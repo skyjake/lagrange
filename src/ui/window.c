@@ -1,5 +1,6 @@
 #include "window.h"
 
+#include "embedded.h"
 #include "app.h"
 #include "command.h"
 #include "paint.h"
@@ -7,7 +8,7 @@
 #include "util.h"
 #include "labelwidget.h"
 #include "inputwidget.h"
-#include "embedded.h"
+#include "documentwidget.h"
 #if defined (iPlatformMsys)
 #   include "../win32.h"
 #endif
@@ -73,6 +74,9 @@ static void setupUserInterface_Window(iWindow *d) {
     /* Children of root cover the entire window. */
     setFlags_Widget(d->root, resizeChildren_WidgetFlag, iTrue);
     setCommandHandler_Widget(d->root, handleRootCommands_);
+
+    addChild_Widget(d->root, iClob(new_DocumentWidget()));
+
 #if 0
     iWidget *mainDiv = makeHDiv_Widget();
     setId_Widget(mainDiv, "maindiv");
@@ -356,7 +360,7 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
 }
 
 static void waitPresent_Window_(iWindow *d) {
-    const double ticksPerFrame = 1000.0 / 30.0;
+    const double ticksPerFrame = 1000.0 / 60.0;
     uint32_t nowTime = SDL_GetTicks();
     if (nowTime < d->presentTime) {
         SDL_Delay((uint32_t) (d->presentTime - nowTime));
