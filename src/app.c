@@ -101,7 +101,7 @@ static void loadPrefs_App_(iApp *d) {
         iRangecc line = iNullRange;
         while (nextSplit_Rangecc(&src, "\n", &line)) {
             iString cmd;
-            initRange_String(&cmd, &line);
+            initRange_String(&cmd, line);
             if (equal_Command(cstr_String(&cmd), "uiscale")) {
                 /* Must be handled before the window is created. */
                 setUiScale_Window(get_Window(), argf_Command(cstr_String(&cmd)));
