@@ -1,5 +1,8 @@
 #include "documentwidget.h"
 #include "paint.h"
+#include "util.h"
+#include "../gemini.h"
+#include "../gmdocument.h"
 
 #include <the_Foundation/regexp.h>
 #include <the_Foundation/tlsrequest.h>
@@ -15,9 +18,10 @@ struct Impl_DocumentWidget {
     iWidget widget;
     enum iDocumentState state;
     iString *url;
-    iString *source;
-    int statusCode;
     iTlsRequest *request;
+    int statusCode;
+    iString *newSource;
+    iGmDocument *doc;
 };
 
 iDeclareType(Url)
@@ -31,7 +35,8 @@ struct Impl_Url {
 };
 
 void init_Url(iUrl *d, const iString *text) {
-    iRegExp *pattern = new_RegExp("(.+)://([^/:?]+)(:[0-9]+)?([^?]*)(\\?.*)?", caseInsensitive_RegExpOption);
+    iRegExp *pattern =
+        new_RegExp("(.+)://([^/:?]+)(:[0-9]+)?([^?]*)(\\?.*)?", caseInsensitive_RegExpOption);
     iRegExpMatch m;
     if (matchString_RegExp(pattern, text, &m)) {
         capturedRange_RegExpMatch(&m, 1, &d->protocol);
@@ -59,22 +64,28 @@ void init_DocumentWidget(iDocumentWidget *d) {
     d->state = blank_DocumentState;
     d->url = new_String();
     d->statusCode = 0;
-    d->source = new_String();
     d->request = NULL;
-
+    d->newSource = new_String();
+    d->doc = new_GmDocument();
     setUrl_DocumentWidget(d, collectNewCStr_String("gemini.circumlunar.space/"));
 }
 
 void deinit_DocumentWidget(iDocumentWidget *d) {
-    delete_String(d->source);
     delete_String(d->url);
+    delete_String(d->newSource);
+    iRelease(d->doc);
+}
+
+static int documentWidth_DocumentWidget_(const iDocumentWidget *d) {
+    const iWidget *w = constAs_Widget(d);
+    const iRect bounds = bounds_Widget(w);
+    return bounds.size.x;
 }
 
 void setSource_DocumentWidget(iDocumentWidget *d, const iString *source) {
     /* TODO: lock source during update */
-    set_String(d->source, source);
-    printf("%s\n", cstr_String(d->source));
-    d->state = layout_DocumentState;
+    setSource_GmDocument(d->doc, source, documentWidth_DocumentWidget_(d));
+    d->state = ready_DocumentState;
 }
 
 static iRangecc getLine_(iRangecc text) {
@@ -92,10 +103,12 @@ static void requestFinished_DocumentWidget_(iAnyObject *obj) {
     /* First line is the status code. */ {
         iString *line = newRange_String(respLine);
         trim_String(line);
-        printf("response: %s\n", cstr_String(line));
+        d->statusCode = toInt_String(line);
+        printf("response (%02d): %s\n", d->statusCode, cstr_String(line));
+        /* TODO: post a command with the status code */
         delete_String(line);
     }
-    setSource_DocumentWidget(d, collect_String(newRange_String(responseRange)));
+    setCStrN_String(d->newSource, responseRange.start, size_Range(&responseRange));
     delete_Block(response);
     iReleaseLater(d->request);
     d->request = NULL;
@@ -135,14 +148,44 @@ void setUrl_DocumentWidget(iDocumentWidget *d, const iString *url) {
 
 static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
+    if (isResize_UserEvent(ev)) {
+        setWidth_GmDocument(d->doc, documentWidth_DocumentWidget_(d));
+    }
     return processEvent_Widget(w, ev);
+}
+
+iDeclareType(DrawContext)
+
+struct Impl_DrawContext {
+    const iDocumentWidget *d;
+    iRect bounds;
+    iPaint paint;
+};
+
+static void drawRun_DrawContext_(void *context, const iGmRun *run) {
+    iDrawContext *d = context;
+    iString text;
+    /* TODO: making a copy is unnecessary; the text routines should accept Rangecc */
+    initRange_String(&text, run->text);
+    drawString_Text(run->font, add_I2(d->bounds.pos, run->bounds.pos), run->color, &text);
+    deinit_String(&text);
 }
 
 static void draw_DocumentWidget_(const iDocumentWidget *d) {
     const iWidget *w = constAs_Widget(d);
     draw_Widget(w);
+    /* Update the document? */
+    if (!isEmpty_String(d->newSource)) {
+        /* TODO: Do this in the background. However, that requires a text metrics calculator
+           that does not try to cache the glyph bitmaps. */
+        setSource_GmDocument(d->doc, d->newSource, documentWidth_DocumentWidget_(d));
+        clear_String(d->newSource);
+        iConstCast(iDocumentWidget *, d)->state = ready_DocumentState;
+    }
     if (d->state != ready_DocumentState) return;
-    /* TODO: lock source during draw */
+    iDrawContext ctx = {.d = d, .bounds = bounds_Widget(w) };
+    init_Paint(&ctx.paint);
+    render_GmDocument(d->doc, (iRangei){ 0, height_Rect(ctx.bounds) }, drawRun_DrawContext_, &ctx);
 }
 
 iBeginDefineSubclass(DocumentWidget, Widget)

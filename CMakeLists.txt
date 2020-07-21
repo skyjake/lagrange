@@ -31,6 +31,9 @@ set (SOURCES
     src/main.c
     src/app.c
     src/app.h
+    src/gemini.h
+    src/gmdocument.h
+    src/gmdocument.c
     src/stb_image.h
     src/stb_truetype.h
     # User interface:

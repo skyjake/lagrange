@@ -484,6 +484,10 @@ void draw_Text(int fontId, iInt2 pos, int color, const char *text, ...) {
     deinit_Block(&chars);
 }
 
+void drawString_Text(int fontId, iInt2 pos, int color, const iString *text) {
+    draw_Text_(fontId, pos, color, cstr_String(text));
+}
+
 void drawCentered_Text(int fontId, iRect rect, int color, const char *text, ...) {
     iBlock chars;
     init_Block(&chars, 0); {
