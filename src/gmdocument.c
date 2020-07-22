@@ -67,6 +67,21 @@ static int lastVisibleRunBottom_GmDocument_(const iGmDocument *d) {
     return 0;
 }
 
+iInt2 measurePreformattedBlock_GmDocument_(const iGmDocument *d, const char *start, int font) {
+    const iRangecc content = { start, constEnd_String(&d->source) };
+    iRangecc line = iNullRange;
+    nextSplit_Rangecc(&content, "\n", &line);
+    iAssert(startsWith_Rangecc(&line, "```"));
+    iRangecc preBlock = { line.end + 1, line.end + 1 };
+    while (nextSplit_Rangecc(&content, "\n", &line)) {
+        if (startsWith_Rangecc(&line, "```")) {
+            break;
+        }
+        preBlock.end = line.end;
+    }
+    return measureRange_Text(font, preBlock);
+}
+
 static void doLayout_GmDocument_(iGmDocument *d) {
     if (d->size.x <= 0 || isEmpty_String(&d->source)) {
         return;
@@ -98,6 +113,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     iRangecc preAltText = iNullRange;
     enum iGmLineType prevType = text_GmLineType;
     iBool isFirstText = iTrue;
+    int preFont = preformatted_FontId;
     while (nextSplit_Rangecc(&content, "\n", &line)) {
         iGmRun run;
         run.color = white_ColorId;
@@ -109,6 +125,12 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             indent = indents[type];
             if (type == preformatted_GmLineType) {
                 isPreformat = iTrue;
+                preFont = preformatted_FontId;
+                /* Use a smaller font if the block contents are wide. */
+                if (measurePreformattedBlock_GmDocument_(d, line.start, preFont).x >
+                    d->size.x - indents[preformatted_GmLineType]) {
+                    preFont = preformattedSmall_FontId;
+                }
                 trimLine_Rangecc_(&line, type);
                 preAltText = line;
                 /* TODO: store and link the alt text to this run */
@@ -118,21 +140,23 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             run.font = fonts[type];
         }
         else {
+            /* Preformatted line. */
             type = preformatted_GmLineType;
             if (startsWithSc_Rangecc(&line, "```", &iCaseSensitive)) {
                 isPreformat = iFalse;
                 preAltText = iNullRange;
                 continue;
             }
-            run.font = preformatted_FontId;
+            run.font = preFont;
             indent = indents[type];
         }
-        /* Check the margin. */
+        /* Empty lines don't produce text runs. */
         if (isEmpty_Range(&line)) {
             pos.y += lineHeight_Text(run.font);
             prevType = text_GmLineType;
             continue;
         }
+        /* Check the margin vs. previous run. */
         if (!isPreformat || (prevType != preformatted_GmLineType)) {
             int required =
                 iMax(topMargin[type], bottomMargin[prevType]) * lineHeight_Text(paragraph_FontId);
@@ -144,6 +168,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 pos.y += required - delta;
             }
         }
+        /* List bullet. */
         if (type == bullet_GmLineType) {
             run.bounds.pos = addX_I2(pos, indent * gap_UI);
             run.bounds.size = advance_Text(run.font, bullet);
@@ -151,6 +176,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             run.text = (iRangecc){ bullet, bullet + strlen(bullet) };
             pushBack_Array(&d->layout, &run);
         }
+        /* Special formatting for the first paragraph (e.g., subtitle, introduction, or lede). */
         if (type == text_GmLineType && isFirstText) {
             run.font = firstParagraph_FontId;
             isFirstText = iFalse;
