@@ -23,14 +23,16 @@ iDeclareTypeConstructionArgs(Glyph, iChar ch)
 
 struct Impl_Glyph {
     iHashNode node;
-    iRect rect;
+    iRect rect[2]; /* zero and half pixel offset */
     int advance;
-    int dx, dy;
+    //int dx, dy;
+    iInt2 d[2];
 };
 
 void init_Glyph(iGlyph *d, iChar ch) {
     d->node.key = ch;
-    d->rect = zero_Rect();
+    d->rect[0] = zero_Rect();
+    d->rect[1] = zero_Rect();
     d->advance = 0;
 }
 
@@ -141,9 +143,10 @@ void deinit_Text(void) {
     d->render = NULL;
 }
 
-static SDL_Surface *rasterizeGlyph_Font_(const iFont *d, iChar ch) {
+static SDL_Surface *rasterizeGlyph_Font_(const iFont *d, iChar ch, float xShift) {
     int w, h;
-    uint8_t *bmp = stbtt_GetCodepointBitmap(&d->font, d->scale, d->scale, ch, &w, &h, 0, 0);
+    uint8_t *bmp = stbtt_GetCodepointBitmapSubpixel(
+        &d->font, d->scale, d->scale, xShift, 0.0f, ch, &w, &h, 0, 0);
     /* Note: `bmp` must be freed afterwards. */
     SDL_Surface *surface =
         SDL_CreateRGBSurfaceWithFormatFrom(bmp, w, h, 8, w, SDL_PIXELFORMAT_INDEX8);
@@ -204,33 +207,44 @@ static void fillTriangle_(SDL_Surface *surface, const SDL_Rect *rect, int dir) {
 }
 #endif
 
-static void cache_Font_(iFont *d, iGlyph *glyph) {
+static void cache_Font_(iFont *d, iGlyph *glyph, int hoff) {
     iText *txt = &text_;
     SDL_Renderer *render = txt->render;
     SDL_Texture *tex = NULL;
     SDL_Surface *surface = NULL;
     const iChar ch = char_Glyph(glyph);
     iBool fromStb = iFalse;
+    iRect *glRect = &glyph->rect[hoff];
     if (!isSpecialChar_(ch)) {
         /* Rasterize the glyph using stbtt. */
-        surface = rasterizeGlyph_Font_(d, ch);
-        int lsb;
-        stbtt_GetCodepointHMetrics(&d->font, ch, &glyph->advance, &lsb);
-        stbtt_GetCodepointBitmapBox(
-            &d->font, ch, d->scale, d->scale, &glyph->dx, &glyph->dy, NULL, NULL);
+        surface = rasterizeGlyph_Font_(d, ch, hoff * 0.5f);
+        if (hoff == 0) {
+            int lsb;
+            stbtt_GetCodepointHMetrics(&d->font, ch, &glyph->advance, &lsb);
+        }
+        stbtt_GetCodepointBitmapBoxSubpixel(&d->font,
+                                            ch,
+                                            d->scale,
+                                            d->scale,
+                                            hoff * 0.5f,
+                                            0.0f,
+                                            &glyph->d[hoff].x,
+                                            &glyph->d[hoff].y,
+                                            NULL,
+                                            NULL);
         fromStb = iTrue;
         tex = SDL_CreateTextureFromSurface(render, surface);
-        glyph->rect.size = init_I2(surface->w, surface->h);
+        glRect->size = init_I2(surface->w, surface->h);
     }
     else {
         /* Metrics for special symbols. */
         int em, lsb;
         const int symbol = specialChar_(ch);
         stbtt_GetCodepointHMetrics(&d->font, 'M', &em, &lsb);
-        glyph->dx = d->baseline / 10;
-        glyph->dy = -d->baseline;
+        glyph->d[hoff].x = d->baseline / 10;
+        glyph->d[hoff].y = -d->baseline;
         glyph->advance = em * symbolAdvance_(symbol);
-        glyph->rect.size = init_I2(symbolEmWidth_(symbol) * em * d->scale, d->height);
+        glyph->rect[hoff].size = init_I2(symbolEmWidth_(symbol) * em * d->scale, d->height);
 #if 0
         if (isRasterizedSymbol_(ch)) {
             /* Rasterize manually. */
@@ -264,18 +278,19 @@ static void cache_Font_(iFont *d, iGlyph *glyph) {
 #endif
     }
     /* Determine placement in the glyph cache texture, advancing in rows. */
-    if (txt->cachePos.x + glyph->rect.size.x > txt->cacheSize.x) {
+    if (txt->cachePos.x + glRect->size.x > txt->cacheSize.x) {
         txt->cachePos.x = 0;
         txt->cachePos.y += txt->cacheRowHeight;
         txt->cacheRowHeight = 0;
     }
-    glyph->rect.pos = txt->cachePos;
+    glRect->pos = txt->cachePos;
     SDL_SetRenderTarget(render, txt->cache);
-    const SDL_Rect dstRect = sdlRect_(glyph->rect);
+    const SDL_Rect dstRect = sdlRect_(*glRect);
     if (surface) {
         SDL_RenderCopy(render, tex, &(SDL_Rect){ 0, 0, dstRect.w, dstRect.h }, &dstRect);
     }
     else {
+#if 0
         /* Draw a special symbol. */
         SDL_SetRenderDrawColor(render, 255, 255, 255, 255);
         const iInt2 tl = init_I2(dstRect.x, dstRect.y);
@@ -283,7 +298,6 @@ static void cache_Font_(iFont *d, iGlyph *glyph) {
         const int midX = tl.x + dstRect.w / 2;
         const int midY = tl.y + dstRect.h / 2;
         const int symH = dstRect.h * 2 / 6;
-#if 0
         /* Frame. */
         if (isFramedSymbol_(ch)) {
             SDL_RenderDrawLines(
@@ -350,8 +364,8 @@ static void cache_Font_(iFont *d, iGlyph *glyph) {
         SDL_FreeSurface(surface);
     }
     /* Update cache cursor. */
-    txt->cachePos.x += glyph->rect.size.x;
-    txt->cacheRowHeight = iMax(txt->cacheRowHeight, glyph->rect.size.y);
+    txt->cachePos.x += glRect->size.x;
+    txt->cacheRowHeight = iMax(txt->cacheRowHeight, glRect->size.y);
 }
 
 static const iGlyph *glyph_Font_(iFont *d, iChar ch) {
@@ -360,7 +374,8 @@ static const iGlyph *glyph_Font_(iFont *d, iChar ch) {
         return node;
     }
     iGlyph *glyph = new_Glyph(ch);
-    cache_Font_(d, glyph);
+    cache_Font_(d, glyph, 0);
+    cache_Font_(d, glyph, 1); /* half-pixel offset */
     insert_Hash(&d->glyphs, &glyph->node);
     return glyph;
 }
@@ -380,6 +395,8 @@ static iChar nextChar_(const char **chPos, const char *end) {
     (*chPos) += len;
     return ch;
 }
+
+int enableHalfPixelGlyphs_Text = iTrue;
 
 static iInt2 run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLen, iInt2 pos,
                        int xposLimit, const char **continueFrom_out, int *runAdvance_out) {
@@ -415,8 +432,9 @@ static iInt2 run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
             }
         }
         const iGlyph *glyph = glyph_Font_(d, ch);
-        float x1 = xpos;
-        float x2 = x1 + glyph->rect.size.x;
+        int x1 = xpos;
+        const int hoff = enableHalfPixelGlyphs_Text ? (xpos - x1 > 0.5f ? 1 : 0) : 0;
+        int x2 = x1 + glyph->rect[hoff].size.x;
         if (xposLimit > 0 && x2 > xposLimit) {
             /* Out of space. */
             *continueFrom_out = lastWordEnd;
@@ -425,11 +443,11 @@ static iInt2 run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
         size.x = iMax(size.x, x2 - orig.x);
         size.y = iMax(size.y, pos.y + d->height - orig.y);
         if (mode != measure_RunMode) {
-            SDL_FRect dst = { x1 + glyph->dx,
-                              pos.y + d->baseline + glyph->dy,
-                              glyph->rect.size.x,
-                              glyph->rect.size.y };
-            SDL_RenderCopyF(text_.render, text_.cache, (const SDL_Rect *) &glyph->rect, &dst);
+            SDL_Rect dst = { x1 + glyph->d[hoff].x,
+                             pos.y + d->baseline + glyph->d[hoff].y,
+                             glyph->rect[hoff].size.x,
+                             glyph->rect[hoff].size.y };
+            SDL_RenderCopy(text_.render, text_.cache, (const SDL_Rect *) &glyph->rect[hoff], &dst);
         }
         xpos += d->scale * glyph->advance;
         xposMax = iMax(xposMax, xpos);

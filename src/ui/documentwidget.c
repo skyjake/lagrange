@@ -172,9 +172,21 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
     if (ev->type == SDL_KEYDOWN) {
         const int mods = keyMods_Sym(ev->key.keysym.mod);
         const int key = ev->key.keysym.sym;
-        if (mods == KMOD_PRIMARY && key == 'r') {
-            fetch_DocumentWidget_(d);
-            return iTrue;
+        switch (key) {
+            case 'r':
+                if (mods == KMOD_PRIMARY) {
+                    fetch_DocumentWidget_(d);
+                    return iTrue;
+                }
+                break;
+            case '0': {
+                extern int enableHalfPixelGlyphs_Text;
+                enableHalfPixelGlyphs_Text = !enableHalfPixelGlyphs_Text;
+                postRefresh_App();
+                printf("halfpixel: %d\n", enableHalfPixelGlyphs_Text);
+                fflush(stdout);
+                break;
+            }
         }
     }
     else if (ev->type == SDL_MOUSEWHEEL) {
