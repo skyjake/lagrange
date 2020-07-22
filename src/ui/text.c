@@ -117,7 +117,7 @@ void init_Text(SDL_Renderer *render) {
         const struct { const iBlock *ttf; int size; } fontData[max_FontId] = {
             { &fontFiraSansRegular_Embedded, fontSize_UI },
             { &fontFiraMonoRegular_Embedded, fontSize_UI * 0.85f },
-            { &fontFiraSansRegular_Embedded, fontSize_UI * 1.5f },
+            { &fontFiraSansRegular_Embedded, fontSize_UI * 1.35f },
             { &fontFiraSansLightItalic_Embedded, fontSize_UI },
             { &fontFiraSansBold_Embedded, fontSize_UI },
             { &fontFiraSansBold_Embedded, fontSize_UI * 1.35f },

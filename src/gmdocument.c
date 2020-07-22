@@ -97,6 +97,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     static const char *bullet = "\u2022";
     iRangecc preAltText = iNullRange;
     enum iGmLineType prevType = text_GmLineType;
+    iBool isFirstText = iTrue;
     while (nextSplit_Rangecc(&content, "\n", &line)) {
         iGmRun run;
         run.color = white_ColorId;
@@ -149,6 +150,13 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             run.bounds.pos.x -= 4 * gap_UI - run.bounds.size.x / 2;
             run.text = (iRangecc){ bullet, bullet + strlen(bullet) };
             pushBack_Array(&d->layout, &run);
+        }
+        if (type == text_GmLineType && isFirstText) {
+            run.font = firstParagraph_FontId;
+            isFirstText = iFalse;
+        }
+        else if (type != header1_GmLineType) {
+            isFirstText = iFalse;
         }
         iRangecc runLine = line;
         while (!isEmpty_Range(&runLine)) {
