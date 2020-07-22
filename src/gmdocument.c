@@ -12,6 +12,42 @@ struct Impl_GmDocument {
 
 iDefineObjectConstruction(GmDocument)
 
+enum iGmLineType {
+    text_GmLineType,
+    bullet_GmLineType,
+    preformatted_GmLineType,
+    quote_GmLineType,
+    header1_GmLineType,
+    header2_GmLineType,
+    header3_GmLineType,
+    max_GmLineType,
+};
+
+static enum iGmLineType lineType_Rangecc_(const iRangecc *line) {
+    if (isEmpty_Range(line)) {
+        return text_GmLineType;
+    }
+    if (startsWithSc_Rangecc(line, "###", &iCaseSensitive)) {
+        return header3_GmLineType;
+    }
+    if (startsWithSc_Rangecc(line, "##", &iCaseSensitive)) {
+        return header2_GmLineType;
+    }
+    if (startsWithSc_Rangecc(line, "#", &iCaseSensitive)) {
+        return header1_GmLineType;
+    }
+    if (startsWithSc_Rangecc(line, "```", &iCaseSensitive)) {
+        return preformatted_GmLineType;
+    }
+    if (*line->start == '>') {
+        return quote_GmLineType;
+    }
+    if (size_Range(line) >= 2 && line->start[0] == '*' && isspace(line->start[1])) {
+        return bullet_GmLineType;
+    }
+    return text_GmLineType;
+}
+
 static void doLayout_GmDocument_(iGmDocument *d) {
     if (d->size.x <= 0 || isEmpty_String(&d->source)) {
         return;
@@ -21,10 +57,20 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     iInt2 pos = zero_I2();
     const iRangecc content = range_String(&d->source);
     iRangecc line = iNullRange;
+    const int fonts[max_GmLineType] = {
+        paragraph_FontId,
+        paragraph_FontId,
+        preformatted_FontId,
+        quote_FontId,
+        header1_FontId,
+        header2_FontId,
+        header3_FontId
+    };
     while (nextSplit_Rangecc(&content, "\n", &line)) {
+        enum iGmLineType type = lineType_Rangecc_(&line);
         iGmRun run;
         run.text = line;
-        run.font = paragraph_FontId;
+        run.font = fonts[type];
         run.color = white_ColorId;
         run.bounds.pos = pos;
         run.bounds.size = advanceN_Text(run.font, line.start, size_Range(&line));
