@@ -236,6 +236,7 @@ static void updateRootSize_Window_(iWindow *d) {
     SDL_GetRendererOutputSize(d->render, &size->x, &size->y);
     arrange_Widget(d->root);
     postCommandf_App("window.resized width:%d height:%d", size->x, size->y);
+    postRefresh_App();
 }
 
 static float pixelRatio_Window_(const iWindow *d) {
@@ -260,7 +261,6 @@ void init_Window(iWindow *d) {
     } 
     SDL_SetWindowMinimumSize(d->win, 640, 480);
     SDL_SetWindowTitle(d->win, "Lagrange");
-    SDL_ShowWindow(d->win);
     /* Some info. */ {
         SDL_RendererInfo info;
         SDL_GetRendererInfo(d->render, &info);
@@ -316,7 +316,11 @@ SDL_Renderer *renderer_Window(const iWindow *d) {
 
 static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
     switch (ev->event) {
+        case SDL_WINDOWEVENT_MOVED:
+            /* No need to do anything. */
+            return iTrue;
         case SDL_WINDOWEVENT_RESIZED:
+        case SDL_WINDOWEVENT_SIZE_CHANGED:
             updateRootSize_Window_(d);
             return iTrue;
         case SDL_WINDOWEVENT_LEAVE:
@@ -359,6 +363,7 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
     return iFalse;
 }
 
+#if 0
 static void waitPresent_Window_(iWindow *d) {
     const double ticksPerFrame = 1000.0 / 60.0;
     uint32_t nowTime = SDL_GetTicks();
@@ -375,6 +380,7 @@ static void waitPresent_Window_(iWindow *d) {
         d->presentTime = nowTime;
     }
 }
+#endif
 
 void draw_Window(iWindow *d) {
     /* Clear the window. */
@@ -392,7 +398,7 @@ void draw_Window(iWindow *d) {
         SDL_RenderCopy(d->render, glyphCache_Text(), NULL, &rect);
     }
 #endif
-    waitPresent_Window_(d);
+//    waitPresent_Window_(d);
     SDL_RenderPresent(d->render);
 }
 

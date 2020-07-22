@@ -156,18 +156,21 @@ const iString *execPath_App(void) {
 void processEvents_App(void) {
     iApp *d = &app_;
     SDL_Event ev;
-    while (SDL_PollEvent(&ev)) {
+    while (SDL_WaitEvent(&ev)) {
         switch (ev.type) {
             case SDL_QUIT:
                 // if (isModified_Song(d->song)) {
                 //     save_App_(d, autosavePath_App_(d));
                 // }
                 d->running = iFalse;
-                break;
+                goto backToMainLoop;
             case SDL_DROPFILE:
                 postCommandf_App("open url:file://%s", ev.drop.file);
                 break;
             default: {
+                if (ev.type == SDL_USEREVENT && ev.user.code == refresh_UserEventCode) {
+                    goto backToMainLoop;
+                }
                 iBool wasUsed = processEvent_Window(d->window, &ev);
                 if (ev.type == SDL_USEREVENT && ev.user.code == command_UserEventCode) {
 #if defined (iPlatformApple) && !defined (iPlatformIOS)
@@ -180,19 +183,23 @@ void processEvents_App(void) {
                         /* No widget handled the command, so we'll do it. */
                         handleCommand_App(ev.user.data1);
                     }
-                    /* Allocated by postCommand_App(). */
+                    /* Allocated by postCommand_Apps(). */
                     free(ev.user.data1);
                 }
                 break;
             }
         }
     }
+backToMainLoop:;
 }
 
 static void runTickers_App_(iApp *d) {
     /* Tickers may add themselves again, so we'll run off a copy. */
     iSortedArray *pending = copy_SortedArray(&d->tickers);
     clear_SortedArray(&d->tickers);
+    if (!isEmpty_SortedArray(pending)) {
+        postRefresh_App();
+    }
     iConstForEach(Array, i, &pending->values) {
         const iTicker *ticker = i.value;
         if (ticker->callback) {
@@ -208,8 +215,7 @@ static int run_App_(iApp *d) {
     SDL_EventState(SDL_DROPFILE, SDL_ENABLE); /* open files via drag'n'drop */
     while (d->running) {
         runTickers_App_(d);
-        processEvents_App();
-        destroyPending_Widget();
+        processEvents_App(); /* may wait here for a while */
         refresh_App();
     }
     return 0;
@@ -217,6 +223,7 @@ static int run_App_(iApp *d) {
 
 void refresh_App(void) {
     iApp *d = &app_;
+    destroyPending_Widget();
     draw_Window(d->window);
     recycle_Garbage();
 }
@@ -226,6 +233,16 @@ int run_App(int argc, char **argv) {
     const int rc = run_App_(&app_);
     deinit_App(&app_);
     return rc;
+}
+
+void postRefresh_App(void) {
+    SDL_Event ev;
+    ev.user.type     = SDL_USEREVENT;
+    ev.user.code     = refresh_UserEventCode;
+    ev.user.windowID = get_Window() ? SDL_GetWindowID(get_Window()->win) : 0;
+    ev.user.data1    = NULL;
+    ev.user.data2    = NULL;
+    SDL_PushEvent(&ev);
 }
 
 void postCommand_App(const char *command) {

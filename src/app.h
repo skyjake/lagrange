@@ -8,6 +8,7 @@ iDeclareType(Window)
 
 enum iUserEventCode {
     command_UserEventCode = 1,
+    refresh_UserEventCode  = 2,
 };
 
 const iString *execPath_App     (void);
@@ -19,6 +20,7 @@ void        refresh_App         (void);
 iAny *      findWidget_App      (const char *id);
 void        addTicker_App       (void (*ticker)(iAny *), iAny *context);
 
+void        postRefresh_App     (void);
 void        postCommand_App     (const char *command);
 void        postCommandf_App    (const char *command, ...);
 
