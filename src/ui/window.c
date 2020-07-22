@@ -274,6 +274,7 @@ void init_Window(iWindow *d) {
 #endif
 #if defined (iPlatformLinux)
     /* Load the window icon. */ {
+#if 0
         int w, h, num;
         const iBlock *icon = &imageAppicon64_Embedded;
         stbi_uc *pixels = stbi_load_from_memory(constData_Block(icon),
@@ -287,6 +288,7 @@ void init_Window(iWindow *d) {
         SDL_SetWindowIcon(d->win, surf);
         SDL_FreeSurface(surf);
         stbi_image_free(pixels);
+#endif
     }
 #endif
     d->root = new_Widget();
