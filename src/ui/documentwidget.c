@@ -25,6 +25,7 @@ struct Impl_DocumentWidget {
     iString *newSource;
     iGmDocument *doc;
     int pageMargin;
+    int scrollY;
 };
 
 iDeclareType(Url)
@@ -71,6 +72,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     d->newSource = new_String();
     d->doc = new_GmDocument();
     d->pageMargin = 5;
+    d->scrollY = 0;
     setUrl_DocumentWidget(d, collectNewCStr_String("file:///home/jaakko/test.gmi"));
 }
 
@@ -173,13 +175,18 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             return iTrue;
         }
     }
+    else if (ev->type == SDL_MOUSEWHEEL) {
+        d->scrollY -= 3 * ev->wheel.y * lineHeight_Text(default_FontId);
+        postRefresh_App();
+        return iTrue;
+    }
     return processEvent_Widget(w, ev);
 }
 
 iDeclareType(DrawContext)
 
 struct Impl_DrawContext {
-    const iDocumentWidget *d;
+    const iDocumentWidget *widget;
     iRect bounds;
     iPaint paint;
 };
@@ -189,8 +196,9 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
     iString text;
     /* TODO: making a copy is unnecessary; the text routines should accept Rangecc */
     initRange_String(&text, run->text);
-    drawString_Text(run->font, add_I2(d->bounds.pos, run->bounds.pos), run->color, &text);
-    drawRect_Paint(&d->paint, moved_Rect(run->bounds, d->bounds.pos), red_ColorId);
+    iInt2 origin = addY_I2(d->bounds.pos, -d->widget->scrollY);
+    drawString_Text(run->font, add_I2(run->bounds.pos, origin), run->color, &text);
+//    drawRect_Paint(&d->paint, moved_Rect(run->bounds, origin), red_ColorId);
     deinit_String(&text);
 }
 
@@ -206,11 +214,14 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
         iConstCast(iDocumentWidget *, d)->state = ready_DocumentState;
     }
     if (d->state != ready_DocumentState) return;
-    iDrawContext ctx = {.d = d, .bounds = bounds_Widget(w) };
+    iDrawContext ctx = {.widget = d, .bounds = bounds_Widget(w) };
     shrink_Rect(&ctx.bounds, init1_I2(gap_UI * d->pageMargin));
     init_Paint(&ctx.paint);
     drawRect_Paint(&ctx.paint, ctx.bounds, teal_ColorId);
-    render_GmDocument(d->doc, (iRangei){ 0, height_Rect(ctx.bounds) }, drawRun_DrawContext_, &ctx);
+    render_GmDocument(d->doc,
+                      (iRangei){ d->scrollY, d->scrollY + height_Rect(ctx.bounds) },
+                      drawRun_DrawContext_,
+                      &ctx);
 }
 
 iBeginDefineSubclass(DocumentWidget, Widget)

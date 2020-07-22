@@ -42,6 +42,7 @@ iInt2   measure_Text        (int fontId, const char *text);
 iInt2   advance_Text        (int fontId, const char *text);
 iInt2   advanceN_Text       (int fontId, const char *text, size_t n); /* `n` in characters */
 iInt2   advanceRange_Text   (int fontId, iRangecc text);
+iInt2   tryAdvanceRange_Text(int fontId, iRangecc text, int width, const char **endPos);
 
 void    draw_Text           (int fontId, iInt2 pos, int color, const char *text, ...); /* negative pos to switch alignment */
 void    drawString_Text     (int fontId, iInt2 pos, int color, const iString *text);

@@ -150,11 +150,18 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             run.text = (iRangecc){ bullet, bullet + strlen(bullet) };
             pushBack_Array(&d->layout, &run);
         }
-        run.text = line;
-        run.bounds.pos = addX_I2(pos, indent * gap_UI);
-        run.bounds.size = advanceRange_Text(run.font, line);
-        pushBack_Array(&d->layout, &run);
-        pos.y += run.bounds.size.y;
+        iRangecc runLine = line;
+        while (!isEmpty_Range(&runLine)) {
+            run.bounds.pos = addX_I2(pos, indent * gap_UI);
+            const char *contPos;
+            run.bounds.size = tryAdvanceRange_Text(
+                run.font, runLine, isPreformat ? 0 : (d->size.x - run.bounds.pos.x), &contPos);
+            run.text = (iRangecc){ runLine.start, contPos };
+            pushBack_Array(&d->layout, &run);
+            runLine.start = contPos;
+            trimStart_Rangecc(&runLine);
+            pos.y += lineHeight_Text(run.font);
+        }
         prevType = type;
     }
     d->size.y = pos.y;
@@ -185,9 +192,22 @@ static void normalize_GmDocument(iGmDocument *d) {
     iRangecc src = range_String(&d->source);
     iRangecc line = iNullRange;
     iBool isPreformat = iFalse;
+    const int preTabWidth = 4; /* TODO: user-configurable parameter */
     while (nextSplit_Rangecc(&src, "\n", &line)) {
         if (isPreformat) {
-            appendRange_String(normalized, line);
+            /* Replace any tab characters with spaces for visualization. */
+            for (const char *ch = line.start; ch != line.end; ch++) {
+                if (*ch == '\t') {
+                    int column = ch - line.start;
+                    int numSpaces = (column / preTabWidth + 1) * preTabWidth - column;
+                    while (numSpaces-- > 0) {
+                        appendCStrN_String(normalized, " ", 1);
+                    }
+                }
+                else {
+                    appendCStrN_String(normalized, ch, 1);
+                }
+            }
             appendCStr_String(normalized, "\n");
             if (lineType_Rangecc_(&line) == preformatted_GmLineType) {
                 isPreformat = iFalse;
@@ -202,21 +222,23 @@ static void normalize_GmDocument(iGmDocument *d) {
         }
         iBool isPrevSpace = iFalse;
         for (const char *ch = line.start; ch != line.end; ch++) {
-            if (isNormalizableSpace_(*ch)) {
+            char c = *ch;
+            if (isNormalizableSpace_(c)) {
                 if (isPrevSpace) {
-                    continue;
+                    continue; /* skip repeated spaces */
                 }
+                c = ' ';
                 isPrevSpace = iTrue;
             }
             else {
                 isPrevSpace = iFalse;
             }
-            appendCStrN_String(normalized, ch, 1);
+            appendCStrN_String(normalized, &c, 1);
         }
         appendCStr_String(normalized, "\n");
     }
     set_String(&d->source, collect_String(normalized));
-    printf("normalized:\n%s\n", cstr_String(&d->source));
+//    printf("normalized:\n%s\n", cstr_String(&d->source));
 }
 
 void setSource_GmDocument(iGmDocument *d, const iString *source, int width) {
@@ -242,6 +264,10 @@ void render_GmDocument(const iGmDocument *d, iRangei visRangeY, iGmDocumentRende
             render(context, run);
         }
     }
+}
+
+iInt2 size_GmDocument(const iGmDocument *d) {
+    return d->size;
 }
 
 iDefineClass(GmDocument)

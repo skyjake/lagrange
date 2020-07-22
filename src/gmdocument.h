@@ -26,3 +26,4 @@ void    setSource_GmDocument    (iGmDocument *, const iString *source, int width
 typedef void (*iGmDocumentRenderFunc)(void *, const iGmRun *);
 
 void    render_GmDocument       (const iGmDocument *, iRangei visRangeY, iGmDocumentRenderFunc render, void *);
+iInt2   size_GmDocument         (const iGmDocument *);

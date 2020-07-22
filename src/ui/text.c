@@ -15,6 +15,7 @@
 #include <the_Foundation/vec2.h>
 
 #include <SDL_surface.h>
+#include <SDL_hints.h>
 #include <stdarg.h>
 
 iDeclareType(Glyph)
@@ -115,12 +116,12 @@ void init_Text(SDL_Renderer *render) {
     /* Load the fonts. */ {
         const struct { const iBlock *ttf; int size; } fontData[max_FontId] = {
             { &fontFiraSansRegular_Embedded, fontSize_UI },
-            { &fontFiraMonoRegular_Embedded, fontSize_UI },
+            { &fontFiraMonoRegular_Embedded, fontSize_UI * 0.85f },
             { &fontFiraSansRegular_Embedded, fontSize_UI * 1.5f },
             { &fontFiraSansLightItalic_Embedded, fontSize_UI },
             { &fontFiraSansBold_Embedded, fontSize_UI },
-            { &fontFiraSansBold_Embedded, fontSize_UI * 1.5f },
-            { &fontFiraSansBold_Embedded, fontSize_UI * 1.75f },
+            { &fontFiraSansBold_Embedded, fontSize_UI * 1.35f },
+            { &fontFiraSansBold_Embedded, fontSize_UI * 1.7f },
             { &fontFiraSansBold_Embedded, fontSize_UI * 2.0f },
         };
         iForIndices(i, fontData) {
@@ -377,18 +378,26 @@ static iChar nextChar_(const char **chPos, const char *end) {
 }
 
 static iInt2 run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLen, iInt2 pos,
-                       int *runAdvance_out) {
+                       int xposLimit, const char **continueFrom_out, int *runAdvance_out) {
     iInt2 size = zero_I2();
     const iInt2 orig = pos;
     const stbtt_fontinfo *info = &d->font;
     float xpos = pos.x;
     float xposMax = xpos;
+    iAssert(xposLimit == 0 || mode == measure_RunMode);
+    const char *lastWordEnd = text.start;
+    if (continueFrom_out) {
+        *continueFrom_out = text.end;
+    }
+    iChar prevCh = 0;
     for (const char *chPos = text.start; chPos != text.end; ) {
+        iAssert(chPos < text.end);
         iChar ch = nextChar_(&chPos, text.end);
         /* Special instructions. */ {
             if (ch == '\n') {
                 xpos = pos.x;
                 pos.y += d->height;
+                prevCh = ch;
                 continue;
             }
             if (ch == '\r') {
@@ -397,20 +406,26 @@ static iInt2 run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
                 if (mode == draw_RunMode) {
                     SDL_SetTextureColorMod(text_.cache, clr.r, clr.g, clr.b);
                 }
+                prevCh = 0;
                 continue;
             }
         }
         const iGlyph *glyph = glyph_Font_(d, ch);
-        int x1 = iRound(xpos);
-        int x2 = x1 + glyph->rect.size.x;
+        float x1 = xpos;
+        float x2 = x1 + glyph->rect.size.x;
+        if (xposLimit > 0 && x2 > xposLimit) {
+            /* Out of space. */
+            *continueFrom_out = lastWordEnd;
+            break;
+        }
         size.x = iMax(size.x, x2 - orig.x);
         size.y = iMax(size.y, pos.y + d->height - orig.y);
         if (mode != measure_RunMode) {
-            SDL_Rect dst = { x1 + glyph->dx,
-                             pos.y + d->baseline + glyph->dy,
-                             glyph->rect.size.x,
-                             glyph->rect.size.y };
-            SDL_RenderCopy(text_.render, text_.cache, (const SDL_Rect *) &glyph->rect, &dst);
+            SDL_FRect dst = { x1 + glyph->dx,
+                              pos.y + d->baseline + glyph->dy,
+                              glyph->rect.size.x,
+                              glyph->rect.size.y };
+            SDL_RenderCopyF(text_.render, text_.cache, (const SDL_Rect *) &glyph->rect, &dst);
         }
         int advance, lsb;
         const iBool spec = isSpecialChar_(ch);
@@ -420,6 +435,9 @@ static iInt2 run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
         }
         xpos += d->scale * advance;
         xposMax = iMax(xposMax, xpos);
+        if (!isSpace_Char(prevCh) && isSpace_Char(ch)) {
+            lastWordEnd = chPos;
+        }
         /* Check the next character. */ {
             /* TODO: No need to decode the next char twice; check this on the next iteration. */
             const char *peek = chPos;
@@ -428,6 +446,7 @@ static iInt2 run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
                 xpos += d->scale * stbtt_GetCodepointKernAdvance(info, ch, next);
             }
         }
+        prevCh = ch;
         if (--maxLen == 0) {
             break;
         }
@@ -446,20 +465,46 @@ iInt2 measure_Text(int fontId, const char *text) {
     if (!*text) {
         return init_I2(0, lineHeight_Text(fontId));
     }
-    return run_Font_(
-        &text_.fonts[fontId], measure_RunMode, range_CStr(text), iInvalidSize, zero_I2(), NULL);
+    return run_Font_(&text_.fonts[fontId],
+                     measure_RunMode,
+                     range_CStr(text),
+                     iInvalidSize,
+                     zero_I2(),
+                     0,
+                     NULL,
+                     NULL);
 }
 
-iInt2 advance_Text(int fontId, const char *text) {
+iInt2 advanceRange_Text(int fontId, iRangecc text) {
     int advance;
     const int height = run_Font_(&text_.fonts[fontId],
                                  measure_RunMode,
-                                 range_CStr(text),
+                                 text,
                                  iInvalidSize,
                                  zero_I2(),
+                                 0,
+                                 NULL,
                                  &advance)
                            .y;
     return init_I2(advance, height);
+}
+
+iInt2 tryAdvanceRange_Text(int fontId, iRangecc text, int width, const char **endPos) {
+    int advance;
+    const int height = run_Font_(&text_.fonts[fontId],
+                                 measure_RunMode,
+                                 text,
+                                 iInvalidSize,
+                                 zero_I2(),
+                                 width,
+                                 endPos,
+                                 &advance)
+                           .y;
+    return init_I2(advance, height);
+}
+
+iInt2 advance_Text(int fontId, const char *text) {
+    return advanceRange_Text(fontId, range_CStr(text));
 }
 
 iInt2 advanceN_Text(int fontId, const char *text, size_t n) {
@@ -467,23 +512,9 @@ iInt2 advanceN_Text(int fontId, const char *text, size_t n) {
         return init_I2(0, lineHeight_Text(fontId));
     }
     int advance;
-    run_Font_(&text_.fonts[fontId], measure_RunMode, range_CStr(text), n, zero_I2(), &advance);
+    run_Font_(
+        &text_.fonts[fontId], measure_RunMode, range_CStr(text), n, zero_I2(), 0, NULL, &advance);
     return init_I2(advance, lineHeight_Text(fontId));
-}
-
-iInt2 advanceRange_Text(int fontId, iRangecc text) {
-    /* TODO: Rangecc should be the default for runs; no need to copy here */
-    iString str;
-    initRange_String(&str, text);
-    const iInt2 metrics = advance_Text(fontId, cstr_String(&str));
-    deinit_String(&str);
-    return metrics;
-}
-
-iInt2 tryAdvanceRange_Text(int fontId, iRangecc text, int width, const char **endPos) {
-    int advance;
-    const int height = run_Font_(&text_.fonts[fontId], measure_RunMode, text, iInvalidSize, zero_I2(), &advance).y;
-
 }
 
 static void draw_Text_(int fontId, iInt2 pos, int color, iRangecc text) {
@@ -495,6 +526,8 @@ static void draw_Text_(int fontId, iInt2 pos, int color, iRangecc text) {
               text,
               iInvalidSize,
               pos,
+              0,
+              NULL,
               NULL);
 }
 
