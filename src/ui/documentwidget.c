@@ -6,6 +6,7 @@
 #include "../gmdocument.h"
 
 #include <the_Foundation/file.h>
+#include <the_Foundation/path.h>
 #include <the_Foundation/regexp.h>
 #include <the_Foundation/tlsrequest.h>
 
@@ -73,7 +74,8 @@ void init_DocumentWidget(iDocumentWidget *d) {
     d->doc = new_GmDocument();
     d->pageMargin = 5;
     d->scrollY = 0;
-    setUrl_DocumentWidget(d, collectNewCStr_String("file:///home/jaakko/test.gmi"));
+    setUrl_DocumentWidget(
+        d, collectNewFormat_String("file://%s/test.gmi", cstr_String(collect_String(home_Path()))));
 }
 
 void deinit_DocumentWidget(iDocumentWidget *d) {
@@ -85,7 +87,7 @@ void deinit_DocumentWidget(iDocumentWidget *d) {
 static int documentWidth_DocumentWidget_(const iDocumentWidget *d) {
     const iWidget *w = constAs_Widget(d);
     const iRect bounds = bounds_Widget(w);
-    return bounds.size.x - gap_UI * d->pageMargin * 2;
+    return iMini(bounds.size.x - gap_UI * d->pageMargin * 2, fontSize_UI * 40);
 }
 
 void setSource_DocumentWidget(iDocumentWidget *d, const iString *source) {
@@ -177,11 +179,16 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
     }
     else if (ev->type == SDL_MOUSEWHEEL) {
         d->scrollY -= 3 * ev->wheel.y * lineHeight_Text(default_FontId);
-        if (d->scrollY < 0) d->scrollY = 0;
+        if (d->scrollY < 0) {
+            d->scrollY = 0;
+        }
         const int scrollMax =
             size_GmDocument(d->doc).y - height_Rect(bounds_Widget(w)) + d->pageMargin * gap_UI;
         if (scrollMax > 0) {
             d->scrollY = iMin(d->scrollY, scrollMax);
+        }
+        else {
+            d->scrollY = 0;
         }
         postRefresh_App();
         return iTrue;
@@ -204,7 +211,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
     initRange_String(&text, run->text);
     iInt2 origin = addY_I2(d->bounds.pos, -d->widget->scrollY);
     drawString_Text(run->font, add_I2(run->bounds.pos, origin), run->color, &text);
-    drawRect_Paint(&d->paint, moved_Rect(run->bounds, origin), red_ColorId);
+//    drawRect_Paint(&d->paint, moved_Rect(run->bounds, origin), red_ColorId);
     deinit_String(&text);
 }
 
@@ -223,6 +230,8 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
     iDrawContext ctx = {.widget = d, .bounds = bounds_Widget(w) };
     const int margin = gap_UI * d->pageMargin;
     shrink_Rect(&ctx.bounds, init1_I2(margin));
+    ctx.bounds.size.x = documentWidth_DocumentWidget_(d);
+    ctx.bounds.pos.x = bounds_Widget(w).size.x / 2 - ctx.bounds.size.x / 2;
     init_Paint(&ctx.paint);
     drawRect_Paint(&ctx.paint, ctx.bounds, teal_ColorId);
     render_GmDocument(
