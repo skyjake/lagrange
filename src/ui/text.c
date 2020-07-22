@@ -117,6 +117,7 @@ void init_Text(SDL_Renderer *render) {
         const struct { const iBlock *ttf; int size; } fontData[max_FontId] = {
             { &fontFiraSansRegular_Embedded, fontSize_UI },
             { &fontFiraMonoRegular_Embedded, fontSize_UI * 0.85f },
+            { &fontFiraMonoRegular_Embedded, fontSize_UI * 0.65f },
             { &fontFiraSansRegular_Embedded, fontSize_UI * 1.35f },
             { &fontFiraSansLightItalic_Embedded, fontSize_UI },
             { &fontFiraSansBold_Embedded, fontSize_UI },
@@ -213,6 +214,8 @@ static void cache_Font_(iFont *d, iGlyph *glyph) {
     if (!isSpecialChar_(ch)) {
         /* Rasterize the glyph using stbtt. */
         surface = rasterizeGlyph_Font_(d, ch);
+        int lsb;
+        stbtt_GetCodepointHMetrics(&d->font, ch, &glyph->advance, &lsb);
         stbtt_GetCodepointBitmapBox(
             &d->font, ch, d->scale, d->scale, &glyph->dx, &glyph->dy, NULL, NULL);
         fromStb = iTrue;
@@ -226,6 +229,7 @@ static void cache_Font_(iFont *d, iGlyph *glyph) {
         stbtt_GetCodepointHMetrics(&d->font, 'M', &em, &lsb);
         glyph->dx = d->baseline / 10;
         glyph->dy = -d->baseline;
+        glyph->advance = em * symbolAdvance_(symbol);
         glyph->rect.size = init_I2(symbolEmWidth_(symbol) * em * d->scale, d->height);
 #if 0
         if (isRasterizedSymbol_(ch)) {
@@ -427,13 +431,7 @@ static iInt2 run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
                               glyph->rect.size.y };
             SDL_RenderCopyF(text_.render, text_.cache, (const SDL_Rect *) &glyph->rect, &dst);
         }
-        int advance, lsb;
-        const iBool spec = isSpecialChar_(ch);
-        stbtt_GetCodepointHMetrics(info, spec ? 'M' : ch, &advance, &lsb);
-        if (spec) {
-            advance *= symbolAdvance_(specialChar_(ch));
-        }
-        xpos += d->scale * advance;
+        xpos += d->scale * glyph->advance;
         xposMax = iMax(xposMax, xpos);
         if (!isSpace_Char(prevCh) && isSpace_Char(ch)) {
             lastWordEnd = chPos;
@@ -461,18 +459,22 @@ int lineHeight_Text(int fontId) {
     return text_.fonts[fontId].height;
 }
 
-iInt2 measure_Text(int fontId, const char *text) {
-    if (!*text) {
+iInt2 measureRange_Text(int fontId, iRangecc text) {
+    if (isEmpty_Range(&text)) {
         return init_I2(0, lineHeight_Text(fontId));
     }
     return run_Font_(&text_.fonts[fontId],
                      measure_RunMode,
-                     range_CStr(text),
+                     text,
                      iInvalidSize,
                      zero_I2(),
                      0,
                      NULL,
                      NULL);
+}
+
+iInt2 measure_Text(int fontId, const char *text) {
+    return measureRange_Text(fontId, range_CStr(text));
 }
 
 iInt2 advanceRange_Text(int fontId, iRangecc text) {

@@ -8,6 +8,7 @@
 enum iFontId {
     default_FontId,
     monospace_FontId,
+    monospaceSmall_FontId,
     medium_FontId,
     italic_FontId,
     bold_FontId,
@@ -18,14 +19,15 @@ enum iFontId {
     /* UI fonts: */
     uiInput_FontId = monospace_FontId,
     /* Document fonts: */
-    paragraph_FontId      = default_FontId,
-    firstParagraph_FontId = medium_FontId,
-    preformatted_FontId   = monospace_FontId,
-    quote_FontId          = italic_FontId,
-    header1_FontId        = hugeBold_FontId,
-    header2_FontId        = largeBold_FontId,
-    header3_FontId        = mediumBold_FontId,
-    uiShortcuts_FontId    = default_FontId,
+    paragraph_FontId         = default_FontId,
+    firstParagraph_FontId    = medium_FontId,
+    preformatted_FontId      = monospace_FontId,
+    preformattedSmall_FontId = monospaceSmall_FontId,
+    quote_FontId             = italic_FontId,
+    header1_FontId           = hugeBold_FontId,
+    header2_FontId           = largeBold_FontId,
+    header3_FontId           = mediumBold_FontId,
+    uiShortcuts_FontId       = default_FontId,
 };
 
 #define specialSymbol_Text  0x10
@@ -39,6 +41,7 @@ void    deinit_Text         (void);
 
 int     lineHeight_Text     (int fontId);
 iInt2   measure_Text        (int fontId, const char *text);
+iInt2   measureRange_Text   (int fontId, iRangecc text);
 iInt2   advance_Text        (int fontId, const char *text);
 iInt2   advanceN_Text       (int fontId, const char *text, size_t n); /* `n` in characters */
 iInt2   advanceRange_Text   (int fontId, iRangecc text);
