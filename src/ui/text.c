@@ -121,8 +121,8 @@ void init_Text(SDL_Renderer *render) {
             { &fontFiraSansRegular_Embedded, fontSize_UI * 1.5f },
             { &fontFiraMonoRegular_Embedded, fontSize_UI },
             { &fontFiraSansLightItalic_Embedded, fontSize_UI },
-            { &fontFiraSansRegular_Embedded, fontSize_UI * 2.5f },
             { &fontFiraSansRegular_Embedded, fontSize_UI * 2.0f },
+            { &fontFiraSansRegular_Embedded, fontSize_UI * 1.75f },
             { &fontFiraSansRegular_Embedded, fontSize_UI * 1.5f },
         };
         iForIndices(i, fontData) {
