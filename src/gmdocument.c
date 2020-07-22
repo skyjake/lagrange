@@ -22,6 +22,7 @@ enum iGmLineType {
     header1_GmLineType,
     header2_GmLineType,
     header3_GmLineType,
+    link_GmLineType,
     max_GmLineType,
 };
 
@@ -29,16 +30,19 @@ static enum iGmLineType lineType_Rangecc_(const iRangecc *line) {
     if (isEmpty_Range(line)) {
         return text_GmLineType;
     }
-    if (startsWithSc_Rangecc(line, "###", &iCaseSensitive)) {
+    if (startsWith_Rangecc(line, "=>")) {
+        return link_GmLineType;
+    }
+    if (startsWith_Rangecc(line, "###")) {
         return header3_GmLineType;
     }
-    if (startsWithSc_Rangecc(line, "##", &iCaseSensitive)) {
+    if (startsWith_Rangecc(line, "##")) {
         return header2_GmLineType;
     }
-    if (startsWithSc_Rangecc(line, "#", &iCaseSensitive)) {
+    if (startsWith_Rangecc(line, "#")) {
         return header1_GmLineType;
     }
-    if (startsWithSc_Rangecc(line, "```", &iCaseSensitive)) {
+    if (startsWith_Rangecc(line, "```")) {
         return preformatted_GmLineType;
     }
     if (*line->start == '>') {
@@ -51,7 +55,7 @@ static enum iGmLineType lineType_Rangecc_(const iRangecc *line) {
 }
 
 static void trimLine_Rangecc_(iRangecc *line, enum iGmLineType type) {
-    static const unsigned int skip[max_GmLineType] = { 0, 2, 3, 1, 1, 2, 3 };
+    static const unsigned int skip[max_GmLineType] = { 0, 2, 3, 1, 1, 2, 3, 0 };
     line->start += skip[type];
     trim_Rangecc(line);
 }
@@ -98,16 +102,27 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         quote_FontId,
         header1_FontId,
         header2_FontId,
-        header3_FontId
+        header3_FontId,
+        default_FontId,
+    };
+    static const int colors[max_GmLineType] = {
+        gray75_ColorId,
+        gray75_ColorId,
+        orange_ColorId,
+        orange_ColorId,
+        white_ColorId,
+        white_ColorId,
+        white_ColorId,
+        white_ColorId,
     };
     static const int indents[max_GmLineType] = {
-        4, 10, 4, 10, 0, 0, 0
+        4, 10, 4, 10, 0, 0, 0, 0
     };
     static const float topMargin[max_GmLineType] = {
-        0.0f, 0.5f, 1.0f, 0.5f, 2.0f, 1.5f, 1.0f
+        0.0f, 0.5f, 1.0f, 0.5f, 2.0f, 2.0f, 1.5f, 1.0f
     };
     static const float bottomMargin[max_GmLineType] = {
-        0.0f, 0.5f, 1.0f, 0.5f, 1.0f, 1.0f, 1.0f
+        0.0f, 0.5f, 1.0f, 0.5f, 1.0f, 1.0f, 1.0f, 1.0f
     };
     static const char *bullet = "\u2022";
     iRangecc preAltText = iNullRange;
@@ -169,6 +184,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             }
         }
         /* List bullet. */
+        run.color = colors[type];
         if (type == bullet_GmLineType) {
             run.bounds.pos = addX_I2(pos, indent * gap_UI);
             run.bounds.size = advance_Text(run.font, bullet);
@@ -179,6 +195,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         /* Special formatting for the first paragraph (e.g., subtitle, introduction, or lede). */
         if (type == text_GmLineType && isFirstText) {
             run.font = firstParagraph_FontId;
+            run.color = orange_ColorId;
             isFirstText = iFalse;
         }
         else if (type != header1_GmLineType) {

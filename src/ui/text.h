@@ -26,7 +26,7 @@ enum iFontId {
     quote_FontId             = italic_FontId,
     header1_FontId           = hugeBold_FontId,
     header2_FontId           = largeBold_FontId,
-    header3_FontId           = mediumBold_FontId,
+    header3_FontId           = medium_FontId,
     uiShortcuts_FontId       = default_FontId,
 };
 

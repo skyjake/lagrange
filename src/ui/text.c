@@ -118,13 +118,13 @@ void init_Text(SDL_Renderer *render) {
     /* Load the fonts. */ {
         const struct { const iBlock *ttf; int size; } fontData[max_FontId] = {
             { &fontFiraSansRegular_Embedded, fontSize_UI },
-            { &fontFiraMonoRegular_Embedded, fontSize_UI * 0.85f },
-            { &fontFiraMonoRegular_Embedded, fontSize_UI * 0.65f },
-            { &fontFiraSansRegular_Embedded, fontSize_UI * 1.35f },
+            { &fontFiraMonoRegular_Embedded, fontSize_UI * 0.866f },
+            { &fontFiraMonoRegular_Embedded, fontSize_UI * 0.666f },
+            { &fontFiraSansRegular_Embedded, fontSize_UI * 1.333f },
             { &fontFiraSansLightItalic_Embedded, fontSize_UI },
             { &fontFiraSansBold_Embedded, fontSize_UI },
-            { &fontFiraSansBold_Embedded, fontSize_UI * 1.35f },
-            { &fontFiraSansBold_Embedded, fontSize_UI * 1.7f },
+            { &fontFiraSansBold_Embedded, fontSize_UI * 1.333f },
+            { &fontFiraSansBold_Embedded, fontSize_UI * 1.666f },
             { &fontFiraSansBold_Embedded, fontSize_UI * 2.0f },
         };
         iForIndices(i, fontData) {
@@ -366,6 +366,7 @@ static void cache_Font_(iFont *d, iGlyph *glyph, int hoff) {
     /* Update cache cursor. */
     txt->cachePos.x += glRect->size.x;
     txt->cacheRowHeight = iMax(txt->cacheRowHeight, glRect->size.y);
+    iAssert(txt->cachePos.y + txt->cacheRowHeight <= txt->cacheSize.y);
 }
 
 static const iGlyph *glyph_Font_(iFont *d, iChar ch) {

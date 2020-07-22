@@ -195,7 +195,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             d->scrollY = 0;
         }
         const int scrollMax =
-            size_GmDocument(d->doc).y - height_Rect(bounds_Widget(w)) + d->pageMargin * gap_UI;
+            size_GmDocument(d->doc).y - height_Rect(bounds_Widget(w)) + 2 * d->pageMargin * gap_UI;
         if (scrollMax > 0) {
             d->scrollY = iMin(d->scrollY, scrollMax);
         }
@@ -245,7 +245,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
     ctx.bounds.size.x = documentWidth_DocumentWidget_(d);
     ctx.bounds.pos.x = bounds_Widget(w).size.x / 2 - ctx.bounds.size.x / 2;
     init_Paint(&ctx.paint);
-    drawRect_Paint(&ctx.paint, ctx.bounds, teal_ColorId);
+//    drawRect_Paint(&ctx.paint, ctx.bounds, teal_ColorId);
     render_GmDocument(
         d->doc,
         (iRangei){ d->scrollY - margin, d->scrollY + height_Rect(ctx.bounds) + margin },
