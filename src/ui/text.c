@@ -115,15 +115,13 @@ void init_Text(SDL_Renderer *render) {
     /* Load the fonts. */ {
         const struct { const iBlock *ttf; int size; } fontData[max_FontId] = {
             { &fontFiraSansRegular_Embedded, fontSize_UI },
-            { &fontFiraSansRegular_Embedded, fontSize_UI },
             { &fontFiraMonoRegular_Embedded, fontSize_UI },
-            { &fontFiraSansRegular_Embedded, fontSize_UI },
             { &fontFiraSansRegular_Embedded, fontSize_UI * 1.5f },
-            { &fontFiraMonoRegular_Embedded, fontSize_UI },
             { &fontFiraSansLightItalic_Embedded, fontSize_UI },
-            { &fontFiraSansRegular_Embedded, fontSize_UI * 2.0f },
-            { &fontFiraSansRegular_Embedded, fontSize_UI * 1.75f },
-            { &fontFiraSansRegular_Embedded, fontSize_UI * 1.5f },
+            { &fontFiraSansBold_Embedded, fontSize_UI },
+            { &fontFiraSansBold_Embedded, fontSize_UI * 1.5f },
+            { &fontFiraSansBold_Embedded, fontSize_UI * 1.75f },
+            { &fontFiraSansBold_Embedded, fontSize_UI * 2.0f },
         };
         iForIndices(i, fontData) {
             init_Font(&d->fonts[i], fontData[i].ttf, fontData[i].size);
@@ -171,6 +169,7 @@ iLocalDef SDL_Rect sdlRect_(const iRect rect) {
     return (SDL_Rect){ rect.pos.x, rect.pos.y, rect.size.x, rect.size.y };
 }
 
+#if 0
 static void fillTriangle_(SDL_Surface *surface, const SDL_Rect *rect, int dir) {
     const uint32_t color = 0xffffffff;
     SDL_LockSurface(surface);
@@ -201,6 +200,7 @@ static void fillTriangle_(SDL_Surface *surface, const SDL_Rect *rect, int dir) {
     }
     SDL_UnlockSurface(surface);
 }
+#endif
 
 static void cache_Font_(iFont *d, iGlyph *glyph) {
     iText *txt = &text_;
@@ -450,6 +450,15 @@ iInt2 advanceN_Text(int fontId, const char *text, size_t n) {
     int advance;
     run_Font_(&text_.fonts[fontId], measure_RunMode, text, n, zero_I2(), &advance);
     return init_I2(advance, lineHeight_Text(fontId));
+}
+
+iInt2 advanceRange_Text(int fontId, iRangecc text) {
+    /* TODO: Rangecc should be the default for runs; no need to copy here */
+    iString str;
+    initRange_String(&str, text);
+    const iInt2 metrics = advance_Text(fontId, cstr_String(&str));
+    deinit_String(&str);
+    return metrics;
 }
 
 static void draw_Text_(int fontId, iInt2 pos, int color, const char *text) {

@@ -16,6 +16,7 @@ pkg_check_modules (SDL2 REQUIRED sdl2)
 message (STATUS "Preparing embedded resources...")
 set (EMBED_RESOURCES 
     res/FiraSans-Regular.ttf
+    res/FiraSans-Bold.ttf
     res/FiraSans-LightItalic.ttf
     res/FiraMono-Regular.ttf
 )

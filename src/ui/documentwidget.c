@@ -1,6 +1,7 @@
 #include "documentwidget.h"
 #include "paint.h"
 #include "util.h"
+#include "app.h"
 #include "../gemini.h"
 #include "../gmdocument.h"
 
@@ -116,6 +117,7 @@ static void requestFinished_DocumentWidget_(iAnyObject *obj) {
     iReleaseLater(d->request);
     d->request = NULL;
     fflush(stdout);
+    postRefresh_App();
 }
 
 static void fetch_DocumentWidget_(iDocumentWidget *d) {
@@ -128,9 +130,9 @@ static void fetch_DocumentWidget_(iDocumentWidget *d) {
         iFile *f = new_File(collect_String(newRange_String(url.path)));
         if (open_File(f, readOnly_FileMode)) {
             setBlock_String(d->newSource, collect_Block(readAll_File(f)));
+            postRefresh_App();
         }
         iRelease(f);
-        d->state = ready_DocumentState;
         return;
     }
     d->request = new_TlsRequest();
@@ -162,6 +164,14 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
     iWidget *w = as_Widget(d);
     if (isResize_UserEvent(ev)) {
         setWidth_GmDocument(d->doc, documentWidth_DocumentWidget_(d));
+    }
+    if (ev->type == SDL_KEYDOWN) {
+        const int mods = keyMods_Sym(ev->key.keysym.mod);
+        const int key = ev->key.keysym.sym;
+        if (mods == KMOD_PRIMARY && key == 'r') {
+            fetch_DocumentWidget_(d);
+            return iTrue;
+        }
     }
     return processEvent_Widget(w, ev);
 }

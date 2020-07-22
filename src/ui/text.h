@@ -7,17 +7,25 @@
 
 enum iFontId {
     default_FontId,
-    uiShortcuts_FontId,
-    uiInput_FontId,
+    monospace_FontId,
+    medium_FontId,
+    italic_FontId,
+    bold_FontId,
+    mediumBold_FontId,
+    largeBold_FontId,
+    hugeBold_FontId,
+    max_FontId,
+    /* UI fonts: */
+    uiInput_FontId = monospace_FontId,
     /* Document fonts: */
-    paragraph_FontId,
-    firstParagraph_FontId,
-    preformatted_FontId,
-    quote_FontId,
-    header1_FontId,
-    header2_FontId,
-    header3_FontId,
-    max_FontId
+    paragraph_FontId      = default_FontId,
+    firstParagraph_FontId = medium_FontId,
+    preformatted_FontId   = monospace_FontId,
+    quote_FontId          = italic_FontId,
+    header1_FontId        = hugeBold_FontId,
+    header2_FontId        = largeBold_FontId,
+    header3_FontId        = mediumBold_FontId,
+    uiShortcuts_FontId    = default_FontId,
 };
 
 #define specialSymbol_Text  0x10
@@ -29,14 +37,15 @@ enum iSpecialSymbol {
 void    init_Text           (SDL_Renderer *);
 void    deinit_Text         (void);
 
-int     lineHeight_Text     (int font);
-iInt2   measure_Text        (int font, const char *text);
-iInt2   advance_Text        (int font, const char *text);
-iInt2   advanceN_Text       (int font, const char *text, size_t n); /* `n` in characters */
+int     lineHeight_Text     (int fontId);
+iInt2   measure_Text        (int fontId, const char *text);
+iInt2   advance_Text        (int fontId, const char *text);
+iInt2   advanceN_Text       (int fontId, const char *text, size_t n); /* `n` in characters */
+iInt2   advanceRange_Text   (int fontId, iRangecc text);
 
-void    draw_Text           (int font, iInt2 pos, int color, const char *text, ...); /* negative pos to switch alignment */
-void    drawString_Text     (int font, iInt2 pos, int color, const iString *text);
-void    drawCentered_Text   (int font, iRect rect, int color, const char *text, ...);
+void    draw_Text           (int fontId, iInt2 pos, int color, const char *text, ...); /* negative pos to switch alignment */
+void    drawString_Text     (int fontId, iInt2 pos, int color, const iString *text);
+void    drawCentered_Text   (int fontId, iRect rect, int color, const char *text, ...);
 
 SDL_Texture *   glyphCache_Text     (void);
 

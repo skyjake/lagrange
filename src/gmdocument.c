@@ -1,6 +1,7 @@
 #include "gmdocument.h"
 #include "ui/color.h"
 #include "ui/text.h"
+#include "ui/metrics.h"
 #include <the_Foundation/array.h>
 
 struct Impl_GmDocument {
@@ -48,6 +49,12 @@ static enum iGmLineType lineType_Rangecc_(const iRangecc *line) {
     return text_GmLineType;
 }
 
+static void trimLine_Rangecc_(iRangecc *line, enum iGmLineType type) {
+    static const unsigned int skip[max_GmLineType] = { 0, 2, 3, 1, 1, 2, 3 };
+    line->start += skip[type];
+    trim_Rangecc(line);
+}
+
 static void doLayout_GmDocument_(iGmDocument *d) {
     if (d->size.x <= 0 || isEmpty_String(&d->source)) {
         return;
@@ -57,7 +64,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     iInt2 pos = zero_I2();
     const iRangecc content = range_String(&d->source);
     iRangecc line = iNullRange;
-    const int fonts[max_GmLineType] = {
+    static const int fonts[max_GmLineType] = {
         paragraph_FontId,
         paragraph_FontId,
         preformatted_FontId,
@@ -66,15 +73,49 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         header2_FontId,
         header3_FontId
     };
+    static const int indents[max_GmLineType] = {
+        4, 10, 4, 10, 0, 0, 0
+    };
+    static const char *bullet = "\u2022";
+    iRangecc preAltText = iNullRange;
     while (nextSplit_Rangecc(&content, "\n", &line)) {
-        enum iGmLineType type = lineType_Rangecc_(&line);
+        int indent = 0;
         iGmRun run;
-        run.text = line;
-        run.font = fonts[type];
         run.color = white_ColorId;
-        run.bounds.pos = pos;
-        run.bounds.size = advanceN_Text(run.font, line.start, size_Range(&line));
         run.linkId = 0;
+        if (!isPreformat) {
+            enum iGmLineType type = lineType_Rangecc_(&line);
+            if (type == preformatted_GmLineType) {
+                isPreformat = iTrue;
+                trimLine_Rangecc_(&line, type);
+                preAltText = line;
+                /* TODO: store and link the alt text to this run */
+                continue;
+            }
+            trimLine_Rangecc_(&line, type);
+            run.font = fonts[type];
+            indent = indents[type];
+            if (type == bullet_GmLineType) {
+                run.bounds.pos = addX_I2(pos, indent * gap_UI);
+                run.bounds.size = advance_Text(run.font, bullet);
+                run.bounds.pos.x -= 4 * gap_UI - run.bounds.size.x / 2;
+                run.text = (iRangecc){ bullet, bullet + strlen(bullet) };
+                pushBack_Array(&d->layout, &run);
+            }
+        }
+        else {
+            if (startsWithSc_Rangecc(&line, "```", &iCaseSensitive)) {
+                isPreformat = iFalse;
+                preAltText = iNullRange;
+                continue;
+            }
+            run.font = preformatted_FontId;
+            indent = indents[preformatted_GmLineType];
+        }
+        run.text = line;
+        run.bounds.pos = pos;
+        run.bounds.size = advanceRange_Text(run.font, line);
+        adjustEdges_Rect(&run.bounds, 0, 0, 0, indent * gap_UI);
         pushBack_Array(&d->layout, &run);
         pos.y += run.bounds.size.y;
     }
