@@ -4,6 +4,7 @@
 #include "../gemini.h"
 #include "../gmdocument.h"
 
+#include <the_Foundation/file.h>
 #include <the_Foundation/regexp.h>
 #include <the_Foundation/tlsrequest.h>
 
@@ -22,6 +23,7 @@ struct Impl_DocumentWidget {
     int statusCode;
     iString *newSource;
     iGmDocument *doc;
+    int pageMargin;
 };
 
 iDeclareType(Url)
@@ -36,7 +38,7 @@ struct Impl_Url {
 
 void init_Url(iUrl *d, const iString *text) {
     iRegExp *pattern =
-        new_RegExp("(.+)://([^/:?]+)(:[0-9]+)?([^?]*)(\\?.*)?", caseInsensitive_RegExpOption);
+        new_RegExp("(.+)://([^/:?]*)(:[0-9]+)?([^?]*)(\\?.*)?", caseInsensitive_RegExpOption);
     iRegExpMatch m;
     if (matchString_RegExp(pattern, text, &m)) {
         capturedRange_RegExpMatch(&m, 1, &d->protocol);
@@ -67,7 +69,8 @@ void init_DocumentWidget(iDocumentWidget *d) {
     d->request = NULL;
     d->newSource = new_String();
     d->doc = new_GmDocument();
-    setUrl_DocumentWidget(d, collectNewCStr_String("gemini.circumlunar.space/"));
+    d->pageMargin = 5;
+    setUrl_DocumentWidget(d, collectNewCStr_String("file:///Users/jaakko/test.gmi"));
 }
 
 void deinit_DocumentWidget(iDocumentWidget *d) {
@@ -79,7 +82,7 @@ void deinit_DocumentWidget(iDocumentWidget *d) {
 static int documentWidth_DocumentWidget_(const iDocumentWidget *d) {
     const iWidget *w = constAs_Widget(d);
     const iRect bounds = bounds_Widget(w);
-    return bounds.size.x;
+    return bounds.size.x - gap_UI * d->pageMargin * 2;
 }
 
 void setSource_DocumentWidget(iDocumentWidget *d, const iString *source) {
@@ -121,6 +124,15 @@ static void fetch_DocumentWidget_(iDocumentWidget *d) {
     d->statusCode = 0;
     iUrl url;
     init_Url(&url, d->url);
+    if (!cmpCStrSc_Rangecc(&url.protocol, "file", &iCaseInsensitive)) {
+        iFile *f = new_File(collect_String(newRange_String(url.path)));
+        if (open_File(f, readOnly_FileMode)) {
+            setBlock_String(d->newSource, collect_Block(readAll_File(f)));
+        }
+        iRelease(f);
+        d->state = ready_DocumentState;
+        return;
+    }
     d->request = new_TlsRequest();
     uint16_t port = toInt_String(collect_String(newRange_String(url.port)));
     if (port == 0) {
@@ -184,6 +196,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
     }
     if (d->state != ready_DocumentState) return;
     iDrawContext ctx = {.d = d, .bounds = bounds_Widget(w) };
+    shrink_Rect(&ctx.bounds, init1_I2(gap_UI * d->pageMargin));
     init_Paint(&ctx.paint);
     render_GmDocument(d->doc, (iRangei){ 0, height_Rect(ctx.bounds) }, drawRun_DrawContext_, &ctx);
 }
