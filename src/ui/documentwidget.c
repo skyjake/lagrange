@@ -71,7 +71,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     d->newSource = new_String();
     d->doc = new_GmDocument();
     d->pageMargin = 5;
-    setUrl_DocumentWidget(d, collectNewCStr_String("file:///Users/jaakko/test.gmi"));
+    setUrl_DocumentWidget(d, collectNewCStr_String("file:///home/jaakko/test.gmi"));
 }
 
 void deinit_DocumentWidget(iDocumentWidget *d) {
@@ -190,6 +190,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
     /* TODO: making a copy is unnecessary; the text routines should accept Rangecc */
     initRange_String(&text, run->text);
     drawString_Text(run->font, add_I2(d->bounds.pos, run->bounds.pos), run->color, &text);
+    drawRect_Paint(&d->paint, moved_Rect(run->bounds, d->bounds.pos), red_ColorId);
     deinit_String(&text);
 }
 
@@ -208,6 +209,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
     iDrawContext ctx = {.d = d, .bounds = bounds_Widget(w) };
     shrink_Rect(&ctx.bounds, init1_I2(gap_UI * d->pageMargin));
     init_Paint(&ctx.paint);
+    drawRect_Paint(&ctx.paint, ctx.bounds, teal_ColorId);
     render_GmDocument(d->doc, (iRangei){ 0, height_Rect(ctx.bounds) }, drawRun_DrawContext_, &ctx);
 }
 
