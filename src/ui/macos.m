@@ -34,9 +34,6 @@ static NSTouchBarItemIdentifier tremoloEvent_TouchId_       = @"fi.skyjake.Bitwi
 
 enum iTouchBarVariant {
     default_TouchBarVariant,
-    sequence_TouchBarVariant,
-    tracker_TouchBarVariant,
-    wide_TouchBarVariant,
 };
 
 @interface CommandButton : NSButtonTouchBarItem {
@@ -136,10 +133,10 @@ enum iTouchBarVariant {
     [sdlDelegate applicationDidFinishLaunching:notification];
 }
 
+#if 0
 - (NSTouchBar *)makeTouchBar {
     NSTouchBar *bar = [[NSTouchBar alloc] init];
     bar.delegate = self;
-#if 0
     switch (touchBarVariant) {
         case default_TouchBarVariant:
             bar.defaultItemIdentifiers = @[ play_TouchId_, restart_TouchId_,
@@ -175,17 +172,9 @@ enum iTouchBarVariant {
                                             NSTouchBarItemIdentifierOtherItemsProxy ];
             break;
     }
-#endif
     return bar;
 }
-
-- (void)playPressed {
-    postCommand_App("playback.toggle");
-}
-
-- (void)restartPressed {
-    postCommand_App("playback.restart");
-}
+#endif
 
 - (void)showPreferences {
     postCommand_App("preferences");
@@ -415,6 +404,7 @@ void insertMenuItems_MacOS(const char *menuLabel, const iMenuItem *items, size_t
 }
 
 void handleCommand_MacOS(const char *cmd) {
+#if 0
     if (equal_Command(cmd, "tabs.changed")) {
         MyDelegate *myDel = (MyDelegate *) [[NSApplication sharedApplication] delegate];
         const char *tabId = valuePtr_Command(cmd, "id");
@@ -431,4 +421,5 @@ void handleCommand_MacOS(const char *cmd) {
             [myDel setTouchBarVariant:default_TouchBarVariant];
         }
     }
+#endif
 }
