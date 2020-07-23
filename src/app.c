@@ -45,6 +45,7 @@ struct Impl_App {
     iBool        running;
     iWindow *    window;
     iSortedArray tickers;
+    iBool        pendingRefresh;
     /* Preferences: */
     iBool        retainWindowSize;
     float        uiScale;
@@ -136,6 +137,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     d->running          = iFalse;
     d->window           = NULL;
     d->retainWindowSize = iTrue;
+    d->pendingRefresh   = iFalse;
     loadPrefs_App_(d);
     d->window = new_Window();
     /* Widget state init. */ {
@@ -233,6 +235,7 @@ void refresh_App(void) {
     destroyPending_Widget();
     draw_Window(d->window);
     recycle_Garbage();
+    d->pendingRefresh = iFalse;
 }
 
 int run_App(int argc, char **argv) {
@@ -243,13 +246,17 @@ int run_App(int argc, char **argv) {
 }
 
 void postRefresh_App(void) {
-    SDL_Event ev;
-    ev.user.type     = SDL_USEREVENT;
-    ev.user.code     = refresh_UserEventCode;
-    ev.user.windowID = get_Window() ? SDL_GetWindowID(get_Window()->win) : 0;
-    ev.user.data1    = NULL;
-    ev.user.data2    = NULL;
-    SDL_PushEvent(&ev);
+    iApp *d = &app_;
+    if (!d->pendingRefresh) {
+        d->pendingRefresh = iTrue;
+        SDL_Event ev;
+        ev.user.type     = SDL_USEREVENT;
+        ev.user.code     = refresh_UserEventCode;
+        ev.user.windowID = get_Window() ? SDL_GetWindowID(get_Window()->win) : 0;
+        ev.user.data1    = NULL;
+        ev.user.data2    = NULL;
+        SDL_PushEvent(&ev);
+    }
 }
 
 void postCommand_App(const char *command) {
@@ -260,7 +267,9 @@ void postCommand_App(const char *command) {
     ev.user.data1    = strdup(command);
     ev.user.data2    = NULL;
     SDL_PushEvent(&ev);
+#if !defined (NDEBUG)
     printf("[command] %s\n", command); fflush(stdout);
+#endif
 }
 
 void postCommandf_App(const char *command, ...) {

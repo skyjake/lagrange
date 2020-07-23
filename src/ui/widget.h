@@ -123,6 +123,7 @@ void    arrange_Widget      (iWidget *);
 iBool   dispatchEvent_Widget(iWidget *, const SDL_Event *);
 iBool   processEvent_Widget (iWidget *, const SDL_Event *);
 void    postCommand_Widget  (const iWidget *, const char *cmd, ...);
+void    refresh_Widget      (const iWidget *);
 
 void    setFocus_Widget     (iWidget *);
 iWidget *focus_Widget       (void);

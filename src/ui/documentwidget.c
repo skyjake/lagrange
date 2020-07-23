@@ -1,6 +1,7 @@
 #include "documentwidget.h"
 #include "scrollwidget.h"
 #include "paint.h"
+#include "command.h"
 #include "util.h"
 #include "app.h"
 #include "../gemini.h"
@@ -18,8 +19,6 @@ enum iDocumentState {
     layout_DocumentState,
     ready_DocumentState,
 };
-
-
 
 struct Impl_DocumentWidget {
     iWidget widget;
@@ -74,16 +73,16 @@ void init_DocumentWidget(iDocumentWidget *d) {
     iWidget *w = as_Widget(d);
     init_Widget(w);
     setId_Widget(w, "document");
-    d->state = blank_DocumentState;
-    d->url = new_String();
+    d->state      = blank_DocumentState;
+    d->url        = new_String();
     d->statusCode = 0;
-    d->request = NULL;
-    d->newSource = new_String();
-    d->doc = new_GmDocument();
+    d->request    = NULL;
+    d->newSource  = new_String();
+    d->doc        = new_GmDocument();
     d->pageMargin = 5;
-    d->scrollY = 0;
+    d->scrollY    = 0;
+    d->hoverLink  = NULL;
     init_PtrArray(&d->visibleLinks);
-    d->hoverLink = NULL;
     init_Click(&d->click, d, SDL_BUTTON_LEFT);
     addChild_Widget(w, iClob(d->scroll = new_ScrollWidget()));
 }
@@ -151,7 +150,7 @@ static void requestFinished_DocumentWidget_(iAnyObject *obj) {
     iReleaseLater(d->request);
     d->request = NULL;
     fflush(stdout);
-    postRefresh_App();
+    refresh_Widget(constAs_Widget(d));
 }
 
 static void fetch_DocumentWidget_(iDocumentWidget *d) {
@@ -164,7 +163,7 @@ static void fetch_DocumentWidget_(iDocumentWidget *d) {
         iFile *f = new_File(collect_String(newRange_String(url.path)));
         if (open_File(f, readOnly_FileMode)) {
             setBlock_String(d->newSource, collect_Block(readAll_File(f)));
-            postRefresh_App();
+            refresh_Widget(constAs_Widget(d));
         }
         iRelease(f);
         return;
@@ -228,6 +227,22 @@ static void updateVisible_DocumentWidget_(iDocumentWidget *d) {
     render_GmDocument(d->doc, visRange, addVisibleLink_DocumentWidget_, d);
 }
 
+static void scroll_DocumentWidget_(iDocumentWidget *d, int offset) {
+    d->scrollY += offset;
+    if (d->scrollY < 0) {
+        d->scrollY = 0;
+    }
+    const int scrollMax = scrollMax_DocumentWidget_(d);
+    if (scrollMax > 0) {
+        d->scrollY = iMin(d->scrollY, scrollMax);
+    }
+    else {
+        d->scrollY = 0;
+    }
+    updateVisible_DocumentWidget_(d);
+    refresh_Widget(as_Widget(d));
+}
+
 static iRangecc dirPath_(iRangecc path) {
     const size_t pos = lastIndexOfCStr_Rangecc(&path, "/");
     if (pos == iInvalidPos) return path;
@@ -287,10 +302,35 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         setWidth_GmDocument(d->doc, documentWidth_DocumentWidget_(d));
         updateVisible_DocumentWidget_(d);
     }
+    else if (isCommand_Widget(w, ev, "scroll.moved")) {
+        d->scrollY = arg_Command(command_UserEvent(ev));
+        updateVisible_DocumentWidget_(d);
+        return iTrue;
+    }
+    else if (isCommand_Widget(w, ev, "scroll.page")) {
+        scroll_DocumentWidget_(
+            d, arg_Command(command_UserEvent(ev)) * height_Rect(documentBounds_DocumentWidget_(d)));
+        return iTrue;
+    }
     if (ev->type == SDL_KEYDOWN) {
         const int mods = keyMods_Sym(ev->key.keysym.mod);
         const int key = ev->key.keysym.sym;
         switch (key) {
+            case SDLK_HOME:
+                d->scrollY = 0;
+                updateVisible_DocumentWidget_(d);
+                refresh_Widget(w);
+                return iTrue;
+            case SDLK_END:
+                d->scrollY = scrollMax_DocumentWidget_(d);
+                updateVisible_DocumentWidget_(d);
+                refresh_Widget(w);
+                return iTrue;
+            case SDLK_PAGEUP:
+            case SDLK_PAGEDOWN:
+            case ' ':
+                postCommand_Widget(w, "scroll.page arg:%d", key == SDLK_PAGEUP ? -1 : +1);
+                return iTrue;
             case 'r':
                 if (mods == KMOD_PRIMARY) {
                     fetch_DocumentWidget_(d);
@@ -300,7 +340,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             case '0': {
                 extern int enableHalfPixelGlyphs_Text;
                 enableHalfPixelGlyphs_Text = !enableHalfPixelGlyphs_Text;
-                postRefresh_App();
+                refresh_Widget(w);
                 printf("halfpixel: %d\n", enableHalfPixelGlyphs_Text);
                 fflush(stdout);
                 break;
@@ -308,19 +348,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         }
     }
     else if (ev->type == SDL_MOUSEWHEEL) {
-        d->scrollY -= 3 * ev->wheel.y * lineHeight_Text(default_FontId);
-        if (d->scrollY < 0) {
-            d->scrollY = 0;
-        }
-        const int scrollMax = scrollMax_DocumentWidget_(d);
-        if (scrollMax > 0) {
-            d->scrollY = iMin(d->scrollY, scrollMax);
-        }
-        else {
-            d->scrollY = 0;
-        }
-        updateVisible_DocumentWidget_(d);
-        postRefresh_App();
+        scroll_DocumentWidget_(d, -3 * ev->wheel.y * lineHeight_Text(default_FontId));
         return iTrue;
     }
     else if (ev->type == SDL_MOUSEMOTION) {
@@ -339,7 +367,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             }
         }
         if (d->hoverLink != oldHoverLink) {
-            postRefresh_App();
+            refresh_Widget(w);
         }
     }
     switch (processEvent_Click(&d->click, ev)) {

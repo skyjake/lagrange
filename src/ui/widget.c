@@ -616,6 +616,12 @@ void postCommand_Widget(const iWidget *d, const char *cmd, ...) {
     deinit_String(&str);
 }
 
+void refresh_Widget(const iWidget *d) {
+    /* TODO: Could be widget specific, if parts of the tree are cached. */
+    iUnused(d);
+    postRefresh_App();
+}
+
 iBeginDefineClass(Widget)
     .processEvent = processEvent_Widget,
     .draw         = draw_Widget,
