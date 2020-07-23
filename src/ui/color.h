@@ -8,6 +8,7 @@ enum iColorId {
     gray25_ColorId,
     gray50_ColorId,
     gray75_ColorId,
+    gray88_ColorId,
     white_ColorId,
     brown_ColorId,
     orange_ColorId,
@@ -28,16 +29,17 @@ enum iColorId {
 #define gray25_ColorEscape  "\r1"
 #define gray50_ColorEscape  "\r2"
 #define gray75_ColorEscape  "\r3"
-#define white_ColorEscape   "\r4"
-#define brown_ColorEscape   "\r5"
-#define orange_ColorEscape  "\r6"
-#define teal_ColorEscape    "\r7"
-#define cyan_ColorEscape    "\r8"
-#define yellow_ColorEscape  "\r9"
-#define red_ColorEscape     "\r:"
-#define magenta_ColorEscape "\r;"
-#define blue_ColorEscape    "\r<"
-#define green_ColorEscape   "\r="
+#define gray88_ColorEscape  "\r4"
+#define white_ColorEscape   "\r5"
+#define brown_ColorEscape   "\r6"
+#define orange_ColorEscape  "\r7"
+#define teal_ColorEscape    "\r8"
+#define cyan_ColorEscape    "\r9"
+#define yellow_ColorEscape  "\r:"
+#define red_ColorEscape     "\r;"
+#define magenta_ColorEscape "\r<"
+#define blue_ColorEscape    "\r="
+#define green_ColorEscape   "\r>"
 
 iDeclareType(Color)
 

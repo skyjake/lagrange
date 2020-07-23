@@ -254,7 +254,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         /* Special formatting for the first paragraph (e.g., subtitle, introduction, or lede). */
         if (type == text_GmLineType && isFirstText) {
             run.font = firstParagraph_FontId;
-            run.color = orange_ColorId;
+            run.color = gray88_ColorId;
             isFirstText = iFalse;
         }
         else if (type != header1_GmLineType) {
