@@ -381,6 +381,7 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
                     widget = mouseGrab_Widget();
                 }
             }
+            /* TODO: Auto-refresh when hover widget changes. */
             return dispatchEvent_Widget(widget, &event);
         }
     }
