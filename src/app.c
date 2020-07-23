@@ -143,7 +143,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
         clean_Path(homePath);
         append_Path(homePath, &iStringLiteral("home.gmi"));
         prependCStr_String(homePath, "file://");
-        setUrl_DocumentWidget(findWidget_App("document"), homePath);
+        postCommandf_App("open url:%s", cstr_String(homePath));
         delete_String(homePath);
     }
 }

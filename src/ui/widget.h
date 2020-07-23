@@ -46,6 +46,7 @@ enum iWidgetFlag {
     resizeChildrenToWidestChild_WidgetFlag = iBit(25),
     resizeToParentWidth_WidgetFlag         = iBit(26),
     resizeToParentHeight_WidgetFlag        = iBit(27),
+    moveToParentRightEdge_WidgetFlag       = iBit(28),
 };
 
 enum iWidgetAddPos {

@@ -150,6 +150,9 @@ static void setHeight_Widget_(iWidget *d, int height) {
 }
 
 void arrange_Widget(iWidget *d) {
+    if (d->flags & moveToParentRightEdge_WidgetFlag) {
+        d->rect.pos.x = width_Rect(d->parent->rect) - width_Rect(d->rect);
+    }
     if (d->flags & resizeToParentWidth_WidgetFlag) {
         setWidth_Widget_(d, d->parent->rect.size.x);
     }
@@ -250,7 +253,8 @@ void arrange_Widget(iWidget *d) {
             /* Parent size changed, must update the children.*/
             iForEach(ObjectList, j, d->children) {
                 iWidget *child = as_Widget(j.object);
-                if (child->flags & resizeToParentWidth_WidgetFlag) {
+                if (child->flags &
+                    (resizeToParentWidth_WidgetFlag | moveToParentRightEdge_WidgetFlag)) {
                     arrange_Widget(child);
                 }
             }

@@ -1,4 +1,5 @@
 #include "documentwidget.h"
+#include "scrollwidget.h"
 #include "paint.h"
 #include "util.h"
 #include "app.h"
@@ -33,6 +34,7 @@ struct Impl_DocumentWidget {
     iPtrArray visibleLinks;
     const iGmRun *hoverLink;
     iClick click;
+    iScrollWidget *scroll;
 };
 
 iDeclareType(Url)
@@ -72,7 +74,6 @@ void init_DocumentWidget(iDocumentWidget *d) {
     iWidget *w = as_Widget(d);
     init_Widget(w);
     setId_Widget(w, "document");
-    setBackgroundColor_Widget(w, gray25_ColorId);
     d->state = blank_DocumentState;
     d->url = new_String();
     d->statusCode = 0;
@@ -84,6 +85,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     init_PtrArray(&d->visibleLinks);
     d->hoverLink = NULL;
     init_Click(&d->click, d, SDL_BUTTON_LEFT);
+    addChild_Widget(w, iClob(d->scroll = new_ScrollWidget()));
 }
 
 void deinit_DocumentWidget(iDocumentWidget *d) {
@@ -110,11 +112,13 @@ static iRect documentBounds_DocumentWidget_(const iDocumentWidget *d) {
     return rect;
 }
 
+#if 0
 void setSource_DocumentWidget(iDocumentWidget *d, const iString *source) {
     /* TODO: lock source during update */
     setSource_GmDocument(d->doc, source, documentWidth_DocumentWidget_(d));
     d->state = ready_DocumentState;
 }
+#endif
 
 static iRangecc getLine_(iRangecc text) {
     iRangecc line = { text.start, text.start };
@@ -194,6 +198,12 @@ void setUrl_DocumentWidget(iDocumentWidget *d, const iString *url) {
     delete_String(newUrl);
 }
 
+static iRangei visibleRange_DocumentWidget_(const iDocumentWidget *d) {
+    const int margin = gap_UI * d->pageMargin;
+    return (iRangei){ d->scrollY - margin,
+                      d->scrollY + height_Rect(bounds_Widget(constAs_Widget(d))) - margin };
+}
+
 static void addVisibleLink_DocumentWidget_(void *context, const iGmRun *run) {
     iDocumentWidget *d = context;
     if (run->linkId) {
@@ -201,19 +211,21 @@ static void addVisibleLink_DocumentWidget_(void *context, const iGmRun *run) {
     }
 }
 
-static iRangei visibleRange_DocumentWidget_(const iDocumentWidget *d) {
-    const int margin = gap_UI * d->pageMargin;
-    return (iRangei){ d->scrollY - margin,
-                      d->scrollY + height_Rect(bounds_Widget(constAs_Widget(d))) - margin };
+static int scrollMax_DocumentWidget_(const iDocumentWidget *d) {
+    return size_GmDocument(d->doc).y - height_Rect(bounds_Widget(constAs_Widget(d))) +
+           2 * d->pageMargin * gap_UI;
 }
 
 static void updateVisible_DocumentWidget_(iDocumentWidget *d) {
+    const iRangei visRange = visibleRange_DocumentWidget_(d);
+    const iRect   bounds   = bounds_Widget(as_Widget(d));
+    setRange_ScrollWidget(d->scroll, (iRangei){ 0, scrollMax_DocumentWidget_(d) });
+    const int docSize = size_GmDocument(d->doc).y;
+    setThumb_ScrollWidget(d->scroll,
+                          d->scrollY,
+                          docSize > 0 ? height_Rect(bounds) * size_Range(&visRange) / docSize : 0);
     clear_PtrArray(&d->visibleLinks);
-    render_GmDocument(
-        d->doc,
-        visibleRange_DocumentWidget_(d),
-        addVisibleLink_DocumentWidget_,
-        d);
+    render_GmDocument(d->doc, visRange, addVisibleLink_DocumentWidget_, d);
 }
 
 static iRangecc dirPath_(iRangecc path) {
@@ -300,8 +312,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         if (d->scrollY < 0) {
             d->scrollY = 0;
         }
-        const int scrollMax =
-            size_GmDocument(d->doc).y - height_Rect(bounds_Widget(w)) + 2 * d->pageMargin * gap_UI;
+        const int scrollMax = scrollMax_DocumentWidget_(d);
         if (scrollMax > 0) {
             d->scrollY = iMin(d->scrollY, scrollMax);
         }
@@ -377,21 +388,25 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
     draw_Widget(w);
     /* Update the document? */
     if (!isEmpty_String(d->newSource)) {
+        iDocumentWidget *m = iConstCast(iDocumentWidget *, d);
         /* TODO: Do this in the background. However, that requires a text metrics calculator
            that does not try to cache the glyph bitmaps. */
-        setSource_GmDocument(d->doc, d->newSource, documentWidth_DocumentWidget_(d));
-        clear_String(d->newSource);
-        iConstCast(iDocumentWidget *, d)->state = ready_DocumentState;
-        updateVisible_DocumentWidget_(iConstCast(iDocumentWidget *, d));
+        setSource_GmDocument(m->doc, m->newSource, documentWidth_DocumentWidget_(m));
+        clear_String(m->newSource);
+        m->scrollY = 0;
+        m->state = ready_DocumentState;
+        updateVisible_DocumentWidget_(m);
     }
     if (d->state != ready_DocumentState) return;
     iDrawContext ctx = { .widget = d, .bounds = documentBounds_DocumentWidget_(d) };
     init_Paint(&ctx.paint);
+    fillRect_Paint(&ctx.paint, bounds_Widget(w), gray25_ColorId);
     render_GmDocument(
         d->doc,
         visibleRange_DocumentWidget_(d),
         drawRun_DrawContext_,
         &ctx);
+    draw_Widget(w);
 }
 
 iBeginDefineSubclass(DocumentWidget, Widget)

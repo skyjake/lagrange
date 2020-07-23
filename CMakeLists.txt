@@ -48,6 +48,8 @@ set (SOURCES
     src/ui/metrics.h
     src/ui/paint.c
     src/ui/paint.h
+    src/ui/scrollwidget.c
+    src/ui/scrollwidget.h
     src/ui/text.c
     src/ui/text.h
     src/ui/util.c
