@@ -139,6 +139,12 @@ static void init_App_(iApp *d, int argc, char **argv) {
     loadPrefs_App_(d);
     d->window = new_Window();
     /* Widget state init. */ {
+        iString *homePath = newCStr_String(dataDir_App_);
+        clean_Path(homePath);
+        append_Path(homePath, &iStringLiteral("home.gmi"));
+        prependCStr_String(homePath, "file://");
+        setUrl_DocumentWidget(findWidget_App("document"), homePath);
+        delete_String(homePath);
     }
 }
 

@@ -84,8 +84,6 @@ void init_DocumentWidget(iDocumentWidget *d) {
     init_PtrArray(&d->visibleLinks);
     d->hoverLink = NULL;
     init_Click(&d->click, d, SDL_BUTTON_LEFT);
-    setUrl_DocumentWidget(
-        d, collectNewFormat_String("file://%s/test.gmi", cstr_String(collect_String(home_Path()))));
 }
 
 void deinit_DocumentWidget(iDocumentWidget *d) {
