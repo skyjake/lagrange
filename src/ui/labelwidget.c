@@ -30,19 +30,23 @@ static void trigger_LabelWidget_(const iLabelWidget *d) {
 }
 
 static iBool processEvent_LabelWidget_(iLabelWidget *d, const SDL_Event *ev) {
+    iWidget *w = &d->widget;
     if (isCommand_UserEvent(ev, "metrics.changed")) {
         updateSize_LabelWidget(d);
     }
     if (!isEmpty_String(&d->command)) {
         switch (processEvent_Click(&d->click, ev)) {
             case started_ClickResult:
-                setFlags_Widget(&d->widget, pressed_WidgetFlag, iTrue);
+                setFlags_Widget(w, pressed_WidgetFlag, iTrue);
+                refresh_Widget(w);
                 return iTrue;
             case aborted_ClickResult:
-                setFlags_Widget(&d->widget, pressed_WidgetFlag, iFalse);
+                setFlags_Widget(w, pressed_WidgetFlag, iFalse);
+                refresh_Widget(w);
                 return iTrue;
             case finished_ClickResult:
-                setFlags_Widget(&d->widget, pressed_WidgetFlag, iFalse);
+                setFlags_Widget(w, pressed_WidgetFlag, iFalse);
+                refresh_Widget(w);
                 trigger_LabelWidget_(d);
                 return iTrue;
             case double_ClickResult:

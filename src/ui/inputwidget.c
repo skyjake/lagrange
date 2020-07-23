@@ -5,6 +5,8 @@
 #include <the_Foundation/array.h>
 #include <SDL_timer.h>
 
+static const int REFRESH_INTERVAL = 256;
+
 struct Impl_InputWidget {
     iWidget         widget;
     enum iInputMode mode;
@@ -14,6 +16,7 @@ struct Impl_InputWidget {
     size_t          cursor;
     int             font;
     iClick          click;
+    uint32_t        timer;
 };
 
 iDefineObjectConstructionArgs(InputWidget, (size_t maxLen), maxLen)
@@ -33,9 +36,13 @@ void init_InputWidget(iInputWidget *d, size_t maxLen) {
         setFlags_Widget(w, fixedHeight_WidgetFlag, iTrue);
     }
     init_Click(&d->click, d, SDL_BUTTON_LEFT);
+    d->timer = 0;
 }
 
 void deinit_InputWidget(iInputWidget *d) {
+    if (d->timer) {
+        SDL_RemoveTimer(d->timer);
+    }
     deinit_Array(&d->oldText);
     deinit_Array(&d->text);
 }
@@ -68,6 +75,7 @@ void setText_InputWidget(iInputWidget *d, const iString *text) {
     iConstForEach(String, i, text) {
         pushBack_Array(&d->text, &i.value);
     }
+    refresh_Widget(as_Widget(d));
 }
 
 void setTextCStr_InputWidget(iInputWidget *d, const char *cstr) {
@@ -78,6 +86,11 @@ void setTextCStr_InputWidget(iInputWidget *d, const char *cstr) {
 
 void setCursor_InputWidget(iInputWidget *d, size_t pos) {
     d->cursor = iMin(pos, size_Array(&d->text));
+}
+
+static uint32_t refreshTimer_(uint32_t interval, void *d) {
+    refresh_Widget(d);
+    return interval;
 }
 
 void begin_InputWidget(iInputWidget *d) {
@@ -96,6 +109,8 @@ void begin_InputWidget(iInputWidget *d) {
     }
     SDL_StartTextInput();
     setFlags_Widget(w, selected_WidgetFlag, iTrue);
+    refresh_Widget(w);
+    d->timer = SDL_AddTimer(REFRESH_INTERVAL, refreshTimer_, d);
 }
 
 void end_InputWidget(iInputWidget *d, iBool accept) {
@@ -107,19 +122,23 @@ void end_InputWidget(iInputWidget *d, iBool accept) {
     if (!accept) {
         setCopy_Array(&d->text, &d->oldText);
     }
+    SDL_RemoveTimer(d->timer);
+    d->timer = 0;
     SDL_StopTextInput();
     setFlags_Widget(w, selected_WidgetFlag, iFalse);
     const char *id = cstr_String(id_Widget(as_Widget(d)));
     if (!*id) id = "_";
+    refresh_Widget(w);
     postCommand_Widget(w, "input.ended id:%s arg:%d", id, accept ? 1 : 0);
 }
 
 static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
-    if (isCommand_Widget(as_Widget(d), ev, "focus.gained")) {
+    iWidget *w = as_Widget(d);
+    if (isCommand_Widget(w, ev, "focus.gained")) {
         begin_InputWidget(d);
         return iTrue;
     }
-    else if (isCommand_Widget(as_Widget(d), ev, "focus.lost")) {
+    else if (isCommand_Widget(w, ev, "focus.lost")) {
         end_InputWidget(d, iTrue);
         return iTrue;
     }
@@ -139,7 +158,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
         return iTrue;
     }
     const size_t curMax = iMin(size_Array(&d->text), d->maxLen - 1);
-    if (ev->type == SDL_KEYDOWN && isFocused_Widget(as_Widget(d))) {
+    if (ev->type == SDL_KEYDOWN && isFocused_Widget(w)) {
         const int key  = ev->key.keysym.sym;
         const int mods = keyMods_Sym(ev->key.keysym.mod);
         switch (key) {
@@ -159,28 +178,33 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                 else if (d->cursor > 0) {
                     remove_Array(&d->text, --d->cursor);
                 }
+                refresh_Widget(w);
                 return iTrue;
             case SDLK_d:
                 if (mods != KMOD_CTRL) break;
             case SDLK_DELETE:
                 if (d->cursor < size_Array(&d->text)) {
                     remove_Array(&d->text, d->cursor);
+                    refresh_Widget(w);
                 }
                 return iTrue;
             case SDLK_k:
                 if (mods == KMOD_CTRL) {
                     removeN_Array(&d->text, d->cursor, size_Array(&d->text) - d->cursor);
+                    refresh_Widget(w);
                     return iTrue;
                 }
                 break;
             case SDLK_HOME:
             case SDLK_END:
                 d->cursor = (key == SDLK_HOME ? 0 : curMax);
+                refresh_Widget(w);
                 return iTrue;
             case SDLK_a:
             case SDLK_e:
                 if (mods == KMOD_CTRL) {
                     d->cursor = (key == 'a' ? 0 : curMax);
+                    refresh_Widget(w);
                     return iTrue;
                 }
                 break;
@@ -191,6 +215,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                 else if (d->cursor > 0) {
                     d->cursor--;
                 }
+                refresh_Widget(w);
                 return iTrue;
             case SDLK_RIGHT:
                 if (mods & KMOD_PRIMARY) {
@@ -199,6 +224,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                 else if (d->cursor < curMax) {
                     d->cursor++;
                 }
+                refresh_Widget(w);
                 return iTrue;
             case SDLK_TAB:
                 /* Allow focus switching. */
@@ -209,7 +235,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
         }
         return iTrue;
     }
-    else if (ev->type == SDL_TEXTINPUT && isFocused_Widget(as_Widget(d))) {
+    else if (ev->type == SDL_TEXTINPUT && isFocused_Widget(w)) {
         const iString *uni = collectNewCStr_String(ev->text.text);
         const iChar    chr = first_String(uni);
         if (d->mode == insert_InputMode) {
@@ -225,9 +251,10 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                 setFocus_Widget(NULL);
             }
         }
+        refresh_Widget(w);
         return iTrue;
     }
-    return processEvent_Widget(as_Widget(d), ev);
+    return processEvent_Widget(w, ev);
 }
 
 static void draw_InputWidget_(const iInputWidget *d) {

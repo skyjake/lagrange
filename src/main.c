@@ -15,7 +15,7 @@ int main(int argc, char **argv) {
     init_Foundation();
     printf("Lagrange: A Beautiful Gemini Client\n");
     /* Initialize SDL. */
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO)) {
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER)) {
         fprintf(stderr, "SDL init failed: %s\n", SDL_GetError());
         return -1;
     }

@@ -49,6 +49,10 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
         }
         return iTrue;
     }
+    else if (equal_Command(cmd, "setfocus")) {
+        setFocus_Widget(findWidget_App(cstr_String(string_Command(cmd, "id"))));
+        return iTrue;
+    }
     else if (handleCommand_App(cmd)) {
         return iTrue;
     }
@@ -70,6 +74,23 @@ static const iMenuItem editMenuItems[] = {
 static const iMenuItem viewMenuItems[] = {
 };
 
+static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
+    if (equal_Command(cmd, "input.ended")) {
+        iInputWidget *url = findChild_Widget(navBar, "url");
+        if (arg_Command(cmd) && pointer_Command(cmd) == url) {
+            postCommandf_App("open url:%s", cstr_String(text_InputWidget(url)));
+            return iTrue;
+        }
+    }
+    else if (equal_Command(cmd, "document.changed")) {
+        iInputWidget *url = findWidget_App("url");
+        setTextCStr_InputWidget(url, valuePtr_Command(cmd, "url"));
+        setTitle_Window(get_Window(), text_InputWidget(url));
+        return iTrue;
+    }
+    return iFalse;
+}
+
 static void setupUserInterface_Window(iWindow *d) {
     /* Children of root cover the entire window. */
     setFlags_Widget(d->root, resizeChildren_WidgetFlag, iTrue);
@@ -87,12 +108,14 @@ static void setupUserInterface_Window(iWindow *d) {
                             arrangeHorizontal_WidgetFlag,
                         iTrue);
         addChild_Widget(div, iClob(navBar));
-        setBackgroundColor_Widget(div, gray25_ColorId);
+        setCommandHandler_Widget(navBar, handleNavBarCommands_);
+        setBackgroundColor_Widget(navBar, gray25_ColorId);
 
         addChild_Widget(navBar, iClob(new_LabelWidget("Back", 0, 0, "navigate.back")));
         addChild_Widget(navBar, iClob(new_LabelWidget("Fwd", 0, 0, "navigate.forward")));
         addChild_Widget(navBar, iClob(new_LabelWidget("Home", 0, 0, "navigate.home")));
         iInputWidget *url = new_InputWidget(0);
+        setId_Widget(as_Widget(url), "url");
         setTextCStr_InputWidget(url, "gemini://");
         addChildFlags_Widget(navBar, iClob(url), expand_WidgetFlag);
     }
@@ -250,6 +273,7 @@ static void setupUserInterface_Window(iWindow *d) {
 #endif
     /* Glboal keyboard shortcuts. */ {
         // addAction_Widget(d->root, SDLK_LEFTBRACKET, KMOD_SHIFT | KMOD_PRIMARY, "tabs.prev");
+        addAction_Widget(d->root, 'l', KMOD_PRIMARY, "setfocus id:url");
     }
 }
 
@@ -381,8 +405,13 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
                     widget = mouseGrab_Widget();
                 }
             }
-            /* TODO: Auto-refresh when hover widget changes. */
-            return dispatchEvent_Widget(widget, &event);
+            iWidget *oldHover = hover_Widget();
+            /* Dispatch the event to the tree of widgets. */
+            iBool wasUsed = dispatchEvent_Widget(widget, &event);
+            if (oldHover != hover_Widget()) {
+                postRefresh_App();
+            }
+            return wasUsed;
         }
     }
     return iFalse;
@@ -430,6 +459,10 @@ void draw_Window(iWindow *d) {
 void resize_Window(iWindow *d, int w, int h) {
     SDL_SetWindowSize(d->win, w, h);
     updateRootSize_Window_(d);
+}
+
+void setTitle_Window(iWindow *d, const iString *title) {
+    SDL_SetWindowTitle(d->win, cstr_String(title));
 }
 
 void setUiScale_Window(iWindow *d, float uiScale) {

@@ -301,6 +301,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
     if (isResize_UserEvent(ev)) {
         setWidth_GmDocument(d->doc, documentWidth_DocumentWidget_(d));
         updateVisible_DocumentWidget_(d);
+        refresh_Widget(w);
     }
     else if (isCommand_Widget(w, ev, "scroll.moved")) {
         d->scrollY = arg_Command(command_UserEvent(ev));
@@ -410,30 +411,27 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
 }
 
 static void draw_DocumentWidget_(const iDocumentWidget *d) {
-    const iWidget *w = constAs_Widget(d);
+    const iWidget *w      = constAs_Widget(d);
+    const iRect    bounds = bounds_Widget(w);
     draw_Widget(w);
+    iDrawContext ctx = { .widget = d, .bounds = documentBounds_DocumentWidget_(d) };
+    init_Paint(&ctx.paint);
+    fillRect_Paint(&ctx.paint, bounds, gray25_ColorId);
     /* Update the document? */
     if (!isEmpty_String(d->newSource)) {
         iDocumentWidget *m = iConstCast(iDocumentWidget *, d);
         /* TODO: Do this in the background. However, that requires a text metrics calculator
            that does not try to cache the glyph bitmaps. */
-        setSource_GmDocument(m->doc, m->newSource, documentWidth_DocumentWidget_(m));
+        setSource_GmDocument(m->doc, m->newSource, width_Rect(ctx.bounds));
+        postCommandf_App("document.changed url:%s", cstr_String(d->url));
         clear_String(m->newSource);
         m->scrollY = 0;
         m->state = ready_DocumentState;
         updateVisible_DocumentWidget_(m);
     }
     if (d->state != ready_DocumentState) return;    
-    iDrawContext ctx = { .widget = d, .bounds = documentBounds_DocumentWidget_(d) };
-    const iRect bounds = bounds_Widget(w);
-    init_Paint(&ctx.paint);    
-    fillRect_Paint(&ctx.paint, bounds, gray25_ColorId);
     setClip_Paint(&ctx.paint, bounds);
-    render_GmDocument(
-        d->doc,
-        visibleRange_DocumentWidget_(d),
-        drawRun_DrawContext_,
-        &ctx);
+    render_GmDocument(d->doc, visibleRange_DocumentWidget_(d), drawRun_DrawContext_, &ctx);
     clearClip_Paint(&ctx.paint);
     draw_Widget(w);
 }
