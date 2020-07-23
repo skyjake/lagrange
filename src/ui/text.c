@@ -105,7 +105,7 @@ void init_Text(SDL_Renderer *render) {
         SDL_SetPaletteColors(d->grayscale, colors, 0, 256);
     }
     /* Initialize the glyph cache. */ {
-        d->cacheSize = init1_I2(fontSize_UI * 16);
+        d->cacheSize = init1_I2(fontSize_UI * 32);
         d->cachePos  = zero_I2();
         d->cache     = SDL_CreateTexture(render,
                                      SDL_PIXELFORMAT_RGBA8888,
