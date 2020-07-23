@@ -3,13 +3,31 @@
 #include "ui/text.h"
 #include "ui/metrics.h"
 
-#include <the_Foundation/array.h>
+#include <the_Foundation/ptrarray.h>
+#include <the_Foundation/regexp.h>
+
+iDeclareType(GmLink)
+
+struct Impl_GmLink {
+    iString url;
+};
+
+void init_GmLink(iGmLink *d) {
+    init_String(&d->url);
+}
+
+void deinit_GmLink(iGmLink *d) {
+    deinit_String(&d->url);
+}
+
+iDefineTypeConstruction(GmLink)
 
 struct Impl_GmDocument {
     iObject object;
     iString source;
     iInt2 size;
     iArray layout; /* contents of source, laid out in document space */
+    iPtrArray links;
 };
 
 iDefineObjectConstruction(GmDocument)
@@ -86,15 +104,45 @@ iInt2 measurePreformattedBlock_GmDocument_(const iGmDocument *d, const char *sta
     return measureRange_Text(font, preBlock);
 }
 
+static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *linkId) {
+    iRegExp *pattern = new_RegExp("=>\\s*([^\\s]+)(\\s.*)?", caseInsensitive_RegExpOption);
+    iRegExpMatch m;
+    if (matchRange_RegExp(pattern, line, &m)) {
+        iGmLink *link = new_GmLink();
+        setRange_String(&link->url, capturedRange_RegExpMatch(&m, 1));
+        pushBack_PtrArray(&d->links, link);
+        *linkId = size_PtrArray(&d->links); /* index + 1 */
+        iRangecc desc = capturedRange_RegExpMatch(&m, 2);
+        trim_Rangecc(&desc);
+        if (!isEmpty_Range(&desc)) {
+            line = desc; /* Just show the description. */
+        }
+        else {
+            line = capturedRange_RegExpMatch(&m, 1); /* Show the URL. */
+        }
+    }
+    iRelease(pattern);
+    return line;
+}
+
+static void clearLinks_GmDocument_(iGmDocument *d) {
+    iForEach(PtrArray, i, &d->links) {
+        delete_GmLink(i.ptr);
+    }
+    clear_PtrArray(&d->links);
+}
+
 static void doLayout_GmDocument_(iGmDocument *d) {
     if (d->size.x <= 0 || isEmpty_String(&d->source)) {
         return;
     }
     clear_Array(&d->layout);
+    clearLinks_GmDocument_(d);
     iBool isPreformat = iFalse;
     iInt2 pos = zero_I2();
     const iRangecc content = range_String(&d->source);
     iRangecc line = iNullRange;
+    /* TODO: Collect these parameters into a GmTheme. */
     static const int fonts[max_GmLineType] = {
         paragraph_FontId,
         paragraph_FontId, /* bullet */
@@ -151,6 +199,13 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 /* TODO: store and link the alt text to this run */
                 continue;
             }
+            else if (type == link_GmLineType) {
+                line = addLink_GmDocument_(d, line, &run.linkId);
+                if (!run.linkId) {
+                    /* Invalid formatting. */
+                    type = text_GmLineType;
+                }
+            }
             trimLine_Rangecc_(&line, type);
             run.font = fonts[type];
         }
@@ -175,6 +230,10 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         if (!isPreformat || (prevType != preformatted_GmLineType)) {
             int required =
                 iMax(topMargin[type], bottomMargin[prevType]) * lineHeight_Text(paragraph_FontId);
+            if (type == link_GmLineType && prevType == link_GmLineType) {
+                /* No margin between consecutive links. */
+                required = 0;
+            }
             if (isEmpty_Array(&d->layout)) {
                 required = 0; /* top of document */
             }
@@ -202,6 +261,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             isFirstText = iFalse;
         }
         iRangecc runLine = line;
+        /* Create one or more runs for this line. */
         while (!isEmpty_Range(&runLine)) {
             run.bounds.pos = addX_I2(pos, indent * gap_UI);
             const char *contPos;
@@ -222,9 +282,12 @@ void init_GmDocument(iGmDocument *d) {
     init_String(&d->source);
     d->size = zero_I2();
     init_Array(&d->layout, sizeof(iGmRun));
+    init_PtrArray(&d->links);
 }
 
 void deinit_GmDocument(iGmDocument *d) {
+    clearLinks_GmDocument_(d);
+    deinit_PtrArray(&d->links);
     deinit_Array(&d->layout);
     deinit_String(&d->source);
 }
@@ -243,7 +306,7 @@ static void normalize_GmDocument(iGmDocument *d) {
     iRangecc src = range_String(&d->source);
     iRangecc line = iNullRange;
     iBool isPreformat = iFalse;
-    const int preTabWidth = 4; /* TODO: user-configurable parameter */
+    const int preTabWidth = 8; /* TODO: user-configurable parameter */
     while (nextSplit_Rangecc(&src, "\n", &line)) {
         if (isPreformat) {
             /* Replace any tab characters with spaces for visualization. */
@@ -302,6 +365,7 @@ void setSource_GmDocument(iGmDocument *d, const iString *source, int width) {
 void render_GmDocument(const iGmDocument *d, iRangei visRangeY, iGmDocumentRenderFunc render,
                        void *context) {
     iBool isInside = iFalse;
+    /* TODO: Check lookup table for quick starting position. */
     iConstForEach(Array, i, &d->layout) {
         const iGmRun *run = i.value;
         if (isInside) {
@@ -319,6 +383,25 @@ void render_GmDocument(const iGmDocument *d, iRangei visRangeY, iGmDocumentRende
 
 iInt2 size_GmDocument(const iGmDocument *d) {
     return d->size;
+}
+
+const iGmRun *findRun_GmDocument(const iGmDocument *d, iInt2 pos) {
+    /* TODO: Perf optimization likely needed; use a block map? */
+    iConstForEach(Array, i, &d->layout) {
+        const iGmRun *run = i.value;
+        if (contains_Rect(run->bounds, pos)) {
+            return run;
+        }
+    }
+    return NULL;
+}
+
+const iString *linkUrl_GmDocument(const iGmDocument *d, iGmLinkId linkId) {
+    if (linkId > 0 && linkId <= size_PtrArray(&d->links)) {
+        const iGmLink *link = constAt_PtrArray(&d->links, linkId - 1);
+        return &link->url;
+    }
+    return NULL;
 }
 
 iDefineClass(GmDocument)

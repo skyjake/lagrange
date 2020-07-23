@@ -3,6 +3,7 @@
 #include "ui/window.h"
 #include "ui/inputwidget.h"
 #include "ui/labelwidget.h"
+#include "ui/documentwidget.h"
 #include "ui/util.h"
 #include "ui/text.h"
 #include "ui/color.h"
@@ -290,6 +291,8 @@ iBool handleCommand_App(const char *cmd) {
     iApp *d = &app_;
     iWidget *root = d->window->root;
     if (equal_Command(cmd, "open")) {
+        setUrl_DocumentWidget(findChild_Widget(root, "document"),
+                              collect_String(newCStr_String(valuePtr_Command(cmd, "url"))));
     }
     else if (equal_Command(cmd, "quit")) {
         SDL_Event ev;

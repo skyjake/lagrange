@@ -7,12 +7,14 @@
 
 iDeclareType(GmRun)
 
+typedef uint16_t iGmLinkId;
+
 struct Impl_GmRun {
     iRangecc text;
     iRect bounds; /* advance metrics */
     uint8_t font;
     uint8_t color;
-    uint16_t linkId;
+    iGmLinkId linkId; /* zero for non-links */
 };
 
 iDeclareType(GmDocument)
@@ -27,3 +29,6 @@ typedef void (*iGmDocumentRenderFunc)(void *, const iGmRun *);
 
 void    render_GmDocument       (const iGmDocument *, iRangei visRangeY, iGmDocumentRenderFunc render, void *);
 iInt2   size_GmDocument         (const iGmDocument *);
+
+const iGmRun *  findRun_GmDocument  (const iGmDocument *, iInt2 pos);
+const iString * linkUrl_GmDocument  (const iGmDocument *, iGmLinkId linkId);
