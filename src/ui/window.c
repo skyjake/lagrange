@@ -75,7 +75,29 @@ static void setupUserInterface_Window(iWindow *d) {
     setFlags_Widget(d->root, resizeChildren_WidgetFlag, iTrue);
     setCommandHandler_Widget(d->root, handleRootCommands_);
 
-    addChild_Widget(d->root, iClob(new_DocumentWidget()));
+    iWidget *div = makeVDiv_Widget();
+    setId_Widget(div, "navdiv");
+    addChild_Widget(d->root, iClob(div));
+
+    /* Navigation bar. */ {
+        iWidget *navBar = new_Widget();
+        setId_Widget(navBar, "navbar");
+        setFlags_Widget(navBar,
+                        arrangeHeight_WidgetFlag | resizeChildren_WidgetFlag |
+                            arrangeHorizontal_WidgetFlag,
+                        iTrue);
+        addChild_Widget(div, iClob(navBar));
+        setBackgroundColor_Widget(div, gray25_ColorId);
+
+        addChild_Widget(navBar, iClob(new_LabelWidget("Back", 0, 0, "navigate.back")));
+        addChild_Widget(navBar, iClob(new_LabelWidget("Fwd", 0, 0, "navigate.forward")));
+        addChild_Widget(navBar, iClob(new_LabelWidget("Home", 0, 0, "navigate.home")));
+        iInputWidget *url = new_InputWidget(0);
+        setTextCStr_InputWidget(url, "gemini://");
+        addChildFlags_Widget(navBar, iClob(url), expand_WidgetFlag);
+    }
+
+    addChildFlags_Widget(div, iClob(new_DocumentWidget()), expand_WidgetFlag);
 
 #if 0
     iWidget *mainDiv = makeHDiv_Widget();

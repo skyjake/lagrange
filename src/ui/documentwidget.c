@@ -353,12 +353,10 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
     }
     else if (ev->type == SDL_MOUSEMOTION) {
         const iGmRun *oldHoverLink = d->hoverLink;
-        d->hoverLink = NULL;
+        d->hoverLink          = NULL;
         const iRect docBounds = documentBounds_DocumentWidget_(d);
-        const iInt2 hoverPos =
-            addY_I2(sub_I2(localCoord_Widget(w, init_I2(ev->motion.x, ev->motion.y)),
-                           topLeft_Rect(docBounds)),
-                    d->scrollY);
+        const iInt2 hoverPos  = addY_I2(
+            sub_I2(init_I2(ev->motion.x, ev->motion.y), topLeft_Rect(docBounds)), d->scrollY);
         iConstForEach(PtrArray, i, &d->visibleLinks) {
             const iGmRun *run = i.ptr;
             if (contains_Rect(run->bounds, hoverPos)) {
@@ -425,15 +423,18 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
         m->state = ready_DocumentState;
         updateVisible_DocumentWidget_(m);
     }
-    if (d->state != ready_DocumentState) return;
+    if (d->state != ready_DocumentState) return;    
     iDrawContext ctx = { .widget = d, .bounds = documentBounds_DocumentWidget_(d) };
-    init_Paint(&ctx.paint);
-    fillRect_Paint(&ctx.paint, bounds_Widget(w), gray25_ColorId);
+    const iRect bounds = bounds_Widget(w);
+    init_Paint(&ctx.paint);    
+    fillRect_Paint(&ctx.paint, bounds, gray25_ColorId);
+    setClip_Paint(&ctx.paint, bounds);
     render_GmDocument(
         d->doc,
         visibleRange_DocumentWidget_(d),
         drawRun_DrawContext_,
         &ctx);
+    clearClip_Paint(&ctx.paint);
     draw_Widget(w);
 }
 

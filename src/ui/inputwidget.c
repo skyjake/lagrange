@@ -70,6 +70,12 @@ void setText_InputWidget(iInputWidget *d, const iString *text) {
     }
 }
 
+void setTextCStr_InputWidget(iInputWidget *d, const char *cstr) {
+    iString *str = newCStr_String(cstr);
+    setText_InputWidget(d, str);
+    delete_String(str);
+}
+
 void setCursor_InputWidget(iInputWidget *d, size_t pos) {
     d->cursor = iMin(pos, size_Array(&d->text));
 }
