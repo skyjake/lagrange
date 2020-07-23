@@ -95,7 +95,7 @@ enum iTouchBarVariant {
     NSMutableDictionary<NSString *, NSString*> *menuCommands;
 }
 - (id)initWithSDLDelegate:(NSObject<NSApplicationDelegate> *)sdl;
-- (NSTouchBar *)makeTouchBar;
+//- (NSTouchBar *)makeTouchBar;
 /* SDL needs to do its own thing. */
 - (BOOL)application:(NSApplication *)theApplication openFile:(NSString *)filename;
 - (void)applicationDidFinishLaunching:(NSNotification *)notificatiosn;
