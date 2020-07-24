@@ -47,13 +47,8 @@ void init_DocumentWidget(iDocumentWidget *d) {
     setId_Widget(w, "document");
     d->state      = blank_DocumentState;
     d->url        = new_String();
-//    d->statusCode = 0;
     d->request    = NULL;
     d->isSourcePending = iFalse;
-//    d->requestTimeout = 0;
-//    d->readPending = iFalse;
-//    d->newSource  = new_String();
-//    d->needSourceUpdate = iFalse;
     d->doc        = new_GmDocument();
     d->pageMargin = 5;
     d->scrollY    = 0;
@@ -66,7 +61,6 @@ void init_DocumentWidget(iDocumentWidget *d) {
 void deinit_DocumentWidget(iDocumentWidget *d) {
     deinit_PtrArray(&d->visibleLinks);
     delete_String(d->url);
-//    delete_String(d->newSource);
     iRelease(d->request);
     iRelease(d->doc);
 }
@@ -95,38 +89,6 @@ static iRangecc getLine_(iRangecc text) {
 }
 
 static void requestUpdated_DocumentWidget_(iAnyObject *obj) {
-#if 0
-    iDocumentWidget *d = obj;
-    iBlock *response = readAll_TlsRequest(d->request);
-    if (d->state == fetching_DocumentState) {
-        iRangecc responseRange = { constBegin_Block(response), constEnd_Block(response) };
-        iRangecc respLine = getLine_(responseRange);
-        responseRange.start = respLine.end + 1;
-        /* First line is the status code. */ {
-            iString *line = newRange_String(respLine);
-            trim_String(line);
-            d->statusCode = toInt_String(line);
-            printf("response (%02d): %s\n", d->statusCode, cstr_String(line));
-            /* TODO: post a command with the status code */
-            switch (d->statusCode) {
-                case redirectPermanent_GmStatusCode:
-                case redirectTemporary_GmStatusCode:
-                    postCommandf_App("open url:%s", cstr_String(line) + 3);
-                    break;
-            }
-            delete_String(line);
-        }
-        setCStrN_String(d->newSource, responseRange.start, size_Range(&responseRange));
-        d->requestTimeout = SDL_AddTimer(2000, requestTimedOut_DocumentWidget_, d);
-        d->state = receivedPartialResponse_DocumentState;
-    }
-    else if (d->state == receivedPartialResponse_DocumentState) {
-        appendCStr_String(d->newSource, cstr_Block(response));
-        d->needSourceUpdate = iTrue;
-    }
-    delete_Block(response);
-    refresh_Widget(as_Widget(d));
-#endif
     iDocumentWidget *d = obj;
     const int wasPending = exchange_Atomic(&d->isSourcePending, iTrue);
     if (!wasPending) {
@@ -136,14 +98,6 @@ static void requestUpdated_DocumentWidget_(iAnyObject *obj) {
 
 static void requestFinished_DocumentWidget_(iAnyObject *obj) {
     iDocumentWidget *d = obj;
-    /*
-    iReleaseLater(d->request);
-    d->request = NULL;
-    if (d->requestTimeout) {
-        SDL_RemoveTimer(d->requestTimeout);
-        d->requestTimeout = 0;
-    }
-    refresh_Widget(constAs_Widget(d));*/
     postCommand_Widget(obj, "document.request.finished request:%p", d->request);
 }
 
@@ -178,22 +132,14 @@ static void updateVisible_DocumentWidget_(iDocumentWidget *d) {
 }
 
 static void updateSource_DocumentWidget_(iDocumentWidget *d) {
-    /* Update the document? */
-    //    if (d->needSourceUpdate) {
     /* TODO: Do this in the background. However, that requires a text metrics calculator
-           that does not try to cache the glyph bitmaps. */
+       that does not try to cache the glyph bitmaps. */
     iString str;
     initBlock_String(&str, body_GmRequest(d->request));
     setSource_GmDocument(d->doc, &str, documentWidth_DocumentWidget_(d));
     deinit_String(&str);
     updateVisible_DocumentWidget_(d);
     refresh_Widget(as_Widget(d));
-    //        d->state = ready_DocumentState;
-    //        if (!d->request) {
-    //            d->needSourceUpdate = iFalse;
-    //            postCommandf_App("document.changed url:%s", cstr_String(d->url));
-    //        }
-    //    }
 }
 
 static void fetch_DocumentWidget_(iDocumentWidget *d) {
@@ -294,45 +240,6 @@ static const iString *absoluteUrl_DocumentWidget_(const iDocumentWidget *d, cons
     return collect_String(absolute);
 }
 
-static void readResponse_DocumentWidget_(iDocumentWidget *d) {
-#if 0
-    d->readPending = iFalse;
-    iBlock *response = collect_Block(readAll_TlsRequest(d->request));
-    if (isEmpty_Block(response)) {
-        return;
-    }
-    if (d->state == fetching_DocumentState) {
-        /* TODO: Bug here is that the first read may occur before the first line is
-           available, so nothing gets done. Should ensure that the status code is
-           read successully. */
-        iRangecc responseRange = { constBegin_Block(response), constEnd_Block(response) };
-        iRangecc respLine = getLine_(responseRange);
-        responseRange.start = respLine.end + 1;
-        /* First line is the status code. */ {
-            iString *line = collect_String(newRange_String(respLine));
-            trim_String(line);
-            d->statusCode = toInt_String(line);
-            printf("response (%02d): %s\n", d->statusCode, cstr_String(line));
-            /* TODO: post a command with the status code */
-            switch (d->statusCode) {
-                case redirectPermanent_GmStatusCode:
-                case redirectTemporary_GmStatusCode:
-                    postCommandf_App("open url:%s", cstr_String(line) + 3);
-                    return;
-            }
-        }
-        setCStrN_String(d->newSource, responseRange.start, size_Range(&responseRange));
-        d->requestTimeout = SDL_AddTimer(2000, requestTimedOut_DocumentWidget_, d);
-        d->state = receivedPartialResponse_DocumentState;
-        d->scrollY = 0;
-    }
-    else if (d->state == receivedPartialResponse_DocumentState) {
-        appendCStr_String(d->newSource, cstr_Block(response));
-    }
-#endif
-    updateSource_DocumentWidget_(d);
-}
-
 static void checkResponseCode_DocumentWidget_(iDocumentWidget *d) {
     if (d->state == fetching_DocumentState) {
         d->state = receivedPartialResponse_DocumentState;
@@ -395,6 +302,14 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 updateVisible_DocumentWidget_(d);
                 refresh_Widget(w);
                 return iTrue;
+            case SDLK_UP:
+            case SDLK_DOWN:
+                if (mods == 0) {
+                    scroll_DocumentWidget_(d, 2 * lineHeight_Text(paragraph_FontId) *
+                                                  (key == SDLK_UP ? -1 : 1));
+                    return iTrue;
+                }
+                break;
             case SDLK_PAGEUP:
             case SDLK_PAGEDOWN:
             case ' ':
@@ -485,7 +400,6 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
     iDrawContext ctx = { .widget = d, .bounds = documentBounds_DocumentWidget_(d) };
     init_Paint(&ctx.paint);
     fillRect_Paint(&ctx.paint, bounds, gray25_ColorId);
-//    if (d->state != ready_DocumentState) return;
     setClip_Paint(&ctx.paint, bounds);
     render_GmDocument(d->doc, visibleRange_DocumentWidget_(d), drawRun_DrawContext_, &ctx);
     clearClip_Paint(&ctx.paint);
