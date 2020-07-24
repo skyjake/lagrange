@@ -1,6 +1,6 @@
 #pragma once
 
-#include <the_Foundation/defs.h>
+#include <the_Foundation/range.h>
 
 enum iColorId {
     none_ColorId = -1,
@@ -48,3 +48,4 @@ struct Impl_Color {
 };
 
 iColor  get_Color   (int color);
+iColor  ansi_Color  (iRangecc escapeSequence, int fallback);

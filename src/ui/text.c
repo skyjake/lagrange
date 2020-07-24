@@ -11,6 +11,7 @@
 #include <the_Foundation/file.h>
 #include <the_Foundation/hash.h>
 #include <the_Foundation/math.h>
+#include <the_Foundation/regexp.h>
 #include <the_Foundation/path.h>
 #include <the_Foundation/vec2.h>
 
@@ -89,12 +90,14 @@ struct Impl_Text {
     iInt2         cachePos;
     int           cacheRowHeight;
     SDL_Palette * grayscale;
+    iRegExp *     ansiEscape;
 };
 
 static iText text_;
 
 void init_Text(SDL_Renderer *render) {
     iText *d = &text_;
+    d->ansiEscape = new_RegExp("\\[([0-9;]+)m", 0);
     d->render = render;
     /* A grayscale palette for rasterized glyphs. */ {
         SDL_Color colors[256];
@@ -117,6 +120,7 @@ void init_Text(SDL_Renderer *render) {
     }
     /* Load the fonts. */ {
         const struct { const iBlock *ttf; int size; } fontData[max_FontId] = {
+            { &fontSourceSansProRegular_Embedded, fontSize_UI },
             { &fontFiraSansRegular_Embedded, fontSize_UI },
             { &fontFiraMonoRegular_Embedded, fontSize_UI * 0.866f },
             { &fontFiraMonoRegular_Embedded, fontSize_UI * 0.666f },
@@ -141,6 +145,7 @@ void deinit_Text(void) {
     }
     SDL_DestroyTexture(d->cache);
     d->render = NULL;
+    iRelease(d->ansiEscape);
 }
 
 static SDL_Surface *rasterizeGlyph_Font_(const iFont *d, iChar ch, float xShift) {
@@ -414,6 +419,20 @@ static iInt2 run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
     iChar prevCh = 0;
     for (const char *chPos = text.start; chPos != text.end; ) {
         iAssert(chPos < text.end);
+        if (*chPos == 0x1b) {
+            /* ANSI escape. */
+            chPos++;
+            iRegExpMatch m;
+            if (match_RegExp(text_.ansiEscape, chPos, text.end - chPos, &m)) {
+                if (mode == draw_RunMode) {
+                    /* Change the color. */
+                    const iColor clr = ansi_Color(capturedRange_RegExpMatch(&m, 1), gray75_ColorId);
+                    SDL_SetTextureColorMod(text_.cache, clr.r, clr.g, clr.b);
+                }
+                chPos = end_RegExpMatch(&m);
+                continue;
+            }
+        }
         iChar ch = nextChar_(&chPos, text.end);
         /* Special instructions. */ {
             if (ch == '\n') {
@@ -424,8 +443,8 @@ static iInt2 run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
             }
             if (ch == '\r') {
                 const iChar esc = nextChar_(&chPos, text.end);
-                const iColor clr = get_Color(esc - '0');
                 if (mode == draw_RunMode) {
+                    const iColor clr = get_Color(esc - '0');
                     SDL_SetTextureColorMod(text_.cache, clr.r, clr.g, clr.b);
                 }
                 prevCh = 0;

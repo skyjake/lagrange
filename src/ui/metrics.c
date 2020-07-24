@@ -2,7 +2,7 @@
 
 #include <the_Foundation/math.h>
 
-#define defaultFontSize_Metrics     20
+#define defaultFontSize_Metrics     18
 #define defaultGap_Metrics          4
 
 int   gap_UI      = defaultGap_Metrics;

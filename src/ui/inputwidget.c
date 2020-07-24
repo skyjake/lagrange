@@ -3,6 +3,7 @@
 #include "util.h"
 
 #include <the_Foundation/array.h>
+#include <SDL_clipboard.h>
 #include <SDL_timer.h>
 
 static const int REFRESH_INTERVAL = 256;
@@ -132,6 +133,23 @@ void end_InputWidget(iInputWidget *d, iBool accept) {
     postCommand_Widget(w, "input.ended id:%s arg:%d", id, accept ? 1 : 0);
 }
 
+static void insertChar_InputWidget_(iInputWidget *d, iChar chr) {
+    if (d->mode == insert_InputMode) {
+        insert_Array(&d->text, d->cursor, &chr);
+        d->cursor++;
+    }
+    else if (d->maxLen == 0 || d->cursor < d->maxLen) {
+        if (d->cursor >= size_Array(&d->text)) {
+            resize_Array(&d->text, d->cursor + 1);
+        }
+        set_Array(&d->text, d->cursor++, &chr);
+        if (d->maxLen && d->cursor == d->maxLen) {
+            setFocus_Widget(NULL);
+        }
+    }
+    refresh_Widget(as_Widget(d));
+}
+
 static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
     if (isCommand_Widget(w, ev, "focus.gained")) {
@@ -161,6 +179,20 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
     if (ev->type == SDL_KEYDOWN && isFocused_Widget(w)) {
         const int key  = ev->key.keysym.sym;
         const int mods = keyMods_Sym(ev->key.keysym.mod);
+        if (mods == KMOD_PRIMARY) {
+            switch (key) {
+                case 'v':
+                    if (SDL_HasClipboardText()) {
+                        char *text = SDL_GetClipboardText();
+                        iString *paste = collect_String(newCStr_String(text));
+                        SDL_free(text);
+                        iConstForEach(String, i, paste) {
+                            insertChar_InputWidget_(d, i.value);
+                        }
+                    }
+                    return iTrue;
+            }
+        }
         switch (key) {
             case SDLK_RETURN:
             case SDLK_KP_ENTER:
@@ -237,21 +269,9 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
     }
     else if (ev->type == SDL_TEXTINPUT && isFocused_Widget(w)) {
         const iString *uni = collectNewCStr_String(ev->text.text);
-        const iChar    chr = first_String(uni);
-        if (d->mode == insert_InputMode) {
-            insert_Array(&d->text, d->cursor, &chr);
-            d->cursor++;
+        iConstForEach(String, i, uni) {
+            insertChar_InputWidget_(d, i.value);
         }
-        else {
-            if (d->cursor >= size_Array(&d->text)) {
-                resize_Array(&d->text, d->cursor + 1);
-            }
-            set_Array(&d->text, d->cursor++, &chr);
-            if (d->maxLen && d->cursor == d->maxLen) {
-                setFocus_Widget(NULL);
-            }
-        }
-        refresh_Widget(w);
         return iTrue;
     }
     return processEvent_Widget(w, ev);
@@ -259,7 +279,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
 
 static void draw_InputWidget_(const iInputWidget *d) {
     const uint32_t time   = frameTime_Window(get_Window());
-    const iInt2 padding   = init_I2(3 * gap_UI, gap_UI);
+    const iInt2 padding   = init_I2(3 * gap_UI, gap_UI / 2);
     iRect       bounds    = adjusted_Rect(bounds_Widget(constAs_Widget(d)), padding, neg_I2(padding));
     const iBool isFocused = isFocused_Widget(constAs_Widget(d));
     const iBool isHover   = isHover_Widget(constAs_Widget(d)) &&
@@ -286,13 +306,19 @@ static void draw_InputWidget_(const iInputWidget *d) {
         }
         xOff = iMin(xOff, 0);
     }
-    draw_Text(d->font, addX_I2(topLeft_Rect(bounds), xOff), white_ColorId, cstr_String(&text));
+    const int yOff = (height_Rect(bounds) - lineHeight_Text(d->font)) / 2;
+    draw_Text(d->font,
+              add_I2(topLeft_Rect(bounds),
+                     init_I2(xOff, yOff)),
+              white_ColorId,
+              cstr_String(&text));
     clearClip_Paint(&p);
     /* Cursor blinking. */
     if (isFocused && (time & 256)) {
         const iInt2 prefixSize = advanceN_Text(d->font, cstr_String(&text), d->cursor);
-        const iInt2 curPos     = init_I2(xOff + left_Rect(bounds) + prefixSize.x, top_Rect(bounds));
-        const iRect curRect    = { curPos, addX_I2(emSize, 1) };
+        const iInt2 curPos = init_I2(xOff + left_Rect(bounds) + prefixSize.x,
+                                     yOff + top_Rect(bounds));
+        const iRect curRect = { curPos, addX_I2(emSize, 1) };
         iString     cur;
         if (d->cursor < size_Array(&d->text)) {
             initUnicodeN_String(&cur, constAt_Array(&d->text, d->cursor), 1);

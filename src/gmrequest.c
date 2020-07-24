@@ -58,9 +58,9 @@ void deinit_GmRequest(iGmRequest *d) {
             iDisconnectObject(TlsRequest, d->req, finished, d);
             cancel_TlsRequest(d->req);
             d->state = finished_GmRequestState;
-            iRelease(d->req);
-            d->req = NULL;
         }
+        iRelease(d->req);
+        d->req = NULL;
     }
     unlock_Mutex(&d->mutex);
     delete_Audience(d->finished);
@@ -235,6 +235,10 @@ const iBlock *body_GmRequest(const iGmRequest *d) {
     iBlock *body;
     iGuardMutex(&d->mutex, body = collect_Block(copy_Block(&d->body)));
     return body;
+}
+
+const iString *url_GmRequest(const iGmRequest *d) {
+    return &d->url;
 }
 
 iDefineClass(GmRequest)

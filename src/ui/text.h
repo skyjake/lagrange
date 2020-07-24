@@ -7,6 +7,7 @@
 
 enum iFontId {
     default_FontId,
+    regular_FontId,
     monospace_FontId,
     monospaceSmall_FontId,
     medium_FontId,
@@ -17,9 +18,11 @@ enum iFontId {
     hugeBold_FontId,
     max_FontId,
     /* UI fonts: */
-    uiInput_FontId = monospace_FontId,
+    uiLabel_FontId     = default_FontId,
+    uiShortcuts_FontId = default_FontId,
+    uiInput_FontId     = monospace_FontId,
     /* Document fonts: */
-    paragraph_FontId         = default_FontId,
+    paragraph_FontId         = regular_FontId,
     firstParagraph_FontId    = medium_FontId,
     preformatted_FontId      = monospace_FontId,
     preformattedSmall_FontId = monospaceSmall_FontId,
@@ -27,7 +30,6 @@ enum iFontId {
     header1_FontId           = hugeBold_FontId,
     header2_FontId           = largeBold_FontId,
     header3_FontId           = medium_FontId,
-    uiShortcuts_FontId       = default_FontId,
 };
 
 #define specialSymbol_Text  0x10

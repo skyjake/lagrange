@@ -21,3 +21,4 @@ const char *        error_GmRequest         (const iGmRequest *); /* NULL if suc
 enum iGmStatusCode  status_GmRequest        (const iGmRequest *);
 const iString *     meta_GmRequest          (const iGmRequest *);
 const iBlock  *     body_GmRequest          (const iGmRequest *);
+const iString *     url_GmRequest           (const iGmRequest *);

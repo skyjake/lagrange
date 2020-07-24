@@ -151,7 +151,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         header1_FontId,
         header2_FontId,
         header3_FontId,
-        default_FontId,
+        regular_FontId,
     };
     static const int colors[max_GmLineType] = {
         gray75_ColorId,
@@ -267,7 +267,13 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             const char *contPos;
             run.bounds.size = tryAdvanceRange_Text(
                 run.font, runLine, isPreformat ? 0 : (d->size.x - run.bounds.pos.x), &contPos);
-            run.text = (iRangecc){ runLine.start, contPos };
+            if (contPos > runLine.start) {
+                run.text = (iRangecc){ runLine.start, contPos };
+            }
+            else {
+                run.text = runLine;
+                contPos = runLine.end;
+            }
             pushBack_Array(&d->layout, &run);
             runLine.start = contPos;
             trimStart_Rangecc(&runLine);

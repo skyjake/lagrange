@@ -368,6 +368,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         checkResponseCode_DocumentWidget_(d);
         d->state = ready_DocumentState;
         iReleasePtr(&d->request);
+        postCommandf_App("document.changed url:%s", cstr_String(d->url));
         return iTrue;
     }
     else if (isCommand_Widget(w, ev, "scroll.moved")) {

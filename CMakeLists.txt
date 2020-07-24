@@ -19,6 +19,7 @@ set (EMBED_RESOURCES
     res/FiraSans-Bold.ttf
     res/FiraSans-LightItalic.ttf
     res/FiraMono-Regular.ttf
+    res/SourceSansPro-Regular.ttf
 )
 # if (UNIX AND NOT APPLE)
 #     list (APPEND EMBED_RESOURCES res/appicon-64.png)
