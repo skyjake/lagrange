@@ -2,6 +2,8 @@
 
 /* Response status codes. */
 enum iGmStatusCode {
+    failedToOpenFile_GmStatusCode          = -2,
+    invalidHeader_GmStatusCode             = -1,
     none_GmStatusCode                      = 0,
     input_GmStatusCode                     = 10,
     sensitiveInput_GmStatusCode            = 11,

@@ -33,8 +33,12 @@ set (SOURCES
     src/app.c
     src/app.h
     src/gemini.h
-    src/gmdocument.h
     src/gmdocument.c
+    src/gmdocument.h
+    src/gmrequest.c
+    src/gmrequest.h
+    src/gmutil.c
+    src/gmutil.h
     src/stb_image.h
     src/stb_truetype.h
     # User interface:
@@ -42,8 +46,8 @@ set (SOURCES
     src/ui/color.h
     src/ui/command.c
     src/ui/command.h
-    src/ui/documentwidget.h
     src/ui/documentwidget.c
+    src/ui/documentwidget.h
     src/ui/metrics.c
     src/ui/metrics.h
     src/ui/paint.c

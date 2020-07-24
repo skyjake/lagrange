@@ -17,9 +17,7 @@ struct Impl_GmRun {
     iGmLinkId linkId; /* zero for non-links */
 };
 
-iDeclareType(GmDocument)
 iDeclareClass(GmDocument)
-
 iDeclareObjectConstruction(GmDocument)
 
 void    setWidth_GmDocument     (iGmDocument *, int width);

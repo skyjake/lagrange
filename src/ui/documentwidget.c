@@ -6,16 +6,20 @@
 #include "app.h"
 #include "../gemini.h"
 #include "../gmdocument.h"
+#include "../gmrequest.h"
+#include "../gmutil.h"
 
 #include <the_Foundation/file.h>
 #include <the_Foundation/path.h>
 #include <the_Foundation/ptrarray.h>
 #include <the_Foundation/regexp.h>
-#include <the_Foundation/tlsrequest.h>
+
+#include <SDL_timer.h>
 
 enum iDocumentState {
     blank_DocumentState,
     fetching_DocumentState,
+    receivedPartialResponse_DocumentState,
     layout_DocumentState,
     ready_DocumentState,
 };
@@ -24,9 +28,8 @@ struct Impl_DocumentWidget {
     iWidget widget;
     enum iDocumentState state;
     iString *url;
-    iTlsRequest *request;
-    int statusCode;
-    iString *newSource;
+    iGmRequest *request;
+    iAtomicInt isSourcePending; /* request has new content, need to parse it */
     iGmDocument *doc;
     int pageMargin;
     int scrollY;
@@ -36,37 +39,6 @@ struct Impl_DocumentWidget {
     iScrollWidget *scroll;
 };
 
-iDeclareType(Url)
-
-struct Impl_Url {
-    iRangecc protocol;
-    iRangecc host;
-    iRangecc port;
-    iRangecc path;
-    iRangecc query;
-};
-
-void init_Url(iUrl *d, const iString *text) {
-    iRegExp *pattern =
-        new_RegExp("(.+)://([^/:?]*)(:[0-9]+)?([^?]*)(\\?.*)?", caseInsensitive_RegExpOption);
-    iRegExpMatch m;
-    if (matchString_RegExp(pattern, text, &m)) {
-        d->protocol = capturedRange_RegExpMatch(&m, 1);
-        d->host     = capturedRange_RegExpMatch(&m, 2);
-        d->port     = capturedRange_RegExpMatch(&m, 3);
-        if (!isEmpty_Range(&d->port)) {
-            /* Don't include the colon. */
-            d->port.start++;
-        }
-        d->path  = capturedRange_RegExpMatch(&m, 4);
-        d->query = capturedRange_RegExpMatch(&m, 5);
-    }
-    else {
-        iZap(*d);
-    }
-    iRelease(pattern);
-}
-
 iDefineObjectConstruction(DocumentWidget)
 
 void init_DocumentWidget(iDocumentWidget *d) {
@@ -75,9 +47,13 @@ void init_DocumentWidget(iDocumentWidget *d) {
     setId_Widget(w, "document");
     d->state      = blank_DocumentState;
     d->url        = new_String();
-    d->statusCode = 0;
+//    d->statusCode = 0;
     d->request    = NULL;
-    d->newSource  = new_String();
+    d->isSourcePending = iFalse;
+//    d->requestTimeout = 0;
+//    d->readPending = iFalse;
+//    d->newSource  = new_String();
+//    d->needSourceUpdate = iFalse;
     d->doc        = new_GmDocument();
     d->pageMargin = 5;
     d->scrollY    = 0;
@@ -90,7 +66,8 @@ void init_DocumentWidget(iDocumentWidget *d) {
 void deinit_DocumentWidget(iDocumentWidget *d) {
     deinit_PtrArray(&d->visibleLinks);
     delete_String(d->url);
-    delete_String(d->newSource);
+//    delete_String(d->newSource);
+    iRelease(d->request);
     iRelease(d->doc);
 }
 
@@ -111,90 +88,63 @@ static iRect documentBounds_DocumentWidget_(const iDocumentWidget *d) {
     return rect;
 }
 
-#if 0
-void setSource_DocumentWidget(iDocumentWidget *d, const iString *source) {
-    /* TODO: lock source during update */
-    setSource_GmDocument(d->doc, source, documentWidth_DocumentWidget_(d));
-    d->state = ready_DocumentState;
-}
-#endif
-
 static iRangecc getLine_(iRangecc text) {
     iRangecc line = { text.start, text.start };
     for (; *line.end != '\n' && line.end != text.end; line.end++) {}
     return line;
 }
 
-static void requestFinished_DocumentWidget_(iAnyObject *obj) {
+static void requestUpdated_DocumentWidget_(iAnyObject *obj) {
+#if 0
     iDocumentWidget *d = obj;
     iBlock *response = readAll_TlsRequest(d->request);
-    iRangecc responseRange = { constBegin_Block(response), constEnd_Block(response) };
-    iRangecc respLine = getLine_(responseRange);
-    responseRange.start = respLine.end + 1;
-    /* First line is the status code. */ {
-        iString *line = newRange_String(respLine);
-        trim_String(line);
-        d->statusCode = toInt_String(line);
-        printf("response (%02d): %s\n", d->statusCode, cstr_String(line));
-        /* TODO: post a command with the status code */
-        switch (d->statusCode) {
-            case redirectPermanent_GmStatusCode:
-            case redirectTemporary_GmStatusCode:
-                postCommandf_App("open url:%s", cstr_String(line) + 3);
-                break;
+    if (d->state == fetching_DocumentState) {
+        iRangecc responseRange = { constBegin_Block(response), constEnd_Block(response) };
+        iRangecc respLine = getLine_(responseRange);
+        responseRange.start = respLine.end + 1;
+        /* First line is the status code. */ {
+            iString *line = newRange_String(respLine);
+            trim_String(line);
+            d->statusCode = toInt_String(line);
+            printf("response (%02d): %s\n", d->statusCode, cstr_String(line));
+            /* TODO: post a command with the status code */
+            switch (d->statusCode) {
+                case redirectPermanent_GmStatusCode:
+                case redirectTemporary_GmStatusCode:
+                    postCommandf_App("open url:%s", cstr_String(line) + 3);
+                    break;
+            }
+            delete_String(line);
         }
-        delete_String(line);
+        setCStrN_String(d->newSource, responseRange.start, size_Range(&responseRange));
+        d->requestTimeout = SDL_AddTimer(2000, requestTimedOut_DocumentWidget_, d);
+        d->state = receivedPartialResponse_DocumentState;
     }
-    setCStrN_String(d->newSource, responseRange.start, size_Range(&responseRange));
+    else if (d->state == receivedPartialResponse_DocumentState) {
+        appendCStr_String(d->newSource, cstr_Block(response));
+        d->needSourceUpdate = iTrue;
+    }
     delete_Block(response);
+    refresh_Widget(as_Widget(d));
+#endif
+    iDocumentWidget *d = obj;
+    const int wasPending = exchange_Atomic(&d->isSourcePending, iTrue);
+    if (!wasPending) {
+        postCommand_Widget(obj, "document.request.updated request:%p", d->request);
+    }
+}
+
+static void requestFinished_DocumentWidget_(iAnyObject *obj) {
+    iDocumentWidget *d = obj;
+    /*
     iReleaseLater(d->request);
     d->request = NULL;
-    fflush(stdout);
-    refresh_Widget(constAs_Widget(d));
-}
-
-static void fetch_DocumentWidget_(iDocumentWidget *d) {
-    iAssert(!d->request);
-    d->state = fetching_DocumentState;
-    d->statusCode = 0;
-    iUrl url;
-    init_Url(&url, d->url);
-    if (!cmpCStrSc_Rangecc(&url.protocol, "file", &iCaseInsensitive)) {
-        iFile *f = new_File(collect_String(newRange_String(url.path)));
-        if (open_File(f, readOnly_FileMode)) {
-            setBlock_String(d->newSource, collect_Block(readAll_File(f)));
-            refresh_Widget(constAs_Widget(d));
-        }
-        iRelease(f);
-        return;
+    if (d->requestTimeout) {
+        SDL_RemoveTimer(d->requestTimeout);
+        d->requestTimeout = 0;
     }
-    d->request = new_TlsRequest();
-    uint16_t port = toInt_String(collect_String(newRange_String(url.port)));
-    if (port == 0) {
-        port = 1965; /* default Gemini port */
-    }
-    setUrl_TlsRequest(d->request, collect_String(newRange_String(url.host)), port);
-    /* The request string is an UTF-8 encoded absolute URL. */
-    iString *content = collectNew_String();
-    append_String(content, d->url);
-    appendCStr_String(content, "\r\n");
-    setContent_TlsRequest(d->request, utf8_String(content));
-    iConnect(TlsRequest, d->request, finished, d, requestFinished_DocumentWidget_);
-    submit_TlsRequest(d->request);
-}
-
-void setUrl_DocumentWidget(iDocumentWidget *d, const iString *url) {
-    iString *newUrl = new_String();
-    if (indexOfCStr_String(url, "://") == iInvalidPos && !startsWithCase_String(url, "gemini:")) {
-        /* Prepend default protocol. */
-        setCStr_String(newUrl, "gemini://");
-    }
-    append_String(newUrl, url);
-    if (cmpStringSc_String(d->url, newUrl, &iCaseInsensitive)) {
-        set_String(d->url, newUrl);
-        fetch_DocumentWidget_(d);
-    }
-    delete_String(newUrl);
+    refresh_Widget(constAs_Widget(d));*/
+    postCommand_Widget(obj, "document.request.finished request:%p", d->request);
 }
 
 static iRangei visibleRange_DocumentWidget_(const iDocumentWidget *d) {
@@ -225,6 +175,54 @@ static void updateVisible_DocumentWidget_(iDocumentWidget *d) {
                           docSize > 0 ? height_Rect(bounds) * size_Range(&visRange) / docSize : 0);
     clear_PtrArray(&d->visibleLinks);
     render_GmDocument(d->doc, visRange, addVisibleLink_DocumentWidget_, d);
+}
+
+static void updateSource_DocumentWidget_(iDocumentWidget *d) {
+    /* Update the document? */
+    //    if (d->needSourceUpdate) {
+    /* TODO: Do this in the background. However, that requires a text metrics calculator
+           that does not try to cache the glyph bitmaps. */
+    iString str;
+    initBlock_String(&str, body_GmRequest(d->request));
+    setSource_GmDocument(d->doc, &str, documentWidth_DocumentWidget_(d));
+    deinit_String(&str);
+    updateVisible_DocumentWidget_(d);
+    refresh_Widget(as_Widget(d));
+    //        d->state = ready_DocumentState;
+    //        if (!d->request) {
+    //            d->needSourceUpdate = iFalse;
+    //            postCommandf_App("document.changed url:%s", cstr_String(d->url));
+    //        }
+    //    }
+}
+
+static void fetch_DocumentWidget_(iDocumentWidget *d) {
+    /* Forget the previous request. */
+    if (d->request) {
+        iRelease(d->request);
+        d->request = NULL;
+    }
+    d->state = fetching_DocumentState;
+    set_Atomic(&d->isSourcePending, iFalse);
+    d->request = new_GmRequest();
+    setUrl_GmRequest(d->request, d->url);
+    iConnect(GmRequest, d->request, updated, d, requestUpdated_DocumentWidget_);
+    iConnect(GmRequest, d->request, finished, d, requestFinished_DocumentWidget_);
+    submit_GmRequest(d->request);
+}
+
+void setUrl_DocumentWidget(iDocumentWidget *d, const iString *url) {
+    iString *newUrl = new_String();
+    if (indexOfCStr_String(url, "://") == iInvalidPos && !startsWithCase_String(url, "gemini:")) {
+        /* Prepend default protocol. */
+        setCStr_String(newUrl, "gemini://");
+    }
+    append_String(newUrl, url);
+    if (cmpStringSc_String(d->url, newUrl, &iCaseInsensitive)) {
+        set_String(d->url, newUrl);
+        fetch_DocumentWidget_(d);
+    }
+    delete_String(newUrl);
 }
 
 static void scroll_DocumentWidget_(iDocumentWidget *d, int offset) {
@@ -296,12 +294,81 @@ static const iString *absoluteUrl_DocumentWidget_(const iDocumentWidget *d, cons
     return collect_String(absolute);
 }
 
+static void readResponse_DocumentWidget_(iDocumentWidget *d) {
+#if 0
+    d->readPending = iFalse;
+    iBlock *response = collect_Block(readAll_TlsRequest(d->request));
+    if (isEmpty_Block(response)) {
+        return;
+    }
+    if (d->state == fetching_DocumentState) {
+        /* TODO: Bug here is that the first read may occur before the first line is
+           available, so nothing gets done. Should ensure that the status code is
+           read successully. */
+        iRangecc responseRange = { constBegin_Block(response), constEnd_Block(response) };
+        iRangecc respLine = getLine_(responseRange);
+        responseRange.start = respLine.end + 1;
+        /* First line is the status code. */ {
+            iString *line = collect_String(newRange_String(respLine));
+            trim_String(line);
+            d->statusCode = toInt_String(line);
+            printf("response (%02d): %s\n", d->statusCode, cstr_String(line));
+            /* TODO: post a command with the status code */
+            switch (d->statusCode) {
+                case redirectPermanent_GmStatusCode:
+                case redirectTemporary_GmStatusCode:
+                    postCommandf_App("open url:%s", cstr_String(line) + 3);
+                    return;
+            }
+        }
+        setCStrN_String(d->newSource, responseRange.start, size_Range(&responseRange));
+        d->requestTimeout = SDL_AddTimer(2000, requestTimedOut_DocumentWidget_, d);
+        d->state = receivedPartialResponse_DocumentState;
+        d->scrollY = 0;
+    }
+    else if (d->state == receivedPartialResponse_DocumentState) {
+        appendCStr_String(d->newSource, cstr_Block(response));
+    }
+#endif
+    updateSource_DocumentWidget_(d);
+}
+
+static void checkResponseCode_DocumentWidget_(iDocumentWidget *d) {
+    if (d->state == fetching_DocumentState) {
+        d->state = receivedPartialResponse_DocumentState;
+        d->scrollY = 0;
+        switch (status_GmRequest(d->request)) {
+            case redirectTemporary_GmStatusCode:
+            case redirectPermanent_GmStatusCode:
+                postCommandf_App("open url:%s", cstr_String(meta_GmRequest(d->request)));
+                iReleasePtr(&d->request);
+                break;
+            default:
+                break;
+        }
+    }
+}
+
 static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
     if (isResize_UserEvent(ev)) {
         setWidth_GmDocument(d->doc, documentWidth_DocumentWidget_(d));
         updateVisible_DocumentWidget_(d);
         refresh_Widget(w);
+    }
+    else if (isCommand_Widget(w, ev, "document.request.updated") &&
+             pointerLabel_Command(command_UserEvent(ev), "request") == d->request) {
+        updateSource_DocumentWidget_(d);
+        checkResponseCode_DocumentWidget_(d);
+        return iTrue;
+    }
+    else if (isCommand_Widget(w, ev, "document.request.finished") &&
+             pointerLabel_Command(command_UserEvent(ev), "request") == d->request) {
+        updateSource_DocumentWidget_(d);
+        checkResponseCode_DocumentWidget_(d);
+        d->state = ready_DocumentState;
+        iReleasePtr(&d->request);
+        return iTrue;
     }
     else if (isCommand_Widget(w, ev, "scroll.moved")) {
         d->scrollY = arg_Command(command_UserEvent(ev));
@@ -417,19 +484,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
     iDrawContext ctx = { .widget = d, .bounds = documentBounds_DocumentWidget_(d) };
     init_Paint(&ctx.paint);
     fillRect_Paint(&ctx.paint, bounds, gray25_ColorId);
-    /* Update the document? */
-    if (!isEmpty_String(d->newSource)) {
-        iDocumentWidget *m = iConstCast(iDocumentWidget *, d);
-        /* TODO: Do this in the background. However, that requires a text metrics calculator
-           that does not try to cache the glyph bitmaps. */
-        setSource_GmDocument(m->doc, m->newSource, width_Rect(ctx.bounds));
-        postCommandf_App("document.changed url:%s", cstr_String(d->url));
-        clear_String(m->newSource);
-        m->scrollY = 0;
-        m->state = ready_DocumentState;
-        updateVisible_DocumentWidget_(m);
-    }
-    if (d->state != ready_DocumentState) return;    
+//    if (d->state != ready_DocumentState) return;
     setClip_Paint(&ctx.paint, bounds);
     render_GmDocument(d->doc, visibleRange_DocumentWidget_(d), drawRun_DrawContext_, &ctx);
     clearClip_Paint(&ctx.paint);

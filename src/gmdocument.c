@@ -133,11 +133,11 @@ static void clearLinks_GmDocument_(iGmDocument *d) {
 }
 
 static void doLayout_GmDocument_(iGmDocument *d) {
+    clear_Array(&d->layout);
+    clearLinks_GmDocument_(d);
     if (d->size.x <= 0 || isEmpty_String(&d->source)) {
         return;
     }
-    clear_Array(&d->layout);
-    clearLinks_GmDocument_(d);
     iBool isPreformat = iFalse;
     iInt2 pos = zero_I2();
     const iRangecc content = range_String(&d->source);

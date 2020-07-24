@@ -49,7 +49,7 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
         }
         return iTrue;
     }
-    else if (equal_Command(cmd, "setfocus")) {
+    else if (equal_Command(cmd, "focus.set")) {
         setFocus_Widget(findWidget_App(cstr_String(string_Command(cmd, "id"))));
         return iTrue;
     }
@@ -273,7 +273,7 @@ static void setupUserInterface_Window(iWindow *d) {
 #endif
     /* Glboal keyboard shortcuts. */ {
         // addAction_Widget(d->root, SDLK_LEFTBRACKET, KMOD_SHIFT | KMOD_PRIMARY, "tabs.prev");
-        addAction_Widget(d->root, 'l', KMOD_PRIMARY, "setfocus id:url");
+        addAction_Widget(d->root, 'l', KMOD_PRIMARY, "focus.set id:url");
     }
 }
 
