@@ -111,8 +111,8 @@ static void setupUserInterface_Window(iWindow *d) {
         setCommandHandler_Widget(navBar, handleNavBarCommands_);
         setBackgroundColor_Widget(navBar, gray25_ColorId);
 
-        addChild_Widget(navBar, iClob(new_LabelWidget("Back", 0, 0, "navigate.back")));
-        addChild_Widget(navBar, iClob(new_LabelWidget("Fwd", 0, 0, "navigate.forward")));
+        addChild_Widget(navBar, iClob(new_LabelWidget(" \u25c4 ", 0, 0, "navigate.back")));
+        addChild_Widget(navBar, iClob(new_LabelWidget(" \u25ba ", 0, 0, "navigate.forward")));
         addChild_Widget(navBar, iClob(new_LabelWidget("Home", 0, 0, "navigate.home")));
         iInputWidget *url = new_InputWidget(0);
         setId_Widget(as_Widget(url), "url");
