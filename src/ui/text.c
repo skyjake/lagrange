@@ -26,7 +26,6 @@ struct Impl_Glyph {
     iHashNode node;
     iRect rect[2]; /* zero and half pixel offset */
     int advance;
-    //int dx, dy;
     iInt2 d[2];
 };
 
@@ -58,10 +57,12 @@ struct Impl_Font {
     int            height;
     int            baseline;
     iHash          glyphs;
+    int            baselineOffset;
 };
 
-static void init_Font(iFont *d, const iBlock *data, int height) {
+static void init_Font(iFont *d, const iBlock *data, int height, int bloff) {
     init_Hash(&d->glyphs);
+    d->baselineOffset = bloff;
     d->data = NULL;
     d->height = height;
     iZap(d->font);
@@ -132,7 +133,8 @@ void init_Text(SDL_Renderer *render) {
             { &fontFiraSansBold_Embedded, fontSize_UI * 2.0f },
         };
         iForIndices(i, fontData) {
-            init_Font(&d->fonts[i], fontData[i].ttf, fontData[i].size);
+            init_Font(&d->fonts[i], fontData[i].ttf, fontData[i].size,
+                      i == 0 ? fontSize_UI / 20 : 0);
         }
     }
 }
@@ -237,6 +239,7 @@ static void cache_Font_(iFont *d, iGlyph *glyph, int hoff) {
                                             &glyph->d[hoff].y,
                                             NULL,
                                             NULL);
+        glyph->d[hoff].y += d->baselineOffset;
         fromStb = iTrue;
         tex = SDL_CreateTextureFromSurface(render, surface);
         glRect->size = init_I2(surface->w, surface->h);
