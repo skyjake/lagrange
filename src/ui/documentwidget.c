@@ -151,7 +151,7 @@ static void fetch_DocumentWidget_(iDocumentWidget *d) {
         iRelease(d->request);
         d->request = NULL;
     }
-    postCommand_Widget(as_Widget(d), "document.request.started");
+    postCommandf_App("document.request.started url:%s", cstr_String(d->url));
     d->state = fetching_DocumentState;
     set_Atomic(&d->isSourcePending, iFalse);
     d->request = new_GmRequest();

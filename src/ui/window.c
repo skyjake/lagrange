@@ -98,6 +98,11 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
         return iFalse;
     }
     else if (equal_Command(cmd, "document.request.started")) {
+        iInputWidget *url = findChild_Widget(navBar, "url");
+        if (isFocused_Widget(as_Widget(url))) {
+            setFocus_Widget(NULL);
+        }
+        setTextCStr_InputWidget(url, valuePtr_Command(cmd, "url"));
         updateTextCStr_LabelWidget(findChild_Widget(navBar, "reload"), stopCStr_);
         return iFalse;
     }
