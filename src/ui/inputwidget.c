@@ -311,6 +311,7 @@ static void draw_InputWidget_(const iInputWidget *d) {
               add_I2(topLeft_Rect(bounds),
                      init_I2(xOff, yOff)),
               white_ColorId,
+              "%s",
               cstr_String(&text));
     clearClip_Paint(&p);
     /* Cursor blinking. */

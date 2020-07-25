@@ -23,3 +23,12 @@ void init_Url(iUrl *d, const iString *text) {
     }
     iRelease(pattern);
 }
+
+void urlEncodeSpaces_String(iString *d) {
+    for (;;) {
+        const size_t pos = indexOfCStr_String(d, " ");
+        if (pos == iInvalidPos) break;
+        remove_Block(&d->chars, pos, 1);
+        insertData_Block(&d->chars, pos, "%20", 3);
+    }
+}

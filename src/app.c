@@ -45,17 +45,18 @@ void deinit_HistoryItem(iHistoryItem *d) {
 }
 
 #if defined (iPlatformApple)
-static const char *dataDir_App_        = "~/Library/Application Support/fi.skyjake.Lagrange";
+static const char *dataDir_App_ = "~/Library/Application Support/fi.skyjake.Lagrange";
 #endif
 #if defined (iPlatformMsys)
-static const char *dataDir_App_        = "~/AppData/Roaming/fi.skyjake.Lagrange";
+static const char *dataDir_App_ = "~/AppData/Roaming/fi.skyjake.Lagrange";
 #endif
 #if defined (iPlatformLinux)
-static const char *dataDir_App_        = "~/.config/lagrange";
+static const char *dataDir_App_ = "~/.config/lagrange";
 #endif
-static const char *prefsFileName_App_  = "prefs.cfg";
+static const char *prefsFileName_App_   = "prefs.cfg";
+static const char *historyFileName_App_ = "history.txt";
 
-static const size_t HISTORY_MAX = 100;
+static const size_t historyMax_App_ = 100;
 
 struct Impl_App {
     iCommandLine args;
@@ -111,6 +112,10 @@ static const iString *prefsFileName_(void) {
     return collect_String(concatCStr_Path(&iStringLiteral(dataDir_App_), prefsFileName_App_));
 }
 
+static const iString *historyFileName_(void) {
+    return collect_String(concatCStr_Path(&iStringLiteral(dataDir_App_), historyFileName_App_));
+}
+
 static void loadPrefs_App_(iApp *d) {
     iUnused(d);
     /* Create the data dir if it doesn't exist yet. */
@@ -150,6 +155,30 @@ static void savePrefs_App_(const iApp *d) {
     delete_String(cfg);
 }
 
+static void saveHistory_App_(const iApp *d) {
+    iFile *f = new_File(historyFileName_());
+    if (open_File(f, writeOnly_FileMode | text_FileMode)) {
+        iString *line = new_String();
+        iConstForEach(Array, i, &d->history) {
+            const iHistoryItem *item = i.value;
+            iDate date;
+            init_Date(&date, &item->when);
+            format_String(line,
+                          "%04d-%02d-%02dT%02d:%02d:%02d %s\n",
+                          date.year,
+                          date.month,
+                          date.day,
+                          date.hour,
+                          date.minute,
+                          date.second,
+                          cstr_String(&item->url));
+            writeData_File(f, cstr_String(line), size_String(line));
+        }
+        delete_String(line);
+    }
+    iRelease(f);
+}
+
 static void clearHistory_App_(iApp *d) {
     iForEach(Array, i, &d->history) {
         deinit_HistoryItem(i.value);
@@ -180,6 +209,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
 
 static void deinit_App(iApp *d) {
     savePrefs_App_(d);
+    saveHistory_App_(d);
     clearHistory_App_(d);
     deinit_Array(&d->history);
     deinit_SortedArray(&d->tickers);
@@ -385,7 +415,7 @@ iBool handleCommand_App(const char *cmd) {
                 set_String(&item.url, url);
                 pushBack_Array(&d->history, &item);
                 /* Don't make it too long. */
-                if (size_Array(&d->history) > HISTORY_MAX) {
+                if (size_Array(&d->history) > historyMax_App_) {
                     deinit_HistoryItem(front_Array(&d->history));
                     remove_Array(&d->history, 0);
                 }

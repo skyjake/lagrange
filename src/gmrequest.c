@@ -73,6 +73,7 @@ void deinit_GmRequest(iGmRequest *d) {
 
 void setUrl_GmRequest(iGmRequest *d, const iString *url) {
     set_String(&d->url, url);
+    urlEncodeSpaces_String(&d->url);
 }
 
 static uint32_t timedOutWhileReceivingBody_GmRequest_(uint32_t interval, void *obj) {
@@ -174,7 +175,8 @@ void submit_GmRequest(iGmRequest *d) {
     iUrl url;
     init_Url(&url, &d->url);
     if (!cmpCStrSc_Rangecc(&url.protocol, "file", &iCaseInsensitive)) {
-        iFile *f = new_File(collect_String(newRange_String(url.path)));
+        iString *path = collect_String(urlDecode_String(collect_String(newRange_String(url.path))));
+        iFile *  f    = new_File(path);
         if (open_File(f, readOnly_FileMode)) {
             /* TODO: Check supported file types: images, audio */
             d->code = success_GmStatusCode;
