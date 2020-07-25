@@ -309,8 +309,7 @@ static void draw_InputWidget_(const iInputWidget *d) {
     }
     const int yOff = (height_Rect(bounds) - lineHeight_Text(d->font)) / 2;
     draw_Text(d->font,
-              add_I2(topLeft_Rect(bounds),
-                     init_I2(xOff, yOff)),
+              add_I2(topLeft_Rect(bounds), init_I2(xOff, yOff)),
               white_ColorId,
               "%s",
               cstr_String(&text));
