@@ -175,7 +175,7 @@ iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
         const iMenuItem *item = &items[i];
         if (equal_CStr(item->label, "---")) {
             iWidget *sep = addChild_Widget(menu, iClob(new_Widget()));
-            setBackgroundColor_Widget(sep, gray50_ColorId);
+            setBackgroundColor_Widget(sep, black_ColorId);
             sep->rect.size.y = gap_UI / 3;
             setFlags_Widget(sep, hover_WidgetFlag | fixedHeight_WidgetFlag, iTrue);
         }

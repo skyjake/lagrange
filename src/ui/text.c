@@ -574,6 +574,24 @@ static void draw_Text_(int fontId, iInt2 pos, int color, iRangecc text) {
               NULL);
 }
 
+void drawAlign_Text(int fontId, iInt2 pos, int color, enum iAlignment align, const char *text, ...) {
+    iBlock chars;
+    init_Block(&chars, 0); {
+        va_list args;
+        va_start(args, text);
+        vprintf_Block(&chars, text, args);
+        va_end(args);
+    }
+    if (align == center_Alignment) {
+        pos.x -= measure_Text(fontId, cstr_Block(&chars)).x / 2;
+    }
+    else if (align == right_Alignment) {
+        pos.x -= measure_Text(fontId, cstr_Block(&chars)).x;
+    }
+    draw_Text_(fontId, pos, color, (iRangecc){ constBegin_Block(&chars), constEnd_Block(&chars) });
+    deinit_Block(&chars);
+}
+
 void draw_Text(int fontId, iInt2 pos, int color, const char *text, ...) {
     iBlock chars;
     init_Block(&chars, 0); {
@@ -582,17 +600,6 @@ void draw_Text(int fontId, iInt2 pos, int color, const char *text, ...) {
         vprintf_Block(&chars, text, args);
         va_end(args);
     }
-#if 0
-    /* BUG: A long text string may have a negative X but still be meant to the left-aligned. */
-    if (pos.x < 0) {
-        /* Right-aligned. */
-        pos.x = -pos.x - measure_Text(fontId, cstr_Block(&chars)).x;
-    }
-    if (pos.y < 0) {
-        /* Bottom-aligned. */
-        pos.y = -pos.y - lineHeight_Text(fontId);
-    }
-#endif
     draw_Text_(fontId, pos, color, (iRangecc){ constBegin_Block(&chars), constEnd_Block(&chars) });
     deinit_Block(&chars);
 }

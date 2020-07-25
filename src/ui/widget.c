@@ -405,7 +405,7 @@ void draw_Widget(const iWidget *d) {
             fillRect_Paint(&p, rect, d->bgColor);
         }
         if (d->frameColor >= 0) {
-            drawRect_Paint(&p, rect, d->frameColor);
+            drawRectThickness_Paint(&p, rect, gap_UI / 4, d->frameColor);
         }
     }
     iConstForEach(ObjectList, i, d->children) {

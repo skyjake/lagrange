@@ -193,16 +193,20 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
             iString str;
             init_String(&str);
             keyStr_LabelWidget_(d, &str);
-            draw_Text(uiShortcuts_FontId, negX_I2(add_I2(topRight_Rect(bounds), negX_I2(padding_()))),
-                      flags & pressed_WidgetFlag ? fg : cyan_ColorId, cstr_String(&str));
+            drawAlign_Text(uiShortcuts_FontId,
+                           add_I2(topRight_Rect(bounds), negX_I2(padding_())),
+                           flags & pressed_WidgetFlag ? fg : cyan_ColorId,
+                           right_Alignment,
+                           cstr_String(&str));
             deinit_String(&str);
         }
     }
     else if (flags & alignRight_WidgetFlag) {
-        draw_Text(
+        drawAlign_Text(
             d->font,
-            mul_I2(init_I2(-1, 1), add_I2(topRight_Rect(bounds), negX_I2(padding_()))),
+            add_I2(topRight_Rect(bounds), negX_I2(padding_())),
             fg,
+            right_Alignment,
             cstr_String(&d->label));
     }
     else {
