@@ -179,6 +179,29 @@ static void saveHistory_App_(const iApp *d) {
     iRelease(f);
 }
 
+static void loadHistory_App_(iApp *d) {
+    iFile *f = new_File(historyFileName_());
+    if (open_File(f, readOnly_FileMode | text_FileMode)) {
+        iString *src = newBlock_String(collect_Block(readAll_File(f)));
+        const iRangecc range = range_String(src);
+        iRangecc line = iNullRange;
+        while (nextSplit_Rangecc(&range, "\n", &line)) {
+            int y, m, D, H, M, S;
+            sscanf(line.start, "%04d-%02d-%02dT%02d:%02d:%02d", &y, &m, &D, &H, &M, &S);
+            if (!y) break;
+            iHistoryItem item;
+            init_HistoryItem(&item);
+            init_Time(
+                &item.when,
+                &(iDate){ .year = y, .month = m, .day = D, .hour = H, .minute = M, .second = S });
+            initCStrN_String(&item.url, line.start + 20, size_Range(&line) - 20);
+            pushBack_Array(&d->history, &item);
+        }
+        delete_String(src);
+    }
+    iRelease(f);
+}
+
 static void clearHistory_App_(iApp *d) {
     iForEach(Array, i, &d->history) {
         deinit_HistoryItem(i.value);
@@ -196,6 +219,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     d->retainWindowSize = iTrue;
     d->pendingRefresh   = iFalse;
     loadPrefs_App_(d);
+    loadHistory_App_(d);
     d->window = new_Window();
     /* Widget state init. */ {
         iString *homePath = newCStr_String(dataDir_App_);
