@@ -55,7 +55,7 @@ static const char *dataDir_App_        = "~/.config/lagrange";
 #endif
 static const char *prefsFileName_App_  = "prefs.cfg";
 
-static const int HISTORY_MAX = 100;
+static const size_t HISTORY_MAX = 100;
 
 struct Impl_App {
     iCommandLine args;
@@ -384,6 +384,11 @@ iBool handleCommand_App(const char *cmd) {
                 init_HistoryItem(&item);
                 set_String(&item.url, url);
                 pushBack_Array(&d->history, &item);
+                /* Don't make it too long. */
+                if (size_Array(&d->history) > HISTORY_MAX) {
+                    deinit_HistoryItem(front_Array(&d->history));
+                    remove_Array(&d->history, 0);
+                }
             }
         }
         printHistory_App_(d);
