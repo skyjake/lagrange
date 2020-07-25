@@ -6,6 +6,11 @@
 
 iDeclareType(Window)
 
+enum iAppEventMode {
+    waitForNewEvents_AppEventMode,
+    postedEventsOnly_AppEventMode,
+};
+
 enum iUserEventCode {
     command_UserEventCode = 1,
     refresh_UserEventCode  = 2,
@@ -14,7 +19,7 @@ enum iUserEventCode {
 const iString *execPath_App     (void);
 
 int         run_App             (int argc, char **argv);
-void        processEvents_App   (void);
+void        processEvents_App   (enum iAppEventMode mode);
 void        refresh_App         (void);
 
 iAny *      findWidget_App      (const char *id);

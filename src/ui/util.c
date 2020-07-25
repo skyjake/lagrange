@@ -165,6 +165,7 @@ static iBool menuHandler_(iWidget *menu, const char *cmd) {
 
 iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
     iWidget *menu = new_Widget();
+    setFrameColor_Widget(menu, black_ColorId);
     setBackgroundColor_Widget(menu, gray25_ColorId);
     setFlags_Widget(menu,
                     keepOnTop_WidgetFlag | hidden_WidgetFlag | arrangeVertical_WidgetFlag |
@@ -194,7 +195,7 @@ iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
 
 void openMenu_Widget(iWidget *d, iInt2 coord) {
     /* Menu closes when commands are emitted, so handle any pending ones beforehand. */
-    processEvents_App();
+    processEvents_App(postedEventsOnly_AppEventMode);
     setFlags_Widget(d, hidden_WidgetFlag, iFalse);
     arrange_Widget(d);
     d->rect.pos = coord;
@@ -213,10 +214,27 @@ void openMenu_Widget(iWidget *d, iInt2 coord) {
     if (left_Rect(d->rect) < 0) {
         d->rect.pos.x = 0;
     }
+    refresh_App();
 }
 
 void closeMenu_Widget(iWidget *d) {
     setFlags_Widget(d, hidden_WidgetFlag, iTrue);
+    refresh_App();
+}
+
+int checkContextMenu_Widget(iWidget *menu, const SDL_Event *ev) {
+    if (ev->type == SDL_MOUSEBUTTONDOWN && ev->button.button == SDL_BUTTON_RIGHT) {
+        if (isVisible_Widget(menu)) {
+            closeMenu_Widget(menu);
+            return 0x1;
+        }
+        const iInt2 mousePos = init_I2(ev->button.x, ev->button.y);
+        if (contains_Widget(menu->parent, mousePos)) {
+            openMenu_Widget(menu, localCoord_Widget(menu->parent, mousePos));
+        }
+        return 0x2;
+    }
+    return 0;
 }
 
 iLabelWidget *makeMenuButton_LabelWidget(const char *label, const iMenuItem *items, size_t n) {
@@ -406,6 +424,7 @@ iBool filePathHandler_(iWidget *dlg, const char *cmd) {
 iWidget *makeSheet_Widget(const char *id) {
     iWidget *sheet = new_Widget();
     setId_Widget(sheet, id);
+    setFrameColor_Widget(sheet, black_ColorId);
     setBackgroundColor_Widget(sheet, gray25_ColorId);
     setFlags_Widget(sheet,
                     keepOnTop_WidgetFlag | arrangeVertical_WidgetFlag |
@@ -429,7 +448,7 @@ void makeFilePath_Widget(iWidget *      parent,
                          const char *   acceptLabel,
                          const char *   command) {
     setFocus_Widget(NULL);
-    processEvents_App();
+    processEvents_App(postedEventsOnly_AppEventMode);
     iWidget *dlg = makeSheet_Widget(command);
     setCommandHandler_Widget(dlg, filePathHandler_);
     addChild_Widget(parent, iClob(dlg));
@@ -487,7 +506,7 @@ iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
 iWidget *makeValueInput_Widget(iWidget *parent, const iString *initialValue, const char *title,
                                const char *prompt, const char *command) {
     setFocus_Widget(NULL);
-    processEvents_App();
+    processEvents_App(postedEventsOnly_AppEventMode);
     iWidget *dlg = makeSheet_Widget(command);
     setCommandHandler_Widget(dlg, valueInputHandler_);
     addChild_Widget(parent, iClob(dlg));
@@ -530,7 +549,7 @@ iWidget *makeQuestion_Widget(const char *title,
                              const char *labels[],
                              const char *commands[],
                              size_t      count) {
-    processEvents_App();
+    processEvents_App(postedEventsOnly_AppEventMode);
     iWidget *dlg = makeSheet_Widget("");
     setCommandHandler_Widget(dlg, messageHandler_);
     addChild_Widget(dlg, iClob(new_LabelWidget(title, 0, 0, NULL)));

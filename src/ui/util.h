@@ -82,6 +82,14 @@ iWidget *   makeMenu_Widget     (iWidget *parent, const iMenuItem *items, size_t
 void        openMenu_Widget     (iWidget *, iInt2 coord);
 void        closeMenu_Widget    (iWidget *);
 
+int         checkContextMenu_Widget   (iWidget *, const SDL_Event *ev); /* see macro below */
+
+#define processContextMenuEvent_Widget(menu, sdlEvent) \
+    for (const int result = checkContextMenu_Widget((menu), (sdlEvent));;) { \
+        if (result) return result >> 1; \
+        break; \
+    }
+
 iLabelWidget *  makeMenuButton_LabelWidget  (const char *label, const iMenuItem *items, size_t n);
 
 /*-----------------------------------------------------------------------------------------------*/

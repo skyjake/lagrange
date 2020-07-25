@@ -241,10 +241,11 @@ const iString *execPath_App(void) {
     return executablePath_CommandLine(&app_.args);
 }
 
-void processEvents_App(void) {
+void processEvents_App(enum iAppEventMode eventMode) {
     iApp *d = &app_;
     SDL_Event ev;
-    while (SDL_WaitEvent(&ev)) {
+    while ((eventMode == waitForNewEvents_AppEventMode && SDL_WaitEvent(&ev)) ||
+           (eventMode == postedEventsOnly_AppEventMode && SDL_PollEvent(&ev))) {
         switch (ev.type) {
             case SDL_QUIT:
                 // if (isModified_Song(d->song)) {
@@ -303,7 +304,7 @@ static int run_App_(iApp *d) {
     SDL_EventState(SDL_DROPFILE, SDL_ENABLE); /* open files via drag'n'drop */
     while (d->running) {
         runTickers_App_(d);
-        processEvents_App(); /* may wait here for a while */
+        processEvents_App(waitForNewEvents_AppEventMode);
         refresh_App();
     }
     return 0;
@@ -429,14 +430,17 @@ iBool handleCommand_App(const char *cmd) {
                     d->historyPos = 0;
                 }
                 /* Insert new item. */
-                iHistoryItem item;
-                init_HistoryItem(&item);
-                set_String(&item.url, url);
-                pushBack_Array(&d->history, &item);
-                /* Don't make it too long. */
-                if (size_Array(&d->history) > historyMax_App_) {
-                    deinit_HistoryItem(front_Array(&d->history));
-                    remove_Array(&d->history, 0);
+                const iHistoryItem *lastItem = historyItem_App_(d, 0);
+                if (!lastItem || cmpString_String(&lastItem->url, url) != 0) {
+                    iHistoryItem item;
+                    init_HistoryItem(&item);
+                    set_String(&item.url, url);
+                    pushBack_Array(&d->history, &item);
+                    /* Don't make it too long. */
+                    if (size_Array(&d->history) > historyMax_App_) {
+                        deinit_HistoryItem(front_Array(&d->history));
+                        remove_Array(&d->history, 0);
+                    }
                 }
             }
         }
