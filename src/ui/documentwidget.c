@@ -87,6 +87,12 @@ static iRect documentBounds_DocumentWidget_(const iDocumentWidget *d) {
     rect.pos.x  = bounds.size.x / 2 - rect.size.x / 2;
     rect.pos.y  = top_Rect(bounds) + margin;
     rect.size.y = height_Rect(bounds) - 2 * margin;
+    if (size_GmDocument(d->doc).y < rect.size.y) {
+        /* Center vertically if short. */
+        int offset = (rect.size.y - size_GmDocument(d->doc).y) / 2;
+        rect.pos.y += offset;
+        rect.size.y = size_GmDocument(d->doc).y;
+    }
     return rect;
 }
 
