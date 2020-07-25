@@ -45,6 +45,7 @@ void init_Widget(iWidget *d) {
     d->flags          = 0;
     d->rect           = zero_Rect();
     d->bgColor        = none_ColorId;
+    d->frameColor     = none_ColorId;
     d->children       = NULL;
     d->parent         = NULL;
     d->commandHandler = NULL;
@@ -112,6 +113,10 @@ void setSize_Widget(iWidget *d, iInt2 size) {
 
 void setBackgroundColor_Widget(iWidget *d, int bgColor) {
     d->bgColor = bgColor;
+}
+
+void setFrameColor_Widget(iWidget *d, int frameColor) {
+    d->frameColor = frameColor;
 }
 
 void setCommandHandler_Widget(iWidget *d, iBool (*handler)(iWidget *, const char *)) {
@@ -392,10 +397,16 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
 
 void draw_Widget(const iWidget *d) {
     if (d->flags & hidden_WidgetFlag) return;
-    if (d->bgColor >= 0) {
+    if (d->bgColor >= 0 || d->frameColor >= 0) {
+        const iRect rect = bounds_Widget(d);
         iPaint p;
         init_Paint(&p);
-        fillRect_Paint(&p, bounds_Widget(d), d->bgColor);
+        if (d->bgColor >= 0) {
+            fillRect_Paint(&p, rect, d->bgColor);
+        }
+        if (d->frameColor >= 0) {
+            drawRect_Paint(&p, rect, d->frameColor);
+        }
     }
     iConstForEach(ObjectList, i, d->children) {
         const iWidget *child = constAs_Widget(i.object);

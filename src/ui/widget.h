@@ -65,6 +65,7 @@ struct Impl_Widget {
     int          flags;
     iRect        rect;
     int          bgColor;
+    int          frameColor;
     iObjectList *children;
     iWidget *    parent;
     iBool (*commandHandler)(iWidget *, const char *);
@@ -113,6 +114,7 @@ void    setFlags_Widget     (iWidget *, int flags, iBool set);
 void    setPos_Widget       (iWidget *, iInt2 pos);
 void    setSize_Widget      (iWidget *, iInt2 size);
 void    setBackgroundColor_Widget   (iWidget *, int bgColor);
+void    setFrameColor_Widget        (iWidget *, int frameColor);
 void    setCommandHandler_Widget    (iWidget *, iBool (*handler)(iWidget *, const char *));
 iAny *  addChild_Widget     (iWidget *, iAnyObject *child); /* holds a ref */
 iAny *  addChildPos_Widget  (iWidget *, iAnyObject *child, enum iWidgetAddPos addPos);
