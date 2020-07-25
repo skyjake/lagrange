@@ -37,6 +37,7 @@ struct Impl_DocumentWidget {
     const iGmRun *hoverLink;
     iClick click;
     iScrollWidget *scroll;
+    iWidget *menu;
 };
 
 iDefineObjectConstruction(DocumentWidget)
@@ -56,6 +57,13 @@ void init_DocumentWidget(iDocumentWidget *d) {
     init_PtrArray(&d->visibleLinks);
     init_Click(&d->click, d, SDL_BUTTON_LEFT);
     addChild_Widget(w, iClob(d->scroll = new_ScrollWidget()));
+    d->menu =
+        makeMenu_Widget(w,
+                        (iMenuItem[]){ { "Back", SDLK_LEFT, KMOD_PRIMARY, "navigate.back" },
+                                       { "Forward", SDLK_RIGHT, KMOD_PRIMARY, "navigate.forward" },
+                                       { "---", 0, 0, NULL },
+                                       { "Reload", 'r', KMOD_PRIMARY, "navigate.reload" } },
+                        4);
 }
 
 void deinit_DocumentWidget(iDocumentWidget *d) {
@@ -80,12 +88,6 @@ static iRect documentBounds_DocumentWidget_(const iDocumentWidget *d) {
     rect.pos.y  = top_Rect(bounds) + margin;
     rect.size.y = height_Rect(bounds) - 2 * margin;
     return rect;
-}
-
-static iRangecc getLine_(iRangecc text) {
-    iRangecc line = { text.start, text.start };
-    for (; *line.end != '\n' && line.end != text.end; line.end++) {}
-    return line;
 }
 
 static void requestUpdated_DocumentWidget_(iAnyObject *obj) {
@@ -335,12 +337,6 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             case ' ':
                 postCommand_Widget(w, "scroll.page arg:%d", key == SDLK_PAGEUP ? -1 : +1);
                 return iTrue;
-            case 'r':
-                if (mods == KMOD_PRIMARY) {
-                    fetch_DocumentWidget_(d);
-                    return iTrue;
-                }
-                break;
             case '0': {
                 extern int enableHalfPixelGlyphs_Text;
                 enableHalfPixelGlyphs_Text = !enableHalfPixelGlyphs_Text;
@@ -372,6 +368,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             refresh_Widget(w);
         }
     }
+    processContextMenuEvent_Widget(d->menu, ev);
     switch (processEvent_Click(&d->click, ev)) {
         case finished_ClickResult:
             if (d->hoverLink) {
