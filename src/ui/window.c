@@ -74,6 +74,9 @@ static const iMenuItem editMenuItems[] = {
 static const iMenuItem viewMenuItems[] = {
 };
 
+static const char *reloadCStr_ = "\u25cb";
+static const char *stopCStr_   = orange_ColorEscape "\u00d7";
+
 static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
     if (equal_Command(cmd, "input.ended")) {
         iInputWidget *url = findChild_Widget(navBar, "url");
@@ -88,7 +91,26 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
         iInputWidget *url = findWidget_App("url");
         setTextCStr_InputWidget(url, valuePtr_Command(cmd, "url"));
         setTitle_Window(get_Window(), text_InputWidget(url));
+        updateTextCStr_LabelWidget(findChild_Widget(navBar, "reload"), reloadCStr_);
         return iFalse;
+    }
+    else if (equal_Command(cmd, "document.request.cancelled")) {
+        updateTextCStr_LabelWidget(findChild_Widget(navBar, "reload"), reloadCStr_);
+        return iFalse;
+    }
+    else if (equal_Command(cmd, "document.request.started")) {
+        updateTextCStr_LabelWidget(findChild_Widget(navBar, "reload"), stopCStr_);
+        return iFalse;
+    }
+    else if (equal_Command(cmd, "navigate.reload")) {
+        iDocumentWidget *doc = findWidget_App("document");
+        if (isRequestOngoing_DocumentWidget(doc)) {
+            postCommand_App("document.stop");
+        }
+        else {
+            postCommand_App("document.reload");
+        }
+        return iTrue;
     }
     return iFalse;
 }
@@ -120,7 +142,9 @@ static void setupUserInterface_Window(iWindow *d) {
         setId_Widget(as_Widget(url), "url");
         setTextCStr_InputWidget(url, "gemini://");
         addChildFlags_Widget(navBar, iClob(url), expand_WidgetFlag);
-        addChild_Widget(navBar, iClob(new_LabelWidget("x", 0, 0, "navigate.reload")));
+        setId_Widget(
+            addChild_Widget(navBar, iClob(new_LabelWidget(reloadCStr_, 0, 0, "navigate.reload"))),
+            "reload");
     }
 
     addChildFlags_Widget(div, iClob(new_DocumentWidget()), expand_WidgetFlag);

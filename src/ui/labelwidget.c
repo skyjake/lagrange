@@ -264,10 +264,12 @@ void setText_LabelWidget(iLabelWidget *d, const iString *text) {
 
 void updateText_LabelWidget(iLabelWidget *d, const iString *text) {
     set_String(&d->label, text);
+    refresh_Widget(&d->widget);
 }
 
 void updateTextCStr_LabelWidget(iLabelWidget *d, const char *text) {
     setCStr_String(&d->label, text);
+    refresh_Widget(&d->widget);
 }
 
 void setTextCStr_LabelWidget(iLabelWidget *d, const char *text) {

@@ -5,4 +5,5 @@
 iDeclareWidgetClass(DocumentWidget)
 iDeclareObjectConstruction(DocumentWidget)
 
-void    setUrl_DocumentWidget   (iDocumentWidget *d, const iString *url);
+void    setUrl_DocumentWidget           (iDocumentWidget *, const iString *url);
+iBool   isRequestOngoing_DocumentWidget (const iDocumentWidget *);

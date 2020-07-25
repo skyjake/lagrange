@@ -148,6 +148,7 @@ static void fetch_DocumentWidget_(iDocumentWidget *d) {
         iRelease(d->request);
         d->request = NULL;
     }
+    postCommand_Widget(as_Widget(d), "document.request.started");
     d->state = fetching_DocumentState;
     set_Atomic(&d->isSourcePending, iFalse);
     d->request = new_GmRequest();
@@ -169,6 +170,10 @@ void setUrl_DocumentWidget(iDocumentWidget *d, const iString *url) {
         fetch_DocumentWidget_(d);
     }
     delete_String(newUrl);
+}
+
+iBool isRequestOngoing_DocumentWidget(const iDocumentWidget *d) {
+    return d->state == fetching_DocumentState || d->state == receivedPartialResponse_DocumentState;
 }
 
 static void scroll_DocumentWidget_(iDocumentWidget *d, int offset) {
@@ -276,6 +281,18 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         d->state = ready_DocumentState;
         iReleasePtr(&d->request);
         postCommandf_App("document.changed url:%s", cstr_String(d->url));
+        return iTrue;
+    }
+    else if (isCommand_UserEvent(ev, "document.stop")) {
+        if (d->request) {
+            postCommandf_App("document.request.cancelled url:%s", cstr_String(d->url));
+            iReleasePtr(&d->request);
+            d->state = ready_DocumentState;
+        }
+        return iTrue;
+    }
+    else if (isCommand_UserEvent(ev, "document.reload")) {
+        fetch_DocumentWidget_(d);
         return iTrue;
     }
     else if (isCommand_Widget(w, ev, "scroll.moved")) {

@@ -222,12 +222,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     loadHistory_App_(d);
     d->window = new_Window();
     /* Widget state init. */ {
-        iString *homePath = newCStr_String(dataDir_App_);
-        clean_Path(homePath);
-        append_Path(homePath, &iStringLiteral("home.gmi"));
-        prependCStr_String(homePath, "file://");
-        postCommandf_App("open url:%s", cstr_String(homePath));
-        delete_String(homePath);
+        postCommand_App("navigate.home");
     }
 }
 
@@ -448,6 +443,21 @@ iBool handleCommand_App(const char *cmd) {
         printHistory_App_(d);
         setUrl_DocumentWidget(findChild_Widget(root, "document"), url);
     }
+    else if (equal_Command(cmd, "document.request.cancelled")) {
+        /* TODO: How should cancelled requests be treated in the history? */
+#if 0
+        if (d->historyPos == 0) {
+            iHistoryItem *item = historyItem_App_(d, 0);
+            if (item) {
+                /* Pop this cancelled URL off history. */
+                deinit_HistoryItem(item);
+                popBack_Array(&d->history);
+                printHistory_App_(d);
+            }
+        }
+#endif
+        return iFalse;
+    }
     else if (equal_Command(cmd, "quit")) {
         SDL_Event ev;
         ev.type = SDL_QUIT;
@@ -485,6 +495,15 @@ iBool handleCommand_App(const char *cmd) {
             postCommandf_App("open history:1 url:%s",
                              cstr_String(historyUrl_App_(d, d->historyPos)));
         }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "navigate.home")) {
+        iString *homePath = newCStr_String(dataDir_App_);
+        clean_Path(homePath);
+        append_Path(homePath, &iStringLiteral("home.gmi"));
+        prependCStr_String(homePath, "file://");
+        postCommandf_App("open url:%s", cstr_String(homePath));
+        delete_String(homePath);
         return iTrue;
     }
     else {
