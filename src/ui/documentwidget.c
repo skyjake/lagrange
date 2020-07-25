@@ -247,7 +247,7 @@ static void checkResponseCode_DocumentWidget_(iDocumentWidget *d) {
         switch (status_GmRequest(d->request)) {
             case redirectTemporary_GmStatusCode:
             case redirectPermanent_GmStatusCode:
-                postCommandf_App("open url:%s", cstr_String(meta_GmRequest(d->request)));
+                postCommandf_App("open redirect:1 url:%s", cstr_String(meta_GmRequest(d->request)));
                 iReleasePtr(&d->request);
                 break;
             default:

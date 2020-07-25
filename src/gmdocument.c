@@ -133,15 +133,6 @@ static void clearLinks_GmDocument_(iGmDocument *d) {
 }
 
 static void doLayout_GmDocument_(iGmDocument *d) {
-    clear_Array(&d->layout);
-    clearLinks_GmDocument_(d);
-    if (d->size.x <= 0 || isEmpty_String(&d->source)) {
-        return;
-    }
-    iBool isPreformat = iFalse;
-    iInt2 pos = zero_I2();
-    const iRangecc content = range_String(&d->source);
-    iRangecc line = iNullRange;
     /* TODO: Collect these parameters into a GmTheme. */
     static const int fonts[max_GmLineType] = {
         paragraph_FontId,
@@ -152,17 +143,17 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         header2_FontId,
         header3_FontId,
         regular_FontId,
-    };
+        };
     static const int colors[max_GmLineType] = {
         gray75_ColorId,
         gray75_ColorId,
-        orange_ColorId,
-        orange_ColorId,
+        cyan_ColorId,
+        gray75_ColorId,
         white_ColorId,
         white_ColorId,
         white_ColorId,
         white_ColorId,
-    };
+        };
     static const int indents[max_GmLineType] = {
         4, 10, 4, 10, 0, 0, 0, 0
     };
@@ -173,10 +164,19 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         0.0f, 0.5f, 1.0f, 0.5f, 1.0f, 1.0f, 1.0f, 1.0f
     };
     static const char *bullet = "\u2022";
-    iRangecc preAltText = iNullRange;
-    enum iGmLineType prevType = text_GmLineType;
-    iBool isFirstText = iTrue;
-    int preFont = preformatted_FontId;
+    clear_Array(&d->layout);
+    clearLinks_GmDocument_(d);
+    if (d->size.x <= 0 || isEmpty_String(&d->source)) {
+        return;
+    }
+    const iRangecc   content     = range_String(&d->source);
+    iInt2            pos         = zero_I2();
+    iRangecc         line        = iNullRange;
+    iRangecc         preAltText  = iNullRange;
+    enum iGmLineType prevType    = text_GmLineType;
+    iBool            isPreformat = iFalse;
+    iBool            isFirstText = iTrue;
+    int              preFont     = preformatted_FontId;
     while (nextSplit_Rangecc(&content, "\n", &line)) {
         iGmRun run;
         run.color = white_ColorId;

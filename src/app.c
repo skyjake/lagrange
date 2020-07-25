@@ -28,6 +28,21 @@
 #endif
 
 iDeclareType(App)
+iDeclareType(HistoryItem)
+
+struct Impl_HistoryItem {
+    iTime   when;
+    iString url;
+};
+
+void init_HistoryItem(iHistoryItem *d) {
+    initCurrent_Time(&d->when);
+    init_String(&d->url);
+}
+
+void deinit_HistoryItem(iHistoryItem *d) {
+    deinit_String(&d->url);
+}
 
 #if defined (iPlatformApple)
 static const char *dataDir_App_        = "~/Library/Application Support/fi.skyjake.Lagrange";
@@ -40,12 +55,16 @@ static const char *dataDir_App_        = "~/.config/lagrange";
 #endif
 static const char *prefsFileName_App_  = "prefs.cfg";
 
+static const int HISTORY_MAX = 100;
+
 struct Impl_App {
     iCommandLine args;
     iBool        running;
     iWindow *    window;
     iSortedArray tickers;
     iBool        pendingRefresh;
+    iArray       history;
+    size_t       historyPos; /* zero at the latest item */
     /* Preferences: */
     iBool        retainWindowSize;
     float        uiScale;
@@ -131,9 +150,18 @@ static void savePrefs_App_(const iApp *d) {
     delete_String(cfg);
 }
 
+static void clearHistory_App_(iApp *d) {
+    iForEach(Array, i, &d->history) {
+        deinit_HistoryItem(i.value);
+    }
+    clear_Array(&d->history);
+}
+
 static void init_App_(iApp *d, int argc, char **argv) {
     init_CommandLine(&d->args, argc, argv);
     init_SortedArray(&d->tickers, sizeof(iTicker), cmp_Ticker_);
+    init_Array(&d->history, sizeof(iHistoryItem));
+    d->historyPos       = 0;
     d->running          = iFalse;
     d->window           = NULL;
     d->retainWindowSize = iTrue;
@@ -152,10 +180,12 @@ static void init_App_(iApp *d, int argc, char **argv) {
 
 static void deinit_App(iApp *d) {
     savePrefs_App_(d);
+    clearHistory_App_(d);
+    deinit_Array(&d->history);
     deinit_SortedArray(&d->tickers);
     delete_Window(d->window);
     d->window = NULL;
-    deinit_CommandLine(&d->args);
+    deinit_CommandLine(&d->args);    
 }
 
 const iString *execPath_App(void) {
@@ -302,12 +332,62 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
     return iFalse;
 }
 
+static iHistoryItem *historyItem_App_(iApp *d, size_t pos) {
+    if (isEmpty_Array(&d->history)) return NULL;
+    return &value_Array(&d->history, size_Array(&d->history) - 1 - pos, iHistoryItem);
+}
+
+static const iString *historyUrl_App_(iApp *d, size_t pos) {
+    const iHistoryItem *item = historyItem_App_(d, pos);
+    if (item) {
+        return &item->url;
+    }
+    return collectNew_String();
+}
+
+static void printHistory_App_(const iApp *d) {
+    iConstForEach(Array, i, &d->history) {
+        const size_t idx = index_ArrayConstIterator(&i);
+        printf("%s[%zu]: %s\n",
+               d->historyPos == size_Array(&d->history) - idx - 1 ? "->" : "  ",
+               idx,
+               cstr_String(&((const iHistoryItem *) i.value)->url));
+    }
+    fflush(stdout);
+}
+
 iBool handleCommand_App(const char *cmd) {
     iApp *d = &app_;
     iWidget *root = d->window->root;
     if (equal_Command(cmd, "open")) {
-        setUrl_DocumentWidget(findChild_Widget(root, "document"),
-                              collect_String(newCStr_String(valuePtr_Command(cmd, "url"))));
+        const iString *url = collect_String(newCStr_String(valuePtr_Command(cmd, "url")));
+        if (!argLabel_Command(cmd, "history")) {
+            if (argLabel_Command(cmd, "redirect")) {
+                /* Update in the history. */
+                iHistoryItem *item = historyItem_App_(d, d->historyPos);
+                if (item) {
+                    set_String(&item->url, url);
+                }
+            }
+            else {
+                /* Cut the trailing history items. */
+                if (d->historyPos > 0) {
+                    for (size_t i = 0; i < d->historyPos - 1; i++) {
+                        deinit_HistoryItem(historyItem_App_(d, i));
+                    }
+                    removeN_Array(
+                        &d->history, size_Array(&d->history) - d->historyPos, iInvalidSize);
+                    d->historyPos = 0;
+                }
+                /* Insert new item. */
+                iHistoryItem item;
+                init_HistoryItem(&item);
+                set_String(&item.url, url);
+                pushBack_Array(&d->history, &item);
+            }
+        }
+        printHistory_App_(d);
+        setUrl_DocumentWidget(findChild_Widget(root, "document"), url);
     }
     else if (equal_Command(cmd, "quit")) {
         SDL_Event ev;
@@ -327,6 +407,26 @@ iBool handleCommand_App(const char *cmd) {
         resize_Window(d->window, argLabel_Command(cmd, "width"), argLabel_Command(cmd, "height"));
         const iInt2 pos = coord_Command(cmd);
         SDL_SetWindowPosition(d->window->win, pos.x, pos.y);
+    }
+    else if (equal_Command(cmd, "document.changed")) {
+        /* TODO: Update current history item with this actual/redirected URL. */
+        return iFalse;
+    }
+    else if (equal_Command(cmd, "navigate.back")) {
+        if (d->historyPos < size_Array(&d->history) - 1) {
+            d->historyPos++;
+            postCommandf_App("open history:1 url:%s",
+                             cstr_String(historyUrl_App_(d, d->historyPos)));
+        }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "navigate.forward")) {
+        if (d->historyPos > 0) {
+            d->historyPos--;
+            postCommandf_App("open history:1 url:%s",
+                             cstr_String(historyUrl_App_(d, d->historyPos)));
+        }
+        return iTrue;
     }
     else {
         return iFalse;

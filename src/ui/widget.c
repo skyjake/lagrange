@@ -74,6 +74,7 @@ void destroy_Widget(iWidget *d) {
         rootData_.pendingDestruction = new_PtrSet();
     }
     insert_PtrSet(rootData_.pendingDestruction, d);
+    postRefresh_App();
 }
 
 void setId_Widget(iWidget *d, const char *id) {
@@ -449,6 +450,7 @@ iAny *removeChild_Widget(iWidget *d, iAnyObject *child) {
     }
     iAssert(found);
     ((iWidget *) child)->parent = NULL;
+    postRefresh_App();
     return child;
 }
 

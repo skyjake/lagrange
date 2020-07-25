@@ -86,7 +86,7 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
         iInputWidget *url = findWidget_App("url");
         setTextCStr_InputWidget(url, valuePtr_Command(cmd, "url"));
         setTitle_Window(get_Window(), text_InputWidget(url));
-        return iTrue;
+        return iFalse;
     }
     return iFalse;
 }
