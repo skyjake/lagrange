@@ -28,6 +28,7 @@ struct Impl_GmDocument {
     iInt2 size;
     iArray layout; /* contents of source, laid out in document space */
     iPtrArray links;
+    iString title; /* the first top-level title */
 };
 
 iDefineObjectConstruction(GmDocument)
@@ -166,6 +167,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     static const char *bullet = "\u2022";
     clear_Array(&d->layout);
     clearLinks_GmDocument_(d);
+    clear_String(&d->title);
     if (d->size.x <= 0 || isEmpty_String(&d->source)) {
         return;
     }
@@ -242,6 +244,10 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 pos.y += required - delta;
             }
         }
+        /* Document title. */
+        if (type == header1_GmLineType && isEmpty_String(&d->title)) {
+            setRange_String(&d->title, line);
+        }
         /* List bullet. */
         run.color = colors[type];
         if (type == bullet_GmLineType) {
@@ -289,9 +295,11 @@ void init_GmDocument(iGmDocument *d) {
     d->size = zero_I2();
     init_Array(&d->layout, sizeof(iGmRun));
     init_PtrArray(&d->links);
+    init_String(&d->title);
 }
 
 void deinit_GmDocument(iGmDocument *d) {
+    deinit_String(&d->title);
     clearLinks_GmDocument_(d);
     deinit_PtrArray(&d->links);
     deinit_Array(&d->layout);
@@ -408,6 +416,10 @@ const iString *linkUrl_GmDocument(const iGmDocument *d, iGmLinkId linkId) {
         return &link->url;
     }
     return NULL;
+}
+
+const iString *title_GmDocument(const iGmDocument *d) {
+    return &d->title;
 }
 
 iDefineClass(GmDocument)

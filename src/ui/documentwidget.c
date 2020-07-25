@@ -140,6 +140,9 @@ static void updateSource_DocumentWidget_(iDocumentWidget *d) {
     deinit_String(&str);
     updateVisible_DocumentWidget_(d);
     refresh_Widget(as_Widget(d));
+    setTitle_Window(get_Window(),
+                    !isEmpty_String(title_GmDocument(d->doc)) ? title_GmDocument(d->doc)
+                                                              : collectNewCStr_String("Lagrange"));
 }
 
 static void fetch_DocumentWidget_(iDocumentWidget *d) {

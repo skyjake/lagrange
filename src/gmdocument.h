@@ -30,3 +30,4 @@ iInt2   size_GmDocument         (const iGmDocument *);
 
 const iGmRun *  findRun_GmDocument  (const iGmDocument *, iInt2 pos);
 const iString * linkUrl_GmDocument  (const iGmDocument *, iGmLinkId linkId);
+const iString * title_GmDocument    (const iGmDocument *);

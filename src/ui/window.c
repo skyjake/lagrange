@@ -90,7 +90,6 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
     else if (equal_Command(cmd, "document.changed")) {
         iInputWidget *url = findWidget_App("url");
         setTextCStr_InputWidget(url, valuePtr_Command(cmd, "url"));
-        setTitle_Window(get_Window(), text_InputWidget(url));
         updateTextCStr_LabelWidget(findChild_Widget(navBar, "reload"), reloadCStr_);
         return iFalse;
     }
