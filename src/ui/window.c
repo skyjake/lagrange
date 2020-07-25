@@ -120,6 +120,7 @@ static void setupUserInterface_Window(iWindow *d) {
         setId_Widget(as_Widget(url), "url");
         setTextCStr_InputWidget(url, "gemini://");
         addChildFlags_Widget(navBar, iClob(url), expand_WidgetFlag);
+        addChild_Widget(navBar, iClob(new_LabelWidget("x", 0, 0, "navigate.reload")));
     }
 
     addChildFlags_Widget(div, iClob(new_DocumentWidget()), expand_WidgetFlag);

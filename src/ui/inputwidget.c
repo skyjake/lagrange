@@ -279,7 +279,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
 
 static void draw_InputWidget_(const iInputWidget *d) {
     const uint32_t time   = frameTime_Window(get_Window());
-    const iInt2 padding   = init_I2(3 * gap_UI, gap_UI / 2);
+    const iInt2 padding   = init_I2(gap_UI / 2, gap_UI / 2);
     iRect       bounds    = adjusted_Rect(bounds_Widget(constAs_Widget(d)), padding, neg_I2(padding));
     const iBool isFocused = isFocused_Widget(constAs_Widget(d));
     const iBool isHover   = isHover_Widget(constAs_Widget(d)) &&
@@ -293,6 +293,7 @@ static void draw_InputWidget_(const iInputWidget *d) {
                    adjusted_Rect(bounds, neg_I2(one_I2()), zero_I2()),
                    isFocused ? orange_ColorId : isHover ? cyan_ColorId : gray50_ColorId);
     setClip_Paint(&p, bounds);
+    shrink_Rect(&bounds, init_I2(gap_UI * 2, 0));
     const iInt2 emSize    = advance_Text(d->font, "M");
     const int   textWidth = advance_Text(d->font, cstr_String(&text)).x;
     const int   cursorX   = advanceN_Text(d->font, cstr_String(&text), d->cursor).x;
