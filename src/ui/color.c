@@ -7,6 +7,7 @@ static const iColor transparent_;
 iColor get_Color(int color) {
     static const iColor palette[] = {
         { 0,   0,   0,   255 },
+        { 24,  24,  24,  255 },
         { 40,  40,  40,  255 },
         { 80,  80,  80,  255 },
         { 160, 160, 160, 255 },

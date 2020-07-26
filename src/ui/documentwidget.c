@@ -514,7 +514,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
     draw_Widget(w);
     iDrawContext ctx = { .widget = d, .bounds = documentBounds_DocumentWidget_(d) };
     init_Paint(&ctx.paint);
-    fillRect_Paint(&ctx.paint, bounds, gray25_ColorId);
+    fillRect_Paint(&ctx.paint, bounds, gray15_ColorId);
     setClip_Paint(&ctx.paint, bounds);
     render_GmDocument(d->doc, visibleRange_DocumentWidget_(d), drawRun_DrawContext_, &ctx);
     clearClip_Paint(&ctx.paint);
