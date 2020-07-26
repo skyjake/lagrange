@@ -117,6 +117,24 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
     return iFalse;
 }
 
+static iBool handleSearchBarCommands_(iWidget *searchBar, const char *cmd) {
+    if (equal_Command(cmd, "input.ended") &&
+        cmp_String(string_Command(cmd, "id"), "find.input") == 0) {
+        if (arg_Command(cmd)) {
+            postCommand_App("find.next");
+            /* Keep focus. */
+            if (!isEmpty_String(text_InputWidget(findChild_Widget(searchBar, "find.input")))) {
+                postCommand_App("focus.set id:find.input");
+            }
+        }
+        else {
+            postCommand_App("find.clearmark");
+        }
+        return iTrue;
+    }
+    return iFalse;
+}
+
 static void setupUserInterface_Window(iWindow *d) {
     /* Children of root cover the entire window. */
     setFlags_Widget(d->root, resizeChildren_WidgetFlag, iTrue);
@@ -134,8 +152,8 @@ static void setupUserInterface_Window(iWindow *d) {
                             arrangeHorizontal_WidgetFlag,
                         iTrue);
         addChild_Widget(div, iClob(navBar));
-        setCommandHandler_Widget(navBar, handleNavBarCommands_);
         setBackgroundColor_Widget(navBar, gray25_ColorId);
+        setCommandHandler_Widget(navBar, handleNavBarCommands_);
 
         addChild_Widget(navBar, iClob(new_LabelWidget(" \u25c4 ", 0, 0, "navigate.back")));
         addChild_Widget(navBar, iClob(new_LabelWidget(" \u25ba ", 0, 0, "navigate.forward")));
@@ -160,9 +178,11 @@ static void setupUserInterface_Window(iWindow *d) {
                         iTrue);
         addChild_Widget(div, iClob(searchBar));
         setBackgroundColor_Widget(searchBar, gray25_ColorId);
+        setCommandHandler_Widget(searchBar, handleSearchBarCommands_);
 
-        addChild_Widget(searchBar, iClob(new_LabelWidget("\U0001f50d Find:", 0, 0, NULL)));
-        addChildFlags_Widget(searchBar, iClob(new_InputWidget(0)), expand_WidgetFlag);
+        addChild_Widget(searchBar, iClob(new_LabelWidget("\U0001f50d Text", 0, 0, NULL)));
+        setId_Widget(addChildFlags_Widget(searchBar, iClob(new_InputWidget(0)), expand_WidgetFlag),
+                     "find.input");
         addChild_Widget(searchBar, iClob(new_LabelWidget("Next", 0, 0, "find.next")));
         addChild_Widget(searchBar, iClob(new_LabelWidget("Previous", 0, 0, "find.prev")));
         addChild_Widget(searchBar, iClob(new_LabelWidget("\u00d7", 0, 0, "find.close")));
@@ -320,6 +340,7 @@ static void setupUserInterface_Window(iWindow *d) {
     /* Glboal keyboard shortcuts. */ {
         // addAction_Widget(d->root, SDLK_LEFTBRACKET, KMOD_SHIFT | KMOD_PRIMARY, "tabs.prev");
         addAction_Widget(d->root, 'l', KMOD_PRIMARY, "focus.set id:url");
+        addAction_Widget(d->root, 'f', KMOD_PRIMARY, "focus.set id:find.input");
     }
 }
 

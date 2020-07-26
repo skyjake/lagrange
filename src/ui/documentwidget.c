@@ -32,6 +32,7 @@ struct Impl_DocumentWidget {
     iGmRequest *request;
     iAtomicInt isSourcePending; /* request has new content, need to parse it */
     iGmDocument *doc;
+    iRangecc foundMark;
     int pageMargin;
     int scrollY;
     iPtrArray visibleLinks;
@@ -47,14 +48,15 @@ void init_DocumentWidget(iDocumentWidget *d) {
     iWidget *w = as_Widget(d);
     init_Widget(w);
     setId_Widget(w, "document");
-    d->state      = blank_DocumentState;
-    d->url        = new_String();
-    d->request    = NULL;
+    d->state           = blank_DocumentState;
+    d->url             = new_String();
+    d->request         = NULL;
     d->isSourcePending = iFalse;
-    d->doc        = new_GmDocument();
-    d->pageMargin = 5;
-    d->scrollY    = 0;
-    d->hoverLink  = NULL;
+    d->doc             = new_GmDocument();
+    d->foundMark       = iNullRange;
+    d->pageMargin      = 5;
+    d->scrollY         = 0;
+    d->hoverLink       = NULL;
     init_PtrArray(&d->visibleLinks);
     init_Click(&d->click, d, SDL_BUTTON_LEFT);
     addChild_Widget(w, iClob(d->scroll = new_ScrollWidget()));
@@ -150,10 +152,11 @@ static void updateSource_DocumentWidget_(iDocumentWidget *d) {
     /* TODO: Do this in the background. However, that requires a text metrics calculator
        that does not try to cache the glyph bitmaps. */
     if (status_GmRequest(d->request) != input_GmStatusCode &&
-        status_GmRequest(d->request) != sensitiveInput_GmStatusCode) {
+        status_GmRequest(d->request) != sensitiveInput_GmStatusCode) {        
         iString str;
         initBlock_String(&str, body_GmRequest(d->request));
         setSource_GmDocument(d->doc, &str, documentWidth_DocumentWidget_(d));
+        d->foundMark = iNullRange;
         updateWindowTitle_DocumentWidget_(d);
         updateVisible_DocumentWidget_(d);
         refresh_Widget(as_Widget(d));
@@ -209,6 +212,11 @@ static void scroll_DocumentWidget_(iDocumentWidget *d, int offset) {
     }
     updateVisible_DocumentWidget_(d);
     refresh_Widget(as_Widget(d));
+}
+
+static void scrollTo_DocumentWidget_(iDocumentWidget *d, int documentY) {
+    d->scrollY = documentY - documentBounds_DocumentWidget_(d).size.y / 2;
+    scroll_DocumentWidget_(d, 0); /* clamp it */
 }
 
 static iRangecc dirPath_(iRangecc path) {
@@ -285,6 +293,7 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
         default:
             break;
     }
+    d->foundMark = iNullRange;
     setSource_GmDocument(d->doc, src, documentWidth_DocumentWidget_(d));
     updateWindowTitle_DocumentWidget_(d);
     updateVisible_DocumentWidget_(d);
@@ -408,6 +417,34 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             d, arg_Command(command_UserEvent(ev)) * height_Rect(documentBounds_DocumentWidget_(d)));
         return iTrue;
     }
+    else if (isCommand_UserEvent(ev, "find.next")) {
+        iInputWidget *find = findWidget_App("find.input");
+        if (isEmpty_String(text_InputWidget(find))) {
+            d->foundMark = iNullRange;
+        }
+        else {
+            const iBool wrap = d->foundMark.start != NULL;
+            d->foundMark = findText_GmDocument(d->doc, text_InputWidget(find), d->foundMark.end);
+            if (!d->foundMark.start && wrap) {
+                d->foundMark = findText_GmDocument(d->doc, text_InputWidget(find), 0);
+            }
+            if (d->foundMark.start) {
+                iGmRun *run = findRunCStr_GmDocument(d->doc, d->foundMark.start);
+                if (run) {
+                    scrollTo_DocumentWidget_(d, mid_Rect(run->bounds).y);
+                }
+            }
+        }
+        refresh_Widget(w);
+        return iTrue;
+    }
+    else if (isCommand_UserEvent(ev, "find.clearmark")) {
+        if (d->foundMark.start) {
+            d->foundMark = iNullRange;
+            refresh_Widget(w);
+        }
+        return iTrue;
+    }
     if (ev->type == SDL_KEYDOWN) {
         const int mods = keyMods_Sym(ev->key.keysym.mod);
         const int key = ev->key.keysym.sym;
@@ -493,6 +530,7 @@ struct Impl_DrawContext {
     const iDocumentWidget *widget;
     iRect bounds;
     iPaint paint;
+    int insideMark;
 };
 
 static void drawRun_DrawContext_(void *context, const iGmRun *run) {
@@ -501,10 +539,55 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
     /* TODO: making a copy is unnecessary; the text routines should accept Rangecc */
     initRange_String(&text, run->text);
     iInt2 origin = addY_I2(d->bounds.pos, -d->widget->scrollY);
-    drawString_Text(run->font, add_I2(run->bounds.pos, origin), run->color, &text);
     if (run == d->widget->hoverLink) {
-        drawRect_Paint(&d->paint, moved_Rect(run->bounds, origin), orange_ColorId);
+        const char *desc = "";
+        const iString *url = linkUrl_GmDocument(d->widget->doc, d->widget->hoverLink->linkId);
+        if (indexOfCStr_String(url, "://") == iInvalidPos) {
+            url = d->widget->url;
+        }
+        iUrl parts;
+        init_Url(&parts, url);
+        desc = cstrFormat_String("\u2192 %s", cstr_String(collect_String(newRange_String(parts.protocol))));
+        int descWidth = measure_Text(default_FontId, desc).x + gap_UI;
+        iRect linkRect = expanded_Rect(moved_Rect(run->bounds, origin), init_I2(gap_UI, 0));
+        linkRect.size.x += descWidth;
+        fillRect_Paint(&d->paint,
+                       linkRect,
+                       teal_ColorId);
+        drawAlign_Text(default_FontId,
+                       addX_I2(topRight_Rect(linkRect), -gap_UI),
+                       cyan_ColorId,
+                       right_Alignment,
+                       "%s",
+                       desc);
     }
+    const iInt2 visPos = add_I2(run->bounds.pos, origin);
+    /* Found text marker. */
+    if ((!d->insideMark && contains_Range(&run->text, d->widget->foundMark.start)) ||
+        d->insideMark) {
+        int x = 0;
+        if (!d->insideMark) {
+            x = advanceRange_Text(run->font, (iRangecc){ run->text.start,
+                                                         d->widget->foundMark.start }).x;
+        }
+        int w = width_Rect(run->bounds) - x;
+        if (contains_Range(&run->text, d->widget->foundMark.end) ||
+            run->text.end == d->widget->foundMark.end) {
+            w = advanceRange_Text(run->font,
+                                  !d->insideMark
+                                      ? d->widget->foundMark
+                                      : (iRangecc){ run->text.start, d->widget->foundMark.end })
+                    .x;
+            d->insideMark = iFalse;
+        }
+        else {
+            d->insideMark = iTrue; /* at least until the next run */
+        }
+        fillRect_Paint(&d->paint,
+                       (iRect){ addX_I2(visPos, x), init_I2(w, height_Rect(run->bounds)) },
+                       teal_ColorId);
+    }
+    drawString_Text(run->font, visPos, run->color, &text);
     deinit_String(&text);
 }
 

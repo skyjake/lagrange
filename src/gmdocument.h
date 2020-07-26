@@ -28,6 +28,8 @@ typedef void (*iGmDocumentRenderFunc)(void *, const iGmRun *);
 void    render_GmDocument       (const iGmDocument *, iRangei visRangeY, iGmDocumentRenderFunc render, void *);
 iInt2   size_GmDocument         (const iGmDocument *);
 
-const iGmRun *  findRun_GmDocument  (const iGmDocument *, iInt2 pos);
-const iString * linkUrl_GmDocument  (const iGmDocument *, iGmLinkId linkId);
-const iString * title_GmDocument    (const iGmDocument *);
+iRangecc        findText_GmDocument     (const iGmDocument *, const iString *text, const char *start);
+const iGmRun *  findRun_GmDocument      (const iGmDocument *, iInt2 pos);
+const iGmRun *  findRunCStr_GmDocument  (const iGmDocument *, const char *textCStr);
+const iString * linkUrl_GmDocument      (const iGmDocument *, iGmLinkId linkId);
+const iString * title_GmDocument        (const iGmDocument *);

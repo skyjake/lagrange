@@ -74,18 +74,22 @@ struct Impl_Widget {
 iDeclareObjectConstruction(Widget)
 
 iLocalDef iWidget *as_Widget(iAnyObject *d) {
+#if !defined (NDEBUG)
     if (d) {
         iAssertIsObject(d);
         iAssert(isInstance_Object(d, &Class_Widget));
     }
+#endif
     return (iWidget *) d;
 }
 
 iLocalDef const iWidget *constAs_Widget(const iAnyObject *d) {
+#if !defined (NDEBUG)
     if (d) {
         iAssertIsObject(d);
         iAssert(isInstance_Object(d, &Class_Widget));
     }
+#endif
     return (const iWidget *) d;
 }
 

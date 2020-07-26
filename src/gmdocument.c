@@ -232,8 +232,9 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         if (!isPreformat || (prevType != preformatted_GmLineType)) {
             int required =
                 iMax(topMargin[type], bottomMargin[prevType]) * lineHeight_Text(paragraph_FontId);
-            if (type == link_GmLineType && prevType == link_GmLineType) {
-                /* No margin between consecutive links. */
+            if ((type == link_GmLineType && prevType == link_GmLineType) ||
+                (type == quote_GmLineType && prevType == quote_GmLineType)) {
+                /* No margin between consecutive links/quote lines. */
                 required = 0;
             }
             if (isEmpty_Array(&d->layout)) {
@@ -399,11 +400,32 @@ iInt2 size_GmDocument(const iGmDocument *d) {
     return d->size;
 }
 
+iRangecc findText_GmDocument(const iGmDocument *d, const iString *text, const char *start) {
+    const char * src      = constBegin_String(&d->source);
+    const size_t startPos = (start ? start - src : 0);
+    const size_t pos =
+        indexOfCStrFromSc_String(&d->source, cstr_String(text), startPos, &iCaseInsensitive);
+    if (pos == iInvalidPos) {
+        return iNullRange;
+    }
+    return (iRangecc){ src + pos, src + pos + size_String(text) };
+}
+
 const iGmRun *findRun_GmDocument(const iGmDocument *d, iInt2 pos) {
     /* TODO: Perf optimization likely needed; use a block map? */
     iConstForEach(Array, i, &d->layout) {
         const iGmRun *run = i.value;
         if (contains_Rect(run->bounds, pos)) {
+            return run;
+        }
+    }
+    return NULL;
+}
+
+const iGmRun *findRunCStr_GmDocument(const iGmDocument *d, const char *textCStr) {
+    iConstForEach(Array, i, &d->layout) {
+        const iGmRun *run = i.value;
+        if (contains_Range(&run->text, textCStr) || run->text.start > textCStr /* went past */) {
             return run;
         }
     }
