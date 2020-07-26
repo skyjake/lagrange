@@ -74,8 +74,8 @@ static const iMenuItem editMenuItems[] = {
 static const iMenuItem viewMenuItems[] = {
 };
 
-static const char *reloadCStr_ = "\u25cb";
-static const char *stopCStr_   = orange_ColorEscape "\u00d7";
+static const char *reloadCStr_ = "\U0001f503";
+static const char *stopCStr_   = orange_ColorEscape "\U0001f310";
 
 static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
     if (equal_Command(cmd, "input.ended")) {
@@ -87,7 +87,7 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
     }
     else if (equal_Command(cmd, "document.changed")) {
         iInputWidget *url = findWidget_App("url");
-        setTextCStr_InputWidget(url, valuePtr_Command(cmd, "url"));
+        setTextCStr_InputWidget(url, suffixPtr_Command(cmd, "url"));
         updateTextCStr_LabelWidget(findChild_Widget(navBar, "reload"), reloadCStr_);
         return iFalse;
     }
@@ -100,7 +100,7 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
         if (isFocused_Widget(as_Widget(url))) {
             setFocus_Widget(NULL);
         }
-        setTextCStr_InputWidget(url, valuePtr_Command(cmd, "url"));
+        setTextCStr_InputWidget(url, suffixPtr_Command(cmd, "url"));
         updateTextCStr_LabelWidget(findChild_Widget(navBar, "reload"), stopCStr_);
         return iFalse;
     }
@@ -139,7 +139,7 @@ static void setupUserInterface_Window(iWindow *d) {
 
         addChild_Widget(navBar, iClob(new_LabelWidget(" \u25c4 ", 0, 0, "navigate.back")));
         addChild_Widget(navBar, iClob(new_LabelWidget(" \u25ba ", 0, 0, "navigate.forward")));
-        addChild_Widget(navBar, iClob(new_LabelWidget("Home", 0, 0, "navigate.home")));
+        addChild_Widget(navBar, iClob(new_LabelWidget("\U0001f3e0", 0, 0, "navigate.home")));
         iInputWidget *url = new_InputWidget(0);
         setId_Widget(as_Widget(url), "url");
         setTextCStr_InputWidget(url, "gemini://");

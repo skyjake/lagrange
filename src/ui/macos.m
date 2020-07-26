@@ -407,7 +407,7 @@ void handleCommand_MacOS(const char *cmd) {
 #if 0
     if (equal_Command(cmd, "tabs.changed")) {
         MyDelegate *myDel = (MyDelegate *) [[NSApplication sharedApplication] delegate];
-        const char *tabId = valuePtr_Command(cmd, "id");
+        const char *tabId = suffixPtr_Command(cmd, "id");
         if (equal_CStr(tabId, "tracker")) {
             [myDel setTouchBarVariant:tracker_TouchBarVariant];
         }

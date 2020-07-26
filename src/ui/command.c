@@ -51,7 +51,7 @@ void *pointer_Command(const char *cmd) {
     return pointerLabel_Command(cmd, "ptr");
 }
 
-const char *valuePtr_Command(const char *cmd, const char *label) {
+const char *suffixPtr_Command(const char *cmd, const char *label) {
     const iString *tok = tokenString_(label);
     const char *ptr = strstr(cmd, cstr_String(tok));
     if (ptr) {
@@ -60,8 +60,12 @@ const char *valuePtr_Command(const char *cmd, const char *label) {
     return NULL;
 }
 
+iString *suffix_Command(const char *cmd, const char *label) {
+    return newCStr_String(suffixPtr_Command(cmd, label));
+}
+
 const iString *string_Command(const char *cmd, const char *label) {
-    iRangecc val = { valuePtr_Command(cmd, label), NULL };
+    iRangecc val = { suffixPtr_Command(cmd, label), NULL };
     if (val.start) {
         for (val.end = val.start; *val.end && !isspace(*val.end); val.end++) {}
         return collect_String(newRange_String(val));

@@ -426,10 +426,8 @@ iWidget *makeSheet_Widget(const char *id) {
     setId_Widget(sheet, id);
     setFrameColor_Widget(sheet, black_ColorId);
     setBackgroundColor_Widget(sheet, gray25_ColorId);
-    setFlags_Widget(sheet,
-                    keepOnTop_WidgetFlag | arrangeVertical_WidgetFlag |
-                        arrangeHeight_WidgetFlag,
-                    iTrue);
+    setFlags_Widget(
+        sheet, keepOnTop_WidgetFlag | arrangeVertical_WidgetFlag | arrangeHeight_WidgetFlag, iTrue);
     const iInt2 rootSize = rootSize_Window(get_Window());
     setSize_Widget(sheet, init_I2(rootSize.x / 2, 0));
     setFlags_Widget(sheet, fixedHeight_WidgetFlag, iFalse);
@@ -440,6 +438,7 @@ void centerSheet_Widget(iWidget *sheet) {
     arrange_Widget(sheet);
     const iInt2 rootSize = rootSize_Window(get_Window());
     sheet->rect.pos.x = rootSize.x / 2 - sheet->rect.size.x / 2;
+    postRefresh_App();
 }
 
 void makeFilePath_Widget(iWidget *      parent,
@@ -479,12 +478,30 @@ static void acceptValueInput_(iWidget *dlg) {
                      cstr_String(val));
 }
 
+static void updateValueInputWidth_(iWidget *dlg) {
+    const iInt2 rootSize = rootSize_Window(get_Window());
+    iWidget *   title    = findChild_Widget(dlg, "valueinput.title");
+    iWidget *   prompt   = findChild_Widget(dlg, "valueinput.prompt");
+    dlg->rect.size.x     = iMaxi(iMaxi(rootSize.x / 2, title->rect.size.x), prompt->rect.size.x);
+    as_Widget(findChild_Widget(dlg, "input"))->rect.size.x = dlg->rect.size.x;
+    centerSheet_Widget(dlg);
+}
+
 iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
     iWidget *ptr = as_Widget(pointer_Command(cmd));
+    if (equal_Command(cmd, "window.resized")) {
+        if (isVisible_Widget(dlg)) {
+            updateValueInputWidth_(dlg);
+        }
+        return iFalse;
+    }
     if (equal_Command(cmd, "input.ended")) {
         if (hasParent_Widget(ptr, dlg)) {
             if (arg_Command(cmd)) {
                 acceptValueInput_(dlg);
+            }
+            else {
+                postCommandf_App("valueinput.cancelled id:%s", cstr_String(id_Widget(dlg)));
             }
             destroy_Widget(dlg);
             return iTrue;
@@ -492,6 +509,7 @@ iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
         return iFalse;
     }
     else if (equal_Command(cmd, "cancel")) {
+        postCommandf_App("valueinput.cancelled id:%s", cstr_String(id_Widget(dlg)));
         destroy_Widget(dlg);
         return iTrue;
     }
@@ -504,30 +522,46 @@ iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
 }
 
 iWidget *makeValueInput_Widget(iWidget *parent, const iString *initialValue, const char *title,
-                               const char *prompt, const char *command) {
-    setFocus_Widget(NULL);
-    processEvents_App(postedEventsOnly_AppEventMode);
+                               const char *prompt, const char *acceptLabel, const char *command) {
+    if (parent) {
+        setFocus_Widget(NULL);
+        processEvents_App(postedEventsOnly_AppEventMode);
+    }
     iWidget *dlg = makeSheet_Widget(command);
     setCommandHandler_Widget(dlg, valueInputHandler_);
-    addChild_Widget(parent, iClob(dlg));
-    addChild_Widget(dlg, iClob(new_LabelWidget(title, 0, 0, NULL)));
-    addChild_Widget(dlg, iClob(new_LabelWidget(prompt, 0, 0, NULL)));
+    if (parent) {
+        addChild_Widget(parent, iClob(dlg));
+    }
+    setId_Widget(addChild_Widget(dlg, iClob(new_LabelWidget(title, 0, 0, NULL))), "valueinput.title");
+    setId_Widget(addChild_Widget(dlg, iClob(new_LabelWidget(prompt, 0, 0, NULL))), "valueinput.prompt");
     iInputWidget *input = addChild_Widget(dlg, iClob(new_InputWidget(0)));
     if (initialValue) {
         setText_InputWidget(input, initialValue);
     }
     setId_Widget(as_Widget(input), "input");
-    as_Widget(input)->rect.size.x = dlg->rect.size.x;
+    updateValueInputWidth_(dlg);
     addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
     iWidget *div = new_Widget(); {
         setFlags_Widget(div, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
         addChild_Widget(div, iClob(new_LabelWidget("Cancel", SDLK_ESCAPE, 0, "cancel")));
-        addChild_Widget(div, iClob(new_LabelWidget(cyan_ColorEscape "OK", SDLK_RETURN, 0, "valueinput.accept")));
+        addChild_Widget(div,
+                        iClob(new_LabelWidget(acceptLabel ? acceptLabel : cyan_ColorEscape "OK",
+                                              SDLK_RETURN,
+                                              0,
+                                              "valueinput.accept")));
     }
     addChild_Widget(dlg, iClob(div));
     centerSheet_Widget(dlg);
-    setFocus_Widget(as_Widget(input));
+    if (parent) {
+        setFocus_Widget(as_Widget(input));
+    }
     return dlg;
+}
+
+void updateValueInput_Widget(iWidget *d, const char *title, const char *prompt) {
+    setTextCStr_LabelWidget(findChild_Widget(d, "valueinput.title"), title);
+    setTextCStr_LabelWidget(findChild_Widget(d, "valueinput.prompt"), prompt);
+    updateValueInputWidth_(d);
 }
 
 static iBool messageHandler_(iWidget *msg, const char *cmd) {

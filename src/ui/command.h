@@ -12,5 +12,6 @@ void *  pointerLabel_Command    (const char *, const char *label);
 iInt2   coord_Command           (const char *);
 iInt2   dir_Command             (const char *);
 
-const iString * string_Command  (const char *, const char *label);
-const char *    valuePtr_Command(const char *, const char *label);
+const iString * string_Command      (const char *, const char *label); /* space-delimited */
+const char *    suffixPtr_Command   (const char *, const char *label); /* until end-of-command */
+iString *       suffix_Command      (const char *, const char *label); /* until end-of-command */

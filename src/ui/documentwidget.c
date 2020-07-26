@@ -38,6 +38,7 @@ struct Impl_DocumentWidget {
     iClick click;
     iScrollWidget *scroll;
     iWidget *menu;
+//    iWidget *userInput;
 };
 
 iDefineObjectConstruction(DocumentWidget)
@@ -64,6 +65,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
                                        { "---", 0, 0, NULL },
                                        { "Reload", 'r', KMOD_PRIMARY, "navigate.reload" } },
                         4);
+//    setFlags_Widget(d->userInput, hidden_WidgetFlag | disabled_WidgetFlag, iTrue);
 }
 
 void deinit_DocumentWidget(iDocumentWidget *d) {
@@ -139,18 +141,25 @@ static void updateVisible_DocumentWidget_(iDocumentWidget *d) {
     render_GmDocument(d->doc, visRange, addVisibleLink_DocumentWidget_, d);
 }
 
-static void updateSource_DocumentWidget_(iDocumentWidget *d) {
-    /* TODO: Do this in the background. However, that requires a text metrics calculator
-       that does not try to cache the glyph bitmaps. */
-    iString str;
-    initBlock_String(&str, body_GmRequest(d->request));
-    setSource_GmDocument(d->doc, &str, documentWidth_DocumentWidget_(d));
-    deinit_String(&str);
-    updateVisible_DocumentWidget_(d);
-    refresh_Widget(as_Widget(d));
+static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
     setTitle_Window(get_Window(),
                     !isEmpty_String(title_GmDocument(d->doc)) ? title_GmDocument(d->doc)
                                                               : collectNewCStr_String("Lagrange"));
+}
+
+static void updateSource_DocumentWidget_(iDocumentWidget *d) {
+    /* TODO: Do this in the background. However, that requires a text metrics calculator
+       that does not try to cache the glyph bitmaps. */
+    if (status_GmRequest(d->request) != input_GmStatusCode &&
+        status_GmRequest(d->request) != sensitiveInput_GmStatusCode) {
+        iString str;
+        initBlock_String(&str, body_GmRequest(d->request));
+        setSource_GmDocument(d->doc, &str, documentWidth_DocumentWidget_(d));
+        updateWindowTitle_DocumentWidget_(d);
+        updateVisible_DocumentWidget_(d);
+        refresh_Widget(as_Widget(d));
+        deinit_String(&str);
+    }
 }
 
 static void fetch_DocumentWidget_(iDocumentWidget *d) {
@@ -256,20 +265,78 @@ static const iString *absoluteUrl_DocumentWidget_(const iDocumentWidget *d, cons
     return collect_String(absolute);
 }
 
+static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode code) {
+    iWidget *w = as_Widget(d);
+    iString *src = collectNew_String();
+    const iGmError *msg = get_GmError(code);
+    format_String(src,
+                  "# %lc %s\n%s",
+                  msg->icon ? msg->icon : 0x2327, /* X in a box */
+                  msg->title,
+                  msg->info);
+    switch (code) {
+        case failedToOpenFile_GmStatusCode:
+        case certificateNotValid_GmStatusCode:
+            appendFormat_String(src, "\n\n%s", cstr_String(meta_GmRequest(d->request)));
+            break;
+        case slowDown_GmStatusCode:
+            appendFormat_String(src, "\n\nWait %s seconds before your next request.",
+                                cstr_String(meta_GmRequest(d->request)));
+            break;
+        default:
+            break;
+    }
+    setSource_GmDocument(d->doc, src, documentWidth_DocumentWidget_(d));
+    updateWindowTitle_DocumentWidget_(d);
+    updateVisible_DocumentWidget_(d);
+    refresh_Widget(w);
+}
+
 static void checkResponseCode_DocumentWidget_(iDocumentWidget *d) {
     if (d->state == fetching_DocumentState) {
         d->state = receivedPartialResponse_DocumentState;
         d->scrollY = 0;
         switch (status_GmRequest(d->request)) {
+            case none_GmStatusCode:
+            case success_GmStatusCode:
+                break;
+            case input_GmStatusCode:
+            case sensitiveInput_GmStatusCode: {
+                iUrl parts;
+                init_Url(&parts, d->url);
+                makeValueInput_Widget(
+                    as_Widget(d),
+                    NULL,
+                    cstrFormat_String(cyan_ColorEscape "%s",
+                                      cstr_String(collect_String(newRange_String(parts.host)))),
+                    isEmpty_String(meta_GmRequest(d->request))
+                        ? cstrFormat_String(
+                              "Please enter input for %s:",
+                              cstr_String(collect_String(newRange_String(parts.path))))
+                        : cstr_String(meta_GmRequest(d->request)),
+                    orange_ColorEscape "Send \u21d2",
+                    "document.input.submit");
+                break;
+            }
             case redirectTemporary_GmStatusCode:
             case redirectPermanent_GmStatusCode:
-                postCommandf_App("open redirect:1 url:%s", cstr_String(meta_GmRequest(d->request)));
-                iReleasePtr(&d->request);
+                if (isEmpty_String(meta_GmRequest(d->request))) {
+                    showErrorPage_DocumentWidget_(d, invalidRedirect_GmStatusCode);
+                }
+                else {
+                    postCommandf_App("open redirect:1 url:%s", cstr_String(meta_GmRequest(d->request)));
+                    iReleasePtr(&d->request);
+                }
                 break;
             default:
+                showErrorPage_DocumentWidget_(d, status_GmRequest(d->request));
                 break;
         }
     }
+}
+
+const iString *valueString_Command(const char *cmd, const char *label) {
+    return collect_String(newCStr_String(suffixPtr_Command(cmd, label)));
 }
 
 static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *ev) {
@@ -278,6 +345,25 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         setWidth_GmDocument(d->doc, documentWidth_DocumentWidget_(d));
         updateVisible_DocumentWidget_(d);
         refresh_Widget(w);
+    }
+    else if (isCommand_UserEvent(ev, "document.input.submit")) {
+        iString *value = collect_String(suffix_Command(command_UserEvent(ev), "value"));
+        urlEncode_String(value);
+        iString *url = collect_String(copy_String(d->url));
+        const size_t qPos = indexOfCStr_String(url, "?");
+        if (qPos != iInvalidPos) {
+            remove_Block(&url->chars, qPos, iInvalidSize);
+        }
+        appendCStr_String(url, "?");
+        append_String(url, value);
+        postCommandf_App("open url:%s", cstr_String(url));
+        return iTrue;
+    }
+    else if (isCommand_UserEvent(ev, "valueinput.cancelled") &&
+             cmp_String(string_Command(command_UserEvent(ev), "id"), "document.input.submit") ==
+                 0) {
+        postCommand_App("navigate.back");
+        return iTrue;
     }
     else if (isCommand_Widget(w, ev, "document.request.updated") &&
              pointerLabel_Command(command_UserEvent(ev), "request") == d->request) {
@@ -325,6 +411,17 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 updateVisible_DocumentWidget_(d);
                 refresh_Widget(w);
                 return iTrue;
+#if 0
+            case 't':
+                if (mods == KMOD_PRIMARY) {
+                    makeValueInput_Widget(get_Window()->root,
+                                          NULL,
+                                          cyan_ColorEscape "Input Needed",
+                                          "Give it!",
+                                          "document.input.submit");
+                }
+                return iTrue;
+#endif
             case SDLK_END:
                 d->scrollY = scrollMax_DocumentWidget_(d);
                 updateVisible_DocumentWidget_(d);
