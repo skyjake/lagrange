@@ -244,8 +244,9 @@ const iString *execPath_App(void) {
 void processEvents_App(enum iAppEventMode eventMode) {
     iApp *d = &app_;
     SDL_Event ev;
-    while ((eventMode == waitForNewEvents_AppEventMode && SDL_WaitEvent(&ev)) ||
-           (eventMode == postedEventsOnly_AppEventMode && SDL_PollEvent(&ev))) {
+    while (
+        (!d->pendingRefresh && eventMode == waitForNewEvents_AppEventMode && SDL_WaitEvent(&ev)) ||
+        ((d->pendingRefresh || eventMode == postedEventsOnly_AppEventMode) && SDL_PollEvent(&ev))) {
         switch (ev.type) {
             case SDL_QUIT:
                 // if (isModified_Song(d->song)) {
@@ -396,6 +397,7 @@ static const iString *historyUrl_App_(iApp *d, size_t pos) {
 }
 
 static void printHistory_App_(const iApp *d) {
+#if 0
     iConstForEach(Array, i, &d->history) {
         const size_t idx = index_ArrayConstIterator(&i);
         printf("%s[%zu]: %s\n",
@@ -404,13 +406,14 @@ static void printHistory_App_(const iApp *d) {
                cstr_String(&((const iHistoryItem *) i.value)->url));
     }
     fflush(stdout);
+#endif
 }
 
 iBool handleCommand_App(const char *cmd) {
     iApp *d = &app_;
     iWidget *root = d->window->root;
     if (equal_Command(cmd, "open")) {
-        const iString *url = collect_String(newCStr_String(valuePtr_Command(cmd, "url")));
+        const iString *url = collect_String(newCStr_String(suffixPtr_Command(cmd, "url")));
         if (!argLabel_Command(cmd, "history")) {
             if (argLabel_Command(cmd, "redirect")) {
                 /* Update in the history. */
