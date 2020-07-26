@@ -17,7 +17,6 @@ void    setUrl_GmRequest    (iGmRequest *, const iString *url);
 void    submit_GmRequest    (iGmRequest *);
 
 iBool               isFinished_GmRequest    (const iGmRequest *);
-const char *        error_GmRequest         (const iGmRequest *); /* NULL if successful */
 enum iGmStatusCode  status_GmRequest        (const iGmRequest *);
 const iString *     meta_GmRequest          (const iGmRequest *);
 const iBlock  *     body_GmRequest          (const iGmRequest *);

@@ -48,21 +48,24 @@ void init_GmRequest(iGmRequest *d) {
 }
 
 void deinit_GmRequest(iGmRequest *d) {
+    if (d->req) {
+        iDisconnectObject(TlsRequest, d->req, readyRead, d);
+        iDisconnectObject(TlsRequest, d->req, finished, d);
+    }
     lock_Mutex(&d->mutex);
     if (d->timeoutId) {
         SDL_RemoveTimer(d->timeoutId);
     }
-    if (d->req) {
-        if (!isFinished_GmRequest(d)) {
-            iDisconnectObject(TlsRequest, d->req, readyRead, d);
-            iDisconnectObject(TlsRequest, d->req, finished, d);
-            cancel_TlsRequest(d->req);
-            d->state = finished_GmRequestState;
-        }
-        iRelease(d->req);
-        d->req = NULL;
+    if (!isFinished_GmRequest(d)) {
+        unlock_Mutex(&d->mutex);
+        cancel_TlsRequest(d->req);
+        d->state = finished_GmRequestState;
     }
-    unlock_Mutex(&d->mutex);
+    else {
+        unlock_Mutex(&d->mutex);
+    }
+    iRelease(d->req);
+    d->req = NULL;
     delete_Audience(d->finished);
     delete_Audience(d->updated);
     deinit_Block(&d->body);
@@ -157,8 +160,8 @@ static void requestFinished_GmRequest_(iAnyObject *obj) {
     }
     SDL_RemoveTimer(d->timeoutId);
     d->timeoutId = 0;
-    iReleaseLater(d->req);
-    d->req = NULL;
+//    iReleaseLater(d->req);
+//    d->req = NULL;
     d->state = finished_GmRequestState;
     unlock_Mutex(&d->mutex);
     iNotifyAudience(d, finished, GmRequestFinished);
@@ -186,6 +189,7 @@ void submit_GmRequest(iGmRequest *d) {
         }
         else {
             d->code = failedToOpenFile_GmStatusCode;
+            setCStr_String(&d->header, cstr_String(path));
         }
         iRelease(f);
         d->state = finished_GmRequestState;
@@ -210,16 +214,6 @@ iBool isFinished_GmRequest(const iGmRequest *d) {
     iBool done;
     iGuardMutex(&d->mutex, done = (d->state == finished_GmRequestState));
     return done;
-}
-
-const char *error_GmRequest(const iGmRequest *d) {
-    if (d->code == failedToOpenFile_GmStatusCode) {
-        return "Failed to open file";
-    }
-    if (d->code == invalidHeader_GmStatusCode) {
-        return "Received invalid header (not Gemini?)";
-    }
-    return NULL; /* TDOO: detailed error string */
 }
 
 enum iGmStatusCode status_GmRequest(const iGmRequest *d) {
