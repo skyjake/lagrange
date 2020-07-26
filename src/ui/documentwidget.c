@@ -1,5 +1,6 @@
 #include "documentwidget.h"
 #include "scrollwidget.h"
+#include "inputwidget.h"
 #include "paint.h"
 #include "command.h"
 #include "util.h"
@@ -38,7 +39,6 @@ struct Impl_DocumentWidget {
     iClick click;
     iScrollWidget *scroll;
     iWidget *menu;
-//    iWidget *userInput;
 };
 
 iDefineObjectConstruction(DocumentWidget)
@@ -65,7 +65,6 @@ void init_DocumentWidget(iDocumentWidget *d) {
                                        { "---", 0, 0, NULL },
                                        { "Reload", 'r', KMOD_PRIMARY, "navigate.reload" } },
                         4);
-//    setFlags_Widget(d->userInput, hidden_WidgetFlag | disabled_WidgetFlag, iTrue);
 }
 
 void deinit_DocumentWidget(iDocumentWidget *d) {
@@ -293,10 +292,14 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
 }
 
 static void checkResponseCode_DocumentWidget_(iDocumentWidget *d) {
+    if (!d->request) {
+        return;
+    }
     if (d->state == fetching_DocumentState) {
         d->state = receivedPartialResponse_DocumentState;
         d->scrollY = 0;
-        switch (status_GmRequest(d->request)) {
+        enum iGmStatusCode statusCode = status_GmRequest(d->request);
+        switch (statusCode) {
             case none_GmStatusCode:
             case success_GmStatusCode:
                 break;
@@ -304,7 +307,7 @@ static void checkResponseCode_DocumentWidget_(iDocumentWidget *d) {
             case sensitiveInput_GmStatusCode: {
                 iUrl parts;
                 init_Url(&parts, d->url);
-                makeValueInput_Widget(
+                iWidget *dlg = makeValueInput_Widget(
                     as_Widget(d),
                     NULL,
                     cstrFormat_String(cyan_ColorEscape "%s",
@@ -316,6 +319,8 @@ static void checkResponseCode_DocumentWidget_(iDocumentWidget *d) {
                         : cstr_String(meta_GmRequest(d->request)),
                     orange_ColorEscape "Send \u21d2",
                     "document.input.submit");
+                setSensitive_InputWidget(findChild_Widget(dlg, "input"),
+                                         statusCode == sensitiveInput_GmStatusCode);
                 break;
             }
             case redirectTemporary_GmStatusCode:
@@ -324,12 +329,13 @@ static void checkResponseCode_DocumentWidget_(iDocumentWidget *d) {
                     showErrorPage_DocumentWidget_(d, invalidRedirect_GmStatusCode);
                 }
                 else {
-                    postCommandf_App("open redirect:1 url:%s", cstr_String(meta_GmRequest(d->request)));
+                    postCommandf_App("open redirect:1 url:%s",
+                                     cstr_String(meta_GmRequest(d->request)));
                     iReleasePtr(&d->request);
                 }
                 break;
             default:
-                showErrorPage_DocumentWidget_(d, status_GmRequest(d->request));
+                showErrorPage_DocumentWidget_(d, statusCode);
                 break;
         }
     }
@@ -411,17 +417,6 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 updateVisible_DocumentWidget_(d);
                 refresh_Widget(w);
                 return iTrue;
-#if 0
-            case 't':
-                if (mods == KMOD_PRIMARY) {
-                    makeValueInput_Widget(get_Window()->root,
-                                          NULL,
-                                          cyan_ColorEscape "Input Needed",
-                                          "Give it!",
-                                          "document.input.submit");
-                }
-                return iTrue;
-#endif
             case SDLK_END:
                 d->scrollY = scrollMax_DocumentWidget_(d);
                 updateVisible_DocumentWidget_(d);

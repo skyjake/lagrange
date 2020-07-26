@@ -11,6 +11,7 @@ static const int REFRESH_INTERVAL = 256;
 struct Impl_InputWidget {
     iWidget         widget;
     enum iInputMode mode;
+    iBool           isSensitive;
     size_t          maxLen;
     iArray          text;    /* iChar[] */
     iArray          oldText; /* iChar[] */
@@ -30,6 +31,7 @@ void init_InputWidget(iInputWidget *d, size_t maxLen) {
     init_Array(&d->oldText, sizeof(iChar));
     d->font   = uiInput_FontId;
     d->cursor = 0;
+    d->isSensitive = iFalse;
     setMaxLen_InputWidget(d, maxLen);
     if (maxLen == 0) {
         /* Caller must arrange the width. */
@@ -50,6 +52,10 @@ void deinit_InputWidget(iInputWidget *d) {
 
 void setMode_InputWidget(iInputWidget *d, enum iInputMode mode) {
     d->mode = mode;
+}
+
+void setSensitive_InputWidget(iInputWidget *d, iBool isSensitive) {
+    d->isSensitive = isSensitive;
 }
 
 const iString *text_InputWidget(const iInputWidget *d) {
@@ -277,17 +283,27 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
     return processEvent_Widget(w, ev);
 }
 
+static const iChar sensitiveChar_ = 0x25cf; /* black circle */
+
 static void draw_InputWidget_(const iInputWidget *d) {
     const uint32_t time   = frameTime_Window(get_Window());
     const iInt2 padding   = init_I2(gap_UI / 2, gap_UI / 2);
     iRect       bounds    = adjusted_Rect(bounds_Widget(constAs_Widget(d)), padding, neg_I2(padding));
     const iBool isFocused = isFocused_Widget(constAs_Widget(d));
     const iBool isHover   = isHover_Widget(constAs_Widget(d)) &&
-                            contains_Widget(constAs_Widget(d), mouseCoord_Window(get_Window()));
+                            contains_Widget(constAs_Widget(d), mouseCoord_Window(get_Window()));    
     iPaint p;
     init_Paint(&p);
     iString text;
-    initUnicodeN_String(&text, constData_Array(&d->text), size_Array(&d->text));
+    if (!d->isSensitive) {
+        initUnicodeN_String(&text, constData_Array(&d->text), size_Array(&d->text));
+    }
+    else {
+        init_String(&text);
+        for (size_t i = 0; i < size_Array(&d->text); ++i) {
+            appendChar_String(&text, sensitiveChar_);
+        }
+    }
     fillRect_Paint(&p, bounds, black_ColorId);
     drawRect_Paint(&p,
                    adjusted_Rect(bounds, neg_I2(one_I2()), zero_I2()),
@@ -322,7 +338,12 @@ static void draw_InputWidget_(const iInputWidget *d) {
         const iRect curRect = { curPos, addX_I2(emSize, 1) };
         iString     cur;
         if (d->cursor < size_Array(&d->text)) {
-            initUnicodeN_String(&cur, constAt_Array(&d->text, d->cursor), 1);
+            if (!d->isSensitive) {
+                initUnicodeN_String(&cur, constAt_Array(&d->text, d->cursor), 1);
+            }
+            else {
+                initUnicodeN_String(&cur, &sensitiveChar_, 1);
+            }
         }
         else {
             initCStr_String(&cur, " ");
