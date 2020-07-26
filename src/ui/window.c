@@ -151,6 +151,23 @@ static void setupUserInterface_Window(iWindow *d) {
 
     addChildFlags_Widget(div, iClob(new_DocumentWidget()), expand_WidgetFlag);
 
+    /* Search bar. */ {
+        iWidget *searchBar = new_Widget();
+        setId_Widget(searchBar, "search");
+        setFlags_Widget(searchBar,
+                        arrangeHeight_WidgetFlag | resizeChildren_WidgetFlag |
+                            arrangeHorizontal_WidgetFlag,
+                        iTrue);
+        addChild_Widget(div, iClob(searchBar));
+        setBackgroundColor_Widget(searchBar, gray25_ColorId);
+
+        addChild_Widget(searchBar, iClob(new_LabelWidget("\U0001f50d Find:", 0, 0, NULL)));
+        addChildFlags_Widget(searchBar, iClob(new_InputWidget(0)), expand_WidgetFlag);
+        addChild_Widget(searchBar, iClob(new_LabelWidget("Next", 0, 0, "find.next")));
+        addChild_Widget(searchBar, iClob(new_LabelWidget("Previous", 0, 0, "find.prev")));
+        addChild_Widget(searchBar, iClob(new_LabelWidget("\u00d7", 0, 0, "find.close")));
+    }
+
 #if 0
     iWidget *mainDiv = makeHDiv_Widget();
     setId_Widget(mainDiv, "maindiv");
