@@ -25,15 +25,15 @@ iDeclareTypeConstructionArgs(Glyph, iChar ch)
 struct Impl_Glyph {
     iHashNode node;
     iRect rect[2]; /* zero and half pixel offset */
-    int advance;
     iInt2 d[2];
+    float advance; /* scaled */
 };
 
 void init_Glyph(iGlyph *d, iChar ch) {
     d->node.key = ch;
     d->rect[0] = zero_Rect();
     d->rect[1] = zero_Rect();
-    d->advance = 0;
+    d->advance = 0.0f;
 }
 
 void deinit_Glyph(iGlyph *d) {
@@ -48,7 +48,7 @@ iDefineTypeConstructionArgs(Glyph, (iChar ch), ch)
 
 /*-----------------------------------------------------------------------------------------------*/
 
-iDeclareType(Font)
+iDeclareType(Font)    
 
 struct Impl_Font {
     iBlock *       data;
@@ -58,9 +58,12 @@ struct Impl_Font {
     int            baseline;
     iHash          glyphs;
     int            baselineOffset;
+    enum iFontId   emojiFont; /* font to use for emojis */
 };
 
-static void init_Font(iFont *d, const iBlock *data, int height, int bloff) {
+static iFont *font_Text_(enum iFontId id);
+
+static void init_Font(iFont *d, const iBlock *data, int height, int bloff, enum iFontId emojiFont) {
     init_Hash(&d->glyphs);
     d->baselineOffset = bloff;
     d->data = NULL;
@@ -69,8 +72,9 @@ static void init_Font(iFont *d, const iBlock *data, int height, int bloff) {
     stbtt_InitFont(&d->font, constData_Block(data), 0);
     d->scale = stbtt_ScaleForPixelHeight(&d->font, height);
     int ascent;
-    stbtt_GetFontVMetrics(&d->font, &ascent, 0, 0);
+    stbtt_GetFontVMetrics(&d->font, &ascent, NULL, NULL);
     d->baseline = (int) ascent * d->scale;
+    d->emojiFont = emojiFont;
 }
 
 static void deinit_Font(iFont *d) {
@@ -120,21 +124,33 @@ void init_Text(SDL_Renderer *render) {
         d->cacheRowHeight = 0;
     }
     /* Load the fonts. */ {
-        const struct { const iBlock *ttf; int size; } fontData[max_FontId] = {
-            { &fontSourceSansProRegular_Embedded, fontSize_UI },
-            { &fontFiraSansRegular_Embedded, fontSize_UI },
-            { &fontFiraMonoRegular_Embedded, fontSize_UI * 0.866f },
-            { &fontFiraMonoRegular_Embedded, fontSize_UI * 0.666f },
-            { &fontFiraSansRegular_Embedded, fontSize_UI * 1.333f },
-            { &fontFiraSansLightItalic_Embedded, fontSize_UI },
-            { &fontFiraSansBold_Embedded, fontSize_UI },
-            { &fontFiraSansBold_Embedded, fontSize_UI * 1.333f },
-            { &fontFiraSansBold_Embedded, fontSize_UI * 1.666f },
-            { &fontFiraSansBold_Embedded, fontSize_UI * 2.0f },
+        const struct {
+            const iBlock *ttf;
+            int size;
+            int emojiFont;
+        } fontData[max_FontId] = {
+            { &fontSourceSansProRegular_Embedded, fontSize_UI,          emoji_FontId },
+            { &fontFiraSansRegular_Embedded,      fontSize_UI,          emoji_FontId },
+            { &fontFiraMonoRegular_Embedded,      fontSize_UI * 0.866f, smallEmoji_FontId },
+            { &fontFiraMonoRegular_Embedded,      fontSize_UI * 0.666f, smallEmoji_FontId },
+            { &fontFiraSansRegular_Embedded,      fontSize_UI * 1.333f, mediumEmoji_FontId },
+            { &fontFiraSansLightItalic_Embedded,  fontSize_UI,          emoji_FontId },
+            { &fontFiraSansBold_Embedded,         fontSize_UI,          emoji_FontId },
+            { &fontFiraSansBold_Embedded,         fontSize_UI * 1.333f, mediumEmoji_FontId },
+            { &fontFiraSansBold_Embedded,         fontSize_UI * 1.666f, largeEmoji_FontId },
+            { &fontFiraSansBold_Embedded,         fontSize_UI * 2.000f, hugeEmoji_FontId },
+            { &fontNotoEmojiRegular_Embedded,     fontSize_UI,          emoji_FontId },
+            { &fontNotoEmojiRegular_Embedded,     fontSize_UI * 1.333f, mediumEmoji_FontId },
+            { &fontNotoEmojiRegular_Embedded,     fontSize_UI * 1.666f, largeEmoji_FontId },
+            { &fontNotoEmojiRegular_Embedded,     fontSize_UI * 2.000f, hugeEmoji_FontId },
+            { &fontNotoEmojiRegular_Embedded,     fontSize_UI * 0.866f, smallEmoji_FontId },
         };
         iForIndices(i, fontData) {
-            init_Font(&d->fonts[i], fontData[i].ttf, fontData[i].size,
-                      i == 0 ? fontSize_UI / 20 : 0);
+            init_Font(&d->fonts[i],
+                      fontData[i].ttf,
+                      fontData[i].size,
+                      i == 0 ? fontSize_UI / 18 : 0,
+                      fontData[i].emojiFont);
         }
     }
 }
@@ -150,6 +166,10 @@ void deinit_Text(void) {
     iRelease(d->ansiEscape);
 }
 
+iFont *font_Text_(enum iFontId id) {
+    return &text_.fonts[id];
+}
+
 static SDL_Surface *rasterizeGlyph_Font_(const iFont *d, iChar ch, float xShift) {
     int w, h;
     uint8_t *bmp = stbtt_GetCodepointBitmapSubpixel(
@@ -161,58 +181,9 @@ static SDL_Surface *rasterizeGlyph_Font_(const iFont *d, iChar ch, float xShift)
     return surface;
 }
 
-static iBool isSpecialChar_(iChar ch) {
-    return ch >= specialSymbol_Text && ch < 0x20;
-}
-
-static float symbolEmWidth_(int symbol) {
-    return 1.5f;
-}
-
-static float symbolAdvance_(int symbol) {
-    return 1.5f;
-}
-
-static int specialChar_(iChar ch) {
-    return ch - specialSymbol_Text;
-}
-
 iLocalDef SDL_Rect sdlRect_(const iRect rect) {
     return (SDL_Rect){ rect.pos.x, rect.pos.y, rect.size.x, rect.size.y };
 }
-
-#if 0
-static void fillTriangle_(SDL_Surface *surface, const SDL_Rect *rect, int dir) {
-    const uint32_t color = 0xffffffff;
-    SDL_LockSurface(surface);
-    uint32_t *row = surface->pixels;
-    row += rect->x + rect->y * surface->pitch / 4;
-    for (int y = 0; y < rect->h; y++, row += surface->pitch / 4) {
-        float norm = (float) y / (float) (rect->h - 1) * 2.0f;
-        if (norm > 1.0f) norm = 2.0f - norm;
-        const int      len        = norm * rect->w;
-        const float    fract      = norm * rect->w - len;
-        const uint32_t fractColor = 0xffffff00 | (int) (fract * 0xff);
-        if (dir > 0) {
-            for (int x = 0; x < len; x++) {
-                row[x] = color;
-            }
-            if (len < rect->w) {
-                row[len] = fractColor;
-            }
-        }
-        else {
-            for (int x = 0; x < len; x++) {
-                row[rect->w - len + x] = color;
-            }
-            if (len < rect->w) {
-                row[rect->w - len - 1] = fractColor;
-            }
-        }
-    }
-    SDL_UnlockSurface(surface);
-}
-#endif
 
 static void cache_Font_(iFont *d, iGlyph *glyph, int hoff) {
     iText *txt = &text_;
@@ -222,12 +193,12 @@ static void cache_Font_(iFont *d, iGlyph *glyph, int hoff) {
     const iChar ch = char_Glyph(glyph);
     iBool fromStb = iFalse;
     iRect *glRect = &glyph->rect[hoff];
-    if (!isSpecialChar_(ch)) {
-        /* Rasterize the glyph using stbtt. */
+    /* Rasterize the glyph using stbtt. */ {
         surface = rasterizeGlyph_Font_(d, ch, hoff * 0.5f);
         if (hoff == 0) {
-            int lsb;
-            stbtt_GetCodepointHMetrics(&d->font, ch, &glyph->advance, &lsb);
+            int adv, lsb;
+            stbtt_GetCodepointHMetrics(&d->font, ch, &adv, &lsb);
+            glyph->advance = d->scale * adv;
         }
         stbtt_GetCodepointBitmapBoxSubpixel(&d->font,
                                             ch,
@@ -244,47 +215,6 @@ static void cache_Font_(iFont *d, iGlyph *glyph, int hoff) {
         tex = SDL_CreateTextureFromSurface(render, surface);
         glRect->size = init_I2(surface->w, surface->h);
     }
-    else {
-        /* Metrics for special symbols. */
-        int em, lsb;
-        const int symbol = specialChar_(ch);
-        stbtt_GetCodepointHMetrics(&d->font, 'M', &em, &lsb);
-        glyph->d[hoff].x = d->baseline / 10;
-        glyph->d[hoff].y = -d->baseline;
-        glyph->advance = em * symbolAdvance_(symbol);
-        glyph->rect[hoff].size = init_I2(symbolEmWidth_(symbol) * em * d->scale, d->height);
-#if 0
-        if (isRasterizedSymbol_(ch)) {
-            /* Rasterize manually. */
-            surface = SDL_CreateRGBSurfaceWithFormat(
-                0, width_Rect(glyph->rect), height_Rect(glyph->rect), 32, SDL_PIXELFORMAT_RGBA8888);
-            SDL_FillRect(surface, NULL, 0);
-            const uint32_t white = 0xffffffff;
-            switch (specialChar_(ch)) {
-                case play_SpecialSymbol:
-                    fillTriangle_(surface, &(SDL_Rect){ 0, 0, surface->w, d->baseline }, 1);
-                    break;
-                case pause_SpecialSymbol: {
-                    const int w = surface->w * 4 / 11;
-                    SDL_FillRect(surface, &(SDL_Rect){ 0, 0, w, d->baseline }, white);
-                    SDL_FillRect(surface, &(SDL_Rect){ surface->w - w, 0, w, d->baseline }, white);
-                    break;
-                }
-                case rewind_SpecialSymbol: {
-                    const int w1 = surface->w / 7;
-                    const int w2 = surface->w * 3 / 7;
-                    const int h = d->baseline * 4 / 5;
-                    const int off = (d->baseline - h) / 2;
-                    SDL_FillRect(surface,  &(SDL_Rect){ 0,  off, w1, h}, white);
-                    fillTriangle_(surface, &(SDL_Rect){ w1, off, w2, h }, -1);
-                    fillTriangle_(surface, &(SDL_Rect){ surface->w * 4 / 7, off, w2, h }, -1);
-                    break;
-                }
-            }
-            tex = SDL_CreateTextureFromSurface(render, surface);
-        }
-#endif
-    }
     /* Determine placement in the glyph cache texture, advancing in rows. */
     if (txt->cachePos.x + glRect->size.x > txt->cacheSize.x) {
         txt->cachePos.x = 0;
@@ -294,87 +224,31 @@ static void cache_Font_(iFont *d, iGlyph *glyph, int hoff) {
     glRect->pos = txt->cachePos;
     SDL_SetRenderTarget(render, txt->cache);
     const SDL_Rect dstRect = sdlRect_(*glRect);
-    if (surface) {
-        SDL_RenderCopy(render, tex, &(SDL_Rect){ 0, 0, dstRect.w, dstRect.h }, &dstRect);
-    }
-    else {
-#if 0
-        /* Draw a special symbol. */
-        SDL_SetRenderDrawColor(render, 255, 255, 255, 255);
-        const iInt2 tl = init_I2(dstRect.x, dstRect.y);
-        const iInt2 br = init_I2(dstRect.x + dstRect.w - 1, dstRect.y + dstRect.h - 1);
-        const int midX = tl.x + dstRect.w / 2;
-        const int midY = tl.y + dstRect.h / 2;
-        const int symH = dstRect.h * 2 / 6;
-        /* Frame. */
-        if (isFramedSymbol_(ch)) {
-            SDL_RenderDrawLines(
-                render,
-                (SDL_Point[]){
-                    { tl.x, tl.y }, { br.x, tl.y }, { br.x, br.y }, { tl.x, br.y }, { tl.x, tl.y } },
-                5);
-        }
-        iArray points;
-        init_Array(&points, sizeof(SDL_Point));
-        switch (specialChar_(ch)) {
-            case 0: /* silence */
-                break;
-            case 1: /* sine */
-                for (int i = 0; i < dstRect.w; ++i) {
-                    float rad = 2.0f * iMathPif * (float) i / dstRect.w;
-                    SDL_Point pt = { tl.x + i, midY + sin(rad) * symH};
-                    pushBack_Array(&points, &pt);
-                }
-                SDL_RenderDrawLines(render, constData_Array(&points), size_Array(&points));
-                break;
-            case 2: /* square */
-                SDL_RenderDrawLines(render,
-                                    (SDL_Point[]){ { tl.x, midY - symH },
-                                                   { midX, midY - symH },
-                                                   { midX, midY + symH },
-                                                   { br.x, midY + symH } },
-                                    4);
-                break;
-            case 3: /* saw */
-                SDL_RenderDrawLines(render,
-                                    (SDL_Point[]){ { tl.x, midY },
-                                                   { midX, midY - symH },
-                                                   { midX, midY + symH },
-                                                   { br.x, midY } },
-                                    4);
-                break;
-            case 4: /* triangle */
-                SDL_RenderDrawLines(render,
-                                    (SDL_Point[]){ { tl.x, midY },
-                                                   { tl.x + dstRect.w / 4, midY - symH },
-                                                   { br.x - dstRect.w / 4, midY + symH },
-                                                   { br.x, midY } },
-                                    4);
-                break;
-            case 5: /* noise */
-                for (int i = 0; i < dstRect.w; ++i) {
-                    for (int p = 0; p < 2; ++p) {
-                        const float val = iRandomf() * 2.0f - 1.0f;
-                        pushBack_Array(&points, &(SDL_Point){ tl.x + i, midY - val * symH });
-                    }
-                }
-                SDL_RenderDrawPoints(render, constData_Array(&points), size_Array(&points));
-                break;
-        }        
-        deinit_Array(&points);
-#endif
-    }
+    SDL_RenderCopy(render, tex, &(SDL_Rect){ 0, 0, dstRect.w, dstRect.h }, &dstRect);
     SDL_SetRenderTarget(render, NULL);
     if (tex) {
         SDL_DestroyTexture(tex);
         iAssert(surface);
-        if (fromStb) stbtt_FreeBitmap(surface->pixels, NULL);
+        stbtt_FreeBitmap(surface->pixels, NULL);
         SDL_FreeSurface(surface);
     }
     /* Update cache cursor. */
     txt->cachePos.x += glRect->size.x;
     txt->cacheRowHeight = iMax(txt->cacheRowHeight, glRect->size.y);
     iAssert(txt->cachePos.y + txt->cacheRowHeight <= txt->cacheSize.y);
+    /* TODO: Automatically enlarge the cache if running out of space?
+       Maybe make it paged. */
+}
+
+iLocalDef iBool isEmoji_(iChar ch) {
+    return ch >= 0x1f000 && ch < 0x20000;
+}
+
+iLocalDef iFont *characterFont_Font_(iFont *d, iChar ch) {
+    if (isEmoji_(ch) && font_Text_(d->emojiFont) != d) {
+        return font_Text_(d->emojiFont);
+    }
+    return d;
 }
 
 static const iGlyph *glyph_Font_(iFont *d, iChar ch) {
@@ -411,7 +285,6 @@ static iInt2 run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
                        int xposLimit, const char **continueFrom_out, int *runAdvance_out) {
     iInt2 size = zero_I2();
     const iInt2 orig = pos;
-    const stbtt_fontinfo *info = &d->font;
     float xpos = pos.x;
     float xposMax = xpos;
     iAssert(xposLimit == 0 || mode == measure_RunMode);
@@ -454,7 +327,8 @@ static iInt2 run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
                 continue;
             }
         }
-        const iGlyph *glyph = glyph_Font_(d, ch);
+        iFont *font = characterFont_Font_(d, ch); /* may switch to an Emoji font */
+        const iGlyph *glyph = glyph_Font_(font, ch);
         int x1 = xpos;
         const int hoff = enableHalfPixelGlyphs_Text ? (xpos - x1 > 0.5f ? 1 : 0) : 0;
         int x2 = x1 + glyph->rect[hoff].size.x;
@@ -464,25 +338,26 @@ static iInt2 run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
             break;
         }
         size.x = iMax(size.x, x2 - orig.x);
-        size.y = iMax(size.y, pos.y + d->height - orig.y);
+        size.y = iMax(size.y, pos.y + font->height - orig.y);
         if (mode != measure_RunMode) {
             SDL_Rect dst = { x1 + glyph->d[hoff].x,
-                             pos.y + d->baseline + glyph->d[hoff].y,
+                             pos.y + font->baseline + glyph->d[hoff].y,
                              glyph->rect[hoff].size.x,
                              glyph->rect[hoff].size.y };
             SDL_RenderCopy(text_.render, text_.cache, (const SDL_Rect *) &glyph->rect[hoff], &dst);
         }
-        xpos += d->scale * glyph->advance;
+        xpos += glyph->advance;
         xposMax = iMax(xposMax, xpos);
         if (!isSpace_Char(prevCh) && isSpace_Char(ch)) {
             lastWordEnd = chPos;
         }
-        /* Check the next character. */ {
+        /* Check the next character. */
+        if (font == d) {
             /* TODO: No need to decode the next char twice; check this on the next iteration. */
             const char *peek = chPos;
             const iChar next = nextChar_(&peek, text.end);
             if (next) {
-                xpos += d->scale * stbtt_GetCodepointKernAdvance(info, ch, next);
+                xpos += font->scale * stbtt_GetCodepointKernAdvance(&d->font, ch, next);
             }
         }
         prevCh = ch;
@@ -608,15 +483,16 @@ void drawString_Text(int fontId, iInt2 pos, int color, const iString *text) {
     draw_Text_(fontId, pos, color, range_String(text));
 }
 
-void drawCentered_Text(int fontId, iRect rect, int color, const char *text, ...) {
+void drawCentered_Text(int fontId, iRect rect, int color, const char *format, ...) {
     iBlock chars;
     init_Block(&chars, 0); {
         va_list args;
-        va_start(args, text);
-        vprintf_Block(&chars, text, args);
+        va_start(args, format);
+        vprintf_Block(&chars, format, args);
         va_end(args);
     }
-    const iInt2 textSize = advance_Text(fontId, cstr_Block(&chars));
+    const char *text = cstr_Block(&chars);
+    iInt2 textSize = advance_Text(fontId, text);
     draw_Text_(fontId, sub_I2(mid_Rect(rect), divi_I2(textSize, 2)), color,
                (iRangecc){ constBegin_Block(&chars), constEnd_Block(&chars) });
     deinit_Block(&chars);

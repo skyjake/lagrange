@@ -16,6 +16,11 @@ enum iFontId {
     mediumBold_FontId,
     largeBold_FontId,
     hugeBold_FontId,
+    emoji_FontId,
+    mediumEmoji_FontId,
+    largeEmoji_FontId,
+    hugeEmoji_FontId,
+    smallEmoji_FontId,
     max_FontId,
     /* UI fonts: */
     uiLabel_FontId     = default_FontId,
@@ -30,12 +35,6 @@ enum iFontId {
     header1_FontId           = hugeBold_FontId,
     header2_FontId           = largeBold_FontId,
     header3_FontId           = medium_FontId,
-};
-
-#define specialSymbol_Text  0x10
-
-enum iSpecialSymbol {
-    silence_SpecialSymbol,
 };
 
 void    init_Text           (SDL_Renderer *);
