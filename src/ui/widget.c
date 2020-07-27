@@ -155,7 +155,16 @@ static void setHeight_Widget_(iWidget *d, int height) {
     }
 }
 
+iLocalDef iBool isCollapsed_Widget_(const iWidget *d) {
+    return (d->flags & (hidden_WidgetFlag | collapse_WidgetFlag)) ==
+           (hidden_WidgetFlag | collapse_WidgetFlag);
+}
+
 void arrange_Widget(iWidget *d) {
+    if (isCollapsed_Widget_(d)) {
+        setFlags_Widget(d, wasCollapsed_WidgetFlag, iTrue);
+        return;
+    }
     if (d->flags & moveToParentRightEdge_WidgetFlag) {
         d->rect.pos.x = width_Rect(d->parent->rect) - width_Rect(d->rect);
     }
@@ -172,6 +181,25 @@ void arrange_Widget(iWidget *d) {
     /* Resize children to fill the parent widget. */
     const size_t childCount = size_ObjectList(d->children);
     if (d->flags & resizeChildren_WidgetFlag) {
+        /* Collapse hidden children. */
+        iForEach(ObjectList, c, d->children) {
+            iWidget *child = as_Widget(c.object);
+            if (isCollapsed_Widget_(child)) {
+                if (d->flags & arrangeHorizontal_WidgetFlag) {
+                    setWidth_Widget_(child, 0);
+                }
+                if (d->flags & arrangeVertical_WidgetFlag) {
+                    setHeight_Widget_(child, 0);
+                }
+            }
+            else if (child->flags & wasCollapsed_WidgetFlag) {
+                setFlags_Widget(child, wasCollapsed_WidgetFlag, iFalse);
+                /* Undo collapse and determine the normal size again. */
+                if (child->flags & arrangeSize_WidgetFlag) {
+                    arrange_Widget(child);
+                }
+            }
+        }
         const int expCount = numExpandingChildren_Widget_(d);
         /* Only resize the expanding children, not touching the others. */
         if (expCount > 0) {
@@ -185,6 +213,7 @@ void arrange_Widget(iWidget *d) {
             avail = divi_I2(avail, expCount);
             iForEach(ObjectList, j, d->children) {
                 iWidget *child = as_Widget(j.object);
+                if (isCollapsed_Widget_(child)) continue;
                 if (child->flags & expand_WidgetFlag) {
                     if (d->flags & arrangeHorizontal_WidgetFlag) {
                         setWidth_Widget_(child, avail.x);
@@ -217,8 +246,10 @@ void arrange_Widget(iWidget *d) {
             }
             iForEach(ObjectList, i, d->children) {
                 iWidget *child = as_Widget(i.object);
-                setWidth_Widget_(child, childSize.x);
-                setHeight_Widget_(child, childSize.y);
+                if (!isCollapsed_Widget_(child)) {
+                    setWidth_Widget_(child, childSize.x);
+                    setHeight_Widget_(child, childSize.y);
+                }
             }
         }
     }
