@@ -32,6 +32,7 @@ struct Impl_DocumentWidget {
     iGmRequest *request;
     iAtomicInt isSourcePending; /* request has new content, need to parse it */
     iGmDocument *doc;
+    iRangecc selectMark;
     iRangecc foundMark;
     int pageMargin;
     int scrollY;
@@ -53,6 +54,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     d->request         = NULL;
     d->isSourcePending = iFalse;
     d->doc             = new_GmDocument();
+    d->selectMark      = iNullRange;
     d->foundMark       = iNullRange;
     d->pageMargin      = 5;
     d->scrollY         = 0;
@@ -535,8 +537,31 @@ struct Impl_DrawContext {
     const iDocumentWidget *widget;
     iRect bounds;
     iPaint paint;
-    int insideMark;
+    iBool inSelectMark;
+    iBool inFoundMark;
 };
+
+static void fillRange_DrawContext_(iDrawContext *d, const iGmRun *run, enum iColorId color,
+                                   iRangecc mark, iBool *isInside) {
+    if ((!*isInside && contains_Range(&run->text, mark.start)) || *isInside) {
+        int x = 0;
+        if (!*isInside) {
+            x = advanceRange_Text(run->font, (iRangecc){ run->text.start, mark.start }).x;
+        }
+        int w = width_Rect(run->bounds) - x;
+        if (contains_Range(&run->text, mark.end) || run->text.end == mark.end) {
+            w = advanceRange_Text(run->font,
+                                  !*isInside ? mark : (iRangecc){ run->text.start, mark.end }).x;
+            *isInside = iFalse;
+        }
+        else {
+            *isInside = iTrue; /* at least until the next run */
+        }
+        const iInt2 visPos = add_I2(run->bounds.pos, addY_I2(d->bounds.pos, -d->widget->scrollY));
+        fillRect_Paint(&d->paint, (iRect){ addX_I2(visPos, x),
+                                           init_I2(w, height_Rect(run->bounds)) }, color);
+    }
+}
 
 static void drawRun_DrawContext_(void *context, const iGmRun *run) {
     iDrawContext *d = context;
@@ -556,9 +581,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
         int descWidth = measure_Text(default_FontId, desc).x + gap_UI;
         iRect linkRect = expanded_Rect(moved_Rect(run->bounds, origin), init_I2(gap_UI, 0));
         linkRect.size.x += descWidth;
-        fillRect_Paint(&d->paint,
-                       linkRect,
-                       teal_ColorId);
+        fillRect_Paint(&d->paint, linkRect, teal_ColorId);
         drawAlign_Text(default_FontId,
                        addX_I2(topRight_Rect(linkRect), -gap_UI),
                        cyan_ColorId,
@@ -567,31 +590,9 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                        desc);
     }
     const iInt2 visPos = add_I2(run->bounds.pos, origin);
-    /* Found text marker. */
-    if ((!d->insideMark && contains_Range(&run->text, d->widget->foundMark.start)) ||
-        d->insideMark) {
-        int x = 0;
-        if (!d->insideMark) {
-            x = advanceRange_Text(run->font, (iRangecc){ run->text.start,
-                                                         d->widget->foundMark.start }).x;
-        }
-        int w = width_Rect(run->bounds) - x;
-        if (contains_Range(&run->text, d->widget->foundMark.end) ||
-            run->text.end == d->widget->foundMark.end) {
-            w = advanceRange_Text(run->font,
-                                  !d->insideMark
-                                      ? d->widget->foundMark
-                                      : (iRangecc){ run->text.start, d->widget->foundMark.end })
-                    .x;
-            d->insideMark = iFalse;
-        }
-        else {
-            d->insideMark = iTrue; /* at least until the next run */
-        }
-        fillRect_Paint(&d->paint,
-                       (iRect){ addX_I2(visPos, x), init_I2(w, height_Rect(run->bounds)) },
-                       teal_ColorId);
-    }
+    /* Text markers. */
+    fillRange_DrawContext_(d, run, teal_ColorId, d->widget->foundMark, &d->inFoundMark);
+    fillRange_DrawContext_(d, run, brown_ColorId, d->widget->selectMark, &d->inSelectMark);
     drawString_Text(run->font, visPos, run->color, &text);
     deinit_String(&text);
 }
