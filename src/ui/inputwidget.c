@@ -160,11 +160,11 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
     if (isCommand_Widget(w, ev, "focus.gained")) {
         begin_InputWidget(d);
-        return iTrue;
+        return iFalse;
     }
     else if (isCommand_Widget(w, ev, "focus.lost")) {
         end_InputWidget(d, iTrue);
-        return iTrue;
+        return iFalse;
     }
     switch (processEvent_Click(&d->click, ev)) {
         case none_ClickResult:

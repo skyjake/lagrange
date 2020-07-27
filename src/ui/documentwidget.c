@@ -430,7 +430,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             d->foundMark     = finder(
                 d->doc, text_InputWidget(find), dir > 0 ? d->foundMark.end : d->foundMark.start);
             if (!d->foundMark.start && wrap) {
-                /* Wrap around */
+                /* Wrap around. */
                 d->foundMark = finder(d->doc, text_InputWidget(find), NULL);
             }
             if (d->foundMark.start) {

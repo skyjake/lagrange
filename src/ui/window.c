@@ -132,6 +132,26 @@ static iBool handleSearchBarCommands_(iWidget *searchBar, const char *cmd) {
         }
         return iTrue;
     }
+    else if (equal_Command(cmd, "focus.gained")) {
+        if (pointer_Command(cmd) == findChild_Widget(searchBar, "find.input")) {
+            if (!isVisible_Widget(searchBar)) {
+                setFlags_Widget(searchBar, hidden_WidgetFlag, iFalse);
+                arrange_Widget(get_Window()->root);
+                refresh_App();
+            }
+        }
+    }
+    else if (equal_Command(cmd, "find.close")) {
+        if (isVisible_Widget(searchBar)) {
+            if (isFocused_Widget(findChild_Widget(searchBar, "find.input"))) {
+                setFocus_Widget(NULL);
+            }
+            setFlags_Widget(searchBar, hidden_WidgetFlag, iTrue);
+            arrange_Widget(searchBar->parent);
+            refresh_Widget(searchBar->parent);
+        }
+        return iTrue;
+    }
     return iFalse;
 }
 
@@ -170,18 +190,19 @@ static void setupUserInterface_Window(iWindow *d) {
     addChildFlags_Widget(div, iClob(new_DocumentWidget()), expand_WidgetFlag);
 
     /* Search bar. */ {
-        iWidget *searchBar = new_Widget();
+        iWidget *searchBar = new_Widget();        
         setId_Widget(searchBar, "search");
         setFlags_Widget(searchBar,
-                        arrangeHeight_WidgetFlag | resizeChildren_WidgetFlag |
-                            arrangeHorizontal_WidgetFlag,
+                        hidden_WidgetFlag | collapse_WidgetFlag | arrangeHeight_WidgetFlag |
+                            resizeChildren_WidgetFlag | arrangeHorizontal_WidgetFlag,
                         iTrue);
         addChild_Widget(div, iClob(searchBar));
         setBackgroundColor_Widget(searchBar, gray25_ColorId);
         setCommandHandler_Widget(searchBar, handleSearchBarCommands_);
 
         addChild_Widget(searchBar, iClob(new_LabelWidget("\U0001f50d Text", 0, 0, NULL)));
-        setId_Widget(addChildFlags_Widget(searchBar, iClob(new_InputWidget(0)), expand_WidgetFlag),
+        iInputWidget *input = new_InputWidget(0);
+        setId_Widget(addChildFlags_Widget(searchBar, iClob(input), expand_WidgetFlag),
                      "find.input");
         addChild_Widget(searchBar, iClob(new_LabelWidget("Next", 'g', KMOD_PRIMARY, "find.next")));
         addChild_Widget(searchBar, iClob(new_LabelWidget("Previous", 'g', KMOD_PRIMARY | KMOD_SHIFT, "find.prev")));
