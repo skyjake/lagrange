@@ -1,4 +1,5 @@
 #include "gmdocument.h"
+#include "gmutil.h"
 #include "ui/color.h"
 #include "ui/text.h"
 #include "ui/metrics.h"
@@ -10,10 +11,12 @@ iDeclareType(GmLink)
 
 struct Impl_GmLink {
     iString url;
+    int flags;
 };
 
 void init_GmLink(iGmLink *d) {
     init_String(&d->url);
+    d->flags = 0;
 }
 
 void deinit_GmLink(iGmLink *d) {
@@ -25,6 +28,7 @@ iDefineTypeConstruction(GmLink)
 struct Impl_GmDocument {
     iObject object;
     iString source;
+    iString localHost;
     iInt2 size;
     iArray layout; /* contents of source, laid out in document space */
     iPtrArray links;
@@ -111,6 +115,26 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
     if (matchRange_RegExp(pattern, line, &m)) {
         iGmLink *link = new_GmLink();
         setRange_String(&link->url, capturedRange_RegExpMatch(&m, 1));
+        /* Check the host. */ {
+            iUrl parts;
+            init_Url(&parts, &link->url);
+            if (!isEmpty_Range(&parts.host) &&
+                !equalCase_Rangecc(&parts.host, cstr_String(&d->localHost))) {
+                link->flags |= remote_GmLinkFlag;
+            }
+            if (!isEmpty_Range(&parts.protocol) && !equalCase_Rangecc(&parts.protocol, "gemini")) {
+                link->flags |= remote_GmLinkFlag;
+            }
+            if (startsWithCase_Rangecc(&parts.protocol, "http")) {
+                link->flags |= http_GmLinkFlag;
+            }
+            else if (equalCase_Rangecc(&parts.protocol, "gopher")) {
+                link->flags |= gopher_GmLinkFlag;
+            }
+            else if (equalCase_Rangecc(&parts.protocol, "file")) {
+                link->flags |= file_GmLinkFlag;
+            }
+        }
         pushBack_PtrArray(&d->links, link);
         *linkId = size_PtrArray(&d->links); /* index + 1 */
         iRangecc desc = capturedRange_RegExpMatch(&m, 2);
@@ -156,7 +180,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         white_ColorId,
         };
     static const int indents[max_GmLineType] = {
-        4, 10, 4, 10, 0, 0, 0, 0
+        5, 10, 5, 10, 0, 0, 0, 5
     };
     static const float topMargin[max_GmLineType] = {
         0.0f, 0.5f, 1.0f, 0.5f, 2.0f, 2.0f, 1.5f, 1.0f
@@ -164,8 +188,11 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     static const float bottomMargin[max_GmLineType] = {
         0.0f, 0.5f, 1.0f, 0.5f, 1.0f, 1.0f, 1.0f, 1.0f
     };
-    const float midRunSkip = 0.1f; /* extra space between wrapped text/quote lines */
+    static const char *arrow  = "\u2192";
     static const char *bullet = "\u2022";
+    static const char *folder = "\U0001f4c1";
+    static const char *globe  = "\U0001f310";
+    const float midRunSkip = 0.1f; /* extra space between wrapped text/quote lines */
     clear_Array(&d->layout);
     clearLinks_GmDocument_(d);
     clear_String(&d->title);
@@ -236,7 +263,8 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             if ((type == link_GmLineType && prevType == link_GmLineType) ||
                 (type == quote_GmLineType && prevType == quote_GmLineType)) {
                 /* No margin between consecutive links/quote lines. */
-                required = 0;
+                required =
+                    (type == link_GmLineType ? midRunSkip * lineHeight_Text(paragraph_FontId) : 0);
             }
             if (isEmpty_Array(&d->layout)) {
                 required = 0; /* top of document */
@@ -246,19 +274,36 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 pos.y += required - delta;
             }
         }
-        /* Document title. */
+        /* Save the document title. */
         if (type == header1_GmLineType && isEmpty_String(&d->title)) {
             setRange_String(&d->title, line);
         }
         /* List bullet. */
         run.color = colors[type];
         if (type == bullet_GmLineType) {
-            run.bounds.pos = addX_I2(pos, indent * gap_UI);
-            run.bounds.size = advance_Text(run.font, bullet);
-            run.bounds.pos.x -= 4 * gap_UI - run.bounds.size.x / 2;
-            run.text = (iRangecc){ bullet, bullet + strlen(bullet) };
+            run.visBounds.pos  = addX_I2(pos, indent * gap_UI);
+            run.visBounds.size = advance_Text(run.font, bullet);
+            run.visBounds.pos.x -= 4 * gap_UI - width_Rect(run.visBounds) / 2;
+            run.bounds = zero_Rect(); /* just visual */
+            run.text = range_CStr(bullet);
             pushBack_Array(&d->layout, &run);
         }
+        /* Link icon. */
+        if (type == link_GmLineType) {
+            run.visBounds.pos  = pos;
+            run.visBounds.size = init_I2(indent * gap_UI, lineHeight_Text(run.font));
+            run.bounds         = zero_Rect(); /* just visual */
+            const iGmLink *link = constAt_PtrArray(&d->links, run.linkId - 1);
+            run.text            = range_CStr(link->flags & file_GmLinkFlag
+                                      ? folder
+                                      : link->flags & remote_GmLinkFlag ? globe : arrow);
+            if (link->flags & remote_GmLinkFlag) {
+                run.visBounds.pos.x -= gap_UI / 2;
+            }
+            run.color = linkColor_GmDocument(d, run.linkId);
+            pushBack_Array(&d->layout, &run);
+        }
+        run.color = colors[type];
         /* Special formatting for the first paragraph (e.g., subtitle, introduction, or lede). */
         if (type == text_GmLineType && isFirstText) {
             run.font = firstParagraph_FontId;
@@ -305,6 +350,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
 
 void init_GmDocument(iGmDocument *d) {
     init_String(&d->source);
+    init_String(&d->localHost);
     d->size = zero_I2();
     init_Array(&d->layout, sizeof(iGmRun));
     init_PtrArray(&d->links);
@@ -316,6 +362,7 @@ void deinit_GmDocument(iGmDocument *d) {
     clearLinks_GmDocument_(d);
     deinit_PtrArray(&d->links);
     deinit_Array(&d->layout);
+    deinit_String(&d->localHost);
     deinit_String(&d->source);
 }
 
@@ -382,6 +429,10 @@ static void normalize_GmDocument(iGmDocument *d) {
 //    printf("normalized:\n%s\n", cstr_String(&d->source));
 }
 
+void setHost_GmDocument(iGmDocument *d, const iString *host) {
+    set_String(&d->localHost, host);
+}
+
 void setSource_GmDocument(iGmDocument *d, const iString *source, int width) {
     set_String(&d->source, source);
     normalize_GmDocument(d);
@@ -396,12 +447,12 @@ void render_GmDocument(const iGmDocument *d, iRangei visRangeY, iGmDocumentRende
     iConstForEach(Array, i, &d->layout) {
         const iGmRun *run = i.value;
         if (isInside) {
-            if (top_Rect(run->bounds) > visRangeY.end) {
+            if (top_Rect(run->visBounds) > visRangeY.end) {
                 break;
             }
             render(context, run);
         }
-        else if (bottom_Rect(run->bounds) >= visRangeY.start) {
+        else if (bottom_Rect(run->visBounds) >= visRangeY.start) {
             isInside = iTrue;
             render(context, run);
         }
@@ -471,6 +522,24 @@ const iString *linkUrl_GmDocument(const iGmDocument *d, iGmLinkId linkId) {
         return &link->url;
     }
     return NULL;
+}
+
+int linkFlags_GmDocument(const iGmDocument *d, iGmLinkId linkId) {
+    if (linkId > 0 && linkId <= size_PtrArray(&d->links)) {
+        const iGmLink *link = constAt_PtrArray(&d->links, linkId - 1);
+        return link->flags;
+    }
+    return 0;
+}
+
+enum iColorId linkColor_GmDocument(const iGmDocument *d, iGmLinkId linkId) {
+    if (linkId > 0 && linkId <= size_PtrArray(&d->links)) {
+        const iGmLink *link = constAt_PtrArray(&d->links, linkId - 1);
+        return link->flags & http_GmLinkFlag
+                   ? orange_ColorId
+                   : link->flags & gopher_GmLinkFlag ? blue_ColorId : cyan_ColorId;
+    }
+    return white_ColorId;
 }
 
 const iString *title_GmDocument(const iGmDocument *d) {

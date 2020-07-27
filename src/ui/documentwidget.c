@@ -179,6 +179,9 @@ static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
 }
 
 static void setSource_DocumentWidget_(iDocumentWidget *d, const iString *source) {
+    iUrl parts;
+    init_Url(&parts, d->url);
+    setHost_GmDocument(d->doc, collect_String(newRange_String(parts.host)));
     setSource_GmDocument(d->doc, source, documentWidth_DocumentWidget_(d));
     d->foundMark = iNullRange;
     d->selectMark = iNullRange;
@@ -676,34 +679,41 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
     /* TODO: making a copy is unnecessary; the text routines should accept Rangecc */
     initRange_String(&text, run->text);
     iInt2 origin = addY_I2(d->bounds.pos, -d->widget->scrollY);
+    enum iColorId fg = run->color;
     if (run == d->widget->hoverLink) {
-        const char *desc = "";
-        const iString *url = linkUrl_GmDocument(d->widget->doc, d->widget->hoverLink->linkId);
-        if (indexOfCStr_String(url, "://") == iInvalidPos) {
-            url = d->widget->url;
-        }
+        //const char *desc = "";
+        const iGmDocument *doc = d->widget->doc;
+        const iGmLinkId linkId = d->widget->hoverLink->linkId;
+        const iString *url = linkUrl_GmDocument(doc, linkId);
+//        const int flags = linkFlags_GmDocument(doc, linkId);
         iUrl parts;
         init_Url(&parts, url);
-        desc = cstrFormat_String("\u2192 %s", cstr_String(collect_String(newRange_String(parts.protocol))));
-        int descWidth = measure_Text(default_FontId, desc).x + gap_UI;
-        iRect linkRect = expanded_Rect(moved_Rect(run->bounds, origin), init_I2(gap_UI, 0));
-        linkRect.size.x += descWidth;
-        fillRect_Paint(&d->paint, linkRect, teal_ColorId);
-        drawAlign_Text(default_FontId,
-                       addX_I2(topRight_Rect(linkRect), -gap_UI),
-                       cyan_ColorId,
-                       right_Alignment,
-                       "%s",
-                       desc);
+//        desc = cstrFormat_String("\u2192 %s", cstr_String(collect_String(newRange_String(parts.protocol))));
+        const iString *host = collect_String(newRange_String(parts.host));
+        fg = linkColor_GmDocument(doc, linkId);
+        if (!isEmpty_String(host)) {
+//        int descWidth = measure_Text(default_FontId, cstr_String(host)).x + gap_UI;
+            iRect linkRect = moved_Rect(run->visBounds, origin);
+//        linkRect.size.x += descWidth;
+//        fillRect_Paint(&d->paint, linkRect, teal_ColorId);
+            drawAlign_Text(default_FontId,
+//                           init_I2(right_Rect(d->bounds), top_Rect(linkRect)),
+                           topRight_Rect(linkRect),
+                           fg - 1,
+                           left_Alignment,
+                           " \u2014 %s",
+                           cstr_String(host));
+        }
     }
-    const iInt2 visPos = add_I2(run->bounds.pos, origin);
+    const iInt2 visPos = add_I2(run->visBounds.pos, origin);
     /* Text markers. */
     fillRange_DrawContext_(d, run, teal_ColorId, d->widget->foundMark, &d->inFoundMark);
     fillRange_DrawContext_(d, run, brown_ColorId, d->widget->selectMark, &d->inSelectMark);
-    drawString_Text(run->font, visPos, run->color, &text);
+    drawString_Text(run->font, visPos, fg, &text);
     deinit_String(&text);
 
-//    drawRect_Paint(&d->paint, (iRect){ visPos, run->bounds.size }, red_ColorId);
+//    drawRect_Paint(&d->paint, (iRect){ visPos, run->bounds.size }, green_ColorId);
+//    drawRect_Paint(&d->paint, (iRect){ visPos, run->visBounds.size }, red_ColorId);
 }
 
 static void draw_DocumentWidget_(const iDocumentWidget *d) {

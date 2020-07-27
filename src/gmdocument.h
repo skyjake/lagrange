@@ -9,6 +9,13 @@ iDeclareType(GmRun)
 
 typedef uint16_t iGmLinkId;
 
+enum iGmLinkFlags {
+    remote_GmLinkFlag = 0x1,
+    http_GmLinkFlag   = 0x2,
+    gopher_GmLinkFlag = 0x4,
+    file_GmLinkFlag   = 0x8,
+};
+
 struct Impl_GmRun {
     iRangecc text;
     iRect bounds; /* used for hit testing, extends to edge */
@@ -24,6 +31,7 @@ iDeclareClass(GmDocument)
 iDeclareObjectConstruction(GmDocument)
 
 void    setWidth_GmDocument     (iGmDocument *, int width);
+void    setHost_GmDocument      (iGmDocument *, const iString *host); /* local host name */
 void    setSource_GmDocument    (iGmDocument *, const iString *source, int width);
 
 typedef void (*iGmDocumentRenderFunc)(void *, const iGmRun *);
@@ -38,4 +46,6 @@ const iGmRun *  findRun_GmDocument      (const iGmDocument *, iInt2 pos);
 const char *    findLoc_GmDocument      (const iGmDocument *, iInt2 pos);
 const iGmRun *  findRunAtLoc_GmDocument (const iGmDocument *, const char *loc);
 const iString * linkUrl_GmDocument      (const iGmDocument *, iGmLinkId linkId);
+int             linkFlags_GmDocument    (const iGmDocument *, iGmLinkId linkId);
+enum iColorId   linkColor_GmDocument    (const iGmDocument *, iGmLinkId linkId);
 const iString * title_GmDocument        (const iGmDocument *);
