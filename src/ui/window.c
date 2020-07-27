@@ -120,10 +120,11 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
 static iBool handleSearchBarCommands_(iWidget *searchBar, const char *cmd) {
     if (equal_Command(cmd, "input.ended") &&
         cmp_String(string_Command(cmd, "id"), "find.input") == 0) {
-        if (arg_Command(cmd)) {
+        iInputWidget *input = findChild_Widget(searchBar, "find.input");
+        if (arg_Command(cmd) && isVisible_Widget(as_Widget(input))) {
             postCommand_App("find.next");
             /* Keep focus. */
-            if (!isEmpty_String(text_InputWidget(findChild_Widget(searchBar, "find.input")))) {
+            if (!isEmpty_String(text_InputWidget(input))) {
                 postCommand_App("focus.set id:find.input");
             }
         }
@@ -143,11 +144,11 @@ static iBool handleSearchBarCommands_(iWidget *searchBar, const char *cmd) {
     }
     else if (equal_Command(cmd, "find.close")) {
         if (isVisible_Widget(searchBar)) {
+            setFlags_Widget(searchBar, hidden_WidgetFlag, iTrue);
+            arrange_Widget(searchBar->parent);
             if (isFocused_Widget(findChild_Widget(searchBar, "find.input"))) {
                 setFocus_Widget(NULL);
             }
-            setFlags_Widget(searchBar, hidden_WidgetFlag, iTrue);
-            arrange_Widget(searchBar->parent);
             refresh_Widget(searchBar->parent);
         }
         return iTrue;
@@ -505,25 +506,6 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
     return iFalse;
 }
 
-#if 0
-static void waitPresent_Window_(iWindow *d) {
-    const double ticksPerFrame = 1000.0 / 60.0;
-    uint32_t nowTime = SDL_GetTicks();
-    if (nowTime < d->presentTime) {
-        SDL_Delay((uint32_t) (d->presentTime - nowTime));
-        nowTime = SDL_GetTicks();
-    }
-    /* Now it is the presentation time. */
-    /* Figure out the next time in the future. */
-    if (d->presentTime <= nowTime) {
-        d->presentTime += ticksPerFrame * ((int) ((nowTime - d->presentTime) / ticksPerFrame) + 1);
-    }
-    else {
-        d->presentTime = nowTime;
-    }
-}
-#endif
-
 void draw_Window(iWindow *d) {
     /* Clear the window. */
     SDL_SetRenderDrawColor(d->render, 0, 0, 0, 255);
@@ -534,13 +516,12 @@ void draw_Window(iWindow *d) {
 #if 0
     /* Text cache debugging. */ {
         SDL_Texture *cache = glyphCache_Text();
-        SDL_Rect rect = { 140, 60, 512, 512 };
+        SDL_Rect rect = { 140, 60, 1024, 1024 };
         SDL_SetRenderDrawColor(d->render, 0, 0, 0, 255);
         SDL_RenderFillRect(d->render, &rect);
         SDL_RenderCopy(d->render, glyphCache_Text(), NULL, &rect);
     }
 #endif
-//    waitPresent_Window_(d);
     SDL_RenderPresent(d->render);
 }
 
