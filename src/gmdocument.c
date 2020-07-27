@@ -164,6 +164,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     static const float bottomMargin[max_GmLineType] = {
         0.0f, 0.5f, 1.0f, 0.5f, 1.0f, 1.0f, 1.0f, 1.0f
     };
+    const float midRunSkip = 0.1f; /* extra space between wrapped text/quote lines */
     static const char *bullet = "\u2022";
     clear_Array(&d->layout);
     clearLinks_GmDocument_(d);
@@ -270,6 +271,12 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         iRangecc runLine = line;
         /* Create one or more runs for this line. */
         while (!isEmpty_Range(&runLine)) {
+            /* Little bit of breathing space between wrapped lines. */
+            if ((type == text_GmLineType || type == quote_GmLineType ||
+                 type == bullet_GmLineType) &&
+                runLine.start != line.start) {
+                pos.y += midRunSkip * lineHeight_Text(run.font);
+            }
             run.bounds.pos = addX_I2(pos, indent * gap_UI);
             const char *contPos;
             const int avail = d->size.x - run.bounds.pos.x;
