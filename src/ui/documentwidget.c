@@ -399,6 +399,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
     iWidget *w = as_Widget(d);
     if (isResize_UserEvent(ev)) {
         setWidth_GmDocument(d->doc, documentWidth_DocumentWidget_(d));
+        scroll_DocumentWidget_(d, 0);
         updateVisible_DocumentWidget_(d);
         refresh_Widget(w);
     }
@@ -564,11 +565,13 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             const iGmRun *oldHoverLink = d->hoverLink;
             d->hoverLink               = NULL;
             const iInt2 hoverPos = addY_I2(sub_I2(mouse, topLeft_Rect(docBounds)), d->scrollY);
-            iConstForEach(PtrArray, i, &d->visibleLinks) {
-                const iGmRun *run = i.ptr;
-                if (contains_Rect(run->bounds, hoverPos)) {
-                    d->hoverLink = run;
-                    break;
+            if (d->state == ready_DocumentState) {
+                iConstForEach(PtrArray, i, &d->visibleLinks) {
+                    const iGmRun *run = i.ptr;
+                    if (contains_Rect(run->bounds, hoverPos)) {
+                        d->hoverLink = run;
+                        break;
+                    }
                 }
             }
             if (d->hoverLink != oldHoverLink) {
