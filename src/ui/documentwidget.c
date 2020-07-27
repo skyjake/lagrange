@@ -15,6 +15,7 @@
 #include <the_Foundation/ptrarray.h>
 #include <the_Foundation/regexp.h>
 
+#include <SDL_clipboard.h>
 #include <SDL_timer.h>
 
 enum iDocumentState {
@@ -74,9 +75,11 @@ void init_DocumentWidget(iDocumentWidget *d) {
         makeMenu_Widget(w,
                         (iMenuItem[]){ { "Back", SDLK_LEFT, KMOD_PRIMARY, "navigate.back" },
                                        { "Forward", SDLK_RIGHT, KMOD_PRIMARY, "navigate.forward" },
+                                       { "Reload", 'r', KMOD_PRIMARY, "navigate.reload" },
                                        { "---", 0, 0, NULL },
-                                       { "Reload", 'r', KMOD_PRIMARY, "navigate.reload" } },
-                        4);
+                                       { "Copy", 'c', KMOD_PRIMARY, "copy" },
+                                       { "Copy Link", 0, 0, "document.copylink" } },
+                        6);
 }
 
 void deinit_DocumentWidget(iDocumentWidget *d) {
@@ -383,6 +386,28 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         updateVisible_DocumentWidget_(d);
         refresh_Widget(w);
     }
+    else if (isCommand_UserEvent(ev, "copy")) {
+        if (d->selectMark.start) {
+            iRangecc mark = d->selectMark;
+            if (mark.start > mark.end) {
+                iSwap(const char *, mark.start, mark.end);
+            }
+            iString *copied = newRange_String(mark);
+            SDL_SetClipboardText(cstr_String(copied));
+            delete_String(copied);
+            return iTrue;
+        }
+    }
+    else if (isCommand_Widget(w, ev, "document.copylink")) {
+        if (d->hoverLink) {
+            SDL_SetClipboardText(cstr_String(
+                absoluteUrl_DocumentWidget_(d, linkUrl_GmDocument(d->doc, d->hoverLink->linkId))));
+        }
+        else {
+            SDL_SetClipboardText(cstr_String(d->url));
+        }
+        return iTrue;
+    }
     else if (isCommand_UserEvent(ev, "document.input.submit")) {
         iString *value = collect_String(suffix_Command(command_UserEvent(ev), "value"));
         urlEncode_String(value);
@@ -514,26 +539,31 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         return iTrue;
     }
     else if (ev->type == SDL_MOUSEMOTION) {
-        const iRect docBounds      = documentBounds_DocumentWidget_(d);
-        const iInt2 mouse          = init_I2(ev->motion.x, ev->motion.y);
-        const iGmRun *oldHoverLink = d->hoverLink;
-        d->hoverLink               = NULL;
-        const iInt2 hoverPos = addY_I2(sub_I2(mouse, topLeft_Rect(docBounds)), d->scrollY);
-        iConstForEach(PtrArray, i, &d->visibleLinks) {
-            const iGmRun *run = i.ptr;
-            if (contains_Rect(run->bounds, hoverPos)) {
-                d->hoverLink = run;
-                break;
-            }
-        }
-        if (d->hoverLink != oldHoverLink) {
-            refresh_Widget(w);
-        }
-        if (!contains_Widget(w, mouse) || contains_Widget(constAs_Widget(d->scroll), mouse)) {
+        if (isVisible_Widget(d->menu)) {
             SDL_SetCursor(d->arrowCursor);
         }
         else {
-            SDL_SetCursor(d->hoverLink ? d->handCursor : d->beamCursor);
+            const iRect docBounds      = documentBounds_DocumentWidget_(d);
+            const iInt2 mouse          = init_I2(ev->motion.x, ev->motion.y);
+            const iGmRun *oldHoverLink = d->hoverLink;
+            d->hoverLink               = NULL;
+            const iInt2 hoverPos = addY_I2(sub_I2(mouse, topLeft_Rect(docBounds)), d->scrollY);
+            iConstForEach(PtrArray, i, &d->visibleLinks) {
+                const iGmRun *run = i.ptr;
+                if (contains_Rect(run->bounds, hoverPos)) {
+                    d->hoverLink = run;
+                    break;
+                }
+            }
+            if (d->hoverLink != oldHoverLink) {
+                refresh_Widget(w);
+            }
+            if (!contains_Widget(w, mouse) || contains_Widget(constAs_Widget(d->scroll), mouse)) {
+                SDL_SetCursor(d->arrowCursor);
+            }
+            else {
+                SDL_SetCursor(d->hoverLink ? d->handCursor : d->beamCursor);
+            }
         }
     }
     processContextMenuEvent_Widget(d->menu, ev);
