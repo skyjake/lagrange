@@ -19,11 +19,13 @@
 #include <SDL_hints.h>
 #include <stdarg.h>
 
+iDeclareType(Font)
 iDeclareType(Glyph)
 iDeclareTypeConstructionArgs(Glyph, iChar ch)
 
 struct Impl_Glyph {
     iHashNode node;
+    const iFont *font; /* may come from symbols/emoji */
     iRect rect[2]; /* zero and half pixel offset */
     iInt2 d[2];
     float advance; /* scaled */
@@ -31,6 +33,7 @@ struct Impl_Glyph {
 
 void init_Glyph(iGlyph *d, iChar ch) {
     d->node.key = ch;
+    d->font = NULL;
     d->rect[0] = zero_Rect();
     d->rect[1] = zero_Rect();
     d->advance = 0.0f;
@@ -48,8 +51,6 @@ iDefineTypeConstructionArgs(Glyph, (iChar ch), ch)
 
 /*-----------------------------------------------------------------------------------------------*/
 
-iDeclareType(Font)    
-
 struct Impl_Font {
     iBlock *       data;
     stbtt_fontinfo font;
@@ -58,12 +59,12 @@ struct Impl_Font {
     int            baseline;
     iHash          glyphs;
     int            baselineOffset;
-    enum iFontId   emojiFont; /* font to use for emojis */
+    enum iFontId   symbolsFont; /* font to use for symbols */
 };
 
 static iFont *font_Text_(enum iFontId id);
 
-static void init_Font(iFont *d, const iBlock *data, int height, int bloff, enum iFontId emojiFont) {
+static void init_Font(iFont *d, const iBlock *data, int height, int bloff, enum iFontId symbolsFont) {
     init_Hash(&d->glyphs);
     d->baselineOffset = bloff;
     d->data = NULL;
@@ -74,7 +75,7 @@ static void init_Font(iFont *d, const iBlock *data, int height, int bloff, enum 
     int ascent;
     stbtt_GetFontVMetrics(&d->font, &ascent, NULL, NULL);
     d->baseline = (int) ascent * d->scale;
-    d->emojiFont = emojiFont;
+    d->symbolsFont = symbolsFont;
 }
 
 static void deinit_Font(iFont *d) {
@@ -127,30 +128,35 @@ void init_Text(SDL_Renderer *render) {
         const struct {
             const iBlock *ttf;
             int size;
-            int emojiFont;
+            int symbolsFont;
         } fontData[max_FontId] = {
-            { &fontSourceSansProRegular_Embedded, fontSize_UI,          emoji_FontId },
-            { &fontFiraSansRegular_Embedded,      fontSize_UI,          emoji_FontId },
-            { &fontFiraMonoRegular_Embedded,      fontSize_UI * 0.866f, smallEmoji_FontId },
-            { &fontFiraMonoRegular_Embedded,      fontSize_UI * 0.666f, smallEmoji_FontId },
-            { &fontFiraSansRegular_Embedded,      fontSize_UI * 1.333f, mediumEmoji_FontId },
-            { &fontFiraSansLightItalic_Embedded,  fontSize_UI,          emoji_FontId },
-            { &fontFiraSansBold_Embedded,         fontSize_UI,          emoji_FontId },
-            { &fontFiraSansBold_Embedded,         fontSize_UI * 1.333f, mediumEmoji_FontId },
-            { &fontFiraSansBold_Embedded,         fontSize_UI * 1.666f, largeEmoji_FontId },
-            { &fontFiraSansBold_Embedded,         fontSize_UI * 2.000f, hugeEmoji_FontId },
-            { &fontNotoEmojiRegular_Embedded,     fontSize_UI,          emoji_FontId },
-            { &fontNotoEmojiRegular_Embedded,     fontSize_UI * 1.333f, mediumEmoji_FontId },
-            { &fontNotoEmojiRegular_Embedded,     fontSize_UI * 1.666f, largeEmoji_FontId },
-            { &fontNotoEmojiRegular_Embedded,     fontSize_UI * 2.000f, hugeEmoji_FontId },
-            { &fontNotoEmojiRegular_Embedded,     fontSize_UI * 0.866f, smallEmoji_FontId },
+            { &fontSourceSansProRegular_Embedded, fontSize_UI,          symbols_FontId },
+            { &fontFiraSansRegular_Embedded,      fontSize_UI,          symbols_FontId },
+            { &fontFiraMonoRegular_Embedded,      fontSize_UI * 0.866f, smallSymbols_FontId },
+            { &fontFiraMonoRegular_Embedded,      fontSize_UI * 0.666f, smallSymbols_FontId },
+            { &fontFiraSansRegular_Embedded,      fontSize_UI * 1.333f, mediumSymbols_FontId },
+            { &fontFiraSansLightItalic_Embedded,  fontSize_UI,          symbols_FontId },
+            { &fontFiraSansBold_Embedded,         fontSize_UI,          symbols_FontId },
+            { &fontFiraSansBold_Embedded,         fontSize_UI * 1.333f, mediumSymbols_FontId },
+            { &fontFiraSansBold_Embedded,         fontSize_UI * 1.666f, largeSymbols_FontId },
+            { &fontFiraSansBold_Embedded,         fontSize_UI * 2.000f, hugeSymbols_FontId },
+            { &fontSymbolaSubset_Embedded,        fontSize_UI,          symbols_FontId },
+            { &fontSymbolaSubset_Embedded,        fontSize_UI * 1.333f, mediumSymbols_FontId },
+            { &fontSymbolaSubset_Embedded,        fontSize_UI * 1.666f, largeSymbols_FontId },
+            { &fontSymbolaSubset_Embedded,        fontSize_UI * 2.000f, hugeSymbols_FontId },
+            { &fontSymbolaSubset_Embedded,        fontSize_UI * 0.866f, smallSymbols_FontId },
+            { &fontNotoEmojiRegular_Embedded,     fontSize_UI,          symbols_FontId },
+            { &fontNotoEmojiRegular_Embedded,     fontSize_UI * 1.333f, mediumSymbols_FontId },
+            { &fontNotoEmojiRegular_Embedded,     fontSize_UI * 1.666f, largeSymbols_FontId },
+            { &fontNotoEmojiRegular_Embedded,     fontSize_UI * 2.000f, hugeSymbols_FontId },
+            { &fontNotoEmojiRegular_Embedded,     fontSize_UI * 0.866f, smallSymbols_FontId },
         };
         iForIndices(i, fontData) {
             init_Font(&d->fonts[i],
                       fontData[i].ttf,
                       fontData[i].size,
                       i == 0 ? fontSize_UI / 18 : 0,
-                      fontData[i].emojiFont);
+                      fontData[i].symbolsFont);
         }
     }
 }
@@ -240,26 +246,31 @@ static void cache_Font_(iFont *d, iGlyph *glyph, int hoff) {
        Maybe make it paged. */
 }
 
-iLocalDef iBool isEmoji_(iChar ch) {
-    return ch >= 0x1f000 && ch < 0x20000;
-}
-
 iLocalDef iFont *characterFont_Font_(iFont *d, iChar ch) {
-    if (isEmoji_(ch) && font_Text_(d->emojiFont) != d) {
-        return font_Text_(d->emojiFont);
+    if (stbtt_FindGlyphIndex(&d->font, ch) != 0) {
+        return d;
     }
-    return d;
+    /* Not defined in current font, try symbols. */
+    iFont *symbols = font_Text_(d->symbolsFont);
+    if (symbols != d && stbtt_FindGlyphIndex(&symbols->font, ch)) {
+        return symbols;
+    }
+    /* Perhaps it's Emoji. */
+    return font_Text_(d->symbolsFont + fromSymbolsToEmojiOffset_FontId);
 }
 
 static const iGlyph *glyph_Font_(iFont *d, iChar ch) {
-    const void *node = value_Hash(&d->glyphs, ch);
+    /* It may actually come from a different font. */
+    iFont *font = characterFont_Font_(d, ch);
+    const void *node = value_Hash(&font->glyphs, ch);
     if (node) {
         return node;
     }
     iGlyph *glyph = new_Glyph(ch);
-    cache_Font_(d, glyph, 0);
-    cache_Font_(d, glyph, 1); /* half-pixel offset */
-    insert_Hash(&d->glyphs, &glyph->node);
+    glyph->font = font;
+    cache_Font_(font, glyph, 0);
+    cache_Font_(font, glyph, 1); /* half-pixel offset */
+    insert_Hash(&font->glyphs, &glyph->node);
     return glyph;
 }
 
@@ -327,8 +338,8 @@ static iInt2 run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
                 continue;
             }
         }
-        iFont *font = characterFont_Font_(d, ch); /* may switch to an Emoji font */
-        const iGlyph *glyph = glyph_Font_(font, ch);
+        /* TODO: Remember the glyph's font, no need to look it up constantly. */
+        const iGlyph *glyph = glyph_Font_(d, ch);
         int x1 = xpos;
         const int hoff = enableHalfPixelGlyphs_Text ? (xpos - x1 > 0.5f ? 1 : 0) : 0;
         int x2 = x1 + glyph->rect[hoff].size.x;
@@ -338,10 +349,10 @@ static iInt2 run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
             break;
         }
         size.x = iMax(size.x, x2 - orig.x);
-        size.y = iMax(size.y, pos.y + font->height - orig.y);
+        size.y = iMax(size.y, pos.y + glyph->font->height - orig.y);
         if (mode != measure_RunMode) {
             SDL_Rect dst = { x1 + glyph->d[hoff].x,
-                             pos.y + font->baseline + glyph->d[hoff].y,
+                             pos.y + glyph->font->baseline + glyph->d[hoff].y,
                              glyph->rect[hoff].size.x,
                              glyph->rect[hoff].size.y };
             SDL_RenderCopy(text_.render, text_.cache, (const SDL_Rect *) &glyph->rect[hoff], &dst);
@@ -352,12 +363,12 @@ static iInt2 run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
             lastWordEnd = chPos;
         }
         /* Check the next character. */
-        if (font == d) {
+        if (glyph->font == d) {
             /* TODO: No need to decode the next char twice; check this on the next iteration. */
             const char *peek = chPos;
             const iChar next = nextChar_(&peek, text.end);
             if (next) {
-                xpos += font->scale * stbtt_GetCodepointKernAdvance(&d->font, ch, next);
+                xpos += d->scale * stbtt_GetCodepointKernAdvance(&d->font, ch, next);
             }
         }
         prevCh = ch;

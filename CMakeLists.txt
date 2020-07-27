@@ -15,12 +15,13 @@ pkg_check_modules (SDL2 REQUIRED sdl2)
 # Embedded resources are written to a generated source file.
 message (STATUS "Preparing embedded resources...")
 set (EMBED_RESOURCES 
+    res/SourceSansPro-Regular.ttf
     res/FiraSans-Regular.ttf
     res/FiraSans-Bold.ttf
     res/FiraSans-LightItalic.ttf
     res/FiraMono-Regular.ttf
     res/NotoEmoji-Regular.ttf
-    res/SourceSansPro-Regular.ttf
+    res/SymbolaSubset.ttf
 )
 # if (UNIX AND NOT APPLE)
 #     list (APPEND EMBED_RESOURCES res/appicon-64.png)
