@@ -274,7 +274,7 @@ static const iGlyph *glyph_Font_(iFont *d, iChar ch) {
     return glyph;
 }
 
-enum iRunMode { measure_RunMode, draw_RunMode, drawPermanentColor_RunMode };
+enum iRunMode { measure_RunMode, measureNoWrap_RunMode, draw_RunMode, drawPermanentColor_RunMode };
 
 static iChar nextChar_(const char **chPos, const char *end) {
     if (*chPos == end) {
@@ -298,7 +298,7 @@ static iInt2 run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
     const iInt2 orig = pos;
     float xpos = pos.x;
     float xposMax = xpos;
-    iAssert(xposLimit == 0 || mode == measure_RunMode);
+    iAssert(xposLimit == 0 || mode == measure_RunMode || mode == measureNoWrap_RunMode);
     const char *lastWordEnd = text.start;
     if (continueFrom_out) {
         *continueFrom_out = text.end;
@@ -338,19 +338,18 @@ static iInt2 run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
                 continue;
             }
         }
-        /* TODO: Remember the glyph's font, no need to look it up constantly. */
         const iGlyph *glyph = glyph_Font_(d, ch);
         int x1 = xpos;
         const int hoff = enableHalfPixelGlyphs_Text ? (xpos - x1 > 0.5f ? 1 : 0) : 0;
         int x2 = x1 + glyph->rect[hoff].size.x;
+        /* Out of the allotted space? */
         if (xposLimit > 0 && x2 > xposLimit) {
-            /* Out of space. */
             *continueFrom_out = lastWordEnd;
             break;
         }
         size.x = iMax(size.x, x2 - orig.x);
         size.y = iMax(size.y, pos.y + glyph->font->height - orig.y);
-        if (mode != measure_RunMode) {
+        if (mode != measure_RunMode && mode != measureNoWrap_RunMode) {
             SDL_Rect dst = { x1 + glyph->d[hoff].x,
                              pos.y + glyph->font->baseline + glyph->d[hoff].y,
                              glyph->rect[hoff].size.x,
@@ -359,7 +358,7 @@ static iInt2 run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
         }
         xpos += glyph->advance;
         xposMax = iMax(xposMax, xpos);
-        if (!isSpace_Char(prevCh) && isSpace_Char(ch)) {
+        if (mode == measureNoWrap_RunMode || (!isSpace_Char(prevCh) && isSpace_Char(ch))) {
             lastWordEnd = chPos;
         }
         /* Check the next character. */
@@ -418,10 +417,24 @@ iInt2 advanceRange_Text(int fontId, iRangecc text) {
     return init_I2(advance, height);
 }
 
-iInt2 tryAdvanceRange_Text(int fontId, iRangecc text, int width, const char **endPos) {
+iInt2 tryAdvance_Text(int fontId, iRangecc text, int width, const char **endPos) {
     int advance;
     const int height = run_Font_(&text_.fonts[fontId],
                                  measure_RunMode,
+                                 text,
+                                 iInvalidSize,
+                                 zero_I2(),
+                                 width,
+                                 endPos,
+                                 &advance)
+                           .y;
+    return init_I2(advance, height);
+}
+
+iInt2 tryAdvanceNoWrap_Text(int fontId, iRangecc text, int width, const char **endPos) {
+    int advance;
+    const int height = run_Font_(&text_.fonts[fontId],
+                                 measureNoWrap_RunMode,
                                  text,
                                  iInvalidSize,
                                  zero_I2(),

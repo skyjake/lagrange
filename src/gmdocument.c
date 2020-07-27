@@ -272,8 +272,13 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         while (!isEmpty_Range(&runLine)) {
             run.bounds.pos = addX_I2(pos, indent * gap_UI);
             const char *contPos;
-            run.bounds.size = tryAdvanceRange_Text(
-                run.font, runLine, isPreformat ? 0 : (d->size.x - run.bounds.pos.x), &contPos);
+            const int avail = d->size.x - run.bounds.pos.x;
+            const iInt2 dims =
+                tryAdvance_Text(run.font, runLine, isPreformat ? 0 : avail, &contPos);
+            run.bounds.size.x = iMax(avail, dims.x); /* Extends to the right edge for selection. */
+            run.bounds.size.y = dims.y;
+            run.visBounds = run.bounds;
+            run.visBounds.size.x = dims.x;
             if (contPos > runLine.start) {
                 run.text = (iRangecc){ runLine.start, contPos };
             }
@@ -435,7 +440,15 @@ const iGmRun *findRun_GmDocument(const iGmDocument *d, iInt2 pos) {
     return NULL;
 }
 
-const iGmRun *findRunCStr_GmDocument(const iGmDocument *d, const char *textCStr) {
+const char *findLoc_GmDocument(const iGmDocument *d, iInt2 pos) {
+    const iGmRun *run = findRun_GmDocument(d, pos);
+    if (run) {
+        return findLoc_GmRun(run, pos);
+    }
+    return NULL;
+}
+
+const iGmRun *findRunAtLoc_GmDocument(const iGmDocument *d, const char *textCStr) {
     iConstForEach(Array, i, &d->layout) {
         const iGmRun *run = i.value;
         if (contains_Range(&run->text, textCStr) || run->text.start > textCStr /* went past */) {
@@ -455,6 +468,13 @@ const iString *linkUrl_GmDocument(const iGmDocument *d, iGmLinkId linkId) {
 
 const iString *title_GmDocument(const iGmDocument *d) {
     return &d->title;
+}
+
+const char *findLoc_GmRun(const iGmRun *d, iInt2 pos) {
+    const int x = pos.x - left_Rect(d->bounds);
+    const char *loc;
+    tryAdvanceNoWrap_Text(d->font, d->text, x, &loc);
+    return loc;
 }
 
 iDefineClass(GmDocument)

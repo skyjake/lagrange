@@ -11,11 +11,14 @@ typedef uint16_t iGmLinkId;
 
 struct Impl_GmRun {
     iRangecc text;
-    iRect bounds; /* advance metrics */
+    iRect bounds; /* used for hit testing, extends to edge */
+    iRect visBounds; /* actual text bounds */
     uint8_t font;
     uint8_t color;
     iGmLinkId linkId; /* zero for non-links */
 };
+
+const char *    findLoc_GmRun   (const iGmRun *, iInt2 pos);
 
 iDeclareClass(GmDocument)
 iDeclareObjectConstruction(GmDocument)
@@ -32,6 +35,7 @@ iRangecc        findText_GmDocument         (const iGmDocument *, const iString 
 iRangecc        findTextBefore_GmDocument   (const iGmDocument *, const iString *text, const char *before);
 
 const iGmRun *  findRun_GmDocument      (const iGmDocument *, iInt2 pos);
-const iGmRun *  findRunCStr_GmDocument  (const iGmDocument *, const char *textCStr);
+const char *    findLoc_GmDocument      (const iGmDocument *, iInt2 pos);
+const iGmRun *  findRunAtLoc_GmDocument (const iGmDocument *, const char *loc);
 const iString * linkUrl_GmDocument      (const iGmDocument *, iGmLinkId linkId);
 const iString * title_GmDocument        (const iGmDocument *);

@@ -112,6 +112,10 @@ static iRect documentBounds_DocumentWidget_(const iDocumentWidget *d) {
     return rect;
 }
 
+static iInt2 documentPos_DocumentWidget_(const iDocumentWidget *d, iInt2 pos) {
+    return addY_I2(sub_I2(pos, topLeft_Rect(documentBounds_DocumentWidget_(d))), d->scrollY);
+}
+
 static void requestUpdated_DocumentWidget_(iAnyObject *obj) {
     iDocumentWidget *d = obj;
     const int wasPending = exchange_Atomic(&d->isSourcePending, iTrue);
@@ -368,6 +372,10 @@ const iString *valueString_Command(const char *cmd, const char *label) {
     return collect_String(newCStr_String(suffixPtr_Command(cmd, label)));
 }
 
+static const char *sourceLoc_DocumentWidget_(const iDocumentWidget *d, iInt2 pos) {
+    return findLoc_GmDocument(d->doc, documentPos_DocumentWidget_(d, pos));
+}
+
 static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
     if (isResize_UserEvent(ev)) {
@@ -441,15 +449,15 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         }
         else {
             const iBool wrap = d->foundMark.start != NULL;
-            d->foundMark     = finder(
-                d->doc, text_InputWidget(find), dir > 0 ? d->foundMark.end : d->foundMark.start);
+            d->foundMark     = finder(d->doc, text_InputWidget(find), dir > 0 ? d->foundMark.end
+                                                                              : d->foundMark.start);
             if (!d->foundMark.start && wrap) {
                 /* Wrap around. */
                 d->foundMark = finder(d->doc, text_InputWidget(find), NULL);
             }
             if (d->foundMark.start) {
                 const iGmRun *found;
-                if ((found = findRunCStr_GmDocument(d->doc, d->foundMark.start)) != NULL) {
+                if ((found = findRunAtLoc_GmDocument(d->doc, d->foundMark.start)) != NULL) {
                     scrollTo_DocumentWidget_(d, mid_Rect(found->bounds).y);
                 }
             }
@@ -530,24 +538,42 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
     }
     processContextMenuEvent_Widget(d->menu, ev);
     switch (processEvent_Click(&d->click, ev)) {
-        case finished_ClickResult:
-            if (d->hoverLink) {
-                iAssert(d->hoverLink->linkId);
-                postCommandf_App("open url:%s",
-                                 cstr_String(absoluteUrl_DocumentWidget_(
-                                     d, linkUrl_GmDocument(d->doc, d->hoverLink->linkId))));
-            }
-            return iTrue;
         case started_ClickResult:
             d->selecting = iFalse;
             return iTrue;
-        case double_ClickResult:
-        case drag_ClickResult:
+        case drag_ClickResult: {
             /* Begin selecting a range of text. */
-            d->selectMark = iNullRange;
-            d->selecting = iTrue;
+            if (!d->selecting) {
+                d->selecting = iTrue;
+                d->selectMark.start = d->selectMark.end =
+                    sourceLoc_DocumentWidget_(d, d->click.startPos);
+                refresh_Widget(w);
+            }
+            const char *loc = sourceLoc_DocumentWidget_(d, pos_Click(&d->click));
+            if (!d->selectMark.start) {
+                d->selectMark.start = d->selectMark.end = loc;
+            }
+            else if (loc) {
+                d->selectMark.end = loc;
+            }
             refresh_Widget(w);
             return iTrue;
+        }
+        case finished_ClickResult:
+            if (!isMoved_Click(&d->click)) {
+                if (d->hoverLink) {
+                    iAssert(d->hoverLink->linkId);
+                    postCommandf_App("open url:%s",
+                                     cstr_String(absoluteUrl_DocumentWidget_(
+                                         d, linkUrl_GmDocument(d->doc, d->hoverLink->linkId))));
+                }
+                if (d->selectMark.start) {
+                    d->selectMark = iNullRange;
+                    refresh_Widget(w);
+                }
+            }
+            return iTrue;
+        case double_ClickResult:
         case aborted_ClickResult:
             return iTrue;
         default:
@@ -568,6 +594,10 @@ struct Impl_DrawContext {
 
 static void fillRange_DrawContext_(iDrawContext *d, const iGmRun *run, enum iColorId color,
                                    iRangecc mark, iBool *isInside) {
+    if (mark.start > mark.end) {
+        /* Selection may be done in either direction. */
+        iSwap(const char *, mark.start, mark.end);
+    }
     if ((!*isInside && contains_Range(&run->text, mark.start)) || *isInside) {
         int x = 0;
         if (!*isInside) {
@@ -581,6 +611,9 @@ static void fillRange_DrawContext_(iDrawContext *d, const iGmRun *run, enum iCol
         }
         else {
             *isInside = iTrue; /* at least until the next run */
+        }
+        if (w > width_Rect(run->visBounds) - x) {
+            w = width_Rect(run->visBounds) - x;
         }
         const iInt2 visPos = add_I2(run->bounds.pos, addY_I2(d->bounds.pos, -d->widget->scrollY));
         fillRect_Paint(&d->paint, (iRect){ addX_I2(visPos, x),
@@ -620,6 +653,8 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
     fillRange_DrawContext_(d, run, brown_ColorId, d->widget->selectMark, &d->inSelectMark);
     drawString_Text(run->font, visPos, run->color, &text);
     deinit_String(&text);
+
+//    drawRect_Paint(&d->paint, (iRect){ visPos, run->bounds.size }, red_ColorId);
 }
 
 static void draw_DocumentWidget_(const iDocumentWidget *d) {

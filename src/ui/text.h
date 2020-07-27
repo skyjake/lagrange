@@ -53,7 +53,9 @@ iInt2   measureRange_Text   (int fontId, iRangecc text);
 iInt2   advance_Text        (int fontId, const char *text);
 iInt2   advanceN_Text       (int fontId, const char *text, size_t n); /* `n` in characters */
 iInt2   advanceRange_Text   (int fontId, iRangecc text);
-iInt2   tryAdvanceRange_Text(int fontId, iRangecc text, int width, const char **endPos);
+
+iInt2   tryAdvance_Text         (int fontId, iRangecc text, int width, const char **endPos);
+iInt2   tryAdvanceNoWrap_Text   (int fontId, iRangecc text, int width, const char **endPos);
 
 enum iAlignment {
     left_Alignment,
