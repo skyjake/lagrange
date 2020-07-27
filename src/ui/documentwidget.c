@@ -32,6 +32,7 @@ struct Impl_DocumentWidget {
     iGmRequest *request;
     iAtomicInt isSourcePending; /* request has new content, need to parse it */
     iGmDocument *doc;
+    iBool selecting;
     iRangecc selectMark;
     iRangecc foundMark;
     int pageMargin;
@@ -41,6 +42,9 @@ struct Impl_DocumentWidget {
     iClick click;
     iScrollWidget *scroll;
     iWidget *menu;
+    SDL_Cursor *arrowCursor;
+    SDL_Cursor *beamCursor;
+    SDL_Cursor *handCursor;
 };
 
 iDefineObjectConstruction(DocumentWidget)
@@ -54,11 +58,15 @@ void init_DocumentWidget(iDocumentWidget *d) {
     d->request         = NULL;
     d->isSourcePending = iFalse;
     d->doc             = new_GmDocument();
+    d->selecting       = iFalse;
     d->selectMark      = iNullRange;
     d->foundMark       = iNullRange;
     d->pageMargin      = 5;
     d->scrollY         = 0;
     d->hoverLink       = NULL;
+    d->arrowCursor     = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_ARROW);
+    d->beamCursor      = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_IBEAM);
+    d->handCursor      = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_HAND);
     init_PtrArray(&d->visibleLinks);
     init_Click(&d->click, d, SDL_BUTTON_LEFT);
     addChild_Widget(w, iClob(d->scroll = new_ScrollWidget()));
@@ -76,6 +84,9 @@ void deinit_DocumentWidget(iDocumentWidget *d) {
     delete_String(d->url);
     iRelease(d->request);
     iRelease(d->doc);
+    SDL_FreeCursor(d->arrowCursor);
+    SDL_FreeCursor(d->beamCursor);
+    SDL_FreeCursor(d->handCursor);
 }
 
 static int documentWidth_DocumentWidget_(const iDocumentWidget *d) {
@@ -150,6 +161,16 @@ static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
                                                               : collectNewCStr_String("Lagrange"));
 }
 
+static void setSource_DocumentWidget_(iDocumentWidget *d, const iString *source) {
+    setSource_GmDocument(d->doc, source, documentWidth_DocumentWidget_(d));
+    d->foundMark = iNullRange;
+    d->selectMark = iNullRange;
+    d->hoverLink = NULL;
+    updateWindowTitle_DocumentWidget_(d);
+    updateVisible_DocumentWidget_(d);
+    refresh_Widget(as_Widget(d));
+}
+
 static void updateSource_DocumentWidget_(iDocumentWidget *d) {
     /* TODO: Do this in the background. However, that requires a text metrics calculator
        that does not try to cache the glyph bitmaps. */
@@ -157,11 +178,7 @@ static void updateSource_DocumentWidget_(iDocumentWidget *d) {
         status_GmRequest(d->request) != sensitiveInput_GmStatusCode) {        
         iString str;
         initBlock_String(&str, body_GmRequest(d->request));
-        setSource_GmDocument(d->doc, &str, documentWidth_DocumentWidget_(d));
-        d->foundMark = iNullRange;
-        updateWindowTitle_DocumentWidget_(d);
-        updateVisible_DocumentWidget_(d);
-        refresh_Widget(as_Widget(d));
+        setSource_DocumentWidget_(d, &str);
         deinit_String(&str);
     }
 }
@@ -275,7 +292,6 @@ static const iString *absoluteUrl_DocumentWidget_(const iDocumentWidget *d, cons
 }
 
 static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode code) {
-    iWidget *w = as_Widget(d);
     iString *src = collectNew_String();
     const iGmError *msg = get_GmError(code);
     format_String(src,
@@ -295,11 +311,7 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
         default:
             break;
     }
-    d->foundMark = iNullRange;
-    setSource_GmDocument(d->doc, src, documentWidth_DocumentWidget_(d));
-    updateWindowTitle_DocumentWidget_(d);
-    updateVisible_DocumentWidget_(d);
-    refresh_Widget(w);
+    setSource_DocumentWidget_(d, src);
 }
 
 static void checkResponseCode_DocumentWidget_(iDocumentWidget *d) {
@@ -494,11 +506,11 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         return iTrue;
     }
     else if (ev->type == SDL_MOUSEMOTION) {
+        const iRect docBounds      = documentBounds_DocumentWidget_(d);
+        const iInt2 mouse          = init_I2(ev->motion.x, ev->motion.y);
         const iGmRun *oldHoverLink = d->hoverLink;
-        d->hoverLink          = NULL;
-        const iRect docBounds = documentBounds_DocumentWidget_(d);
-        const iInt2 hoverPos  = addY_I2(
-            sub_I2(init_I2(ev->motion.x, ev->motion.y), topLeft_Rect(docBounds)), d->scrollY);
+        d->hoverLink               = NULL;
+        const iInt2 hoverPos = addY_I2(sub_I2(mouse, topLeft_Rect(docBounds)), d->scrollY);
         iConstForEach(PtrArray, i, &d->visibleLinks) {
             const iGmRun *run = i.ptr;
             if (contains_Rect(run->bounds, hoverPos)) {
@@ -508,6 +520,12 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         }
         if (d->hoverLink != oldHoverLink) {
             refresh_Widget(w);
+        }
+        if (!contains_Widget(w, mouse) || contains_Widget(constAs_Widget(d->scroll), mouse)) {
+            SDL_SetCursor(d->arrowCursor);
+        }
+        else {
+            SDL_SetCursor(d->hoverLink ? d->handCursor : d->beamCursor);
         }
     }
     processContextMenuEvent_Widget(d->menu, ev);
@@ -521,8 +539,15 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             }
             return iTrue;
         case started_ClickResult:
+            d->selecting = iFalse;
+            return iTrue;
         case double_ClickResult:
         case drag_ClickResult:
+            /* Begin selecting a range of text. */
+            d->selectMark = iNullRange;
+            d->selecting = iTrue;
+            refresh_Widget(w);
+            return iTrue;
         case aborted_ClickResult:
             return iTrue;
         default:
