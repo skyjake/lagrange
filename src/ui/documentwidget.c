@@ -30,6 +30,7 @@ struct Impl_DocumentWidget {
     iWidget widget;
     enum iDocumentState state;
     iString *url;
+    iString *titleUser;
     iGmRequest *request;
     iAtomicInt isSourcePending; /* request has new content, need to parse it */
     iGmDocument *doc;
@@ -56,6 +57,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     setId_Widget(w, "document");
     d->state           = blank_DocumentState;
     d->url             = new_String();
+    d->titleUser       = new_String();
     d->request         = NULL;
     d->isSourcePending = iFalse;
     d->doc             = new_GmDocument();
@@ -85,6 +87,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
 void deinit_DocumentWidget(iDocumentWidget *d) {
     deinit_PtrArray(&d->visibleLinks);
     delete_String(d->url);
+    delete_String(d->titleUser);
     iRelease(d->request);
     iRelease(d->doc);
     SDL_FreeCursor(d->arrowCursor);
@@ -163,9 +166,16 @@ static void updateVisible_DocumentWidget_(iDocumentWidget *d) {
 }
 
 static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
-    setTitle_Window(get_Window(),
-                    !isEmpty_String(title_GmDocument(d->doc)) ? title_GmDocument(d->doc)
-                                                              : collectNewCStr_String("Lagrange"));
+    const char *titleSep = " \u2013 ";
+    iString *title = collect_String(copy_String(title_GmDocument(d->doc)));
+    if (!isEmpty_String(d->titleUser)) {
+        if (!isEmpty_String(title)) appendCStr_String(title, titleSep);
+        append_String(title, d->titleUser);
+    }
+    if (isEmpty_String(title)) {
+        setCStr_String(title, "Lagrange");
+    }
+    setTitle_Window(get_Window(), title);
 }
 
 static void setSource_DocumentWidget_(iDocumentWidget *d, const iString *source) {
@@ -217,6 +227,12 @@ void setUrl_DocumentWidget(iDocumentWidget *d, const iString *url) {
         set_String(d->url, newUrl);
         fetch_DocumentWidget_(d);
     }
+    iRegExp *userPat = new_RegExp("~([^/?]+)", 0);
+    iRegExpMatch m;
+    if (matchString_RegExp(userPat, d->url, &m)) {
+        setRange_String(d->titleUser, capturedRange_RegExpMatch(&m, 1));
+    }
+    iRelease(userPat);
     delete_String(newUrl);
 }
 
