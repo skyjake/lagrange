@@ -12,6 +12,7 @@ struct Impl_InputWidget {
     iWidget         widget;
     enum iInputMode mode;
     iBool           isSensitive;
+    iBool           enterPressed;
     size_t          maxLen;
     iArray          text;    /* iChar[] */
     iArray          oldText; /* iChar[] */
@@ -32,6 +33,7 @@ void init_InputWidget(iInputWidget *d, size_t maxLen) {
     d->font   = uiInput_FontId;
     d->cursor = 0;
     d->isSensitive = iFalse;
+    d->enterPressed = iFalse;
     setMaxLen_InputWidget(d, maxLen);
     if (maxLen == 0) {
         /* Caller must arrange the width. */
@@ -118,6 +120,7 @@ void begin_InputWidget(iInputWidget *d) {
     setFlags_Widget(w, selected_WidgetFlag, iTrue);
     refresh_Widget(w);
     d->timer = SDL_AddTimer(REFRESH_INTERVAL, refreshTimer_, d);
+    d->enterPressed = iFalse;
 }
 
 void end_InputWidget(iInputWidget *d, iBool accept) {
@@ -136,7 +139,8 @@ void end_InputWidget(iInputWidget *d, iBool accept) {
     const char *id = cstr_String(id_Widget(as_Widget(d)));
     if (!*id) id = "_";
     refresh_Widget(w);
-    postCommand_Widget(w, "input.ended id:%s arg:%d", id, accept ? 1 : 0);
+    postCommand_Widget(
+        w, "input.ended id:%s enter:%d arg:%d", id, d->enterPressed ? 1 : 0, accept ? 1 : 0);
 }
 
 static void insertChar_InputWidget_(iInputWidget *d, iChar chr) {
@@ -202,6 +206,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
         switch (key) {
             case SDLK_RETURN:
             case SDLK_KP_ENTER:
+                d->enterPressed = iTrue;
                 setFocus_Widget(NULL);
                 return iTrue;
             case SDLK_ESCAPE:
