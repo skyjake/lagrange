@@ -411,6 +411,19 @@ iRangecc findText_GmDocument(const iGmDocument *d, const iString *text, const ch
     return (iRangecc){ src + pos, src + pos + size_String(text) };
 }
 
+iRangecc findTextBefore_GmDocument(const iGmDocument *d, const iString *text, const char *before) {
+    iRangecc found = iNullRange;
+    const char *start = constBegin_String(&d->source);
+    if (!before) before = constEnd_String(&d->source);
+    while (start < before) {
+        iRangecc range = findText_GmDocument(d, text, start);
+        if (range.start == NULL || range.start >= before) break;
+        found = range;
+        start = range.end;
+    }
+    return found;
+}
+
 const iGmRun *findRun_GmDocument(const iGmDocument *d, iInt2 pos) {
     /* TODO: Perf optimization likely needed; use a block map? */
     iConstForEach(Array, i, &d->layout) {

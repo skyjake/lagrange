@@ -417,27 +417,32 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             d, arg_Command(command_UserEvent(ev)) * height_Rect(documentBounds_DocumentWidget_(d)));
         return iTrue;
     }
-    else if (isCommand_UserEvent(ev, "find.next")) {
+    else if (isCommand_UserEvent(ev, "find.next") || isCommand_UserEvent(ev, "find.prev")) {
+        const int dir = isCommand_UserEvent(ev, "find.next") ? +1 : -1;
+        iRangecc (*finder)(const iGmDocument *, const iString *, const char *) =
+            dir > 0 ? findText_GmDocument : findTextBefore_GmDocument;
         iInputWidget *find = findWidget_App("find.input");
         if (isEmpty_String(text_InputWidget(find))) {
             d->foundMark = iNullRange;
         }
         else {
             const iBool wrap = d->foundMark.start != NULL;
-            d->foundMark = findText_GmDocument(d->doc, text_InputWidget(find), d->foundMark.end);
+            d->foundMark     = finder(
+                d->doc, text_InputWidget(find), dir > 0 ? d->foundMark.end : d->foundMark.start);
             if (!d->foundMark.start && wrap) {
-                d->foundMark = findText_GmDocument(d->doc, text_InputWidget(find), 0);
+                /* Wrap around */
+                d->foundMark = finder(d->doc, text_InputWidget(find), NULL);
             }
             if (d->foundMark.start) {
-                iGmRun *run = findRunCStr_GmDocument(d->doc, d->foundMark.start);
-                if (run) {
-                    scrollTo_DocumentWidget_(d, mid_Rect(run->bounds).y);
+                const iGmRun *found;
+                if ((found = findRunCStr_GmDocument(d->doc, d->foundMark.start)) != NULL) {
+                    scrollTo_DocumentWidget_(d, mid_Rect(found->bounds).y);
                 }
             }
         }
         refresh_Widget(w);
         return iTrue;
-    }
+    }   
     else if (isCommand_UserEvent(ev, "find.clearmark")) {
         if (d->foundMark.start) {
             d->foundMark = iNullRange;

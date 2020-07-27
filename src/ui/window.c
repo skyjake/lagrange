@@ -183,9 +183,9 @@ static void setupUserInterface_Window(iWindow *d) {
         addChild_Widget(searchBar, iClob(new_LabelWidget("\U0001f50d Text", 0, 0, NULL)));
         setId_Widget(addChildFlags_Widget(searchBar, iClob(new_InputWidget(0)), expand_WidgetFlag),
                      "find.input");
-        addChild_Widget(searchBar, iClob(new_LabelWidget("Next", 0, 0, "find.next")));
-        addChild_Widget(searchBar, iClob(new_LabelWidget("Previous", 0, 0, "find.prev")));
-        addChild_Widget(searchBar, iClob(new_LabelWidget("\u00d7", 0, 0, "find.close")));
+        addChild_Widget(searchBar, iClob(new_LabelWidget("Next", 'g', KMOD_PRIMARY, "find.next")));
+        addChild_Widget(searchBar, iClob(new_LabelWidget("Previous", 'g', KMOD_PRIMARY | KMOD_SHIFT, "find.prev")));
+        addChild_Widget(searchBar, iClob(new_LabelWidget("\u00d7", SDLK_ESCAPE, 0, "find.close")));
     }
 
 #if 0
