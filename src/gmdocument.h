@@ -5,6 +5,8 @@
 #include <the_Foundation/rect.h>
 #include <the_Foundation/string.h>
 
+#include <SDL_render.h>
+
 iDeclareType(GmRun)
 
 typedef uint16_t iGmLinkId;
@@ -20,12 +22,13 @@ enum iGmLinkFlags {
 };
 
 struct Impl_GmRun {
-    iRangecc text;
-    iRect bounds; /* used for hit testing, extends to edge */
-    iRect visBounds; /* actual text bounds */
-    uint8_t font;
-    uint8_t color;
-    iGmLinkId linkId; /* zero for non-links */
+    iRangecc  text;
+    uint8_t   font;
+    uint8_t   color;
+    iRect     bounds;    /* used for hit testing, may extend to edges */
+    iRect     visBounds; /* actual visual bounds */
+    iGmLinkId linkId;    /* zero for non-links */
+    uint16_t  imageId;   /* zero for images */
 };
 
 const char *    findLoc_GmRun   (const iGmRun *, iInt2 pos);
@@ -42,6 +45,9 @@ void    setFormat_GmDocument    (iGmDocument *, enum iGmDocumentFormat format);
 void    setWidth_GmDocument     (iGmDocument *, int width);
 void    setHost_GmDocument      (iGmDocument *, const iString *host); /* local host name */
 void    setSource_GmDocument    (iGmDocument *, const iString *source, int width);
+void    setImage_GmDocument     (iGmDocument *, iGmLinkId linkId, const iString *mime, const iBlock *data);
+
+void    reset_GmDocument        (iGmDocument *); /* free images */
 
 typedef void (*iGmDocumentRenderFunc)(void *, const iGmRun *);
 
@@ -57,4 +63,7 @@ const iGmRun *  findRunAtLoc_GmDocument (const iGmDocument *, const char *loc);
 const iString * linkUrl_GmDocument      (const iGmDocument *, iGmLinkId linkId);
 int             linkFlags_GmDocument    (const iGmDocument *, iGmLinkId linkId);
 enum iColorId   linkColor_GmDocument    (const iGmDocument *, iGmLinkId linkId);
+iBool           isMediaLink_GmDocument  (const iGmDocument *, iGmLinkId linkId);
 const iString * title_GmDocument        (const iGmDocument *);
+
+SDL_Texture *   imageTexture_GmDocument (const iGmDocument *, uint16_t imageId);

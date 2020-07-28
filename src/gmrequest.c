@@ -163,8 +163,6 @@ static void requestFinished_GmRequest_(iAnyObject *obj) {
     }
     SDL_RemoveTimer(d->timeoutId);
     d->timeoutId = 0;
-//    iReleaseLater(d->req);
-//    d->req = NULL;
     d->state = finished_GmRequestState;
     unlock_Mutex(&d->mutex);
     iNotifyAudience(d, finished, GmRequestFinished);
@@ -192,6 +190,15 @@ void submit_GmRequest(iGmRequest *d) {
             }
             else if (endsWithCase_String(path, ".txt")) {
                 setCStr_String(&d->header, "text/plain");
+            }
+            else if (endsWithCase_String(path, ".png")) {
+                setCStr_String(&d->header, "image/png");
+            }
+            else if (endsWithCase_String(path, ".jpg") || endsWithCase_String(path, ".jpeg")) {
+                setCStr_String(&d->header, "image/jpeg");
+            }
+            else if (endsWithCase_String(path, ".gif")) {
+                setCStr_String(&d->header, "image/gif");
             }
             else {
                 setCStr_String(&d->header, "application/octet-stream");

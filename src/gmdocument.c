@@ -3,9 +3,14 @@
 #include "ui/color.h"
 #include "ui/text.h"
 #include "ui/metrics.h"
+#include "ui/window.h"
 
 #include <the_Foundation/ptrarray.h>
 #include <the_Foundation/regexp.h>
+
+#include <SDL_hints.h>
+#include <SDL_render.h>
+#include <stb_image.h>
 
 iDeclareType(GmLink)
 
@@ -25,6 +30,40 @@ void deinit_GmLink(iGmLink *d) {
 
 iDefineTypeConstruction(GmLink)
 
+iDeclareType(GmImage)
+
+struct Impl_GmImage {
+    iInt2 size;
+    SDL_Texture *texture;
+    iGmLinkId linkId;
+};
+
+void init_GmImage(iGmImage *d, const iBlock *data) {
+    uint8_t *imgData = stbi_load_from_memory(
+        constData_Block(data), size_Block(data), &d->size.x, &d->size.y, NULL, 4);
+    if (!imgData) {
+        d->size = zero_I2();
+        d->texture = NULL;
+    }
+    else {
+        SDL_Surface *surface = SDL_CreateRGBSurfaceWithFormatFrom(
+            imgData, d->size.x, d->size.y, 32, d->size.x * 4, SDL_PIXELFORMAT_ABGR8888);
+        /* TODO: In multiwindow case, all windows must have the same shared renderer?
+           Or at least a shared context. */
+        SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1"); /* linear scaling */
+        d->texture = SDL_CreateTextureFromSurface(renderer_Window(get_Window()), surface);
+        SDL_FreeSurface(surface);
+        stbi_image_free(imgData);
+    }
+    d->linkId = 0;
+}
+
+void deinit_GmImage(iGmImage *d) {
+    SDL_DestroyTexture(d->texture);
+}
+
+iDefineTypeConstructionArgs(GmImage, (const iBlock *data), data)
+
 struct Impl_GmDocument {
     iObject object;
     enum iGmDocumentFormat format;
@@ -34,6 +73,7 @@ struct Impl_GmDocument {
     iArray layout; /* contents of source, laid out in document space */
     iPtrArray links;
     iString title; /* the first top-level title */
+    iPtrArray images; /* persistent across layouts, references links by ID */
 };
 
 iDefineObjectConstruction(GmDocument)
@@ -178,6 +218,17 @@ static void clearLinks_GmDocument_(iGmDocument *d) {
     clear_PtrArray(&d->links);
 }
 
+static size_t findLinkImage_GmDocument_(const iGmDocument *d, iGmLinkId linkId) {
+    /* TODO: use a hash */
+    iConstForEach(PtrArray, i, &d->images) {
+        const iGmImage *img = i.ptr;
+        if (img->linkId == linkId) {
+            return index_PtrArrayConstIterator(&i);
+        }
+    }
+    return iInvalidPos;
+}
+
 static void doLayout_GmDocument_(iGmDocument *d) {
     /* TODO: Collect these parameters into a GmTheme. */
     static const int fonts[max_GmLineType] = {
@@ -236,6 +287,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         iGmRun run;
         run.color = white_ColorId;
         run.linkId = 0;
+        run.imageId = 0;
         enum iGmLineType type;
         int indent = 0;
         if (!isPreformat) {
@@ -373,6 +425,24 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             trimStart_Rangecc(&runLine);
             pos.y += lineHeight_Text(run.font);
         }
+        /* Image content. */
+        if (type == link_GmLineType) {
+            const size_t imgIndex = findLinkImage_GmDocument_(d, run.linkId);
+            if (imgIndex != iInvalidPos) {
+                const iGmImage *img = constAt_PtrArray(&d->images, imgIndex);
+                run.bounds.pos = pos;
+                run.bounds.size.x = d->size.x;
+                const float aspect = (float) img->size.y / (float) img->size.x;
+                run.bounds.size.y = d->size.x * aspect;
+                run.visBounds = run.bounds; /* TODO: limit max height? */
+                run.text = iNullRange;
+                run.font = 0;
+                run.color = 0;
+                run.imageId = imgIndex + 1;
+                pushBack_Array(&d->layout, &run);
+                pos.y += run.bounds.size.y;
+            }
+        }
         prevType = type;
     }
     d->size.y = pos.y;
@@ -386,6 +456,7 @@ void init_GmDocument(iGmDocument *d) {
     init_Array(&d->layout, sizeof(iGmRun));
     init_PtrArray(&d->links);
     init_String(&d->title);
+    init_PtrArray(&d->images);
 }
 
 void deinit_GmDocument(iGmDocument *d) {
@@ -395,6 +466,16 @@ void deinit_GmDocument(iGmDocument *d) {
     deinit_Array(&d->layout);
     deinit_String(&d->localHost);
     deinit_String(&d->source);
+}
+
+void reset_GmDocument(iGmDocument *d) {
+    /* Free the loaded images. */
+    iForEach(PtrArray, i, &d->images) {
+        deinit_GmImage(i.ptr);
+    }
+    clear_PtrArray(&d->images);
+    clearLinks_GmDocument_(d);
+    clear_Array(&d->layout);
 }
 
 void setFormat_GmDocument(iGmDocument *d, enum iGmDocumentFormat format) {
@@ -475,6 +556,21 @@ void setSource_GmDocument(iGmDocument *d, const iString *source, int width) {
     normalize_GmDocument(d);
     setWidth_GmDocument(d, width);
     /* TODO: just flag need-layout and do it later */
+}
+
+void setImage_GmDocument(iGmDocument *d, iGmLinkId linkId, const iString *mime, const iBlock *data) {
+    /* TODO: check if we know this MIME type */
+    /* Load the image. */ {
+        iGmImage *img = new_GmImage(data);
+        img->linkId = linkId; /* TODO: use a hash? */
+        if (img->texture) {
+            pushBack_PtrArray(&d->images, img);
+        }
+        else {
+            delete_GmImage(img);
+        }
+    }
+    doLayout_GmDocument_(d);
 }
 
 void render_GmDocument(const iGmDocument *d, iRangei visRangeY, iGmDocumentRenderFunc render,
@@ -577,6 +673,19 @@ enum iColorId linkColor_GmDocument(const iGmDocument *d, iGmLinkId linkId) {
                    : link->flags & gopher_GmLinkFlag ? blue_ColorId : cyan_ColorId;
     }
     return white_ColorId;
+}
+
+iBool isMediaLink_GmDocument(const iGmDocument *d, iGmLinkId linkId) {
+    return (linkFlags_GmDocument(d, linkId) &
+            (imageFileExtension_GmLinkFlag | audioFileExtension_GmLinkFlag)) != 0;
+}
+
+SDL_Texture *imageTexture_GmDocument(const iGmDocument *d, uint16_t imageId) {
+    if (imageId > 0 && imageId <= size_PtrArray(&d->images)) {
+        const iGmImage *img = constAt_PtrArray(&d->images, imageId - 1);
+        return img->texture;
+    }
+    return NULL;
 }
 
 const iString *title_GmDocument(const iGmDocument *d) {

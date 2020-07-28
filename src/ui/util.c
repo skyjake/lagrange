@@ -308,7 +308,7 @@ static void addTabPage_Widget_(iWidget *tabs, enum iWidgetAddPos addPos, iWidget
     const iBool isSel  = childCount_Widget(pages) == 0;
     iWidget *   button = addChildPos_Widget(
         findChild_Widget(tabs, "tabs.buttons"),
-        iClob(new_LabelWidget(label, key, kmods, cstrFormat_String("tabs.switch page:%p", page))),
+        iClob(new_LabelWidget(label, key, kmods, format_CStr("tabs.switch page:%p", page))),
         addPos);
     setFlags_Widget(button, selected_WidgetFlag, isSel);
     addChildPos_Widget(pages, page, addPos);
@@ -615,7 +615,7 @@ static iBool toggleHandler_(iWidget *d, const char *cmd) {
     if (equal_Command(cmd, "toggle") && pointer_Command(cmd) == d) {
         setToggle_Widget(d, (flags_Widget(d) & selected_WidgetFlag) == 0);
         postCommand_Widget(d,
-                           cstrFormat_String("%s.changed arg:%d",
+                           format_CStr("%s.changed arg:%d",
                                              cstr_String(id_Widget(d)),
                                              isSelected_Widget(d) ? 1 : 0));
         return iTrue;

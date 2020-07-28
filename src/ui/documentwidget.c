@@ -11,6 +11,7 @@
 #include "../gmutil.h"
 
 #include <the_Foundation/file.h>
+#include <the_Foundation/objectlist.h>
 #include <the_Foundation/path.h>
 #include <the_Foundation/ptrarray.h>
 #include <the_Foundation/regexp.h>
@@ -26,13 +27,59 @@ enum iDocumentState {
     ready_DocumentState,
 };
 
+iDeclareClass(MediaRequest)
+
+struct Impl_MediaRequest {
+    iObject object;
+    iDocumentWidget *doc;
+    iGmLinkId linkId;
+    iGmRequest *req;
+    iAtomicInt isUpdated;
+};
+
+static void updated_MediaRequest_(iAnyObject *obj) {
+    iMediaRequest *d = obj;
+    int wasUpdated = exchange_Atomic(&d->isUpdated, iTrue);
+    if (!wasUpdated) {
+        postCommandf_App("media.updated link:%u request:%p", d->linkId, d);
+    }
+}
+
+static void finished_MediaRequest_(iAnyObject *obj) {
+    iMediaRequest *d = obj;
+    postCommandf_App("media.finished link:%u request:%p", d->linkId, d);
+}
+
+void init_MediaRequest(iMediaRequest *d, iDocumentWidget *doc, iGmLinkId linkId, const iString *url) {
+    d->doc    = doc;
+    d->linkId = linkId;
+    d->req    = new_GmRequest();
+    setUrl_GmRequest(d->req, url);
+    iConnect(GmRequest, d->req, updated, d, updated_MediaRequest_);
+    iConnect(GmRequest, d->req, finished, d, finished_MediaRequest_);
+    set_Atomic(&d->isUpdated, iFalse);
+    submit_GmRequest(d->req);
+}
+
+void deinit_MediaRequest(iMediaRequest *d) {
+    iDisconnect(GmRequest, d->req, updated, d, updated_MediaRequest_);
+    iDisconnect(GmRequest, d->req, finished, d, finished_MediaRequest_);
+    iRelease(d->req);
+}
+
+iDefineObjectConstructionArgs(MediaRequest,
+                              (iDocumentWidget *doc, iGmLinkId linkId, const iString *url),
+                              doc, linkId, url)
+iDefineClass(MediaRequest)
+
 struct Impl_DocumentWidget {
     iWidget widget;
     enum iDocumentState state;
     iString *url;
     iString *titleUser;
     iGmRequest *request;
-    iAtomicInt isSourcePending; /* request has new content, need to parse it */
+    iAtomicInt isRequestUpdated; /* request has new content, need to parse it */
+    iObjectList *media;
     iGmDocument *doc;
     iBool selecting;
     iRangecc selectMark;
@@ -55,21 +102,22 @@ void init_DocumentWidget(iDocumentWidget *d) {
     iWidget *w = as_Widget(d);
     init_Widget(w);
     setId_Widget(w, "document");
-    d->state           = blank_DocumentState;
-    d->url             = new_String();
-    d->titleUser       = new_String();
-    d->request         = NULL;
-    d->isSourcePending = iFalse;
-    d->doc             = new_GmDocument();
-    d->selecting       = iFalse;
-    d->selectMark      = iNullRange;
-    d->foundMark       = iNullRange;
-    d->pageMargin      = 5;
-    d->scrollY         = 0;
-    d->hoverLink       = NULL;
-    d->arrowCursor     = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_ARROW);
-    d->beamCursor      = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_IBEAM);
-    d->handCursor      = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_HAND);
+    d->state            = blank_DocumentState;
+    d->url              = new_String();
+    d->titleUser        = new_String();
+    d->request          = NULL;
+    d->isRequestUpdated = iFalse;
+    d->media            = new_ObjectList();
+    d->doc              = new_GmDocument();
+    d->selecting        = iFalse;
+    d->selectMark       = iNullRange;
+    d->foundMark        = iNullRange;
+    d->pageMargin       = 5;
+    d->scrollY          = 0;
+    d->hoverLink        = NULL;
+    d->arrowCursor      = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_ARROW);
+    d->beamCursor       = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_IBEAM);
+    d->handCursor       = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_HAND);
     init_PtrArray(&d->visibleLinks);
     init_Click(&d->click, d, SDL_BUTTON_LEFT);
     addChild_Widget(w, iClob(d->scroll = new_ScrollWidget()));
@@ -85,14 +133,24 @@ void init_DocumentWidget(iDocumentWidget *d) {
 }
 
 void deinit_DocumentWidget(iDocumentWidget *d) {
+    iRelease(d->media);
+    iRelease(d->request);
+    iRelease(d->doc);
     deinit_PtrArray(&d->visibleLinks);
     delete_String(d->url);
     delete_String(d->titleUser);
-    iRelease(d->request);
-    iRelease(d->doc);
     SDL_FreeCursor(d->arrowCursor);
     SDL_FreeCursor(d->beamCursor);
     SDL_FreeCursor(d->handCursor);
+}
+
+static iString *cleanUrl_(const iString *url) {
+    iString *clean = copy_String(url);
+    if (indexOfCStr_String(url, "://") == iInvalidPos && !startsWithCase_String(url, "gemini:")) {
+        /* Prepend default protocol. */
+        prependCStr_String(clean, "gemini://");
+    }
+    return clean;
 }
 
 static int documentWidth_DocumentWidget_(const iDocumentWidget *d) {
@@ -124,8 +182,8 @@ static iInt2 documentPos_DocumentWidget_(const iDocumentWidget *d, iInt2 pos) {
 
 static void requestUpdated_DocumentWidget_(iAnyObject *obj) {
     iDocumentWidget *d = obj;
-    const int wasPending = exchange_Atomic(&d->isSourcePending, iTrue);
-    if (!wasPending) {
+    const int wasUpdated = exchange_Atomic(&d->isRequestUpdated, iTrue);
+    if (!wasUpdated) {
         postCommand_Widget(obj, "document.request.updated request:%p", d->request);
     }
 }
@@ -234,6 +292,10 @@ static void updateSource_DocumentWidget_(iDocumentWidget *d) {
             else if (startsWith_String(mime, "text/gemini")) {
                 setFormat_GmDocument(d->doc, gemini_GmDocumentFormat);
             }
+            else if (startsWith_String(mime, "image/")) {
+                /* TODO: Make a simple document with an image. */
+                clear_String(&str);
+            }
             else {
                 showErrorPage_DocumentWidget_(d, unsupportedMimeType_GmStatusCode);
                 deinit_String(&str);
@@ -252,8 +314,9 @@ static void fetch_DocumentWidget_(iDocumentWidget *d) {
         d->request = NULL;
     }
     postCommandf_App("document.request.started url:%s", cstr_String(d->url));
+    clear_ObjectList(d->media);
     d->state = fetching_DocumentState;
-    set_Atomic(&d->isSourcePending, iFalse);
+    set_Atomic(&d->isRequestUpdated, iFalse);
     d->request = new_GmRequest();
     setUrl_GmRequest(d->request, d->url);
     iConnect(GmRequest, d->request, updated, d, requestUpdated_DocumentWidget_);
@@ -262,12 +325,7 @@ static void fetch_DocumentWidget_(iDocumentWidget *d) {
 }
 
 void setUrl_DocumentWidget(iDocumentWidget *d, const iString *url) {
-    iString *newUrl = new_String();
-    if (indexOfCStr_String(url, "://") == iInvalidPos && !startsWithCase_String(url, "gemini:")) {
-        /* Prepend default protocol. */
-        setCStr_String(newUrl, "gemini://");
-    }
-    append_String(newUrl, url);
+    iString *newUrl = collect_String(cleanUrl_(url));
     if (cmpStringSc_String(d->url, newUrl, &iCaseInsensitive)) {
         set_String(d->url, newUrl);
         fetch_DocumentWidget_(d);
@@ -284,7 +342,6 @@ void setUrl_DocumentWidget(iDocumentWidget *d, const iString *url) {
             iRelease(userPats[i]);
         }
     }
-    delete_String(newUrl);
 }
 
 iBool isRequestOngoing_DocumentWidget(const iDocumentWidget *d) {
@@ -372,6 +429,7 @@ static void checkResponseCode_DocumentWidget_(iDocumentWidget *d) {
     if (d->state == fetching_DocumentState) {
         d->state = receivedPartialResponse_DocumentState;
         d->scrollY = 0;
+        reset_GmDocument(d->doc); /* new content incoming */
         enum iGmStatusCode statusCode = status_GmRequest(d->request);
         switch (statusCode) {
             case none_GmStatusCode:
@@ -384,10 +442,10 @@ static void checkResponseCode_DocumentWidget_(iDocumentWidget *d) {
                 iWidget *dlg = makeValueInput_Widget(
                     as_Widget(d),
                     NULL,
-                    cstrFormat_String(cyan_ColorEscape "%s",
+                    format_CStr(cyan_ColorEscape "%s",
                                       cstr_String(collect_String(newRange_String(parts.host)))),
                     isEmpty_String(meta_GmRequest(d->request))
-                        ? cstrFormat_String(
+                        ? format_CStr(
                               "Please enter input for %s:",
                               cstr_String(collect_String(newRange_String(parts.path))))
                         : cstr_String(meta_GmRequest(d->request)),
@@ -415,12 +473,71 @@ static void checkResponseCode_DocumentWidget_(iDocumentWidget *d) {
     }
 }
 
-const iString *valueString_Command(const char *cmd, const char *label) {
-    return collect_String(newCStr_String(suffixPtr_Command(cmd, label)));
-}
-
 static const char *sourceLoc_DocumentWidget_(const iDocumentWidget *d, iInt2 pos) {
     return findLoc_GmDocument(d->doc, documentPos_DocumentWidget_(d, pos));
+}
+
+static void removeMediaRequest_DocumentWidget_(iDocumentWidget *d, iGmLinkId linkId) {
+    iForEach(ObjectList, i, d->media) {
+        iMediaRequest *req = (iMediaRequest *) i.object;
+        if (req->linkId == linkId) {
+            remove_ObjectListIterator(&i);
+            break;
+        }
+    }
+}
+
+static iMediaRequest *findMediaRequest_DocumentWidget_(const iDocumentWidget *d, iGmLinkId linkId) {
+    iConstForEach(ObjectList, i, d->media) {
+        const iMediaRequest *req = (const iMediaRequest *) i.object;
+        if (req->linkId == linkId) {
+            return iConstCast(iMediaRequest *, req);
+        }
+    }
+    return NULL;
+}
+
+static void requestMedia_DocumentWidget_(iDocumentWidget *d, iGmLinkId linkId) {
+    if (!findMediaRequest_DocumentWidget_(d, linkId)) {
+        pushBack_ObjectList(
+            d->media,
+            iClob(new_MediaRequest(
+                d, linkId, absoluteUrl_DocumentWidget_(d, linkUrl_GmDocument(d->doc, linkId)))));
+    }
+}
+
+static iBool handleMediaEvent_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
+    iMediaRequest *req = pointerLabel_Command(cmd, "request");
+    if (!req || req->doc != d) {
+        return iFalse; /* not our request */
+    }
+    if (equal_Command(cmd, "media.updated")) {
+        /* TODO: Show a progress indicator */
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "media.finished")) {
+        const enum iGmStatusCode code = status_GmRequest(req->req);
+        /* Give the media to the document for presentation. */
+        if (code == success_GmStatusCode) {
+            printf("media finished: %s\n  size: %zu\n  type: %s\n",
+                   cstr_String(url_GmRequest(req->req)),
+                   size_Block(body_GmRequest(req->req)),
+                   cstr_String(meta_GmRequest(req->req)));
+            if (startsWith_String(meta_GmRequest(req->req), "image/")) {
+                setImage_GmDocument(d->doc, req->linkId, meta_GmRequest(req->req),
+                                    body_GmRequest(req->req));
+                updateVisible_DocumentWidget_(d);
+                refresh_Widget(as_Widget(d));
+            }
+        }
+        else {
+            const iGmError *err = get_GmError(code);
+            makeMessage_Widget(format_CStr(orange_ColorEscape "%s", err->title), err->info);
+            removeMediaRequest_DocumentWidget_(d, req->linkId);
+        }
+        return iTrue;
+    }
+    return iFalse;
 }
 
 static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *ev) {
@@ -498,6 +615,9 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             d->state = ready_DocumentState;
         }
         return iTrue;
+    }
+    else if (isCommand_UserEvent(ev, "media.updated") || isCommand_UserEvent(ev, "media.finished")) {
+        return handleMediaEvent_DocumentWidget_(d, command_UserEvent(ev));
     }
     else if (isCommand_UserEvent(ev, "document.reload")) {
         fetch_DocumentWidget_(d);
@@ -653,10 +773,17 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         case finished_ClickResult:
             if (!isMoved_Click(&d->click)) {
                 if (d->hoverLink) {
-                    iAssert(d->hoverLink->linkId);
-                    postCommandf_App("open url:%s",
-                                     cstr_String(absoluteUrl_DocumentWidget_(
-                                         d, linkUrl_GmDocument(d->doc, d->hoverLink->linkId))));
+                    const iGmLinkId linkId = d->hoverLink->linkId;
+                    iAssert(linkId);
+                    /* Media links are opened inline by default. */
+                    if (isMediaLink_GmDocument(d->doc, linkId)) {
+                        requestMedia_DocumentWidget_(d, linkId);
+                    }
+                    else {
+                        postCommandf_App("open url:%s",
+                                         cstr_String(absoluteUrl_DocumentWidget_(
+                                             d, linkUrl_GmDocument(d->doc, linkId))));
+                    }
                 }
                 if (d->selectMark.start) {
                     d->selectMark = iNullRange;
@@ -714,20 +841,27 @@ static void fillRange_DrawContext_(iDrawContext *d, const iGmRun *run, enum iCol
 
 static void drawRun_DrawContext_(void *context, const iGmRun *run) {
     iDrawContext *d = context;
+    const iInt2 origin = addY_I2(d->bounds.pos, -d->widget->scrollY);
+    if (run->imageId) {
+        SDL_Texture *tex = imageTexture_GmDocument(d->widget->doc, run->imageId);
+        if (tex) {
+            const iRect dst = moved_Rect(run->visBounds, origin);
+            SDL_RenderCopy(d->paint.dst->render, tex, NULL,
+                           &(SDL_Rect){ dst.pos.x, dst.pos.y, dst.size.x, dst.size.y });
+        }
+        return;
+    }
     iString text;
     /* TODO: making a copy is unnecessary; the text routines should accept Rangecc */
     initRange_String(&text, run->text);
-    iInt2 origin = addY_I2(d->bounds.pos, -d->widget->scrollY);
     enum iColorId fg = run->color;
     if (run == d->widget->hoverLink) {
-        //const char *desc = "";
-        const iGmDocument *doc = d->widget->doc;
-        const iGmLinkId linkId = d->widget->hoverLink->linkId;
-        const iString *url = linkUrl_GmDocument(doc, linkId);
-        const int flags = linkFlags_GmDocument(doc, linkId);
+        const iGmDocument *doc    = d->widget->doc;
+        const iGmLinkId    linkId = d->widget->hoverLink->linkId;
+        const iString *    url    = linkUrl_GmDocument(doc, linkId);
+        const int          flags  = linkFlags_GmDocument(doc, linkId);
         iUrl parts;
         init_Url(&parts, url);
-//        desc = cstrFormat_String("\u2192 %s", cstr_String(collect_String(newRange_String(parts.protocol))));
         const iString *host = collect_String(newRange_String(parts.host));
         fg = linkColor_GmDocument(doc, linkId);
         const iBool showHost = (!isEmpty_String(host) && flags & userFriendly_GmLinkFlag);
@@ -739,9 +873,10 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                            topRight_Rect(linkRect),
                            fg - 1,
                            left_Alignment,
-                           " \u2014%s%s\r%c%s",
+                           " \u2014%s%s%s\r%c%s",
                            showHost ? " " : "",
                            showHost ? cstr_String(host) : "",
+                           showHost && (showImage || showAudio) ? " \u2014" : "",
                            showImage || showAudio ? '0' + fg : ('0' + fg - 1),
                            showImage ? " View Image \U0001f5bc"
                                      : showAudio ? " Play Audio \U0001f3b5" : "");
