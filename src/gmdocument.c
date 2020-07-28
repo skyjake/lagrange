@@ -27,6 +27,7 @@ iDefineTypeConstruction(GmLink)
 
 struct Impl_GmDocument {
     iObject object;
+    enum iGmDocumentFormat format;
     iString source;
     iString localHost;
     iInt2 size;
@@ -49,7 +50,10 @@ enum iGmLineType {
     max_GmLineType,
 };
 
-static enum iGmLineType lineType_Rangecc_(const iRangecc *line) {
+static enum iGmLineType lineType_GmDocument_(const iGmDocument *d, const iRangecc *line) {
+    if (d->format == plainText_GmDocumentFormat) {
+        return text_GmLineType;
+    }
     if (isEmpty_Range(line)) {
         return text_GmLineType;
     }
@@ -207,6 +211,10 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     iBool            isPreformat = iFalse;
     iBool            isFirstText = iTrue;
     int              preFont     = preformatted_FontId;
+    if (d->format == plainText_GmDocumentFormat) {
+        isPreformat = iTrue;
+        isFirstText = iFalse;
+    }
     while (nextSplit_Rangecc(&content, "\n", &line)) {
         iGmRun run;
         run.color = white_ColorId;
@@ -214,7 +222,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         enum iGmLineType type;
         int indent = 0;
         if (!isPreformat) {
-            type = lineType_Rangecc_(&line);
+            type = lineType_GmDocument_(d, &line);
             indent = indents[type];
             if (type == preformatted_GmLineType) {
                 isPreformat = iTrue;
@@ -242,7 +250,8 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         else {
             /* Preformatted line. */
             type = preformatted_GmLineType;
-            if (startsWithSc_Rangecc(&line, "```", &iCaseSensitive)) {
+            if (d->format == gemini_GmDocumentFormat &&
+                startsWithSc_Rangecc(&line, "```", &iCaseSensitive)) {
                 isPreformat = iFalse;
                 preAltText = iNullRange;
                 continue;
@@ -254,6 +263,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         if (isEmpty_Range(&line)) {
             pos.y += lineHeight_Text(run.font);
             prevType = text_GmLineType;
+            /* TODO: Extra skip needed here? */
             continue;
         }
         /* Check the margin vs. previous run. */
@@ -304,6 +314,9 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             pushBack_Array(&d->layout, &run);
         }
         run.color = colors[type];
+        if (d->format == plainText_GmDocumentFormat) {
+            run.color = colors[text_GmLineType];
+        }
         /* Special formatting for the first paragraph (e.g., subtitle, introduction, or lede). */
         if (type == text_GmLineType && isFirstText) {
             run.font = firstParagraph_FontId;
@@ -349,6 +362,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
 }
 
 void init_GmDocument(iGmDocument *d) {
+    d->format = gemini_GmDocumentFormat;
     init_String(&d->source);
     init_String(&d->localHost);
     d->size = zero_I2();
@@ -366,6 +380,10 @@ void deinit_GmDocument(iGmDocument *d) {
     deinit_String(&d->source);
 }
 
+void setFormat_GmDocument(iGmDocument *d, enum iGmDocumentFormat format) {
+    d->format = format;
+}
+
 void setWidth_GmDocument(iGmDocument *d, int width) {
     d->size.x = width;
     doLayout_GmDocument_(d); /* TODO: just flag need-layout and do it later */
@@ -380,6 +398,9 @@ static void normalize_GmDocument(iGmDocument *d) {
     iRangecc src = range_String(&d->source);
     iRangecc line = iNullRange;
     iBool isPreformat = iFalse;
+    if (d->format == plainText_GmDocumentFormat) {
+        isPreformat = iTrue; /* Cannot be turned off. */
+    }
     const int preTabWidth = 8; /* TODO: user-configurable parameter */
     while (nextSplit_Rangecc(&src, "\n", &line)) {
         if (isPreformat) {
@@ -397,12 +418,12 @@ static void normalize_GmDocument(iGmDocument *d) {
                 }
             }
             appendCStr_String(normalized, "\n");
-            if (lineType_Rangecc_(&line) == preformatted_GmLineType) {
+            if (lineType_GmDocument_(d, &line) == preformatted_GmLineType) {
                 isPreformat = iFalse;
             }
             continue;
         }
-        if (lineType_Rangecc_(&line) == preformatted_GmLineType) {
+        if (lineType_GmDocument_(d, &line) == preformatted_GmLineType) {
             isPreformat = iTrue;
             appendRange_String(normalized, line);
             appendCStr_String(normalized, "\n");
@@ -426,7 +447,6 @@ static void normalize_GmDocument(iGmDocument *d) {
         appendCStr_String(normalized, "\n");
     }
     set_String(&d->source, collect_String(normalized));
-//    printf("normalized:\n%s\n", cstr_String(&d->source));
 }
 
 void setHost_GmDocument(iGmDocument *d, const iString *host) {

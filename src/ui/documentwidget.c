@@ -191,13 +191,55 @@ static void setSource_DocumentWidget_(iDocumentWidget *d, const iString *source)
     refresh_Widget(as_Widget(d));
 }
 
+static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode code) {
+    iString *src = collectNew_String();
+    const iGmError *msg = get_GmError(code);
+    format_String(src,
+                  "# %lc %s\n%s",
+                  msg->icon ? msg->icon : 0x2327, /* X in a box */
+                  msg->title,
+                  msg->info);
+    switch (code) {
+        case failedToOpenFile_GmStatusCode:
+        case certificateNotValid_GmStatusCode:
+            appendFormat_String(src, "\n\n%s", cstr_String(meta_GmRequest(d->request)));
+            break;
+        case unsupportedMimeType_GmStatusCode:
+            appendFormat_String(src, "\n```\n%s\n```\n", cstr_String(meta_GmRequest(d->request)));
+            break;
+        case slowDown_GmStatusCode:
+            appendFormat_String(src, "\n\nWait %s seconds before your next request.",
+                                cstr_String(meta_GmRequest(d->request)));
+            break;
+        default:
+            break;
+    }
+    setSource_DocumentWidget_(d, src);
+}
+
 static void updateSource_DocumentWidget_(iDocumentWidget *d) {
     /* TODO: Do this in the background. However, that requires a text metrics calculator
        that does not try to cache the glyph bitmaps. */
-    if (status_GmRequest(d->request) != input_GmStatusCode &&
-        status_GmRequest(d->request) != sensitiveInput_GmStatusCode) {        
+    const enum iGmStatusCode statusCode = status_GmRequest(d->request);
+    if (statusCode != input_GmStatusCode &&
+        statusCode != sensitiveInput_GmStatusCode) {
         iString str;
         initBlock_String(&str, body_GmRequest(d->request));
+        if (statusCode == success_GmStatusCode) {
+            /* Check the MIME type. */
+            const iString *mime = meta_GmRequest(d->request);
+            if (startsWith_String(mime, "text/plain")) {
+                setFormat_GmDocument(d->doc, plainText_GmDocumentFormat);
+            }
+            else if (startsWith_String(mime, "text/gemini")) {
+                setFormat_GmDocument(d->doc, gemini_GmDocumentFormat);
+            }
+            else {
+                showErrorPage_DocumentWidget_(d, unsupportedMimeType_GmStatusCode);
+                deinit_String(&str);
+                return;
+            }
+        }
         setSource_DocumentWidget_(d, &str);
         deinit_String(&str);
     }
@@ -315,29 +357,6 @@ static const iString *absoluteUrl_DocumentWidget_(const iDocumentWidget *d, cons
         appendRange_String(absolute, relPath);
     }
     return collect_String(absolute);
-}
-
-static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode code) {
-    iString *src = collectNew_String();
-    const iGmError *msg = get_GmError(code);
-    format_String(src,
-                  "# %lc %s\n%s",
-                  msg->icon ? msg->icon : 0x2327, /* X in a box */
-                  msg->title,
-                  msg->info);
-    switch (code) {
-        case failedToOpenFile_GmStatusCode:
-        case certificateNotValid_GmStatusCode:
-            appendFormat_String(src, "\n\n%s", cstr_String(meta_GmRequest(d->request)));
-            break;
-        case slowDown_GmStatusCode:
-            appendFormat_String(src, "\n\nWait %s seconds before your next request.",
-                                cstr_String(meta_GmRequest(d->request)));
-            break;
-        default:
-            break;
-    }
-    setSource_DocumentWidget_(d, src);
 }
 
 static void checkResponseCode_DocumentWidget_(iDocumentWidget *d) {

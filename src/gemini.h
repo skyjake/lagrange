@@ -4,9 +4,11 @@
 
 /* Response status codes. */
 enum iGmStatusCode {
-    invalidRedirect_GmStatusCode           = -3,
-    invalidHeader_GmStatusCode             = -2,
-    failedToOpenFile_GmStatusCode          = -1,
+    clientSide_GmStatusCode = -100, /* clientside status codes */
+    invalidRedirect_GmStatusCode,
+    invalidHeader_GmStatusCode,
+    unsupportedMimeType_GmStatusCode,
+    failedToOpenFile_GmStatusCode,
     none_GmStatusCode                      = 0,
     input_GmStatusCode                     = 10,
     sensitiveInput_GmStatusCode            = 11,

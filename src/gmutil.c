@@ -45,6 +45,11 @@ const iGmError *get_GmError(enum iGmStatusCode code) {
             "Failed to Open File",
             "The requested file does not exist or is inaccessible. "
             "Please check the file path." } },
+        { unsupportedMimeType_GmStatusCode,
+          { 0x1f47d, /* alien */
+            "Unsupported MIME Type",
+            "The received content is in an unsupported format and cannot be viewed with "
+            "this application." } },
         { invalidHeader_GmStatusCode,
           { 0x1f4a9, /* pile of poo */
             "Invalid Header",

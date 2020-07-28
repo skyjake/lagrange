@@ -30,6 +30,12 @@ const char *    findLoc_GmRun   (const iGmRun *, iInt2 pos);
 iDeclareClass(GmDocument)
 iDeclareObjectConstruction(GmDocument)
 
+enum iGmDocumentFormat {
+    gemini_GmDocumentFormat,
+    plainText_GmDocumentFormat,
+};
+
+void    setFormat_GmDocument    (iGmDocument *, enum iGmDocumentFormat format);
 void    setWidth_GmDocument     (iGmDocument *, int width);
 void    setHost_GmDocument      (iGmDocument *, const iString *host); /* local host name */
 void    setSource_GmDocument    (iGmDocument *, const iString *source, int width);

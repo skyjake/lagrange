@@ -182,8 +182,17 @@ void submit_GmRequest(iGmRequest *d) {
         iFile *  f    = new_File(path);
         if (open_File(f, readOnly_FileMode)) {
             /* TODO: Check supported file types: images, audio */
+            /* TODO: Detect text files based on contents? E.g., is the content valid UTF-8. */
             d->code = success_GmStatusCode;
-            setCStr_String(&d->header, "text/gemini; charset=utf-8");
+            if (endsWithCase_String(path, ".gmi")) {
+                setCStr_String(&d->header, "text/gemini; charset=utf-8");
+            }
+            else if (endsWithCase_String(path, ".txt")) {
+                setCStr_String(&d->header, "text/plain");
+            }
+            else {
+                setCStr_String(&d->header, "application/octet-stream");
+            }
             set_Block(&d->body, collect_Block(readAll_File(f)));
             iNotifyAudience(d, updated, GmRequestUpdated);
         }
