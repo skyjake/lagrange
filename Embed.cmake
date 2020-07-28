@@ -1,3 +1,11 @@
+# CMake Helper for Binary Resources
+# Copyright: 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
+# License: BSD 2-Clause
+
+option (EMBED_IN_EXECUTABLE "Embed resources inside the executable" ON)
+# Note: If disabled, the Unix "cat" tool is required for concatenating
+# the resources into a single "resources.bin" file.
+
 function (embed_getname output fn)
     get_filename_component (name ${fn} NAME_WE)
     string (REPLACE "-" "" name ${name})
@@ -12,7 +20,7 @@ function (embed_getname output fn)
         set (resName "image")
     else ()
         set (resName "blob")
-    endif ()        
+    endif ()
     set (resName "${resName}${name}_Embedded" PARENT_SCOPE)
 endfunction (embed_getname)
 
@@ -42,25 +50,100 @@ endfunction (embed_write)
 function (embed_make)
     set (EMB_H ${CMAKE_CURRENT_BINARY_DIR}/embedded.h)
     set (EMB_C ${CMAKE_CURRENT_BINARY_DIR}/embedded.c)
-    set (needGen NO)
-    if (NOT EXISTS ${EMB_H} OR NOT EXISTS ${EMB_C})
-        set (needGen YES)
+    if (EMBED_IN_EXECUTABLE)
+        set (needGen NO)
+        if (NOT EXISTS ${EMB_H} OR NOT EXISTS ${EMB_C})
+            set (needGen YES)
+        else ()
+            file (TIMESTAMP ${EMB_H} genTime %s)
+            foreach (resPath ${ARGV})
+                set (fn "${CMAKE_CURRENT_LIST_DIR}/${resPath}")
+                file (TIMESTAMP ${fn} resTime %s)
+                if (${resTime} GREATER ${genTime})
+                    set (needGen YES)
+                endif ()
+            endforeach (resPath)
+        endif ()
     else ()
-        file (TIMESTAMP ${EMB_H} genTime %s)
-        foreach (resPath ${ARGV})
-            set (fn "${CMAKE_CURRENT_LIST_DIR}/${resPath}")
-            file (TIMESTAMP ${fn} resTime %s)
-            if (${resTime} GREATER ${genTime})
-                set (needGen YES)
-            endif ()
-        endforeach (resPath)
+        set (needGen YES)
     endif ()
     if (needGen)
-        file (WRITE ${EMB_H} "#include <the_Foundation/block.h>\n")
-        file (WRITE ${EMB_C} "#include \"embedded.h\"\n")
-        foreach (fn ${ARGV})
-            embed_getname (resName ${fn})
-            embed_write (${fn} ${resName} ${EMB_C} ${EMB_H})
-        endforeach (fn)
+        if (EMBED_IN_EXECUTABLE)
+            file (WRITE ${EMB_H} "#include <the_Foundation/block.h>\n")
+            file (WRITE ${EMB_C} "#include \"embedded.h\"\n")
+            foreach (fn ${ARGV})
+                embed_getname (resName ${fn})
+                embed_write (${fn} ${resName} ${EMB_C} ${EMB_H})
+            endforeach (fn)
+        else ()
+            set (EMB_BIN ${CMAKE_CURRENT_BINARY_DIR}/resources.bin)
+            file (REMOVE ${EMB_BIN})
+            execute_process (COMMAND cat ${ARGV} OUTPUT_FILE ${EMB_BIN}
+                WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+            set (offsets)
+            set (fpos 0)
+            foreach (fn ${ARGV})
+                file (SIZE ${CMAKE_SOURCE_DIR}/${fn} fileSize)
+                list (APPEND offsets "${fpos}")
+                math (EXPR fpos "${fpos} + ${fileSize}")
+            endforeach (fn)
+            file (WRITE ${EMB_H} "#include <the_Foundation/block.h>\n
+#define iHaveLoadEmbed 1
+iBool load_Embed(const char *path);\n\n")
+            file (WRITE ${EMB_C} [[
+#include "embedded.h"
+#include <the_Foundation/file.h>
+#include <the_Foundation/fileinfo.h>
+
+iDeclareType(EmbedChunk)
+
+struct Impl_EmbedChunk {
+    size_t pos;
+    size_t size;
+};
+
+static const iEmbedChunk chunks_Embed_[] = {
+]])
+            set (index 0)
+            foreach (fn ${ARGV})
+                file (SIZE ${CMAKE_SOURCE_DIR}/${fn} fileSize)
+                list (GET offsets ${index} fpos)
+                file (APPEND ${EMB_C} "    { ${fpos}, ${fileSize} },\n")
+                math (EXPR index "${index} + 1")
+            endforeach (fn)
+            file (APPEND ${EMB_C} "};\n\n")
+            foreach (fn ${ARGV})
+                embed_getname (resName ${fn})
+                file (APPEND ${EMB_H} "extern const iBlock ${resName};\n")
+                file (APPEND ${EMB_C} "const iBlock ${resName};\n")
+            endforeach (fn)
+            file (APPEND ${EMB_C} "\nstatic iBlock *blocks_Embed_[] = {\n")
+            foreach (fn ${ARGV})
+                embed_getname (resName ${fn})
+                file (APPEND ${EMB_C} "   iConstCast(iBlock *, &${resName}),\n")
+            endforeach (fn)
+            file (APPEND ${EMB_C} [[
+};
+
+iBool load_Embed(const char *path) {
+    const size_t fileSize = (size_t) fileSizeCStr_FileInfo(path);
+    iFile *f = newCStr_File(path);
+    if (open_File(f, readOnly_FileMode)) {
+        iForIndices(i, blocks_Embed_) {
+            const iEmbedChunk *chunk = &chunks_Embed_[i];
+            iBlock *data = blocks_Embed_[i];
+            if (chunk->pos + chunk->size > fileSize) {
+                return iFalse;
+            }
+            init_Block(data, chunk->size);
+            seek_File(f, chunk->pos);
+            readData_File(f, chunk->size, data_Block(data));
+        }
+    }
+    iRelease(f);
+    return iTrue;
+}
+]])
+        endif ()
     endif ()
 endfunction (embed_make)

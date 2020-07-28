@@ -1,4 +1,5 @@
 #include "app.h"
+#include "embedded.h"
 #include "ui/command.h"
 #include "ui/window.h"
 #include "ui/inputwidget.h"
@@ -220,6 +221,15 @@ static void init_App_(iApp *d, int argc, char **argv) {
     d->pendingRefresh   = iFalse;
     loadPrefs_App_(d);
     loadHistory_App_(d);
+#if defined (iHaveLoadEmbed)
+    /* Load the resources from a file. */ {
+        if (!load_Embed(
+                cstr_String(collect_String(concatCStr_Path(execPath_App(), "../resources.bin"))))) {
+            fprintf(stderr, "failed to load resources.bin\n");
+            exit(-1);
+        }
+    }
+#endif
     d->window = new_Window();
     /* Widget state init. */ {
         postCommand_App("navigate.home");
