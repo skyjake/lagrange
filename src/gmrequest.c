@@ -127,6 +127,9 @@ static void readIncoming_GmRequest_(iAnyObject *obj) {
                 notifyDone = iTrue;
             }
             remove_Block(&d->header.chars, 0, 3); /* just the meta */
+            if (code == success_GmStatusCode && isEmpty_String(&d->header)) {
+                setCStr_String(&d->header, "text/gemini; charset=utf-8"); /* default */
+            }
             d->code = code;
             d->state = receivingBody_GmRequestState;
             notifyUpdate = iTrue;
