@@ -724,13 +724,13 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
         const iGmDocument *doc = d->widget->doc;
         const iGmLinkId linkId = d->widget->hoverLink->linkId;
         const iString *url = linkUrl_GmDocument(doc, linkId);
-//        const int flags = linkFlags_GmDocument(doc, linkId);
+        const int flags = linkFlags_GmDocument(doc, linkId);
         iUrl parts;
         init_Url(&parts, url);
 //        desc = cstrFormat_String("\u2192 %s", cstr_String(collect_String(newRange_String(parts.protocol))));
         const iString *host = collect_String(newRange_String(parts.host));
         fg = linkColor_GmDocument(doc, linkId);
-        if (!isEmpty_String(host)) {
+        if (!isEmpty_String(host) && flags & userFriendly_GmLinkFlag) {
 //        int descWidth = measure_Text(default_FontId, cstr_String(host)).x + gap_UI;
             iRect linkRect = moved_Rect(run->visBounds, origin);
 //        linkRect.size.x += descWidth;

@@ -145,6 +145,7 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
         trim_Rangecc(&desc);
         if (!isEmpty_Range(&desc)) {
             line = desc; /* Just show the description. */
+            link->flags |= userFriendly_GmLinkFlag;
         }
         else {
             line = capturedRange_RegExpMatch(&m, 1); /* Show the URL. */

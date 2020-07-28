@@ -10,10 +10,11 @@ iDeclareType(GmRun)
 typedef uint16_t iGmLinkId;
 
 enum iGmLinkFlags {
-    remote_GmLinkFlag = 0x1,
-    http_GmLinkFlag   = 0x2,
-    gopher_GmLinkFlag = 0x4,
-    file_GmLinkFlag   = 0x8,
+    userFriendly_GmLinkFlag = 0x1,
+    remote_GmLinkFlag       = 0x2,
+    http_GmLinkFlag         = 0x4,
+    gopher_GmLinkFlag       = 0x8,
+    file_GmLinkFlag         = 0x10,
 };
 
 struct Impl_GmRun {
