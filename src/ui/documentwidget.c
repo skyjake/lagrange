@@ -451,7 +451,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
              pointerLabel_Command(command_UserEvent(ev), "request") == d->request) {
         updateSource_DocumentWidget_(d);
         checkResponseCode_DocumentWidget_(d);
-        return iTrue;
+        return iFalse;
     }
     else if (isCommand_Widget(w, ev, "document.request.finished") &&
              pointerLabel_Command(command_UserEvent(ev), "request") == d->request) {
@@ -460,7 +460,11 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         d->state = ready_DocumentState;
         iReleasePtr(&d->request);
         postCommandf_App("document.changed url:%s", cstr_String(d->url));
-        return iTrue;
+        return iFalse;
+    }
+    else if (isCommand_UserEvent(ev, "document.request.cancelled")) {
+        postCommand_App("navigate.back");
+        return iFalse;
     }
     else if (isCommand_UserEvent(ev, "document.stop")) {
         if (d->request) {
