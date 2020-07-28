@@ -730,18 +730,21 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
 //        desc = cstrFormat_String("\u2192 %s", cstr_String(collect_String(newRange_String(parts.protocol))));
         const iString *host = collect_String(newRange_String(parts.host));
         fg = linkColor_GmDocument(doc, linkId);
-        if (!isEmpty_String(host) && flags & userFriendly_GmLinkFlag) {
-//        int descWidth = measure_Text(default_FontId, cstr_String(host)).x + gap_UI;
+        const iBool showHost = (!isEmpty_String(host) && flags & userFriendly_GmLinkFlag);
+        const iBool showImage = (flags & imageFileExtension_GmLinkFlag) != 0;
+        const iBool showAudio = (flags & audioFileExtension_GmLinkFlag) != 0;
+        if (flags & (imageFileExtension_GmLinkFlag | audioFileExtension_GmLinkFlag) || showHost) {
             iRect linkRect = moved_Rect(run->visBounds, origin);
-//        linkRect.size.x += descWidth;
-//        fillRect_Paint(&d->paint, linkRect, teal_ColorId);
             drawAlign_Text(default_FontId,
-//                           init_I2(right_Rect(d->bounds), top_Rect(linkRect)),
                            topRight_Rect(linkRect),
                            fg - 1,
                            left_Alignment,
-                           " \u2014 %s",
-                           cstr_String(host));
+                           " \u2014%s%s\r%c%s",
+                           showHost ? " " : "",
+                           showHost ? cstr_String(host) : "",
+                           showImage || showAudio ? '0' + fg : ('0' + fg - 1),
+                           showImage ? " View Image \U0001f5bc"
+                                     : showAudio ? " Play Audio \U0001f3b5" : "");
         }
     }
     const iInt2 visPos = add_I2(run->visBounds.pos, origin);

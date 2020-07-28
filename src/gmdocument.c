@@ -119,9 +119,10 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
     if (matchRange_RegExp(pattern, line, &m)) {
         iGmLink *link = new_GmLink();
         setRange_String(&link->url, capturedRange_RegExpMatch(&m, 1));
-        /* Check the host. */ {
+        /* Check the URL. */ {
             iUrl parts;
             init_Url(&parts, &link->url);
+            /* Host name. */
             if (!isEmpty_Range(&parts.host) &&
                 !equalCase_Rangecc(&parts.host, cstr_String(&d->localHost))) {
                 link->flags |= remote_GmLinkFlag;
@@ -137,6 +138,21 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
             }
             else if (equalCase_Rangecc(&parts.protocol, "file")) {
                 link->flags |= file_GmLinkFlag;
+            }
+            /* Check the file name extension, if present. */
+            if (!isEmpty_Range(&parts.path)) {
+                iString *path = newRange_String(parts.path);
+                if (endsWithCase_String(path, ".gif")  || endsWithCase_String(path, ".jpg") ||
+                    endsWithCase_String(path, ".jpeg") || endsWithCase_String(path, ".png") ||
+                    endsWithCase_String(path, ".tga")  || endsWithCase_String(path, ".psd") ||
+                    endsWithCase_String(path, ".hdr")  || endsWithCase_String(path, ".pic")) {
+                    link->flags |= imageFileExtension_GmLinkFlag;
+                }
+                else if (endsWithCase_String(path, ".mp3") || endsWithCase_String(path, ".wav") ||
+                         endsWithCase_String(path, ".mid")) {
+                    link->flags |= audioFileExtension_GmLinkFlag;
+                }
+                delete_String(path);
             }
         }
         pushBack_PtrArray(&d->links, link);

@@ -5,10 +5,10 @@
 #include <the_Foundation/object.h>
 
 void init_Url(iUrl *d, const iString *text) {
-    iRegExp *pattern =
+    iRegExp *absPat =
         new_RegExp("(.+)://([^/:?]*)(:[0-9]+)?([^?]*)(\\?.*)?", caseInsensitive_RegExpOption);
     iRegExpMatch m;
-    if (matchString_RegExp(pattern, text, &m)) {
+    if (matchString_RegExp(absPat, text, &m)) {
         d->protocol = capturedRange_RegExpMatch(&m, 1);
         d->host     = capturedRange_RegExpMatch(&m, 2);
         d->port     = capturedRange_RegExpMatch(&m, 3);
@@ -20,9 +20,16 @@ void init_Url(iUrl *d, const iString *text) {
         d->query = capturedRange_RegExpMatch(&m, 5);
     }
     else {
+        /* Must be a relative path. */
         iZap(*d);
+        iRegExp *relPat = new_RegExp("([^?]*)(\\?.*)?", 0);
+        if (matchString_RegExp(relPat, text, &m)) {
+            d->path  = capturedRange_RegExpMatch(&m, 1);
+            d->query = capturedRange_RegExpMatch(&m, 2);
+        }
+        iRelease(relPat);
     }
-    iRelease(pattern);
+    iRelease(absPat);
 }
 
 void urlEncodeSpaces_String(iString *d) {
