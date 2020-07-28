@@ -272,12 +272,18 @@ void setUrl_DocumentWidget(iDocumentWidget *d, const iString *url) {
         set_String(d->url, newUrl);
         fetch_DocumentWidget_(d);
     }
-    iRegExp *userPat = new_RegExp("~([^/?]+)", 0);
-    iRegExpMatch m;
-    if (matchString_RegExp(userPat, d->url, &m)) {
-        setRange_String(d->titleUser, capturedRange_RegExpMatch(&m, 1));
+    /* See if there a username in the URL. */ {
+        clear_String(d->titleUser);
+        iRegExp *userPats[2] = { new_RegExp("~([^/?]+)", 0),
+                                 new_RegExp("/users/([^/?]+)", caseInsensitive_RegExpOption) };
+        iRegExpMatch m;
+        iForIndices(i, userPats) {
+            if (matchString_RegExp(userPats[i], d->url, &m)) {
+                setRange_String(d->titleUser, capturedRange_RegExpMatch(&m, 1));
+            }
+            iRelease(userPats[i]);
+        }
     }
-    iRelease(userPat);
     delete_String(newUrl);
 }
 
@@ -609,6 +615,16 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             else {
                 SDL_SetCursor(d->hoverLink ? d->handCursor : d->beamCursor);
             }
+        }
+    }
+    if (ev->type == SDL_MOUSEBUTTONDOWN) {
+        if (ev->button.button == SDL_BUTTON_X1) {
+            postCommand_App("navigate.back");
+            return iTrue;
+        }
+        if (ev->button.button == SDL_BUTTON_X2) {
+            postCommand_App("navigate.forward");
+            return iTrue;
         }
     }
     processContextMenuEvent_Widget(d->menu, ev);

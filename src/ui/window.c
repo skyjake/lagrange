@@ -176,7 +176,6 @@ static void setupUserInterface_Window(iWindow *d) {
         addChild_Widget(div, iClob(navBar));
         setBackgroundColor_Widget(navBar, gray25_ColorId);
         setCommandHandler_Widget(navBar, handleNavBarCommands_);
-
         addChild_Widget(navBar, iClob(new_LabelWidget(" \u25c4 ", 0, 0, "navigate.back")));
         addChild_Widget(navBar, iClob(new_LabelWidget(" \u25ba ", 0, 0, "navigate.forward")));
         addChild_Widget(navBar, iClob(new_LabelWidget("\U0001f3e0", 0, 0, "navigate.home")));
@@ -201,7 +200,6 @@ static void setupUserInterface_Window(iWindow *d) {
         addChild_Widget(div, iClob(searchBar));
         setBackgroundColor_Widget(searchBar, gray25_ColorId);
         setCommandHandler_Widget(searchBar, handleSearchBarCommands_);
-
         addChild_Widget(searchBar, iClob(new_LabelWidget("\U0001f50d Text", 0, 0, NULL)));
         iInputWidget *input = new_InputWidget(0);
         setId_Widget(addChildFlags_Widget(searchBar, iClob(input), expand_WidgetFlag),
