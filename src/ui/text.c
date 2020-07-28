@@ -58,6 +58,7 @@ struct Impl_Font {
     int            height;
     int            baseline;
     iHash          glyphs;
+    iBool          enableKerning;
     int            baselineOffset;
     enum iFontId   symbolsFont; /* font to use for symbols */
 };
@@ -76,6 +77,7 @@ static void init_Font(iFont *d, const iBlock *data, int height, int bloff, enum 
     stbtt_GetFontVMetrics(&d->font, &ascent, NULL, NULL);
     d->baseline = (int) ascent * d->scale;
     d->symbolsFont = symbolsFont;
+    d->enableKerning = iTrue;
 }
 
 static void deinit_Font(iFont *d) {
@@ -152,11 +154,15 @@ void init_Text(SDL_Renderer *render) {
             { &fontNotoEmojiRegular_Embedded,     fontSize_UI * 0.866f, smallSymbols_FontId },
         };
         iForIndices(i, fontData) {
-            init_Font(&d->fonts[i],
+            iFont *font = &d->fonts[i];
+            init_Font(font,
                       fontData[i].ttf,
                       fontData[i].size,
                       i == 0 ? fontSize_UI / 18 : 0,
                       fontData[i].symbolsFont);
+            if (fontData[i].ttf == &fontFiraMonoRegular_Embedded) {
+                font->enableKerning = iFalse;
+            }
         }
     }
 }
@@ -362,11 +368,15 @@ static iInt2 run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
             lastWordEnd = chPos;
         }
         /* Check the next character. */
-        if (glyph->font == d) {
+        if (d->enableKerning && glyph->font == d) {
             /* TODO: No need to decode the next char twice; check this on the next iteration. */
             const char *peek = chPos;
             const iChar next = nextChar_(&peek, text.end);
-            if (next) {
+            if (ch == '/' && next == '/') {
+                /* Manual kerning for double-slash. */
+                xpos -= glyph->rect[hoff].size.x * 0.5f;
+            }
+            else if (next) {
                 xpos += d->scale * stbtt_GetCodepointKernAdvance(&d->font, ch, next);
             }
         }
