@@ -245,7 +245,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         header2_FontId,
         header3_FontId,
         regular_FontId,
-        };
+    };
     static const int colors[max_GmLineType] = {
         gray75_ColorId,
         gray75_ColorId,
@@ -255,7 +255,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         white_ColorId,
         white_ColorId,
         white_ColorId,
-        };
+    };
     static const int indents[max_GmLineType] = {
         5, 10, 5, 10, 0, 0, 0, 5
     };
@@ -290,6 +290,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     }
     while (nextSplit_Rangecc(&content, "\n", &line)) {
         iGmRun run;
+        run.flags = 0;
         run.color = white_ColorId;
         run.linkId = 0;
         run.imageId = 0;
@@ -402,7 +403,9 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             isFirstText = iFalse;
         }
         iRangecc runLine = line;
-        /* Create one or more runs for this line. */
+        /* Create one or more text runs for this line. */
+        run.flags |= startOfLine_GmRunFlag;
+        iAssert(!isEmpty_Range(&runLine)); /* must have something at this point */
         while (!isEmpty_Range(&runLine)) {
             /* Little bit of breathing space between wrapped lines. */
             if ((type == text_GmLineType || type == quote_GmLineType ||
@@ -427,10 +430,13 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 contPos = runLine.end;
             }
             pushBack_Array(&d->layout, &run);
+            run.flags &= ~startOfLine_GmRunFlag;
             runLine.start = contPos;
             trimStart_Rangecc(&runLine);
             pos.y += lineHeight_Text(run.font);
         }
+        /* Flag the end of line, too. */
+        ((iGmRun *) back_Array(&d->layout))->flags |= endOfLine_GmRunFlag;
         /* Image content. */
         if (type == link_GmLineType) {
             const size_t imgIndex = findLinkImage_GmDocument_(d, run.linkId);

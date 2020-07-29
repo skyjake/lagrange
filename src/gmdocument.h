@@ -12,14 +12,14 @@ iDeclareType(GmRun)
 typedef uint16_t iGmLinkId;
 
 enum iGmLinkFlags {
-    userFriendly_GmLinkFlag       = 0x1,
-    remote_GmLinkFlag             = 0x2,
-    http_GmLinkFlag               = 0x4,
-    gopher_GmLinkFlag             = 0x8,
-    file_GmLinkFlag               = 0x10,
-    imageFileExtension_GmLinkFlag = 0x20,
-    audioFileExtension_GmLinkFlag = 0x40,
-    content_GmLinkFlag            = 0x80, /* content visible below */
+    userFriendly_GmLinkFlag       = iBit(1),
+    remote_GmLinkFlag             = iBit(2),
+    http_GmLinkFlag               = iBit(3),
+    gopher_GmLinkFlag             = iBit(4),
+    file_GmLinkFlag               = iBit(5),
+    imageFileExtension_GmLinkFlag = iBit(6),
+    audioFileExtension_GmLinkFlag = iBit(7),
+    content_GmLinkFlag            = iBit(8), /* content visible below */
 };
 
 iDeclareType(GmImageInfo)
@@ -30,10 +30,16 @@ struct Impl_GmImageInfo {
     const char *mime;
 };
 
+enum iGmRunFlags {
+    startOfLine_GmRunFlag = iBit(1),
+    endOfLine_GmRunFlag   = iBit(2),
+};
+
 struct Impl_GmRun {
     iRangecc  text;
     uint8_t   font;
     uint8_t   color;
+    uint8_t   flags;
     iRect     bounds;    /* used for hit testing, may extend to edges */
     iRect     visBounds; /* actual visual bounds */
     iGmLinkId linkId;    /* zero for non-links */

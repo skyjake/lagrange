@@ -843,7 +843,8 @@ iDeclareType(DrawContext)
 
 struct Impl_DrawContext {
     const iDocumentWidget *widget;
-    iRect bounds;
+    iRect widgetBounds;
+    iRect bounds; /* document area */
     iPaint paint;
     iBool inSelectMark;
     iBool inFoundMark;
@@ -895,8 +896,24 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
     initRange_String(&text, run->text);
     enum iColorId      fg  = run->color;
     const iGmDocument *doc = d->widget->doc;
+    const iBool        isHover =
+        run->linkId != 0 && d->widget->hoverLink && run->linkId == d->widget->hoverLink->linkId &&
+        !isEmpty_Rect(run->bounds);
+    const iInt2 visPos = add_I2(run->visBounds.pos, origin);
+    /* Text markers. */
+    fillRange_DrawContext_(d, run, teal_ColorId, d->widget->foundMark, &d->inFoundMark);
+    fillRange_DrawContext_(d, run, brown_ColorId, d->widget->selectMark, &d->inSelectMark);
     if (run->linkId) {
-        /* TODO: Visualize an ongoing media request. */
+        fg = linkColor_GmDocument(doc, run->linkId);
+        if (isHover && ~linkFlags_GmDocument(doc, run->linkId) & content_GmLinkFlag) {
+            fg = white_ColorId;
+        }
+    }
+    drawString_Text(run->font, visPos, fg, &text);
+    deinit_String(&text);
+    /* Presentation of links. */
+    if (run->linkId) {
+        /* TODO: Show status of an ongoing media request. */
         const int flags = linkFlags_GmDocument(doc, run->linkId);
         if (flags & content_GmLinkFlag) {
             fg = linkColor_GmDocument(doc, run->linkId);
@@ -909,7 +926,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                               info.mime, info.size.x, info.size.y, info.numBytes / 1.0e6f);
                 if (findMediaRequest_DocumentWidget_(d->widget, run->linkId)) {
                     appendFormat_String(
-                        &text, "  %s\u2715", run == d->widget->hoverLink ? white_ColorEscape : "");
+                        &text, "  %s\u2715", isHover ? white_ColorEscape : "");
                 }
                 drawAlign_Text(default_FontId,
                                add_I2(topRight_Rect(run->bounds), origin),
@@ -919,10 +936,10 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                 deinit_String(&text);
             }
         }
-        else if (run == d->widget->hoverLink) {
-            const iGmLinkId    linkId = d->widget->hoverLink->linkId;
-            const iString *    url    = linkUrl_GmDocument(doc, linkId);
-            const int          flags  = linkFlags_GmDocument(doc, linkId);
+        else if (isHover) {
+            const iGmLinkId linkId = d->widget->hoverLink->linkId;
+            const iString * url    = linkUrl_GmDocument(doc, linkId);
+            const int       flags  = linkFlags_GmDocument(doc, linkId);
             iUrl parts;
             init_Url(&parts, url);
             const iString *host = collect_String(newRange_String(parts.host));
@@ -931,27 +948,37 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
             const iBool showImage = (flags & imageFileExtension_GmLinkFlag) != 0;
             const iBool showAudio = (flags & audioFileExtension_GmLinkFlag) != 0;
             iRect linkRect = moved_Rect(run->visBounds, origin);
-            if (flags & (imageFileExtension_GmLinkFlag | audioFileExtension_GmLinkFlag) || showHost) {
+            if (run->flags & endOfLine_GmRunFlag &&
+                (flags & (imageFileExtension_GmLinkFlag | audioFileExtension_GmLinkFlag) ||
+                 showHost)) {
+                iString str;
+                init_String(&str);
+                format_String(&str, " \u2014%s%s%s\r%c%s",
+                              showHost ? " " : "",
+                              showHost ? cstr_String(host) : "",
+                              showHost && (showImage || showAudio) ? " \u2014" : "",
+                              showImage || showAudio ? '0' + fg : ('0' + fg - 1),
+                              showImage ? " View Image \U0001f5bc"
+                                        : showAudio ? " Play Audio \U0001f3b5" : "");
+                const iInt2 textSize = measure_Text(default_FontId, cstr_String(&str));
+                int tx = topRight_Rect(linkRect).x;
+                const char *msg = cstr_String(&str);
+                if (tx + textSize.x > right_Rect(d->widgetBounds)) {
+                    tx = right_Rect(d->widgetBounds) - textSize.x;
+                    fillRect_Paint(&d->paint, (iRect){ init_I2(tx, top_Rect(linkRect)), textSize },
+                                   black_ColorId);
+                    msg += 4; /* skip the space and dash */
+                }
                 drawAlign_Text(default_FontId,
-                               topRight_Rect(linkRect),
+                               init_I2(tx, top_Rect(linkRect)),
                                fg - 1,
                                left_Alignment,
-                               " \u2014%s%s%s\r%c%s",
-                               showHost ? " " : "",
-                               showHost ? cstr_String(host) : "",
-                               showHost && (showImage || showAudio) ? " \u2014" : "",
-                               showImage || showAudio ? '0' + fg : ('0' + fg - 1),
-                               showImage ? " View Image \U0001f5bc"
-                                         : showAudio ? " Play Audio \U0001f3b5" : "");
+                               "%s",
+                               msg);
+                deinit_String(&str);
             }
         }
     }
-    const iInt2 visPos = add_I2(run->visBounds.pos, origin);
-    /* Text markers. */
-    fillRange_DrawContext_(d, run, teal_ColorId, d->widget->foundMark, &d->inFoundMark);
-    fillRange_DrawContext_(d, run, brown_ColorId, d->widget->selectMark, &d->inSelectMark);
-    drawString_Text(run->font, visPos, fg, &text);
-    deinit_String(&text);
 
 //    drawRect_Paint(&d->paint, (iRect){ visPos, run->bounds.size }, green_ColorId);
 //    drawRect_Paint(&d->paint, (iRect){ visPos, run->visBounds.size }, red_ColorId);
@@ -961,7 +988,12 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
     const iWidget *w      = constAs_Widget(d);
     const iRect    bounds = bounds_Widget(w);
     draw_Widget(w);
-    iDrawContext ctx = { .widget = d, .bounds = documentBounds_DocumentWidget_(d) };
+    iDrawContext ctx = {
+        .widget = d,
+        .widgetBounds = /* omit scrollbar width */
+            adjusted_Rect(bounds, zero_I2(), init_I2(-constAs_Widget(d->scroll)->rect.size.x, 0)),
+        .bounds = documentBounds_DocumentWidget_(d)
+    };
     init_Paint(&ctx.paint);
     fillRect_Paint(&ctx.paint, bounds, gray15_ColorId);
     setClip_Paint(&ctx.paint, bounds);
