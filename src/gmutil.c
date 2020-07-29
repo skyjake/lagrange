@@ -32,6 +32,59 @@ void init_Url(iUrl *d, const iString *text) {
     iRelease(absPat);
 }
 
+static iRangecc dirPath_(iRangecc path) {
+    const size_t pos = lastIndexOfCStr_Rangecc(&path, "/");
+    if (pos == iInvalidPos) return path;
+    return (iRangecc){ path.start, path.start + pos };
+}
+
+const iString *absoluteUrl_String(const iString *d, const iString *urlMaybeRelative) {
+    if (indexOfCStr_String(urlMaybeRelative, "://") != iInvalidPos) {
+        /* Already absolute. */
+        return urlMaybeRelative;
+    }
+    iUrl parts;
+    init_Url(&parts, d);
+    iString *absolute = new_String();
+    appendRange_String(absolute, parts.protocol);
+    appendCStr_String(absolute, "://");
+    appendRange_String(absolute, parts.host);
+    if (!isEmpty_Range(&parts.port)) {
+        appendCStr_String(absolute, ":");
+        appendRange_String(absolute, parts.port);
+    }
+    if (startsWith_String(urlMaybeRelative, "/")) {
+        append_String(absolute, urlMaybeRelative);
+    }
+    else {
+        iRangecc relPath = range_String(urlMaybeRelative);
+        iRangecc dir = dirPath_(parts.path);
+        for (;;) {
+            if (equal_Rangecc(&relPath, ".")) {
+                relPath.start++;
+            }
+            else if (startsWith_Rangecc(&relPath, "./")) {
+                relPath.start += 2;
+            }
+            else if (equal_Rangecc(&relPath, "..")) {
+                relPath.start += 2;
+                dir = dirPath_(dir);
+            }
+            else if (startsWith_Rangecc(&relPath, "../")) {
+                relPath.start += 3;
+                dir = dirPath_(dir);
+            }
+            else break;
+        }
+        appendRange_String(absolute, dir);
+        if (!endsWith_String(absolute, "/")) {
+            appendCStr_String(absolute, "/");
+        }
+        appendRange_String(absolute, relPath);
+    }
+    return collect_String(absolute);
+}
+
 void urlEncodeSpaces_String(iString *d) {
     for (;;) {
         const size_t pos = indexOfCStr_String(d, " ");

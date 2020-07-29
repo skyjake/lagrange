@@ -13,6 +13,7 @@ struct Impl_Url {
     iRangecc query;
 };
 
-void    init_Url    (iUrl *, const iString *text);
+void            init_Url                (iUrl *, const iString *text);
 
-void    urlEncodeSpaces_String  (iString *);
+const iString * absoluteUrl_String      (const iString *, const iString *urlMaybeRelative);
+void            urlEncodeSpaces_String  (iString *);

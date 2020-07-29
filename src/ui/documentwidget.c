@@ -409,59 +409,6 @@ static void scrollTo_DocumentWidget_(iDocumentWidget *d, int documentY) {
     scroll_DocumentWidget_(d, 0); /* clamp it */
 }
 
-static iRangecc dirPath_(iRangecc path) {
-    const size_t pos = lastIndexOfCStr_Rangecc(&path, "/");
-    if (pos == iInvalidPos) return path;
-    return (iRangecc){ path.start, path.start + pos };
-}
-
-static const iString *absoluteUrl_DocumentWidget_(const iDocumentWidget *d, const iString *url) {
-    if (indexOfCStr_String(url, "://") != iInvalidPos) {
-        /* Already absolute. */
-        return url;
-    }
-    iUrl parts;
-    init_Url(&parts, d->url);
-    iString *absolute = new_String();
-    appendRange_String(absolute, parts.protocol);
-    appendCStr_String(absolute, "://");
-    appendRange_String(absolute, parts.host);
-    if (!isEmpty_Range(&parts.port)) {
-        appendCStr_String(absolute, ":");
-        appendRange_String(absolute, parts.port);
-    }
-    if (startsWith_String(url, "/")) {
-        append_String(absolute, url);
-    }
-    else {
-        iRangecc relPath = range_String(url);
-        iRangecc dir = dirPath_(parts.path);
-        for (;;) {
-            if (equal_Rangecc(&relPath, ".")) {
-                relPath.start++;
-            }
-            else if (startsWith_Rangecc(&relPath, "./")) {
-                relPath.start += 2;
-            }
-            else if (equal_Rangecc(&relPath, "..")) {
-                relPath.start += 2;
-                dir = dirPath_(dir);
-            }
-            else if (startsWith_Rangecc(&relPath, "../")) {
-                relPath.start += 3;
-                dir = dirPath_(dir);
-            }
-            else break;
-        }
-        appendRange_String(absolute, dir);
-        if (!endsWith_String(absolute, "/")) {
-            appendCStr_String(absolute, "/");
-        }
-        appendRange_String(absolute, relPath);
-    }
-    return collect_String(absolute);
-}
-
 static void checkResponseCode_DocumentWidget_(iDocumentWidget *d) {
     if (!d->request) {
         return;
@@ -542,7 +489,7 @@ static iBool requestMedia_DocumentWidget_(iDocumentWidget *d, iGmLinkId linkId) 
         pushBack_ObjectList(
             d->media,
             iClob(new_MediaRequest(
-                d, linkId, absoluteUrl_DocumentWidget_(d, linkUrl_GmDocument(d->doc, linkId)))));
+                d, linkId, absoluteUrl_String(d->url, linkUrl_GmDocument(d->doc, linkId)))));
         return iTrue;
     }
     return iFalse;
@@ -605,7 +552,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
     else if (isCommand_Widget(w, ev, "document.copylink")) {
         if (d->hoverLink) {
             SDL_SetClipboardText(cstr_String(
-                absoluteUrl_DocumentWidget_(d, linkUrl_GmDocument(d->doc, d->hoverLink->linkId))));
+                absoluteUrl_String(d->url, linkUrl_GmDocument(d->doc, d->hoverLink->linkId))));
         }
         else {
             SDL_SetClipboardText(cstr_String(d->url));
@@ -820,8 +767,8 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                     }
                     else {
                         postCommandf_App("open url:%s",
-                                         cstr_String(absoluteUrl_DocumentWidget_(
-                                             d, linkUrl_GmDocument(d->doc, linkId))));
+                                         cstr_String(absoluteUrl_String(
+                                             d->url, linkUrl_GmDocument(d->doc, linkId))));
                     }
                 }
                 if (d->selectMark.start) {
