@@ -211,6 +211,32 @@ static int scrollMax_DocumentWidget_(const iDocumentWidget *d) {
            2 * d->pageMargin * gap_UI;
 }
 
+static void updateHover_DocumentWidget_(iDocumentWidget *d, iInt2 mouse) {
+    const iRect docBounds      = documentBounds_DocumentWidget_(d);
+    const iGmRun *oldHoverLink = d->hoverLink;
+    d->hoverLink               = NULL;
+    const iInt2 hoverPos = addY_I2(sub_I2(mouse, topLeft_Rect(docBounds)), d->scrollY);
+    if (d->state == ready_DocumentState) {
+        iConstForEach(PtrArray, i, &d->visibleLinks) {
+            const iGmRun *run = i.ptr;
+            if (contains_Rect(run->bounds, hoverPos)) {
+                d->hoverLink = run;
+                break;
+            }
+        }
+    }
+    if (d->hoverLink != oldHoverLink) {
+        refresh_Widget(as_Widget(d));
+    }
+    if (!contains_Widget(constAs_Widget(d), mouse) ||
+        contains_Widget(constAs_Widget(d->scroll), mouse)) {
+        SDL_SetCursor(d->arrowCursor);
+    }
+    else {
+        SDL_SetCursor(d->hoverLink ? d->handCursor : d->beamCursor);
+    }
+}
+
 static void updateVisible_DocumentWidget_(iDocumentWidget *d) {
     const iRangei visRange = visibleRange_DocumentWidget_(d);
     const iRect   bounds   = bounds_Widget(as_Widget(d));
@@ -221,6 +247,7 @@ static void updateVisible_DocumentWidget_(iDocumentWidget *d) {
                           docSize > 0 ? height_Rect(bounds) * size_Range(&visRange) / docSize : 0);
     clear_PtrArray(&d->visibleLinks);
     render_GmDocument(d->doc, visRange, addVisibleLink_DocumentWidget_, d);
+    updateHover_DocumentWidget_(d, mouseCoord_Window(get_Window()));
 }
 
 static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
@@ -293,8 +320,21 @@ static void updateSource_DocumentWidget_(iDocumentWidget *d) {
                 setFormat_GmDocument(d->doc, gemini_GmDocumentFormat);
             }
             else if (startsWith_String(mime, "image/")) {
-                /* TODO: Make a simple document with an image. */
-                clear_String(&str);
+                if (isFinished_GmRequest(d->request)) {
+                    /* Make a simple document with an image. */
+                    const char *imageTitle = "Image";
+                    iUrl parts;
+                    init_Url(&parts, url_GmRequest(d->request));
+                    if (!isEmpty_Range(&parts.path)) {
+                        imageTitle = baseName_Path(collect_String(newRange_String(parts.path)));
+                    }
+                    format_String(
+                        &str, "=> %s %s\n", cstr_String(url_GmRequest(d->request)), imageTitle);
+                    setImage_GmDocument(d->doc, 1, mime, body_GmRequest(d->request));
+                }
+                else {
+                    clear_String(&str);
+                }
             }
             else {
                 showErrorPage_DocumentWidget_(d, unsupportedMimeType_GmStatusCode);
@@ -714,29 +754,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             SDL_SetCursor(d->arrowCursor);
         }
         else {
-            const iRect docBounds      = documentBounds_DocumentWidget_(d);
-            const iInt2 mouse          = init_I2(ev->motion.x, ev->motion.y);
-            const iGmRun *oldHoverLink = d->hoverLink;
-            d->hoverLink               = NULL;
-            const iInt2 hoverPos = addY_I2(sub_I2(mouse, topLeft_Rect(docBounds)), d->scrollY);
-            if (d->state == ready_DocumentState) {
-                iConstForEach(PtrArray, i, &d->visibleLinks) {
-                    const iGmRun *run = i.ptr;
-                    if (contains_Rect(run->bounds, hoverPos)) {
-                        d->hoverLink = run;
-                        break;
-                    }
-                }
-            }
-            if (d->hoverLink != oldHoverLink) {
-                refresh_Widget(w);
-            }
-            if (!contains_Widget(w, mouse) || contains_Widget(constAs_Widget(d->scroll), mouse)) {
-                SDL_SetCursor(d->arrowCursor);
-            }
-            else {
-                SDL_SetCursor(d->hoverLink ? d->handCursor : d->beamCursor);
-            }
+            updateHover_DocumentWidget_(d, init_I2(ev->motion.x, ev->motion.y));
         }
     }
     if (ev->type == SDL_MOUSEBUTTONDOWN) {
@@ -885,13 +903,20 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
             if (!isEmpty_Rect(run->bounds)) {
                 iGmImageInfo info;
                 imageInfo_GmDocument(doc, linkImage_GmDocument(doc, run->linkId), &info);
+                iString text;
+                init_String(&text);
+                format_String(&text, "%s \u2014 %d x %d \u2014 %.1fMB",
+                              info.mime, info.size.x, info.size.y, info.numBytes / 1.0e6f);
+                if (findMediaRequest_DocumentWidget_(d->widget, run->linkId)) {
+                    appendFormat_String(
+                        &text, "  %s\u2715", run == d->widget->hoverLink ? white_ColorEscape : "");
+                }
                 drawAlign_Text(default_FontId,
                                add_I2(topRight_Rect(run->bounds), origin),
                                fg,
                                right_Alignment,
-                               "%s \u2014 %d x %d \u2014 %.1fMB %s \u2715",
-                               info.mime, info.size.x, info.size.y, info.numBytes / 1.0e6f,
-                               run == d->widget->hoverLink ? white_ColorEscape : "");
+                               "%s", cstr_String(&text));
+                deinit_String(&text);
             }
         }
         else if (run == d->widget->hoverLink) {

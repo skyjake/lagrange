@@ -448,7 +448,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 if (width_Rect(run.visBounds) > maxSize.x) {
                     /* Don't scale the image up. */
                     run.visBounds.size.y = run.visBounds.size.y * maxSize.x / width_Rect(run.visBounds);
-                    run.visBounds.size.x = img->size.x;
+                    run.visBounds.size.x = maxSize.x;
                     run.visBounds.pos.x = run.bounds.size.x / 2 - width_Rect(run.visBounds) / 2;
                     run.bounds.size.y = run.visBounds.size.y;
                 }
