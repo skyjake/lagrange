@@ -903,10 +903,10 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
     /* Text markers. */
     fillRange_DrawContext_(d, run, teal_ColorId, d->widget->foundMark, &d->inFoundMark);
     fillRange_DrawContext_(d, run, brown_ColorId, d->widget->selectMark, &d->inSelectMark);
-    if (run->linkId) {
-        fg = linkColor_GmDocument(doc, run->linkId);
-        if (isHover && ~linkFlags_GmDocument(doc, run->linkId) & content_GmLinkFlag) {
-            fg = white_ColorId;
+    if (run->linkId && !isEmpty_Rect(run->bounds)) {
+        fg = white_ColorId;
+        if (isHover || linkFlags_GmDocument(doc, run->linkId) & content_GmLinkFlag) {
+            fg = linkColor_GmDocument(doc, run->linkId);
         }
     }
     drawString_Text(run->font, visPos, fg, &text);

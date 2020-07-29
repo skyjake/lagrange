@@ -298,6 +298,11 @@ static iChar nextChar_(const char **chPos, const char *end) {
 
 int enableHalfPixelGlyphs_Text = iTrue;
 
+iLocalDef iBool isWrapBoundary_(iChar a, iChar b) {
+    if (b == '/' || b == '-') return iTrue;
+    return !isSpace_Char(a) && isSpace_Char(b);
+}
+
 static iInt2 run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLen, iInt2 pos,
                        int xposLimit, const char **continueFrom_out, int *runAdvance_out) {
     iInt2 size = zero_I2();
@@ -364,7 +369,7 @@ static iInt2 run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
         }
         xpos += glyph->advance;
         xposMax = iMax(xposMax, xpos);
-        if (mode == measureNoWrap_RunMode || (!isSpace_Char(prevCh) && isSpace_Char(ch))) {
+        if (mode == measureNoWrap_RunMode || isWrapBoundary_(prevCh, ch)) {
             lastWordEnd = chPos;
         }
         /* Check the next character. */

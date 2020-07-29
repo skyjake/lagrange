@@ -20,6 +20,7 @@ enum iGmLinkFlags {
     imageFileExtension_GmLinkFlag = iBit(6),
     audioFileExtension_GmLinkFlag = iBit(7),
     content_GmLinkFlag            = iBit(8), /* content visible below */
+    visited_GmLinkFlag            = iBit(9), /* in the history */
 };
 
 iDeclareType(GmImageInfo)

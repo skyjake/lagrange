@@ -42,6 +42,8 @@ set (SOURCES
     src/gmrequest.h
     src/gmutil.c
     src/gmutil.h
+    src/history.c
+    src/history.h
     src/stb_image.h
     src/stb_truetype.h
     # User interface:
