@@ -299,7 +299,9 @@ static iChar nextChar_(const char **chPos, const char *end) {
 int enableHalfPixelGlyphs_Text = iTrue;
 
 iLocalDef iBool isWrapBoundary_(iChar a, iChar b) {
-    if (b == '/' || b == '-') return iTrue;
+    if (b == '/' || b == '-' || b == ',' || b == ';' || b == ':') {
+        return iTrue;
+    }
     return !isSpace_Char(a) && isSpace_Char(b);
 }
 
