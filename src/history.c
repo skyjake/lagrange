@@ -2,6 +2,7 @@
 #include "app.h"
 
 #include <the_Foundation/file.h>
+#include <the_Foundation/sortedarray.h>
 
 static const size_t maxSize_History_ = 5000;
 
@@ -14,12 +15,40 @@ void deinit_HistoryItem(iHistoryItem *d) {
     deinit_String(&d->url);
 }
 
+struct Impl_History {
+    iArray history;
+    size_t historyPos; /* zero at the latest item */
+    iSortedArray visitedUrls;
+};
+
+iDefineTypeConstruction(History)
+
+static int cmp_VisitedUrls_(const void *a, const void *b) {
+    const iHistoryItem *elem[2] = { a, b };
+    return cmpString_String(&elem[0]->url, &elem[1]->url);
+}
+
+static int cmpWhen_HistoryItem_(const void *old, const void *ins) {
+    const iHistoryItem *elem[2] = { old, ins };
+    const double tOld = seconds_Time(&elem[0]->when), tIns = seconds_Time(&elem[1]->when);
+    return tIns > tOld;
+}
+
+static void updateVisitedUrls_History_(iHistory *d) {
+    clear_SortedArray(&d->visitedUrls);
+    iConstForEach(Array, i, &d->history) {
+        insertIf_SortedArray(&d->visitedUrls, &i.value, cmpWhen_HistoryItem_);
+    }
+}
+
 void init_History(iHistory *d) {
     init_Array(&d->history, sizeof(iHistoryItem));
     d->historyPos = 0;
+    init_SortedArray(&d->visitedUrls, sizeof(const iHistoryItem *), cmp_VisitedUrls_);
 }
 
 void deinit_History(iHistory *d) {
+    deinit_SortedArray(&d->visitedUrls);
     clear_History(d);
     deinit_Array(&d->history);
 }
@@ -83,6 +112,10 @@ iHistoryItem *itemAtPos_History(iHistory *d, size_t pos) {
     return &value_Array(&d->history, size_Array(&d->history) - 1 - pos, iHistoryItem);
 }
 
+iHistoryItem *item_History(iHistory *d) {
+    return itemAtPos_History(d, d->historyPos);
+}
+
 const iString *url_History(iHistory *d, size_t pos) {
     const iHistoryItem *item = itemAtPos_History(d, pos);
     if (item) {
@@ -137,10 +170,15 @@ iBool goForward_History(iHistory *d) {
 }
 
 iTime urlVisitTime_History(const iHistory *d, const iString *url) {
-    iTime when;
-    iZap(when);
-
-    return when;
+    iHistoryItem item;
+    size_t pos;
+    iZap(item);
+    initCopy_String(&item.url, url);
+    if (locate_SortedArray(&d->visitedUrls, &(const void *){ &item }, &pos)) {
+        item.when = ((const iHistoryItem *) constAt_SortedArray(&d->visitedUrls, pos))->when;
+    }
+    deinit_String(&item.url);
+    return item.when;
 }
 
 void print_History(const iHistory *d) {

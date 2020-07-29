@@ -49,7 +49,7 @@ struct Impl_App {
     iWindow *    window;
     iSortedArray tickers;
     iBool        pendingRefresh;
-    iHistory     history;
+    iHistory *   history;
     /* Preferences: */
     iBool        retainWindowSize;
     float        uiScale;
@@ -146,9 +146,9 @@ static void init_App_(iApp *d, int argc, char **argv) {
     d->window           = NULL;
     d->retainWindowSize = iTrue;
     d->pendingRefresh   = iFalse;
-    init_History(&d->history);
+    d->history          = new_History();
     loadPrefs_App_(d);
-    load_History(&d->history, historyFileName_());
+    load_History(d->history, historyFileName_());
 #if defined (iHaveLoadEmbed)
     /* Load the resources from a file. */ {
         if (!load_Embed(
@@ -166,8 +166,8 @@ static void init_App_(iApp *d, int argc, char **argv) {
 
 static void deinit_App(iApp *d) {
     savePrefs_App_(d);
-    save_History(&d->history, historyFileName_());
-    deinit_History(&d->history);
+    save_History(d->history, historyFileName_());
+    delete_History(d->history);
     deinit_SortedArray(&d->tickers);
     delete_Window(d->window);
     d->window = NULL;
@@ -328,16 +328,16 @@ iBool handleCommand_App(const char *cmd) {
         if (!argLabel_Command(cmd, "history")) {
             if (argLabel_Command(cmd, "redirect")) {
                 /* Update in the history. */
-                iHistoryItem *item = item_History(&d->history);
+                iHistoryItem *item = item_History(d->history);
                 if (item) {
                     set_String(&item->url, url);
                 }
             }
             else {
-                addUrl_History(&d->history, url);
+                addUrl_History(d->history, url);
             }
         }
-        print_History(&d->history);
+        print_History(d->history);
         setUrl_DocumentWidget(findChild_Widget(root, "document"), url);
     }
     else if (equal_Command(cmd, "document.request.cancelled")) {
@@ -379,11 +379,11 @@ iBool handleCommand_App(const char *cmd) {
         return iFalse;
     }
     else if (equal_Command(cmd, "navigate.back")) {
-        goBack_History(&d->history);
+        goBack_History(d->history);
         return iTrue;
     }
     else if (equal_Command(cmd, "navigate.forward")) {
-        goForward_History(&d->history);
+        goForward_History(d->history);
         return iTrue;
     }
     else if (equal_Command(cmd, "navigate.home")) {
