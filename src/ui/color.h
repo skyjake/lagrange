@@ -49,5 +49,6 @@ struct Impl_Color {
     uint8_t r, g, b, a;
 };
 
-iColor  get_Color   (int color);
-iColor  ansi_Color  (iRangecc escapeSequence, int fallback);
+iColor          get_Color       (int color);
+iColor          ansi_Color      (iRangecc escapeSequence, int fallback);
+const char *    escape_Color    (int color);

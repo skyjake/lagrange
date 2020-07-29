@@ -497,13 +497,15 @@ static iMediaRequest *findMediaRequest_DocumentWidget_(const iDocumentWidget *d,
     return NULL;
 }
 
-static void requestMedia_DocumentWidget_(iDocumentWidget *d, iGmLinkId linkId) {
+static iBool requestMedia_DocumentWidget_(iDocumentWidget *d, iGmLinkId linkId) {
     if (!findMediaRequest_DocumentWidget_(d, linkId)) {
         pushBack_ObjectList(
             d->media,
             iClob(new_MediaRequest(
                 d, linkId, absoluteUrl_DocumentWidget_(d, linkUrl_GmDocument(d->doc, linkId)))));
+        return iTrue;
     }
+    return iFalse;
 }
 
 static iBool handleMediaEvent_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
@@ -777,7 +779,26 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                     iAssert(linkId);
                     /* Media links are opened inline by default. */
                     if (isMediaLink_GmDocument(d->doc, linkId)) {
-                        requestMedia_DocumentWidget_(d, linkId);
+                        if (!requestMedia_DocumentWidget_(d, linkId)) {
+                            if (linkFlags_GmDocument(d->doc, linkId) & content_GmLinkFlag) {
+                                setImage_GmDocument(d->doc, linkId, NULL, NULL);
+                                d->hoverLink = NULL;
+                                updateVisible_DocumentWidget_(d);
+                                refresh_Widget(w);
+                                return iTrue;
+                            }
+                            else {
+                                /* Show the existing content again if we have it. */
+                                iMediaRequest *req = findMediaRequest_DocumentWidget_(d, linkId);
+                                if (req) {
+                                    setImage_GmDocument(d->doc, linkId, meta_GmRequest(req->req),
+                                                        body_GmRequest(req->req));
+                                    updateVisible_DocumentWidget_(d);
+                                    refresh_Widget(w);
+                                    return iTrue;
+                                }
+                            }
+                        }
                     }
                     else {
                         postCommandf_App("open url:%s",
@@ -840,8 +861,8 @@ static void fillRange_DrawContext_(iDrawContext *d, const iGmRun *run, enum iCol
 }
 
 static void drawRun_DrawContext_(void *context, const iGmRun *run) {
-    iDrawContext *d = context;
-    const iInt2 origin = addY_I2(d->bounds.pos, -d->widget->scrollY);
+    iDrawContext *d      = context;
+    const iInt2   origin = addY_I2(d->bounds.pos, -d->widget->scrollY);
     if (run->imageId) {
         SDL_Texture *tex = imageTexture_GmDocument(d->widget->doc, run->imageId);
         if (tex) {
@@ -854,32 +875,50 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
     iString text;
     /* TODO: making a copy is unnecessary; the text routines should accept Rangecc */
     initRange_String(&text, run->text);
-    enum iColorId fg = run->color;
-    if (run == d->widget->hoverLink) {
-        const iGmDocument *doc    = d->widget->doc;
-        const iGmLinkId    linkId = d->widget->hoverLink->linkId;
-        const iString *    url    = linkUrl_GmDocument(doc, linkId);
-        const int          flags  = linkFlags_GmDocument(doc, linkId);
-        iUrl parts;
-        init_Url(&parts, url);
-        const iString *host = collect_String(newRange_String(parts.host));
-        fg = linkColor_GmDocument(doc, linkId);
-        const iBool showHost = (!isEmpty_String(host) && flags & userFriendly_GmLinkFlag);
-        const iBool showImage = (flags & imageFileExtension_GmLinkFlag) != 0;
-        const iBool showAudio = (flags & audioFileExtension_GmLinkFlag) != 0;
-        if (flags & (imageFileExtension_GmLinkFlag | audioFileExtension_GmLinkFlag) || showHost) {
+    enum iColorId      fg  = run->color;
+    const iGmDocument *doc = d->widget->doc;
+    if (run->linkId) {
+        /* TODO: Visualize an ongoing media request. */
+        const int flags = linkFlags_GmDocument(doc, run->linkId);
+        if (flags & content_GmLinkFlag) {
+            fg = linkColor_GmDocument(doc, run->linkId);
+            if (!isEmpty_Rect(run->bounds)) {
+                iGmImageInfo info;
+                imageInfo_GmDocument(doc, linkImage_GmDocument(doc, run->linkId), &info);
+                drawAlign_Text(default_FontId,
+                               add_I2(topRight_Rect(run->bounds), origin),
+                               fg,
+                               right_Alignment,
+                               "%s \u2014 %d x %d \u2014 %.1fMB %s \u2715",
+                               info.mime, info.size.x, info.size.y, info.numBytes / 1.0e6f,
+                               run == d->widget->hoverLink ? white_ColorEscape : "");
+            }
+        }
+        else if (run == d->widget->hoverLink) {
+            const iGmLinkId    linkId = d->widget->hoverLink->linkId;
+            const iString *    url    = linkUrl_GmDocument(doc, linkId);
+            const int          flags  = linkFlags_GmDocument(doc, linkId);
+            iUrl parts;
+            init_Url(&parts, url);
+            const iString *host = collect_String(newRange_String(parts.host));
+            fg = linkColor_GmDocument(doc, linkId);
+            const iBool showHost = (!isEmpty_String(host) && flags & userFriendly_GmLinkFlag);
+            const iBool showImage = (flags & imageFileExtension_GmLinkFlag) != 0;
+            const iBool showAudio = (flags & audioFileExtension_GmLinkFlag) != 0;
             iRect linkRect = moved_Rect(run->visBounds, origin);
-            drawAlign_Text(default_FontId,
-                           topRight_Rect(linkRect),
-                           fg - 1,
-                           left_Alignment,
-                           " \u2014%s%s%s\r%c%s",
-                           showHost ? " " : "",
-                           showHost ? cstr_String(host) : "",
-                           showHost && (showImage || showAudio) ? " \u2014" : "",
-                           showImage || showAudio ? '0' + fg : ('0' + fg - 1),
-                           showImage ? " View Image \U0001f5bc"
-                                     : showAudio ? " Play Audio \U0001f3b5" : "");
+            if (flags & (imageFileExtension_GmLinkFlag | audioFileExtension_GmLinkFlag) || showHost) {
+                drawAlign_Text(default_FontId,
+                               topRight_Rect(linkRect),
+                               fg - 1,
+                               left_Alignment,
+                               " \u2014%s%s%s\r%c%s",
+                               showHost ? " " : "",
+                               showHost ? cstr_String(host) : "",
+                               showHost && (showImage || showAudio) ? " \u2014" : "",
+                               showImage || showAudio ? '0' + fg : ('0' + fg - 1),
+                               showImage ? " View Image \U0001f5bc"
+                                         : showAudio ? " Play Audio \U0001f3b5" : "");
+            }
         }
     }
     const iInt2 visPos = add_I2(run->visBounds.pos, origin);

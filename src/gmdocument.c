@@ -33,12 +33,16 @@ iDefineTypeConstruction(GmLink)
 iDeclareType(GmImage)
 
 struct Impl_GmImage {
-    iInt2 size;
+    iInt2        size;
+    size_t       numBytes;
+    iString      mime;
+    iGmLinkId    linkId;
     SDL_Texture *texture;
-    iGmLinkId linkId;
 };
 
 void init_GmImage(iGmImage *d, const iBlock *data) {
+    init_String(&d->mime);
+    d->numBytes = size_Block(data);
     uint8_t *imgData = stbi_load_from_memory(
         constData_Block(data), size_Block(data), &d->size.x, &d->size.y, NULL, 4);
     if (!imgData) {
@@ -60,6 +64,7 @@ void init_GmImage(iGmImage *d, const iBlock *data) {
 
 void deinit_GmImage(iGmImage *d) {
     SDL_DestroyTexture(d->texture);
+    deinit_String(&d->mime);
 }
 
 iDefineTypeConstructionArgs(GmImage, (const iBlock *data), data)
@@ -379,6 +384,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             if (link->flags & remote_GmLinkFlag) {
                 run.visBounds.pos.x -= gap_UI / 2;
             }
+
             run.color = linkColor_GmDocument(d, run.linkId);
             pushBack_Array(&d->layout, &run);
         }
@@ -429,18 +435,29 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         if (type == link_GmLineType) {
             const size_t imgIndex = findLinkImage_GmDocument_(d, run.linkId);
             if (imgIndex != iInvalidPos) {
+                ((iGmLink *) at_PtrArray(&d->links, run.linkId - 1))->flags |= content_GmLinkFlag;
                 const iGmImage *img = constAt_PtrArray(&d->images, imgIndex);
+                const int margin = 0.5f * lineHeight_Text(paragraph_FontId);
+                pos.y += margin;
                 run.bounds.pos = pos;
                 run.bounds.size.x = d->size.x;
                 const float aspect = (float) img->size.y / (float) img->size.x;
                 run.bounds.size.y = d->size.x * aspect;
-                run.visBounds = run.bounds; /* TODO: limit max height? */
+                run.visBounds = run.bounds;
+                const iInt2 maxSize = mulf_I2(img->size, get_Window()->pixelRatio);
+                if (width_Rect(run.visBounds) > maxSize.x) {
+                    /* Don't scale the image up. */
+                    run.visBounds.size.y = run.visBounds.size.y * maxSize.x / width_Rect(run.visBounds);
+                    run.visBounds.size.x = img->size.x;
+                    run.visBounds.pos.x = run.bounds.size.x / 2 - width_Rect(run.visBounds) / 2;
+                    run.bounds.size.y = run.visBounds.size.y;
+                }
                 run.text = iNullRange;
                 run.font = 0;
                 run.color = 0;
                 run.imageId = imgIndex + 1;
                 pushBack_Array(&d->layout, &run);
-                pos.y += run.bounds.size.y;
+                pos.y += run.bounds.size.y + margin;
             }
         }
         prevType = type;
@@ -559,15 +576,24 @@ void setSource_GmDocument(iGmDocument *d, const iString *source, int width) {
 }
 
 void setImage_GmDocument(iGmDocument *d, iGmLinkId linkId, const iString *mime, const iBlock *data) {
-    /* TODO: check if we know this MIME type */
-    /* Load the image. */ {
-        iGmImage *img = new_GmImage(data);
-        img->linkId = linkId; /* TODO: use a hash? */
-        if (img->texture) {
-            pushBack_PtrArray(&d->images, img);
-        }
-        else {
+    if (!mime || !data) {
+        iGmImage *img;
+        if (take_PtrArray(&d->images, findLinkImage_GmDocument_(d, linkId), (void **) &img)) {
             delete_GmImage(img);
+        }
+    }
+    else {
+        /* TODO: check if we know this MIME type */
+        /* Load the image. */ {
+            iGmImage *img = new_GmImage(data);
+            img->linkId = linkId; /* TODO: use a hash? */
+            set_String(&img->mime, mime);
+            if (img->texture) {
+                pushBack_PtrArray(&d->images, img);
+            }
+            else {
+                delete_GmImage(img);
+            }
         }
     }
     doLayout_GmDocument_(d);
@@ -649,25 +675,34 @@ const iGmRun *findRunAtLoc_GmDocument(const iGmDocument *d, const char *textCStr
     return NULL;
 }
 
-const iString *linkUrl_GmDocument(const iGmDocument *d, iGmLinkId linkId) {
-    if (linkId > 0 && linkId <= size_PtrArray(&d->links)) {
-        const iGmLink *link = constAt_PtrArray(&d->links, linkId - 1);
-        return &link->url;
+static const iGmLink *link_GmDocument_(const iGmDocument *d, iGmLinkId id) {
+    if (id > 0 && id <= size_PtrArray(&d->links)) {
+        return constAt_PtrArray(&d->links, id - 1);
     }
     return NULL;
 }
 
+const iString *linkUrl_GmDocument(const iGmDocument *d, iGmLinkId linkId) {
+    const iGmLink *link = link_GmDocument_(d, linkId);
+    return link ? &link->url : NULL;
+}
+
 int linkFlags_GmDocument(const iGmDocument *d, iGmLinkId linkId) {
-    if (linkId > 0 && linkId <= size_PtrArray(&d->links)) {
-        const iGmLink *link = constAt_PtrArray(&d->links, linkId - 1);
-        return link->flags;
+    const iGmLink *link = link_GmDocument_(d, linkId);
+    return link ? link->flags : 0;
+}
+
+uint16_t linkImage_GmDocument(const iGmDocument *d, iGmLinkId linkId) {
+    size_t index = findLinkImage_GmDocument_(d, linkId);
+    if (index != iInvalidPos) {
+        return index + 1;
     }
     return 0;
 }
 
 enum iColorId linkColor_GmDocument(const iGmDocument *d, iGmLinkId linkId) {
-    if (linkId > 0 && linkId <= size_PtrArray(&d->links)) {
-        const iGmLink *link = constAt_PtrArray(&d->links, linkId - 1);
+    const iGmLink *link = link_GmDocument_(d, linkId);
+    if (link) {
         return link->flags & http_GmLinkFlag
                    ? orange_ColorId
                    : link->flags & gopher_GmLinkFlag ? blue_ColorId : cyan_ColorId;
@@ -686,6 +721,18 @@ SDL_Texture *imageTexture_GmDocument(const iGmDocument *d, uint16_t imageId) {
         return img->texture;
     }
     return NULL;
+}
+
+void imageInfo_GmDocument(const iGmDocument *d, uint16_t imageId, iGmImageInfo *info_out) {
+    if (imageId > 0 && imageId <= size_PtrArray(&d->images)) {
+        const iGmImage *img = constAt_PtrArray(&d->images, imageId - 1);
+        info_out->size = img->size;
+        info_out->numBytes = img->numBytes;
+        info_out->mime = cstr_String(&img->mime);
+    }
+    else {
+        iZap(*info_out);
+    }
 }
 
 const iString *title_GmDocument(const iGmDocument *d) {

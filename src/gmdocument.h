@@ -19,6 +19,15 @@ enum iGmLinkFlags {
     file_GmLinkFlag               = 0x10,
     imageFileExtension_GmLinkFlag = 0x20,
     audioFileExtension_GmLinkFlag = 0x40,
+    content_GmLinkFlag            = 0x80, /* content visible below */
+};
+
+iDeclareType(GmImageInfo)
+
+struct Impl_GmImageInfo {
+    iInt2 size;
+    size_t numBytes;
+    const char *mime;
 };
 
 struct Impl_GmRun {
@@ -61,9 +70,11 @@ const iGmRun *  findRun_GmDocument      (const iGmDocument *, iInt2 pos);
 const char *    findLoc_GmDocument      (const iGmDocument *, iInt2 pos);
 const iGmRun *  findRunAtLoc_GmDocument (const iGmDocument *, const char *loc);
 const iString * linkUrl_GmDocument      (const iGmDocument *, iGmLinkId linkId);
+uint16_t        linkImage_GmDocument    (const iGmDocument *, iGmLinkId linkId);
 int             linkFlags_GmDocument    (const iGmDocument *, iGmLinkId linkId);
 enum iColorId   linkColor_GmDocument    (const iGmDocument *, iGmLinkId linkId);
 iBool           isMediaLink_GmDocument  (const iGmDocument *, iGmLinkId linkId);
 const iString * title_GmDocument        (const iGmDocument *);
 
 SDL_Texture *   imageTexture_GmDocument (const iGmDocument *, uint16_t imageId);
+void            imageInfo_GmDocument    (const iGmDocument *, uint16_t imageId, iGmImageInfo *info_out);

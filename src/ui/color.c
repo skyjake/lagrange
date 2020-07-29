@@ -30,6 +30,31 @@ iColor get_Color(int color) {
     return *clr;
 }
 
+const char *escape_Color(int color) {
+    static const char *esc[] = {
+        black_ColorEscape,
+        gray15_ColorEscape,
+        gray25_ColorEscape,
+        gray50_ColorEscape,
+        gray75_ColorEscape,
+        gray88_ColorEscape,
+        white_ColorEscape,
+        brown_ColorEscape,
+        orange_ColorEscape,
+        teal_ColorEscape,
+        cyan_ColorEscape,
+        yellow_ColorEscape,
+        red_ColorEscape,
+        magenta_ColorEscape,
+        blue_ColorEscape,
+        green_ColorEscape,
+    };
+    if (color >= 0 && color < max_ColorId) {
+        return esc[color];
+    }
+    return white_ColorEscape;
+}
+
 iColor ansi_Color(iRangecc escapeSequence, int fallback) {
     iColor clr = get_Color(fallback);
     for (const char *ch = escapeSequence.start; ch < escapeSequence.end; ch++) {
