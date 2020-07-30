@@ -773,6 +773,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                 }
                             }
                         }
+                        refresh_Widget(w);
                     }
                     else {
                         postCommandf_App("open url:%s",
@@ -873,6 +874,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
         /* TODO: Show status of an ongoing media request. */
         const int flags = linkFlags_GmDocument(doc, run->linkId);
         const iRect linkRect = moved_Rect(run->visBounds, origin);
+        iMediaRequest *mr = NULL;
         if (flags & content_GmLinkFlag) {
             fg = linkColor_GmDocument(doc, run->linkId);
             if (!isEmpty_Rect(run->bounds)) {
@@ -892,6 +894,15 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                                right_Alignment,
                                "%s", cstr_String(&text));
                 deinit_String(&text);
+            }
+        }
+        else if (run->flags & endOfLine_GmRunFlag &&
+                 (mr = findMediaRequest_DocumentWidget_(d->widget, run->linkId)) != NULL) {
+            if (!isFinished_GmRequest(mr->req)) {
+                draw_Text(default_FontId,
+                          topRight_Rect(linkRect),
+                          linkColor_GmDocument(doc, run->linkId),
+                          " \u2014 Fetching\u2026");
             }
         }
         else if (isHover) {
