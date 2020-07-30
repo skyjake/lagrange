@@ -41,7 +41,6 @@ static const char *dataDir_App_ = "~/AppData/Roaming/fi.skyjake.Lagrange";
 static const char *dataDir_App_ = "~/.config/lagrange";
 #endif
 static const char *prefsFileName_App_   = "prefs.cfg";
-static const char *historyFileName_App_ = "history.txt";
 
 struct Impl_App {
     iCommandLine args;
@@ -96,10 +95,6 @@ static const iString *prefsFileName_(void) {
     return collect_String(concatCStr_Path(&iStringLiteral(dataDir_App_), prefsFileName_App_));
 }
 
-static const iString *historyFileName_(void) {
-    return collect_String(concatCStr_Path(&iStringLiteral(dataDir_App_), historyFileName_App_));
-}
-
 static void loadPrefs_App_(iApp *d) {
     iUnused(d);
     /* Create the data dir if it doesn't exist yet. */
@@ -148,7 +143,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     d->pendingRefresh   = iFalse;
     d->history          = new_History();
     loadPrefs_App_(d);
-    load_History(d->history, historyFileName_());
+    load_History(d->history, dataDir_App_);
 #if defined (iHaveLoadEmbed)
     /* Load the resources from a file. */ {
         if (!load_Embed(
@@ -166,7 +161,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
 
 static void deinit_App(iApp *d) {
     savePrefs_App_(d);
-    save_History(d->history, historyFileName_());
+    save_History(d->history, dataDir_App_);
     delete_History(d->history);
     deinit_SortedArray(&d->tickers);
     delete_Window(d->window);
@@ -310,6 +305,10 @@ void addTicker_App(void (*ticker)(iAny *), iAny *context) {
     insert_SortedArray(&d->tickers, &(iTicker){ context, ticker });
 }
 
+const iHistory *history_App(void) {
+    return app_.history;
+}
+
 static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
     if (equal_Command(cmd, "prefs.dismiss") || equal_Command(cmd, "preferences")) {
         setUiScale_Window(get_Window(),
@@ -327,11 +326,7 @@ iBool handleCommand_App(const char *cmd) {
         const iString *url = collect_String(newCStr_String(suffixPtr_Command(cmd, "url")));
         if (!argLabel_Command(cmd, "history")) {
             if (argLabel_Command(cmd, "redirect")) {
-                /* Update in the history. */
-                iHistoryItem *item = item_History(d->history);
-                if (item) {
-                    set_String(&item->url, url);
-                }
+                replace_History(d->history, url);
             }
             else {
                 addUrl_History(d->history, url);

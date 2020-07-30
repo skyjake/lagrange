@@ -4,6 +4,8 @@
 #include "ui/text.h"
 #include "ui/metrics.h"
 #include "ui/window.h"
+#include "history.h"
+#include "app.h"
 
 #include <the_Foundation/ptrarray.h>
 #include <the_Foundation/regexp.h>
@@ -16,11 +18,13 @@ iDeclareType(GmLink)
 
 struct Impl_GmLink {
     iString url;
+    iTime when;
     int flags;
 };
 
 void init_GmLink(iGmLink *d) {
     init_String(&d->url);
+    iZap(d->when);
     d->flags = 0;
 }
 
@@ -69,10 +73,13 @@ void deinit_GmImage(iGmImage *d) {
 
 iDefineTypeConstructionArgs(GmImage, (const iBlock *data), data)
 
+/*----------------------------------------------------------------------------------------------*/
+
 struct Impl_GmDocument {
     iObject object;
     enum iGmDocumentFormat format;
     iString source;
+    iString url; /* for resolving relative links */
     iString localHost;
     iInt2 size;
     iArray layout; /* contents of source, laid out in document space */
@@ -198,6 +205,12 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
                     link->flags |= audioFileExtension_GmLinkFlag;
                 }
                 delete_String(path);
+            }
+        }
+        /* Check if visited. */ {
+            link->when = urlVisitTime_History(history_App(), &link->url);
+            if (isValid_Time(&link->when)) {
+                link->flags |= visited_GmLinkFlag;
             }
         }
         pushBack_PtrArray(&d->links, link);
@@ -474,6 +487,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
 void init_GmDocument(iGmDocument *d) {
     d->format = gemini_GmDocumentFormat;
     init_String(&d->source);
+    init_String(&d->url);
     init_String(&d->localHost);
     d->size = zero_I2();
     init_Array(&d->layout, sizeof(iGmRun));
@@ -488,6 +502,7 @@ void deinit_GmDocument(iGmDocument *d) {
     deinit_PtrArray(&d->links);
     deinit_Array(&d->layout);
     deinit_String(&d->localHost);
+    deinit_String(&d->url);
     deinit_String(&d->source);
 }
 
@@ -499,6 +514,8 @@ void reset_GmDocument(iGmDocument *d) {
     clear_PtrArray(&d->images);
     clearLinks_GmDocument_(d);
     clear_Array(&d->layout);
+    clear_String(&d->url);
+    clear_String(&d->localHost);
 }
 
 void setFormat_GmDocument(iGmDocument *d, enum iGmDocumentFormat format) {
@@ -570,8 +587,11 @@ static void normalize_GmDocument(iGmDocument *d) {
     set_String(&d->source, collect_String(normalized));
 }
 
-void setHost_GmDocument(iGmDocument *d, const iString *host) {
-    set_String(&d->localHost, host);
+void setUrl_GmDocument(iGmDocument *d, const iString *url) {
+    set_String(&d->url, url);
+    iUrl parts;
+    init_Url(&parts, url);
+    setRange_String(&d->localHost, parts.host);
 }
 
 void setSource_GmDocument(iGmDocument *d, const iString *source, int width) {
@@ -697,6 +717,12 @@ int linkFlags_GmDocument(const iGmDocument *d, iGmLinkId linkId) {
     const iGmLink *link = link_GmDocument_(d, linkId);
     return link ? link->flags : 0;
 }
+
+const iTime *linkTime_GmDocument(const iGmDocument *d, iGmLinkId linkId) {
+    const iGmLink *link = link_GmDocument_(d, linkId);
+    return link ? &link->when : NULL;
+}
+
 
 uint16_t linkImage_GmDocument(const iGmDocument *d, iGmLinkId linkId) {
     size_t index = findLinkImage_GmDocument_(d, linkId);

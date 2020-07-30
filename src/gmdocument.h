@@ -4,6 +4,7 @@
 #include <the_Foundation/object.h>
 #include <the_Foundation/rect.h>
 #include <the_Foundation/string.h>
+#include <the_Foundation/time.h>
 
 #include <SDL_render.h>
 
@@ -59,7 +60,7 @@ enum iGmDocumentFormat {
 
 void    setFormat_GmDocument    (iGmDocument *, enum iGmDocumentFormat format);
 void    setWidth_GmDocument     (iGmDocument *, int width);
-void    setHost_GmDocument      (iGmDocument *, const iString *host); /* local host name */
+void    setUrl_GmDocument       (iGmDocument *, const iString *url);
 void    setSource_GmDocument    (iGmDocument *, const iString *source, int width);
 void    setImage_GmDocument     (iGmDocument *, iGmLinkId linkId, const iString *mime, const iBlock *data);
 
@@ -80,6 +81,7 @@ const iString * linkUrl_GmDocument      (const iGmDocument *, iGmLinkId linkId);
 uint16_t        linkImage_GmDocument    (const iGmDocument *, iGmLinkId linkId);
 int             linkFlags_GmDocument    (const iGmDocument *, iGmLinkId linkId);
 enum iColorId   linkColor_GmDocument    (const iGmDocument *, iGmLinkId linkId);
+const iTime *   linkTime_GmDocument     (const iGmDocument *, iGmLinkId linkId);
 iBool           isMediaLink_GmDocument  (const iGmDocument *, iGmLinkId linkId);
 const iString * title_GmDocument        (const iGmDocument *);
 

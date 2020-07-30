@@ -264,9 +264,7 @@ static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
 }
 
 static void setSource_DocumentWidget_(iDocumentWidget *d, const iString *source) {
-    iUrl parts;
-    init_Url(&parts, d->url);
-    setHost_GmDocument(d->doc, collect_String(newRange_String(parts.host)));
+    setUrl_GmDocument(d->doc, d->url);
     setSource_GmDocument(d->doc, source, documentWidth_DocumentWidget_(d));
     d->foundMark = iNullRange;
     d->selectMark = iNullRange;
@@ -326,7 +324,7 @@ static void updateSource_DocumentWidget_(iDocumentWidget *d) {
                     iUrl parts;
                     init_Url(&parts, url_GmRequest(d->request));
                     if (!isEmpty_Range(&parts.path)) {
-                        imageTitle = baseName_Path(collect_String(newRange_String(parts.path)));
+                        imageTitle = baseName_Path(collect_String(newRange_String(parts.path))).start;
                     }
                     format_String(
                         &str, "=> %s %s\n", cstr_String(url_GmRequest(d->request)), imageTitle);
@@ -851,7 +849,8 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
     fillRange_DrawContext_(d, run, teal_ColorId, d->widget->foundMark, &d->inFoundMark);
     fillRange_DrawContext_(d, run, brown_ColorId, d->widget->selectMark, &d->inSelectMark);
     if (run->linkId && !isEmpty_Rect(run->bounds)) {
-        fg = white_ColorId;
+        const int flags = linkFlags_GmDocument(doc, run->linkId);
+        fg = /*flags & visited_GmLinkFlag ? gray88_ColorId :*/ white_ColorId;
         if (isHover || linkFlags_GmDocument(doc, run->linkId) & content_GmLinkFlag) {
             fg = linkColor_GmDocument(doc, run->linkId);
         }
@@ -862,6 +861,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
     if (run->linkId) {
         /* TODO: Show status of an ongoing media request. */
         const int flags = linkFlags_GmDocument(doc, run->linkId);
+        const iRect linkRect = moved_Rect(run->visBounds, origin);
         if (flags & content_GmLinkFlag) {
             fg = linkColor_GmDocument(doc, run->linkId);
             if (!isEmpty_Rect(run->bounds)) {
@@ -894,7 +894,6 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
             const iBool showHost = (!isEmpty_String(host) && flags & userFriendly_GmLinkFlag);
             const iBool showImage = (flags & imageFileExtension_GmLinkFlag) != 0;
             const iBool showAudio = (flags & audioFileExtension_GmLinkFlag) != 0;
-            iRect linkRect = moved_Rect(run->visBounds, origin);
             if (run->flags & endOfLine_GmRunFlag &&
                 (flags & (imageFileExtension_GmLinkFlag | audioFileExtension_GmLinkFlag) ||
                  showHost)) {
@@ -924,6 +923,17 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                                msg);
                 deinit_String(&str);
             }
+        }
+        else if (run->flags & endOfLine_GmRunFlag && flags & visited_GmLinkFlag) {
+            iDate date;
+            init_Date(&date, linkTime_GmDocument(doc, run->linkId));
+            draw_Text(default_FontId,
+                      topRight_Rect(linkRect),
+                      linkColor_GmDocument(doc, run->linkId) - 1,
+                      " \u2014 Visited on %04d-%02d-%02d",
+                      date.year,
+                      date.month,
+                      date.day);
         }
     }
 
