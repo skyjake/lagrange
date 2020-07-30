@@ -208,10 +208,12 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
             }
         }
         /* Check if visited. */ {
-            link->when = urlVisitTime_History(history_App(), absoluteUrl_String(&d->url,
-                                                                                &link->url));
-            if (isValid_Time(&link->when)) {
-                link->flags |= visited_GmLinkFlag;
+            const iString *absUrl = absoluteUrl_String(&d->url, &link->url);
+            if (cmpString_String(absUrl, &d->url)) {
+                link->when = urlVisitTime_History(history_App(), absUrl);
+                if (isValid_Time(&link->when)) {
+                    link->flags |= visited_GmLinkFlag;
+                }
             }
         }
         pushBack_PtrArray(&d->links, link);
