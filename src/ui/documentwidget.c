@@ -216,7 +216,7 @@ static void updateHover_DocumentWidget_(iDocumentWidget *d, iInt2 mouse) {
     const iGmRun *oldHoverLink = d->hoverLink;
     d->hoverLink               = NULL;
     const iInt2 hoverPos = addY_I2(sub_I2(mouse, topLeft_Rect(docBounds)), d->scrollY);
-    if (d->state == ready_DocumentState) {
+    if (d->state == ready_DocumentState || d->state == receivedPartialResponse_DocumentState) {
         iConstForEach(PtrArray, i, &d->visibleLinks) {
             const iGmRun *run = i.ptr;
             if (contains_Rect(run->bounds, hoverPos)) {
@@ -266,9 +266,9 @@ static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
 static void setSource_DocumentWidget_(iDocumentWidget *d, const iString *source) {
     setUrl_GmDocument(d->doc, d->url);
     setSource_GmDocument(d->doc, source, documentWidth_DocumentWidget_(d));
-    d->foundMark = iNullRange;
+    d->foundMark  = iNullRange;
     d->selectMark = iNullRange;
-    d->hoverLink = NULL;
+    d->hoverLink  = NULL;
     updateWindowTitle_DocumentWidget_(d);
     updateVisible_DocumentWidget_(d);
     refresh_Widget(as_Widget(d));
@@ -411,14 +411,15 @@ static void checkResponseCode_DocumentWidget_(iDocumentWidget *d) {
     if (!d->request) {
         return;
     }
+    enum iGmStatusCode statusCode = status_GmRequest(d->request);
     if (d->state == fetching_DocumentState) {
         d->state = receivedPartialResponse_DocumentState;
-        d->scrollY = 0;
-        reset_GmDocument(d->doc); /* new content incoming */
-        enum iGmStatusCode statusCode = status_GmRequest(d->request);
         switch (statusCode) {
             case none_GmStatusCode:
             case success_GmStatusCode:
+                d->scrollY = 0;
+                reset_GmDocument(d->doc); /* new content incoming */
+                updateSource_DocumentWidget_(d);
                 break;
             case input_GmStatusCode:
             case sensitiveInput_GmStatusCode: {
@@ -453,6 +454,16 @@ static void checkResponseCode_DocumentWidget_(iDocumentWidget *d) {
                 break;
             default:
                 showErrorPage_DocumentWidget_(d, statusCode);
+                break;
+        }
+    }
+    else if (d->state == receivedPartialResponse_DocumentState) {
+        switch (statusCode) {
+            case success_GmStatusCode:
+                /* More content available. */
+                updateSource_DocumentWidget_(d);
+                break;
+            default:
                 break;
         }
     }
@@ -578,13 +589,13 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
     }
     else if (isCommand_Widget(w, ev, "document.request.updated") &&
              pointerLabel_Command(command_UserEvent(ev), "request") == d->request) {
-        updateSource_DocumentWidget_(d);
         checkResponseCode_DocumentWidget_(d);
+//        updateSource_DocumentWidget_(d);
         return iFalse;
     }
     else if (isCommand_Widget(w, ev, "document.request.finished") &&
              pointerLabel_Command(command_UserEvent(ev), "request") == d->request) {
-        updateSource_DocumentWidget_(d);
+//        updateSource_DocumentWidget_(d);
         checkResponseCode_DocumentWidget_(d);
         d->state = ready_DocumentState;
         iReleasePtr(&d->request);
@@ -894,11 +905,11 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
             const iBool showHost = (!isEmpty_String(host) && flags & userFriendly_GmLinkFlag);
             const iBool showImage = (flags & imageFileExtension_GmLinkFlag) != 0;
             const iBool showAudio = (flags & audioFileExtension_GmLinkFlag) != 0;
+            iString str;
+            init_String(&str);
             if (run->flags & endOfLine_GmRunFlag &&
                 (flags & (imageFileExtension_GmLinkFlag | audioFileExtension_GmLinkFlag) ||
                  showHost)) {
-                iString str;
-                init_String(&str);
                 format_String(&str, " \u2014%s%s%s\r%c%s",
                               showHost ? " " : "",
                               showHost ? cstr_String(host) : "",
@@ -906,6 +917,15 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                               showImage || showAudio ? '0' + fg : ('0' + fg - 1),
                               showImage ? " View Image \U0001f5bc"
                                         : showAudio ? " Play Audio \U0001f3b5" : "");
+            }
+            if (run->flags & endOfLine_GmRunFlag && flags & visited_GmLinkFlag) {
+                iDate date;
+                init_Date(&date, linkTime_GmDocument(doc, run->linkId));
+                appendFormat_String(&str,
+                          " \u2014 %s",
+                          cstr_String(collect_String(format_Date(&date, "%b %d"))));
+            }
+            if (!isEmpty_String(&str)) {
                 const iInt2 textSize = measure_Text(default_FontId, cstr_String(&str));
                 int tx = topRight_Rect(linkRect).x;
                 const char *msg = cstr_String(&str);
@@ -914,6 +934,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                     fillRect_Paint(&d->paint, (iRect){ init_I2(tx, top_Rect(linkRect)), textSize },
                                    black_ColorId);
                     msg += 4; /* skip the space and dash */
+                    tx += measure_Text(default_FontId, " \u2014").x / 2;
                 }
                 drawAlign_Text(default_FontId,
                                init_I2(tx, top_Rect(linkRect)),
@@ -923,17 +944,6 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                                msg);
                 deinit_String(&str);
             }
-        }
-        else if (run->flags & endOfLine_GmRunFlag && flags & visited_GmLinkFlag) {
-            iDate date;
-            init_Date(&date, linkTime_GmDocument(doc, run->linkId));
-            draw_Text(default_FontId,
-                      topRight_Rect(linkRect),
-                      linkColor_GmDocument(doc, run->linkId) - 1,
-                      " \u2014 Visited on %04d-%02d-%02d",
-                      date.year,
-                      date.month,
-                      date.day);
         }
     }
 
