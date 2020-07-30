@@ -89,14 +89,21 @@ static void deinit_Font(iFont *d) {
 }
 
 iDeclareType(Text)
+iDeclareType(CacheRow)
+
+struct Impl_CacheRow {
+    int   height;
+    iInt2 pos;
+};
 
 struct Impl_Text {
     iFont         fonts[max_FontId];
     SDL_Renderer *render;
     SDL_Texture * cache;
     iInt2         cacheSize;
-    iInt2         cachePos;
-    int           cacheRowHeight;
+    int           cacheRowAllocStep;
+    int           cacheBottom;
+    iArray        cacheRows;
     SDL_Palette * grayscale;
     iRegExp *     ansiEscape;
 };
@@ -105,6 +112,7 @@ static iText text_;
 
 void init_Text(SDL_Renderer *render) {
     iText *d = &text_;
+    init_Array(&d->cacheRows, sizeof(iCacheRow));
     d->ansiEscape = new_RegExp("\\[([0-9;]+)m", 0);
     d->render = render;
     /* A grayscale palette for rasterized glyphs. */ {
@@ -116,15 +124,20 @@ void init_Text(SDL_Renderer *render) {
         SDL_SetPaletteColors(d->grayscale, colors, 0, 256);
     }
     /* Initialize the glyph cache. */ {
-        d->cacheSize = init1_I2(fontSize_UI * 32);
-        d->cachePos  = zero_I2();
-        d->cache     = SDL_CreateTexture(render,
+        d->cacheSize = init_I2(fontSize_UI * 16, fontSize_UI * 64);
+        d->cacheRowAllocStep = fontSize_UI / 6;
+        /* Allocate initial (empty) rows. These will be assigned actual locations in the cache
+           once at least one glyph is stored. */
+        for (int h = d->cacheRowAllocStep; h <= 2 * fontSize_UI; h += d->cacheRowAllocStep) {
+            pushBack_Array(&d->cacheRows, &(iCacheRow){ .height = 0 });
+        }
+        d->cacheBottom = 0;
+        d->cache = SDL_CreateTexture(render,
                                      SDL_PIXELFORMAT_RGBA8888,
                                      SDL_TEXTUREACCESS_STATIC | SDL_TEXTUREACCESS_TARGET,
                                      d->cacheSize.x,
                                      d->cacheSize.y);
         SDL_SetTextureBlendMode(d->cache, SDL_BLENDMODE_BLEND);
-        d->cacheRowHeight = 0;
     }
     /* Load the fonts. */ {
         const struct {
@@ -173,6 +186,7 @@ void deinit_Text(void) {
     iForIndices(i, d->fonts) {
         deinit_Font(&d->fonts[i]);
     }
+    deinit_Array(&d->cacheRows);
     SDL_DestroyTexture(d->cache);
     d->render = NULL;
     iRelease(d->ansiEscape);
@@ -197,13 +211,39 @@ iLocalDef SDL_Rect sdlRect_(const iRect rect) {
     return (SDL_Rect){ rect.pos.x, rect.pos.y, rect.size.x, rect.size.y };
 }
 
+iLocalDef iCacheRow *cacheRow_Text_(iText *d, int height) {
+    return at_Array(&d->cacheRows, (height - 1) / d->cacheRowAllocStep);
+}
+
+static iInt2 assignCachePos_Text_(iText *d, iInt2 size) {
+    iCacheRow *cur = cacheRow_Text_(d, size.y);
+    if (cur->height == 0) {
+        /* Begin a new row height. */
+        cur->height = (1 + (size.y - 1) / d->cacheRowAllocStep) * d->cacheRowAllocStep;
+        cur->pos.y = d->cacheBottom;
+        d->cacheBottom = cur->pos.y + cur->height;
+    }
+    iAssert(cur->height >= size.y);
+    /* TODO: Automatically enlarge the cache if running out of space?
+       Maybe make it paged, but beware of texture swapping too often inside a text string. */
+    if (cur->pos.x + size.x > d->cacheSize.x) {
+        /* Does not fit on this row, advance to a new location in the cache. */
+        cur->pos.y = d->cacheBottom;
+        cur->pos.x = 0;
+        d->cacheBottom += cur->height;
+        iAssert(d->cacheBottom <= d->cacheSize.y);
+    }
+    const iInt2 assigned = cur->pos;
+    cur->pos.x += size.x;
+    return assigned;
+}
+
 static void cache_Font_(iFont *d, iGlyph *glyph, int hoff) {
     iText *txt = &text_;
     SDL_Renderer *render = txt->render;
     SDL_Texture *tex = NULL;
     SDL_Surface *surface = NULL;
     const iChar ch = char_Glyph(glyph);
-    iBool fromStb = iFalse;
     iRect *glRect = &glyph->rect[hoff];
     /* Rasterize the glyph using stbtt. */ {
         surface = rasterizeGlyph_Font_(d, ch, hoff * 0.5f);
@@ -223,17 +263,11 @@ static void cache_Font_(iFont *d, iGlyph *glyph, int hoff) {
                                             NULL,
                                             NULL);
         glyph->d[hoff].y += d->baselineOffset;
-        fromStb = iTrue;
         tex = SDL_CreateTextureFromSurface(render, surface);
         glRect->size = init_I2(surface->w, surface->h);
     }
     /* Determine placement in the glyph cache texture, advancing in rows. */
-    if (txt->cachePos.x + glRect->size.x > txt->cacheSize.x) {
-        txt->cachePos.x = 0;
-        txt->cachePos.y += txt->cacheRowHeight;
-        txt->cacheRowHeight = 0;
-    }
-    glRect->pos = txt->cachePos;
+    glRect->pos = assignCachePos_Text_(txt, glRect->size);
     SDL_SetRenderTarget(render, txt->cache);
     const SDL_Rect dstRect = sdlRect_(*glRect);
     SDL_RenderCopy(render, tex, &(SDL_Rect){ 0, 0, dstRect.w, dstRect.h }, &dstRect);
@@ -244,12 +278,6 @@ static void cache_Font_(iFont *d, iGlyph *glyph, int hoff) {
         stbtt_FreeBitmap(surface->pixels, NULL);
         SDL_FreeSurface(surface);
     }
-    /* Update cache cursor. */
-    txt->cachePos.x += glRect->size.x;
-    txt->cacheRowHeight = iMax(txt->cacheRowHeight, glRect->size.y);
-    iAssert(txt->cachePos.y + txt->cacheRowHeight <= txt->cacheSize.y);
-    /* TODO: Automatically enlarge the cache if running out of space?
-       Maybe make it paged. */
 }
 
 iLocalDef iFont *characterFont_Font_(iFont *d, iChar ch) {
