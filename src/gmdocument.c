@@ -208,7 +208,8 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
             }
         }
         /* Check if visited. */ {
-            link->when = urlVisitTime_History(history_App(), &link->url);
+            link->when = urlVisitTime_History(history_App(), absoluteUrl_String(&d->url,
+                                                                                &link->url));
             if (isValid_Time(&link->when)) {
                 link->flags |= visited_GmLinkFlag;
             }
