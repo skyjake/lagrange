@@ -150,7 +150,7 @@ void init_Text(SDL_Renderer *render) {
             { &fontFiraMonoRegular_Embedded,      fontSize_UI * 0.866f, smallSymbols_FontId },
             { &fontFiraMonoRegular_Embedded,      fontSize_UI * 0.666f, smallSymbols_FontId },
             { &fontFiraSansRegular_Embedded,      fontSize_UI * 1.333f, mediumSymbols_FontId },
-            { &fontFiraSansLightItalic_Embedded,  fontSize_UI,          symbols_FontId },
+            { &fontFiraSansItalic_Embedded,       fontSize_UI,          symbols_FontId },
             { &fontFiraSansBold_Embedded,         fontSize_UI,          symbols_FontId },
             { &fontFiraSansBold_Embedded,         fontSize_UI * 1.333f, mediumSymbols_FontId },
             { &fontFiraSansBold_Embedded,         fontSize_UI * 1.666f, largeSymbols_FontId },

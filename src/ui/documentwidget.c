@@ -933,8 +933,9 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                 iDate date;
                 init_Date(&date, linkTime_GmDocument(doc, run->linkId));
                 appendFormat_String(&str,
-                          " \u2014 %s",
-                          cstr_String(collect_String(format_Date(&date, "%b %d"))));
+                                    " \u2014 %s%s",
+                                    escape_Color(fg),
+                                    cstr_String(collect_String(format_Date(&date, "%b %d"))));
             }
             if (!isEmpty_String(&str)) {
                 const iInt2 textSize = measure_Text(default_FontId, cstr_String(&str));
