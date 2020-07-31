@@ -66,12 +66,12 @@ static void writeItems_(const iArray *items, iFile *f) {
 }
 
 void save_History(const iHistory *d, const char *dirPath) {
-    iFile *f = new_File(concatPath_CStr(dirPath, "recent.txt"));
+    iFile *f = newCStr_File(concatPath_CStr(dirPath, "recent.txt"));
     if (open_File(f, writeOnly_FileMode | text_FileMode)) {
         writeItems_(&d->stack, f);
     }
     iRelease(f);
-    f = new_File(concatPath_CStr(dirPath, "visited.txt"));
+    f = newCStr_File(concatPath_CStr(dirPath, "visited.txt"));
     if (open_File(f, writeOnly_FileMode | text_FileMode)) {
         writeItems_(&d->visitedUrls.values, f);
     }
@@ -101,12 +101,12 @@ static void loadItems_(iArray *items, iFile *f, double maxAge) {
 }
 
 void load_History(iHistory *d, const char *dirPath) {
-    iFile *f = new_File(concatPath_CStr(dirPath, "recent.txt"));
+    iFile *f = newCStr_File(concatPath_CStr(dirPath, "recent.txt"));
     if (open_File(f, readOnly_FileMode | text_FileMode)) {
         loadItems_(&d->stack, f, 0);
     }
     iRelease(f);
-    f = new_File(concatPath_CStr(dirPath, "visited.txt"));
+    f = newCStr_File(concatPath_CStr(dirPath, "visited.txt"));
     if (open_File(f, readOnly_FileMode | text_FileMode)) {
         loadItems_(&d->visitedUrls.values, f, maxAgeVisited_History_);
     }
@@ -222,6 +222,7 @@ iTime urlVisitTime_History(const iHistory *d, const iString *url) {
 }
 
 void print_History(const iHistory *d) {
+    iUnused(d);
 #if 0
     iConstForEach(Array, i, &d->history) {
         const size_t idx = index_ArrayConstIterator(&i);

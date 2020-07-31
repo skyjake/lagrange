@@ -155,11 +155,11 @@ void init_Text(SDL_Renderer *render) {
             { &fontFiraSansBold_Embedded,         fontSize_UI * 1.333f, mediumSymbols_FontId },
             { &fontFiraSansBold_Embedded,         fontSize_UI * 1.666f, largeSymbols_FontId },
             { &fontFiraSansBold_Embedded,         fontSize_UI * 2.000f, hugeSymbols_FontId },
-            { &fontSymbolaSubset_Embedded,        fontSize_UI,          symbols_FontId },
-            { &fontSymbolaSubset_Embedded,        fontSize_UI * 1.333f, mediumSymbols_FontId },
-            { &fontSymbolaSubset_Embedded,        fontSize_UI * 1.666f, largeSymbols_FontId },
-            { &fontSymbolaSubset_Embedded,        fontSize_UI * 2.000f, hugeSymbols_FontId },
-            { &fontSymbolaSubset_Embedded,        fontSize_UI * 0.866f, smallSymbols_FontId },
+            { &fontSymbola_Embedded,              fontSize_UI,          symbols_FontId },
+            { &fontSymbola_Embedded,              fontSize_UI * 1.333f, mediumSymbols_FontId },
+            { &fontSymbola_Embedded,              fontSize_UI * 1.666f, largeSymbols_FontId },
+            { &fontSymbola_Embedded,              fontSize_UI * 2.000f, hugeSymbols_FontId },
+            { &fontSymbola_Embedded,              fontSize_UI * 0.866f, smallSymbols_FontId },
             { &fontNotoEmojiRegular_Embedded,     fontSize_UI,          symbols_FontId },
             { &fontNotoEmojiRegular_Embedded,     fontSize_UI * 1.333f, mediumSymbols_FontId },
             { &fontNotoEmojiRegular_Embedded,     fontSize_UI * 1.666f, largeSymbols_FontId },
@@ -280,17 +280,19 @@ static void cache_Font_(iFont *d, iGlyph *glyph, int hoff) {
     }
 }
 
-iLocalDef iFont *characterFont_Font_(iFont *d, iChar ch) {
+iLocalDef iFont *characterFont_Font_(iFont *d, iChar ch) {    
     if (stbtt_FindGlyphIndex(&d->font, ch) != 0) {
         return d;
     }
-    /* Not defined in current font, try symbols. */
-    iFont *symbols = font_Text_(d->symbolsFont);
-    if (symbols != d && stbtt_FindGlyphIndex(&symbols->font, ch)) {
-        return symbols;
+    /* Not defined in current font, try Noto Emoji (for selected characters). */
+    if ((ch >= 0x1f300 && ch < 0x1f600) || (ch >= 0x1f680 && ch <= 0x1f6c5)) {
+        iFont *emoji = font_Text_(d->symbolsFont + fromSymbolsToEmojiOffset_FontId);
+        if (emoji != d && stbtt_FindGlyphIndex(&emoji->font, ch)) {
+            return emoji;
+        }
     }
-    /* Perhaps it's Emoji. */
-    return font_Text_(d->symbolsFont + fromSymbolsToEmojiOffset_FontId);
+    /* Fall back to Symbola for anything else. */
+    return font_Text_(d->symbolsFont);
 }
 
 static const iGlyph *glyph_Font_(iFont *d, iChar ch) {

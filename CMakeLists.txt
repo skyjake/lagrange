@@ -14,6 +14,8 @@ pkg_check_modules (SDL2 REQUIRED sdl2)
 
 # Embedded resources are written to a generated source file.
 message (STATUS "Preparing embedded resources...")
+# Fonts are too large to comfortably embed as a C source.
+set (EMBED_IN_EXECUTABLE OFF CACHE BOOL "Embed resources inside the executable")
 set (EMBED_RESOURCES 
     res/SourceSansPro-Regular.ttf
     res/FiraSans-Regular.ttf
@@ -21,15 +23,19 @@ set (EMBED_RESOURCES
     res/FiraSans-Italic.ttf
     res/FiraMono-Regular.ttf
     res/NotoEmoji-Regular.ttf
-    res/SymbolaSubset.ttf
+    res/Symbola.ttf
 )
 # if (UNIX AND NOT APPLE)
 #     list (APPEND EMBED_RESOURCES res/appicon-64.png)
 # endif ()
 embed_make (${EMBED_RESOURCES})
 
+set (EMB_BIN ${CMAKE_CURRENT_BINARY_DIR}/resources.bin)
+set_source_files_properties (${EMB_BIN} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
+
 # Source files.
 set (SOURCES
+    ${CMAKE_CURRENT_BINARY_DIR}/resources.bin
     ${CMAKE_CURRENT_BINARY_DIR}/embedded.c
     ${CMAKE_CURRENT_BINARY_DIR}/embedded.h
     src/main.c

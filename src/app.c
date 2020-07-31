@@ -32,12 +32,15 @@
 iDeclareType(App)
 
 #if defined (iPlatformApple)
+#define EMB_BIN "../../Resources/resources.bin"
 static const char *dataDir_App_ = "~/Library/Application Support/fi.skyjake.Lagrange";
 #endif
 #if defined (iPlatformMsys)
+#define EMB_BIN "../resources.bin"
 static const char *dataDir_App_ = "~/AppData/Roaming/fi.skyjake.Lagrange";
 #endif
 #if defined (iPlatformLinux)
+#define EMB_BIN "../../share/lagrange/resources.bin"
 static const char *dataDir_App_ = "~/.config/lagrange";
 #endif
 static const char *prefsFileName_App_   = "prefs.cfg";
@@ -146,8 +149,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     load_History(d->history, dataDir_App_);
 #if defined (iHaveLoadEmbed)
     /* Load the resources from a file. */ {
-        if (!load_Embed(
-                cstr_String(collect_String(concatCStr_Path(execPath_App(), "../resources.bin"))))) {
+        if (!load_Embed(concatPath_CStr(cstr_String(execPath_App()), EMB_BIN))) {
             fprintf(stderr, "failed to load resources.bin\n");
             exit(-1);
         }
