@@ -59,15 +59,13 @@ struct Impl_Font {
     int            baseline;
     iHash          glyphs;
     iBool          enableKerning;
-    int            baselineOffset;
     enum iFontId   symbolsFont; /* font to use for symbols */
 };
 
 static iFont *font_Text_(enum iFontId id);
 
-static void init_Font(iFont *d, const iBlock *data, int height, int bloff, enum iFontId symbolsFont) {
+static void init_Font(iFont *d, const iBlock *data, int height, enum iFontId symbolsFont) {
     init_Hash(&d->glyphs);
-    d->baselineOffset = bloff;
     d->data = NULL;
     d->height = height;
     iZap(d->font);
@@ -171,7 +169,6 @@ void init_Text(SDL_Renderer *render) {
             init_Font(font,
                       fontData[i].ttf,
                       fontData[i].size,
-                      i == 0 ? fontSize_UI / 18 : 0,
                       fontData[i].symbolsFont);
             if (fontData[i].ttf == &fontFiraMonoRegular_Embedded) {
                 font->enableKerning = iFalse;
@@ -262,7 +259,6 @@ static void cache_Font_(iFont *d, iGlyph *glyph, int hoff) {
                                             &glyph->d[hoff].y,
                                             NULL,
                                             NULL);
-        glyph->d[hoff].y += d->baselineOffset;
         tex = SDL_CreateTextureFromSurface(render, surface);
         glRect->size = init_I2(surface->w, surface->h);
     }
