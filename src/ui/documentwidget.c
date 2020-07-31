@@ -886,7 +886,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                               info.mime, info.size.x, info.size.y, info.numBytes / 1.0e6f);
                 if (findMediaRequest_DocumentWidget_(d->widget, run->linkId)) {
                     appendFormat_String(
-                        &text, "  %s\u2715", isHover ? white_ColorEscape : "");
+                        &text, "  %s\U0001f7a8", isHover ? white_ColorEscape : "");
                 }
                 drawAlign_Text(default_FontId,
                                add_I2(topRight_Rect(run->bounds), origin),

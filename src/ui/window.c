@@ -206,7 +206,7 @@ static void setupUserInterface_Window(iWindow *d) {
                      "find.input");
         addChild_Widget(searchBar, iClob(new_LabelWidget("  \U0001f86b  ", 'g', KMOD_PRIMARY, "find.next")));
         addChild_Widget(searchBar, iClob(new_LabelWidget("  \U0001f869  ", 'g', KMOD_PRIMARY | KMOD_SHIFT, "find.prev")));
-        addChild_Widget(searchBar, iClob(new_LabelWidget("\u2715", SDLK_ESCAPE, 0, "find.close")));
+        addChild_Widget(searchBar, iClob(new_LabelWidget("\U0001f7a8", SDLK_ESCAPE, 0, "find.close")));
     }
 
 #if 0
