@@ -164,6 +164,14 @@ static void requestFinished_GmRequest_(iAnyObject *obj) {
     SDL_RemoveTimer(d->timeoutId);
     d->timeoutId = 0;
     d->state = finished_GmRequestState;
+#if 0
+    printf("Server certificate:\n%s\n",
+           cstrLocal_String(pem_TlsCertificate(serverCertificate_TlsRequest(d->req))));
+    iDate expiry;
+    validUntil_TlsCertificate(serverCertificate_TlsRequest(d->req), &expiry);
+    printf("Valid until %04d-%02d-%02d\n", expiry.year, expiry.month, expiry.day);
+    printf("Subject: %s\n", cstrLocal_String(subject_TlsCertificate(serverCertificate_TlsRequest(d->req))));
+#endif
     unlock_Mutex(&d->mutex);
     iNotifyAudience(d, finished, GmRequestFinished);
 }
