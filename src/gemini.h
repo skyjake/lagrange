@@ -9,6 +9,7 @@ enum iGmStatusCode {
     invalidHeader_GmStatusCode,
     unsupportedMimeType_GmStatusCode,
     failedToOpenFile_GmStatusCode,
+    unknownStatusCode_GmStatusCode,
     none_GmStatusCode                      = 0,
     input_GmStatusCode                     = 10,
     sensitiveInput_GmStatusCode            = 11,
@@ -38,4 +39,5 @@ struct Impl_GmError {
     const char *info;
 };
 
-const iGmError *    get_GmError (enum iGmStatusCode code);
+iBool               isDefined_GmError   (enum iGmStatusCode code);
+const iGmError *    get_GmError         (enum iGmStatusCode code);

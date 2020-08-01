@@ -9,6 +9,7 @@
 #include "labelwidget.h"
 #include "inputwidget.h"
 #include "documentwidget.h"
+#include "gmutil.h"
 #if defined (iPlatformMsys)
 #   include "../win32.h"
 #endif
@@ -81,7 +82,9 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
     if (equal_Command(cmd, "input.ended")) {
         iInputWidget *url = findChild_Widget(navBar, "url");
         if (arg_Command(cmd) && pointer_Command(cmd) == url) {
-            postCommandf_App("open url:%s", cstr_String(text_InputWidget(url)));
+            postCommandf_App(
+                "open url:%s",
+                cstr_String(absoluteUrl_String(&iStringLiteral(""), text_InputWidget(url))));
             return iTrue;
         }
     }

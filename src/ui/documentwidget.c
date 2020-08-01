@@ -419,26 +419,19 @@ static void checkResponseCode_DocumentWidget_(iDocumentWidget *d) {
     enum iGmStatusCode statusCode = status_GmRequest(d->request);
     if (d->state == fetching_DocumentState) {
         d->state = receivedPartialResponse_DocumentState;
-        switch (statusCode) {
-            case none_GmStatusCode:
-            case success_GmStatusCode:
-                d->scrollY = 0;
-                reset_GmDocument(d->doc); /* new content incoming */
-                updateSource_DocumentWidget_(d);
-                break;
-            case input_GmStatusCode:
-            case sensitiveInput_GmStatusCode: {
+        switch (statusCode / 10) {
+            case 1: /* input required */ {
                 iUrl parts;
                 init_Url(&parts, d->url);
+                printf("%s\n", cstr_String(meta_GmRequest(d->request)));
                 iWidget *dlg = makeValueInput_Widget(
                     as_Widget(d),
                     NULL,
                     format_CStr(cyan_ColorEscape "%s",
-                                      cstr_String(collect_String(newRange_String(parts.host)))),
+                                cstr_String(collect_String(newRange_String(parts.host)))),
                     isEmpty_String(meta_GmRequest(d->request))
-                        ? format_CStr(
-                              "Please enter input for %s:",
-                              cstr_String(collect_String(newRange_String(parts.path))))
+                        ? format_CStr("Please enter input for %s:",
+                                      cstr_String(collect_String(newRange_String(parts.path))))
                         : cstr_String(meta_GmRequest(d->request)),
                     orange_ColorEscape "Send \u21d2",
                     "document.input.submit");
@@ -446,19 +439,32 @@ static void checkResponseCode_DocumentWidget_(iDocumentWidget *d) {
                                          statusCode == sensitiveInput_GmStatusCode);
                 break;
             }
-            case redirectTemporary_GmStatusCode:
-            case redirectPermanent_GmStatusCode:
+            case 2: /* success */
+                d->scrollY = 0;
+                reset_GmDocument(d->doc); /* new content incoming */
+                updateSource_DocumentWidget_(d);
+                break;
+            case 3: /* redirect */
                 if (isEmpty_String(meta_GmRequest(d->request))) {
                     showErrorPage_DocumentWidget_(d, invalidRedirect_GmStatusCode);
                 }
                 else {
-                    postCommandf_App("open redirect:1 url:%s",
-                                     cstr_String(meta_GmRequest(d->request)));
+                    postCommandf_App(
+                        "open redirect:1 url:%s",
+                        cstr_String(absoluteUrl_String(d->url, meta_GmRequest(d->request))));
                     iReleasePtr(&d->request);
                 }
                 break;
             default:
-                showErrorPage_DocumentWidget_(d, statusCode);
+                if (isDefined_GmError(statusCode)) {
+                    showErrorPage_DocumentWidget_(d, statusCode);
+                }
+                else if (statusCode / 10 == 4) {
+                    showErrorPage_DocumentWidget_(d, temporaryFailure_GmStatusCode);
+                }
+                else if (statusCode / 10 == 5) {
+                    showErrorPage_DocumentWidget_(d, permanentFailure_GmStatusCode);
+                }
                 break;
         }
     }
