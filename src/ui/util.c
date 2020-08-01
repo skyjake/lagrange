@@ -195,7 +195,7 @@ iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
 
 void openMenu_Widget(iWidget *d, iInt2 coord) {
     /* Menu closes when commands are emitted, so handle any pending ones beforehand. */
-    processEvents_App(postedEventsOnly_AppEventMode);
+//    processEvents_App(postedEventsOnly_AppEventMode);
     setFlags_Widget(d, hidden_WidgetFlag, iFalse);
     arrange_Widget(d);
     d->rect.pos = coord;
@@ -447,7 +447,7 @@ void makeFilePath_Widget(iWidget *      parent,
                          const char *   acceptLabel,
                          const char *   command) {
     setFocus_Widget(NULL);
-    processEvents_App(postedEventsOnly_AppEventMode);
+//    processEvents_App(postedEventsOnly_AppEventMode);
     iWidget *dlg = makeSheet_Widget(command);
     setCommandHandler_Widget(dlg, filePathHandler_);
     addChild_Widget(parent, iClob(dlg));
@@ -525,7 +525,7 @@ iWidget *makeValueInput_Widget(iWidget *parent, const iString *initialValue, con
                                const char *prompt, const char *acceptLabel, const char *command) {
     if (parent) {
         setFocus_Widget(NULL);
-        processEvents_App(postedEventsOnly_AppEventMode);
+//        processEvents_App(postedEventsOnly_AppEventMode);
     }
     iWidget *dlg = makeSheet_Widget(command);
     setCommandHandler_Widget(dlg, valueInputHandler_);
@@ -583,7 +583,7 @@ iWidget *makeQuestion_Widget(const char *title,
                              const char *labels[],
                              const char *commands[],
                              size_t      count) {
-    processEvents_App(postedEventsOnly_AppEventMode);
+//    processEvents_App(postedEventsOnly_AppEventMode);
     iWidget *dlg = makeSheet_Widget("");
     setCommandHandler_Widget(dlg, messageHandler_);
     addChild_Widget(dlg, iClob(new_LabelWidget(title, 0, 0, NULL)));

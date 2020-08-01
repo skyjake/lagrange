@@ -241,6 +241,7 @@ static int run_App_(iApp *d) {
         runTickers_App_(d);
         processEvents_App(waitForNewEvents_AppEventMode);
         refresh_App();
+        recycle_Garbage();
     }
     return 0;
 }
@@ -249,7 +250,6 @@ void refresh_App(void) {
     iApp *d = &app_;
     destroyPending_Widget();
     draw_Window(d->window);
-    recycle_Garbage();
     d->pendingRefresh = iFalse;
 }
 
