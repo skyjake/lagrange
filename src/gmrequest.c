@@ -7,7 +7,7 @@
 
 #include <SDL_timer.h>
 
-static const int BODY_TIMEOUT = 1500; /* ms */
+static const int BODY_TIMEOUT = 3000; /* ms */
 
 enum iGmRequestState {
     initialized_GmRequestState,
@@ -186,7 +186,7 @@ void submit_GmRequest(iGmRequest *d) {
     clear_Block(&d->body);
     iUrl url;
     init_Url(&url, &d->url);
-    if (!cmpCStrSc_Rangecc(&url.protocol, "file", &iCaseInsensitive)) {
+    if (equalCase_Rangecc(&url.protocol, "file")) {
         iString *path = collect_String(urlDecode_String(collect_String(newRange_String(url.path))));
         iFile *  f    = new_File(path);
         if (open_File(f, readOnly_FileMode)) {
@@ -219,6 +219,35 @@ void submit_GmRequest(iGmRequest *d) {
             setCStr_String(&d->header, cstr_String(path));
         }
         iRelease(f);
+        d->state = finished_GmRequestState;
+        iNotifyAudience(d, finished, GmRequestFinished);
+        return;
+    }
+    else if (equalCase_Rangecc(&url.protocol, "data")) {
+        d->code = success_GmStatusCode;
+        iString *src = collectNewCStr_String(url.protocol.start + 5);
+        iRangecc header = { constBegin_String(src), constBegin_String(src) };
+        while (header.end < constEnd_String(src) && *header.end != ',') {
+            header.end++;
+        }
+        iBool isBase64 = iFalse;
+        setRange_String(&d->header, header);
+        /* Check what's in the header. */ {
+            iRangecc entry = iNullRange;
+            while (nextSplit_Rangecc(&header, ";", &entry)) {
+                if (equal_Rangecc(&entry, "base64")) {
+                    isBase64 = iTrue;
+                }
+            }
+        }
+        remove_Block(&src->chars, 0, size_Range(&header) + 1);
+        if (isBase64) {
+            set_Block(&src->chars, collect_Block(base64Decode_Block(&src->chars)));
+        }
+        else {
+            set_String(src, collect_String(urlDecode_String(src)));
+        }
+        set_Block(&d->body, &src->chars);
         d->state = finished_GmRequestState;
         iNotifyAudience(d, finished, GmRequestFinished);
         return;
