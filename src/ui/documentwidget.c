@@ -144,14 +144,20 @@ void deinit_DocumentWidget(iDocumentWidget *d) {
     SDL_FreeCursor(d->handCursor);
 }
 
+#if 0
 static iString *cleanUrl_(const iString *url) {
     iString *clean = copy_String(url);
-    if (indexOfCStr_String(url, "://") == iInvalidPos && !startsWithCase_String(url, "gemini:")) {
+    if (startsWith_String(url, "//")) {
+        prependCStr_String(clean, "gemini:");
+    }
+    else if (indexOfCStr_String(url, "://") == iInvalidPos && !startsWithCase_String(url, "gemini:")
+             && !startsWithCase_String(url, "data:")) {
         /* Prepend default protocol. */
         prependCStr_String(clean, "gemini://");
     }
     return clean;
 }
+#endif
 
 static int documentWidth_DocumentWidget_(const iDocumentWidget *d) {
     const iWidget *w = constAs_Widget(d);
@@ -201,7 +207,7 @@ static iRangei visibleRange_DocumentWidget_(const iDocumentWidget *d) {
 
 static void addVisibleLink_DocumentWidget_(void *context, const iGmRun *run) {
     iDocumentWidget *d = context;
-    if (run->linkId) {
+    if (run->linkId && linkFlags_GmDocument(d->doc, run->linkId) & supportedProtocol_GmLinkFlag) {
         pushBack_PtrArray(&d->visibleLinks, run);
     }
 }
@@ -363,9 +369,8 @@ static void fetch_DocumentWidget_(iDocumentWidget *d) {
 }
 
 void setUrl_DocumentWidget(iDocumentWidget *d, const iString *url) {
-    iString *newUrl = collect_String(cleanUrl_(url));
-    if (cmpStringSc_String(d->url, newUrl, &iCaseInsensitive)) {
-        set_String(d->url, newUrl);
+    if (cmpStringSc_String(d->url, url, &iCaseInsensitive)) {
+        set_String(d->url, url);
         fetch_DocumentWidget_(d);
     }
     /* See if there a username in the URL. */ {
@@ -861,7 +866,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
     fillRange_DrawContext_(d, run, teal_ColorId, d->widget->foundMark, &d->inFoundMark);
     fillRange_DrawContext_(d, run, brown_ColorId, d->widget->selectMark, &d->inSelectMark);
     if (run->linkId && !isEmpty_Rect(run->bounds)) {
-        const int flags = linkFlags_GmDocument(doc, run->linkId);
+//        const int flags = linkFlags_GmDocument(doc, run->linkId);
         fg = /*flags & visited_GmLinkFlag ? gray88_ColorId :*/ white_ColorId;
         if (isHover || linkFlags_GmDocument(doc, run->linkId) & content_GmLinkFlag) {
             fg = linkColor_GmDocument(doc, run->linkId);
@@ -913,7 +918,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
             init_Url(&parts, url);
             const iString *host = collect_String(newRange_String(parts.host));
             fg = linkColor_GmDocument(doc, linkId);
-            const iBool showHost = (!isEmpty_String(host) && flags & userFriendly_GmLinkFlag);
+            const iBool showHost  = (!isEmpty_String(host) && flags & userFriendly_GmLinkFlag);
             const iBool showImage = (flags & imageFileExtension_GmLinkFlag) != 0;
             const iBool showAudio = (flags & audioFileExtension_GmLinkFlag) != 0;
             iString str;

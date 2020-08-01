@@ -13,15 +13,18 @@ iDeclareType(GmRun)
 typedef uint16_t iGmLinkId;
 
 enum iGmLinkFlags {
-    userFriendly_GmLinkFlag       = iBit(1),
-    remote_GmLinkFlag             = iBit(2),
+    gemini_GmLinkFlag             = iBit(1),
+    gopher_GmLinkFlag             = iBit(2),
     http_GmLinkFlag               = iBit(3),
-    gopher_GmLinkFlag             = iBit(4),
-    file_GmLinkFlag               = iBit(5),
-    imageFileExtension_GmLinkFlag = iBit(6),
-    audioFileExtension_GmLinkFlag = iBit(7),
-    content_GmLinkFlag            = iBit(8), /* content visible below */
-    visited_GmLinkFlag            = iBit(9), /* in the history */
+    file_GmLinkFlag               = iBit(4),
+    data_GmLinkFlag               = iBit(5),
+    supportedProtocol_GmLinkFlag  = 0x1f,
+    remote_GmLinkFlag             = iBit(9),
+    userFriendly_GmLinkFlag       = iBit(10),
+    imageFileExtension_GmLinkFlag = iBit(11),
+    audioFileExtension_GmLinkFlag = iBit(12),
+    content_GmLinkFlag            = iBit(13),  /* content visible below */
+    visited_GmLinkFlag            = iBit(14), /* in the history */
 };
 
 iDeclareType(GmImageInfo)

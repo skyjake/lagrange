@@ -171,18 +171,17 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
     if (matchRange_RegExp(pattern, line, &m)) {
         iGmLink *link = new_GmLink();
         setRange_String(&link->url, capturedRange_RegExpMatch(&m, 1));
+        set_String(&link->url, absoluteUrl_String(&d->url, &link->url));
         /* Check the URL. */ {
             iUrl parts;
             init_Url(&parts, &link->url);
-            /* Host name. */
-            if (!isEmpty_Range(&parts.host) &&
-                !equalCase_Rangecc(&parts.host, cstr_String(&d->localHost))) {
+            if (!equalCase_Rangecc(&parts.host, cstr_String(&d->localHost))) {
                 link->flags |= remote_GmLinkFlag;
             }
-            if (!isEmpty_Range(&parts.protocol) && !equalCase_Rangecc(&parts.protocol, "gemini")) {
-                link->flags |= remote_GmLinkFlag;
+            if (startsWithCase_Rangecc(&parts.protocol, "gemini")) {
+                link->flags |= gemini_GmLinkFlag;
             }
-            if (startsWithCase_Rangecc(&parts.protocol, "http")) {
+            else if (startsWithCase_Rangecc(&parts.protocol, "http")) {
                 link->flags |= http_GmLinkFlag;
             }
             else if (equalCase_Rangecc(&parts.protocol, "gopher")) {
@@ -190,6 +189,9 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
             }
             else if (equalCase_Rangecc(&parts.protocol, "file")) {
                 link->flags |= file_GmLinkFlag;
+            }
+            else if (equalCase_Rangecc(&parts.protocol, "data")) {
+                link->flags |= data_GmLinkFlag;
             }
             /* Check the file name extension, if present. */
             if (!isEmpty_Range(&parts.path)) {
@@ -206,11 +208,9 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
                 }
                 delete_String(path);
             }
-        }
-        /* Check if visited. */ {
-            const iString *absUrl = absoluteUrl_String(&d->url, &link->url);
-            if (cmpString_String(absUrl, &d->url)) {
-                link->when = urlVisitTime_History(history_App(), absUrl);
+            /* Check if visited. */
+            if (cmpString_String(&link->url, &d->url)) {
+                link->when = urlVisitTime_History(history_App(), &link->url);
                 if (isValid_Time(&link->when)) {
                     link->flags |= visited_GmLinkFlag;
                 }
@@ -401,8 +401,10 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             if (link->flags & remote_GmLinkFlag) {
                 run.visBounds.pos.x -= gap_UI / 2;
             }
-
             run.color = linkColor_GmDocument(d, run.linkId);
+            if (link->flags & visited_GmLinkFlag) {
+                run.color--; /* darker */
+            }
             pushBack_Array(&d->layout, &run);
         }
         run.color = colors[type];
@@ -554,7 +556,7 @@ static void normalize_GmDocument(iGmDocument *d) {
                         appendCStrN_String(normalized, " ", 1);
                     }
                 }
-                else {
+                else if (*ch != '\r') {
                     appendCStrN_String(normalized, ch, 1);
                 }
             }
@@ -573,6 +575,7 @@ static void normalize_GmDocument(iGmDocument *d) {
         iBool isPrevSpace = iFalse;
         for (const char *ch = line.start; ch != line.end; ch++) {
             char c = *ch;
+            if (c == '\r') continue;
             if (isNormalizableSpace_(c)) {
                 if (isPrevSpace) {
                     continue; /* skip repeated spaces */
@@ -738,6 +741,9 @@ uint16_t linkImage_GmDocument(const iGmDocument *d, iGmLinkId linkId) {
 enum iColorId linkColor_GmDocument(const iGmDocument *d, iGmLinkId linkId) {
     const iGmLink *link = link_GmDocument_(d, linkId);
     if (link) {
+        if ((link->flags & supportedProtocol_GmLinkFlag) == 0) {
+            return red_ColorId;
+        }
         return link->flags & http_GmLinkFlag
                    ? orange_ColorId
                    : link->flags & gopher_GmLinkFlag ? blue_ColorId : cyan_ColorId;

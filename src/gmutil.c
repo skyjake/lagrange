@@ -6,30 +6,36 @@
 
 void init_Url(iUrl *d, const iString *text) {
     iRegExp *absPat =
-        new_RegExp("(.+)://([^/:?]*)(:[0-9]+)?([^?]*)(\\?.*)?", caseInsensitive_RegExpOption);
+        new_RegExp("([a-z]+:)?(//[^/:?]*)(:[0-9]+)?([^?]*)(\\?.*)?", caseInsensitive_RegExpOption);
     iRegExpMatch m;
     if (matchString_RegExp(absPat, text, &m)) {
         d->protocol = capturedRange_RegExpMatch(&m, 1);
-        d->host     = capturedRange_RegExpMatch(&m, 2);
-        d->port     = capturedRange_RegExpMatch(&m, 3);
-        if (!isEmpty_Range(&d->port)) {
-            /* Don't include the colon. */
-            d->port.start++;
+        d->host = capturedRange_RegExpMatch(&m, 2);
+        if (!isEmpty_Range(&d->host)) {
+            d->host.start += 2; /* skip the double slash */
         }
-        d->path  = capturedRange_RegExpMatch(&m, 4);
+        d->port = capturedRange_RegExpMatch(&m, 3);
+        if (!isEmpty_Range(&d->port)) {
+            d->port.start++; /* omit the colon */
+        }
+        d->path = capturedRange_RegExpMatch(&m, 4);
         d->query = capturedRange_RegExpMatch(&m, 5);
     }
     else {
         /* Must be a relative path. */
         iZap(*d);
-        iRegExp *relPat = new_RegExp("([^?]*)(\\?.*)?", 0);
+        iRegExp *relPat = new_RegExp("([a-z]+:)?([^?]*)(\\?.*)?", 0);
         if (matchString_RegExp(relPat, text, &m)) {
-            d->path  = capturedRange_RegExpMatch(&m, 1);
-            d->query = capturedRange_RegExpMatch(&m, 2);
+            d->protocol = capturedRange_RegExpMatch(&m, 1);
+            d->path     = capturedRange_RegExpMatch(&m, 2);
+            d->query    = capturedRange_RegExpMatch(&m, 3);
         }
         iRelease(relPat);
     }
     iRelease(absPat);
+    if (!isEmpty_Range(&d->protocol)) {
+        d->protocol.end--; /* omit the colon */
+    }
 }
 
 static iRangecc dirPath_(iRangecc path) {
@@ -38,51 +44,97 @@ static iRangecc dirPath_(iRangecc path) {
     return (iRangecc){ path.start, path.start + pos };
 }
 
-const iString *absoluteUrl_String(const iString *d, const iString *urlMaybeRelative) {
-    if (indexOfCStr_String(urlMaybeRelative, "://") != iInvalidPos) {
-        /* Already absolute. */
-        return urlMaybeRelative;
-    }
+iLocalDef iBool isDef_(iRangecc cc) {
+    return !isEmpty_Range(&cc);
+}
+
+static iRangecc prevPathSeg_(const char *end, const char *start) {
+    iRangecc seg = { end, end };
+    do {
+        seg.start--;
+    } while (*seg.start != '/' && seg.start != start);
+    return seg;
+}
+
+void cleanUrlPath_String(iString *d) {
+    iString clean;
+    init_String(&clean);
     iUrl parts;
     init_Url(&parts, d);
-    iString *absolute = new_String();
-    appendRange_String(absolute, parts.protocol);
-    appendCStr_String(absolute, "://");
-    appendRange_String(absolute, parts.host);
-    if (!isEmpty_Range(&parts.port)) {
-        appendCStr_String(absolute, ":");
-        appendRange_String(absolute, parts.port);
+    iRangecc seg = iNullRange;
+    while (nextSplit_Rangecc(&parts.path, "/", &seg)) {
+        if (equal_Rangecc(&seg, "..")) {
+            /* Back up one segment. */
+            iRangecc last = prevPathSeg_(constEnd_String(&clean), constBegin_String(&clean));
+            truncate_Block(&clean.chars, last.start - constBegin_String(&clean));
+        }
+        else if (equal_Rangecc(&seg, ".")) {
+            /* Skip it. */
+        }
+        else {
+            appendCStr_String(&clean, "/");
+            appendRange_String(&clean, seg);
+        }
     }
-    if (startsWith_String(urlMaybeRelative, "/")) {
-        append_String(absolute, urlMaybeRelative);
+    if (endsWith_Rangecc(&parts.path, "/")) {
+        appendCStr_String(&clean, "/");
+    }
+    /* Replace with the new path. */
+    if (cmpCStrNSc_Rangecc(&parts.path, cstr_String(&clean), size_String(&clean), &iCaseSensitive)) {
+        const size_t pos = parts.path.start - constBegin_String(d);
+        remove_Block(&d->chars, pos, size_Range(&parts.path));
+        insertData_Block(&d->chars, pos, cstr_String(&clean), size_String(&clean));
+    }
+    deinit_String(&clean);
+}
+
+const iString *absoluteUrl_String(const iString *d, const iString *urlMaybeRelative) {
+    iUrl orig;
+    iUrl rel;
+    init_Url(&orig, d);
+    init_Url(&rel, urlMaybeRelative);
+    if (equalCase_Rangecc(&rel.protocol, "data")) {
+        /* Special case, the contents should be left unparsed. */
+        return urlMaybeRelative;
+    }
+    const iBool isRelative = !isDef_(rel.host);
+    iRangecc protocol = range_CStr("gemini");
+    if (isDef_(rel.protocol)) {
+        protocol = rel.protocol;
+    }
+    else if (isRelative && isDef_(orig.protocol)) {
+        protocol = orig.protocol;
+    }
+    iString *absolute = collectNew_String();
+    appendRange_String(absolute, protocol);
+    appendCStr_String(absolute, "://"); {
+        const iUrl *selHost = isDef_(rel.host) ? &rel : &orig;
+        appendRange_String(absolute, selHost->host);
+        if (!isEmpty_Range(&selHost->port)) {
+            appendCStr_String(absolute, ":");
+            appendRange_String(absolute, selHost->port);
+        }
+    }
+    if (isDef_(rel.protocol) || isDef_(rel.host) || startsWith_Rangecc(&rel.path, "/")) {
+        appendRange_String(absolute, rel.path); /* absolute path */
     }
     else {
-        iRangecc relPath = range_String(urlMaybeRelative);
-        iRangecc dir = dirPath_(parts.path);
-        for (;;) {
-            if (equal_Rangecc(&relPath, ".")) {
-                relPath.start++;
-            }
-            else if (startsWith_Rangecc(&relPath, "./")) {
-                relPath.start += 2;
-            }
-            else if (equal_Rangecc(&relPath, "..")) {
-                relPath.start += 2;
-                dir = dirPath_(dir);
-            }
-            else if (startsWith_Rangecc(&relPath, "../")) {
-                relPath.start += 3;
-                dir = dirPath_(dir);
-            }
-            else break;
+        if (!endsWith_Rangecc(&orig.path, "/")) {
+            /* Referencing a file. */
+            appendRange_String(absolute, dirPath_(orig.path));
         }
-        appendRange_String(absolute, dir);
+        else {
+            /* Referencing a directory. */
+            appendRange_String(absolute, orig.path);
+        }
         if (!endsWith_String(absolute, "/")) {
             appendCStr_String(absolute, "/");
         }
-        appendRange_String(absolute, relPath);
+        appendRange_String(absolute, rel.path);
     }
-    return collect_String(absolute);
+    appendRange_String(absolute, rel.query);
+    cleanUrlPath_String(absolute);
+    return absolute;
 }
 
 void urlEncodeSpaces_String(iString *d) {
