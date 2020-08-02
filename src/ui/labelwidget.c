@@ -132,10 +132,10 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
     }
     iPaint p;
     init_Paint(&p);
-    int bg     = 0;
-    int fg     = gray75_ColorId;
-    int frame  = isButton ? gray50_ColorId : gray25_ColorId;
-    int frame2 = isButton ? black_ColorId : frame;
+    int bg      = 0;
+    int fg      = gray75_ColorId;
+    int frame   = isButton ? gray50_ColorId : gray25_ColorId;
+    int frame2  = isButton ? black_ColorId : frame;
     if (flags & selected_WidgetFlag) {
         bg = teal_ColorId;
         fg = white_ColorId;
@@ -166,7 +166,10 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
     }
     if (flags & pressed_WidgetFlag) {
         bg = orange_ColorId | permanent_ColorId;
-        if (isButton) frame = bg;
+        if (isButton) {
+            frame = brown_ColorId;
+            frame2 = white_ColorId;
+        }
         fg = black_ColorId | permanent_ColorId;
     }
     if (bg) {
