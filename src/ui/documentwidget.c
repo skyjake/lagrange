@@ -15,6 +15,7 @@
 #include <the_Foundation/path.h>
 #include <the_Foundation/ptrarray.h>
 #include <the_Foundation/regexp.h>
+#include <the_Foundation/stringarray.h>
 
 #include <SDL_clipboard.h>
 #include <SDL_timer.h>
@@ -257,16 +258,24 @@ static void updateVisible_DocumentWidget_(iDocumentWidget *d) {
 }
 
 static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
-    const char *titleSep = " \u2013 ";
-    iString *title = collect_String(copy_String(title_GmDocument(d->doc)));
+    iStringArray *title = iClob(new_StringArray());
+    if (!isEmpty_String(title_GmDocument(d->doc))) {
+        pushBack_StringArray(title, title_GmDocument(d->doc));
+    }
     if (!isEmpty_String(d->titleUser)) {
-        if (!isEmpty_String(title)) appendCStr_String(title, titleSep);
-        append_String(title, d->titleUser);
+        pushBack_StringArray(title, d->titleUser);
     }
-    if (isEmpty_String(title)) {
-        setCStr_String(title, "Lagrange");
+    else {
+        iUrl parts;
+        init_Url(&parts, d->url);
+        if (!isEmpty_Range(&parts.host)) {
+            pushBackRange_StringArray(title, parts.host);
+        }
     }
-    setTitle_Window(get_Window(), title);
+    if (isEmpty_StringArray(title)) {
+        pushBackCStr_StringArray(title, "Lagrange");
+    }
+    setTitle_Window(get_Window(), collect_String(joinCStr_StringArray(title, " \u2013 ")));
 }
 
 static void setSource_DocumentWidget_(iDocumentWidget *d, const iString *source) {

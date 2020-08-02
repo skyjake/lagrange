@@ -200,11 +200,13 @@ static void setupUserInterface_Window(iWindow *d) {
         addChild_Widget(navBar, iClob(newIcon_LabelWidget(" \U0001f850 ", 0, 0, "navigate.back")));
         addChild_Widget(navBar, iClob(newIcon_LabelWidget("\U0001f852", 0, 0, "navigate.forward")));
         addChild_Widget(navBar, iClob(newIcon_LabelWidget("\U0001f3e0", 0, 0, "navigate.home")));
-        iLabelWidget *lock = addChildFlags_Widget(navBar,
-                                             iClob(newIcon_LabelWidget("\U0001f512", 0, 0, "cert.server")),
-                                             frameless_WidgetFlag | tight_WidgetFlag);
-        setId_Widget(as_Widget(lock), "lock");
+        iLabelWidget *lock =
+            addChildFlags_Widget(navBar,
+                                 iClob(newIcon_LabelWidget("\U0001f513", 0, 0, "server.showcert")),
+                                 frameless_WidgetFlag | tight_WidgetFlag);
+        setId_Widget(as_Widget(lock), "navbar.lock");
         setFont_LabelWidget(lock, symbols_FontId);
+        updateTextCStr_LabelWidget(lock, "\U0001f512");
         iInputWidget *url = new_InputWidget(0);
         setId_Widget(as_Widget(url), "url");
         setTextCStr_InputWidget(url, "gemini://");
