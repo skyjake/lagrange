@@ -197,8 +197,8 @@ static void setupUserInterface_Window(iWindow *d) {
         addChild_Widget(div, iClob(navBar));
         setBackgroundColor_Widget(navBar, gray25_ColorId);
         setCommandHandler_Widget(navBar, handleNavBarCommands_);
-        addChild_Widget(navBar, iClob(newIcon_LabelWidget(" \U0001f860 ", 0, 0, "navigate.back")));
-        addChild_Widget(navBar, iClob(newIcon_LabelWidget("\U0001f862", 0, 0, "navigate.forward")));
+        addChild_Widget(navBar, iClob(newIcon_LabelWidget(" \U0001f850 ", 0, 0, "navigate.back")));
+        addChild_Widget(navBar, iClob(newIcon_LabelWidget("\U0001f852", 0, 0, "navigate.forward")));
         addChild_Widget(navBar, iClob(newIcon_LabelWidget("\U0001f3e0", 0, 0, "navigate.home")));
         iLabelWidget *lock = addChildFlags_Widget(navBar,
                                              iClob(newIcon_LabelWidget("\U0001f512", 0, 0, "cert.server")),

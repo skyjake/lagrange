@@ -7,10 +7,10 @@
 iDeclareWidgetClass(LabelWidget)
 iDeclareObjectConstructionArgs(LabelWidget, const char *label, int key, int kmods, const char *command)
 
+void    setAlignVisually_LabelWidget(iLabelWidget *, iBool alignVisual);
 void    setFont_LabelWidget         (iLabelWidget *, int fontId);
 void    setText_LabelWidget         (iLabelWidget *, const iString *text); /* resizes widget */
 void    setTextCStr_LabelWidget     (iLabelWidget *, const char *text);
-void    setAlignVisually_LabelWidget(iLabelWidget *, iBool alignVisual);
 
 void    updateSize_LabelWidget      (iLabelWidget *);
 void    updateText_LabelWidget      (iLabelWidget *, const iString *text); /* not resized */
