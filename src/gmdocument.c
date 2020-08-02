@@ -412,9 +412,11 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             run.color = colors[text_GmLineType];
         }
         /* Special formatting for the first paragraph (e.g., subtitle, introduction, or lede). */
+        int bigCount = 0;
         if (type == text_GmLineType && isFirstText) {
             run.font = firstParagraph_FontId;
             run.color = gray88_ColorId;
+            bigCount = 6; /* lines */
             isFirstText = iFalse;
         }
         else if (type != header1_GmLineType) {
@@ -452,6 +454,10 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             runLine.start = contPos;
             trimStart_Rangecc(&runLine);
             pos.y += lineHeight_Text(run.font);
+            if (--bigCount == 0) {
+                run.font = paragraph_FontId;
+                run.color = colors[text_GmLineType];
+            }
         }
         /* Flag the end of line, too. */
         ((iGmRun *) back_Array(&d->layout))->flags |= endOfLine_GmRunFlag;
