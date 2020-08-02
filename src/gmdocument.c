@@ -416,7 +416,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         if (type == text_GmLineType && isFirstText) {
             run.font = firstParagraph_FontId;
             run.color = gray88_ColorId;
-            bigCount = 6; /* lines */
+            bigCount = 15; /* max lines -- what if the whole document is one paragraph? */
             isFirstText = iFalse;
         }
         else if (type != header1_GmLineType) {

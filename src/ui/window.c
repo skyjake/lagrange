@@ -79,7 +79,25 @@ static const char *reloadCStr_ = "\U0001f503";
 static const char *stopCStr_   = orange_ColorEscape "\U0001f310";
 
 static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
-    if (equal_Command(cmd, "input.ended")) {
+    if (equal_Command(cmd, "window.resized")) {
+        const iBool isNarrow = width_Rect(bounds_Widget(navBar)) / gap_UI < 140;
+        if (isNarrow ^ ((flags_Widget(navBar) & tight_WidgetFlag) != 0)) {
+            setFlags_Widget(navBar, tight_WidgetFlag, isNarrow);
+            iForEach(ObjectList, i, navBar->children) {
+                iWidget *child = as_Widget(i.object);
+                setFlags_Widget(
+                    child, tight_WidgetFlag, isNarrow || !cmp_String(id_Widget(child), "lock"));
+                if (isInstance_Object(i.object, &Class_LabelWidget)) {
+                    iLabelWidget *label = (iLabelWidget *) i.object;
+                    updateSize_LabelWidget(label);
+                }
+            }
+        }
+        arrange_Widget(navBar);
+        refresh_Widget(navBar);
+        return iFalse;
+    }
+    else if (equal_Command(cmd, "input.ended")) {
         iInputWidget *url = findChild_Widget(navBar, "url");
         if (arg_Command(cmd) && pointer_Command(cmd) == url) {
             postCommandf_App(
@@ -179,16 +197,23 @@ static void setupUserInterface_Window(iWindow *d) {
         addChild_Widget(div, iClob(navBar));
         setBackgroundColor_Widget(navBar, gray25_ColorId);
         setCommandHandler_Widget(navBar, handleNavBarCommands_);
-        addChild_Widget(navBar, iClob(new_LabelWidget(" \u25c4 ", 0, 0, "navigate.back")));
-        addChild_Widget(navBar, iClob(new_LabelWidget(" \u25ba ", 0, 0, "navigate.forward")));
-        addChild_Widget(navBar, iClob(new_LabelWidget("\U0001f3e0", 0, 0, "navigate.home")));
+        addChild_Widget(navBar, iClob(newIcon_LabelWidget(" \U0001f860 ", 0, 0, "navigate.back")));
+        addChild_Widget(navBar, iClob(newIcon_LabelWidget("\U0001f862", 0, 0, "navigate.forward")));
+        addChild_Widget(navBar, iClob(newIcon_LabelWidget("\U0001f3e0", 0, 0, "navigate.home")));
+        iLabelWidget *lock = addChildFlags_Widget(navBar,
+                                             iClob(newIcon_LabelWidget("\U0001f512", 0, 0, "cert.server")),
+                                             frameless_WidgetFlag | tight_WidgetFlag);
+        setId_Widget(as_Widget(lock), "lock");
+        setFont_LabelWidget(lock, symbols_FontId);
         iInputWidget *url = new_InputWidget(0);
         setId_Widget(as_Widget(url), "url");
         setTextCStr_InputWidget(url, "gemini://");
         addChildFlags_Widget(navBar, iClob(url), expand_WidgetFlag);
         setId_Widget(
-            addChild_Widget(navBar, iClob(new_LabelWidget(reloadCStr_, 0, 0, "navigate.reload"))),
+            addChild_Widget(navBar, iClob(newIcon_LabelWidget(reloadCStr_, 0, 0, "navigate.reload"))),
             "reload");
+        addChild_Widget(navBar, iClob(newIcon_LabelWidget("\U0001f464", 0, 0, "cert.client")));
+        addChild_Widget(navBar, iClob(newIcon_LabelWidget("\U0001d362", 0, 0, "navbar.menu")));
     }
 
     addChildFlags_Widget(div, iClob(new_DocumentWidget()), expand_WidgetFlag);
@@ -207,9 +232,9 @@ static void setupUserInterface_Window(iWindow *d) {
         iInputWidget *input = new_InputWidget(0);
         setId_Widget(addChildFlags_Widget(searchBar, iClob(input), expand_WidgetFlag),
                      "find.input");
-        addChild_Widget(searchBar, iClob(new_LabelWidget("  \U0001f86b  ", 'g', KMOD_PRIMARY, "find.next")));
-        addChild_Widget(searchBar, iClob(new_LabelWidget("  \U0001f869  ", 'g', KMOD_PRIMARY | KMOD_SHIFT, "find.prev")));
-        addChild_Widget(searchBar, iClob(new_LabelWidget("\U0001f7a8", SDLK_ESCAPE, 0, "find.close")));
+        addChild_Widget(searchBar, iClob(newIcon_LabelWidget("  \U0001f86b  ", 'g', KMOD_PRIMARY, "find.next")));
+        addChild_Widget(searchBar, iClob(newIcon_LabelWidget("  \U0001f869  ", 'g', KMOD_PRIMARY | KMOD_SHIFT, "find.prev")));
+        addChild_Widget(searchBar, iClob(newIcon_LabelWidget("\U0001f7a8", SDLK_ESCAPE, 0, "find.close")));
     }
 
 #if 0
