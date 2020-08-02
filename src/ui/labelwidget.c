@@ -5,7 +5,9 @@
 #include "app.h"
 #include "util.h"
 
-iLocalDef iInt2 padding_(void) { return init_I2(3 * gap_UI, gap_UI); }
+iLocalDef iInt2 padding_(int flags) {
+    return init_I2(flags & tight_WidgetFlag ? 3 * gap_UI / 2 : (3 * gap_UI), gap_UI);
+}
 
 struct Impl_LabelWidget {
     iWidget widget;
@@ -14,6 +16,7 @@ struct Impl_LabelWidget {
     int     key;
     int     kmods;
     iString command;
+    iBool   alignVisual; /* align according to visible bounds, not typography */
     iClick  click;
 };
 
@@ -191,13 +194,13 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
     }
     setClip_Paint(&p, rect);
     if (flags & alignLeft_WidgetFlag) {
-        draw_Text(d->font, add_I2(bounds.pos, padding_()), fg, cstr_String(&d->label));
+        draw_Text(d->font, add_I2(bounds.pos, padding_(flags)), fg, cstr_String(&d->label));
         if ((flags & drawKey_WidgetFlag) && d->key) {
             iString str;
             init_String(&str);
             keyStr_LabelWidget_(d, &str);
             drawAlign_Text(uiShortcuts_FontId,
-                           add_I2(topRight_Rect(bounds), negX_I2(padding_())),
+                           add_I2(topRight_Rect(bounds), negX_I2(padding_(flags))),
                            flags & pressed_WidgetFlag ? fg : cyan_ColorId,
                            right_Alignment,
                            cstr_String(&str));
@@ -207,13 +210,13 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
     else if (flags & alignRight_WidgetFlag) {
         drawAlign_Text(
             d->font,
-            add_I2(topRight_Rect(bounds), negX_I2(padding_())),
+            add_I2(topRight_Rect(bounds), negX_I2(padding_(flags))),
             fg,
             right_Alignment,
             cstr_String(&d->label));
     }
     else {
-        drawCentered_Text(d->font, bounds, fg, cstr_String(&d->label));
+        drawCentered_Text(d->font, bounds, d->alignVisual, fg, cstr_String(&d->label));
     }
     clearClip_Paint(&p);
 }
@@ -221,7 +224,7 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
 void updateSize_LabelWidget(iLabelWidget *d) {
     iWidget *w = as_Widget(d);
     const int flags = flags_Widget(w);
-    iInt2 size = add_I2(measure_Text(d->font, cstr_String(&d->label)), muli_I2(padding_(), 2));
+    iInt2 size = add_I2(measure_Text(d->font, cstr_String(&d->label)), muli_I2(padding_(flags), 2));
     if ((flags & drawKey_WidgetFlag) && d->key) {
         iString str;
         init_String(&str);
@@ -251,6 +254,7 @@ void init_LabelWidget(iLabelWidget *d, const char *label, int key, int kmods, co
     d->kmods = kmods;
     init_Click(&d->click, d, !isEmpty_String(&d->command) ? SDL_BUTTON_LEFT : 0);
     setFlags_Widget(&d->widget, hover_WidgetFlag, d->click.button != 0);
+    d->alignVisual = iFalse;
     updateSize_LabelWidget(d);
 }
 
@@ -267,6 +271,10 @@ void setFont_LabelWidget(iLabelWidget *d, int fontId) {
 void setText_LabelWidget(iLabelWidget *d, const iString *text) {
     updateText_LabelWidget(d, text);
     updateSize_LabelWidget(d);
+}
+
+void setAlignVisually_LabelWidget(iLabelWidget *d, iBool alignVisual) {
+    d->alignVisual = alignVisual;
 }
 
 void updateText_LabelWidget(iLabelWidget *d, const iString *text) {

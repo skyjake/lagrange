@@ -23,6 +23,8 @@ iDeclareType(Font)
 iDeclareType(Glyph)
 iDeclareTypeConstructionArgs(Glyph, iChar ch)
 
+int enableHalfPixelGlyphs_Text = iTrue; /* debug setting */
+
 struct Impl_Glyph {
     iHashNode node;
     const iFont *font; /* may come from symbols/emoji */
@@ -189,7 +191,7 @@ void deinit_Text(void) {
     iRelease(d->ansiEscape);
 }
 
-iFont *font_Text_(enum iFontId id) {
+iLocalDef iFont *font_Text_(enum iFontId id) {
     return &text_.fonts[id];
 }
 
@@ -306,7 +308,13 @@ static const iGlyph *glyph_Font_(iFont *d, iChar ch) {
     return glyph;
 }
 
-enum iRunMode { measure_RunMode, measureNoWrap_RunMode, draw_RunMode, drawPermanentColor_RunMode };
+enum iRunMode {
+    measure_RunMode,
+    measureNoWrap_RunMode,
+    measureVisual_RunMode, /* actual visible bounding box of the glyph, e.g., for icons */
+    draw_RunMode,
+    drawPermanentColor_RunMode
+};
 
 static iChar nextChar_(const char **chPos, const char *end) {
     if (*chPos == end) {
@@ -322,8 +330,6 @@ static iChar nextChar_(const char **chPos, const char *end) {
     return ch;
 }
 
-int enableHalfPixelGlyphs_Text = iTrue;
-
 iLocalDef iBool isWrapBoundary_(iChar a, iChar b) {
     if (b == '/' || b == '-' || b == ',' || b == ';' || b == ':') {
         return iTrue;
@@ -331,13 +337,18 @@ iLocalDef iBool isWrapBoundary_(iChar a, iChar b) {
     return !isSpace_Char(a) && isSpace_Char(b);
 }
 
-static iInt2 run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLen, iInt2 pos,
+iLocalDef iBool isMeasuring_(enum iRunMode mode) {
+    return mode == measure_RunMode || mode == measureNoWrap_RunMode ||
+           mode == measureVisual_RunMode;
+}
+
+static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLen, iInt2 pos,
                        int xposLimit, const char **continueFrom_out, int *runAdvance_out) {
-    iInt2 size = zero_I2();
+    iRect bounds = zero_Rect();
     const iInt2 orig = pos;
     float xpos = pos.x;
     float xposMax = xpos;
-    iAssert(xposLimit == 0 || mode == measure_RunMode || mode == measureNoWrap_RunMode);
+    iAssert(xposLimit == 0 || isMeasuring_(mode));
     const char *lastWordEnd = text.start;
     if (continueFrom_out) {
         *continueFrom_out = text.end;
@@ -386,13 +397,24 @@ static iInt2 run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
             *continueFrom_out = lastWordEnd;
             break;
         }
-        size.x = iMax(size.x, x2 - orig.x);
-        size.y = iMax(size.y, pos.y + glyph->font->height - orig.y);
-        if (mode != measure_RunMode && mode != measureNoWrap_RunMode) {
-            SDL_Rect dst = { x1 + glyph->d[hoff].x,
-                             pos.y + glyph->font->baseline + glyph->d[hoff].y,
-                             glyph->rect[hoff].size.x,
-                             glyph->rect[hoff].size.y };
+        const SDL_Rect dst = { x1 + glyph->d[hoff].x,
+                               pos.y + glyph->font->baseline + glyph->d[hoff].y,
+                               glyph->rect[hoff].size.x,
+                               glyph->rect[hoff].size.y };
+        /* Update the bounding box. */
+        if (mode == measureVisual_RunMode) {
+            if (isEmpty_Rect(bounds)) {
+                bounds = init_Rect(dst.x, dst.y, dst.w, dst.h);
+            }
+            else {
+                bounds = union_Rect(bounds, init_Rect(dst.x, dst.y, dst.w, dst.h));
+            }
+        }
+        else {
+            bounds.size.x = iMax(bounds.size.x, x2 - orig.x);
+            bounds.size.y = iMax(bounds.size.y, pos.y + glyph->font->height - orig.y);
+        }
+        if (!isMeasuring_(mode)) {
             SDL_RenderCopy(text_.render, text_.cache, (const SDL_Rect *) &glyph->rect[hoff], &dst);
         }
         xpos += glyph->advance;
@@ -421,7 +443,7 @@ static iInt2 run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
     if (runAdvance_out) {
         *runAdvance_out = xposMax - orig.x;
     }
-    return size;
+    return bounds;
 }
 
 int lineHeight_Text(int fontId) {
@@ -439,7 +461,12 @@ iInt2 measureRange_Text(int fontId, iRangecc text) {
                      zero_I2(),
                      0,
                      NULL,
-                     NULL);
+                     NULL).size;
+}
+
+iRect visualBounds_Text(int fontId, iRangecc text) {
+    return run_Font_(
+        font_Text_(fontId), measureVisual_RunMode, text, iInvalidSize, zero_I2(), 0, NULL, NULL);
 }
 
 iInt2 measure_Text(int fontId, const char *text) {
@@ -456,7 +483,7 @@ iInt2 advanceRange_Text(int fontId, iRangecc text) {
                                  0,
                                  NULL,
                                  &advance)
-                           .y;
+                           .size.y;
     return init_I2(advance, height);
 }
 
@@ -470,7 +497,7 @@ iInt2 tryAdvance_Text(int fontId, iRangecc text, int width, const char **endPos)
                                  width,
                                  endPos,
                                  &advance)
-                           .y;
+                           .size.y;
     return init_I2(advance, height);
 }
 
@@ -484,7 +511,7 @@ iInt2 tryAdvanceNoWrap_Text(int fontId, iRangecc text, int width, const char **e
                                  width,
                                  endPos,
                                  &advance)
-                           .y;
+                           .size.y;
     return init_I2(advance, height);
 }
 
@@ -530,7 +557,7 @@ void drawAlign_Text(int fontId, iInt2 pos, int color, enum iAlignment align, con
     else if (align == right_Alignment) {
         pos.x -= measure_Text(fontId, cstr_Block(&chars)).x;
     }
-    draw_Text_(fontId, pos, color, (iRangecc){ constBegin_Block(&chars), constEnd_Block(&chars) });
+    draw_Text_(fontId, pos, color, range_Block(&chars));
     deinit_Block(&chars);
 }
 
@@ -542,7 +569,7 @@ void draw_Text(int fontId, iInt2 pos, int color, const char *text, ...) {
         vprintf_Block(&chars, text, args);
         va_end(args);
     }
-    draw_Text_(fontId, pos, color, (iRangecc){ constBegin_Block(&chars), constEnd_Block(&chars) });
+    draw_Text_(fontId, pos, color, range_Block(&chars));
     deinit_Block(&chars);
 }
 
@@ -550,7 +577,7 @@ void drawString_Text(int fontId, iInt2 pos, int color, const iString *text) {
     draw_Text_(fontId, pos, color, range_String(text));
 }
 
-void drawCentered_Text(int fontId, iRect rect, int color, const char *format, ...) {
+void drawCentered_Text(int fontId, iRect rect, iBool alignVisual, int color, const char *format, ...) {
     iBlock chars;
     init_Block(&chars, 0); {
         va_list args;
@@ -558,10 +585,11 @@ void drawCentered_Text(int fontId, iRect rect, int color, const char *format, ..
         vprintf_Block(&chars, format, args);
         va_end(args);
     }
-    const char *text = cstr_Block(&chars);
-    iInt2 textSize = advance_Text(fontId, text);
-    draw_Text_(fontId, sub_I2(mid_Rect(rect), divi_I2(textSize, 2)), color,
-               (iRangecc){ constBegin_Block(&chars), constEnd_Block(&chars) });
+    const iRangecc text       = range_Block(&chars);
+    iRect          textBounds = alignVisual ? visualBounds_Text(fontId, text)
+                                   : (iRect){ zero_I2(), advanceRange_Text(fontId, text) };
+    textBounds.pos = sub_I2(mid_Rect(rect), mid_Rect(textBounds));
+    draw_Text_(fontId, textBounds.pos, color, text);
     deinit_Block(&chars);
 }
 

@@ -32,6 +32,7 @@ enum iWidgetFlag {
     frameless_WidgetFlag         = iBit(8),
     drawKey_WidgetFlag           = iBit(10),
     focusable_WidgetFlag         = iBit(11),
+    tight_WidgetFlag             = iBit(31), /* smaller padding */
     keepOnTop_WidgetFlag         = iBit(12), /* gets events first; drawn last */
     arrangeHorizontal_WidgetFlag = iBit(17), /* arrange children horizontally */
     arrangeVertical_WidgetFlag   = iBit(18), /* arrange children vertically */
