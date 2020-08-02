@@ -164,13 +164,28 @@ static void requestFinished_GmRequest_(iAnyObject *obj) {
     SDL_RemoveTimer(d->timeoutId);
     d->timeoutId = 0;
     d->state = finished_GmRequestState;
-#if 0
-    printf("Server certificate:\n%s\n",
-           cstrLocal_String(pem_TlsCertificate(serverCertificate_TlsRequest(d->req))));
-    iDate expiry;
-    validUntil_TlsCertificate(serverCertificate_TlsRequest(d->req), &expiry);
-    printf("Valid until %04d-%02d-%02d\n", expiry.year, expiry.month, expiry.day);
-    printf("Subject: %s\n", cstrLocal_String(subject_TlsCertificate(serverCertificate_TlsRequest(d->req))));
+#if 1
+    /* Check the server certificate. */ {
+        const iTlsCertificate *cert = serverCertificate_TlsRequest(d->req);
+        printf("Server certificate:\n%s\n", cstrLocal_String(pem_TlsCertificate(cert)));
+        iBlock *sha = fingerprint_TlsCertificate(cert);
+        printf("Fingerprint: %s\n",
+               cstr_String(collect_String(
+                   hexEncode_Block(collect_Block(fingerprint_TlsCertificate(cert))))));
+        delete_Block(sha);
+        iDate expiry;
+        validUntil_TlsCertificate(cert, &expiry);
+        printf("Valid until %04d-%02d-%02d\n", expiry.year, expiry.month, expiry.day);
+        printf("Has expired: %s\n", isExpired_TlsCertificate(cert) ? "yes" : "no");
+        //printf("Subject: %s\n", cstrLocal_String(subject_TlsCertificate(serverCertificate_TlsRequest(d->req))));
+        /* Verify. */ {
+            iUrl parts;
+            init_Url(&parts, &d->url);
+            printf("Domain name is %s\n",
+                   verifyDomain_TlsCertificate(cert, parts.host) ? "valid" : "not valid");
+        }
+        fflush(stdout);
+    }
 #endif
     unlock_Mutex(&d->mutex);
     iNotifyAudience(d, finished, GmRequestFinished);
