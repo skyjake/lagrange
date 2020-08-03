@@ -129,7 +129,7 @@ static const iEmbedChunk chunks_Embed_[] = {
 
 iBool load_Embed(const char *path) {
     const size_t fileSize = (size_t) fileSizeCStr_FileInfo(path);
-    iFile *f = newCStr_File(path);
+    iFile *f = iClob(newCStr_File(path));
     if (open_File(f, readOnly_FileMode)) {
         iForIndices(i, blocks_Embed_) {
             const iEmbedChunk *chunk = &chunks_Embed_[i];
@@ -141,9 +141,9 @@ iBool load_Embed(const char *path) {
             seek_File(f, chunk->pos);
             readData_File(f, chunk->size, data_Block(data));
         }
+        return iTrue;
     }
-    iRelease(f);
-    return iTrue;
+    return iFalse;
 }
 ]])
         endif ()
