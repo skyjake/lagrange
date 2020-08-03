@@ -16,6 +16,13 @@ iDeclareAudienceGetter(GmRequest, finished)
 void    setUrl_GmRequest    (iGmRequest *, const iString *url);
 void    submit_GmRequest    (iGmRequest *);
 
+enum iGmRequestCertification {
+    notApplicable_GmRequestCertification,
+    invalid_GmRequestCertification,
+    valid_GmRequestCertification,
+    expired_GmRequestCertification,
+};
+
 iBool               isFinished_GmRequest    (const iGmRequest *);
 enum iGmStatusCode  status_GmRequest        (const iGmRequest *);
 const iString *     meta_GmRequest          (const iGmRequest *);

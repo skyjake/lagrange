@@ -5,8 +5,9 @@
 #include <the_Foundation/string.h>
 #include <the_Foundation/time.h>
 
-iDeclareType(Window)
+iDeclareType(GmCerts)
 iDeclareType(History)
+iDeclareType(Window)
 
 enum iAppEventMode {
     waitForNewEvents_AppEventMode,
@@ -25,6 +26,7 @@ void        processEvents_App   (enum iAppEventMode mode);
 iBool       handleCommand_App   (const char *cmd);
 void        refresh_App         (void);
 
+iGmCerts *      certs_App       (void);
 const iHistory *history_App     (void);
 
 iAny *      findWidget_App      (const char *id);

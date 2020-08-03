@@ -41,7 +41,8 @@ set (SOURCES
     src/main.c
     src/app.c
     src/app.h
-    src/gemini.h
+    src/gmcerts.c
+    src/gmcerts.h
     src/gmdocument.c
     src/gmdocument.h
     src/gmrequest.c

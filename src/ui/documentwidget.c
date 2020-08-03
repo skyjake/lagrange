@@ -145,21 +145,6 @@ void deinit_DocumentWidget(iDocumentWidget *d) {
     SDL_FreeCursor(d->handCursor);
 }
 
-#if 0
-static iString *cleanUrl_(const iString *url) {
-    iString *clean = copy_String(url);
-    if (startsWith_String(url, "//")) {
-        prependCStr_String(clean, "gemini:");
-    }
-    else if (indexOfCStr_String(url, "://") == iInvalidPos && !startsWithCase_String(url, "gemini:")
-             && !startsWithCase_String(url, "data:")) {
-        /* Prepend default protocol. */
-        prependCStr_String(clean, "gemini://");
-    }
-    return clean;
-}
-#endif
-
 static int documentWidth_DocumentWidget_(const iDocumentWidget *d) {
     const iWidget *w = constAs_Widget(d);
     const iRect bounds = bounds_Widget(w);

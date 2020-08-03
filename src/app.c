@@ -1,5 +1,6 @@
 #include "app.h"
 #include "embedded.h"
+#include "gmcerts.h"
 #include "history.h"
 #include "ui/command.h"
 #include "ui/window.h"
@@ -51,6 +52,7 @@ struct Impl_App {
     iWindow *    window;
     iSortedArray tickers;
     iBool        pendingRefresh;
+    iGmCerts *   certs;
     iHistory *   history;
     /* Preferences: */
     iBool        retainWindowSize;
@@ -144,6 +146,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     d->window           = NULL;
     d->retainWindowSize = iTrue;
     d->pendingRefresh   = iFalse;
+    d->certs            = new_GmCerts(dataDir_App_);
     d->history          = new_History();
     loadPrefs_App_(d);
     load_History(d->history, dataDir_App_);
@@ -165,6 +168,7 @@ static void deinit_App(iApp *d) {
     savePrefs_App_(d);
     save_History(d->history, dataDir_App_);
     delete_History(d->history);
+    delete_GmCerts(d->certs);
     deinit_SortedArray(&d->tickers);
     delete_Window(d->window);
     d->window = NULL;

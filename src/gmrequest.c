@@ -20,6 +20,7 @@ struct Impl_GmRequest {
     iObject object;
     iMutex mutex;
     enum iGmRequestState state;
+    enum iGmRequestCertification certState;
     iString url;
     iTlsRequest *req;
     enum iGmStatusCode code;
@@ -37,6 +38,7 @@ iDefineAudienceGetter(GmRequest, finished)
 void init_GmRequest(iGmRequest *d) {
     init_Mutex(&d->mutex);
     d->state = initialized_GmRequestState;
+    d->certState = notApplicable_GmRequestCertification;
     init_String(&d->url);
     d->req = NULL;
     d->code = none_GmStatusCode;
@@ -166,6 +168,7 @@ static void requestFinished_GmRequest_(iAnyObject *obj) {
     d->state = finished_GmRequestState;
 #if 1
     /* Check the server certificate. */ {
+        d->certState = invalid_GmRequestCertification; /* check trust */
         const iTlsCertificate *cert = serverCertificate_TlsRequest(d->req);
         printf("Server certificate:\n%s\n", cstrLocal_String(pem_TlsCertificate(cert)));
         iBlock *sha = fingerprint_TlsCertificate(cert);
@@ -208,6 +211,7 @@ void submit_GmRequest(iGmRequest *d) {
             /* TODO: Check supported file types: images, audio */
             /* TODO: Detect text files based on contents? E.g., is the content valid UTF-8. */
             d->code = success_GmStatusCode;
+            d->certState = notApplicable_GmRequestCertification;
             if (endsWithCase_String(path, ".gmi")) {
                 setCStr_String(&d->header, "text/gemini; charset=utf-8");
             }
@@ -235,11 +239,13 @@ void submit_GmRequest(iGmRequest *d) {
         }
         iRelease(f);
         d->state = finished_GmRequestState;
+        d->certState = notApplicable_GmRequestCertification;
         iNotifyAudience(d, finished, GmRequestFinished);
         return;
     }
     else if (equalCase_Rangecc(&url.protocol, "data")) {
         d->code = success_GmStatusCode;
+        d->certState = notApplicable_GmRequestCertification;
         iString *src = collectNewCStr_String(url.protocol.start + 5);
         iRangecc header = { constBegin_String(src), constBegin_String(src) };
         while (header.end < constEnd_String(src) && *header.end != ',') {
