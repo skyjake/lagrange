@@ -82,6 +82,7 @@ struct Impl_DocumentWidget {
     iAtomicInt isRequestUpdated; /* request has new content, need to parse it */
     iObjectList *media;
     iGmDocument *doc;
+    int certFlags;
     iBool selecting;
     iRangecc selectMark;
     iRangecc foundMark;
@@ -110,6 +111,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     d->isRequestUpdated = iFalse;
     d->media            = new_ObjectList();
     d->doc              = new_GmDocument();
+    d->certFlags        = 0;
     d->selecting        = iFalse;
     d->selectMark       = iNullRange;
     d->foundMark        = iNullRange;
@@ -353,6 +355,7 @@ static void fetch_DocumentWidget_(iDocumentWidget *d) {
     }
     postCommandf_App("document.request.started url:%s", cstr_String(d->url));
     clear_ObjectList(d->media);
+    d->certFlags = 0;
     d->state = fetching_DocumentState;
     set_Atomic(&d->isRequestUpdated, iFalse);
     d->request = new_GmRequest();
@@ -410,18 +413,18 @@ static void updateTrust_DocumentWidget_(iDocumentWidget *d) {
     iAssert(d->request);
 #define openLock_CStr   "\U0001f513"
 #define closedLock_CStr "\U0001f512"
-    int certFlags = certFlags_GmRequest(d->request);
+    d->certFlags = certFlags_GmRequest(d->request);
     iLabelWidget *lock = findWidget_App("navbar.lock");
-    if (~certFlags & available_GmRequestCertFlag) {
+    if (~d->certFlags & available_GmRequestCertFlag) {
         setFlags_Widget(as_Widget(lock), disabled_WidgetFlag, iTrue);
         updateTextCStr_LabelWidget(lock, gray50_ColorEscape openLock_CStr);
         return;
     }
     setFlags_Widget(as_Widget(lock), disabled_WidgetFlag, iFalse);
-    if (~certFlags & domainVerified_GmRequestCertFlag) {
+    if (~d->certFlags & domainVerified_GmRequestCertFlag) {
         updateTextCStr_LabelWidget(lock, red_ColorEscape closedLock_CStr);
     }
-    else if (certFlags & trusted_GmRequestCertFlag) {
+    else if (d->certFlags & trusted_GmRequestCertFlag) {
         updateTextCStr_LabelWidget(lock, green_ColorEscape closedLock_CStr);
     }
     else {
@@ -574,6 +577,29 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         scroll_DocumentWidget_(d, 0);
         updateVisible_DocumentWidget_(d);
         refresh_Widget(w);
+    }
+    else if (isCommand_UserEvent(ev, "server.showcert")) {
+        const char *unchecked = red_ColorEscape   "\u2610";
+        const char *checked   = green_ColorEscape "\u2611";
+        makeMessage_Widget(
+            cyan_ColorEscape "CERTIFICATE STATUS",
+            format_CStr("%s%s  Certificate %s\n"
+                        "%s%s  Domain name %s\n"
+                        "%s%s  %s\n"
+                        "%s%s  %s",
+                        d->certFlags & available_GmRequestCertFlag ? checked : unchecked,
+                        gray75_ColorEscape,
+                        d->certFlags & available_GmRequestCertFlag ? "available" : "not available",
+                        d->certFlags & domainVerified_GmRequestCertFlag ? checked : unchecked,
+                        gray75_ColorEscape,
+                        d->certFlags & domainVerified_GmRequestCertFlag ? "matches" : "mismatch",
+                        d->certFlags & timeVerified_GmRequestCertFlag ? checked : unchecked,
+                        gray75_ColorEscape,
+                        d->certFlags & timeVerified_GmRequestCertFlag ? "Not expired" : "Expired",
+                        d->certFlags & trusted_GmRequestCertFlag ? checked : unchecked,
+                        gray75_ColorEscape,
+                        d->certFlags & trusted_GmRequestCertFlag ? "Trusted on first use" : "Not trusted"));
+        return iTrue;
     }
     else if (isCommand_UserEvent(ev, "copy")) {
         if (d->selectMark.start) {
