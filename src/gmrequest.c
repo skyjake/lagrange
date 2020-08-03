@@ -98,6 +98,25 @@ static void restartTimeout_GmRequest_(iGmRequest *d) {
     d->timeoutId = SDL_AddTimer(BODY_TIMEOUT, timedOutWhileReceivingBody_GmRequest_, d);
 }
 
+static void checkServerCertificate_GmRequest_(iGmRequest *d) {
+    const iTlsCertificate *cert = serverCertificate_TlsRequest(d->req);
+    d->certFlags = 0;
+    if (cert) {
+        iGmCerts *     certDb = certs_App();
+        const iRangecc domain = urlHost_String(&d->url);
+        d->certFlags |= available_GmRequestCertFlag;
+        if (!isExpired_TlsCertificate(cert)) {
+            d->certFlags |= timeVerified_GmRequestCertFlag;
+        }
+        if (verifyDomain_TlsCertificate(cert, domain)) {
+            d->certFlags |= domainVerified_GmRequestCertFlag;
+        }
+        if (checkTrust_GmCerts(certDb, domain, cert)) {
+            d->certFlags |= trusted_GmRequestCertFlag;
+        }
+    }
+}
+
 static void readIncoming_GmRequest_(iAnyObject *obj) {
     iGmRequest *d = (iGmRequest *) obj;
     iBool notifyUpdate = iFalse;
@@ -136,6 +155,7 @@ static void readIncoming_GmRequest_(iAnyObject *obj) {
             }
             d->code = code;
             d->state = receivingBody_GmRequestState;
+            checkServerCertificate_GmRequest_(d);
             notifyUpdate = iTrue;
             /* Start a timeout for the remainder of the response, in case the connection
                remains open. */
@@ -168,23 +188,7 @@ static void requestFinished_GmRequest_(iAnyObject *obj) {
     SDL_RemoveTimer(d->timeoutId);
     d->timeoutId = 0;
     d->state     = finished_GmRequestState;
-    d->certFlags = 0;
-    /* Check the server certificate. */ {
-        const iTlsCertificate *cert = serverCertificate_TlsRequest(d->req);
-        if (cert) {
-            iGmCerts *     certDb = certs_App();
-            const iRangecc domain = urlHost_String(&d->url);
-            d->certFlags |= available_GmRequestCertFlag;
-            if (!isExpired_TlsCertificate(cert)) {
-                d->certFlags |= timeVerified_GmRequestCertFlag;
-            }
-            if (verifyDomain_TlsCertificate(cert, domain)) {
-                d->certFlags |= domainVerified_GmRequestCertFlag;
-            }
-            if (checkTrust_GmCerts(certDb, domain, cert)) {
-                d->certFlags |= trusted_GmRequestCertFlag;
-            }
-        }
+    checkServerCertificate_GmRequest_(d);
 #if 0
         printf("Server certificate:\n%s\n", cstrLocal_String(pem_TlsCertificate(cert)));
         iBlock *sha = fingerprint_TlsCertificate(cert);
@@ -205,7 +209,6 @@ static void requestFinished_GmRequest_(iAnyObject *obj) {
         }
         fflush(stdout);
 #endif
-    }
     unlock_Mutex(&d->mutex);
     iNotifyAudience(d, finished, GmRequestFinished);
 }
@@ -218,6 +221,7 @@ void submit_GmRequest(iGmRequest *d) {
     d->code = none_GmStatusCode;
     clear_String(&d->header);
     clear_Block(&d->body);
+    d->certFlags = 0;
     iUrl url;
     init_Url(&url, &d->url);
     if (equalCase_Rangecc(&url.protocol, "file")) {

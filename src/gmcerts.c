@@ -1,6 +1,7 @@
 #include "gmcerts.h"
 
 #include <the_Foundation/file.h>
+#include <the_Foundation/mutex.h>
 #include <the_Foundation/path.h>
 #include <the_Foundation/regexp.h>
 #include <the_Foundation/stringhash.h>
@@ -32,6 +33,7 @@ iDefineClass(TrustEntry)
 /*-----------------------------------------------------------------------------------------------*/
 
 struct Impl_GmCerts {
+    iMutex mtx;
     iString saveDir;
     iStringHash *trusted;
 };
@@ -87,14 +89,18 @@ static void load_GmCerts_(iGmCerts *d) {
 }
 
 void init_GmCerts(iGmCerts *d, const char *saveDir) {
+    init_Mutex(&d->mtx);
     initCStr_String(&d->saveDir, saveDir);
     d->trusted = new_StringHash();
     load_GmCerts_(d);
 }
 
-void deinit_GmCerts(iGmCerts *d) {    
-    iRelease(d->trusted);
-    deinit_String(&d->saveDir);
+void deinit_GmCerts(iGmCerts *d) {
+    iGuardMutex(&d->mtx, {
+        iRelease(d->trusted);
+        deinit_String(&d->saveDir);
+    });
+    deinit_Mutex(&d->mtx);
 }
 
 iBool checkTrust_GmCerts(iGmCerts *d, iRangecc domain, const iTlsCertificate *cert) {
@@ -112,6 +118,7 @@ iBool checkTrust_GmCerts(iGmCerts *d, iRangecc domain, const iTlsCertificate *ce
     iDate until;
     validUntil_TlsCertificate(cert, &until);
     iBlock *fingerprint = collect_Block(fingerprint_TlsCertificate(cert));
+    lock_Mutex(&d->mtx);
     iTrustEntry *trust = value_StringHash(d->trusted, key);
     if (trust) {
         /* We already have it, check if it matches the one we trust for this domain (if it's
@@ -120,7 +127,9 @@ iBool checkTrust_GmCerts(iGmCerts *d, iRangecc domain, const iTlsCertificate *ce
         initCurrent_Time(&now);
         if (secondsSince_Time(&trust->validUntil, &now) > 0) {
             /* Trusted cert is still valid. */
-            return cmp_Block(fingerprint, &trust->fingerprint) == 0;
+            const iBool isTrusted = cmp_Block(fingerprint, &trust->fingerprint) == 0;
+            unlock_Mutex(&d->mtx);
+            return isTrusted;
         }
         /* Update the trusted cert. */
         init_Time(&trust->validUntil, &until);
@@ -130,5 +139,6 @@ iBool checkTrust_GmCerts(iGmCerts *d, iRangecc domain, const iTlsCertificate *ce
         insert_StringHash(d->trusted, key, iClob(new_TrustEntry(fingerprint, &until)));
     }
     save_GmCerts_(d);
+    unlock_Mutex(&d->mtx);
     return iTrue;
 }
