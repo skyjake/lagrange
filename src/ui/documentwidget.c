@@ -260,7 +260,7 @@ static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
     if (isEmpty_StringArray(title)) {
         pushBackCStr_StringArray(title, "Lagrange");
     }
-    setTitle_Window(get_Window(), collect_String(joinCStr_StringArray(title, " \u2013 ")));
+    setTitle_Window(get_Window(), collect_String(joinCStr_StringArray(title, " \u2014 ")));
 }
 
 static void setSource_DocumentWidget_(iDocumentWidget *d, const iString *source) {
