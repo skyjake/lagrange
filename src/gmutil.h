@@ -54,5 +54,6 @@ struct Impl_Url {
 
 void            init_Url                (iUrl *, const iString *text);
 
+iRangecc        urlHost_String          (const iString *);
 const iString * absoluteUrl_String      (const iString *, const iString *urlMaybeRelative);
 void            urlEncodeSpaces_String  (iString *);

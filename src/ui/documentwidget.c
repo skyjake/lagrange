@@ -1,11 +1,11 @@
 #include "documentwidget.h"
 #include "scrollwidget.h"
 #include "inputwidget.h"
+#include "labelwidget.h"
 #include "paint.h"
 #include "command.h"
 #include "util.h"
 #include "app.h"
-#include "../gemini.h"
 #include "../gmdocument.h"
 #include "../gmrequest.h"
 #include "../gmutil.h"
@@ -406,13 +406,37 @@ static void scrollTo_DocumentWidget_(iDocumentWidget *d, int documentY) {
     scroll_DocumentWidget_(d, 0); /* clamp it */
 }
 
-static void checkResponseCode_DocumentWidget_(iDocumentWidget *d) {
+static void updateTrust_DocumentWidget_(iDocumentWidget *d) {
+    iAssert(d->request);
+#define openLock_CStr   "\U0001f513"
+#define closedLock_CStr "\U0001f512"
+    int certFlags = certFlags_GmRequest(d->request);
+    iLabelWidget *lock = findWidget_App("navbar.lock");
+    if (~certFlags & available_GmRequestCertFlag) {
+        setFlags_Widget(as_Widget(lock), disabled_WidgetFlag, iTrue);
+        updateTextCStr_LabelWidget(lock, gray50_ColorEscape openLock_CStr);
+        return;
+    }
+    setFlags_Widget(as_Widget(lock), disabled_WidgetFlag, iFalse);
+    if (~certFlags & domainVerified_GmRequestCertFlag) {
+        updateTextCStr_LabelWidget(lock, red_ColorEscape closedLock_CStr);
+    }
+    else if (certFlags & trusted_GmRequestCertFlag) {
+        updateTextCStr_LabelWidget(lock, green_ColorEscape closedLock_CStr);
+    }
+    else {
+        updateTextCStr_LabelWidget(lock, orange_ColorEscape closedLock_CStr);
+    }
+}
+
+static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
     if (!d->request) {
         return;
     }
     enum iGmStatusCode statusCode = status_GmRequest(d->request);
     if (d->state == fetching_DocumentState) {
         d->state = receivedPartialResponse_DocumentState;
+        updateTrust_DocumentWidget_(d);
         switch (statusCode / 10) {
             case 1: /* input required */ {
                 iUrl parts;
@@ -594,14 +618,13 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
     }
     else if (isCommand_Widget(w, ev, "document.request.updated") &&
              pointerLabel_Command(command_UserEvent(ev), "request") == d->request) {
-        checkResponseCode_DocumentWidget_(d);
-//        updateSource_DocumentWidget_(d);
+        checkResponse_DocumentWidget_(d);
         return iFalse;
     }
     else if (isCommand_Widget(w, ev, "document.request.finished") &&
              pointerLabel_Command(command_UserEvent(ev), "request") == d->request) {
-//        updateSource_DocumentWidget_(d);
-        checkResponseCode_DocumentWidget_(d);
+        iAssert(d->state == receivedPartialResponse_DocumentState); /* must already have been updated at least once */
+        checkResponse_DocumentWidget_(d);
         d->state = ready_DocumentState;
         iReleasePtr(&d->request);
         postCommandf_App("document.changed url:%s", cstr_String(d->url));

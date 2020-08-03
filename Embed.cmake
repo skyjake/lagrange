@@ -69,6 +69,7 @@ function (embed_make)
     endif ()
     if (needGen)
         if (EMBED_IN_EXECUTABLE)
+            # Compose a source file with the resource data in an array.
             file (WRITE ${EMB_H} "#include <the_Foundation/block.h>\n")
             file (WRITE ${EMB_C} "#include \"embedded.h\"\n")
             foreach (fn ${ARGV})
@@ -76,6 +77,7 @@ function (embed_make)
                 embed_write (${fn} ${resName} ${EMB_C} ${EMB_H})
             endforeach (fn)
         else ()
+            # Collect resources in a single binary file.
             set (EMB_BIN ${CMAKE_CURRENT_BINARY_DIR}/resources.bin)
             file (REMOVE ${EMB_BIN})
             execute_process (COMMAND cat ${ARGV} OUTPUT_FILE ${EMB_BIN}

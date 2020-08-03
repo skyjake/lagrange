@@ -41,7 +41,8 @@ static const char *dataDir_App_ = "~/Library/Application Support/fi.skyjake.Lagr
 static const char *dataDir_App_ = "~/AppData/Roaming/fi.skyjake.Lagrange";
 #endif
 #if defined (iPlatformLinux)
-#define EMB_BIN "../../share/lagrange/resources.bin"
+#define EMB_BIN  "../../share/lagrange/resources.bin"
+#define EMB_BIN2 "../resources.bin" /* try from build dir as well */
 static const char *dataDir_App_ = "~/.config/lagrange";
 #endif
 static const char *prefsFileName_App_   = "prefs.cfg";
@@ -152,9 +153,11 @@ static void init_App_(iApp *d, int argc, char **argv) {
     load_History(d->history, dataDir_App_);
 #if defined (iHaveLoadEmbed)
     /* Load the resources from a file. */ {
-        if (!load_Embed(concatPath_CStr(cstr_String(execPath_App()), EMB_BIN))) {
-            fprintf(stderr, "failed to load resources.bin\n");
-            exit(-1);
+        if (!load_Embed(concatPath_CStr(cstr_String(execPath_App()), "../resources.bin"))) {
+            if (!load_Embed(concatPath_CStr(cstr_String(execPath_App()), EMB_BIN))) {
+                fprintf(stderr, "failed to load resources.bin: %s\n", strerror(errno));
+                exit(-1);
+            }
         }
     }
 #endif
@@ -309,6 +312,10 @@ iAny *findWidget_App(const char *id) {
 void addTicker_App(void (*ticker)(iAny *), iAny *context) {
     iApp *d = &app_;
     insert_SortedArray(&d->tickers, &(iTicker){ context, ticker });
+}
+
+iGmCerts *certs_App(void) {
+    return app_.certs;
 }
 
 const iHistory *history_App(void) {

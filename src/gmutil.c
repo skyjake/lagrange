@@ -1,5 +1,4 @@
 #include "gmutil.h"
-#include "gemini.h"
 
 #include <the_Foundation/regexp.h>
 #include <the_Foundation/object.h>
@@ -86,6 +85,12 @@ void cleanUrlPath_String(iString *d) {
         insertData_Block(&d->chars, pos, cstr_String(&clean), size_String(&clean));
     }
     deinit_String(&clean);
+}
+
+iRangecc urlHost_String(const iString *d) {
+    iUrl url;
+    init_Url(&url, d);
+    return url.host;
 }
 
 const iString *absoluteUrl_String(const iString *d, const iString *urlMaybeRelative) {

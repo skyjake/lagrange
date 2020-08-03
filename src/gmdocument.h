@@ -1,6 +1,6 @@
 #pragma once
 
-#include "gemini.h"
+#include "gmutil.h"
 #include <the_Foundation/object.h>
 #include <the_Foundation/rect.h>
 #include <the_Foundation/string.h>

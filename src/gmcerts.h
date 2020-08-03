@@ -4,3 +4,5 @@
 
 iDeclareType(GmCerts)
 iDeclareTypeConstructionArgs(GmCerts, const char *saveDir)
+
+iBool   checkTrust_GmCerts  (iGmCerts *, iRangecc domain, const iTlsCertificate *cert);
