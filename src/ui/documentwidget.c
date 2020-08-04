@@ -5,6 +5,7 @@
 #include "paint.h"
 #include "command.h"
 #include "util.h"
+#include "history.h"
 #include "app.h"
 #include "../gmdocument.h"
 #include "../gmrequest.h"
@@ -91,6 +92,7 @@ struct Impl_DocumentWidget {
     iPtrArray visibleLinks;
     const iGmRun *hoverLink;
     iClick click;
+    int initialScrollY;
     iScrollWidget *scroll;
     iWidget *menu;
     SDL_Cursor *arrowCursor;
@@ -242,6 +244,12 @@ static void updateVisible_DocumentWidget_(iDocumentWidget *d) {
     clear_PtrArray(&d->visibleLinks);
     render_GmDocument(d->doc, visRange, addVisibleLink_DocumentWidget_, d);
     updateHover_DocumentWidget_(d, mouseCoord_Window(get_Window()));
+    /* Remember scroll positions of recently visited pages. */ {
+        iHistoryItem *it = item_History(history_App());
+        if (it) {
+            it->scrollY = d->scrollY / gap_UI;
+        }
+    }
 }
 
 static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
@@ -300,9 +308,14 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
             break;
     }
     setSource_DocumentWidget_(d, src);
+    d->scrollY = 0;
+    d->state = ready_DocumentState;
 }
 
 static void updateSource_DocumentWidget_(iDocumentWidget *d) {
+    if (d->state == ready_DocumentState) {
+        return;
+    }
     /* TODO: Do this in the background. However, that requires a text metrics calculator
        that does not try to cache the glyph bitmaps. */
     const enum iGmStatusCode statusCode = status_GmRequest(d->request);
@@ -384,6 +397,10 @@ void setUrl_DocumentWidget(iDocumentWidget *d, const iString *url) {
     }
 }
 
+void setInitialScroll_DocumentWidget (iDocumentWidget *d, int scrollY) {
+    d->initialScrollY = scrollY;
+}
+
 iBool isRequestOngoing_DocumentWidget(const iDocumentWidget *d) {
     return d->state == fetching_DocumentState || d->state == receivedPartialResponse_DocumentState;
 }
@@ -437,11 +454,14 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
         return;
     }
     enum iGmStatusCode statusCode = status_GmRequest(d->request);
+    if (statusCode == none_GmStatusCode) {
+        return;
+    }
     if (d->state == fetching_DocumentState) {
         d->state = receivedPartialResponse_DocumentState;
         updateTrust_DocumentWidget_(d);
-        switch (statusCode / 10) {
-            case 1: /* input required */ {
+        switch (category_GmStatusCode(statusCode)) {
+            case categoryInput_GmStatusCode: {
                 iUrl parts;
                 init_Url(&parts, d->url);
                 printf("%s\n", cstr_String(meta_GmRequest(d->request)));
@@ -460,16 +480,17 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                                          statusCode == sensitiveInput_GmStatusCode);
                 break;
             }
-            case 2: /* success */
-                d->scrollY = 0;
+            case categorySuccess_GmStatusCode:
+                d->scrollY = d->initialScrollY;
                 reset_GmDocument(d->doc); /* new content incoming */
                 updateSource_DocumentWidget_(d);
                 break;
-            case 3: /* redirect */
+            case categoryRedirect_GmStatusCode:
                 if (isEmpty_String(meta_GmRequest(d->request))) {
                     showErrorPage_DocumentWidget_(d, invalidRedirect_GmStatusCode);
                 }
                 else {
+                    /* TODO: only accept redirects that use gemini protocol */
                     postCommandf_App(
                         "open redirect:1 url:%s",
                         cstr_String(absoluteUrl_String(d->url, meta_GmRequest(d->request))));
@@ -480,18 +501,20 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                 if (isDefined_GmError(statusCode)) {
                     showErrorPage_DocumentWidget_(d, statusCode);
                 }
-                else if (statusCode / 10 == 4) {
+                else if (category_GmStatusCode(statusCode) ==
+                         categoryTemporaryFailure_GmStatusCode) {
                     showErrorPage_DocumentWidget_(d, temporaryFailure_GmStatusCode);
                 }
-                else if (statusCode / 10 == 5) {
+                else if (category_GmStatusCode(statusCode) ==
+                         categoryPermanentFailure_GmStatusCode) {
                     showErrorPage_DocumentWidget_(d, permanentFailure_GmStatusCode);
                 }
                 break;
         }
     }
     else if (d->state == receivedPartialResponse_DocumentState) {
-        switch (statusCode) {
-            case success_GmStatusCode:
+        switch (category_GmStatusCode(statusCode)) {
+            case categorySuccess_GmStatusCode:
                 /* More content available. */
                 updateSource_DocumentWidget_(d);
                 break;
@@ -649,7 +672,6 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
     }
     else if (isCommand_Widget(w, ev, "document.request.finished") &&
              pointerLabel_Command(command_UserEvent(ev), "request") == d->request) {
-        iAssert(d->state == receivedPartialResponse_DocumentState); /* must already have been updated at least once */
         checkResponse_DocumentWidget_(d);
         d->state = ready_DocumentState;
         iReleasePtr(&d->request);

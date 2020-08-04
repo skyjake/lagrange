@@ -11,6 +11,7 @@ static const size_t maxAgeVisited_History_ = 3600 * 24 * 30; /* one month */
 void init_HistoryItem(iHistoryItem *d) {
     initCurrent_Time(&d->when);
     init_String(&d->url);
+    d->scrollY = 0;
 }
 
 void deinit_HistoryItem(iHistoryItem *d) {
@@ -52,13 +53,14 @@ static void writeItems_(const iArray *items, iFile *f) {
         iDate date;
         init_Date(&date, &item->when);
         format_String(line,
-                      "%04d-%02d-%02dT%02d:%02d:%02d %s\n",
+                      "%04d-%02d-%02dT%02d:%02d:%02d %04x %s\n",
                       date.year,
                       date.month,
                       date.day,
                       date.hour,
                       date.minute,
                       date.second,
+                      item->scrollY,
                       cstr_String(&item->url));
         writeData_File(f, cstr_String(line), size_String(line));
     }
@@ -84,18 +86,19 @@ static void loadItems_(iArray *items, iFile *f, double maxAge) {
     iTime          now;
     initCurrent_Time(&now);
     while (nextSplit_Rangecc(&src, "\n", &line)) {
-        int y, m, D, H, M, S;
-        sscanf(line.start, "%04d-%02d-%02dT%02d:%02d:%02d", &y, &m, &D, &H, &M, &S);
+        int y, m, D, H, M, S, scroll = 0;
+        sscanf(line.start, "%04d-%02d-%02dT%02d:%02d:%02d %04x", &y, &m, &D, &H, &M, &S, &scroll);
         if (!y) break;
         iHistoryItem item;
         init_HistoryItem(&item);
+        item.scrollY = scroll;
         init_Time(
             &item.when,
             &(iDate){ .year = y, .month = m, .day = D, .hour = H, .minute = M, .second = S });
         if (maxAge > 0.0 && secondsSince_Time(&now, &item.when) > maxAge) {
             continue; /* Too old. */
         }
-        initRange_String(&item.url, (iRangecc){ line.start + 20, line.end });
+        initRange_String(&item.url, (iRangecc){ line.start + 25, line.end });
         pushBack_Array(items, &item);
     }
 }
@@ -194,7 +197,9 @@ void addUrl_History(iHistory *d, const iString *url ){
 iBool goBack_History(iHistory *d) {
     if (d->stackPos < size_Array(&d->stack) - 1) {
         d->stackPos++;
-        postCommandf_App("open history:1 url:%s", cstr_String(url_History(d, d->stackPos)));
+        postCommandf_App("open history:1 scroll:%d url:%s",
+                         item_History(d)->scrollY,
+                         cstr_String(url_History(d, d->stackPos)));
         return iTrue;
     }
     return iFalse;

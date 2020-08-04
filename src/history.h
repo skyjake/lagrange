@@ -10,6 +10,7 @@ iDeclareTypeConstruction(HistoryItem)
 struct Impl_HistoryItem {
     iTime   when;
     iString url;
+    int     scrollY; /* unit is gap_UI */
 };
 
 iDeclareType(History)

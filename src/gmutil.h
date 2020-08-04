@@ -3,18 +3,26 @@
 #include <the_Foundation/range.h>
 #include <the_Foundation/string.h>
 
-iDeclareType(GmError)
-iDeclareType(Url)
+iDeclareType(GmError) iDeclareType(Url)
 
 /* Response status codes. */
 enum iGmStatusCode {
-    clientSide_GmStatusCode = -100, /* clientside status codes */
+    /* clientside status codes */
+    clientSide_GmStatusCode = -100,
     invalidRedirect_GmStatusCode,
     invalidHeader_GmStatusCode,
     unsupportedMimeType_GmStatusCode,
     failedToOpenFile_GmStatusCode,
     unknownStatusCode_GmStatusCode,
     none_GmStatusCode                      = 0,
+    /* general status code categories */
+    categoryInput_GmStatusCode             = 1,
+    categorySuccess_GmStatusCode           = 2,
+    categoryRedirect_GmStatusCode          = 3,
+    categoryTemporaryFailure_GmStatusCode  = 4,
+    categoryPermanentFailure_GmStatusCode  = 5,
+    categoryClientCertificate_GmStatus     = 6,
+    /* detailed status codes */
     input_GmStatusCode                     = 10,
     sensitiveInput_GmStatusCode            = 11,
     success_GmStatusCode                   = 20,
@@ -34,6 +42,12 @@ enum iGmStatusCode {
     certificateNotAuthorized_GmStatusCode  = 61,
     certificateNotValid_GmStatusCode       = 62,
 };
+
+iLocalDef enum iGmStatusCode category_GmStatusCode(enum iGmStatusCode code) {
+    if (code < 0) return 0;
+    if (code < 10) return code;
+    return code / 10;
+}
 
 struct Impl_GmError {
     iChar       icon;

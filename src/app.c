@@ -318,7 +318,7 @@ iGmCerts *certs_App(void) {
     return app_.certs;
 }
 
-const iHistory *history_App(void) {
+iHistory *history_App(void) {
     return app_.history;
 }
 
@@ -346,7 +346,9 @@ iBool handleCommand_App(const char *cmd) {
             }
         }
         print_History(d->history);
-        setUrl_DocumentWidget(findChild_Widget(root, "document"), url);
+        iDocumentWidget *doc = findChild_Widget(root, "document");
+        setUrl_DocumentWidget(doc, url);
+        setInitialScroll_DocumentWidget(doc, argLabel_Command(cmd, "scroll") * gap_UI);
     }
     else if (equal_Command(cmd, "document.request.cancelled")) {
         /* TODO: How should cancelled requests be treated in the history? */

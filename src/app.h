@@ -26,8 +26,8 @@ void        processEvents_App   (enum iAppEventMode mode);
 iBool       handleCommand_App   (const char *cmd);
 void        refresh_App         (void);
 
-iGmCerts *      certs_App       (void);
-const iHistory *history_App     (void);
+iGmCerts *  certs_App       (void);
+iHistory *  history_App     (void);
 
 iAny *      findWidget_App      (const char *id);
 void        addTicker_App       (void (*ticker)(iAny *), iAny *context);

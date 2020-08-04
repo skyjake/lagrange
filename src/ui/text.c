@@ -356,6 +356,7 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
     iChar prevCh = 0;
     for (const char *chPos = text.start; chPos != text.end; ) {
         iAssert(chPos < text.end);
+        const char *currentPos = chPos;
         if (*chPos == 0x1b) {
             /* ANSI escape. */
             chPos++;
@@ -394,7 +395,12 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
         int x2 = x1 + glyph->rect[hoff].size.x;
         /* Out of the allotted space? */
         if (xposLimit > 0 && x2 > xposLimit) {
-            *continueFrom_out = lastWordEnd;
+            if (lastWordEnd != text.start) {
+                *continueFrom_out = lastWordEnd;
+            }
+            else {
+                *continueFrom_out = currentPos; /* forced break */
+            }
             break;
         }
         const SDL_Rect dst = { x1 + glyph->d[hoff].x,
