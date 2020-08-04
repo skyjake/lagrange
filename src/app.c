@@ -405,6 +405,12 @@ iBool handleCommand_App(const char *cmd) {
         delete_String(homePath);
         return iTrue;
     }
+    else if (equal_Command(cmd, "font.setfactor")) {
+        setContentFontSize_Text((float) arg_Command(cmd) / 100.0f);
+        postCommand_App("font.changed");
+        refresh_App();
+        return iTrue;
+    }
     else {
         return iFalse;
     }

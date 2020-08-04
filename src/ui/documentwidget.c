@@ -82,6 +82,7 @@ struct Impl_DocumentWidget {
     iGmRequest *request;
     iAtomicInt isRequestUpdated; /* request has new content, need to parse it */
     iObjectList *media;
+    int textSizePercent;
     iGmDocument *doc;
     int certFlags;
     iDate certExpiry;
@@ -114,6 +115,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     d->request          = NULL;
     d->isRequestUpdated = iFalse;
     d->media            = new_ObjectList();
+    d->textSizePercent  = 100;
     d->doc              = new_GmDocument();
     d->certFlags        = 0;
     d->selecting        = iFalse;
@@ -154,7 +156,8 @@ void deinit_DocumentWidget(iDocumentWidget *d) {
 static int documentWidth_DocumentWidget_(const iDocumentWidget *d) {
     const iWidget *w = constAs_Widget(d);
     const iRect bounds = bounds_Widget(w);
-    return iMini(bounds.size.x - gap_UI * d->pageMargin * 2, fontSize_UI * 40);
+    return iMini(bounds.size.x - gap_UI * d->pageMargin * 2,
+                 fontSize_UI * 40 * d->textSizePercent / 100);
 }
 
 static iRect documentBounds_DocumentWidget_(const iDocumentWidget *d) {
@@ -531,6 +534,32 @@ static const char *sourceLoc_DocumentWidget_(const iDocumentWidget *d, iInt2 pos
     return findLoc_GmDocument(d->doc, documentPos_DocumentWidget_(d, pos));
 }
 
+iDeclareType(MiddleRunParams)
+struct Impl_MiddleRunParams {
+    int midY;
+    const iGmRun *closest;
+    int distance;
+};
+
+static void find_MiddleRunParams_(void *params, const iGmRun *run) {
+    iMiddleRunParams *d = params;
+    if (isEmpty_Rect(run->bounds)) {
+        return;
+    }
+    const int distance = iAbs(mid_Rect(run->bounds).y - d->midY);
+    if (!d->closest || distance < d->distance) {
+        d->closest  = run;
+        d->distance = distance;
+    }
+}
+
+static const iGmRun *middleRun_DocumentWidget_(const iDocumentWidget *d) {
+    iRangei visRange = visibleRange_DocumentWidget_(d);
+    iMiddleRunParams params = { (visRange.start + visRange.end) / 2, NULL, 0 };
+    render_GmDocument(d->doc, visRange, find_MiddleRunParams_, &params);
+    return params.closest;
+}
+
 static void removeMediaRequest_DocumentWidget_(iDocumentWidget *d, iGmLinkId linkId) {
     iForEach(ObjectList, i, d->media) {
         iMediaRequest *req = (iMediaRequest *) i.object;
@@ -596,12 +625,34 @@ static iBool handleMediaEvent_DocumentWidget_(iDocumentWidget *d, const char *cm
     return iFalse;
 }
 
+static void changeTextSize_DocumentWidget_(iDocumentWidget *d, int delta) {
+    if (delta == 0) {
+        d->textSizePercent = 100;
+    }
+    else {
+        if (d->textSizePercent < 100 || (delta < 0 && d->textSizePercent == 100)) {
+            delta /= 2;
+        }
+        d->textSizePercent += delta;
+        d->textSizePercent = iClamp(d->textSizePercent, 50, 200);
+    }
+    postCommandf_App("font.setfactor arg:%d", d->textSizePercent);
+}
+
 static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
-    if (isResize_UserEvent(ev)) {
+    if (isResize_UserEvent(ev) || isCommand_UserEvent(ev, "font.changed")) {
+        const iGmRun *mid = middleRun_DocumentWidget_(d);
+        const char *midLoc = (mid ? mid->text.start : NULL);
         setWidth_GmDocument(d->doc, documentWidth_DocumentWidget_(d));
         scroll_DocumentWidget_(d, 0);
         updateVisible_DocumentWidget_(d);
+        if (midLoc) {
+            mid = findRunAtLoc_GmDocument(d->doc, midLoc);
+            if (mid) {
+                scrollTo_DocumentWidget_(d, mid_Rect(mid->bounds).y);
+            }
+        }
         refresh_Widget(w);
     }
     else if (isCommand_UserEvent(ev, "server.showcert")) {
@@ -762,7 +813,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             case SDLK_UP:
             case SDLK_DOWN:
                 if (mods == 0) {
-                    scroll_DocumentWidget_(d, 2 * lineHeight_Text(paragraph_FontId) *
+                    scroll_DocumentWidget_(d, 2 * lineHeight_Text(default_FontId) *
                                                   (key == SDLK_UP ? -1 : 1));
                     return iTrue;
                 }
@@ -772,6 +823,16 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             case ' ':
                 postCommand_Widget(w, "scroll.page arg:%d", key == SDLK_PAGEUP ? -1 : +1);
                 return iTrue;
+            case SDLK_MINUS:
+            case SDLK_EQUALS:
+            case SDLK_0:
+                if (mods == KMOD_PRIMARY) {
+                    changeTextSize_DocumentWidget_(
+                        d, key == SDLK_EQUALS ? 10 : key == SDLK_MINUS ? -10 : 0);
+                    return iTrue;
+                }
+                break;
+#if 0
             case '0': {
                 extern int enableHalfPixelGlyphs_Text;
                 enableHalfPixelGlyphs_Text = !enableHalfPixelGlyphs_Text;
@@ -780,10 +841,15 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 fflush(stdout);
                 break;
             }
+#endif
         }
     }
     else if (ev->type == SDL_MOUSEWHEEL) {
-        scroll_DocumentWidget_(d, -3 * ev->wheel.y * lineHeight_Text(paragraph_FontId));
+        if (keyMods_Sym(SDL_GetModState()) == KMOD_PRIMARY) {
+            changeTextSize_DocumentWidget_(d, ev->wheel.y > 0 ? 10 : -10);
+            return iTrue;
+        }
+        scroll_DocumentWidget_(d, -3 * ev->wheel.y * lineHeight_Text(default_FontId));
         return iTrue;
     }
     else if (ev->type == SDL_MOUSEMOTION) {
@@ -954,6 +1020,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
     deinit_String(&text);
     /* Presentation of links. */
     if (run->linkId) {
+        const int metaFont = paragraph_FontId;
         /* TODO: Show status of an ongoing media request. */
         const int flags = linkFlags_GmDocument(doc, run->linkId);
         const iRect linkRect = moved_Rect(run->visBounds, origin);
@@ -971,7 +1038,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                     appendFormat_String(
                         &text, "  %s\U0001f7a8", isHover ? white_ColorEscape : "");
                 }
-                drawAlign_Text(uiLabel_FontId,
+                drawAlign_Text(metaFont,
                                add_I2(topRight_Rect(run->bounds), origin),
                                fg,
                                right_Alignment,
@@ -982,7 +1049,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
         else if (run->flags & endOfLine_GmRunFlag &&
                  (mr = findMediaRequest_DocumentWidget_(d->widget, run->linkId)) != NULL) {
             if (!isFinished_GmRequest(mr->req)) {
-                draw_Text(uiLabel_FontId,
+                draw_Text(metaFont,
                           topRight_Rect(linkRect),
                           linkColor_GmDocument(doc, run->linkId),
                           " \u2014 Fetching\u2026");
@@ -1021,7 +1088,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                                     cstr_String(collect_String(format_Date(&date, "%b %d"))));
             }
             if (!isEmpty_String(&str)) {
-                const iInt2 textSize = measure_Text(uiLabel_FontId, cstr_String(&str));
+                const iInt2 textSize = measure_Text(metaFont, cstr_String(&str));
                 int tx = topRight_Rect(linkRect).x;
                 const char *msg = cstr_String(&str);
                 if (tx + textSize.x > right_Rect(d->widgetBounds)) {
@@ -1029,9 +1096,9 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                     fillRect_Paint(&d->paint, (iRect){ init_I2(tx, top_Rect(linkRect)), textSize },
                                    black_ColorId);
                     msg += 4; /* skip the space and dash */
-                    tx += measure_Text(uiLabel_FontId, " \u2014").x / 2;
+                    tx += measure_Text(metaFont, " \u2014").x / 2;
                 }
-                drawAlign_Text(uiLabel_FontId,
+                drawAlign_Text(metaFont,
                                init_I2(tx, top_Rect(linkRect)),
                                fg - 1,
                                left_Alignment,

@@ -205,7 +205,7 @@ static void setupUserInterface_Window(iWindow *d) {
                                  iClob(newIcon_LabelWidget("\U0001f513", 0, 0, "server.showcert")),
                                  frameless_WidgetFlag | tight_WidgetFlag);
         setId_Widget(as_Widget(lock), "navbar.lock");
-        setFont_LabelWidget(lock, symbols_FontId);
+        setFont_LabelWidget(lock, defaultSymbols_FontId);
         updateTextCStr_LabelWidget(lock, "\U0001f512");
         iInputWidget *url = new_InputWidget(0);
         setId_Widget(as_Widget(url), "url");
@@ -545,7 +545,7 @@ void draw_Window(iWindow *d) {
 #if 0
     /* Text cache debugging. */ {
         SDL_Texture *cache = glyphCache_Text();
-        SDL_Rect rect = { d->root->rect.size.x - 640, 0, 640, 4 * 640 };
+        SDL_Rect rect = { d->root->rect.size.x - 640, 0, 640, 5 * 640 };
         SDL_SetRenderDrawColor(d->render, 0, 0, 0, 255);
         SDL_RenderFillRect(d->render, &rect);
         SDL_RenderCopy(d->render, glyphCache_Text(), NULL, &rect);

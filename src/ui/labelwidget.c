@@ -242,7 +242,7 @@ void updateSize_LabelWidget(iLabelWidget *d) {
 
 void init_LabelWidget(iLabelWidget *d, const char *label, int key, int kmods, const char *cmd) {
     init_Widget(&d->widget);
-    d->font = default_FontId;
+    d->font = uiLabel_FontId;
     initCStr_String(&d->label, label);
     if (cmd) {
         initCStr_String(&d->command, cmd);

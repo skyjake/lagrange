@@ -382,9 +382,9 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         /* List bullet. */
         run.color = colors[type];
         if (type == bullet_GmLineType) {
-            run.visBounds.pos  = addX_I2(pos, indent * gap_UI);
+            run.visBounds.pos  = addX_I2(pos, indent * gap_Text);
             run.visBounds.size = advance_Text(run.font, bullet);
-            run.visBounds.pos.x -= 4 * gap_UI - width_Rect(run.visBounds) / 2;
+            run.visBounds.pos.x -= 4 * gap_Text - width_Rect(run.visBounds) / 2;
             run.bounds = zero_Rect(); /* just visual */
             run.text = range_CStr(bullet);
             pushBack_Array(&d->layout, &run);
@@ -392,14 +392,14 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         /* Link icon. */
         if (type == link_GmLineType) {
             run.visBounds.pos  = pos;
-            run.visBounds.size = init_I2(indent * gap_UI, lineHeight_Text(run.font));
+            run.visBounds.size = init_I2(indent * gap_Text, lineHeight_Text(run.font));
             run.bounds         = zero_Rect(); /* just visual */
             const iGmLink *link = constAt_PtrArray(&d->links, run.linkId - 1);
             run.text            = range_CStr(link->flags & file_GmLinkFlag
                                       ? folder
                                       : link->flags & remote_GmLinkFlag ? globe : arrow);
             if (link->flags & remote_GmLinkFlag) {
-                run.visBounds.pos.x -= gap_UI / 2;
+                run.visBounds.pos.x -= gap_Text / 2;
             }
             run.color = linkColor_GmDocument(d, run.linkId);
             if (link->flags & visited_GmLinkFlag) {
@@ -433,7 +433,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 runLine.start != line.start) {
                 pos.y += midRunSkip * lineHeight_Text(run.font);
             }
-            run.bounds.pos = addX_I2(pos, indent * gap_UI);
+            run.bounds.pos = addX_I2(pos, indent * gap_Text);
             const char *contPos;
             const int avail = d->size.x - run.bounds.pos.x;
             const iInt2 dims =

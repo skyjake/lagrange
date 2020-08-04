@@ -23,6 +23,7 @@ iDeclareType(Font)
 iDeclareType(Glyph)
 iDeclareTypeConstructionArgs(Glyph, iChar ch)
 
+int gap_Text;                           /* cf. gap_UI in metrics.h */
 int enableHalfPixelGlyphs_Text = iTrue; /* debug setting */
 
 struct Impl_Glyph {
@@ -97,6 +98,7 @@ struct Impl_CacheRow {
 };
 
 struct Impl_Text {
+    float         contentFontSize;
     iFont         fonts[max_FontId];
     SDL_Renderer *render;
     SDL_Texture * cache;
@@ -110,11 +112,84 @@ struct Impl_Text {
 
 static iText text_;
 
+static void initFonts_Text_(iText *d) {
+    const float textSize = fontSize_UI * d->contentFontSize;
+    const struct {
+        const iBlock *ttf;
+        int size;
+        int symbolsFont;
+    } fontData[max_FontId] = {
+        { &fontSourceSansProRegular_Embedded, fontSize_UI,          defaultSymbols_FontId },
+        { &fontFiraMonoRegular_Embedded,      fontSize_UI * 0.866f, defaultSymbols_FontId },
+        { &fontFiraSansRegular_Embedded,      textSize,             symbols_FontId },
+        { &fontFiraMonoRegular_Embedded,      textSize * 0.866f,    smallSymbols_FontId },
+        { &fontFiraMonoRegular_Embedded,      textSize * 0.666f,    smallSymbols_FontId },
+        { &fontFiraSansRegular_Embedded,      textSize * 1.333f,    mediumSymbols_FontId },
+        { &fontFiraSansItalic_Embedded,       textSize,             symbols_FontId },
+        { &fontFiraSansBold_Embedded,         textSize,             symbols_FontId },
+        { &fontFiraSansBold_Embedded,         textSize * 1.333f,    mediumSymbols_FontId },
+        { &fontFiraSansBold_Embedded,         textSize * 1.666f,    largeSymbols_FontId },
+        { &fontFiraSansBold_Embedded,         textSize * 2.000f,    hugeSymbols_FontId },
+        { &fontSymbola_Embedded,              fontSize_UI,          defaultSymbols_FontId },
+        { &fontSymbola_Embedded,              textSize,             symbols_FontId },
+        { &fontSymbola_Embedded,              textSize * 1.333f,    mediumSymbols_FontId },
+        { &fontSymbola_Embedded,              textSize * 1.666f,    largeSymbols_FontId },
+        { &fontSymbola_Embedded,              textSize * 2.000f,    hugeSymbols_FontId },
+        { &fontSymbola_Embedded,              textSize * 0.866f,    smallSymbols_FontId },
+        { &fontNotoEmojiRegular_Embedded,     fontSize_UI,          defaultSymbols_FontId },
+        { &fontNotoEmojiRegular_Embedded,     textSize,             symbols_FontId },
+        { &fontNotoEmojiRegular_Embedded,     textSize * 1.333f,    mediumSymbols_FontId },
+        { &fontNotoEmojiRegular_Embedded,     textSize * 1.666f,    largeSymbols_FontId },
+        { &fontNotoEmojiRegular_Embedded,     textSize * 2.000f,    hugeSymbols_FontId },
+        { &fontNotoEmojiRegular_Embedded,     textSize * 0.866f,    smallSymbols_FontId },
+    };
+    iForIndices(i, fontData) {
+        iFont *font = &d->fonts[i];
+        init_Font(font, fontData[i].ttf, fontData[i].size, fontData[i].symbolsFont);
+        if (fontData[i].ttf == &fontFiraMonoRegular_Embedded) {
+            font->enableKerning = iFalse;
+        }
+    }
+    gap_Text = iRound(gap_UI * d->contentFontSize);
+}
+
+static void deinitFonts_Text_(iText *d) {
+    iForIndices(i, d->fonts) {
+        deinit_Font(&d->fonts[i]);
+    }
+}
+
+static void initCache_Text_(iText *d) {
+    init_Array(&d->cacheRows, sizeof(iCacheRow));
+    const int textSize = d->contentFontSize * fontSize_UI;
+    iAssert(textSize > 0);
+    const iInt2 cacheDims = init_I2(16, 80);
+    d->cacheSize = mul_I2(cacheDims, init1_I2(iMax(textSize, fontSize_UI)));
+    d->cacheRowAllocStep = iMax(2, textSize / 6);
+    /* Allocate initial (empty) rows. These will be assigned actual locations in the cache
+       once at least one glyph is stored. */
+    for (int h = d->cacheRowAllocStep; h <= 2 * textSize; h += d->cacheRowAllocStep) {
+        pushBack_Array(&d->cacheRows, &(iCacheRow){ .height = 0 });
+    }
+    d->cacheBottom = 0;
+    d->cache = SDL_CreateTexture(d->render,
+                                 SDL_PIXELFORMAT_RGBA8888,
+                                 SDL_TEXTUREACCESS_STATIC | SDL_TEXTUREACCESS_TARGET,
+                                 d->cacheSize.x,
+                                 d->cacheSize.y);
+    SDL_SetTextureBlendMode(d->cache, SDL_BLENDMODE_BLEND);
+}
+
+static void deinitCache_Text_(iText *d) {
+    deinit_Array(&d->cacheRows);
+    SDL_DestroyTexture(d->cache);
+}
+
 void init_Text(SDL_Renderer *render) {
     iText *d = &text_;
-    init_Array(&d->cacheRows, sizeof(iCacheRow));
-    d->ansiEscape = new_RegExp("\\[([0-9;]+)m", 0);
-    d->render = render;
+    d->contentFontSize = 1.0f;
+    d->ansiEscape      = new_RegExp("\\[([0-9;]+)m", 0);
+    d->render          = render;
     /* A grayscale palette for rasterized glyphs. */ {
         SDL_Color colors[256];
         for (int i = 0; i < 256; ++i) {
@@ -123,72 +198,33 @@ void init_Text(SDL_Renderer *render) {
         d->grayscale = SDL_AllocPalette(256);
         SDL_SetPaletteColors(d->grayscale, colors, 0, 256);
     }
-    /* Initialize the glyph cache. */ {
-        d->cacheSize = init_I2(fontSize_UI * 16, fontSize_UI * 64);
-        d->cacheRowAllocStep = fontSize_UI / 6;
-        /* Allocate initial (empty) rows. These will be assigned actual locations in the cache
-           once at least one glyph is stored. */
-        for (int h = d->cacheRowAllocStep; h <= 2 * fontSize_UI; h += d->cacheRowAllocStep) {
-            pushBack_Array(&d->cacheRows, &(iCacheRow){ .height = 0 });
-        }
-        d->cacheBottom = 0;
-        d->cache = SDL_CreateTexture(render,
-                                     SDL_PIXELFORMAT_RGBA8888,
-                                     SDL_TEXTUREACCESS_STATIC | SDL_TEXTUREACCESS_TARGET,
-                                     d->cacheSize.x,
-                                     d->cacheSize.y);
-        SDL_SetTextureBlendMode(d->cache, SDL_BLENDMODE_BLEND);
-    }
-    /* Load the fonts. */ {
-        const struct {
-            const iBlock *ttf;
-            int size;
-            int symbolsFont;
-        } fontData[max_FontId] = {
-            { &fontSourceSansProRegular_Embedded, fontSize_UI,          symbols_FontId },
-            { &fontFiraSansRegular_Embedded,      fontSize_UI,          symbols_FontId },
-            { &fontFiraMonoRegular_Embedded,      fontSize_UI * 0.866f, smallSymbols_FontId },
-            { &fontFiraMonoRegular_Embedded,      fontSize_UI * 0.666f, smallSymbols_FontId },
-            { &fontFiraSansRegular_Embedded,      fontSize_UI * 1.333f, mediumSymbols_FontId },
-            { &fontFiraSansItalic_Embedded,       fontSize_UI,          symbols_FontId },
-            { &fontFiraSansBold_Embedded,         fontSize_UI,          symbols_FontId },
-            { &fontFiraSansBold_Embedded,         fontSize_UI * 1.333f, mediumSymbols_FontId },
-            { &fontFiraSansBold_Embedded,         fontSize_UI * 1.666f, largeSymbols_FontId },
-            { &fontFiraSansBold_Embedded,         fontSize_UI * 2.000f, hugeSymbols_FontId },
-            { &fontSymbola_Embedded,              fontSize_UI,          symbols_FontId },
-            { &fontSymbola_Embedded,              fontSize_UI * 1.333f, mediumSymbols_FontId },
-            { &fontSymbola_Embedded,              fontSize_UI * 1.666f, largeSymbols_FontId },
-            { &fontSymbola_Embedded,              fontSize_UI * 2.000f, hugeSymbols_FontId },
-            { &fontSymbola_Embedded,              fontSize_UI * 0.866f, smallSymbols_FontId },
-            { &fontNotoEmojiRegular_Embedded,     fontSize_UI,          symbols_FontId },
-            { &fontNotoEmojiRegular_Embedded,     fontSize_UI * 1.333f, mediumSymbols_FontId },
-            { &fontNotoEmojiRegular_Embedded,     fontSize_UI * 1.666f, largeSymbols_FontId },
-            { &fontNotoEmojiRegular_Embedded,     fontSize_UI * 2.000f, hugeSymbols_FontId },
-            { &fontNotoEmojiRegular_Embedded,     fontSize_UI * 0.866f, smallSymbols_FontId },
-        };
-        iForIndices(i, fontData) {
-            iFont *font = &d->fonts[i];
-            init_Font(font,
-                      fontData[i].ttf,
-                      fontData[i].size,
-                      fontData[i].symbolsFont);
-            if (fontData[i].ttf == &fontFiraMonoRegular_Embedded) {
-                font->enableKerning = iFalse;
-            }
-        }
-    }
+    initCache_Text_(d);
+    initFonts_Text_(d);
 }
 
 void deinit_Text(void) {
     iText *d = &text_;
     SDL_FreePalette(d->grayscale);
-    iForIndices(i, d->fonts) {
-        deinit_Font(&d->fonts[i]);
-    }
-    deinit_Array(&d->cacheRows);
-    SDL_DestroyTexture(d->cache);
+    deinitFonts_Text_(d);
+    deinitCache_Text_(d);
     d->render = NULL;
     iRelease(d->ansiEscape);
+}
+
+void setContentFontSize_Text(float fontSizeFactor) {
+    iAssert(fontSizeFactor > 0);
+    if (iAbs(text_.contentFontSize - fontSizeFactor) > 0.001f) {
+        text_.contentFontSize = fontSizeFactor;
+        resetFonts_Text();
+    }
+}
+
+void resetFonts_Text(void) {
+    iText *d = &text_;
+    deinitFonts_Text_(d);
+    deinitCache_Text_(d);
+    initCache_Text_(d);
+    initFonts_Text_(d);
 }
 
 iLocalDef iFont *font_Text_(enum iFontId id) {

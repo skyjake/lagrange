@@ -7,8 +7,9 @@
 
 enum iFontId {
     default_FontId,
+    defaultMonospace_FontId,
     regular_FontId,
-    monospace_FontId,
+    monospace_FontId,    
     monospaceSmall_FontId,
     medium_FontId,
     italic_FontId,
@@ -16,11 +17,13 @@ enum iFontId {
     mediumBold_FontId,
     largeBold_FontId,
     hugeBold_FontId,
+    defaultSymbols_FontId,
     symbols_FontId,
     mediumSymbols_FontId,
     largeSymbols_FontId,
     hugeSymbols_FontId,
     smallSymbols_FontId,
+    defaultEmoji_FontId,
     emoji_FontId,
     mediumEmoji_FontId,
     largeEmoji_FontId,
@@ -28,11 +31,11 @@ enum iFontId {
     smallEmoji_FontId,
     max_FontId,
     /* Meta: */
-    fromSymbolsToEmojiOffset_FontId = 5,
+    fromSymbolsToEmojiOffset_FontId = 6,
     /* UI fonts: */
     uiLabel_FontId     = default_FontId,
     uiShortcuts_FontId = default_FontId,
-    uiInput_FontId     = monospace_FontId,
+    uiInput_FontId     = defaultMonospace_FontId,
     /* Document fonts: */
     paragraph_FontId         = regular_FontId,
     firstParagraph_FontId    = medium_FontId,
@@ -44,8 +47,13 @@ enum iFontId {
     header3_FontId           = medium_FontId,
 };
 
+extern int gap_Text; /* affected by content font size */
+
 void    init_Text           (SDL_Renderer *);
 void    deinit_Text         (void);
+
+void    setContentFontSize_Text (float fontSizeFactor); /* affects all except `default*` fonts */
+void    resetFonts_Text     (void);
 
 int     lineHeight_Text     (int fontId);
 iInt2   measure_Text        (int fontId, const char *text);
