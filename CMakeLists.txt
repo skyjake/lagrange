@@ -20,6 +20,7 @@ set (EMBED_RESOURCES
     res/SourceSansPro-Regular.ttf
     res/FiraSans-Regular.ttf
     res/FiraSans-Bold.ttf
+    res/FiraSans-Light.ttf
     res/FiraSans-Italic.ttf
     res/FiraMono-Regular.ttf
     res/NotoEmoji-Regular.ttf

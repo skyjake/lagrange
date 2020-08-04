@@ -17,6 +17,8 @@ enum iFontId {
     mediumBold_FontId,
     largeBold_FontId,
     hugeBold_FontId,
+    largeLight_FontId,
+    /* symbol fonts */
     defaultSymbols_FontId,
     symbols_FontId,
     mediumSymbols_FontId,
@@ -45,6 +47,7 @@ enum iFontId {
     header1_FontId           = hugeBold_FontId,
     header2_FontId           = largeBold_FontId,
     header3_FontId           = medium_FontId,
+    banner_FontId            = largeLight_FontId,
 };
 
 extern int gap_Text; /* affected by content font size */

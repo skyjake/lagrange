@@ -23,7 +23,7 @@ enum iGmLinkFlags {
     userFriendly_GmLinkFlag       = iBit(10),
     imageFileExtension_GmLinkFlag = iBit(11),
     audioFileExtension_GmLinkFlag = iBit(12),
-    content_GmLinkFlag            = iBit(13),  /* content visible below */
+    content_GmLinkFlag            = iBit(13), /* content visible below */
     visited_GmLinkFlag            = iBit(14), /* in the history */
 };
 
@@ -38,6 +38,7 @@ struct Impl_GmImageInfo {
 enum iGmRunFlags {
     startOfLine_GmRunFlag = iBit(1),
     endOfLine_GmRunFlag   = iBit(2),
+    siteBanner_GmRunlag   = iBit(3), /* area reserved for the site banner */
 };
 
 struct Impl_GmRun {

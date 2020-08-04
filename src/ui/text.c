@@ -130,6 +130,7 @@ static void initFonts_Text_(iText *d) {
         { &fontFiraSansBold_Embedded,         textSize * 1.333f,    mediumSymbols_FontId },
         { &fontFiraSansBold_Embedded,         textSize * 1.666f,    largeSymbols_FontId },
         { &fontFiraSansBold_Embedded,         textSize * 2.000f,    hugeSymbols_FontId },
+        { &fontFiraSansLight_Embedded,        textSize * 1.666f,    largeSymbols_FontId },
         { &fontSymbola_Embedded,              fontSize_UI,          defaultSymbols_FontId },
         { &fontSymbola_Embedded,              textSize,             symbols_FontId },
         { &fontSymbola_Embedded,              textSize * 1.333f,    mediumSymbols_FontId },
