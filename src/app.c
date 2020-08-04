@@ -1,6 +1,7 @@
 #include "app.h"
 #include "embedded.h"
 #include "gmcerts.h"
+#include "gmutil.h"
 #include "history.h"
 #include "ui/command.h"
 #include "ui/window.h"
@@ -337,6 +338,13 @@ iBool handleCommand_App(const char *cmd) {
     iWidget *root = d->window->root;
     if (equal_Command(cmd, "open")) {
         const iString *url = collect_String(newCStr_String(suffixPtr_Command(cmd, "url")));
+        iUrl parts;
+        init_Url(&parts, url);
+        if (equalCase_Rangecc(&parts.protocol, "http") ||
+            equalCase_Rangecc(&parts.protocol, "https")) {
+            openInDefaultBrowser_App(url);
+            return iTrue;
+        }
         if (!argLabel_Command(cmd, "history")) {
             if (argLabel_Command(cmd, "redirect")) {
                 replace_History(d->history, url);
@@ -415,4 +423,20 @@ iBool handleCommand_App(const char *cmd) {
         return iFalse;
     }
     return iTrue;
+}
+
+void openInDefaultBrowser_App(const iString *url) {
+    iProcess *proc = new_Process();
+#if defined (iPlatformApple)
+    setArguments_Process(proc,
+                         iClob(newStringsCStr_StringList("/usr/bin/open", cstr_String(url), NULL)));
+    start_Process(proc);
+#elif defined(iPlatformLinux)
+    setArguments_Process(proc,
+                         iClob(newStringsCStr_StringList("/usr/bin/x-www-browser", cstr_String(url), NULL)));
+    start_Process(proc);
+#else
+    iAssert(iFalse);
+#endif
+    iRelease(proc);
 }
