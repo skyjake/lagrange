@@ -84,6 +84,7 @@ struct Impl_DocumentWidget {
     iObjectList *media;
     iGmDocument *doc;
     int certFlags;
+    iDate certExpiry;
     iBool selecting;
     iRangecc selectMark;
     iRangecc foundMark;
@@ -106,6 +107,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     iWidget *w = as_Widget(d);
     init_Widget(w);
     setId_Widget(w, "document");
+    iZap(d->certExpiry);
     d->state            = blank_DocumentState;
     d->url              = new_String();
     d->titleUser        = new_String();
@@ -430,7 +432,8 @@ static void updateTrust_DocumentWidget_(iDocumentWidget *d) {
     iAssert(d->request);
 #define openLock_CStr   "\U0001f513"
 #define closedLock_CStr "\U0001f512"
-    d->certFlags = certFlags_GmRequest(d->request);
+    d->certFlags       = certFlags_GmRequest(d->request);
+    d->certExpiry      = certExpirationDate_GmRequest(d->request);
     iLabelWidget *lock = findWidget_App("navbar.lock");
     if (~d->certFlags & available_GmRequestCertFlag) {
         setFlags_Widget(as_Widget(lock), disabled_WidgetFlag, iTrue);
@@ -603,22 +606,24 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
     }
     else if (isCommand_UserEvent(ev, "server.showcert")) {
         const char *unchecked = red_ColorEscape   "\u2610";
-        const char *checked   = green_ColorEscape "\u2611";
+        const char *checked   = green_ColorEscape "\u2611";        
         makeMessage_Widget(
             cyan_ColorEscape "CERTIFICATE STATUS",
-            format_CStr("%s%s  Certificate %s\n"
-                        "%s%s  Domain name %s\n"
-                        "%s%s  %s\n"
+            format_CStr("%s%s  Domain name %s\n"
+                        "%s%s  %s (%04d-%02d-%02d %02d:%02d:%02d)\n"
                         "%s%s  %s",
-                        d->certFlags & available_GmRequestCertFlag ? checked : unchecked,
-                        gray75_ColorEscape,
-                        d->certFlags & available_GmRequestCertFlag ? "available" : "not available",
                         d->certFlags & domainVerified_GmRequestCertFlag ? checked : unchecked,
                         gray75_ColorEscape,
                         d->certFlags & domainVerified_GmRequestCertFlag ? "matches" : "mismatch",
                         d->certFlags & timeVerified_GmRequestCertFlag ? checked : unchecked,
                         gray75_ColorEscape,
                         d->certFlags & timeVerified_GmRequestCertFlag ? "Not expired" : "Expired",
+                        d->certExpiry.year,
+                        d->certExpiry.month,
+                        d->certExpiry.day,
+                        d->certExpiry.hour,
+                        d->certExpiry.minute,
+                        d->certExpiry.second,
                         d->certFlags & trusted_GmRequestCertFlag ? checked : unchecked,
                         gray75_ColorEscape,
                         d->certFlags & trusted_GmRequestCertFlag ? "Trusted on first use" : "Not trusted"));
@@ -778,7 +783,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         }
     }
     else if (ev->type == SDL_MOUSEWHEEL) {
-        scroll_DocumentWidget_(d, -3 * ev->wheel.y * lineHeight_Text(default_FontId));
+        scroll_DocumentWidget_(d, -3 * ev->wheel.y * lineHeight_Text(paragraph_FontId));
         return iTrue;
     }
     else if (ev->type == SDL_MOUSEMOTION) {
@@ -831,8 +836,10 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                     if (isMediaLink_GmDocument(d->doc, linkId)) {
                         if (!requestMedia_DocumentWidget_(d, linkId)) {
                             if (linkFlags_GmDocument(d->doc, linkId) & content_GmLinkFlag) {
+                                /* Dismiss shown content on click. */
                                 setImage_GmDocument(d->doc, linkId, NULL, NULL);
                                 d->hoverLink = NULL;
+                                scroll_DocumentWidget_(d, 0);
                                 updateVisible_DocumentWidget_(d);
                                 refresh_Widget(w);
                                 return iTrue;
@@ -964,7 +971,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                     appendFormat_String(
                         &text, "  %s\U0001f7a8", isHover ? white_ColorEscape : "");
                 }
-                drawAlign_Text(default_FontId,
+                drawAlign_Text(uiLabel_FontId,
                                add_I2(topRight_Rect(run->bounds), origin),
                                fg,
                                right_Alignment,
@@ -975,7 +982,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
         else if (run->flags & endOfLine_GmRunFlag &&
                  (mr = findMediaRequest_DocumentWidget_(d->widget, run->linkId)) != NULL) {
             if (!isFinished_GmRequest(mr->req)) {
-                draw_Text(default_FontId,
+                draw_Text(uiLabel_FontId,
                           topRight_Rect(linkRect),
                           linkColor_GmDocument(doc, run->linkId),
                           " \u2014 Fetching\u2026");
@@ -1014,7 +1021,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                                     cstr_String(collect_String(format_Date(&date, "%b %d"))));
             }
             if (!isEmpty_String(&str)) {
-                const iInt2 textSize = measure_Text(default_FontId, cstr_String(&str));
+                const iInt2 textSize = measure_Text(uiLabel_FontId, cstr_String(&str));
                 int tx = topRight_Rect(linkRect).x;
                 const char *msg = cstr_String(&str);
                 if (tx + textSize.x > right_Rect(d->widgetBounds)) {
@@ -1022,9 +1029,9 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                     fillRect_Paint(&d->paint, (iRect){ init_I2(tx, top_Rect(linkRect)), textSize },
                                    black_ColorId);
                     msg += 4; /* skip the space and dash */
-                    tx += measure_Text(default_FontId, " \u2014").x / 2;
+                    tx += measure_Text(uiLabel_FontId, " \u2014").x / 2;
                 }
-                drawAlign_Text(default_FontId,
+                drawAlign_Text(uiLabel_FontId,
                                init_I2(tx, top_Rect(linkRect)),
                                fg - 1,
                                left_Alignment,

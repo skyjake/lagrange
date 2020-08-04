@@ -343,7 +343,12 @@ int certFlags_GmRequest(const iGmRequest *d) {
 
 iDate certExpirationDate_GmRequest(const iGmRequest *d) {
     iDate expiry;
-    validUntil_TlsCertificate(serverCertificate_TlsRequest(d->req), &expiry);
+    if (d->req) {
+        validUntil_TlsCertificate(serverCertificate_TlsRequest(d->req), &expiry);
+    }
+    else {
+        iZap(expiry);
+    }
     return expiry;
 }
 
