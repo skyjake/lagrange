@@ -342,6 +342,7 @@ iBool handleCommand_App(const char *cmd) {
         init_Url(&parts, url);
         if (equalCase_Rangecc(&parts.protocol, "http") ||
             equalCase_Rangecc(&parts.protocol, "https")) {
+            visitUrl_History(d->history, url);
             openInDefaultBrowser_App(url);
             return iTrue;
         }
@@ -427,16 +428,15 @@ iBool handleCommand_App(const char *cmd) {
 
 void openInDefaultBrowser_App(const iString *url) {
     iProcess *proc = new_Process();
+    setArguments_Process(proc,
 #if defined (iPlatformApple)
-    setArguments_Process(proc,
-                         iClob(newStringsCStr_StringList("/usr/bin/open", cstr_String(url), NULL)));
-    start_Process(proc);
-#elif defined(iPlatformLinux)
-    setArguments_Process(proc,
-                         iClob(newStringsCStr_StringList("/usr/bin/x-www-browser", cstr_String(url), NULL)));
-    start_Process(proc);
-#else
-    iAssert(iFalse);
+                         iClob(newStringsCStr_StringList("/usr/bin/open", cstr_String(url), NULL))
+#elif defined (iPlatformLinux)
+                         iClob(newStringsCStr_StringList("/usr/bin/x-www-browser", cstr_String(url), NULL))
+#elif defined (iPlatformMsys)
+                         iClob(newStringsCStr_StringList("start", cstr_String(url), NULL))
 #endif
+    );
+    start_Process(proc);
     iRelease(proc);
 }

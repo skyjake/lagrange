@@ -194,6 +194,10 @@ void addUrl_History(iHistory *d, const iString *url ){
     addVisited_History_(d, url);
 }
 
+void visitUrl_History(iHistory *d, const iString *url) {
+    addVisited_History_(d, url);
+}
+
 iBool goBack_History(iHistory *d) {
     if (d->stackPos < size_Array(&d->stack) - 1) {
         d->stackPos++;

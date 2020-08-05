@@ -27,7 +27,8 @@ const iString * url_History         (iHistory *, size_t pos);
 iTime           urlVisitTime_History(const iHistory *, const iString *url);
 void            print_History       (const iHistory *);
 
-void    addUrl_History      (iHistory *, const iString *url);
+void    addUrl_History      (iHistory *, const iString *url); /* adds to the stack of recents */
+void    visitUrl_History    (iHistory *, const iString *url); /* adds URL to the visited URLs set */
 void    replace_History     (iHistory *, const iString *url);
 
 iBool   goBack_History      (iHistory *);
