@@ -841,6 +841,16 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                     return iTrue;
                 }
                 break;
+            case SDLK_9: {
+                iBlock *seed = new_Block(64);
+                for (size_t i = 0; i < 64; ++i) {
+                    setByte_Block(seed, i, iRandom(0, 255));
+                }
+                setThemeSeed_GmDocument(d->doc, seed);
+                delete_Block(seed);
+                refresh_Widget(w);
+                break;
+            }
 #if 0
             case '0': {
                 extern int enableHalfPixelGlyphs_Text;
@@ -1013,34 +1023,38 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
          !isEmpty_Rect(run->bounds));
     const iInt2 visPos = add_I2(run->visBounds.pos, origin);
     /* Text markers. */
+    /* TODO: Add themed palette entries */
     fillRange_DrawContext_(d, run, teal_ColorId, d->widget->foundMark, &d->inFoundMark);
     fillRange_DrawContext_(d, run, brown_ColorId, d->widget->selectMark, &d->inSelectMark);
     if (run->linkId && !isEmpty_Rect(run->bounds)) {
-//        const int flags = linkFlags_GmDocument(doc, run->linkId);
-        fg = /*flags & visited_GmLinkFlag ? gray88_ColorId :*/ white_ColorId;
-        if (isHover || linkFlags_GmDocument(doc, run->linkId) & content_GmLinkFlag) {
-            fg = linkColor_GmDocument(doc, run->linkId);
+        fg = linkColor_GmDocument(doc, run->linkId, isHover ? textHover_GmLinkPart : text_GmLinkPart);
+        if (linkFlags_GmDocument(doc, run->linkId) & content_GmLinkFlag) {
+            fg = linkColor_GmDocument(doc, run->linkId, textHover_GmLinkPart); /* link is inactive */
         }
     }
     if (run->flags & siteBanner_GmRunFlag) {
+        /* Draw the site banner. */
         fillRect_Paint(
             &d->paint,
             initCorners_Rect(topLeft_Rect(d->widgetBounds),
                              init_I2(right_Rect(bounds_Widget(constAs_Widget(d->widget))),
                                      visPos.y + height_Rect(run->visBounds))),
-            black_ColorId);
+            tmBannerBackground_ColorId);
         const iChar icon = siteIcon_GmDocument(doc);
         iString bannerText;
         init_String(&bannerText);
-        format_String(&bannerText, "%lc", (int) icon);
-        //appendRange_String(&bannerText, run->text);
-        const iInt2 iconSize = advanceN_Text(banner_FontId, cstr_String(&bannerText), 2);
         iInt2 bpos = add_I2(visPos, init_I2(0, lineHeight_Text(banner_FontId) / 2));
-//        draw_Text(run->font, bpos, fg, "%s", buf);
-//        bpos.x += iconSize.x;
-        drawRange_Text(run->font, bpos, fg, range_String(&bannerText));
-        bpos.x += iconSize.x + 3 * gap_Text;
-        drawRange_Text(run->font, bpos, fg, run->text);
+        if (icon) {
+            format_String(&bannerText, "%lc", (int) icon);
+            const iInt2 iconSize = advanceN_Text(banner_FontId, cstr_String(&bannerText), 2);
+            drawRange_Text(run->font, bpos, tmBannerIcon_ColorId, range_String(&bannerText));
+            bpos.x += iconSize.x + 3 * gap_Text;
+        }
+        drawRange_Text(run->font,
+                       bpos,
+                       tmBannerTitle_ColorId,
+                       isEmpty_String(d->widget->titleUser) ? run->text
+                                                            : range_String(d->widget->titleUser));
         deinit_String(&bannerText);
     }
     else {
@@ -1053,8 +1067,9 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
         const int flags = linkFlags_GmDocument(doc, run->linkId);
         const iRect linkRect = moved_Rect(run->visBounds, origin);
         iMediaRequest *mr = NULL;
+        /* Show inline content. */
         if (flags & content_GmLinkFlag) {
-            fg = linkColor_GmDocument(doc, run->linkId);
+            fg = linkColor_GmDocument(doc, run->linkId, textHover_GmLinkPart);
             if (!isEmpty_Rect(run->bounds)) {
                 iGmImageInfo info;
                 imageInfo_GmDocument(doc, linkImage_GmDocument(doc, run->linkId), &info);
@@ -1064,7 +1079,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                               info.mime, info.size.x, info.size.y, info.numBytes / 1.0e6f);
                 if (findMediaRequest_DocumentWidget_(d->widget, run->linkId)) {
                     appendFormat_String(
-                        &text, "  %s\U0001f7a8", isHover ? white_ColorEscape : "");
+                        &text, "  %s\U0001f7a8", isHover ? escape_Color(tmLinkText_ColorId) : "");
                 }
                 drawAlign_Text(metaFont,
                                add_I2(topRight_Rect(run->bounds), origin),
@@ -1079,7 +1094,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
             if (!isFinished_GmRequest(mr->req)) {
                 draw_Text(metaFont,
                           topRight_Rect(linkRect),
-                          linkColor_GmDocument(doc, run->linkId),
+                          tmInlineContentMetadata_ColorId,
                           " \u2014 Fetching\u2026");
             }
         }
@@ -1090,7 +1105,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
             iUrl parts;
             init_Url(&parts, url);
             const iString *host = collect_String(newRange_String(parts.host));
-            fg = linkColor_GmDocument(doc, linkId);
+            fg = linkColor_GmDocument(doc, linkId, textHover_GmLinkPart);
             const iBool showHost  = (!isEmpty_String(host) && flags & userFriendly_GmLinkFlag);
             const iBool showImage = (flags & imageFileExtension_GmLinkFlag) != 0;
             const iBool showAudio = (flags & audioFileExtension_GmLinkFlag) != 0;
@@ -1099,20 +1114,25 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
             if (run->flags & endOfLine_GmRunFlag &&
                 (flags & (imageFileExtension_GmLinkFlag | audioFileExtension_GmLinkFlag) ||
                  showHost)) {
-                format_String(&str, " \u2014%s%s%s\r%c%s",
-                              showHost ? " " : "",
-                              showHost ? cstr_String(host) : "",
-                              showHost && (showImage || showAudio) ? " \u2014" : "",
-                              showImage || showAudio ? '0' + fg : ('0' + fg - 1),
-                              showImage ? " View Image \U0001f5bc"
-                                        : showAudio ? " Play Audio \U0001f3b5" : "");
+                format_String(
+                    &str,
+                    " \u2014%s%s%s\r%c%s",
+                    showHost ? " " : "",
+                    showHost ? cstr_String(host) : "",
+                    showHost && (showImage || showAudio) ? " \u2014" : "",
+                    showImage || showAudio
+                        ? '0' + fg
+                        : ('0' + linkColor_GmDocument(doc, run->linkId, domain_GmLinkPart)),
+                    showImage ? " View Image \U0001f5bc"
+                              : showAudio ? " Play Audio \U0001f3b5" : "");
             }
             if (run->flags & endOfLine_GmRunFlag && flags & visited_GmLinkFlag) {
                 iDate date;
                 init_Date(&date, linkTime_GmDocument(doc, run->linkId));
                 appendFormat_String(&str,
                                     " \u2014 %s%s",
-                                    escape_Color(fg),
+                                    escape_Color(linkColor_GmDocument(doc, run->linkId,
+                                                                      visited_GmLinkPart)),
                                     cstr_String(collect_String(format_Date(&date, "%b %d"))));
             }
             if (!isEmpty_String(&str)) {
@@ -1128,7 +1148,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                 }
                 drawAlign_Text(metaFont,
                                init_I2(tx, top_Rect(linkRect)),
-                               fg - 1,
+                               linkColor_GmDocument(doc, run->linkId, domain_GmLinkPart),
                                left_Alignment,
                                "%s",
                                msg);
@@ -1152,7 +1172,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
         .bounds = documentBounds_DocumentWidget_(d)
     };
     init_Paint(&ctx.paint);
-    fillRect_Paint(&ctx.paint, bounds, black_ColorId);
+    fillRect_Paint(&ctx.paint, bounds, tmBackground_ColorId);
     setClip_Paint(&ctx.paint, bounds);
     render_GmDocument(d->doc, visibleRange_DocumentWidget_(d), drawRun_DrawContext_, &ctx);
     clearClip_Paint(&ctx.paint);

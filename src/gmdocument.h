@@ -80,13 +80,21 @@ iInt2   sizeWithoutBanner_GmDocument    (const iGmDocument *);
 iRangecc        findText_GmDocument         (const iGmDocument *, const iString *text, const char *start);
 iRangecc        findTextBefore_GmDocument   (const iGmDocument *, const iString *text, const char *before);
 
+enum iGmLinkPart {
+    icon_GmLinkPart,
+    text_GmLinkPart,
+    textHover_GmLinkPart,
+    domain_GmLinkPart,
+    visited_GmLinkPart,
+};
+
 const iGmRun *  findRun_GmDocument      (const iGmDocument *, iInt2 pos);
 const char *    findLoc_GmDocument      (const iGmDocument *, iInt2 pos);
 const iGmRun *  findRunAtLoc_GmDocument (const iGmDocument *, const char *loc);
 const iString * linkUrl_GmDocument      (const iGmDocument *, iGmLinkId linkId);
 uint16_t        linkImage_GmDocument    (const iGmDocument *, iGmLinkId linkId);
 int             linkFlags_GmDocument    (const iGmDocument *, iGmLinkId linkId);
-enum iColorId   linkColor_GmDocument    (const iGmDocument *, iGmLinkId linkId);
+enum iColorId   linkColor_GmDocument    (const iGmDocument *, iGmLinkId linkId, enum iGmLinkPart part);
 const iTime *   linkTime_GmDocument     (const iGmDocument *, iGmLinkId linkId);
 iBool           isMediaLink_GmDocument  (const iGmDocument *, iGmLinkId linkId);
 const iString * title_GmDocument        (const iGmDocument *);

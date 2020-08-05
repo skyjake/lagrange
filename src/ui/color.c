@@ -100,9 +100,12 @@ static float hueToRgb_(float p, float q, float t) {
     return p;
 }
 
-iColor fromHsl_Color(iHSLColor hsl) {
+iColor rgb_HSLColor(iHSLColor hsl) {
     float r, g, b;
     hsl.hue /= 360.0f;
+    hsl.hue = iWrapf(hsl.hue, 0, 1);
+    hsl.sat = iClamp(hsl.sat, 0.0f, 1.0f);
+    hsl.lum = iClamp(hsl.lum, 0.0f, 1.0f);
     if (hsl.sat < 0.00001f) {
         r = g = b = hsl.lum;
     }
@@ -137,7 +140,23 @@ const char *escape_Color(int color) {
     if (color >= 0 && color < (int) iElemCount(esc)) {
         return esc[color];
     }
-    return white_ColorEscape;
+    return format_CStr("\r%c", color + '0');
+}
+
+iHSLColor setSat_HSLColor(iHSLColor d, float sat) {
+    d.sat = iClamp(sat, 0, 1);
+    return d;
+}
+
+iHSLColor setLum_HSLColor(iHSLColor d, float lum) {
+    d.lum = iClamp(lum, 0, 1);
+    return d;
+}
+
+iHSLColor addSatLum_HSLColor(iHSLColor d, float sat, float lum) {
+    d.sat = iClamp(d.sat + sat, 0, 1);
+    d.lum = iClamp(d.lum + lum, 0, 1);
+    return d;
 }
 
 iColor ansi_Color(iRangecc escapeSequence, int fallback) {
