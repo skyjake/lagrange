@@ -38,7 +38,7 @@ struct Impl_GmImageInfo {
 enum iGmRunFlags {
     startOfLine_GmRunFlag = iBit(1),
     endOfLine_GmRunFlag   = iBit(2),
-    siteBanner_GmRunlag   = iBit(3), /* area reserved for the site banner */
+    siteBanner_GmRunFlag  = iBit(3), /* area reserved for the site banner */
 };
 
 struct Impl_GmRun {
@@ -62,6 +62,7 @@ enum iGmDocumentFormat {
     plainText_GmDocumentFormat,
 };
 
+void    setThemeSeed_GmDocument (iGmDocument *, const iBlock *seed);
 void    setFormat_GmDocument    (iGmDocument *, enum iGmDocumentFormat format);
 void    setWidth_GmDocument     (iGmDocument *, int width);
 void    setUrl_GmDocument       (iGmDocument *, const iString *url);
@@ -74,6 +75,7 @@ typedef void (*iGmDocumentRenderFunc)(void *, const iGmRun *);
 
 void    render_GmDocument       (const iGmDocument *, iRangei visRangeY, iGmDocumentRenderFunc render, void *);
 iInt2   size_GmDocument         (const iGmDocument *);
+iInt2   sizeWithoutBanner_GmDocument    (const iGmDocument *);
 
 iRangecc        findText_GmDocument         (const iGmDocument *, const iString *text, const char *start);
 iRangecc        findTextBefore_GmDocument   (const iGmDocument *, const iString *text, const char *before);
@@ -88,6 +90,7 @@ enum iColorId   linkColor_GmDocument    (const iGmDocument *, iGmLinkId linkId);
 const iTime *   linkTime_GmDocument     (const iGmDocument *, iGmLinkId linkId);
 iBool           isMediaLink_GmDocument  (const iGmDocument *, iGmLinkId linkId);
 const iString * title_GmDocument        (const iGmDocument *);
+iChar           siteIcon_GmDocument     (const iGmDocument *);
 
 SDL_Texture *   imageTexture_GmDocument (const iGmDocument *, uint16_t imageId);
 void            imageInfo_GmDocument    (const iGmDocument *, uint16_t imageId, iGmImageInfo *info_out);

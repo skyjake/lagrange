@@ -86,6 +86,8 @@ struct Impl_GmDocument {
     iPtrArray links;
     iString title; /* the first top-level title */
     iPtrArray images; /* persistent across layouts, references links by ID */
+    uint32_t themeSeed;
+    iChar siteIcon;
 };
 
 iDefineObjectConstruction(GmDocument)
@@ -299,11 +301,12 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     enum iGmLineType prevType    = text_GmLineType;
     iBool            isPreformat = iFalse;
     iBool            isFirstText = iTrue;
+    iBool            addSiteBanner = iTrue;
     int              preFont     = preformatted_FontId;
     if (d->format == plainText_GmDocumentFormat) {
         isPreformat = iTrue;
         isFirstText = iFalse;
-    }
+    }       
     while (nextSplit_Rangecc(&content, "\n", &line)) {
         iGmRun run;
         run.flags = 0;
@@ -345,10 +348,25 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 startsWithSc_Rangecc(&line, "```", &iCaseSensitive)) {
                 isPreformat = iFalse;
                 preAltText = iNullRange;
+                addSiteBanner = iFalse; /* overrides the banner */
                 continue;
             }
             run.font = preFont;
             indent = indents[type];
+        }
+        if (addSiteBanner) {
+            addSiteBanner = iFalse;
+            const iRangecc bannerText = urlHost_String(&d->url);
+            if (!isEmpty_Range(&bannerText)) {
+                iGmRun banner    = { .flags = siteBanner_GmRunFlag };
+                banner.bounds    = zero_Rect();
+                banner.visBounds = init_Rect(0, 0, d->size.x, lineHeight_Text(banner_FontId) * 2);
+                banner.font      = banner_FontId;
+                banner.text      = bannerText;
+                banner.color     = gray50_ColorId;
+                pushBack_Array(&d->layout, &banner);
+                pos.y += height_Rect(banner.visBounds) + lineHeight_Text(paragraph_FontId);
+            }
         }
         /* Empty lines don't produce text runs. */
         if (isEmpty_Range(&line)) {
@@ -415,7 +433,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         int bigCount = 0;
         if (type == text_GmLineType && isFirstText) {
             run.font = firstParagraph_FontId;
-            run.color = gray88_ColorId;
+            run.color = white_ColorId;
             bigCount = 15; /* max lines -- what if the whole document is one paragraph? */
             isFirstText = iFalse;
         }
@@ -505,6 +523,7 @@ void init_GmDocument(iGmDocument *d) {
     init_PtrArray(&d->links);
     init_String(&d->title);
     init_PtrArray(&d->images);
+    setThemeSeed_GmDocument(d, NULL);
 }
 
 void deinit_GmDocument(iGmDocument *d) {
@@ -527,6 +546,30 @@ void reset_GmDocument(iGmDocument *d) {
     clear_Array(&d->layout);
     clear_String(&d->url);
     clear_String(&d->localHost);
+    d->themeSeed = 0;
+}
+
+void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
+    static const iChar siteIcons[] = {
+        0x25ed,  0x2600,  0x2601,  0x2604,  0x2605,  0x2606,  0x265c,  0x265e,  0x2690,
+        0x2691,  0x2693,  0x2698,  0x2699,  0x26f0,  0x270e,  0x2728,  0x272a,  0x272f,
+        0x2731,  0x2738,  0x273a,  0x273e,  0x2740,  0x2742,  0x2744,  0x2748,  0x274a,
+        0x2751,  0x2756,  0x2766,  0x27bd,  0x27c1,  0x27d0,  0x2b19,  0x1f300, 0x1f303,
+        0x1f306, 0x1f308, 0x1f30a, 0x1f319, 0x1f31f, 0x1f320, 0x1f340, 0x1f4cd, 0x1f4e1,
+        0x1f657, 0x1f659, 0x1f665, 0x1f78b, 0x1f796, 0x1f79c,
+    };
+    d->themeSeed = 0;
+    d->siteIcon  = 0;
+    if (seed && !isEmpty_Block(seed)) {
+        d->themeSeed = crc32_Block(seed);
+        d->siteIcon  = siteIcons[(d->themeSeed >> 7) % iElemCount(siteIcons)];
+    }
+    /* Special exceptions. */ {
+        const iRangecc host = urlHost_String(&d->url);
+        if (equalCase_Rangecc(&host, "gemini.circumlunar.space")) {
+            d->siteIcon = 0x264a; /* gemini */
+        }
+    }
 }
 
 void setFormat_GmDocument(iGmDocument *d, enum iGmDocumentFormat format) {
@@ -784,6 +827,10 @@ void imageInfo_GmDocument(const iGmDocument *d, uint16_t imageId, iGmImageInfo *
 
 const iString *title_GmDocument(const iGmDocument *d) {
     return &d->title;
+}
+
+iChar siteIcon_GmDocument(const iGmDocument *d) {
+    return d->siteIcon;
 }
 
 const char *findLoc_GmRun(const iGmRun *d, iInt2 pos) {

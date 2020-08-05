@@ -157,7 +157,7 @@ static int documentWidth_DocumentWidget_(const iDocumentWidget *d) {
     const iWidget *w = constAs_Widget(d);
     const iRect bounds = bounds_Widget(w);
     return iMini(bounds.size.x - gap_UI * d->pageMargin * 2,
-                 fontSize_UI * 40 * d->textSizePercent / 100);
+                 fontSize_UI * 38 * d->textSizePercent / 100); /* TODO: Add user preference .*/
 }
 
 static iRect documentBounds_DocumentWidget_(const iDocumentWidget *d) {
@@ -168,11 +168,12 @@ static iRect documentBounds_DocumentWidget_(const iDocumentWidget *d) {
     rect.pos.x  = bounds.size.x / 2 - rect.size.x / 2;
     rect.pos.y  = top_Rect(bounds) + margin;
     rect.size.y = height_Rect(bounds) - 2 * margin;
-    if (size_GmDocument(d->doc).y < rect.size.y) {
+    iInt2 docSize = addY_I2(size_GmDocument(d->doc), 0 /*-lineHeight_Text(banner_FontId) * 2*/);
+    if (docSize.y < rect.size.y) {
         /* Center vertically if short. */
-        int offset = (rect.size.y - size_GmDocument(d->doc).y) / 2;
+        int offset = (rect.size.y - docSize.y) / 2;
         rect.pos.y += offset;
-        rect.size.y = size_GmDocument(d->doc).y;
+        rect.size.y = docSize.y;
     }
     return rect;
 }
@@ -324,11 +325,19 @@ static void updateSource_DocumentWidget_(iDocumentWidget *d) {
     /* TODO: Do this in the background. However, that requires a text metrics calculator
        that does not try to cache the glyph bitmaps. */
     const enum iGmStatusCode statusCode = status_GmRequest(d->request);
-    if (statusCode != input_GmStatusCode &&
-        statusCode != sensitiveInput_GmStatusCode) {
+    if (category_GmStatusCode(statusCode) != categoryInput_GmStatusCode) {
         iString str;
+        /* Theming. */ {
+            if (isEmpty_String(d->titleUser)) {
+                setThemeSeed_GmDocument(d->doc,
+                                        collect_Block(newRange_Block(urlHost_String(d->url))));
+            }
+            else {
+                setThemeSeed_GmDocument(d->doc, &d->titleUser->chars);
+            }
+        }
         initBlock_String(&str, body_GmRequest(d->request));
-        if (statusCode == success_GmStatusCode) {
+        if (category_GmStatusCode(statusCode) == categorySuccess_GmStatusCode) {
             /* Check the MIME type. */
             const iString *mime = meta_GmRequest(d->request);
             if (startsWith_String(mime, "text/plain")) {
@@ -997,14 +1006,11 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
         }
         return;
     }
-    iString text;
-    /* TODO: making a copy is unnecessary; the text routines should accept Rangecc */
-    initRange_String(&text, run->text);
     enum iColorId      fg  = run->color;
     const iGmDocument *doc = d->widget->doc;
-    const iBool        isHover =
-        run->linkId != 0 && d->widget->hoverLink && run->linkId == d->widget->hoverLink->linkId &&
-        !isEmpty_Rect(run->bounds);
+    const iBool isHover =
+        (run->linkId != 0 && d->widget->hoverLink && run->linkId == d->widget->hoverLink->linkId &&
+         !isEmpty_Rect(run->bounds));
     const iInt2 visPos = add_I2(run->visBounds.pos, origin);
     /* Text markers. */
     fillRange_DrawContext_(d, run, teal_ColorId, d->widget->foundMark, &d->inFoundMark);
@@ -1016,8 +1022,30 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
             fg = linkColor_GmDocument(doc, run->linkId);
         }
     }
-    drawString_Text(run->font, visPos, fg, &text);
-    deinit_String(&text);
+    if (run->flags & siteBanner_GmRunFlag) {
+        fillRect_Paint(
+            &d->paint,
+            initCorners_Rect(topLeft_Rect(d->widgetBounds),
+                             init_I2(right_Rect(bounds_Widget(constAs_Widget(d->widget))),
+                                     visPos.y + height_Rect(run->visBounds))),
+            black_ColorId);
+        const iChar icon = siteIcon_GmDocument(doc);
+        iString bannerText;
+        init_String(&bannerText);
+        format_String(&bannerText, "%lc", (int) icon);
+        //appendRange_String(&bannerText, run->text);
+        const iInt2 iconSize = advanceN_Text(banner_FontId, cstr_String(&bannerText), 2);
+        iInt2 bpos = add_I2(visPos, init_I2(0, lineHeight_Text(banner_FontId) / 2));
+//        draw_Text(run->font, bpos, fg, "%s", buf);
+//        bpos.x += iconSize.x;
+        drawRange_Text(run->font, bpos, fg, range_String(&bannerText));
+        bpos.x += iconSize.x + 3 * gap_Text;
+        drawRange_Text(run->font, bpos, fg, run->text);
+        deinit_String(&bannerText);
+    }
+    else {
+        drawRange_Text(run->font, visPos, fg, run->text);
+    }
     /* Presentation of links. */
     if (run->linkId) {
         const int metaFont = paragraph_FontId;
@@ -1124,7 +1152,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
         .bounds = documentBounds_DocumentWidget_(d)
     };
     init_Paint(&ctx.paint);
-    fillRect_Paint(&ctx.paint, bounds, gray15_ColorId);
+    fillRect_Paint(&ctx.paint, bounds, black_ColorId);
     setClip_Paint(&ctx.paint, bounds);
     render_GmDocument(d->doc, visibleRange_DocumentWidget_(d), drawRun_DrawContext_, &ctx);
     clearClip_Paint(&ctx.paint);

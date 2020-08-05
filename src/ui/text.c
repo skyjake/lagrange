@@ -620,6 +620,10 @@ void drawString_Text(int fontId, iInt2 pos, int color, const iString *text) {
     draw_Text_(fontId, pos, color, range_String(text));
 }
 
+void drawRange_Text(int fontId, iInt2 pos, int color, iRangecc text) {
+    draw_Text_(fontId, pos, color, text);
+}
+
 void drawCentered_Text(int fontId, iRect rect, iBool alignVisual, int color, const char *format, ...) {
     iBlock chars;
     init_Block(&chars, 0); {
