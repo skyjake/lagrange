@@ -100,6 +100,7 @@ void        prependTabPage_Widget   (iWidget *tabs, iWidget *page, const char *l
 iWidget *   tabPage_Widget          (iWidget *tabs, size_t index);
 iWidget *   removeTabPage_Widget    (iWidget *tabs, size_t index); /* returns the page */
 void        showTabPage_Widget      (iWidget *tabs, const iWidget *page);
+void        setTabPageLabel_Widget  (iWidget *tabs, const iAnyObject *page, const iString *label);
 const iWidget *currentTabPage_Widget(const iWidget *tabs);
 size_t      tabCount_Widget         (const iWidget *tabs);
 

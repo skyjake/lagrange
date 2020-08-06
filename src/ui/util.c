@@ -340,6 +340,18 @@ iWidget *removeTabPage_Widget(iWidget *tabs, size_t index) {
     return page;
 }
 
+iLabelWidget *tabButtonForPage_Widget_(iWidget *tabs, const iWidget *page) {
+    iWidget *buttons = findChild_Widget(tabs, "tabs.buttons");
+    iForEach(ObjectList, i, buttons->children) {
+        iAssert(isInstance_Object(i.object, &Class_LabelWidget));
+        iAny *label = i.object;
+        if (pointerLabel_Command(cstr_String(command_LabelWidget(label)), "page") == page) {
+            return label;
+        }
+    }
+    return NULL;
+}
+
 void showTabPage_Widget(iWidget *tabs, const iWidget *page) {
     /* Select the corresponding button. */ {
         iWidget *buttons = findChild_Widget(tabs, "tabs.buttons");
@@ -362,6 +374,12 @@ void showTabPage_Widget(iWidget *tabs, const iWidget *page) {
     if (!isEmpty_String(id_Widget(page))) {
         postCommandf_App("tabs.changed id:%s", cstr_String(id_Widget(page)));
     }
+}
+
+void setTabPageLabel_Widget(iWidget *tabs, const iAnyObject *page, const iString *label) {
+    iLabelWidget *button = tabButtonForPage_Widget_(tabs, page);
+    setText_LabelWidget(button, label);
+    arrange_Widget(tabs);
 }
 
 const iWidget *currentTabPage_Widget(const iWidget *tabs) {
