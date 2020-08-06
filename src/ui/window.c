@@ -218,8 +218,15 @@ static void setupUserInterface_Window(iWindow *d) {
         addChild_Widget(navBar, iClob(newIcon_LabelWidget("\U0001d362", 0, 0, "navbar.menu")));
     }
 
-    addChildFlags_Widget(div, iClob(new_DocumentWidget()), expand_WidgetFlag);
-
+    /* Tab bar. */ {
+        iWidget *tabBar = makeTabs_Widget(div);
+        setId_Widget(tabBar, "doctabs");
+        setFlags_Widget(tabBar, expand_WidgetFlag, iTrue);
+        setBackgroundColor_Widget(tabBar, gray25_ColorId);
+        appendTabPage_Widget(tabBar, iClob(new_DocumentWidget()), "Document", '1', KMOD_PRIMARY);
+        addChild_Widget(findChild_Widget(tabBar, "tabs.buttons"),
+                        iClob(newIcon_LabelWidget("\u2795", 't', KMOD_PRIMARY, "tabs.new")));
+    }
     /* Search bar. */ {
         iWidget *searchBar = new_Widget();        
         setId_Widget(searchBar, "search");
@@ -236,7 +243,7 @@ static void setupUserInterface_Window(iWindow *d) {
                      "find.input");
         addChild_Widget(searchBar, iClob(newIcon_LabelWidget("  \u2b9f  ", 'g', KMOD_PRIMARY, "find.next")));
         addChild_Widget(searchBar, iClob(newIcon_LabelWidget("  \u2b9d  ", 'g', KMOD_PRIMARY | KMOD_SHIFT, "find.prev")));
-        addChild_Widget(searchBar, iClob(newIcon_LabelWidget("\U0001f7a8", SDLK_ESCAPE, 0, "find.close")));
+        addChild_Widget(searchBar, iClob(newIcon_LabelWidget("\u2a2f", SDLK_ESCAPE, 0, "find.close")));
     }
 
 #if 0
