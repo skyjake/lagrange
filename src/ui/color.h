@@ -60,20 +60,20 @@ enum iColorId {
     max_ColorId
 };
 
-iLocalDef isLink_ColorId(enum iColorId d) {
+iLocalDef iBool isLink_ColorId(enum iColorId d) {
     return d >= tmBadLink_ColorId;
 }
-iLocalDef isBackground_ColorId(enum iColorId d) {
+iLocalDef iBool isBackground_ColorId(enum iColorId d) {
     return d == tmBackground_ColorId || d == tmBannerBackground_ColorId;
 }
-iLocalDef isText_ColorId(enum iColorId d) {
+iLocalDef iBool isText_ColorId(enum iColorId d) {
     return d >= tmFirst_ColorId && !isBackground_ColorId(d);
 }
-iLocalDef isLinkText_ColorId(enum iColorId d) {
+iLocalDef iBool isLinkText_ColorId(enum iColorId d) {
     return d == tmLinkText_ColorId || d == tmHypertextLinkText_ColorId ||
            d == tmGopherLinkText_ColorId;
 }
-iLocalDef isRegularText_ColorId(enum iColorId d) {
+iLocalDef iBool isRegularText_ColorId(enum iColorId d) {
     return isLinkText_ColorId(d) || d == tmParagraph_ColorId || d == tmFirstParagraph_ColorId;
 }
 
