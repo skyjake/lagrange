@@ -576,15 +576,16 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
             static const float hues[] = {
                 0, 60, 90, 100, 180, 210, 230, 260, 330
             };
-            const iBool isDesaturated   = iFalse;
-            const iBool isLowSaturated  = iFalse;
-            const iBool isLightMode     = iFalse;
+            const float saturationLevel = 1.0f; /* TODO: user setting */
+            const iBool isLightMode     = !iFalse; /* TODO: user setting */
             const iBool isBannerLighter = (d->themeSeed & 0x4000) != 0;
+            const iBool isDarkBgSat     = (d->themeSeed & 0x200000) != 0;
             iHSLColor   base            = { hues[(d->themeSeed & 0xff) % iElemCount(hues)],
                                0.8f * (d->themeSeed >> 24) / 255.0f,
                                0.06f + 0.09f * ((d->themeSeed >> 5) & 0x7) / 7.0f,
                                1.0f };
             printf("background: %d %f %f\n", (int) base.hue, base.sat, base.lum);
+            printf("isDarkBgSat: %d\n", isDarkBgSat);
             setHsl_Color(tmBackground_ColorId, base);
 
             setHsl_Color(tmBannerBackground_ColorId, addSatLum_HSLColor(base, 0.1f, 0.04f * (isBannerLighter ? 1 : -1)));
@@ -593,7 +594,8 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
 
             const iBool altDir = (d->themeSeed & 0x4) != 0;
             const float altHue = fixHue_(iWrapf(base.hue + (altDir ? 90 : -90), 0, 360));
-            const float altHue2 = fixHue_(iWrapf(base.hue + (altDir ? -30 : 30), 0, 360));
+            float altHue2 = fixHue_(iWrapf(base.hue + (altDir ? -30 : 30), 0, 360));
+            if (altHue2 > 230) altHue2 = fixHue_(iWrapf(base.hue + (altDir ? 45 : -45), 0, 360));
             iHSLColor altBase = base;
             altBase.hue = altHue;
             const float titleLum = 0.2f * ((d->themeSeed >> 17) & 0x7) / 7.0f;
@@ -629,34 +631,80 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
             set_Color(tmGopherLinkDomain_ColorId, get_Color(magenta_ColorId));
             set_Color(tmGopherLinkLastVisitDate_ColorId, get_Color(blue_ColorId));
 
+            /* Adjust colors based on light/dark mode. */
             for (int i = tmFirst_ColorId; i < max_ColorId; i++) {
                 iHSLColor color = hsl_Color(get_Color(i));
                 if (isLightMode) {
-                    color.lum = 1.0f - color.lum;
-                }
-                if (i < tmBadLink_ColorId) { /* Not a link? */
-                    if (isLowSaturated) {
-                        color.sat *= 0.3f;
+                    color.lum = 1.0f - color.lum; /* All colors invert lightness. */
+                    if (isRegularText_ColorId(i)) {
+                        /* Darken paragraphs and default state link text. */
+                        color.lum *= 0.5f;
                     }
-                    if (isDesaturated) {
-                        color.sat = 0;
+                    else if (i == tmBackground_ColorId) {
+                        color.sat = (color.sat + 1) / 2;
                     }
-                    if (isLightMode) {
-                        /* Darken text. */
-                        if (i == tmParagraph_ColorId || i == tmLinkText_ColorId ||
-                            i == tmHypertextLinkText_ColorId || i == tmGopherLinkText_ColorId) {
-                            color.lum *= 0.5f;
-                        }
-                        else if (i == tmBannerIcon_ColorId) {
+                    else if (i == tmHeader3_ColorId) {
+                        color.lum *= 0.75f;
+                    }
+                    else if (isLink_ColorId(i)) {
+                        /* Darken links generally to improve visibility against a
+                           light background. */
+                        color.lum *= 0.5f;
+                        color.sat = 1.0f;
+                    }
+                    else if (i == tmBannerIcon_ColorId || i == tmBannerTitle_ColorId) {
+                        if (isBannerLighter) {
                             color.lum *= 0.75f;
                         }
+                        else {
+                            color.lum = 0.98f;
+                        }
+                    }
+                    else if (i == tmBannerBackground_ColorId) {
+                        if (isBannerLighter) {
+                            color.sat = (color.sat + 1) / 2;
+                            color.lum = (color.lum + 2) / 3;
+                        }
+                        else {
+                            color.sat = 0.8f;
+                            color.lum = 0.4f;
+                        }
+                    }
+                    else if (isText_ColorId(i)) {
+                        color.sat = 0.9f;
+                        color.lum = (9 * color.lum + 0.5f) / 10;
                     }
                 }
-                else if (isLightMode) {
-                    /* Darken links. */
-                    color.lum *= 0.75f;
-                    color.sat = 1.0f;
+                else { /* dark mode */
+                    if (!isLink_ColorId(i)) {
+                        if (isDarkBgSat) {
+                            /* Saturate background, desaturate text. */
+                            if (isBackground_ColorId(i)) {
+                                color.sat = (color.sat + 1) / 2;
+//                                color.lum = (color.lum + 2 * 0.5f) / 3;
+                                color.lum *= 0.75f;
+                            }
+                            else if (isText_ColorId(i)) {
+//                                color.sat *= 0.85f;
+                                color.lum = (color.lum + 1) / 2;
+                            }
+                        }
+                        else {
+                            /* Desaturate background, saturate text. */
+                            if (isBackground_ColorId(i)) {
+                                color.sat *= 0.333f;
+//                                color.lum *= 0.5f;
+                            }
+                            else if (isText_ColorId(i)) {
+                                color.sat = (color.sat + 2) / 3;
+                                color.lum = (2 * color.lum + 1) / 3;
+//                                color.lum = (color.lum + 0.5f) / 2;
+                            }
+                        }
+                    }
                 }
+                /* Modify overall saturation. */
+                color.sat *= saturationLevel;
                 setHsl_Color(i, color);
             }
         }
@@ -667,6 +715,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
             d->siteIcon = 0x264a; /* gemini symbol */
         }
     }
+    fflush(stdout);
 }
 
 void setFormat_GmDocument(iGmDocument *d, enum iGmDocumentFormat format) {
