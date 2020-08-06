@@ -204,7 +204,7 @@ static void requestFinished_DocumentWidget_(iAnyObject *obj) {
 static iRangei visibleRange_DocumentWidget_(const iDocumentWidget *d) {
     const int margin = gap_UI * d->pageMargin;
     return (iRangei){ d->scrollY - margin,
-                      d->scrollY + height_Rect(bounds_Widget(constAs_Widget(d))) - margin };
+                      d->scrollY + height_Rect(bounds_Widget(constAs_Widget(d))) };
 }
 
 static void addVisibleLink_DocumentWidget_(void *context, const iGmRun *run) {
