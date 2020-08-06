@@ -623,7 +623,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
             setHsl_Color(tmBannerIcon_ColorId, setLum_HSLColor(addSatLum_HSLColor(base, 0.35f, 0), 0.65f));
 
             const iBool altDir = (d->themeSeed & 0x4) != 0;
-            const float altHue = fixHue_(iWrapf(base.hue + (altDir ? 90 : -90), 0, 360));
+            const float altHue = fixHue_(iWrapf(base.hue + (altDir ? 180 : -180), 0, 360));
             float altHue2 = fixHue_(iWrapf(base.hue + (altDir ? -30 : 30), 0, 360));
             if (altHue2 > 230) altHue2 = fixHue_(iWrapf(base.hue + (altDir ? 45 : -45), 0, 360));
             iHSLColor altBase = base;
