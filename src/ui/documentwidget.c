@@ -168,8 +168,12 @@ static iRect documentBounds_DocumentWidget_(const iDocumentWidget *d) {
     iRect       rect;
     rect.size.x = documentWidth_DocumentWidget_(d);
     rect.pos.x  = bounds.size.x / 2 - rect.size.x / 2;
-    rect.pos.y  = top_Rect(bounds) + margin;
-    rect.size.y = height_Rect(bounds) - 2 * margin;
+    rect.pos.y  = top_Rect(bounds);
+    rect.size.y = height_Rect(bounds) - margin;
+    if (!hasSiteBanner_GmDocument(d->doc)) {
+        rect.pos.y += margin;
+        rect.size.y -= margin;
+    }
     iInt2 docSize = addY_I2(size_GmDocument(d->doc), 0 /*-lineHeight_Text(banner_FontId) * 2*/);
     if (docSize.y < rect.size.y) {
         /* Center vertically if short. */

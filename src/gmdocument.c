@@ -857,6 +857,14 @@ iInt2 size_GmDocument(const iGmDocument *d) {
     return d->size;
 }
 
+iBool hasSiteBanner_GmDocument(const iGmDocument *d) {
+    if (isEmpty_Array(&d->layout)) {
+        return iFalse;
+    }
+    const iGmRun *first = constFront_Array(&d->layout);
+    return (first->flags & siteBanner_GmRunFlag) != 0;
+}
+
 iRangecc findText_GmDocument(const iGmDocument *d, const iString *text, const char *start) {
     const char * src      = constBegin_String(&d->source);
     const size_t startPos = (start ? start - src : 0);
