@@ -7,10 +7,14 @@
 
 #include "app.h"
 
-extern void enableWheel_MacOS(void);
+#if defined (iPlatformApple)
+extern void enableMomentumScroll_MacOS(void);
+#endif
 
 int main(int argc, char **argv) {
-    enableWheel_MacOS();
+#if defined (iPlatformApple)
+    enableMomentumScroll_MacOS();
+#endif
 #if defined (iPlatformMsys)
     /* MSYS runtime takes care of WinMain. */
     SDL_SetMainReady();

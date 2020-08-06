@@ -333,7 +333,7 @@ enum iTouchBarVariant {
 
 @end
 
-void enableWheel_MacOS(void) {
+void enableMomentumScroll_MacOS(void) {
     [[NSUserDefaults standardUserDefaults] setBool: YES
                                             forKey: @"AppleMomentumScrollSupported"];
 }
