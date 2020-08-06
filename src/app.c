@@ -191,18 +191,12 @@ void processEvents_App(enum iAppEventMode eventMode) {
         ((d->pendingRefresh || eventMode == postedEventsOnly_AppEventMode) && SDL_PollEvent(&ev))) {
         switch (ev.type) {
             case SDL_QUIT:
-                // if (isModified_Song(d->song)) {
-                //     save_App_(d, autosavePath_App_(d));
-                // }
                 d->running = iFalse;
                 goto backToMainLoop;
             case SDL_DROPFILE:
                 postCommandf_App("open url:file://%s", ev.drop.file);
                 break;
             default: {
-                if (ev.type == SDL_USEREVENT && ev.user.code == refresh_UserEventCode) {
-                    goto backToMainLoop;
-                }
                 iBool wasUsed = processEvent_Window(d->window, &ev);
                 if (ev.type == SDL_USEREVENT && ev.user.code == command_UserEventCode) {
 #if defined (iPlatformApple) && !defined (iPlatformIOS)
