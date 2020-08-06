@@ -7,7 +7,10 @@
 
 #include "app.h"
 
+extern void enableWheel_MacOS(void);
+
 int main(int argc, char **argv) {
+    enableWheel_MacOS();
 #if defined (iPlatformMsys)
     /* MSYS runtime takes care of WinMain. */
     SDL_SetMainReady();

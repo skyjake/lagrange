@@ -98,7 +98,7 @@ enum iTouchBarVariant {
 //- (NSTouchBar *)makeTouchBar;
 /* SDL needs to do its own thing. */
 - (BOOL)application:(NSApplication *)theApplication openFile:(NSString *)filename;
-- (void)applicationDidFinishLaunching:(NSNotification *)notificatiosn;
+- (void)applicationDidFinishLaunching:(NSNotification *)notifications;
 @end
 
 @implementation MyDelegate
@@ -332,6 +332,11 @@ enum iTouchBarVariant {
 }
 
 @end
+
+void enableWheel_MacOS(void) {
+    [[NSUserDefaults standardUserDefaults] setBool: YES
+                                            forKey: @"AppleMomentumScrollSupported"];
+}
 
 void setupApplication_MacOS(void) {
     NSApplication *app = [NSApplication sharedApplication];

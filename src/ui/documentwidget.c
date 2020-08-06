@@ -864,11 +864,16 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         }
     }
     else if (ev->type == SDL_MOUSEWHEEL) {
+#if defined (iPlatformApple)
+        /* Momentum scrolling. */
+        scroll_DocumentWidget_(d, -ev->wheel.y * get_Window()->pixelRatio);
+#else
         if (keyMods_Sym(SDL_GetModState()) == KMOD_PRIMARY) {
             changeTextSize_DocumentWidget_(d, ev->wheel.y > 0 ? 10 : -10);
             return iTrue;
         }
         scroll_DocumentWidget_(d, -3 * ev->wheel.y * lineHeight_Text(default_FontId));
+#endif
         return iTrue;
     }
     else if (ev->type == SDL_MOUSEMOTION) {
