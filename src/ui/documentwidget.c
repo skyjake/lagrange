@@ -1079,9 +1079,12 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
         iInt2 bpos = add_I2(visPos, init_I2(0, lineHeight_Text(banner_FontId) / 2));
         if (icon) {
             format_String(&bannerText, "%lc", (int) icon);
-            const iInt2 iconSize = advanceN_Text(banner_FontId, cstr_String(&bannerText), 2);
-            drawRange_Text(run->font, bpos, tmBannerIcon_ColorId, range_String(&bannerText));
-            bpos.x += iconSize.x + 3 * gap_Text;
+            const iRect iconRect = visualBounds_Text(banner_FontId, range_String(&bannerText));
+            drawRange_Text(run->font,
+                           addY_I2(bpos, -mid_Rect(iconRect).y + lineHeight_Text(run->font) / 2),
+                           tmBannerIcon_ColorId,
+                           range_String(&bannerText));
+            bpos.x += right_Rect(iconRect) + 3 * gap_Text;
         }
         drawRange_Text(run->font,
                        bpos,
