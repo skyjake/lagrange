@@ -93,6 +93,7 @@ struct Impl_DocumentWidget {
     int scrollY;
     iPtrArray visibleLinks;
     const iGmRun *hoverLink;
+    iBool noHoverWhileScrolling;
     iClick click;
     int initialScrollY;
     iScrollWidget *scroll;
@@ -124,6 +125,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     d->pageMargin       = 5;
     d->scrollY          = 0;
     d->hoverLink        = NULL;
+    d->noHoverWhileScrolling = iFalse;
     d->arrowCursor      = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_ARROW);
     d->beamCursor       = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_IBEAM);
     d->handCursor       = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_HAND);
@@ -218,7 +220,8 @@ static void updateHover_DocumentWidget_(iDocumentWidget *d, iInt2 mouse) {
     const iGmRun *oldHoverLink = d->hoverLink;
     d->hoverLink               = NULL;
     const iInt2 hoverPos = addY_I2(sub_I2(mouse, topLeft_Rect(docBounds)), d->scrollY);
-    if (d->state == ready_DocumentState || d->state == receivedPartialResponse_DocumentState) {
+    if (!d->noHoverWhileScrolling &&
+        (d->state == ready_DocumentState || d->state == receivedPartialResponse_DocumentState)) {
         iConstForEach(PtrArray, i, &d->visibleLinks) {
             const iGmRun *run = i.ptr;
             if (contains_Rect(run->bounds, hoverPos)) {
@@ -276,7 +279,9 @@ static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
     if (isEmpty_StringArray(title)) {
         pushBackCStr_StringArray(title, "Lagrange");
     }
-    setTitle_Window(get_Window(), collect_String(joinCStr_StringArray(title, " \u2014 ")));
+    const iString *text = collect_String(joinCStr_StringArray(title, " \u2014 "));
+    setTitle_Window(get_Window(), text);
+    setTabPageLabel_Widget(findWidget_App("doctabs"), d, text);
 }
 
 static void setSource_DocumentWidget_(iDocumentWidget *d, const iString *source) {
@@ -891,9 +896,11 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         }
         scroll_DocumentWidget_(d, -3 * ev->wheel.y * lineHeight_Text(default_FontId));
 #endif
+        d->noHoverWhileScrolling = iTrue;
         return iTrue;
     }
     else if (ev->type == SDL_MOUSEMOTION) {
+        d->noHoverWhileScrolling = iFalse;
         if (isVisible_Widget(d->menu)) {
             SDL_SetCursor(d->arrowCursor);
         }
@@ -1101,7 +1108,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                               info.mime, info.size.x, info.size.y, info.numBytes / 1.0e6f);
                 if (findMediaRequest_DocumentWidget_(d->widget, run->linkId)) {
                     appendFormat_String(
-                        &text, "  %s\U0001f7a8", isHover ? escape_Color(tmLinkText_ColorId) : "");
+                        &text, "  %s\u2a2f", isHover ? escape_Color(tmLinkText_ColorId) : "");
                 }
                 drawAlign_Text(metaFont,
                                add_I2(topRight_Rect(run->bounds), origin),
