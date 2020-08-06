@@ -340,7 +340,8 @@ iBool handleCommand_App(const char *cmd) {
             openInDefaultBrowser_App(url);
             return iTrue;
         }
-        if (!argLabel_Command(cmd, "history")) {
+        const iBool isHistory = argLabel_Command(cmd, "history") != 0;
+        if (!isHistory) {
             if (argLabel_Command(cmd, "redirect")) {
                 replace_History(d->history, url);
             }
@@ -348,10 +349,9 @@ iBool handleCommand_App(const char *cmd) {
                 addUrl_History(d->history, url);
             }
         }
-        print_History(d->history);
         iDocumentWidget *doc = findChild_Widget(root, "document");
-        setUrl_DocumentWidget(doc, url);
         setInitialScroll_DocumentWidget(doc, argLabel_Command(cmd, "scroll") * gap_UI);
+        setUrlFromCache_DocumentWidget(doc, url, isHistory);
     }
     else if (equal_Command(cmd, "document.request.cancelled")) {
         /* TODO: How should cancelled requests be treated in the history? */

@@ -251,9 +251,9 @@ static void updateVisible_DocumentWidget_(iDocumentWidget *d) {
     render_GmDocument(d->doc, visRange, addVisibleLink_DocumentWidget_, d);
     updateHover_DocumentWidget_(d, mouseCoord_Window(get_Window()));
     /* Remember scroll positions of recently visited pages. */ {
-        iHistoryItem *it = item_History(history_App());
-        if (it) {
-            it->scrollY = d->scrollY / gap_UI;
+        iRecentUrl *recent = mostRecentUrl_History(history_App());
+        if (recent) {
+            recent->scrollY = d->scrollY / gap_UI;
         }
     }
 }
@@ -318,16 +318,16 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
     d->state = ready_DocumentState;
 }
 
-static void updateSource_DocumentWidget_(iDocumentWidget *d) {
+static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse *response) {
     if (d->state == ready_DocumentState) {
         return;
     }
     /* TODO: Do this in the background. However, that requires a text metrics calculator
        that does not try to cache the glyph bitmaps. */
-    const enum iGmStatusCode statusCode = status_GmRequest(d->request);
+    const enum iGmStatusCode statusCode = response->statusCode;
     if (category_GmStatusCode(statusCode) != categoryInput_GmStatusCode) {
         iString str;
-        /* Theming. */ {
+        /* Update theme. */ {
             if (isEmpty_String(d->titleUser)) {
                 setThemeSeed_GmDocument(d->doc,
                                         collect_Block(newRange_Block(urlHost_String(d->url))));
@@ -336,10 +336,10 @@ static void updateSource_DocumentWidget_(iDocumentWidget *d) {
                 setThemeSeed_GmDocument(d->doc, &d->titleUser->chars);
             }
         }
-        initBlock_String(&str, body_GmRequest(d->request));
+        initBlock_String(&str, &response->body);
         if (category_GmStatusCode(statusCode) == categorySuccess_GmStatusCode) {
             /* Check the MIME type. */
-            const iString *mime = meta_GmRequest(d->request);
+            const iString *mime = &response->meta;
             if (startsWith_String(mime, "text/plain")) {
                 setFormat_GmDocument(d->doc, plainText_GmDocumentFormat);
             }
@@ -347,17 +347,17 @@ static void updateSource_DocumentWidget_(iDocumentWidget *d) {
                 setFormat_GmDocument(d->doc, gemini_GmDocumentFormat);
             }
             else if (startsWith_String(mime, "image/")) {
-                if (isFinished_GmRequest(d->request)) {
+                if (!d->request || isFinished_GmRequest(d->request)) {
                     /* Make a simple document with an image. */
                     const char *imageTitle = "Image";
                     iUrl parts;
-                    init_Url(&parts, url_GmRequest(d->request));
+                    init_Url(&parts, d->url); // url_GmRequest(d->request));
                     if (!isEmpty_Range(&parts.path)) {
                         imageTitle = baseName_Path(collect_String(newRange_String(parts.path))).start;
                     }
                     format_String(
-                        &str, "=> %s %s\n", cstr_String(url_GmRequest(d->request)), imageTitle);
-                    setImage_GmDocument(d->doc, 1, mime, body_GmRequest(d->request));
+                        &str, "=> %s %s\n", cstr_String(d->url), imageTitle);
+                    setImage_GmDocument(d->doc, 1, mime, &response->body);
                 }
                 else {
                     clear_String(&str);
@@ -392,23 +392,68 @@ static void fetch_DocumentWidget_(iDocumentWidget *d) {
     submit_GmRequest(d->request);
 }
 
-void setUrl_DocumentWidget(iDocumentWidget *d, const iString *url) {
+static void updateTrust_DocumentWidget_(iDocumentWidget *d, const iGmResponse *response) {
+#define openLock_CStr   "\U0001f513"
+#define closedLock_CStr "\U0001f512"
+    d->certFlags       = response->certFlags;
+    d->certExpiry      = response->certValidUntil;
+    iLabelWidget *lock = findWidget_App("navbar.lock");
+    if (~d->certFlags & available_GmCertFlag) {
+        setFlags_Widget(as_Widget(lock), disabled_WidgetFlag, iTrue);
+        updateTextCStr_LabelWidget(lock, gray50_ColorEscape openLock_CStr);
+        return;
+    }
+    setFlags_Widget(as_Widget(lock), disabled_WidgetFlag, iFalse);
+    if (~d->certFlags & domainVerified_GmCertFlag) {
+        updateTextCStr_LabelWidget(lock, red_ColorEscape closedLock_CStr);
+    }
+    else if (d->certFlags & trusted_GmCertFlag) {
+        updateTextCStr_LabelWidget(lock, green_ColorEscape closedLock_CStr);
+    }
+    else {
+        updateTextCStr_LabelWidget(lock, orange_ColorEscape closedLock_CStr);
+    }
+}
+
+void setUrlFromCache_DocumentWidget(iDocumentWidget *d, const iString *url, iBool isFromCache) {
     if (cmpStringSc_String(d->url, url, &iCaseInsensitive)) {
         set_String(d->url, url);
-        fetch_DocumentWidget_(d);
-    }
-    /* See if there a username in the URL. */ {
-        clear_String(d->titleUser);
-        iRegExp *userPats[2] = { new_RegExp("~([^/?]+)", 0),
-                                 new_RegExp("/users/([^/?]+)", caseInsensitive_RegExpOption) };
-        iRegExpMatch m;
-        iForIndices(i, userPats) {
-            if (matchString_RegExp(userPats[i], d->url, &m)) {
-                setRange_String(d->titleUser, capturedRange_RegExpMatch(&m, 1));
+        /* See if there a username in the URL. */ {
+            clear_String(d->titleUser);
+            iRegExp *userPats[2] = { new_RegExp("~([^/?]+)", 0),
+                                     new_RegExp("/users/([^/?]+)", caseInsensitive_RegExpOption) };
+            iRegExpMatch m;
+            iForIndices(i, userPats) {
+                if (matchString_RegExp(userPats[i], d->url, &m)) {
+                    setRange_String(d->titleUser, capturedRange_RegExpMatch(&m, 1));
+                }
+                iRelease(userPats[i]);
             }
-            iRelease(userPats[i]);
+        }
+        const iRecentUrl *recent = mostRecentUrl_History(history_App());
+        if (isFromCache && recent && recent->cachedResponse) {
+            const iGmResponse *resp = recent->cachedResponse;
+            d->state = fetching_DocumentState;
+            /* Use the cached response data. */
+            printf("cached response: %d [%s] %zu bytes\n{%s}\n",
+                   resp->statusCode,
+                   cstr_String(&resp->meta),
+                   size_Block(&resp->body),
+                   cstr_Block(&resp->body));
+            d->scrollY = d->initialScrollY;
+            updateTrust_DocumentWidget_(d, resp);
+            updateDocument_DocumentWidget_(d, resp);
+            d->state = ready_DocumentState;
+            postCommandf_App("document.changed url:%s", cstr_String(d->url));
+        }
+        else {
+            fetch_DocumentWidget_(d);
         }
     }
+}
+
+void setUrl_DocumentWidget(iDocumentWidget *d, const iString *url) {
+    setUrlFromCache_DocumentWidget(d, url, iFalse);
 }
 
 void setInitialScroll_DocumentWidget (iDocumentWidget *d, int scrollY) {
@@ -440,30 +485,6 @@ static void scrollTo_DocumentWidget_(iDocumentWidget *d, int documentY) {
     scroll_DocumentWidget_(d, 0); /* clamp it */
 }
 
-static void updateTrust_DocumentWidget_(iDocumentWidget *d) {
-    iAssert(d->request);
-#define openLock_CStr   "\U0001f513"
-#define closedLock_CStr "\U0001f512"
-    d->certFlags       = certFlags_GmRequest(d->request);
-    d->certExpiry      = certExpirationDate_GmRequest(d->request);
-    iLabelWidget *lock = findWidget_App("navbar.lock");
-    if (~d->certFlags & available_GmCertFlag) {
-        setFlags_Widget(as_Widget(lock), disabled_WidgetFlag, iTrue);
-        updateTextCStr_LabelWidget(lock, gray50_ColorEscape openLock_CStr);
-        return;
-    }
-    setFlags_Widget(as_Widget(lock), disabled_WidgetFlag, iFalse);
-    if (~d->certFlags & domainVerified_GmCertFlag) {
-        updateTextCStr_LabelWidget(lock, red_ColorEscape closedLock_CStr);
-    }
-    else if (d->certFlags & trusted_GmCertFlag) {
-        updateTextCStr_LabelWidget(lock, green_ColorEscape closedLock_CStr);
-    }
-    else {
-        updateTextCStr_LabelWidget(lock, orange_ColorEscape closedLock_CStr);
-    }
-}
-
 static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
     if (!d->request) {
         return;
@@ -474,7 +495,7 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
     }
     if (d->state == fetching_DocumentState) {
         d->state = receivedPartialResponse_DocumentState;
-        updateTrust_DocumentWidget_(d);
+        updateTrust_DocumentWidget_(d, response_GmRequest(d->request));
         switch (category_GmStatusCode(statusCode)) {
             case categoryInput_GmStatusCode: {
                 iUrl parts;
@@ -498,7 +519,7 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
             case categorySuccess_GmStatusCode:
                 d->scrollY = d->initialScrollY;
                 reset_GmDocument(d->doc); /* new content incoming */
-                updateSource_DocumentWidget_(d);
+                updateDocument_DocumentWidget_(d, response_GmRequest(d->request));
                 break;
             case categoryRedirect_GmStatusCode:
                 if (isEmpty_String(meta_GmRequest(d->request))) {
@@ -531,7 +552,7 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
         switch (category_GmStatusCode(statusCode)) {
             case categorySuccess_GmStatusCode:
                 /* More content available. */
-                updateSource_DocumentWidget_(d);
+                updateDocument_DocumentWidget_(d, response_GmRequest(d->request));
                 break;
             default:
                 break;
@@ -739,6 +760,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
              pointerLabel_Command(command_UserEvent(ev), "request") == d->request) {
         checkResponse_DocumentWidget_(d);
         d->state = ready_DocumentState;
+        setCachedResponse_History(history_App(), response_GmRequest(d->request));
         iReleasePtr(&d->request);
         postCommandf_App("document.changed url:%s", cstr_String(d->url));
         return iFalse;

@@ -9,6 +9,8 @@
 
 #include <SDL_timer.h>
 
+iDefineTypeConstruction(GmResponse)
+
 void init_GmResponse(iGmResponse *d) {
     d->statusCode = none_GmStatusCode;
     init_String(&d->meta);
@@ -343,7 +345,7 @@ const iString *url_GmRequest(const iGmRequest *d) {
 }
 
 const iGmResponse *response_GmRequest(const iGmRequest *d) {
-    iAssert(d->state == finished_GmRequestState);
+    iAssert(d->state != initialized_GmRequestState);
     return &d->resp;
 }
 
