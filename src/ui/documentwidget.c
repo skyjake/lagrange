@@ -447,16 +447,16 @@ static void updateTrust_DocumentWidget_(iDocumentWidget *d) {
     d->certFlags       = certFlags_GmRequest(d->request);
     d->certExpiry      = certExpirationDate_GmRequest(d->request);
     iLabelWidget *lock = findWidget_App("navbar.lock");
-    if (~d->certFlags & available_GmRequestCertFlag) {
+    if (~d->certFlags & available_GmCertFlag) {
         setFlags_Widget(as_Widget(lock), disabled_WidgetFlag, iTrue);
         updateTextCStr_LabelWidget(lock, gray50_ColorEscape openLock_CStr);
         return;
     }
     setFlags_Widget(as_Widget(lock), disabled_WidgetFlag, iFalse);
-    if (~d->certFlags & domainVerified_GmRequestCertFlag) {
+    if (~d->certFlags & domainVerified_GmCertFlag) {
         updateTextCStr_LabelWidget(lock, red_ColorEscape closedLock_CStr);
     }
-    else if (d->certFlags & trusted_GmRequestCertFlag) {
+    else if (d->certFlags & trusted_GmCertFlag) {
         updateTextCStr_LabelWidget(lock, green_ColorEscape closedLock_CStr);
     }
     else {
@@ -672,21 +672,21 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             format_CStr("%s%s  Domain name %s\n"
                         "%s%s  %s (%04d-%02d-%02d %02d:%02d:%02d)\n"
                         "%s%s  %s",
-                        d->certFlags & domainVerified_GmRequestCertFlag ? checked : unchecked,
+                        d->certFlags & domainVerified_GmCertFlag ? checked : unchecked,
                         gray75_ColorEscape,
-                        d->certFlags & domainVerified_GmRequestCertFlag ? "matches" : "mismatch",
-                        d->certFlags & timeVerified_GmRequestCertFlag ? checked : unchecked,
+                        d->certFlags & domainVerified_GmCertFlag ? "matches" : "mismatch",
+                        d->certFlags & timeVerified_GmCertFlag ? checked : unchecked,
                         gray75_ColorEscape,
-                        d->certFlags & timeVerified_GmRequestCertFlag ? "Not expired" : "Expired",
+                        d->certFlags & timeVerified_GmCertFlag ? "Not expired" : "Expired",
                         d->certExpiry.year,
                         d->certExpiry.month,
                         d->certExpiry.day,
                         d->certExpiry.hour,
                         d->certExpiry.minute,
                         d->certExpiry.second,
-                        d->certFlags & trusted_GmRequestCertFlag ? checked : unchecked,
+                        d->certFlags & trusted_GmCertFlag ? checked : unchecked,
                         gray75_ColorEscape,
-                        d->certFlags & trusted_GmRequestCertFlag ? "Trusted on first use" : "Not trusted"));
+                        d->certFlags & trusted_GmCertFlag ? "Trusted on first use" : "Not trusted"));
         return iTrue;
     }
     else if (isCommand_UserEvent(ev, "copy")) {

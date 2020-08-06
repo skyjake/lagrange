@@ -5,6 +5,29 @@
 
 #include "gmutil.h"
 
+iDeclareType(GmResponse)
+
+enum iGmCertFlags {
+    available_GmCertFlag      = iBit(1), /* certificate provided by server */
+    trusted_GmCertFlag        = iBit(2), /* TOFU status */
+    timeVerified_GmCertFlag   = iBit(3), /* has not expired */
+    domainVerified_GmCertFlag = iBit(4), /* cert matches server domain */
+};
+
+struct Impl_GmResponse {
+    enum iGmStatusCode statusCode;
+    iString            meta; /* MIME type or other metadata */
+    iBlock             body;
+    int                certFlags;
+    iDate              certValidUntil;
+};
+
+iDeclareTypeConstruction(GmResponse)
+
+iGmResponse *       copy_GmResponse             (const iGmResponse *);
+
+/*----------------------------------------------------------------------------------------------*/
+
 iDeclareClass(GmRequest)
 iDeclareObjectConstruction(GmRequest)
 
@@ -13,21 +36,15 @@ iDeclareNotifyFunc(GmRequest, Finished)
 iDeclareAudienceGetter(GmRequest, updated)
 iDeclareAudienceGetter(GmRequest, finished)
 
-void    setUrl_GmRequest    (iGmRequest *, const iString *url);
-void    submit_GmRequest    (iGmRequest *);
+void                setUrl_GmRequest            (iGmRequest *, const iString *url);
+void                submit_GmRequest            (iGmRequest *);
 
-enum iGmRequestCertFlags {
-    available_GmRequestCertFlag      = iBit(1), /* certificate provided by server */
-    trusted_GmRequestCertFlag        = iBit(2), /* TOFU status */
-    timeVerified_GmRequestCertFlag   = iBit(3), /* has not expired */
-    domainVerified_GmRequestCertFlag = iBit(4), /* cert matches server domain */
-};
-
-iBool               isFinished_GmRequest    (const iGmRequest *);
-enum iGmStatusCode  status_GmRequest        (const iGmRequest *);
-const iString *     meta_GmRequest          (const iGmRequest *);
-const iBlock  *     body_GmRequest          (const iGmRequest *);
-const iString *     url_GmRequest           (const iGmRequest *);
+iBool               isFinished_GmRequest        (const iGmRequest *);
+enum iGmStatusCode  status_GmRequest            (const iGmRequest *);
+const iString *     meta_GmRequest              (const iGmRequest *);
+const iBlock  *     body_GmRequest              (const iGmRequest *);
+const iString *     url_GmRequest               (const iGmRequest *);
+const iGmResponse * response_GmRequest          (const iGmRequest *);
 
 int                 certFlags_GmRequest         (const iGmRequest *);
 iDate               certExpirationDate_GmRequest(const iGmRequest *);

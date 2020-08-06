@@ -9,7 +9,44 @@
 
 #include <SDL_timer.h>
 
-static const int BODY_TIMEOUT = 3000; /* ms */
+void init_GmResponse(iGmResponse *d) {
+    d->statusCode = none_GmStatusCode;
+    init_String(&d->meta);
+    init_Block(&d->body, 0);
+    d->certFlags = 0;
+    iZap(d->certValidUntil);
+}
+
+void initCopy_GmResponse(iGmResponse *d, const iGmResponse *other) {
+    d->statusCode = other->statusCode;
+    initCopy_String(&d->meta, &other->meta);
+    initCopy_Block(&d->body, &other->body);
+    d->certFlags = other->certFlags;
+    d->certValidUntil = other->certValidUntil;
+}
+
+void deinit_GmResponse(iGmResponse *d) {
+    deinit_Block(&d->body);
+    deinit_String(&d->meta);
+}
+
+void clear_GmResponse(iGmResponse *d) {
+    d->statusCode = none_GmStatusCode;
+    clear_String(&d->meta);
+    clear_Block(&d->body);
+    d->certFlags = 0;
+    iZap(d->certValidUntil);
+}
+
+iGmResponse *copy_GmResponse(const iGmResponse *d) {
+    iGmResponse *copied = iMalloc(GmResponse);
+    initCopy_GmResponse(copied, d);
+    return copied;
+}
+
+/*----------------------------------------------------------------------------------------------*/
+
+static const int bodyTimeout_GmRequest_ = 3000; /* ms */
 
 enum iGmRequestState {
     initialized_GmRequestState,
@@ -22,12 +59,9 @@ struct Impl_GmRequest {
     iObject object;
     iMutex mutex;
     enum iGmRequestState state;
-    int certFlags;
     iString url;
     iTlsRequest *req;
-    enum iGmStatusCode code;
-    iString header;
-    iBlock body; /* rest of the received data */
+    iGmResponse resp;
     uint32_t timeoutId; /* in case server doesn't close the connection */
     iAudience *updated;
     iAudience *finished;
@@ -40,12 +74,9 @@ iDefineAudienceGetter(GmRequest, finished)
 void init_GmRequest(iGmRequest *d) {
     init_Mutex(&d->mutex);
     d->state = initialized_GmRequestState;
-    d->certFlags = 0;
+    init_GmResponse(&d->resp);
     init_String(&d->url);
     d->req = NULL;
-    d->code = none_GmStatusCode;
-    init_String(&d->header);
-    init_Block(&d->body, 0);
     d->timeoutId = 0;
     d->updated = NULL;
     d->finished = NULL;
@@ -72,8 +103,7 @@ void deinit_GmRequest(iGmRequest *d) {
     d->req = NULL;
     delete_Audience(d->finished);
     delete_Audience(d->updated);
-    deinit_Block(&d->body);
-    deinit_String(&d->header);
+    deinit_GmResponse(&d->resp);
     deinit_String(&d->url);
     deinit_Mutex(&d->mutex);
 }
@@ -95,25 +125,26 @@ static void restartTimeout_GmRequest_(iGmRequest *d) {
     if (d->timeoutId) {
         SDL_RemoveTimer(d->timeoutId);
     }
-    d->timeoutId = SDL_AddTimer(BODY_TIMEOUT, timedOutWhileReceivingBody_GmRequest_, d);
+    d->timeoutId = SDL_AddTimer(bodyTimeout_GmRequest_, timedOutWhileReceivingBody_GmRequest_, d);
 }
 
 static void checkServerCertificate_GmRequest_(iGmRequest *d) {
     const iTlsCertificate *cert = serverCertificate_TlsRequest(d->req);
-    d->certFlags = 0;
+    d->resp.certFlags = 0;
     if (cert) {
         iGmCerts *     certDb = certs_App();
         const iRangecc domain = urlHost_String(&d->url);
-        d->certFlags |= available_GmRequestCertFlag;
+        d->resp.certFlags |= available_GmCertFlag;
         if (!isExpired_TlsCertificate(cert)) {
-            d->certFlags |= timeVerified_GmRequestCertFlag;
+            d->resp.certFlags |= timeVerified_GmCertFlag;
         }
         if (verifyDomain_TlsCertificate(cert, domain)) {
-            d->certFlags |= domainVerified_GmRequestCertFlag;
+            d->resp.certFlags |= domainVerified_GmCertFlag;
         }
         if (checkTrust_GmCerts(certDb, domain, cert)) {
-            d->certFlags |= trusted_GmRequestCertFlag;
+            d->resp.certFlags |= trusted_GmCertFlag;
         }
+        validUntil_TlsCertificate(serverCertificate_TlsRequest(d->req), &d->resp.certValidUntil);
     }
 }
 
@@ -126,35 +157,35 @@ static void readIncoming_GmRequest_(iAnyObject *obj) {
     iBlock *data = readAll_TlsRequest(d->req);
     fflush(stdout);
     if (d->state == receivingHeader_GmRequestState) {
-        appendCStrN_String(&d->header, constData_Block(data), size_Block(data));
+        appendCStrN_String(&d->resp.meta, constData_Block(data), size_Block(data));
         /* Check if the header line is complete. */
-        size_t endPos = indexOfCStr_String(&d->header, "\r\n");
+        size_t endPos = indexOfCStr_String(&d->resp.meta, "\r\n");
         if (endPos != iInvalidPos) {
             /* Move remainder to the body. */
-            setData_Block(&d->body,
-                          constBegin_String(&d->header) + endPos + 2,
-                          size_String(&d->header) - endPos - 2);
-            remove_Block(&d->header.chars, endPos, iInvalidSize);
+            setData_Block(&d->resp.body,
+                          constBegin_String(&d->resp.meta) + endPos + 2,
+                          size_String(&d->resp.meta) - endPos - 2);
+            remove_Block(&d->resp.meta.chars, endPos, iInvalidSize);
             /* parse and remove the code */
-            if (size_String(&d->header) < 3) {
-                clear_String(&d->header);
-                d->code  = invalidHeader_GmStatusCode;
-                d->state = finished_GmRequestState;
-                notifyDone = iTrue;
+            if (size_String(&d->resp.meta) < 3) {
+                clear_String(&d->resp.meta);
+                d->resp.statusCode = invalidHeader_GmStatusCode;
+                d->state           = finished_GmRequestState;
+                notifyDone         = iTrue;
             }
-            const int code = toInt_String(&d->header);
-            if (code == 0 || cstr_String(&d->header)[2] != ' ') {
-                clear_String(&d->header);
-                d->code  = invalidHeader_GmStatusCode;
-                d->state = finished_GmRequestState;
-                notifyDone = iTrue;
+            const int code = toInt_String(&d->resp.meta);
+            if (code == 0 || cstr_String(&d->resp.meta)[2] != ' ') {
+                clear_String(&d->resp.meta);
+                d->resp.statusCode = invalidHeader_GmStatusCode;
+                d->state           = finished_GmRequestState;
+                notifyDone         = iTrue;
             }
-            remove_Block(&d->header.chars, 0, 3); /* just the meta */
-            if (code == success_GmStatusCode && isEmpty_String(&d->header)) {
-                setCStr_String(&d->header, "text/gemini; charset=utf-8"); /* default */
+            remove_Block(&d->resp.meta.chars, 0, 3); /* just the meta */
+            if (code == success_GmStatusCode && isEmpty_String(&d->resp.meta)) {
+                setCStr_String(&d->resp.meta, "text/gemini; charset=utf-8"); /* default */
             }
-            d->code = code;
-            d->state = receivingBody_GmRequestState;
+            d->resp.statusCode = code;
+            d->state           = receivingBody_GmRequestState;
             checkServerCertificate_GmRequest_(d);
             notifyUpdate = iTrue;
             /* Start a timeout for the remainder of the response, in case the connection
@@ -163,7 +194,7 @@ static void readIncoming_GmRequest_(iAnyObject *obj) {
         }
     }
     else if (d->state == receivingBody_GmRequestState) {
-        append_Block(&d->body, data);
+        append_Block(&d->resp.body, data);
         restartTimeout_GmRequest_(d);
         notifyUpdate = iTrue;
     }
@@ -189,26 +220,6 @@ static void requestFinished_GmRequest_(iAnyObject *obj) {
     d->timeoutId = 0;
     d->state     = finished_GmRequestState;
     checkServerCertificate_GmRequest_(d);
-#if 0
-        printf("Server certificate:\n%s\n", cstrLocal_String(pem_TlsCertificate(cert)));
-        iBlock *sha = fingerprint_TlsCertificate(cert);
-        printf("Fingerprint: %s\n",
-               cstr_String(collect_String(
-                   hexEncode_Block(collect_Block(fingerprint_TlsCertificate(cert))))));
-        delete_Block(sha);
-        iDate expiry;
-        validUntil_TlsCertificate(cert, &expiry);
-        printf("Valid until %04d-%02d-%02d\n", expiry.year, expiry.month, expiry.day);
-        printf("Has expired: %s\n", isExpired_TlsCertificate(cert) ? "yes" : "no");
-        //printf("Subject: %s\n", cstrLocal_String(subject_TlsCertificate(serverCertificate_TlsRequest(d->req))));
-        /* Verify. */ {
-            iUrl parts;
-            init_Url(&parts, &d->url);
-            printf("Domain name is %s\n",
-                   verifyDomain_TlsCertificate(cert, parts.host) ? "valid" : "not valid");
-        }
-        fflush(stdout);
-#endif
     unlock_Mutex(&d->mutex);
     iNotifyAudience(d, finished, GmRequestFinished);
 }
@@ -218,10 +229,7 @@ void submit_GmRequest(iGmRequest *d) {
     if (d->state != initialized_GmRequestState) {
         return;
     }
-    d->code = none_GmStatusCode;
-    clear_String(&d->header);
-    clear_Block(&d->body);
-    d->certFlags = 0;
+    clear_GmResponse(&d->resp);
     iUrl url;
     init_Url(&url, &d->url);
     if (equalCase_Rangecc(&url.protocol, "file")) {
@@ -230,50 +238,47 @@ void submit_GmRequest(iGmRequest *d) {
         if (open_File(f, readOnly_FileMode)) {
             /* TODO: Check supported file types: images, audio */
             /* TODO: Detect text files based on contents? E.g., is the content valid UTF-8. */
-            d->code = success_GmStatusCode;
-            d->certFlags = 0;
+            d->resp.statusCode = success_GmStatusCode;
             if (endsWithCase_String(path, ".gmi")) {
-                setCStr_String(&d->header, "text/gemini; charset=utf-8");
+                setCStr_String(&d->resp.meta, "text/gemini; charset=utf-8");
             }
             else if (endsWithCase_String(path, ".txt")) {
-                setCStr_String(&d->header, "text/plain");
+                setCStr_String(&d->resp.meta, "text/plain");
             }
             else if (endsWithCase_String(path, ".png")) {
-                setCStr_String(&d->header, "image/png");
+                setCStr_String(&d->resp.meta, "image/png");
             }
             else if (endsWithCase_String(path, ".jpg") || endsWithCase_String(path, ".jpeg")) {
-                setCStr_String(&d->header, "image/jpeg");
+                setCStr_String(&d->resp.meta, "image/jpeg");
             }
             else if (endsWithCase_String(path, ".gif")) {
-                setCStr_String(&d->header, "image/gif");
+                setCStr_String(&d->resp.meta, "image/gif");
             }
             else {
-                setCStr_String(&d->header, "application/octet-stream");
+                setCStr_String(&d->resp.meta, "application/octet-stream");
             }
-            set_Block(&d->body, collect_Block(readAll_File(f)));
+            set_Block(&d->resp.body, collect_Block(readAll_File(f)));
             d->state = receivingBody_GmRequestState;
             iNotifyAudience(d, updated, GmRequestUpdated);
         }
         else {
-            d->code = failedToOpenFile_GmStatusCode;
-            setCStr_String(&d->header, cstr_String(path));
+            d->resp.statusCode = failedToOpenFile_GmStatusCode;
+            setCStr_String(&d->resp.meta, cstr_String(path));
         }
         iRelease(f);
-        d->certFlags = 0;
         d->state = finished_GmRequestState;
         iNotifyAudience(d, finished, GmRequestFinished);
         return;
     }
     else if (equalCase_Rangecc(&url.protocol, "data")) {
-        d->code = success_GmStatusCode;
-        d->certFlags = 0;
+        d->resp.statusCode = success_GmStatusCode;
         iString *src = collectNewCStr_String(url.protocol.start + 5);
         iRangecc header = { constBegin_String(src), constBegin_String(src) };
         while (header.end < constEnd_String(src) && *header.end != ',') {
             header.end++;
         }
         iBool isBase64 = iFalse;
-        setRange_String(&d->header, header);
+        setRange_String(&d->resp.meta, header);
         /* Check what's in the header. */ {
             iRangecc entry = iNullRange;
             while (nextSplit_Rangecc(&header, ";", &entry)) {
@@ -289,7 +294,7 @@ void submit_GmRequest(iGmRequest *d) {
         else {
             set_String(src, collect_String(urlDecode_String(src)));
         }
-        set_Block(&d->body, &src->chars);
+        set_Block(&d->resp.body, &src->chars);
         d->state = receivingBody_GmRequestState;
         iNotifyAudience(d, updated, GmRequestUpdated);
         d->state = finished_GmRequestState;
@@ -317,19 +322,19 @@ iBool isFinished_GmRequest(const iGmRequest *d) {
 }
 
 enum iGmStatusCode status_GmRequest(const iGmRequest *d) {
-    return d->code;
+    return d->resp.statusCode;
 }
 
 const iString *meta_GmRequest(const iGmRequest *d) {
     if (d->state >= receivingBody_GmRequestState) {
-        return &d->header;
+        return &d->resp.meta;
     }
     return collectNew_String();
 }
 
 const iBlock *body_GmRequest(const iGmRequest *d) {
     iBlock *body;
-    iGuardMutex(&d->mutex, body = collect_Block(copy_Block(&d->body)));
+    iGuardMutex(&d->mutex, body = collect_Block(copy_Block(&d->resp.body)));
     return body;
 }
 
@@ -337,19 +342,17 @@ const iString *url_GmRequest(const iGmRequest *d) {
     return &d->url;
 }
 
+const iGmResponse *response_GmRequest(const iGmRequest *d) {
+    iAssert(d->state == finished_GmRequestState);
+    return &d->resp;
+}
+
 int certFlags_GmRequest(const iGmRequest *d) {
-    return d->certFlags;
+    return d->resp.certFlags;
 }
 
 iDate certExpirationDate_GmRequest(const iGmRequest *d) {
-    iDate expiry;
-    if (d->req) {
-        validUntil_TlsCertificate(serverCertificate_TlsRequest(d->req), &expiry);
-    }
-    else {
-        iZap(expiry);
-    }
-    return expiry;
+    return d->resp.certValidUntil;
 }
 
 iDefineClass(GmRequest)
