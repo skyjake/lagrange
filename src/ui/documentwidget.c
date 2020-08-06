@@ -435,11 +435,6 @@ void setUrlFromCache_DocumentWidget(iDocumentWidget *d, const iString *url, iBoo
             const iGmResponse *resp = recent->cachedResponse;
             d->state = fetching_DocumentState;
             /* Use the cached response data. */
-            printf("cached response: %d [%s] %zu bytes\n{%s}\n",
-                   resp->statusCode,
-                   cstr_String(&resp->meta),
-                   size_Block(&resp->body),
-                   cstr_Block(&resp->body));
             d->scrollY = d->initialScrollY;
             updateTrust_DocumentWidget_(d, resp);
             updateDocument_DocumentWidget_(d, resp);
