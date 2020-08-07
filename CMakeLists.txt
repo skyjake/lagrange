@@ -84,9 +84,7 @@ set (SOURCES
 if (IOS)
 elseif (APPLE)
     list (APPEND SOURCES src/ui/macos.m src/ui/macos.h)
-    # list (APPEND RESOURCES
-    #     "res/Lagrange.icns"
-    # )
+    list (APPEND RESOURCES "res/Lagrange.icns")
 endif ()
 if (MSYS)
     set (WINRC_FILE_VERSION ${PROJECT_VERSION_MAJOR},${PROJECT_VERSION_MINOR},${PROJECT_VERSION_PATCH},0)
@@ -158,9 +156,9 @@ Type=Application
 Icon=fi.skyjake.lagrange")
     install (TARGETS app DESTINATION bin)
     install (FILES ${desktop} DESTINATION share/applications)
-    # install (FILES res/appicon-128.png
-    #     DESTINATION share/icons/hicolor/256x256/apps
-    #     RENAME fi.skyjake.lagrange.png
-    # )
+     install (FILES res/lagrange-256.png
+         DESTINATION share/icons/hicolor/256x256/apps
+         RENAME fi.skyjake.lagrange.png
+     )
 endif ()
 
