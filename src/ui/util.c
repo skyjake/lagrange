@@ -195,24 +195,27 @@ iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
 
 void openMenu_Widget(iWidget *d, iInt2 coord) {
     /* Menu closes when commands are emitted, so handle any pending ones beforehand. */
-//    processEvents_App(postedEventsOnly_AppEventMode);
     setFlags_Widget(d, hidden_WidgetFlag, iFalse);
     arrange_Widget(d);
     d->rect.pos = coord;
     /* Ensure the full menu is visible. */
-    const iInt2 rootSize = rootSize_Window(get_Window());
-    const int bottomExcess = bottom_Rect(bounds_Widget(d)) - rootSize.y;
+    const iInt2 rootSize     = rootSize_Window(get_Window());
+    const iRect bounds = bounds_Widget(d);
+    const int   leftExcess   = -left_Rect(bounds);
+    const int   rightExcess  = right_Rect(bounds) - rootSize.x;
+    const int   topExcess    = -top_Rect(bounds);
+    const int   bottomExcess = bottom_Rect(bounds) - rootSize.y;
     if (bottomExcess > 0) {
         d->rect.pos.y -= bottomExcess;
     }
-    if (top_Rect(d->rect) < 0) {
-        d->rect.pos.y += -top_Rect(d->rect);
+    if (topExcess > 0) {
+        d->rect.pos.y += topExcess;
     }
-    if (right_Rect(bounds_Widget(d)) > rootSize.x) {
-        d->rect.pos.x = coord.x - d->rect.size.x;
+    if (rightExcess > 0) {
+        d->rect.pos.x -= rightExcess;
     }
-    if (left_Rect(d->rect) < 0) {
-        d->rect.pos.x = 0;
+    if (leftExcess > 0) {
+        d->rect.pos.x += leftExcess;
     }
     refresh_App();
 }
