@@ -327,6 +327,22 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
     return iFalse;
 }
 
+iDocumentWidget *document_App(void) {
+    return iConstCast(iDocumentWidget *, currentTabPage_Widget(findWidget_App("doctabs")));
+}
+
+iDocumentWidget *document_Command(const char *cmd) {
+    iAnyObject *obj = pointerLabel_Command(cmd, "doc");
+    if (obj) {
+        return obj;
+    }
+    obj = pointer_Command(cmd);
+    if (obj && isInstance_Object(obj, &Class_DocumentWidget)) {
+        return obj;
+    }
+    return document_App();
+}
+
 iBool handleCommand_App(const char *cmd) {
     iApp *d = &app_;
     iWidget *root = d->window->root;
