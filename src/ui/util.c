@@ -200,7 +200,7 @@ void openMenu_Widget(iWidget *d, iInt2 coord) {
     d->rect.pos = coord;
     /* Ensure the full menu is visible. */
     const iInt2 rootSize     = rootSize_Window(get_Window());
-    const iRect bounds = bounds_Widget(d);
+    const iRect bounds       = bounds_Widget(d);
     const int   leftExcess   = -left_Rect(bounds);
     const int   rightExcess  = right_Rect(bounds) - rootSize.x;
     const int   topExcess    = -top_Rect(bounds);
