@@ -604,13 +604,28 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
         d->siteIcon  = siteIcons[(d->themeSeed >> 7) % iElemCount(siteIcons)];
         /* Set up colors. */ {
             static const float hues[] = {
-                0, 60, 90, 100, 180, 210, 230, 260, 330
+                5, 25, 40, 56, 80, 120, 160, 180, 208, 231, 270, 324
+            };
+            static const struct { int index[2]; } altHues[iElemCount(hues)] = {
+                {2, 4}, /* red */
+                {8, 3}, /* reddish orange */
+                {7, 9}, /* yellowish orange */
+                {5, 7}, /* yellow */
+                {11, 2}, /* greenish yellow */
+                {1, 3}, /* green */
+                {2, 4}, /* bluish green */
+                {2, 11}, /* cyan */
+                {6, 10}, /* sky blue */
+                {3, 11}, /* blue */
+                {8, 9}, /* violet */
+                {7, 8}, /* pink */
             };
             const float saturationLevel = 1.0f; /* TODO: user setting */
             const iBool isLightMode     = iFalse; /* TODO: user setting */
             const iBool isBannerLighter = (d->themeSeed & 0x4000) != 0;
-            const iBool isDarkBgSat     = (d->themeSeed & 0x200000) != 0;
-            iHSLColor   base            = { hues[(d->themeSeed & 0xff) % iElemCount(hues)],
+            const size_t primIndex       = (d->themeSeed & 0xff) % iElemCount(hues);
+            const iBool isDarkBgSat     = (d->themeSeed & 0x200000) != 0 && (primIndex < 1 || primIndex > 4);
+            iHSLColor    base            = { hues[primIndex],
                                0.8f * (d->themeSeed >> 24) / 255.0f,
                                0.06f + 0.09f * ((d->themeSeed >> 5) & 0x7) / 7.0f,
                                1.0f };
@@ -622,12 +637,16 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
             setHsl_Color(tmBannerTitle_ColorId, setLum_HSLColor(addSatLum_HSLColor(base, 0.1f, 0), 0.55f));
             setHsl_Color(tmBannerIcon_ColorId, setLum_HSLColor(addSatLum_HSLColor(base, 0.35f, 0), 0.65f));
 
-            const iBool altDir = (d->themeSeed & 0x4) != 0;
-            const float altHue = fixHue_(iWrapf(base.hue + (altDir ? 180 : -180), 0, 360));
-            float altHue2 = fixHue_(iWrapf(base.hue + (altDir ? -30 : 30), 0, 360));
-            if (altHue2 > 230) altHue2 = fixHue_(iWrapf(base.hue + (altDir ? 45 : -45), 0, 360));
-            iHSLColor altBase = base;
-            altBase.hue = altHue;
+            const int altIndex[2] = { (d->themeSeed & 0x4) != 0,
+                                      (d->themeSeed & 0x40) != 0 };
+
+//            printf("primHue: %zu  alts: %d %d\n",
+//                   primIndex,
+//                   altHues[primIndex].index[altIndex[0]],
+//                   altHues[primIndex].index[altIndex[1]]);
+            const float altHue   = hues[altHues[primIndex].index[altIndex[0]]];
+            const float altHue2  = hues[altHues[primIndex].index[altIndex[1]]];
+            iHSLColor   altBase  = { altHue, base.sat, base.lum, 1 };
             const float titleLum = 0.2f * ((d->themeSeed >> 17) & 0x7) / 7.0f;
             setHsl_Color(tmHeader1_ColorId, setLum_HSLColor(altBase, titleLum + 0.80f));
             setHsl_Color(tmHeader2_ColorId, setLum_HSLColor(altBase, titleLum + 0.70f));
@@ -650,6 +669,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
                     }
                     else if (i == tmBackground_ColorId) {
                         color.sat = (color.sat + 1) / 2;
+                        color.lum += 0.06f;
                     }
                     else if (i == tmHeader3_ColorId) {
                         color.lum *= 0.75f;
@@ -670,8 +690,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
                     }
                     else if (i == tmBannerBackground_ColorId) {
                         if (isBannerLighter) {
-                            color.sat = (color.sat + 1) / 2;
-                            color.lum = (color.lum + 2) / 3;
+                            color.lum = 1.0f;
                         }
                         else {
                             color.sat *= 0.8f;
