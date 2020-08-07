@@ -215,7 +215,11 @@ static void setupUserInterface_Window(iWindow *d) {
             addChild_Widget(navBar, iClob(newIcon_LabelWidget(reloadCStr_, 0, 0, "navigate.reload"))),
             "reload");
         addChild_Widget(navBar, iClob(newIcon_LabelWidget("\U0001f464", 0, 0, "cert.client")));
-        addChild_Widget(navBar, iClob(newIcon_LabelWidget("\U0001d362", 0, 0, "navbar.menu")));
+
+        iLabelWidget *fileMenu =
+            makeMenuButton_LabelWidget("\U0001d362", fileMenuItems, iElemCount(fileMenuItems));
+        setAlignVisually_LabelWidget(fileMenu, iTrue);
+        addChild_Widget(navBar, iClob(fileMenu));
     }
 
     /* Tab bar. */ {
@@ -445,9 +449,8 @@ void init_Window(iWindow *d) {
 #endif
 #if defined (iPlatformLinux)
     /* Load the window icon. */ {
-#if 0
         int w, h, num;
-        const iBlock *icon = &imageAppicon64_Embedded;
+        const iBlock *icon = &imageLagrange64_Embedded;
         stbi_uc *pixels = stbi_load_from_memory(constData_Block(icon),
                                                 size_Block(icon),
                                                 &w,
@@ -459,7 +462,6 @@ void init_Window(iWindow *d) {
         SDL_SetWindowIcon(d->win, surf);
         SDL_FreeSurface(surf);
         stbi_image_free(pixels);
-#endif
     }
 #endif
     d->root = new_Widget();

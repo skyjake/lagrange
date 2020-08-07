@@ -26,9 +26,9 @@ set (EMBED_RESOURCES
     res/NotoEmoji-Regular.ttf
     res/Symbola.ttf
 )
-# if (UNIX AND NOT APPLE)
-#     list (APPEND EMBED_RESOURCES res/appicon-64.png)
-# endif ()
+ if (UNIX AND NOT APPLE)
+     list (APPEND EMBED_RESOURCES res/lagrange-64.png)
+ endif ()
 embed_make (${EMBED_RESOURCES})
 
 set (EMB_BIN ${CMAKE_CURRENT_BINARY_DIR}/resources.bin)
