@@ -389,6 +389,20 @@ iBool handleCommand_App(const char *cmd) {
 #endif
         return iFalse;
     }
+    else if (equal_Command(cmd, "tabs.new")) {
+        iWidget *tabs = findWidget_App("doctabs");
+        iWidget *newTabButton = findChild_Widget(tabs, "newtab");
+        removeChild_Widget(newTabButton->parent, newTabButton);
+        iDocumentWidget *newDoc = new_DocumentWidget();
+        setId_Widget(as_Widget(newDoc), format_CStr("document%03d", tabCount_Widget(tabs)));
+        appendTabPage_Widget(tabs, iClob(newDoc), "", 0, 0);
+        addChild_Widget(findChild_Widget(tabs, "tabs.buttons"), iClob(newTabButton));
+        postCommandf_App("tabs.switch page:%p", newDoc);
+        postCommand_App("navigate.home");
+        arrange_Widget(tabs);
+        refresh_Widget(tabs);
+        return iTrue;
+    }
     else if (equal_Command(cmd, "quit")) {
         SDL_Event ev;
         ev.type = SDL_QUIT;

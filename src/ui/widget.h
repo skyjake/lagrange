@@ -140,3 +140,5 @@ iWidget *hover_Widget       (void);
 void    unhover_Widget      (void);
 void    setMouseGrab_Widget (iWidget *);
 iWidget *mouseGrab_Widget   (void);
+
+iBool   equalWidget_Command (const char *cmd, const iWidget *widget, const char *checkCommand);

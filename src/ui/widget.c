@@ -551,11 +551,18 @@ iBool isSelected_Widget(const iWidget *d) {
     return (d->flags & selected_WidgetFlag) != 0;
 }
 
+iBool equalWidget_Command(const char *cmd, const iWidget *widget, const char *checkCommand) {
+    if (equal_Command(cmd, checkCommand)) {
+        const iWidget *src = pointer_Command(cmd);
+        iAssert(!src || strstr(cmd, " ptr:"));
+        return src == widget || hasParent_Widget(src, widget);
+    }
+    return iFalse;
+}
+
 iBool isCommand_Widget(const iWidget *d, const SDL_Event *ev, const char *cmd) {
-    if (isCommand_UserEvent(ev, cmd)) {
-        const iWidget *src = pointer_Command(command_UserEvent(ev));
-        iAssert(!src || strstr(ev->user.data1, " ptr:"));
-        return src == d || hasParent_Widget(src, d);
+    if (ev->type == SDL_USEREVENT && ev->user.code == command_UserEventCode) {
+        return equalWidget_Command(command_UserEvent(ev), d, cmd);
     }
     return iFalse;
 }

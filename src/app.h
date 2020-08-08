@@ -5,6 +5,7 @@
 #include <the_Foundation/string.h>
 #include <the_Foundation/time.h>
 
+iDeclareType(DocumentWidget)
 iDeclareType(GmCerts)
 iDeclareType(Visited)
 iDeclareType(Window)
@@ -26,8 +27,11 @@ void        processEvents_App   (enum iAppEventMode mode);
 iBool       handleCommand_App   (const char *cmd);
 void        refresh_App         (void);
 
-iGmCerts *  certs_App       (void);
-iVisited *  visited_App     (void);
+iGmCerts *          certs_App           (void);
+iVisited *          visited_App         (void);
+iDocumentWidget *   document_App        (void);
+iDocumentWidget *   document_Command    (const char *cmd);
+
 
 iAny *      findWidget_App      (const char *id);
 void        addTicker_App       (void (*ticker)(iAny *), iAny *context);

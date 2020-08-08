@@ -6,7 +6,7 @@
 
 iBool equal_Command(const char *cmdWithArgs, const char *cmd) {
     if (strchr(cmdWithArgs, ':')) {
-        return beginsWith_CStr(cmdWithArgs, cmd) && cmdWithArgs[strlen(cmd)] == ' ';
+        return startsWith_CStr(cmdWithArgs, cmd) && cmdWithArgs[strlen(cmd)] == ' ';
     }
     return equal_CStr(cmdWithArgs, cmd);
 }

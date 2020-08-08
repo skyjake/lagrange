@@ -109,7 +109,7 @@ iDefineObjectConstruction(DocumentWidget)
 void init_DocumentWidget(iDocumentWidget *d) {
     iWidget *w = as_Widget(d);
     init_Widget(w);
-    setId_Widget(w, "document");
+    setId_Widget(w, "document000");
     iZap(d->certExpiry);
     d->history          = new_History();
     d->state            = blank_DocumentState;
@@ -195,13 +195,13 @@ static void requestUpdated_DocumentWidget_(iAnyObject *obj) {
     iDocumentWidget *d = obj;
     const int wasUpdated = exchange_Atomic(&d->isRequestUpdated, iTrue);
     if (!wasUpdated) {
-        postCommand_Widget(obj, "document.request.updated request:%p", d->request);
+        postCommand_Widget(obj, "document.request.updated doc:%p request:%p", d, d->request);
     }
 }
 
 static void requestFinished_DocumentWidget_(iAnyObject *obj) {
     iDocumentWidget *d = obj;
-    postCommand_Widget(obj, "document.request.finished request:%p", d->request);
+    postCommand_Widget(obj, "document.request.finished doc:%p request:%p", d, d->request);
 }
 
 static iRangei visibleRange_DocumentWidget_(const iDocumentWidget *d) {
@@ -330,6 +330,16 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
     d->state = ready_DocumentState;
 }
 
+static void updateTheme_DocumentWidget_(iDocumentWidget *d) {
+    if (isEmpty_String(d->titleUser)) {
+        setThemeSeed_GmDocument(d->doc,
+                                collect_Block(newRange_Block(urlHost_String(d->url))));
+    }
+    else {
+        setThemeSeed_GmDocument(d->doc, &d->titleUser->chars);
+    }
+}
+
 static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse *response) {
     if (d->state == ready_DocumentState) {
         return;
@@ -339,15 +349,7 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse
     const enum iGmStatusCode statusCode = response->statusCode;
     if (category_GmStatusCode(statusCode) != categoryInput_GmStatusCode) {
         iString str;
-        /* Update theme. */ {
-            if (isEmpty_String(d->titleUser)) {
-                setThemeSeed_GmDocument(d->doc,
-                                        collect_Block(newRange_Block(urlHost_String(d->url))));
-            }
-            else {
-                setThemeSeed_GmDocument(d->doc, &d->titleUser->chars);
-            }
-        }
+        updateTheme_DocumentWidget_(d);
         initBlock_String(&str, &response->body);
         if (category_GmStatusCode(statusCode) == categorySuccess_GmStatusCode) {
             /* Check the MIME type. */
@@ -392,7 +394,7 @@ static void fetch_DocumentWidget_(iDocumentWidget *d) {
         iRelease(d->request);
         d->request = NULL;
     }
-    postCommandf_App("document.request.started url:%s", cstr_String(d->url));
+    postCommandf_App("document.request.started doc:%p url:%s", d, cstr_String(d->url));
     clear_ObjectList(d->media);
     d->certFlags = 0;
     d->state = fetching_DocumentState;
@@ -632,7 +634,7 @@ static iBool requestMedia_DocumentWidget_(iDocumentWidget *d, iGmLinkId linkId) 
     return iFalse;
 }
 
-static iBool handleMediaEvent_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
+static iBool handleMediaCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
     iMediaRequest *req = pointerLabel_Command(cmd, "request");
     if (!req || req->doc != d) {
         return iFalse; /* not our request */
@@ -680,9 +682,9 @@ static void changeTextSize_DocumentWidget_(iDocumentWidget *d, int delta) {
     postCommandf_App("font.setfactor arg:%d", d->textSizePercent);
 }
 
-static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *ev) {
+static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
     iWidget *w = as_Widget(d);
-    if (isResize_UserEvent(ev) || isCommand_UserEvent(ev, "font.changed")) {
+    if (equal_Command(cmd, "window.resized") || equal_Command(cmd, "font.changed")) {
         const iGmRun *mid = middleRun_DocumentWidget_(d);
         const char *midLoc = (mid ? mid->text.start : NULL);
         setWidth_GmDocument(d->doc, documentWidth_DocumentWidget_(d));
@@ -696,9 +698,16 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         }
         refresh_Widget(w);
     }
-    else if (isCommand_UserEvent(ev, "server.showcert")) {
+    else if (equal_Command(cmd, "tabs.changed")) {
+        if (cmp_String(id_Widget(w), suffixPtr_Command(cmd, "id")) == 0) {
+            /* Set palette for our document. */
+            updateTheme_DocumentWidget_(d);
+        }
+        return iFalse;
+    }
+    else if (equal_Command(cmd, "server.showcert")) {
         const char *unchecked = red_ColorEscape   "\u2610";
-        const char *checked   = green_ColorEscape "\u2611";        
+        const char *checked   = green_ColorEscape "\u2611";
         makeMessage_Widget(
             cyan_ColorEscape "CERTIFICATE STATUS",
             format_CStr("%s%s  Domain name %s\n"
@@ -721,7 +730,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                         d->certFlags & trusted_GmCertFlag ? "Trusted on first use" : "Not trusted"));
         return iTrue;
     }
-    else if (isCommand_UserEvent(ev, "copy")) {
+    else if (equal_Command(cmd, "copy")) {
         if (d->selectMark.start) {
             iRangecc mark = d->selectMark;
             if (mark.start > mark.end) {
@@ -733,7 +742,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             return iTrue;
         }
     }
-    else if (isCommand_Widget(w, ev, "document.copylink")) {
+    else if (equalWidget_Command(cmd, w, "document.copylink")) {
         if (d->hoverLink) {
             SDL_SetClipboardText(cstr_String(
                 absoluteUrl_String(d->url, linkUrl_GmDocument(d->doc, d->hoverLink->linkId))));
@@ -743,8 +752,8 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         }
         return iTrue;
     }
-    else if (isCommand_UserEvent(ev, "document.input.submit")) {
-        iString *value = collect_String(suffix_Command(command_UserEvent(ev), "value"));
+    else if (equal_Command(cmd, "document.input.submit")) {
+        iString *value = collect_String(suffix_Command(cmd, "value"));
         urlEncode_String(value);
         iString *url = collect_String(copy_String(d->url));
         const size_t qPos = indexOfCStr_String(url, "?");
@@ -756,19 +765,18 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         postCommandf_App("open url:%s", cstr_String(url));
         return iTrue;
     }
-    else if (isCommand_UserEvent(ev, "valueinput.cancelled") &&
-             cmp_String(string_Command(command_UserEvent(ev), "id"), "document.input.submit") ==
-                 0) {
+    else if (equal_Command(cmd, "valueinput.cancelled") &&
+             cmp_String(string_Command(cmd, "id"), "document.input.submit") == 0) {
         postCommand_App("navigate.back");
         return iTrue;
     }
-    else if (isCommand_Widget(w, ev, "document.request.updated") &&
-             pointerLabel_Command(command_UserEvent(ev), "request") == d->request) {
+    else if (equalWidget_Command(cmd, w, "document.request.updated") &&
+             pointerLabel_Command(cmd, "request") == d->request) {
         checkResponse_DocumentWidget_(d);
         return iFalse;
     }
-    else if (isCommand_Widget(w, ev, "document.request.finished") &&
-             pointerLabel_Command(command_UserEvent(ev), "request") == d->request) {
+    else if (equalWidget_Command(cmd, w, "document.request.finished") &&
+             pointerLabel_Command(cmd, "request") == d->request) {
         checkResponse_DocumentWidget_(d);
         d->state = ready_DocumentState;
         setCachedResponse_History(d->history, response_GmRequest(d->request));
@@ -776,45 +784,46 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         postCommandf_App("document.changed url:%s", cstr_String(d->url));
         return iFalse;
     }
-    else if (isCommand_UserEvent(ev, "document.request.cancelled")) {
+    else if (equal_Command(cmd, "document.request.cancelled") && document_Command(cmd) == d) {
         postCommand_App("navigate.back");
         return iFalse;
     }
-    else if (isCommand_UserEvent(ev, "document.stop")) {
+    else if (equal_Command(cmd, "document.stop")) {
         if (d->request) {
-            postCommandf_App("document.request.cancelled url:%s", cstr_String(d->url));
+            postCommandf_App("document.request.cancelled doc:%p url:%s", d, cstr_String(d->url));
             iReleasePtr(&d->request);
             d->state = ready_DocumentState;
+            return iTrue;
         }
-        return iTrue;
     }
-    else if (isCommand_UserEvent(ev, "media.updated") || isCommand_UserEvent(ev, "media.finished")) {
-        return handleMediaEvent_DocumentWidget_(d, command_UserEvent(ev));
+    else if (equal_Command(cmd, "media.updated") || equal_Command(cmd, "media.finished")) {
+        return handleMediaCommand_DocumentWidget_(d, cmd);
     }
-    else if (isCommand_UserEvent(ev, "document.reload")) {
+    else if (equal_Command(cmd, "document.reload") && document_App() == d) {
         fetch_DocumentWidget_(d);
         return iTrue;
     }
-    else if (isCommand_UserEvent(ev, "navigate.back")) {
+    else if (equal_Command(cmd, "navigate.back") && document_App() == d) {
         goBack_History(d->history);
         return iTrue;
     }
-    else if (isCommand_UserEvent(ev, "navigate.forward")) {
+    else if (equal_Command(cmd, "navigate.forward") && document_App() == d) {
         goForward_History(d->history);
         return iTrue;
     }
-    else if (isCommand_Widget(w, ev, "scroll.moved")) {
-        d->scrollY = arg_Command(command_UserEvent(ev));
+    else if (equalWidget_Command(cmd, w, "scroll.moved")) {
+        d->scrollY = arg_Command(cmd);
         updateVisible_DocumentWidget_(d);
         return iTrue;
     }
-    else if (isCommand_Widget(w, ev, "scroll.page")) {
-        scroll_DocumentWidget_(
-            d, arg_Command(command_UserEvent(ev)) * height_Rect(documentBounds_DocumentWidget_(d)));
+    else if (equalWidget_Command(cmd, w, "scroll.page")) {
+        scroll_DocumentWidget_(d,
+                               arg_Command(cmd) * height_Rect(documentBounds_DocumentWidget_(d)));
         return iTrue;
     }
-    else if (isCommand_UserEvent(ev, "find.next") || isCommand_UserEvent(ev, "find.prev")) {
-        const int dir = isCommand_UserEvent(ev, "find.next") ? +1 : -1;
+    else if ((equal_Command(cmd, "find.next") || equal_Command(cmd, "find.prev")) &&
+             document_App() == d) {
+        const int dir = equal_Command(cmd, "find.next") ? +1 : -1;
         iRangecc (*finder)(const iGmDocument *, const iString *, const char *) =
             dir > 0 ? findText_GmDocument : findTextBefore_GmDocument;
         iInputWidget *find = findWidget_App("find.input");
@@ -824,7 +833,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         else {
             const iBool wrap = d->foundMark.start != NULL;
             d->foundMark     = finder(d->doc, text_InputWidget(find), dir > 0 ? d->foundMark.end
-                                                                              : d->foundMark.start);
+                                                                          : d->foundMark.start);
             if (!d->foundMark.start && wrap) {
                 /* Wrap around. */
                 d->foundMark = finder(d->doc, text_InputWidget(find), NULL);
@@ -838,11 +847,23 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         }
         refresh_Widget(w);
         return iTrue;
-    }   
-    else if (isCommand_UserEvent(ev, "find.clearmark")) {
+    }
+    else if (equal_Command(cmd, "find.clearmark")) {
         if (d->foundMark.start) {
             d->foundMark = iNullRange;
             refresh_Widget(w);
+        }
+        return iTrue;
+    }
+    return iFalse;
+}
+
+static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *ev) {
+    iWidget *w = as_Widget(d);
+    if (ev->type == SDL_USEREVENT && ev->user.code == command_UserEventCode) {
+        if (!handleCommand_DocumentWidget_(d, command_UserEvent(ev))) {
+            /* Base class commands. */
+            return processEvent_Widget(w, ev);
         }
         return iTrue;
     }

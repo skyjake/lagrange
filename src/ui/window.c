@@ -107,29 +107,34 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
             return iTrue;
         }
     }
-    else if (equal_Command(cmd, "document.changed")) {
-        iInputWidget *url = findWidget_App("url");
-        const iString *urlStr = collect_String(suffix_Command(cmd, "url"));
-        visitUrl_Visited(visited_App(), urlStr);
-        setText_InputWidget(url, urlStr);
-        updateTextCStr_LabelWidget(findChild_Widget(navBar, "reload"), reloadCStr_);
-        return iFalse;
-    }
-    else if (equal_Command(cmd, "document.request.cancelled")) {
-        updateTextCStr_LabelWidget(findChild_Widget(navBar, "reload"), reloadCStr_);
-        return iFalse;
-    }
-    else if (equal_Command(cmd, "document.request.started")) {
-        iInputWidget *url = findChild_Widget(navBar, "url");
-        if (isFocused_Widget(as_Widget(url))) {
-            setFocus_Widget(NULL);
+    else if (startsWith_CStr(cmd, "document.")) {
+        /* React to the current document only. */
+        if (document_Command(cmd) == document_App()) {
+            iLabelWidget *reloadButton = findChild_Widget(navBar, "reload");
+            if (equal_Command(cmd, "document.changed")) {
+                iInputWidget *url = findWidget_App("url");
+                const iString *urlStr = collect_String(suffix_Command(cmd, "url"));
+                setText_InputWidget(url, urlStr);
+                updateTextCStr_LabelWidget(reloadButton, reloadCStr_);
+                return iFalse;
+            }
+            else if (equal_Command(cmd, "document.request.cancelled")) {
+                updateTextCStr_LabelWidget(reloadButton, reloadCStr_);
+                return iFalse;
+            }
+            else if (equal_Command(cmd, "document.request.started")) {
+                iInputWidget *url = findChild_Widget(navBar, "url");
+                if (isFocused_Widget(as_Widget(url))) {
+                    setFocus_Widget(NULL);
+                }
+                setTextCStr_InputWidget(url, suffixPtr_Command(cmd, "url"));
+                updateTextCStr_LabelWidget(reloadButton, stopCStr_);
+                return iFalse;
+            }
         }
-        setTextCStr_InputWidget(url, suffixPtr_Command(cmd, "url"));
-        updateTextCStr_LabelWidget(findChild_Widget(navBar, "reload"), stopCStr_);
-        return iFalse;
     }
     else if (equal_Command(cmd, "navigate.reload")) {
-        iDocumentWidget *doc = findWidget_App("document");
+        iDocumentWidget *doc = document_Command(cmd);
         if (isRequestOngoing_DocumentWidget(doc)) {
             postCommand_App("document.stop");
         }
@@ -224,15 +229,16 @@ static void setupUserInterface_Window(iWindow *d) {
         setAlignVisually_LabelWidget(fileMenu, iTrue);
         addChild_Widget(navBar, iClob(fileMenu));
     }
-
     /* Tab bar. */ {
         iWidget *tabBar = makeTabs_Widget(div);
         setId_Widget(tabBar, "doctabs");
         setFlags_Widget(tabBar, expand_WidgetFlag, iTrue);
         setBackgroundColor_Widget(tabBar, gray25_ColorId);
         appendTabPage_Widget(tabBar, iClob(new_DocumentWidget()), "Document", '1', KMOD_PRIMARY);
-        addChild_Widget(findChild_Widget(tabBar, "tabs.buttons"),
-                        iClob(newIcon_LabelWidget("\u2795", 't', KMOD_PRIMARY, "tabs.new")));
+        setId_Widget(
+            addChild_Widget(findChild_Widget(tabBar, "tabs.buttons"),
+                            iClob(newIcon_LabelWidget("\u2795", 't', KMOD_PRIMARY, "tabs.new"))),
+            "newtab");
     }
     /* Search bar. */ {
         iWidget *searchBar = new_Widget();        
