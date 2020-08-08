@@ -99,7 +99,7 @@ const iString *absoluteUrl_String(const iString *d, const iString *urlMaybeRelat
     iUrl rel;
     init_Url(&orig, d);
     init_Url(&rel, urlMaybeRelative);
-    if (equalCase_Rangecc(&rel.protocol, "data")) {
+    if (equalCase_Rangecc(&rel.protocol, "data") || equalCase_Rangecc(&rel.protocol, "about")) {
         /* Special case, the contents should be left unparsed. */
         return urlMaybeRelative;
     }
