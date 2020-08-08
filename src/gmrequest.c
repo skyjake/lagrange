@@ -120,10 +120,14 @@ void setUrl_GmRequest(iGmRequest *d, const iString *url) {
 }
 
 static uint32_t timedOutWhileReceivingBody_GmRequest_(uint32_t interval, void *obj) {
-    iGmRequest *d = obj;
-    cancel_TlsRequest(d->req);
+    /* Note: Called from SDL's timer thread. */
+    postCommandf_App("gmrequest.timeout request:%p", obj);
     iUnused(interval);
     return 0;
+}
+
+void cancel_GmRequest(iGmRequest *d) {
+    cancel_TlsRequest(d->req);
 }
 
 static void restartTimeout_GmRequest_(iGmRequest *d) {

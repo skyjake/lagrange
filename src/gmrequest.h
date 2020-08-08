@@ -39,6 +39,7 @@ iDeclareAudienceGetter(GmRequest, finished)
 
 void                setUrl_GmRequest            (iGmRequest *, const iString *url);
 void                submit_GmRequest            (iGmRequest *);
+void                cancel_GmRequest            (iGmRequest *);
 
 iBool               isFinished_GmRequest        (const iGmRequest *);
 enum iGmStatusCode  status_GmRequest            (const iGmRequest *);

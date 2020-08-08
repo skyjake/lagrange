@@ -792,6 +792,11 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         postCommandf_App("document.changed url:%s", cstr_String(d->url));
         return iFalse;
     }
+    else if (equal_Command(cmd, "gmrequest.timeout") &&
+             pointerLabel_Command(cmd, "request") == d->request) {
+        cancel_GmRequest(d->request);
+        return iFalse;
+    }
     else if (equal_Command(cmd, "document.request.cancelled") && document_Command(cmd) == d) {
         postCommand_App("navigate.back");
         return iFalse;
