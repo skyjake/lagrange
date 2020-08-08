@@ -2,7 +2,7 @@
 # Copyright: 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
 # License: BSD 2-Clause
 
-option (EMBED_IN_EXECUTABLE "Embed resources inside the executable" ON)
+option (EMBED_IN_EXECUTABLE "Embed resources inside the executable" OFF)
 # Note: If disabled, the Unix "cat" tool is required for concatenating
 # the resources into a single "resources.bin" file.
 
