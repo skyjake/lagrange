@@ -17,6 +17,7 @@ void init_GmResponse(iGmResponse *d) {
     init_Block(&d->body, 0);
     d->certFlags = 0;
     iZap(d->certValidUntil);
+    init_String(&d->certSubject);
 }
 
 void initCopy_GmResponse(iGmResponse *d, const iGmResponse *other) {
@@ -25,9 +26,11 @@ void initCopy_GmResponse(iGmResponse *d, const iGmResponse *other) {
     initCopy_Block(&d->body, &other->body);
     d->certFlags = other->certFlags;
     d->certValidUntil = other->certValidUntil;
+    initCopy_String(&d->certSubject, &other->certSubject);
 }
 
 void deinit_GmResponse(iGmResponse *d) {
+    deinit_String(&d->certSubject);
     deinit_Block(&d->body);
     deinit_String(&d->meta);
 }
@@ -38,6 +41,7 @@ void clear_GmResponse(iGmResponse *d) {
     clear_Block(&d->body);
     d->certFlags = 0;
     iZap(d->certValidUntil);
+    clear_String(&d->certSubject);
 }
 
 iGmResponse *copy_GmResponse(const iGmResponse *d) {
@@ -117,7 +121,7 @@ void setUrl_GmRequest(iGmRequest *d, const iString *url) {
 
 static uint32_t timedOutWhileReceivingBody_GmRequest_(uint32_t interval, void *obj) {
     iGmRequest *d = obj;
-    iGuardMutex(&d->mutex, cancel_TlsRequest(d->req));
+    cancel_TlsRequest(d->req);
     iUnused(interval);
     return 0;
 }
@@ -146,7 +150,8 @@ static void checkServerCertificate_GmRequest_(iGmRequest *d) {
         if (checkTrust_GmCerts(certDb, domain, cert)) {
             d->resp.certFlags |= trusted_GmCertFlag;
         }
-        validUntil_TlsCertificate(serverCertificate_TlsRequest(d->req), &d->resp.certValidUntil);
+        validUntil_TlsCertificate(cert, &d->resp.certValidUntil);
+        set_String(&d->resp.certSubject, collect_String(subject_TlsCertificate(cert)));
     }
 }
 

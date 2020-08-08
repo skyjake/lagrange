@@ -87,6 +87,7 @@ struct Impl_DocumentWidget {
     iGmDocument *doc;
     int certFlags;
     iDate certExpiry;
+    iString *certSubject;
     iBool selecting;
     iRangecc selectMark;
     iRangecc foundMark;
@@ -121,6 +122,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     d->textSizePercent  = 100;
     d->doc              = new_GmDocument();
     d->certFlags        = 0;
+    d->certSubject      = new_String();
     d->selecting        = iFalse;
     d->selectMark       = iNullRange;
     d->foundMark        = iNullRange;
@@ -151,6 +153,7 @@ void deinit_DocumentWidget(iDocumentWidget *d) {
     iRelease(d->doc);
     deinit_PtrArray(&d->visibleLinks);
     delete_String(d->url);
+    delete_String(d->certSubject);
     delete_String(d->titleUser);
     SDL_FreeCursor(d->arrowCursor);
     SDL_FreeCursor(d->beamCursor);
@@ -411,6 +414,7 @@ static void updateTrust_DocumentWidget_(iDocumentWidget *d, const iGmResponse *r
 #define closedLock_CStr "\U0001f512"
     d->certFlags       = response->certFlags;
     d->certExpiry      = response->certValidUntil;
+    set_String(d->certSubject, &response->certSubject);
     iLabelWidget *lock = findWidget_App("navbar.lock");
     if (~d->certFlags & available_GmCertFlag) {
         setFlags_Widget(as_Widget(lock), disabled_WidgetFlag, iTrue);
@@ -710,12 +714,15 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         const char *checked   = green_ColorEscape "\u2611";
         makeMessage_Widget(
             cyan_ColorEscape "CERTIFICATE STATUS",
-            format_CStr("%s%s  Domain name %s\n"
+            format_CStr("%s%s  Domain name %s%s\n"
                         "%s%s  %s (%04d-%02d-%02d %02d:%02d:%02d)\n"
                         "%s%s  %s",
                         d->certFlags & domainVerified_GmCertFlag ? checked : unchecked,
                         gray75_ColorEscape,
                         d->certFlags & domainVerified_GmCertFlag ? "matches" : "mismatch",
+                        ~d->certFlags & domainVerified_GmCertFlag
+                            ? format_CStr(" (%s)", cstr_String(d->certSubject))
+                            : "",
                         d->certFlags & timeVerified_GmCertFlag ? checked : unchecked,
                         gray75_ColorEscape,
                         d->certFlags & timeVerified_GmCertFlag ? "Not expired" : "Expired",
@@ -727,7 +734,8 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                         d->certExpiry.second,
                         d->certFlags & trusted_GmCertFlag ? checked : unchecked,
                         gray75_ColorEscape,
-                        d->certFlags & trusted_GmCertFlag ? "Trusted on first use" : "Not trusted"));
+                        d->certFlags & trusted_GmCertFlag ? "Trusted on first use"
+                                                          : "Not trusted"));
         return iTrue;
     }
     else if (equal_Command(cmd, "copy")) {

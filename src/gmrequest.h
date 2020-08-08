@@ -20,6 +20,7 @@ struct Impl_GmResponse {
     iBlock             body;
     int                certFlags;
     iDate              certValidUntil;
+    iString            certSubject;
 };
 
 iDeclareTypeConstruction(GmResponse)
