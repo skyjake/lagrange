@@ -3,7 +3,8 @@
 #include <the_Foundation/range.h>
 #include <the_Foundation/string.h>
 
-iDeclareType(GmError) iDeclareType(Url)
+iDeclareType(GmError)
+iDeclareType(Url)
 
 /* Response status codes. */
 enum iGmStatusCode {
@@ -14,6 +15,7 @@ enum iGmStatusCode {
     unsupportedMimeType_GmStatusCode,
     failedToOpenFile_GmStatusCode,
     unknownStatusCode_GmStatusCode,
+    invalidLocalResource_GmStatusCode,
     none_GmStatusCode                      = 0,
     /* general status code categories */
     categoryInput_GmStatusCode             = 1,
@@ -70,4 +72,5 @@ void            init_Url                (iUrl *, const iString *text);
 
 iRangecc        urlHost_String          (const iString *);
 const iString * absoluteUrl_String      (const iString *, const iString *urlMaybeRelative);
+iString *       makeFileUrl_String      (const iString *localFilePath);
 void            urlEncodeSpaces_String  (iString *);

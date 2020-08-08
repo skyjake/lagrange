@@ -2,6 +2,7 @@
 
 #include <the_Foundation/regexp.h>
 #include <the_Foundation/object.h>
+#include <the_Foundation/path.h>
 
 void init_Url(iUrl *d, const iString *text) {
     iRegExp *absPat =
@@ -142,6 +143,13 @@ const iString *absoluteUrl_String(const iString *d, const iString *urlMaybeRelat
     return absolute;
 }
 
+iString *makeFileUrl_String(const iString *localFilePath) {
+    iString *url = cleaned_Path(localFilePath);
+    replace_Block(&url->chars, '\\', '/'); /* in case it's a Windows path */
+    prependCStr_String(url, "file://");
+    return url;
+}
+
 void urlEncodeSpaces_String(iString *d) {
     for (;;) {
         const size_t pos = indexOfCStr_String(d, " ");
@@ -166,6 +174,10 @@ static const struct {
         "Failed to Open File",
         "The requested file does not exist or is inaccessible. "
         "Please check the file path." } },
+    { invalidLocalResource_GmStatusCode,
+      { 0,
+        "Invalid Resource",
+        "The requested resource does not exist." } },
     { unsupportedMimeType_GmStatusCode,
       { 0x1f47d, /* alien */
         "Unsupported MIME Type",
@@ -178,7 +190,7 @@ static const struct {
         "Perhaps the server is malfunctioning or you tried to contact a "
         "non-Gemini server." } },
     { invalidRedirect_GmStatusCode,
-      { 0, /*  */
+      { 0x27a0, /* dashed arrow */
         "Invalid Redirect",
         "The server responded with a redirect but did not provide a valid destination URL. "
         "Perhaps the server is malfunctioning." } },
@@ -226,7 +238,7 @@ static const struct {
       { 0x1f44e, /* thumbs down */
         "Bad Request",
         "The server was unable to parse your request, presumably due to the "
-        "request being malformed. Likely a bug in Lagrange." } },
+        "request being malformed." } },
     { clientCertificateRequired_GmStatusCode,
       { 0x1f511, /* key */
         "Certificate Required",

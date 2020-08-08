@@ -1,11 +1,12 @@
 #include "gmrequest.h"
 #include "gmutil.h"
 #include "gmcerts.h"
-#include "app.h"
+#include "app.h" /* dataDir_App() */
 
 #include <the_Foundation/file.h>
 #include <the_Foundation/tlsrequest.h>
 #include <the_Foundation/mutex.h>
+#include <the_Foundation/path.h>
 
 #include <SDL_timer.h>
 
@@ -62,30 +63,35 @@ enum iGmRequestState {
 };
 
 struct Impl_GmRequest {
-    iObject object;
-    iMutex mutex;
-    enum iGmRequestState state;
-    iString url;
-    iTlsRequest *req;
-    iGmResponse resp;
-    uint32_t timeoutId; /* in case server doesn't close the connection */
-    iAudience *updated;
-    iAudience *finished;
+    iObject               object;
+    iMutex                mutex;
+    iGmCerts *            certs; /* not owned */
+    enum iGmRequestState  state;
+    iString               url;
+    iTlsRequest *         req;
+    iGmResponse           resp;
+    uint32_t              timeoutId; /* in case server doesn't close the connection */
+    iAudience *           updated;
+    iAudience *           timeout;
+    iAudience *           finished;
 };
 
-iDefineObjectConstruction(GmRequest)
+iDefineObjectConstructionArgs(GmRequest, (iGmCerts *certs), certs)
 iDefineAudienceGetter(GmRequest, updated)
+iDefineAudienceGetter(GmRequest, timeout)
 iDefineAudienceGetter(GmRequest, finished)
 
-void init_GmRequest(iGmRequest *d) {
+void init_GmRequest(iGmRequest *d, iGmCerts *certs) {
     init_Mutex(&d->mutex);
-    d->state = initialized_GmRequestState;
     init_GmResponse(&d->resp);
     init_String(&d->url);
-    d->req = NULL;
-    d->timeoutId = 0;
-    d->updated = NULL;
-    d->finished = NULL;
+    d->certs           = certs;
+    d->timeoutId       = 0;
+    d->req             = NULL;
+    d->state           = initialized_GmRequestState;
+    d->updated         = NULL;
+    d->timeout         = NULL;
+    d->finished        = NULL;
 }
 
 void deinit_GmRequest(iGmRequest *d) {
@@ -107,6 +113,7 @@ void deinit_GmRequest(iGmRequest *d) {
     }
     iRelease(d->req);
     d->req = NULL;
+    delete_Audience(d->timeout);
     delete_Audience(d->finished);
     delete_Audience(d->updated);
     deinit_GmResponse(&d->resp);
@@ -121,7 +128,9 @@ void setUrl_GmRequest(iGmRequest *d, const iString *url) {
 
 static uint32_t timedOutWhileReceivingBody_GmRequest_(uint32_t interval, void *obj) {
     /* Note: Called from SDL's timer thread. */
-    postCommandf_App("gmrequest.timeout request:%p", obj);
+    iGmRequest *d = obj;
+    //postCommandf_App("gmrequest.timeout request:%p", obj);
+    iNotifyAudience(d, timeout, GmRequestTimeout);
     iUnused(interval);
     return 0;
 }
@@ -142,7 +151,6 @@ static void checkServerCertificate_GmRequest_(iGmRequest *d) {
     const iTlsCertificate *cert = serverCertificate_TlsRequest(d->req);
     d->resp.certFlags = 0;
     if (cert) {
-        iGmCerts *     certDb = certs_App();
         const iRangecc domain = urlHost_String(&d->url);
         d->resp.certFlags |= available_GmCertFlag;
         if (!isExpired_TlsCertificate(cert)) {
@@ -151,7 +159,7 @@ static void checkServerCertificate_GmRequest_(iGmRequest *d) {
         if (verifyDomain_TlsCertificate(cert, domain)) {
             d->resp.certFlags |= domainVerified_GmCertFlag;
         }
-        if (checkTrust_GmCerts(certDb, domain, cert)) {
+        if (checkTrust_GmCerts(d->certs, domain, cert)) {
             d->resp.certFlags |= trusted_GmCertFlag;
         }
         validUntil_TlsCertificate(cert, &d->resp.certValidUntil);
@@ -243,7 +251,39 @@ void submit_GmRequest(iGmRequest *d) {
     clear_GmResponse(&d->resp);
     iUrl url;
     init_Url(&url, &d->url);
-    if (equalCase_Rangecc(&url.protocol, "file")) {
+    /* Check for special protocols. */
+    /* TODO: If this were a library, these could be handled via callbacks. */
+    if (equalCase_Rangecc(&url.protocol, "about")) {
+        if (equalCase_Rangecc(&url.path, "home")) {
+            d->resp.statusCode = success_GmStatusCode;
+            setCStr_String(&d->resp.meta, "text/gemini; charset=utf-8");
+            setCStr_Block(&d->resp.body,
+"```\n"
+"ooooo                                                                                 \n"
+"`888'                                                                                 \n"
+" 888          .oooo.    .oooooooo oooo d8b  .oooo.   ooo. .oo.    .oooooooo  .ooooo.  \n"
+" 888         `P  )88b  888' `88b  `888\"\"8P `P  )88b  `888P\"Y88b  888' `88b  d88' `88b \n"
+" 888          .oP\"888  888   888   888      .oP\"888   888   888  888   888  888ooo888 \n"
+" 888       o d8(  888  `88bod8P'   888     d8(  888   888   888  `88bod8P'  888    .o \n"
+"o888ooooood8 `Y888\"\"8o `8oooooo.  d888b    `Y888\"\"8o o888o o888o `8oooooo.  `Y8bod8P' \n"
+"                       d\"     YD                                 d\"     YD            \n"
+"                       \"Y88888P'                                 \"Y88888P'            \n"
+"```\n"
+"# A Beautiful Gemini Browser\n"
+"## Version " LAGRANGE_APP_VERSION "\n\n"
+"=> https://skyjake.fi/@jk by Jaakko Keränen <code@iki.fi>\n"
+"Crafted with \u2615 in Finland\n");
+            d->state = receivingBody_GmRequestState;
+            iNotifyAudience(d, updated, GmRequestUpdated);
+        }
+        else {
+            d->resp.statusCode = invalidLocalResource_GmStatusCode;
+        }
+        d->state = finished_GmRequestState;
+        iNotifyAudience(d, finished, GmRequestFinished);
+        return;
+    }
+    else if (equalCase_Rangecc(&url.protocol, "file")) {
         iString *path = collect_String(urlDecode_String(collect_String(newRange_String(url.path))));
         iFile *  f    = new_File(path);
         if (open_File(f, readOnly_FileMode)) {

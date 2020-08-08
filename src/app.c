@@ -56,7 +56,6 @@ struct Impl_App {
     iSortedArray tickers;
     iBool        pendingRefresh;
     iGmCerts *   certs;
-//    iHistory *   history;
     iVisited *   visited;
     /* Preferences: */
     iBool        retainWindowSize;
@@ -183,6 +182,10 @@ static void deinit_App(iApp *d) {
 
 const iString *execPath_App(void) {
     return executablePath_CommandLine(&app_.args);
+}
+
+const iString *dataDir_App(void) {
+    return collect_String(cleanedCStr_Path(dataDir_App_));
 }
 
 void processEvents_App(enum iAppEventMode eventMode) {
@@ -423,12 +426,7 @@ iBool handleCommand_App(const char *cmd) {
         SDL_SetWindowPosition(d->window->win, pos.x, pos.y);
     }
     else if (equal_Command(cmd, "navigate.home")) {
-        iString *homePath = newCStr_String(dataDir_App_);
-        clean_Path(homePath);
-        append_Path(homePath, &iStringLiteral("home.gmi"));
-        prependCStr_String(homePath, "file://");
-        postCommandf_App("open url:%s", cstr_String(homePath));
-        delete_String(homePath);
+        postCommand_App("open url:about:home");
         return iTrue;
     }
     else if (equal_Command(cmd, "font.setfactor")) {

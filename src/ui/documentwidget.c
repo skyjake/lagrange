@@ -55,7 +55,7 @@ static void finished_MediaRequest_(iAnyObject *obj) {
 void init_MediaRequest(iMediaRequest *d, iDocumentWidget *doc, iGmLinkId linkId, const iString *url) {
     d->doc    = doc;
     d->linkId = linkId;
-    d->req    = new_GmRequest();
+    d->req    = new_GmRequest(certs_App());
     setUrl_GmRequest(d->req, url);
     iConnect(GmRequest, d->req, updated, d, updated_MediaRequest_);
     iConnect(GmRequest, d->req, finished, d, finished_MediaRequest_);
@@ -200,6 +200,11 @@ static void requestUpdated_DocumentWidget_(iAnyObject *obj) {
     if (!wasUpdated) {
         postCommand_Widget(obj, "document.request.updated doc:%p request:%p", d, d->request);
     }
+}
+
+static void requestTimedOut_DocumentWidget_(iAnyObject *obj) {
+    iDocumentWidget *d = obj;
+    postCommandf_App("document.request.timeout doc:%p request:%p", d, d->request);
 }
 
 static void requestFinished_DocumentWidget_(iAnyObject *obj) {
@@ -402,9 +407,10 @@ static void fetch_DocumentWidget_(iDocumentWidget *d) {
     d->certFlags = 0;
     d->state = fetching_DocumentState;
     set_Atomic(&d->isRequestUpdated, iFalse);
-    d->request = new_GmRequest();
+    d->request = new_GmRequest(certs_App());
     setUrl_GmRequest(d->request, d->url);
     iConnect(GmRequest, d->request, updated, d, requestUpdated_DocumentWidget_);
+    iConnect(GmRequest, d->request, timeout, d, requestTimedOut_DocumentWidget_);
     iConnect(GmRequest, d->request, finished, d, requestFinished_DocumentWidget_);
     submit_GmRequest(d->request);
 }
@@ -792,7 +798,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         postCommandf_App("document.changed url:%s", cstr_String(d->url));
         return iFalse;
     }
-    else if (equal_Command(cmd, "gmrequest.timeout") &&
+    else if (equal_Command(cmd, "document.request.timeout") &&
              pointerLabel_Command(cmd, "request") == d->request) {
         cancel_GmRequest(d->request);
         return iFalse;
