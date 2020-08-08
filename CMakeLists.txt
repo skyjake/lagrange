@@ -54,6 +54,8 @@ set (SOURCES
     src/history.h
     src/stb_image.h
     src/stb_truetype.h
+    src/visited.c
+    src/visited.h
     # User interface:
     src/ui/color.c
     src/ui/color.h

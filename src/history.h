@@ -15,42 +15,28 @@ struct Impl_RecentUrl {
     iGmResponse *cachedResponse; /* kept in memory for quicker back navigation */
 };
 
-iDeclareType(VisitedUrl)
-iDeclareTypeConstruction(VisitedUrl)
-
-struct Impl_VisitedUrl {
-    iString url;
-    iTime   when;
-};
-
 /*----------------------------------------------------------------------------------------------*/
 
 iDeclareType(History)
 iDeclareTypeConstruction(History)
 
-void    clear_History   (iHistory *);
+void        clear_History               (iHistory *);
+void        load_History                (iHistory *, const char *dirPath);
+void        add_History                 (iHistory *, const iString *url);
+void        replace_History             (iHistory *, const iString *url);
+void        setCachedResponse_History   (iHistory *, const iGmResponse *response);
+iBool       goBack_History              (iHistory *);
+iBool       goForward_History           (iHistory *);
+iRecentUrl *recentUrl_History           (iHistory *, size_t pos);
+iRecentUrl *mostRecentUrl_History       (iHistory *);
 
-void    load_History    (iHistory *, const char *dirPath);
-void    save_History    (const iHistory *, const char *dirPath);
-
-iRecentUrl *
-        recentUrl_History           (iHistory *, size_t pos);
-iRecentUrl *
-        mostRecentUrl_History       (iHistory *);
-
+void        save_History                (const iHistory *, const char *dirPath);
 const iString *
-        url_History                 (const iHistory *, size_t pos);
+            url_History                 (const iHistory *, size_t pos);
 const iRecentUrl *
-        constRecentUrl_History      (const iHistory *d, size_t pos);
+            constRecentUrl_History      (const iHistory *d, size_t pos);
 const iRecentUrl *
-        constMostRecentUrl_History  (const iHistory *);
-iTime   urlVisitTime_History        (const iHistory *, const iString *url);
+            constMostRecentUrl_History  (const iHistory *);
 const iGmResponse *
-        cachedResponse_History      (const iHistory *);
+            cachedResponse_History      (const iHistory *);
 
-void    addUrl_History              (iHistory *, const iString *url); /* adds to the stack of recents */
-void    setCachedResponse_History   (iHistory *, const iGmResponse *response);
-void    visitUrl_History            (iHistory *, const iString *url); /* adds URL to the visited URLs set */
-void    replace_History             (iHistory *, const iString *url);
-iBool   goBack_History              (iHistory *);
-iBool   goForward_History           (iHistory *);

@@ -76,6 +76,7 @@ iDefineClass(MediaRequest)
 
 struct Impl_DocumentWidget {
     iWidget widget;
+    iHistory *history;
     enum iDocumentState state;
     iString *url;
     iString *titleUser;
@@ -98,7 +99,7 @@ struct Impl_DocumentWidget {
     int initialScrollY;
     iScrollWidget *scroll;
     iWidget *menu;
-    SDL_Cursor *arrowCursor;
+    SDL_Cursor *arrowCursor; /* TODO: cursors belong in Window */
     SDL_Cursor *beamCursor;
     SDL_Cursor *handCursor;
 };
@@ -110,6 +111,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     init_Widget(w);
     setId_Widget(w, "document");
     iZap(d->certExpiry);
+    d->history          = new_History();
     d->state            = blank_DocumentState;
     d->url              = new_String();
     d->titleUser        = new_String();
@@ -153,6 +155,7 @@ void deinit_DocumentWidget(iDocumentWidget *d) {
     SDL_FreeCursor(d->arrowCursor);
     SDL_FreeCursor(d->beamCursor);
     SDL_FreeCursor(d->handCursor);
+    delete_History(d->history);
 }
 
 static int documentWidth_DocumentWidget_(const iDocumentWidget *d) {
@@ -258,7 +261,7 @@ static void updateVisible_DocumentWidget_(iDocumentWidget *d) {
     render_GmDocument(d->doc, visRange, addVisibleLink_DocumentWidget_, d);
     updateHover_DocumentWidget_(d, mouseCoord_Window(get_Window()));
     /* Remember scroll positions of recently visited pages. */ {
-        iRecentUrl *recent = mostRecentUrl_History(history_App());
+        iRecentUrl *recent = mostRecentUrl_History(d->history);
         if (recent) {
             recent->scrollY = d->scrollY / gap_UI;
         }
@@ -424,6 +427,10 @@ static void updateTrust_DocumentWidget_(iDocumentWidget *d, const iGmResponse *r
     }
 }
 
+iHistory *history_DocumentWidget(iDocumentWidget *d) {
+    return d->history;
+}
+
 void setUrlFromCache_DocumentWidget(iDocumentWidget *d, const iString *url, iBool isFromCache) {
     if (cmpStringSc_String(d->url, url, &iCaseInsensitive)) {
         set_String(d->url, url);
@@ -439,7 +446,7 @@ void setUrlFromCache_DocumentWidget(iDocumentWidget *d, const iString *url, iBoo
                 iRelease(userPats[i]);
             }
         }
-        const iRecentUrl *recent = mostRecentUrl_History(history_App());
+        const iRecentUrl *recent = mostRecentUrl_History(d->history);
         if (isFromCache && recent && recent->cachedResponse) {
             const iGmResponse *resp = recent->cachedResponse;
             d->state = fetching_DocumentState;
@@ -764,7 +771,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
              pointerLabel_Command(command_UserEvent(ev), "request") == d->request) {
         checkResponse_DocumentWidget_(d);
         d->state = ready_DocumentState;
-        setCachedResponse_History(history_App(), response_GmRequest(d->request));
+        setCachedResponse_History(d->history, response_GmRequest(d->request));
         iReleasePtr(&d->request);
         postCommandf_App("document.changed url:%s", cstr_String(d->url));
         return iFalse;
@@ -786,6 +793,14 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
     }
     else if (isCommand_UserEvent(ev, "document.reload")) {
         fetch_DocumentWidget_(d);
+        return iTrue;
+    }
+    else if (isCommand_UserEvent(ev, "navigate.back")) {
+        goBack_History(d->history);
+        return iTrue;
+    }
+    else if (isCommand_UserEvent(ev, "navigate.forward")) {
+        goForward_History(d->history);
         return iTrue;
     }
     else if (isCommand_Widget(w, ev, "scroll.moved")) {

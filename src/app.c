@@ -3,6 +3,7 @@
 #include "gmcerts.h"
 #include "gmutil.h"
 #include "history.h"
+#include "visited.h"
 #include "ui/command.h"
 #include "ui/window.h"
 #include "ui/inputwidget.h"
@@ -55,7 +56,8 @@ struct Impl_App {
     iSortedArray tickers;
     iBool        pendingRefresh;
     iGmCerts *   certs;
-    iHistory *   history;
+//    iHistory *   history;
+    iVisited *   visited;
     /* Preferences: */
     iBool        retainWindowSize;
     float        uiScale;
@@ -149,9 +151,9 @@ static void init_App_(iApp *d, int argc, char **argv) {
     d->retainWindowSize = iTrue;
     d->pendingRefresh   = iFalse;
     d->certs            = new_GmCerts(dataDir_App_);
-    d->history          = new_History();
+    d->visited          = new_Visited();
     loadPrefs_App_(d);
-    load_History(d->history, dataDir_App_);
+    load_Visited(d->visited, dataDir_App_);
 #if defined (iHaveLoadEmbed)
     /* Load the resources from a file. */ {
         if (!load_Embed(concatPath_CStr(cstr_String(execPath_App()), "../resources.bin"))) {
@@ -170,8 +172,8 @@ static void init_App_(iApp *d, int argc, char **argv) {
 
 static void deinit_App(iApp *d) {
     savePrefs_App_(d);
-    save_History(d->history, dataDir_App_);
-    delete_History(d->history);
+    save_Visited(d->visited, dataDir_App_);
+    delete_Visited(d->visited);
     delete_GmCerts(d->certs);
     deinit_SortedArray(&d->tickers);
     delete_Window(d->window);
@@ -313,8 +315,8 @@ iGmCerts *certs_App(void) {
     return app_.certs;
 }
 
-iHistory *history_App(void) {
-    return app_.history;
+iVisited *visited_App(void) {
+    return app_.visited;
 }
 
 static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
@@ -332,40 +334,43 @@ iDocumentWidget *document_App(void) {
 }
 
 iDocumentWidget *document_Command(const char *cmd) {
+    /* Explicitly referenced. */
     iAnyObject *obj = pointerLabel_Command(cmd, "doc");
     if (obj) {
         return obj;
     }
+    /* Implicit via source widget. */
     obj = pointer_Command(cmd);
     if (obj && isInstance_Object(obj, &Class_DocumentWidget)) {
         return obj;
     }
+    /* Currently visible document. */
     return document_App();
 }
 
 iBool handleCommand_App(const char *cmd) {
     iApp *d = &app_;
-    iWidget *root = d->window->root;
     if (equal_Command(cmd, "open")) {
         const iString *url = collect_String(newCStr_String(suffixPtr_Command(cmd, "url")));
         iUrl parts;
         init_Url(&parts, url);
         if (equalCase_Rangecc(&parts.protocol, "http") ||
             equalCase_Rangecc(&parts.protocol, "https")) {
-            visitUrl_History(d->history, url);
             openInDefaultBrowser_App(url);
             return iTrue;
         }
+        iDocumentWidget *doc = document_Command(cmd);
+        iHistory *history = history_DocumentWidget(doc);
         const iBool isHistory = argLabel_Command(cmd, "history") != 0;
         if (!isHistory) {
             if (argLabel_Command(cmd, "redirect")) {
-                replace_History(d->history, url);
+                replace_History(history, url);
             }
             else {
-                addUrl_History(d->history, url);
+                add_History(history, url);
             }
         }
-        iDocumentWidget *doc = findChild_Widget(root, "document");
+        visitUrl_Visited(d->visited, url);
         setInitialScroll_DocumentWidget(doc, argLabel_Command(cmd, "scroll") * gap_UI);
         setUrlFromCache_DocumentWidget(doc, url, isHistory);
     }
@@ -402,18 +407,6 @@ iBool handleCommand_App(const char *cmd) {
         resize_Window(d->window, argLabel_Command(cmd, "width"), argLabel_Command(cmd, "height"));
         const iInt2 pos = coord_Command(cmd);
         SDL_SetWindowPosition(d->window->win, pos.x, pos.y);
-    }
-    else if (equal_Command(cmd, "document.changed")) {
-        /* TODO: Update current history item with this actual/redirected URL. */
-        return iFalse;
-    }
-    else if (equal_Command(cmd, "navigate.back")) {
-        goBack_History(d->history);
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "navigate.forward")) {
-        goForward_History(d->history);
-        return iTrue;
     }
     else if (equal_Command(cmd, "navigate.home")) {
         iString *homePath = newCStr_String(dataDir_App_);

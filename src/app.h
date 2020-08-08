@@ -6,7 +6,7 @@
 #include <the_Foundation/time.h>
 
 iDeclareType(GmCerts)
-iDeclareType(History)
+iDeclareType(Visited)
 iDeclareType(Window)
 
 enum iAppEventMode {
@@ -27,7 +27,7 @@ iBool       handleCommand_App   (const char *cmd);
 void        refresh_App         (void);
 
 iGmCerts *  certs_App       (void);
-iHistory *  history_App     (void);
+iVisited *  visited_App     (void);
 
 iAny *      findWidget_App      (const char *id);
 void        addTicker_App       (void (*ticker)(iAny *), iAny *context);

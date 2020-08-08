@@ -4,7 +4,7 @@
 #include "ui/text.h"
 #include "ui/metrics.h"
 #include "ui/window.h"
-#include "history.h"
+#include "visited.h"
 #include "app.h"
 
 #include <the_Foundation/ptrarray.h>
@@ -212,7 +212,7 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
             }
             /* Check if visited. */
             if (cmpString_String(&link->url, &d->url)) {
-                link->when = urlVisitTime_History(history_App(), &link->url);
+                link->when = urlVisitTime_Visited(visited_App(), &link->url);
                 if (isValid_Time(&link->when)) {
                     link->flags |= visited_GmLinkFlag;
                 }

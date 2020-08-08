@@ -6,6 +6,7 @@
 #include "paint.h"
 #include "text.h"
 #include "util.h"
+#include "../visited.h"
 #include "labelwidget.h"
 #include "inputwidget.h"
 #include "documentwidget.h"
@@ -108,7 +109,9 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
     }
     else if (equal_Command(cmd, "document.changed")) {
         iInputWidget *url = findWidget_App("url");
-        setTextCStr_InputWidget(url, suffixPtr_Command(cmd, "url"));
+        const iString *urlStr = collect_String(suffix_Command(cmd, "url"));
+        visitUrl_Visited(visited_App(), urlStr);
+        setText_InputWidget(url, urlStr);
         updateTextCStr_LabelWidget(findChild_Widget(navBar, "reload"), reloadCStr_);
         return iFalse;
     }
