@@ -180,6 +180,10 @@ enum iTouchBarVariant {
     postCommand_App("preferences");
 }
 
+- (void)closeTab {
+    postCommand_App("tabs.close");
+}
+
 - (void)postMenuItemCommand:(id)sender {
     NSString *command = [menuCommands objectForKey:[(NSMenuItem *)sender title]];
     if (command) {
@@ -347,6 +351,11 @@ void setupApplication_MacOS(void) {
     NSMenuItem *prefsItem = [appMenu itemWithTitle:@"Preferences…"];
     prefsItem.target = myDel;
     prefsItem.action = @selector(showPreferences);
+    /* Get rid of the default window close item */
+    NSMenu *windowMenu = [[[NSApp mainMenu] itemWithTitle:@"Window"] submenu];
+    NSMenuItem *windowCloseItem = [windowMenu itemWithTitle:@"Close"];
+    windowCloseItem.target = myDel;
+    windowCloseItem.action = @selector(closeTab);
 }
 
 void insertMenuItems_MacOS(const char *menuLabel, const iMenuItem *items, size_t count) {

@@ -406,6 +406,23 @@ iBool handleCommand_App(const char *cmd) {
         refresh_Widget(tabs);
         return iTrue;
     }
+    else if (equal_Command(cmd, "tabs.close")) {
+        iWidget *tabs = findWidget_App("doctabs");
+        if (tabCount_Widget(tabs) > 1) {
+            size_t index = tabPageIndex_Widget(tabs, document_App());
+            iWidget *closed = removeTabPage_Widget(tabs, index);
+            destroy_Widget(closed); /* released later */
+            if (index == tabCount_Widget(tabs)) {
+                index--;
+            }
+            arrange_Widget(tabs);
+            postCommandf_App("tabs.switch page:%p", tabPage_Widget(tabs, index));
+        }
+        else {
+            postCommand_App("quit");
+        }
+        return iTrue;
+    }
     else if (equal_Command(cmd, "quit")) {
         SDL_Event ev;
         ev.type = SDL_QUIT;

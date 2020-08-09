@@ -145,6 +145,9 @@ void init_DocumentWidget(iDocumentWidget *d) {
                                        { "Copy", 'c', KMOD_PRIMARY, "copy" },
                                        { "Copy Link", 0, 0, "document.copylink" } },
                         6);
+#if !defined (iPlatformApple) /* in system menu */
+    addAction_Widget(w, SDLK_w, KMOD_PRIMARY, "tabs.close");
+#endif
 }
 
 void deinit_DocumentWidget(iDocumentWidget *d) {

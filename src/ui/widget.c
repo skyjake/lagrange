@@ -33,7 +33,12 @@ void destroyPending_Widget(void) {
     iForEach(PtrSet, i, rootData_.pendingDestruction) {
         iWidget *widget = *i.value;
         remove_PtrSet(onTop_RootData_(), widget);
-        iRelease(removeChild_Widget(widget->parent, widget));
+        if (widget->parent) {
+            iRelease(removeChild_Widget(widget->parent, widget));
+        }
+        else {
+            iRelease(widget);
+        }
         remove_PtrSetIterator(&i);
     }
 }
@@ -481,6 +486,7 @@ iAny *addChildFlags_Widget(iWidget *d, iAnyObject *child, int childFlags) {
 }
 
 iAny *removeChild_Widget(iWidget *d, iAnyObject *child) {
+    iAssert(child);
     ref_Object(child);
     iBool found = iFalse;
     iForEach(ObjectList, i, d->children) {
@@ -503,6 +509,17 @@ iAny *child_Widget(iWidget *d, size_t index) {
         }
     }
     return NULL;
+}
+
+size_t childIndex_Widget(const iWidget *d, const iAnyObject *child) {
+    size_t index = 0;
+    iConstForEach(ObjectList, i, d->children) {
+        if (i.object == child) {
+            return index;
+        }
+        index++;
+    }
+    return iInvalidPos;
 }
 
 iAny *findChild_Widget(const iWidget *d, const char *id) {

@@ -128,6 +128,7 @@ iAny *  addChildPos_Widget  (iWidget *, iAnyObject *child, enum iWidgetAddPos ad
 iAny *  addChildFlags_Widget(iWidget *, iAnyObject *child, int childFlags); /* holds a ref */
 iAny *  removeChild_Widget  (iWidget *, iAnyObject *child); /* returns a ref */
 iAny *  child_Widget        (iWidget *, size_t index); /* O(n) */
+size_t  childIndex_Widget   (const iWidget *, const iAnyObject *child); /* O(n) */
 void    arrange_Widget      (iWidget *);
 iBool   dispatchEvent_Widget(iWidget *, const SDL_Event *);
 iBool   processEvent_Widget (iWidget *, const SDL_Event *);

@@ -295,7 +295,11 @@ static iBool tabSwitcher_(iWidget *tabs, const char *cmd) {
 iWidget *makeTabs_Widget(iWidget *parent) {
     iWidget *tabs = makeVDiv_Widget();
     iWidget *buttons = addChild_Widget(tabs, iClob(new_Widget()));
-    setFlags_Widget(buttons, arrangeHorizontal_WidgetFlag | arrangeHeight_WidgetFlag, iTrue);
+    buttons->rect.size.y = 2 * gap_UI + lineHeight_Text(default_FontId);
+    setFlags_Widget(buttons,
+                    resizeChildren_WidgetFlag | arrangeHorizontal_WidgetFlag |
+                        fixedHeight_WidgetFlag,
+                    iTrue);
     setId_Widget(buttons, "tabs.buttons");
     iWidget *pages = addChildFlags_Widget(
         tabs, iClob(new_Widget()), expand_WidgetFlag | resizeChildren_WidgetFlag);
@@ -313,7 +317,7 @@ static void addTabPage_Widget_(iWidget *tabs, enum iWidgetAddPos addPos, iWidget
         findChild_Widget(tabs, "tabs.buttons"),
         iClob(new_LabelWidget(label, key, kmods, format_CStr("tabs.switch page:%p", page))),
         addPos);
-    setFlags_Widget(button, selected_WidgetFlag, isSel);
+    setFlags_Widget(button, selected_WidgetFlag | expand_WidgetFlag, isSel);
     addChildPos_Widget(pages, page, addPos);
     setFlags_Widget(page, hidden_WidgetFlag | disabled_WidgetFlag, !isSel);
 }
@@ -385,6 +389,11 @@ void setTabPageLabel_Widget(iWidget *tabs, const iAnyObject *page, const iString
     arrange_Widget(tabs);
 }
 
+size_t tabPageIndex_Widget(const iWidget *tabs, const iAnyObject *page) {
+    iWidget *pages = findChild_Widget(tabs, "tabs.pages");
+    return childIndex_Widget(pages, page);
+}
+
 const iWidget *currentTabPage_Widget(const iWidget *tabs) {
     iWidget *pages = findChild_Widget(tabs, "tabs.pages");
     iConstForEach(ObjectList, i, pages->children) {
@@ -396,7 +405,7 @@ const iWidget *currentTabPage_Widget(const iWidget *tabs) {
 }
 
 size_t tabCount_Widget(const iWidget *tabs) {
-    return childCount_Widget(findChild_Widget(tabs, "tabs.buttons"));
+    return childCount_Widget(findChild_Widget(tabs, "tabs.pages"));
 }
 
 /*-----------------------------------------------------------------------------------------------*/
