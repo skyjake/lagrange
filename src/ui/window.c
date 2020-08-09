@@ -133,6 +133,13 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
             }
         }
     }
+    else if (equal_Command(cmd, "tabs.changed")) {
+        /* Update navbar according to the current tab. */
+        iDocumentWidget *doc = document_App();
+        setText_InputWidget(findWidget_App("url"), url_DocumentWidget(doc));
+        updateTextCStr_LabelWidget(findChild_Widget(navBar, "reload"),
+                                   isRequestOngoing_DocumentWidget(doc) ? stopCStr_ : reloadCStr_);
+    }
     else if (equal_Command(cmd, "navigate.reload")) {
         iDocumentWidget *doc = document_Command(cmd);
         if (isRequestOngoing_DocumentWidget(doc)) {
@@ -409,7 +416,8 @@ static void setupUserInterface_Window(iWindow *d) {
     }
 #endif
     /* Glboal keyboard shortcuts. */ {
-        // addAction_Widget(d->root, SDLK_LEFTBRACKET, KMOD_SHIFT | KMOD_PRIMARY, "tabs.prev");
+        addAction_Widget(d->root, SDLK_LEFTBRACKET, KMOD_SHIFT | KMOD_PRIMARY, "tabs.prev");
+        addAction_Widget(d->root, SDLK_RIGHTBRACKET, KMOD_SHIFT | KMOD_PRIMARY, "tabs.next");
         addAction_Widget(d->root, 'l', KMOD_PRIMARY, "focus.set id:url");
         addAction_Widget(d->root, 'f', KMOD_PRIMARY, "focus.set id:find.input");
     }

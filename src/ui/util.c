@@ -317,7 +317,8 @@ static void addTabPage_Widget_(iWidget *tabs, enum iWidgetAddPos addPos, iWidget
         findChild_Widget(tabs, "tabs.buttons"),
         iClob(new_LabelWidget(label, key, kmods, format_CStr("tabs.switch page:%p", page))),
         addPos);
-    setFlags_Widget(button, selected_WidgetFlag | expand_WidgetFlag, isSel);
+    setFlags_Widget(button, selected_WidgetFlag, isSel);
+    setFlags_Widget(button, expand_WidgetFlag, iTrue);
     addChildPos_Widget(pages, page, addPos);
     setFlags_Widget(page, hidden_WidgetFlag | disabled_WidgetFlag, !isSel);
 }
@@ -381,6 +382,10 @@ void showTabPage_Widget(iWidget *tabs, const iWidget *page) {
     if (!isEmpty_String(id_Widget(page))) {
         postCommandf_App("tabs.changed id:%s", cstr_String(id_Widget(page)));
     }
+}
+
+iLabelWidget *tabPageButton_Widget(iWidget *tabs, const iAnyObject *page) {
+    return tabButtonForPage_Widget_(tabs, page);
 }
 
 void setTabPageLabel_Widget(iWidget *tabs, const iAnyObject *page, const iString *label) {

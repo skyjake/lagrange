@@ -297,9 +297,46 @@ static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
     if (isEmpty_StringArray(title)) {
         pushBackCStr_StringArray(title, "Lagrange");
     }
-    const iString *text = collect_String(joinCStr_StringArray(title, " \u2014 "));
-    setTitle_Window(get_Window(), text);
-    setTabPageLabel_Widget(findWidget_App("doctabs"), d, text);
+    /* Take away parts if it doesn't fit. */
+    iLabelWidget *tabButton = tabPageButton_Widget(findWidget_App("doctabs"), d);
+    const int avail = bounds_Widget(as_Widget(tabButton)).size.x - 3 * gap_UI;
+    iBool setWindow = (document_App() == d);
+    for (;;) {
+        iString *text = collect_String(joinCStr_StringArray(title, " \u2014 "));
+        if (setWindow) {
+            /* Longest version for the window title, and omit the icon. */
+            setTitle_Window(get_Window(), text);
+            setWindow = iFalse;
+        }
+        const iChar siteIcon = siteIcon_GmDocument(d->doc);
+        if (siteIcon) {
+            if (!isEmpty_String(text)) {
+                prependCStr_String(text, " ");
+            }
+            prependChar_String(text, siteIcon);
+        }
+        const int width = advanceRange_Text(default_FontId, range_String(text)).x;
+        if (width <= avail ||
+            isEmpty_StringArray(title)) {
+            updateText_LabelWidget(tabButton, text);
+            break;
+        }
+        if (size_StringArray(title) == 1) {
+            /* Just truncate to fit. */
+            const char *endPos;
+            tryAdvanceNoWrap_Text(default_FontId,
+                                  range_String(text),
+                                  avail - advance_Text(default_FontId, "...").x,
+                                  &endPos);
+            updateText_LabelWidget(
+                tabButton,
+                collectNewFormat_String("%s...",
+                                        cstrCollect_String(newRange_String(
+                                            (iRangecc){ constBegin_String(text), endPos }))));
+            break;
+        }
+        remove_StringArray(title, size_StringArray(title) - 1);
+    }
 }
 
 static void setSource_DocumentWidget_(iDocumentWidget *d, const iString *source) {
@@ -444,6 +481,10 @@ static void updateTrust_DocumentWidget_(iDocumentWidget *d, const iGmResponse *r
 
 iHistory *history_DocumentWidget(iDocumentWidget *d) {
     return d->history;
+}
+
+const iString *url_DocumentWidget(const iDocumentWidget *d) {
+    return d->url;
 }
 
 void setUrlFromCache_DocumentWidget(iDocumentWidget *d, const iString *url, iBool isFromCache) {
@@ -710,12 +751,14 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             }
         }
         refresh_Widget(w);
+        updateWindowTitle_DocumentWidget_(d);
     }
     else if (equal_Command(cmd, "tabs.changed")) {
         if (cmp_String(id_Widget(w), suffixPtr_Command(cmd, "id")) == 0) {
             /* Set palette for our document. */
             updateTheme_DocumentWidget_(d);
         }
+        updateWindowTitle_DocumentWidget_(d);
         return iFalse;
     }
     else if (equal_Command(cmd, "server.showcert")) {
