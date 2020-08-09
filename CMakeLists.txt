@@ -138,6 +138,9 @@ endif ()
 # Deployment.
 if (MSYS)
     install (TARGETS app DESTINATION .)
+    if (NOT EMBED_IN_EXECUTABLE)
+        install (FILES ${EMB_BIN} DESTINATION .)
+    endif ()
     install (PROGRAMS 
         ${SDL2_LIBDIR}/SDL2.dll 
         $<TARGET_FILE:the_Foundation::the_Foundation>
@@ -158,9 +161,12 @@ Type=Application
 Icon=fi.skyjake.lagrange")
     install (TARGETS app DESTINATION bin)
     install (FILES ${desktop} DESTINATION share/applications)
-     install (FILES res/lagrange-256.png
+    install (FILES res/lagrange-256.png
          DESTINATION share/icons/hicolor/256x256/apps
          RENAME fi.skyjake.lagrange.png
-     )
+    )
+    if (NOT EMBED_IN_EXECUTABLE)
+        install (FILES ${EMB_BIN} DESTINATION share/lagrange)
+    endif ()
 endif ()
 
