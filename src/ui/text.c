@@ -61,7 +61,7 @@ struct Impl_Font {
     int            height;
     int            baseline;
     iHash          glyphs;
-    iBool          enableKerning;
+    iBool          isMonospaced;
     enum iFontId   symbolsFont; /* font to use for symbols */
 };
 
@@ -78,7 +78,7 @@ static void init_Font(iFont *d, const iBlock *data, int height, enum iFontId sym
     stbtt_GetFontVMetrics(&d->font, &ascent, NULL, NULL);
     d->baseline = (int) ascent * d->scale;
     d->symbolsFont = symbolsFont;
-    d->enableKerning = iTrue;
+    d->isMonospaced = iFalse;
 }
 
 static void deinit_Font(iFont *d) {
@@ -148,7 +148,7 @@ static void initFonts_Text_(iText *d) {
         iFont *font = &d->fonts[i];
         init_Font(font, fontData[i].ttf, fontData[i].size, fontData[i].symbolsFont);
         if (fontData[i].ttf == &fontFiraMonoRegular_Embedded) {
-            font->enableKerning = iFalse;
+            font->isMonospaced = iTrue;
         }
     }
     gap_Text = iRound(gap_UI * d->contentFontSize);
@@ -385,12 +385,16 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
     const iInt2 orig = pos;
     float xpos = pos.x;
     float xposMax = xpos;
+    float monoAdvance = 0;
     iAssert(xposLimit == 0 || isMeasuring_(mode));
     const char *lastWordEnd = text.start;
     if (continueFrom_out) {
         *continueFrom_out = text.end;
     }
     iChar prevCh = 0;
+    if (d->isMonospaced) {
+        monoAdvance = glyph_Font_(d, 'M')->advance;
+    }
     for (const char *chPos = text.start; chPos != text.end; ) {
         iAssert(chPos < text.end);
         const char *currentPos = chPos;
@@ -460,13 +464,15 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
         if (!isMeasuring_(mode)) {
             SDL_RenderCopy(text_.render, text_.cache, (const SDL_Rect *) &glyph->rect[hoff], &dst);
         }
-        xpos += glyph->advance;
+        /* Symbols and emojis are NOT monospaced, so must conform when the primary font
+           is monospaced. */
+        xpos += (d->isMonospaced && glyph->font != d ? monoAdvance : glyph->advance);
         xposMax = iMax(xposMax, xpos);
         if (mode == measureNoWrap_RunMode || isWrapBoundary_(prevCh, ch)) {
             lastWordEnd = chPos;
         }
         /* Check the next character. */
-        if (d->enableKerning && glyph->font == d) {
+        if (!d->isMonospaced && glyph->font == d) {
             /* TODO: No need to decode the next char twice; check this on the next iteration. */
             const char *peek = chPos;
             const iChar next = nextChar_(&peek, text.end);
