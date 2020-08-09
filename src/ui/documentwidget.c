@@ -351,13 +351,10 @@ static void setSource_DocumentWidget_(iDocumentWidget *d, const iString *source)
 }
 
 static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode code) {
-    iString *src = collectNew_String();
+    iString *src = collectNewCStr_String("# ");
     const iGmError *msg = get_GmError(code);
-    format_String(src,
-                  "# %lc %s\n%s",
-                  msg->icon ? msg->icon : 0x2327, /* X in a box */
-                  msg->title,
-                  msg->info);
+    appendChar_String(src, msg->icon ? msg->icon : 0x2327); /* X in a box */
+    appendFormat_String(src, " %s\n%s", msg->title, msg->info);
     switch (code) {
         case failedToOpenFile_GmStatusCode:
         case certificateNotValid_GmStatusCode:
@@ -1179,7 +1176,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
         init_String(&bannerText);
         iInt2 bpos = add_I2(visPos, init_I2(0, lineHeight_Text(banner_FontId) / 2));
         if (icon) {
-            format_String(&bannerText, "%lc", (int) icon);
+            appendChar_String(&bannerText, icon);
             const iRect iconRect = visualBounds_Text(banner_FontId, range_String(&bannerText));
             drawRange_Text(run->font,
                            addY_I2(bpos, -mid_Rect(iconRect).y + lineHeight_Text(run->font) / 2),

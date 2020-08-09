@@ -13,6 +13,7 @@
 #include <SDL_hints.h>
 #include <SDL_render.h>
 #include <stb_image.h>
+#include <ctype.h>
 
 iDeclareType(GmLink)
 
