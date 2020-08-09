@@ -30,6 +30,7 @@ enum iWidgetFlag {
     alignLeft_WidgetFlag         = iBit(6),
     alignRight_WidgetFlag        = iBit(7),
     frameless_WidgetFlag         = iBit(8),
+    commandOnClick_WidgetFlag    = iBit(9),
     drawKey_WidgetFlag           = iBit(10),
     focusable_WidgetFlag         = iBit(11),
     tight_WidgetFlag             = iBit(31), /* smaller padding */

@@ -140,6 +140,16 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
         updateTextCStr_LabelWidget(findChild_Widget(navBar, "reload"),
                                    isRequestOngoing_DocumentWidget(doc) ? stopCStr_ : reloadCStr_);
     }
+    else if (equal_Command(cmd, "mouse.clicked")) {
+        iWidget *widget = pointer_Command(cmd);
+        iWidget *menu = findWidget_App("doctabs.menu");
+        if (isTabButton_Widget(widget)) {
+            iWidget *tabs = findWidget_App("doctabs");
+            showTabPage_Widget(tabs,
+                               tabPage_Widget(tabs, childIndex_Widget(widget->parent, widget)));
+            openMenu_Widget(menu, coord_Command(cmd));
+        }
+    }
     else if (equal_Command(cmd, "navigate.reload")) {
         iDocumentWidget *doc = document_Command(cmd);
         if (isRequestOngoing_DocumentWidget(doc)) {
@@ -265,156 +275,17 @@ static void setupUserInterface_Window(iWindow *d) {
         addChild_Widget(searchBar, iClob(newIcon_LabelWidget("  \u2b9d  ", 'g', KMOD_PRIMARY | KMOD_SHIFT, "find.prev")));
         addChild_Widget(searchBar, iClob(newIcon_LabelWidget("\u2a2f", SDLK_ESCAPE, 0, "find.close")));
     }
-
-#if 0
-    iWidget *mainDiv = makeHDiv_Widget();
-    setId_Widget(mainDiv, "maindiv");
-    addChild_Widget(d->root, iClob(mainDiv));
-
-    iWidget *sidebar = makeVDiv_Widget();
-    setFlags_Widget(sidebar, arrangeWidth_WidgetFlag, iTrue);
-    setId_Widget(sidebar, "sidebar");
-    addChild_Widget(mainDiv, iClob(sidebar));
-
-    /* Menus. */ {
-#if defined (iPlatformApple) && !defined (iPlatformIOS)
-        /* Use the native menus. */
-        insertMenuItems_MacOS("File", fileMenuItems, iElemCount(fileMenuItems));
-        insertMenuItems_MacOS("Edit", editMenuItems, iElemCount(editMenuItems));
-        insertMenuItems_MacOS("View", viewMenuItems, iElemCount(viewMenuItems));
-#else
-        iWidget *menubar = new_Widget();
-        setBackgroundColor_Widget(menubar, gray25_ColorId);
-        setFlags_Widget(menubar, arrangeHorizontal_WidgetFlag | arrangeHeight_WidgetFlag, iTrue);
-        addChild_Widget(menubar, iClob(makeMenuButton_LabelWidget("File", fileMenuItems, iElemCount(fileMenuItems))));
-        addChild_Widget(menubar, iClob(makeMenuButton_LabelWidget("Edit", editMenuItems, iElemCount(editMenuItems))));
-        addChild_Widget(menubar, iClob(makeMenuButton_LabelWidget("View", viewMenuItems, iElemCount(viewMenuItems))));
-        addChild_Widget(sidebar, iClob(menubar));
-#endif
-    }
-    /* Tracker info. */ {
-        iWidget *trackerInfo = addChild_Widget(sidebar, iClob(new_Widget()));
-        setId_Widget(trackerInfo, "trackerinfo");        
-        trackerInfo->rect.size.y = lineHeight_Text(default_FontId) + 2 * gap_UI;
-        setFlags_Widget(trackerInfo, arrangeHorizontal_WidgetFlag | resizeChildren_WidgetFlag, iTrue);
-        setId_Widget(
-            addChild_Widget(trackerInfo, iClob(new_LabelWidget("", 'p', KMOD_PRIMARY, "pattern.goto arg:-1"))),
-            "trackerinfo.current");
-        iLabelWidget *dims = new_LabelWidget("", 'r', KMOD_PRIMARY | KMOD_ALT, "pattern.resize");
-        setId_Widget(addChild_Widget(trackerInfo, iClob(dims)), "trackerinfo.dims");
-    }
-
-    iLibraryWidget *lib = new_LibraryWidget();
-    setId_Widget(as_Widget(lib), "library");
-    addChildFlags_Widget(sidebar, iClob(lib), expand_WidgetFlag);
-
-    iPlaybackWidget *play = new_PlaybackWidget();
-    setId_Widget(as_Widget(play), "playback");
-    addChild_Widget(sidebar, iClob(play));
-
-    iWidget *mainTabs = makeTabs_Widget(mainDiv);
-    setId_Widget(mainTabs, "maintabs");
-    setFlags_Widget(mainTabs, expand_WidgetFlag, iTrue);
-
-    /* Optional sidebar on the right. */
-    iWidget *sidebar2 = new_Widget();
-    setId_Widget(addChild_Widget(mainDiv, iClob(sidebar2)), "sidebar2");
-    setFlags_Widget(
-        sidebar2, fixedWidth_WidgetFlag | frameless_WidgetFlag | resizeChildren_WidgetFlag, iTrue);
-
-    /* Pattern sequence. */ {
-        iSequenceWidget *seq = new_SequenceWidget();
-        appendTabPage_Widget(mainTabs, iClob(seq), "SEQUENCE", 0, 0);
-    }
-    /* Tracker. */ {
-        iTrackerWidget *tracker = new_TrackerWidget();
-        appendTabPage_Widget(mainTabs, as_Widget(tracker), "PATTERN", 0, 0);
-    }
-    /* Voice editor. */ {
-        iWidget *voice = as_Widget(new_VoiceWidget());
-        setId_Widget(voice, "voicelayers");
-        appendTabPage_Widget(mainTabs, iClob(voice), "VOICE", '3', KMOD_PRIMARY);
-    }
-    /* Song information. */ {
-        iWidget *songPage = new_Widget();
-        setId_Widget(songPage, "songinfo");
-        setFlags_Widget(songPage, arrangeHorizontal_WidgetFlag, iTrue);
-        iWidget *headings =
-            addChildFlags_Widget(songPage,
-                                 iClob(new_Widget()),
-                                 resizeToParentHeight_WidgetFlag | resizeChildren_WidgetFlag |
-                                     arrangeVertical_WidgetFlag | arrangeWidth_WidgetFlag);
-        iWidget *values = addChildFlags_Widget(
-            songPage, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
-
-        setId_Widget(addChild_Widget(headings, iClob(makePadding_Widget(2 * gap_UI))), "headings.padding");
-        setId_Widget(addChild_Widget(values, iClob(makePadding_Widget(2 * gap_UI))), "values.padding");
-
-        addChild_Widget(headings, iClob(makeHeading_Widget(cyan_ColorEscape "SONG PROPERTIES")));
-        addChild_Widget(values, iClob(makeHeading_Widget("")));
-
-        const int fieldWidth = advance_Text(monospace_FontId, "A").x * 40;
-        iWidget *field;
-
-        addChild_Widget(headings, iClob(makeHeading_Widget("Title:")));
-        setId_Widget(field = addChild_Widget(values, iClob(new_InputWidget(0))), "info.title");
-        field->rect.size.x = fieldWidth;
-
-        addChild_Widget(headings, iClob(makeHeading_Widget("Author:")));
-        setId_Widget(field = addChild_Widget(values, iClob(new_InputWidget(0))), "info.author");
-        field->rect.size.x = fieldWidth;
-
-        addChild_Widget(headings, iClob(makeHeading_Widget("Tempo:")));
-        setId_Widget(addChild_Widget(values, iClob(new_InputWidget(3))), "info.tempo");
-
-        addChild_Widget(headings, iClob(makeHeading_Widget("Events per Beat:")));
-        setId_Widget(addChild_Widget(values, iClob(new_InputWidget(2))), "info.eventsperbeat");
-
-        addChild_Widget(headings, iClob(makeHeading_Widget("Num of Tracks:")));
-        setId_Widget(addChild_Widget(values, iClob(new_InputWidget(2))), "info.numtracks");
-
-        addChild_Widget(headings, iClob(makePadding_Widget(2 * gap_UI)));
-        addChild_Widget(values, iClob(makePadding_Widget(2 * gap_UI)));
-
-        addChild_Widget(headings, iClob(makeHeading_Widget(cyan_ColorEscape "SONG METADATA")));
-        addChild_Widget(values, iClob(makeHeading_Widget("")));
-
-        addChild_Widget(headings, iClob(makeHeading_Widget("Duration:")));
-        setId_Widget(addChildFlags_Widget(values, iClob(newEmpty_LabelWidget()),
-                                          alignLeft_WidgetFlag | frameless_WidgetFlag),
-                     "info.duration");
-        addChild_Widget(headings, iClob(makeHeading_Widget("Statistics:\n\n ")));
-        setId_Widget(addChildFlags_Widget(values,
-                                          iClob(newEmpty_LabelWidget()),
-                                          alignLeft_WidgetFlag | frameless_WidgetFlag),
-                     "info.statistics");
-        addChild_Widget(headings, iClob(makeHeading_Widget("Created on:")));
-        setId_Widget(addChildFlags_Widget(values,
-                                          iClob(newEmpty_LabelWidget()),
-                                          alignLeft_WidgetFlag | frameless_WidgetFlag),
-                     "info.created");
-
-        addChild_Widget(headings, iClob(makeHeading_Widget("Last Modified on:")));
-        setId_Widget(addChildFlags_Widget(values,
-                                          iClob(newEmpty_LabelWidget()),
-                                          alignLeft_WidgetFlag | frameless_WidgetFlag),
-                     "info.lastmodified");
-        /* App info in the bottom. */ {
-            addChildFlags_Widget(headings, iClob(new_Widget()), expand_WidgetFlag);
-            addChildFlags_Widget(
-                headings,
-                iClob(new_LabelWidget(gray50_ColorEscape "Version " BWH_APP_VERSION, 0, 0, NULL)),
-                frameless_WidgetFlag | alignLeft_WidgetFlag);
-        }
-        appendTabPage_Widget(mainTabs, iClob(songPage), "INFO", '4', KMOD_PRIMARY);                
-    }
-    /* Application status. */ {
-        iWidget *status = addChildFlags_Widget(d->root, iClob(newEmpty_LabelWidget()), 0);
-        setFont_LabelWidget((iLabelWidget *) status, monospace_FontId);
-        setFlags_Widget(status, frameless_WidgetFlag | alignRight_WidgetFlag, iTrue);
-        setId_Widget(status, "status");
-    }
-#endif
+    iWidget *tabsMenu = makeMenu_Widget(d->root,
+                                        (iMenuItem[]){
+                                            { "Close Tab", 0, 0, "tabs.close" },
+                                            { "Duplicate Tab", 0, 0, "tabs.new duplicate:1" },
+                                            { "---", 0, 0, NULL },
+                                            { "Close Other Tabs", 0, 0, "tabs.close toleft:1 toright:1" },
+                                            { "Close Tabs To Left", 0, 0, "tabs.close toleft:1" },
+                                            { "Close Tabs To Right", 0, 0, "tabs.close toright:1" },
+                                        },
+                                        6);
+    setId_Widget(tabsMenu, "doctabs.menu");
     /* Glboal keyboard shortcuts. */ {
         addAction_Widget(d->root, SDLK_LEFTBRACKET, KMOD_SHIFT | KMOD_PRIMARY, "tabs.prev");
         addAction_Widget(d->root, SDLK_RIGHTBRACKET, KMOD_SHIFT | KMOD_PRIMARY, "tabs.next");

@@ -17,6 +17,16 @@ void deinit_RecentUrl(iRecentUrl *d) {
     delete_GmResponse(d->cachedResponse);
 }
 
+iDefineTypeConstruction(RecentUrl)
+
+iRecentUrl *copy_RecentUrl(const iRecentUrl *d) {
+    iRecentUrl *copy = new_RecentUrl();
+    set_String(&copy->url, &d->url);
+    copy->scrollY = d->scrollY;
+    copy->cachedResponse = d->cachedResponse ? copy_GmResponse(d->cachedResponse) : NULL;
+    return copy;
+}
+
 /*----------------------------------------------------------------------------------------------*/
 
 struct Impl_History {
@@ -34,6 +44,15 @@ void init_History(iHistory *d) {
 void deinit_History(iHistory *d) {
     clear_History(d);
     deinit_Array(&d->recent);
+}
+
+iHistory *copy_History(const iHistory *d) {
+    iHistory *copy = new_History();
+    iConstForEach(Array, i, &d->recent) {
+        pushBack_Array(&copy->recent, copy_RecentUrl(i.value));
+    }
+    copy->recentPos = d->recentPos;
+    return copy;
 }
 
 void save_History(const iHistory *d, const char *dirPath) {

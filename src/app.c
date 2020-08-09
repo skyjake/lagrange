@@ -396,20 +396,47 @@ iBool handleCommand_App(const char *cmd) {
         iWidget *tabs = findWidget_App("doctabs");
         iWidget *newTabButton = findChild_Widget(tabs, "newtab");
         removeChild_Widget(newTabButton->parent, newTabButton);
-        iDocumentWidget *newDoc = new_DocumentWidget();
+        iDocumentWidget *newDoc;
+        const iBool isDuplicate = (argLabel_Command(cmd, "duplicate") != 0);
+        if (isDuplicate) {
+            newDoc = duplicate_DocumentWidget(document_App());
+        }
+        else {
+            newDoc = new_DocumentWidget();
+        }
         setId_Widget(as_Widget(newDoc), format_CStr("document%03d", tabCount_Widget(tabs)));
         appendTabPage_Widget(tabs, iClob(newDoc), "", 0, 0);
         addChild_Widget(findChild_Widget(tabs, "tabs.buttons"), iClob(newTabButton));
         postCommandf_App("tabs.switch page:%p", newDoc);
-        postCommand_App("navigate.home");
+        if (!isDuplicate) {
+            postCommand_App("navigate.home");
+        }
         arrange_Widget(tabs);
         refresh_Widget(tabs);
         return iTrue;
     }
     else if (equal_Command(cmd, "tabs.close")) {
         iWidget *tabs = findWidget_App("doctabs");
+        size_t index = tabPageIndex_Widget(tabs, document_App());
+        iBool wasClosed = iFalse;
+        if (argLabel_Command(cmd, "toright")) {
+            while (tabCount_Widget(tabs) > index + 1) {
+                destroy_Widget(removeTabPage_Widget(tabs, index + 1));
+            }
+            wasClosed = iTrue;
+        }
+        if (argLabel_Command(cmd, "toleft")) {
+            while (index-- > 0) {
+                destroy_Widget(removeTabPage_Widget(tabs, 0));
+            }
+            postCommandf_App("tabs.switch page:%p", tabPage_Widget(tabs, 0));
+            wasClosed = iTrue;
+        }
+        if (wasClosed) {
+            arrange_Widget(tabs);
+            return iTrue;
+        }
         if (tabCount_Widget(tabs) > 1) {
-            size_t index = tabPageIndex_Widget(tabs, document_App());
             iWidget *closed = removeTabPage_Widget(tabs, index);
             destroy_Widget(closed); /* released later */
             if (index == tabCount_Widget(tabs)) {

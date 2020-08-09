@@ -195,6 +195,8 @@ iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
 
 void openMenu_Widget(iWidget *d, iInt2 coord) {
     /* Menu closes when commands are emitted, so handle any pending ones beforehand. */
+    postCommand_App("cancel"); /* dismiss any other menus */
+    processEvents_App(postedEventsOnly_AppEventMode);
     setFlags_Widget(d, hidden_WidgetFlag, iFalse);
     arrange_Widget(d);
     d->rect.pos = coord;
@@ -318,7 +320,7 @@ static void addTabPage_Widget_(iWidget *tabs, enum iWidgetAddPos addPos, iWidget
         iClob(new_LabelWidget(label, key, kmods, format_CStr("tabs.switch page:%p", page))),
         addPos);
     setFlags_Widget(button, selected_WidgetFlag, isSel);
-    setFlags_Widget(button, expand_WidgetFlag, iTrue);
+    setFlags_Widget(button, commandOnClick_WidgetFlag | expand_WidgetFlag, iTrue);
     addChildPos_Widget(pages, page, addPos);
     setFlags_Widget(page, hidden_WidgetFlag | disabled_WidgetFlag, !isSel);
 }
@@ -386,6 +388,10 @@ void showTabPage_Widget(iWidget *tabs, const iWidget *page) {
 
 iLabelWidget *tabPageButton_Widget(iWidget *tabs, const iAnyObject *page) {
     return tabButtonForPage_Widget_(tabs, page);
+}
+
+iBool isTabButton_Widget(const iWidget *d) {
+    return d->parent && cmp_String(id_Widget(d->parent), "tabs.buttons") == 0;
 }
 
 void setTabPageLabel_Widget(iWidget *tabs, const iAnyObject *page, const iString *label) {

@@ -280,6 +280,11 @@ static void updateVisible_DocumentWidget_(iDocumentWidget *d) {
 }
 
 static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
+    iLabelWidget *tabButton = tabPageButton_Widget(findWidget_App("doctabs"), d);
+    if (!tabButton) {
+        /* Not part of the UI at the moment. */
+        return;
+    }
     iStringArray *title = iClob(new_StringArray());
     if (!isEmpty_String(title_GmDocument(d->doc))) {
         pushBack_StringArray(title, title_GmDocument(d->doc));
@@ -298,7 +303,6 @@ static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
         pushBackCStr_StringArray(title, "Lagrange");
     }
     /* Take away parts if it doesn't fit. */
-    iLabelWidget *tabButton = tabPageButton_Widget(findWidget_App("doctabs"), d);
     const int avail = bounds_Widget(as_Widget(tabButton)).size.x - 3 * gap_UI;
     iBool setWindow = (document_App() == d);
     for (;;) {
@@ -455,9 +459,11 @@ static void fetch_DocumentWidget_(iDocumentWidget *d) {
 static void updateTrust_DocumentWidget_(iDocumentWidget *d, const iGmResponse *response) {
 #define openLock_CStr   "\U0001f513"
 #define closedLock_CStr "\U0001f512"
-    d->certFlags       = response->certFlags;
-    d->certExpiry      = response->certValidUntil;
-    set_String(d->certSubject, &response->certSubject);
+    if (response) {
+        d->certFlags  = response->certFlags;
+        d->certExpiry = response->certValidUntil;
+        set_String(d->certSubject, &response->certSubject);
+    }
     iLabelWidget *lock = findWidget_App("navbar.lock");
     if (~d->certFlags & available_GmCertFlag) {
         setFlags_Widget(as_Widget(lock), disabled_WidgetFlag, iTrue);
@@ -514,6 +520,16 @@ void setUrlFromCache_DocumentWidget(iDocumentWidget *d, const iString *url, iBoo
             fetch_DocumentWidget_(d);
         }
     }
+}
+
+iDocumentWidget *duplicate_DocumentWidget(iDocumentWidget *orig) {
+    iDocumentWidget *d = new_DocumentWidget();
+    delete_History(d->history);
+    d->textSizePercent = orig->textSizePercent;
+    d->initialScrollY  = orig->scrollY;
+    d->history         = copy_History(orig->history);
+    setUrlFromCache_DocumentWidget(d, orig->url, iTrue);
+    return d;
 }
 
 void setUrl_DocumentWidget(iDocumentWidget *d, const iString *url) {
@@ -754,11 +770,14 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         if (cmp_String(id_Widget(w), suffixPtr_Command(cmd, "id")) == 0) {
             /* Set palette for our document. */
             updateTheme_DocumentWidget_(d);
+            updateTrust_DocumentWidget_(d, NULL);
+            setWidth_GmDocument(d->doc, documentWidth_DocumentWidget_(d));
+            updateVisible_DocumentWidget_(d);
         }
         updateWindowTitle_DocumentWidget_(d);
         return iFalse;
     }
-    else if (equal_Command(cmd, "server.showcert")) {
+    else if (equal_Command(cmd, "server.showcert") && d == document_App()) {
         const char *unchecked = red_ColorEscape   "\u2610";
         const char *checked   = green_ColorEscape "\u2611";
         makeMessage_Widget(

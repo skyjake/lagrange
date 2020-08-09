@@ -20,6 +20,8 @@ struct Impl_RecentUrl {
 iDeclareType(History)
 iDeclareTypeConstruction(History)
 
+iHistory *  copy_History                (const iHistory *);
+
 void        clear_History               (iHistory *);
 void        load_History                (iHistory *, const char *dirPath);
 void        add_History                 (iHistory *, const iString *url);

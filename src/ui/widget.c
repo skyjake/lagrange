@@ -419,6 +419,17 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
             return iTrue;
         }
     }
+    else if (d->flags & commandOnClick_WidgetFlag && (ev->type == SDL_MOUSEBUTTONDOWN ||
+                                                 ev->type == SDL_MOUSEBUTTONUP) &&
+        contains_Widget(d, init_I2(ev->button.x, ev->button.y))) {
+        postCommand_Widget(d,
+                           "mouse.clicked arg:%d button:%d coord:%d %d",
+                           ev->type == SDL_MOUSEBUTTONDOWN ? 1 : 0,
+                           ev->button.button,
+                           ev->button.x,
+                           ev->button.y);
+        return iTrue;
+    }
     switch (ev->type) {
         case SDL_USEREVENT: {
             if (ev->user.code == command_UserEventCode && d->commandHandler &&
