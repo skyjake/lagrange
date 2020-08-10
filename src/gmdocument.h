@@ -58,7 +58,8 @@ iDeclareClass(GmDocument)
 iDeclareObjectConstruction(GmDocument)
 
 enum iGmDocumentFormat {
-    gemini_GmDocumentFormat,
+    undefined_GmDocumentFormat = -1,
+    gemini_GmDocumentFormat  = 0,
     plainText_GmDocumentFormat,
 };
 

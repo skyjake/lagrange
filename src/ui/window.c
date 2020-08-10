@@ -82,16 +82,13 @@ static const iMenuItem fileMenuItems[] = {
     { "New Tab", SDLK_t, KMOD_PRIMARY, "tabs.new" },
     { "Open Location...", SDLK_l, KMOD_PRIMARY, "focus.set id:url" },
 };
-#endif
 
 static const iMenuItem editMenuItems[] = {
-#if !defined (iPlatformApple)
-    { "Preferences...", SDLK_COMMA, KMOD_PRIMARY, "preferences" }
-#endif
 };
 
 static const iMenuItem viewMenuItems[] = {
 };
+#endif
 
 static const char *reloadCStr_ = "\U0001f503";
 static const char *stopCStr_   = orange_ColorEscape "\U0001f310";

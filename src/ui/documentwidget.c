@@ -334,9 +334,8 @@ static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
                                   &endPos);
             updateText_LabelWidget(
                 tabButton,
-                collectNewFormat_String("%s...",
-                                        cstrCollect_String(newRange_String(
-                                            (iRangecc){ constBegin_String(text), endPos }))));
+                collectNewFormat_String(
+                    "%s...", cstr_Rangecc((iRangecc){ constBegin_String(text), endPos })));
             break;
         }
         remove_StringArray(title, size_StringArray(title) - 1);
@@ -402,34 +401,58 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse
         initBlock_String(&str, &response->body);
         if (category_GmStatusCode(statusCode) == categorySuccess_GmStatusCode) {
             /* Check the MIME type. */
-            const iString *mime = &response->meta;
-            if (startsWith_String(mime, "text/plain")) {
-                setFormat_GmDocument(d->doc, plainText_GmDocumentFormat);
-            }
-            else if (startsWith_String(mime, "text/gemini")) {
-                setFormat_GmDocument(d->doc, gemini_GmDocumentFormat);
-            }
-            else if (startsWith_String(mime, "image/")) {
-                if (!d->request || isFinished_GmRequest(d->request)) {
-                    /* Make a simple document with an image. */
-                    const char *imageTitle = "Image";
-                    iUrl parts;
-                    init_Url(&parts, d->url); // url_GmRequest(d->request));
-                    if (!isEmpty_Range(&parts.path)) {
-                        imageTitle = baseName_Path(collect_String(newRange_String(parts.path))).start;
+            iRangecc charset = range_CStr("utf-8");
+            enum iGmDocumentFormat docFormat = undefined_GmDocumentFormat;
+            const iString *mimeStr = collect_String(lower_String(&response->meta)); /* for convenience */
+            iRangecc mime = range_String(mimeStr);
+            iRangecc seg = iNullRange;
+            while (nextSplit_Rangecc(&mime, ";", &seg)) {
+                iRangecc param = seg;
+                trim_Rangecc(&param);
+                if (equal_Rangecc(&param, "text/plain")) {
+                    docFormat = plainText_GmDocumentFormat;
+                }
+                else if (equal_Rangecc(&param, "text/gemini")) {
+                    docFormat = gemini_GmDocumentFormat;
+                }
+                else if (startsWith_Rangecc(&param, "image/")) {
+                    docFormat = gemini_GmDocumentFormat;
+                    if (!d->request || isFinished_GmRequest(d->request)) {
+                        /* Make a simple document with an image. */
+                        const char *imageTitle = "Image";
+                        iUrl parts;
+                        init_Url(&parts, d->url);
+                        if (!isEmpty_Range(&parts.path)) {
+                            imageTitle =
+                                baseName_Path(collect_String(newRange_String(parts.path))).start;
+                        }
+                        format_String(
+                            &str, "=> %s %s\n", cstr_String(d->url), imageTitle);
+                        setImage_GmDocument(d->doc, 1, mimeStr, &response->body);
                     }
-                    format_String(
-                        &str, "=> %s %s\n", cstr_String(d->url), imageTitle);
-                    setImage_GmDocument(d->doc, 1, mime, &response->body);
+                    else {
+                        clear_String(&str);
+                    }
                 }
-                else {
-                    clear_String(&str);
+                else if (startsWith_Rangecc(&param, "charset=")) {
+                    charset = (iRangecc){ param.start + 8, param.end };
+                    /* Remove whitespace and quotes. */
+                    trim_Rangecc(&charset);
+                    if (*charset.start == '"' && *charset.end == '"') {
+                        charset.start++;
+                        charset.end--;
+                    }
                 }
             }
-            else {
+            if (docFormat == undefined_GmDocumentFormat) {
                 showErrorPage_DocumentWidget_(d, unsupportedMimeType_GmStatusCode);
                 deinit_String(&str);
                 return;
+            }
+            /* Convert the source to UTF-8 if needed. */
+            if (!equal_Rangecc(&charset, "utf-8")) {
+                set_String(&str,
+                           collect_String(decode_Block(&str.chars, cstr_Rangecc(charset))));
             }
         }
         setSource_DocumentWidget_(d, &str);
@@ -584,11 +607,9 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                 iWidget *dlg = makeValueInput_Widget(
                     as_Widget(d),
                     NULL,
-                    format_CStr(cyan_ColorEscape "%s",
-                                cstr_String(collect_String(newRange_String(parts.host)))),
+                    format_CStr(cyan_ColorEscape "%s", cstr_Rangecc(parts.host)),
                     isEmpty_String(meta_GmRequest(d->request))
-                        ? format_CStr("Please enter input for %s:",
-                                      cstr_String(collect_String(newRange_String(parts.path))))
+                        ? format_CStr("Please enter input for %s:", cstr_Rangecc(parts.path))
                         : cstr_String(meta_GmRequest(d->request)),
                     orange_ColorEscape "Send \u21d2",
                     "document.input.submit");
