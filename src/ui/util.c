@@ -302,8 +302,10 @@ iWidget *makeTabs_Widget(iWidget *parent) {
                         arrangeHeight_WidgetFlag,
                     iTrue);
     setId_Widget(buttons, "tabs.buttons");
+    iWidget *content = addChildFlags_Widget(tabs, iClob(makeHDiv_Widget()), expand_WidgetFlag);
+    setId_Widget(content, "tabs.content");
     iWidget *pages = addChildFlags_Widget(
-        tabs, iClob(new_Widget()), expand_WidgetFlag | resizeChildren_WidgetFlag);
+        content, iClob(new_Widget()), expand_WidgetFlag | resizeChildren_WidgetFlag);
     setId_Widget(pages, "tabs.pages");
     addChild_Widget(parent, iClob(tabs));
     setCommandHandler_Widget(tabs, tabSwitcher_);

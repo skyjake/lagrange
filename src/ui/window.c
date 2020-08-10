@@ -10,6 +10,7 @@
 #include "labelwidget.h"
 #include "inputwidget.h"
 #include "documentwidget.h"
+#include "sidebarwidget.h"
 #include "gmutil.h"
 #if defined (iPlatformMsys)
 #   include "../win32.h"
@@ -277,6 +278,11 @@ static void setupUserInterface_Window(iWindow *d) {
         setId_Widget(
             addChild_Widget(buttons, iClob(newIcon_LabelWidget("\u2795", 0, 0, "tabs.new"))),
             "newtab");
+    }
+    /* Side bar. */ {
+        iWidget *content = findChild_Widget(d->root, "tabs.content");
+        iSidebarWidget *sidebar = new_SidebarWidget();
+        addChildPos_Widget(content, iClob(sidebar), front_WidgetAddPos);
     }
     /* Search bar. */ {
         iWidget *searchBar = new_Widget();        
