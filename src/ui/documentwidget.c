@@ -176,7 +176,7 @@ static iRect documentBounds_DocumentWidget_(const iDocumentWidget *d) {
     const int   margin = gap_UI * d->pageMargin;
     iRect       rect;
     rect.size.x = documentWidth_DocumentWidget_(d);
-    rect.pos.x  = bounds.size.x / 2 - rect.size.x / 2;
+    rect.pos.x  = mid_Rect(bounds).x - rect.size.x / 2;
     rect.pos.y  = top_Rect(bounds);
     rect.size.y = height_Rect(bounds) - margin;
     if (!hasSiteBanner_GmDocument(d->doc)) {
