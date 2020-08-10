@@ -295,19 +295,20 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     if (d->size.x <= 0 || isEmpty_String(&d->source)) {
         return;
     }
-    const iRangecc   content     = range_String(&d->source);
-    iInt2            pos         = zero_I2();
-    iRangecc         line        = iNullRange;
-    iRangecc         preAltText  = iNullRange;
-    enum iGmLineType prevType    = text_GmLineType;
-    iBool            isPreformat = iFalse;
-    iBool            isFirstText = iTrue;
+    const iRangecc   content       = range_String(&d->source);
+    iInt2            pos           = zero_I2();
+    iRangecc         line          = iNullRange;
+    iRangecc         preAltText    = iNullRange;
+    enum iGmLineType prevType; //     = text_GmLineType;
+    iBool            isPreformat   = iFalse;
+    iBool            isFirstText   = iTrue;
+    iBool            enableIndents = iFalse;
     iBool            addSiteBanner = iTrue;
-    int              preFont     = preformatted_FontId;
+    int              preFont       = preformatted_FontId;
     if (d->format == plainText_GmDocumentFormat) {
         isPreformat = iTrue;
         isFirstText = iFalse;
-    }       
+    }
     while (nextSplit_Rangecc(&content, "\n", &line)) {
         iGmRun run;
         run.flags = 0;
@@ -318,6 +319,9 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         int indent = 0;
         if (!isPreformat) {
             type = lineType_GmDocument_(d, &line);
+            if (line.start == content.start) {
+                prevType = type;
+            }
             indent = indents[type];
             if (type == preformatted_GmLineType) {
                 isPreformat = iTrue;
@@ -375,6 +379,13 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             prevType = text_GmLineType;
             /* TODO: Extra skip needed here? */
             continue;
+        }
+        /* Begin indenting after the first preformatted block. */
+        if (type != preformatted_GmLineType || prevType != preformatted_GmLineType) {
+            enableIndents = iTrue;
+        }
+        if (!enableIndents) {
+            indent = 0;
         }
         /* Check the margin vs. previous run. */
         if (!isPreformat || (prevType != preformatted_GmLineType)) {
