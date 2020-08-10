@@ -545,7 +545,7 @@ void setUrlFromCache_DocumentWidget(iDocumentWidget *d, const iString *url, iBoo
     }
 }
 
-iDocumentWidget *duplicate_DocumentWidget(iDocumentWidget *orig) {
+iDocumentWidget *duplicate_DocumentWidget(const iDocumentWidget *orig) {
     iDocumentWidget *d = new_DocumentWidget();
     delete_History(d->history);
     d->textSizePercent = orig->textSizePercent;
@@ -1060,7 +1060,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             return iTrue;
         }
     }
-    processContextMenuEvent_Widget(d->menu, ev);
+    processContextMenuEvent_Widget(d->menu, ev, d->hoverLink = NULL);
     switch (processEvent_Click(&d->click, ev)) {
         case started_ClickResult:
             d->selecting = iFalse;
@@ -1084,6 +1084,9 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             return iTrue;
         }
         case finished_ClickResult:
+            if (isVisible_Widget(d->menu)) {
+                closeMenu_Widget(d->menu);
+            }
             if (!isMoved_Click(&d->click)) {
                 if (d->hoverLink) {
                     const iGmLinkId linkId = d->hoverLink->linkId;
@@ -1115,7 +1118,8 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                         refresh_Widget(w);
                     }
                     else {
-                        postCommandf_App("open url:%s",
+                        postCommandf_App("open newtab:%d url:%s",
+                                         (SDL_GetModState() & KMOD_PRIMARY) != 0,
                                          cstr_String(absoluteUrl_String(
                                              d->url, linkUrl_GmDocument(d->doc, linkId))));
                     }

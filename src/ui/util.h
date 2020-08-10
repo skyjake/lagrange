@@ -84,9 +84,9 @@ void        closeMenu_Widget    (iWidget *);
 
 int         checkContextMenu_Widget   (iWidget *, const SDL_Event *ev); /* see macro below */
 
-#define processContextMenuEvent_Widget(menu, sdlEvent) \
+#define processContextMenuEvent_Widget(menu, sdlEvent, stmtEaten) \
     for (const int result = checkContextMenu_Widget((menu), (sdlEvent));;) { \
-        if (result) return result >> 1; \
+        if (result) { {stmtEaten;} return result >> 1; } \
         break; \
     }
 

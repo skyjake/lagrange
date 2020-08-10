@@ -57,6 +57,7 @@ struct Impl_App {
     iBool        pendingRefresh;
     iGmCerts *   certs;
     iVisited *   visited;
+    int          tabEnum;
     /* Preferences: */
     iBool        retainWindowSize;
     float        uiScale;
@@ -151,6 +152,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     d->pendingRefresh   = iFalse;
     d->certs            = new_GmCerts(dataDir_App_);
     d->visited          = new_Visited();
+    d->tabEnum          = 0;
     loadPrefs_App_(d);
     load_Visited(d->visited, dataDir_App_);
 #if defined (iHaveLoadEmbed)
@@ -351,6 +353,28 @@ iDocumentWidget *document_Command(const char *cmd) {
     return document_App();
 }
 
+iDocumentWidget *newTab_App(const iDocumentWidget *duplicateOf) {
+    iApp *d = &app_;
+    iWidget *tabs = findWidget_App("doctabs");
+    setFlags_Widget(tabs, hidden_WidgetFlag, iFalse);
+    iWidget *newTabButton = findChild_Widget(tabs, "newtab");
+    removeChild_Widget(newTabButton->parent, newTabButton);
+    iDocumentWidget *doc;
+    if (duplicateOf) {
+        doc = duplicate_DocumentWidget(duplicateOf);
+    }
+    else {
+        doc = new_DocumentWidget();
+    }
+    setId_Widget(as_Widget(doc), format_CStr("document%03d", ++d->tabEnum));
+    appendTabPage_Widget(tabs, iClob(doc), "", 0, 0);
+    addChild_Widget(findChild_Widget(tabs, "tabs.buttons"), iClob(newTabButton));
+    postCommandf_App("tabs.switch page:%p", doc);
+    arrange_Widget(tabs);
+    refresh_Widget(tabs);
+    return doc;
+}
+
 iBool handleCommand_App(const char *cmd) {
     iApp *d = &app_;
     if (equal_Command(cmd, "open")) {
@@ -363,6 +387,9 @@ iBool handleCommand_App(const char *cmd) {
             return iTrue;
         }
         iDocumentWidget *doc = document_Command(cmd);
+        if (argLabel_Command(cmd, "newtab")) {
+            doc = newTab_App(NULL);
+        }
         iHistory *history = history_DocumentWidget(doc);
         const iBool isHistory = argLabel_Command(cmd, "history") != 0;
         if (!isHistory) {
@@ -393,27 +420,11 @@ iBool handleCommand_App(const char *cmd) {
         return iFalse;
     }
     else if (equal_Command(cmd, "tabs.new")) {
-        iWidget *tabs = findWidget_App("doctabs");
-        setFlags_Widget(tabs, hidden_WidgetFlag, iFalse);
-        iWidget *newTabButton = findChild_Widget(tabs, "newtab");
-        removeChild_Widget(newTabButton->parent, newTabButton);
-        iDocumentWidget *newDoc;
-        const iBool isDuplicate = (argLabel_Command(cmd, "duplicate") != 0);
-        if (isDuplicate) {
-            newDoc = duplicate_DocumentWidget(document_App());
-        }
-        else {
-            newDoc = new_DocumentWidget();
-        }
-        setId_Widget(as_Widget(newDoc), format_CStr("document%03d", tabCount_Widget(tabs)));
-        appendTabPage_Widget(tabs, iClob(newDoc), "", 0, 0);
-        addChild_Widget(findChild_Widget(tabs, "tabs.buttons"), iClob(newTabButton));
-        postCommandf_App("tabs.switch page:%p", newDoc);
+        const iBool isDuplicate = argLabel_Command(cmd, "duplicate") != 0;
+        iDocumentWidget *newDoc = newTab_App(isDuplicate ? document_App() : NULL);
         if (!isDuplicate) {
             postCommand_App("navigate.home");
         }        
-        arrange_Widget(tabs);
-        refresh_Widget(tabs);
         return iTrue;
     }
     else if (equal_Command(cmd, "tabs.close")) {
