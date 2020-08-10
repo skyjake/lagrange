@@ -61,7 +61,7 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
     return iFalse;
 }
 
-#if !defined (iPlatformApple)
+#if defined (iPlatformApple)
 #  define iHaveNativeMenus
 #endif
 
@@ -278,8 +278,7 @@ static void setupUserInterface_Window(iWindow *d) {
         iWidget *buttons = findChild_Widget(tabBar, "tabs.buttons");
         setFlags_Widget(buttons, collapse_WidgetFlag | hidden_WidgetFlag, iTrue);
         setId_Widget(
-            addChild_Widget(buttons,
-                            iClob(newIcon_LabelWidget("\u2795", 't', KMOD_PRIMARY, "tabs.new"))),
+            addChild_Widget(buttons, iClob(newIcon_LabelWidget("\u2795", 0, 0, "tabs.new"))),
             "newtab");
     }
     /* Search bar. */ {
