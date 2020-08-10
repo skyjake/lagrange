@@ -186,6 +186,8 @@ void arrange_Widget(iWidget *d) {
     /* Resize children to fill the parent widget. */
     const size_t childCount = size_ObjectList(d->children);
     if (d->flags & resizeChildren_WidgetFlag) {
+        const iInt2 dirs = init_I2((d->flags & resizeWidthOfChildren_WidgetFlag) != 0,
+                                   (d->flags & resizeHeightOfChildren_WidgetFlag) != 0);
         /* Collapse hidden children. */
         iForEach(ObjectList, c, d->children) {
             iWidget *child = as_Widget(c.object);
@@ -221,21 +223,21 @@ void arrange_Widget(iWidget *d) {
                 if (isCollapsed_Widget_(child)) continue;
                 if (child->flags & expand_WidgetFlag) {
                     if (d->flags & arrangeHorizontal_WidgetFlag) {
-                        setWidth_Widget_(child, avail.x);
-                        setHeight_Widget_(child, d->rect.size.y);
+                        if (dirs.x) setWidth_Widget_(child, avail.x);
+                        if (dirs.y) setHeight_Widget_(child, d->rect.size.y);
                     }
                     else if (d->flags & arrangeVertical_WidgetFlag) {
-                        setWidth_Widget_(child, d->rect.size.x);
-                        setHeight_Widget_(child, avail.y);
+                        if (dirs.x) setWidth_Widget_(child, d->rect.size.x);
+                        if (dirs.y) setHeight_Widget_(child, avail.y);
                     }
                 }
                 else {
                     /* Fill the off axis, though. */
                     if (d->flags & arrangeHorizontal_WidgetFlag) {
-                        setHeight_Widget_(child, d->rect.size.y);
+                        if (dirs.y) setHeight_Widget_(child, d->rect.size.y);
                     }
                     else if (d->flags & arrangeVertical_WidgetFlag) {
-                        setWidth_Widget_(child, d->rect.size.x);
+                        if (dirs.x) setWidth_Widget_(child, d->rect.size.x);
                     }
                 }
             }
@@ -252,8 +254,8 @@ void arrange_Widget(iWidget *d) {
             iForEach(ObjectList, i, d->children) {
                 iWidget *child = as_Widget(i.object);
                 if (!isCollapsed_Widget_(child)) {
-                    setWidth_Widget_(child, childSize.x);
-                    setHeight_Widget_(child, childSize.y);
+                    if (dirs.x) setWidth_Widget_(child, childSize.x);
+                    if (dirs.y) setHeight_Widget_(child, childSize.y);
                 }
             }
         }

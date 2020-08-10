@@ -61,11 +61,28 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
     return iFalse;
 }
 
-static const iMenuItem fileMenuItems[] = {
 #if !defined (iPlatformApple)
-    { "Quit Lagrange", 'q', KMOD_PRIMARY, "quit" }
+#  define iHaveNativeMenus
 #endif
+
+#if !defined (iHaveNativeMenus)
+static const iMenuItem navMenuItems[] = {
+    { "New Tab", 't', KMOD_PRIMARY, "tabs.new" },
+    { "Open Location...", SDLK_l, KMOD_PRIMARY, "focus.set id:url" },
+    { "---", 0, 0, NULL },
+    { "Preferences...", SDLK_COMMA, KMOD_PRIMARY, "preferences" },
+    { "---", 0, 0, NULL },
+    { "Quit Lagrange", 'q', KMOD_PRIMARY, "quit" }
 };
+#endif
+
+#if defined (iHaveNativeMenus)
+/* Using native menus. */
+static const iMenuItem fileMenuItems[] = {
+    { "New Tab", SDLK_t, KMOD_PRIMARY, "tabs.new" },
+    { "Open Location...", SDLK_l, KMOD_PRIMARY, "focus.set id:url" },
+};
+#endif
 
 static const iMenuItem editMenuItems[] = {
 #if !defined (iPlatformApple)
@@ -136,9 +153,11 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
     else if (equal_Command(cmd, "tabs.changed")) {
         /* Update navbar according to the current tab. */
         iDocumentWidget *doc = document_App();
-        setText_InputWidget(findWidget_App("url"), url_DocumentWidget(doc));
-        updateTextCStr_LabelWidget(findChild_Widget(navBar, "reload"),
-                                   isRequestOngoing_DocumentWidget(doc) ? stopCStr_ : reloadCStr_);
+        if (doc) {
+            setText_InputWidget(findWidget_App("url"), url_DocumentWidget(doc));
+            updateTextCStr_LabelWidget(findChild_Widget(navBar, "reload"),
+                                       isRequestOngoing_DocumentWidget(doc) ? stopCStr_ : reloadCStr_);
+        }
     }
     else if (equal_Command(cmd, "mouse.clicked")) {
         iWidget *widget = pointer_Command(cmd);
@@ -241,10 +260,14 @@ static void setupUserInterface_Window(iWindow *d) {
             "reload");
         addChild_Widget(navBar, iClob(newIcon_LabelWidget("\U0001f464", 0, 0, "cert.client")));
 
-        iLabelWidget *fileMenu =
-            makeMenuButton_LabelWidget("\U0001d362", fileMenuItems, iElemCount(fileMenuItems));
-        setAlignVisually_LabelWidget(fileMenu, iTrue);
-        addChild_Widget(navBar, iClob(fileMenu));
+#if !defined (iHaveNativeMenus)
+        iLabelWidget *navMenu =
+            makeMenuButton_LabelWidget("\U0001d362", navMenuItems, iElemCount(navMenuItems));
+        setAlignVisually_LabelWidget(navMenu, iTrue);
+        addChild_Widget(navBar, iClob(navMenu));
+#else
+        insertMenuItems_MacOS("File", fileMenuItems, iElemCount(fileMenuItems));
+#endif
     }
     /* Tab bar. */ {
         iWidget *tabBar = makeTabs_Widget(div);
@@ -252,8 +275,10 @@ static void setupUserInterface_Window(iWindow *d) {
         setFlags_Widget(tabBar, expand_WidgetFlag, iTrue);
         setBackgroundColor_Widget(tabBar, gray25_ColorId);
         appendTabPage_Widget(tabBar, iClob(new_DocumentWidget()), "Document", '1', KMOD_PRIMARY);
+        iWidget *buttons = findChild_Widget(tabBar, "tabs.buttons");
+        setFlags_Widget(buttons, collapse_WidgetFlag | hidden_WidgetFlag, iTrue);
         setId_Widget(
-            addChild_Widget(findChild_Widget(tabBar, "tabs.buttons"),
+            addChild_Widget(buttons,
                             iClob(newIcon_LabelWidget("\u2795", 't', KMOD_PRIMARY, "tabs.new"))),
             "newtab");
     }

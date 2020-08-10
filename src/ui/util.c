@@ -297,10 +297,9 @@ static iBool tabSwitcher_(iWidget *tabs, const char *cmd) {
 iWidget *makeTabs_Widget(iWidget *parent) {
     iWidget *tabs = makeVDiv_Widget();
     iWidget *buttons = addChild_Widget(tabs, iClob(new_Widget()));
-    buttons->rect.size.y = 2 * gap_UI + lineHeight_Text(default_FontId);
     setFlags_Widget(buttons,
-                    resizeChildren_WidgetFlag | arrangeHorizontal_WidgetFlag |
-                        fixedHeight_WidgetFlag,
+                    resizeWidthOfChildren_WidgetFlag | arrangeHorizontal_WidgetFlag |
+                        arrangeHeight_WidgetFlag,
                     iTrue);
     setId_Widget(buttons, "tabs.buttons");
     iWidget *pages = addChildFlags_Widget(
@@ -313,12 +312,14 @@ iWidget *makeTabs_Widget(iWidget *parent) {
 
 static void addTabPage_Widget_(iWidget *tabs, enum iWidgetAddPos addPos, iWidget *page,
                                const char *label, int key, int kmods) {
-    iWidget *   pages  = findChild_Widget(tabs, "tabs.pages");
-    const iBool isSel  = childCount_Widget(pages) == 0;
-    iWidget *   button = addChildPos_Widget(
-        findChild_Widget(tabs, "tabs.buttons"),
+    iWidget *   pages   = findChild_Widget(tabs, "tabs.pages");
+    const iBool isSel   = childCount_Widget(pages) == 0;
+    iWidget *   buttons = findChild_Widget(tabs, "tabs.buttons");
+    iWidget *   button  = addChildPos_Widget(
+        buttons,
         iClob(new_LabelWidget(label, key, kmods, format_CStr("tabs.switch page:%p", page))),
         addPos);
+    setFlags_Widget(buttons, hidden_WidgetFlag, iFalse);
     setFlags_Widget(button, selected_WidgetFlag, isSel);
     setFlags_Widget(button, commandOnClick_WidgetFlag | expand_WidgetFlag, iTrue);
     addChildPos_Widget(pages, page, addPos);
@@ -340,13 +341,16 @@ iWidget *tabPage_Widget(iWidget *tabs, size_t index) {
 
 iWidget *removeTabPage_Widget(iWidget *tabs, size_t index) {
     iWidget *buttons = findChild_Widget(tabs, "tabs.buttons");
-    iWidget *pages = findChild_Widget(tabs, "tabs.pages");
-    iWidget *button = removeChild_Widget(buttons, child_Widget(buttons, index));
+    iWidget *pages   = findChild_Widget(tabs, "tabs.pages");
+    iWidget *button  = removeChild_Widget(buttons, child_Widget(buttons, index));
     iRelease(button);
     iWidget *page = child_Widget(pages, index);
     ref_Object(page);
     setFlags_Widget(page, hidden_WidgetFlag | disabled_WidgetFlag, iFalse);
     removeChild_Widget(pages, page);
+    if (tabCount_Widget(tabs) <= 1 && flags_Widget(buttons) & collapse_WidgetFlag) {
+        setFlags_Widget(buttons, hidden_WidgetFlag, iTrue);
+    }
     return page;
 }
 

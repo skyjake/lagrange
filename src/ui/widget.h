@@ -22,35 +22,39 @@ iBeginDeclareClass(Widget)
 iEndDeclareClass(Widget)
 
 enum iWidgetFlag {
-    hidden_WidgetFlag            = iBit(1),
-    disabled_WidgetFlag          = iBit(2),
-    hover_WidgetFlag             = iBit(3), /* eligible for mouse hover */
-    selected_WidgetFlag          = iBit(4),
-    pressed_WidgetFlag           = iBit(5),
-    alignLeft_WidgetFlag         = iBit(6),
-    alignRight_WidgetFlag        = iBit(7),
-    frameless_WidgetFlag         = iBit(8),
-    commandOnClick_WidgetFlag    = iBit(9),
-    drawKey_WidgetFlag           = iBit(10),
-    focusable_WidgetFlag         = iBit(11),
-    tight_WidgetFlag             = iBit(31), /* smaller padding */
-    keepOnTop_WidgetFlag         = iBit(12), /* gets events first; drawn last */
-    arrangeHorizontal_WidgetFlag = iBit(17), /* arrange children horizontally */
-    arrangeVertical_WidgetFlag   = iBit(18), /* arrange children vertically */
-    arrangeWidth_WidgetFlag      = iBit(19), /* area of children becomes parent size */
-    arrangeHeight_WidgetFlag     = iBit(20), /* area of children becomes parent size */
-    arrangeSize_WidgetFlag       = arrangeWidth_WidgetFlag | arrangeHeight_WidgetFlag,
-    resizeChildren_WidgetFlag    = iBit(21), /* resize children to fill parent size */
-    expand_WidgetFlag            = iBit(22),
-    fixedWidth_WidgetFlag        = iBit(23),
-    fixedHeight_WidgetFlag       = iBit(24),
-    fixedSize_WidgetFlag         = fixedWidth_WidgetFlag | fixedHeight_WidgetFlag,
-    resizeChildrenToWidestChild_WidgetFlag = iBit(25),
-    resizeToParentWidth_WidgetFlag         = iBit(26),
-    resizeToParentHeight_WidgetFlag        = iBit(27),
-    moveToParentRightEdge_WidgetFlag       = iBit(28),
-    collapse_WidgetFlag                    = iBit(29), /* when hidden, arrange size to zero */
-    wasCollapsed_WidgetFlag                = iBit(30),
+    hidden_WidgetFlag         = iBit(1),
+    disabled_WidgetFlag       = iBit(2),
+    hover_WidgetFlag          = iBit(3), /* eligible for mouse hover */
+    selected_WidgetFlag       = iBit(4),
+    pressed_WidgetFlag        = iBit(5),
+    alignLeft_WidgetFlag      = iBit(6),
+    alignRight_WidgetFlag     = iBit(7),
+    frameless_WidgetFlag      = iBit(8),
+    commandOnClick_WidgetFlag = iBit(9),
+    drawKey_WidgetFlag        = iBit(10),
+    focusable_WidgetFlag      = iBit(11),
+    tight_WidgetFlag          = iBit(12), /* smaller padding */
+    keepOnTop_WidgetFlag      = iBit(13), /* gets events first; drawn last */
+    /* arrange behavior */
+    arrangeHorizontal_WidgetFlag           = iBit(17), /* arrange children horizontally */
+    arrangeVertical_WidgetFlag             = iBit(18), /* arrange children vertically */
+    arrangeWidth_WidgetFlag                = iBit(19), /* area of children becomes parent size */
+    arrangeHeight_WidgetFlag               = iBit(20), /* area of children becomes parent size */
+    resizeWidthOfChildren_WidgetFlag       = iBit(21),
+    resizeHeightOfChildren_WidgetFlag      = iBit(22),
+    expand_WidgetFlag                      = iBit(23),
+    fixedWidth_WidgetFlag                  = iBit(24),
+    fixedHeight_WidgetFlag                 = iBit(25),
+    resizeChildrenToWidestChild_WidgetFlag = iBit(26),
+    resizeToParentWidth_WidgetFlag         = iBit(27),
+    resizeToParentHeight_WidgetFlag        = iBit(28),
+    moveToParentRightEdge_WidgetFlag       = iBit(29),
+    collapse_WidgetFlag                    = iBit(30), /* when hidden, arrange size to zero */
+    wasCollapsed_WidgetFlag                = iBit(31),
+    /* combinations */
+    arrangeSize_WidgetFlag    = arrangeWidth_WidgetFlag | arrangeHeight_WidgetFlag,
+    resizeChildren_WidgetFlag = resizeWidthOfChildren_WidgetFlag | resizeHeightOfChildren_WidgetFlag,
+    fixedSize_WidgetFlag      = fixedWidth_WidgetFlag | fixedHeight_WidgetFlag,
 };
 
 enum iWidgetAddPos {

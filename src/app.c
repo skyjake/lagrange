@@ -394,6 +394,7 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "tabs.new")) {
         iWidget *tabs = findWidget_App("doctabs");
+        setFlags_Widget(tabs, hidden_WidgetFlag, iFalse);
         iWidget *newTabButton = findChild_Widget(tabs, "newtab");
         removeChild_Widget(newTabButton->parent, newTabButton);
         iDocumentWidget *newDoc;
@@ -410,7 +411,7 @@ iBool handleCommand_App(const char *cmd) {
         postCommandf_App("tabs.switch page:%p", newDoc);
         if (!isDuplicate) {
             postCommand_App("navigate.home");
-        }
+        }        
         arrange_Widget(tabs);
         refresh_Widget(tabs);
         return iTrue;
