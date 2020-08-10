@@ -69,6 +69,8 @@ set (SOURCES
     src/ui/paint.h
     src/ui/scrollwidget.c
     src/ui/scrollwidget.h
+    src/ui/sidebarwidget.c
+    src/ui/sidebarwidget.h
     src/ui/text.c
     src/ui/text.h
     src/ui/util.c
