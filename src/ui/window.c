@@ -349,7 +349,7 @@ void init_Window(iWindow *d) {
         fprintf(stderr, "Error when creating window: %s\n", SDL_GetError());
         exit(-2);
     }
-    SDL_SetWindowMinimumSize(d->win, 320, 240);
+    SDL_SetWindowMinimumSize(d->win, 640, 400);
     SDL_SetWindowTitle(d->win, "Lagrange");
     /* Some info. */ {
         SDL_RendererInfo info;

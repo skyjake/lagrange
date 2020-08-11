@@ -384,7 +384,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         /* Empty lines don't produce text runs. */
         if (isEmpty_Range(&line)) {
             pos.y += lineHeight_Text(run.font);
-            prevType = text_GmLineType;
+            prevType = type;
             /* TODO: Extra skip needed here? */
             continue;
         }

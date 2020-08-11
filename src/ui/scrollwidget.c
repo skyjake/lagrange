@@ -115,8 +115,8 @@ static void draw_ScrollWidget_(const iScrollWidget *d) {
         iPaint p;
         init_Paint(&p);
         drawRect_Paint(&p, bounds, black_ColorId);
-        fillRect_Paint(&p, shrunk_Rect(thumbRect_ScrollWidget_(d), init1_I2(gap_UI / 2)),
-                       isPressed ? orange_ColorId : gray25_ColorId);
+        const iRect thumbRect = shrunk_Rect(thumbRect_ScrollWidget_(d), init_I2(gap_UI, gap_UI / 2));
+        fillRect_Paint(&p, thumbRect, isPressed ? orange_ColorId : tmQuote_ColorId);
     }
 }
 

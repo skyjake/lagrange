@@ -61,6 +61,31 @@ static void clearItems_SidebarWidget_(iSidebarWidget *d) {
     clear_Array(&d->items);
 }
 
+static iRect contentBounds_SidebarWidget_(const iSidebarWidget *d) {
+    iRect bounds = bounds_Widget(constAs_Widget(d));
+    adjustEdges_Rect(&bounds, as_Widget(d->modeButtons[0])->rect.size.y + gap_UI,
+                     -constAs_Widget(d->scroll)->rect.size.x, -gap_UI, 0);
+    return bounds;
+}
+
+static int scrollMax_SidebarWidget_(const iSidebarWidget *d) {
+    return iMax(0,
+                (int) size_Array(&d->items) * d->itemHeight -
+                    height_Rect(contentBounds_SidebarWidget_(d)));
+}
+
+static void updateVisible_SidebarWidget_(iSidebarWidget *d) {
+    //    iWidget *w = as_Widget(d);
+    const int contentSize = size_Array(&d->items) * d->itemHeight;
+    const iRect bounds = contentBounds_SidebarWidget_(d);
+    setRange_ScrollWidget(d->scroll, (iRangei){ 0, scrollMax_SidebarWidget_(d) });
+    setThumb_ScrollWidget(d->scroll,
+                          d->scrollY,
+                          contentSize > 0 ? height_Rect(bounds_Widget(as_Widget(d->scroll))) *
+                                                height_Rect(bounds) / contentSize
+                                          : 0);
+}
+
 static void updateItems_SidebarWidget_(iSidebarWidget *d) {
     clearItems_SidebarWidget_(d);
     switch (d->mode) {
@@ -84,6 +109,7 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
         default:
             break;
     }
+    updateVisible_SidebarWidget_(d);
     refresh_Widget(as_Widget(d));
 }
 
@@ -131,12 +157,6 @@ void deinit_SidebarWidget(iSidebarWidget *d) {
     deinit_Array(&d->items);
 }
 
-static iRect contentBounds_SidebarWidget_(const iSidebarWidget *d) {
-    iRect bounds = bounds_Widget(constAs_Widget(d));
-    adjustEdges_Rect(&bounds, as_Widget(d->modeButtons[0])->rect.size.y + gap_UI, 0, 0, 0);
-    return bounds;
-}
-
 static int visCount_SidebarWidget_(const iSidebarWidget *d) {
     return iMin(height_Rect(bounds_Widget(constAs_Widget(d))) / d->itemHeight,
                 (int) size_Array(&d->items));
@@ -174,17 +194,25 @@ static void scroll_SidebarWidget_(iSidebarWidget *d, int offset) {
     if (d->scrollY < 0) {
         d->scrollY = 0;
     }
-    const int scrollMax = iMax(0,
-                               (int) size_Array(&d->items) * d->itemHeight -
-                                   height_Rect(contentBounds_SidebarWidget_(d)));
+    const int scrollMax = scrollMax_SidebarWidget_(d);
     d->scrollY = iMin(d->scrollY, scrollMax);
+    updateVisible_SidebarWidget_(d);
     refresh_Widget(as_Widget(d));
 }
 
 static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
     /* Handle commands. */
-    if (ev->type == SDL_USEREVENT && ev->user.code == command_UserEventCode) {
+    if (isResize_UserEvent(ev)) {
+        updateVisible_SidebarWidget_(d);
+    }
+    else if (isCommand_Widget(w, ev, "scroll.moved")) {
+        d->scrollY = arg_Command(command_UserEvent(ev));
+        d->hoverItem = iInvalidPos;
+        refresh_Widget(w);
+        return iTrue;
+    }
+    else if (ev->type == SDL_USEREVENT && ev->user.code == command_UserEventCode) {
         const char *cmd = command_UserEvent(ev);
         if (isCommand_Widget(w, ev, "sidebar.mode")) {
             setMode_SidebarWidget(d, arg_Command(cmd));
@@ -240,7 +268,6 @@ static void draw_SidebarWidget_(const iSidebarWidget *d) {
     init_Paint(&p);
     /* Draw the items. */ {
         const int font = default_FontId;
-//        /iConstForEach(Array, i, &d->items) {
         const iRanges visRange = visRange_SidebarWidget_(d);
         iInt2 pos = addY_I2(topLeft_Rect(bounds), -(d->scrollY % d->itemHeight));
         for (size_t i = visRange.start; i < visRange.end; i++) {
@@ -250,9 +277,10 @@ static void draw_SidebarWidget_(const iSidebarWidget *d) {
             if (isHover) {
                 fillRect_Paint(&p, itemRect, isPressing ? orange_ColorId : teal_ColorId);
             }
-            setClip_Paint(&p, itemRect);
-            const int fg = isHover ? (isPressing ? black_ColorId : white_ColorId) : gray75_ColorId;
+            setClip_Paint(&p, intersect_Rect(itemRect, bounds));
             if (d->mode == documentOutline_SidebarMode) {
+                const int fg = isHover ? (isPressing ? black_ColorId : white_ColorId) :
+                                       (item->indent == 0 ? white_ColorId : gray75_ColorId);
                 drawRange_Text(font, init_I2(pos.x + 3 * gap_UI + item->indent,
                                         mid_Rect(itemRect).y - lineHeight_Text(font) / 2),
                                fg, range_String(&item->label));
