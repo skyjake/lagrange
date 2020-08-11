@@ -423,7 +423,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             iGmRun bulRun = run;
             bulRun.visBounds.pos  = addX_I2(pos, indent * gap_Text);
             bulRun.visBounds.size = advance_Text(run.font, bullet);
-            bulRun.visBounds.pos.x -= 4 * gap_Text - width_Rect(run.visBounds) / 2;
+            bulRun.visBounds.pos.x -= 4 * gap_Text - width_Rect(bulRun.visBounds) / 2;
             bulRun.bounds = zero_Rect(); /* just visual */
             bulRun.text = range_CStr(bullet);
             bulRun.flags |= decoration_GmRunFlag;
