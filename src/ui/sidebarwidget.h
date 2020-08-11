@@ -3,10 +3,11 @@
 #include "widget.h"
 
 enum iSidebarMode {
+    documentOutline_SidebarMode,
     bookmarks_SidebarMode,
     history_SidebarMode,
-    documentOutline_SidebarMode,
     identities_SidebarMode,
+    max_SidebarMode
 };
 
 iDeclareWidgetClass(SidebarWidget)

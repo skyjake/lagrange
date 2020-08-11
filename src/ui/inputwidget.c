@@ -335,7 +335,7 @@ static void draw_InputWidget_(const iInputWidget *d) {
               white_ColorId,
               "%s",
               cstr_String(&text));
-    clearClip_Paint(&p);
+    unsetClip_Paint(&p);
     /* Cursor blinking. */
     if (isFocused && (time & 256)) {
         const iInt2 prefixSize = advanceN_Text(d->font, cstr_String(&text), d->cursor);

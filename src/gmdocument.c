@@ -86,6 +86,7 @@ struct Impl_GmDocument {
     iArray layout; /* contents of source, laid out in document space */
     iPtrArray links;
     iString title; /* the first top-level title */
+    iArray headings;
     iPtrArray images; /* persistent across layouts, references links by ID */
     uint32_t themeSeed;
     iChar siteIcon;
@@ -98,9 +99,9 @@ enum iGmLineType {
     bullet_GmLineType,
     preformatted_GmLineType,
     quote_GmLineType,
-    header1_GmLineType,
-    header2_GmLineType,
-    header3_GmLineType,
+    heading1_GmLineType,
+    heading2_GmLineType,
+    heading3_GmLineType,
     link_GmLineType,
     max_GmLineType,
 };
@@ -116,13 +117,13 @@ static enum iGmLineType lineType_GmDocument_(const iGmDocument *d, const iRangec
         return link_GmLineType;
     }
     if (startsWith_Rangecc(line, "###")) {
-        return header3_GmLineType;
+        return heading3_GmLineType;
     }
     if (startsWith_Rangecc(line, "##")) {
-        return header2_GmLineType;
+        return heading2_GmLineType;
     }
     if (startsWith_Rangecc(line, "#")) {
-        return header1_GmLineType;
+        return heading1_GmLineType;
     }
     if (startsWith_Rangecc(line, "```")) {
         return preformatted_GmLineType;
@@ -260,9 +261,9 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         paragraph_FontId, /* bullet */
         preformatted_FontId,
         quote_FontId,
-        header1_FontId,
-        header2_FontId,
-        header3_FontId,
+        heading1_FontId,
+        heading2_FontId,
+        heading3_FontId,
         regular_FontId,
     };
     static const int colors[max_GmLineType] = {
@@ -270,9 +271,9 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         tmParagraph_ColorId,
         tmPreformatted_ColorId,
         tmQuote_ColorId,
-        tmHeader1_ColorId,
-        tmHeader2_ColorId,
-        tmHeader3_ColorId,
+        tmHeading1_ColorId,
+        tmHeading2_ColorId,
+        tmHeading3_ColorId,
         tmLinkText_ColorId,
     };
     static const int indents[max_GmLineType] = {
@@ -291,6 +292,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     const float midRunSkip = 0.1f; /* extra space between wrapped text/quote lines */
     clear_Array(&d->layout);
     clearLinks_GmDocument_(d);
+    clear_Array(&d->headings);
     clear_String(&d->title);
     if (d->size.x <= 0 || isEmpty_String(&d->source)) {
         return;
@@ -345,6 +347,12 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             }
             trimLine_Rangecc_(&line, type);
             run.font = fonts[type];
+            /* Remember headings for the document outline. */
+            if (type == heading1_GmLineType || type == heading2_GmLineType || type == heading3_GmLineType) {
+                pushBack_Array(
+                    &d->headings,
+                    &(iGmHeading){ .text = line, .level = type - heading1_GmLineType });
+            }
         }
         else {
             /* Preformatted line. */
@@ -363,7 +371,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             addSiteBanner = iFalse;
             const iRangecc bannerText = urlHost_String(&d->url);
             if (!isEmpty_Range(&bannerText)) {
-                iGmRun banner    = { .flags = siteBanner_GmRunFlag };
+                iGmRun banner    = { .flags = decoration_GmRunFlag | siteBanner_GmRunFlag };
                 banner.bounds    = zero_Rect();
                 banner.visBounds = init_Rect(0, 0, d->size.x, lineHeight_Text(banner_FontId) * 2);
                 banner.font      = banner_FontId;
@@ -406,33 +414,37 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             }
         }
         /* Save the document title. */
-        if (type == header1_GmLineType && isEmpty_String(&d->title)) {
+        if (type == heading1_GmLineType && isEmpty_String(&d->title)) {
             setRange_String(&d->title, line);
         }
         /* List bullet. */
         run.color = colors[type];
         if (type == bullet_GmLineType) {
-            run.visBounds.pos  = addX_I2(pos, indent * gap_Text);
-            run.visBounds.size = advance_Text(run.font, bullet);
-            run.visBounds.pos.x -= 4 * gap_Text - width_Rect(run.visBounds) / 2;
-            run.bounds = zero_Rect(); /* just visual */
-            run.text = range_CStr(bullet);
-            pushBack_Array(&d->layout, &run);
+            iGmRun bulRun = run;
+            bulRun.visBounds.pos  = addX_I2(pos, indent * gap_Text);
+            bulRun.visBounds.size = advance_Text(run.font, bullet);
+            bulRun.visBounds.pos.x -= 4 * gap_Text - width_Rect(run.visBounds) / 2;
+            bulRun.bounds = zero_Rect(); /* just visual */
+            bulRun.text = range_CStr(bullet);
+            bulRun.flags |= decoration_GmRunFlag;
+            pushBack_Array(&d->layout, &bulRun);
         }
         /* Link icon. */
         if (type == link_GmLineType) {
-            run.visBounds.pos  = pos;
-            run.visBounds.size = init_I2(indent * gap_Text, lineHeight_Text(run.font));
-            run.bounds         = zero_Rect(); /* just visual */
+            iGmRun icon = run;
+            icon.visBounds.pos  = pos;
+            icon.visBounds.size = init_I2(indent * gap_Text, lineHeight_Text(run.font));
+            icon.bounds         = zero_Rect(); /* just visual */
             const iGmLink *link = constAt_PtrArray(&d->links, run.linkId - 1);
-            run.text            = range_CStr(link->flags & file_GmLinkFlag
-                                      ? folder
-                                      : link->flags & remote_GmLinkFlag ? globe : arrow);
+            icon.text           = range_CStr(link->flags & file_GmLinkFlag
+                                       ? folder
+                                       : link->flags & remote_GmLinkFlag ? globe : arrow);
             if (link->flags & remote_GmLinkFlag) {
-                run.visBounds.pos.x -= gap_Text / 2;
+                icon.visBounds.pos.x -= gap_Text / 2;
             }
-            run.color = linkColor_GmDocument(d, run.linkId, icon_GmLinkPart);
-            pushBack_Array(&d->layout, &run);
+            icon.color = linkColor_GmDocument(d, run.linkId, icon_GmLinkPart);
+            icon.flags |= decoration_GmRunFlag;
+            pushBack_Array(&d->layout, &icon);
         }
         run.color = colors[type];
         if (d->format == plainText_GmDocumentFormat) {
@@ -446,7 +458,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             bigCount = 15; /* max lines -- what if the whole document is one paragraph? */
             isFirstText = iFalse;
         }
-        else if (type != header1_GmLineType) {
+        else if (type != heading1_GmLineType) {
             isFirstText = iFalse;
         }
         iRangecc runLine = line;
@@ -531,6 +543,7 @@ void init_GmDocument(iGmDocument *d) {
     init_Array(&d->layout, sizeof(iGmRun));
     init_PtrArray(&d->links);
     init_String(&d->title);
+    init_Array(&d->headings, sizeof(iGmHeading));
     init_PtrArray(&d->images);
     setThemeSeed_GmDocument(d, NULL);
 }
@@ -539,6 +552,7 @@ void deinit_GmDocument(iGmDocument *d) {
     deinit_String(&d->title);
     clearLinks_GmDocument_(d);
     deinit_PtrArray(&d->links);
+    deinit_Array(&d->headings);
     deinit_Array(&d->layout);
     deinit_String(&d->localHost);
     deinit_String(&d->url);
@@ -553,6 +567,7 @@ void reset_GmDocument(iGmDocument *d) {
     clear_PtrArray(&d->images);
     clearLinks_GmDocument_(d);
     clear_Array(&d->layout);
+    clear_Array(&d->headings);
     clear_String(&d->url);
     clear_String(&d->localHost);
     d->themeSeed = 0;
@@ -576,9 +591,9 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
         setHsl_Color(tmFirstParagraph_ColorId, addSatLum_HSLColor(base, 0, 0.75f));
         set_Color(tmQuote_ColorId, get_Color(cyan_ColorId));
         set_Color(tmPreformatted_ColorId, get_Color(cyan_ColorId));
-        set_Color(tmHeader1_ColorId, get_Color(white_ColorId));
-        setHsl_Color(tmHeader2_ColorId, addSatLum_HSLColor(base, 0, 0.7f));
-        setHsl_Color(tmHeader3_ColorId, addSatLum_HSLColor(base, 0, 0.6f));
+        set_Color(tmHeading1_ColorId, get_Color(white_ColorId));
+        setHsl_Color(tmHeading2_ColorId, addSatLum_HSLColor(base, 0, 0.7f));
+        setHsl_Color(tmHeading3_ColorId, addSatLum_HSLColor(base, 0, 0.6f));
         set_Color(tmBannerBackground_ColorId, get_Color(black_ColorId));
         set_Color(tmBannerTitle_ColorId, get_Color(white_ColorId));
         set_Color(tmBannerIcon_ColorId, get_Color(orange_ColorId));
@@ -652,15 +667,15 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
             const float altHue2  = hues[altHues[primIndex].index[altIndex[1]]];
             iHSLColor   altBase  = { altHue, base.sat, base.lum, 1 };
             const float titleLum = 0.2f * ((d->themeSeed >> 17) & 0x7) / 7.0f;
-            setHsl_Color(tmHeader1_ColorId, setLum_HSLColor(altBase, titleLum + 0.80f));
-            setHsl_Color(tmHeader2_ColorId, setLum_HSLColor(altBase, titleLum + 0.70f));
-            setHsl_Color(tmHeader3_ColorId, setLum_HSLColor(altBase, titleLum + 0.60f));
+            setHsl_Color(tmHeading1_ColorId, setLum_HSLColor(altBase, titleLum + 0.80f));
+            setHsl_Color(tmHeading2_ColorId, setLum_HSLColor(altBase, titleLum + 0.70f));
+            setHsl_Color(tmHeading3_ColorId, setLum_HSLColor(altBase, titleLum + 0.60f));
 
             setHsl_Color(tmParagraph_ColorId, addSatLum_HSLColor(base, 0.1f, 0.6f));
             setHsl_Color(tmFirstParagraph_ColorId, addSatLum_HSLColor(base, 0.2f, 0.8f));
             setHsl_Color(tmPreformatted_ColorId, (iHSLColor){ altHue2, 1.0f, 0.75f, 1.0f });
             set_Color(tmQuote_ColorId, get_Color(tmPreformatted_ColorId));
-            set_Color(tmInlineContentMetadata_ColorId, get_Color(tmHeader3_ColorId));
+            set_Color(tmInlineContentMetadata_ColorId, get_Color(tmHeading3_ColorId));
 
             /* Adjust colors based on light/dark mode. */
             for (int i = tmFirst_ColorId; i < max_ColorId; i++) {
@@ -675,7 +690,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
                         color.sat = (color.sat + 1) / 2;
                         color.lum += 0.06f;
                     }
-                    else if (i == tmHeader3_ColorId) {
+                    else if (i == tmHeading3_ColorId) {
                         color.lum *= 0.75f;
                     }
                     else if (isLink_ColorId(i)) {
@@ -888,6 +903,10 @@ iBool hasSiteBanner_GmDocument(const iGmDocument *d) {
     return (first->flags & siteBanner_GmRunFlag) != 0;
 }
 
+const iArray *headings_GmDocument(const iGmDocument *d) {
+    return &d->headings;
+}
+
 iRangecc findText_GmDocument(const iGmDocument *d, const iString *text, const char *start) {
     const char * src      = constBegin_String(&d->source);
     const size_t startPos = (start ? start - src : 0);
@@ -934,6 +953,9 @@ const char *findLoc_GmDocument(const iGmDocument *d, iInt2 pos) {
 const iGmRun *findRunAtLoc_GmDocument(const iGmDocument *d, const char *textCStr) {
     iConstForEach(Array, i, &d->layout) {
         const iGmRun *run = i.value;
+        if (run->flags & decoration_GmRunFlag) {
+            continue;
+        }
         if (contains_Range(&run->text, textCStr) || run->text.start > textCStr /* went past */) {
             return run;
         }

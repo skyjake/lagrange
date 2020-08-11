@@ -218,7 +218,7 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
     else {
         drawCentered_Text(d->font, bounds, d->alignVisual, fg, cstr_String(&d->label));
     }
-    clearClip_Paint(&p);
+    unsetClip_Paint(&p);
 }
 
 void updateSize_LabelWidget(iLabelWidget *d) {

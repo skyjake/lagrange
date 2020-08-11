@@ -44,9 +44,9 @@ enum iFontId {
     preformatted_FontId      = monospace_FontId,
     preformattedSmall_FontId = monospaceSmall_FontId,
     quote_FontId             = italic_FontId,
-    header1_FontId           = hugeBold_FontId,
-    header2_FontId           = largeBold_FontId,
-    header3_FontId           = medium_FontId,
+    heading1_FontId          = hugeBold_FontId,
+    heading2_FontId          = largeBold_FontId,
+    heading3_FontId          = medium_FontId,
     banner_FontId            = largeLight_FontId,
 };
 

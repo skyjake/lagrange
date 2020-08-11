@@ -18,7 +18,7 @@ void setClip_Paint(iPaint *d, iRect rect) {
     SDL_RenderSetClipRect(renderer_Paint_(d), (const SDL_Rect *) &rect);
 }
 
-void clearClip_Paint(iPaint *d) {
+void unsetClip_Paint(iPaint *d) {
     const SDL_Rect winRect = { 0, 0, d->dst->root->rect.size.x, d->dst->root->rect.size.y };
     SDL_RenderSetClipRect(renderer_Paint_(d), &winRect);
 }

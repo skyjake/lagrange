@@ -14,7 +14,7 @@ struct Impl_Paint {
 void    init_Paint      (iPaint *);
 
 void    setClip_Paint   (iPaint *, iRect rect);
-void    clearClip_Paint (iPaint *);
+void    unsetClip_Paint (iPaint *);
 
 void    drawRect_Paint          (const iPaint *, iRect rect, int color);
 void    drawRectThickness_Paint (const iPaint *, iRect rect, int thickness, int color);

@@ -513,6 +513,10 @@ const iString *url_DocumentWidget(const iDocumentWidget *d) {
     return d->url;
 }
 
+const iGmDocument *document_DocumentWidget(const iDocumentWidget *d) {
+    return d->doc;
+}
+
 void setUrlFromCache_DocumentWidget(iDocumentWidget *d, const iString *url, iBool isFromCache) {
     if (cmpStringSc_String(d->url, url, &iCaseInsensitive)) {
         set_String(d->url, url);
@@ -583,8 +587,9 @@ static void scroll_DocumentWidget_(iDocumentWidget *d, int offset) {
     refresh_Widget(as_Widget(d));
 }
 
-static void scrollTo_DocumentWidget_(iDocumentWidget *d, int documentY) {
-    d->scrollY = documentY - documentBounds_DocumentWidget_(d).size.y / 2;
+static void scrollTo_DocumentWidget_(iDocumentWidget *d, int documentY, iBool centered) {
+    d->scrollY = documentY - (centered ? documentBounds_DocumentWidget_(d).size.y / 2 :
+                                       lineHeight_Text(paragraph_FontId));
     scroll_DocumentWidget_(d, 0); /* clamp it */
 }
 
@@ -781,7 +786,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         if (midLoc) {
             mid = findRunAtLoc_GmDocument(d->doc, midLoc);
             if (mid) {
-                scrollTo_DocumentWidget_(d, mid_Rect(mid->bounds).y);
+                scrollTo_DocumentWidget_(d, mid_Rect(mid->bounds).y, iTrue);
             }
         }
         refresh_Widget(w);
@@ -923,6 +928,14 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                                arg_Command(cmd) * height_Rect(documentBounds_DocumentWidget_(d)));
         return iTrue;
     }
+    else if (equal_Command(cmd, "document.goto") && document_App() == d) {
+        const char *loc = pointerLabel_Command(cmd, "loc");
+        const iGmRun *run = findRunAtLoc_GmDocument(d->doc, loc);
+        if (run) {
+            scrollTo_DocumentWidget_(d, run->visBounds.pos.y, iFalse);
+        }
+        return iTrue;
+    }
     else if ((equal_Command(cmd, "find.next") || equal_Command(cmd, "find.prev")) &&
              document_App() == d) {
         const int dir = equal_Command(cmd, "find.next") ? +1 : -1;
@@ -943,7 +956,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             if (d->foundMark.start) {
                 const iGmRun *found;
                 if ((found = findRunAtLoc_GmDocument(d->doc, d->foundMark.start)) != NULL) {
-                    scrollTo_DocumentWidget_(d, mid_Rect(found->bounds).y);
+                    scrollTo_DocumentWidget_(d, mid_Rect(found->bounds).y, iTrue);
                 }
             }
         }
@@ -1353,7 +1366,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
     fillRect_Paint(&ctx.paint, bounds, tmBackground_ColorId);
     setClip_Paint(&ctx.paint, bounds);
     render_GmDocument(d->doc, visibleRange_DocumentWidget_(d), drawRun_DrawContext_, &ctx);
-    clearClip_Paint(&ctx.paint);
+    unsetClip_Paint(&ctx.paint);
     draw_Widget(w);
 }
 

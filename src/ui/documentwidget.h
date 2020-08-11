@@ -2,16 +2,18 @@
 
 #include "widget.h"
 
+iDeclareType(GmDocument)
 iDeclareType(History)
 
 iDeclareWidgetClass(DocumentWidget)
 iDeclareObjectConstruction(DocumentWidget)
 
-iDocumentWidget *duplicate_DocumentWidget       (const iDocumentWidget *);
-iHistory *      history_DocumentWidget          (iDocumentWidget *);
+iDocumentWidget *   duplicate_DocumentWidget        (const iDocumentWidget *);
+iHistory *          history_DocumentWidget          (iDocumentWidget *);
 
-const iString * url_DocumentWidget              (const iDocumentWidget *);
-iBool           isRequestOngoing_DocumentWidget (const iDocumentWidget *);
+const iString *     url_DocumentWidget              (const iDocumentWidget *);
+iBool               isRequestOngoing_DocumentWidget (const iDocumentWidget *);
+const iGmDocument * document_DocumentWidget         (const iDocumentWidget *);
 
 void    setUrl_DocumentWidget           (iDocumentWidget *, const iString *url);
 void    setUrlFromCache_DocumentWidget  (iDocumentWidget *d, const iString *url, iBool isFromCache);

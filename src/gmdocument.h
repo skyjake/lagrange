@@ -1,13 +1,16 @@
 #pragma once
 
 #include "gmutil.h"
+
+#include <the_Foundation/array.h>
 #include <the_Foundation/object.h>
 #include <the_Foundation/rect.h>
 #include <the_Foundation/string.h>
 #include <the_Foundation/time.h>
-
 #include <SDL_render.h>
 
+iDeclareType(GmImageInfo)
+iDeclareType(GmHeading)
 iDeclareType(GmRun)
 
 typedef uint16_t iGmLinkId;
@@ -27,18 +30,22 @@ enum iGmLinkFlags {
     visited_GmLinkFlag            = iBit(14), /* in the history */
 };
 
-iDeclareType(GmImageInfo)
-
 struct Impl_GmImageInfo {
     iInt2 size;
     size_t numBytes;
     const char *mime;
 };
 
+struct Impl_GmHeading {
+    iRangecc text;
+    int level; /* 0, 1, 2 */
+};
+
 enum iGmRunFlags {
-    startOfLine_GmRunFlag = iBit(1),
-    endOfLine_GmRunFlag   = iBit(2),
-    siteBanner_GmRunFlag  = iBit(3), /* area reserved for the site banner */
+    decoration_GmRunFlag  = iBit(1), /* not part of the source */
+    startOfLine_GmRunFlag = iBit(2),
+    endOfLine_GmRunFlag   = iBit(3),
+    siteBanner_GmRunFlag  = iBit(4), /* area reserved for the site banner */
 };
 
 struct Impl_GmRun {
@@ -74,9 +81,11 @@ void    reset_GmDocument        (iGmDocument *); /* free images */
 
 typedef void (*iGmDocumentRenderFunc)(void *, const iGmRun *);
 
-void    render_GmDocument       (const iGmDocument *, iRangei visRangeY, iGmDocumentRenderFunc render, void *);
-iInt2   size_GmDocument         (const iGmDocument *);
-iBool   hasSiteBanner_GmDocument(const iGmDocument *);
+void            render_GmDocument           (const iGmDocument *, iRangei visRangeY,
+                                             iGmDocumentRenderFunc render, void *);
+iInt2           size_GmDocument             (const iGmDocument *);
+iBool           hasSiteBanner_GmDocument    (const iGmDocument *);
+const iArray *  headings_GmDocument         (const iGmDocument *);
 
 iRangecc        findText_GmDocument         (const iGmDocument *, const iString *text, const char *start);
 iRangecc        findTextBefore_GmDocument   (const iGmDocument *, const iString *text, const char *before);
