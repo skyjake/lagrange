@@ -484,7 +484,10 @@ iWidget *makeSheet_Widget(const char *id) {
 void centerSheet_Widget(iWidget *sheet) {
     arrange_Widget(sheet);
     const iInt2 rootSize = rootSize_Window(get_Window());
-    sheet->rect.pos.x = rootSize.x / 2 - sheet->rect.size.x / 2;
+    const iInt2 orig     = localCoord_Widget(
+        sheet->parent,
+        init_I2(rootSize.x / 2 - sheet->rect.size.x / 2, bounds_Widget(sheet).pos.y));
+    sheet->rect.pos = orig;
     postRefresh_App();
 }
 
