@@ -137,9 +137,20 @@ static iRect contentBounds_SidebarWidget_(const iSidebarWidget *d) {
     return bounds;
 }
 
+static int visCount_SidebarWidget_(const iSidebarWidget *d) {
+    return iMin(height_Rect(bounds_Widget(constAs_Widget(d))) / d->itemHeight,
+                (int) size_Array(&d->items));
+}
+
+static iRanges visRange_SidebarWidget_(const iSidebarWidget *d) {
+    iRanges vis = { d->scrollY / d->itemHeight, 0 };
+    vis.end = iMin(size_Array(&d->items), vis.start + visCount_SidebarWidget_(d));
+    return vis;
+}
+
 static size_t itemIndex_SidebarWidget_(const iSidebarWidget *d, iInt2 pos) {
     const iRect bounds = contentBounds_SidebarWidget_(d);
-    pos.y -= top_Rect(bounds);
+    pos.y -= top_Rect(bounds) - d->scrollY;
     if (pos.y < 0) return iInvalidPos;
     size_t index = pos.y / d->itemHeight;
     if (index >= size_Array(&d->items)) return iInvalidPos;
@@ -156,6 +167,18 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, size_t index) {
             break;
         }
     }
+}
+
+static void scroll_SidebarWidget_(iSidebarWidget *d, int offset) {
+    d->scrollY += offset;
+    if (d->scrollY < 0) {
+        d->scrollY = 0;
+    }
+    const int scrollMax = iMax(0,
+                               (int) size_Array(&d->items) * d->itemHeight -
+                                   height_Rect(contentBounds_SidebarWidget_(d)));
+    d->scrollY = iMin(d->scrollY, scrollMax);
+    refresh_Widget(as_Widget(d));
 }
 
 static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev) {
@@ -177,12 +200,20 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         size_t hover = iInvalidPos;
         if (contains_Widget(w, mouse)) {
             hover = itemIndex_SidebarWidget_(d, mouse);
-
         }
         if (hover != d->hoverItem) {
             d->hoverItem = hover;
             refresh_Widget(w);
         }
+    }
+    if (ev->type == SDL_MOUSEWHEEL && isHover_Widget(w)) {
+#if defined (iPlatformApple)
+        /* Momentum scrolling. */
+        scroll_SidebarWidget_(d, -ev->wheel.y * get_Window()->pixelRatio);
+#endif
+        d->hoverItem = iInvalidPos;
+        refresh_Widget(w);
+        return iTrue;
     }
     switch (processEvent_Click(&d->click, ev)) {
         case started_ClickResult:
@@ -191,7 +222,6 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         case finished_ClickResult:
             if (contains_Rect(contentBounds_SidebarWidget_(d), pos_Click(&d->click)) &&
                 d->hoverItem != iInvalidSize) {
-                //printf("click:%zu\n", d->hoverItem); fflush(stdout);
                 itemClicked_SidebarWidget_(d, d->hoverItem);
             }
             refresh_Widget(w);
@@ -209,12 +239,14 @@ static void draw_SidebarWidget_(const iSidebarWidget *d) {
     iPaint p;
     init_Paint(&p);
     /* Draw the items. */ {
-        iInt2 pos = topLeft_Rect(bounds);
         const int font = default_FontId;
-        iConstForEach(Array, i, &d->items) {
-            const iSidebarItem *item = i.value;
+//        /iConstForEach(Array, i, &d->items) {
+        const iRanges visRange = visRange_SidebarWidget_(d);
+        iInt2 pos = addY_I2(topLeft_Rect(bounds), -(d->scrollY % d->itemHeight));
+        for (size_t i = visRange.start; i < visRange.end; i++) {
+            const iSidebarItem *item = constAt_Array(&d->items, i);
             const iRect itemRect = { pos, init_I2(width_Rect(bounds), d->itemHeight) };
-            const iBool isHover = (d->hoverItem == index_ArrayConstIterator(&i));
+            const iBool isHover = (d->hoverItem == i);
             if (isHover) {
                 fillRect_Paint(&p, itemRect, isPressing ? orange_ColorId : teal_ColorId);
             }

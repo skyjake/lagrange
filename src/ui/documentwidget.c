@@ -111,6 +111,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     iWidget *w = as_Widget(d);
     init_Widget(w);
     setId_Widget(w, "document000");
+    setFlags_Widget(w, hover_WidgetFlag, iTrue);
     iZap(d->certExpiry);
     d->history          = new_History();
     d->state            = blank_DocumentState;
@@ -1040,7 +1041,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
 #endif
         }
     }
-    else if (ev->type == SDL_MOUSEWHEEL) {
+    else if (ev->type == SDL_MOUSEWHEEL && isHover_Widget(w)) {
 #if defined (iPlatformApple)
         /* Momentum scrolling. */
         scroll_DocumentWidget_(d, -ev->wheel.y * get_Window()->pixelRatio);
