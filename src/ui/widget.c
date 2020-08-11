@@ -271,6 +271,9 @@ void arrange_Widget(iWidget *d) {
         iWidget *child = as_Widget(i.object);
         arrange_Widget(child);
         if (d->flags & (arrangeHorizontal_WidgetFlag | arrangeVertical_WidgetFlag)) {
+            if (child->flags & moveToParentRightEdge_WidgetFlag) {
+                continue; /* Not part of the sequential arrangement .*/
+            }
             child->rect.pos = pos;
             if (d->flags & arrangeHorizontal_WidgetFlag) {
                 pos.x += child->rect.size.x;
