@@ -177,7 +177,7 @@ void init_SidebarWidget(iSidebarWidget *d) {
             resizeToParentHeight_WidgetFlag | moveToParentRightEdge_WidgetFlag);
     setId_Widget(d->resizer, "sidebar.grab");
     d->resizer->rect.size.x = gap_UI;
-    setBackgroundColor_Widget(d->resizer, red_ColorId);
+    setBackgroundColor_Widget(d->resizer, none_ColorId);
     d->resizeCursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZEWE);
 }
 
@@ -257,13 +257,13 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         if (argLabel_Command(cmd, "button") == SDL_BUTTON_LEFT) {
             if (arg_Command(cmd)) {
                 setFlags_Widget(d->resizer, pressed_WidgetFlag, iTrue);
-                setBackgroundColor_Widget(d->resizer, orange_ColorId);
+                setBackgroundColor_Widget(d->resizer, gray75_ColorId);
                 setMouseGrab_Widget(d->resizer);
                 refresh_Widget(d->resizer);
             }
             else {
                 setFlags_Widget(d->resizer, pressed_WidgetFlag, iFalse);
-                setBackgroundColor_Widget(d->resizer, red_ColorId);
+                setBackgroundColor_Widget(d->resizer, none_ColorId);
                 setMouseGrab_Widget(NULL);
                 refresh_Widget(d->resizer);
             }
@@ -274,7 +274,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         const char *cmd = command_UserEvent(ev);
         if (isResizing_SidebarWidget_(d)) {
             const iInt2 local = localCoord_Widget(w, coord_Command(cmd));
-            w->rect.size.x = local.x + d->resizer->rect.size.x / 2;
+            w->rect.size.x = iMax(30 * gap_UI, local.x + d->resizer->rect.size.x / 2);
             arrange_Widget(findWidget_App("doctabs"));
             checkModeButtonLayout_SidebarWidget_(d);
             if (!isRefreshPending_App()) {
@@ -376,6 +376,10 @@ static void draw_SidebarWidget_(const iSidebarWidget *d) {
         }
     }
     draw_Widget(w);
+    drawVLine_Paint(&p,
+                    addX_I2(topRight_Rect(bounds_Widget(w)), -1),
+                    height_Rect(bounds_Widget(w)),
+                    black_ColorId);
 }
 
 iBeginDefineSubclass(SidebarWidget, Widget)
