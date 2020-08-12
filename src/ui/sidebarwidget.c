@@ -48,6 +48,7 @@ struct Impl_SidebarWidget {
     int scrollY;
     iLabelWidget *modeButtons[max_SidebarMode];
     int itemHeight;
+    int maxButtonLabelWidth;
     iArray items;
     size_t hoverItem;
     iClick click;
@@ -130,29 +131,41 @@ void setMode_SidebarWidget(iSidebarWidget *d, enum iSidebarMode mode) {
     d->itemHeight = heights[mode] * lineHeight_Text(default_FontId);
 }
 
+static const char *normalModeLabels_[max_SidebarMode] = {
+    "\U0001f5b9 Outline",
+    "\U0001f588 Bookmarks",
+    "\U0001f553 History",
+    "\U0001f464 Identities",
+};
+
+static const char *tightModeLabels_[max_SidebarMode] = {
+    "\U0001f5b9",
+    "\U0001f588",
+    "\U0001f553",
+    "\U0001f464",
+};
+
 void init_SidebarWidget(iSidebarWidget *d) {
     iWidget *w = as_Widget(d);
     init_Widget(w);
     setBackgroundColor_Widget(w, none_ColorId);
-    setFlags_Widget(w, hover_WidgetFlag | arrangeHorizontal_WidgetFlag, iTrue);
+    setFlags_Widget(w, hover_WidgetFlag | arrangeHorizontal_WidgetFlag | resizeWidthOfChildren_WidgetFlag, iTrue);
     d->scrollY = 0;
     d->mode = -1;
-    w->rect.size.x = 100 * gap_UI;
+    w->rect.size.x = 75 * gap_UI;
     init_Array(&d->items, sizeof(iSidebarItem));
     d->hoverItem = iInvalidPos;
     init_Click(&d->click, d, SDL_BUTTON_LEFT);
     setFlags_Widget(w, fixedWidth_WidgetFlag, iTrue);
-    const char *buttonLabels[max_SidebarMode] = {
-        "\U0001f5b9 Outline",
-        "\U0001f588 Bookmarks",
-        "\U0001f553 History",
-        "\U0001f464 Identities",
-    };
+    d->maxButtonLabelWidth = 0;
     for (int i = 0; i < max_SidebarMode; i++) {
         d->modeButtons[i] = addChildFlags_Widget(
             w,
-            iClob(new_LabelWidget(buttonLabels[i], 0, 0, format_CStr("sidebar.mode arg:%d", i))),
-            frameless_WidgetFlag);
+            iClob(
+                new_LabelWidget(normalModeLabels_[i], 0, 0, format_CStr("sidebar.mode arg:%d", i))),
+            frameless_WidgetFlag | expand_WidgetFlag);
+        d->maxButtonLabelWidth =
+            iMaxi(d->maxButtonLabelWidth, 3 * gap_UI + measure_Text(default_FontId, normalModeLabels_[i]).x);
     }
     addChild_Widget(w, iClob(d->scroll = new_ScrollWidget()));
     setThumb_ScrollWidget(d->scroll, 0, 0);
@@ -217,11 +230,27 @@ static void scroll_SidebarWidget_(iSidebarWidget *d, int offset) {
     refresh_Widget(as_Widget(d));
 }
 
+static void checkModeButtonLayout_SidebarWidget_(iSidebarWidget *d) {
+    const iBool isTight =
+        (width_Rect(bounds_Widget(as_Widget(d->modeButtons[0]))) < d->maxButtonLabelWidth);
+    for (int i = 0; i < max_SidebarMode; i++) {
+        if (isTight && ~flags_Widget(as_Widget(d->modeButtons[i])) & tight_WidgetFlag) {
+            setFlags_Widget(as_Widget(d->modeButtons[i]), tight_WidgetFlag, iTrue);
+            updateTextCStr_LabelWidget(d->modeButtons[i], tightModeLabels_[i]);
+        }
+        else if (!isTight && flags_Widget(as_Widget(d->modeButtons[i])) & tight_WidgetFlag) {
+            setFlags_Widget(as_Widget(d->modeButtons[i]), tight_WidgetFlag, iFalse);
+            updateTextCStr_LabelWidget(d->modeButtons[i], normalModeLabels_[i]);
+        }
+    }
+}
+
 static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
     /* Handle commands. */
     if (isResize_UserEvent(ev)) {
         updateVisible_SidebarWidget_(d);
+        checkModeButtonLayout_SidebarWidget_(d);
     }
     else if (isCommand_Widget(w, ev, "mouse.clicked")) {
         const char *cmd = command_UserEvent(ev);
@@ -247,6 +276,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             const iInt2 local = localCoord_Widget(w, coord_Command(cmd));
             w->rect.size.x = local.x + d->resizer->rect.size.x / 2;
             arrange_Widget(findWidget_App("doctabs"));
+            checkModeButtonLayout_SidebarWidget_(d);
             if (!isRefreshPending_App()) {
                 updateSize_DocumentWidget(document_App());
                 refresh_Widget(w);
@@ -292,6 +322,8 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
 #if defined (iPlatformApple)
         /* Momentum scrolling. */
         scroll_SidebarWidget_(d, -ev->wheel.y * get_Window()->pixelRatio);
+#else
+        scroll_SidebarWidget_(d, -ev->wheel.y * 3 * d->itemHeight);
 #endif
         d->hoverItem = iInvalidPos;
         refresh_Widget(w);
@@ -328,10 +360,10 @@ static void draw_SidebarWidget_(const iSidebarWidget *d) {
             const iSidebarItem *item = constAt_Array(&d->items, i);
             const iRect itemRect = { pos, init_I2(width_Rect(bounds), d->itemHeight) };
             const iBool isHover = (d->hoverItem == i);
+            setClip_Paint(&p, intersect_Rect(itemRect, bounds));
             if (isHover) {
                 fillRect_Paint(&p, itemRect, isPressing ? orange_ColorId : teal_ColorId);
             }
-            setClip_Paint(&p, intersect_Rect(itemRect, bounds));
             if (d->mode == documentOutline_SidebarMode) {
                 const int fg = isHover ? (isPressing ? black_ColorId : white_ColorId) :
                                        (item->indent == 0 ? white_ColorId : gray75_ColorId);
