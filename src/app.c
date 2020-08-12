@@ -326,6 +326,10 @@ void refresh_App(void) {
     d->pendingRefresh = iFalse;
 }
 
+iBool isRefreshPending_App(void) {
+    return app_.pendingRefresh;
+}
+
 int run_App(int argc, char **argv) {
     init_App_(&app_, argc, argv);
     const int rc = run_App_(&app_);

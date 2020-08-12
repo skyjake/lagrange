@@ -159,6 +159,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     d->isRequestUpdated = iFalse;
     d->media            = new_ObjectList();
     d->doc              = new_GmDocument();
+    d->initialScrollY   = 0;
     d->scrollY          = 0;
     d->selecting        = iFalse;
     d->selectMark       = iNullRange;
@@ -558,7 +559,7 @@ static iBool updateFromHistory_DocumentWidget_(iDocumentWidget *d) {
         const iGmResponse *resp = recent->cachedResponse;
         d->state = fetching_RequestState;
         /* Use the cached response data. */
-        d->scrollY = recent->scrollY;
+        d->scrollY = d->initialScrollY = recent->scrollY;
         updateTrust_DocumentWidget_(d, resp);
         updateDocument_DocumentWidget_(d, resp);
         d->state = ready_RequestState;
@@ -824,6 +825,11 @@ static void changeTextSize_DocumentWidget_(iDocumentWidget *d, int delta) {
     postCommandf_App("font.setfactor arg:%d", d->mod.textSizePercent);
 }
 
+void updateSize_DocumentWidget(iDocumentWidget *d) {
+    setWidth_GmDocument(d->doc, documentWidth_DocumentWidget_(d));
+    updateVisible_DocumentWidget_(d);
+}
+
 static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
     iWidget *w = as_Widget(d);
     if (equal_Command(cmd, "window.resized") || equal_Command(cmd, "font.changed")) {
@@ -956,6 +962,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return handleMediaCommand_DocumentWidget_(d, cmd);
     }
     else if (equal_Command(cmd, "document.reload") && document_App() == d) {
+        d->initialScrollY = d->scrollY;
         fetch_DocumentWidget_(d);
         return iTrue;
     }

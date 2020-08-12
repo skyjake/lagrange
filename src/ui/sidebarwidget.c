@@ -9,6 +9,7 @@
 #include "app.h"
 
 #include <the_Foundation/array.h>
+#include <SDL_mouse.h>
 
 iDeclareType(SidebarItem)
 
@@ -50,9 +51,15 @@ struct Impl_SidebarWidget {
     iArray items;
     size_t hoverItem;
     iClick click;
+    iWidget *resizer;
+    SDL_Cursor *resizeCursor;
 };
 
 iDefineObjectConstruction(SidebarWidget)
+
+static iBool isResizing_SidebarWidget_(const iSidebarWidget *d) {
+    return (flags_Widget(d->resizer) & pressed_WidgetFlag) != 0;
+}
 
 static void clearItems_SidebarWidget_(iSidebarWidget *d) {
     iForEach(Array, i, &d->items) {
@@ -150,9 +157,19 @@ void init_SidebarWidget(iSidebarWidget *d) {
     addChild_Widget(w, iClob(d->scroll = new_ScrollWidget()));
     setThumb_ScrollWidget(d->scroll, 0, 0);
     setMode_SidebarWidget(d, documentOutline_SidebarMode);
+    d->resizer = addChildFlags_Widget(
+        w,
+        iClob(new_Widget()),
+        hover_WidgetFlag | commandOnClick_WidgetFlag | fixedWidth_WidgetFlag |
+            resizeToParentHeight_WidgetFlag | moveToParentRightEdge_WidgetFlag);
+    setId_Widget(d->resizer, "sidebar.grab");
+    d->resizer->rect.size.x = gap_UI;
+    setBackgroundColor_Widget(d->resizer, red_ColorId);
+    d->resizeCursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZEWE);
 }
 
 void deinit_SidebarWidget(iSidebarWidget *d) {
+    SDL_FreeCursor(d->resizeCursor);
     clearItems_SidebarWidget_(d);
     deinit_Array(&d->items);
 }
@@ -206,6 +223,37 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
     if (isResize_UserEvent(ev)) {
         updateVisible_SidebarWidget_(d);
     }
+    else if (isCommand_Widget(w, ev, "mouse.clicked")) {
+        const char *cmd = command_UserEvent(ev);
+        if (argLabel_Command(cmd, "button") == SDL_BUTTON_LEFT) {
+            if (arg_Command(cmd)) {
+                setFlags_Widget(d->resizer, pressed_WidgetFlag, iTrue);
+                setBackgroundColor_Widget(d->resizer, orange_ColorId);
+                setMouseGrab_Widget(d->resizer);
+                refresh_Widget(d->resizer);
+            }
+            else {
+                setFlags_Widget(d->resizer, pressed_WidgetFlag, iFalse);
+                setBackgroundColor_Widget(d->resizer, red_ColorId);
+                setMouseGrab_Widget(NULL);
+                refresh_Widget(d->resizer);
+            }
+        }
+        return iTrue;
+    }
+    else if (isCommand_Widget(w, ev, "mouse.moved")) {
+        const char *cmd = command_UserEvent(ev);
+        if (isResizing_SidebarWidget_(d)) {
+            const iInt2 local = localCoord_Widget(w, coord_Command(cmd));
+            w->rect.size.x = local.x + d->resizer->rect.size.x / 2;
+            arrange_Widget(findWidget_App("doctabs"));
+            if (!isRefreshPending_App()) {
+                updateSize_DocumentWidget(document_App());
+                refresh_Widget(w);
+            }
+        }
+        return iTrue;
+    }
     else if (isCommand_Widget(w, ev, "scroll.moved")) {
         d->scrollY = arg_Command(command_UserEvent(ev));
         d->hoverItem = iInvalidPos;
@@ -226,8 +274,14 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
     if (ev->type == SDL_MOUSEMOTION) {
         const iInt2 mouse = init_I2(ev->motion.x, ev->motion.y);
         size_t hover = iInvalidPos;
-        if (contains_Widget(w, mouse)) {
-            hover = itemIndex_SidebarWidget_(d, mouse);
+        if (contains_Widget(d->resizer, mouse)) {
+            SDL_SetCursor(d->resizeCursor);
+        }
+        else {
+            SDL_SetCursor(NULL);
+            if (contains_Widget(w, mouse)) {
+                hover = itemIndex_SidebarWidget_(d, mouse);
+            }
         }
         if (hover != d->hoverItem) {
             d->hoverItem = hover;
