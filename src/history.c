@@ -55,39 +55,38 @@ iHistory *copy_History(const iHistory *d) {
     return copy;
 }
 
-void save_History(const iHistory *d, const char *dirPath) {
-    iString *line = new_String();
-    iFile *f = newCStr_File(concatPath_CStr(dirPath, "recent.txt"));
-    if (open_File(f, writeOnly_FileMode | text_FileMode)) {
-        iConstForEach(Array, i, &d->recent) {
-            const iRecentUrl *item = i.value;
-            format_String(line, "%04x %s\n", item->scrollY, cstr_String(&item->url));
-            writeData_File(f, cstr_String(line), size_String(line));
+void serialize_History(const iHistory *d, iStream *outs) {
+    writeU16_Stream(outs, d->recentPos);
+    writeU16_Stream(outs, size_Array(&d->recent));
+    iConstForEach(Array, i, &d->recent) {
+        const iRecentUrl *item = i.value;
+        serialize_String(&item->url, outs);
+        write32_Stream(outs, item->scrollY);
+        if (item->cachedResponse) {
+            write8_Stream(outs, 1);
+            serialize_GmResponse(item->cachedResponse, outs);
+        }
+        else {
+            write8_Stream(outs, 0);
         }
     }
-    iRelease(f);
-    delete_String(line);
 }
 
-void load_History(iHistory *d, const char *dirPath) {
-    iFile *f = newCStr_File(concatPath_CStr(dirPath, "recent.txt"));
-    if (open_File(f, readOnly_FileMode | text_FileMode)) {
-        const iRangecc src  = range_Block(collect_Block(readAll_File(f)));
-        iRangecc       line = iNullRange;
-        while (nextSplit_Rangecc(&src, "\n", &line)) {
-            iRangecc nonwhite = line;
-            trim_Rangecc(&nonwhite);
-            if (isEmpty_Range(&nonwhite)) continue;
-            int scroll = 0;
-            sscanf(nonwhite.start, "%04x", &scroll);
-            iRecentUrl item;
-            init_RecentUrl(&item);
-            item.scrollY = scroll;
-            initRange_String(&item.url, (iRangecc){ nonwhite.start + 5, nonwhite.end });
-            pushBack_Array(&d->recent, &item);
+void deserialize_History(iHistory *d, iStream *ins) {
+    clear_History(d);
+    d->recentPos = readU16_Stream(ins);
+    size_t count = readU16_Stream(ins);
+    while (count--) {
+        iRecentUrl item;
+        init_RecentUrl(&item);
+        deserialize_String(&item.url, ins);
+        item.scrollY = read32_Stream(ins);
+        if (read8_Stream(ins)) {
+            item.cachedResponse = new_GmResponse();
+            deserialize_GmResponse(item.cachedResponse, ins);
         }
+        pushBack_Array(&d->recent, &item);
     }
-    iRelease(f);
 }
 
 void clear_History(iHistory *d) {
@@ -121,6 +120,15 @@ const iString *url_History(const iHistory *d, size_t pos) {
         return &item->url;
     }
     return collectNew_String();
+}
+
+iRecentUrl *findUrl_History(iHistory *d, const iString *url) {
+    iReverseForEach(Array, i, &d->recent) {
+        if (cmpStringCase_String(url, &((iRecentUrl *) i.value)->url) == 0) {
+            return i.value;
+        }
+    }
+    return NULL;
 }
 
 void replace_History(iHistory *d, const iString *url) {

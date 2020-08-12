@@ -104,7 +104,7 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
                 setFlags_Widget(
                     child, tight_WidgetFlag, isNarrow || !cmp_String(id_Widget(child), "lock"));
                 if (isInstance_Object(i.object, &Class_LabelWidget)) {
-                    iLabelWidget *label = (iLabelWidget *) i.object;
+                    iLabelWidget *label = i.object;
                     updateSize_LabelWidget(label);
                 }
             }

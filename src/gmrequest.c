@@ -51,6 +51,24 @@ iGmResponse *copy_GmResponse(const iGmResponse *d) {
     return copied;
 }
 
+void serialize_GmResponse(const iGmResponse *d, iStream *outs) {
+    write32_Stream(outs, d->statusCode);
+    serialize_String(&d->meta, outs);
+    serialize_Block(&d->body, outs);
+    write32_Stream(outs, d->certFlags);
+    serialize_Date(&d->certValidUntil, outs);
+    serialize_String(&d->certSubject, outs);
+}
+
+void deserialize_GmResponse(iGmResponse *d, iStream *ins) {
+    d->statusCode = read32_Stream(ins);
+    deserialize_String(&d->meta, ins);
+    deserialize_Block(&d->body, ins);
+    d->certFlags = read32_Stream(ins);
+    deserialize_Date(&d->certValidUntil, ins);
+    deserialize_String(&d->certSubject, ins);
+}
+
 /*----------------------------------------------------------------------------------------------*/
 
 static const int bodyTimeout_GmRequest_ = 3000; /* ms */

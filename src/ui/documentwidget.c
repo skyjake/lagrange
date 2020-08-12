@@ -21,22 +21,14 @@
 #include <SDL_clipboard.h>
 #include <SDL_timer.h>
 
-enum iDocumentState {
-    blank_DocumentState,
-    fetching_DocumentState,
-    receivedPartialResponse_DocumentState,
-    layout_DocumentState,
-    ready_DocumentState,
-};
-
 iDeclareClass(MediaRequest)
 
 struct Impl_MediaRequest {
-    iObject object;
+    iObject          object;
     iDocumentWidget *doc;
-    iGmLinkId linkId;
-    iGmRequest *req;
-    iAtomicInt isUpdated;
+    iGmLinkId        linkId;
+    iGmRequest *     req;
+    iAtomicInt       isUpdated;
 };
 
 static void updated_MediaRequest_(iAnyObject *obj) {
@@ -74,30 +66,75 @@ iDefineObjectConstructionArgs(MediaRequest,
                               doc, linkId, url)
 iDefineClass(MediaRequest)
 
+/*----------------------------------------------------------------------------------------------*/
+
+iDeclareType(Model)
+iDeclareTypeConstruction(Model)
+iDeclareTypeSerialization(Model)
+
+struct Impl_Model {
+    /* state that persists across sessions */
+    iHistory *history;
+    iString * url;
+    int       textSizePercent;
+};
+
+void init_Model(iModel *d) {
+    d->history         = new_History();
+    d->url             = new_String();
+    d->textSizePercent = 100;
+}
+
+void deinit_Model(iModel *d) {
+    delete_String(d->url);
+    delete_History(d->history);
+}
+
+void serialize_Model(const iModel *d, iStream *outs) {
+    serialize_String(d->url, outs);
+    write16_Stream(outs, d->textSizePercent);
+    serialize_History(d->history, outs);
+}
+
+void deserialize_Model(iModel *d, iStream *ins) {
+    deserialize_String(d->url, ins);
+    d->textSizePercent = read16_Stream(ins);
+    deserialize_History(d->history, ins);
+}
+
+iDefineTypeConstruction(Model)
+
+/*----------------------------------------------------------------------------------------------*/
+
+enum iRequestState {
+    blank_RequestState,
+    fetching_RequestState,
+    receivedPartialResponse_RequestState,
+    ready_RequestState,
+};
+
 struct Impl_DocumentWidget {
     iWidget widget;
-    iHistory *history;
-    enum iDocumentState state;
-    iString *url;
+    enum iRequestState state;
+    iModel mod;
     iString *titleUser;
     iGmRequest *request;
     iAtomicInt isRequestUpdated; /* request has new content, need to parse it */
     iObjectList *media;
-    int textSizePercent;
     iGmDocument *doc;
-    int certFlags;
-    iDate certExpiry;
-    iString *certSubject;
+    int       certFlags;
+    iDate     certExpiry;
+    iString * certSubject;
     iBool selecting;
     iRangecc selectMark;
     iRangecc foundMark;
     int pageMargin;
-    int scrollY;
     iPtrArray visibleLinks;
     const iGmRun *hoverLink;
     iBool noHoverWhileScrolling;
     iClick click;
     int initialScrollY;
+    int scrollY;
     iScrollWidget *scroll;
     iWidget *menu;
     SDL_Cursor *arrowCursor; /* TODO: cursors belong in Window */
@@ -112,23 +149,21 @@ void init_DocumentWidget(iDocumentWidget *d) {
     init_Widget(w);
     setId_Widget(w, "document000");
     setFlags_Widget(w, hover_WidgetFlag, iTrue);
+    init_Model(&d->mod);
     iZap(d->certExpiry);
-    d->history          = new_History();
-    d->state            = blank_DocumentState;
-    d->url              = new_String();
+    d->certFlags        = 0;
+    d->certSubject      = new_String();
+    d->state            = blank_RequestState;
     d->titleUser        = new_String();
     d->request          = NULL;
     d->isRequestUpdated = iFalse;
     d->media            = new_ObjectList();
-    d->textSizePercent  = 100;
     d->doc              = new_GmDocument();
-    d->certFlags        = 0;
-    d->certSubject      = new_String();
+    d->scrollY          = 0;
     d->selecting        = iFalse;
     d->selectMark       = iNullRange;
     d->foundMark        = iNullRange;
     d->pageMargin       = 5;
-    d->scrollY          = 0;
     d->hoverLink        = NULL;
     d->noHoverWhileScrolling = iFalse;
     d->arrowCursor      = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_ARROW);
@@ -156,20 +191,19 @@ void deinit_DocumentWidget(iDocumentWidget *d) {
     iRelease(d->request);
     iRelease(d->doc);
     deinit_PtrArray(&d->visibleLinks);
-    delete_String(d->url);
     delete_String(d->certSubject);
     delete_String(d->titleUser);
     SDL_FreeCursor(d->arrowCursor);
     SDL_FreeCursor(d->beamCursor);
     SDL_FreeCursor(d->handCursor);
-    delete_History(d->history);
+    deinit_Model(&d->mod);
 }
 
 static int documentWidth_DocumentWidget_(const iDocumentWidget *d) {
     const iWidget *w = constAs_Widget(d);
     const iRect bounds = bounds_Widget(w);
     return iMini(bounds.size.x - gap_UI * d->pageMargin * 2,
-                 fontSize_UI * 38 * d->textSizePercent / 100); /* TODO: Add user preference .*/
+                 fontSize_UI * 38 * d->mod.textSizePercent / 100); /* TODO: Add user preference .*/
 }
 
 static iRect documentBounds_DocumentWidget_(const iDocumentWidget *d) {
@@ -240,7 +274,7 @@ static void updateHover_DocumentWidget_(iDocumentWidget *d, iInt2 mouse) {
     d->hoverLink               = NULL;
     const iInt2 hoverPos = addY_I2(sub_I2(mouse, topLeft_Rect(docBounds)), d->scrollY);
     if (!d->noHoverWhileScrolling &&
-        (d->state == ready_DocumentState || d->state == receivedPartialResponse_DocumentState)) {
+        (d->state == ready_RequestState || d->state == receivedPartialResponse_RequestState)) {
         iConstForEach(PtrArray, i, &d->visibleLinks) {
             const iGmRun *run = i.ptr;
             if (contains_Rect(run->bounds, hoverPos)) {
@@ -273,7 +307,7 @@ static void updateVisible_DocumentWidget_(iDocumentWidget *d) {
     render_GmDocument(d->doc, visRange, addVisibleLink_DocumentWidget_, d);
     updateHover_DocumentWidget_(d, mouseCoord_Window(get_Window()));
     /* Remember scroll positions of recently visited pages. */ {
-        iRecentUrl *recent = mostRecentUrl_History(d->history);
+        iRecentUrl *recent = mostRecentUrl_History(d->mod.history);
         if (recent) {
             recent->scrollY = d->scrollY / gap_UI;
         }
@@ -295,7 +329,7 @@ static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
     }
     else {
         iUrl parts;
-        init_Url(&parts, d->url);
+        init_Url(&parts, d->mod.url);
         if (!isEmpty_Range(&parts.host)) {
             pushBackRange_StringArray(title, parts.host);
         }
@@ -344,7 +378,7 @@ static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
 }
 
 static void setSource_DocumentWidget_(iDocumentWidget *d, const iString *source) {
-    setUrl_GmDocument(d->doc, d->url);
+    setUrl_GmDocument(d->doc, d->mod.url);
     setSource_GmDocument(d->doc, source, documentWidth_DocumentWidget_(d));
     d->foundMark  = iNullRange;
     d->selectMark = iNullRange;
@@ -376,13 +410,13 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
     }
     setSource_DocumentWidget_(d, src);
     d->scrollY = 0;
-    d->state = ready_DocumentState;
+    d->state = ready_RequestState;
 }
 
 static void updateTheme_DocumentWidget_(iDocumentWidget *d) {
     if (isEmpty_String(d->titleUser)) {
         setThemeSeed_GmDocument(d->doc,
-                                collect_Block(newRange_Block(urlHost_String(d->url))));
+                                collect_Block(newRange_Block(urlHost_String(d->mod.url))));
     }
     else {
         setThemeSeed_GmDocument(d->doc, &d->titleUser->chars);
@@ -390,7 +424,7 @@ static void updateTheme_DocumentWidget_(iDocumentWidget *d) {
 }
 
 static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse *response) {
-    if (d->state == ready_DocumentState) {
+    if (d->state == ready_RequestState) {
         return;
     }
     /* TODO: Do this in the background. However, that requires a text metrics calculator
@@ -422,13 +456,13 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse
                         /* Make a simple document with an image. */
                         const char *imageTitle = "Image";
                         iUrl parts;
-                        init_Url(&parts, d->url);
+                        init_Url(&parts, d->mod.url);
                         if (!isEmpty_Range(&parts.path)) {
                             imageTitle =
                                 baseName_Path(collect_String(newRange_String(parts.path))).start;
                         }
                         format_String(
-                            &str, "=> %s %s\n", cstr_String(d->url), imageTitle);
+                            &str, "=> %s %s\n", cstr_String(d->mod.url), imageTitle);
                         setImage_GmDocument(d->doc, 1, mimeStr, &response->body);
                     }
                     else {
@@ -467,13 +501,13 @@ static void fetch_DocumentWidget_(iDocumentWidget *d) {
         iRelease(d->request);
         d->request = NULL;
     }
-    postCommandf_App("document.request.started doc:%p url:%s", d, cstr_String(d->url));
+    postCommandf_App("document.request.started doc:%p url:%s", d, cstr_String(d->mod.url));
     clear_ObjectList(d->media);
     d->certFlags = 0;
-    d->state = fetching_DocumentState;
+    d->state = fetching_RequestState;
     set_Atomic(&d->isRequestUpdated, iFalse);
     d->request = new_GmRequest(certs_App());
-    setUrl_GmRequest(d->request, d->url);
+    setUrl_GmRequest(d->request, d->mod.url);
     iConnect(GmRequest, d->request, updated, d, requestUpdated_DocumentWidget_);
     iConnect(GmRequest, d->request, timeout, d, requestTimedOut_DocumentWidget_);
     iConnect(GmRequest, d->request, finished, d, requestFinished_DocumentWidget_);
@@ -507,44 +541,58 @@ static void updateTrust_DocumentWidget_(iDocumentWidget *d, const iGmResponse *r
 }
 
 iHistory *history_DocumentWidget(iDocumentWidget *d) {
-    return d->history;
+    return d->mod.history;
 }
 
 const iString *url_DocumentWidget(const iDocumentWidget *d) {
-    return d->url;
+    return d->mod.url;
 }
 
 const iGmDocument *document_DocumentWidget(const iDocumentWidget *d) {
     return d->doc;
 }
 
+static iBool updateFromHistory_DocumentWidget_(iDocumentWidget *d) {
+    const iRecentUrl *recent = findUrl_History(d->mod.history, d->mod.url);
+    if (recent && recent->cachedResponse) {
+        const iGmResponse *resp = recent->cachedResponse;
+        d->state = fetching_RequestState;
+        /* Use the cached response data. */
+        d->scrollY = recent->scrollY;
+        updateTrust_DocumentWidget_(d, resp);
+        updateDocument_DocumentWidget_(d, resp);
+        d->state = ready_RequestState;
+        postCommandf_App("document.changed doc:%p url:%s", d, cstr_String(d->mod.url));
+        return iTrue;
+    }
+    return iFalse;
+}
+
+void serializeState_DocumentWidget(const iDocumentWidget *d, iStream *outs) {
+    serialize_Model(&d->mod, outs);
+}
+
+void deserializeState_DocumentWidget(iDocumentWidget *d, iStream *ins) {
+    deserialize_Model(&d->mod, ins);
+    updateFromHistory_DocumentWidget_(d);
+}
+
 void setUrlFromCache_DocumentWidget(iDocumentWidget *d, const iString *url, iBool isFromCache) {
-    if (cmpStringSc_String(d->url, url, &iCaseInsensitive)) {
-        set_String(d->url, url);
+    if (cmpStringSc_String(d->mod.url, url, &iCaseInsensitive)) {
+        set_String(d->mod.url, url);
         /* See if there a username in the URL. */ {
             clear_String(d->titleUser);
             iRegExp *userPats[2] = { new_RegExp("~([^/?]+)", 0),
                                      new_RegExp("/users/([^/?]+)", caseInsensitive_RegExpOption) };
             iRegExpMatch m;
             iForIndices(i, userPats) {
-                if (matchString_RegExp(userPats[i], d->url, &m)) {
+                if (matchString_RegExp(userPats[i], d->mod.url, &m)) {
                     setRange_String(d->titleUser, capturedRange_RegExpMatch(&m, 1));
                 }
                 iRelease(userPats[i]);
             }
         }
-        const iRecentUrl *recent = mostRecentUrl_History(d->history);
-        if (isFromCache && recent && recent->cachedResponse) {
-            const iGmResponse *resp = recent->cachedResponse;
-            d->state = fetching_DocumentState;
-            /* Use the cached response data. */
-            d->scrollY = d->initialScrollY;
-            updateTrust_DocumentWidget_(d, resp);
-            updateDocument_DocumentWidget_(d, resp);
-            d->state = ready_DocumentState;
-            postCommandf_App("document.changed url:%s", cstr_String(d->url));
-        }
-        else {
+        if (!isFromCache || !updateFromHistory_DocumentWidget_(d)) {
             fetch_DocumentWidget_(d);
         }
     }
@@ -552,11 +600,11 @@ void setUrlFromCache_DocumentWidget(iDocumentWidget *d, const iString *url, iBoo
 
 iDocumentWidget *duplicate_DocumentWidget(const iDocumentWidget *orig) {
     iDocumentWidget *d = new_DocumentWidget();
-    delete_History(d->history);
-    d->textSizePercent = orig->textSizePercent;
-    d->initialScrollY  = orig->scrollY;
-    d->history         = copy_History(orig->history);
-    setUrlFromCache_DocumentWidget(d, orig->url, iTrue);
+    delete_History(d->mod.history);
+    d->mod.textSizePercent = orig->mod.textSizePercent;
+    d->initialScrollY      = orig->scrollY;
+    d->mod.history         = copy_History(orig->mod.history);
+    setUrlFromCache_DocumentWidget(d, orig->mod.url, iTrue);
     return d;
 }
 
@@ -569,7 +617,7 @@ void setInitialScroll_DocumentWidget (iDocumentWidget *d, int scrollY) {
 }
 
 iBool isRequestOngoing_DocumentWidget(const iDocumentWidget *d) {
-    return d->state == fetching_DocumentState || d->state == receivedPartialResponse_DocumentState;
+    return d->state == fetching_RequestState || d->state == receivedPartialResponse_RequestState;
 }
 
 static void scroll_DocumentWidget_(iDocumentWidget *d, int offset) {
@@ -602,13 +650,13 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
     if (statusCode == none_GmStatusCode) {
         return;
     }
-    if (d->state == fetching_DocumentState) {
-        d->state = receivedPartialResponse_DocumentState;
+    if (d->state == fetching_RequestState) {
+        d->state = receivedPartialResponse_RequestState;
         updateTrust_DocumentWidget_(d, response_GmRequest(d->request));
         switch (category_GmStatusCode(statusCode)) {
             case categoryInput_GmStatusCode: {
                 iUrl parts;
-                init_Url(&parts, d->url);
+                init_Url(&parts, d->mod.url);
                 printf("%s\n", cstr_String(meta_GmRequest(d->request)));
                 iWidget *dlg = makeValueInput_Widget(
                     as_Widget(d),
@@ -636,7 +684,7 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                     /* TODO: only accept redirects that use gemini protocol */
                     postCommandf_App(
                         "open redirect:1 url:%s",
-                        cstr_String(absoluteUrl_String(d->url, meta_GmRequest(d->request))));
+                        cstr_String(absoluteUrl_String(d->mod.url, meta_GmRequest(d->request))));
                     iReleasePtr(&d->request);
                 }
                 break;
@@ -655,7 +703,7 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                 break;
         }
     }
-    else if (d->state == receivedPartialResponse_DocumentState) {
+    else if (d->state == receivedPartialResponse_RequestState) {
         switch (category_GmStatusCode(statusCode)) {
             case categorySuccess_GmStatusCode:
                 /* More content available. */
@@ -722,7 +770,7 @@ static iBool requestMedia_DocumentWidget_(iDocumentWidget *d, iGmLinkId linkId) 
         pushBack_ObjectList(
             d->media,
             iClob(new_MediaRequest(
-                d, linkId, absoluteUrl_String(d->url, linkUrl_GmDocument(d->doc, linkId)))));
+                d, linkId, absoluteUrl_String(d->mod.url, linkUrl_GmDocument(d->doc, linkId)))));
         return iTrue;
     }
     return iFalse;
@@ -764,16 +812,16 @@ static iBool handleMediaCommand_DocumentWidget_(iDocumentWidget *d, const char *
 
 static void changeTextSize_DocumentWidget_(iDocumentWidget *d, int delta) {
     if (delta == 0) {
-        d->textSizePercent = 100;
+        d->mod.textSizePercent = 100;
     }
     else {
-        if (d->textSizePercent < 100 || (delta < 0 && d->textSizePercent == 100)) {
+        if (d->mod.textSizePercent < 100 || (delta < 0 && d->mod.textSizePercent == 100)) {
             delta /= 2;
         }
-        d->textSizePercent += delta;
-        d->textSizePercent = iClamp(d->textSizePercent, 50, 200);
+        d->mod.textSizePercent += delta;
+        d->mod.textSizePercent = iClamp(d->mod.textSizePercent, 50, 200);
     }
-    postCommandf_App("font.setfactor arg:%d", d->textSizePercent);
+    postCommandf_App("font.setfactor arg:%d", d->mod.textSizePercent);
 }
 
 static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
@@ -848,17 +896,17 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     else if (equalWidget_Command(cmd, w, "document.copylink")) {
         if (d->hoverLink) {
             SDL_SetClipboardText(cstr_String(
-                absoluteUrl_String(d->url, linkUrl_GmDocument(d->doc, d->hoverLink->linkId))));
+                absoluteUrl_String(d->mod.url, linkUrl_GmDocument(d->doc, d->hoverLink->linkId))));
         }
         else {
-            SDL_SetClipboardText(cstr_String(d->url));
+            SDL_SetClipboardText(cstr_String(d->mod.url));
         }
         return iTrue;
     }
     else if (equal_Command(cmd, "document.input.submit")) {
         iString *value = collect_String(suffix_Command(cmd, "value"));
         urlEncode_String(value);
-        iString *url = collect_String(copy_String(d->url));
+        iString *url = collect_String(copy_String(d->mod.url));
         const size_t qPos = indexOfCStr_String(url, "?");
         if (qPos != iInvalidPos) {
             remove_Block(&url->chars, qPos, iInvalidSize);
@@ -881,10 +929,10 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     else if (equalWidget_Command(cmd, w, "document.request.finished") &&
              pointerLabel_Command(cmd, "request") == d->request) {
         checkResponse_DocumentWidget_(d);
-        d->state = ready_DocumentState;
-        setCachedResponse_History(d->history, response_GmRequest(d->request));
+        d->state = ready_RequestState;
+        setCachedResponse_History(d->mod.history, response_GmRequest(d->request));
         iReleasePtr(&d->request);
-        postCommandf_App("document.changed url:%s", cstr_String(d->url));
+        postCommandf_App("document.changed url:%s", cstr_String(d->mod.url));
         return iFalse;
     }
     else if (equal_Command(cmd, "document.request.timeout") &&
@@ -898,9 +946,9 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     else if (equal_Command(cmd, "document.stop")) {
         if (d->request) {
-            postCommandf_App("document.request.cancelled doc:%p url:%s", d, cstr_String(d->url));
+            postCommandf_App("document.request.cancelled doc:%p url:%s", d, cstr_String(d->mod.url));
             iReleasePtr(&d->request);
-            d->state = ready_DocumentState;
+            d->state = ready_RequestState;
             return iTrue;
         }
     }
@@ -912,11 +960,11 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equal_Command(cmd, "navigate.back") && document_App() == d) {
-        goBack_History(d->history);
+        goBack_History(d->mod.history);
         return iTrue;
     }
     else if (equal_Command(cmd, "navigate.forward") && document_App() == d) {
-        goForward_History(d->history);
+        goForward_History(d->mod.history);
         return iTrue;
     }
     else if (equalWidget_Command(cmd, w, "scroll.moved")) {
@@ -1135,7 +1183,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                         postCommandf_App("open newtab:%d url:%s",
                                          (SDL_GetModState() & KMOD_PRIMARY) != 0,
                                          cstr_String(absoluteUrl_String(
-                                             d->url, linkUrl_GmDocument(d->doc, linkId))));
+                                             d->mod.url, linkUrl_GmDocument(d->doc, linkId))));
                     }
                 }
                 if (d->selectMark.start) {

@@ -32,7 +32,7 @@ iGmCerts *          certs_App           (void);
 iVisited *          visited_App         (void);
 iDocumentWidget *   document_App        (void);
 iDocumentWidget *   document_Command    (const char *cmd);
-
+iDocumentWidget *   newTab_App          (const iDocumentWidget *duplicateOf);
 
 iAny *      findWidget_App      (const char *id);
 void        addTicker_App       (void (*ticker)(iAny *), iAny *context);

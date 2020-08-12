@@ -48,6 +48,7 @@ static const char *dataDir_App_ = "~/AppData/Roaming/fi.skyjake.Lagrange";
 static const char *dataDir_App_ = "~/.config/lagrange";
 #endif
 static const char *prefsFileName_App_   = "prefs.cfg";
+static const char *stateFileName_App_   = "state.bin";
 
 struct Impl_App {
     iCommandLine args;
@@ -143,6 +144,67 @@ static void savePrefs_App_(const iApp *d) {
     delete_String(cfg);
 }
 
+static const char *magicState_App_       = "lgL1";
+static const char *magicTabDocument_App_ = "tabd";
+
+static iBool loadState_App_(iApp *d) {
+    iFile *f = iClob(newCStr_File(concatPath_CStr(dataDir_App_, stateFileName_App_)));
+    if (open_File(f, readOnly_FileMode)) {
+        char magic[4];
+        readData_File(f, 4, magic);
+        if (memcmp(magic, magicState_App_, 4)) {
+            printf("%s: format not recognized\n", cstr_String(path_File(f)));
+            return iFalse;
+        }
+        const int version = read32_File(f);
+        /* Check supported versions. */
+        if (version != 0) {
+            printf("%s: unsupported version\n", cstr_String(path_File(f)));
+            return iFalse;
+        }
+        setVersion_Stream(stream_File(f), version);
+        iDocumentWidget *doc = document_App();
+        iDocumentWidget *current = NULL;
+        while (!atEnd_File(f)) {
+            readData_File(f, 4, magic);
+            if (!memcmp(magic, magicTabDocument_App_, 4)) {
+                if (!doc) {
+                    doc = newTab_App(NULL);
+                }
+                if (read8_File(f)) {
+                    current = doc;
+                }
+                deserializeState_DocumentWidget(doc, stream_File(f));
+                doc = NULL;
+            }
+            else {
+                printf("%s: unrecognized data\n", cstr_String(path_File(f)));
+                return iFalse;
+            }
+        }
+        postCommandf_App("tabs.switch page:%p", current);
+        return iTrue;
+    }
+    return iFalse;
+}
+
+static void saveState_App_(const iApp *d) {
+    iFile *f = newCStr_File(concatPath_CStr(dataDir_App_, stateFileName_App_));
+    if (open_File(f, writeOnly_FileMode)) {
+        writeData_File(f, magicState_App_, 4);
+        write32_File(f, 0); /* version */
+        iWidget *tabs = findChild_Widget(d->window->root, "doctabs");
+        iConstForEach(ObjectList, i, children_Widget(findChild_Widget(tabs, "tabs.pages"))) {
+            if (isInstance_Object(i.object, &Class_DocumentWidget)) {
+                writeData_File(f, magicTabDocument_App_, 4);
+                write8_File(f, document_App() == i.object ? 1 : 0);
+                serializeState_DocumentWidget(i.object, stream_File(f));
+            }
+        }
+    }
+    iRelease(f);
+}
+
 static void init_App_(iApp *d, int argc, char **argv) {
     init_CommandLine(&d->args, argc, argv);
     init_SortedArray(&d->tickers, sizeof(iTicker), cmp_Ticker_);
@@ -166,12 +228,14 @@ static void init_App_(iApp *d, int argc, char **argv) {
     }
 #endif
     d->window = new_Window();
-    /* Widget state init. */ {
+    /* Widget state init. */
+    if (!loadState_App_(d)) {
         postCommand_App("navigate.home");
     }
 }
 
 static void deinit_App(iApp *d) {
+    saveState_App_(d);
     savePrefs_App_(d);
     save_Visited(d->visited, dataDir_App_);
     delete_Visited(d->visited);

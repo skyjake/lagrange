@@ -25,6 +25,7 @@ struct Impl_GmResponse {
 };
 
 iDeclareTypeConstruction(GmResponse)
+iDeclareTypeSerialization(GmResponse)
 
 iGmResponse *       copy_GmResponse             (const iGmResponse *);
 

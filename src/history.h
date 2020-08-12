@@ -19,11 +19,11 @@ struct Impl_RecentUrl {
 
 iDeclareType(History)
 iDeclareTypeConstruction(History)
+iDeclareTypeSerialization(History)
 
 iHistory *  copy_History                (const iHistory *);
 
 void        clear_History               (iHistory *);
-void        load_History                (iHistory *, const char *dirPath);
 void        add_History                 (iHistory *, const iString *url);
 void        replace_History             (iHistory *, const iString *url);
 void        setCachedResponse_History   (iHistory *, const iGmResponse *response);
@@ -31,8 +31,8 @@ iBool       goBack_History              (iHistory *);
 iBool       goForward_History           (iHistory *);
 iRecentUrl *recentUrl_History           (iHistory *, size_t pos);
 iRecentUrl *mostRecentUrl_History       (iHistory *);
+iRecentUrl *findUrl_History             (iHistory *, const iString *url);
 
-void        save_History                (const iHistory *, const char *dirPath);
 const iString *
             url_History                 (const iHistory *, size_t pos);
 const iRecentUrl *

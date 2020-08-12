@@ -114,6 +114,11 @@ iAny *  findFocusable_Widget(const iWidget *startFrom, enum iWidgetFocusDir focu
 size_t  childCount_Widget   (const iWidget *);
 void    draw_Widget         (const iWidget *);
 
+iLocalDef iObjectList *children_Widget(iAnyObject *d) {
+    iAssert(isInstance_Object(d, &Class_Widget));
+    return ((iWidget *) d)->children;
+}
+
 iBool   isVisible_Widget    (const iWidget *);
 iBool   isDisabled_Widget   (const iWidget *);
 iBool   isFocused_Widget    (const iWidget *);
