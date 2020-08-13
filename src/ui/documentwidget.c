@@ -887,17 +887,22 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                                                           : "Not trusted"));
         return iTrue;
     }
-    else if (equal_Command(cmd, "copy")) {
+    else if (equal_Command(cmd, "copy") && document_App() == d) {
+        iString *copied;
         if (d->selectMark.start) {
             iRangecc mark = d->selectMark;
             if (mark.start > mark.end) {
                 iSwap(const char *, mark.start, mark.end);
             }
-            iString *copied = newRange_String(mark);
-            SDL_SetClipboardText(cstr_String(copied));
-            delete_String(copied);
-            return iTrue;
+            copied = newRange_String(mark);
         }
+        else {
+            /* Full document. */
+            copied = copy_String(source_GmDocument(d->doc));
+        }
+        SDL_SetClipboardText(cstr_String(copied));
+        delete_String(copied);
+        return iTrue;
     }
     else if (equalWidget_Command(cmd, w, "document.copylink")) {
         if (d->hoverLink) {

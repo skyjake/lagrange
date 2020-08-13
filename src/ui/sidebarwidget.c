@@ -46,6 +46,7 @@ struct Impl_SidebarWidget {
     enum iSidebarMode mode;
     iScrollWidget *scroll;
     int scrollY;
+    int width;
     iLabelWidget *modeButtons[max_SidebarMode];
     int itemHeight;
     int maxButtonLabelWidth;
@@ -131,6 +132,14 @@ void setMode_SidebarWidget(iSidebarWidget *d, enum iSidebarMode mode) {
     d->itemHeight = heights[mode] * lineHeight_Text(default_FontId);
 }
 
+enum iSidebarMode mode_SidebarWidget(const iSidebarWidget *d) {
+    return d->mode;
+}
+
+int width_SidebarWidget(const iSidebarWidget *d) {
+    return d->width;
+}
+
 static const char *normalModeLabels_[max_SidebarMode] = {
     "\U0001f5b9 Outline",
     "\U0001f588 Bookmarks",
@@ -148,11 +157,15 @@ static const char *tightModeLabels_[max_SidebarMode] = {
 void init_SidebarWidget(iSidebarWidget *d) {
     iWidget *w = as_Widget(d);
     init_Widget(w);
+    setId_Widget(w, "sidebar");
     setBackgroundColor_Widget(w, none_ColorId);
-    setFlags_Widget(w, hover_WidgetFlag | arrangeHorizontal_WidgetFlag | resizeWidthOfChildren_WidgetFlag, iTrue);
+    setFlags_Widget(w,
+                    hidden_WidgetFlag | hover_WidgetFlag | arrangeHorizontal_WidgetFlag |
+                        resizeWidthOfChildren_WidgetFlag | collapse_WidgetFlag,
+                    iTrue);
     d->scrollY = 0;
-    d->mode = -1;
-    w->rect.size.x = 75 * gap_UI;
+    d->mode    = -1;
+    d->width   = 75 * gap_UI;
     init_Array(&d->items, sizeof(iSidebarItem));
     d->hoverItem = iInvalidPos;
     init_Click(&d->click, d, SDL_BUTTON_LEFT);
@@ -165,7 +178,8 @@ void init_SidebarWidget(iSidebarWidget *d) {
                 new_LabelWidget(normalModeLabels_[i], 0, 0, format_CStr("sidebar.mode arg:%d", i))),
             frameless_WidgetFlag | expand_WidgetFlag);
         d->maxButtonLabelWidth =
-            iMaxi(d->maxButtonLabelWidth, 3 * gap_UI + measure_Text(default_FontId, normalModeLabels_[i]).x);
+            iMaxi(d->maxButtonLabelWidth,
+                  3 * gap_UI + measure_Text(default_FontId, normalModeLabels_[i]).x);
     }
     addChild_Widget(w, iClob(d->scroll = new_ScrollWidget()));
     setThumb_ScrollWidget(d->scroll, 0, 0);
@@ -245,6 +259,21 @@ static void checkModeButtonLayout_SidebarWidget_(iSidebarWidget *d) {
     }
 }
 
+void setWidth_SidebarWidget(iSidebarWidget *d, int width) {
+    iWidget *w = as_Widget(d);
+    width = iMax(30 * gap_UI, width);
+    d->width = width;
+    if (isVisible_Widget(w)) {
+        w->rect.size.x = width;
+    }
+    arrange_Widget(findWidget_App("doctabs"));
+    checkModeButtonLayout_SidebarWidget_(d);
+    if (!isRefreshPending_App()) {
+        updateSize_DocumentWidget(document_App());
+        refresh_Widget(w);
+    }
+}
+
 static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
     /* Handle commands. */
@@ -252,49 +281,55 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         updateVisible_SidebarWidget_(d);
         checkModeButtonLayout_SidebarWidget_(d);
     }
-    else if (isCommand_Widget(w, ev, "mouse.clicked")) {
-        const char *cmd = command_UserEvent(ev);
-        if (argLabel_Command(cmd, "button") == SDL_BUTTON_LEFT) {
-            if (arg_Command(cmd)) {
-                setFlags_Widget(d->resizer, pressed_WidgetFlag, iTrue);
-                setBackgroundColor_Widget(d->resizer, gray75_ColorId);
-                setMouseGrab_Widget(d->resizer);
-                refresh_Widget(d->resizer);
-            }
-            else {
-                setFlags_Widget(d->resizer, pressed_WidgetFlag, iFalse);
-                setBackgroundColor_Widget(d->resizer, none_ColorId);
-                setMouseGrab_Widget(NULL);
-                refresh_Widget(d->resizer);
-            }
-        }
-        return iTrue;
-    }
-    else if (isCommand_Widget(w, ev, "mouse.moved")) {
-        const char *cmd = command_UserEvent(ev);
-        if (isResizing_SidebarWidget_(d)) {
-            const iInt2 local = localCoord_Widget(w, coord_Command(cmd));
-            w->rect.size.x = iMax(30 * gap_UI, local.x + d->resizer->rect.size.x / 2);
-            arrange_Widget(findWidget_App("doctabs"));
-            checkModeButtonLayout_SidebarWidget_(d);
-            if (!isRefreshPending_App()) {
-                updateSize_DocumentWidget(document_App());
-                refresh_Widget(w);
-            }
-        }
-        return iTrue;
-    }
-    else if (isCommand_Widget(w, ev, "scroll.moved")) {
-        d->scrollY = arg_Command(command_UserEvent(ev));
-        d->hoverItem = iInvalidPos;
-        refresh_Widget(w);
-        return iTrue;
-    }
     else if (ev->type == SDL_USEREVENT && ev->user.code == command_UserEventCode) {
         const char *cmd = command_UserEvent(ev);
-        if (isCommand_Widget(w, ev, "sidebar.mode")) {
+        if (isCommand_Widget(w, ev, "mouse.clicked")) {
+            if (argLabel_Command(cmd, "button") == SDL_BUTTON_LEFT) {
+                if (arg_Command(cmd)) {
+                    setFlags_Widget(d->resizer, pressed_WidgetFlag, iTrue);
+                    setBackgroundColor_Widget(d->resizer, gray75_ColorId);
+                    setMouseGrab_Widget(d->resizer);
+                    refresh_Widget(d->resizer);
+                }
+                else {
+                    setFlags_Widget(d->resizer, pressed_WidgetFlag, iFalse);
+                    setBackgroundColor_Widget(d->resizer, none_ColorId);
+                    setMouseGrab_Widget(NULL);
+                    refresh_Widget(d->resizer);
+                }
+            }
+            return iTrue;
+        }
+        else if (isCommand_Widget(w, ev, "mouse.moved")) {
+            if (isResizing_SidebarWidget_(d)) {
+                const iInt2 local = localCoord_Widget(w, coord_Command(cmd));
+                setWidth_SidebarWidget(d, local.x + d->resizer->rect.size.x / 2);
+            }
+            return iTrue;
+        }
+        else if (equal_Command(cmd, "sidebar.width")) {
+            setWidth_SidebarWidget(d, arg_Command(cmd));
+            return iTrue;
+        }
+        else if (equal_Command(cmd, "sidebar.mode")) {
             setMode_SidebarWidget(d, arg_Command(cmd));
             updateItems_SidebarWidget_(d);
+            return iTrue;
+        }
+        else if (equal_Command(cmd, "sidebar.toggle")) {
+            setFlags_Widget(w, hidden_WidgetFlag, isVisible_Widget(w));
+            if (isVisible_Widget(w)) {
+                w->rect.size.x = d->width;
+            }
+            arrange_Widget(w->parent);
+            updateSize_DocumentWidget(document_App());
+            refresh_Widget(w->parent);
+            return iTrue;
+        }
+        else if (equal_Command(cmd, "scroll.moved")) {
+            d->scrollY = arg_Command(command_UserEvent(ev));
+            d->hoverItem = iInvalidPos;
+            refresh_Widget(w);
             return iTrue;
         }
         else if (equal_Command(cmd, "tabs.changed") || equal_Command(cmd, "document.changed")) {

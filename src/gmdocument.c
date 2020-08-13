@@ -907,6 +907,10 @@ const iArray *headings_GmDocument(const iGmDocument *d) {
     return &d->headings;
 }
 
+const iString *source_GmDocument(const iGmDocument *d) {
+    return &d->source;
+}
+
 iRangecc findText_GmDocument(const iGmDocument *d, const iString *text, const char *start) {
     const char * src      = constBegin_String(&d->source);
     const size_t startPos = (start ? start - src : 0);

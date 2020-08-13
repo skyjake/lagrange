@@ -8,6 +8,7 @@
 #include "ui/window.h"
 #include "ui/inputwidget.h"
 #include "ui/labelwidget.h"
+#include "ui/sidebarwidget.h"
 #include "ui/documentwidget.h"
 #include "ui/util.h"
 #include "ui/text.h"
@@ -90,13 +91,18 @@ const iString *dateStr_(const iDate *date) {
 
 static iString *serializePrefs_App_(const iApp *d) {
     iString *str = new_String();
-    iWindow *win = get_Window();
+    const iSidebarWidget *sidebar = findWidget_App("sidebar");
     if (d->retainWindowSize) {
         int w, h, x, y;
         SDL_GetWindowSize(d->window->win, &w, &h);
         SDL_GetWindowPosition(d->window->win, &x, &y);
         appendFormat_String(str, "restorewindow width:%d height:%d coord:%d %d\n", w, h, x, y);
+        appendFormat_String(str, "sidebar.width arg:%d\n", width_SidebarWidget(sidebar));
     }
+    if (isVisible_Widget(constAs_Widget(sidebar))) {
+        appendCStr_String(str, "sidebar.toggle\n");
+    }
+    appendFormat_String(str, "sidebar.mode arg:%d\n", mode_SidebarWidget(sidebar));
     appendFormat_String(str, "uiscale arg:%f\n", uiScale_Window(d->window));
     return str;
 }

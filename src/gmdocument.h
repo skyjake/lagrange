@@ -86,6 +86,7 @@ void            render_GmDocument           (const iGmDocument *, iRangei visRan
 iInt2           size_GmDocument             (const iGmDocument *);
 iBool           hasSiteBanner_GmDocument    (const iGmDocument *);
 const iArray *  headings_GmDocument         (const iGmDocument *);
+const iString * source_GmDocument           (const iGmDocument *);
 
 iRangecc        findText_GmDocument         (const iGmDocument *, const iString *text, const char *start);
 iRangecc        findTextBefore_GmDocument   (const iGmDocument *, const iString *text, const char *before);

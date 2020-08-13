@@ -149,13 +149,13 @@ static int widestChild_Widget_(const iWidget *d) {
 }
 
 static void setWidth_Widget_(iWidget *d, int width) {
-    if (~d->flags & fixedWidth_WidgetFlag) {
+    if (~d->flags & fixedWidth_WidgetFlag || d->flags & collapse_WidgetFlag) {
         d->rect.size.x = width;
     }
 }
 
 static void setHeight_Widget_(iWidget *d, int height) {
-    if (~d->flags & fixedHeight_WidgetFlag) {
+    if (~d->flags & fixedHeight_WidgetFlag || d->flags & collapse_WidgetFlag) {
         d->rect.size.y = height;
     }
 }

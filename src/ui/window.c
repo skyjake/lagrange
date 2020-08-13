@@ -71,6 +71,10 @@ static const iMenuItem navMenuItems[] = {
     { "New Tab", 't', KMOD_PRIMARY, "tabs.new" },
     { "Open Location...", SDLK_l, KMOD_PRIMARY, "focus.set id:url" },
     { "---", 0, 0, NULL },
+    { "Copy Source Text", SDLK_c, KMOD_PRIMARY, "copy" },
+    { "---", 0, 0, NULL },
+    { "Toggle Sidebar", SDLK_s, KMOD_PRIMARY | KMOD_ALT, "sidebar.toggle" },
+    { "---", 0, 0, NULL },
     { "Preferences...", SDLK_COMMA, KMOD_PRIMARY, "preferences" },
     { "---", 0, 0, NULL },
     { "Quit Lagrange", 'q', KMOD_PRIMARY, "quit" }
@@ -85,9 +89,11 @@ static const iMenuItem fileMenuItems[] = {
 };
 
 static const iMenuItem editMenuItems[] = {
+    { "Copy Source Text", SDLK_c, KMOD_PRIMARY, "copy" },
 };
 
 static const iMenuItem viewMenuItems[] = {
+    { "Toggle Sidebar", SDLK_s, KMOD_PRIMARY | KMOD_ALT, "sidebar.toggle" },
 };
 #endif
 
@@ -265,6 +271,8 @@ static void setupUserInterface_Window(iWindow *d) {
         addChild_Widget(navBar, iClob(navMenu));
 #else
         insertMenuItems_MacOS("File", fileMenuItems, iElemCount(fileMenuItems));
+        insertMenuItems_MacOS("Edit", editMenuItems, iElemCount(editMenuItems));
+        insertMenuItems_MacOS("View", viewMenuItems, iElemCount(viewMenuItems));
 #endif
     }
     /* Tab bar. */ {
