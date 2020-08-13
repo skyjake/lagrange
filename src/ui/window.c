@@ -96,6 +96,10 @@ static const iMenuItem editMenuItems[] = {
 };
 
 static const iMenuItem viewMenuItems[] = {
+    { "Zoom In", SDLK_EQUALS, KMOD_PRIMARY, "zoom.delta arg:10" },
+    { "Zoom Out", SDLK_MINUS, KMOD_PRIMARY, "zoom.delta arg:-10" },
+    { "Reset Zoom", SDLK_0, KMOD_PRIMARY, "zoom.set arg:100" },
+    { "---", 0, 0, NULL },
     { "Toggle Sidebar", SDLK_s, KMOD_PRIMARY | KMOD_ALT, "sidebar.toggle" },
 };
 #endif
@@ -248,7 +252,7 @@ static void setupUserInterface_Window(iWindow *d) {
         addChild_Widget(div, iClob(navBar));
         setBackgroundColor_Widget(navBar, gray25_ColorId);
         setCommandHandler_Widget(navBar, handleNavBarCommands_);
-        addChild_Widget(navBar, iClob(newIcon_LabelWidget(" \U0001f850 ", 0, 0, "navigate.back")));
+        addChild_Widget(navBar, iClob(newIcon_LabelWidget("\U0001f850", 0, 0, "navigate.back")));
         addChild_Widget(navBar, iClob(newIcon_LabelWidget("\U0001f852", 0, 0, "navigate.forward")));
         addChild_Widget(navBar, iClob(newIcon_LabelWidget("\U0001f3e0", 0, 0, "navigate.home")));
         iLabelWidget *lock =
