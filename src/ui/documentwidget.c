@@ -76,13 +76,11 @@ struct Impl_Model {
     /* state that persists across sessions */
     iHistory *history;
     iString * url;
-    int       textSizePercent;
 };
 
 void init_Model(iModel *d) {
     d->history         = new_History();
     d->url             = new_String();
-    d->textSizePercent = 100;
 }
 
 void deinit_Model(iModel *d) {
@@ -92,13 +90,13 @@ void deinit_Model(iModel *d) {
 
 void serialize_Model(const iModel *d, iStream *outs) {
     serialize_String(d->url, outs);
-    write16_Stream(outs, d->textSizePercent);
+    write16_Stream(outs, 0 /*d->zoomPercent*/);
     serialize_History(d->history, outs);
 }
 
 void deserialize_Model(iModel *d, iStream *ins) {
     deserialize_String(d->url, ins);
-    d->textSizePercent = read16_Stream(ins);
+    /*d->zoomPercent =*/ read16_Stream(ins);
     deserialize_History(d->history, ins);
 }
 
@@ -204,7 +202,7 @@ static int documentWidth_DocumentWidget_(const iDocumentWidget *d) {
     const iWidget *w = constAs_Widget(d);
     const iRect bounds = bounds_Widget(w);
     return iMini(bounds.size.x - gap_UI * d->pageMargin * 2,
-                 fontSize_UI * 38 * d->mod.textSizePercent / 100); /* TODO: Add user preference .*/
+                 fontSize_UI * 38 * zoom_App() / 100); /* TODO: Add user preference .*/
 }
 
 static iRect documentBounds_DocumentWidget_(const iDocumentWidget *d) {
@@ -559,7 +557,7 @@ static iBool updateFromHistory_DocumentWidget_(iDocumentWidget *d) {
         const iGmResponse *resp = recent->cachedResponse;
         d->state = fetching_RequestState;
         /* Use the cached response data. */
-        d->scrollY = d->initialScrollY = recent->scrollY;
+        d->scrollY = d->initialScrollY = recent->scrollY * gap_UI;
         updateTrust_DocumentWidget_(d, resp);
         updateDocument_DocumentWidget_(d, resp);
         d->state = ready_RequestState;
@@ -602,9 +600,8 @@ void setUrlFromCache_DocumentWidget(iDocumentWidget *d, const iString *url, iBoo
 iDocumentWidget *duplicate_DocumentWidget(const iDocumentWidget *orig) {
     iDocumentWidget *d = new_DocumentWidget();
     delete_History(d->mod.history);
-    d->mod.textSizePercent = orig->mod.textSizePercent;
-    d->initialScrollY      = orig->scrollY;
-    d->mod.history         = copy_History(orig->mod.history);
+    d->initialScrollY = orig->scrollY;
+    d->mod.history    = copy_History(orig->mod.history);
     setUrlFromCache_DocumentWidget(d, orig->mod.url, iTrue);
     return d;
 }
@@ -809,20 +806,6 @@ static iBool handleMediaCommand_DocumentWidget_(iDocumentWidget *d, const char *
         return iTrue;
     }
     return iFalse;
-}
-
-static void changeTextSize_DocumentWidget_(iDocumentWidget *d, int delta) {
-    if (delta == 0) {
-        d->mod.textSizePercent = 100;
-    }
-    else {
-        if (d->mod.textSizePercent < 100 || (delta < 0 && d->mod.textSizePercent == 100)) {
-            delta /= 2;
-        }
-        d->mod.textSizePercent += delta;
-        d->mod.textSizePercent = iClamp(d->mod.textSizePercent, 50, 200);
-    }
-    postCommandf_App("font.setfactor arg:%d", d->mod.textSizePercent);
 }
 
 void updateSize_DocumentWidget(iDocumentWidget *d) {
@@ -1070,15 +1053,6 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             case ' ':
                 postCommand_Widget(w, "scroll.page arg:%d", key == SDLK_PAGEUP ? -1 : +1);
                 return iTrue;
-            case SDLK_MINUS:
-            case SDLK_EQUALS:
-            case SDLK_0:
-                if (mods == KMOD_PRIMARY) {
-                    changeTextSize_DocumentWidget_(
-                        d, key == SDLK_EQUALS ? 10 : key == SDLK_MINUS ? -10 : 0);
-                    return iTrue;
-                }
-                break;
             case SDLK_9: {
                 iBlock *seed = new_Block(64);
                 for (size_t i = 0; i < 64; ++i) {
@@ -1107,7 +1081,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         scroll_DocumentWidget_(d, -ev->wheel.y * get_Window()->pixelRatio);
 #else
         if (keyMods_Sym(SDL_GetModState()) == KMOD_PRIMARY) {
-            changeTextSize_DocumentWidget_(d, ev->wheel.y > 0 ? 10 : -10);
+            postCommandf_App("zoom.delta arg:%d", ev->wheel.y > 0 ? 10 : -10);
             return iTrue;
         }
         scroll_DocumentWidget_(d, -3 * ev->wheel.y * lineHeight_Text(default_FontId));

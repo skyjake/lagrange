@@ -333,6 +333,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             return iTrue;
         }
         else if (equal_Command(cmd, "tabs.changed") || equal_Command(cmd, "document.changed")) {
+            d->scrollY = 0;
             updateItems_SidebarWidget_(d);
         }
     }

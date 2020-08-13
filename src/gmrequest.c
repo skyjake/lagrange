@@ -287,7 +287,7 @@ void submit_GmRequest(iGmRequest *d) {
 "                       d\"     YD                                 d\"     YD\n"
 "                       \"Y88888P'                                 \"Y88888P'\n"
 "```\n"
-"# A Beautiful Gemini Browser\n"
+"# A Beautiful Gemini Client\n"
 "## Version " LAGRANGE_APP_VERSION "\n\n"
 "=> https://skyjake.fi/@jk by Jaakko Keränen <code@iki.fi>\n"
 "Crafted with \u2615 in Finland\n");

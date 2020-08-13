@@ -28,6 +28,7 @@ void        processEvents_App   (enum iAppEventMode mode);
 iBool       handleCommand_App   (const char *cmd);
 void        refresh_App         (void);
 iBool       isRefreshPending_App(void);
+int         zoom_App            (void);
 
 iGmCerts *          certs_App           (void);
 iVisited *          visited_App         (void);

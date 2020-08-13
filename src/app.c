@@ -53,12 +53,14 @@ static const char *stateFileName_App_   = "state.bin";
 
 struct Impl_App {
     iCommandLine args;
+    iBool        commandEcho; /* --echo */
     iBool        running;
     iWindow *    window;
     iSortedArray tickers;
     iBool        pendingRefresh;
     iGmCerts *   certs;
     iVisited *   visited;
+    int          zoomPercent;
     int          tabEnum;
     /* Preferences: */
     iBool        retainWindowSize;
@@ -104,6 +106,7 @@ static iString *serializePrefs_App_(const iApp *d) {
     }
     appendFormat_String(str, "sidebar.mode arg:%d\n", mode_SidebarWidget(sidebar));
     appendFormat_String(str, "uiscale arg:%f\n", uiScale_Window(d->window));
+    appendFormat_String(str, "zoom.set arg:%d\n", d->zoomPercent);
     return str;
 }
 
@@ -214,10 +217,12 @@ static void saveState_App_(const iApp *d) {
 static void init_App_(iApp *d, int argc, char **argv) {
     init_CommandLine(&d->args, argc, argv);
     init_SortedArray(&d->tickers, sizeof(iTicker), cmp_Ticker_);
+    d->commandEcho      = checkArgument_CommandLine(&d->args, "echo") != NULL;
     d->running          = iFalse;
     d->window           = NULL;
     d->retainWindowSize = iTrue;
     d->pendingRefresh   = iFalse;
+    d->zoomPercent      = 100;
     d->certs            = new_GmCerts(dataDir_App_);
     d->visited          = new_Visited();
     d->tabEnum          = 0;
@@ -336,6 +341,10 @@ iBool isRefreshPending_App(void) {
     return app_.pendingRefresh;
 }
 
+int zoom_App(void) {
+    return app_.zoomPercent;
+}
+
 int run_App(int argc, char **argv) {
     init_App_(&app_, argc, argv);
     const int rc = run_App_(&app_);
@@ -365,9 +374,9 @@ void postCommand_App(const char *command) {
     ev.user.data1    = strdup(command);
     ev.user.data2    = NULL;
     SDL_PushEvent(&ev);
-#if !defined (NDEBUG)
-    printf("[command] %s\n", command); fflush(stdout);
-#endif
+    if (app_.commandEcho) {
+        printf("[command] %s\n", command); fflush(stdout);
+    }
 }
 
 void postCommandf_App(const char *command, ...) {
@@ -542,11 +551,10 @@ iBool handleCommand_App(const char *cmd) {
         SDL_PushEvent(&ev);
     }
     else if (equal_Command(cmd, "preferences")) {
-        iWindow *win = get_Window();
         iWidget *dlg = makePreferences_Widget();
         setToggle_Widget(findChild_Widget(dlg, "prefs.retainwindow"), d->retainWindowSize);
         setText_InputWidget(findChild_Widget(dlg, "prefs.uiscale"),
-                            collectNewFormat_String("%g", uiScale_Window(get_Window())));
+                            collectNewFormat_String("%g", uiScale_Window(d->window)));
         setCommandHandler_Widget(dlg, handlePrefsCommands_);
     }
     else if (equal_Command(cmd, "restorewindow")) {
@@ -559,8 +567,20 @@ iBool handleCommand_App(const char *cmd) {
         postCommand_App("open url:about:home");
         return iTrue;
     }
-    else if (equal_Command(cmd, "font.setfactor")) {
-        setContentFontSize_Text((float) arg_Command(cmd) / 100.0f);
+    else if (equal_Command(cmd, "zoom.set")) {
+        d->zoomPercent = arg_Command(cmd);
+        setContentFontSize_Text((float) d->zoomPercent / 100.0f);
+        postCommand_App("font.changed");
+        refresh_App();
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "zoom.delta")) {
+        int delta = arg_Command(cmd);
+        if (d->zoomPercent < 100 || (delta < 0 && d->zoomPercent == 100)) {
+            delta /= 2;
+        }
+        d->zoomPercent = iClamp(d->zoomPercent + delta, 50, 200);
+        setContentFontSize_Text((float) d->zoomPercent / 100.0f);
         postCommand_App("font.changed");
         refresh_App();
         return iTrue;
