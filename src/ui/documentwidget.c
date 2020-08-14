@@ -313,6 +313,27 @@ static void updateVisible_DocumentWidget_(iDocumentWidget *d) {
     }
 }
 
+const iString *bookmarkTitle_DocumentWidget(const iDocumentWidget *d) {
+    iStringArray *title = iClob(new_StringArray());
+    if (!isEmpty_String(title_GmDocument(d->doc))) {
+        pushBack_StringArray(title, title_GmDocument(d->doc));
+    }
+    if (!isEmpty_String(d->titleUser)) {
+        pushBack_StringArray(title, d->titleUser);
+    }
+    else {
+        iUrl parts;
+        init_Url(&parts, d->mod.url);
+        if (!isEmpty_Range(&parts.host)) {
+            pushBackRange_StringArray(title, parts.host);
+        }
+    }
+    if (isEmpty_StringArray(title)) {
+        pushBackCStr_StringArray(title, "Blank Page");
+    }
+    return collect_String(joinCStr_StringArray(title, " \u2014 "));
+}
+
 static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
     iLabelWidget *tabButton = tabPageButton_Widget(findWidget_App("doctabs"), d);
     if (!tabButton) {

@@ -1,18 +1,20 @@
 #include "app.h"
+#include "bookmarks.h"
 #include "embedded.h"
 #include "gmcerts.h"
+#include "gmdocument.h"
 #include "gmutil.h"
 #include "history.h"
-#include "visited.h"
+#include "ui/color.h"
 #include "ui/command.h"
-#include "ui/window.h"
+#include "ui/documentwidget.h"
 #include "ui/inputwidget.h"
 #include "ui/labelwidget.h"
 #include "ui/sidebarwidget.h"
-#include "ui/documentwidget.h"
-#include "ui/util.h"
 #include "ui/text.h"
-#include "ui/color.h"
+#include "ui/util.h"
+#include "ui/window.h"
+#include "visited.h"
 
 #include <the_Foundation/commandline.h>
 #include <the_Foundation/file.h>
@@ -60,6 +62,7 @@ struct Impl_App {
     iBool        pendingRefresh;
     iGmCerts *   certs;
     iVisited *   visited;
+    iBookmarks * bookmarks;
     int          zoomPercent;
     int          tabEnum;
     /* Preferences: */
@@ -157,6 +160,7 @@ static const char *magicState_App_       = "lgL1";
 static const char *magicTabDocument_App_ = "tabd";
 
 static iBool loadState_App_(iApp *d) {
+    iUnused(d);
     iFile *f = iClob(newCStr_File(concatPath_CStr(dataDir_App_, stateFileName_App_)));
     if (open_File(f, readOnly_FileMode)) {
         char magic[4];
@@ -225,9 +229,11 @@ static void init_App_(iApp *d, int argc, char **argv) {
     d->zoomPercent      = 100;
     d->certs            = new_GmCerts(dataDir_App_);
     d->visited          = new_Visited();
+    d->bookmarks        = new_Bookmarks();
     d->tabEnum          = 0;
     loadPrefs_App_(d);
     load_Visited(d->visited, dataDir_App_);
+    load_Bookmarks(d->bookmarks, dataDir_App_);
 #if defined (iHaveLoadEmbed)
     /* Load the resources from a file. */ {
         if (!load_Embed(concatPath_CStr(cstr_String(execPath_App()), "../resources.bin"))) {
@@ -248,6 +254,8 @@ static void init_App_(iApp *d, int argc, char **argv) {
 static void deinit_App(iApp *d) {
     saveState_App_(d);
     savePrefs_App_(d);
+    save_Bookmarks(d->bookmarks, dataDir_App_);
+    delete_Bookmarks(d->bookmarks);
     save_Visited(d->visited, dataDir_App_);
     delete_Visited(d->visited);
     delete_GmCerts(d->certs);
@@ -407,6 +415,10 @@ iVisited *visited_App(void) {
     return app_.visited;
 }
 
+iBookmarks *bookmarks_App(void) {
+    return app_.bookmarks;
+}
+
 static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
     if (equal_Command(cmd, "prefs.dismiss") || equal_Command(cmd, "preferences")) {
         setUiScale_Window(get_Window(),
@@ -504,7 +516,7 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "tabs.new")) {
         const iBool isDuplicate = argLabel_Command(cmd, "duplicate") != 0;
-        iDocumentWidget *newDoc = newTab_App(isDuplicate ? document_App() : NULL);
+        newTab_App(isDuplicate ? document_App() : NULL);
         if (!isDuplicate) {
             postCommand_App("navigate.home");
         }        
@@ -583,6 +595,15 @@ iBool handleCommand_App(const char *cmd) {
         setContentFontSize_Text((float) d->zoomPercent / 100.0f);
         postCommand_App("font.changed");
         refresh_App();
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "bookmark.add")) {
+        iDocumentWidget *doc = document_App();
+        add_Bookmarks(d->bookmarks, url_DocumentWidget(doc),
+                      bookmarkTitle_DocumentWidget(doc),
+                      collectNew_String(),
+                      siteIcon_GmDocument(document_DocumentWidget(doc)));
+        postCommand_App("bookmarks.changed");
         return iTrue;
     }
     else {

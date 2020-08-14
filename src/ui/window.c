@@ -72,6 +72,7 @@ static const iMenuItem navMenuItems[] = {
     { "Open Location...", SDLK_l, KMOD_PRIMARY, "focus.set id:url" },
     { "---", 0, 0, NULL },
     { "Copy Source Text", SDLK_c, KMOD_PRIMARY, "copy" },
+    { "Bookmark This Page", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
     { "---", 0, 0, NULL },
     { "Toggle Sidebar", SDLK_s, KMOD_PRIMARY | KMOD_ALT, "sidebar.toggle" },
     { "Zoom In", SDLK_EQUALS, KMOD_PRIMARY, "zoom.delta arg:10" },
@@ -93,6 +94,8 @@ static const iMenuItem fileMenuItems[] = {
 
 static const iMenuItem editMenuItems[] = {
     { "Copy Source Text", SDLK_c, KMOD_PRIMARY, "copy" },
+    { "---", 0, 0, NULL },
+    { "Bookmark This Page", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
 };
 
 static const iMenuItem viewMenuItems[] = {

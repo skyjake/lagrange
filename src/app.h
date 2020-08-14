@@ -5,6 +5,7 @@
 #include <the_Foundation/string.h>
 #include <the_Foundation/time.h>
 
+iDeclareType(Bookmarks)
 iDeclareType(DocumentWidget)
 iDeclareType(GmCerts)
 iDeclareType(Visited)
@@ -32,6 +33,7 @@ int         zoom_App            (void);
 
 iGmCerts *          certs_App           (void);
 iVisited *          visited_App         (void);
+iBookmarks *        bookmarks_App       (void);
 iDocumentWidget *   document_App        (void);
 iDocumentWidget *   document_Command    (const char *cmd);
 iDocumentWidget *   newTab_App          (const iDocumentWidget *duplicateOf);

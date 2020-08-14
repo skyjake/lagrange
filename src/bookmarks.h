@@ -11,6 +11,7 @@ struct Impl_Bookmark {
     iString url;
     iString title;
     iString tags;
+    iChar icon;
     iTime when;
 };
 
@@ -20,6 +21,8 @@ iDeclareTypeConstruction(Bookmarks)
 void    clear_Bookmarks     (iBookmarks *);
 void    load_Bookmarks      (iBookmarks *, const char *dirPath);
 void    save_Bookmarks      (const iBookmarks *, const char *dirPath);
+
+void    add_Bookmarks       (iBookmarks *, const iString *url, const iString *title, const iString *tags, iChar icon);
 
 typedef iBool (*iBookmarksFilterFunc) (const iBookmark *);
 typedef int   (*iBookmarksCompareFunc)(const iBookmark **, const iBookmark **);

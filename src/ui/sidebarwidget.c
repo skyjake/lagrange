@@ -2,6 +2,7 @@
 #include "labelwidget.h"
 #include "scrollwidget.h"
 #include "documentwidget.h"
+#include "bookmarks.h"
 #include "paint.h"
 #include "util.h"
 #include "command.h"
@@ -111,8 +112,23 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
             }
             break;
         }
-        case bookmarks_SidebarMode:
+        case bookmarks_SidebarMode: {
+            iConstForEach(PtrArray, i, list_Bookmarks(bookmarks_App(), NULL, NULL)) {
+                const iBookmark *bm = i.ptr;
+                iSidebarItem item;
+                init_SidebarItem(&item);
+                item.icon = bm->icon;
+                set_String(&item.url, &bm->url);
+                set_String(&item.label, &bm->title);
+                iDate date;
+                init_Date(&date, &bm->when);
+                iString *ds = format_Date(&date, "%Y %b %d");
+                set_String(&item.meta, ds);
+                delete_String(ds);
+                pushBack_Array(&d->items, &item);
+            }
             break;
+        }
         case history_SidebarMode:
             break;
         default:
@@ -230,6 +246,10 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, size_t index) {
             postCommandf_App("document.goto loc:%p", head->text.start);
             break;
         }
+        case bookmarks_SidebarMode: {
+            postCommandf_App("open url:%s", cstr_String(&item->url));
+            break;
+        }
     }
 }
 
@@ -336,6 +356,9 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             d->scrollY = 0;
             updateItems_SidebarWidget_(d);
         }
+        else if (equal_Command(cmd, "bookmarks.changed")) {
+            updateItems_SidebarWidget_(d);
+        }
     }
     if (ev->type == SDL_MOUSEMOTION) {
         const iInt2 mouse = init_I2(ev->motion.x, ev->motion.y);
@@ -406,6 +429,27 @@ static void draw_SidebarWidget_(const iSidebarWidget *d) {
                 drawRange_Text(font, init_I2(pos.x + 3 * gap_UI + item->indent,
                                         mid_Rect(itemRect).y - lineHeight_Text(font) / 2),
                                fg, range_String(&item->label));
+            }
+            else if (d->mode == bookmarks_SidebarMode) {
+                const int fg =
+                    isHover ? (isPressing ? black_ColorId : white_ColorId) : gray75_ColorId;
+                iString str;
+                init_String(&str);
+                appendChar_String(&str, item->icon ? item->icon : 0x1f588);
+                const iRect iconArea = { pos, init_I2(10 * gap_UI, d->itemHeight) };
+                drawCentered_Text(uiBookmarkIcon_FontId,
+                                  iconArea,
+                                  iTrue,
+                                  isHover && isPressing ? black_ColorId : cyan_ColorId,
+                                  "%s",
+                                  cstr_String(&str));
+                deinit_String(&str);
+                iInt2 textPos = topRight_Rect(iconArea);
+                drawRange_Text(font, textPos, fg, range_String(&item->label));
+                drawRange_Text(font,
+                               addY_I2(textPos, lineHeight_Text(font)),
+                               isHover ? (isPressing ? black_ColorId : cyan_ColorId) : teal_ColorId,
+                               range_String(&item->meta));
             }
             unsetClip_Paint(&p);
             pos.y += d->itemHeight;
