@@ -27,7 +27,7 @@ void    load_Bookmarks      (iBookmarks *, const char *dirPath);
 void    save_Bookmarks      (const iBookmarks *, const char *dirPath);
 
 void    add_Bookmarks       (iBookmarks *, const iString *url, const iString *title, const iString *tags, iChar icon);
-void    remove_Bookmarks    (iBookmarks *, uint32_t id);
+iBool   remove_Bookmarks    (iBookmarks *, uint32_t id);
 
 typedef iBool (*iBookmarksFilterFunc) (const iBookmark *);
 typedef int   (*iBookmarksCompareFunc)(const iBookmark **, const iBookmark **);

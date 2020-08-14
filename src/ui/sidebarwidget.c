@@ -15,20 +15,18 @@
 iDeclareType(SidebarItem)
 
 struct Impl_SidebarItem {
+    uint32_t    id;
     int         indent;
     iChar       icon;
     iString     label;
     iString     meta;
     iString     url;
-    size_t      index;
-    const void *src;
 };
 
 void init_SidebarItem(iSidebarItem *d) {
+    d->id     = 0;
     d->indent = 0;
     d->icon   = 0;
-    d->index  = 0;
-    d->src    = NULL;
     init_String(&d->label);
     init_String(&d->meta);
     init_String(&d->url);
@@ -110,7 +108,7 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 const iGmHeading *head = i.value;
                 iSidebarItem item;
                 init_SidebarItem(&item);
-                item.index = index_ArrayConstIterator(&i);
+                item.id = index_ArrayConstIterator(&i);
                 setRange_String(&item.label, head->text);
                 item.indent = head->level * 4 * gap_UI;
                 pushBack_Array(&d->items, &item);
@@ -122,6 +120,7 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 const iBookmark *bm = i.ptr;
                 iSidebarItem item;
                 init_SidebarItem(&item);
+                item.id = id_Bookmark(bm);
                 item.icon = bm->icon;
                 set_String(&item.url, &bm->url);
                 set_String(&item.label, &bm->title);
@@ -129,7 +128,6 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 init_Date(&date, &bm->when);
                 iString *ds = format_Date(&date, "%Y %b %d");
                 set_String(&item.meta, ds);
-                item.src = bm;
                 delete_String(ds);
                 pushBack_Array(&d->items, &item);
             }
@@ -251,7 +249,7 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, size_t index) {
     switch (d->mode) {
         case documentOutline_SidebarMode: {
             const iGmDocument *doc = document_DocumentWidget(document_App());
-            const iGmHeading *head = constAt_Array(headings_GmDocument(doc), item->index);
+            const iGmHeading *head = constAt_Array(headings_GmDocument(doc), item->id);
             postCommandf_App("document.goto loc:%p", head->text.start);
             break;
         }
@@ -367,8 +365,12 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         }
         else if (equal_Command(cmd, "bookmark.delete")) {
             if (d->mode == bookmarks_SidebarMode && d->hoverItem < size_Array(&d->items)) {
-
+                const iSidebarItem *item = at_Array(&d->items, d->hoverItem);
+                if (remove_Bookmarks(bookmarks_App(), item->id)) {
+                    postCommand_App("bookmarks.changed");
+                }
             }
+            return iTrue;
         }
         else if (equal_Command(cmd, "bookmarks.changed")) {
             updateItems_SidebarWidget_(d);

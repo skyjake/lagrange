@@ -118,8 +118,13 @@ void add_Bookmarks(iBookmarks *d, const iString *url, const iString *title, cons
     insert_Bookmarks_(d, bm);
 }
 
-void remove_Bookmarks(iBookmarks *d, uint32_t id) {
-    delete_Bookmark((iBookmark *) remove_Hash(&d->bookmarks, id));
+iBool remove_Bookmarks(iBookmarks *d, uint32_t id) {
+    iBookmark *bm = (iBookmark *) remove_Hash(&d->bookmarks, id);
+    if (bm) {
+        delete_Bookmark(bm);
+        return iTrue;
+    }
+    return iFalse;
 }
 
 const iPtrArray *list_Bookmarks(const iBookmarks *d, iBookmarksFilterFunc filter,

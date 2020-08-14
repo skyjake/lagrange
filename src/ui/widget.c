@@ -412,10 +412,6 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
             }
         }
         if (class_Widget(d)->processEvent(d, ev)) {
-            if (ev->type == SDL_MOUSEBUTTONDOWN) {
-                printf("mb.down eaten by %p '%s'\n", d, cstr_String(id_Widget(d)));
-                fflush(stdout);
-            }
             return iTrue;
         }
     }
