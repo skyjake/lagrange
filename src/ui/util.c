@@ -189,7 +189,9 @@ iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
     }
     addChild_Widget(parent, iClob(menu));
     setCommandHandler_Widget(menu, menuHandler_);
-    addAction_Widget(menu, SDLK_ESCAPE, 0, "cancel");
+    iWidget *cancel = addAction_Widget(menu, SDLK_ESCAPE, 0, "cancel");
+    setId_Widget(cancel, "menu.cancel");
+    setFlags_Widget(cancel, disabled_WidgetFlag, iTrue);
     return menu;
 }
 
@@ -198,6 +200,7 @@ void openMenu_Widget(iWidget *d, iInt2 coord) {
     postCommand_App("cancel"); /* dismiss any other menus */
     processEvents_App(postedEventsOnly_AppEventMode);
     setFlags_Widget(d, hidden_WidgetFlag, iFalse);
+    setFlags_Widget(findChild_Widget(d, "menu.cancel"), disabled_WidgetFlag, iFalse);
     arrange_Widget(d);
     d->rect.pos = coord;
     /* Ensure the full menu is visible. */
@@ -224,6 +227,7 @@ void openMenu_Widget(iWidget *d, iInt2 coord) {
 
 void closeMenu_Widget(iWidget *d) {
     setFlags_Widget(d, hidden_WidgetFlag, iTrue);
+    setFlags_Widget(findChild_Widget(d, "menu.cancel"), disabled_WidgetFlag, iTrue);
     refresh_App();
 }
 
