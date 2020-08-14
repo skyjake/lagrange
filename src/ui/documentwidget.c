@@ -808,10 +808,10 @@ static iBool handleMediaCommand_DocumentWidget_(iDocumentWidget *d, const char *
         const enum iGmStatusCode code = status_GmRequest(req->req);
         /* Give the media to the document for presentation. */
         if (code == success_GmStatusCode) {
-            printf("media finished: %s\n  size: %zu\n  type: %s\n",
-                   cstr_String(url_GmRequest(req->req)),
-                   size_Block(body_GmRequest(req->req)),
-                   cstr_String(meta_GmRequest(req->req)));
+//            printf("media finished: %s\n  size: %zu\n  type: %s\n",
+//                   cstr_String(url_GmRequest(req->req)),
+//                   size_Block(body_GmRequest(req->req)),
+//                   cstr_String(meta_GmRequest(req->req)));
             if (startsWith_String(meta_GmRequest(req->req), "image/")) {
                 setImage_GmDocument(d->doc, req->linkId, meta_GmRequest(req->req),
                                     body_GmRequest(req->req));

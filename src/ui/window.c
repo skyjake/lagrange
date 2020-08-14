@@ -36,7 +36,7 @@ static float initialUiScale_ = 1.0f;
 static float initialUiScale_ = 1.1f;
 #endif
 
-iDefineTypeConstruction(Window)
+iDefineTypeConstructionArgs(Window, (iRect rect), rect)
 
 static iBool handleRootCommands_(iWidget *root, const char *cmd) {
     iUnused(root);
@@ -354,8 +354,16 @@ static float pixelRatio_Window_(const iWindow *d) {
     return (float) dx / (float) x;
 }
 
-void init_Window(iWindow *d) {
+static void drawBlank_Window_(iWindow *d) {
+    const iColor bg = get_Color(gray25_ColorId);
+    SDL_SetRenderDrawColor(d->render, bg.r, bg.g, bg.b, 255);
+    SDL_RenderClear(d->render);
+    SDL_RenderPresent(d->render);
+}
+
+void init_Window(iWindow *d, iRect rect) {
     theWindow_ = d;
+    d->isBlank = iTrue;
     uint32_t flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI;
 #if defined (iPlatformApple)
     SDL_SetHint(SDL_HINT_RENDER_DRIVER, "metal");
@@ -363,17 +371,22 @@ void init_Window(iWindow *d) {
     flags |= SDL_WINDOW_OPENGL;
 #endif
     SDL_SetHint(SDL_HINT_RENDER_VSYNC, "1");
-    if (SDL_CreateWindowAndRenderer(800, 500, flags, &d->win, &d->render)) {
+    if (SDL_CreateWindowAndRenderer(
+            width_Rect(rect), height_Rect(rect), flags, &d->win, &d->render)) {
         fprintf(stderr, "Error when creating window: %s\n", SDL_GetError());
         exit(-2);
     }
+    if (left_Rect(rect) >= 0) {
+        SDL_SetWindowPosition(d->win, left_Rect(rect), top_Rect(rect));
+    }
     SDL_SetWindowMinimumSize(d->win, 640, 400);
-    SDL_SetWindowTitle(d->win, "Lagrange");
+    SDL_SetWindowTitle(d->win, "Lagrange");    
     /* Some info. */ {
         SDL_RendererInfo info;
         SDL_GetRendererInfo(d->render, &info);
         printf("[window] renderer: %s\n", info.name);
     }
+    drawBlank_Window_(d);
     d->uiScale = initialUiScale_;
     d->pixelRatio = pixelRatio_Window_(d);
     setPixelRatio_Metrics(d->pixelRatio * d->uiScale);
@@ -447,6 +460,11 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
         }
         default: {
             SDL_Event event = *ev;
+            if (event.type == SDL_USEREVENT && isCommand_UserEvent(ev, "window.unblank")) {
+                d->isBlank = iFalse;
+                postRefresh_App();
+                return iTrue;
+            }
             /* Map mouse pointer coordinate to our coordinate system. */
             if (event.type == SDL_MOUSEMOTION) {
                 const iInt2 pos = coord_Window(d, event.motion.x, event.motion.y);
@@ -479,6 +497,10 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
 
 void draw_Window(iWindow *d) {
     /* Clear the window. */
+    if (d->isBlank) {
+        drawBlank_Window_(d);
+        return;
+    }
     SDL_SetRenderDrawColor(d->render, 0, 0, 0, 255);
     SDL_RenderClear(d->render);
     /* Draw widgets. */

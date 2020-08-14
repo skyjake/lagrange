@@ -55,19 +55,20 @@ static const char *stateFileName_App_   = "state.bin";
 
 struct Impl_App {
     iCommandLine args;
-    iBool        commandEcho; /* --echo */
-    iBool        running;
-    iWindow *    window;
-    iSortedArray tickers;
-    iBool        pendingRefresh;
     iGmCerts *   certs;
     iVisited *   visited;
     iBookmarks * bookmarks;
-    int          zoomPercent;
+    iWindow *    window;
+    iSortedArray tickers;
+    iBool        running;
+    iBool        pendingRefresh;
     int          tabEnum;
     /* Preferences: */
+    iBool        commandEcho; /* --echo */
     iBool        retainWindowSize;
+    iRect        initialWindowRect;
     float        uiScale;
+    int          zoomPercent;
 };
 
 static iApp app_;
@@ -101,9 +102,10 @@ static iString *serializePrefs_App_(const iApp *d) {
         int w, h, x, y;
         SDL_GetWindowSize(d->window->win, &w, &h);
         SDL_GetWindowPosition(d->window->win, &x, &y);
-        appendFormat_String(str, "restorewindow width:%d height:%d coord:%d %d\n", w, h, x, y);
+        appendFormat_String(str, "window.setrect width:%d height:%d coord:%d %d\n", w, h, x, y);
         appendFormat_String(str, "sidebar.width arg:%d\n", width_SidebarWidget(sidebar));
     }
+    appendFormat_String(str, "retainwindow arg:%d\n", d->retainWindowSize);
     if (isVisible_Widget(constAs_Widget(sidebar))) {
         appendCStr_String(str, "sidebar.toggle\n");
     }
@@ -127,16 +129,22 @@ static void loadPrefs_App_(iApp *d) {
         const iRangecc src = range_String(str);
         iRangecc line = iNullRange;
         while (nextSplit_Rangecc(&src, "\n", &line)) {
-            iString cmd;
-            initRange_String(&cmd, line);
-            if (equal_Command(cstr_String(&cmd), "uiscale")) {
-                /* Must be handled before the window is created. */
-                setUiScale_Window(get_Window(), argf_Command(cstr_String(&cmd)));
+            iString cmdStr;
+            initRange_String(&cmdStr, line);
+            const char *cmd = cstr_String(&cmdStr);
+            /* Window init commands must be handled before the window is created. */
+            if (equal_Command(cmd, "uiscale")) {
+                setUiScale_Window(get_Window(), argf_Command(cmd));
+            }
+            else if (equal_Command(cmd, "window.setrect")) {
+                const iInt2 pos = coord_Command(cmd);
+                d->initialWindowRect = init_Rect(
+                    pos.x, pos.y, argLabel_Command(cmd, "width"), argLabel_Command(cmd, "height"));
             }
             else {
-                postCommandString_App(&cmd);
+                postCommandString_App(&cmdStr);
             }
-            deinit_String(&cmd);
+            deinit_String(&cmdStr);
         }
         delete_String(str);
     }
@@ -221,16 +229,17 @@ static void saveState_App_(const iApp *d) {
 static void init_App_(iApp *d, int argc, char **argv) {
     init_CommandLine(&d->args, argc, argv);
     init_SortedArray(&d->tickers, sizeof(iTicker), cmp_Ticker_);
-    d->commandEcho      = checkArgument_CommandLine(&d->args, "echo") != NULL;
-    d->running          = iFalse;
-    d->window           = NULL;
-    d->retainWindowSize = iTrue;
-    d->pendingRefresh   = iFalse;
-    d->zoomPercent      = 100;
-    d->certs            = new_GmCerts(dataDir_App_);
-    d->visited          = new_Visited();
-    d->bookmarks        = new_Bookmarks();
-    d->tabEnum          = 0;
+    d->commandEcho       = checkArgument_CommandLine(&d->args, "echo") != NULL;
+    d->initialWindowRect = init_Rect(-1, -1, 800, 500);
+    d->running           = iFalse;
+    d->window            = NULL;
+    d->retainWindowSize  = iTrue;
+    d->pendingRefresh    = iFalse;
+    d->zoomPercent       = 100;
+    d->certs             = new_GmCerts(dataDir_App_);
+    d->visited           = new_Visited();
+    d->bookmarks         = new_Bookmarks();
+    d->tabEnum           = 0; /* generates unique IDs for tab pages */
     loadPrefs_App_(d);
     load_Visited(d->visited, dataDir_App_);
     load_Bookmarks(d->bookmarks, dataDir_App_);
@@ -244,11 +253,12 @@ static void init_App_(iApp *d, int argc, char **argv) {
         }
     }
 #endif
-    d->window = new_Window();
+    d->window = new_Window(d->initialWindowRect);
     /* Widget state init. */
     if (!loadState_App_(d)) {
         postCommand_App("navigate.home");
     }
+    postCommand_App("window.unblank");
 }
 
 static void deinit_App(iApp *d) {
@@ -423,6 +433,8 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
     if (equal_Command(cmd, "prefs.dismiss") || equal_Command(cmd, "preferences")) {
         setUiScale_Window(get_Window(),
                           toFloat_String(text_InputWidget(findChild_Widget(d, "prefs.uiscale"))));
+        postCommandf_App("retainwindow arg:%d",
+                         isSelected_Widget(findChild_Widget(d, "prefs.retainwindow")));
         destroy_Widget(d);
         return iTrue;
     }
@@ -472,7 +484,11 @@ iDocumentWidget *newTab_App(const iDocumentWidget *duplicateOf) {
 
 iBool handleCommand_App(const char *cmd) {
     iApp *d = &app_;
-    if (equal_Command(cmd, "open")) {
+    if (equal_Command(cmd, "retainwindow")) {
+        d->retainWindowSize = arg_Command(cmd);
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "open")) {
         const iString *url = collect_String(newCStr_String(suffixPtr_Command(cmd, "url")));
         iUrl parts;
         init_Url(&parts, url);
@@ -568,12 +584,6 @@ iBool handleCommand_App(const char *cmd) {
         setText_InputWidget(findChild_Widget(dlg, "prefs.uiscale"),
                             collectNewFormat_String("%g", uiScale_Window(d->window)));
         setCommandHandler_Widget(dlg, handlePrefsCommands_);
-    }
-    else if (equal_Command(cmd, "restorewindow")) {
-        d->retainWindowSize = iTrue;
-        resize_Window(d->window, argLabel_Command(cmd, "width"), argLabel_Command(cmd, "height"));
-        const iInt2 pos = coord_Command(cmd);
-        SDL_SetWindowPosition(d->window->win, pos.x, pos.y);
     }
     else if (equal_Command(cmd, "navigate.home")) {
         postCommand_App("open url:about:home");

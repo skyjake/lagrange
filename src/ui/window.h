@@ -2,16 +2,17 @@
 
 #include "widget.h"
 
-#include <the_Foundation/defs.h>
+#include <the_Foundation/rect.h>
 #include <SDL_events.h>
 #include <SDL_render.h>
 #include <SDL_video.h>
 
 iDeclareType(Window)
-iDeclareTypeConstruction(Window)
+iDeclareTypeConstructionArgs(Window, iRect rect)
 
 struct Impl_Window {
     SDL_Window *  win;
+    iBool         isBlank; /* avoids premature draws while restoring window state */
     SDL_Renderer *render;
     iWidget *     root;
     float         pixelRatio;

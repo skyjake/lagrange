@@ -648,8 +648,8 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
                                0.8f * (d->themeSeed >> 24) / 255.0f,
                                0.06f + 0.09f * ((d->themeSeed >> 5) & 0x7) / 7.0f,
                                1.0f };
-            printf("background: %d %f %f\n", (int) base.hue, base.sat, base.lum);
-            printf("isDarkBgSat: %d\n", isDarkBgSat);
+//            printf("background: %d %f %f\n", (int) base.hue, base.sat, base.lum);
+//            printf("isDarkBgSat: %d\n", isDarkBgSat);
             setHsl_Color(tmBackground_ColorId, base);
 
             setHsl_Color(tmBannerBackground_ColorId, addSatLum_HSLColor(base, 0.1f, 0.04f * (isBannerLighter ? 1 : -1)));
