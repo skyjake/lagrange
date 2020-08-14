@@ -341,10 +341,13 @@ static void setupUserInterface_Window(iWindow *d) {
 
 static void updateRootSize_Window_(iWindow *d) {
     iInt2 *size = &d->root->rect.size;
+    const iInt2 oldSize = *size;
     SDL_GetRendererOutputSize(d->render, &size->x, &size->y);
-    arrange_Widget(d->root);
-    postCommandf_App("window.resized width:%d height:%d", size->x, size->y);
-    postRefresh_App();
+    if (!isEqual_I2(oldSize, *size)) {
+        arrange_Widget(d->root);
+        postCommandf_App("window.resized width:%d height:%d", size->x, size->y);
+        postRefresh_App();
+    }
 }
 
 static float pixelRatio_Window_(const iWindow *d) {
