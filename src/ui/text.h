@@ -7,9 +7,10 @@
 
 enum iFontId {
     default_FontId,
+    defaultLarge_FontId,
     defaultMonospace_FontId,
     regular_FontId,
-    monospace_FontId,    
+    monospace_FontId,
     monospaceSmall_FontId,
     medium_FontId,
     italic_FontId,
@@ -20,12 +21,15 @@ enum iFontId {
     largeLight_FontId,
     /* symbol fonts */
     defaultSymbols_FontId,
+    defaultLargeSymbols_FontId,
     symbols_FontId,
     mediumSymbols_FontId,
     largeSymbols_FontId,
     hugeSymbols_FontId,
     smallSymbols_FontId,
+    /* emoji fonts */
     defaultEmoji_FontId,
+    defaultLargeEmoji_FontId,
     emoji_FontId,
     mediumEmoji_FontId,
     largeEmoji_FontId,
@@ -33,11 +37,12 @@ enum iFontId {
     smallEmoji_FontId,
     max_FontId,
     /* Meta: */
-    fromSymbolsToEmojiOffset_FontId = 6,
+    fromSymbolsToEmojiOffset_FontId = 7,
     /* UI fonts: */
-    uiLabel_FontId     = default_FontId,
-    uiShortcuts_FontId = default_FontId,
-    uiInput_FontId     = defaultMonospace_FontId,
+    uiLabel_FontId        = default_FontId,
+    uiShortcuts_FontId    = default_FontId,
+    uiInput_FontId        = defaultMonospace_FontId,
+    uiBookmarkIcon_FontId = defaultLarge_FontId,
     /* Document fonts: */
     paragraph_FontId         = regular_FontId,
     firstParagraph_FontId    = medium_FontId,
