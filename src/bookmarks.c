@@ -127,6 +127,10 @@ iBool remove_Bookmarks(iBookmarks *d, uint32_t id) {
     return iFalse;
 }
 
+iBookmark *get_Bookmarks(iBookmarks *d, uint32_t id) {
+    return (iBookmark *) value_Hash(&d->bookmarks, id);
+}
+
 const iPtrArray *list_Bookmarks(const iBookmarks *d, iBookmarksFilterFunc filter,
                                 iBookmarksCompareFunc cmp) {
     iPtrArray *list = collectNew_PtrArray();

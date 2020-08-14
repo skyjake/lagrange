@@ -121,3 +121,4 @@ void        makeMessage_Widget      (const char *title, const char *msg);
 iWidget *   makeQuestion_Widget     (const char *title, const char *msg,
                                      const char *labels[], const char *commands[], size_t count);
 iWidget *   makePreferences_Widget  (void);
+iWidget *   makeBookmarkEditor_Widget(void);

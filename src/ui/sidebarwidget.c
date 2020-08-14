@@ -76,8 +76,12 @@ static void clearItems_SidebarWidget_(iSidebarWidget *d) {
 
 static iRect contentBounds_SidebarWidget_(const iSidebarWidget *d) {
     iRect bounds = bounds_Widget(constAs_Widget(d));
-    adjustEdges_Rect(&bounds, as_Widget(d->modeButtons[0])->rect.size.y + gap_UI,
-                     -constAs_Widget(d->scroll)->rect.size.x, -gap_UI, 0);
+    const iWidget *scroll = constAs_Widget(d->scroll);
+    adjustEdges_Rect(&bounds,
+                     as_Widget(d->modeButtons[0])->rect.size.y + gap_UI,
+                     isVisible_Widget(scroll) ? -scroll->rect.size.x : 0,
+                     -gap_UI,
+                     0);
     return bounds;
 }
 
@@ -318,6 +322,15 @@ void setWidth_SidebarWidget(iSidebarWidget *d, int width) {
 iBool handleBookmarkEditorCommands_SidebarWidget_(iWidget *editor, const char *cmd) {
     iSidebarWidget *d = findWidget_App("sidebar");
     if (equal_Command(cmd, "bmed.accept") || equal_Command(cmd, "cancel")) {
+        if (equal_Command(cmd, "bmed.accept")) {
+            const iSidebarItem *item = hoverItem_SidebarWidget_(d);
+            iAssert(item); /* hover item cannot have been changed */
+            iBookmark *bm = get_Bookmarks(bookmarks_App(), item->id);
+            set_String(&bm->title, text_InputWidget(findChild_Widget(editor, "bmed.title")));
+            set_String(&bm->url, text_InputWidget(findChild_Widget(editor, "bmed.url")));
+            set_String(&bm->tags, text_InputWidget(findChild_Widget(editor, "bmed.tags")));
+            postCommand_App("bookmarks.changed");
+        }
         setFlags_Widget(as_Widget(d), disabled_WidgetFlag, iFalse);
         destroy_Widget(editor);
         return iTrue;
@@ -402,9 +415,10 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             if (d->mode == bookmarks_SidebarMode && item) {
                 setFlags_Widget(w, disabled_WidgetFlag, iTrue);
                 iWidget *dlg = makeBookmarkEditor_Widget();
-                setText_InputWidget(findChild_Widget(dlg, "bmed.title"), &item->label);
-                setText_InputWidget(findChild_Widget(dlg, "bmed.url"), &item->url);
-                //setText_InputWidget(findChild_Widget(dlg, "bmed.tags"), &item->)
+                iBookmark *bm = get_Bookmarks(bookmarks_App(), item->id);
+                setText_InputWidget(findChild_Widget(dlg, "bmed.title"), &bm->title);
+                setText_InputWidget(findChild_Widget(dlg, "bmed.url"), &bm->url);
+                setText_InputWidget(findChild_Widget(dlg, "bmed.tags"), &bm->tags);
                 setCommandHandler_Widget(dlg, handleBookmarkEditorCommands_SidebarWidget_);
             }
             return iTrue;

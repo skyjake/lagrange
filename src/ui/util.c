@@ -168,8 +168,9 @@ iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
     setFrameColor_Widget(menu, black_ColorId);
     setBackgroundColor_Widget(menu, gray25_ColorId);
     setFlags_Widget(menu,
-                    keepOnTop_WidgetFlag | hidden_WidgetFlag | arrangeVertical_WidgetFlag |
-                        arrangeSize_WidgetFlag | resizeChildrenToWidestChild_WidgetFlag,
+                    keepOnTop_WidgetFlag | collapse_WidgetFlag | hidden_WidgetFlag |
+                        arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag |
+                        resizeChildrenToWidestChild_WidgetFlag,
                     iTrue);
     for (size_t i = 0; i < n; ++i) {
         const iMenuItem *item = &items[i];
@@ -659,10 +660,8 @@ iWidget *makeQuestion_Widget(const char *title,
 
 void setToggle_Widget(iWidget *d, iBool active) {
     setFlags_Widget(d, selected_WidgetFlag, active);
-    updateText_LabelWidget(
-        (iLabelWidget *) d,
-        collectNewFormat_String(
-            "%s", isSelected_Widget(d) ? "YES" : "NO"));
+    updateText_LabelWidget((iLabelWidget *) d,
+                           collectNewFormat_String("%s", isSelected_Widget(d) ? "YES" : "NO"));
 }
 
 static iBool toggleHandler_(iWidget *d, const char *cmd) {
@@ -703,6 +702,41 @@ iWidget *makePreferences_Widget(void) {
     iWidget *div = new_Widget(); {
         setFlags_Widget(div, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
         addChild_Widget(div, iClob(new_LabelWidget("Dismiss", SDLK_ESCAPE, 0, "prefs.dismiss")));
+    }
+    addChild_Widget(dlg, iClob(div));
+    addChild_Widget(get_Window()->root, iClob(dlg));
+    centerSheet_Widget(dlg);
+    return dlg;
+}
+
+iWidget *makeBookmarkEditor_Widget(void) {
+    iWidget *dlg = makeSheet_Widget("bmed");
+    addChild_Widget(dlg, iClob(new_LabelWidget(cyan_ColorEscape "EDIT BOOKMARK", 0, 0, NULL)));
+    iWidget *page = new_Widget();
+    addChild_Widget(dlg, iClob(page));
+    setFlags_Widget(page, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
+    iWidget *headings = addChildFlags_Widget(
+        page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
+    iWidget *values = addChildFlags_Widget(
+        page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
+    iInputWidget *inputs[4];
+    addChild_Widget(headings, iClob(makeHeading_Widget("Title:")));
+    setId_Widget(addChild_Widget(values, iClob(inputs[0] = new_InputWidget(0))), "bmed.title");
+    addChild_Widget(headings, iClob(makeHeading_Widget("URL:")));
+    setId_Widget(addChild_Widget(values, iClob(inputs[1] = new_InputWidget(0))), "bmed.url");
+    addChild_Widget(headings, iClob(makeHeading_Widget("Tags:")));
+    setId_Widget(addChild_Widget(values, iClob(inputs[2] = new_InputWidget(0))), "bmed.tags");
+    arrange_Widget(dlg);
+    for (int i = 0; i < 3; ++i) {
+        as_Widget(inputs[i])->rect.size.x = dlg->rect.size.x - headings->rect.size.x - 3 * gap_UI;
+    }
+    iWidget *div = new_Widget(); {
+        setFlags_Widget(div, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
+        addChild_Widget(div, iClob(new_LabelWidget("Cancel", SDLK_ESCAPE, 0, "cancel")));
+        addChild_Widget(
+            div,
+            iClob(new_LabelWidget(
+                orange_ColorEscape "Save", SDLK_RETURN, KMOD_PRIMARY, "bmed.accept")));
     }
     addChild_Widget(dlg, iClob(div));
     addChild_Widget(get_Window()->root, iClob(dlg));
