@@ -173,9 +173,9 @@ void init_DocumentWidget(iDocumentWidget *d) {
     addChild_Widget(w, iClob(d->scroll = new_ScrollWidget()));
     d->menu =
         makeMenu_Widget(w,
-                        (iMenuItem[]){ { "Back", SDLK_LEFT, KMOD_PRIMARY, "navigate.back" },
-                                       { "Forward", SDLK_RIGHT, KMOD_PRIMARY, "navigate.forward" },
-                                       { "Reload", 'r', KMOD_PRIMARY, "navigate.reload" },
+                        (iMenuItem[]){ { "Go Back", SDLK_LEFT, KMOD_PRIMARY, "navigate.back" },
+                                       { "Go Forward", SDLK_RIGHT, KMOD_PRIMARY, "navigate.forward" },
+                                       { "Reload Page", 0, 0, "navigate.reload" },
                                        { "---", 0, 0, NULL },
                                        { "Copy", 'c', KMOD_PRIMARY, "copy" },
                                        { "Copy Link", 0, 0, "document.copylink" } },

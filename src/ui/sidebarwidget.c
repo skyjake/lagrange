@@ -2,6 +2,7 @@
 #include "labelwidget.h"
 #include "scrollwidget.h"
 #include "documentwidget.h"
+#include "inputwidget.h"
 #include "bookmarks.h"
 #include "paint.h"
 #include "util.h"
@@ -10,6 +11,7 @@
 #include "app.h"
 
 #include <the_Foundation/array.h>
+#include <SDL_clipboard.h>
 #include <SDL_mouse.h>
 
 iDeclareType(SidebarItem)
@@ -132,7 +134,12 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 pushBack_Array(&d->items, &item);
             }
             d->menu = makeMenu_Widget(
-                as_Widget(d), (iMenuItem[]){ { "Delete Bookmark", 0, 0, "bookmark.delete" } }, 1);
+                as_Widget(d),
+                (iMenuItem[]){ { "Edit Bookmark...", 0, 0, "bookmark.edit" },
+                               { "Copy URL", 0, 0, "bookmark.copy" },
+                               { "---", 0, 0, NULL },
+                               { orange_ColorEscape "Delete Bookmark", 0, 0, "bookmark.delete" } },
+                4);
             break;
         }
         case history_SidebarMode:
@@ -150,7 +157,7 @@ void setMode_SidebarWidget(iSidebarWidget *d, enum iSidebarMode mode) {
     for (enum iSidebarMode i = 0; i < max_SidebarMode; i++) {
         setFlags_Widget(as_Widget(d->modeButtons[i]), selected_WidgetFlag, i == d->mode);
     }
-    const float heights[max_SidebarMode] = { 1.2f, 2, 3, 3 };
+    const float heights[max_SidebarMode] = { 1.2f, 2.4f, 3, 3 };
     d->itemHeight = heights[mode] * lineHeight_Text(default_FontId);
 }
 
@@ -286,6 +293,13 @@ static void checkModeButtonLayout_SidebarWidget_(iSidebarWidget *d) {
     }
 }
 
+static iSidebarItem *hoverItem_SidebarWidget_(iSidebarWidget *d) {
+    if (d->hoverItem < size_Array(&d->items)) {
+        return at_Array(&d->items, d->hoverItem);
+    }
+    return NULL;
+}
+
 void setWidth_SidebarWidget(iSidebarWidget *d, int width) {
     iWidget *w = as_Widget(d);
     width = iMax(30 * gap_UI, width);
@@ -299,6 +313,16 @@ void setWidth_SidebarWidget(iSidebarWidget *d, int width) {
         updateSize_DocumentWidget(document_App());
         refresh_Widget(w);
     }
+}
+
+iBool handleBookmarkEditorCommands_SidebarWidget_(iWidget *editor, const char *cmd) {
+    iSidebarWidget *d = findWidget_App("sidebar");
+    if (equal_Command(cmd, "bmed.accept") || equal_Command(cmd, "cancel")) {
+        setFlags_Widget(as_Widget(d), disabled_WidgetFlag, iFalse);
+        destroy_Widget(editor);
+        return iTrue;
+    }
+    return iFalse;
 }
 
 static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev) {
@@ -341,6 +365,9 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         else if (equal_Command(cmd, "sidebar.mode")) {
             setMode_SidebarWidget(d, arg_Command(cmd));
             updateItems_SidebarWidget_(d);
+            if (argLabel_Command(cmd, "show") && !isVisible_Widget(w)) {
+                postCommand_App("sidebar.toggle");
+            }
             return iTrue;
         }
         else if (equal_Command(cmd, "sidebar.toggle")) {
@@ -363,12 +390,29 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             d->scrollY = 0;
             updateItems_SidebarWidget_(d);
         }
+        else if (equal_Command(cmd, "bookmark.copy")) {
+            const iSidebarItem *item = hoverItem_SidebarWidget_(d);
+            if (d->mode == bookmarks_SidebarMode && item) {
+                SDL_SetClipboardText(cstr_String(&item->url));
+            }
+            return iTrue;
+        }
+        else if (equal_Command(cmd, "bookmark.edit")) {
+            const iSidebarItem *item = hoverItem_SidebarWidget_(d);
+            if (d->mode == bookmarks_SidebarMode && item) {
+                setFlags_Widget(w, disabled_WidgetFlag, iTrue);
+                iWidget *dlg = makeBookmarkEditor_Widget();
+                setText_InputWidget(findChild_Widget(dlg, "bmed.title"), &item->label);
+                setText_InputWidget(findChild_Widget(dlg, "bmed.url"), &item->url);
+                //setText_InputWidget(findChild_Widget(dlg, "bmed.tags"), &item->)
+                setCommandHandler_Widget(dlg, handleBookmarkEditorCommands_SidebarWidget_);
+            }
+            return iTrue;
+        }
         else if (equal_Command(cmd, "bookmark.delete")) {
-            if (d->mode == bookmarks_SidebarMode && d->hoverItem < size_Array(&d->items)) {
-                const iSidebarItem *item = at_Array(&d->items, d->hoverItem);
-                if (remove_Bookmarks(bookmarks_App(), item->id)) {
-                    postCommand_App("bookmarks.changed");
-                }
+            const iSidebarItem *item = hoverItem_SidebarWidget_(d);
+            if (d->mode == bookmarks_SidebarMode && item && remove_Bookmarks(bookmarks_App(), item->id)) {
+                postCommand_App("bookmarks.changed");
             }
             return iTrue;
         }
@@ -405,7 +449,9 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         return iTrue;
     }
     if (d->menu && ev->type == SDL_MOUSEBUTTONDOWN) {
-        processContextMenuEvent_Widget(d->menu, ev, {});
+        if (d->hoverItem != iInvalidPos || isVisible_Widget(d->menu)) {
+            processContextMenuEvent_Widget(d->menu, ev, {});
+        }
     }
     switch (processEvent_Click(&d->click, ev)) {
         case started_ClickResult:
@@ -463,7 +509,7 @@ static void draw_SidebarWidget_(const iSidebarWidget *d) {
                                   "%s",
                                   cstr_String(&str));
                 deinit_String(&str);
-                iInt2 textPos = topRight_Rect(iconArea);
+                iInt2 textPos = addY_I2(topRight_Rect(iconArea), 0.2f * lineHeight_Text(font));
                 drawRange_Text(font, textPos, fg, range_String(&item->label));
                 drawRange_Text(font,
                                addY_I2(textPos, lineHeight_Text(font)),

@@ -99,11 +99,19 @@ static const iMenuItem editMenuItems[] = {
 };
 
 static const iMenuItem viewMenuItems[] = {
+    { "Show Page Outline", '1', KMOD_PRIMARY, "sidebar.mode arg:0 show:1" },
+    { "Show Bookmarks", '2', KMOD_PRIMARY, "sidebar.mode arg:1 show:1" },
+    { "Show History", '3', KMOD_PRIMARY, "sidebar.mode arg:2 show:1" },
+    { "Show Identities", '4', KMOD_PRIMARY, "sidebar.mode arg:3 show:1" },
+    { "Toggle Sidebar", SDLK_s, KMOD_PRIMARY | KMOD_ALT, "sidebar.toggle" },
+    { "---", 0, 0, NULL },
+    { "Go Back", SDLK_LEFTBRACKET, KMOD_PRIMARY, "navigate.back" },
+    { "Go Forward", SDLK_RIGHTBRACKET, KMOD_PRIMARY, "navigate.forward" },
+    { "Reload Page", 'r', KMOD_PRIMARY, "navigate.reload" },
+    { "---", 0, 0, NULL },
     { "Zoom In", SDLK_EQUALS, KMOD_PRIMARY, "zoom.delta arg:10" },
     { "Zoom Out", SDLK_MINUS, KMOD_PRIMARY, "zoom.delta arg:-10" },
     { "Reset Zoom", SDLK_0, KMOD_PRIMARY, "zoom.set arg:100" },
-    { "---", 0, 0, NULL },
-    { "Toggle Sidebar", SDLK_s, KMOD_PRIMARY | KMOD_ALT, "sidebar.toggle" },
 };
 #endif
 
@@ -290,7 +298,7 @@ static void setupUserInterface_Window(iWindow *d) {
         setId_Widget(tabBar, "doctabs");
         setFlags_Widget(tabBar, expand_WidgetFlag, iTrue);
         setBackgroundColor_Widget(tabBar, gray25_ColorId);
-        appendTabPage_Widget(tabBar, iClob(new_DocumentWidget()), "Document", '1', KMOD_PRIMARY);
+        appendTabPage_Widget(tabBar, iClob(new_DocumentWidget()), "Document", 0, 0);
         iWidget *buttons = findChild_Widget(tabBar, "tabs.buttons");
         setFlags_Widget(buttons, collapse_WidgetFlag | hidden_WidgetFlag, iTrue);
         setId_Widget(
@@ -382,7 +390,7 @@ void init_Window(iWindow *d, iRect rect) {
     if (left_Rect(rect) >= 0) {
         SDL_SetWindowPosition(d->win, left_Rect(rect), top_Rect(rect));
     }
-    SDL_SetWindowMinimumSize(d->win, 640, 400);
+    SDL_SetWindowMinimumSize(d->win, 400, 200);
     SDL_SetWindowTitle(d->win, "Lagrange");    
     /* Some info. */ {
         SDL_RendererInfo info;
