@@ -42,6 +42,8 @@ set (SOURCES
     src/main.c
     src/app.c
     src/app.h
+    src/bookmarks.c
+    src/bookmarks.h
     src/gmcerts.c
     src/gmcerts.h
     src/gmdocument.c
