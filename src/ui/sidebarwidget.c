@@ -15,18 +15,20 @@
 iDeclareType(SidebarItem)
 
 struct Impl_SidebarItem {
-    int     indent;
-    iChar   icon;
-    iString label;
-    iString meta;
-    iString url;
-    size_t  index;
+    int         indent;
+    iChar       icon;
+    iString     label;
+    iString     meta;
+    iString     url;
+    size_t      index;
+    const void *src;
 };
 
 void init_SidebarItem(iSidebarItem *d) {
     d->indent = 0;
     d->icon   = 0;
     d->index  = 0;
+    d->src    = NULL;
     init_String(&d->label);
     init_String(&d->meta);
     init_String(&d->url);
@@ -56,6 +58,7 @@ struct Impl_SidebarWidget {
     iClick click;
     iWidget *resizer;
     SDL_Cursor *resizeCursor;
+    iWidget *menu;
 };
 
 iDefineObjectConstruction(SidebarWidget)
@@ -85,7 +88,6 @@ static int scrollMax_SidebarWidget_(const iSidebarWidget *d) {
 }
 
 static void updateVisible_SidebarWidget_(iSidebarWidget *d) {
-    //    iWidget *w = as_Widget(d);
     const int contentSize = size_Array(&d->items) * d->itemHeight;
     const iRect bounds = contentBounds_SidebarWidget_(d);
     setRange_ScrollWidget(d->scroll, (iRangei){ 0, scrollMax_SidebarWidget_(d) });
@@ -98,6 +100,9 @@ static void updateVisible_SidebarWidget_(iSidebarWidget *d) {
 
 static void updateItems_SidebarWidget_(iSidebarWidget *d) {
     clearItems_SidebarWidget_(d);
+    destroy_Widget(d->menu);
+    d->menu = NULL;
+    d->hoverItem = iInvalidPos;
     switch (d->mode) {
         case documentOutline_SidebarMode: {
             const iGmDocument *doc = document_DocumentWidget(document_App());
@@ -124,9 +129,12 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 init_Date(&date, &bm->when);
                 iString *ds = format_Date(&date, "%Y %b %d");
                 set_String(&item.meta, ds);
+                item.src = bm;
                 delete_String(ds);
                 pushBack_Array(&d->items, &item);
             }
+            d->menu = makeMenu_Widget(
+                as_Widget(d), (iMenuItem[]){ { "Delete Bookmark", 0, 0, "bookmark.delete" } }, 1);
             break;
         }
         case history_SidebarMode:
@@ -209,6 +217,7 @@ void init_SidebarWidget(iSidebarWidget *d) {
     d->resizer->rect.size.x = gap_UI;
     setBackgroundColor_Widget(d->resizer, none_ColorId);
     d->resizeCursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZEWE);
+    d->menu = NULL;
 }
 
 void deinit_SidebarWidget(iSidebarWidget *d) {
@@ -356,11 +365,16 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             d->scrollY = 0;
             updateItems_SidebarWidget_(d);
         }
+        else if (equal_Command(cmd, "bookmark.delete")) {
+            if (d->mode == bookmarks_SidebarMode && d->hoverItem < size_Array(&d->items)) {
+
+            }
+        }
         else if (equal_Command(cmd, "bookmarks.changed")) {
             updateItems_SidebarWidget_(d);
         }
     }
-    if (ev->type == SDL_MOUSEMOTION) {
+    if (ev->type == SDL_MOUSEMOTION && !isVisible_Widget(d->menu)) {
         const iInt2 mouse = init_I2(ev->motion.x, ev->motion.y);
         size_t hover = iInvalidPos;
         if (contains_Widget(d->resizer, mouse)) {
@@ -387,6 +401,9 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         d->hoverItem = iInvalidPos;
         refresh_Widget(w);
         return iTrue;
+    }
+    if (d->menu && ev->type == SDL_MOUSEBUTTONDOWN) {
+        processContextMenuEvent_Widget(d->menu, ev, {});
     }
     switch (processEvent_Click(&d->click, ev)) {
         case started_ClickResult:
@@ -416,9 +433,9 @@ static void draw_SidebarWidget_(const iSidebarWidget *d) {
         const iRanges visRange = visRange_SidebarWidget_(d);
         iInt2 pos = addY_I2(topLeft_Rect(bounds), -(d->scrollY % d->itemHeight));
         for (size_t i = visRange.start; i < visRange.end; i++) {
-            const iSidebarItem *item = constAt_Array(&d->items, i);
-            const iRect itemRect = { pos, init_I2(width_Rect(bounds), d->itemHeight) };
-            const iBool isHover = (d->hoverItem == i);
+            const iSidebarItem *item        = constAt_Array(&d->items, i);
+            const iRect         itemRect    = { pos, init_I2(width_Rect(bounds), d->itemHeight) };
+            const iBool         isHover     = (d->hoverItem == i);
             setClip_Paint(&p, intersect_Rect(itemRect, bounds));
             if (isHover) {
                 fillRect_Paint(&p, itemRect, isPressing ? orange_ColorId : teal_ColorId);

@@ -240,8 +240,8 @@ int checkContextMenu_Widget(iWidget *menu, const SDL_Event *ev) {
         const iInt2 mousePos = init_I2(ev->button.x, ev->button.y);
         if (contains_Widget(menu->parent, mousePos)) {
             openMenu_Widget(menu, localCoord_Widget(menu->parent, mousePos));
+            return 0x2;
         }
-        return 0x2;
     }
     return 0;
 }

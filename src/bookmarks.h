@@ -1,5 +1,6 @@
 #pragma once
 
+#include <the_Foundation/hash.h>
 #include <the_Foundation/ptrarray.h>
 #include <the_Foundation/string.h>
 #include <the_Foundation/time.h>
@@ -8,12 +9,15 @@ iDeclareType(Bookmark)
 iDeclareTypeConstruction(Bookmark)
 
 struct Impl_Bookmark {
+    iHashNode node;
     iString url;
     iString title;
     iString tags;
     iChar icon;
     iTime when;
 };
+
+iLocalDef uint32_t  id_Bookmark (const iBookmark *d) { return d->node.key; }
 
 iDeclareType(Bookmarks)
 iDeclareTypeConstruction(Bookmarks)
@@ -23,6 +27,7 @@ void    load_Bookmarks      (iBookmarks *, const char *dirPath);
 void    save_Bookmarks      (const iBookmarks *, const char *dirPath);
 
 void    add_Bookmarks       (iBookmarks *, const iString *url, const iString *title, const iString *tags, iChar icon);
+void    remove_Bookmarks    (iBookmarks *, uint32_t id);
 
 typedef iBool (*iBookmarksFilterFunc) (const iBookmark *);
 typedef int   (*iBookmarksCompareFunc)(const iBookmark **, const iBookmark **);

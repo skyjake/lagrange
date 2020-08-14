@@ -75,12 +75,16 @@ static void aboutToBeDestroyed_Widget_(iWidget *d) {
 }
 
 void destroy_Widget(iWidget *d) {
-    aboutToBeDestroyed_Widget_(d);
-    if (!rootData_.pendingDestruction) {
-        rootData_.pendingDestruction = new_PtrSet();
+    if (d) {
+        if (isVisible_Widget(d)) {
+            postRefresh_App();
+        }
+        aboutToBeDestroyed_Widget_(d);
+        if (!rootData_.pendingDestruction) {
+            rootData_.pendingDestruction = new_PtrSet();
+        }
+        insert_PtrSet(rootData_.pendingDestruction, d);
     }
-    insert_PtrSet(rootData_.pendingDestruction, d);
-    postRefresh_App();
 }
 
 void setId_Widget(iWidget *d, const char *id) {
@@ -408,6 +412,10 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
             }
         }
         if (class_Widget(d)->processEvent(d, ev)) {
+            if (ev->type == SDL_MOUSEBUTTONDOWN) {
+                printf("mb.down eaten by %p '%s'\n", d, cstr_String(id_Widget(d)));
+                fflush(stdout);
+            }
             return iTrue;
         }
     }
@@ -560,6 +568,7 @@ size_t childCount_Widget(const iWidget *d) {
 }
 
 iBool isVisible_Widget(const iWidget *d) {
+    if (!d) return iFalse;
     for (const iWidget *w = d; w; w = w->parent) {
         if (w->flags & hidden_WidgetFlag) {
             return iFalse;

@@ -2,6 +2,7 @@
 
 #include <the_Foundation/file.h>
 #include <the_Foundation/path.h>
+#include <the_Foundation/hash.h>
 
 void init_Bookmark(iBookmark *d) {
     init_String(&d->url);
@@ -27,25 +28,33 @@ static int cmpTimeDescending_Bookmark_(const iBookmark **a, const iBookmark **b)
 static const char *fileName_Bookmarks_ = "bookmarks.txt";
 
 struct Impl_Bookmarks {
-    iArray bookmarks;
+    int   idEnum;
+    iHash bookmarks;
 };
 
 iDefineTypeConstruction(Bookmarks)
 
 void init_Bookmarks(iBookmarks *d) {
-    init_Array(&d->bookmarks, sizeof(iBookmark));
+    d->idEnum = 0;
+    init_Hash(&d->bookmarks);
 }
 
 void deinit_Bookmarks(iBookmarks *d) {
     clear_Bookmarks(d);
-    deinit_Array(&d->bookmarks);
+    deinit_Hash(&d->bookmarks);
 }
 
 void clear_Bookmarks(iBookmarks *d) {
-    iForEach(Array, i, &d->bookmarks) {
-        deinit_Bookmark(i.value);
+    iForEach(Hash, i, &d->bookmarks) {
+        delete_Bookmark((iBookmark *) i.value);
     }
-    clear_Array(&d->bookmarks);
+    clear_Hash(&d->bookmarks);
+    d->idEnum = 0;
+}
+
+static void insert_Bookmarks_(iBookmarks *d, iBookmark *bookmark) {
+    bookmark->node.key = ++d->idEnum;
+    insert_Hash(&d->bookmarks, &bookmark->node);
 }
 
 void load_Bookmarks(iBookmarks *d, const char *dirPath) {
@@ -62,19 +71,18 @@ void load_Bookmarks(iBookmarks *d, const char *dirPath) {
                     continue;
                 }
             }
-            iBookmark bm;
-            init_Bookmark(&bm);
-            bm.icon = strtoul(line.start, NULL, 16);
+            iBookmark *bm = new_Bookmark();
+            bm->icon = strtoul(line.start, NULL, 16);
             line.start += 9;
             char *endPos;
-            initSeconds_Time(&bm.when, strtod(line.start, &endPos));
+            initSeconds_Time(&bm->when, strtod(line.start, &endPos));
             line.start = skipSpace_CStr(endPos);
-            setRange_String(&bm.url, line);
+            setRange_String(&bm->url, line);
             nextSplit_Rangecc(&src, "\n", &line);
-            setRange_String(&bm.title, line);
+            setRange_String(&bm->title, line);
             nextSplit_Rangecc(&src, "\n", &line);
-            setRange_String(&bm.tags, line);
-            pushBack_Array(&d->bookmarks, &bm);
+            setRange_String(&bm->tags, line);
+            insert_Bookmarks_(d, bm);
         }
     }
     iRelease(f);
@@ -84,8 +92,8 @@ void save_Bookmarks(const iBookmarks *d, const char *dirPath) {
     iFile *f = newCStr_File(concatPath_CStr(dirPath, fileName_Bookmarks_));
     if (open_File(f, writeOnly_FileMode | text_FileMode)) {
         iString *str = collectNew_String();
-        iConstForEach(Array, i, &d->bookmarks) {
-            const iBookmark *bm = i.value;
+        iConstForEach(Hash, i, &d->bookmarks) {
+            const iBookmark *bm = (const iBookmark *) i.value;
             format_String(str,
                           "%08x %lf %s\n%s\n%s\n",
                           bm->icon,
@@ -101,22 +109,26 @@ void save_Bookmarks(const iBookmarks *d, const char *dirPath) {
 
 void add_Bookmarks(iBookmarks *d, const iString *url, const iString *title, const iString *tags,
                    iChar icon) {
-    iBookmark bm;
-    init_Bookmark(&bm);
-    set_String(&bm.url, url);
-    set_String(&bm.title, title);
-    set_String(&bm.tags, tags);
-    bm.icon = icon;
-    initCurrent_Time(&bm.when);
-    pushBack_Array(&d->bookmarks, &bm);
+    iBookmark *bm = new_Bookmark();
+    set_String(&bm->url, url);
+    set_String(&bm->title, title);
+    set_String(&bm->tags, tags);
+    bm->icon = icon;
+    initCurrent_Time(&bm->when);
+    insert_Bookmarks_(d, bm);
+}
+
+void remove_Bookmarks(iBookmarks *d, uint32_t id) {
+    delete_Bookmark((iBookmark *) remove_Hash(&d->bookmarks, id));
 }
 
 const iPtrArray *list_Bookmarks(const iBookmarks *d, iBookmarksFilterFunc filter,
                                 iBookmarksCompareFunc cmp) {
     iPtrArray *list = collectNew_PtrArray();
-    iConstForEach(Array, i, &d->bookmarks) {
-        if (!filter || filter(i.value)) {
-            pushBack_PtrArray(list, i.value);
+    iConstForEach(Hash, i, &d->bookmarks) {
+        const iBookmark *bm = (const iBookmark *) i.value;
+        if (!filter || filter(bm)) {
+            pushBack_PtrArray(list, bm);
         }
     }
     if (!cmp) cmp = cmpTimeDescending_Bookmark_;
