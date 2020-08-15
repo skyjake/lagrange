@@ -55,6 +55,8 @@ enum iFontId {
     banner_FontId            = largeLight_FontId,
 };
 
+#define variationSelectorEmoji_Char     ((iChar) 0xfe0f)
+
 extern int gap_Text; /* affected by content font size */
 
 void    init_Text           (SDL_Renderer *);

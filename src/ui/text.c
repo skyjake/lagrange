@@ -416,6 +416,10 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
             }
         }
         iChar ch = nextChar_(&chPos, text.end);
+        if (ch == variationSelectorEmoji_Char) {
+            /* TODO: Should peek ahead for this and prefer the Emoji font. */
+            ch = nextChar_(&chPos, text.end); /* just ignore */
+        }
         /* Special instructions. */ {
             if (ch == '\n') {
                 xpos = pos.x;
