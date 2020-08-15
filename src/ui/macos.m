@@ -358,15 +358,14 @@ void setupApplication_MacOS(void) {
     windowCloseItem.action = @selector(closeTab);
 }
 
-void insertMenuItems_MacOS(const char *menuLabel, const iMenuItem *items, size_t count) {
+void insertMenuItems_MacOS(const char *menuLabel, int atIndex, const iMenuItem *items, size_t count) {
     NSApplication *app = [NSApplication sharedApplication];
     MyDelegate *myDel = (MyDelegate *) app.delegate;
     NSMenu *appMenu = [app mainMenu];
     NSMenuItem *mainItem = [appMenu insertItemWithTitle:[NSString stringWithUTF8String:menuLabel]
                                                  action:nil
                                           keyEquivalent:@""
-                                                atIndex:(iCmpStr(menuLabel, "File") == 0 ? 1 :
-                                                         iCmpStr(menuLabel, "Edit") == 0 ? 2 : 3)];
+                                                atIndex:atIndex];
     NSMenu *menu = [[NSMenu alloc] initWithTitle:[NSString stringWithUTF8String:menuLabel]];
     for (size_t i = 0; i < count; ++i) {
         const char *label = items[i].label;
