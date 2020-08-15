@@ -88,6 +88,12 @@ void cleanUrlPath_String(iString *d) {
     deinit_String(&clean);
 }
 
+iRangecc urlProtocol_String(const iString *d) {
+    iUrl url;
+    init_Url(&url, d);
+    return url.protocol;
+}
+
 iRangecc urlHost_String(const iString *d) {
     iUrl url;
     init_Url(&url, d);

@@ -595,6 +595,9 @@ static iBool updateFromHistory_DocumentWidget_(iDocumentWidget *d) {
         postCommandf_App("document.changed doc:%p url:%s", d, cstr_String(d->mod.url));
         return iTrue;
     }
+    else if (!isEmpty_String(d->mod.url)) {
+        fetch_DocumentWidget_(d);
+    }
     return iFalse;
 }
 
@@ -956,7 +959,12 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         checkResponse_DocumentWidget_(d);
         d->scrollY = d->initialNormScrollY * size_GmDocument(d->doc).y;
         d->state = ready_RequestState;
-        setCachedResponse_History(d->mod.history, response_GmRequest(d->request));
+        /* The response may be cached. */ {
+            const iRangecc proto = urlProtocol_String(d->mod.url);
+            if (!equal_Rangecc(&proto, "about")) {
+                setCachedResponse_History(d->mod.history, response_GmRequest(d->request));
+            }
+        }
         iReleasePtr(&d->request);
         updateVisible_DocumentWidget_(d);
         postCommandf_App("document.changed url:%s", cstr_String(d->mod.url));

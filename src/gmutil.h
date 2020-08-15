@@ -70,6 +70,7 @@ struct Impl_Url {
 
 void            init_Url                (iUrl *, const iString *text);
 
+iRangecc        urlProtocol_String      (const iString *);
 iRangecc        urlHost_String          (const iString *);
 const iString * absoluteUrl_String      (const iString *, const iString *urlMaybeRelative);
 iString *       makeFileUrl_String      (const iString *localFilePath);
