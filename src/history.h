@@ -11,7 +11,7 @@ iDeclareTypeConstruction(RecentUrl)
 
 struct Impl_RecentUrl {
     iString      url;
-    int          scrollY;        /* unit is gap_UI */
+    float        normScrollY;    /* normalized to document height */
     iGmResponse *cachedResponse; /* kept in memory for quicker back navigation */
 };
 

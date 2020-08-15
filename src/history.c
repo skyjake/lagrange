@@ -8,7 +8,7 @@ static const size_t maxStack_History_ = 50; /* back/forward navigable items */
 
 void init_RecentUrl(iRecentUrl *d) {
     init_String(&d->url);
-    d->scrollY = 0;
+    d->normScrollY = 0;
     d->cachedResponse = NULL;
 }
 
@@ -22,7 +22,7 @@ iDefineTypeConstruction(RecentUrl)
 iRecentUrl *copy_RecentUrl(const iRecentUrl *d) {
     iRecentUrl *copy = new_RecentUrl();
     set_String(&copy->url, &d->url);
-    copy->scrollY = d->scrollY;
+    copy->normScrollY = d->normScrollY;
     copy->cachedResponse = d->cachedResponse ? copy_GmResponse(d->cachedResponse) : NULL;
     return copy;
 }
@@ -61,7 +61,7 @@ void serialize_History(const iHistory *d, iStream *outs) {
     iConstForEach(Array, i, &d->recent) {
         const iRecentUrl *item = i.value;
         serialize_String(&item->url, outs);
-        write32_Stream(outs, item->scrollY);
+        write32_Stream(outs, item->normScrollY * 1.0e6f);
         if (item->cachedResponse) {
             write8_Stream(outs, 1);
             serialize_GmResponse(item->cachedResponse, outs);
@@ -80,7 +80,7 @@ void deserialize_History(iHistory *d, iStream *ins) {
         iRecentUrl item;
         init_RecentUrl(&item);
         deserialize_String(&item.url, ins);
-        item.scrollY = read32_Stream(ins);
+        item.normScrollY = (float) read32_Stream(ins) / 1.0e6f;
         if (read8_Stream(ins)) {
             item.cachedResponse = new_GmResponse();
             deserialize_GmResponse(item.cachedResponse, ins);
@@ -166,8 +166,8 @@ void add_History(iHistory *d, const iString *url ){
 iBool goBack_History(iHistory *d) {
     if (d->recentPos < size_Array(&d->recent) - 1) {
         d->recentPos++;
-        postCommandf_App("open history:1 scroll:%d url:%s",
-                         mostRecentUrl_History(d)->scrollY,
+        postCommandf_App("open history:1 scroll:%f url:%s",
+                         mostRecentUrl_History(d)->normScrollY,
                          cstr_String(url_History(d, d->recentPos)));
         return iTrue;
     }
@@ -177,7 +177,9 @@ iBool goBack_History(iHistory *d) {
 iBool goForward_History(iHistory *d) {
     if (d->recentPos > 0) {
         d->recentPos--;
-        postCommandf_App("open history:1 url:%s", cstr_String(url_History(d, d->recentPos)));
+        postCommandf_App("open history:1 scroll:%f url:%s",
+                         mostRecentUrl_History(d)->normScrollY,
+                         cstr_String(url_History(d, d->recentPos)));
         return iTrue;
     }
     return iFalse;

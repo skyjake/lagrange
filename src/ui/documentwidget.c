@@ -131,7 +131,7 @@ struct Impl_DocumentWidget {
     const iGmRun *hoverLink;
     iBool noHoverWhileScrolling;
     iClick click;
-    int initialScrollY;
+    float initialNormScrollY;
     int scrollY;
     iScrollWidget *scroll;
     iWidget *menu;
@@ -157,7 +157,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     d->isRequestUpdated = iFalse;
     d->media            = new_ObjectList();
     d->doc              = new_GmDocument();
-    d->initialScrollY   = 0;
+    d->initialNormScrollY = 0;
     d->scrollY          = 0;
     d->selecting        = iFalse;
     d->selectMark       = iNullRange;
@@ -262,6 +262,14 @@ static void addVisibleLink_DocumentWidget_(void *context, const iGmRun *run) {
     }
 }
 
+static float normScrollPos_DocumentWidget_(const iDocumentWidget *d) {
+    const int docSize = size_GmDocument(d->doc).y;
+    if (docSize) {
+        return (float) d->scrollY / (float) docSize;
+    }
+    return 0;
+}
+
 static int scrollMax_DocumentWidget_(const iDocumentWidget *d) {
     return size_GmDocument(d->doc).y - height_Rect(bounds_Widget(constAs_Widget(d))) +
            2 * d->pageMargin * gap_UI;
@@ -307,8 +315,8 @@ static void updateVisible_DocumentWidget_(iDocumentWidget *d) {
     updateHover_DocumentWidget_(d, mouseCoord_Window(get_Window()));
     /* Remember scroll positions of recently visited pages. */ {
         iRecentUrl *recent = mostRecentUrl_History(d->mod.history);
-        if (recent) {
-            recent->scrollY = d->scrollY / gap_UI;
+        if (recent && docSize && d->state == ready_RequestState) {
+            recent->normScrollY = normScrollPos_DocumentWidget_(d);
         }
     }
 }
@@ -505,7 +513,7 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse
                 return;
             }
             /* Convert the source to UTF-8 if needed. */
-            if (!equal_Rangecc(&charset, "utf-8")) {
+            if (!equalCase_Rangecc(&charset, "utf-8")) {
                 set_String(&str,
                            collect_String(decode_Block(&str.chars, cstr_Rangecc(charset))));
             }
@@ -577,11 +585,13 @@ static iBool updateFromHistory_DocumentWidget_(iDocumentWidget *d) {
     if (recent && recent->cachedResponse) {
         const iGmResponse *resp = recent->cachedResponse;
         d->state = fetching_RequestState;
+        d->initialNormScrollY = recent->normScrollY;
         /* Use the cached response data. */
-        d->scrollY = d->initialScrollY = recent->scrollY * gap_UI;
         updateTrust_DocumentWidget_(d, resp);
         updateDocument_DocumentWidget_(d, resp);
+        d->scrollY = d->initialNormScrollY * size_GmDocument(d->doc).y;
         d->state = ready_RequestState;
+        updateVisible_DocumentWidget_(d);
         postCommandf_App("document.changed doc:%p url:%s", d, cstr_String(d->mod.url));
         return iTrue;
     }
@@ -621,8 +631,8 @@ void setUrlFromCache_DocumentWidget(iDocumentWidget *d, const iString *url, iBoo
 iDocumentWidget *duplicate_DocumentWidget(const iDocumentWidget *orig) {
     iDocumentWidget *d = new_DocumentWidget();
     delete_History(d->mod.history);
-    d->initialScrollY = orig->scrollY;
-    d->mod.history    = copy_History(orig->mod.history);
+    d->initialNormScrollY = normScrollPos_DocumentWidget_(d);
+    d->mod.history = copy_History(orig->mod.history);
     setUrlFromCache_DocumentWidget(d, orig->mod.url, iTrue);
     return d;
 }
@@ -631,8 +641,8 @@ void setUrl_DocumentWidget(iDocumentWidget *d, const iString *url) {
     setUrlFromCache_DocumentWidget(d, url, iFalse);
 }
 
-void setInitialScroll_DocumentWidget (iDocumentWidget *d, int scrollY) {
-    d->initialScrollY = scrollY;
+void setInitialScroll_DocumentWidget(iDocumentWidget *d, float normScrollY) {
+    d->initialNormScrollY = normScrollY;
 }
 
 iBool isRequestOngoing_DocumentWidget(const iDocumentWidget *d) {
@@ -691,7 +701,7 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                 break;
             }
             case categorySuccess_GmStatusCode:
-                d->scrollY = d->initialScrollY;
+                d->scrollY = 0;
                 reset_GmDocument(d->doc); /* new content incoming */
                 updateDocument_DocumentWidget_(d, response_GmRequest(d->request));
                 break;
@@ -944,9 +954,11 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     else if (equalWidget_Command(cmd, w, "document.request.finished") &&
              pointerLabel_Command(cmd, "request") == d->request) {
         checkResponse_DocumentWidget_(d);
+        d->scrollY = d->initialNormScrollY * size_GmDocument(d->doc).y;
         d->state = ready_RequestState;
         setCachedResponse_History(d->mod.history, response_GmRequest(d->request));
         iReleasePtr(&d->request);
+        updateVisible_DocumentWidget_(d);
         postCommandf_App("document.changed url:%s", cstr_String(d->mod.url));
         return iFalse;
     }
@@ -971,7 +983,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return handleMediaCommand_DocumentWidget_(d, cmd);
     }
     else if (equal_Command(cmd, "document.reload") && document_App() == d) {
-        d->initialScrollY = d->scrollY;
+        d->initialNormScrollY = normScrollPos_DocumentWidget_(d);
         fetch_DocumentWidget_(d);
         return iTrue;
     }

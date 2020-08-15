@@ -28,6 +28,15 @@ int arg_Command(const char *cmd) {
     return argLabel_Command(cmd, "arg");
 }
 
+float argfLabel_Command(const char *cmd, const char *label) {
+    const iString *tok = tokenString_(label);
+    const char *ptr = strstr(cmd, cstr_String(tok));
+    if (ptr) {
+        return strtof(ptr + size_String(tok), NULL);
+    }
+    return 0.0f;
+}
+
 float argf_Command(const char *cmd) {
     const char *ptr = strstr(cmd, " arg:");
     if (ptr) {

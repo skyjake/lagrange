@@ -255,6 +255,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
 #endif
     d->window = new_Window(d->initialWindowRect);
     /* Widget state init. */
+    processEvents_App(postedEventsOnly_AppEventMode);
     if (!loadState_App_(d)) {
         postCommand_App("navigate.home");
     }
@@ -512,7 +513,7 @@ iBool handleCommand_App(const char *cmd) {
             }
         }
         visitUrl_Visited(d->visited, url);
-        setInitialScroll_DocumentWidget(doc, argLabel_Command(cmd, "scroll") * gap_UI);
+        setInitialScroll_DocumentWidget(doc, argfLabel_Command(cmd, "scroll"));
         setUrlFromCache_DocumentWidget(doc, url, isHistory);
     }
     else if (equal_Command(cmd, "document.request.cancelled")) {

@@ -7,6 +7,7 @@ iBool   equal_Command           (const char *commandWithArgs, const char *comman
 int     arg_Command             (const char *); /* arg: */
 float   argf_Command            (const char *); /* arg: */
 int     argLabel_Command        (const char *, const char *label);
+float   argfLabel_Command       (const char *, const char *label);
 void *  pointer_Command         (const char *); /* ptr: */
 void *  pointerLabel_Command    (const char *, const char *label);
 iInt2   coord_Command           (const char *);
