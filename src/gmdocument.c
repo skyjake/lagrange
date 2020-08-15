@@ -289,7 +289,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     static const char *bullet = "\u2022";
     static const char *folder = "\U0001f4c1";
     static const char *globe  = "\U0001f310";
-    const float midRunSkip = 0.1f; /* extra space between wrapped text/quote lines */
+    const float midRunSkip = 0.120f; /* extra space between wrapped text/quote lines */
     clear_Array(&d->layout);
     clearLinks_GmDocument_(d);
     clear_Array(&d->headings);

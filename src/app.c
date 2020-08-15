@@ -587,7 +587,8 @@ iBool handleCommand_App(const char *cmd) {
         setCommandHandler_Widget(dlg, handlePrefsCommands_);
     }
     else if (equal_Command(cmd, "navigate.home")) {
-        postCommand_App("open url:about:home");
+        /* TODO: Look for bookmarks tagged homepage, or use the URL set in Preferences. */
+        postCommand_App("open url:about:lagrange");
         return iTrue;
     }
     else if (equal_Command(cmd, "zoom.set")) {

@@ -1,0 +1,15 @@
+```
+ooooo
+`888'
+ 888          .oooo.    .oooooooo oooo d8b  .oooo.   ooo. .oo.    .oooooooo  .ooooo.
+ 888         `P  )88b  888' `88b  `888""8P `P  )88b  `888P"Y88b  888' `88b  d88' `88b
+ 888          .oP"888  888   888   888      .oP"888   888   888  888   888  888ooo888
+ 888       o d8(  888  `88bod8P'   888     d8(  888   888   888  `88bod8P'  888    .o
+o888ooooood8 `Y888""8o `8oooooo.  d888b    `Y888""8o o888o o888o `8oooooo.  `Y8bod8P'
+                       d"     YD                                 d"     YD
+                       "Y88888P'                                 "Y88888P'
+```
+# A Beautiful Gemini Client
+## Version ${APP_VERSION}
+=> https://skyjake.fi/@jk by Jaakko Keränen <code@iki.fi>
+Crafted with ☕️ in Finland

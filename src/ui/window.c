@@ -113,6 +113,11 @@ static const iMenuItem viewMenuItems[] = {
     { "Zoom Out", SDLK_MINUS, KMOD_PRIMARY, "zoom.delta arg:-10" },
     { "Reset Zoom", SDLK_0, KMOD_PRIMARY, "zoom.set arg:100" },
 };
+
+static const iMenuItem helpMenuItems[] = {
+    { "Help", 0, 0, "open url:about:help" },
+    { "Release Notes", 0, 0, "open url:about:version" },
+};
 #endif
 
 static const char *reloadCStr_ = "\U0001f503";
@@ -288,9 +293,10 @@ static void setupUserInterface_Window(iWindow *d) {
         setAlignVisually_LabelWidget(navMenu, iTrue);
         addChild_Widget(navBar, iClob(navMenu));
 #else
-        insertMenuItems_MacOS("File", fileMenuItems, iElemCount(fileMenuItems));
-        insertMenuItems_MacOS("Edit", editMenuItems, iElemCount(editMenuItems));
-        insertMenuItems_MacOS("View", viewMenuItems, iElemCount(viewMenuItems));
+        insertMenuItems_MacOS("File", 1, fileMenuItems, iElemCount(fileMenuItems));
+        insertMenuItems_MacOS("Edit", 2, editMenuItems, iElemCount(editMenuItems));
+        insertMenuItems_MacOS("View", 3, viewMenuItems, iElemCount(viewMenuItems));
+        insertMenuItems_MacOS("Help", 5, helpMenuItems, iElemCount(helpMenuItems));
 #endif
     }
     /* Tab bar. */ {

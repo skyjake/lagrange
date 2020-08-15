@@ -2,11 +2,13 @@
 #include "gmutil.h"
 #include "gmcerts.h"
 #include "app.h" /* dataDir_App() */
+#include "embedded.h"
 
 #include <the_Foundation/file.h>
-#include <the_Foundation/tlsrequest.h>
 #include <the_Foundation/mutex.h>
 #include <the_Foundation/path.h>
+#include <the_Foundation/regexp.h>
+#include <the_Foundation/tlsrequest.h>
 
 #include <SDL_timer.h>
 
@@ -81,17 +83,17 @@ enum iGmRequestState {
 };
 
 struct Impl_GmRequest {
-    iObject               object;
-    iMutex                mutex;
-    iGmCerts *            certs; /* not owned */
-    enum iGmRequestState  state;
-    iString               url;
-    iTlsRequest *         req;
-    iGmResponse           resp;
-    uint32_t              timeoutId; /* in case server doesn't close the connection */
-    iAudience *           updated;
-    iAudience *           timeout;
-    iAudience *           finished;
+    iObject              object;
+    iMutex               mutex;
+    iGmCerts *           certs; /* not owned */
+    enum iGmRequestState state;
+    iString              url;
+    iTlsRequest *        req;
+    iGmResponse          resp;
+    uint32_t             timeoutId; /* in case server doesn't close the connection */
+    iAudience *          updated;
+    iAudience *          timeout;
+    iAudience *          finished;
 };
 
 iDefineObjectConstructionArgs(GmRequest, (iGmCerts *certs), certs)
@@ -261,6 +263,40 @@ static void requestFinished_GmRequest_(iAnyObject *obj) {
     iNotifyAudience(d, finished, GmRequestFinished);
 }
 
+static const iBlock *aboutPageSource_(iRangecc path) {
+    const iBlock *src = NULL;
+    if (equalCase_Rangecc(&path, "lagrange")) {
+        return &blobAbout_Embedded;
+    }
+    if (equalCase_Rangecc(&path, "help")) {
+        return &blobHelp_Embedded;
+    }
+    if (equalCase_Rangecc(&path, "version")) {
+        return &blobVersion_Embedded;
+    }
+    return src;
+}
+
+static const iBlock *replaceVariables_(const iBlock *block) {
+    iRegExp *var = new_RegExp("\\$\\{([A-Z_]+)\\}", 0);
+    iRegExpMatch m;
+    if (matchRange_RegExp(var, range_Block(block), &m)) {
+        iBlock *replaced = collect_Block(copy_Block(block));
+        do {
+            const iRangei span = m.range;
+            remove_Block(replaced, span.start, size_Range(&span));
+            const iRangecc name = capturedRange_RegExpMatch(&m, 1);
+            if (equal_Rangecc(&name, "APP_VERSION")) {
+                insertData_Block(replaced, span.start,
+                                 LAGRANGE_APP_VERSION, strlen(LAGRANGE_APP_VERSION));
+            }
+        } while (matchRange_RegExp(var, range_Block(replaced), &m));
+        block = replaced;
+    }
+    iRelease(var);
+    return block;
+}
+
 void submit_GmRequest(iGmRequest *d) {
     iAssert(d->state == initialized_GmRequestState);
     if (d->state != initialized_GmRequestState) {
@@ -272,25 +308,11 @@ void submit_GmRequest(iGmRequest *d) {
     /* Check for special protocols. */
     /* TODO: If this were a library, these could be handled via callbacks. */
     if (equalCase_Rangecc(&url.protocol, "about")) {
-        if (equalCase_Rangecc(&url.path, "home")) {
+        const iBlock *src = aboutPageSource_(url.path);
+        if (src) {
             d->resp.statusCode = success_GmStatusCode;
             setCStr_String(&d->resp.meta, "text/gemini; charset=utf-8");
-            setCStr_Block(&d->resp.body,
-"```\n"
-"ooooo\n"
-"`888'\n"
-" 888          .oooo.    .oooooooo oooo d8b  .oooo.   ooo. .oo.    .oooooooo  .ooooo. \n"
-" 888         `P  )88b  888' `88b  `888\"\"8P `P  )88b  `888P\"Y88b  888' `88b  d88' `88b \n"
-" 888          .oP\"888  888   888   888      .oP\"888   888   888  888   888  888ooo888 \n"
-" 888       o d8(  888  `88bod8P'   888     d8(  888   888   888  `88bod8P'  888    .o \n"
-"o888ooooood8 `Y888\"\"8o `8oooooo.  d888b    `Y888\"\"8o o888o o888o `8oooooo.  `Y8bod8P' \n"
-"                       d\"     YD                                 d\"     YD\n"
-"                       \"Y88888P'                                 \"Y88888P'\n"
-"```\n"
-"# A Beautiful Gemini Client\n"
-"## Version " LAGRANGE_APP_VERSION "\n\n"
-"=> https://skyjake.fi/@jk by Jaakko Keränen <code@iki.fi>\n"
-"Crafted with \u2615 in Finland\n");
+            set_Block(&d->resp.body, replaceVariables_(src));
             d->state = receivingBody_GmRequestState;
             iNotifyAudience(d, updated, GmRequestUpdated);
         }
