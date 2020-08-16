@@ -453,6 +453,9 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
             break;
         }
     }
+    if (d->flags & mouseModal_WidgetFlag && isMouseEvent_(ev)) {
+        return iTrue;
+    }
     return iFalse;
 }
 

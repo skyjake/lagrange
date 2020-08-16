@@ -263,7 +263,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     if (!loadState_App_(d)) {
         postCommand_App("navigate.home");
     }
-    postCommand_App("window.unblank");
+    postCommand_App("window.unfreeze");
 }
 
 static void deinit_App(iApp *d) {
@@ -612,13 +612,15 @@ iBool handleCommand_App(const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "zoom.set")) {
+        setFreezeDraw_Window(get_Window(), iTrue); /* no intermediate draws before docs updated */
         d->zoomPercent = arg_Command(cmd);
         setContentFontSize_Text((float) d->zoomPercent / 100.0f);
         postCommand_App("font.changed");
-        refresh_App();
+        postCommand_App("window.unfreeze");
         return iTrue;
     }
     else if (equal_Command(cmd, "zoom.delta")) {
+        setFreezeDraw_Window(get_Window(), iTrue); /* no intermediate draws before docs updated */
         int delta = arg_Command(cmd);
         if (d->zoomPercent < 100 || (delta < 0 && d->zoomPercent == 100)) {
             delta /= 2;
@@ -626,7 +628,7 @@ iBool handleCommand_App(const char *cmd) {
         d->zoomPercent = iClamp(d->zoomPercent + delta, 50, 200);
         setContentFontSize_Text((float) d->zoomPercent / 100.0f);
         postCommand_App("font.changed");
-        refresh_App();
+        postCommand_App("window.unfreeze");
         return iTrue;
     }
     else if (equal_Command(cmd, "bookmark.add")) {

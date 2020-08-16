@@ -4,10 +4,19 @@
 #include <the_Foundation/math.h>
 
 enum iColorTheme {
+    pureBlack_ColorTheme,
     dark_ColorTheme,
     light_ColorTheme,
+    pureWhite_ColorTheme,
     max_ColorTheme
 };
+
+iLocalDef iBool isDark_ColorTheme(enum iColorTheme d) {
+    return d == pureBlack_ColorTheme || d == dark_ColorTheme;
+}
+iLocalDef iBool isLight_ColorTheme(enum iColorTheme d) {
+    return !isDark_ColorTheme(d);
+}
 
 enum iColorId {
     none_ColorId = -1,
@@ -65,6 +74,7 @@ enum iColorId {
     uiInputCursorText_ColorId,
     uiHeading_ColorId,
     uiIcon_ColorId,
+    uiIconHover_ColorId,
     uiSeparator_ColorId,
     uiMarked_ColorId,
     uiMatching_ColorId,

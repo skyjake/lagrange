@@ -530,17 +530,15 @@ static void draw_SidebarWidget_(const iSidebarWidget *d) {
                 drawCentered_Text(font,
                                   iconArea,
                                   iTrue,
-                                  isHover && isPressing ? uiTextPressed_ColorId : uiIcon_ColorId,
+                                  isHover
+                                      ? (isPressing ? uiTextPressed_ColorId : uiIconHover_ColorId)
+                                      : uiIcon_ColorId,
                                   "%s",
                                   cstr_String(&str));
                 deinit_String(&str);
                 iInt2 textPos =
                     addY_I2(topRight_Rect(iconArea), (d->itemHeight - lineHeight_Text(font)) / 2);
                 drawRange_Text(font, textPos, fg, range_String(&item->label));
-                /*drawRange_Text(font,
-                               addY_I2(textPos, lineHeight_Text(font)),
-                               isHover ? (isPressing ? black_ColorId : cyan_ColorId) : teal_ColorId,
-                               range_String(&item->meta));*/
             }
             unsetClip_Paint(&p);
             pos.y += d->itemHeight;

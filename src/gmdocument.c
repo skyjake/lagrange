@@ -574,7 +574,7 @@ void reset_GmDocument(iGmDocument *d) {
 }
 
 void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
-    const iBool        isLightMode = (colorTheme_App() == light_ColorTheme);
+    const iBool        isLightMode = isLight_ColorTheme(colorTheme_App());
     static const iChar siteIcons[] = {
         0x203b,  0x2042,  0x205c,  0x2182,  0x25ed,  0x2600,  0x2601,  0x2604,  0x2605,  0x2606,
         0x265c,  0x265e,  0x2690,  0x2691,  0x2693,  0x2698,  0x2699,  0x26f0,  0x270e,  0x2728,
@@ -722,6 +722,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
         for (int i = tmFirst_ColorId; i < max_ColorId; i++) {
             iHSLColor color = hsl_Color(get_Color(i));
             if (isLightMode) {
+                if (isLink_ColorId(i)) continue;
                 color.lum = 1.0f - color.lum; /* All colors invert lightness. */
                 if (isRegularText_ColorId(i)) {
                     /* Darken paragraphs and default state link text. */
@@ -734,12 +735,14 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
                 else if (i == tmHeading3_ColorId) {
                     color.lum *= 0.75f;
                 }
+#if 0
                 else if (isLink_ColorId(i)) {
                     /* Darken links generally to improve visibility against a
                        light background. */
                     color.lum *= 0.5f;
                     color.sat = 1.0f;
                 }
+#endif
                 else if (i == tmBannerIcon_ColorId || i == tmBannerTitle_ColorId) {
                     if (isBannerLighter) {
                         color.lum *= 0.75f;
@@ -750,11 +753,12 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
                 }
                 else if (i == tmBannerBackground_ColorId) {
                     if (isBannerLighter) {
-                        color.lum = 1.0f;
+                        //color.lum = iMin(0.9, color.lum);
+                        color = hsl_Color(get_Color(tmBackground_ColorId));
                     }
                     else {
                         color.sat *= 0.8f;
-                        color.lum = 0.4f;
+                        color.lum = 0.6f;
                     }
                 }
                 else if (isText_ColorId(i)) {

@@ -12,7 +12,7 @@ iDeclareTypeConstructionArgs(Window, iRect rect)
 
 struct Impl_Window {
     SDL_Window *  win;
-    iBool         isBlank; /* avoids premature draws while restoring window state */
+    iBool         isDrawFrozen; /* avoids premature draws while restoring window state */
     SDL_Renderer *render;
     iWidget *     root;
     float         pixelRatio;
@@ -26,6 +26,7 @@ void        draw_Window             (iWindow *);
 void        resize_Window           (iWindow *, int w, int h);
 void        setTitle_Window         (iWindow *, const iString *title);
 void        setUiScale_Window       (iWindow *, float uiScale);
+void        setFreezeDraw_Window    (iWindow *, iBool freezeDraw);
 
 iInt2       rootSize_Window         (const iWindow *);
 float       uiScale_Window          (const iWindow *);

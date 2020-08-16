@@ -35,6 +35,7 @@ enum iWidgetFlag {
     focusable_WidgetFlag      = iBit(11),
     tight_WidgetFlag          = iBit(12), /* smaller padding */
     keepOnTop_WidgetFlag      = iBit(13), /* gets events first; drawn last */
+    mouseModal_WidgetFlag     = iBit(14), /* eats all unprocessed mouse events */
     /* arrange behavior */
     arrangeHorizontal_WidgetFlag           = iBit(17), /* arrange children horizontally */
     arrangeVertical_WidgetFlag             = iBit(18), /* arrange children vertically */

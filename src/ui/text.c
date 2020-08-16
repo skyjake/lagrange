@@ -408,7 +408,7 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
             if (match_RegExp(text_.ansiEscape, chPos, text.end - chPos, &m)) {
                 if (mode == draw_RunMode) {
                     /* Change the color. */
-                    const iColor clr = ansi_Color(capturedRange_RegExpMatch(&m, 1), gray75_ColorId);
+                    const iColor clr = ansi_Color(capturedRange_RegExpMatch(&m, 1), tmParagraph_ColorId);
                     SDL_SetTextureColorMod(text_.cache, clr.r, clr.g, clr.b);
                 }
                 chPos = end_RegExpMatch(&m);

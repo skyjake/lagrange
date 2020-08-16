@@ -380,7 +380,7 @@ static void drawBlank_Window_(iWindow *d) {
 
 void init_Window(iWindow *d, iRect rect) {
     theWindow_ = d;
-    d->isBlank = iTrue;
+    d->isDrawFrozen = iTrue;
     uint32_t flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI;
 #if defined (iPlatformApple)
     SDL_SetHint(SDL_HINT_RENDER_DRIVER, "metal");
@@ -477,8 +477,8 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
         }
         default: {
             SDL_Event event = *ev;
-            if (event.type == SDL_USEREVENT && isCommand_UserEvent(ev, "window.unblank")) {
-                d->isBlank = iFalse;
+            if (event.type == SDL_USEREVENT && isCommand_UserEvent(ev, "window.unfreeze")) {
+                d->isDrawFrozen = iFalse;
                 postRefresh_App();
                 return iTrue;
             }
@@ -513,11 +513,10 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
 }
 
 void draw_Window(iWindow *d) {
-    /* Clear the window. */
-    if (d->isBlank) {
-        drawBlank_Window_(d);
+    if (d->isDrawFrozen) {
         return;
     }
+    /* Clear the window. */
     SDL_SetRenderDrawColor(d->render, 0, 0, 0, 255);
     SDL_RenderClear(d->render);
     /* Draw widgets. */
@@ -559,6 +558,10 @@ void setUiScale_Window(iWindow *d, float uiScale) {
     else {
         initialUiScale_ = uiScale;
     }
+}
+
+void setFreezeDraw_Window(iWindow *d, iBool freezeDraw) {
+    d->isDrawFrozen = freezeDraw;
 }
 
 iInt2 rootSize_Window(const iWindow *d) {

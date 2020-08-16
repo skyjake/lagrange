@@ -166,7 +166,7 @@ static iBool menuHandler_(iWidget *menu, const char *cmd) {
 
 iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
     iWidget *menu = new_Widget();
-    setFrameColor_Widget(menu, black_ColorId);
+    setFrameColor_Widget(menu, uiSeparator_ColorId);
     setBackgroundColor_Widget(menu, uiBackground_ColorId);
     setFlags_Widget(menu,
                     keepOnTop_WidgetFlag | collapse_WidgetFlag | hidden_WidgetFlag |
@@ -177,7 +177,7 @@ iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
         const iMenuItem *item = &items[i];
         if (equal_CStr(item->label, "---")) {
             iWidget *sep = addChild_Widget(menu, iClob(new_Widget()));
-            setBackgroundColor_Widget(sep, black_ColorId);
+            setBackgroundColor_Widget(sep, uiSeparator_ColorId);
             sep->rect.size.y = gap_UI / 3;
             setFlags_Widget(sep, hover_WidgetFlag | fixedHeight_WidgetFlag, iTrue);
         }
@@ -477,13 +477,15 @@ iBool filePathHandler_(iWidget *dlg, const char *cmd) {
 iWidget *makeSheet_Widget(const char *id) {
     iWidget *sheet = new_Widget();
     setId_Widget(sheet, id);
-    setFrameColor_Widget(sheet, black_ColorId);
+    setFrameColor_Widget(sheet, uiSeparator_ColorId);
     setBackgroundColor_Widget(sheet, uiBackground_ColorId);
-    setFlags_Widget(
-        sheet, keepOnTop_WidgetFlag | arrangeVertical_WidgetFlag | arrangeHeight_WidgetFlag, iTrue);
-    const iInt2 rootSize = rootSize_Window(get_Window());
-    setSize_Widget(sheet, init_I2(rootSize.x / 2, 0));
-    setFlags_Widget(sheet, fixedHeight_WidgetFlag, iFalse);
+    setFlags_Widget(sheet,
+                    mouseModal_WidgetFlag | keepOnTop_WidgetFlag | arrangeVertical_WidgetFlag |
+                        arrangeSize_WidgetFlag,
+                    iTrue);
+    //    const iInt2 rootSize = rootSize_Window(get_Window());
+    //    setSize_Widget(sheet, init_I2(rootSize.x / 2, 0));
+    //    setFlags_Widget(sheet, fixedHeight_WidgetFlag, iFalse);
     return sheet;
 }
 
@@ -588,8 +590,12 @@ iWidget *makeValueInput_Widget(iWidget *parent, const iString *initialValue, con
     if (parent) {
         addChild_Widget(parent, iClob(dlg));
     }
-    setId_Widget(addChild_Widget(dlg, iClob(new_LabelWidget(title, 0, 0, NULL))), "valueinput.title");
-    setId_Widget(addChild_Widget(dlg, iClob(new_LabelWidget(prompt, 0, 0, NULL))), "valueinput.prompt");
+    setId_Widget(
+        addChildFlags_Widget(dlg, iClob(new_LabelWidget(title, 0, 0, NULL)), frameless_WidgetFlag),
+        "valueinput.title");
+    setId_Widget(
+        addChildFlags_Widget(dlg, iClob(new_LabelWidget(prompt, 0, 0, NULL)), frameless_WidgetFlag),
+        "valueinput.prompt");
     iInputWidget *input = addChild_Widget(dlg, iClob(new_InputWidget(0)));
     if (initialValue) {
         setText_InputWidget(input, initialValue);
@@ -701,8 +707,10 @@ iWidget *makePreferences_Widget(void) {
     addChild_Widget(headings, iClob(makeHeading_Widget("Theme:")));
     iWidget *themes = new_Widget();
     /* Themes. */ {
-        setId_Widget(addChild_Widget(themes, iClob(new_LabelWidget("Dark", 0, 0, "theme.set arg:0"))), "prefs.theme.0");
-        setId_Widget(addChild_Widget(themes, iClob(new_LabelWidget("Light", 0, 0, "theme.set arg:1"))), "prefs.theme.1");
+        setId_Widget(addChild_Widget(themes, iClob(new_LabelWidget("Pure Black", 0, 0, "theme.set arg:0"))), "prefs.theme.0");
+        setId_Widget(addChild_Widget(themes, iClob(new_LabelWidget("Dark", 0, 0, "theme.set arg:1"))), "prefs.theme.1");
+        setId_Widget(addChild_Widget(themes, iClob(new_LabelWidget("Light", 0, 0, "theme.set arg:2"))), "prefs.theme.2");
+        setId_Widget(addChild_Widget(themes, iClob(new_LabelWidget("Pure White", 0, 0, "theme.set arg:3"))), "prefs.theme.3");
     }
     addChildFlags_Widget(values, iClob(themes), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
     addChild_Widget(headings, iClob(makeHeading_Widget("Retain window size:")));
@@ -742,10 +750,8 @@ iWidget *makeBookmarkEditor_Widget(void) {
     addChild_Widget(headings, iClob(makeHeading_Widget("Tags:")));
     setId_Widget(addChild_Widget(values, iClob(inputs[2] = new_InputWidget(0))), "bmed.tags");
     arrange_Widget(dlg);
-    /* TODO: Heights don't match here. */
-    printf("hd:%d inp:%d\n", hd->rect.size.y, as_Widget(inputs[0])->rect.size.y); fflush(stdout);
     for (int i = 0; i < 3; ++i) {
-        as_Widget(inputs[i])->rect.size.x = dlg->rect.size.x - headings->rect.size.x - 3 * gap_UI;
+        as_Widget(inputs[i])->rect.size.x = 100 * gap_UI - headings->rect.size.x;
     }
     iWidget *div = new_Widget(); {
         setFlags_Widget(div, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);

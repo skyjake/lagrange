@@ -149,7 +149,7 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
         else {
             /* Frames matching color escaped text. */
             if (startsWith_String(&d->label, "\r")) {
-                if (colorTheme_App() == dark_ColorTheme) {
+                if (isDark_ColorTheme(colorTheme_App())) {
                     *frame1 = cstr_String(&d->label)[1] - '0';
                     *frame2 = darker_Color(*frame1);
                 }
