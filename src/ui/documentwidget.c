@@ -864,8 +864,9 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         refresh_Widget(w);
         updateWindowTitle_DocumentWidget_(d);
     }
-    else if (equal_Command(cmd, "theme.changed")) {
+    else if (equal_Command(cmd, "theme.changed") && document_App() == d) {
         updateTheme_DocumentWidget_(d);
+        refresh_Widget(w);
     }
     else if (equal_Command(cmd, "tabs.changed")) {
         if (cmp_String(id_Widget(w), suffixPtr_Command(cmd, "id")) == 0) {
@@ -1291,8 +1292,8 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
     const iInt2 visPos = add_I2(run->visBounds.pos, origin);
     /* Text markers. */
     /* TODO: Add themed palette entries */
-    fillRange_DrawContext_(d, run, teal_ColorId, d->widget->foundMark, &d->inFoundMark);
-    fillRange_DrawContext_(d, run, brown_ColorId, d->widget->selectMark, &d->inSelectMark);
+    fillRange_DrawContext_(d, run, uiMatching_ColorId, d->widget->foundMark, &d->inFoundMark);
+    fillRange_DrawContext_(d, run, uiMarked_ColorId, d->widget->selectMark, &d->inSelectMark);
     if (run->linkId && !isEmpty_Rect(run->bounds)) {
         fg = linkColor_GmDocument(doc, run->linkId, isHover ? textHover_GmLinkPart : text_GmLinkPart);
         if (linkFlags_GmDocument(doc, run->linkId) & content_GmLinkFlag) {

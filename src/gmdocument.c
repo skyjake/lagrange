@@ -583,8 +583,6 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
         0x1f306, 0x1f308, 0x1f30a, 0x1f319, 0x1f31f, 0x1f320, 0x1f340, 0x1f4cd, 0x1f4e1, 0x1f531,
         0x1f533, 0x1f657, 0x1f659, 0x1f665, 0x1f668, 0x1f66b, 0x1f78b, 0x1f796, 0x1f79c,
     };
-    d->themeSeed = 0;
-    d->siteIcon  = 0;
     /* Default colors. */ {
         if (!isLightMode) {
             const iHSLColor base = { 0, 0, 0.15f, 1.0f };
@@ -600,6 +598,24 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
             set_Color(tmBannerTitle_ColorId, get_Color(white_ColorId));
             set_Color(tmBannerIcon_ColorId, get_Color(orange_ColorId));
             set_Color(tmInlineContentMetadata_ColorId, get_Color(cyan_ColorId));
+            set_Color(tmLinkText_ColorId, get_Color(white_ColorId));
+            set_Color(tmLinkIcon_ColorId, get_Color(cyan_ColorId));
+            set_Color(tmLinkTextHover_ColorId, get_Color(cyan_ColorId));
+            set_Color(tmLinkIconVisited_ColorId, get_Color(teal_ColorId));
+            set_Color(tmLinkDomain_ColorId, get_Color(teal_ColorId));
+            set_Color(tmLinkLastVisitDate_ColorId, get_Color(cyan_ColorId));
+            set_Color(tmHypertextLinkText_ColorId, get_Color(white_ColorId));
+            set_Color(tmHypertextLinkIcon_ColorId, get_Color(orange_ColorId));
+            set_Color(tmHypertextLinkTextHover_ColorId, get_Color(orange_ColorId));
+            set_Color(tmHypertextLinkIconVisited_ColorId, get_Color(brown_ColorId));
+            set_Color(tmHypertextLinkDomain_ColorId, get_Color(brown_ColorId));
+            set_Color(tmHypertextLinkLastVisitDate_ColorId, get_Color(orange_ColorId));
+            set_Color(tmGopherLinkText_ColorId, get_Color(white_ColorId));
+            set_Color(tmGopherLinkIcon_ColorId, get_Color(blue_ColorId));
+            set_Color(tmGopherLinkTextHover_ColorId, get_Color(blue_ColorId));
+            set_Color(tmGopherLinkIconVisited_ColorId, get_Color(magenta_ColorId));
+            set_Color(tmGopherLinkDomain_ColorId, get_Color(magenta_ColorId));
+            set_Color(tmGopherLinkLastVisitDate_ColorId, get_Color(blue_ColorId));
         }
         else {
             const iHSLColor base = { 0, 0, 1.0f, 1.0f };
@@ -615,162 +631,164 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
             set_Color(tmBannerTitle_ColorId, get_Color(gray50_ColorId));
             set_Color(tmBannerIcon_ColorId, get_Color(teal_ColorId));
             set_Color(tmInlineContentMetadata_ColorId, get_Color(brown_ColorId));
+
+            set_Color(tmLinkText_ColorId, get_Color(black_ColorId));
+            set_Color(tmLinkIcon_ColorId, get_Color(teal_ColorId));
+            set_Color(tmLinkTextHover_ColorId, get_Color(teal_ColorId));
+            set_Color(tmLinkIconVisited_ColorId, get_Color(cyan_ColorId));
+            set_Color(tmLinkDomain_ColorId, get_Color(cyan_ColorId));
+            set_Color(tmLinkLastVisitDate_ColorId, get_Color(teal_ColorId));
+            set_Color(tmHypertextLinkText_ColorId, get_Color(black_ColorId));
+            set_Color(tmHypertextLinkIcon_ColorId, get_Color(brown_ColorId));
+            set_Color(tmHypertextLinkTextHover_ColorId, get_Color(brown_ColorId));
+            set_Color(tmHypertextLinkIconVisited_ColorId, get_Color(orange_ColorId));
+            set_Color(tmHypertextLinkDomain_ColorId, get_Color(orange_ColorId));
+            set_Color(tmHypertextLinkLastVisitDate_ColorId, get_Color(brown_ColorId));
+            set_Color(tmGopherLinkText_ColorId, get_Color(black_ColorId));
+            set_Color(tmGopherLinkIcon_ColorId, get_Color(blue_ColorId));
+            set_Color(tmGopherLinkTextHover_ColorId, get_Color(blue_ColorId));
+            set_Color(tmGopherLinkIconVisited_ColorId, get_Color(magenta_ColorId));
+            set_Color(tmGopherLinkDomain_ColorId, get_Color(magenta_ColorId));
+            set_Color(tmGopherLinkLastVisitDate_ColorId, get_Color(blue_ColorId));
         }
         set_Color(tmBadLink_ColorId, get_Color(red_ColorId));
-        set_Color(tmLinkText_ColorId, get_Color(white_ColorId));
-        set_Color(tmLinkIcon_ColorId, get_Color(cyan_ColorId));
-        set_Color(tmLinkTextHover_ColorId, get_Color(cyan_ColorId));
-        set_Color(tmLinkIconVisited_ColorId, get_Color(teal_ColorId));
-        set_Color(tmLinkDomain_ColorId, get_Color(teal_ColorId));
-        set_Color(tmLinkLastVisitDate_ColorId, get_Color(cyan_ColorId));
-        set_Color(tmHypertextLinkText_ColorId, get_Color(white_ColorId));
-        set_Color(tmHypertextLinkIcon_ColorId, get_Color(orange_ColorId));
-        set_Color(tmHypertextLinkTextHover_ColorId, get_Color(orange_ColorId));
-        set_Color(tmHypertextLinkIconVisited_ColorId, get_Color(brown_ColorId));
-        set_Color(tmHypertextLinkDomain_ColorId, get_Color(brown_ColorId));
-        set_Color(tmHypertextLinkLastVisitDate_ColorId, get_Color(orange_ColorId));
-        set_Color(tmGopherLinkText_ColorId, get_Color(white_ColorId));
-        set_Color(tmGopherLinkIcon_ColorId, get_Color(blue_ColorId));
-        set_Color(tmGopherLinkTextHover_ColorId, get_Color(blue_ColorId));
-        set_Color(tmGopherLinkIconVisited_ColorId, get_Color(magenta_ColorId));
-        set_Color(tmGopherLinkDomain_ColorId, get_Color(magenta_ColorId));
-        set_Color(tmGopherLinkLastVisitDate_ColorId, get_Color(blue_ColorId));
     }
     if (seed && !isEmpty_Block(seed)) {
         d->themeSeed = crc32_Block(seed);
         d->siteIcon  = siteIcons[(d->themeSeed >> 7) % iElemCount(siteIcons)];
-        /* Set up colors. */ {
-            static const float hues[] = { 5, 25, 40, 56, 80, 120, 160, 180, 208, 231, 270, 324 };
-            static const struct {
-                int index[2];
-            } altHues[iElemCount(hues)] = {
-                { 2, 4 },  /* red */
-                { 8, 3 },  /* reddish orange */
-                { 7, 9 },  /* yellowish orange */
-                { 5, 7 },  /* yellow */
-                { 11, 2 }, /* greenish yellow */
-                { 1, 3 },  /* green */
-                { 2, 4 },  /* bluish green */
-                { 2, 11 }, /* cyan */
-                { 6, 10 }, /* sky blue */
-                { 3, 11 }, /* blue */
-                { 8, 9 },  /* violet */
-                { 7, 8 },  /* pink */
-            };
-            const float  saturationLevel = 1.0f; /* TODO: user setting */
-            const iBool  isBannerLighter = (d->themeSeed & 0x4000) != 0;
-            const size_t primIndex       = (d->themeSeed & 0xff) % iElemCount(hues);
-            const iBool  isDarkBgSat =
-                (d->themeSeed & 0x200000) != 0 && (primIndex < 1 || primIndex > 4);
-            iHSLColor base = { hues[primIndex],
-                               0.8f * (d->themeSeed >> 24) / 255.0f,
-                               0.06f + 0.09f * ((d->themeSeed >> 5) & 0x7) / 7.0f,
-                               1.0f };
-            //            printf("background: %d %f %f\n", (int) base.hue, base.sat, base.lum);
-            //            printf("isDarkBgSat: %d\n", isDarkBgSat);
-            setHsl_Color(tmBackground_ColorId, base);
+    }
+    else {
+        d->themeSeed = 0;
+        d->siteIcon  = 0x1f310; /* globe */
+    }
+    /* Set up colors. */
+    if (d->themeSeed) {
+        static const float hues[] = { 5, 25, 40, 56, 80, 120, 160, 180, 208, 231, 270, 324 };
+        static const struct {
+            int index[2];
+        } altHues[iElemCount(hues)] = {
+            { 2, 4 },  /* red */
+            { 8, 3 },  /* reddish orange */
+            { 7, 9 },  /* yellowish orange */
+            { 5, 7 },  /* yellow */
+            { 11, 2 }, /* greenish yellow */
+            { 1, 3 },  /* green */
+            { 2, 4 },  /* bluish green */
+            { 2, 11 }, /* cyan */
+            { 6, 10 }, /* sky blue */
+            { 3, 11 }, /* blue */
+            { 8, 9 },  /* violet */
+            { 7, 8 },  /* pink */
+        };
+        const float saturationLevel = 1.0f; /* TODO: user setting */
+        const iBool isBannerLighter = (d->themeSeed & 0x4000) != 0;
+        const size_t primIndex = d->themeSeed ? (d->themeSeed & 0xff) % iElemCount(hues) : 2;
+        const iBool  isDarkBgSat =
+            (d->themeSeed & 0x200000) != 0 && (primIndex < 1 || primIndex > 4);
+        iHSLColor base = { hues[primIndex],
+                           0.8f * (d->themeSeed >> 24) / 255.0f,
+                           0.06f + 0.09f * ((d->themeSeed >> 5) & 0x7) / 7.0f,
+                           1.0f };
+        //            printf("background: %d %f %f\n", (int) base.hue, base.sat, base.lum);
+        //            printf("isDarkBgSat: %d\n", isDarkBgSat);
+        setHsl_Color(tmBackground_ColorId, base);
 
-            setHsl_Color(tmBannerBackground_ColorId, addSatLum_HSLColor(base, 0.1f, 0.04f * (isBannerLighter ? 1 : -1)));
-            setHsl_Color(tmBannerTitle_ColorId, setLum_HSLColor(addSatLum_HSLColor(base, 0.1f, 0), 0.55f));
-            setHsl_Color(tmBannerIcon_ColorId, setLum_HSLColor(addSatLum_HSLColor(base, 0.35f, 0), 0.65f));
+        setHsl_Color(tmBannerBackground_ColorId, addSatLum_HSLColor(base, 0.1f, 0.04f * (isBannerLighter ? 1 : -1)));
+        setHsl_Color(tmBannerTitle_ColorId, setLum_HSLColor(addSatLum_HSLColor(base, 0.1f, 0), 0.55f));
+        setHsl_Color(tmBannerIcon_ColorId, setLum_HSLColor(addSatLum_HSLColor(base, 0.35f, 0), 0.65f));
 
-            const int altIndex[2] = { (d->themeSeed & 0x4) != 0,
-                                      (d->themeSeed & 0x40) != 0 };
+        const int altIndex[2] = { (d->themeSeed & 0x4) != 0,
+                                  (d->themeSeed & 0x40) != 0 };
 
 //            printf("primHue: %zu  alts: %d %d\n",
 //                   primIndex,
 //                   altHues[primIndex].index[altIndex[0]],
 //                   altHues[primIndex].index[altIndex[1]]);
-            const float altHue   = hues[altHues[primIndex].index[altIndex[0]]];
-            const float altHue2  = hues[altHues[primIndex].index[altIndex[1]]];
-            iHSLColor   altBase  = { altHue, base.sat, base.lum, 1 };
-            const float titleLum = 0.2f * ((d->themeSeed >> 17) & 0x7) / 7.0f;
-            setHsl_Color(tmHeading1_ColorId, setLum_HSLColor(altBase, titleLum + 0.80f));
-            setHsl_Color(tmHeading2_ColorId, setLum_HSLColor(altBase, titleLum + 0.70f));
-            setHsl_Color(tmHeading3_ColorId, setLum_HSLColor(altBase, titleLum + 0.60f));
+        const float altHue   = hues[d->themeSeed ? altHues[primIndex].index[altIndex[0]] : 8];
+        const float altHue2  = hues[d->themeSeed ? altHues[primIndex].index[altIndex[1]] : 8];
+        iHSLColor   altBase  = { altHue, base.sat, base.lum, 1 };
+        const float titleLum = 0.2f * ((d->themeSeed >> 17) & 0x7) / 7.0f;
+        setHsl_Color(tmHeading1_ColorId, setLum_HSLColor(altBase, titleLum + 0.80f));
+        setHsl_Color(tmHeading2_ColorId, setLum_HSLColor(altBase, titleLum + 0.70f));
+        setHsl_Color(tmHeading3_ColorId, setLum_HSLColor(altBase, titleLum + 0.60f));
 
-            setHsl_Color(tmParagraph_ColorId, addSatLum_HSLColor(base, 0.1f, 0.6f));
-            setHsl_Color(tmFirstParagraph_ColorId, addSatLum_HSLColor(base, 0.2f, 0.8f));
-            setHsl_Color(tmPreformatted_ColorId, (iHSLColor){ altHue2, 1.0f, 0.75f, 1.0f });
-            set_Color(tmQuote_ColorId, get_Color(tmPreformatted_ColorId));
-            set_Color(tmInlineContentMetadata_ColorId, get_Color(tmHeading3_ColorId));
+        setHsl_Color(tmParagraph_ColorId, addSatLum_HSLColor(base, 0.1f, 0.6f));
+        setHsl_Color(tmFirstParagraph_ColorId, addSatLum_HSLColor(base, 0.2f, 0.8f));
+        setHsl_Color(tmPreformatted_ColorId, (iHSLColor){ altHue2, 1.0f, 0.75f, 1.0f });
+        set_Color(tmQuote_ColorId, get_Color(tmPreformatted_ColorId));
+        set_Color(tmInlineContentMetadata_ColorId, get_Color(tmHeading3_ColorId));
 
-            /* Adjust colors based on light/dark mode. */
-            for (int i = tmFirst_ColorId; i < max_ColorId; i++) {
-                iHSLColor color = hsl_Color(get_Color(i));
-                if (isLightMode) {
-                    color.lum = 1.0f - color.lum; /* All colors invert lightness. */
-                    if (isRegularText_ColorId(i)) {
-                        /* Darken paragraphs and default state link text. */
-                        color.lum *= 0.5f;
-                    }
-                    else if (i == tmBackground_ColorId) {
-                        color.sat = (color.sat + 1) / 2;
-                        color.lum += 0.06f;
-                    }
-                    else if (i == tmHeading3_ColorId) {
+        /* Adjust colors based on light/dark mode. */
+        for (int i = tmFirst_ColorId; i < max_ColorId; i++) {
+            iHSLColor color = hsl_Color(get_Color(i));
+            if (isLightMode) {
+                color.lum = 1.0f - color.lum; /* All colors invert lightness. */
+                if (isRegularText_ColorId(i)) {
+                    /* Darken paragraphs and default state link text. */
+                    color.lum *= 0.5f;
+                }
+                else if (i == tmBackground_ColorId) {
+                    color.sat = (color.sat + 1) / 2;
+                    color.lum += 0.06f;
+                }
+                else if (i == tmHeading3_ColorId) {
+                    color.lum *= 0.75f;
+                }
+                else if (isLink_ColorId(i)) {
+                    /* Darken links generally to improve visibility against a
+                       light background. */
+                    color.lum *= 0.5f;
+                    color.sat = 1.0f;
+                }
+                else if (i == tmBannerIcon_ColorId || i == tmBannerTitle_ColorId) {
+                    if (isBannerLighter) {
                         color.lum *= 0.75f;
                     }
-                    else if (isLink_ColorId(i)) {
-                        /* Darken links generally to improve visibility against a
-                           light background. */
-                        color.lum *= 0.5f;
-                        color.sat = 1.0f;
+                    else {
+                        color.lum = 0.98f;
                     }
-                    else if (i == tmBannerIcon_ColorId || i == tmBannerTitle_ColorId) {
-                        if (isBannerLighter) {
+                }
+                else if (i == tmBannerBackground_ColorId) {
+                    if (isBannerLighter) {
+                        color.lum = 1.0f;
+                    }
+                    else {
+                        color.sat *= 0.8f;
+                        color.lum = 0.4f;
+                    }
+                }
+                else if (isText_ColorId(i)) {
+                    color.sat = 0.9f;
+                    color.lum = (9 * color.lum + 0.5f) / 10;
+                }
+            }
+            else { /* dark mode */
+                if (!isLink_ColorId(i)) {
+                    if (isDarkBgSat) {
+                        /* Saturate background, desaturate text. */
+                        if (isBackground_ColorId(i)) {
+                            color.sat = (color.sat + 1) / 2;
                             color.lum *= 0.75f;
                         }
-                        else {
-                            color.lum = 0.98f;
+                        else if (isText_ColorId(i)) {
+                            color.lum = (color.lum + 1) / 2;
                         }
                     }
-                    else if (i == tmBannerBackground_ColorId) {
-                        if (isBannerLighter) {
-                            color.lum = 1.0f;
+                    else {
+                        /* Desaturate background, saturate text. */
+                        if (isBackground_ColorId(i)) {
+                            color.sat *= 0.333f;
                         }
-                        else {
-                            color.sat *= 0.8f;
-                            color.lum = 0.4f;
-                        }
-                    }
-                    else if (isText_ColorId(i)) {
-                        color.sat = 0.9f;
-                        color.lum = (9 * color.lum + 0.5f) / 10;
-                    }
-                }
-                else { /* dark mode */
-                    if (!isLink_ColorId(i)) {
-                        if (isDarkBgSat) {
-                            /* Saturate background, desaturate text. */
-                            if (isBackground_ColorId(i)) {
-                                color.sat = (color.sat + 1) / 2;
-//                                color.lum = (color.lum + 2 * 0.5f) / 3;
-                                color.lum *= 0.75f;
-                            }
-                            else if (isText_ColorId(i)) {
-//                                color.sat *= 0.85f;
-                                color.lum = (color.lum + 1) / 2;
-                            }
-                        }
-                        else {
-                            /* Desaturate background, saturate text. */
-                            if (isBackground_ColorId(i)) {
-                                color.sat *= 0.333f;
-//                                color.lum *= 0.5f;
-                            }
-                            else if (isText_ColorId(i)) {
-                                color.sat = (color.sat + 2) / 3;
-                                color.lum = (2 * color.lum + 1) / 3;
-//                                color.lum = (color.lum + 0.5f) / 2;
-                            }
+                        else if (isText_ColorId(i)) {
+                            color.sat = (color.sat + 2) / 3;
+                            color.lum = (2 * color.lum + 1) / 3;
                         }
                     }
                 }
-                /* Modify overall saturation. */
-                color.sat *= saturationLevel;
-                setHsl_Color(i, color);
             }
+            /* Modify overall saturation. */
+            color.sat *= saturationLevel;
+            setHsl_Color(i, color);
         }
     }
     /* Special exceptions. */
@@ -779,7 +797,6 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
             d->siteIcon = 0x264a; /* gemini symbol */
         }
     }
-    fflush(stdout);
 }
 
 void setFormat_GmDocument(iGmDocument *d, enum iGmDocumentFormat format) {

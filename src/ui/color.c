@@ -89,6 +89,8 @@ void setThemePalette_Color(enum iColorTheme theme) {
             copy_(uiHeading_ColorId, cyan_ColorId);
             copy_(uiIcon_ColorId, cyan_ColorId);
             copy_(uiSeparator_ColorId, black_ColorId);
+            copy_(uiMarked_ColorId, brown_ColorId);
+            copy_(uiMatching_ColorId, teal_ColorId);
             break;
         case light_ColorTheme:
             copy_(uiBackground_ColorId, white_ColorId);
@@ -128,6 +130,8 @@ void setThemePalette_Color(enum iColorTheme theme) {
             copy_(uiHeading_ColorId, brown_ColorId);
             copy_(uiIcon_ColorId, brown_ColorId);
             copy_(uiSeparator_ColorId, gray50_ColorId);
+            copy_(uiMarked_ColorId, cyan_ColorId);
+            copy_(uiMatching_ColorId, orange_ColorId);
             break;
     }
 }

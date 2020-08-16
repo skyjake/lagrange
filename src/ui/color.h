@@ -66,6 +66,8 @@ enum iColorId {
     uiHeading_ColorId,
     uiIcon_ColorId,
     uiSeparator_ColorId,
+    uiMarked_ColorId,
+    uiMatching_ColorId,
 
     /* content theme colors */
     tmFirst_ColorId,
