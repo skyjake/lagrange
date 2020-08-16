@@ -36,11 +36,9 @@ void init_InputWidget(iInputWidget *d, size_t maxLen) {
     d->isSensitive = iFalse;
     d->enterPressed = iFalse;
     setMaxLen_InputWidget(d, maxLen);
-    if (maxLen == 0) {
-        /* Caller must arrange the width. */
-        w->rect.size.y = lineHeight_Text(d->font) + 2 * gap_UI;
-        setFlags_Widget(w, fixedHeight_WidgetFlag, iTrue);
-    }
+    /* Caller must arrange the width, but the height is fixed. */
+    w->rect.size.y = lineHeight_Text(default_FontId) + 2 * gap_UI;
+    setFlags_Widget(w, fixedHeight_WidgetFlag, iTrue);
     init_Click(&d->click, d, SDL_BUTTON_LEFT);
     d->timer = 0;
 }
