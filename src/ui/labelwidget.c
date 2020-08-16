@@ -122,6 +122,63 @@ static void keyStr_LabelWidget_(const iLabelWidget *d, iString *str) {
     }
 }
 
+static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int *frame1, int *frame2) {
+    const iWidget *w           = constAs_Widget(d);
+    const iBool    isPress     = (flags_Widget(w) & pressed_WidgetFlag) != 0;
+    const iBool    isSel       = (flags_Widget(w) & selected_WidgetFlag) != 0;
+    const iBool    isFrameless = (flags_Widget(w) & frameless_WidgetFlag) != 0;
+    const iBool    isButton    = d->click.button != 0;
+    /* Default color state. */
+    *bg     = isButton ? uiBackground_ColorId : none_ColorId;
+    *fg     = uiText_ColorId;
+    *frame1 = isButton ? uiEmboss1_ColorId : uiFrame_ColorId;
+    *frame2 = isButton ? uiEmboss2_ColorId : *frame1;
+    if (isSel) {
+        *bg = uiBackgroundSelected_ColorId;
+        *fg = uiTextSelected_ColorId;
+        if (isButton) {
+            *frame1 = uiEmbossSelected1_ColorId;
+            *frame2 = uiEmbossSelected2_ColorId;
+        }
+    }
+    if (isHover_Widget(w)) {
+        if (isFrameless) {
+            *bg = uiBackgroundFramelessHover_ColorId;
+            *fg = uiTextFramelessHover_ColorId;
+        }
+        else {
+            /* Frames matching color escaped text. */
+            if (startsWith_String(&d->label, "\r")) {
+                if (colorTheme_App() == dark_ColorTheme) {
+                    *frame1 = cstr_String(&d->label)[1] - '0';
+                    *frame2 = darker_Color(*frame1);
+                }
+                else {
+                    *bg = *frame1 = *frame2 = cstr_String(&d->label)[1] - '0';
+                    *fg = uiBackground_ColorId | permanent_ColorId;
+                }
+            }
+            else if (isSel) {
+                *frame1 = uiEmbossSelectedHover1_ColorId;
+                *frame2 = uiEmbossSelectedHover2_ColorId;
+            }
+            else {
+                if (isButton) *bg = uiBackgroundHover_ColorId;
+                *frame1 = uiEmbossHover1_ColorId;
+                *frame2 = uiEmbossHover2_ColorId;
+            }
+        }
+    }
+    if (isPress) {
+        *bg = uiBackgroundPressed_ColorId | permanent_ColorId;
+        if (isButton) {
+            *frame1 = uiEmbossPressed1_ColorId;
+            *frame2 = uiEmbossPressed2_ColorId;
+        }
+        *fg = uiTextPressed_ColorId | permanent_ColorId;
+    }
+}
+
 static void draw_LabelWidget_(const iLabelWidget *d) {
     const iWidget *w = constAs_Widget(d);
     draw_Widget(w);
@@ -135,47 +192,9 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
     }
     iPaint p;
     init_Paint(&p);
-    int bg      = 0;
-    int fg      = gray75_ColorId;
-    int frame   = isButton ? gray50_ColorId : gray25_ColorId;
-    int frame2  = isButton ? black_ColorId : frame;
-    if (flags & selected_WidgetFlag) {
-        bg = teal_ColorId;
-        fg = white_ColorId;
-        frame = isButton ? cyan_ColorId : frame;
-    }
-    if (isHover_Widget(w)) {
-        if (flags & frameless_WidgetFlag) {
-            bg = teal_ColorId;
-            fg = white_ColorId;
-            if (isButton && flags & selected_WidgetFlag) frame = white_ColorId;
-        }
-        else {
-            if (frame != cyan_ColorId) {
-                if (startsWith_String(&d->label, orange_ColorEscape)) {
-                    frame = orange_ColorId;
-                    frame2 = brown_ColorId;
-                }
-                else {
-                    frame  = cyan_ColorId;
-                    frame2 = teal_ColorId;
-                }
-            }
-            else {
-                frame  = white_ColorId;
-                frame2 = cyan_ColorId;
-            }
-        }
-    }
-    if (flags & pressed_WidgetFlag) {
-        bg = orange_ColorId | permanent_ColorId;
-        if (isButton) {
-            frame = brown_ColorId;
-            frame2 = white_ColorId;
-        }
-        fg = black_ColorId | permanent_ColorId;
-    }
-    if (bg) {
+    int bg, fg, frame, frame2;
+    getColors_LabelWidget_(d, &bg, &fg, &frame, &frame2);
+    if (bg >= 0) {
         fillRect_Paint(&p, rect, bg);
     }
     if (~flags & frameless_WidgetFlag) {
@@ -201,7 +220,7 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
             keyStr_LabelWidget_(d, &str);
             drawAlign_Text(uiShortcuts_FontId,
                            add_I2(topRight_Rect(bounds), negX_I2(padding_(flags))),
-                           flags & pressed_WidgetFlag ? fg : cyan_ColorId,
+                           flags & pressed_WidgetFlag ? fg : uiTextShortcut_ColorId,
                            right_Alignment,
                            cstr_String(&str));
             deinit_String(&str);

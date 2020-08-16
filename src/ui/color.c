@@ -4,23 +4,133 @@
 
 static const iColor transparent_;
 
-static iColor palette_[max_ColorId] = {
+static const iColor darkPalette_[] = {
     { 0,   0,   0,   255 },
     { 40,  40,  40,  255 },
     { 80,  80,  80,  255 },
     { 160, 160, 160, 255 },
     { 255, 255, 255, 255 },
+
     { 106, 80,  0,   255 },
     { 255, 192, 0,   255 },
     { 0,   96,  128, 255 },
     { 0,   192, 255, 255 },
+
     { 255, 255, 32,  255 },
     { 255, 64,  64,  255 },
     { 255, 0,   255, 255 },
     { 132, 132, 255, 255 },
     { 0,   200, 0,   255 },
-    /* theme colors left black until theme is seeded */
 };
+
+static const iColor lightPalette_[] = {
+    { 0,   0,   0,   255 },
+    { 75,  75,  75,  255 },
+    { 150, 150, 150, 255 },
+    { 235, 235, 235, 255 },
+    { 255, 255, 255, 255 },
+
+    { 170, 128, 0,  255 },
+    { 255, 213, 86,  255 },
+    { 0,   96,  128, 255 },
+    { 86,  213, 255, 255 },
+
+    { 255, 255, 32,  255 },
+    { 255, 64,  64,  255 },
+    { 255, 0,   255, 255 },
+    { 132, 132, 255, 255 },
+    { 0,   150, 0,   255 },
+};
+
+static iColor palette_[max_ColorId];
+
+iLocalDef void copy_(enum iColorId dst, enum iColorId src) {
+    set_Color(dst, get_Color(src));
+}
+
+void setThemePalette_Color(enum iColorTheme theme) {
+    memcpy(palette_, theme == dark_ColorTheme ? darkPalette_ : lightPalette_, sizeof(darkPalette_));
+    switch (theme) {
+        default:
+        case dark_ColorTheme:
+            copy_(uiBackground_ColorId, gray25_ColorId);
+            copy_(uiBackgroundHover_ColorId, gray25_ColorId);
+            copy_(uiBackgroundPressed_ColorId, orange_ColorId);
+            copy_(uiBackgroundSelected_ColorId, teal_ColorId);
+            copy_(uiBackgroundFramelessHover_ColorId, teal_ColorId);
+            copy_(uiText_ColorId, gray75_ColorId);
+            copy_(uiTextPressed_ColorId, black_ColorId);
+            copy_(uiTextStrong_ColorId, white_ColorId);
+            copy_(uiTextSelected_ColorId, white_ColorId);
+            copy_(uiTextFramelessHover_ColorId, white_ColorId);
+            copy_(uiTextShortcut_ColorId, cyan_ColorId);
+            copy_(uiTextAction_ColorId, cyan_ColorId);
+            copy_(uiTextCaution_ColorId, orange_ColorId);
+            copy_(uiFrame_ColorId, gray25_ColorId);
+            copy_(uiEmboss1_ColorId, gray50_ColorId);
+            copy_(uiEmboss2_ColorId, black_ColorId);
+            copy_(uiEmbossHover1_ColorId, cyan_ColorId);
+            copy_(uiEmbossHover2_ColorId, teal_ColorId);
+            copy_(uiEmbossPressed1_ColorId, brown_ColorId);
+            copy_(uiEmbossPressed2_ColorId, white_ColorId);
+            copy_(uiEmbossSelected1_ColorId, cyan_ColorId);
+            copy_(uiEmbossSelected2_ColorId, black_ColorId);
+            copy_(uiEmbossSelectedHover1_ColorId, white_ColorId);
+            copy_(uiEmbossSelectedHover2_ColorId, cyan_ColorId);
+            copy_(uiInputBackground_ColorId, black_ColorId);
+            copy_(uiInputBackgroundFocused_ColorId, black_ColorId);
+            copy_(uiInputText_ColorId, gray75_ColorId);
+            copy_(uiInputTextFocused_ColorId, white_ColorId);
+            copy_(uiInputFrame_ColorId, gray50_ColorId);
+            copy_(uiInputFrameHover_ColorId, cyan_ColorId);
+            copy_(uiInputFrameFocused_ColorId, orange_ColorId);
+            copy_(uiInputCursor_ColorId, orange_ColorId);
+            copy_(uiInputCursorText_ColorId, black_ColorId);
+            copy_(uiHeading_ColorId, cyan_ColorId);
+            copy_(uiIcon_ColorId, cyan_ColorId);
+            copy_(uiSeparator_ColorId, black_ColorId);
+            break;
+        case light_ColorTheme:
+            copy_(uiBackground_ColorId, white_ColorId);
+            copy_(uiBackgroundHover_ColorId, gray75_ColorId);
+            copy_(uiBackgroundSelected_ColorId, orange_ColorId);
+            copy_(uiBackgroundPressed_ColorId, cyan_ColorId);
+            copy_(uiBackgroundFramelessHover_ColorId, orange_ColorId);
+            copy_(uiText_ColorId, gray25_ColorId);
+            copy_(uiTextStrong_ColorId, black_ColorId);
+            copy_(uiTextPressed_ColorId, black_ColorId);
+            copy_(uiTextStrong_ColorId, black_ColorId);
+            copy_(uiTextSelected_ColorId, black_ColorId);
+            copy_(uiTextFramelessHover_ColorId, black_ColorId);
+            copy_(uiTextShortcut_ColorId, brown_ColorId);
+            copy_(uiTextAction_ColorId, brown_ColorId);
+            copy_(uiTextCaution_ColorId, teal_ColorId);
+            copy_(uiFrame_ColorId, gray75_ColorId);
+            copy_(uiEmboss1_ColorId, white_ColorId);
+            copy_(uiEmboss2_ColorId, white_ColorId);
+            copy_(uiEmbossHover1_ColorId, gray25_ColorId);
+            copy_(uiEmbossHover2_ColorId, gray25_ColorId);
+            copy_(uiEmbossPressed1_ColorId, black_ColorId);
+            copy_(uiEmbossPressed2_ColorId, teal_ColorId);
+            copy_(uiEmbossSelected1_ColorId, white_ColorId);
+            copy_(uiEmbossSelected2_ColorId, brown_ColorId);
+            copy_(uiEmbossSelectedHover1_ColorId, gray50_ColorId);
+            copy_(uiEmbossSelectedHover2_ColorId, gray50_ColorId);
+            copy_(uiInputBackground_ColorId, white_ColorId);
+            copy_(uiInputBackgroundFocused_ColorId, white_ColorId);
+            copy_(uiInputText_ColorId, gray25_ColorId);
+            copy_(uiInputTextFocused_ColorId, black_ColorId);
+            copy_(uiInputFrame_ColorId, gray50_ColorId);
+            copy_(uiInputFrameHover_ColorId, brown_ColorId);
+            copy_(uiInputFrameFocused_ColorId, teal_ColorId);
+            copy_(uiInputCursor_ColorId, teal_ColorId);
+            copy_(uiInputCursorText_ColorId, white_ColorId);
+            copy_(uiHeading_ColorId, brown_ColorId);
+            copy_(uiIcon_ColorId, brown_ColorId);
+            copy_(uiSeparator_ColorId, gray50_ColorId);
+            break;
+    }
+}
 
 iColor get_Color(int color) {
     const iColor *rgba = &transparent_;
@@ -31,9 +141,33 @@ iColor get_Color(int color) {
 }
 
 void set_Color(int color, iColor rgba) {
-    if (color >= tmFirst_ColorId && color < max_ColorId) {
+    if (color >= uiBackground_ColorId && color < max_ColorId) {
         palette_[color] = rgba;
     }
+}
+
+iLocalDef iBool equal_Color_(const iColor *x, const iColor *y) {
+    return memcmp(x, y, sizeof(iColor)) == 0;
+}
+
+int darker_Color(int color) {
+    const iColor rgb = get_Color(color);
+    for (int i = 0; i < uiFirst_ColorId; i++) {
+        if (equal_Color_(&rgb, &palette_[i])) {
+            return i > 0 ? i - 1 : i;
+        }
+    }
+    return color;
+}
+
+int lighter_Color(int color) {
+    const iColor rgb = get_Color(color);
+    for (int i = 0; i < uiFirst_ColorId; i++) {
+        if (equal_Color_(&rgb, &palette_[i])) {
+            return i < uiFirst_ColorId - 1 ? i + 1 : i;
+        }
+    }
+    return color;
 }
 
 iLocalDef iFloat4 normalize_(iColor d) {

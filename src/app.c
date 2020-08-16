@@ -69,6 +69,7 @@ struct Impl_App {
     iRect        initialWindowRect;
     float        uiScale;
     int          zoomPercent;
+    enum iColorTheme theme;
 };
 
 static iApp app_;
@@ -112,6 +113,7 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "sidebar.mode arg:%d\n", mode_SidebarWidget(sidebar));
     appendFormat_String(str, "uiscale arg:%f\n", uiScale_Window(d->window));
     appendFormat_String(str, "zoom.set arg:%d\n", d->zoomPercent);
+    appendFormat_String(str, "theme.set arg:%d\n", d->theme);
     return str;
 }
 
@@ -231,6 +233,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     init_SortedArray(&d->tickers, sizeof(iTicker), cmp_Ticker_);
     d->commandEcho       = checkArgument_CommandLine(&d->args, "echo") != NULL;
     d->initialWindowRect = init_Rect(-1, -1, 800, 500);
+    d->theme             = dark_ColorTheme;
     d->running           = iFalse;
     d->window            = NULL;
     d->retainWindowSize  = iTrue;
@@ -240,6 +243,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     d->visited           = new_Visited();
     d->bookmarks         = new_Bookmarks();
     d->tabEnum           = 0; /* generates unique IDs for tab pages */
+    setThemePalette_Color(d->theme);
     loadPrefs_App_(d);
     load_Visited(d->visited, dataDir_App_);
     load_Bookmarks(d->bookmarks, dataDir_App_);
@@ -364,6 +368,10 @@ int zoom_App(void) {
     return app_.zoomPercent;
 }
 
+enum iColorTheme colorTheme_App(void) {
+    return app_.theme;
+}
+
 int run_App(int argc, char **argv) {
     init_App_(&app_, argc, argv);
     const int rc = run_App_(&app_);
@@ -430,6 +438,14 @@ iBookmarks *bookmarks_App(void) {
     return app_.bookmarks;
 }
 
+static void updatePrefsThemeButtons_(iWidget *d) {
+    for (size_t i = 0; i < max_ColorTheme; i++) {
+        setFlags_Widget(findChild_Widget(d, format_CStr("prefs.theme.%u", i)),
+                        selected_WidgetFlag,
+                        colorTheme_App() == i);
+    }
+}
+
 static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
     if (equal_Command(cmd, "prefs.dismiss") || equal_Command(cmd, "preferences")) {
         setUiScale_Window(get_Window(),
@@ -438,6 +454,9 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
                          isSelected_Widget(findChild_Widget(d, "prefs.retainwindow")));
         destroy_Widget(d);
         return iTrue;
+    }
+    else if (equal_Command(cmd, "theme.changed")) {
+        updatePrefsThemeButtons_(d);
     }
     return iFalse;
 }
@@ -581,6 +600,7 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "preferences")) {
         iWidget *dlg = makePreferences_Widget();
+        updatePrefsThemeButtons_(dlg);
         setToggle_Widget(findChild_Widget(dlg, "prefs.retainwindow"), d->retainWindowSize);
         setText_InputWidget(findChild_Widget(dlg, "prefs.uiscale"),
                             collectNewFormat_String("%g", uiScale_Window(d->window)));
@@ -616,6 +636,12 @@ iBool handleCommand_App(const char *cmd) {
                       collectNew_String(),
                       siteIcon_GmDocument(document_DocumentWidget(doc)));
         postCommand_App("bookmarks.changed");
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "theme.set")) {
+        d->theme = arg_Command(cmd);
+        setThemePalette_Color(d->theme);
+        postCommand_App("theme.changed");
         return iTrue;
     }
     else {

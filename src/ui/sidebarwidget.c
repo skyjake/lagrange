@@ -102,6 +102,10 @@ static void updateVisible_SidebarWidget_(iSidebarWidget *d) {
                                           : 0);
 }
 
+static int cmpTitle_Bookmark_(const iBookmark **a, const iBookmark **b) {
+    return cmpStringCase_String(&(*a)->title, &(*b)->title);
+}
+
 static void updateItems_SidebarWidget_(iSidebarWidget *d) {
     clearItems_SidebarWidget_(d);
     destroy_Widget(d->menu);
@@ -122,7 +126,7 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
             break;
         }
         case bookmarks_SidebarMode: {
-            iConstForEach(PtrArray, i, list_Bookmarks(bookmarks_App(), NULL, NULL)) {
+            iConstForEach(PtrArray, i, list_Bookmarks(bookmarks_App(), NULL, cmpTitle_Bookmark_)) {
                 const iBookmark *bm = i.ptr;
                 iSidebarItem item;
                 init_SidebarItem(&item);
@@ -130,11 +134,12 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 item.icon = bm->icon;
                 set_String(&item.url, &bm->url);
                 set_String(&item.label, &bm->title);
-                iDate date;
-                init_Date(&date, &bm->when);
-                iString *ds = format_Date(&date, "%Y %b %d");
-                set_String(&item.meta, ds);
-                delete_String(ds);
+//                iDate date;
+//                init_Date(&date, &bm->when);
+//                iString *ds = format_Date(&date, "%Y %b %d");
+//                set_String(&item.meta, ds);
+                set_String(&item.meta, &bm->tags);
+//                delete_String(ds);
                 pushBack_Array(&d->items, &item);
             }
             d->menu = makeMenu_Widget(
@@ -142,7 +147,7 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 (iMenuItem[]){ { "Edit Bookmark...", 0, 0, "bookmark.edit" },
                                { "Copy URL", 0, 0, "bookmark.copy" },
                                { "---", 0, 0, NULL },
-                               { orange_ColorEscape "Delete Bookmark", 0, 0, "bookmark.delete" } },
+                               { uiTextCaution_ColorEscape "Delete Bookmark", 0, 0, "bookmark.delete" } },
                 4);
             break;
         }
@@ -161,7 +166,7 @@ void setMode_SidebarWidget(iSidebarWidget *d, enum iSidebarMode mode) {
     for (enum iSidebarMode i = 0; i < max_SidebarMode; i++) {
         setFlags_Widget(as_Widget(d->modeButtons[i]), selected_WidgetFlag, i == d->mode);
     }
-    const float heights[max_SidebarMode] = { 1.2f, 2.4f, 3, 3 };
+    const float heights[max_SidebarMode] = { 1.2f, 1.5f, 3, 3 };
     d->itemHeight = heights[mode] * lineHeight_Text(default_FontId);
 }
 
@@ -351,7 +356,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             if (argLabel_Command(cmd, "button") == SDL_BUTTON_LEFT) {
                 if (arg_Command(cmd)) {
                     setFlags_Widget(d->resizer, pressed_WidgetFlag, iTrue);
-                    setBackgroundColor_Widget(d->resizer, gray75_ColorId);
+                    setBackgroundColor_Widget(d->resizer, uiBackgroundFramelessHover_ColorId);
                     setMouseGrab_Widget(d->resizer);
                     refresh_Widget(d->resizer);
                 }
@@ -420,6 +425,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                 setText_InputWidget(findChild_Widget(dlg, "bmed.url"), &bm->url);
                 setText_InputWidget(findChild_Widget(dlg, "bmed.tags"), &bm->tags);
                 setCommandHandler_Widget(dlg, handleBookmarkEditorCommands_SidebarWidget_);
+                setFocus_Widget(findChild_Widget(dlg, "bmed.title"));
             }
             return iTrue;
         }
@@ -500,35 +506,41 @@ static void draw_SidebarWidget_(const iSidebarWidget *d) {
             const iBool         isHover     = (d->hoverItem == i);
             setClip_Paint(&p, intersect_Rect(itemRect, bounds));
             if (isHover) {
-                fillRect_Paint(&p, itemRect, isPressing ? orange_ColorId : teal_ColorId);
+                fillRect_Paint(&p,
+                               itemRect,
+                               isPressing ? uiBackgroundPressed_ColorId
+                                          : uiBackgroundFramelessHover_ColorId);
             }
             if (d->mode == documentOutline_SidebarMode) {
-                const int fg = isHover ? (isPressing ? black_ColorId : white_ColorId) :
-                                       (item->indent == 0 ? white_ColorId : gray75_ColorId);
+                const int fg =
+                    isHover ? (isPressing ? uiTextPressed_ColorId : uiTextFramelessHover_ColorId)
+                            : (item->indent == 0 ? uiTextStrong_ColorId : uiText_ColorId);
                 drawRange_Text(font, init_I2(pos.x + 3 * gap_UI + item->indent,
                                         mid_Rect(itemRect).y - lineHeight_Text(font) / 2),
                                fg, range_String(&item->label));
             }
             else if (d->mode == bookmarks_SidebarMode) {
                 const int fg =
-                    isHover ? (isPressing ? black_ColorId : white_ColorId) : gray75_ColorId;
+                    isHover ? (isPressing ? uiTextPressed_ColorId : uiTextFramelessHover_ColorId)
+                            : uiText_ColorId;
                 iString str;
                 init_String(&str);
                 appendChar_String(&str, item->icon ? item->icon : 0x1f588);
-                const iRect iconArea = { pos, init_I2(10 * gap_UI, d->itemHeight) };
-                drawCentered_Text(uiBookmarkIcon_FontId,
+                const iRect iconArea = { addX_I2(pos, gap_UI), init_I2(7 * gap_UI, d->itemHeight) };
+                drawCentered_Text(font,
                                   iconArea,
                                   iTrue,
-                                  isHover && isPressing ? black_ColorId : cyan_ColorId,
+                                  isHover && isPressing ? uiTextPressed_ColorId : uiIcon_ColorId,
                                   "%s",
                                   cstr_String(&str));
                 deinit_String(&str);
-                iInt2 textPos = addY_I2(topRight_Rect(iconArea), 0.2f * lineHeight_Text(font));
+                iInt2 textPos =
+                    addY_I2(topRight_Rect(iconArea), (d->itemHeight - lineHeight_Text(font)) / 2);
                 drawRange_Text(font, textPos, fg, range_String(&item->label));
-                drawRange_Text(font,
+                /*drawRange_Text(font,
                                addY_I2(textPos, lineHeight_Text(font)),
                                isHover ? (isPressing ? black_ColorId : cyan_ColorId) : teal_ColorId,
-                               range_String(&item->meta));
+                               range_String(&item->meta));*/
             }
             unsetClip_Paint(&p);
             pos.y += d->itemHeight;
@@ -538,7 +550,7 @@ static void draw_SidebarWidget_(const iSidebarWidget *d) {
     drawVLine_Paint(&p,
                     addX_I2(topRight_Rect(bounds_Widget(w)), -1),
                     height_Rect(bounds_Widget(w)),
-                    black_ColorId);
+                    uiSeparator_ColorId);
 }
 
 iBeginDefineSubclass(SidebarWidget, Widget)

@@ -574,6 +574,7 @@ void reset_GmDocument(iGmDocument *d) {
 }
 
 void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
+    const iBool        isLightMode = (colorTheme_App() == light_ColorTheme);
     static const iChar siteIcons[] = {
         0x203b,  0x2042,  0x205c,  0x2182,  0x25ed,  0x2600,  0x2601,  0x2604,  0x2605,  0x2606,
         0x265c,  0x265e,  0x2690,  0x2691,  0x2693,  0x2698,  0x2699,  0x26f0,  0x270e,  0x2728,
@@ -585,19 +586,36 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
     d->themeSeed = 0;
     d->siteIcon  = 0;
     /* Default colors. */ {
-        const iHSLColor base = { 0, 0, 0.15f, 1.0f };
-        setHsl_Color(tmBackground_ColorId, base);
-        set_Color(tmParagraph_ColorId, get_Color(gray75_ColorId));
-        setHsl_Color(tmFirstParagraph_ColorId, addSatLum_HSLColor(base, 0, 0.75f));
-        set_Color(tmQuote_ColorId, get_Color(cyan_ColorId));
-        set_Color(tmPreformatted_ColorId, get_Color(cyan_ColorId));
-        set_Color(tmHeading1_ColorId, get_Color(white_ColorId));
-        setHsl_Color(tmHeading2_ColorId, addSatLum_HSLColor(base, 0, 0.7f));
-        setHsl_Color(tmHeading3_ColorId, addSatLum_HSLColor(base, 0, 0.6f));
-        set_Color(tmBannerBackground_ColorId, get_Color(black_ColorId));
-        set_Color(tmBannerTitle_ColorId, get_Color(white_ColorId));
-        set_Color(tmBannerIcon_ColorId, get_Color(orange_ColorId));
-        set_Color(tmInlineContentMetadata_ColorId, get_Color(cyan_ColorId));
+        if (!isLightMode) {
+            const iHSLColor base = { 0, 0, 0.15f, 1.0f };
+            setHsl_Color(tmBackground_ColorId, base);
+            set_Color(tmParagraph_ColorId, get_Color(gray75_ColorId));
+            setHsl_Color(tmFirstParagraph_ColorId, addSatLum_HSLColor(base, 0, 0.75f));
+            set_Color(tmQuote_ColorId, get_Color(cyan_ColorId));
+            set_Color(tmPreformatted_ColorId, get_Color(cyan_ColorId));
+            set_Color(tmHeading1_ColorId, get_Color(white_ColorId));
+            setHsl_Color(tmHeading2_ColorId, addSatLum_HSLColor(base, 0, 0.7f));
+            setHsl_Color(tmHeading3_ColorId, addSatLum_HSLColor(base, 0, 0.6f));
+            set_Color(tmBannerBackground_ColorId, get_Color(black_ColorId));
+            set_Color(tmBannerTitle_ColorId, get_Color(white_ColorId));
+            set_Color(tmBannerIcon_ColorId, get_Color(orange_ColorId));
+            set_Color(tmInlineContentMetadata_ColorId, get_Color(cyan_ColorId));
+        }
+        else {
+            const iHSLColor base = { 0, 0, 1.0f, 1.0f };
+            setHsl_Color(tmBackground_ColorId, base);
+            set_Color(tmParagraph_ColorId, get_Color(gray25_ColorId));
+            set_Color(tmFirstParagraph_ColorId, get_Color(black_ColorId));
+            set_Color(tmQuote_ColorId, get_Color(brown_ColorId));
+            set_Color(tmPreformatted_ColorId, get_Color(brown_ColorId));
+            set_Color(tmHeading1_ColorId, get_Color(black_ColorId));
+            setHsl_Color(tmHeading2_ColorId, addSatLum_HSLColor(base, 0, -0.7f));
+            setHsl_Color(tmHeading3_ColorId, addSatLum_HSLColor(base, 0, -0.6f));
+            set_Color(tmBannerBackground_ColorId, get_Color(white_ColorId));
+            set_Color(tmBannerTitle_ColorId, get_Color(gray50_ColorId));
+            set_Color(tmBannerIcon_ColorId, get_Color(teal_ColorId));
+            set_Color(tmInlineContentMetadata_ColorId, get_Color(brown_ColorId));
+        }
         set_Color(tmBadLink_ColorId, get_Color(red_ColorId));
         set_Color(tmLinkText_ColorId, get_Color(white_ColorId));
         set_Color(tmLinkIcon_ColorId, get_Color(cyan_ColorId));
@@ -639,17 +657,17 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
                 { 8, 9 },  /* violet */
                 { 7, 8 },  /* pink */
             };
-            const float saturationLevel = 1.0f; /* TODO: user setting */
-            const iBool isLightMode     = iFalse; /* TODO: user setting */
-            const iBool isBannerLighter = (d->themeSeed & 0x4000) != 0;
+            const float  saturationLevel = 1.0f; /* TODO: user setting */
+            const iBool  isBannerLighter = (d->themeSeed & 0x4000) != 0;
             const size_t primIndex       = (d->themeSeed & 0xff) % iElemCount(hues);
-            const iBool isDarkBgSat     = (d->themeSeed & 0x200000) != 0 && (primIndex < 1 || primIndex > 4);
-            iHSLColor    base            = { hues[primIndex],
+            const iBool  isDarkBgSat =
+                (d->themeSeed & 0x200000) != 0 && (primIndex < 1 || primIndex > 4);
+            iHSLColor base = { hues[primIndex],
                                0.8f * (d->themeSeed >> 24) / 255.0f,
                                0.06f + 0.09f * ((d->themeSeed >> 5) & 0x7) / 7.0f,
                                1.0f };
-//            printf("background: %d %f %f\n", (int) base.hue, base.sat, base.lum);
-//            printf("isDarkBgSat: %d\n", isDarkBgSat);
+            //            printf("background: %d %f %f\n", (int) base.hue, base.sat, base.lum);
+            //            printf("isDarkBgSat: %d\n", isDarkBgSat);
             setHsl_Color(tmBackground_ColorId, base);
 
             setHsl_Color(tmBannerBackground_ColorId, addSatLum_HSLColor(base, 0.1f, 0.04f * (isBannerLighter ? 1 : -1)));

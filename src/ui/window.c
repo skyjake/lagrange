@@ -121,7 +121,7 @@ static const iMenuItem helpMenuItems[] = {
 #endif
 
 static const char *reloadCStr_ = "\U0001f503";
-static const char *stopCStr_   = orange_ColorEscape "\U0001f310";
+static const char *stopCStr_   = uiTextCaution_ColorEscape "\U0001f310";
 
 static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
     if (equal_Command(cmd, "window.resized")) {
@@ -266,7 +266,7 @@ static void setupUserInterface_Window(iWindow *d) {
                             arrangeHorizontal_WidgetFlag,
                         iTrue);
         addChild_Widget(div, iClob(navBar));
-        setBackgroundColor_Widget(navBar, gray25_ColorId);
+        setBackgroundColor_Widget(navBar, uiBackground_ColorId);
         setCommandHandler_Widget(navBar, handleNavBarCommands_);
         addChild_Widget(navBar, iClob(newIcon_LabelWidget("\U0001f850", 0, 0, "navigate.back")));
         addChild_Widget(navBar, iClob(newIcon_LabelWidget("\U0001f852", 0, 0, "navigate.forward")));
@@ -303,7 +303,7 @@ static void setupUserInterface_Window(iWindow *d) {
         iWidget *tabBar = makeTabs_Widget(div);
         setId_Widget(tabBar, "doctabs");
         setFlags_Widget(tabBar, expand_WidgetFlag, iTrue);
-        setBackgroundColor_Widget(tabBar, gray25_ColorId);
+        setBackgroundColor_Widget(tabBar, uiBackground_ColorId);
         appendTabPage_Widget(tabBar, iClob(new_DocumentWidget()), "Document", 0, 0);
         iWidget *buttons = findChild_Widget(tabBar, "tabs.buttons");
         setFlags_Widget(buttons, collapse_WidgetFlag | hidden_WidgetFlag, iTrue);
@@ -324,7 +324,7 @@ static void setupUserInterface_Window(iWindow *d) {
                             resizeChildren_WidgetFlag | arrangeHorizontal_WidgetFlag,
                         iTrue);
         addChild_Widget(div, iClob(searchBar));
-        setBackgroundColor_Widget(searchBar, gray25_ColorId);
+        setBackgroundColor_Widget(searchBar, uiBackground_ColorId);
         setCommandHandler_Widget(searchBar, handleSearchBarCommands_);
         addChild_Widget(searchBar, iClob(new_LabelWidget("\U0001f50d Text", 0, 0, NULL)));
         iInputWidget *input = new_InputWidget(0);
@@ -372,7 +372,7 @@ static float pixelRatio_Window_(const iWindow *d) {
 }
 
 static void drawBlank_Window_(iWindow *d) {
-    const iColor bg = get_Color(gray25_ColorId);
+    const iColor bg = get_Color(uiBackground_ColorId);
     SDL_SetRenderDrawColor(d->render, bg.r, bg.g, bg.b, 255);
     SDL_RenderClear(d->render);
     SDL_RenderPresent(d->render);

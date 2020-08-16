@@ -1,6 +1,7 @@
 #include "inputwidget.h"
 #include "paint.h"
 #include "util.h"
+#include "app.h"
 
 #include <the_Foundation/array.h>
 #include <SDL_clipboard.h>
@@ -291,13 +292,13 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
 static const iChar sensitiveChar_ = 0x25cf; /* black circle */
 
 static void draw_InputWidget_(const iInputWidget *d) {
-    const iWidget *w      = constAs_Widget(d);
-    const uint32_t time   = frameTime_Window(get_Window());
-    const iInt2 padding   = init_I2(gap_UI / 2, gap_UI / 2);
-    iRect       bounds    = adjusted_Rect(bounds_Widget(w), padding, neg_I2(padding));
-    const iBool isFocused = isFocused_Widget(w);
-    const iBool isHover   = isHover_Widget(w) &&
-                            contains_Widget(w, mouseCoord_Window(get_Window()));
+    const iWidget *w         = constAs_Widget(d);
+    const uint32_t time      = frameTime_Window(get_Window());
+    const iInt2    padding   = init_I2(gap_UI / 2, gap_UI / 2);
+    iRect          bounds    = adjusted_Rect(bounds_Widget(w), padding, neg_I2(padding));
+    const iBool    isFocused = isFocused_Widget(w);
+    const iBool    isHover   = isHover_Widget(w) &&
+                               contains_Widget(w, mouseCoord_Window(get_Window()));
     iPaint p;
     init_Paint(&p);
     iString text;
@@ -310,10 +311,13 @@ static void draw_InputWidget_(const iInputWidget *d) {
             appendChar_String(&text, sensitiveChar_);
         }
     }
-    fillRect_Paint(&p, bounds, black_ColorId);
-    drawRect_Paint(&p,
-                   adjusted_Rect(bounds, neg_I2(one_I2()), zero_I2()),
-                   isFocused ? orange_ColorId : isHover ? cyan_ColorId : gray50_ColorId);
+    fillRect_Paint(
+        &p, bounds, isFocused ? uiInputBackgroundFocused_ColorId : uiInputBackground_ColorId);
+    drawRectThickness_Paint(&p,
+                            adjusted_Rect(bounds, neg_I2(one_I2()), zero_I2()),
+                            isFocused ? gap_UI / 4 : 1,
+                            isFocused ? uiInputFrameFocused_ColorId
+                                      : isHover ? uiInputFrameHover_ColorId : uiInputFrame_ColorId);
     setClip_Paint(&p, bounds);
     shrink_Rect(&bounds, init_I2(gap_UI * (flags_Widget(w) & tight_WidgetFlag ? 1 : 2), 0));
     const iInt2 emSize    = advance_Text(d->font, "M");
@@ -332,7 +336,7 @@ static void draw_InputWidget_(const iInputWidget *d) {
     const int yOff = (height_Rect(bounds) - lineHeight_Text(d->font)) / 2;
     draw_Text(d->font,
               add_I2(topLeft_Rect(bounds), init_I2(xOff, yOff)),
-              white_ColorId,
+              isFocused ? uiInputTextFocused_ColorId : uiInputText_ColorId,
               "%s",
               cstr_String(&text));
     unsetClip_Paint(&p);
@@ -354,8 +358,8 @@ static void draw_InputWidget_(const iInputWidget *d) {
         else {
             initCStr_String(&cur, " ");
         }
-        fillRect_Paint(&p, curRect, orange_ColorId);
-        draw_Text(d->font, curPos, black_ColorId, cstr_String(&cur));
+        fillRect_Paint(&p, curRect, uiInputCursor_ColorId);
+        draw_Text(d->font, curPos, uiInputCursorText_ColorId, cstr_String(&cur));
         deinit_String(&cur);
     }
     deinit_String(&text);

@@ -5,6 +5,8 @@
 #include <the_Foundation/string.h>
 #include <the_Foundation/time.h>
 
+#include "ui/color.h"
+
 iDeclareType(Bookmarks)
 iDeclareType(DocumentWidget)
 iDeclareType(GmCerts)
@@ -29,7 +31,9 @@ void        processEvents_App   (enum iAppEventMode mode);
 iBool       handleCommand_App   (const char *cmd);
 void        refresh_App         (void);
 iBool       isRefreshPending_App(void);
-int         zoom_App            (void);
+
+int                 zoom_App            (void);
+enum iColorTheme    colorTheme_App      (void);
 
 iGmCerts *          certs_App           (void);
 iVisited *          visited_App         (void);

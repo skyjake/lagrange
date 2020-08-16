@@ -329,7 +329,7 @@ const iString *bookmarkTitle_DocumentWidget(const iDocumentWidget *d) {
     if (!isEmpty_String(d->titleUser)) {
         pushBack_StringArray(title, d->titleUser);
     }
-    else {
+    if (isEmpty_StringArray(title)) {
         iUrl parts;
         init_Url(&parts, d->mod.url);
         if (!isEmpty_Range(&parts.host)) {
@@ -693,11 +693,11 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                 iWidget *dlg = makeValueInput_Widget(
                     as_Widget(d),
                     NULL,
-                    format_CStr(cyan_ColorEscape "%s", cstr_Rangecc(parts.host)),
+                    format_CStr(uiHeading_ColorEscape "%s", cstr_Rangecc(parts.host)),
                     isEmpty_String(meta_GmRequest(d->request))
                         ? format_CStr("Please enter input for %s:", cstr_Rangecc(parts.path))
                         : cstr_String(meta_GmRequest(d->request)),
-                    orange_ColorEscape "Send \u21d2",
+                    uiTextCaution_ColorEscape "Send \u21d2",
                     "document.input.submit");
                 setSensitive_InputWidget(findChild_Widget(dlg, "input"),
                                          statusCode == sensitiveInput_GmStatusCode);
@@ -834,7 +834,7 @@ static iBool handleMediaCommand_DocumentWidget_(iDocumentWidget *d, const char *
         }
         else {
             const iGmError *err = get_GmError(code);
-            makeMessage_Widget(format_CStr(orange_ColorEscape "%s", err->title), err->info);
+            makeMessage_Widget(format_CStr(uiTextCaution_ColorEscape "%s", err->title), err->info);
             removeMediaRequest_DocumentWidget_(d, req->linkId);
         }
         return iTrue;
@@ -864,6 +864,9 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         refresh_Widget(w);
         updateWindowTitle_DocumentWidget_(d);
     }
+    else if (equal_Command(cmd, "theme.changed")) {
+        updateTheme_DocumentWidget_(d);
+    }
     else if (equal_Command(cmd, "tabs.changed")) {
         if (cmp_String(id_Widget(w), suffixPtr_Command(cmd, "id")) == 0) {
             /* Set palette for our document. */
@@ -879,18 +882,18 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         const char *unchecked = red_ColorEscape   "\u2610";
         const char *checked   = green_ColorEscape "\u2611";
         makeMessage_Widget(
-            cyan_ColorEscape "CERTIFICATE STATUS",
+            uiHeading_ColorEscape "CERTIFICATE STATUS",
             format_CStr("%s%s  Domain name %s%s\n"
                         "%s%s  %s (%04d-%02d-%02d %02d:%02d:%02d)\n"
                         "%s%s  %s",
                         d->certFlags & domainVerified_GmCertFlag ? checked : unchecked,
-                        gray75_ColorEscape,
+                        uiText_ColorEscape,
                         d->certFlags & domainVerified_GmCertFlag ? "matches" : "mismatch",
                         ~d->certFlags & domainVerified_GmCertFlag
                             ? format_CStr(" (%s)", cstr_String(d->certSubject))
                             : "",
                         d->certFlags & timeVerified_GmCertFlag ? checked : unchecked,
-                        gray75_ColorEscape,
+                        uiText_ColorEscape,
                         d->certFlags & timeVerified_GmCertFlag ? "Not expired" : "Expired",
                         d->certExpiry.year,
                         d->certExpiry.month,
@@ -899,7 +902,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                         d->certExpiry.minute,
                         d->certExpiry.second,
                         d->certFlags & trusted_GmCertFlag ? checked : unchecked,
-                        gray75_ColorEscape,
+                        uiText_ColorEscape,
                         d->certFlags & trusted_GmCertFlag ? "Trusted on first use"
                                                           : "Not trusted"));
         return iTrue;
@@ -1409,7 +1412,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                 if (tx + textSize.x > right_Rect(d->widgetBounds)) {
                     tx = right_Rect(d->widgetBounds) - textSize.x;
                     fillRect_Paint(&d->paint, (iRect){ init_I2(tx, top_Rect(linkRect)), textSize },
-                                   black_ColorId);
+                                   uiBackground_ColorId);
                     msg += 4; /* skip the space and dash */
                     tx += measure_Text(metaFont, " \u2014").x / 2;
                 }
