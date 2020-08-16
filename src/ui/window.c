@@ -181,7 +181,7 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
         /* Update navbar according to the current tab. */
         iDocumentWidget *doc = document_App();
         if (doc) {
-            setText_InputWidget(findWidget_App("url"), url_DocumentWidget(doc));
+            setText_InputWidget(findChild_Widget(navBar, "url"), url_DocumentWidget(doc));
             updateTextCStr_LabelWidget(findChild_Widget(navBar, "reload"),
                                        isRequestOngoing_DocumentWidget(doc) ? stopCStr_ : reloadCStr_);
         }

@@ -12,9 +12,17 @@
 
 ## Why not just use a web browser
 
-# Bookmarking
+# User interface
 
-# Managing and using identities
+## Navigation
+
+Hold down Alt/Option to see link shortcut keys. Each visible link on the page gets an alphanumeric shortcut. For example, the first link can be opened by pressing Alt-1. The tenth link is Alt-A. Additionally hold down Control/Command to open the link in a new tab.
+
+### SEomting
+
+## Bookmarking
+
+## Managing and using identities
 
 TLS client certificates used to identify you.
 

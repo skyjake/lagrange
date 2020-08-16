@@ -585,15 +585,15 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
     };
     /* Default colors. */ {
         if (!isLightMode) {
-            const iHSLColor base = { 0, 0, 0.15f, 1.0f };
+            const iHSLColor base = { 200, 0, 0.15f, 1.0f };
             setHsl_Color(tmBackground_ColorId, base);
             set_Color(tmParagraph_ColorId, get_Color(gray75_ColorId));
             setHsl_Color(tmFirstParagraph_ColorId, addSatLum_HSLColor(base, 0, 0.75f));
             set_Color(tmQuote_ColorId, get_Color(cyan_ColorId));
             set_Color(tmPreformatted_ColorId, get_Color(cyan_ColorId));
             set_Color(tmHeading1_ColorId, get_Color(white_ColorId));
-            setHsl_Color(tmHeading2_ColorId, addSatLum_HSLColor(base, 0, 0.7f));
-            setHsl_Color(tmHeading3_ColorId, addSatLum_HSLColor(base, 0, 0.6f));
+            setHsl_Color(tmHeading2_ColorId, addSatLum_HSLColor(base, 0.5f, 0.5f));
+            setHsl_Color(tmHeading3_ColorId, addSatLum_HSLColor(base, 1.0f, 0.4f));
             set_Color(tmBannerBackground_ColorId, get_Color(black_ColorId));
             set_Color(tmBannerTitle_ColorId, get_Color(white_ColorId));
             set_Color(tmBannerIcon_ColorId, get_Color(orange_ColorId));
@@ -618,15 +618,15 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
             set_Color(tmGopherLinkLastVisitDate_ColorId, get_Color(blue_ColorId));
         }
         else {
-            const iHSLColor base = { 0, 0, 1.0f, 1.0f };
+            const iHSLColor base = { 40, 0, 1.0f, 1.0f };
             setHsl_Color(tmBackground_ColorId, base);
             set_Color(tmParagraph_ColorId, get_Color(gray25_ColorId));
             set_Color(tmFirstParagraph_ColorId, get_Color(black_ColorId));
             set_Color(tmQuote_ColorId, get_Color(brown_ColorId));
             set_Color(tmPreformatted_ColorId, get_Color(brown_ColorId));
             set_Color(tmHeading1_ColorId, get_Color(black_ColorId));
-            setHsl_Color(tmHeading2_ColorId, addSatLum_HSLColor(base, 0, -0.7f));
-            setHsl_Color(tmHeading3_ColorId, addSatLum_HSLColor(base, 0, -0.6f));
+            setHsl_Color(tmHeading2_ColorId, addSatLum_HSLColor(base, 0.15f, -0.7f));
+            setHsl_Color(tmHeading3_ColorId, addSatLum_HSLColor(base, 0.3f, -0.6f));
             set_Color(tmBannerBackground_ColorId, get_Color(white_ColorId));
             set_Color(tmBannerTitle_ColorId, get_Color(gray50_ColorId));
             set_Color(tmBannerIcon_ColorId, get_Color(teal_ColorId));
