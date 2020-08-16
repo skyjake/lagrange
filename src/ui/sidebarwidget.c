@@ -166,7 +166,7 @@ void setMode_SidebarWidget(iSidebarWidget *d, enum iSidebarMode mode) {
     for (enum iSidebarMode i = 0; i < max_SidebarMode; i++) {
         setFlags_Widget(as_Widget(d->modeButtons[i]), selected_WidgetFlag, i == d->mode);
     }
-    const float heights[max_SidebarMode] = { 1.2f, 1.5f, 3, 3 };
+    const float heights[max_SidebarMode] = { 1.5f, 3, 3, 1.2f };
     d->itemHeight = heights[mode] * lineHeight_Text(default_FontId);
 }
 
@@ -179,17 +179,17 @@ int width_SidebarWidget(const iSidebarWidget *d) {
 }
 
 static const char *normalModeLabels_[max_SidebarMode] = {
-    "\U0001f5b9 Outline",
     "\U0001f588 Bookmarks",
     "\U0001f553 History",
     "\U0001f464 Identities",
+    "\U0001f5b9 Outline",
 };
 
 static const char *tightModeLabels_[max_SidebarMode] = {
-    "\U0001f5b9",
     "\U0001f588",
     "\U0001f553",
     "\U0001f464",
+    "\U0001f5b9",
 };
 
 void init_SidebarWidget(iSidebarWidget *d) {
@@ -496,10 +496,14 @@ static void draw_SidebarWidget_(const iSidebarWidget *d) {
     const iBool    isPressing = d->click.isActive && contains_Rect(bounds, pos_Click(&d->click));
     iPaint p;
     init_Paint(&p);
+    fillRect_Paint(&p,
+                   bounds_Widget(w),
+                   d->mode == documentOutline_SidebarMode ? tmBackground_ColorId
+                                                          : uiBackground_ColorId);
     /* Draw the items. */ {
-        const int font = default_FontId;
+        const int     font     = default_FontId;
         const iRanges visRange = visRange_SidebarWidget_(d);
-        iInt2 pos = addY_I2(topLeft_Rect(bounds), -(d->scrollY % d->itemHeight));
+        iInt2         pos      = addY_I2(topLeft_Rect(bounds), -(d->scrollY % d->itemHeight));
         for (size_t i = visRange.start; i < visRange.end; i++) {
             const iSidebarItem *item        = constAt_Array(&d->items, i);
             const iRect         itemRect    = { pos, init_I2(width_Rect(bounds), d->itemHeight) };
@@ -514,7 +518,7 @@ static void draw_SidebarWidget_(const iSidebarWidget *d) {
             if (d->mode == documentOutline_SidebarMode) {
                 const int fg =
                     isHover ? (isPressing ? uiTextPressed_ColorId : uiTextFramelessHover_ColorId)
-                            : (item->indent == 0 ? uiTextStrong_ColorId : uiText_ColorId);
+                            : (tmHeading1_ColorId + item->indent / (4 * gap_UI));
                 drawRange_Text(font, init_I2(pos.x + 3 * gap_UI + item->indent,
                                         mid_Rect(itemRect).y - lineHeight_Text(font) / 2),
                                fg, range_String(&item->label));

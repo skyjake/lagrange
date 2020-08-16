@@ -181,7 +181,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
             setFocus_Widget(as_Widget(d));
             return iTrue;
     }
-    if (ev->type == SDL_KEYUP) {
+    if (ev->type == SDL_KEYUP && isFocused_Widget(w)) {
         return iTrue;
     }
     const size_t curMax = iMin(size_Array(&d->text), d->maxLen - 1);

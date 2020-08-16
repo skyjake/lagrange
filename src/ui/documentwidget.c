@@ -17,9 +17,9 @@
 #include <the_Foundation/ptrarray.h>
 #include <the_Foundation/regexp.h>
 #include <the_Foundation/stringarray.h>
-
 #include <SDL_clipboard.h>
 #include <SDL_timer.h>
+#include <ctype.h>
 
 iDeclareClass(MediaRequest)
 
@@ -130,6 +130,7 @@ struct Impl_DocumentWidget {
     iPtrArray visibleLinks;
     const iGmRun *hoverLink;
     iBool noHoverWhileScrolling;
+    iBool showLinkNumbers;
     iClick click;
     float initialNormScrollY;
     int scrollY;
@@ -165,6 +166,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     d->pageMargin       = 5;
     d->hoverLink        = NULL;
     d->noHoverWhileScrolling = iFalse;
+    d->showLinkNumbers  = iFalse;
     d->arrowCursor      = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_ARROW);
     d->beamCursor       = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_IBEAM);
     d->handCursor       = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_HAND);
@@ -580,6 +582,19 @@ const iGmDocument *document_DocumentWidget(const iDocumentWidget *d) {
     return d->doc;
 }
 
+static void parseUser_DocumentWidget_(iDocumentWidget *d) {
+    clear_String(d->titleUser);
+    iRegExp *userPats[2] = { new_RegExp("~([^/?]+)", 0),
+                             new_RegExp("/users/([^/?]+)", caseInsensitive_RegExpOption) };
+    iRegExpMatch m;
+    iForIndices(i, userPats) {
+        if (matchString_RegExp(userPats[i], d->mod.url, &m)) {
+            setRange_String(d->titleUser, capturedRange_RegExpMatch(&m, 1));
+        }
+        iRelease(userPats[i]);
+    }
+}
+
 static iBool updateFromHistory_DocumentWidget_(iDocumentWidget *d) {
     const iRecentUrl *recent = findUrl_History(d->mod.history, d->mod.url);
     if (recent && recent->cachedResponse) {
@@ -607,24 +622,15 @@ void serializeState_DocumentWidget(const iDocumentWidget *d, iStream *outs) {
 
 void deserializeState_DocumentWidget(iDocumentWidget *d, iStream *ins) {
     deserialize_Model(&d->mod, ins);
+    parseUser_DocumentWidget_(d);
     updateFromHistory_DocumentWidget_(d);
 }
 
 void setUrlFromCache_DocumentWidget(iDocumentWidget *d, const iString *url, iBool isFromCache) {
     if (cmpStringSc_String(d->mod.url, url, &iCaseInsensitive)) {
         set_String(d->mod.url, url);
-        /* See if there a username in the URL. */ {
-            clear_String(d->titleUser);
-            iRegExp *userPats[2] = { new_RegExp("~([^/?]+)", 0),
-                                     new_RegExp("/users/([^/?]+)", caseInsensitive_RegExpOption) };
-            iRegExpMatch m;
-            iForIndices(i, userPats) {
-                if (matchString_RegExp(userPats[i], d->mod.url, &m)) {
-                    setRange_String(d->titleUser, capturedRange_RegExpMatch(&m, 1));
-                }
-                iRelease(userPats[i]);
-            }
-        }
+        /* See if there a username in the URL. */
+        parseUser_DocumentWidget_(d);
         if (!isFromCache || !updateFromHistory_DocumentWidget_(d)) {
             fetch_DocumentWidget_(d);
         }
@@ -869,6 +875,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         refresh_Widget(w);
     }
     else if (equal_Command(cmd, "tabs.changed")) {
+        d->showLinkNumbers = iFalse;
         if (cmp_String(id_Widget(w), suffixPtr_Command(cmd, "id")) == 0) {
             /* Set palette for our document. */
             updateTheme_DocumentWidget_(d);
@@ -1062,6 +1069,21 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     return iFalse;
 }
 
+static size_t visibleLinkOrdinal_DocumentWidget_(const iDocumentWidget *d, iGmLinkId linkId) {
+    size_t ord = 0;
+    const iRangei visRange = visibleRange_DocumentWidget_(d);
+    iConstForEach(PtrArray, i, &d->visibleLinks) {
+        const iGmRun *run = i.ptr;
+        if (top_Rect(run->visBounds) >= visRange.start + gap_UI * d->pageMargin * 4 / 5) {
+            if (run->flags & decoration_GmRunFlag && run->linkId) {
+                if (run->linkId == linkId) return ord;
+                ord++;
+            }
+        }
+    }
+    return iInvalidPos;
+}
+
 static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
     if (ev->type == SDL_USEREVENT && ev->user.code == command_UserEventCode) {
@@ -1071,17 +1093,64 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         }
         return iTrue;
     }
+    if (ev->type == SDL_KEYUP) {
+        const int key = ev->key.keysym.sym;
+        switch (key) {
+            case SDLK_LALT:
+            case SDLK_RALT:
+                if (document_App() == d) {
+                    d->showLinkNumbers = iFalse;
+                    refresh_Widget(w);
+                }
+                break;
+        }
+    }
     if (ev->type == SDL_KEYDOWN) {
         const int mods = keyMods_Sym(ev->key.keysym.mod);
         const int key = ev->key.keysym.sym;
+        if (d->showLinkNumbers && ((key >= '1' && key <= '9') ||
+                                   (key >= 'a' && key <= 'z'))) {
+            const size_t ord = isdigit(key) ? key - SDLK_1 : (key - 'a' + 9);
+            iConstForEach(PtrArray, i, &d->visibleLinks) {
+                const iGmRun *run = i.ptr;
+                if (run->flags & decoration_GmRunFlag &&
+                    visibleLinkOrdinal_DocumentWidget_(d, run->linkId) == ord) {
+                    postCommandf_App("open newtab:%d url:%s",
+                                     (SDL_GetModState() & KMOD_PRIMARY) != 0,
+                                     cstr_String(linkUrl_GmDocument(d->doc, run->linkId)));
+                    return iTrue;
+                }
+            }
+        }
         switch (key) {
+            case SDLK_LALT:
+            case SDLK_RALT:
+                if (document_App() == d) {
+                    d->showLinkNumbers = iTrue;
+                    refresh_Widget(w);
+                }
+                break;
+            case SDLK_1:
+            case SDLK_2:
+            case SDLK_3:
+            case SDLK_4:
+            case SDLK_5:
+            case SDLK_6:
+            case SDLK_7:
+            case SDLK_8:
+            case SDLK_9:
+                if (mods == KMOD_ALT || mods == (KMOD_ALT | KMOD_PRIMARY)) {
+                }
+                break;
             case SDLK_HOME:
                 d->scrollY = 0;
+                scroll_DocumentWidget_(d, 0);
                 updateVisible_DocumentWidget_(d);
                 refresh_Widget(w);
                 return iTrue;
             case SDLK_END:
                 d->scrollY = scrollMax_DocumentWidget_(d);
+                scroll_DocumentWidget_(d, 0);
                 updateVisible_DocumentWidget_(d);
                 refresh_Widget(w);
                 return iTrue;
@@ -1098,6 +1167,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             case ' ':
                 postCommand_Widget(w, "scroll.page arg:%d", key == SDLK_PAGEUP ? -1 : +1);
                 return iTrue;
+#if 0
             case SDLK_9: {
                 iBlock *seed = new_Block(64);
                 for (size_t i = 0; i < 64; ++i) {
@@ -1108,6 +1178,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 refresh_Widget(w);
                 break;
             }
+#endif
 #if 0
             case '0': {
                 extern int enableHalfPixelGlyphs_Text;
@@ -1241,6 +1312,7 @@ struct Impl_DrawContext {
     iPaint paint;
     iBool inSelectMark;
     iBool inFoundMark;
+    iBool showLinkNumbers;
 };
 
 static void fillRange_DrawContext_(iDrawContext *d, const iGmRun *run, enum iColorId color,
@@ -1329,10 +1401,22 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
         deinit_String(&bannerText);
     }
     else {
+        if (d->showLinkNumbers && run->linkId && run->flags & decoration_GmRunFlag) {
+            const size_t ord = visibleLinkOrdinal_DocumentWidget_(d->widget, run->linkId);
+            if (ord < 9 + 26) {
+                const iChar ordChar = ord < 9 ? 0x278a + ord : (0x24b6 + ord - 9);
+                drawString_Text(run->font,
+                                init_I2(left_Rect(d->bounds) - gap_UI / 2, visPos.y),
+                                fg,
+                                collect_String(newUnicodeN_String(&ordChar, 1)));
+                goto runDrawn;
+            }
+        }
         drawRange_Text(run->font, visPos, fg, run->text);
+    runDrawn:;
     }
     /* Presentation of links. */
-    if (run->linkId) {
+    if (run->linkId && ~run->flags & decoration_GmRunFlag) {
         const int metaFont = paragraph_FontId;
         /* TODO: Show status of an ongoing media request. */
         const int flags = linkFlags_GmDocument(doc, run->linkId);
@@ -1341,24 +1425,23 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
         /* Show inline content. */
         if (flags & content_GmLinkFlag) {
             fg = linkColor_GmDocument(doc, run->linkId, textHover_GmLinkPart);
-            if (!isEmpty_Rect(run->bounds)) {
-                iGmImageInfo info;
-                imageInfo_GmDocument(doc, linkImage_GmDocument(doc, run->linkId), &info);
-                iString text;
-                init_String(&text);
-                format_String(&text, "%s \u2014 %d x %d \u2014 %.1fMB",
-                              info.mime, info.size.x, info.size.y, info.numBytes / 1.0e6f);
-                if (findMediaRequest_DocumentWidget_(d->widget, run->linkId)) {
-                    appendFormat_String(
-                        &text, "  %s\u2a2f", isHover ? escape_Color(tmLinkText_ColorId) : "");
-                }
-                drawAlign_Text(metaFont,
-                               add_I2(topRight_Rect(run->bounds), origin),
-                               fg,
-                               right_Alignment,
-                               "%s", cstr_String(&text));
-                deinit_String(&text);
+            iAssert(!isEmpty_Rect(run->bounds));
+            iGmImageInfo info;
+            imageInfo_GmDocument(doc, linkImage_GmDocument(doc, run->linkId), &info);
+            iString text;
+            init_String(&text);
+            format_String(&text, "%s \u2014 %d x %d \u2014 %.1fMB",
+                          info.mime, info.size.x, info.size.y, info.numBytes / 1.0e6f);
+            if (findMediaRequest_DocumentWidget_(d->widget, run->linkId)) {
+                appendFormat_String(
+                    &text, "  %s\u2a2f", isHover ? escape_Color(tmLinkText_ColorId) : "");
             }
+            drawAlign_Text(metaFont,
+                           add_I2(topRight_Rect(run->bounds), origin),
+                           fg,
+                           right_Alignment,
+                           "%s", cstr_String(&text));
+            deinit_String(&text);
         }
         else if (run->flags & endOfLine_GmRunFlag &&
                  (mr = findMediaRequest_DocumentWidget_(d->widget, run->linkId)) != NULL) {
@@ -1440,13 +1523,18 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
         .widget = d,
         .widgetBounds = /* omit scrollbar width */
             adjusted_Rect(bounds, zero_I2(), init_I2(-constAs_Widget(d->scroll)->rect.size.x, 0)),
-        .bounds = documentBounds_DocumentWidget_(d)
+        .bounds = documentBounds_DocumentWidget_(d),
+        .showLinkNumbers = d->showLinkNumbers,
     };
     init_Paint(&ctx.paint);
     fillRect_Paint(&ctx.paint, bounds, tmBackground_ColorId);
     setClip_Paint(&ctx.paint, bounds);
     render_GmDocument(d->doc, visibleRange_DocumentWidget_(d), drawRun_DrawContext_, &ctx);
     unsetClip_Paint(&ctx.paint);
+//    drawRect_Paint(&ctx.paint,
+//                   moved_Rect((iRect){ zero_I2(), size_GmDocument(d->doc) },
+//                              add_I2(topLeft_Rect(ctx.bounds), init_I2(0, -d->scrollY))),
+//                   green_ColorId);
     draw_Widget(w);
 }
 

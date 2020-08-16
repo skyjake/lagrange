@@ -74,7 +74,7 @@ static const iMenuItem navMenuItems[] = {
     { "Copy Source Text", SDLK_c, KMOD_PRIMARY, "copy" },
     { "Bookmark This Page", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
     { "---", 0, 0, NULL },
-    { "Toggle Sidebar", SDLK_s, KMOD_PRIMARY | KMOD_ALT, "sidebar.toggle" },
+    { "Toggle Sidebar", SDLK_l, KMOD_PRIMARY | KMOD_SHIFT, "sidebar.toggle" },
     { "Zoom In", SDLK_EQUALS, KMOD_PRIMARY, "zoom.delta arg:10" },
     { "Zoom Out", SDLK_MINUS, KMOD_PRIMARY, "zoom.delta arg:-10" },
     { "Reset Zoom", SDLK_0, KMOD_PRIMARY, "zoom.set arg:100" },
@@ -99,11 +99,11 @@ static const iMenuItem editMenuItems[] = {
 };
 
 static const iMenuItem viewMenuItems[] = {
-    { "Show Page Outline", '1', KMOD_PRIMARY, "sidebar.mode arg:0 show:1" },
-    { "Show Bookmarks", '2', KMOD_PRIMARY, "sidebar.mode arg:1 show:1" },
-    { "Show History", '3', KMOD_PRIMARY, "sidebar.mode arg:2 show:1" },
-    { "Show Identities", '4', KMOD_PRIMARY, "sidebar.mode arg:3 show:1" },
-    { "Toggle Sidebar", SDLK_s, KMOD_PRIMARY | KMOD_ALT, "sidebar.toggle" },
+    { "Show Bookmarks", '1', KMOD_PRIMARY, "sidebar.mode arg:0 show:1" },
+    { "Show History", '2', KMOD_PRIMARY, "sidebar.mode arg:1 show:1" },
+    { "Show Identities", '3', KMOD_PRIMARY, "sidebar.mode arg:2 show:1" },
+    { "Show Page Outline", '4', KMOD_PRIMARY, "sidebar.mode arg:3 show:1" },
+    { "Toggle Sidebar", SDLK_l, KMOD_PRIMARY | KMOD_SHIFT, "sidebar.toggle" },
     { "---", 0, 0, NULL },
     { "Go Back", SDLK_LEFTBRACKET, KMOD_PRIMARY, "navigate.back" },
     { "Go Forward", SDLK_RIGHTBRACKET, KMOD_PRIMARY, "navigate.forward" },
