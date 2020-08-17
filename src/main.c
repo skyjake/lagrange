@@ -22,6 +22,7 @@ int main(int argc, char **argv) {
     init_Foundation();
     printf("Lagrange: A Beautiful Gemini Client\n");
     /* Initialize SDL. */
+    SDL_SetHint(SDL_HINT_VIDEO_ALLOW_SCREENSAVER, "1");
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER)) {
         fprintf(stderr, "SDL init failed: %s\n", SDL_GetError());
         return -1;

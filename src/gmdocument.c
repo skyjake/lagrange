@@ -659,7 +659,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
     }
     else {
         d->themeSeed = 0;
-        d->siteIcon  = 0x1f310; /* globe */
+        d->siteIcon  = 0; //0x1f310; /* globe */
     }
     /* Set up colors. */
     if (d->themeSeed) {
