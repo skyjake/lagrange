@@ -74,3 +74,9 @@ void drawLines_Paint(const iPaint *d, const iInt2 *points, size_t count, int col
     setColor_Paint_(d, color);
     SDL_RenderDrawLines(renderer_Paint_(d), (const SDL_Point *) points, count);
 }
+
+iInt2 size_SDLTexture(SDL_Texture *d) {
+    iInt2 size;
+    SDL_QueryTexture(d, NULL, NULL, &size.x, &size.y);
+    return size;
+}

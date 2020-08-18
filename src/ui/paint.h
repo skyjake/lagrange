@@ -35,3 +35,5 @@ iLocalDef void drawHLine_Paint(const iPaint *d, iInt2 pos, int len, int color) {
 iLocalDef void drawVLine_Paint(const iPaint *d, iInt2 pos, int len, int color) {
     drawLine_Paint(d, pos, addY_I2(pos, len), color);
 }
+
+iInt2   size_SDLTexture     (SDL_Texture *);
