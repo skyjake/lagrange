@@ -175,6 +175,7 @@ void setMode_SidebarWidget(iSidebarWidget *d, enum iSidebarMode mode) {
     }
     const float heights[max_SidebarMode] = { 1.333f, 3, 3, 1.2f };
     d->itemHeight = heights[mode] * lineHeight_Text(uiContent_FontId);
+    invalidate_SidebarWidget_(d);
 }
 
 enum iSidebarMode mode_SidebarWidget(const iSidebarWidget *d) {
@@ -401,6 +402,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             if (argLabel_Command(cmd, "show") && !isVisible_Widget(w)) {
                 postCommand_App("sidebar.toggle");
             }
+            scroll_SidebarWidget_(d, 0);
             return iTrue;
         }
         else if (equal_Command(cmd, "sidebar.toggle")) {

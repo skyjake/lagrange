@@ -217,6 +217,8 @@ void setThemePalette_Color(enum iColorTheme theme) {
             copy_(uiMatching_ColorId, orange_ColorId);
             break;
     }
+    palette_[uiMarked_ColorId].a = 128;
+    palette_[uiMatching_ColorId].a = 128;
 }
 
 iColor get_Color(int color) {
