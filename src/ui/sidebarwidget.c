@@ -173,7 +173,7 @@ void setMode_SidebarWidget(iSidebarWidget *d, enum iSidebarMode mode) {
     for (enum iSidebarMode i = 0; i < max_SidebarMode; i++) {
         setFlags_Widget(as_Widget(d->modeButtons[i]), selected_WidgetFlag, i == d->mode);
     }
-    const float heights[max_SidebarMode] = { 1.5f, 3, 3, 1.2f };
+    const float heights[max_SidebarMode] = { 1.333f, 3, 3, 1.2f };
     d->itemHeight = heights[mode] * lineHeight_Text(uiContent_FontId);
 }
 
@@ -423,6 +423,9 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         else if (equal_Command(cmd, "tabs.changed") || equal_Command(cmd, "document.changed")) {
             d->scrollY = 0;
             updateItems_SidebarWidget_(d);
+        }
+        else if (equal_Command(cmd, "theme.changed")) {
+            invalidate_SidebarWidget_(d);
         }
         else if (equal_Command(cmd, "bookmark.copy")) {
             const iSidebarItem *item = hoverItem_SidebarWidget_(d);
