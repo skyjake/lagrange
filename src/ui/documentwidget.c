@@ -1505,6 +1505,12 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                 appendFormat_String(
                     &text, "  %s\u2a2f", isHover ? escape_Color(tmLinkText_ColorId) : "");
             }
+            const iInt2 size = measureRange_Text(metaFont, range_String(&text));
+            fillRect_Paint(
+                &d->paint,
+                (iRect){ add_I2(origin, addX_I2(topRight_Rect(run->bounds), -size.x - gap_UI)),
+                         addX_I2(size, 2 * gap_UI) },
+                tmBackground_ColorId);
             drawAlign_Text(metaFont,
                            add_I2(topRight_Rect(run->bounds), origin),
                            fg,
@@ -1527,9 +1533,8 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
             const int       flags  = linkFlags_GmDocument(doc, linkId);
             iUrl parts;
             init_Url(&parts, url);
-            const iString *host = collect_String(newRange_String(parts.host));
             fg = linkColor_GmDocument(doc, linkId, textHover_GmLinkPart);
-            const iBool showHost  = (!isEmpty_String(host) && flags & userFriendly_GmLinkFlag);
+            const iBool showHost  = (!isEmpty_Range(&parts.host) && flags & userFriendly_GmLinkFlag);
             const iBool showImage = (flags & imageFileExtension_GmLinkFlag) != 0;
             const iBool showAudio = (flags & audioFileExtension_GmLinkFlag) != 0;
             iString str;
@@ -1541,7 +1546,12 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                     &str,
                     " \u2014%s%s%s\r%c%s",
                     showHost ? " " : "",
-                    showHost ? cstr_String(host) : "",
+                    showHost ? (!equalCase_Rangecc(&parts.protocol, "gemini")
+                                    ? format_CStr("%s://%s",
+                                                  cstr_Rangecc(parts.protocol),
+                                                  cstr_Rangecc(parts.host))
+                                    : cstr_Rangecc(parts.host))
+                             : "",
                     showHost && (showImage || showAudio) ? " \u2014" : "",
                     showImage || showAudio
                         ? '0' + fg
