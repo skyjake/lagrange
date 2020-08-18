@@ -1,5 +1,7 @@
 #include "paint.h"
 
+#include <SDL_version.h>
+
 iLocalDef SDL_Renderer *renderer_Paint_(const iPaint *d) {
     iAssert(d->dst);
     return d->dst->render;
@@ -12,6 +14,18 @@ static void setColor_Paint_(const iPaint *d, int color) {
 
 void init_Paint(iPaint *d) {
     d->dst = get_Window();
+    d->oldTarget = NULL;
+}
+
+void beginTarget_Paint(iPaint *d, SDL_Texture *target) {
+    SDL_Renderer *rend = renderer_Paint_(d);
+    d->oldTarget = SDL_GetRenderTarget(rend);
+    SDL_SetRenderTarget(rend, target);
+}
+
+void endTarget_Paint(iPaint *d) {
+    SDL_SetRenderTarget(renderer_Paint_(d), d->oldTarget);
+    d->oldTarget = NULL;
 }
 
 void setClip_Paint(iPaint *d, iRect rect) {
@@ -19,8 +33,12 @@ void setClip_Paint(iPaint *d, iRect rect) {
 }
 
 void unsetClip_Paint(iPaint *d) {
+#if SDL_VERSION_ATLEAST(2, 0, 12)
+    SDL_RenderSetClipRect(renderer_Paint_(d), NULL);
+#else
     const SDL_Rect winRect = { 0, 0, d->dst->root->rect.size.x, d->dst->root->rect.size.y };
     SDL_RenderSetClipRect(renderer_Paint_(d), &winRect);
+#endif
 }
 
 void drawRect_Paint(const iPaint *d, iRect rect, int color) {
@@ -55,4 +73,10 @@ void fillRect_Paint(const iPaint *d, iRect rect, int color) {
 void drawLines_Paint(const iPaint *d, const iInt2 *points, size_t count, int color) {
     setColor_Paint_(d, color);
     SDL_RenderDrawLines(renderer_Paint_(d), (const SDL_Point *) points, count);
+}
+
+iInt2 size_SDLTexture(SDL_Texture *d) {
+    iInt2 size;
+    SDL_QueryTexture(d, NULL, NULL, &size.x, &size.y);
+    return size;
 }

@@ -330,7 +330,7 @@ void submit_GmRequest(iGmRequest *d) {
             /* TODO: Check supported file types: images, audio */
             /* TODO: Detect text files based on contents? E.g., is the content valid UTF-8. */
             d->resp.statusCode = success_GmStatusCode;
-            if (endsWithCase_String(path, ".gmi")) {
+            if (endsWithCase_String(path, ".gmi") || endsWithCase_String(path, ".gemini")) {
                 setCStr_String(&d->resp.meta, "text/gemini; charset=utf-8");
             }
             else if (endsWithCase_String(path, ".txt")) {

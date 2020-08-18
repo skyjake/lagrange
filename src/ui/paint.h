@@ -9,12 +9,16 @@ iDeclareType(Paint)
 
 struct Impl_Paint {
     iWindow *dst;
+    SDL_Texture *oldTarget;
 };
 
-void    init_Paint      (iPaint *);
+void    init_Paint          (iPaint *);
 
-void    setClip_Paint   (iPaint *, iRect rect);
-void    unsetClip_Paint (iPaint *);
+void    beginTarget_Paint   (iPaint *, SDL_Texture *target);
+void    endTarget_Paint     (iPaint *);
+
+void    setClip_Paint       (iPaint *, iRect rect);
+void    unsetClip_Paint     (iPaint *);
 
 void    drawRect_Paint          (const iPaint *, iRect rect, int color);
 void    drawRectThickness_Paint (const iPaint *, iRect rect, int thickness, int color);
@@ -31,3 +35,5 @@ iLocalDef void drawHLine_Paint(const iPaint *d, iInt2 pos, int len, int color) {
 iLocalDef void drawVLine_Paint(const iPaint *d, iInt2 pos, int len, int color) {
     drawLine_Paint(d, pos, addY_I2(pos, len), color);
 }
+
+iInt2   size_SDLTexture     (SDL_Texture *);

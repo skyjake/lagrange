@@ -120,7 +120,7 @@ static void initFonts_Text_(iText *d) {
         int symbolsFont;
     } fontData[max_FontId] = {
         { &fontSourceSansProRegular_Embedded, fontSize_UI,          defaultSymbols_FontId },
-        { &fontSourceSansProRegular_Embedded, fontSize_UI * 1.666f, defaultLargeSymbols_FontId },
+        { &fontSourceSansProRegular_Embedded, fontSize_UI * 1.150f, defaultMediumSymbols_FontId },
         { &fontFiraMonoRegular_Embedded,      fontSize_UI * 0.866f, defaultSymbols_FontId },
         { &fontFiraSansRegular_Embedded,      textSize,             symbols_FontId },
         { &fontFiraMonoRegular_Embedded,      textSize * 0.866f,    smallSymbols_FontId },
@@ -133,14 +133,14 @@ static void initFonts_Text_(iText *d) {
         { &fontFiraSansBold_Embedded,         textSize * 2.000f,    hugeSymbols_FontId },
         { &fontFiraSansLight_Embedded,        textSize * 1.666f,    largeSymbols_FontId },
         { &fontSymbola_Embedded,              fontSize_UI,          defaultSymbols_FontId },
-        { &fontSymbola_Embedded,              fontSize_UI * 1.666f, defaultLargeSymbols_FontId },
+        { &fontSymbola_Embedded,              fontSize_UI * 1.150f, defaultMediumSymbols_FontId },
         { &fontSymbola_Embedded,              textSize,             symbols_FontId },
         { &fontSymbola_Embedded,              textSize * 1.333f,    mediumSymbols_FontId },
         { &fontSymbola_Embedded,              textSize * 1.666f,    largeSymbols_FontId },
         { &fontSymbola_Embedded,              textSize * 2.000f,    hugeSymbols_FontId },
         { &fontSymbola_Embedded,              textSize * 0.866f,    smallSymbols_FontId },
         { &fontNotoEmojiRegular_Embedded,     fontSize_UI,          defaultSymbols_FontId },
-        { &fontNotoEmojiRegular_Embedded,     fontSize_UI * 1.666f, defaultLargeSymbols_FontId },
+        { &fontNotoEmojiRegular_Embedded,     fontSize_UI * 1.150f, defaultMediumSymbols_FontId },
         { &fontNotoEmojiRegular_Embedded,     textSize,             symbols_FontId },
         { &fontNotoEmojiRegular_Embedded,     textSize * 1.333f,    mediumSymbols_FontId },
         { &fontNotoEmojiRegular_Embedded,     textSize * 1.666f,    largeSymbols_FontId },
@@ -306,10 +306,11 @@ static void cache_Font_(iFont *d, iGlyph *glyph, int hoff) {
     }
     /* Determine placement in the glyph cache texture, advancing in rows. */
     glRect->pos = assignCachePos_Text_(txt, glRect->size);
+    SDL_Texture *oldTarget = SDL_GetRenderTarget(render);
     SDL_SetRenderTarget(render, txt->cache);
     const SDL_Rect dstRect = sdlRect_(*glRect);
     SDL_RenderCopy(render, tex, &(SDL_Rect){ 0, 0, dstRect.w, dstRect.h }, &dstRect);
-    SDL_SetRenderTarget(render, NULL);
+    SDL_SetRenderTarget(render, oldTarget);
     if (tex) {
         SDL_DestroyTexture(tex);
         iAssert(surface);
@@ -670,9 +671,10 @@ void init_TextBuf(iTextBuf *d, int font, const char *text) {
                                    d->size.x,
                                    d->size.y);
     SDL_SetTextureBlendMode(d->texture, SDL_BLENDMODE_BLEND);
+    SDL_Texture *oldTarget = SDL_GetRenderTarget(render);
     SDL_SetRenderTarget(render, d->texture);
     draw_Text_(font, zero_I2(), white_ColorId, range_CStr(text));
-    SDL_SetRenderTarget(render, NULL);
+    SDL_SetRenderTarget(render, oldTarget);
 }
 
 void deinit_TextBuf(iTextBuf *d) {

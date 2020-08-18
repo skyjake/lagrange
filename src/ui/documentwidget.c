@@ -19,6 +19,7 @@
 #include <the_Foundation/stringarray.h>
 #include <SDL_clipboard.h>
 #include <SDL_timer.h>
+#include <SDL_render.h>
 #include <ctype.h>
 
 iDeclareClass(MediaRequest)
@@ -112,33 +113,37 @@ enum iRequestState {
 };
 
 struct Impl_DocumentWidget {
-    iWidget widget;
+    iWidget        widget;
     enum iRequestState state;
-    iModel mod;
-    iString *titleUser;
-    iGmRequest *request;
-    iAtomicInt isRequestUpdated; /* request has new content, need to parse it */
-    iObjectList *media;
-    iGmDocument *doc;
-    int       certFlags;
-    iDate     certExpiry;
-    iString * certSubject;
-    iBool selecting;
-    iRangecc selectMark;
-    iRangecc foundMark;
-    int pageMargin;
-    iPtrArray visibleLinks;
-    const iGmRun *hoverLink;
-    iBool noHoverWhileScrolling;
-    iBool showLinkNumbers;
-    iClick click;
-    float initialNormScrollY;
-    int scrollY;
+    iModel         mod;
+    iString *      titleUser;
+    iGmRequest *   request;
+    iAtomicInt     isRequestUpdated; /* request has new content, need to parse it */
+    iObjectList *  media;
+    iGmDocument *  doc;
+    int            certFlags;
+    iDate          certExpiry;
+    iString *      certSubject;
+    iBool          selecting;
+    iRangecc       selectMark;
+    iRangecc       foundMark;
+    int            pageMargin;
+    iPtrArray      visibleLinks;
+    const iGmRun * hoverLink;
+    iBool          noHoverWhileScrolling;
+    iBool          showLinkNumbers;
+    iClick         click;
+    float          initNormScrollY;
+    int            scrollY;
     iScrollWidget *scroll;
-    iWidget *menu;
-    SDL_Cursor *arrowCursor; /* TODO: cursors belong in Window */
-    SDL_Cursor *beamCursor;
-    SDL_Cursor *handCursor;
+    iWidget *      menu;
+    SDL_Cursor *   arrowCursor; /* TODO: cursors belong in Window */
+    SDL_Cursor *   beamCursor;
+    SDL_Cursor *   handCursor;
+    SDL_Texture *  visBuffer[2];
+    int            visBufferIndex;
+    iInt2          visBufferSize;
+    iRangei        visBufferValidRange;
 };
 
 iDefineObjectConstruction(DocumentWidget)
@@ -158,7 +163,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     d->isRequestUpdated = iFalse;
     d->media            = new_ObjectList();
     d->doc              = new_GmDocument();
-    d->initialNormScrollY = 0;
+    d->initNormScrollY  = 0;
     d->scrollY          = 0;
     d->selecting        = iFalse;
     d->selectMark       = iNullRange;
@@ -167,9 +172,13 @@ void init_DocumentWidget(iDocumentWidget *d) {
     d->hoverLink        = NULL;
     d->noHoverWhileScrolling = iFalse;
     d->showLinkNumbers  = iFalse;
-    d->arrowCursor      = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_ARROW);
-    d->beamCursor       = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_IBEAM);
-    d->handCursor       = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_HAND);
+    iZap(d->visBuffer);
+    d->visBufferIndex = 0;
+    d->visBufferSize  = zero_I2();
+    iZap(d->visBufferValidRange);
+    d->arrowCursor    = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_ARROW);
+    d->beamCursor     = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_IBEAM);
+    d->handCursor     = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_HAND);
     init_PtrArray(&d->visibleLinks);
     init_Click(&d->click, d, SDL_BUTTON_LEFT);
     addChild_Widget(w, iClob(d->scroll = new_ScrollWidget()));
@@ -219,7 +228,7 @@ static iRect documentBounds_DocumentWidget_(const iDocumentWidget *d) {
         rect.pos.y += margin;
         rect.size.y -= margin;
     }
-    iInt2 docSize = addY_I2(size_GmDocument(d->doc), 0 /*-lineHeight_Text(banner_FontId) * 2*/);
+    const iInt2 docSize = size_GmDocument(d->doc);
     if (docSize.y < rect.size.y) {
         /* Center vertically if short. */
         int offset = (rect.size.y - docSize.y) / 2;
@@ -227,6 +236,14 @@ static iRect documentBounds_DocumentWidget_(const iDocumentWidget *d) {
         rect.size.y = docSize.y;
     }
     return rect;
+}
+
+iLocalDef int documentToWindowY_DocumentWidget_(const iDocumentWidget *d, int docY) {
+    return docY - d->scrollY + documentBounds_DocumentWidget_(d).pos.y;
+}
+
+iLocalDef int windowToDocumentY_DocumentWidget_(const iDocumentWidget *d, int localY) {
+    return localY + d->scrollY - documentBounds_DocumentWidget_(d).pos.y;
 }
 
 static iInt2 documentPos_DocumentWidget_(const iDocumentWidget *d, iInt2 pos) {
@@ -252,9 +269,9 @@ static void requestFinished_DocumentWidget_(iAnyObject *obj) {
 }
 
 static iRangei visibleRange_DocumentWidget_(const iDocumentWidget *d) {
-    const int margin = gap_UI * d->pageMargin;
+    const int margin = !hasSiteBanner_GmDocument(d->doc) ? gap_UI * d->pageMargin : 0;
     return (iRangei){ d->scrollY - margin,
-                      d->scrollY + height_Rect(bounds_Widget(constAs_Widget(d))) };
+                      d->scrollY + height_Rect(bounds_Widget(constAs_Widget(d))) - margin };
 }
 
 static void addVisibleLink_DocumentWidget_(void *context, const iGmRun *run) {
@@ -453,6 +470,10 @@ static void updateTheme_DocumentWidget_(iDocumentWidget *d) {
     }
 }
 
+static void invalidate_DocumentWidget_(iDocumentWidget *d) {
+    iZap(d->visBufferValidRange);
+}
+
 static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse *response) {
     if (d->state == ready_RequestState) {
         return;
@@ -462,6 +483,7 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse
     const enum iGmStatusCode statusCode = response->statusCode;
     if (category_GmStatusCode(statusCode) != categoryInput_GmStatusCode) {
         iString str;
+        invalidate_DocumentWidget_(d);
         updateTheme_DocumentWidget_(d);
         initBlock_String(&str, &response->body);
         if (category_GmStatusCode(statusCode) == categorySuccess_GmStatusCode) {
@@ -600,11 +622,11 @@ static iBool updateFromHistory_DocumentWidget_(iDocumentWidget *d) {
     if (recent && recent->cachedResponse) {
         const iGmResponse *resp = recent->cachedResponse;
         d->state = fetching_RequestState;
-        d->initialNormScrollY = recent->normScrollY;
+        d->initNormScrollY = recent->normScrollY;
         /* Use the cached response data. */
         updateTrust_DocumentWidget_(d, resp);
         updateDocument_DocumentWidget_(d, resp);
-        d->scrollY = d->initialNormScrollY * size_GmDocument(d->doc).y;
+        d->scrollY = d->initNormScrollY * size_GmDocument(d->doc).y;
         d->state = ready_RequestState;
         updateVisible_DocumentWidget_(d);
         postCommandf_App("document.changed doc:%p url:%s", d, cstr_String(d->mod.url));
@@ -640,7 +662,7 @@ void setUrlFromCache_DocumentWidget(iDocumentWidget *d, const iString *url, iBoo
 iDocumentWidget *duplicate_DocumentWidget(const iDocumentWidget *orig) {
     iDocumentWidget *d = new_DocumentWidget();
     delete_History(d->mod.history);
-    d->initialNormScrollY = normScrollPos_DocumentWidget_(d);
+    d->initNormScrollY = normScrollPos_DocumentWidget_(d);
     d->mod.history = copy_History(orig->mod.history);
     setUrlFromCache_DocumentWidget(d, orig->mod.url, iTrue);
     return d;
@@ -651,7 +673,7 @@ void setUrl_DocumentWidget(iDocumentWidget *d, const iString *url) {
 }
 
 void setInitialScroll_DocumentWidget(iDocumentWidget *d, float normScrollY) {
-    d->initialNormScrollY = normScrollY;
+    d->initNormScrollY = normScrollY;
 }
 
 iBool isRequestOngoing_DocumentWidget(const iDocumentWidget *d) {
@@ -695,7 +717,7 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
             case categoryInput_GmStatusCode: {
                 iUrl parts;
                 init_Url(&parts, d->mod.url);
-                printf("%s\n", cstr_String(meta_GmRequest(d->request)));
+//                printf("%s\n", cstr_String(meta_GmRequest(d->request)));
                 iWidget *dlg = makeValueInput_Widget(
                     as_Widget(d),
                     NULL,
@@ -809,6 +831,7 @@ static iBool requestMedia_DocumentWidget_(iDocumentWidget *d, iGmLinkId linkId) 
             d->media,
             iClob(new_MediaRequest(
                 d, linkId, absoluteUrl_String(d->mod.url, linkUrl_GmDocument(d->doc, linkId)))));
+        invalidate_DocumentWidget_(d);
         return iTrue;
     }
     return iFalse;
@@ -835,6 +858,7 @@ static iBool handleMediaCommand_DocumentWidget_(iDocumentWidget *d, const char *
                 setImage_GmDocument(d->doc, req->linkId, meta_GmRequest(req->req),
                                     body_GmRequest(req->req));
                 updateVisible_DocumentWidget_(d);
+                invalidate_DocumentWidget_(d);
                 refresh_Widget(as_Widget(d));
             }
         }
@@ -846,6 +870,36 @@ static iBool handleMediaCommand_DocumentWidget_(iDocumentWidget *d, const char *
         return iTrue;
     }
     return iFalse;
+}
+
+static void deallocVisBuffer_DocumentWidget_(iDocumentWidget *d) {
+    d->visBufferSize = zero_I2();
+    iZap(d->visBufferValidRange);
+    iForIndices(i, d->visBuffer) {
+        SDL_DestroyTexture(d->visBuffer[i]);
+        d->visBuffer[i] = NULL;
+    }
+}
+
+static void allocVisBuffer_DocumentWidget_(iDocumentWidget *d) {
+    iWidget *w = as_Widget(d);
+    const iBool isVisible = isVisible_Widget(w);
+    const iInt2 size = bounds_Widget(w).size;
+    if (!isEqual_I2(size, d->visBufferSize) || !isVisible) {
+        deallocVisBuffer_DocumentWidget_(d);
+    }
+    if (isVisible && !d->visBuffer[0]) {
+        iZap(d->visBufferValidRange);
+        d->visBufferSize = size;
+        iForIndices(i, d->visBuffer) {
+            d->visBuffer[i] = SDL_CreateTexture(renderer_Window(get_Window()),
+                                                SDL_PIXELFORMAT_RGBA8888,
+                                                SDL_TEXTUREACCESS_STATIC | SDL_TEXTUREACCESS_TARGET,
+                                                size.x,
+                                                size.y);
+            SDL_SetTextureBlendMode(d->visBuffer[i], SDL_BLENDMODE_NONE);
+        }
+    }
 }
 
 void updateSize_DocumentWidget(iDocumentWidget *d) {
@@ -867,11 +921,14 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                 scrollTo_DocumentWidget_(d, mid_Rect(mid->bounds).y, iTrue);
             }
         }
+        invalidate_DocumentWidget_(d);
+        allocVisBuffer_DocumentWidget_(d);
         refresh_Widget(w);
         updateWindowTitle_DocumentWidget_(d);
     }
     else if (equal_Command(cmd, "theme.changed") && document_App() == d) {
         updateTheme_DocumentWidget_(d);
+        invalidate_DocumentWidget_(d);
         refresh_Widget(w);
     }
     else if (equal_Command(cmd, "tabs.changed")) {
@@ -884,6 +941,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             updateVisible_DocumentWidget_(d);
         }
         updateWindowTitle_DocumentWidget_(d);
+        allocVisBuffer_DocumentWidget_(d);
         return iFalse;
     }
     else if (equal_Command(cmd, "server.showcert") && d == document_App()) {
@@ -943,16 +1001,18 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equal_Command(cmd, "document.input.submit")) {
-        iString *value = collect_String(suffix_Command(cmd, "value"));
-        urlEncode_String(value);
-        iString *url = collect_String(copy_String(d->mod.url));
-        const size_t qPos = indexOfCStr_String(url, "?");
-        if (qPos != iInvalidPos) {
-            remove_Block(&url->chars, qPos, iInvalidSize);
+        if (arg_Command(cmd)) {
+            iString *value = collect_String(suffix_Command(cmd, "value"));
+            urlEncode_String(value);
+            iString *url = collect_String(copy_String(d->mod.url));
+            const size_t qPos = indexOfCStr_String(url, "?");
+            if (qPos != iInvalidPos) {
+                remove_Block(&url->chars, qPos, iInvalidSize);
+            }
+            appendCStr_String(url, "?");
+            append_String(url, value);
+            postCommandf_App("open url:%s", cstr_String(url));
         }
-        appendCStr_String(url, "?");
-        append_String(url, value);
-        postCommandf_App("open url:%s", cstr_String(url));
         return iTrue;
     }
     else if (equal_Command(cmd, "valueinput.cancelled") &&
@@ -968,7 +1028,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     else if (equalWidget_Command(cmd, w, "document.request.finished") &&
              pointerLabel_Command(cmd, "request") == d->request) {
         checkResponse_DocumentWidget_(d);
-        d->scrollY = d->initialNormScrollY * size_GmDocument(d->doc).y;
+        d->scrollY = d->initNormScrollY * size_GmDocument(d->doc).y;
         d->state = ready_RequestState;
         /* The response may be cached. */ {
             const iRangecc proto = urlProtocol_String(d->mod.url);
@@ -1002,7 +1062,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return handleMediaCommand_DocumentWidget_(d, cmd);
     }
     else if (equal_Command(cmd, "document.reload") && document_App() == d) {
-        d->initialNormScrollY = normScrollPos_DocumentWidget_(d);
+        d->initNormScrollY = normScrollPos_DocumentWidget_(d);
         fetch_DocumentWidget_(d);
         return iTrue;
     }
@@ -1100,6 +1160,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             case SDLK_RALT:
                 if (document_App() == d) {
                     d->showLinkNumbers = iFalse;
+                    invalidate_DocumentWidget_(d);
                     refresh_Widget(w);
                 }
                 break;
@@ -1127,19 +1188,8 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             case SDLK_RALT:
                 if (document_App() == d) {
                     d->showLinkNumbers = iTrue;
+                    invalidate_DocumentWidget_(d);
                     refresh_Widget(w);
-                }
-                break;
-            case SDLK_1:
-            case SDLK_2:
-            case SDLK_3:
-            case SDLK_4:
-            case SDLK_5:
-            case SDLK_6:
-            case SDLK_7:
-            case SDLK_8:
-            case SDLK_9:
-                if (mods == KMOD_ALT || mods == (KMOD_ALT | KMOD_PRIMARY)) {
                 }
                 break;
             case SDLK_HOME:
@@ -1264,6 +1314,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                 d->hoverLink = NULL;
                                 scroll_DocumentWidget_(d, 0);
                                 updateVisible_DocumentWidget_(d);
+                                invalidate_DocumentWidget_(d);
                                 refresh_Widget(w);
                                 return iTrue;
                             }
@@ -1274,6 +1325,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                     setImage_GmDocument(d->doc, linkId, meta_GmRequest(req->req),
                                                         body_GmRequest(req->req));
                                     updateVisible_DocumentWidget_(d);
+                                    invalidate_DocumentWidget_(d);
                                     refresh_Widget(w);
                                     return iTrue;
                                 }
@@ -1305,7 +1357,13 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
 
 iDeclareType(DrawContext)
 
+enum iDrawRunPass {
+    static_DrawRunPass,
+    dynamic_DrawRunPass,
+};
+
 struct Impl_DrawContext {
+    enum iDrawRunPass pass;
     const iDocumentWidget *widget;
     iRect widgetBounds;
     iRect bounds; /* document area */
@@ -1348,57 +1406,67 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
     iDrawContext *d      = context;
     const iInt2   origin = addY_I2(d->bounds.pos, -d->widget->scrollY);
     if (run->imageId) {
-        SDL_Texture *tex = imageTexture_GmDocument(d->widget->doc, run->imageId);
-        if (tex) {
-            const iRect dst = moved_Rect(run->visBounds, origin);
-            SDL_RenderCopy(d->paint.dst->render, tex, NULL,
-                           &(SDL_Rect){ dst.pos.x, dst.pos.y, dst.size.x, dst.size.y });
+        if (d->pass == static_DrawRunPass) {
+            SDL_Texture *tex = imageTexture_GmDocument(d->widget->doc, run->imageId);
+            if (tex) {
+                const iRect dst = moved_Rect(run->visBounds, origin);
+                SDL_RenderCopy(d->paint.dst->render, tex, NULL,
+                               &(SDL_Rect){ dst.pos.x, dst.pos.y, dst.size.x, dst.size.y });
+            }
         }
         return;
     }
+    /* Text markers. */
+    if (d->pass == dynamic_DrawRunPass) {
+        fillRange_DrawContext_(d, run, uiMatching_ColorId, d->widget->foundMark, &d->inFoundMark);
+        fillRange_DrawContext_(d, run, uiMarked_ColorId, d->widget->selectMark, &d->inSelectMark);
+    }
     enum iColorId      fg  = run->color;
     const iGmDocument *doc = d->widget->doc;
+    /* Matches the current drawing pass? */
+    const iBool isDynamic = (run->linkId && ~run->flags & decoration_GmRunFlag);
+    if (isDynamic ^ (d->pass == dynamic_DrawRunPass)) {
+        return;
+    }
     const iBool isHover =
-        (run->linkId != 0 && d->widget->hoverLink && run->linkId == d->widget->hoverLink->linkId &&
-         !isEmpty_Rect(run->bounds));
+        (run->linkId && d->widget->hoverLink && run->linkId == d->widget->hoverLink->linkId &&
+         ~run->flags & decoration_GmRunFlag);
     const iInt2 visPos = add_I2(run->visBounds.pos, origin);
-    /* Text markers. */
-    /* TODO: Add themed palette entries */
-    fillRange_DrawContext_(d, run, uiMatching_ColorId, d->widget->foundMark, &d->inFoundMark);
-    fillRange_DrawContext_(d, run, uiMarked_ColorId, d->widget->selectMark, &d->inSelectMark);
-    if (run->linkId && !isEmpty_Rect(run->bounds)) {
+    if (run->linkId && ~run->flags & decoration_GmRunFlag) {
         fg = linkColor_GmDocument(doc, run->linkId, isHover ? textHover_GmLinkPart : text_GmLinkPart);
         if (linkFlags_GmDocument(doc, run->linkId) & content_GmLinkFlag) {
             fg = linkColor_GmDocument(doc, run->linkId, textHover_GmLinkPart); /* link is inactive */
         }
     }
     if (run->flags & siteBanner_GmRunFlag) {
-        /* Draw the site banner. */
-        fillRect_Paint(
-            &d->paint,
-            initCorners_Rect(topLeft_Rect(d->widgetBounds),
-                             init_I2(right_Rect(bounds_Widget(constAs_Widget(d->widget))),
-                                     visPos.y + height_Rect(run->visBounds))),
-            tmBannerBackground_ColorId);
-        const iChar icon = siteIcon_GmDocument(doc);
-        iString bannerText;
-        init_String(&bannerText);
-        iInt2 bpos = add_I2(visPos, init_I2(0, lineHeight_Text(banner_FontId) / 2));
-        if (icon) {
-            appendChar_String(&bannerText, icon);
-            const iRect iconRect = visualBounds_Text(banner_FontId, range_String(&bannerText));
+        if (d->pass == static_DrawRunPass) {
+            /* Draw the site banner. */
+            fillRect_Paint(
+                &d->paint,
+                initCorners_Rect(topLeft_Rect(d->widgetBounds),
+                                 init_I2(right_Rect(bounds_Widget(constAs_Widget(d->widget))),
+                                         visPos.y + height_Rect(run->visBounds))),
+                tmBannerBackground_ColorId);
+            const iChar icon = siteIcon_GmDocument(doc);
+            iString bannerText;
+            init_String(&bannerText);
+            iInt2 bpos = add_I2(visPos, init_I2(0, lineHeight_Text(banner_FontId) / 2));
+            if (icon) {
+                appendChar_String(&bannerText, icon);
+                const iRect iconRect = visualBounds_Text(banner_FontId, range_String(&bannerText));
+                drawRange_Text(run->font,
+                               addY_I2(bpos, -mid_Rect(iconRect).y + lineHeight_Text(run->font) / 2),
+                               tmBannerIcon_ColorId,
+                               range_String(&bannerText));
+                bpos.x += right_Rect(iconRect) + 3 * gap_Text;
+            }
             drawRange_Text(run->font,
-                           addY_I2(bpos, -mid_Rect(iconRect).y + lineHeight_Text(run->font) / 2),
-                           tmBannerIcon_ColorId,
-                           range_String(&bannerText));
-            bpos.x += right_Rect(iconRect) + 3 * gap_Text;
+                           bpos,
+                           tmBannerTitle_ColorId,
+                           isEmpty_String(d->widget->titleUser) ? run->text
+                                                                : range_String(d->widget->titleUser));
+            deinit_String(&bannerText);
         }
-        drawRange_Text(run->font,
-                       bpos,
-                       tmBannerTitle_ColorId,
-                       isEmpty_String(d->widget->titleUser) ? run->text
-                                                            : range_String(d->widget->titleUser));
-        deinit_String(&bannerText);
     }
     else {
         if (d->showLinkNumbers && run->linkId && run->flags & decoration_GmRunFlag) {
@@ -1413,10 +1481,11 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
             }
         }
         drawRange_Text(run->font, visPos, fg, run->text);
+//        printf("{%s}\n", cstr_Rangecc(run->text));
     runDrawn:;
     }
     /* Presentation of links. */
-    if (run->linkId && ~run->flags & decoration_GmRunFlag) {
+    if (run->linkId && ~run->flags & decoration_GmRunFlag && d->pass == dynamic_DrawRunPass) {
         const int metaFont = paragraph_FontId;
         /* TODO: Show status of an ongoing media request. */
         const int flags = linkFlags_GmDocument(doc, run->linkId);
@@ -1510,27 +1579,97 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
             }
         }
     }
-
 //    drawRect_Paint(&d->paint, (iRect){ visPos, run->bounds.size }, green_ColorId);
 //    drawRect_Paint(&d->paint, (iRect){ visPos, run->visBounds.size }, red_ColorId);
 }
 
+static iRangei intersect_Rangei_(iRangei a, iRangei b) {
+    if (a.end < b.start || a.start > b.end) {
+        return (iRangei){ 0, 0 };
+    }
+    return (iRangei){ iMax(a.start, b.start), iMin(a.end, b.end) };
+}
+
+iLocalDef iBool isEmpty_Rangei_(iRangei d) {
+    return size_Range(&d) == 0;
+}
+
 static void draw_DocumentWidget_(const iDocumentWidget *d) {
-    const iWidget *w      = constAs_Widget(d);
-    const iRect    bounds = bounds_Widget(w);
+    const iWidget *w        = constAs_Widget(d);
+    const iRect    bounds   = bounds_Widget(w);
+    const iInt2    origin   = topLeft_Rect(bounds);
+    const iRangei  visRange = visibleRange_DocumentWidget_(d);
     draw_Widget(w);
-    iDrawContext ctx = {
-        .widget = d,
-        .widgetBounds = /* omit scrollbar width */
-            adjusted_Rect(bounds, zero_I2(), init_I2(-constAs_Widget(d->scroll)->rect.size.x, 0)),
-        .bounds = documentBounds_DocumentWidget_(d),
+    allocVisBuffer_DocumentWidget_(iConstCast(iDocumentWidget *, d));
+    iDrawContext ctxDynamic = {
+        .pass         = dynamic_DrawRunPass,
+        .widget       = d,
+        .widgetBounds = adjusted_Rect(bounds,
+            zero_I2(),
+            init_I2(-constAs_Widget(d->scroll)->rect.size.x, 0)), /* omit scrollbar width */
+        .bounds          = documentBounds_DocumentWidget_(d),
         .showLinkNumbers = d->showLinkNumbers,
     };
-    init_Paint(&ctx.paint);
-    fillRect_Paint(&ctx.paint, bounds, tmBackground_ColorId);
-    setClip_Paint(&ctx.paint, bounds);
-    render_GmDocument(d->doc, visibleRange_DocumentWidget_(d), drawRun_DrawContext_, &ctx);
-    unsetClip_Paint(&ctx.paint);
+    iDrawContext ctxStatic = ctxDynamic;
+    ctxStatic.pass = static_DrawRunPass;
+    subv_I2(&ctxStatic.widgetBounds.pos, origin);
+    subv_I2(&ctxStatic.bounds.pos, origin);
+    SDL_Renderer *render = get_Window()->render;
+    /* Static content. */ {
+        iPaint *p = &ctxStatic.paint;
+        init_Paint(p);
+        const int vbSrc = d->visBufferIndex;
+        const int vbDst = d->visBufferIndex ^ 1;
+        iRangei drawRange = visRange;
+        iAssert(d->visBuffer[vbDst]);
+        beginTarget_Paint(p, d->visBuffer[vbDst]);
+        const iRect visBufferRect = { zero_I2(), d->visBufferSize };
+        iRect drawRect = visBufferRect;
+        if (!isEmpty_Rangei_(intersect_Rangei_(visRange, d->visBufferValidRange))) {
+            if (visRange.start < d->visBufferValidRange.start) {
+                drawRange = (iRangei){ visRange.start, d->visBufferValidRange.start };
+            }
+            else {
+                drawRange = (iRangei){ d->visBufferValidRange.end, visRange.end };
+            }
+            if (isEmpty_Range(&drawRange)) {
+                SDL_RenderCopy(render, d->visBuffer[vbSrc], NULL, NULL);
+            }
+            else {
+                SDL_RenderCopy(
+                    render,
+                    d->visBuffer[vbSrc],
+                    NULL,
+                    &(SDL_Rect){ 0,
+                                 documentToWindowY_DocumentWidget_(d, d->visBufferValidRange.start) - origin.y,
+                                 d->visBufferSize.x,
+                                 d->visBufferSize.y });
+                drawRect = init_Rect(0,
+                                     documentToWindowY_DocumentWidget_(d, drawRange.start) - origin.y,
+                                     d->visBufferSize.x,
+                                     size_Range(&drawRange));
+            }
+        }
+        if (!isEmpty_Range(&drawRange)) {
+            setClip_Paint(p, drawRect);
+            fillRect_Paint(p, drawRect, tmBackground_ColorId); // vbDst == 1 ? blue_ColorId : red_ColorId
+            render_GmDocument(d->doc, drawRange, drawRun_DrawContext_, &ctxStatic);
+            unsetClip_Paint(p);
+        }
+        endTarget_Paint(p);
+        SDL_RenderCopy(render, d->visBuffer[vbDst], NULL,
+                       &(SDL_Rect){ origin.x, origin.y, bounds.size.x, bounds.size.y } );
+        iConstCast(iDocumentWidget *, d)->visBufferValidRange = visRange;
+        iConstCast(iDocumentWidget *, d)->visBufferIndex = vbDst;
+    }
+    /* Dynamic content. */ {
+        iPaint *p = &ctxDynamic.paint;
+        init_Paint(p);
+        setClip_Paint(p, bounds);
+        render_GmDocument(d->doc, visRange, drawRun_DrawContext_, &ctxDynamic);
+        unsetClip_Paint(p);
+    }
+
 //    drawRect_Paint(&ctx.paint,
 //                   moved_Rect((iRect){ zero_I2(), size_GmDocument(d->doc) },
 //                              add_I2(topLeft_Rect(ctx.bounds), init_I2(0, -d->scrollY))),

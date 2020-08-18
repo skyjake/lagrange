@@ -59,9 +59,16 @@ struct Impl_SidebarWidget {
     iWidget *resizer;
     SDL_Cursor *resizeCursor;
     iWidget *menu;
+    SDL_Texture *visBuffer;
+    iBool visBufferValid;
 };
 
 iDefineObjectConstruction(SidebarWidget)
+
+static void invalidate_SidebarWidget_(iSidebarWidget *d) {
+    d->visBufferValid = iFalse;
+    refresh_Widget(as_Widget(d));
+}
 
 static iBool isResizing_SidebarWidget_(const iSidebarWidget *d) {
     return (flags_Widget(d->resizer) & pressed_WidgetFlag) != 0;
@@ -157,7 +164,7 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
             break;
     }
     updateVisible_SidebarWidget_(d);
-    refresh_Widget(as_Widget(d));
+    invalidate_SidebarWidget_(d);
 }
 
 void setMode_SidebarWidget(iSidebarWidget *d, enum iSidebarMode mode) {
@@ -166,8 +173,8 @@ void setMode_SidebarWidget(iSidebarWidget *d, enum iSidebarMode mode) {
     for (enum iSidebarMode i = 0; i < max_SidebarMode; i++) {
         setFlags_Widget(as_Widget(d->modeButtons[i]), selected_WidgetFlag, i == d->mode);
     }
-    const float heights[max_SidebarMode] = { 1.5f, 3, 3, 1.2f };
-    d->itemHeight = heights[mode] * lineHeight_Text(default_FontId);
+    const float heights[max_SidebarMode] = { 1.333f, 3, 3, 1.2f };
+    d->itemHeight = heights[mode] * lineHeight_Text(uiContent_FontId);
 }
 
 enum iSidebarMode mode_SidebarWidget(const iSidebarWidget *d) {
@@ -217,7 +224,7 @@ void init_SidebarWidget(iSidebarWidget *d) {
             frameless_WidgetFlag | expand_WidgetFlag);
         d->maxButtonLabelWidth =
             iMaxi(d->maxButtonLabelWidth,
-                  3 * gap_UI + measure_Text(default_FontId, normalModeLabels_[i]).x);
+                  3 * gap_UI + measure_Text(uiLabel_FontId, normalModeLabels_[i]).x);
     }
     addChild_Widget(w, iClob(d->scroll = new_ScrollWidget()));
     setThumb_ScrollWidget(d->scroll, 0, 0);
@@ -232,12 +239,15 @@ void init_SidebarWidget(iSidebarWidget *d) {
     setBackgroundColor_Widget(d->resizer, none_ColorId);
     d->resizeCursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZEWE);
     d->menu = NULL;
+    d->visBuffer = NULL;
+    d->visBufferValid = iFalse;
 }
 
 void deinit_SidebarWidget(iSidebarWidget *d) {
     SDL_FreeCursor(d->resizeCursor);
     clearItems_SidebarWidget_(d);
     deinit_Array(&d->items);
+    SDL_DestroyTexture(d->visBuffer);
 }
 
 static int visCount_SidebarWidget_(const iSidebarWidget *d) {
@@ -277,14 +287,18 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, size_t index) {
 }
 
 static void scroll_SidebarWidget_(iSidebarWidget *d, int offset) {
+    const int oldScroll = d->scrollY;
     d->scrollY += offset;
     if (d->scrollY < 0) {
         d->scrollY = 0;
     }
     const int scrollMax = scrollMax_SidebarWidget_(d);
     d->scrollY = iMin(d->scrollY, scrollMax);
-    updateVisible_SidebarWidget_(d);
-    refresh_Widget(as_Widget(d));
+    if (oldScroll != d->scrollY) {
+        d->hoverItem = iInvalidPos;
+        updateVisible_SidebarWidget_(d);
+        invalidate_SidebarWidget_(d);
+    }
 }
 
 static void checkModeButtonLayout_SidebarWidget_(iSidebarWidget *d) {
@@ -320,7 +334,7 @@ void setWidth_SidebarWidget(iSidebarWidget *d, int width) {
     checkModeButtonLayout_SidebarWidget_(d);
     if (!isRefreshPending_App()) {
         updateSize_DocumentWidget(document_App());
-        refresh_Widget(w);
+        invalidate_SidebarWidget_(d);
     }
 }
 
@@ -349,6 +363,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
     if (isResize_UserEvent(ev)) {
         updateVisible_SidebarWidget_(d);
         checkModeButtonLayout_SidebarWidget_(d);
+        invalidate_SidebarWidget_(d);
     }
     else if (ev->type == SDL_USEREVENT && ev->user.code == command_UserEventCode) {
         const char *cmd = command_UserEvent(ev);
@@ -392,6 +407,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             setFlags_Widget(w, hidden_WidgetFlag, isVisible_Widget(w));
             if (isVisible_Widget(w)) {
                 w->rect.size.x = d->width;
+                invalidate_SidebarWidget_(d);
             }
             arrange_Widget(w->parent);
             updateSize_DocumentWidget(document_App());
@@ -401,12 +417,15 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         else if (equal_Command(cmd, "scroll.moved")) {
             d->scrollY = arg_Command(command_UserEvent(ev));
             d->hoverItem = iInvalidPos;
-            refresh_Widget(w);
+            invalidate_SidebarWidget_(d);
             return iTrue;
         }
         else if (equal_Command(cmd, "tabs.changed") || equal_Command(cmd, "document.changed")) {
             d->scrollY = 0;
             updateItems_SidebarWidget_(d);
+        }
+        else if (equal_Command(cmd, "theme.changed")) {
+            invalidate_SidebarWidget_(d);
         }
         else if (equal_Command(cmd, "bookmark.copy")) {
             const iSidebarItem *item = hoverItem_SidebarWidget_(d);
@@ -454,7 +473,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         }
         if (hover != d->hoverItem) {
             d->hoverItem = hover;
-            refresh_Widget(w);
+            invalidate_SidebarWidget_(d);
         }
     }
     if (ev->type == SDL_MOUSEWHEEL && isHover_Widget(w)) {
@@ -464,8 +483,6 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
 #else
         scroll_SidebarWidget_(d, -ev->wheel.y * 3 * d->itemHeight);
 #endif
-        d->hoverItem = iInvalidPos;
-        refresh_Widget(w);
         return iTrue;
     }
     if (d->menu && ev->type == SDL_MOUSEBUTTONDOWN) {
@@ -475,19 +492,35 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
     }
     switch (processEvent_Click(&d->click, ev)) {
         case started_ClickResult:
-            refresh_Widget(w);
+            invalidate_SidebarWidget_(d);
             break;
         case finished_ClickResult:
             if (contains_Rect(contentBounds_SidebarWidget_(d), pos_Click(&d->click)) &&
                 d->hoverItem != iInvalidSize) {
                 itemClicked_SidebarWidget_(d, d->hoverItem);
             }
-            refresh_Widget(w);
+            invalidate_SidebarWidget_(d);
             break;
         default:
             break;
     }
     return processEvent_Widget(w, ev);
+}
+
+static void allocVisBuffer_SidebarWidget_(iSidebarWidget *d) {
+    const iInt2 size = contentBounds_SidebarWidget_(d).size;
+    if (!d->visBuffer || !isEqual_I2(size_SDLTexture(d->visBuffer), size)) {
+        if (d->visBuffer) {
+            SDL_DestroyTexture(d->visBuffer);
+        }
+        d->visBuffer = SDL_CreateTexture(renderer_Window(get_Window()),
+                                         SDL_PIXELFORMAT_RGBA8888,
+                                         SDL_TEXTUREACCESS_STATIC | SDL_TEXTUREACCESS_TARGET,
+                                         size.x,
+                                         size.y);
+        SDL_SetTextureBlendMode(d->visBuffer, SDL_BLENDMODE_NONE);
+        d->visBufferValid = iFalse;
+    }
 }
 
 static void draw_SidebarWidget_(const iSidebarWidget *d) {
@@ -496,58 +529,71 @@ static void draw_SidebarWidget_(const iSidebarWidget *d) {
     const iBool    isPressing = d->click.isActive && contains_Rect(bounds, pos_Click(&d->click));
     iPaint p;
     init_Paint(&p);
-    fillRect_Paint(&p,
-                   bounds_Widget(w),
-                   d->mode == documentOutline_SidebarMode ? tmBackground_ColorId
-                                                          : uiBackground_ColorId);
-    /* Draw the items. */ {
-        const int     font     = default_FontId;
-        const iRanges visRange = visRange_SidebarWidget_(d);
-        iInt2         pos      = addY_I2(topLeft_Rect(bounds), -(d->scrollY % d->itemHeight));
-        for (size_t i = visRange.start; i < visRange.end; i++) {
-            const iSidebarItem *item        = constAt_Array(&d->items, i);
-            const iRect         itemRect    = { pos, init_I2(width_Rect(bounds), d->itemHeight) };
-            const iBool         isHover     = (d->hoverItem == i);
-            setClip_Paint(&p, intersect_Rect(itemRect, bounds));
-            if (isHover) {
-                fillRect_Paint(&p,
-                               itemRect,
-                               isPressing ? uiBackgroundPressed_ColorId
-                                          : uiBackgroundFramelessHover_ColorId);
+    const int bg =
+        d->mode == documentOutline_SidebarMode ? tmBackground_ColorId : uiBackground_ColorId;
+    fillRect_Paint(&p, bounds_Widget(w), bg); /* TODO: should do only the mode buttons area */
+    if (!d->visBufferValid) {
+        allocVisBuffer_SidebarWidget_(iConstCast(iSidebarWidget *, d));
+        iRect bufBounds = bounds;
+        bufBounds.pos = zero_I2();
+        beginTarget_Paint(&p, d->visBuffer);
+        fillRect_Paint(&p, bufBounds, bg);
+        /* Draw the items. */ {
+            const int     font     = uiContent_FontId;
+            const iRanges visRange = visRange_SidebarWidget_(d);
+            iInt2         pos      = addY_I2(topLeft_Rect(bufBounds), -(d->scrollY % d->itemHeight));
+            for (size_t i = visRange.start; i < visRange.end; i++) {
+                const iSidebarItem *item     = constAt_Array(&d->items, i);
+                const iRect         itemRect = { pos, init_I2(width_Rect(bufBounds), d->itemHeight) };
+                const iBool         isHover  = (d->hoverItem == i);
+                setClip_Paint(&p, intersect_Rect(itemRect, bufBounds));
+                if (isHover) {
+                    fillRect_Paint(&p,
+                                   itemRect,
+                                   isPressing ? uiBackgroundPressed_ColorId
+                                              : uiBackgroundFramelessHover_ColorId);
+                }
+                if (d->mode == documentOutline_SidebarMode) {
+                    const int fg = isHover ? (isPressing ? uiTextPressed_ColorId
+                                                         : uiTextFramelessHover_ColorId)
+                                           : (tmHeading1_ColorId + item->indent / (4 * gap_UI));
+                    drawRange_Text(font,
+                                   init_I2(pos.x + 3 * gap_UI + item->indent,
+                                           mid_Rect(itemRect).y - lineHeight_Text(font) / 2),
+                                   fg,
+                                   range_String(&item->label));
+                }
+                else if (d->mode == bookmarks_SidebarMode) {
+                    const int fg = isHover ? (isPressing ? uiTextPressed_ColorId
+                                                         : uiTextFramelessHover_ColorId)
+                                           : uiText_ColorId;
+                    iString str;
+                    init_String(&str);
+                    appendChar_String(&str, item->icon ? item->icon : 0x1f588);
+                    const iRect iconArea = { addX_I2(pos, gap_UI),
+                                             init_I2(7 * gap_UI, d->itemHeight) };
+                    drawCentered_Text(
+                        font,
+                        iconArea,
+                        iTrue,
+                        isHover ? (isPressing ? uiTextPressed_ColorId : uiIconHover_ColorId)
+                                : uiIcon_ColorId,
+                        "%s",
+                        cstr_String(&str));
+                    deinit_String(&str);
+                    iInt2 textPos = addY_I2(topRight_Rect(iconArea),
+                                            (d->itemHeight - lineHeight_Text(font)) / 2);
+                    drawRange_Text(font, textPos, fg, range_String(&item->label));
+                }
+                unsetClip_Paint(&p);
+                pos.y += d->itemHeight;
             }
-            if (d->mode == documentOutline_SidebarMode) {
-                const int fg =
-                    isHover ? (isPressing ? uiTextPressed_ColorId : uiTextFramelessHover_ColorId)
-                            : (tmHeading1_ColorId + item->indent / (4 * gap_UI));
-                drawRange_Text(font, init_I2(pos.x + 3 * gap_UI + item->indent,
-                                        mid_Rect(itemRect).y - lineHeight_Text(font) / 2),
-                               fg, range_String(&item->label));
-            }
-            else if (d->mode == bookmarks_SidebarMode) {
-                const int fg =
-                    isHover ? (isPressing ? uiTextPressed_ColorId : uiTextFramelessHover_ColorId)
-                            : uiText_ColorId;
-                iString str;
-                init_String(&str);
-                appendChar_String(&str, item->icon ? item->icon : 0x1f588);
-                const iRect iconArea = { addX_I2(pos, gap_UI), init_I2(7 * gap_UI, d->itemHeight) };
-                drawCentered_Text(font,
-                                  iconArea,
-                                  iTrue,
-                                  isHover
-                                      ? (isPressing ? uiTextPressed_ColorId : uiIconHover_ColorId)
-                                      : uiIcon_ColorId,
-                                  "%s",
-                                  cstr_String(&str));
-                deinit_String(&str);
-                iInt2 textPos =
-                    addY_I2(topRight_Rect(iconArea), (d->itemHeight - lineHeight_Text(font)) / 2);
-                drawRange_Text(font, textPos, fg, range_String(&item->label));
-            }
-            unsetClip_Paint(&p);
-            pos.y += d->itemHeight;
         }
+        endTarget_Paint(&p);
+        iConstCast(iSidebarWidget *, d)->visBufferValid = iTrue;
     }
+    SDL_RenderCopy(
+        renderer_Window(get_Window()), d->visBuffer, NULL, (const SDL_Rect *) &bounds);
     draw_Widget(w);
     drawVLine_Paint(&p,
                     addX_I2(topRight_Rect(bounds_Widget(w)), -1),
