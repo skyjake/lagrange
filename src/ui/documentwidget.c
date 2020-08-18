@@ -1001,16 +1001,18 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equal_Command(cmd, "document.input.submit")) {
-        iString *value = collect_String(suffix_Command(cmd, "value"));
-        urlEncode_String(value);
-        iString *url = collect_String(copy_String(d->mod.url));
-        const size_t qPos = indexOfCStr_String(url, "?");
-        if (qPos != iInvalidPos) {
-            remove_Block(&url->chars, qPos, iInvalidSize);
+        if (arg_Command(cmd)) {
+            iString *value = collect_String(suffix_Command(cmd, "value"));
+            urlEncode_String(value);
+            iString *url = collect_String(copy_String(d->mod.url));
+            const size_t qPos = indexOfCStr_String(url, "?");
+            if (qPos != iInvalidPos) {
+                remove_Block(&url->chars, qPos, iInvalidSize);
+            }
+            appendCStr_String(url, "?");
+            append_String(url, value);
+            postCommandf_App("open url:%s", cstr_String(url));
         }
-        appendCStr_String(url, "?");
-        append_String(url, value);
-        postCommandf_App("open url:%s", cstr_String(url));
         return iTrue;
     }
     else if (equal_Command(cmd, "valueinput.cancelled") &&
@@ -1577,7 +1579,6 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
             }
         }
     }
-
 //    drawRect_Paint(&d->paint, (iRect){ visPos, run->bounds.size }, green_ColorId);
 //    drawRect_Paint(&d->paint, (iRect){ visPos, run->visBounds.size }, red_ColorId);
 }
@@ -1625,7 +1626,6 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
         const iRect visBufferRect = { zero_I2(), d->visBufferSize };
         iRect drawRect = visBufferRect;
         if (!isEmpty_Rangei_(intersect_Rangei_(visRange, d->visBufferValidRange))) {
-            const iRangei isct = intersect_Rangei_(visRange, d->visBufferValidRange);
             if (visRange.start < d->visBufferValidRange.start) {
                 drawRange = (iRangei){ visRange.start, d->visBufferValidRange.start };
             }
@@ -1652,7 +1652,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
         }
         if (!isEmpty_Range(&drawRange)) {
             setClip_Paint(p, drawRect);
-            fillRect_Paint(p, drawRect, vbDst == 1 ? blue_ColorId : red_ColorId); //tmBackground_ColorId);
+            fillRect_Paint(p, drawRect, tmBackground_ColorId); // vbDst == 1 ? blue_ColorId : red_ColorId
             render_GmDocument(d->doc, drawRange, drawRun_DrawContext_, &ctxStatic);
             unsetClip_Paint(p);
         }

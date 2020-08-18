@@ -413,8 +413,9 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 pos.y += required - delta;
             }
         }
-        /* Save the document title. */
-        if (type == heading1_GmLineType && isEmpty_String(&d->title)) {
+        /* Save the document title (first high-level heading). */
+        if ((type == heading1_GmLineType || type == heading2_GmLineType) &&
+            isEmpty_String(&d->title)) {
             setRange_String(&d->title, line);
         }
         /* List bullet. */
