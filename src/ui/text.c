@@ -306,10 +306,11 @@ static void cache_Font_(iFont *d, iGlyph *glyph, int hoff) {
     }
     /* Determine placement in the glyph cache texture, advancing in rows. */
     glRect->pos = assignCachePos_Text_(txt, glRect->size);
+    SDL_Texture *oldTarget = SDL_GetRenderTarget(render);
     SDL_SetRenderTarget(render, txt->cache);
     const SDL_Rect dstRect = sdlRect_(*glRect);
     SDL_RenderCopy(render, tex, &(SDL_Rect){ 0, 0, dstRect.w, dstRect.h }, &dstRect);
-    SDL_SetRenderTarget(render, NULL);
+    SDL_SetRenderTarget(render, oldTarget);
     if (tex) {
         SDL_DestroyTexture(tex);
         iAssert(surface);
@@ -670,9 +671,10 @@ void init_TextBuf(iTextBuf *d, int font, const char *text) {
                                    d->size.x,
                                    d->size.y);
     SDL_SetTextureBlendMode(d->texture, SDL_BLENDMODE_BLEND);
+    SDL_Texture *oldTarget = SDL_GetRenderTarget(render);
     SDL_SetRenderTarget(render, d->texture);
     draw_Text_(font, zero_I2(), white_ColorId, range_CStr(text));
-    SDL_SetRenderTarget(render, NULL);
+    SDL_SetRenderTarget(render, oldTarget);
 }
 
 void deinit_TextBuf(iTextBuf *d) {

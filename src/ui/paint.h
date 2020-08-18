@@ -9,12 +9,16 @@ iDeclareType(Paint)
 
 struct Impl_Paint {
     iWindow *dst;
+    SDL_Texture *oldTarget;
 };
 
-void    init_Paint      (iPaint *);
+void    init_Paint          (iPaint *);
 
-void    setClip_Paint   (iPaint *, iRect rect);
-void    unsetClip_Paint (iPaint *);
+void    beginTarget_Paint   (iPaint *, SDL_Texture *target);
+void    endTarget_Paint     (iPaint *);
+
+void    setClip_Paint       (iPaint *, iRect rect);
+void    unsetClip_Paint     (iPaint *);
 
 void    drawRect_Paint          (const iPaint *, iRect rect, int color);
 void    drawRectThickness_Paint (const iPaint *, iRect rect, int thickness, int color);
