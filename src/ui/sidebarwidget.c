@@ -167,7 +167,7 @@ void setMode_SidebarWidget(iSidebarWidget *d, enum iSidebarMode mode) {
         setFlags_Widget(as_Widget(d->modeButtons[i]), selected_WidgetFlag, i == d->mode);
     }
     const float heights[max_SidebarMode] = { 1.5f, 3, 3, 1.2f };
-    d->itemHeight = heights[mode] * lineHeight_Text(default_FontId);
+    d->itemHeight = heights[mode] * lineHeight_Text(uiContent_FontId);
 }
 
 enum iSidebarMode mode_SidebarWidget(const iSidebarWidget *d) {
@@ -217,7 +217,7 @@ void init_SidebarWidget(iSidebarWidget *d) {
             frameless_WidgetFlag | expand_WidgetFlag);
         d->maxButtonLabelWidth =
             iMaxi(d->maxButtonLabelWidth,
-                  3 * gap_UI + measure_Text(default_FontId, normalModeLabels_[i]).x);
+                  3 * gap_UI + measure_Text(uiLabel_FontId, normalModeLabels_[i]).x);
     }
     addChild_Widget(w, iClob(d->scroll = new_ScrollWidget()));
     setThumb_ScrollWidget(d->scroll, 0, 0);
@@ -501,7 +501,7 @@ static void draw_SidebarWidget_(const iSidebarWidget *d) {
                    d->mode == documentOutline_SidebarMode ? tmBackground_ColorId
                                                           : uiBackground_ColorId);
     /* Draw the items. */ {
-        const int     font     = default_FontId;
+        const int     font     = uiContent_FontId;
         const iRanges visRange = visRange_SidebarWidget_(d);
         iInt2         pos      = addY_I2(topLeft_Rect(bounds), -(d->scrollY % d->itemHeight));
         for (size_t i = visRange.start; i < visRange.end; i++) {
