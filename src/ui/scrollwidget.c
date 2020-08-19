@@ -39,6 +39,7 @@ static iRect thumbRect_ScrollWidget_(const iScrollWidget *d) {
     const int total = size_Range(&d->range);
     if (total > 0) {
         const int tsize = thumbSize_ScrollWidget_(d);
+//        iAssert(tsize <= height_Rect(bounds));
         const int tpos =
             iClamp((float) d->thumb / (float) total, 0, 1) * (height_Rect(bounds) - tsize);
         rect.pos.y  = bounds.pos.y + tpos;

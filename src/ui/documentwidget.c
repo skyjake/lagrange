@@ -130,6 +130,7 @@ struct Impl_DocumentWidget {
     int            pageMargin;
     iPtrArray      visibleLinks;
     const iGmRun * hoverLink;
+    const iGmRun * contextLink;
     iBool          noHoverWhileScrolling;
     iBool          showLinkNumbers;
     iClick         click;
@@ -170,6 +171,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     d->foundMark        = iNullRange;
     d->pageMargin       = 5;
     d->hoverLink        = NULL;
+    d->contextLink      = NULL;
     d->noHoverWhileScrolling = iFalse;
     d->showLinkNumbers  = iFalse;
     iZap(d->visBuffer);
@@ -291,7 +293,7 @@ static float normScrollPos_DocumentWidget_(const iDocumentWidget *d) {
 
 static int scrollMax_DocumentWidget_(const iDocumentWidget *d) {
     return size_GmDocument(d->doc).y - height_Rect(bounds_Widget(constAs_Widget(d))) +
-           2 * d->pageMargin * gap_UI;
+           (hasSiteBanner_GmDocument(d->doc) ? 1 : 2) * d->pageMargin * gap_UI;
 }
 
 static void updateHover_DocumentWidget_(iDocumentWidget *d, iInt2 mouse) {
@@ -427,9 +429,10 @@ static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
 static void setSource_DocumentWidget_(iDocumentWidget *d, const iString *source) {
     setUrl_GmDocument(d->doc, d->mod.url);
     setSource_GmDocument(d->doc, source, documentWidth_DocumentWidget_(d));
-    d->foundMark  = iNullRange;
-    d->selectMark = iNullRange;
-    d->hoverLink  = NULL;
+    d->foundMark   = iNullRange;
+    d->selectMark  = iNullRange;
+    d->hoverLink   = NULL;
+    d->contextLink = NULL;
     updateWindowTitle_DocumentWidget_(d);
     updateVisible_DocumentWidget_(d);
     refresh_Widget(as_Widget(d));
@@ -621,6 +624,8 @@ static iBool updateFromHistory_DocumentWidget_(iDocumentWidget *d) {
     const iRecentUrl *recent = findUrl_History(d->mod.history, d->mod.url);
     if (recent && recent->cachedResponse) {
         const iGmResponse *resp = recent->cachedResponse;
+        clear_ObjectList(d->media);
+        reset_GmDocument(d->doc);
         d->state = fetching_RequestState;
         d->initNormScrollY = recent->normScrollY;
         /* Use the cached response data. */
@@ -991,9 +996,9 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equalWidget_Command(cmd, w, "document.copylink")) {
-        if (d->hoverLink) {
+        if (d->contextLink) {
             SDL_SetClipboardText(cstr_String(
-                absoluteUrl_String(d->mod.url, linkUrl_GmDocument(d->doc, d->hoverLink->linkId))));
+                absoluteUrl_String(d->mod.url, linkUrl_GmDocument(d->doc, d->contextLink->linkId))));
         }
         else {
             SDL_SetClipboardText(cstr_String(d->mod.url));
@@ -1273,6 +1278,9 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             postCommand_App("navigate.forward");
             return iTrue;
         }
+    }
+    if (!isVisible_Widget(d->menu)) {
+        d->contextLink = d->hoverLink;
     }
     processContextMenuEvent_Widget(d->menu, ev, d->hoverLink = NULL);
     switch (processEvent_Click(&d->click, ev)) {
