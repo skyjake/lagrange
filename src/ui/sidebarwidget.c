@@ -211,7 +211,7 @@ void init_SidebarWidget(iSidebarWidget *d) {
                     iTrue);
     d->scrollY = 0;
     d->mode    = -1;
-    d->width   = 75 * gap_UI;
+    d->width   = 60 * gap_UI;
     init_Array(&d->items, sizeof(iSidebarItem));
     d->hoverItem = iInvalidPos;
     init_Click(&d->click, d, SDL_BUTTON_LEFT);
@@ -221,7 +221,7 @@ void init_SidebarWidget(iSidebarWidget *d) {
         d->modeButtons[i] = addChildFlags_Widget(
             w,
             iClob(
-                new_LabelWidget(normalModeLabels_[i], 0, 0, format_CStr("sidebar.mode arg:%d", i))),
+                new_LabelWidget(tightModeLabels_[i], 0, 0, format_CStr("sidebar.mode arg:%d", i))),
             frameless_WidgetFlag | expand_WidgetFlag);
         d->maxButtonLabelWidth =
             iMaxi(d->maxButtonLabelWidth,
