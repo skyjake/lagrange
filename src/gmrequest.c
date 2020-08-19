@@ -278,18 +278,63 @@ static const iBlock *aboutPageSource_(iRangecc path) {
 }
 
 static const iBlock *replaceVariables_(const iBlock *block) {
-    iRegExp *var = new_RegExp("\\$\\{([A-Z_]+)\\}", 0);
+    iRegExp *var = new_RegExp("\\$\\{([A-Z_+-]+)\\}", 0);
     iRegExpMatch m;
     if (matchRange_RegExp(var, range_Block(block), &m)) {
         iBlock *replaced = collect_Block(copy_Block(block));
         do {
             const iRangei span = m.range;
-            remove_Block(replaced, span.start, size_Range(&span));
             const iRangecc name = capturedRange_RegExpMatch(&m, 1);
+            iRangecc repl = iNullRange;
             if (equal_Rangecc(&name, "APP_VERSION")) {
-                insertData_Block(replaced, span.start,
-                                 LAGRANGE_APP_VERSION, strlen(LAGRANGE_APP_VERSION));
+                repl = range_CStr(LAGRANGE_APP_VERSION);
             }
+            else if (equal_Rangecc(&name, "ALT")) {
+#if defined (iPlatformApple)
+                repl = range_CStr("\u2325");
+#else
+                repl = range_CStr("Alt");
+#endif
+            }
+            else if (equal_Rangecc(&name, "ALT+")) {
+#if defined (iPlatformApple)
+                repl = range_CStr("\u2325");
+#else
+                repl = range_CStr("Alt+");
+#endif
+            }
+            else if (equal_Rangecc(&name, "CTRL")) {
+#if defined (iPlatformApple)
+                repl = range_CStr("\u2318");
+#else
+                repl = range_CStr("Ctrl");
+#endif
+            }
+            else if (equal_Rangecc(&name, "CTRL+")) {
+#if defined (iPlatformApple)
+                repl = range_CStr("\u2318");
+#else
+                repl = range_CStr("Ctrl+");
+#endif
+            }
+            else if (equal_Rangecc(&name, "SHIFT")) {
+#if defined (iPlatformApple)
+                repl = range_CStr("\u21e7");
+#else
+                repl = range_CStr("Shift");
+#endif
+            }
+            else if (equal_Rangecc(&name, "SHIFT+")) {
+#if defined (iPlatformApple)
+                repl = range_CStr("\u21e7");
+#else
+                repl = range_CStr("Shift+");
+#endif
+            }
+            remove_Block(replaced, span.start, size_Range(&span));
+            insertData_Block(replaced, span.start, repl.start, size_Range(&repl));
+            printf("{%s}\n", cstr_Block(replaced));
+            iZap(m);
         } while (matchRange_RegExp(var, range_Block(replaced), &m));
         block = replaced;
     }

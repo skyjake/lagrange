@@ -16,7 +16,11 @@
 
 ## Navigation
 
-Hold down Alt/Option to see link shortcut keys. Each visible link on the page gets an alphanumeric shortcut. For example, the first link can be opened by pressing Alt-1. The tenth link is Alt-A. Additionally hold down Control/Command to open the link in a new tab.
+When navigating via keyboard, hold down ${ALT} to see link shortcut keys. Try doing so now and see how the link icon below is replaced with a number.
+
+=> gemini://gemini.circumlunar.space/ Project Gemini
+
+Each visible link on the page gets an alphanumeric shortcut. For example, the first link can be opened by pressing ${ALT+}1. The tenth link is ${ALT+}A. Additionally hold down ${CTRL} to open the link in a new tab.
 
 ### SEomting
 
