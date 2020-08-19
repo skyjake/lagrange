@@ -105,6 +105,41 @@ iDefineTypeConstruction(Model)
 
 /*----------------------------------------------------------------------------------------------*/
 
+iDeclareType(VisBuffer)
+iDeclareTypeConstruction(VisBuffer)
+
+struct Impl_VisBuffer {
+    SDL_Texture *  texture[2];
+    int            index;
+    iInt2          size;
+    iRangei        validRange;
+};
+
+void init_VisBuffer(iVisBuffer *d) {
+    iZap(*d);
+}
+
+void deinit_VisBuffer(iVisBuffer *d) {
+    iForIndices(i, d->texture) {
+        if (d->texture[i]) {
+            SDL_DestroyTexture(d->texture[i]);
+        }
+    }
+}
+
+void dealloc_VisBuffer(iVisBuffer *d) {
+    d->size = zero_I2();
+    iZap(d->validRange);
+    iForIndices(i, d->texture) {
+        SDL_DestroyTexture(d->texture[i]);
+        d->texture[i] = NULL;
+    }
+}
+
+iDefineTypeConstruction(VisBuffer)
+
+/*----------------------------------------------------------------------------------------------*/
+
 enum iRequestState {
     blank_RequestState,
     fetching_RequestState,
@@ -141,10 +176,7 @@ struct Impl_DocumentWidget {
     SDL_Cursor *   arrowCursor; /* TODO: cursors belong in Window */
     SDL_Cursor *   beamCursor;
     SDL_Cursor *   handCursor;
-    SDL_Texture *  visBuffer[2];
-    int            visBufferIndex;
-    iInt2          visBufferSize;
-    iRangei        visBufferValidRange;
+    iVisBuffer *   visBuffer;
 };
 
 iDefineObjectConstruction(DocumentWidget)
@@ -174,10 +206,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     d->contextLink      = NULL;
     d->noHoverWhileScrolling = iFalse;
     d->showLinkNumbers  = iFalse;
-    iZap(d->visBuffer);
-    d->visBufferIndex = 0;
-    d->visBufferSize  = zero_I2();
-    iZap(d->visBufferValidRange);
+    d->visBuffer        = new_VisBuffer();
     d->arrowCursor    = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_ARROW);
     d->beamCursor     = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_IBEAM);
     d->handCursor     = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_HAND);
@@ -199,6 +228,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
 }
 
 void deinit_DocumentWidget(iDocumentWidget *d) {
+    delete_VisBuffer(d->visBuffer);
     iRelease(d->media);
     iRelease(d->request);
     iRelease(d->doc);
@@ -474,7 +504,7 @@ static void updateTheme_DocumentWidget_(iDocumentWidget *d) {
 }
 
 static void invalidate_DocumentWidget_(iDocumentWidget *d) {
-    iZap(d->visBufferValidRange);
+    iZap(d->visBuffer->validRange);
 }
 
 static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse *response) {
@@ -877,32 +907,33 @@ static iBool handleMediaCommand_DocumentWidget_(iDocumentWidget *d, const char *
     return iFalse;
 }
 
-static void deallocVisBuffer_DocumentWidget_(iDocumentWidget *d) {
-    d->visBufferSize = zero_I2();
-    iZap(d->visBufferValidRange);
-    iForIndices(i, d->visBuffer) {
-        SDL_DestroyTexture(d->visBuffer[i]);
-        d->visBuffer[i] = NULL;
+static void deallocVisBuffer_DocumentWidget_(const iDocumentWidget *d) {
+    d->visBuffer->size = zero_I2();
+    iZap(d->visBuffer->validRange);
+    iForIndices(i, d->visBuffer->texture) {
+        SDL_DestroyTexture(d->visBuffer->texture[i]);
+        d->visBuffer->texture[i] = NULL;
     }
 }
 
-static void allocVisBuffer_DocumentWidget_(iDocumentWidget *d) {
-    iWidget *w = as_Widget(d);
-    const iBool isVisible = isVisible_Widget(w);
-    const iInt2 size = bounds_Widget(w).size;
-    if (!isEqual_I2(size, d->visBufferSize) || !isVisible) {
-        deallocVisBuffer_DocumentWidget_(d);
+static void allocVisBuffer_DocumentWidget_(const iDocumentWidget *d) {
+    const iWidget *w         = constAs_Widget(d);
+    const iBool    isVisible = isVisible_Widget(w);
+    const iInt2    size      = bounds_Widget(w).size;
+    if (!isEqual_I2(size, d->visBuffer->size) || !isVisible) {
+        dealloc_VisBuffer(d->visBuffer);
     }
-    if (isVisible && !d->visBuffer[0]) {
-        iZap(d->visBufferValidRange);
-        d->visBufferSize = size;
-        iForIndices(i, d->visBuffer) {
-            d->visBuffer[i] = SDL_CreateTexture(renderer_Window(get_Window()),
-                                                SDL_PIXELFORMAT_RGBA8888,
-                                                SDL_TEXTUREACCESS_STATIC | SDL_TEXTUREACCESS_TARGET,
-                                                size.x,
-                                                size.y);
-            SDL_SetTextureBlendMode(d->visBuffer[i], SDL_BLENDMODE_NONE);
+    if (isVisible && !d->visBuffer->texture[0]) {
+        iZap(d->visBuffer->validRange);
+        d->visBuffer->size = size;
+        iForIndices(i, d->visBuffer->texture) {
+            d->visBuffer->texture[i] =
+                SDL_CreateTexture(renderer_Window(get_Window()),
+                                  SDL_PIXELFORMAT_RGBA8888,
+                                  SDL_TEXTUREACCESS_STATIC | SDL_TEXTUREACCESS_TARGET,
+                                  size.x,
+                                  size.y);
+            SDL_SetTextureBlendMode(d->visBuffer->texture[i], SDL_BLENDMODE_NONE);
         }
     }
 }
@@ -1619,8 +1650,9 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
     const iRect    bounds   = bounds_Widget(w);
     const iInt2    origin   = topLeft_Rect(bounds);
     const iRangei  visRange = visibleRange_DocumentWidget_(d);
+    iVisBuffer *   visBuf   = d->visBuffer; /* this may be updated/modified here */
     draw_Widget(w);
-    allocVisBuffer_DocumentWidget_(iConstCast(iDocumentWidget *, d));
+    allocVisBuffer_DocumentWidget_(d);
     iDrawContext ctxDynamic = {
         .pass         = dynamic_DrawRunPass,
         .widget       = d,
@@ -1638,36 +1670,38 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
     /* Static content. */ {
         iPaint *p = &ctxStatic.paint;
         init_Paint(p);
-        const int vbSrc = d->visBufferIndex;
-        const int vbDst = d->visBufferIndex ^ 1;
+        const int vbSrc = visBuf->index;
+        const int vbDst = visBuf->index ^ 1;
         iRangei drawRange = visRange;
-        iAssert(d->visBuffer[vbDst]);
-        beginTarget_Paint(p, d->visBuffer[vbDst]);
-        const iRect visBufferRect = { zero_I2(), d->visBufferSize };
+        iAssert(visBuf->texture[vbDst]);
+        beginTarget_Paint(p, visBuf->texture[vbDst]);
+        const iRect visBufferRect = { zero_I2(), visBuf->size };
         iRect drawRect = visBufferRect;
-        if (!isEmpty_Rangei_(intersect_Rangei_(visRange, d->visBufferValidRange))) {
-            if (visRange.start < d->visBufferValidRange.start) {
-                drawRange = (iRangei){ visRange.start, d->visBufferValidRange.start };
+        if (!isEmpty_Rangei_(intersect_Rangei_(visRange, visBuf->validRange))) {
+            if (visRange.start < visBuf->validRange.start) {
+                drawRange = (iRangei){ visRange.start, visBuf->validRange.start };
             }
             else {
-                drawRange = (iRangei){ d->visBufferValidRange.end, visRange.end };
+                drawRange = (iRangei){ visBuf->validRange.end, visRange.end };
             }
             if (isEmpty_Range(&drawRange)) {
-                SDL_RenderCopy(render, d->visBuffer[vbSrc], NULL, NULL);
+                SDL_RenderCopy(render, visBuf->texture[vbSrc], NULL, NULL);
             }
             else {
                 SDL_RenderCopy(
                     render,
-                    d->visBuffer[vbSrc],
+                    visBuf->texture[vbSrc],
                     NULL,
                     &(SDL_Rect){ 0,
-                                 documentToWindowY_DocumentWidget_(d, d->visBufferValidRange.start) - origin.y,
-                                 d->visBufferSize.x,
-                                 d->visBufferSize.y });
-                drawRect = init_Rect(0,
-                                     documentToWindowY_DocumentWidget_(d, drawRange.start) - origin.y,
-                                     d->visBufferSize.x,
-                                     size_Range(&drawRange));
+                                 documentToWindowY_DocumentWidget_(d, visBuf->validRange.start) -
+                                     origin.y,
+                                 visBuf->size.x,
+                                 visBuf->size.y });
+                drawRect =
+                    init_Rect(0,
+                              documentToWindowY_DocumentWidget_(d, drawRange.start) - origin.y,
+                              visBuf->size.x,
+                              size_Range(&drawRange));
             }
         }
         if (!isEmpty_Range(&drawRange)) {
@@ -1677,10 +1711,10 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
             unsetClip_Paint(p);
         }
         endTarget_Paint(p);
-        SDL_RenderCopy(render, d->visBuffer[vbDst], NULL,
+        SDL_RenderCopy(render, visBuf->texture[vbDst], NULL,
                        &(SDL_Rect){ origin.x, origin.y, bounds.size.x, bounds.size.y } );
-        iConstCast(iDocumentWidget *, d)->visBufferValidRange = visRange;
-        iConstCast(iDocumentWidget *, d)->visBufferIndex = vbDst;
+        visBuf->validRange = visRange;
+        visBuf->index = vbDst;
     }
     /* Dynamic content. */ {
         iPaint *p = &ctxDynamic.paint;
