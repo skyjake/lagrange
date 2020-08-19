@@ -454,6 +454,7 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
         }
     }
     if (d->flags & mouseModal_WidgetFlag && isMouseEvent_(ev)) {
+        setCursor_Window(get_Window(), SDL_SYSTEM_CURSOR_ARROW);
         return iTrue;
     }
     return iFalse;

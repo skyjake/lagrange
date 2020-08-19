@@ -173,9 +173,6 @@ struct Impl_DocumentWidget {
     int            scrollY;
     iScrollWidget *scroll;
     iWidget *      menu;
-    SDL_Cursor *   arrowCursor; /* TODO: cursors belong in Window */
-    SDL_Cursor *   beamCursor;
-    SDL_Cursor *   handCursor;
     iVisBuffer *   visBuffer;
 };
 
@@ -207,9 +204,6 @@ void init_DocumentWidget(iDocumentWidget *d) {
     d->noHoverWhileScrolling = iFalse;
     d->showLinkNumbers  = iFalse;
     d->visBuffer        = new_VisBuffer();
-    d->arrowCursor    = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_ARROW);
-    d->beamCursor     = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_IBEAM);
-    d->handCursor     = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_HAND);
     init_PtrArray(&d->visibleLinks);
     init_Click(&d->click, d, SDL_BUTTON_LEFT);
     addChild_Widget(w, iClob(d->scroll = new_ScrollWidget()));
@@ -235,9 +229,6 @@ void deinit_DocumentWidget(iDocumentWidget *d) {
     deinit_PtrArray(&d->visibleLinks);
     delete_String(d->certSubject);
     delete_String(d->titleUser);
-    SDL_FreeCursor(d->arrowCursor);
-    SDL_FreeCursor(d->beamCursor);
-    SDL_FreeCursor(d->handCursor);
     deinit_Model(&d->mod);
 }
 
@@ -346,10 +337,11 @@ static void updateHover_DocumentWidget_(iDocumentWidget *d, iInt2 mouse) {
     }
     if (!contains_Widget(constAs_Widget(d), mouse) ||
         contains_Widget(constAs_Widget(d->scroll), mouse)) {
-        SDL_SetCursor(d->arrowCursor);
+//        setCursor_Window(get_Window(), SDL_SYSTEM_CURSOR_ARROW);
     }
     else {
-        SDL_SetCursor(d->hoverLink ? d->handCursor : d->beamCursor);
+        setCursor_Window(get_Window(),
+                         d->hoverLink ? SDL_SYSTEM_CURSOR_HAND : SDL_SYSTEM_CURSOR_IBEAM);
     }
 }
 
@@ -1294,7 +1286,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
     else if (ev->type == SDL_MOUSEMOTION) {
         d->noHoverWhileScrolling = iFalse;
         if (isVisible_Widget(d->menu)) {
-            SDL_SetCursor(d->arrowCursor);
+            setCursor_Window(get_Window(), SDL_SYSTEM_CURSOR_ARROW);
         }
         else {
             updateHover_DocumentWidget_(d, init_I2(ev->motion.x, ev->motion.y));

@@ -19,6 +19,7 @@ struct Impl_Window {
     float         uiScale;
     uint32_t      frameTime;
     double        presentTime;
+    SDL_Cursor *  cursors[SDL_NUM_SYSTEM_CURSORS];
 };
 
 iBool       processEvent_Window     (iWindow *, const SDL_Event *);
@@ -27,6 +28,7 @@ void        resize_Window           (iWindow *, int w, int h);
 void        setTitle_Window         (iWindow *, const iString *title);
 void        setUiScale_Window       (iWindow *, float uiScale);
 void        setFreezeDraw_Window    (iWindow *, iBool freezeDraw);
+void        setCursor_Window        (iWindow *, int cursor);
 
 iInt2       rootSize_Window         (const iWindow *);
 float       uiScale_Window          (const iWindow *);

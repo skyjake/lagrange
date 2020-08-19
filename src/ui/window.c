@@ -380,6 +380,7 @@ static void drawBlank_Window_(iWindow *d) {
 
 void init_Window(iWindow *d, iRect rect) {
     theWindow_ = d;
+    iZap(d->cursors);
     d->isDrawFrozen = iTrue;
     uint32_t flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI;
 #if defined (iPlatformApple)
@@ -441,6 +442,11 @@ void init_Window(iWindow *d, iRect rect) {
 void deinit_Window(iWindow *d) {
     if (theWindow_ == d) {
         theWindow_ = NULL;
+    }
+    iForIndices(i, d->cursors) {
+        if (d->cursors[i]) {
+            SDL_FreeCursor(d->cursors[i]);
+        }
     }
     iReleasePtr(&d->root);
     deinit_Text();
@@ -562,6 +568,13 @@ void setUiScale_Window(iWindow *d, float uiScale) {
 
 void setFreezeDraw_Window(iWindow *d, iBool freezeDraw) {
     d->isDrawFrozen = freezeDraw;
+}
+
+void setCursor_Window(iWindow *d, int cursor) {
+    if (!d->cursors[cursor]) {
+        d->cursors[cursor] = SDL_CreateSystemCursor(cursor);
+    }
+    SDL_SetCursor(d->cursors[cursor]);
 }
 
 iInt2 rootSize_Window(const iWindow *d) {

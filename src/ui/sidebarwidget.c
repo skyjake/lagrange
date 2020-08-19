@@ -465,11 +465,11 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         const iInt2 mouse = init_I2(ev->motion.x, ev->motion.y);
         size_t hover = iInvalidPos;
         if (contains_Widget(d->resizer, mouse)) {
-            SDL_SetCursor(d->resizeCursor);
+            setCursor_Window(get_Window(), SDL_SYSTEM_CURSOR_SIZEWE);
         }
         else {
-            SDL_SetCursor(NULL);
             if (contains_Widget(w, mouse)) {
+                setCursor_Window(get_Window(), SDL_SYSTEM_CURSOR_ARROW);
                 hover = itemIndex_SidebarWidget_(d, mouse);
             }
         }
