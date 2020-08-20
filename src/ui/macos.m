@@ -91,6 +91,7 @@ enum iTouchBarVariant {
 
 @interface MyDelegate : NSResponder<NSApplicationDelegate, NSTouchBarDelegate> {
     enum iTouchBarVariant touchBarVariant;
+    NSString *currentAppearanceName;
     NSObject<NSApplicationDelegate> *sdlDelegate;
     NSMutableDictionary<NSString *, NSString*> *menuCommands;
 }
@@ -105,6 +106,7 @@ enum iTouchBarVariant {
 
 - (id)initWithSDLDelegate:(NSObject<NSApplicationDelegate> *)sdl {
     [super init];
+    currentAppearanceName = nil;
     menuCommands = [[NSMutableDictionary<NSString *, NSString *> alloc] init];
     touchBarVariant = default_TouchBarVariant;
     sdlDelegate = sdl;
@@ -113,12 +115,31 @@ enum iTouchBarVariant {
 
 - (void)dealloc {
     [menuCommands release];
+    [currentAppearanceName release];
     [super dealloc];
 }
 
 - (void)setTouchBarVariant:(enum iTouchBarVariant)variant {
     touchBarVariant = variant;
     self.touchBar = nil;
+}
+
+static void appearanceChanged_MacOS_(NSString *name) {
+    const iBool isDark = [name containsString:@"Dark"];
+    const iBool isHighContrast = [name containsString:@"HighContrast"];
+    postCommandf_App("os.theme.changed dark:%d contrast:%d", isDark ? 1 : 0, isHighContrast ? 1 : 0);
+    printf("Effective appearance changed: %s\n", [name cStringUsingEncoding:NSUTF8StringEncoding]);
+    fflush(stdout);
+}
+
+- (void)setAppearance:(NSString *)name {
+    if (!currentAppearanceName || ![name isEqualToString:currentAppearanceName]) {
+        if (currentAppearanceName) {
+            [currentAppearanceName release];
+        }
+        currentAppearanceName = [name retain];
+        appearanceChanged_MacOS_(currentAppearanceName);
+    }
 }
 
 - (void)setCommand:(NSString *)command forMenuItem:(NSMenuItem *)menuItem {
@@ -131,6 +152,16 @@ enum iTouchBarVariant {
 
 - (void)applicationDidFinishLaunching:(NSNotification *)notification {
     [sdlDelegate applicationDidFinishLaunching:notification];
+}
+
+- (void)observeValueForKeyPath:(NSString *)keyPath
+                      ofObject:(id)object
+                        change:(NSDictionary *)change
+                       context:(void *)context {
+    iUnused(object, change);
+    if ([keyPath isEqualToString:@"effectiveAppearance"] && context == self) {
+        [self setAppearance:[[NSApp effectiveAppearance] name]];
+    }
 }
 
 #if 0
@@ -344,8 +375,10 @@ void enableMomentumScroll_MacOS(void) {
 
 void setupApplication_MacOS(void) {
     NSApplication *app = [NSApplication sharedApplication];
+    //appearanceChanged_MacOS_([[app effectiveAppearance] name]);
     /* Our delegate will override SDL's delegate. */
     MyDelegate *myDel = [[MyDelegate alloc] initWithSDLDelegate:app.delegate];
+    [myDel setAppearance:[[app effectiveAppearance] name]];
     app.delegate = myDel;
     NSMenu *appMenu = [[[NSApp mainMenu] itemAtIndex:0] submenu];
     NSMenuItem *prefsItem = [appMenu itemWithTitle:@"Preferences…"];
@@ -361,6 +394,10 @@ void setupApplication_MacOS(void) {
 void insertMenuItems_MacOS(const char *menuLabel, int atIndex, const iMenuItem *items, size_t count) {
     NSApplication *app = [NSApplication sharedApplication];
     MyDelegate *myDel = (MyDelegate *) app.delegate;
+    [app addObserver:myDel
+          forKeyPath:@"effectiveAppearance"
+             options:0
+             context:myDel];
     NSMenu *appMenu = [app mainMenu];
     NSMenuItem *mainItem = [appMenu insertItemWithTitle:[NSString stringWithUTF8String:menuLabel]
                                                  action:nil
@@ -417,6 +454,11 @@ void insertMenuItems_MacOS(const char *menuLabel, int atIndex, const iMenuItem *
 }
 
 void handleCommand_MacOS(const char *cmd) {
+    if (equal_Command(cmd, "prefs.ostheme.changed")) {
+        if (arg_Command(cmd)) {
+            appearanceChanged_MacOS_([[NSApp effectiveAppearance] name]);
+        }
+    }
 #if 0
     if (equal_Command(cmd, "tabs.changed")) {
         MyDelegate *myDel = (MyDelegate *) [[NSApplication sharedApplication] delegate];

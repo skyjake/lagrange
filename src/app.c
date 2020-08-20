@@ -70,6 +70,7 @@ struct Impl_App {
     float        uiScale;
     int          zoomPercent;
     enum iColorTheme theme;
+    iBool        useSystemTheme;
 };
 
 static iApp app_;
@@ -113,7 +114,8 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "sidebar.mode arg:%d\n", mode_SidebarWidget(sidebar));
     appendFormat_String(str, "uiscale arg:%f\n", uiScale_Window(d->window));
     appendFormat_String(str, "zoom.set arg:%d\n", d->zoomPercent);
-    appendFormat_String(str, "theme.set arg:%d\n", d->theme);
+    appendFormat_String(str, "theme.set arg:%d auto:1\n", d->theme);
+    appendFormat_String(str, "ostheme arg:%d\n", d->useSystemTheme);
     return str;
 }
 
@@ -234,6 +236,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     d->commandEcho       = checkArgument_CommandLine(&d->args, "echo") != NULL;
     d->initialWindowRect = init_Rect(-1, -1, 800, 500);
     d->theme             = dark_ColorTheme;
+    d->useSystemTheme    = iTrue;
     d->running           = iFalse;
     d->window            = NULL;
     d->retainWindowSize  = iTrue;
@@ -452,11 +455,20 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
                           toFloat_String(text_InputWidget(findChild_Widget(d, "prefs.uiscale"))));
         postCommandf_App("retainwindow arg:%d",
                          isSelected_Widget(findChild_Widget(d, "prefs.retainwindow")));
+        postCommandf_App("ostheme arg:%d",
+                         isSelected_Widget(findChild_Widget(d, "prefs.ostheme")));
         destroy_Widget(d);
         return iTrue;
     }
-    else if (equal_Command(cmd, "theme.changed")) {
+    else if (equal_Command(cmd, "prefs.ostheme.changed")) {
+        //setToggle_Widget(findChild_Widget(d, "prefs.ostheme"), arg_Command(cmd));
+        postCommandf_App("ostheme arg:%d", arg_Command(cmd));
+    }
+    else if (equal_Command(cmd, "theme.changed")) {        
         updatePrefsThemeButtons_(d);
+        if (!argLabel_Command(cmd, "auto")) {
+            setToggle_Widget(findChild_Widget(d, "prefs.ostheme"), iFalse);
+        }
     }
     return iFalse;
 }
@@ -601,6 +613,7 @@ iBool handleCommand_App(const char *cmd) {
     else if (equal_Command(cmd, "preferences")) {
         iWidget *dlg = makePreferences_Widget();
         updatePrefsThemeButtons_(dlg);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.ostheme"), d->useSystemTheme);
         setToggle_Widget(findChild_Widget(dlg, "prefs.retainwindow"), d->retainWindowSize);
         setText_InputWidget(findChild_Widget(dlg, "prefs.uiscale"),
                             collectNewFormat_String("%g", uiScale_Window(d->window)));
@@ -641,10 +654,28 @@ iBool handleCommand_App(const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "theme.set")) {
+        const int isAuto = argLabel_Command(cmd, "auto");
         d->theme = arg_Command(cmd);
+        if (!isAuto) {
+            postCommand_App("ostheme arg:0");
+        }
         setThemePalette_Color(d->theme);
-        postCommand_App("theme.changed");
+        postCommandf_App("theme.changed auto:%d", isAuto);
         return iTrue;
+    }
+    else if (equal_Command(cmd, "ostheme")) {
+        d->useSystemTheme = arg_Command(cmd);
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "os.theme.changed")) {
+        if (d->useSystemTheme) {
+            const int dark     = argLabel_Command(cmd, "dark");
+            const int contrast = argLabel_Command(cmd, "contrast");
+            postCommandf_App("theme.set arg:%d auto:1",
+                             dark ? (contrast ? pureBlack_ColorTheme : dark_ColorTheme)
+                                  : (contrast ? pureWhite_ColorTheme : light_ColorTheme));
+        }
+        return iFalse;
     }
     else {
         return iFalse;

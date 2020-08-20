@@ -702,9 +702,11 @@ iWidget *makePreferences_Widget(void) {
         page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);    
     iWidget *values = addChildFlags_Widget(
         page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
-//    setBackgroundColor_Widget(headings, none_ColorId);
-//    setBackgroundColor_Widget(values, none_ColorId);
-    addChild_Widget(headings, iClob(makeHeading_Widget("Theme:")));
+#if defined (iPlatformApple) || defined (iPlatformMSys)
+    addChild_Widget(headings, iClob(makeHeading_Widget("Use system theme:")));
+    addChild_Widget(values, iClob(makeToggle_Widget("prefs.ostheme")));
+#endif
+    addChild_Widget(headings, iClob(makeHeading_Widget("Theme:")));    
     iWidget *themes = new_Widget();
     /* Themes. */ {
         setId_Widget(addChild_Widget(themes, iClob(new_LabelWidget("Pure Black", 0, 0, "theme.set arg:0"))), "prefs.theme.0");
