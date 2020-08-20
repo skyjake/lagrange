@@ -266,7 +266,7 @@ static void requestFinished_GmRequest_(iAnyObject *obj) {
 static const iBlock *aboutPageSource_(iRangecc path) {
     const iBlock *src = NULL;
     if (equalCase_Rangecc(&path, "lagrange")) {
-        return &blobAbout_Embedded;
+        return &blobLagrange_Embedded;
     }
     if (equalCase_Rangecc(&path, "help")) {
         return &blobHelp_Embedded;

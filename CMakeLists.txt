@@ -17,9 +17,9 @@ message (STATUS "Preparing embedded resources...")
 # Fonts are too large to comfortably embed as a C source.
 set (EMBED_IN_EXECUTABLE OFF CACHE BOOL "Embed resources inside the executable")
 set (EMBED_RESOURCES 
-    res/about.gmi
-    res/help.gmi
-    res/version.gmi
+    res/about/help.gmi
+    res/about/lagrange.gmi
+    res/about/version.gmi
     res/SourceSansPro-Regular.ttf
     res/FiraSans-Regular.ttf
     res/FiraSans-Bold.ttf
