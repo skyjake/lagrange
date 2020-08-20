@@ -1,14 +1,16 @@
 #include "sidebarwidget.h"
-#include "labelwidget.h"
-#include "scrollwidget.h"
-#include "documentwidget.h"
-#include "inputwidget.h"
-#include "bookmarks.h"
-#include "paint.h"
-#include "util.h"
-#include "command.h"
+
 #include "../gmdocument.h"
 #include "app.h"
+#include "bookmarks.h"
+#include "command.h"
+#include "documentwidget.h"
+#include "inputwidget.h"
+#include "labelwidget.h"
+#include "paint.h"
+#include "scrollwidget.h"
+#include "util.h"
+#include "visited.h"
 
 #include <the_Foundation/array.h>
 #include <SDL_clipboard.h>
@@ -23,6 +25,7 @@ struct Impl_SidebarItem {
     iString     label;
     iString     meta;
     iString     url;
+    iBool       isSeparator;
 };
 
 void init_SidebarItem(iSidebarItem *d) {
@@ -32,6 +35,7 @@ void init_SidebarItem(iSidebarItem *d) {
     init_String(&d->label);
     init_String(&d->meta);
     init_String(&d->url);
+    d->isSeparator = iFalse;
 }
 
 void deinit_SidebarItem(iSidebarItem *d) {
@@ -49,6 +53,7 @@ struct Impl_SidebarWidget {
     enum iSidebarMode mode;
     iScrollWidget *scroll;
     int scrollY;
+    int modeScroll[max_SidebarMode];
     int width;
     iLabelWidget *modeButtons[max_SidebarMode];
     int itemHeight;
@@ -141,12 +146,7 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 item.icon = bm->icon;
                 set_String(&item.url, &bm->url);
                 set_String(&item.label, &bm->title);
-//                iDate date;
-//                init_Date(&date, &bm->when);
-//                iString *ds = format_Date(&date, "%Y %b %d");
-//                set_String(&item.meta, ds);
                 set_String(&item.meta, &bm->tags);
-//                delete_String(ds);
                 pushBack_Array(&d->items, &item);
             }
             d->menu = makeMenu_Widget(
@@ -158,8 +158,42 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 4);
             break;
         }
-        case history_SidebarMode:
+        case history_SidebarMode: {
+            iDate on;
+            initCurrent_Date(&on);
+            const int thisYear = on.year;
+            iConstForEach(PtrArray, i, list_Visited(visited_App(), 200)) {
+                const iVisitedUrl *visit = i.ptr;
+                iSidebarItem item;
+                init_SidebarItem(&item);
+                set_String(&item.url, &visit->url);
+                iDate date;
+                init_Date(&date, &visit->when);
+                if (date.day != on.day || date.month != on.month || date.year != on.year) {
+                    /* Date separator. */
+                    iSidebarItem sep;
+                    init_SidebarItem(&sep);
+                    sep.isSeparator = iTrue;
+                    set_String(&sep.meta,
+                               collect_String(format_Date(
+                                   &date, date.year != thisYear ? "%b %d %Y" : "%b %d")));
+                    pushBack_Array(&d->items, &sep);
+                    on = date;
+                }
+                pushBack_Array(&d->items, &item);
+            }
+            d->menu = makeMenu_Widget(
+                as_Widget(d),
+                (iMenuItem[]){
+                    { "Copy URL", 0, 0, "history.copy" },
+                    { "Add Bookmark", 0, 0, "history.addbookmark" },
+                    { "---", 0, 0, NULL },
+                    { "Remove URL", 0, 0, "history.delete" },
+                    { "---", 0, 0, NULL },
+                    { uiTextCaution_ColorEscape "Clear History", 0, 0, "history.clear confirm:1" },
+                }, 6);
             break;
+        }
         default:
             break;
     }
@@ -167,15 +201,35 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
     invalidate_SidebarWidget_(d);
 }
 
+static void scroll_SidebarWidget_(iSidebarWidget *d, int offset) {
+    const int oldScroll = d->scrollY;
+    d->scrollY += offset;
+    if (d->scrollY < 0) {
+        d->scrollY = 0;
+    }
+    const int scrollMax = scrollMax_SidebarWidget_(d);
+    d->scrollY = iMin(d->scrollY, scrollMax);
+    if (oldScroll != d->scrollY) {
+        d->hoverItem = iInvalidPos;
+        updateVisible_SidebarWidget_(d);
+        invalidate_SidebarWidget_(d);
+    }
+}
+
 void setMode_SidebarWidget(iSidebarWidget *d, enum iSidebarMode mode) {
     if (d->mode == mode) return;
+    if (d->mode >= 0 && d->mode < max_SidebarMode) {
+        d->modeScroll[d->mode] = d->scrollY; /* saved for later */
+    }
     d->mode = mode;
     for (enum iSidebarMode i = 0; i < max_SidebarMode; i++) {
         setFlags_Widget(as_Widget(d->modeButtons[i]), selected_WidgetFlag, i == d->mode);
     }
-    const float heights[max_SidebarMode] = { 1.333f, 3, 3, 1.2f };
+    const float heights[max_SidebarMode] = { 1.333f, 1.333f, 2.5f, 1.2f };
     d->itemHeight = heights[mode] * lineHeight_Text(uiContent_FontId);
     invalidate_SidebarWidget_(d);
+    /* Restore previous scroll position. */
+    d->scrollY = d->modeScroll[mode];
 }
 
 enum iSidebarMode mode_SidebarWidget(const iSidebarWidget *d) {
@@ -210,8 +264,9 @@ void init_SidebarWidget(iSidebarWidget *d) {
                         resizeWidthOfChildren_WidgetFlag | collapse_WidgetFlag,
                     iTrue);
     d->scrollY = 0;
-    d->mode    = -1;
-    d->width   = 60 * gap_UI;
+    iZap(d->modeScroll);
+    d->mode  = -1;
+    d->width = 60 * gap_UI;
     init_Array(&d->items, sizeof(iSidebarItem));
     d->hoverItem = iInvalidPos;
     init_Click(&d->click, d, SDL_BUTTON_LEFT);
@@ -280,25 +335,18 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, size_t index) {
             postCommandf_App("document.goto loc:%p", head->text.start);
             break;
         }
-        case bookmarks_SidebarMode: {
-            postCommandf_App("open url:%s", cstr_String(&item->url));
+        case bookmarks_SidebarMode:
+        case history_SidebarMode: {
+            if (!isEmpty_String(&item->url)) {
+                postCommandf_App("open url:%s", cstr_String(&item->url));
+            }
             break;
         }
-    }
-}
-
-static void scroll_SidebarWidget_(iSidebarWidget *d, int offset) {
-    const int oldScroll = d->scrollY;
-    d->scrollY += offset;
-    if (d->scrollY < 0) {
-        d->scrollY = 0;
-    }
-    const int scrollMax = scrollMax_SidebarWidget_(d);
-    d->scrollY = iMin(d->scrollY, scrollMax);
-    if (oldScroll != d->scrollY) {
-        d->hoverItem = iInvalidPos;
-        updateVisible_SidebarWidget_(d);
-        invalidate_SidebarWidget_(d);
+        case identities_SidebarMode: {
+            break;
+        }
+        default:
+            break;
     }
 }
 
@@ -423,7 +471,6 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             return iTrue;
         }
         else if (equal_Command(cmd, "tabs.changed") || equal_Command(cmd, "document.changed")) {
-            d->scrollY = 0;
             updateItems_SidebarWidget_(d);
         }
         else if (equal_Command(cmd, "theme.changed")) {
@@ -459,6 +506,50 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         }
         else if (equal_Command(cmd, "bookmarks.changed")) {
             updateItems_SidebarWidget_(d);
+        }
+        else if (equal_Command(cmd, "history.delete")) {
+            const iSidebarItem *item = hoverItem_SidebarWidget_(d);
+            if (item && !isEmpty_String(&item->url)) {
+                removeUrl_Visited(visited_App(), &item->url);
+                updateItems_SidebarWidget_(d);
+                scroll_SidebarWidget_(d, 0);
+            }
+            return iTrue;
+        }
+        else if (equal_Command(cmd, "history.copy")) {
+            const iSidebarItem *item = hoverItem_SidebarWidget_(d);
+            if (item && !isEmpty_String(&item->url)) {
+                SDL_SetClipboardText(cstr_String(&item->url));
+            }
+            return iTrue;
+        }
+        else if (equal_Command(cmd, "history.addbookmark")) {
+            const iSidebarItem *item = hoverItem_SidebarWidget_(d);
+            if (!isEmpty_String(&item->url)) {
+                /* TODO: Open the bookmark editor dialog. */
+                /*add_Bookmarks(bookmarks_App(),
+                              &item->url,
+                              urlHost_String(&item->url),
+                              collectNew_String(),
+                              0x1f310);
+                postCommand_App("bookmarks.changed");*/
+            }
+        }
+        else if (equal_Command(cmd, "history.clear")) {
+            if (argLabel_Command(cmd, "confirm")) {
+                makeQuestion_Widget(
+                    uiTextCaution_ColorEscape "CLEAR HISTORY",
+                    "Do you really want to erase the history of all visited pages?",
+                    (const char *[]){ "Cancel", uiTextCaution_ColorEscape "Clear History" },
+                    (const char *[]){ "cancel", "history.clear confirm:0" },
+                    2);
+            }
+            else {
+                clear_Visited(visited_App());
+                updateItems_SidebarWidget_(d);
+                scroll_SidebarWidget_(d, 0);
+            }
+            return iTrue;
         }
     }
     if (ev->type == SDL_MOUSEMOTION && !isVisible_Widget(d->menu)) {
@@ -549,7 +640,7 @@ static void draw_SidebarWidget_(const iSidebarWidget *d) {
                 const iRect         itemRect = { pos, init_I2(width_Rect(bufBounds), d->itemHeight) };
                 const iBool         isHover  = (d->hoverItem == i);
                 setClip_Paint(&p, intersect_Rect(itemRect, bufBounds));
-                if (isHover) {
+                if (isHover && !item->isSeparator) {
                     fillRect_Paint(&p,
                                    itemRect,
                                    isPressing ? uiBackgroundPressed_ColorId
@@ -586,6 +677,43 @@ static void draw_SidebarWidget_(const iSidebarWidget *d) {
                     iInt2 textPos = addY_I2(topRight_Rect(iconArea),
                                             (d->itemHeight - lineHeight_Text(font)) / 2);
                     drawRange_Text(font, textPos, fg, range_String(&item->label));
+                }
+                else if (d->mode == history_SidebarMode) {
+                    iBeginCollect();
+                    const int fg = isHover ? (isPressing ? uiTextPressed_ColorId
+                                                         : uiTextFramelessHover_ColorId)
+                                           : uiText_ColorId;
+                    if (!isEmpty_String(&item->meta)) {
+                        drawHLine_Paint(
+                            &p, topLeft_Rect(itemRect), width_Rect(itemRect), uiIcon_ColorId);
+                        drawRange_Text(
+                            default_FontId,
+                            add_I2(topLeft_Rect(itemRect),
+                                   init_I2(3 * gap_UI,
+                                           (d->itemHeight - lineHeight_Text(default_FontId)) / 2)),
+                            uiIcon_ColorId,
+                            range_String(&item->meta));
+                    }
+                    else {
+                        iUrl parts;
+                        init_Url(&parts, &item->url);
+                        const iBool isGemini = equalCase_Rangecc(&parts.protocol, "gemini");
+                        draw_Text(
+                            font,
+                            add_I2(topLeft_Rect(itemRect),
+                                   init_I2(3 * gap_UI, (d->itemHeight - lineHeight_Text(font)) / 2)),
+                            fg,
+                            "%s%s%s%s%s%s",
+                            isGemini ? "" : cstr_Rangecc(parts.protocol),
+                            isGemini ? "" : "://",
+                            escape_Color(isHover ? (isPressing ? uiTextPressed_ColorId
+                                                               : uiTextFramelessHover_ColorId)
+                                                 : uiTextStrong_ColorId),
+                            cstr_Rangecc(parts.host),
+                            escape_Color(fg),
+                            cstr_Rangecc(parts.path));
+                    }
+                    iEndCollect();
                 }
                 unsetClip_Paint(&p);
                 pos.y += d->itemHeight;

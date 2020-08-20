@@ -180,6 +180,7 @@ iColor          get_Color       (int color);
 int             darker_Color    (int color);
 int             lighter_Color   (int color);
 void            set_Color       (int color, iColor rgba);
+iColor          mix_Color       (iColor c1, iColor c2, float t);
 
 iLocalDef void setHsl_Color(int color, iHSLColor hsl) {
     set_Color(color, rgb_HSLColor(hsl));

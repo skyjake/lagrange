@@ -3,6 +3,7 @@
 
 #include <the_Foundation/file.h>
 #include <the_Foundation/path.h>
+#include <the_Foundation/ptrarray.h>
 #include <the_Foundation/sortedarray.h>
 
 static const size_t maxAgeVisited_Visited_ = 3600 * 24 * 30; /* one month */
@@ -99,6 +100,16 @@ void clear_Visited(iVisited *d) {
     clear_SortedArray(&d->visited);
 }
 
+static size_t find_Visited_(const iVisited *d, const iString *url) {
+    iVisitedUrl visit;
+    init_VisitedUrl(&visit);
+    set_String(&visit.url, url);
+    size_t pos = iInvalidPos;
+    locate_SortedArray(&d->visited, &visit, &pos);
+    deinit_VisitedUrl(&visit);
+    return pos;
+}
+
 void visitUrl_Visited(iVisited *d, const iString *url) {
     iVisitedUrl visit;
     init_VisitedUrl(&visit);
@@ -115,6 +126,14 @@ void visitUrl_Visited(iVisited *d, const iString *url) {
     insert_SortedArray(&d->visited, &visit);
 }
 
+void removeUrl_Visited(iVisited *d, const iString *url) {
+    size_t pos = find_Visited_(d, url);
+    if (pos != iInvalidPos) {
+        deinit_VisitedUrl(at_SortedArray(&d->visited, pos));
+        remove_Array(&d->visited.values, pos);
+    }
+}
+
 iTime urlVisitTime_Visited(const iVisited *d, const iString *url) {
     iVisitedUrl item;
     size_t pos;
@@ -125,4 +144,18 @@ iTime urlVisitTime_Visited(const iVisited *d, const iString *url) {
     }
     deinit_String(&item.url);
     return item.when;
+}
+
+static int cmpWhenDescending_VisitedUrlPtr_(const void *a, const void *b) {
+    const iVisitedUrl *s = *(const void **) a, *t = *(const void **) b;
+    return -cmp_Time(&s->when, &t->when);
+}
+
+const iArray *list_Visited(const iVisited *d, size_t count) {
+    iPtrArray *urls = collectNew_PtrArray();
+    iConstForEach(Array, i, &d->visited.values) {
+        pushBack_PtrArray(urls, i.value);
+    }
+    sort_Array(urls, cmpWhenDescending_VisitedUrlPtr_);
+    return urls;
 }

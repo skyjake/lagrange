@@ -2,7 +2,7 @@
 
 #include "gmrequest.h"
 
-#include <the_Foundation/array.h>
+#include <the_Foundation/ptrarray.h>
 #include <the_Foundation/string.h>
 #include <the_Foundation/time.h>
 
@@ -23,3 +23,6 @@ void    save_Visited            (const iVisited *, const char *dirPath);
 
 iTime   urlVisitTime_Visited    (const iVisited *, const iString *url);
 void    visitUrl_Visited        (iVisited *, const iString *url); /* adds URL to the visited URLs set */
+void    removeUrl_Visited       (iVisited *, const iString *url);
+
+const iPtrArray *  list_Visited (const iVisited *, size_t count); /* returns collected */

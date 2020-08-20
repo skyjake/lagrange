@@ -86,7 +86,7 @@ void setThemePalette_Color(enum iColorTheme theme) {
             copy_(uiInputCursor_ColorId, orange_ColorId);
             copy_(uiInputCursorText_ColorId, black_ColorId);
             copy_(uiHeading_ColorId, cyan_ColorId);
-            copy_(uiIcon_ColorId, teal_ColorId);
+            copy_(uiIcon_ColorId, cyan_ColorId);
             copy_(uiIconHover_ColorId, cyan_ColorId);
             copy_(uiSeparator_ColorId, gray25_ColorId);
             copy_(uiMarked_ColorId, brown_ColorId);
@@ -141,7 +141,7 @@ void setThemePalette_Color(enum iColorTheme theme) {
             copy_(uiBackgroundPressed_ColorId, cyan_ColorId);
             copy_(uiBackgroundFramelessHover_ColorId, orange_ColorId);
             copy_(uiText_ColorId, black_ColorId);
-            copy_(uiTextStrong_ColorId, brown_ColorId);
+            copy_(uiTextStrong_ColorId, teal_ColorId);
             copy_(uiTextPressed_ColorId, black_ColorId);
             copy_(uiTextSelected_ColorId, black_ColorId);
             copy_(uiTextFramelessHover_ColorId, black_ColorId);
@@ -233,6 +233,14 @@ void set_Color(int color, iColor rgba) {
     if (color >= uiBackground_ColorId && color < max_ColorId) {
         palette_[color] = rgba;
     }
+}
+
+iColor mix_Color(iColor c1, iColor c2, float t) {
+    t = iClamp(t, 0.0f, 1.0f);
+    return (iColor){ c1.r * (1 - t) + c2.r * t,
+                     c1.g * (1 - t) + c2.g * t,
+                     c1.b * (1 - t) + c2.b * t,
+                     c1.a * (1 - t) + c2.a * t };
 }
 
 iLocalDef iBool equal_Color_(const iColor *x, const iColor *y) {
