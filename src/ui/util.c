@@ -733,9 +733,11 @@ iWidget *makePreferences_Widget(void) {
 
 iWidget *makeBookmarkEditor_Widget(void) {
     iWidget *dlg = makeSheet_Widget("bmed");
-    addChildFlags_Widget(dlg,
-                         iClob(new_LabelWidget(uiHeading_ColorEscape "EDIT BOOKMARK", 0, 0, NULL)),
-                         frameless_WidgetFlag);
+    setId_Widget(addChildFlags_Widget(
+                     dlg,
+                     iClob(new_LabelWidget(uiHeading_ColorEscape "EDIT BOOKMARK", 0, 0, NULL)),
+                     frameless_WidgetFlag),
+                 "bmed.heading");
     iWidget *page = new_Widget();
     addChild_Widget(dlg, iClob(page));
     setFlags_Widget(page, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
@@ -744,8 +746,7 @@ iWidget *makeBookmarkEditor_Widget(void) {
     iWidget *values = addChildFlags_Widget(
         page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
     iInputWidget *inputs[4];
-    iWidget *hd;
-    addChild_Widget(headings, iClob(hd = makeHeading_Widget("Title:")));
+    addChild_Widget(headings, iClob(makeHeading_Widget("Title:")));
     setId_Widget(addChild_Widget(values, iClob(inputs[0] = new_InputWidget(0))), "bmed.title");
     addChild_Widget(headings, iClob(makeHeading_Widget("URL:")));
     setId_Widget(addChild_Widget(values, iClob(inputs[1] = new_InputWidget(0))), "bmed.url");

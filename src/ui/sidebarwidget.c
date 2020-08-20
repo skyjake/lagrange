@@ -388,15 +388,23 @@ void setWidth_SidebarWidget(iSidebarWidget *d, int width) {
 }
 
 iBool handleBookmarkEditorCommands_SidebarWidget_(iWidget *editor, const char *cmd) {
-    iSidebarWidget *d = findWidget_App("sidebar");
     if (equal_Command(cmd, "bmed.accept") || equal_Command(cmd, "cancel")) {
+        iSidebarWidget *d = findWidget_App("sidebar");
         if (equal_Command(cmd, "bmed.accept")) {
-            const iSidebarItem *item = hoverItem_SidebarWidget_(d);
-            iAssert(item); /* hover item cannot have been changed */
-            iBookmark *bm = get_Bookmarks(bookmarks_App(), item->id);
-            set_String(&bm->title, text_InputWidget(findChild_Widget(editor, "bmed.title")));
-            set_String(&bm->url, text_InputWidget(findChild_Widget(editor, "bmed.url")));
-            set_String(&bm->tags, text_InputWidget(findChild_Widget(editor, "bmed.tags")));
+            const iString *title = text_InputWidget(findChild_Widget(editor, "bmed.title"));
+            const iString *url   = text_InputWidget(findChild_Widget(editor, "bmed.url"));
+            const iString *tags  = text_InputWidget(findChild_Widget(editor, "bmed.tags"));
+            if (!cmp_String(id_Widget(editor), "bmed.create")) {
+                add_Bookmarks(bookmarks_App(), url, title, tags, 0x1f310);
+            }
+            else {
+                const iSidebarItem *item = hoverItem_SidebarWidget_(d);
+                iAssert(item); /* hover item cannot have been changed */
+                iBookmark *bm = get_Bookmarks(bookmarks_App(), item->id);
+                set_String(&bm->title, title);
+                set_String(&bm->url, url);
+                set_String(&bm->tags, tags);
+            }
             postCommand_App("bookmarks.changed");
         }
         setFlags_Widget(as_Widget(d), disabled_WidgetFlag, iFalse);
@@ -526,13 +534,16 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         else if (equal_Command(cmd, "history.addbookmark")) {
             const iSidebarItem *item = hoverItem_SidebarWidget_(d);
             if (!isEmpty_String(&item->url)) {
-                /* TODO: Open the bookmark editor dialog. */
-                /*add_Bookmarks(bookmarks_App(),
-                              &item->url,
-                              urlHost_String(&item->url),
-                              collectNew_String(),
-                              0x1f310);
-                postCommand_App("bookmarks.changed");*/
+                iWidget *dlg = makeBookmarkEditor_Widget();
+                setId_Widget(dlg, "bmed.create");
+                setTextCStr_LabelWidget(findChild_Widget(dlg, "bmed.heading"),
+                                        uiHeading_ColorEscape "ADD BOOKMARK");
+                iUrl parts;
+                init_Url(&parts, &item->url);
+                setTextCStr_InputWidget(findChild_Widget(dlg, "bmed.title"),
+                                        cstr_Rangecc(parts.host));
+                setText_InputWidget(findChild_Widget(dlg, "bmed.url"), &item->url);
+                setCommandHandler_Widget(dlg, handleBookmarkEditorCommands_SidebarWidget_);
             }
         }
         else if (equal_Command(cmd, "history.clear")) {
