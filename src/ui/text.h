@@ -90,6 +90,11 @@ void    drawRange_Text      (int fontId, iInt2 pos, int color, iRangecc text);
 
 SDL_Texture *   glyphCache_Text     (void);
 
+enum iTextBlockMode { quadrants_TextBlockMode, shading_TextBlockMode };
+
+iString *   renderBlockChars_Text   (const iBlock *fontData, int height, enum iTextBlockMode,
+                                     const iString *text);
+
 /*-----------------------------------------------------------------------------------------------*/
 
 iDeclareType(TextBuf)

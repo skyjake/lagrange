@@ -3,6 +3,7 @@
 #include "gmcerts.h"
 #include "app.h" /* dataDir_App() */
 #include "embedded.h"
+#include "ui/text.h"
 
 #include <the_Foundation/file.h>
 #include <the_Foundation/mutex.h>
@@ -278,7 +279,7 @@ static const iBlock *aboutPageSource_(iRangecc path) {
 }
 
 static const iBlock *replaceVariables_(const iBlock *block) {
-    iRegExp *var = new_RegExp("\\$\\{([A-Z_+-]+)\\}", 0);
+    iRegExp *var = new_RegExp("\\$\\{([^}]+)\\}", 0);
     iRegExpMatch m;
     if (matchRange_RegExp(var, range_Block(block), &m)) {
         iBlock *replaced = collect_Block(copy_Block(block));
@@ -288,6 +289,22 @@ static const iBlock *replaceVariables_(const iBlock *block) {
             iRangecc repl = iNullRange;
             if (equal_Rangecc(&name, "APP_VERSION")) {
                 repl = range_CStr(LAGRANGE_APP_VERSION);
+            }
+            else if (startsWith_Rangecc(&name, "BT:")) { /* block text */
+                repl = range_String(collect_String(renderBlockChars_Text(
+                    &fontFiraSansRegular_Embedded,
+                    11, /* should be larger if shaded */
+                    quadrants_TextBlockMode,
+                    &(iString){ iBlockLiteral(
+                        name.start + 3, size_Range(&name) - 3, size_Range(&name) - 3) })));
+            }
+            else if (startsWith_Rangecc(&name, "ST:")) { /* shaded text */
+                repl = range_String(collect_String(renderBlockChars_Text(
+                    &fontSymbola_Embedded,
+                    20,
+                    shading_TextBlockMode,
+                    &(iString){ iBlockLiteral(
+                        name.start + 3, size_Range(&name) - 3, size_Range(&name) - 3) })));
             }
             else if (equal_Rangecc(&name, "ALT")) {
 #if defined (iPlatformApple)
