@@ -64,7 +64,7 @@ typedef int   (*iBookmarksCompareFunc)(const iBookmark **, const iBookmark **);
  *                returned list is sorted by descending creation time.
  *
  * @return Collected array of bookmarks. Caller does not get ownership of the
- * list or the bookmarks.
+ * listed bookmarks.
  */
 const iPtrArray *list_Bookmarks(const iBookmarks *, iBookmarksFilterFunc filter,
                                 iBookmarksCompareFunc cmp);
