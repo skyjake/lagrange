@@ -58,6 +58,7 @@ TLS client certificates used to identify you.
 
 Lagrange itself is distributed under the BSD 2-clause license:
 => https://opensource.org/licenses/BSD-2-Clause  The 2-Clause BSD License
+=> https://git.skyjake.fi/skyjake/lagrange.git  Lagrange Git Repository
 
 > Copyright 2020 Jaakko Keränen
 >
@@ -88,7 +89,7 @@ SDL 2.0 and newer are available under the zlib license:
 
 the_Foundation is an opinionated C11 library by Jaakko Keränen. It is under the BSD 2-clause license. Note that the rest of the libraries in this section are used by the_Foundation, and not directly by Lagrange.
 => https://opensource.org/licenses/BSD-2-Clause  The 2-Clause BSD License
-=> https://git.skyjake.fi/skyjake/the_Foundation.git  the_Foundation Git repository
+=> https://git.skyjake.fi/skyjake/the_Foundation.git  the_Foundation Git Repository
 
 ## OpenSSL
 
