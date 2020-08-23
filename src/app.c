@@ -539,34 +539,52 @@ iDocumentWidget *newTab_App(const iDocumentWidget *duplicateOf) {
 static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
     if (equal_Command(cmd, "ident.accept") || equal_Command(cmd, "cancel")) {
         if (equal_Command(cmd, "ident.accept")) {
+            const iString *commonName   = text_InputWidget (findChild_Widget(dlg, "ident.common"));
+            const iString *userId       = text_InputWidget (findChild_Widget(dlg, "ident.userid"));
+            const iString *organization = text_InputWidget (findChild_Widget(dlg, "ident.org"));
+            const iString *country      = text_InputWidget (findChild_Widget(dlg, "ident.country"));
+            const iBool    isTemp       = isSelected_Widget(findChild_Widget(dlg, "ident.temp"));
+            if (isEmpty_String(commonName)) {
+                makeMessage_Widget(orange_ColorEscape "MISSING INFO",
+                                   "A \"Common name\" must be specified.");
+                return iTrue;
+            }
             iDate until;
             /* Validate the date. */ {
                 iZap(until);
                 unsigned int val[6];
+                iDate today;
+                initCurrent_Date(&today);
                 const int n =
                     sscanf(cstr_String(text_InputWidget(findChild_Widget(dlg, "ident.until"))),
                            "%04u-%u-%u %u:%u:%u",
-                           &val[0],
-                           &val[1],
-                           &val[2],
-                           &val[3],
-                           &val[4],
-                           &val[5]);
-                if (n <= 0) {
-                    iWidget *msg =
-                        makeMessage_Widget(orange_ColorEscape "INVALID DATE",
-                                           "Please check the \"Valid until\" date. Examples:\n"
-                                           "2030\n"
-                                           "2025-06-30\n"
-                                           "2021-12-31 23:59:59");
+                           &val[0], &val[1], &val[2], &val[3], &val[4], &val[5]);
+                if (n <= 0 || val[0] < (unsigned) today.year) {
+                    makeMessage_Widget(orange_ColorEscape "INVALID DATE",
+                                       "Please check the \"Valid until\" date. Examples:\n"
+                                       "2030\n"
+                                       "2025-06-30\n"
+                                       "2021-12-31 23:59:59");
                     return iTrue;
                 }
+                until.year   = val[0];
+                until.month  = n >= 2 ? val[1] : 1;
+                until.day    = n >= 3 ? val[2] : 1;
+                until.hour   = n >= 4 ? val[3] : 0;
+                until.minute = n >= 5 ? val[4] : 0;
+                until.second = n == 6 ? val[5] : 0;
+                /* In the past? */ {
+                    iTime now, t;
+                    initCurrent_Time(&now);
+                    init_Time(&t, &until);
+                    if (cmp_Time(&t, &now) <= 0) {
+                        makeMessage_Widget(orange_ColorEscape "INVALID DATE",
+                                           "Expiration date must be in the future.");
+                        return iTrue;
+                    }
+                }
             }
-            const iString *commonName = text_InputWidget(findChild_Widget(dlg, "ident.common"));
-            const iString *userId = text_InputWidget(findChild_Widget(dlg, "ident.userid"));
-            const iString *organization = text_InputWidget(findChild_Widget(dlg, "ident.org"));
-            const iString *country = text_InputWidget(findChild_Widget(dlg, "ident.country"));
-            const iBool isTemp = isSelected_Widget(findChild_Widget(dlg, "ident.temp"));
+
         }
         destroy_Widget(dlg);
         return iTrue;
