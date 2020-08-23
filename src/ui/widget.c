@@ -76,6 +76,7 @@ void init_Widget(iWidget *d) {
     d->children       = NULL;
     d->parent         = NULL;
     d->commandHandler = NULL;
+    iZap(d->padding);
 }
 
 void deinit_Widget(iWidget *d) {
@@ -142,6 +143,13 @@ void setSize_Widget(iWidget *d, iInt2 size) {
     setFlags_Widget(d, fixedSize_WidgetFlag, iTrue);
 }
 
+void setPadding_Widget(iWidget *d, int left, int top, int right, int bottom) {
+    d->padding[0] = left;
+    d->padding[1] = top;
+    d->padding[2] = right;
+    d->padding[3] = bottom;
+}
+
 void setBackgroundColor_Widget(iWidget *d, int bgColor) {
     d->bgColor = bgColor;
 }
@@ -191,19 +199,26 @@ iLocalDef iBool isCollapsed_Widget_(const iWidget *d) {
            (hidden_WidgetFlag | collapse_WidgetFlag);
 }
 
+iLocalDef iRect innerRect_Widget_(const iWidget *d) {
+    return init_Rect(d->padding[0],
+                     d->padding[1],
+                     width_Rect(d->rect) - d->padding[0] - d->padding[2],
+                     height_Rect(d->rect) - d->padding[1] - d->padding[3]);
+}
+
 void arrange_Widget(iWidget *d) {
     if (isCollapsed_Widget_(d)) {
         setFlags_Widget(d, wasCollapsed_WidgetFlag, iTrue);
         return;
     }
     if (d->flags & moveToParentRightEdge_WidgetFlag) {
-        d->rect.pos.x = width_Rect(d->parent->rect) - width_Rect(d->rect);
+        d->rect.pos.x = width_Rect(innerRect_Widget_(d->parent)) - width_Rect(d->rect);
     }
     if (d->flags & resizeToParentWidth_WidgetFlag) {
-        setWidth_Widget_(d, d->parent->rect.size.x);
+        setWidth_Widget_(d, width_Rect(innerRect_Widget_(d->parent)));
     }
     if (d->flags & resizeToParentHeight_WidgetFlag) {
-        setHeight_Widget_(d, d->parent->rect.size.y);
+        setHeight_Widget_(d, height_Rect(innerRect_Widget_(d->parent)));
     }
     /* The rest of the arrangement depends on child widgets. */
     if (!d->children) {
@@ -236,7 +251,7 @@ void arrange_Widget(iWidget *d) {
         const int expCount = numExpandingChildren_Widget_(d);
         /* Only resize the expanding children, not touching the others. */
         if (expCount > 0) {
-            iInt2 avail = d->rect.size;
+            iInt2 avail = innerRect_Widget_(d).size;
             iConstForEach(ObjectList, i, d->children) {
                 const iWidget *child = constAs_Widget(i.object);
                 if (~child->flags & expand_WidgetFlag) {
@@ -250,27 +265,27 @@ void arrange_Widget(iWidget *d) {
                 if (child->flags & expand_WidgetFlag) {
                     if (d->flags & arrangeHorizontal_WidgetFlag) {
                         if (dirs.x) setWidth_Widget_(child, avail.x);
-                        if (dirs.y) setHeight_Widget_(child, d->rect.size.y);
+                        if (dirs.y) setHeight_Widget_(child, height_Rect(innerRect_Widget_(d)));
                     }
                     else if (d->flags & arrangeVertical_WidgetFlag) {
-                        if (dirs.x) setWidth_Widget_(child, d->rect.size.x);
+                        if (dirs.x) setWidth_Widget_(child, width_Rect(innerRect_Widget_(d)));
                         if (dirs.y) setHeight_Widget_(child, avail.y);
                     }
                 }
                 else {
                     /* Fill the off axis, though. */
                     if (d->flags & arrangeHorizontal_WidgetFlag) {
-                        if (dirs.y) setHeight_Widget_(child, d->rect.size.y);
+                        if (dirs.y) setHeight_Widget_(child, height_Rect(innerRect_Widget_(d)));
                     }
                     else if (d->flags & arrangeVertical_WidgetFlag) {
-                        if (dirs.x) setWidth_Widget_(child, d->rect.size.x);
+                        if (dirs.x) setWidth_Widget_(child, width_Rect(innerRect_Widget_(d)));
                     }
                 }
             }
         }
         else {
             /* Evenly size all children. */
-            iInt2 childSize = d->rect.size;
+            iInt2 childSize = innerRect_Widget_(d).size;
             if (d->flags & arrangeHorizontal_WidgetFlag) {
                 childSize.x /= childCount;
             }
@@ -292,7 +307,7 @@ void arrange_Widget(iWidget *d) {
             setWidth_Widget_(as_Widget(i.object), widest);
         }
     }
-    iInt2 pos = zero_I2();
+    iInt2 pos = initv_I2(d->padding);
     iForEach(ObjectList, i, d->children) {
         iWidget *child = as_Widget(i.object);
         arrange_Widget(child);
@@ -308,6 +323,9 @@ void arrange_Widget(iWidget *d) {
                 pos.y += child->rect.size.y;
             }
         }
+        else if (d->flags & resizeChildren_WidgetFlag) {
+            child->rect.pos = pos;
+        }
     }
     /* Update the size of the widget according to the arrangement. */
     if (d->flags & arrangeSize_WidgetFlag) {
@@ -321,6 +339,7 @@ void arrange_Widget(iWidget *d) {
                 bounds = union_Rect(bounds, child->rect);
             }
         }
+        adjustEdges_Rect(&bounds, -d->padding[1], d->padding[2], d->padding[3], -d->padding[0]);
         if (d->flags & arrangeWidth_WidgetFlag) {
             setWidth_Widget_(d, bounds.size.x);
             /* Parent size changed, must update the children.*/

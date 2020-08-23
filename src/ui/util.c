@@ -500,6 +500,7 @@ iBool filePathHandler_(iWidget *dlg, const char *cmd) {
 
 iWidget *makeSheet_Widget(const char *id) {
     iWidget *sheet = new_Widget();
+    setPadding1_Widget(sheet, 3 * gap_UI);
     setId_Widget(sheet, id);
     setFrameColor_Widget(sheet, uiSeparator_ColorId);
     setBackgroundColor_Widget(sheet, uiBackground_ColorId);
@@ -507,9 +508,6 @@ iWidget *makeSheet_Widget(const char *id) {
                     mouseModal_WidgetFlag | keepOnTop_WidgetFlag | arrangeVertical_WidgetFlag |
                         arrangeSize_WidgetFlag,
                     iTrue);
-    //    const iInt2 rootSize = rootSize_Window(get_Window());
-    //    setSize_Widget(sheet, init_I2(rootSize.x / 2, 0));
-    //    setFlags_Widget(sheet, fixedHeight_WidgetFlag, iFalse);
     return sheet;
 }
 
@@ -787,7 +785,7 @@ iWidget *makeBookmarkEditor_Widget(void) {
         addChild_Widget(
             div,
             iClob(new_LabelWidget(
-                uiTextCaution_ColorEscape "Save", SDLK_RETURN, KMOD_PRIMARY, "bmed.accept")));
+                uiTextCaution_ColorEscape "Save Bookmark", SDLK_RETURN, KMOD_PRIMARY, "bmed.accept")));
     }
     addChild_Widget(dlg, iClob(div));
     addChild_Widget(get_Window()->root, iClob(dlg));
@@ -865,20 +863,9 @@ iWidget *makeIdentityCreation_Widget(void) {
     addChild_Widget(headings, iClob(makeHeading_Widget("Valid until:")));
     iInputWidget *until;
     addChild_Widget(values, iClob(until = new_InputWidget(19)));
-    setTextCStr_InputWidget(until, "YYYY-MM-DD HH:MM:SS");
-//    addChild_Widget(headings, iClob(newEmpty_LabelWidget()));
-//    addChild_Widget(values,
-//                    iClob(newColor_LabelWidget("Time defaults to end of day.",
-//                                               uiAnnotation_ColorId)));
+    setHint_InputWidget(until, collectNewCStr_String("YYYY-MM-DD HH:MM:SS"));
     addChild_Widget(headings, iClob(makeHeading_Widget("Temporary:")));
-//    iWidget *temp = new_Widget();
-//    addChildFlags_Widget(
-//        values, iClob(temp), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
     addChild_Widget(values, iClob(makeToggle_Widget("ident.temp")));
-    //    addChild_Widget(
-    //        temp,
-    //        iClob(newColor_LabelWidget("Temporary identities are not saved.",
-    //        uiAnnotation_ColorId)));
     arrange_Widget(dlg);
     for (size_t i = 0; i < iElemCount(inputs); ++i) {
         as_Widget(inputs[i])->rect.size.x = 100 * gap_UI - headings->rect.size.x;
@@ -889,7 +876,7 @@ iWidget *makeIdentityCreation_Widget(void) {
         addChild_Widget(
             div,
             iClob(new_LabelWidget(
-                uiTextAction_ColorEscape "Create", SDLK_RETURN, KMOD_PRIMARY, "ident.accept")));
+                uiTextAction_ColorEscape "Create Identity", SDLK_RETURN, KMOD_PRIMARY, "ident.accept")));
     }
     addChild_Widget(dlg, iClob(div));
     addChild_Widget(get_Window()->root, iClob(dlg));

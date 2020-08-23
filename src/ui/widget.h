@@ -95,6 +95,7 @@ struct Impl_Widget {
     iString      id;
     int          flags;
     iRect        rect;
+    int          padding[4]; /* left, top, right, bottom */
     int          bgColor;
     int          frameColor;
     iObjectList *children;
@@ -129,7 +130,8 @@ void    destroyPending_Widget(void);
 
 const iString *id_Widget    (const iWidget *);
 int     flags_Widget        (const iWidget *);
-iRect   bounds_Widget       (const iWidget *);
+iRect   bounds_Widget       (const iWidget *); /* outer bounds */
+iRect   innerBounds_Widget  (const iWidget *);
 iInt2   localCoord_Widget   (const iWidget *, iInt2 coord);
 iBool   contains_Widget     (const iWidget *, iInt2 coord);
 iAny *  findChild_Widget    (const iWidget *, const char *id);
@@ -153,6 +155,8 @@ void    setId_Widget        (iWidget *, const char *id);
 void    setFlags_Widget     (iWidget *, int flags, iBool set);
 void    setPos_Widget       (iWidget *, iInt2 pos);
 void    setSize_Widget      (iWidget *, iInt2 size);
+void    setPadding_Widget   (iWidget *, int left, int top, int right, int bottom);
+iLocalDef void setPadding1_Widget   (iWidget *d, int padding) { setPadding_Widget(d, padding, padding, padding, padding); }
 void    setBackgroundColor_Widget   (iWidget *, int bgColor);
 void    setFrameColor_Widget        (iWidget *, int frameColor);
 void    setCommandHandler_Widget    (iWidget *, iBool (*handler)(iWidget *, const char *));
