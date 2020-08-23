@@ -1731,11 +1731,14 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
         visBuf->index = vbDst;
     }
     /* Dynamic content. */ {
+        extern int enableKerning_Text;
+        enableKerning_Text = iFalse; /* need to be fast, these is redone on every redraw */
         iPaint *p = &ctxDynamic.paint;
         init_Paint(p);
         setClip_Paint(p, bounds);
         render_GmDocument(d->doc, visRange, drawRun_DrawContext_, &ctxDynamic);
         unsetClip_Paint(p);
+        enableKerning_Text = iTrue;
     }
 
 //    drawRect_Paint(&ctx.paint,

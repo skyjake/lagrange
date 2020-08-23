@@ -58,6 +58,7 @@ enum iFontId {
     hugeEmoji_FontId,
     smallEmoji_FontId,
     max_FontId,
+
     /* Meta: */
     fromSymbolsToEmojiOffset_FontId = 7,
     /* UI fonts: */

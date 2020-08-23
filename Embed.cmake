@@ -2,7 +2,7 @@
 # Copyright: 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
 # License: BSD 2-Clause
 
-option (EMBED_IN_EXECUTABLE "Embed resources inside the executable" OFF)
+option (ENABLE_RESOURCE_EMBED "Embed resources inside the executable" OFF)
 # Note: If disabled, the Unix "cat" tool is required for concatenating
 # the resources into a single "resources.binary" file.
 
@@ -50,7 +50,7 @@ endfunction (embed_write)
 function (embed_make)
     set (EMB_H ${CMAKE_CURRENT_BINARY_DIR}/embedded.h)
     set (EMB_C ${CMAKE_CURRENT_BINARY_DIR}/embedded.c)
-    if (EMBED_IN_EXECUTABLE)
+    if (ENABLE_RESOURCE_EMBED)
         set (needGen NO)
         if (NOT EXISTS ${EMB_H} OR NOT EXISTS ${EMB_C})
             set (needGen YES)
@@ -68,7 +68,7 @@ function (embed_make)
         set (needGen YES)
     endif ()
     if (needGen)
-        if (EMBED_IN_EXECUTABLE)
+        if (ENABLE_RESOURCE_EMBED)
             # Compose a source file with the resource data in an array.
             file (WRITE ${EMB_H} "#include <the_Foundation/block.h>\n")
             file (WRITE ${EMB_C} "#include \"embedded.h\"\n")

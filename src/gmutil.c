@@ -27,12 +27,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/path.h>
 
 void init_Url(iUrl *d, const iString *text) {
-    iRegExp *absPat =
-        new_RegExp("([a-z]+:)?(//[^/:?]*)(:[0-9]+)?([^?]*)(\\?.*)?", caseInsensitive_RegExpOption);
+    static iRegExp *absoluteUrlPattern_;
+    static iRegExp *relativeUrlPattern_;
+    if (!absoluteUrlPattern_) {
+        absoluteUrlPattern_ = new_RegExp("([a-z]+:)?(//[^/:?]*)(:[0-9]+)?([^?]*)(\\?.*)?",
+                                         caseInsensitive_RegExpOption);
+    }
     iRegExpMatch m;
-    if (matchString_RegExp(absPat, text, &m)) {
+    if (matchString_RegExp(absoluteUrlPattern_, text, &m)) {
         d->protocol = capturedRange_RegExpMatch(&m, 1);
-        d->host = capturedRange_RegExpMatch(&m, 2);
+        d->host     = capturedRange_RegExpMatch(&m, 2);
         if (!isEmpty_Range(&d->host)) {
             d->host.start += 2; /* skip the double slash */
         }
@@ -40,21 +44,21 @@ void init_Url(iUrl *d, const iString *text) {
         if (!isEmpty_Range(&d->port)) {
             d->port.start++; /* omit the colon */
         }
-        d->path = capturedRange_RegExpMatch(&m, 4);
+        d->path  = capturedRange_RegExpMatch(&m, 4);
         d->query = capturedRange_RegExpMatch(&m, 5);
     }
     else {
         /* Must be a relative path. */
         iZap(*d);
-        iRegExp *relPat = new_RegExp("([a-z]+:)?([^?]*)(\\?.*)?", 0);
-        if (matchString_RegExp(relPat, text, &m)) {
+        if (!relativeUrlPattern_) {
+            relativeUrlPattern_ = new_RegExp("([a-z]+:)?([^?]*)(\\?.*)?", 0);
+        }
+        if (matchString_RegExp(relativeUrlPattern_, text, &m)) {
             d->protocol = capturedRange_RegExpMatch(&m, 1);
             d->path     = capturedRange_RegExpMatch(&m, 2);
             d->query    = capturedRange_RegExpMatch(&m, 3);
         }
-        iRelease(relPat);
     }
-    iRelease(absPat);
     if (!isEmpty_Range(&d->protocol)) {
         d->protocol.end--; /* omit the colon */
     }

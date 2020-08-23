@@ -7,6 +7,10 @@ project (Lagrange
 )
 set (COPYRIGHT_YEAR 2020)
 
+# Build configuration.
+option (ENABLE_KERNING "Enable kerning in font renderer (slower)" ON)
+option (ENABLE_RESOURCE_EMBED "Embed resources inside the executable" OFF)
+
 include (Embed.cmake)
 find_package (the_Foundation REQUIRED)
 find_package (PkgConfig REQUIRED)
@@ -15,7 +19,6 @@ pkg_check_modules (SDL2 REQUIRED sdl2)
 # Embedded resources are written to a generated source file.
 message (STATUS "Preparing embedded resources...")
 # Fonts are too large to comfortably embed as a C source.
-set (EMBED_IN_EXECUTABLE OFF CACHE BOOL "Embed resources inside the executable")
 set (EMBED_RESOURCES 
     res/about/help.gmi
     res/about/lagrange.gmi
@@ -113,9 +116,13 @@ target_include_directories (app PUBLIC
 )
 target_compile_options (app PUBLIC
     -Werror=implicit-function-declaration
+    -Werror=incompatible-pointer-types
     ${SDL2_CFLAGS}
 )
 target_compile_definitions (app PUBLIC LAGRANGE_APP_VERSION="${PROJECT_VERSION}")
+if (ENABLE_KERNING)
+    target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_KERNING=1)
+endif ()
 target_link_libraries (app PUBLIC the_Foundation::the_Foundation)
 target_link_libraries (app PUBLIC ${SDL2_LDFLAGS})
 if (APPLE)
@@ -145,7 +152,7 @@ endif ()
 # Deployment.
 if (MSYS)
     install (TARGETS app DESTINATION .)
-    if (NOT EMBED_IN_EXECUTABLE)
+    if (NOT ENABLE_RESOURCE_EMBED)
         install (FILES ${EMB_BIN} DESTINATION .)
     endif ()
     install (PROGRAMS 
@@ -172,7 +179,7 @@ Icon=fi.skyjake.lagrange")
          DESTINATION share/icons/hicolor/256x256/apps
          RENAME fi.skyjake.lagrange.png
     )
-    if (NOT EMBED_IN_EXECUTABLE)
+    if (NOT ENABLE_RESOURCE_EMBED)
         install (FILES ${EMB_BIN} DESTINATION share/lagrange)
     endif ()
 endif ()

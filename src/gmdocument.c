@@ -192,9 +192,12 @@ iInt2 measurePreformattedBlock_GmDocument_(const iGmDocument *d, const char *sta
 }
 
 static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *linkId) {
-    iRegExp *pattern = new_RegExp("=>\\s*([^\\s]+)(\\s.*)?", caseInsensitive_RegExpOption);
+    static iRegExp *pattern_;
+    if (!pattern_) {
+        pattern_ = new_RegExp("=>\\s*([^\\s]+)(\\s.*)?", caseInsensitive_RegExpOption);
+    }
     iRegExpMatch m;
-    if (matchRange_RegExp(pattern, line, &m)) {
+    if (matchRange_RegExp(pattern_, line, &m)) {
         iGmLink *link = new_GmLink();
         setRange_String(&link->url, capturedRange_RegExpMatch(&m, 1));
         set_String(&link->url, absoluteUrl_String(&d->url, &link->url));
@@ -254,7 +257,6 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
             line = capturedRange_RegExpMatch(&m, 1); /* Show the URL. */
         }
     }
-    iRelease(pattern);
     return line;
 }
 

@@ -48,6 +48,7 @@ iDeclareTypeConstructionArgs(Glyph, iChar ch)
 
 int gap_Text;                           /* cf. gap_UI in metrics.h */
 int enableHalfPixelGlyphs_Text = iTrue; /* debug setting */
+int enableKerning_Text         = iTrue; /* looking up kern pairs is slow */
 
 struct Impl_Glyph {
     iHashNode node;
@@ -85,6 +86,7 @@ struct Impl_Font {
     int            baseline;
     iHash          glyphs;
     iBool          isMonospaced;
+    iBool          manualKernOnly;
     enum iFontId   symbolsFont; /* font to use for symbols */
 };
 
@@ -175,6 +177,9 @@ static void initFonts_Text_(iText *d) {
         init_Font(font, fontData[i].ttf, fontData[i].size, fontData[i].symbolsFont);
         if (fontData[i].ttf == &fontFiraMonoRegular_Embedded) {
             font->isMonospaced = iTrue;
+        }
+        if (i == default_FontId || i == defaultMedium_FontId) {
+            font->manualKernOnly = iTrue;
         }
     }
     gap_Text = iRound(gap_UI * d->contentFontSize);
@@ -511,9 +516,11 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
                 /* Manual kerning for double-slash. */
                 xpos -= glyph->rect[hoff].size.x * 0.5f;
             }
-            else if (next) {
+#if defined (LAGRANGE_ENABLE_KERNING)
+            else if (enableKerning_Text && !d->manualKernOnly && next) {
                 xpos += d->scale * stbtt_GetCodepointKernAdvance(&d->font, ch, next);
             }
+#endif
         }
         prevCh = ch;
         if (--maxLen == 0) {
