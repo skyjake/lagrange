@@ -1471,7 +1471,9 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
     }
     /* Text markers. */
     if (d->pass == dynamic_DrawRunPass) {
-        SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_BLEND);
+        SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()),
+                                   isDark_ColorTheme(colorTheme_App()) ? SDL_BLENDMODE_ADD
+                                                                       : SDL_BLENDMODE_BLEND);
         fillRange_DrawContext_(d, run, uiMatching_ColorId, d->widget->foundMark, &d->inFoundMark);
         fillRange_DrawContext_(d, run, uiMarked_ColorId, d->widget->selectMark, &d->inSelectMark);
         SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_NONE);
