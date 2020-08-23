@@ -208,11 +208,11 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 as_Widget(d),
                 (iMenuItem[]){
                     { "Copy URL", 0, 0, "history.copy" },
-                    { "Add Bookmark", 0, 0, "history.addbookmark" },
+                    { "Add Bookmark...", 0, 0, "history.addbookmark" },
                     { "---", 0, 0, NULL },
                     { "Remove URL", 0, 0, "history.delete" },
                     { "---", 0, 0, NULL },
-                    { uiTextCaution_ColorEscape "Clear History", 0, 0, "history.clear confirm:1" },
+                    { uiTextCaution_ColorEscape "Clear History...", 0, 0, "history.clear confirm:1" },
                 }, 6);
             break;
         }

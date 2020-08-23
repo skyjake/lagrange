@@ -116,8 +116,13 @@ static const iMenuItem fileMenuItems[] = {
 
 static const iMenuItem editMenuItems[] = {
     { "Copy Source Text", SDLK_c, KMOD_PRIMARY, "copy" },
+    { "Copy Link to Page", SDLK_c, KMOD_PRIMARY | KMOD_SHIFT, "document.copylink" },
     { "---", 0, 0, NULL },
-    { "Bookmark This Page", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
+    { "Bookmark This Page...", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
+};
+
+static const iMenuItem identityMenuItems[] = {
+    { "New Identity...", SDLK_n, KMOD_PRIMARY | KMOD_SHIFT, "ident.new" },
 };
 
 static const iMenuItem viewMenuItems[] = {
@@ -317,8 +322,9 @@ static void setupUserInterface_Window(iWindow *d) {
 #else
         insertMenuItems_MacOS("File", 1, fileMenuItems, iElemCount(fileMenuItems));
         insertMenuItems_MacOS("Edit", 2, editMenuItems, iElemCount(editMenuItems));
-        insertMenuItems_MacOS("View", 3, viewMenuItems, iElemCount(viewMenuItems));
-        insertMenuItems_MacOS("Help", 5, helpMenuItems, iElemCount(helpMenuItems));
+        insertMenuItems_MacOS("Identity", 3, identityMenuItems, iElemCount(identityMenuItems));
+        insertMenuItems_MacOS("View", 4, viewMenuItems, iElemCount(viewMenuItems));
+        insertMenuItems_MacOS("Help", 6, helpMenuItems, iElemCount(helpMenuItems));
 #endif
     }
     /* Tab bar. */ {

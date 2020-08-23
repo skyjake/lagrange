@@ -1040,7 +1040,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         delete_String(copied);
         return iTrue;
     }
-    else if (equalWidget_Command(cmd, w, "document.copylink")) {
+    else if (equal_Command(cmd, "document.copylink") && document_App() == d) {
         if (d->contextLink) {
             SDL_SetClipboardText(cstr_String(
                 absoluteUrl_String(d->mod.url, linkUrl_GmDocument(d->doc, d->contextLink->linkId))));
