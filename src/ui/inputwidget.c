@@ -103,8 +103,8 @@ void setMaxLen_InputWidget(iInputWidget *d, size_t maxLen) {
     }
 }
 
-void setHint_InputWidget(iInputWidget *d, const iString *hintText) {
-    set_String(&d->hint, hintText);
+void setHint_InputWidget(iInputWidget *d, const char *hintText) {
+    setCStr_String(&d->hint, hintText);
 }
 
 void setText_InputWidget(iInputWidget *d, const iString *text) {

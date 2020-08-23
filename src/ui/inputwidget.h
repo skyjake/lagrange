@@ -32,7 +32,7 @@ enum iInputMode {
     overwrite_InputMode,
 };
 
-void    setHint_InputWidget     (iInputWidget *, const iString *hintText);
+void    setHint_InputWidget     (iInputWidget *, const char *hintText);
 void    setSensitive_InputWidget(iInputWidget *, iBool isSensitive);
 void    setMode_InputWidget     (iInputWidget *, enum iInputMode mode);
 void    setMaxLen_InputWidget   (iInputWidget *, size_t maxLen);
@@ -43,3 +43,9 @@ void    begin_InputWidget       (iInputWidget *);
 void    end_InputWidget         (iInputWidget *, iBool accept);
 
 const iString * text_InputWidget    (const iInputWidget *);
+
+iLocalDef iInputWidget *newHint_InputWidget(size_t maxLen, const char *hint) {
+    iInputWidget *d = new_InputWidget(maxLen);
+    setHint_InputWidget(d, hint);
+    return d;
+}
