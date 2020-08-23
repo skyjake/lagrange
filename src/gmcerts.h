@@ -24,7 +24,31 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <the_Foundation/tlsrequest.h>
 
+iDeclareType(GmIdentity)
+iDeclareTypeConstruction(GmIdentity)
+iDeclareTypeSerialization(GmIdentity)
+
+enum iGmIdentityFlags {
+    temporary_GmIdentityFlag = 0x1, /* not saved persistently */
+};
+
+struct Impl_GmIdentity {
+//    iString fileName;
+    iBlock fingerprint;
+    iTlsCertificate *cert;
+    iSortedArray useUrls; /* Strings */
+    iChar icon;
+    iString notes; /* private, local usage notes */
+    int flags;
+};
+
 iDeclareType(GmCerts)
 iDeclareTypeConstructionArgs(GmCerts, const char *saveDir)
 
-iBool   checkTrust_GmCerts  (iGmCerts *, iRangecc domain, const iTlsCertificate *cert);
+iBool               checkTrust_GmCerts      (iGmCerts *, iRangecc domain, const iTlsCertificate *cert);
+
+const iGmIdentity * identityForUrl_GmCerts  (const iGmCerts *, const iString *url);
+
+iGmIdentity *       newIdentity_GmCerts     (iGmCerts *, int flags, iDate validUntil,
+                                             const iString *commonName, const iString *userId,
+                                             const iString *org, const iString *country);
