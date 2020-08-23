@@ -150,8 +150,8 @@ static void appearanceChanged_MacOS_(NSString *name) {
     const iBool isDark = [name containsString:@"Dark"];
     const iBool isHighContrast = [name containsString:@"HighContrast"];
     postCommandf_App("os.theme.changed dark:%d contrast:%d", isDark ? 1 : 0, isHighContrast ? 1 : 0);
-    printf("Effective appearance changed: %s\n", [name cStringUsingEncoding:NSUTF8StringEncoding]);
-    fflush(stdout);
+//    printf("Effective appearance changed: %s\n", [name cStringUsingEncoding:NSUTF8StringEncoding]);
+//    fflush(stdout);
 }
 
 - (void)setAppearance:(NSString *)name {

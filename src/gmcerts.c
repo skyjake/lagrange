@@ -35,7 +35,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 static const char *filename_GmCerts_       = "trusted.txt";
 static const char *identsDir_GmCerts_      = "idents";
-static const char *identsFilename_GmCerts_ = "idents.bin";
+static const char *identsFilename_GmCerts_ = "idents.binary";
 
 iDeclareClass(TrustEntry)
 
@@ -197,7 +197,6 @@ static void save_GmCerts_(const iGmCerts *d) {
         deinit_String(&line);
     }
     iRelease(f);
-    saveIdentities_GmCerts_(d);
     iEndCollect();
 }
 
@@ -317,6 +316,7 @@ void init_GmCerts(iGmCerts *d, const char *saveDir) {
 
 void deinit_GmCerts(iGmCerts *d) {
     iGuardMutex(&d->mtx, {
+        saveIdentities_GmCerts_(d);
         iForEach(PtrArray, i, &d->idents) {
             delete_GmIdentity(i.ptr);
         }

@@ -4,7 +4,7 @@
 
 option (EMBED_IN_EXECUTABLE "Embed resources inside the executable" OFF)
 # Note: If disabled, the Unix "cat" tool is required for concatenating
-# the resources into a single "resources.bin" file.
+# the resources into a single "resources.binary" file.
 
 function (embed_getname output fn)
     get_filename_component (name ${fn} NAME_WE)
@@ -78,7 +78,7 @@ function (embed_make)
             endforeach (fn)
         else ()
             # Collect resources in a single binary file.
-            set (EMB_BIN ${CMAKE_CURRENT_BINARY_DIR}/resources.bin)
+            set (EMB_BIN ${CMAKE_CURRENT_BINARY_DIR}/resources.binary)
             file (REMOVE ${EMB_BIN})
             execute_process (COMMAND cat ${ARGV} OUTPUT_FILE ${EMB_BIN}
                 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})

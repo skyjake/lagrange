@@ -60,20 +60,20 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 iDeclareType(App)
 
 #if defined (iPlatformApple)
-#define EMB_BIN "../../Resources/resources.bin"
+#define EMB_BIN "../../Resources/resources.binary"
 static const char *dataDir_App_ = "~/Library/Application Support/fi.skyjake.Lagrange";
 #endif
 #if defined (iPlatformMsys)
-#define EMB_BIN "../resources.bin"
+#define EMB_BIN "../resources.binary"
 static const char *dataDir_App_ = "~/AppData/Roaming/fi.skyjake.Lagrange";
 #endif
 #if defined (iPlatformLinux)
-#define EMB_BIN  "../../share/lagrange/resources.bin"
-#define EMB_BIN2 "../resources.bin" /* try from build dir as well */
+#define EMB_BIN  "../../share/lagrange/resources.binary"
 static const char *dataDir_App_ = "~/.config/lagrange";
 #endif
+#define EMB_BIN2 "../resources.binary" /* fallback from build/executable dir */
 static const char *prefsFileName_App_   = "prefs.cfg";
-static const char *stateFileName_App_   = "state.bin";
+static const char *stateFileName_App_   = "state.binary";
 
 struct Impl_App {
     iCommandLine args;
@@ -274,9 +274,9 @@ static void init_App_(iApp *d, int argc, char **argv) {
     load_Bookmarks(d->bookmarks, dataDir_App_);
 #if defined (iHaveLoadEmbed)
     /* Load the resources from a file. */ {
-        if (!load_Embed(concatPath_CStr(cstr_String(execPath_App()), "../resources.bin"))) {
-            if (!load_Embed(concatPath_CStr(cstr_String(execPath_App()), EMB_BIN))) {
-                fprintf(stderr, "failed to load resources.bin: %s\n", strerror(errno));
+        if (!load_Embed(concatPath_CStr(cstr_String(execPath_App()), EMB_BIN))) {
+            if (!load_Embed(concatPath_CStr(cstr_String(execPath_App()), EMB_BIN2))) {
+                fprintf(stderr, "failed to load resources: %s\n", strerror(errno));
                 exit(-1);
             }
         }

@@ -34,12 +34,12 @@ set (EMBED_RESOURCES
  endif ()
 embed_make (${EMBED_RESOURCES})
 
-set (EMB_BIN ${CMAKE_CURRENT_BINARY_DIR}/resources.bin)
+set (EMB_BIN ${CMAKE_CURRENT_BINARY_DIR}/resources.binary)
 set_source_files_properties (${EMB_BIN} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
 
 # Source files.
 set (SOURCES
-    ${CMAKE_CURRENT_BINARY_DIR}/resources.bin
+    ${CMAKE_CURRENT_BINARY_DIR}/resources.binary
     ${CMAKE_CURRENT_BINARY_DIR}/embedded.c
     ${CMAKE_CURRENT_BINARY_DIR}/embedded.h
     src/main.c
