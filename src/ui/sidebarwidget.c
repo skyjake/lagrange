@@ -416,17 +416,12 @@ iBool handleBookmarkEditorCommands_SidebarWidget_(iWidget *editor, const char *c
             const iString *title = text_InputWidget(findChild_Widget(editor, "bmed.title"));
             const iString *url   = text_InputWidget(findChild_Widget(editor, "bmed.url"));
             const iString *tags  = text_InputWidget(findChild_Widget(editor, "bmed.tags"));
-            if (!cmp_String(id_Widget(editor), "bmed.create")) {
-                add_Bookmarks(bookmarks_App(), url, title, tags, 0x1f310);
-            }
-            else {
-                const iSidebarItem *item = hoverItem_SidebarWidget_(d);
-                iAssert(item); /* hover item cannot have been changed */
-                iBookmark *bm = get_Bookmarks(bookmarks_App(), item->id);
-                set_String(&bm->title, title);
-                set_String(&bm->url, url);
-                set_String(&bm->tags, tags);
-            }
+            const iSidebarItem *item = hoverItem_SidebarWidget_(d);
+            iAssert(item); /* hover item cannot have been changed */
+            iBookmark *bm = get_Bookmarks(bookmarks_App(), item->id);
+            set_String(&bm->title, title);
+            set_String(&bm->url, url);
+            set_String(&bm->tags, tags);
             postCommand_App("bookmarks.changed");
         }
         setFlags_Widget(as_Widget(d), disabled_WidgetFlag, iFalse);
@@ -556,16 +551,10 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         else if (equal_Command(cmd, "history.addbookmark")) {
             const iSidebarItem *item = hoverItem_SidebarWidget_(d);
             if (!isEmpty_String(&item->url)) {
-                iWidget *dlg = makeBookmarkEditor_Widget();
-                setId_Widget(dlg, "bmed.create");
-                setTextCStr_LabelWidget(findChild_Widget(dlg, "bmed.heading"),
-                                        uiHeading_ColorEscape "ADD BOOKMARK");
-                iUrl parts;
-                init_Url(&parts, &item->url);
-                setTextCStr_InputWidget(findChild_Widget(dlg, "bmed.title"),
-                                        cstr_Rangecc(parts.host));
-                setText_InputWidget(findChild_Widget(dlg, "bmed.url"), &item->url);
-                setCommandHandler_Widget(dlg, handleBookmarkEditorCommands_SidebarWidget_);
+                makeBookmarkCreation_Widget(
+                    &item->url,
+                    collect_String(newRange_String(urlHost_String(&item->url))),
+                    0x1f310 /* globe */);
             }
         }
         else if (equal_Command(cmd, "history.clear")) {

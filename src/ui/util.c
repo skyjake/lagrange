@@ -23,8 +23,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "util.h"
 
 #include "app.h"
+#include "bookmarks.h"
 #include "color.h"
 #include "command.h"
+#include "gmutil.h"
 #include "labelwidget.h"
 #include "inputwidget.h"
 #include "widget.h"
@@ -789,5 +791,44 @@ iWidget *makeBookmarkEditor_Widget(void) {
     addChild_Widget(dlg, iClob(div));
     addChild_Widget(get_Window()->root, iClob(dlg));
     centerSheet_Widget(dlg);
+    return dlg;
+}
+
+static iBool handleBookmarkCreationCommands_SidebarWidget_(iWidget *editor, const char *cmd) {
+    if (equal_Command(cmd, "bmed.accept") || equal_Command(cmd, "cancel")) {
+        if (equal_Command(cmd, "bmed.accept")) {
+            const iString *title = text_InputWidget(findChild_Widget(editor, "bmed.title"));
+            const iString *url   = text_InputWidget(findChild_Widget(editor, "bmed.url"));
+            const iString *tags  = text_InputWidget(findChild_Widget(editor, "bmed.tags"));
+            add_Bookmarks(bookmarks_App(),
+                          url,
+                          title,
+                          tags,
+                          first_String(label_LabelWidget(findChild_Widget(editor, "bmed.icon"))));
+            postCommand_App("bookmarks.changed");
+        }
+        destroy_Widget(editor);
+        return iTrue;
+    }
+    return iFalse;
+}
+
+iWidget *makeBookmarkCreation_Widget(const iString *url, const iString *title, iChar icon) {
+    iWidget *dlg = makeBookmarkEditor_Widget();
+    setId_Widget(dlg, "bmed.create");
+    setTextCStr_LabelWidget(findChild_Widget(dlg, "bmed.heading"),
+                            uiHeading_ColorEscape "ADD BOOKMARK");
+    iUrl parts;
+    init_Url(&parts, url);
+    setTextCStr_InputWidget(findChild_Widget(dlg, "bmed.title"),
+                            title ? cstr_String(title) : cstr_Rangecc(parts.host));
+    setText_InputWidget(findChild_Widget(dlg, "bmed.url"), url);
+    setId_Widget(
+        addChildFlags_Widget(
+            dlg,
+            iClob(new_LabelWidget(cstrCollect_String(newUnicodeN_String(&icon, 1)), 0, 0, NULL)),
+            collapse_WidgetFlag | hidden_WidgetFlag | disabled_WidgetFlag),
+        "bmed.icon");
+    setCommandHandler_Widget(dlg, handleBookmarkCreationCommands_SidebarWidget_);
     return dlg;
 }

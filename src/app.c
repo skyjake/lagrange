@@ -668,11 +668,9 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "bookmark.add")) {
         iDocumentWidget *doc = document_App();
-        add_Bookmarks(d->bookmarks, url_DocumentWidget(doc),
-                      bookmarkTitle_DocumentWidget(doc),
-                      collectNew_String(),
-                      siteIcon_GmDocument(document_DocumentWidget(doc)));
-        postCommand_App("bookmarks.changed");
+        makeBookmarkCreation_Widget(url_DocumentWidget(doc),
+                                    bookmarkTitle_DocumentWidget(doc),
+                                    siteIcon_GmDocument(document_DocumentWidget(doc)));
         return iTrue;
     }
     else if (equal_Command(cmd, "theme.set")) {

@@ -38,6 +38,7 @@ void    updateSize_LabelWidget      (iLabelWidget *);
 void    updateText_LabelWidget      (iLabelWidget *, const iString *text); /* not resized */
 void    updateTextCStr_LabelWidget  (iLabelWidget *, const char *text); /* not resized */
 
+const iString *label_LabelWidget    (const iLabelWidget *);
 const iString *command_LabelWidget  (const iLabelWidget *);
 
 iLocalDef iLabelWidget *newEmpty_LabelWidget(void) {

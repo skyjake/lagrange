@@ -22,6 +22,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
+#include <the_Foundation/string.h>
 #include <the_Foundation/rect.h>
 #include <the_Foundation/vec2.h>
 #include <SDL_events.h>
@@ -142,5 +143,7 @@ void        updateValueInput_Widget (iWidget *, const char *title, const char *p
 void        makeMessage_Widget      (const char *title, const char *msg);
 iWidget *   makeQuestion_Widget     (const char *title, const char *msg,
                                      const char *labels[], const char *commands[], size_t count);
-iWidget *   makePreferences_Widget  (void);
-iWidget *   makeBookmarkEditor_Widget(void);
+
+iWidget *   makePreferences_Widget      (void);
+iWidget *   makeBookmarkEditor_Widget   (void);
+iWidget *   makeBookmarkCreation_Widget (const iString *url, const iString *title, iChar icon);
