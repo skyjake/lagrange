@@ -39,6 +39,7 @@ struct Impl_InputWidget {
     size_t          maxLen;
     iArray          text;    /* iChar[] */
     iArray          oldText; /* iChar[] */
+    iString         hint;
     size_t          cursor;
     int             font;
     iClick          click;
@@ -53,6 +54,7 @@ void init_InputWidget(iInputWidget *d, size_t maxLen) {
     setFlags_Widget(w, focusable_WidgetFlag | hover_WidgetFlag, iTrue);
     init_Array(&d->text, sizeof(iChar));
     init_Array(&d->oldText, sizeof(iChar));
+    init_String(&d->hint);
     d->font   = uiInput_FontId;
     d->cursor = 0;
     d->isSensitive = iFalse;
@@ -69,6 +71,7 @@ void deinit_InputWidget(iInputWidget *d) {
     if (d->timer) {
         SDL_RemoveTimer(d->timer);
     }
+    deinit_String(&d->hint);
     deinit_Array(&d->oldText);
     deinit_Array(&d->text);
 }
@@ -98,6 +101,10 @@ void setMaxLen_InputWidget(iInputWidget *d, size_t maxLen) {
             add_I2(measure_Text(d->font, cstr_Block(content)), init_I2(6 * gap_UI, 2 * gap_UI)));
         delete_Block(content);
     }
+}
+
+void setHint_InputWidget(iInputWidget *d, const iString *hintText) {
+    set_String(&d->hint, hintText);
 }
 
 void setText_InputWidget(iInputWidget *d, const iString *text) {
@@ -311,6 +318,15 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
 
 static const iChar sensitiveChar_ = 0x25cf; /* black circle */
 
+static iBool isWhite_(const iString *str) {
+    iConstForEach(String, i, str) {
+        if (!isSpace_Char(i.value)) {
+            return iFalse;
+        }
+    }
+    return iTrue;
+}
+
 static void draw_InputWidget_(const iInputWidget *d) {
     const iWidget *w         = constAs_Widget(d);
     const uint32_t time      = frameTime_Window(get_Window());
@@ -319,6 +335,7 @@ static void draw_InputWidget_(const iInputWidget *d) {
     const iBool    isFocused = isFocused_Widget(w);
     const iBool    isHover   = isHover_Widget(w) &&
                                contains_Widget(w, mouseCoord_Window(get_Window()));
+    iBool          isHint    = iFalse;
     iPaint p;
     init_Paint(&p);
     iString text;
@@ -330,6 +347,10 @@ static void draw_InputWidget_(const iInputWidget *d) {
         for (size_t i = 0; i < size_Array(&d->text); ++i) {
             appendChar_String(&text, sensitiveChar_);
         }
+    }
+    if (isWhite_(&text) && !isEmpty_String(&d->hint)) {
+        set_String(&text, &d->hint);
+        isHint = iTrue;
     }
     fillRect_Paint(
         &p, bounds, isFocused ? uiInputBackgroundFocused_ColorId : uiInputBackground_ColorId);
@@ -356,7 +377,9 @@ static void draw_InputWidget_(const iInputWidget *d) {
     const int yOff = (height_Rect(bounds) - lineHeight_Text(d->font)) / 2;
     draw_Text(d->font,
               add_I2(topLeft_Rect(bounds), init_I2(xOff, yOff)),
-              isFocused ? uiInputTextFocused_ColorId : uiInputText_ColorId,
+              isHint ? uiAnnotation_ColorId
+                     : isFocused && !isEmpty_Array(&d->text) ? uiInputTextFocused_ColorId
+                                                             : uiInputText_ColorId,
               "%s",
               cstr_String(&text));
     unsetClip_Paint(&p);

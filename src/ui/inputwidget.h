@@ -32,6 +32,7 @@ enum iInputMode {
     overwrite_InputMode,
 };
 
+void    setHint_InputWidget     (iInputWidget *, const iString *hintText);
 void    setSensitive_InputWidget(iInputWidget *, iBool isSensitive);
 void    setMode_InputWidget     (iInputWidget *, enum iInputMode mode);
 void    setMaxLen_InputWidget   (iInputWidget *, size_t maxLen);
