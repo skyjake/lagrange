@@ -28,6 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "util.h"
 #include "window.h"
 
+#include <the_Foundation/ptrarray.h>
 #include <the_Foundation/ptrset.h>
 #include <SDL_mouse.h>
 #include <stdarg.h>
@@ -38,15 +39,15 @@ struct Impl_RootData {
     iWidget *hover;
     iWidget *mouseGrab;
     iWidget *focus;
-    iPtrSet *onTop;
+    iPtrArray *onTop; /* order is important; last one is topmost */
     iPtrSet *pendingDestruction;
 };
 
 static iRootData rootData_;
 
-iPtrSet *onTop_RootData_(void) {
+iPtrArray *onTop_RootData_(void) {
     if (!rootData_.onTop) {
-        rootData_.onTop = new_PtrSet();
+        rootData_.onTop = new_PtrArray();
     }
     return rootData_.onTop;
 }
@@ -54,7 +55,7 @@ iPtrSet *onTop_RootData_(void) {
 void destroyPending_Widget(void) {
     iForEach(PtrSet, i, rootData_.pendingDestruction) {
         iWidget *widget = *i.value;
-        remove_PtrSet(onTop_RootData_(), widget);
+        removeOne_PtrArray(onTop_RootData_(), widget);
         if (widget->parent) {
             iRelease(removeChild_Widget(widget->parent, widget));
         }
@@ -126,10 +127,10 @@ void setFlags_Widget(iWidget *d, int flags, iBool set) {
     iChangeFlags(d->flags, flags, set);
     if (flags & keepOnTop_WidgetFlag) {
         if (set) {
-            insert_PtrSet(onTop_RootData_(), d);
+            pushBack_PtrArray(onTop_RootData_(), d);
         }
         else {
-            remove_PtrSet(onTop_RootData_(), d);
+            removeOne_PtrArray(onTop_RootData_(), d);
         }
     }
 }
@@ -422,7 +423,7 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
             }
         }
         /* Root offers events first to widgets on top. */
-        iForEach(PtrSet, i, rootData_.onTop) {
+        iReverseForEach(PtrArray, i, rootData_.onTop) {
             iWidget *widget = *i.value;
             if (isVisible_Widget(widget) && dispatchEvent_Widget(widget, ev)) {
                 return iTrue;
@@ -522,7 +523,7 @@ void draw_Widget(const iWidget *d) {
     }
     /* Root draws the on-top widgets on top of everything else. */
     if (!d->parent) {
-        iConstForEach(PtrSet, i, onTop_RootData_()) {
+        iConstForEach(PtrArray, i, onTop_RootData_()) {
             draw_Widget(*i.value);
         }
     }
