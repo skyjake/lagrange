@@ -140,7 +140,7 @@ void        makeFilePath_Widget     (iWidget *parent, const iString *initialPath
 iWidget *   makeValueInput_Widget   (iWidget *parent, const iString *initialValue, const char *title,
                                      const char *prompt, const char *acceptLabel, const char *command);
 void        updateValueInput_Widget (iWidget *, const char *title, const char *prompt);
-void        makeMessage_Widget      (const char *title, const char *msg);
+iWidget *   makeMessage_Widget      (const char *title, const char *msg);
 iWidget *   makeQuestion_Widget     (const char *title, const char *msg,
                                      const char *labels[], const char *commands[], size_t count);
 

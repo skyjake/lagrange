@@ -425,7 +425,7 @@ void init_Window(iWindow *d, iRect rect) {
     if (left_Rect(rect) >= 0) {
         SDL_SetWindowPosition(d->win, left_Rect(rect), top_Rect(rect));
     }
-    SDL_SetWindowMinimumSize(d->win, 400, 200);
+    SDL_SetWindowMinimumSize(d->win, 400, 250);
     SDL_SetWindowTitle(d->win, "Lagrange");    
     /* Some info. */ {
         SDL_RendererInfo info;

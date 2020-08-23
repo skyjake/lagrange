@@ -655,11 +655,12 @@ static iBool messageHandler_(iWidget *msg, const char *cmd) {
     return iFalse;
 }
 
-void makeMessage_Widget(const char *title, const char *msg) {
+iWidget *makeMessage_Widget(const char *title, const char *msg) {
     iWidget *dlg = makeQuestion_Widget(
         title, msg, (const char *[]){ "Continue" }, (const char *[]){ "message.ok" }, 1);
     addAction_Widget(dlg, SDLK_ESCAPE, 0, "message.ok");
     addAction_Widget(dlg, SDLK_SPACE, 0, "message.ok");
+    return dlg;
 }
 
 iWidget *makeQuestion_Widget(const char *title,
@@ -855,15 +856,13 @@ iWidget *makeIdentityCreation_Widget(void) {
     addChild_Widget(headings, iClob(makeHeading_Widget("Common name:")));
     setId_Widget(addChild_Widget(values, iClob(inputs[0] = new_InputWidget(0))), "ident.common");
     addChild_Widget(headings, iClob(makeHeading_Widget("User ID:")));
-    setId_Widget(addChild_Widget(values, iClob(inputs[1] = new_InputWidget(0))), "ident.userid");
+    setId_Widget(addChild_Widget(values, iClob(inputs[1] = newHint_InputWidget(0, "optional"))), "ident.userid");
     addChild_Widget(headings, iClob(makeHeading_Widget("Organization:")));
-    setId_Widget(addChild_Widget(values, iClob(inputs[2] = new_InputWidget(0))), "ident.org");
+    setId_Widget(addChild_Widget(values, iClob(inputs[2] = newHint_InputWidget(0, "optional"))), "ident.org");
     addChild_Widget(headings, iClob(makeHeading_Widget("Country:")));
-    setId_Widget(addChild_Widget(values, iClob(inputs[3] = new_InputWidget(0))), "ident.country");
+    setId_Widget(addChild_Widget(values, iClob(inputs[3] = newHint_InputWidget(0, "optional"))), "ident.country");
     addChild_Widget(headings, iClob(makeHeading_Widget("Valid until:")));
-    iInputWidget *until;
-    addChild_Widget(values, iClob(until = new_InputWidget(19)));
-    setHint_InputWidget(until, collectNewCStr_String("YYYY-MM-DD HH:MM:SS"));
+    setId_Widget(addChild_Widget(values, iClob(newHint_InputWidget(19, "YYYY-MM-DD HH:MM:SS"))), "ident.until");
     addChild_Widget(headings, iClob(makeHeading_Widget("Temporary:")));
     addChild_Widget(values, iClob(makeToggle_Widget("ident.temp")));
     arrange_Widget(dlg);
