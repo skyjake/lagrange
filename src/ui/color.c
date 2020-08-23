@@ -108,6 +108,7 @@ void setThemePalette_Color(enum iColorTheme theme) {
             copy_(uiInputCursor_ColorId, orange_ColorId);
             copy_(uiInputCursorText_ColorId, black_ColorId);
             copy_(uiHeading_ColorId, cyan_ColorId);
+            copy_(uiAnnotation_ColorId, teal_ColorId);
             copy_(uiIcon_ColorId, cyan_ColorId);
             copy_(uiIconHover_ColorId, cyan_ColorId);
             copy_(uiSeparator_ColorId, gray25_ColorId);
@@ -150,6 +151,7 @@ void setThemePalette_Color(enum iColorTheme theme) {
             copy_(uiInputCursor_ColorId, orange_ColorId);
             copy_(uiInputCursorText_ColorId, black_ColorId);
             copy_(uiHeading_ColorId, cyan_ColorId);
+            copy_(uiAnnotation_ColorId, teal_ColorId);
             copy_(uiIcon_ColorId, cyan_ColorId);
             copy_(uiIconHover_ColorId, cyan_ColorId);
             copy_(uiSeparator_ColorId, black_ColorId);
@@ -191,6 +193,7 @@ void setThemePalette_Color(enum iColorTheme theme) {
             copy_(uiInputCursor_ColorId, teal_ColorId);
             copy_(uiInputCursorText_ColorId, white_ColorId);
             copy_(uiHeading_ColorId, brown_ColorId);
+            copy_(uiAnnotation_ColorId, gray50_ColorId);
             copy_(uiIcon_ColorId, brown_ColorId);
             copy_(uiIconHover_ColorId, brown_ColorId);
             copy_(uiSeparator_ColorId, gray25_ColorId);
@@ -232,6 +235,7 @@ void setThemePalette_Color(enum iColorTheme theme) {
             copy_(uiInputCursor_ColorId, teal_ColorId);
             copy_(uiInputCursorText_ColorId, white_ColorId);
             copy_(uiHeading_ColorId, brown_ColorId);
+            copy_(uiAnnotation_ColorId, gray50_ColorId);
             copy_(uiIcon_ColorId, brown_ColorId);
             copy_(uiIconHover_ColorId, brown_ColorId);
             copy_(uiSeparator_ColorId, gray50_ColorId);

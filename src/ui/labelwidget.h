@@ -41,6 +41,8 @@ void    updateTextCStr_LabelWidget  (iLabelWidget *, const char *text); /* not r
 const iString *label_LabelWidget    (const iLabelWidget *);
 const iString *command_LabelWidget  (const iLabelWidget *);
 
+iLabelWidget *newColor_LabelWidget(const char *text, int color);
+
 iLocalDef iLabelWidget *newEmpty_LabelWidget(void) {
     return new_LabelWidget("", 0, 0, NULL);
 }

@@ -341,6 +341,12 @@ const iString *command_LabelWidget(const iLabelWidget *d) {
     return &d->command;
 }
 
+iLabelWidget *newColor_LabelWidget(const char *text, int color) {
+    iLabelWidget *d = new_LabelWidget(format_CStr("%s%s", escape_Color(color), text), 0, 0, NULL);
+    setFlags_Widget(as_Widget(d), frameless_WidgetFlag, iTrue);
+    return d;
+}
+
 iBeginDefineSubclass(LabelWidget, Widget)
     .processEvent = (iAny *) processEvent_LabelWidget_,
     .draw         = (iAny *) draw_LabelWidget_,

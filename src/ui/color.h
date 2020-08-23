@@ -95,6 +95,7 @@ enum iColorId {
     uiInputCursor_ColorId,
     uiInputCursorText_ColorId,
     uiHeading_ColorId,
+    uiAnnotation_ColorId,
     uiIcon_ColorId,
     uiIconHover_ColorId,
     uiSeparator_ColorId,

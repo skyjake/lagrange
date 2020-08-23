@@ -536,6 +536,17 @@ iDocumentWidget *newTab_App(const iDocumentWidget *duplicateOf) {
     return doc;
 }
 
+static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
+    if (equal_Command(cmd, "ident.accept") || equal_Command(cmd, "cancel")) {
+        if (equal_Command(cmd, "ident.accept")) {
+
+        }
+        destroy_Widget(dlg);
+        return iTrue;
+    }
+    return iFalse;
+}
+
 iBool handleCommand_App(const char *cmd) {
     iApp *d = &app_;
     if (equal_Command(cmd, "retainwindow")) {
@@ -671,6 +682,11 @@ iBool handleCommand_App(const char *cmd) {
         makeBookmarkCreation_Widget(url_DocumentWidget(doc),
                                     bookmarkTitle_DocumentWidget(doc),
                                     siteIcon_GmDocument(document_DocumentWidget(doc)));
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "ident.new")) {
+        iWidget *dlg = makeIdentityCreation_Widget();
+        setCommandHandler_Widget(dlg, handleIdentityCreationCommands_);
         return iTrue;
     }
     else if (equal_Command(cmd, "theme.set")) {

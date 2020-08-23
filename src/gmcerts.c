@@ -384,10 +384,11 @@ iGmIdentity *newIdentity_GmCerts(iGmCerts *d, int flags, iDate validUntil, const
                                  const iString *userId, const iString *org,
                                  const iString *country) {
     const iTlsCertificateName names[] = {
-        { subjectCommonName_TlsCertificateNameType,     commonName },
-        { subjectUserId_TlsCertificateNameType,         userId },
-        { subjectOrganization_TlsCertificateNameType,   org },
-        { subjectCountry_TlsCertificateNameType,        country },
+        { issuerCommonName_TlsCertificateNameType,    collectNewCStr_String("fi.skyjake.Lagrange") },
+        { subjectCommonName_TlsCertificateNameType,   commonName },
+        { subjectUserId_TlsCertificateNameType,       userId },
+        { subjectOrganization_TlsCertificateNameType, org },
+        { subjectCountry_TlsCertificateNameType,      country },
         { 0, NULL }
     };
     iGmIdentity *id = new_GmIdentity();

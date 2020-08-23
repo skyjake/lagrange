@@ -147,3 +147,4 @@ iWidget *   makeQuestion_Widget     (const char *title, const char *msg,
 iWidget *   makePreferences_Widget      (void);
 iWidget *   makeBookmarkEditor_Widget   (void);
 iWidget *   makeBookmarkCreation_Widget (const iString *url, const iString *title, iChar icon);
+iWidget *   makeIdentityCreation_Widget (void);

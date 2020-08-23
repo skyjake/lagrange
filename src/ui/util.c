@@ -708,8 +708,9 @@ static iBool toggleHandler_(iWidget *d, const char *cmd) {
 }
 
 iWidget *makeToggle_Widget(const char *id) {
-    iWidget *toggle = as_Widget(new_LabelWidget("YES", 0, 0, "toggle"));
+    iWidget *toggle = as_Widget(new_LabelWidget("YES", 0, 0, "toggle")); /* "YES" for sizing */
     setId_Widget(toggle, id);
+    updateTextCStr_LabelWidget((iLabelWidget *) toggle, "NO"); /* actual initial value */
     setCommandHandler_Widget(toggle, toggleHandler_);
     return toggle;
 }
@@ -769,7 +770,7 @@ iWidget *makeBookmarkEditor_Widget(void) {
         page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
     iWidget *values = addChildFlags_Widget(
         page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
-    iInputWidget *inputs[4];
+    iInputWidget *inputs[3];
     addChild_Widget(headings, iClob(makeHeading_Widget("Title:")));
     setId_Widget(addChild_Widget(values, iClob(inputs[0] = new_InputWidget(0))), "bmed.title");
     addChild_Widget(headings, iClob(makeHeading_Widget("URL:")));
@@ -830,5 +831,68 @@ iWidget *makeBookmarkCreation_Widget(const iString *url, const iString *title, i
             collapse_WidgetFlag | hidden_WidgetFlag | disabled_WidgetFlag),
         "bmed.icon");
     setCommandHandler_Widget(dlg, handleBookmarkCreationCommands_SidebarWidget_);
+    return dlg;
+}
+
+iWidget *makeIdentityCreation_Widget(void) {
+    iWidget *dlg = makeSheet_Widget("ident");
+    setId_Widget(addChildFlags_Widget(
+                     dlg,
+                     iClob(new_LabelWidget(uiHeading_ColorEscape "NEW IDENTITY", 0, 0, NULL)),
+                     frameless_WidgetFlag),
+                 "ident.heading");
+    iWidget *page = new_Widget();
+    addChildFlags_Widget(
+        dlg,
+        iClob(
+            new_LabelWidget("Creating a 2048-bit self-signed RSA certificate.", 0, 0, NULL)),
+        frameless_WidgetFlag);
+    addChild_Widget(dlg, iClob(page));
+    setFlags_Widget(page, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
+    iWidget *headings = addChildFlags_Widget(
+        page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
+    iWidget *values = addChildFlags_Widget(
+        page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
+    iInputWidget *inputs[4];
+    addChild_Widget(headings, iClob(makeHeading_Widget("Common name:")));
+    setId_Widget(addChild_Widget(values, iClob(inputs[0] = new_InputWidget(0))), "ident.common");
+    addChild_Widget(headings, iClob(makeHeading_Widget("User ID:")));
+    setId_Widget(addChild_Widget(values, iClob(inputs[1] = new_InputWidget(0))), "ident.userid");
+    addChild_Widget(headings, iClob(makeHeading_Widget("Organization:")));
+    setId_Widget(addChild_Widget(values, iClob(inputs[2] = new_InputWidget(0))), "ident.org");
+    addChild_Widget(headings, iClob(makeHeading_Widget("Country:")));
+    setId_Widget(addChild_Widget(values, iClob(inputs[3] = new_InputWidget(0))), "ident.country");
+    addChild_Widget(headings, iClob(makeHeading_Widget("Valid until:")));
+    iInputWidget *until;
+    addChild_Widget(values, iClob(until = new_InputWidget(19)));
+    setTextCStr_InputWidget(until, "YYYY-MM-DD HH:MM:SS");
+//    addChild_Widget(headings, iClob(newEmpty_LabelWidget()));
+//    addChild_Widget(values,
+//                    iClob(newColor_LabelWidget("Time defaults to end of day.",
+//                                               uiAnnotation_ColorId)));
+    addChild_Widget(headings, iClob(makeHeading_Widget("Temporary:")));
+//    iWidget *temp = new_Widget();
+//    addChildFlags_Widget(
+//        values, iClob(temp), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+    addChild_Widget(values, iClob(makeToggle_Widget("ident.temp")));
+    //    addChild_Widget(
+    //        temp,
+    //        iClob(newColor_LabelWidget("Temporary identities are not saved.",
+    //        uiAnnotation_ColorId)));
+    arrange_Widget(dlg);
+    for (size_t i = 0; i < iElemCount(inputs); ++i) {
+        as_Widget(inputs[i])->rect.size.x = 100 * gap_UI - headings->rect.size.x;
+    }
+    iWidget *div = new_Widget(); {
+        setFlags_Widget(div, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
+        addChild_Widget(div, iClob(new_LabelWidget("Cancel", SDLK_ESCAPE, 0, "cancel")));
+        addChild_Widget(
+            div,
+            iClob(new_LabelWidget(
+                uiTextAction_ColorEscape "Create", SDLK_RETURN, KMOD_PRIMARY, "ident.accept")));
+    }
+    addChild_Widget(dlg, iClob(div));
+    addChild_Widget(get_Window()->root, iClob(dlg));
+    centerSheet_Widget(dlg);
     return dlg;
 }
