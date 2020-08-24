@@ -125,6 +125,7 @@ static iBool isValid_GmIdentity_(const iGmIdentity *d) {
 static void setCertificate_GmIdentity_(iGmIdentity *d, iTlsCertificate *cert) {
     delete_TlsCertificate(d->cert);
     d->cert = cert;
+    set_Block(&d->fingerprint, collect_Block(fingerprint_TlsCertificate(cert)));
 }
 
 static const iString *readFile_(const iString *path) {
@@ -249,7 +250,6 @@ static void loadIdentityFromCertificate_GmCerts_(iGmCerts *d, const iString *crt
     iGmIdentity *ident = findIdentity_GmCerts_(d, finger);
     if (!ident) {
         ident = new_GmIdentity();
-        set_Block(&ident->fingerprint, finger);
         iDate today;
         initCurrent_Date(&today);
         set_String(&ident->notes, collect_String(format_Date(&today, "Imported on %b %d, %Y")));
@@ -387,9 +387,9 @@ iGmIdentity *newIdentity_GmCerts(iGmCerts *d, int flags, iDate validUntil, const
     const iTlsCertificateName names[] = {
         { issuerCommonName_TlsCertificateNameType,    collectNewCStr_String("fi.skyjake.Lagrange") },
         { subjectCommonName_TlsCertificateNameType,   commonName },
-        { subjectUserId_TlsCertificateNameType,       userId },
-        { subjectOrganization_TlsCertificateNameType, org },
-        { subjectCountry_TlsCertificateNameType,      country },
+        { subjectUserId_TlsCertificateNameType,       !isEmpty_String(userId) ? userId : NULL },
+        { subjectOrganization_TlsCertificateNameType, !isEmpty_String(org) ? org : NULL },
+        { subjectCountry_TlsCertificateNameType,      !isEmpty_String(country) ? country : NULL },
         { 0, NULL }
     };
     iGmIdentity *id = new_GmIdentity();
@@ -398,17 +398,22 @@ iGmIdentity *newIdentity_GmCerts(iGmCerts *d, int flags, iDate validUntil, const
     if (~flags & temporary_GmIdentityFlag) {
         const char *finger = cstrCollect_String(hexEncode_Block(&id->fingerprint));
         if (!writeTextFile_(
-                collect_String(concatCStr_Path(&d->saveDir, format_CStr("%s.crt", finger))),
+                collect_String(concatCStr_Path(&d->saveDir, format_CStr("idents/%s.crt", finger))),
                 collect_String(pem_TlsCertificate(id->cert)))) {
             delete_GmIdentity(id);
             return NULL;
         }
         if (!writeTextFile_(
-                collect_String(concatCStr_Path(&d->saveDir, format_CStr("%s.key", finger))),
+                collect_String(concatCStr_Path(&d->saveDir, format_CStr("idents/%s.key", finger))),
                 collect_String(privateKeyPem_TlsCertificate(id->cert)))) {
             delete_GmIdentity(id);
             return NULL;
         }
     }
+    pushBack_PtrArray(&d->idents, id);
     return id;
+}
+
+const iPtrArray *identities_GmCerts(const iGmCerts *d) {
+    return &d->idents;
 }

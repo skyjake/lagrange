@@ -689,9 +689,11 @@ iWidget *makeQuestion_Widget(const char *title,
 }
 
 void setToggle_Widget(iWidget *d, iBool active) {
-    setFlags_Widget(d, selected_WidgetFlag, active);
-    updateText_LabelWidget((iLabelWidget *) d,
-                           collectNewFormat_String("%s", isSelected_Widget(d) ? "YES" : "NO"));
+    if (d) {
+        setFlags_Widget(d, selected_WidgetFlag, active);
+        updateText_LabelWidget((iLabelWidget *) d,
+                               collectNewFormat_String("%s", isSelected_Widget(d) ? "YES" : "NO"));
+    }
 }
 
 static iBool toggleHandler_(iWidget *d, const char *cmd) {

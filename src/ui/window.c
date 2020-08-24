@@ -102,6 +102,8 @@ static const iMenuItem navMenuItems[] = {
     { "Reset Zoom", SDLK_0, KMOD_PRIMARY, "zoom.set arg:100" },
     { "---", 0, 0, NULL },
     { "Preferences...", SDLK_COMMA, KMOD_PRIMARY, "preferences" },
+    { "Help", 0, 0, "!open url:about:help" },
+    { "Release Notes", 0, 0, "!open url:about:version" },
     { "---", 0, 0, NULL },
     { "Quit Lagrange", 'q', KMOD_PRIMARY, "quit" }
 };
@@ -119,10 +121,6 @@ static const iMenuItem editMenuItems[] = {
     { "Copy Link to Page", SDLK_c, KMOD_PRIMARY | KMOD_SHIFT, "document.copylink" },
     { "---", 0, 0, NULL },
     { "Bookmark This Page...", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
-};
-
-static const iMenuItem identityMenuItems[] = {
-    { "New Identity...", SDLK_n, KMOD_PRIMARY | KMOD_SHIFT, "ident.new" },
 };
 
 static const iMenuItem viewMenuItems[] = {
@@ -146,6 +144,10 @@ static const iMenuItem helpMenuItems[] = {
     { "Release Notes", 0, 0, "open url:about:version" },
 };
 #endif
+
+static const iMenuItem identityMenuItems[] = {
+    { "New Identity...", SDLK_n, KMOD_PRIMARY | KMOD_SHIFT, "ident.new" },
+};
 
 static const char *reloadCStr_ = "\U0001f503";
 static const char *stopCStr_   = uiTextCaution_ColorEscape "\U0001f310";
@@ -312,8 +314,11 @@ static void setupUserInterface_Window(iWindow *d) {
         setId_Widget(
             addChild_Widget(navBar, iClob(newIcon_LabelWidget(reloadCStr_, 0, 0, "navigate.reload"))),
             "reload");
-        addChild_Widget(navBar, iClob(newIcon_LabelWidget("\U0001f464", 0, 0, "cert.client")));
-
+        iLabelWidget *idMenu =
+            makeMenuButton_LabelWidget("\U0001f464", identityMenuItems, iElemCount(identityMenuItems));
+        setAlignVisually_LabelWidget(idMenu, iTrue);
+        addChild_Widget(navBar, iClob(idMenu));
+        //addChild_Widget(navBar, iClob(newIcon_LabelWidget("\U0001f464", 0, 0, "cert.client")));
 #if !defined (iHaveNativeMenus)
         iLabelWidget *navMenu =
             makeMenuButton_LabelWidget("\U0001d362", navMenuItems, iElemCount(navMenuItems));

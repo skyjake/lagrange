@@ -22,6 +22,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
+#include <the_Foundation/ptrarray.h>
 #include <the_Foundation/tlsrequest.h>
 
 iDeclareType(GmIdentity)
@@ -49,6 +50,19 @@ iBool               checkTrust_GmCerts      (iGmCerts *, iRangecc domain, const 
 
 const iGmIdentity * identityForUrl_GmCerts  (const iGmCerts *, const iString *url);
 
+/**
+ * Create a new self-signed TLS client certificate for identifying the user.
+ * @a commonName and the other name parameters are inserted in the subject field
+ * of the certificate.
+ *
+ * @param flags       Identity flags. A temporary identity is not saved persistently and
+ *                    will be erased when the application is shut down.
+ * @param validUntil  Expiration date. Must be in the future.
+ *
+ * @returns Created identity. GmCerts retains ownership of returned object.
+ */
 iGmIdentity *       newIdentity_GmCerts     (iGmCerts *, int flags, iDate validUntil,
                                              const iString *commonName, const iString *userId,
                                              const iString *org, const iString *country);
+
+const iPtrArray *   identities_GmCerts      (const iGmCerts *);

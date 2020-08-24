@@ -22,11 +22,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "sidebarwidget.h"
 
-#include "../gmdocument.h"
 #include "app.h"
 #include "bookmarks.h"
 #include "command.h"
 #include "documentwidget.h"
+#include "gmcerts.h"
+#include "gmdocument.h"
 #include "inputwidget.h"
 #include "labelwidget.h"
 #include "paint.h"
@@ -216,6 +217,33 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 }, 6);
             break;
         }
+        case identities_SidebarMode: {
+            iConstForEach(PtrArray, i, identities_GmCerts(certs_App())) {
+                const iGmIdentity *ident = i.ptr;
+                /* icon, common name, used URLs, expiration, isTemp, free-form notes */
+                iSidebarItem item;
+                init_SidebarItem(&item);
+                item.icon = ident->icon;
+                set_String(&item.label, collect_String(subject_TlsCertificate(ident->cert)));
+                iDate until;
+                validUntil_TlsCertificate(ident->cert, &until);
+                set_String(
+                    &item.meta,
+                    collectNewFormat_String(
+                        "%s \u2014 %s\n%s",
+                        isEmpty_SortedArray(&ident->useUrls)
+                            ? "Not used"
+                            : format_CStr("Used on %zu URLs", size_SortedArray(&ident->useUrls)),
+                        ident->flags & temporary_GmIdentityFlag
+                            ? "Temporary"
+                            : cstrCollect_String(format_Date(&until, "Expires %b %d, %Y")),
+                        cstr_String(&ident->notes)));
+                pushBack_Array(&d->items, &item);
+            }
+            /* menu: set icon, edit notes, view urls, reveal files, delete, activate on this page,
+             * deactivate on this page, deactivate everywhere  */
+            break;
+        }
         default:
             break;
     }
@@ -247,7 +275,7 @@ void setMode_SidebarWidget(iSidebarWidget *d, enum iSidebarMode mode) {
     for (enum iSidebarMode i = 0; i < max_SidebarMode; i++) {
         setFlags_Widget(as_Widget(d->modeButtons[i]), selected_WidgetFlag, i == d->mode);
     }
-    const float heights[max_SidebarMode] = { 1.333f, 1.333f, 2.5f, 1.2f };
+    const float heights[max_SidebarMode] = { 1.333f, 1.333f, 3.0f, 1.2f };
     d->itemHeight = heights[mode] * lineHeight_Text(uiContent_FontId);
     invalidate_SidebarWidget_(d);
     /* Restore previous scroll position. */
@@ -529,7 +557,10 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             }
             return iTrue;
         }
-        else if (equal_Command(cmd, "bookmarks.changed")) {
+        else if (equal_Command(cmd, "bookmarks.changed") && d->mode == bookmarks_SidebarMode) {
+            updateItems_SidebarWidget_(d);
+        }
+        else if (equal_Command(cmd, "idents.changed") && d->mode == identities_SidebarMode) {
             updateItems_SidebarWidget_(d);
         }
         else if (equal_Command(cmd, "history.delete")) {
@@ -661,6 +692,9 @@ static void draw_SidebarWidget_(const iSidebarWidget *d) {
                 const iSidebarItem *item     = constAt_Array(&d->items, i);
                 const iRect         itemRect = { pos, init_I2(width_Rect(bufBounds), d->itemHeight) };
                 const iBool         isHover  = (d->hoverItem == i);
+                const int           iconColor =
+                    isHover ? (isPressing ? uiTextPressed_ColorId : uiIconHover_ColorId)
+                            : uiIcon_ColorId;
                 setClip_Paint(&p, intersect_Rect(itemRect, bufBounds));
                 if (isHover && !item->isSeparator) {
                     fillRect_Paint(&p,
@@ -691,8 +725,7 @@ static void draw_SidebarWidget_(const iSidebarWidget *d) {
                         font,
                         iconArea,
                         iTrue,
-                        isHover ? (isPressing ? uiTextPressed_ColorId : uiIconHover_ColorId)
-                                : uiIcon_ColorId,
+                        iconColor,
                         "%s",
                         cstr_String(&str));
                     deinit_String(&str);
@@ -736,6 +769,25 @@ static void draw_SidebarWidget_(const iSidebarWidget *d) {
                             cstr_Rangecc(parts.path));
                     }
                     iEndCollect();
+                }
+                else if (d->mode == identities_SidebarMode) {
+                    const int fg = isHover ? (isPressing ? uiTextPressed_ColorId
+                                                         : uiTextFramelessHover_ColorId)
+                                           : uiText_ColorId;
+                    iString icon;
+                    initUnicodeN_String(&icon, &item->icon, 1);
+                    drawRange_Text(font, add_I2(topLeft_Rect(itemRect), init_I2(3 * gap_UI, 0)),
+                                   iconColor, range_String(&icon));
+                    deinit_String(&icon);
+                    drawRange_Text(font, add_I2(topLeft_Rect(itemRect), init_I2(10 * gap_UI, 0)),
+                                   fg, range_String(&item->label));
+                    drawRange_Text(
+                        font,
+                        add_I2(topLeft_Rect(itemRect), init_I2(3 * gap_UI, lineHeight_Text(font))),
+                        isHover
+                            ? (isPressing ? uiTextPressed_ColorId : uiTextFramelessHover_ColorId)
+                            : uiAnnotation_ColorId,
+                        range_String(&item->meta));
                 }
                 unsetClip_Paint(&p);
                 pos.y += d->itemHeight;

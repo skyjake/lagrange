@@ -537,7 +537,8 @@ iDocumentWidget *newTab_App(const iDocumentWidget *duplicateOf) {
 }
 
 static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
-    if (equal_Command(cmd, "ident.accept") || equal_Command(cmd, "cancel")) {
+    iApp *d = &app_;
+    if (equal_Command(cmd, "ident.accept") || equal_Command(cmd, "cancel")) {        
         if (equal_Command(cmd, "ident.accept")) {
             const iString *commonName   = text_InputWidget (findChild_Widget(dlg, "ident.common"));
             const iString *userId       = text_InputWidget (findChild_Widget(dlg, "ident.userid"));
@@ -584,7 +585,10 @@ static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
                     }
                 }
             }
-
+            /* The input seems fine. */
+            newIdentity_GmCerts(d->certs, isTemp ? temporary_GmIdentityFlag : 0,
+                                until, commonName, userId, organization, country);
+            postCommand_App("idents.changed");
         }
         destroy_Widget(dlg);
         return iTrue;

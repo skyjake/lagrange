@@ -637,7 +637,7 @@ iBool isHover_Widget(const iWidget *d) {
 }
 
 iBool isSelected_Widget(const iWidget *d) {
-    return (d->flags & selected_WidgetFlag) != 0;
+    return d && (d->flags & selected_WidgetFlag) != 0;
 }
 
 iBool equalWidget_Command(const char *cmd, const iWidget *widget, const char *checkCommand) {
