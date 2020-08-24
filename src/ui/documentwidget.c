@@ -1264,8 +1264,11 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 break;
             case SDLK_PAGEUP:
             case SDLK_PAGEDOWN:
-            case ' ':
-                postCommand_Widget(w, "scroll.page arg:%d", key == SDLK_PAGEUP ? -1 : +1);
+            case SDLK_SPACE:
+                postCommand_Widget(
+                    w,
+                    "scroll.page arg:%d",
+                    (key == SDLK_SPACE && mods & KMOD_SHIFT) || key == SDLK_PAGEUP ? -1 : +1);
                 return iTrue;
 #if 0
             case SDLK_9: {
