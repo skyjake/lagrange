@@ -540,16 +540,16 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse
             const iString *mimeStr = collect_String(lower_String(&response->meta)); /* for convenience */
             iRangecc mime = range_String(mimeStr);
             iRangecc seg = iNullRange;
-            while (nextSplit_Rangecc(&mime, ";", &seg)) {
+            while (nextSplit_Rangecc(mime, ";", &seg)) {
                 iRangecc param = seg;
                 trim_Rangecc(&param);
-                if (equal_Rangecc(&param, "text/plain")) {
+                if (equal_Rangecc(param, "text/plain")) {
                     docFormat = plainText_GmDocumentFormat;
                 }
-                else if (equal_Rangecc(&param, "text/gemini")) {
+                else if (equal_Rangecc(param, "text/gemini")) {
                     docFormat = gemini_GmDocumentFormat;
                 }
-                else if (startsWith_Rangecc(&param, "image/")) {
+                else if (startsWith_Rangecc(param, "image/")) {
                     docFormat = gemini_GmDocumentFormat;
                     if (!d->request || isFinished_GmRequest(d->request)) {
                         /* Make a simple document with an image. */
@@ -568,7 +568,7 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse
                         clear_String(&str);
                     }
                 }
-                else if (startsWith_Rangecc(&param, "charset=")) {
+                else if (startsWith_Rangecc(param, "charset=")) {
                     charset = (iRangecc){ param.start + 8, param.end };
                     /* Remove whitespace and quotes. */
                     trim_Rangecc(&charset);
@@ -584,7 +584,7 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse
                 return;
             }
             /* Convert the source to UTF-8 if needed. */
-            if (!equalCase_Rangecc(&charset, "utf-8")) {
+            if (!equalCase_Rangecc(charset, "utf-8")) {
                 set_String(&str,
                            collect_String(decode_Block(&str.chars, cstr_Rangecc(charset))));
             }
@@ -1083,7 +1083,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         d->state = ready_RequestState;
         /* The response may be cached. */ {
             const iRangecc proto = urlProtocol_String(d->mod.url);
-            if (!equal_Rangecc(&proto, "about")) {
+            if (!equal_Rangecc(proto, "about")) {
                 setCachedResponse_History(d->mod.history, response_GmRequest(d->request));
             }
         }
@@ -1607,7 +1607,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                     &str,
                     " \u2014%s%s%s\r%c%s",
                     showHost ? " " : "",
-                    showHost ? (!equalCase_Rangecc(&parts.protocol, "gemini")
+                    showHost ? (!equalCase_Rangecc(parts.protocol, "gemini")
                                     ? format_CStr("%s://%s",
                                                   cstr_Rangecc(parts.protocol),
                                                   cstr_Rangecc(parts.host))

@@ -154,7 +154,7 @@ static void loadPrefs_App_(iApp *d) {
         iString *str = readString_File(f);
         const iRangecc src = range_String(str);
         iRangecc line = iNullRange;
-        while (nextSplit_Rangecc(&src, "\n", &line)) {
+        while (nextSplit_Rangecc(src, "\n", &line)) {
             iString cmdStr;
             initRange_String(&cmdStr, line);
             const char *cmd = cstr_String(&cmdStr);
@@ -602,8 +602,8 @@ iBool handleCommand_App(const char *cmd) {
         const iString *url = collect_String(newCStr_String(suffixPtr_Command(cmd, "url")));
         iUrl parts;
         init_Url(&parts, url);
-        if (equalCase_Rangecc(&parts.protocol, "http") ||
-            equalCase_Rangecc(&parts.protocol, "https")) {
+        if (equalCase_Rangecc(parts.protocol, "http") ||
+            equalCase_Rangecc(parts.protocol, "https")) {
             openInDefaultBrowser_App(url);
             return iTrue;
         }

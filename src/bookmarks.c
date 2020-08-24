@@ -85,7 +85,7 @@ void load_Bookmarks(iBookmarks *d, const char *dirPath) {
     if (open_File(f, readOnly_FileMode | text_FileMode)) {
         const iRangecc src = range_Block(collect_Block(readAll_File(f)));
         iRangecc line = iNullRange;
-        while (nextSplit_Rangecc(&src, "\n", &line)) {
+        while (nextSplit_Rangecc(src, "\n", &line)) {
             /* Skip empty lines. */ {
                 iRangecc ln = line;
                 trim_Rangecc(&ln);
@@ -100,9 +100,9 @@ void load_Bookmarks(iBookmarks *d, const char *dirPath) {
             initSeconds_Time(&bm->when, strtod(line.start, &endPos));
             line.start = skipSpace_CStr(endPos);
             setRange_String(&bm->url, line);
-            nextSplit_Rangecc(&src, "\n", &line);
+            nextSplit_Rangecc(src, "\n", &line);
             setRange_String(&bm->title, line);
-            nextSplit_Rangecc(&src, "\n", &line);
+            nextSplit_Rangecc(src, "\n", &line);
             setRange_String(&bm->tags, line);
             insert_Bookmarks_(d, bm);
         }

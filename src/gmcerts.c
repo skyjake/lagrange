@@ -264,7 +264,7 @@ static void load_GmCerts_(iGmCerts *d) {
         iRegExp *      pattern = new_RegExp("([^\\s]+) ([0-9]+) ([a-z0-9]+)", 0);
         const iRangecc src     = range_Block(collect_Block(readAll_File(f)));
         iRangecc       line    = iNullRange;
-        while (nextSplit_Rangecc(&src, "\n", &line)) {
+        while (nextSplit_Rangecc(src, "\n", &line)) {
             iRegExpMatch m;
             init_RegExpMatch(&m);
             if (matchRange_RegExp(pattern, line, &m)) {

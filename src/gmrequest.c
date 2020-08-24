@@ -299,13 +299,13 @@ static void requestFinished_GmRequest_(iAnyObject *obj) {
 
 static const iBlock *aboutPageSource_(iRangecc path) {
     const iBlock *src = NULL;
-    if (equalCase_Rangecc(&path, "lagrange")) {
+    if (equalCase_Rangecc(path, "lagrange")) {
         return &blobLagrange_Embedded;
     }
-    if (equalCase_Rangecc(&path, "help")) {
+    if (equalCase_Rangecc(path, "help")) {
         return &blobHelp_Embedded;
     }
-    if (equalCase_Rangecc(&path, "version")) {
+    if (equalCase_Rangecc(path, "version")) {
         return &blobVersion_Embedded;
     }
     return src;
@@ -321,10 +321,10 @@ static const iBlock *replaceVariables_(const iBlock *block) {
             const iRangei span = m.range;
             const iRangecc name = capturedRange_RegExpMatch(&m, 1);
             iRangecc repl = iNullRange;
-            if (equal_Rangecc(&name, "APP_VERSION")) {
+            if (equal_Rangecc(name, "APP_VERSION")) {
                 repl = range_CStr(LAGRANGE_APP_VERSION);
             }
-            else if (startsWith_Rangecc(&name, "BT:")) { /* block text */
+            else if (startsWith_Rangecc(name, "BT:")) { /* block text */
                 repl = range_String(collect_String(renderBlockChars_Text(
                     &fontFiraSansRegular_Embedded,
                     11, /* should be larger if shaded */
@@ -332,7 +332,7 @@ static const iBlock *replaceVariables_(const iBlock *block) {
                     &(iString){ iBlockLiteral(
                         name.start + 3, size_Range(&name) - 3, size_Range(&name) - 3) })));
             }
-            else if (startsWith_Rangecc(&name, "ST:")) { /* shaded text */
+            else if (startsWith_Rangecc(name, "ST:")) { /* shaded text */
                 repl = range_String(collect_String(renderBlockChars_Text(
                     &fontSymbola_Embedded,
                     20,
@@ -340,42 +340,42 @@ static const iBlock *replaceVariables_(const iBlock *block) {
                     &(iString){ iBlockLiteral(
                         name.start + 3, size_Range(&name) - 3, size_Range(&name) - 3) })));
             }
-            else if (equal_Rangecc(&name, "ALT")) {
+            else if (equal_Rangecc(name, "ALT")) {
 #if defined (iPlatformApple)
                 repl = range_CStr("\u2325");
 #else
                 repl = range_CStr("Alt");
 #endif
             }
-            else if (equal_Rangecc(&name, "ALT+")) {
+            else if (equal_Rangecc(name, "ALT+")) {
 #if defined (iPlatformApple)
                 repl = range_CStr("\u2325");
 #else
                 repl = range_CStr("Alt+");
 #endif
             }
-            else if (equal_Rangecc(&name, "CTRL")) {
+            else if (equal_Rangecc(name, "CTRL")) {
 #if defined (iPlatformApple)
                 repl = range_CStr("\u2318");
 #else
                 repl = range_CStr("Ctrl");
 #endif
             }
-            else if (equal_Rangecc(&name, "CTRL+")) {
+            else if (equal_Rangecc(name, "CTRL+")) {
 #if defined (iPlatformApple)
                 repl = range_CStr("\u2318");
 #else
                 repl = range_CStr("Ctrl+");
 #endif
             }
-            else if (equal_Rangecc(&name, "SHIFT")) {
+            else if (equal_Rangecc(name, "SHIFT")) {
 #if defined (iPlatformApple)
                 repl = range_CStr("\u21e7");
 #else
                 repl = range_CStr("Shift");
 #endif
             }
-            else if (equal_Rangecc(&name, "SHIFT+")) {
+            else if (equal_Rangecc(name, "SHIFT+")) {
 #if defined (iPlatformApple)
                 repl = range_CStr("\u21e7");
 #else
@@ -403,7 +403,7 @@ void submit_GmRequest(iGmRequest *d) {
     init_Url(&url, &d->url);
     /* Check for special protocols. */
     /* TODO: If this were a library, these could be handled via callbacks. */
-    if (equalCase_Rangecc(&url.protocol, "about")) {
+    if (equalCase_Rangecc(url.protocol, "about")) {
         const iBlock *src = aboutPageSource_(url.path);
         if (src) {
             d->resp.statusCode = success_GmStatusCode;
@@ -419,7 +419,7 @@ void submit_GmRequest(iGmRequest *d) {
         iNotifyAudience(d, finished, GmRequestFinished);
         return;
     }
-    else if (equalCase_Rangecc(&url.protocol, "file")) {
+    else if (equalCase_Rangecc(url.protocol, "file")) {
         iString *path = collect_String(urlDecode_String(collect_String(newRange_String(url.path))));
         iFile *  f    = new_File(path);
         if (open_File(f, readOnly_FileMode)) {
@@ -457,7 +457,7 @@ void submit_GmRequest(iGmRequest *d) {
         iNotifyAudience(d, finished, GmRequestFinished);
         return;
     }
-    else if (equalCase_Rangecc(&url.protocol, "data")) {
+    else if (equalCase_Rangecc(url.protocol, "data")) {
         d->resp.statusCode = success_GmStatusCode;
         iString *src = collectNewCStr_String(url.protocol.start + 5);
         iRangecc header = { constBegin_String(src), constBegin_String(src) };
@@ -468,8 +468,8 @@ void submit_GmRequest(iGmRequest *d) {
         setRange_String(&d->resp.meta, header);
         /* Check what's in the header. */ {
             iRangecc entry = iNullRange;
-            while (nextSplit_Rangecc(&header, ";", &entry)) {
-                if (equal_Rangecc(&entry, "base64")) {
+            while (nextSplit_Rangecc(header, ";", &entry)) {
+                if (equal_Rangecc(entry, "base64")) {
                     isBase64 = iTrue;
                 }
             }

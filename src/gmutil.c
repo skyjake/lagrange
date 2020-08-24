@@ -66,7 +66,7 @@ void init_Url(iUrl *d, const iString *text) {
 }
 
 static iRangecc dirPath_(iRangecc path) {
-    const size_t pos = lastIndexOfCStr_Rangecc(&path, "/");
+    const size_t pos = lastIndexOfCStr_Rangecc(path, "/");
     if (pos == iInvalidPos) return path;
     return (iRangecc){ path.start, path.start + pos };
 }
@@ -89,13 +89,13 @@ void cleanUrlPath_String(iString *d) {
     iUrl parts;
     init_Url(&parts, d);
     iRangecc seg = iNullRange;
-    while (nextSplit_Rangecc(&parts.path, "/", &seg)) {
-        if (equal_Rangecc(&seg, "..")) {
+    while (nextSplit_Rangecc(parts.path, "/", &seg)) {
+        if (equal_Rangecc(seg, "..")) {
             /* Back up one segment. */
             iRangecc last = prevPathSeg_(constEnd_String(&clean), constBegin_String(&clean));
             truncate_Block(&clean.chars, last.start - constBegin_String(&clean));
         }
-        else if (equal_Rangecc(&seg, ".")) {
+        else if (equal_Rangecc(seg, ".")) {
             /* Skip it. */
         }
         else {
@@ -103,11 +103,11 @@ void cleanUrlPath_String(iString *d) {
             appendRange_String(&clean, seg);
         }
     }
-    if (endsWith_Rangecc(&parts.path, "/")) {
+    if (endsWith_Rangecc(parts.path, "/")) {
         appendCStr_String(&clean, "/");
     }
     /* Replace with the new path. */
-    if (cmpCStrNSc_Rangecc(&parts.path, cstr_String(&clean), size_String(&clean), &iCaseSensitive)) {
+    if (cmpCStrNSc_Rangecc(parts.path, cstr_String(&clean), size_String(&clean), &iCaseSensitive)) {
         const size_t pos = parts.path.start - constBegin_String(d);
         remove_Block(&d->chars, pos, size_Range(&parts.path));
         insertData_Block(&d->chars, pos, cstr_String(&clean), size_String(&clean));
@@ -132,7 +132,7 @@ const iString *absoluteUrl_String(const iString *d, const iString *urlMaybeRelat
     iUrl rel;
     init_Url(&orig, d);
     init_Url(&rel, urlMaybeRelative);
-    if (equalCase_Rangecc(&rel.protocol, "data") || equalCase_Rangecc(&rel.protocol, "about")) {
+    if (equalCase_Rangecc(rel.protocol, "data") || equalCase_Rangecc(rel.protocol, "about")) {
         /* Special case, the contents should be left unparsed. */
         return urlMaybeRelative;
     }
@@ -154,11 +154,11 @@ const iString *absoluteUrl_String(const iString *d, const iString *urlMaybeRelat
             appendRange_String(absolute, selHost->port);
         }
     }
-    if (isDef_(rel.protocol) || isDef_(rel.host) || startsWith_Rangecc(&rel.path, "/")) {
+    if (isDef_(rel.protocol) || isDef_(rel.host) || startsWith_Rangecc(rel.path, "/")) {
         appendRange_String(absolute, rel.path); /* absolute path */
     }
     else {
-        if (!endsWith_Rangecc(&orig.path, "/")) {
+        if (!endsWith_Rangecc(orig.path, "/")) {
             /* Referencing a file. */
             appendRange_String(absolute, dirPath_(orig.path));
         }

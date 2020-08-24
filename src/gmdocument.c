@@ -128,11 +128,11 @@ enum iGmLineType {
     max_GmLineType,
 };
 
-static enum iGmLineType lineType_GmDocument_(const iGmDocument *d, const iRangecc *line) {
+static enum iGmLineType lineType_GmDocument_(const iGmDocument *d, const iRangecc line) {
     if (d->format == plainText_GmDocumentFormat) {
         return text_GmLineType;
     }
-    if (isEmpty_Range(line)) {
+    if (isEmpty_Range(&line)) {
         return text_GmLineType;
     }
     if (startsWith_Rangecc(line, "=>")) {
@@ -150,10 +150,10 @@ static enum iGmLineType lineType_GmDocument_(const iGmDocument *d, const iRangec
     if (startsWith_Rangecc(line, "```")) {
         return preformatted_GmLineType;
     }
-    if (*line->start == '>') {
+    if (*line.start == '>') {
         return quote_GmLineType;
     }
-    if (size_Range(line) >= 2 && line->start[0] == '*' && isspace(line->start[1])) {
+    if (size_Range(&line) >= 2 && line.start[0] == '*' && isspace(line.start[1])) {
         return bullet_GmLineType;
     }
     return text_GmLineType;
@@ -179,11 +179,11 @@ static int lastVisibleRunBottom_GmDocument_(const iGmDocument *d) {
 iInt2 measurePreformattedBlock_GmDocument_(const iGmDocument *d, const char *start, int font) {
     const iRangecc content = { start, constEnd_String(&d->source) };
     iRangecc line = iNullRange;
-    nextSplit_Rangecc(&content, "\n", &line);
-    iAssert(startsWith_Rangecc(&line, "```"));
+    nextSplit_Rangecc(content, "\n", &line);
+    iAssert(startsWith_Rangecc(line, "```"));
     iRangecc preBlock = { line.end + 1, line.end + 1 };
-    while (nextSplit_Rangecc(&content, "\n", &line)) {
-        if (startsWith_Rangecc(&line, "```")) {
+    while (nextSplit_Rangecc(content, "\n", &line)) {
+        if (startsWith_Rangecc(line, "```")) {
             break;
         }
         preBlock.end = line.end;
@@ -205,22 +205,22 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
         /* Check the URL. */ {
             iUrl parts;
             init_Url(&parts, &link->url);
-            if (!equalCase_Rangecc(&parts.host, cstr_String(&d->localHost))) {
+            if (!equalCase_Rangecc(parts.host, cstr_String(&d->localHost))) {
                 link->flags |= remote_GmLinkFlag;
             }
-            if (startsWithCase_Rangecc(&parts.protocol, "gemini")) {
+            if (startsWithCase_Rangecc(parts.protocol, "gemini")) {
                 link->flags |= gemini_GmLinkFlag;
             }
-            else if (startsWithCase_Rangecc(&parts.protocol, "http")) {
+            else if (startsWithCase_Rangecc(parts.protocol, "http")) {
                 link->flags |= http_GmLinkFlag;
             }
-            else if (equalCase_Rangecc(&parts.protocol, "gopher")) {
+            else if (equalCase_Rangecc(parts.protocol, "gopher")) {
                 link->flags |= gopher_GmLinkFlag;
             }
-            else if (equalCase_Rangecc(&parts.protocol, "file")) {
+            else if (equalCase_Rangecc(parts.protocol, "file")) {
                 link->flags |= file_GmLinkFlag;
             }
-            else if (equalCase_Rangecc(&parts.protocol, "data")) {
+            else if (equalCase_Rangecc(parts.protocol, "data")) {
                 link->flags |= data_GmLinkFlag;
             }
             /* Check the file name extension, if present. */
@@ -336,7 +336,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         isPreformat = iTrue;
         isFirstText = iFalse;
     }
-    while (nextSplit_Rangecc(&content, "\n", &line)) {
+    while (nextSplit_Rangecc(content, "\n", &line)) {
         iGmRun run;
         run.flags = 0;
         run.color = white_ColorId;
@@ -345,7 +345,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         enum iGmLineType type;
         int indent = 0;
         if (!isPreformat) {
-            type = lineType_GmDocument_(d, &line);
+            type = lineType_GmDocument_(d, line);
             if (line.start == content.start) {
                 prevType = type;
             }
@@ -383,7 +383,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             /* Preformatted line. */
             type = preformatted_GmLineType;
             if (d->format == gemini_GmDocumentFormat &&
-                startsWithSc_Rangecc(&line, "```", &iCaseSensitive)) {
+                startsWithSc_Rangecc(line, "```", &iCaseSensitive)) {
                 isPreformat = iFalse;
                 preAltText = iNullRange;
                 addSiteBanner = iFalse; /* overrides the banner */
@@ -851,7 +851,7 @@ static void normalize_GmDocument(iGmDocument *d) {
         isPreformat = iTrue; /* Cannot be turned off. */
     }
     const int preTabWidth = 8; /* TODO: user-configurable parameter */
-    while (nextSplit_Rangecc(&src, "\n", &line)) {
+    while (nextSplit_Rangecc(src, "\n", &line)) {
         if (isPreformat) {
             /* Replace any tab characters with spaces for visualization. */
             for (const char *ch = line.start; ch != line.end; ch++) {
@@ -867,12 +867,12 @@ static void normalize_GmDocument(iGmDocument *d) {
                 }
             }
             appendCStr_String(normalized, "\n");
-            if (lineType_GmDocument_(d, &line) == preformatted_GmLineType) {
+            if (lineType_GmDocument_(d, line) == preformatted_GmLineType) {
                 isPreformat = iFalse;
             }
             continue;
         }
-        if (lineType_GmDocument_(d, &line) == preformatted_GmLineType) {
+        if (lineType_GmDocument_(d, line) == preformatted_GmLineType) {
             isPreformat = iTrue;
             appendRange_String(normalized, line);
             appendCStr_String(normalized, "\n");

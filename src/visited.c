@@ -96,7 +96,7 @@ void load_Visited(iVisited *d, const char *dirPath) {
         iRangecc       line = iNullRange;
         iTime          now;
         initCurrent_Time(&now);
-        while (nextSplit_Rangecc(&src, "\n", &line)) {
+        while (nextSplit_Rangecc(src, "\n", &line)) {
             int y, m, D, H, M, S;
             sscanf(line.start, "%04d-%02d-%02dT%02d:%02d:%02d ", &y, &m, &D, &H, &M, &S);
             if (!y) break;

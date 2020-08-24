@@ -719,7 +719,7 @@ static void draw_SidebarWidget_(const iSidebarWidget *d) {
                     else {
                         iUrl parts;
                         init_Url(&parts, &item->url);
-                        const iBool isGemini = equalCase_Rangecc(&parts.protocol, "gemini");
+                        const iBool isGemini = equalCase_Rangecc(parts.protocol, "gemini");
                         draw_Text(
                             font,
                             add_I2(topLeft_Rect(itemRect),
