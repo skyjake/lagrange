@@ -197,6 +197,7 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
         pattern_ = new_RegExp("=>\\s*([^\\s]+)(\\s.*)?", caseInsensitive_RegExpOption);
     }
     iRegExpMatch m;
+    init_RegExpMatch(&m);
     if (matchRange_RegExp(pattern_, line, &m)) {
         iGmLink *link = new_GmLink();
         setRange_String(&link->url, capturedRange_RegExpMatch(&m, 1));

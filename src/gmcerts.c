@@ -266,6 +266,7 @@ static void load_GmCerts_(iGmCerts *d) {
         iRangecc       line    = iNullRange;
         while (nextSplit_Rangecc(&src, "\n", &line)) {
             iRegExpMatch m;
+            init_RegExpMatch(&m);
             if (matchRange_RegExp(pattern, line, &m)) {
                 const iRangecc domain = capturedRange_RegExpMatch(&m, 1);
                 const iRangecc until  = capturedRange_RegExpMatch(&m, 2);

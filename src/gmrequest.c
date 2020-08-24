@@ -199,6 +199,17 @@ static void checkServerCertificate_GmRequest_(iGmRequest *d) {
         if (!isExpired_TlsCertificate(cert)) {
             d->resp.certFlags |= timeVerified_GmCertFlag;
         }
+        /* TODO: Check for IP too (see below), because it may be specified in the SAN. */
+#if 0
+        iString *ip = toStringFlags_Address(address_TlsRequest(d->req), noPort_SocketStringFlag, 0);
+        if (verifyIp_TlsCertificate(cert, ip)) {
+            printf("[GmRequest] IP address %s matches!\n", cstr_String(ip));
+        }
+        else {
+            printf("[GmRequest] IP address %s not matched\n", cstr_String(ip));
+        }
+        delete_String(ip);
+#endif
         if (verifyDomain_TlsCertificate(cert, domain)) {
             d->resp.certFlags |= domainVerified_GmCertFlag;
         }
@@ -303,6 +314,7 @@ static const iBlock *aboutPageSource_(iRangecc path) {
 static const iBlock *replaceVariables_(const iBlock *block) {
     iRegExp *var = new_RegExp("\\$\\{([^}]+)\\}", 0);
     iRegExpMatch m;
+    init_RegExpMatch(&m);
     if (matchRange_RegExp(var, range_Block(block), &m)) {
         iBlock *replaced = collect_Block(copy_Block(block));
         do {

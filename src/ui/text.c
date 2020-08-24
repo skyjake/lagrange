@@ -434,6 +434,7 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
             /* ANSI escape. */
             chPos++;
             iRegExpMatch m;
+            init_RegExpMatch(&m);
             if (match_RegExp(text_.ansiEscape, chPos, text.end - chPos, &m)) {
                 if (mode == draw_RunMode) {
                     /* Change the color. */

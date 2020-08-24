@@ -656,6 +656,7 @@ static void parseUser_DocumentWidget_(iDocumentWidget *d) {
     iRegExp *userPats[2] = { new_RegExp("~([^/?]+)", 0),
                              new_RegExp("/users/([^/?]+)", caseInsensitive_RegExpOption) };
     iRegExpMatch m;
+    init_RegExpMatch(&m);
     iForIndices(i, userPats) {
         if (matchString_RegExp(userPats[i], d->mod.url, &m)) {
             setRange_String(d->titleUser, capturedRange_RegExpMatch(&m, 1));

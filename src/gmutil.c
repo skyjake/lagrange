@@ -34,6 +34,7 @@ void init_Url(iUrl *d, const iString *text) {
                                          caseInsensitive_RegExpOption);
     }
     iRegExpMatch m;
+    init_RegExpMatch(&m);
     if (matchString_RegExp(absoluteUrlPattern_, text, &m)) {
         d->protocol = capturedRange_RegExpMatch(&m, 1);
         d->host     = capturedRange_RegExpMatch(&m, 2);
