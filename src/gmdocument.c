@@ -208,19 +208,19 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
             if (!equalCase_Rangecc(parts.host, cstr_String(&d->localHost))) {
                 link->flags |= remote_GmLinkFlag;
             }
-            if (startsWithCase_Rangecc(parts.protocol, "gemini")) {
+            if (startsWithCase_Rangecc(parts.scheme, "gemini")) {
                 link->flags |= gemini_GmLinkFlag;
             }
-            else if (startsWithCase_Rangecc(parts.protocol, "http")) {
+            else if (startsWithCase_Rangecc(parts.scheme, "http")) {
                 link->flags |= http_GmLinkFlag;
             }
-            else if (equalCase_Rangecc(parts.protocol, "gopher")) {
+            else if (equalCase_Rangecc(parts.scheme, "gopher")) {
                 link->flags |= gopher_GmLinkFlag;
             }
-            else if (equalCase_Rangecc(parts.protocol, "file")) {
+            else if (equalCase_Rangecc(parts.scheme, "file")) {
                 link->flags |= file_GmLinkFlag;
             }
-            else if (equalCase_Rangecc(parts.protocol, "data")) {
+            else if (equalCase_Rangecc(parts.scheme, "data")) {
                 link->flags |= data_GmLinkFlag;
             }
             /* Check the file name extension, if present. */

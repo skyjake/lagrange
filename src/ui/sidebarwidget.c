@@ -771,14 +771,14 @@ static void draw_SidebarWidget_(const iSidebarWidget *d) {
                     else {
                         iUrl parts;
                         init_Url(&parts, &item->url);
-                        const iBool isGemini = equalCase_Rangecc(parts.protocol, "gemini");
+                        const iBool isGemini = equalCase_Rangecc(parts.scheme, "gemini");
                         draw_Text(
                             font,
                             add_I2(topLeft_Rect(itemRect),
                                    init_I2(3 * gap_UI, (d->itemHeight - lineHeight_Text(font)) / 2)),
                             fg,
                             "%s%s%s%s%s%s",
-                            isGemini ? "" : cstr_Rangecc(parts.protocol),
+                            isGemini ? "" : cstr_Rangecc(parts.scheme),
                             isGemini ? "" : "://",
                             escape_Color(isHover ? (isPressing ? uiTextPressed_ColorId
                                                                : uiTextFramelessHover_ColorId)

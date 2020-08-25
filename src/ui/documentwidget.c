@@ -788,7 +788,7 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                     showErrorPage_DocumentWidget_(d, invalidRedirect_GmStatusCode);
                 }
                 else {
-                    /* TODO: only accept redirects that use gemini protocol */
+                    /* TODO: only accept redirects that use gemini scheme */
                     postCommandf_App(
                         "open redirect:1 url:%s",
                         cstr_String(absoluteUrl_String(d->mod.url, meta_GmRequest(d->request))));
@@ -1079,8 +1079,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         d->scrollY = d->initNormScrollY * size_GmDocument(d->doc).y;
         d->state = ready_RequestState;
         /* The response may be cached. */ {
-            const iRangecc proto = urlProtocol_String(d->mod.url);
-            if (!equal_Rangecc(proto, "about")) {
+            if (!equal_Rangecc(urlScheme_String(d->mod.url), "about")) {
                 setCachedResponse_History(d->mod.history, response_GmRequest(d->request));
             }
         }
@@ -1604,9 +1603,9 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                     &str,
                     " \u2014%s%s%s\r%c%s",
                     showHost ? " " : "",
-                    showHost ? (!equalCase_Rangecc(parts.protocol, "gemini")
+                    showHost ? (!equalCase_Rangecc(parts.scheme, "gemini")
                                     ? format_CStr("%s://%s",
-                                                  cstr_Rangecc(parts.protocol),
+                                                  cstr_Rangecc(parts.scheme),
                                                   cstr_Rangecc(parts.host))
                                     : cstr_Rangecc(parts.host))
                              : "",

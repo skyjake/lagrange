@@ -401,9 +401,9 @@ void submit_GmRequest(iGmRequest *d) {
     clear_GmResponse(&d->resp);
     iUrl url;
     init_Url(&url, &d->url);
-    /* Check for special protocols. */
+    /* Check for special schemes. */
     /* TODO: If this were a library, these could be handled via callbacks. */
-    if (equalCase_Rangecc(url.protocol, "about")) {
+    if (equalCase_Rangecc(url.scheme, "about")) {
         const iBlock *src = aboutPageSource_(url.path);
         if (src) {
             d->resp.statusCode = success_GmStatusCode;
@@ -419,7 +419,7 @@ void submit_GmRequest(iGmRequest *d) {
         iNotifyAudience(d, finished, GmRequestFinished);
         return;
     }
-    else if (equalCase_Rangecc(url.protocol, "file")) {
+    else if (equalCase_Rangecc(url.scheme, "file")) {
         iString *path = collect_String(urlDecode_String(collect_String(newRange_String(url.path))));
         iFile *  f    = new_File(path);
         if (open_File(f, readOnly_FileMode)) {
@@ -457,9 +457,9 @@ void submit_GmRequest(iGmRequest *d) {
         iNotifyAudience(d, finished, GmRequestFinished);
         return;
     }
-    else if (equalCase_Rangecc(url.protocol, "data")) {
+    else if (equalCase_Rangecc(url.scheme, "data")) {
         d->resp.statusCode = success_GmStatusCode;
-        iString *src = collectNewCStr_String(url.protocol.start + 5);
+        iString *src = collectNewCStr_String(url.scheme.start + 5);
         iRangecc header = { constBegin_String(src), constBegin_String(src) };
         while (header.end < constEnd_String(src) && *header.end != ',') {
             header.end++;

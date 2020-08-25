@@ -36,8 +36,8 @@ void init_Url(iUrl *d, const iString *text) {
     iRegExpMatch m;
     init_RegExpMatch(&m);
     if (matchString_RegExp(absoluteUrlPattern_, text, &m)) {
-        d->protocol = capturedRange_RegExpMatch(&m, 1);
-        d->host     = capturedRange_RegExpMatch(&m, 2);
+        d->scheme = capturedRange_RegExpMatch(&m, 1);
+        d->host   = capturedRange_RegExpMatch(&m, 2);
         if (!isEmpty_Range(&d->host)) {
             d->host.start += 2; /* skip the double slash */
         }
@@ -55,13 +55,13 @@ void init_Url(iUrl *d, const iString *text) {
             relativeUrlPattern_ = new_RegExp("([a-z]+:)?([^?]*)(\\?.*)?", 0);
         }
         if (matchString_RegExp(relativeUrlPattern_, text, &m)) {
-            d->protocol = capturedRange_RegExpMatch(&m, 1);
-            d->path     = capturedRange_RegExpMatch(&m, 2);
-            d->query    = capturedRange_RegExpMatch(&m, 3);
+            d->scheme = capturedRange_RegExpMatch(&m, 1);
+            d->path   = capturedRange_RegExpMatch(&m, 2);
+            d->query  = capturedRange_RegExpMatch(&m, 3);
         }
     }
-    if (!isEmpty_Range(&d->protocol)) {
-        d->protocol.end--; /* omit the colon */
+    if (!isEmpty_Range(&d->scheme)) {
+        d->scheme.end--; /* omit the colon */
     }
 }
 
@@ -115,10 +115,10 @@ void cleanUrlPath_String(iString *d) {
     deinit_String(&clean);
 }
 
-iRangecc urlProtocol_String(const iString *d) {
+iRangecc urlScheme_String(const iString *d) {
     iUrl url;
     init_Url(&url, d);
-    return url.protocol;
+    return url.scheme;
 }
 
 iRangecc urlHost_String(const iString *d) {
@@ -132,20 +132,20 @@ const iString *absoluteUrl_String(const iString *d, const iString *urlMaybeRelat
     iUrl rel;
     init_Url(&orig, d);
     init_Url(&rel, urlMaybeRelative);
-    if (equalCase_Rangecc(rel.protocol, "data") || equalCase_Rangecc(rel.protocol, "about")) {
+    if (equalCase_Rangecc(rel.scheme, "data") || equalCase_Rangecc(rel.scheme, "about")) {
         /* Special case, the contents should be left unparsed. */
         return urlMaybeRelative;
     }
     const iBool isRelative = !isDef_(rel.host);
-    iRangecc protocol = range_CStr("gemini");
-    if (isDef_(rel.protocol)) {
-        protocol = rel.protocol;
+    iRangecc scheme = range_CStr("gemini");
+    if (isDef_(rel.scheme)) {
+        scheme = rel.scheme;
     }
-    else if (isRelative && isDef_(orig.protocol)) {
-        protocol = orig.protocol;
+    else if (isRelative && isDef_(orig.scheme)) {
+        scheme = orig.scheme;
     }
     iString *absolute = collectNew_String();
-    appendRange_String(absolute, protocol);
+    appendRange_String(absolute, scheme);
     appendCStr_String(absolute, "://"); {
         const iUrl *selHost = isDef_(rel.host) ? &rel : &orig;
         appendRange_String(absolute, selHost->host);
@@ -154,7 +154,7 @@ const iString *absoluteUrl_String(const iString *d, const iString *urlMaybeRelat
             appendRange_String(absolute, selHost->port);
         }
     }
-    if (isDef_(rel.protocol) || isDef_(rel.host) || startsWith_Rangecc(rel.path, "/")) {
+    if (isDef_(rel.scheme) || isDef_(rel.host) || startsWith_Rangecc(rel.path, "/")) {
         appendRange_String(absolute, rel.path); /* absolute path */
     }
     else {

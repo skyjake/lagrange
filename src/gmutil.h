@@ -83,7 +83,7 @@ iBool               isDefined_GmError   (enum iGmStatusCode code);
 const iGmError *    get_GmError         (enum iGmStatusCode code);
 
 struct Impl_Url {
-    iRangecc protocol;
+    iRangecc scheme;
     iRangecc host;
     iRangecc port;
     iRangecc path;
@@ -92,7 +92,7 @@ struct Impl_Url {
 
 void            init_Url                (iUrl *, const iString *text);
 
-iRangecc        urlProtocol_String      (const iString *);
+iRangecc        urlScheme_String        (const iString *);
 iRangecc        urlHost_String          (const iString *);
 const iString * absoluteUrl_String      (const iString *, const iString *urlMaybeRelative);
 iString *       makeFileUrl_String      (const iString *localFilePath);

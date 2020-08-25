@@ -612,8 +612,8 @@ iBool handleCommand_App(const char *cmd) {
         const iString *url = collect_String(newCStr_String(suffixPtr_Command(cmd, "url")));
         iUrl parts;
         init_Url(&parts, url);
-        if (equalCase_Rangecc(parts.protocol, "http") ||
-            equalCase_Rangecc(parts.protocol, "https")) {
+        if (equalCase_Rangecc(parts.scheme, "http") ||
+            equalCase_Rangecc(parts.scheme, "https")) {
             openInDefaultBrowser_App(url);
             return iTrue;
         }
