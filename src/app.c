@@ -419,7 +419,12 @@ void postRefresh_App(void) {
 }
 
 void postCommand_App(const char *command) {
+    iAssert(command);
     SDL_Event ev;
+    if (*command == '!') {
+        /* Global command; this is global context so just ignore. */
+        command++;
+    }
     ev.user.type     = SDL_USEREVENT;
     ev.user.code     = command_UserEventCode;
     ev.user.windowID = get_Window() ? SDL_GetWindowID(get_Window()->win) : 0;

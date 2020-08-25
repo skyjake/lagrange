@@ -140,13 +140,17 @@ static const iMenuItem viewMenuItems[] = {
 };
 
 static const iMenuItem helpMenuItems[] = {
-    { "Help", 0, 0, "open url:about:help" },
-    { "Release Notes", 0, 0, "open url:about:version" },
+    { "Help", 0, 0, "!open url:about:help" },
+    { "Release Notes", 0, 0, "!open url:about:version" },
 };
 #endif
 
 static const iMenuItem identityMenuItems[] = {
     { "New Identity...", SDLK_n, KMOD_PRIMARY | KMOD_SHIFT, "ident.new" },
+#if !defined (iHaveNativeMenus)
+    { "---", 0, 0, NULL },
+    { "Show Identities", '3', KMOD_PRIMARY, "sidebar.mode arg:2 show:1" },
+#endif
 };
 
 static const char *reloadCStr_ = "\U0001f503";
@@ -299,7 +303,11 @@ static void setupUserInterface_Window(iWindow *d) {
         setCommandHandler_Widget(navBar, handleNavBarCommands_);
         addChild_Widget(navBar, iClob(newIcon_LabelWidget("\U0001f850", 0, 0, "navigate.back")));
         addChild_Widget(navBar, iClob(newIcon_LabelWidget("\U0001f852", 0, 0, "navigate.forward")));
-        addChild_Widget(navBar, iClob(newIcon_LabelWidget("\U0001f3e0", 0, 0, "navigate.home")));
+        iLabelWidget *idMenu =
+            makeMenuButton_LabelWidget("\U0001f464", identityMenuItems, iElemCount(identityMenuItems));
+        setAlignVisually_LabelWidget(idMenu, iTrue);
+        addChild_Widget(navBar, iClob(idMenu));
+        //addChild_Widget(navBar, iClob(newIcon_LabelWidget("\U0001f464", 0, 0, "cert.client")));
         iLabelWidget *lock =
             addChildFlags_Widget(navBar,
                                  iClob(newIcon_LabelWidget("\U0001f513", 0, 0, "server.showcert")),
@@ -314,11 +322,7 @@ static void setupUserInterface_Window(iWindow *d) {
         setId_Widget(
             addChild_Widget(navBar, iClob(newIcon_LabelWidget(reloadCStr_, 0, 0, "navigate.reload"))),
             "reload");
-        iLabelWidget *idMenu =
-            makeMenuButton_LabelWidget("\U0001f464", identityMenuItems, iElemCount(identityMenuItems));
-        setAlignVisually_LabelWidget(idMenu, iTrue);
-        addChild_Widget(navBar, iClob(idMenu));
-        //addChild_Widget(navBar, iClob(newIcon_LabelWidget("\U0001f464", 0, 0, "cert.client")));
+        addChild_Widget(navBar, iClob(newIcon_LabelWidget("\U0001f3e0", 0, 0, "navigate.home")));
 #if !defined (iHaveNativeMenus)
         iLabelWidget *navMenu =
             makeMenuButton_LabelWidget("\U0001d362", navMenuItems, iElemCount(navMenuItems));
@@ -523,6 +527,7 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
             }
             /* Map mouse pointer coordinate to our coordinate system. */
             if (event.type == SDL_MOUSEMOTION) {
+                setCursor_Window(d, SDL_SYSTEM_CURSOR_ARROW); /* default cursor */
                 const iInt2 pos = coord_Window(d, event.motion.x, event.motion.y);
                 event.motion.x = pos.x;
                 event.motion.y = pos.y;
