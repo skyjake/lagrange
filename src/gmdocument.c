@@ -898,7 +898,6 @@ static void normalize_GmDocument(iGmDocument *d) {
         appendCStr_String(normalized, "\n");
     }
     set_String(&d->source, collect_String(normalized));
-    printf("{{{\n%s\n}}}\n", cstr_String(&d->source)); fflush(stdout);
 }
 
 void setUrl_GmDocument(iGmDocument *d, const iString *url) {
