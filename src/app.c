@@ -593,6 +593,7 @@ static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
             /* The input seems fine. */
             newIdentity_GmCerts(d->certs, isTemp ? temporary_GmIdentityFlag : 0,
                                 until, commonName, userId, organization, country);
+            postCommandf_App("sidebar.mode arg:%d show:1", identities_SidebarMode);
             postCommand_App("idents.changed");
         }
         destroy_Widget(dlg);

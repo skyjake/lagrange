@@ -340,11 +340,12 @@ static int scrollMax_DocumentWidget_(const iDocumentWidget *d) {
 }
 
 static void updateHover_DocumentWidget_(iDocumentWidget *d, iInt2 mouse) {
-    const iRect docBounds      = documentBounds_DocumentWidget_(d);
-    const iGmRun *oldHoverLink = d->hoverLink;
-    d->hoverLink               = NULL;
-    const iInt2 hoverPos = addY_I2(sub_I2(mouse, topLeft_Rect(docBounds)), d->scrollY);
-    if (!d->noHoverWhileScrolling &&
+    const iWidget *w            = constAs_Widget(d);
+    const iRect    docBounds    = documentBounds_DocumentWidget_(d);
+    const iGmRun * oldHoverLink = d->hoverLink;
+    d->hoverLink                = NULL;
+    const iInt2 hoverPos        = addY_I2(sub_I2(mouse, topLeft_Rect(docBounds)), d->scrollY);
+    if (isHover_Widget(w) && !d->noHoverWhileScrolling &&
         (d->state == ready_RequestState || d->state == receivedPartialResponse_RequestState)) {
         iConstForEach(PtrArray, i, &d->visibleLinks) {
             const iGmRun *run = i.ptr;
@@ -357,11 +358,7 @@ static void updateHover_DocumentWidget_(iDocumentWidget *d, iInt2 mouse) {
     if (d->hoverLink != oldHoverLink) {
         refresh_Widget(as_Widget(d));
     }
-    if (!contains_Widget(constAs_Widget(d), mouse) ||
-        contains_Widget(constAs_Widget(d->scroll), mouse)) {
-//        setCursor_Window(get_Window(), SDL_SYSTEM_CURSOR_ARROW);
-    }
-    else {
+    if (isHover_Widget(w) && !contains_Widget(constAs_Widget(d->scroll), mouse)) {
         setCursor_Window(get_Window(),
                          d->hoverLink ? SDL_SYSTEM_CURSOR_HAND : SDL_SYSTEM_CURSOR_IBEAM);
     }

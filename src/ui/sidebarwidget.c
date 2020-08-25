@@ -242,6 +242,19 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
             }
             /* menu: set icon, edit notes, view urls, reveal files, delete, activate on this page,
              * deactivate on this page, deactivate everywhere  */
+            const iMenuItem menuItems[] = {
+                { "Use on This Page", 0, 0, "ident.use arg:1" },
+                { "Stop Using This Page", 0, 0, "ident.use arg:0" },
+                { "Stop Using Everywhere", 0, 0, "ident.use arg:0 clear:1" },
+                { "View Use URLs", 0, 0, "ident.showuse" },
+                { "---", 0, 0, NULL },
+                { "Edit Notes...", 0, 0, "ident.edit" },
+                { "Pick Icon...", 0, 0, "ident.pickicon" },
+                { "---", 0, 0, NULL },
+                { "Reveal Files", 0, 0, "ident.reveal" },
+                { uiTextCaution_ColorEscape "Delete Identity...", 0, 0, "ident.delete confirm:1" },
+            };
+            d->menu = makeMenu_Widget(as_Widget(d), menuItems, iElemCount(menuItems));
             break;
         }
         default:

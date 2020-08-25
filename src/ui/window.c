@@ -319,10 +319,12 @@ static void setupUserInterface_Window(iWindow *d) {
         setId_Widget(as_Widget(url), "url");
         setTextCStr_InputWidget(url, "gemini://");
         addChildFlags_Widget(navBar, iClob(url), expand_WidgetFlag);
-        setId_Widget(
-            addChild_Widget(navBar, iClob(newIcon_LabelWidget(reloadCStr_, 0, 0, "navigate.reload"))),
-            "reload");
-        addChild_Widget(navBar, iClob(newIcon_LabelWidget("\U0001f3e0", 0, 0, "navigate.home")));
+        setId_Widget(addChild_Widget(
+                         navBar, iClob(newIcon_LabelWidget(reloadCStr_, 0, 0, "navigate.reload"))),
+                     "reload");
+        addChild_Widget(navBar,
+                        iClob(newIcon_LabelWidget(
+                            "\U0001f3e0", SDLK_h, KMOD_PRIMARY | KMOD_SHIFT, "navigate.home")));
 #if !defined (iHaveNativeMenus)
         iLabelWidget *navMenu =
             makeMenuButton_LabelWidget("\U0001d362", navMenuItems, iElemCount(navMenuItems));
