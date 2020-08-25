@@ -187,7 +187,7 @@ void setThemePalette_Color(enum iColorTheme theme) {
             copy_(uiInputBackgroundFocused_ColorId, white_ColorId);
             copy_(uiInputText_ColorId, gray25_ColorId);
             copy_(uiInputTextFocused_ColorId, black_ColorId);
-            copy_(uiInputFrame_ColorId, gray25_ColorId);
+            copy_(uiInputFrame_ColorId, gray50_ColorId);
             copy_(uiInputFrameHover_ColorId, brown_ColorId);
             copy_(uiInputFrameFocused_ColorId, teal_ColorId);
             copy_(uiInputCursor_ColorId, teal_ColorId);

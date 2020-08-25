@@ -162,6 +162,8 @@ iDefineTypeConstruction(VisBuffer)
 
 /*----------------------------------------------------------------------------------------------*/
 
+static const int smoothSpeed_DocumentWidget_ = 150; /* unit: gap_Text per second */
+
 enum iRequestState {
     blank_RequestState,
     fetching_RequestState,
@@ -193,6 +195,10 @@ struct Impl_DocumentWidget {
     iClick         click;
     float          initNormScrollY;
     int            scrollY;
+    int            smoothScroll;
+    int            smoothSpeed;
+    int            lastSmoothOffset;
+    iBool          keepScrolling;
     iScrollWidget *scroll;
     iWidget *      menu;
     iVisBuffer *   visBuffer;
@@ -217,6 +223,10 @@ void init_DocumentWidget(iDocumentWidget *d) {
     d->doc              = new_GmDocument();
     d->initNormScrollY  = 0;
     d->scrollY          = 0;
+    d->smoothScroll     = 0;
+    d->smoothSpeed      = 0;
+    d->lastSmoothOffset = 0;
+    d->keepScrolling    = iFalse;
     d->selecting        = iFalse;
     d->selectMark       = iNullRange;
     d->foundMark        = iNullRange;
@@ -254,6 +264,13 @@ void deinit_DocumentWidget(iDocumentWidget *d) {
     deinit_Model(&d->mod);
 }
 
+static void resetSmoothScroll_DocumentWidget_(iDocumentWidget *d) {
+    d->smoothSpeed      = 0;
+    d->smoothScroll     = 0;
+    d->lastSmoothOffset = 0;
+    d->keepScrolling    = iFalse;
+}
+
 static int documentWidth_DocumentWidget_(const iDocumentWidget *d) {
     const iWidget *w = constAs_Widget(d);
     const iRect bounds = bounds_Widget(w);
@@ -287,9 +304,11 @@ iLocalDef int documentToWindowY_DocumentWidget_(const iDocumentWidget *d, int do
     return docY - d->scrollY + documentBounds_DocumentWidget_(d).pos.y;
 }
 
+#if 0
 iLocalDef int windowToDocumentY_DocumentWidget_(const iDocumentWidget *d, int localY) {
     return localY + d->scrollY - documentBounds_DocumentWidget_(d).pos.y;
 }
+#endif
 
 static iInt2 documentPos_DocumentWidget_(const iDocumentWidget *d, iInt2 pos) {
     return addY_I2(sub_I2(pos, topLeft_Rect(documentBounds_DocumentWidget_(d))), d->scrollY);
@@ -500,6 +519,7 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
             break;
     }
     setSource_DocumentWidget_(d, src);
+    resetSmoothScroll_DocumentWidget_(d);
     d->scrollY = 0;
     d->state = ready_RequestState;
 }
@@ -743,6 +763,37 @@ static void scroll_DocumentWidget_(iDocumentWidget *d, int offset) {
     refresh_Widget(as_Widget(d));
 }
 
+static void doScroll_DocumentWidget_(iAny *ptr) {
+    iDocumentWidget *d = ptr;
+    if (!d->smoothScroll) return; /* was cancelled */
+    const double elapsed = (double) elapsedSinceLastTicker_App() / 1000.0;
+    int delta = d->smoothSpeed * elapsed * iSign(d->smoothScroll);
+    if (iAbs(d->smoothScroll) <= iAbs(delta)) {
+        if (d->keepScrolling) {
+            d->smoothScroll += d->lastSmoothOffset;
+        }
+        else {
+            delta = d->smoothScroll;
+        }
+    }
+    scroll_DocumentWidget_(d, delta);
+    d->smoothScroll -= delta;
+    if (d->smoothScroll != 0) {
+        addTicker_App(doScroll_DocumentWidget_, d);
+    }
+}
+
+static void smoothScroll_DocumentWidget_(iDocumentWidget *d, int offset, int speed) {
+    if (speed == 0) {
+        scroll_DocumentWidget_(d, offset);
+        return;
+    }
+    d->smoothSpeed = speed;
+    d->smoothScroll += offset;
+    d->lastSmoothOffset = offset;
+    addTicker_App(doScroll_DocumentWidget_, d);
+}
+
 static void scrollTo_DocumentWidget_(iDocumentWidget *d, int documentY, iBool centered) {
     d->scrollY = documentY - (centered ? documentBounds_DocumentWidget_(d).size.y / 2 :
                                        lineHeight_Text(paragraph_FontId));
@@ -780,6 +831,7 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
             }
             case categorySuccess_GmStatusCode:
                 d->scrollY = 0;
+                resetSmoothScroll_DocumentWidget_(d);
                 reset_GmDocument(d->doc); /* new content incoming */
                 updateDocument_DocumentWidget_(d, response_GmRequest(d->request));
                 break;
@@ -1076,6 +1128,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     else if (equalWidget_Command(cmd, w, "document.request.finished") &&
              pointerLabel_Command(cmd, "request") == d->request) {
         checkResponse_DocumentWidget_(d);
+        resetSmoothScroll_DocumentWidget_(d);
         d->scrollY = d->initNormScrollY * size_GmDocument(d->doc).y;
         d->state = ready_RequestState;
         /* The response may be cached. */ {
@@ -1123,12 +1176,24 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     else if (equalWidget_Command(cmd, w, "scroll.moved")) {
         d->scrollY = arg_Command(cmd);
+        resetSmoothScroll_DocumentWidget_(d);
         updateVisible_DocumentWidget_(d);
         return iTrue;
     }
     else if (equalWidget_Command(cmd, w, "scroll.page")) {
-        scroll_DocumentWidget_(d,
-                               arg_Command(cmd) * height_Rect(documentBounds_DocumentWidget_(d)));
+        if (argLabel_Command(cmd, "repeat")) {
+            if (!d->keepScrolling) {
+                d->keepScrolling = iTrue;
+            }
+            else {
+                return iTrue;
+            }
+        }
+        smoothScroll_DocumentWidget_(d,
+                                     arg_Command(cmd) *
+                                         (0.5f * height_Rect(documentBounds_DocumentWidget_(d)) -
+                                          0 * lineHeight_Text(paragraph_FontId)),
+                                     15 * smoothSpeed_DocumentWidget_);
         return iTrue;
     }
     else if (equal_Command(cmd, "document.goto") && document_App() == d) {
@@ -1211,6 +1276,13 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                     refresh_Widget(w);
                 }
                 break;
+            case SDLK_PAGEUP:
+            case SDLK_PAGEDOWN:
+            case SDLK_SPACE:
+            case SDLK_UP:
+            case SDLK_DOWN:
+                d->keepScrolling = iFalse;
+                break;
         }
     }
     if (ev->type == SDL_KEYDOWN) {
@@ -1241,12 +1313,14 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 break;
             case SDLK_HOME:
                 d->scrollY = 0;
+                resetSmoothScroll_DocumentWidget_(d);
                 scroll_DocumentWidget_(d, 0);
                 updateVisible_DocumentWidget_(d);
                 refresh_Widget(w);
                 return iTrue;
             case SDLK_END:
                 d->scrollY = scrollMax_DocumentWidget_(d);
+                resetSmoothScroll_DocumentWidget_(d);
                 scroll_DocumentWidget_(d, 0);
                 updateVisible_DocumentWidget_(d);
                 refresh_Widget(w);
@@ -1254,8 +1328,16 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             case SDLK_UP:
             case SDLK_DOWN:
                 if (mods == 0) {
-                    scroll_DocumentWidget_(d, 2 * lineHeight_Text(default_FontId) *
-                                                  (key == SDLK_UP ? -1 : 1));
+                    if (ev->key.repeat) {
+                        if (!d->keepScrolling) {
+                            d->keepScrolling = iTrue;
+                        }
+                        else return iTrue;
+                    }
+                    smoothScroll_DocumentWidget_(d,
+                                                 3 * lineHeight_Text(paragraph_FontId) *
+                                                     (key == SDLK_UP ? -1 : 1),
+                                                 gap_Text * smoothSpeed_DocumentWidget_);
                     return iTrue;
                 }
                 break;
@@ -1264,8 +1346,9 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             case SDLK_SPACE:
                 postCommand_Widget(
                     w,
-                    "scroll.page arg:%d",
-                    (key == SDLK_SPACE && mods & KMOD_SHIFT) || key == SDLK_PAGEUP ? -1 : +1);
+                    "scroll.page arg:%d repeat:%d",
+                    (key == SDLK_SPACE && mods & KMOD_SHIFT) || key == SDLK_PAGEUP ? -1 : +1,
+                    ev->key.repeat != 0);
                 return iTrue;
 #if 1
             case SDLK_KP_1: {

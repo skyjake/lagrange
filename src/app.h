@@ -48,11 +48,12 @@ enum iUserEventCode {
 const iString *execPath_App     (void);
 const iString *dataDir_App      (void);
 
-int         run_App             (int argc, char **argv);
-void        processEvents_App   (enum iAppEventMode mode);
-iBool       handleCommand_App   (const char *cmd);
-void        refresh_App         (void);
-iBool       isRefreshPending_App(void);
+int         run_App                     (int argc, char **argv);
+void        processEvents_App           (enum iAppEventMode mode);
+iBool       handleCommand_App           (const char *cmd);
+void        refresh_App                 (void);
+iBool       isRefreshPending_App        (void);
+uint32_t    elapsedSinceLastTicker_App  (void); /* milliseconds */
 
 int                 zoom_App            (void);
 enum iColorTheme    colorTheme_App      (void);

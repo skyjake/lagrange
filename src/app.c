@@ -47,6 +47,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/time.h>
 #include <SDL_events.h>
 #include <SDL_render.h>
+#include <SDL_timer.h>
 #include <SDL_video.h>
 
 #include <stdio.h>
@@ -82,6 +83,8 @@ struct Impl_App {
     iBookmarks * bookmarks;
     iWindow *    window;
     iSortedArray tickers;
+    uint32_t     lastTickerTime;
+    uint32_t     elapsedSinceLastTicker;
     iBool        running;
     iBool        pendingRefresh;
     int          tabEnum;
@@ -255,6 +258,8 @@ static void saveState_App_(const iApp *d) {
 static void init_App_(iApp *d, int argc, char **argv) {
     init_CommandLine(&d->args, argc, argv);
     init_SortedArray(&d->tickers, sizeof(iTicker), cmp_Ticker_);
+    d->lastTickerTime    = SDL_GetTicks();
+    d->elapsedSinceLastTicker = 0;
     d->commandEcho       = checkArgument_CommandLine(&d->args, "echo") != NULL;
     d->initialWindowRect = init_Rect(-1, -1, 800, 500);
     d->theme             = dark_ColorTheme;
@@ -350,6 +355,9 @@ backToMainLoop:;
 }
 
 static void runTickers_App_(iApp *d) {
+    const uint32_t now = SDL_GetTicks();
+    d->elapsedSinceLastTicker = (d->lastTickerTime ? now - d->lastTickerTime : 0);
+    d->lastTickerTime = now;
     /* Tickers may add themselves again, so we'll run off a copy. */
     iSortedArray *pending = copy_SortedArray(&d->tickers);
     clear_SortedArray(&d->tickers);
@@ -389,6 +397,10 @@ iBool isRefreshPending_App(void) {
     return app_.pendingRefresh;
 }
 
+uint32_t elapsedSinceLastTicker_App(void) {
+    return app_.elapsedSinceLastTicker;
+}
+
 int zoom_App(void) {
     return app_.zoomPercent;
 }
@@ -407,6 +419,9 @@ int run_App(int argc, char **argv) {
 void postRefresh_App(void) {
     iApp *d = &app_;
     if (!d->pendingRefresh) {
+        if (!isEmpty_SortedArray(&d->tickers)) {
+            d->lastTickerTime = 0; /* tickers had been paused */
+        }
         d->pendingRefresh = iTrue;
         SDL_Event ev;
         ev.user.type     = SDL_USEREVENT;
@@ -454,6 +469,7 @@ iAny *findWidget_App(const char *id) {
 void addTicker_App(void (*ticker)(iAny *), iAny *context) {
     iApp *d = &app_;
     insert_SortedArray(&d->tickers, &(iTicker){ context, ticker });
+    postRefresh_App();
 }
 
 iGmCerts *certs_App(void) {
