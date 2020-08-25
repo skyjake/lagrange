@@ -323,20 +323,21 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         return;
     }
     const iRangecc   content       = range_String(&d->source);
+    iRangecc         contentLine   = iNullRange;
     iInt2            pos           = zero_I2();
-    iRangecc         line          = iNullRange;
-    iRangecc         preAltText    = iNullRange;
-    enum iGmLineType prevType; //     = text_GmLineType;
-    iBool            isPreformat   = iFalse;
     iBool            isFirstText   = iTrue;
+    iBool            isPreformat   = iFalse;
+    iRangecc         preAltText    = iNullRange;
+    int              preFont       = preformatted_FontId;
     iBool            enableIndents = iFalse;
     iBool            addSiteBanner = iTrue;
-    int              preFont       = preformatted_FontId;
+    enum iGmLineType prevType;
     if (d->format == plainText_GmDocumentFormat) {
         isPreformat = iTrue;
         isFirstText = iFalse;
     }
-    while (nextSplit_Rangecc(content, "\n", &line)) {
+    while (nextSplit_Rangecc(content, "\n", &contentLine)) {
+        iRangecc line = contentLine; /* `line` will be trimmed later; would confuse nextSplit */
         iGmRun run;
         run.flags = 0;
         run.color = white_ColorId;
@@ -897,6 +898,7 @@ static void normalize_GmDocument(iGmDocument *d) {
         appendCStr_String(normalized, "\n");
     }
     set_String(&d->source, collect_String(normalized));
+    printf("{{{\n%s\n}}}\n", cstr_String(&d->source)); fflush(stdout);
 }
 
 void setUrl_GmDocument(iGmDocument *d, const iString *url) {
