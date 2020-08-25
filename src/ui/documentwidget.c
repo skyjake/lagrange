@@ -1267,14 +1267,15 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                     "scroll.page arg:%d",
                     (key == SDLK_SPACE && mods & KMOD_SHIFT) || key == SDLK_PAGEUP ? -1 : +1);
                 return iTrue;
-#if 0
-            case SDLK_9: {
+#if 1
+            case SDLK_KP_1: {
                 iBlock *seed = new_Block(64);
                 for (size_t i = 0; i < 64; ++i) {
                     setByte_Block(seed, i, iRandom(0, 255));
                 }
                 setThemeSeed_GmDocument(d->doc, seed);
                 delete_Block(seed);
+                invalidate_DocumentWidget_(d);
                 refresh_Widget(w);
                 break;
             }

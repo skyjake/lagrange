@@ -762,31 +762,12 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
                 else if (i == tmHeading3_ColorId) {
                     color.lum *= 0.75f;
                 }
-#if 0
-                else if (isLink_ColorId(i)) {
-                    /* Darken links generally to improve visibility against a
-                       light background. */
-                    color.lum *= 0.5f;
-                    color.sat = 1.0f;
-                }
-#endif
                 else if (i == tmBannerIcon_ColorId || i == tmBannerTitle_ColorId) {
-                    if (isBannerLighter) {
-                        color.lum *= 0.75f;
-                    }
-                    else {
-                        color.lum = 0.98f;
-                    }
+                    color.sat = 1.0f;
+                    color.lum = 0.3f;
                 }
                 else if (i == tmBannerBackground_ColorId) {
-                    if (isBannerLighter) {
-                        //color.lum = iMin(0.9, color.lum);
-                        color = hsl_Color(get_Color(tmBackground_ColorId));
-                    }
-                    else {
-                        color.sat *= 0.8f;
-                        color.lum = 0.6f;
-                    }
+                    color = hsl_Color(get_Color(tmBackground_ColorId));
                 }
                 else if (isText_ColorId(i)) {
                     color.sat = 0.9f;
