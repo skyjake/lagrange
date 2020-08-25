@@ -420,7 +420,7 @@ void postRefresh_App(void) {
     iApp *d = &app_;
     if (!d->pendingRefresh) {
         if (!isEmpty_SortedArray(&d->tickers)) {
-            d->lastTickerTime = 0; /* tickers had been paused */
+            d->lastTickerTime = SDL_GetTicks(); /* tickers had been paused */
         }
         d->pendingRefresh = iTrue;
         SDL_Event ev;

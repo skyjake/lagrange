@@ -764,7 +764,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
                 }
                 else if (i == tmBannerIcon_ColorId || i == tmBannerTitle_ColorId) {
                     color.sat = 1.0f;
-                    color.lum = 0.3f;
+                    color.lum = 0.35f;
                 }
                 else if (i == tmBannerBackground_ColorId) {
                     color = hsl_Color(get_Color(tmBackground_ColorId));

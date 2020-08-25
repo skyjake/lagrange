@@ -195,11 +195,11 @@ struct Impl_DocumentWidget {
     iClick         click;
     float          initNormScrollY;
     int            scrollY;
+    iScrollWidget *scroll;
     int            smoothScroll;
     int            smoothSpeed;
-    int            lastSmoothOffset;
-    iBool          keepScrolling;
-    iScrollWidget *scroll;
+    int            smoothLastOffset;
+    iBool          smoothContinue;
     iWidget *      menu;
     iVisBuffer *   visBuffer;
 };
@@ -225,8 +225,8 @@ void init_DocumentWidget(iDocumentWidget *d) {
     d->scrollY          = 0;
     d->smoothScroll     = 0;
     d->smoothSpeed      = 0;
-    d->lastSmoothOffset = 0;
-    d->keepScrolling    = iFalse;
+    d->smoothLastOffset = 0;
+    d->smoothContinue   = iFalse;
     d->selecting        = iFalse;
     d->selectMark       = iNullRange;
     d->foundMark        = iNullRange;
@@ -267,8 +267,8 @@ void deinit_DocumentWidget(iDocumentWidget *d) {
 static void resetSmoothScroll_DocumentWidget_(iDocumentWidget *d) {
     d->smoothSpeed      = 0;
     d->smoothScroll     = 0;
-    d->lastSmoothOffset = 0;
-    d->keepScrolling    = iFalse;
+    d->smoothLastOffset = 0;
+    d->smoothContinue   = iFalse;
 }
 
 static int documentWidth_DocumentWidget_(const iDocumentWidget *d) {
@@ -769,8 +769,8 @@ static void doScroll_DocumentWidget_(iAny *ptr) {
     const double elapsed = (double) elapsedSinceLastTicker_App() / 1000.0;
     int delta = d->smoothSpeed * elapsed * iSign(d->smoothScroll);
     if (iAbs(d->smoothScroll) <= iAbs(delta)) {
-        if (d->keepScrolling) {
-            d->smoothScroll += d->lastSmoothOffset;
+        if (d->smoothContinue) {
+            d->smoothScroll += d->smoothLastOffset;
         }
         else {
             delta = d->smoothScroll;
@@ -790,7 +790,7 @@ static void smoothScroll_DocumentWidget_(iDocumentWidget *d, int offset, int spe
     }
     d->smoothSpeed = speed;
     d->smoothScroll += offset;
-    d->lastSmoothOffset = offset;
+    d->smoothLastOffset = offset;
     addTicker_App(doScroll_DocumentWidget_, d);
 }
 
@@ -1182,8 +1182,8 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     else if (equalWidget_Command(cmd, w, "scroll.page")) {
         if (argLabel_Command(cmd, "repeat")) {
-            if (!d->keepScrolling) {
-                d->keepScrolling = iTrue;
+            if (!d->smoothContinue) {
+                d->smoothContinue = iTrue;
             }
             else {
                 return iTrue;
@@ -1193,7 +1193,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                                      arg_Command(cmd) *
                                          (0.5f * height_Rect(documentBounds_DocumentWidget_(d)) -
                                           0 * lineHeight_Text(paragraph_FontId)),
-                                     15 * smoothSpeed_DocumentWidget_);
+                                     25 * smoothSpeed_DocumentWidget_);
         return iTrue;
     }
     else if (equal_Command(cmd, "document.goto") && document_App() == d) {
@@ -1281,7 +1281,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             case SDLK_SPACE:
             case SDLK_UP:
             case SDLK_DOWN:
-                d->keepScrolling = iFalse;
+                d->smoothContinue = iFalse;
                 break;
         }
     }
@@ -1329,8 +1329,8 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             case SDLK_DOWN:
                 if (mods == 0) {
                     if (ev->key.repeat) {
-                        if (!d->keepScrolling) {
-                            d->keepScrolling = iTrue;
+                        if (!d->smoothContinue) {
+                            d->smoothContinue = iTrue;
                         }
                         else return iTrue;
                     }
