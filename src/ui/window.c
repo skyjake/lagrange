@@ -420,6 +420,7 @@ static void drawBlank_Window_(iWindow *d) {
 void init_Window(iWindow *d, iRect rect) {
     theWindow_ = d;
     iZap(d->cursors);
+    d->pendingCursor = NULL;
     d->isDrawFrozen = iTrue;
     uint32_t flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI;
 #if defined (iPlatformApple)
@@ -515,6 +516,13 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
     return iFalse;
 }
 
+static void applyCursor_Window_(iWindow *d) {
+    if (d->pendingCursor) {
+        SDL_SetCursor(d->pendingCursor);
+        d->pendingCursor = NULL;
+    }
+}
+
 iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
     switch (ev->type) {
         case SDL_WINDOWEVENT: {
@@ -551,6 +559,9 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
             iBool wasUsed = dispatchEvent_Widget(widget, &event);
             if (oldHover != hover_Widget()) {
                 postRefresh_App();
+            }
+            if (event.type == SDL_MOUSEMOTION) {
+                applyCursor_Window_(d);
             }
             return wasUsed;
         }
@@ -610,11 +621,11 @@ void setFreezeDraw_Window(iWindow *d, iBool freezeDraw) {
     d->isDrawFrozen = freezeDraw;
 }
 
-void setCursor_Window(iWindow *d, int cursor) {
+void setCursor_Window(iWindow *d, int cursor) {    
     if (!d->cursors[cursor]) {
         d->cursors[cursor] = SDL_CreateSystemCursor(cursor);
     }
-    SDL_SetCursor(d->cursors[cursor]);
+    d->pendingCursor = d->cursors[cursor];
 }
 
 iInt2 rootSize_Window(const iWindow *d) {

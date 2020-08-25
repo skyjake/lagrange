@@ -42,6 +42,7 @@ struct Impl_Window {
     uint32_t      frameTime;
     double        presentTime;
     SDL_Cursor *  cursors[SDL_NUM_SYSTEM_CURSORS];
+    SDL_Cursor *  pendingCursor;
 };
 
 iBool       processEvent_Window     (iWindow *, const SDL_Event *);

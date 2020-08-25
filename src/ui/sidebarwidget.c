@@ -627,15 +627,13 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         else if (contains_Widget(constAs_Widget(d->scroll), mouse)) {
             setCursor_Window(get_Window(), SDL_SYSTEM_CURSOR_ARROW);
         }
-        else {
-            if (contains_Widget(w, mouse)) {
-                hover = itemIndex_SidebarWidget_(d, mouse);
-                if (hover != iInvalidPos && d->mode != identities_SidebarMode) {
-                    setCursor_Window(get_Window(), SDL_SYSTEM_CURSOR_HAND);
-                }
-                else {
-                    setCursor_Window(get_Window(), SDL_SYSTEM_CURSOR_ARROW);
-                }
+        else if (contains_Widget(w, mouse)) {
+            hover = itemIndex_SidebarWidget_(d, mouse);
+            if (hover != iInvalidPos && d->mode != identities_SidebarMode) {
+                setCursor_Window(get_Window(), SDL_SYSTEM_CURSOR_HAND);
+            }
+            else {
+                setCursor_Window(get_Window(), SDL_SYSTEM_CURSOR_ARROW);
             }
         }
         if (hover != d->hoverItem) {
