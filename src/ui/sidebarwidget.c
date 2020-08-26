@@ -223,6 +223,7 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 /* icon, common name, used URLs, expiration, isTemp, free-form notes */
                 iSidebarItem item;
                 init_SidebarItem(&item);
+                item.id = index_PtrArrayConstIterator(&i);
                 item.icon = ident->icon;
                 set_String(&item.label, collect_String(subject_TlsCertificate(ident->cert)));
                 iDate until;
@@ -240,8 +241,6 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                         cstr_String(&ident->notes)));
                 pushBack_Array(&d->items, &item);
             }
-            /* menu: set icon, edit notes, view urls, reveal files, delete, activate on this page,
-             * deactivate on this page, deactivate everywhere  */
             const iMenuItem menuItems[] = {
                 { "Use on This Page", 0, 0, "ident.use arg:1" },
                 { "Stop Using This Page", 0, 0, "ident.use arg:0" },
@@ -428,6 +427,13 @@ static void checkModeButtonLayout_SidebarWidget_(iSidebarWidget *d) {
     }
 }
 
+static const iSidebarItem *constHoverItem_SidebarWidget_(const iSidebarWidget *d) {
+    if (d->hoverItem < size_Array(&d->items)) {
+        return constAt_Array(&d->items, d->hoverItem);
+    }
+    return NULL;
+}
+
 static iSidebarItem *hoverItem_SidebarWidget_(iSidebarWidget *d) {
     if (d->hoverItem < size_Array(&d->items)) {
         return at_Array(&d->items, d->hoverItem);
@@ -472,6 +478,20 @@ iBool handleBookmarkEditorCommands_SidebarWidget_(iWidget *editor, const char *c
     return iFalse;
 }
 
+static const iGmIdentity *constHoverIdentity_SidebarWidget_(const iSidebarWidget *d) {
+    if (d->mode == identities_SidebarMode) {
+        const iSidebarItem *hoverItem = constHoverItem_SidebarWidget_(d);
+        if (hoverItem) {
+            return constAt_PtrArray(identities_GmCerts(certs_App()), hoverItem->id);
+        }
+    }
+    return NULL;
+}
+
+static iGmIdentity *hoverIdentity_SidebarWidget_(const iSidebarWidget *d) {
+    return iConstCast(iGmIdentity *, constHoverIdentity_SidebarWidget_(d));
+}
+
 static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
     /* Handle commands. */
@@ -514,12 +534,15 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             setMode_SidebarWidget(d, arg_Command(cmd));
             updateItems_SidebarWidget_(d);
             if (argLabel_Command(cmd, "show") && !isVisible_Widget(w)) {
-                postCommand_App("sidebar.toggle");
+                postCommand_App("sidebar.toggle arg:1");
             }
             scroll_SidebarWidget_(d, 0);
             return iTrue;
         }
         else if (equal_Command(cmd, "sidebar.toggle")) {
+            if (arg_Command(cmd) && isVisible_Widget(w)) {
+                return iTrue;
+            }
             setFlags_Widget(w, hidden_WidgetFlag, isVisible_Widget(w));
             if (isVisible_Widget(w)) {
                 w->rect.size.x = d->width;
@@ -577,6 +600,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             updateItems_SidebarWidget_(d);
         }
         else if (isCommand_Widget(w, ev, "ident.use")) {
+
             return iTrue;
         }
         else if (isCommand_Widget(w, ev, "ident.showuse")) {
@@ -685,6 +709,29 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
     }
     if (d->menu && ev->type == SDL_MOUSEBUTTONDOWN) {
         if (d->hoverItem != iInvalidPos || isVisible_Widget(d->menu)) {
+            /* Update menu items. */
+            if (d->mode == identities_SidebarMode) {
+                const iGmIdentity *ident  = constHoverIdentity_SidebarWidget_(d);
+                const iString *    docUrl = url_DocumentWidget(document_App());
+                iForEach(ObjectList, i, children_Widget(d->menu)) {
+                    if (isInstance_Object(i.object, &Class_LabelWidget)) {
+                        iLabelWidget *menuItem = i.object;
+                        const char *  itemCmd  = cstr_String(command_LabelWidget(menuItem));
+                        if (equal_Command(itemCmd, "ident.use")) {
+                            if (!arg_Command(itemCmd)) {
+                                setFlags_Widget(as_Widget(menuItem),
+                                                disabled_WidgetFlag,
+                                                !isUsed_GmIdentity(ident));
+                            }
+                        }
+                        else if (equal_Command(itemCmd, "ident.showuse")) {
+                            setFlags_Widget(as_Widget(menuItem),
+                                            disabled_WidgetFlag,
+                                            !isUsed_GmIdentity(ident));
+                        }
+                    }
+                }
+            }
             processContextMenuEvent_Widget(d->menu, ev, {});
         }
     }
@@ -722,8 +769,8 @@ static void allocVisBuffer_SidebarWidget_(iSidebarWidget *d) {
 }
 
 static void draw_SidebarWidget_(const iSidebarWidget *d) {
-    const iWidget *w      = constAs_Widget(d);
-    const iRect    bounds = contentBounds_SidebarWidget_(d);
+    const iWidget *w          = constAs_Widget(d);
+    const iRect    bounds     = contentBounds_SidebarWidget_(d);
     const iBool    isPressing = d->click.isActive && contains_Rect(bounds, pos_Click(&d->click));
     iPaint p;
     init_Paint(&p);
@@ -743,7 +790,7 @@ static void draw_SidebarWidget_(const iSidebarWidget *d) {
             for (size_t i = visRange.start; i < visRange.end; i++) {
                 const iSidebarItem *item     = constAt_Array(&d->items, i);
                 const iRect         itemRect = { pos, init_I2(width_Rect(bufBounds), d->itemHeight) };
-                const iBool         isHover  = (d->hoverItem == i);
+                const iBool         isHover  = isHover_Widget(w) && (d->hoverItem == i);
                 const int           iconColor =
                     isHover ? (isPressing ? uiTextPressed_ColorId : uiIconHover_ColorId)
                             : uiIcon_ColorId;

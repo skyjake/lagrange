@@ -150,11 +150,17 @@ static const iMenuItem helpMenuItems[] = {
 #endif
 
 static const iMenuItem identityButtonMenuItems[] = {
+    { "No Active Identity", 0, 0, NULL },
+    { "---", 0, 0, NULL },
 #if !defined (iHaveNativeMenus)
     { "New Identity...", SDLK_n, KMOD_PRIMARY | KMOD_SHIFT, "ident.new" },
     { "---", 0, 0, NULL },
-#endif
     { "Show Identities", '3', KMOD_PRIMARY, "sidebar.mode arg:2 show:1" },
+#else
+    { "New Identity...", 0, 0, "ident.new" },
+    { "---", 0, 0, NULL },
+    { "Show Identities", 0, 0, "sidebar.mode arg:2 show:1" },
+#endif
 };
 
 static const char *reloadCStr_ = "\U0001f503";

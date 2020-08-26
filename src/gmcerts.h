@@ -43,6 +43,8 @@ struct Impl_GmIdentity {
     int flags;
 };
 
+iBool   isUsed_GmIdentity   (const iGmIdentity *);
+
 iDeclareType(GmCerts)
 iDeclareTypeConstructionArgs(GmCerts, const char *saveDir)
 

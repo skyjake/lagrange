@@ -148,6 +148,10 @@ static iBool writeTextFile_(const iString *path, const iString *content) {
     return iFalse;
 }
 
+iBool isUsed_GmIdentity(const iGmIdentity *d) {
+    return d && !isEmpty_SortedArray(&d->useUrls);
+}
+
 iDefineTypeConstruction(GmIdentity)
 
 /*-----------------------------------------------------------------------------------------------*/
