@@ -690,6 +690,20 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
     }
     /* Set up colors. */
     if (d->themeSeed) {
+        enum iHue {
+            red_Hue,
+            reddishOrange_Hue,
+            yellowishOrange_Hue,
+            yellow_Hue,
+            greenishYellow_Hue,
+            green_Hue,
+            bluishGreen_Hue,
+            cyan_Hue,
+            skyBlue_Hue,
+            blue_Hue,
+            violet_Hue,
+            pink_Hue
+        };
         static const float hues[] = { 5, 25, 40, 56, 80, 120, 160, 180, 208, 231, 270, 324 };
         static const struct {
             int index[2];
@@ -707,9 +721,9 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
             { 8, 9 },  /* violet */
             { 7, 8 },  /* pink */
         };
-        const float saturationLevel = 1.0f; /* TODO: user setting */
         const iBool isBannerLighter = (d->themeSeed & 0x4000) != 0;
         const size_t primIndex = d->themeSeed ? (d->themeSeed & 0xff) % iElemCount(hues) : 2;
+        const float saturationLevel = 1.0f; /* TODO: user setting */
         const iBool  isDarkBgSat =
             (d->themeSeed & 0x200000) != 0 && (primIndex < 1 || primIndex > 4);
         iHSLColor base = { hues[primIndex],
@@ -718,9 +732,10 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
                            1.0f };
         //            printf("background: %d %f %f\n", (int) base.hue, base.sat, base.lum);
         //            printf("isDarkBgSat: %d\n", isDarkBgSat);
-        setHsl_Color(tmBackground_ColorId, base);
+        iHSLColor bgBase = base;
+        setHsl_Color(tmBackground_ColorId, bgBase);
 
-        setHsl_Color(tmBannerBackground_ColorId, addSatLum_HSLColor(base, 0.1f, 0.04f * (isBannerLighter ? 1 : -1)));
+        setHsl_Color(tmBannerBackground_ColorId, addSatLum_HSLColor(bgBase, 0.1f, 0.04f * (isBannerLighter ? 1 : -1)));
         setHsl_Color(tmBannerTitle_ColorId, setLum_HSLColor(addSatLum_HSLColor(base, 0.1f, 0), 0.55f));
         setHsl_Color(tmBannerIcon_ColorId, setLum_HSLColor(addSatLum_HSLColor(base, 0.35f, 0), 0.65f));
 
@@ -779,7 +794,12 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
                     if (isDarkBgSat) {
                         /* Saturate background, desaturate text. */
                         if (isBackground_ColorId(i)) {
-                            color.sat = (color.sat + 1) / 2;
+                            if (primIndex != green_Hue) {
+                                color.sat = (color.sat + 1) / 2;
+                            }
+                            else {
+                                color.sat *= 0.5f;
+                            }
                             color.lum *= 0.75f;
                         }
                         else if (isText_ColorId(i)) {
