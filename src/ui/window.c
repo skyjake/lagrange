@@ -123,6 +123,10 @@ static const iMenuItem editMenuItems[] = {
     { "Bookmark This Page...", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
 };
 
+static const iMenuItem identityMenuItems[] = {
+    { "New Identity...", SDLK_n, KMOD_PRIMARY | KMOD_SHIFT, "ident.new" },
+};
+
 static const iMenuItem viewMenuItems[] = {
     { "Show Bookmarks", '1', KMOD_PRIMARY, "sidebar.mode arg:0 show:1" },
     { "Show History", '2', KMOD_PRIMARY, "sidebar.mode arg:1 show:1" },
@@ -145,12 +149,12 @@ static const iMenuItem helpMenuItems[] = {
 };
 #endif
 
-static const iMenuItem identityMenuItems[] = {
-    { "New Identity...", SDLK_n, KMOD_PRIMARY | KMOD_SHIFT, "ident.new" },
+static const iMenuItem identityButtonMenuItems[] = {
 #if !defined (iHaveNativeMenus)
+    { "New Identity...", SDLK_n, KMOD_PRIMARY | KMOD_SHIFT, "ident.new" },
     { "---", 0, 0, NULL },
-    { "Show Identities", '3', KMOD_PRIMARY, "sidebar.mode arg:2 show:1" },
 #endif
+    { "Show Identities", '3', KMOD_PRIMARY, "sidebar.mode arg:2 show:1" },
 };
 
 static const char *reloadCStr_ = "\U0001f503";
@@ -304,10 +308,9 @@ static void setupUserInterface_Window(iWindow *d) {
         addChild_Widget(navBar, iClob(newIcon_LabelWidget("\U0001f850", 0, 0, "navigate.back")));
         addChild_Widget(navBar, iClob(newIcon_LabelWidget("\U0001f852", 0, 0, "navigate.forward")));
         iLabelWidget *idMenu =
-            makeMenuButton_LabelWidget("\U0001f464", identityMenuItems, iElemCount(identityMenuItems));
+            makeMenuButton_LabelWidget("\U0001f464", identityButtonMenuItems, iElemCount(identityButtonMenuItems));
         setAlignVisually_LabelWidget(idMenu, iTrue);
         addChild_Widget(navBar, iClob(idMenu));
-        //addChild_Widget(navBar, iClob(newIcon_LabelWidget("\U0001f464", 0, 0, "cert.client")));
         iLabelWidget *lock =
             addChildFlags_Widget(navBar,
                                  iClob(newIcon_LabelWidget("\U0001f513", 0, 0, "server.showcert")),
