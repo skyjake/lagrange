@@ -318,12 +318,17 @@ const iString *dataDir_App(void) {
     return collect_String(cleanedCStr_Path(dataDir_App_));
 }
 
+iLocalDef iBool isWaitingAllowed_App_(const iApp *d) {
+    return !d->pendingRefresh && isEmpty_SortedArray(&d->tickers);
+}
+
 void processEvents_App(enum iAppEventMode eventMode) {
     iApp *d = &app_;
     SDL_Event ev;
-    while (
-        (!d->pendingRefresh && eventMode == waitForNewEvents_AppEventMode && SDL_WaitEvent(&ev)) ||
-        ((d->pendingRefresh || eventMode == postedEventsOnly_AppEventMode) && SDL_PollEvent(&ev))) {
+    while ((isWaitingAllowed_App_(d) && eventMode == waitForNewEvents_AppEventMode &&
+            SDL_WaitEvent(&ev)) ||
+           ((!isWaitingAllowed_App_(d) || eventMode == postedEventsOnly_AppEventMode) &&
+            SDL_PollEvent(&ev))) {
         switch (ev.type) {
             case SDL_QUIT:
                 d->running = iFalse;
@@ -358,12 +363,14 @@ static void runTickers_App_(iApp *d) {
     const uint32_t now = SDL_GetTicks();
     d->elapsedSinceLastTicker = (d->lastTickerTime ? now - d->lastTickerTime : 0);
     d->lastTickerTime = now;
+    if (isEmpty_SortedArray(&d->tickers)) {
+        d->lastTickerTime = 0;
+        return;
+    }
     /* Tickers may add themselves again, so we'll run off a copy. */
     iSortedArray *pending = copy_SortedArray(&d->tickers);
     clear_SortedArray(&d->tickers);
-    if (!isEmpty_SortedArray(pending)) {
-        postRefresh_App();
-    }
+    postRefresh_App();
     iConstForEach(Array, i, &pending->values) {
         const iTicker *ticker = i.value;
         if (ticker->callback) {
@@ -371,6 +378,9 @@ static void runTickers_App_(iApp *d) {
         }
     }
     delete_SortedArray(pending);
+    if (isEmpty_SortedArray(&d->tickers)) {
+        d->lastTickerTime = 0;
+    }
 }
 
 static int run_App_(iApp *d) {
@@ -378,8 +388,8 @@ static int run_App_(iApp *d) {
     d->running = iTrue;
     SDL_EventState(SDL_DROPFILE, SDL_ENABLE); /* open files via drag'n'drop */
     while (d->running) {
-        runTickers_App_(d);
         processEvents_App(waitForNewEvents_AppEventMode);
+        runTickers_App_(d);
         refresh_App();
         recycle_Garbage();
     }
@@ -419,9 +429,6 @@ int run_App(int argc, char **argv) {
 void postRefresh_App(void) {
     iApp *d = &app_;
     if (!d->pendingRefresh) {
-        if (!isEmpty_SortedArray(&d->tickers)) {
-            d->lastTickerTime = SDL_GetTicks(); /* tickers had been paused */
-        }
         d->pendingRefresh = iTrue;
         SDL_Event ev;
         ev.user.type     = SDL_USEREVENT;
