@@ -486,6 +486,10 @@ static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
     }
 }
 
+static void invalidate_DocumentWidget_(iDocumentWidget *d) {
+    iZap(d->visBuffer->validRange);
+}
+
 static void setSource_DocumentWidget_(iDocumentWidget *d, const iString *source) {
     setUrl_GmDocument(d->doc, d->mod.url);
     setSource_GmDocument(d->doc, source, documentWidth_DocumentWidget_(d));
@@ -495,6 +499,7 @@ static void setSource_DocumentWidget_(iDocumentWidget *d, const iString *source)
     d->contextLink = NULL;
     updateWindowTitle_DocumentWidget_(d);
     updateVisible_DocumentWidget_(d);
+    invalidate_DocumentWidget_(d);
     refresh_Widget(as_Widget(d));
 }
 
@@ -532,10 +537,6 @@ static void updateTheme_DocumentWidget_(iDocumentWidget *d) {
     else {
         setThemeSeed_GmDocument(d->doc, &d->titleUser->chars);
     }
-}
-
-static void invalidate_DocumentWidget_(iDocumentWidget *d) {
-    iZap(d->visBuffer->validRange);
 }
 
 static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse *response) {
