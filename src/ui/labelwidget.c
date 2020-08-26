@@ -155,6 +155,9 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
     *fg     = uiText_ColorId;
     *frame1 = isButton ? uiEmboss1_ColorId : uiFrame_ColorId;
     *frame2 = isButton ? uiEmboss2_ColorId : *frame1;
+    if (flags_Widget(w) & disabled_WidgetFlag && isButton) {
+        *fg = uiTextDisabled_ColorId;
+    }
     if (isSel) {
         *bg = uiBackgroundSelected_ColorId;
         *fg = uiTextSelected_ColorId;
