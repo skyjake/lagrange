@@ -576,6 +576,39 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         else if (equal_Command(cmd, "idents.changed") && d->mode == identities_SidebarMode) {
             updateItems_SidebarWidget_(d);
         }
+        else if (isCommand_Widget(w, ev, "ident.use")) {
+            return iTrue;
+        }
+        else if (isCommand_Widget(w, ev, "ident.showuse")) {
+            return iTrue;
+        }
+        else if (isCommand_Widget(w, ev, "ident.edit")) {
+            return iTrue;
+        }
+        else if (isCommand_Widget(w, ev, "ident.pickicon")) {
+            return iTrue;
+        }
+        else if (isCommand_Widget(w, ev, "ident.reveal")) {
+            return iTrue;
+        }
+        else if (isCommand_Widget(w, ev, "ident.delete")) {
+            iSidebarItem *item = hoverItem_SidebarWidget_(d);
+            if (argLabel_Command(cmd, "confirm")) {
+                makeQuestion_Widget(uiTextCaution_ColorEscape "DELETE IDENTITY",
+                                    format_CStr("Do you really want to delete the identity\n"
+                                                uiTextAction_ColorEscape "%s\n"
+                                                uiText_ColorEscape
+                                                "including its certificate and private key files?",
+                                                cstr_String(&item->label)),
+                                    (const char *[]){ "Cancel",
+                                                      uiTextCaution_ColorEscape
+                                                      "Delete Identity and Files" },
+                                    (const char *[]){ "cancel", "ident.delete confirm:0" },
+                                    2);
+                return iTrue;
+            }
+            return iTrue;
+        }
         else if (equal_Command(cmd, "history.delete")) {
             const iSidebarItem *item = hoverItem_SidebarWidget_(d);
             if (item && !isEmpty_String(&item->url)) {
