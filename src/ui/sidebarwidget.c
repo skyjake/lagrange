@@ -35,7 +35,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "util.h"
 #include "visited.h"
 
-#include <the_Foundation/array.h>
+#include <the_Foundation/stringarray.h>
 #include <SDL_clipboard.h>
 #include <SDL_mouse.h>
 
@@ -232,9 +232,9 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                     &item.meta,
                     collectNewFormat_String(
                         "%s \u2014 %s\n%s",
-                        isEmpty_SortedArray(&ident->useUrls)
-                            ? "Not used"
-                            : format_CStr("Used on %zu URLs", size_SortedArray(&ident->useUrls)),
+                        isUsed_GmIdentity(ident)
+                            ? format_CStr("Used on %zu URLs", size_StringSet(ident->useUrls))
+                            : "Not used",
                         ident->flags & temporary_GmIdentityFlag
                             ? "Temporary"
                             : cstrCollect_String(format_Date(&until, "Expires %b %d, %Y")),
@@ -600,10 +600,25 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             updateItems_SidebarWidget_(d);
         }
         else if (isCommand_Widget(w, ev, "ident.use")) {
-
+            iGmIdentity *ident = hoverIdentity_SidebarWidget_(d);
+            if (ident) {
+                if (argLabel_Command(cmd, "clear")) {
+                    clearUse_GmIdentity(ident);
+                }
+                else {
+                    setUse_GmIdentity(
+                        ident, url_DocumentWidget(document_App()), arg_Command(cmd) != 0);
+                }
+                updateItems_SidebarWidget_(d);
+            }
             return iTrue;
         }
         else if (isCommand_Widget(w, ev, "ident.showuse")) {
+            const iGmIdentity *ident = constHoverIdentity_SidebarWidget_(d);
+            if (ident) {
+                makeMessage_Widget(uiHeading_ColorEscape "IDENTITY USAGE",
+                                   cstrCollect_String(joinCStr_StringSet(ident->useUrls, "\n")));
+            }
             return iTrue;
         }
         else if (isCommand_Widget(w, ev, "ident.edit")) {
@@ -718,11 +733,10 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                         iLabelWidget *menuItem = i.object;
                         const char *  itemCmd  = cstr_String(command_LabelWidget(menuItem));
                         if (equal_Command(itemCmd, "ident.use")) {
-                            if (!arg_Command(itemCmd)) {
-                                setFlags_Widget(as_Widget(menuItem),
-                                                disabled_WidgetFlag,
-                                                !isUsed_GmIdentity(ident));
-                            }
+                            setFlags_Widget(as_Widget(menuItem),
+                                            disabled_WidgetFlag,
+                                            (arg_Command(itemCmd) != 0) ^
+                                                (!isUsed_GmIdentity(ident)));
                         }
                         else if (equal_Command(itemCmd, "ident.showuse")) {
                             setFlags_Widget(as_Widget(menuItem),
