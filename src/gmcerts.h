@@ -23,6 +23,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #pragma once
 
 #include <the_Foundation/ptrarray.h>
+#include <the_Foundation/stringset.h>
 #include <the_Foundation/tlsrequest.h>
 
 iDeclareType(GmIdentity)
@@ -34,16 +35,21 @@ enum iGmIdentityFlags {
 };
 
 struct Impl_GmIdentity {
-//    iString fileName;
     iBlock fingerprint;
     iTlsCertificate *cert;
-    iSortedArray useUrls; /* Strings */
+    iStringSet *useUrls;
     iChar icon;
     iString notes; /* private, local usage notes */
     int flags;
 };
 
 iBool   isUsed_GmIdentity   (const iGmIdentity *);
+iBool   isUsedOn_GmIdentity (const iGmIdentity *, const iString *url);
+
+void    setUse_GmIdentity   (iGmIdentity *, const iString *url, iBool use);
+void    clearUse_GmIdentity (iGmIdentity *);
+
+/*----------------------------------------------------------------------------------------------*/
 
 iDeclareType(GmCerts)
 iDeclareTypeConstructionArgs(GmCerts, const char *saveDir)

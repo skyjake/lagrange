@@ -61,50 +61,38 @@ iDefineClass(TrustEntry)
 
 /*----------------------------------------------------------------------------------------------*/
 
-static int cmpUrl_GmIdentity_(const void *a, const void *b) {
-    return cmpStringCase_String((const iString *) a, (const iString *) b);
+static int cmpUrl_GmIdentity_(const iString *a, const iString *b) {
+    return cmpStringCase_String(a, b);
 }
 
 void init_GmIdentity(iGmIdentity *d) {
     d->icon  = 0x1f511; /* key */
     d->flags = 0;
     d->cert  = new_TlsCertificate();
-//    init_String(&d->fileName);
     init_Block(&d->fingerprint, 0);
-    init_SortedArray(&d->useUrls, sizeof(iString), cmpUrl_GmIdentity_);
+    d->useUrls = newCmp_StringSet(cmpUrl_GmIdentity_);
     init_String(&d->notes);
 }
 
-static void clear_GmIdentity_(iGmIdentity *d) {
-    iForEach(Array, i, &d->useUrls.values) {
-        deinit_String(i.value);
-    }
-    clear_SortedArray(&d->useUrls);
-}
-
 void deinit_GmIdentity(iGmIdentity *d) {
-    clear_GmIdentity_(d);
+    iRelease(d->useUrls);
     deinit_String(&d->notes);
-    deinit_SortedArray(&d->useUrls);
     delete_TlsCertificate(d->cert);
     deinit_Block(&d->fingerprint);
-//    deinit_String(&d->fileName);
 }
 
 void serialize_GmIdentity(const iGmIdentity *d, iStream *outs) {
-//    serialize_String(&d->fileName, outs);
     serialize_Block(&d->fingerprint, outs);
     writeU32_Stream(outs, d->icon);
     serialize_String(&d->notes, outs);
     write32_Stream(outs, d->flags);
-    writeU32_Stream(outs, size_SortedArray(&d->useUrls));
-    iConstForEach(Array, i, &d->useUrls.values) {
+    writeU32_Stream(outs, size_StringSet(d->useUrls));
+    iConstForEach(StringSet, i, d->useUrls) {
         serialize_String(i.value, outs);
     }
 }
 
 void deserialize_GmIdentity(iGmIdentity *d, iStream *ins) {
-//    deserialize_String(&d->fileName, ins);
     deserialize_Block(&d->fingerprint, ins);
     d->icon = readU32_Stream(ins);
     deserialize_String(&d->notes, ins);
@@ -114,7 +102,8 @@ void deserialize_GmIdentity(iGmIdentity *d, iStream *ins) {
         iString url;
         init_String(&url);
         deserialize_String(&url, ins);
-        insert_SortedArray(&d->useUrls, &url);
+        insert_StringSet(d->useUrls, &url);
+        deinit_String(&url);
     }
 }
 
@@ -149,7 +138,36 @@ static iBool writeTextFile_(const iString *path, const iString *content) {
 }
 
 iBool isUsed_GmIdentity(const iGmIdentity *d) {
-    return d && !isEmpty_SortedArray(&d->useUrls);
+    return d && !isEmpty_StringSet(d->useUrls);
+}
+
+iBool isUsedOn_GmIdentity(const iGmIdentity *d, const iString *url) {
+    size_t pos = iInvalidPos;
+    locate_StringSet(d->useUrls, url, &pos);
+    if (pos < size_StringSet(d->useUrls)) {
+        return startsWithCase_String(url, cstr_String(constAt_StringSet(d->useUrls, pos)));
+    }
+    return iFalse;
+}
+
+void setUse_GmIdentity(iGmIdentity *d, const iString *url, iBool use) {
+    if (use && isUsedOn_GmIdentity(d, url)) {
+        return; /* Redudant. */
+    }
+    if (use) {
+#if !defined (NDEBUG)
+        const iBool wasInserted =
+#endif
+        insert_StringSet(d->useUrls, url);
+        iAssert(wasInserted);
+    }
+    else {
+        remove_StringSet(d->useUrls, url);
+    }
+}
+
+void clearUse_GmIdentity(iGmIdentity *d) {
+    clear_StringSet(d->useUrls);
 }
 
 iDefineTypeConstruction(GmIdentity)
@@ -375,7 +393,7 @@ iBool checkTrust_GmCerts(iGmCerts *d, iRangecc domain, const iTlsCertificate *ce
 const iGmIdentity *identityForUrl_GmCerts(const iGmCerts *d, const iString *url) {
     iConstForEach(PtrArray, i, &d->idents) {
         const iGmIdentity *ident = i.ptr;
-        iConstForEach(Array, j, &ident->useUrls.values) {
+        iConstForEach(StringSet, j, ident->useUrls) {
             const iString *used = j.value;
             if (startsWithCase_String(url, cstr_String(used))) {
                 return ident;
