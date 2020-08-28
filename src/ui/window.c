@@ -342,8 +342,8 @@ static void setupUserInterface_Window(iWindow *d) {
 #else
         insertMenuItems_MacOS("File", 1, fileMenuItems, iElemCount(fileMenuItems));
         insertMenuItems_MacOS("Edit", 2, editMenuItems, iElemCount(editMenuItems));
-        insertMenuItems_MacOS("Identity", 3, identityMenuItems, iElemCount(identityMenuItems));
-        insertMenuItems_MacOS("View", 4, viewMenuItems, iElemCount(viewMenuItems));
+        insertMenuItems_MacOS("View", 3, viewMenuItems, iElemCount(viewMenuItems));
+        insertMenuItems_MacOS("Identity", 4, identityMenuItems, iElemCount(identityMenuItems));
         insertMenuItems_MacOS("Help", 6, helpMenuItems, iElemCount(helpMenuItems));
 #endif
     }
