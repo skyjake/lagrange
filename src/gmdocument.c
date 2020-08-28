@@ -852,7 +852,7 @@ static void normalize_GmDocument(iGmDocument *d) {
     if (d->format == plainText_GmDocumentFormat) {
         isPreformat = iTrue; /* Cannot be turned off. */
     }
-    const int preTabWidth = 8; /* TODO: user-configurable parameter */
+    const int preTabWidth = 4; /* TODO: user-configurable parameter */
     while (nextSplit_Rangecc(src, "\n", &line)) {
         if (isPreformat) {
             /* Replace any tab characters with spaces for visualization. */
