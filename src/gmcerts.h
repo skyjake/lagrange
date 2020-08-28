@@ -71,6 +71,7 @@ const iGmIdentity * identityForUrl_GmCerts  (const iGmCerts *, const iString *ur
  */
 iGmIdentity *       newIdentity_GmCerts     (iGmCerts *, int flags, iDate validUntil,
                                              const iString *commonName, const iString *userId,
-                                             const iString *org, const iString *country);
+                                             const iString *domain, const iString *org,
+                                             const iString *country);
 
 const iPtrArray *   identities_GmCerts      (const iGmCerts *);
