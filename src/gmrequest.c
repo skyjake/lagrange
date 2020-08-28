@@ -490,6 +490,10 @@ void submit_GmRequest(iGmRequest *d) {
     }
     d->state = receivingHeader_GmRequestState;
     d->req = new_TlsRequest();
+    const iGmIdentity *identity = identityForUrl_GmCerts(d->certs, &d->url);
+    if (identity) {
+        setCertificate_TlsRequest(d->req, identity->cert);
+    }
     iConnect(TlsRequest, d->req, readyRead, d, readIncoming_GmRequest_);
     iConnect(TlsRequest, d->req, finished, d, requestFinished_GmRequest_);
     uint16_t port = toInt_String(collect_String(newRange_String(url.port)));
