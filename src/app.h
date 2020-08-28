@@ -76,3 +76,4 @@ iLocalDef void postCommandString_App(const iString *command) {
 }
 
 void        openInDefaultBrowser_App    (const iString *url);
+void        revealPath_App              (const iString *path);

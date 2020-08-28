@@ -812,3 +812,36 @@ void openInDefaultBrowser_App(const iString *url) {
     start_Process(proc);
     iRelease(proc);
 }
+
+void revealPath_App(const iString *path) {
+#if defined (iPlatformApple)
+    const char *scriptPath = concatPath_CStr(dataDir_App_, "revealfile.scpt");
+    iFile *f = newCStr_File(scriptPath);
+    if (open_File(f, writeOnly_FileMode | text_FileMode)) {
+        /* AppleScript to select a specific file. */
+        write_File(f, collect_Block(newCStr_Block("on run argv\n"
+                                                  "  tell application \"Finder\"\n"
+                                                  "    activate\n"
+                                                  "    reveal POSIX file (item 1 of argv) as text\n"
+                                                  "  end tell\n"
+                                                  "end run\n")));
+        close_File(f);
+        iProcess *proc = new_Process();
+        setArguments_Process(
+            proc,
+            iClob(newStringsCStr_StringList(
+                "/usr/bin/osascript", scriptPath, cstr_String(path), NULL)));
+        start_Process(proc);
+        iRelease(proc);
+    }
+    iRelease(f);
+#elif defined (iPlatformLinux)
+    {
+        String path = (fileOrFolder.isDirectory() ? fileOrFolder.toString()
+                                                  : fileOrFolder.fileNamePath().toString());
+        CommandLine({"/usr/bin/xdg-open", path}).execute();
+    }
+#else
+    iAssert(0 /* File revealing not implemented on this platform */);
+#endif
+}

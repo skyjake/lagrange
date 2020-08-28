@@ -448,11 +448,18 @@ iGmIdentity *newIdentity_GmCerts(iGmCerts *d, int flags, iDate validUntil, const
     return id;
 }
 
-void deleteIdentity_GmCerts(iGmCerts *d, iGmIdentity *identity) {
-    /* Only delete the files if we created them. */
+static const char *certPath_GmCerts_(const iGmCerts *d, const iGmIdentity *identity) {
     if (!(identity->flags & (temporary_GmIdentityFlag | imported_GmIdentityFlag))) {
         const char *finger   = cstrCollect_String(hexEncode_Block(&identity->fingerprint));
-        const char *filename = concatPath_CStr(cstr_String(&d->saveDir), format_CStr("idents/%s", finger));
+        return concatPath_CStr(cstr_String(&d->saveDir), format_CStr("idents/%s", finger));
+    }
+    return NULL;
+}
+
+void deleteIdentity_GmCerts(iGmCerts *d, iGmIdentity *identity) {
+    /* Only delete the files if we created them. */
+    const char *filename = certPath_GmCerts_(d, identity);
+    if (filename) {
         remove(format_CStr("%s.crt", filename));
         remove(format_CStr("%s.key", filename));
     }
@@ -460,6 +467,15 @@ void deleteIdentity_GmCerts(iGmCerts *d, iGmIdentity *identity) {
     collect_GmIdentity(identity);
 }
 
+const iString *certificatePath_GmCerts(const iGmCerts *d, const iGmIdentity *identity) {
+    const char *filename = certPath_GmCerts_(d, identity);
+    if (filename) {
+        return collectNewFormat_String("%s.crt", filename);
+    }
+    return NULL;
+}
+
 const iPtrArray *identities_GmCerts(const iGmCerts *d) {
     return &d->idents;
 }
+

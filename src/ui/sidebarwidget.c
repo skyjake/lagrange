@@ -635,6 +635,11 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             return iTrue;
         }
         else if (isCommand_Widget(w, ev, "ident.reveal")) {
+            const iString *crtPath =
+                certificatePath_GmCerts(certs_App(), constHoverIdentity_SidebarWidget_(d));
+            if (crtPath) {
+                revealPath_App(crtPath);
+            }
             return iTrue;
         }
         else if (equal_Command(cmd, "ident.delete")) {

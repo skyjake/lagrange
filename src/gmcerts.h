@@ -75,6 +75,8 @@ iGmIdentity *       newIdentity_GmCerts     (iGmCerts *, int flags, iDate validU
 
 void                deleteIdentity_GmCerts  (iGmCerts *, iGmIdentity *identity);
 
+const iString *     certificatePath_GmCerts (const iGmCerts *, const iGmIdentity *identity);
+
 iGmIdentity *       identity_GmCerts        (iGmCerts *, unsigned int id);
 const iGmIdentity * constIdentity_GmCerts   (const iGmCerts *, unsigned int id);
 const iGmIdentity * identityForUrl_GmCerts  (const iGmCerts *, const iString *url);
