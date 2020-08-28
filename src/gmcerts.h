@@ -32,6 +32,7 @@ iDeclareTypeSerialization(GmIdentity)
 
 enum iGmIdentityFlags {
     temporary_GmIdentityFlag = 0x1, /* not saved persistently */
+    imported_GmIdentityFlag  = 0x2, /* user-provided files */
 };
 
 struct Impl_GmIdentity {
@@ -56,8 +57,6 @@ iDeclareTypeConstructionArgs(GmCerts, const char *saveDir)
 
 iBool               checkTrust_GmCerts      (iGmCerts *, iRangecc domain, const iTlsCertificate *cert);
 
-const iGmIdentity * identityForUrl_GmCerts  (const iGmCerts *, const iString *url);
-
 /**
  * Create a new self-signed TLS client certificate for identifying the user.
  * @a commonName and the other name parameters are inserted in the subject field
@@ -74,4 +73,9 @@ iGmIdentity *       newIdentity_GmCerts     (iGmCerts *, int flags, iDate validU
                                              const iString *domain, const iString *org,
                                              const iString *country);
 
+void                deleteIdentity_GmCerts  (iGmCerts *, iGmIdentity *identity);
+
+iGmIdentity *       identity_GmCerts        (iGmCerts *, unsigned int id);
+const iGmIdentity * constIdentity_GmCerts   (const iGmCerts *, unsigned int id);
+const iGmIdentity * identityForUrl_GmCerts  (const iGmCerts *, const iString *url);
 const iPtrArray *   identities_GmCerts      (const iGmCerts *);

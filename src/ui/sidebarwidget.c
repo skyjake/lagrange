@@ -482,7 +482,7 @@ static const iGmIdentity *constHoverIdentity_SidebarWidget_(const iSidebarWidget
     if (d->mode == identities_SidebarMode) {
         const iSidebarItem *hoverItem = constHoverItem_SidebarWidget_(d);
         if (hoverItem) {
-            return constAt_PtrArray(identities_GmCerts(certs_App()), hoverItem->id);
+            return identity_GmCerts(certs_App(), hoverItem->id);
         }
     }
     return NULL;
@@ -490,6 +490,13 @@ static const iGmIdentity *constHoverIdentity_SidebarWidget_(const iSidebarWidget
 
 static iGmIdentity *hoverIdentity_SidebarWidget_(const iSidebarWidget *d) {
     return iConstCast(iGmIdentity *, constHoverIdentity_SidebarWidget_(d));
+}
+
+static void setHoverItem_SidebarWidget_(iSidebarWidget *d, size_t index) {
+    if (d->hoverItem != index) {
+        d->hoverItem = index;
+        invalidate_SidebarWidget_(d);
+    }
 }
 
 static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev) {
@@ -630,7 +637,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         else if (isCommand_Widget(w, ev, "ident.reveal")) {
             return iTrue;
         }
-        else if (isCommand_Widget(w, ev, "ident.delete")) {
+        else if (equal_Command(cmd, "ident.delete")) {
             iSidebarItem *item = hoverItem_SidebarWidget_(d);
             if (argLabel_Command(cmd, "confirm")) {
                 makeQuestion_Widget(uiTextCaution_ColorEscape "DELETE IDENTITY",
@@ -646,6 +653,8 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                                     2);
                 return iTrue;
             }
+            deleteIdentity_GmCerts(certs_App(), hoverIdentity_SidebarWidget_(d));
+            updateItems_SidebarWidget_(d);
             return iTrue;
         }
         else if (equal_Command(cmd, "history.delete")) {
@@ -708,10 +717,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                 setCursor_Window(get_Window(), SDL_SYSTEM_CURSOR_ARROW);
             }
         }
-        if (hover != d->hoverItem) {
-            d->hoverItem = hover;
-            invalidate_SidebarWidget_(d);
-        }
+        setHoverItem_SidebarWidget_(d, hover);
     }
     if (ev->type == SDL_MOUSEWHEEL && isHover_Widget(w)) {
 #if defined (iPlatformApple)
@@ -723,32 +729,42 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         return iTrue;
     }
     if (d->menu && ev->type == SDL_MOUSEBUTTONDOWN) {
-        if (d->hoverItem != iInvalidPos || isVisible_Widget(d->menu)) {
-            /* Update menu items. */
-            if (d->mode == identities_SidebarMode) {
-                const iGmIdentity *ident  = constHoverIdentity_SidebarWidget_(d);
-                const iString *    docUrl = url_DocumentWidget(document_App());
-                iForEach(ObjectList, i, children_Widget(d->menu)) {
-                    if (isInstance_Object(i.object, &Class_LabelWidget)) {
-                        iLabelWidget *menuItem = i.object;
-                        const char *  itemCmd  = cstr_String(command_LabelWidget(menuItem));
-                        if (equal_Command(itemCmd, "ident.use")) {
-                            setFlags_Widget(as_Widget(menuItem),
-                                            disabled_WidgetFlag,
-                                            (arg_Command(itemCmd) != 0) ^
-                                                (!isUsed_GmIdentity(ident)));
-                        }
-                        else if (equal_Command(itemCmd, "ident.showuse")) {
-                            setFlags_Widget(as_Widget(menuItem),
-                                            disabled_WidgetFlag,
-                                            !isUsed_GmIdentity(ident));
+        if (ev->button.button == SDL_BUTTON_RIGHT) {
+            if (!isVisible_Widget(d->menu)) {
+                setHoverItem_SidebarWidget_(
+                    d, itemIndex_SidebarWidget_(d, init_I2(ev->button.x, ev->button.y)));
+            }
+            if (d->hoverItem != iInvalidPos || isVisible_Widget(d->menu)) {
+                /* Update menu items. */
+                if (d->mode == identities_SidebarMode) {
+                    const iGmIdentity *ident  = constHoverIdentity_SidebarWidget_(d);
+                    const iString *    docUrl = url_DocumentWidget(document_App());
+                    iForEach(ObjectList, i, children_Widget(d->menu)) {
+                        if (isInstance_Object(i.object, &Class_LabelWidget)) {
+                            iLabelWidget *menuItem = i.object;
+                            const char *  cmdItem  = cstr_String(command_LabelWidget(menuItem));
+                            if (equal_Command(cmdItem, "ident.use")) {
+                                const iBool cmdUse   = arg_Command(cmdItem) != 0;
+                                const iBool cmdClear = argLabel_Command(cmdItem, "clear") != 0;
+                                setFlags_Widget(
+                                    as_Widget(menuItem),
+                                    disabled_WidgetFlag,
+                                    (cmdClear && !isUsed_GmIdentity(ident)) ||
+                                        (!cmdClear && cmdUse && isUsedOn_GmIdentity(ident, docUrl)) ||
+                                        (!cmdClear && !cmdUse && !isUsedOn_GmIdentity(ident, docUrl)));
+                            }
+                            else if (equal_Command(cmdItem, "ident.showuse")) {
+                                setFlags_Widget(as_Widget(menuItem),
+                                                disabled_WidgetFlag,
+                                                !isUsed_GmIdentity(ident));
+                            }
                         }
                     }
                 }
             }
-            processContextMenuEvent_Widget(d->menu, ev, {});
         }
     }
+    processContextMenuEvent_Widget(d->menu, ev, {});
     switch (processEvent_Click(&d->click, ev)) {
         case started_ClickResult:
             invalidate_SidebarWidget_(d);

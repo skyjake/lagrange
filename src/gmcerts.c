@@ -271,7 +271,9 @@ static void loadIdentityFromCertificate_GmCerts_(iGmCerts *d, const iString *crt
     iBlock *finger = fingerprint_TlsCertificate(cert);
     iGmIdentity *ident = findIdentity_GmCerts_(d, finger);
     if (!ident) {
+        /* User-provided certificate. */
         ident = new_GmIdentity();
+        ident->flags |= imported_GmIdentityFlag;
         iDate today;
         initCurrent_Date(&today);
         set_String(&ident->notes, collect_String(format_Date(&today, "Imported on %b %d, %Y")));
@@ -390,6 +392,14 @@ iBool checkTrust_GmCerts(iGmCerts *d, iRangecc domain, const iTlsCertificate *ce
     return iTrue;
 }
 
+iGmIdentity *identity_GmCerts(iGmCerts *d, unsigned int id) {
+    return at_PtrArray(&d->idents, id);
+}
+
+const iGmIdentity *constIdentity_GmCerts(const iGmCerts *d, unsigned int id) {
+    return constAt_PtrArray(&d->idents, id);
+}
+
 const iGmIdentity *identityForUrl_GmCerts(const iGmCerts *d, const iString *url) {
     iConstForEach(PtrArray, i, &d->idents) {
         const iGmIdentity *ident = i.ptr;
@@ -436,6 +446,18 @@ iGmIdentity *newIdentity_GmCerts(iGmCerts *d, int flags, iDate validUntil, const
     }
     pushBack_PtrArray(&d->idents, id);
     return id;
+}
+
+void deleteIdentity_GmCerts(iGmCerts *d, iGmIdentity *identity) {
+    /* Only delete the files if we created them. */
+    if (!(identity->flags & (temporary_GmIdentityFlag | imported_GmIdentityFlag))) {
+        const char *finger   = cstrCollect_String(hexEncode_Block(&identity->fingerprint));
+        const char *filename = concatPath_CStr(cstr_String(&d->saveDir), format_CStr("idents/%s", finger));
+        remove(format_CStr("%s.crt", filename));
+        remove(format_CStr("%s.key", filename));
+    }
+    removeOne_PtrArray(&d->idents, identity);
+    collect_GmIdentity(identity);
 }
 
 const iPtrArray *identities_GmCerts(const iGmCerts *d) {
