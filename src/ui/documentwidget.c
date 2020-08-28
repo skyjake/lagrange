@@ -1102,18 +1102,16 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equal_Command(cmd, "document.input.submit")) {
-        if (arg_Command(cmd)) {
-            iString *value = collect_String(suffix_Command(cmd, "value"));
-            urlEncode_String(value);
-            iString *url = collect_String(copy_String(d->mod.url));
-            const size_t qPos = indexOfCStr_String(url, "?");
-            if (qPos != iInvalidPos) {
-                remove_Block(&url->chars, qPos, iInvalidSize);
-            }
-            appendCStr_String(url, "?");
-            append_String(url, value);
-            postCommandf_App("open url:%s", cstr_String(url));
+        iString *value = collect_String(suffix_Command(cmd, "value"));
+        urlEncode_String(value);
+        iString *url = collect_String(copy_String(d->mod.url));
+        const size_t qPos = indexOfCStr_String(url, "?");
+        if (qPos != iInvalidPos) {
+            remove_Block(&url->chars, qPos, iInvalidSize);
         }
+        appendCStr_String(url, "?");
+        append_String(url, value);
+        postCommandf_App("open url:%s", cstr_String(url));
         return iTrue;
     }
     else if (equal_Command(cmd, "valueinput.cancelled") &&
