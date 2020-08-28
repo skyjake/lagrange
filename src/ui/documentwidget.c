@@ -162,7 +162,7 @@ iDefineTypeConstruction(VisBuffer)
 
 /*----------------------------------------------------------------------------------------------*/
 
-static const int smoothSpeed_DocumentWidget_ = 150; /* unit: gap_Text per second */
+static const int smoothSpeed_DocumentWidget_ = 120; /* unit: gap_Text per second */
 
 enum iRequestState {
     blank_RequestState,
