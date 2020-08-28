@@ -1,9 +1,9 @@
 ```
-           __   __             __   ___ 
-|     /\  / _` |__)  /\  |\ | / _` |__  
-|___ /~~\ \__> |  \ /~~\ | \| \__> |___ 
+           __   __             __   ___
+|     /\  / _` |__)  /\  |\ | / _` |__
+|___ /~~\ \__> |  \ /~~\ | \| \__> |___
 
-```                                        
+```
 # Introduction
 
 ## What is Lagrange
@@ -19,7 +19,7 @@ Lagrange relies on a minimal set of dependencies. It is written in C and uses SD
 
 Gemini is a simple protocol for serving content over the internet. It specifies a Markdown inspired format allowing basic plain text document markup. Compared to HTTP and HTML, Gemini is vastly simpler and easier to work with.
 
-=> gemini://gemini.circumlunar.space/docs/faq.gmi   Project Gemini FAQ
+=> gemini://gemini.circumlunar.space/docs/faq.gmi Project Gemini FAQ
 => gemini://gemini.circumlunar.space/docs/specification.gmi Protocol and text/gemini specification
 
 ## Why not just use a web browser
@@ -30,7 +30,7 @@ Modern web browsers are complex beasts. In fact, they are so complex that one ca
 
 If one seeks to just read text and view images, this is absurd overkill. While having a universal platform that runs on everything and everywhere is clearly a valuable notion, it comes with a hefty price tag. The software stack towers ever higher, and similarly hardware needs to be ever more powerful and complicated to run it well. But everything happening over the internet doesn't have to be on this behemoth.
 
-One way to browse Gemini content is via web browser extensions or proxies that translate the content for the web. This may be a sufficient and easy solution for you. However, native clients such as Lagrange also benefit from the simpleness of the protocol and the content. The experience can be optimized, and the software runs well even on simple hardware like the Raspberry Pi. 
+One way to browse Gemini content is via web browser extensions or proxies that translate the content for the web. This may be a sufficient and easy solution for you. However, native clients such as Lagrange also benefit from the simpleness of the protocol and the content. The experience can be optimized, and the software runs well even on simple hardware like the Raspberry Pi.
 
 # User interface
 
@@ -93,7 +93,7 @@ the_Foundation is an opinionated C11 library by Jaakko Keränen. It is under the
 
 ## OpenSSL
 
-OpenSSL 1.1.1 is under a double license, which both apply to the library. 
+OpenSSL 1.1.1 is under a double license, which both apply to the library.
 => https://www.openssl.org/source/license-openssl-ssleay.txt OpenSSL and SSLeay Licenses
 
 > Copyright (c) 1998-2019 The OpenSSL Project.  All rights reserved.

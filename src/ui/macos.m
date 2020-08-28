@@ -278,7 +278,7 @@ static void appearanceChanged_MacOS_(NSString *name) {
         return [[CommandButton alloc] initWithIdentifier:identifier
                                                    title:@"Go to…"
                                                  command:@"pattern.goto arg:-1"];
-    }   
+    }
     else if ([identifier isEqualToString:event_TouchId_]) {
         NSTouchBar *events = [[NSTouchBar alloc] init];
         events.delegate = self;
