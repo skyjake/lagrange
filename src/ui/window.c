@@ -229,10 +229,10 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
                                        isRequestOngoing_DocumentWidget(doc) ? stopCStr_ : reloadCStr_);
         }
     }
-    else if (equal_Command(cmd, "mouse.clicked")) {
+    else if (equal_Command(cmd, "mouse.clicked") && arg_Command(cmd)) {
         iWidget *widget = pointer_Command(cmd);
         iWidget *menu = findWidget_App("doctabs.menu");
-        if (isTabButton_Widget(widget)) {
+        if (isTabButton_Widget(widget) && !isVisible_Widget(menu)) {
             iWidget *tabs = findWidget_App("doctabs");
             showTabPage_Widget(tabs,
                                tabPage_Widget(tabs, childIndex_Widget(widget->parent, widget)));

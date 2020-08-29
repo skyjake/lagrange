@@ -181,7 +181,13 @@ static iBool menuHandler_(iWidget *menu, const char *cmd) {
             /* Don't reopen self; instead, root will close the menu. */
             return iFalse;
         }
-        if (!equal_Command(cmd, "window.resized")) {
+        if (equal_Command(cmd, "mouse.clicked") && arg_Command(cmd)) {
+            /* Dismiss open menus when clicking outside them. */
+            closeMenu_Widget(menu);
+            return iTrue;
+        }
+        if (!equal_Command(cmd, "window.resized") &&
+            !(equal_Command(cmd, "mouse.clicked") && !arg_Command(cmd)) /* ignore button release */) {
             closeMenu_Widget(menu);
         }
     }
