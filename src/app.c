@@ -55,7 +55,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <errno.h>
 
 #if defined (iPlatformApple) && !defined (iPlatformIOS)
-#   include "ui/macos.h"
+#   include "macos.h"
 #endif
 
 iDeclareType(App)

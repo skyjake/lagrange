@@ -95,7 +95,7 @@ set (SOURCES
 )
 if (IOS)
 elseif (APPLE)
-    list (APPEND SOURCES src/ui/macos.m src/ui/macos.h)
+    list (APPEND SOURCES src/macos.m src/macos.h)
     list (APPEND RESOURCES "res/Lagrange.icns")
 endif ()
 if (MSYS)

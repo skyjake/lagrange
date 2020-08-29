@@ -22,9 +22,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "macos.h"
 #include "app.h"
-#include "command.h"
-#include "widget.h"
-#include "color.h"
+#include "ui/command.h"
+#include "ui/widget.h"
+#include "ui/color.h"
 
 #import <AppKit/AppKit.h>
 

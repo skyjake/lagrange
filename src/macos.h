@@ -22,7 +22,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
-#include "util.h"
+#include "ui/util.h"
 
 /* Platform-specific functionality for macOS */
 
