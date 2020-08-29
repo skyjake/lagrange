@@ -508,20 +508,22 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
     const iGmError *msg = get_GmError(code);
     appendChar_String(src, msg->icon ? msg->icon : 0x2327); /* X in a box */
     appendFormat_String(src, " %s\n%s", msg->title, msg->info);
-    switch (code) {
-        case failedToOpenFile_GmStatusCode:
-        case certificateNotValid_GmStatusCode:
-            appendFormat_String(src, "\n\n%s", cstr_String(meta_GmRequest(d->request)));
-            break;
-        case unsupportedMimeType_GmStatusCode:
-            appendFormat_String(src, "\n```\n%s\n```\n", cstr_String(meta_GmRequest(d->request)));
-            break;
-        case slowDown_GmStatusCode:
-            appendFormat_String(src, "\n\nWait %s seconds before your next request.",
-                                cstr_String(meta_GmRequest(d->request)));
-            break;
-        default:
-            break;
+    if (d->request) {
+        switch (code) {
+            case failedToOpenFile_GmStatusCode:
+            case certificateNotValid_GmStatusCode:
+                appendFormat_String(src, "\n\n%s", cstr_String(meta_GmRequest(d->request)));
+                break;
+            case unsupportedMimeType_GmStatusCode:
+                appendFormat_String(src, "\n```\n%s\n```\n", cstr_String(meta_GmRequest(d->request)));
+                break;
+            case slowDown_GmStatusCode:
+                appendFormat_String(src, "\n\nWait %s seconds before your next request.",
+                                    cstr_String(meta_GmRequest(d->request)));
+                break;
+            default:
+                break;
+        }
     }
     setSource_DocumentWidget_(d, src);
     resetSmoothScroll_DocumentWidget_(d);
