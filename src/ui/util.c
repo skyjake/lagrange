@@ -264,7 +264,7 @@ void closeMenu_Widget(iWidget *d) {
 }
 
 int checkContextMenu_Widget(iWidget *menu, const SDL_Event *ev) {
-    if (ev->type == SDL_MOUSEBUTTONDOWN && ev->button.button == SDL_BUTTON_RIGHT) {
+    if (menu && ev->type == SDL_MOUSEBUTTONDOWN && ev->button.button == SDL_BUTTON_RIGHT) {
         if (isVisible_Widget(menu)) {
             closeMenu_Widget(menu);
             return 0x1;
