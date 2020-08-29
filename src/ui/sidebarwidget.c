@@ -195,6 +195,7 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 iDate date;
                 init_Date(&date, &visit->when);
                 if (date.day != on.day || date.month != on.month || date.year != on.year) {
+                    on = date;
                     /* Date separator. */
                     iSidebarItem sep;
                     init_SidebarItem(&sep);
@@ -202,8 +203,11 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                     set_String(&sep.meta,
                                collect_String(format_Date(
                                    &date, date.year != thisYear ? "%b %d %Y" : "%b %d")));
+                    pushBack_Array(&d->items, &sep);                    
+                    /* Date separators are two items tall. */
+                    init_SidebarItem(&sep);
+                    sep.isSeparator = iTrue;
                     pushBack_Array(&d->items, &sep);
-                    on = date;
                 }
                 pushBack_Array(&d->items, &item);
             }
@@ -771,14 +775,19 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         }
         else if (contains_Widget(w, mouse)) {
             hover = itemIndex_SidebarWidget_(d, mouse);
-            if (hover != iInvalidPos && d->mode != identities_SidebarMode) {
-                setCursor_Window(get_Window(), SDL_SYSTEM_CURSOR_HAND);
+        }
+        setHoverItem_SidebarWidget_(d, hover);
+        /* Update cursor. */
+        if (contains_Widget(w, mouse)) {
+            const iSidebarItem *item = constHoverItem_SidebarWidget_(d);
+            if (item && d->mode != identities_SidebarMode) {
+                setCursor_Window(get_Window(), item->isSeparator ? SDL_SYSTEM_CURSOR_ARROW
+                                                                 : SDL_SYSTEM_CURSOR_HAND);
             }
             else {
                 setCursor_Window(get_Window(), SDL_SYSTEM_CURSOR_ARROW);
             }
         }
-        setHoverItem_SidebarWidget_(d, hover);
     }
     if (ev->type == SDL_MOUSEWHEEL && isHover_Widget(w)) {
 #if defined (iPlatformApple)
@@ -928,16 +937,20 @@ static void draw_SidebarWidget_(const iSidebarWidget *d) {
                     const int fg = isHover ? (isPressing ? uiTextPressed_ColorId
                                                          : uiTextFramelessHover_ColorId)
                                            : uiText_ColorId;
-                    if (!isEmpty_String(&item->meta)) {
-                        drawHLine_Paint(
-                            &p, topLeft_Rect(itemRect), width_Rect(itemRect), uiIcon_ColorId);
-                        drawRange_Text(
-                            default_FontId,
-                            add_I2(topLeft_Rect(itemRect),
-                                   init_I2(3 * gap_UI,
-                                           (d->itemHeight - lineHeight_Text(default_FontId)) / 2)),
-                            uiIcon_ColorId,
-                            range_String(&item->meta));
+                    if (item->isSeparator) {
+                        if (!isEmpty_String(&item->meta)) {
+                            unsetClip_Paint(&p);
+                            iInt2 drawPos = addY_I2(topLeft_Rect(itemRect), d->itemHeight * 0.666f);
+                            drawHLine_Paint(
+                                &p, drawPos, width_Rect(itemRect), uiIcon_ColorId);
+                            drawRange_Text(
+                                default_FontId,
+                                add_I2(drawPos,
+                                       init_I2(3 * gap_UI,
+                                               (d->itemHeight - lineHeight_Text(default_FontId)) / 2)),
+                                uiIcon_ColorId,
+                                range_String(&item->meta));
+                        }
                     }
                     else {
                         iUrl parts;

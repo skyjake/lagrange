@@ -321,6 +321,7 @@ static void setupUserInterface_Window(iWindow *d) {
     /* Navigation bar. */ {
         iWidget *navBar = new_Widget();
         setId_Widget(navBar, "navbar");
+        setPadding_Widget(navBar, gap_UI / 2, 0, gap_UI / 2, 0);
         setFlags_Widget(navBar,
                         arrangeHeight_WidgetFlag | resizeChildren_WidgetFlag |
                             arrangeHorizontal_WidgetFlag,
