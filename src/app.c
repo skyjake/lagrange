@@ -125,6 +125,7 @@ const iString *dateStr_(const iDate *date) {
 static iString *serializePrefs_App_(const iApp *d) {
     iString *str = new_String();
     const iSidebarWidget *sidebar = findWidget_App("sidebar");
+    appendFormat_String(str, "window.retain arg:%d\n", d->retainWindowSize);
     if (d->retainWindowSize) {
         int w, h, x, y;
         SDL_GetWindowSize(d->window->win, &w, &h);
@@ -132,7 +133,6 @@ static iString *serializePrefs_App_(const iApp *d) {
         appendFormat_String(str, "window.setrect width:%d height:%d coord:%d %d\n", w, h, x, y);
         appendFormat_String(str, "sidebar.width arg:%d\n", width_SidebarWidget(sidebar));
     }
-    appendFormat_String(str, "retainwindow arg:%d\n", d->retainWindowSize);
     if (isVisible_Widget(constAs_Widget(sidebar))) {
         appendCStr_String(str, "sidebar.toggle\n");
     }
@@ -503,7 +503,7 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
     if (equal_Command(cmd, "prefs.dismiss") || equal_Command(cmd, "preferences")) {
         setUiScale_Window(get_Window(),
                           toFloat_String(text_InputWidget(findChild_Widget(d, "prefs.uiscale"))));
-        postCommandf_App("retainwindow arg:%d",
+        postCommandf_App("window.retain arg:%d",
                          isSelected_Widget(findChild_Widget(d, "prefs.retainwindow")));
         postCommandf_App("ostheme arg:%d",
                          isSelected_Widget(findChild_Widget(d, "prefs.ostheme")));
@@ -629,7 +629,7 @@ static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
 
 iBool handleCommand_App(const char *cmd) {
     iApp *d = &app_;
-    if (equal_Command(cmd, "retainwindow")) {
+    if (equal_Command(cmd, "window.retain")) {
         d->retainWindowSize = arg_Command(cmd);
         return iTrue;
     }
