@@ -22,18 +22,18 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "window.h"
 
-#include "embedded.h"
-#include "app.h"
-#include "command.h"
-#include "paint.h"
-#include "text.h"
-#include "util.h"
-#include "../visited.h"
 #include "labelwidget.h"
 #include "inputwidget.h"
 #include "documentwidget.h"
 #include "sidebarwidget.h"
-#include "gmutil.h"
+#include "embedded.h"
+#include "command.h"
+#include "paint.h"
+#include "util.h"
+#include "../app.h"
+#include "../visited.h"
+#include "../gmcerts.h"
+#include "../gmutil.h"
 #if defined (iPlatformMsys)
 #   include "../win32.h"
 #endif
@@ -150,7 +150,7 @@ static const iMenuItem helpMenuItems[] = {
 #endif
 
 static const iMenuItem identityButtonMenuItems[] = {
-    { "No Active Identity", 0, 0, NULL },
+    { "No Active Identity", 0, 0, "ident.showactive" },
     { "---", 0, 0, NULL },
 #if !defined (iHaveNativeMenus)
     { "New Identity...", SDLK_n, KMOD_PRIMARY | KMOD_SHIFT, "ident.new" },
@@ -165,6 +165,21 @@ static const iMenuItem identityButtonMenuItems[] = {
 
 static const char *reloadCStr_ = "\U0001f503";
 static const char *stopCStr_   = uiTextCaution_ColorEscape "\U0001f310";
+
+static void updateNavBarIdentity_(iWidget *navBar) {
+    const iGmIdentity *ident =
+        identityForUrl_GmCerts(certs_App(), url_DocumentWidget(document_App()));
+    iWidget *button = findChild_Widget(navBar, "navbar.ident");
+    setFlags_Widget(button, selected_WidgetFlag, ident != NULL);
+    /* Update menu. */
+    iLabelWidget *idItem = child_Widget(findChild_Widget(button, "menu"), 0);
+    setTextCStr_LabelWidget(
+        idItem,
+        ident ? format_CStr(uiTextAction_ColorEscape "%s",
+                            cstrCollect_String(subject_TlsCertificate(ident->cert)))
+              : "No Active Identity");
+    setFlags_Widget(as_Widget(idItem), disabled_WidgetFlag, !ident);
+}
 
 static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
     if (equal_Command(cmd, "window.resized")) {
@@ -203,6 +218,7 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
                 const iString *urlStr = collect_String(suffix_Command(cmd, "url"));
                 setText_InputWidget(url, urlStr);
                 updateTextCStr_LabelWidget(reloadButton, reloadCStr_);
+                updateNavBarIdentity_(navBar);
                 return iFalse;
             }
             else if (equal_Command(cmd, "document.request.cancelled")) {
@@ -227,6 +243,7 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
             setText_InputWidget(findChild_Widget(navBar, "url"), url_DocumentWidget(doc));
             updateTextCStr_LabelWidget(findChild_Widget(navBar, "reload"),
                                        isRequestOngoing_DocumentWidget(doc) ? stopCStr_ : reloadCStr_);
+            updateNavBarIdentity_(navBar);
         }
     }
     else if (equal_Command(cmd, "mouse.clicked") && arg_Command(cmd)) {
@@ -317,6 +334,7 @@ static void setupUserInterface_Window(iWindow *d) {
             makeMenuButton_LabelWidget("\U0001f464", identityButtonMenuItems, iElemCount(identityButtonMenuItems));
         setAlignVisually_LabelWidget(idMenu, iTrue);
         addChild_Widget(navBar, iClob(idMenu));
+        setId_Widget(as_Widget(idMenu), "navbar.ident");
         iLabelWidget *lock =
             addChildFlags_Widget(navBar,
                                  iClob(newIcon_LabelWidget("\U0001f513", 0, 0, "server.showcert")),

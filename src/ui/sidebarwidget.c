@@ -245,7 +245,7 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 { "Use on This Page", 0, 0, "ident.use arg:1" },
                 { "Stop Using This Page", 0, 0, "ident.use arg:0" },
                 { "Stop Using Everywhere", 0, 0, "ident.use arg:0 clear:1" },
-                { "View Use URLs", 0, 0, "ident.showuse" },
+                { "Show Usage", 0, 0, "ident.showuse" },
                 { "---", 0, 0, NULL },
                 { "Edit Notes...", 0, 0, "ident.edit" },
                 { "Pick Icon...", 0, 0, "ident.pickicon" },
