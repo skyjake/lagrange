@@ -246,8 +246,11 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                     appendFormat_String(&item.meta, "\n%s", expiry);
                 }
                 else {
-                    appendFormat_String(
-                        &item.meta, " \u2014 %s\n%s", expiry, cstr_String(&ident->notes));
+                    appendFormat_String(&item.meta,
+                                        " \u2014 %s\n%s%s",
+                                        expiry,
+                                        escape_Color(uiHeading_ColorId),
+                                        cstr_String(&ident->notes));
                 }
                 item.isSelected = isActive;
                 pushBack_Array(&d->items, &item);
@@ -974,18 +977,20 @@ static void draw_SidebarWidget_(const iSidebarWidget *d) {
                     addv_I2(&cPos,
                             init_I2(3 * gap_UI,
                                     (d->itemHeight - lineHeight_Text(default_FontId) * 2 -
-                                     lineHeight_Text(font)) / 2));
-                    const int metaFg = isHover ? (isPressing ? uiTextPressed_ColorId
-                                                             : uiTextFramelessHover_ColorId)
-                                               : uiText_ColorId;
+                                     lineHeight_Text(font)) /
+                                        2));
+                    const int metaFg =
+                        isHover ? permanent_ColorId | (isPressing ? uiTextPressed_ColorId
+                                                                  : uiTextFramelessHover_ColorId)
+                                : uiText_ColorId;
                     drawRange_Text(
                         font, cPos, item->isSelected ? iconColor : metaFg, range_String(&icon));
                     deinit_String(&icon);
-                    drawRange_Text(font, add_I2(cPos, init_I2(7 * gap_UI, 0)),
+                    drawRange_Text(font, add_I2(cPos, init_I2(6 * gap_UI, 0)),
                                    fg, range_String(&item->label));
                     drawRange_Text(
                         default_FontId,
-                        add_I2(cPos, init_I2(0, lineHeight_Text(font))),
+                        add_I2(cPos, init_I2(6 * gap_UI, lineHeight_Text(font))),
                         metaFg,
                         range_String(&item->meta));
                 }
