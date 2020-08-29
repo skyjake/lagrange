@@ -49,6 +49,7 @@ struct Impl_SidebarItem {
     iString     meta;
     iString     url;
     iBool       isSeparator;
+    iBool       isSelected;
 };
 
 void init_SidebarItem(iSidebarItem *d) {
@@ -59,6 +60,7 @@ void init_SidebarItem(iSidebarItem *d) {
     init_String(&d->meta);
     init_String(&d->url);
     d->isSeparator = iFalse;
+    d->isSelected = iFalse;
 }
 
 void deinit_SidebarItem(iSidebarItem *d) {
@@ -218,9 +220,9 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
             break;
         }
         case identities_SidebarMode: {
+            const iString *tabUrl = url_DocumentWidget(document_App());
             iConstForEach(PtrArray, i, identities_GmCerts(certs_App())) {
                 const iGmIdentity *ident = i.ptr;
-                /* icon, common name, used URLs, expiration, isTemp, free-form notes */
                 iSidebarItem item;
                 init_SidebarItem(&item);
                 item.id = index_PtrArrayConstIterator(&i);
@@ -228,17 +230,26 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 set_String(&item.label, collect_String(subject_TlsCertificate(ident->cert)));
                 iDate until;
                 validUntil_TlsCertificate(ident->cert, &until);
-                set_String(
+                const iBool isActive = isUsedOn_GmIdentity(ident, tabUrl);
+                format_String(
                     &item.meta,
-                    collectNewFormat_String(
-                        "%s \u2014 %s\n%s",
-                        isUsed_GmIdentity(ident)
-                            ? format_CStr("Used on %zu URLs", size_StringSet(ident->useUrls))
-                            : "Not used",
-                        ident->flags & temporary_GmIdentityFlag
-                            ? "Temporary"
-                            : cstrCollect_String(format_Date(&until, "Expires %b %d, %Y")),
-                        cstr_String(&ident->notes)));
+                    "%s",
+                    isActive ? "Using"
+                             : isUsed_GmIdentity(ident)
+                                   ? format_CStr("Used on %zu URLs", size_StringSet(ident->useUrls))
+                                   : "Not used");
+                const char *expiry =
+                    ident->flags & temporary_GmIdentityFlag
+                        ? "Temporary"
+                        : cstrCollect_String(format_Date(&until, "Expires %b %d, %Y"));
+                if (isEmpty_String(&ident->notes)) {
+                    appendFormat_String(&item.meta, "\n%s", expiry);
+                }
+                else {
+                    appendFormat_String(
+                        &item.meta, " \u2014 %s\n%s", expiry, cstr_String(&ident->notes));
+                }
+                item.isSelected = isActive;
                 pushBack_Array(&d->items, &item);
             }
             const iMenuItem menuItems[] = {
@@ -287,7 +298,7 @@ void setMode_SidebarWidget(iSidebarWidget *d, enum iSidebarMode mode) {
     for (enum iSidebarMode i = 0; i < max_SidebarMode; i++) {
         setFlags_Widget(as_Widget(d->modeButtons[i]), selected_WidgetFlag, i == d->mode);
     }
-    const float heights[max_SidebarMode] = { 1.333f, 1.333f, 3.0f, 1.2f };
+    const float heights[max_SidebarMode] = { 1.333f, 1.333f, 3.5f, 1.2f };
     d->itemHeight = heights[mode] * lineHeight_Text(uiContent_FontId);
     invalidate_SidebarWidget_(d);
     /* Restore previous scroll position. */
@@ -388,6 +399,51 @@ static size_t itemIndex_SidebarWidget_(const iSidebarWidget *d, iInt2 pos) {
     return index;
 }
 
+static const iSidebarItem *constHoverItem_SidebarWidget_(const iSidebarWidget *d) {
+    if (d->hoverItem < size_Array(&d->items)) {
+        return constAt_Array(&d->items, d->hoverItem);
+    }
+    return NULL;
+}
+
+static iSidebarItem *hoverItem_SidebarWidget_(iSidebarWidget *d) {
+    if (d->hoverItem < size_Array(&d->items)) {
+        return at_Array(&d->items, d->hoverItem);
+    }
+    return NULL;
+}
+
+static const iGmIdentity *constHoverIdentity_SidebarWidget_(const iSidebarWidget *d) {
+    if (d->mode == identities_SidebarMode) {
+        const iSidebarItem *hoverItem = constHoverItem_SidebarWidget_(d);
+        if (hoverItem) {
+            return identity_GmCerts(certs_App(), hoverItem->id);
+        }
+    }
+    return NULL;
+}
+
+static iGmIdentity *hoverIdentity_SidebarWidget_(const iSidebarWidget *d) {
+    return iConstCast(iGmIdentity *, constHoverIdentity_SidebarWidget_(d));
+}
+
+static void setHoverItem_SidebarWidget_(iSidebarWidget *d, size_t index) {
+    if (index < size_Array(&d->items)) {
+        if (constValue_Array(&d->items, index, iSidebarItem).isSeparator) {
+            index = iInvalidPos;
+        }
+    }
+    if (d->hoverItem != index) {
+        d->hoverItem = index;
+        invalidate_SidebarWidget_(d);
+    }
+}
+
+static void updateMouseHover_SidebarWidget_(iSidebarWidget *d) {
+    const iInt2 mouse = mouseCoord_Window(get_Window());
+    setHoverItem_SidebarWidget_(d, itemIndex_SidebarWidget_(d, mouse));
+}
+
 static void itemClicked_SidebarWidget_(iSidebarWidget *d, size_t index) {
     const iSidebarItem *item = constAt_Array(&d->items, index);
     switch (d->mode) {
@@ -405,6 +461,18 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, size_t index) {
             break;
         }
         case identities_SidebarMode: {
+            iGmIdentity *ident = hoverIdentity_SidebarWidget_(d);
+            if (ident) {
+                const iString *tabUrl = url_DocumentWidget(document_App());
+                if (isUsedOn_GmIdentity(ident, tabUrl)) {
+                    signOut_GmCerts(certs_App(), tabUrl);
+                }
+                else {
+                    signIn_GmCerts(certs_App(), ident, tabUrl);
+                }
+                updateItems_SidebarWidget_(d);
+                updateMouseHover_SidebarWidget_(d);
+            }
             break;
         }
         default:
@@ -425,20 +493,6 @@ static void checkModeButtonLayout_SidebarWidget_(iSidebarWidget *d) {
             updateTextCStr_LabelWidget(d->modeButtons[i], normalModeLabels_[i]);
         }
     }
-}
-
-static const iSidebarItem *constHoverItem_SidebarWidget_(const iSidebarWidget *d) {
-    if (d->hoverItem < size_Array(&d->items)) {
-        return constAt_Array(&d->items, d->hoverItem);
-    }
-    return NULL;
-}
-
-static iSidebarItem *hoverItem_SidebarWidget_(iSidebarWidget *d) {
-    if (d->hoverItem < size_Array(&d->items)) {
-        return at_Array(&d->items, d->hoverItem);
-    }
-    return NULL;
 }
 
 void setWidth_SidebarWidget(iSidebarWidget *d, int width) {
@@ -476,27 +530,6 @@ iBool handleBookmarkEditorCommands_SidebarWidget_(iWidget *editor, const char *c
         return iTrue;
     }
     return iFalse;
-}
-
-static const iGmIdentity *constHoverIdentity_SidebarWidget_(const iSidebarWidget *d) {
-    if (d->mode == identities_SidebarMode) {
-        const iSidebarItem *hoverItem = constHoverItem_SidebarWidget_(d);
-        if (hoverItem) {
-            return identity_GmCerts(certs_App(), hoverItem->id);
-        }
-    }
-    return NULL;
-}
-
-static iGmIdentity *hoverIdentity_SidebarWidget_(const iSidebarWidget *d) {
-    return iConstCast(iGmIdentity *, constHoverIdentity_SidebarWidget_(d));
-}
-
-static void setHoverItem_SidebarWidget_(iSidebarWidget *d, size_t index) {
-    if (d->hoverItem != index) {
-        d->hoverItem = index;
-        invalidate_SidebarWidget_(d);
-    }
 }
 
 static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev) {
@@ -607,14 +640,17 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             updateItems_SidebarWidget_(d);
         }
         else if (isCommand_Widget(w, ev, "ident.use")) {
-            iGmIdentity *ident = hoverIdentity_SidebarWidget_(d);
+            iGmIdentity *  ident  = hoverIdentity_SidebarWidget_(d);
+            const iString *tabUrl = url_DocumentWidget(document_App());
             if (ident) {
                 if (argLabel_Command(cmd, "clear")) {
                     clearUse_GmIdentity(ident);
                 }
+                else if (arg_Command(cmd)) {
+                    signIn_GmCerts(certs_App(), ident, tabUrl);
+                }
                 else {
-                    setUse_GmIdentity(
-                        ident, url_DocumentWidget(document_App()), arg_Command(cmd) != 0);
+                    signOut_GmCerts(certs_App(), tabUrl);
                 }
                 updateItems_SidebarWidget_(d);
             }
@@ -629,6 +665,23 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             return iTrue;
         }
         else if (isCommand_Widget(w, ev, "ident.edit")) {
+            const iGmIdentity *ident = constHoverIdentity_SidebarWidget_(d);
+            if (ident) {
+                makeValueInput_Widget(get_Window()->root,
+                                      &ident->notes,
+                                      uiHeading_ColorEscape "IDENTITY NOTES",
+                                      format_CStr("Notes about %s:", cstr_String(name_GmIdentity(ident))),
+                                      uiTextAction_ColorEscape "OK",
+                                      format_CStr("ident.setnotes ident:%p", ident));
+            }
+            return iTrue;
+        }
+        else if (equal_Command(cmd, "ident.setnotes")) {
+            iGmIdentity *ident = pointerLabel_Command(cmd, "ident");
+            if (ident) {
+                setCStr_String(&ident->notes, suffixPtr_Command(cmd, "value"));
+                updateItems_SidebarWidget_(d);
+            }
             return iTrue;
         }
         else if (isCommand_Widget(w, ev, "ident.pickicon")) {
@@ -907,20 +960,33 @@ static void draw_SidebarWidget_(const iSidebarWidget *d) {
                 else if (d->mode == identities_SidebarMode) {
                     const int fg = isHover ? (isPressing ? uiTextPressed_ColorId
                                                          : uiTextFramelessHover_ColorId)
-                                           : uiText_ColorId;
+                                           : uiTextStrong_ColorId;
+                    if (item->isSelected) {
+                        drawRectThickness_Paint(&p,
+                                                adjusted_Rect(itemRect, zero_I2(), init_I2(-2, -1)),
+                                                gap_UI / 4,
+                                                isHover && isPressing ? uiTextPressed_ColorId
+                                                                      : uiIcon_ColorId);
+                    }
                     iString icon;
-                    initUnicodeN_String(&icon, &item->icon, 1);
-                    drawRange_Text(font, add_I2(topLeft_Rect(itemRect), init_I2(3 * gap_UI, 0)),
-                                   iconColor, range_String(&icon));
+                    initUnicodeN_String(&icon, &item->icon, 1);                    
+                    iInt2 cPos = topLeft_Rect(itemRect);
+                    addv_I2(&cPos,
+                            init_I2(3 * gap_UI,
+                                    (d->itemHeight - lineHeight_Text(default_FontId) * 2 -
+                                     lineHeight_Text(font)) / 2));
+                    const int metaFg = isHover ? (isPressing ? uiTextPressed_ColorId
+                                                             : uiTextFramelessHover_ColorId)
+                                               : uiText_ColorId;
+                    drawRange_Text(
+                        font, cPos, item->isSelected ? iconColor : metaFg, range_String(&icon));
                     deinit_String(&icon);
-                    drawRange_Text(font, add_I2(topLeft_Rect(itemRect), init_I2(10 * gap_UI, 0)),
+                    drawRange_Text(font, add_I2(cPos, init_I2(7 * gap_UI, 0)),
                                    fg, range_String(&item->label));
                     drawRange_Text(
-                        font,
-                        add_I2(topLeft_Rect(itemRect), init_I2(3 * gap_UI, lineHeight_Text(font))),
-                        isHover
-                            ? (isPressing ? uiTextPressed_ColorId : uiTextFramelessHover_ColorId)
-                            : uiAnnotation_ColorId,
+                        default_FontId,
+                        add_I2(cPos, init_I2(0, lineHeight_Text(font))),
+                        metaFg,
                         range_String(&item->meta));
                 }
                 unsetClip_Paint(&p);

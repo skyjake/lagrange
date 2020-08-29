@@ -170,6 +170,10 @@ void clearUse_GmIdentity(iGmIdentity *d) {
     clear_StringSet(d->useUrls);
 }
 
+const iString *name_GmIdentity(const iGmIdentity *d) {
+    return collect_String(subject_TlsCertificate(d->cert));
+}
+
 iDefineTypeConstruction(GmIdentity)
 
 /*-----------------------------------------------------------------------------------------------*/
@@ -481,3 +485,13 @@ const iPtrArray *identities_GmCerts(const iGmCerts *d) {
     return &d->idents;
 }
 
+void signIn_GmCerts(iGmCerts *d, iGmIdentity *identity, const iString *url) {
+    signOut_GmCerts(d, url);
+    setUse_GmIdentity(identity, url, iTrue);
+}
+
+void signOut_GmCerts(iGmCerts *d, const iString *url) {
+    iForEach(PtrArray, i, &d->idents) {
+        setUse_GmIdentity(i.ptr, url, iFalse);
+    }
+}

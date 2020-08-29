@@ -50,6 +50,8 @@ iBool   isUsedOn_GmIdentity (const iGmIdentity *, const iString *url);
 void    setUse_GmIdentity   (iGmIdentity *, const iString *url, iBool use);
 void    clearUse_GmIdentity (iGmIdentity *);
 
+const iString *name_GmIdentity(const iGmIdentity *);
+
 /*----------------------------------------------------------------------------------------------*/
 
 iDeclareType(GmCerts)
@@ -81,3 +83,6 @@ iGmIdentity *       identity_GmCerts        (iGmCerts *, unsigned int id);
 const iGmIdentity * constIdentity_GmCerts   (const iGmCerts *, unsigned int id);
 const iGmIdentity * identityForUrl_GmCerts  (const iGmCerts *, const iString *url);
 const iPtrArray *   identities_GmCerts      (const iGmCerts *);
+
+void                signIn_GmCerts          (iGmCerts *, iGmIdentity *identity, const iString *url);
+void                signOut_GmCerts         (iGmCerts *, const iString *url);
