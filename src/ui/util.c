@@ -860,17 +860,19 @@ iWidget *makeIdentityCreation_Widget(void) {
         page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
     iWidget *values = addChildFlags_Widget(
         page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
-    iInputWidget *inputs[5];
+    iInputWidget *inputs[6];
     addChild_Widget(headings, iClob(makeHeading_Widget("Common name:")));
     setId_Widget(addChild_Widget(values, iClob(inputs[0] = new_InputWidget(0))), "ident.common");
+    addChild_Widget(headings, iClob(makeHeading_Widget("Email:")));
+    setId_Widget(addChild_Widget(values, iClob(inputs[1] = newHint_InputWidget(0, "optional"))), "ident.email");
     addChild_Widget(headings, iClob(makeHeading_Widget("User ID:")));
-    setId_Widget(addChild_Widget(values, iClob(inputs[1] = newHint_InputWidget(0, "optional"))), "ident.userid");
+    setId_Widget(addChild_Widget(values, iClob(inputs[2] = newHint_InputWidget(0, "optional"))), "ident.userid");
     addChild_Widget(headings, iClob(makeHeading_Widget("Domain:")));
-    setId_Widget(addChild_Widget(values, iClob(inputs[2] = newHint_InputWidget(0, "optional"))), "ident.domain");
+    setId_Widget(addChild_Widget(values, iClob(inputs[3] = newHint_InputWidget(0, "optional"))), "ident.domain");
     addChild_Widget(headings, iClob(makeHeading_Widget("Organization:")));
-    setId_Widget(addChild_Widget(values, iClob(inputs[3] = newHint_InputWidget(0, "optional"))), "ident.org");
+    setId_Widget(addChild_Widget(values, iClob(inputs[4] = newHint_InputWidget(0, "optional"))), "ident.org");
     addChild_Widget(headings, iClob(makeHeading_Widget("Country:")));
-    setId_Widget(addChild_Widget(values, iClob(inputs[4] = newHint_InputWidget(0, "optional"))), "ident.country");
+    setId_Widget(addChild_Widget(values, iClob(inputs[5] = newHint_InputWidget(0, "optional"))), "ident.country");
     addChild_Widget(headings, iClob(makeHeading_Widget("Valid until:")));
     setId_Widget(addChild_Widget(values, iClob(newHint_InputWidget(19, "YYYY-MM-DD HH:MM:SS"))), "ident.until");
     addChild_Widget(headings, iClob(makeHeading_Widget("Temporary:")));

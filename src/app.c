@@ -569,6 +569,7 @@ static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
     if (equal_Command(cmd, "ident.accept") || equal_Command(cmd, "cancel")) {        
         if (equal_Command(cmd, "ident.accept")) {
             const iString *commonName   = text_InputWidget (findChild_Widget(dlg, "ident.common"));
+            const iString *email        = text_InputWidget (findChild_Widget(dlg, "ident.email"));
             const iString *userId       = text_InputWidget (findChild_Widget(dlg, "ident.userid"));
             const iString *domain       = text_InputWidget (findChild_Widget(dlg, "ident.domain"));
             const iString *organization = text_InputWidget (findChild_Widget(dlg, "ident.org"));
@@ -616,7 +617,7 @@ static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
             }
             /* The input seems fine. */
             newIdentity_GmCerts(d->certs, isTemp ? temporary_GmIdentityFlag : 0,
-                                until, commonName, userId, domain, organization, country);
+                                until, commonName, email, userId, domain, organization, country);
             postCommandf_App("sidebar.mode arg:%d show:1", identities_SidebarMode);
             postCommand_App("idents.changed");
         }
