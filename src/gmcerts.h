@@ -69,9 +69,9 @@ iBool               checkTrust_GmCerts      (iGmCerts *, iRangecc domain, const 
  * @returns Created identity. GmCerts retains ownership of returned object.
  */
 iGmIdentity *       newIdentity_GmCerts     (iGmCerts *, int flags, iDate validUntil,
-                                             const iString *commonName, const iString *userId,
-                                             const iString *domain, const iString *org,
-                                             const iString *country);
+                                             const iString *commonName, const iString *email,
+                                             const iString *userId, const iString *domain,
+                                             const iString *org, const iString *country);
 
 void                deleteIdentity_GmCerts  (iGmCerts *, iGmIdentity *identity);
 

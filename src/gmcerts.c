@@ -277,6 +277,7 @@ static void loadIdentityFromCertificate_GmCerts_(iGmCerts *d, const iString *crt
         iDate today;
         initCurrent_Date(&today);
         set_String(&ident->notes, collect_String(format_Date(&today, "Imported on %b %d, %Y")));
+        pushBack_PtrArray(&d->idents, ident);
     }
     setCertificate_GmIdentity_(ident, cert);
     delete_Block(finger);
@@ -414,15 +415,16 @@ const iGmIdentity *identityForUrl_GmCerts(const iGmCerts *d, const iString *url)
 }
 
 iGmIdentity *newIdentity_GmCerts(iGmCerts *d, int flags, iDate validUntil, const iString *commonName,
-                                 const iString *userId, const iString *domain, const iString *org,
-                                 const iString *country) {
+                                 const iString *email, const iString *userId, const iString *domain,
+                                 const iString *org, const iString *country) {
     const iTlsCertificateName names[] = {
         { issuerCommonName_TlsCertificateNameType,    collectNewCStr_String("Lagrange v" LAGRANGE_APP_VERSION) },
         { issuerDomain_TlsCertificateNameType,        collectNewCStr_String("lagrange.skyjake.fi") },
         { subjectCommonName_TlsCertificateNameType,   commonName },
-        { subjectUserId_TlsCertificateNameType,       !isEmpty_String(userId) ? userId : NULL },
-        { subjectDomain_TlsCertificateNameType,       !isEmpty_String(domain) ? domain : NULL },
-        { subjectOrganization_TlsCertificateNameType, !isEmpty_String(org) ? org : NULL },
+        { subjectEmailAddress_TlsCertificateNameType, !isEmpty_String(email)   ? email   : NULL },
+        { subjectUserId_TlsCertificateNameType,       !isEmpty_String(userId)  ? userId  : NULL },
+        { subjectDomain_TlsCertificateNameType,       !isEmpty_String(domain)  ? domain  : NULL },
+        { subjectOrganization_TlsCertificateNameType, !isEmpty_String(org)     ? org     : NULL },
         { subjectCountry_TlsCertificateNameType,      !isEmpty_String(country) ? country : NULL },
         { 0, NULL }
     };

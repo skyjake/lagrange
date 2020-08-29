@@ -384,7 +384,6 @@ static const iBlock *replaceVariables_(const iBlock *block) {
             }
             remove_Block(replaced, span.start, size_Range(&span));
             insertData_Block(replaced, span.start, repl.start, size_Range(&repl));
-            printf("{%s}\n", cstr_Block(replaced));
             iZap(m);
         } while (matchRange_RegExp(var, range_Block(replaced), &m));
         block = replaced;
