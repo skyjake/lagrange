@@ -452,6 +452,7 @@ static void updateMouseHover_SidebarWidget_(iSidebarWidget *d) {
 }
 
 static void itemClicked_SidebarWidget_(iSidebarWidget *d, size_t index) {
+    setFocus_Widget(NULL);
     const iSidebarItem *item = constAt_Array(&d->items, index);
     switch (d->mode) {
         case documentOutline_SidebarMode: {

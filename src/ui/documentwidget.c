@@ -1097,7 +1097,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                                                           : "Not trusted"));
         return iTrue;
     }
-    else if (equal_Command(cmd, "copy") && document_App() == d) {
+    else if (equal_Command(cmd, "copy") && document_App() == d && !focus_Widget()) {
         iString *copied;
         if (d->selectMark.start) {
             iRangecc mark = d->selectMark;
@@ -1441,6 +1441,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         case drag_ClickResult: {
             /* Begin selecting a range of text. */
             if (!d->selecting) {
+                setFocus_Widget(NULL); /* TODO: Focus this document? */
                 d->selecting = iTrue;
                 d->selectMark.start = d->selectMark.end =
                     sourceLoc_DocumentWidget_(d, d->click.startPos);

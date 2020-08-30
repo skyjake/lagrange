@@ -29,7 +29,24 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <SDL_clipboard.h>
 #include <SDL_timer.h>
 
-static const int REFRESH_INTERVAL = 256;
+static const int    refreshInterval_InputWidget_ = 256;
+static const size_t maxUndo_InputWidget_         = 64;
+
+iDeclareType(InputUndo)
+
+struct Impl_InputUndo {
+    iArray text;
+    size_t cursor;
+};
+
+static void init_InputUndo_(iInputUndo *d, const iArray *text, size_t cursor) {
+    initCopy_Array(&d->text, text);
+    d->cursor = cursor;
+}
+
+static void deinit_InputUndo_(iInputUndo *d) {
+    deinit_Array(&d->text);
+}
 
 struct Impl_InputWidget {
     iWidget         widget;
@@ -44,12 +61,20 @@ struct Impl_InputWidget {
     size_t          cursor;
     size_t          lastCursor;
     iRanges         mark;
+    iArray          undoStack;
     int             font;
     iClick          click;
     uint32_t        timer;
 };
 
 iDefineObjectConstructionArgs(InputWidget, (size_t maxLen), maxLen)
+
+static void clearUndo_InputWidget_(iInputWidget *d) {
+    iForEach(Array, i, &d->undoStack) {
+        deinit_InputUndo_(i.value);
+    }
+    clear_Array(&d->undoStack);
+}
 
 void init_InputWidget(iInputWidget *d, size_t maxLen) {
     iWidget *w = &d->widget;
@@ -58,6 +83,7 @@ void init_InputWidget(iInputWidget *d, size_t maxLen) {
     init_Array(&d->text, sizeof(iChar));
     init_Array(&d->oldText, sizeof(iChar));
     init_String(&d->hint);
+    init_Array(&d->undoStack, sizeof(iInputUndo));
     d->font   = uiInput_FontId;
     d->cursor = 0;
     iZap(d->mark);
@@ -73,12 +99,37 @@ void init_InputWidget(iInputWidget *d, size_t maxLen) {
 }
 
 void deinit_InputWidget(iInputWidget *d) {
+    clearUndo_InputWidget_(d);
+    deinit_Array(&d->undoStack);
     if (d->timer) {
         SDL_RemoveTimer(d->timer);
     }
     deinit_String(&d->hint);
     deinit_Array(&d->oldText);
     deinit_Array(&d->text);
+}
+
+static void pushUndo_InputWidget_(iInputWidget *d) {
+    iInputUndo undo;
+    init_InputUndo_(&undo, &d->text, d->cursor);
+    pushBack_Array(&d->undoStack, &undo);
+    if (size_Array(&d->undoStack) > maxUndo_InputWidget_) {
+        deinit_InputUndo_(front_Array(&d->undoStack));
+        popFront_Array(&d->undoStack);
+    }
+}
+
+static iBool popUndo_InputWidget_(iInputWidget *d) {
+    if (!isEmpty_Array(&d->undoStack)) {
+        iInputUndo *undo = back_Array(&d->undoStack);
+        setCopy_Array(&d->text, &undo->text);
+        d->cursor = undo->cursor;
+        deinit_InputUndo_(undo);
+        popBack_Array(&d->undoStack);
+        iZap(d->mark);
+        return iTrue;
+    }
+    return iFalse;
 }
 
 void setMode_InputWidget(iInputWidget *d, enum iInputMode mode) {
@@ -113,6 +164,7 @@ void setHint_InputWidget(iInputWidget *d, const char *hintText) {
 }
 
 void setText_InputWidget(iInputWidget *d, const iString *text) {
+    clearUndo_InputWidget_(d);
     clear_Array(&d->text);
     iConstForEach(String, i, text) {
         pushBack_Array(&d->text, &i.value);
@@ -148,7 +200,7 @@ void begin_InputWidget(iInputWidget *d) {
     SDL_StartTextInput();
     setFlags_Widget(w, selected_WidgetFlag, iTrue);
     refresh_Widget(w);
-    d->timer = SDL_AddTimer(REFRESH_INTERVAL, refreshTimer_, d);
+    d->timer = SDL_AddTimer(refreshInterval_InputWidget_, refreshTimer_, d);
     d->enterPressed = iFalse;
     if (d->selectAllOnFocus) {
         d->mark = (iRanges){ 0, size_Array(&d->text) };
@@ -233,11 +285,15 @@ static iRanges mark_InputWidget_(const iInputWidget *d) {
     return (iRanges){ iMin(d->mark.start, d->mark.end), iMax(d->mark.start, d->mark.end) };
 }
 
-static void deleteMarked_InputWidget_(iInputWidget *d) {
+static iBool deleteMarked_InputWidget_(iInputWidget *d) {
     const iRanges m = mark_InputWidget_(d);
-    removeRange_Array(&d->text, m);
-    setCursor_InputWidget(d, m.start);
-    iZap(d->mark);
+    if (!isEmpty_Range(&m)) {
+        removeRange_Array(&d->text, m);
+        setCursor_InputWidget(d, m.start);
+        iZap(d->mark);
+        return iTrue;
+    }
+    return iFalse;
 }
 
 static iBool isWordChar_InputWidget_(const iInputWidget *d, size_t pos) {
@@ -325,14 +381,32 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
         const int mods = keyMods_Sym(ev->key.keysym.mod);
         if (mods == KMOD_PRIMARY) {
             switch (key) {
+                case 'c':
+                case 'x':
+                    if (!isEmpty_Range(&d->mark)) {
+                        const iRanges m = mark_InputWidget_(d);
+                        SDL_SetClipboardText(cstrCollect_String(
+                            newUnicodeN_String(constAt_Array(&d->text, m.start), size_Range(&m))));
+                        if (key == 'x') {
+                            pushUndo_InputWidget_(d);
+                            deleteMarked_InputWidget_(d);
+                        }
+                    }
+                    return iTrue;
                 case 'v':
                     if (SDL_HasClipboardText()) {
+                        pushUndo_InputWidget_(d);
                         char *text = SDL_GetClipboardText();
                         iString *paste = collect_String(newCStr_String(text));
                         SDL_free(text);
                         iConstForEach(String, i, paste) {
                             insertChar_InputWidget_(d, i.value);
                         }
+                    }
+                    return iTrue;
+                case 'z':
+                    if (popUndo_InputWidget_(d)) {
+                        refresh_Widget(w);
                     }
                     return iTrue;
             }
@@ -350,14 +424,17 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                 return iTrue;
             case SDLK_BACKSPACE:
                 if (!isEmpty_Range(&d->mark)) {
+                    pushUndo_InputWidget_(d);
                     deleteMarked_InputWidget_(d);
                 }
                 else if (mods & KMOD_ALT) {
+                    pushUndo_InputWidget_(d);
                     d->mark.start = d->cursor;
                     d->mark.end   = skipWord_InputWidget_(d, d->cursor, -1);
                     deleteMarked_InputWidget_(d);
                 }
                 else if (d->cursor > 0) {
+                    pushUndo_InputWidget_(d);
                     remove_Array(&d->text, --d->cursor);
                 }
                 refresh_Widget(w);
@@ -366,27 +443,32 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                 if (mods != KMOD_CTRL) break;
             case SDLK_DELETE:
                 if (!isEmpty_Range(&d->mark)) {
+                    pushUndo_InputWidget_(d);
                     deleteMarked_InputWidget_(d);
                 }
                 else if (mods & KMOD_ALT) {
+                    pushUndo_InputWidget_(d);
                     d->mark.start = d->cursor;
                     d->mark.end   = skipWord_InputWidget_(d, d->cursor, +1);
                     deleteMarked_InputWidget_(d);
                 }
                 else if (d->cursor < size_Array(&d->text)) {
+                    pushUndo_InputWidget_(d);
                     remove_Array(&d->text, d->cursor);
-                    refresh_Widget(w);
                 }
+                refresh_Widget(w);
                 return iTrue;
             case SDLK_k:
                 if (mods == KMOD_CTRL) {
                     if (!isEmpty_Range(&d->mark)) {
+                        pushUndo_InputWidget_(d);
                         deleteMarked_InputWidget_(d);
                     }
                     else {
+                        pushUndo_InputWidget_(d);
                         removeN_Array(&d->text, d->cursor, size_Array(&d->text) - d->cursor);
-                        refresh_Widget(w);
                     }
+                    refresh_Widget(w);
                     return iTrue;
                 }
                 break;
@@ -396,8 +478,17 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                 refresh_Widget(w);
                 return iTrue;
             case SDLK_a:
+#if defined (iPlatformApple)
+                if (mods == KMOD_PRIMARY) {
+                    d->mark.start = 0;
+                    d->mark.end   = curMax;
+                    d->cursor     = curMax;
+                    return iTrue;
+                }
+#endif
+                /* fall through for Emacs-style Home/End */
             case SDLK_e:
-                if (!(mods & ~(KMOD_CTRL | KMOD_SHIFT))) {
+                if (mods == KMOD_CTRL || mods == (KMOD_CTRL | KMOD_SHIFT)) {
                     setCursor_InputWidget(d, key == 'a' ? 0 : curMax);
                     refresh_Widget(w);
                     return iTrue;
@@ -433,6 +524,8 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
         return iTrue;
     }
     else if (ev->type == SDL_TEXTINPUT && isFocused_Widget(w)) {
+        pushUndo_InputWidget_(d);
+        deleteMarked_InputWidget_(d);
         const iString *uni = collectNewCStr_String(ev->text.text);
         iConstForEach(String, i, uni) {
             insertChar_InputWidget_(d, i.value);
