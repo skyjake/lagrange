@@ -227,6 +227,11 @@ static const struct {
         "Invalid Redirect",
         "The server responded with a redirect but did not provide a valid destination URL. "
         "Perhaps the server is malfunctioning." } },
+    { nonGeminiRedirect_GmStatusCode,
+      { 0x27a0, /* dashed arrow */
+        "Redirect to Non-Gemini URL",
+        "The server attempted to redirect us to a non-Gemini URL. Here is the link so you "
+        "can open it manually if appropriate."} },
     { temporaryFailure_GmStatusCode,
       { 0x1f50c, /* electric plug */
         "Temporary Failure",

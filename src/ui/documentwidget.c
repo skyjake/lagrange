@@ -503,23 +503,27 @@ static void setSource_DocumentWidget_(iDocumentWidget *d, const iString *source)
     refresh_Widget(as_Widget(d));
 }
 
-static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode code) {
+static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode code,
+                                          const iString *meta) {
     iString *src = collectNewCStr_String("# ");
     const iGmError *msg = get_GmError(code);
     appendChar_String(src, msg->icon ? msg->icon : 0x2327); /* X in a box */
     appendFormat_String(src, " %s\n%s", msg->title, msg->info);
-    if (d->request) {
+    if (meta) {
         switch (code) {
+            case nonGeminiRedirect_GmStatusCode:
+                appendFormat_String(src, "\n=> %s\n", cstr_String(meta));
+                break;
             case failedToOpenFile_GmStatusCode:
             case certificateNotValid_GmStatusCode:
-                appendFormat_String(src, "\n\n%s", cstr_String(meta_GmRequest(d->request)));
+                appendFormat_String(src, "\n\n%s", cstr_String(meta));
                 break;
             case unsupportedMimeType_GmStatusCode:
-                appendFormat_String(src, "\n```\n%s\n```\n", cstr_String(meta_GmRequest(d->request)));
+                appendFormat_String(src, "\n```\n%s\n```\n", cstr_String(meta));
                 break;
             case slowDown_GmStatusCode:
                 appendFormat_String(src, "\n\nWait %s seconds before your next request.",
-                                    cstr_String(meta_GmRequest(d->request)));
+                                    cstr_String(meta));
                 break;
             default:
                 break;
@@ -599,7 +603,7 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse
                 }
             }
             if (docFormat == undefined_GmDocumentFormat) {
-                showErrorPage_DocumentWidget_(d, unsupportedMimeType_GmStatusCode);
+                showErrorPage_DocumentWidget_(d, unsupportedMimeType_GmStatusCode, &response->meta);
                 deinit_String(&str);
                 return;
             }
@@ -840,27 +844,33 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                 break;
             case categoryRedirect_GmStatusCode:
                 if (isEmpty_String(meta_GmRequest(d->request))) {
-                    showErrorPage_DocumentWidget_(d, invalidRedirect_GmStatusCode);
+                    showErrorPage_DocumentWidget_(d, invalidRedirect_GmStatusCode, NULL);
                 }
                 else {
-                    /* TODO: only accept redirects that use gemini scheme */
-                    postCommandf_App(
-                        "open redirect:1 url:%s",
-                        cstr_String(absoluteUrl_String(d->mod.url, meta_GmRequest(d->request))));
+                    /* Only accept redirects that use gemini scheme. */
+                    const iString *dstUrl = absoluteUrl_String(d->mod.url, meta_GmRequest(d->request));
+                    if (equalCase_Rangecc(urlScheme_String(dstUrl), "gemini")) {
+                        postCommandf_App("open redirect:1 url:%s", cstr_String(dstUrl));
+                    }
+                    else {
+                        showErrorPage_DocumentWidget_(d, nonGeminiRedirect_GmStatusCode, dstUrl);
+                    }
                     iReleasePtr(&d->request);
                 }
                 break;
             default:
                 if (isDefined_GmError(statusCode)) {
-                    showErrorPage_DocumentWidget_(d, statusCode);
+                    showErrorPage_DocumentWidget_(d, statusCode, meta_GmRequest(d->request));
                 }
                 else if (category_GmStatusCode(statusCode) ==
                          categoryTemporaryFailure_GmStatusCode) {
-                    showErrorPage_DocumentWidget_(d, temporaryFailure_GmStatusCode);
+                    showErrorPage_DocumentWidget_(
+                        d, temporaryFailure_GmStatusCode, meta_GmRequest(d->request));
                 }
                 else if (category_GmStatusCode(statusCode) ==
                          categoryPermanentFailure_GmStatusCode) {
-                    showErrorPage_DocumentWidget_(d, permanentFailure_GmStatusCode);
+                    showErrorPage_DocumentWidget_(
+                        d, permanentFailure_GmStatusCode, meta_GmRequest(d->request));
                 }
                 break;
         }

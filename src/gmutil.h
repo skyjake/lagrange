@@ -33,6 +33,7 @@ enum iGmStatusCode {
     /* clientside status codes */
     clientSide_GmStatusCode = -100,
     invalidRedirect_GmStatusCode,
+    nonGeminiRedirect_GmStatusCode,
     invalidHeader_GmStatusCode,
     unsupportedMimeType_GmStatusCode,
     failedToOpenFile_GmStatusCode,
