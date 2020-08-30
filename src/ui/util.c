@@ -557,11 +557,13 @@ void makeFilePath_Widget(iWidget *      parent,
 
 static void acceptValueInput_(iWidget *dlg) {
     const iInputWidget *input = findChild_Widget(dlg, "input");
-    const iString *val = text_InputWidget(input);
-    postCommandf_App("%s arg:%d value:%s",
-                     cstr_String(id_Widget(dlg)),
-                     toInt_String(val),
-                     cstr_String(val));
+    if (!isEmpty_String(id_Widget(dlg))) {
+        const iString *val = text_InputWidget(input);
+        postCommandf_App("%s arg:%d value:%s",
+                         cstr_String(id_Widget(dlg)),
+                         toInt_String(val),
+                         cstr_String(val));
+    }
 }
 
 static void updateValueInputWidth_(iWidget *dlg) {
@@ -588,6 +590,7 @@ iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
             }
             else {
                 postCommandf_App("valueinput.cancelled id:%s", cstr_String(id_Widget(dlg)));
+                setId_Widget(dlg, ""); /* no further commands to emit */
             }
             destroy_Widget(dlg);
             return iTrue;
@@ -596,6 +599,7 @@ iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
     }
     else if (equal_Command(cmd, "cancel")) {
         postCommandf_App("valueinput.cancelled id:%s", cstr_String(id_Widget(dlg)));
+        setId_Widget(dlg, ""); /* no further commands to emit */
         destroy_Widget(dlg);
         return iTrue;
     }
