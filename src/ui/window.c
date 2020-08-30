@@ -344,6 +344,7 @@ static void setupUserInterface_Window(iWindow *d) {
         setFont_LabelWidget(lock, defaultSymbols_FontId);
         updateTextCStr_LabelWidget(lock, "\U0001f512");
         iInputWidget *url = new_InputWidget(0);
+        setSelectAllOnFocus_InputWidget(url, iTrue);
         setId_Widget(as_Widget(url), "url");
         setTextCStr_InputWidget(url, "gemini://");
         addChildFlags_Widget(navBar, iClob(url), expand_WidgetFlag);

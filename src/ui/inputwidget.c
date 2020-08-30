@@ -36,11 +36,14 @@ struct Impl_InputWidget {
     enum iInputMode mode;
     iBool           isSensitive;
     iBool           enterPressed;
+    iBool           selectAllOnFocus;
     size_t          maxLen;
     iArray          text;    /* iChar[] */
     iArray          oldText; /* iChar[] */
     iString         hint;
     size_t          cursor;
+    size_t          lastCursor;
+    iRanges         mark;
     int             font;
     iClick          click;
     uint32_t        timer;
@@ -57,8 +60,10 @@ void init_InputWidget(iInputWidget *d, size_t maxLen) {
     init_String(&d->hint);
     d->font   = uiInput_FontId;
     d->cursor = 0;
-    d->isSensitive = iFalse;
-    d->enterPressed = iFalse;
+    iZap(d->mark);
+    d->isSensitive      = iFalse;
+    d->enterPressed     = iFalse;
+    d->selectAllOnFocus = iFalse;
     setMaxLen_InputWidget(d, maxLen);
     /* Caller must arrange the width, but the height is fixed. */
     w->rect.size.y = lineHeight_Text(default_FontId) + 2 * gap_UI;
@@ -121,10 +126,6 @@ void setTextCStr_InputWidget(iInputWidget *d, const char *cstr) {
     delete_String(str);
 }
 
-void setCursor_InputWidget(iInputWidget *d, size_t pos) {
-    d->cursor = iMin(pos, size_Array(&d->text));
-}
-
 static uint32_t refreshTimer_(uint32_t interval, void *d) {
     refresh_Widget(d);
     return interval;
@@ -149,6 +150,12 @@ void begin_InputWidget(iInputWidget *d) {
     refresh_Widget(w);
     d->timer = SDL_AddTimer(REFRESH_INTERVAL, refreshTimer_, d);
     d->enterPressed = iFalse;
+    if (d->selectAllOnFocus) {
+        d->mark = (iRanges){ 0, size_Array(&d->text) };
+    }
+    else {
+        iZap(d->mark);
+    }
 }
 
 void end_InputWidget(iInputWidget *d, iBool accept) {
@@ -188,6 +195,100 @@ static void insertChar_InputWidget_(iInputWidget *d, iChar chr) {
     refresh_Widget(as_Widget(d));
 }
 
+iLocalDef size_t cursorMax_InputWidget_(const iInputWidget *d) {
+    return iMin(size_Array(&d->text), d->maxLen - 1);
+}
+
+iLocalDef iBool isMarking_(void) {
+    return (SDL_GetModState() & KMOD_SHIFT) != 0;
+}
+
+void setCursor_InputWidget(iInputWidget *d, size_t pos) {
+    if (isEmpty_Array(&d->text)) {
+        d->cursor = 0;
+    }
+    else {
+        d->cursor = iClamp(pos, 0, cursorMax_InputWidget_(d));
+    }
+    /* Update selection. */
+    if (isMarking_()) {
+        if (isEmpty_Range(&d->mark)) {
+            d->mark.start = d->lastCursor;
+            d->mark.end   = d->cursor;
+        }
+        else {
+            d->mark.end = d->cursor;
+        }
+    }
+    else {
+        iZap(d->mark);
+    }
+}
+
+void setSelectAllOnFocus_InputWidget(iInputWidget *d, iBool selectAllOnFocus) {
+    d->selectAllOnFocus = selectAllOnFocus;
+}
+
+static iRanges mark_InputWidget_(const iInputWidget *d) {
+    return (iRanges){ iMin(d->mark.start, d->mark.end), iMax(d->mark.start, d->mark.end) };
+}
+
+static void deleteMarked_InputWidget_(iInputWidget *d) {
+    const iRanges m = mark_InputWidget_(d);
+    removeRange_Array(&d->text, m);
+    setCursor_InputWidget(d, m.start);
+    iZap(d->mark);
+}
+
+static iBool isWordChar_InputWidget_(const iInputWidget *d, size_t pos) {
+    const iChar ch = pos < size_Array(&d->text) ? constValue_Array(&d->text, pos, iChar) : ' ';
+    return isAlphaNumeric_Char(ch);
+}
+
+iLocalDef iBool movePos_InputWidget_(const iInputWidget *d, size_t *pos, int dir) {
+    if (dir < 0) {
+        if (*pos > 0) (*pos)--; else return iFalse;
+    }
+    else {
+        if (*pos < cursorMax_InputWidget_(d)) (*pos)++; else return iFalse;
+    }
+    return iTrue;
+}
+
+static size_t skipWord_InputWidget_(const iInputWidget *d, size_t pos, int dir) {
+    const iBool startedAtNonWord = !isWordChar_InputWidget_(d, pos);
+    if (!movePos_InputWidget_(d, &pos, dir)) {
+        return pos;
+    }
+    /* Skip any non-word characters at start position. */
+    while (!isWordChar_InputWidget_(d, pos)) {
+        if (!movePos_InputWidget_(d, &pos, dir)) {
+            return pos;
+        }
+    }
+    if (startedAtNonWord && dir > 0) {
+        return pos; /* Found the start of a word. */
+    }
+    /* Skip the word. */
+    while (isWordChar_InputWidget_(d, pos)) {
+        if (!movePos_InputWidget_(d, &pos, dir)) {
+            return pos;
+        }
+    }
+    if (dir > 0) {
+        /* Skip to the beginning of the word. */
+        while (!isWordChar_InputWidget_(d, pos)) {
+            if (!movePos_InputWidget_(d, &pos, dir)) {
+                return pos;
+            }
+        }
+    }
+    else {
+        movePos_InputWidget_(d, &pos, +1);
+    }
+    return pos;
+}
+
 static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
     if (isCommand_Widget(w, ev, "focus.gained")) {
@@ -207,13 +308,18 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
         case aborted_ClickResult:
             return iTrue;
         case finished_ClickResult:
-            setFocus_Widget(as_Widget(d));
+            if (isFocused_Widget(w)) {
+
+            }
+            else {
+                setFocus_Widget(w);
+            }
             return iTrue;
     }
     if (ev->type == SDL_KEYUP && isFocused_Widget(w)) {
         return iTrue;
     }
-    const size_t curMax = iMin(size_Array(&d->text), d->maxLen - 1);
+    const size_t curMax = cursorMax_InputWidget_(d);
     if (ev->type == SDL_KEYDOWN && isFocused_Widget(w)) {
         const int key  = ev->key.keysym.sym;
         const int mods = keyMods_Sym(ev->key.keysym.mod);
@@ -231,6 +337,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                     return iTrue;
             }
         }
+        d->lastCursor = d->cursor;
         switch (key) {
             case SDLK_RETURN:
             case SDLK_KP_ENTER:
@@ -242,9 +349,13 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                 setFocus_Widget(NULL);
                 return iTrue;
             case SDLK_BACKSPACE:
-                if (mods & KMOD_ALT) {
-                    clear_Array(&d->text);
-                    d->cursor = 0;
+                if (!isEmpty_Range(&d->mark)) {
+                    deleteMarked_InputWidget_(d);
+                }
+                else if (mods & KMOD_ALT) {
+                    d->mark.start = d->cursor;
+                    d->mark.end   = skipWord_InputWidget_(d, d->cursor, -1);
+                    deleteMarked_InputWidget_(d);
                 }
                 else if (d->cursor > 0) {
                     remove_Array(&d->text, --d->cursor);
@@ -254,49 +365,64 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
             case SDLK_d:
                 if (mods != KMOD_CTRL) break;
             case SDLK_DELETE:
-                if (d->cursor < size_Array(&d->text)) {
+                if (!isEmpty_Range(&d->mark)) {
+                    deleteMarked_InputWidget_(d);
+                }
+                else if (mods & KMOD_ALT) {
+                    d->mark.start = d->cursor;
+                    d->mark.end   = skipWord_InputWidget_(d, d->cursor, +1);
+                    deleteMarked_InputWidget_(d);
+                }
+                else if (d->cursor < size_Array(&d->text)) {
                     remove_Array(&d->text, d->cursor);
                     refresh_Widget(w);
                 }
                 return iTrue;
             case SDLK_k:
                 if (mods == KMOD_CTRL) {
-                    removeN_Array(&d->text, d->cursor, size_Array(&d->text) - d->cursor);
-                    refresh_Widget(w);
+                    if (!isEmpty_Range(&d->mark)) {
+                        deleteMarked_InputWidget_(d);
+                    }
+                    else {
+                        removeN_Array(&d->text, d->cursor, size_Array(&d->text) - d->cursor);
+                        refresh_Widget(w);
+                    }
                     return iTrue;
                 }
                 break;
             case SDLK_HOME:
             case SDLK_END:
-                d->cursor = (key == SDLK_HOME ? 0 : curMax);
+                setCursor_InputWidget(d, key == SDLK_HOME ? 0 : curMax);
                 refresh_Widget(w);
                 return iTrue;
             case SDLK_a:
             case SDLK_e:
-                if (mods == KMOD_CTRL) {
-                    d->cursor = (key == 'a' ? 0 : curMax);
+                if (!(mods & ~(KMOD_CTRL | KMOD_SHIFT))) {
+                    setCursor_InputWidget(d, key == 'a' ? 0 : curMax);
                     refresh_Widget(w);
                     return iTrue;
                 }
                 break;
             case SDLK_LEFT:
+            case SDLK_RIGHT: {
+                const int dir = (key == SDLK_LEFT ? -1 : +1);
                 if (mods & KMOD_PRIMARY) {
-                    d->cursor = 0;
+                    setCursor_InputWidget(d, dir < 0 ? 0 : curMax);
                 }
-                else if (d->cursor > 0) {
-                    d->cursor--;
+                else if (mods & KMOD_ALT) {
+                    setCursor_InputWidget(d, skipWord_InputWidget_(d, d->cursor, dir));
+                }
+                else if (!isMarking_() && !isEmpty_Range(&d->mark)) {
+                    const iRanges m = mark_InputWidget_(d);
+                    setCursor_InputWidget(d, dir < 0 ? m.start : m.end);
+                    iZap(d->mark);
+                }
+                else if ((dir < 0 && d->cursor > 0) || (dir > 0 && d->cursor < curMax)) {
+                    setCursor_InputWidget(d, d->cursor + dir);
                 }
                 refresh_Widget(w);
                 return iTrue;
-            case SDLK_RIGHT:
-                if (mods & KMOD_PRIMARY) {
-                    d->cursor = curMax;
-                }
-                else if (d->cursor < curMax) {
-                    d->cursor++;
-                }
-                refresh_Widget(w);
-                return iTrue;
+            }
             case SDLK_TAB:
                 /* Allow focus switching. */
                 return processEvent_Widget(as_Widget(d), ev);
@@ -332,10 +458,10 @@ static void draw_InputWidget_(const iInputWidget *d) {
     const uint32_t time      = frameTime_Window(get_Window());
     const iInt2    padding   = init_I2(gap_UI / 2, gap_UI / 2);
     iRect          bounds    = adjusted_Rect(bounds_Widget(w), padding, neg_I2(padding));
+    iBool          isHint    = iFalse;
     const iBool    isFocused = isFocused_Widget(w);
     const iBool    isHover   = isHover_Widget(w) &&
                                contains_Widget(w, mouseCoord_Window(get_Window()));
-    iBool          isHint    = iFalse;
     iPaint p;
     init_Paint(&p);
     iString text;
@@ -375,8 +501,18 @@ static void draw_InputWidget_(const iInputWidget *d) {
         xOff = iMin(xOff, 0);
     }
     const int yOff = (height_Rect(bounds) - lineHeight_Text(d->font)) / 2;
+    const iInt2 textOrigin = add_I2(topLeft_Rect(bounds), init_I2(xOff, yOff));
+    if (isFocused && !isEmpty_Range(&d->mark)) {
+        /* Draw the selected range. */
+        const int m1 = advanceN_Text(d->font, cstr_String(&text), d->mark.start).x;
+        const int m2 = advanceN_Text(d->font, cstr_String(&text), d->mark.end).x;
+        fillRect_Paint(
+            &p,
+            (iRect){ addX_I2(textOrigin, iMin(m1, m2)), init_I2(iAbs(m2 - m1), lineHeight_Text(d->font)) },
+            red_ColorId);
+    }
     draw_Text(d->font,
-              add_I2(topLeft_Rect(bounds), init_I2(xOff, yOff)),
+              textOrigin,
               isHint ? uiAnnotation_ColorId
                      : isFocused && !isEmpty_Array(&d->text) ? uiInputTextFocused_ColorId
                                                              : uiInputText_ColorId,
@@ -386,8 +522,8 @@ static void draw_InputWidget_(const iInputWidget *d) {
     /* Cursor blinking. */
     if (isFocused && (time & 256)) {
         const iInt2 prefixSize = advanceN_Text(d->font, cstr_String(&text), d->cursor);
-        const iInt2 curPos = init_I2(xOff + left_Rect(bounds) + prefixSize.x,
-                                     yOff + top_Rect(bounds));
+        const iInt2 curPos = addX_I2(textOrigin, prefixSize.x); /* init_I2(xOff + left_Rect(bounds) + prefixSize.x,
+                                     yOff + top_Rect(bounds));*/
         const iRect curRect = { curPos, addX_I2(emSize, 1) };
         iString     cur;
         if (d->cursor < size_Array(&d->text)) {
