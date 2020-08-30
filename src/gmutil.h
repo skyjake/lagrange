@@ -34,6 +34,7 @@ enum iGmStatusCode {
     clientSide_GmStatusCode = -100,
     invalidRedirect_GmStatusCode,
     nonGeminiRedirect_GmStatusCode,
+    tooManyRedirects_GmStatusCode,
     invalidHeader_GmStatusCode,
     unsupportedMimeType_GmStatusCode,
     failedToOpenFile_GmStatusCode,

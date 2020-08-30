@@ -634,11 +634,10 @@ iBool handleCommand_App(const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "open")) {
-        const iString *url = collect_String(newCStr_String(suffixPtr_Command(cmd, "url")));
+        const iString *url = collectNewCStr_String(suffixPtr_Command(cmd, "url"));
         iUrl parts;
         init_Url(&parts, url);
-        if (equalCase_Rangecc(parts.scheme, "http") ||
-            equalCase_Rangecc(parts.scheme, "https")) {
+        if (equalCase_Rangecc(parts.scheme, "http") || equalCase_Rangecc(parts.scheme, "https")) {
             openInDefaultBrowser_App(url);
             return iTrue;
         }
@@ -648,8 +647,9 @@ iBool handleCommand_App(const char *cmd) {
         }
         iHistory *history = history_DocumentWidget(doc);
         const iBool isHistory = argLabel_Command(cmd, "history") != 0;
+        int redirectCount = argLabel_Command(cmd, "redirect");
         if (!isHistory) {
-            if (argLabel_Command(cmd, "redirect")) {
+            if (redirectCount) {
                 replace_History(history, url);
             }
             else {
@@ -658,6 +658,7 @@ iBool handleCommand_App(const char *cmd) {
         }
         visitUrl_Visited(d->visited, url);
         setInitialScroll_DocumentWidget(doc, argfLabel_Command(cmd, "scroll"));
+        setRedirectCount_DocumentWidget(doc, redirectCount);
         setUrlFromCache_DocumentWidget(doc, url, isHistory);
     }
     else if (equal_Command(cmd, "document.request.cancelled")) {

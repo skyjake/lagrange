@@ -232,6 +232,11 @@ static const struct {
         "Redirect to Non-Gemini URL",
         "The server attempted to redirect us to a non-Gemini URL. Here is the link so you "
         "can open it manually if appropriate."} },
+    { tooManyRedirects_GmStatusCode,
+      { 0x27a0, /* dashed arrow */
+        "Too Many Redirects",
+        "You may be stuck in a redirection loop. The next redirected URL is below if you "
+        "want to continue manually."} },
     { temporaryFailure_GmStatusCode,
       { 0x1f50c, /* electric plug */
         "Temporary Failure",

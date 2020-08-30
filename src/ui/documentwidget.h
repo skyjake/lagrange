@@ -45,5 +45,6 @@ const iString *     bookmarkTitle_DocumentWidget    (const iDocumentWidget *);
 void    setUrl_DocumentWidget           (iDocumentWidget *, const iString *url);
 void    setUrlFromCache_DocumentWidget  (iDocumentWidget *, const iString *url, iBool isFromCache);
 void    setInitialScroll_DocumentWidget (iDocumentWidget *, float normScrollY); /* set after content received */
+void    setRedirectCount_DocumentWidget (iDocumentWidget *, int count);
 
 void    updateSize_DocumentWidget       (iDocumentWidget *);

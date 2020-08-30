@@ -183,6 +183,7 @@ struct Impl_DocumentWidget {
     int            certFlags;
     iDate          certExpiry;
     iString *      certSubject;
+    int            redirectCount;
     iBool          selecting;
     iRangecc       selectMark;
     iRangecc       foundMark;
@@ -221,6 +222,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     d->isRequestUpdated = iFalse;
     d->media            = new_ObjectList();
     d->doc              = new_GmDocument();
+    d->redirectCount    = 0;
     d->initNormScrollY  = 0;
     d->scrollY          = 0;
     d->smoothScroll     = 0;
@@ -512,6 +514,7 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
     if (meta) {
         switch (code) {
             case nonGeminiRedirect_GmStatusCode:
+            case tooManyRedirects_GmStatusCode:
                 appendFormat_String(src, "\n=> %s\n", cstr_String(meta));
                 break;
             case failedToOpenFile_GmStatusCode:
@@ -750,6 +753,10 @@ void setInitialScroll_DocumentWidget(iDocumentWidget *d, float normScrollY) {
     d->initNormScrollY = normScrollY;
 }
 
+void setRedirectCount_DocumentWidget(iDocumentWidget *d, int count) {
+    d->redirectCount = count;
+}
+
 iBool isRequestOngoing_DocumentWidget(const iDocumentWidget *d) {
     return d->state == fetching_RequestState || d->state == receivedPartialResponse_RequestState;
 }
@@ -849,8 +856,12 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                 else {
                     /* Only accept redirects that use gemini scheme. */
                     const iString *dstUrl = absoluteUrl_String(d->mod.url, meta_GmRequest(d->request));
-                    if (equalCase_Rangecc(urlScheme_String(dstUrl), "gemini")) {
-                        postCommandf_App("open redirect:1 url:%s", cstr_String(dstUrl));
+                    if (d->redirectCount >= 5) {
+                        showErrorPage_DocumentWidget_(d, tooManyRedirects_GmStatusCode, dstUrl);
+                    }
+                    else if (equalCase_Rangecc(urlScheme_String(dstUrl), "gemini")) {
+                        postCommandf_App(
+                            "open redirect:%d url:%s", d->redirectCount + 1, cstr_String(dstUrl));
                     }
                     else {
                         showErrorPage_DocumentWidget_(d, nonGeminiRedirect_GmStatusCode, dstUrl);
