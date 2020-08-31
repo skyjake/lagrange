@@ -130,6 +130,14 @@ static iString *serializePrefs_App_(const iApp *d) {
         int w, h, x, y;
         SDL_GetWindowSize(d->window->win, &w, &h);
         SDL_GetWindowPosition(d->window->win, &x, &y);
+#if defined (iPlatformLinux)
+        /* Workaround for window position being unaffected by decorations on creation. */ {
+            int bl, bt;
+            SDL_GetWindowBordersSize(d->window->win, &bt, &bl, NULL, NULL);
+            x -= bl;
+            y -= bt;
+        }
+#endif
         appendFormat_String(str, "window.setrect width:%d height:%d coord:%d %d\n", w, h, x, y);
         appendFormat_String(str, "sidebar.width arg:%d\n", width_SidebarWidget(sidebar));
     }
@@ -838,11 +846,19 @@ void revealPath_App(const iString *path) {
     }
     iRelease(f);
 #elif defined (iPlatformLinux)
-    {
-        String path = (fileOrFolder.isDirectory() ? fileOrFolder.toString()
-                                                  : fileOrFolder.fileNamePath().toString());
-        CommandLine({"/usr/bin/xdg-open", path}).execute();
+    iFileInfo *inf = iClob(new_FileInfo(path));
+    iRangecc target;
+    if (isDirectory_FileInfo(inf)) {
+        target = range_String(path);
     }
+    else {
+        target = dirName_Path(path);
+    }
+    iProcess *proc = new_Process();
+    setArguments_Process(
+        proc, iClob(newStringsCStr_StringList("/usr/bin/xdg-open", cstr_Rangecc(target), NULL)));
+    start_Process(proc);
+    iRelease(proc);
 #else
     iAssert(0 /* File revealing not implemented on this platform */);
 #endif
