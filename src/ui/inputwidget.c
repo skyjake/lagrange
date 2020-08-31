@@ -60,6 +60,7 @@ struct Impl_InputWidget {
     iString         hint;
     size_t          cursor;
     size_t          lastCursor;
+    iBool           isMarking;
     iRanges         mark;
     iArray          undoStack;
     int             font;
@@ -86,6 +87,8 @@ void init_InputWidget(iInputWidget *d, size_t maxLen) {
     init_Array(&d->undoStack, sizeof(iInputUndo));
     d->font   = uiInput_FontId;
     d->cursor = 0;
+    d->lastCursor = 0;
+    d->isMarking = iFalse;
     iZap(d->mark);
     d->isSensitive      = iFalse;
     d->enterPressed     = iFalse;
@@ -345,6 +348,70 @@ static size_t skipWord_InputWidget_(const iInputWidget *d, size_t pos, int dir) 
     return pos;
 }
 
+static const iChar sensitiveChar_ = 0x25cf; /* black circle */
+
+static iString *visText_InputWidget_(const iInputWidget *d) {
+    iString *text;
+    if (!d->isSensitive) {
+        text = newUnicodeN_String(constData_Array(&d->text), size_Array(&d->text));
+    }
+    else {
+        text = new_String();
+        for (size_t i = 0; i < size_Array(&d->text); ++i) {
+            appendChar_String(text, sensitiveChar_);
+        }
+    }
+    return text;
+}
+
+iLocalDef iInt2 padding_(void) {
+    return init_I2(gap_UI / 2, gap_UI / 2);
+}
+
+static iInt2 textOrigin_InputWidget_(const iInputWidget *d, const char *visText) {
+    const iWidget *w         = constAs_Widget(d);
+    iRect          bounds    = adjusted_Rect(bounds_Widget(w), padding_(), neg_I2(padding_()));
+    const iInt2    emSize    = advance_Text(d->font, "M");
+    const int      textWidth = advance_Text(d->font, visText).x;
+    const int      cursorX   = advanceN_Text(d->font, visText, d->cursor).x;
+    int            xOff      = 0;
+    shrink_Rect(&bounds, init_I2(gap_UI * (flags_Widget(w) & tight_WidgetFlag ? 1 : 2), 0));
+    if (d->maxLen == 0) {
+        if (textWidth > width_Rect(bounds) - emSize.x) {
+            xOff = width_Rect(bounds) - emSize.x - textWidth;
+        }
+        if (cursorX + xOff < width_Rect(bounds) / 2) {
+            xOff = width_Rect(bounds) / 2 - cursorX;
+        }
+        xOff = iMin(xOff, 0);
+    }
+    const int yOff = (height_Rect(bounds) - lineHeight_Text(d->font)) / 2;
+    return add_I2(topLeft_Rect(bounds), init_I2(xOff, yOff));
+}
+
+static size_t coordIndex_InputWidget_(const iInputWidget *d, iInt2 coord) {
+    iString *visText = visText_InputWidget_(d);
+    iInt2    pos     = sub_I2(coord, textOrigin_InputWidget_(d, cstr_String(visText)));
+    size_t   index   = 0;
+    if (pos.x > 0) {
+        const char *endPos;
+        tryAdvanceNoWrap_Text(d->font, range_String(visText), pos.x, &endPos);
+        if (endPos == constEnd_String(visText)) {
+            index = cursorMax_InputWidget_(d);
+        }
+        else {
+            /* Need to know the actual character index. */
+            /* TODO: tryAdvance could tell us this directly with an extra return value */
+            iConstForEach(String, i, visText) {
+                if (i.pos >= endPos) break;
+                index++;
+            }
+        }
+    }
+    delete_String(visText);
+    return index;
+}
+
 static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
     if (isCommand_Widget(w, ev, "focus.gained")) {
@@ -359,17 +426,24 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
         case none_ClickResult:
             break;
         case started_ClickResult:
-        case drag_ClickResult:
+            setFocus_Widget(w);
+            setCursor_InputWidget(d, coordIndex_InputWidget_(d, pos_Click(&d->click)));
+            iZap(d->mark);
+            d->isMarking = iFalse;
+            return iTrue;
         case double_ClickResult:
         case aborted_ClickResult:
             return iTrue;
+        case drag_ClickResult:
+            d->cursor = coordIndex_InputWidget_(d, pos_Click(&d->click));
+            if (!d->isMarking) {
+                d->isMarking = iTrue;
+                d->mark.start = d->cursor;
+            }
+            d->mark.end = d->cursor;
+            refresh_Widget(w);
+            return iTrue;
         case finished_ClickResult:
-            if (isFocused_Widget(w)) {
-
-            }
-            else {
-                setFocus_Widget(w);
-            }
             return iTrue;
     }
     if (ev->type == SDL_KEYUP && isFocused_Widget(w)) {
@@ -483,6 +557,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                     d->mark.start = 0;
                     d->mark.end   = curMax;
                     d->cursor     = curMax;
+                    refresh_Widget(w);
                     return iTrue;
                 }
 #endif
@@ -535,8 +610,6 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
     return processEvent_Widget(w, ev);
 }
 
-static const iChar sensitiveChar_ = 0x25cf; /* black circle */
-
 static iBool isWhite_(const iString *str) {
     iConstForEach(String, i, str) {
         if (!isSpace_Char(i.value)) {
@@ -549,26 +622,16 @@ static iBool isWhite_(const iString *str) {
 static void draw_InputWidget_(const iInputWidget *d) {
     const iWidget *w         = constAs_Widget(d);
     const uint32_t time      = frameTime_Window(get_Window());
-    const iInt2    padding   = init_I2(gap_UI / 2, gap_UI / 2);
-    iRect          bounds    = adjusted_Rect(bounds_Widget(w), padding, neg_I2(padding));
+    iRect          bounds    = adjusted_Rect(bounds_Widget(w), padding_(), neg_I2(padding_()));
     iBool          isHint    = iFalse;
     const iBool    isFocused = isFocused_Widget(w);
     const iBool    isHover   = isHover_Widget(w) &&
                                contains_Widget(w, mouseCoord_Window(get_Window()));
     iPaint p;
     init_Paint(&p);
-    iString text;
-    if (!d->isSensitive) {
-        initUnicodeN_String(&text, constData_Array(&d->text), size_Array(&d->text));
-    }
-    else {
-        init_String(&text);
-        for (size_t i = 0; i < size_Array(&d->text); ++i) {
-            appendChar_String(&text, sensitiveChar_);
-        }
-    }
-    if (isWhite_(&text) && !isEmpty_String(&d->hint)) {
-        set_String(&text, &d->hint);
+    iString *text = visText_InputWidget_(d);
+    if (isWhite_(text) && !isEmpty_String(&d->hint)) {
+        set_String(text, &d->hint);
         isHint = iTrue;
     }
     fillRect_Paint(
@@ -579,30 +642,15 @@ static void draw_InputWidget_(const iInputWidget *d) {
                             isFocused ? uiInputFrameFocused_ColorId
                                       : isHover ? uiInputFrameHover_ColorId : uiInputFrame_ColorId);
     setClip_Paint(&p, bounds);
-    shrink_Rect(&bounds, init_I2(gap_UI * (flags_Widget(w) & tight_WidgetFlag ? 1 : 2), 0));
-    const iInt2 emSize    = advance_Text(d->font, "M");
-    const int   textWidth = advance_Text(d->font, cstr_String(&text)).x;
-    const int   cursorX   = advanceN_Text(d->font, cstr_String(&text), d->cursor).x;
-    int         xOff      = 0;
-    if (d->maxLen == 0) {
-        if (textWidth > width_Rect(bounds) - emSize.x) {
-            xOff = width_Rect(bounds) - emSize.x - textWidth;
-        }
-        if (cursorX + xOff < width_Rect(bounds) / 2) {
-            xOff = width_Rect(bounds) / 2 - cursorX;
-        }
-        xOff = iMin(xOff, 0);
-    }
-    const int yOff = (height_Rect(bounds) - lineHeight_Text(d->font)) / 2;
-    const iInt2 textOrigin = add_I2(topLeft_Rect(bounds), init_I2(xOff, yOff));
+    const iInt2 textOrigin = textOrigin_InputWidget_(d, cstr_String(text));
     if (isFocused && !isEmpty_Range(&d->mark)) {
         /* Draw the selected range. */
-        const int m1 = advanceN_Text(d->font, cstr_String(&text), d->mark.start).x;
-        const int m2 = advanceN_Text(d->font, cstr_String(&text), d->mark.end).x;
-        fillRect_Paint(
-            &p,
-            (iRect){ addX_I2(textOrigin, iMin(m1, m2)), init_I2(iAbs(m2 - m1), lineHeight_Text(d->font)) },
-            red_ColorId);
+        const int m1 = advanceN_Text(d->font, cstr_String(text), d->mark.start).x;
+        const int m2 = advanceN_Text(d->font, cstr_String(text), d->mark.end).x;
+        fillRect_Paint(&p,
+                       (iRect){ addX_I2(textOrigin, iMin(m1, m2)),
+                                init_I2(iAbs(m2 - m1), lineHeight_Text(d->font)) },
+                       uiMarked_ColorId);
     }
     draw_Text(d->font,
               textOrigin,
@@ -610,15 +658,11 @@ static void draw_InputWidget_(const iInputWidget *d) {
                      : isFocused && !isEmpty_Array(&d->text) ? uiInputTextFocused_ColorId
                                                              : uiInputText_ColorId,
               "%s",
-              cstr_String(&text));
+              cstr_String(text));
     unsetClip_Paint(&p);
     /* Cursor blinking. */
     if (isFocused && (time & 256)) {
-        const iInt2 prefixSize = advanceN_Text(d->font, cstr_String(&text), d->cursor);
-        const iInt2 curPos = addX_I2(textOrigin, prefixSize.x); /* init_I2(xOff + left_Rect(bounds) + prefixSize.x,
-                                     yOff + top_Rect(bounds));*/
-        const iRect curRect = { curPos, addX_I2(emSize, 1) };
-        iString     cur;
+        iString cur;
         if (d->cursor < size_Array(&d->text)) {
             if (!d->isSensitive) {
                 initUnicodeN_String(&cur, constAt_Array(&d->text, d->cursor), 1);
@@ -630,11 +674,14 @@ static void draw_InputWidget_(const iInputWidget *d) {
         else {
             initCStr_String(&cur, " ");
         }
+        const iInt2 prefixSize = advanceN_Text(d->font, cstr_String(text), d->cursor);
+        const iInt2 curPos     = addX_I2(textOrigin, prefixSize.x);
+        const iRect curRect    = { curPos, addX_I2(advance_Text(d->font, cstr_String(&cur)), 1) };
         fillRect_Paint(&p, curRect, uiInputCursor_ColorId);
         draw_Text(d->font, curPos, uiInputCursorText_ColorId, cstr_String(&cur));
         deinit_String(&cur);
     }
-    deinit_String(&text);
+    delete_String(text);
 }
 
 iBeginDefineSubclass(InputWidget, Widget)
