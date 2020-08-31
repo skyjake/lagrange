@@ -696,10 +696,12 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             return iTrue;
         }
         else if (isCommand_Widget(w, ev, "ident.reveal")) {
-            const iString *crtPath =
-                certificatePath_GmCerts(certs_App(), constHoverIdentity_SidebarWidget_(d));
-            if (crtPath) {
-                revealPath_App(crtPath);
+            const iGmIdentity *ident = constHoverIdentity_SidebarWidget_(d);
+            if (ident) {
+                const iString *crtPath = certificatePath_GmCerts(certs_App(), ident);
+                if (crtPath) {
+                    revealPath_App(crtPath);
+                }
             }
             return iTrue;
         }
@@ -779,7 +781,8 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         }
         setHoverItem_SidebarWidget_(d, hover);
         /* Update cursor. */
-        if (contains_Widget(w, mouse)) {
+        if (contains_Widget(w, mouse) && !contains_Widget(d->resizer, mouse) &&
+            !contains_Widget(constAs_Widget(d->scroll), mouse)) {
             const iSidebarItem *item = constHoverItem_SidebarWidget_(d);
             if (item && d->mode != identities_SidebarMode) {
                 setCursor_Window(get_Window(), item->isSeparator ? SDL_SYSTEM_CURSOR_ARROW
