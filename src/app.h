@@ -57,6 +57,7 @@ uint32_t    elapsedSinceLastTicker_App  (void); /* milliseconds */
 
 int                 zoom_App            (void);
 enum iColorTheme    colorTheme_App      (void);
+const iString *     schemeProxy_App     (iRangecc scheme);
 
 iGmCerts *          certs_App           (void);
 iVisited *          visited_App         (void);

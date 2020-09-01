@@ -96,6 +96,8 @@ struct Impl_App {
     int          zoomPercent;
     enum iColorTheme theme;
     iBool        useSystemTheme;
+    iString      gopherProxy;
+    iString      httpProxy;
 };
 
 static iApp app_;
@@ -149,6 +151,8 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "zoom.set arg:%d\n", d->zoomPercent);
     appendFormat_String(str, "theme.set arg:%d auto:1\n", d->theme);
     appendFormat_String(str, "ostheme arg:%d\n", d->useSystemTheme);
+    appendFormat_String(str, "proxy.gopher address:%s\n", cstr_String(&d->gopherProxy));
+    appendFormat_String(str, "proxy.http address:%s\n", cstr_String(&d->httpProxy));
     return str;
 }
 
@@ -281,6 +285,8 @@ static void init_App_(iApp *d, int argc, char **argv) {
     d->visited           = new_Visited();
     d->bookmarks         = new_Bookmarks();
     d->tabEnum           = 0; /* generates unique IDs for tab pages */
+    init_String(&d->gopherProxy);
+    init_String(&d->httpProxy);
     setThemePalette_Color(d->theme);
     loadPrefs_App_(d);
     load_Visited(d->visited, dataDir_App_);
@@ -427,6 +433,17 @@ enum iColorTheme colorTheme_App(void) {
     return app_.theme;
 }
 
+const iString *schemeProxy_App(iRangecc scheme) {
+    iApp *d = &app_;
+    if (equalCase_Rangecc(scheme, "gopher")) {
+        return &d->gopherProxy;
+    }
+    if (equalCase_Rangecc(scheme, "http") || equalCase_Rangecc(scheme, "https")) {
+        return &d->httpProxy;
+    }
+    return NULL;
+}
+
 int run_App(int argc, char **argv) {
     init_App_(&app_, argc, argv);
     const int rc = run_App_(&app_);
@@ -515,11 +532,14 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
                          isSelected_Widget(findChild_Widget(d, "prefs.retainwindow")));
         postCommandf_App("ostheme arg:%d",
                          isSelected_Widget(findChild_Widget(d, "prefs.ostheme")));
+        postCommandf_App("proxy.http address:%s",
+                         cstr_String(text_InputWidget(findChild_Widget(d, "prefs.proxy.http"))));
+        postCommandf_App("proxy.gopher address:%s",
+                         cstr_String(text_InputWidget(findChild_Widget(d, "prefs.proxy.gopher"))));
         destroy_Widget(d);
         return iTrue;
     }
     else if (equal_Command(cmd, "prefs.ostheme.changed")) {
-        //setToggle_Widget(findChild_Widget(d, "prefs.ostheme"), arg_Command(cmd));
         postCommandf_App("ostheme arg:%d", arg_Command(cmd));
     }
     else if (equal_Command(cmd, "theme.changed")) {        
@@ -739,6 +759,10 @@ iBool handleCommand_App(const char *cmd) {
         setToggle_Widget(findChild_Widget(dlg, "prefs.retainwindow"), d->retainWindowSize);
         setText_InputWidget(findChild_Widget(dlg, "prefs.uiscale"),
                             collectNewFormat_String("%g", uiScale_Window(d->window)));
+        setText_InputWidget(findChild_Widget(dlg, "prefs.proxy.http"),
+                            schemeProxy_App(range_CStr("http")));
+        setText_InputWidget(findChild_Widget(dlg, "prefs.proxy.gopher"),
+                            schemeProxy_App(range_CStr("gopher")));
         setCommandHandler_Widget(dlg, handlePrefsCommands_);
     }
     else if (equal_Command(cmd, "navigate.home")) {
@@ -801,6 +825,14 @@ iBool handleCommand_App(const char *cmd) {
                                   : (contrast ? pureWhite_ColorTheme : light_ColorTheme));
         }
         return iFalse;
+    }
+    else if (equal_Command(cmd, "proxy.gopher")) {
+        setCStr_String(&d->gopherProxy, suffixPtr_Command(cmd, "address"));
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "proxy.http")) {
+        setCStr_String(&d->httpProxy, suffixPtr_Command(cmd, "address"));
+        return iTrue;
     }
     else {
         return iFalse;

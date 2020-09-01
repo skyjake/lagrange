@@ -755,8 +755,18 @@ iWidget *makePreferences_Widget(void) {
     addChild_Widget(values, iClob(makeToggle_Widget("prefs.retainwindow")));
     addChild_Widget(headings, iClob(makeHeading_Widget("UI scale factor:")));
     setId_Widget(addChild_Widget(values, iClob(new_InputWidget(8))), "prefs.uiscale");
+    addChild_Widget(headings, iClob(makeHeading_Widget(uiHeading_ColorEscape "Proxies")));
+    addChild_Widget(values, iClob(makeHeading_Widget("")));
+    addChild_Widget(headings, iClob(makeHeading_Widget("HTTP proxy:")));
+    setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.proxy.http");
+    addChild_Widget(headings, iClob(makeHeading_Widget("Gopher proxy:")));
+    setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.proxy.gopher");
     arrange_Widget(dlg);
-//    as_Widget(songDir)->rect.size.x = dlg->rect.size.x - headings->rect.size.x;
+    /* Text input widths. */ {
+        const int inputWidth = width_Rect(page->rect) - width_Rect(headings->rect);
+        as_Widget(findChild_Widget(values, "prefs.proxy.http"))->rect.size.x = inputWidth;
+        as_Widget(findChild_Widget(values, "prefs.proxy.gopher"))->rect.size.x = inputWidth;
+    }
     iWidget *div = new_Widget(); {
         setFlags_Widget(div, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
         addChild_Widget(div, iClob(new_LabelWidget("Dismiss", SDLK_ESCAPE, 0, "prefs.dismiss")));

@@ -402,6 +402,9 @@ void submit_GmRequest(iGmRequest *d) {
     init_Url(&url, &d->url);
     /* Check for special schemes. */
     /* TODO: If this were a library, these could be handled via callbacks. */
+    /* TODO: Handle app's configured proxies and these via the same mechanism. */
+    const iString *host = collect_String(newRange_String(url.host));
+    uint16_t       port = toInt_String(collect_String(newRange_String(url.port)));
     if (equalCase_Rangecc(url.scheme, "about")) {
         const iBlock *src = aboutPageSource_(url.path);
         if (src) {
@@ -487,6 +490,19 @@ void submit_GmRequest(iGmRequest *d) {
         iNotifyAudience(d, finished, GmRequestFinished);
         return;
     }
+    else if (schemeProxy_App(url.scheme)) {
+        /* User has configured a proxy server for this scheme. */
+        const iString *proxy = schemeProxy_App(url.scheme);
+        if (contains_String(proxy, ':')) {
+            const size_t cpos = indexOf_String(proxy, ':');
+            port = atoi(cstr_String(proxy) + cpos + 1);
+            host = collect_String(newCStrN_String(cstr_String(proxy), cpos));
+        }
+        else {
+            host = proxy;
+            port = 0;
+        }
+    }
     d->state = receivingHeader_GmRequestState;
     d->req = new_TlsRequest();
     const iGmIdentity *identity = identityForUrl_GmCerts(d->certs, &d->url);
@@ -495,11 +511,10 @@ void submit_GmRequest(iGmRequest *d) {
     }
     iConnect(TlsRequest, d->req, readyRead, d, readIncoming_GmRequest_);
     iConnect(TlsRequest, d->req, finished, d, requestFinished_GmRequest_);
-    uint16_t port = toInt_String(collect_String(newRange_String(url.port)));
     if (port == 0) {
         port = 1965; /* default Gemini port */
     }
-    setUrl_TlsRequest(d->req, collect_String(newRange_String(url.host)), port);
+    setUrl_TlsRequest(d->req, host, port);
     setContent_TlsRequest(d->req,
                           utf8_String(collectNewFormat_String("%s\r\n", cstr_String(&d->url))));
     submit_TlsRequest(d->req);
