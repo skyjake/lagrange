@@ -313,6 +313,8 @@ static void init_App_(iApp *d, int argc, char **argv) {
 static void deinit_App(iApp *d) {
     saveState_App_(d);
     savePrefs_App_(d);
+    deinit_String(&d->httpProxy);
+    deinit_String(&d->gopherProxy);
     save_Bookmarks(d->bookmarks, dataDir_App_);
     delete_Bookmarks(d->bookmarks);
     save_Visited(d->visited, dataDir_App_);
