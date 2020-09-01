@@ -279,16 +279,21 @@ static size_t findLinkImage_GmDocument_(const iGmDocument *d, iGmLinkId linkId) 
     return iInvalidPos;
 }
 
+static iBool isGopher_GmDocument_(const iGmDocument *d) {
+    return equalCase_Rangecc(urlScheme_String(&d->url), "gopher");
+}
+
 static void doLayout_GmDocument_(iGmDocument *d) {
+    const iBool isGemini = !isGopher_GmDocument_(d);
     /* TODO: Collect these parameters into a GmTheme. */
-    static const int fonts[max_GmLineType] = {
-        paragraph_FontId,
-        paragraph_FontId, /* bullet */
+    const int fonts[max_GmLineType] = {
+        isGemini ? paragraph_FontId : preformatted_FontId,
+        isGemini ? paragraph_FontId : preformatted_FontId, /* bullet */
         preformatted_FontId,
         quote_FontId,
-        heading1_FontId,
-        heading2_FontId,
-        heading3_FontId,
+        isGemini ? heading1_FontId : preformatted_FontId,
+        isGemini ? heading2_FontId : preformatted_FontId,
+        isGemini ? heading3_FontId : preformatted_FontId,
         regular_FontId,
     };
     static const int colors[max_GmLineType] = {
@@ -325,7 +330,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     const iRangecc   content       = range_String(&d->source);
     iRangecc         contentLine   = iNullRange;
     iInt2            pos           = zero_I2();
-    iBool            isFirstText   = iTrue;
+    iBool            isFirstText   = isGemini;
     iBool            isPreformat   = iFalse;
     iRangecc         preAltText    = iNullRange;
     int              preFont       = preformatted_FontId;
@@ -849,7 +854,7 @@ static void normalize_GmDocument(iGmDocument *d) {
     iRangecc src = range_String(&d->source);
     iRangecc line = iNullRange;
     iBool isPreformat = iFalse;
-    if (d->format == plainText_GmDocumentFormat) {
+    if (d->format == plainText_GmDocumentFormat || isGopher_GmDocument_(d)) {
         isPreformat = iTrue; /* Cannot be turned off. */
     }
     const int preTabWidth = 4; /* TODO: user-configurable parameter */
