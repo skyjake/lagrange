@@ -470,6 +470,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                 case 'v':
                     if (SDL_HasClipboardText()) {
                         pushUndo_InputWidget_(d);
+                        deleteMarked_InputWidget_(d);
                         char *text = SDL_GetClipboardText();
                         iString *paste = collect_String(newCStr_String(text));
                         SDL_free(text);
