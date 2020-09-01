@@ -194,7 +194,7 @@ static void checkServerCertificate_GmRequest_(iGmRequest *d) {
     const iTlsCertificate *cert = serverCertificate_TlsRequest(d->req);
     d->resp.certFlags = 0;
     if (cert) {
-        const iRangecc domain = urlHost_String(&d->url);
+        const iRangecc domain = range_String(hostName_Address(address_TlsRequest(d->req)));
         d->resp.certFlags |= available_GmCertFlag;
         if (!isExpired_TlsCertificate(cert)) {
             d->resp.certFlags |= timeVerified_GmCertFlag;
