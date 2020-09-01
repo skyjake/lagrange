@@ -460,7 +460,7 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
             if (ch == '\r') {
                 const iChar esc = nextChar_(&chPos, text.end);
                 if (mode == draw_RunMode) {
-                    const iColor clr = get_Color(esc - '0');
+                    const iColor clr = get_Color(esc - asciiBase_ColorEscape);
                     SDL_SetTextureColorMod(text_.cache, clr.r, clr.g, clr.b);
                 }
                 prevCh = 0;

@@ -1718,8 +1718,8 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                              : "",
                     showHost && (showImage || showAudio) ? " \u2014" : "",
                     showImage || showAudio
-                        ? '0' + fg
-                        : ('0' + linkColor_GmDocument(doc, run->linkId, domain_GmLinkPart)),
+                        ? asciiBase_ColorEscape + fg
+                        : (asciiBase_ColorEscape + linkColor_GmDocument(doc, run->linkId, domain_GmLinkPart)),
                     showImage ? " View Image \U0001f5bc"
                               : showAudio ? " Play Audio \U0001f3b5" : "");
             }

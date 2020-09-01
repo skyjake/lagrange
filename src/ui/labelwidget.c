@@ -175,11 +175,11 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
             /* Frames matching color escaped text. */
             if (startsWith_String(&d->label, "\r")) {
                 if (isDark_ColorTheme(colorTheme_App())) {
-                    *frame1 = cstr_String(&d->label)[1] - '0';
+                    *frame1 = cstr_String(&d->label)[1] - asciiBase_ColorEscape;
                     *frame2 = darker_Color(*frame1);
                 }
                 else {
-                    *bg = *frame1 = *frame2 = cstr_String(&d->label)[1] - '0';
+                    *bg = *frame1 = *frame2 = cstr_String(&d->label)[1] - asciiBase_ColorEscape;
                     *fg = uiBackground_ColorId | permanent_ColorId;
                 }
             }

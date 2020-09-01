@@ -68,6 +68,7 @@ enum iColorId {
     uiText_ColorId,
     uiTextPressed_ColorId,
     uiTextSelected_ColorId,
+    uiTextDisabled_ColorId,
     uiTextFramelessHover_ColorId,
     uiTextFramelessSelected_ColorId,
     uiTextStrong_ColorId,
@@ -101,7 +102,6 @@ enum iColorId {
     uiSeparator_ColorId,
     uiMarked_ColorId,
     uiMatching_ColorId,
-    uiTextDisabled_ColorId,
 
     /* content theme colors */
     tmFirst_ColorId,
@@ -163,24 +163,26 @@ iLocalDef iBool isRegularText_ColorId(enum iColorId d) {
 #define mask_ColorId                0x7f
 #define permanent_ColorId           0x80 /* cannot be changed via escapes */
 
-#define black_ColorEscape           "\r0"
-#define gray25_ColorEscape          "\r1"
-#define gray50_ColorEscape          "\r2"
-#define gray75_ColorEscape          "\r3"
-#define white_ColorEscape           "\r4"
-#define brown_ColorEscape           "\r5"
-#define orange_ColorEscape          "\r6"
-#define teal_ColorEscape            "\r7"
-#define cyan_ColorEscape            "\r8"
-#define yellow_ColorEscape          "\r9"
-#define red_ColorEscape             "\r:"
-#define magenta_ColorEscape         "\r;"
-#define blue_ColorEscape            "\r<"
-#define green_ColorEscape           "\r="
-#define uiText_ColorEscape          "\rC"
-#define uiTextAction_ColorEscape    "\rJ"
-#define uiTextCaution_ColorEscape   "\rK"
-#define uiHeading_ColorEscape       "\r`"
+#define asciiBase_ColorEscape       33
+
+#define black_ColorEscape           "\r!"
+#define gray25_ColorEscape          "\r\""
+#define gray50_ColorEscape          "\r#"
+#define gray75_ColorEscape          "\r$"
+#define white_ColorEscape           "\r%"
+#define brown_ColorEscape           "\r&"
+#define orange_ColorEscape          "\r'"
+#define teal_ColorEscape            "\r("
+#define cyan_ColorEscape            "\r)"
+#define yellow_ColorEscape          "\r*"
+#define red_ColorEscape             "\r+"
+#define magenta_ColorEscape         "\r,"
+#define blue_ColorEscape            "\r-"
+#define green_ColorEscape           "\r."
+#define uiText_ColorEscape          "\r4"
+#define uiTextAction_ColorEscape    "\r<"
+#define uiTextCaution_ColorEscape   "\r="
+#define uiHeading_ColorEscape       "\rR"
 
 iDeclareType(Color)
 iDeclareType(HSLColor)

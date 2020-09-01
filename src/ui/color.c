@@ -401,7 +401,8 @@ const char *escape_Color(int color) {
     if (color >= 0 && color < (int) iElemCount(esc)) {
         return esc[color];
     }
-    return format_CStr("\r%c", color + '0');
+    iAssert(asciiBase_ColorEscape + color <= 127);
+    return format_CStr("\r%c", asciiBase_ColorEscape + color);
 }
 
 iHSLColor setSat_HSLColor(iHSLColor d, float sat) {
