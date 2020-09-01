@@ -302,7 +302,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         tmLinkText_ColorId,
     };
     static const int indents[max_GmLineType] = {
-        5, 10, 5, 10, 0, 0, 0, 5
+        6, 12, 6, 12, 0, 0, 0, 6
     };
     static const float topMargin[max_GmLineType] = {
         0.0f, 0.5f, 1.0f, 0.5f, 2.0f, 2.0f, 1.5f, 1.0f
