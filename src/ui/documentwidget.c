@@ -241,18 +241,12 @@ void init_DocumentWidget(iDocumentWidget *d) {
     init_PtrArray(&d->visibleLinks);
     init_Click(&d->click, d, SDL_BUTTON_LEFT);
     addChild_Widget(w, iClob(d->scroll = new_ScrollWidget()));
-    d->menu =
-        makeMenu_Widget(w,
-                        (iMenuItem[]){ { "Go Back", SDLK_LEFT, KMOD_PRIMARY, "navigate.back" },
-                                       { "Go Forward", SDLK_RIGHT, KMOD_PRIMARY, "navigate.forward" },
-                                       { "Reload Page", 0, 0, "navigate.reload" },
-                                       { "---", 0, 0, NULL },
-                                       { "Copy", 'c', KMOD_PRIMARY, "copy" },
-                                       { "Copy Link", 0, 0, "document.copylink" } },
-                        6);
+    d->menu = NULL; /* created when clicking */
 #if !defined (iPlatformApple) /* in system menu */
     addAction_Widget(w, SDLK_w, KMOD_PRIMARY, "tabs.close");
 #endif
+    addAction_Widget(w, SDLK_LEFT, KMOD_PRIMARY, "navigate.back");
+    addAction_Widget(w, SDLK_RIGHT, KMOD_PRIMARY, "navigate.forward");
 }
 
 void deinit_DocumentWidget(iDocumentWidget *d) {
@@ -1429,11 +1423,37 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             postCommand_App("navigate.forward");
             return iTrue;
         }
+        if (ev->button.button == SDL_BUTTON_RIGHT) {
+            if (!d->menu || !isVisible_Widget(d->menu)) {
+                d->contextLink = d->hoverLink;
+                if (d->menu) {
+                    destroy_Widget(d->menu);
+                }
+                iArray items;
+                init_Array(&items, sizeof(iMenuItem));
+                pushBackN_Array(
+                    &items,
+                    (iMenuItem[]){
+                        { "Go Back", SDLK_LEFT, KMOD_PRIMARY, "navigate.back" },
+                        { "Go Forward", SDLK_RIGHT, KMOD_PRIMARY, "navigate.forward" },
+                        { "Reload Page", 0, 0, "navigate.reload" },
+                        { "---", 0, 0, NULL },
+                        { d->contextLink ? "Copy Link URL" : "Copy Page URL",
+                          0,
+                          0,
+                          "document.copylink" },
+                        { isEmpty_Range(&d->selectMark) ? "Copy Full Source" : "Copy Selected",
+                          'c',
+                          KMOD_PRIMARY,
+                          "copy" },
+                    },
+                    6);
+                d->menu = makeMenu_Widget(w, data_Array(&items), size_Array(&items));
+                deinit_Array(&items);
+            }
+            processContextMenuEvent_Widget(d->menu, ev, d->hoverLink = NULL);
+        }
     }
-    if (!isVisible_Widget(d->menu)) {
-        d->contextLink = d->hoverLink;
-    }
-    processContextMenuEvent_Widget(d->menu, ev, d->hoverLink = NULL);
     switch (processEvent_Click(&d->click, ev)) {
         case started_ClickResult:
             d->selecting = iFalse;

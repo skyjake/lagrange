@@ -329,10 +329,10 @@ static void setupUserInterface_Window(iWindow *d) {
         addChild_Widget(div, iClob(navBar));
         setBackgroundColor_Widget(navBar, uiBackground_ColorId);
         setCommandHandler_Widget(navBar, handleNavBarCommands_);
-        addChild_Widget(navBar, iClob(newIcon_LabelWidget("\U0001f850", 0, 0, "navigate.back")));
-        addChild_Widget(navBar, iClob(newIcon_LabelWidget("\U0001f852", 0, 0, "navigate.forward")));
-        iLabelWidget *idMenu =
-            makeMenuButton_LabelWidget("\U0001f464", identityButtonMenuItems, iElemCount(identityButtonMenuItems));
+        addChild_Widget(navBar, iClob(newIcon_LabelWidget("\U0001f870", 0, 0, "navigate.back")));
+        addChild_Widget(navBar, iClob(newIcon_LabelWidget("\U0001f872", 0, 0, "navigate.forward")));
+        iLabelWidget *idMenu = makeMenuButton_LabelWidget(
+            "\U0001f464", identityButtonMenuItems, iElemCount(identityButtonMenuItems));
         setAlignVisually_LabelWidget(idMenu, iTrue);
         addChild_Widget(navBar, iClob(idMenu));
         setId_Widget(as_Widget(idMenu), "navbar.ident");
