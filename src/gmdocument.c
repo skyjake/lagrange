@@ -1,3 +1,25 @@
+/* Copyright 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
+
 #include "gmdocument.h"
 #include "gmutil.h"
 #include "ui/color.h"
@@ -106,11 +128,11 @@ enum iGmLineType {
     max_GmLineType,
 };
 
-static enum iGmLineType lineType_GmDocument_(const iGmDocument *d, const iRangecc *line) {
+static enum iGmLineType lineType_GmDocument_(const iGmDocument *d, const iRangecc line) {
     if (d->format == plainText_GmDocumentFormat) {
         return text_GmLineType;
     }
-    if (isEmpty_Range(line)) {
+    if (isEmpty_Range(&line)) {
         return text_GmLineType;
     }
     if (startsWith_Rangecc(line, "=>")) {
@@ -128,10 +150,10 @@ static enum iGmLineType lineType_GmDocument_(const iGmDocument *d, const iRangec
     if (startsWith_Rangecc(line, "```")) {
         return preformatted_GmLineType;
     }
-    if (*line->start == '>') {
+    if (*line.start == '>') {
         return quote_GmLineType;
     }
-    if (size_Range(line) >= 2 && line->start[0] == '*' && isspace(line->start[1])) {
+    if (size_Range(&line) >= 2 && line.start[0] == '*' && isspace(line.start[1])) {
         return bullet_GmLineType;
     }
     return text_GmLineType;
@@ -157,11 +179,11 @@ static int lastVisibleRunBottom_GmDocument_(const iGmDocument *d) {
 iInt2 measurePreformattedBlock_GmDocument_(const iGmDocument *d, const char *start, int font) {
     const iRangecc content = { start, constEnd_String(&d->source) };
     iRangecc line = iNullRange;
-    nextSplit_Rangecc(&content, "\n", &line);
-    iAssert(startsWith_Rangecc(&line, "```"));
+    nextSplit_Rangecc(content, "\n", &line);
+    iAssert(startsWith_Rangecc(line, "```"));
     iRangecc preBlock = { line.end + 1, line.end + 1 };
-    while (nextSplit_Rangecc(&content, "\n", &line)) {
-        if (startsWith_Rangecc(&line, "```")) {
+    while (nextSplit_Rangecc(content, "\n", &line)) {
+        if (startsWith_Rangecc(line, "```")) {
             break;
         }
         preBlock.end = line.end;
@@ -170,31 +192,35 @@ iInt2 measurePreformattedBlock_GmDocument_(const iGmDocument *d, const char *sta
 }
 
 static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *linkId) {
-    iRegExp *pattern = new_RegExp("=>\\s*([^\\s]+)(\\s.*)?", caseInsensitive_RegExpOption);
+    static iRegExp *pattern_;
+    if (!pattern_) {
+        pattern_ = new_RegExp("=>\\s*([^\\s]+)(\\s.*)?", caseInsensitive_RegExpOption);
+    }
     iRegExpMatch m;
-    if (matchRange_RegExp(pattern, line, &m)) {
+    init_RegExpMatch(&m);
+    if (matchRange_RegExp(pattern_, line, &m)) {
         iGmLink *link = new_GmLink();
         setRange_String(&link->url, capturedRange_RegExpMatch(&m, 1));
         set_String(&link->url, absoluteUrl_String(&d->url, &link->url));
         /* Check the URL. */ {
             iUrl parts;
             init_Url(&parts, &link->url);
-            if (!equalCase_Rangecc(&parts.host, cstr_String(&d->localHost))) {
+            if (!equalCase_Rangecc(parts.host, cstr_String(&d->localHost))) {
                 link->flags |= remote_GmLinkFlag;
             }
-            if (startsWithCase_Rangecc(&parts.protocol, "gemini")) {
+            if (startsWithCase_Rangecc(parts.scheme, "gemini")) {
                 link->flags |= gemini_GmLinkFlag;
             }
-            else if (startsWithCase_Rangecc(&parts.protocol, "http")) {
+            else if (startsWithCase_Rangecc(parts.scheme, "http")) {
                 link->flags |= http_GmLinkFlag;
             }
-            else if (equalCase_Rangecc(&parts.protocol, "gopher")) {
+            else if (equalCase_Rangecc(parts.scheme, "gopher")) {
                 link->flags |= gopher_GmLinkFlag;
             }
-            else if (equalCase_Rangecc(&parts.protocol, "file")) {
+            else if (equalCase_Rangecc(parts.scheme, "file")) {
                 link->flags |= file_GmLinkFlag;
             }
-            else if (equalCase_Rangecc(&parts.protocol, "data")) {
+            else if (equalCase_Rangecc(parts.scheme, "data")) {
                 link->flags |= data_GmLinkFlag;
             }
             /* Check the file name extension, if present. */
@@ -232,7 +258,6 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
             line = capturedRange_RegExpMatch(&m, 1); /* Show the URL. */
         }
     }
-    iRelease(pattern);
     return line;
 }
 
@@ -254,16 +279,21 @@ static size_t findLinkImage_GmDocument_(const iGmDocument *d, iGmLinkId linkId) 
     return iInvalidPos;
 }
 
+static iBool isGopher_GmDocument_(const iGmDocument *d) {
+    return equalCase_Rangecc(urlScheme_String(&d->url), "gopher");
+}
+
 static void doLayout_GmDocument_(iGmDocument *d) {
+    const iBool isGemini = !isGopher_GmDocument_(d);
     /* TODO: Collect these parameters into a GmTheme. */
-    static const int fonts[max_GmLineType] = {
-        paragraph_FontId,
-        paragraph_FontId, /* bullet */
+    const int fonts[max_GmLineType] = {
+        isGemini ? paragraph_FontId : preformatted_FontId,
+        isGemini ? paragraph_FontId : preformatted_FontId, /* bullet */
         preformatted_FontId,
         quote_FontId,
-        heading1_FontId,
-        heading2_FontId,
-        heading3_FontId,
+        isGemini ? heading1_FontId : preformatted_FontId,
+        isGemini ? heading2_FontId : preformatted_FontId,
+        isGemini ? heading3_FontId : preformatted_FontId,
         regular_FontId,
     };
     static const int colors[max_GmLineType] = {
@@ -277,7 +307,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         tmLinkText_ColorId,
     };
     static const int indents[max_GmLineType] = {
-        5, 10, 5, 10, 0, 0, 0, 5
+        6, 12, 6, 12, 0, 0, 0, 6
     };
     static const float topMargin[max_GmLineType] = {
         0.0f, 0.5f, 1.0f, 0.5f, 2.0f, 2.0f, 1.5f, 1.0f
@@ -298,20 +328,21 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         return;
     }
     const iRangecc   content       = range_String(&d->source);
+    iRangecc         contentLine   = iNullRange;
     iInt2            pos           = zero_I2();
-    iRangecc         line          = iNullRange;
-    iRangecc         preAltText    = iNullRange;
-    enum iGmLineType prevType; //     = text_GmLineType;
+    iBool            isFirstText   = isGemini;
     iBool            isPreformat   = iFalse;
-    iBool            isFirstText   = iTrue;
+    iRangecc         preAltText    = iNullRange;
+    int              preFont       = preformatted_FontId;
     iBool            enableIndents = iFalse;
     iBool            addSiteBanner = iTrue;
-    int              preFont       = preformatted_FontId;
+    enum iGmLineType prevType;
     if (d->format == plainText_GmDocumentFormat) {
         isPreformat = iTrue;
         isFirstText = iFalse;
     }
-    while (nextSplit_Rangecc(&content, "\n", &line)) {
+    while (nextSplit_Rangecc(content, "\n", &contentLine)) {
+        iRangecc line = contentLine; /* `line` will be trimmed later; would confuse nextSplit */
         iGmRun run;
         run.flags = 0;
         run.color = white_ColorId;
@@ -320,7 +351,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         enum iGmLineType type;
         int indent = 0;
         if (!isPreformat) {
-            type = lineType_GmDocument_(d, &line);
+            type = lineType_GmDocument_(d, line);
             if (line.start == content.start) {
                 prevType = type;
             }
@@ -358,7 +389,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             /* Preformatted line. */
             type = preformatted_GmLineType;
             if (d->format == gemini_GmDocumentFormat &&
-                startsWithSc_Rangecc(&line, "```", &iCaseSensitive)) {
+                startsWithSc_Rangecc(line, "```", &iCaseSensitive)) {
                 isPreformat = iFalse;
                 preAltText = iNullRange;
                 addSiteBanner = iFalse; /* overrides the banner */
@@ -664,6 +695,20 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
     }
     /* Set up colors. */
     if (d->themeSeed) {
+        enum iHue {
+            red_Hue,
+            reddishOrange_Hue,
+            yellowishOrange_Hue,
+            yellow_Hue,
+            greenishYellow_Hue,
+            green_Hue,
+            bluishGreen_Hue,
+            cyan_Hue,
+            skyBlue_Hue,
+            blue_Hue,
+            violet_Hue,
+            pink_Hue
+        };
         static const float hues[] = { 5, 25, 40, 56, 80, 120, 160, 180, 208, 231, 270, 324 };
         static const struct {
             int index[2];
@@ -681,9 +726,9 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
             { 8, 9 },  /* violet */
             { 7, 8 },  /* pink */
         };
-        const float saturationLevel = 1.0f; /* TODO: user setting */
         const iBool isBannerLighter = (d->themeSeed & 0x4000) != 0;
         const size_t primIndex = d->themeSeed ? (d->themeSeed & 0xff) % iElemCount(hues) : 2;
+        const float saturationLevel = 1.0f; /* TODO: user setting */
         const iBool  isDarkBgSat =
             (d->themeSeed & 0x200000) != 0 && (primIndex < 1 || primIndex > 4);
         iHSLColor base = { hues[primIndex],
@@ -692,9 +737,10 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
                            1.0f };
         //            printf("background: %d %f %f\n", (int) base.hue, base.sat, base.lum);
         //            printf("isDarkBgSat: %d\n", isDarkBgSat);
-        setHsl_Color(tmBackground_ColorId, base);
+        iHSLColor bgBase = base;
+        setHsl_Color(tmBackground_ColorId, bgBase);
 
-        setHsl_Color(tmBannerBackground_ColorId, addSatLum_HSLColor(base, 0.1f, 0.04f * (isBannerLighter ? 1 : -1)));
+        setHsl_Color(tmBannerBackground_ColorId, addSatLum_HSLColor(bgBase, 0.1f, 0.04f * (isBannerLighter ? 1 : -1)));
         setHsl_Color(tmBannerTitle_ColorId, setLum_HSLColor(addSatLum_HSLColor(base, 0.1f, 0), 0.55f));
         setHsl_Color(tmBannerIcon_ColorId, setLum_HSLColor(addSatLum_HSLColor(base, 0.35f, 0), 0.65f));
 
@@ -714,7 +760,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
         setHsl_Color(tmHeading3_ColorId, setLum_HSLColor(altBase, titleLum + 0.60f));
 
         setHsl_Color(tmParagraph_ColorId, addSatLum_HSLColor(base, 0.1f, 0.6f));
-        setHsl_Color(tmFirstParagraph_ColorId, addSatLum_HSLColor(base, 0.2f, 0.8f));
+        setHsl_Color(tmFirstParagraph_ColorId, addSatLum_HSLColor(base, 0.2f, 0.72f));
         setHsl_Color(tmPreformatted_ColorId, (iHSLColor){ altHue2, 1.0f, 0.75f, 1.0f });
         set_Color(tmQuote_ColorId, get_Color(tmPreformatted_ColorId));
         set_Color(tmInlineContentMetadata_ColorId, get_Color(tmHeading3_ColorId));
@@ -736,31 +782,12 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
                 else if (i == tmHeading3_ColorId) {
                     color.lum *= 0.75f;
                 }
-#if 0
-                else if (isLink_ColorId(i)) {
-                    /* Darken links generally to improve visibility against a
-                       light background. */
-                    color.lum *= 0.5f;
-                    color.sat = 1.0f;
-                }
-#endif
                 else if (i == tmBannerIcon_ColorId || i == tmBannerTitle_ColorId) {
-                    if (isBannerLighter) {
-                        color.lum *= 0.75f;
-                    }
-                    else {
-                        color.lum = 0.98f;
-                    }
+                    color.sat = 1.0f;
+                    color.lum = 0.35f;
                 }
                 else if (i == tmBannerBackground_ColorId) {
-                    if (isBannerLighter) {
-                        //color.lum = iMin(0.9, color.lum);
-                        color = hsl_Color(get_Color(tmBackground_ColorId));
-                    }
-                    else {
-                        color.sat *= 0.8f;
-                        color.lum = 0.6f;
-                    }
+                    color = hsl_Color(get_Color(tmBackground_ColorId));
                 }
                 else if (isText_ColorId(i)) {
                     color.sat = 0.9f;
@@ -772,7 +799,12 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
                     if (isDarkBgSat) {
                         /* Saturate background, desaturate text. */
                         if (isBackground_ColorId(i)) {
-                            color.sat = (color.sat + 1) / 2;
+                            if (primIndex != green_Hue) {
+                                color.sat = (color.sat + 1) / 2;
+                            }
+                            else {
+                                color.sat *= 0.5f;
+                            }
                             color.lum *= 0.75f;
                         }
                         else if (isText_ColorId(i)) {
@@ -822,11 +854,11 @@ static void normalize_GmDocument(iGmDocument *d) {
     iRangecc src = range_String(&d->source);
     iRangecc line = iNullRange;
     iBool isPreformat = iFalse;
-    if (d->format == plainText_GmDocumentFormat) {
+    if (d->format == plainText_GmDocumentFormat || isGopher_GmDocument_(d)) {
         isPreformat = iTrue; /* Cannot be turned off. */
     }
-    const int preTabWidth = 8; /* TODO: user-configurable parameter */
-    while (nextSplit_Rangecc(&src, "\n", &line)) {
+    const int preTabWidth = 4; /* TODO: user-configurable parameter */
+    while (nextSplit_Rangecc(src, "\n", &line)) {
         if (isPreformat) {
             /* Replace any tab characters with spaces for visualization. */
             for (const char *ch = line.start; ch != line.end; ch++) {
@@ -842,12 +874,12 @@ static void normalize_GmDocument(iGmDocument *d) {
                 }
             }
             appendCStr_String(normalized, "\n");
-            if (lineType_GmDocument_(d, &line) == preformatted_GmLineType) {
+            if (lineType_GmDocument_(d, line) == preformatted_GmLineType) {
                 isPreformat = iFalse;
             }
             continue;
         }
-        if (lineType_GmDocument_(d, &line) == preformatted_GmLineType) {
+        if (lineType_GmDocument_(d, line) == preformatted_GmLineType) {
             isPreformat = iTrue;
             appendRange_String(normalized, line);
             appendCStr_String(normalized, "\n");

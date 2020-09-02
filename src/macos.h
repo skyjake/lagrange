@@ -22,10 +22,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
-#include <the_Foundation/vec2.h>
+#include "ui/util.h"
 
-extern int   gap_UI;
-extern int   fontSize_UI;
-extern iInt2 gap2_UI;
+/* Platform-specific functionality for macOS */
 
-void    setPixelRatio_Metrics       (float pixelRatio);
+void    setupApplication_MacOS  (void);
+void    insertMenuItems_MacOS   (const char *menuLabel, int atIndex, const iMenuItem *items, size_t count);
+void    handleCommand_MacOS     (const char *cmd);

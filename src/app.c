@@ -1,3 +1,25 @@
+/* Copyright 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
+
 #include "app.h"
 #include "bookmarks.h"
 #include "embedded.h"
@@ -25,6 +47,7 @@
 #include <the_Foundation/time.h>
 #include <SDL_events.h>
 #include <SDL_render.h>
+#include <SDL_timer.h>
 #include <SDL_video.h>
 
 #include <stdio.h>
@@ -32,26 +55,26 @@
 #include <errno.h>
 
 #if defined (iPlatformApple) && !defined (iPlatformIOS)
-#   include "ui/macos.h"
+#   include "macos.h"
 #endif
 
 iDeclareType(App)
 
 #if defined (iPlatformApple)
-#define EMB_BIN "../../Resources/resources.bin"
+#define EMB_BIN "../../Resources/resources.binary"
 static const char *dataDir_App_ = "~/Library/Application Support/fi.skyjake.Lagrange";
 #endif
 #if defined (iPlatformMsys)
-#define EMB_BIN "../resources.bin"
+#define EMB_BIN "../resources.binary"
 static const char *dataDir_App_ = "~/AppData/Roaming/fi.skyjake.Lagrange";
 #endif
 #if defined (iPlatformLinux)
-#define EMB_BIN  "../../share/lagrange/resources.bin"
-#define EMB_BIN2 "../resources.bin" /* try from build dir as well */
+#define EMB_BIN  "../../share/lagrange/resources.binary"
 static const char *dataDir_App_ = "~/.config/lagrange";
 #endif
+#define EMB_BIN2 "../resources.binary" /* fallback from build/executable dir */
 static const char *prefsFileName_App_   = "prefs.cfg";
-static const char *stateFileName_App_   = "state.bin";
+static const char *stateFileName_App_   = "state.binary";
 
 struct Impl_App {
     iCommandLine args;
@@ -60,6 +83,8 @@ struct Impl_App {
     iBookmarks * bookmarks;
     iWindow *    window;
     iSortedArray tickers;
+    uint32_t     lastTickerTime;
+    uint32_t     elapsedSinceLastTicker;
     iBool        running;
     iBool        pendingRefresh;
     int          tabEnum;
@@ -70,6 +95,9 @@ struct Impl_App {
     float        uiScale;
     int          zoomPercent;
     enum iColorTheme theme;
+    iBool        useSystemTheme;
+    iString      gopherProxy;
+    iString      httpProxy;
 };
 
 static iApp app_;
@@ -99,21 +127,32 @@ const iString *dateStr_(const iDate *date) {
 static iString *serializePrefs_App_(const iApp *d) {
     iString *str = new_String();
     const iSidebarWidget *sidebar = findWidget_App("sidebar");
+    appendFormat_String(str, "window.retain arg:%d\n", d->retainWindowSize);
     if (d->retainWindowSize) {
         int w, h, x, y;
         SDL_GetWindowSize(d->window->win, &w, &h);
         SDL_GetWindowPosition(d->window->win, &x, &y);
+#if defined (iPlatformLinux)
+        /* Workaround for window position being unaffected by decorations on creation. */ {
+            int bl, bt;
+            SDL_GetWindowBordersSize(d->window->win, &bt, &bl, NULL, NULL);
+            x -= bl;
+            y -= bt;
+        }
+#endif
         appendFormat_String(str, "window.setrect width:%d height:%d coord:%d %d\n", w, h, x, y);
         appendFormat_String(str, "sidebar.width arg:%d\n", width_SidebarWidget(sidebar));
     }
-    appendFormat_String(str, "retainwindow arg:%d\n", d->retainWindowSize);
     if (isVisible_Widget(constAs_Widget(sidebar))) {
         appendCStr_String(str, "sidebar.toggle\n");
     }
     appendFormat_String(str, "sidebar.mode arg:%d\n", mode_SidebarWidget(sidebar));
     appendFormat_String(str, "uiscale arg:%f\n", uiScale_Window(d->window));
     appendFormat_String(str, "zoom.set arg:%d\n", d->zoomPercent);
-    appendFormat_String(str, "theme.set arg:%d\n", d->theme);
+    appendFormat_String(str, "theme.set arg:%d auto:1\n", d->theme);
+    appendFormat_String(str, "ostheme arg:%d\n", d->useSystemTheme);
+    appendFormat_String(str, "proxy.gopher address:%s\n", cstr_String(&d->gopherProxy));
+    appendFormat_String(str, "proxy.http address:%s\n", cstr_String(&d->httpProxy));
     return str;
 }
 
@@ -130,7 +169,7 @@ static void loadPrefs_App_(iApp *d) {
         iString *str = readString_File(f);
         const iRangecc src = range_String(str);
         iRangecc line = iNullRange;
-        while (nextSplit_Rangecc(&src, "\n", &line)) {
+        while (nextSplit_Rangecc(src, "\n", &line)) {
             iString cmdStr;
             initRange_String(&cmdStr, line);
             const char *cmd = cstr_String(&cmdStr);
@@ -231,9 +270,12 @@ static void saveState_App_(const iApp *d) {
 static void init_App_(iApp *d, int argc, char **argv) {
     init_CommandLine(&d->args, argc, argv);
     init_SortedArray(&d->tickers, sizeof(iTicker), cmp_Ticker_);
+    d->lastTickerTime    = SDL_GetTicks();
+    d->elapsedSinceLastTicker = 0;
     d->commandEcho       = checkArgument_CommandLine(&d->args, "echo") != NULL;
     d->initialWindowRect = init_Rect(-1, -1, 800, 500);
     d->theme             = dark_ColorTheme;
+    d->useSystemTheme    = iTrue;
     d->running           = iFalse;
     d->window            = NULL;
     d->retainWindowSize  = iTrue;
@@ -243,15 +285,17 @@ static void init_App_(iApp *d, int argc, char **argv) {
     d->visited           = new_Visited();
     d->bookmarks         = new_Bookmarks();
     d->tabEnum           = 0; /* generates unique IDs for tab pages */
+    init_String(&d->gopherProxy);
+    init_String(&d->httpProxy);
     setThemePalette_Color(d->theme);
     loadPrefs_App_(d);
     load_Visited(d->visited, dataDir_App_);
     load_Bookmarks(d->bookmarks, dataDir_App_);
 #if defined (iHaveLoadEmbed)
     /* Load the resources from a file. */ {
-        if (!load_Embed(concatPath_CStr(cstr_String(execPath_App()), "../resources.bin"))) {
-            if (!load_Embed(concatPath_CStr(cstr_String(execPath_App()), EMB_BIN))) {
-                fprintf(stderr, "failed to load resources.bin: %s\n", strerror(errno));
+        if (!load_Embed(concatPath_CStr(cstr_String(execPath_App()), EMB_BIN))) {
+            if (!load_Embed(concatPath_CStr(cstr_String(execPath_App()), EMB_BIN2))) {
+                fprintf(stderr, "failed to load resources: %s\n", strerror(errno));
                 exit(-1);
             }
         }
@@ -269,6 +313,8 @@ static void init_App_(iApp *d, int argc, char **argv) {
 static void deinit_App(iApp *d) {
     saveState_App_(d);
     savePrefs_App_(d);
+    deinit_String(&d->httpProxy);
+    deinit_String(&d->gopherProxy);
     save_Bookmarks(d->bookmarks, dataDir_App_);
     delete_Bookmarks(d->bookmarks);
     save_Visited(d->visited, dataDir_App_);
@@ -288,12 +334,17 @@ const iString *dataDir_App(void) {
     return collect_String(cleanedCStr_Path(dataDir_App_));
 }
 
+iLocalDef iBool isWaitingAllowed_App_(const iApp *d) {
+    return !d->pendingRefresh && isEmpty_SortedArray(&d->tickers);
+}
+
 void processEvents_App(enum iAppEventMode eventMode) {
     iApp *d = &app_;
     SDL_Event ev;
-    while (
-        (!d->pendingRefresh && eventMode == waitForNewEvents_AppEventMode && SDL_WaitEvent(&ev)) ||
-        ((d->pendingRefresh || eventMode == postedEventsOnly_AppEventMode) && SDL_PollEvent(&ev))) {
+    while ((isWaitingAllowed_App_(d) && eventMode == waitForNewEvents_AppEventMode &&
+            SDL_WaitEvent(&ev)) ||
+           ((!isWaitingAllowed_App_(d) || eventMode == postedEventsOnly_AppEventMode) &&
+            SDL_PollEvent(&ev))) {
         switch (ev.type) {
             case SDL_QUIT:
                 d->running = iFalse;
@@ -325,12 +376,17 @@ backToMainLoop:;
 }
 
 static void runTickers_App_(iApp *d) {
+    const uint32_t now = SDL_GetTicks();
+    d->elapsedSinceLastTicker = (d->lastTickerTime ? now - d->lastTickerTime : 0);
+    d->lastTickerTime = now;
+    if (isEmpty_SortedArray(&d->tickers)) {
+        d->lastTickerTime = 0;
+        return;
+    }
     /* Tickers may add themselves again, so we'll run off a copy. */
     iSortedArray *pending = copy_SortedArray(&d->tickers);
     clear_SortedArray(&d->tickers);
-    if (!isEmpty_SortedArray(pending)) {
-        postRefresh_App();
-    }
+    postRefresh_App();
     iConstForEach(Array, i, &pending->values) {
         const iTicker *ticker = i.value;
         if (ticker->callback) {
@@ -338,6 +394,9 @@ static void runTickers_App_(iApp *d) {
         }
     }
     delete_SortedArray(pending);
+    if (isEmpty_SortedArray(&d->tickers)) {
+        d->lastTickerTime = 0;
+    }
 }
 
 static int run_App_(iApp *d) {
@@ -345,8 +404,8 @@ static int run_App_(iApp *d) {
     d->running = iTrue;
     SDL_EventState(SDL_DROPFILE, SDL_ENABLE); /* open files via drag'n'drop */
     while (d->running) {
-        runTickers_App_(d);
         processEvents_App(waitForNewEvents_AppEventMode);
+        runTickers_App_(d);
         refresh_App();
         recycle_Garbage();
     }
@@ -364,12 +423,27 @@ iBool isRefreshPending_App(void) {
     return app_.pendingRefresh;
 }
 
+uint32_t elapsedSinceLastTicker_App(void) {
+    return app_.elapsedSinceLastTicker;
+}
+
 int zoom_App(void) {
     return app_.zoomPercent;
 }
 
 enum iColorTheme colorTheme_App(void) {
     return app_.theme;
+}
+
+const iString *schemeProxy_App(iRangecc scheme) {
+    iApp *d = &app_;
+    if (equalCase_Rangecc(scheme, "gopher")) {
+        return &d->gopherProxy;
+    }
+    if (equalCase_Rangecc(scheme, "http") || equalCase_Rangecc(scheme, "https")) {
+        return &d->httpProxy;
+    }
+    return NULL;
 }
 
 int run_App(int argc, char **argv) {
@@ -394,7 +468,12 @@ void postRefresh_App(void) {
 }
 
 void postCommand_App(const char *command) {
+    iAssert(command);
     SDL_Event ev;
+    if (*command == '!') {
+        /* Global command; this is global context so just ignore. */
+        command++;
+    }
     ev.user.type     = SDL_USEREVENT;
     ev.user.code     = command_UserEventCode;
     ev.user.windowID = get_Window() ? SDL_GetWindowID(get_Window()->win) : 0;
@@ -424,6 +503,7 @@ iAny *findWidget_App(const char *id) {
 void addTicker_App(void (*ticker)(iAny *), iAny *context) {
     iApp *d = &app_;
     insert_SortedArray(&d->tickers, &(iTicker){ context, ticker });
+    postRefresh_App();
 }
 
 iGmCerts *certs_App(void) {
@@ -450,13 +530,25 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
     if (equal_Command(cmd, "prefs.dismiss") || equal_Command(cmd, "preferences")) {
         setUiScale_Window(get_Window(),
                           toFloat_String(text_InputWidget(findChild_Widget(d, "prefs.uiscale"))));
-        postCommandf_App("retainwindow arg:%d",
+        postCommandf_App("window.retain arg:%d",
                          isSelected_Widget(findChild_Widget(d, "prefs.retainwindow")));
+        postCommandf_App("ostheme arg:%d",
+                         isSelected_Widget(findChild_Widget(d, "prefs.ostheme")));
+        postCommandf_App("proxy.http address:%s",
+                         cstr_String(text_InputWidget(findChild_Widget(d, "prefs.proxy.http"))));
+        postCommandf_App("proxy.gopher address:%s",
+                         cstr_String(text_InputWidget(findChild_Widget(d, "prefs.proxy.gopher"))));
         destroy_Widget(d);
         return iTrue;
     }
-    else if (equal_Command(cmd, "theme.changed")) {
+    else if (equal_Command(cmd, "prefs.ostheme.changed")) {
+        postCommandf_App("ostheme arg:%d", arg_Command(cmd));
+    }
+    else if (equal_Command(cmd, "theme.changed")) {        
         updatePrefsThemeButtons_(d);
+        if (!argLabel_Command(cmd, "auto")) {
+            setToggle_Widget(findChild_Widget(d, "prefs.ostheme"), iFalse);
+        }
     }
     return iFalse;
 }
@@ -502,18 +594,81 @@ iDocumentWidget *newTab_App(const iDocumentWidget *duplicateOf) {
     return doc;
 }
 
+static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
+    iApp *d = &app_;
+    if (equal_Command(cmd, "ident.accept") || equal_Command(cmd, "cancel")) {        
+        if (equal_Command(cmd, "ident.accept")) {
+            const iString *commonName   = text_InputWidget (findChild_Widget(dlg, "ident.common"));
+            const iString *email        = text_InputWidget (findChild_Widget(dlg, "ident.email"));
+            const iString *userId       = text_InputWidget (findChild_Widget(dlg, "ident.userid"));
+            const iString *domain       = text_InputWidget (findChild_Widget(dlg, "ident.domain"));
+            const iString *organization = text_InputWidget (findChild_Widget(dlg, "ident.org"));
+            const iString *country      = text_InputWidget (findChild_Widget(dlg, "ident.country"));
+            const iBool    isTemp       = isSelected_Widget(findChild_Widget(dlg, "ident.temp"));
+            if (isEmpty_String(commonName)) {
+                makeMessage_Widget(orange_ColorEscape "MISSING INFO",
+                                   "A \"Common name\" must be specified.");
+                return iTrue;
+            }
+            iDate until;
+            /* Validate the date. */ {
+                iZap(until);
+                unsigned int val[6];
+                iDate today;
+                initCurrent_Date(&today);
+                const int n =
+                    sscanf(cstr_String(text_InputWidget(findChild_Widget(dlg, "ident.until"))),
+                           "%04u-%u-%u %u:%u:%u",
+                           &val[0], &val[1], &val[2], &val[3], &val[4], &val[5]);
+                if (n <= 0 || val[0] < (unsigned) today.year) {
+                    makeMessage_Widget(orange_ColorEscape "INVALID DATE",
+                                       "Please check the \"Valid until\" date. Examples:\n"
+                                       "\u2022 2030\n"
+                                       "\u2022 2025-06-30\n"
+                                       "\u2022 2021-12-31 23:59:59");
+                    return iTrue;
+                }
+                until.year   = val[0];
+                until.month  = n >= 2 ? val[1] : 1;
+                until.day    = n >= 3 ? val[2] : 1;
+                until.hour   = n >= 4 ? val[3] : 0;
+                until.minute = n >= 5 ? val[4] : 0;
+                until.second = n == 6 ? val[5] : 0;
+                /* In the past? */ {
+                    iTime now, t;
+                    initCurrent_Time(&now);
+                    init_Time(&t, &until);
+                    if (cmp_Time(&t, &now) <= 0) {
+                        makeMessage_Widget(orange_ColorEscape "INVALID DATE",
+                                           "Expiration date must be in the future.");
+                        return iTrue;
+                    }
+                }
+            }
+            /* The input seems fine. */
+            newIdentity_GmCerts(d->certs, isTemp ? temporary_GmIdentityFlag : 0,
+                                until, commonName, email, userId, domain, organization, country);
+            postCommandf_App("sidebar.mode arg:%d show:1", identities_SidebarMode);
+            postCommand_App("idents.changed");
+        }
+        destroy_Widget(dlg);
+        return iTrue;
+    }
+    return iFalse;
+}
+
 iBool handleCommand_App(const char *cmd) {
     iApp *d = &app_;
-    if (equal_Command(cmd, "retainwindow")) {
+    if (equal_Command(cmd, "window.retain")) {
         d->retainWindowSize = arg_Command(cmd);
         return iTrue;
     }
     else if (equal_Command(cmd, "open")) {
-        const iString *url = collect_String(newCStr_String(suffixPtr_Command(cmd, "url")));
+        const iString *url = collectNewCStr_String(suffixPtr_Command(cmd, "url"));
         iUrl parts;
         init_Url(&parts, url);
-        if (equalCase_Rangecc(&parts.protocol, "http") ||
-            equalCase_Rangecc(&parts.protocol, "https")) {
+        if (isEmpty_String(&d->httpProxy) &&
+            (equalCase_Rangecc(parts.scheme, "http") || equalCase_Rangecc(parts.scheme, "https"))) {
             openInDefaultBrowser_App(url);
             return iTrue;
         }
@@ -523,8 +678,9 @@ iBool handleCommand_App(const char *cmd) {
         }
         iHistory *history = history_DocumentWidget(doc);
         const iBool isHistory = argLabel_Command(cmd, "history") != 0;
+        int redirectCount = argLabel_Command(cmd, "redirect");
         if (!isHistory) {
-            if (argLabel_Command(cmd, "redirect")) {
+            if (redirectCount) {
                 replace_History(history, url);
             }
             else {
@@ -533,6 +689,7 @@ iBool handleCommand_App(const char *cmd) {
         }
         visitUrl_Visited(d->visited, url);
         setInitialScroll_DocumentWidget(doc, argfLabel_Command(cmd, "scroll"));
+        setRedirectCount_DocumentWidget(doc, redirectCount);
         setUrlFromCache_DocumentWidget(doc, url, isHistory);
     }
     else if (equal_Command(cmd, "document.request.cancelled")) {
@@ -601,9 +758,14 @@ iBool handleCommand_App(const char *cmd) {
     else if (equal_Command(cmd, "preferences")) {
         iWidget *dlg = makePreferences_Widget();
         updatePrefsThemeButtons_(dlg);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.ostheme"), d->useSystemTheme);
         setToggle_Widget(findChild_Widget(dlg, "prefs.retainwindow"), d->retainWindowSize);
         setText_InputWidget(findChild_Widget(dlg, "prefs.uiscale"),
                             collectNewFormat_String("%g", uiScale_Window(d->window)));
+        setText_InputWidget(findChild_Widget(dlg, "prefs.proxy.http"),
+                            schemeProxy_App(range_CStr("http")));
+        setText_InputWidget(findChild_Widget(dlg, "prefs.proxy.gopher"),
+                            schemeProxy_App(range_CStr("gopher")));
         setCommandHandler_Widget(dlg, handlePrefsCommands_);
     }
     else if (equal_Command(cmd, "navigate.home")) {
@@ -633,17 +795,46 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "bookmark.add")) {
         iDocumentWidget *doc = document_App();
-        add_Bookmarks(d->bookmarks, url_DocumentWidget(doc),
-                      bookmarkTitle_DocumentWidget(doc),
-                      collectNew_String(),
-                      siteIcon_GmDocument(document_DocumentWidget(doc)));
-        postCommand_App("bookmarks.changed");
+        makeBookmarkCreation_Widget(url_DocumentWidget(doc),
+                                    bookmarkTitle_DocumentWidget(doc),
+                                    siteIcon_GmDocument(document_DocumentWidget(doc)));
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "ident.new")) {
+        iWidget *dlg = makeIdentityCreation_Widget();
+        setCommandHandler_Widget(dlg, handleIdentityCreationCommands_);
         return iTrue;
     }
     else if (equal_Command(cmd, "theme.set")) {
+        const int isAuto = argLabel_Command(cmd, "auto");
         d->theme = arg_Command(cmd);
+        if (!isAuto) {
+            postCommand_App("ostheme arg:0");
+        }
         setThemePalette_Color(d->theme);
-        postCommand_App("theme.changed");
+        postCommandf_App("theme.changed auto:%d", isAuto);
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "ostheme")) {
+        d->useSystemTheme = arg_Command(cmd);
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "os.theme.changed")) {
+        if (d->useSystemTheme) {
+            const int dark     = argLabel_Command(cmd, "dark");
+            const int contrast = argLabel_Command(cmd, "contrast");
+            postCommandf_App("theme.set arg:%d auto:1",
+                             dark ? (contrast ? pureBlack_ColorTheme : dark_ColorTheme)
+                                  : (contrast ? pureWhite_ColorTheme : light_ColorTheme));
+        }
+        return iFalse;
+    }
+    else if (equal_Command(cmd, "proxy.gopher")) {
+        setCStr_String(&d->gopherProxy, suffixPtr_Command(cmd, "address"));
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "proxy.http")) {
+        setCStr_String(&d->httpProxy, suffixPtr_Command(cmd, "address"));
         return iTrue;
     }
     else {
@@ -665,4 +856,45 @@ void openInDefaultBrowser_App(const iString *url) {
     );
     start_Process(proc);
     iRelease(proc);
+}
+
+void revealPath_App(const iString *path) {
+#if defined (iPlatformApple)
+    const char *scriptPath = concatPath_CStr(dataDir_App_, "revealfile.scpt");
+    iFile *f = newCStr_File(scriptPath);
+    if (open_File(f, writeOnly_FileMode | text_FileMode)) {
+        /* AppleScript to select a specific file. */
+        write_File(f, collect_Block(newCStr_Block("on run argv\n"
+                                                  "  tell application \"Finder\"\n"
+                                                  "    activate\n"
+                                                  "    reveal POSIX file (item 1 of argv) as text\n"
+                                                  "  end tell\n"
+                                                  "end run\n")));
+        close_File(f);
+        iProcess *proc = new_Process();
+        setArguments_Process(
+            proc,
+            iClob(newStringsCStr_StringList(
+                "/usr/bin/osascript", scriptPath, cstr_String(path), NULL)));
+        start_Process(proc);
+        iRelease(proc);
+    }
+    iRelease(f);
+#elif defined (iPlatformLinux)
+    iFileInfo *inf = iClob(new_FileInfo(path));
+    iRangecc target;
+    if (isDirectory_FileInfo(inf)) {
+        target = range_String(path);
+    }
+    else {
+        target = dirName_Path(path);
+    }
+    iProcess *proc = new_Process();
+    setArguments_Process(
+        proc, iClob(newStringsCStr_StringList("/usr/bin/xdg-open", cstr_Rangecc(target), NULL)));
+    start_Process(proc);
+    iRelease(proc);
+#else
+    iAssert(0 /* File revealing not implemented on this platform */);
+#endif
 }

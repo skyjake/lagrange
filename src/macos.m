@@ -1,8 +1,30 @@
+/* Copyright 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
+
 #include "macos.h"
 #include "app.h"
-#include "command.h"
-#include "widget.h"
-#include "color.h"
+#include "ui/command.h"
+#include "ui/widget.h"
+#include "ui/color.h"
 
 #import <AppKit/AppKit.h>
 
@@ -91,6 +113,7 @@ enum iTouchBarVariant {
 
 @interface MyDelegate : NSResponder<NSApplicationDelegate, NSTouchBarDelegate> {
     enum iTouchBarVariant touchBarVariant;
+    NSString *currentAppearanceName;
     NSObject<NSApplicationDelegate> *sdlDelegate;
     NSMutableDictionary<NSString *, NSString*> *menuCommands;
 }
@@ -105,6 +128,7 @@ enum iTouchBarVariant {
 
 - (id)initWithSDLDelegate:(NSObject<NSApplicationDelegate> *)sdl {
     [super init];
+    currentAppearanceName = nil;
     menuCommands = [[NSMutableDictionary<NSString *, NSString *> alloc] init];
     touchBarVariant = default_TouchBarVariant;
     sdlDelegate = sdl;
@@ -113,12 +137,31 @@ enum iTouchBarVariant {
 
 - (void)dealloc {
     [menuCommands release];
+    [currentAppearanceName release];
     [super dealloc];
 }
 
 - (void)setTouchBarVariant:(enum iTouchBarVariant)variant {
     touchBarVariant = variant;
     self.touchBar = nil;
+}
+
+static void appearanceChanged_MacOS_(NSString *name) {
+    const iBool isDark = [name containsString:@"Dark"];
+    const iBool isHighContrast = [name containsString:@"HighContrast"];
+    postCommandf_App("os.theme.changed dark:%d contrast:%d", isDark ? 1 : 0, isHighContrast ? 1 : 0);
+//    printf("Effective appearance changed: %s\n", [name cStringUsingEncoding:NSUTF8StringEncoding]);
+//    fflush(stdout);
+}
+
+- (void)setAppearance:(NSString *)name {
+    if (!currentAppearanceName || ![name isEqualToString:currentAppearanceName]) {
+        if (currentAppearanceName) {
+            [currentAppearanceName release];
+        }
+        currentAppearanceName = [name retain];
+        appearanceChanged_MacOS_(currentAppearanceName);
+    }
 }
 
 - (void)setCommand:(NSString *)command forMenuItem:(NSMenuItem *)menuItem {
@@ -131,6 +174,16 @@ enum iTouchBarVariant {
 
 - (void)applicationDidFinishLaunching:(NSNotification *)notification {
     [sdlDelegate applicationDidFinishLaunching:notification];
+}
+
+- (void)observeValueForKeyPath:(NSString *)keyPath
+                      ofObject:(id)object
+                        change:(NSDictionary *)change
+                       context:(void *)context {
+    iUnused(object, change);
+    if ([keyPath isEqualToString:@"effectiveAppearance"] && context == self) {
+        [self setAppearance:[[NSApp effectiveAppearance] name]];
+    }
 }
 
 #if 0
@@ -225,7 +278,7 @@ enum iTouchBarVariant {
         return [[CommandButton alloc] initWithIdentifier:identifier
                                                    title:@"Go to…"
                                                  command:@"pattern.goto arg:-1"];
-    }   
+    }
     else if ([identifier isEqualToString:event_TouchId_]) {
         NSTouchBar *events = [[NSTouchBar alloc] init];
         events.delegate = self;
@@ -344,8 +397,10 @@ void enableMomentumScroll_MacOS(void) {
 
 void setupApplication_MacOS(void) {
     NSApplication *app = [NSApplication sharedApplication];
+    //appearanceChanged_MacOS_([[app effectiveAppearance] name]);
     /* Our delegate will override SDL's delegate. */
     MyDelegate *myDel = [[MyDelegate alloc] initWithSDLDelegate:app.delegate];
+    [myDel setAppearance:[[app effectiveAppearance] name]];
     app.delegate = myDel;
     NSMenu *appMenu = [[[NSApp mainMenu] itemAtIndex:0] submenu];
     NSMenuItem *prefsItem = [appMenu itemWithTitle:@"Preferences…"];
@@ -361,6 +416,10 @@ void setupApplication_MacOS(void) {
 void insertMenuItems_MacOS(const char *menuLabel, int atIndex, const iMenuItem *items, size_t count) {
     NSApplication *app = [NSApplication sharedApplication];
     MyDelegate *myDel = (MyDelegate *) app.delegate;
+    [app addObserver:myDel
+          forKeyPath:@"effectiveAppearance"
+             options:0
+             context:myDel];
     NSMenu *appMenu = [app mainMenu];
     NSMenuItem *mainItem = [appMenu insertItemWithTitle:[NSString stringWithUTF8String:menuLabel]
                                                  action:nil
@@ -417,6 +476,11 @@ void insertMenuItems_MacOS(const char *menuLabel, int atIndex, const iMenuItem *
 }
 
 void handleCommand_MacOS(const char *cmd) {
+    if (equal_Command(cmd, "prefs.ostheme.changed")) {
+        if (arg_Command(cmd)) {
+            appearanceChanged_MacOS_([[NSApp effectiveAppearance] name]);
+        }
+    }
 #if 0
     if (equal_Command(cmd, "tabs.changed")) {
         MyDelegate *myDel = (MyDelegate *) [[NSApplication sharedApplication] delegate];

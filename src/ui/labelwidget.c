@@ -1,3 +1,25 @@
+/* Copyright 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
+
 #include "labelwidget.h"
 #include "text.h"
 #include "color.h"
@@ -133,6 +155,9 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
     *fg     = uiText_ColorId;
     *frame1 = isButton ? uiEmboss1_ColorId : uiFrame_ColorId;
     *frame2 = isButton ? uiEmboss2_ColorId : *frame1;
+    if (flags_Widget(w) & disabled_WidgetFlag && isButton) {
+        *fg = uiTextDisabled_ColorId;
+    }
     if (isSel) {
         *bg = uiBackgroundSelected_ColorId;
         *fg = uiTextSelected_ColorId;
@@ -150,11 +175,11 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
             /* Frames matching color escaped text. */
             if (startsWith_String(&d->label, "\r")) {
                 if (isDark_ColorTheme(colorTheme_App())) {
-                    *frame1 = cstr_String(&d->label)[1] - '0';
+                    *frame1 = cstr_String(&d->label)[1] - asciiBase_ColorEscape;
                     *frame2 = darker_Color(*frame1);
                 }
                 else {
-                    *bg = *frame1 = *frame2 = cstr_String(&d->label)[1] - '0';
+                    *bg = *frame1 = *frame2 = cstr_String(&d->label)[1] - asciiBase_ColorEscape;
                     *fg = uiBackground_ColorId | permanent_ColorId;
                 }
             }
@@ -311,8 +336,18 @@ void setTextCStr_LabelWidget(iLabelWidget *d, const char *text) {
     updateSize_LabelWidget(d);
 }
 
+const iString *label_LabelWidget(const iLabelWidget *d) {
+    return &d->label;
+}
+
 const iString *command_LabelWidget(const iLabelWidget *d) {
     return &d->command;
+}
+
+iLabelWidget *newColor_LabelWidget(const char *text, int color) {
+    iLabelWidget *d = new_LabelWidget(format_CStr("%s%s", escape_Color(color), text), 0, 0, NULL);
+    setFlags_Widget(as_Widget(d), frameless_WidgetFlag, iTrue);
+    return d;
 }
 
 iBeginDefineSubclass(LabelWidget, Widget)

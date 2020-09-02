@@ -1,3 +1,25 @@
+/* Copyright 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
+
 #pragma once
 
 #include <the_Foundation/range.h>
@@ -46,6 +68,7 @@ enum iColorId {
     uiText_ColorId,
     uiTextPressed_ColorId,
     uiTextSelected_ColorId,
+    uiTextDisabled_ColorId,
     uiTextFramelessHover_ColorId,
     uiTextFramelessSelected_ColorId,
     uiTextStrong_ColorId,
@@ -73,6 +96,7 @@ enum iColorId {
     uiInputCursor_ColorId,
     uiInputCursorText_ColorId,
     uiHeading_ColorId,
+    uiAnnotation_ColorId,
     uiIcon_ColorId,
     uiIconHover_ColorId,
     uiSeparator_ColorId,
@@ -139,24 +163,26 @@ iLocalDef iBool isRegularText_ColorId(enum iColorId d) {
 #define mask_ColorId                0x7f
 #define permanent_ColorId           0x80 /* cannot be changed via escapes */
 
-#define black_ColorEscape           "\r0"
-#define gray25_ColorEscape          "\r1"
-#define gray50_ColorEscape          "\r2"
-#define gray75_ColorEscape          "\r3"
-#define white_ColorEscape           "\r4"
-#define brown_ColorEscape           "\r5"
-#define orange_ColorEscape          "\r6"
-#define teal_ColorEscape            "\r7"
-#define cyan_ColorEscape            "\r8"
-#define yellow_ColorEscape          "\r9"
-#define red_ColorEscape             "\r:"
-#define magenta_ColorEscape         "\r;"
-#define blue_ColorEscape            "\r<"
-#define green_ColorEscape           "\r="
-#define uiText_ColorEscape          "\rC"
-#define uiTextAction_ColorEscape    "\rJ"
-#define uiTextCaution_ColorEscape   "\rK"
-#define uiHeading_ColorEscape       "\r`"
+#define asciiBase_ColorEscape       33
+
+#define black_ColorEscape           "\r!"
+#define gray25_ColorEscape          "\r\""
+#define gray50_ColorEscape          "\r#"
+#define gray75_ColorEscape          "\r$"
+#define white_ColorEscape           "\r%"
+#define brown_ColorEscape           "\r&"
+#define orange_ColorEscape          "\r'"
+#define teal_ColorEscape            "\r("
+#define cyan_ColorEscape            "\r)"
+#define yellow_ColorEscape          "\r*"
+#define red_ColorEscape             "\r+"
+#define magenta_ColorEscape         "\r,"
+#define blue_ColorEscape            "\r-"
+#define green_ColorEscape           "\r."
+#define uiText_ColorEscape          "\r4"
+#define uiTextAction_ColorEscape    "\r<"
+#define uiTextCaution_ColorEscape   "\r="
+#define uiHeading_ColorEscape       "\rR"
 
 iDeclareType(Color)
 iDeclareType(HSLColor)
@@ -180,6 +206,7 @@ iColor          get_Color       (int color);
 int             darker_Color    (int color);
 int             lighter_Color   (int color);
 void            set_Color       (int color, iColor rgba);
+iColor          mix_Color       (iColor c1, iColor c2, float t);
 
 iLocalDef void setHsl_Color(int color, iHSLColor hsl) {
     set_Color(color, rgb_HSLColor(hsl));

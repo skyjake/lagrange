@@ -1,17 +1,39 @@
+/* Copyright 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
+
 #include "window.h"
 
-#include "embedded.h"
-#include "app.h"
-#include "command.h"
-#include "paint.h"
-#include "text.h"
-#include "util.h"
-#include "../visited.h"
 #include "labelwidget.h"
 #include "inputwidget.h"
 #include "documentwidget.h"
 #include "sidebarwidget.h"
-#include "gmutil.h"
+#include "embedded.h"
+#include "command.h"
+#include "paint.h"
+#include "util.h"
+#include "../app.h"
+#include "../visited.h"
+#include "../gmcerts.h"
+#include "../gmutil.h"
 #if defined (iPlatformMsys)
 #   include "../win32.h"
 #endif
@@ -80,6 +102,8 @@ static const iMenuItem navMenuItems[] = {
     { "Reset Zoom", SDLK_0, KMOD_PRIMARY, "zoom.set arg:100" },
     { "---", 0, 0, NULL },
     { "Preferences...", SDLK_COMMA, KMOD_PRIMARY, "preferences" },
+    { "Help", 0, 0, "!open url:about:help" },
+    { "Release Notes", 0, 0, "!open url:about:version" },
     { "---", 0, 0, NULL },
     { "Quit Lagrange", 'q', KMOD_PRIMARY, "quit" }
 };
@@ -94,8 +118,13 @@ static const iMenuItem fileMenuItems[] = {
 
 static const iMenuItem editMenuItems[] = {
     { "Copy Source Text", SDLK_c, KMOD_PRIMARY, "copy" },
+    { "Copy Link to Page", SDLK_c, KMOD_PRIMARY | KMOD_SHIFT, "document.copylink" },
     { "---", 0, 0, NULL },
-    { "Bookmark This Page", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
+    { "Bookmark This Page...", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
+};
+
+static const iMenuItem identityMenuItems[] = {
+    { "New Identity...", SDLK_n, KMOD_PRIMARY | KMOD_SHIFT, "ident.new" },
 };
 
 static const iMenuItem viewMenuItems[] = {
@@ -115,13 +144,42 @@ static const iMenuItem viewMenuItems[] = {
 };
 
 static const iMenuItem helpMenuItems[] = {
-    { "Help", 0, 0, "open url:about:help" },
-    { "Release Notes", 0, 0, "open url:about:version" },
+    { "Help", 0, 0, "!open url:about:help" },
+    { "Release Notes", 0, 0, "!open url:about:version" },
 };
 #endif
 
+static const iMenuItem identityButtonMenuItems[] = {
+    { "No Active Identity", 0, 0, "ident.showactive" },
+    { "---", 0, 0, NULL },
+#if !defined (iHaveNativeMenus)
+    { "New Identity...", SDLK_n, KMOD_PRIMARY | KMOD_SHIFT, "ident.new" },
+    { "---", 0, 0, NULL },
+    { "Show Identities", '3', KMOD_PRIMARY, "sidebar.mode arg:2 show:1" },
+#else
+    { "New Identity...", 0, 0, "ident.new" },
+    { "---", 0, 0, NULL },
+    { "Show Identities", 0, 0, "sidebar.mode arg:2 show:1" },
+#endif
+};
+
 static const char *reloadCStr_ = "\U0001f503";
 static const char *stopCStr_   = uiTextCaution_ColorEscape "\U0001f310";
+
+static void updateNavBarIdentity_(iWidget *navBar) {
+    const iGmIdentity *ident =
+        identityForUrl_GmCerts(certs_App(), url_DocumentWidget(document_App()));
+    iWidget *button = findChild_Widget(navBar, "navbar.ident");
+    setFlags_Widget(button, selected_WidgetFlag, ident != NULL);
+    /* Update menu. */
+    iLabelWidget *idItem = child_Widget(findChild_Widget(button, "menu"), 0);
+    setTextCStr_LabelWidget(
+        idItem,
+        ident ? format_CStr(uiTextAction_ColorEscape "%s",
+                            cstrCollect_String(subject_TlsCertificate(ident->cert)))
+              : "No Active Identity");
+    setFlags_Widget(as_Widget(idItem), disabled_WidgetFlag, !ident);
+}
 
 static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
     if (equal_Command(cmd, "window.resized")) {
@@ -160,6 +218,7 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
                 const iString *urlStr = collect_String(suffix_Command(cmd, "url"));
                 setText_InputWidget(url, urlStr);
                 updateTextCStr_LabelWidget(reloadButton, reloadCStr_);
+                updateNavBarIdentity_(navBar);
                 return iFalse;
             }
             else if (equal_Command(cmd, "document.request.cancelled")) {
@@ -184,12 +243,13 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
             setText_InputWidget(findChild_Widget(navBar, "url"), url_DocumentWidget(doc));
             updateTextCStr_LabelWidget(findChild_Widget(navBar, "reload"),
                                        isRequestOngoing_DocumentWidget(doc) ? stopCStr_ : reloadCStr_);
+            updateNavBarIdentity_(navBar);
         }
     }
-    else if (equal_Command(cmd, "mouse.clicked")) {
+    else if (equal_Command(cmd, "mouse.clicked") && arg_Command(cmd)) {
         iWidget *widget = pointer_Command(cmd);
         iWidget *menu = findWidget_App("doctabs.menu");
-        if (isTabButton_Widget(widget)) {
+        if (isTabButton_Widget(widget) && !isVisible_Widget(menu)) {
             iWidget *tabs = findWidget_App("doctabs");
             showTabPage_Widget(tabs,
                                tabPage_Widget(tabs, childIndex_Widget(widget->parent, widget)));
@@ -261,6 +321,7 @@ static void setupUserInterface_Window(iWindow *d) {
     /* Navigation bar. */ {
         iWidget *navBar = new_Widget();
         setId_Widget(navBar, "navbar");
+        setPadding_Widget(navBar, gap_UI / 2, 0, gap_UI / 2, 0);
         setFlags_Widget(navBar,
                         arrangeHeight_WidgetFlag | resizeChildren_WidgetFlag |
                             arrangeHorizontal_WidgetFlag,
@@ -270,7 +331,11 @@ static void setupUserInterface_Window(iWindow *d) {
         setCommandHandler_Widget(navBar, handleNavBarCommands_);
         addChild_Widget(navBar, iClob(newIcon_LabelWidget("\U0001f850", 0, 0, "navigate.back")));
         addChild_Widget(navBar, iClob(newIcon_LabelWidget("\U0001f852", 0, 0, "navigate.forward")));
-        addChild_Widget(navBar, iClob(newIcon_LabelWidget("\U0001f3e0", 0, 0, "navigate.home")));
+        iLabelWidget *idMenu =
+            makeMenuButton_LabelWidget("\U0001f464", identityButtonMenuItems, iElemCount(identityButtonMenuItems));
+        setAlignVisually_LabelWidget(idMenu, iTrue);
+        addChild_Widget(navBar, iClob(idMenu));
+        setId_Widget(as_Widget(idMenu), "navbar.ident");
         iLabelWidget *lock =
             addChildFlags_Widget(navBar,
                                  iClob(newIcon_LabelWidget("\U0001f513", 0, 0, "server.showcert")),
@@ -279,14 +344,16 @@ static void setupUserInterface_Window(iWindow *d) {
         setFont_LabelWidget(lock, defaultSymbols_FontId);
         updateTextCStr_LabelWidget(lock, "\U0001f512");
         iInputWidget *url = new_InputWidget(0);
+        setSelectAllOnFocus_InputWidget(url, iTrue);
         setId_Widget(as_Widget(url), "url");
         setTextCStr_InputWidget(url, "gemini://");
         addChildFlags_Widget(navBar, iClob(url), expand_WidgetFlag);
-        setId_Widget(
-            addChild_Widget(navBar, iClob(newIcon_LabelWidget(reloadCStr_, 0, 0, "navigate.reload"))),
-            "reload");
-        addChild_Widget(navBar, iClob(newIcon_LabelWidget("\U0001f464", 0, 0, "cert.client")));
-
+        setId_Widget(addChild_Widget(
+                         navBar, iClob(newIcon_LabelWidget(reloadCStr_, 0, 0, "navigate.reload"))),
+                     "reload");
+        addChild_Widget(navBar,
+                        iClob(newIcon_LabelWidget(
+                            "\U0001f3e0", SDLK_h, KMOD_PRIMARY | KMOD_SHIFT, "navigate.home")));
 #if !defined (iHaveNativeMenus)
         iLabelWidget *navMenu =
             makeMenuButton_LabelWidget("\U0001d362", navMenuItems, iElemCount(navMenuItems));
@@ -296,7 +363,8 @@ static void setupUserInterface_Window(iWindow *d) {
         insertMenuItems_MacOS("File", 1, fileMenuItems, iElemCount(fileMenuItems));
         insertMenuItems_MacOS("Edit", 2, editMenuItems, iElemCount(editMenuItems));
         insertMenuItems_MacOS("View", 3, viewMenuItems, iElemCount(viewMenuItems));
-        insertMenuItems_MacOS("Help", 5, helpMenuItems, iElemCount(helpMenuItems));
+        insertMenuItems_MacOS("Identity", 4, identityMenuItems, iElemCount(identityMenuItems));
+        insertMenuItems_MacOS("Help", 6, helpMenuItems, iElemCount(helpMenuItems));
 #endif
     }
     /* Tab bar. */ {
@@ -380,6 +448,8 @@ static void drawBlank_Window_(iWindow *d) {
 
 void init_Window(iWindow *d, iRect rect) {
     theWindow_ = d;
+    iZap(d->cursors);
+    d->pendingCursor = NULL;
     d->isDrawFrozen = iTrue;
     uint32_t flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI;
 #if defined (iPlatformApple)
@@ -396,7 +466,7 @@ void init_Window(iWindow *d, iRect rect) {
     if (left_Rect(rect) >= 0) {
         SDL_SetWindowPosition(d->win, left_Rect(rect), top_Rect(rect));
     }
-    SDL_SetWindowMinimumSize(d->win, 400, 200);
+    SDL_SetWindowMinimumSize(d->win, 400, 250);
     SDL_SetWindowTitle(d->win, "Lagrange");    
     /* Some info. */ {
         SDL_RendererInfo info;
@@ -442,6 +512,11 @@ void deinit_Window(iWindow *d) {
     if (theWindow_ == d) {
         theWindow_ = NULL;
     }
+    iForIndices(i, d->cursors) {
+        if (d->cursors[i]) {
+            SDL_FreeCursor(d->cursors[i]);
+        }
+    }
     iReleasePtr(&d->root);
     deinit_Text();
     SDL_DestroyRenderer(d->render);
@@ -470,6 +545,13 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
     return iFalse;
 }
 
+static void applyCursor_Window_(iWindow *d) {
+    if (d->pendingCursor) {
+        SDL_SetCursor(d->pendingCursor);
+        d->pendingCursor = NULL;
+    }
+}
+
 iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
     switch (ev->type) {
         case SDL_WINDOWEVENT: {
@@ -484,6 +566,7 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
             }
             /* Map mouse pointer coordinate to our coordinate system. */
             if (event.type == SDL_MOUSEMOTION) {
+                setCursor_Window(d, SDL_SYSTEM_CURSOR_ARROW); /* default cursor */
                 const iInt2 pos = coord_Window(d, event.motion.x, event.motion.y);
                 event.motion.x = pos.x;
                 event.motion.y = pos.y;
@@ -505,6 +588,9 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
             iBool wasUsed = dispatchEvent_Widget(widget, &event);
             if (oldHover != hover_Widget()) {
                 postRefresh_App();
+            }
+            if (event.type == SDL_MOUSEMOTION) {
+                applyCursor_Window_(d);
             }
             return wasUsed;
         }
@@ -562,6 +648,13 @@ void setUiScale_Window(iWindow *d, float uiScale) {
 
 void setFreezeDraw_Window(iWindow *d, iBool freezeDraw) {
     d->isDrawFrozen = freezeDraw;
+}
+
+void setCursor_Window(iWindow *d, int cursor) {    
+    if (!d->cursors[cursor]) {
+        d->cursors[cursor] = SDL_CreateSystemCursor(cursor);
+    }
+    d->pendingCursor = d->cursors[cursor];
 }
 
 iInt2 rootSize_Window(const iWindow *d) {

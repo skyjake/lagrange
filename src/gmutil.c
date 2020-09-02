@@ -1,3 +1,25 @@
+/* Copyright 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
+
 #include "gmutil.h"
 
 #include <the_Foundation/regexp.h>
@@ -5,12 +27,17 @@
 #include <the_Foundation/path.h>
 
 void init_Url(iUrl *d, const iString *text) {
-    iRegExp *absPat =
-        new_RegExp("([a-z]+:)?(//[^/:?]*)(:[0-9]+)?([^?]*)(\\?.*)?", caseInsensitive_RegExpOption);
+    static iRegExp *absoluteUrlPattern_;
+    static iRegExp *relativeUrlPattern_;
+    if (!absoluteUrlPattern_) {
+        absoluteUrlPattern_ = new_RegExp("([a-z]+:)?(//[^/:?]*)(:[0-9]+)?([^?]*)(\\?.*)?",
+                                         caseInsensitive_RegExpOption);
+    }
     iRegExpMatch m;
-    if (matchString_RegExp(absPat, text, &m)) {
-        d->protocol = capturedRange_RegExpMatch(&m, 1);
-        d->host = capturedRange_RegExpMatch(&m, 2);
+    init_RegExpMatch(&m);
+    if (matchString_RegExp(absoluteUrlPattern_, text, &m)) {
+        d->scheme = capturedRange_RegExpMatch(&m, 1);
+        d->host   = capturedRange_RegExpMatch(&m, 2);
         if (!isEmpty_Range(&d->host)) {
             d->host.start += 2; /* skip the double slash */
         }
@@ -18,28 +45,28 @@ void init_Url(iUrl *d, const iString *text) {
         if (!isEmpty_Range(&d->port)) {
             d->port.start++; /* omit the colon */
         }
-        d->path = capturedRange_RegExpMatch(&m, 4);
+        d->path  = capturedRange_RegExpMatch(&m, 4);
         d->query = capturedRange_RegExpMatch(&m, 5);
     }
     else {
         /* Must be a relative path. */
         iZap(*d);
-        iRegExp *relPat = new_RegExp("([a-z]+:)?([^?]*)(\\?.*)?", 0);
-        if (matchString_RegExp(relPat, text, &m)) {
-            d->protocol = capturedRange_RegExpMatch(&m, 1);
-            d->path     = capturedRange_RegExpMatch(&m, 2);
-            d->query    = capturedRange_RegExpMatch(&m, 3);
+        if (!relativeUrlPattern_) {
+            relativeUrlPattern_ = new_RegExp("([a-z]+:)?([^?]*)(\\?.*)?", 0);
         }
-        iRelease(relPat);
+        if (matchString_RegExp(relativeUrlPattern_, text, &m)) {
+            d->scheme = capturedRange_RegExpMatch(&m, 1);
+            d->path   = capturedRange_RegExpMatch(&m, 2);
+            d->query  = capturedRange_RegExpMatch(&m, 3);
+        }
     }
-    iRelease(absPat);
-    if (!isEmpty_Range(&d->protocol)) {
-        d->protocol.end--; /* omit the colon */
+    if (!isEmpty_Range(&d->scheme)) {
+        d->scheme.end--; /* omit the colon */
     }
 }
 
 static iRangecc dirPath_(iRangecc path) {
-    const size_t pos = lastIndexOfCStr_Rangecc(&path, "/");
+    const size_t pos = lastIndexOfCStr_Rangecc(path, "/");
     if (pos == iInvalidPos) return path;
     return (iRangecc){ path.start, path.start + pos };
 }
@@ -62,13 +89,13 @@ void cleanUrlPath_String(iString *d) {
     iUrl parts;
     init_Url(&parts, d);
     iRangecc seg = iNullRange;
-    while (nextSplit_Rangecc(&parts.path, "/", &seg)) {
-        if (equal_Rangecc(&seg, "..")) {
+    while (nextSplit_Rangecc(parts.path, "/", &seg)) {
+        if (equal_Rangecc(seg, "..")) {
             /* Back up one segment. */
             iRangecc last = prevPathSeg_(constEnd_String(&clean), constBegin_String(&clean));
             truncate_Block(&clean.chars, last.start - constBegin_String(&clean));
         }
-        else if (equal_Rangecc(&seg, ".")) {
+        else if (equal_Rangecc(seg, ".")) {
             /* Skip it. */
         }
         else {
@@ -76,11 +103,11 @@ void cleanUrlPath_String(iString *d) {
             appendRange_String(&clean, seg);
         }
     }
-    if (endsWith_Rangecc(&parts.path, "/")) {
+    if (endsWith_Rangecc(parts.path, "/")) {
         appendCStr_String(&clean, "/");
     }
     /* Replace with the new path. */
-    if (cmpCStrNSc_Rangecc(&parts.path, cstr_String(&clean), size_String(&clean), &iCaseSensitive)) {
+    if (cmpCStrNSc_Rangecc(parts.path, cstr_String(&clean), size_String(&clean), &iCaseSensitive)) {
         const size_t pos = parts.path.start - constBegin_String(d);
         remove_Block(&d->chars, pos, size_Range(&parts.path));
         insertData_Block(&d->chars, pos, cstr_String(&clean), size_String(&clean));
@@ -88,10 +115,10 @@ void cleanUrlPath_String(iString *d) {
     deinit_String(&clean);
 }
 
-iRangecc urlProtocol_String(const iString *d) {
+iRangecc urlScheme_String(const iString *d) {
     iUrl url;
     init_Url(&url, d);
-    return url.protocol;
+    return url.scheme;
 }
 
 iRangecc urlHost_String(const iString *d) {
@@ -105,20 +132,20 @@ const iString *absoluteUrl_String(const iString *d, const iString *urlMaybeRelat
     iUrl rel;
     init_Url(&orig, d);
     init_Url(&rel, urlMaybeRelative);
-    if (equalCase_Rangecc(&rel.protocol, "data") || equalCase_Rangecc(&rel.protocol, "about")) {
+    if (equalCase_Rangecc(rel.scheme, "data") || equalCase_Rangecc(rel.scheme, "about")) {
         /* Special case, the contents should be left unparsed. */
         return urlMaybeRelative;
     }
     const iBool isRelative = !isDef_(rel.host);
-    iRangecc protocol = range_CStr("gemini");
-    if (isDef_(rel.protocol)) {
-        protocol = rel.protocol;
+    iRangecc scheme = range_CStr("gemini");
+    if (isDef_(rel.scheme)) {
+        scheme = rel.scheme;
     }
-    else if (isRelative && isDef_(orig.protocol)) {
-        protocol = orig.protocol;
+    else if (isRelative && isDef_(orig.scheme)) {
+        scheme = orig.scheme;
     }
     iString *absolute = collectNew_String();
-    appendRange_String(absolute, protocol);
+    appendRange_String(absolute, scheme);
     appendCStr_String(absolute, "://"); {
         const iUrl *selHost = isDef_(rel.host) ? &rel : &orig;
         appendRange_String(absolute, selHost->host);
@@ -127,11 +154,11 @@ const iString *absoluteUrl_String(const iString *d, const iString *urlMaybeRelat
             appendRange_String(absolute, selHost->port);
         }
     }
-    if (isDef_(rel.protocol) || isDef_(rel.host) || startsWith_Rangecc(&rel.path, "/")) {
-        appendRange_String(absolute, rel.path); /* absolute path */
+    if (isDef_(rel.scheme) || isDef_(rel.host) || startsWith_Rangecc(rel.path, "/")) {
+        appendRange_String(absolute, isDef_(rel.path) ? rel.path : range_CStr("/")); /* absolute path */
     }
     else {
-        if (!endsWith_Rangecc(&orig.path, "/")) {
+        if (!endsWith_Rangecc(orig.path, "/")) {
             /* Referencing a file. */
             appendRange_String(absolute, dirPath_(orig.path));
         }
@@ -200,6 +227,16 @@ static const struct {
         "Invalid Redirect",
         "The server responded with a redirect but did not provide a valid destination URL. "
         "Perhaps the server is malfunctioning." } },
+    { nonGeminiRedirect_GmStatusCode,
+      { 0x27a0, /* dashed arrow */
+        "Redirect to Non-Gemini URL",
+        "The server attempted to redirect us to a non-Gemini URL. Here is the link so you "
+        "can open it manually if appropriate."} },
+    { tooManyRedirects_GmStatusCode,
+      { 0x27a0, /* dashed arrow */
+        "Too Many Redirects",
+        "You may be stuck in a redirection loop. The next redirected URL is below if you "
+        "want to continue manually."} },
     { temporaryFailure_GmStatusCode,
       { 0x1f50c, /* electric plug */
         "Temporary Failure",

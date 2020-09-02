@@ -1,3 +1,25 @@
+/* Copyright 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
+
 #include "color.h"
 
 #include <the_Foundation/string.h>
@@ -62,6 +84,7 @@ void setThemePalette_Color(enum iColorTheme theme) {
             copy_(uiTextStrong_ColorId, white_ColorId);
             copy_(uiTextSelected_ColorId, white_ColorId);
             copy_(uiTextFramelessHover_ColorId, white_ColorId);
+            copy_(uiTextDisabled_ColorId, gray25_ColorId);
             copy_(uiTextShortcut_ColorId, cyan_ColorId);
             copy_(uiTextAction_ColorId, cyan_ColorId);
             copy_(uiTextCaution_ColorId, orange_ColorId);
@@ -86,7 +109,8 @@ void setThemePalette_Color(enum iColorTheme theme) {
             copy_(uiInputCursor_ColorId, orange_ColorId);
             copy_(uiInputCursorText_ColorId, black_ColorId);
             copy_(uiHeading_ColorId, cyan_ColorId);
-            copy_(uiIcon_ColorId, teal_ColorId);
+            copy_(uiAnnotation_ColorId, teal_ColorId);
+            copy_(uiIcon_ColorId, cyan_ColorId);
             copy_(uiIconHover_ColorId, cyan_ColorId);
             copy_(uiSeparator_ColorId, gray25_ColorId);
             copy_(uiMarked_ColorId, brown_ColorId);
@@ -103,6 +127,7 @@ void setThemePalette_Color(enum iColorTheme theme) {
             copy_(uiTextPressed_ColorId, black_ColorId);
             copy_(uiTextStrong_ColorId, white_ColorId);
             copy_(uiTextSelected_ColorId, white_ColorId);
+            copy_(uiTextDisabled_ColorId, gray50_ColorId);
             copy_(uiTextFramelessHover_ColorId, white_ColorId);
             copy_(uiTextShortcut_ColorId, cyan_ColorId);
             copy_(uiTextAction_ColorId, cyan_ColorId);
@@ -128,6 +153,7 @@ void setThemePalette_Color(enum iColorTheme theme) {
             copy_(uiInputCursor_ColorId, orange_ColorId);
             copy_(uiInputCursorText_ColorId, black_ColorId);
             copy_(uiHeading_ColorId, cyan_ColorId);
+            copy_(uiAnnotation_ColorId, teal_ColorId);
             copy_(uiIcon_ColorId, cyan_ColorId);
             copy_(uiIconHover_ColorId, cyan_ColorId);
             copy_(uiSeparator_ColorId, black_ColorId);
@@ -141,9 +167,10 @@ void setThemePalette_Color(enum iColorTheme theme) {
             copy_(uiBackgroundPressed_ColorId, cyan_ColorId);
             copy_(uiBackgroundFramelessHover_ColorId, orange_ColorId);
             copy_(uiText_ColorId, black_ColorId);
-            copy_(uiTextStrong_ColorId, brown_ColorId);
+            copy_(uiTextStrong_ColorId, teal_ColorId);
             copy_(uiTextPressed_ColorId, black_ColorId);
             copy_(uiTextSelected_ColorId, black_ColorId);
+            copy_(uiTextDisabled_ColorId, gray50_ColorId);
             copy_(uiTextFramelessHover_ColorId, black_ColorId);
             copy_(uiTextShortcut_ColorId, brown_ColorId);
             copy_(uiTextAction_ColorId, brown_ColorId);
@@ -163,15 +190,16 @@ void setThemePalette_Color(enum iColorTheme theme) {
             copy_(uiInputBackgroundFocused_ColorId, white_ColorId);
             copy_(uiInputText_ColorId, gray25_ColorId);
             copy_(uiInputTextFocused_ColorId, black_ColorId);
-            copy_(uiInputFrame_ColorId, gray25_ColorId);
+            copy_(uiInputFrame_ColorId, gray50_ColorId);
             copy_(uiInputFrameHover_ColorId, brown_ColorId);
             copy_(uiInputFrameFocused_ColorId, teal_ColorId);
             copy_(uiInputCursor_ColorId, teal_ColorId);
             copy_(uiInputCursorText_ColorId, white_ColorId);
             copy_(uiHeading_ColorId, brown_ColorId);
+            copy_(uiAnnotation_ColorId, gray50_ColorId);
             copy_(uiIcon_ColorId, brown_ColorId);
             copy_(uiIconHover_ColorId, brown_ColorId);
-            copy_(uiSeparator_ColorId, gray25_ColorId);
+            copy_(uiSeparator_ColorId, gray50_ColorId);
             copy_(uiMarked_ColorId, cyan_ColorId);
             copy_(uiMatching_ColorId, orange_ColorId);
             break;
@@ -183,6 +211,7 @@ void setThemePalette_Color(enum iColorTheme theme) {
             copy_(uiBackgroundFramelessHover_ColorId, orange_ColorId);
             copy_(uiText_ColorId, gray25_ColorId);
             copy_(uiTextPressed_ColorId, black_ColorId);
+            copy_(uiTextDisabled_ColorId, gray75_ColorId);
             copy_(uiTextStrong_ColorId, black_ColorId);
             copy_(uiTextSelected_ColorId, black_ColorId);
             copy_(uiTextFramelessHover_ColorId, black_ColorId);
@@ -210,13 +239,16 @@ void setThemePalette_Color(enum iColorTheme theme) {
             copy_(uiInputCursor_ColorId, teal_ColorId);
             copy_(uiInputCursorText_ColorId, white_ColorId);
             copy_(uiHeading_ColorId, brown_ColorId);
+            copy_(uiAnnotation_ColorId, gray50_ColorId);
             copy_(uiIcon_ColorId, brown_ColorId);
             copy_(uiIconHover_ColorId, brown_ColorId);
-            copy_(uiSeparator_ColorId, gray50_ColorId);
+            copy_(uiSeparator_ColorId, gray75_ColorId);
             copy_(uiMarked_ColorId, cyan_ColorId);
             copy_(uiMatching_ColorId, orange_ColorId);
             break;
     }
+    palette_[uiMarked_ColorId].a = 128;
+    palette_[uiMatching_ColorId].a = 128;
 }
 
 iColor get_Color(int color) {
@@ -231,6 +263,14 @@ void set_Color(int color, iColor rgba) {
     if (color >= uiBackground_ColorId && color < max_ColorId) {
         palette_[color] = rgba;
     }
+}
+
+iColor mix_Color(iColor c1, iColor c2, float t) {
+    t = iClamp(t, 0.0f, 1.0f);
+    return (iColor){ c1.r * (1 - t) + c2.r * t,
+                     c1.g * (1 - t) + c2.g * t,
+                     c1.b * (1 - t) + c2.b * t,
+                     c1.a * (1 - t) + c2.a * t };
 }
 
 iLocalDef iBool equal_Color_(const iColor *x, const iColor *y) {
@@ -361,7 +401,8 @@ const char *escape_Color(int color) {
     if (color >= 0 && color < (int) iElemCount(esc)) {
         return esc[color];
     }
-    return format_CStr("\r%c", color + '0');
+    iAssert(asciiBase_ColorEscape + color <= 127);
+    return format_CStr("\r%c", asciiBase_ColorEscape + color);
 }
 
 iHSLColor setSat_HSLColor(iHSLColor d, float sat) {

@@ -1,14 +1,41 @@
+/* Copyright 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
+
 #include "gmcerts.h"
 
 #include <the_Foundation/file.h>
+#include <the_Foundation/fileinfo.h>
 #include <the_Foundation/mutex.h>
 #include <the_Foundation/path.h>
 #include <the_Foundation/regexp.h>
+#include <the_Foundation/stringarray.h>
 #include <the_Foundation/stringhash.h>
+#include <the_Foundation/stringlist.h>
 #include <the_Foundation/time.h>
 #include <ctype.h>
 
-static const char *filename_GmCerts_ = "trusted.txt";
+static const char *filename_GmCerts_       = "trusted.txt";
+static const char *identsDir_GmCerts_      = "idents";
+static const char *identsFilename_GmCerts_ = "idents.binary";
 
 iDeclareClass(TrustEntry)
 
@@ -27,8 +54,127 @@ void deinit_TrustEntry(iTrustEntry *d) {
     deinit_Block(&d->fingerprint);
 }
 
-iDefineObjectConstructionArgs(TrustEntry, (const iBlock *fingerprint, const iDate *until), fingerprint, until)
+iDefineObjectConstructionArgs(TrustEntry,
+                              (const iBlock *fingerprint, const iDate *until),
+                              fingerprint, until)
 iDefineClass(TrustEntry)
+
+/*----------------------------------------------------------------------------------------------*/
+
+static int cmpUrl_GmIdentity_(const iString *a, const iString *b) {
+    return cmpStringCase_String(a, b);
+}
+
+void init_GmIdentity(iGmIdentity *d) {
+    d->icon  = 0x1f511; /* key */
+    d->flags = 0;
+    d->cert  = new_TlsCertificate();
+    init_Block(&d->fingerprint, 0);
+    d->useUrls = newCmp_StringSet(cmpUrl_GmIdentity_);
+    init_String(&d->notes);
+}
+
+void deinit_GmIdentity(iGmIdentity *d) {
+    iRelease(d->useUrls);
+    deinit_String(&d->notes);
+    delete_TlsCertificate(d->cert);
+    deinit_Block(&d->fingerprint);
+}
+
+void serialize_GmIdentity(const iGmIdentity *d, iStream *outs) {
+    serialize_Block(&d->fingerprint, outs);
+    writeU32_Stream(outs, d->icon);
+    serialize_String(&d->notes, outs);
+    write32_Stream(outs, d->flags);
+    writeU32_Stream(outs, size_StringSet(d->useUrls));
+    iConstForEach(StringSet, i, d->useUrls) {
+        serialize_String(i.value, outs);
+    }
+}
+
+void deserialize_GmIdentity(iGmIdentity *d, iStream *ins) {
+    deserialize_Block(&d->fingerprint, ins);
+    d->icon = readU32_Stream(ins);
+    deserialize_String(&d->notes, ins);
+    d->flags = read32_Stream(ins);
+    size_t n = readU32_Stream(ins);
+    while (n-- && !atEnd_Stream(ins)) {
+        iString url;
+        init_String(&url);
+        deserialize_String(&url, ins);
+        insert_StringSet(d->useUrls, &url);
+        deinit_String(&url);
+    }
+}
+
+static iBool isValid_GmIdentity_(const iGmIdentity *d) {
+    return !isEmpty_TlsCertificate(d->cert);
+}
+
+static void setCertificate_GmIdentity_(iGmIdentity *d, iTlsCertificate *cert) {
+    delete_TlsCertificate(d->cert);
+    d->cert = cert;
+    set_Block(&d->fingerprint, collect_Block(fingerprint_TlsCertificate(cert)));
+}
+
+static const iString *readFile_(const iString *path) {
+    iString *str = NULL;
+    iFile *f = new_File(path);
+    if (open_File(f, readOnly_FileMode | text_FileMode)) {
+        str = readString_File(f);
+    }
+    iRelease(f);
+    return str ? collect_String(str) : collectNew_String();
+}
+
+static iBool writeTextFile_(const iString *path, const iString *content) {
+    iFile *f = iClob(new_File(path));
+    if (open_File(f, writeOnly_FileMode | text_FileMode)) {
+        write_File(f, &content->chars);
+        close_File(f);
+        return iTrue;
+    }
+    return iFalse;
+}
+
+iBool isUsed_GmIdentity(const iGmIdentity *d) {
+    return d && !isEmpty_StringSet(d->useUrls);
+}
+
+iBool isUsedOn_GmIdentity(const iGmIdentity *d, const iString *url) {
+    size_t pos = iInvalidPos;
+    locate_StringSet(d->useUrls, url, &pos);
+    if (pos < size_StringSet(d->useUrls)) {
+        return startsWithCase_String(url, cstr_String(constAt_StringSet(d->useUrls, pos)));
+    }
+    return iFalse;
+}
+
+void setUse_GmIdentity(iGmIdentity *d, const iString *url, iBool use) {
+    if (use && isUsedOn_GmIdentity(d, url)) {
+        return; /* Redudant. */
+    }
+    if (use) {
+#if !defined (NDEBUG)
+        const iBool wasInserted =
+#endif
+        insert_StringSet(d->useUrls, url);
+        iAssert(wasInserted);
+    }
+    else {
+        remove_StringSet(d->useUrls, url);
+    }
+}
+
+void clearUse_GmIdentity(iGmIdentity *d) {
+    clear_StringSet(d->useUrls);
+}
+
+const iString *name_GmIdentity(const iGmIdentity *d) {
+    return collect_String(subject_TlsCertificate(d->cert));
+}
+
+iDefineTypeConstruction(GmIdentity)
 
 /*-----------------------------------------------------------------------------------------------*/
 
@@ -36,9 +182,29 @@ struct Impl_GmCerts {
     iMutex mtx;
     iString saveDir;
     iStringHash *trusted;
+    iPtrArray idents;
 };
 
+static const char *magicIdMeta_GmCerts_   = "lgL2";
+static const char *magicIdentity_GmCerts_ = "iden";
+
 iDefineTypeConstructionArgs(GmCerts, (const char *saveDir), saveDir)
+
+static void saveIdentities_GmCerts_(const iGmCerts *d) {
+    iFile *f = new_File(collect_String(concatCStr_Path(&d->saveDir, identsFilename_GmCerts_)));
+    if (open_File(f, writeOnly_FileMode)) {
+        writeData_File(f, magicIdMeta_GmCerts_, 4);
+        writeU32_File(f, 0); /* version */
+        iConstForEach(PtrArray, i, &d->idents) {
+            const iGmIdentity *ident = i.ptr;
+            if (~ident->flags & temporary_GmIdentityFlag) {
+                writeData_File(f, magicIdentity_GmCerts_, 4);
+                serialize_GmIdentity(ident, stream_File(f));
+            }
+        }
+    }
+    iRelease(f);
+}
 
 static void save_GmCerts_(const iGmCerts *d) {
     iBeginCollect();
@@ -61,14 +227,75 @@ static void save_GmCerts_(const iGmCerts *d) {
     iEndCollect();
 }
 
+static void loadIdentities_GmCerts_(iGmCerts *d) {
+    iFile *f =
+        iClob(new_File(collect_String(concatCStr_Path(&d->saveDir, identsFilename_GmCerts_))));
+    if (open_File(f, readOnly_FileMode)) {
+        char magic[4];
+        readData_File(f, sizeof(magic), magic);
+        if (memcmp(magic, magicIdMeta_GmCerts_, sizeof(magic))) {
+            printf("%s: format not recognized\n", cstr_String(path_File(f)));
+            return;
+        }
+        setVersion_Stream(stream_File(f), readU32_File(f));
+        while (!atEnd_File(f)) {
+            readData_File(f, sizeof(magic), magic);
+            if (!memcmp(magic, magicIdentity_GmCerts_, sizeof(magic))) {
+                iGmIdentity *id = new_GmIdentity();
+                deserialize_GmIdentity(id, stream_File(f));
+                pushBack_PtrArray(&d->idents, id);
+            }
+            else {
+                printf("%s: invalid file contents\n", cstr_String(path_File(f)));
+                break;
+            }
+        }
+    }
+}
+
+static iGmIdentity *findIdentity_GmCerts_(iGmCerts *d, const iBlock *fingerprint) {
+    iForEach(PtrArray, i, &d->idents) {
+        iGmIdentity *ident = i.ptr;
+        if (cmp_Block(fingerprint, &ident->fingerprint) == 0) { /* TODO: could use a hash */
+            return ident;
+        }
+    }
+    return NULL;
+}
+
+static void loadIdentityFromCertificate_GmCerts_(iGmCerts *d, const iString *crtPath) {
+    iAssert(fileExists_FileInfo(crtPath));
+    iString *keyPath = collect_String(copy_String(crtPath));
+    truncate_Block(&keyPath->chars, size_String(keyPath) - 3);
+    appendCStr_String(keyPath, "key");
+    if (!fileExists_FileInfo(keyPath)) {
+        return;
+    }
+    iTlsCertificate *cert = newPemKey_TlsCertificate(readFile_(crtPath), readFile_(keyPath));
+    iBlock *finger = fingerprint_TlsCertificate(cert);
+    iGmIdentity *ident = findIdentity_GmCerts_(d, finger);
+    if (!ident) {
+        /* User-provided certificate. */
+        ident = new_GmIdentity();
+        ident->flags |= imported_GmIdentityFlag;
+        iDate today;
+        initCurrent_Date(&today);
+        set_String(&ident->notes, collect_String(format_Date(&today, "Imported on %b %d, %Y")));
+        pushBack_PtrArray(&d->idents, ident);
+    }
+    setCertificate_GmIdentity_(ident, cert);
+    delete_Block(finger);
+}
+
 static void load_GmCerts_(iGmCerts *d) {
     iFile *f = new_File(collect_String(concatCStr_Path(&d->saveDir, filename_GmCerts_)));
     if (open_File(f, readOnly_FileMode | text_FileMode)) {
         iRegExp *      pattern = new_RegExp("([^\\s]+) ([0-9]+) ([a-z0-9]+)", 0);
         const iRangecc src     = range_Block(collect_Block(readAll_File(f)));
         iRangecc       line    = iNullRange;
-        while (nextSplit_Rangecc(&src, "\n", &line)) {
+        while (nextSplit_Rangecc(src, "\n", &line)) {
             iRegExpMatch m;
+            init_RegExpMatch(&m);
             if (matchRange_RegExp(pattern, line, &m)) {
                 const iRangecc domain = capturedRange_RegExpMatch(&m, 1);
                 const iRangecc until  = capturedRange_RegExpMatch(&m, 2);
@@ -86,17 +313,44 @@ static void load_GmCerts_(iGmCerts *d) {
         iRelease(pattern);
     }
     iRelease(f);
+    /* Load all identity certificates. */ {
+        loadIdentities_GmCerts_(d);
+        const iString *idDir = collect_String(concatCStr_Path(&d->saveDir, identsDir_GmCerts_));
+        if (!fileExists_FileInfo(idDir)) {
+            mkdir_Path(idDir);
+        }
+        iForEach(DirFileInfo, i, iClob(directoryContents_FileInfo(iClob(new_FileInfo(idDir))))) {
+            const iFileInfo *entry = i.value;
+            if (endsWithCase_String(path_FileInfo(entry), ".crt")) {
+                loadIdentityFromCertificate_GmCerts_(d, path_FileInfo(entry));
+            }
+        }
+        /* Remove certificates whose crt/key files were missing. */
+        iForEach(PtrArray, j, &d->idents) {
+            iGmIdentity *ident = j.ptr;
+            if (!isValid_GmIdentity_(ident)) {
+                delete_GmIdentity(ident);
+                remove_PtrArrayIterator(&j);
+            }
+        }
+    }
 }
 
 void init_GmCerts(iGmCerts *d, const char *saveDir) {
     init_Mutex(&d->mtx);
     initCStr_String(&d->saveDir, saveDir);
     d->trusted = new_StringHash();
+    init_PtrArray(&d->idents);
     load_GmCerts_(d);
 }
 
 void deinit_GmCerts(iGmCerts *d) {
     iGuardMutex(&d->mtx, {
+        saveIdentities_GmCerts_(d);
+        iForEach(PtrArray, i, &d->idents) {
+            delete_GmIdentity(i.ptr);
+        }
+        deinit_PtrArray(&d->idents);
         iRelease(d->trusted);
         deinit_String(&d->saveDir);
     });
@@ -141,4 +395,103 @@ iBool checkTrust_GmCerts(iGmCerts *d, iRangecc domain, const iTlsCertificate *ce
     save_GmCerts_(d);
     unlock_Mutex(&d->mtx);
     return iTrue;
+}
+
+iGmIdentity *identity_GmCerts(iGmCerts *d, unsigned int id) {
+    return at_PtrArray(&d->idents, id);
+}
+
+const iGmIdentity *constIdentity_GmCerts(const iGmCerts *d, unsigned int id) {
+    return constAt_PtrArray(&d->idents, id);
+}
+
+const iGmIdentity *identityForUrl_GmCerts(const iGmCerts *d, const iString *url) {
+    iConstForEach(PtrArray, i, &d->idents) {
+        const iGmIdentity *ident = i.ptr;
+        iConstForEach(StringSet, j, ident->useUrls) {
+            const iString *used = j.value;
+            if (startsWithCase_String(url, cstr_String(used))) {
+                return ident;
+            }
+        }
+    }
+    return NULL;
+}
+
+iGmIdentity *newIdentity_GmCerts(iGmCerts *d, int flags, iDate validUntil, const iString *commonName,
+                                 const iString *email, const iString *userId, const iString *domain,
+                                 const iString *org, const iString *country) {
+    const iTlsCertificateName names[] = {
+        { issuerCommonName_TlsCertificateNameType,    collectNewCStr_String("Lagrange v" LAGRANGE_APP_VERSION) },
+        { issuerDomain_TlsCertificateNameType,        collectNewCStr_String("lagrange.skyjake.fi") },
+        { subjectCommonName_TlsCertificateNameType,   commonName },
+        { subjectEmailAddress_TlsCertificateNameType, !isEmpty_String(email)   ? email   : NULL },
+        { subjectUserId_TlsCertificateNameType,       !isEmpty_String(userId)  ? userId  : NULL },
+        { subjectDomain_TlsCertificateNameType,       !isEmpty_String(domain)  ? domain  : NULL },
+        { subjectOrganization_TlsCertificateNameType, !isEmpty_String(org)     ? org     : NULL },
+        { subjectCountry_TlsCertificateNameType,      !isEmpty_String(country) ? country : NULL },
+        { 0, NULL }
+    };
+    iGmIdentity *id = new_GmIdentity();
+    setCertificate_GmIdentity_(id, newSelfSignedRSA_TlsCertificate(2048, validUntil, names));
+    /* Save the certificate and private key as PEM files. */
+    if (~flags & temporary_GmIdentityFlag) {
+        const char *finger = cstrCollect_String(hexEncode_Block(&id->fingerprint));
+        if (!writeTextFile_(
+                collect_String(concatCStr_Path(&d->saveDir, format_CStr("idents/%s.crt", finger))),
+                collect_String(pem_TlsCertificate(id->cert)))) {
+            delete_GmIdentity(id);
+            return NULL;
+        }
+        if (!writeTextFile_(
+                collect_String(concatCStr_Path(&d->saveDir, format_CStr("idents/%s.key", finger))),
+                collect_String(privateKeyPem_TlsCertificate(id->cert)))) {
+            delete_GmIdentity(id);
+            return NULL;
+        }
+    }
+    pushBack_PtrArray(&d->idents, id);
+    return id;
+}
+
+static const char *certPath_GmCerts_(const iGmCerts *d, const iGmIdentity *identity) {
+    if (!(identity->flags & (temporary_GmIdentityFlag | imported_GmIdentityFlag))) {
+        const char *finger   = cstrCollect_String(hexEncode_Block(&identity->fingerprint));
+        return concatPath_CStr(cstr_String(&d->saveDir), format_CStr("idents/%s", finger));
+    }
+    return NULL;
+}
+
+void deleteIdentity_GmCerts(iGmCerts *d, iGmIdentity *identity) {
+    /* Only delete the files if we created them. */
+    const char *filename = certPath_GmCerts_(d, identity);
+    if (filename) {
+        remove(format_CStr("%s.crt", filename));
+        remove(format_CStr("%s.key", filename));
+    }
+    removeOne_PtrArray(&d->idents, identity);
+    collect_GmIdentity(identity);
+}
+
+const iString *certificatePath_GmCerts(const iGmCerts *d, const iGmIdentity *identity) {
+    const char *filename = certPath_GmCerts_(d, identity);
+    if (filename) {
+        return collectNewFormat_String("%s.crt", filename);
+    }
+    return NULL;
+}
+
+const iPtrArray *identities_GmCerts(const iGmCerts *d) {
+    return &d->idents;
+}
+
+void signIn_GmCerts(iGmCerts *d, iGmIdentity *identity, const iString *url) {
+    signOut_GmCerts(d, url);
+    setUse_GmIdentity(identity, url, iTrue);
+}
+
+void signOut_GmCerts(iGmCerts *d, const iString *url) {
+    iForEach(PtrArray, i, &d->idents) {
+        setUse_GmIdentity(i.ptr, url, iFalse);
+    }
 }

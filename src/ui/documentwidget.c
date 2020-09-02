@@ -1,3 +1,25 @@
+/* Copyright 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
+
 #include "documentwidget.h"
 #include "scrollwidget.h"
 #include "inputwidget.h"
@@ -105,6 +127,43 @@ iDefineTypeConstruction(Model)
 
 /*----------------------------------------------------------------------------------------------*/
 
+iDeclareType(VisBuffer)
+iDeclareTypeConstruction(VisBuffer)
+
+struct Impl_VisBuffer {
+    SDL_Texture *  texture[2];
+    int            index;
+    iInt2          size;
+    iRangei        validRange;
+};
+
+void init_VisBuffer(iVisBuffer *d) {
+    iZap(*d);
+}
+
+void deinit_VisBuffer(iVisBuffer *d) {
+    iForIndices(i, d->texture) {
+        if (d->texture[i]) {
+            SDL_DestroyTexture(d->texture[i]);
+        }
+    }
+}
+
+void dealloc_VisBuffer(iVisBuffer *d) {
+    d->size = zero_I2();
+    iZap(d->validRange);
+    iForIndices(i, d->texture) {
+        SDL_DestroyTexture(d->texture[i]);
+        d->texture[i] = NULL;
+    }
+}
+
+iDefineTypeConstruction(VisBuffer)
+
+/*----------------------------------------------------------------------------------------------*/
+
+static const int smoothSpeed_DocumentWidget_ = 120; /* unit: gap_Text per second */
+
 enum iRequestState {
     blank_RequestState,
     fetching_RequestState,
@@ -124,26 +183,26 @@ struct Impl_DocumentWidget {
     int            certFlags;
     iDate          certExpiry;
     iString *      certSubject;
+    int            redirectCount;
     iBool          selecting;
     iRangecc       selectMark;
     iRangecc       foundMark;
     int            pageMargin;
     iPtrArray      visibleLinks;
     const iGmRun * hoverLink;
+    const iGmRun * contextLink;
     iBool          noHoverWhileScrolling;
     iBool          showLinkNumbers;
     iClick         click;
     float          initNormScrollY;
     int            scrollY;
     iScrollWidget *scroll;
+    int            smoothScroll;
+    int            smoothSpeed;
+    int            smoothLastOffset;
+    iBool          smoothContinue;
     iWidget *      menu;
-    SDL_Cursor *   arrowCursor; /* TODO: cursors belong in Window */
-    SDL_Cursor *   beamCursor;
-    SDL_Cursor *   handCursor;
-    SDL_Texture *  visBuffer[2];
-    int            visBufferIndex;
-    iInt2          visBufferSize;
-    iRangei        visBufferValidRange;
+    iVisBuffer *   visBuffer;
 };
 
 iDefineObjectConstruction(DocumentWidget)
@@ -163,22 +222,22 @@ void init_DocumentWidget(iDocumentWidget *d) {
     d->isRequestUpdated = iFalse;
     d->media            = new_ObjectList();
     d->doc              = new_GmDocument();
+    d->redirectCount    = 0;
     d->initNormScrollY  = 0;
     d->scrollY          = 0;
+    d->smoothScroll     = 0;
+    d->smoothSpeed      = 0;
+    d->smoothLastOffset = 0;
+    d->smoothContinue   = iFalse;
     d->selecting        = iFalse;
     d->selectMark       = iNullRange;
     d->foundMark        = iNullRange;
     d->pageMargin       = 5;
     d->hoverLink        = NULL;
+    d->contextLink      = NULL;
     d->noHoverWhileScrolling = iFalse;
     d->showLinkNumbers  = iFalse;
-    iZap(d->visBuffer);
-    d->visBufferIndex = 0;
-    d->visBufferSize  = zero_I2();
-    iZap(d->visBufferValidRange);
-    d->arrowCursor    = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_ARROW);
-    d->beamCursor     = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_IBEAM);
-    d->handCursor     = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_HAND);
+    d->visBuffer        = new_VisBuffer();
     init_PtrArray(&d->visibleLinks);
     init_Click(&d->click, d, SDL_BUTTON_LEFT);
     addChild_Widget(w, iClob(d->scroll = new_ScrollWidget()));
@@ -197,16 +256,21 @@ void init_DocumentWidget(iDocumentWidget *d) {
 }
 
 void deinit_DocumentWidget(iDocumentWidget *d) {
+    delete_VisBuffer(d->visBuffer);
     iRelease(d->media);
     iRelease(d->request);
     iRelease(d->doc);
     deinit_PtrArray(&d->visibleLinks);
     delete_String(d->certSubject);
     delete_String(d->titleUser);
-    SDL_FreeCursor(d->arrowCursor);
-    SDL_FreeCursor(d->beamCursor);
-    SDL_FreeCursor(d->handCursor);
     deinit_Model(&d->mod);
+}
+
+static void resetSmoothScroll_DocumentWidget_(iDocumentWidget *d) {
+    d->smoothSpeed      = 0;
+    d->smoothScroll     = 0;
+    d->smoothLastOffset = 0;
+    d->smoothContinue   = iFalse;
 }
 
 static int documentWidth_DocumentWidget_(const iDocumentWidget *d) {
@@ -242,9 +306,11 @@ iLocalDef int documentToWindowY_DocumentWidget_(const iDocumentWidget *d, int do
     return docY - d->scrollY + documentBounds_DocumentWidget_(d).pos.y;
 }
 
+#if 0
 iLocalDef int windowToDocumentY_DocumentWidget_(const iDocumentWidget *d, int localY) {
     return localY + d->scrollY - documentBounds_DocumentWidget_(d).pos.y;
 }
+#endif
 
 static iInt2 documentPos_DocumentWidget_(const iDocumentWidget *d, iInt2 pos) {
     return addY_I2(sub_I2(pos, topLeft_Rect(documentBounds_DocumentWidget_(d))), d->scrollY);
@@ -291,15 +357,16 @@ static float normScrollPos_DocumentWidget_(const iDocumentWidget *d) {
 
 static int scrollMax_DocumentWidget_(const iDocumentWidget *d) {
     return size_GmDocument(d->doc).y - height_Rect(bounds_Widget(constAs_Widget(d))) +
-           2 * d->pageMargin * gap_UI;
+           (hasSiteBanner_GmDocument(d->doc) ? 1 : 2) * d->pageMargin * gap_UI;
 }
 
 static void updateHover_DocumentWidget_(iDocumentWidget *d, iInt2 mouse) {
-    const iRect docBounds      = documentBounds_DocumentWidget_(d);
-    const iGmRun *oldHoverLink = d->hoverLink;
-    d->hoverLink               = NULL;
-    const iInt2 hoverPos = addY_I2(sub_I2(mouse, topLeft_Rect(docBounds)), d->scrollY);
-    if (!d->noHoverWhileScrolling &&
+    const iWidget *w            = constAs_Widget(d);
+    const iRect    docBounds    = documentBounds_DocumentWidget_(d);
+    const iGmRun * oldHoverLink = d->hoverLink;
+    d->hoverLink                = NULL;
+    const iInt2 hoverPos        = addY_I2(sub_I2(mouse, topLeft_Rect(docBounds)), d->scrollY);
+    if (isHover_Widget(w) && !d->noHoverWhileScrolling &&
         (d->state == ready_RequestState || d->state == receivedPartialResponse_RequestState)) {
         iConstForEach(PtrArray, i, &d->visibleLinks) {
             const iGmRun *run = i.ptr;
@@ -312,12 +379,9 @@ static void updateHover_DocumentWidget_(iDocumentWidget *d, iInt2 mouse) {
     if (d->hoverLink != oldHoverLink) {
         refresh_Widget(as_Widget(d));
     }
-    if (!contains_Widget(constAs_Widget(d), mouse) ||
-        contains_Widget(constAs_Widget(d->scroll), mouse)) {
-        SDL_SetCursor(d->arrowCursor);
-    }
-    else {
-        SDL_SetCursor(d->hoverLink ? d->handCursor : d->beamCursor);
+    if (isHover_Widget(w) && !contains_Widget(constAs_Widget(d->scroll), mouse)) {
+        setCursor_Window(get_Window(),
+                         d->hoverLink ? SDL_SYSTEM_CURSOR_HAND : SDL_SYSTEM_CURSOR_IBEAM);
     }
 }
 
@@ -424,38 +488,52 @@ static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
     }
 }
 
+static void invalidate_DocumentWidget_(iDocumentWidget *d) {
+    iZap(d->visBuffer->validRange);
+}
+
 static void setSource_DocumentWidget_(iDocumentWidget *d, const iString *source) {
     setUrl_GmDocument(d->doc, d->mod.url);
     setSource_GmDocument(d->doc, source, documentWidth_DocumentWidget_(d));
-    d->foundMark  = iNullRange;
-    d->selectMark = iNullRange;
-    d->hoverLink  = NULL;
+    d->foundMark   = iNullRange;
+    d->selectMark  = iNullRange;
+    d->hoverLink   = NULL;
+    d->contextLink = NULL;
     updateWindowTitle_DocumentWidget_(d);
     updateVisible_DocumentWidget_(d);
+    invalidate_DocumentWidget_(d);
     refresh_Widget(as_Widget(d));
 }
 
-static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode code) {
+static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode code,
+                                          const iString *meta) {
     iString *src = collectNewCStr_String("# ");
     const iGmError *msg = get_GmError(code);
     appendChar_String(src, msg->icon ? msg->icon : 0x2327); /* X in a box */
     appendFormat_String(src, " %s\n%s", msg->title, msg->info);
-    switch (code) {
-        case failedToOpenFile_GmStatusCode:
-        case certificateNotValid_GmStatusCode:
-            appendFormat_String(src, "\n\n%s", cstr_String(meta_GmRequest(d->request)));
-            break;
-        case unsupportedMimeType_GmStatusCode:
-            appendFormat_String(src, "\n```\n%s\n```\n", cstr_String(meta_GmRequest(d->request)));
-            break;
-        case slowDown_GmStatusCode:
-            appendFormat_String(src, "\n\nWait %s seconds before your next request.",
-                                cstr_String(meta_GmRequest(d->request)));
-            break;
-        default:
-            break;
+    if (meta) {
+        switch (code) {
+            case nonGeminiRedirect_GmStatusCode:
+            case tooManyRedirects_GmStatusCode:
+                appendFormat_String(src, "\n=> %s\n", cstr_String(meta));
+                break;
+            case failedToOpenFile_GmStatusCode:
+            case certificateNotValid_GmStatusCode:
+                appendFormat_String(src, "\n\n%s", cstr_String(meta));
+                break;
+            case unsupportedMimeType_GmStatusCode:
+                appendFormat_String(src, "\n```\n%s\n```\n", cstr_String(meta));
+                break;
+            case slowDown_GmStatusCode:
+                appendFormat_String(src, "\n\nWait %s seconds before your next request.",
+                                    cstr_String(meta));
+                break;
+            default:
+                break;
+        }
     }
     setSource_DocumentWidget_(d, src);
+    resetSmoothScroll_DocumentWidget_(d);
     d->scrollY = 0;
     d->state = ready_RequestState;
 }
@@ -468,10 +546,6 @@ static void updateTheme_DocumentWidget_(iDocumentWidget *d) {
     else {
         setThemeSeed_GmDocument(d->doc, &d->titleUser->chars);
     }
-}
-
-static void invalidate_DocumentWidget_(iDocumentWidget *d) {
-    iZap(d->visBufferValidRange);
 }
 
 static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse *response) {
@@ -493,16 +567,16 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse
             const iString *mimeStr = collect_String(lower_String(&response->meta)); /* for convenience */
             iRangecc mime = range_String(mimeStr);
             iRangecc seg = iNullRange;
-            while (nextSplit_Rangecc(&mime, ";", &seg)) {
+            while (nextSplit_Rangecc(mime, ";", &seg)) {
                 iRangecc param = seg;
                 trim_Rangecc(&param);
-                if (equal_Rangecc(&param, "text/plain")) {
+                if (equal_Rangecc(param, "text/plain")) {
                     docFormat = plainText_GmDocumentFormat;
                 }
-                else if (equal_Rangecc(&param, "text/gemini")) {
+                else if (equal_Rangecc(param, "text/gemini")) {
                     docFormat = gemini_GmDocumentFormat;
                 }
-                else if (startsWith_Rangecc(&param, "image/")) {
+                else if (startsWith_Rangecc(param, "image/")) {
                     docFormat = gemini_GmDocumentFormat;
                     if (!d->request || isFinished_GmRequest(d->request)) {
                         /* Make a simple document with an image. */
@@ -521,7 +595,7 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse
                         clear_String(&str);
                     }
                 }
-                else if (startsWith_Rangecc(&param, "charset=")) {
+                else if (startsWith_Rangecc(param, "charset=")) {
                     charset = (iRangecc){ param.start + 8, param.end };
                     /* Remove whitespace and quotes. */
                     trim_Rangecc(&charset);
@@ -532,12 +606,12 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse
                 }
             }
             if (docFormat == undefined_GmDocumentFormat) {
-                showErrorPage_DocumentWidget_(d, unsupportedMimeType_GmStatusCode);
+                showErrorPage_DocumentWidget_(d, unsupportedMimeType_GmStatusCode, &response->meta);
                 deinit_String(&str);
                 return;
             }
             /* Convert the source to UTF-8 if needed. */
-            if (!equalCase_Rangecc(&charset, "utf-8")) {
+            if (!equalCase_Rangecc(charset, "utf-8")) {
                 set_String(&str,
                            collect_String(decode_Block(&str.chars, cstr_Rangecc(charset))));
             }
@@ -609,6 +683,7 @@ static void parseUser_DocumentWidget_(iDocumentWidget *d) {
     iRegExp *userPats[2] = { new_RegExp("~([^/?]+)", 0),
                              new_RegExp("/users/([^/?]+)", caseInsensitive_RegExpOption) };
     iRegExpMatch m;
+    init_RegExpMatch(&m);
     iForIndices(i, userPats) {
         if (matchString_RegExp(userPats[i], d->mod.url, &m)) {
             setRange_String(d->titleUser, capturedRange_RegExpMatch(&m, 1));
@@ -621,6 +696,8 @@ static iBool updateFromHistory_DocumentWidget_(iDocumentWidget *d) {
     const iRecentUrl *recent = findUrl_History(d->mod.history, d->mod.url);
     if (recent && recent->cachedResponse) {
         const iGmResponse *resp = recent->cachedResponse;
+        clear_ObjectList(d->media);
+        reset_GmDocument(d->doc);
         d->state = fetching_RequestState;
         d->initNormScrollY = recent->normScrollY;
         /* Use the cached response data. */
@@ -676,6 +753,10 @@ void setInitialScroll_DocumentWidget(iDocumentWidget *d, float normScrollY) {
     d->initNormScrollY = normScrollY;
 }
 
+void setRedirectCount_DocumentWidget(iDocumentWidget *d, int count) {
+    d->redirectCount = count;
+}
+
 iBool isRequestOngoing_DocumentWidget(const iDocumentWidget *d) {
     return d->state == fetching_RequestState || d->state == receivedPartialResponse_RequestState;
 }
@@ -694,6 +775,37 @@ static void scroll_DocumentWidget_(iDocumentWidget *d, int offset) {
     }
     updateVisible_DocumentWidget_(d);
     refresh_Widget(as_Widget(d));
+}
+
+static void doScroll_DocumentWidget_(iAny *ptr) {
+    iDocumentWidget *d = ptr;
+    if (!d->smoothScroll) return; /* was cancelled */
+    const double elapsed = (double) elapsedSinceLastTicker_App() / 1000.0;
+    int delta = d->smoothSpeed * elapsed * iSign(d->smoothScroll);
+    if (iAbs(d->smoothScroll) <= iAbs(delta)) {
+        if (d->smoothContinue) {
+            d->smoothScroll += d->smoothLastOffset;
+        }
+        else {
+            delta = d->smoothScroll;
+        }
+    }
+    scroll_DocumentWidget_(d, delta);
+    d->smoothScroll -= delta;
+    if (d->smoothScroll != 0) {
+        addTicker_App(doScroll_DocumentWidget_, d);
+    }
+}
+
+static void smoothScroll_DocumentWidget_(iDocumentWidget *d, int offset, int speed) {
+    if (speed == 0) {
+        scroll_DocumentWidget_(d, offset);
+        return;
+    }
+    d->smoothSpeed = speed;
+    d->smoothScroll += offset;
+    d->smoothLastOffset = offset;
+    addTicker_App(doScroll_DocumentWidget_, d);
 }
 
 static void scrollTo_DocumentWidget_(iDocumentWidget *d, int documentY, iBool centered) {
@@ -733,32 +845,43 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
             }
             case categorySuccess_GmStatusCode:
                 d->scrollY = 0;
+                resetSmoothScroll_DocumentWidget_(d);
                 reset_GmDocument(d->doc); /* new content incoming */
                 updateDocument_DocumentWidget_(d, response_GmRequest(d->request));
                 break;
             case categoryRedirect_GmStatusCode:
                 if (isEmpty_String(meta_GmRequest(d->request))) {
-                    showErrorPage_DocumentWidget_(d, invalidRedirect_GmStatusCode);
+                    showErrorPage_DocumentWidget_(d, invalidRedirect_GmStatusCode, NULL);
                 }
                 else {
-                    /* TODO: only accept redirects that use gemini protocol */
-                    postCommandf_App(
-                        "open redirect:1 url:%s",
-                        cstr_String(absoluteUrl_String(d->mod.url, meta_GmRequest(d->request))));
+                    /* Only accept redirects that use gemini scheme. */
+                    const iString *dstUrl = absoluteUrl_String(d->mod.url, meta_GmRequest(d->request));
+                    if (d->redirectCount >= 5) {
+                        showErrorPage_DocumentWidget_(d, tooManyRedirects_GmStatusCode, dstUrl);
+                    }
+                    else if (equalCase_Rangecc(urlScheme_String(dstUrl), "gemini")) {
+                        postCommandf_App(
+                            "open redirect:%d url:%s", d->redirectCount + 1, cstr_String(dstUrl));
+                    }
+                    else {
+                        showErrorPage_DocumentWidget_(d, nonGeminiRedirect_GmStatusCode, dstUrl);
+                    }
                     iReleasePtr(&d->request);
                 }
                 break;
             default:
                 if (isDefined_GmError(statusCode)) {
-                    showErrorPage_DocumentWidget_(d, statusCode);
+                    showErrorPage_DocumentWidget_(d, statusCode, meta_GmRequest(d->request));
                 }
                 else if (category_GmStatusCode(statusCode) ==
                          categoryTemporaryFailure_GmStatusCode) {
-                    showErrorPage_DocumentWidget_(d, temporaryFailure_GmStatusCode);
+                    showErrorPage_DocumentWidget_(
+                        d, temporaryFailure_GmStatusCode, meta_GmRequest(d->request));
                 }
                 else if (category_GmStatusCode(statusCode) ==
                          categoryPermanentFailure_GmStatusCode) {
-                    showErrorPage_DocumentWidget_(d, permanentFailure_GmStatusCode);
+                    showErrorPage_DocumentWidget_(
+                        d, permanentFailure_GmStatusCode, meta_GmRequest(d->request));
                 }
                 break;
         }
@@ -872,32 +995,33 @@ static iBool handleMediaCommand_DocumentWidget_(iDocumentWidget *d, const char *
     return iFalse;
 }
 
-static void deallocVisBuffer_DocumentWidget_(iDocumentWidget *d) {
-    d->visBufferSize = zero_I2();
-    iZap(d->visBufferValidRange);
-    iForIndices(i, d->visBuffer) {
-        SDL_DestroyTexture(d->visBuffer[i]);
-        d->visBuffer[i] = NULL;
+static void deallocVisBuffer_DocumentWidget_(const iDocumentWidget *d) {
+    d->visBuffer->size = zero_I2();
+    iZap(d->visBuffer->validRange);
+    iForIndices(i, d->visBuffer->texture) {
+        SDL_DestroyTexture(d->visBuffer->texture[i]);
+        d->visBuffer->texture[i] = NULL;
     }
 }
 
-static void allocVisBuffer_DocumentWidget_(iDocumentWidget *d) {
-    iWidget *w = as_Widget(d);
-    const iBool isVisible = isVisible_Widget(w);
-    const iInt2 size = bounds_Widget(w).size;
-    if (!isEqual_I2(size, d->visBufferSize) || !isVisible) {
-        deallocVisBuffer_DocumentWidget_(d);
+static void allocVisBuffer_DocumentWidget_(const iDocumentWidget *d) {
+    const iWidget *w         = constAs_Widget(d);
+    const iBool    isVisible = isVisible_Widget(w);
+    const iInt2    size      = bounds_Widget(w).size;
+    if (!isEqual_I2(size, d->visBuffer->size) || !isVisible) {
+        dealloc_VisBuffer(d->visBuffer);
     }
-    if (isVisible && !d->visBuffer[0]) {
-        iZap(d->visBufferValidRange);
-        d->visBufferSize = size;
-        iForIndices(i, d->visBuffer) {
-            d->visBuffer[i] = SDL_CreateTexture(renderer_Window(get_Window()),
-                                                SDL_PIXELFORMAT_RGBA8888,
-                                                SDL_TEXTUREACCESS_STATIC | SDL_TEXTUREACCESS_TARGET,
-                                                size.x,
-                                                size.y);
-            SDL_SetTextureBlendMode(d->visBuffer[i], SDL_BLENDMODE_NONE);
+    if (isVisible && !d->visBuffer->texture[0]) {
+        iZap(d->visBuffer->validRange);
+        d->visBuffer->size = size;
+        iForIndices(i, d->visBuffer->texture) {
+            d->visBuffer->texture[i] =
+                SDL_CreateTexture(renderer_Window(get_Window()),
+                                  SDL_PIXELFORMAT_RGBA8888,
+                                  SDL_TEXTUREACCESS_STATIC | SDL_TEXTUREACCESS_TARGET,
+                                  size.x,
+                                  size.y);
+            SDL_SetTextureBlendMode(d->visBuffer->texture[i], SDL_BLENDMODE_NONE);
         }
     }
 }
@@ -973,7 +1097,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                                                           : "Not trusted"));
         return iTrue;
     }
-    else if (equal_Command(cmd, "copy") && document_App() == d) {
+    else if (equal_Command(cmd, "copy") && document_App() == d && !focus_Widget()) {
         iString *copied;
         if (d->selectMark.start) {
             iRangecc mark = d->selectMark;
@@ -990,10 +1114,10 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         delete_String(copied);
         return iTrue;
     }
-    else if (equalWidget_Command(cmd, w, "document.copylink")) {
-        if (d->hoverLink) {
+    else if (equal_Command(cmd, "document.copylink") && document_App() == d) {
+        if (d->contextLink) {
             SDL_SetClipboardText(cstr_String(
-                absoluteUrl_String(d->mod.url, linkUrl_GmDocument(d->doc, d->hoverLink->linkId))));
+                absoluteUrl_String(d->mod.url, linkUrl_GmDocument(d->doc, d->contextLink->linkId))));
         }
         else {
             SDL_SetClipboardText(cstr_String(d->mod.url));
@@ -1001,18 +1125,16 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equal_Command(cmd, "document.input.submit")) {
-        if (arg_Command(cmd)) {
-            iString *value = collect_String(suffix_Command(cmd, "value"));
-            urlEncode_String(value);
-            iString *url = collect_String(copy_String(d->mod.url));
-            const size_t qPos = indexOfCStr_String(url, "?");
-            if (qPos != iInvalidPos) {
-                remove_Block(&url->chars, qPos, iInvalidSize);
-            }
-            appendCStr_String(url, "?");
-            append_String(url, value);
-            postCommandf_App("open url:%s", cstr_String(url));
+        iString *value = collect_String(suffix_Command(cmd, "value"));
+        urlEncode_String(value);
+        iString *url = collect_String(copy_String(d->mod.url));
+        const size_t qPos = indexOfCStr_String(url, "?");
+        if (qPos != iInvalidPos) {
+            remove_Block(&url->chars, qPos, iInvalidSize);
         }
+        appendCStr_String(url, "?");
+        append_String(url, value);
+        postCommandf_App("open url:%s", cstr_String(url));
         return iTrue;
     }
     else if (equal_Command(cmd, "valueinput.cancelled") &&
@@ -1028,11 +1150,11 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     else if (equalWidget_Command(cmd, w, "document.request.finished") &&
              pointerLabel_Command(cmd, "request") == d->request) {
         checkResponse_DocumentWidget_(d);
+        resetSmoothScroll_DocumentWidget_(d);
         d->scrollY = d->initNormScrollY * size_GmDocument(d->doc).y;
         d->state = ready_RequestState;
         /* The response may be cached. */ {
-            const iRangecc proto = urlProtocol_String(d->mod.url);
-            if (!equal_Rangecc(&proto, "about")) {
+            if (!equal_Rangecc(urlScheme_String(d->mod.url), "about")) {
                 setCachedResponse_History(d->mod.history, response_GmRequest(d->request));
             }
         }
@@ -1076,12 +1198,24 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     else if (equalWidget_Command(cmd, w, "scroll.moved")) {
         d->scrollY = arg_Command(cmd);
+        resetSmoothScroll_DocumentWidget_(d);
         updateVisible_DocumentWidget_(d);
         return iTrue;
     }
     else if (equalWidget_Command(cmd, w, "scroll.page")) {
-        scroll_DocumentWidget_(d,
-                               arg_Command(cmd) * height_Rect(documentBounds_DocumentWidget_(d)));
+        if (argLabel_Command(cmd, "repeat")) {
+            if (!d->smoothContinue) {
+                d->smoothContinue = iTrue;
+            }
+            else {
+                return iTrue;
+            }
+        }
+        smoothScroll_DocumentWidget_(d,
+                                     arg_Command(cmd) *
+                                         (0.5f * height_Rect(documentBounds_DocumentWidget_(d)) -
+                                          0 * lineHeight_Text(paragraph_FontId)),
+                                     25 * smoothSpeed_DocumentWidget_);
         return iTrue;
     }
     else if (equal_Command(cmd, "document.goto") && document_App() == d) {
@@ -1164,6 +1298,13 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                     refresh_Widget(w);
                 }
                 break;
+            case SDLK_PAGEUP:
+            case SDLK_PAGEDOWN:
+            case SDLK_SPACE:
+            case SDLK_UP:
+            case SDLK_DOWN:
+                d->smoothContinue = iFalse;
+                break;
         }
     }
     if (ev->type == SDL_KEYDOWN) {
@@ -1194,12 +1335,14 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 break;
             case SDLK_HOME:
                 d->scrollY = 0;
+                resetSmoothScroll_DocumentWidget_(d);
                 scroll_DocumentWidget_(d, 0);
                 updateVisible_DocumentWidget_(d);
                 refresh_Widget(w);
                 return iTrue;
             case SDLK_END:
                 d->scrollY = scrollMax_DocumentWidget_(d);
+                resetSmoothScroll_DocumentWidget_(d);
                 scroll_DocumentWidget_(d, 0);
                 updateVisible_DocumentWidget_(d);
                 refresh_Widget(w);
@@ -1207,24 +1350,37 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             case SDLK_UP:
             case SDLK_DOWN:
                 if (mods == 0) {
-                    scroll_DocumentWidget_(d, 2 * lineHeight_Text(default_FontId) *
-                                                  (key == SDLK_UP ? -1 : 1));
+                    if (ev->key.repeat) {
+                        if (!d->smoothContinue) {
+                            d->smoothContinue = iTrue;
+                        }
+                        else return iTrue;
+                    }
+                    smoothScroll_DocumentWidget_(d,
+                                                 3 * lineHeight_Text(paragraph_FontId) *
+                                                     (key == SDLK_UP ? -1 : 1),
+                                                 gap_Text * smoothSpeed_DocumentWidget_);
                     return iTrue;
                 }
                 break;
             case SDLK_PAGEUP:
             case SDLK_PAGEDOWN:
-            case ' ':
-                postCommand_Widget(w, "scroll.page arg:%d", key == SDLK_PAGEUP ? -1 : +1);
+            case SDLK_SPACE:
+                postCommand_Widget(
+                    w,
+                    "scroll.page arg:%d repeat:%d",
+                    (key == SDLK_SPACE && mods & KMOD_SHIFT) || key == SDLK_PAGEUP ? -1 : +1,
+                    ev->key.repeat != 0);
                 return iTrue;
-#if 0
-            case SDLK_9: {
+#if 1
+            case SDLK_KP_1: {
                 iBlock *seed = new_Block(64);
                 for (size_t i = 0; i < 64; ++i) {
                     setByte_Block(seed, i, iRandom(0, 255));
                 }
                 setThemeSeed_GmDocument(d->doc, seed);
                 delete_Block(seed);
+                invalidate_DocumentWidget_(d);
                 refresh_Widget(w);
                 break;
             }
@@ -1258,7 +1414,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
     else if (ev->type == SDL_MOUSEMOTION) {
         d->noHoverWhileScrolling = iFalse;
         if (isVisible_Widget(d->menu)) {
-            SDL_SetCursor(d->arrowCursor);
+            setCursor_Window(get_Window(), SDL_SYSTEM_CURSOR_ARROW);
         }
         else {
             updateHover_DocumentWidget_(d, init_I2(ev->motion.x, ev->motion.y));
@@ -1274,6 +1430,9 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             return iTrue;
         }
     }
+    if (!isVisible_Widget(d->menu)) {
+        d->contextLink = d->hoverLink;
+    }
     processContextMenuEvent_Widget(d->menu, ev, d->hoverLink = NULL);
     switch (processEvent_Click(&d->click, ev)) {
         case started_ClickResult:
@@ -1282,6 +1441,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         case drag_ClickResult: {
             /* Begin selecting a range of text. */
             if (!d->selecting) {
+                setFocus_Widget(NULL); /* TODO: Focus this document? */
                 d->selecting = iTrue;
                 d->selectMark.start = d->selectMark.end =
                     sourceLoc_DocumentWidget_(d, d->click.startPos);
@@ -1418,8 +1578,12 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
     }
     /* Text markers. */
     if (d->pass == dynamic_DrawRunPass) {
+        SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()),
+                                   isDark_ColorTheme(colorTheme_App()) ? SDL_BLENDMODE_ADD
+                                                                       : SDL_BLENDMODE_BLEND);
         fillRange_DrawContext_(d, run, uiMatching_ColorId, d->widget->foundMark, &d->inFoundMark);
         fillRange_DrawContext_(d, run, uiMarked_ColorId, d->widget->selectMark, &d->inSelectMark);
+        SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_NONE);
     }
     enum iColorId      fg  = run->color;
     const iGmDocument *doc = d->widget->doc;
@@ -1505,6 +1669,12 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                 appendFormat_String(
                     &text, "  %s\u2a2f", isHover ? escape_Color(tmLinkText_ColorId) : "");
             }
+            const iInt2 size = measureRange_Text(metaFont, range_String(&text));
+            fillRect_Paint(
+                &d->paint,
+                (iRect){ add_I2(origin, addX_I2(topRight_Rect(run->bounds), -size.x - gap_UI)),
+                         addX_I2(size, 2 * gap_UI) },
+                tmBackground_ColorId);
             drawAlign_Text(metaFont,
                            add_I2(topRight_Rect(run->bounds), origin),
                            fg,
@@ -1527,9 +1697,8 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
             const int       flags  = linkFlags_GmDocument(doc, linkId);
             iUrl parts;
             init_Url(&parts, url);
-            const iString *host = collect_String(newRange_String(parts.host));
             fg = linkColor_GmDocument(doc, linkId, textHover_GmLinkPart);
-            const iBool showHost  = (!isEmpty_String(host) && flags & userFriendly_GmLinkFlag);
+            const iBool showHost  = (!isEmpty_Range(&parts.host) && flags & userFriendly_GmLinkFlag);
             const iBool showImage = (flags & imageFileExtension_GmLinkFlag) != 0;
             const iBool showAudio = (flags & audioFileExtension_GmLinkFlag) != 0;
             iString str;
@@ -1541,11 +1710,16 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                     &str,
                     " \u2014%s%s%s\r%c%s",
                     showHost ? " " : "",
-                    showHost ? cstr_String(host) : "",
+                    showHost ? (!equalCase_Rangecc(parts.scheme, "gemini")
+                                    ? format_CStr("%s://%s",
+                                                  cstr_Rangecc(parts.scheme),
+                                                  cstr_Rangecc(parts.host))
+                                    : cstr_Rangecc(parts.host))
+                             : "",
                     showHost && (showImage || showAudio) ? " \u2014" : "",
                     showImage || showAudio
-                        ? '0' + fg
-                        : ('0' + linkColor_GmDocument(doc, run->linkId, domain_GmLinkPart)),
+                        ? asciiBase_ColorEscape + fg
+                        : (asciiBase_ColorEscape + linkColor_GmDocument(doc, run->linkId, domain_GmLinkPart)),
                     showImage ? " View Image \U0001f5bc"
                               : showAudio ? " Play Audio \U0001f3b5" : "");
             }
@@ -1599,8 +1773,9 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
     const iRect    bounds   = bounds_Widget(w);
     const iInt2    origin   = topLeft_Rect(bounds);
     const iRangei  visRange = visibleRange_DocumentWidget_(d);
+    iVisBuffer *   visBuf   = d->visBuffer; /* this may be updated/modified here */
     draw_Widget(w);
-    allocVisBuffer_DocumentWidget_(iConstCast(iDocumentWidget *, d));
+    allocVisBuffer_DocumentWidget_(d);
     iDrawContext ctxDynamic = {
         .pass         = dynamic_DrawRunPass,
         .widget       = d,
@@ -1618,36 +1793,38 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
     /* Static content. */ {
         iPaint *p = &ctxStatic.paint;
         init_Paint(p);
-        const int vbSrc = d->visBufferIndex;
-        const int vbDst = d->visBufferIndex ^ 1;
+        const int vbSrc = visBuf->index;
+        const int vbDst = visBuf->index ^ 1;
         iRangei drawRange = visRange;
-        iAssert(d->visBuffer[vbDst]);
-        beginTarget_Paint(p, d->visBuffer[vbDst]);
-        const iRect visBufferRect = { zero_I2(), d->visBufferSize };
+        iAssert(visBuf->texture[vbDst]);
+        beginTarget_Paint(p, visBuf->texture[vbDst]);
+        const iRect visBufferRect = { zero_I2(), visBuf->size };
         iRect drawRect = visBufferRect;
-        if (!isEmpty_Rangei_(intersect_Rangei_(visRange, d->visBufferValidRange))) {
-            if (visRange.start < d->visBufferValidRange.start) {
-                drawRange = (iRangei){ visRange.start, d->visBufferValidRange.start };
+        if (!isEmpty_Rangei_(intersect_Rangei_(visRange, visBuf->validRange))) {
+            if (visRange.start < visBuf->validRange.start) {
+                drawRange = (iRangei){ visRange.start, visBuf->validRange.start };
             }
             else {
-                drawRange = (iRangei){ d->visBufferValidRange.end, visRange.end };
+                drawRange = (iRangei){ visBuf->validRange.end, visRange.end };
             }
             if (isEmpty_Range(&drawRange)) {
-                SDL_RenderCopy(render, d->visBuffer[vbSrc], NULL, NULL);
+                SDL_RenderCopy(render, visBuf->texture[vbSrc], NULL, NULL);
             }
             else {
                 SDL_RenderCopy(
                     render,
-                    d->visBuffer[vbSrc],
+                    visBuf->texture[vbSrc],
                     NULL,
                     &(SDL_Rect){ 0,
-                                 documentToWindowY_DocumentWidget_(d, d->visBufferValidRange.start) - origin.y,
-                                 d->visBufferSize.x,
-                                 d->visBufferSize.y });
-                drawRect = init_Rect(0,
-                                     documentToWindowY_DocumentWidget_(d, drawRange.start) - origin.y,
-                                     d->visBufferSize.x,
-                                     size_Range(&drawRange));
+                                 documentToWindowY_DocumentWidget_(d, visBuf->validRange.start) -
+                                     origin.y,
+                                 visBuf->size.x,
+                                 visBuf->size.y });
+                drawRect =
+                    init_Rect(0,
+                              documentToWindowY_DocumentWidget_(d, drawRange.start) - origin.y,
+                              visBuf->size.x,
+                              size_Range(&drawRange));
             }
         }
         if (!isEmpty_Range(&drawRange)) {
@@ -1657,17 +1834,20 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
             unsetClip_Paint(p);
         }
         endTarget_Paint(p);
-        SDL_RenderCopy(render, d->visBuffer[vbDst], NULL,
+        SDL_RenderCopy(render, visBuf->texture[vbDst], NULL,
                        &(SDL_Rect){ origin.x, origin.y, bounds.size.x, bounds.size.y } );
-        iConstCast(iDocumentWidget *, d)->visBufferValidRange = visRange;
-        iConstCast(iDocumentWidget *, d)->visBufferIndex = vbDst;
+        visBuf->validRange = visRange;
+        visBuf->index = vbDst;
     }
     /* Dynamic content. */ {
+        extern int enableKerning_Text;
+        enableKerning_Text = iFalse; /* need to be fast, these is redone on every redraw */
         iPaint *p = &ctxDynamic.paint;
         init_Paint(p);
         setClip_Paint(p, bounds);
         render_GmDocument(d->doc, visRange, drawRun_DrawContext_, &ctxDynamic);
         unsetClip_Paint(p);
+        enableKerning_Text = iTrue;
     }
 
 //    drawRect_Paint(&ctx.paint,

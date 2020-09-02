@@ -1,8 +1,32 @@
+/* Copyright 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
+
 #include "util.h"
 
 #include "app.h"
+#include "bookmarks.h"
 #include "color.h"
 #include "command.h"
+#include "gmutil.h"
 #include "labelwidget.h"
 #include "inputwidget.h"
 #include "widget.h"
@@ -157,7 +181,13 @@ static iBool menuHandler_(iWidget *menu, const char *cmd) {
             /* Don't reopen self; instead, root will close the menu. */
             return iFalse;
         }
-        if (!equal_Command(cmd, "window.resized")) {
+        if (equal_Command(cmd, "mouse.clicked") && arg_Command(cmd)) {
+            /* Dismiss open menus when clicking outside them. */
+            closeMenu_Widget(menu);
+            return iTrue;
+        }
+        if (!equal_Command(cmd, "window.resized") &&
+            !(equal_Command(cmd, "mouse.clicked") && !arg_Command(cmd)) /* ignore button release */) {
             closeMenu_Widget(menu);
         }
     }
@@ -234,7 +264,7 @@ void closeMenu_Widget(iWidget *d) {
 }
 
 int checkContextMenu_Widget(iWidget *menu, const SDL_Event *ev) {
-    if (ev->type == SDL_MOUSEBUTTONDOWN && ev->button.button == SDL_BUTTON_RIGHT) {
+    if (menu && ev->type == SDL_MOUSEBUTTONDOWN && ev->button.button == SDL_BUTTON_RIGHT) {
         if (isVisible_Widget(menu)) {
             closeMenu_Widget(menu);
             return 0x1;
@@ -476,6 +506,7 @@ iBool filePathHandler_(iWidget *dlg, const char *cmd) {
 
 iWidget *makeSheet_Widget(const char *id) {
     iWidget *sheet = new_Widget();
+    setPadding1_Widget(sheet, 3 * gap_UI);
     setId_Widget(sheet, id);
     setFrameColor_Widget(sheet, uiSeparator_ColorId);
     setBackgroundColor_Widget(sheet, uiBackground_ColorId);
@@ -483,9 +514,6 @@ iWidget *makeSheet_Widget(const char *id) {
                     mouseModal_WidgetFlag | keepOnTop_WidgetFlag | arrangeVertical_WidgetFlag |
                         arrangeSize_WidgetFlag,
                     iTrue);
-    //    const iInt2 rootSize = rootSize_Window(get_Window());
-    //    setSize_Widget(sheet, init_I2(rootSize.x / 2, 0));
-    //    setFlags_Widget(sheet, fixedHeight_WidgetFlag, iFalse);
     return sheet;
 }
 
@@ -529,11 +557,13 @@ void makeFilePath_Widget(iWidget *      parent,
 
 static void acceptValueInput_(iWidget *dlg) {
     const iInputWidget *input = findChild_Widget(dlg, "input");
-    const iString *val = text_InputWidget(input);
-    postCommandf_App("%s arg:%d value:%s",
-                     cstr_String(id_Widget(dlg)),
-                     toInt_String(val),
-                     cstr_String(val));
+    if (!isEmpty_String(id_Widget(dlg))) {
+        const iString *val = text_InputWidget(input);
+        postCommandf_App("%s arg:%d value:%s",
+                         cstr_String(id_Widget(dlg)),
+                         toInt_String(val),
+                         cstr_String(val));
+    }
 }
 
 static void updateValueInputWidth_(iWidget *dlg) {
@@ -560,6 +590,7 @@ iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
             }
             else {
                 postCommandf_App("valueinput.cancelled id:%s", cstr_String(id_Widget(dlg)));
+                setId_Widget(dlg, ""); /* no further commands to emit */
             }
             destroy_Widget(dlg);
             return iTrue;
@@ -568,6 +599,7 @@ iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
     }
     else if (equal_Command(cmd, "cancel")) {
         postCommandf_App("valueinput.cancelled id:%s", cstr_String(id_Widget(dlg)));
+        setId_Widget(dlg, ""); /* no further commands to emit */
         destroy_Widget(dlg);
         return iTrue;
     }
@@ -633,11 +665,12 @@ static iBool messageHandler_(iWidget *msg, const char *cmd) {
     return iFalse;
 }
 
-void makeMessage_Widget(const char *title, const char *msg) {
+iWidget *makeMessage_Widget(const char *title, const char *msg) {
     iWidget *dlg = makeQuestion_Widget(
         title, msg, (const char *[]){ "Continue" }, (const char *[]){ "message.ok" }, 1);
     addAction_Widget(dlg, SDLK_ESCAPE, 0, "message.ok");
     addAction_Widget(dlg, SDLK_SPACE, 0, "message.ok");
+    return dlg;
 }
 
 iWidget *makeQuestion_Widget(const char *title,
@@ -666,9 +699,11 @@ iWidget *makeQuestion_Widget(const char *title,
 }
 
 void setToggle_Widget(iWidget *d, iBool active) {
-    setFlags_Widget(d, selected_WidgetFlag, active);
-    updateText_LabelWidget((iLabelWidget *) d,
-                           collectNewFormat_String("%s", isSelected_Widget(d) ? "YES" : "NO"));
+    if (d) {
+        setFlags_Widget(d, selected_WidgetFlag, active);
+        updateText_LabelWidget((iLabelWidget *) d,
+                               collectNewFormat_String("%s", isSelected_Widget(d) ? "YES" : "NO"));
+    }
 }
 
 static iBool toggleHandler_(iWidget *d, const char *cmd) {
@@ -684,8 +719,9 @@ static iBool toggleHandler_(iWidget *d, const char *cmd) {
 }
 
 iWidget *makeToggle_Widget(const char *id) {
-    iWidget *toggle = as_Widget(new_LabelWidget("YES", 0, 0, "toggle"));
+    iWidget *toggle = as_Widget(new_LabelWidget("YES", 0, 0, "toggle")); /* "YES" for sizing */
     setId_Widget(toggle, id);
+    updateTextCStr_LabelWidget((iLabelWidget *) toggle, "NO"); /* actual initial value */
     setCommandHandler_Widget(toggle, toggleHandler_);
     return toggle;
 }
@@ -702,9 +738,11 @@ iWidget *makePreferences_Widget(void) {
         page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);    
     iWidget *values = addChildFlags_Widget(
         page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
-//    setBackgroundColor_Widget(headings, none_ColorId);
-//    setBackgroundColor_Widget(values, none_ColorId);
-    addChild_Widget(headings, iClob(makeHeading_Widget("Theme:")));
+#if defined (iPlatformApple) || defined (iPlatformMSys)
+    addChild_Widget(headings, iClob(makeHeading_Widget("Use system theme:")));
+    addChild_Widget(values, iClob(makeToggle_Widget("prefs.ostheme")));
+#endif
+    addChild_Widget(headings, iClob(makeHeading_Widget("Theme:")));    
     iWidget *themes = new_Widget();
     /* Themes. */ {
         setId_Widget(addChild_Widget(themes, iClob(new_LabelWidget("Pure Black", 0, 0, "theme.set arg:0"))), "prefs.theme.0");
@@ -717,8 +755,18 @@ iWidget *makePreferences_Widget(void) {
     addChild_Widget(values, iClob(makeToggle_Widget("prefs.retainwindow")));
     addChild_Widget(headings, iClob(makeHeading_Widget("UI scale factor:")));
     setId_Widget(addChild_Widget(values, iClob(new_InputWidget(8))), "prefs.uiscale");
+    addChild_Widget(headings, iClob(makeHeading_Widget(uiHeading_ColorEscape "Proxies")));
+    addChild_Widget(values, iClob(makeHeading_Widget("")));
+    addChild_Widget(headings, iClob(makeHeading_Widget("HTTP proxy:")));
+    setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.proxy.http");
+    addChild_Widget(headings, iClob(makeHeading_Widget("Gopher proxy:")));
+    setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.proxy.gopher");
     arrange_Widget(dlg);
-//    as_Widget(songDir)->rect.size.x = dlg->rect.size.x - headings->rect.size.x;
+    /* Text input widths. */ {
+        const int inputWidth = width_Rect(page->rect) - width_Rect(headings->rect);
+        as_Widget(findChild_Widget(values, "prefs.proxy.http"))->rect.size.x = inputWidth;
+        as_Widget(findChild_Widget(values, "prefs.proxy.gopher"))->rect.size.x = inputWidth;
+    }
     iWidget *div = new_Widget(); {
         setFlags_Widget(div, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
         addChild_Widget(div, iClob(new_LabelWidget("Dismiss", SDLK_ESCAPE, 0, "prefs.dismiss")));
@@ -731,9 +779,11 @@ iWidget *makePreferences_Widget(void) {
 
 iWidget *makeBookmarkEditor_Widget(void) {
     iWidget *dlg = makeSheet_Widget("bmed");
-    addChildFlags_Widget(dlg,
-                         iClob(new_LabelWidget(uiHeading_ColorEscape "EDIT BOOKMARK", 0, 0, NULL)),
-                         frameless_WidgetFlag);
+    setId_Widget(addChildFlags_Widget(
+                     dlg,
+                     iClob(new_LabelWidget(uiHeading_ColorEscape "EDIT BOOKMARK", 0, 0, NULL)),
+                     frameless_WidgetFlag),
+                 "bmed.heading");
     iWidget *page = new_Widget();
     addChild_Widget(dlg, iClob(page));
     setFlags_Widget(page, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
@@ -741,9 +791,8 @@ iWidget *makeBookmarkEditor_Widget(void) {
         page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
     iWidget *values = addChildFlags_Widget(
         page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
-    iInputWidget *inputs[4];
-    iWidget *hd;
-    addChild_Widget(headings, iClob(hd = makeHeading_Widget("Title:")));
+    iInputWidget *inputs[3];
+    addChild_Widget(headings, iClob(makeHeading_Widget("Title:")));
     setId_Widget(addChild_Widget(values, iClob(inputs[0] = new_InputWidget(0))), "bmed.title");
     addChild_Widget(headings, iClob(makeHeading_Widget("URL:")));
     setId_Widget(addChild_Widget(values, iClob(inputs[1] = new_InputWidget(0))), "bmed.url");
@@ -759,7 +808,100 @@ iWidget *makeBookmarkEditor_Widget(void) {
         addChild_Widget(
             div,
             iClob(new_LabelWidget(
-                uiTextCaution_ColorEscape "Save", SDLK_RETURN, KMOD_PRIMARY, "bmed.accept")));
+                uiTextCaution_ColorEscape "Save Bookmark", SDLK_RETURN, KMOD_PRIMARY, "bmed.accept")));
+    }
+    addChild_Widget(dlg, iClob(div));
+    addChild_Widget(get_Window()->root, iClob(dlg));
+    centerSheet_Widget(dlg);
+    return dlg;
+}
+
+static iBool handleBookmarkCreationCommands_SidebarWidget_(iWidget *editor, const char *cmd) {
+    if (equal_Command(cmd, "bmed.accept") || equal_Command(cmd, "cancel")) {
+        if (equal_Command(cmd, "bmed.accept")) {
+            const iString *title = text_InputWidget(findChild_Widget(editor, "bmed.title"));
+            const iString *url   = text_InputWidget(findChild_Widget(editor, "bmed.url"));
+            const iString *tags  = text_InputWidget(findChild_Widget(editor, "bmed.tags"));
+            add_Bookmarks(bookmarks_App(),
+                          url,
+                          title,
+                          tags,
+                          first_String(label_LabelWidget(findChild_Widget(editor, "bmed.icon"))));
+            postCommand_App("bookmarks.changed");
+        }
+        destroy_Widget(editor);
+        return iTrue;
+    }
+    return iFalse;
+}
+
+iWidget *makeBookmarkCreation_Widget(const iString *url, const iString *title, iChar icon) {
+    iWidget *dlg = makeBookmarkEditor_Widget();
+    setId_Widget(dlg, "bmed.create");
+    setTextCStr_LabelWidget(findChild_Widget(dlg, "bmed.heading"),
+                            uiHeading_ColorEscape "ADD BOOKMARK");
+    iUrl parts;
+    init_Url(&parts, url);
+    setTextCStr_InputWidget(findChild_Widget(dlg, "bmed.title"),
+                            title ? cstr_String(title) : cstr_Rangecc(parts.host));
+    setText_InputWidget(findChild_Widget(dlg, "bmed.url"), url);
+    setId_Widget(
+        addChildFlags_Widget(
+            dlg,
+            iClob(new_LabelWidget(cstrCollect_String(newUnicodeN_String(&icon, 1)), 0, 0, NULL)),
+            collapse_WidgetFlag | hidden_WidgetFlag | disabled_WidgetFlag),
+        "bmed.icon");
+    setCommandHandler_Widget(dlg, handleBookmarkCreationCommands_SidebarWidget_);
+    return dlg;
+}
+
+iWidget *makeIdentityCreation_Widget(void) {
+    iWidget *dlg = makeSheet_Widget("ident");
+    setId_Widget(addChildFlags_Widget(
+                     dlg,
+                     iClob(new_LabelWidget(uiHeading_ColorEscape "NEW IDENTITY", 0, 0, NULL)),
+                     frameless_WidgetFlag),
+                 "ident.heading");
+    iWidget *page = new_Widget();
+    addChildFlags_Widget(
+        dlg,
+        iClob(
+            new_LabelWidget("Creating a 2048-bit self-signed RSA certificate.", 0, 0, NULL)),
+        frameless_WidgetFlag);
+    addChild_Widget(dlg, iClob(page));
+    setFlags_Widget(page, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
+    iWidget *headings = addChildFlags_Widget(
+        page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
+    iWidget *values = addChildFlags_Widget(
+        page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
+    iInputWidget *inputs[6];
+    addChild_Widget(headings, iClob(makeHeading_Widget("Common name:")));
+    setId_Widget(addChild_Widget(values, iClob(inputs[0] = new_InputWidget(0))), "ident.common");
+    addChild_Widget(headings, iClob(makeHeading_Widget("Email:")));
+    setId_Widget(addChild_Widget(values, iClob(inputs[1] = newHint_InputWidget(0, "optional"))), "ident.email");
+    addChild_Widget(headings, iClob(makeHeading_Widget("User ID:")));
+    setId_Widget(addChild_Widget(values, iClob(inputs[2] = newHint_InputWidget(0, "optional"))), "ident.userid");
+    addChild_Widget(headings, iClob(makeHeading_Widget("Domain:")));
+    setId_Widget(addChild_Widget(values, iClob(inputs[3] = newHint_InputWidget(0, "optional"))), "ident.domain");
+    addChild_Widget(headings, iClob(makeHeading_Widget("Organization:")));
+    setId_Widget(addChild_Widget(values, iClob(inputs[4] = newHint_InputWidget(0, "optional"))), "ident.org");
+    addChild_Widget(headings, iClob(makeHeading_Widget("Country:")));
+    setId_Widget(addChild_Widget(values, iClob(inputs[5] = newHint_InputWidget(0, "optional"))), "ident.country");
+    addChild_Widget(headings, iClob(makeHeading_Widget("Valid until:")));
+    setId_Widget(addChild_Widget(values, iClob(newHint_InputWidget(19, "YYYY-MM-DD HH:MM:SS"))), "ident.until");
+    addChild_Widget(headings, iClob(makeHeading_Widget("Temporary:")));
+    addChild_Widget(values, iClob(makeToggle_Widget("ident.temp")));
+    arrange_Widget(dlg);
+    for (size_t i = 0; i < iElemCount(inputs); ++i) {
+        as_Widget(inputs[i])->rect.size.x = 100 * gap_UI - headings->rect.size.x;
+    }
+    iWidget *div = new_Widget(); {
+        setFlags_Widget(div, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
+        addChild_Widget(div, iClob(new_LabelWidget("Cancel", SDLK_ESCAPE, 0, "cancel")));
+        addChild_Widget(
+            div,
+            iClob(new_LabelWidget(
+                uiTextAction_ColorEscape "Create Identity", SDLK_RETURN, KMOD_PRIMARY, "ident.accept")));
     }
     addChild_Widget(dlg, iClob(div));
     addChild_Widget(get_Window()->root, iClob(dlg));

@@ -1,3 +1,25 @@
+/* Copyright 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
+
 #include "text.h"
 #include "color.h"
 #include "metrics.h"
@@ -11,6 +33,7 @@
 #include <the_Foundation/file.h>
 #include <the_Foundation/hash.h>
 #include <the_Foundation/math.h>
+#include <the_Foundation/stringlist.h>
 #include <the_Foundation/regexp.h>
 #include <the_Foundation/path.h>
 #include <the_Foundation/vec2.h>
@@ -25,6 +48,7 @@ iDeclareTypeConstructionArgs(Glyph, iChar ch)
 
 int gap_Text;                           /* cf. gap_UI in metrics.h */
 int enableHalfPixelGlyphs_Text = iTrue; /* debug setting */
+int enableKerning_Text         = iTrue; /* looking up kern pairs is slow */
 
 struct Impl_Glyph {
     iHashNode node;
@@ -62,6 +86,7 @@ struct Impl_Font {
     int            baseline;
     iHash          glyphs;
     iBool          isMonospaced;
+    iBool          manualKernOnly;
     enum iFontId   symbolsFont; /* font to use for symbols */
 };
 
@@ -120,7 +145,7 @@ static void initFonts_Text_(iText *d) {
         int symbolsFont;
     } fontData[max_FontId] = {
         { &fontSourceSansProRegular_Embedded, fontSize_UI,          defaultSymbols_FontId },
-        { &fontSourceSansProRegular_Embedded, fontSize_UI * 1.150f, defaultMediumSymbols_FontId },
+        { &fontSourceSansProRegular_Embedded, fontSize_UI * 1.125f, defaultMediumSymbols_FontId },
         { &fontFiraMonoRegular_Embedded,      fontSize_UI * 0.866f, defaultSymbols_FontId },
         { &fontFiraSansRegular_Embedded,      textSize,             symbols_FontId },
         { &fontFiraMonoRegular_Embedded,      textSize * 0.866f,    smallSymbols_FontId },
@@ -133,14 +158,14 @@ static void initFonts_Text_(iText *d) {
         { &fontFiraSansBold_Embedded,         textSize * 2.000f,    hugeSymbols_FontId },
         { &fontFiraSansLight_Embedded,        textSize * 1.666f,    largeSymbols_FontId },
         { &fontSymbola_Embedded,              fontSize_UI,          defaultSymbols_FontId },
-        { &fontSymbola_Embedded,              fontSize_UI * 1.150f, defaultMediumSymbols_FontId },
+        { &fontSymbola_Embedded,              fontSize_UI * 1.125f, defaultMediumSymbols_FontId },
         { &fontSymbola_Embedded,              textSize,             symbols_FontId },
         { &fontSymbola_Embedded,              textSize * 1.333f,    mediumSymbols_FontId },
         { &fontSymbola_Embedded,              textSize * 1.666f,    largeSymbols_FontId },
         { &fontSymbola_Embedded,              textSize * 2.000f,    hugeSymbols_FontId },
         { &fontSymbola_Embedded,              textSize * 0.866f,    smallSymbols_FontId },
         { &fontNotoEmojiRegular_Embedded,     fontSize_UI,          defaultSymbols_FontId },
-        { &fontNotoEmojiRegular_Embedded,     fontSize_UI * 1.150f, defaultMediumSymbols_FontId },
+        { &fontNotoEmojiRegular_Embedded,     fontSize_UI * 1.125f, defaultMediumSymbols_FontId },
         { &fontNotoEmojiRegular_Embedded,     textSize,             symbols_FontId },
         { &fontNotoEmojiRegular_Embedded,     textSize * 1.333f,    mediumSymbols_FontId },
         { &fontNotoEmojiRegular_Embedded,     textSize * 1.666f,    largeSymbols_FontId },
@@ -152,6 +177,9 @@ static void initFonts_Text_(iText *d) {
         init_Font(font, fontData[i].ttf, fontData[i].size, fontData[i].symbolsFont);
         if (fontData[i].ttf == &fontFiraMonoRegular_Embedded) {
             font->isMonospaced = iTrue;
+        }
+        if (i == default_FontId || i == defaultMedium_FontId) {
+            font->manualKernOnly = iTrue;
         }
     }
     gap_Text = iRound(gap_UI * d->contentFontSize);
@@ -287,8 +315,8 @@ static void cache_Font_(iFont *d, iGlyph *glyph, int hoff) {
     /* Rasterize the glyph using stbtt. */ {
         surface = rasterizeGlyph_Font_(d, ch, hoff * 0.5f);
         if (hoff == 0) {
-            int adv, lsb;
-            stbtt_GetCodepointHMetrics(&d->font, ch, &adv, &lsb);
+            int adv;
+            stbtt_GetCodepointHMetrics(&d->font, ch, &adv, NULL);
             glyph->advance = d->scale * adv;
         }
         stbtt_GetCodepointBitmapBoxSubpixel(&d->font,
@@ -406,6 +434,7 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
             /* ANSI escape. */
             chPos++;
             iRegExpMatch m;
+            init_RegExpMatch(&m);
             if (match_RegExp(text_.ansiEscape, chPos, text.end - chPos, &m)) {
                 if (mode == draw_RunMode) {
                     /* Change the color. */
@@ -431,7 +460,7 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
             if (ch == '\r') {
                 const iChar esc = nextChar_(&chPos, text.end);
                 if (mode == draw_RunMode) {
-                    const iColor clr = get_Color(esc - '0');
+                    const iColor clr = get_Color(esc - asciiBase_ColorEscape);
                     SDL_SetTextureColorMod(text_.cache, clr.r, clr.g, clr.b);
                 }
                 prevCh = 0;
@@ -488,9 +517,11 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
                 /* Manual kerning for double-slash. */
                 xpos -= glyph->rect[hoff].size.x * 0.5f;
             }
-            else if (next) {
+#if defined (LAGRANGE_ENABLE_KERNING)
+            else if (enableKerning_Text && !d->manualKernOnly && next) {
                 xpos += d->scale * stbtt_GetCodepointKernAdvance(&d->font, ch, next);
             }
+#endif
         }
         prevCh = ch;
         if (--maxLen == 0) {
@@ -656,6 +687,111 @@ void drawCentered_Text(int fontId, iRect rect, iBool alignVisual, int color, con
 
 SDL_Texture *glyphCache_Text(void) {
     return text_.cache;
+}
+
+static void freeBitmap_(void *ptr) {
+    stbtt_FreeBitmap(ptr, NULL);
+}
+
+iString *renderBlockChars_Text(const iBlock *fontData, int height, enum iTextBlockMode mode,
+                               const iString *text) {
+    iBeginCollect();
+    stbtt_fontinfo font;
+    iZap(font);
+    stbtt_InitFont(&font, constData_Block(fontData), 0);
+    int ascent;
+    stbtt_GetFontVMetrics(&font, &ascent, NULL, NULL);
+    iDeclareType(CharBuf);
+    struct Impl_CharBuf {
+        uint8_t *pixels;
+        iInt2 size;
+        int dy;
+        int advance;
+    };
+    iArray *    chars     = collectNew_Array(sizeof(iCharBuf));
+    int         pxRatio   = (mode == quadrants_TextBlockMode ? 2 : 1);
+    int         pxHeight  = height * pxRatio;
+    const float scale     = stbtt_ScaleForPixelHeight(&font, pxHeight);
+    const float xScale    = scale * 2; /* character aspect ratio */
+    const int   baseline  = ascent * scale;
+    int         width     = 0;
+    size_t      strRemain = length_String(text);
+    iConstForEach(String, i, text) {
+        if (!strRemain) break;
+        if (i.value == variationSelectorEmoji_Char) {
+            strRemain--;
+            continue;
+        }
+        iCharBuf buf;
+        buf.pixels = stbtt_GetCodepointBitmap(
+            &font, xScale, scale, i.value, &buf.size.x, &buf.size.y, 0, &buf.dy);
+        stbtt_GetCodepointHMetrics(&font, i.value, &buf.advance, NULL);
+        buf.advance *= xScale;
+        if (!isSpace_Char(i.value)) {
+            if (mode == quadrants_TextBlockMode) {
+                buf.advance = (buf.size.x - 1) / 2 * 2 + 2;
+            }
+            else {
+                buf.advance = buf.size.x + 1;
+            }
+        }
+        pushBack_Array(chars, &buf);
+        collect_Garbage(buf.pixels, freeBitmap_);
+        width += buf.advance;
+        strRemain--;
+    }
+    const size_t len = (mode == quadrants_TextBlockMode ? height * ((width + 1) / 2 + 1)
+                                                        : (height * (width + 1)));
+    iChar *outBuf = iCollectMem(malloc(sizeof(iChar) * len));
+    for (size_t i = 0; i < len; ++i) {
+        outBuf[i] = 0x20;
+    }
+    iChar *outPos = outBuf;
+    for (int y = 0; y < pxHeight; y += pxRatio) {
+        const iCharBuf *ch = constData_Array(chars);
+        int lx = 0;
+        for (int x = 0; x < width; x += pxRatio, lx += pxRatio) {
+            if (lx >= ch->advance) {
+                ch++;
+                lx = 0;
+            }
+            const int ly = y - baseline - ch->dy;
+            if (mode == quadrants_TextBlockMode) {
+                #define checkPixel_(offx, offy) \
+                    (lx + offx < ch->size.x && ly + offy < ch->size.y && ly + offy >= 0 ? \
+                        ch->pixels[(lx + offx) + (ly + offy) * ch->size.x] > 155 \
+                        : iFalse)
+                const int mask = (checkPixel_(0, 0) ? 1 : 0) |
+                                 (checkPixel_(1, 0) ? 2 : 0) |
+                                 (checkPixel_(0, 1) ? 4 : 0) |
+                                 (checkPixel_(1, 1) ? 8 : 0);
+                #undef checkPixel_
+                static const iChar blocks[16] = { 0x0020, 0x2598, 0x259D, 0x2580, 0x2596, 0x258C,
+                                                  0x259E, 0x259B, 0x2597, 0x259A, 0x2590, 0x259C,
+                                                  0x2584, 0x2599, 0x259F, 0x2588 };
+                *outPos++ = blocks[mask];
+            }
+            else {
+                static const iChar shades[5] = { 0x0020, 0x2591, 0x2592, 0x2593, 0x2588 };
+                *outPos++ = shades[lx < ch->size.x && ly < ch->size.y && ly >= 0 ?
+                                   ch->pixels[lx + ly * ch->size.x] * 5 / 256 : 0];
+            }
+        }
+        *outPos++ = '\n';
+    }
+    /* We could compose the lines separately, but we'd still need to convert them to Strings
+       individually to trim them. */
+    iStringList *lines = split_String(collect_String(newUnicodeN_String(outBuf, len)), "\n");
+    while (!isEmpty_StringList(lines) &&
+           isEmpty_String(collect_String(trimmed_String(at_StringList(lines, 0))))) {
+        popFront_StringList(lines);
+    }
+    while (!isEmpty_StringList(lines) && isEmpty_String(collect_String(trimmed_String(
+                                             at_StringList(lines, size_StringList(lines) - 1))))) {
+        popBack_StringList(lines);
+    }
+    iEndCollect();
+    return joinCStr_StringList(iClob(lines), "\n");
 }
 
 /*-----------------------------------------------------------------------------------------------*/

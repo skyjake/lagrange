@@ -1,8 +1,31 @@
+/* Copyright 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
+
 #include "gmrequest.h"
 #include "gmutil.h"
 #include "gmcerts.h"
 #include "app.h" /* dataDir_App() */
 #include "embedded.h"
+#include "ui/text.h"
 
 #include <the_Foundation/file.h>
 #include <the_Foundation/mutex.h>
@@ -171,11 +194,22 @@ static void checkServerCertificate_GmRequest_(iGmRequest *d) {
     const iTlsCertificate *cert = serverCertificate_TlsRequest(d->req);
     d->resp.certFlags = 0;
     if (cert) {
-        const iRangecc domain = urlHost_String(&d->url);
+        const iRangecc domain = range_String(hostName_Address(address_TlsRequest(d->req)));
         d->resp.certFlags |= available_GmCertFlag;
         if (!isExpired_TlsCertificate(cert)) {
             d->resp.certFlags |= timeVerified_GmCertFlag;
         }
+        /* TODO: Check for IP too (see below), because it may be specified in the SAN. */
+#if 0
+        iString *ip = toStringFlags_Address(address_TlsRequest(d->req), noPort_SocketStringFlag, 0);
+        if (verifyIp_TlsCertificate(cert, ip)) {
+            printf("[GmRequest] IP address %s matches!\n", cstr_String(ip));
+        }
+        else {
+            printf("[GmRequest] IP address %s not matched\n", cstr_String(ip));
+        }
+        delete_String(ip);
+#endif
         if (verifyDomain_TlsCertificate(cert, domain)) {
             d->resp.certFlags |= domainVerified_GmCertFlag;
         }
@@ -265,31 +299,92 @@ static void requestFinished_GmRequest_(iAnyObject *obj) {
 
 static const iBlock *aboutPageSource_(iRangecc path) {
     const iBlock *src = NULL;
-    if (equalCase_Rangecc(&path, "lagrange")) {
-        return &blobAbout_Embedded;
+    if (equalCase_Rangecc(path, "lagrange")) {
+        return &blobLagrange_Embedded;
     }
-    if (equalCase_Rangecc(&path, "help")) {
+    if (equalCase_Rangecc(path, "help")) {
         return &blobHelp_Embedded;
     }
-    if (equalCase_Rangecc(&path, "version")) {
+    if (equalCase_Rangecc(path, "version")) {
         return &blobVersion_Embedded;
     }
     return src;
 }
 
 static const iBlock *replaceVariables_(const iBlock *block) {
-    iRegExp *var = new_RegExp("\\$\\{([A-Z_]+)\\}", 0);
+    iRegExp *var = new_RegExp("\\$\\{([^}]+)\\}", 0);
     iRegExpMatch m;
+    init_RegExpMatch(&m);
     if (matchRange_RegExp(var, range_Block(block), &m)) {
         iBlock *replaced = collect_Block(copy_Block(block));
         do {
             const iRangei span = m.range;
-            remove_Block(replaced, span.start, size_Range(&span));
             const iRangecc name = capturedRange_RegExpMatch(&m, 1);
-            if (equal_Rangecc(&name, "APP_VERSION")) {
-                insertData_Block(replaced, span.start,
-                                 LAGRANGE_APP_VERSION, strlen(LAGRANGE_APP_VERSION));
+            iRangecc repl = iNullRange;
+            if (equal_Rangecc(name, "APP_VERSION")) {
+                repl = range_CStr(LAGRANGE_APP_VERSION);
             }
+            else if (startsWith_Rangecc(name, "BT:")) { /* block text */
+                repl = range_String(collect_String(renderBlockChars_Text(
+                    &fontFiraSansRegular_Embedded,
+                    11, /* should be larger if shaded */
+                    quadrants_TextBlockMode,
+                    &(iString){ iBlockLiteral(
+                        name.start + 3, size_Range(&name) - 3, size_Range(&name) - 3) })));
+            }
+            else if (startsWith_Rangecc(name, "ST:")) { /* shaded text */
+                repl = range_String(collect_String(renderBlockChars_Text(
+                    &fontSymbola_Embedded,
+                    20,
+                    shading_TextBlockMode,
+                    &(iString){ iBlockLiteral(
+                        name.start + 3, size_Range(&name) - 3, size_Range(&name) - 3) })));
+            }
+            else if (equal_Rangecc(name, "ALT")) {
+#if defined (iPlatformApple)
+                repl = range_CStr("\u2325");
+#else
+                repl = range_CStr("Alt");
+#endif
+            }
+            else if (equal_Rangecc(name, "ALT+")) {
+#if defined (iPlatformApple)
+                repl = range_CStr("\u2325");
+#else
+                repl = range_CStr("Alt+");
+#endif
+            }
+            else if (equal_Rangecc(name, "CTRL")) {
+#if defined (iPlatformApple)
+                repl = range_CStr("\u2318");
+#else
+                repl = range_CStr("Ctrl");
+#endif
+            }
+            else if (equal_Rangecc(name, "CTRL+")) {
+#if defined (iPlatformApple)
+                repl = range_CStr("\u2318");
+#else
+                repl = range_CStr("Ctrl+");
+#endif
+            }
+            else if (equal_Rangecc(name, "SHIFT")) {
+#if defined (iPlatformApple)
+                repl = range_CStr("\u21e7");
+#else
+                repl = range_CStr("Shift");
+#endif
+            }
+            else if (equal_Rangecc(name, "SHIFT+")) {
+#if defined (iPlatformApple)
+                repl = range_CStr("\u21e7");
+#else
+                repl = range_CStr("Shift+");
+#endif
+            }
+            remove_Block(replaced, span.start, size_Range(&span));
+            insertData_Block(replaced, span.start, repl.start, size_Range(&repl));
+            iZap(m);
         } while (matchRange_RegExp(var, range_Block(replaced), &m));
         block = replaced;
     }
@@ -305,9 +400,12 @@ void submit_GmRequest(iGmRequest *d) {
     clear_GmResponse(&d->resp);
     iUrl url;
     init_Url(&url, &d->url);
-    /* Check for special protocols. */
+    /* Check for special schemes. */
     /* TODO: If this were a library, these could be handled via callbacks. */
-    if (equalCase_Rangecc(&url.protocol, "about")) {
+    /* TODO: Handle app's configured proxies and these via the same mechanism. */
+    const iString *host = collect_String(newRange_String(url.host));
+    uint16_t       port = toInt_String(collect_String(newRange_String(url.port)));
+    if (equalCase_Rangecc(url.scheme, "about")) {
         const iBlock *src = aboutPageSource_(url.path);
         if (src) {
             d->resp.statusCode = success_GmStatusCode;
@@ -323,7 +421,7 @@ void submit_GmRequest(iGmRequest *d) {
         iNotifyAudience(d, finished, GmRequestFinished);
         return;
     }
-    else if (equalCase_Rangecc(&url.protocol, "file")) {
+    else if (equalCase_Rangecc(url.scheme, "file")) {
         iString *path = collect_String(urlDecode_String(collect_String(newRange_String(url.path))));
         iFile *  f    = new_File(path);
         if (open_File(f, readOnly_FileMode)) {
@@ -361,9 +459,9 @@ void submit_GmRequest(iGmRequest *d) {
         iNotifyAudience(d, finished, GmRequestFinished);
         return;
     }
-    else if (equalCase_Rangecc(&url.protocol, "data")) {
+    else if (equalCase_Rangecc(url.scheme, "data")) {
         d->resp.statusCode = success_GmStatusCode;
-        iString *src = collectNewCStr_String(url.protocol.start + 5);
+        iString *src = collectNewCStr_String(url.scheme.start + 5);
         iRangecc header = { constBegin_String(src), constBegin_String(src) };
         while (header.end < constEnd_String(src) && *header.end != ',') {
             header.end++;
@@ -372,8 +470,8 @@ void submit_GmRequest(iGmRequest *d) {
         setRange_String(&d->resp.meta, header);
         /* Check what's in the header. */ {
             iRangecc entry = iNullRange;
-            while (nextSplit_Rangecc(&header, ";", &entry)) {
-                if (equal_Rangecc(&entry, "base64")) {
+            while (nextSplit_Rangecc(header, ";", &entry)) {
+                if (equal_Rangecc(entry, "base64")) {
                     isBase64 = iTrue;
                 }
             }
@@ -392,15 +490,31 @@ void submit_GmRequest(iGmRequest *d) {
         iNotifyAudience(d, finished, GmRequestFinished);
         return;
     }
+    else if (schemeProxy_App(url.scheme)) {
+        /* User has configured a proxy server for this scheme. */
+        const iString *proxy = schemeProxy_App(url.scheme);
+        if (contains_String(proxy, ':')) {
+            const size_t cpos = indexOf_String(proxy, ':');
+            port = atoi(cstr_String(proxy) + cpos + 1);
+            host = collect_String(newCStrN_String(cstr_String(proxy), cpos));
+        }
+        else {
+            host = proxy;
+            port = 0;
+        }
+    }
     d->state = receivingHeader_GmRequestState;
     d->req = new_TlsRequest();
+    const iGmIdentity *identity = identityForUrl_GmCerts(d->certs, &d->url);
+    if (identity) {
+        setCertificate_TlsRequest(d->req, identity->cert);
+    }
     iConnect(TlsRequest, d->req, readyRead, d, readIncoming_GmRequest_);
     iConnect(TlsRequest, d->req, finished, d, requestFinished_GmRequest_);
-    uint16_t port = toInt_String(collect_String(newRange_String(url.port)));
     if (port == 0) {
         port = 1965; /* default Gemini port */
     }
-    setUrl_TlsRequest(d->req, collect_String(newRange_String(url.host)), port);
+    setUrl_TlsRequest(d->req, host, port);
     setContent_TlsRequest(d->req,
                           utf8_String(collectNewFormat_String("%s\r\n", cstr_String(&d->url))));
     submit_TlsRequest(d->req);
