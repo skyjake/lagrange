@@ -263,14 +263,23 @@ iLocalDef iFont *font_Text_(enum iFontId id) {
     return &text_.fonts[id];
 }
 
+static void freeBmp_(void *ptr) {
+    stbtt_FreeBitmap(ptr, NULL);
+}
+
 static SDL_Surface *rasterizeGlyph_Font_(const iFont *d, iChar ch, float xShift) {
     int w, h;
     uint8_t *bmp = stbtt_GetCodepointBitmapSubpixel(
         &d->font, d->scale, d->scale, xShift, 0.0f, ch, &w, &h, 0, 0);
     /* Note: `bmp` must be freed afterwards. */
-    SDL_Surface *surface =
+    collect_Garbage(bmp, freeBmp_);
+    SDL_Surface *surface8 =
         SDL_CreateRGBSurfaceWithFormatFrom(bmp, w, h, 8, w, SDL_PIXELFORMAT_INDEX8);
-    SDL_SetSurfacePalette(surface, text_.grayscale);
+    SDL_SetSurfacePalette(surface8, text_.grayscale);
+    SDL_PixelFormat *fmt = SDL_AllocFormat(SDL_PIXELFORMAT_RGBA8888);
+    SDL_Surface *surface = SDL_ConvertSurface(surface8, fmt, 0);
+    SDL_FreeFormat(fmt);
+    SDL_FreeSurface(surface8);
     return surface;
 }
 
@@ -330,6 +339,7 @@ static void cache_Font_(iFont *d, iGlyph *glyph, int hoff) {
                                             NULL,
                                             NULL);
         tex = SDL_CreateTextureFromSurface(render, surface);
+        SDL_SetTextureBlendMode(tex, SDL_BLENDMODE_NONE);
         glRect->size = init_I2(surface->w, surface->h);
     }
     /* Determine placement in the glyph cache texture, advancing in rows. */
@@ -342,7 +352,6 @@ static void cache_Font_(iFont *d, iGlyph *glyph, int hoff) {
     if (tex) {
         SDL_DestroyTexture(tex);
         iAssert(surface);
-        stbtt_FreeBitmap(surface->pixels, NULL);
         SDL_FreeSurface(surface);
     }
 }
