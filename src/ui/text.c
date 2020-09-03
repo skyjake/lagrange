@@ -123,7 +123,7 @@ static void deinit_Font(iFont *d) {
 static uint32_t glyphIndex_Font_(iFont *d, iChar ch) {
     const size_t entry = ch - 32;
     if (entry < iElemCount(d->indexTable)) {
-        if (d->indexTable[entry] == iInvalidPos) {
+        if (d->indexTable[entry] == ~0u) {
             d->indexTable[entry] = stbtt_FindGlyphIndex(&d->font, ch);
         }
         return d->indexTable[entry];
@@ -225,7 +225,8 @@ static void initCache_Text_(iText *d) {
     /* Allocate initial (empty) rows. These will be assigned actual locations in the cache
        once at least one glyph is stored. */
     for (int h = d->cacheRowAllocStep; h <= 2 * textSize; h += d->cacheRowAllocStep) {
-        pushBack_Array(&d->cacheRows, &(iCacheRow){ .height = 0 });    }
+        pushBack_Array(&d->cacheRows, &(iCacheRow){ .height = 0 });
+    }
     d->cacheBottom = 0;
     d->cache = SDL_CreateTexture(d->render,
                                  SDL_PIXELFORMAT_RGBA4444,
