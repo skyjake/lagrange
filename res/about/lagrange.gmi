@@ -11,5 +11,5 @@ o888ooooood8 `Y888""8o `8oooooo.  d888b    `Y888""8o o888o o888o `8oooooo.  `Y8b
 ```
 # A Beautiful Gemini Client
 ## Version ${APP_VERSION}
-=> https://skyjake.fi/@jk by Jaakko Keränen <code@iki.fi>
+=> https://skyjake.fi/@jk by @jk@skyjake.fi
 Crafted with ☕️ in Finland

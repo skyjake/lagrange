@@ -28,6 +28,10 @@ set (EMBED_RESOURCES
     res/FiraSans-Bold.ttf
     res/FiraSans-Light.ttf
     res/FiraSans-Italic.ttf
+    res/Nunito-Regular.ttf
+    res/Nunito-Bold.ttf
+    res/Nunito-ExtraLight.ttf
+    res/Nunito-LightItalic.ttf
     res/FiraMono-Regular.ttf
     res/NotoEmoji-Regular.ttf
     res/Symbola.ttf
@@ -42,9 +46,6 @@ set_source_files_properties (${EMB_BIN} PROPERTIES MACOSX_PACKAGE_LOCATION Resou
 
 # Source files.
 set (SOURCES
-    ${CMAKE_CURRENT_BINARY_DIR}/resources.binary
-    ${CMAKE_CURRENT_BINARY_DIR}/embedded.c
-    ${CMAKE_CURRENT_BINARY_DIR}/embedded.h
     src/main.c
     src/app.c
     src/app.h
@@ -92,6 +93,13 @@ set (SOURCES
     src/ui/inputwidget.h
     src/ui/labelwidget.c
     src/ui/labelwidget.h
+    # Resources:
+    res/about/help.gmi
+    res/about/lagrange.gmi
+    res/about/version.gmi
+    ${CMAKE_CURRENT_BINARY_DIR}/resources.binary
+    ${CMAKE_CURRENT_BINARY_DIR}/embedded.c
+    ${CMAKE_CURRENT_BINARY_DIR}/embedded.h
 )
 if (IOS)
 elseif (APPLE)

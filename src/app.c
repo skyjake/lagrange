@@ -273,7 +273,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     d->lastTickerTime    = SDL_GetTicks();
     d->elapsedSinceLastTicker = 0;
     d->commandEcho       = checkArgument_CommandLine(&d->args, "echo") != NULL;
-    d->initialWindowRect = init_Rect(-1, -1, 800, 500);
+    d->initialWindowRect = init_Rect(-1, -1, 900, 560);
     d->theme             = dark_ColorTheme;
     d->useSystemTheme    = iTrue;
     d->running           = iFalse;

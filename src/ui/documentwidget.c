@@ -271,7 +271,7 @@ static int documentWidth_DocumentWidget_(const iDocumentWidget *d) {
     const iWidget *w = constAs_Widget(d);
     const iRect bounds = bounds_Widget(w);
     return iMini(bounds.size.x - gap_UI * d->pageMargin * 2,
-                 fontSize_UI * 38 * zoom_App() / 100); /* TODO: Add user preference .*/
+                 fontSize_UI * 40 * zoom_App() / 100); /* TODO: Add user preference .*/
 }
 
 static iRect documentBounds_DocumentWidget_(const iDocumentWidget *d) {

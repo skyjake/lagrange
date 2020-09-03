@@ -310,16 +310,16 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         6, 12, 6, 12, 0, 0, 0, 6
     };
     static const float topMargin[max_GmLineType] = {
-        0.0f, 0.5f, 1.0f, 0.5f, 2.0f, 2.0f, 1.5f, 1.0f
+        0.0f, 0.5f, 1.0f, 0.5f, 2.0f, 1.5f, 1.0f, 1.0f
     };
     static const float bottomMargin[max_GmLineType] = {
-        0.0f, 0.5f, 1.0f, 0.5f, 1.0f, 1.0f, 1.0f, 1.0f
+        0.0f, 0.5f, 1.0f, 0.5f, 0.5f, 0.5f, 0.5f, 1.0f
     };
     static const char *arrow  = "\u2192";
     static const char *bullet = "\u2022";
     static const char *folder = "\U0001f4c1";
     static const char *globe  = "\U0001f310";
-    const float midRunSkip = 0.120f; /* extra space between wrapped text/quote lines */
+    const float midRunSkip = 0; /*0.120f;*/ /* extra space between wrapped text/quote lines */
     clear_Array(&d->layout);
     clearLinks_GmDocument_(d);
     clear_Array(&d->headings);

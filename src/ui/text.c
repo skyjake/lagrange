@@ -46,6 +46,8 @@ iDeclareType(Font)
 iDeclareType(Glyph)
 iDeclareTypeConstructionArgs(Glyph, iChar ch)
 
+static const float contentScale_Text_ = 1.3f;
+
 int gap_Text;                           /* cf. gap_UI in metrics.h */
 int enableHalfPixelGlyphs_Text = iTrue; /* debug setting */
 int enableKerning_Text         = iTrue; /* looking up kern pairs is slow */
@@ -139,6 +141,7 @@ static iText text_;
 
 static void initFonts_Text_(iText *d) {
     const float textSize = fontSize_UI * d->contentFontSize;
+    const float monoSize = fontSize_UI * d->contentFontSize / contentScale_Text_ * 0.866f;
     const struct {
         const iBlock *ttf;
         int size;
@@ -147,16 +150,16 @@ static void initFonts_Text_(iText *d) {
         { &fontSourceSansProRegular_Embedded, fontSize_UI,          defaultSymbols_FontId },
         { &fontSourceSansProRegular_Embedded, fontSize_UI * 1.125f, defaultMediumSymbols_FontId },
         { &fontFiraMonoRegular_Embedded,      fontSize_UI * 0.866f, defaultSymbols_FontId },
-        { &fontFiraSansRegular_Embedded,      textSize,             symbols_FontId },
-        { &fontFiraMonoRegular_Embedded,      textSize * 0.866f,    smallSymbols_FontId },
-        { &fontFiraMonoRegular_Embedded,      textSize * 0.666f,    smallSymbols_FontId },
-        { &fontFiraSansRegular_Embedded,      textSize * 1.333f,    mediumSymbols_FontId },
-        { &fontFiraSansItalic_Embedded,       textSize,             symbols_FontId },
-        { &fontFiraSansBold_Embedded,         textSize,             symbols_FontId },
-        { &fontFiraSansBold_Embedded,         textSize * 1.333f,    mediumSymbols_FontId },
-        { &fontFiraSansBold_Embedded,         textSize * 1.666f,    largeSymbols_FontId },
-        { &fontFiraSansBold_Embedded,         textSize * 2.000f,    hugeSymbols_FontId },
-        { &fontFiraSansLight_Embedded,        textSize * 1.666f,    largeSymbols_FontId },
+        { &fontNunitoRegular_Embedded,        textSize,             symbols_FontId },
+        { &fontFiraMonoRegular_Embedded,      monoSize,             smallSymbols_FontId },
+        { &fontFiraMonoRegular_Embedded,      monoSize * 0.750f,    smallSymbols_FontId },
+        { &fontNunitoRegular_Embedded,        textSize * 1.333f,    mediumSymbols_FontId },
+        { &fontNunitoLightItalic_Embedded,    textSize,             symbols_FontId },
+        { &fontNunitoBold_Embedded,           textSize,             symbols_FontId },
+        { &fontNunitoBold_Embedded,           textSize * 1.333f,    mediumSymbols_FontId },
+        { &fontNunitoBold_Embedded,           textSize * 1.666f,    largeSymbols_FontId },
+        { &fontNunitoBold_Embedded,           textSize * 2.000f,    hugeSymbols_FontId },
+        { &fontNunitoExtraLight_Embedded,     textSize * 1.666f,    largeSymbols_FontId },
         { &fontSymbola_Embedded,              fontSize_UI,          defaultSymbols_FontId },
         { &fontSymbola_Embedded,              fontSize_UI * 1.125f, defaultMediumSymbols_FontId },
         { &fontSymbola_Embedded,              textSize,             symbols_FontId },
@@ -219,7 +222,7 @@ static void deinitCache_Text_(iText *d) {
 
 void init_Text(SDL_Renderer *render) {
     iText *d = &text_;
-    d->contentFontSize = 1.0f;
+    d->contentFontSize = contentScale_Text_;
     d->ansiEscape      = new_RegExp("\\[([0-9;]+)m", 0);
     d->render          = render;
     /* A grayscale palette for rasterized glyphs. */ {
@@ -244,6 +247,7 @@ void deinit_Text(void) {
 }
 
 void setContentFontSize_Text(float fontSizeFactor) {
+    fontSizeFactor *= contentScale_Text_;
     iAssert(fontSizeFactor > 0);
     if (iAbs(text_.contentFontSize - fontSizeFactor) > 0.001f) {
         text_.contentFontSize = fontSizeFactor;
@@ -522,12 +526,14 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
             /* TODO: No need to decode the next char twice; check this on the next iteration. */
             const char *peek = chPos;
             const iChar next = nextChar_(&peek, text.end);
+#if 0
             if (ch == '/' && next == '/') {
                 /* Manual kerning for double-slash. */
                 xpos -= glyph->rect[hoff].size.x * 0.5f;
-            }
+            } else
+#endif
 #if defined (LAGRANGE_ENABLE_KERNING)
-            else if (enableKerning_Text && !d->manualKernOnly && next) {
+            if (enableKerning_Text && !d->manualKernOnly && next) {
                 xpos += d->scale * stbtt_GetCodepointKernAdvance(&d->font, ch, next);
             }
 #endif
