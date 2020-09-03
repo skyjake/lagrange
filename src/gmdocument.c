@@ -606,7 +606,9 @@ void reset_GmDocument(iGmDocument *d) {
 }
 
 void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
+    const float        saturationLevel = 1.0f; /* TODO: user setting */
     const iBool        isLightMode = isLight_ColorTheme(colorTheme_App());
+    const iBool        isDarkMode  = !isLightMode;
     static const iChar siteIcons[] = {
         0x203b,  0x2042,  0x205c,  0x2182,  0x25ed,  0x2600,  0x2601,  0x2604,  0x2605,  0x2606,
         0x265c,  0x265e,  0x2690,  0x2691,  0x2693,  0x2698,  0x2699,  0x26f0,  0x270e,  0x2728,
@@ -616,7 +618,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
         0x1f533, 0x1f657, 0x1f659, 0x1f665, 0x1f668, 0x1f66b, 0x1f78b, 0x1f796, 0x1f79c,
     };
     /* Default colors. */ {
-        if (!isLightMode) {
+        if (isDarkMode) {
             const iHSLColor base = { 200, 0, 0.15f, 1.0f };
             setHsl_Color(tmBackground_ColorId, base);
             set_Color(tmParagraph_ColorId, get_Color(gray75_ColorId));
@@ -663,7 +665,6 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
             set_Color(tmBannerTitle_ColorId, get_Color(gray50_ColorId));
             set_Color(tmBannerIcon_ColorId, get_Color(teal_ColorId));
             set_Color(tmInlineContentMetadata_ColorId, get_Color(brown_ColorId));
-
             set_Color(tmLinkText_ColorId, get_Color(black_ColorId));
             set_Color(tmLinkIcon_ColorId, get_Color(teal_ColorId));
             set_Color(tmLinkTextHover_ColorId, get_Color(teal_ColorId));
@@ -691,7 +692,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
     }
     else {
         d->themeSeed = 0;
-        d->siteIcon  = 0; //0x1f310; /* globe */
+        d->siteIcon  = 0;
     }
     /* Set up colors. */
     if (d->themeSeed) {
@@ -726,49 +727,73 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
             { 8, 9 },  /* violet */
             { 7, 8 },  /* pink */
         };
-        const iBool isBannerLighter = (d->themeSeed & 0x4000) != 0;
         const size_t primIndex = d->themeSeed ? (d->themeSeed & 0xff) % iElemCount(hues) : 2;
-        const float saturationLevel = 1.0f; /* TODO: user setting */
-        const iBool  isDarkBgSat =
+
+        const int   altIndex[2] = { (d->themeSeed & 0x4) != 0, (d->themeSeed & 0x40) != 0 };
+        const float altHue      = hues[d->themeSeed ? altHues[primIndex].index[altIndex[0]] : 8];
+        const float altHue2     = hues[d->themeSeed ? altHues[primIndex].index[altIndex[1]] : 8];
+
+        const iBool isBannerLighter = (d->themeSeed & 0x4000) != 0;
+        const iBool isDarkBgSat =
             (d->themeSeed & 0x200000) != 0 && (primIndex < 1 || primIndex > 4);
-        iHSLColor base = { hues[primIndex],
-                           0.8f * (d->themeSeed >> 24) / 255.0f,
-                           0.06f + 0.09f * ((d->themeSeed >> 5) & 0x7) / 7.0f,
-                           1.0f };
+
         //            printf("background: %d %f %f\n", (int) base.hue, base.sat, base.lum);
         //            printf("isDarkBgSat: %d\n", isDarkBgSat);
-        iHSLColor bgBase = base;
-        setHsl_Color(tmBackground_ColorId, bgBase);
 
-        setHsl_Color(tmBannerBackground_ColorId, addSatLum_HSLColor(bgBase, 0.1f, 0.04f * (isBannerLighter ? 1 : -1)));
-        setHsl_Color(tmBannerTitle_ColorId, setLum_HSLColor(addSatLum_HSLColor(base, 0.1f, 0), 0.55f));
-        setHsl_Color(tmBannerIcon_ColorId, setLum_HSLColor(addSatLum_HSLColor(base, 0.35f, 0), 0.65f));
+        if (isDarkMode) {
+            iHSLColor base    = { hues[primIndex],
+                                  0.8f * (d->themeSeed >> 24) / 255.0f,
+                                  0.06f + 0.09f * ((d->themeSeed >> 5) & 0x7) / 7.0f,
+                                  1.0f };
+            iHSLColor altBase = { altHue, base.sat, base.lum, 1 };
 
-        const int altIndex[2] = { (d->themeSeed & 0x4) != 0,
-                                  (d->themeSeed & 0x40) != 0 };
+            setHsl_Color(tmBackground_ColorId, base);
+
+            setHsl_Color(tmBannerBackground_ColorId, addSatLum_HSLColor(base, 0.1f, 0.04f * (isBannerLighter ? 1 : -1)));
+            setHsl_Color(tmBannerTitle_ColorId, setLum_HSLColor(addSatLum_HSLColor(base, 0.1f, 0), 0.55f));
+            setHsl_Color(tmBannerIcon_ColorId, setLum_HSLColor(addSatLum_HSLColor(base, 0.35f, 0), 0.65f));
 
 //            printf("primHue: %zu  alts: %d %d\n",
 //                   primIndex,
 //                   altHues[primIndex].index[altIndex[0]],
 //                   altHues[primIndex].index[altIndex[1]]);
-        const float altHue   = hues[d->themeSeed ? altHues[primIndex].index[altIndex[0]] : 8];
-        const float altHue2  = hues[d->themeSeed ? altHues[primIndex].index[altIndex[1]] : 8];
-        iHSLColor   altBase  = { altHue, base.sat, base.lum, 1 };
-        const float titleLum = 0.2f * ((d->themeSeed >> 17) & 0x7) / 7.0f;
-        setHsl_Color(tmHeading1_ColorId, setLum_HSLColor(altBase, titleLum + 0.80f));
-        setHsl_Color(tmHeading2_ColorId, setLum_HSLColor(altBase, titleLum + 0.70f));
-        setHsl_Color(tmHeading3_ColorId, setLum_HSLColor(altBase, titleLum + 0.60f));
 
-        setHsl_Color(tmParagraph_ColorId, addSatLum_HSLColor(base, 0.1f, 0.6f));
-        setHsl_Color(tmFirstParagraph_ColorId, addSatLum_HSLColor(base, 0.2f, 0.72f));
-        setHsl_Color(tmPreformatted_ColorId, (iHSLColor){ altHue2, 1.0f, 0.75f, 1.0f });
-        set_Color(tmQuote_ColorId, get_Color(tmPreformatted_ColorId));
-        set_Color(tmInlineContentMetadata_ColorId, get_Color(tmHeading3_ColorId));
+            const float titleLum = 0.2f * ((d->themeSeed >> 17) & 0x7) / 7.0f;
+            setHsl_Color(tmHeading1_ColorId, setLum_HSLColor(altBase, titleLum + 0.80f));
+            setHsl_Color(tmHeading2_ColorId, setLum_HSLColor(altBase, titleLum + 0.70f));
+            setHsl_Color(tmHeading3_ColorId, setLum_HSLColor(altBase, titleLum + 0.60f));
+
+            setHsl_Color(tmParagraph_ColorId, addSatLum_HSLColor(base, 0.1f, 0.6f));
+            setHsl_Color(tmFirstParagraph_ColorId, addSatLum_HSLColor(base, 0.2f, 0.72f));
+            setHsl_Color(tmPreformatted_ColorId, (iHSLColor){ altHue2, 1.0f, 0.75f, 1.0f });
+            set_Color(tmQuote_ColorId, get_Color(tmPreformatted_ColorId));
+            set_Color(tmInlineContentMetadata_ColorId, get_Color(tmHeading3_ColorId));
+        }
+        else {
+            iHSLColor base    = { hues[primIndex], 1.0f, 0.3f, 1.0f };
+            iHSLColor altBase = { altHue, base.sat, base.lum - 0.1f, 1 };
+
+            set_Color(tmBackground_ColorId, get_Color(white_ColorId));
+            set_Color(tmBannerBackground_ColorId, get_Color(white_ColorId));
+            setHsl_Color(tmBannerTitle_ColorId, addSatLum_HSLColor(base, -0.6f, 0.25f));
+            setHsl_Color(tmBannerIcon_ColorId, addSatLum_HSLColor(base, 0, 0));
+
+            setHsl_Color(tmHeading1_ColorId, base); //addSatLum_HSLColor(base, -0.5f, 0.125f));
+            set_Color(tmHeading2_ColorId, mix_Color(rgb_HSLColor(base), rgb_HSLColor(altBase), 0.5f));
+            setHsl_Color(tmHeading3_ColorId, altBase);
+
+            setHsl_Color(tmParagraph_ColorId, addSatLum_HSLColor(base, 0, -0.25f));
+            setHsl_Color(tmFirstParagraph_ColorId, addSatLum_HSLColor(base, 0, -0.1f));
+            setHsl_Color(tmPreformatted_ColorId, (iHSLColor){ altHue2, 1.0f, 0.25f, 1.0f });
+            set_Color(tmQuote_ColorId, get_Color(tmPreformatted_ColorId));
+            set_Color(tmInlineContentMetadata_ColorId, get_Color(tmHeading3_ColorId));
+        }
 
         /* Adjust colors based on light/dark mode. */
         for (int i = tmFirst_ColorId; i < max_ColorId; i++) {
             iHSLColor color = hsl_Color(get_Color(i));
             if (isLightMode) {
+#if 0
                 if (isLink_ColorId(i)) continue;
                 color.lum = 1.0f - color.lum; /* All colors invert lightness. */
                 if (isRegularText_ColorId(i)) {
@@ -793,6 +818,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
                     color.sat = 0.9f;
                     color.lum = (9 * color.lum + 0.5f) / 10;
                 }
+#endif
             }
             else { /* dark mode */
                 if (!isLink_ColorId(i)) {

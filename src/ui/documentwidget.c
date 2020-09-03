@@ -1367,7 +1367,8 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                     ev->key.repeat != 0);
                 return iTrue;
 #if 1
-            case SDLK_KP_1: {
+            case SDLK_KP_1:
+            case '`': {
                 iBlock *seed = new_Block(64);
                 for (size_t i = 0; i < 64; ++i) {
                     setByte_Block(seed, i, iRandom(0, 255));
@@ -1636,12 +1637,20 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
             init_String(&bannerText);
             iInt2 bpos = add_I2(visPos, init_I2(0, lineHeight_Text(banner_FontId) / 2));
             if (icon) {
+//                appendChar_String(&bannerText, 0x2b24); // icon);
+//                const iRect iconRect = visualBounds_Text(hugeBold_FontId, range_String(&bannerText));
+//                drawRange_Text(hugeBold_FontId, /*run->font,*/
+//                               addY_I2(bpos, -mid_Rect(iconRect).y + lineHeight_Text(run->font) / 2),
+//                               tmBannerIcon_ColorId,
+//                               range_String(&bannerText));
+//                clear_String(&bannerText);
                 appendChar_String(&bannerText, icon);
-                const iRect iconRect = visualBounds_Text(banner_FontId, range_String(&bannerText));
-                drawRange_Text(run->font,
-                               addY_I2(bpos, -mid_Rect(iconRect).y + lineHeight_Text(run->font) / 2),
-                               tmBannerIcon_ColorId,
-                               range_String(&bannerText));
+                const iRect iconRect = visualBounds_Text(run->font, range_String(&bannerText));
+                drawRange_Text(
+                    run->font,
+                    addY_I2(bpos, -mid_Rect(iconRect).y + lineHeight_Text(run->font) / 2),
+                    tmBannerIcon_ColorId,
+                    range_String(&bannerText));
                 bpos.x += right_Rect(iconRect) + 3 * gap_Text;
             }
             drawRange_Text(run->font,
