@@ -200,18 +200,25 @@ static void initCache_Text_(iText *d) {
     iAssert(textSize > 0);
     const iInt2 cacheDims = init_I2(16, 80);
     d->cacheSize = mul_I2(cacheDims, init1_I2(iMax(textSize, fontSize_UI)));
+    SDL_RendererInfo renderInfo;
+    SDL_GetRendererInfo(d->render, &renderInfo);
+    if (renderInfo.max_texture_height > 0 && d->cacheSize.y > renderInfo.max_texture_height) {
+        d->cacheSize.y = renderInfo.max_texture_height;
+        d->cacheSize.x = renderInfo.max_texture_width;
+    }    
     d->cacheRowAllocStep = iMax(2, textSize / 6);
     /* Allocate initial (empty) rows. These will be assigned actual locations in the cache
        once at least one glyph is stored. */
     for (int h = d->cacheRowAllocStep; h <= 2 * textSize; h += d->cacheRowAllocStep) {
-        pushBack_Array(&d->cacheRows, &(iCacheRow){ .height = 0 });
-    }
+        pushBack_Array(&d->cacheRows, &(iCacheRow){ .height = 0 });    }
     d->cacheBottom = 0;
     d->cache = SDL_CreateTexture(d->render,
-                                 SDL_PIXELFORMAT_RGBA8888,
+                                 SDL_PIXELFORMAT_RGBA4444,
                                  SDL_TEXTUREACCESS_STATIC | SDL_TEXTUREACCESS_TARGET,
                                  d->cacheSize.x,
                                  d->cacheSize.y);
+    
+    printf("cache texture:%p size:%d x %d\n", d->cache, d->cacheSize.x, d->cacheSize.y);
     SDL_SetTextureBlendMode(d->cache, SDL_BLENDMODE_BLEND);
 }
 
@@ -280,7 +287,7 @@ static SDL_Surface *rasterizeGlyph_Font_(const iFont *d, iChar ch, float xShift)
     SDL_Surface *surface8 =
         SDL_CreateRGBSurfaceWithFormatFrom(bmp, w, h, 8, w, SDL_PIXELFORMAT_INDEX8);
     SDL_SetSurfacePalette(surface8, text_.grayscale);
-    SDL_PixelFormat *fmt = SDL_AllocFormat(SDL_PIXELFORMAT_RGBA8888);
+    SDL_PixelFormat *fmt = SDL_AllocFormat(SDL_PIXELFORMAT_RGBA4444);
     SDL_Surface *surface = SDL_ConvertSurface(surface8, fmt, 0);
     SDL_FreeFormat(fmt);
     SDL_FreeSurface(surface8);
@@ -817,7 +824,7 @@ void init_TextBuf(iTextBuf *d, int font, const char *text) {
     SDL_Renderer *render = text_.render;
     d->size    = advance_Text(font, text);
     d->texture = SDL_CreateTexture(render,
-                                   SDL_PIXELFORMAT_RGBA8888,
+                                   SDL_PIXELFORMAT_RGBA4444,
                                    SDL_TEXTUREACCESS_STATIC | SDL_TEXTUREACCESS_TARGET,
                                    d->size.x,
                                    d->size.y);
