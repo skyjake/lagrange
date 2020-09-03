@@ -54,6 +54,7 @@ int enableKerning_Text         = iTrue; /* looking up kern pairs is slow */
 
 struct Impl_Glyph {
     iHashNode node;
+    uint32_t glyphIndex;
     const iFont *font; /* may come from symbols/emoji */
     iRect rect[2]; /* zero and half pixel offset */
     iInt2 d[2];
@@ -61,11 +62,12 @@ struct Impl_Glyph {
 };
 
 void init_Glyph(iGlyph *d, iChar ch) {
-    d->node.key = ch;
-    d->font = NULL;
-    d->rect[0] = zero_Rect();
-    d->rect[1] = zero_Rect();
-    d->advance = 0.0f;
+    d->node.key   = ch;
+    d->glyphIndex = 0;
+    d->font       = NULL;
+    d->rect[0]    = zero_Rect();
+    d->rect[1]    = zero_Rect();
+    d->advance    = 0.0f;
 }
 
 void deinit_Glyph(iGlyph *d) {
@@ -90,6 +92,7 @@ struct Impl_Font {
     iBool          isMonospaced;
     iBool          manualKernOnly;
     enum iFontId   symbolsFont; /* font to use for symbols */
+    uint32_t       indexTable[128 - 32];
 };
 
 static iFont *font_Text_(enum iFontId id);
@@ -106,6 +109,7 @@ static void init_Font(iFont *d, const iBlock *data, int height, enum iFontId sym
     d->baseline = (int) ascent * d->scale;
     d->symbolsFont = symbolsFont;
     d->isMonospaced = iFalse;
+    memset(d->indexTable, 0xff, sizeof(d->indexTable));
 }
 
 static void deinit_Font(iFont *d) {
@@ -114,6 +118,17 @@ static void deinit_Font(iFont *d) {
     }
     deinit_Hash(&d->glyphs);
     delete_Block(d->data);
+}
+
+static uint32_t glyphIndex_Font_(iFont *d, iChar ch) {
+    const size_t entry = ch - 32;
+    if (entry < iElemCount(d->indexTable)) {
+        if (d->indexTable[entry] == iInvalidPos) {
+            d->indexTable[entry] = stbtt_FindGlyphIndex(&d->font, ch);
+        }
+        return d->indexTable[entry];
+    }
+    return stbtt_FindGlyphIndex(&d->font, ch);
 }
 
 iDeclareType(Text)
@@ -216,9 +231,7 @@ static void initCache_Text_(iText *d) {
                                  SDL_PIXELFORMAT_RGBA4444,
                                  SDL_TEXTUREACCESS_STATIC | SDL_TEXTUREACCESS_TARGET,
                                  d->cacheSize.x,
-                                 d->cacheSize.y);
-    
-    printf("cache texture:%p size:%d x %d\n", d->cache, d->cacheSize.x, d->cacheSize.y);
+                                 d->cacheSize.y);    
     SDL_SetTextureBlendMode(d->cache, SDL_BLENDMODE_BLEND);
 }
 
@@ -278,16 +291,16 @@ static void freeBmp_(void *ptr) {
     stbtt_FreeBitmap(ptr, NULL);
 }
 
-static SDL_Surface *rasterizeGlyph_Font_(const iFont *d, iChar ch, float xShift) {
+static SDL_Surface *rasterizeGlyph_Font_(const iFont *d, uint32_t glyphIndex, float xShift) {
     int w, h;
-    uint8_t *bmp = stbtt_GetCodepointBitmapSubpixel(
-        &d->font, d->scale, d->scale, xShift, 0.0f, ch, &w, &h, 0, 0);
+    uint8_t *bmp = stbtt_GetGlyphBitmapSubpixel(
+        &d->font, d->scale, d->scale, xShift, 0.0f, glyphIndex, &w, &h, 0, 0);
     /* Note: `bmp` must be freed afterwards. */
     collect_Garbage(bmp, freeBmp_);
     SDL_Surface *surface8 =
         SDL_CreateRGBSurfaceWithFormatFrom(bmp, w, h, 8, w, SDL_PIXELFORMAT_INDEX8);
     SDL_SetSurfacePalette(surface8, text_.grayscale);
-    SDL_PixelFormat *fmt = SDL_AllocFormat(SDL_PIXELFORMAT_RGBA4444);
+    SDL_PixelFormat *fmt = SDL_AllocFormat(SDL_PIXELFORMAT_RGBA8888);
     SDL_Surface *surface = SDL_ConvertSurface(surface8, fmt, 0);
     SDL_FreeFormat(fmt);
     SDL_FreeSurface(surface8);
@@ -333,22 +346,22 @@ static void cache_Font_(iFont *d, iGlyph *glyph, int hoff) {
     const iChar ch = char_Glyph(glyph);
     iRect *glRect = &glyph->rect[hoff];
     /* Rasterize the glyph using stbtt. */ {
-        surface = rasterizeGlyph_Font_(d, ch, hoff * 0.5f);
+        surface = rasterizeGlyph_Font_(d, glyph->glyphIndex, hoff * 0.5f);
         if (hoff == 0) {
             int adv;
-            stbtt_GetCodepointHMetrics(&d->font, ch, &adv, NULL);
+            stbtt_GetGlyphHMetrics(&d->font, glyph->glyphIndex, &adv, NULL);
             glyph->advance = d->scale * adv;
         }
-        stbtt_GetCodepointBitmapBoxSubpixel(&d->font,
-                                            ch,
-                                            d->scale,
-                                            d->scale,
-                                            hoff * 0.5f,
-                                            0.0f,
-                                            &glyph->d[hoff].x,
-                                            &glyph->d[hoff].y,
-                                            NULL,
-                                            NULL);
+        stbtt_GetGlyphBitmapBoxSubpixel(&d->font,
+                                        glyph->glyphIndex,
+                                        d->scale,
+                                        d->scale,
+                                        hoff * 0.5f,
+                                        0.0f,
+                                        &glyph->d[hoff].x,
+                                        &glyph->d[hoff].y,
+                                        NULL,
+                                        NULL);
         tex = SDL_CreateTextureFromSurface(render, surface);
         SDL_SetTextureBlendMode(tex, SDL_BLENDMODE_NONE);
         glRect->size = init_I2(surface->w, surface->h);
@@ -367,30 +380,34 @@ static void cache_Font_(iFont *d, iGlyph *glyph, int hoff) {
     }
 }
 
-iLocalDef iFont *characterFont_Font_(iFont *d, iChar ch) {    
-    if (stbtt_FindGlyphIndex(&d->font, ch) != 0) {
+iLocalDef iFont *characterFont_Font_(iFont *d, iChar ch, uint32_t *glyphIndex) {    
+    if ((*glyphIndex = glyphIndex_Font_(d, ch)) != 0) {
         return d;
     }
     /* Not defined in current font, try Noto Emoji (for selected characters). */
     if ((ch >= 0x1f300 && ch < 0x1f600) || (ch >= 0x1f680 && ch <= 0x1f6c5)) {
         iFont *emoji = font_Text_(d->symbolsFont + fromSymbolsToEmojiOffset_FontId);
-        if (emoji != d && stbtt_FindGlyphIndex(&emoji->font, ch)) {
+        if (emoji != d && (*glyphIndex = glyphIndex_Font_(emoji, ch)) != 0) {
             return emoji;
         }
     }
     /* Fall back to Symbola for anything else. */
-    return font_Text_(d->symbolsFont);
+    iFont *font = font_Text_(d->symbolsFont);
+    *glyphIndex = glyphIndex_Font_(font, ch);
+    return font;
 }
 
 static const iGlyph *glyph_Font_(iFont *d, iChar ch) {
     /* It may actually come from a different font. */
-    iFont *font = characterFont_Font_(d, ch);
+    uint32_t glyphIndex = 0;
+    iFont *font = characterFont_Font_(d, ch, &glyphIndex);
     const void *node = value_Hash(&font->glyphs, ch);
     if (node) {
         return node;
     }
-    iGlyph *glyph = new_Glyph(ch);
-    glyph->font = font;
+    iGlyph *glyph     = new_Glyph(ch);
+    glyph->glyphIndex = glyphIndex;
+    glyph->font       = font;
     cache_Font_(font, glyph, 0);
     cache_Font_(font, glyph, 1); /* half-pixel offset */
     insert_Hash(&font->glyphs, &glyph->node);
@@ -541,7 +558,7 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
 #endif
 #if defined (LAGRANGE_ENABLE_KERNING)
             if (enableKerning_Text && !d->manualKernOnly && next) {
-                xpos += d->scale * stbtt_GetCodepointKernAdvance(&d->font, ch, next);
+                xpos += d->scale * stbtt_GetGlyphKernAdvance(&d->font, glyph->glyphIndex, next);
             }
 #endif
         }
