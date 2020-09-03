@@ -35,6 +35,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "util.h"
 #include "visited.h"
 
+#include <the_Foundation/intset.h>
 #include <the_Foundation/stringarray.h>
 #include <SDL_clipboard.h>
 #include <SDL_mouse.h>
@@ -89,6 +90,7 @@ struct Impl_SidebarWidget {
     iWidget *resizer;
     SDL_Cursor *resizeCursor;
     iWidget *menu;
+    iIntSet invalidItems;
     SDL_Texture *visBuffer;
     iBool visBufferValid;
 };
@@ -98,6 +100,7 @@ iDefineObjectConstruction(SidebarWidget)
 static void invalidate_SidebarWidget_(iSidebarWidget *d) {
     d->visBufferValid = iFalse;
     refresh_Widget(as_Widget(d));
+    clear_IntSet(&d->invalidItems); /* all will be drawn */
 }
 
 static iBool isResizing_SidebarWidget_(const iSidebarWidget *d) {
@@ -375,6 +378,7 @@ void init_SidebarWidget(iSidebarWidget *d) {
     setBackgroundColor_Widget(d->resizer, none_ColorId);
     d->resizeCursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZEWE);
     d->menu = NULL;
+    init_IntSet(&d->invalidItems);
     d->visBuffer = NULL;
     d->visBufferValid = iFalse;
 }
@@ -441,8 +445,10 @@ static void setHoverItem_SidebarWidget_(iSidebarWidget *d, size_t index) {
         }
     }
     if (d->hoverItem != index) {
+        insert_IntSet(&d->invalidItems, d->hoverItem);
+        insert_IntSet(&d->invalidItems, index);
         d->hoverItem = index;
-        invalidate_SidebarWidget_(d);
+        refresh_Widget(as_Widget(d));
     }
 }
 
@@ -841,14 +847,14 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
     processContextMenuEvent_Widget(d->menu, ev, {});
     switch (processEvent_Click(&d->click, ev)) {
         case started_ClickResult:
-            invalidate_SidebarWidget_(d);
+            //invalidate_SidebarWidget_(d);
             break;
         case finished_ClickResult:
             if (contains_Rect(contentBounds_SidebarWidget_(d), pos_Click(&d->click)) &&
                 d->hoverItem != iInvalidSize) {
                 itemClicked_SidebarWidget_(d, d->hoverItem);
             }
-            invalidate_SidebarWidget_(d);
+//            invalidate_SidebarWidget_(d);
             break;
         default:
             break;
@@ -881,17 +887,24 @@ static void draw_SidebarWidget_(const iSidebarWidget *d) {
     const int bg =
         d->mode == documentOutline_SidebarMode ? tmBackground_ColorId : uiBackground_ColorId;
     fillRect_Paint(&p, bounds_Widget(w), bg); /* TODO: should do only the mode buttons area */
-    if (!d->visBufferValid) {
+    if (!d->visBufferValid || !isEmpty_IntSet(&d->invalidItems)) {
         allocVisBuffer_SidebarWidget_(iConstCast(iSidebarWidget *, d));
         iRect bufBounds = bounds;
         bufBounds.pos = zero_I2();
         beginTarget_Paint(&p, d->visBuffer);
-        fillRect_Paint(&p, bufBounds, bg);
+        if (!d->visBufferValid) {
+            fillRect_Paint(&p, bufBounds, bg);
+        }
         /* Draw the items. */ {
             const int     font     = uiContent_FontId;
             const iRanges visRange = visRange_SidebarWidget_(d);
             iInt2         pos      = addY_I2(topLeft_Rect(bufBounds), -(d->scrollY % d->itemHeight));
             for (size_t i = visRange.start; i < visRange.end; i++) {
+                if (d->visBufferValid && !contains_IntSet(&d->invalidItems, i)) {
+                    /* TODO: Refactor to loop through invalidItems only. */
+                    pos.y += d->itemHeight;
+                    continue;
+                }
                 const iSidebarItem *item     = constAt_Array(&d->items, i);
                 const iRect         itemRect = { pos, init_I2(width_Rect(bufBounds), d->itemHeight) };
                 const iBool         isHover  = isHover_Widget(w) && (d->hoverItem == i);
@@ -904,6 +917,9 @@ static void draw_SidebarWidget_(const iSidebarWidget *d) {
                                    itemRect,
                                    isPressing ? uiBackgroundPressed_ColorId
                                               : uiBackgroundFramelessHover_ColorId);
+                }
+                else if (d->visBufferValid) {
+                    fillRect_Paint(&p, itemRect, bg);
                 }
                 if (d->mode == documentOutline_SidebarMode) {
                     const int fg = isHover ? (isPressing ? uiTextPressed_ColorId
@@ -1016,7 +1032,11 @@ static void draw_SidebarWidget_(const iSidebarWidget *d) {
             }
         }
         endTarget_Paint(&p);
-        iConstCast(iSidebarWidget *, d)->visBufferValid = iTrue;
+        /* Update state. */ {
+            iSidebarWidget *m = iConstCast(iSidebarWidget *, d);
+            m->visBufferValid = iTrue;
+            clear_IntSet(&m->invalidItems);
+        }
     }
     SDL_RenderCopy(
         renderer_Window(get_Window()), d->visBuffer, NULL, (const SDL_Rect *) &bounds);
