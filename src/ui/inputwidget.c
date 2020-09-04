@@ -65,6 +65,7 @@ struct Impl_InputWidget {
     iArray          undoStack;
     int             font;
     iClick          click;
+    int             cursorVis;
     uint32_t        timer;
 };
 
@@ -77,6 +78,10 @@ static void clearUndo_InputWidget_(iInputWidget *d) {
     clear_Array(&d->undoStack);
 }
 
+static void showCursor_InputWidget_(iInputWidget *d) {
+    d->cursorVis = 2;
+}
+
 void init_InputWidget(iInputWidget *d, size_t maxLen) {
     iWidget *w = &d->widget;
     init_Widget(w);
@@ -85,20 +90,21 @@ void init_InputWidget(iInputWidget *d, size_t maxLen) {
     init_Array(&d->oldText, sizeof(iChar));
     init_String(&d->hint);
     init_Array(&d->undoStack, sizeof(iInputUndo));
-    d->font   = uiInput_FontId;
-    d->cursor = 0;
-    d->lastCursor = 0;
-    d->isMarking = iFalse;
-    iZap(d->mark);
+    d->font             = uiInput_FontId;
+    d->cursor           = 0;
+    d->lastCursor       = 0;
+    d->isMarking        = iFalse;
     d->isSensitive      = iFalse;
     d->enterPressed     = iFalse;
     d->selectAllOnFocus = iFalse;
+    iZap(d->mark);
     setMaxLen_InputWidget(d, maxLen);
     /* Caller must arrange the width, but the height is fixed. */
     w->rect.size.y = lineHeight_Text(default_FontId) + 2 * gap_UI;
     setFlags_Widget(w, fixedHeight_WidgetFlag, iTrue);
     init_Click(&d->click, d, SDL_BUTTON_LEFT);
     d->timer = 0;
+    d->cursorVis = 0;
 }
 
 void deinit_InputWidget(iInputWidget *d) {
@@ -181,8 +187,15 @@ void setTextCStr_InputWidget(iInputWidget *d, const char *cstr) {
     delete_String(str);
 }
 
-static uint32_t refreshTimer_(uint32_t interval, void *d) {
-    refresh_Widget(d);
+static uint32_t cursorTimer_(uint32_t interval, void *w) {
+    iInputWidget *d = w;
+    if (d->cursorVis > 1) {
+        d->cursorVis--;
+    }
+    else {
+        d->cursorVis ^= 1;
+    }
+    refresh_Widget(w);
     return interval;
 }
 
@@ -202,8 +215,9 @@ void begin_InputWidget(iInputWidget *d) {
     }
     SDL_StartTextInput();
     setFlags_Widget(w, selected_WidgetFlag, iTrue);
+    showCursor_InputWidget_(d);
     refresh_Widget(w);
-    d->timer = SDL_AddTimer(refreshInterval_InputWidget_, refreshTimer_, d);
+    d->timer = SDL_AddTimer(refreshInterval_InputWidget_, cursorTimer_, d);
     d->enterPressed = iFalse;
     if (d->selectAllOnFocus) {
         d->mark = (iRanges){ 0, size_Array(&d->text) };
@@ -247,6 +261,7 @@ static void insertChar_InputWidget_(iInputWidget *d, iChar chr) {
             setFocus_Widget(NULL);
         }
     }
+    showCursor_InputWidget_(d);
     refresh_Widget(as_Widget(d));
 }
 
@@ -259,6 +274,7 @@ iLocalDef iBool isMarking_(void) {
 }
 
 void setCursor_InputWidget(iInputWidget *d, size_t pos) {
+    showCursor_InputWidget_(d);
     if (isEmpty_Array(&d->text)) {
         d->cursor = 0;
     }
@@ -435,6 +451,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
         case aborted_ClickResult:
             return iTrue;
         case drag_ClickResult:
+            showCursor_InputWidget_(d);
             d->cursor = coordIndex_InputWidget_(d, pos_Click(&d->click));
             if (!d->isMarking) {
                 d->isMarking = iTrue;
@@ -512,6 +529,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                     pushUndo_InputWidget_(d);
                     remove_Array(&d->text, --d->cursor);
                 }
+                showCursor_InputWidget_(d);
                 refresh_Widget(w);
                 return iTrue;
             case SDLK_d:
@@ -531,6 +549,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                     pushUndo_InputWidget_(d);
                     remove_Array(&d->text, d->cursor);
                 }
+                showCursor_InputWidget_(d);
                 refresh_Widget(w);
                 return iTrue;
             case SDLK_k:
@@ -543,6 +562,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                         pushUndo_InputWidget_(d);
                         removeN_Array(&d->text, d->cursor, size_Array(&d->text) - d->cursor);
                     }
+                    showCursor_InputWidget_(d);
                     refresh_Widget(w);
                     return iTrue;
                 }
@@ -558,6 +578,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                     d->mark.start = 0;
                     d->mark.end   = curMax;
                     d->cursor     = curMax;
+                    showCursor_InputWidget_(d);
                     refresh_Widget(w);
                     return iTrue;
                 }
@@ -662,7 +683,7 @@ static void draw_InputWidget_(const iInputWidget *d) {
               cstr_String(text));
     unsetClip_Paint(&p);
     /* Cursor blinking. */
-    if (isFocused && (time & 256)) {
+    if (isFocused && d->cursorVis) {
         iString cur;
         if (d->cursor < size_Array(&d->text)) {
             if (!d->isSensitive) {
