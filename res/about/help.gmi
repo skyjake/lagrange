@@ -145,3 +145,16 @@ SSLeay license:
 
 The libunistring library is covered by the GNU Lesser General Public License (LGPL):
 => https://www.gnu.org/software/libunistring/manual/libunistring.html#GNU-LGPL GNU LGPL License
+
+## Fonts
+
+This application uses fonts licensed under the Open Font License.
+
+=> https://github.com/mozilla/Fira/blob/master/LICENSE  Fira Sans, Fira Mono
+=> https://github.com/googlefonts/nunito/blob/master/OFL.txt  Nunito
+=> https://github.com/adobe-fonts/source-sans-pro/blob/release/LICENSE.md  Source Sans Pro
+
+Additional fonts:
+
+=> https://github.com/googlefonts/noto-emoji/blob/master/LICENSE  Noto Emoji (Apache License 2.0)
+=> https://dn-works.com/ufas/  Symbola (Public Domain)
