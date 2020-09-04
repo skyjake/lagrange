@@ -29,7 +29,7 @@ set (EMBED_RESOURCES
     res/FiraSans-Light.ttf
     res/FiraSans-Italic.ttf
     res/Nunito-Regular.ttf
-    res/Nunito-Bold.ttf
+    res/Nunito-ExtraBold.ttf
     res/Nunito-ExtraLight.ttf
     res/Nunito-LightItalic.ttf
     res/FiraMono-Regular.ttf
