@@ -543,7 +543,7 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
            is monospaced. */
         xpos += (d->isMonospaced && glyph->font != d ? monoAdvance : glyph->advance);
         xposMax = iMax(xposMax, xpos);
-        if (mode == measureNoWrap_RunMode || isWrapBoundary_(prevCh, ch)) {
+        if (continueFrom_out && isWrapBoundary_(prevCh, ch)) {
             lastWordEnd = chPos;
         }
         /* Check the next character. */
