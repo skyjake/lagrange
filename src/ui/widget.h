@@ -135,9 +135,12 @@ iRect   innerBounds_Widget  (const iWidget *);
 iInt2   localCoord_Widget   (const iWidget *, iInt2 coord);
 iBool   contains_Widget     (const iWidget *, iInt2 coord);
 iAny *  findChild_Widget    (const iWidget *, const char *id);
+iAny *  findParentClass_Widget(const iWidget *, const iAnyClass *class);
 iAny *  findFocusable_Widget(const iWidget *startFrom, enum iWidgetFocusDir focusDir);
 size_t  childCount_Widget   (const iWidget *);
 void    draw_Widget         (const iWidget *);
+void    drawBackground_Widget(const iWidget *);
+void    drawChildren_Widget (const iWidget *);
 
 iLocalDef iObjectList *children_Widget(iAnyObject *d) {
     iAssert(isInstance_Object(d, &Class_Widget));

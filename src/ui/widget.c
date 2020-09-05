@@ -184,12 +184,14 @@ static int widestChild_Widget_(const iWidget *d) {
 }
 
 static void setWidth_Widget_(iWidget *d, int width) {
+    iAssert(width >= 0);
     if (~d->flags & fixedWidth_WidgetFlag || d->flags & collapse_WidgetFlag) {
         d->rect.size.x = width;
     }
 }
 
 static void setHeight_Widget_(iWidget *d, int height) {
+    iAssert(height >= 0);
     if (~d->flags & fixedHeight_WidgetFlag || d->flags & collapse_WidgetFlag) {
         d->rect.size.y = height;
     }
@@ -203,14 +205,16 @@ iLocalDef iBool isCollapsed_Widget_(const iWidget *d) {
 iLocalDef iRect innerRect_Widget_(const iWidget *d) {
     return init_Rect(d->padding[0],
                      d->padding[1],
-                     width_Rect(d->rect) - d->padding[0] - d->padding[2],
-                     height_Rect(d->rect) - d->padding[1] - d->padding[3]);
+                     iMaxi(0, width_Rect(d->rect) - d->padding[0] - d->padding[2]),
+                     iMaxi(0, height_Rect(d->rect) - d->padding[1] - d->padding[3]));
 }
 
 iRect innerBounds_Widget(const iWidget *d) {
-    return adjusted_Rect(bounds_Widget(d),
-                         init_I2(d->padding[0], d->padding[1]),
-                         init_I2(-d->padding[2], -d->padding[3]));
+    iRect ib = adjusted_Rect(bounds_Widget(d),
+                             init_I2(d->padding[0], d->padding[1]),
+                             init_I2(-d->padding[2], -d->padding[3]));
+    ib.size = max_I2(zero_I2(), ib.size);
+    return ib;
 }
 
 void arrange_Widget(iWidget *d) {
@@ -265,7 +269,7 @@ void arrange_Widget(iWidget *d) {
                     subv_I2(&avail, child->rect.size);
                 }
             }
-            avail = divi_I2(avail, expCount);
+            avail = divi_I2(max_I2(zero_I2(), avail), expCount);
             iForEach(ObjectList, j, d->children) {
                 iWidget *child = as_Widget(j.object);
                 if (isCollapsed_Widget_(child)) continue;
@@ -508,7 +512,7 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
     return iFalse;
 }
 
-void draw_Widget(const iWidget *d) {
+void drawBackground_Widget(const iWidget *d) {
     if (d->flags & hidden_WidgetFlag) return;
     if (d->bgColor >= 0 || d->frameColor >= 0) {
         const iRect rect = bounds_Widget(d);
@@ -521,6 +525,10 @@ void draw_Widget(const iWidget *d) {
             drawRectThickness_Paint(&p, rect, gap_UI / 4, d->frameColor);
         }
     }
+}
+
+void drawChildren_Widget(const iWidget *d) {
+    if (d->flags & hidden_WidgetFlag) return;
     iConstForEach(ObjectList, i, d->children) {
         const iWidget *child = constAs_Widget(i.object);
         if (~child->flags & keepOnTop_WidgetFlag && ~child->flags & hidden_WidgetFlag) {
@@ -533,6 +541,11 @@ void draw_Widget(const iWidget *d) {
             draw_Widget(*i.value);
         }
     }
+}
+
+void draw_Widget(const iWidget *d) {
+    drawBackground_Widget(d);
+    drawChildren_Widget(d);
 }
 
 iAny *addChild_Widget(iWidget *d, iAnyObject *child) {
@@ -608,6 +621,15 @@ iAny *findChild_Widget(const iWidget *d, const char *id) {
         if (found) return found;
     }
     return NULL;
+}
+
+iAny *findParentClass_Widget(const iWidget *d, const iAnyClass *class) {
+    if (!d) return NULL;
+    iWidget *i = d->parent;
+    while (i && !isInstance_Object(i, class)) {
+        i = i->parent;
+    }
+    return i;
 }
 
 size_t childCount_Widget(const iWidget *d) {
