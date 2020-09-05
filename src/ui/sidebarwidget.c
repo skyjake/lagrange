@@ -92,6 +92,7 @@ struct Impl_SidebarWidget {
     iWidget *resizer;
     SDL_Cursor *resizeCursor;
     iWidget *menu;
+    iSidebarItem *menuItem; /* list item accessed in the context menu */
 };
 
 iDefineObjectConstruction(SidebarWidget)
@@ -347,6 +348,15 @@ static const iGmIdentity *constHoverIdentity_SidebarWidget_(const iSidebarWidget
     return NULL;
 }
 
+static iGmIdentity *menuIdentity_SidebarWidget_(const iSidebarWidget *d) {
+    if (d->mode == identities_SidebarMode) {
+        if (d->menuItem) {
+            return identity_GmCerts(certs_App(), d->menuItem->id);
+        }
+    }
+    return NULL;
+}
+
 static iGmIdentity *hoverIdentity_SidebarWidget_(const iSidebarWidget *d) {
     return iConstCast(iGmIdentity *, constHoverIdentity_SidebarWidget_(d));
 }
@@ -477,6 +487,12 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             itemClicked_SidebarWidget_(d, pointerLabel_Command(cmd, "item"));
             return iTrue;
         }
+        else if (isCommand_Widget(w, ev, "menu.opened")) {
+            setFlags_Widget(as_Widget(d->list), disabled_WidgetFlag, iTrue);
+        }
+        else if (isCommand_Widget(w, ev, "menu.closed")) {
+            setFlags_Widget(as_Widget(d->list), disabled_WidgetFlag, iFalse);
+        }
         else if (equal_Command(cmd, "sidebar.width")) {
             setWidth_SidebarWidget(d, arg_Command(cmd));
             return iTrue;
@@ -508,14 +524,14 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             updateItems_SidebarWidget_(d);
         }
         else if (equal_Command(cmd, "bookmark.copy")) {
-            const iSidebarItem *item = hoverItem_ListWidget(d->list);
+            const iSidebarItem *item = d->menuItem; //hoverItem_ListWidget(d->list);
             if (d->mode == bookmarks_SidebarMode && item) {
                 SDL_SetClipboardText(cstr_String(&item->url));
             }
             return iTrue;
         }
         else if (equal_Command(cmd, "bookmark.edit")) {
-            const iSidebarItem *item = hoverItem_ListWidget(d->list);
+            const iSidebarItem *item = d->menuItem; //hoverItem_ListWidget(d->list);
             if (d->mode == bookmarks_SidebarMode && item) {
                 setFlags_Widget(w, disabled_WidgetFlag, iTrue);
                 iWidget *dlg = makeBookmarkEditor_Widget();
@@ -529,7 +545,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             return iTrue;
         }
         else if (equal_Command(cmd, "bookmark.delete")) {
-            const iSidebarItem *item = hoverItem_ListWidget(d->list);
+            const iSidebarItem *item = d->menuItem;
             if (d->mode == bookmarks_SidebarMode && item && remove_Bookmarks(bookmarks_App(), item->id)) {
                 postCommand_App("bookmarks.changed");
             }
@@ -542,7 +558,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             updateItems_SidebarWidget_(d);
         }
         else if (isCommand_Widget(w, ev, "ident.use")) {
-            iGmIdentity *  ident  = hoverIdentity_SidebarWidget_(d);
+            iGmIdentity *  ident  = menuIdentity_SidebarWidget_(d);
             const iString *tabUrl = url_DocumentWidget(document_App());
             if (ident) {
                 if (argLabel_Command(cmd, "clear")) {
@@ -559,7 +575,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             return iTrue;
         }
         else if (isCommand_Widget(w, ev, "ident.showuse")) {
-            const iGmIdentity *ident = constHoverIdentity_SidebarWidget_(d);
+            const iGmIdentity *ident = menuIdentity_SidebarWidget_(d);
             if (ident) {
                 makeMessage_Widget(uiHeading_ColorEscape "IDENTITY USAGE",
                                    cstrCollect_String(joinCStr_StringSet(ident->useUrls, "\n")));
@@ -567,7 +583,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             return iTrue;
         }
         else if (isCommand_Widget(w, ev, "ident.edit")) {
-            const iGmIdentity *ident = constHoverIdentity_SidebarWidget_(d);
+            const iGmIdentity *ident = menuIdentity_SidebarWidget_(d);
             if (ident) {
                 makeValueInput_Widget(get_Window()->root,
                                       &ident->notes,
@@ -590,7 +606,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             return iTrue;
         }
         else if (isCommand_Widget(w, ev, "ident.reveal")) {
-            const iGmIdentity *ident = constHoverIdentity_SidebarWidget_(d);
+            const iGmIdentity *ident = menuIdentity_SidebarWidget_(d);
             if (ident) {
                 const iString *crtPath = certificatePath_GmCerts(certs_App(), ident);
                 if (crtPath) {
@@ -600,7 +616,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             return iTrue;
         }
         else if (equal_Command(cmd, "ident.delete")) {
-            iSidebarItem *item = hoverItem_ListWidget(d->list);
+            iSidebarItem *item = d->menuItem;
             if (argLabel_Command(cmd, "confirm")) {
                 makeQuestion_Widget(uiTextCaution_ColorEscape "DELETE IDENTITY",
                                     format_CStr("Do you really want to delete the identity\n"
@@ -620,23 +636,22 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             return iTrue;
         }
         else if (equal_Command(cmd, "history.delete")) {
-            const iSidebarItem *item = hoverItem_ListWidget(d->list);
-            if (item && !isEmpty_String(&item->url)) {
-                removeUrl_Visited(visited_App(), &item->url);
+            if (d->menuItem && !isEmpty_String(&d->menuItem->url)) {
+                removeUrl_Visited(visited_App(), &d->menuItem->url);
                 updateItems_SidebarWidget_(d);
                 scrollOffset_ListWidget(d->list, 0);
             }
             return iTrue;
         }
         else if (equal_Command(cmd, "history.copy")) {
-            const iSidebarItem *item = hoverItem_ListWidget(d->list);
+            const iSidebarItem *item = d->menuItem;
             if (item && !isEmpty_String(&item->url)) {
                 SDL_SetClipboardText(cstr_String(&item->url));
             }
             return iTrue;
         }
         else if (equal_Command(cmd, "history.addbookmark")) {
-            const iSidebarItem *item = hoverItem_ListWidget(d->list);
+            const iSidebarItem *item = d->menuItem;
             if (!isEmpty_String(&item->url)) {
                 makeBookmarkCreation_Widget(
                     &item->url,
@@ -660,7 +675,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             }
             return iTrue;
         }
-    }
+    }    
     if (ev->type == SDL_MOUSEMOTION && !isVisible_Widget(d->menu)) {
         const iInt2 mouse = init_I2(ev->motion.x, ev->motion.y);
         if (contains_Widget(d->resizer, mouse)) {
@@ -685,6 +700,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                 updateMouseHover_ListWidget(d->list);
             }
             if (constHoverItem_ListWidget(d->list) || isVisible_Widget(d->menu)) {
+                d->menuItem = hoverItem_ListWidget(d->list);
                 /* Update menu items. */
                 if (d->mode == identities_SidebarMode) {
                     const iGmIdentity *ident  = constHoverIdentity_SidebarWidget_(d);

@@ -62,7 +62,7 @@ void    updateVisible_ListWidget    (iListWidget *);
 void    updateMouseHover_ListWidget (iListWidget *);
 
 size_t  numItems_ListWidget (const iListWidget *);
-size_t itemIndex_ListWidget(const iListWidget *, iInt2 pos);
+size_t  itemIndex_ListWidget(const iListWidget *, iInt2 pos);
 const iAnyObject *constHoverItem_ListWidget(const iListWidget *);
 iAnyObject *hoverItem_ListWidget(iListWidget *);
 

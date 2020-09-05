@@ -181,6 +181,9 @@ iWidget *addAction_Widget(iWidget *parent, int key, int kmods, const char *comma
 
 static iBool menuHandler_(iWidget *menu, const char *cmd) {
     if (isVisible_Widget(menu)) {
+        if (equalWidget_Command(cmd, menu, "menu.opened")) {
+            return iFalse;
+        }
         if (equal_Command(cmd, "menu.open") && pointer_Command(cmd) == menu->parent) {
             /* Don't reopen self; instead, root will close the menu. */
             return iFalse;
@@ -259,12 +262,14 @@ void openMenu_Widget(iWidget *d, iInt2 coord) {
         d->rect.pos.x += leftExcess;
     }
     refresh_App();
+    postCommand_Widget(d, "menu.opened");
 }
 
 void closeMenu_Widget(iWidget *d) {
     setFlags_Widget(d, hidden_WidgetFlag, iTrue);
     setFlags_Widget(findChild_Widget(d, "menu.cancel"), disabled_WidgetFlag, iTrue);
     refresh_App();
+    postCommand_Widget(d, "menu.closed");
 }
 
 int checkContextMenu_Widget(iWidget *menu, const SDL_Event *ev) {
@@ -663,8 +668,10 @@ void updateValueInput_Widget(iWidget *d, const char *title, const char *prompt) 
 }
 
 static iBool messageHandler_(iWidget *msg, const char *cmd) {
-    /* Any command dismisses the sheet. */
-    iUnused(cmd);
+    /* Almost any command dismisses the sheet. */
+//    if (equal_Command(cmd, "menu.closed")) {
+//        return iFalse;
+//    }
     destroy_Widget(msg);
     return iFalse;
 }
@@ -677,12 +684,9 @@ iWidget *makeMessage_Widget(const char *title, const char *msg) {
     return dlg;
 }
 
-iWidget *makeQuestion_Widget(const char *title,
-                             const char *msg,
-                             const char *labels[],
-                             const char *commands[],
-                             size_t      count) {
-//    processEvents_App(postedEventsOnly_AppEventMode);
+iWidget *makeQuestion_Widget(const char *title, const char *msg, const char *labels[],
+                             const char *commands[], size_t count) {
+    processEvents_App(postedEventsOnly_AppEventMode);
     iWidget *dlg = makeSheet_Widget("");
     setCommandHandler_Widget(dlg, messageHandler_);
     addChildFlags_Widget(dlg, iClob(new_LabelWidget(title, 0, 0, NULL)), frameless_WidgetFlag);
@@ -715,8 +719,8 @@ static iBool toggleHandler_(iWidget *d, const char *cmd) {
         setToggle_Widget(d, (flags_Widget(d) & selected_WidgetFlag) == 0);
         postCommand_Widget(d,
                            format_CStr("%s.changed arg:%d",
-                                             cstr_String(id_Widget(d)),
-                                             isSelected_Widget(d) ? 1 : 0));
+                                       cstr_String(id_Widget(d)),
+                                       isSelected_Widget(d) ? 1 : 0));
         return iTrue;
     }
     return iFalse;
