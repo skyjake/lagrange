@@ -87,7 +87,6 @@ struct Impl_SidebarWidget {
     int modeScroll[max_SidebarMode];
     int width;
     iLabelWidget *modeButtons[max_SidebarMode];
-    int itemHeight;
     int maxButtonLabelWidth;
     iWidget *resizer;
     SDL_Cursor *resizeCursor;
@@ -163,14 +162,18 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                     /* Date separator. */
                     iSidebarItem *sep = new_SidebarItem();
                     sep->listItem.isSeparator = iTrue;
-                    set_String(&sep->meta,
-                               collect_String(format_Date(
-                                   &date, date.year != thisYear ? "%b %d %Y" : "%b %d")));
+                    const iString *text = collect_String(format_Date(
+                        &date, date.year != thisYear ? "%b %d %Y" : "%b %d"));
+                    set_String(&sep->meta, text);
+                    const int yOffset = itemHeight_ListWidget(d->list) * 2 / 3;
+                    sep->id = yOffset;
                     addItem_ListWidget(d->list, sep);
                     iRelease(sep);
                     /* Date separators are two items tall. */
                     sep = new_SidebarItem();
                     sep->listItem.isSeparator = iTrue;
+                    sep->id = -itemHeight_ListWidget(d->list) + yOffset;
+                    set_String(&sep->meta, text);
                     addItem_ListWidget(d->list, sep);
                     iRelease(sep);
                 }
@@ -755,7 +758,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
     const int itemHeight = height_Rect(itemRect);
     const int iconColor =
         isHover ? (isPressing ? uiTextPressed_ColorId : uiIconHover_ColorId) : uiIcon_ColorId;
-    if (isHover && !d->listItem.isSeparator) {
+    if (isHover) /* && !d->listItem.isSeparator)*/ {
         fillRect_Paint(p,
                        itemRect,
                        isPressing ? uiBackgroundPressed_ColorId
@@ -789,8 +792,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                                : uiText_ColorId;
         if (d->listItem.isSeparator) {
             if (!isEmpty_String(&d->meta)) {
-                unsetClip_Paint(p);
-                iInt2 drawPos = addY_I2(topLeft_Rect(itemRect), itemHeight * 0.666f);
+                iInt2 drawPos = addY_I2(topLeft_Rect(itemRect), d->id);
                 drawHLine_Paint(p, drawPos, width_Rect(itemRect), uiIcon_ColorId);
                 drawRange_Text(
                     default_FontId,

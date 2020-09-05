@@ -54,7 +54,8 @@ void    addItem_ListWidget      (iListWidget *, iAnyObject *item);
 
 iScrollWidget * scroll_ListWidget (iListWidget *);
 
-int     scrollPos_ListWidget        (const iListWidget *);
+int     itemHeight_ListWidget   (const iListWidget *);
+int     scrollPos_ListWidget    (const iListWidget *);
 
 void    setScrollPos_ListWidget     (iListWidget *, int pos);
 void    scrollOffset_ListWidget     (iListWidget *, int offset);

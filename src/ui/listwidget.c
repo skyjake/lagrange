@@ -44,6 +44,12 @@ iDefineClass(ListItem)
 
 iDefineObjectConstruction(ListWidget)
 
+enum iBufferValidity {
+    none_BufferValidity,
+    partial_BufferValidity,
+    full_BufferValidity,
+};
+
 struct Impl_ListWidget {
     iWidget widget;
     iScrollWidget *scroll;
@@ -53,8 +59,11 @@ struct Impl_ListWidget {
     size_t hoverItem;
     iClick click;
     iIntSet invalidItems;
-    SDL_Texture *visBuffer;
-    iBool visBufferValid;
+    SDL_Texture *visBuffer[2];
+    int visBufferIndex;
+    int visBufferScrollY;
+//    iBool visBufferValid;
+    enum iBufferValidity visBufferValid;
 };
 
 void init_ListWidget(iListWidget *d) {
@@ -69,18 +78,21 @@ void init_ListWidget(iListWidget *d) {
     d->hoverItem = iInvalidPos;
     init_Click(&d->click, d, SDL_BUTTON_LEFT);
     init_IntSet(&d->invalidItems);
-    d->visBuffer = NULL;
-    d->visBufferValid = iFalse;
+    iZap(d->visBuffer);
+    d->visBufferIndex = 0;
+    d->visBufferValid = none_BufferValidity;
+    d->visBufferScrollY = 0;
 }
 
 void deinit_ListWidget(iListWidget *d) {
     clear_ListWidget(d);
     deinit_PtrArray(&d->items);
-    SDL_DestroyTexture(d->visBuffer);
+    SDL_DestroyTexture(d->visBuffer[0]);
+    SDL_DestroyTexture(d->visBuffer[1]);
 }
 
 void invalidate_ListWidget(iListWidget *d) {
-    d->visBufferValid = iFalse;
+    d->visBufferValid = none_BufferValidity;
     clear_IntSet(&d->invalidItems); /* all will be drawn */
     refresh_Widget(as_Widget(d));
 }
@@ -127,6 +139,10 @@ void setItemHeight_ListWidget(iListWidget *d, int itemHeight) {
     invalidate_ListWidget(d);
 }
 
+int itemHeight_ListWidget(const iListWidget *d) {
+    return d->itemHeight;
+}
+
 int scrollPos_ListWidget(const iListWidget *d) {
     return d->scrollY;
 }
@@ -134,7 +150,9 @@ int scrollPos_ListWidget(const iListWidget *d) {
 void setScrollPos_ListWidget(iListWidget *d, int pos) {
     d->scrollY = pos;
     d->hoverItem = iInvalidPos;
-    invalidate_ListWidget(d);
+//    invalidate_ListWidget(d);
+    d->visBufferValid = partial_BufferValidity;
+    refresh_Widget(as_Widget(d));
 }
 
 void scrollOffset_ListWidget(iListWidget *d, int offset) {
@@ -148,12 +166,14 @@ void scrollOffset_ListWidget(iListWidget *d, int offset) {
     if (oldScroll != d->scrollY) {
         d->hoverItem = iInvalidPos;
         updateVisible_ListWidget(d);
-        invalidate_ListWidget(d);
+        //invalidate_ListWidget(d);
+        d->visBufferValid = partial_BufferValidity;
+        refresh_Widget(as_Widget(d));
     }
 }
 
 static int visCount_ListWidget_(const iListWidget *d) {
-    return iMin(height_Rect(innerBounds_Widget(constAs_Widget(d))) / d->itemHeight + 1,
+    return iMin(height_Rect(innerBounds_Widget(constAs_Widget(d))) / d->itemHeight + 2,
                 (int) size_PtrArray(&d->items));
 }
 
@@ -206,6 +226,11 @@ void updateMouseHover_ListWidget(iListWidget *d) {
     setHoverItem_ListWidget_(d, itemIndex_ListWidget(d, mouse));
 }
 
+static void redrawHoverItem_ListWidget_(iListWidget *d) {
+    insert_IntSet(&d->invalidItems, d->hoverItem);
+    refresh_Widget(as_Widget(d));
+}
+
 static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
     if (isCommand_SDLEvent(ev)) {
@@ -238,16 +263,19 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
     }
     switch (processEvent_Click(&d->click, ev)) {
         case started_ClickResult:
-            //invalidate_SidebarWidget_(d);
+            redrawHoverItem_ListWidget_(d);
+            break;
+        case aborted_ClickResult:
+            redrawHoverItem_ListWidget_(d);
             break;
         case finished_ClickResult:
+        case double_ClickResult:
+            redrawHoverItem_ListWidget_(d);
             if (contains_Rect(innerBounds_Widget(w), pos_Click(&d->click)) &&
                 d->hoverItem != iInvalidSize) {
-                //itemClicked_SidebarWidget_(d, d->hoverItem);
                 postCommand_Widget(w, "list.clicked arg:%zu item:%p",
                                    d->hoverItem, constHoverItem_ListWidget(d));
             }
-            //            invalidate_SidebarWidget_(d);
             break;
         default:
             break;
@@ -257,18 +285,38 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
 
 static void allocVisBuffer_ListWidget_(iListWidget *d) {
     const iInt2 size = innerBounds_Widget(as_Widget(d)).size;
-    if (!d->visBuffer || !isEqual_I2(size_SDLTexture(d->visBuffer), size)) {
-        if (d->visBuffer) {
-            SDL_DestroyTexture(d->visBuffer);
+    if (!d->visBuffer[0] || !isEqual_I2(size_SDLTexture(d->visBuffer[0]), size)) {
+        iForIndices(i, d->visBuffer) {
+            if (d->visBuffer[i]) {
+                SDL_DestroyTexture(d->visBuffer[i]);
+            }
+            d->visBuffer[i] = SDL_CreateTexture(renderer_Window(get_Window()),
+                                                SDL_PIXELFORMAT_RGBA8888,
+                                                SDL_TEXTUREACCESS_STATIC | SDL_TEXTUREACCESS_TARGET,
+                                                size.x,
+                                                size.y);
+            SDL_SetTextureBlendMode(d->visBuffer[i], SDL_BLENDMODE_NONE);
         }
-        d->visBuffer = SDL_CreateTexture(renderer_Window(get_Window()),
-                                         SDL_PIXELFORMAT_RGBA8888,
-                                         SDL_TEXTUREACCESS_STATIC | SDL_TEXTUREACCESS_TARGET,
-                                         size.x,
-                                         size.y);
-        SDL_SetTextureBlendMode(d->visBuffer, SDL_BLENDMODE_NONE);
-        d->visBufferValid = iFalse;
+        d->visBufferValid = none_BufferValidity;
     }
+}
+
+static void drawItem_ListWidget_(const iListWidget *d, iPaint *p, size_t index, iInt2 pos) {
+    const iWidget *  w         = constAs_Widget(d);
+    const iRect      bounds    = innerBounds_Widget(w);
+    const iRect      bufBounds = { zero_I2(), bounds.size };
+    const iListItem *item      = constAt_PtrArray(&d->items, index);
+    const iRect      itemRect  = { pos, init_I2(width_Rect(bounds), d->itemHeight) };
+    setClip_Paint(p, intersect_Rect(itemRect, bufBounds));
+    if (d->visBufferValid) {
+        fillRect_Paint(p, itemRect, w->bgColor);
+    }
+    class_ListItem(item)->draw(item, p, itemRect, d);
+    unsetClip_Paint(p);
+}
+
+static const iListItem *item_ListWidget_(const iListWidget *d, size_t pos) {
+    return constAt_PtrArray(&d->items, pos);
 }
 
 static void draw_ListWidget_(const iListWidget *d) {
@@ -277,22 +325,55 @@ static void draw_ListWidget_(const iListWidget *d) {
     if (!bounds.size.y || !bounds.size.x) return;
     iPaint p;
     init_Paint(&p);
+    SDL_Renderer *render = renderer_Window(get_Window());
     drawBackground_Widget(w);
-    if (!d->visBufferValid || !isEmpty_IntSet(&d->invalidItems)) {
+    if (d->visBufferValid != full_BufferValidity || !isEmpty_IntSet(&d->invalidItems)) {
         iListWidget *m = iConstCast(iListWidget *, d);
         allocVisBuffer_ListWidget_(m);
         iAssert(d->visBuffer);
-        beginTarget_Paint(&p, d->visBuffer);
+        const int vbSrc = d->visBufferIndex;
+        const int vbDst = d->visBufferIndex ^ 1;
+        beginTarget_Paint(&p, d->visBuffer[vbDst]);
         const iRect bufBounds = (iRect){ zero_I2(), bounds.size };
+        iRanges invalidRange = { 0, 0 };
         if (!d->visBufferValid) {
             fillRect_Paint(&p, bufBounds, w->bgColor);
+        }
+        else if (d->visBufferValid == partial_BufferValidity) {
+            /* Copy previous contents. */
+            const int delta = d->scrollY - d->visBufferScrollY;
+            SDL_RenderCopy(
+                render,
+                d->visBuffer[vbSrc],
+                NULL,
+                &(SDL_Rect){ 0, -delta, bounds.size.x, bounds.size.y });
+            if (delta > 0) {
+                /* Scrolling down. */
+                invalidRange.start = (d->visBufferScrollY + bounds.size.y) / d->itemHeight;
+                invalidRange.end   = (d->scrollY + bounds.size.y) / d->itemHeight + 1;
+            }
+            else if (delta < 0) {
+                /* Scrolling up. */
+                invalidRange.start = d->scrollY / d->itemHeight;
+                invalidRange.end   = d->visBufferScrollY / d->itemHeight + 1;
+            }
+#if 0
+            /* Separators may consist of multiple items. */
+            if (item_ListWidget_(d, invalidRange.start)->isSeparator) {
+                invalidRange.start--;
+            }
+            if (item_ListWidget_(d, invalidRange.end)->isSeparator) {
+                invalidRange.end++;
+            }
+#endif
         }
         /* Draw items. */ {
             const iRanges visRange = visRange_ListWidget_(d);
             iInt2         pos      = init_I2(0, -(d->scrollY % d->itemHeight));
             for (size_t i = visRange.start; i < visRange.end; i++) {
                 /* TODO: Refactor to loop through invalidItems only. */
-                if (!d->visBufferValid || contains_IntSet(&d->invalidItems, i)) {
+                if (!d->visBufferValid || contains_Range(&invalidRange, i) ||
+                    contains_IntSet(&d->invalidItems, i)) {
                     const iListItem *item     = constAt_PtrArray(&d->items, i);
                     const iRect      itemRect = { pos, init_I2(width_Rect(bounds), d->itemHeight) };
                     setClip_Paint(&p, intersect_Rect(itemRect, bufBounds));
@@ -308,10 +389,11 @@ static void draw_ListWidget_(const iListWidget *d) {
         endTarget_Paint(&p);
         /* Update state. */
         m->visBufferValid = iTrue;
+        m->visBufferScrollY = m->scrollY;
+        m->visBufferIndex = vbDst;
         clear_IntSet(&m->invalidItems);
     }
-    SDL_RenderCopy(
-        renderer_Window(get_Window()), d->visBuffer, NULL, (const SDL_Rect *) &bounds);
+    SDL_RenderCopy(render, d->visBuffer[d->visBufferIndex], NULL, (const SDL_Rect *) &bounds);
     drawChildren_Widget(w);
 }
 
