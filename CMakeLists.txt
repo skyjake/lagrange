@@ -72,6 +72,8 @@ set (SOURCES
     src/ui/command.h
     src/ui/documentwidget.c
     src/ui/documentwidget.h
+    src/ui/listwidget.c
+    src/ui/listwidget.h
     src/ui/metrics.c
     src/ui/metrics.h
     src/ui/paint.c

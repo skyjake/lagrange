@@ -207,6 +207,12 @@ iLocalDef iRect innerRect_Widget_(const iWidget *d) {
                      height_Rect(d->rect) - d->padding[1] - d->padding[3]);
 }
 
+iRect innerBounds_Widget(const iWidget *d) {
+    return adjusted_Rect(bounds_Widget(d),
+                         init_I2(d->padding[0], d->padding[1]),
+                         init_I2(-d->padding[2], -d->padding[3]));
+}
+
 void arrange_Widget(iWidget *d) {
     if (isCollapsed_Widget_(d)) {
         setFlags_Widget(d, wasCollapsed_WidgetFlag, iTrue);

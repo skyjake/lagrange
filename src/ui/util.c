@@ -36,6 +36,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/math.h>
 #include <the_Foundation/path.h>
 
+iBool isCommand_SDLEvent(const SDL_Event *d) {
+    return d->type == SDL_USEREVENT && d->user.code == command_UserEventCode;
+}
+
 iBool isCommand_UserEvent(const SDL_Event *d, const char *cmd) {
     return d->type == SDL_USEREVENT && d->user.code == command_UserEventCode &&
            equal_Command(d->user.data1, cmd);

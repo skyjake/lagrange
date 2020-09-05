@@ -32,6 +32,7 @@ iDeclareType(Click)
 iDeclareType(Widget)
 iDeclareType(LabelWidget)
 
+iBool           isCommand_SDLEvent  (const SDL_Event *d);
 iBool           isCommand_UserEvent (const SDL_Event *, const char *cmd);
 const char *    command_UserEvent   (const SDL_Event *);
 
