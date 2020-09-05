@@ -296,6 +296,15 @@ static iRect documentBounds_DocumentWidget_(const iDocumentWidget *d) {
     return rect;
 }
 
+static int forceBreakWidth_DocumentWidget_(const iDocumentWidget *d) {
+    if (isLineWrapForced_App()) {
+        const iRect bounds    = bounds_Widget(constAs_Widget(d));
+        const iRect docBounds = documentBounds_DocumentWidget_(d);
+        return right_Rect(bounds) - left_Rect(docBounds) - gap_UI * d->pageMargin;
+    }
+    return 0;
+}
+
 iLocalDef int documentToWindowY_DocumentWidget_(const iDocumentWidget *d, int docY) {
     return docY - d->scrollY + documentBounds_DocumentWidget_(d).pos.y;
 }
@@ -488,7 +497,8 @@ static void invalidate_DocumentWidget_(iDocumentWidget *d) {
 
 static void setSource_DocumentWidget_(iDocumentWidget *d, const iString *source) {
     setUrl_GmDocument(d->doc, d->mod.url);
-    setSource_GmDocument(d->doc, source, documentWidth_DocumentWidget_(d));
+    setSource_GmDocument(
+        d->doc, source, documentWidth_DocumentWidget_(d), forceBreakWidth_DocumentWidget_(d));
     d->foundMark   = iNullRange;
     d->selectMark  = iNullRange;
     d->hoverLink   = NULL;
@@ -1021,8 +1031,10 @@ static void allocVisBuffer_DocumentWidget_(const iDocumentWidget *d) {
 }
 
 void updateSize_DocumentWidget(iDocumentWidget *d) {
-    setWidth_GmDocument(d->doc, documentWidth_DocumentWidget_(d));
+    setWidth_GmDocument(
+        d->doc, documentWidth_DocumentWidget_(d), forceBreakWidth_DocumentWidget_(d));
     updateVisible_DocumentWidget_(d);
+    invalidate_DocumentWidget_(d);
 }
 
 static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
@@ -1030,9 +1042,9 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     if (equal_Command(cmd, "window.resized") || equal_Command(cmd, "font.changed")) {
         const iGmRun *mid = middleRun_DocumentWidget_(d);
         const char *midLoc = (mid ? mid->text.start : NULL);
-        setWidth_GmDocument(d->doc, documentWidth_DocumentWidget_(d));
+        setWidth_GmDocument(
+            d->doc, documentWidth_DocumentWidget_(d), forceBreakWidth_DocumentWidget_(d));
         scroll_DocumentWidget_(d, 0);
-        updateVisible_DocumentWidget_(d);
         if (midLoc) {
             mid = findRunAtLoc_GmDocument(d->doc, midLoc);
             if (mid) {
@@ -1055,8 +1067,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             /* Set palette for our document. */
             updateTheme_DocumentWidget_(d);
             updateTrust_DocumentWidget_(d, NULL);
-            setWidth_GmDocument(d->doc, documentWidth_DocumentWidget_(d));
-            updateVisible_DocumentWidget_(d);
+            updateSize_DocumentWidget(d);
         }
         updateWindowTitle_DocumentWidget_(d);
         allocVisBuffer_DocumentWidget_(d);

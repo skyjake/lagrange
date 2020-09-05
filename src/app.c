@@ -94,6 +94,7 @@ struct Impl_App {
     iRect        initialWindowRect;
     float        uiScale;
     int          zoomPercent;
+    iBool        forceWrap;
     enum iColorTheme theme;
     iBool        useSystemTheme;
     iString      gopherProxy;
@@ -145,6 +146,9 @@ static iString *serializePrefs_App_(const iApp *d) {
     }
     if (isVisible_Widget(constAs_Widget(sidebar))) {
         appendCStr_String(str, "sidebar.toggle\n");
+    }
+    if (d->forceWrap) {
+        appendFormat_String(str, "forcewrap.toggle\n");
     }
     appendFormat_String(str, "sidebar.mode arg:%d\n", mode_SidebarWidget(sidebar));
     appendFormat_String(str, "uiscale arg:%f\n", uiScale_Window(d->window));
@@ -281,6 +285,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     d->retainWindowSize  = iTrue;
     d->pendingRefresh    = iFalse;
     d->zoomPercent       = 100;
+    d->forceWrap         = iFalse;
     d->certs             = new_GmCerts(dataDir_App_);
     d->visited           = new_Visited();
     d->bookmarks         = new_Bookmarks();
@@ -429,6 +434,10 @@ uint32_t elapsedSinceLastTicker_App(void) {
 
 int zoom_App(void) {
     return app_.zoomPercent;
+}
+
+iBool isLineWrapForced_App(void) {
+    return app_.forceWrap;
 }
 
 enum iColorTheme colorTheme_App(void) {
@@ -791,6 +800,11 @@ iBool handleCommand_App(const char *cmd) {
         setContentFontSize_Text((float) d->zoomPercent / 100.0f);
         postCommand_App("font.changed");
         postCommand_App("window.unfreeze");
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "forcewrap.toggle")) {
+        d->forceWrap = !d->forceWrap;
+        updateSize_DocumentWidget(document_App());
         return iTrue;
     }
     else if (equal_Command(cmd, "bookmark.add")) {

@@ -94,9 +94,9 @@ enum iGmDocumentFormat {
 
 void    setThemeSeed_GmDocument (iGmDocument *, const iBlock *seed);
 void    setFormat_GmDocument    (iGmDocument *, enum iGmDocumentFormat format);
-void    setWidth_GmDocument     (iGmDocument *, int width);
+void    setWidth_GmDocument     (iGmDocument *, int width, int forceBreakWidth);
 void    setUrl_GmDocument       (iGmDocument *, const iString *url);
-void    setSource_GmDocument    (iGmDocument *, const iString *source, int width);
+void    setSource_GmDocument    (iGmDocument *, const iString *source, int width, int forceBreakWidth);
 void    setImage_GmDocument     (iGmDocument *, iGmLinkId linkId, const iString *mime, const iBlock *data);
 
 void    reset_GmDocument        (iGmDocument *); /* free images */
