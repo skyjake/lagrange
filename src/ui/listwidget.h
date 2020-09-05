@@ -35,7 +35,7 @@ iEndDeclareClass(ListItem)
 
 iDeclareType(ListItem)
 
-    struct Impl_ListItem {
+struct Impl_ListItem {
     iObject object;
     iBool   isSeparator;
     iBool   isSelected;
@@ -52,7 +52,7 @@ void    invalidate_ListWidget   (iListWidget *);
 void    clear_ListWidget        (iListWidget *);
 void    addItem_ListWidget      (iListWidget *, iAnyObject *item);
 
-iScrollWidget * scroll_ListWidget   (iListWidget *);
+iScrollWidget * scroll_ListWidget (iListWidget *);
 
 int     scrollPos_ListWidget        (const iListWidget *);
 

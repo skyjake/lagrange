@@ -121,6 +121,7 @@ static iBool isResizing_SidebarWidget_(const iSidebarWidget *d) {
 //    clear_Array(&d->items);
 //}
 
+#if 0
 static iRect contentBounds_SidebarWidget_(const iSidebarWidget *d) {
     iRect bounds = bounds_Widget(constAs_Widget(d));
     const iWidget *scroll = constAs_Widget(scroll_ListWidget(d->list));
@@ -131,6 +132,7 @@ static iRect contentBounds_SidebarWidget_(const iSidebarWidget *d) {
                      0);
     return bounds;
 }
+#endif
 
 //static int scrollMax_SidebarWidget_(const iSidebarWidget *d) {
 //    return iMax(0,
@@ -151,6 +153,10 @@ static iRect contentBounds_SidebarWidget_(const iSidebarWidget *d) {
 
 static int cmpTitle_Bookmark_(const iBookmark **a, const iBookmark **b) {
     return cmpStringCase_String(&(*a)->title, &(*b)->title);
+}
+
+static void updateVisible_SidebarWidget_(iSidebarWidget *d) {
+    updateVisible_ListWidget(d->list);
 }
 
 static void updateItems_SidebarWidget_(iSidebarWidget *d) {
@@ -297,7 +303,7 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
         default:
             break;
     }
-    updateVisible_ListWidget(d->list);
+    updateVisible_SidebarWidget_(d);
     invalidate_ListWidget(d->list);
 }
 
@@ -326,6 +332,9 @@ void setMode_SidebarWidget(iSidebarWidget *d, enum iSidebarMode mode) {
         setFlags_Widget(as_Widget(d->modeButtons[i]), selected_WidgetFlag, i == d->mode);
     }
     const float heights[max_SidebarMode] = { 1.333f, 1.333f, 3.5f, 1.2f };
+    setBackgroundColor_Widget(as_Widget(d->list),
+                              d->mode == documentOutline_SidebarMode ? tmBackground_ColorId
+                                                                     : uiBackground_ColorId);
     setItemHeight_ListWidget(d->list, heights[mode] * lineHeight_Text(uiContent_FontId));
     /* Restore previous scroll position. */
     setScrollPos_ListWidget(d->list, d->modeScroll[mode]);
@@ -359,26 +368,34 @@ void init_SidebarWidget(iSidebarWidget *d) {
     setId_Widget(w, "sidebar");
     setBackgroundColor_Widget(w, none_ColorId);
     setFlags_Widget(w,
-                    hidden_WidgetFlag | arrangeVertical_WidgetFlag |
-                        resizeChildren_WidgetFlag | collapse_WidgetFlag,
+                    collapse_WidgetFlag | hidden_WidgetFlag | arrangeHorizontal_WidgetFlag |
+                        resizeWidthOfChildren_WidgetFlag,
                     iTrue);
     iZap(d->modeScroll);
     d->mode  = -1;
     d->width = 60 * gap_UI;
     setFlags_Widget(w, fixedWidth_WidgetFlag, iTrue);
     d->maxButtonLabelWidth = 0;
-    /* TODO: Add a parent h-div for the mode buttons. */
+    iWidget *vdiv = makeVDiv_Widget();
+    addChildFlags_Widget(w, vdiv, resizeToParentWidth_WidgetFlag | resizeToParentHeight_WidgetFlag);
+    iWidget *buttons = new_Widget();
     for (int i = 0; i < max_SidebarMode; i++) {
         d->modeButtons[i] = addChildFlags_Widget(
-            w,
+            buttons,
             iClob(
                 new_LabelWidget(tightModeLabels_[i], 0, 0, format_CStr("sidebar.mode arg:%d", i))),
-            frameless_WidgetFlag | expand_WidgetFlag);
+            frameless_WidgetFlag);
         d->maxButtonLabelWidth =
             iMaxi(d->maxButtonLabelWidth,
                   3 * gap_UI + measure_Text(uiLabel_FontId, normalModeLabels_[i]).x);
     }
-    addChildFlags_Widget(w, iClob(d->list = new_ListWidget()), expand_WidgetFlag);
+    addChildFlags_Widget(vdiv,
+                         iClob(buttons),
+                         arrangeHorizontal_WidgetFlag | resizeWidthOfChildren_WidgetFlag |
+                             arrangeHeight_WidgetFlag | resizeToParentWidth_WidgetFlag);
+    d->list = new_ListWidget();
+    setPadding_Widget(as_Widget(d->list), 0, gap_UI, 0, gap_UI);
+    addChildFlags_Widget(vdiv, iClob(d->list), expand_WidgetFlag);
     setMode_SidebarWidget(d, documentOutline_SidebarMode);
     d->resizer = addChildFlags_Widget(
         w,
@@ -558,7 +575,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
     iWidget *w = as_Widget(d);
     /* Handle commands. */
     if (isResize_UserEvent(ev)) {
-        updateVisible_ListWidget(d->list);
+        updateVisible_SidebarWidget_(d);
         checkModeButtonLayout_SidebarWidget_(d);
         invalidate_ListWidget(d->list);
     }
@@ -1041,7 +1058,8 @@ static void draw_SidebarWidget_(const iSidebarWidget *d) {
 
 static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                               const iListWidget *list) {
-    const iSidebarWidget *sidebar    = (const iSidebarWidget *) constAs_Widget(list)->parent;
+    const iSidebarWidget *sidebar    = findParentClass_Widget(constAs_Widget(list),
+                                                              &Class_SidebarWidget);
     const iBool           isPressing = isMouseDown_ListWidget(list);
     const int             font       = uiContent_FontId;
     const iBool           isHover =

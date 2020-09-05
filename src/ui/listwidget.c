@@ -153,7 +153,7 @@ void scrollOffset_ListWidget(iListWidget *d, int offset) {
 }
 
 static int visCount_ListWidget_(const iListWidget *d) {
-    return iMin(height_Rect(innerBounds_Widget(constAs_Widget(d))) / d->itemHeight,
+    return iMin(height_Rect(innerBounds_Widget(constAs_Widget(d))) / d->itemHeight + 1,
                 (int) size_PtrArray(&d->items));
 }
 
@@ -272,14 +272,16 @@ static void allocVisBuffer_ListWidget_(iListWidget *d) {
 }
 
 static void draw_ListWidget_(const iListWidget *d) {
-    const iWidget *w = constAs_Widget(d);
-    const iRect    bounds     = innerBounds_Widget(w);
-    draw_Widget(w); /* background */
+    const iWidget *w      = constAs_Widget(d);
+    const iRect    bounds = innerBounds_Widget(w);
+    if (!bounds.size.y || !bounds.size.x) return;
     iPaint p;
     init_Paint(&p);
+    drawBackground_Widget(w);
     if (!d->visBufferValid || !isEmpty_IntSet(&d->invalidItems)) {
         iListWidget *m = iConstCast(iListWidget *, d);
         allocVisBuffer_ListWidget_(m);
+        iAssert(d->visBuffer);
         beginTarget_Paint(&p, d->visBuffer);
         const iRect bufBounds = (iRect){ zero_I2(), bounds.size };
         if (!d->visBufferValid) {
@@ -310,6 +312,7 @@ static void draw_ListWidget_(const iListWidget *d) {
     }
     SDL_RenderCopy(
         renderer_Window(get_Window()), d->visBuffer, NULL, (const SDL_Rect *) &bounds);
+    drawChildren_Widget(w);
 }
 
 iBool isMouseDown_ListWidget(const iListWidget *d) {
