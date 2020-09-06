@@ -35,7 +35,7 @@ enum iSidebarMode {
 iDeclareWidgetClass(SidebarWidget)
 iDeclareObjectConstruction(SidebarWidget)
 
-void                setMode_SidebarWidget   (iSidebarWidget *, enum iSidebarMode mode);
+iBool               setMode_SidebarWidget   (iSidebarWidget *, enum iSidebarMode mode);
 
 enum iSidebarMode   mode_SidebarWidget      (const iSidebarWidget *);
 int                 width_SidebarWidget     (const iSidebarWidget *);

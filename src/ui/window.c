@@ -128,10 +128,10 @@ static const iMenuItem identityMenuItems[] = {
 };
 
 static const iMenuItem viewMenuItems[] = {
-    { "Show Bookmarks", '1', KMOD_PRIMARY, "sidebar.mode arg:0 show:1" },
-    { "Show History", '2', KMOD_PRIMARY, "sidebar.mode arg:1 show:1" },
-    { "Show Identities", '3', KMOD_PRIMARY, "sidebar.mode arg:2 show:1" },
-    { "Show Page Outline", '4', KMOD_PRIMARY, "sidebar.mode arg:3 show:1" },
+    { "Show Bookmarks", '1', KMOD_PRIMARY, "sidebar.mode arg:0 toggle:1" },
+    { "Show History", '2', KMOD_PRIMARY, "sidebar.mode arg:1 toggle:1" },
+    { "Show Identities", '3', KMOD_PRIMARY, "sidebar.mode arg:2 toggle:1" },
+    { "Show Page Outline", '4', KMOD_PRIMARY, "sidebar.mode arg:3 toggle:1" },
     { "Toggle Sidebar", SDLK_l, KMOD_PRIMARY | KMOD_SHIFT, "sidebar.toggle" },
     { "---", 0, 0, NULL },
     { "Go Back", SDLK_LEFTBRACKET, KMOD_PRIMARY, "navigate.back" },

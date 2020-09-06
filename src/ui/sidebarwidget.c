@@ -250,8 +250,10 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
     invalidate_ListWidget(d->list);
 }
 
-void setMode_SidebarWidget(iSidebarWidget *d, enum iSidebarMode mode) {
-    if (d->mode == mode) return;
+iBool setMode_SidebarWidget(iSidebarWidget *d, enum iSidebarMode mode) {
+    if (d->mode == mode) {
+        return iFalse;
+    }
     if (d->mode >= 0 && d->mode < max_SidebarMode) {
         d->modeScroll[d->mode] = scrollPos_ListWidget(d->list); /* saved for later */
     }
@@ -266,6 +268,7 @@ void setMode_SidebarWidget(iSidebarWidget *d, enum iSidebarMode mode) {
     setItemHeight_ListWidget(d->list, heights[mode] * lineHeight_Text(uiContent_FontId));
     /* Restore previous scroll position. */
     setScrollPos_ListWidget(d->list, d->modeScroll[mode]);
+    return iTrue;
 }
 
 enum iSidebarMode mode_SidebarWidget(const iSidebarWidget *d) {
@@ -501,10 +504,11 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             return iTrue;
         }
         else if (equal_Command(cmd, "sidebar.mode")) {
-            setMode_SidebarWidget(d, arg_Command(cmd));
+            const iBool wasChanged = setMode_SidebarWidget(d, arg_Command(cmd));
             updateItems_SidebarWidget_(d);
-            if (argLabel_Command(cmd, "show") && !isVisible_Widget(w)) {
-                postCommand_App("sidebar.toggle arg:1");
+            if ((argLabel_Command(cmd, "show") && !isVisible_Widget(w)) ||
+                (argLabel_Command(cmd, "toggle") && !wasChanged)) {
+                postCommand_App("sidebar.toggle");
             }
             scrollOffset_ListWidget(d->list, 0);
             return iTrue;
