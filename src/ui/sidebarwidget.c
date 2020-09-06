@@ -503,7 +503,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             const iBool wasChanged = setMode_SidebarWidget(d, arg_Command(cmd));
             updateItems_SidebarWidget_(d);
             if ((argLabel_Command(cmd, "show") && !isVisible_Widget(w)) ||
-                (argLabel_Command(cmd, "toggle") && !wasChanged)) {
+                (argLabel_Command(cmd, "toggle") && (!isVisible_Widget(w) || !wasChanged))) {
                 postCommand_App("sidebar.toggle");
             }
             scrollOffset_ListWidget(d->list, 0);

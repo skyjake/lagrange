@@ -61,6 +61,8 @@ set (SOURCES
     src/gmutil.h
     src/history.c
     src/history.h
+    src/lookup.c
+    src/lookup.h
     src/stb_image.h
     src/stb_truetype.h
     src/visited.c
@@ -74,6 +76,8 @@ set (SOURCES
     src/ui/documentwidget.h
     src/ui/listwidget.c
     src/ui/listwidget.h
+    src/ui/lookupwidget.c
+    src/ui/lookupwidget.h
     src/ui/metrics.c
     src/ui/metrics.h
     src/ui/paint.c

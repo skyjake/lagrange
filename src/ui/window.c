@@ -26,6 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "inputwidget.h"
 #include "documentwidget.h"
 #include "sidebarwidget.h"
+#include "lookupwidget.h"
 #include "embedded.h"
 #include "command.h"
 #include "paint.h"
@@ -404,6 +405,8 @@ static void setupUserInterface_Window(iWindow *d) {
         addChild_Widget(searchBar, iClob(newIcon_LabelWidget("  \u2b9d  ", 'g', KMOD_PRIMARY | KMOD_SHIFT, "find.prev")));
         addChild_Widget(searchBar, iClob(newIcon_LabelWidget("\u2a2f", SDLK_ESCAPE, 0, "find.close")));
     }
+    iLookupWidget *lookup = new_LookupWidget();
+    addChildFlags_Widget(d->root, iClob(lookup), hidden_WidgetFlag);
     iWidget *tabsMenu = makeMenu_Widget(d->root,
                                         (iMenuItem[]){
                                             { "Close Tab", 0, 0, "tabs.close" },

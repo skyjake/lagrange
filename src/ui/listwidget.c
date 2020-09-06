@@ -62,7 +62,6 @@ struct Impl_ListWidget {
     SDL_Texture *visBuffer[2];
     int visBufferIndex;
     int visBufferScrollY;
-//    iBool visBufferValid;
     enum iBufferValidity visBufferValid;
 };
 
@@ -70,6 +69,7 @@ void init_ListWidget(iListWidget *d) {
     iWidget *w = as_Widget(d);
     init_Widget(w);
     setId_Widget(w, "list");
+    setBackgroundColor_Widget(w, uiBackground_ColorId); /* needed for filling visbuffer */
     setFlags_Widget(w, hover_WidgetFlag, iTrue);
     addChild_Widget(w, iClob(d->scroll = new_ScrollWidget()));
     setThumb_ScrollWidget(d->scroll, 0, 0);
@@ -150,7 +150,6 @@ int scrollPos_ListWidget(const iListWidget *d) {
 void setScrollPos_ListWidget(iListWidget *d, int pos) {
     d->scrollY = pos;
     d->hoverItem = iInvalidPos;
-//    invalidate_ListWidget(d);
     d->visBufferValid = partial_BufferValidity;
     refresh_Widget(as_Widget(d));
 }
@@ -166,7 +165,6 @@ void scrollOffset_ListWidget(iListWidget *d, int offset) {
     if (oldScroll != d->scrollY) {
         d->hoverItem = iInvalidPos;
         updateVisible_ListWidget(d);
-        //invalidate_ListWidget(d);
         d->visBufferValid = partial_BufferValidity;
         refresh_Widget(as_Widget(d));
     }
@@ -178,6 +176,9 @@ static int visCount_ListWidget_(const iListWidget *d) {
 }
 
 static iRanges visRange_ListWidget_(const iListWidget *d) {
+    if (d->itemHeight == 0) {
+        return (iRanges){ 0, 0 };
+    }
     iRanges vis = { d->scrollY / d->itemHeight, 0 };
     vis.end = iMin(size_PtrArray(&d->items), vis.start + visCount_ListWidget_(d));
     return vis;
@@ -186,7 +187,7 @@ static iRanges visRange_ListWidget_(const iListWidget *d) {
 size_t itemIndex_ListWidget(const iListWidget *d, iInt2 pos) {
     const iRect bounds = innerBounds_Widget(constAs_Widget(d));
     pos.y -= top_Rect(bounds) - d->scrollY;
-    if (pos.y < 0) return iInvalidPos;
+    if (pos.y < 0 || !d->itemHeight) return iInvalidPos;
     size_t index = pos.y / d->itemHeight;
     if (index >= size_Array(&d->items)) return iInvalidPos;
     return index;

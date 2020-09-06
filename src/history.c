@@ -24,6 +24,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "app.h"
 
 #include <the_Foundation/file.h>
+#include <the_Foundation/mutex.h>
 #include <the_Foundation/path.h>
 
 static const size_t maxStack_History_ = 50; /* back/forward navigable items */
@@ -52,6 +53,7 @@ iRecentUrl *copy_RecentUrl(const iRecentUrl *d) {
 /*----------------------------------------------------------------------------------------------*/
 
 struct Impl_History {
+    iMutex *mtx;
     iArray recent;    /* TODO: should be specific to a DocumentWidget */
     size_t recentPos; /* zero at the latest item */
 };
@@ -59,6 +61,7 @@ struct Impl_History {
 iDefineTypeConstruction(History)
 
 void init_History(iHistory *d) {
+    d->mtx = new_Mutex();
     init_Array(&d->recent, sizeof(iRecentUrl));
     d->recentPos = 0;
 }
@@ -66,18 +69,22 @@ void init_History(iHistory *d) {
 void deinit_History(iHistory *d) {
     clear_History(d);
     deinit_Array(&d->recent);
+    delete_Mutex(d->mtx);
 }
 
 iHistory *copy_History(const iHistory *d) {
+    lock_Mutex(d->mtx);
     iHistory *copy = new_History();
     iConstForEach(Array, i, &d->recent) {
         pushBack_Array(&copy->recent, copy_RecentUrl(i.value));
     }
     copy->recentPos = d->recentPos;
+    unlock_Mutex(d->mtx);
     return copy;
 }
 
 void serialize_History(const iHistory *d, iStream *outs) {
+    lock_Mutex(d->mtx);
     writeU16_Stream(outs, d->recentPos);
     writeU16_Stream(outs, size_Array(&d->recent));
     iConstForEach(Array, i, &d->recent) {
@@ -92,10 +99,12 @@ void serialize_History(const iHistory *d, iStream *outs) {
             write8_Stream(outs, 0);
         }
     }
+    unlock_Mutex(d->mtx);
 }
 
 void deserialize_History(iHistory *d, iStream *ins) {
     clear_History(d);
+    lock_Mutex(d->mtx);
     d->recentPos = readU16_Stream(ins);
     size_t count = readU16_Stream(ins);
     while (count--) {
@@ -109,13 +118,16 @@ void deserialize_History(iHistory *d, iStream *ins) {
         }
         pushBack_Array(&d->recent, &item);
     }
+    unlock_Mutex(d->mtx);
 }
 
 void clear_History(iHistory *d) {
+    lock_Mutex(d->mtx);
     iForEach(Array, s, &d->recent) {
         deinit_RecentUrl(s.value);
     }
     clear_Array(&d->recent);
+    unlock_Mutex(d->mtx);
 }
 
 iRecentUrl *recentUrl_History(iHistory *d, size_t pos) {
@@ -145,23 +157,29 @@ const iString *url_History(const iHistory *d, size_t pos) {
 }
 
 iRecentUrl *findUrl_History(iHistory *d, const iString *url) {
+    lock_Mutex(d->mtx);
     iReverseForEach(Array, i, &d->recent) {
         if (cmpStringCase_String(url, &((iRecentUrl *) i.value)->url) == 0) {
+            unlock_Mutex(d->mtx);
             return i.value;
         }
     }
+    unlock_Mutex(d->mtx);
     return NULL;
 }
 
 void replace_History(iHistory *d, const iString *url) {
+    lock_Mutex(d->mtx);
     /* Update in the history. */
     iRecentUrl *item = mostRecentUrl_History(d);
     if (item) {
         set_String(&item->url, url);
     }
+    unlock_Mutex(d->mtx);
 }
 
 void add_History(iHistory *d, const iString *url ){
+    lock_Mutex(d->mtx);
     /* Cut the trailing history items. */
     if (d->recentPos > 0) {
         for (size_t i = 0; i < d->recentPos - 1; i++) {
@@ -183,27 +201,34 @@ void add_History(iHistory *d, const iString *url ){
             remove_Array(&d->recent, 0);
         }
     }
+    unlock_Mutex(d->mtx);
 }
 
 iBool goBack_History(iHistory *d) {
+    lock_Mutex(d->mtx);
     if (d->recentPos < size_Array(&d->recent) - 1) {
         d->recentPos++;
         postCommandf_App("open history:1 scroll:%f url:%s",
                          mostRecentUrl_History(d)->normScrollY,
                          cstr_String(url_History(d, d->recentPos)));
+        unlock_Mutex(d->mtx);
         return iTrue;
     }
+    unlock_Mutex(d->mtx);
     return iFalse;
 }
 
 iBool goForward_History(iHistory *d) {
+    lock_Mutex(d->mtx);
     if (d->recentPos > 0) {
         d->recentPos--;
         postCommandf_App("open history:1 scroll:%f url:%s",
                          mostRecentUrl_History(d)->normScrollY,
                          cstr_String(url_History(d, d->recentPos)));
+        unlock_Mutex(d->mtx);
         return iTrue;
     }
+    unlock_Mutex(d->mtx);
     return iFalse;
 }
 
@@ -213,6 +238,7 @@ const iGmResponse *cachedResponse_History(const iHistory *d) {
 }
 
 void setCachedResponse_History(iHistory *d, const iGmResponse *response) {
+    lock_Mutex(d->mtx);
     iRecentUrl *item = mostRecentUrl_History(d);
     if (item) {
         delete_GmResponse(item->cachedResponse);
@@ -221,4 +247,5 @@ void setCachedResponse_History(iHistory *d, const iGmResponse *response) {
             item->cachedResponse = copy_GmResponse(response);
         }
     }
+    unlock_Mutex(d->mtx);
 }
