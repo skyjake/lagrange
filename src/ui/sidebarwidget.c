@@ -104,10 +104,6 @@ static int cmpTitle_Bookmark_(const iBookmark **a, const iBookmark **b) {
     return cmpStringCase_String(&(*a)->title, &(*b)->title);
 }
 
-static void updateVisible_SidebarWidget_(iSidebarWidget *d) {
-    updateVisible_ListWidget(d->list);
-}
-
 static void updateItems_SidebarWidget_(iSidebarWidget *d) {
     clear_ListWidget(d->list);
     destroy_Widget(d->menu);
@@ -246,7 +242,7 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
         default:
             break;
     }
-    updateVisible_SidebarWidget_(d);
+    updateVisible_ListWidget(d->list);
     invalidate_ListWidget(d->list);
 }
 
@@ -459,8 +455,8 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
     iWidget *w = as_Widget(d);
     /* Handle commands. */
     if (isResize_UserEvent(ev)) {
-        updateVisible_SidebarWidget_(d);
         checkModeButtonLayout_SidebarWidget_(d);
+        updateVisible_ListWidget(d->list);
         invalidate_ListWidget(d->list);
     }
     else if (ev->type == SDL_USEREVENT && ev->user.code == command_UserEventCode) {
