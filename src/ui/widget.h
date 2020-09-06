@@ -59,6 +59,7 @@ enum iWidgetFlag {
     keepOnTop_WidgetFlag      = iBit(13), /* gets events first; drawn last */
     mouseModal_WidgetFlag     = iBit(14), /* eats all unprocessed mouse events */
     /* arrange behavior */
+    fixedPosition_WidgetFlag               = iBit(16),
     arrangeHorizontal_WidgetFlag           = iBit(17), /* arrange children horizontally */
     arrangeVertical_WidgetFlag             = iBit(18), /* arrange children vertically */
     arrangeWidth_WidgetFlag                = iBit(19), /* area of children becomes parent size */
@@ -142,16 +143,20 @@ void    draw_Widget         (const iWidget *);
 void    drawBackground_Widget(const iWidget *);
 void    drawChildren_Widget (const iWidget *);
 
+iLocalDef int width_Widget(const iAnyObject *d) {
+    iAssert(isInstance_Object(d, &Class_Widget));
+    return ((const iWidget *) d)->rect.size.x;
+}
 iLocalDef iObjectList *children_Widget(iAnyObject *d) {
     iAssert(isInstance_Object(d, &Class_Widget));
     return ((iWidget *) d)->children;
 }
 
-iBool   isVisible_Widget    (const iWidget *);
-iBool   isDisabled_Widget   (const iWidget *);
-iBool   isFocused_Widget    (const iWidget *);
-iBool   isHover_Widget      (const iWidget *);
-iBool   isSelected_Widget   (const iWidget *);
+iBool   isVisible_Widget    (const iAnyObject *);
+iBool   isDisabled_Widget   (const iAnyObject *);
+iBool   isFocused_Widget    (const iAnyObject *);
+iBool   isHover_Widget      (const iAnyObject *);
+iBool   isSelected_Widget   (const iAnyObject *);
 iBool   isCommand_Widget    (const iWidget *d, const SDL_Event *ev, const char *cmd);
 iBool   hasParent_Widget    (const iWidget *d, const iWidget *someParent);
 void    setId_Widget        (iWidget *, const char *id);
@@ -172,8 +177,8 @@ size_t  childIndex_Widget   (const iWidget *, const iAnyObject *child); /* O(n) 
 void    arrange_Widget      (iWidget *);
 iBool   dispatchEvent_Widget(iWidget *, const SDL_Event *);
 iBool   processEvent_Widget (iWidget *, const SDL_Event *);
-void    postCommand_Widget  (const iWidget *, const char *cmd, ...);
-void    refresh_Widget      (const iWidget *);
+void    postCommand_Widget  (const iAnyObject *, const char *cmd, ...);
+void    refresh_Widget      (const iAnyObject *);
 
 void    setFocus_Widget     (iWidget *);
 iWidget *focus_Widget       (void);

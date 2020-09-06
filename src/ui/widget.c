@@ -137,6 +137,7 @@ void setFlags_Widget(iWidget *d, int flags, iBool set) {
 
 void setPos_Widget(iWidget *d, iInt2 pos) {
     d->rect.pos = pos;
+    setFlags_Widget(d, fixedPosition_WidgetFlag, iTrue);
 }
 
 void setSize_Widget(iWidget *d, iInt2 size) {    
@@ -322,6 +323,9 @@ void arrange_Widget(iWidget *d) {
     iForEach(ObjectList, i, d->children) {
         iWidget *child = as_Widget(i.object);
         arrange_Widget(child);
+        if (child->flags & fixedPosition_WidgetFlag) {
+            continue;
+        }
         if (d->flags & (arrangeHorizontal_WidgetFlag | arrangeVertical_WidgetFlag)) {
             if (child->flags & moveToParentRightEdge_WidgetFlag) {
                 continue; /* Not part of the sequential arrangement .*/
@@ -460,6 +464,12 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
                 continue;
             }
             if (dispatchEvent_Widget(child, ev)) {
+                if (ev->type == SDL_MOUSEBUTTONDOWN) {
+                    printf("widget %p ('%s' class:%s) ate the mouse down\n",
+                           child, cstr_String(id_Widget(child)),
+                           class_Widget(child)->name);
+                    fflush(stdout);
+                }
                 return iTrue;
             }
         }
@@ -637,8 +647,9 @@ size_t childCount_Widget(const iWidget *d) {
     return size_ObjectList(d->children);
 }
 
-iBool isVisible_Widget(const iWidget *d) {
+iBool isVisible_Widget(const iAnyObject *d) {
     if (!d) return iFalse;
+    iAssert(isInstance_Object(d, &Class_Widget));
     for (const iWidget *w = d; w; w = w->parent) {
         if (w->flags & hidden_WidgetFlag) {
             return iFalse;
@@ -647,7 +658,8 @@ iBool isVisible_Widget(const iWidget *d) {
     return iTrue;
 }
 
-iBool isDisabled_Widget(const iWidget *d) {
+iBool isDisabled_Widget(const iAnyObject *d) {
+    iAssert(isInstance_Object(d, &Class_Widget));
     for (const iWidget *w = d; w; w = w->parent) {
         if (w->flags & disabled_WidgetFlag) {
             return iTrue;
@@ -656,16 +668,19 @@ iBool isDisabled_Widget(const iWidget *d) {
     return iFalse;
 }
 
-iBool isFocused_Widget(const iWidget *d) {
+iBool isFocused_Widget(const iAnyObject *d) {
+    iAssert(isInstance_Object(d, &Class_Widget));
     return rootData_.focus == d;
 }
 
-iBool isHover_Widget(const iWidget *d) {
+iBool isHover_Widget(const iAnyObject *d) {
+    iAssert(isInstance_Object(d, &Class_Widget));
     return rootData_.hover == d;
 }
 
-iBool isSelected_Widget(const iWidget *d) {
-    return d && (d->flags & selected_WidgetFlag) != 0;
+iBool isSelected_Widget(const iAnyObject *d) {
+    iAssert(isInstance_Object(d, &Class_Widget));
+    return d && (flags_Widget(d) & selected_WidgetFlag) != 0;
 }
 
 iBool equalWidget_Command(const char *cmd, const iWidget *widget, const char *checkCommand) {
@@ -764,7 +779,7 @@ iWidget *mouseGrab_Widget(void) {
     return rootData_.mouseGrab;
 }
 
-void postCommand_Widget(const iWidget *d, const char *cmd, ...) {
+void postCommand_Widget(const iAnyObject *d, const char *cmd, ...) {
     iString str;
     init_String(&str); {
         va_list args;
@@ -778,14 +793,18 @@ void postCommand_Widget(const iWidget *d, const char *cmd, ...) {
         remove_Block(&str.chars, 0, 1);
     }
     if (!isGlobal) {
+        iAssert(isInstance_Object(d, &Class_Widget));
         appendFormat_String(&str, " ptr:%p", d);
     }
     postCommandString_App(&str);
     deinit_String(&str);
 }
 
-void refresh_Widget(const iWidget *d) {
+void refresh_Widget(const iAnyObject *d) {
     /* TODO: Could be widget specific, if parts of the tree are cached. */
+    /* TODO: The visbuffer in DocumentWidget and ListWidget could be moved to be a general
+       purpose feature of Widget. */
+    iAssert(isInstance_Object(d, &Class_Widget));
     iUnused(d);
     postRefresh_App();
 }
