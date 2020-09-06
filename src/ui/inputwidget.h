@@ -39,7 +39,8 @@ void    setMaxLen_InputWidget   (iInputWidget *, size_t maxLen);
 void    setText_InputWidget     (iInputWidget *, const iString *text);
 void    setTextCStr_InputWidget (iInputWidget *, const char *cstr);
 void    setCursor_InputWidget   (iInputWidget *, size_t pos);
-void    setSelectAllOnFocus_InputWidget(iInputWidget *, iBool selectAllOnFocus);
+void    setSelectAllOnFocus_InputWidget (iInputWidget *, iBool selectAllOnFocus);
+void    setNotifyEdits_InputWidget      (iInputWidget *, iBool notifyEdits);
 void    begin_InputWidget       (iInputWidget *);
 void    end_InputWidget         (iInputWidget *, iBool accept);
 

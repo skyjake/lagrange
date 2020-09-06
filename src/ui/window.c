@@ -203,9 +203,17 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
         refresh_Widget(navBar);
         return iFalse;
     }
+    else if (equal_Command(cmd, "input.edited")) {
+        iAnyObject *url = findChild_Widget(navBar, "url");
+        if (pointer_Command(cmd) == url) {
+            submit_LookupWidget(findWidget_App("lookup"), text_InputWidget(url));
+            return iTrue;
+        }
+    }
     else if (equal_Command(cmd, "input.ended")) {
         iInputWidget *url = findChild_Widget(navBar, "url");
-        if (arg_Command(cmd) && pointer_Command(cmd) == url) {
+        if (arg_Command(cmd) && pointer_Command(cmd) == url &&
+            !isFocused_Widget(findWidget_App("lookup"))) {
             postCommandf_App(
                 "open url:%s",
                 cstr_String(absoluteUrl_String(&iStringLiteral(""), text_InputWidget(url))));
@@ -276,8 +284,7 @@ static iBool handleSearchBarCommands_(iWidget *searchBar, const char *cmd) {
     if (equal_Command(cmd, "input.ended") &&
         cmp_String(string_Command(cmd, "id"), "find.input") == 0) {
         iInputWidget *input = findChild_Widget(searchBar, "find.input");
-        if (arg_Command(cmd) && argLabel_Command(cmd, "enter") &&
-            isVisible_Widget(as_Widget(input))) {
+        if (arg_Command(cmd) && argLabel_Command(cmd, "enter") && isVisible_Widget(input)) {
             postCommand_App("find.next");
             /* Keep focus when pressing Enter. */
             if (!isEmpty_String(text_InputWidget(input))) {
@@ -349,6 +356,7 @@ static void setupUserInterface_Window(iWindow *d) {
         iInputWidget *url = new_InputWidget(0);
         setSelectAllOnFocus_InputWidget(url, iTrue);
         setId_Widget(as_Widget(url), "url");
+        setNotifyEdits_InputWidget(url, iTrue);
         setTextCStr_InputWidget(url, "gemini://");
         addChildFlags_Widget(navBar, iClob(url), expand_WidgetFlag);
         setId_Widget(addChild_Widget(
@@ -406,7 +414,7 @@ static void setupUserInterface_Window(iWindow *d) {
         addChild_Widget(searchBar, iClob(newIcon_LabelWidget("\u2a2f", SDLK_ESCAPE, 0, "find.close")));
     }
     iLookupWidget *lookup = new_LookupWidget();
-    addChildFlags_Widget(d->root, iClob(lookup), hidden_WidgetFlag);
+    addChildFlags_Widget(d->root, iClob(lookup), fixedPosition_WidgetFlag | hidden_WidgetFlag);
     iWidget *tabsMenu = makeMenu_Widget(d->root,
                                         (iMenuItem[]){
                                             { "Close Tab", 0, 0, "tabs.close" },

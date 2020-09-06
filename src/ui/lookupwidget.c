@@ -23,19 +23,26 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "lookupwidget.h"
 #include "lookup.h"
 #include "listwidget.h"
+#include "inputwidget.h"
+#include "util.h"
+#include "command.h"
+#include "bookmarks.h"
+#include "gmutil.h"
+#include "app.h"
 
 #include <the_Foundation/mutex.h>
 #include <the_Foundation/thread.h>
+#include <the_Foundation/regexp.h>
 
 iDeclareType(LookupJob)
 
 struct Impl_LookupJob {
-    iString term;
+    iRegExp *term;
     iPtrArray results;
 };
 
 static void init_LookupJob(iLookupJob *d) {
-    init_String(&d->term);
+    d->term = NULL;
     init_PtrArray(&d->results);
 }
 
@@ -44,23 +51,124 @@ static void deinit_LookupJob(iLookupJob *d) {
         delete_LookupResult(i.ptr);
     }
     deinit_PtrArray(&d->results);
-    deinit_String(&d->term);
+    iRelease(d->term);
 }
 
 iDefineTypeConstruction(LookupJob)
 
-struct Impl_LookupWidget {
-    iWidget widget;
-    iListWidget *list;
-    iThread *work;
-    iCondition jobAvailable; /* wakes up the work thread */
-    iMutex *mtx;
-    iString nextJob;
-    iLookupJob *finishedJob;
+/*----------------------------------------------------------------------------------------------*/
+
+iDeclareType(LookupItem)
+typedef iListItemClass iLookupItemClass;
+
+struct Impl_LookupItem {
+    iListItem listItem;
+    iLookupResult *result;
+    int font;
+    int fg;
+    iString text;
+    iString command;
 };
+
+static void init_LookupItem(iLookupItem *d, const iLookupResult *res) {
+    init_ListItem(&d->listItem);
+    d->result = res ? copy_LookupResult(res) : NULL;
+    d->font = uiContent_FontId;
+    d->fg = uiText_ColorId;
+    init_String(&d->text);
+    init_String(&d->command);
+}
+
+static void deinit_LookupItem(iLookupItem *d) {
+    deinit_String(&d->command);
+    deinit_String(&d->text);
+    delete_LookupResult(d->result);
+}
+
+static void draw_LookupItem_(iLookupItem *d, iPaint *p, iRect rect, const iListWidget *list) {
+    const iBool isPressing = isMouseDown_ListWidget(list);
+    const iBool isHover    = isHover_Widget(list) && constHoverItem_ListWidget(list) == d;
+    const iBool isCursor   = d->listItem.isSelected;
+    if (isHover || isCursor) {
+        fillRect_Paint(p,
+                       rect,
+                       isPressing || isCursor ? uiBackgroundPressed_ColorId
+                                              : uiBackgroundFramelessHover_ColorId);
+    }
+    int fg = isHover || isCursor
+                 ? permanent_ColorId | (isPressing || isCursor ? uiTextPressed_ColorId
+                                                               : uiTextFramelessHover_ColorId)
+                 : d->fg;
+    const iInt2 size = measure_Text(d->font, cstr_String(&d->text));
+    iInt2       pos  = init_I2(left_Rect(rect) + 3 * gap_UI, mid_Rect(rect).y - size.y / 2);
+    if (d->listItem.isSeparator) {
+        pos.y = bottom_Rect(rect) - lineHeight_Text(d->font) - gap_UI;
+    }
+    drawRange_Text(d->font, pos, fg, range_String(&d->text));
+}
+
+iBeginDefineSubclass(LookupItem, ListItem)
+    .draw = (iAny *) draw_LookupItem_,
+iEndDefineSubclass(LookupItem)
+
+iDefineObjectConstructionArgs(LookupItem, (const iLookupResult *res), res)
+
+/*----------------------------------------------------------------------------------------------*/
+
+struct Impl_LookupWidget {
+    iWidget      widget;
+    iListWidget *list;
+    size_t       cursor;
+    iThread *    work;
+    iCondition   jobAvailable; /* wakes up the work thread */
+    iMutex *     mtx;
+    iString      nextJob;
+    iLookupJob * finishedJob;
+};
+
+static float scoreMatch_(const iRegExp *pattern, iRangecc text) {
+    float score = 0.0f;
+    iRegExpMatch m;
+    init_RegExpMatch(&m);
+    while (matchRange_RegExp(pattern, text, &m)) {
+        /* Match near the beginning is scored higher. */
+        score += (float) size_Range(&m.range) / ((float) m.range.start + 1);
+    }
+    return score;
+}
+
+static float bookmarkRelevance_LookupJob_(const iLookupJob *d, const iBookmark *bm) {
+    iUrl parts;
+    init_Url(&parts, &bm->url);
+    const float t = scoreMatch_(d->term, range_String(&bm->title));
+    const float h = scoreMatch_(d->term, parts.host);
+    const float p = scoreMatch_(d->term, parts.path);
+    const float g = scoreMatch_(d->term, range_String(&bm->tags));
+    return h + iMax(p, t) + 2 * g; /* extra weight for tags */
+}
+
+static iBool matchBookmark_LookupJob_(void *context, const iBookmark *bm) {
+    return bookmarkRelevance_LookupJob_(context, bm) > 0;
+}
+
+static void searchBookmarks_LookupJob_(iLookupJob *d) {
+    /* Note: Called in a background thread. */
+    iConstForEach(PtrArray, i, list_Bookmarks(bookmarks_App(), NULL, matchBookmark_LookupJob_, d)) {
+        const iBookmark *bm  = i.ptr;
+        iLookupResult *  res = new_LookupResult();
+        res->type            = bookmark_LookupResultType;
+        res->relevance       = bookmarkRelevance_LookupJob_(d, bm);
+        set_String(&res->label, &bm->title);
+//        appendFormat_String(&res->label, " (%f)", res->relevance);
+        set_String(&res->url, &bm->url);
+        res->when = bm->when;
+        pushBack_PtrArray(&d->results, res);
+    }
+}
 
 static iThreadResult worker_LookupWidget_(iThread *thread) {
     iLookupWidget *d = userData_Thread(thread);
+    printf("[LookupWidget] worker is running\n"); fflush(stdout);
     lock_Mutex(d->mtx);
     for (;;) {
         wait_Condition(&d->jobAvailable, d->mtx);
@@ -68,11 +176,31 @@ static iThreadResult worker_LookupWidget_(iThread *thread) {
             break; /* Time to quit. */
         }
         iLookupJob *job = new_LookupJob();
-        set_String(&job->term, &d->nextJob);
+        /* Make a regular expression to search for multiple alternative words. */ {
+            iString *pattern = new_String();
+            iRangecc word = iNullRange;
+            iBool isFirst = iTrue;
+            while (nextSplit_Rangecc(range_String(&d->nextJob), " ", &word)) {
+                if (isEmpty_Range(&word)) continue;
+                if (!isFirst) appendChar_String(pattern, '|');
+                for (const char *ch = word.start; ch != word.end; ch++) {
+                    /* Escape regular expression characters. */
+                    if (isSyntaxChar_RegExp(*ch)) {
+                        appendChar_String(pattern, '\\');
+                    }
+                    appendChar_String(pattern, *ch);
+                }
+                isFirst = iFalse;
+            }
+            iAssert(!isEmpty_String(pattern));
+//            printf("{%s}\n", cstr_String(pattern));
+            job->term = new_RegExp(cstr_String(pattern), caseInsensitive_RegExpOption);
+            delete_String(pattern);
+        }
         clear_String(&d->nextJob);
         unlock_Mutex(d->mtx);
         /* Do the lookup. */ {
-
+            searchBookmarks_LookupJob_(job);
         }
         /* Submit the result. */
         lock_Mutex(d->mtx);
@@ -80,7 +208,10 @@ static iThreadResult worker_LookupWidget_(iThread *thread) {
             /* Previous results haven't been taken yet. */
             delete_LookupJob(d->finishedJob);
         }
+        printf("[LookupWidget] worker has %zu results\n", size_PtrArray(&job->results));
+        fflush(stdout);
         d->finishedJob = job;
+        postCommand_Widget(as_Widget(d), "lookup.ready");
     }
     unlock_Mutex(d->mtx);
     printf("[LookupWidget] worker has quit\n"); fflush(stdout);
@@ -93,14 +224,17 @@ void init_LookupWidget(iLookupWidget *d) {
     iWidget *w = as_Widget(d);
     init_Widget(w);
     setId_Widget(w, "lookup");
-    setFlags_Widget(w, resizeChildren_WidgetFlag, iTrue);
+    setFlags_Widget(w, focusable_WidgetFlag | resizeChildren_WidgetFlag, iTrue);
     d->list = addChild_Widget(w, iClob(new_ListWidget()));
+    setItemHeight_ListWidget(d->list, lineHeight_Text(default_FontId) * 2);
+    d->cursor = iInvalidPos;
     d->work = new_Thread(worker_LookupWidget_);
     setUserData_Thread(d->work, d);
     init_Condition(&d->jobAvailable);
     d->mtx = new_Mutex();
     init_String(&d->nextJob);
     d->finishedJob = NULL;
+    start_Thread(d->work);
 }
 
 void deinit_LookupWidget(iLookupWidget *d) {
@@ -118,13 +252,229 @@ void deinit_LookupWidget(iLookupWidget *d) {
     deinit_Condition(&d->jobAvailable);
 }
 
+void submit_LookupWidget(iLookupWidget *d, const iString *term) {
+    iGuardMutex(d->mtx, {
+        set_String(&d->nextJob, term);
+        trim_String(&d->nextJob);
+        if (!isEmpty_String(&d->nextJob)) {
+            signal_Condition(&d->jobAvailable);
+        }
+        else {
+            setFlags_Widget(as_Widget(d), hidden_WidgetFlag, iTrue);
+        }
+    });
+}
+
 static void draw_LookupWidget_(const iLookupWidget *d) {
     const iWidget *w = constAs_Widget(d);
     draw_Widget(w);
+    /* Draw a frame. */ {
+        iPaint p;
+        init_Paint(&p);
+        drawRect_Paint(&p,
+                       bounds_Widget(w),
+                       isFocused_Widget(w) ? uiInputFrameFocused_ColorId : uiSeparator_ColorId);
+    }
+}
+
+static int cmpPtr_LookupResult_(const void *p1, const void *p2) {
+    const iLookupResult *a = *(const iLookupResult **) p1;
+    const iLookupResult *b = *(const iLookupResult **) p2;
+    if (a->type != b->type) {
+        return iCmp(a->type, b->type);
+    }
+    if (fabsf(a->relevance - b->relevance) < 0.0001f) {
+        return cmpString_String(&a->url, &b->url);
+    }
+    return -iCmp(a->relevance, b->relevance);
+}
+
+static const char *cstr_LookupResultType(enum iLookupResultType d) {
+    switch (d) {
+        case bookmark_LookupResultType:
+            return "BOOKMARKS";
+        case history_LookupResultType:
+            return "HISTORY";
+        case content_LookupResultType:
+            return "PAGE CONTENTS";
+        case identity_LookupResultType:
+            return "IDENTITIES";
+        default:
+            return "OTHER";
+    }
+}
+
+static void presentResults_LookupWidget_(iLookupWidget *d) {
+    iLookupJob *job;
+    iGuardMutex(d->mtx, {
+        job = d->finishedJob;
+        d->finishedJob = NULL;
+    });
+    if (!job) return;
+    clear_ListWidget(d->list);
+    sort_Array(&job->results, cmpPtr_LookupResult_);
+    enum iLookupResultType lastType = none_LookupResultType;
+    iConstForEach(PtrArray, i, &job->results) {
+        const iLookupResult *res = i.ptr;
+        if (lastType != res->type) {
+            /* Heading separator. */
+            iLookupItem *item = new_LookupItem(NULL);
+            item->listItem.isSeparator = iTrue;
+            item->fg = uiHeading_ColorId;
+            item->font = default_FontId;
+            format_String(&item->text, "%s", cstr_LookupResultType(res->type));
+            addItem_ListWidget(d->list, item);
+            iRelease(item);
+            lastType = res->type;
+        }
+        iLookupItem *item = new_LookupItem(res);
+        switch (res->type) {
+            case bookmark_LookupResultType: {
+                item->fg = uiTextStrong_ColorId;
+                item->font = default_FontId;
+                const char *url = cstr_String(&res->url);
+                if (startsWithCase_String(&res->url, "gemini://")) {
+                    url += 9;
+                }
+                format_String(&item->text, "%s\n%s    Open %s", cstr_String(&res->label),
+                              uiText_ColorEscape, url);
+                format_String(&item->command, "open url:%s", cstr_String(&res->url));
+                break;
+            }
+        }
+        addItem_ListWidget(d->list, item);
+        iRelease(item);
+    }
+    delete_LookupJob(job);
+    /* Re-select the item at the cursor. */
+    if (d->cursor != iInvalidPos) {
+        d->cursor = iMin(d->cursor, numItems_ListWidget(d->list) - 1);
+        ((iListItem *) item_ListWidget(d->list, d->cursor))->isSelected = iTrue;
+    }
+    updateVisible_ListWidget(d->list);
+    invalidate_ListWidget(d->list);
+    setFlags_Widget(as_Widget(d), hidden_WidgetFlag, numItems_ListWidget(d->list) == 0);
+}
+
+static iLookupItem *item_LookupWidget_(iLookupWidget *d, size_t index) {
+    return item_ListWidget(d->list, index);
+}
+
+static void setCursor_LookupWidget_(iLookupWidget *d, size_t index) {
+    if (index != d->cursor) {
+        iLookupItem *item = item_LookupWidget_(d, d->cursor);
+        if (item) {
+            item->listItem.isSelected = iFalse;
+            invalidateItem_ListWidget(d->list, d->cursor);
+        }
+        d->cursor = index;
+        if ((item = item_LookupWidget_(d, d->cursor)) != NULL) {
+            item->listItem.isSelected = iTrue;
+            invalidateItem_ListWidget(d->list, d->cursor);
+        }
+    }
 }
 
 static iBool processEvent_LookupWidget_(iLookupWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
+    const char *cmd = command_UserEvent(ev);
+//    if (ev->type == SDL_MOUSEMOTION && contains_Widget(w, init_I2(ev->motion.x, ev->motion.y))) {
+//        setCursor_Window(get_Window(), SDL_SYSTEM_CURSOR_ARROW);
+//    }
+    if (isCommand_Widget(w, ev, "lookup.ready")) {
+        /* Take the results and present them in the list. */
+        presentResults_LookupWidget_(d);
+        return iTrue;
+    }
+    if (isResize_UserEvent(ev)) {
+        /* Position the lookup popup under the URL bar. */ {
+            setSize_Widget(w, init_I2(width_Widget(findWidget_App("url")),
+                                      get_Window()->root->rect.size.y / 2));
+            setPos_Widget(w, bottomLeft_Rect(bounds_Widget(findWidget_App("url"))));
+            arrange_Widget(w);
+        }
+        updateVisible_ListWidget(d->list);
+        invalidate_ListWidget(d->list);
+    }
+    if (equal_Command(cmd, "input.ended") && !cmp_String(string_Command(cmd, "id"), "url") &&
+        !isFocused_Widget(w)) {
+        setFlags_Widget(w, hidden_WidgetFlag, iTrue);
+    }
+    if (isCommand_Widget(w, ev, "focus.lost")) {
+        setCursor_LookupWidget_(d, iInvalidPos);
+    }
+    if (isCommand_Widget(w, ev, "focus.gained")) {
+        if (d->cursor == iInvalidPos) {
+            setCursor_LookupWidget_(d, 1);
+        }
+    }
+    if (isCommand_Widget(w, ev, "list.clicked")) {
+        setTextCStr_InputWidget(findWidget_App("url"), "");
+        const iLookupItem *item = constItem_ListWidget(d->list, arg_Command(cmd));
+        if (item && !isEmpty_String(&item->command)) {
+            postCommandString_App(&item->command);
+            setFlags_Widget(w, hidden_WidgetFlag, iTrue);
+            setCursor_LookupWidget_(d, iInvalidPos);
+            setFocus_Widget(NULL);
+        }
+        return iTrue;
+    }
+    if (ev->type == SDL_KEYDOWN) {
+        const int mods = keyMods_Sym(ev->key.keysym.mod);
+        const int key = ev->key.keysym.sym;
+        if (isFocused_Widget(d)) {
+            iWidget *url = findWidget_App("url");
+            switch (key) {
+                case SDLK_ESCAPE:
+                    setFlags_Widget(w, hidden_WidgetFlag, iTrue);
+                    setCursor_LookupWidget_(d, iInvalidPos);
+                    setFocus_Widget(url);
+                    return iTrue;
+                case SDLK_UP:
+                    for (;;) {
+                        if (d->cursor == 0) {
+                            setCursor_LookupWidget_(d, iInvalidPos);
+                            setFocus_Widget(url);
+                            break;
+                        }
+                        setCursor_LookupWidget_(d, d->cursor - 1);
+                        if (!item_LookupWidget_(d, d->cursor)->listItem.isSeparator) {
+                            break;
+                        }
+                    }
+                    return iTrue;
+                case SDLK_DOWN:
+                    while (d->cursor < numItems_ListWidget(d->list) - 1) {
+                        setCursor_LookupWidget_(d, d->cursor + 1);
+                        if (!item_LookupWidget_(d, d->cursor)->listItem.isSeparator) {
+                            break;
+                        }
+                    }
+                    return iTrue;
+                case SDLK_PAGEUP:
+                    return iTrue;
+                case SDLK_PAGEDOWN:
+                    return iTrue;
+                case SDLK_HOME:
+                    setCursor_LookupWidget_(d, 1);
+                    return iTrue;
+                case SDLK_END:
+                    setCursor_LookupWidget_(d, numItems_ListWidget(d->list) - 1);
+                    return iTrue;
+                case SDLK_KP_ENTER:
+                case SDLK_SPACE:
+                case SDLK_RETURN:
+                    postCommand_Widget(w, "list.clicked arg:%zu", d->cursor);
+                    return iTrue;
+            }
+        }
+        if (key == SDLK_DOWN && !mods && focus_Widget() == findWidget_App("url") &&
+            numItems_ListWidget(d->list)) {
+            setCursor_LookupWidget_(d, 1); /* item 0 is always the first heading */
+            setFocus_Widget(w);
+            return iTrue;
+        }
+    }
     return processEvent_Widget(w, ev);
 }
 

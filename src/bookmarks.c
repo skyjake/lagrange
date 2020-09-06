@@ -23,8 +23,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "bookmarks.h"
 
 #include <the_Foundation/file.h>
-#include <the_Foundation/path.h>
 #include <the_Foundation/hash.h>
+#include <the_Foundation/mutex.h>
+#include <the_Foundation/path.h>
 
 void init_Bookmark(iBookmark *d) {
     init_String(&d->url);
@@ -50,13 +51,15 @@ static int cmpTimeDescending_Bookmark_(const iBookmark **a, const iBookmark **b)
 static const char *fileName_Bookmarks_ = "bookmarks.txt";
 
 struct Impl_Bookmarks {
-    int   idEnum;
-    iHash bookmarks;
+    iMutex *mtx;
+    int     idEnum;
+    iHash   bookmarks;
 };
 
 iDefineTypeConstruction(Bookmarks)
 
 void init_Bookmarks(iBookmarks *d) {
+    d->mtx = new_Mutex();
     d->idEnum = 0;
     init_Hash(&d->bookmarks);
 }
@@ -64,19 +67,24 @@ void init_Bookmarks(iBookmarks *d) {
 void deinit_Bookmarks(iBookmarks *d) {
     clear_Bookmarks(d);
     deinit_Hash(&d->bookmarks);
+    delete_Mutex(d->mtx);
 }
 
 void clear_Bookmarks(iBookmarks *d) {
+    lock_Mutex(d->mtx);
     iForEach(Hash, i, &d->bookmarks) {
         delete_Bookmark((iBookmark *) i.value);
     }
     clear_Hash(&d->bookmarks);
     d->idEnum = 0;
+    unlock_Mutex(d->mtx);
 }
 
 static void insert_Bookmarks_(iBookmarks *d, iBookmark *bookmark) {
+    lock_Mutex(d->mtx);
     bookmark->node.key = ++d->idEnum;
     insert_Hash(&d->bookmarks, &bookmark->node);
+    unlock_Mutex(d->mtx);
 }
 
 void load_Bookmarks(iBookmarks *d, const char *dirPath) {
@@ -111,6 +119,7 @@ void load_Bookmarks(iBookmarks *d, const char *dirPath) {
 }
 
 void save_Bookmarks(const iBookmarks *d, const char *dirPath) {
+    lock_Mutex(d->mtx);
     iFile *f = newCStr_File(concatPath_CStr(dirPath, fileName_Bookmarks_));
     if (open_File(f, writeOnly_FileMode | text_FileMode)) {
         iString *str = collectNew_String();
@@ -127,10 +136,12 @@ void save_Bookmarks(const iBookmarks *d, const char *dirPath) {
         }
     }
     iRelease(f);
+    unlock_Mutex(d->mtx);
 }
 
 void add_Bookmarks(iBookmarks *d, const iString *url, const iString *title, const iString *tags,
                    iChar icon) {
+    lock_Mutex(d->mtx);
     iBookmark *bm = new_Bookmark();
     set_String(&bm->url, url);
     set_String(&bm->title, title);
@@ -138,30 +149,34 @@ void add_Bookmarks(iBookmarks *d, const iString *url, const iString *title, cons
     bm->icon = icon;
     initCurrent_Time(&bm->when);
     insert_Bookmarks_(d, bm);
+    unlock_Mutex(d->mtx);
 }
 
 iBool remove_Bookmarks(iBookmarks *d, uint32_t id) {
+    lock_Mutex(d->mtx);
     iBookmark *bm = (iBookmark *) remove_Hash(&d->bookmarks, id);
     if (bm) {
         delete_Bookmark(bm);
-        return iTrue;
     }
-    return iFalse;
+    unlock_Mutex(d->mtx);
+    return bm != NULL;
 }
 
 iBookmark *get_Bookmarks(iBookmarks *d, uint32_t id) {
     return (iBookmark *) value_Hash(&d->bookmarks, id);
 }
 
-const iPtrArray *list_Bookmarks(const iBookmarks *d, iBookmarksFilterFunc filter,
-                                iBookmarksCompareFunc cmp) {
+const iPtrArray *list_Bookmarks(const iBookmarks *d, iBookmarksCompareFunc cmp,
+                                iBookmarksFilterFunc filter, void *context) {
+    lock_Mutex(d->mtx);
     iPtrArray *list = collectNew_PtrArray();
     iConstForEach(Hash, i, &d->bookmarks) {
         const iBookmark *bm = (const iBookmark *) i.value;
-        if (!filter || filter(bm)) {
+        if (!filter || filter(context, bm)) {
             pushBack_PtrArray(list, bm);
         }
     }
+    unlock_Mutex(d->mtx);
     if (!cmp) cmp = cmpTimeDescending_Bookmark_;
     sort_Array(list, (int (*)(const void *, const void *)) cmp);
     return list;

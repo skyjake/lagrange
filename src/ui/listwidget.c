@@ -97,6 +97,11 @@ void invalidate_ListWidget(iListWidget *d) {
     refresh_Widget(as_Widget(d));
 }
 
+void invalidateItem_ListWidget(iListWidget *d, size_t index) {
+    insert_IntSet(&d->invalidItems, index);
+    refresh_Widget(d);
+}
+
 void clear_ListWidget(iListWidget *d) {
     iForEach(PtrArray, i, &d->items) {
         deref_Object(i.ptr);
@@ -124,14 +129,18 @@ static int scrollMax_ListWidget_(const iListWidget *d) {
 }
 
 void updateVisible_ListWidget(iListWidget *d) {
-    const int contentSize = size_PtrArray(&d->items) * d->itemHeight;
-    const iRect bounds = innerBounds_Widget(as_Widget(d));
+    const int   contentSize = size_PtrArray(&d->items) * d->itemHeight;
+    const iRect bounds      = innerBounds_Widget(as_Widget(d));
+    const iBool wasVisible  = isVisible_Widget(d->scroll);
     setRange_ScrollWidget(d->scroll, (iRangei){ 0, scrollMax_ListWidget_(d) });
     setThumb_ScrollWidget(d->scroll,
                           d->scrollY,
                           contentSize > 0 ? height_Rect(bounds_Widget(as_Widget(d->scroll))) *
                                                 height_Rect(bounds) / contentSize
                                           : 0);
+    if (wasVisible != isVisible_Widget(d->scroll)) {
+        invalidate_ListWidget(d); /* clip margins changed */
+    }
 }
 
 void setItemHeight_ListWidget(iListWidget *d, int itemHeight) {
@@ -193,18 +202,26 @@ size_t itemIndex_ListWidget(const iListWidget *d, iInt2 pos) {
     return index;
 }
 
+const iAnyObject *constItem_ListWidget(const iListWidget *d, size_t index) {
+    if (index < size_PtrArray(&d->items)) {
+        return constAt_PtrArray(&d->items, index);
+    }
+    return NULL;
+}
+
 const iAnyObject *constHoverItem_ListWidget(const iListWidget *d) {
-    if (d->hoverItem < size_PtrArray(&d->items)) {
-        return constAt_PtrArray(&d->items, d->hoverItem);
+    return constItem_ListWidget(d, d->hoverItem);
+}
+
+iAnyObject *item_ListWidget(iListWidget *d, size_t index) {
+    if (index < size_PtrArray(&d->items)) {
+        return at_PtrArray(&d->items, index);
     }
     return NULL;
 }
 
 iAnyObject *hoverItem_ListWidget(iListWidget *d) {
-    if (d->hoverItem < size_PtrArray(&d->items)) {
-        return at_PtrArray(&d->items, d->hoverItem);
-    }
-    return NULL;
+    return item_ListWidget(d, d->hoverItem);
 }
 
 static void setHoverItem_ListWidget_(iListWidget *d, size_t index) {
@@ -265,7 +282,7 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
     switch (processEvent_Click(&d->click, ev)) {
         case started_ClickResult:
             redrawHoverItem_ListWidget_(d);
-            break;
+            return iTrue;
         case aborted_ClickResult:
             redrawHoverItem_ListWidget_(d);
             break;
@@ -277,7 +294,7 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
                 postCommand_Widget(w, "list.clicked arg:%zu item:%p",
                                    d->hoverItem, constHoverItem_ListWidget(d));
             }
-            break;
+            return iTrue;
         default:
             break;
     }
@@ -382,7 +399,15 @@ static void draw_ListWidget_(const iListWidget *d) {
                         fillRect_Paint(&p, itemRect, w->bgColor);
                     }
                     class_ListItem(item)->draw(item, &p, itemRect, d);
-                    unsetClip_Paint(&p);
+                    /* Clear under the scrollbar. */
+                    if (isVisible_Widget(d->scroll)) {
+                        fillRect_Paint(
+                            &p,
+                            (iRect){ addX_I2(topRight_Rect(itemRect), -width_Widget(d->scroll)),
+                                     bottomRight_Rect(itemRect) },
+                            w->bgColor);
+                    }
+                    unsetClip_Paint(&p);                    
                 }
                 pos.y += d->itemHeight;
             }

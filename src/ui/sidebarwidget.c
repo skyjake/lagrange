@@ -123,7 +123,7 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
             break;
         }
         case bookmarks_SidebarMode: {
-            iConstForEach(PtrArray, i, list_Bookmarks(bookmarks_App(), NULL, cmpTitle_Bookmark_)) {
+            iConstForEach(PtrArray, i, list_Bookmarks(bookmarks_App(), cmpTitle_Bookmark_, NULL, NULL)) {
                 const iBookmark *bm = i.ptr;
                 iSidebarItem *item = new_SidebarItem();
                 item->id = id_Bookmark(bm);
@@ -749,16 +749,16 @@ static void draw_SidebarWidget_(const iSidebarWidget *d) {
 
 static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                               const iListWidget *list) {
+    const int             font       = uiContent_FontId;
     const iSidebarWidget *sidebar    = findParentClass_Widget(constAs_Widget(list),
                                                               &Class_SidebarWidget);
     const iBool           isPressing = isMouseDown_ListWidget(list);
-    const int             font       = uiContent_FontId;
     const iBool           isHover =
         isHover_Widget(constAs_Widget(list)) && constHoverItem_ListWidget(list) == d;
     const int itemHeight = height_Rect(itemRect);
     const int iconColor =
         isHover ? (isPressing ? uiTextPressed_ColorId : uiIconHover_ColorId) : uiIcon_ColorId;
-    if (isHover) /* && !d->listItem.isSeparator)*/ {
+    if (isHover) {
         fillRect_Paint(p,
                        itemRect,
                        isPressing ? uiBackgroundPressed_ColorId

@@ -49,6 +49,7 @@ iDeclareObjectConstruction(ListWidget)
 void    setItemHeight_ListWidget(iListWidget *, int itemHeight);
 
 void    invalidate_ListWidget   (iListWidget *);
+void    invalidateItem_ListWidget(iListWidget *, size_t index);
 void    clear_ListWidget        (iListWidget *);
 void    addItem_ListWidget      (iListWidget *, iAnyObject *item);
 
@@ -62,9 +63,12 @@ void    scrollOffset_ListWidget     (iListWidget *, int offset);
 void    updateVisible_ListWidget    (iListWidget *);
 void    updateMouseHover_ListWidget (iListWidget *);
 
+iAnyObject *item_ListWidget         (iListWidget *, size_t index);
+iAnyObject *hoverItem_ListWidget    (iListWidget *);
+
 size_t  numItems_ListWidget (const iListWidget *);
 size_t  itemIndex_ListWidget(const iListWidget *, iInt2 pos);
-const iAnyObject *constHoverItem_ListWidget(const iListWidget *);
-iAnyObject *hoverItem_ListWidget(iListWidget *);
+const iAnyObject *constItem_ListWidget      (const iListWidget *, size_t index);
+const iAnyObject *constHoverItem_ListWidget (const iListWidget *);
 
 iBool   isMouseDown_ListWidget  (const iListWidget *);

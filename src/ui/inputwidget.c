@@ -54,6 +54,7 @@ struct Impl_InputWidget {
     iBool           isSensitive;
     iBool           enterPressed;
     iBool           selectAllOnFocus;
+    iBool           notifyEdits;
     size_t          maxLen;
     iArray          text;    /* iChar[] */
     iArray          oldText; /* iChar[] */
@@ -97,6 +98,7 @@ void init_InputWidget(iInputWidget *d, size_t maxLen) {
     d->isSensitive      = iFalse;
     d->enterPressed     = iFalse;
     d->selectAllOnFocus = iFalse;
+    d->notifyEdits      = iFalse;
     iZap(d->mark);
     setMaxLen_InputWidget(d, maxLen);
     /* Caller must arrange the width, but the height is fixed. */
@@ -300,8 +302,18 @@ void setSelectAllOnFocus_InputWidget(iInputWidget *d, iBool selectAllOnFocus) {
     d->selectAllOnFocus = selectAllOnFocus;
 }
 
+void setNotifyEdits_InputWidget(iInputWidget *d, iBool notifyEdits) {
+    d->notifyEdits = notifyEdits;
+}
+
 static iRanges mark_InputWidget_(const iInputWidget *d) {
     return (iRanges){ iMin(d->mark.start, d->mark.end), iMax(d->mark.start, d->mark.end) };
+}
+
+static void contentsWereChanged_InputWidget_(iInputWidget *d) {
+    if (d->notifyEdits) {
+        postCommand_Widget(d, "input.edited id:%s", cstr_String(id_Widget(constAs_Widget(d))));
+    }
 }
 
 static iBool deleteMarked_InputWidget_(iInputWidget *d) {
@@ -481,6 +493,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                         if (key == 'x') {
                             pushUndo_InputWidget_(d);
                             deleteMarked_InputWidget_(d);
+                            contentsWereChanged_InputWidget_(d);
                         }
                     }
                     return iTrue;
@@ -494,11 +507,13 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                         iConstForEach(String, i, paste) {
                             insertChar_InputWidget_(d, i.value);
                         }
+                        contentsWereChanged_InputWidget_(d);
                     }
                     return iTrue;
                 case 'z':
                     if (popUndo_InputWidget_(d)) {
                         refresh_Widget(w);
+                        contentsWereChanged_InputWidget_(d);
                     }
                     return iTrue;
             }
@@ -518,16 +533,19 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                 if (!isEmpty_Range(&d->mark)) {
                     pushUndo_InputWidget_(d);
                     deleteMarked_InputWidget_(d);
+                    contentsWereChanged_InputWidget_(d);
                 }
                 else if (mods & KMOD_ALT) {
                     pushUndo_InputWidget_(d);
                     d->mark.start = d->cursor;
                     d->mark.end   = skipWord_InputWidget_(d, d->cursor, -1);
                     deleteMarked_InputWidget_(d);
+                    contentsWereChanged_InputWidget_(d);
                 }
                 else if (d->cursor > 0) {
                     pushUndo_InputWidget_(d);
                     remove_Array(&d->text, --d->cursor);
+                    contentsWereChanged_InputWidget_(d);
                 }
                 showCursor_InputWidget_(d);
                 refresh_Widget(w);
@@ -538,16 +556,19 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                 if (!isEmpty_Range(&d->mark)) {
                     pushUndo_InputWidget_(d);
                     deleteMarked_InputWidget_(d);
+                    contentsWereChanged_InputWidget_(d);
                 }
                 else if (mods & KMOD_ALT) {
                     pushUndo_InputWidget_(d);
                     d->mark.start = d->cursor;
                     d->mark.end   = skipWord_InputWidget_(d, d->cursor, +1);
                     deleteMarked_InputWidget_(d);
+                    contentsWereChanged_InputWidget_(d);
                 }
                 else if (d->cursor < size_Array(&d->text)) {
                     pushUndo_InputWidget_(d);
                     remove_Array(&d->text, d->cursor);
+                    contentsWereChanged_InputWidget_(d);
                 }
                 showCursor_InputWidget_(d);
                 refresh_Widget(w);
@@ -557,10 +578,12 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                     if (!isEmpty_Range(&d->mark)) {
                         pushUndo_InputWidget_(d);
                         deleteMarked_InputWidget_(d);
+                        contentsWereChanged_InputWidget_(d);
                     }
                     else {
                         pushUndo_InputWidget_(d);
                         removeN_Array(&d->text, d->cursor, size_Array(&d->text) - d->cursor);
+                        contentsWereChanged_InputWidget_(d);
                     }
                     showCursor_InputWidget_(d);
                     refresh_Widget(w);
@@ -612,6 +635,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                 return iTrue;
             }
             case SDLK_TAB:
+            case SDLK_DOWN: /* for moving to lookup from url entry */
                 /* Allow focus switching. */
                 return processEvent_Widget(as_Widget(d), ev);
         }
@@ -627,6 +651,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
         iConstForEach(String, i, uni) {
             insertChar_InputWidget_(d, i.value);
         }
+        contentsWereChanged_InputWidget_(d);
         return iTrue;
     }
     return processEvent_Widget(w, ev);
@@ -643,7 +668,6 @@ static iBool isWhite_(const iString *str) {
 
 static void draw_InputWidget_(const iInputWidget *d) {
     const iWidget *w         = constAs_Widget(d);
-    const uint32_t time      = frameTime_Window(get_Window());
     iRect          bounds    = adjusted_Rect(bounds_Widget(w), padding_(), neg_I2(padding_()));
     iBool          isHint    = iFalse;
     const iBool    isFocused = isFocused_Widget(w);

@@ -52,7 +52,7 @@ void    add_Bookmarks       (iBookmarks *, const iString *url, const iString *ti
 iBool   remove_Bookmarks    (iBookmarks *, uint32_t id);
 iBookmark *get_Bookmarks    (iBookmarks *, uint32_t id);
 
-typedef iBool (*iBookmarksFilterFunc) (const iBookmark *);
+typedef iBool (*iBookmarksFilterFunc) (void *context, const iBookmark *);
 typedef int   (*iBookmarksCompareFunc)(const iBookmark **, const iBookmark **);
 
 /**
@@ -66,5 +66,5 @@ typedef int   (*iBookmarksCompareFunc)(const iBookmark **, const iBookmark **);
  * @return Collected array of bookmarks. Caller does not get ownership of the
  * listed bookmarks.
  */
-const iPtrArray *list_Bookmarks(const iBookmarks *, iBookmarksFilterFunc filter,
-                                iBookmarksCompareFunc cmp);
+const iPtrArray *list_Bookmarks(const iBookmarks *, iBookmarksCompareFunc cmp,
+                                iBookmarksFilterFunc filter, void *context);

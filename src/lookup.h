@@ -37,6 +37,7 @@ enum iLookupResultType {
 
 struct Impl_LookupResult {
     enum iLookupResultType type;
+    float relevance; /* used for sorting results */
     iString label;
     iString url;
     iString meta;
@@ -44,3 +45,5 @@ struct Impl_LookupResult {
 };
 
 iDeclareTypeConstruction(LookupResult)
+
+iLookupResult *     copy_LookupResult   (const iLookupResult *);

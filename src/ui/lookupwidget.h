@@ -27,4 +27,4 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 iDeclareWidgetClass(LookupWidget)
 iDeclareObjectConstruction(LookupWidget)
 
-
+void    submit_LookupWidget     (iLookupWidget *, const iString *term);

@@ -144,7 +144,7 @@ static iString *serializePrefs_App_(const iApp *d) {
         appendFormat_String(str, "window.setrect width:%d height:%d coord:%d %d\n", w, h, x, y);
         appendFormat_String(str, "sidebar.width arg:%d\n", width_SidebarWidget(sidebar));
     }
-    if (isVisible_Widget(constAs_Widget(sidebar))) {
+    if (isVisible_Widget(sidebar)) {
         appendCStr_String(str, "sidebar.toggle\n");
     }
     if (d->forceWrap) {
