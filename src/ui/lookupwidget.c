@@ -372,7 +372,23 @@ static void setCursor_LookupWidget_(iLookupWidget *d, size_t index) {
             item->listItem.isSelected = iTrue;
             invalidateItem_ListWidget(d->list, d->cursor);
         }
+        scrollToItem_ListWidget(d->list, d->cursor);
     }
+}
+
+static iBool moveCursor_LookupWidget_(iLookupWidget *d, int delta) {
+    const int dir  = iSign(delta);
+    size_t    cur  = d->cursor;
+    size_t    good = cur;
+    while (delta && ((dir < 0 && cur > 0) || (dir > 0 && cur < numItems_ListWidget(d->list) - 1))) {
+        cur += dir;
+        if (!item_LookupWidget_(d, cur)->listItem.isSeparator) {
+            delta -= dir;
+            good = cur;
+        }
+    }
+    setCursor_LookupWidget_(d, good);
+    return delta == 0;
 }
 
 static iBool processEvent_LookupWidget_(iLookupWidget *d, const SDL_Event *ev) {
@@ -431,29 +447,19 @@ static iBool processEvent_LookupWidget_(iLookupWidget *d, const SDL_Event *ev) {
                     setFocus_Widget(url);
                     return iTrue;
                 case SDLK_UP:
-                    for (;;) {
-                        if (d->cursor == 0) {
-                            setCursor_LookupWidget_(d, iInvalidPos);
-                            setFocus_Widget(url);
-                            break;
-                        }
-                        setCursor_LookupWidget_(d, d->cursor - 1);
-                        if (!item_LookupWidget_(d, d->cursor)->listItem.isSeparator) {
-                            break;
-                        }
+                    if (!moveCursor_LookupWidget_(d, -1)) {
+                        setCursor_LookupWidget_(d, iInvalidPos);
+                        setFocus_Widget(url);
                     }
                     return iTrue;
                 case SDLK_DOWN:
-                    while (d->cursor < numItems_ListWidget(d->list) - 1) {
-                        setCursor_LookupWidget_(d, d->cursor + 1);
-                        if (!item_LookupWidget_(d, d->cursor)->listItem.isSeparator) {
-                            break;
-                        }
-                    }
+                    moveCursor_LookupWidget_(d, +1);
                     return iTrue;
                 case SDLK_PAGEUP:
+                    moveCursor_LookupWidget_(d, -visCount_ListWidget(d->list) + 1);
                     return iTrue;
                 case SDLK_PAGEDOWN:
+                    moveCursor_LookupWidget_(d, visCount_ListWidget(d->list) - 1);
                     return iTrue;
                 case SDLK_HOME:
                     setCursor_LookupWidget_(d, 1);

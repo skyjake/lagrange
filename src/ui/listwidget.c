@@ -179,8 +179,20 @@ void scrollOffset_ListWidget(iListWidget *d, int offset) {
     }
 }
 
-static int visCount_ListWidget_(const iListWidget *d) {
-    return iMin(height_Rect(innerBounds_Widget(constAs_Widget(d))) / d->itemHeight + 2,
+void scrollToItem_ListWidget(iListWidget *d, size_t index) {
+    const iRect rect    = innerBounds_Widget(as_Widget(d));
+    int         yTop    = d->itemHeight * index - d->scrollY;
+    int         yBottom = yTop + d->itemHeight;
+    if (yBottom > height_Rect(rect)) {
+        scrollOffset_ListWidget(d, yBottom - height_Rect(rect));
+    }
+    else if (yTop < 0) {
+        scrollOffset_ListWidget(d, yTop);
+    }
+}
+
+int visCount_ListWidget(const iListWidget *d) {
+    return iMin(height_Rect(innerBounds_Widget(constAs_Widget(d))) / d->itemHeight,
                 (int) size_PtrArray(&d->items));
 }
 
@@ -189,7 +201,7 @@ static iRanges visRange_ListWidget_(const iListWidget *d) {
         return (iRanges){ 0, 0 };
     }
     iRanges vis = { d->scrollY / d->itemHeight, 0 };
-    vis.end = iMin(size_PtrArray(&d->items), vis.start + visCount_ListWidget_(d));
+    vis.end = iMin(size_PtrArray(&d->items), vis.start + visCount_ListWidget(d) + 1);
     return vis;
 }
 
