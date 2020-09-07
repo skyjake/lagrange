@@ -21,17 +21,19 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "lookupwidget.h"
-#include "documentwidget.h"
-#include "lookup.h"
-#include "listwidget.h"
-#include "inputwidget.h"
-#include "util.h"
-#include "command.h"
-#include "bookmarks.h"
-#include "history.h"
-#include "visited.h"
-#include "gmutil.h"
+
 #include "app.h"
+#include "bookmarks.h"
+#include "command.h"
+#include "documentwidget.h"
+#include "gmcerts.h"
+#include "gmutil.h"
+#include "history.h"
+#include "inputwidget.h"
+#include "listwidget.h"
+#include "lookup.h"
+#include "util.h"
+#include "visited.h"
 
 #include <the_Foundation/mutex.h>
 #include <the_Foundation/thread.h>
@@ -156,6 +158,14 @@ static float bookmarkRelevance_LookupJob_(const iLookupJob *d, const iBookmark *
     return h + iMax(p, t) + 2 * g; /* extra weight for tags */
 }
 
+static float identityRelevance_LookupJob_(const iLookupJob *d, const iGmIdentity *identity) {
+    iString *cn = subject_TlsCertificate(identity->cert);
+    const float c = scoreMatch_(d->term, range_String(cn));
+    const float n = scoreMatch_(d->term, range_String(&identity->notes));
+    delete_String(cn);
+    return c + 2 * n; /* extra weight for notes */
+}
+
 static float visitedRelevance_LookupJob_(const iLookupJob *d, const iVisitedUrl *vis) {
     iUrl parts;
     init_Url(&parts, &vis->url);
@@ -167,6 +177,10 @@ static float visitedRelevance_LookupJob_(const iLookupJob *d, const iVisitedUrl 
 
 static iBool matchBookmark_LookupJob_(void *context, const iBookmark *bm) {
     return bookmarkRelevance_LookupJob_(context, bm) > 0;
+}
+
+static iBool matchIdentity_LookupJob_(void *context, const iGmIdentity *identity) {
+    return identityRelevance_LookupJob_(context, identity) > 0;
 }
 
 static void searchBookmarks_LookupJob_(iLookupJob *d) {
@@ -230,6 +244,25 @@ static void searchHistory_LookupJob_(iLookupJob *d) {
     }
 }
 
+static void searchIdentities_LookupJob_(iLookupJob *d) {
+    /* Note: Called in a background thread. */
+    iConstForEach(PtrArray, i, listIdentities_GmCerts(certs_App(), matchIdentity_LookupJob_, d)) {
+        const iGmIdentity *identity = i.ptr;
+        iLookupResult *res = new_LookupResult();
+        res->type = identity_LookupResultType;
+        res->relevance = identityRelevance_LookupJob_(d, identity);
+        appendChar_String(&res->label, identity->icon);
+        appendChar_String(&res->label, ' ');
+        iString *cn = subject_TlsCertificate(identity->cert);
+        append_String(&res->label, cn);
+        delete_String(cn);
+        set_String(&res->meta,
+                   collect_String(
+                       hexEncode_Block(collect_Block(fingerprint_TlsCertificate(identity->cert)))));
+        pushBack_PtrArray(&d->results, res);
+    }
+}
+
 static iThreadResult worker_LookupWidget_(iThread *thread) {
     iLookupWidget *d = userData_Thread(thread);
     printf("[LookupWidget] worker is running\n"); fflush(stdout);
@@ -271,6 +304,7 @@ static iThreadResult worker_LookupWidget_(iThread *thread) {
             if (termLen >= 3) {
                 searchHistory_LookupJob_(job);
             }
+            searchIdentities_LookupJob_(job);
         }
         /* Submit the result. */
         lock_Mutex(d->mtx);
@@ -431,6 +465,12 @@ static void presentResults_LookupWidget_(iLookupWidget *d) {
                 item->font = uiContent_FontId;
                 format_String(&item->text, "%s \u2014 %s", cstr_String(&res->label), url);
                 format_String(&item->command, "open url:%s", cstr_String(&res->url));
+                break;
+            }
+            case identity_LookupResultType: {
+                item->fg = uiText_ColorId;
+                item->font = uiContent_FontId;
+                format_String(&item->text, "%s", cstr_String(&res->label));
                 break;
             }
         }

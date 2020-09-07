@@ -179,7 +179,7 @@ iDefineTypeConstruction(GmIdentity)
 /*-----------------------------------------------------------------------------------------------*/
 
 struct Impl_GmCerts {
-    iMutex mtx;
+    iMutex *mtx;
     iString saveDir;
     iStringHash *trusted;
     iPtrArray idents;
@@ -337,7 +337,7 @@ static void load_GmCerts_(iGmCerts *d) {
 }
 
 void init_GmCerts(iGmCerts *d, const char *saveDir) {
-    init_Mutex(&d->mtx);
+    d->mtx = new_Mutex();
     initCStr_String(&d->saveDir, saveDir);
     d->trusted = new_StringHash();
     init_PtrArray(&d->idents);
@@ -345,7 +345,7 @@ void init_GmCerts(iGmCerts *d, const char *saveDir) {
 }
 
 void deinit_GmCerts(iGmCerts *d) {
-    iGuardMutex(&d->mtx, {
+    iGuardMutex(d->mtx, {
         saveIdentities_GmCerts_(d);
         iForEach(PtrArray, i, &d->idents) {
             delete_GmIdentity(i.ptr);
@@ -354,7 +354,7 @@ void deinit_GmCerts(iGmCerts *d) {
         iRelease(d->trusted);
         deinit_String(&d->saveDir);
     });
-    deinit_Mutex(&d->mtx);
+    delete_Mutex(d->mtx);
 }
 
 iBool checkTrust_GmCerts(iGmCerts *d, iRangecc domain, const iTlsCertificate *cert) {
@@ -372,7 +372,7 @@ iBool checkTrust_GmCerts(iGmCerts *d, iRangecc domain, const iTlsCertificate *ce
     iDate until;
     validUntil_TlsCertificate(cert, &until);
     iBlock *fingerprint = fingerprint_TlsCertificate(cert);
-    lock_Mutex(&d->mtx);
+    lock_Mutex(d->mtx);
     iTrustEntry *trust = value_StringHash(d->trusted, key);
     if (trust) {
         /* We already have it, check if it matches the one we trust for this domain (if it's
@@ -382,7 +382,7 @@ iBool checkTrust_GmCerts(iGmCerts *d, iRangecc domain, const iTlsCertificate *ce
         if (secondsSince_Time(&trust->validUntil, &now) > 0) {
             /* Trusted cert is still valid. */
             const iBool isTrusted = cmp_Block(fingerprint, &trust->fingerprint) == 0;
-            unlock_Mutex(&d->mtx);
+            unlock_Mutex(d->mtx);
             delete_Block(fingerprint);
             delete_String(key);
             return isTrusted;
@@ -395,7 +395,7 @@ iBool checkTrust_GmCerts(iGmCerts *d, iRangecc domain, const iTlsCertificate *ce
         insert_StringHash(d->trusted, key, iClob(new_TrustEntry(fingerprint, &until)));
     }
     save_GmCerts_(d);
-    unlock_Mutex(&d->mtx);
+    unlock_Mutex(d->mtx);
     delete_Block(fingerprint);
     delete_String(key);
     return iTrue;
@@ -410,16 +410,21 @@ const iGmIdentity *constIdentity_GmCerts(const iGmCerts *d, unsigned int id) {
 }
 
 const iGmIdentity *identityForUrl_GmCerts(const iGmCerts *d, const iString *url) {
+    lock_Mutex(d->mtx);
+    const iGmIdentity *found = NULL;
     iConstForEach(PtrArray, i, &d->idents) {
         const iGmIdentity *ident = i.ptr;
         iConstForEach(StringSet, j, ident->useUrls) {
             const iString *used = j.value;
             if (startsWithCase_String(url, cstr_String(used))) {
-                return ident;
+                found = ident;
+                goto done;
             }
         }
     }
-    return NULL;
+done:
+    unlock_Mutex(d->mtx);
+    return found;
 }
 
 iGmIdentity *newIdentity_GmCerts(iGmCerts *d, int flags, iDate validUntil, const iString *commonName,
@@ -454,7 +459,7 @@ iGmIdentity *newIdentity_GmCerts(iGmCerts *d, int flags, iDate validUntil, const
             return NULL;
         }
     }
-    pushBack_PtrArray(&d->idents, id);
+    iGuardMutex(d->mtx, pushBack_PtrArray(&d->idents, id));
     return id;
 }
 
@@ -467,6 +472,7 @@ static const char *certPath_GmCerts_(const iGmCerts *d, const iGmIdentity *ident
 }
 
 void deleteIdentity_GmCerts(iGmCerts *d, iGmIdentity *identity) {
+    lock_Mutex(d->mtx);
     /* Only delete the files if we created them. */
     const char *filename = certPath_GmCerts_(d, identity);
     if (filename) {
@@ -475,6 +481,7 @@ void deleteIdentity_GmCerts(iGmCerts *d, iGmIdentity *identity) {
     }
     removeOne_PtrArray(&d->idents, identity);
     collect_GmIdentity(identity);
+    unlock_Mutex(d->mtx);
 }
 
 const iString *certificatePath_GmCerts(const iGmCerts *d, const iGmIdentity *identity) {
@@ -498,4 +505,17 @@ void signOut_GmCerts(iGmCerts *d, const iString *url) {
     iForEach(PtrArray, i, &d->idents) {
         setUse_GmIdentity(i.ptr, url, iFalse);
     }
+}
+
+const iPtrArray *listIdentities_GmCerts(const iGmCerts *d, iGmCertsIdentityFilterFunc filter,
+                                        void *context) {
+    iPtrArray *list = collectNew_PtrArray();
+    lock_Mutex(d->mtx);
+    iConstForEach(PtrArray, i, &d->idents) {
+        if (!filter || filter(context, i.ptr)) {
+            pushBack_PtrArray(list, i.ptr);
+        }
+    }
+    unlock_Mutex(d->mtx);
+    return list;
 }

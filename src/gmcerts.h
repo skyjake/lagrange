@@ -57,6 +57,8 @@ const iString *name_GmIdentity(const iGmIdentity *);
 iDeclareType(GmCerts)
 iDeclareTypeConstructionArgs(GmCerts, const char *saveDir)
 
+typedef iBool (*iGmCertsIdentityFilterFunc)(void *context, const iGmIdentity *);
+
 iBool               checkTrust_GmCerts      (iGmCerts *, iRangecc domain, const iTlsCertificate *cert);
 
 /**
@@ -83,6 +85,7 @@ iGmIdentity *       identity_GmCerts        (iGmCerts *, unsigned int id);
 const iGmIdentity * constIdentity_GmCerts   (const iGmCerts *, unsigned int id);
 const iGmIdentity * identityForUrl_GmCerts  (const iGmCerts *, const iString *url);
 const iPtrArray *   identities_GmCerts      (const iGmCerts *);
+const iPtrArray *   listIdentities_GmCerts  (const iGmCerts *, iGmCertsIdentityFilterFunc filter, void *context);
 
 void                signIn_GmCerts          (iGmCerts *, iGmIdentity *identity, const iString *url);
 void                signOut_GmCerts         (iGmCerts *, const iString *url);
