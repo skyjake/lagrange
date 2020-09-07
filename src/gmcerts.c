@@ -368,10 +368,10 @@ iBool checkTrust_GmCerts(iGmCerts *d, iRangecc domain, const iTlsCertificate *ce
         return iFalse;
     }
     /* Good certificate. If not already trusted, add it now. */
-    const iString *key = collect_String(newRange_String(domain));
+    iString *key = newRange_String(domain);
     iDate until;
     validUntil_TlsCertificate(cert, &until);
-    iBlock *fingerprint = collect_Block(fingerprint_TlsCertificate(cert));
+    iBlock *fingerprint = fingerprint_TlsCertificate(cert);
     lock_Mutex(&d->mtx);
     iTrustEntry *trust = value_StringHash(d->trusted, key);
     if (trust) {
@@ -383,6 +383,8 @@ iBool checkTrust_GmCerts(iGmCerts *d, iRangecc domain, const iTlsCertificate *ce
             /* Trusted cert is still valid. */
             const iBool isTrusted = cmp_Block(fingerprint, &trust->fingerprint) == 0;
             unlock_Mutex(&d->mtx);
+            delete_Block(fingerprint);
+            delete_String(key);
             return isTrusted;
         }
         /* Update the trusted cert. */
@@ -394,6 +396,8 @@ iBool checkTrust_GmCerts(iGmCerts *d, iRangecc domain, const iTlsCertificate *ce
     }
     save_GmCerts_(d);
     unlock_Mutex(&d->mtx);
+    delete_Block(fingerprint);
+    delete_String(key);
     return iTrue;
 }
 
