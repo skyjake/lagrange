@@ -242,6 +242,7 @@ void arrange_Widget(iWidget *d) {
         const iInt2 dirs = init_I2((d->flags & resizeWidthOfChildren_WidgetFlag) != 0,
                                    (d->flags & resizeHeightOfChildren_WidgetFlag) != 0);
         /* Collapse hidden children. */
+        iBool uncollapsed = iFalse;
         iForEach(ObjectList, c, d->children) {
             iWidget *child = as_Widget(c.object);
             if (isCollapsed_Widget_(child)) {
@@ -256,9 +257,14 @@ void arrange_Widget(iWidget *d) {
                 setFlags_Widget(child, wasCollapsed_WidgetFlag, iFalse);
                 /* Undo collapse and determine the normal size again. */
                 if (child->flags & arrangeSize_WidgetFlag) {
-                    arrange_Widget(child);
+                    arrange_Widget(d);
+                    uncollapsed = iTrue;
                 }
             }
+        }
+        if (uncollapsed) {
+            arrange_Widget(d); /* Redo with the next child sizes. */
+            return;
         }
         const int expCount = numExpandingChildren_Widget_(d);
         /* Only resize the expanding children, not touching the others. */
