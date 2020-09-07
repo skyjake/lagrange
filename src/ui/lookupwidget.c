@@ -246,7 +246,7 @@ static iThreadResult worker_LookupWidget_(iThread *thread) {
             iBool isFirst = iTrue;
             while (nextSplit_Rangecc(range_String(&d->pendingTerm), " ", &word)) {
                 if (isEmpty_Range(&word)) continue;
-                if (!isFirst) appendChar_String(pattern, '|');
+                if (!isFirst) appendCStr_String(pattern, ".*");
                 for (const char *ch = word.start; ch != word.end; ch++) {
                     /* Escape regular expression characters. */
                     if (isSyntaxChar_RegExp(*ch)) {

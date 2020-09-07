@@ -26,6 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/file.h>
 #include <the_Foundation/mutex.h>
 #include <the_Foundation/path.h>
+#include <the_Foundation/stringset.h>
 
 static const size_t maxStack_History_ = 50; /* back/forward navigable items */
 
@@ -255,7 +256,9 @@ void setCachedResponse_History(iHistory *d, const iGmResponse *response) {
 const iStringArray *searchContents_History(const iHistory *d, const iRegExp *pattern) {
     iStringArray *urls = iClob(new_StringArray());
     lock_Mutex(d->mtx);
-    iConstForEach(Array, i, &d->recent) {
+    iStringSet inserted;
+    init_StringSet(&inserted);
+    iReverseConstForEach(Array, i, &d->recent) {
         const iRecentUrl *url = i.value;
         const iGmResponse *resp = url->cachedResponse;
         if (resp && category_GmStatusCode(resp->statusCode) == categorySuccess_GmStatusCode) {
@@ -274,6 +277,7 @@ const iStringArray *searchContents_History(const iHistory *d, const iRegExp *pat
                 initRange_String(&content, (iRangecc){ m.subject + cap.start, m.subject + cap.end });
                 /* This needs cleaning up; highlight the matched word. */
                 replace_Block(&content.chars, '\n', ' ');
+                replace_Block(&content.chars, '\r', ' ');
 //                insertData_Block(&content.chars, 10, uiTextStrong_ColorEscape, 2);
 //                insertData_Block(&content.chars, size_String(&content) - 10, uiText_ColorEscape, 2);
                 format_String(
@@ -281,11 +285,15 @@ const iStringArray *searchContents_History(const iHistory *d, const iRegExp *pat
                 deinit_String(&content);
                 //appendRange_String(&entry, );
                 appendFormat_String(&entry, " url:%s", cstr_String(&url->url));
-                pushBack_StringArray(urls, &entry);
+                if (!contains_StringSet(&inserted, &url->url)) {
+                    pushFront_StringArray(urls, &entry);
+                    insert_StringSet(&inserted, &url->url);
+                }
                 deinit_String(&entry);
             }
         }
     }
+    deinit_StringSet(&inserted);
     unlock_Mutex(d->mtx);
     return urls;
 }
