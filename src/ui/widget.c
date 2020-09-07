@@ -464,12 +464,14 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
                 continue;
             }
             if (dispatchEvent_Widget(child, ev)) {
+#if 0
                 if (ev->type == SDL_MOUSEBUTTONDOWN) {
                     printf("widget %p ('%s' class:%s) ate the mouse down\n",
                            child, cstr_String(id_Widget(child)),
                            class_Widget(child)->name);
                     fflush(stdout);
                 }
+#endif
                 return iTrue;
             }
         }

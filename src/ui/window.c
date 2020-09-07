@@ -210,10 +210,14 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
             return iTrue;
         }
     }
-    else if (equal_Command(cmd, "input.ended")) {
+    else if (startsWith_CStr(cmd, "input.ended id:url ")) {
         iInputWidget *url = findChild_Widget(navBar, "url");
-        if (arg_Command(cmd) && pointer_Command(cmd) == url &&
-            !isFocused_Widget(findWidget_App("lookup"))) {
+        if (isEmpty_String(text_InputWidget(url))) {
+            /* User entered nothing; restore the current URL. */
+            setText_InputWidget(url, url_DocumentWidget(document_App()));
+            return iTrue;
+        }
+        if (arg_Command(cmd) && !isFocused_Widget(findWidget_App("lookup"))) {
             postCommandf_App(
                 "open url:%s",
                 cstr_String(absoluteUrl_String(&iStringLiteral(""), text_InputWidget(url))));

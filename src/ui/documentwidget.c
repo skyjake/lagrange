@@ -738,6 +738,9 @@ void setUrlFromCache_DocumentWidget(iDocumentWidget *d, const iString *url, iBoo
             fetch_DocumentWidget_(d);
         }
     }
+    else {
+        postCommandf_App("document.changed url:%s", cstr_String(d->mod.url));
+    }
 }
 
 iDocumentWidget *duplicate_DocumentWidget(const iDocumentWidget *orig) {
