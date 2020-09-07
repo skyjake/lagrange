@@ -42,7 +42,7 @@ enum iAppEventMode {
 
 enum iUserEventCode {
     command_UserEventCode = 1,
-    refresh_UserEventCode  = 2,
+    refresh_UserEventCode = 2,
 };
 
 const iString *execPath_App     (void);
