@@ -172,7 +172,10 @@ void scrollOffset_ListWidget(iListWidget *d, int offset) {
     const int scrollMax = scrollMax_ListWidget_(d);
     d->scrollY = iMin(d->scrollY, scrollMax);
     if (oldScroll != d->scrollY) {
-        d->hoverItem = iInvalidPos;
+        if (d->hoverItem != iInvalidPos) {
+            invalidateItem_ListWidget(d, d->hoverItem);
+            d->hoverItem = iInvalidPos;
+        }
         updateVisible_ListWidget(d);
         d->visBufferValid = partial_BufferValidity;
         refresh_Widget(as_Widget(d));
