@@ -67,8 +67,10 @@ void init_History(iHistory *d) {
 }
 
 void deinit_History(iHistory *d) {
-    clear_History(d);
-    deinit_Array(&d->recent);
+    iGuardMutex(d->mtx, {
+        clear_History(d);
+        deinit_Array(&d->recent);
+    });
     delete_Mutex(d->mtx);
 }
 
@@ -248,4 +250,40 @@ void setCachedResponse_History(iHistory *d, const iGmResponse *response) {
         }
     }
     unlock_Mutex(d->mtx);
+}
+
+const iStringArray *searchContents_History(const iHistory *d, const iRegExp *pattern) {
+    iStringArray *urls = iClob(new_StringArray());
+    lock_Mutex(d->mtx);
+    iConstForEach(Array, i, &d->recent) {
+        const iRecentUrl *url = i.value;
+        const iGmResponse *resp = url->cachedResponse;
+        if (resp && category_GmStatusCode(resp->statusCode) == categorySuccess_GmStatusCode) {
+            if (indexOfCStrSc_String(&resp->meta, "text/", &iCaseInsensitive) == iInvalidPos) {
+                continue;
+            }
+            iRegExpMatch m;
+            init_RegExpMatch(&m);
+            if (matchRange_RegExp(pattern, range_Block(&resp->body), &m)) {
+                iString entry;
+                init_String(&entry);
+                iRangei cap = m.range;
+                cap.start   = iMax(cap.start - 4, 0);
+                cap.end     = iMin(cap.end + 10, (int) size_Block(&resp->body));
+                iString content;
+                initRange_String(&content, (iRangecc){ m.subject + cap.start, m.subject + cap.end });
+                /* This needs cleaning up; highlight the matched word. */ {
+
+                }
+                format_String(&entry, "match len:%zu str:%s", size_String(&content), cstr_String(&content));
+                deinit_String(&content);
+                //appendRange_String(&entry, );
+                appendFormat_String(&entry, " url:%s", cstr_String(&url->url));
+                pushBack_StringArray(urls, &entry);
+                deinit_String(&entry);
+            }
+        }
+    }
+    unlock_Mutex(d->mtx);
+    return urls;
 }

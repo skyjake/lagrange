@@ -24,6 +24,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 /* Application core: event loop, base event processing, audio synth. */
 
+#include <the_Foundation/objectlist.h>
 #include <the_Foundation/string.h>
 #include <the_Foundation/time.h>
 
@@ -64,6 +65,7 @@ iGmCerts *          certs_App           (void);
 iVisited *          visited_App         (void);
 iBookmarks *        bookmarks_App       (void);
 iDocumentWidget *   document_App        (void);
+iObjectList *       listDocuments_App   (void);
 iDocumentWidget *   document_Command    (const char *cmd);
 iDocumentWidget *   newTab_App          (const iDocumentWidget *duplicateOf);
 

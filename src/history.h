@@ -24,8 +24,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "gmrequest.h"
 
-#include <the_Foundation/array.h>
+#include <the_Foundation/ptrarray.h>
+#include <the_Foundation/regexp.h>
 #include <the_Foundation/string.h>
+#include <the_Foundation/stringarray.h>
 #include <the_Foundation/time.h>
 
 iDeclareType(RecentUrl)
@@ -54,6 +56,8 @@ iBool       goForward_History           (iHistory *);
 iRecentUrl *recentUrl_History           (iHistory *, size_t pos);
 iRecentUrl *mostRecentUrl_History       (iHistory *);
 iRecentUrl *findUrl_History             (iHistory *, const iString *url);
+
+const iStringArray *   searchContents_History   (const iHistory *, const iRegExp *pattern); /* chronologically ascending */
 
 const iString *
             url_History                 (const iHistory *, size_t pos);

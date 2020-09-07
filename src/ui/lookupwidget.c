@@ -21,12 +21,14 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "lookupwidget.h"
+#include "documentwidget.h"
 #include "lookup.h"
 #include "listwidget.h"
 #include "inputwidget.h"
 #include "util.h"
 #include "command.h"
 #include "bookmarks.h"
+#include "history.h"
 #include "visited.h"
 #include "gmutil.h"
 #include "app.h"
@@ -40,12 +42,14 @@ iDeclareType(LookupJob)
 struct Impl_LookupJob {
     iRegExp *term;
     iTime now;
+    iObjectList *docs;
     iPtrArray results;
 };
 
 static void init_LookupJob(iLookupJob *d) {
     d->term = NULL;
     initCurrent_Time(&d->now);
+    d->docs = NULL;
     init_PtrArray(&d->results);
 }
 
@@ -54,6 +58,7 @@ static void deinit_LookupJob(iLookupJob *d) {
         delete_LookupResult(i.ptr);
     }
     deinit_PtrArray(&d->results);
+    iRelease(d->docs);
     iRelease(d->term);
 }
 
@@ -125,7 +130,8 @@ struct Impl_LookupWidget {
     iThread *    work;
     iCondition   jobAvailable; /* wakes up the work thread */
     iMutex *     mtx;
-    iString      nextJob;
+    iString      pendingTerm;
+    iObjectList *pendingDocs;
     iLookupJob * finishedJob;
 };
 
@@ -200,13 +206,37 @@ static void searchVisited_LookupJob_(iLookupJob *d) {
     }
 }
 
+static void searchHistory_LookupJob_(iLookupJob *d) {
+    /* Note: Called in a background thread. */
+    size_t index = 0;
+    iForEach(ObjectList, i, d->docs) {
+        iConstForEach(StringArray, j,
+                      searchContents_History(history_DocumentWidget(i.object), d->term)) {
+            const char *match = cstr_String(j.value);
+            const size_t matchLen = argLabel_Command(match, "len");
+            iRangecc text;
+            text.start = strstr(match, " str:") + 5;
+            text.end = text.start + matchLen;
+            const char *url = strstr(text.end, " url:") + 5;
+            iLookupResult *res = new_LookupResult();
+            res->type = content_LookupResultType;
+            res->relevance = ++index; /* most recent comes last */
+            setCStr_String(&res->label, "...");
+            appendRange_String(&res->label, text);
+            appendCStr_String(&res->label, "...");
+            setCStr_String(&res->url, url);
+            pushBack_PtrArray(&d->results, res);
+        }
+    }
+}
+
 static iThreadResult worker_LookupWidget_(iThread *thread) {
     iLookupWidget *d = userData_Thread(thread);
     printf("[LookupWidget] worker is running\n"); fflush(stdout);
     lock_Mutex(d->mtx);
     for (;;) {
         wait_Condition(&d->jobAvailable, d->mtx);
-        if (isEmpty_String(&d->nextJob)) {
+        if (isEmpty_String(&d->pendingTerm)) {
             break; /* Time to quit. */
         }
         iLookupJob *job = new_LookupJob();
@@ -214,7 +244,7 @@ static iThreadResult worker_LookupWidget_(iThread *thread) {
             iString *pattern = new_String();
             iRangecc word = iNullRange;
             iBool isFirst = iTrue;
-            while (nextSplit_Rangecc(range_String(&d->nextJob), " ", &word)) {
+            while (nextSplit_Rangecc(range_String(&d->pendingTerm), " ", &word)) {
                 if (isEmpty_Range(&word)) continue;
                 if (!isFirst) appendChar_String(pattern, '|');
                 for (const char *ch = word.start; ch != word.end; ch++) {
@@ -230,11 +260,14 @@ static iThreadResult worker_LookupWidget_(iThread *thread) {
             job->term = new_RegExp(cstr_String(pattern), caseInsensitive_RegExpOption);
             delete_String(pattern);
         }
-        clear_String(&d->nextJob);
+        clear_String(&d->pendingTerm);
+        job->docs = d->pendingDocs;
+        d->pendingDocs = NULL;
         unlock_Mutex(d->mtx);
         /* Do the lookup. */ {
             searchBookmarks_LookupJob_(job);
             searchVisited_LookupJob_(job);
+            searchHistory_LookupJob_(job);
         }
         /* Submit the result. */
         lock_Mutex(d->mtx);
@@ -266,7 +299,8 @@ void init_LookupWidget(iLookupWidget *d) {
     setUserData_Thread(d->work, d);
     init_Condition(&d->jobAvailable);
     d->mtx = new_Mutex();
-    init_String(&d->nextJob);
+    init_String(&d->pendingTerm);
+    d->pendingDocs = NULL;
     d->finishedJob = NULL;
     start_Thread(d->work);
 }
@@ -274,23 +308,26 @@ void init_LookupWidget(iLookupWidget *d) {
 void deinit_LookupWidget(iLookupWidget *d) {
     /* Stop the worker. */ {
         iGuardMutex(d->mtx, {
-            clear_String(&d->nextJob);
+            iReleasePtr(&d->pendingDocs);
+            clear_String(&d->pendingTerm);
             signal_Condition(&d->jobAvailable);
         });
         join_Thread(d->work);
         iRelease(d->work);
     }
     delete_LookupJob(d->finishedJob);
-    deinit_String(&d->nextJob);
+    deinit_String(&d->pendingTerm);
     delete_Mutex(d->mtx);
     deinit_Condition(&d->jobAvailable);
 }
 
 void submit_LookupWidget(iLookupWidget *d, const iString *term) {
     iGuardMutex(d->mtx, {
-        set_String(&d->nextJob, term);
-        trim_String(&d->nextJob);
-        if (!isEmpty_String(&d->nextJob)) {
+        set_String(&d->pendingTerm, term);
+        trim_String(&d->pendingTerm);
+        iReleasePtr(&d->pendingDocs);
+        if (!isEmpty_String(&d->pendingTerm)) {
+            d->pendingDocs = listDocuments_App(); /* holds reference to all open tabs */
             signal_Condition(&d->jobAvailable);
         }
         else {
@@ -383,6 +420,13 @@ static void presentResults_LookupWidget_(iLookupWidget *d) {
                 item->font = uiContent_FontId;
                 format_String(&item->text, "%s \u2014 ", url);
                 append_String(&item->text, collect_String(format_Time(&res->when, "%b %d, %Y")));
+                format_String(&item->command, "open url:%s", cstr_String(&res->url));
+                break;
+            }
+            case content_LookupResultType: {
+                item->fg = uiText_ColorId;
+                item->font = uiContent_FontId;
+                format_String(&item->text, "%s \u2014 %s", cstr_String(&res->label), url);
                 format_String(&item->command, "open url:%s", cstr_String(&res->url));
                 break;
             }

@@ -254,13 +254,24 @@ static iBool loadState_App_(iApp *d) {
     return iFalse;
 }
 
+iObjectList *listDocuments_App(void) {
+    iObjectList *docs = new_ObjectList();
+    const iWidget *tabs = findWidget_App("doctabs");
+    iForEach(ObjectList, i, children_Widget(findChild_Widget(tabs, "tabs.pages"))) {
+        if (isInstance_Object(i.object, &Class_DocumentWidget)) {
+            pushBack_ObjectList(docs, i.object);
+        }
+    }
+    return docs;
+}
+
 static void saveState_App_(const iApp *d) {
+    iUnused(d);
     iFile *f = newCStr_File(concatPath_CStr(dataDir_App_, stateFileName_App_));
     if (open_File(f, writeOnly_FileMode)) {
         writeData_File(f, magicState_App_, 4);
         write32_File(f, 0); /* version */
-        iWidget *tabs = findChild_Widget(d->window->root, "doctabs");
-        iConstForEach(ObjectList, i, children_Widget(findChild_Widget(tabs, "tabs.pages"))) {
+        iConstForEach(ObjectList, i, iClob(listDocuments_App())) {
             if (isInstance_Object(i.object, &Class_DocumentWidget)) {
                 writeData_File(f, magicTabDocument_App_, 4);
                 write8_File(f, document_App() == i.object ? 1 : 0);
