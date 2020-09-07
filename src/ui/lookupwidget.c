@@ -221,9 +221,9 @@ static void searchHistory_LookupJob_(iLookupJob *d) {
             iLookupResult *res = new_LookupResult();
             res->type = content_LookupResultType;
             res->relevance = ++index; /* most recent comes last */
-            setCStr_String(&res->label, "...");
+            setCStr_String(&res->label, "\"");
             appendRange_String(&res->label, text);
-            appendCStr_String(&res->label, "...");
+            appendCStr_String(&res->label, "\"");
             setCStr_String(&res->url, url);
             pushBack_PtrArray(&d->results, res);
         }
@@ -260,6 +260,7 @@ static iThreadResult worker_LookupWidget_(iThread *thread) {
             job->term = new_RegExp(cstr_String(pattern), caseInsensitive_RegExpOption);
             delete_String(pattern);
         }
+        const size_t termLen = size_String(&d->pendingTerm);
         clear_String(&d->pendingTerm);
         job->docs = d->pendingDocs;
         d->pendingDocs = NULL;
@@ -267,7 +268,9 @@ static iThreadResult worker_LookupWidget_(iThread *thread) {
         /* Do the lookup. */ {
             searchBookmarks_LookupJob_(job);
             searchVisited_LookupJob_(job);
-            searchHistory_LookupJob_(job);
+            if (termLen >= 3) {
+                searchHistory_LookupJob_(job);
+            }
         }
         /* Submit the result. */
         lock_Mutex(d->mtx);

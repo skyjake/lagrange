@@ -182,6 +182,7 @@ iLocalDef iBool isRegularText_ColorId(enum iColorId d) {
 #define uiText_ColorEscape          "\r4"
 #define uiTextAction_ColorEscape    "\r<"
 #define uiTextCaution_ColorEscape   "\r="
+#define uiTextStrong_ColorEscape    "\r:"
 #define uiHeading_ColorEscape       "\rR"
 
 iDeclareType(Color)
