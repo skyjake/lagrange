@@ -24,6 +24,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "app.h"
 
 #include <the_Foundation/file.h>
+#include <the_Foundation/mutex.h>
 #include <the_Foundation/path.h>
 #include <the_Foundation/ptrarray.h>
 #include <the_Foundation/sortedarray.h>
@@ -51,24 +52,30 @@ static int cmpNewer_VisitedUrl_(const void *insert, const void *existing) {
 /*----------------------------------------------------------------------------------------------*/
 
 struct Impl_Visited {
+    iMutex *mtx;
     iSortedArray visited;
 };
 
 iDefineTypeConstruction(Visited)
 
 void init_Visited(iVisited *d) {
+    d->mtx = new_Mutex();
     init_SortedArray(&d->visited, sizeof(iVisitedUrl), cmpUrl_VisitedUrl_);
 }
 
 void deinit_Visited(iVisited *d) {
-    clear_Visited(d);
-    deinit_SortedArray(&d->visited);
+    iGuardMutex(d->mtx, {
+        clear_Visited(d);
+        deinit_SortedArray(&d->visited);
+    });
+    delete_Mutex(d->mtx);
 }
 
 void save_Visited(const iVisited *d, const char *dirPath) {
     iString *line = new_String();
     iFile *f = newCStr_File(concatPath_CStr(dirPath, "visited.txt"));
     if (open_File(f, writeOnly_FileMode | text_FileMode)) {
+        lock_Mutex(d->mtx);
         iConstForEach(Array, i, &d->visited.values) {
             const iVisitedUrl *item = i.value;
             iDate date;
@@ -84,6 +91,7 @@ void save_Visited(const iVisited *d, const char *dirPath) {
                           cstr_String(&item->url));
             writeData_File(f, cstr_String(line), size_String(line));
         }
+        unlock_Mutex(d->mtx);
     }
     iRelease(f);
     delete_String(line);
@@ -92,6 +100,7 @@ void save_Visited(const iVisited *d, const char *dirPath) {
 void load_Visited(iVisited *d, const char *dirPath) {
     iFile *f = newCStr_File(concatPath_CStr(dirPath, "visited.txt"));
     if (open_File(f, readOnly_FileMode | text_FileMode)) {
+        lock_Mutex(d->mtx);
         const iRangecc src  = range_Block(collect_Block(readAll_File(f)));
         iRangecc       line = iNullRange;
         iTime          now;
@@ -111,15 +120,18 @@ void load_Visited(iVisited *d, const char *dirPath) {
             initRange_String(&item.url, (iRangecc){ line.start + 20, line.end });
             insert_SortedArray(&d->visited, &item);
         }
+        unlock_Mutex(d->mtx);
     }
     iRelease(f);
 }
 
 void clear_Visited(iVisited *d) {
+    lock_Mutex(d->mtx);
     iForEach(Array, v, &d->visited.values) {
         deinit_VisitedUrl(v.value);
     }
     clear_SortedArray(&d->visited);
+    unlock_Mutex(d->mtx);
 }
 
 static size_t find_Visited_(const iVisited *d, const iString *url) {
@@ -127,8 +139,10 @@ static size_t find_Visited_(const iVisited *d, const iString *url) {
     init_VisitedUrl(&visit);
     set_String(&visit.url, url);
     size_t pos = iInvalidPos;
-    locate_SortedArray(&d->visited, &visit, &pos);
-    deinit_VisitedUrl(&visit);
+    iGuardMutex(d->mtx, {
+        locate_SortedArray(&d->visited, &visit, &pos);
+        deinit_VisitedUrl(&visit);
+    });
     return pos;
 }
 
@@ -137,23 +151,28 @@ void visitUrl_Visited(iVisited *d, const iString *url) {
     init_VisitedUrl(&visit);
     set_String(&visit.url, url);
     size_t pos;
+    lock_Mutex(d->mtx);
     if (locate_SortedArray(&d->visited, &visit, &pos)) {
         iVisitedUrl *old = at_SortedArray(&d->visited, pos);
         if (cmpNewer_VisitedUrl_(&visit, old)) {
             old->when = visit.when;
+            unlock_Mutex(d->mtx);
             deinit_VisitedUrl(&visit);
             return;
         }
     }
     insert_SortedArray(&d->visited, &visit);
+    unlock_Mutex(d->mtx);
 }
 
 void removeUrl_Visited(iVisited *d, const iString *url) {
-    size_t pos = find_Visited_(d, url);
-    if (pos != iInvalidPos) {
-        deinit_VisitedUrl(at_SortedArray(&d->visited, pos));
-        remove_Array(&d->visited.values, pos);
-    }
+    iGuardMutex(d->mtx, {
+        size_t pos = find_Visited_(d, url);
+        if (pos != iInvalidPos) {
+            deinit_VisitedUrl(at_SortedArray(&d->visited, pos));
+            remove_Array(&d->visited.values, pos);
+        }
+    });
 }
 
 iTime urlVisitTime_Visited(const iVisited *d, const iString *url) {
@@ -161,9 +180,11 @@ iTime urlVisitTime_Visited(const iVisited *d, const iString *url) {
     size_t pos;
     iZap(item);
     initCopy_String(&item.url, url);
+    lock_Mutex(d->mtx);
     if (locate_SortedArray(&d->visited, &item, &pos)) {
         item.when = ((const iVisitedUrl *) constAt_SortedArray(&d->visited, pos))->when;
     }
+    unlock_Mutex(d->mtx);
     deinit_String(&item.url);
     return item.when;
 }
@@ -175,9 +196,14 @@ static int cmpWhenDescending_VisitedUrlPtr_(const void *a, const void *b) {
 
 const iArray *list_Visited(const iVisited *d, size_t count) {
     iPtrArray *urls = collectNew_PtrArray();
-    iConstForEach(Array, i, &d->visited.values) {
-        pushBack_PtrArray(urls, i.value);
-    }
+    iGuardMutex(d->mtx, {
+        iConstForEach(Array, i, &d->visited.values) {
+            pushBack_PtrArray(urls, i.value);
+        }
+    });
     sort_Array(urls, cmpWhenDescending_VisitedUrlPtr_);
+    if (count > 0 && size_Array(urls) > count) {
+        resize_Array(urls, count);
+    }
     return urls;
 }

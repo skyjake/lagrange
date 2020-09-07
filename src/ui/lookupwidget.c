@@ -27,6 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "util.h"
 #include "command.h"
 #include "bookmarks.h"
+#include "visited.h"
 #include "gmutil.h"
 #include "app.h"
 
@@ -38,11 +39,13 @@ iDeclareType(LookupJob)
 
 struct Impl_LookupJob {
     iRegExp *term;
+    iTime now;
     iPtrArray results;
 };
 
 static void init_LookupJob(iLookupJob *d) {
     d->term = NULL;
+    initCurrent_Time(&d->now);
     init_PtrArray(&d->results);
 }
 
@@ -102,7 +105,7 @@ static void draw_LookupItem_(iLookupItem *d, iPaint *p, iRect rect, const iListW
     const iInt2 size = measure_Text(d->font, cstr_String(&d->text));
     iInt2       pos  = init_I2(left_Rect(rect) + 3 * gap_UI, mid_Rect(rect).y - size.y / 2);
     if (d->listItem.isSeparator) {
-        pos.y = bottom_Rect(rect) - lineHeight_Text(d->font) - gap_UI;
+        pos.y = bottom_Rect(rect) - lineHeight_Text(d->font);
     }
     drawRange_Text(d->font, pos, fg, range_String(&d->text));
 }
@@ -147,22 +150,53 @@ static float bookmarkRelevance_LookupJob_(const iLookupJob *d, const iBookmark *
     return h + iMax(p, t) + 2 * g; /* extra weight for tags */
 }
 
+static float visitedRelevance_LookupJob_(const iLookupJob *d, const iVisitedUrl *vis) {
+    iUrl parts;
+    init_Url(&parts, &vis->url);
+    const float h = scoreMatch_(d->term, parts.host);
+    const float p = scoreMatch_(d->term, parts.path);
+    const double age = secondsSince_Time(&d->now, &vis->when) / 3600.0 / 24.0; /* days */
+    return iMax(h, p) / (age + 1); /* extra weight for recency */
+}
+
 static iBool matchBookmark_LookupJob_(void *context, const iBookmark *bm) {
     return bookmarkRelevance_LookupJob_(context, bm) > 0;
 }
 
 static void searchBookmarks_LookupJob_(iLookupJob *d) {
     /* Note: Called in a background thread. */
+    /* TODO: Thread safety! What if a bookmark gets deleted while its being accessed here? */
     iConstForEach(PtrArray, i, list_Bookmarks(bookmarks_App(), NULL, matchBookmark_LookupJob_, d)) {
         const iBookmark *bm  = i.ptr;
         iLookupResult *  res = new_LookupResult();
         res->type            = bookmark_LookupResultType;
         res->relevance       = bookmarkRelevance_LookupJob_(d, bm);
-        set_String(&res->label, &bm->title);
+        appendChar_String(&res->label, bm->icon);
+        appendChar_String(&res->label, ' ');
+        append_String(&res->label, &bm->title);
+//        set_String(&res->label, &bm->title);
 //        appendFormat_String(&res->label, " (%f)", res->relevance);
         set_String(&res->url, &bm->url);
         res->when = bm->when;
         pushBack_PtrArray(&d->results, res);
+    }
+}
+
+static void searchVisited_LookupJob_(iLookupJob *d) {
+    /* Note: Called in a background thread. */
+    /* TODO: Thread safety! Visited URLs may be deleted while being accessed here. */
+    iConstForEach(PtrArray, i, list_Visited(visited_App(), 0)) {
+        const iVisitedUrl *vis = i.ptr;
+        const float relevance = visitedRelevance_LookupJob_(d, vis);
+        if (relevance > 0) {
+            iLookupResult *res = new_LookupResult();
+            res->type = history_LookupResultType;
+            res->relevance = relevance;
+            set_String(&res->label, &vis->url);
+            set_String(&res->url, &vis->url);
+            res->when = vis->when;
+            pushBack_PtrArray(&d->results, res);
+        }
     }
 }
 
@@ -193,7 +227,6 @@ static iThreadResult worker_LookupWidget_(iThread *thread) {
                 isFirst = iFalse;
             }
             iAssert(!isEmpty_String(pattern));
-//            printf("{%s}\n", cstr_String(pattern));
             job->term = new_RegExp(cstr_String(pattern), caseInsensitive_RegExpOption);
             delete_String(pattern);
         }
@@ -201,6 +234,7 @@ static iThreadResult worker_LookupWidget_(iThread *thread) {
         unlock_Mutex(d->mtx);
         /* Do the lookup. */ {
             searchBookmarks_LookupJob_(job);
+            searchVisited_LookupJob_(job);
         }
         /* Submit the result. */
         lock_Mutex(d->mtx);
@@ -226,7 +260,7 @@ void init_LookupWidget(iLookupWidget *d) {
     setId_Widget(w, "lookup");
     setFlags_Widget(w, focusable_WidgetFlag | resizeChildren_WidgetFlag, iTrue);
     d->list = addChild_Widget(w, iClob(new_ListWidget()));
-    setItemHeight_ListWidget(d->list, lineHeight_Text(default_FontId) * 2);
+    setItemHeight_ListWidget(d->list, lineHeight_Text(uiContent_FontId) * 1.25f);
     d->cursor = iInvalidPos;
     d->work = new_Thread(worker_LookupWidget_);
     setUserData_Thread(d->work, d);
@@ -321,23 +355,34 @@ static void presentResults_LookupWidget_(iLookupWidget *d) {
             iLookupItem *item = new_LookupItem(NULL);
             item->listItem.isSeparator = iTrue;
             item->fg = uiHeading_ColorId;
-            item->font = default_FontId;
+            item->font = uiLabel_FontId;
             format_String(&item->text, "%s", cstr_LookupResultType(res->type));
             addItem_ListWidget(d->list, item);
             iRelease(item);
             lastType = res->type;
         }
         iLookupItem *item = new_LookupItem(res);
+        const char *url = cstr_String(&res->url);
+        if (startsWithCase_String(&res->url, "gemini://")) {
+            url += 9;
+        }
         switch (res->type) {
             case bookmark_LookupResultType: {
                 item->fg = uiTextStrong_ColorId;
-                item->font = default_FontId;
-                const char *url = cstr_String(&res->url);
-                if (startsWithCase_String(&res->url, "gemini://")) {
-                    url += 9;
-                }
-                format_String(&item->text, "%s\n%s    Open %s", cstr_String(&res->label),
-                              uiText_ColorEscape, url);
+                item->font = uiLabel_FontId;
+                format_String(&item->text,
+                              "%s %s\u2014 %s",
+                              cstr_String(&res->label),
+                              uiText_ColorEscape,
+                              url);
+                format_String(&item->command, "open url:%s", cstr_String(&res->url));
+                break;
+            }
+            case history_LookupResultType: {
+                item->fg = uiText_ColorId;
+                item->font = uiContent_FontId;
+                format_String(&item->text, "%s \u2014 ", url);
+                append_String(&item->text, collect_String(format_Time(&res->when, "%b %d, %Y")));
                 format_String(&item->command, "open url:%s", cstr_String(&res->url));
                 break;
             }
