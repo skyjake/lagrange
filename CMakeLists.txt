@@ -193,11 +193,12 @@ elseif (UNIX AND NOT APPLE)
     file (WRITE ${desktop} "[Desktop Entry]
 Name=Lagrange
 Comment=${PROJECT_DESCRIPTION}
-;Categories=
+Categories=Network
 Exec=${CMAKE_INSTALL_PREFIX}/bin/lagrange
 Terminal=false
 Type=Application
-Icon=fi.skyjake.lagrange")
+Icon=fi.skyjake.lagrange
+")
     install (TARGETS app DESTINATION bin)
     install (FILES ${desktop} DESTINATION share/applications)
     install (FILES res/lagrange-256.png
