@@ -501,7 +501,7 @@ static void presentResults_LookupWidget_(iLookupWidget *d) {
             case content_LookupResultType: {
                 item->fg = uiText_ColorId;
                 item->font = uiContent_FontId;
-                format_String(&item->text, "%s \u2014 pe%s", url, cstr_String(&res->label));
+                format_String(&item->text, "%s \u2014 %s", url, cstr_String(&res->label));
                 format_String(&item->command, "open url:%s", cstr_String(&res->url));
                 break;
             }
@@ -594,14 +594,13 @@ static iBool processEvent_LookupWidget_(iLookupWidget *d, const SDL_Event *ev) {
     }
     if (isCommand_Widget(w, ev, "list.clicked")) {
         iInputWidget *url = findWidget_App("url");
-//        setTextCStr_InputWidget(findWidget_App("url"), "");
         const iLookupItem *item = constItem_ListWidget(d->list, arg_Command(cmd));
         if (item && !isEmpty_String(&item->command)) {
             setText_InputWidget(url, url_DocumentWidget(document_App()));
-            setFocus_Widget(NULL);
             setFlags_Widget(w, hidden_WidgetFlag, iTrue);
             setCursor_LookupWidget_(d, iInvalidPos);
             postCommandString_App(&item->command);
+            postCommand_App("focus.set id:"); /* unfocus */
         }
         return iTrue;
     }

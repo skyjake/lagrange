@@ -517,6 +517,7 @@ void postCommandf_App(const char *command, ...) {
 }
 
 iAny *findWidget_App(const char *id) {
+    if (!*id) return NULL;
     return findChild_Widget(app_.window->root, id);
 }
 
