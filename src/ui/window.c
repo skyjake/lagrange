@@ -435,8 +435,8 @@ static void setupUserInterface_Window(iWindow *d) {
     /* Global keyboard shortcuts. */ {
         addAction_Widget(d->root, SDLK_LEFTBRACKET, KMOD_SHIFT | KMOD_PRIMARY, "tabs.prev");
         addAction_Widget(d->root, SDLK_RIGHTBRACKET, KMOD_SHIFT | KMOD_PRIMARY, "tabs.next");
-        addAction_Widget(d->root, 'l', KMOD_PRIMARY, "focus.set id:url");
 #if !defined (iHaveNativeMenus)
+        addAction_Widget(d->root, 'l', KMOD_PRIMARY, "focus.set id:url");
         addAction_Widget(d->root, 'f', KMOD_PRIMARY, "focus.set id:find.input");
 #endif
     }
