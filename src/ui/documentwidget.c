@@ -1681,7 +1681,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
             if (ord < 9 + 26) {
                 const iChar ordChar = ord < 9 ? 0x278a + ord : (0x24b6 + ord - 9);
                 drawString_Text(run->font,
-                                init_I2(left_Rect(d->bounds) - gap_UI / 2, visPos.y),
+                                init_I2(left_Rect(d->bounds) - gap_UI / 3, visPos.y),
                                 fg,
                                 collect_String(newUnicodeN_String(&ordChar, 1)));
                 goto runDrawn;
