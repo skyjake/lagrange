@@ -11,6 +11,7 @@ set (COPYRIGHT_YEAR 2020)
 option (ENABLE_KERNING "Enable kerning in font renderer (slower)" ON)
 option (ENABLE_RESOURCE_EMBED "Embed resources inside the executable" OFF)
 
+include (BuildType.cmake)
 include (Embed.cmake)
 if (EXISTS ${CMAKE_SOURCE_DIR}/lib/the_Foundation)
     set (TFDN_STATIC_LIBRARY    ON  CACHE BOOL "Shared library not needed")
