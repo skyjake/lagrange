@@ -121,6 +121,8 @@ static const iMenuItem editMenuItems[] = {
     { "Copy Source Text", SDLK_c, KMOD_PRIMARY, "copy" },
     { "Copy Link to Page", SDLK_c, KMOD_PRIMARY | KMOD_SHIFT, "document.copylink" },
     { "---", 0, 0, NULL },
+    { "Find", SDLK_f, KMOD_PRIMARY, "focus.set id:find.input" },
+    { "---", 0, 0, NULL },
     { "Bookmark This Page...", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
 };
 
@@ -434,7 +436,9 @@ static void setupUserInterface_Window(iWindow *d) {
         addAction_Widget(d->root, SDLK_LEFTBRACKET, KMOD_SHIFT | KMOD_PRIMARY, "tabs.prev");
         addAction_Widget(d->root, SDLK_RIGHTBRACKET, KMOD_SHIFT | KMOD_PRIMARY, "tabs.next");
         addAction_Widget(d->root, 'l', KMOD_PRIMARY, "focus.set id:url");
+#if !defined (iHaveNativeMenus)
         addAction_Widget(d->root, 'f', KMOD_PRIMARY, "focus.set id:find.input");
+#endif
     }
 }
 

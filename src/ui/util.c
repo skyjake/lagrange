@@ -765,10 +765,10 @@ iWidget *makePreferences_Widget(void) {
     setId_Widget(addChild_Widget(values, iClob(new_InputWidget(8))), "prefs.uiscale");
     addChild_Widget(headings, iClob(makeHeading_Widget(uiHeading_ColorEscape "Proxies")));
     addChild_Widget(values, iClob(makeHeading_Widget("")));
-    addChild_Widget(headings, iClob(makeHeading_Widget("HTTP proxy:")));
-    setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.proxy.http");
     addChild_Widget(headings, iClob(makeHeading_Widget("Gopher proxy:")));
     setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.proxy.gopher");
+    addChild_Widget(headings, iClob(makeHeading_Widget("HTTP proxy:")));
+    setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.proxy.http");
     arrange_Widget(dlg);
     /* Text input widths. */ {
         const int inputWidth = width_Rect(page->rect) - width_Rect(headings->rect);
