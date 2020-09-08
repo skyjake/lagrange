@@ -12,7 +12,16 @@ option (ENABLE_KERNING "Enable kerning in font renderer (slower)" ON)
 option (ENABLE_RESOURCE_EMBED "Embed resources inside the executable" OFF)
 
 include (Embed.cmake)
-find_package (the_Foundation REQUIRED)
+if (EXISTS ${CMAKE_SOURCE_DIR}/lib/the_Foundation)
+    set (TFDN_STATIC_LIBRARY    ON  CACHE BOOL "Shared library not needed")
+    set (TFDN_ENABLE_INSTALL    OFF CACHE BOOL "Library install not needed")
+    set (TFDN_ENABLE_TESTS      OFF CACHE BOOL "Library tests not needed")
+    set (TFDN_ENABLE_WEBREQUEST OFF CACHE BOOL "libcurl not needed")
+    add_subdirectory (lib/the_Foundation)
+    add_library (the_Foundation::the_Foundation ALIAS the_Foundation)
+else ()
+    find_package (the_Foundation REQUIRED)
+endif ()
 find_package (PkgConfig REQUIRED)
 pkg_check_modules (SDL2 REQUIRED sdl2)
 
@@ -147,6 +156,7 @@ if (APPLE)
     endif ()
     set_target_properties (app PROPERTIES
         OUTPUT_NAME "Lagrange"
+        BUILD_RPATH ${SDL2_LIBRARY_DIRS}
         MACOSX_BUNDLE YES
         MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_LIST_DIR}/res/MacOSXBundleInfo.plist.in"
         MACOSX_BUNDLE_BUNDLE_NAME "Lagrange"
