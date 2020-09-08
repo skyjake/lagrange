@@ -96,12 +96,16 @@ iString *suffix_Command(const char *cmd, const char *label) {
 }
 
 const iString *string_Command(const char *cmd, const char *label) {
+    return collect_String(newRange_String(range_Command(cmd, label)));
+}
+
+iRangecc range_Command(const char *cmd, const char *label) {
     iRangecc val = { suffixPtr_Command(cmd, label), NULL };
     if (val.start) {
         for (val.end = val.start; *val.end && !isspace(*val.end); val.end++) {}
-        return collect_String(newRange_String(val));
+        return val;
     }
-    return collectNew_String();
+    return iNullRange;
 }
 
 iInt2 dir_Command(const char *cmd) {

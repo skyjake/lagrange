@@ -22,6 +22,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
+#include <the_Foundation/range.h>
 #include <the_Foundation/vec2.h>
 
 iBool   equal_Command           (const char *commandWithArgs, const char *command);
@@ -36,5 +37,6 @@ iInt2   coord_Command           (const char *);
 iInt2   dir_Command             (const char *);
 
 const iString * string_Command      (const char *, const char *label); /* space-delimited */
+iRangecc        range_Command       (const char *, const char *label); /* space-delimited */
 const char *    suffixPtr_Command   (const char *, const char *label); /* until end-of-command */
 iString *       suffix_Command      (const char *, const char *label); /* until end-of-command */

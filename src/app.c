@@ -830,6 +830,27 @@ iBool handleCommand_App(const char *cmd) {
         setCommandHandler_Widget(dlg, handleIdentityCreationCommands_);
         return iTrue;
     }
+    else if (equal_Command(cmd, "ident.signin")) {
+        const iString *url = collect_String(suffix_Command(cmd, "url"));
+        signIn_GmCerts(
+            d->certs,
+            findIdentity_GmCerts(d->certs, collect_Block(hexDecode_Rangecc(range_Command(cmd, "ident")))),
+            url);
+        postCommand_App("idents.changed");
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "ident.signout")) {
+        iGmIdentity *ident = findIdentity_GmCerts(
+            d->certs, collect_Block(hexDecode_Rangecc(range_Command(cmd, "ident"))));
+        if (arg_Command(cmd)) {
+            clearUse_GmIdentity(ident);
+        }
+        else {
+            setUse_GmIdentity(ident, collect_String(suffix_Command(cmd, "url")), iFalse);
+        }
+        postCommand_App("idents.changed");
+        return iTrue;
+    }
     else if (equal_Command(cmd, "theme.set")) {
         const int isAuto = argLabel_Command(cmd, "auto");
         d->theme = arg_Command(cmd);

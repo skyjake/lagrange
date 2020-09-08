@@ -253,7 +253,7 @@ static void loadIdentities_GmCerts_(iGmCerts *d) {
     }
 }
 
-static iGmIdentity *findIdentity_GmCerts_(iGmCerts *d, const iBlock *fingerprint) {
+iGmIdentity *findIdentity_GmCerts(iGmCerts *d, const iBlock *fingerprint) {
     iForEach(PtrArray, i, &d->idents) {
         iGmIdentity *ident = i.ptr;
         if (cmp_Block(fingerprint, &ident->fingerprint) == 0) { /* TODO: could use a hash */
@@ -273,7 +273,7 @@ static void loadIdentityFromCertificate_GmCerts_(iGmCerts *d, const iString *crt
     }
     iTlsCertificate *cert = newPemKey_TlsCertificate(readFile_(crtPath), readFile_(keyPath));
     iBlock *finger = fingerprint_TlsCertificate(cert);
-    iGmIdentity *ident = findIdentity_GmCerts_(d, finger);
+    iGmIdentity *ident = findIdentity_GmCerts(d, finger);
     if (!ident) {
         /* User-provided certificate. */
         ident = new_GmIdentity();
@@ -497,8 +497,10 @@ const iPtrArray *identities_GmCerts(const iGmCerts *d) {
 }
 
 void signIn_GmCerts(iGmCerts *d, iGmIdentity *identity, const iString *url) {
-    signOut_GmCerts(d, url);
-    setUse_GmIdentity(identity, url, iTrue);
+    if (identity) {
+        signOut_GmCerts(d, url);
+        setUse_GmIdentity(identity, url, iTrue);
+    }
 }
 
 void signOut_GmCerts(iGmCerts *d, const iString *url) {

@@ -271,19 +271,25 @@ const iStringArray *searchContents_History(const iHistory *d, const iRegExp *pat
                 iString entry;
                 init_String(&entry);
                 iRangei cap = m.range;
-                cap.start   = iMax(cap.start - 15, 0);
-                cap.end     = iMin(cap.end + 15, (int) size_Block(&resp->body));
+                const int prefix = iMin(10, cap.start);
+                cap.start   = cap.start - prefix;
+                cap.end     = iMin(cap.end + 30, (int) size_Block(&resp->body));
+                const size_t maxLen = 60;
+                if (size_Range(&cap) > maxLen) {
+                    cap.end = cap.start + maxLen;
+                }
                 iString content;
                 initRange_String(&content, (iRangecc){ m.subject + cap.start, m.subject + cap.end });
                 /* This needs cleaning up; highlight the matched word. */
                 replace_Block(&content.chars, '\n', ' ');
                 replace_Block(&content.chars, '\r', ' ');
-//                insertData_Block(&content.chars, 10, uiTextStrong_ColorEscape, 2);
-//                insertData_Block(&content.chars, size_String(&content) - 10, uiText_ColorEscape, 2);
+                if (prefix + size_Range(&m.range) < size_String(&content)) {
+                    insertData_Block(&content.chars, prefix + size_Range(&m.range), uiText_ColorEscape, 2);
+                }
+                insertData_Block(&content.chars, prefix, uiTextStrong_ColorEscape, 2);
                 format_String(
                     &entry, "match len:%zu str:%s", size_String(&content), cstr_String(&content));
                 deinit_String(&content);
-                //appendRange_String(&entry, );
                 appendFormat_String(&entry, " url:%s", cstr_String(&url->url));
                 if (!contains_StringSet(&inserted, &url->url)) {
                     pushFront_StringArray(urls, &entry);

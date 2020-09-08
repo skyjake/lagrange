@@ -422,6 +422,8 @@ static void presentResults_LookupWidget_(iLookupWidget *d) {
     clear_ListWidget(d->list);
     sort_Array(&job->results, cmpPtr_LookupResult_);
     enum iLookupResultType lastType = none_LookupResultType;
+    const size_t maxPerType = 10; /* TODO: Setting? */
+    size_t perType = 0;
     iConstForEach(PtrArray, i, &job->results) {
         const iLookupResult *res = i.ptr;
         if (lastType != res->type) {
@@ -434,6 +436,42 @@ static void presentResults_LookupWidget_(iLookupWidget *d) {
             addItem_ListWidget(d->list, item);
             iRelease(item);
             lastType = res->type;
+            perType = 0;
+        }
+        if (perType > maxPerType) {
+            continue;
+        }
+        if (res->type == identity_LookupResultType) {
+            const iString *docUrl = url_DocumentWidget(document_App());
+            iBlock *finger = hexDecode_Rangecc(range_String(&res->meta));
+            const iGmIdentity *ident = findIdentity_GmCerts(certs_App(), finger);
+            /* Sign in/out. */ {
+                const iBool isUsed = isUsedOn_GmIdentity(ident, docUrl);
+                iLookupItem *item  = new_LookupItem(res);
+                item->fg           = uiText_ColorId;
+                item->font         = uiContent_FontId;
+                format_String(&item->text,
+                              "%s \u2014 " uiTextStrong_ColorEscape "%s on this page",
+                              cstr_String(&res->label),
+                              isUsed ? "Stop using" : "Use");
+                format_String(&item->command, "ident.sign%s ident:%s url:%s",
+                              isUsed ? "out arg:0" : "in", cstr_String(&res->meta), cstr_String(docUrl));
+                addItem_ListWidget(d->list, item);
+                iRelease(item);
+            }
+            if (isUsed_GmIdentity(ident)) {
+                iLookupItem *item  = new_LookupItem(res);
+                item->fg           = uiText_ColorId;
+                item->font         = uiContent_FontId;
+                format_String(&item->text,
+                              "%s \u2014 " uiTextStrong_ColorEscape "Stop using everywhere",
+                              cstr_String(&res->label));
+                format_String(&item->command, "ident.signout arg:1 ident:%s", cstr_String(&res->meta));
+                addItem_ListWidget(d->list, item);
+                iRelease(item);
+            }
+            delete_Block(finger);
+            continue;
         }
         iLookupItem *item = new_LookupItem(res);
         const char *url = cstr_String(&res->url);
@@ -463,19 +501,16 @@ static void presentResults_LookupWidget_(iLookupWidget *d) {
             case content_LookupResultType: {
                 item->fg = uiText_ColorId;
                 item->font = uiContent_FontId;
-                format_String(&item->text, "%s \u2014 %s", cstr_String(&res->label), url);
+                format_String(&item->text, "%s \u2014 pe%s", url, cstr_String(&res->label));
                 format_String(&item->command, "open url:%s", cstr_String(&res->url));
                 break;
             }
-            case identity_LookupResultType: {
-                item->fg = uiText_ColorId;
-                item->font = uiContent_FontId;
-                format_String(&item->text, "%s", cstr_String(&res->label));
+            default:
                 break;
-            }
         }
         addItem_ListWidget(d->list, item);
         iRelease(item);
+        perType++;
     }
     delete_LookupJob(job);
     /* Re-select the item at the cursor. */
@@ -483,6 +518,7 @@ static void presentResults_LookupWidget_(iLookupWidget *d) {
         d->cursor = iMin(d->cursor, numItems_ListWidget(d->list) - 1);
         ((iListItem *) item_ListWidget(d->list, d->cursor))->isSelected = iTrue;
     }
+    scrollOffset_ListWidget(d->list, 0);
     updateVisible_ListWidget(d->list);
     invalidate_ListWidget(d->list);
     setFlags_Widget(as_Widget(d), hidden_WidgetFlag, numItems_ListWidget(d->list) == 0);
@@ -557,13 +593,15 @@ static iBool processEvent_LookupWidget_(iLookupWidget *d, const SDL_Event *ev) {
         }
     }
     if (isCommand_Widget(w, ev, "list.clicked")) {
-        setTextCStr_InputWidget(findWidget_App("url"), "");
+        iInputWidget *url = findWidget_App("url");
+//        setTextCStr_InputWidget(findWidget_App("url"), "");
         const iLookupItem *item = constItem_ListWidget(d->list, arg_Command(cmd));
         if (item && !isEmpty_String(&item->command)) {
-            postCommandString_App(&item->command);
+            setText_InputWidget(url, url_DocumentWidget(document_App()));
+            setFocus_Widget(NULL);
             setFlags_Widget(w, hidden_WidgetFlag, iTrue);
             setCursor_LookupWidget_(d, iInvalidPos);
-            setFocus_Widget(NULL);
+            postCommandString_App(&item->command);
         }
         return iTrue;
     }
