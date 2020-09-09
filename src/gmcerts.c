@@ -145,7 +145,15 @@ iBool isUsedOn_GmIdentity(const iGmIdentity *d, const iString *url) {
     size_t pos = iInvalidPos;
     locate_StringSet(d->useUrls, url, &pos);
     if (pos < size_StringSet(d->useUrls)) {
-        return startsWithCase_String(url, cstr_String(constAt_StringSet(d->useUrls, pos)));
+        if (!cmpStringCase_String(url, constAt_StringSet(d->useUrls, pos))) {
+            return iTrue;
+        }
+    }
+    if (pos > 0) {
+        /* URLs with a longer path will be following the shorter URL(s). */
+        if (startsWithCase_String(url, cstr_String(constAt_StringSet(d->useUrls, pos - 1)))) {
+            return iTrue;
+        }
     }
     return iFalse;
 }
