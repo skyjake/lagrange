@@ -307,7 +307,10 @@ void setNotifyEdits_InputWidget(iInputWidget *d, iBool notifyEdits) {
 }
 
 static iRanges mark_InputWidget_(const iInputWidget *d) {
-    return (iRanges){ iMin(d->mark.start, d->mark.end), iMax(d->mark.start, d->mark.end) };
+    iRanges m = { iMin(d->mark.start, d->mark.end), iMax(d->mark.start, d->mark.end) };
+    m.start   = iMin(m.start, size_Array(&d->text));
+    m.end     = iMin(m.end, size_Array(&d->text));
+    return m;
 }
 
 static void contentsWereChanged_InputWidget_(iInputWidget *d) {
