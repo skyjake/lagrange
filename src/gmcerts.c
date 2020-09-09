@@ -431,8 +431,7 @@ iGmIdentity *newIdentity_GmCerts(iGmCerts *d, int flags, iDate validUntil, const
                                  const iString *email, const iString *userId, const iString *domain,
                                  const iString *org, const iString *country) {
     const iTlsCertificateName names[] = {
-        { issuerCommonName_TlsCertificateNameType,    collectNewCStr_String("Lagrange v" LAGRANGE_APP_VERSION) },
-        { issuerDomain_TlsCertificateNameType,        collectNewCStr_String("lagrange.skyjake.fi") },
+        { issuerCommonName_TlsCertificateNameType,    commonName },
         { subjectCommonName_TlsCertificateNameType,   commonName },
         { subjectEmailAddress_TlsCertificateNameType, !isEmpty_String(email)   ? email   : NULL },
         { subjectUserId_TlsCertificateNameType,       !isEmpty_String(userId)  ? userId  : NULL },
