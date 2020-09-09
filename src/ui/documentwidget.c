@@ -26,6 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "labelwidget.h"
 #include "paint.h"
 #include "command.h"
+#include "keys.h"
 #include "util.h"
 #include "history.h"
 #include "app.h"
@@ -245,8 +246,8 @@ void init_DocumentWidget(iDocumentWidget *d) {
 #if !defined (iPlatformApple) /* in system menu */
     addAction_Widget(w, SDLK_w, KMOD_PRIMARY, "tabs.close");
 #endif
-    addAction_Widget(w, SDLK_LEFT, KMOD_PRIMARY, "navigate.back");
-    addAction_Widget(w, SDLK_RIGHT, KMOD_PRIMARY, "navigate.forward");
+    addAction_Widget(w, navigateBack_KeyShortcut, "navigate.back");
+    addAction_Widget(w, navigateForward_KeyShortcut, "navigate.forward");
 }
 
 void deinit_DocumentWidget(iDocumentWidget *d) {

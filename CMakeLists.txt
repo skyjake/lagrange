@@ -89,6 +89,7 @@ set (SOURCES
     src/ui/listwidget.h
     src/ui/lookupwidget.c
     src/ui/lookupwidget.h
+    src/ui/keys.h
     src/ui/metrics.c
     src/ui/metrics.h
     src/ui/paint.c

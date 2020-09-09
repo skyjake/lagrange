@@ -31,6 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "command.h"
 #include "paint.h"
 #include "util.h"
+#include "keys.h"
 #include "../app.h"
 #include "../visited.h"
 #include "../gmcerts.h"
@@ -433,11 +434,15 @@ static void setupUserInterface_Window(iWindow *d) {
                                         6);
     setId_Widget(tabsMenu, "doctabs.menu");
     /* Global keyboard shortcuts. */ {
-        addAction_Widget(d->root, SDLK_LEFTBRACKET, KMOD_SHIFT | KMOD_PRIMARY, "tabs.prev");
-        addAction_Widget(d->root, SDLK_RIGHTBRACKET, KMOD_SHIFT | KMOD_PRIMARY, "tabs.next");
+        addAction_Widget(d->root, prevTab_KeyShortcut, "tabs.prev");
+        addAction_Widget(d->root, nextTab_KeyShortcut, "tabs.next");
 #if !defined (iHaveNativeMenus)
         addAction_Widget(d->root, 'l', KMOD_PRIMARY, "focus.set id:url");
         addAction_Widget(d->root, 'f', KMOD_PRIMARY, "focus.set id:find.input");
+        addAction_Widget(d->root, '1', KMOD_PRIMARY, "sidebar.mode arg:0 toggle:1");
+        addAction_Widget(d->root, '2', KMOD_PRIMARY, "sidebar.mode arg:1 toggle:1");
+        addAction_Widget(d->root, '3', KMOD_PRIMARY, "sidebar.mode arg:2 toggle:1");
+        addAction_Widget(d->root, '4', KMOD_PRIMARY, "sidebar.mode arg:3 toggle:1");
 #endif
     }
 }
