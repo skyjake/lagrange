@@ -58,6 +58,7 @@ enum iTouchBarVariant {
     default_TouchBarVariant,
 };
 
+#if 0
 @interface CommandButton : NSButtonTouchBarItem {
     NSString *command;
     iWidget *widget;
@@ -110,6 +111,7 @@ enum iTouchBarVariant {
 }
 
 @end
+#endif
 
 @interface MyDelegate : NSResponder<NSApplicationDelegate, NSTouchBarDelegate> {
     enum iTouchBarVariant touchBarVariant;

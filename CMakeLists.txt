@@ -1,4 +1,5 @@
 cmake_minimum_required (VERSION 3.9)
+set (CMAKE_OSX_DEPLOYMENT_TARGET 10.14)
 
 project (Lagrange
     VERSION 0.1.0
