@@ -34,17 +34,17 @@ set (EMBED_RESOURCES
     res/about/help.gmi
     res/about/lagrange.gmi
     res/about/version.gmi
-    res/SourceSansPro-Regular.ttf
-    res/FiraSans-Regular.ttf
+    res/FiraMono-Regular.ttf
     res/FiraSans-Bold.ttf
-    res/FiraSans-Light.ttf
     res/FiraSans-Italic.ttf
-    res/Nunito-Regular.ttf
+    res/FiraSans-Light.ttf
+    res/FiraSans-Regular.ttf
+    res/NotoEmoji-Regular.ttf
     res/Nunito-ExtraBold.ttf
     res/Nunito-ExtraLight.ttf
     res/Nunito-LightItalic.ttf
-    res/FiraMono-Regular.ttf
-    res/NotoEmoji-Regular.ttf
+    res/Nunito-Regular.ttf
+    res/SourceSansPro-Regular.ttf
     res/Symbola.ttf
 )
  if (UNIX AND NOT APPLE)
@@ -156,6 +156,7 @@ if (APPLE)
     else ()
         target_link_libraries (app PUBLIC "-framework AppKit")
     endif ()
+    target_link_options (app PUBLIC -mmacosx-version-min=10.14)
     set_target_properties (app PROPERTIES
         OUTPUT_NAME "Lagrange"
         BUILD_RPATH ${SDL2_LIBRARY_DIRS}
