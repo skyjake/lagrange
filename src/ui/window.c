@@ -496,8 +496,9 @@ void init_Window(iWindow *d, iRect rect) {
     /* Some info. */ {
         SDL_RendererInfo info;
         SDL_GetRendererInfo(d->render, &info);
-        printf("[window] renderer: %s%s\n", info.name, 
+        printf("[window] renderer: %s%s\n", info.name,
                info.flags & SDL_RENDERER_ACCELERATED ? " (accelerated)" : "");
+#if !defined (NDEBUG)
         printf("[window] max texture size: %d x %d\n",
                info.max_texture_width,
                info.max_texture_height);
@@ -505,6 +506,7 @@ void init_Window(iWindow *d, iRect rect) {
             printf("[window] supported texture format: %s\n", SDL_GetPixelFormatName(
                        info.texture_formats[i]));
         }
+#endif
     }
     drawBlank_Window_(d);
     d->uiScale = initialUiScale_;
