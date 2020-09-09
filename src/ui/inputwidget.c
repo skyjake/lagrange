@@ -180,6 +180,7 @@ void setText_InputWidget(iInputWidget *d, const iString *text) {
     iConstForEach(String, i, text) {
         pushBack_Array(&d->text, &i.value);
     }
+    iZap(d->mark);
     refresh_Widget(as_Widget(d));
 }
 
