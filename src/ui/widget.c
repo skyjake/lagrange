@@ -218,6 +218,16 @@ iRect innerBounds_Widget(const iWidget *d) {
     return ib;
 }
 
+static size_t numArrangedChildren_Widget_(const iWidget *d) {
+    size_t count = 0;
+    iConstForEach(ObjectList, i, d->children) {
+        if (~flags_Widget(i.object) & fixedPosition_WidgetFlag) {
+            count++;
+        }
+    }
+    return count;
+}
+
 void arrange_Widget(iWidget *d) {
     if (isCollapsed_Widget_(d)) {
         setFlags_Widget(d, wasCollapsed_WidgetFlag, iTrue);
@@ -237,7 +247,10 @@ void arrange_Widget(iWidget *d) {
         return;
     }
     /* Resize children to fill the parent widget. */
-    const size_t childCount = size_ObjectList(d->children);
+    const size_t childCount = numArrangedChildren_Widget_(d);
+    if (childCount == 0) {
+        return;
+    }
     if (d->flags & resizeChildren_WidgetFlag) {
         const iInt2 dirs = init_I2((d->flags & resizeWidthOfChildren_WidgetFlag) != 0,
                                    (d->flags & resizeHeightOfChildren_WidgetFlag) != 0);
@@ -272,6 +285,9 @@ void arrange_Widget(iWidget *d) {
             iInt2 avail = innerRect_Widget_(d).size;
             iConstForEach(ObjectList, i, d->children) {
                 const iWidget *child = constAs_Widget(i.object);
+                if (child->flags & fixedPosition_WidgetFlag) {
+                    continue;
+                }
                 if (~child->flags & expand_WidgetFlag) {
                     subv_I2(&avail, child->rect.size);
                 }
@@ -280,6 +296,9 @@ void arrange_Widget(iWidget *d) {
             iForEach(ObjectList, j, d->children) {
                 iWidget *child = as_Widget(j.object);
                 if (isCollapsed_Widget_(child)) continue;
+                if (child->flags & fixedPosition_WidgetFlag) {
+                    continue;
+                }
                 if (child->flags & expand_WidgetFlag) {
                     if (d->flags & arrangeHorizontal_WidgetFlag) {
                         if (dirs.x) setWidth_Widget_(child, avail.x);

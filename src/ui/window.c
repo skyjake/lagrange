@@ -404,6 +404,10 @@ static void setupUserInterface_Window(iWindow *d) {
         iSidebarWidget *sidebar = new_SidebarWidget();
         addChildPos_Widget(content, iClob(sidebar), front_WidgetAddPos);
     }
+    /* Lookup results. */ {
+        iLookupWidget *lookup = new_LookupWidget();
+        addChildFlags_Widget(div, iClob(lookup), fixedPosition_WidgetFlag | hidden_WidgetFlag);
+    }
     /* Search bar. */ {
         iWidget *searchBar = new_Widget();
         setId_Widget(searchBar, "search");
@@ -414,7 +418,8 @@ static void setupUserInterface_Window(iWindow *d) {
         addChild_Widget(div, iClob(searchBar));
         setBackgroundColor_Widget(searchBar, uiBackground_ColorId);
         setCommandHandler_Widget(searchBar, handleSearchBarCommands_);
-        addChild_Widget(searchBar, iClob(new_LabelWidget("\U0001f50d Text", 0, 0, NULL)));
+        addChildFlags_Widget(
+            searchBar, iClob(new_LabelWidget("\U0001f50d Text", 0, 0, NULL)), frameless_WidgetFlag);
         iInputWidget *input = new_InputWidget(0);
         setId_Widget(addChildFlags_Widget(searchBar, iClob(input), expand_WidgetFlag),
                      "find.input");
@@ -422,8 +427,6 @@ static void setupUserInterface_Window(iWindow *d) {
         addChild_Widget(searchBar, iClob(newIcon_LabelWidget("  \u2b9d  ", 'g', KMOD_PRIMARY | KMOD_SHIFT, "find.prev")));
         addChild_Widget(searchBar, iClob(newIcon_LabelWidget("\u2a2f", SDLK_ESCAPE, 0, "find.close")));
     }
-    iLookupWidget *lookup = new_LookupWidget();
-    addChildFlags_Widget(d->root, iClob(lookup), fixedPosition_WidgetFlag | hidden_WidgetFlag);
     iWidget *tabsMenu = makeMenu_Widget(d->root,
                                         (iMenuItem[]){
                                             { "Close Tab", 0, 0, "tabs.close" },
