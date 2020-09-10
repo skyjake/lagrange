@@ -25,13 +25,19 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/defs.h>
 
 #if defined (iPlatformApple)
+#   define reload_KeyShortcut           SDLK_r,             KMOD_PRIMARY
 #   define prevTab_KeyShortcut          SDLK_LEFTBRACKET,   KMOD_SHIFT | KMOD_PRIMARY
 #   define nextTab_KeyShortcut          SDLK_RIGHTBRACKET,  KMOD_SHIFT | KMOD_PRIMARY
 #   define navigateBack_KeyShortcut     SDLK_LEFT,          KMOD_PRIMARY
 #   define navigateForward_KeyShortcut  SDLK_RIGHT,         KMOD_PRIMARY
+#   define byWord_KeyModifier           KMOD_ALT
+#   define byLine_KeyModifier           KMOD_PRIMARY
 #else
+#   define reload_KeyShortcut           SDLK_r,             KMOD_PRIMARY
 #   define prevTab_KeyShortcut          SDLK_PAGEUP,        KMOD_PRIMARY
 #   define nextTab_KeyShortcut          SDLK_PAGEDOWN,      KMOD_PRIMARY
 #   define navigateBack_KeyShortcut     SDLK_LEFT,          KMOD_ALT
 #   define navigateForward_KeyShortcut  SDLK_RIGHT,         KMOD_ALT
+#   define byWord_KeyModifier           KMOD_CTRL
+#   define byLine_KeyModifier           0
 #endif

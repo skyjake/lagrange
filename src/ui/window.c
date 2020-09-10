@@ -138,9 +138,9 @@ static const iMenuItem viewMenuItems[] = {
     { "Show Page Outline", '4', KMOD_PRIMARY, "sidebar.mode arg:3 toggle:1" },
     { "Toggle Sidebar", SDLK_l, KMOD_PRIMARY | KMOD_SHIFT, "sidebar.toggle" },
     { "---", 0, 0, NULL },
-    { "Go Back", SDLK_LEFTBRACKET, KMOD_PRIMARY, "navigate.back" },
-    { "Go Forward", SDLK_RIGHTBRACKET, KMOD_PRIMARY, "navigate.forward" },
-    { "Reload Page", 'r', KMOD_PRIMARY, "navigate.reload" },
+    { "Go Back", navigateBack_KeyShortcut, "navigate.back" },
+    { "Go Forward", navigateForward_KeyShortcut, "navigate.forward" },
+    { "Reload Page", reload_KeyShortcut, "navigate.reload" },
     { "---", 0, 0, NULL },
     { "Zoom In", SDLK_EQUALS, KMOD_PRIMARY, "zoom.delta arg:10" },
     { "Zoom Out", SDLK_MINUS, KMOD_PRIMARY, "zoom.delta arg:-10" },
@@ -405,7 +405,7 @@ static void setupUserInterface_Window(iWindow *d) {
         addChildPos_Widget(content, iClob(sidebar), front_WidgetAddPos);
     }
     /* Search bar. */ {
-        iWidget *searchBar = new_Widget();        
+        iWidget *searchBar = new_Widget();
         setId_Widget(searchBar, "search");
         setFlags_Widget(searchBar,
                         hidden_WidgetFlag | collapse_WidgetFlag | arrangeHeight_WidgetFlag |
@@ -483,7 +483,7 @@ void init_Window(iWindow *d, iRect rect) {
     d->isDrawFrozen = iTrue;
     uint32_t flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI;
 #if defined (ENABLE_SWRENDER)
-    SDL_SetHint(SDL_HINT_RENDER_DRIVER, "software");    
+    SDL_SetHint(SDL_HINT_RENDER_DRIVER, "software");
 #elif defined (iPlatformApple)
     SDL_SetHint(SDL_HINT_RENDER_DRIVER, "metal");
 #else
@@ -499,7 +499,7 @@ void init_Window(iWindow *d, iRect rect) {
         SDL_SetWindowPosition(d->win, left_Rect(rect), top_Rect(rect));
     }
     SDL_SetWindowMinimumSize(d->win, 400, 250);
-    SDL_SetWindowTitle(d->win, "Lagrange");    
+    SDL_SetWindowTitle(d->win, "Lagrange");
     /* Some info. */ {
         SDL_RendererInfo info;
         SDL_GetRendererInfo(d->render, &info);
@@ -692,7 +692,7 @@ void setFreezeDraw_Window(iWindow *d, iBool freezeDraw) {
     d->isDrawFrozen = freezeDraw;
 }
 
-void setCursor_Window(iWindow *d, int cursor) {    
+void setCursor_Window(iWindow *d, int cursor) {
     if (!d->cursors[cursor]) {
         d->cursors[cursor] = SDL_CreateSystemCursor(cursor);
     }

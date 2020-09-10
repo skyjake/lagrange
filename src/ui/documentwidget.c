@@ -244,6 +244,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     addChild_Widget(w, iClob(d->scroll = new_ScrollWidget()));
     d->menu = NULL; /* created when clicking */
 #if !defined (iPlatformApple) /* in system menu */
+    addAction_Widget(w, reload_KeyShortcut, "navigate.reload");
     addAction_Widget(w, SDLK_w, KMOD_PRIMARY, "tabs.close");
 #endif
     addAction_Widget(w, navigateBack_KeyShortcut, "navigate.back");
@@ -1453,9 +1454,9 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 pushBackN_Array(
                     &items,
                     (iMenuItem[]){
-                        { "Go Back", SDLK_LEFT, KMOD_PRIMARY, "navigate.back" },
-                        { "Go Forward", SDLK_RIGHT, KMOD_PRIMARY, "navigate.forward" },
-                        { "Reload Page", 0, 0, "navigate.reload" },
+                        { "Go Back", navigateBack_KeyShortcut, "navigate.back" },
+                        { "Go Forward", navigateForward_KeyShortcut, "navigate.forward" },
+                        { "Reload Page", reload_KeyShortcut, "navigate.reload" },
                         { "---", 0, 0, NULL },
                         { d->contextLink ? "Copy Link URL" : "Copy Page URL",
                           0,

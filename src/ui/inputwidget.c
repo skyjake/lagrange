@@ -23,6 +23,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "inputwidget.h"
 #include "paint.h"
 #include "util.h"
+#include "keys.h"
 #include "app.h"
 
 #include <the_Foundation/array.h>
@@ -539,7 +540,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                     deleteMarked_InputWidget_(d);
                     contentsWereChanged_InputWidget_(d);
                 }
-                else if (mods & KMOD_ALT) {
+                else if (mods & byWord_KeyModifier) {
                     pushUndo_InputWidget_(d);
                     d->mark.start = d->cursor;
                     d->mark.end   = skipWord_InputWidget_(d, d->cursor, -1);
@@ -562,7 +563,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                     deleteMarked_InputWidget_(d);
                     contentsWereChanged_InputWidget_(d);
                 }
-                else if (mods & KMOD_ALT) {
+                else if (mods & byWord_KeyModifier) {
                     pushUndo_InputWidget_(d);
                     d->mark.start = d->cursor;
                     d->mark.end   = skipWord_InputWidget_(d, d->cursor, +1);
@@ -621,10 +622,10 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
             case SDLK_LEFT:
             case SDLK_RIGHT: {
                 const int dir = (key == SDLK_LEFT ? -1 : +1);
-                if (mods & KMOD_PRIMARY) {
+                if (mods & byLine_KeyModifier) {
                     setCursor_InputWidget(d, dir < 0 ? 0 : curMax);
                 }
-                else if (mods & KMOD_ALT) {
+                else if (mods & byWord_KeyModifier) {
                     setCursor_InputWidget(d, skipWord_InputWidget_(d, d->cursor, dir));
                 }
                 else if (!isMarking_() && !isEmpty_Range(&d->mark)) {
