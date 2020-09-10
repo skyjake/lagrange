@@ -325,7 +325,7 @@ static void load_GmCerts_(iGmCerts *d) {
         loadIdentities_GmCerts_(d);
         const iString *idDir = collect_String(concatCStr_Path(&d->saveDir, identsDir_GmCerts_));
         if (!fileExists_FileInfo(idDir)) {
-            mkdir_Path(idDir);
+            makeDirs_Path(idDir);
         }
         iForEach(DirFileInfo, i, iClob(directoryContents_FileInfo(iClob(new_FileInfo(idDir))))) {
             const iFileInfo *entry = i.value;
