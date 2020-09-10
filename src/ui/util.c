@@ -304,8 +304,7 @@ static iBool tabSwitcher_(iWidget *tabs, const char *cmd) {
     if (equal_Command(cmd, "tabs.switch")) {
         iWidget *target = pointerLabel_Command(cmd, "page");
         if (!target) {
-            const iString *id = string_Command(cmd, "id");
-            target = findChild_Widget(tabs, cstr_String(id));
+            target = findChild_Widget(tabs, cstr_Rangecc(range_Command(cmd, "id")));
         }
         if (!target) return iFalse;
         if (flags_Widget(target) & focusable_WidgetFlag) {

@@ -77,7 +77,7 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "focus.set")) {
-        setFocus_Widget(findWidget_App(cstr_String(string_Command(cmd, "id"))));
+        setFocus_Widget(findWidget_App(cstr_Rangecc(range_Command(cmd, "id"))));
         return iTrue;
     }
     else if (handleCommand_App(cmd)) {
@@ -204,6 +204,7 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
         }
         arrange_Widget(navBar);
         refresh_Widget(navBar);
+        postCommand_Widget(navBar, "layout.changed id:navbar");
         return iFalse;
     }
     else if (equal_Command(cmd, "input.edited")) {
@@ -289,7 +290,7 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
 
 static iBool handleSearchBarCommands_(iWidget *searchBar, const char *cmd) {
     if (equal_Command(cmd, "input.ended") &&
-        cmp_String(string_Command(cmd, "id"), "find.input") == 0) {
+        equal_Rangecc(range_Command(cmd, "id"), "find.input")) {
         iInputWidget *input = findChild_Widget(searchBar, "find.input");
         if (arg_Command(cmd) && argLabel_Command(cmd, "enter") && isVisible_Widget(input)) {
             postCommand_App("find.next");
@@ -338,7 +339,8 @@ static void setupUserInterface_Window(iWindow *d) {
     /* Navigation bar. */ {
         iWidget *navBar = new_Widget();
         setId_Widget(navBar, "navbar");
-        setPadding_Widget(navBar, gap_UI / 2, 0, gap_UI / 2, 0);
+        /*setPadding_Widget(navBar, gap_UI / 2, 0, gap_UI / 2, 0);*/
+        setPadding_Widget(navBar, gap_UI, gap_UI / 2, gap_UI, gap_UI / 2);
         setFlags_Widget(navBar,
                         arrangeHeight_WidgetFlag | resizeChildren_WidgetFlag |
                             arrangeHorizontal_WidgetFlag,

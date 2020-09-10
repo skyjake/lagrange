@@ -570,7 +570,8 @@ static iBool processEvent_LookupWidget_(iLookupWidget *d, const SDL_Event *ev) {
         presentResults_LookupWidget_(d);
         return iTrue;
     }
-    if (isResize_UserEvent(ev)) {
+    if (isResize_UserEvent(ev) || (equal_Command(cmd, "layout.changed") &&
+                                   equal_Rangecc(range_Command(cmd, "id"), "navbar"))) {
         /* Position the lookup popup under the URL bar. */ {
             setSize_Widget(w, init_I2(width_Widget(findWidget_App("url")),
                                       get_Window()->root->rect.size.y / 2));
@@ -580,7 +581,7 @@ static iBool processEvent_LookupWidget_(iLookupWidget *d, const SDL_Event *ev) {
         updateVisible_ListWidget(d->list);
         invalidate_ListWidget(d->list);
     }
-    if (equal_Command(cmd, "input.ended") && !cmp_String(string_Command(cmd, "id"), "url") &&
+    if (equal_Command(cmd, "input.ended") && equal_Rangecc(range_Command(cmd, "id"), "url") &&
         !isFocused_Widget(w)) {
         setFlags_Widget(w, hidden_WidgetFlag, iTrue);
     }

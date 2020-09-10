@@ -1150,7 +1150,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equal_Command(cmd, "valueinput.cancelled") &&
-             cmp_String(string_Command(cmd, "id"), "document.input.submit") == 0) {
+             equal_Rangecc(range_Command(cmd, "id"), "document.input.submit")) {
         postCommand_App("navigate.back");
         return iTrue;
     }
