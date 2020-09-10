@@ -15,8 +15,10 @@ option (ENABLE_RESOURCE_EMBED "Embed resources inside the executable" OFF)
 include (BuildType.cmake)
 include (Embed.cmake)
 if (NOT EXISTS ${CMAKE_SOURCE_DIR}/lib/the_Foundation)
+    set (INSTALL_THE_FOUNDATION YES)
     find_package (the_Foundation REQUIRED)
 else ()
+    set (INSTALL_THE_FOUNDATION NO)
     set (TFDN_STATIC_LIBRARY    ON  CACHE BOOL "")
     set (TFDN_ENABLE_INSTALL    OFF CACHE BOOL "")
     set (TFDN_ENABLE_TESTS      OFF CACHE BOOL "")
@@ -183,11 +185,10 @@ if (MSYS)
     if (NOT ENABLE_RESOURCE_EMBED)
         install (FILES ${EMB_BIN} DESTINATION .)
     endif ()
-    install (PROGRAMS
-        ${SDL2_LIBDIR}/SDL2.dll
-        $<TARGET_FILE:the_Foundation::the_Foundation>
-        DESTINATION .
-    )
+    install (PROGRAMS ${SDL2_LIBDIR}/SDL2.dll DESTINATION .)
+    if (INSTALL_THE_FOUNDATION)
+        install (PROGRAMS $<TARGET_FILE:the_Foundation::the_Foundation> DESTINATION .)
+    endif ()
 elseif (UNIX AND NOT APPLE)
     set_target_properties (app PROPERTIES
         INSTALL_RPATH_USE_LINK_PATH YES
