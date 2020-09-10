@@ -30,7 +30,7 @@ pkg_check_modules (SDL2 REQUIRED sdl2)
 # Embedded resources are written to a generated source file.
 message (STATUS "Preparing embedded resources...")
 # Fonts are too large to comfortably embed as a C source.
-set (EMBED_RESOURCES 
+set (EMBED_RESOURCES
     res/about/help.gmi
     res/about/lagrange.gmi
     res/about/version.gmi
@@ -183,8 +183,8 @@ if (MSYS)
     if (NOT ENABLE_RESOURCE_EMBED)
         install (FILES ${EMB_BIN} DESTINATION .)
     endif ()
-    install (PROGRAMS 
-        ${SDL2_LIBDIR}/SDL2.dll 
+    install (PROGRAMS
+        ${SDL2_LIBDIR}/SDL2.dll
         $<TARGET_FILE:the_Foundation::the_Foundation>
         DESTINATION .
     )

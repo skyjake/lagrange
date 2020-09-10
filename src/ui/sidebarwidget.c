@@ -527,14 +527,14 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             updateItems_SidebarWidget_(d);
         }
         else if (equal_Command(cmd, "bookmark.copy")) {
-            const iSidebarItem *item = d->menuItem; //hoverItem_ListWidget(d->list);
+            const iSidebarItem *item = d->menuItem;
             if (d->mode == bookmarks_SidebarMode && item) {
                 SDL_SetClipboardText(cstr_String(&item->url));
             }
             return iTrue;
         }
         else if (equal_Command(cmd, "bookmark.edit")) {
-            const iSidebarItem *item = d->menuItem; //hoverItem_ListWidget(d->list);
+            const iSidebarItem *item = d->menuItem;
             if (d->mode == bookmarks_SidebarMode && item) {
                 setFlags_Widget(w, disabled_WidgetFlag, iTrue);
                 iWidget *dlg = makeBookmarkEditor_Widget();
@@ -660,6 +660,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                     &item->url,
                     collect_String(newRange_String(urlHost_String(&item->url))),
                     0x1f310 /* globe */);
+                postCommand_App("focus.set id:bmed.title");
             }
         }
         else if (equal_Command(cmd, "history.clear")) {
@@ -678,7 +679,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             }
             return iTrue;
         }
-    }    
+    }
     if (ev->type == SDL_MOUSEMOTION && !isVisible_Widget(d->menu)) {
         const iInt2 mouse = init_I2(ev->motion.x, ev->motion.y);
         if (contains_Widget(d->resizer, mouse)) {
@@ -733,7 +734,9 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             }
         }
     }
-    processContextMenuEvent_Widget(d->menu, ev, {});
+    if (hoverItem_ListWidget(d->list) || isVisible_Widget(d->menu)) {
+        processContextMenuEvent_Widget(d->menu, ev, {});
+    }
     return processEvent_Widget(w, ev);
 }
 

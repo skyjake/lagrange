@@ -339,7 +339,7 @@ static void deinit_App(iApp *d) {
     deinit_SortedArray(&d->tickers);
     delete_Window(d->window);
     d->window = NULL;
-    deinit_CommandLine(&d->args);    
+    deinit_CommandLine(&d->args);
 }
 
 const iString *execPath_App(void) {
@@ -565,7 +565,7 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
     else if (equal_Command(cmd, "prefs.ostheme.changed")) {
         postCommandf_App("ostheme arg:%d", arg_Command(cmd));
     }
-    else if (equal_Command(cmd, "theme.changed")) {        
+    else if (equal_Command(cmd, "theme.changed")) {
         updatePrefsThemeButtons_(d);
         if (!argLabel_Command(cmd, "auto")) {
             setToggle_Widget(findChild_Widget(d, "prefs.ostheme"), iFalse);
@@ -617,7 +617,7 @@ iDocumentWidget *newTab_App(const iDocumentWidget *duplicateOf) {
 
 static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
     iApp *d = &app_;
-    if (equal_Command(cmd, "ident.accept") || equal_Command(cmd, "cancel")) {        
+    if (equal_Command(cmd, "ident.accept") || equal_Command(cmd, "cancel")) {
         if (equal_Command(cmd, "ident.accept")) {
             const iString *commonName   = text_InputWidget (findChild_Widget(dlg, "ident.common"));
             const iString *email        = text_InputWidget (findChild_Widget(dlg, "ident.email"));
@@ -733,7 +733,7 @@ iBool handleCommand_App(const char *cmd) {
         newTab_App(isDuplicate ? document_App() : NULL);
         if (!isDuplicate) {
             postCommand_App("navigate.home");
-        }        
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "tabs.close")) {
@@ -824,6 +824,7 @@ iBool handleCommand_App(const char *cmd) {
         makeBookmarkCreation_Widget(url_DocumentWidget(doc),
                                     bookmarkTitle_DocumentWidget(doc),
                                     siteIcon_GmDocument(document_DocumentWidget(doc)));
+        postCommand_App("focus.set id:bmed.title");
         return iTrue;
     }
     else if (equal_Command(cmd, "ident.new")) {
