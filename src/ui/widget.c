@@ -140,7 +140,7 @@ void setPos_Widget(iWidget *d, iInt2 pos) {
     setFlags_Widget(d, fixedPosition_WidgetFlag, iTrue);
 }
 
-void setSize_Widget(iWidget *d, iInt2 size) {    
+void setSize_Widget(iWidget *d, iInt2 size) {
     d->rect.size = size;
     setFlags_Widget(d, fixedSize_WidgetFlag, iTrue);
 }
@@ -687,8 +687,11 @@ iBool isHover_Widget(const iAnyObject *d) {
 }
 
 iBool isSelected_Widget(const iAnyObject *d) {
-    iAssert(isInstance_Object(d, &Class_Widget));
-    return d && (flags_Widget(d) & selected_WidgetFlag) != 0;
+    if (d) {
+        iAssert(isInstance_Object(d, &Class_Widget));
+        return (flags_Widget(d) & selected_WidgetFlag) != 0;
+    }
+    return iFalse;
 }
 
 iBool equalWidget_Command(const char *cmd, const iWidget *widget, const char *checkCommand) {
