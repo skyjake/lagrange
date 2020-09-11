@@ -198,10 +198,11 @@ elseif (UNIX AND NOT APPLE)
 Name=Lagrange
 Comment=${PROJECT_DESCRIPTION}
 Categories=Network
-Exec=${CMAKE_INSTALL_PREFIX}/bin/lagrange
+Exec=${CMAKE_INSTALL_PREFIX}/bin/lagrange %U
 Terminal=false
 Type=Application
 Icon=fi.skyjake.lagrange
+MimeType=x-scheme-handler/gemini;
 ")
     install (TARGETS app DESTINATION bin)
     install (FILES ${desktop} DESTINATION share/applications)
