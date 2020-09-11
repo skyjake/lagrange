@@ -38,8 +38,8 @@
 			<key>CFBundleTypeExtensions</key>
 			<array>
 				<string>gmi</string>
-                                <string>gemini</string>
-                        </array>
+				<string>gemini</string>
+			</array>
 			<key>CFBundleTypeIconFile</key>
 			<string>text-gemini.icns</string>
 			<key>CFBundleTypeName</key>
@@ -52,5 +52,16 @@
 			<false/>
 		</dict>
 	</array>
+		<key>CFBundleURLTypes</key>
+		<array>
+			<dict>
+				<key>CFBundleURLName</key>
+				<string>Gemini</string>
+				<key>CFBundleURLSchemes</key>
+				<array>
+					<string>gemini</string>
+				</array>
+			</dict>
+		</array>
 </dict>
 </plist>

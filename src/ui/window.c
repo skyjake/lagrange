@@ -138,8 +138,8 @@ static const iMenuItem viewMenuItems[] = {
     { "Show Page Outline", '4', KMOD_PRIMARY, "sidebar.mode arg:3 toggle:1" },
     { "Toggle Sidebar", SDLK_l, KMOD_PRIMARY | KMOD_SHIFT, "sidebar.toggle" },
     { "---", 0, 0, NULL },
-    { "Go Back", navigateBack_KeyShortcut, "navigate.back" },
-    { "Go Forward", navigateForward_KeyShortcut, "navigate.forward" },
+    { "Go Back", SDLK_LEFTBRACKET, KMOD_PRIMARY, "navigate.back" },
+    { "Go Forward", SDLK_RIGHTBRACKET, KMOD_PRIMARY, "navigate.forward" },
     { "Reload Page", reload_KeyShortcut, "navigate.reload" },
     { "---", 0, 0, NULL },
     { "Zoom In", SDLK_EQUALS, KMOD_PRIMARY, "zoom.delta arg:10" },
@@ -546,9 +546,6 @@ void init_Window(iWindow *d, iRect rect) {
     d->presentTime = 0.0;
     setId_Widget(d->root, "root");
     init_Text(d->render);
-#if defined (iPlatformApple) && !defined (iPlatformIOS)
-    setupApplication_MacOS();
-#endif
     setupUserInterface_Window(d);
     updateRootSize_Window_(d);
 }

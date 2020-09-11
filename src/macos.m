@@ -121,8 +121,9 @@ enum iTouchBarVariant {
 }
 - (id)initWithSDLDelegate:(NSObject<NSApplicationDelegate> *)sdl;
 //- (NSTouchBar *)makeTouchBar;
-/* SDL needs to do its own thing. */
-- (BOOL)application:(NSApplication *)theApplication openFile:(NSString *)filename;
+- (BOOL)application:(NSApplication *)app openFile:(NSString *)filename;
+- (void)application:(NSApplication *)app openFiles:(NSArray<NSString *> *)filenames;
+- (void)application:(NSApplication *)app openURLs:(NSArray<NSURL *> *)urls;
 - (void)applicationDidFinishLaunching:(NSNotification *)notifications;
 @end
 
@@ -151,7 +152,7 @@ enum iTouchBarVariant {
 static void appearanceChanged_MacOS_(NSString *name) {
     const iBool isDark = [name containsString:@"Dark"];
     const iBool isHighContrast = [name containsString:@"HighContrast"];
-    postCommandf_App("os.theme.changed dark:%d contrast:%d", isDark ? 1 : 0, isHighContrast ? 1 : 0);
+    postCommandf_App("~os.theme.changed dark:%d contrast:%d", isDark ? 1 : 0, isHighContrast ? 1 : 0);
 //    printf("Effective appearance changed: %s\n", [name cStringUsingEncoding:NSUTF8StringEncoding]);
 //    fflush(stdout);
 }
@@ -170,8 +171,23 @@ static void appearanceChanged_MacOS_(NSString *name) {
     [menuCommands setObject:command forKey:[menuItem title]];
 }
 
-- (BOOL)application:(NSApplication *)theApplication openFile:(NSString *)filename {
-    return [sdlDelegate application:theApplication openFile:filename];
+- (BOOL)application:(NSApplication *)app openFile:(NSString *)filename {
+    return [sdlDelegate application:app openFile:filename];
+}
+
+- (void)application:(NSApplication *)app openFiles:(NSArray<NSString *> *)filenames {
+    /* TODO: According to AppKit docs, this method won't be called when openURLs is defined. */
+    for (NSString *fn in filenames) {
+        NSLog(@"openFiles: %@", fn);
+        [self application:app openFile:fn];
+    }
+}
+
+- (void)application:(NSApplication *)app openURLs:(NSArray<NSURL *> *)urls {
+    for (NSURL *url in urls) {
+        NSLog(@"openURLs: %@", [url absoluteString]);
+        [sdlDelegate application:app openFile:[url absoluteString]];
+    }
 }
 
 - (void)applicationDidFinishLaunching:(NSNotification *)notification {
@@ -397,9 +413,30 @@ void enableMomentumScroll_MacOS(void) {
                                             forKey: @"AppleMomentumScrollSupported"];
 }
 
+@interface UrlHandler : NSObject
+- (void)handleURLEvent:(NSAppleEventDescriptor*)event
+        withReplyEvent:(NSAppleEventDescriptor*)replyEvent;
+@end
+
+@implementation UrlHandler
+- (void)handleURLEvent:(NSAppleEventDescriptor*)event
+        withReplyEvent:(NSAppleEventDescriptor*)replyEvent {
+    NSString *url = [[event paramDescriptorForKeyword:keyDirectObject] stringValue];
+    postCommandf_App("~open url:%s", [url cStringUsingEncoding:NSUTF8StringEncoding]);
+}
+@end
+
+void registerURLHandler_MacOS(void) {
+    UrlHandler *handler = [[UrlHandler alloc] init];
+    [[NSAppleEventManager sharedAppleEventManager]
+        setEventHandler:handler
+            andSelector:@selector(handleURLEvent:withReplyEvent:)
+          forEventClass:kInternetEventClass
+             andEventID:kAEGetURL];
+}
+
 void setupApplication_MacOS(void) {
     NSApplication *app = [NSApplication sharedApplication];
-    //appearanceChanged_MacOS_([[app effectiveAppearance] name]);
     /* Our delegate will override SDL's delegate. */
     MyDelegate *myDel = [[MyDelegate alloc] initWithSDLDelegate:app.delegate];
     [myDel setAppearance:[[app effectiveAppearance] name]];
@@ -501,4 +538,8 @@ void handleCommand_MacOS(const char *cmd) {
         }
     }
 #endif
+}
+
+void log_MacOS(const char *msg) {
+    NSLog(@"%s", msg);
 }

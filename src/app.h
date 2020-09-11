@@ -48,6 +48,7 @@ enum iUserEventCode {
 
 const iString *execPath_App     (void);
 const iString *dataDir_App      (void);
+const iString *debugInfo_App    (void);
 
 int         run_App                     (int argc, char **argv);
 void        processEvents_App           (enum iAppEventMode mode);

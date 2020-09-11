@@ -88,6 +88,9 @@ struct Impl_App {
     iBool        running;
     iBool        pendingRefresh;
     int          tabEnum;
+    iStringList *launchCommands;
+    iBool        isFinishedLaunching;
+    iTime        lastDropTime; /* for detecting drops of multiple items */
     /* Preferences: */
     iBool        commandEcho; /* --echo */
     iBool        retainWindowSize;
@@ -283,6 +286,9 @@ static void saveState_App_(const iApp *d) {
 }
 
 static void init_App_(iApp *d, int argc, char **argv) {
+    d->isFinishedLaunching = iFalse;
+    d->launchCommands      = new_StringList();
+    iZap(d->lastDropTime);
     init_CommandLine(&d->args, argc, argv);
     init_SortedArray(&d->tickers, sizeof(iTicker), cmp_Ticker_);
     d->lastTickerTime    = SDL_GetTicks();
@@ -304,6 +310,9 @@ static void init_App_(iApp *d, int argc, char **argv) {
     init_String(&d->gopherProxy);
     init_String(&d->httpProxy);
     setThemePalette_Color(d->theme);
+#if defined (iPlatformApple)
+    setupApplication_MacOS();
+#endif
     loadPrefs_App_(d);
     load_Visited(d->visited, dataDir_App_);
     load_Bookmarks(d->bookmarks, dataDir_App_);
@@ -324,6 +333,12 @@ static void init_App_(iApp *d, int argc, char **argv) {
         postCommand_App("navigate.home");
     }
     postCommand_App("window.unfreeze");
+    d->isFinishedLaunching = iTrue;
+    /* Run any commands that were pending completion of launch. */ {
+        iForEach(StringList, i, d->launchCommands) {
+            postCommandString_App(i.value);
+        }
+    }
 }
 
 static void deinit_App(iApp *d) {
@@ -340,6 +355,7 @@ static void deinit_App(iApp *d) {
     delete_Window(d->window);
     d->window = NULL;
     deinit_CommandLine(&d->args);
+    iRelease(d->launchCommands);
 }
 
 const iString *execPath_App(void) {
@@ -348,6 +364,21 @@ const iString *execPath_App(void) {
 
 const iString *dataDir_App(void) {
     return collect_String(cleanedCStr_Path(dataDir_App_));
+}
+
+const iString *debugInfo_App(void) {
+    iApp *d = &app_;
+    iString *msg = collectNew_String();
+    format_String(msg, "# Debug information\n");
+    appendFormat_String(msg, "## Launch arguments\n");
+    iConstForEach(StringList, i, args_CommandLine(&d->args)) {
+        appendFormat_String(msg, "* %zu: %s\n", i.pos, cstr_String(i.value));
+    }
+    appendFormat_String(msg, "## Launch commands\n");
+    iConstForEach(StringList, j, d->launchCommands) {
+        appendFormat_String(msg, "%s\n", cstr_String(j.value));
+    }
+    return msg;
 }
 
 iLocalDef iBool isWaitingAllowed_App_(const iApp *d) {
@@ -365,9 +396,22 @@ void processEvents_App(enum iAppEventMode eventMode) {
             case SDL_QUIT:
                 d->running = iFalse;
                 goto backToMainLoop;
-            case SDL_DROPFILE:
-                postCommandf_App("open url:file://%s", ev.drop.file);
+            case SDL_DROPFILE: {
+                iBool newTab = iFalse;
+                if (elapsedSeconds_Time(&d->lastDropTime) < 0.1) {
+                    /* Each additional drop gets a new tab. */
+                    newTab = iTrue;
+                }
+                d->lastDropTime = now_Time();
+                if (startsWithCase_CStr(ev.drop.file, "gemini:") ||
+                    startsWithCase_CStr(ev.drop.file, "file:")) {
+                    postCommandf_App("~open newtab:%d url:%s", newTab, ev.drop.file);
+                }
+                else {
+                    postCommandf_App("~open newtab:%d url:file://%s", newTab, ev.drop.file);
+                }
                 break;
+            }
             default: {
                 iBool wasUsed = processEvent_Window(d->window, &ev);
                 if (ev.type == SDL_USEREVENT && ev.user.code == command_UserEventCode) {
@@ -488,11 +532,20 @@ void postRefresh_App(void) {
 }
 
 void postCommand_App(const char *command) {
+    iApp *d = &app_;
     iAssert(command);
     SDL_Event ev;
     if (*command == '!') {
         /* Global command; this is global context so just ignore. */
         command++;
+    }
+    if (*command == '~') {
+        /* Requires launch to be finished; defer it if needed. */
+        command++;
+        if (!d->isFinishedLaunching) {
+            pushBackCStr_StringList(d->launchCommands, command);
+            return;
+        }
     }
     ev.user.type     = SDL_USEREVENT;
     ev.user.code     = command_UserEventCode;

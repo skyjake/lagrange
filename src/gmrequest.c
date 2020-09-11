@@ -308,6 +308,9 @@ static const iBlock *aboutPageSource_(iRangecc path) {
     if (equalCase_Rangecc(path, "version")) {
         return &blobVersion_Embedded;
     }
+    if (equalCase_Rangecc(path, "debug")) {
+        return utf8_String(debugInfo_App());
+    }
     return src;
 }
 

@@ -31,11 +31,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #if defined (iPlatformApple)
 extern void enableMomentumScroll_MacOS(void);
+extern void registerURLHandler_MacOS(void);
 #endif
 
 int main(int argc, char **argv) {
 #if defined (iPlatformApple)
     enableMomentumScroll_MacOS();
+    registerURLHandler_MacOS();
 #endif
 #if defined (iPlatformMsys)
     /* MSYS runtime takes care of WinMain. */
