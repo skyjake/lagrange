@@ -62,6 +62,19 @@ int keyMods_Sym(int kmods) {
     return kmods;
 }
 
+iRangei intersect_Rangei(iRangei a, iRangei b) {
+    if (a.end < b.start || a.start > b.end) {
+        return (iRangei){ 0, 0 };
+    }
+    return (iRangei){ iMax(a.start, b.start), iMin(a.end, b.end) };
+}
+
+iRangei union_Rangei(iRangei a, iRangei b) {
+    if (isEmpty_Rangei(a)) return b;
+    if (isEmpty_Rangei(b)) return a;
+    return (iRangei){ iMin(a.start, b.start), iMax(a.end, b.end) };
+}
+
 /*-----------------------------------------------------------------------------------------------*/
 
 void init_Click(iClick *d, iAnyObject *widget, int button) {

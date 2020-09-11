@@ -48,7 +48,17 @@ iLocalDef iBool isResize_UserEvent(const SDL_Event *d) {
 #   define KMOD_SECONDARY   KMOD_GUI
 #endif
 
-int     keyMods_Sym         (int kmods); /* shift, alt, control, or gui */
+int         keyMods_Sym         (int kmods); /* shift, alt, control, or gui */
+
+iRangei     intersect_Rangei    (iRangei a, iRangei b);
+iRangei     union_Rangei        (iRangei a, iRangei b);
+
+iLocalDef iBool equal_Rangei(iRangei a, iRangei b) {
+    return a.start == b.start && a.end == b.end;
+}
+iLocalDef iBool isEmpty_Rangei(iRangei d) {
+    return size_Range(&d) == 0;
+}
 
 /*-----------------------------------------------------------------------------------------------*/
 
