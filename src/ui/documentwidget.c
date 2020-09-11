@@ -789,9 +789,15 @@ static void scroll_DocumentWidget_(iDocumentWidget *d, int offset) {
     refresh_Widget(as_Widget(d));
 }
 
+static iBool isSmoothScrolling_DocumentWidget_(const iDocumentWidget *d) {
+    return d->smoothScroll != 0;
+}
+
 static void doScroll_DocumentWidget_(iAny *ptr) {
     iDocumentWidget *d = ptr;
-    if (!d->smoothScroll) return; /* was cancelled */
+    if (!isSmoothScrolling_DocumentWidget_(d)) {
+        return; /* was cancelled */
+    }
     const double elapsed = (double) elapsedSinceLastTicker_App() / 1000.0;
     int delta = d->smoothSpeed * elapsed * iSign(d->smoothScroll);
     if (iAbs(d->smoothScroll) <= iAbs(delta)) {
@@ -804,7 +810,7 @@ static void doScroll_DocumentWidget_(iAny *ptr) {
     }
     scroll_DocumentWidget_(d, delta);
     d->smoothScroll -= delta;
-    if (d->smoothScroll != 0) {
+    if (isSmoothScrolling_DocumentWidget_(d)) {
         addTicker_App(doScroll_DocumentWidget_, d);
     }
 }
@@ -1420,7 +1426,11 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             postCommandf_App("zoom.delta arg:%d", ev->wheel.y > 0 ? 10 : -10);
             return iTrue;
         }
-        scroll_DocumentWidget_(d, -3 * ev->wheel.y * lineHeight_Text(default_FontId));
+        smoothScroll_DocumentWidget_(
+            d,
+            -3 * ev->wheel.y * lineHeight_Text(default_FontId),
+            gap_UI * smoothSpeed_DocumentWidget_ +
+                (isSmoothScrolling_DocumentWidget_(d) ? d->smoothSpeed : 0));
 #endif
         d->noHoverWhileScrolling = iTrue;
         return iTrue;
