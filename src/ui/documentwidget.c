@@ -1032,6 +1032,7 @@ static void allocVisBuffer_DocumentWidget_(const iDocumentWidget *d) {
     if (isVisible && !d->visBuffer->texture[0]) {
         iZap(d->visBuffer->validRange);
         d->visBuffer->size = size;
+        iAssert(size.x > 0);
         iForIndices(i, d->visBuffer->texture) {
             d->visBuffer->texture[i] =
                 SDL_CreateTexture(renderer_Window(get_Window()),
@@ -1066,7 +1067,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             }
         }
         invalidate_DocumentWidget_(d);
-        allocVisBuffer_DocumentWidget_(d);
+        deallocVisBuffer_DocumentWidget_(d);
         refresh_Widget(w);
         updateWindowTitle_DocumentWidget_(d);
     }
@@ -1815,17 +1816,6 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
 //    drawRect_Paint(&d->paint, (iRect){ visPos, run->visBounds.size }, red_ColorId);
 }
 
-static iRangei intersect_Rangei_(iRangei a, iRangei b) {
-    if (a.end < b.start || a.start > b.end) {
-        return (iRangei){ 0, 0 };
-    }
-    return (iRangei){ iMax(a.start, b.start), iMin(a.end, b.end) };
-}
-
-iLocalDef iBool isEmpty_Rangei_(iRangei d) {
-    return size_Range(&d) == 0;
-}
-
 static void draw_DocumentWidget_(const iDocumentWidget *d) {
     const iWidget *w        = constAs_Widget(d);
     const iRect    bounds   = bounds_Widget(w);
@@ -1858,7 +1848,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
         beginTarget_Paint(p, visBuf->texture[vbDst]);
         const iRect visBufferRect = { zero_I2(), visBuf->size };
         iRect drawRect = visBufferRect;
-        if (!isEmpty_Rangei_(intersect_Rangei_(visRange, visBuf->validRange))) {
+        if (!isEmpty_Rangei(intersect_Rangei(visRange, visBuf->validRange))) {
             if (visRange.start < visBuf->validRange.start) {
                 drawRange = (iRangei){ visRange.start, visBuf->validRange.start };
             }
