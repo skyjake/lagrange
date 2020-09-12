@@ -128,42 +128,6 @@ void deserialize_Model(iModel *d, iStream *ins) {
 
 iDefineTypeConstruction(Model)
 
-#if 0
-/*----------------------------------------------------------------------------------------------*/
-
-iDeclareType(VisBuffer)
-iDeclareTypeConstruction(VisBuffer)
-
-struct Impl_VisBuffer {
-    SDL_Texture *  texture[2];
-    int            index;
-    iInt2          size;
-    iRangei        validRange;
-};
-
-void init_VisBuffer(iVisBuffer *d) {
-    iZap(*d);
-}
-
-void deinit_VisBuffer(iVisBuffer *d) {
-    iForIndices(i, d->texture) {
-        if (d->texture[i]) {
-            SDL_DestroyTexture(d->texture[i]);
-        }
-    }
-}
-
-void dealloc_VisBuffer(iVisBuffer *d) {
-    d->size = zero_I2();
-    iZap(d->validRange);
-    iForIndices(i, d->texture) {
-        SDL_DestroyTexture(d->texture[i]);
-        d->texture[i] = NULL;
-    }
-}
-
-iDefineTypeConstruction(VisBuffer)
-#endif
 /*----------------------------------------------------------------------------------------------*/
 
 static const int smoothSpeed_DocumentWidget_ = 120; /* unit: gap_Text per second */
@@ -312,16 +276,6 @@ static int forceBreakWidth_DocumentWidget_(const iDocumentWidget *d) {
     }
     return 0;
 }
-
-iLocalDef int documentToWindowY_DocumentWidget_(const iDocumentWidget *d, int docY) {
-    return docY - d->scrollY + documentBounds_DocumentWidget_(d).pos.y;
-}
-
-#if 0
-iLocalDef int windowToDocumentY_DocumentWidget_(const iDocumentWidget *d, int localY) {
-    return localY + d->scrollY - documentBounds_DocumentWidget_(d).pos.y;
-}
-#endif
 
 static iInt2 documentPos_DocumentWidget_(const iDocumentWidget *d, iInt2 pos) {
     return addY_I2(sub_I2(pos, topLeft_Rect(documentBounds_DocumentWidget_(d))), d->scrollY);
@@ -1585,15 +1539,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
 
 iDeclareType(DrawContext)
 
-#if 0
-enum iDrawRunPass {
-    static_DrawRunPass,
-    dynamic_DrawRunPass,
-};
-#endif
-
 struct Impl_DrawContext {
-//    enum iDrawRunPass pass;
     const iDocumentWidget *widget;
     iRect widgetBounds;
     iInt2 viewPos; /* document area origin */
@@ -1644,35 +1590,21 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
     iDrawContext *d      = context;
     const iInt2   origin = d->viewPos;
     if (run->imageId) {
-        /*if (d->pass == static_DrawRunPass)*/ {
-            SDL_Texture *tex = imageTexture_GmDocument(d->widget->doc, run->imageId);
-            if (tex) {
-                const iRect dst = moved_Rect(run->visBounds, origin);
-                SDL_RenderCopy(d->paint.dst->render, tex, NULL,
-                               &(SDL_Rect){ dst.pos.x, dst.pos.y, dst.size.x, dst.size.y });
-            }
+        SDL_Texture *tex = imageTexture_GmDocument(d->widget->doc, run->imageId);
+        if (tex) {
+            const iRect dst = moved_Rect(run->visBounds, origin);
+            SDL_RenderCopy(d->paint.dst->render, tex, NULL,
+                           &(SDL_Rect){ dst.pos.x, dst.pos.y, dst.size.x, dst.size.y });
         }
         return;
     }
     enum iColorId      fg  = run->color;
     const iGmDocument *doc = d->widget->doc;
-    /* Matches the current drawing pass? */
-//    const iBool isDynamic = (run->linkId && ~run->flags & decoration_GmRunFlag);
-//    if (isDynamic ^ (d->pass == dynamic_DrawRunPass)) {
-//        return;
-//    }
-    const iBool isHover =
+    const iBool        isHover =
         (run->linkId && d->widget->hoverLink && run->linkId == d->widget->hoverLink->linkId &&
          ~run->flags & decoration_GmRunFlag);
     const iInt2 visPos = add_I2(run->visBounds.pos, origin);
-    fillRect_Paint(&d->paint,
-                   (iRect){ visPos,
-                            /* Links have additional hover info on the right side. */
-//                            init_I2(run->linkId && ~run->flags & decoration_GmRunFlag
-//                                        ? d->widgetBounds.size.x - visPos.x :
-                            init_I2(run->visBounds.size.x,
-                                    run->visBounds.size.y) },
-                   tmBackground_ColorId);
+    fillRect_Paint(&d->paint, (iRect){ visPos, run->visBounds.size }, tmBackground_ColorId);
     if (run->linkId && ~run->flags & decoration_GmRunFlag) {
         fg = linkColor_GmDocument(doc, run->linkId, isHover ? textHover_GmLinkPart : text_GmLinkPart);
         if (linkFlags_GmDocument(doc, run->linkId) & content_GmLinkFlag) {
@@ -1680,42 +1612,40 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
         }
     }
     if (run->flags & siteBanner_GmRunFlag) {
-        /*if (d->pass == static_DrawRunPass)*/ {
-            /* Draw the site banner. */
-            fillRect_Paint(
-                &d->paint,
-                initCorners_Rect(topLeft_Rect(d->widgetBounds),
-                                 init_I2(right_Rect(bounds_Widget(constAs_Widget(d->widget))),
-                                         visPos.y + height_Rect(run->visBounds))),
-                tmBannerBackground_ColorId);
-            const iChar icon = siteIcon_GmDocument(doc);
-            iString bannerText;
-            init_String(&bannerText);
-            iInt2 bpos = add_I2(visPos, init_I2(0, lineHeight_Text(banner_FontId) / 2));
-            if (icon) {
-//                appendChar_String(&bannerText, 0x2b24); // icon);
-//                const iRect iconRect = visualBounds_Text(hugeBold_FontId, range_String(&bannerText));
-//                drawRange_Text(hugeBold_FontId, /*run->font,*/
-//                               addY_I2(bpos, -mid_Rect(iconRect).y + lineHeight_Text(run->font) / 2),
-//                               tmBannerIcon_ColorId,
-//                               range_String(&bannerText));
-//                clear_String(&bannerText);
-                appendChar_String(&bannerText, icon);
-                const iRect iconRect = visualBounds_Text(run->font, range_String(&bannerText));
-                drawRange_Text(
-                    run->font,
-                    addY_I2(bpos, -mid_Rect(iconRect).y + lineHeight_Text(run->font) / 2),
-                    tmBannerIcon_ColorId,
-                    range_String(&bannerText));
-                bpos.x += right_Rect(iconRect) + 3 * gap_Text;
-            }
-            drawRange_Text(run->font,
-                           bpos,
-                           tmBannerTitle_ColorId,
-                           isEmpty_String(d->widget->titleUser) ? run->text
-                                                                : range_String(d->widget->titleUser));
-            deinit_String(&bannerText);
+        /* Draw the site banner. */
+        fillRect_Paint(
+            &d->paint,
+            initCorners_Rect(topLeft_Rect(d->widgetBounds),
+                             init_I2(right_Rect(bounds_Widget(constAs_Widget(d->widget))),
+                                     visPos.y + height_Rect(run->visBounds))),
+            tmBannerBackground_ColorId);
+        const iChar icon = siteIcon_GmDocument(doc);
+        iString bannerText;
+        init_String(&bannerText);
+        iInt2 bpos = add_I2(visPos, init_I2(0, lineHeight_Text(banner_FontId) / 2));
+        if (icon) {
+//            appendChar_String(&bannerText, 0x2b24); // icon);
+//            const iRect iconRect = visualBounds_Text(hugeBold_FontId, range_String(&bannerText));
+//            drawRange_Text(hugeBold_FontId, /*run->font,*/
+//                           addY_I2(bpos, -mid_Rect(iconRect).y + lineHeight_Text(run->font) / 2),
+//                           tmBannerIcon_ColorId,
+//                           range_String(&bannerText));
+//            clear_String(&bannerText);
+            appendChar_String(&bannerText, icon);
+            const iRect iconRect = visualBounds_Text(run->font, range_String(&bannerText));
+            drawRange_Text(
+                run->font,
+                addY_I2(bpos, -mid_Rect(iconRect).y + lineHeight_Text(run->font) / 2),
+                tmBannerIcon_ColorId,
+                range_String(&bannerText));
+            bpos.x += right_Rect(iconRect) + 3 * gap_Text;
         }
+        drawRange_Text(run->font,
+                       bpos,
+                       tmBannerTitle_ColorId,
+                       isEmpty_String(d->widget->titleUser) ? run->text
+                                                            : range_String(d->widget->titleUser));
+        deinit_String(&bannerText);
     }
     else {
         if (d->showLinkNumbers && run->linkId && run->flags & decoration_GmRunFlag) {
@@ -1734,7 +1664,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
     runDrawn:;
     }
     /* Presentation of links. */
-    if (run->linkId && ~run->flags & decoration_GmRunFlag/* && d->pass == dynamic_DrawRunPass*/) {
+    if (run->linkId && ~run->flags & decoration_GmRunFlag) {
         const int metaFont = paragraph_FontId;
         /* TODO: Show status of an ongoing media request. */
         const int flags = linkFlags_GmDocument(doc, run->linkId);
@@ -1908,6 +1838,15 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
     setClip_Paint(&ctx.paint, bounds);
     const int yTop = docBounds.pos.y - d->scrollY;
     draw_VisBuf(visBuf, init_I2(bounds.pos.x, yTop));
+    /* Text markers. */
+    if (!isEmpty_Range(&d->foundMark) || !isEmpty_Range(&d->selectMark)) {
+        SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()),
+                                   isDark_ColorTheme(colorTheme_App()) ? SDL_BLENDMODE_ADD
+                                                                       : SDL_BLENDMODE_BLEND);
+        ctx.viewPos = topLeft_Rect(docBounds);
+        render_GmDocument(d->doc, vis, drawMark_DrawContext_, &ctx);
+        SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_NONE);
+    }
     unsetClip_Paint(&ctx.paint);
     /* Fill the top and bottom, in case the document is short. */
     if (yTop > top_Rect(bounds)) {
@@ -1921,15 +1860,6 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
         fillRect_Paint(&ctx.paint,
                        init_Rect(bounds.pos.x, yBottom, bounds.size.x, bottom_Rect(bounds) - yBottom),
                        tmBackground_ColorId);
-    }
-    /* Text markers. */
-    if (!isEmpty_Range(&d->foundMark) || !isEmpty_Range(&d->selectMark)) {
-        SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()),
-                                   isDark_ColorTheme(colorTheme_App()) ? SDL_BLENDMODE_ADD
-                                                                       : SDL_BLENDMODE_BLEND);
-        ctx.viewPos = topLeft_Rect(docBounds);
-        render_GmDocument(d->doc, vis, drawMark_DrawContext_, &ctx);
-        SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_NONE);
     }
     draw_Widget(w);
 }

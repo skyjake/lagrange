@@ -302,31 +302,6 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
     return processEvent_Widget(w, ev);
 }
 
-#if 0
-static void allocVisBuffer_ListWidget_(iListWidget *d) {
-    /* Make sure two buffers cover the entire visible area. */
-//    const iRect inner = innerBounds_Widget(as_Widget(d));
-    const iInt2 size = init_I2(inner.size.x, (inner.size.y / 2 / d->itemHeight + 1) * d->itemHeight);
-    if (!d->visBuffers[0].texture || !isEqual_I2(size, d->visBufSize)) {
-        d->visBufSize = size;
-        iForIndices(i, d->visBuffers) {
-            if (d->visBuffers[i].texture) {
-                SDL_DestroyTexture(d->visBuffers[i].texture);
-            }
-            d->visBuffers[i].texture =
-                SDL_CreateTexture(renderer_Window(get_Window()),
-                                  SDL_PIXELFORMAT_RGBA8888,
-                                  SDL_TEXTUREACCESS_STATIC | SDL_TEXTUREACCESS_TARGET,
-                                  size.x,
-                                  size.y);
-            SDL_SetTextureBlendMode(d->visBuffers[i].texture, SDL_BLENDMODE_NONE);
-            d->visBuffers[i].origin = i * size.y;
-            iZap(d->visBuffers[i].validRange);
-        }
-    }
-}
-#endif
-
 static void drawItem_ListWidget_(const iListWidget *d, iPaint *p, size_t index, iInt2 pos) {
     const iWidget *  w         = constAs_Widget(d);
     const iRect      bounds    = innerBounds_Widget(w);
@@ -340,15 +315,14 @@ static const iListItem *item_ListWidget_(const iListWidget *d, size_t pos) {
 }
 
 static void draw_ListWidget_(const iListWidget *d) {
-    const iWidget *w         = constAs_Widget(d);
-    const iRect    bounds    = innerBounds_Widget(w);
+    const iWidget *w      = constAs_Widget(d);
+    const iRect    bounds = innerBounds_Widget(w);
     if (!bounds.size.y || !bounds.size.x || !d->itemHeight) {
         return;
     }
     iPaint p;
     init_Paint(&p);
     drawBackground_Widget(w);
-//    iListWidget *m = iConstCast(iListWidget *, d);
     alloc_VisBuf(d->visBuf, bounds.size, d->itemHeight);
     /* Update invalid regions/items. */ {
         /* TODO: This seems to draw two items per each shift of the visible region, even though
@@ -362,19 +336,15 @@ static void draw_ListWidget_(const iListWidget *d) {
         const int bottom = numItems_ListWidget(d) * d->itemHeight;
         const iRangei vis = { d->scrollY / d->itemHeight * d->itemHeight,
                              ((d->scrollY + bounds.size.y) / d->itemHeight + 1) * d->itemHeight };
-//        printf("visBufSize.y = %d\n", d->visBufSize.y);
         reposition_VisBuf(d->visBuf, vis);
         /* Check which parts are invalid. */
         iRangei invalidRange[3];
         invalidRanges_VisBuf(d->visBuf, (iRangei){ 0, bottom }, invalidRange);
         iForIndices(i, d->visBuf->buffers) {
             iVisBufTexture *buf = &d->visBuf->buffers[i];
-//            printf("%zu: orig %d, invalid %d ... %d\n", i, buf->origin, invalidRange[i].start, invalidRange[i].end);
             iRanges drawItems = { iMax(0, buf->origin) / d->itemHeight,
                                   iMax(0, buf->origin + d->visBuf->texSize.y) / d->itemHeight };
-            iBool isTargetSet = iFalse;
             if (isEmpty_Rangei(buf->validRange)) {
-                isTargetSet = iTrue;
                 beginTarget_Paint(&p, buf->texture);
                 fillRect_Paint(&p, (iRect){ zero_I2(), d->visBuf->texSize }, bg[i]);
             }
@@ -384,21 +354,14 @@ static void draw_ListWidget_(const iListWidget *d) {
                     const iListItem *item = constAt_PtrArray(&d->items, index);
                     const iRect      itemRect = { init_I2(0, index * d->itemHeight - buf->origin),
                                                   init_I2(d->visBuf->texSize.x, d->itemHeight) };
-                    if (!isTargetSet) {
-                        beginTarget_Paint(&p, buf->texture);
-                        isTargetSet = iTrue;
-                    }
+                    beginTarget_Paint(&p, buf->texture);
                     fillRect_Paint(&p, itemRect, bg[i]);
                     class_ListItem(item)->draw(item, &p, itemRect, d);
-//                    printf("- drawing invalid item %zu\n", index);
                 }
             }
             /* Visible range is not fully covered. Fill in the new items. */
             if (!isEmpty_Rangei(invalidRange[i])) {
-                if (!isTargetSet) {
-                    beginTarget_Paint(&p, buf->texture);
-                    isTargetSet = iTrue;
-                }
+                beginTarget_Paint(&p, buf->texture);
                 drawItems.start = invalidRange[i].start / d->itemHeight;
                 drawItems.end   = invalidRange[i].end   / d->itemHeight + 1;
                 for (size_t j = drawItems.start; j < drawItems.end && j < size_PtrArray(&d->items); j++) {
@@ -407,13 +370,9 @@ static void draw_ListWidget_(const iListWidget *d) {
                                                   init_I2(d->visBuf->texSize.x, d->itemHeight) };
                     fillRect_Paint(&p, itemRect, bg[i]);
                     class_ListItem(item)->draw(item, &p, itemRect, d);
-//                    printf("- drawing item %zu\n", j);
                 }
             }
-            if (isTargetSet) {
-                endTarget_Paint(&p);
-            }
-//            fflush(stdout);
+            endTarget_Paint(&p);
         }
         validate_VisBuf(d->visBuf);
         clear_IntSet(&iConstCast(iListWidget *, d)->invalidItems);
