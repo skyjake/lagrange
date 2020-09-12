@@ -24,6 +24,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "scrollwidget.h"
 #include "inputwidget.h"
 #include "labelwidget.h"
+#include "visbuf.h"
 #include "paint.h"
 #include "command.h"
 #include "keys.h"
@@ -38,6 +39,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/objectlist.h>
 #include <the_Foundation/path.h>
 #include <the_Foundation/ptrarray.h>
+#include <the_Foundation/ptrset.h>
 #include <the_Foundation/regexp.h>
 #include <the_Foundation/stringarray.h>
 #include <SDL_clipboard.h>
@@ -126,6 +128,7 @@ void deserialize_Model(iModel *d, iStream *ins) {
 
 iDefineTypeConstruction(Model)
 
+#if 0
 /*----------------------------------------------------------------------------------------------*/
 
 iDeclareType(VisBuffer)
@@ -160,7 +163,7 @@ void dealloc_VisBuffer(iVisBuffer *d) {
 }
 
 iDefineTypeConstruction(VisBuffer)
-
+#endif
 /*----------------------------------------------------------------------------------------------*/
 
 static const int smoothSpeed_DocumentWidget_ = 120; /* unit: gap_Text per second */
@@ -203,7 +206,8 @@ struct Impl_DocumentWidget {
     int            smoothLastOffset;
     iBool          smoothContinue;
     iWidget *      menu;
-    iVisBuffer *   visBuffer;
+    iVisBuf *      visBuf;
+    iPtrSet *      invalidRuns;
 };
 
 iDefineObjectConstruction(DocumentWidget)
@@ -238,7 +242,8 @@ void init_DocumentWidget(iDocumentWidget *d) {
     d->contextLink      = NULL;
     d->noHoverWhileScrolling = iFalse;
     d->showLinkNumbers  = iFalse;
-    d->visBuffer        = new_VisBuffer();
+    d->visBuf           = new_VisBuf();
+    d->invalidRuns      = new_PtrSet();
     init_PtrArray(&d->visibleLinks);
     init_Click(&d->click, d, SDL_BUTTON_LEFT);
     addChild_Widget(w, iClob(d->scroll = new_ScrollWidget()));
@@ -252,7 +257,8 @@ void init_DocumentWidget(iDocumentWidget *d) {
 }
 
 void deinit_DocumentWidget(iDocumentWidget *d) {
-    delete_VisBuffer(d->visBuffer);
+    delete_VisBuf(d->visBuf);
+    delete_PtrSet(d->invalidRuns);
     iRelease(d->media);
     iRelease(d->request);
     iRelease(d->doc);
@@ -365,6 +371,16 @@ static int scrollMax_DocumentWidget_(const iDocumentWidget *d) {
            (hasSiteBanner_GmDocument(d->doc) ? 1 : 2) * d->pageMargin * gap_UI;
 }
 
+static void invalidateLink_DocumentWidget_(iDocumentWidget *d, iGmLinkId id) {
+    /* A link has multiple runs associated with it. */
+    iConstForEach(PtrArray, i, &d->visibleLinks) {
+        const iGmRun *run = i.ptr;
+        if (run->linkId == id) {
+            insert_PtrSet(d->invalidRuns, run);
+        }
+    }
+}
+
 static void updateHover_DocumentWidget_(iDocumentWidget *d, iInt2 mouse) {
     const iWidget *w            = constAs_Widget(d);
     const iRect    docBounds    = documentBounds_DocumentWidget_(d);
@@ -382,6 +398,12 @@ static void updateHover_DocumentWidget_(iDocumentWidget *d, iInt2 mouse) {
         }
     }
     if (d->hoverLink != oldHoverLink) {
+        if (oldHoverLink) {
+            invalidateLink_DocumentWidget_(d, oldHoverLink->linkId);
+        }
+        if (d->hoverLink) {
+            invalidateLink_DocumentWidget_(d, d->hoverLink->linkId);
+        }
         refresh_Widget(as_Widget(d));
     }
     if (isHover_Widget(w) && !contains_Widget(constAs_Widget(d->scroll), mouse)) {
@@ -497,7 +519,8 @@ static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
 }
 
 static void invalidate_DocumentWidget_(iDocumentWidget *d) {
-    iZap(d->visBuffer->validRange);
+    invalidate_VisBuf(d->visBuf);
+    clear_PtrSet(d->invalidRuns);
 }
 
 static void setSource_DocumentWidget_(iDocumentWidget *d, const iString *source) {
@@ -1013,23 +1036,16 @@ static iBool handleMediaCommand_DocumentWidget_(iDocumentWidget *d, const char *
     return iFalse;
 }
 
-static void deallocVisBuffer_DocumentWidget_(const iDocumentWidget *d) {
-    d->visBuffer->size = zero_I2();
-    iZap(d->visBuffer->validRange);
-    iForIndices(i, d->visBuffer->texture) {
-        SDL_DestroyTexture(d->visBuffer->texture[i]);
-        d->visBuffer->texture[i] = NULL;
-    }
-}
-
 static void allocVisBuffer_DocumentWidget_(const iDocumentWidget *d) {
     const iWidget *w         = constAs_Widget(d);
     const iBool    isVisible = isVisible_Widget(w);
     const iInt2    size      = bounds_Widget(w).size;
-    if (!isEqual_I2(size, d->visBuffer->size) || !isVisible) {
-        dealloc_VisBuffer(d->visBuffer);
+    if (isVisible) {
+        alloc_VisBuf(d->visBuf, size, 1);
     }
-    if (isVisible && !d->visBuffer->texture[0]) {
+    else {
+        dealloc_VisBuf(d->visBuf);
+#if 0
         iZap(d->visBuffer->validRange);
         d->visBuffer->size = size;
         iAssert(size.x > 0);
@@ -1042,6 +1058,7 @@ static void allocVisBuffer_DocumentWidget_(const iDocumentWidget *d) {
                                   size.y);
             SDL_SetTextureBlendMode(d->visBuffer->texture[i], SDL_BLENDMODE_NONE);
         }
+#endif
     }
 }
 
@@ -1067,7 +1084,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             }
         }
         invalidate_DocumentWidget_(d);
-        deallocVisBuffer_DocumentWidget_(d);
+        dealloc_VisBuf(d->visBuf);
         refresh_Widget(w);
         updateWindowTitle_DocumentWidget_(d);
     }
@@ -1568,16 +1585,18 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
 
 iDeclareType(DrawContext)
 
+#if 0
 enum iDrawRunPass {
     static_DrawRunPass,
     dynamic_DrawRunPass,
 };
+#endif
 
 struct Impl_DrawContext {
-    enum iDrawRunPass pass;
+//    enum iDrawRunPass pass;
     const iDocumentWidget *widget;
     iRect widgetBounds;
-    iRect bounds; /* document area */
+    iInt2 viewPos; /* document area origin */
     iPaint paint;
     iBool inSelectMark;
     iBool inFoundMark;
@@ -1607,7 +1626,7 @@ static void fillRange_DrawContext_(iDrawContext *d, const iGmRun *run, enum iCol
         if (w > width_Rect(run->visBounds) - x) {
             w = width_Rect(run->visBounds) - x;
         }
-        const iInt2 visPos = add_I2(run->bounds.pos, addY_I2(d->bounds.pos, -d->widget->scrollY));
+        const iInt2 visPos = add_I2(run->bounds.pos, addY_I2(d->viewPos, -d->widget->scrollY));
         fillRect_Paint(&d->paint, (iRect){ addX_I2(visPos, x),
                                            init_I2(w, height_Rect(run->bounds)) }, color);
     }
@@ -1615,9 +1634,9 @@ static void fillRange_DrawContext_(iDrawContext *d, const iGmRun *run, enum iCol
 
 static void drawRun_DrawContext_(void *context, const iGmRun *run) {
     iDrawContext *d      = context;
-    const iInt2   origin = addY_I2(d->bounds.pos, -d->widget->scrollY);
+    const iInt2   origin = d->viewPos; //addY_I2(d->bounds.pos, -d->widget->scrollY);
     if (run->imageId) {
-        if (d->pass == static_DrawRunPass) {
+        /*if (d->pass == static_DrawRunPass)*/ {
             SDL_Texture *tex = imageTexture_GmDocument(d->widget->doc, run->imageId);
             if (tex) {
                 const iRect dst = moved_Rect(run->visBounds, origin);
@@ -1627,8 +1646,9 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
         }
         return;
     }
+#if 0
     /* Text markers. */
-    if (d->pass == dynamic_DrawRunPass) {
+    /*if (d->pass == dynamic_DrawRunPass)*/ {
         SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()),
                                    isDark_ColorTheme(colorTheme_App()) ? SDL_BLENDMODE_ADD
                                                                        : SDL_BLENDMODE_BLEND);
@@ -1636,17 +1656,26 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
         fillRange_DrawContext_(d, run, uiMarked_ColorId, d->widget->selectMark, &d->inSelectMark);
         SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_NONE);
     }
+#endif
     enum iColorId      fg  = run->color;
     const iGmDocument *doc = d->widget->doc;
     /* Matches the current drawing pass? */
-    const iBool isDynamic = (run->linkId && ~run->flags & decoration_GmRunFlag);
-    if (isDynamic ^ (d->pass == dynamic_DrawRunPass)) {
-        return;
-    }
+//    const iBool isDynamic = (run->linkId && ~run->flags & decoration_GmRunFlag);
+//    if (isDynamic ^ (d->pass == dynamic_DrawRunPass)) {
+//        return;
+//    }
     const iBool isHover =
         (run->linkId && d->widget->hoverLink && run->linkId == d->widget->hoverLink->linkId &&
          ~run->flags & decoration_GmRunFlag);
     const iInt2 visPos = add_I2(run->visBounds.pos, origin);
+    fillRect_Paint(&d->paint,
+                   (iRect){ visPos,
+                            /* Links have additional hover info on the right side. */
+                            init_I2(run->linkId && ~run->flags & decoration_GmRunFlag
+                                        ? d->widgetBounds.size.x - visPos.x
+                                        : run->visBounds.size.x,
+                                    run->visBounds.size.y) },
+                   tmBackground_ColorId);
     if (run->linkId && ~run->flags & decoration_GmRunFlag) {
         fg = linkColor_GmDocument(doc, run->linkId, isHover ? textHover_GmLinkPart : text_GmLinkPart);
         if (linkFlags_GmDocument(doc, run->linkId) & content_GmLinkFlag) {
@@ -1654,7 +1683,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
         }
     }
     if (run->flags & siteBanner_GmRunFlag) {
-        if (d->pass == static_DrawRunPass) {
+        /*if (d->pass == static_DrawRunPass)*/ {
             /* Draw the site banner. */
             fillRect_Paint(
                 &d->paint,
@@ -1697,7 +1726,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
             if (ord < 9 + 26) {
                 const iChar ordChar = ord < 9 ? 0x278a + ord : (0x24b6 + ord - 9);
                 drawString_Text(run->font,
-                                init_I2(left_Rect(d->bounds) - gap_UI / 3, visPos.y),
+                                init_I2(d->viewPos.x - gap_UI / 3, visPos.y),
                                 fg,
                                 collect_String(newUnicodeN_String(&ordChar, 1)));
                 goto runDrawn;
@@ -1708,7 +1737,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
     runDrawn:;
     }
     /* Presentation of links. */
-    if (run->linkId && ~run->flags & decoration_GmRunFlag && d->pass == dynamic_DrawRunPass) {
+    if (run->linkId && ~run->flags & decoration_GmRunFlag/* && d->pass == dynamic_DrawRunPass*/) {
         const int metaFont = paragraph_FontId;
         /* TODO: Show status of an ongoing media request. */
         const int flags = linkFlags_GmDocument(doc, run->linkId);
@@ -1819,32 +1848,78 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
 static void draw_DocumentWidget_(const iDocumentWidget *d) {
     const iWidget *w        = constAs_Widget(d);
     const iRect    bounds   = bounds_Widget(w);
-    const iInt2    origin   = topLeft_Rect(bounds);
-    const iRangei  visRange = visibleRange_DocumentWidget_(d);
-    iVisBuffer *   visBuf   = d->visBuffer; /* this may be updated/modified here */
+//    const iInt2    origin   = topLeft_Rect(bounds);
+    //const iRangei  visRange = visibleRange_DocumentWidget_(d);
+    iVisBuf *      visBuf   = d->visBuf; /* will be updated now */
     draw_Widget(w);
     allocVisBuffer_DocumentWidget_(d);
-    iDrawContext ctxDynamic = {
-        .pass         = dynamic_DrawRunPass,
+    const iRect ctxWidgetBounds = init_Rect(
+        0, 0, width_Rect(bounds) - constAs_Widget(d->scroll)->rect.size.x, height_Rect(bounds));
+//        adjusted_Rect(bounds, zero_I2(), init_I2(-constAs_Widget(d->scroll)->rect.size.x, 0)),
+//        neg_I2(origin)); /* omit scrollbar width */
+    const iRect docBounds = documentBounds_DocumentWidget_(d);
+//    const iRect  ctxBounds = moved_Rect(documentBounds_DocumentWidget_(d), neg_I2(origin));
+    iDrawContext ctx = {
+//        .pass         = dynamic_DrawRunPass,
         .widget       = d,
-        .widgetBounds = adjusted_Rect(bounds,
-            zero_I2(),
-            init_I2(-constAs_Widget(d->scroll)->rect.size.x, 0)), /* omit scrollbar width */
-        .bounds          = documentBounds_DocumentWidget_(d),
         .showLinkNumbers = d->showLinkNumbers,
     };
-    iDrawContext ctxStatic = ctxDynamic;
-    ctxStatic.pass = static_DrawRunPass;
-    subv_I2(&ctxStatic.widgetBounds.pos, origin);
-    subv_I2(&ctxStatic.bounds.pos, origin);
-    SDL_Renderer *render = get_Window()->render;
-    /* Static content. */ {
-        iPaint *p = &ctxStatic.paint;
+//    iDrawContext ctxStatic = ctxDynamic;
+//    ctxStatic.pass = static_DrawRunPass;
+//    subv_I2(&ctx.widgetBounds.pos, origin);
+//    subv_I2(&ctx.bounds.pos, origin);
+//    SDL_Renderer *render = get_Window()->render;
+    /* Currently visible region. */
+    const iRangei vis  = visibleRange_DocumentWidget_(d);
+    const iRangei full = { 0, size_GmDocument(d->doc).y };
+    reposition_VisBuf(visBuf, vis);
+    iRangei invalidRange[3];
+    invalidRanges_VisBuf(visBuf, full, invalidRange);
+    /* Redraw the invalid ranges. */ {
+        iPaint *p = &ctx.paint;
         init_Paint(p);
-        const int vbSrc = visBuf->index;
-        const int vbDst = visBuf->index ^ 1;
-        iRangei drawRange = visRange;
-        iAssert(visBuf->texture[vbDst]);
+//        const int vbSrc = visBuf->index;
+//        const int vbDst = visBuf->index ^ 1;
+//        iRangei drawRange = visRange;
+        iForIndices(i, visBuf->buffers) {
+            iBool isTargetSet = iFalse;
+            iVisBufTexture *buf = &visBuf->buffers[i];
+            ctx.widgetBounds = moved_Rect(ctxWidgetBounds, init_I2(0, -buf->origin));
+            ctx.viewPos      = init_I2(left_Rect(docBounds) - left_Rect(bounds), -buf->origin);
+            if (!isEmpty_Rangei(invalidRange[i])) {
+                if (!isTargetSet) {
+                    beginTarget_Paint(p, buf->texture);
+                    isTargetSet = iTrue;
+                }
+                if (isEmpty_Rangei(buf->validRange)) {
+                    fillRect_Paint(p, (iRect){ zero_I2(), visBuf->texSize }, tmBackground_ColorId);
+                }
+                render_GmDocument(d->doc, invalidRange[i], drawRun_DrawContext_, &ctx);
+            }
+            /* Draw any invalidated runs that fall within this buffer. */
+            const iRangei bufRange = { buf->origin, buf->origin + visBuf->texSize.y };
+            iConstForEach(PtrSet, r, d->invalidRuns) {
+                const iGmRun *run = *r.value;
+                if (!isEmpty_Rangei(intersect_Rangei(
+                        bufRange,
+                        (iRangei){ top_Rect(run->visBounds), bottom_Rect(run->visBounds) }))) {
+                    if (!isTargetSet) {
+                        beginTarget_Paint(p, buf->texture);
+                        isTargetSet = iTrue;
+                    }
+                    drawRun_DrawContext_(&ctx, run);
+                }
+            }
+            if (isTargetSet) {
+                endTarget_Paint(&ctx.paint);
+            }
+            fflush(stdout);
+        }
+        validate_VisBuf(visBuf);
+        clear_PtrSet(d->invalidRuns);
+    }
+#if 0
+//        iAssert(visBuf->texture[vbDst]);
         beginTarget_Paint(p, visBuf->texture[vbDst]);
         const iRect visBufferRect = { zero_I2(), visBuf->size };
         iRect drawRect = visBufferRect;
@@ -1897,7 +1972,24 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
         unsetClip_Paint(p);
         enableKerning_Text = iTrue;
     }
-
+#endif
+    setClip_Paint(&ctx.paint, bounds);
+    const int yTop = docBounds.pos.y - d->scrollY;
+    draw_VisBuf(visBuf, init_I2(bounds.pos.x, yTop));
+    unsetClip_Paint(&ctx.paint);
+    /* Fill the top and bottom, in case the document is short. */
+    if (yTop > top_Rect(bounds)) {
+        fillRect_Paint(&ctx.paint,
+                       (iRect){ bounds.pos, init_I2(bounds.size.x, yTop - top_Rect(bounds)) },
+                       hasSiteBanner_GmDocument(d->doc) ? tmBannerBackground_ColorId
+                                                        : tmBackground_ColorId);
+    }
+    const int yBottom = yTop + size_GmDocument(d->doc).y;
+    if (yBottom < bottom_Rect(bounds)) {
+        fillRect_Paint(&ctx.paint,
+                       init_Rect(bounds.pos.x, yBottom, bounds.size.x, bottom_Rect(bounds) - yBottom),
+                       tmBackground_ColorId);
+    }
 //    drawRect_Paint(&ctx.paint,
 //                   moved_Rect((iRect){ zero_I2(), size_GmDocument(d->doc) },
 //                              add_I2(topLeft_Rect(ctx.bounds), init_I2(0, -d->scrollY))),
