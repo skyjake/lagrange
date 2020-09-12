@@ -1632,9 +1632,17 @@ static void fillRange_DrawContext_(iDrawContext *d, const iGmRun *run, enum iCol
     }
 }
 
+static void drawMark_DrawContext_(void *context, const iGmRun *run) {
+    iDrawContext *d = context;
+    if (!run->imageId) {
+        fillRange_DrawContext_(d, run, uiMatching_ColorId, d->widget->foundMark, &d->inFoundMark);
+        fillRange_DrawContext_(d, run, uiMarked_ColorId, d->widget->selectMark, &d->inSelectMark);
+    }
+}
+
 static void drawRun_DrawContext_(void *context, const iGmRun *run) {
     iDrawContext *d      = context;
-    const iInt2   origin = d->viewPos; //addY_I2(d->bounds.pos, -d->widget->scrollY);
+    const iInt2   origin = d->viewPos;
     if (run->imageId) {
         /*if (d->pass == static_DrawRunPass)*/ {
             SDL_Texture *tex = imageTexture_GmDocument(d->widget->doc, run->imageId);
@@ -1646,17 +1654,6 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
         }
         return;
     }
-#if 0
-    /* Text markers. */
-    /*if (d->pass == dynamic_DrawRunPass)*/ {
-        SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()),
-                                   isDark_ColorTheme(colorTheme_App()) ? SDL_BLENDMODE_ADD
-                                                                       : SDL_BLENDMODE_BLEND);
-        fillRange_DrawContext_(d, run, uiMatching_ColorId, d->widget->foundMark, &d->inFoundMark);
-        fillRange_DrawContext_(d, run, uiMarked_ColorId, d->widget->selectMark, &d->inSelectMark);
-        SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_NONE);
-    }
-#endif
     enum iColorId      fg  = run->color;
     const iGmDocument *doc = d->widget->doc;
     /* Matches the current drawing pass? */
@@ -1671,9 +1668,9 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
     fillRect_Paint(&d->paint,
                    (iRect){ visPos,
                             /* Links have additional hover info on the right side. */
-                            init_I2(run->linkId && ~run->flags & decoration_GmRunFlag
-                                        ? d->widgetBounds.size.x - visPos.x
-                                        : run->visBounds.size.x,
+//                            init_I2(run->linkId && ~run->flags & decoration_GmRunFlag
+//                                        ? d->widgetBounds.size.x - visPos.x :
+                            init_I2(run->visBounds.size.x,
                                     run->visBounds.size.y) },
                    tmBackground_ColorId);
     if (run->linkId && ~run->flags & decoration_GmRunFlag) {
@@ -1848,27 +1845,16 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
 static void draw_DocumentWidget_(const iDocumentWidget *d) {
     const iWidget *w        = constAs_Widget(d);
     const iRect    bounds   = bounds_Widget(w);
-//    const iInt2    origin   = topLeft_Rect(bounds);
-    //const iRangei  visRange = visibleRange_DocumentWidget_(d);
     iVisBuf *      visBuf   = d->visBuf; /* will be updated now */
     draw_Widget(w);
     allocVisBuffer_DocumentWidget_(d);
     const iRect ctxWidgetBounds = init_Rect(
         0, 0, width_Rect(bounds) - constAs_Widget(d->scroll)->rect.size.x, height_Rect(bounds));
-//        adjusted_Rect(bounds, zero_I2(), init_I2(-constAs_Widget(d->scroll)->rect.size.x, 0)),
-//        neg_I2(origin)); /* omit scrollbar width */
-    const iRect docBounds = documentBounds_DocumentWidget_(d);
-//    const iRect  ctxBounds = moved_Rect(documentBounds_DocumentWidget_(d), neg_I2(origin));
-    iDrawContext ctx = {
-//        .pass         = dynamic_DrawRunPass,
-        .widget       = d,
+    const iRect  docBounds = documentBounds_DocumentWidget_(d);
+    iDrawContext ctx       = {
+        .widget          = d,
         .showLinkNumbers = d->showLinkNumbers,
     };
-//    iDrawContext ctxStatic = ctxDynamic;
-//    ctxStatic.pass = static_DrawRunPass;
-//    subv_I2(&ctx.widgetBounds.pos, origin);
-//    subv_I2(&ctx.bounds.pos, origin);
-//    SDL_Renderer *render = get_Window()->render;
     /* Currently visible region. */
     const iRangei vis  = visibleRange_DocumentWidget_(d);
     const iRangei full = { 0, size_GmDocument(d->doc).y };
@@ -1878,101 +1864,47 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
     /* Redraw the invalid ranges. */ {
         iPaint *p = &ctx.paint;
         init_Paint(p);
-//        const int vbSrc = visBuf->index;
-//        const int vbDst = visBuf->index ^ 1;
-//        iRangei drawRange = visRange;
         iForIndices(i, visBuf->buffers) {
-            iBool isTargetSet = iFalse;
             iVisBufTexture *buf = &visBuf->buffers[i];
             ctx.widgetBounds = moved_Rect(ctxWidgetBounds, init_I2(0, -buf->origin));
             ctx.viewPos      = init_I2(left_Rect(docBounds) - left_Rect(bounds), -buf->origin);
             if (!isEmpty_Rangei(invalidRange[i])) {
-                if (!isTargetSet) {
-                    beginTarget_Paint(p, buf->texture);
-                    isTargetSet = iTrue;
-                }
+                beginTarget_Paint(p, buf->texture);
                 if (isEmpty_Rangei(buf->validRange)) {
                     fillRect_Paint(p, (iRect){ zero_I2(), visBuf->texSize }, tmBackground_ColorId);
                 }
                 render_GmDocument(d->doc, invalidRange[i], drawRun_DrawContext_, &ctx);
             }
-            /* Draw any invalidated runs that fall within this buffer. */
-            const iRangei bufRange = { buf->origin, buf->origin + visBuf->texSize.y };
-            iConstForEach(PtrSet, r, d->invalidRuns) {
-                const iGmRun *run = *r.value;
-                if (!isEmpty_Rangei(intersect_Rangei(
-                        bufRange,
-                        (iRangei){ top_Rect(run->visBounds), bottom_Rect(run->visBounds) }))) {
-                    if (!isTargetSet) {
-                        beginTarget_Paint(p, buf->texture);
-                        isTargetSet = iTrue;
+            /* Draw any invalidated runs that fall within this buffer. */ {
+                const iRangei bufRange = { buf->origin, buf->origin + visBuf->texSize.y };
+                /* Clear full-width backgrounds first in case there are any dynamic elements. */ {
+                    iConstForEach(PtrSet, r, d->invalidRuns) {
+                        const iGmRun *run = *r.value;
+                        if (isOverlapping_Rangei(bufRange, ySpan_Rect(run->visBounds))) {
+                            beginTarget_Paint(p, buf->texture);
+                            fillRect_Paint(&ctx.paint,
+                                           init_Rect(0,
+                                                     run->visBounds.pos.y - buf->origin,
+                                                     visBuf->texSize.x,
+                                                     run->visBounds.size.y),
+                                           tmBackground_ColorId);
+                        }
                     }
-                    drawRun_DrawContext_(&ctx, run);
+                }
+                iConstForEach(PtrSet, r, d->invalidRuns) {
+                    const iGmRun *run = *r.value;
+                    if (isOverlapping_Rangei(bufRange, ySpan_Rect(run->visBounds))) {
+                        beginTarget_Paint(p, buf->texture);
+                        drawRun_DrawContext_(&ctx, run);
+                    }
                 }
             }
-            if (isTargetSet) {
-                endTarget_Paint(&ctx.paint);
-            }
+            endTarget_Paint(&ctx.paint);
             fflush(stdout);
         }
         validate_VisBuf(visBuf);
         clear_PtrSet(d->invalidRuns);
     }
-#if 0
-//        iAssert(visBuf->texture[vbDst]);
-        beginTarget_Paint(p, visBuf->texture[vbDst]);
-        const iRect visBufferRect = { zero_I2(), visBuf->size };
-        iRect drawRect = visBufferRect;
-        if (!isEmpty_Rangei(intersect_Rangei(visRange, visBuf->validRange))) {
-            if (visRange.start < visBuf->validRange.start) {
-                drawRange = (iRangei){ visRange.start, visBuf->validRange.start };
-            }
-            else {
-                drawRange = (iRangei){ visBuf->validRange.end, visRange.end };
-            }
-            if (isEmpty_Range(&drawRange)) {
-                SDL_RenderCopy(render, visBuf->texture[vbSrc], NULL, NULL);
-            }
-            else {
-                SDL_RenderCopy(
-                    render,
-                    visBuf->texture[vbSrc],
-                    NULL,
-                    &(SDL_Rect){ 0,
-                                 documentToWindowY_DocumentWidget_(d, visBuf->validRange.start) -
-                                     origin.y,
-                                 visBuf->size.x,
-                                 visBuf->size.y });
-                drawRect =
-                    init_Rect(0,
-                              documentToWindowY_DocumentWidget_(d, drawRange.start) - origin.y,
-                              visBuf->size.x,
-                              size_Range(&drawRange));
-            }
-        }
-        if (!isEmpty_Range(&drawRange)) {
-            setClip_Paint(p, drawRect);
-            fillRect_Paint(p, drawRect, tmBackground_ColorId); // vbDst == 1 ? blue_ColorId : red_ColorId
-            render_GmDocument(d->doc, drawRange, drawRun_DrawContext_, &ctxStatic);
-            unsetClip_Paint(p);
-        }
-        endTarget_Paint(p);
-        SDL_RenderCopy(render, visBuf->texture[vbDst], NULL,
-                       &(SDL_Rect){ origin.x, origin.y, bounds.size.x, bounds.size.y } );
-        visBuf->validRange = visRange;
-        visBuf->index = vbDst;
-    }
-    /* Dynamic content. */ {
-        extern int enableKerning_Text;
-        enableKerning_Text = iFalse; /* need to be fast, these is redone on every redraw */
-        iPaint *p = &ctxDynamic.paint;
-        init_Paint(p);
-        setClip_Paint(p, bounds);
-        render_GmDocument(d->doc, visRange, drawRun_DrawContext_, &ctxDynamic);
-        unsetClip_Paint(p);
-        enableKerning_Text = iTrue;
-    }
-#endif
     setClip_Paint(&ctx.paint, bounds);
     const int yTop = docBounds.pos.y - d->scrollY;
     draw_VisBuf(visBuf, init_I2(bounds.pos.x, yTop));
@@ -1990,10 +1922,15 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
                        init_Rect(bounds.pos.x, yBottom, bounds.size.x, bottom_Rect(bounds) - yBottom),
                        tmBackground_ColorId);
     }
-//    drawRect_Paint(&ctx.paint,
-//                   moved_Rect((iRect){ zero_I2(), size_GmDocument(d->doc) },
-//                              add_I2(topLeft_Rect(ctx.bounds), init_I2(0, -d->scrollY))),
-//                   green_ColorId);
+    /* Text markers. */
+    if (!isEmpty_Range(&d->foundMark) || !isEmpty_Range(&d->selectMark)) {
+        SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()),
+                                   isDark_ColorTheme(colorTheme_App()) ? SDL_BLENDMODE_ADD
+                                                                       : SDL_BLENDMODE_BLEND);
+        ctx.viewPos = topLeft_Rect(docBounds);
+        render_GmDocument(d->doc, vis, drawMark_DrawContext_, &ctx);
+        SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_NONE);
+    }
     draw_Widget(w);
 }
 
