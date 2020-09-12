@@ -69,10 +69,6 @@ struct Impl_ListWidget {
     size_t hoverItem;
     iClick click;
     iIntSet invalidItems;
-//    SDL_Texture *visBuffer[numVisBuffers_ListWidget_];
-//    int visBufferIndex;
-//    int visBufferScrollY[3];
-//    enum iBufferValidity visBufferValid;
     iInt2 visBufSize;
     iListVisBuffer visBuffers[numVisBuffers_ListWidget_];
 };
@@ -103,7 +99,6 @@ void deinit_ListWidget(iListWidget *d) {
 }
 
 void invalidate_ListWidget(iListWidget *d) {
-    //d->visBufferValid = none_BufferValidity;
     iForIndices(i, d->visBuffers) {
         iZap(d->visBuffers[i].validRange);
     }
@@ -173,7 +168,6 @@ int scrollPos_ListWidget(const iListWidget *d) {
 void setScrollPos_ListWidget(iListWidget *d, int pos) {
     d->scrollY = pos;
     d->hoverItem = iInvalidPos;
-//    d->visBufferValid = partial_BufferValidity;
     refresh_Widget(as_Widget(d));
 }
 
@@ -191,7 +185,6 @@ void scrollOffset_ListWidget(iListWidget *d, int offset) {
             d->hoverItem = iInvalidPos;
         }
         updateVisible_ListWidget(d);
-//        d->visBufferValid = partial_BufferValidity;
         refresh_Widget(as_Widget(d));
     }
 }
@@ -350,45 +343,20 @@ static void allocVisBuffer_ListWidget_(iListWidget *d) {
             d->visBuffers[i].origin = i * size.y;
             iZap(d->visBuffers[i].validRange);
         }
-        //d->visBufferValid = none_BufferValidity;
     }
 }
 
 static void drawItem_ListWidget_(const iListWidget *d, iPaint *p, size_t index, iInt2 pos) {
     const iWidget *  w         = constAs_Widget(d);
     const iRect      bounds    = innerBounds_Widget(w);
-    const iRect      bufBounds = { zero_I2(), bounds.size };
     const iListItem *item      = constAt_PtrArray(&d->items, index);
     const iRect      itemRect  = { pos, init_I2(width_Rect(bounds), d->itemHeight) };
-//    setClip_Paint(p, intersect_Rect(itemRect, bufBounds));
-//    if (d->visBufferValid) {
-//        fillRect_Paint(p, itemRect, w->bgColor);
-//    }
     class_ListItem(item)->draw(item, p, itemRect, d);
-//    unsetClip_Paint(p);
 }
 
 static const iListItem *item_ListWidget_(const iListWidget *d, size_t pos) {
     return constAt_PtrArray(&d->items, pos);
 }
-
-#if 0
-static size_t findBuffer_ListWidget_(const iListWidget *d, int top, const iRangei vis) {
-    size_t avail = iInvalidPos;
-    iForIndices(i, d->visBuffers) {
-        const iListVisBuffer *buf = d->visBuffers + i;
-        const iRangei bufRange = { buf->scrollY, buf->scrollY + d->visBufSize.y };
-        if (top >= bufRange.start && top < bufRange.end) {
-            return i;
-        }
-        if (buf->scrollY >= vis.end || buf->scrollY + d->visBufSize.y <= vis.start) {
-            avail = i; /* Outside currently visible region. */
-        }
-    }
-    iAssert(avail != iInvalidPos);
-    return avail;
-}
-#endif
 
 static void draw_ListWidget_(const iListWidget *d) {
     const iWidget *w         = constAs_Widget(d);
