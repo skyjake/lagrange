@@ -316,7 +316,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     static const float bottomMargin[max_GmLineType] = {
         0.0f, 0.5f, 1.0f, 0.5f, 0.5f, 0.5f, 0.5f, 1.0f
     };
-    static const char *arrow  = "\u2192";
+    static const char *arrow  = "\u27a4"; // "\u2192";
     static const char *bullet = "\u2022";
     static const char *folder = "\U0001f4c1";
     static const char *globe  = "\U0001f310";
