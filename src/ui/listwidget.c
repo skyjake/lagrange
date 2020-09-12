@@ -25,6 +25,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "paint.h"
 #include "util.h"
 #include "command.h"
+#include "visbuf.h"
 
 #include <the_Foundation/intset.h>
 
@@ -44,22 +45,6 @@ iDefineClass(ListItem)
 
 iDefineObjectConstruction(ListWidget)
 
-enum iBufferValidity {
-    none_BufferValidity,
-    partial_BufferValidity,
-    full_BufferValidity,
-};
-
-#define numVisBuffers_ListWidget_   3
-
-iDeclareType(ListVisBuffer)
-
-struct Impl_ListVisBuffer {
-    SDL_Texture *texture;
-    int origin;
-    iRangei validRange;
-};
-
 struct Impl_ListWidget {
     iWidget widget;
     iScrollWidget *scroll;
@@ -69,8 +54,7 @@ struct Impl_ListWidget {
     size_t hoverItem;
     iClick click;
     iIntSet invalidItems;
-    iInt2 visBufSize;
-    iListVisBuffer visBuffers[numVisBuffers_ListWidget_];
+    iVisBuf *visBuf;
 };
 
 void init_ListWidget(iListWidget *d) {
@@ -86,22 +70,17 @@ void init_ListWidget(iListWidget *d) {
     d->hoverItem = iInvalidPos;
     init_Click(&d->click, d, SDL_BUTTON_LEFT);
     init_IntSet(&d->invalidItems);
-    d->visBufSize = zero_I2();
-    iZap(d->visBuffers);
+    d->visBuf = new_VisBuf();
 }
 
 void deinit_ListWidget(iListWidget *d) {
     clear_ListWidget(d);
     deinit_PtrArray(&d->items);
-    iForIndices(i, d->visBuffers) {
-        SDL_DestroyTexture(d->visBuffers[i].texture);
-    }
+    delete_VisBuf(d->visBuf);
 }
 
 void invalidate_ListWidget(iListWidget *d) {
-    iForIndices(i, d->visBuffers) {
-        iZap(d->visBuffers[i].validRange);
-    }
+    invalidate_VisBuf(d->visBuf);
     clear_IntSet(&d->invalidItems); /* all will be drawn */
     refresh_Widget(as_Widget(d));
 }
@@ -323,9 +302,10 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
     return processEvent_Widget(w, ev);
 }
 
+#if 0
 static void allocVisBuffer_ListWidget_(iListWidget *d) {
     /* Make sure two buffers cover the entire visible area. */
-    const iRect inner = innerBounds_Widget(as_Widget(d));
+//    const iRect inner = innerBounds_Widget(as_Widget(d));
     const iInt2 size = init_I2(inner.size.x, (inner.size.y / 2 / d->itemHeight + 1) * d->itemHeight);
     if (!d->visBuffers[0].texture || !isEqual_I2(size, d->visBufSize)) {
         d->visBufSize = size;
@@ -345,6 +325,7 @@ static void allocVisBuffer_ListWidget_(iListWidget *d) {
         }
     }
 }
+#endif
 
 static void drawItem_ListWidget_(const iListWidget *d, iPaint *p, size_t index, iInt2 pos) {
     const iWidget *  w         = constAs_Widget(d);
@@ -361,89 +342,48 @@ static const iListItem *item_ListWidget_(const iListWidget *d, size_t pos) {
 static void draw_ListWidget_(const iListWidget *d) {
     const iWidget *w         = constAs_Widget(d);
     const iRect    bounds    = innerBounds_Widget(w);
-    if (!bounds.size.y || !bounds.size.x) return;
+    if (!bounds.size.y || !bounds.size.x || !d->itemHeight) {
+        return;
+    }
     iPaint p;
     init_Paint(&p);
-    SDL_Renderer *render = renderer_Window(get_Window());
     drawBackground_Widget(w);
-    iListWidget *m = iConstCast(iListWidget *, d);
-    allocVisBuffer_ListWidget_(m);
-    /* Update invalid regions/items. */
-    /* TODO: This seems to draw two items per each shift of the visible region, even though
-       one should be enough. Probably an off-by-one error in the calculation of the
-       invalid range. */
-    if (d->visBufSize.y > 0) {
-        iAssert(d->visBuffers[0].texture);
-        iAssert(d->visBuffers[1].texture);
-        iAssert(d->visBuffers[2].texture);
+//    iListWidget *m = iConstCast(iListWidget *, d);
+    alloc_VisBuf(d->visBuf, bounds.size, d->itemHeight);
+    /* Update invalid regions/items. */ {
+        /* TODO: This seems to draw two items per each shift of the visible region, even though
+           one should be enough. Probably an off-by-one error in the calculation of the
+           invalid range. */
+        iAssert(d->visBuf->buffers[0].texture);
+        iAssert(d->visBuf->buffers[1].texture);
+        iAssert(d->visBuf->buffers[2].texture);
         const int bg[3] = { w->bgColor, w->bgColor, w->bgColor };
 //        const int bg[3] = { red_ColorId, magenta_ColorId, blue_ColorId };
         const int bottom = numItems_ListWidget(d) * d->itemHeight;
         const iRangei vis = { d->scrollY / d->itemHeight * d->itemHeight,
                              ((d->scrollY + bounds.size.y) / d->itemHeight + 1) * d->itemHeight };
-        iRangei good = { 0, 0 };
 //        printf("visBufSize.y = %d\n", d->visBufSize.y);
-        size_t avail[3], numAvail = 0;
-        /* Check which buffers are available for reuse. */ {
-            iForIndices(i, d->visBuffers) {
-                iListVisBuffer *buf = m->visBuffers + i;
-                const iRangei region = { buf->origin, buf->origin + d->visBufSize.y };
-                if (region.start >= vis.end || region.end <= vis.start) {
-                    avail[numAvail++] = i;
-                    iZap(buf->validRange);
-                }
-                else {
-                    good = union_Rangei(good, region);
-                }
-            }
-        }
-        if (numAvail == numVisBuffers_ListWidget_) {
-            /* All buffers are outside the visible range, do a reset. */
-            m->visBuffers[0].origin = vis.start;
-            m->visBuffers[1].origin = vis.start + d->visBufSize.y;
-        }
-        else {
-            /* Extend to cover the visible range. */
-            while (vis.start < good.start) {
-                iAssert(numAvail > 0);
-                m->visBuffers[avail[--numAvail]].origin = good.start - d->visBufSize.y;
-                good.start -= d->visBufSize.y;
-            }
-            while (vis.end > good.end) {
-                iAssert(numAvail > 0);
-                m->visBuffers[avail[--numAvail]].origin = good.end;
-                good.end += d->visBufSize.y;
-            }
-        }
+        reposition_VisBuf(d->visBuf, vis);
         /* Check which parts are invalid. */
         iRangei invalidRange[3];
-        iForIndices(i, d->visBuffers) {
-            const iListVisBuffer *buf = d->visBuffers + i;
-            const iRangei region = intersect_Rangei(vis, (iRangei){ buf->origin, buf->origin + d->visBufSize.y });
-            const iRangei before = { 0, buf->validRange.start };
-            const iRangei after  = { buf->validRange.end, bottom };
-            invalidRange[i] = intersect_Rangei(before, region);
-            if (isEmpty_Rangei(invalidRange[i])) {
-                invalidRange[i] = intersect_Rangei(after, region);
-            }
-        }
-        iForIndices(i, d->visBuffers) {
-            iListVisBuffer *buf = m->visBuffers + i;
+        invalidRanges_VisBuf(d->visBuf, (iRangei){ 0, bottom }, invalidRange);
+        iForIndices(i, d->visBuf->buffers) {
+            iVisBufTexture *buf = &d->visBuf->buffers[i];
 //            printf("%zu: orig %d, invalid %d ... %d\n", i, buf->origin, invalidRange[i].start, invalidRange[i].end);
             iRanges drawItems = { iMax(0, buf->origin) / d->itemHeight,
-                                  iMax(0, buf->origin + d->visBufSize.y) / d->itemHeight };
+                                  iMax(0, buf->origin + d->visBuf->texSize.y) / d->itemHeight };
             iBool isTargetSet = iFalse;
             if (isEmpty_Rangei(buf->validRange)) {
                 isTargetSet = iTrue;
                 beginTarget_Paint(&p, buf->texture);
-                fillRect_Paint(&p, (iRect){ zero_I2(), d->visBufSize }, bg[i]);
+                fillRect_Paint(&p, (iRect){ zero_I2(), d->visBuf->texSize }, bg[i]);
             }
             iConstForEach(IntSet, v, &d->invalidItems) {
                 const size_t index = *v.value;
                 if (contains_Range(&drawItems, index)) {
                     const iListItem *item = constAt_PtrArray(&d->items, index);
                     const iRect      itemRect = { init_I2(0, index * d->itemHeight - buf->origin),
-                                                  init_I2(d->visBufSize.x, d->itemHeight) };
+                                                  init_I2(d->visBuf->texSize.x, d->itemHeight) };
                     if (!isTargetSet) {
                         beginTarget_Paint(&p, buf->texture);
                         isTargetSet = iTrue;
@@ -464,7 +404,7 @@ static void draw_ListWidget_(const iListWidget *d) {
                 for (size_t j = drawItems.start; j < drawItems.end && j < size_PtrArray(&d->items); j++) {
                     const iListItem *item     = constAt_PtrArray(&d->items, j);
                     const iRect      itemRect = { init_I2(0, j * d->itemHeight - buf->origin),
-                                                  init_I2(d->visBufSize.x, d->itemHeight) };
+                                                  init_I2(d->visBuf->texSize.x, d->itemHeight) };
                     fillRect_Paint(&p, itemRect, bg[i]);
                     class_ListItem(item)->draw(item, &p, itemRect, d);
 //                    printf("- drawing item %zu\n", j);
@@ -474,22 +414,13 @@ static void draw_ListWidget_(const iListWidget *d) {
                 endTarget_Paint(&p);
             }
             buf->validRange =
-                intersect_Rangei(vis, (iRangei){ buf->origin, buf->origin + d->visBufSize.y });
+                intersect_Rangei(vis, (iRangei){ buf->origin, buf->origin + d->visBuf->texSize.y });
 //            fflush(stdout);
         }
-        clear_IntSet(&m->invalidItems);
+        clear_IntSet(&iConstCast(iListWidget *, d)->invalidItems);
     }
     setClip_Paint(&p, bounds_Widget(w));
-    iForIndices(i, d->visBuffers) {
-        const iListVisBuffer *buf = d->visBuffers + i;
-        SDL_RenderCopy(render,
-                       buf->texture,
-                       NULL,
-                       &(SDL_Rect){ left_Rect(bounds),
-                                    top_Rect(bounds) - d->scrollY + buf->origin,
-                                    d->visBufSize.x,
-                                    d->visBufSize.y });
-    }
+    draw_VisBuf(d->visBuf, addY_I2(topLeft_Rect(bounds), -d->scrollY));
     unsetClip_Paint(&p);
     drawChildren_Widget(w);
 }

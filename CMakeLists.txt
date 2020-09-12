@@ -104,6 +104,8 @@ set (SOURCES
     src/ui/text.h
     src/ui/util.c
     src/ui/util.h
+    src/ui/visbuf.c
+    src/ui/visbuf.h
     src/ui/window.c
     src/ui/window.h
     # Widgets:
