@@ -431,7 +431,7 @@ static void draw_ListWidget_(const iListWidget *d) {
             iListVisBuffer *buf = m->visBuffers + i;
 //            printf("%zu: orig %d, invalid %d ... %d\n", i, buf->origin, invalidRange[i].start, invalidRange[i].end);
             iRanges drawItems = { iMax(0, buf->origin) / d->itemHeight,
-                                  iMax(0, buf->origin + d->visBufSize.y) / d->itemHeight + 1 };
+                                  iMax(0, buf->origin + d->visBufSize.y) / d->itemHeight };
             iBool isTargetSet = iFalse;
             if (isEmpty_Rangei(buf->validRange)) {
                 isTargetSet = iTrue;
