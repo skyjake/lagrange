@@ -46,17 +46,17 @@ iDeclareObjectConstruction(ListItem)
 iDeclareWidgetClass(ListWidget)
 iDeclareObjectConstruction(ListWidget)
 
-void    setItemHeight_ListWidget(iListWidget *, int itemHeight);
+void    setItemHeight_ListWidget    (iListWidget *, int itemHeight);
 
-void    invalidate_ListWidget   (iListWidget *);
-void    invalidateItem_ListWidget(iListWidget *, size_t index);
-void    clear_ListWidget        (iListWidget *);
-void    addItem_ListWidget      (iListWidget *, iAnyObject *item);
+void    invalidate_ListWidget       (iListWidget *);
+void    invalidateItem_ListWidget   (iListWidget *, size_t index);
+void    clear_ListWidget            (iListWidget *);
+void    addItem_ListWidget          (iListWidget *, iAnyObject *item);
 
-iScrollWidget * scroll_ListWidget (iListWidget *);
+iScrollWidget * scroll_ListWidget   (iListWidget *);
 
-int     itemHeight_ListWidget   (const iListWidget *);
-int     scrollPos_ListWidget    (const iListWidget *);
+int     itemHeight_ListWidget       (const iListWidget *);
+int     scrollPos_ListWidget        (const iListWidget *);
 
 void    setScrollPos_ListWidget     (iListWidget *, int pos);
 void    scrollToItem_ListWidget     (iListWidget *, size_t index);
@@ -64,13 +64,13 @@ void    scrollOffset_ListWidget     (iListWidget *, int offset);
 void    updateVisible_ListWidget    (iListWidget *);
 void    updateMouseHover_ListWidget (iListWidget *);
 
-iAnyObject *item_ListWidget         (iListWidget *, size_t index);
-iAnyObject *hoverItem_ListWidget    (iListWidget *);
+iAnyObject *        item_ListWidget             (iListWidget *, size_t index);
+iAnyObject *        hoverItem_ListWidget        (iListWidget *);
 
-size_t  numItems_ListWidget (const iListWidget *);
-int visCount_ListWidget(const iListWidget *);
-size_t  itemIndex_ListWidget(const iListWidget *, iInt2 pos);
-const iAnyObject *constItem_ListWidget      (const iListWidget *, size_t index);
-const iAnyObject *constHoverItem_ListWidget (const iListWidget *);
+size_t              numItems_ListWidget         (const iListWidget *);
+int                 visCount_ListWidget         (const iListWidget *);
+size_t              itemIndex_ListWidget        (const iListWidget *, iInt2 pos);
+const iAnyObject *  constItem_ListWidget        (const iListWidget *, size_t index);
+const iAnyObject *  constHoverItem_ListWidget   (const iListWidget *);
 
-iBool   isMouseDown_ListWidget  (const iListWidget *);
+iBool   isMouseDown_ListWidget      (const iListWidget *);

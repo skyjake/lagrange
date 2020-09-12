@@ -413,10 +413,9 @@ static void draw_ListWidget_(const iListWidget *d) {
             if (isTargetSet) {
                 endTarget_Paint(&p);
             }
-            buf->validRange =
-                intersect_Rangei(vis, (iRangei){ buf->origin, buf->origin + d->visBuf->texSize.y });
 //            fflush(stdout);
         }
+        validate_VisBuf(d->visBuf);
         clear_IntSet(&iConstCast(iListWidget *, d)->invalidItems);
     }
     setClip_Paint(&p, bounds_Widget(w));
