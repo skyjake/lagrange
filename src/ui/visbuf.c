@@ -123,6 +123,14 @@ void invalidRanges_VisBuf(const iVisBuf *d, const iRangei full, iRangei *out_inv
     }
 }
 
+void validate_VisBuf(iVisBuf *d) {
+    iForIndices(i, d->buffers) {
+        iVisBufTexture *buf = &d->buffers[i];
+        buf->validRange =
+            intersect_Rangei(d->vis, (iRangei){ buf->origin, buf->origin + d->texSize.y });
+    }
+}
+
 void draw_VisBuf(const iVisBuf *d, iInt2 topLeft) {
     SDL_Renderer *render = renderer_Window(get_Window());
     iForIndices(i, d->buffers) {

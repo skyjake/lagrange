@@ -47,6 +47,7 @@ void    invalidate_VisBuf       (iVisBuf *);
 void    alloc_VisBuf            (iVisBuf *, const iInt2 size, int granularity);
 void    dealloc_VisBuf          (iVisBuf *);
 void    reposition_VisBuf       (iVisBuf *, const iRangei vis);
+void    validate_VisBuf         (iVisBuf *);
 
 void    invalidRanges_VisBuf    (const iVisBuf *, const iRangei full, iRangei *out_invalidRanges);
 void    draw_VisBuf             (const iVisBuf *, iInt2 topLeft);
