@@ -36,18 +36,28 @@ static void setColor_Paint_(const iPaint *d, int color) {
 
 void init_Paint(iPaint *d) {
     d->dst = get_Window();
+    d->setTarget = NULL;
     d->oldTarget = NULL;
 }
 
 void beginTarget_Paint(iPaint *d, SDL_Texture *target) {
     SDL_Renderer *rend = renderer_Paint_(d);
-    d->oldTarget = SDL_GetRenderTarget(rend);
-    SDL_SetRenderTarget(rend, target);
+    if (!d->setTarget) {
+        d->oldTarget = SDL_GetRenderTarget(rend);
+        SDL_SetRenderTarget(rend, target);
+        d->setTarget = target;
+    }
+    else {
+        iAssert(d->setTarget == target);
+    }
 }
 
 void endTarget_Paint(iPaint *d) {
-    SDL_SetRenderTarget(renderer_Paint_(d), d->oldTarget);
-    d->oldTarget = NULL;
+    if (d->setTarget) {
+        SDL_SetRenderTarget(renderer_Paint_(d), d->oldTarget);
+        d->oldTarget = NULL;
+        d->setTarget = NULL;
+    }
 }
 
 void setClip_Paint(iPaint *d, iRect rect) {

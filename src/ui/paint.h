@@ -30,7 +30,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 iDeclareType(Paint)
 
 struct Impl_Paint {
-    iWindow *dst;
+    iWindow *    dst;
+    SDL_Texture *setTarget;
     SDL_Texture *oldTarget;
 };
 
