@@ -47,17 +47,31 @@ Modern web browsers are complex beasts. In fact, they are so complex that one ca
 
 => https://win95.ajf.me Windows 95 on DOSBox (using Emscripten)
 
-If one seeks to just read text and view images, this is absurd overkill. Having a universal platform that runs everywhere and on everything is clearly a valuable notion, but it comes with a hefty price tag. The software stack towers ever higher, and hardware needs to be ever more powerful and complicated to run it well. However, everything happening over the internet doesn't have to rely on this behemoth.
+If one seeks to just read text and view images, this is absurd overkill. Having a universal platform that runs everywhere and on everything is clearly a valuable notion, but it comes with a hefty price tag. The software stack towers ever higher, and hardware needs to be ever more powerful and complicated to run it well. However, everything on the internet doesn't have to rely on this behemoth.
 
 One way to browse Gemini content is via web browser extensions or proxies that translate the content for the web. This may be a sufficient and easy solution for you. However, native clients such as Lagrange also benefit from the simpleness of the protocol and the content. The experience can be optimized, and the software runs well even on simple hardware like the Raspberry Pi.
 
 # User interface
+
+Lagrange's user interface is modeled after WWW browsers:
+* There is a navigation bar at the top with Back and Forward buttons.
+* Below the navigation bar, there is a tab bar for switching between open tabs. The tab bar is hidden if there is only one tab open.
+* There is a sidebar for managing bookmarks and TLS identities, and viewing history and the page outline. The sidebar is hidden by default.
+* There is a search bar that appears at the bottom when searching text on the page.
 
 ## URL entry and quick search
 
 The URL input field is in its typical location in the navigation bar. It can be accessed quickly by pressing ${CTRL+}L.
 
 As you enter text, Lagrange starts looking for matches in bookmarks, history, content of cached pages, and identities. Search terms are case insensitive, and if many words are entered, they are all required to appear in the specified order in any matched content. Search of cached pages is limited to the (small) set of pages that Lagrange keeps in memory for back navigation.
+
+Press Tab or ↓ to switch input focus to the search results.
+
+## Tabs
+
+Press ${CTRL+}T to open a new tab, and ${CTRL+}W to close the current tab. Right-clicking on buttons in the tab bar shows a context menu for additional tab-related functions.
+
+The set of open tabs is restored when you launch Lagrange.
 
 ## Sidebar
 
@@ -67,6 +81,8 @@ The sidebar can be toggled via menus or by pressing ${SHIFT+}${CTRL+}L. It has f
 * History: Chronological list of visited URLs. This is not a full history of all the URLs you've accessed over time — only unique URLs are shown at the latest access time.
 * Identities: TLS client certificates.
 * Outline: List of the headings in the currently open tab. Useful when reading longer documents.
+
+${CTRL+}1 through ${CTRL+}4 switch between the sidebar tabs, or hide the sidebar if the current tab's key is pressed.
 
 ## Navigation
 
@@ -82,7 +98,11 @@ Each visible link on the page gets an alphanumeric shortcut. For example, the fi
 
 ## Managing and using identities
 
-TLS client certificates used to identify you.
+TLS client certificates that you can identify yourself with. Consider any information you enter in the certificate as public; only the Common Name is required and will appear as the issuer and subject of the certificate.
+
+## Drop and drop
+
+You can drag and drop .gmi files on the Lagrange window to open them in the current tab. Dropping multiple files opens them in separate tabs. This is the recommended way to view local files, because there is no "Open File" menu item. You may also type "file://" URLs in the URL field.
 
 # Runtime files
 
@@ -92,10 +112,6 @@ TLS client certificates used to identify you.
 * state.binary
 * trusted.txt
 * visited.txt
-
-# Platform-specific instructions
-
-# Compiling from source
 
 # Open source licenses
 
