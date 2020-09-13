@@ -1593,6 +1593,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
         SDL_Texture *tex = imageTexture_GmDocument(d->widget->doc, run->imageId);
         if (tex) {
             const iRect dst = moved_Rect(run->visBounds, origin);
+            fillRect_Paint(&d->paint, dst, tmBackground_ColorId); /* in case the image has alpha */
             SDL_RenderCopy(d->paint.dst->render, tex, NULL,
                            &(SDL_Rect){ dst.pos.x, dst.pos.y, dst.size.x, dst.size.y });
         }
