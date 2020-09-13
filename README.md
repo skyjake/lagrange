@@ -25,13 +25,13 @@ Prebuilt binaries for Windows and macOS can be found in [Releases][rel].
 This is how to build Lagrange in a Unix-like environment. The required tools are a C11 compiler (e.g., Clang or GCC), CMake and `pkg-config`.
 
 1. Download and extract a source tarball from [Releases][rel]. (If you just clone this Git repository, [the_Foundation][tf] is expected to be already available on the system.)
-2. Check that you have the dependencies installed: SDL2, OpenSSL, libpcre, zlib, libunistring. For example, on Homebrew this would do the trick: ```brew install sdl2 openssl@1.1 pcre libunistring``` Or on Ubuntu: ```sudo apt install libsdl2-dev libssl-dev libpcre3-dev zlib1g-dev libunistring-dev```
+2. Check that you have the dependencies installed: SDL2, OpenSSL, libpcre, zlib, libunistring. For example, on macOS this would do the trick (using Homebrew): ```brew install sdl2 openssl@1.1 pcre libunistring``` Or on Ubuntu: ```sudo apt install libsdl2-dev libssl-dev libpcre3-dev zlib1g-dev libunistring-dev```
 3. Create a build directory.
 4. In your empty build directory, run CMake: ```cmake {path_of_lagrange_sources}```
 5. Built it: ```cmake --build .```
 6. Now you can run `lagrange`, `lagrange.exe`, or `Lagrange.app`.
 
-## Installing to a directory
+### Installing to a directory
 
 To install to "/dest/path":
 
