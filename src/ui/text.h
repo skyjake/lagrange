@@ -40,7 +40,7 @@ enum iFontId {
     mediumBold_FontId,
     largeBold_FontId,
     hugeBold_FontId,
-    largeLight_FontId,
+    largeLight_FontId,    
     /* symbol fonts */
     defaultSymbols_FontId,
     defaultMediumSymbols_FontId,
@@ -57,10 +57,17 @@ enum iFontId {
     largeEmoji_FontId,
     hugeEmoji_FontId,
     smallEmoji_FontId,
+    /* japanese script */
+    smallJapanese_FontId,
+    regularJapanese_FontId,
+    mediumJapanese_FontId,
+    largeJapanese_FontId,
+    hugeJapanese_FontId,
     max_FontId,
 
     /* Meta: */
     fromSymbolsToEmojiOffset_FontId = 7,
+
     /* UI fonts: */
     uiLabel_FontId        = default_FontId,
     uiShortcuts_FontId    = default_FontId,
@@ -77,6 +84,10 @@ enum iFontId {
     heading3_FontId          = medium_FontId,
     banner_FontId            = largeLight_FontId,
 };
+
+iLocalDef iBool isJapanese_FontId(enum iFontId id) {
+    return id >= smallJapanese_FontId && id <= hugeJapanese_FontId;
+}
 
 #define variationSelectorEmoji_Char     ((iChar) 0xfe0f)
 

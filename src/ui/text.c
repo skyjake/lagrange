@@ -92,6 +92,7 @@ struct Impl_Font {
     iBool          isMonospaced;
     iBool          manualKernOnly;
     enum iFontId   symbolsFont; /* font to use for symbols */
+    enum iFontId   japaneseFont; /* font to use for Japanese glyphs */
     uint32_t       indexTable[128 - 32];
 };
 
@@ -108,6 +109,7 @@ static void init_Font(iFont *d, const iBlock *data, int height, enum iFontId sym
     stbtt_GetFontVMetrics(&d->font, &ascent, NULL, NULL);
     d->baseline = (int) ascent * d->scale;
     d->symbolsFont = symbolsFont;
+    d->japaneseFont = regularJapanese_FontId;
     d->isMonospaced = iFalse;
     memset(d->indexTable, 0xff, sizeof(d->indexTable));
 }
@@ -189,6 +191,11 @@ static void initFonts_Text_(iText *d) {
         { &fontNotoEmojiRegular_Embedded,     textSize * 1.666f,    largeSymbols_FontId },
         { &fontNotoEmojiRegular_Embedded,     textSize * 2.000f,    hugeSymbols_FontId },
         { &fontNotoEmojiRegular_Embedded,     textSize * 0.866f,    smallSymbols_FontId },
+        { &fontKosugiMaruRegular_Embedded,    textSize * 0.666f,    smallSymbols_FontId },
+        { &fontKosugiMaruRegular_Embedded,    textSize,             symbols_FontId },
+        { &fontKosugiMaruRegular_Embedded,    textSize * 1.333f,    mediumSymbols_FontId },
+        { &fontKosugiMaruRegular_Embedded,    textSize * 1.666f,    largeSymbols_FontId },
+        { &fontKosugiMaruRegular_Embedded,    textSize * 2.000f,    hugeSymbols_FontId },
     };
     iForIndices(i, fontData) {
         iFont *font = &d->fonts[i];
@@ -199,6 +206,18 @@ static void initFonts_Text_(iText *d) {
         if (i == default_FontId || i == defaultMedium_FontId) {
             font->manualKernOnly = iTrue;
         }
+    }
+    /* Japanese script. */ {
+        /* Everything defaults to the regular sized japanese font, so these are just
+           the other sizes. */
+        /* TODO: Add these to the table above... */
+        font_Text_(monospace_FontId)->japaneseFont      = smallJapanese_FontId;
+        font_Text_(monospaceSmall_FontId)->japaneseFont = smallJapanese_FontId;
+        font_Text_(medium_FontId)->japaneseFont         = mediumJapanese_FontId;
+        font_Text_(mediumBold_FontId)->japaneseFont     = mediumJapanese_FontId;
+        font_Text_(largeBold_FontId)->japaneseFont      = largeJapanese_FontId;
+        font_Text_(largeLight_FontId)->japaneseFont     = largeJapanese_FontId;
+        font_Text_(hugeBold_FontId)->japaneseFont       = hugeJapanese_FontId;
     }
     gap_Text = iRound(gap_UI * d->contentFontSize);
 }
@@ -344,13 +363,19 @@ static void cache_Font_(iFont *d, iGlyph *glyph, int hoff) {
     SDL_Renderer *render = txt->render;
     SDL_Texture *tex = NULL;
     SDL_Surface *surface = NULL;
-    const iChar ch = char_Glyph(glyph);
     iRect *glRect = &glyph->rect[hoff];
     /* Rasterize the glyph using stbtt. */ {
         surface = rasterizeGlyph_Font_(d, glyph->glyphIndex, hoff * 0.5f);
         if (hoff == 0) {
             int adv;
-            stbtt_GetGlyphHMetrics(&d->font, glyph->glyphIndex, &adv, NULL);
+            const uint32_t gIndex = glyph->glyphIndex;
+//            float advScale = d->scale;
+//            if (isJapanese_FontId(d - text_.fonts)) {
+                /* Treat as monospace. */
+//                gIndex = stbtt_FindGlyphIndex(&d->font, 0x5712);
+//                advScale *= 2.0f;
+//            }
+            stbtt_GetGlyphHMetrics(&d->font, gIndex, &adv, NULL);
             glyph->advance = d->scale * adv;
         }
         stbtt_GetGlyphBitmapBoxSubpixel(&d->font,
@@ -387,6 +412,13 @@ iLocalDef iFont *characterFont_Font_(iFont *d, iChar ch, uint32_t *glyphIndex) {
         iFont *emoji = font_Text_(d->symbolsFont + fromSymbolsToEmojiOffset_FontId);
         if (emoji != d && (*glyphIndex = glyphIndex_Font_(emoji, ch)) != 0) {
             return emoji;
+        }
+    }
+    /* Japanese perhaps? */
+    if (ch > 0x3040) {
+        iFont *japanese = font_Text_(d->japaneseFont);
+        if (japanese != d && (*glyphIndex = glyphIndex_Font_(japanese, ch)) != 0) {
+            return japanese;
         }
     }
     /* Fall back to Symbola for anything else. */
@@ -435,6 +467,10 @@ static iChar nextChar_(const char **chPos, const char *end) {
     }
     (*chPos) += len;
     return ch;
+}
+
+static enum iFontId fontId_Text_(const iFont *font) {
+    return font - text_.fonts;
 }
 
 iLocalDef iBool isWrapBoundary_(iChar a, iChar b) {
@@ -540,29 +576,24 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
             SDL_RenderCopy(text_.render, text_.cache, (const SDL_Rect *) &glyph->rect[hoff], &dst);
         }
         /* Symbols and emojis are NOT monospaced, so must conform when the primary font
-           is monospaced. */
-        xpos += (d->isMonospaced && glyph->font != d ? monoAdvance : glyph->advance);
+           is monospaced. Except with Japanese script, that's larger than the normal monospace. */
+        xpos += (monoAdvance > 0 && !isJapanese_FontId(fontId_Text_(glyph->font)) ? monoAdvance
+                                                                                  : glyph->advance);
         xposMax = iMax(xposMax, xpos);
         if (continueFrom_out && (mode == measureNoWrap_RunMode || isWrapBoundary_(prevCh, ch))) {
             lastWordEnd = chPos;
         }
+#if defined (LAGRANGE_ENABLE_KERNING)
         /* Check the next character. */
         if (!d->isMonospaced && glyph->font == d) {
             /* TODO: No need to decode the next char twice; check this on the next iteration. */
             const char *peek = chPos;
             const iChar next = nextChar_(&peek, text.end);
-#if 0
-            if (ch == '/' && next == '/') {
-                /* Manual kerning for double-slash. */
-                xpos -= glyph->rect[hoff].size.x * 0.5f;
-            } else
-#endif
-#if defined (LAGRANGE_ENABLE_KERNING)
             if (enableKerning_Text && !d->manualKernOnly && next) {
                 xpos += d->scale * stbtt_GetGlyphKernAdvance(&d->font, glyph->glyphIndex, next);
             }
-#endif
         }
+#endif
         prevCh = ch;
         if (--maxLen == 0) {
             break;

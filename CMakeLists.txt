@@ -41,6 +41,7 @@ set (EMBED_RESOURCES
     res/FiraSans-Italic.ttf
     res/FiraSans-Light.ttf
     res/FiraSans-Regular.ttf
+    res/KosugiMaru-Regular.ttf
     res/NotoEmoji-Regular.ttf
     res/Nunito-ExtraBold.ttf
     res/Nunito-ExtraLight.ttf
