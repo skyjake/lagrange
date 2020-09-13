@@ -286,6 +286,7 @@ static void saveState_App_(const iApp *d) {
 }
 
 static void init_App_(iApp *d, int argc, char **argv) {
+    const iBool isFirstRun = !fileExistsCStr_FileInfo(cleanedPath_CStr(dataDir_App_));
     d->isFinishedLaunching = iFalse;
     d->launchCommands      = new_StringList();
     iZap(d->lastDropTime);
@@ -316,6 +317,29 @@ static void init_App_(iApp *d, int argc, char **argv) {
     loadPrefs_App_(d);
     load_Visited(d->visited, dataDir_App_);
     load_Bookmarks(d->bookmarks, dataDir_App_);
+    if (isFirstRun) {
+        /* Create the default bookmarks for a quick start. */
+        add_Bookmarks(d->bookmarks,
+                      collectNewCStr_String("gemini://gemini.circumlunar.space/"),
+                      collectNewCStr_String("Project Gemini"),
+                      NULL,
+                      0x264a /* Gemini symbol */);
+        add_Bookmarks(d->bookmarks,
+                      collectNewCStr_String("gemini://gemini.circumlunar.space/capcom/"),
+                      collectNewCStr_String("CAPCOM Geminispace aggregator"),
+                      NULL,
+                      0x264a /* Gemini symbol */);
+        add_Bookmarks(d->bookmarks,
+                      collectNewCStr_String("gemini://gus.guru/"),
+                      collectNewCStr_String("GUS - Gemini Universal Search"),
+                      NULL,
+                      0x2690);
+        add_Bookmarks(d->bookmarks,
+                      collectNewCStr_String("gemini://skyjake.fi/lagrange/"),
+                      collectNewCStr_String("Lagrange"),
+                      NULL,
+                      0x1f306);
+    }
 #if defined (iHaveLoadEmbed)
     /* Load the resources from a file. */ {
         if (!load_Embed(concatPath_CStr(cstr_String(execPath_App()), EMB_BIN))) {

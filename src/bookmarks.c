@@ -145,7 +145,7 @@ void add_Bookmarks(iBookmarks *d, const iString *url, const iString *title, cons
     iBookmark *bm = new_Bookmark();
     set_String(&bm->url, url);
     set_String(&bm->title, title);
-    set_String(&bm->tags, tags);
+    if (tags) set_String(&bm->tags, tags);
     bm->icon = icon;
     initCurrent_Time(&bm->when);
     insert_Bookmarks_(d, bm);
