@@ -123,13 +123,13 @@ static const iEmbedChunk chunks_Embed_[] = {
             file (APPEND ${EMB_C} "};\n\n")
             foreach (fn ${ARGV})
                 embed_getname (resName ${fn})
-                file (APPEND ${EMB_H} "extern const iBlock ${resName};\n")
-                file (APPEND ${EMB_C} "const iBlock ${resName};\n")
+                file (APPEND ${EMB_H} "extern iBlock ${resName};\n")
+                file (APPEND ${EMB_C} "iBlock ${resName};\n")
             endforeach (fn)
             file (APPEND ${EMB_C} "\nstatic iBlock *blocks_Embed_[] = {\n")
             foreach (fn ${ARGV})
                 embed_getname (resName ${fn})
-                file (APPEND ${EMB_C} "   iConstCast(iBlock *, &${resName}),\n")
+                file (APPEND ${EMB_C} "   &${resName},\n")
             endforeach (fn)
             file (APPEND ${EMB_C} [[
 };
