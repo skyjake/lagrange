@@ -14,7 +14,7 @@ option (ENABLE_RESOURCE_EMBED "Embed resources inside the executable" OFF)
 
 include (BuildType.cmake)
 include (Embed.cmake)
-if (NOT EXISTS ${CMAKE_SOURCE_DIR}/lib/the_Foundation)
+if (NOT EXISTS ${CMAKE_SOURCE_DIR}/lib/the_Foundation/CMakeLists.txt)
     set (INSTALL_THE_FOUNDATION YES)
     find_package (the_Foundation REQUIRED)
 else ()
