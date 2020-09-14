@@ -323,7 +323,7 @@ void init_SidebarWidget(iSidebarWidget *d) {
     d->list = new_ListWidget();
     setPadding_Widget(as_Widget(d->list), 0, gap_UI, 0, gap_UI);
     addChildFlags_Widget(vdiv, iClob(d->list), expand_WidgetFlag);
-    setMode_SidebarWidget(d, documentOutline_SidebarMode);
+    setMode_SidebarWidget(d, bookmarks_SidebarMode);
     d->resizer = addChildFlags_Widget(
         w,
         iClob(new_Widget()),

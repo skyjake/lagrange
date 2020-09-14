@@ -8,6 +8,7 @@
 
 ## 0.2
 * Windows: Fixed opening HTTP links in the default web browser.
+* Default sidebar mode is Bookmarks.
 
 ## 0.1
 * The major version zero is reserved for non-feature-complete releases.
