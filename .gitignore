@@ -4,5 +4,5 @@
 build-*
 /.vsbuild
 /.vscode
-/lib
+
 
