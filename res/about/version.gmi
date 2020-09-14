@@ -6,6 +6,9 @@
 ```                                        
 # Version history
 
+## 0.2
+* Windows: Fixed opening HTTP links in the default web browser.
+
 ## 0.1
 * The major version zero is reserved for non-feature-complete releases.
 * Beautiful typography using Unicode fonts.
