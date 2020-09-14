@@ -992,7 +992,10 @@ void openInDefaultBrowser_App(const iString *url) {
 #elif defined (iPlatformLinux)
                          iClob(newStringsCStr_StringList("/usr/bin/x-www-browser", cstr_String(url), NULL))
 #elif defined (iPlatformMsys)
-                         iClob(newStringsCStr_StringList("start", cstr_String(url), NULL))
+        iClob(newStringsCStr_StringList(
+            "c:\\Windows\\System32\\cmd.exe", "/q", "/c", "start", cstr_String(url), NULL))
+        /* TODO: Should consult environment variables to find the
+           right cmd.exe. Also, the prompt window is shown momentarily... */
 #endif
     );
     start_Process(proc);
