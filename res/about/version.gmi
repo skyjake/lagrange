@@ -6,7 +6,8 @@
 ```                                        
 # Release notes
 
-## 0.2
+## 0.1.1
+* Fixed a potential crash at startup.
 * Fixed bug where user's query input is handled by all tabs.
 * Default sidebar mode is Bookmarks.
 * Windows: Fixed opening HTTP links in the default web browser.
