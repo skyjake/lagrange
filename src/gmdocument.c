@@ -224,6 +224,9 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
             else if (equalCase_Rangecc(parts.scheme, "data")) {
                 link->flags |= data_GmLinkFlag;
             }
+            else if (equalCase_Rangecc(parts.scheme, "about")) {
+                link->flags |= about_GmLinkFlag;
+            }
             /* Check the file name extension, if present. */
             if (!isEmpty_Range(&parts.path)) {
                 iString *path = newRange_String(parts.path);

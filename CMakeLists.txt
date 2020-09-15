@@ -35,6 +35,7 @@ message (STATUS "Preparing embedded resources...")
 set (EMBED_RESOURCES
     res/about/help.gmi
     res/about/lagrange.gmi
+    res/about/license.gmi
     res/about/version.gmi
     res/FiraMono-Regular.ttf
     res/FiraSans-Bold.ttf

@@ -305,6 +305,9 @@ static const iBlock *aboutPageSource_(iRangecc path) {
     if (equalCase_Rangecc(path, "help")) {
         return &blobHelp_Embedded;
     }
+    if (equalCase_Rangecc(path, "license")) {
+        return &blobLicense_Embedded;
+    }
     if (equalCase_Rangecc(path, "version")) {
         return &blobVersion_Embedded;
     }
