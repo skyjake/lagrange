@@ -40,5 +40,13 @@ To install to "/dest/path":
 
 This will also install an XDG .desktop file for launching the app.
 
+### macOS-specific notes
+
+When using OpenSSL 1.1.1 from Homebrew, you must add its pkgconfig path to your `PKG_CONFIG_PATH` environment variable, for example:
+
+    export PKG_CONFIG_PATH=/usr/local/Cellar/openssl@1.1/1.1.1g/lib/pkgconfig
+
+Also, SDL's trackpad scrolling behavior on macOS is not optimal for regular GUI apps because it emulates a physical mouse wheel. This may change in a future release of SDL, but at least in 2.0.12 a [small patch](https://git.skyjake.fi/skyjake/lagrange/raw/branch/dev/sdl2-macos-mouse-scrolling-patch.diff) is required to allow momentum scrolling to come through as single-pixel mouse wheel events.
+
 [rel]: https://git.skyjake.fi/skyjake/lagrange/releases
 [tf]:  https://git.skyjake.fi/skyjake/the_Foundation
