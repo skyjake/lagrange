@@ -63,9 +63,11 @@ Lagrange's user interface is modeled after web browsers:
 
 The URL input field is in its typical location in the navigation bar. It can be accessed quickly by pressing ${CTRL+}L.
 
-As you enter text, Lagrange starts looking for matches in bookmarks, history, content of cached pages, and identities. Search terms are case insensitive, and if many words are entered, they are all required to appear in the specified order in any matched content. Search of cached pages is limited to the (small) set of pages that Lagrange keeps in memory for back navigation.
+As you enter text, Lagrange starts looking for matches in bookmarks, history, content of cached pages, and identities. Search terms are case insensitive, and if many words are entered, they are all required to appear in the specified order in any matched content.
 
 Press Tab or ↓ to switch input focus to the search results.
+
+Search within cached pages is limited to the (small) set of pages that Lagrange keeps in memory for back navigation. Note that while the navigation stack is saved to a file when Lagrange is shut down and restored on the next launch, it is also tab-specific — a tab's navigation cache is lost when the tab is closed.
 
 ## Tabs
 
@@ -105,15 +107,38 @@ Each visible link on the page gets an alphanumeric shortcut. For example, the fi
 
 ## Bookmarks
 
-## Managing and using identities
+...
 
-TLS client certificates that you can identify yourself with. Consider any information you enter in the certificate as public; only the Common Name is required and will appear as the issuer and subject of the certificate.
+## Identities (TLS client certificates)
+
+Gemini uses TLS client certificates for manual user/session identification purposes. This is analogous to logging into a web site, except you are in full control of the information. The term "Identity" is used in Lagrange to refer to client certificates.
+
+Lagrange can easily create a new identity. The shortcut for this is ${SHIFT+}${CTRL+}N. Consider any information you enter in the certificate as public; only the Common Name is required and will appear as the issuer and subject of the certificate.
+
+Clicking on an identity in the sidebar will toggle it on/off for the currently open URL. On subsequent page loads, the certificate will then be sent to the server when the URL or any URL under it is fetched. You can click on the 👤 button in the navigation bar to see which identity is being used for the current page.
+
+### Importing existing certificates
+
+At launch, Lagrange looks through its "idents" directory to see if any new certificates have been copied there. (See "Runtime files" below for the location.) The file format must be PEM. Both a certificate (.crt) and its private key (.key) must be found in "idents" and they must have matching file names. For example:
+* mycert.crt
+* mycert.key
+Lagrange will add a note to the imported identities to mark them as "Imported".
+
+# OS integration
 
 ## Drop and drop
 
-You can drag and drop .gmi files on the Lagrange window to open them in the current tab. Dropping multiple files opens them in separate tabs. This is the recommended way to view local files, because there is no "Open File" menu item. You may also type "file://" URLs in the URL field.
+You can drag and drop .gmi files on the Lagrange window to open them in the current tab. Dropping multiple files opens them in separate tabs. This is the recommended way to view local files, because there is no "Open File" menu item. You may also type "file://" URLs in the URL field.    
 
-# Runtime files
+## Runtime files
+
+Lagrange stores user-specific persistent files in one of the following locations (depending on the operating system):
+
+```
+   Windows : C:\Users\Name\AppData\Roaming\fi.skyjake.Lagrange\
+     macOS : ~/Library/Application Support/fi.skyjake.Lagrange/
+Other Unix : ~/.config/lagrange/
+```
 
 * bookmarks.txt
 * idents.binary and idents/
