@@ -53,7 +53,7 @@ One way to browse Gemini content is via web browser extensions or proxies that t
 
 # User interface
 
-Lagrange's user interface is modeled after WWW browsers:
+Lagrange's user interface is modeled after web browsers:
 * There is a navigation bar at the top with Back and Forward buttons.
 * Below the navigation bar, there is a tab bar for switching between open tabs. The tab bar is hidden if there is only one tab open.
 * There is a sidebar for managing bookmarks and TLS identities, and viewing history and the page outline. The sidebar is hidden by default.
@@ -85,6 +85,15 @@ The sidebar can be toggled via menus or by pressing ${SHIFT+}${CTRL+}L. It has f
 ${CTRL+}1 through ${CTRL+}4 switch between the sidebar tabs, or hide the sidebar if the current tab's key is pressed.
 
 ## Navigation
+
+### Link icons
+
+The type and destination of a link are indicated by the link's icon and color: ➤ links to the same domain, and 🌐 to a different domain. The colors are:
+
+* Blue for Gemini
+* Purple for Gopher
+* Orange for HTTP(S)
+* Red for other (cannot be opened)
 
 ### Opening links using the keyboard
 

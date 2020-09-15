@@ -4,7 +4,7 @@
 |___ /~~\ \__> |  \ /~~\ | \| \__> |___ 
 
 ```                                        
-# Version history
+# Release notes
 
 ## 0.2
 * Windows: Fixed opening HTTP links in the default web browser.
