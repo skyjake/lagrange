@@ -337,7 +337,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     int              preFont       = preformatted_FontId;
     iBool            enableIndents = iFalse;
     iBool            addSiteBanner = iTrue;
-    enum iGmLineType prevType;
+    enum iGmLineType prevType      = text_GmLineType;
     if (d->format == plainText_GmDocumentFormat) {
         isPreformat = iTrue;
         isFirstText = iFalse;
@@ -353,7 +353,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         int indent = 0;
         if (!isPreformat) {
             type = lineType_GmDocument_(d, line);
-            if (line.start == content.start) {
+            if (contentLine.start == content.start) {
                 prevType = type;
             }
             indent = indents[type];
@@ -389,6 +389,9 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         else {
             /* Preformatted line. */
             type = preformatted_GmLineType;
+            if (contentLine.start == content.start) {
+                prevType = type;
+            }
             if (d->format == gemini_GmDocumentFormat &&
                 startsWithSc_Rangecc(line, "```", &iCaseSensitive)) {
                 isPreformat = iFalse;
