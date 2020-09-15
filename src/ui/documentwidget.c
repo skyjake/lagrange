@@ -1115,7 +1115,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         }
         return iTrue;
     }
-    else if (equal_Command(cmd, "document.input.submit")) {
+    else if (equal_Command(cmd, "document.input.submit") && document_App() == d) {
         iString *value = collect_String(suffix_Command(cmd, "value"));
         urlEncode_String(value);
         iString *url = collect_String(copy_String(d->mod.url));
@@ -1129,7 +1129,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equal_Command(cmd, "valueinput.cancelled") &&
-             equal_Rangecc(range_Command(cmd, "id"), "document.input.submit")) {
+             equal_Rangecc(range_Command(cmd, "id"), "document.input.submit") && document_App() == d) {
         postCommand_App("navigate.back");
         return iTrue;
     }
@@ -1163,7 +1163,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         postCommand_App("navigate.back");
         return iFalse;
     }
-    else if (equal_Command(cmd, "document.stop")) {
+    else if (equal_Command(cmd, "document.stop") && document_App() == d) {
         if (d->request) {
             postCommandf_App("document.request.cancelled doc:%p url:%s", d, cstr_String(d->mod.url));
             iReleasePtr(&d->request);
