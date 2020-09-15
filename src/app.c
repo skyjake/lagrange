@@ -98,6 +98,7 @@ struct Impl_App {
     float        uiScale;
     int          zoomPercent;
     iBool        forceWrap;
+    iBool        forceSoftwareRender;
     enum iColorTheme theme;
     iBool        useSystemTheme;
     iString      gopherProxy;
@@ -304,6 +305,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     d->pendingRefresh    = iFalse;
     d->zoomPercent       = 100;
     d->forceWrap         = iFalse;
+    d->forceSoftwareRender = checkArgument_CommandLine(&d->args, "sw") != NULL;
     d->certs             = new_GmCerts(dataDir_App_);
     d->visited           = new_Visited();
     d->bookmarks         = new_Bookmarks();
@@ -531,8 +533,12 @@ int zoom_App(void) {
     return app_.zoomPercent;
 }
 
-iBool isLineWrapForced_App(void) {
+iBool forceLineWrap_App(void) {
     return app_.forceWrap;
+}
+
+iBool forceSoftwareRender_App(void) {
+    return app_.forceSoftwareRender;
 }
 
 enum iColorTheme colorTheme_App(void) {

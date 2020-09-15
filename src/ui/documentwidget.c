@@ -269,7 +269,7 @@ static iRect documentBounds_DocumentWidget_(const iDocumentWidget *d) {
 }
 
 static int forceBreakWidth_DocumentWidget_(const iDocumentWidget *d) {
-    if (isLineWrapForced_App()) {
+    if (forceLineWrap_App()) {
         const iRect bounds    = bounds_Widget(constAs_Widget(d));
         const iRect docBounds = documentBounds_DocumentWidget_(d);
         return right_Rect(bounds) - left_Rect(docBounds) - gap_UI * d->pageMargin;

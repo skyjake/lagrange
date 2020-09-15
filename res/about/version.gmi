@@ -7,6 +7,8 @@
 # Release notes
 
 ## 0.2
+* Fall back to software rendering automatically if accelerated graphics are not available.
+* Added --sw option to force software rendering.
 
 ## 0.1.1
 * Fixed a potential crash at startup.

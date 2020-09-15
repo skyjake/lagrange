@@ -477,26 +477,35 @@ static void drawBlank_Window_(iWindow *d) {
     SDL_RenderPresent(d->render);
 }
 
-// #define ENABLE_SWRENDER
+iBool create_Window_(iWindow *d, iRect rect, uint32_t flags) {
+    flags |= SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI;
+    if (SDL_CreateWindowAndRenderer(
+            width_Rect(rect), height_Rect(rect), flags, &d->win, &d->render)) {
+        return iFalse;
+    }
+    return iTrue;
+}
 
 void init_Window(iWindow *d, iRect rect) {
     theWindow_ = d;
     iZap(d->cursors);
     d->pendingCursor = NULL;
     d->isDrawFrozen = iTrue;
-    uint32_t flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI;
-#if defined (ENABLE_SWRENDER)
-    SDL_SetHint(SDL_HINT_RENDER_DRIVER, "software");
-#elif defined (iPlatformApple)
+    uint32_t flags = 0;
+#if defined (iPlatformApple)
     SDL_SetHint(SDL_HINT_RENDER_DRIVER, "metal");
 #else
     flags |= SDL_WINDOW_OPENGL;
 #endif
     SDL_SetHint(SDL_HINT_RENDER_VSYNC, "1");
-    if (SDL_CreateWindowAndRenderer(
-            width_Rect(rect), height_Rect(rect), flags, &d->win, &d->render)) {
-        fprintf(stderr, "Error when creating window: %s\n", SDL_GetError());
-        exit(-2);
+    /* First try SDL's default renderer that should be the best option. */
+    if (forceSoftwareRender_App() || !create_Window_(d, rect, flags)) {
+        /* No luck, maybe software only? This should always work as long as there is a display. */
+        SDL_SetHint(SDL_HINT_RENDER_DRIVER, "software");
+        if (!create_Window_(d, rect, 0)) {
+            fprintf(stderr, "Error when creating window: %s\n", SDL_GetError());
+            exit(-2);
+        }
     }
     if (left_Rect(rect) >= 0) {
         SDL_SetWindowPosition(d->win, left_Rect(rect), top_Rect(rect));

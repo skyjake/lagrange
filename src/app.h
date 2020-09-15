@@ -58,7 +58,8 @@ iBool       isRefreshPending_App        (void);
 uint32_t    elapsedSinceLastTicker_App  (void); /* milliseconds */
 
 int                 zoom_App            (void);
-iBool               isLineWrapForced_App(void);
+iBool               forceLineWrap_App   (void);
+iBool               forceSoftwareRender_App(void);
 enum iColorTheme    colorTheme_App      (void);
 const iString *     schemeProxy_App     (iRangecc scheme);
 
