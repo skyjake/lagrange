@@ -28,7 +28,7 @@ This is how to build Lagrange in a Unix-like environment. The required tools are
 2. Check that you have the dependencies installed: CMake, SDL 2, OpenSSL 1.1.1, libpcre, zlib, libunistring. For example, on macOS this would do the trick (using Homebrew): ```brew install cmake sdl2 openssl@1.1 pcre libunistring``` Or on Ubuntu: ```sudo apt install cmake libsdl2-dev libssl-dev libpcre3-dev zlib1g-dev libunistring-dev```
 3. Create a build directory.
 4. In your empty build directory, run CMake: ```cmake {path_of_lagrange_sources}```
-5. Built it: ```cmake --build .```
+5. Build it: ```cmake --build .```
 6. Now you can run `lagrange`, `lagrange.exe`, or `Lagrange.app`.
 
 ### Installing to a directory
