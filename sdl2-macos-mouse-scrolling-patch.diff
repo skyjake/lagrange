@@ -1,0 +1,28 @@
+diff -r 4f06c06b6d19 src/events/SDL_mouse.c
+--- a/src/events/SDL_mouse.c    Wed Aug 05 15:28:51 2020 +0200
++++ b/src/events/SDL_mouse.c    Tue Sep 15 07:54:17 2020 +0300
+@@ -642,8 +642,8 @@
+         event.wheel.preciseX = x;
+         event.wheel.preciseY = y;
+ #endif
+-        event.wheel.x = integral_x;
+-        event.wheel.y = integral_y;
++        event.wheel.x = x; //integral_x;
++        event.wheel.y = y; //integral_y;
+         event.wheel.direction = (Uint32)direction;
+         posted = (SDL_PushEvent(&event) > 0);
+     }
+diff -r 4f06c06b6d19 src/video/cocoa/SDL_cocoamouse.m
+--- a/src/video/cocoa/SDL_cocoamouse.m  Wed Aug 05 15:28:51 2020 +0200
++++ b/src/video/cocoa/SDL_cocoamouse.m  Tue Sep 15 07:54:17 2020 +0300
+@@ -424,8 +424,8 @@
+     }
+ 
+     SDL_MouseID mouseID = mouse->mouseID;
+-    CGFloat x = -[event deltaX];
+-    CGFloat y = [event deltaY];
++    CGFloat x = -[event scrollingDeltaX];
++    CGFloat y = [event scrollingDeltaY];
+     SDL_MouseWheelDirection direction = SDL_MOUSEWHEEL_NORMAL;
+ 
+     if ([event respondsToSelector:@selector(isDirectionInvertedFromDevice)]) {
