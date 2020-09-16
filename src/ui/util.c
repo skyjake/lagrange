@@ -201,7 +201,8 @@ static iBool menuHandler_(iWidget *menu, const char *cmd) {
             /* Don't reopen self; instead, root will close the menu. */
             return iFalse;
         }
-        if (equal_Command(cmd, "mouse.clicked") && arg_Command(cmd)) {
+        if ((equal_Command(cmd, "mouse.clicked") || equal_Command(cmd, "mouse.missed")) &&
+            arg_Command(cmd)) {
             /* Dismiss open menus when clicking outside them. */
             closeMenu_Widget(menu);
             return iTrue;
@@ -252,6 +253,7 @@ void openMenu_Widget(iWidget *d, iInt2 coord) {
     postCommand_App("cancel"); /* dismiss any other menus */
     processEvents_App(postedEventsOnly_AppEventMode);
     setFlags_Widget(d, hidden_WidgetFlag, iFalse);
+    setFlags_Widget(d, commandOnMouseMiss_WidgetFlag, iTrue);
     setFlags_Widget(findChild_Widget(d, "menu.cancel"), disabled_WidgetFlag, iFalse);
     arrange_Widget(d);
     d->rect.pos = coord;
