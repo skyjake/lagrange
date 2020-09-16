@@ -153,5 +153,13 @@ Other Unix : ~/.config/lagrange/
 * trusted.txt
 * visited.txt
 
+## Command line options
+
+### --echo
+Debugging utility: internal events are printed to stdout.
+
+### --sw
+Disable hardware accelerated graphics. Note that software rendering is anyway used as a fallback, so usually this option should not be necessary.
+
 # Open source licenses
 => about:license
