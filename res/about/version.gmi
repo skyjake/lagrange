@@ -9,7 +9,7 @@
 ## 0.2
 * Fall back to software rendering automatically if accelerated graphics are not available.
 * Added `--sw` option to force software rendering.
-* macOS: Touch bar buttons for Back, Forward, Find, New Tab.
+* macOS: Touch bar buttons for Back, Forward, Find, New Tab, and sidebar modes.
 
 ## 0.1.1
 * Fixed a potential crash at startup.

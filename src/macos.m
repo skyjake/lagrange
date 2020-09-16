@@ -28,10 +28,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #import <AppKit/AppKit.h>
 
-static NSTouchBarItemIdentifier goBack_TouchId_    = @"fi.skyjake.Lagrange.back";
-static NSTouchBarItemIdentifier goForward_TouchId_ = @"fi.skyjake.Lagrange.forward";
-static NSTouchBarItemIdentifier find_TouchId_      = @"fi.skyjake.Lagrange.find";
-static NSTouchBarItemIdentifier newTab_TouchId_    = @"fi.skyjake.Lagrange.tabs.new";
+static NSTouchBarItemIdentifier goBack_TouchId_      = @"fi.skyjake.Lagrange.back";
+static NSTouchBarItemIdentifier goForward_TouchId_   = @"fi.skyjake.Lagrange.forward";
+static NSTouchBarItemIdentifier find_TouchId_        = @"fi.skyjake.Lagrange.find";
+static NSTouchBarItemIdentifier newTab_TouchId_      = @"fi.skyjake.Lagrange.tabs.new";
+static NSTouchBarItemIdentifier sidebarMode_TouchId_ = @"fi.skyjake.Lagrange.sidebar.mode";
 
 enum iTouchBarVariant {
     default_TouchBarVariant,
@@ -205,6 +206,8 @@ static void appearanceChanged_MacOS_(NSString *name) {
                                             NSTouchBarItemIdentifierFixedSpaceSmall,
                                             find_TouchId_,
                                             NSTouchBarItemIdentifierFlexibleSpace,
+                                            sidebarMode_TouchId_,
+                                            NSTouchBarItemIdentifierFlexibleSpace,
                                             newTab_TouchId_,
                                             NSTouchBarItemIdentifierOtherItemsProxy ];
             break;
@@ -228,6 +231,11 @@ static void appearanceChanged_MacOS_(NSString *name) {
     }
 }
 
+- (void)sidebarModePressed:(id)sender {
+    NSSegmentedControl *seg = sender;
+    postCommandf_App("sidebar.mode arg:%d toggle:1", (int) [seg selectedSegment]);
+}
+
 - (nullable NSTouchBarItem *)touchBar:(NSTouchBar *)touchBar
                 makeItemForIdentifier:(NSTouchBarItemIdentifier)identifier {
     iUnused(touchBar);
@@ -248,6 +256,16 @@ static void appearanceChanged_MacOS_(NSString *name) {
                                                    image:[NSImage imageNamed:NSImageNameTouchBarSearchTemplate]
                                                   widget:nil
                                                  command:@"focus.set id:find.input"];
+    }
+    else if ([identifier isEqualToString:sidebarMode_TouchId_]) {
+        NSCustomTouchBarItem *item = [[NSCustomTouchBarItem alloc] initWithIdentifier:sidebarMode_TouchId_];
+        NSSegmentedControl *seg =
+            [NSSegmentedControl segmentedControlWithLabels:@[ @"Bookmarks", @"History", @"Identities", @"Outline"]
+                                              trackingMode:NSSegmentSwitchTrackingMomentary
+                                                    target:[[NSApplication sharedApplication] delegate]
+                                                    action:@selector(sidebarModePressed:)];
+        item.view = seg;
+        return item;
     }
     else if ([identifier isEqualToString:newTab_TouchId_]) {
         return [[CommandButton alloc] initWithIdentifier:identifier
