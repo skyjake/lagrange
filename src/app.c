@@ -73,8 +73,9 @@ static const char *dataDir_App_ = "~/AppData/Roaming/fi.skyjake.Lagrange";
 static const char *dataDir_App_ = "~/.config/lagrange";
 #endif
 #define EMB_BIN2 "../resources.binary" /* fallback from build/executable dir */
-static const char *prefsFileName_App_   = "prefs.cfg";
-static const char *stateFileName_App_   = "state.binary";
+static const char *prefsFileName_App_ = "prefs.cfg";
+static const char *stateFileName_App_ = "state.binary";
+static const char *downloadDir_App_   = "~/Downloads";
 
 struct Impl_App {
     iCommandLine args;
@@ -103,6 +104,7 @@ struct Impl_App {
     iBool        useSystemTheme;
     iString      gopherProxy;
     iString      httpProxy;
+    iString      downloadDir;
 };
 
 static iApp app_;
@@ -161,6 +163,7 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "ostheme arg:%d\n", d->useSystemTheme);
     appendFormat_String(str, "proxy.gopher address:%s\n", cstr_String(&d->gopherProxy));
     appendFormat_String(str, "proxy.http address:%s\n", cstr_String(&d->httpProxy));
+    appendFormat_String(str, "downloads path:%s\n", cstr_String(&d->downloadDir));
     return str;
 }
 
@@ -312,6 +315,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     d->tabEnum           = 0; /* generates unique IDs for tab pages */
     init_String(&d->gopherProxy);
     init_String(&d->httpProxy);
+    initCStr_String(&d->downloadDir, downloadDir_App_);
     setThemePalette_Color(d->theme);
 #if defined (iPlatformApple)
     setupApplication_MacOS();
@@ -386,6 +390,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
 static void deinit_App(iApp *d) {
     saveState_App_(d);
     savePrefs_App_(d);
+    deinit_String(&d->downloadDir);
     deinit_String(&d->httpProxy);
     deinit_String(&d->gopherProxy);
     save_Bookmarks(d->bookmarks, dataDir_App_);
@@ -781,6 +786,10 @@ iBool handleCommand_App(const char *cmd) {
     iApp *d = &app_;
     if (equal_Command(cmd, "window.retain")) {
         d->retainWindowSize = arg_Command(cmd);
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "downloads")) {
+        setCStr_String(&d->downloadDir, suffixPtr_Command(cmd, "path"));
         return iTrue;
     }
     else if (equal_Command(cmd, "open")) {

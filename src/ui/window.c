@@ -91,9 +91,12 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
 #endif
 
 #if !defined (iHaveNativeMenus)
+/* TODO: Submenus wouldn't hurt here. */
 static const iMenuItem navMenuItems[] = {
     { "New Tab", 't', KMOD_PRIMARY, "tabs.new" },
     { "Open Location...", SDLK_l, KMOD_PRIMARY, "focus.set id:url" },
+    { "---", 0, 0, NULL },
+    { "Save Page", SDLK_s, KMOD_PRIMARY, "document.save" },
     { "---", 0, 0, NULL },
     { "Copy Source Text", SDLK_c, KMOD_PRIMARY, "copy" },
     { "Bookmark This Page", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
@@ -104,7 +107,7 @@ static const iMenuItem navMenuItems[] = {
     { "Reset Zoom", SDLK_0, KMOD_PRIMARY, "zoom.set arg:100" },
     { "---", 0, 0, NULL },
     { "Preferences...", SDLK_COMMA, KMOD_PRIMARY, "preferences" },
-    { "Help", 0, 0, "!open url:about:help" },
+    { "Help", SDLK_F1, 0, "!open url:about:help" },
     { "Release Notes", 0, 0, "!open url:about:version" },
     { "---", 0, 0, NULL },
     { "Quit Lagrange", 'q', KMOD_PRIMARY, "quit" }
@@ -116,6 +119,8 @@ static const iMenuItem navMenuItems[] = {
 static const iMenuItem fileMenuItems[] = {
     { "New Tab", SDLK_t, KMOD_PRIMARY, "tabs.new" },
     { "Open Location...", SDLK_l, KMOD_PRIMARY, "focus.set id:url" },
+    { "---", 0, 0, NULL },
+    { "Save Page", SDLK_s, KMOD_PRIMARY, "document.save" },
 };
 
 static const iMenuItem editMenuItems[] = {
