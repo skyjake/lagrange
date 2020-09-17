@@ -215,8 +215,7 @@ static const struct {
     { unsupportedMimeType_GmStatusCode,
       { 0x1f47d, /* alien */
         "Unsupported MIME Type",
-        "The received content is in an unsupported format and cannot be viewed with "
-        "this application." } },
+        "The received content cannot be viewed with this application." } },
     { invalidHeader_GmStatusCode,
       { 0x1f4a9, /* pile of poo */
         "Invalid Header",
