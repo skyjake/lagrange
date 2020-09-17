@@ -659,6 +659,8 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
     if (equal_Command(cmd, "prefs.dismiss") || equal_Command(cmd, "preferences")) {
         setUiScale_Window(get_Window(),
                           toFloat_String(text_InputWidget(findChild_Widget(d, "prefs.uiscale"))));
+        postCommandf_App("downloads path:%s",
+                         cstr_String(text_InputWidget(findChild_Widget(d, "prefs.downloads"))));
         postCommandf_App("window.retain arg:%d",
                          isSelected_Widget(findChild_Widget(d, "prefs.retainwindow")));
         postCommandf_App("ostheme arg:%d",
@@ -892,6 +894,7 @@ iBool handleCommand_App(const char *cmd) {
     else if (equal_Command(cmd, "preferences")) {
         iWidget *dlg = makePreferences_Widget();
         updatePrefsThemeButtons_(dlg);
+        setText_InputWidget(findChild_Widget(dlg, "prefs.downloads"), &d->downloadDir);
         setToggle_Widget(findChild_Widget(dlg, "prefs.ostheme"), d->useSystemTheme);
         setToggle_Widget(findChild_Widget(dlg, "prefs.retainwindow"), d->retainWindowSize);
         setText_InputWidget(findChild_Widget(dlg, "prefs.uiscale"),

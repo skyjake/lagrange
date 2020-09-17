@@ -811,6 +811,8 @@ iWidget *makePreferences_Widget(void) {
         page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);    
     iWidget *values = addChildFlags_Widget(
         page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
+    addChild_Widget(headings, iClob(makeHeading_Widget("Downloads folder:")));
+    setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.downloads");
 #if defined (iPlatformApple) || defined (iPlatformMSys)
     addChild_Widget(headings, iClob(makeHeading_Widget("Use system theme:")));
     addChild_Widget(values, iClob(makeToggle_Widget("prefs.ostheme")));
@@ -835,8 +837,9 @@ iWidget *makePreferences_Widget(void) {
     addChild_Widget(headings, iClob(makeHeading_Widget("HTTP proxy:")));
     setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.proxy.http");
     arrange_Widget(dlg);
-    /* Text input widths. */ {
+    /* Set text input widths. */ {
         const int inputWidth = width_Rect(page->rect) - width_Rect(headings->rect);
+        as_Widget(findChild_Widget(values, "prefs.downloads"))->rect.size.x = inputWidth;
         as_Widget(findChild_Widget(values, "prefs.proxy.http"))->rect.size.x = inputWidth;
         as_Widget(findChild_Widget(values, "prefs.proxy.gopher"))->rect.size.x = inputWidth;
     }
