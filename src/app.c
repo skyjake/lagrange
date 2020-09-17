@@ -904,6 +904,7 @@ iBool handleCommand_App(const char *cmd) {
         setText_InputWidget(findChild_Widget(dlg, "prefs.proxy.gopher"),
                             schemeProxy_App(range_CStr("gopher")));
         setCommandHandler_Widget(dlg, handlePrefsCommands_);
+        postCommand_App("focus.set id:prefs.downloads");
     }
     else if (equal_Command(cmd, "navigate.home")) {
         /* TODO: Look for bookmarks tagged homepage, or use the URL set in Preferences. */

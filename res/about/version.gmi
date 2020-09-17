@@ -7,6 +7,8 @@
 # Release notes
 
 ## 0.2
+* Added "Save Page" (${CTRL+}S) menu item for saving page contents.
+* Added Downloads folder to the Preferences.
 * Fixed behavior of images on single-image pages; cannot be hidden like inline images.
 * Recognize and handle "mailto:" links.
 * Fall back to software rendering automatically if accelerated graphics are not available.
