@@ -44,13 +44,15 @@ enum iGmLinkFlags {
     file_GmLinkFlag               = iBit(4),
     data_GmLinkFlag               = iBit(5),
     about_GmLinkFlag              = iBit(6),
-    supportedProtocol_GmLinkFlag  = 0x3f,
+    mailto_GmLinkFlag             = iBit(7),
+    supportedProtocol_GmLinkFlag  = 0xff,
     remote_GmLinkFlag             = iBit(9),
     userFriendly_GmLinkFlag       = iBit(10),
     imageFileExtension_GmLinkFlag = iBit(11),
     audioFileExtension_GmLinkFlag = iBit(12),
     content_GmLinkFlag            = iBit(13), /* content visible below */
     visited_GmLinkFlag            = iBit(14), /* in the history */
+    permanent_GmLinkFlag          = iBit(15), /* content cannot be dismissed; media link */
 };
 
 struct Impl_GmImageInfo {
@@ -98,7 +100,8 @@ void    setFormat_GmDocument    (iGmDocument *, enum iGmDocumentFormat format);
 void    setWidth_GmDocument     (iGmDocument *, int width, int forceBreakWidth);
 void    setUrl_GmDocument       (iGmDocument *, const iString *url);
 void    setSource_GmDocument    (iGmDocument *, const iString *source, int width, int forceBreakWidth);
-void    setImage_GmDocument     (iGmDocument *, iGmLinkId linkId, const iString *mime, const iBlock *data);
+void    setImage_GmDocument     (iGmDocument *, iGmLinkId linkId, const iString *mime, const iBlock *data,
+                                 iBool allowHide);
 
 void    reset_GmDocument        (iGmDocument *); /* free images */
 

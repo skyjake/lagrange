@@ -64,11 +64,13 @@ struct Impl_GmImage {
     size_t       numBytes;
     iString      mime;
     iGmLinkId    linkId;
+    iBool        isPermanent;
     SDL_Texture *texture;
 };
 
 void init_GmImage(iGmImage *d, const iBlock *data) {
     init_String(&d->mime);
+    d->isPermanent = iFalse;
     d->numBytes = size_Block(data);
     uint8_t *imgData = stbi_load_from_memory(
         constData_Block(data), size_Block(data), &d->size.x, &d->size.y, NULL, 4);
@@ -542,8 +544,14 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         if (type == link_GmLineType) {
             const size_t imgIndex = findLinkImage_GmDocument_(d, run.linkId);
             if (imgIndex != iInvalidPos) {
-                ((iGmLink *) at_PtrArray(&d->links, run.linkId - 1))->flags |= content_GmLinkFlag;
                 const iGmImage *img = constAt_PtrArray(&d->images, imgIndex);
+                /* Mark the link as having content. */ {
+                    iGmLink *link = at_PtrArray(&d->links, run.linkId - 1);
+                    link->flags |= content_GmLinkFlag;
+                    if (img->isPermanent) {
+                        link->flags |= permanent_GmLinkFlag;
+                    }
+                }
                 const int margin = 0.5f * lineHeight_Text(paragraph_FontId);
                 pos.y += margin;
                 run.bounds.pos = pos;
@@ -952,7 +960,8 @@ void setSource_GmDocument(iGmDocument *d, const iString *source, int width, int 
     setWidth_GmDocument(d, width, forceBreakWidth); /* re-do layout */
 }
 
-void setImage_GmDocument(iGmDocument *d, iGmLinkId linkId, const iString *mime, const iBlock *data) {
+void setImage_GmDocument(iGmDocument *d, iGmLinkId linkId, const iString *mime, const iBlock *data,
+                         iBool allowHide) {
     if (!mime || !data) {
         iGmImage *img;
         if (take_PtrArray(&d->images, findLinkImage_GmDocument_(d, linkId), (void **) &img)) {
@@ -961,16 +970,17 @@ void setImage_GmDocument(iGmDocument *d, iGmLinkId linkId, const iString *mime, 
     }
     else {
         /* TODO: check if we know this MIME type */
-        /* Load the image. */ {
+        /* Upload the image. */ {
             iGmImage *img = new_GmImage(data);
             img->linkId = linkId; /* TODO: use a hash? */
+            img->isPermanent = !allowHide;
             set_String(&img->mime, mime);
             if (img->texture) {
                 pushBack_PtrArray(&d->images, img);
             }
             else {
                 delete_GmImage(img);
-            }
+            }            
         }
     }
     doLayout_GmDocument_(d);

@@ -363,6 +363,10 @@ static void updateHover_DocumentWidget_(iDocumentWidget *d, iInt2 mouse) {
     if (isHover_Widget(w) && !contains_Widget(constAs_Widget(d->scroll), mouse)) {
         setCursor_Window(get_Window(),
                          d->hoverLink ? SDL_SYSTEM_CURSOR_HAND : SDL_SYSTEM_CURSOR_IBEAM);
+        if (d->hoverLink &&
+            linkFlags_GmDocument(d->doc, d->hoverLink->linkId) & permanent_GmLinkFlag) {
+            setCursor_Window(get_Window(), SDL_SYSTEM_CURSOR_ARROW); /* not dismissable */
+        }
     }
 }
 
@@ -575,7 +579,7 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse
                         }
                         format_String(
                             &str, "=> %s %s\n", cstr_String(d->mod.url), imageTitle);
-                        setImage_GmDocument(d->doc, 1, mimeStr, &response->body);
+                        setImage_GmDocument(d->doc, 1, mimeStr, &response->body, iFalse /* it's fixed */);
                     }
                     else {
                         clear_String(&str);
@@ -974,7 +978,7 @@ static iBool handleMediaCommand_DocumentWidget_(iDocumentWidget *d, const char *
 //                   cstr_String(meta_GmRequest(req->req)));
             if (startsWith_String(meta_GmRequest(req->req), "image/")) {
                 setImage_GmDocument(d->doc, req->linkId, meta_GmRequest(req->req),
-                                    body_GmRequest(req->req));
+                                    body_GmRequest(req->req), iTrue);
                 updateVisible_DocumentWidget_(d);
                 invalidate_DocumentWidget_(d);
                 refresh_Widget(as_Widget(d));
@@ -1489,10 +1493,16 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                     iAssert(linkId);
                     /* Media links are opened inline by default. */
                     if (isMediaLink_GmDocument(d->doc, linkId)) {
+                        const int linkFlags = linkFlags_GmDocument(d->doc, linkId);
+                        if (linkFlags & content_GmLinkFlag && linkFlags & permanent_GmLinkFlag) {
+                            /* We have the image and it cannot be dismissed, so nothing
+                               further to do. */
+                            return iTrue;
+                        }
                         if (!requestMedia_DocumentWidget_(d, linkId)) {
-                            if (linkFlags_GmDocument(d->doc, linkId) & content_GmLinkFlag) {
+                            if (linkFlags & content_GmLinkFlag) {
                                 /* Dismiss shown content on click. */
-                                setImage_GmDocument(d->doc, linkId, NULL, NULL);
+                                setImage_GmDocument(d->doc, linkId, NULL, NULL, iTrue);
                                 d->hoverLink = NULL;
                                 scroll_DocumentWidget_(d, 0);
                                 updateVisible_DocumentWidget_(d);
@@ -1505,7 +1515,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                 iMediaRequest *req = findMediaRequest_DocumentWidget_(d, linkId);
                                 if (req) {
                                     setImage_GmDocument(d->doc, linkId, meta_GmRequest(req->req),
-                                                        body_GmRequest(req->req));
+                                                        body_GmRequest(req->req), iTrue);
                                     updateVisible_DocumentWidget_(d);
                                     invalidate_DocumentWidget_(d);
                                     refresh_Widget(w);
