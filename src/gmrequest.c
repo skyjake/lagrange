@@ -228,7 +228,6 @@ static void readIncoming_GmRequest_(iAnyObject *obj) {
     lock_Mutex(&d->mutex);
     iAssert(d->state != finished_GmRequestState); /* notifications out of order? */
     iBlock *data = readAll_TlsRequest(d->req);
-    fflush(stdout);
     if (d->state == receivingHeader_GmRequestState) {
         appendCStrN_String(&d->resp.meta, constData_Block(data), size_Block(data));
         /* Check if the header line is complete. */

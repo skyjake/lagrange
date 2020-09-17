@@ -733,6 +733,7 @@ static void draw_InputWidget_(const iInputWidget *d) {
         deinit_String(&cur);
     }
     delete_String(text);
+    drawChildren_Widget(w);
 }
 
 iBeginDefineSubclass(InputWidget, Widget)

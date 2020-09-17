@@ -367,12 +367,24 @@ static void setupUserInterface_Window(iWindow *d) {
         setId_Widget(as_Widget(lock), "navbar.lock");
         setFont_LabelWidget(lock, defaultSymbols_FontId);
         updateTextCStr_LabelWidget(lock, "\U0001f512");
-        iInputWidget *url = new_InputWidget(0);
-        setSelectAllOnFocus_InputWidget(url, iTrue);
-        setId_Widget(as_Widget(url), "url");
-        setNotifyEdits_InputWidget(url, iTrue);
-        setTextCStr_InputWidget(url, "gemini://");
-        addChildFlags_Widget(navBar, iClob(url), expand_WidgetFlag);
+        /* URL input field. */ {
+            iInputWidget *url = new_InputWidget(0);
+            setSelectAllOnFocus_InputWidget(url, iTrue);
+            setId_Widget(as_Widget(url), "url");
+            setNotifyEdits_InputWidget(url, iTrue);
+            setTextCStr_InputWidget(url, "gemini://");
+            addChildFlags_Widget(navBar, iClob(url), expand_WidgetFlag);
+            /* Download progress indicator is inside the input field, but hidden normally. */
+            setPadding_Widget(as_Widget(url),0, 0, gap_UI * 1, 0);
+            iLabelWidget *progress = new_LabelWidget(uiTextCaution_ColorEscape "00.000 MB", 0, 0, NULL);
+            setId_Widget(as_Widget(progress), "document.progress");
+            setAlignVisually_LabelWidget(progress, iTrue);
+            shrink_Rect(&as_Widget(progress)->rect, init_I2(0, gap_UI));
+            addChildFlags_Widget(as_Widget(url),
+                                 iClob(progress),
+                                 moveToParentRightEdge_WidgetFlag);
+            setBackgroundColor_Widget(as_Widget(progress), uiBackground_ColorId);
+        }
         setId_Widget(addChild_Widget(
                          navBar, iClob(newIcon_LabelWidget(reloadCStr_, 0, 0, "navigate.reload"))),
                      "reload");

@@ -554,6 +554,20 @@ static void updateTheme_DocumentWidget_(iDocumentWidget *d) {
     }
 }
 
+static void updateFetchProgress_DocumentWidget_(iDocumentWidget *d) {
+    iLabelWidget *prog   = findWidget_App("document.progress");
+    const size_t  dlSize = d->request ? size_Block(body_GmRequest(d->request)) : 0;
+    setFlags_Widget(as_Widget(prog), hidden_WidgetFlag, dlSize < 250000);
+    if (isVisible_Widget(prog)) {
+        updateText_LabelWidget(prog,
+                               collectNewFormat_String("%s%.3f MB",
+                                                       isFinished_GmRequest(d->request)
+                                                           ? uiHeading_ColorEscape
+                                                           : uiTextCaution_ColorEscape,
+                                                       dlSize / 1.0e6f));
+    }
+}
+
 static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse *response) {
     if (d->state == ready_RequestState) {
         return;
@@ -566,7 +580,7 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse
         invalidate_DocumentWidget_(d);
         updateTheme_DocumentWidget_(d);
         clear_String(&d->sourceMime);
-        set_Block(&d->sourceContent, &response->body);
+//        set_Block(&d->sourceContent, &response->body);
         initBlock_String(&str, &response->body);
         if (category_GmStatusCode(statusCode) == categorySuccess_GmStatusCode) {
             /* Check the MIME type. */
@@ -867,7 +881,6 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
             case categorySuccess_GmStatusCode:
                 d->scrollY = 0;
                 resetSmoothScroll_DocumentWidget_(d);
-                clear_Block(&d->sourceContent);
                 reset_GmDocument(d->doc); /* new content incoming */
                 updateDocument_DocumentWidget_(d, response_GmRequest(d->request));
                 break;
@@ -1062,6 +1075,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     else if (equal_Command(cmd, "tabs.changed")) {
         d->showLinkNumbers = iFalse;
+        updateFetchProgress_DocumentWidget_(d);
         if (cmp_String(id_Widget(w), suffixPtr_Command(cmd, "id")) == 0) {
             /* Set palette for our document. */
             updateTheme_DocumentWidget_(d);
@@ -1148,11 +1162,16 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     else if (equalWidget_Command(cmd, w, "document.request.updated") &&
              pointerLabel_Command(cmd, "request") == d->request) {
+        set_Block(&d->sourceContent, body_GmRequest(d->request));
+        updateFetchProgress_DocumentWidget_(d);
         checkResponse_DocumentWidget_(d);
+        set_Atomic(&d->isRequestUpdated, iFalse); /* ready to be notified again */
         return iFalse;
     }
     else if (equalWidget_Command(cmd, w, "document.request.finished") &&
              pointerLabel_Command(cmd, "request") == d->request) {
+        set_Block(&d->sourceContent, body_GmRequest(d->request));
+        updateFetchProgress_DocumentWidget_(d);
         checkResponse_DocumentWidget_(d);
         resetSmoothScroll_DocumentWidget_(d);
         d->scrollY = d->initNormScrollY * size_GmDocument(d->doc).y;
@@ -1185,6 +1204,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             postCommandf_App("document.request.cancelled doc:%p url:%s", d, cstr_String(d->mod.url));
             iReleasePtr(&d->request);
             d->state = ready_RequestState;
+            updateFetchProgress_DocumentWidget_(d);
             return iTrue;
         }
     }
