@@ -1149,7 +1149,8 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         d->scrollY = d->initNormScrollY * size_GmDocument(d->doc).y;
         d->state = ready_RequestState;
         /* The response may be cached. */ {
-            if (!equal_Rangecc(urlScheme_String(d->mod.url), "about")) {
+            if (!equal_Rangecc(urlScheme_String(d->mod.url), "about") &&
+                startsWithCase_String(meta_GmRequest(d->request), "text/")) {
                 setCachedResponse_History(d->mod.history, response_GmRequest(d->request));
             }
         }
