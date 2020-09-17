@@ -47,7 +47,7 @@ enum iGmLinkFlags {
     mailto_GmLinkFlag             = iBit(7),
     supportedProtocol_GmLinkFlag  = 0xff,
     remote_GmLinkFlag             = iBit(9),
-    userFriendly_GmLinkFlag       = iBit(10),
+    humanReadable_GmLinkFlag      = iBit(10), /* link has a human-readable description */
     imageFileExtension_GmLinkFlag = iBit(11),
     audioFileExtension_GmLinkFlag = iBit(12),
     content_GmLinkFlag            = iBit(13), /* content visible below */

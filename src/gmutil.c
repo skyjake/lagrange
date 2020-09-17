@@ -132,7 +132,8 @@ const iString *absoluteUrl_String(const iString *d, const iString *urlMaybeRelat
     iUrl rel;
     init_Url(&orig, d);
     init_Url(&rel, urlMaybeRelative);
-    if (equalCase_Rangecc(rel.scheme, "data") || equalCase_Rangecc(rel.scheme, "about")) {
+    if (equalCase_Rangecc(rel.scheme, "data") || equalCase_Rangecc(rel.scheme, "about") ||
+        equalCase_Rangecc(rel.scheme, "mailto")) {
         /* Special case, the contents should be left unparsed. */
         return urlMaybeRelative;
     }

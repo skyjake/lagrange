@@ -1715,6 +1715,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                           topRight_Rect(linkRect),
                           tmInlineContentMetadata_ColorId,
                           " \u2014 Fetching\u2026");
+                /* TODO: Show amount downloaded so far. */
             }
         }
         else if (isHover) {
@@ -1723,31 +1724,35 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
             const int       flags  = linkFlags_GmDocument(doc, linkId);
             iUrl parts;
             init_Url(&parts, url);
-            fg = linkColor_GmDocument(doc, linkId, textHover_GmLinkPart);
-            const iBool showHost  = (!isEmpty_Range(&parts.host) && flags & userFriendly_GmLinkFlag);
+            fg                    = linkColor_GmDocument(doc, linkId, textHover_GmLinkPart);
+            const iBool showHost  = (flags & humanReadable_GmLinkFlag &&
+                                    (!isEmpty_Range(&parts.host) || flags & mailto_GmLinkFlag));
             const iBool showImage = (flags & imageFileExtension_GmLinkFlag) != 0;
             const iBool showAudio = (flags & audioFileExtension_GmLinkFlag) != 0;
             iString str;
             init_String(&str);
+            /* Show scheme and host. */
             if (run->flags & endOfLine_GmRunFlag &&
                 (flags & (imageFileExtension_GmLinkFlag | audioFileExtension_GmLinkFlag) ||
                  showHost)) {
-                format_String(
-                    &str,
-                    " \u2014%s%s%s\r%c%s",
-                    showHost ? " " : "",
-                    showHost ? (!equalCase_Rangecc(parts.scheme, "gemini")
-                                    ? format_CStr("%s://%s",
-                                                  cstr_Rangecc(parts.scheme),
-                                                  cstr_Rangecc(parts.host))
-                                    : cstr_Rangecc(parts.host))
-                             : "",
-                    showHost && (showImage || showAudio) ? " \u2014" : "",
-                    showImage || showAudio
-                        ? asciiBase_ColorEscape + fg
-                        : (asciiBase_ColorEscape + linkColor_GmDocument(doc, run->linkId, domain_GmLinkPart)),
-                    showImage ? " View Image \U0001f5bc"
-                              : showAudio ? " Play Audio \U0001f3b5" : "");
+                format_String(&str,
+                              " \u2014%s%s%s\r%c%s",
+                              showHost ? " " : "",
+                              showHost ? (flags & mailto_GmLinkFlag
+                                              ? cstr_String(url)
+                                              : ~flags & gemini_GmLinkFlag
+                                                    ? format_CStr("%s://%s",
+                                                                  cstr_Rangecc(parts.scheme),
+                                                                  cstr_Rangecc(parts.host))
+                                                    : cstr_Rangecc(parts.host))
+                                       : "",
+                              showHost && (showImage || showAudio) ? " \u2014" : "",
+                              showImage || showAudio
+                                  ? asciiBase_ColorEscape + fg
+                                  : (asciiBase_ColorEscape +
+                                     linkColor_GmDocument(doc, run->linkId, domain_GmLinkPart)),
+                              showImage ? " View Image \U0001f5bc"
+                                        : showAudio ? " Play Audio \U0001f3b5" : "");
             }
             if (run->flags & endOfLine_GmRunFlag && flags & visited_GmLinkFlag) {
                 iDate date;

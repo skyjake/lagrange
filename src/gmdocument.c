@@ -229,6 +229,9 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
             else if (equalCase_Rangecc(parts.scheme, "about")) {
                 link->flags |= about_GmLinkFlag;
             }
+            else if (equalCase_Rangecc(parts.scheme, "mailto")) {
+                link->flags |= mailto_GmLinkFlag;
+            }
             /* Check the file name extension, if present. */
             if (!isEmpty_Range(&parts.path)) {
                 iString *path = newRange_String(parts.path);
@@ -258,7 +261,7 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
         trim_Rangecc(&desc);
         if (!isEmpty_Range(&desc)) {
             line = desc; /* Just show the description. */
-            link->flags |= userFriendly_GmLinkFlag;
+            link->flags |= humanReadable_GmLinkFlag;
         }
         else {
             line = capturedRange_RegExpMatch(&m, 1); /* Show the URL. */
@@ -321,10 +324,11 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     static const float bottomMargin[max_GmLineType] = {
         0.0f, 0.5f, 1.0f, 0.5f, 0.5f, 0.5f, 0.5f, 1.0f
     };
-    static const char *arrow  = "\u27a4"; // "\u2192";
-    static const char *bullet = "\u2022";
-    static const char *folder = "\U0001f4c1";
-    static const char *globe  = "\U0001f310";
+    static const char *arrow    = "\u27a4";
+    static const char *envelope = "\U0001f4e7";
+    static const char *bullet   = "\u2022";
+    static const char *folder   = "\U0001f4c1";
+    static const char *globe    = "\U0001f310";
     const float midRunSkip = 0; /*0.120f;*/ /* extra space between wrapped text/quote lines */
     clear_Array(&d->layout);
     clearLinks_GmDocument_(d);
@@ -356,6 +360,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         run.imageId = 0;
         enum iGmLineType type;
         int indent = 0;
+        /* Detect the type of the line. */
         if (!isPreformat) {
             type = lineType_GmDocument_(d, line);
             if (contentLine.start == content.start) {
@@ -479,7 +484,9 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             const iGmLink *link = constAt_PtrArray(&d->links, run.linkId - 1);
             icon.text           = range_CStr(link->flags & file_GmLinkFlag
                                        ? folder
-                                       : link->flags & remote_GmLinkFlag ? globe : arrow);
+                                       : link->flags & mailto_GmLinkFlag
+                                             ? envelope
+                                             : link->flags & remote_GmLinkFlag ? globe : arrow);
             if (link->flags & remote_GmLinkFlag) {
                 icon.visBounds.pos.x -= gap_Text / 2;
             }
@@ -1114,6 +1121,7 @@ uint16_t linkImage_GmDocument(const iGmDocument *d, iGmLinkId linkId) {
 
 enum iColorId linkColor_GmDocument(const iGmDocument *d, iGmLinkId linkId, enum iGmLinkPart part) {
     const iGmLink *link = link_GmDocument_(d, linkId);
+    const int www_GmLinkFlag = http_GmLinkFlag | mailto_GmLinkFlag;
     if (link) {
         const iBool isBad = (link->flags & supportedProtocol_GmLinkFlag) == 0;
         if (part == icon_GmLinkPart) {
@@ -1121,24 +1129,24 @@ enum iColorId linkColor_GmDocument(const iGmDocument *d, iGmLinkId linkId, enum 
                 return tmBadLink_ColorId;
             }
             if (link->flags & visited_GmLinkFlag) {
-                return link->flags & http_GmLinkFlag
+                return link->flags & www_GmLinkFlag
                            ? tmHypertextLinkIconVisited_ColorId
                            : link->flags & gopher_GmLinkFlag ? tmGopherLinkIconVisited_ColorId
                                                              : tmLinkIconVisited_ColorId;
             }
-            return link->flags & http_GmLinkFlag
+            return link->flags & www_GmLinkFlag
                        ? tmHypertextLinkIcon_ColorId
                        : link->flags & gopher_GmLinkFlag ? tmGopherLinkIcon_ColorId
                                                          : tmLinkIcon_ColorId;
         }
         if (part == text_GmLinkPart) {
-            return link->flags & http_GmLinkFlag
+            return link->flags & www_GmLinkFlag
                        ? tmHypertextLinkText_ColorId
                        : link->flags & gopher_GmLinkFlag ? tmGopherLinkText_ColorId
                                                          : tmLinkText_ColorId;
         }
         if (part == textHover_GmLinkPart) {
-            return link->flags & http_GmLinkFlag
+            return link->flags & www_GmLinkFlag
                        ? tmHypertextLinkTextHover_ColorId
                        : link->flags & gopher_GmLinkFlag ? tmGopherLinkTextHover_ColorId
                                                          : tmLinkTextHover_ColorId;
@@ -1147,13 +1155,13 @@ enum iColorId linkColor_GmDocument(const iGmDocument *d, iGmLinkId linkId, enum 
             if (isBad) {
                 return tmBadLink_ColorId;
             }
-            return link->flags & http_GmLinkFlag
+            return link->flags & www_GmLinkFlag
                        ? tmHypertextLinkDomain_ColorId
                        : link->flags & gopher_GmLinkFlag ? tmGopherLinkDomain_ColorId
                                                          : tmLinkDomain_ColorId;
         }
         if (part == visited_GmLinkPart) {
-            return link->flags & http_GmLinkFlag
+            return link->flags & www_GmLinkFlag
                        ? tmHypertextLinkLastVisitDate_ColorId
                        : link->flags & gopher_GmLinkFlag ? tmGopherLinkLastVisitDate_ColorId
                                                          : tmLinkLastVisitDate_ColorId;
