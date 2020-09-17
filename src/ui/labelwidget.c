@@ -94,54 +94,7 @@ static iBool processEvent_LabelWidget_(iLabelWidget *d, const SDL_Event *ev) {
 }
 
 static void keyStr_LabelWidget_(const iLabelWidget *d, iString *str) {
-#if defined (iPlatformApple)
-    if (d->kmods & KMOD_CTRL) {
-        appendChar_String(str, 0x2303);
-    }
-    if (d->kmods & KMOD_ALT) {
-        appendChar_String(str, 0x2325);
-    }
-    if (d->kmods & KMOD_SHIFT) {
-        appendChar_String(str, 0x21e7);
-    }
-    if (d->kmods & KMOD_GUI) {
-        appendChar_String(str, 0x2318);
-    }
-#else
-    if (d->kmods & KMOD_CTRL) {
-        appendCStr_String(str, "Ctrl+");
-    }
-    if (d->kmods & KMOD_ALT) {
-        appendCStr_String(str, "Alt+");
-    }
-    if (d->kmods & KMOD_SHIFT) {
-        appendCStr_String(str, "Shift+");
-    }
-    if (d->kmods & KMOD_GUI) {
-        appendCStr_String(str, "Meta+");
-    }
-#endif
-    if (d->key == 0x20) {
-        appendCStr_String(str, "Space");
-    }
-    else if (d->key == SDLK_LEFT) {
-        appendChar_String(str, 0x2190);
-    }
-    else if (d->key == SDLK_RIGHT) {
-        appendChar_String(str, 0x2192);
-    }
-    else if (d->key < 128 && (isalnum(d->key) || ispunct(d->key))) {
-        appendChar_String(str, upper_Char(d->key));
-    }
-    else if (d->key == SDLK_BACKSPACE) {
-        appendChar_String(str, 0x232b); /* Erase to the Left */
-    }
-    else if (d->key == SDLK_DELETE) {
-        appendChar_String(str, 0x2326); /* Erase to the Right */
-    }
-    else {
-        appendCStr_String(str, SDL_GetKeyName(d->key));
-    }
+    toString_Sym(d->key, d->kmods, str);
 }
 
 static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int *frame1, int *frame2) {

@@ -49,6 +49,7 @@ iLocalDef iBool isResize_UserEvent(const SDL_Event *d) {
 #endif
 
 int         keyMods_Sym         (int kmods); /* shift, alt, control, or gui */
+void        toString_Sym        (int key, int kmods, iString *str);
 
 iRangei     intersect_Rangei    (iRangei a, iRangei b);
 iRangei     union_Rangei        (iRangei a, iRangei b);

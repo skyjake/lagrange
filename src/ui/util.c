@@ -52,6 +52,57 @@ const char *command_UserEvent(const SDL_Event *d) {
     return "";
 }
 
+void toString_Sym(int key, int kmods, iString *str) {
+#if defined (iPlatformApple)
+    if (kmods & KMOD_CTRL) {
+        appendChar_String(str, 0x2303);
+    }
+    if (kmods & KMOD_ALT) {
+        appendChar_String(str, 0x2325);
+    }
+    if (kmods & KMOD_SHIFT) {
+        appendChar_String(str, 0x21e7);
+    }
+    if (kmods & KMOD_GUI) {
+        appendChar_String(str, 0x2318);
+    }
+#else
+    if (kmods & KMOD_CTRL) {
+        appendCStr_String(str, "Ctrl+");
+    }
+    if (kmods & KMOD_ALT) {
+        appendCStr_String(str, "Alt+");
+    }
+    if (kmods & KMOD_SHIFT) {
+        appendCStr_String(str, "Shift+");
+    }
+    if (kmods & KMOD_GUI) {
+        appendCStr_String(str, "Meta+");
+    }
+#endif
+    if (key == 0x20) {
+        appendCStr_String(str, "Space");
+    }
+    else if (key == SDLK_LEFT) {
+        appendChar_String(str, 0x2190);
+    }
+    else if (key == SDLK_RIGHT) {
+        appendChar_String(str, 0x2192);
+    }
+    else if (key < 128 && (isalnum(key) || ispunct(key))) {
+        appendChar_String(str, upper_Char(key));
+    }
+    else if (key == SDLK_BACKSPACE) {
+        appendChar_String(str, 0x232b); /* Erase to the Left */
+    }
+    else if (key == SDLK_DELETE) {
+        appendChar_String(str, 0x2326); /* Erase to the Right */
+    }
+    else {
+        appendCStr_String(str, SDL_GetKeyName(key));
+    }
+}
+
 int keyMods_Sym(int kmods) {
     kmods &= (KMOD_SHIFT | KMOD_ALT | KMOD_CTRL | KMOD_GUI);
     /* Don't treat left/right modifiers differently. */

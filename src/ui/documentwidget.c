@@ -511,9 +511,15 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
             case certificateNotValid_GmStatusCode:
                 appendFormat_String(src, "\n\n%s", cstr_String(meta));
                 break;
-            case unsupportedMimeType_GmStatusCode:
-                appendFormat_String(src, "\n```\n%s\n```\n", cstr_String(meta));
+            case unsupportedMimeType_GmStatusCode: {
+                iString *key = collectNew_String();
+                toString_Sym(SDLK_s, KMOD_PRIMARY, key);
+                appendFormat_String(src, "\n```\n%s\n```\n"
+                                         "You can save the content to your Downloads folder, though. "
+                                         "Press %s or select Save Page from the menu.", cstr_String(meta),
+                                    cstr_String(key));
                 break;
+            }
             case slowDown_GmStatusCode:
                 appendFormat_String(src, "\n\nWait %s seconds before your next request.",
                                     cstr_String(meta));
@@ -1168,6 +1174,9 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         postCommand_App("navigate.back");
         return iFalse;
     }
+    else if (equal_Command(cmd, "media.updated") || equal_Command(cmd, "media.finished")) {
+        return handleMediaCommand_DocumentWidget_(d, cmd);
+    }
     else if (equal_Command(cmd, "document.stop") && document_App() == d) {
         if (d->request) {
             postCommandf_App("document.request.cancelled doc:%p url:%s", d, cstr_String(d->mod.url));
@@ -1176,8 +1185,8 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             return iTrue;
         }
     }
-    else if (equal_Command(cmd, "media.updated") || equal_Command(cmd, "media.finished")) {
-        return handleMediaCommand_DocumentWidget_(d, cmd);
+    else if (equal_Command(cmd, "document.save") && document_App() == d) {
+        return iTrue;
     }
     else if (equal_Command(cmd, "document.reload") && document_App() == d) {
         d->initNormScrollY = normScrollPos_DocumentWidget_(d);
