@@ -46,6 +46,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <SDL_timer.h>
 #include <SDL_render.h>
 #include <ctype.h>
+#include <errno.h>
 
 iDeclareClass(MediaRequest)
 
@@ -147,7 +148,8 @@ struct Impl_DocumentWidget {
     iGmRequest *   request;
     iAtomicInt     isRequestUpdated; /* request has new content, need to parse it */
     iObjectList *  media;
-    iGmDocument *  doc;
+    iBlock         sourceContent; /* original content as received, for saving */
+    iGmDocument *  doc;    
     int            certFlags;
     iDate          certExpiry;
     iString *      certSubject;
@@ -208,6 +210,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     d->showLinkNumbers  = iFalse;
     d->visBuf           = new_VisBuf();
     d->invalidRuns      = new_PtrSet();
+    init_Block(&d->sourceContent, 0);
     init_PtrArray(&d->visibleLinks);
     init_Click(&d->click, d, SDL_BUTTON_LEFT);
     addChild_Widget(w, iClob(d->scroll = new_ScrollWidget()));
@@ -225,6 +228,7 @@ void deinit_DocumentWidget(iDocumentWidget *d) {
     delete_PtrSet(d->invalidRuns);
     iRelease(d->media);
     iRelease(d->request);
+    deinit_Block(&d->sourceContent);
     iRelease(d->doc);
     deinit_PtrArray(&d->visibleLinks);
     delete_String(d->certSubject);
@@ -555,6 +559,7 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse
         iString str;
         invalidate_DocumentWidget_(d);
         updateTheme_DocumentWidget_(d);
+        set_Block(&d->sourceContent, &response->body);
         initBlock_String(&str, &response->body);
         if (category_GmStatusCode(statusCode) == categorySuccess_GmStatusCode) {
             /* Check the MIME type. */
@@ -583,9 +588,9 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse
                             imageTitle =
                                 baseName_Path(collect_String(newRange_String(parts.path))).start;
                         }
-                        format_String(
-                            &str, "=> %s %s\n", cstr_String(d->mod.url), imageTitle);
-                        setImage_GmDocument(d->doc, 1, mimeStr, &response->body, iFalse /* it's fixed */);
+                        format_String(&str, "=> %s %s\n", cstr_String(d->mod.url), imageTitle);
+                        setImage_GmDocument(
+                            d->doc, 1, mimeStr, &response->body, iFalse /* it's fixed */);
                     }
                     else {
                         clear_String(&str);
@@ -851,6 +856,7 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
             case categorySuccess_GmStatusCode:
                 d->scrollY = 0;
                 resetSmoothScroll_DocumentWidget_(d);
+                clear_Block(&d->sourceContent);
                 reset_GmDocument(d->doc); /* new content incoming */
                 updateDocument_DocumentWidget_(d, response_GmRequest(d->request));
                 break;
@@ -1186,6 +1192,53 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         }
     }
     else if (equal_Command(cmd, "document.save") && document_App() == d) {
+        if (d->request) {
+            makeMessage_Widget(uiTextCaution_ColorEscape "PAGE INCOMPLETE",
+                               "The page contents are still being downloaded.");
+        }
+        else if (!isEmpty_Block(&d->sourceContent)) {
+            /* Figure out a file name from the URL. */
+            /* TODO: Make this a utility function. */
+#if 0
+            iUrl parts;
+            init_Url(&parts, d->mod.url);
+            if (endsWith_Rangecc(parts.path, "/")) {
+                parts.path.end--;
+            }
+            iString *name = collectNew_String();
+            if (isEmpty_Range(&parts.path)) {
+                if (isEmpty_String(name)) {
+                    setCStr_String(name, "pagecontent");
+                }
+                else {
+                    setRange_String(name, parts.host);
+                }
+            }
+            else {
+
+                size_t slashPos = lastIndexOfCStr_Rangecc(parts.path, "/");
+                if (slashPos == size_Range(&parts.path) - 1) {
+                        slashPos = lastIndexOfCStr_Rangecc(parts.path - 1, "/");
+                    }
+                }
+            }
+            iAssert(!isEmpty_Range(&name));
+            /* Write the file. */ {
+                iFile *f =
+                    new_File(collect_String(concat_Path(downloadDir_App(), string_Rangecc(name))));
+                if (open_File(f, writeOnly_FileMode)) {
+                    write_File(f, &d->sourceContent);
+                    makeMessage_Widget(uiHeading_ColorEscape "PAGE SAVED",
+                                       cstr_String(path_File(f)));
+                }
+                else {
+                    makeMessage_Widget(uiTextCaution_ColorEscape "ERROR SAVING PAGE",
+                                       strerror(errno));
+                }
+                iRelease(f);
+            }
+#endif
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "document.reload") && document_App() == d) {
