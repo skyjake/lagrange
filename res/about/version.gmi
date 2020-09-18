@@ -7,13 +7,14 @@
 # Release notes
 
 ## 0.2
-* Added "Save Page" (${CTRL+}S) menu item for saving page contents.
-* Added Downloads folder to the Preferences.
-* Fixed behavior of images on single-image pages; cannot be hidden like inline images.
-* Recognize and handle "mailto:" links.
-* Fall back to software rendering automatically if accelerated graphics are not available.
+* Added Downloads folder to Preferences.
+* Added "Save Page" menu item (${CTRL+}S) for saving page contents.
+* Added a download progress indicator in the URL input field.
 * Added `--sw` option to force software rendering.
-* macOS: Touch bar buttons for Back, Forward, Find, New Tab, and sidebar modes.
+* macOS: Added touch bar buttons for Back, Forward, Find, New Tab, and sidebar modes.
+* Recognize and handle "mailto:" links.
+* Fixed behavior of images on single-image pages; cannot be hidden like inline images.
+* Fall back to software rendering automatically if accelerated graphics are not available.
 
 ## 0.1.1
 * Fixed a potential crash at startup.
