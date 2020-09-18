@@ -329,6 +329,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     static const char *bullet   = "\u2022";
     static const char *folder   = "\U0001f4c1";
     static const char *globe    = "\U0001f310";
+    static const char *quote    = "\u201c";
     const float midRunSkip = 0; /*0.120f;*/ /* extra space between wrapped text/quote lines */
     clear_Array(&d->layout);
     clearLinks_GmDocument_(d);
@@ -341,6 +342,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     iRangecc         contentLine   = iNullRange;
     iInt2            pos           = zero_I2();
     iBool            isFirstText   = isGemini;
+    iBool            addQuoteIcon  = iTrue;
     iBool            isPreformat   = iFalse;
     iRangecc         preAltText    = iNullRange;
     int              preFont       = preformatted_FontId;
@@ -471,9 +473,29 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             bulRun.visBounds.size = advance_Text(run.font, bullet);
             bulRun.visBounds.pos.x -= 4 * gap_Text - width_Rect(bulRun.visBounds) / 2;
             bulRun.bounds = zero_Rect(); /* just visual */
-            bulRun.text = range_CStr(bullet);
+            bulRun.text   = range_CStr(bullet);
             bulRun.flags |= decoration_GmRunFlag;
             pushBack_Array(&d->layout, &bulRun);
+        }
+        /* Quote icon. */
+        if (type == quote_GmLineType && addQuoteIcon) {
+            addQuoteIcon = iFalse;
+            iGmRun quoteRun = run;
+            quoteRun.font           = heading1_FontId;
+            quoteRun.text           = range_CStr(quote);
+            quoteRun.color          = tmQuoteIcon_ColorId;
+            iRect vis = visualBounds_Text(quoteRun.font, quoteRun.text);
+            quoteRun.visBounds.size = advance_Text(quoteRun.font, quote);
+            quoteRun.visBounds.pos =
+                add_I2(pos,
+                       init_I2(indents[text_GmLineType] * gap_Text,
+                               lineHeight_Text(quote_FontId) / 2 - bottom_Rect(vis)));
+            quoteRun.bounds = zero_Rect(); /* just visual */
+            quoteRun.flags |= decoration_GmRunFlag;
+            pushBack_Array(&d->layout, &quoteRun);
+        }
+        else if (type != quote_GmLineType) {
+            addQuoteIcon = iTrue;
         }
         /* Link icon. */
         if (type == link_GmLineType) {
@@ -875,6 +897,8 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
             setHsl_Color(i, color);
         }
     }
+    set_Color(tmQuoteIcon_ColorId,
+              mix_Color(get_Color(tmQuote_ColorId), get_Color(tmBackground_ColorId), 0.55f));
     /* Special exceptions. */
     if (seed) {
         if (equal_CStr(cstr_Block(seed), "gemini.circumlunar.space")) {
@@ -987,7 +1011,7 @@ void setImage_GmDocument(iGmDocument *d, iGmLinkId linkId, const iString *mime, 
             }
             else {
                 delete_GmImage(img);
-            }            
+            }
         }
     }
     doLayout_GmDocument_(d);
