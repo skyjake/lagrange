@@ -182,6 +182,7 @@ void setText_InputWidget(iInputWidget *d, const iString *text) {
         pushBack_Array(&d->text, &i.value);
     }
     iZap(d->mark);
+    d->cursor = iMin(d->cursor, size_Array(&d->text));
     refresh_Widget(as_Widget(d));
 }
 
