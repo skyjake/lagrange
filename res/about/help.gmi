@@ -12,6 +12,7 @@ Lagrange is a GUI client for browsing Geminispace. It offers modern conveniences
 
 Like Gemini, Lagrange has been designed with minimalism in mind. It depends on a small number of essential libraries. It is written in C and uses SDL for hardware-accelerated graphics. OpenSSL is used for secure communications.
 
+=> about:lagrange           About Lagrange
 => https://www.libsdl.org   SDL: Simple DirectMedia Layer
 => https://www.openssl.org  OpenSSL: Cryptography and SSL/TLS Toolkit
 
@@ -59,15 +60,17 @@ Lagrange's user interface is modeled after web browsers:
 * There is a sidebar for managing bookmarks and TLS identities, and viewing history and the page outline. The sidebar is hidden by default.
 * There is a search bar that appears at the bottom when searching text on the page.
 
+Tip: Try pressing ${CTRL+}4 now to see the page outline.
+
 ## URL entry and quick search
 
 The URL input field is in its typical location in the navigation bar. It can be accessed quickly by pressing ${CTRL+}L.
 
-As you enter text, Lagrange starts looking for matches in bookmarks, history, content of cached pages, and identities. Search terms are case insensitive, and if many words are entered, they are all required to appear in the specified order in any matched content.
+As you enter text, Lagrange starts looking for matches in bookmarks, history, content of cached pages, and identities. Search results appear below the URL input field in a popup. Press Tab or ↓ to switch input focus to the results.
 
-Press Tab or ↓ to switch input focus to the search results.
+Search within cached pages is limited to the (small) set of pages that Lagrange keeps in memory for back navigation. Search terms are case insensitive, and if many words are entered, they are all required to appear in the specified order in any matched content.
 
-Search within cached pages is limited to the (small) set of pages that Lagrange keeps in memory for back navigation. Note that while the navigation stack is saved to a file when Lagrange is shut down and restored on the next launch, it is also tab-specific — a tab's navigation cache is lost when the tab is closed.
+Note that the navigation stack is saved to a file when Lagrange is shut down and restored on the next launch. This means the next time you launch Lagrange, you can still search the contents of past pages. However, navigation stacks are tab-specific, so closing a tab will delete its history as well.
 
 ## Tabs
 
@@ -88,6 +91,8 @@ ${CTRL+}1 through ${CTRL+}4 switch between the sidebar tabs, or hide the sidebar
 
 ## Navigation
 
+When navigating to a new page, the old page is cached in memory. If you navigate back, the cached copy of the page is restored. Think of it as rewinding time — you return to a past time as if nothing had happened. The same applies to forward navigation; cached pages are loaded if available. This allows back and forward navigation to happen instantly, without any network requests.
+
 ### Link icons
 
 The type and destination of a link are indicated by the link's icon and color: ➤ links to the same domain, and 🌐 to a different domain. The colors are:
@@ -105,9 +110,23 @@ When navigating via keyboard, hold down ${ALT} to see link shortcut keys. Try do
 
 Each visible link on the page gets an alphanumeric shortcut. For example, the first link can be opened by pressing ${ALT+}1. The tenth link is ${ALT+}A. Additionally hold down ${CTRL} to open the link in a new tab.
 
+## Downloads
+
+Press ${CTRL+}S to save the contents of the current page to the Downloads folder. This works on all pages regardless of whether Lagrange can display the contents or not.
+
+The location where downloaded files are saved can be set in Preferences.
+
+The 🔃 button on the right side of the URL input field is the Reload/Stop button — it reloads the current page or stops an ongoing download. During large downloads, an additional progress indicator appears next to the Stop button.
+
 ## Bookmarks
 
-...
+Press ${CTRL+}D to bookmark the currently open URL.
+
+In addition to a title, bookmarks can have tags. Some tags have a special meaning, but you are free to enter whatever you want in the tags field. In quick search results, tags are given extra weight so they appear higher in results.
+
+### Special tags
+
+* Set a "homepage" tag on a bookmark to make it one of the pages that will be opened when pressing the 🏠 button.
 
 ## Identities (TLS client certificates)
 
@@ -134,7 +153,7 @@ Likewise, .gmi/.gemini file extensions are registered as file formats that Lagra
 
 ## Drop and drop
 
-You can drag and drop .gmi files on the Lagrange window to open them in the current tab. Dropping multiple files opens them in separate tabs. This is the recommended way to view local files, because there is no "Open File" menu item. You may also type "file://" URLs in the URL field.    
+You can drag and drop .gmi files on the Lagrange window to open them in the current tab. Dropping multiple files opens them in separate tabs. This is the recommended way to view local files, because there is no "Open File" menu item. You may also type "file://" URLs in the URL field.
 
 ## Runtime files
 
