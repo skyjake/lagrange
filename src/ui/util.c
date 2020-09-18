@@ -243,6 +243,12 @@ iWidget *addAction_Widget(iWidget *parent, int key, int kmods, const char *comma
 
 /*-----------------------------------------------------------------------------------------------*/
 
+static iBool isCommandIgnoredByMenus_(const char *cmd) {
+    return equal_Command(cmd, "media.updated") || equal_Command(cmd, "document.request.updated") ||
+           equal_Command(cmd, "window.resized") ||
+           (equal_Command(cmd, "mouse.clicked") && !arg_Command(cmd)); /* button released */
+}
+
 static iBool menuHandler_(iWidget *menu, const char *cmd) {
     if (isVisible_Widget(menu)) {
         if (equalWidget_Command(cmd, menu, "menu.opened")) {
@@ -258,8 +264,7 @@ static iBool menuHandler_(iWidget *menu, const char *cmd) {
             closeMenu_Widget(menu);
             return iTrue;
         }
-        if (!equal_Command(cmd, "window.resized") &&
-            !(equal_Command(cmd, "mouse.clicked") && !arg_Command(cmd)) /* ignore button release */) {
+        if (!isCommandIgnoredByMenus_(cmd)) {
             closeMenu_Widget(menu);
         }
     }
@@ -734,10 +739,9 @@ void updateValueInput_Widget(iWidget *d, const char *title, const char *prompt) 
 
 static iBool messageHandler_(iWidget *msg, const char *cmd) {
     /* Almost any command dismisses the sheet. */
-//    if (equal_Command(cmd, "menu.closed")) {
-//        return iFalse;
-//    }
-    destroy_Widget(msg);
+    if (!(equal_Command(cmd, "media.updated") || equal_Command(cmd, "document.request.updated"))) {
+        destroy_Widget(msg);
+    }
     return iFalse;
 }
 
@@ -808,7 +812,7 @@ iWidget *makePreferences_Widget(void) {
     addChild_Widget(dlg, iClob(page));
     setFlags_Widget(page, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
     iWidget *headings = addChildFlags_Widget(
-        page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);    
+        page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
     iWidget *values = addChildFlags_Widget(
         page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
     addChild_Widget(headings, iClob(makeHeading_Widget("Downloads folder:")));
@@ -817,7 +821,7 @@ iWidget *makePreferences_Widget(void) {
     addChild_Widget(headings, iClob(makeHeading_Widget("Use system theme:")));
     addChild_Widget(values, iClob(makeToggle_Widget("prefs.ostheme")));
 #endif
-    addChild_Widget(headings, iClob(makeHeading_Widget("Theme:")));    
+    addChild_Widget(headings, iClob(makeHeading_Widget("Theme:")));
     iWidget *themes = new_Widget();
     /* Themes. */ {
         setId_Widget(addChild_Widget(themes, iClob(new_LabelWidget("Pure Black", 0, 0, "theme.set arg:0"))), "prefs.theme.0");

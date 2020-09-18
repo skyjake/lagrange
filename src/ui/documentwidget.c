@@ -146,7 +146,7 @@ struct Impl_DocumentWidget {
     iObjectList *  media;
     iString        sourceMime;
     iBlock         sourceContent; /* original content as received, for saving */
-    iGmDocument *  doc;    
+    iGmDocument *  doc;
     int            certFlags;
     iDate          certExpiry;
     iString *      certSubject;
@@ -782,7 +782,9 @@ void setRedirectCount_DocumentWidget(iDocumentWidget *d, int count) {
 }
 
 iBool isRequestOngoing_DocumentWidget(const iDocumentWidget *d) {
-    return d->state == fetching_RequestState || d->state == receivedPartialResponse_RequestState;
+    /*return d->state == fetching_RequestState ||
+            d->state == receivedPartialResponse_RequestState;*/
+    return d->request != NULL;
 }
 
 static void scroll_DocumentWidget_(iDocumentWidget *d, int offset) {
@@ -1072,12 +1074,12 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     else if (equal_Command(cmd, "tabs.changed")) {
         d->showLinkNumbers = iFalse;
-        updateFetchProgress_DocumentWidget_(d);
         if (cmp_String(id_Widget(w), suffixPtr_Command(cmd, "id")) == 0) {
             /* Set palette for our document. */
             updateTheme_DocumentWidget_(d);
             updateTrust_DocumentWidget_(d, NULL);
             updateSize_DocumentWidget(d);
+            updateFetchProgress_DocumentWidget_(d);
         }
         updateWindowTitle_DocumentWidget_(d);
         allocVisBuffer_DocumentWidget_(d);
@@ -1160,7 +1162,9 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     else if (equalWidget_Command(cmd, w, "document.request.updated") &&
              pointerLabel_Command(cmd, "request") == d->request) {
         set_Block(&d->sourceContent, body_GmRequest(d->request));
-        updateFetchProgress_DocumentWidget_(d);
+        if (document_App() == d) {
+            updateFetchProgress_DocumentWidget_(d);
+        }
         checkResponse_DocumentWidget_(d);
         set_Atomic(&d->isRequestUpdated, iFalse); /* ready to be notified again */
         return iFalse;
@@ -1189,18 +1193,24 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         cancel_GmRequest(d->request);
         return iFalse;
     }
+    /*
     else if (equal_Command(cmd, "document.request.cancelled") && document_Command(cmd) == d) {
         postCommand_App("navigate.back");
         return iFalse;
     }
+    */
     else if (equal_Command(cmd, "media.updated") || equal_Command(cmd, "media.finished")) {
         return handleMediaCommand_DocumentWidget_(d, cmd);
     }
     else if (equal_Command(cmd, "document.stop") && document_App() == d) {
         if (d->request) {
-            postCommandf_App("document.request.cancelled doc:%p url:%s", d, cstr_String(d->mod.url));
+            postCommandf_App(
+                "document.request.cancelled doc:%p url:%s", d, cstr_String(d->mod.url));
             iReleasePtr(&d->request);
-            d->state = ready_RequestState;
+            if (d->state != ready_RequestState) {
+                d->state = ready_RequestState;
+                postCommand_App("navigate.back");
+            }
             updateFetchProgress_DocumentWidget_(d);
             return iTrue;
         }
@@ -1554,8 +1564,10 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                           'c',
                           KMOD_PRIMARY,
                           "copy" },
+                        { "---", 0, 0, NULL },
+                        { "Save to Downloads", SDLK_s, KMOD_PRIMARY, "document.save" },
                     },
-                    6);
+                    8);
                 d->menu = makeMenu_Widget(w, data_Array(&items), size_Array(&items));
                 deinit_Array(&items);
             }
