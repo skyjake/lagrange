@@ -1484,7 +1484,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             case '`': {
                 iBlock *seed = new_Block(64);
                 for (size_t i = 0; i < 64; ++i) {
-                    setByte_Block(seed, i, iRandom(0, 255));
+                    setByte_Block(seed, i, iRandom(0, 256));
                 }
                 setThemeSeed_GmDocument(d->doc, seed);
                 delete_Block(seed);
@@ -1549,25 +1549,48 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 }
                 iArray items;
                 init_Array(&items, sizeof(iMenuItem));
-                pushBackN_Array(
-                    &items,
-                    (iMenuItem[]){
-                        { "Go Back", navigateBack_KeyShortcut, "navigate.back" },
-                        { "Go Forward", navigateForward_KeyShortcut, "navigate.forward" },
-                        { "Reload Page", reload_KeyShortcut, "navigate.reload" },
-                        { "---", 0, 0, NULL },
-                        { d->contextLink ? "Copy Link URL" : "Copy Page URL",
-                          0,
-                          0,
-                          "document.copylink" },
-                        { isEmpty_Range(&d->selectMark) ? "Copy Full Source" : "Copy Selected",
-                          'c',
-                          KMOD_PRIMARY,
-                          "copy" },
-                        { "---", 0, 0, NULL },
-                        { "Save to Downloads", SDLK_s, KMOD_PRIMARY, "document.save" },
-                    },
-                    8);
+                if (d->contextLink) {
+                    pushBackN_Array(
+                        &items,
+                        (iMenuItem[]){ { "Open Link in New Tab",
+                              0,
+                              0,
+                              format_CStr("!open newtab:1 url:%s",
+                                          cstr_String(linkUrl_GmDocument(
+                                              d->doc, d->contextLink->linkId))) },
+                            { "---", 0, 0, NULL },
+                            { "Copy Link",
+                              0,
+                              0,
+                              "document.copylink" }},
+                        3);
+                }
+                else {
+                    if (!isEmpty_Range(&d->selectMark)) {
+                        pushBackN_Array(
+                            &items,
+                            (iMenuItem[]){ { "Copy", 0, 0, "copy" }, { "---", 0, 0, NULL } },
+                            2);
+                    }
+                    pushBackN_Array(
+                        &items,
+                        (iMenuItem[]){
+                            { "Go Back", navigateBack_KeyShortcut, "navigate.back" },
+                            { "Go Forward", navigateForward_KeyShortcut, "navigate.forward" },
+                            { "Reload Page", reload_KeyShortcut, "navigate.reload" },
+                            { "---", 0, 0, NULL },
+                            { "Copy Page URL", 0, 0, "document.copylink" },
+                            { "---", 0, 0, NULL } },
+                        6);
+                    if (isEmpty_Range(&d->selectMark)) {
+                        pushBackN_Array(
+                            &items,
+                            (iMenuItem[]){
+                                { "Copy Page Source", 'c', KMOD_PRIMARY, "copy" },
+                                { "Save to Downloads", SDLK_s, KMOD_PRIMARY, "document.save" } },
+                            2);
+                    }
+                }
                 d->menu = makeMenu_Widget(w, data_Array(&items), size_Array(&items));
                 deinit_Array(&items);
             }
