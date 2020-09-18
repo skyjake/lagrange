@@ -96,7 +96,7 @@ static const iMenuItem navMenuItems[] = {
     { "New Tab", 't', KMOD_PRIMARY, "tabs.new" },
     { "Open Location...", SDLK_l, KMOD_PRIMARY, "focus.set id:url" },
     { "---", 0, 0, NULL },
-    { "Save Page", SDLK_s, KMOD_PRIMARY, "document.save" },
+    { "Save to Downloads", SDLK_s, KMOD_PRIMARY, "document.save" },
     { "---", 0, 0, NULL },
     { "Copy Source Text", SDLK_c, KMOD_PRIMARY, "copy" },
     { "Bookmark This Page", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
@@ -120,7 +120,7 @@ static const iMenuItem fileMenuItems[] = {
     { "New Tab", SDLK_t, KMOD_PRIMARY, "tabs.new" },
     { "Open Location...", SDLK_l, KMOD_PRIMARY, "focus.set id:url" },
     { "---", 0, 0, NULL },
-    { "Save Page", SDLK_s, KMOD_PRIMARY, "document.save" },
+    { "Save to Downloads", SDLK_s, KMOD_PRIMARY, "document.save" },
 };
 
 static const iMenuItem editMenuItems[] = {

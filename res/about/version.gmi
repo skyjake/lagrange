@@ -1,14 +1,14 @@
 ```
-           __   __             __   ___ 
-|     /\  / _` |__)  /\  |\ | / _` |__  
-|___ /~~\ \__> |  \ /~~\ | \| \__> |___ 
+           __   __             __   ___
+|     /\  / _` |__)  /\  |\ | / _` |__
+|___ /~~\ \__> |  \ /~~\ | \| \__> |___
 
-```                                        
+```
 # Release notes
 
 ## 0.2
 * Added Downloads folder to Preferences.
-* Added "Save Page" menu item (${CTRL+}S) for saving page contents.
+* Added "Save to Downloads" menu item (${CTRL+}S) for saving page contents.
 * Added a download progress indicator in the URL input field.
 * Added a progress indicator for inline image fetching.
 * Added `--sw` option to force software rendering.
