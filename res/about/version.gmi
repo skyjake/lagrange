@@ -13,7 +13,9 @@
 * Added a download progress indicator in the URL input field.
 * Added a progress indicator for inline image fetching.
 * Added `--sw` option to force software rendering.
-* macOS: Added touch bar buttons for Back, Forward, Find, New Tab, and sidebar modes.
+* Added macOS touch bar buttons for Back, Forward, Find, New Tab, and sidebar modes.
+* Home button opens a random bookmark with the "homepage" tag.
+* Improved context menu when right-clicking on links or the page.
 * Recognize and handle "mailto:" links.
 * Fixed behavior of images on single-image pages; cannot be hidden like inline images.
 * Fall back to software rendering automatically if accelerated graphics are not available.
