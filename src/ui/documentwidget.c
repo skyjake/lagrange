@@ -56,15 +56,11 @@ struct Impl_MediaRequest {
     iDocumentWidget *doc;
     iGmLinkId        linkId;
     iGmRequest *     req;
-    iAtomicInt       isUpdated;
 };
 
 static void updated_MediaRequest_(iAnyObject *obj) {
     iMediaRequest *d = obj;
-    int wasUpdated = exchange_Atomic(&d->isUpdated, iTrue);
-    if (!wasUpdated) {
-        postCommandf_App("media.updated link:%u request:%p", d->linkId, d);
-    }
+    postCommandf_App("media.updated link:%u request:%p", d->linkId, d);
 }
 
 static void finished_MediaRequest_(iAnyObject *obj) {
@@ -79,7 +75,6 @@ void init_MediaRequest(iMediaRequest *d, iDocumentWidget *doc, iGmLinkId linkId,
     setUrl_GmRequest(d->req, url);
     iConnect(GmRequest, d->req, updated, d, updated_MediaRequest_);
     iConnect(GmRequest, d->req, finished, d, finished_MediaRequest_);
-    set_Atomic(&d->isUpdated, iFalse);
     submit_GmRequest(d->req);
 }
 
@@ -1001,7 +996,9 @@ static iBool handleMediaCommand_DocumentWidget_(iDocumentWidget *d, const char *
         return iFalse; /* not our request */
     }
     if (equal_Command(cmd, "media.updated")) {
-        /* TODO: Show a progress indicator */
+        /* Update the link's progress. */
+        invalidateLink_DocumentWidget_(d, req->linkId);
+        refresh_Widget(d);
         return iTrue;
     }
     else if (equal_Command(cmd, "media.finished")) {
@@ -1786,8 +1783,8 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
         const int flags = linkFlags_GmDocument(doc, run->linkId);
         const iRect linkRect = moved_Rect(run->visBounds, origin);
         iMediaRequest *mr = NULL;
-        /* Show inline content. */
-        if (flags & content_GmLinkFlag) {
+        /* Show metadata about inline content. */
+        if (flags & content_GmLinkFlag && run->flags & endOfLine_GmRunFlag) {
             fg = linkColor_GmDocument(doc, run->linkId, textHover_GmLinkPart);
             iAssert(!isEmpty_Rect(run->bounds));
             iGmImageInfo info;
@@ -1819,8 +1816,8 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                 draw_Text(metaFont,
                           topRight_Rect(linkRect),
                           tmInlineContentMetadata_ColorId,
-                          " \u2014 Fetching\u2026");
-                /* TODO: Show amount downloaded so far. */
+                          " \u2014 Fetching\u2026 (%.1f MB)",
+                          (float) size_Block(body_GmRequest(mr->req)) / 1.0e6f);
             }
         }
         else if (isHover) {

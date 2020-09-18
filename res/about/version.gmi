@@ -10,6 +10,7 @@
 * Added Downloads folder to Preferences.
 * Added "Save Page" menu item (${CTRL+}S) for saving page contents.
 * Added a download progress indicator in the URL input field.
+* Added a progress indicator for inline image fetching.
 * Added `--sw` option to force software rendering.
 * macOS: Added touch bar buttons for Back, Forward, Find, New Tab, and sidebar modes.
 * Recognize and handle "mailto:" links.
