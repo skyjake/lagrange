@@ -547,7 +547,15 @@ iBool forceLineWrap_App(void) {
 }
 
 iBool forceSoftwareRender_App(void) {
-    return app_.forceSoftwareRender;
+    if (app_.forceSoftwareRender) {
+        return iTrue;
+    }
+#if defined (LAGRANGE_ENABLE_X11_SWRENDER)
+    if (getenv("DISPLAY")) {
+        return iTrue;
+    }
+#endif
+    return iFalse;
 }
 
 enum iColorTheme colorTheme_App(void) {

@@ -506,6 +506,7 @@ iBool create_Window_(iWindow *d, iRect rect, uint32_t flags) {
 void init_Window(iWindow *d, iRect rect) {
     theWindow_ = d;
     iZap(d->cursors);
+    d->initialPos = rect.pos;
     d->pendingCursor = NULL;
     d->isDrawFrozen = iTrue;
     uint32_t flags = 0;
@@ -597,6 +598,16 @@ SDL_Renderer *renderer_Window(const iWindow *d) {
 
 static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
     switch (ev->event) {
+#if defined (LAGRANGE_ENABLE_WINDOWPOS_FIX)
+        case SDL_WINDOWEVENT_EXPOSED:
+            if (d->initialPos.x >= 0) {
+                int bx, by;
+                SDL_GetWindowBordersSize(d->win, &by, &bx, NULL, NULL);
+                SDL_SetWindowPosition(d->win, d->initialPos.x + bx, d->initialPos.y + by);
+                d->initialPos = init1_I2(-1);
+            }
+            return iFalse;
+#endif
         case SDL_WINDOWEVENT_MOVED:
             /* No need to do anything. */
             return iTrue;

@@ -27,8 +27,10 @@ project (Lagrange
 set (COPYRIGHT_YEAR 2020)
 
 # Build configuration.
+option (ENABLE_X11_SWRENDER "Use software rendering under X11" OFF)
 option (ENABLE_KERNING "Enable kerning in font renderer (slower)" ON)
 option (ENABLE_RESOURCE_EMBED "Embed resources inside the executable" OFF)
+option (ENABLE_WINDOWPOS_FIX "Set position after showing window (workaround for SDL bug)" OFF)
 
 include (BuildType.cmake)
 include (Embed.cmake)
@@ -170,8 +172,14 @@ target_compile_options (app PUBLIC
     ${SDL2_CFLAGS}
 )
 target_compile_definitions (app PUBLIC LAGRANGE_APP_VERSION="${PROJECT_VERSION}")
+if (ENABLE_X11_SWRENDER)
+    target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_X11_SWRENDER=1)
+endif ()
 if (ENABLE_KERNING)
     target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_KERNING=1)
+endif ()
+if (ENABLE_WINDOWPOS_FIX)
+    target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_WINDOWPOS_FIX=1)
 endif ()
 target_link_libraries (app PUBLIC the_Foundation::the_Foundation)
 target_link_libraries (app PUBLIC ${SDL2_LDFLAGS})
