@@ -1516,8 +1516,8 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         }
         smoothScroll_DocumentWidget_(
             d,
-            -3 * ev->wheel.y * lineHeight_Text(default_FontId),
-            gap_UI * smoothSpeed_DocumentWidget_ +
+            -3 * ev->wheel.y * lineHeight_Text(paragraph_FontId),
+            gap_Text * smoothSpeed_DocumentWidget_ +
                 (isSmoothScrolling_DocumentWidget_(d) ? d->smoothSpeed : 0));
 #endif
         d->noHoverWhileScrolling = iTrue;
