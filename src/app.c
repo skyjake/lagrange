@@ -912,11 +912,30 @@ iBool handleCommand_App(const char *cmd) {
         setText_InputWidget(findChild_Widget(dlg, "prefs.proxy.gopher"),
                             schemeProxy_App(range_CStr("gopher")));
         setCommandHandler_Widget(dlg, handlePrefsCommands_);
-        postCommand_App("focus.set id:prefs.downloads");
     }
     else if (equal_Command(cmd, "navigate.home")) {
-        /* TODO: Look for bookmarks tagged homepage, or use the URL set in Preferences. */
-        postCommand_App("open url:about:lagrange");
+        /* Look for bookmarks tagged "homepage". */
+        iRegExp *pattern = iClob(new_RegExp("\\bhomepage\\b", caseInsensitive_RegExpOption));
+        const iPtrArray *homepages =
+            list_Bookmarks(d->bookmarks, NULL, filterTagsRegExp_Bookmarks, pattern);
+        if (isEmpty_PtrArray(homepages)) {
+            postCommand_App("open url:about:lagrange");
+        }
+        else {
+            iStringSet *urls = iClob(new_StringSet());
+            iConstForEach(PtrArray, i, homepages) {
+                const iBookmark *bm = i.ptr;
+                /* Try to switch to a different bookmark. */
+                if (cmpStringCase_String(url_DocumentWidget(document_App()), &bm->url)) {
+                    insert_StringSet(urls, &bm->url);
+                }
+            }
+            if (!isEmpty_StringSet(urls)) {
+                postCommandf_App(
+                    "open url:%s",
+                    cstr_String(constAt_StringSet(urls, iRandoms(0, size_StringSet(urls)))));
+            }
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "zoom.set")) {
