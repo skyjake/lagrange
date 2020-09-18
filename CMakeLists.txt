@@ -1,3 +1,21 @@
+# Lagrange - A Beautiful Gemini Client
+# Copyright: 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
+#
+# Notes:
+# - Required dependencies: SDL 2, OpenSSL 1.1.1, libpcre,
+#   GNU libunistring, zlib.
+# - the_Foundation is built as a static library from 'lib/the_Foundation',
+#   if it exists in that location. The Git repository has it as a submodule.
+# - Windows builds require MSYS2. In theory, Clang could be set up on
+#   Windows for compiling everything, but the_Foundation still lacks
+#   native Win32 implementations for the Socket and Process classes.
+# - Windows builds should use the SDL 2 library precompiled for native
+#   Windows (MSVC variant) instead the version from MSYS2 (get it from
+#   https://libsdl.org/). To make configuration easier, consider writing
+#   for your personal use a pkg-config sdl2.pc file that uses the Windows
+#   version of the library.
+# - `cat` is relied upon for merging all the resource files together.
+
 cmake_minimum_required (VERSION 3.9)
 set (CMAKE_OSX_DEPLOYMENT_TARGET 10.14)
 
