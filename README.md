@@ -48,5 +48,16 @@ When using OpenSSL 1.1.1 from Homebrew, you must add its pkgconfig path to your 
 
 Also, SDL's trackpad scrolling behavior on macOS is not optimal for regular GUI apps because it emulates a physical mouse wheel. This may change in a future release of SDL, but at least in 2.0.12 a [small patch](https://git.skyjake.fi/skyjake/lagrange/raw/branch/dev/sdl2-macos-mouse-scrolling-patch.diff) is required to allow momentum scrolling to come through as single-pixel mouse wheel events.
 
+### Raspberry Pi notes
+
+You should use a version of SDL that is compiled to take advantage of the Broadcom VideoCore OpenGL ES hardware. This provides the best performance when running Lagrange in a console.
+
+When running under X11, software rendering is the best choice and in that case the SDL from Raspbian etc. is sufficient.
+
+The following build options are recommended on Raspberry Pi:
+* `ENABLE_KERNING=NO`: faster text rendering without noticeable loss of quality
+* `ENABLE_WINDOWPOS_FIX=YES`: workaround for window position restore issues (SDL bug)
+* `ENABLE_X11_SWRENDER=YES`: use software rendering under X11
+
 [rel]: https://git.skyjake.fi/skyjake/lagrange/releases
 [tf]:  https://git.skyjake.fi/skyjake/the_Foundation
