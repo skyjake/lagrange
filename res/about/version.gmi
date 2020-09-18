@@ -7,6 +7,7 @@
 # Release notes
 
 ## 0.2
+* Added an icon for quote paragraphs.
 * Added Downloads folder to Preferences.
 * Added "Save to Downloads" menu item (${CTRL+}S) for saving page contents.
 * Added a download progress indicator in the URL input field.
@@ -16,6 +17,7 @@
 * Recognize and handle "mailto:" links.
 * Fixed behavior of images on single-image pages; cannot be hidden like inline images.
 * Fall back to software rendering automatically if accelerated graphics are not available.
+* Minor bug fixes.
 
 ## 0.1.1
 * Fixed a potential crash at startup.
