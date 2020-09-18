@@ -189,7 +189,11 @@ if (MSYS)
     if (NOT ENABLE_RESOURCE_EMBED)
         install (FILES ${EMB_BIN} DESTINATION .)
     endif ()
-    install (PROGRAMS ${SDL2_LIBDIR}/SDL2.dll DESTINATION .)
+    install (PROGRAMS
+        ${SDL2_LIBDIR}/SDL2.dll
+        res/urlopen.bat
+        DESTINATION .
+    )
     if (INSTALL_THE_FOUNDATION)
         install (PROGRAMS $<TARGET_FILE:the_Foundation::the_Foundation> DESTINATION .)
     endif ()

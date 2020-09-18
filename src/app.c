@@ -1017,7 +1017,9 @@ void openInDefaultBrowser_App(const iString *url) {
                          iClob(newStringsCStr_StringList("/usr/bin/x-www-browser", cstr_String(url), NULL))
 #elif defined (iPlatformMsys)
         iClob(newStringsCStr_StringList(
-            "c:\\Windows\\System32\\cmd.exe", "/q", "/c", "start", cstr_String(url), NULL))
+            concatPath_CStr(cstr_String(execPath_App()), "../urlopen.bat"),
+            cstr_String(url),
+            NULL))
         /* TODO: Should consult environment variables to find the
            right cmd.exe. Also, the prompt window is shown momentarily... */
 #endif
