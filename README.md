@@ -55,6 +55,7 @@ You should use a version of SDL that is compiled to take advantage of the Broadc
 When running under X11, software rendering is the best choice and in that case the SDL from Raspbian etc. is sufficient.
 
 The following build options are recommended on Raspberry Pi:
+
 * `ENABLE_KERNING=NO`: faster text rendering without noticeable loss of quality
 * `ENABLE_WINDOWPOS_FIX=YES`: workaround for window position restore issues (SDL bug)
 * `ENABLE_X11_SWRENDER=YES`: use software rendering under X11
