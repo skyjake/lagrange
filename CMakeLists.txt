@@ -189,6 +189,7 @@ if (APPLE)
     else ()
         target_link_libraries (app PUBLIC "-framework AppKit")
     endif ()
+    target_compile_options (app PUBLIC -mmacosx-version-min=10.14)
     target_link_options (app PUBLIC -mmacosx-version-min=10.14)
     set_target_properties (app PROPERTIES
         OUTPUT_NAME "Lagrange"
