@@ -636,6 +636,11 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
         case SDL_WINDOWEVENT: {
             return handleWindowEvent_Window_(d, &ev->window);
         }
+        case SDL_RENDER_TARGETS_RESET:
+        case SDL_RENDER_DEVICE_RESET: {
+            resetFonts_Text();
+            break;
+        }
         default: {
             SDL_Event event = *ev;
             if (event.type == SDL_USEREVENT && isCommand_UserEvent(ev, "window.unfreeze")) {
