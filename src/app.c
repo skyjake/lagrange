@@ -1047,8 +1047,7 @@ void openInDefaultBrowser_App(const iString *url) {
             concatPath_CStr(cstr_String(execPath_App()), "../urlopen.bat"),
             cstr_String(url),
             NULL))
-        /* TODO: Should consult environment variables to find the
-           right cmd.exe. Also, the prompt window is shown momentarily... */
+        /* TODO: The prompt window is shown momentarily... */
 #endif
     );
     start_Process(proc);
