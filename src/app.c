@@ -544,9 +544,9 @@ int zoom_App(void) {
 
 iBool forceLineWrap_App(void) {
     return app_.forceWrap;
-iBool forceSoftwareRender_App(void) {
 }
 
+iBool forceSoftwareRender_App(void) {
     if (app_.forceSoftwareRender) {
         return iTrue;
     }
