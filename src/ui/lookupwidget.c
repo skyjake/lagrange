@@ -265,7 +265,7 @@ static void searchIdentities_LookupJob_(iLookupJob *d) {
 
 static iThreadResult worker_LookupWidget_(iThread *thread) {
     iLookupWidget *d = userData_Thread(thread);
-    printf("[LookupWidget] worker is running\n"); fflush(stdout);
+//    printf("[LookupWidget] worker is running\n"); fflush(stdout);
     lock_Mutex(d->mtx);
     for (;;) {
         wait_Condition(&d->jobAvailable, d->mtx);
@@ -312,13 +312,13 @@ static iThreadResult worker_LookupWidget_(iThread *thread) {
             /* Previous results haven't been taken yet. */
             delete_LookupJob(d->finishedJob);
         }
-        printf("[LookupWidget] worker has %zu results\n", size_PtrArray(&job->results));
+//        printf("[LookupWidget] worker has %zu results\n", size_PtrArray(&job->results));
         fflush(stdout);
         d->finishedJob = job;
         postCommand_Widget(as_Widget(d), "lookup.ready");
     }
     unlock_Mutex(d->mtx);
-    printf("[LookupWidget] worker has quit\n"); fflush(stdout);
+//    printf("[LookupWidget] worker has quit\n"); fflush(stdout);
     return 0;
 }
 

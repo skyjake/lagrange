@@ -64,11 +64,13 @@ struct Impl_GmImage {
     size_t       numBytes;
     iString      mime;
     iGmLinkId    linkId;
+    iBool        isPermanent;
     SDL_Texture *texture;
 };
 
 void init_GmImage(iGmImage *d, const iBlock *data) {
     init_String(&d->mime);
+    d->isPermanent = iFalse;
     d->numBytes = size_Block(data);
     uint8_t *imgData = stbi_load_from_memory(
         constData_Block(data), size_Block(data), &d->size.x, &d->size.y, NULL, 4);
@@ -224,6 +226,12 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
             else if (equalCase_Rangecc(parts.scheme, "data")) {
                 link->flags |= data_GmLinkFlag;
             }
+            else if (equalCase_Rangecc(parts.scheme, "about")) {
+                link->flags |= about_GmLinkFlag;
+            }
+            else if (equalCase_Rangecc(parts.scheme, "mailto")) {
+                link->flags |= mailto_GmLinkFlag;
+            }
             /* Check the file name extension, if present. */
             if (!isEmpty_Range(&parts.path)) {
                 iString *path = newRange_String(parts.path);
@@ -253,7 +261,7 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
         trim_Rangecc(&desc);
         if (!isEmpty_Range(&desc)) {
             line = desc; /* Just show the description. */
-            link->flags |= userFriendly_GmLinkFlag;
+            link->flags |= humanReadable_GmLinkFlag;
         }
         else {
             line = capturedRange_RegExpMatch(&m, 1); /* Show the URL. */
@@ -316,10 +324,12 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     static const float bottomMargin[max_GmLineType] = {
         0.0f, 0.5f, 1.0f, 0.5f, 0.5f, 0.5f, 0.5f, 1.0f
     };
-    static const char *arrow  = "\u27a4"; // "\u2192";
-    static const char *bullet = "\u2022";
-    static const char *folder = "\U0001f4c1";
-    static const char *globe  = "\U0001f310";
+    static const char *arrow    = "\u27a4";
+    static const char *envelope = "\U0001f4e7";
+    static const char *bullet   = "\u2022";
+    static const char *folder   = "\U0001f4c1";
+    static const char *globe    = "\U0001f310";
+    static const char *quote    = "\u201c";
     const float midRunSkip = 0; /*0.120f;*/ /* extra space between wrapped text/quote lines */
     clear_Array(&d->layout);
     clearLinks_GmDocument_(d);
@@ -332,12 +342,13 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     iRangecc         contentLine   = iNullRange;
     iInt2            pos           = zero_I2();
     iBool            isFirstText   = isGemini;
+    iBool            addQuoteIcon  = iTrue;
     iBool            isPreformat   = iFalse;
     iRangecc         preAltText    = iNullRange;
     int              preFont       = preformatted_FontId;
     iBool            enableIndents = iFalse;
     iBool            addSiteBanner = iTrue;
-    enum iGmLineType prevType;
+    enum iGmLineType prevType      = text_GmLineType;
     if (d->format == plainText_GmDocumentFormat) {
         isPreformat = iTrue;
         isFirstText = iFalse;
@@ -351,9 +362,10 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         run.imageId = 0;
         enum iGmLineType type;
         int indent = 0;
+        /* Detect the type of the line. */
         if (!isPreformat) {
             type = lineType_GmDocument_(d, line);
-            if (line.start == content.start) {
+            if (contentLine.start == content.start) {
                 prevType = type;
             }
             indent = indents[type];
@@ -389,6 +401,9 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         else {
             /* Preformatted line. */
             type = preformatted_GmLineType;
+            if (contentLine.start == content.start) {
+                prevType = type;
+            }
             if (d->format == gemini_GmDocumentFormat &&
                 startsWithSc_Rangecc(line, "```", &iCaseSensitive)) {
                 isPreformat = iFalse;
@@ -458,9 +473,29 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             bulRun.visBounds.size = advance_Text(run.font, bullet);
             bulRun.visBounds.pos.x -= 4 * gap_Text - width_Rect(bulRun.visBounds) / 2;
             bulRun.bounds = zero_Rect(); /* just visual */
-            bulRun.text = range_CStr(bullet);
+            bulRun.text   = range_CStr(bullet);
             bulRun.flags |= decoration_GmRunFlag;
             pushBack_Array(&d->layout, &bulRun);
+        }
+        /* Quote icon. */
+        if (type == quote_GmLineType && addQuoteIcon) {
+            addQuoteIcon = iFalse;
+            iGmRun quoteRun = run;
+            quoteRun.font           = heading1_FontId;
+            quoteRun.text           = range_CStr(quote);
+            quoteRun.color          = tmQuoteIcon_ColorId;
+            iRect vis = visualBounds_Text(quoteRun.font, quoteRun.text);
+            quoteRun.visBounds.size = advance_Text(quoteRun.font, quote);
+            quoteRun.visBounds.pos =
+                add_I2(pos,
+                       init_I2(indents[text_GmLineType] * gap_Text,
+                               lineHeight_Text(quote_FontId) / 2 - bottom_Rect(vis)));
+            quoteRun.bounds = zero_Rect(); /* just visual */
+            quoteRun.flags |= decoration_GmRunFlag;
+            pushBack_Array(&d->layout, &quoteRun);
+        }
+        else if (type != quote_GmLineType) {
+            addQuoteIcon = iTrue;
         }
         /* Link icon. */
         if (type == link_GmLineType) {
@@ -471,7 +506,9 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             const iGmLink *link = constAt_PtrArray(&d->links, run.linkId - 1);
             icon.text           = range_CStr(link->flags & file_GmLinkFlag
                                        ? folder
-                                       : link->flags & remote_GmLinkFlag ? globe : arrow);
+                                       : link->flags & mailto_GmLinkFlag
+                                             ? envelope
+                                             : link->flags & remote_GmLinkFlag ? globe : arrow);
             if (link->flags & remote_GmLinkFlag) {
                 icon.visBounds.pos.x -= gap_Text / 2;
             }
@@ -536,8 +573,14 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         if (type == link_GmLineType) {
             const size_t imgIndex = findLinkImage_GmDocument_(d, run.linkId);
             if (imgIndex != iInvalidPos) {
-                ((iGmLink *) at_PtrArray(&d->links, run.linkId - 1))->flags |= content_GmLinkFlag;
                 const iGmImage *img = constAt_PtrArray(&d->images, imgIndex);
+                /* Mark the link as having content. */ {
+                    iGmLink *link = at_PtrArray(&d->links, run.linkId - 1);
+                    link->flags |= content_GmLinkFlag;
+                    if (img->isPermanent) {
+                        link->flags |= permanent_GmLinkFlag;
+                    }
+                }
                 const int margin = 0.5f * lineHeight_Text(paragraph_FontId);
                 pos.y += margin;
                 run.bounds.pos = pos;
@@ -854,6 +897,8 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
             setHsl_Color(i, color);
         }
     }
+    set_Color(tmQuoteIcon_ColorId,
+              mix_Color(get_Color(tmQuote_ColorId), get_Color(tmBackground_ColorId), 0.55f));
     /* Special exceptions. */
     if (seed) {
         if (equal_CStr(cstr_Block(seed), "gemini.circumlunar.space")) {
@@ -946,7 +991,8 @@ void setSource_GmDocument(iGmDocument *d, const iString *source, int width, int 
     setWidth_GmDocument(d, width, forceBreakWidth); /* re-do layout */
 }
 
-void setImage_GmDocument(iGmDocument *d, iGmLinkId linkId, const iString *mime, const iBlock *data) {
+void setImage_GmDocument(iGmDocument *d, iGmLinkId linkId, const iString *mime, const iBlock *data,
+                         iBool allowHide) {
     if (!mime || !data) {
         iGmImage *img;
         if (take_PtrArray(&d->images, findLinkImage_GmDocument_(d, linkId), (void **) &img)) {
@@ -955,9 +1001,10 @@ void setImage_GmDocument(iGmDocument *d, iGmLinkId linkId, const iString *mime, 
     }
     else {
         /* TODO: check if we know this MIME type */
-        /* Load the image. */ {
+        /* Upload the image. */ {
             iGmImage *img = new_GmImage(data);
             img->linkId = linkId; /* TODO: use a hash? */
+            img->isPermanent = !allowHide;
             set_String(&img->mime, mime);
             if (img->texture) {
                 pushBack_PtrArray(&d->images, img);
@@ -1098,6 +1145,7 @@ uint16_t linkImage_GmDocument(const iGmDocument *d, iGmLinkId linkId) {
 
 enum iColorId linkColor_GmDocument(const iGmDocument *d, iGmLinkId linkId, enum iGmLinkPart part) {
     const iGmLink *link = link_GmDocument_(d, linkId);
+    const int www_GmLinkFlag = http_GmLinkFlag | mailto_GmLinkFlag;
     if (link) {
         const iBool isBad = (link->flags & supportedProtocol_GmLinkFlag) == 0;
         if (part == icon_GmLinkPart) {
@@ -1105,24 +1153,24 @@ enum iColorId linkColor_GmDocument(const iGmDocument *d, iGmLinkId linkId, enum 
                 return tmBadLink_ColorId;
             }
             if (link->flags & visited_GmLinkFlag) {
-                return link->flags & http_GmLinkFlag
+                return link->flags & www_GmLinkFlag
                            ? tmHypertextLinkIconVisited_ColorId
                            : link->flags & gopher_GmLinkFlag ? tmGopherLinkIconVisited_ColorId
                                                              : tmLinkIconVisited_ColorId;
             }
-            return link->flags & http_GmLinkFlag
+            return link->flags & www_GmLinkFlag
                        ? tmHypertextLinkIcon_ColorId
                        : link->flags & gopher_GmLinkFlag ? tmGopherLinkIcon_ColorId
                                                          : tmLinkIcon_ColorId;
         }
         if (part == text_GmLinkPart) {
-            return link->flags & http_GmLinkFlag
+            return link->flags & www_GmLinkFlag
                        ? tmHypertextLinkText_ColorId
                        : link->flags & gopher_GmLinkFlag ? tmGopherLinkText_ColorId
                                                          : tmLinkText_ColorId;
         }
         if (part == textHover_GmLinkPart) {
-            return link->flags & http_GmLinkFlag
+            return link->flags & www_GmLinkFlag
                        ? tmHypertextLinkTextHover_ColorId
                        : link->flags & gopher_GmLinkFlag ? tmGopherLinkTextHover_ColorId
                                                          : tmLinkTextHover_ColorId;
@@ -1131,13 +1179,13 @@ enum iColorId linkColor_GmDocument(const iGmDocument *d, iGmLinkId linkId, enum 
             if (isBad) {
                 return tmBadLink_ColorId;
             }
-            return link->flags & http_GmLinkFlag
+            return link->flags & www_GmLinkFlag
                        ? tmHypertextLinkDomain_ColorId
                        : link->flags & gopher_GmLinkFlag ? tmGopherLinkDomain_ColorId
                                                          : tmLinkDomain_ColorId;
         }
         if (part == visited_GmLinkPart) {
-            return link->flags & http_GmLinkFlag
+            return link->flags & www_GmLinkFlag
                        ? tmHypertextLinkLastVisitDate_ColorId
                        : link->flags & gopher_GmLinkFlag ? tmGopherLinkLastVisitDate_ColorId
                                                          : tmLinkLastVisitDate_ColorId;

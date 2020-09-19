@@ -73,8 +73,9 @@ static const char *dataDir_App_ = "~/AppData/Roaming/fi.skyjake.Lagrange";
 static const char *dataDir_App_ = "~/.config/lagrange";
 #endif
 #define EMB_BIN2 "../resources.binary" /* fallback from build/executable dir */
-static const char *prefsFileName_App_   = "prefs.cfg";
-static const char *stateFileName_App_   = "state.binary";
+static const char *prefsFileName_App_ = "prefs.cfg";
+static const char *stateFileName_App_ = "state.binary";
+static const char *downloadDir_App_   = "~/Downloads";
 
 struct Impl_App {
     iCommandLine args;
@@ -98,10 +99,12 @@ struct Impl_App {
     float        uiScale;
     int          zoomPercent;
     iBool        forceWrap;
+    iBool        forceSoftwareRender;
     enum iColorTheme theme;
     iBool        useSystemTheme;
     iString      gopherProxy;
     iString      httpProxy;
+    iString      downloadDir;
 };
 
 static iApp app_;
@@ -160,6 +163,7 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "ostheme arg:%d\n", d->useSystemTheme);
     appendFormat_String(str, "proxy.gopher address:%s\n", cstr_String(&d->gopherProxy));
     appendFormat_String(str, "proxy.http address:%s\n", cstr_String(&d->httpProxy));
+    appendFormat_String(str, "downloads path:%s\n", cstr_String(&d->downloadDir));
     return str;
 }
 
@@ -304,12 +308,14 @@ static void init_App_(iApp *d, int argc, char **argv) {
     d->pendingRefresh    = iFalse;
     d->zoomPercent       = 100;
     d->forceWrap         = iFalse;
+    d->forceSoftwareRender = checkArgument_CommandLine(&d->args, "sw") != NULL;
     d->certs             = new_GmCerts(dataDir_App_);
     d->visited           = new_Visited();
     d->bookmarks         = new_Bookmarks();
     d->tabEnum           = 0; /* generates unique IDs for tab pages */
     init_String(&d->gopherProxy);
     init_String(&d->httpProxy);
+    initCStr_String(&d->downloadDir, downloadDir_App_);
     setThemePalette_Color(d->theme);
 #if defined (iPlatformApple)
     setupApplication_MacOS();
@@ -384,6 +390,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
 static void deinit_App(iApp *d) {
     saveState_App_(d);
     savePrefs_App_(d);
+    deinit_String(&d->downloadDir);
     deinit_String(&d->httpProxy);
     deinit_String(&d->gopherProxy);
     save_Bookmarks(d->bookmarks, dataDir_App_);
@@ -404,6 +411,10 @@ const iString *execPath_App(void) {
 
 const iString *dataDir_App(void) {
     return collect_String(cleanedCStr_Path(dataDir_App_));
+}
+
+const iString *downloadDir_App(void) {
+    return collect_String(cleaned_Path(&app_.downloadDir));
 }
 
 const iString *debugInfo_App(void) {
@@ -531,8 +542,20 @@ int zoom_App(void) {
     return app_.zoomPercent;
 }
 
-iBool isLineWrapForced_App(void) {
+iBool forceLineWrap_App(void) {
     return app_.forceWrap;
+iBool forceSoftwareRender_App(void) {
+}
+
+    if (app_.forceSoftwareRender) {
+        return iTrue;
+    }
+#if defined (LAGRANGE_ENABLE_X11_SWRENDER)
+    if (getenv("DISPLAY")) {
+        return iTrue;
+    }
+#endif
+    return iFalse;
 }
 
 enum iColorTheme colorTheme_App(void) {
@@ -644,6 +667,8 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
     if (equal_Command(cmd, "prefs.dismiss") || equal_Command(cmd, "preferences")) {
         setUiScale_Window(get_Window(),
                           toFloat_String(text_InputWidget(findChild_Widget(d, "prefs.uiscale"))));
+        postCommandf_App("downloads path:%s",
+                         cstr_String(text_InputWidget(findChild_Widget(d, "prefs.downloads"))));
         postCommandf_App("window.retain arg:%d",
                          isSelected_Widget(findChild_Widget(d, "prefs.retainwindow")));
         postCommandf_App("ostheme arg:%d",
@@ -777,12 +802,17 @@ iBool handleCommand_App(const char *cmd) {
         d->retainWindowSize = arg_Command(cmd);
         return iTrue;
     }
+    else if (equal_Command(cmd, "downloads")) {
+        setCStr_String(&d->downloadDir, suffixPtr_Command(cmd, "path"));
+        return iTrue;
+    }
     else if (equal_Command(cmd, "open")) {
         const iString *url = collectNewCStr_String(suffixPtr_Command(cmd, "url"));
         iUrl parts;
         init_Url(&parts, url);
-        if (isEmpty_String(&d->httpProxy) &&
-            (equalCase_Rangecc(parts.scheme, "http") || equalCase_Rangecc(parts.scheme, "https"))) {
+        if (equalCase_Rangecc(parts.scheme, "mailto") ||
+            (isEmpty_String(&d->httpProxy) && (equalCase_Rangecc(parts.scheme, "http") ||
+                                               equalCase_Rangecc(parts.scheme, "https")))) {
             openInDefaultBrowser_App(url);
             return iTrue;
         }
@@ -872,6 +902,7 @@ iBool handleCommand_App(const char *cmd) {
     else if (equal_Command(cmd, "preferences")) {
         iWidget *dlg = makePreferences_Widget();
         updatePrefsThemeButtons_(dlg);
+        setText_InputWidget(findChild_Widget(dlg, "prefs.downloads"), &d->downloadDir);
         setToggle_Widget(findChild_Widget(dlg, "prefs.ostheme"), d->useSystemTheme);
         setToggle_Widget(findChild_Widget(dlg, "prefs.retainwindow"), d->retainWindowSize);
         setText_InputWidget(findChild_Widget(dlg, "prefs.uiscale"),
@@ -883,8 +914,28 @@ iBool handleCommand_App(const char *cmd) {
         setCommandHandler_Widget(dlg, handlePrefsCommands_);
     }
     else if (equal_Command(cmd, "navigate.home")) {
-        /* TODO: Look for bookmarks tagged homepage, or use the URL set in Preferences. */
+        /* Look for bookmarks tagged "homepage". */
+        iRegExp *pattern = iClob(new_RegExp("\\bhomepage\\b", caseInsensitive_RegExpOption));
+        const iPtrArray *homepages =
+            list_Bookmarks(d->bookmarks, NULL, filterTagsRegExp_Bookmarks, pattern);
+        if (isEmpty_PtrArray(homepages)) {
         postCommand_App("open url:about:lagrange");
+        }
+        else {
+            iStringSet *urls = iClob(new_StringSet());
+            iConstForEach(PtrArray, i, homepages) {
+                const iBookmark *bm = i.ptr;
+                /* Try to switch to a different bookmark. */
+                if (cmpStringCase_String(url_DocumentWidget(document_App()), &bm->url)) {
+                    insert_StringSet(urls, &bm->url);
+                }
+            }
+            if (!isEmpty_StringSet(urls)) {
+                postCommandf_App(
+                    "open url:%s",
+                    cstr_String(constAt_StringSet(urls, iRandoms(0, size_StringSet(urls)))));
+            }
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "zoom.set")) {
@@ -993,9 +1044,10 @@ void openInDefaultBrowser_App(const iString *url) {
                          iClob(newStringsCStr_StringList("/usr/bin/x-www-browser", cstr_String(url), NULL))
 #elif defined (iPlatformMsys)
         iClob(newStringsCStr_StringList(
-            "c:\\Windows\\System32\\cmd.exe", "/q", "/c", "start", cstr_String(url), NULL))
-        /* TODO: Should consult environment variables to find the
-           right cmd.exe. Also, the prompt window is shown momentarily... */
+            concatPath_CStr(cstr_String(execPath_App()), "../urlopen.bat"),
+            cstr_String(url),
+            NULL))
+        /* TODO: The prompt window is shown momentarily... */
 #endif
     );
     start_Process(proc);

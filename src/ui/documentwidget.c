@@ -36,6 +36,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "../gmutil.h"
 
 #include <the_Foundation/file.h>
+#include <the_Foundation/fileinfo.h>
 #include <the_Foundation/objectlist.h>
 #include <the_Foundation/path.h>
 #include <the_Foundation/ptrarray.h>
@@ -46,6 +47,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <SDL_timer.h>
 #include <SDL_render.h>
 #include <ctype.h>
+#include <errno.h>
 
 iDeclareClass(MediaRequest)
 
@@ -54,16 +56,12 @@ struct Impl_MediaRequest {
     iDocumentWidget *doc;
     iGmLinkId        linkId;
     iGmRequest *     req;
-    iAtomicInt       isUpdated;
 };
 
 static void updated_MediaRequest_(iAnyObject *obj) {
     iMediaRequest *d = obj;
-    int wasUpdated = exchange_Atomic(&d->isUpdated, iTrue);
-    if (!wasUpdated) {
         postCommandf_App("media.updated link:%u request:%p", d->linkId, d);
     }
-}
 
 static void finished_MediaRequest_(iAnyObject *obj) {
     iMediaRequest *d = obj;
@@ -77,7 +75,6 @@ void init_MediaRequest(iMediaRequest *d, iDocumentWidget *doc, iGmLinkId linkId,
     setUrl_GmRequest(d->req, url);
     iConnect(GmRequest, d->req, updated, d, updated_MediaRequest_);
     iConnect(GmRequest, d->req, finished, d, finished_MediaRequest_);
-    set_Atomic(&d->isUpdated, iFalse);
     submit_GmRequest(d->req);
 }
 
@@ -105,8 +102,8 @@ struct Impl_Model {
 };
 
 void init_Model(iModel *d) {
-    d->history         = new_History();
-    d->url             = new_String();
+    d->history = new_History();
+    d->url     = new_String();
 }
 
 void deinit_Model(iModel *d) {
@@ -147,6 +144,8 @@ struct Impl_DocumentWidget {
     iGmRequest *   request;
     iAtomicInt     isRequestUpdated; /* request has new content, need to parse it */
     iObjectList *  media;
+    iString        sourceMime;
+    iBlock         sourceContent; /* original content as received, for saving */
     iGmDocument *  doc;
     int            certFlags;
     iDate          certExpiry;
@@ -208,6 +207,8 @@ void init_DocumentWidget(iDocumentWidget *d) {
     d->showLinkNumbers  = iFalse;
     d->visBuf           = new_VisBuf();
     d->invalidRuns      = new_PtrSet();
+    init_String(&d->sourceMime);
+    init_Block(&d->sourceContent, 0);
     init_PtrArray(&d->visibleLinks);
     init_Click(&d->click, d, SDL_BUTTON_LEFT);
     addChild_Widget(w, iClob(d->scroll = new_ScrollWidget()));
@@ -225,6 +226,8 @@ void deinit_DocumentWidget(iDocumentWidget *d) {
     delete_PtrSet(d->invalidRuns);
     iRelease(d->media);
     iRelease(d->request);
+    deinit_Block(&d->sourceContent);
+    deinit_String(&d->sourceMime);
     iRelease(d->doc);
     deinit_PtrArray(&d->visibleLinks);
     delete_String(d->certSubject);
@@ -269,7 +272,7 @@ static iRect documentBounds_DocumentWidget_(const iDocumentWidget *d) {
 }
 
 static int forceBreakWidth_DocumentWidget_(const iDocumentWidget *d) {
-    if (isLineWrapForced_App()) {
+    if (forceLineWrap_App()) {
         const iRect bounds    = bounds_Widget(constAs_Widget(d));
         const iRect docBounds = documentBounds_DocumentWidget_(d);
         return right_Rect(bounds) - left_Rect(docBounds) - gap_UI * d->pageMargin;
@@ -363,7 +366,11 @@ static void updateHover_DocumentWidget_(iDocumentWidget *d, iInt2 mouse) {
     if (isHover_Widget(w) && !contains_Widget(constAs_Widget(d->scroll), mouse)) {
         setCursor_Window(get_Window(),
                          d->hoverLink ? SDL_SYSTEM_CURSOR_HAND : SDL_SYSTEM_CURSOR_IBEAM);
+        if (d->hoverLink &&
+            linkFlags_GmDocument(d->doc, d->hoverLink->linkId) & permanent_GmLinkFlag) {
+            setCursor_Window(get_Window(), SDL_SYSTEM_CURSOR_ARROW); /* not dismissable */
     }
+}
 }
 
 static void updateVisible_DocumentWidget_(iDocumentWidget *d) {
@@ -507,9 +514,17 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
             case certificateNotValid_GmStatusCode:
                 appendFormat_String(src, "\n\n%s", cstr_String(meta));
                 break;
-            case unsupportedMimeType_GmStatusCode:
-                appendFormat_String(src, "\n```\n%s\n```\n", cstr_String(meta));
+            case unsupportedMimeType_GmStatusCode: {
+                iString *key = collectNew_String();
+                toString_Sym(SDLK_s, KMOD_PRIMARY, key);
+                appendFormat_String(src,
+                                    "\n```\n%s\n```\n"
+                                    "You can save it as a file to your Downloads folder, though. "
+                                    "Press %s or select Save Page from the menu.",
+                                    cstr_String(meta),
+                                    cstr_String(key));
                 break;
+            }
             case slowDown_GmStatusCode:
                 appendFormat_String(src, "\n\nWait %s seconds before your next request.",
                                     cstr_String(meta));
@@ -534,6 +549,20 @@ static void updateTheme_DocumentWidget_(iDocumentWidget *d) {
     }
 }
 
+static void updateFetchProgress_DocumentWidget_(iDocumentWidget *d) {
+    iLabelWidget *prog   = findWidget_App("document.progress");
+    const size_t  dlSize = d->request ? size_Block(body_GmRequest(d->request)) : 0;
+    setFlags_Widget(as_Widget(prog), hidden_WidgetFlag, dlSize < 250000);
+    if (isVisible_Widget(prog)) {
+        updateText_LabelWidget(prog,
+                               collectNewFormat_String("%s%.3f MB",
+                                                       isFinished_GmRequest(d->request)
+                                                           ? uiHeading_ColorEscape
+                                                           : uiTextCaution_ColorEscape,
+                                                       dlSize / 1.0e6f));
+    }
+}
+
 static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse *response) {
     if (d->state == ready_RequestState) {
         return;
@@ -545,12 +574,15 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse
         iString str;
         invalidate_DocumentWidget_(d);
         updateTheme_DocumentWidget_(d);
+        clear_String(&d->sourceMime);
+//        set_Block(&d->sourceContent, &response->body);
         initBlock_String(&str, &response->body);
         if (category_GmStatusCode(statusCode) == categorySuccess_GmStatusCode) {
             /* Check the MIME type. */
             iRangecc charset = range_CStr("utf-8");
             enum iGmDocumentFormat docFormat = undefined_GmDocumentFormat;
             const iString *mimeStr = collect_String(lower_String(&response->meta)); /* for convenience */
+            set_String(&d->sourceMime, mimeStr);
             iRangecc mime = range_String(mimeStr);
             iRangecc seg = iNullRange;
             while (nextSplit_Rangecc(mime, ";", &seg)) {
@@ -558,12 +590,15 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse
                 trim_Rangecc(&param);
                 if (equal_Rangecc(param, "text/plain")) {
                     docFormat = plainText_GmDocumentFormat;
+                    setRange_String(&d->sourceMime, param);
                 }
                 else if (equal_Rangecc(param, "text/gemini")) {
                     docFormat = gemini_GmDocumentFormat;
+                    setRange_String(&d->sourceMime, param);
                 }
                 else if (startsWith_Rangecc(param, "image/")) {
                     docFormat = gemini_GmDocumentFormat;
+                    setRange_String(&d->sourceMime, param);
                     if (!d->request || isFinished_GmRequest(d->request)) {
                         /* Make a simple document with an image. */
                         const char *imageTitle = "Image";
@@ -573,9 +608,9 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse
                             imageTitle =
                                 baseName_Path(collect_String(newRange_String(parts.path))).start;
                         }
-                        format_String(
-                            &str, "=> %s %s\n", cstr_String(d->mod.url), imageTitle);
-                        setImage_GmDocument(d->doc, 1, mimeStr, &response->body);
+                        format_String(&str, "=> %s %s\n", cstr_String(d->mod.url), imageTitle);
+                        setImage_GmDocument(
+                            d->doc, 1, mimeStr, &response->body, iFalse /* it's fixed */);
                     }
                     else {
                         clear_String(&str);
@@ -747,7 +782,9 @@ void setRedirectCount_DocumentWidget(iDocumentWidget *d, int count) {
 }
 
 iBool isRequestOngoing_DocumentWidget(const iDocumentWidget *d) {
-    return d->state == fetching_RequestState || d->state == receivedPartialResponse_RequestState;
+    /*return d->state == fetching_RequestState ||
+            d->state == receivedPartialResponse_RequestState;*/
+    return d->request != NULL;
 }
 
 static void scroll_DocumentWidget_(iDocumentWidget *d, int offset) {
@@ -961,7 +998,9 @@ static iBool handleMediaCommand_DocumentWidget_(iDocumentWidget *d, const char *
         return iFalse; /* not our request */
     }
     if (equal_Command(cmd, "media.updated")) {
-        /* TODO: Show a progress indicator */
+        /* Update the link's progress. */
+        invalidateLink_DocumentWidget_(d, req->linkId);
+        refresh_Widget(d);
         return iTrue;
     }
     else if (equal_Command(cmd, "media.finished")) {
@@ -974,7 +1013,7 @@ static iBool handleMediaCommand_DocumentWidget_(iDocumentWidget *d, const char *
 //                   cstr_String(meta_GmRequest(req->req)));
             if (startsWith_String(meta_GmRequest(req->req), "image/")) {
                 setImage_GmDocument(d->doc, req->linkId, meta_GmRequest(req->req),
-                                    body_GmRequest(req->req));
+                                    body_GmRequest(req->req), iTrue);
                 updateVisible_DocumentWidget_(d);
                 invalidate_DocumentWidget_(d);
                 refresh_Widget(as_Widget(d));
@@ -999,20 +1038,6 @@ static void allocVisBuffer_DocumentWidget_(const iDocumentWidget *d) {
     }
     else {
         dealloc_VisBuf(d->visBuf);
-#if 0
-        iZap(d->visBuffer->validRange);
-        d->visBuffer->size = size;
-        iAssert(size.x > 0);
-        iForIndices(i, d->visBuffer->texture) {
-            d->visBuffer->texture[i] =
-                SDL_CreateTexture(renderer_Window(get_Window()),
-                                  SDL_PIXELFORMAT_RGBA8888,
-                                  SDL_TEXTUREACCESS_STATIC | SDL_TEXTUREACCESS_TARGET,
-                                  size.x,
-                                  size.y);
-            SDL_SetTextureBlendMode(d->visBuffer->texture[i], SDL_BLENDMODE_NONE);
-        }
-#endif
     }
 }
 
@@ -1054,6 +1079,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             updateTheme_DocumentWidget_(d);
             updateTrust_DocumentWidget_(d, NULL);
             updateSize_DocumentWidget(d);
+            updateFetchProgress_DocumentWidget_(d);
         }
         updateWindowTitle_DocumentWidget_(d);
         allocVisBuffer_DocumentWidget_(d);
@@ -1135,17 +1161,25 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     else if (equalWidget_Command(cmd, w, "document.request.updated") &&
              pointerLabel_Command(cmd, "request") == d->request) {
+        set_Block(&d->sourceContent, body_GmRequest(d->request));
+        if (document_App() == d) {
+            updateFetchProgress_DocumentWidget_(d);
+        }
         checkResponse_DocumentWidget_(d);
+        set_Atomic(&d->isRequestUpdated, iFalse); /* ready to be notified again */
         return iFalse;
     }
     else if (equalWidget_Command(cmd, w, "document.request.finished") &&
              pointerLabel_Command(cmd, "request") == d->request) {
+        set_Block(&d->sourceContent, body_GmRequest(d->request));
+        updateFetchProgress_DocumentWidget_(d);
         checkResponse_DocumentWidget_(d);
         resetSmoothScroll_DocumentWidget_(d);
         d->scrollY = d->initNormScrollY * size_GmDocument(d->doc).y;
         d->state = ready_RequestState;
         /* The response may be cached. */ {
-            if (!equal_Rangecc(urlScheme_String(d->mod.url), "about")) {
+            if (!equal_Rangecc(urlScheme_String(d->mod.url), "about") &&
+                startsWithCase_String(meta_GmRequest(d->request), "text/")) {
                 setCachedResponse_History(d->mod.history, response_GmRequest(d->request));
             }
         }
@@ -1159,20 +1193,102 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         cancel_GmRequest(d->request);
         return iFalse;
     }
+    /*
     else if (equal_Command(cmd, "document.request.cancelled") && document_Command(cmd) == d) {
         postCommand_App("navigate.back");
         return iFalse;
     }
+    */
+    else if (equal_Command(cmd, "media.updated") || equal_Command(cmd, "media.finished")) {
+        return handleMediaCommand_DocumentWidget_(d, cmd);
+    }
     else if (equal_Command(cmd, "document.stop") && document_App() == d) {
         if (d->request) {
-            postCommandf_App("document.request.cancelled doc:%p url:%s", d, cstr_String(d->mod.url));
+            postCommandf_App(
+                "document.request.cancelled doc:%p url:%s", d, cstr_String(d->mod.url));
             iReleasePtr(&d->request);
+            if (d->state != ready_RequestState) {
             d->state = ready_RequestState;
+                postCommand_App("navigate.back");
+            }
+            updateFetchProgress_DocumentWidget_(d);
             return iTrue;
         }
     }
-    else if (equal_Command(cmd, "media.updated") || equal_Command(cmd, "media.finished")) {
-        return handleMediaCommand_DocumentWidget_(d, cmd);
+    else if (equal_Command(cmd, "document.save") && document_App() == d) {
+        if (d->request) {
+            makeMessage_Widget(uiTextCaution_ColorEscape "PAGE INCOMPLETE",
+                               "The page contents are still being downloaded.");
+        }
+        else if (!isEmpty_Block(&d->sourceContent)) {
+            /* Figure out a file name from the URL. */
+            /* TODO: Make this a utility function. */
+            iUrl parts;
+            init_Url(&parts, d->mod.url);
+            while (startsWith_Rangecc(parts.path, "/")) {
+                parts.path.start++;
+            }
+            while (endsWith_Rangecc(parts.path, "/")) {
+                parts.path.end--;
+            }
+            iString *name = collectNewCStr_String("pagecontent");
+            if (isEmpty_Range(&parts.path)) {
+                if (!isEmpty_Range(&parts.host)) {
+                    setRange_String(name, parts.host);
+                    replace_Block(&name->chars, '.', '_');
+                }
+            }
+            else {
+                iRangecc fn = { parts.path.start + lastIndexOfCStr_Rangecc(parts.path, "/") + 1,
+                                parts.path.end };
+                if (!isEmpty_Range(&fn)) {
+                    setRange_String(name, fn);
+                }
+            }
+            iString *savePath = concat_Path(downloadDir_App(), name);
+            if (lastIndexOfCStr_String(savePath, ".") == iInvalidPos) {
+                /* No extension specified in URL. */
+                if (startsWith_String(&d->sourceMime, "text/gemini")) {
+                    appendCStr_String(savePath, ".gmi");
+                }
+                else if (startsWith_String(&d->sourceMime, "text/")) {
+                    appendCStr_String(savePath, ".txt");
+                }
+                else if (startsWith_String(&d->sourceMime, "image/")) {
+                    appendCStr_String(savePath, cstr_String(&d->sourceMime) + 6);
+            if (fileExists_FileInfo(savePath)) {
+        }
+    }
+                /* Make it unique. */
+                iDate now;
+                initCurrent_Date(&now);
+                size_t insPos = lastIndexOfCStr_String(savePath, ".");
+                if (insPos == iInvalidPos) {
+                    insPos = size_String(savePath);
+                }
+                const iString *date = collect_String(format_Date(&now, "_%Y-%m-%d_%H%M%S"));
+                insertData_Block(&savePath->chars, insPos, cstr_String(date), size_String(date));
+            }
+            /* Write the file. */ {
+                iFile *f = new_File(savePath);
+                if (open_File(f, writeOnly_FileMode)) {
+                    write_File(f, &d->sourceContent);
+                    const size_t size   = size_Block(&d->sourceContent);
+                    const iBool  isMega = size >= 1000000;
+                    makeMessage_Widget(uiHeading_ColorEscape "PAGE SAVED",
+                                       format_CStr("%s\nSize: %.3f %s", cstr_String(path_File(f)),
+                                                   isMega ? size / 1.0e6f : (size / 1.0e3f),
+                                                   isMega ? "MB" : "KB"));
+                }
+                else {
+                    makeMessage_Widget(uiTextCaution_ColorEscape "ERROR SAVING PAGE",
+                                       strerror(errno));
+                }
+                iRelease(f);
+            }
+            delete_String(savePath);
+        }
+        return iTrue;
     }
     else if (equal_Command(cmd, "document.reload") && document_App() == d) {
         d->initNormScrollY = normScrollPos_DocumentWidget_(d);
@@ -1368,7 +1484,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             case '`': {
                 iBlock *seed = new_Block(64);
                 for (size_t i = 0; i < 64; ++i) {
-                    setByte_Block(seed, i, iRandom(0, 255));
+                    setByte_Block(seed, i, iRandom(0, 256));
                 }
                 setThemeSeed_GmDocument(d->doc, seed);
                 delete_Block(seed);
@@ -1400,8 +1516,8 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         }
         smoothScroll_DocumentWidget_(
             d,
-            -3 * ev->wheel.y * lineHeight_Text(default_FontId),
-            gap_UI * smoothSpeed_DocumentWidget_ +
+            -3 * ev->wheel.y * lineHeight_Text(paragraph_FontId),
+            gap_Text * smoothSpeed_DocumentWidget_ +
                 (isSmoothScrolling_DocumentWidget_(d) ? d->smoothSpeed : 0));
 #endif
         d->noHoverWhileScrolling = iTrue;
@@ -1433,23 +1549,48 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 }
                 iArray items;
                 init_Array(&items, sizeof(iMenuItem));
+                if (d->contextLink) {
+                    pushBackN_Array(
+                        &items,
+                        (iMenuItem[]){ { "Open Link in New Tab",
+                              0,
+                              0,
+                              format_CStr("!open newtab:1 url:%s",
+                                          cstr_String(linkUrl_GmDocument(
+                                              d->doc, d->contextLink->linkId))) },
+                            { "---", 0, 0, NULL },
+                            { "Copy Link",
+                              0,
+                              0,
+                              "document.copylink" }},
+                        3);
+                }
+                else {
+                    if (!isEmpty_Range(&d->selectMark)) {
                 pushBackN_Array(
                     &items,
+                            (iMenuItem[]){ { "Copy", 0, 0, "copy" }, { "---", 0, 0, NULL } },
+                            2);
+                    }
+                    pushBackN_Array(
+                        &items,
                     (iMenuItem[]){
                         { "Go Back", navigateBack_KeyShortcut, "navigate.back" },
                         { "Go Forward", navigateForward_KeyShortcut, "navigate.forward" },
                         { "Reload Page", reload_KeyShortcut, "navigate.reload" },
                         { "---", 0, 0, NULL },
-                        { d->contextLink ? "Copy Link URL" : "Copy Page URL",
-                          0,
-                          0,
-                          "document.copylink" },
-                        { isEmpty_Range(&d->selectMark) ? "Copy Full Source" : "Copy Selected",
-                          'c',
-                          KMOD_PRIMARY,
-                          "copy" },
-                    },
+                            { "Copy Page URL", 0, 0, "document.copylink" },
+                            { "---", 0, 0, NULL } },
                     6);
+                    if (isEmpty_Range(&d->selectMark)) {
+                        pushBackN_Array(
+                            &items,
+                            (iMenuItem[]){
+                                { "Copy Page Source", 'c', KMOD_PRIMARY, "copy" },
+                                { "Save to Downloads", SDLK_s, KMOD_PRIMARY, "document.save" } },
+                            2);
+                    }
+                }
                 d->menu = makeMenu_Widget(w, data_Array(&items), size_Array(&items));
                 deinit_Array(&items);
             }
@@ -1489,10 +1630,16 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                     iAssert(linkId);
                     /* Media links are opened inline by default. */
                     if (isMediaLink_GmDocument(d->doc, linkId)) {
+                        const int linkFlags = linkFlags_GmDocument(d->doc, linkId);
+                        if (linkFlags & content_GmLinkFlag && linkFlags & permanent_GmLinkFlag) {
+                            /* We have the image and it cannot be dismissed, so nothing
+                               further to do. */
+                            return iTrue;
+                        }
                         if (!requestMedia_DocumentWidget_(d, linkId)) {
-                            if (linkFlags_GmDocument(d->doc, linkId) & content_GmLinkFlag) {
+                            if (linkFlags & content_GmLinkFlag) {
                                 /* Dismiss shown content on click. */
-                                setImage_GmDocument(d->doc, linkId, NULL, NULL);
+                                setImage_GmDocument(d->doc, linkId, NULL, NULL, iTrue);
                                 d->hoverLink = NULL;
                                 scroll_DocumentWidget_(d, 0);
                                 updateVisible_DocumentWidget_(d);
@@ -1505,7 +1652,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                 iMediaRequest *req = findMediaRequest_DocumentWidget_(d, linkId);
                                 if (req) {
                                     setImage_GmDocument(d->doc, linkId, meta_GmRequest(req->req),
-                                                        body_GmRequest(req->req));
+                                                        body_GmRequest(req->req), iTrue);
                                     updateVisible_DocumentWidget_(d);
                                     invalidate_DocumentWidget_(d);
                                     refresh_Widget(w);
@@ -1671,8 +1818,8 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
         const int flags = linkFlags_GmDocument(doc, run->linkId);
         const iRect linkRect = moved_Rect(run->visBounds, origin);
         iMediaRequest *mr = NULL;
-        /* Show inline content. */
-        if (flags & content_GmLinkFlag) {
+        /* Show metadata about inline content. */
+        if (flags & content_GmLinkFlag && run->flags & endOfLine_GmRunFlag) {
             fg = linkColor_GmDocument(doc, run->linkId, textHover_GmLinkPart);
             iAssert(!isEmpty_Rect(run->bounds));
             iGmImageInfo info;
@@ -1704,7 +1851,8 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                 draw_Text(metaFont,
                           topRight_Rect(linkRect),
                           tmInlineContentMetadata_ColorId,
-                          " \u2014 Fetching\u2026");
+                          " \u2014 Fetching\u2026 (%.1f MB)",
+                          (float) size_Block(body_GmRequest(mr->req)) / 1.0e6f);
             }
         }
         else if (isHover) {
@@ -1713,20 +1861,23 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
             const int       flags  = linkFlags_GmDocument(doc, linkId);
             iUrl parts;
             init_Url(&parts, url);
-            fg = linkColor_GmDocument(doc, linkId, textHover_GmLinkPart);
-            const iBool showHost  = (!isEmpty_Range(&parts.host) && flags & userFriendly_GmLinkFlag);
+            fg                    = linkColor_GmDocument(doc, linkId, textHover_GmLinkPart);
+            const iBool showHost  = (flags & humanReadable_GmLinkFlag &&
+                                    (!isEmpty_Range(&parts.host) || flags & mailto_GmLinkFlag));
             const iBool showImage = (flags & imageFileExtension_GmLinkFlag) != 0;
             const iBool showAudio = (flags & audioFileExtension_GmLinkFlag) != 0;
             iString str;
             init_String(&str);
+            /* Show scheme and host. */
             if (run->flags & endOfLine_GmRunFlag &&
                 (flags & (imageFileExtension_GmLinkFlag | audioFileExtension_GmLinkFlag) ||
                  showHost)) {
-                format_String(
-                    &str,
+                format_String(&str,
                     " \u2014%s%s%s\r%c%s",
                     showHost ? " " : "",
-                    showHost ? (!equalCase_Rangecc(parts.scheme, "gemini")
+                              showHost ? (flags & mailto_GmLinkFlag
+                                              ? cstr_String(url)
+                                              : ~flags & gemini_GmLinkFlag
                                     ? format_CStr("%s://%s",
                                                   cstr_Rangecc(parts.scheme),
                                                   cstr_Rangecc(parts.host))
@@ -1735,7 +1886,8 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                     showHost && (showImage || showAudio) ? " \u2014" : "",
                     showImage || showAudio
                         ? asciiBase_ColorEscape + fg
-                        : (asciiBase_ColorEscape + linkColor_GmDocument(doc, run->linkId, domain_GmLinkPart)),
+                                  : (asciiBase_ColorEscape +
+                                     linkColor_GmDocument(doc, run->linkId, domain_GmLinkPart)),
                     showImage ? " View Image \U0001f5bc"
                               : showAudio ? " Play Audio \U0001f3b5" : "");
             }

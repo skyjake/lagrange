@@ -28,38 +28,19 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #import <AppKit/AppKit.h>
 
-#if 0
-static NSTouchBarItemIdentifier play_TouchId_         = @"fi.skyjake.BitwiseHarmony.play";
-static NSTouchBarItemIdentifier restart_TouchId_      = @"fi.skyjake.BitwiseHarmony.restart";
-
-static NSTouchBarItemIdentifier seqMoveUp_TouchId_    = @"fi.skyjake.BitwiseHarmony.sequence.move.up";
-static NSTouchBarItemIdentifier seqMoveDown_TouchId_  = @"fi.skyjake.BitwiseHarmony.sequence.move.down";
-
-static NSTouchBarItemIdentifier goto_TouchId_         = @"fi.skyjake.BitwiseHarmony.goto";
-static NSTouchBarItemIdentifier mute_TouchId_         = @"fi.skyjake.BitwiseHarmony.mute";
-static NSTouchBarItemIdentifier solo_TouchId_         = @"fi.skyjake.BitwiseHarmony.solo";
-static NSTouchBarItemIdentifier color_TouchId_        = @"fi.skyjake.BitwiseHarmony.color";
-static NSTouchBarItemIdentifier event_TouchId_        = @"fi.skyjake.BitwiseHarmony.event";
-
-static NSTouchBarItemIdentifier eventList_TouchId_          = @"fi.skyjake.BitwiseHarmony.eventlist";
-static NSTouchBarItemIdentifier masterGainEvent_TouchId_    = @"fi.skyjake.BitwiseHarmony.event.mastergain";
-static NSTouchBarItemIdentifier resetEvent_TouchId_         = @"fi.skyjake.BitwiseHarmony.event.reset";
-static NSTouchBarItemIdentifier voiceEvent_TouchId_         = @"fi.skyjake.BitwiseHarmony.event.voice";
-static NSTouchBarItemIdentifier panEvent_TouchId_           = @"fi.skyjake.BitwiseHarmony.event.pan";
-static NSTouchBarItemIdentifier gainEvent_TouchId_          = @"fi.skyjake.BitwiseHarmony.event.gain";
-static NSTouchBarItemIdentifier fadeEvent_TouchId_          = @"fi.skyjake.BitwiseHarmony.event.fade";
-static NSTouchBarItemIdentifier pitchSpeedEvent_TouchId_    = @"fi.skyjake.BitwiseHarmony.event.pitchspeed";
-static NSTouchBarItemIdentifier pitchBendUpEvent_TouchId_   = @"fi.skyjake.BitwiseHarmony.event.pitchbendup";
-static NSTouchBarItemIdentifier pitchBendDownEvent_TouchId_ = @"fi.skyjake.BitwiseHarmony.event.pitchbenddown";
-static NSTouchBarItemIdentifier tremoloEvent_TouchId_       = @"fi.skyjake.BitwiseHarmony.event.tremolo";
-#endif
+static NSTouchBarItemIdentifier goBack_TouchId_      = @"fi.skyjake.Lagrange.back";
+static NSTouchBarItemIdentifier goForward_TouchId_   = @"fi.skyjake.Lagrange.forward";
+static NSTouchBarItemIdentifier find_TouchId_        = @"fi.skyjake.Lagrange.find";
+static NSTouchBarItemIdentifier newTab_TouchId_      = @"fi.skyjake.Lagrange.tabs.new";
+static NSTouchBarItemIdentifier sidebarMode_TouchId_ = @"fi.skyjake.Lagrange.sidebar.mode";
 
 enum iTouchBarVariant {
     default_TouchBarVariant,
 };
 
-#if 0
-@interface CommandButton : NSButtonTouchBarItem {
+/*----------------------------------------------------------------------------------------------*/
+
+@interface CommandButton : NSCustomTouchBarItem {
     NSString *command;
     iWidget *widget;
 }
@@ -68,6 +49,10 @@ enum iTouchBarVariant {
                  command:(NSString *)cmd;
 - (id)initWithIdentifier:(NSTouchBarItemIdentifier)identifier
                    title:(NSString *)title
+                  widget:(iWidget *)widget
+                 command:(NSString *)cmd;
+- (id)initWithIdentifier:(NSTouchBarItemIdentifier)identifier
+                   image:(NSImage *)image
                   widget:(iWidget *)widget
                  command:(NSString *)cmd;
 - (void)dealloc;
@@ -79,9 +64,17 @@ enum iTouchBarVariant {
                    title:(NSString *)title
                  command:(NSString *)cmd {
     [super initWithIdentifier:identifier];
-    self.title = title;
-    self.target = self;
-    self.action = @selector(buttonPressed);
+    self.view = [NSButton buttonWithTitle:title target:self action:@selector(buttonPressed)];
+    command = cmd;
+    return self;
+}
+
+- (id)initWithIdentifier:(NSTouchBarItemIdentifier)identifier
+                   image:(NSImage *)image
+                  widget:(iWidget *)widget
+                 command:(NSString *)cmd {
+    [super initWithIdentifier:identifier];
+    self.view = [NSButton buttonWithImage:image target:self action:@selector(buttonPressed)];
     command = cmd;
     return self;
 }
@@ -111,7 +104,8 @@ enum iTouchBarVariant {
 }
 
 @end
-#endif
+
+/*----------------------------------------------------------------------------------------------*/
 
 @interface MyDelegate : NSResponder<NSApplicationDelegate, NSTouchBarDelegate> {
     enum iTouchBarVariant touchBarVariant;
@@ -120,7 +114,7 @@ enum iTouchBarVariant {
     NSMutableDictionary<NSString *, NSString*> *menuCommands;
 }
 - (id)initWithSDLDelegate:(NSObject<NSApplicationDelegate> *)sdl;
-//- (NSTouchBar *)makeTouchBar;
+- (NSTouchBar *)makeTouchBar;
 - (BOOL)application:(NSApplication *)app openFile:(NSString *)filename;
 - (void)application:(NSApplication *)app openFiles:(NSArray<NSString *> *)filenames;
 - (void)application:(NSApplication *)app openURLs:(NSArray<NSURL *> *)urls;
@@ -153,8 +147,6 @@ static void appearanceChanged_MacOS_(NSString *name) {
     const iBool isDark = [name containsString:@"Dark"];
     const iBool isHighContrast = [name containsString:@"HighContrast"];
     postCommandf_App("~os.theme.changed dark:%d contrast:%d", isDark ? 1 : 0, isHighContrast ? 1 : 0);
-//    printf("Effective appearance changed: %s\n", [name cStringUsingEncoding:NSUTF8StringEncoding]);
-//    fflush(stdout);
 }
 
 - (void)setAppearance:(NSString *)name {
@@ -204,42 +196,19 @@ static void appearanceChanged_MacOS_(NSString *name) {
     }
 }
 
-#if 0
+#if 1
 - (NSTouchBar *)makeTouchBar {
     NSTouchBar *bar = [[NSTouchBar alloc] init];
     bar.delegate = self;
     switch (touchBarVariant) {
         case default_TouchBarVariant:
-            bar.defaultItemIdentifiers = @[ play_TouchId_, restart_TouchId_,
+            bar.defaultItemIdentifiers = @[ goBack_TouchId_, goForward_TouchId_,
                                             NSTouchBarItemIdentifierFixedSpaceSmall,
-                                            NSTouchBarItemIdentifierOtherItemsProxy ];
-            break;
-        case sequence_TouchBarVariant:
-            bar.defaultItemIdentifiers = @[ play_TouchId_, restart_TouchId_,
+                                            find_TouchId_,
                                             NSTouchBarItemIdentifierFlexibleSpace,
-                                            seqMoveUp_TouchId_, seqMoveDown_TouchId_,
+                                            sidebarMode_TouchId_,
                                             NSTouchBarItemIdentifierFlexibleSpace,
-                                            NSTouchBarItemIdentifierOtherItemsProxy];
-            break;
-        case tracker_TouchBarVariant:
-            bar.defaultItemIdentifiers = @[ play_TouchId_, restart_TouchId_,
-                                            NSTouchBarItemIdentifierFlexibleSpace,
-                                            goto_TouchId_,
-                                            event_TouchId_,
-                                            NSTouchBarItemIdentifierFlexibleSpace,
-                                            solo_TouchId_, mute_TouchId_, color_TouchId_,
-                                            NSTouchBarItemIdentifierFlexibleSpace,
-                                            NSTouchBarItemIdentifierOtherItemsProxy ];
-            break;
-        case wide_TouchBarVariant:
-            bar.defaultItemIdentifiers = @[ play_TouchId_, restart_TouchId_,
-                                            NSTouchBarItemIdentifierFlexibleSpace,
-                                            event_TouchId_,
-                                            NSTouchBarItemIdentifierFlexibleSpace,
-                                            solo_TouchId_, mute_TouchId_, color_TouchId_,
-                                            NSTouchBarItemIdentifierFlexibleSpace,
-                                            seqMoveUp_TouchId_, seqMoveDown_TouchId_,
-                                            NSTouchBarItemIdentifierFlexibleSpace,
+                                            newTab_TouchId_,
                                             NSTouchBarItemIdentifierOtherItemsProxy ];
             break;
     }
@@ -262,9 +231,48 @@ static void appearanceChanged_MacOS_(NSString *name) {
     }
 }
 
+- (void)sidebarModePressed:(id)sender {
+    NSSegmentedControl *seg = sender;
+    postCommandf_App("sidebar.mode arg:%d toggle:1", (int) [seg selectedSegment]);
+}
+
 - (nullable NSTouchBarItem *)touchBar:(NSTouchBar *)touchBar
                 makeItemForIdentifier:(NSTouchBarItemIdentifier)identifier {
     iUnused(touchBar);
+    if ([identifier isEqualToString:goBack_TouchId_]) {
+        return [[CommandButton alloc] initWithIdentifier:identifier
+                                                   image:[NSImage imageNamed:NSImageNameTouchBarGoBackTemplate]
+                                                  widget:nil
+                                                 command:@"navigate.back"];
+    }
+    else if ([identifier isEqualToString:goForward_TouchId_]) {
+        return [[CommandButton alloc] initWithIdentifier:identifier
+                                                   image:[NSImage imageNamed:NSImageNameTouchBarGoForwardTemplate]
+                                                  widget:nil
+                                                 command:@"navigate.forward"];
+    }
+    else if ([identifier isEqualToString:find_TouchId_]) {
+        return [[CommandButton alloc] initWithIdentifier:identifier
+                                                   image:[NSImage imageNamed:NSImageNameTouchBarSearchTemplate]
+                                                  widget:nil
+                                                 command:@"focus.set id:find.input"];
+    }
+    else if ([identifier isEqualToString:sidebarMode_TouchId_]) {
+        NSCustomTouchBarItem *item = [[NSCustomTouchBarItem alloc] initWithIdentifier:sidebarMode_TouchId_];
+        NSSegmentedControl *seg =
+            [NSSegmentedControl segmentedControlWithLabels:@[ @"Bookmarks", @"History", @"Identities", @"Outline"]
+                                              trackingMode:NSSegmentSwitchTrackingMomentary
+                                                    target:[[NSApplication sharedApplication] delegate]
+                                                    action:@selector(sidebarModePressed:)];
+        item.view = seg;
+        return item;
+    }
+    else if ([identifier isEqualToString:newTab_TouchId_]) {
+        return [[CommandButton alloc] initWithIdentifier:identifier
+                                                   image:[NSImage imageNamed:NSImageNameTouchBarAddTemplate]
+                                                  widget:nil
+                                                 command:@"tabs.new"];
+    }
 #if 0
     if ([identifier isEqualToString:play_TouchId_]) {
         return [NSButtonTouchBarItem
@@ -524,18 +532,7 @@ void handleCommand_MacOS(const char *cmd) {
     if (equal_Command(cmd, "tabs.changed")) {
         MyDelegate *myDel = (MyDelegate *) [[NSApplication sharedApplication] delegate];
         const char *tabId = suffixPtr_Command(cmd, "id");
-        if (equal_CStr(tabId, "tracker")) {
-            [myDel setTouchBarVariant:tracker_TouchBarVariant];
-        }
-        else if (equal_CStr(tabId, "sequence")) {
-            [myDel setTouchBarVariant:sequence_TouchBarVariant];
-        }
-        else if (equal_CStr(tabId, "trackertab")) {
-            [myDel setTouchBarVariant:wide_TouchBarVariant];
-        }
-        else {
-            [myDel setTouchBarVariant:default_TouchBarVariant];
-        }
+        [myDel setTouchBarVariant:default_TouchBarVariant];
     }
 #endif
 }

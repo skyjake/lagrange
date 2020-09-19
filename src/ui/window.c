@@ -91,9 +91,12 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
 #endif
 
 #if !defined (iHaveNativeMenus)
+/* TODO: Submenus wouldn't hurt here. */
 static const iMenuItem navMenuItems[] = {
     { "New Tab", 't', KMOD_PRIMARY, "tabs.new" },
     { "Open Location...", SDLK_l, KMOD_PRIMARY, "focus.set id:url" },
+    { "---", 0, 0, NULL },
+    { "Save to Downloads", SDLK_s, KMOD_PRIMARY, "document.save" },
     { "---", 0, 0, NULL },
     { "Copy Source Text", SDLK_c, KMOD_PRIMARY, "copy" },
     { "Bookmark This Page", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
@@ -104,7 +107,7 @@ static const iMenuItem navMenuItems[] = {
     { "Reset Zoom", SDLK_0, KMOD_PRIMARY, "zoom.set arg:100" },
     { "---", 0, 0, NULL },
     { "Preferences...", SDLK_COMMA, KMOD_PRIMARY, "preferences" },
-    { "Help", 0, 0, "!open url:about:help" },
+    { "Help", SDLK_F1, 0, "!open url:about:help" },
     { "Release Notes", 0, 0, "!open url:about:version" },
     { "---", 0, 0, NULL },
     { "Quit Lagrange", 'q', KMOD_PRIMARY, "quit" }
@@ -116,6 +119,8 @@ static const iMenuItem navMenuItems[] = {
 static const iMenuItem fileMenuItems[] = {
     { "New Tab", SDLK_t, KMOD_PRIMARY, "tabs.new" },
     { "Open Location...", SDLK_l, KMOD_PRIMARY, "focus.set id:url" },
+    { "---", 0, 0, NULL },
+    { "Save to Downloads", SDLK_s, KMOD_PRIMARY, "document.save" },
 };
 
 static const iMenuItem editMenuItems[] = {
@@ -362,12 +367,24 @@ static void setupUserInterface_Window(iWindow *d) {
         setId_Widget(as_Widget(lock), "navbar.lock");
         setFont_LabelWidget(lock, defaultSymbols_FontId);
         updateTextCStr_LabelWidget(lock, "\U0001f512");
-        iInputWidget *url = new_InputWidget(0);
-        setSelectAllOnFocus_InputWidget(url, iTrue);
-        setId_Widget(as_Widget(url), "url");
-        setNotifyEdits_InputWidget(url, iTrue);
-        setTextCStr_InputWidget(url, "gemini://");
-        addChildFlags_Widget(navBar, iClob(url), expand_WidgetFlag);
+        /* URL input field. */ {
+            iInputWidget *url = new_InputWidget(0);
+            setSelectAllOnFocus_InputWidget(url, iTrue);
+            setId_Widget(as_Widget(url), "url");
+            setNotifyEdits_InputWidget(url, iTrue);
+            setTextCStr_InputWidget(url, "gemini://");
+            addChildFlags_Widget(navBar, iClob(url), expand_WidgetFlag);
+            /* Download progress indicator is inside the input field, but hidden normally. */
+            setPadding_Widget(as_Widget(url),0, 0, gap_UI * 1, 0);
+            iLabelWidget *progress = new_LabelWidget(uiTextCaution_ColorEscape "00.000 MB", 0, 0, NULL);
+            setId_Widget(as_Widget(progress), "document.progress");
+            setAlignVisually_LabelWidget(progress, iTrue);
+            shrink_Rect(&as_Widget(progress)->rect, init_I2(0, gap_UI));
+            addChildFlags_Widget(as_Widget(url),
+                                 iClob(progress),
+                                 moveToParentRightEdge_WidgetFlag);
+            setBackgroundColor_Widget(as_Widget(progress), uiBackground_ColorId);
+        }
         setId_Widget(addChild_Widget(
                          navBar, iClob(newIcon_LabelWidget(reloadCStr_, 0, 0, "navigate.reload"))),
                      "reload");
@@ -477,26 +494,36 @@ static void drawBlank_Window_(iWindow *d) {
     SDL_RenderPresent(d->render);
 }
 
-// #define ENABLE_SWRENDER
+iBool create_Window_(iWindow *d, iRect rect, uint32_t flags) {
+    flags |= SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI;
+    if (SDL_CreateWindowAndRenderer(
+            width_Rect(rect), height_Rect(rect), flags, &d->win, &d->render)) {
+        return iFalse;
+    }
+    return iTrue;
+}
 
 void init_Window(iWindow *d, iRect rect) {
     theWindow_ = d;
     iZap(d->cursors);
+    d->initialPos = rect.pos;
     d->pendingCursor = NULL;
     d->isDrawFrozen = iTrue;
-    uint32_t flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI;
-#if defined (ENABLE_SWRENDER)
-    SDL_SetHint(SDL_HINT_RENDER_DRIVER, "software");
-#elif defined (iPlatformApple)
+    uint32_t flags = 0;
+#if defined (iPlatformApple)
     SDL_SetHint(SDL_HINT_RENDER_DRIVER, "metal");
 #else
     flags |= SDL_WINDOW_OPENGL;
 #endif
     SDL_SetHint(SDL_HINT_RENDER_VSYNC, "1");
-    if (SDL_CreateWindowAndRenderer(
-            width_Rect(rect), height_Rect(rect), flags, &d->win, &d->render)) {
-        fprintf(stderr, "Error when creating window: %s\n", SDL_GetError());
-        exit(-2);
+    /* First try SDL's default renderer that should be the best option. */
+    if (forceSoftwareRender_App() || !create_Window_(d, rect, flags)) {
+        /* No luck, maybe software only? This should always work as long as there is a display. */
+        SDL_SetHint(SDL_HINT_RENDER_DRIVER, "software");
+        if (!create_Window_(d, rect, 0)) {
+            fprintf(stderr, "Error when creating window: %s\n", SDL_GetError());
+            exit(-2);
+        }
     }
     if (left_Rect(rect) >= 0) {
         SDL_SetWindowPosition(d->win, left_Rect(rect), top_Rect(rect));
@@ -571,6 +598,16 @@ SDL_Renderer *renderer_Window(const iWindow *d) {
 
 static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
     switch (ev->event) {
+#if defined (LAGRANGE_ENABLE_WINDOWPOS_FIX)
+        case SDL_WINDOWEVENT_EXPOSED:
+            if (d->initialPos.x >= 0) {
+                int bx, by;
+                SDL_GetWindowBordersSize(d->win, &by, &bx, NULL, NULL);
+                SDL_SetWindowPosition(d->win, d->initialPos.x + bx, d->initialPos.y + by);
+                d->initialPos = init1_I2(-1);
+            }
+            return iFalse;
+#endif
         case SDL_WINDOWEVENT_MOVED:
             /* No need to do anything. */
             return iTrue;

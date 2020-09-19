@@ -55,6 +55,8 @@ iBookmark *get_Bookmarks    (iBookmarks *, uint32_t id);
 typedef iBool (*iBookmarksFilterFunc) (void *context, const iBookmark *);
 typedef int   (*iBookmarksCompareFunc)(const iBookmark **, const iBookmark **);
 
+iBool   filterTagsRegExp_Bookmarks  (void *regExp, const iBookmark *);
+
 /**
  * Lists all or a subset of the bookmarks in a sorted array of Bookmark pointers.
  *

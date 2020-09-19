@@ -132,7 +132,8 @@ const iString *absoluteUrl_String(const iString *d, const iString *urlMaybeRelat
     iUrl rel;
     init_Url(&orig, d);
     init_Url(&rel, urlMaybeRelative);
-    if (equalCase_Rangecc(rel.scheme, "data") || equalCase_Rangecc(rel.scheme, "about")) {
+    if (equalCase_Rangecc(rel.scheme, "data") || equalCase_Rangecc(rel.scheme, "about") ||
+        equalCase_Rangecc(rel.scheme, "mailto")) {
         /* Special case, the contents should be left unparsed. */
         return urlMaybeRelative;
     }
@@ -214,8 +215,7 @@ static const struct {
     { unsupportedMimeType_GmStatusCode,
       { 0x1f47d, /* alien */
         "Unsupported MIME Type",
-        "The received content is in an unsupported format and cannot be viewed with "
-        "this application." } },
+        "The received content cannot be viewed with this application." } },
     { invalidHeader_GmStatusCode,
       { 0x1f4a9, /* pile of poo */
         "Invalid Header",

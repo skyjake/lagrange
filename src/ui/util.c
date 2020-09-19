@@ -52,6 +52,57 @@ const char *command_UserEvent(const SDL_Event *d) {
     return "";
 }
 
+void toString_Sym(int key, int kmods, iString *str) {
+#if defined (iPlatformApple)
+    if (kmods & KMOD_CTRL) {
+        appendChar_String(str, 0x2303);
+    }
+    if (kmods & KMOD_ALT) {
+        appendChar_String(str, 0x2325);
+    }
+    if (kmods & KMOD_SHIFT) {
+        appendChar_String(str, 0x21e7);
+    }
+    if (kmods & KMOD_GUI) {
+        appendChar_String(str, 0x2318);
+    }
+#else
+    if (kmods & KMOD_CTRL) {
+        appendCStr_String(str, "Ctrl+");
+    }
+    if (kmods & KMOD_ALT) {
+        appendCStr_String(str, "Alt+");
+    }
+    if (kmods & KMOD_SHIFT) {
+        appendCStr_String(str, "Shift+");
+    }
+    if (kmods & KMOD_GUI) {
+        appendCStr_String(str, "Meta+");
+    }
+#endif
+    if (key == 0x20) {
+        appendCStr_String(str, "Space");
+    }
+    else if (key == SDLK_LEFT) {
+        appendChar_String(str, 0x2190);
+    }
+    else if (key == SDLK_RIGHT) {
+        appendChar_String(str, 0x2192);
+    }
+    else if (key < 128 && (isalnum(key) || ispunct(key))) {
+        appendChar_String(str, upper_Char(key));
+    }
+    else if (key == SDLK_BACKSPACE) {
+        appendChar_String(str, 0x232b); /* Erase to the Left */
+    }
+    else if (key == SDLK_DELETE) {
+        appendChar_String(str, 0x2326); /* Erase to the Right */
+    }
+    else {
+        appendCStr_String(str, SDL_GetKeyName(key));
+    }
+}
+
 int keyMods_Sym(int kmods) {
     kmods &= (KMOD_SHIFT | KMOD_ALT | KMOD_CTRL | KMOD_GUI);
     /* Don't treat left/right modifiers differently. */
@@ -192,6 +243,12 @@ iWidget *addAction_Widget(iWidget *parent, int key, int kmods, const char *comma
 
 /*-----------------------------------------------------------------------------------------------*/
 
+static iBool isCommandIgnoredByMenus_(const char *cmd) {
+    return equal_Command(cmd, "media.updated") || equal_Command(cmd, "document.request.updated") ||
+           equal_Command(cmd, "window.resized") ||
+           (equal_Command(cmd, "mouse.clicked") && !arg_Command(cmd)); /* button released */
+}
+
 static iBool menuHandler_(iWidget *menu, const char *cmd) {
     if (isVisible_Widget(menu)) {
         if (equalWidget_Command(cmd, menu, "menu.opened")) {
@@ -201,13 +258,13 @@ static iBool menuHandler_(iWidget *menu, const char *cmd) {
             /* Don't reopen self; instead, root will close the menu. */
             return iFalse;
         }
-        if (equal_Command(cmd, "mouse.clicked") && arg_Command(cmd)) {
+        if ((equal_Command(cmd, "mouse.clicked") || equal_Command(cmd, "mouse.missed")) &&
+            arg_Command(cmd)) {
             /* Dismiss open menus when clicking outside them. */
             closeMenu_Widget(menu);
             return iTrue;
         }
-        if (!equal_Command(cmd, "window.resized") &&
-            !(equal_Command(cmd, "mouse.clicked") && !arg_Command(cmd)) /* ignore button release */) {
+        if (!isCommandIgnoredByMenus_(cmd)) {
             closeMenu_Widget(menu);
         }
     }
@@ -252,6 +309,7 @@ void openMenu_Widget(iWidget *d, iInt2 coord) {
     postCommand_App("cancel"); /* dismiss any other menus */
     processEvents_App(postedEventsOnly_AppEventMode);
     setFlags_Widget(d, hidden_WidgetFlag, iFalse);
+    setFlags_Widget(d, commandOnMouseMiss_WidgetFlag, iTrue);
     setFlags_Widget(findChild_Widget(d, "menu.cancel"), disabled_WidgetFlag, iFalse);
     arrange_Widget(d);
     d->rect.pos = coord;
@@ -681,10 +739,9 @@ void updateValueInput_Widget(iWidget *d, const char *title, const char *prompt) 
 
 static iBool messageHandler_(iWidget *msg, const char *cmd) {
     /* Almost any command dismisses the sheet. */
-//    if (equal_Command(cmd, "menu.closed")) {
-//        return iFalse;
-//    }
-    destroy_Widget(msg);
+    if (!(equal_Command(cmd, "media.updated") || equal_Command(cmd, "document.request.updated"))) {
+        destroy_Widget(msg);
+    }
     return iFalse;
 }
 
@@ -755,14 +812,16 @@ iWidget *makePreferences_Widget(void) {
     addChild_Widget(dlg, iClob(page));
     setFlags_Widget(page, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
     iWidget *headings = addChildFlags_Widget(
-        page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);    
+        page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
     iWidget *values = addChildFlags_Widget(
         page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
+    addChild_Widget(headings, iClob(makeHeading_Widget("Downloads folder:")));
+    setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.downloads");
 #if defined (iPlatformApple) || defined (iPlatformMSys)
     addChild_Widget(headings, iClob(makeHeading_Widget("Use system theme:")));
     addChild_Widget(values, iClob(makeToggle_Widget("prefs.ostheme")));
 #endif
-    addChild_Widget(headings, iClob(makeHeading_Widget("Theme:")));    
+    addChild_Widget(headings, iClob(makeHeading_Widget("Theme:")));
     iWidget *themes = new_Widget();
     /* Themes. */ {
         setId_Widget(addChild_Widget(themes, iClob(new_LabelWidget("Pure Black", 0, 0, "theme.set arg:0"))), "prefs.theme.0");
@@ -782,8 +841,9 @@ iWidget *makePreferences_Widget(void) {
     addChild_Widget(headings, iClob(makeHeading_Widget("HTTP proxy:")));
     setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.proxy.http");
     arrange_Widget(dlg);
-    /* Text input widths. */ {
+    /* Set text input widths. */ {
         const int inputWidth = width_Rect(page->rect) - width_Rect(headings->rect);
+        as_Widget(findChild_Widget(values, "prefs.downloads"))->rect.size.x = inputWidth;
         as_Widget(findChild_Widget(values, "prefs.proxy.http"))->rect.size.x = inputWidth;
         as_Widget(findChild_Widget(values, "prefs.proxy.gopher"))->rect.size.x = inputWidth;
     }

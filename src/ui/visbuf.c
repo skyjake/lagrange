@@ -37,6 +37,7 @@ void deinit_VisBuf(iVisBuf *d) {
 
 void invalidate_VisBuf(iVisBuf *d) {
     iForIndices(i, d->buffers) {
+        d->buffers[i].origin = i * d->texSize.y;
         iZap(d->buffers[i].validRange);
     }
 }

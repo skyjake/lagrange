@@ -12,6 +12,7 @@ Lagrange is a GUI client for browsing Geminispace. It offers modern conveniences
 
 Like Gemini, Lagrange has been designed with minimalism in mind. It depends on a small number of essential libraries. It is written in C and uses SDL for hardware-accelerated graphics. OpenSSL is used for secure communications.
 
+=> about:lagrange           About Lagrange
 => https://www.libsdl.org   SDL: Simple DirectMedia Layer
 => https://www.openssl.org  OpenSSL: Cryptography and SSL/TLS Toolkit
 
@@ -59,13 +60,17 @@ Lagrange's user interface is modeled after web browsers:
 * There is a sidebar for managing bookmarks and TLS identities, and viewing history and the page outline. The sidebar is hidden by default.
 * There is a search bar that appears at the bottom when searching text on the page.
 
+Tip: Try pressing ${CTRL+}4 now to see the page outline.
+
 ## URL entry and quick search
 
 The URL input field is in its typical location in the navigation bar. It can be accessed quickly by pressing ${CTRL+}L.
 
-As you enter text, Lagrange starts looking for matches in bookmarks, history, content of cached pages, and identities. Search terms are case insensitive, and if many words are entered, they are all required to appear in the specified order in any matched content. Search of cached pages is limited to the (small) set of pages that Lagrange keeps in memory for back navigation.
+As you enter text, Lagrange starts looking for matches in bookmarks, history, content of cached pages, and identities. Search results appear below the URL input field in a popup. Press Tab or ↓ to switch input focus to the results.
 
-Press Tab or ↓ to switch input focus to the search results.
+Search within cached pages is limited to the (small) set of pages that Lagrange keeps in memory for back navigation. Search terms are case insensitive, and if many words are entered, they are all required to appear in the specified order in any matched content.
+
+Note that the navigation stack is saved to a file when Lagrange is shut down and restored on the next launch. This means the next time you launch Lagrange, you can still search the contents of past pages. However, navigation stacks are tab-specific, so closing a tab will delete its history as well.
 
 ## Tabs
 
@@ -86,6 +91,8 @@ ${CTRL+}1 through ${CTRL+}4 switch between the sidebar tabs, or hide the sidebar
 
 ## Navigation
 
+When navigating to a new page, the old page is cached in memory. If you navigate back, the cached copy of the page is restored. Think of it as rewinding time — you return to a past time as if nothing had happened. The same applies to forward navigation; cached pages are loaded if available. This allows back and forward navigation to happen instantly, without any network requests.
+
 ### Link icons
 
 The type and destination of a link are indicated by the link's icon and color: ➤ links to the same domain, and 🌐 to a different domain. The colors are:
@@ -103,17 +110,60 @@ When navigating via keyboard, hold down ${ALT} to see link shortcut keys. Try do
 
 Each visible link on the page gets an alphanumeric shortcut. For example, the first link can be opened by pressing ${ALT+}1. The tenth link is ${ALT+}A. Additionally hold down ${CTRL} to open the link in a new tab.
 
+## Downloads
+
+Press ${CTRL+}S to save the contents of the current page to the Downloads folder. This works on all pages regardless of whether Lagrange can display the contents or not.
+
+The location where downloaded files are saved can be set in Preferences.
+
+The 🔃 button on the right side of the URL input field is the Reload/Stop button — it reloads the current page or stops an ongoing download. During large downloads, an additional progress indicator appears next to the Stop button.
+
 ## Bookmarks
 
-## Managing and using identities
+Press ${CTRL+}D to bookmark the currently open URL.
 
-TLS client certificates that you can identify yourself with. Consider any information you enter in the certificate as public; only the Common Name is required and will appear as the issuer and subject of the certificate.
+In addition to a title, bookmarks can have tags. Some tags have a special meaning, but you are free to enter whatever you want in the tags field. In quick search results, tags are given extra weight so they appear higher in results.
+
+### Special tags
+
+* Set a "homepage" tag on a bookmark to make it one of the pages that will be opened when pressing the 🏠 button.
+
+## Identities (TLS client certificates)
+
+Gemini uses TLS client certificates for manual user/session identification purposes. This is analogous to logging into a web site, except you are in full control of the information. The term "Identity" is used in Lagrange to refer to client certificates.
+
+Lagrange can easily create a new identity. The shortcut for this is ${SHIFT+}${CTRL+}N. Consider any information you enter in the certificate as public; only the Common Name is required and will appear as the issuer and subject of the certificate.
+
+Clicking on an identity in the sidebar will toggle it on/off for the currently open URL. On subsequent page loads, the certificate will then be sent to the server when the URL or any URL under it is fetched. You can click on the 👤 button in the navigation bar to see which identity is being used for the current page.
+
+### Importing existing certificates
+
+At launch, Lagrange looks through its "idents" directory to see if any new certificates have been copied there. (See "Runtime files" below for the location.) The file format must be PEM. Both a certificate (.crt) and its private key (.key) must be found in "idents" and they must have matching file names. For example:
+* mycert.crt
+* mycert.key
+Lagrange will add a note to the imported identities to mark them as "Imported".
+
+# OS integration
+
+## Opening Gemini URLs (macOS)
+
+Lagrange registers itself as a "gemini:" URL scheme handler, so you can click on Gemini links in any application to open Lagrange with that URL.
+
+Likewise, .gmi/.gemini file extensions are registered as file formats that Lagrange can view so Finder will know how to open those automatically using Lagrange.
 
 ## Drop and drop
 
 You can drag and drop .gmi files on the Lagrange window to open them in the current tab. Dropping multiple files opens them in separate tabs. This is the recommended way to view local files, because there is no "Open File" menu item. You may also type "file://" URLs in the URL field.
 
-# Runtime files
+## Runtime files
+
+Lagrange stores user-specific persistent files in one of the following locations (depending on the operating system):
+
+```
+   Windows : C:\Users\Name\AppData\Roaming\fi.skyjake.Lagrange\
+     macOS : ~/Library/Application Support/fi.skyjake.Lagrange/
+Other Unix : ~/.config/lagrange/
+```
 
 * bookmarks.txt
 * idents.binary and idents/
@@ -122,108 +172,13 @@ You can drag and drop .gmi files on the Lagrange window to open them in the curr
 * trusted.txt
 * visited.txt
 
+## Command line options
+
+### --echo
+Debugging utility: internal events are printed to stdout.
+
+### --sw
+Disable hardware accelerated graphics. Note that software rendering is anyway used as a fallback, so usually this option should not be necessary.
+
 # Open source licenses
-
-Lagrange itself is distributed under the BSD 2-clause license:
-=> https://opensource.org/licenses/BSD-2-Clause  The 2-Clause BSD License
-=> https://git.skyjake.fi/skyjake/lagrange.git  Lagrange Git Repository
-
-> Copyright 2020 Jaakko Keränen
->
-> Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
->
-> 1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
->
-> 2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
->
-> THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-## SDL
-
-SDL 2.0 and newer are available under the zlib license:
-=> https://www.zlib.net/zlib_license.html ZLIB License
-
-> This software is provided 'as-is', without any express or implied warranty. In no event will the authors be held liable for any damages arising from the use of this software.
->
-> Permission is granted to anyone to use this software for any purpose, including commercial applications, and to alter it and redistribute it freely, subject to the following restrictions:
->
-> 1. The origin of this software must not be misrepresented; you must not claim that you wrote the original software. If you use this software in a product, an acknowledgment in the product documentation would be appreciated but is not required.
->
-> 2. Altered source versions must be plainly marked as such, and must not be misrepresented as being the original software.
->
-> 3. This notice may not be removed or altered from any source distribution.
-
-## the_Foundation
-
-the_Foundation is an opinionated C11 library by Jaakko Keränen. It is under the BSD 2-clause license. Note that the rest of the libraries in this section are used by the_Foundation, and not directly by Lagrange.
-=> https://opensource.org/licenses/BSD-2-Clause  The 2-Clause BSD License
-=> https://git.skyjake.fi/skyjake/the_Foundation.git  the_Foundation Git Repository
-
-## OpenSSL
-
-OpenSSL 1.1.1 is under a double license, which both apply to the library.
-=> https://www.openssl.org/source/license-openssl-ssleay.txt OpenSSL and SSLeay Licenses
-
-> Copyright (c) 1998-2019 The OpenSSL Project.  All rights reserved.
->
-> Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
->
-> 1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
->
-> 2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
->
-> 3. All advertising materials mentioning features or use of this software must display the following acknowledgment: "This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
->
-> 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to endorse or promote products derived from this software without prior written permission. For written permission, please contact openssl-core@openssl.org.
->
-> 5. Products derived from this software may not be called "OpenSSL" nor may "OpenSSL" appear in their names without prior written permission of the OpenSSL Project.
->
-> 6. Redistributions of any form whatsoever must retain the following acknowledgment: "This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit (http://www.openssl.org/)"
->
-> THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
->
-> This product includes cryptographic software written by Eric Young (eay@cryptsoft.com).  This product includes software written by Tim Hudson (tjh@cryptsoft.com).
-
-SSLeay license:
-
-> Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
-> All rights reserved.
->
-> This package is an SSL implementation written by Eric Young (eay@cryptsoft.com). The implementation was written so as to conform with Netscapes SSL.
->
-> This library is free for commercial and non-commercial use as long as the following conditions are aheared to.  The following conditions apply to all code found in this distribution, be it the RC4, RSA, lhash, DES, etc., code; not just the SSL code.  The SSL documentation included with this distribution is covered by the same copyright terms except that the holder is Tim Hudson (tjh@cryptsoft.com).
->
-> Copyright remains Eric Young's, and as such any Copyright notices in the code are not to be removed. If this package is used in a product, Eric Young should be given attribution as the author of the parts of the library used. This can be in the form of a textual message at program startup or in documentation (online or textual) provided with the package.
->
-> Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
->
-> 1. Redistributions of source code must retain the copyright notice, this list of conditions and the following disclaimer.
->
-> 2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
->
-> 3. All advertising materials mentioning features or use of this software must display the following acknowledgement: "This product includes cryptographic software written by Eric Young (eay@cryptsoft.com)" The word 'cryptographic' can be left out if the rouines from the library being used are not cryptographic related :-).
->
-> 4. If you include any Windows specific code (or a derivative thereof) from the apps directory (application code) you must include an acknowledgement: "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
->
-> THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
->
-> The licence and distribution terms for any publically available version or derivative of this code cannot be changed.  i.e. this code cannot simply be copied and put under another distribution licence [including the GNU Public Licence.]
-
-## GNU libunistring
-
-The libunistring library is covered by the GNU Lesser General Public License (LGPL):
-=> https://www.gnu.org/software/libunistring/manual/libunistring.html#GNU-LGPL GNU LGPL License
-
-## Fonts
-
-This application uses fonts licensed under the Open Font License.
-
-=> https://github.com/mozilla/Fira/blob/master/LICENSE  Fira Sans, Fira Mono
-=> https://github.com/googlefonts/nunito/blob/master/OFL.txt  Nunito
-=> https://github.com/adobe-fonts/source-sans-pro/blob/release/LICENSE.md  Source Sans Pro
-
-Additional fonts:
-
-=> https://fonts.google.com/specimen/Kosugi+Maru#license  Kosugi Maru (Apache License 2.0)
-=> https://github.com/googlefonts/noto-emoji/blob/master/LICENSE  Noto Emoji (Apache License 2.0)
-=> https://dn-works.com/ufas/  Symbola (Public Domain)
+=> about:license

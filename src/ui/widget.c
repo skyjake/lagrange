@@ -542,6 +542,15 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
             break;
         }
     }
+    if (d->flags & commandOnMouseMiss_WidgetFlag && ev->type == SDL_MOUSEBUTTONDOWN &&
+        !contains_Widget(d, init_I2(ev->button.x, ev->button.y))) {
+        postCommand_Widget(d,
+                           "mouse.missed arg:%d button:%d coord:%d %d",
+                           ev->type == SDL_MOUSEBUTTONDOWN ? 1 : 0,
+                           ev->button.button,
+                           ev->button.x,
+                           ev->button.y);
+    }
     if (d->flags & mouseModal_WidgetFlag && isMouseEvent_(ev)) {
         setCursor_Window(get_Window(), SDL_SYSTEM_CURSOR_ARROW);
         return iTrue;

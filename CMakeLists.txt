@@ -1,20 +1,40 @@
+# Lagrange - A Beautiful Gemini Client
+# Copyright: 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
+#
+# Notes:
+# - Required dependencies: SDL 2, OpenSSL 1.1.1, libpcre,
+#   GNU libunistring, zlib.
+# - the_Foundation is built as a static library from 'lib/the_Foundation',
+#   if it exists in that location. The Git repository has it as a submodule.
+# - Windows builds require MSYS2. In theory, Clang could be set up on
+#   Windows for compiling everything, but the_Foundation still lacks
+#   native Win32 implementations for the Socket and Process classes.
+# - Windows builds should use the SDL 2 library precompiled for native
+#   Windows (MSVC variant) instead the version from MSYS2 (get it from
+#   https://libsdl.org/). To make configuration easier, consider writing
+#   for your personal use a pkg-config sdl2.pc file that uses the Windows
+#   version of the library.
+# - `cat` is relied upon for merging all the resource files together.
+
 cmake_minimum_required (VERSION 3.9)
 set (CMAKE_OSX_DEPLOYMENT_TARGET 10.14)
 
 project (Lagrange
-    VERSION 0.1.1
+    VERSION 0.2.0
     DESCRIPTION "Beautiful Gemini Client"
     LANGUAGES C
 )
 set (COPYRIGHT_YEAR 2020)
 
 # Build configuration.
+option (ENABLE_X11_SWRENDER "Use software rendering under X11" OFF)
 option (ENABLE_KERNING "Enable kerning in font renderer (slower)" ON)
 option (ENABLE_RESOURCE_EMBED "Embed resources inside the executable" OFF)
+option (ENABLE_WINDOWPOS_FIX "Set position after showing window (workaround for SDL bug)" OFF)
 
 include (BuildType.cmake)
 include (Embed.cmake)
-if (NOT EXISTS ${CMAKE_SOURCE_DIR}/lib/the_Foundation)
+if (NOT EXISTS ${CMAKE_SOURCE_DIR}/lib/the_Foundation/CMakeLists.txt)
     set (INSTALL_THE_FOUNDATION YES)
     find_package (the_Foundation REQUIRED)
 else ()
@@ -35,6 +55,7 @@ message (STATUS "Preparing embedded resources...")
 set (EMBED_RESOURCES
     res/about/help.gmi
     res/about/lagrange.gmi
+    res/about/license.gmi
     res/about/version.gmi
     res/FiraMono-Regular.ttf
     res/FiraSans-Bold.ttf
@@ -151,8 +172,14 @@ target_compile_options (app PUBLIC
     ${SDL2_CFLAGS}
 )
 target_compile_definitions (app PUBLIC LAGRANGE_APP_VERSION="${PROJECT_VERSION}")
+if (ENABLE_X11_SWRENDER)
+    target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_X11_SWRENDER=1)
+endif ()
 if (ENABLE_KERNING)
     target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_KERNING=1)
+if (ENABLE_WINDOWPOS_FIX)
+endif ()
+    target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_WINDOWPOS_FIX=1)
 endif ()
 target_link_libraries (app PUBLIC the_Foundation::the_Foundation)
 target_link_libraries (app PUBLIC ${SDL2_LDFLAGS})
@@ -188,7 +215,11 @@ if (MSYS)
     if (NOT ENABLE_RESOURCE_EMBED)
         install (FILES ${EMB_BIN} DESTINATION .)
     endif ()
-    install (PROGRAMS ${SDL2_LIBDIR}/SDL2.dll DESTINATION .)
+    install (PROGRAMS
+        ${SDL2_LIBDIR}/SDL2.dll
+        res/urlopen.bat
+        DESTINATION .
+    )
     if (INSTALL_THE_FOUNDATION)
         install (PROGRAMS $<TARGET_FILE:the_Foundation::the_Foundation> DESTINATION .)
     endif ()

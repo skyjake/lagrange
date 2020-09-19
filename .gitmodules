@@ -1,0 +1,3 @@
+[submodule "lib/the_Foundation"]
+	path = lib/the_Foundation
+	url = https://git.skyjake.fi/skyjake/the_Foundation

@@ -26,6 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/hash.h>
 #include <the_Foundation/mutex.h>
 #include <the_Foundation/path.h>
+#include <the_Foundation/regexp.h>
 
 void init_Bookmark(iBookmark *d) {
     init_String(&d->url);
@@ -164,6 +165,12 @@ iBool remove_Bookmarks(iBookmarks *d, uint32_t id) {
 
 iBookmark *get_Bookmarks(iBookmarks *d, uint32_t id) {
     return (iBookmark *) value_Hash(&d->bookmarks, id);
+}
+
+iBool filterTagsRegExp_Bookmarks(void *regExp, const iBookmark *bm) {
+    iRegExpMatch m;
+    init_RegExpMatch(&m);
+    return matchString_RegExp(regExp, &bm->tags, &m);
 }
 
 const iPtrArray *list_Bookmarks(const iBookmarks *d, iBookmarksCompareFunc cmp,
