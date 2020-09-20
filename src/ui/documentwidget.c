@@ -1620,6 +1620,9 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             else if (loc) {
                 d->selectMark.end = loc;
             }
+//            printf("mark %zu ... %zu\n", d->selectMark.start - cstr_String(source_GmDocument(d->doc)),
+//                   d->selectMark.end - cstr_String(source_GmDocument(d->doc)));
+//            fflush(stdout);
             refresh_Widget(w);
             return iTrue;
         }
@@ -1705,7 +1708,8 @@ static void fillRange_DrawContext_(iDrawContext *d, const iGmRun *run, enum iCol
         /* Selection may be done in either direction. */
         iSwap(const char *, mark.start, mark.end);
     }
-    if ((!*isInside && contains_Range(&run->text, mark.start)) || *isInside) {
+    if ((!*isInside && (contains_Range(&run->text, mark.start) || mark.start == run->text.end)) ||
+        *isInside) {
         int x = 0;
         if (!*isInside) {
             x = advanceRange_Text(run->font, (iRangecc){ run->text.start, mark.start }).x;

@@ -1083,13 +1083,29 @@ iRangecc findTextBefore_GmDocument(const iGmDocument *d, const iString *text, co
 
 const iGmRun *findRun_GmDocument(const iGmDocument *d, iInt2 pos) {
     /* TODO: Perf optimization likely needed; use a block map? */
+    const iGmRun *last = NULL;
+    iBool isFirstNonDecoration = iTrue;
     iConstForEach(Array, i, &d->layout) {
         const iGmRun *run = i.value;
-        if (contains_Rect(run->bounds, pos)) {
-            return run;
+        if (run->flags & decoration_GmRunFlag) continue;
+        const iRangei span = ySpan_Rect(run->bounds);
+        if (contains_Range(&span, pos.y)) {
+            last = run;
+            break;
         }
+        if (isFirstNonDecoration && pos.y < top_Rect(run->bounds)) {
+            last = run;
+            break;
+        }
+        if (top_Rect(run->bounds) > pos.y) break; /* Below the point. */
+        last = run;
+        isFirstNonDecoration = iFalse;
     }
-    return NULL;
+//    if (last) {
+//        printf("found run at (%d,%d): %p [%s]\n", pos.x, pos.y, last, cstr_Rangecc(last->text));
+//        fflush(stdout);
+//    }
+    return last;
 }
 
 const char *findLoc_GmDocument(const iGmDocument *d, iInt2 pos) {
@@ -1229,7 +1245,13 @@ iChar siteIcon_GmDocument(const iGmDocument *d) {
 }
 
 const char *findLoc_GmRun(const iGmRun *d, iInt2 pos) {
+    if (pos.y < top_Rect(d->bounds)) {
+        return d->text.start;
+    }
     const int x = pos.x - left_Rect(d->bounds);
+    if (x <= 0) {
+        return d->text.start;
+    }
     const char *loc;
     tryAdvanceNoWrap_Text(d->font, d->text, x, &loc);
     return loc;
