@@ -471,6 +471,15 @@ iWidget *removeTabPage_Widget(iWidget *tabs, size_t index) {
     return page;
 }
 
+void resizeToLargestPage_Widget(iWidget *tabs) {
+    arrange_Widget(tabs);
+    iInt2 largest = zero_I2();
+    iConstForEach(ObjectList, i, children_Widget(findChild_Widget(tabs, "tabs.pages"))) {
+        largest = max_I2(largest, ((const iWidget *) i.object)->rect.size);
+    }
+    setSize_Widget(tabs, addY_I2(largest, height_Widget(findChild_Widget(tabs, "tabs.buttons"))));
+}
+
 iLabelWidget *tabButtonForPage_Widget_(iWidget *tabs, const iWidget *page) {
     iWidget *buttons = findChild_Widget(tabs, "tabs.buttons");
     iForEach(ObjectList, i, buttons->children) {
@@ -803,49 +812,76 @@ iWidget *makeToggle_Widget(const char *id) {
     return toggle;
 }
 
+static iWidget *appendTwoColumnPage_(iWidget *tabs, const char *title, iWidget **headings,
+                                     iWidget **values) {
+    iWidget *page = new_Widget();
+    appendTabPage_Widget(tabs, page, title, 0, 0);
+    setFlags_Widget(page, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
+    *headings = addChildFlags_Widget(
+        page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
+    *values = addChildFlags_Widget(
+        page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
+    return page;
+}
+
+static void makeTwoColumnHeading_(const char *title, iWidget *headings, iWidget *values) {
+    addChild_Widget(headings,
+                    iClob(makeHeading_Widget(format_CStr(uiHeading_ColorEscape "%s", title))));
+    addChild_Widget(values, iClob(makeHeading_Widget("")));
+}
+
+static void expandInputFieldWidth_(iInputWidget *input) {
+    iWidget *page = as_Widget(input)->parent->parent->parent; /* tabs > page > values > input */
+    as_Widget(input)->rect.size.x =
+        right_Rect(bounds_Widget(page)) - left_Rect(bounds_Widget(constAs_Widget(input)));
+    printf("expand to %s, %d - %d\n", cstr_String(id_Widget(page)),
+           right_Rect(bounds_Widget(page)), left_Rect(bounds_Widget(constAs_Widget(input))));
+    fflush(stdout);
+}
+
 iWidget *makePreferences_Widget(void) {
     iWidget *dlg = makeSheet_Widget("prefs");
     addChildFlags_Widget(dlg,
                          iClob(new_LabelWidget(uiHeading_ColorEscape "PREFERENCES", 0, 0, NULL)),
                          frameless_WidgetFlag);
-    iWidget *page = new_Widget();
-    addChild_Widget(dlg, iClob(page));
-    setFlags_Widget(page, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
-    iWidget *headings = addChildFlags_Widget(
-        page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
-    iWidget *values = addChildFlags_Widget(
-        page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
-    addChild_Widget(headings, iClob(makeHeading_Widget("Downloads folder:")));
-    setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.downloads");
+    iWidget *tabs = makeTabs_Widget(dlg);
+    iWidget *headings, *values;
+    /* General preferences. */ {
+        appendTwoColumnPage_(tabs, "General", &headings, &values);
+        addChild_Widget(headings, iClob(makeHeading_Widget("Downloads folder:")));
+        setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.downloads");
+        makeTwoColumnHeading_("WINDOW", headings, values);
 #if defined (iPlatformApple) || defined (iPlatformMSys)
-    addChild_Widget(headings, iClob(makeHeading_Widget("Use system theme:")));
-    addChild_Widget(values, iClob(makeToggle_Widget("prefs.ostheme")));
+        addChild_Widget(headings, iClob(makeHeading_Widget("Use system theme:")));
+        addChild_Widget(values, iClob(makeToggle_Widget("prefs.ostheme")));
 #endif
-    addChild_Widget(headings, iClob(makeHeading_Widget("Theme:")));
-    iWidget *themes = new_Widget();
-    /* Themes. */ {
-        setId_Widget(addChild_Widget(themes, iClob(new_LabelWidget("Pure Black", 0, 0, "theme.set arg:0"))), "prefs.theme.0");
-        setId_Widget(addChild_Widget(themes, iClob(new_LabelWidget("Dark", 0, 0, "theme.set arg:1"))), "prefs.theme.1");
-        setId_Widget(addChild_Widget(themes, iClob(new_LabelWidget("Light", 0, 0, "theme.set arg:2"))), "prefs.theme.2");
-        setId_Widget(addChild_Widget(themes, iClob(new_LabelWidget("Pure White", 0, 0, "theme.set arg:3"))), "prefs.theme.3");
+        addChild_Widget(headings, iClob(makeHeading_Widget("Theme:")));
+        iWidget *themes = new_Widget();
+        /* Themes. */ {
+            setId_Widget(addChild_Widget(themes, iClob(new_LabelWidget("Pure Black", 0, 0, "theme.set arg:0"))), "prefs.theme.0");
+            setId_Widget(addChild_Widget(themes, iClob(new_LabelWidget("Dark", 0, 0, "theme.set arg:1"))), "prefs.theme.1");
+            setId_Widget(addChild_Widget(themes, iClob(new_LabelWidget("Light", 0, 0, "theme.set arg:2"))), "prefs.theme.2");
+            setId_Widget(addChild_Widget(themes, iClob(new_LabelWidget("Pure White", 0, 0, "theme.set arg:3"))), "prefs.theme.3");
+        }
+        addChildFlags_Widget(values, iClob(themes), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+        addChild_Widget(headings, iClob(makeHeading_Widget("Retain window size:")));
+        addChild_Widget(values, iClob(makeToggle_Widget("prefs.retainwindow")));
+        addChild_Widget(headings, iClob(makeHeading_Widget("UI scale factor:")));
+        setId_Widget(addChild_Widget(values, iClob(new_InputWidget(8))), "prefs.uiscale");
     }
-    addChildFlags_Widget(values, iClob(themes), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
-    addChild_Widget(headings, iClob(makeHeading_Widget("Retain window size:")));
-    addChild_Widget(values, iClob(makeToggle_Widget("prefs.retainwindow")));
-    addChild_Widget(headings, iClob(makeHeading_Widget("UI scale factor:")));
-    setId_Widget(addChild_Widget(values, iClob(new_InputWidget(8))), "prefs.uiscale");
-    addChild_Widget(headings, iClob(makeHeading_Widget(uiHeading_ColorEscape "Proxies")));
-    addChild_Widget(values, iClob(makeHeading_Widget("")));
-    addChild_Widget(headings, iClob(makeHeading_Widget("Gopher proxy:")));
-    setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.proxy.gopher");
-    addChild_Widget(headings, iClob(makeHeading_Widget("HTTP proxy:")));
-    setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.proxy.http");
+    /* Proxies. */ {
+        appendTwoColumnPage_(tabs, "Proxies", &headings, &values);
+        addChild_Widget(headings, iClob(makeHeading_Widget("Gopher proxy:")));
+        setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.proxy.gopher");
+        addChild_Widget(headings, iClob(makeHeading_Widget("HTTP proxy:")));
+        setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.proxy.http");
+    }
+    resizeToLargestPage_Widget(tabs);
     arrange_Widget(dlg);
-    /* Set text input widths. */ {
-        const int inputWidth = width_Rect(page->rect) - width_Rect(headings->rect);
-        as_Widget(findChild_Widget(values, "prefs.downloads"))->rect.size.x = inputWidth;
-        as_Widget(findChild_Widget(values, "prefs.proxy.http"))->rect.size.x = inputWidth;
-        as_Widget(findChild_Widget(values, "prefs.proxy.gopher"))->rect.size.x = inputWidth;
+    /* Set input field sizes. */ {
+        expandInputFieldWidth_(findChild_Widget(tabs, "prefs.downloads"));
+        expandInputFieldWidth_(findChild_Widget(tabs, "prefs.proxy.http"));
+        expandInputFieldWidth_(findChild_Widget(tabs, "prefs.proxy.gopher"));
     }
     iWidget *div = new_Widget(); {
         setFlags_Widget(div, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);

@@ -148,6 +148,10 @@ iLocalDef int width_Widget(const iAnyObject *d) {
     iAssert(isInstance_Object(d, &Class_Widget));
     return ((const iWidget *) d)->rect.size.x;
 }
+iLocalDef int height_Widget(const iAnyObject *d) {
+    iAssert(isInstance_Object(d, &Class_Widget));
+    return ((const iWidget *) d)->rect.size.y;
+}
 iLocalDef iObjectList *children_Widget(iAnyObject *d) {
     iAssert(isInstance_Object(d, &Class_Widget));
     return ((iWidget *) d)->children;
