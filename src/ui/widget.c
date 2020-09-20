@@ -71,7 +71,6 @@ iDefineObjectConstruction(Widget)
 void init_Widget(iWidget *d) {
     init_String(&d->id);
     d->flags          = 0;
-    d->flags2         = 0;
     d->rect           = zero_Rect();
     d->bgColor        = none_ColorId;
     d->frameColor     = none_ColorId;
@@ -120,11 +119,11 @@ const iString *id_Widget(const iWidget *d) {
     return &d->id;
 }
 
-int flags_Widget(const iWidget *d) {
+int64_t flags_Widget(const iWidget *d) {
     return d->flags;
 }
 
-void setFlags_Widget(iWidget *d, int flags, iBool set) {
+void setFlags_Widget(iWidget *d, int64_t flags, iBool set) {
     iChangeFlags(d->flags, flags, set);
     if (flags & keepOnTop_WidgetFlag) {
         if (set) {
@@ -134,10 +133,6 @@ void setFlags_Widget(iWidget *d, int flags, iBool set) {
             removeOne_PtrArray(onTop_RootData_(), d);
         }
     }
-}
-
-void setFlags2_Widget(iWidget *d, int flags2, iBool set) {
-    iChangeFlags(d->flags2, flags2, set);
 }
 
 void setPos_Widget(iWidget *d, iInt2 pos) {
@@ -248,7 +243,7 @@ void arrange_Widget(iWidget *d) {
     if (d->flags & moveToParentRightEdge_WidgetFlag) {
         d->rect.pos.x = width_Rect(innerRect_Widget_(d->parent)) - width_Rect(d->rect);
     }
-    if (d->flags2 & centerHorizontal_WidgetFlag2) {
+    if (d->flags & centerHorizontal_WidgetFlag) {
         centerHorizontal_Widget_(d);
     }
     if (d->flags & resizeToParentWidth_WidgetFlag) {
@@ -366,7 +361,7 @@ void arrange_Widget(iWidget *d) {
         if (child->flags & fixedPosition_WidgetFlag) {
             continue;
         }
-        if (child->flags2 & centerHorizontal_WidgetFlag2) {
+        if (child->flags & centerHorizontal_WidgetFlag) {
             continue;
         }
         if (d->flags & (arrangeHorizontal_WidgetFlag | arrangeVertical_WidgetFlag)) {
@@ -419,7 +414,7 @@ void arrange_Widget(iWidget *d) {
                 }
             }
         }
-        if (d->flags2 & centerHorizontal_WidgetFlag2) {
+        if (d->flags & centerHorizontal_WidgetFlag) {
             centerHorizontal_Widget_(d);
         }
     }
@@ -637,7 +632,7 @@ iAny *addChildPos_Widget(iWidget *d, iAnyObject *child, enum iWidgetAddPos addPo
     return child;
 }
 
-iAny *addChildFlags_Widget(iWidget *d, iAnyObject *child, int childFlags) {
+iAny *addChildFlags_Widget(iWidget *d, iAnyObject *child, int64_t childFlags) {
     setFlags_Widget(child, childFlags, iTrue);
     return addChild_Widget(d, child);
 }

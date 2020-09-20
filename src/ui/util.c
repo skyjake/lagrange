@@ -604,9 +604,8 @@ iWidget *makeSheet_Widget(const char *id) {
     setBackgroundColor_Widget(sheet, uiBackground_ColorId);
     setFlags_Widget(sheet,
                     mouseModal_WidgetFlag | keepOnTop_WidgetFlag | arrangeVertical_WidgetFlag |
-                        arrangeSize_WidgetFlag,
+                        arrangeSize_WidgetFlag | centerHorizontal_WidgetFlag,
                     iTrue);
-    setFlags2_Widget(sheet, centerHorizontal_WidgetFlag2, iTrue);
     return sheet;
 }
 
