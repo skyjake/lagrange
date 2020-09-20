@@ -10,6 +10,7 @@
 * Added "Open Link in Background Tab" to link context menu.
 * Added tabs in Preferences for better grouping.
 * Slightly smaller first paragraph font size.
+* Improved text selection behavior when starting on empty space.
 * Fixed: Centered popups do not remain centered when window is resized.
 
 ## 0.2.1
