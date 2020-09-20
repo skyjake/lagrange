@@ -573,7 +573,9 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse
     if (category_GmStatusCode(statusCode) != categoryInput_GmStatusCode) {
         iString str;
         invalidate_DocumentWidget_(d);
-        updateTheme_DocumentWidget_(d);
+        if (document_App() == d) {
+            updateTheme_DocumentWidget_(d);
+        }
         clear_String(&d->sourceMime);
 //        set_Block(&d->sourceContent, &response->body);
         initBlock_String(&str, &response->body);
@@ -1550,20 +1552,21 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 iArray items;
                 init_Array(&items, sizeof(iMenuItem));
                 if (d->contextLink) {
+                    const iString *linkUrl = linkUrl_GmDocument(d->doc, d->contextLink->linkId);
                     pushBackN_Array(
                         &items,
-                        (iMenuItem[]){ { "Open Link in New Tab",
+                        (iMenuItem[]){
+                            { "Open Link in New Tab",
                               0,
                               0,
-                              format_CStr("!open newtab:1 url:%s",
-                                          cstr_String(linkUrl_GmDocument(
-                                              d->doc, d->contextLink->linkId))) },
+                              format_CStr("!open newtab:1 url:%s", cstr_String(linkUrl)) },
+                            { "Open Link in Background Tab",
+                              0,
+                              0,
+                              format_CStr("!open newtab:2 url:%s", cstr_String(linkUrl)) },
                             { "---", 0, 0, NULL },
-                            { "Copy Link",
-                              0,
-                              0,
-                              "document.copylink" }},
-                        3);
+                            { "Copy Link", 0, 0, "document.copylink" } },
+                        4);
                 }
                 else {
                     if (!isEmpty_Range(&d->selectMark)) {

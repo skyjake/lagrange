@@ -242,7 +242,7 @@ static iBool loadState_App_(iApp *d) {
             readData_File(f, 4, magic);
             if (!memcmp(magic, magicTabDocument_App_, 4)) {
                 if (!doc) {
-                    doc = newTab_App(NULL);
+                    doc = newTab_App(NULL, iTrue);
                 }
                 if (read8_File(f)) {
                     current = doc;
@@ -711,7 +711,7 @@ iDocumentWidget *document_Command(const char *cmd) {
     return document_App();
 }
 
-iDocumentWidget *newTab_App(const iDocumentWidget *duplicateOf) {
+iDocumentWidget *newTab_App(const iDocumentWidget *duplicateOf, iBool switchToNew) {
     iApp *d = &app_;
     iWidget *tabs = findWidget_App("doctabs");
     setFlags_Widget(tabs, hidden_WidgetFlag, iFalse);
@@ -727,7 +727,9 @@ iDocumentWidget *newTab_App(const iDocumentWidget *duplicateOf) {
     setId_Widget(as_Widget(doc), format_CStr("document%03d", ++d->tabEnum));
     appendTabPage_Widget(tabs, iClob(doc), "", 0, 0);
     addChild_Widget(findChild_Widget(tabs, "tabs.buttons"), iClob(newTabButton));
-    postCommandf_App("tabs.switch page:%p", doc);
+    if (switchToNew) {
+        postCommandf_App("tabs.switch page:%p", doc);
+    }
     arrange_Widget(tabs);
     refresh_Widget(tabs);
     return doc;
@@ -817,8 +819,9 @@ iBool handleCommand_App(const char *cmd) {
             return iTrue;
         }
         iDocumentWidget *doc = document_Command(cmd);
-        if (argLabel_Command(cmd, "newtab")) {
-            doc = newTab_App(NULL);
+        const int newTab = argLabel_Command(cmd, "newtab");
+        if (newTab) {
+            doc = newTab_App(NULL, (newTab & 1) != 0); /* newtab:2 to open in background */
         }
         iHistory *history = history_DocumentWidget(doc);
         const iBool isHistory = argLabel_Command(cmd, "history") != 0;
@@ -853,7 +856,7 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "tabs.new")) {
         const iBool isDuplicate = argLabel_Command(cmd, "duplicate") != 0;
-        newTab_App(isDuplicate ? document_App() : NULL);
+        newTab_App(isDuplicate ? document_App() : NULL, iTrue);
         if (!isDuplicate) {
             postCommand_App("navigate.home");
         }

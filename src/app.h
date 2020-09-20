@@ -70,7 +70,7 @@ iBookmarks *        bookmarks_App       (void);
 iDocumentWidget *   document_App        (void);
 iObjectList *       listDocuments_App   (void);
 iDocumentWidget *   document_Command    (const char *cmd);
-iDocumentWidget *   newTab_App          (const iDocumentWidget *duplicateOf);
+iDocumentWidget *   newTab_App          (const iDocumentWidget *duplicateOf, iBool switchToNew);
 
 iAny *      findWidget_App      (const char *id);
 void        addTicker_App       (void (*ticker)(iAny *), iAny *context);
