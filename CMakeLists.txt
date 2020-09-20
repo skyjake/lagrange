@@ -17,7 +17,6 @@
 # - `cat` is relied upon for merging all the resource files together.
 
 cmake_minimum_required (VERSION 3.9)
-set (CMAKE_OSX_DEPLOYMENT_TARGET 10.14)
 
 project (Lagrange
     VERSION 0.3.0
@@ -189,8 +188,10 @@ if (APPLE)
     else ()
         target_link_libraries (app PUBLIC "-framework AppKit")
     endif ()
-    target_compile_options (app PUBLIC -mmacosx-version-min=10.14)
-    target_link_options (app PUBLIC -mmacosx-version-min=10.14)
+    if (CMAKE_OSX_DEPLOYMENT_TARGET)
+        target_compile_options (app PUBLIC -mmacosx-version-min=${CMAKE_OSX_DEPLOYMENT_TARGET})
+        target_link_options (app PUBLIC -mmacosx-version-min=${CMAKE_OSX_DEPLOYMENT_TARGET})
+    endif ()
     set_target_properties (app PROPERTIES
         OUTPUT_NAME "Lagrange"
         BUILD_RPATH ${SDL2_LIBRARY_DIRS}
