@@ -6,6 +6,12 @@
 ```
 # Release notes
 
+## 0.3
+* Slightly smaller first paragraph font size.
+
+## 0.2.1
+* Windows: Fixed UI text disappearing after window resize.
+
 ## 0.2
 * Added an icon for quote paragraphs.
 * Added Downloads folder to Preferences.
