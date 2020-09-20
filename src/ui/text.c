@@ -198,6 +198,7 @@ static void initFonts_Text_(iText *d) {
         { &fontNotoEmojiRegular_Embedded,     textSize * 2.000f,    hugeSymbols_FontId },
         { &fontNotoEmojiRegular_Embedded,     textSize * 0.866f,    smallSymbols_FontId },
         /* japanese fonts */
+        { &fontKosugiMaruRegular_Embedded,    fontSize_UI,          defaultSymbols_FontId },
         { &fontKosugiMaruRegular_Embedded,    textSize * 0.666f,    smallSymbols_FontId },
         { &fontKosugiMaruRegular_Embedded,    textSize,             symbols_FontId },
         { &fontKosugiMaruRegular_Embedded,    textSize * 1.200f,    mediumSymbols_FontId },
@@ -219,14 +220,17 @@ static void initFonts_Text_(iText *d) {
         /* Everything defaults to the regular sized japanese font, so these are just
            the other sizes. */
         /* TODO: Add these to the table above... */
-        font_Text_(monospace_FontId)->japaneseFont      = smallJapanese_FontId;
-        font_Text_(monospaceSmall_FontId)->japaneseFont = smallJapanese_FontId;
-        font_Text_(medium_FontId)->japaneseFont         = mediumJapanese_FontId;
-        font_Text_(big_FontId)->japaneseFont            = bigJapanese_FontId;
-        font_Text_(bigBold_FontId)->japaneseFont        = bigJapanese_FontId;
-        font_Text_(largeBold_FontId)->japaneseFont      = largeJapanese_FontId;
-        font_Text_(largeLight_FontId)->japaneseFont     = largeJapanese_FontId;
-        font_Text_(hugeBold_FontId)->japaneseFont       = hugeJapanese_FontId;
+        font_Text_(default_FontId)->japaneseFont          = defaultJapanese_FontId;
+        font_Text_(defaultMedium_FontId)->japaneseFont    = defaultJapanese_FontId;
+        font_Text_(defaultMonospace_FontId)->japaneseFont = defaultJapanese_FontId;
+        font_Text_(monospace_FontId)->japaneseFont        = smallJapanese_FontId;
+        font_Text_(monospaceSmall_FontId)->japaneseFont   = smallJapanese_FontId;
+        font_Text_(medium_FontId)->japaneseFont           = mediumJapanese_FontId;
+        font_Text_(big_FontId)->japaneseFont              = bigJapanese_FontId;
+        font_Text_(bigBold_FontId)->japaneseFont          = bigJapanese_FontId;
+        font_Text_(largeBold_FontId)->japaneseFont        = largeJapanese_FontId;
+        font_Text_(largeLight_FontId)->japaneseFont       = largeJapanese_FontId;
+        font_Text_(hugeBold_FontId)->japaneseFont         = hugeJapanese_FontId;
     }
     gap_Text = iRound(gap_UI * d->contentFontSize);
 }

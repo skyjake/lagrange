@@ -64,6 +64,7 @@ enum iFontId {
     hugeEmoji_FontId,
     smallEmoji_FontId,
     /* japanese script */
+    defaultJapanese_FontId,
     smallJapanese_FontId,
     regularJapanese_FontId,
     mediumJapanese_FontId,

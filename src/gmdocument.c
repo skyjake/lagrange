@@ -620,6 +620,8 @@ void init_GmDocument(iGmDocument *d) {
     init_String(&d->title);
     init_Array(&d->headings, sizeof(iGmHeading));
     init_PtrArray(&d->images);
+    d->themeSeed = 0;
+    d->siteIcon = 0;
 }
 
 void deinit_GmDocument(iGmDocument *d) {
