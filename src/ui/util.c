@@ -474,8 +474,12 @@ iWidget *removeTabPage_Widget(iWidget *tabs, size_t index) {
 void resizeToLargestPage_Widget(iWidget *tabs) {
     arrange_Widget(tabs);
     iInt2 largest = zero_I2();
-    iConstForEach(ObjectList, i, children_Widget(findChild_Widget(tabs, "tabs.pages"))) {
+    iWidget *pages = findChild_Widget(tabs, "tabs.pages");
+    iConstForEach(ObjectList, i, children_Widget(pages)) {
         largest = max_I2(largest, ((const iWidget *) i.object)->rect.size);
+    }
+    iForEach(ObjectList, j, children_Widget(pages)) {
+        setSize_Widget(j.object, largest);
     }
     setSize_Widget(tabs, addY_I2(largest, height_Widget(findChild_Widget(tabs, "tabs.buttons"))));
 }
@@ -602,16 +606,17 @@ iWidget *makeSheet_Widget(const char *id) {
                     mouseModal_WidgetFlag | keepOnTop_WidgetFlag | arrangeVertical_WidgetFlag |
                         arrangeSize_WidgetFlag,
                     iTrue);
+    setFlags2_Widget(sheet, centerHorizontal_WidgetFlag2, iTrue);
     return sheet;
 }
 
 void centerSheet_Widget(iWidget *sheet) {
-    arrange_Widget(sheet);
-    const iInt2 rootSize = rootSize_Window(get_Window());
-    const iInt2 orig     = localCoord_Widget(
-        sheet->parent,
-        init_I2(rootSize.x / 2 - sheet->rect.size.x / 2, bounds_Widget(sheet).pos.y));
-    sheet->rect.pos = orig;
+    arrange_Widget(sheet->parent);
+//    const iInt2 rootSize = rootSize_Window(get_Window());
+//    const iInt2 orig     = localCoord_Widget(
+//        sheet->parent,
+//        init_I2(rootSize.x / 2 - sheet->rect.size.x / 2, bounds_Widget(sheet).pos.y));
+//    sheet->rect.pos = orig;
     postRefresh_App();
 }
 
@@ -815,12 +820,17 @@ iWidget *makeToggle_Widget(const char *id) {
 static iWidget *appendTwoColumnPage_(iWidget *tabs, const char *title, iWidget **headings,
                                      iWidget **values) {
     iWidget *page = new_Widget();
-    appendTabPage_Widget(tabs, page, title, 0, 0);
-    setFlags_Widget(page, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
+    setFlags_Widget(page, arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag |
+                    resizeHeightOfChildren_WidgetFlag, iTrue);
+    addChildFlags_Widget(page, iClob(new_Widget()), expand_WidgetFlag);
+    iWidget *columns = new_Widget();
+    addChildFlags_Widget(page, iClob(columns), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
     *headings = addChildFlags_Widget(
-        page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
+        columns, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
     *values = addChildFlags_Widget(
-        page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
+        columns, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
+    addChildFlags_Widget(page, iClob(new_Widget()), expand_WidgetFlag);
+    appendTabPage_Widget(tabs, page, title, 0, 0);
     return page;
 }
 
@@ -831,7 +841,7 @@ static void makeTwoColumnHeading_(const char *title, iWidget *headings, iWidget 
 }
 
 static void expandInputFieldWidth_(iInputWidget *input) {
-    iWidget *page = as_Widget(input)->parent->parent->parent; /* tabs > page > values > input */
+    iWidget *page = as_Widget(input)->parent->parent->parent->parent; /* tabs > page > values > input */
     as_Widget(input)->rect.size.x =
         right_Rect(bounds_Widget(page)) - left_Rect(bounds_Widget(constAs_Widget(input)));
     printf("expand to %s, %d - %d\n", cstr_String(id_Widget(page)),

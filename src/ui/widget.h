@@ -82,6 +82,10 @@ enum iWidgetFlag {
     fixedSize_WidgetFlag      = fixedWidth_WidgetFlag | fixedHeight_WidgetFlag,
 };
 
+enum iWidgetFlag2 {
+    centerHorizontal_WidgetFlag2 = iBit(1),
+};
+
 enum iWidgetAddPos {
     back_WidgetAddPos,
     front_WidgetAddPos,
@@ -96,6 +100,7 @@ struct Impl_Widget {
     iObject      object;
     iString      id;
     int          flags;
+    int          flags2;
     iRect        rect;
     int          padding[4]; /* left, top, right, bottom */
     int          bgColor;
@@ -166,6 +171,7 @@ iBool   isCommand_Widget    (const iWidget *d, const SDL_Event *ev, const char *
 iBool   hasParent_Widget    (const iWidget *d, const iWidget *someParent);
 void    setId_Widget        (iWidget *, const char *id);
 void    setFlags_Widget     (iWidget *, int flags, iBool set);
+void    setFlags2_Widget    (iWidget *, int flags2, iBool set);
 void    setPos_Widget       (iWidget *, iInt2 pos);
 void    setSize_Widget      (iWidget *, iInt2 size);
 void    setPadding_Widget   (iWidget *, int left, int top, int right, int bottom);
