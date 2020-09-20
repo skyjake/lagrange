@@ -7,7 +7,9 @@
 # Release notes
 
 ## 0.3
+* Added tabs in Preferences for better grouping.
 * Slightly smaller first paragraph font size.
+* Fixed: Centered popups do not remain centered when window is resized.
 
 ## 0.2.1
 * Windows: Fixed UI text disappearing after window resize.
