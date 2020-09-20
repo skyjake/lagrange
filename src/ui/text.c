@@ -167,33 +167,41 @@ static void initFonts_Text_(iText *d) {
         { &fontSourceSansProRegular_Embedded, fontSize_UI,          defaultSymbols_FontId },
         { &fontSourceSansProRegular_Embedded, fontSize_UI * 1.125f, defaultMediumSymbols_FontId },
         { &fontFiraMonoRegular_Embedded,      fontSize_UI * 0.866f, defaultSymbols_FontId },
+        /* content fonts */
         { &fontNunitoRegular_Embedded,        textSize,             symbols_FontId },
         { &fontFiraMonoRegular_Embedded,      monoSize,             smallSymbols_FontId },
         { &fontFiraMonoRegular_Embedded,      monoSize * 0.750f,    smallSymbols_FontId },
-        { &fontNunitoRegular_Embedded,        textSize * 1.333f,    mediumSymbols_FontId },
+        { &fontNunitoRegular_Embedded,        textSize * 1.200f,    mediumSymbols_FontId },
+        { &fontNunitoRegular_Embedded,        textSize * 1.333f,    bigSymbols_FontId },
         { &fontNunitoLightItalic_Embedded,    textSize,             symbols_FontId },
         { &fontNunitoExtraBold_Embedded,      textSize,             symbols_FontId },
         { &fontNunitoExtraBold_Embedded,      textSize * 1.333f,    mediumSymbols_FontId },
         { &fontNunitoExtraBold_Embedded,      textSize * 1.666f,    largeSymbols_FontId },
         { &fontNunitoExtraBold_Embedded,      textSize * 2.000f,    hugeSymbols_FontId },
         { &fontNunitoExtraLight_Embedded,     textSize * 1.666f,    largeSymbols_FontId },
+        /* symbol fonts */
         { &fontSymbola_Embedded,              fontSize_UI,          defaultSymbols_FontId },
         { &fontSymbola_Embedded,              fontSize_UI * 1.125f, defaultMediumSymbols_FontId },
         { &fontSymbola_Embedded,              textSize,             symbols_FontId },
-        { &fontSymbola_Embedded,              textSize * 1.333f,    mediumSymbols_FontId },
+        { &fontSymbola_Embedded,              textSize * 1.200f,    mediumSymbols_FontId },
+        { &fontSymbola_Embedded,              textSize * 1.333f,    bigSymbols_FontId },
         { &fontSymbola_Embedded,              textSize * 1.666f,    largeSymbols_FontId },
         { &fontSymbola_Embedded,              textSize * 2.000f,    hugeSymbols_FontId },
         { &fontSymbola_Embedded,              textSize * 0.866f,    smallSymbols_FontId },
+        /* emoji fonts */
         { &fontNotoEmojiRegular_Embedded,     fontSize_UI,          defaultSymbols_FontId },
         { &fontNotoEmojiRegular_Embedded,     fontSize_UI * 1.125f, defaultMediumSymbols_FontId },
         { &fontNotoEmojiRegular_Embedded,     textSize,             symbols_FontId },
-        { &fontNotoEmojiRegular_Embedded,     textSize * 1.333f,    mediumSymbols_FontId },
+        { &fontNotoEmojiRegular_Embedded,     textSize * 1.200f,    mediumSymbols_FontId },
+        { &fontNotoEmojiRegular_Embedded,     textSize * 1.333f,    bigSymbols_FontId },
         { &fontNotoEmojiRegular_Embedded,     textSize * 1.666f,    largeSymbols_FontId },
         { &fontNotoEmojiRegular_Embedded,     textSize * 2.000f,    hugeSymbols_FontId },
         { &fontNotoEmojiRegular_Embedded,     textSize * 0.866f,    smallSymbols_FontId },
+        /* japanese fonts */
         { &fontKosugiMaruRegular_Embedded,    textSize * 0.666f,    smallSymbols_FontId },
         { &fontKosugiMaruRegular_Embedded,    textSize,             symbols_FontId },
-        { &fontKosugiMaruRegular_Embedded,    textSize * 1.333f,    mediumSymbols_FontId },
+        { &fontKosugiMaruRegular_Embedded,    textSize * 1.200f,    mediumSymbols_FontId },
+        { &fontKosugiMaruRegular_Embedded,    textSize * 1.333f,    bigSymbols_FontId },
         { &fontKosugiMaruRegular_Embedded,    textSize * 1.666f,    largeSymbols_FontId },
         { &fontKosugiMaruRegular_Embedded,    textSize * 2.000f,    hugeSymbols_FontId },
     };
@@ -214,7 +222,8 @@ static void initFonts_Text_(iText *d) {
         font_Text_(monospace_FontId)->japaneseFont      = smallJapanese_FontId;
         font_Text_(monospaceSmall_FontId)->japaneseFont = smallJapanese_FontId;
         font_Text_(medium_FontId)->japaneseFont         = mediumJapanese_FontId;
-        font_Text_(mediumBold_FontId)->japaneseFont     = mediumJapanese_FontId;
+        font_Text_(big_FontId)->japaneseFont            = bigJapanese_FontId;
+        font_Text_(bigBold_FontId)->japaneseFont        = bigJapanese_FontId;
         font_Text_(largeBold_FontId)->japaneseFont      = largeJapanese_FontId;
         font_Text_(largeLight_FontId)->japaneseFont     = largeJapanese_FontId;
         font_Text_(hugeBold_FontId)->japaneseFont       = hugeJapanese_FontId;

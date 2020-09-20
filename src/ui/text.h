@@ -27,17 +27,21 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <SDL_render.h>
 
+/* Size names: regular (1x) -> medium (1.2x) -> big (1.33x) -> large (1.67x) -> huge (2x) */
+
 enum iFontId {
     default_FontId,
     defaultMedium_FontId,
     defaultMonospace_FontId,
+    /* content fonts */
     regular_FontId,
     monospace_FontId,
     monospaceSmall_FontId,
     medium_FontId,
+    big_FontId,
     italic_FontId,
     bold_FontId,
-    mediumBold_FontId,
+    bigBold_FontId,
     largeBold_FontId,
     hugeBold_FontId,
     largeLight_FontId,    
@@ -46,6 +50,7 @@ enum iFontId {
     defaultMediumSymbols_FontId,
     symbols_FontId,
     mediumSymbols_FontId,
+    bigSymbols_FontId,
     largeSymbols_FontId,
     hugeSymbols_FontId,
     smallSymbols_FontId,
@@ -54,6 +59,7 @@ enum iFontId {
     defaultMediumEmoji_FontId,
     emoji_FontId,
     mediumEmoji_FontId,
+    bigEmoji_FontId,
     largeEmoji_FontId,
     hugeEmoji_FontId,
     smallEmoji_FontId,
@@ -61,12 +67,13 @@ enum iFontId {
     smallJapanese_FontId,
     regularJapanese_FontId,
     mediumJapanese_FontId,
+    bigJapanese_FontId,
     largeJapanese_FontId,
     hugeJapanese_FontId,
     max_FontId,
 
     /* Meta: */
-    fromSymbolsToEmojiOffset_FontId = 7,
+    fromSymbolsToEmojiOffset_FontId = 8,
 
     /* UI fonts: */
     uiLabel_FontId        = default_FontId,
@@ -81,7 +88,7 @@ enum iFontId {
     quote_FontId             = italic_FontId,
     heading1_FontId          = hugeBold_FontId,
     heading2_FontId          = largeBold_FontId,
-    heading3_FontId          = medium_FontId,
+    heading3_FontId          = big_FontId,
     banner_FontId            = largeLight_FontId,
 };
 
