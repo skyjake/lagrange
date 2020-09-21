@@ -7,8 +7,8 @@
 # Release notes
 
 ## 0.2.1
+* Fixed window size/state restoration issues, e.g., after window is maximized.
 * Windows: Fixed text disappearing when window is resized.
-* Windows: Fixed window size/state restoration issues when launching.
 
 ## 0.2
 * Added an icon for quote paragraphs.
