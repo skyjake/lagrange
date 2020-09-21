@@ -136,19 +136,31 @@ static iString *serializePrefs_App_(const iApp *d) {
     const iSidebarWidget *sidebar = findWidget_App("sidebar");
     appendFormat_String(str, "window.retain arg:%d\n", d->retainWindowSize);
     if (d->retainWindowSize) {
+        const iBool isMaximized = (SDL_GetWindowFlags(d->window->win) & SDL_WINDOW_MAXIMIZED) != 0;
         int w, h, x, y;
-        SDL_GetWindowSize(d->window->win, &w, &h);
-        SDL_GetWindowPosition(d->window->win, &x, &y);
-#if defined (iPlatformLinux)
-        /* Workaround for window position being unaffected by decorations on creation. */ {
-            int bl, bt;
-            SDL_GetWindowBordersSize(d->window->win, &bt, &bl, NULL, NULL);
-            x -= bl;
-            y -= bt;
+        x = d->window->lastRect.pos.x;
+        y = d->window->lastRect.pos.y;
+        w = d->window->lastRect.size.x;
+        h = d->window->lastRect.size.y;
+#if 0
+            SDL_GetWindowSize(d->window->win, &w, &h);
+            SDL_GetWindowPosition(d->window->win, &x, &y);
+#i f defined (iPlatformLinux)
+            /* Workaround for window position being unaffected by decorations on creation. */ {
+                int bl, bt;
+                SDL_GetWindowBordersSize(d->window->win, &bt, &bl, NULL, NULL);
+                x -= bl;
+                y -= bt;
+                x = iMax(0, x);
+                y = iMax(0, y);
+            }
         }
 #endif
         appendFormat_String(str, "window.setrect width:%d height:%d coord:%d %d\n", w, h, x, y);
         appendFormat_String(str, "sidebar.width arg:%d\n", width_SidebarWidget(sidebar));
+        if (isMaximized) {
+            appendFormat_String(str, "~window.maximize\n");
+        }
     }
     if (isVisible_Widget(sidebar)) {
         appendCStr_String(str, "sidebar.toggle\n");
@@ -800,6 +812,10 @@ iBool handleCommand_App(const char *cmd) {
     iApp *d = &app_;
     if (equal_Command(cmd, "window.retain")) {
         d->retainWindowSize = arg_Command(cmd);
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "window.maximize")) {
+        SDL_MaximizeWindow(d->window->win);
         return iTrue;
     }
     else if (equal_Command(cmd, "downloads")) {

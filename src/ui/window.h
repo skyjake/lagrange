@@ -35,6 +35,7 @@ iDeclareTypeConstructionArgs(Window, iRect rect)
 struct Impl_Window {
     SDL_Window *  win;
     iInt2         initialPos;
+    iRect         lastRect; /* updated when window is moved/resized */
     iBool         isDrawFrozen; /* avoids premature draws while restoring window state */
     SDL_Renderer *render;
     iWidget *     root;
