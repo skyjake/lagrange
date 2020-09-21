@@ -1,10 +1,13 @@
 ```
-           __   __             __   ___ 
-|     /\  / _` |__)  /\  |\ | / _` |__  
-|___ /~~\ \__> |  \ /~~\ | \| \__> |___ 
+           __   __             __   ___
+|     /\  / _` |__)  /\  |\ | / _` |__
+|___ /~~\ \__> |  \ /~~\ | \| \__> |___
 
-```                                        
+```
 # Release notes
+
+## 0.2.1
+* Windows: Fixed text disappearing when window is resized.
 
 ## 0.2
 * Added an icon for quote paragraphs.
