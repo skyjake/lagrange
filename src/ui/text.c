@@ -169,8 +169,8 @@ static void initFonts_Text_(iText *d) {
         { &fontFiraMonoRegular_Embedded,      fontSize_UI * 0.866f, defaultSymbols_FontId },
         /* content fonts */
         { &fontNunitoRegular_Embedded,        textSize,             symbols_FontId },
-        { &fontFiraMonoRegular_Embedded,      monoSize,             smallSymbols_FontId },
-        { &fontFiraMonoRegular_Embedded,      monoSize * 0.750f,    smallSymbols_FontId },
+        { &fontFiraMonoRegular_Embedded,      monoSize,             monospaceSymbols_FontId },
+        { &fontFiraMonoRegular_Embedded,      monoSize * 0.750f,    monospaceSmallSymbols_FontId },
         { &fontNunitoRegular_Embedded,        textSize * 1.200f,    mediumSymbols_FontId },
         { &fontNunitoRegular_Embedded,        textSize * 1.333f,    bigSymbols_FontId },
         { &fontNunitoLightItalic_Embedded,    textSize,             symbols_FontId },
@@ -187,7 +187,8 @@ static void initFonts_Text_(iText *d) {
         { &fontSymbola_Embedded,              textSize * 1.333f,    bigSymbols_FontId },
         { &fontSymbola_Embedded,              textSize * 1.666f,    largeSymbols_FontId },
         { &fontSymbola_Embedded,              textSize * 2.000f,    hugeSymbols_FontId },
-        { &fontSymbola_Embedded,              textSize * 0.866f,    smallSymbols_FontId },
+        { &fontSymbola_Embedded,              monoSize,             monospaceSymbols_FontId },
+        { &fontSymbola_Embedded,              monoSize * 0.750f,    monospaceSmallSymbols_FontId },
         /* emoji fonts */
         { &fontNotoEmojiRegular_Embedded,     fontSize_UI,          defaultSymbols_FontId },
         { &fontNotoEmojiRegular_Embedded,     fontSize_UI * 1.125f, defaultMediumSymbols_FontId },
@@ -196,10 +197,12 @@ static void initFonts_Text_(iText *d) {
         { &fontNotoEmojiRegular_Embedded,     textSize * 1.333f,    bigSymbols_FontId },
         { &fontNotoEmojiRegular_Embedded,     textSize * 1.666f,    largeSymbols_FontId },
         { &fontNotoEmojiRegular_Embedded,     textSize * 2.000f,    hugeSymbols_FontId },
-        { &fontNotoEmojiRegular_Embedded,     textSize * 0.866f,    smallSymbols_FontId },
+        { &fontNotoEmojiRegular_Embedded,     monoSize,             monospaceSymbols_FontId },
+        { &fontNotoEmojiRegular_Embedded,     monoSize * 0.750f,    monospaceSmallSymbols_FontId },
         /* japanese fonts */
         { &fontKosugiMaruRegular_Embedded,    fontSize_UI,          defaultSymbols_FontId },
-        { &fontKosugiMaruRegular_Embedded,    textSize * 0.666f,    smallSymbols_FontId },
+        { &fontKosugiMaruRegular_Embedded,    monoSize * 0.750,     monospaceSmallSymbols_FontId },
+        { &fontKosugiMaruRegular_Embedded,    monoSize,             monospaceSymbols_FontId },
         { &fontKosugiMaruRegular_Embedded,    textSize,             symbols_FontId },
         { &fontKosugiMaruRegular_Embedded,    textSize * 1.200f,    mediumSymbols_FontId },
         { &fontKosugiMaruRegular_Embedded,    textSize * 1.333f,    bigSymbols_FontId },
@@ -223,8 +226,8 @@ static void initFonts_Text_(iText *d) {
         font_Text_(default_FontId)->japaneseFont          = defaultJapanese_FontId;
         font_Text_(defaultMedium_FontId)->japaneseFont    = defaultJapanese_FontId;
         font_Text_(defaultMonospace_FontId)->japaneseFont = defaultJapanese_FontId;
-        font_Text_(monospace_FontId)->japaneseFont        = smallJapanese_FontId;
-        font_Text_(monospaceSmall_FontId)->japaneseFont   = smallJapanese_FontId;
+        font_Text_(monospaceSmall_FontId)->japaneseFont   = monospaceSmallJapanese_FontId;
+        font_Text_(monospace_FontId)->japaneseFont        = monospaceJapanese_FontId;
         font_Text_(medium_FontId)->japaneseFont           = mediumJapanese_FontId;
         font_Text_(big_FontId)->japaneseFont              = bigJapanese_FontId;
         font_Text_(bigBold_FontId)->japaneseFont          = bigJapanese_FontId;
@@ -533,8 +536,8 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
             }
         }
         iChar ch = nextChar_(&chPos, text.end);
-        if (ch == variationSelectorEmoji_Char) {
-            /* TODO: Should peek ahead for this and prefer the Emoji font. */
+        if (isVariationSelector_Char(ch)) {
+            /* TODO: VS15: Should peek ahead for this and prefer the Emoji font. */
             ch = nextChar_(&chPos, text.end); /* just ignore */
         }
         /* Special instructions. */ {
@@ -568,10 +571,10 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
             }
             break;
         }
-        const SDL_Rect dst = { x1 + glyph->d[hoff].x,
-                               pos.y + glyph->font->baseline + glyph->d[hoff].y,
-                               glyph->rect[hoff].size.x,
-                               glyph->rect[hoff].size.y };
+        SDL_Rect dst = { x1 + glyph->d[hoff].x,
+                         pos.y + glyph->font->baseline + glyph->d[hoff].y,
+                         glyph->rect[hoff].size.x,
+                         glyph->rect[hoff].size.y };
         /* Update the bounding box. */
         if (mode == measureVisual_RunMode) {
             if (isEmpty_Rect(bounds)) {
@@ -585,13 +588,19 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
             bounds.size.x = iMax(bounds.size.x, x2 - orig.x);
             bounds.size.y = iMax(bounds.size.y, pos.y + glyph->font->height - orig.y);
         }
+        const iBool useMonoAdvance =
+            monoAdvance > 0 && !isJapanese_FontId(fontId_Text_(glyph->font));
+        const float advance = (useMonoAdvance ? monoAdvance : glyph->advance);
         if (!isMeasuring_(mode)) {
+            if (useMonoAdvance && dst.w > advance) {
+                dst.x -= (dst.w - advance) / 2;
+
+            }
             SDL_RenderCopy(text_.render, text_.cache, (const SDL_Rect *) &glyph->rect[hoff], &dst);
         }
         /* Symbols and emojis are NOT monospaced, so must conform when the primary font
            is monospaced. Except with Japanese script, that's larger than the normal monospace. */
-        xpos += (monoAdvance > 0 && !isJapanese_FontId(fontId_Text_(glyph->font)) ? monoAdvance
-                                                                                  : glyph->advance);
+        xpos += advance;
         xposMax = iMax(xposMax, xpos);
         if (continueFrom_out && (mode == measureNoWrap_RunMode || isWrapBoundary_(prevCh, ch))) {
             lastWordEnd = chPos;
