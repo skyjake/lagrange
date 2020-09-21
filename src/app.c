@@ -167,7 +167,7 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "uiscale arg:%f\n", uiScale_Window(d->window));
     appendFormat_String(str, "zoom.set arg:%d\n", d->prefs.zoomPercent);
     appendFormat_String(str, "linewidth.set arg:%d\n", d->prefs.lineWidth);
-    appendFormat_String(str, "biglede.set arg:%d\n", d->prefs.bigFirstParagraph);
+    appendFormat_String(str, "prefs.biglede.changed arg:%d\n", d->prefs.bigFirstParagraph);
     appendFormat_String(str, "theme.set arg:%d auto:1\n", d->prefs.theme);
     appendFormat_String(str, "ostheme arg:%d\n", d->prefs.useSystemTheme);
     appendFormat_String(str, "saturation.set arg:%d\n", (int) ((d->prefs.saturation * 100) + 0.5f));
