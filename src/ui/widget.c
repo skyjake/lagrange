@@ -124,13 +124,15 @@ int64_t flags_Widget(const iWidget *d) {
 }
 
 void setFlags_Widget(iWidget *d, int64_t flags, iBool set) {
-    iChangeFlags(d->flags, flags, set);
-    if (flags & keepOnTop_WidgetFlag) {
-        if (set) {
-            pushBack_PtrArray(onTop_RootData_(), d);
-        }
-        else {
-            removeOne_PtrArray(onTop_RootData_(), d);
+    if (d) {
+        iChangeFlags(d->flags, flags, set);
+        if (flags & keepOnTop_WidgetFlag) {
+            if (set) {
+                pushBack_PtrArray(onTop_RootData_(), d);
+            }
+            else {
+                removeOne_PtrArray(onTop_RootData_(), d);
+            }
         }
     }
 }

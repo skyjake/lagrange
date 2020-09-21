@@ -51,7 +51,13 @@ static iBool checkModifiers_(int have, int req) {
 }
 
 static void trigger_LabelWidget_(const iLabelWidget *d) {
+    const iWidget *w = constAs_Widget(d);
     postCommand_Widget(&d->widget, "%s", cstr_String(&d->command));
+    if (flags_Widget(w) & radio_WidgetFlag) {
+        iForEach(ObjectList, i, children_Widget(w->parent)) {
+            setFlags_Widget(i.object, selected_WidgetFlag, d == i.object);
+        }
+    }
 }
 
 static iBool processEvent_LabelWidget_(iLabelWidget *d, const SDL_Event *ev) {
