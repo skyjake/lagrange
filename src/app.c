@@ -142,25 +142,15 @@ static iString *serializePrefs_App_(const iApp *d) {
         y = d->window->lastRect.pos.y;
         w = d->window->lastRect.size.x;
         h = d->window->lastRect.size.y;
-#if 0
-            SDL_GetWindowSize(d->window->win, &w, &h);
-            SDL_GetWindowPosition(d->window->win, &x, &y);
-#i f defined (iPlatformLinux)
-            /* Workaround for window position being unaffected by decorations on creation. */ {
-                int bl, bt;
-                SDL_GetWindowBordersSize(d->window->win, &bt, &bl, NULL, NULL);
-                x -= bl;
-                y -= bt;
-                x = iMax(0, x);
-                y = iMax(0, y);
-            }
-        }
-#endif
         appendFormat_String(str, "window.setrect width:%d height:%d coord:%d %d\n", w, h, x, y);
         appendFormat_String(str, "sidebar.width arg:%d\n", width_SidebarWidget(sidebar));
+        /* On macOS, maximization should be applied at creation time or the window will take
+           a moment to animate to its maximized size. */
+#if !defined (iPlatformApple)
         if (isMaximized) {
             appendFormat_String(str, "~window.maximize\n");
         }
+#endif
     }
     if (isVisible_Widget(sidebar)) {
         appendCStr_String(str, "sidebar.toggle\n");
