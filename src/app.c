@@ -164,6 +164,7 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "zoom.set arg:%d\n", d->prefs.zoomPercent);
     appendFormat_String(str, "theme.set arg:%d auto:1\n", d->prefs.theme);
     appendFormat_String(str, "ostheme arg:%d\n", d->prefs.useSystemTheme);
+    appendFormat_String(str, "saturation.set arg:%d\n", (int) ((d->prefs.saturation * 100) + 0.5f));
     appendFormat_String(str, "proxy.gopher address:%s\n", cstr_String(&d->prefs.gopherProxy));
     appendFormat_String(str, "proxy.http address:%s\n", cstr_String(&d->prefs.httpProxy));
     appendFormat_String(str, "downloads path:%s\n", cstr_String(&d->prefs.downloadDir));
@@ -799,7 +800,58 @@ iBool handleCommand_App(const char *cmd) {
         d->prefs.retainWindowSize = arg_Command(cmd);
         return iTrue;
     }
-    else if (equal_Command(cmd, "downloads")) {
+    else if (equal_Command(cmd, "zoom.set")) {
+        setFreezeDraw_Window(get_Window(), iTrue); /* no intermediate draws before docs updated */
+        d->prefs.zoomPercent = arg_Command(cmd);
+        setContentFontSize_Text((float) d->prefs.zoomPercent / 100.0f);
+        postCommand_App("font.changed");
+        postCommand_App("window.unfreeze");
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "zoom.delta")) {
+        setFreezeDraw_Window(get_Window(), iTrue); /* no intermediate draws before docs updated */
+        int delta = arg_Command(cmd);
+        if (d->prefs.zoomPercent < 100 || (delta < 0 && d->prefs.zoomPercent == 100)) {
+            delta /= 2;
+        }
+        d->prefs.zoomPercent = iClamp(d->prefs.zoomPercent + delta, 50, 200);
+        setContentFontSize_Text((float) d->prefs.zoomPercent / 100.0f);
+        postCommand_App("font.changed");
+        postCommand_App("window.unfreeze");
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "forcewrap.toggle")) {
+        d->prefs.forceLineWrap = !d->prefs.forceLineWrap;
+        updateSize_DocumentWidget(document_App());
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "theme.set")) {
+        const int isAuto = argLabel_Command(cmd, "auto");
+        d->prefs.theme = arg_Command(cmd);
+        if (!isAuto) {
+            postCommand_App("ostheme arg:0");
+        }
+        setThemePalette_Color(d->prefs.theme);
+        postCommandf_App("theme.changed auto:%d", isAuto);
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "ostheme")) {
+        d->prefs.useSystemTheme = arg_Command(cmd);
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "saturation.set")) {
+        d->prefs.saturation = (float) arg_Command(cmd) / 100.0f;
+        postCommandf_App("theme.changed auto:1");
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "proxy.gopher")) {
+        setCStr_String(&d->prefs.gopherProxy, suffixPtr_Command(cmd, "address"));
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "proxy.http")) {
+        setCStr_String(&d->prefs.httpProxy, suffixPtr_Command(cmd, "address"));
+        return iTrue;
+    }    else if (equal_Command(cmd, "downloads")) {
         setCStr_String(&d->prefs.downloadDir, suffixPtr_Command(cmd, "path"));
         return iTrue;
     }
@@ -936,31 +988,6 @@ iBool handleCommand_App(const char *cmd) {
         }
         return iTrue;
     }
-    else if (equal_Command(cmd, "zoom.set")) {
-        setFreezeDraw_Window(get_Window(), iTrue); /* no intermediate draws before docs updated */
-        d->prefs.zoomPercent = arg_Command(cmd);
-        setContentFontSize_Text((float) d->prefs.zoomPercent / 100.0f);
-        postCommand_App("font.changed");
-        postCommand_App("window.unfreeze");
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "zoom.delta")) {
-        setFreezeDraw_Window(get_Window(), iTrue); /* no intermediate draws before docs updated */
-        int delta = arg_Command(cmd);
-        if (d->prefs.zoomPercent < 100 || (delta < 0 && d->prefs.zoomPercent == 100)) {
-            delta /= 2;
-        }
-        d->prefs.zoomPercent = iClamp(d->prefs.zoomPercent + delta, 50, 200);
-        setContentFontSize_Text((float) d->prefs.zoomPercent / 100.0f);
-        postCommand_App("font.changed");
-        postCommand_App("window.unfreeze");
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "forcewrap.toggle")) {
-        d->prefs.forceLineWrap = !d->prefs.forceLineWrap;
-        updateSize_DocumentWidget(document_App());
-        return iTrue;
-    }
     else if (equal_Command(cmd, "bookmark.add")) {
         iDocumentWidget *doc = document_App();
         makeBookmarkCreation_Widget(url_DocumentWidget(doc),
@@ -995,20 +1022,6 @@ iBool handleCommand_App(const char *cmd) {
         postCommand_App("idents.changed");
         return iTrue;
     }
-    else if (equal_Command(cmd, "theme.set")) {
-        const int isAuto = argLabel_Command(cmd, "auto");
-        d->prefs.theme = arg_Command(cmd);
-        if (!isAuto) {
-            postCommand_App("ostheme arg:0");
-        }
-        setThemePalette_Color(d->prefs.theme);
-        postCommandf_App("theme.changed auto:%d", isAuto);
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "ostheme")) {
-        d->prefs.useSystemTheme = arg_Command(cmd);
-        return iTrue;
-    }
     else if (equal_Command(cmd, "os.theme.changed")) {
         if (d->prefs.useSystemTheme) {
             const int dark     = argLabel_Command(cmd, "dark");
@@ -1018,14 +1031,6 @@ iBool handleCommand_App(const char *cmd) {
                                   : (contrast ? pureWhite_ColorTheme : light_ColorTheme));
         }
         return iFalse;
-    }
-    else if (equal_Command(cmd, "proxy.gopher")) {
-        setCStr_String(&d->prefs.gopherProxy, suffixPtr_Command(cmd, "address"));
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "proxy.http")) {
-        setCStr_String(&d->prefs.httpProxy, suffixPtr_Command(cmd, "address"));
-        return iTrue;
     }
     else {
         return iFalse;

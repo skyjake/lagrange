@@ -843,9 +843,6 @@ static void expandInputFieldWidth_(iInputWidget *input) {
     iWidget *page = as_Widget(input)->parent->parent->parent->parent; /* tabs > page > values > input */
     as_Widget(input)->rect.size.x =
         right_Rect(bounds_Widget(page)) - left_Rect(bounds_Widget(constAs_Widget(input)));
-    printf("expand to %s, %d - %d\n", cstr_String(id_Widget(page)),
-           right_Rect(bounds_Widget(page)), left_Rect(bounds_Widget(constAs_Widget(input))));
-    fflush(stdout);
 }
 
 iWidget *makePreferences_Widget(void) {
@@ -881,18 +878,34 @@ iWidget *makePreferences_Widget(void) {
     /* Layout. */ {
         appendTwoColumnPage_(tabs, "Layout", &headings, &values);
         addChild_Widget(headings, iClob(makeHeading_Widget("Line width:")));
-        addChild_Widget(values, iClob(new_LabelWidget("Normal", 0, 0, NULL)));
-        addChild_Widget(headings, iClob(makeHeading_Widget("First paragaph:")));
-        addChild_Widget(values, iClob(new_LabelWidget("Emphasized", 0, 0, NULL)));
+        iWidget *widths = new_Widget();
+        /* Line widths. */ {
+            addChild_Widget(widths, iClob(new_LabelWidget("\u20132", 0, 0, "linewidth.set arg:-2")));
+            addChild_Widget(widths, iClob(new_LabelWidget("\u20131", 0, 0, "linewidth.set arg:-1")));
+            addChild_Widget(widths, iClob(new_LabelWidget("Normal", 0, 0, "linewidth.set arg:0")));
+            addChild_Widget(widths, iClob(new_LabelWidget("+1", 0, 0, "linewidth.set arg:1")));
+            addChild_Widget(widths, iClob(new_LabelWidget("+2", 0, 0, "linewidth.set arg:2")));
+            addChild_Widget(widths, iClob(new_LabelWidget("Window", 0, 0, "linewidth.set arg:1000")));
+        }
+        addChildFlags_Widget(values, iClob(widths), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+        addChild_Widget(headings, iClob(makeHeading_Widget("Big 1st paragaph:")));
+        addChild_Widget(values, iClob(makeToggle_Widget("prefs.biglede")));
     }
     /* Colors. */ {
         appendTwoColumnPage_(tabs, "Colors", &headings, &values);
-        addChild_Widget(headings, iClob(makeHeading_Widget("Saturation:")));
-        addChild_Widget(values, iClob(new_LabelWidget("Full", 0, 0, 0)));
         addChild_Widget(headings, iClob(makeHeading_Widget("Dark theme:")));
         addChild_Widget(values, iClob(new_LabelWidget("Colorful", 0, 0, 0)));
         addChild_Widget(headings, iClob(makeHeading_Widget("Light theme:")));
         addChild_Widget(values, iClob(new_LabelWidget("White", 0, 0, 0)));
+        addChild_Widget(headings, iClob(makeHeading_Widget("Saturation:")));
+        iWidget *sats = new_Widget();
+        /* Saturation levels. */ {
+            addChild_Widget(sats, iClob(new_LabelWidget("Full", 0, 0, "saturation.set arg:100")));
+            addChild_Widget(sats, iClob(new_LabelWidget("Reduced", 0, 0, "saturation.set arg:66")));
+            addChild_Widget(sats, iClob(new_LabelWidget("Minimal", 0, 0, "saturation.set arg:33")));
+            addChild_Widget(sats, iClob(new_LabelWidget("Monochrome", 0, 0, "saturation.set arg:0")));
+        }
+        addChildFlags_Widget(values, iClob(sats), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
     }
     /* Proxies. */ {
         appendTwoColumnPage_(tabs, "Proxies", &headings, &values);

@@ -897,7 +897,9 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
                 }
             }
             /* Modify overall saturation. */
-            color.sat *= prefs->saturation;
+            if (!isLink_ColorId(i)) {
+                color.sat *= prefs->saturation;
+            }
             setHsl_Color(i, color);
         }
     }
