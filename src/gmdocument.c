@@ -331,6 +331,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     static const char *globe    = "\U0001f310";
     static const char *quote    = "\u201c";
     const float midRunSkip = 0; /*0.120f;*/ /* extra space between wrapped text/quote lines */
+    const iPrefs *prefs = prefs_App();
     clear_Array(&d->layout);
     clearLinks_GmDocument_(d);
     clear_Array(&d->headings);
@@ -341,7 +342,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     const iRangecc   content       = range_String(&d->source);
     iRangecc         contentLine   = iNullRange;
     iInt2            pos           = zero_I2();
-    iBool            isFirstText   = isGemini;
+    iBool            isFirstText   = isGemini && prefs->bigFirstParagraph;
     iBool            addQuoteIcon  = iTrue;
     iBool            isPreformat   = iFalse;
     iRangecc         preAltText    = iNullRange;
@@ -650,9 +651,11 @@ void reset_GmDocument(iGmDocument *d) {
 }
 
 void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
-    const float        saturationLevel = 1.0f; /* TODO: user setting */
-    const iBool        isLightMode = isLight_ColorTheme(colorTheme_App());
-    const iBool        isDarkMode  = !isLightMode;
+    const iPrefs *     prefs = prefs_App();
+    enum iGmDocumentTheme theme =
+        (isDark_ColorTheme(colorTheme_App()) ? prefs->docThemeDark : prefs->docThemeLight);
+//    const iBool        isLightMode =  isLight_ColorTheme(colorTheme_App());
+//    const iBool        isDarkMode  = !isLightMode;
     static const iChar siteIcons[] = {
         0x203b,  0x2042,  0x205c,  0x2182,  0x25ed,  0x2600,  0x2601,  0x2604,  0x2605,  0x2606,
         0x265c,  0x265e,  0x2690,  0x2691,  0x2693,  0x2698,  0x2699,  0x26f0,  0x270e,  0x2728,
@@ -662,7 +665,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
         0x1f533, 0x1f657, 0x1f659, 0x1f665, 0x1f668, 0x1f66b, 0x1f78b, 0x1f796, 0x1f79c,
     };
     /* Default colors. */ {
-        if (isDarkMode) {
+        if (theme == colorfulDark_GmDocumentTheme) {
             const iHSLColor base = { 200, 0, 0.15f, 1.0f };
             setHsl_Color(tmBackground_ColorId, base);
             set_Color(tmParagraph_ColorId, get_Color(gray75_ColorId));
@@ -784,7 +787,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
         //            printf("background: %d %f %f\n", (int) base.hue, base.sat, base.lum);
         //            printf("isDarkBgSat: %d\n", isDarkBgSat);
 
-        if (isDarkMode) {
+        if (theme == colorfulDark_GmDocumentTheme) {
             iHSLColor base    = { hues[primIndex],
                                   0.8f * (d->themeSeed >> 24) / 255.0f,
                                   0.06f + 0.09f * ((d->themeSeed >> 5) & 0x7) / 7.0f,
@@ -836,7 +839,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
         /* Adjust colors based on light/dark mode. */
         for (int i = tmFirst_ColorId; i < max_ColorId; i++) {
             iHSLColor color = hsl_Color(get_Color(i));
-            if (isLightMode) {
+            if (theme == white_GmDocumentTheme) {
 #if 0
                 if (isLink_ColorId(i)) continue;
                 color.lum = 1.0f - color.lum; /* All colors invert lightness. */
@@ -894,7 +897,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
                 }
             }
             /* Modify overall saturation. */
-            color.sat *= saturationLevel;
+            color.sat *= prefs->saturation;
             setHsl_Color(i, color);
         }
     }

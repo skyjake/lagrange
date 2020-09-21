@@ -35,6 +35,11 @@ iDeclareType(GmImageInfo)
 iDeclareType(GmHeading)
 iDeclareType(GmRun)
 
+enum iGmDocumentTheme {
+    colorfulDark_GmDocumentTheme,
+    white_GmDocumentTheme,
+};
+
 typedef uint16_t iGmLinkId;
 
 enum iGmLinkFlags {

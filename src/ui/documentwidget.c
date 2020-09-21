@@ -243,10 +243,11 @@ static void resetSmoothScroll_DocumentWidget_(iDocumentWidget *d) {
 }
 
 static int documentWidth_DocumentWidget_(const iDocumentWidget *d) {
-    const iWidget *w = constAs_Widget(d);
-    const iRect bounds = bounds_Widget(w);
+    const iWidget *w      = constAs_Widget(d);
+    const iRect    bounds = bounds_Widget(w);
+    const iPrefs * prefs  = prefs_App();
     return iMini(bounds.size.x - gap_UI * d->pageMargin * 2,
-                 fontSize_UI * 40 * zoom_App() / 100); /* TODO: Add user preference .*/
+                 fontSize_UI * prefs->lineWidth * prefs->zoomPercent / 100);
 }
 
 static iRect documentBounds_DocumentWidget_(const iDocumentWidget *d) {

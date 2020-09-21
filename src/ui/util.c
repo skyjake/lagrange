@@ -878,6 +878,22 @@ iWidget *makePreferences_Widget(void) {
         addChild_Widget(headings, iClob(makeHeading_Widget("UI scale factor:")));
         setId_Widget(addChild_Widget(values, iClob(new_InputWidget(8))), "prefs.uiscale");
     }
+    /* Layout. */ {
+        appendTwoColumnPage_(tabs, "Layout", &headings, &values);
+        addChild_Widget(headings, iClob(makeHeading_Widget("Line width:")));
+        addChild_Widget(values, iClob(new_LabelWidget("Normal", 0, 0, NULL)));
+        addChild_Widget(headings, iClob(makeHeading_Widget("First paragaph:")));
+        addChild_Widget(values, iClob(new_LabelWidget("Emphasized", 0, 0, NULL)));
+    }
+    /* Colors. */ {
+        appendTwoColumnPage_(tabs, "Colors", &headings, &values);
+        addChild_Widget(headings, iClob(makeHeading_Widget("Saturation:")));
+        addChild_Widget(values, iClob(new_LabelWidget("Full", 0, 0, 0)));
+        addChild_Widget(headings, iClob(makeHeading_Widget("Dark theme:")));
+        addChild_Widget(values, iClob(new_LabelWidget("Colorful", 0, 0, 0)));
+        addChild_Widget(headings, iClob(makeHeading_Widget("Light theme:")));
+        addChild_Widget(values, iClob(new_LabelWidget("White", 0, 0, 0)));
+    }
     /* Proxies. */ {
         appendTwoColumnPage_(tabs, "Proxies", &headings, &values);
         addChild_Widget(headings, iClob(makeHeading_Widget("Gopher proxy:")));

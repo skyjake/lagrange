@@ -97,6 +97,8 @@ set (SOURCES
     src/history.h
     src/lookup.c
     src/lookup.h
+    src/prefs.c
+    src/prefs.h
     src/stb_image.h
     src/stb_truetype.h
     src/visited.c

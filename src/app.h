@@ -28,6 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/string.h>
 #include <the_Foundation/time.h>
 
+#include "prefs.h"
 #include "ui/color.h"
 
 iDeclareType(Bookmarks)
@@ -58,7 +59,7 @@ void        refresh_App                 (void);
 iBool       isRefreshPending_App        (void);
 uint32_t    elapsedSinceLastTicker_App  (void); /* milliseconds */
 
-int                 zoom_App            (void);
+const iPrefs *      prefs_App           (void);
 iBool               forceLineWrap_App   (void);
 iBool               forceSoftwareRender_App(void);
 enum iColorTheme    colorTheme_App      (void);
