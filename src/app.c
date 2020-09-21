@@ -139,19 +139,21 @@ static iString *serializePrefs_App_(const iApp *d) {
     const iSidebarWidget *sidebar = findWidget_App("sidebar");
     appendFormat_String(str, "window.retain arg:%d\n", d->prefs.retainWindowSize);
     if (d->prefs.retainWindowSize) {
+        const iBool isMaximized = (SDL_GetWindowFlags(d->window->win) & SDL_WINDOW_MAXIMIZED) != 0;
         int w, h, x, y;
-        SDL_GetWindowSize(d->window->win, &w, &h);
-        SDL_GetWindowPosition(d->window->win, &x, &y);
-#if defined (iPlatformLinux)
-        /* Workaround for window position being unaffected by decorations on creation. */ {
-            int bl, bt;
-            SDL_GetWindowBordersSize(d->window->win, &bt, &bl, NULL, NULL);
-            x -= bl;
-            y -= bt;
-        }
-#endif
+        x = d->window->lastRect.pos.x;
+        y = d->window->lastRect.pos.y;
+        w = d->window->lastRect.size.x;
+        h = d->window->lastRect.size.y;
         appendFormat_String(str, "window.setrect width:%d height:%d coord:%d %d\n", w, h, x, y);
         appendFormat_String(str, "sidebar.width arg:%d\n", width_SidebarWidget(sidebar));
+        /* On macOS, maximization should be applied at creation time or the window will take
+           a moment to animate to its maximized size. */
+#if !defined (iPlatformApple)
+        if (isMaximized) {
+            appendFormat_String(str, "~window.maximize\n");
+        }
+#endif
     }
     if (isVisible_Widget(sidebar)) {
         appendCStr_String(str, "sidebar.toggle\n");
@@ -798,6 +800,10 @@ iBool handleCommand_App(const char *cmd) {
     iApp *d = &app_;
     if (equal_Command(cmd, "window.retain")) {
         d->prefs.retainWindowSize = arg_Command(cmd);
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "window.maximize")) {
+        SDL_MaximizeWindow(d->window->win);
         return iTrue;
     }
     else if (equal_Command(cmd, "zoom.set")) {

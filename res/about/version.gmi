@@ -15,7 +15,8 @@
 * Fixed: Sizing and alignment of Unicode symbols in preformatted text.
 
 ## 0.2.1
-* Windows: Fixed UI text disappearing after window resize.
+* Fixed window size/state restoration issues, e.g., after window is maximized.
+* Windows: Fixed text disappearing when window is resized.
 
 ## 0.2
 * Added an icon for quote paragraphs.

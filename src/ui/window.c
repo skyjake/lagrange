@@ -507,6 +507,7 @@ void init_Window(iWindow *d, iRect rect) {
     theWindow_ = d;
     iZap(d->cursors);
     d->initialPos = rect.pos;
+    d->lastRect = rect;
     d->pendingCursor = NULL;
     d->isDrawFrozen = iTrue;
     uint32_t flags = 0;
@@ -525,7 +526,7 @@ void init_Window(iWindow *d, iRect rect) {
             exit(-2);
         }
     }
-    if (left_Rect(rect) >= 0) {
+    if (left_Rect(rect) >= 0 || top_Rect(rect) >= 0) {
         SDL_SetWindowPosition(d->win, left_Rect(rect), top_Rect(rect));
     }
     SDL_SetWindowMinimumSize(d->win, 400, 250);
@@ -596,6 +597,15 @@ SDL_Renderer *renderer_Window(const iWindow *d) {
     return d->render;
 }
 
+static iBool isMaximized_Window_(const iWindow *d) {
+#if !defined (iPlatformApple)
+    return (SDL_GetWindowFlags(d->win) & (SDL_WINDOW_MINIMIZED | SDL_WINDOW_MAXIMIZED)) != 0;
+#else
+    iUnused(d);
+    return iFalse; /* There is fullscreen mode but that is not handled at the moment. */
+#endif
+}
+
 static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
     switch (ev->event) {
 #if defined (LAGRANGE_ENABLE_WINDOWPOS_FIX)
@@ -608,11 +618,22 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
             }
             return iFalse;
 #endif
-        case SDL_WINDOWEVENT_MOVED:
-            /* No need to do anything. */
+        case SDL_WINDOWEVENT_MOVED: {
+            if (!isMaximized_Window_(d)) {
+                d->lastRect.pos = init_I2(ev->data1, ev->data2);
+                iInt2 border = zero_I2();
+#if !defined (iPlatformApple)
+                SDL_GetWindowBordersSize(d->win, &border.y, &border.x, NULL, NULL);
+#endif
+                d->lastRect.pos = max_I2(zero_I2(), sub_I2(d->lastRect.pos, border));
+            }
             return iTrue;
+        }
         case SDL_WINDOWEVENT_RESIZED:
         case SDL_WINDOWEVENT_SIZE_CHANGED:
+            if (!isMaximized_Window_(d)) {
+                d->lastRect.size = init_I2(ev->data1, ev->data2);
+            }
             updateRootSize_Window_(d);
             return iTrue;
         case SDL_WINDOWEVENT_LEAVE:
