@@ -1256,9 +1256,9 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                 }
                 else if (startsWith_String(&d->sourceMime, "image/")) {
                     appendCStr_String(savePath, cstr_String(&d->sourceMime) + 6);
+                }
+            }
             if (fileExists_FileInfo(savePath)) {
-        }
-    }
                 /* Make it unique. */
                 iDate now;
                 initCurrent_Date(&now);
