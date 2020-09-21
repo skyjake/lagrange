@@ -1075,6 +1075,9 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         invalidate_DocumentWidget_(d);
         refresh_Widget(w);
     }
+    else if (equal_Command(cmd, "document.layout.changed") && document_App() == d) {
+        updateSize_DocumentWidget(d);
+    }
     else if (equal_Command(cmd, "tabs.changed")) {
         d->showLinkNumbers = iFalse;
         if (cmp_String(id_Widget(w), suffixPtr_Command(cmd, "id")) == 0) {

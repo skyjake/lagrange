@@ -29,6 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "gmutil.h"
 #include "labelwidget.h"
 #include "inputwidget.h"
+#include "keys.h"
 #include "widget.h"
 #include "text.h"
 #include "window.h"
@@ -404,6 +405,7 @@ static iBool tabSwitcher_(iWidget *tabs, const char *cmd) {
         }
         tabIndex += (equal_Command(cmd, "tabs.next") ? +1 : -1);
         showTabPage_Widget(tabs, child_Widget(pages, iWrap(tabIndex, 0, childCount_Widget(pages))));
+        refresh_Widget(tabs);
         return iTrue;
     }
     return iFalse;
@@ -816,7 +818,7 @@ iWidget *makeToggle_Widget(const char *id) {
     return toggle;
 }
 
-static iWidget *appendTwoColumnPage_(iWidget *tabs, const char *title, iWidget **headings,
+static iWidget *appendTwoColumnPage_(iWidget *tabs, const char *title, int shortcut, iWidget **headings,
                                      iWidget **values) {
     iWidget *page = new_Widget();
     setFlags_Widget(page, arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag |
@@ -829,7 +831,7 @@ static iWidget *appendTwoColumnPage_(iWidget *tabs, const char *title, iWidget *
     *values = addChildFlags_Widget(
         columns, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
     addChildFlags_Widget(page, iClob(new_Widget()), expand_WidgetFlag);
-    appendTabPage_Widget(tabs, page, title, 0, 0);
+    appendTabPage_Widget(tabs, page, title, shortcut, shortcut ? KMOD_PRIMARY : 0);
     return page;
 }
 
@@ -845,6 +847,12 @@ static void expandInputFieldWidth_(iInputWidget *input) {
         right_Rect(bounds_Widget(page)) - left_Rect(bounds_Widget(constAs_Widget(input)));
 }
 
+static void addRadioButton_(iWidget *parent, const char *id, const char *label, const char *cmd) {
+    setId_Widget(
+        addChildFlags_Widget(parent, iClob(new_LabelWidget(label, 0, 0, cmd)), radio_WidgetFlag),
+        id);
+}
+
 iWidget *makePreferences_Widget(void) {
     iWidget *dlg = makeSheet_Widget("prefs");
     addChildFlags_Widget(dlg,
@@ -853,7 +861,7 @@ iWidget *makePreferences_Widget(void) {
     iWidget *tabs = makeTabs_Widget(dlg);
     iWidget *headings, *values;
     /* General preferences. */ {
-        appendTwoColumnPage_(tabs, "General", &headings, &values);
+        appendTwoColumnPage_(tabs, "General", '1', &headings, &values);
         addChild_Widget(headings, iClob(makeHeading_Widget("Downloads folder:")));
         setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.downloads");
         makeTwoColumnHeading_("WINDOW", headings, values);
@@ -876,23 +884,23 @@ iWidget *makePreferences_Widget(void) {
         setId_Widget(addChild_Widget(values, iClob(new_InputWidget(8))), "prefs.uiscale");
     }
     /* Layout. */ {
-        appendTwoColumnPage_(tabs, "Layout", &headings, &values);
+        appendTwoColumnPage_(tabs, "Layout", '2', &headings, &values);
         addChild_Widget(headings, iClob(makeHeading_Widget("Line width:")));
         iWidget *widths = new_Widget();
         /* Line widths. */ {
-            addChild_Widget(widths, iClob(new_LabelWidget("\u20132", 0, 0, "linewidth.set arg:-2")));
-            addChild_Widget(widths, iClob(new_LabelWidget("\u20131", 0, 0, "linewidth.set arg:-1")));
-            addChild_Widget(widths, iClob(new_LabelWidget("Normal", 0, 0, "linewidth.set arg:0")));
-            addChild_Widget(widths, iClob(new_LabelWidget("+1", 0, 0, "linewidth.set arg:1")));
-            addChild_Widget(widths, iClob(new_LabelWidget("+2", 0, 0, "linewidth.set arg:2")));
-            addChild_Widget(widths, iClob(new_LabelWidget("Window", 0, 0, "linewidth.set arg:1000")));
+            addRadioButton_(widths, "prefs.linewidth.30", "\u20132", "linewidth.set arg:30");
+            addRadioButton_(widths, "prefs.linewidth.35", "\u20131", "linewidth.set arg:35");
+            addRadioButton_(widths, "prefs.linewidth.40", "Normal", "linewidth.set arg:40");
+            addRadioButton_(widths, "prefs.linewidth.45", "+1", "linewidth.set arg:45");
+            addRadioButton_(widths, "prefs.linewidth.50", "+2", "linewidth.set arg:50");
+            addRadioButton_(widths, "prefs.linewidth.1000", "Window", "linewidth.set arg:1000");
         }
         addChildFlags_Widget(values, iClob(widths), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
         addChild_Widget(headings, iClob(makeHeading_Widget("Big 1st paragaph:")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.biglede")));
     }
     /* Colors. */ {
-        appendTwoColumnPage_(tabs, "Colors", &headings, &values);
+        appendTwoColumnPage_(tabs, "Colors", '3', &headings, &values);
         addChild_Widget(headings, iClob(makeHeading_Widget("Dark theme:")));
         addChild_Widget(values, iClob(new_LabelWidget("Colorful", 0, 0, 0)));
         addChild_Widget(headings, iClob(makeHeading_Widget("Light theme:")));
@@ -900,15 +908,15 @@ iWidget *makePreferences_Widget(void) {
         addChild_Widget(headings, iClob(makeHeading_Widget("Saturation:")));
         iWidget *sats = new_Widget();
         /* Saturation levels. */ {
-            addChild_Widget(sats, iClob(new_LabelWidget("Full", 0, 0, "saturation.set arg:100")));
-            addChild_Widget(sats, iClob(new_LabelWidget("Reduced", 0, 0, "saturation.set arg:66")));
-            addChild_Widget(sats, iClob(new_LabelWidget("Minimal", 0, 0, "saturation.set arg:33")));
-            addChild_Widget(sats, iClob(new_LabelWidget("Monochrome", 0, 0, "saturation.set arg:0")));
+            addRadioButton_(sats, "prefs.saturation.3", "Full", "saturation.set arg:100");
+            addRadioButton_(sats, "prefs.saturation.2", "Reduced", "saturation.set arg:66");
+            addRadioButton_(sats, "prefs.saturation.1", "Minimal", "saturation.set arg:33");
+            addRadioButton_(sats, "prefs.saturation.0", "Monochrome", "saturation.set arg:0");
         }
         addChildFlags_Widget(values, iClob(sats), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
     }
     /* Proxies. */ {
-        appendTwoColumnPage_(tabs, "Proxies", &headings, &values);
+        appendTwoColumnPage_(tabs, "Proxies", '4', &headings, &values);
         addChild_Widget(headings, iClob(makeHeading_Widget("Gopher proxy:")));
         setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.proxy.gopher");
         addChild_Widget(headings, iClob(makeHeading_Widget("HTTP proxy:")));
@@ -926,6 +934,8 @@ iWidget *makePreferences_Widget(void) {
         addChild_Widget(div, iClob(new_LabelWidget("Dismiss", SDLK_ESCAPE, 0, "prefs.dismiss")));
     }
     addChild_Widget(dlg, iClob(div));
+    addAction_Widget(dlg, prevTab_KeyShortcut, "tabs.prev");
+    addAction_Widget(dlg, nextTab_KeyShortcut, "tabs.next");
     addChild_Widget(get_Window()->root, iClob(dlg));
     centerSheet_Widget(dlg);
     return dlg;

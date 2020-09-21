@@ -153,6 +153,8 @@ static iString *serializePrefs_App_(const iApp *d) {
         if (isMaximized) {
             appendFormat_String(str, "~window.maximize\n");
         }
+#else
+        iUnused(isMaximized);
 #endif
     }
     if (isVisible_Widget(sidebar)) {
@@ -164,6 +166,8 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "sidebar.mode arg:%d\n", mode_SidebarWidget(sidebar));
     appendFormat_String(str, "uiscale arg:%f\n", uiScale_Window(d->window));
     appendFormat_String(str, "zoom.set arg:%d\n", d->prefs.zoomPercent);
+    appendFormat_String(str, "linewidth.set arg:%d\n", d->prefs.lineWidth);
+    appendFormat_String(str, "biglede.set arg:%d\n", d->prefs.bigFirstParagraph);
     appendFormat_String(str, "theme.set arg:%d auto:1\n", d->prefs.theme);
     appendFormat_String(str, "ostheme arg:%d\n", d->prefs.useSystemTheme);
     appendFormat_String(str, "saturation.set arg:%d\n", (int) ((d->prefs.saturation * 100) + 0.5f));
@@ -845,6 +849,16 @@ iBool handleCommand_App(const char *cmd) {
         d->prefs.useSystemTheme = arg_Command(cmd);
         return iTrue;
     }
+    else if (equal_Command(cmd, "linewidth.set")) {
+        d->prefs.lineWidth = iMax(20, arg_Command(cmd));
+        postCommand_App("document.layout.changed");
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "prefs.biglede.changed")) {
+        d->prefs.bigFirstParagraph = arg_Command(cmd) != 0;
+        postCommand_App("document.layout.changed");
+        return iTrue;
+    }
     else if (equal_Command(cmd, "saturation.set")) {
         d->prefs.saturation = (float) arg_Command(cmd) / 100.0f;
         postCommandf_App("theme.changed auto:1");
@@ -963,6 +977,16 @@ iBool handleCommand_App(const char *cmd) {
         setToggle_Widget(findChild_Widget(dlg, "prefs.retainwindow"), d->prefs.retainWindowSize);
         setText_InputWidget(findChild_Widget(dlg, "prefs.uiscale"),
                             collectNewFormat_String("%g", uiScale_Window(d->window)));
+        setFlags_Widget(
+            findChild_Widget(dlg, format_CStr("prefs.linewidth.%d", d->prefs.lineWidth)),
+            selected_WidgetFlag,
+            iTrue);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.biglede"), d->prefs.bigFirstParagraph);
+        setFlags_Widget(
+            findChild_Widget(
+                dlg, format_CStr("prefs.saturation.%d", (int) (d->prefs.saturation * 3.99f))),
+            selected_WidgetFlag,
+            iTrue);
         setText_InputWidget(findChild_Widget(dlg, "prefs.proxy.http"),
                             schemeProxy_App(range_CStr("http")));
         setText_InputWidget(findChild_Widget(dlg, "prefs.proxy.gopher"),
