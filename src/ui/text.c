@@ -302,6 +302,10 @@ void deinit_Text(void) {
     iRelease(d->ansiEscape);
 }
 
+void setOpacity_Text(float opacity) {
+    SDL_SetTextureAlphaMod(text_.cache, iClamp(opacity, 0.0f, 1.0f) * 255 + 0.5f);
+}
+
 void setContentFontSize_Text(float fontSizeFactor) {
     fontSizeFactor *= contentScale_Text_;
     iAssert(fontSizeFactor > 0);
@@ -490,7 +494,7 @@ static enum iFontId fontId_Text_(const iFont *font) {
 }
 
 iLocalDef iBool isWrapBoundary_(iChar a, iChar b) {
-    if (b == '/' || b == '-' || b == ',' || b == ';' || b == ':') {
+    if (b == '/' || b == '-' || b == ',' || b == ';' || b == ':' || b == '.') {
         return iTrue;
     }
     return !isSpace_Char(a) && isSpace_Char(b);
