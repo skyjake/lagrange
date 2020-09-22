@@ -127,6 +127,39 @@ iRangei union_Rangei(iRangei a, iRangei b) {
     return (iRangei){ iMin(a.start, b.start), iMax(a.end, b.end) };
 }
 
+/*----------------------------------------------------------------------------------------------*/
+
+iBool isFinished_Anim(const iAnim *d) {
+    return frameTime_Window(get_Window()) >= d->due;
+}
+
+void init_Anim(iAnim *d, float value) {
+    d->due = d->when = frameTime_Window(get_Window());
+    d->from = d->to = value;
+}
+
+void setValue_Anim(iAnim *d, float to, uint32_t span) {
+    if (fabsf(to - d->to) > 0.00001f) {
+        const uint32_t now = frameTime_Window(get_Window());
+        d->from = value_Anim(d);
+        d->to   = to;
+        d->when = now;
+        d->due  = now + span;
+    }
+}
+
+float value_Anim(const iAnim *d) {
+    const uint32_t now = frameTime_Window(get_Window());
+    if (now >= d->due) {
+        return d->to;
+    }
+    if (now <= d->when) {
+        return d->from;
+    }
+    const float pos = (float) (now - d->when) / (float) (d->due - d->when);
+    return d->from * (1.0f - pos) + d->to * pos;
+}
+
 /*-----------------------------------------------------------------------------------------------*/
 
 void init_Click(iClick *d, iAnyObject *widget, int button) {

@@ -66,6 +66,20 @@ iLocalDef iBool isOverlapping_Rangei(iRangei a, iRangei b) {
 
 /*-----------------------------------------------------------------------------------------------*/
 
+iDeclareType(Anim)
+
+struct Impl_Anim {
+    float    from, to;
+    uint32_t when, due;
+};
+
+void    init_Anim       (iAnim *, float value);
+void    setValue_Anim   (iAnim *, float to, uint32_t span);
+float   value_Anim      (const iAnim *);
+iBool   isFinished_Anim (const iAnim *);
+
+/*-----------------------------------------------------------------------------------------------*/
+
 enum iClickResult {
     none_ClickResult,
     started_ClickResult,
