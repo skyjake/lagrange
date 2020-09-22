@@ -115,7 +115,9 @@ typedef void (*iGmDocumentRenderFunc)(void *, const iGmRun *);
 void            render_GmDocument           (const iGmDocument *, iRangei visRangeY,
                                              iGmDocumentRenderFunc render, void *);
 iInt2           size_GmDocument             (const iGmDocument *);
+const iGmRun *  siteBanner_GmDocument       (const iGmDocument *);
 iBool           hasSiteBanner_GmDocument    (const iGmDocument *);
+const iString * bannerText_GmDocument       (const iGmDocument *);
 const iArray *  headings_GmDocument         (const iGmDocument *);
 const iString * source_GmDocument           (const iGmDocument *);
 

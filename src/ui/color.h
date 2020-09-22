@@ -117,6 +117,7 @@ enum iColorId {
     tmBannerBackground_ColorId,
     tmBannerTitle_ColorId,
     tmBannerIcon_ColorId,
+    tmBannerSideTitle_ColorId,
     tmInlineContentMetadata_ColorId,
     tmBadLink_ColorId,
 
@@ -192,6 +193,10 @@ iDeclareType(HSLColor)
 struct Impl_Color {
     uint8_t r, g, b, a;
 };
+
+iLocalDef iBool equal_Color(const iColor a, const iColor b) {
+    return memcmp(&a, &b, sizeof(a)) == 0;
+}
 
 struct Impl_HSLColor {
     float hue, sat, lum, a;

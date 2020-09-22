@@ -110,6 +110,7 @@ struct Impl_GmDocument {
     iInt2 size;
     iArray layout; /* contents of source, laid out in document space */
     iPtrArray links;
+    iString bannerText;
     iString title; /* the first top-level title */
     iArray headings;
     iPtrArray images; /* persistent across layouts, references links by ID */
@@ -336,6 +337,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     clearLinks_GmDocument_(d);
     clear_Array(&d->headings);
     clear_String(&d->title);
+    clear_String(&d->bannerText);
     if (d->size.x <= 0 || isEmpty_String(&d->source)) {
         return;
     }
@@ -419,6 +421,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             addSiteBanner = iFalse;
             const iRangecc bannerText = urlHost_String(&d->url);
             if (!isEmpty_Range(&bannerText)) {
+                setRange_String(&d->bannerText, bannerText);
                 iGmRun banner    = { .flags = decoration_GmRunFlag | siteBanner_GmRunFlag };
                 banner.bounds    = zero_Rect();
                 banner.visBounds = init_Rect(0, 0, d->size.x, lineHeight_Text(banner_FontId) * 2);
@@ -618,6 +621,7 @@ void init_GmDocument(iGmDocument *d) {
     d->size = zero_I2();
     init_Array(&d->layout, sizeof(iGmRun));
     init_PtrArray(&d->links);
+    init_String(&d->bannerText);
     init_String(&d->title);
     init_Array(&d->headings, sizeof(iGmHeading));
     init_PtrArray(&d->images);
@@ -626,6 +630,7 @@ void init_GmDocument(iGmDocument *d) {
 }
 
 void deinit_GmDocument(iGmDocument *d) {
+    deinit_String(&d->bannerText);
     deinit_String(&d->title);
     clearLinks_GmDocument_(d);
     deinit_PtrArray(&d->links);
@@ -903,8 +908,12 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
             setHsl_Color(i, color);
         }
     }
+    /* Derived colors. */
     set_Color(tmQuoteIcon_ColorId,
               mix_Color(get_Color(tmQuote_ColorId), get_Color(tmBackground_ColorId), 0.55f));
+    set_Color(tmBannerSideTitle_ColorId,
+              mix_Color(get_Color(tmBannerTitle_ColorId), get_Color(tmBackground_ColorId),
+                        theme == colorfulDark_GmDocumentTheme ? 0.55f : 0));
     /* Special exceptions. */
     if (seed) {
         if (equal_CStr(cstr_Block(seed), "gemini.circumlunar.space")) {
@@ -1047,11 +1056,22 @@ iInt2 size_GmDocument(const iGmDocument *d) {
 }
 
 iBool hasSiteBanner_GmDocument(const iGmDocument *d) {
+    return siteBanner_GmDocument(d) != NULL;
+}
+
+const iGmRun *siteBanner_GmDocument(const iGmDocument *d) {
     if (isEmpty_Array(&d->layout)) {
         return iFalse;
     }
     const iGmRun *first = constFront_Array(&d->layout);
-    return (first->flags & siteBanner_GmRunFlag) != 0;
+    if (first->flags & siteBanner_GmRunFlag) {
+        return first;
+    }
+    return NULL;
+}
+
+const iString *bannerText_GmDocument(const iGmDocument *d) {
+    return &d->bannerText;
 }
 
 const iArray *headings_GmDocument(const iGmDocument *d) {

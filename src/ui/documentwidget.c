@@ -146,6 +146,7 @@ struct Impl_DocumentWidget {
     iObjectList *  media;
     iString        sourceMime;
     iBlock         sourceContent; /* original content as received, for saving */
+    iTime          sourceTime;
     iGmDocument *  doc;
     int            certFlags;
     iDate          certExpiry;
@@ -168,6 +169,7 @@ struct Impl_DocumentWidget {
     int            smoothSpeed;
     int            smoothLastOffset;
     iBool          smoothContinue;
+    iAnim          sideOpacity;
     iWidget *      menu;
     iVisBuf *      visBuf;
     iPtrSet *      invalidRuns;
@@ -207,6 +209,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     d->showLinkNumbers  = iFalse;
     d->visBuf           = new_VisBuf();
     d->invalidRuns      = new_PtrSet();
+    init_Anim(&d->sideOpacity, 0);
     init_String(&d->sourceMime);
     init_Block(&d->sourceContent, 0);
     init_PtrArray(&d->visibleLinks);
@@ -374,6 +377,23 @@ static void updateHover_DocumentWidget_(iDocumentWidget *d, iInt2 mouse) {
     }
 }
 
+static void animate_DocumentWidget_(void *ticker) {
+    iDocumentWidget *d = ticker;
+    if (!isFinished_Anim(&d->sideOpacity)) {
+        addTicker_App(animate_DocumentWidget_, d);
+    }
+}
+
+static void updateSideOpacity_DocumentWidget_(iDocumentWidget *d) {
+    float opacity = 0.0f;
+    const iGmRun *banner = siteBanner_GmDocument(d->doc);
+    if (banner && bottom_Rect(banner->visBounds) < d->scrollY) {
+        opacity = 1.0f;
+    }
+    setValue_Anim(&d->sideOpacity, opacity, opacity < 0.5f ? 166 : 333);
+    animate_DocumentWidget_(d);
+}
+
 static void updateVisible_DocumentWidget_(iDocumentWidget *d) {
     const iRangei visRange = visibleRange_DocumentWidget_(d);
     const iRect   bounds   = bounds_Widget(as_Widget(d));
@@ -385,6 +405,7 @@ static void updateVisible_DocumentWidget_(iDocumentWidget *d) {
     clear_PtrArray(&d->visibleLinks);
     render_GmDocument(d->doc, visRange, addVisibleLink_DocumentWidget_, d);
     updateHover_DocumentWidget_(d, mouseCoord_Window(get_Window()));
+    updateSideOpacity_DocumentWidget_(d);
     /* Remember scroll positions of recently visited pages. */ {
         iRecentUrl *recent = mostRecentUrl_History(d->mod.history);
         if (recent && docSize && d->state == ready_RequestState) {
@@ -537,6 +558,7 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
     setSource_DocumentWidget_(d, src);
     resetSmoothScroll_DocumentWidget_(d);
     d->scrollY = 0;
+    init_Anim(&d->sideOpacity, 0);
     d->state = ready_RequestState;
 }
 
@@ -578,7 +600,7 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse
             updateTheme_DocumentWidget_(d);
         }
         clear_String(&d->sourceMime);
-//        set_Block(&d->sourceContent, &response->body);
+        d->sourceTime = response->when;
         initBlock_String(&str, &response->body);
         if (category_GmStatusCode(statusCode) == categorySuccess_GmStatusCode) {
             /* Check the MIME type. */
@@ -1706,6 +1728,11 @@ struct Impl_DrawContext {
     iBool showLinkNumbers;
 };
 
+static iRangecc bannerText_DocumentWidget_(const iDocumentWidget *d) {
+    return isEmpty_String(d->titleUser) ? range_String(bannerText_GmDocument(d->doc))
+                                        : range_String(d->titleUser);
+}
+
 static void fillRange_DrawContext_(iDrawContext *d, const iGmRun *run, enum iColorId color,
                                    iRangecc mark, iBool *isInside) {
     if (mark.start > mark.end) {
@@ -1802,8 +1829,9 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
         drawRange_Text(run->font,
                        bpos,
                        tmBannerTitle_ColorId,
-                       isEmpty_String(d->widget->titleUser) ? run->text
-                                                            : range_String(d->widget->titleUser));
+                       bannerText_DocumentWidget_(d->widget));
+//                       isEmpty_String(d->widget->titleUser) ? run->text
+//                                                            : range_String(d->widget->titleUser));
         deinit_String(&bannerText);
     }
     else {
@@ -1936,6 +1964,59 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
 //    drawRect_Paint(&d->paint, (iRect){ visPos, run->visBounds.size }, red_ColorId);
 }
 
+static void drawSideElements_DocumentWidget_(const iDocumentWidget *d) {
+    const iWidget *w         = constAs_Widget(d);
+    const iRect    bounds    = bounds_Widget(w);
+    const iRect    docBounds = documentBounds_DocumentWidget_(d);
+    const int      margin    = gap_UI * d->pageMargin;
+    const iGmRun * banner    = siteBanner_GmDocument(d->doc);
+    float          opacity   = value_Anim(&d->sideOpacity);
+    const int      minBannerSize = lineHeight_Text(banner_FontId) * 2;
+    const int      avail         = left_Rect(docBounds) - left_Rect(bounds) - 2 * margin;
+    if (avail > minBannerSize) {
+        if (banner && opacity > 0) {
+            setOpacity_Text(opacity);
+            SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_BLEND);
+            const iChar icon = siteIcon_GmDocument(d->doc);
+            iRect       rect = { add_I2(topLeft_Rect(bounds), init1_I2(margin)), init1_I2(minBannerSize) };
+            iPaint      p;
+            init_Paint(&p);
+            p.alpha = opacity * 255;
+            int offset = iMax(0, bottom_Rect(banner->visBounds) - d->scrollY);
+            rect.pos.y += offset;
+            if (equal_Color(get_Color(tmBannerBackground_ColorId), get_Color(tmBackground_ColorId))) {
+                drawRectThickness_Paint(&p, rect, gap_UI / 2, tmBannerIcon_ColorId);
+            }
+            else {
+                fillRect_Paint(&p, rect, tmBannerBackground_ColorId);
+            }
+            iString str;
+            initUnicodeN_String(&str, &icon, 1);
+            drawCentered_Text(banner_FontId, rect, iTrue, tmBannerIcon_ColorId, "%s", cstr_String(&str));
+            if (avail >= minBannerSize * 2) {
+                const char *endp;
+                iRangecc    text = bannerText_DocumentWidget_(d);
+                iInt2       pos  = addY_I2(bottomLeft_Rect(rect), gap_Text);
+                const int   font = banner_FontId;
+                while (!isEmpty_Range(&text)) {
+                    tryAdvance_Text(font, text, avail - 2 * margin, &endp);
+                    drawRange_Text(font, pos, tmBannerSideTitle_ColorId, (iRangecc){ text.start, endp });
+                    text.start = endp;
+                    pos.y += lineHeight_Text(font);
+                }
+            }
+            setOpacity_Text(1.0f);
+            SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_NONE);
+        }
+        /* Update date. */
+        drawString_Text(default_FontId,
+                        add_I2(bottomLeft_Rect(bounds),
+                               init_I2(margin, -margin + -2 * lineHeight_Text(default_FontId))),
+                        tmQuoteIcon_ColorId,
+                        collect_String(format_Time(&d->sourceTime, "Received\n%H:%M %b %d, %Y")));
+    }
+}
+
 static void draw_DocumentWidget_(const iDocumentWidget *d) {
     const iWidget *w        = constAs_Widget(d);
     const iRect    bounds   = bounds_Widget(w);
@@ -2025,6 +2106,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
                        init_Rect(bounds.pos.x, yBottom, bounds.size.x, bottom_Rect(bounds) - yBottom),
                        tmBackground_ColorId);
     }
+    drawSideElements_DocumentWidget_(d);
     draw_Widget(w);
 }
 
