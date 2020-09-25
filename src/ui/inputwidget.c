@@ -204,6 +204,11 @@ static uint32_t cursorTimer_(uint32_t interval, void *w) {
     return interval;
 }
 
+void selectAll_InputWidget(iInputWidget *d) {
+    d->mark = (iRanges){ 0, size_Array(&d->text) };
+    refresh_Widget(as_Widget(d));
+}
+
 void begin_InputWidget(iInputWidget *d) {
     iWidget *w = as_Widget(d);
     if (flags_Widget(w) & selected_WidgetFlag) {

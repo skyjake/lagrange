@@ -7,8 +7,12 @@
 # Release notes
 
 ## 0.3
-* Added "Open Link in Background Tab" to link context menu.
+* Added preferences for font and page layout.
+* Added preference for color saturation.
 * Added tabs in Preferences for better grouping.
+* Page outline appears when mouse is hovering over the scrollbar.
+* Site icon appears on the left when the window is wide enough.
+* Added "Open Link in Background Tab" to link context menu.
 * Slightly smaller first paragraph font size.
 * Improved text selection behavior when starting on empty space.
 * Fixed: Centered popups do not remain centered when window is resized.

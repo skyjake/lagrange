@@ -105,13 +105,19 @@ iLocalDef iBool isVariationSelector_Char(iChar ch) {
 
 #define variationSelectorEmoji_Char     ((iChar) 0xfe0f)
 
+enum iTextFont {
+    nunito_TextFont,
+    firaSans_TextFont,
+};
+
 extern int gap_Text; /* affected by content font size */
 
 void    init_Text           (SDL_Renderer *);
 void    deinit_Text         (void);
 
+void    setContentFont_Text     (enum iTextFont font);
 void    setContentFontSize_Text (float fontSizeFactor); /* affects all except `default*` fonts */
-void    resetFonts_Text     (void);
+void    resetFonts_Text         (void);
 
 int     lineHeight_Text     (int fontId);
 iInt2   measure_Text        (int fontId, const char *text);
@@ -120,6 +126,7 @@ iRect   visualBounds_Text   (int fontId, iRangecc text);
 iInt2   advance_Text        (int fontId, const char *text);
 iInt2   advanceN_Text       (int fontId, const char *text, size_t n); /* `n` in characters */
 iInt2   advanceRange_Text   (int fontId, iRangecc text);
+iInt2   advanceWrapRange_Text   (int fontId, int maxWidth, iRangecc text);
 
 iInt2   tryAdvance_Text         (int fontId, iRangecc text, int width, const char **endPos);
 iInt2   tryAdvanceNoWrap_Text   (int fontId, iRangecc text, int width, const char **endPos);
@@ -137,6 +144,7 @@ void    drawAlign_Text      (int fontId, iInt2 pos, int color, enum iAlignment a
 void    drawCentered_Text   (int fontId, iRect rect, iBool alignVisual, int color, const char *text, ...);
 void    drawString_Text     (int fontId, iInt2 pos, int color, const iString *text);
 void    drawRange_Text      (int fontId, iInt2 pos, int color, iRangecc text);
+int     drawWrapRange_Text  (int fontId, iInt2 pos, int maxWidth, int color, iRangecc text); /* returns new Y */
 
 SDL_Texture *   glyphCache_Text     (void);
 

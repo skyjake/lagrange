@@ -6,6 +6,7 @@ void init_Prefs(iPrefs *d) {
     d->retainWindowSize  = iTrue;
     d->zoomPercent       = 100;
     d->forceLineWrap     = iFalse;
+    d->font              = nunito_TextFont;
     d->lineWidth         = 40;
     d->bigFirstParagraph = iTrue;
     d->docThemeDark      = colorfulDark_GmDocumentTheme;

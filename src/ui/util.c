@@ -36,6 +36,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <the_Foundation/math.h>
 #include <the_Foundation/path.h>
+#include <SDL_timer.h>
 
 iBool isCommand_SDLEvent(const SDL_Event *d) {
     return d->type == SDL_USEREVENT && d->user.code == command_UserEventCode;
@@ -140,7 +141,7 @@ void init_Anim(iAnim *d, float value) {
 
 void setValue_Anim(iAnim *d, float to, uint32_t span) {
     if (fabsf(to - d->to) > 0.00001f) {
-        const uint32_t now = frameTime_Window(get_Window());
+        const uint32_t now = SDL_GetTicks();
         d->from = value_Anim(d);
         d->to   = to;
         d->when = now;
@@ -918,6 +919,13 @@ iWidget *makePreferences_Widget(void) {
     }
     /* Layout. */ {
         appendTwoColumnPage_(tabs, "Layout", '2', &headings, &values);
+        addChild_Widget(headings, iClob(makeHeading_Widget("Font:")));
+        iWidget *fonts = new_Widget();
+        /* Fonts. */ {
+            addRadioButton_(fonts, "prefs.font.0", "Nunito", "font.set arg:0");
+            addRadioButton_(fonts, "prefs.font.1", "Fira Sans", "font.set arg:1");
+        }
+        addChildFlags_Widget(values, iClob(fonts), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
         addChild_Widget(headings, iClob(makeHeading_Widget("Line width:")));
         iWidget *widths = new_Widget();
         /* Line widths. */ {

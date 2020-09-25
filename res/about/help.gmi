@@ -132,7 +132,19 @@ In addition to a title, bookmarks can have tags. Some tags have a special meanin
 
 Gemini uses TLS client certificates for manual user/session identification purposes. This is analogous to logging into a web site, except you are in full control of the information. The term "Identity" is used in Lagrange to refer to client certificates.
 
-Lagrange can easily create a new identity. The shortcut for this is ${SHIFT+}${CTRL+}N. Consider any information you enter in the certificate as public; only the Common Name is required and will appear as the issuer and subject of the certificate.
+The Identities sidebar tab shows all identities known to Lagrange. Press ${CTRL+}3 to show it. This includes identities created in Lagrange and any identities based on imported X.509 certificates.
+
+### Creating a new identity
+
+Click on the 👤 button in the navigation bar and select "New Identity...". The shortcut for this is ${SHIFT+}${CTRL+}N.
+
+Consider any information you enter in the certificate as public; only the Common Name is required and will appear as the issuer and subject of the certificate.
+
+### Using an identity
+
+You'll need to select an identity when you encounter this error message:
+
+...
 
 Clicking on an identity in the sidebar will toggle it on/off for the currently open URL. On subsequent page loads, the certificate will then be sent to the server when the URL or any URL under it is fetched. You can click on the 👤 button in the navigation bar to see which identity is being used for the current page.
 

@@ -142,16 +142,17 @@ struct Impl_CacheRow {
 };
 
 struct Impl_Text {
-    float         contentFontSize;
-    iFont         fonts[max_FontId];
-    SDL_Renderer *render;
-    SDL_Texture * cache;
-    iInt2         cacheSize;
-    int           cacheRowAllocStep;
-    int           cacheBottom;
-    iArray        cacheRows;
-    SDL_Palette * grayscale;
-    iRegExp *     ansiEscape;
+    enum iTextFont contentFont;
+    float          contentFontSize;
+    iFont          fonts[max_FontId];
+    SDL_Renderer * render;
+    SDL_Texture *  cache;
+    iInt2          cacheSize;
+    int            cacheRowAllocStep;
+    int            cacheBottom;
+    iArray         cacheRows;
+    SDL_Palette *  grayscale;
+    iRegExp *      ansiEscape;
 };
 
 static iText text_;
@@ -159,6 +160,16 @@ static iText text_;
 static void initFonts_Text_(iText *d) {
     const float textSize = fontSize_UI * d->contentFontSize;
     const float monoSize = fontSize_UI * d->contentFontSize / contentScale_Text_ * 0.866f;
+    const iBlock *regularFont = &fontNunitoRegular_Embedded;
+    const iBlock *italicFont  = &fontNunitoLightItalic_Embedded;
+    const iBlock *boldFont    = &fontNunitoExtraBold_Embedded;
+    const iBlock *lightFont   = &fontNunitoExtraLight_Embedded;
+    if (d->contentFont == firaSans_TextFont) {
+        regularFont = &fontFiraSansRegular_Embedded;
+        italicFont  = &fontFiraSansItalic_Embedded;
+        boldFont    = &fontFiraSansBold_Embedded;
+        lightFont   = &fontFiraSansLight_Embedded;
+    }
     const struct {
         const iBlock *ttf;
         int size;
@@ -168,17 +179,17 @@ static void initFonts_Text_(iText *d) {
         { &fontSourceSansProRegular_Embedded, fontSize_UI * 1.125f, defaultMediumSymbols_FontId },
         { &fontFiraMonoRegular_Embedded,      fontSize_UI * 0.866f, defaultSymbols_FontId },
         /* content fonts */
-        { &fontNunitoRegular_Embedded,        textSize,             symbols_FontId },
+        { regularFont,                        textSize,             symbols_FontId },
         { &fontFiraMonoRegular_Embedded,      monoSize,             monospaceSymbols_FontId },
         { &fontFiraMonoRegular_Embedded,      monoSize * 0.750f,    monospaceSmallSymbols_FontId },
-        { &fontNunitoRegular_Embedded,        textSize * 1.200f,    mediumSymbols_FontId },
-        { &fontNunitoRegular_Embedded,        textSize * 1.333f,    bigSymbols_FontId },
-        { &fontNunitoLightItalic_Embedded,    textSize,             symbols_FontId },
-        { &fontNunitoExtraBold_Embedded,      textSize,             symbols_FontId },
-        { &fontNunitoExtraBold_Embedded,      textSize * 1.333f,    mediumSymbols_FontId },
-        { &fontNunitoExtraBold_Embedded,      textSize * 1.666f,    largeSymbols_FontId },
-        { &fontNunitoExtraBold_Embedded,      textSize * 2.000f,    hugeSymbols_FontId },
-        { &fontNunitoExtraLight_Embedded,     textSize * 1.666f,    largeSymbols_FontId },
+        { regularFont,                        textSize * 1.200f,    mediumSymbols_FontId },
+        { regularFont,                        textSize * 1.333f,    bigSymbols_FontId },
+        { italicFont,                         textSize,             symbols_FontId },
+        { boldFont,                           textSize,             symbols_FontId },
+        { boldFont,                           textSize * 1.333f,    mediumSymbols_FontId },
+        { boldFont,                           textSize * 1.666f,    largeSymbols_FontId },
+        { boldFont,                           textSize * 2.000f,    hugeSymbols_FontId },
+        { lightFont,                          textSize * 1.666f,    largeSymbols_FontId },
         /* symbol fonts */
         { &fontSymbola_Embedded,              fontSize_UI,          defaultSymbols_FontId },
         { &fontSymbola_Embedded,              fontSize_UI * 1.125f, defaultMediumSymbols_FontId },
@@ -278,6 +289,7 @@ static void deinitCache_Text_(iText *d) {
 
 void init_Text(SDL_Renderer *render) {
     iText *d = &text_;
+    d->contentFont     = nunito_TextFont;
     d->contentFontSize = contentScale_Text_;
     d->ansiEscape      = new_RegExp("\\[([0-9;]+)m", 0);
     d->render          = render;
@@ -304,6 +316,13 @@ void deinit_Text(void) {
 
 void setOpacity_Text(float opacity) {
     SDL_SetTextureAlphaMod(text_.cache, iClamp(opacity, 0.0f, 1.0f) * 255 + 0.5f);
+}
+
+void setContentFont_Text(enum iTextFont font) {
+    if (text_.contentFont != font) {
+        text_.contentFont = font;
+        resetFonts_Text();
+    }
 }
 
 void setContentFontSize_Text(float fontSizeFactor) {
@@ -764,6 +783,29 @@ void drawString_Text(int fontId, iInt2 pos, int color, const iString *text) {
 
 void drawRange_Text(int fontId, iInt2 pos, int color, iRangecc text) {
     draw_Text_(fontId, pos, color, text);
+}
+
+iInt2 advanceWrapRange_Text(int fontId, int maxWidth, iRangecc text) {
+    iInt2 size = zero_I2();
+    const char *endp;
+    while (!isEmpty_Range(&text)) {
+        iInt2 line = tryAdvance_Text(fontId, text, maxWidth, &endp);
+        text.start = endp;
+        size.x = iMax(size.x, line.x);
+        size.y += line.y;
+    }
+    return size;
+}
+
+int drawWrapRange_Text(int fontId, iInt2 pos, int maxWidth, int color, iRangecc text) {
+    const char *endp;
+    while (!isEmpty_Range(&text)) {
+        tryAdvance_Text(fontId, text, maxWidth, &endp);
+        drawRange_Text(fontId, pos, color, (iRangecc){ text.start, endp });
+        text.start = endp;
+        pos.y += lineHeight_Text(fontId);
+    }
+    return pos.y;
 }
 
 void drawCentered_Text(int fontId, iRect rect, iBool alignVisual, int color, const char *format, ...) {

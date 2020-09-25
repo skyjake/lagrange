@@ -116,7 +116,7 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 iSidebarItem *item = new_SidebarItem();
                 item->id = index_ArrayConstIterator(&i);
                 setRange_String(&item->label, head->text);
-                item->indent = head->level * 4 * gap_UI;
+                item->indent = head->level * 5 * gap_UI;
                 addItem_ListWidget(d->list, item);
                 iRelease(item);
             }

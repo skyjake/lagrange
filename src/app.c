@@ -165,6 +165,7 @@ static iString *serializePrefs_App_(const iApp *d) {
     }
     appendFormat_String(str, "sidebar.mode arg:%d\n", mode_SidebarWidget(sidebar));
     appendFormat_String(str, "uiscale arg:%f\n", uiScale_Window(d->window));
+    appendFormat_String(str, "font.set arg:%d\n", d->prefs.font);
     appendFormat_String(str, "zoom.set arg:%d\n", d->prefs.zoomPercent);
     appendFormat_String(str, "linewidth.set arg:%d\n", d->prefs.lineWidth);
     appendFormat_String(str, "prefs.biglede.changed arg:%d\n", d->prefs.bigFirstParagraph);
@@ -810,6 +811,14 @@ iBool handleCommand_App(const char *cmd) {
         SDL_MaximizeWindow(d->window->win);
         return iTrue;
     }
+    else if (equal_Command(cmd, "font.set")) {
+        setFreezeDraw_Window(get_Window(), iTrue);
+        d->prefs.font = arg_Command(cmd);
+        setContentFont_Text(d->prefs.font);
+        postCommand_App("font.changed");
+        postCommand_App("window.unfreeze");
+        return iTrue;
+    }
     else if (equal_Command(cmd, "zoom.set")) {
         setFreezeDraw_Window(get_Window(), iTrue); /* no intermediate draws before docs updated */
         d->prefs.zoomPercent = arg_Command(cmd);
@@ -977,6 +986,9 @@ iBool handleCommand_App(const char *cmd) {
         setToggle_Widget(findChild_Widget(dlg, "prefs.retainwindow"), d->prefs.retainWindowSize);
         setText_InputWidget(findChild_Widget(dlg, "prefs.uiscale"),
                             collectNewFormat_String("%g", uiScale_Window(d->window)));
+        setFlags_Widget(findChild_Widget(dlg, format_CStr("prefs.font.%d", d->prefs.font)),
+                        selected_WidgetFlag,
+                        iTrue);
         setFlags_Widget(
             findChild_Widget(dlg, format_CStr("prefs.linewidth.%d", d->prefs.lineWidth)),
             selected_WidgetFlag,

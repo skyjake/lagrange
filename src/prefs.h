@@ -1,8 +1,9 @@
 #pragma once
 #include <the_Foundation/string.h>
 
-#include "ui/color.h"
 #include "gmdocument.h"
+#include "ui/color.h"
+#include "ui/text.h"
 
 /* User preferences */
 
@@ -10,7 +11,7 @@ iDeclareType(Prefs)
 
 struct Impl_Prefs {
     iBool retainWindowSize;
-    float uiScale;
+    float uiScale;    
     int zoomPercent;
     iBool useSystemTheme;
     enum iColorTheme theme;
@@ -18,6 +19,7 @@ struct Impl_Prefs {
     iString httpProxy;
     iString downloadDir;
     /* Content */
+    enum iTextFont font;
     int lineWidth;
     iBool bigFirstParagraph;
     iBool forceLineWrap;
