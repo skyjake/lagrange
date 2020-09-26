@@ -643,7 +643,7 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
                 appendFormat_String(src,
                                     "\n```\n%s\n```\n"
                                     "You can save it as a file to your Downloads folder, though. "
-                                    "Press %s or select Save Page from the menu.",
+                                    "Press %s or select \"Save to Downloads\" from the menu.",
                                     cstr_String(meta),
                                     cstr_String(key));
                 break;
