@@ -173,6 +173,7 @@ struct Impl_DocumentWidget {
     const iGmRun * contextLink;
     iBool          noHoverWhileScrolling;
     iBool          showLinkNumbers;
+    const iGmRun * firstVisibleRun;
     const iGmRun * lastVisibleRun;
     iClick         click;
     float          initNormScrollY;
@@ -222,6 +223,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     d->contextLink      = NULL;
     d->noHoverWhileScrolling = iFalse;
     d->showLinkNumbers  = iFalse;
+    d->firstVisibleRun  = NULL;
     d->lastVisibleRun   = NULL;
     d->visBuf           = new_VisBuf();
     d->invalidRuns      = new_PtrSet();
@@ -332,7 +334,12 @@ static iRangei visibleRange_DocumentWidget_(const iDocumentWidget *d) {
 
 static void addVisibleLink_DocumentWidget_(void *context, const iGmRun *run) {
     iDocumentWidget *d = context;
-    d->lastVisibleRun = run;
+    if (~run->flags & decoration_GmRunFlag && !run->imageId) {
+        if (!d->firstVisibleRun) {
+            d->firstVisibleRun = run;
+        }
+        d->lastVisibleRun = run;
+    }
     if (run->linkId && linkFlags_GmDocument(d->doc, run->linkId) & supportedProtocol_GmLinkFlag) {
         pushBack_PtrArray(&d->visibleLinks, run);
     }
@@ -422,7 +429,7 @@ static void updateOutlineOpacity_DocumentWidget_(iDocumentWidget *d) {
     if (contains_Widget(constAs_Widget(d->scroll), mouseCoord_Window(get_Window()))) {
         opacity = 1.0f;
     }
-    setValue_Anim(&d->outlineOpacity, opacity, opacity > 0.5f? 166 : 333);
+    setValue_Anim(&d->outlineOpacity, opacity, opacity > 0.5f? 100 : 166);
     animate_DocumentWidget_(d);
 }
 
@@ -435,6 +442,7 @@ static void updateVisible_DocumentWidget_(iDocumentWidget *d) {
                           d->scrollY,
                           docSize > 0 ? height_Rect(bounds) * size_Range(&visRange) / docSize : 0);
     clear_PtrArray(&d->visibleLinks);
+    d->firstVisibleRun = NULL;
     render_GmDocument(d->doc, visRange, addVisibleLink_DocumentWidget_, d);
     updateHover_DocumentWidget_(d, mouseCoord_Window(get_Window()));
     updateSideOpacity_DocumentWidget_(d);
@@ -1496,6 +1504,11 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     return iFalse;
 }
 
+static int outlineHeight_DocumentWidget_(const iDocumentWidget *d) {
+    if (isEmpty_Array(&d->outline)) return 0;
+    return bottom_Rect(((const iOutlineItem *) constBack_Array(&d->outline))->rect);
+}
+
 static size_t visibleLinkOrdinal_DocumentWidget_(const iDocumentWidget *d, iGmLinkId linkId) {
     size_t ord = 0;
     const iRangei visRange = visibleRange_DocumentWidget_(d);
@@ -1632,9 +1645,17 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         }
     }
     else if (ev->type == SDL_MOUSEWHEEL && isHover_Widget(w)) {
+        float acceleration = 1.0f;
+        if (prefs_App()->hoverOutline &&
+            contains_Widget(constAs_Widget(d->scroll), mouseCoord_Window(get_Window()))) {
+            const int outHeight = outlineHeight_DocumentWidget_(d);
+            if (outHeight > height_Rect(bounds_Widget(w))) {
+                acceleration = (float) size_GmDocument(d->doc).y / (float) outHeight;
+            }
+        }
 #if defined (iPlatformApple)
         /* Momentum scrolling. */
-        scroll_DocumentWidget_(d, -ev->wheel.y * get_Window()->pixelRatio);
+        scroll_DocumentWidget_(d, -ev->wheel.y * get_Window()->pixelRatio * acceleration);
 #else
         if (keyMods_Sym(SDL_GetModState()) == KMOD_PRIMARY) {
             postCommandf_App("zoom.delta arg:%d", ev->wheel.y > 0 ? 10 : -10);
@@ -1642,7 +1663,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         }
         smoothScroll_DocumentWidget_(
             d,
-            -3 * ev->wheel.y * lineHeight_Text(paragraph_FontId),
+            -3 * ev->wheel.y * lineHeight_Text(paragraph_FontId) * acceleration,
             gap_Text * smoothSpeed_DocumentWidget_ +
                 (isSmoothScrolling_DocumentWidget_(d) ? d->smoothSpeed : 0));
 #endif
@@ -2069,6 +2090,24 @@ static int drawSideRect_(iPaint *p, iRect rect) { //}, int thickness) {
     return fg;
 }
 
+static iRangecc currentHeading_DocumentWidget_(const iDocumentWidget *d) {
+    iRangecc heading = iNullRange;
+    if (d->firstVisibleRun) {
+        iConstForEach(Array, i, headings_GmDocument(d->doc)) {
+            const iGmHeading *head = i.value;
+            if (head->level == 0) {
+                if (head->text.start <= d->firstVisibleRun->text.start) {
+                    heading = head->text;
+                }
+                if (d->lastVisibleRun && head->text.start > d->lastVisibleRun->text.start) {
+                    break;
+                }
+            }
+        }
+    }
+    return heading;
+}
+
 static void drawSideElements_DocumentWidget_(const iDocumentWidget *d) {
     const iWidget *w         = constAs_Widget(d);
     const iRect    bounds    = bounds_Widget(w);
@@ -2090,22 +2129,18 @@ static void drawSideElements_DocumentWidget_(const iDocumentWidget *d) {
             p.alpha = opacity * 255;
             //int offset = iMax(0, bottom_Rect(banner->visBounds) - d->scrollY);
             rect.pos.y += height_Rect(bounds) / 2 - rect.size.y / 2 - (banner ? banner->visBounds.size.y / 2 : 0); // offset;
+            //rect.pos.y -= lineHeight_Text(heading3_FontId) / 2; /* the heading text underneath */
             int fg = drawSideRect_(&p, rect); //, gap_UI / 2);
-//            if (equal_Color(get_Color(tmBannerBackground_ColorId), get_Color(tmBackground_ColorId))) {
-//                drawRectThickness_Paint(&p, rect, gap_UI / 2, tmBannerIcon_ColorId);
-//            }
-//            else {
-//                fillRect_Paint(&p, rect, tmBannerBackground_ColorId);
-//            }
             iString str;
             initUnicodeN_String(&str, &icon, 1);
             drawCentered_Text(banner_FontId, rect, iTrue, fg, "%s", cstr_String(&str));
-#if 0
-            if (avail >= minBannerSize * 2) {
-                const char *endp;
-                iRangecc    text = bannerText_DocumentWidget_(d);
+#if 1
+            if (avail >= minBannerSize * 2.25f) {
+                iRangecc    text = currentHeading_DocumentWidget_(d);// bannerText_DocumentWidget_(d);
                 iInt2       pos  = addY_I2(bottomLeft_Rect(rect), gap_Text);
                 const int   font = heading3_FontId;
+                drawWrapRange_Text(font, pos, avail - margin, tmBannerSideTitle_ColorId, text);
+#if 0
                 while (!isEmpty_Range(&text)) {
                     tryAdvance_Text(font, text, avail - 2 * margin, &endp);
                     drawRange_Text(
@@ -2117,6 +2152,7 @@ static void drawSideElements_DocumentWidget_(const iDocumentWidget *d) {
                     text.start = endp;
                     pos.y += lineHeight_Text(font);
                 }
+#endif
             }
 #endif
             setOpacity_Text(1.0f);
@@ -2142,31 +2178,21 @@ static void drawSideElements_DocumentWidget_(const iDocumentWidget *d) {
     /* Outline on the right side. */
     const float outlineOpacity = value_Anim(&d->outlineOpacity);
     if (prefs_App()->hoverOutline && !isEmpty_Array(&d->outline) && outlineOpacity > 0.0f) {
-//        const int font = uiLabel_FontId;
-        //iRect outlineRect = initCorners_Rect(topRight_Rect(docBounds), bottomRight_Rect(bounds));
-        //const int excess = width_Rect(outlineRect) - 75 * gap_UI;
-//        if (excess > 0) {
-//            adjustEdges_Rect(&outlineRect, 0, 0, 0, excess);
-//        }
-//        const int margin = gap_UI * d->pageMargin;
-        const int innerWidth = outlineWidth_DocumentWidget_(d);
-        const int outWidth  = innerWidth + 2 * outlinePadding_DocumentWidget_ * gap_UI;
-        const int topMargin = 0;//d->pageMargin * gap_UI; // + (banner ? banner->visBounds.size.y : 0);
-        const int bottomMargin = 3 * gap_UI; //d->pageMargin * gap_UI;
-        iInt2 pos = add_I2(topRight_Rect(bounds), init_I2(-outWidth - width_Widget(d->scroll), topMargin));
-//        const int lineWidth = avail - margin;
-//        pos.y = drawRangeWrap_Text(uiContent_FontId, pos, lineWidth, tmBannerIcon_ColorId,
-//                                   bannerText_DocumentWidget_(d));
-//        pos.y += gap_UI;
-        const int scrollMax = scrollMax_DocumentWidget_(d);
-        const int outHeight = bottom_Rect(((const iOutlineItem *) constBack_Array(&d->outline))->rect);
-        const int oversize  = outHeight - height_Rect(bounds) + topMargin + bottomMargin;
+        const int innerWidth   = outlineWidth_DocumentWidget_(d);
+        const int outWidth     = innerWidth + 2 * outlinePadding_DocumentWidget_ * gap_UI;
+        const int topMargin    = 0;
+        const int bottomMargin = 3 * gap_UI;
+        const int scrollMax    = scrollMax_DocumentWidget_(d);
+        const int outHeight    = outlineHeight_DocumentWidget_(d);
+        const int oversize     = outHeight - height_Rect(bounds) + topMargin + bottomMargin;
         const int scroll =
             (oversize > 0 && scrollMax > 0 ? oversize * d->scrollY / scrollMax_DocumentWidget_(d)
                                            : 0);
+        iInt2 pos =
+            add_I2(topRight_Rect(bounds), init_I2(-outWidth - width_Widget(d->scroll), topMargin));
         /* Center short outlines vertically. */
         if (oversize < 0) {
-            pos.y -= oversize / 2;// + (banner ? banner->visBounds.size.y / 2 : 0);
+            pos.y -= oversize / 2;
         }
         pos.y -= scroll;
         setOpacity_Text(outlineOpacity);
