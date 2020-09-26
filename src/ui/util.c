@@ -898,6 +898,8 @@ iWidget *makePreferences_Widget(void) {
         appendTwoColumnPage_(tabs, "General", '1', &headings, &values);
         addChild_Widget(headings, iClob(makeHeading_Widget("Downloads folder:")));
         setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.downloads");
+        addChild_Widget(headings, iClob(makeHeading_Widget("Outline on scrollbar:")));
+        addChild_Widget(values, iClob(makeToggle_Widget("prefs.hoveroutline")));
         makeTwoColumnHeading_("WINDOW", headings, values);
 #if defined (iPlatformApple) || defined (iPlatformMSys)
         addChild_Widget(headings, iClob(makeHeading_Widget("Use system theme:")));
@@ -939,6 +941,9 @@ iWidget *makePreferences_Widget(void) {
         addChildFlags_Widget(values, iClob(widths), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
         addChild_Widget(headings, iClob(makeHeading_Widget("Big 1st paragaph:")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.biglede")));
+        makeTwoColumnHeading_("WIDE LAYOUT", headings, values);
+        addChild_Widget(headings, iClob(makeHeading_Widget("Site icon:")));
+        addChild_Widget(values, iClob(makeToggle_Widget("prefs.sideicon")));
     }
     /* Colors. */ {
         appendTwoColumnPage_(tabs, "Colors", '3', &headings, &values);

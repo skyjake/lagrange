@@ -23,6 +23,8 @@ struct Impl_Prefs {
     int lineWidth;
     iBool bigFirstParagraph;
     iBool forceLineWrap;
+    iBool sideIcon;
+    iBool hoverOutline;
     enum iGmDocumentTheme docThemeDark;
     enum iGmDocumentTheme docThemeLight;
     float saturation;

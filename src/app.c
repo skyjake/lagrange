@@ -169,6 +169,8 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "zoom.set arg:%d\n", d->prefs.zoomPercent);
     appendFormat_String(str, "linewidth.set arg:%d\n", d->prefs.lineWidth);
     appendFormat_String(str, "prefs.biglede.changed arg:%d\n", d->prefs.bigFirstParagraph);
+    appendFormat_String(str, "prefs.sideicon.changed arg:%d\n", d->prefs.sideIcon);
+    appendFormat_String(str, "prefs.hoveroutline.changed arg:%d\n", d->prefs.hoverOutline);
     appendFormat_String(str, "theme.set arg:%d auto:1\n", d->prefs.theme);
     appendFormat_String(str, "ostheme arg:%d\n", d->prefs.useSystemTheme);
     appendFormat_String(str, "saturation.set arg:%d\n", (int) ((d->prefs.saturation * 100) + 0.5f));
@@ -868,6 +870,16 @@ iBool handleCommand_App(const char *cmd) {
         postCommand_App("document.layout.changed");
         return iTrue;
     }
+    else if (equal_Command(cmd, "prefs.sideicon.changed")) {
+        d->prefs.sideIcon = arg_Command(cmd) != 0;
+        refresh_App();
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "prefs.hoveroutline.changed")) {
+        d->prefs.hoverOutline = arg_Command(cmd) != 0;
+        refresh_App();
+        return iTrue;
+    }
     else if (equal_Command(cmd, "saturation.set")) {
         d->prefs.saturation = (float) arg_Command(cmd) / 100.0f;
         postCommandf_App("theme.changed auto:1");
@@ -982,6 +994,7 @@ iBool handleCommand_App(const char *cmd) {
         iWidget *dlg = makePreferences_Widget();
         updatePrefsThemeButtons_(dlg);
         setText_InputWidget(findChild_Widget(dlg, "prefs.downloads"), &d->prefs.downloadDir);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.hoveroutline"), d->prefs.hoverOutline);
         setToggle_Widget(findChild_Widget(dlg, "prefs.ostheme"), d->prefs.useSystemTheme);
         setToggle_Widget(findChild_Widget(dlg, "prefs.retainwindow"), d->prefs.retainWindowSize);
         setText_InputWidget(findChild_Widget(dlg, "prefs.uiscale"),
@@ -994,6 +1007,7 @@ iBool handleCommand_App(const char *cmd) {
             selected_WidgetFlag,
             iTrue);
         setToggle_Widget(findChild_Widget(dlg, "prefs.biglede"), d->prefs.bigFirstParagraph);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.sideicon"), d->prefs.sideIcon);
         setFlags_Widget(
             findChild_Widget(
                 dlg, format_CStr("prefs.saturation.%d", (int) (d->prefs.saturation * 3.99f))),

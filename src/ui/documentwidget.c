@@ -133,7 +133,7 @@ struct Impl_OutlineItem {
     iRangecc text;
     int      font;
     iRect    rect;
-    int      seenColor;
+    int      seenColor; /* TODO: not used */
     int      sepColor;
 };
 
@@ -2058,13 +2058,15 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
 //    drawRect_Paint(&d->paint, (iRect){ visPos, run->visBounds.size }, red_ColorId);
 }
 
-static void drawSideRect_(iPaint *p, iRect rect, int thickness) {
-    if (equal_Color(get_Color(tmBannerBackground_ColorId), get_Color(tmBackground_ColorId))) {
-        drawRectThickness_Paint(p, rect, thickness, tmBannerIcon_ColorId);
+static int drawSideRect_(iPaint *p, iRect rect) { //}, int thickness) {
+    int bg = tmBannerBackground_ColorId;
+    int fg = tmBannerIcon_ColorId;
+    if (equal_Color(get_Color(bg), get_Color(tmBackground_ColorId))) {
+        bg = tmBannerIcon_ColorId;
+        fg = tmBannerBackground_ColorId;
     }
-    else {
-        fillRect_Paint(p, rect, tmBannerBackground_ColorId);
-    }
+    fillRect_Paint(p, rect, bg);
+    return fg;
 }
 
 static void drawSideElements_DocumentWidget_(const iDocumentWidget *d) {
@@ -2079,7 +2081,7 @@ static void drawSideElements_DocumentWidget_(const iDocumentWidget *d) {
     iPaint      p;
     init_Paint(&p);
     setClip_Paint(&p, bounds);
-    if (avail > minBannerSize) {
+    if (prefs_App()->sideIcon && avail > minBannerSize) {
         if (banner && opacity > 0) {
             setOpacity_Text(opacity);
             SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_BLEND);
@@ -2088,16 +2090,16 @@ static void drawSideElements_DocumentWidget_(const iDocumentWidget *d) {
             p.alpha = opacity * 255;
             //int offset = iMax(0, bottom_Rect(banner->visBounds) - d->scrollY);
             rect.pos.y += height_Rect(bounds) / 2 - rect.size.y / 2 - (banner ? banner->visBounds.size.y / 2 : 0); // offset;
-            drawSideRect_(&p, rect, gap_UI / 2);
-            if (equal_Color(get_Color(tmBannerBackground_ColorId), get_Color(tmBackground_ColorId))) {
-                drawRectThickness_Paint(&p, rect, gap_UI / 2, tmBannerIcon_ColorId);
-            }
-            else {
-                fillRect_Paint(&p, rect, tmBannerBackground_ColorId);
-            }
+            int fg = drawSideRect_(&p, rect); //, gap_UI / 2);
+//            if (equal_Color(get_Color(tmBannerBackground_ColorId), get_Color(tmBackground_ColorId))) {
+//                drawRectThickness_Paint(&p, rect, gap_UI / 2, tmBannerIcon_ColorId);
+//            }
+//            else {
+//                fillRect_Paint(&p, rect, tmBannerBackground_ColorId);
+//            }
             iString str;
             initUnicodeN_String(&str, &icon, 1);
-            drawCentered_Text(banner_FontId, rect, iTrue, tmBannerIcon_ColorId, "%s", cstr_String(&str));
+            drawCentered_Text(banner_FontId, rect, iTrue, fg, "%s", cstr_String(&str));
 #if 0
             if (avail >= minBannerSize * 2) {
                 const char *endp;
@@ -2139,7 +2141,7 @@ static void drawSideElements_DocumentWidget_(const iDocumentWidget *d) {
     }
     /* Outline on the right side. */
     const float outlineOpacity = value_Anim(&d->outlineOpacity);
-    if (!isEmpty_Array(&d->outline) && outlineOpacity > 0.0f) {
+    if (prefs_App()->hoverOutline && !isEmpty_Array(&d->outline) && outlineOpacity > 0.0f) {
 //        const int font = uiLabel_FontId;
         //iRect outlineRect = initCorners_Rect(topRight_Rect(docBounds), bottomRight_Rect(bounds));
         //const int excess = width_Rect(outlineRect) - 75 * gap_UI;
@@ -2170,26 +2172,23 @@ static void drawSideElements_DocumentWidget_(const iDocumentWidget *d) {
         setOpacity_Text(outlineOpacity);
         SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_BLEND);
         p.alpha = outlineOpacity * 255;
-        drawSideRect_(
-            &p,
-            (iRect){ addY_I2(pos, -outlinePadding_DocumentWidget_ * gap_UI / 2),
-                     init_I2(outWidth, outHeight + outlinePadding_DocumentWidget_ * gap_UI * 1.5f) },
-            1);
+        iRect outlineFrame = {
+            addY_I2(pos, -outlinePadding_DocumentWidget_ * gap_UI / 2),
+            init_I2(outWidth, outHeight + outlinePadding_DocumentWidget_ * gap_UI * 1.5f)
+        };
+        fillRect_Paint(&p, outlineFrame, tmBannerBackground_ColorId);
+        const int textFg = drawSideRect_(&p, outlineFrame); //, 1);
         iConstForEach(Array, i, &d->outline) {
             const iOutlineItem *item = i.value;
             iInt2 visPos = addX_I2(add_I2(pos, item->rect.pos), outlinePadding_DocumentWidget_ * gap_UI);
-//            visPos.y -= scroll;
-//            if (item->sepColor != none_ColorId) {
-//                drawHLine_Paint(&p, addY_I2(visPos, -gap_UI), outWidth, item->sepColor);
-//            }
-//            drawRect_Paint(&p, (iRect){ visPos, item->rect.size }, red_ColorId);
             const iBool isVisible = d->lastVisibleRun && d->lastVisibleRun->text.start >= item->text.start;
-            drawWrapRange_Text(item->font,
-                               visPos,
-                               innerWidth - left_Rect(item->rect),
-                               index_ArrayConstIterator(&i) == 0 || isVisible ? item->seenColor
-                                                                 : tmQuoteIcon_ColorId,
-                               item->text);
+            const int fg = index_ArrayConstIterator(&i) == 0 || isVisible ? textFg
+                                                                          : tmQuoteIcon_ColorId;
+            drawWrapRange_Text(
+                item->font, visPos, innerWidth - left_Rect(item->rect), fg, item->text);
+            if (left_Rect(item->rect) > 0) {
+                drawRange_Text(item->font, addX_I2(visPos, -3 * gap_UI), fg, range_CStr("\u2013"));
+            }
         }
         setOpacity_Text(1.0f);
         SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_NONE);

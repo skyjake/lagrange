@@ -9,6 +9,8 @@ void init_Prefs(iPrefs *d) {
     d->font              = nunito_TextFont;
     d->lineWidth         = 40;
     d->bigFirstParagraph = iTrue;
+    d->sideIcon          = iTrue;
+    d->hoverOutline      = iFalse;
     d->docThemeDark      = colorfulDark_GmDocumentTheme;
     d->docThemeLight     = white_GmDocumentTheme;
     d->saturation        = 1.0f;
