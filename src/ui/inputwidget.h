@@ -43,6 +43,7 @@ void    setSelectAllOnFocus_InputWidget (iInputWidget *, iBool selectAllOnFocus)
 void    setNotifyEdits_InputWidget      (iInputWidget *, iBool notifyEdits);
 void    begin_InputWidget       (iInputWidget *);
 void    end_InputWidget         (iInputWidget *, iBool accept);
+void    selectAll_InputWidget   (iInputWidget *);
 
 const iString * text_InputWidget    (const iInputWidget *);
 

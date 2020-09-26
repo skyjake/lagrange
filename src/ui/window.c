@@ -94,7 +94,7 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
 /* TODO: Submenus wouldn't hurt here. */
 static const iMenuItem navMenuItems[] = {
     { "New Tab", 't', KMOD_PRIMARY, "tabs.new" },
-    { "Open Location...", SDLK_l, KMOD_PRIMARY, "focus.set id:url" },
+    { "Open Location...", SDLK_l, KMOD_PRIMARY, "navigate.focus" },
     { "---", 0, 0, NULL },
     { "Save to Downloads", SDLK_s, KMOD_PRIMARY, "document.save" },
     { "---", 0, 0, NULL },
@@ -118,7 +118,7 @@ static const iMenuItem navMenuItems[] = {
 /* Using native menus. */
 static const iMenuItem fileMenuItems[] = {
     { "New Tab", SDLK_t, KMOD_PRIMARY, "tabs.new" },
-    { "Open Location...", SDLK_l, KMOD_PRIMARY, "focus.set id:url" },
+    { "Open Location...", SDLK_l, KMOD_PRIMARY, "navigate.focus" },
     { "---", 0, 0, NULL },
     { "Save to Downloads", SDLK_s, KMOD_PRIMARY, "document.save" },
 };
@@ -211,6 +211,16 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
         refresh_Widget(navBar);
         postCommand_Widget(navBar, "layout.changed id:navbar");
         return iFalse;
+    }
+    else if (equal_Command(cmd, "navigate.focus")) {
+        iWidget *url = findChild_Widget(navBar, "url");
+        if (focus_Widget() != url) {
+            setFocus_Widget(findChild_Widget(navBar, "url"));
+        }
+        else {
+            selectAll_InputWidget((iInputWidget *) url);
+        }
+        return iTrue;
     }
     else if (equal_Command(cmd, "input.edited")) {
         iAnyObject *url = findChild_Widget(navBar, "url");
@@ -459,7 +469,7 @@ static void setupUserInterface_Window(iWindow *d) {
         addAction_Widget(d->root, prevTab_KeyShortcut, "tabs.prev");
         addAction_Widget(d->root, nextTab_KeyShortcut, "tabs.next");
 #if !defined (iHaveNativeMenus)
-        addAction_Widget(d->root, 'l', KMOD_PRIMARY, "focus.set id:url");
+        addAction_Widget(d->root, 'l', KMOD_PRIMARY, "navigate.focus");
         addAction_Widget(d->root, 'f', KMOD_PRIMARY, "focus.set id:find.input");
         addAction_Widget(d->root, '1', KMOD_PRIMARY, "sidebar.mode arg:0 toggle:1");
         addAction_Widget(d->root, '2', KMOD_PRIMARY, "sidebar.mode arg:1 toggle:1");

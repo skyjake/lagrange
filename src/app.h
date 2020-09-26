@@ -28,6 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/string.h>
 #include <the_Foundation/time.h>
 
+#include "prefs.h"
 #include "ui/color.h"
 
 iDeclareType(Bookmarks)
@@ -58,7 +59,7 @@ void        refresh_App                 (void);
 iBool       isRefreshPending_App        (void);
 uint32_t    elapsedSinceLastTicker_App  (void); /* milliseconds */
 
-int                 zoom_App            (void);
+const iPrefs *      prefs_App           (void);
 iBool               forceLineWrap_App   (void);
 iBool               forceSoftwareRender_App(void);
 enum iColorTheme    colorTheme_App      (void);
@@ -70,7 +71,7 @@ iBookmarks *        bookmarks_App       (void);
 iDocumentWidget *   document_App        (void);
 iObjectList *       listDocuments_App   (void);
 iDocumentWidget *   document_Command    (const char *cmd);
-iDocumentWidget *   newTab_App          (const iDocumentWidget *duplicateOf);
+iDocumentWidget *   newTab_App          (const iDocumentWidget *duplicateOf, iBool switchToNew);
 
 iAny *      findWidget_App      (const char *id);
 void        addTicker_App       (void (*ticker)(iAny *), iAny *context);

@@ -56,13 +56,15 @@ One way to browse Gemini content is via web browser extensions or proxies that t
 
 Lagrange's user interface is modeled after web browsers:
 * There is a navigation bar at the top with Back and Forward buttons.
-* Below the navigation bar, there is a tab bar for switching between open tabs. The tab bar is hidden if there is only one tab open.
+* There is a tab bar for switching tabs. The tab bar is hidden if there is only one tab open.
 * There is a sidebar for managing bookmarks and TLS identities, and viewing history and the page outline. The sidebar is hidden by default.
 * There is a search bar that appears at the bottom when searching text on the page.
 
 Tip: Try pressing ${CTRL+}4 now to see the page outline.
 
-## URL entry and quick search
+## Navigation
+
+### URL entry and quick search
 
 The URL input field is in its typical location in the navigation bar. It can be accessed quickly by pressing ${CTRL+}L.
 
@@ -71,6 +73,37 @@ As you enter text, Lagrange starts looking for matches in bookmarks, history, co
 Search within cached pages is limited to the (small) set of pages that Lagrange keeps in memory for back navigation. Search terms are case insensitive, and if many words are entered, they are all required to appear in the specified order in any matched content.
 
 Note that the navigation stack is saved to a file when Lagrange is shut down and restored on the next launch. This means the next time you launch Lagrange, you can still search the contents of past pages. However, navigation stacks are tab-specific, so closing a tab will delete its history as well.
+
+### Links
+
+The type and destination of a link are indicated by the link's icon and color: ➤ links to the same domain, and 🌐 to a different domain. The colors are:
+
+* Blue for Gemini
+* Purple for Gopher
+* Orange for HTTP(S)
+* Red for other (cannot be opened)
+
+When you move the mouse over a link, additional information about it will appear: the destination domain, with the URL scheme shown for non-Gemini links, and the date of the last visit to the URL.
+
+### Note about caching
+
+When navigating to a new page, the old page is cached in memory. If you navigate back, the cached copy of the page is restored. Think of it as rewinding time — you return to a past time as if nothing had happened. The same applies to forward navigation; cached pages are loaded if available. This allows back and forward navigation to happen instantly, without any network requests.
+
+The page cache is saved to a file when Lagrange is shut down so it can be restored on the next launch.
+
+### Opening links in a new tab
+
+Holding down ${CTRL} when clicking on a link causes it to open in a new tab.
+
+Right-clicking on a link shows a link-specific context menu. From there, you can also open the link in a new background tab, which will keep the current tab open.
+
+### Opening links using the keyboard
+
+When navigating via keyboard, hold down ${ALT} to see link shortcut keys. Try doing so now and see how the link icon below is replaced with a number.
+
+=> gemini://gemini.circumlunar.space/ Project Gemini
+
+Each visible link on the page gets an alphanumeric shortcut. For example, the first link can be opened by pressing ${ALT+}1. The tenth link is ${ALT+}A. Additionally hold down ${CTRL} to open the link in a new tab.
 
 ## Tabs
 
@@ -85,38 +118,9 @@ The sidebar can be toggled via menus or by pressing ${SHIFT+}${CTRL+}L. It has f
 * Bookmarks: List of bookmarks that you've created. These appear first in search results for quick and easy access.
 * History: Chronological list of visited URLs. This is not a full history of all the URLs you've accessed over time — only unique URLs are shown at the latest access time.
 * Identities: TLS client certificates.
-* Outline: List of the headings in the currently open tab. Useful when reading longer documents.
+* Outline: List of the headings in the currently open tab. Useful when reading longer documents. 
 
 ${CTRL+}1 through ${CTRL+}4 switch between the sidebar tabs, or hide the sidebar if the current tab's key is pressed.
-
-## Navigation
-
-When navigating to a new page, the old page is cached in memory. If you navigate back, the cached copy of the page is restored. Think of it as rewinding time — you return to a past time as if nothing had happened. The same applies to forward navigation; cached pages are loaded if available. This allows back and forward navigation to happen instantly, without any network requests.
-
-### Link icons
-
-The type and destination of a link are indicated by the link's icon and color: ➤ links to the same domain, and 🌐 to a different domain. The colors are:
-
-* Blue for Gemini
-* Purple for Gopher
-* Orange for HTTP(S)
-* Red for other (cannot be opened)
-
-### Opening links using the keyboard
-
-When navigating via keyboard, hold down ${ALT} to see link shortcut keys. Try doing so now and see how the link icon below is replaced with a number.
-
-=> gemini://gemini.circumlunar.space/ Project Gemini
-
-Each visible link on the page gets an alphanumeric shortcut. For example, the first link can be opened by pressing ${ALT+}1. The tenth link is ${ALT+}A. Additionally hold down ${CTRL} to open the link in a new tab.
-
-## Downloads
-
-Press ${CTRL+}S to save the contents of the current page to the Downloads folder. This works on all pages regardless of whether Lagrange can display the contents or not.
-
-The location where downloaded files are saved can be set in Preferences.
-
-The 🔃 button on the right side of the URL input field is the Reload/Stop button — it reloads the current page or stops an ongoing download. During large downloads, an additional progress indicator appears next to the Stop button.
 
 ## Bookmarks
 
@@ -128,11 +132,23 @@ In addition to a title, bookmarks can have tags. Some tags have a special meanin
 
 * Set a "homepage" tag on a bookmark to make it one of the pages that will be opened when pressing the 🏠 button.
 
-## Identities (TLS client certificates)
+## Identities (client certificates)
 
 Gemini uses TLS client certificates for manual user/session identification purposes. This is analogous to logging into a web site, except you are in full control of the information. The term "Identity" is used in Lagrange to refer to client certificates.
 
-Lagrange can easily create a new identity. The shortcut for this is ${SHIFT+}${CTRL+}N. Consider any information you enter in the certificate as public; only the Common Name is required and will appear as the issuer and subject of the certificate.
+The Identities sidebar tab shows all identities known to Lagrange. Press ${CTRL+}3 to show it. This includes identities created in Lagrange and any identities based on imported X.509 certificates.
+
+### Creating a new identity
+
+Click on the 👤 button in the navigation bar and select "New Identity...". The shortcut for this is ${SHIFT+}${CTRL+}N.
+
+Consider any information you enter in the certificate as public; only the Common Name is required and will appear as the issuer and subject of the certificate.
+
+### Using an identity
+
+You will need to select an identity when you encounter this error message:
+
+> 🔑 Certificate Required
 
 Clicking on an identity in the sidebar will toggle it on/off for the currently open URL. On subsequent page loads, the certificate will then be sent to the server when the URL or any URL under it is fetched. You can click on the 👤 button in the navigation bar to see which identity is being used for the current page.
 
@@ -143,9 +159,49 @@ At launch, Lagrange looks through its "idents" directory to see if any new certi
 * mycert.key
 Lagrange will add a note to the imported identities to mark them as "Imported".
 
+## Downloads
+
+Press ${CTRL+}S to save the contents of the current page to the Downloads folder. This works on all pages regardless of whether Lagrange can display the contents or not.
+
+The location where downloaded files are saved can be set in Preferences.
+
+The 🔃 button on the right side of the URL input field is the Reload/Stop button — it reloads the current page or stops an ongoing download. During large downloads, an additional progress indicator appears next to the Stop button.
+
+## Customization
+
+You can find a number of settings in Preferences to customize what the user interface and page contents look like.
+
+### Window color theme
+
+...
+
+### Page style
+
+* Font: At the moment, two font options are provided. "Nunito" is a friendly rounded font with generous leading. "Fira Sans" is more angular and narrow, and has a tighter leading.
+* Line width: This setting determines the maximum width for text lines. "Window" disables the maximum limit and fits text lines to the full width of the window. Shorter lines are generally easier to read.
+* Big 1st paragraph: When enabled, the leading paragraph on the page is shown in a slightly larger font.
+
+Options for wide window layouts:
+
+* Site icon: If there is room on the left side of the page text, the site icon appears there along with the top level heading. This allows one to keep better track of the current reading position in long documents.
+
 # OS integration
 
-## Opening Gemini URLs (macOS)
+## Command line options
+
+### URLs
+URLs on the command line are opened after Lagrange has launched. If more than one URL is given, multiple tabs will be opened. For example:
+```
+$ lagrange gemini://gus.guru/
+```
+
+### --echo
+Debugging utility: internal events are printed to stdout.
+
+### --sw
+Disable hardware accelerated graphics. Note that software rendering is anyway used as a fallback, so usually this option should not be necessary.
+
+## Handling Gemini URLs (macOS)
 
 Lagrange registers itself as a "gemini:" URL scheme handler, so you can click on Gemini links in any application to open Lagrange with that URL.
 
@@ -171,14 +227,6 @@ Other Unix : ~/.config/lagrange/
 * state.binary
 * trusted.txt
 * visited.txt
-
-## Command line options
-
-### --echo
-Debugging utility: internal events are printed to stdout.
-
-### --sw
-Disable hardware accelerated graphics. Note that software rendering is anyway used as a fallback, so usually this option should not be necessary.
 
 # Open source licenses
 => about:license

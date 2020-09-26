@@ -66,6 +66,20 @@ iLocalDef iBool isOverlapping_Rangei(iRangei a, iRangei b) {
 
 /*-----------------------------------------------------------------------------------------------*/
 
+iDeclareType(Anim)
+
+struct Impl_Anim {
+    float    from, to;
+    uint32_t when, due;
+};
+
+void    init_Anim       (iAnim *, float value);
+void    setValue_Anim   (iAnim *, float to, uint32_t span);
+float   value_Anim      (const iAnim *);
+iBool   isFinished_Anim (const iAnim *);
+
+/*-----------------------------------------------------------------------------------------------*/
+
 enum iClickResult {
     none_ClickResult,
     started_ClickResult,
@@ -136,6 +150,7 @@ iWidget *       makeTabs_Widget         (iWidget *parent);
 void            appendTabPage_Widget    (iWidget *tabs, iWidget *page, const char *label, int key, int kmods);
 void            prependTabPage_Widget   (iWidget *tabs, iWidget *page, const char *label, int key, int kmods);
 iWidget *       removeTabPage_Widget    (iWidget *tabs, size_t index); /* returns the page */
+void            resizeToLargestPage_Widget  (iWidget *tabs);
 void            showTabPage_Widget      (iWidget *tabs, const iWidget *page);
 void            setTabPageLabel_Widget  (iWidget *tabs, const iAnyObject *page, const iString *label);
 iWidget *       tabPage_Widget          (iWidget *tabs, size_t index);

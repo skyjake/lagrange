@@ -27,17 +27,21 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <SDL_render.h>
 
+/* Size names: regular (1x) -> medium (1.2x) -> big (1.33x) -> large (1.67x) -> huge (2x) */
+
 enum iFontId {
     default_FontId,
     defaultMedium_FontId,
     defaultMonospace_FontId,
+    /* content fonts */
     regular_FontId,
     monospace_FontId,
     monospaceSmall_FontId,
     medium_FontId,
+    big_FontId,
     italic_FontId,
     bold_FontId,
-    mediumBold_FontId,
+    bigBold_FontId,
     largeBold_FontId,
     hugeBold_FontId,
     largeLight_FontId,    
@@ -46,27 +50,34 @@ enum iFontId {
     defaultMediumSymbols_FontId,
     symbols_FontId,
     mediumSymbols_FontId,
+    bigSymbols_FontId,
     largeSymbols_FontId,
     hugeSymbols_FontId,
-    smallSymbols_FontId,
+    monospaceSymbols_FontId,
+    monospaceSmallSymbols_FontId,
     /* emoji fonts */
     defaultEmoji_FontId,
     defaultMediumEmoji_FontId,
     emoji_FontId,
     mediumEmoji_FontId,
+    bigEmoji_FontId,
     largeEmoji_FontId,
     hugeEmoji_FontId,
-    smallEmoji_FontId,
+    monospaceEmoji_FontId,
+    monospaceSmallEmoji_FontId,
     /* japanese script */
-    smallJapanese_FontId,
+    defaultJapanese_FontId,
+    monospaceSmallJapanese_FontId,
+    monospaceJapanese_FontId,
     regularJapanese_FontId,
     mediumJapanese_FontId,
+    bigJapanese_FontId,
     largeJapanese_FontId,
     hugeJapanese_FontId,
     max_FontId,
 
     /* Meta: */
-    fromSymbolsToEmojiOffset_FontId = 7,
+    fromSymbolsToEmojiOffset_FontId = 9,
 
     /* UI fonts: */
     uiLabel_FontId        = default_FontId,
@@ -81,23 +92,32 @@ enum iFontId {
     quote_FontId             = italic_FontId,
     heading1_FontId          = hugeBold_FontId,
     heading2_FontId          = largeBold_FontId,
-    heading3_FontId          = medium_FontId,
+    heading3_FontId          = big_FontId,
     banner_FontId            = largeLight_FontId,
 };
 
 iLocalDef iBool isJapanese_FontId(enum iFontId id) {
-    return id >= smallJapanese_FontId && id <= hugeJapanese_FontId;
+    return id >= defaultJapanese_FontId && id <= hugeJapanese_FontId;
+}
+iLocalDef iBool isVariationSelector_Char(iChar ch) {
+    return ch >= 0xfe00 && ch <= 0xfe0f;
 }
 
 #define variationSelectorEmoji_Char     ((iChar) 0xfe0f)
+
+enum iTextFont {
+    nunito_TextFont,
+    firaSans_TextFont,
+};
 
 extern int gap_Text; /* affected by content font size */
 
 void    init_Text           (SDL_Renderer *);
 void    deinit_Text         (void);
 
+void    setContentFont_Text     (enum iTextFont font);
 void    setContentFontSize_Text (float fontSizeFactor); /* affects all except `default*` fonts */
-void    resetFonts_Text     (void);
+void    resetFonts_Text         (void);
 
 int     lineHeight_Text     (int fontId);
 iInt2   measure_Text        (int fontId, const char *text);
@@ -106,6 +126,7 @@ iRect   visualBounds_Text   (int fontId, iRangecc text);
 iInt2   advance_Text        (int fontId, const char *text);
 iInt2   advanceN_Text       (int fontId, const char *text, size_t n); /* `n` in characters */
 iInt2   advanceRange_Text   (int fontId, iRangecc text);
+iInt2   advanceWrapRange_Text   (int fontId, int maxWidth, iRangecc text);
 
 iInt2   tryAdvance_Text         (int fontId, iRangecc text, int width, const char **endPos);
 iInt2   tryAdvanceNoWrap_Text   (int fontId, iRangecc text, int width, const char **endPos);
@@ -116,11 +137,14 @@ enum iAlignment {
     right_Alignment,
 };
 
+void    setOpacity_Text     (float opacity);
+
 void    draw_Text           (int fontId, iInt2 pos, int color, const char *text, ...);
 void    drawAlign_Text      (int fontId, iInt2 pos, int color, enum iAlignment align, const char *text, ...);
 void    drawCentered_Text   (int fontId, iRect rect, iBool alignVisual, int color, const char *text, ...);
 void    drawString_Text     (int fontId, iInt2 pos, int color, const iString *text);
 void    drawRange_Text      (int fontId, iInt2 pos, int color, iRangecc text);
+int     drawWrapRange_Text  (int fontId, iInt2 pos, int maxWidth, int color, iRangecc text); /* returns new Y */
 
 SDL_Texture *   glyphCache_Text     (void);
 

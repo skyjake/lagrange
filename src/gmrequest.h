@@ -44,6 +44,7 @@ struct Impl_GmResponse {
     int                certFlags;
     iDate              certValidUntil;
     iString            certSubject;
+    iTime              when;
 };
 
 iDeclareTypeConstruction(GmResponse)

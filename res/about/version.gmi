@@ -6,6 +6,21 @@
 ```
 # Release notes
 
+## 0.3
+* Added style customization.
+* Added new font option: Fira Sans.
+* Added a setting for maximum line width.
+* Added a setting for adjusting color saturation.
+* Added an option for "Outline on scrollbar": page outline appears when mouse is hovering over the scrollbar.
+* Added an option for site icon and current top heading that appear when the window is wide enough.
+* Added tabs in Preferences for better grouping.
+* Added "Open Link in Background Tab" in link context menus.
+* More flexible text selection behavior when starting on empty space.
+* Smaller first paragraph font size.
+* Fixed centering of popups so they remain centered when window is resized.
+* Fixed sizing and alignment of Unicode symbols in preformatted text.
+* Fixed sizing of Japanese glyphs in UI text (e.g., tab titles).
+
 ## 0.2.1
 * Fixed window size/state restoration issues, e.g., after window is maximized.
 * Windows: Fixed text disappearing when window is resized.

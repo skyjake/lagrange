@@ -119,18 +119,20 @@ const iString *id_Widget(const iWidget *d) {
     return &d->id;
 }
 
-int flags_Widget(const iWidget *d) {
+int64_t flags_Widget(const iWidget *d) {
     return d->flags;
 }
 
-void setFlags_Widget(iWidget *d, int flags, iBool set) {
-    iChangeFlags(d->flags, flags, set);
-    if (flags & keepOnTop_WidgetFlag) {
-        if (set) {
-            pushBack_PtrArray(onTop_RootData_(), d);
-        }
-        else {
-            removeOne_PtrArray(onTop_RootData_(), d);
+void setFlags_Widget(iWidget *d, int64_t flags, iBool set) {
+    if (d) {
+        iChangeFlags(d->flags, flags, set);
+        if (flags & keepOnTop_WidgetFlag) {
+            if (set) {
+                pushBack_PtrArray(onTop_RootData_(), d);
+            }
+            else {
+                removeOne_PtrArray(onTop_RootData_(), d);
+            }
         }
     }
 }
@@ -228,6 +230,13 @@ static size_t numArrangedChildren_Widget_(const iWidget *d) {
     return count;
 }
 
+static void centerHorizontal_Widget_(iWidget *d) {
+    d->rect.pos.x = ((d->parent ? width_Rect(innerRect_Widget_(d->parent))
+                                : rootSize_Window(get_Window()).x) -
+                     width_Rect(d->rect)) /
+                    2;
+}
+
 void arrange_Widget(iWidget *d) {
     if (isCollapsed_Widget_(d)) {
         setFlags_Widget(d, wasCollapsed_WidgetFlag, iTrue);
@@ -235,6 +244,9 @@ void arrange_Widget(iWidget *d) {
     }
     if (d->flags & moveToParentRightEdge_WidgetFlag) {
         d->rect.pos.x = width_Rect(innerRect_Widget_(d->parent)) - width_Rect(d->rect);
+    }
+    if (d->flags & centerHorizontal_WidgetFlag) {
+        centerHorizontal_Widget_(d);
     }
     if (d->flags & resizeToParentWidth_WidgetFlag) {
         setWidth_Widget_(d, width_Rect(innerRect_Widget_(d->parent)));
@@ -351,6 +363,9 @@ void arrange_Widget(iWidget *d) {
         if (child->flags & fixedPosition_WidgetFlag) {
             continue;
         }
+        if (child->flags & centerHorizontal_WidgetFlag) {
+            continue;
+        }
         if (d->flags & (arrangeHorizontal_WidgetFlag | arrangeVertical_WidgetFlag)) {
             if (child->flags & moveToParentRightEdge_WidgetFlag) {
                 continue; /* Not part of the sequential arrangement .*/
@@ -400,6 +415,9 @@ void arrange_Widget(iWidget *d) {
                     arrange_Widget(child);
                 }
             }
+        }
+        if (d->flags & centerHorizontal_WidgetFlag) {
+            centerHorizontal_Widget_(d);
         }
     }
 }
@@ -616,7 +634,7 @@ iAny *addChildPos_Widget(iWidget *d, iAnyObject *child, enum iWidgetAddPos addPo
     return child;
 }
 
-iAny *addChildFlags_Widget(iWidget *d, iAnyObject *child, int childFlags) {
+iAny *addChildFlags_Widget(iWidget *d, iAnyObject *child, int64_t childFlags) {
     setFlags_Widget(child, childFlags, iTrue);
     return addChild_Widget(d, child);
 }

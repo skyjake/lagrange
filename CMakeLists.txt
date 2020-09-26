@@ -17,10 +17,9 @@
 # - `cat` is relied upon for merging all the resource files together.
 
 cmake_minimum_required (VERSION 3.9)
-set (CMAKE_OSX_DEPLOYMENT_TARGET 10.14)
 
 project (Lagrange
-    VERSION 0.2.1
+    VERSION 0.3.0
     DESCRIPTION "Beautiful Gemini Client"
     LANGUAGES C
 )
@@ -98,6 +97,8 @@ set (SOURCES
     src/history.h
     src/lookup.c
     src/lookup.h
+    src/prefs.c
+    src/prefs.h
     src/stb_image.h
     src/stb_truetype.h
     src/visited.c
@@ -177,8 +178,8 @@ if (ENABLE_X11_SWRENDER)
 endif ()
 if (ENABLE_KERNING)
     target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_KERNING=1)
-if (ENABLE_WINDOWPOS_FIX)
 endif ()
+if (ENABLE_WINDOWPOS_FIX)
     target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_WINDOWPOS_FIX=1)
 endif ()
 target_link_libraries (app PUBLIC the_Foundation::the_Foundation)
@@ -189,8 +190,10 @@ if (APPLE)
     else ()
         target_link_libraries (app PUBLIC "-framework AppKit")
     endif ()
-    target_compile_options (app PUBLIC -mmacosx-version-min=10.14)
-    target_link_options (app PUBLIC -mmacosx-version-min=10.14)
+    if (CMAKE_OSX_DEPLOYMENT_TARGET)
+        target_compile_options (app PUBLIC -mmacosx-version-min=${CMAKE_OSX_DEPLOYMENT_TARGET})
+        target_link_options (app PUBLIC -mmacosx-version-min=${CMAKE_OSX_DEPLOYMENT_TARGET})
+    endif ()
     set_target_properties (app PROPERTIES
         OUTPUT_NAME "Lagrange"
         BUILD_RPATH ${SDL2_LIBRARY_DIRS}

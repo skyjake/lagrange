@@ -44,6 +44,7 @@ void init_GmResponse(iGmResponse *d) {
     d->certFlags = 0;
     iZap(d->certValidUntil);
     init_String(&d->certSubject);
+    iZap(d->when);
 }
 
 void initCopy_GmResponse(iGmResponse *d, const iGmResponse *other) {
@@ -53,6 +54,7 @@ void initCopy_GmResponse(iGmResponse *d, const iGmResponse *other) {
     d->certFlags = other->certFlags;
     d->certValidUntil = other->certValidUntil;
     initCopy_String(&d->certSubject, &other->certSubject);
+    d->when = other->when;
 }
 
 void deinit_GmResponse(iGmResponse *d) {
@@ -68,6 +70,7 @@ void clear_GmResponse(iGmResponse *d) {
     d->certFlags = 0;
     iZap(d->certValidUntil);
     clear_String(&d->certSubject);
+    iZap(d->when);
 }
 
 iGmResponse *copy_GmResponse(const iGmResponse *d) {
@@ -83,6 +86,7 @@ void serialize_GmResponse(const iGmResponse *d, iStream *outs) {
     write32_Stream(outs, d->certFlags);
     serialize_Date(&d->certValidUntil, outs);
     serialize_String(&d->certSubject, outs);
+    /* TODO: Include the timestamp. */
 }
 
 void deserialize_GmResponse(iGmResponse *d, iStream *ins) {
@@ -270,6 +274,7 @@ static void readIncoming_GmRequest_(iAnyObject *obj) {
         restartTimeout_GmRequest_(d);
         notifyUpdate = iTrue;
     }
+    initCurrent_Time(&d->resp.when);
     delete_Block(data);
     unlock_Mutex(&d->mutex);
     if (notifyUpdate) {
@@ -287,6 +292,7 @@ static void requestFinished_GmRequest_(iAnyObject *obj) {
         iBlock *data = readAll_TlsRequest(d->req);
         iAssert(isEmpty_Block(data));
         delete_Block(data);
+        initCurrent_Time(&d->resp.when);
     }
     SDL_RemoveTimer(d->timeoutId);
     d->timeoutId = 0;

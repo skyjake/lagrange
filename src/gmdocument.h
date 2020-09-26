@@ -35,6 +35,11 @@ iDeclareType(GmImageInfo)
 iDeclareType(GmHeading)
 iDeclareType(GmRun)
 
+enum iGmDocumentTheme {
+    colorfulDark_GmDocumentTheme,
+    white_GmDocumentTheme,
+};
+
 typedef uint16_t iGmLinkId;
 
 enum iGmLinkFlags {
@@ -110,8 +115,10 @@ typedef void (*iGmDocumentRenderFunc)(void *, const iGmRun *);
 void            render_GmDocument           (const iGmDocument *, iRangei visRangeY,
                                              iGmDocumentRenderFunc render, void *);
 iInt2           size_GmDocument             (const iGmDocument *);
+const iGmRun *  siteBanner_GmDocument       (const iGmDocument *);
 iBool           hasSiteBanner_GmDocument    (const iGmDocument *);
-const iArray *  headings_GmDocument         (const iGmDocument *);
+const iString * bannerText_GmDocument       (const iGmDocument *);
+const iArray *  headings_GmDocument         (const iGmDocument *); /* array of GmHeadings */
 const iString * source_GmDocument           (const iGmDocument *);
 
 iRangecc        findText_GmDocument         (const iGmDocument *, const iString *text, const char *start);

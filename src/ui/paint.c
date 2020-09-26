@@ -31,13 +31,14 @@ iLocalDef SDL_Renderer *renderer_Paint_(const iPaint *d) {
 
 static void setColor_Paint_(const iPaint *d, int color) {
     const iColor clr = get_Color(color & mask_ColorId);
-    SDL_SetRenderDrawColor(renderer_Paint_(d), clr.r, clr.g, clr.b, clr.a);
+    SDL_SetRenderDrawColor(renderer_Paint_(d), clr.r, clr.g, clr.b, clr.a * d->alpha / 255);
 }
 
 void init_Paint(iPaint *d) {
-    d->dst = get_Window();
+    d->dst       = get_Window();
     d->setTarget = NULL;
     d->oldTarget = NULL;
+    d->alpha     = 255;
 }
 
 void beginTarget_Paint(iPaint *d, SDL_Texture *target) {

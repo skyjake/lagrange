@@ -29,12 +29,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "gmutil.h"
 #include "labelwidget.h"
 #include "inputwidget.h"
+#include "keys.h"
 #include "widget.h"
 #include "text.h"
 #include "window.h"
 
 #include <the_Foundation/math.h>
 #include <the_Foundation/path.h>
+#include <SDL_timer.h>
 
 iBool isCommand_SDLEvent(const SDL_Event *d) {
     return d->type == SDL_USEREVENT && d->user.code == command_UserEventCode;
@@ -124,6 +126,39 @@ iRangei union_Rangei(iRangei a, iRangei b) {
     if (isEmpty_Rangei(a)) return b;
     if (isEmpty_Rangei(b)) return a;
     return (iRangei){ iMin(a.start, b.start), iMax(a.end, b.end) };
+}
+
+/*----------------------------------------------------------------------------------------------*/
+
+iBool isFinished_Anim(const iAnim *d) {
+    return frameTime_Window(get_Window()) >= d->due;
+}
+
+void init_Anim(iAnim *d, float value) {
+    d->due = d->when = frameTime_Window(get_Window());
+    d->from = d->to = value;
+}
+
+void setValue_Anim(iAnim *d, float to, uint32_t span) {
+    if (fabsf(to - d->to) > 0.00001f) {
+        const uint32_t now = SDL_GetTicks();
+        d->from = value_Anim(d);
+        d->to   = to;
+        d->when = now;
+        d->due  = now + span;
+    }
+}
+
+float value_Anim(const iAnim *d) {
+    const uint32_t now = frameTime_Window(get_Window());
+    if (now >= d->due) {
+        return d->to;
+    }
+    if (now <= d->when) {
+        return d->from;
+    }
+    const float pos = (float) (now - d->when) / (float) (d->due - d->when);
+    return d->from * (1.0f - pos) + d->to * pos;
 }
 
 /*-----------------------------------------------------------------------------------------------*/
@@ -404,6 +439,7 @@ static iBool tabSwitcher_(iWidget *tabs, const char *cmd) {
         }
         tabIndex += (equal_Command(cmd, "tabs.next") ? +1 : -1);
         showTabPage_Widget(tabs, child_Widget(pages, iWrap(tabIndex, 0, childCount_Widget(pages))));
+        refresh_Widget(tabs);
         return iTrue;
     }
     return iFalse;
@@ -469,6 +505,19 @@ iWidget *removeTabPage_Widget(iWidget *tabs, size_t index) {
         setFlags_Widget(buttons, hidden_WidgetFlag, iTrue);
     }
     return page;
+}
+
+void resizeToLargestPage_Widget(iWidget *tabs) {
+    arrange_Widget(tabs);
+    iInt2 largest = zero_I2();
+    iWidget *pages = findChild_Widget(tabs, "tabs.pages");
+    iConstForEach(ObjectList, i, children_Widget(pages)) {
+        largest = max_I2(largest, ((const iWidget *) i.object)->rect.size);
+    }
+    iForEach(ObjectList, j, children_Widget(pages)) {
+        setSize_Widget(j.object, largest);
+    }
+    setSize_Widget(tabs, addY_I2(largest, height_Widget(findChild_Widget(tabs, "tabs.buttons"))));
 }
 
 iLabelWidget *tabButtonForPage_Widget_(iWidget *tabs, const iWidget *page) {
@@ -591,18 +640,18 @@ iWidget *makeSheet_Widget(const char *id) {
     setBackgroundColor_Widget(sheet, uiBackground_ColorId);
     setFlags_Widget(sheet,
                     mouseModal_WidgetFlag | keepOnTop_WidgetFlag | arrangeVertical_WidgetFlag |
-                        arrangeSize_WidgetFlag,
+                        arrangeSize_WidgetFlag | centerHorizontal_WidgetFlag,
                     iTrue);
     return sheet;
 }
 
 void centerSheet_Widget(iWidget *sheet) {
-    arrange_Widget(sheet);
-    const iInt2 rootSize = rootSize_Window(get_Window());
-    const iInt2 orig     = localCoord_Widget(
-        sheet->parent,
-        init_I2(rootSize.x / 2 - sheet->rect.size.x / 2, bounds_Widget(sheet).pos.y));
-    sheet->rect.pos = orig;
+    arrange_Widget(sheet->parent);
+//    const iInt2 rootSize = rootSize_Window(get_Window());
+//    const iInt2 orig     = localCoord_Widget(
+//        sheet->parent,
+//        init_I2(rootSize.x / 2 - sheet->rect.size.x / 2, bounds_Widget(sheet).pos.y));
+//    sheet->rect.pos = orig;
     postRefresh_App();
 }
 
@@ -803,55 +852,136 @@ iWidget *makeToggle_Widget(const char *id) {
     return toggle;
 }
 
+static iWidget *appendTwoColumnPage_(iWidget *tabs, const char *title, int shortcut, iWidget **headings,
+                                     iWidget **values) {
+    iWidget *page = new_Widget();
+    setFlags_Widget(page, arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag |
+                    resizeHeightOfChildren_WidgetFlag, iTrue);
+    addChildFlags_Widget(page, iClob(new_Widget()), expand_WidgetFlag);
+    iWidget *columns = new_Widget();
+    addChildFlags_Widget(page, iClob(columns), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+    *headings = addChildFlags_Widget(
+        columns, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
+    *values = addChildFlags_Widget(
+        columns, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
+    addChildFlags_Widget(page, iClob(new_Widget()), expand_WidgetFlag);
+    appendTabPage_Widget(tabs, page, title, shortcut, shortcut ? KMOD_PRIMARY : 0);
+    return page;
+}
+
+static void makeTwoColumnHeading_(const char *title, iWidget *headings, iWidget *values) {
+    addChild_Widget(headings,
+                    iClob(makeHeading_Widget(format_CStr(uiHeading_ColorEscape "%s", title))));
+    addChild_Widget(values, iClob(makeHeading_Widget("")));
+}
+
+static void expandInputFieldWidth_(iInputWidget *input) {
+    iWidget *page = as_Widget(input)->parent->parent->parent->parent; /* tabs > page > values > input */
+    as_Widget(input)->rect.size.x =
+        right_Rect(bounds_Widget(page)) - left_Rect(bounds_Widget(constAs_Widget(input)));
+}
+
+static void addRadioButton_(iWidget *parent, const char *id, const char *label, const char *cmd) {
+    setId_Widget(
+        addChildFlags_Widget(parent, iClob(new_LabelWidget(label, 0, 0, cmd)), radio_WidgetFlag),
+        id);
+}
+
 iWidget *makePreferences_Widget(void) {
     iWidget *dlg = makeSheet_Widget("prefs");
     addChildFlags_Widget(dlg,
                          iClob(new_LabelWidget(uiHeading_ColorEscape "PREFERENCES", 0, 0, NULL)),
                          frameless_WidgetFlag);
-    iWidget *page = new_Widget();
-    addChild_Widget(dlg, iClob(page));
-    setFlags_Widget(page, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
-    iWidget *headings = addChildFlags_Widget(
-        page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
-    iWidget *values = addChildFlags_Widget(
-        page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
-    addChild_Widget(headings, iClob(makeHeading_Widget("Downloads folder:")));
-    setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.downloads");
+    iWidget *tabs = makeTabs_Widget(dlg);
+    iWidget *headings, *values;
+    /* General preferences. */ {
+        appendTwoColumnPage_(tabs, "General", '1', &headings, &values);
+        addChild_Widget(headings, iClob(makeHeading_Widget("Downloads folder:")));
+        setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.downloads");
+        addChild_Widget(headings, iClob(makeHeading_Widget("Outline on scrollbar:")));
+        addChild_Widget(values, iClob(makeToggle_Widget("prefs.hoveroutline")));
+        makeTwoColumnHeading_("WINDOW", headings, values);
 #if defined (iPlatformApple) || defined (iPlatformMSys)
-    addChild_Widget(headings, iClob(makeHeading_Widget("Use system theme:")));
-    addChild_Widget(values, iClob(makeToggle_Widget("prefs.ostheme")));
+        addChild_Widget(headings, iClob(makeHeading_Widget("Use system theme:")));
+        addChild_Widget(values, iClob(makeToggle_Widget("prefs.ostheme")));
 #endif
-    addChild_Widget(headings, iClob(makeHeading_Widget("Theme:")));
-    iWidget *themes = new_Widget();
-    /* Themes. */ {
-        setId_Widget(addChild_Widget(themes, iClob(new_LabelWidget("Pure Black", 0, 0, "theme.set arg:0"))), "prefs.theme.0");
-        setId_Widget(addChild_Widget(themes, iClob(new_LabelWidget("Dark", 0, 0, "theme.set arg:1"))), "prefs.theme.1");
-        setId_Widget(addChild_Widget(themes, iClob(new_LabelWidget("Light", 0, 0, "theme.set arg:2"))), "prefs.theme.2");
-        setId_Widget(addChild_Widget(themes, iClob(new_LabelWidget("Pure White", 0, 0, "theme.set arg:3"))), "prefs.theme.3");
+        addChild_Widget(headings, iClob(makeHeading_Widget("Theme:")));
+        iWidget *themes = new_Widget();
+        /* Themes. */ {
+            setId_Widget(addChild_Widget(themes, iClob(new_LabelWidget("Pure Black", 0, 0, "theme.set arg:0"))), "prefs.theme.0");
+            setId_Widget(addChild_Widget(themes, iClob(new_LabelWidget("Dark", 0, 0, "theme.set arg:1"))), "prefs.theme.1");
+            setId_Widget(addChild_Widget(themes, iClob(new_LabelWidget("Light", 0, 0, "theme.set arg:2"))), "prefs.theme.2");
+            setId_Widget(addChild_Widget(themes, iClob(new_LabelWidget("Pure White", 0, 0, "theme.set arg:3"))), "prefs.theme.3");
+        }
+        addChildFlags_Widget(values, iClob(themes), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+        addChild_Widget(headings, iClob(makeHeading_Widget("Retain window size:")));
+        addChild_Widget(values, iClob(makeToggle_Widget("prefs.retainwindow")));
+        addChild_Widget(headings, iClob(makeHeading_Widget("UI scale factor:")));
+        setId_Widget(addChild_Widget(values, iClob(new_InputWidget(8))), "prefs.uiscale");
     }
-    addChildFlags_Widget(values, iClob(themes), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
-    addChild_Widget(headings, iClob(makeHeading_Widget("Retain window size:")));
-    addChild_Widget(values, iClob(makeToggle_Widget("prefs.retainwindow")));
-    addChild_Widget(headings, iClob(makeHeading_Widget("UI scale factor:")));
-    setId_Widget(addChild_Widget(values, iClob(new_InputWidget(8))), "prefs.uiscale");
-    addChild_Widget(headings, iClob(makeHeading_Widget(uiHeading_ColorEscape "Proxies")));
-    addChild_Widget(values, iClob(makeHeading_Widget("")));
-    addChild_Widget(headings, iClob(makeHeading_Widget("Gopher proxy:")));
-    setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.proxy.gopher");
-    addChild_Widget(headings, iClob(makeHeading_Widget("HTTP proxy:")));
-    setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.proxy.http");
+    /* Layout. */ {
+        appendTwoColumnPage_(tabs, "Style", '2', &headings, &values);
+        addChild_Widget(headings, iClob(makeHeading_Widget("Font:")));
+        iWidget *fonts = new_Widget();
+        /* Fonts. */ {
+            addRadioButton_(fonts, "prefs.font.0", "Nunito", "font.set arg:0");
+            addRadioButton_(fonts, "prefs.font.1", "Fira Sans", "font.set arg:1");
+        }
+        addChildFlags_Widget(values, iClob(fonts), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+        addChild_Widget(headings, iClob(makeHeading_Widget("Line width:")));
+        iWidget *widths = new_Widget();
+        /* Line widths. */ {
+            addRadioButton_(widths, "prefs.linewidth.30", "\u20132", "linewidth.set arg:30");
+            addRadioButton_(widths, "prefs.linewidth.35", "\u20131", "linewidth.set arg:35");
+            addRadioButton_(widths, "prefs.linewidth.40", "Normal", "linewidth.set arg:40");
+            addRadioButton_(widths, "prefs.linewidth.45", "+1", "linewidth.set arg:45");
+            addRadioButton_(widths, "prefs.linewidth.50", "+2", "linewidth.set arg:50");
+            addRadioButton_(widths, "prefs.linewidth.1000", "Window", "linewidth.set arg:1000");
+        }
+        addChildFlags_Widget(values, iClob(widths), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+        addChild_Widget(headings, iClob(makeHeading_Widget("Big 1st paragaph:")));
+        addChild_Widget(values, iClob(makeToggle_Widget("prefs.biglede")));
+        makeTwoColumnHeading_("WIDE LAYOUT", headings, values);
+        addChild_Widget(headings, iClob(makeHeading_Widget("Site icon:")));
+        addChild_Widget(values, iClob(makeToggle_Widget("prefs.sideicon")));
+    }
+    /* Colors. */ {
+        appendTwoColumnPage_(tabs, "Colors", '3', &headings, &values);
+        addChild_Widget(headings, iClob(makeHeading_Widget("Dark theme:")));
+        addChild_Widget(values, iClob(new_LabelWidget("Colorful", 0, 0, 0)));
+        addChild_Widget(headings, iClob(makeHeading_Widget("Light theme:")));
+        addChild_Widget(values, iClob(new_LabelWidget("White", 0, 0, 0)));
+        addChild_Widget(headings, iClob(makeHeading_Widget("Saturation:")));
+        iWidget *sats = new_Widget();
+        /* Saturation levels. */ {
+            addRadioButton_(sats, "prefs.saturation.3", "Full", "saturation.set arg:100");
+            addRadioButton_(sats, "prefs.saturation.2", "Reduced", "saturation.set arg:66");
+            addRadioButton_(sats, "prefs.saturation.1", "Minimal", "saturation.set arg:33");
+            addRadioButton_(sats, "prefs.saturation.0", "Monochrome", "saturation.set arg:0");
+        }
+        addChildFlags_Widget(values, iClob(sats), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+    }
+    /* Proxies. */ {
+        appendTwoColumnPage_(tabs, "Proxies", '4', &headings, &values);
+        addChild_Widget(headings, iClob(makeHeading_Widget("Gopher proxy:")));
+        setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.proxy.gopher");
+        addChild_Widget(headings, iClob(makeHeading_Widget("HTTP proxy:")));
+        setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.proxy.http");
+    }
+    resizeToLargestPage_Widget(tabs);
     arrange_Widget(dlg);
-    /* Set text input widths. */ {
-        const int inputWidth = width_Rect(page->rect) - width_Rect(headings->rect);
-        as_Widget(findChild_Widget(values, "prefs.downloads"))->rect.size.x = inputWidth;
-        as_Widget(findChild_Widget(values, "prefs.proxy.http"))->rect.size.x = inputWidth;
-        as_Widget(findChild_Widget(values, "prefs.proxy.gopher"))->rect.size.x = inputWidth;
+    /* Set input field sizes. */ {
+        expandInputFieldWidth_(findChild_Widget(tabs, "prefs.downloads"));
+        expandInputFieldWidth_(findChild_Widget(tabs, "prefs.proxy.http"));
+        expandInputFieldWidth_(findChild_Widget(tabs, "prefs.proxy.gopher"));
     }
     iWidget *div = new_Widget(); {
         setFlags_Widget(div, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
         addChild_Widget(div, iClob(new_LabelWidget("Dismiss", SDLK_ESCAPE, 0, "prefs.dismiss")));
     }
     addChild_Widget(dlg, iClob(div));
+    addAction_Widget(dlg, prevTab_KeyShortcut, "tabs.prev");
+    addAction_Widget(dlg, nextTab_KeyShortcut, "tabs.next");
     addChild_Widget(get_Window()->root, iClob(dlg));
     centerSheet_Widget(dlg);
     return dlg;

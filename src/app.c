@@ -94,17 +94,20 @@ struct Impl_App {
     iTime        lastDropTime; /* for detecting drops of multiple items */
     /* Preferences: */
     iBool        commandEcho; /* --echo */
-    iBool        retainWindowSize;
+    iBool        forceSoftwareRender; /* --sw */
     iRect        initialWindowRect;
+    iPrefs       prefs;
+#if 0
+    iBool        retainWindowSize;
     float        uiScale;
     int          zoomPercent;
     iBool        forceWrap;
-    iBool        forceSoftwareRender;
     enum iColorTheme theme;
     iBool        useSystemTheme;
     iString      gopherProxy;
     iString      httpProxy;
     iString      downloadDir;
+#endif
 };
 
 static iApp app_;
@@ -134,8 +137,8 @@ const iString *dateStr_(const iDate *date) {
 static iString *serializePrefs_App_(const iApp *d) {
     iString *str = new_String();
     const iSidebarWidget *sidebar = findWidget_App("sidebar");
-    appendFormat_String(str, "window.retain arg:%d\n", d->retainWindowSize);
-    if (d->retainWindowSize) {
+    appendFormat_String(str, "window.retain arg:%d\n", d->prefs.retainWindowSize);
+    if (d->prefs.retainWindowSize) {
         const iBool isMaximized = (SDL_GetWindowFlags(d->window->win) & SDL_WINDOW_MAXIMIZED) != 0;
         int w, h, x, y;
         x = d->window->lastRect.pos.x;
@@ -150,22 +153,30 @@ static iString *serializePrefs_App_(const iApp *d) {
         if (isMaximized) {
             appendFormat_String(str, "~window.maximize\n");
         }
+#else
+        iUnused(isMaximized);
 #endif
     }
     if (isVisible_Widget(sidebar)) {
         appendCStr_String(str, "sidebar.toggle\n");
     }
-    if (d->forceWrap) {
+    if (d->prefs.forceLineWrap) {
         appendFormat_String(str, "forcewrap.toggle\n");
     }
     appendFormat_String(str, "sidebar.mode arg:%d\n", mode_SidebarWidget(sidebar));
     appendFormat_String(str, "uiscale arg:%f\n", uiScale_Window(d->window));
-    appendFormat_String(str, "zoom.set arg:%d\n", d->zoomPercent);
-    appendFormat_String(str, "theme.set arg:%d auto:1\n", d->theme);
-    appendFormat_String(str, "ostheme arg:%d\n", d->useSystemTheme);
-    appendFormat_String(str, "proxy.gopher address:%s\n", cstr_String(&d->gopherProxy));
-    appendFormat_String(str, "proxy.http address:%s\n", cstr_String(&d->httpProxy));
-    appendFormat_String(str, "downloads path:%s\n", cstr_String(&d->downloadDir));
+    appendFormat_String(str, "font.set arg:%d\n", d->prefs.font);
+    appendFormat_String(str, "zoom.set arg:%d\n", d->prefs.zoomPercent);
+    appendFormat_String(str, "linewidth.set arg:%d\n", d->prefs.lineWidth);
+    appendFormat_String(str, "prefs.biglede.changed arg:%d\n", d->prefs.bigFirstParagraph);
+    appendFormat_String(str, "prefs.sideicon.changed arg:%d\n", d->prefs.sideIcon);
+    appendFormat_String(str, "prefs.hoveroutline.changed arg:%d\n", d->prefs.hoverOutline);
+    appendFormat_String(str, "theme.set arg:%d auto:1\n", d->prefs.theme);
+    appendFormat_String(str, "ostheme arg:%d\n", d->prefs.useSystemTheme);
+    appendFormat_String(str, "saturation.set arg:%d\n", (int) ((d->prefs.saturation * 100) + 0.5f));
+    appendFormat_String(str, "proxy.gopher address:%s\n", cstr_String(&d->prefs.gopherProxy));
+    appendFormat_String(str, "proxy.http address:%s\n", cstr_String(&d->prefs.httpProxy));
+    appendFormat_String(str, "downloads path:%s\n", cstr_String(&d->prefs.downloadDir));
     return str;
 }
 
@@ -244,7 +255,7 @@ static iBool loadState_App_(iApp *d) {
             readData_File(f, 4, magic);
             if (!memcmp(magic, magicTabDocument_App_, 4)) {
                 if (!doc) {
-                    doc = newTab_App(NULL);
+                    doc = newTab_App(NULL, iTrue);
                 }
                 if (read8_File(f)) {
                     current = doc;
@@ -301,24 +312,18 @@ static void init_App_(iApp *d, int argc, char **argv) {
     d->lastTickerTime    = SDL_GetTicks();
     d->elapsedSinceLastTicker = 0;
     d->commandEcho       = checkArgument_CommandLine(&d->args, "echo") != NULL;
+    d->forceSoftwareRender = checkArgument_CommandLine(&d->args, "sw") != NULL;
     d->initialWindowRect = init_Rect(-1, -1, 900, 560);
-    d->theme             = dark_ColorTheme;
-    d->useSystemTheme    = iTrue;
+    init_Prefs(&d->prefs);
+    setCStr_String(&d->prefs.downloadDir, downloadDir_App_);
     d->running           = iFalse;
     d->window            = NULL;
-    d->retainWindowSize  = iTrue;
     d->pendingRefresh    = iFalse;
-    d->zoomPercent       = 100;
-    d->forceWrap         = iFalse;
-    d->forceSoftwareRender = checkArgument_CommandLine(&d->args, "sw") != NULL;
     d->certs             = new_GmCerts(dataDir_App_);
     d->visited           = new_Visited();
     d->bookmarks         = new_Bookmarks();
     d->tabEnum           = 0; /* generates unique IDs for tab pages */
-    init_String(&d->gopherProxy);
-    init_String(&d->httpProxy);
-    initCStr_String(&d->downloadDir, downloadDir_App_);
-    setThemePalette_Color(d->theme);
+    setThemePalette_Color(d->prefs.theme);
 #if defined (iPlatformApple)
     setupApplication_MacOS();
 #endif
@@ -392,9 +397,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
 static void deinit_App(iApp *d) {
     saveState_App_(d);
     savePrefs_App_(d);
-    deinit_String(&d->downloadDir);
-    deinit_String(&d->httpProxy);
-    deinit_String(&d->gopherProxy);
+    deinit_Prefs(&d->prefs);
     save_Bookmarks(d->bookmarks, dataDir_App_);
     delete_Bookmarks(d->bookmarks);
     save_Visited(d->visited, dataDir_App_);
@@ -416,7 +419,7 @@ const iString *dataDir_App(void) {
 }
 
 const iString *downloadDir_App(void) {
-    return collect_String(cleaned_Path(&app_.downloadDir));
+    return collect_String(cleaned_Path(&app_.prefs.downloadDir));
 }
 
 const iString *debugInfo_App(void) {
@@ -540,12 +543,12 @@ uint32_t elapsedSinceLastTicker_App(void) {
     return app_.elapsedSinceLastTicker;
 }
 
-int zoom_App(void) {
-    return app_.zoomPercent;
+const iPrefs *prefs_App(void) {
+    return &app_.prefs;
 }
 
 iBool forceLineWrap_App(void) {
-    return app_.forceWrap;
+    return app_.prefs.forceLineWrap;
 }
 
 iBool forceSoftwareRender_App(void) {
@@ -561,16 +564,16 @@ iBool forceSoftwareRender_App(void) {
 }
 
 enum iColorTheme colorTheme_App(void) {
-    return app_.theme;
+    return app_.prefs.theme;
 }
 
 const iString *schemeProxy_App(iRangecc scheme) {
     iApp *d = &app_;
     if (equalCase_Rangecc(scheme, "gopher")) {
-        return &d->gopherProxy;
+        return &d->prefs.gopherProxy;
     }
     if (equalCase_Rangecc(scheme, "http") || equalCase_Rangecc(scheme, "https")) {
-        return &d->httpProxy;
+        return &d->prefs.httpProxy;
     }
     return NULL;
 }
@@ -713,7 +716,7 @@ iDocumentWidget *document_Command(const char *cmd) {
     return document_App();
 }
 
-iDocumentWidget *newTab_App(const iDocumentWidget *duplicateOf) {
+iDocumentWidget *newTab_App(const iDocumentWidget *duplicateOf, iBool switchToNew) {
     iApp *d = &app_;
     iWidget *tabs = findWidget_App("doctabs");
     setFlags_Widget(tabs, hidden_WidgetFlag, iFalse);
@@ -729,7 +732,9 @@ iDocumentWidget *newTab_App(const iDocumentWidget *duplicateOf) {
     setId_Widget(as_Widget(doc), format_CStr("document%03d", ++d->tabEnum));
     appendTabPage_Widget(tabs, iClob(doc), "", 0, 0);
     addChild_Widget(findChild_Widget(tabs, "tabs.buttons"), iClob(newTabButton));
-    postCommandf_App("tabs.switch page:%p", doc);
+    if (switchToNew) {
+        postCommandf_App("tabs.switch page:%p", doc);
+    }
     arrange_Widget(tabs);
     refresh_Widget(tabs);
     return doc;
@@ -801,15 +806,94 @@ static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
 iBool handleCommand_App(const char *cmd) {
     iApp *d = &app_;
     if (equal_Command(cmd, "window.retain")) {
-        d->retainWindowSize = arg_Command(cmd);
+        d->prefs.retainWindowSize = arg_Command(cmd);
         return iTrue;
     }
     else if (equal_Command(cmd, "window.maximize")) {
         SDL_MaximizeWindow(d->window->win);
         return iTrue;
     }
-    else if (equal_Command(cmd, "downloads")) {
-        setCStr_String(&d->downloadDir, suffixPtr_Command(cmd, "path"));
+    else if (equal_Command(cmd, "font.set")) {
+        setFreezeDraw_Window(get_Window(), iTrue);
+        d->prefs.font = arg_Command(cmd);
+        setContentFont_Text(d->prefs.font);
+        postCommand_App("font.changed");
+        postCommand_App("window.unfreeze");
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "zoom.set")) {
+        setFreezeDraw_Window(get_Window(), iTrue); /* no intermediate draws before docs updated */
+        d->prefs.zoomPercent = arg_Command(cmd);
+        setContentFontSize_Text((float) d->prefs.zoomPercent / 100.0f);
+        postCommand_App("font.changed");
+        postCommand_App("window.unfreeze");
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "zoom.delta")) {
+        setFreezeDraw_Window(get_Window(), iTrue); /* no intermediate draws before docs updated */
+        int delta = arg_Command(cmd);
+        if (d->prefs.zoomPercent < 100 || (delta < 0 && d->prefs.zoomPercent == 100)) {
+            delta /= 2;
+        }
+        d->prefs.zoomPercent = iClamp(d->prefs.zoomPercent + delta, 50, 200);
+        setContentFontSize_Text((float) d->prefs.zoomPercent / 100.0f);
+        postCommand_App("font.changed");
+        postCommand_App("window.unfreeze");
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "forcewrap.toggle")) {
+        d->prefs.forceLineWrap = !d->prefs.forceLineWrap;
+        updateSize_DocumentWidget(document_App());
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "theme.set")) {
+        const int isAuto = argLabel_Command(cmd, "auto");
+        d->prefs.theme = arg_Command(cmd);
+        if (!isAuto) {
+            postCommand_App("ostheme arg:0");
+        }
+        setThemePalette_Color(d->prefs.theme);
+        postCommandf_App("theme.changed auto:%d", isAuto);
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "ostheme")) {
+        d->prefs.useSystemTheme = arg_Command(cmd);
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "linewidth.set")) {
+        d->prefs.lineWidth = iMax(20, arg_Command(cmd));
+        postCommand_App("document.layout.changed");
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "prefs.biglede.changed")) {
+        d->prefs.bigFirstParagraph = arg_Command(cmd) != 0;
+        postCommand_App("document.layout.changed");
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "prefs.sideicon.changed")) {
+        d->prefs.sideIcon = arg_Command(cmd) != 0;
+        refresh_App();
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "prefs.hoveroutline.changed")) {
+        d->prefs.hoverOutline = arg_Command(cmd) != 0;
+        refresh_App();
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "saturation.set")) {
+        d->prefs.saturation = (float) arg_Command(cmd) / 100.0f;
+        postCommandf_App("theme.changed auto:1");
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "proxy.gopher")) {
+        setCStr_String(&d->prefs.gopherProxy, suffixPtr_Command(cmd, "address"));
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "proxy.http")) {
+        setCStr_String(&d->prefs.httpProxy, suffixPtr_Command(cmd, "address"));
+        return iTrue;
+    }    else if (equal_Command(cmd, "downloads")) {
+        setCStr_String(&d->prefs.downloadDir, suffixPtr_Command(cmd, "path"));
         return iTrue;
     }
     else if (equal_Command(cmd, "open")) {
@@ -817,14 +901,15 @@ iBool handleCommand_App(const char *cmd) {
         iUrl parts;
         init_Url(&parts, url);
         if (equalCase_Rangecc(parts.scheme, "mailto") ||
-            (isEmpty_String(&d->httpProxy) && (equalCase_Rangecc(parts.scheme, "http") ||
-                                               equalCase_Rangecc(parts.scheme, "https")))) {
+            (isEmpty_String(&d->prefs.httpProxy) && (equalCase_Rangecc(parts.scheme, "http") ||
+                                                     equalCase_Rangecc(parts.scheme, "https")))) {
             openInDefaultBrowser_App(url);
             return iTrue;
         }
         iDocumentWidget *doc = document_Command(cmd);
-        if (argLabel_Command(cmd, "newtab")) {
-            doc = newTab_App(NULL);
+        const int newTab = argLabel_Command(cmd, "newtab");
+        if (newTab) {
+            doc = newTab_App(NULL, (newTab & 1) != 0); /* newtab:2 to open in background */
         }
         iHistory *history = history_DocumentWidget(doc);
         const iBool isHistory = argLabel_Command(cmd, "history") != 0;
@@ -859,7 +944,7 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "tabs.new")) {
         const iBool isDuplicate = argLabel_Command(cmd, "duplicate") != 0;
-        newTab_App(isDuplicate ? document_App() : NULL);
+        newTab_App(isDuplicate ? document_App() : NULL, iTrue);
         if (!isDuplicate) {
             postCommand_App("navigate.home");
         }
@@ -908,11 +993,26 @@ iBool handleCommand_App(const char *cmd) {
     else if (equal_Command(cmd, "preferences")) {
         iWidget *dlg = makePreferences_Widget();
         updatePrefsThemeButtons_(dlg);
-        setText_InputWidget(findChild_Widget(dlg, "prefs.downloads"), &d->downloadDir);
-        setToggle_Widget(findChild_Widget(dlg, "prefs.ostheme"), d->useSystemTheme);
-        setToggle_Widget(findChild_Widget(dlg, "prefs.retainwindow"), d->retainWindowSize);
+        setText_InputWidget(findChild_Widget(dlg, "prefs.downloads"), &d->prefs.downloadDir);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.hoveroutline"), d->prefs.hoverOutline);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.ostheme"), d->prefs.useSystemTheme);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.retainwindow"), d->prefs.retainWindowSize);
         setText_InputWidget(findChild_Widget(dlg, "prefs.uiscale"),
                             collectNewFormat_String("%g", uiScale_Window(d->window)));
+        setFlags_Widget(findChild_Widget(dlg, format_CStr("prefs.font.%d", d->prefs.font)),
+                        selected_WidgetFlag,
+                        iTrue);
+        setFlags_Widget(
+            findChild_Widget(dlg, format_CStr("prefs.linewidth.%d", d->prefs.lineWidth)),
+            selected_WidgetFlag,
+            iTrue);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.biglede"), d->prefs.bigFirstParagraph);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.sideicon"), d->prefs.sideIcon);
+        setFlags_Widget(
+            findChild_Widget(
+                dlg, format_CStr("prefs.saturation.%d", (int) (d->prefs.saturation * 3.99f))),
+            selected_WidgetFlag,
+            iTrue);
         setText_InputWidget(findChild_Widget(dlg, "prefs.proxy.http"),
                             schemeProxy_App(range_CStr("http")));
         setText_InputWidget(findChild_Widget(dlg, "prefs.proxy.gopher"),
@@ -925,7 +1025,7 @@ iBool handleCommand_App(const char *cmd) {
         const iPtrArray *homepages =
             list_Bookmarks(d->bookmarks, NULL, filterTagsRegExp_Bookmarks, pattern);
         if (isEmpty_PtrArray(homepages)) {
-        postCommand_App("open url:about:lagrange");
+            postCommand_App("open url:about:lagrange");
         }
         else {
             iStringSet *urls = iClob(new_StringSet());
@@ -942,31 +1042,6 @@ iBool handleCommand_App(const char *cmd) {
                     cstr_String(constAt_StringSet(urls, iRandoms(0, size_StringSet(urls)))));
             }
         }
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "zoom.set")) {
-        setFreezeDraw_Window(get_Window(), iTrue); /* no intermediate draws before docs updated */
-        d->zoomPercent = arg_Command(cmd);
-        setContentFontSize_Text((float) d->zoomPercent / 100.0f);
-        postCommand_App("font.changed");
-        postCommand_App("window.unfreeze");
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "zoom.delta")) {
-        setFreezeDraw_Window(get_Window(), iTrue); /* no intermediate draws before docs updated */
-        int delta = arg_Command(cmd);
-        if (d->zoomPercent < 100 || (delta < 0 && d->zoomPercent == 100)) {
-            delta /= 2;
-        }
-        d->zoomPercent = iClamp(d->zoomPercent + delta, 50, 200);
-        setContentFontSize_Text((float) d->zoomPercent / 100.0f);
-        postCommand_App("font.changed");
-        postCommand_App("window.unfreeze");
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "forcewrap.toggle")) {
-        d->forceWrap = !d->forceWrap;
-        updateSize_DocumentWidget(document_App());
         return iTrue;
     }
     else if (equal_Command(cmd, "bookmark.add")) {
@@ -1003,22 +1078,8 @@ iBool handleCommand_App(const char *cmd) {
         postCommand_App("idents.changed");
         return iTrue;
     }
-    else if (equal_Command(cmd, "theme.set")) {
-        const int isAuto = argLabel_Command(cmd, "auto");
-        d->theme = arg_Command(cmd);
-        if (!isAuto) {
-            postCommand_App("ostheme arg:0");
-        }
-        setThemePalette_Color(d->theme);
-        postCommandf_App("theme.changed auto:%d", isAuto);
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "ostheme")) {
-        d->useSystemTheme = arg_Command(cmd);
-        return iTrue;
-    }
     else if (equal_Command(cmd, "os.theme.changed")) {
-        if (d->useSystemTheme) {
+        if (d->prefs.useSystemTheme) {
             const int dark     = argLabel_Command(cmd, "dark");
             const int contrast = argLabel_Command(cmd, "contrast");
             postCommandf_App("theme.set arg:%d auto:1",
@@ -1026,14 +1087,6 @@ iBool handleCommand_App(const char *cmd) {
                                   : (contrast ? pureWhite_ColorTheme : light_ColorTheme));
         }
         return iFalse;
-    }
-    else if (equal_Command(cmd, "proxy.gopher")) {
-        setCStr_String(&d->gopherProxy, suffixPtr_Command(cmd, "address"));
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "proxy.http")) {
-        setCStr_String(&d->httpProxy, suffixPtr_Command(cmd, "address"));
-        return iTrue;
     }
     else {
         return iFalse;
