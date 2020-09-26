@@ -7,13 +7,13 @@
 # Release notes
 
 ## 0.3
-* Added several page appearance customization settings.
-* Added tabs in Preferences for better grouping.
+* Added style customization.
 * Added new font option: Fira Sans.
 * Added a setting for maximum line width.
 * Added a setting for adjusting color saturation.
 * Added an option for "Outline on scrollbar": page outline appears when mouse is hovering over the scrollbar.
-* Added an option for site icon and current top heading to appear on the left when the window is wide enough.
+* Added an option for site icon and current top heading that appear when the window is wide enough.
+* Added tabs in Preferences for better grouping.
 * Added "Open Link in Background Tab" in link context menus.
 * More flexible text selection behavior when starting on empty space.
 * Smaller first paragraph font size.

@@ -920,7 +920,7 @@ iWidget *makePreferences_Widget(void) {
         setId_Widget(addChild_Widget(values, iClob(new_InputWidget(8))), "prefs.uiscale");
     }
     /* Layout. */ {
-        appendTwoColumnPage_(tabs, "Layout", '2', &headings, &values);
+        appendTwoColumnPage_(tabs, "Style", '2', &headings, &values);
         addChild_Widget(headings, iClob(makeHeading_Widget("Font:")));
         iWidget *fonts = new_Widget();
         /* Fonts. */ {
