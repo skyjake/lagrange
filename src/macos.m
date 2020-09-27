@@ -38,14 +38,25 @@ enum iTouchBarVariant {
     default_TouchBarVariant,
 };
 
+static iInt2 macVer_(void) {
+    if ([[NSProcessInfo processInfo] respondsToSelector:@selector(operatingSystemVersion)]) {
+        const NSOperatingSystemVersion ver = [[NSProcessInfo processInfo] operatingSystemVersion];
+        return init_I2(ver.majorVersion, ver.minorVersion);
+    }
+    return init_I2(10, 10);
+}
+
 static NSString *currentSystemAppearance_(void) {
     /* This API does not exist on 10.13. */
-    @try {
+    if ([NSApp respondsToSelector:@selector(effectiveAppearance)]) {
         return [[NSApp effectiveAppearance] name];
     }
-    @catch (NSException *) {
-        return @"NSAppearanceNameAqua";
-    }
+    return @"NSAppearanceNameAqua";
+}
+
+iBool shouldDefaultToMetalRenderer_MacOS(void) {
+    const iInt2 ver = macVer_();
+    return ver.x > 10 || ver.y > 13;
 }
 
 /*----------------------------------------------------------------------------------------------*/

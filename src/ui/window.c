@@ -522,7 +522,7 @@ void init_Window(iWindow *d, iRect rect) {
     d->isDrawFrozen = iTrue;
     uint32_t flags = 0;
 #if defined (iPlatformApple)
-    SDL_SetHint(SDL_HINT_RENDER_DRIVER, "metal");
+    SDL_SetHint(SDL_HINT_RENDER_DRIVER, shouldDefaultToMetalRenderer_MacOS() ? "metal" : "opengl");
 #else
     flags |= SDL_WINDOW_OPENGL;
 #endif

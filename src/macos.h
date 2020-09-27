@@ -26,6 +26,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 /* Platform-specific functionality for macOS */
 
+iBool   shouldDefaultToMetalRenderer_MacOS  (void);
+
 void    setupApplication_MacOS  (void);
 void    insertMenuItems_MacOS   (const char *menuLabel, int atIndex, const iMenuItem *items, size_t count);
 void    handleCommand_MacOS     (const char *cmd);
