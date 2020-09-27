@@ -410,13 +410,13 @@ static void animate_DocumentWidget_(void *ticker) {
     }
 }
 
-static void updateSideOpacity_DocumentWidget_(iDocumentWidget *d) {
+static void updateSideOpacity_DocumentWidget_(iDocumentWidget *d, iBool isAnimated) {
     float opacity = 0.0f;
     const iGmRun *banner = siteBanner_GmDocument(d->doc);
     if (banner && bottom_Rect(banner->visBounds) < d->scrollY) {
         opacity = 1.0f;
     }
-    setValue_Anim(&d->sideOpacity, opacity, opacity < 0.5f ? 100 : 200);
+    setValue_Anim(&d->sideOpacity, opacity, isAnimated ? (opacity < 0.5f ? 100 : 200) : 0);
     animate_DocumentWidget_(d);
 }
 
@@ -445,7 +445,7 @@ static void updateVisible_DocumentWidget_(iDocumentWidget *d) {
     d->firstVisibleRun = NULL;
     render_GmDocument(d->doc, visRange, addVisibleLink_DocumentWidget_, d);
     updateHover_DocumentWidget_(d, mouseCoord_Window(get_Window()));
-    updateSideOpacity_DocumentWidget_(d);
+    updateSideOpacity_DocumentWidget_(d, iTrue);
     /* Remember scroll positions of recently visited pages. */ {
         iRecentUrl *recent = mostRecentUrl_History(d->mod.history);
         if (recent && docSize && d->state == ready_RequestState) {
@@ -852,6 +852,7 @@ static iBool updateFromHistory_DocumentWidget_(iDocumentWidget *d) {
         updateDocument_DocumentWidget_(d, resp);
         d->scrollY = d->initNormScrollY * size_GmDocument(d->doc).y;
         d->state = ready_RequestState;
+        updateSideOpacity_DocumentWidget_(d, iFalse);
         updateOutline_DocumentWidget_(d);
         updateVisible_DocumentWidget_(d);
         postCommandf_App("document.changed doc:%p url:%s", d, cstr_String(d->mod.url));
@@ -984,6 +985,7 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
     if (d->state == fetching_RequestState) {
         d->state = receivedPartialResponse_RequestState;
         updateTrust_DocumentWidget_(d, response_GmRequest(d->request));
+        init_Anim(&d->sideOpacity, 0);
         switch (category_GmStatusCode(statusCode)) {
             case categoryInput_GmStatusCode: {
                 iUrl parts;
@@ -1213,6 +1215,8 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             updateSize_DocumentWidget(d);
             updateFetchProgress_DocumentWidget_(d);
         }
+        init_Anim(&d->sideOpacity, 0);
+        updateSideOpacity_DocumentWidget_(d, iFalse);
         updateOutlineOpacity_DocumentWidget_(d);
         updateWindowTitle_DocumentWidget_(d);
         allocVisBuffer_DocumentWidget_(d);
