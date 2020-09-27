@@ -38,6 +38,16 @@ enum iTouchBarVariant {
     default_TouchBarVariant,
 };
 
+static NSString *currentSystemAppearance_(void) {
+    /* This API does not exist on 10.13. */
+    @try {
+        return [[NSApp effectiveAppearance] name];
+    }
+    @catch (NSException *) {
+        return @"NSAppearanceNameAqua";
+    }
+}
+
 /*----------------------------------------------------------------------------------------------*/
 
 @interface CommandButton : NSCustomTouchBarItem {
@@ -447,7 +457,11 @@ void setupApplication_MacOS(void) {
     NSApplication *app = [NSApplication sharedApplication];
     /* Our delegate will override SDL's delegate. */
     MyDelegate *myDel = [[MyDelegate alloc] initWithSDLDelegate:app.delegate];
-    [myDel setAppearance:[[app effectiveAppearance] name]];
+    [myDel setAppearance:currentSystemAppearance_()];
+    [app addObserver:myDel
+          forKeyPath:@"effectiveAppearance"
+             options:0
+             context:myDel];
     app.delegate = myDel;
     NSMenu *appMenu = [[[NSApp mainMenu] itemAtIndex:0] submenu];
     NSMenuItem *prefsItem = [appMenu itemWithTitle:@"Preferences…"];
@@ -463,10 +477,6 @@ void setupApplication_MacOS(void) {
 void insertMenuItems_MacOS(const char *menuLabel, int atIndex, const iMenuItem *items, size_t count) {
     NSApplication *app = [NSApplication sharedApplication];
     MyDelegate *myDel = (MyDelegate *) app.delegate;
-    [app addObserver:myDel
-          forKeyPath:@"effectiveAppearance"
-             options:0
-             context:myDel];
     NSMenu *appMenu = [app mainMenu];
     NSMenuItem *mainItem = [appMenu insertItemWithTitle:[NSString stringWithUTF8String:menuLabel]
                                                  action:nil
@@ -525,7 +535,7 @@ void insertMenuItems_MacOS(const char *menuLabel, int atIndex, const iMenuItem *
 void handleCommand_MacOS(const char *cmd) {
     if (equal_Command(cmd, "prefs.ostheme.changed")) {
         if (arg_Command(cmd)) {
-            appearanceChanged_MacOS_([[NSApp effectiveAppearance] name]);
+            appearanceChanged_MacOS_(currentSystemAppearance_());
         }
     }
 #if 0
