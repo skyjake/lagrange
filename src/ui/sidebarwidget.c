@@ -416,7 +416,7 @@ static void checkModeButtonLayout_SidebarWidget_(iSidebarWidget *d) {
 
 void setWidth_SidebarWidget(iSidebarWidget *d, int width) {
     iWidget *w = as_Widget(d);
-    width = iMax(30 * gap_UI, width);
+    width = iClamp(width, 30 * gap_UI, rootSize_Window(get_Window()).x - 50 * gap_UI);
     d->width = width;
     if (isVisible_Widget(w)) {
         w->rect.size.x = width;
