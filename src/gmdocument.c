@@ -826,7 +826,6 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
                 iHSLColor clr = get_HSLColor(tmParagraph_ColorId);
                 clr.lum       = iMax(0.5f, clr.lum - 0.15f);
                 setHsl_Color(tmParagraph_ColorId, clr);
-                clr.lum = 1.0;
                 setHsl_Color(tmHeading3_ColorId,
                              addSatLum_HSLColor(get_HSLColor(tmHeading3_ColorId), 0, 0.15f));
             }
