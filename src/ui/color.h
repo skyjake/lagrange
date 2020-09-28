@@ -214,7 +214,11 @@ int             darker_Color    (int color);
 int             lighter_Color   (int color);
 void            set_Color       (int color, iColor rgba);
 iColor          mix_Color       (iColor c1, iColor c2, float t);
+int             delta_Color     (iColor c1, iColor c2);
 
+iLocalDef iHSLColor get_HSLColor(int color) {
+    return hsl_Color(get_Color(color));
+}
 iLocalDef void setHsl_Color(int color, iHSLColor hsl) {
     set_Color(color, rgb_HSLColor(hsl));
 }

@@ -273,6 +273,10 @@ iColor mix_Color(iColor c1, iColor c2, float t) {
                      c1.a * (1 - t) + c2.a * t };
 }
 
+int delta_Color(iColor c1, iColor c2) {
+    return iAbs(c1.r - c2.r) + iAbs(c1.g - c2.g) + iAbs(c1.b - c2.b);
+}
+
 iLocalDef iBool equal_Color_(const iColor *x, const iColor *y) {
     return memcmp(x, y, sizeof(iColor)) == 0;
 }
