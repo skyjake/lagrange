@@ -103,6 +103,9 @@ set (SOURCES
     src/stb_truetype.h
     src/visited.c
     src/visited.h
+    # Audio playback:
+    src/audio/player.c
+    src/audio/player.h
     # User interface:
     src/ui/color.c
     src/ui/color.h
