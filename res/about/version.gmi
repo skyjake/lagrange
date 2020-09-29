@@ -6,6 +6,9 @@
 ```
 # Release notes
 
+## 0.4
+* Visual fine-tuning: increased Fira Sans line spacing; list bullets use an accent color.
+
 ## 0.3
 * Added style customization.
 * Added new font option: Fira Sans.
