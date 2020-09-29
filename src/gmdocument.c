@@ -473,6 +473,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         run.color = colors[type];
         if (type == bullet_GmLineType) {
             iGmRun bulRun = run;
+            bulRun.color = tmQuote_ColorId;
             bulRun.visBounds.pos  = addX_I2(pos, indent * gap_Text);
             bulRun.visBounds.size = advance_Text(run.font, bullet);
             bulRun.visBounds.pos.x -= 4 * gap_Text - width_Rect(bulRun.visBounds) / 2;
