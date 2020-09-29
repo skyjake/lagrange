@@ -86,6 +86,7 @@ struct Impl_Font {
     iBlock *       data;
     stbtt_fontinfo font;
     float          scale;
+    int            vertOffset; /* offset due to scaling */
     int            height;
     int            baseline;
     iHash          glyphs;
@@ -98,13 +99,14 @@ struct Impl_Font {
 
 static iFont *font_Text_(enum iFontId id);
 
-static void init_Font(iFont *d, const iBlock *data, int height, enum iFontId symbolsFont) {
+static void init_Font(iFont *d, const iBlock *data, int height, float scale, enum iFontId symbolsFont) {
     init_Hash(&d->glyphs);
     d->data = NULL;
     d->height = height;
     iZap(d->font);
     stbtt_InitFont(&d->font, constData_Block(data), 0);
-    d->scale = stbtt_ScaleForPixelHeight(&d->font, height);
+    d->scale = stbtt_ScaleForPixelHeight(&d->font, height) * scale;
+    d->vertOffset = height * (1.0f - scale) / 2;
     int ascent;
     stbtt_GetFontVMetrics(&d->font, &ascent, NULL, NULL);
     d->baseline = (int) ascent * d->scale;
@@ -164,65 +166,69 @@ static void initFonts_Text_(iText *d) {
     const iBlock *italicFont  = &fontNunitoLightItalic_Embedded;
     const iBlock *boldFont    = &fontNunitoExtraBold_Embedded;
     const iBlock *lightFont   = &fontNunitoExtraLight_Embedded;
+    float         scaling     = 1.0f;
     if (d->contentFont == firaSans_TextFont) {
         regularFont = &fontFiraSansRegular_Embedded;
         italicFont  = &fontFiraSansItalic_Embedded;
         boldFont    = &fontFiraSansBold_Embedded;
         lightFont   = &fontFiraSansLight_Embedded;
+        scaling     = 0.85f;
     }
     const struct {
         const iBlock *ttf;
         int size;
+        float scaling;
         int symbolsFont;
     } fontData[max_FontId] = {
-        { &fontSourceSansProRegular_Embedded, fontSize_UI,          defaultSymbols_FontId },
-        { &fontSourceSansProRegular_Embedded, fontSize_UI * 1.125f, defaultMediumSymbols_FontId },
-        { &fontFiraMonoRegular_Embedded,      fontSize_UI * 0.866f, defaultSymbols_FontId },
+        { &fontSourceSansProRegular_Embedded, fontSize_UI,          1.0f, defaultSymbols_FontId },
+        { &fontSourceSansProRegular_Embedded, fontSize_UI * 1.125f, 1.0f, defaultMediumSymbols_FontId },
+        { &fontFiraMonoRegular_Embedded,      fontSize_UI * 0.866f, 1.0f, defaultSymbols_FontId },
         /* content fonts */
-        { regularFont,                        textSize,             symbols_FontId },
-        { &fontFiraMonoRegular_Embedded,      monoSize,             monospaceSymbols_FontId },
-        { &fontFiraMonoRegular_Embedded,      monoSize * 0.750f,    monospaceSmallSymbols_FontId },
-        { regularFont,                        textSize * 1.200f,    mediumSymbols_FontId },
-        { regularFont,                        textSize * 1.333f,    bigSymbols_FontId },
-        { italicFont,                         textSize,             symbols_FontId },
-        { boldFont,                           textSize,             symbols_FontId },
-        { boldFont,                           textSize * 1.333f,    mediumSymbols_FontId },
-        { boldFont,                           textSize * 1.666f,    largeSymbols_FontId },
-        { boldFont,                           textSize * 2.000f,    hugeSymbols_FontId },
-        { lightFont,                          textSize * 1.666f,    largeSymbols_FontId },
+        { regularFont,                        textSize,             scaling, symbols_FontId },
+        { &fontFiraMonoRegular_Embedded,      monoSize,             1.0f,    monospaceSymbols_FontId },
+        { &fontFiraMonoRegular_Embedded,      monoSize * 0.750f,    1.0f,    monospaceSmallSymbols_FontId },
+        { regularFont,                        textSize * 1.200f,    scaling, mediumSymbols_FontId },
+        { regularFont,                        textSize * 1.333f,    scaling, bigSymbols_FontId },
+        { italicFont,                         textSize,             scaling, symbols_FontId },
+        { boldFont,                           textSize,             scaling, symbols_FontId },
+        { boldFont,                           textSize * 1.333f,    scaling, mediumSymbols_FontId },
+        { boldFont,                           textSize * 1.666f,    scaling, largeSymbols_FontId },
+        { boldFont,                           textSize * 2.000f,    scaling, hugeSymbols_FontId },
+        { lightFont,                          textSize * 1.666f,    scaling, largeSymbols_FontId },
         /* symbol fonts */
-        { &fontSymbola_Embedded,              fontSize_UI,          defaultSymbols_FontId },
-        { &fontSymbola_Embedded,              fontSize_UI * 1.125f, defaultMediumSymbols_FontId },
-        { &fontSymbola_Embedded,              textSize,             symbols_FontId },
-        { &fontSymbola_Embedded,              textSize * 1.200f,    mediumSymbols_FontId },
-        { &fontSymbola_Embedded,              textSize * 1.333f,    bigSymbols_FontId },
-        { &fontSymbola_Embedded,              textSize * 1.666f,    largeSymbols_FontId },
-        { &fontSymbola_Embedded,              textSize * 2.000f,    hugeSymbols_FontId },
-        { &fontSymbola_Embedded,              monoSize,             monospaceSymbols_FontId },
-        { &fontSymbola_Embedded,              monoSize * 0.750f,    monospaceSmallSymbols_FontId },
+        { &fontSymbola_Embedded,              fontSize_UI,          1.0f, defaultSymbols_FontId },
+        { &fontSymbola_Embedded,              fontSize_UI * 1.125f, 1.0f, defaultMediumSymbols_FontId },
+        { &fontSymbola_Embedded,              textSize,             1.0f, symbols_FontId },
+        { &fontSymbola_Embedded,              textSize * 1.200f,    1.0f, mediumSymbols_FontId },
+        { &fontSymbola_Embedded,              textSize * 1.333f,    1.0f, bigSymbols_FontId },
+        { &fontSymbola_Embedded,              textSize * 1.666f,    1.0f, largeSymbols_FontId },
+        { &fontSymbola_Embedded,              textSize * 2.000f,    1.0f, hugeSymbols_FontId },
+        { &fontSymbola_Embedded,              monoSize,             1.0f, monospaceSymbols_FontId },
+        { &fontSymbola_Embedded,              monoSize * 0.750f,    1.0f, monospaceSmallSymbols_FontId },
         /* emoji fonts */
-        { &fontNotoEmojiRegular_Embedded,     fontSize_UI,          defaultSymbols_FontId },
-        { &fontNotoEmojiRegular_Embedded,     fontSize_UI * 1.125f, defaultMediumSymbols_FontId },
-        { &fontNotoEmojiRegular_Embedded,     textSize,             symbols_FontId },
-        { &fontNotoEmojiRegular_Embedded,     textSize * 1.200f,    mediumSymbols_FontId },
-        { &fontNotoEmojiRegular_Embedded,     textSize * 1.333f,    bigSymbols_FontId },
-        { &fontNotoEmojiRegular_Embedded,     textSize * 1.666f,    largeSymbols_FontId },
-        { &fontNotoEmojiRegular_Embedded,     textSize * 2.000f,    hugeSymbols_FontId },
-        { &fontNotoEmojiRegular_Embedded,     monoSize,             monospaceSymbols_FontId },
-        { &fontNotoEmojiRegular_Embedded,     monoSize * 0.750f,    monospaceSmallSymbols_FontId },
+        { &fontNotoEmojiRegular_Embedded,     fontSize_UI,          1.0f, defaultSymbols_FontId },
+        { &fontNotoEmojiRegular_Embedded,     fontSize_UI * 1.125f, 1.0f, defaultMediumSymbols_FontId },
+        { &fontNotoEmojiRegular_Embedded,     textSize,             1.0f, symbols_FontId },
+        { &fontNotoEmojiRegular_Embedded,     textSize * 1.200f,    1.0f, mediumSymbols_FontId },
+        { &fontNotoEmojiRegular_Embedded,     textSize * 1.333f,    1.0f, bigSymbols_FontId },
+        { &fontNotoEmojiRegular_Embedded,     textSize * 1.666f,    1.0f, largeSymbols_FontId },
+        { &fontNotoEmojiRegular_Embedded,     textSize * 2.000f,    1.0f, hugeSymbols_FontId },
+        { &fontNotoEmojiRegular_Embedded,     monoSize,             1.0f, monospaceSymbols_FontId },
+        { &fontNotoEmojiRegular_Embedded,     monoSize * 0.750f,    1.0f, monospaceSmallSymbols_FontId },
         /* japanese fonts */
-        { &fontKosugiMaruRegular_Embedded,    fontSize_UI,          defaultSymbols_FontId },
-        { &fontKosugiMaruRegular_Embedded,    monoSize * 0.750,     monospaceSmallSymbols_FontId },
-        { &fontKosugiMaruRegular_Embedded,    monoSize,             monospaceSymbols_FontId },
-        { &fontKosugiMaruRegular_Embedded,    textSize,             symbols_FontId },
-        { &fontKosugiMaruRegular_Embedded,    textSize * 1.200f,    mediumSymbols_FontId },
-        { &fontKosugiMaruRegular_Embedded,    textSize * 1.333f,    bigSymbols_FontId },
-        { &fontKosugiMaruRegular_Embedded,    textSize * 1.666f,    largeSymbols_FontId },
-        { &fontKosugiMaruRegular_Embedded,    textSize * 2.000f,    hugeSymbols_FontId },
+        { &fontKosugiMaruRegular_Embedded,    fontSize_UI,          1.0f, defaultSymbols_FontId },
+        { &fontKosugiMaruRegular_Embedded,    monoSize * 0.750,     1.0f, monospaceSmallSymbols_FontId },
+        { &fontKosugiMaruRegular_Embedded,    monoSize,             1.0f, monospaceSymbols_FontId },
+        { &fontKosugiMaruRegular_Embedded,    textSize,             1.0f, symbols_FontId },
+        { &fontKosugiMaruRegular_Embedded,    textSize * 1.200f,    1.0f, mediumSymbols_FontId },
+        { &fontKosugiMaruRegular_Embedded,    textSize * 1.333f,    1.0f, bigSymbols_FontId },
+        { &fontKosugiMaruRegular_Embedded,    textSize * 1.666f,    1.0f, largeSymbols_FontId },
+        { &fontKosugiMaruRegular_Embedded,    textSize * 2.000f,    1.0f, hugeSymbols_FontId },
     };
     iForIndices(i, fontData) {
         iFont *font = &d->fonts[i];
-        init_Font(font, fontData[i].ttf, fontData[i].size, fontData[i].symbolsFont);
+        init_Font(
+            font, fontData[i].ttf, fontData[i].size, fontData[i].scaling, fontData[i].symbolsFont);
         if (fontData[i].ttf == &fontFiraMonoRegular_Embedded) {
             font->isMonospaced = iTrue;
         }
@@ -427,6 +433,7 @@ static void cache_Font_(iFont *d, iGlyph *glyph, int hoff) {
                                         &glyph->d[hoff].y,
                                         NULL,
                                         NULL);
+        glyph->d[hoff].y += d->vertOffset;
         tex = SDL_CreateTextureFromSurface(render, surface);
         SDL_SetTextureBlendMode(tex, SDL_BLENDMODE_NONE);
         glRect->size = init_I2(surface->w, surface->h);

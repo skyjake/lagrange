@@ -177,7 +177,7 @@ You can find a number of settings in Preferences to customize what the user inte
 
 ### Page style
 
-* Font: At the moment, two font options are provided. "Nunito" is a friendly rounded font with generous leading. "Fira Sans" is more angular and narrow, and has a tighter leading.
+* Font: At the moment, two font options are provided. "Nunito" is a friendly rounded font. "Fira Sans" is bolder and more angular.
 * Line width: This setting determines the maximum width for text lines. "Window" disables the maximum limit and fits text lines to the full width of the window. Shorter lines are generally easier to read.
 * Big 1st paragraph: When enabled, the leading paragraph on the page is shown in a slightly larger font.
 
