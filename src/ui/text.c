@@ -166,7 +166,7 @@ static void initFonts_Text_(iText *d) {
     const iBlock *italicFont  = &fontNunitoLightItalic_Embedded;
     const iBlock *boldFont    = &fontNunitoExtraBold_Embedded;
     const iBlock *lightFont   = &fontNunitoExtraLight_Embedded;
-    float         scaling     = 1.0f;
+    float         scaling     = 1.0f; /* additional glyph scaling (<=1), to increase line spacing */
     if (d->contentFont == firaSans_TextFont) {
         regularFont = &fontFiraSansRegular_Embedded;
         italicFont  = &fontFiraSansItalic_Embedded;
