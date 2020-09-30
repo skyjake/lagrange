@@ -212,6 +212,9 @@ if (APPLE)
         MACOSX_BUNDLE_COPYRIGHT "© ${COPYRIGHT_YEAR} Jaakko Keränen"
     )
 endif ()
+if (MSYS)
+    target_link_libraries (app PUBLIC d2d1 uuid) # querying DPI
+endif ()
 if (UNIX)
     target_link_libraries (app PUBLIC m)
 endif ()

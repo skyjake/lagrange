@@ -8,6 +8,7 @@
 
 ## 0.4
 * Visual fine-tuning: increased Fira Sans line spacing; list bullets use an accent color.
+* Windows: Support for HiDPI and system UI scaling factor.
 
 ## 0.3
 * Added style customization.

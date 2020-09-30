@@ -38,6 +38,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "../gmutil.h"
 #if defined (iPlatformMsys)
 #   include "../win32.h"
+#   include <d2d1.h>
 #endif
 #if defined (iPlatformApple) && !defined (iPlatformIOS)
 #   include "macos.h"
@@ -491,10 +492,26 @@ static void updateRootSize_Window_(iWindow *d) {
 }
 
 static float pixelRatio_Window_(const iWindow *d) {
+#if defined (iPlatformMsys)
+    /* Query Direct2D for the desktop DPI (not aware of which monitor, though). */ {
+        float ratio = 1.0f;
+        ID2D1Factory *d2dFactory = NULL;
+        HRESULT hr = D2D1CreateFactory(
+            D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory, NULL, (void **) &d2dFactory);
+        if (SUCCEEDED(hr)) {
+            FLOAT dpiX = 96;
+            FLOAT dpiY = 96;
+            ID2D1Factory_GetDesktopDpi(d2dFactory, &dpiX, &dpiY);
+            ratio = (float) (dpiX / 96.0);
+            ID2D1Factory_Release(d2dFactory);
+        }
+    }
+#else
     int dx, x;
     SDL_GetRendererOutputSize(d->render, &dx, NULL);
     SDL_GetWindowSize(d->win, &x, NULL);
     return (float) dx / (float) x;
+#endif
 }
 
 static void drawBlank_Window_(iWindow *d) {
@@ -778,7 +795,13 @@ iInt2 rootSize_Window(const iWindow *d) {
 }
 
 iInt2 coord_Window(const iWindow *d, int x, int y) {
+#if defined (iPlatformMsys)
+    /* On Windows, surface coordinates are in pixels. */
+    return init_I2(x, y);
+#else
+    /* Coordinates are in points. */
     return mulf_I2(init_I2(x, y), d->pixelRatio);
+#endif
 }
 
 iInt2 mouseCoord_Window(const iWindow *d) {
