@@ -26,6 +26,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 
+void setDPIAware_Win32(void) {
+    SetProcessDPIAware();
+}
+
 void useExecutableIconResource_SDLWindow(SDL_Window *win) {
     HINSTANCE handle = GetModuleHandle(NULL);
     HICON icon = LoadIcon(handle, "IDI_ICON1");

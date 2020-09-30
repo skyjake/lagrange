@@ -34,6 +34,10 @@ extern void enableMomentumScroll_MacOS(void);
 extern void registerURLHandler_MacOS(void);
 #endif
 
+#if defined (iPlatformMsys)
+#  include "win32.h"
+#endif
+
 int main(int argc, char **argv) {
 #if defined (iPlatformApple)
     enableMomentumScroll_MacOS();
@@ -41,6 +45,7 @@ int main(int argc, char **argv) {
 #endif
 #if defined (iPlatformMsys)
     /* MSYS runtime takes care of WinMain. */
+    setDPIAware_Win32();
     SDL_SetMainReady();
 #endif
     init_Foundation();
