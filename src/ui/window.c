@@ -38,7 +38,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "../gmutil.h"
 #if defined (iPlatformMsys)
 #   include "../win32.h"
-#   include <d2d1.h>
 #endif
 #if defined (iPlatformApple) && !defined (iPlatformIOS)
 #   include "macos.h"
@@ -493,19 +492,8 @@ static void updateRootSize_Window_(iWindow *d) {
 
 static float pixelRatio_Window_(const iWindow *d) {
 #if defined (iPlatformMsys)
-    /* Query Direct2D for the desktop DPI (not aware of which monitor, though). */ {
-        float ratio = 1.0f;
-        ID2D1Factory *d2dFactory = NULL;
-        HRESULT hr = D2D1CreateFactory(
-            D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory, NULL, (void **) &d2dFactory);
-        if (SUCCEEDED(hr)) {
-            FLOAT dpiX = 96;
-            FLOAT dpiY = 96;
-            ID2D1Factory_GetDesktopDpi(d2dFactory, &dpiX, &dpiY);
-            ratio = (float) (dpiX / 96.0);
-            ID2D1Factory_Release(d2dFactory);
-        }
-    }
+    iUnused(d);
+    return desktopDPI_Win32();
 #else
     int dx, x;
     SDL_GetRendererOutputSize(d->render, &dx, NULL);
@@ -556,7 +544,8 @@ void init_Window(iWindow *d, iRect rect) {
     if (left_Rect(rect) >= 0 || top_Rect(rect) >= 0) {
         SDL_SetWindowPosition(d->win, left_Rect(rect), top_Rect(rect));
     }
-    SDL_SetWindowMinimumSize(d->win, 400, 250);
+    const iInt2 minSize = init_I2(400, 250);
+    SDL_SetWindowMinimumSize(d->win, minSize.x, minSize.y);
     SDL_SetWindowTitle(d->win, "Lagrange");
     /* Some info. */ {
         SDL_RendererInfo info;
@@ -578,6 +567,7 @@ void init_Window(iWindow *d, iRect rect) {
     d->pixelRatio = pixelRatio_Window_(d);
     setPixelRatio_Metrics(d->pixelRatio * d->uiScale);
 #if defined (iPlatformMsys)
+    SDL_SetWindowMinimumSize(d->win, minSize.x * d->pixelRatio, minSize.y * d->pixelRatio);
     useExecutableIconResource_SDLWindow(d->win);
 #endif
 #if defined (iPlatformLinux)

@@ -57,6 +57,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #if defined (iPlatformApple) && !defined (iPlatformIOS)
 #   include "macos.h"
 #endif
+#if defined (iPlatformMsys)
+#   include "win32.h"
+#endif
 
 iDeclareType(App)
 
@@ -314,6 +317,10 @@ static void init_App_(iApp *d, int argc, char **argv) {
     d->commandEcho       = checkArgument_CommandLine(&d->args, "echo") != NULL;
     d->forceSoftwareRender = checkArgument_CommandLine(&d->args, "sw") != NULL;
     d->initialWindowRect = init_Rect(-1, -1, 900, 560);
+#if defined (iPlatformMsys)
+    /* Must scale by UI scaling factor. */
+    mulfv_I2(&d->initialWindowRect.size, desktopDPI_Win32());
+#endif
     init_Prefs(&d->prefs);
     setCStr_String(&d->prefs.downloadDir, downloadDir_App_);
     d->running           = iFalse;

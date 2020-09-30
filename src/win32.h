@@ -23,5 +23,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #pragma once
 #include <SDL_video.h>
 
-void setDPIAware_Win32(void);
-void useExecutableIconResource_SDLWindow(SDL_Window *win);
+void  setDPIAware_Win32(void);
+float desktopDPI_Win32(void);
+void  useExecutableIconResource_SDLWindow(SDL_Window *win);
