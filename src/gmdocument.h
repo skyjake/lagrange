@@ -23,15 +23,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #pragma once
 
 #include "gmutil.h"
+#include "media.h"
 
 #include <the_Foundation/array.h>
 #include <the_Foundation/object.h>
 #include <the_Foundation/rect.h>
 #include <the_Foundation/string.h>
 #include <the_Foundation/time.h>
-#include <SDL_render.h>
 
-iDeclareType(GmImageInfo)
 iDeclareType(GmHeading)
 iDeclareType(GmRun)
 
@@ -60,12 +59,6 @@ enum iGmLinkFlags {
     permanent_GmLinkFlag          = iBit(15), /* content cannot be dismissed; media link */
 };
 
-struct Impl_GmImageInfo {
-    iInt2 size;
-    size_t numBytes;
-    const char *mime;
-};
-
 struct Impl_GmHeading {
     iRangecc text;
     int level; /* 0, 1, 2 */
@@ -86,7 +79,8 @@ struct Impl_GmRun {
     iRect     bounds;    /* used for hit testing, may extend to edges */
     iRect     visBounds; /* actual visual bounds */
     iGmLinkId linkId;    /* zero for non-links */
-    uint16_t  imageId;   /* zero for images */
+    uint16_t  imageId;   /* zero if not an image */
+    uint16_t  audioId;   /* zero if not audio */
 };
 
 const char *    findLoc_GmRun   (const iGmRun *, iInt2 pos);
@@ -103,14 +97,16 @@ enum iGmDocumentFormat {
 void    setThemeSeed_GmDocument (iGmDocument *, const iBlock *seed);
 void    setFormat_GmDocument    (iGmDocument *, enum iGmDocumentFormat format);
 void    setWidth_GmDocument     (iGmDocument *, int width, int forceBreakWidth);
+void    redoLayout_GmDocument   (iGmDocument *);
 void    setUrl_GmDocument       (iGmDocument *, const iString *url);
 void    setSource_GmDocument    (iGmDocument *, const iString *source, int width, int forceBreakWidth);
-void    setImage_GmDocument     (iGmDocument *, iGmLinkId linkId, const iString *mime, const iBlock *data,
-                                 iBool allowHide);
 
 void    reset_GmDocument        (iGmDocument *); /* free images */
 
 typedef void (*iGmDocumentRenderFunc)(void *, const iGmRun *);
+
+iMedia *        media_GmDocument            (iGmDocument *);
+const iMedia *  constMedia_GmDocument       (const iGmDocument *);
 
 void            render_GmDocument           (const iGmDocument *, iRangei visRangeY,
                                              iGmDocumentRenderFunc render, void *);
@@ -144,5 +140,3 @@ iBool           isMediaLink_GmDocument  (const iGmDocument *, iGmLinkId linkId);
 const iString * title_GmDocument        (const iGmDocument *);
 iChar           siteIcon_GmDocument     (const iGmDocument *);
 
-SDL_Texture *   imageTexture_GmDocument (const iGmDocument *, uint16_t imageId);
-void            imageInfo_GmDocument    (const iGmDocument *, uint16_t imageId, iGmImageInfo *info_out);

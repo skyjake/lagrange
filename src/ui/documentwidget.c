@@ -31,9 +31,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "util.h"
 #include "history.h"
 #include "app.h"
-#include "../gmdocument.h"
-#include "../gmrequest.h"
-#include "../gmutil.h"
+#include "gmdocument.h"
+#include "gmrequest.h"
+#include "gmutil.h"
+#include "media.h"
 
 #include <the_Foundation/file.h>
 #include <the_Foundation/fileinfo.h>
@@ -735,8 +736,12 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse
                                 baseName_Path(collect_String(newRange_String(parts.path))).start;
                         }
                         format_String(&str, "=> %s %s\n", cstr_String(d->mod.url), imageTitle);
-                        setImage_GmDocument(
-                            d->doc, 1, mimeStr, &response->body, iFalse /* it's fixed */);
+                        setImage_Media(media_GmDocument(d->doc),
+                                       1,
+                                       mimeStr,
+                                       &response->body,
+                                       iFalse /* it's fixed */);
+                        redoLayout_GmDocument(d->doc);
                     }
                     else {
                         clear_String(&str);
@@ -1136,13 +1141,13 @@ static iBool handleMediaCommand_DocumentWidget_(iDocumentWidget *d, const char *
         const enum iGmStatusCode code = status_GmRequest(req->req);
         /* Give the media to the document for presentation. */
         if (code == success_GmStatusCode) {
-//            printf("media finished: %s\n  size: %zu\n  type: %s\n",
-//                   cstr_String(url_GmRequest(req->req)),
-//                   size_Block(body_GmRequest(req->req)),
-//                   cstr_String(meta_GmRequest(req->req)));
             if (startsWith_String(meta_GmRequest(req->req), "image/")) {
-                setImage_GmDocument(d->doc, req->linkId, meta_GmRequest(req->req),
-                                    body_GmRequest(req->req), iTrue);
+                setImage_Media(media_GmDocument(d->doc),
+                               req->linkId,
+                               meta_GmRequest(req->req),
+                               body_GmRequest(req->req),
+                               iTrue);
+                redoLayout_GmDocument(d->doc);
                 updateVisible_DocumentWidget_(d);
                 invalidate_DocumentWidget_(d);
                 refresh_Widget(as_Widget(d));
@@ -1792,10 +1797,11 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                further to do. */
                             return iTrue;
                         }
-                        if (!requestMedia_DocumentWidget_(d, linkId)) {
+                        if (!requestMedia_DocumentWidget_(d, linkId)) {                            
                             if (linkFlags & content_GmLinkFlag) {
                                 /* Dismiss shown content on click. */
-                                setImage_GmDocument(d->doc, linkId, NULL, NULL, iTrue);
+                                setImage_Media(media_GmDocument(d->doc), linkId, NULL, NULL, iTrue);
+                                redoLayout_GmDocument(d->doc);
                                 d->hoverLink = NULL;
                                 scroll_DocumentWidget_(d, 0);
                                 updateVisible_DocumentWidget_(d);
@@ -1807,8 +1813,12 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                 /* Show the existing content again if we have it. */
                                 iMediaRequest *req = findMediaRequest_DocumentWidget_(d, linkId);
                                 if (req) {
-                                    setImage_GmDocument(d->doc, linkId, meta_GmRequest(req->req),
-                                                        body_GmRequest(req->req), iTrue);
+                                    setImage_Media(media_GmDocument(d->doc),
+                                                   linkId,
+                                                   meta_GmRequest(req->req),
+                                                   body_GmRequest(req->req),
+                                                   iTrue);
+                                    redoLayout_GmDocument(d->doc);
                                     updateVisible_DocumentWidget_(d);
                                     invalidate_DocumentWidget_(d);
                                     refresh_Widget(w);
@@ -1894,7 +1904,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
     iDrawContext *d      = context;
     const iInt2   origin = d->viewPos;
     if (run->imageId) {
-        SDL_Texture *tex = imageTexture_GmDocument(d->widget->doc, run->imageId);
+        SDL_Texture *tex = imageTexture_Media(media_GmDocument(d->widget->doc), run->imageId);
         if (tex) {
             const iRect dst = moved_Rect(run->visBounds, origin);
             fillRect_Paint(&d->paint, dst, tmBackground_ColorId); /* in case the image has alpha */
@@ -1981,7 +1991,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
             fg = linkColor_GmDocument(doc, run->linkId, textHover_GmLinkPart);
             iAssert(!isEmpty_Rect(run->bounds));
             iGmImageInfo info;
-            imageInfo_GmDocument(doc, linkImage_GmDocument(doc, run->linkId), &info);
+            imageInfo_Media(constMedia_GmDocument(doc), linkImage_GmDocument(doc, run->linkId), &info);
             iString text;
             init_String(&text);
             format_String(&text, "%s \u2014 %d x %d \u2014 %.1fMB",
@@ -2083,7 +2093,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
 //    drawRect_Paint(&d->paint, (iRect){ visPos, run->visBounds.size }, red_ColorId);
 }
 
-static int drawSideRect_(iPaint *p, iRect rect) { //}, int thickness) {
+static int drawSideRect_(iPaint *p, iRect rect) {
     int bg = tmBannerBackground_ColorId;
     int fg = tmBannerIcon_ColorId;
     if (equal_Color(get_Color(bg), get_Color(tmBackground_ColorId))) {
@@ -2131,34 +2141,17 @@ static void drawSideElements_DocumentWidget_(const iDocumentWidget *d) {
             const iChar icon = siteIcon_GmDocument(d->doc);
             iRect       rect = { add_I2(topLeft_Rect(bounds), init1_I2(margin)), init1_I2(minBannerSize) };
             p.alpha = opacity * 255;
-            //int offset = iMax(0, bottom_Rect(banner->visBounds) - d->scrollY);
-            rect.pos.y += height_Rect(bounds) / 2 - rect.size.y / 2 - (banner ? banner->visBounds.size.y / 2 : 0); // offset;
-            //rect.pos.y -= lineHeight_Text(heading3_FontId) / 2; /* the heading text underneath */
-            int fg = drawSideRect_(&p, rect); //, gap_UI / 2);
+            rect.pos.y += height_Rect(bounds) / 2 - rect.size.y / 2 - (banner ? banner->visBounds.size.y / 2 : 0);
+            int fg = drawSideRect_(&p, rect);
             iString str;
             initUnicodeN_String(&str, &icon, 1);
             drawCentered_Text(banner_FontId, rect, iTrue, fg, "%s", cstr_String(&str));
-#if 1
             if (avail >= minBannerSize * 2.25f) {
                 iRangecc    text = currentHeading_DocumentWidget_(d);// bannerText_DocumentWidget_(d);
                 iInt2       pos  = addY_I2(bottomLeft_Rect(rect), gap_Text);
                 const int   font = heading3_FontId;
                 drawWrapRange_Text(font, pos, avail - margin, tmBannerSideTitle_ColorId, text);
-#if 0
-                while (!isEmpty_Range(&text)) {
-                    tryAdvance_Text(font, text, avail - 2 * margin, &endp);
-                    drawRange_Text(
-                        font, pos, tmBannerTitle_ColorId, (iRangecc){ text.start, endp });
-//                    drawRange_Text(font,
-//                                   add_I2(pos, init1_I2(-gap_UI / 4)),
-//                                   tmBackground_ColorId,
-//                                   (iRangecc){ text.start, endp });
-                    text.start = endp;
-                    pos.y += lineHeight_Text(font);
-                }
-#endif
             }
-#endif
             setOpacity_Text(1.0f);
             SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_NONE);
         }
