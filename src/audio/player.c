@@ -25,14 +25,100 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/thread.h>
 #include <SDL_audio.h>
 
+iDeclareType(Decoder)
+
+enum iDecoderType {
+    wav_DecoderType,
+    mpeg_DecoderType,
+    vorbis_DecoderType,
+    midi_DecoderType,
+};
+
+struct Impl_Decoder {
+    enum iDecoderType type;
+    size_t inPos;
+//    iBlock samples;
+};
+
 struct Impl_Player {
+    SDL_AudioSpec spec;
     SDL_AudioDeviceID device;
+    iMutex mtx;
+    iBlock data;
+    iBool isDataComplete;
 };
 
 void init_Player(iPlayer *d) {
+    iZap(d->spec);
     d->device = 0;
+    init_Mutex(&d->mtx);
+    init_Block(&d->data, 0);
+    d->isDataComplete = iFalse;
 }
 
 void deinit_Player(iPlayer *d) {
-    SDL_CloseAudioDevice(d->device);
+    stop_Player(d);
+    deinit_Block(&d->data);
+}
+
+iBool isStarted_Player(const iPlayer *d) {
+    return d->device != 0;
+}
+
+void setFormatHint_Player(iPlayer *d, const char *hint) {
+
+}
+
+void updateSourceData_Player(iPlayer *d, const iBlock *data, enum iPlayerUpdate update) {
+    lock_Mutex(&d->mtx);
+    switch (update) {
+        case replace_PlayerUpdate:
+            set_Block(&d->data, data);
+            d->isDataComplete = iFalse;
+            break;
+        case append_PlayerUpdate:
+            append_Block(&d->data, data);
+            d->isDataComplete = iFalse;
+            break;
+        case complete_PlayerUpdate:
+            d->isDataComplete = iTrue;
+            break;
+    }
+    unlock_Mutex(&d->mtx);
+}
+
+static void writeOutputSamples_Player_(void *plr, Uint8 *stream, int len) {
+    iPlayer *d = plr;
+    memset(stream, 0, len);
+    /* TODO: Copy samples from the decoder's ring buffer. */
+}
+
+iBool start_Player(iPlayer *d) {
+    if (isStarted_Player(d)) {
+        return iFalse;
+    }
+    SDL_AudioSpec conf;
+    iZap(conf);
+    conf.freq     = 44100; /* TODO: from content */
+    conf.format   = AUDIO_S16;
+    conf.channels = 2; /* TODO: from content */
+    conf.samples  = 2048;
+    conf.callback = writeOutputSamples_Player_;
+    conf.userdata = d;
+    d->device     = SDL_OpenAudioDevice(NULL, SDL_FALSE /* playback */, &conf, &d->spec, 0);
+    if (!d->device) {
+        return iFalse;
+    }
+    /* TODO: Start the stream/decoder thread. */
+    /* TODO: Audio device is unpaused when there are samples ready to play. */
+    return iTrue;
+}
+
+void stop_Player(iPlayer *d) {
+    if (isStarted_Player(d)) {
+        /* TODO: Stop the stream/decoder. */
+        SDL_PauseAudioDevice(d->device, SDL_TRUE);
+        SDL_CloseAudioDevice(d->device);
+        d->device = 0;
+    }
 }

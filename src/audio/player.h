@@ -22,7 +22,21 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
-#include <the_Foundation/defs.h>
+#include <the_Foundation/block.h>
 
 iDeclareType(Player)
-iDeclareTypeConstruction(Player)
+iDeclareTypeConstruction(Player)    
+
+enum iPlayerUpdate {
+    replace_PlayerUpdate,
+    append_PlayerUpdate,
+    complete_PlayerUpdate,
+};
+
+void    setFormatHint_Player    (iPlayer *, const char *hint);
+void    updateSourceData_Player (iPlayer *, const iBlock *data, enum iPlayerUpdate update);
+
+iBool   start_Player    (iPlayer *);
+void    stop_Player     (iPlayer *);
+
+iBool   isStarted_Player    (const iPlayer *);
