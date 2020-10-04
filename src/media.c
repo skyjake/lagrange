@@ -177,6 +177,9 @@ void setData_Media(iMedia *d, iGmLinkId linkId, const iString *mime, const iBloc
             /* TODO: What about update/complete, for streaming? */
             updateSourceData_Player(audio->player, data, replace_PlayerUpdate);
             pushBack_PtrArray(&d->audio, audio);
+
+            /* TEST: Start playing right away. */
+            start_Player(audio->player);
         }
     }
 }

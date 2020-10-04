@@ -60,17 +60,21 @@ iDeclareType(SampleBuf)
 
 struct Impl_SampleBuf {
     void * data;
-    size_t sampleSize;
+    uint8_t numBits;
+    uint8_t numChannels;
+    uint8_t sampleSize; /* bytes; one sample includes values for all channels */
     size_t count;
     size_t head, tail;
 };
 
-void init_SampleBuf(iSampleBuf *d, size_t sampleSize, size_t count) {
-    d->sampleSize = sampleSize;
-    d->count      = count + 1; /* considered empty if head==tail */
-    d->data       = malloc(d->sampleSize * d->count);
-    d->head       = 0;
-    d->tail       = 0;
+void init_SampleBuf(iSampleBuf *d, size_t numChannels, size_t sampleSize, size_t count) {
+    d->numChannels = numChannels;
+    d->sampleSize  = sampleSize;
+    d->numBits     = sampleSize / numChannels * 8;
+    d->count       = count + 1; /* considered empty if head==tail */
+    d->data        = malloc(d->sampleSize * d->count);
+    d->head        = 0;
+    d->tail        = 0;
 }
 
 void deinit_SampleBuf(iSampleBuf *d) {
@@ -146,24 +150,41 @@ enum iDecoderType {
 
 struct Impl_Decoder {
     enum iDecoderType type;
+    float             gain;
     iThread *         thread;
     iInputBuf *       input;
     size_t            inputPos;
     iSampleBuf        output;
-    iMutex            mtx; /* for output */
+    iMutex            outputMutex;
     iRanges           wavData;
 };
 
 static void parseWav_Decoder_(iDecoder *d, iRanges inputRange) {
-    lock_Mutex(&d->mtx);
+    const size_t sampleSize = d->output.sampleSize;
     const size_t vacancy = vacancy_SampleBuf(&d->output);
     const size_t avail = iMin(inputRange.end - d->inputPos, d->wavData.end - d->inputPos) /
-                         d->output.sampleSize;
+                         sampleSize;
     const size_t n = iMin(vacancy, avail);
-    iGuardMutex(&d->input->mtx, /* lock so input array isn't reallocated during the copy */
-                write_SampleBuf(&d->output, constData_Block(&d->input->data) + d->inputPos, n));
-    d->inputPos += n;
-    unlock_Mutex(&d->mtx);
+    if (n == 0) return;
+    void *samples = malloc(sampleSize * n);
+    /* Get a copy of the input for mixing. */ {
+        lock_Mutex(&d->input->mtx);
+        memcpy(
+            samples, constData_Block(&d->input->data) + sampleSize * d->inputPos, sampleSize * n);
+        d->inputPos += n;
+        unlock_Mutex(&d->input->mtx);
+    }
+    /* Gain. */ {
+        const float gain = d->gain;
+        if (d->output.numBits == 16) {
+            int16_t *value = samples;
+            for (size_t count = d->output.numChannels * n; count; count--, value++) {
+                *value *= gain;
+            }
+        }
+    }
+    iGuardMutex(&d->outputMutex, write_SampleBuf(&d->output, samples, n));
+    free(samples);
 }
 
 static iThreadResult run_Decoder_(iThread *thread) {
@@ -195,11 +216,14 @@ static iThreadResult run_Decoder_(iThread *thread) {
 
 void init_Decoder(iDecoder *d, iInputBuf *input, const iContentSpec *spec) {
     d->type     = wav_DecoderType;
+    d->gain     = 0.5f;
     d->input    = input;
     d->inputPos = spec->wavData.start;
-    init_SampleBuf(&d->output, SDL_AUDIO_BITSIZE(spec->spec.format) / 8 *
-                                   spec->spec.channels, spec->spec.samples * 2);
-    init_Mutex(&d->mtx);
+    init_SampleBuf(&d->output,
+                   spec->spec.channels,
+                   SDL_AUDIO_BITSIZE(spec->spec.format) / 8 * spec->spec.channels,
+                   spec->spec.samples * 2);
+    init_Mutex(&d->outputMutex);
     d->thread = new_Thread(run_Decoder_);
     setUserData_Thread(d->thread, d);
     start_Thread(d->thread);
@@ -210,7 +234,7 @@ void deinit_Decoder(iDecoder *d) {
     signal_Condition(&d->input->changed);
     join_Thread(d->thread);
     iRelease(d->thread);
-    deinit_Mutex(&d->mtx);
+    deinit_Mutex(&d->outputMutex);
     deinit_SampleBuf(&d->output);
 }
 
@@ -289,8 +313,7 @@ static iContentSpec contentSpec_Player_(const iPlayer *d) {
                     (bitsPerSample == 8 ? AUDIO_S8 : bitsPerSample == 16 ? AUDIO_S16 : AUDIO_S32);
             }
             else if (memcmp(magic, "data", 4) == 0) {
-                size_t len = read32_Stream(is); /* data size */
-                content.wavData = (iRanges){ pos_Stream(is), pos_Stream(is) + len };
+                content.wavData = (iRanges){ pos_Stream(is), pos_Stream(is) + size };
                 break;
             }
             else {
@@ -307,14 +330,14 @@ static void writeOutputSamples_Player_(void *plr, Uint8 *stream, int len) {
     iAssert(d->decoder);
     const size_t sampleSize = sampleSize_Player_(d);
     const size_t count      = len / sampleSize;
-    lock_Mutex(&d->decoder->mtx);
+    lock_Mutex(&d->decoder->outputMutex);
     if (size_SampleBuf(&d->decoder->output) >= count) {
         read_SampleBuf(&d->decoder->output, count, stream);
     }
     else {
-        memset(stream, 0, len); /* TODO: If unsigned samples, don't use zero! */
+        memset(stream, d->spec.silence, len);
     }
-    unlock_Mutex(&d->decoder->mtx);
+    unlock_Mutex(&d->decoder->outputMutex);
     /* Wake up decoder; there is more room for output. */
     signal_Condition(&d->data->changed);
 }
@@ -340,23 +363,23 @@ void setFormatHint_Player(iPlayer *d, const char *hint) {
 }
 
 void updateSourceData_Player(iPlayer *d, const iBlock *data, enum iPlayerUpdate update) {
-    iInputBuf *inp = d->data;
-    lock_Mutex(&inp->mtx);
+    iInputBuf *input = d->data;
+    lock_Mutex(&input->mtx);
     switch (update) {
         case replace_PlayerUpdate:
-            set_Block(&inp->data, data);
-            inp->isComplete = iFalse;
+            set_Block(&input->data, data);
+            input->isComplete = iFalse;
             break;
         case append_PlayerUpdate:
-            append_Block(&inp->data, data);
-            inp->isComplete = iFalse;
+            append_Block(&input->data, data);
+            input->isComplete = iFalse;
             break;
         case complete_PlayerUpdate:
-            inp->isComplete = iTrue;
+            input->isComplete = iTrue;
             break;
     }
-    signal_Condition(&inp->changed);
-    unlock_Mutex(&inp->mtx);
+    signal_Condition(&input->changed);
+    unlock_Mutex(&input->mtx);
 }
 
 iBool start_Player(iPlayer *d) {
