@@ -636,7 +636,7 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
             return iFalse;
 #endif
         case SDL_WINDOWEVENT_MOVED: {
-            if (!isMaximized_Window_(d)) {
+            if (!isMaximized_Window_(d) && !d->isDrawFrozen) {
                 d->lastRect.pos = init_I2(ev->data1, ev->data2);
                 iInt2 border = zero_I2();
 #if !defined (iPlatformApple)
@@ -648,7 +648,7 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
         }
         case SDL_WINDOWEVENT_RESIZED:
         case SDL_WINDOWEVENT_SIZE_CHANGED:
-            if (!isMaximized_Window_(d)) {
+            if (!isMaximized_Window_(d) && !d->isDrawFrozen) {
                 d->lastRect.size = init_I2(ev->data1, ev->data2);
             }
             updateRootSize_Window_(d);
