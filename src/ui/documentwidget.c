@@ -723,24 +723,26 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse
                     docFormat = gemini_GmDocumentFormat;
                     setRange_String(&d->sourceMime, param);
                 }
-                else if (startsWith_Rangecc(param, "image/")) {
+                else if (startsWith_Rangecc(param, "image/") ||
+                         startsWith_Rangecc(param, "audio/")) {
                     docFormat = gemini_GmDocumentFormat;
                     setRange_String(&d->sourceMime, param);
                     if (!d->request || isFinished_GmRequest(d->request)) {
-                        /* Make a simple document with an image. */
-                        const char *imageTitle = "Image";
+                        /* Make a simple document with an image or audio player. */
+                        const char *linkTitle =
+                            startsWith_String(mimeStr, "image/") ? "Image" : "Audio";
                         iUrl parts;
                         init_Url(&parts, d->mod.url);
                         if (!isEmpty_Range(&parts.path)) {
-                            imageTitle =
+                            linkTitle =
                                 baseName_Path(collect_String(newRange_String(parts.path))).start;
                         }
-                        format_String(&str, "=> %s %s\n", cstr_String(d->mod.url), imageTitle);
-                        setImage_Media(media_GmDocument(d->doc),
-                                       1,
-                                       mimeStr,
-                                       &response->body,
-                                       iFalse /* it's fixed */);
+                        format_String(&str, "=> %s %s\n", cstr_String(d->mod.url), linkTitle);
+                        setData_Media(media_GmDocument(d->doc),
+                                      1,
+                                      mimeStr,
+                                      &response->body,
+                                      iFalse /* it's fixed */);
                         redoLayout_GmDocument(d->doc);
                     }
                     else {
@@ -1132,6 +1134,8 @@ static iBool handleMediaCommand_DocumentWidget_(iDocumentWidget *d, const char *
         return iFalse; /* not our request */
     }
     if (equal_Command(cmd, "media.updated")) {
+        /* Pass new data to media players. */
+
         /* Update the link's progress. */
         invalidateLink_DocumentWidget_(d, req->linkId);
         refresh_Widget(d);
@@ -1141,12 +1145,13 @@ static iBool handleMediaCommand_DocumentWidget_(iDocumentWidget *d, const char *
         const enum iGmStatusCode code = status_GmRequest(req->req);
         /* Give the media to the document for presentation. */
         if (code == success_GmStatusCode) {
-            if (startsWith_String(meta_GmRequest(req->req), "image/")) {
-                setImage_Media(media_GmDocument(d->doc),
-                               req->linkId,
-                               meta_GmRequest(req->req),
-                               body_GmRequest(req->req),
-                               iTrue);
+            if (startsWith_String(meta_GmRequest(req->req), "image/") ||
+                startsWith_String(meta_GmRequest(req->req), "audio/")) {
+                setData_Media(media_GmDocument(d->doc),
+                              req->linkId,
+                              meta_GmRequest(req->req),
+                              body_GmRequest(req->req),
+                              iTrue);
                 redoLayout_GmDocument(d->doc);
                 updateVisible_DocumentWidget_(d);
                 invalidate_DocumentWidget_(d);
@@ -1793,14 +1798,14 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                     if (isMediaLink_GmDocument(d->doc, linkId)) {
                         const int linkFlags = linkFlags_GmDocument(d->doc, linkId);
                         if (linkFlags & content_GmLinkFlag && linkFlags & permanent_GmLinkFlag) {
-                            /* We have the image and it cannot be dismissed, so nothing
+                            /* We have the content and it cannot be dismissed, so nothing
                                further to do. */
                             return iTrue;
                         }
                         if (!requestMedia_DocumentWidget_(d, linkId)) {                            
                             if (linkFlags & content_GmLinkFlag) {
                                 /* Dismiss shown content on click. */
-                                setImage_Media(media_GmDocument(d->doc), linkId, NULL, NULL, iTrue);
+                                setData_Media(media_GmDocument(d->doc), linkId, NULL, NULL, iTrue);
                                 redoLayout_GmDocument(d->doc);
                                 d->hoverLink = NULL;
                                 scroll_DocumentWidget_(d, 0);
@@ -1813,11 +1818,11 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                 /* Show the existing content again if we have it. */
                                 iMediaRequest *req = findMediaRequest_DocumentWidget_(d, linkId);
                                 if (req) {
-                                    setImage_Media(media_GmDocument(d->doc),
-                                                   linkId,
-                                                   meta_GmRequest(req->req),
-                                                   body_GmRequest(req->req),
-                                                   iTrue);
+                                    setData_Media(media_GmDocument(d->doc),
+                                                  linkId,
+                                                  meta_GmRequest(req->req),
+                                                  body_GmRequest(req->req),
+                                                  iTrue);
                                     redoLayout_GmDocument(d->doc);
                                     updateVisible_DocumentWidget_(d);
                                     invalidate_DocumentWidget_(d);
@@ -1913,6 +1918,11 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
         }
         return;
     }
+    else if (run->audioId) {
+        /* Draw the audio player interface. */
+        fillRect_Paint(&d->paint, moved_Rect(run->visBounds, origin), red_ColorId);
+        return;
+    }
     enum iColorId      fg  = run->color;
     const iGmDocument *doc = d->widget->doc;
     const iBool        isHover =
@@ -1989,13 +1999,23 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
         /* Show metadata about inline content. */
         if (flags & content_GmLinkFlag && run->flags & endOfLine_GmRunFlag) {
             fg = linkColor_GmDocument(doc, run->linkId, textHover_GmLinkPart);
-            iAssert(!isEmpty_Rect(run->bounds));
-            iGmImageInfo info;
-            imageInfo_Media(constMedia_GmDocument(doc), linkImage_GmDocument(doc, run->linkId), &info);
             iString text;
             init_String(&text);
-            format_String(&text, "%s \u2014 %d x %d \u2014 %.1fMB",
-                          info.mime, info.size.x, info.size.y, info.numBytes / 1.0e6f);
+            iMediaId imageId = linkImage_GmDocument(doc, run->linkId);
+            iMediaId audioId = !imageId ? linkAudio_GmDocument(doc, run->linkId) : 0;
+            iAssert(imageId || audioId);
+            if (imageId) {
+                iAssert(!isEmpty_Rect(run->bounds));
+                iGmImageInfo info;
+                imageInfo_Media(constMedia_GmDocument(doc), imageId, &info);
+                format_String(&text, "%s \u2014 %d x %d \u2014 %.1fMB",
+                              info.mime, info.size.x, info.size.y, info.numBytes / 1.0e6f);
+            }
+            else if (audioId) {
+                iGmAudioInfo info;
+                audioInfo_Media(constMedia_GmDocument(doc), audioId, &info);
+                format_String(&text, "%s", info.mime);
+            }
             if (findMediaRequest_DocumentWidget_(d->widget, run->linkId)) {
                 appendFormat_String(
                     &text, "  %s\u2a2f", isHover ? escape_Color(tmLinkText_ColorId) : "");

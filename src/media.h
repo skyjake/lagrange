@@ -29,20 +29,32 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 typedef uint16_t iMediaId;
 
+iDeclareType(Player)
 iDeclareType(GmImageInfo)
+iDeclareType(GmAudioInfo)
 
 struct Impl_GmImageInfo {
-    iInt2 size;
-    size_t numBytes;
+    iInt2       size;
+    size_t      numBytes;
     const char *mime;
-    iBool isPermanent;
+    iBool       isPermanent;
 };
 
-iDeclareType(Media) iDeclareTypeConstruction(Media)
+struct Impl_GmAudioInfo {
+    const char *mime;
+    iBool       isPermanent;
+};
+
+iDeclareType(Media)
+iDeclareTypeConstruction(Media)
 
 void    clear_Media     (iMedia *);
-void    setImage_Media  (iMedia *, uint16_t linkId, const iString *mime, const iBlock *data, iBool allowHide);
+void    setData_Media   (iMedia *, uint16_t linkId, const iString *mime, const iBlock *data, iBool allowHide);
 
 iMediaId        findLinkImage_Media (const iMedia *, uint16_t linkId);
+iBool           imageInfo_Media     (const iMedia *, iMediaId imageId, iGmImageInfo *info_out);
 SDL_Texture *   imageTexture_Media  (const iMedia *, iMediaId imageId);
-void            imageInfo_Media     (const iMedia *, iMediaId imageId, iGmImageInfo *info_out);
+
+iMediaId        findLinkAudio_Media (const iMedia *, uint16_t linkId);
+iBool           audioInfo_Media     (const iMedia *, iMediaId audioId, iGmAudioInfo *info_out);
+iPlayer *       audioPlayer_Media   (const iMedia *, iMediaId audioId);

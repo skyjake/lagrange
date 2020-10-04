@@ -454,6 +454,9 @@ void submit_GmRequest(iGmRequest *d) {
             else if (endsWithCase_String(path, ".gif")) {
                 setCStr_String(&d->resp.meta, "image/gif");
             }
+            else if (endsWithCase_String(path, ".wav")) {
+                setCStr_String(&d->resp.meta, "audio/wave");
+            }
             else {
                 setCStr_String(&d->resp.meta, "application/octet-stream");
             }

@@ -308,6 +308,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         run.color = white_ColorId;
         run.linkId = 0;
         run.imageId = 0;
+        run.audioId = 0;
         enum iGmLineType type;
         int indent = 0;
         /* Detect the type of the line. */
@@ -429,12 +430,12 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         }
         /* Quote icon. */
         if (type == quote_GmLineType && addQuoteIcon) {
-            addQuoteIcon = iFalse;
+            addQuoteIcon    = iFalse;
             iGmRun quoteRun = run;
-            quoteRun.font           = heading1_FontId;
-            quoteRun.text           = range_CStr(quote);
-            quoteRun.color          = tmQuoteIcon_ColorId;
-            iRect vis = visualBounds_Text(quoteRun.font, quoteRun.text);
+            quoteRun.font   = heading1_FontId;
+            quoteRun.text   = range_CStr(quote);
+            quoteRun.color  = tmQuoteIcon_ColorId;
+            iRect vis       = visualBounds_Text(quoteRun.font, quoteRun.text);
             quoteRun.visBounds.size = advance_Text(quoteRun.font, quote);
             quoteRun.visBounds.pos =
                 add_I2(pos,
@@ -522,6 +523,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         /* Image content. */
         if (type == link_GmLineType) {
             const iMediaId imageId = findLinkImage_Media(d->media, run.linkId);
+            const iMediaId audioId = !imageId ? findLinkAudio_Media(d->media, run.linkId) : 0;
             if (imageId) {
                 iGmImageInfo img;
                 imageInfo_Media(d->media, imageId, &img);
@@ -532,7 +534,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                         link->flags |= permanent_GmLinkFlag;
                     }
                 }
-                const int margin = 0.5f * lineHeight_Text(paragraph_FontId);
+                const int margin = lineHeight_Text(paragraph_FontId) / 2;
                 pos.y += margin;
                 run.bounds.pos = pos;
                 run.bounds.size.x = d->size.x;
@@ -551,6 +553,28 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 run.font    = 0;
                 run.color   = 0;
                 run.imageId = imageId;
+                pushBack_Array(&d->layout, &run);
+                pos.y += run.bounds.size.y + margin;
+            }
+            else if (audioId) {
+                iGmAudioInfo info;
+                audioInfo_Media(d->media, audioId, &info);
+                /* Mark the link as having content. */ {
+                    iGmLink *link = at_PtrArray(&d->links, run.linkId - 1);
+                    link->flags |= content_GmLinkFlag;
+                    if (info.isPermanent) {
+                        link->flags |= permanent_GmLinkFlag;
+                    }
+                }
+                const int margin = lineHeight_Text(paragraph_FontId) / 2;
+                pos.y += margin;
+                run.bounds.pos    = pos;
+                run.bounds.size.x = d->size.x;
+                run.bounds.size.y = 2 * lineHeight_Text(uiContent_FontId);
+                run.visBounds     = run.bounds;
+                run.text          = iNullRange;
+                run.color         = 0;
+                run.audioId       = audioId;
                 pushBack_Array(&d->layout, &run);
                 pos.y += run.bounds.size.y + margin;
             }
@@ -1120,8 +1144,12 @@ const iTime *linkTime_GmDocument(const iGmDocument *d, iGmLinkId linkId) {
     return link ? &link->when : NULL;
 }
 
-uint16_t linkImage_GmDocument(const iGmDocument *d, iGmLinkId linkId) {
+iMediaId linkImage_GmDocument(const iGmDocument *d, iGmLinkId linkId) {
     return findLinkImage_Media(d->media, linkId);
+}
+
+iMediaId linkAudio_GmDocument(const iGmDocument *d, iGmLinkId linkId) {
+    return findLinkAudio_Media(d->media, linkId);
 }
 
 enum iColorId linkColor_GmDocument(const iGmDocument *d, iGmLinkId linkId, enum iGmLinkPart part) {
