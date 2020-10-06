@@ -28,6 +28,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 iDeclareType(InputBuf)
 
+#if !defined (AUDIO_S24LSB)
+#   define AUDIO_S24LSB     0x8018  /* 24-bit integer samples */
+#endif
+#if !defined (AUDIO_F64LSB)
+#   define AUDIO_F64LSB     0x8140  /* 64-bit floating point samples */
+#endif
+
 struct Impl_InputBuf {
     iMutex     mtx;
     iCondition changed;
@@ -59,25 +66,28 @@ iDefineTypeConstruction(InputBuf)
 iDeclareType(SampleBuf)
 
 struct Impl_SampleBuf {
-    void * data;
-    uint8_t numBits;
-    uint8_t numChannels;
-    uint8_t sampleSize; /* bytes; one sample includes values for all channels */
-    size_t count;
-    size_t head, tail;
+    SDL_AudioFormat format;
+    uint8_t         numChannels;
+    uint8_t         sampleSize; /* as bytes; one sample includes values for all channels */
+    void *          data;
+    size_t          count;
+    size_t          head, tail;
+    iCondition      moreNeeded;
 };
 
-void init_SampleBuf(iSampleBuf *d, size_t numChannels, size_t sampleSize, size_t count) {
+void init_SampleBuf(iSampleBuf *d, SDL_AudioFormat format, size_t numChannels, size_t count) {
+    d->format      = format;
     d->numChannels = numChannels;
-    d->sampleSize  = sampleSize;
-    d->numBits     = sampleSize / numChannels * 8;
+    d->sampleSize  = SDL_AUDIO_BITSIZE(format) / 8 * numChannels;
     d->count       = count + 1; /* considered empty if head==tail */
     d->data        = malloc(d->sampleSize * d->count);
     d->head        = 0;
     d->tail        = 0;
+    init_Condition(&d->moreNeeded);
 }
 
 void deinit_SampleBuf(iSampleBuf *d) {
+    deinit_Condition(&d->moreNeeded);
     free(d->data);
 }
 
@@ -134,8 +144,9 @@ void read_SampleBuf(iSampleBuf *d, const size_t n, void *samples_out) {
 iDeclareType(ContentSpec)
 
 struct Impl_ContentSpec {
-    SDL_AudioSpec spec;
-    iRanges       wavData;
+    SDL_AudioFormat inputFormat;
+    SDL_AudioSpec   output;
+    iRanges         wavData;
 };
 
 iDeclareType(Decoder)
@@ -152,6 +163,7 @@ struct Impl_Decoder {
     enum iDecoderType type;
     float             gain;
     iThread *         thread;
+    SDL_AudioFormat   inputFormat;
     iInputBuf *       input;
     size_t            inputPos;
     iSampleBuf        output;
@@ -159,70 +171,140 @@ struct Impl_Decoder {
     iRanges           wavData;
 };
 
-static void parseWav_Decoder_(iDecoder *d, iRanges inputRange) {
-    const size_t sampleSize = d->output.sampleSize;
-    const size_t vacancy = vacancy_SampleBuf(&d->output);
-    const size_t avail = iMin(inputRange.end - d->inputPos, d->wavData.end - d->inputPos) /
-                         sampleSize;
+enum iDecoderParseStatus {
+    ok_DecoderParseStatus,
+    needMoreInput_DecoderParseStatus,
+};
+
+static enum iDecoderParseStatus parseWav_Decoder_(iDecoder *d, iRanges inputRange) {
+    const uint8_t numChannels     = d->output.numChannels;
+    const size_t  inputSampleSize = numChannels * SDL_AUDIO_BITSIZE(d->inputFormat) / 8;
+    const size_t  vacancy         = vacancy_SampleBuf(&d->output);
+    const size_t  inputBytePos    = inputSampleSize * d->inputPos;
+    const size_t  avail =
+        iMin(inputRange.end - inputBytePos, d->wavData.end - inputBytePos) / inputSampleSize;
+    if (avail == 0) {
+        return needMoreInput_DecoderParseStatus;
+    }
     const size_t n = iMin(vacancy, avail);
-    if (n == 0) return;
-    void *samples = malloc(sampleSize * n);
+    if (n == 0) {
+        return ok_DecoderParseStatus;
+    }
+    void *samples = malloc(inputSampleSize * n);
     /* Get a copy of the input for mixing. */ {
         lock_Mutex(&d->input->mtx);
-        memcpy(
-            samples, constData_Block(&d->input->data) + sampleSize * d->inputPos, sampleSize * n);
+        iAssert(inputSampleSize * d->inputPos < size_Block(&d->input->data));
+        memcpy(samples,
+               constData_Block(&d->input->data) + inputSampleSize * d->inputPos,
+               inputSampleSize * n);
         d->inputPos += n;
         unlock_Mutex(&d->input->mtx);
     }
     /* Gain. */ {
         const float gain = d->gain;
-        if (d->output.numBits == 16) {
-            int16_t *value = samples;
-            for (size_t count = d->output.numChannels * n; count; count--, value++) {
+        if (d->inputFormat == AUDIO_F64LSB) {
+            iAssert(d->output.format == AUDIO_F32);
+            double *inValue  = samples;
+            float * outValue = samples;
+            for (size_t count = numChannels * n; count; count--) {
+                *outValue++ = gain * *inValue++;
+            }
+        }
+        else if (d->inputFormat == AUDIO_F32) {
+            float *value = samples;
+            for (size_t count = numChannels * n; count; count--, value++) {
                 *value *= gain;
+            }
+        }
+        else if (d->inputFormat == AUDIO_S24LSB) {
+            iAssert(d->output.format == AUDIO_S16);
+            const char *inValue  = samples;
+            int16_t *   outValue = samples;
+            for (size_t count = numChannels * n; count; count--, inValue += 3, outValue++) {
+                memcpy(outValue, inValue, 2);
+                *outValue *= gain;
+            }
+        }
+        else {
+            switch (SDL_AUDIO_BITSIZE(d->output.format)) {
+                case 8: {
+                    uint8_t *value = samples;
+                    for (size_t count = numChannels * n; count; count--, value++) {
+                        *value = (int) (*value - 127) * gain + 127;
+                    }
+                    break;
+                }
+                case 16: {
+                    int16_t *value = samples;
+                    for (size_t count = numChannels * n; count; count--, value++) {
+                        *value *= gain;
+                    }
+                    break;
+                }
+                case 32: {
+                    int32_t *value = samples;
+                    for (size_t count = numChannels * n; count; count--, value++) {
+                        *value *= gain;
+                    }
+                    break;
+                }
             }
         }
     }
     iGuardMutex(&d->outputMutex, write_SampleBuf(&d->output, samples, n));
     free(samples);
+    return ok_DecoderParseStatus;
 }
 
 static iThreadResult run_Decoder_(iThread *thread) {
     iDecoder *d = userData_Thread(thread);
+    /* Amount of data initially available. */
+    lock_Mutex(&d->input->mtx);
+    size_t inputSize = size_InputBuf(d->input);
+    unlock_Mutex(&d->input->mtx);
     while (d->type) {
-        size_t inputSize = 0;
-        /* Grab more input. */ {
-            lock_Mutex(&d->input->mtx);
-            wait_Condition(&d->input->changed, &d->input->mtx);
-            inputSize = size_Block(&d->input->data);
-            unlock_Mutex(&d->input->mtx);
-        }
         iRanges inputRange = { d->inputPos, inputSize };
         iAssert(inputRange.start <= inputRange.end);
         if (!d->type) break;
         /* Have data to work on and a place to save output? */
-        if (!isEmpty_Range(&inputRange) && !isFull_SampleBuf(&d->output)) {
+        enum iDecoderParseStatus status = ok_DecoderParseStatus;
+        if (!isEmpty_Range(&inputRange)) {
             switch (d->type) {
                 case wav_DecoderType:
-                    parseWav_Decoder_(d, inputRange);
+                    status = parseWav_Decoder_(d, inputRange);
                     break;
                 default:
                     break;
             }
+        }
+        if (status == needMoreInput_DecoderParseStatus) {
+            lock_Mutex(&d->input->mtx);
+            if (size_InputBuf(d->input) == inputSize) {
+                wait_Condition(&d->input->changed, &d->input->mtx);
+            }
+            inputSize = size_InputBuf(d->input);
+            unlock_Mutex(&d->input->mtx);
+        }
+        else {
+            iGuardMutex(
+                &d->outputMutex, if (isFull_SampleBuf(&d->output)) {
+                    wait_Condition(&d->output.moreNeeded, &d->outputMutex);
+                });
         }
     }
     return 0;
 }
 
 void init_Decoder(iDecoder *d, iInputBuf *input, const iContentSpec *spec) {
-    d->type     = wav_DecoderType;
-    d->gain     = 0.5f;
-    d->input    = input;
-    d->inputPos = spec->wavData.start;
+    d->type        = wav_DecoderType;
+    d->gain        = 0.5f;
+    d->input       = input;
+    d->inputPos    = spec->wavData.start;
+    d->inputFormat = spec->inputFormat;
     init_SampleBuf(&d->output,
-                   spec->spec.channels,
-                   SDL_AUDIO_BITSIZE(spec->spec.format) / 8 * spec->spec.channels,
-                   spec->spec.samples * 2);
+                   spec->output.format,
+                   spec->output.channels,
+                   spec->output.samples * 2);
     init_Mutex(&d->outputMutex);
     d->thread = new_Thread(run_Decoder_);
     setUserData_Thread(d->thread, d);
@@ -231,6 +313,7 @@ void init_Decoder(iDecoder *d, iInputBuf *input, const iContentSpec *spec) {
 
 void deinit_Decoder(iDecoder *d) {
     d->type = none_DecoderType;
+    signal_Condition(&d->output.moreNeeded);
     signal_Condition(&d->input->changed);
     join_Thread(d->thread);
     iRelease(d->thread);
@@ -287,30 +370,52 @@ static iContentSpec contentSpec_Player_(const iPlayer *d) {
             readData_Buffer(buf, 4, magic);
             const size_t size = read32_Stream(is);
             if (memcmp(magic, "fmt ", 4) == 0) {
-                if (size != 16) {
+                if (size != 16 && size != 18) {
                     return content;
                 }
-                const int16_t  mode           = read16_Stream(is); /* 1 = PCM */
+                enum iWavFormat {
+                    pcm_WavFormat = 1,
+                    ieeeFloat_WavFormat = 3,
+                };
+                const int16_t  mode           = read16_Stream(is); /* 1 = PCM, 3 = IEEE_FLOAT */
                 const int16_t  numChannels    = read16_Stream(is);
                 const int32_t  freq           = read32_Stream(is);
                 const uint32_t bytesPerSecond = readU32_Stream(is);
                 const int16_t  blockAlign     = read16_Stream(is);
                 const int16_t  bitsPerSample  = read16_Stream(is);
+                const uint16_t extSize        = (size == 18 ? readU16_Stream(is) : 0);
                 iUnused(bytesPerSecond);
-                iUnused(blockAlign); /* TODO: Should use this one when reading samples? */
-                if (mode != 1) { /* PCM */
+                if (mode != pcm_WavFormat && mode != ieeeFloat_WavFormat) { /* PCM or float */
+                    return content;
+                }
+                if (extSize != 0) {
                     return content;
                 }
                 if (numChannels != 1 && numChannels != 2) {
                     return content;
                 }
-                if (bitsPerSample != 8 && bitsPerSample != 16 && bitsPerSample != 32) {
+                if (bitsPerSample != 8 && bitsPerSample != 16 && bitsPerSample != 24 &&
+                    bitsPerSample != 32 && bitsPerSample != 64) {
                     return content;
                 }
-                content.spec.freq     = freq;
-                content.spec.channels = numChannels;
-                content.spec.format =
-                    (bitsPerSample == 8 ? AUDIO_S8 : bitsPerSample == 16 ? AUDIO_S16 : AUDIO_S32);
+                if (bitsPerSample == 24 && blockAlign != 3 * numChannels) {
+                    return content;
+                }
+                content.output.freq     = freq;
+                content.output.channels = numChannels;
+                if (mode == ieeeFloat_WavFormat) {
+                    content.inputFormat   = (bitsPerSample == 32 ? AUDIO_F32 : AUDIO_F64LSB);
+                    content.output.format = AUDIO_F32;
+                }
+                else if (bitsPerSample == 24) {
+                    content.inputFormat   = AUDIO_S24LSB;
+                    content.output.format = AUDIO_S16;
+                }
+                else {
+                    content.inputFormat = content.output.format =
+                        (bitsPerSample == 8 ? AUDIO_U8
+                                            : bitsPerSample == 16 ? AUDIO_S16 : AUDIO_S32);
+                }
             }
             else if (memcmp(magic, "data", 4) == 0) {
                 content.wavData = (iRanges){ pos_Stream(is), pos_Stream(is) + size };
@@ -321,7 +426,10 @@ static iContentSpec contentSpec_Player_(const iPlayer *d) {
             }
         }
     }
-    content.spec.samples = 2048;
+    iAssert(content.inputFormat == content.output.format ||
+            (content.inputFormat == AUDIO_S24LSB && content.output.format == AUDIO_S16) ||
+            (content.inputFormat == AUDIO_F64LSB && content.output.format == AUDIO_F32));
+    content.output.samples = 2048;
     return content;
 }
 
@@ -337,9 +445,8 @@ static void writeOutputSamples_Player_(void *plr, Uint8 *stream, int len) {
     else {
         memset(stream, d->spec.silence, len);
     }
+    signal_Condition(&d->decoder->output.moreNeeded);
     unlock_Mutex(&d->decoder->outputMutex);
-    /* Wake up decoder; there is more room for output. */
-    signal_Condition(&d->data->changed);
 }
 
 void init_Player(iPlayer *d) {
@@ -387,9 +494,9 @@ iBool start_Player(iPlayer *d) {
         return iFalse;
     }
     iContentSpec content  = contentSpec_Player_(d);
-    content.spec.callback = writeOutputSamples_Player_;
-    content.spec.userdata = d;
-    d->device = SDL_OpenAudioDevice(NULL, SDL_FALSE /* playback */, &content.spec, &d->spec, 0);
+    content.output.callback = writeOutputSamples_Player_;
+    content.output.userdata = d;
+    d->device = SDL_OpenAudioDevice(NULL, SDL_FALSE /* playback */, &content.output, &d->spec, 0);
     if (!d->device) {
         return iFalse;
     }
