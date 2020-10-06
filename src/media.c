@@ -140,21 +140,41 @@ void clear_Media(iMedia *d) {
 }
 
 void setData_Media(iMedia *d, iGmLinkId linkId, const iString *mime, const iBlock *data,
-                   iBool allowHide) {
-    if (!mime || !data) {
-        iMediaId existing = findLinkImage_Media(d, linkId);
-        if (existing) {
+                   int flags) {
+    const iBool isPartial  = (flags & partialData_MediaFlag) != 0;
+    const iBool allowHide  = (flags & allowHide_MediaFlag) != 0;
+    const iBool isDeleting = (!mime || !data);
+    iMediaId    existing   = findLinkImage_Media(d, linkId);
+    if (existing) {
+        if (isDeleting) {
             iGmImage *img;
             take_PtrArray(&d->images, existing - 1, (void **) &img);
             delete_GmImage(img);
         }
-        else if ((existing = findLinkAudio_Media(d, linkId)) != 0) {
-            iGmAudio *audio;
+        else {
+            iAssert(isDeleting); /* images cannot be modified once set */
+        }
+    }
+    else if ((existing = findLinkAudio_Media(d, linkId)) != 0) {
+        iGmAudio *audio;
+        if (isDeleting) {
             take_PtrArray(&d->audio, existing - 1, (void **) &audio);
             delete_GmAudio(audio);
         }
+        else {
+            audio = at_PtrArray(&d->audio, existing - 1);
+            iAssert(equal_String(&audio->props.mime, mime)); /* MIME cannot change */
+            updateSourceData_Player(audio->player, data, append_PlayerUpdate);
+            if (!isStarted_Player(audio->player)) {
+                /* Maybe the previous updates didn't have enough data. */
+                start_Player(audio->player);
+            }
+            if (!isPartial) {
+                updateSourceData_Player(audio->player, NULL, complete_PlayerUpdate);
+            }
+        }
     }
-    else {
+    else if (!isDeleting) {
         if (startsWith_String(mime, "image/")) {
             /* Copy the image to a texture. */
             /* TODO: Resize down to min(maximum texture size, window size). */
@@ -171,13 +191,14 @@ void setData_Media(iMedia *d, iGmLinkId linkId, const iString *mime, const iBloc
         }
         else if (startsWith_String(mime, "audio/")) {
             iGmAudio *audio = new_GmAudio();
-            audio->props.linkId = linkId;
+            audio->props.linkId = linkId; /* TODO: use a hash? */
             audio->props.isPermanent = !allowHide;
             set_String(&audio->props.mime, mime);
-            /* TODO: What about update/complete, for streaming? */
             updateSourceData_Player(audio->player, data, replace_PlayerUpdate);
+            if (!isPartial) {
+                updateSourceData_Player(audio->player, NULL, complete_PlayerUpdate);
+            }
             pushBack_PtrArray(&d->audio, audio);
-
             /* TEST: Start playing right away. */
             start_Player(audio->player);
         }

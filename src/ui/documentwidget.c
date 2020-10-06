@@ -742,7 +742,7 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse
                                       1,
                                       mimeStr,
                                       &response->body,
-                                      iFalse /* it's fixed */);
+                                      0);
                         redoLayout_GmDocument(d->doc);
                     }
                     else {
@@ -1151,7 +1151,7 @@ static iBool handleMediaCommand_DocumentWidget_(iDocumentWidget *d, const char *
                               req->linkId,
                               meta_GmRequest(req->req),
                               body_GmRequest(req->req),
-                              iTrue);
+                              allowHide_MediaFlag);
                 redoLayout_GmDocument(d->doc);
                 updateVisible_DocumentWidget_(d);
                 invalidate_DocumentWidget_(d);
@@ -1805,7 +1805,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                         if (!requestMedia_DocumentWidget_(d, linkId)) {                            
                             if (linkFlags & content_GmLinkFlag) {
                                 /* Dismiss shown content on click. */
-                                setData_Media(media_GmDocument(d->doc), linkId, NULL, NULL, iTrue);
+                                setData_Media(media_GmDocument(d->doc), linkId, NULL, NULL, allowHide_MediaFlag);
                                 redoLayout_GmDocument(d->doc);
                                 d->hoverLink = NULL;
                                 scroll_DocumentWidget_(d, 0);
@@ -1822,7 +1822,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                                   linkId,
                                                   meta_GmRequest(req->req),
                                                   body_GmRequest(req->req),
-                                                  iTrue);
+                                                  allowHide_MediaFlag);
                                     redoLayout_GmDocument(d->doc);
                                     updateVisible_DocumentWidget_(d);
                                     invalidate_DocumentWidget_(d);
