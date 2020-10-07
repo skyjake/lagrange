@@ -589,6 +589,7 @@ void init_Window(iWindow *d, iRect rect) {
 #endif
     d->root = new_Widget();
     d->presentTime = 0.0;
+    d->frameTime = SDL_GetTicks();
     setId_Widget(d->root, "root");
     init_Text(d->render);
     setupUserInterface_Window(d);
@@ -725,6 +726,9 @@ void draw_Window(iWindow *d) {
     if (d->isDrawFrozen) {
         return;
     }
+//#if !defined (NDEBUG)
+//    printf("draw %d\n", d->frameTime); fflush(stdout);
+//#endif
     /* Clear the window. */
     SDL_SetRenderDrawColor(d->render, 0, 0, 0, 255);
     SDL_RenderClear(d->render);

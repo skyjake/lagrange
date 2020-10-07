@@ -233,6 +233,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     d->invalidRuns      = new_PtrSet();
     init_Array(&d->outline, sizeof(iOutlineItem));
     init_Anim(&d->sideOpacity, 0);
+    init_Anim(&d->outlineOpacity, 0);
     init_String(&d->sourceMime);
     init_Block(&d->sourceContent, 0);
     init_PtrArray(&d->visibleLinks);
