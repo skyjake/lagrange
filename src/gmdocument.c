@@ -570,7 +570,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 pos.y += margin;
                 run.bounds.pos    = pos;
                 run.bounds.size.x = d->size.x;
-                run.bounds.size.y = 2 * lineHeight_Text(uiContent_FontId);
+                run.bounds.size.y = lineHeight_Text(uiContent_FontId) + 3 * gap_UI;
                 run.visBounds     = run.bounds;
                 run.text          = iNullRange;
                 run.color         = 0;

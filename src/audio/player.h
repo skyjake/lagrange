@@ -41,3 +41,6 @@ void    setPaused_Player    (iPlayer *, iBool isPaused);
 void    stop_Player         (iPlayer *);
 
 iBool   isStarted_Player    (const iPlayer *);
+iBool   isPaused_Player     (const iPlayer *);
+float   time_Player         (const iPlayer *);
+float   duration_Player     (const iPlayer *);

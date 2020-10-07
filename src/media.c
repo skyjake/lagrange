@@ -266,3 +266,11 @@ iBool audioInfo_Media(const iMedia *d, iMediaId audioId, iGmAudioInfo *info_out)
     iZap(*info_out);
     return iFalse;
 }
+
+iPlayer *audioPlayer_Media(const iMedia *d, iMediaId audioId) {
+    if (audioId > 0 && audioId <= size_PtrArray(&d->audio)) {
+        const iGmAudio *audio = constAt_PtrArray(&d->audio, audioId - 1);
+        return audio->player;
+    }
+    return NULL;
+}

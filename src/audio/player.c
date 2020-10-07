@@ -146,6 +146,7 @@ iDeclareType(ContentSpec)
 struct Impl_ContentSpec {
     SDL_AudioFormat inputFormat;
     SDL_AudioSpec   output;
+    uint64_t        totalSamples;
     iRanges         wavData;
 };
 
@@ -168,6 +169,8 @@ struct Impl_Decoder {
     size_t            inputPos;
     iSampleBuf        output;
     iMutex            outputMutex;
+    uint64_t          currentSample;
+    uint64_t          totalSamples; /* zero if unknown */
     iRanges           wavData;
 };
 
@@ -252,6 +255,7 @@ static enum iDecoderParseStatus parseWav_Decoder_(iDecoder *d, iRanges inputRang
         }
     }
     iGuardMutex(&d->outputMutex, write_SampleBuf(&d->output, samples, n));
+    d->currentSample += n;
     free(samples);
     return ok_DecoderParseStatus;
 }
@@ -305,6 +309,8 @@ void init_Decoder(iDecoder *d, iInputBuf *input, const iContentSpec *spec) {
                    spec->output.format,
                    spec->output.channels,
                    spec->output.samples * 2);
+    d->currentSample = 0;
+    d->totalSamples  = spec->totalSamples;
     init_Mutex(&d->outputMutex);
     d->thread = new_Thread(run_Decoder_);
     setUserData_Thread(d->thread, d);
@@ -366,6 +372,7 @@ static iContentSpec contentSpec_Player_(const iPlayer *d) {
             return content;
         }
         /* Read all the chunks. */
+        int16_t blockAlign = 0;
         while (!atEnd_Buffer(buf)) {
             readData_Buffer(buf, 4, magic);
             const size_t size = read32_Stream(is);
@@ -381,7 +388,7 @@ static iContentSpec contentSpec_Player_(const iPlayer *d) {
                 const int16_t  numChannels    = read16_Stream(is);
                 const int32_t  freq           = read32_Stream(is);
                 const uint32_t bytesPerSecond = readU32_Stream(is);
-                const int16_t  blockAlign     = read16_Stream(is);
+                blockAlign                    = read16_Stream(is);
                 const int16_t  bitsPerSample  = read16_Stream(is);
                 const uint16_t extSize        = (size == 18 ? readU16_Stream(is) : 0);
                 iUnused(bytesPerSecond);
@@ -418,7 +425,8 @@ static iContentSpec contentSpec_Player_(const iPlayer *d) {
                 }
             }
             else if (memcmp(magic, "data", 4) == 0) {
-                content.wavData = (iRanges){ pos_Stream(is), pos_Stream(is) + size };
+                content.wavData      = (iRanges){ pos_Stream(is), pos_Stream(is) + size };
+                content.totalSamples = (uint64_t) size_Range(&content.wavData) / blockAlign;
                 break;
             }
             else {
@@ -465,11 +473,16 @@ iBool isStarted_Player(const iPlayer *d) {
     return d->device != 0;
 }
 
-void setFormatHint_Player(iPlayer *d, const char *hint) {
+iBool isPaused_Player(const iPlayer *d) {
+    if (!d->device) return iTrue;
+    return SDL_GetAudioDeviceStatus(d->device) == SDL_AUDIO_PAUSED;
+}
 
+void setFormatHint_Player(iPlayer *d, const char *hint) {
 }
 
 void updateSourceData_Player(iPlayer *d, const iBlock *data, enum iPlayerUpdate update) {
+    /* TODO: Add MIME as argument */
     iInputBuf *input = d->data;
     lock_Mutex(&input->mtx);
     switch (update) {
@@ -526,4 +539,14 @@ void stop_Player(iPlayer *d) {
         delete_Decoder(d->decoder);
         d->decoder = NULL;
     }
+}
+
+float time_Player(const iPlayer *d) {
+    if (!d->decoder) return 0;
+    return (float) ((double) d->decoder->currentSample / (double) d->spec.freq);
+}
+
+float duration_Player(const iPlayer *d) {
+    if (!d->decoder) return 0;
+    return (float) ((double) d->decoder->totalSamples / (double) d->spec.freq);
 }
