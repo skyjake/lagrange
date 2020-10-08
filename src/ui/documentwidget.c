@@ -715,7 +715,7 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse
     if (d->state == ready_RequestState) {
         return;
     }
-    /* TODO: Do this in the background. However, that requires a text metrics calculator
+    /* TODO: Do document update in the background. However, that requires a text metrics calculator
        that does not try to cache the glyph bitmaps. */
     const enum iGmStatusCode statusCode = response->statusCode;
     if (category_GmStatusCode(statusCode) != categoryInput_GmStatusCode) {
@@ -727,7 +727,7 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse
         clear_String(&d->sourceMime);
         d->sourceTime = response->when;
         initBlock_String(&str, &response->body);
-        if (category_GmStatusCode(statusCode) == categorySuccess_GmStatusCode) {
+        if (isSuccess_GmStatusCode(statusCode)) {
             /* Check the MIME type. */
             iRangecc charset = range_CStr("utf-8");
             enum iGmDocumentFormat docFormat = undefined_GmDocumentFormat;
@@ -1158,7 +1158,21 @@ static iBool handleMediaCommand_DocumentWidget_(iDocumentWidget *d, const char *
     }
     if (equal_Command(cmd, "media.updated")) {
         /* Pass new data to media players. */
-
+        const enum iGmStatusCode code = status_GmRequest(req->req);
+        if (isSuccess_GmStatusCode(code)) {
+            if (startsWith_String(meta_GmRequest(req->req), "audio/")) {
+                /* TODO: Use a helper? This is same as below except for the partialData flag. */
+                setData_Media(media_GmDocument(d->doc),
+                              req->linkId,
+                              meta_GmRequest(req->req),
+                              body_GmRequest(req->req),
+                              partialData_MediaFlag | allowHide_MediaFlag);
+                redoLayout_GmDocument(d->doc);
+                updateVisible_DocumentWidget_(d);
+                invalidate_DocumentWidget_(d);
+                refresh_Widget(as_Widget(d));
+            }
+        }
         /* Update the link's progress. */
         invalidateLink_DocumentWidget_(d, req->linkId);
         refresh_Widget(d);
@@ -1167,7 +1181,7 @@ static iBool handleMediaCommand_DocumentWidget_(iDocumentWidget *d, const char *
     else if (equal_Command(cmd, "media.finished")) {
         const enum iGmStatusCode code = status_GmRequest(req->req);
         /* Give the media to the document for presentation. */
-        if (code == success_GmStatusCode) {
+        if (isSuccess_GmStatusCode(code)) {
             if (startsWith_String(meta_GmRequest(req->req), "image/") ||
                 startsWith_String(meta_GmRequest(req->req), "audio/")) {
                 setData_Media(media_GmDocument(d->doc),
@@ -2355,8 +2369,9 @@ static void draw_PlayerUI(iPlayerUI *d, iPaint *p) {
     const int   s2      = right_Rect(d->scrubberRect) - rightWidth - 6 * gap_UI;
     const float normPos = totalTime > 0 ? playTime / totalTime : 0.0f;
     const int   part    = (s2 - s1) * normPos;
+    const int   scrubMax = (s2 - s1) * streamProgress_Player(d->player);
     drawHLine_Paint(p, init_I2(s1, yMid), part, bright);
-    drawHLine_Paint(p, init_I2(s1 + part, yMid), (s2 - s1) - part, dim);
+    drawHLine_Paint(p, init_I2(s1 + part, yMid), scrubMax - part, dim);
     draw_Text(uiLabel_FontId,
               init_I2(s1 * (1.0f - normPos) + s2 * normPos - hgt / 3, yMid - hgt / 2),
               bright,
