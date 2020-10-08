@@ -54,14 +54,29 @@ iDeclareType(GmImage)
 
 struct Impl_GmImage {
     iGmMediaProps props;
-    iInt2        size;
-    size_t       numBytes;
-    SDL_Texture *texture;
+    iBlock        partialData; /* cleared when image is converted to texture */
+    iInt2         size;
+    size_t        numBytes;
+    SDL_Texture * texture;
 };
 
 void init_GmImage(iGmImage *d, const iBlock *data) {
     init_GmMediaProps_(&d->props);
-    d->numBytes      = size_Block(data);
+    initCopy_Block(&d->partialData, data);
+    d->size     = zero_I2();
+    d->numBytes = 0;
+    d->texture  = NULL;
+}
+
+void deinit_GmImage(iGmImage *d) {
+    deinit_Block(&d->partialData);
+    SDL_DestroyTexture(d->texture);
+    deinit_GmMediaProps_(&d->props);
+}
+
+void makeTexture_GmImage(iGmImage *d) {
+    iBlock *data = &d->partialData;
+    d->numBytes = size_Block(data);
     uint8_t *imgData = stbi_load_from_memory(
         constData_Block(data), size_Block(data), &d->size.x, &d->size.y, NULL, 4);
     if (!imgData) {
@@ -69,6 +84,8 @@ void init_GmImage(iGmImage *d, const iBlock *data) {
         d->texture = NULL;
     }
     else {
+        /* TODO: Save some memory by checking if the alpha channel is actually in use. */
+        /* TODO: Resize down to min(maximum texture size, window size). */
         SDL_Surface *surface = SDL_CreateRGBSurfaceWithFormatFrom(
             imgData, d->size.x, d->size.y, 32, d->size.x * 4, SDL_PIXELFORMAT_ABGR8888);
         /* TODO: In multiwindow case, all windows must have the same shared renderer?
@@ -78,11 +95,7 @@ void init_GmImage(iGmImage *d, const iBlock *data) {
         SDL_FreeSurface(surface);
         stbi_image_free(imgData);
     }
-}
-
-void deinit_GmImage(iGmImage *d) {
-    SDL_DestroyTexture(d->texture);
-    deinit_GmMediaProps_(&d->props);
+    clear_Block(data);
 }
 
 iDefineTypeConstructionArgs(GmImage, (const iBlock *data), data)
@@ -144,15 +157,20 @@ void setData_Media(iMedia *d, iGmLinkId linkId, const iString *mime, const iBloc
     const iBool isPartial  = (flags & partialData_MediaFlag) != 0;
     const iBool allowHide  = (flags & allowHide_MediaFlag) != 0;
     const iBool isDeleting = (!mime || !data);
-    iMediaId    existing   = findLinkImage_Media(d, linkId);
+    iMediaId    existing   = findLinkImage_Media(d, linkId);    
     if (existing) {
+        iGmImage *img;
         if (isDeleting) {
-            iGmImage *img;
             take_PtrArray(&d->images, existing - 1, (void **) &img);
             delete_GmImage(img);
         }
         else {
-            iAssert(isDeleting); /* images cannot be modified once set */
+            img = at_PtrArray(&d->images, existing - 1);
+            iAssert(equal_String(&img->props.mime, mime)); /* MIME cannot change */
+            set_Block(&img->partialData, data);
+            if (!isPartial) {
+                makeTexture_GmImage(img);
+            }
         }
     }
     else if ((existing = findLinkAudio_Media(d, linkId)) != 0) {
@@ -177,16 +195,13 @@ void setData_Media(iMedia *d, iGmLinkId linkId, const iString *mime, const iBloc
     else if (!isDeleting) {
         if (startsWith_String(mime, "image/")) {
             /* Copy the image to a texture. */
-            /* TODO: Resize down to min(maximum texture size, window size). */
             iGmImage *img = new_GmImage(data);
-            img->props.linkId      = linkId; /* TODO: use a hash? */
+            img->props.linkId = linkId; /* TODO: use a hash? */
             img->props.isPermanent = !allowHide;
             set_String(&img->props.mime, mime);
-            if (img->texture) {
-                pushBack_PtrArray(&d->images, img);
-            }
-            else {
-                delete_GmImage(img);
+            pushBack_PtrArray(&d->images, img);
+            if (!isPartial) {
+                makeTexture_GmImage(img);
             }
         }
         else if (startsWith_String(mime, "audio/")) {
