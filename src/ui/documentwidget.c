@@ -711,14 +711,17 @@ static void updateFetchProgress_DocumentWidget_(iDocumentWidget *d) {
     }
 }
 
-static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse *response) {
+static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse *response,
+                                           const iBool isInitialUpdate) {
     if (d->state == ready_RequestState) {
         return;
     }
+    const iBool isRequestFinished = !d->request || isFinished_GmRequest(d->request);
     /* TODO: Do document update in the background. However, that requires a text metrics calculator
        that does not try to cache the glyph bitmaps. */
     const enum iGmStatusCode statusCode = response->statusCode;
     if (category_GmStatusCode(statusCode) != categoryInput_GmStatusCode) {
+        iBool setSource = iTrue;
         iString str;
         invalidate_DocumentWidget_(d);
         if (document_App() == d) {
@@ -748,10 +751,11 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse
                 }
                 else if (startsWith_Rangecc(param, "image/") ||
                          startsWith_Rangecc(param, "audio/")) {
+                    const iBool isAudio = startsWith_Rangecc(param, "audio/");
+                    /* Make a simple document with an image or audio player. */
                     docFormat = gemini_GmDocumentFormat;
                     setRange_String(&d->sourceMime, param);
-                    if (!d->request || isFinished_GmRequest(d->request)) {
-                        /* Make a simple document with an image or audio player. */
+                    if ((isAudio && isInitialUpdate) || (!isAudio && isRequestFinished)) {
                         const char *linkTitle =
                             startsWith_String(mimeStr, "image/") ? "Image" : "Audio";
                         iUrl parts;
@@ -765,8 +769,18 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse
                                       1,
                                       mimeStr,
                                       &response->body,
-                                      0);
+                                      !isRequestFinished ? partialData_MediaFlag : 0);
                         redoLayout_GmDocument(d->doc);
+                    }
+                    else if (isAudio && !isInitialUpdate) {
+                        /* Update the audio content. */
+                        setData_Media(media_GmDocument(d->doc),
+                                      1,
+                                      mimeStr,
+                                      &response->body,
+                                      !isRequestFinished ? partialData_MediaFlag : 0);
+                        refresh_Widget(d);
+                        setSource = iFalse;
                     }
                     else {
                         clear_String(&str);
@@ -793,7 +807,9 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse
                            collect_String(decode_Block(&str.chars, cstr_Rangecc(charset))));
             }
         }
-        setSource_DocumentWidget_(d, &str);
+        if (setSource) {
+            setSource_DocumentWidget_(d, &str);
+        }
         deinit_String(&str);
     }
 }
@@ -879,7 +895,7 @@ static iBool updateFromHistory_DocumentWidget_(iDocumentWidget *d) {
         d->initNormScrollY = recent->normScrollY;
         /* Use the cached response data. */
         updateTrust_DocumentWidget_(d, resp);
-        updateDocument_DocumentWidget_(d, resp);
+        updateDocument_DocumentWidget_(d, resp, iTrue);
         d->scrollY = d->initNormScrollY * size_GmDocument(d->doc).y;
         d->state = ready_RequestState;
         updateSideOpacity_DocumentWidget_(d, iFalse);
@@ -1038,7 +1054,7 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                 d->scrollY = 0;
                 resetSmoothScroll_DocumentWidget_(d);
                 reset_GmDocument(d->doc); /* new content incoming */
-                updateDocument_DocumentWidget_(d, response_GmRequest(d->request));
+                updateDocument_DocumentWidget_(d, response_GmRequest(d->request), iTrue);
                 break;
             case categoryRedirect_GmStatusCode:
                 if (isEmpty_String(meta_GmRequest(d->request))) {
@@ -1081,7 +1097,7 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
         switch (category_GmStatusCode(statusCode)) {
             case categorySuccess_GmStatusCode:
                 /* More content available. */
-                updateDocument_DocumentWidget_(d, response_GmRequest(d->request));
+                updateDocument_DocumentWidget_(d, response_GmRequest(d->request), iFalse);
                 break;
             default:
                 break;
