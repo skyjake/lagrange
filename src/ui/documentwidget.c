@@ -1721,6 +1721,13 @@ static iBool processAudioPlayerEvents_DocumentWidget_(iDocumentWidget *d, const 
                 animatePlayingAudio_DocumentWidget_(d);
                 return iTrue;
             }
+            else if (contains_Rect(ui.rewindRect, mouse)) {
+                stop_Player(plr);
+                start_Player(plr);
+                setPaused_Player(plr, iTrue);
+                refresh_Widget(d);
+                return iTrue;
+            }
         }
     }
     return iFalse;
