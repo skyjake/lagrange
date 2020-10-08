@@ -146,6 +146,7 @@ iDeclareType(ContentSpec)
 struct Impl_ContentSpec {
     SDL_AudioFormat inputFormat;
     SDL_AudioSpec   output;
+    size_t          totalInputSize;
     uint64_t        totalSamples;
     iRanges         wavData;
 };
@@ -167,6 +168,7 @@ struct Impl_Decoder {
     SDL_AudioFormat   inputFormat;
     iInputBuf *       input;
     size_t            inputPos;
+    size_t            totalInputSize;
     iSampleBuf        output;
     iMutex            outputMutex;
     uint64_t          currentSample;
@@ -305,6 +307,7 @@ void init_Decoder(iDecoder *d, iInputBuf *input, const iContentSpec *spec) {
     d->input       = input;
     d->inputPos    = spec->wavData.start;
     d->inputFormat = spec->inputFormat;
+    d->totalInputSize = spec->totalInputSize;
     init_SampleBuf(&d->output,
                    spec->output.format,
                    spec->output.channels,
@@ -365,7 +368,7 @@ static iContentSpec contentSpec_Player_(const iPlayer *d) {
             /* Not WAV. */
             return content;
         }
-        readU32_Stream(is); /* file size */
+        content.totalInputSize = readU32_Stream(is); /* file size */
         readData_Buffer(buf, 4, magic);
         if (memcmp(magic, "WAVE", 4)) {
             /* Not WAV. */
@@ -549,4 +552,14 @@ float time_Player(const iPlayer *d) {
 float duration_Player(const iPlayer *d) {
     if (!d->decoder) return 0;
     return (float) ((double) d->decoder->totalSamples / (double) d->spec.freq);
+}
+
+float streamProgress_Player(const iPlayer *d) {
+    if (d->decoder->totalInputSize) {
+        lock_Mutex(&d->data->mtx);
+        const double inputSize = size_InputBuf(d->data);
+        unlock_Mutex(&d->data->mtx);
+        return (float) iMin(1.0, (double) inputSize / (double) d->decoder->totalInputSize);
+    }
+    return 0;
 }

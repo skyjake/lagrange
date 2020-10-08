@@ -36,11 +36,12 @@ enum iPlayerUpdate {
 void    setFormatHint_Player    (iPlayer *, const char *hint);
 void    updateSourceData_Player (iPlayer *, const iBlock *data, enum iPlayerUpdate update);
 
-iBool   start_Player        (iPlayer *);
-void    setPaused_Player    (iPlayer *, iBool isPaused);
-void    stop_Player         (iPlayer *);
+iBool   start_Player            (iPlayer *);
+void    setPaused_Player        (iPlayer *, iBool isPaused);
+void    stop_Player             (iPlayer *);
 
-iBool   isStarted_Player    (const iPlayer *);
-iBool   isPaused_Player     (const iPlayer *);
-float   time_Player         (const iPlayer *);
-float   duration_Player     (const iPlayer *);
+iBool   isStarted_Player        (const iPlayer *);
+iBool   isPaused_Player         (const iPlayer *);
+float   time_Player             (const iPlayer *);
+float   duration_Player         (const iPlayer *);
+float   streamProgress_Player   (const iPlayer *); /* normalized 0...1 */
