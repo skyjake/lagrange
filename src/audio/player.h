@@ -45,3 +45,5 @@ iBool   isPaused_Player         (const iPlayer *);
 float   time_Player             (const iPlayer *);
 float   duration_Player         (const iPlayer *);
 float   streamProgress_Player   (const iPlayer *); /* normalized 0...1 */
+
+iString *   metadataLabel_Player    (const iPlayer *);

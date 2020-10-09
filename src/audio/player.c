@@ -563,3 +563,9 @@ float streamProgress_Player(const iPlayer *d) {
     }
     return 0;
 }
+
+iString *metadataLabel_Player(const iPlayer *d) {
+    return newFormat_String("%d-bit %s %d Hz", SDL_AUDIO_BITSIZE(d->decoder->inputFormat),
+                            SDL_AUDIO_ISFLOAT(d->decoder->inputFormat) ? "float" : "integer",
+                            d->spec.freq);
+}

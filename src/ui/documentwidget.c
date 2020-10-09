@@ -191,6 +191,7 @@ struct Impl_DocumentWidget {
     iAnim          outlineOpacity;
     iArray         outline;
     iWidget *      menu;
+    iWidget *      playerMenu;
     iVisBuf *      visBuf;
     iPtrSet *      invalidRuns;
 };
@@ -241,6 +242,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     init_Click(&d->click, d, SDL_BUTTON_LEFT);
     addChild_Widget(w, iClob(d->scroll = new_ScrollWidget()));
     d->menu = NULL; /* created when clicking */
+    d->playerMenu = NULL;
 #if !defined (iPlatformApple) /* in system menu */
     addAction_Widget(w, reload_KeyShortcut, "navigate.reload");
     addAction_Widget(w, SDLK_w, KMOD_PRIMARY, "tabs.close");
@@ -249,7 +251,10 @@ void init_DocumentWidget(iDocumentWidget *d) {
     addAction_Widget(w, navigateForward_KeyShortcut, "navigate.forward");
 }
 
+static void animatePlayingAudio_DocumentWidget_(void *);
+
 void deinit_DocumentWidget(iDocumentWidget *d) {
+    removeTicker_App(animatePlayingAudio_DocumentWidget_, d);
     delete_VisBuf(d->visBuf);
     delete_PtrSet(d->invalidRuns);
     deinit_Array(&d->outline);
@@ -1626,7 +1631,7 @@ static void drawPlayerButton_(iPaint *p, iRect rect, const char *label) {
             adjusted_Rect(shrunk_Rect(frameRect, divi_I2(gap2_UI, 2)), zero_I2(), one_I2()),
             frame);
     }
-    const int fg = isPressed ? uiBackground_ColorId : frame;
+    const int fg = isPressed ? (permanent_ColorId | uiBackground_ColorId) : uiHeading_ColorId;
     drawCentered_Text(uiContent_FontId, frameRect, iTrue, fg, "%s", label);
 }
 
@@ -1704,6 +1709,11 @@ static iBool processAudioPlayerEvents_DocumentWidget_(iDocumentWidget *d, const 
         ev->type != SDL_MOUSEMOTION) {
         return iFalse;
     }
+    if (ev->type == SDL_MOUSEBUTTONDOWN || ev->type == SDL_MOUSEBUTTONUP) {
+        if (ev->button.button != SDL_BUTTON_LEFT) {
+            return iFalse;
+        }
+    }
     const iInt2 mouse = init_I2(ev->button.x, ev->button.y);
     iConstForEach(PtrArray, i, &d->visiblePlayers) {
         const iGmRun *run = i.ptr;
@@ -1722,10 +1732,32 @@ static iBool processAudioPlayerEvents_DocumentWidget_(iDocumentWidget *d, const 
                 return iTrue;
             }
             else if (contains_Rect(ui.rewindRect, mouse)) {
-                stop_Player(plr);
-                start_Player(plr);
-                setPaused_Player(plr, iTrue);
+                if (isStarted_Player(plr) && time_Player(plr) > 0.5f) {
+                    stop_Player(plr);
+                    start_Player(plr);
+                    setPaused_Player(plr, iTrue);
+                }
                 refresh_Widget(d);
+                return iTrue;
+            }
+            else if (contains_Rect(ui.menuRect, mouse)) {
+                /* TODO: Add menu items for:
+                   - output device
+                   - Save to Downloads
+                */
+                if (d->playerMenu) {
+                    destroy_Widget(d->playerMenu);
+                    d->playerMenu = NULL;
+                    return iTrue;
+                }
+                d->playerMenu = makeMenu_Widget(
+                    as_Widget(d),
+                    (iMenuItem[]){
+                        { cstrCollect_String(metadataLabel_Player(plr)), 0, 0, NULL },
+                    },
+                    1);
+                openMenu_Widget(d->playerMenu,
+                                localCoord_Widget(constAs_Widget(d), bottomLeft_Rect(ui.menuRect)));
                 return iTrue;
             }
         }

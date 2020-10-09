@@ -73,8 +73,11 @@ iObjectList *       listDocuments_App   (void);
 iDocumentWidget *   document_Command    (const char *cmd);
 iDocumentWidget *   newTab_App          (const iDocumentWidget *duplicateOf, iBool switchToNew);
 
+typedef void (*iTickerFunc)(iAny *);
+
 iAny *      findWidget_App      (const char *id);
-void        addTicker_App       (void (*ticker)(iAny *), iAny *context);
+void        addTicker_App       (iTickerFunc ticker, iAny *context);
+void        removeTicker_App    (iTickerFunc ticker, iAny *context);
 void        postRefresh_App     (void);
 void        postCommand_App     (const char *command);
 void        postCommandf_App    (const char *command, ...);

@@ -75,8 +75,8 @@ void deinit_GmImage(iGmImage *d) {
 }
 
 void makeTexture_GmImage(iGmImage *d) {
-    iBlock *data = &d->partialData;
-    d->numBytes = size_Block(data);
+    iBlock *data     = &d->partialData;
+    d->numBytes      = size_Block(data);
     uint8_t *imgData = stbi_load_from_memory(
         constData_Block(data), size_Block(data), &d->size.x, &d->size.y, NULL, 4);
     if (!imgData) {

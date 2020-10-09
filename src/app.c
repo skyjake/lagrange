@@ -649,10 +649,15 @@ iAny *findWidget_App(const char *id) {
     return findChild_Widget(app_.window->root, id);
 }
 
-void addTicker_App(void (*ticker)(iAny *), iAny *context) {
+void addTicker_App(iTickerFunc ticker, iAny *context) {
     iApp *d = &app_;
     insert_SortedArray(&d->tickers, &(iTicker){ context, ticker });
     postRefresh_App();
+}
+
+void removeTicker_App(iTickerFunc ticker, iAny *context) {
+    iApp *d = &app_;
+    remove_SortedArray(&d->tickers, &(iTicker){ context, ticker });
 }
 
 iGmCerts *certs_App(void) {
@@ -737,7 +742,8 @@ iDocumentWidget *newTab_App(const iDocumentWidget *duplicateOf, iBool switchToNe
         doc = new_DocumentWidget();
     }
     setId_Widget(as_Widget(doc), format_CStr("document%03d", ++d->tabEnum));
-    appendTabPage_Widget(tabs, iClob(doc), "", 0, 0);
+    appendTabPage_Widget(tabs, as_Widget(doc), "", 0, 0);
+    iRelease(doc); /* now owned by the tabs */
     addChild_Widget(findChild_Widget(tabs, "tabs.buttons"), iClob(newTabButton));
     if (switchToNew) {
         postCommandf_App("tabs.switch page:%p", doc);
