@@ -106,8 +106,11 @@ set (SOURCES
     src/visited.c
     src/visited.h
     # Audio playback:
+    src/audio/buf.c
+    src/audio/buf.h
     src/audio/player.c
     src/audio/player.h
+    src/audio/stb_vorbis.c
     # User interface:
     src/ui/color.c
     src/ui/color.h

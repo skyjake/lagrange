@@ -33,8 +33,8 @@ enum iPlayerUpdate {
     complete_PlayerUpdate,
 };
 
-void    setFormatHint_Player    (iPlayer *, const char *hint);
-void    updateSourceData_Player (iPlayer *, const iBlock *data, enum iPlayerUpdate update);
+void    updateSourceData_Player (iPlayer *, const iString *mimeType, const iBlock *data,
+                                 enum iPlayerUpdate update);
 
 iBool   start_Player            (iPlayer *);
 void    setPaused_Player        (iPlayer *, iBool isPaused);
