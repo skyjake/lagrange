@@ -48,7 +48,7 @@ struct Impl_ContentSpec {
     SDL_AudioSpec     output;
     size_t            totalInputSize;
     uint64_t          totalSamples;
-    iRanges           dataRange;
+    size_t            inputStartPos;
 };
 
 iDeclareType(Decoder)
@@ -61,11 +61,13 @@ struct Impl_Decoder {
     iInputBuf *       input;
     size_t            inputPos;
     size_t            totalInputSize;
+    unsigned int      outputFreq;
     iSampleBuf        output;
     iMutex            outputMutex;
+    iArray            pendingOutput;
     uint64_t          currentSample;
     uint64_t          totalSamples; /* zero if unknown */
-    iRanges           wavData;
+    stb_vorbis *      vorbis;
 };
 
 enum iDecoderStatus {
@@ -78,8 +80,7 @@ static enum iDecoderStatus decodeWav_Decoder_(iDecoder *d, iRanges inputRange) {
     const size_t  inputSampleSize = numChannels * SDL_AUDIO_BITSIZE(d->inputFormat) / 8;
     const size_t  vacancy         = vacancy_SampleBuf(&d->output);
     const size_t  inputBytePos    = inputSampleSize * d->inputPos;
-    const size_t  avail =
-        iMin(inputRange.end - inputBytePos, d->wavData.end - inputBytePos) / inputSampleSize;
+    const size_t  avail           = (inputRange.end - inputBytePos) / inputSampleSize;
     if (avail == 0) {
         return needMoreInput_DecoderStatus;
     }
@@ -88,7 +89,7 @@ static enum iDecoderStatus decodeWav_Decoder_(iDecoder *d, iRanges inputRange) {
         return ok_DecoderStatus;
     }
     void *samples = malloc(inputSampleSize * n);
-    /* Get a copy of the input for mixing. */ {
+    /* Get a copy of the input for further processing. */ {
         lock_Mutex(&d->input->mtx);
         iAssert(inputSampleSize * d->inputPos < size_Block(&d->input->data));
         memcpy(samples,
@@ -154,13 +155,81 @@ static enum iDecoderStatus decodeWav_Decoder_(iDecoder *d, iRanges inputRange) {
     return ok_DecoderStatus;
 }
 
+static enum iDecoderStatus decodeVorbis_Decoder_(iDecoder *d, iRanges inputRange) {
+    iUnused(inputRange);
+    const iBlock *input = &d->input->data;
+    if (!d->vorbis) {
+        lock_Mutex(&d->input->mtx);
+        int error;
+        int consumed;
+        d->vorbis = stb_vorbis_open_pushdata(
+            constData_Block(input), size_Block(input), &consumed, &error, NULL);
+        if (!d->vorbis) {
+            return needMoreInput_DecoderStatus;
+        }
+        d->inputPos += consumed;
+        unlock_Mutex(&d->input->mtx);
+    }
+    if (d->totalSamples == 0 && d->input->isComplete) {
+        /* Time to check the stream size. */
+        lock_Mutex(&d->input->mtx);
+        d->totalInputSize = size_Block(input);
+        int error = 0;
+        stb_vorbis *vrb = stb_vorbis_open_memory(constData_Block(input), size_Block(input),
+                                                 &error, NULL);
+        if (vrb) {
+            d->totalSamples = stb_vorbis_stream_length_in_samples(vrb);
+            stb_vorbis_close(vrb);
+        }
+        unlock_Mutex(&d->input->mtx);
+    }
+    enum iDecoderStatus status = ok_DecoderStatus;
+    while (size_Array(&d->pendingOutput) < d->output.count) {
+        /* Try to decode some input. */
+        lock_Mutex(&d->input->mtx);
+        int     count     = 0;
+        float **samples   = NULL;
+        int     remaining = d->inputPos < size_Block(input) ? size_Block(input) - d->inputPos : 0;
+        int     consumed  = stb_vorbis_decode_frame_pushdata(
+            d->vorbis, constData_Block(input) + d->inputPos, remaining, NULL, &samples, &count);
+        d->inputPos += consumed;
+        iAssert(d->inputPos <= size_Block(input));
+        unlock_Mutex(&d->input->mtx);
+        if (count == 0) {
+            if (consumed == 0) {
+                status = needMoreInput_DecoderStatus;
+                break;
+            }
+            else continue;
+        }
+        /* Apply gain. */ {
+            float sample[2];
+            for (size_t i = 0; i < (size_t) count; ++i) {
+                for (size_t chan = 0; chan < d->output.numChannels; chan++) {
+                    sample[chan] = samples[chan][i] * d->gain;
+                }
+                pushBack_Array(&d->pendingOutput, sample);
+            }
+        }
+    }
+    /* Write as much as we can. */
+    lock_Mutex(&d->outputMutex);
+    size_t avail = vacancy_SampleBuf(&d->output);
+    size_t n = iMin(avail, size_Array(&d->pendingOutput));
+    write_SampleBuf(&d->output, constData_Array(&d->pendingOutput), n);
+    removeN_Array(&d->pendingOutput, 0, n);
+    unlock_Mutex(&d->outputMutex);
+    d->currentSample += n;
+    return status;
+}
+
 static iThreadResult run_Decoder_(iThread *thread) {
     iDecoder *d = userData_Thread(thread);
-    /* Amount of data initially available. */
-    lock_Mutex(&d->input->mtx);
-    size_t inputSize = size_InputBuf(d->input);
-    unlock_Mutex(&d->input->mtx);
     while (d->type) {
+        /* Check amount of data available. */
+        lock_Mutex(&d->input->mtx);
+        size_t inputSize = size_InputBuf(d->input);
+        unlock_Mutex(&d->input->mtx);
         iRanges inputRange = { d->inputPos, inputSize };
         iAssert(inputRange.start <= inputRange.end);
         if (!d->type) break;
@@ -171,6 +240,8 @@ static iThreadResult run_Decoder_(iThread *thread) {
                 case wav_DecoderType:
                     status = decodeWav_Decoder_(d, inputRange);
                     break;
+                case vorbis_DecoderType:
+                    status = decodeVorbis_Decoder_(d, inputRange);
                 default:
                     break;
             }
@@ -180,7 +251,6 @@ static iThreadResult run_Decoder_(iThread *thread) {
             if (size_InputBuf(d->input) == inputSize) {
                 wait_Condition(&d->input->changed, &d->input->mtx);
             }
-            inputSize = size_InputBuf(d->input);
             unlock_Mutex(&d->input->mtx);
         }
         else {
@@ -194,18 +264,21 @@ static iThreadResult run_Decoder_(iThread *thread) {
 }
 
 void init_Decoder(iDecoder *d, iInputBuf *input, const iContentSpec *spec) {
-    d->type        = spec->type;
-    d->gain        = 0.5f;
-    d->input       = input;
-    d->inputPos    = spec->dataRange.start;
-    d->inputFormat = spec->inputFormat;
+    d->type           = spec->type;
+    d->gain           = 0.5f;
+    d->input          = input;
+    d->inputPos       = spec->inputStartPos;
+    d->inputFormat    = spec->inputFormat;
     d->totalInputSize = spec->totalInputSize;
+    d->outputFreq     = spec->output.freq;
+    init_Array(&d->pendingOutput, spec->output.channels * SDL_AUDIO_BITSIZE(spec->output.format) / 8);
     init_SampleBuf(&d->output,
                    spec->output.format,
                    spec->output.channels,
                    spec->output.samples * 2);
     d->currentSample = 0;
     d->totalSamples  = spec->totalSamples;
+    d->vorbis = NULL;
     init_Mutex(&d->outputMutex);
     d->thread = new_Thread(run_Decoder_);
     setUserData_Thread(d->thread, d);
@@ -220,11 +293,7 @@ void deinit_Decoder(iDecoder *d) {
     iRelease(d->thread);
     deinit_Mutex(&d->outputMutex);
     deinit_SampleBuf(&d->output);
-}
-
-static void start_Decoder_(iDecoder *d) {
-    if (!d->thread && d->type != none_DecoderType) {
-    }
+    deinit_Array(&d->pendingOutput);
 }
 
 iDefineTypeConstructionArgs(Decoder, (iInputBuf *input, const iContentSpec *spec),
@@ -256,7 +325,18 @@ static iContentSpec contentSpec_Player_(const iPlayer *d) {
     const size_t dataSize = size_InputBuf(d->data);
     iBuffer *buf = iClob(new_Buffer());
     open_Buffer(buf, &d->data->data);
-    content.type = wav_DecoderType; /* TODO: from MIME */
+    if (!cmp_String(&d->mime, "audio/wave") || !cmp_String(&d->mime, "audio/wav") ||
+        !cmp_String(&d->mime, "audio/x-wav") || !cmp_String(&d->mime, "audio/x-pn-wav")) {
+        content.type = wav_DecoderType;
+    }
+    else if (!cmp_String(&d->mime, "audio/vorbis") || !cmp_String(&d->mime, "audio/ogg") ||
+             !cmp_String(&d->mime, "audio/x-vorbis+ogg")) {
+        content.type = vorbis_DecoderType;
+    }
+    else {
+        /* TODO: Could try decoders to see if one works? */
+        content.type = none_DecoderType;
+    }
     if (content.type == wav_DecoderType && dataSize >= 44) {
         /* Read the RIFF/WAVE header. */
         iStream *is = stream_Buffer(buf);
@@ -326,14 +406,34 @@ static iContentSpec contentSpec_Player_(const iPlayer *d) {
                 }
             }
             else if (memcmp(magic, "data", 4) == 0) {
-                content.dataRange    = (iRanges){ pos_Stream(is), pos_Stream(is) + size };
-                content.totalSamples = (uint64_t) size_Range(&content.dataRange) / blockAlign;
+                content.inputStartPos = pos_Stream(is);
+                content.totalSamples  = (uint64_t) size / blockAlign;
                 break;
             }
             else {
                 seek_Stream(is, pos_Stream(is) + size);
             }
         }
+    }
+    else if (content.type == vorbis_DecoderType) {
+        /* Try to decode what we have and see if it looks like Vorbis. */
+        int consumed = 0;
+        int error = 0;
+        stb_vorbis *vrb = stb_vorbis_open_pushdata(
+            constData_Block(&d->data->data), size_Block(&d->data->data), &consumed, &error, NULL);
+        if (!vrb) {
+            return content;
+        }
+        const stb_vorbis_info info = stb_vorbis_get_info(vrb);
+        const int numChannels = info.channels;
+        if (numChannels != 1 && numChannels != 2) {
+            return content;
+        }
+        content.output.freq     = info.sample_rate;
+        content.output.channels = numChannels;
+        content.output.format   = AUDIO_F32;
+        content.inputFormat     = AUDIO_F32; /* actually stb_vorbis provides floats */
+        stb_vorbis_close(vrb);
     }
     iAssert(content.inputFormat == content.output.format ||
             (content.inputFormat == AUDIO_S24LSB && content.output.format == AUDIO_S16) ||
@@ -416,7 +516,10 @@ iBool start_Player(iPlayer *d) {
     if (isStarted_Player(d)) {
         return iFalse;
     }
-    iContentSpec content    = contentSpec_Player_(d);
+    iContentSpec content = contentSpec_Player_(d);
+    if (!content.output.freq) {
+        return iFalse;
+    }
     content.output.callback = writeOutputSamples_Player_;
     content.output.userdata = d;
     d->device = SDL_OpenAudioDevice(NULL, SDL_FALSE /* playback */, &content.output, &d->spec, 0);
@@ -456,7 +559,7 @@ float duration_Player(const iPlayer *d) {
 }
 
 float streamProgress_Player(const iPlayer *d) {
-    if (d->decoder->totalInputSize) {
+    if (d->decoder && d->decoder->totalInputSize) {
         lock_Mutex(&d->data->mtx);
         const double inputSize = size_InputBuf(d->data);
         unlock_Mutex(&d->data->mtx);

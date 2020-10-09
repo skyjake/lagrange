@@ -1680,11 +1680,14 @@ static void draw_PlayerUI(iPlayerUI *d, iPaint *p) {
         isPaused_Player(d->player) ? dim : bright,
         left_Alignment,
         iRound(playTime));
-    int rightWidth = drawSevenSegmentTime_(
-        init_I2(right_Rect(d->scrubberRect) - 2 * gap_UI, yMid - hgt / 2),
-        dim,
-        right_Alignment,
-        iRound(totalTime));
+    int rightWidth = 0;
+    if (totalTime > 0) {
+        rightWidth =
+            drawSevenSegmentTime_(init_I2(right_Rect(d->scrubberRect) - 2 * gap_UI, yMid - hgt / 2),
+                                  dim,
+                                  right_Alignment,
+                                  iRound(totalTime));
+    }
     /* Scrubber. */
     const int   s1      = left_Rect(d->scrubberRect) + leftWidth + 6 * gap_UI;
     const int   s2      = right_Rect(d->scrubberRect) - rightWidth - 6 * gap_UI;

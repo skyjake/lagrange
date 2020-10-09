@@ -179,6 +179,8 @@ target_compile_options (app PUBLIC
     -Werror=implicit-function-declaration
     -Werror=incompatible-pointer-types
     ${SDL2_CFLAGS}
+    -DSTB_VORBIS_NO_STDIO=1
+    -DSTB_VORBIS_NO_INTEGER_CONVERSION=1
 )
 target_compile_definitions (app PUBLIC LAGRANGE_APP_VERSION="${PROJECT_VERSION}")
 if (ENABLE_X11_SWRENDER)
