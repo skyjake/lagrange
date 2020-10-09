@@ -450,6 +450,7 @@ static void updateOutlineOpacity_DocumentWidget_(iDocumentWidget *d) {
 
 static void animatePlayingAudio_DocumentWidget_(void *widget) {
     iDocumentWidget *d = widget;
+    if (document_App() != d) return;
     iConstForEach(PtrArray, i, &d->visiblePlayers) {
         const iGmRun *run = i.ptr;
         iPlayer *plr = audioPlayer_Media(media_GmDocument(d->doc), run->audioId);
@@ -1289,6 +1290,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         updateOutlineOpacity_DocumentWidget_(d);
         updateWindowTitle_DocumentWidget_(d);
         allocVisBuffer_DocumentWidget_(d);
+        animatePlayingAudio_DocumentWidget_(d);
         return iFalse;
     }
     else if (equal_Command(cmd, "server.showcert") && d == document_App()) {
