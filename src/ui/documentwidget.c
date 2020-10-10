@@ -1614,7 +1614,7 @@ static void init_PlayerUI(iPlayerUI *d, const iPlayer *player, iRect bounds) {
     d->player = player;
     d->bounds = bounds;
     const int height = height_Rect(bounds);
-    d->playPauseRect = (iRect){ addX_I2(topLeft_Rect(bounds), gap_UI / 2), init1_I2(height) };
+    d->playPauseRect = (iRect){ addX_I2(topLeft_Rect(bounds), gap_UI / 2), init_I2(3 * height / 2, height) };
     d->rewindRect    = (iRect){ topRight_Rect(d->playPauseRect), init1_I2(height) };
     d->menuRect      = (iRect){ addX_I2(topRight_Rect(bounds), -height - gap_UI / 2), init1_I2(height) };
     d->scrubberRect  = initCorners_Rect(topRight_Rect(d->rewindRect), bottomLeft_Rect(d->menuRect));
