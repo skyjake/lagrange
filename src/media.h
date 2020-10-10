@@ -20,43 +20,46 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-#include <the_Foundation/commandline.h>
-#include <stdio.h>
-#if defined (iPlatformMsys)
-#  define SDL_MAIN_HANDLED
-#endif
-#include <SDL.h>
+#pragma once
 
-#include "app.h"
+#include <the_Foundation/block.h>
+#include <the_Foundation/string.h>
+#include <the_Foundation/vec2.h>
+#include <SDL_render.h>
 
-#if defined (iPlatformApple)
-extern void enableMomentumScroll_MacOS(void);
-extern void registerURLHandler_MacOS(void);
-#endif
+typedef uint16_t iMediaId;
 
-#if defined (iPlatformMsys)
-#  include "win32.h"
-#endif
+iDeclareType(Player)
+iDeclareType(GmImageInfo)
+iDeclareType(GmAudioInfo)
 
-int main(int argc, char **argv) {
-#if defined (iPlatformApple)
-    enableMomentumScroll_MacOS();
-    registerURLHandler_MacOS();
-#endif
-#if defined (iPlatformMsys)
-    /* MSYS runtime takes care of WinMain. */
-    setDPIAware_Win32();
-    SDL_SetMainReady();
-#endif
-    init_Foundation();
-    printf("Lagrange: A Beautiful Gemini Client\n");
-    /* Initialize SDL. */
-    SDL_SetHint(SDL_HINT_VIDEO_ALLOW_SCREENSAVER, "1");
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER)) {
-        fprintf(stderr, "SDL init failed: %s\n", SDL_GetError());
-        return -1;
-    }
-    run_App(argc, argv);
-    SDL_Quit();
-    return 0;
-}
+struct Impl_GmImageInfo {
+    iInt2       size;
+    size_t      numBytes;
+    const char *mime;
+    iBool       isPermanent;
+};
+
+struct Impl_GmAudioInfo {
+    const char *mime;
+    iBool       isPermanent;
+};
+
+iDeclareType(Media)
+iDeclareTypeConstruction(Media)
+
+enum iMediaFlags {
+    allowHide_MediaFlag   = iBit(1),
+    partialData_MediaFlag = iBit(2),
+};
+
+void    clear_Media     (iMedia *);
+void    setData_Media   (iMedia *, uint16_t linkId, const iString *mime, const iBlock *data, int flags);
+
+iMediaId        findLinkImage_Media (const iMedia *, uint16_t linkId);
+iBool           imageInfo_Media     (const iMedia *, iMediaId imageId, iGmImageInfo *info_out);
+SDL_Texture *   imageTexture_Media  (const iMedia *, iMediaId imageId);
+
+iMediaId        findLinkAudio_Media (const iMedia *, uint16_t linkId);
+iBool           audioInfo_Media     (const iMedia *, iMediaId audioId, iGmAudioInfo *info_out);
+iPlayer *       audioPlayer_Media   (const iMedia *, iMediaId audioId);

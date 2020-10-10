@@ -498,9 +498,8 @@ iWidget *removeTabPage_Widget(iWidget *tabs, size_t index) {
     iWidget *button  = removeChild_Widget(buttons, child_Widget(buttons, index));
     iRelease(button);
     iWidget *page = child_Widget(pages, index);
-    ref_Object(page);
     setFlags_Widget(page, hidden_WidgetFlag | disabled_WidgetFlag, iFalse);
-    removeChild_Widget(pages, page);
+    removeChild_Widget(pages, page); /* `page` is now ours */
     if (tabCount_Widget(tabs) <= 1 && flags_Widget(buttons) & collapse_WidgetFlag) {
         setFlags_Widget(buttons, hidden_WidgetFlag, iTrue);
     }

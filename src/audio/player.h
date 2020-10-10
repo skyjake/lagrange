@@ -20,43 +20,30 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-#include <the_Foundation/commandline.h>
-#include <stdio.h>
-#if defined (iPlatformMsys)
-#  define SDL_MAIN_HANDLED
-#endif
-#include <SDL.h>
+#pragma once
 
-#include "app.h"
+#include <the_Foundation/block.h>
 
-#if defined (iPlatformApple)
-extern void enableMomentumScroll_MacOS(void);
-extern void registerURLHandler_MacOS(void);
-#endif
+iDeclareType(Player)
+iDeclareTypeConstruction(Player)    
 
-#if defined (iPlatformMsys)
-#  include "win32.h"
-#endif
+enum iPlayerUpdate {
+    replace_PlayerUpdate,
+    append_PlayerUpdate,
+    complete_PlayerUpdate,
+};
 
-int main(int argc, char **argv) {
-#if defined (iPlatformApple)
-    enableMomentumScroll_MacOS();
-    registerURLHandler_MacOS();
-#endif
-#if defined (iPlatformMsys)
-    /* MSYS runtime takes care of WinMain. */
-    setDPIAware_Win32();
-    SDL_SetMainReady();
-#endif
-    init_Foundation();
-    printf("Lagrange: A Beautiful Gemini Client\n");
-    /* Initialize SDL. */
-    SDL_SetHint(SDL_HINT_VIDEO_ALLOW_SCREENSAVER, "1");
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER)) {
-        fprintf(stderr, "SDL init failed: %s\n", SDL_GetError());
-        return -1;
-    }
-    run_App(argc, argv);
-    SDL_Quit();
-    return 0;
-}
+void    updateSourceData_Player (iPlayer *, const iString *mimeType, const iBlock *data,
+                                 enum iPlayerUpdate update);
+
+iBool   start_Player            (iPlayer *);
+void    setPaused_Player        (iPlayer *, iBool isPaused);
+void    stop_Player             (iPlayer *);
+
+iBool   isStarted_Player        (const iPlayer *);
+iBool   isPaused_Player         (const iPlayer *);
+float   time_Player             (const iPlayer *);
+float   duration_Player         (const iPlayer *);
+float   streamProgress_Player   (const iPlayer *); /* normalized 0...1 */
+
+iString *   metadataLabel_Player    (const iPlayer *);

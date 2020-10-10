@@ -74,6 +74,9 @@ iLocalDef enum iGmStatusCode category_GmStatusCode(enum iGmStatusCode code) {
     if (code < 10) return code;
     return code / 10;
 }
+iLocalDef iBool isSuccess_GmStatusCode(enum iGmStatusCode code) {
+    return category_GmStatusCode(code) == categorySuccess_GmStatusCode;
+}
 
 struct Impl_GmError {
     iChar       icon;

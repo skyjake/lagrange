@@ -6,6 +6,17 @@
 ```
 # Release notes
 
+## 0.4
+* Added audio playback with support for streaming. Supported audio formats in this release are WAV (PCM, mono/stereo, 8/16/32 integer/float) and Ogg Vorbis. Shoutout to Sean Barrett et al. for stb_vorbis:
+=> https://github.com/nothings/stb stb: single-file public domain libraries for C/C++
+* Added inline audio player that works like inline images. Clicking on an audio link opens the audio player below the link (works for URLs that have file extension .wav/.ogg).
+* Visual fine-tuning: increased Fira Sans line spacing; list bullets use an accent color; adjusted accent colors in the light mode palette.
+* Sidebar has a maximum width — the document must remain visible.
+* Windows: Support for HiDPI displays and the system UI scaling factor. The UI will be scaled according to your settings automatically without having to adjust the UI scaling in Preferences.
+* macOS: Use OpenGL on 10.13 for potentially better compatibility.
+* Fixed a memory leak when closing tabs.
+* Fixed unnecessary continual window redrawing related to the scrollbar hover outline.
+
 ## 0.3
 * Added style customization.
 * Added new font option: Fira Sans.

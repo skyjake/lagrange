@@ -491,10 +491,15 @@ static void updateRootSize_Window_(iWindow *d) {
 }
 
 static float pixelRatio_Window_(const iWindow *d) {
+#if defined (iPlatformMsys)
+    iUnused(d);
+    return desktopDPI_Win32();
+#else
     int dx, x;
     SDL_GetRendererOutputSize(d->render, &dx, NULL);
     SDL_GetWindowSize(d->win, &x, NULL);
     return (float) dx / (float) x;
+#endif
 }
 
 static void drawBlank_Window_(iWindow *d) {
@@ -539,7 +544,8 @@ void init_Window(iWindow *d, iRect rect) {
     if (left_Rect(rect) >= 0 || top_Rect(rect) >= 0) {
         SDL_SetWindowPosition(d->win, left_Rect(rect), top_Rect(rect));
     }
-    SDL_SetWindowMinimumSize(d->win, 400, 250);
+    const iInt2 minSize = init_I2(400, 250);
+    SDL_SetWindowMinimumSize(d->win, minSize.x, minSize.y);
     SDL_SetWindowTitle(d->win, "Lagrange");
     /* Some info. */ {
         SDL_RendererInfo info;
@@ -561,6 +567,7 @@ void init_Window(iWindow *d, iRect rect) {
     d->pixelRatio = pixelRatio_Window_(d);
     setPixelRatio_Metrics(d->pixelRatio * d->uiScale);
 #if defined (iPlatformMsys)
+    SDL_SetWindowMinimumSize(d->win, minSize.x * d->pixelRatio, minSize.y * d->pixelRatio);
     useExecutableIconResource_SDLWindow(d->win);
 #endif
 #if defined (iPlatformLinux)
@@ -582,6 +589,7 @@ void init_Window(iWindow *d, iRect rect) {
 #endif
     d->root = new_Widget();
     d->presentTime = 0.0;
+    d->frameTime = SDL_GetTicks();
     setId_Widget(d->root, "root");
     init_Text(d->render);
     setupUserInterface_Window(d);
@@ -629,7 +637,7 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
             return iFalse;
 #endif
         case SDL_WINDOWEVENT_MOVED: {
-            if (!isMaximized_Window_(d)) {
+            if (!isMaximized_Window_(d) && !d->isDrawFrozen) {
                 d->lastRect.pos = init_I2(ev->data1, ev->data2);
                 iInt2 border = zero_I2();
 #if !defined (iPlatformApple)
@@ -641,7 +649,7 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
         }
         case SDL_WINDOWEVENT_RESIZED:
         case SDL_WINDOWEVENT_SIZE_CHANGED:
-            if (!isMaximized_Window_(d)) {
+            if (!isMaximized_Window_(d) && !d->isDrawFrozen) {
                 d->lastRect.size = init_I2(ev->data1, ev->data2);
             }
             updateRootSize_Window_(d);
@@ -670,6 +678,7 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
         case SDL_RENDER_TARGETS_RESET:
         case SDL_RENDER_DEVICE_RESET: {
             resetFonts_Text();
+            postCommand_App("theme.changed"); /* forces UI invalidation */
             break;
         }
         default: {
@@ -717,6 +726,9 @@ void draw_Window(iWindow *d) {
     if (d->isDrawFrozen) {
         return;
     }
+//#if !defined (NDEBUG)
+//    printf("draw %d\n", d->frameTime); fflush(stdout);
+//#endif
     /* Clear the window. */
     SDL_SetRenderDrawColor(d->render, 0, 0, 0, 255);
     SDL_RenderClear(d->render);
@@ -777,7 +789,13 @@ iInt2 rootSize_Window(const iWindow *d) {
 }
 
 iInt2 coord_Window(const iWindow *d, int x, int y) {
+#if defined (iPlatformMsys)
+    /* On Windows, surface coordinates are in pixels. */
+    return init_I2(x, y);
+#else
+    /* Coordinates are in points. */
     return mulf_I2(init_I2(x, y), d->pixelRatio);
+#endif
 }
 
 iInt2 mouseCoord_Window(const iWindow *d) {

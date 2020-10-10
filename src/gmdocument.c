@@ -32,9 +32,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/ptrarray.h>
 #include <the_Foundation/regexp.h>
 
-#include <SDL_hints.h>
-#include <SDL_render.h>
-#include <stb_image.h>
 #include <ctype.h>
 
 iDeclareType(GmLink)
@@ -57,65 +54,24 @@ void deinit_GmLink(iGmLink *d) {
 
 iDefineTypeConstruction(GmLink)
 
-iDeclareType(GmImage)
-
-struct Impl_GmImage {
-    iInt2        size;
-    size_t       numBytes;
-    iString      mime;
-    iGmLinkId    linkId;
-    iBool        isPermanent;
-    SDL_Texture *texture;
-};
-
-void init_GmImage(iGmImage *d, const iBlock *data) {
-    init_String(&d->mime);
-    d->isPermanent = iFalse;
-    d->numBytes = size_Block(data);
-    uint8_t *imgData = stbi_load_from_memory(
-        constData_Block(data), size_Block(data), &d->size.x, &d->size.y, NULL, 4);
-    if (!imgData) {
-        d->size = zero_I2();
-        d->texture = NULL;
-    }
-    else {
-        SDL_Surface *surface = SDL_CreateRGBSurfaceWithFormatFrom(
-            imgData, d->size.x, d->size.y, 32, d->size.x * 4, SDL_PIXELFORMAT_ABGR8888);
-        /* TODO: In multiwindow case, all windows must have the same shared renderer?
-           Or at least a shared context. */
-        SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1"); /* linear scaling */
-        d->texture = SDL_CreateTextureFromSurface(renderer_Window(get_Window()), surface);
-        SDL_FreeSurface(surface);
-        stbi_image_free(imgData);
-    }
-    d->linkId = 0;
-}
-
-void deinit_GmImage(iGmImage *d) {
-    SDL_DestroyTexture(d->texture);
-    deinit_String(&d->mime);
-}
-
-iDefineTypeConstructionArgs(GmImage, (const iBlock *data), data)
-
 /*----------------------------------------------------------------------------------------------*/
 
 struct Impl_GmDocument {
     iObject object;
     enum iGmDocumentFormat format;
-    iString source;
-    iString url; /* for resolving relative links */
-    iString localHost;
-    int forceBreakWidth; /* force breaks on very long preformatted lines */
-    iInt2 size;
-    iArray layout; /* contents of source, laid out in document space */
+    iString   source;
+    iString   url; /* for resolving relative links */
+    iString   localHost;
+    int       forceBreakWidth; /* force breaks on very long preformatted lines */
+    iInt2     size;
+    iArray    layout; /* contents of source, laid out in document space */
     iPtrArray links;
-    iString bannerText;
-    iString title; /* the first top-level title */
-    iArray headings;
-    iPtrArray images; /* persistent across layouts, references links by ID */
-    uint32_t themeSeed;
-    iChar siteIcon;
+    iString   bannerText;
+    iString   title; /* the first top-level title */
+    iArray    headings;
+    uint32_t  themeSeed;
+    iChar     siteIcon;
+    iMedia *  media;
 };
 
 iDefineObjectConstruction(GmDocument)
@@ -180,7 +136,7 @@ static int lastVisibleRunBottom_GmDocument_(const iGmDocument *d) {
     return 0;
 }
 
-iInt2 measurePreformattedBlock_GmDocument_(const iGmDocument *d, const char *start, int font) {
+static iInt2 measurePreformattedBlock_GmDocument_(const iGmDocument *d, const char *start, int font) {
     const iRangecc content = { start, constEnd_String(&d->source) };
     iRangecc line = iNullRange;
     nextSplit_Rangecc(content, "\n", &line);
@@ -243,7 +199,7 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
                     link->flags |= imageFileExtension_GmLinkFlag;
                 }
                 else if (endsWithCase_String(path, ".mp3") || endsWithCase_String(path, ".wav") ||
-                         endsWithCase_String(path, ".mid")) {
+                         endsWithCase_String(path, ".mid") || endsWithCase_String(path, ".ogg")) {
                     link->flags |= audioFileExtension_GmLinkFlag;
                 }
                 delete_String(path);
@@ -276,17 +232,6 @@ static void clearLinks_GmDocument_(iGmDocument *d) {
         delete_GmLink(i.ptr);
     }
     clear_PtrArray(&d->links);
-}
-
-static size_t findLinkImage_GmDocument_(const iGmDocument *d, iGmLinkId linkId) {
-    /* TODO: use a hash */
-    iConstForEach(PtrArray, i, &d->images) {
-        const iGmImage *img = i.ptr;
-        if (img->linkId == linkId) {
-            return index_PtrArrayConstIterator(&i);
-        }
-    }
-    return iInvalidPos;
 }
 
 static iBool isGopher_GmDocument_(const iGmDocument *d) {
@@ -363,6 +308,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         run.color = white_ColorId;
         run.linkId = 0;
         run.imageId = 0;
+        run.audioId = 0;
         enum iGmLineType type;
         int indent = 0;
         /* Detect the type of the line. */
@@ -473,6 +419,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         run.color = colors[type];
         if (type == bullet_GmLineType) {
             iGmRun bulRun = run;
+            bulRun.color = tmQuote_ColorId;
             bulRun.visBounds.pos  = addX_I2(pos, indent * gap_Text);
             bulRun.visBounds.size = advance_Text(run.font, bullet);
             bulRun.visBounds.pos.x -= 4 * gap_Text - width_Rect(bulRun.visBounds) / 2;
@@ -483,12 +430,12 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         }
         /* Quote icon. */
         if (type == quote_GmLineType && addQuoteIcon) {
-            addQuoteIcon = iFalse;
+            addQuoteIcon    = iFalse;
             iGmRun quoteRun = run;
-            quoteRun.font           = heading1_FontId;
-            quoteRun.text           = range_CStr(quote);
-            quoteRun.color          = tmQuoteIcon_ColorId;
-            iRect vis = visualBounds_Text(quoteRun.font, quoteRun.text);
+            quoteRun.font   = heading1_FontId;
+            quoteRun.text   = range_CStr(quote);
+            quoteRun.color  = tmQuoteIcon_ColorId;
+            iRect vis       = visualBounds_Text(quoteRun.font, quoteRun.text);
             quoteRun.visBounds.size = advance_Text(quoteRun.font, quote);
             quoteRun.visBounds.pos =
                 add_I2(pos,
@@ -575,24 +522,26 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         ((iGmRun *) back_Array(&d->layout))->flags |= endOfLine_GmRunFlag;
         /* Image content. */
         if (type == link_GmLineType) {
-            const size_t imgIndex = findLinkImage_GmDocument_(d, run.linkId);
-            if (imgIndex != iInvalidPos) {
-                const iGmImage *img = constAt_PtrArray(&d->images, imgIndex);
+            const iMediaId imageId = findLinkImage_Media(d->media, run.linkId);
+            const iMediaId audioId = !imageId ? findLinkAudio_Media(d->media, run.linkId) : 0;
+            if (imageId) {
+                iGmImageInfo img;
+                imageInfo_Media(d->media, imageId, &img);
                 /* Mark the link as having content. */ {
                     iGmLink *link = at_PtrArray(&d->links, run.linkId - 1);
                     link->flags |= content_GmLinkFlag;
-                    if (img->isPermanent) {
+                    if (img.isPermanent) {
                         link->flags |= permanent_GmLinkFlag;
                     }
                 }
-                const int margin = 0.5f * lineHeight_Text(paragraph_FontId);
+                const int margin = lineHeight_Text(paragraph_FontId) / 2;
                 pos.y += margin;
                 run.bounds.pos = pos;
                 run.bounds.size.x = d->size.x;
-                const float aspect = (float) img->size.y / (float) img->size.x;
+                const float aspect = (float) img.size.y / (float) img.size.x;
                 run.bounds.size.y = d->size.x * aspect;
                 run.visBounds = run.bounds;
-                const iInt2 maxSize = mulf_I2(img->size, get_Window()->pixelRatio);
+                const iInt2 maxSize = mulf_I2(img.size, get_Window()->pixelRatio);
                 if (width_Rect(run.visBounds) > maxSize.x) {
                     /* Don't scale the image up. */
                     run.visBounds.size.y = run.visBounds.size.y * maxSize.x / width_Rect(run.visBounds);
@@ -600,10 +549,32 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                     run.visBounds.pos.x = run.bounds.size.x / 2 - width_Rect(run.visBounds) / 2;
                     run.bounds.size.y = run.visBounds.size.y;
                 }
-                run.text = iNullRange;
-                run.font = 0;
-                run.color = 0;
-                run.imageId = imgIndex + 1;
+                run.text    = iNullRange;
+                run.font    = 0;
+                run.color   = 0;
+                run.imageId = imageId;
+                pushBack_Array(&d->layout, &run);
+                pos.y += run.bounds.size.y + margin;
+            }
+            else if (audioId) {
+                iGmAudioInfo info;
+                audioInfo_Media(d->media, audioId, &info);
+                /* Mark the link as having content. */ {
+                    iGmLink *link = at_PtrArray(&d->links, run.linkId - 1);
+                    link->flags |= content_GmLinkFlag;
+                    if (info.isPermanent) {
+                        link->flags |= permanent_GmLinkFlag;
+                    }
+                }
+                const int margin = lineHeight_Text(paragraph_FontId) / 2;
+                pos.y += margin;
+                run.bounds.pos    = pos;
+                run.bounds.size.x = d->size.x;
+                run.bounds.size.y = lineHeight_Text(uiContent_FontId) + 3 * gap_UI;
+                run.visBounds     = run.bounds;
+                run.text          = iNullRange;
+                run.color         = 0;
+                run.audioId       = audioId;
                 pushBack_Array(&d->layout, &run);
                 pos.y += run.bounds.size.y + margin;
             }
@@ -624,12 +595,13 @@ void init_GmDocument(iGmDocument *d) {
     init_String(&d->bannerText);
     init_String(&d->title);
     init_Array(&d->headings, sizeof(iGmHeading));
-    init_PtrArray(&d->images);
     d->themeSeed = 0;
     d->siteIcon = 0;
+    d->media = new_Media();
 }
 
 void deinit_GmDocument(iGmDocument *d) {
+    delete_Media(d->media);
     deinit_String(&d->bannerText);
     deinit_String(&d->title);
     clearLinks_GmDocument_(d);
@@ -641,12 +613,16 @@ void deinit_GmDocument(iGmDocument *d) {
     deinit_String(&d->source);
 }
 
+iMedia *media_GmDocument(iGmDocument *d) {
+    return d->media;
+}
+
+const iMedia *constMedia_GmDocument(const iGmDocument *d) {
+    return d->media;
+}
+
 void reset_GmDocument(iGmDocument *d) {
-    /* Free the loaded images. */
-    iForEach(PtrArray, i, &d->images) {
-        deinit_GmImage(i.ptr);
-    }
-    clear_PtrArray(&d->images);
+    clear_Media(d->media);
     clearLinks_GmDocument_(d);
     clear_Array(&d->layout);
     clear_Array(&d->headings);
@@ -816,6 +792,20 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
             setHsl_Color(tmHeading3_ColorId, setLum_HSLColor(altBase, titleLum + 0.60f));
 
             setHsl_Color(tmParagraph_ColorId, addSatLum_HSLColor(base, 0.1f, 0.6f));
+
+//            printf("heading3: %d,%d,%d\n", get_Color(tmHeading3_ColorId).r,  get_Color(tmHeading3_ColorId).g,  get_Color(tmHeading3_ColorId).b);
+//            printf("paragr  : %d,%d,%d\n", get_Color(tmParagraph_ColorId).r, get_Color(tmParagraph_ColorId).g, get_Color(tmParagraph_ColorId).b);
+//            printf("delta   : %d\n", delta_Color(get_Color(tmHeading3_ColorId), get_Color(tmParagraph_ColorId)));
+
+            if (delta_Color(get_Color(tmHeading3_ColorId), get_Color(tmParagraph_ColorId)) <= 80) {
+                /* Smallest headings may be too close to body text color. */
+                iHSLColor clr = get_HSLColor(tmParagraph_ColorId);
+                clr.lum       = iMax(0.5f, clr.lum - 0.15f);
+                setHsl_Color(tmParagraph_ColorId, clr);
+                setHsl_Color(tmHeading3_ColorId,
+                             addSatLum_HSLColor(get_HSLColor(tmHeading3_ColorId), 0, 0.15f));
+            }
+
             setHsl_Color(tmFirstParagraph_ColorId, addSatLum_HSLColor(base, 0.2f, 0.72f));
             setHsl_Color(tmPreformatted_ColorId, (iHSLColor){ altHue2, 1.0f, 0.75f, 1.0f });
             set_Color(tmQuote_ColorId, get_Color(tmPreformatted_ColorId));
@@ -932,6 +922,10 @@ void setWidth_GmDocument(iGmDocument *d, int width, int forceBreakWidth) {
     doLayout_GmDocument_(d); /* TODO: just flag need-layout and do it later */
 }
 
+void redoLayout_GmDocument(iGmDocument *d) {
+    doLayout_GmDocument_(d);
+}
+
 iLocalDef iBool isNormalizableSpace_(char ch) {
     return ch == ' ' || ch == '\t';
 }
@@ -1004,32 +998,6 @@ void setSource_GmDocument(iGmDocument *d, const iString *source, int width, int 
     set_String(&d->source, source);
     normalize_GmDocument(d);
     setWidth_GmDocument(d, width, forceBreakWidth); /* re-do layout */
-}
-
-void setImage_GmDocument(iGmDocument *d, iGmLinkId linkId, const iString *mime, const iBlock *data,
-                         iBool allowHide) {
-    if (!mime || !data) {
-        iGmImage *img;
-        if (take_PtrArray(&d->images, findLinkImage_GmDocument_(d, linkId), (void **) &img)) {
-            delete_GmImage(img);
-        }
-    }
-    else {
-        /* TODO: check if we know this MIME type */
-        /* Upload the image. */ {
-            iGmImage *img = new_GmImage(data);
-            img->linkId = linkId; /* TODO: use a hash? */
-            img->isPermanent = !allowHide;
-            set_String(&img->mime, mime);
-            if (img->texture) {
-                pushBack_PtrArray(&d->images, img);
-            }
-            else {
-                delete_GmImage(img);
-            }
-        }
-    }
-    doLayout_GmDocument_(d);
 }
 
 void render_GmDocument(const iGmDocument *d, iRangei visRangeY, iGmDocumentRenderFunc render,
@@ -1176,13 +1144,12 @@ const iTime *linkTime_GmDocument(const iGmDocument *d, iGmLinkId linkId) {
     return link ? &link->when : NULL;
 }
 
+iMediaId linkImage_GmDocument(const iGmDocument *d, iGmLinkId linkId) {
+    return findLinkImage_Media(d->media, linkId);
+}
 
-uint16_t linkImage_GmDocument(const iGmDocument *d, iGmLinkId linkId) {
-    size_t index = findLinkImage_GmDocument_(d, linkId);
-    if (index != iInvalidPos) {
-        return index + 1;
-    }
-    return 0;
+iMediaId linkAudio_GmDocument(const iGmDocument *d, iGmLinkId linkId) {
+    return findLinkAudio_Media(d->media, linkId);
 }
 
 enum iColorId linkColor_GmDocument(const iGmDocument *d, iGmLinkId linkId, enum iGmLinkPart part) {
@@ -1239,26 +1206,6 @@ enum iColorId linkColor_GmDocument(const iGmDocument *d, iGmLinkId linkId, enum 
 iBool isMediaLink_GmDocument(const iGmDocument *d, iGmLinkId linkId) {
     return (linkFlags_GmDocument(d, linkId) &
             (imageFileExtension_GmLinkFlag | audioFileExtension_GmLinkFlag)) != 0;
-}
-
-SDL_Texture *imageTexture_GmDocument(const iGmDocument *d, uint16_t imageId) {
-    if (imageId > 0 && imageId <= size_PtrArray(&d->images)) {
-        const iGmImage *img = constAt_PtrArray(&d->images, imageId - 1);
-        return img->texture;
-    }
-    return NULL;
-}
-
-void imageInfo_GmDocument(const iGmDocument *d, uint16_t imageId, iGmImageInfo *info_out) {
-    if (imageId > 0 && imageId <= size_PtrArray(&d->images)) {
-        const iGmImage *img = constAt_PtrArray(&d->images, imageId - 1);
-        info_out->size = img->size;
-        info_out->numBytes = img->numBytes;
-        info_out->mime = cstr_String(&img->mime);
-    }
-    else {
-        iZap(*info_out);
-    }
 }
 
 const iString *title_GmDocument(const iGmDocument *d) {

@@ -19,7 +19,7 @@
 cmake_minimum_required (VERSION 3.9)
 
 project (Lagrange
-    VERSION 0.3.0
+    VERSION 0.4.0
     DESCRIPTION "Beautiful Gemini Client"
     LANGUAGES C
 )
@@ -97,12 +97,20 @@ set (SOURCES
     src/history.h
     src/lookup.c
     src/lookup.h
+    src/media.c
+    src/media.h
     src/prefs.c
     src/prefs.h
     src/stb_image.h
     src/stb_truetype.h
     src/visited.c
     src/visited.h
+    # Audio playback:
+    src/audio/buf.c
+    src/audio/buf.h
+    src/audio/player.c
+    src/audio/player.h
+    src/audio/stb_vorbis.c
     # User interface:
     src/ui/color.c
     src/ui/color.h
@@ -171,6 +179,8 @@ target_compile_options (app PUBLIC
     -Werror=implicit-function-declaration
     -Werror=incompatible-pointer-types
     ${SDL2_CFLAGS}
+    -DSTB_VORBIS_NO_STDIO=1
+    -DSTB_VORBIS_NO_INTEGER_CONVERSION=1
 )
 target_compile_definitions (app PUBLIC LAGRANGE_APP_VERSION="${PROJECT_VERSION}")
 if (ENABLE_X11_SWRENDER)
@@ -208,6 +218,9 @@ if (APPLE)
         MACOSX_BUNDLE_GUI_IDENTIFIER "fi.skyjake.Lagrange"
         MACOSX_BUNDLE_COPYRIGHT "© ${COPYRIGHT_YEAR} Jaakko Keränen"
     )
+endif ()
+if (MSYS)
+    target_link_libraries (app PUBLIC d2d1 uuid) # querying DPI
 endif ()
 if (UNIX)
     target_link_libraries (app PUBLIC m)

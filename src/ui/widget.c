@@ -55,7 +55,6 @@ iPtrArray *onTop_RootData_(void) {
 void destroyPending_Widget(void) {
     iForEach(PtrSet, i, rootData_.pendingDestruction) {
         iWidget *widget = *i.value;
-        removeOne_PtrArray(onTop_RootData_(), widget);
         if (widget->parent) {
             iRelease(removeChild_Widget(widget->parent, widget));
         }
@@ -89,6 +88,9 @@ static void aboutToBeDestroyed_Widget_(iWidget *d) {
     if (isFocused_Widget(d)) {
         setFocus_Widget(NULL);
         return;
+    }
+    if (flags_Widget(d) & keepOnTop_WidgetFlag) {
+        removeOne_PtrArray(onTop_RootData_(), d);
     }
     if (isHover_Widget(d)) {
         rootData_.hover = NULL;

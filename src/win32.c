@@ -25,6 +25,27 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
+#include <d2d1.h>
+
+void setDPIAware_Win32(void) {
+    SetProcessDPIAware();
+}
+
+float desktopDPI_Win32(void) {
+    /* Query Direct2D for the desktop DPI (not aware of which monitor, though). */
+    float ratio = 1.0f;
+    ID2D1Factory *d2dFactory = NULL;
+    HRESULT hr = D2D1CreateFactory(
+        D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory, NULL, (void **) &d2dFactory);
+    if (SUCCEEDED(hr)) {
+        FLOAT dpiX = 96;
+        FLOAT dpiY = 96;
+        ID2D1Factory_GetDesktopDpi(d2dFactory, &dpiX, &dpiY);
+        ratio = (float) (dpiX / 96.0);
+        ID2D1Factory_Release(d2dFactory);
+    }
+    return ratio;
+}
 
 void useExecutableIconResource_SDLWindow(SDL_Window *win) {
     HINSTANCE handle = GetModuleHandle(NULL);

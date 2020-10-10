@@ -57,6 +57,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #if defined (iPlatformApple) && !defined (iPlatformIOS)
 #   include "macos.h"
 #endif
+#if defined (iPlatformMsys)
+#   include "win32.h"
+#endif
 
 iDeclareType(App)
 
@@ -314,6 +317,10 @@ static void init_App_(iApp *d, int argc, char **argv) {
     d->commandEcho       = checkArgument_CommandLine(&d->args, "echo") != NULL;
     d->forceSoftwareRender = checkArgument_CommandLine(&d->args, "sw") != NULL;
     d->initialWindowRect = init_Rect(-1, -1, 900, 560);
+#if defined (iPlatformMsys)
+    /* Must scale by UI scaling factor. */
+    mulfv_I2(&d->initialWindowRect.size, desktopDPI_Win32());
+#endif
     init_Prefs(&d->prefs);
     setCStr_String(&d->prefs.downloadDir, downloadDir_App_);
     d->running           = iFalse;
@@ -642,10 +649,15 @@ iAny *findWidget_App(const char *id) {
     return findChild_Widget(app_.window->root, id);
 }
 
-void addTicker_App(void (*ticker)(iAny *), iAny *context) {
+void addTicker_App(iTickerFunc ticker, iAny *context) {
     iApp *d = &app_;
     insert_SortedArray(&d->tickers, &(iTicker){ context, ticker });
     postRefresh_App();
+}
+
+void removeTicker_App(iTickerFunc ticker, iAny *context) {
+    iApp *d = &app_;
+    remove_SortedArray(&d->tickers, &(iTicker){ context, ticker });
 }
 
 iGmCerts *certs_App(void) {
@@ -730,7 +742,8 @@ iDocumentWidget *newTab_App(const iDocumentWidget *duplicateOf, iBool switchToNe
         doc = new_DocumentWidget();
     }
     setId_Widget(as_Widget(doc), format_CStr("document%03d", ++d->tabEnum));
-    appendTabPage_Widget(tabs, iClob(doc), "", 0, 0);
+    appendTabPage_Widget(tabs, as_Widget(doc), "", 0, 0);
+    iRelease(doc); /* now owned by the tabs */
     addChild_Widget(findChild_Widget(tabs, "tabs.buttons"), iClob(newTabButton));
     if (switchToNew) {
         postCommandf_App("tabs.switch page:%p", doc);

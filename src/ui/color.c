@@ -52,10 +52,10 @@ static const iColor lightPalette_[] = {
     { 235, 235, 235, 255 },
     { 255, 255, 255, 255 },
 
-    { 170, 128, 0,  255 },
-    { 255, 213, 86,  255 },
-    { 0,   96,  128, 255 },
-    { 86,  213, 255, 255 },
+    { 112, 80,  20,  255 },
+    { 255, 200, 86,  255 },
+    { 0,   80,  118, 255 },
+    { 120, 200, 220, 255 },
 
     { 255, 255, 32,  255 },
     { 255, 64,  64,  255 },
@@ -199,7 +199,7 @@ void setThemePalette_Color(enum iColorTheme theme) {
             copy_(uiAnnotation_ColorId, gray50_ColorId);
             copy_(uiIcon_ColorId, brown_ColorId);
             copy_(uiIconHover_ColorId, brown_ColorId);
-            copy_(uiSeparator_ColorId, gray50_ColorId);
+            copy_(uiSeparator_ColorId, gray75_ColorId);
             copy_(uiMarked_ColorId, cyan_ColorId);
             copy_(uiMatching_ColorId, orange_ColorId);
             break;
@@ -242,7 +242,7 @@ void setThemePalette_Color(enum iColorTheme theme) {
             copy_(uiAnnotation_ColorId, gray50_ColorId);
             copy_(uiIcon_ColorId, brown_ColorId);
             copy_(uiIconHover_ColorId, brown_ColorId);
-            copy_(uiSeparator_ColorId, gray50_ColorId);
+            copy_(uiSeparator_ColorId, gray75_ColorId);
             copy_(uiMarked_ColorId, cyan_ColorId);
             copy_(uiMatching_ColorId, orange_ColorId);
             break;
@@ -271,6 +271,10 @@ iColor mix_Color(iColor c1, iColor c2, float t) {
                      c1.g * (1 - t) + c2.g * t,
                      c1.b * (1 - t) + c2.b * t,
                      c1.a * (1 - t) + c2.a * t };
+}
+
+int delta_Color(iColor c1, iColor c2) {
+    return iAbs(c1.r - c2.r) + iAbs(c1.g - c2.g) + iAbs(c1.b - c2.b);
 }
 
 iLocalDef iBool equal_Color_(const iColor *x, const iColor *y) {
