@@ -1176,8 +1176,16 @@ static iBool requestMedia_DocumentWidget_(iDocumentWidget *d, iGmLinkId linkId) 
 
 static iBool handleMediaCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
     iMediaRequest *req = pointerLabel_Command(cmd, "request");
-    if (!req || req->doc != d) {
-        return iFalse; /* not our request */
+    iBool isOurRequest = iFalse;
+    /* This request may already be deleted so treat the pointer with caution. */
+    iConstForEach(ObjectList, m, d->media) {
+        if (m.object == req) {
+            isOurRequest = iTrue;
+            break;
+        }
+    }
+    if (!isOurRequest) {
+        return iFalse;
     }
     if (equal_Command(cmd, "media.updated")) {
         /* Pass new data to media players. */
@@ -2040,7 +2048,18 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                         if (!requestMedia_DocumentWidget_(d, linkId)) {                            
                             if (linkFlags & content_GmLinkFlag) {
                                 /* Dismiss shown content on click. */
-                                setData_Media(media_GmDocument(d->doc), linkId, NULL, NULL, allowHide_MediaFlag);
+                                setData_Media(media_GmDocument(d->doc),
+                                              linkId,
+                                              NULL,
+                                              NULL,
+                                              allowHide_MediaFlag);
+                                /* Cancel a partially received request. */ {
+                                    iMediaRequest *req = findMediaRequest_DocumentWidget_(d, linkId);
+                                    if (!isFinished_GmRequest(req->req)) {
+                                        cancel_GmRequest(req->req);
+                                        removeMediaRequest_DocumentWidget_(d, linkId);
+                                    }
+                                }
                                 redoLayout_GmDocument(d->doc);
                                 d->hoverLink = NULL;
                                 scroll_DocumentWidget_(d, 0);
