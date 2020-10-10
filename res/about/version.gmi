@@ -7,7 +7,7 @@
 # Release notes
 
 ## 0.4
-* Added audio playback with support for streaming. Supported audio formats in this release are WAV (PCM, mono/stereo, 8/16/32 integer/float) and Ogg Vorbis. Shoutout to Sean Barrett et al. for stb_vorbis:
+* Added audio playback with support for streaming. Supported audio formats in this release are WAV (PCM, mono/stereo, 8/16/24/32 integer/float) and Ogg Vorbis. Shoutout to Sean Barrett et al. for stb_vorbis:
 => https://github.com/nothings/stb stb: single-file public domain libraries for C/C++
 * Added inline audio player that works like inline images. Clicking on an audio link opens the audio player below the link (works for URLs that have file extension .wav/.ogg).
 * Visual fine-tuning: increased Fira Sans line spacing; list bullets use an accent color; adjusted accent colors in the light mode palette.
