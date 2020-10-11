@@ -7,6 +7,7 @@ void init_Prefs(iPrefs *d) {
     d->zoomPercent       = 100;
     d->forceLineWrap     = iFalse;
     d->font              = nunito_TextFont;
+    d->headingFont       = nunito_TextFont;
     d->lineWidth         = 40;
     d->bigFirstParagraph = iTrue;
     d->sideIcon          = iTrue;

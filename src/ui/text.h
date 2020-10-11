@@ -40,8 +40,8 @@ enum iFontId {
     medium_FontId,
     big_FontId,
     italic_FontId,
-    bold_FontId,
-    bigBold_FontId,
+    /*bold_FontId,*/ /* TODO: Not used presently, but could be useful for Markdown for instance. */
+    /*bigBold_FontId,*/
     largeBold_FontId,
     hugeBold_FontId,
     largeLight_FontId,    
@@ -118,6 +118,7 @@ void    init_Text           (SDL_Renderer *);
 void    deinit_Text         (void);
 
 void    setContentFont_Text     (enum iTextFont font);
+void    setHeadingFont_Text     (enum iTextFont font);
 void    setContentFontSize_Text (float fontSizeFactor); /* affects all except `default*` fonts */
 void    resetFonts_Text         (void);
 

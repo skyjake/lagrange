@@ -886,6 +886,18 @@ static void addRadioButton_(iWidget *parent, const char *id, const char *label, 
         id);
 }
 
+static void addFontButtons_(iWidget *parent, const char *id) {
+    const char *fontNames[] = {
+        "Nunito", "Fira Sans", "Literata", "EB Garamond"
+    };
+    iForIndices(i, fontNames) {
+        addRadioButton_(parent,
+                        format_CStr("prefs.%s.%u", id, i),
+                        fontNames[i],
+                        format_CStr("%s.set arg:%u", id, i));
+    }
+}
+
 iWidget *makePreferences_Widget(void) {
     iWidget *dlg = makeSheet_Widget("prefs");
     addChildFlags_Widget(dlg,
@@ -920,15 +932,18 @@ iWidget *makePreferences_Widget(void) {
     }
     /* Layout. */ {
         appendTwoColumnPage_(tabs, "Style", '2', &headings, &values);
-        addChild_Widget(headings, iClob(makeHeading_Widget("Font:")));
-        iWidget *fonts = new_Widget();
         /* Fonts. */ {
-            addRadioButton_(fonts, "prefs.font.0", "Nunito", "font.set arg:0");
-            addRadioButton_(fonts, "prefs.font.1", "Fira Sans", "font.set arg:1");
-            addRadioButton_(fonts, "prefs.font.2", "Literata", "font.set arg:2");
-            addRadioButton_(fonts, "prefs.font.3", "EB Garamond", "font.set arg:3");
+            addChild_Widget(headings, iClob(makeHeading_Widget("Body font:")));
+            iWidget *fonts = new_Widget();
+            addFontButtons_(fonts, "font");
+            addChildFlags_Widget(values, iClob(fonts), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+            addChild_Widget(headings, iClob(makeHeading_Widget("Heading font:")));
+            fonts = new_Widget();
+            addFontButtons_(fonts, "headingfont");
+            addChildFlags_Widget(values, iClob(fonts), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
         }
-        addChildFlags_Widget(values, iClob(fonts), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+        addChild_Widget(headings, iClob(makePadding_Widget(2 * gap_UI)));
+        addChild_Widget(values, iClob(makePadding_Widget(2 * gap_UI)));
         addChild_Widget(headings, iClob(makeHeading_Widget("Line width:")));
         iWidget *widths = new_Widget();
         /* Line widths. */ {

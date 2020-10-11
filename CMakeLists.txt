@@ -57,7 +57,6 @@ set (EMBED_RESOURCES
     res/about/license.gmi
     res/about/version.gmi
     res/fonts/EBGaramond-Regular.ttf
-    res/fonts/EBGaramond-Medium.ttf
     res/fonts/EBGaramond-Italic.ttf
     res/fonts/EBGaramond-Bold.ttf
     res/fonts/FiraMono-Regular.ttf
@@ -69,7 +68,7 @@ set (EMBED_RESOURCES
     res/fonts/Literata-Regular-opsz=14.ttf
     res/fonts/Literata-Bold-opsz=36.ttf
     res/fonts/Literata-ExtraLight-opsz=18.ttf
-    res/fonts/Literata-LightItalic-opsz=14.ttf
+    res/fonts/Literata-LightItalic-opsz=10.ttf
     res/fonts/NotoEmoji-Regular.ttf
     res/fonts/Nunito-ExtraBold.ttf
     res/fonts/Nunito-ExtraLight.ttf

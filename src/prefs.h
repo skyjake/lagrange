@@ -20,6 +20,7 @@ struct Impl_Prefs {
     iString downloadDir;
     /* Content */
     enum iTextFont font;
+    enum iTextFont headingFont;
     int lineWidth;
     iBool bigFirstParagraph;
     iBool forceLineWrap;

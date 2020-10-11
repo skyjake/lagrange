@@ -169,6 +169,7 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "sidebar.mode arg:%d\n", mode_SidebarWidget(sidebar));
     appendFormat_String(str, "uiscale arg:%f\n", uiScale_Window(d->window));
     appendFormat_String(str, "font.set arg:%d\n", d->prefs.font);
+    appendFormat_String(str, "headingfont.set arg:%d\n", d->prefs.headingFont);
     appendFormat_String(str, "zoom.set arg:%d\n", d->prefs.zoomPercent);
     appendFormat_String(str, "linewidth.set arg:%d\n", d->prefs.lineWidth);
     appendFormat_String(str, "prefs.biglede.changed arg:%d\n", d->prefs.bigFirstParagraph);
@@ -834,6 +835,14 @@ iBool handleCommand_App(const char *cmd) {
         postCommand_App("window.unfreeze");
         return iTrue;
     }
+    else if (equal_Command(cmd, "headingfont.set")) {
+        setFreezeDraw_Window(get_Window(), iTrue);
+        d->prefs.headingFont = arg_Command(cmd);
+        setHeadingFont_Text(d->prefs.headingFont);
+        postCommand_App("font.changed");
+        postCommand_App("window.unfreeze");
+        return iTrue;
+    }
     else if (equal_Command(cmd, "zoom.set")) {
         setFreezeDraw_Window(get_Window(), iTrue); /* no intermediate draws before docs updated */
         d->prefs.zoomPercent = arg_Command(cmd);
@@ -1015,6 +1024,10 @@ iBool handleCommand_App(const char *cmd) {
         setFlags_Widget(findChild_Widget(dlg, format_CStr("prefs.font.%d", d->prefs.font)),
                         selected_WidgetFlag,
                         iTrue);
+        setFlags_Widget(
+            findChild_Widget(dlg, format_CStr("prefs.headingfont.%d", d->prefs.headingFont)),
+            selected_WidgetFlag,
+            iTrue);
         setFlags_Widget(
             findChild_Widget(dlg, format_CStr("prefs.linewidth.%d", d->prefs.lineWidth)),
             selected_WidgetFlag,
