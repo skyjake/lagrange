@@ -959,7 +959,7 @@ iBool handleCommand_App(const char *cmd) {
         const iBool isDuplicate = argLabel_Command(cmd, "duplicate") != 0;
         newTab_App(isDuplicate ? document_App() : NULL, iTrue);
         if (!isDuplicate) {
-            postCommand_App("navigate.home");
+            postCommand_App("navigate.home focus:1");
         }
         return iTrue;
     }
@@ -1054,6 +1054,9 @@ iBool handleCommand_App(const char *cmd) {
                     "open url:%s",
                     cstr_String(constAt_StringSet(urls, iRandoms(0, size_StringSet(urls)))));
             }
+        }
+        if (argLabel_Command(cmd, "focus")) {
+            postCommand_App("navigate.focus");
         }
         return iTrue;
     }

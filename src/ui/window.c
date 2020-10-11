@@ -236,7 +236,8 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
             setText_InputWidget(url, url_DocumentWidget(document_App()));
             return iTrue;
         }
-        if (arg_Command(cmd) && !isFocused_Widget(findWidget_App("lookup"))) {
+        if (arg_Command(cmd) && argLabel_Command(cmd, "enter") &&
+            !isFocused_Widget(findWidget_App("lookup"))) {
             postCommandf_App(
                 "open url:%s",
                 cstr_String(absoluteUrl_String(&iStringLiteral(""), text_InputWidget(url))));
@@ -261,9 +262,6 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
             }
             else if (equal_Command(cmd, "document.request.started")) {
                 iInputWidget *url = findChild_Widget(navBar, "url");
-                if (isFocused_Widget(as_Widget(url))) {
-                    setFocus_Widget(NULL);
-                }
                 setTextCStr_InputWidget(url, suffixPtr_Command(cmd, "url"));
                 updateTextCStr_LabelWidget(reloadButton, stopCStr_);
                 return iFalse;

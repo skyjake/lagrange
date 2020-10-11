@@ -181,8 +181,14 @@ void setText_InputWidget(iInputWidget *d, const iString *text) {
     iConstForEach(String, i, text) {
         pushBack_Array(&d->text, &i.value);
     }
-    iZap(d->mark);
-    d->cursor = iMin(d->cursor, size_Array(&d->text));
+    if (isFocused_Widget(d)) {
+        d->cursor = size_Array(&d->text);
+        selectAll_InputWidget(d);
+    }
+    else {
+        d->cursor = iMin(d->cursor, size_Array(&d->text));
+        iZap(d->mark);
+    }
     refresh_Widget(as_Widget(d));
 }
 
