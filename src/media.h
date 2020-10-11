@@ -60,6 +60,7 @@ iMediaId        findLinkImage_Media (const iMedia *, uint16_t linkId);
 iBool           imageInfo_Media     (const iMedia *, iMediaId imageId, iGmImageInfo *info_out);
 SDL_Texture *   imageTexture_Media  (const iMedia *, iMediaId imageId);
 
+size_t          numAudio_Media      (const iMedia *);
 iMediaId        findLinkAudio_Media (const iMedia *, uint16_t linkId);
 iBool           audioInfo_Media     (const iMedia *, iMediaId audioId, iGmAudioInfo *info_out);
 iPlayer *       audioPlayer_Media   (const iMedia *, iMediaId audioId);

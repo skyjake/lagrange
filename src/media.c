@@ -24,6 +24,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "gmdocument.h"
 #include "ui/window.h"
 #include "audio/player.h"
+#include "app.h"
 
 #include <the_Foundation/ptrarray.h>
 #include <stb_image.h>
@@ -214,8 +215,9 @@ void setData_Media(iMedia *d, iGmLinkId linkId, const iString *mime, const iBloc
                 updateSourceData_Player(audio->player, NULL, NULL, complete_PlayerUpdate);
             }
             pushBack_PtrArray(&d->audio, audio);
-            /* TEST: Start playing right away. */
+            /* Start playing right away. */
             start_Player(audio->player);
+            postCommandf_App("media.player.started player:%p", audio->player);
         }
     }
 }
@@ -229,6 +231,10 @@ iMediaId findLinkImage_Media(const iMedia *d, iGmLinkId linkId) {
         }
     }
     return 0;
+}
+
+size_t numAudio_Media(const iMedia *d) {
+    return size_PtrArray(&d->audio);
 }
 
 iMediaId findLinkAudio_Media(const iMedia *d, iGmLinkId linkId) {

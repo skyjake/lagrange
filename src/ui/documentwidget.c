@@ -1421,6 +1421,18 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     else if (equal_Command(cmd, "media.updated") || equal_Command(cmd, "media.finished")) {
         return handleMediaCommand_DocumentWidget_(d, cmd);
     }
+    else if (equal_Command(cmd, "media.player.started")) {
+        /* When one media player starts, pause the others that may be playing. */
+        const iPlayer *startedPlr = pointerLabel_Command(cmd, "player");
+        const iMedia * media  = media_GmDocument(d->doc);
+        const size_t   num    = numAudio_Media(media);
+        for (size_t id = 1; id <= num; id++) {
+            iPlayer *plr = audioPlayer_Media(media, id);
+            if (plr != startedPlr) {
+                setPaused_Player(plr, iTrue);
+            }
+        }
+    }
     else if (equal_Command(cmd, "document.stop") && document_App() == d) {
         if (d->request) {
             postCommandf_App(
@@ -2064,6 +2076,8 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                     if (!isFinished_GmRequest(req->req)) {
                                         cancel_GmRequest(req->req);
                                         removeMediaRequest_DocumentWidget_(d, linkId);
+                                        /* Note: Some of the audio IDs have changed now, layout must
+                                           be redone. */
                                     }
                                 }
                                 redoLayout_GmDocument(d->doc);
