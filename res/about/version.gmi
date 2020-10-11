@@ -6,6 +6,12 @@
 ```
 # Release notes
 
+## 0.5
+* Added new serif fonts: EB Garamond and Literata.
+* Configure separate fonts for headings and body text for more visual distinction.
+* Preferences dialog remembers the previously open tab.
+* Paste from clipboard on middle mouse button click.
+
 ## 0.4.1
 * Set keyboard focus to URL input field after opening a new tab.
 * Pause other audio players when a new one is started. One can still choose to have multiple audio players playing simultaneously by unpausing them again.
