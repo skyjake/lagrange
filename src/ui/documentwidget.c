@@ -1462,6 +1462,10 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                     setRange_String(name, fn);
                 }
             }
+            if (startsWith_String(name, "~")) {
+                /* This would be interpreted as a reference to a home directory. */
+                remove_Block(&name->chars, 0, 1);
+            }
             iString *savePath = concat_Path(downloadDir_App(), name);
             if (lastIndexOfCStr_String(savePath, ".") == iInvalidPos) {
                 /* No extension specified in URL. */
