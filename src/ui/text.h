@@ -40,8 +40,6 @@ enum iFontId {
     medium_FontId,
     big_FontId,
     italic_FontId,
-    /*bold_FontId,*/ /* TODO: Not used presently, but could be useful for Markdown for instance. */
-    /*bigBold_FontId,*/
     largeBold_FontId,
     hugeBold_FontId,
     largeLight_FontId,    

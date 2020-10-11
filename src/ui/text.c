@@ -166,7 +166,7 @@ static void initFonts_Text_(iText *d) {
     const iBlock *regularFont = &fontNunitoRegular_Embedded;
     const iBlock *italicFont  = &fontNunitoLightItalic_Embedded;
     const iBlock *h12Font     = &fontNunitoExtraBold_Embedded;
-    const iBlock *h3Font      = &fontNunitoExtraBold_Embedded;
+    const iBlock *h3Font      = &fontNunitoRegular_Embedded;
     const iBlock *lightFont   = &fontNunitoExtraLight_Embedded;
     float         scaling     = 1.0f; /* glyph scaling (<=1.0), for increasing line spacing */
     float         h123Scaling = 1.0f; /* glyph scaling (<=1.0), for increasing line spacing */
@@ -215,8 +215,6 @@ static void initFonts_Text_(iText *d) {
         { regularFont,                        textSize * 1.200f,    scaling, mediumSymbols_FontId },
         { h3Font,                             textSize * 1.333f,    scaling, bigSymbols_FontId },
         { italicFont,                         textSize,             scaling, symbols_FontId },
-//        { boldFont,                           textSize,             scaling, symbols_FontId },
-//        { boldFont,                           textSize * 1.333f,    h123Scaling, mediumSymbols_FontId },
         { h12Font,                            textSize * 1.666f,    h123Scaling, largeSymbols_FontId },
         { h12Font,                            textSize * 2.000f,    h123Scaling, hugeSymbols_FontId },
         { lightFont,                          textSize * 1.666f,    scaling,     largeSymbols_FontId },
