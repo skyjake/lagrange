@@ -799,9 +799,9 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
 
             if (delta_Color(get_Color(tmHeading3_ColorId), get_Color(tmParagraph_ColorId)) <= 80) {
                 /* Smallest headings may be too close to body text color. */
-                iHSLColor clr = get_HSLColor(tmParagraph_ColorId);
-                clr.lum       = iMax(0.5f, clr.lum - 0.15f);
-                setHsl_Color(tmParagraph_ColorId, clr);
+//                iHSLColor clr = get_HSLColor(tmParagraph_ColorId);
+//                clr.lum       = iMax(0.5f, clr.lum - 0.15f);
+                //setHsl_Color(tmParagraph_ColorId, clr);
                 setHsl_Color(tmHeading3_ColorId,
                              addSatLum_HSLColor(get_HSLColor(tmHeading3_ColorId), 0, 0.15f));
             }

@@ -925,6 +925,8 @@ iWidget *makePreferences_Widget(void) {
         /* Fonts. */ {
             addRadioButton_(fonts, "prefs.font.0", "Nunito", "font.set arg:0");
             addRadioButton_(fonts, "prefs.font.1", "Fira Sans", "font.set arg:1");
+            addRadioButton_(fonts, "prefs.font.2", "Literata", "font.set arg:2");
+            addRadioButton_(fonts, "prefs.font.3", "EB Garamond", "font.set arg:3");
         }
         addChildFlags_Widget(values, iClob(fonts), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
         addChild_Widget(headings, iClob(makeHeading_Widget("Line width:")));

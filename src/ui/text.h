@@ -108,6 +108,8 @@ iLocalDef iBool isVariationSelector_Char(iChar ch) {
 enum iTextFont {
     nunito_TextFont,
     firaSans_TextFont,
+    literata_TextFont,
+    ebGaramond_TextFont,
 };
 
 extern int gap_Text; /* affected by content font size */

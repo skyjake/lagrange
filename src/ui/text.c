@@ -166,13 +166,25 @@ static void initFonts_Text_(iText *d) {
     const iBlock *italicFont  = &fontNunitoLightItalic_Embedded;
     const iBlock *boldFont    = &fontNunitoExtraBold_Embedded;
     const iBlock *lightFont   = &fontNunitoExtraLight_Embedded;
-    float         scaling     = 1.0f; /* additional glyph scaling (<=1), to increase line spacing */
+    float         scaling     = 1.0f; /* glyph scaling (<=1.0), for increasing line spacing */
     if (d->contentFont == firaSans_TextFont) {
         regularFont = &fontFiraSansRegular_Embedded;
         italicFont  = &fontFiraSansItalic_Embedded;
         boldFont    = &fontFiraSansBold_Embedded;
         lightFont   = &fontFiraSansLight_Embedded;
         scaling     = 0.85f;
+    }
+    else if (d->contentFont == ebGaramond_TextFont) {
+        regularFont = &fontEBGaramondRegular_Embedded;
+        italicFont  = &fontEBGaramondItalic_Embedded;
+        boldFont    = &fontEBGaramondBold_Embedded;
+        lightFont   = &fontLiterataExtraLightopsz18_Embedded;
+    }
+    else if (d->contentFont == literata_TextFont) {
+        regularFont = &fontLiterataRegularopsz14_Embedded;
+        italicFont  = &fontLiterataLightItalicopsz14_Embedded;
+        boldFont    = &fontLiterataBoldopsz36_Embedded;
+        lightFont   = &fontLiterataExtraLightopsz18_Embedded;
     }
     const struct {
         const iBlock *ttf;

@@ -56,12 +56,20 @@ set (EMBED_RESOURCES
     res/about/lagrange.gmi
     res/about/license.gmi
     res/about/version.gmi
+    res/fonts/EBGaramond-Regular.ttf
+    res/fonts/EBGaramond-Medium.ttf
+    res/fonts/EBGaramond-Italic.ttf
+    res/fonts/EBGaramond-Bold.ttf
     res/fonts/FiraMono-Regular.ttf
     res/fonts/FiraSans-Bold.ttf
     res/fonts/FiraSans-Italic.ttf
     res/fonts/FiraSans-Light.ttf
     res/fonts/FiraSans-Regular.ttf
     res/fonts/KosugiMaru-Regular.ttf
+    res/fonts/Literata-Regular-opsz=14.ttf
+    res/fonts/Literata-Bold-opsz=36.ttf
+    res/fonts/Literata-ExtraLight-opsz=18.ttf
+    res/fonts/Literata-LightItalic-opsz=14.ttf
     res/fonts/NotoEmoji-Regular.ttf
     res/fonts/Nunito-ExtraBold.ttf
     res/fonts/Nunito-ExtraLight.ttf
