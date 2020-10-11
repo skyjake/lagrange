@@ -56,19 +56,19 @@ set (EMBED_RESOURCES
     res/about/lagrange.gmi
     res/about/license.gmi
     res/about/version.gmi
-    res/FiraMono-Regular.ttf
-    res/FiraSans-Bold.ttf
-    res/FiraSans-Italic.ttf
-    res/FiraSans-Light.ttf
-    res/FiraSans-Regular.ttf
-    res/KosugiMaru-Regular.ttf
-    res/NotoEmoji-Regular.ttf
-    res/Nunito-ExtraBold.ttf
-    res/Nunito-ExtraLight.ttf
-    res/Nunito-LightItalic.ttf
-    res/Nunito-Regular.ttf
-    res/SourceSansPro-Regular.ttf
-    res/Symbola.ttf
+    res/fonts/FiraMono-Regular.ttf
+    res/fonts/FiraSans-Bold.ttf
+    res/fonts/FiraSans-Italic.ttf
+    res/fonts/FiraSans-Light.ttf
+    res/fonts/FiraSans-Regular.ttf
+    res/fonts/KosugiMaru-Regular.ttf
+    res/fonts/NotoEmoji-Regular.ttf
+    res/fonts/Nunito-ExtraBold.ttf
+    res/fonts/Nunito-ExtraLight.ttf
+    res/fonts/Nunito-LightItalic.ttf
+    res/fonts/Nunito-Regular.ttf
+    res/fonts/SourceSansPro-Regular.ttf
+    res/fonts/Symbola.ttf
 )
  if (UNIX AND NOT APPLE)
      list (APPEND EMBED_RESOURCES res/lagrange-64.png)
