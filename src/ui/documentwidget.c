@@ -901,6 +901,8 @@ static iBool updateFromHistory_DocumentWidget_(iDocumentWidget *d) {
         d->initNormScrollY = recent->normScrollY;
         /* Use the cached response data. */
         updateTrust_DocumentWidget_(d, resp);
+        d->sourceTime = resp->when;
+        set_Block(&d->sourceContent, &resp->body);
         updateDocument_DocumentWidget_(d, resp, iTrue);
         d->scrollY = d->initNormScrollY * size_GmDocument(d->doc).y;
         d->state = ready_RequestState;
