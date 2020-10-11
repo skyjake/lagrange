@@ -168,6 +168,7 @@ static iString *serializePrefs_App_(const iApp *d) {
     }
     appendFormat_String(str, "sidebar.mode arg:%d\n", mode_SidebarWidget(sidebar));
     appendFormat_String(str, "uiscale arg:%f\n", uiScale_Window(d->window));
+    appendFormat_String(str, "prefs.dialogtab arg:%d\n", d->prefs.dialogTab);
     appendFormat_String(str, "font.set arg:%d\n", d->prefs.font);
     appendFormat_String(str, "headingfont.set arg:%d\n", d->prefs.headingFont);
     appendFormat_String(str, "zoom.set arg:%d\n", d->prefs.zoomPercent);
@@ -695,6 +696,9 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
                          cstr_String(text_InputWidget(findChild_Widget(d, "prefs.proxy.http"))));
         postCommandf_App("proxy.gopher address:%s",
                          cstr_String(text_InputWidget(findChild_Widget(d, "prefs.proxy.gopher"))));
+        const iWidget *tabs = findChild_Widget(d, "prefs.tabs");
+        postCommandf_App("prefs.dialogtab arg:%u",
+                         tabPageIndex_Widget(tabs, currentTabPage_Widget(tabs)));
         destroy_Widget(d);
         return iTrue;
     }
@@ -819,7 +823,11 @@ static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
 
 iBool handleCommand_App(const char *cmd) {
     iApp *d = &app_;
-    if (equal_Command(cmd, "window.retain")) {
+    if (equal_Command(cmd, "prefs.dialogtab")) {
+        d->prefs.dialogTab = arg_Command(cmd);
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "window.retain")) {
         d->prefs.retainWindowSize = arg_Command(cmd);
         return iTrue;
     }
@@ -842,7 +850,7 @@ iBool handleCommand_App(const char *cmd) {
         postCommand_App("font.changed");
         postCommand_App("window.unfreeze");
         return iTrue;
-    }
+    }    
     else if (equal_Command(cmd, "zoom.set")) {
         setFreezeDraw_Window(get_Window(), iTrue); /* no intermediate draws before docs updated */
         d->prefs.zoomPercent = arg_Command(cmd);
@@ -1043,6 +1051,8 @@ iBool handleCommand_App(const char *cmd) {
                             schemeProxy_App(range_CStr("http")));
         setText_InputWidget(findChild_Widget(dlg, "prefs.proxy.gopher"),
                             schemeProxy_App(range_CStr("gopher")));
+        iWidget *tabs = findChild_Widget(dlg, "prefs.tabs");
+        showTabPage_Widget(tabs, tabPage_Widget(tabs, d->prefs.dialogTab));
         setCommandHandler_Widget(dlg, handlePrefsCommands_);
     }
     else if (equal_Command(cmd, "navigate.home")) {

@@ -10,6 +10,7 @@
 iDeclareType(Prefs)
 
 struct Impl_Prefs {
+    int dialogTab;
     iBool retainWindowSize;
     float uiScale;    
     int zoomPercent;

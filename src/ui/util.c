@@ -904,6 +904,7 @@ iWidget *makePreferences_Widget(void) {
                          iClob(new_LabelWidget(uiHeading_ColorEscape "PREFERENCES", 0, 0, NULL)),
                          frameless_WidgetFlag);
     iWidget *tabs = makeTabs_Widget(dlg);
+    setId_Widget(tabs, "prefs.tabs");
     iWidget *headings, *values;
     /* General preferences. */ {
         appendTwoColumnPage_(tabs, "General", '1', &headings, &values);
@@ -933,13 +934,14 @@ iWidget *makePreferences_Widget(void) {
     /* Layout. */ {
         appendTwoColumnPage_(tabs, "Style", '2', &headings, &values);
         /* Fonts. */ {
-            addChild_Widget(headings, iClob(makeHeading_Widget("Body font:")));
-            iWidget *fonts = new_Widget();
-            addFontButtons_(fonts, "font");
-            addChildFlags_Widget(values, iClob(fonts), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+            iWidget *fonts;
             addChild_Widget(headings, iClob(makeHeading_Widget("Heading font:")));
             fonts = new_Widget();
             addFontButtons_(fonts, "headingfont");
+            addChildFlags_Widget(values, iClob(fonts), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+            addChild_Widget(headings, iClob(makeHeading_Widget("Body font:")));
+            fonts = new_Widget();
+            addFontButtons_(fonts, "font");
             addChildFlags_Widget(values, iClob(fonts), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
         }
         addChild_Widget(headings, iClob(makePadding_Widget(2 * gap_UI)));
@@ -999,7 +1001,7 @@ iWidget *makePreferences_Widget(void) {
     addAction_Widget(dlg, prevTab_KeyShortcut, "tabs.prev");
     addAction_Widget(dlg, nextTab_KeyShortcut, "tabs.next");
     addChild_Widget(get_Window()->root, iClob(dlg));
-    centerSheet_Widget(dlg);
+    centerSheet_Widget(dlg);    
     return dlg;
 }
 
