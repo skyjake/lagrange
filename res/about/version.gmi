@@ -6,6 +6,13 @@
 ```
 # Release notes
 
+## 0.4.1
+* Set keyboard focus to URL input field after opening a new tab.
+* Pause other audio players when a new one is started. One can still choose to have multiple audio players playing simultaneously by unpausing them again.
+* Fixed dismissing an audio player that is still downloading content. The partially downloaded data is discarded.
+* Fixed saving pages whose name starts with a tilde.
+* Fixed saving pages restored from cache.
+
 ## 0.4
 * Added audio playback with support for streaming. Supported audio formats in this release are WAV (PCM, mono/stereo, 8/16/24/32 integer/float) and Ogg Vorbis. Shoutout to Sean Barrett et al. for stb_vorbis:
 => https://github.com/nothings/stb stb: single-file public domain libraries for C/C++
