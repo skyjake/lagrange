@@ -967,11 +967,18 @@ static void normalize_GmDocument(iGmDocument *d) {
             continue;
         }
         iBool isPrevSpace = iFalse;
+        int spaceCount = 0;
         for (const char *ch = line.start; ch != line.end; ch++) {
             char c = *ch;
             if (c == '\r') continue;
             if (isNormalizableSpace_(c)) {
                 if (isPrevSpace) {
+                    if (++spaceCount == 8) {
+                        /* There are several consecutive space characters. The author likely
+                           really wants to have some space here, so normalize to a tab stop. */
+                        popBack_Block(&normalized->chars);
+                        pushBack_Block(&normalized->chars, '\t');
+                    }
                     continue; /* skip repeated spaces */
                 }
                 c = ' ';
@@ -979,6 +986,7 @@ static void normalize_GmDocument(iGmDocument *d) {
             }
             else {
                 isPrevSpace = iFalse;
+                spaceCount = 0;
             }
             appendCStrN_String(normalized, &c, 1);
         }

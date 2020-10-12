@@ -608,6 +608,12 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
                 prevCh = ch;
                 continue;
             }
+            if (ch == '\t') {
+                const int tabStopWidth = d->height * 8;
+                xpos = pos.x + ((int) ((xpos - pos.x) / tabStopWidth) + 1) * tabStopWidth;
+                prevCh = 0;
+                continue;
+            }
             if (ch == '\r') {
                 const iChar esc = nextChar_(&chPos, text.end);
                 if (mode == draw_RunMode) {
