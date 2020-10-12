@@ -277,6 +277,7 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
                                        isRequestOngoing_DocumentWidget(doc) ? stopCStr_ : reloadCStr_);
             updateNavBarIdentity_(navBar);
         }
+        setFocus_Widget(NULL);
     }
     else if (equal_Command(cmd, "mouse.clicked") && arg_Command(cmd)) {
         iWidget *widget = pointer_Command(cmd);
