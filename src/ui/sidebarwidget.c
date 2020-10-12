@@ -520,11 +520,16 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             }
             arrange_Widget(w->parent);
             updateSize_DocumentWidget(document_App());
+            if (isVisible_Widget(w)) {
+                updateItems_SidebarWidget_(d);
+                scrollOffset_ListWidget(d->list, 0);
+            }
             refresh_Widget(w->parent);
             return iTrue;
         }
         else if (equal_Command(cmd, "tabs.changed") || equal_Command(cmd, "document.changed")) {
             updateItems_SidebarWidget_(d);
+            scrollOffset_ListWidget(d->list, 0);
         }
         else if (equal_Command(cmd, "bookmark.copy")) {
             const iSidebarItem *item = d->menuItem;
