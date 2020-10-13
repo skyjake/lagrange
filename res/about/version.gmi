@@ -18,6 +18,8 @@
 * Fixed dismissing an audio player that is still downloading content. The partially downloaded data is discarded.
 * Fixed saving pages whose name starts with a tilde.
 * Fixed saving pages restored from cache.
+* Windows: The app is now distributed as an installer created with Inno Setup.
+* Windows: All binaries are signed.
 
 ## 0.4
 * Added audio playback with support for streaming. Supported audio formats in this release are WAV (PCM, mono/stereo, 8/16/24/32 integer/float) and Ogg Vorbis. Shoutout to Sean Barrett et al. for stb_vorbis:
