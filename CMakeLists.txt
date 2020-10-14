@@ -26,6 +26,7 @@ project (Lagrange
 set (COPYRIGHT_YEAR 2020)
 
 # Build configuration.
+option (ENABLE_MPG123 "Use mpg123 for decoding MPEG audio" ON)
 option (ENABLE_X11_SWRENDER "Use software rendering under X11" OFF)
 option (ENABLE_KERNING "Enable kerning in font renderer (slower)" ON)
 option (ENABLE_RESOURCE_EMBED "Embed resources inside the executable" OFF)
@@ -47,6 +48,7 @@ else ()
 endif ()
 find_package (PkgConfig REQUIRED)
 pkg_check_modules (SDL2 REQUIRED sdl2)
+pkg_check_modules (MPG123 IMPORTED_TARGET libmpg123)
 
 # Embedded resources are written to a generated source file.
 message (STATUS "Preparing embedded resources...")
@@ -200,6 +202,10 @@ if (ENABLE_KERNING)
 endif ()
 if (ENABLE_WINDOWPOS_FIX)
     target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_WINDOWPOS_FIX=1)
+endif ()
+if (ENABLE_MPG123 AND MPG123_FOUND)
+    target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_MPG123=1)
+    target_link_libraries (app PUBLIC PkgConfig::MPG123)
 endif ()
 target_link_libraries (app PUBLIC the_Foundation::the_Foundation)
 target_link_libraries (app PUBLIC ${SDL2_LDFLAGS})

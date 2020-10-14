@@ -20,25 +20,25 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-#include <the_Foundation/commandline.h>
-#include <stdio.h>
-#if defined (iPlatformMsys)
-#  define SDL_MAIN_HANDLED
-#endif
-#include <SDL.h>
-
 #include "app.h"
 
 #if defined (iPlatformApple)
-extern void enableMomentumScroll_MacOS(void);
-extern void registerURLHandler_MacOS(void);
+#  include "macos.h"
 #endif
-
 #if defined (iPlatformMsys)
 #  include "win32.h"
+#  define SDL_MAIN_HANDLED
+#endif
+#if defined (LAGRANGE_ENABLE_MPG123)
+#  include <mpg123.h>
 #endif
 
+#include <the_Foundation/commandline.h>
+#include <SDL.h>
+#include <stdio.h>
+
 int main(int argc, char **argv) {
+    printf("Lagrange: A Beautiful Gemini Client\n");
 #if defined (iPlatformApple)
     enableMomentumScroll_MacOS();
     registerURLHandler_MacOS();
@@ -48,9 +48,11 @@ int main(int argc, char **argv) {
     setDPIAware_Win32();
     SDL_SetMainReady();
 #endif
+    /* Initialize libraries. */
+#if defined (LAGRANGE_ENABLE_MPG123)
+    mpg123_init();
+#endif
     init_Foundation();
-    printf("Lagrange: A Beautiful Gemini Client\n");
-    /* Initialize SDL. */
     SDL_SetHint(SDL_HINT_VIDEO_ALLOW_SCREENSAVER, "1");
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER)) {
         fprintf(stderr, "SDL init failed: %s\n", SDL_GetError());
@@ -58,5 +60,8 @@ int main(int argc, char **argv) {
     }
     run_App(argc, argv);
     SDL_Quit();
+#if defined (LAGRANGE_ENABLE_MPG123)
+    mpg123_exit();
+#endif
     return 0;
 }

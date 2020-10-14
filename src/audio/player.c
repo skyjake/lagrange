@@ -30,6 +30,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/thread.h>
 #include <SDL_audio.h>
 
+#if defined (LAGRANGE_ENABLE_MPG123)
+#  include <mpg123.h>
+#endif
+
 /*----------------------------------------------------------------------------------------------*/
 
 iDeclareType(ContentSpec)
@@ -68,6 +72,9 @@ struct Impl_Decoder {
     uint64_t          currentSample;
     uint64_t          totalSamples; /* zero if unknown */
     stb_vorbis *      vorbis;
+#if defined (LAGRANGE_ENABLE_MPG123)
+    mpg123_handle *   mpeg;
+#endif
 };
 
 enum iDecoderStatus {
@@ -155,8 +162,18 @@ static enum iDecoderStatus decodeWav_Decoder_(iDecoder *d, iRanges inputRange) {
     return ok_DecoderStatus;
 }
 
-static enum iDecoderStatus decodeVorbis_Decoder_(iDecoder *d, iRanges inputRange) {
-    iUnused(inputRange);
+static void writePending_Decoder_(iDecoder *d) {
+    /* Write as much as we can. */
+    lock_Mutex(&d->outputMutex);
+    size_t avail = vacancy_SampleBuf(&d->output);
+    size_t n = iMin(avail, size_Array(&d->pendingOutput));
+    write_SampleBuf(&d->output, constData_Array(&d->pendingOutput), n);
+    removeN_Array(&d->pendingOutput, 0, n);
+    unlock_Mutex(&d->outputMutex);
+    d->currentSample += n;
+}
+
+static enum iDecoderStatus decodeVorbis_Decoder_(iDecoder *d) {
     const iBlock *input = &d->input->data;
     if (!d->vorbis) {
         lock_Mutex(&d->input->mtx);
@@ -213,14 +230,47 @@ static enum iDecoderStatus decodeVorbis_Decoder_(iDecoder *d, iRanges inputRange
             }
         }
     }
-    /* Write as much as we can. */
-    lock_Mutex(&d->outputMutex);
-    size_t avail = vacancy_SampleBuf(&d->output);
-    size_t n = iMin(avail, size_Array(&d->pendingOutput));
-    write_SampleBuf(&d->output, constData_Array(&d->pendingOutput), n);
-    removeN_Array(&d->pendingOutput, 0, n);
-    unlock_Mutex(&d->outputMutex);
-    d->currentSample += n;
+    writePending_Decoder_(d);
+    return status;
+}
+
+enum iDecoderStatus decodeMpeg_Decoder_(iDecoder *d) {
+    enum iDecoderStatus status = ok_DecoderStatus;
+#if defined (LAGRANGE_ENABLE_MPG123)
+    const iBlock *input = &d->input->data;
+    if (!d->mpeg) {
+        d->mpeg = mpg123_new(NULL, NULL);
+        mpg123_format_none(d->mpeg);
+        mpg123_format(d->mpeg, d->outputFreq, d->output.numChannels, MPG123_ENC_SIGNED_16);
+        mpg123_open_feed(d->mpeg);
+        lock_Mutex(&d->input->mtx);
+        mpg123_feed(d->mpeg, constData_Block(input), size_Block(input));
+        unlock_Mutex(&d->input->mtx);
+        long r; int ch, enc;
+        mpg123_getformat(d->mpeg, &r, &ch, &enc);
+        iAssert(r == d->outputFreq);
+        iAssert(ch == d->output.numChannels);
+        iAssert(enc == MPG123_ENC_SIGNED_16);
+    }
+    while (size_Array(&d->pendingOutput) < d->output.count) {
+        int16_t buffer[512];
+        size_t bytesWritten = 0;
+        const int rc = mpg123_read(d->mpeg, buffer, sizeof(buffer), &bytesWritten);
+        const float gain = d->gain;
+        for (size_t i = 0; i < bytesWritten / 2; i++) {
+            buffer[i] *= gain;
+        }
+        pushBackN_Array(&d->pendingOutput, buffer, bytesWritten / 2 / d->output.numChannels);
+        if (rc == MPG123_NEED_MORE) {
+            status = needMoreInput_DecoderStatus;
+            break;
+        }
+        else if (rc == MPG123_DONE) {
+            break;
+        }
+    }
+    writePending_Decoder_(d);
+#endif
     return status;
 }
 
@@ -242,7 +292,11 @@ static iThreadResult run_Decoder_(iThread *thread) {
                     status = decodeWav_Decoder_(d, inputRange);
                     break;
                 case vorbis_DecoderType:
-                    status = decodeVorbis_Decoder_(d, inputRange);
+                    status = decodeVorbis_Decoder_(d);
+                    break;
+                case mpeg_DecoderType:
+                    status = decodeMpeg_Decoder_(d);
+                    break;
                 default:
                     break;
             }
@@ -280,6 +334,9 @@ void init_Decoder(iDecoder *d, iInputBuf *input, const iContentSpec *spec) {
     d->currentSample = 0;
     d->totalSamples  = spec->totalSamples;
     d->vorbis = NULL;
+#if defined (LAGRANGE_ENABLE_MPG123)
+    d->mpeg = NULL;
+#endif
     init_Mutex(&d->outputMutex);
     d->thread = new_Thread(run_Decoder_);
     setUserData_Thread(d->thread, d);
@@ -295,6 +352,15 @@ void deinit_Decoder(iDecoder *d) {
     deinit_Mutex(&d->outputMutex);
     deinit_SampleBuf(&d->output);
     deinit_Array(&d->pendingOutput);
+    if (d->vorbis) {
+        stb_vorbis_close(d->vorbis);
+    }
+#if defined (LAGRANGE_ENABLE_MPG123)
+    if (d->mpeg) {
+        mpg123_close(d->mpeg);
+        mpg123_delete(d->mpeg);
+    }
+#endif
 }
 
 iDefineTypeConstructionArgs(Decoder, (iInputBuf *input, const iContentSpec *spec),
@@ -336,6 +402,11 @@ static iContentSpec contentSpec_Player_(const iPlayer *d) {
              !cmp_String(&d->mime, "audio/x-vorbis+ogg")) {
         content.type = vorbis_DecoderType;
     }
+#if defined (LAGRANGE_ENABLE_MPG123)
+    else if (!cmp_String(&d->mime, "audio/mpeg") || !cmp_String(&d->mime, "audio/mp3")) {
+        content.type = mpeg_DecoderType;
+    }
+#endif
     else {
         /* TODO: Could try decoders to see if one works? */
         content.type = none_DecoderType;
@@ -437,6 +508,24 @@ static iContentSpec contentSpec_Player_(const iPlayer *d) {
         content.output.format   = AUDIO_F32;
         content.inputFormat     = AUDIO_F32; /* actually stb_vorbis provides floats */
         stb_vorbis_close(vrb);
+    }
+    else if (content.type == mpeg_DecoderType) {
+#if defined (LAGRANGE_ENABLE_MPG123)
+        mpg123_handle *mh = mpg123_new(NULL, NULL);
+        mpg123_open_feed(mh);
+        mpg123_feed(mh, constData_Block(&d->data->data), size_Block(&d->data->data));
+        long rate = 0;
+        int channels = 0;
+        int encoding = 0;
+        if (mpg123_getformat(mh, &rate, &channels, &encoding) == MPG123_OK) {
+            content.output.freq     = rate;
+            content.output.channels = channels;
+            content.inputFormat     = AUDIO_S16;
+            content.output.format   = AUDIO_S16;
+        }
+        mpg123_close(mh);
+        mpg123_delete(mh);
+#endif
     }
     iAssert(content.inputFormat == content.output.format ||
             (content.inputFormat == AUDIO_S24LSB && content.output.format == AUDIO_S16) ||

@@ -1584,17 +1584,18 @@ static iBool processAudioPlayerEvents_DocumentWidget_(iDocumentWidget *d, const 
         if (contains_Rect(rect, mouse)) {
             iPlayerUI ui;
             init_PlayerUI(&ui, plr, rect);
-            if (ev->type == SDL_MOUSEBUTTONDOWN || ev->type == SDL_MOUSEMOTION) {
-                if (ev->type == SDL_MOUSEBUTTONDOWN &&
-                    flags_Player(plr) & adjustingVolume_PlayerFlag &&
-                    contains_Rect(adjusted_Rect(ui.volumeAdjustRect,
-                                                zero_I2(),
-                                                init_I2(-height_Rect(ui.volumeAdjustRect), 0)),
-                                  mouse)) {
-                    setGrabbedPlayer_DocumentWidget_(d, run);
-                    processEvent_Click(&d->click, ev);
-                    /* The rest is done in the DocumentWidget click responder. */
-                }
+            if (ev->type == SDL_MOUSEBUTTONDOWN && flags_Player(plr) & adjustingVolume_PlayerFlag &&
+                contains_Rect(adjusted_Rect(ui.volumeAdjustRect,
+                                            zero_I2(),
+                                            init_I2(-height_Rect(ui.volumeAdjustRect), 0)),
+                              mouse)) {
+                setGrabbedPlayer_DocumentWidget_(d, run);
+                processEvent_Click(&d->click, ev);
+                /* The rest is done in the DocumentWidget click responder. */
+                refresh_Widget(d);
+                return iTrue;
+            }
+            else if (ev->type == SDL_MOUSEBUTTONDOWN || ev->type == SDL_MOUSEMOTION) {
                 refresh_Widget(d);
                 return iTrue;
             }

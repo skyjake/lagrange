@@ -460,6 +460,9 @@ void submit_GmRequest(iGmRequest *d) {
             else if (endsWithCase_String(path, ".ogg")) {
                 setCStr_String(&d->resp.meta, "audio/ogg");
             }
+            else if (endsWithCase_String(path, ".mp3")) {
+                setCStr_String(&d->resp.meta, "audio/mpeg");
+            }
             else {
                 setCStr_String(&d->resp.meta, "application/octet-stream");
             }
