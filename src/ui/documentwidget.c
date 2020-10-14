@@ -34,6 +34,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "labelwidget.h"
 #include "media.h"
 #include "paint.h"
+#include "playerui.h"
 #include "scrollwidget.h"
 #include "util.h"
 #include "visbuf.h"
@@ -178,6 +179,8 @@ struct Impl_DocumentWidget {
     int            pageMargin;
     iPtrArray      visibleLinks;
     iPtrArray      visiblePlayers; /* currently playing audio */
+    const iGmRun * grabbedPlayer; /* currently adjusting volume in a player */
+    float          grabbedStartVolume;
     const iGmRun * hoverLink;
     const iGmRun * contextLink;
     iBool          noHoverWhileScrolling;
@@ -244,6 +247,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     init_Block(&d->sourceContent, 0);
     init_PtrArray(&d->visibleLinks);
     init_PtrArray(&d->visiblePlayers);
+    d->grabbedPlayer = NULL;
     init_Click(&d->click, d, SDL_BUTTON_LEFT);
     addChild_Widget(w, iClob(d->scroll = new_ScrollWidget()));
     d->menu = NULL; /* created when clicking */
@@ -1532,114 +1536,30 @@ static size_t visibleLinkOrdinal_DocumentWidget_(const iDocumentWidget *d, iGmLi
     return iInvalidPos;
 }
 
-iDeclareType(PlayerUI)
-
-struct Impl_PlayerUI {
-    const iPlayer *player;
-    iRect bounds;
-    iRect playPauseRect;
-    iRect rewindRect;
-    iRect scrubberRect;
-    iRect menuRect;
-};
-
-static void init_PlayerUI(iPlayerUI *d, const iPlayer *player, iRect bounds) {
-    d->player = player;
-    d->bounds = bounds;
-    const int height = height_Rect(bounds);
-    d->playPauseRect = (iRect){ addX_I2(topLeft_Rect(bounds), gap_UI / 2), init_I2(3 * height / 2, height) };
-    d->rewindRect    = (iRect){ topRight_Rect(d->playPauseRect), init1_I2(height) };
-    d->menuRect      = (iRect){ addX_I2(topRight_Rect(bounds), -height - gap_UI / 2), init1_I2(height) };
-    d->scrubberRect  = initCorners_Rect(topRight_Rect(d->rewindRect), bottomLeft_Rect(d->menuRect));
-}
-
-static void drawPlayerButton_(iPaint *p, iRect rect, const char *label) {
-    const iInt2 mouse     = mouseCoord_Window(get_Window());
-    const iBool isHover   = contains_Rect(rect, mouse);
-    const iBool isPressed = isHover && (SDL_GetMouseState(NULL, NULL) & SDL_BUTTON_LEFT) != 0;
-    const int frame = (isPressed ? uiTextCaution_ColorId : isHover ? uiHeading_ColorId : uiAnnotation_ColorId);
-    iRect frameRect = shrunk_Rect(rect, init_I2(gap_UI / 2, gap_UI));
-    drawRect_Paint(p, frameRect, frame);
-    if (isPressed) {
-        fillRect_Paint(
-            p,
-            adjusted_Rect(shrunk_Rect(frameRect, divi_I2(gap2_UI, 2)), zero_I2(), one_I2()),
-            frame);
-    }
-    const int fg = isPressed ? (permanent_ColorId | uiBackground_ColorId) : uiHeading_ColorId;
-    drawCentered_Text(uiContent_FontId, frameRect, iTrue, fg, "%s", label);
-}
-
-static int drawSevenSegmentTime_(iInt2 pos, int color, int align, int seconds) { /* returns width */
-    const uint32_t sevenSegmentDigit = 0x1fbf0;
-    const int hours = seconds / 3600;
-    const int mins  = (seconds / 60) % 60;
-    const int secs  = seconds % 60;
-    const int font  = uiLabel_FontId;
-    iString   num;
-    init_String(&num);
-    if (hours) {
-        appendChar_String(&num, sevenSegmentDigit + (hours % 10));
-        appendChar_String(&num, ':');
-    }
-    appendChar_String(&num, sevenSegmentDigit + (mins / 10) % 10);
-    appendChar_String(&num, sevenSegmentDigit + (mins % 10));
-    appendChar_String(&num, ':');
-    appendChar_String(&num, sevenSegmentDigit + (secs / 10) % 10);
-    appendChar_String(&num, sevenSegmentDigit + (secs % 10));
-    iInt2 size = advanceRange_Text(font, range_String(&num));
-    if (align == right_Alignment) {
-        pos.x -= size.x;
-    }
-    drawRange_Text(font, pos, color, range_String(&num));
-    deinit_String(&num);
-    return size.x;
-}
-
-static void draw_PlayerUI(iPlayerUI *d, iPaint *p) {
-    const int playerBackground_ColorId = uiBackground_ColorId;
-    const int playerFrame_ColorId      = uiSeparator_ColorId;
-    fillRect_Paint(p, d->bounds, playerBackground_ColorId);
-    drawRect_Paint(p, d->bounds, playerFrame_ColorId);
-    drawPlayerButton_(p, d->playPauseRect, isPaused_Player(d->player) ? "\U0001f782" : "\u23f8");
-    drawPlayerButton_(p, d->rewindRect, "\u23ee");
-    drawPlayerButton_(p, d->menuRect, "\U0001d362");
-    const int   hgt       = lineHeight_Text(uiLabel_FontId);
-    const int   yMid      = mid_Rect(d->scrubberRect).y;
-    const float playTime  = time_Player(d->player);
-    const float totalTime = duration_Player(d->player);
-    const int   bright    = uiHeading_ColorId;
-    const int   dim       = uiAnnotation_ColorId;
-    int leftWidth = drawSevenSegmentTime_(
-        init_I2(left_Rect(d->scrubberRect) + 2 * gap_UI, yMid - hgt / 2),
-        isPaused_Player(d->player) ? dim : bright,
-        left_Alignment,
-        iRound(playTime));
-    int rightWidth = 0;
-    if (totalTime > 0) {
-        rightWidth =
-            drawSevenSegmentTime_(init_I2(right_Rect(d->scrubberRect) - 2 * gap_UI, yMid - hgt / 2),
-                                  dim,
-                                  right_Alignment,
-                                  iRound(totalTime));
-    }
-    /* Scrubber. */
-    const int   s1      = left_Rect(d->scrubberRect) + leftWidth + 6 * gap_UI;
-    const int   s2      = right_Rect(d->scrubberRect) - rightWidth - 6 * gap_UI;
-    const float normPos = totalTime > 0 ? playTime / totalTime : 0.0f;
-    const int   part    = (s2 - s1) * normPos;
-    const int   scrubMax = (s2 - s1) * streamProgress_Player(d->player);
-    drawHLine_Paint(p, init_I2(s1, yMid), part, bright);
-    drawHLine_Paint(p, init_I2(s1 + part, yMid), scrubMax - part, dim);
-    draw_Text(uiLabel_FontId,
-              init_I2(s1 * (1.0f - normPos) + s2 * normPos - hgt / 3, yMid - hgt / 2),
-              bright,
-              "\u23fa");
-}
-
 static iRect audioPlayerRect_DocumentWidget_(const iDocumentWidget *d, const iGmRun *run) {
     const iRect docBounds = documentBounds_DocumentWidget_(d);
     return moved_Rect(run->bounds, addY_I2(topLeft_Rect(docBounds), -d->scrollY));
+}
+
+static void setGrabbedPlayer_DocumentWidget_(iDocumentWidget *d, const iGmRun *run) {
+    if (run) {
+        iPlayer *plr = audioPlayer_Media(media_GmDocument(d->doc), run->audioId);
+        setFlags_Player(plr, volumeGrabbed_PlayerFlag, iTrue);
+        d->grabbedStartVolume = volume_Player(plr);
+        d->grabbedPlayer      = run;
+        refresh_Widget(d);
+    }
+    else if (d->grabbedPlayer) {
+        setFlags_Player(
+            audioPlayer_Media(media_GmDocument(d->doc), d->grabbedPlayer->audioId),
+            volumeGrabbed_PlayerFlag,
+            iFalse);
+        d->grabbedPlayer = NULL;
+        refresh_Widget(d);
+    }
+    else {
+        iAssert(iFalse);
+    }
 }
 
 static iBool processAudioPlayerEvents_DocumentWidget_(iDocumentWidget *d, const SDL_Event *ev) {
@@ -1652,18 +1572,32 @@ static iBool processAudioPlayerEvents_DocumentWidget_(iDocumentWidget *d, const 
             return iFalse;
         }
     }
+    if (d->grabbedPlayer) {
+        /* Updated in the drag. */
+        return iFalse;
+    }
     const iInt2 mouse = init_I2(ev->button.x, ev->button.y);
     iConstForEach(PtrArray, i, &d->visiblePlayers) {
-        const iGmRun *run = i.ptr;
-        const iRect rect = audioPlayerRect_DocumentWidget_(d, run);
+        const iGmRun *run  = i.ptr;
+        const iRect   rect = audioPlayerRect_DocumentWidget_(d, run);
+        iPlayer *     plr  = audioPlayer_Media(media_GmDocument(d->doc), run->audioId);
         if (contains_Rect(rect, mouse)) {
+            iPlayerUI ui;
+            init_PlayerUI(&ui, plr, rect);
             if (ev->type == SDL_MOUSEBUTTONDOWN || ev->type == SDL_MOUSEMOTION) {
+                if (ev->type == SDL_MOUSEBUTTONDOWN &&
+                    flags_Player(plr) & adjustingVolume_PlayerFlag &&
+                    contains_Rect(adjusted_Rect(ui.volumeAdjustRect,
+                                                zero_I2(),
+                                                init_I2(-height_Rect(ui.volumeAdjustRect), 0)),
+                                  mouse)) {
+                    setGrabbedPlayer_DocumentWidget_(d, run);
+                    processEvent_Click(&d->click, ev);
+                    /* The rest is done in the DocumentWidget click responder. */
+                }
                 refresh_Widget(d);
                 return iTrue;
             }
-            iPlayer *plr = audioPlayer_Media(media_GmDocument(d->doc), run->audioId);
-            iPlayerUI ui;
-            init_PlayerUI(&ui, plr, rect);
             if (contains_Rect(ui.playPauseRect, mouse)) {
                 setPaused_Player(plr, !isPaused_Player(plr));
                 animatePlayingAudio_DocumentWidget_(d);
@@ -1675,6 +1609,13 @@ static iBool processAudioPlayerEvents_DocumentWidget_(iDocumentWidget *d, const 
                     start_Player(plr);
                     setPaused_Player(plr, iTrue);
                 }
+                refresh_Widget(d);
+                return iTrue;
+            }
+            else if (contains_Rect(ui.volumeRect, mouse)) {
+                setFlags_Player(plr,
+                                adjustingVolume_PlayerFlag,
+                                !(flags_Player(plr) & adjustingVolume_PlayerFlag));
                 refresh_Widget(d);
                 return iTrue;
             }
@@ -1933,6 +1874,16 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             d->selecting = iFalse;
             return iTrue;
         case drag_ClickResult: {
+            if (d->grabbedPlayer) {
+                iPlayer *plr =
+                    audioPlayer_Media(media_GmDocument(d->doc), d->grabbedPlayer->audioId);
+                iPlayerUI ui;
+                init_PlayerUI(&ui, plr, audioPlayerRect_DocumentWidget_(d, d->grabbedPlayer));
+                float off = (float) delta_Click(&d->click).x / (float) width_Rect(ui.volumeSlider);
+                setVolume_Player(plr, d->grabbedStartVolume + off);
+                refresh_Widget(w);
+                return iTrue;
+            }
             /* Begin selecting a range of text. */
             if (!d->selecting) {
                 setFocus_Widget(NULL); /* TODO: Focus this document? */
@@ -1955,6 +1906,10 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             return iTrue;
         }
         case finished_ClickResult:
+            if (d->grabbedPlayer) {
+                setGrabbedPlayer_DocumentWidget_(d, NULL);
+                return iTrue;
+            }
             if (isVisible_Widget(d->menu)) {
                 closeMenu_Widget(d->menu);
             }
@@ -2029,6 +1984,10 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             return iTrue;
         case double_ClickResult:
         case aborted_ClickResult:
+            if (d->grabbedPlayer) {
+                setGrabbedPlayer_DocumentWidget_(d, NULL);
+                return iTrue;
+            }
             return iTrue;
         default:
             break;
@@ -2559,6 +2518,7 @@ const iString *bookmarkTitle_DocumentWidget(const iDocumentWidget *d) {
     }
     return collect_String(joinCStr_StringArray(title, " \u2014 "));
 }
+
 
 void serializeState_DocumentWidget(const iDocumentWidget *d, iStream *outs) {
     serialize_Model(&d->mod, outs);

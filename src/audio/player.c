@@ -203,10 +203,11 @@ static enum iDecoderStatus decodeVorbis_Decoder_(iDecoder *d, iRanges inputRange
             else continue;
         }
         /* Apply gain. */ {
+            const float gain = d->gain;
             float sample[2];
             for (size_t i = 0; i < (size_t) count; ++i) {
                 for (size_t chan = 0; chan < d->output.numChannels; chan++) {
-                    sample[chan] = samples[chan][i] * d->gain;
+                    sample[chan] = samples[chan][i] * gain;
                 }
                 pushBack_Array(&d->pendingOutput, sample);
             }
@@ -265,7 +266,7 @@ static iThreadResult run_Decoder_(iThread *thread) {
 
 void init_Decoder(iDecoder *d, iInputBuf *input, const iContentSpec *spec) {
     d->type           = spec->type;
-    d->gain           = 0.5f;
+    d->gain           = 1.0f;
     d->input          = input;
     d->inputPos       = spec->inputStartPos;
     d->inputFormat    = spec->inputFormat;
@@ -305,6 +306,8 @@ struct Impl_Player {
     SDL_AudioSpec     spec;
     SDL_AudioDeviceID device;
     iString           mime;
+    float             volume;
+    int               flags;
     iInputBuf *       data;
     iDecoder *        decoder;
 };
@@ -464,6 +467,8 @@ void init_Player(iPlayer *d) {
     d->device  = 0;
     d->decoder = NULL;
     d->data    = new_InputBuf();
+    d->volume  = 1.0f;
+    d->flags   = 0;
 }
 
 void deinit_Player(iPlayer *d) {
@@ -479,6 +484,10 @@ iBool isStarted_Player(const iPlayer *d) {
 iBool isPaused_Player(const iPlayer *d) {
     if (!d->device) return iTrue;
     return SDL_GetAudioDeviceStatus(d->device) == SDL_AUDIO_PAUSED;
+}
+
+float volume_Player(const iPlayer *d) {
+    return d->volume;
 }
 
 void updateSourceData_Player(iPlayer *d, const iString *mimeType, const iBlock *data,
@@ -527,6 +536,7 @@ iBool start_Player(iPlayer *d) {
         return iFalse;
     }
     d->decoder = new_Decoder(d->data, &content);
+    d->decoder->gain = d->volume;
     SDL_PauseAudioDevice(d->device, SDL_FALSE);
     return iTrue;
 }
@@ -546,6 +556,21 @@ void stop_Player(iPlayer *d) {
         delete_Decoder(d->decoder);
         d->decoder = NULL;
     }
+}
+
+void setVolume_Player(iPlayer *d, float volume) {
+    d->volume = iClamp(volume, 0, 1);
+    if (d->decoder) {
+        d->decoder->gain = d->volume;
+    }
+}
+
+void setFlags_Player(iPlayer *d, int flags, iBool set) {
+    iChangeFlags(d->flags, flags, set);
+}
+
+int flags_Player(const iPlayer *d) {
+    return d->flags;
 }
 
 float time_Player(const iPlayer *d) {

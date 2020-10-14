@@ -78,10 +78,11 @@ enum iFontId {
     fromSymbolsToEmojiOffset_FontId = 9,
 
     /* UI fonts: */
-    uiLabel_FontId        = default_FontId,
-    uiShortcuts_FontId    = default_FontId,
-    uiInput_FontId        = defaultMonospace_FontId,
-    uiContent_FontId      = defaultMedium_FontId,
+    uiLabel_FontId          = default_FontId,
+    uiShortcuts_FontId      = default_FontId,
+    uiInput_FontId          = defaultMonospace_FontId,
+    uiContent_FontId        = defaultMedium_FontId,
+    uiContentSymbols_FontId = defaultMediumSymbols_FontId,
     /* Document fonts: */
     paragraph_FontId         = regular_FontId,
     firstParagraph_FontId    = medium_FontId,

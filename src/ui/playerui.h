@@ -22,37 +22,23 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
-#include <the_Foundation/block.h>
+#include <the_Foundation/rect.h>
 
+iDeclareType(Paint)
 iDeclareType(Player)
-iDeclareTypeConstruction(Player)    
+iDeclareType(PlayerUI)
 
-enum iPlayerUpdate {
-    replace_PlayerUpdate,
-    append_PlayerUpdate,
-    complete_PlayerUpdate,
+struct Impl_PlayerUI {
+    const iPlayer *player;
+    iRect bounds;
+    iRect playPauseRect;
+    iRect rewindRect;
+    iRect scrubberRect;
+    iRect volumeRect;
+    iRect volumeAdjustRect;
+    iRect volumeSlider;
+    iRect menuRect;
 };
 
-enum iPlayerFlag {
-    adjustingVolume_PlayerFlag = iBit(1),
-    volumeGrabbed_PlayerFlag   = iBit(2),
-};
-
-void    updateSourceData_Player (iPlayer *, const iString *mimeType, const iBlock *data,
-                                 enum iPlayerUpdate update);
-
-iBool   start_Player            (iPlayer *);
-void    stop_Player             (iPlayer *);
-void    setPaused_Player        (iPlayer *, iBool isPaused);
-void    setVolume_Player        (iPlayer *, float volume);
-void    setFlags_Player         (iPlayer *, int flags, iBool set);
-
-int     flags_Player            (const iPlayer *);
-iBool   isStarted_Player        (const iPlayer *);
-iBool   isPaused_Player         (const iPlayer *);
-float   volume_Player           (const iPlayer *);
-float   time_Player             (const iPlayer *);
-float   duration_Player         (const iPlayer *);
-float   streamProgress_Player   (const iPlayer *); /* normalized 0...1 */
-
-iString *   metadataLabel_Player    (const iPlayer *);
+void    init_PlayerUI   (iPlayerUI *, const iPlayer *player, iRect bounds);
+void    draw_PlayerUI   (iPlayerUI *, iPaint *p);
