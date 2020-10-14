@@ -142,7 +142,12 @@ struct Impl_OutlineItem {
 
 /*----------------------------------------------------------------------------------------------*/
 
-static const int smoothSpeed_DocumentWidget_ = 120; /* unit: gap_Text per second */
+static void animatePlayingAudio_DocumentWidget_(void *);
+
+static const int smoothSpeed_DocumentWidget_     = 120; /* unit: gap_Text per second */
+static const int outlineMinWidth_DocumentWdiget_ = 45;  /* times gap_UI */
+static const int outlineMaxWidth_DocumentWidget_ = 65;  /* times gap_UI */
+static const int outlinePadding_DocumentWidget_  = 3;   /* times gap_UI */
 
 enum iRequestState {
     blank_RequestState,
@@ -251,8 +256,6 @@ void init_DocumentWidget(iDocumentWidget *d) {
     addAction_Widget(w, navigateForward_KeyShortcut, "navigate.forward");
 }
 
-static void animatePlayingAudio_DocumentWidget_(void *);
-
 void deinit_DocumentWidget(iDocumentWidget *d) {
     removeTicker_App(animatePlayingAudio_DocumentWidget_, d);
     delete_VisBuf(d->visBuf);
@@ -268,6 +271,24 @@ void deinit_DocumentWidget(iDocumentWidget *d) {
     delete_String(d->certSubject);
     delete_String(d->titleUser);
     deinit_Model(&d->mod);
+}
+
+static void requestUpdated_DocumentWidget_(iAnyObject *obj) {
+    iDocumentWidget *d = obj;
+    const int wasUpdated = exchange_Atomic(&d->isRequestUpdated, iTrue);
+    if (!wasUpdated) {
+        postCommand_Widget(obj, "document.request.updated doc:%p request:%p", d, d->request);
+    }
+}
+
+static void requestTimedOut_DocumentWidget_(iAnyObject *obj) {
+    iDocumentWidget *d = obj;
+    postCommandf_App("document.request.timeout doc:%p request:%p", d, d->request);
+}
+
+static void requestFinished_DocumentWidget_(iAnyObject *obj) {
+    iDocumentWidget *d = obj;
+    postCommand_Widget(obj, "document.request.finished doc:%p request:%p", d, d->request);
 }
 
 static void resetSmoothScroll_DocumentWidget_(iDocumentWidget *d) {
@@ -318,24 +339,6 @@ static int forceBreakWidth_DocumentWidget_(const iDocumentWidget *d) {
 
 static iInt2 documentPos_DocumentWidget_(const iDocumentWidget *d, iInt2 pos) {
     return addY_I2(sub_I2(pos, topLeft_Rect(documentBounds_DocumentWidget_(d))), d->scrollY);
-}
-
-static void requestUpdated_DocumentWidget_(iAnyObject *obj) {
-    iDocumentWidget *d = obj;
-    const int wasUpdated = exchange_Atomic(&d->isRequestUpdated, iTrue);
-    if (!wasUpdated) {
-        postCommand_Widget(obj, "document.request.updated doc:%p request:%p", d, d->request);
-    }
-}
-
-static void requestTimedOut_DocumentWidget_(iAnyObject *obj) {
-    iDocumentWidget *d = obj;
-    postCommandf_App("document.request.timeout doc:%p request:%p", d, d->request);
-}
-
-static void requestFinished_DocumentWidget_(iAnyObject *obj) {
-    iDocumentWidget *d = obj;
-    postCommand_Widget(obj, "document.request.finished doc:%p request:%p", d, d->request);
 }
 
 static iRangei visibleRange_DocumentWidget_(const iDocumentWidget *d) {
@@ -484,27 +487,6 @@ static void updateVisible_DocumentWidget_(iDocumentWidget *d) {
     }
 }
 
-const iString *bookmarkTitle_DocumentWidget(const iDocumentWidget *d) {
-    iStringArray *title = iClob(new_StringArray());
-    if (!isEmpty_String(title_GmDocument(d->doc))) {
-        pushBack_StringArray(title, title_GmDocument(d->doc));
-    }
-    if (!isEmpty_String(d->titleUser)) {
-        pushBack_StringArray(title, d->titleUser);
-    }
-    if (isEmpty_StringArray(title)) {
-        iUrl parts;
-        init_Url(&parts, d->mod.url);
-        if (!isEmpty_Range(&parts.host)) {
-            pushBackRange_StringArray(title, parts.host);
-        }
-    }
-    if (isEmpty_StringArray(title)) {
-        pushBackCStr_StringArray(title, "Blank Page");
-    }
-    return collect_String(joinCStr_StringArray(title, " \u2014 "));
-}
-
 static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
     iLabelWidget *tabButton = tabPageButton_Widget(findWidget_App("doctabs"), d);
     if (!tabButton) {
@@ -575,10 +557,6 @@ static void invalidate_DocumentWidget_(iDocumentWidget *d) {
     invalidate_VisBuf(d->visBuf);
     clear_PtrSet(d->invalidRuns);
 }
-
-static const int outlineMinWidth_DocumentWdiget_ = 45; /* times gap_UI */
-static const int outlineMaxWidth_DocumentWidget_ = 65; /* times gap_UI */
-static const int outlinePadding_DocumentWidget_  = 3;  /* times gap_UI */
 
 static int outlineWidth_DocumentWidget_(const iDocumentWidget *d) {
     const iWidget *w         = constAs_Widget(d);
@@ -865,18 +843,6 @@ static void updateTrust_DocumentWidget_(iDocumentWidget *d, const iGmResponse *r
     }
 }
 
-iHistory *history_DocumentWidget(iDocumentWidget *d) {
-    return d->mod.history;
-}
-
-const iString *url_DocumentWidget(const iDocumentWidget *d) {
-    return d->mod.url;
-}
-
-const iGmDocument *document_DocumentWidget(const iDocumentWidget *d) {
-    return d->doc;
-}
-
 static void parseUser_DocumentWidget_(iDocumentWidget *d) {
     clear_String(d->titleUser);
     iRegExp *userPats[2] = { new_RegExp("~([^/?]+)", 0),
@@ -916,57 +882,6 @@ static iBool updateFromHistory_DocumentWidget_(iDocumentWidget *d) {
         fetch_DocumentWidget_(d);
     }
     return iFalse;
-}
-
-void serializeState_DocumentWidget(const iDocumentWidget *d, iStream *outs) {
-    serialize_Model(&d->mod, outs);
-}
-
-void deserializeState_DocumentWidget(iDocumentWidget *d, iStream *ins) {
-    deserialize_Model(&d->mod, ins);
-    parseUser_DocumentWidget_(d);
-    updateFromHistory_DocumentWidget_(d);
-}
-
-void setUrlFromCache_DocumentWidget(iDocumentWidget *d, const iString *url, iBool isFromCache) {
-    if (cmpStringSc_String(d->mod.url, url, &iCaseInsensitive)) {
-        set_String(d->mod.url, url);
-        /* See if there a username in the URL. */
-        parseUser_DocumentWidget_(d);
-        if (!isFromCache || !updateFromHistory_DocumentWidget_(d)) {
-            fetch_DocumentWidget_(d);
-        }
-    }
-    else {
-        postCommandf_App("document.changed url:%s", cstr_String(d->mod.url));
-    }
-}
-
-iDocumentWidget *duplicate_DocumentWidget(const iDocumentWidget *orig) {
-    iDocumentWidget *d = new_DocumentWidget();
-    delete_History(d->mod.history);
-    d->initNormScrollY = normScrollPos_DocumentWidget_(d);
-    d->mod.history = copy_History(orig->mod.history);
-    setUrlFromCache_DocumentWidget(d, orig->mod.url, iTrue);
-    return d;
-}
-
-void setUrl_DocumentWidget(iDocumentWidget *d, const iString *url) {
-    setUrlFromCache_DocumentWidget(d, url, iFalse);
-}
-
-void setInitialScroll_DocumentWidget(iDocumentWidget *d, float normScrollY) {
-    d->initNormScrollY = normScrollY;
-}
-
-void setRedirectCount_DocumentWidget(iDocumentWidget *d, int count) {
-    d->redirectCount = count;
-}
-
-iBool isRequestOngoing_DocumentWidget(const iDocumentWidget *d) {
-    /*return d->state == fetching_RequestState ||
-            d->state == receivedPartialResponse_RequestState;*/
-    return d->request != NULL;
 }
 
 static void scroll_DocumentWidget_(iDocumentWidget *d, int offset) {
@@ -1248,14 +1163,6 @@ static void allocVisBuffer_DocumentWidget_(const iDocumentWidget *d) {
     else {
         dealloc_VisBuf(d->visBuf);
     }
-}
-
-void updateSize_DocumentWidget(iDocumentWidget *d) {
-    setWidth_GmDocument(
-        d->doc, documentWidth_DocumentWidget_(d), forceBreakWidth_DocumentWidget_(d));
-    updateOutline_DocumentWidget_(d);
-    updateVisible_DocumentWidget_(d);
-    invalidate_DocumentWidget_(d);
 }
 
 static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
@@ -2616,6 +2523,100 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
     }
     drawSideElements_DocumentWidget_(d);
     draw_Widget(w);
+}
+
+/*----------------------------------------------------------------------------------------------*/
+
+iHistory *history_DocumentWidget(iDocumentWidget *d) {
+    return d->mod.history;
+}
+
+const iString *url_DocumentWidget(const iDocumentWidget *d) {
+    return d->mod.url;
+}
+
+const iGmDocument *document_DocumentWidget(const iDocumentWidget *d) {
+    return d->doc;
+}
+
+const iString *bookmarkTitle_DocumentWidget(const iDocumentWidget *d) {
+    iStringArray *title = iClob(new_StringArray());
+    if (!isEmpty_String(title_GmDocument(d->doc))) {
+        pushBack_StringArray(title, title_GmDocument(d->doc));
+    }
+    if (!isEmpty_String(d->titleUser)) {
+        pushBack_StringArray(title, d->titleUser);
+    }
+    if (isEmpty_StringArray(title)) {
+        iUrl parts;
+        init_Url(&parts, d->mod.url);
+        if (!isEmpty_Range(&parts.host)) {
+            pushBackRange_StringArray(title, parts.host);
+        }
+    }
+    if (isEmpty_StringArray(title)) {
+        pushBackCStr_StringArray(title, "Blank Page");
+    }
+    return collect_String(joinCStr_StringArray(title, " \u2014 "));
+}
+
+void serializeState_DocumentWidget(const iDocumentWidget *d, iStream *outs) {
+    serialize_Model(&d->mod, outs);
+}
+
+void deserializeState_DocumentWidget(iDocumentWidget *d, iStream *ins) {
+    deserialize_Model(&d->mod, ins);
+    parseUser_DocumentWidget_(d);
+    updateFromHistory_DocumentWidget_(d);
+}
+
+void setUrlFromCache_DocumentWidget(iDocumentWidget *d, const iString *url, iBool isFromCache) {
+    if (cmpStringSc_String(d->mod.url, url, &iCaseInsensitive)) {
+        set_String(d->mod.url, url);
+        /* See if there a username in the URL. */
+        parseUser_DocumentWidget_(d);
+        if (!isFromCache || !updateFromHistory_DocumentWidget_(d)) {
+            fetch_DocumentWidget_(d);
+        }
+    }
+    else {
+        postCommandf_App("document.changed url:%s", cstr_String(d->mod.url));
+    }
+}
+
+iDocumentWidget *duplicate_DocumentWidget(const iDocumentWidget *orig) {
+    iDocumentWidget *d = new_DocumentWidget();
+    delete_History(d->mod.history);
+    d->initNormScrollY = normScrollPos_DocumentWidget_(d);
+    d->mod.history = copy_History(orig->mod.history);
+    setUrlFromCache_DocumentWidget(d, orig->mod.url, iTrue);
+    return d;
+}
+
+void setUrl_DocumentWidget(iDocumentWidget *d, const iString *url) {
+    setUrlFromCache_DocumentWidget(d, url, iFalse);
+}
+
+void setInitialScroll_DocumentWidget(iDocumentWidget *d, float normScrollY) {
+    d->initNormScrollY = normScrollY;
+}
+
+void setRedirectCount_DocumentWidget(iDocumentWidget *d, int count) {
+    d->redirectCount = count;
+}
+
+iBool isRequestOngoing_DocumentWidget(const iDocumentWidget *d) {
+    /*return d->state == fetching_RequestState ||
+            d->state == receivedPartialResponse_RequestState;*/
+    return d->request != NULL;
+}
+
+void updateSize_DocumentWidget(iDocumentWidget *d) {
+    setWidth_GmDocument(
+        d->doc, documentWidth_DocumentWidget_(d), forceBreakWidth_DocumentWidget_(d));
+    updateOutline_DocumentWidget_(d);
+    updateVisible_DocumentWidget_(d);
+    invalidate_DocumentWidget_(d);
 }
 
 iBeginDefineSubclass(DocumentWidget, Widget)
