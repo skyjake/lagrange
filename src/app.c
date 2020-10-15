@@ -46,6 +46,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/sortedarray.h>
 #include <the_Foundation/time.h>
 #include <SDL_events.h>
+#include <SDL_filesystem.h>
 #include <SDL_render.h>
 #include <SDL_timer.h>
 #include <SDL_video.h>
@@ -82,6 +83,7 @@ static const char *downloadDir_App_   = "~/Downloads";
 
 struct Impl_App {
     iCommandLine args;
+    iString *    execPath;
     iGmCerts *   certs;
     iVisited *   visited;
     iBookmarks * bookmarks;
@@ -313,12 +315,23 @@ static void init_App_(iApp *d, int argc, char **argv) {
     d->launchCommands      = new_StringList();
     iZap(d->lastDropTime);
     init_CommandLine(&d->args, argc, argv);
+    /* Where was the app started from? */ {
+        char *exec = SDL_GetBasePath();
+        if (exec) {
+            d->execPath = newCStr_String(concatPath_CStr(
+                exec, cstr_Rangecc(baseName_Path(executablePath_CommandLine(&d->args)))));
+        }
+        else {
+            d->execPath = copy_String(executablePath_CommandLine(&d->args));
+        }
+        SDL_free(exec);
+    }
     init_SortedArray(&d->tickers, sizeof(iTicker), cmp_Ticker_);
-    d->lastTickerTime    = SDL_GetTicks();
+    d->lastTickerTime         = SDL_GetTicks();
     d->elapsedSinceLastTicker = 0;
-    d->commandEcho       = checkArgument_CommandLine(&d->args, "echo") != NULL;
-    d->forceSoftwareRender = checkArgument_CommandLine(&d->args, "sw") != NULL;
-    d->initialWindowRect = init_Rect(-1, -1, 900, 560);
+    d->commandEcho            = checkArgument_CommandLine(&d->args, "echo") != NULL;
+    d->forceSoftwareRender    = checkArgument_CommandLine(&d->args, "sw") != NULL;
+    d->initialWindowRect      = init_Rect(-1, -1, 900, 560);
 #if defined (iPlatformMsys)
     /* Must scale by UI scaling factor. */
     mulfv_I2(&d->initialWindowRect.size, desktopDPI_Win32());
@@ -417,10 +430,11 @@ static void deinit_App(iApp *d) {
     d->window = NULL;
     deinit_CommandLine(&d->args);
     iRelease(d->launchCommands);
+    delete_String(d->execPath);
 }
 
 const iString *execPath_App(void) {
-    return executablePath_CommandLine(&app_.args);
+    return app_.execPath;
 }
 
 const iString *dataDir_App(void) {
