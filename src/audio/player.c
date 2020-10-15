@@ -239,34 +239,52 @@ enum iDecoderStatus decodeMpeg_Decoder_(iDecoder *d) {
 #if defined (LAGRANGE_ENABLE_MPG123)
     const iBlock *input = &d->input->data;
     if (!d->mpeg) {
+        d->inputPos = 0;
         d->mpeg = mpg123_new(NULL, NULL);
         mpg123_format_none(d->mpeg);
         mpg123_format(d->mpeg, d->outputFreq, d->output.numChannels, MPG123_ENC_SIGNED_16);
         mpg123_open_feed(d->mpeg);
+    }
+    /* Feed more input. */ {
         lock_Mutex(&d->input->mtx);
-        mpg123_feed(d->mpeg, constData_Block(input), size_Block(input));
+        if (d->input->isComplete) {
+            d->totalInputSize = size_Block(input);
+        }
+        if (d->inputPos < size_Block(input)) {
+            mpg123_feed(d->mpeg, constData_Block(input) + d->inputPos, size_Block(input) - d->inputPos);
+            if (d->inputPos == 0) {
+                long r; int ch, enc;
+                mpg123_getformat(d->mpeg, &r, &ch, &enc);
+                iAssert(r == d->outputFreq);
+                iAssert(ch == d->output.numChannels);
+                iAssert(enc == MPG123_ENC_SIGNED_16);
+            }
+            d->inputPos = size_Block(input);
+        }
         unlock_Mutex(&d->input->mtx);
-        long r; int ch, enc;
-        mpg123_getformat(d->mpeg, &r, &ch, &enc);
-        iAssert(r == d->outputFreq);
-        iAssert(ch == d->output.numChannels);
-        iAssert(enc == MPG123_ENC_SIGNED_16);
     }
     while (size_Array(&d->pendingOutput) < d->output.count) {
         int16_t buffer[512];
-        size_t bytesWritten = 0;
-        const int rc = mpg123_read(d->mpeg, buffer, sizeof(buffer), &bytesWritten);
+        size_t bytesRead = 0;
+        const int rc = mpg123_read(d->mpeg, buffer, sizeof(buffer), &bytesRead);
         const float gain = d->gain;
-        for (size_t i = 0; i < bytesWritten / 2; i++) {
+        for (size_t i = 0; i < bytesRead / 2; i++) {
             buffer[i] *= gain;
         }
-        pushBackN_Array(&d->pendingOutput, buffer, bytesWritten / 2 / d->output.numChannels);
+        pushBackN_Array(&d->pendingOutput, buffer, bytesRead / 2 / d->output.numChannels);
         if (rc == MPG123_NEED_MORE) {
             status = needMoreInput_DecoderStatus;
             break;
         }
-        else if (rc == MPG123_DONE) {
+        else if (rc == MPG123_DONE || bytesRead == 0) {
             break;
+        }
+    }
+    /* Check if we know the total length already. This info should be available eventually. */
+    if (d->totalSamples == 0) {
+        const off_t off = mpg123_length(d->mpeg);
+        if (off != MPG123_ERR) {
+            d->totalSamples = off;
         }
     }
     writePending_Decoder_(d);
@@ -286,20 +304,18 @@ static iThreadResult run_Decoder_(iThread *thread) {
         if (!d->type) break;
         /* Have data to work on and a place to save output? */
         enum iDecoderStatus status = ok_DecoderStatus;
-        if (!isEmpty_Range(&inputRange)) {
-            switch (d->type) {
-                case wav_DecoderType:
-                    status = decodeWav_Decoder_(d, inputRange);
-                    break;
-                case vorbis_DecoderType:
-                    status = decodeVorbis_Decoder_(d);
-                    break;
-                case mpeg_DecoderType:
-                    status = decodeMpeg_Decoder_(d);
-                    break;
-                default:
-                    break;
-            }
+        switch (d->type) {
+            case wav_DecoderType:
+                status = decodeWav_Decoder_(d, inputRange);
+                break;
+            case vorbis_DecoderType:
+                status = decodeVorbis_Decoder_(d);
+                break;
+            case mpeg_DecoderType:
+                status = decodeMpeg_Decoder_(d);
+                break;
+            default:
+                break;
         }
         if (status == needMoreInput_DecoderStatus) {
             lock_Mutex(&d->input->mtx);
@@ -326,13 +342,13 @@ void init_Decoder(iDecoder *d, iInputBuf *input, const iContentSpec *spec) {
     d->inputFormat    = spec->inputFormat;
     d->totalInputSize = spec->totalInputSize;
     d->outputFreq     = spec->output.freq;
+    d->currentSample  = 0;
+    d->totalSamples   = spec->totalSamples;
     init_Array(&d->pendingOutput, spec->output.channels * SDL_AUDIO_BITSIZE(spec->output.format) / 8);
     init_SampleBuf(&d->output,
                    spec->output.format,
                    spec->output.channels,
                    spec->output.samples * 2);
-    d->currentSample = 0;
-    d->totalSamples  = spec->totalSamples;
     d->vorbis = NULL;
 #if defined (LAGRANGE_ENABLE_MPG123)
     d->mpeg = NULL;
@@ -514,9 +530,9 @@ static iContentSpec contentSpec_Player_(const iPlayer *d) {
         mpg123_handle *mh = mpg123_new(NULL, NULL);
         mpg123_open_feed(mh);
         mpg123_feed(mh, constData_Block(&d->data->data), size_Block(&d->data->data));
-        long rate = 0;
-        int channels = 0;
-        int encoding = 0;
+        long rate     = 0;
+        int  channels = 0;
+        int  encoding = 0;
         if (mpg123_getformat(mh, &rate, &channels, &encoding) == MPG123_OK) {
             content.output.freq     = rate;
             content.output.channels = channels;
