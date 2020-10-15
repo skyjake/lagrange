@@ -38,6 +38,14 @@ enum iPlayerFlag {
     volumeGrabbed_PlayerFlag   = iBit(2),
 };
 
+enum iPlayerTag {
+    title_PlayerTag,
+    artist_PlayerTag,
+    genre_PlayerTag,
+    date_PlayerTag,
+    max_PlayerTag,
+};
+
 void    updateSourceData_Player (iPlayer *, const iString *mimeType, const iBlock *data,
                                  enum iPlayerUpdate update);
 
@@ -48,6 +56,7 @@ void    setVolume_Player        (iPlayer *, float volume);
 void    setFlags_Player         (iPlayer *, int flags, iBool set);
 
 int     flags_Player            (const iPlayer *);
+const iString *tag_Player       (const iPlayer *, enum iPlayerTag tag);
 iBool   isStarted_Player        (const iPlayer *);
 iBool   isPaused_Player         (const iPlayer *);
 float   volume_Player           (const iPlayer *);
