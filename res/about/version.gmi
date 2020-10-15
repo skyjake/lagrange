@@ -7,7 +7,7 @@
 # Release notes
 
 ## 0.5
-* Added MP3 support in the audio player (using libmpg123).
+* Added MP3 support in the audio player (using mpg123).
 * Added volume control in the audio player.
 * Metadata in Vorbis and MP3 audio content (title, artist, etc.) is shown in the audio player menu.
 * Added new serif fonts: EB Garamond and Literata.

@@ -29,6 +29,12 @@ SDL 2.0 and newer are available under the zlib license:
 >
 > 3. This notice may not be removed or altered from any source distribution.
 
+## mpg123
+
+mpg123 is a fast console MPEG audio player and decoder library. It is licensed under LGPL 2.1.
+=> https://www.gnu.org/licenses/old-licenses/lgpl-2.1.en.html GNU LGPL version 2.1
+=> https://mpg123.org/ mpg123
+
 ## the_Foundation
 
 the_Foundation is an opinionated C11 library by Jaakko Keränen. It is under the BSD 2-clause license. Note that the rest of the libraries in this section are used by the_Foundation, and not directly by Lagrange.
@@ -88,7 +94,7 @@ SSLeay license:
 ## GNU libunistring
 
 The libunistring library is covered by the GNU Lesser General Public License (LGPL):
-=> https://www.gnu.org/software/libunistring/manual/libunistring.html#GNU-LGPL GNU LGPL License
+=> https://www.gnu.org/software/libunistring/manual/libunistring.html#GNU-LGPL GNU LGPL
 
 ## Fonts
 
