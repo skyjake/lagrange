@@ -7,10 +7,14 @@
 # Release notes
 
 ## 0.5
+* Added MP3 support in the audio player (using libmpg123).
+* Added volume control in the audio player.
+* Metadata in Vorbis and MP3 audio content (title, artist, etc.) is shown in the audio player menu.
 * Added new serif fonts: EB Garamond and Literata.
-* Configure separate fonts for headings and body text for more visual distinction.
+* Allow configuring separate fonts for headings and body text for better visual distinction.
 * Preferences dialog remembers the previously open tab.
 * Paste from clipboard on middle mouse button click.
+* Fixed failure to find resources when launching via PATH.
 
 ## 0.4.1
 * Set keyboard focus to URL input field after opening a new tab.
