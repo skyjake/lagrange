@@ -297,7 +297,7 @@ enum iDecoderStatus decodeMpeg_Decoder_(iDecoder *d) {
     while (size_Array(&d->pendingOutput) < d->output.count) {
         int16_t buffer[512];
         size_t bytesRead = 0;
-        const int rc = mpg123_read(d->mpeg, buffer, sizeof(buffer), &bytesRead);
+        const int rc = mpg123_read(d->mpeg, (uint8_t *) buffer, sizeof(buffer), &bytesRead);
         const float gain = d->gain;
         for (size_t i = 0; i < bytesRead / 2; i++) {
             buffer[i] *= gain;
