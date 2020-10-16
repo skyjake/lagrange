@@ -1810,6 +1810,11 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             postCommand_App("navigate.forward");
             return iTrue;
         }
+        if (ev->button.button == SDL_BUTTON_MIDDLE && d->hoverLink) {
+            postCommandf_App("open newtab:1 url:%s",
+                             cstr_String(linkUrl_GmDocument(d->doc, d->hoverLink->linkId)));
+            return iTrue;
+        }
         if (ev->button.button == SDL_BUTTON_RIGHT) {
             if (!d->menu || !isVisible_Widget(d->menu)) {
                 d->contextLink = d->hoverLink;

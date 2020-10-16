@@ -707,20 +707,22 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
                 }
             }
             iWidget *oldHover = hover_Widget();
-            /* As a special case, clicking the middle mouse button can be used for pasting
-               from the clipboard. */
-            if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_MIDDLE) {
-                SDL_Event paste;
-                iZap(paste);
-                paste.type           = SDL_KEYDOWN;
-                paste.key.keysym.sym = SDLK_v;
-                paste.key.keysym.mod = KMOD_PRIMARY;
-                paste.key.state      = SDL_PRESSED;
-                paste.key.timestamp  = SDL_GetTicks();
-                dispatchEvent_Widget(widget, &paste);
-            }
             /* Dispatch the event to the tree of widgets. */
             iBool wasUsed = dispatchEvent_Widget(widget, &event);
+            if (!wasUsed) {
+                /* As a special case, clicking the middle mouse button can be used for pasting
+                   from the clipboard. */
+                if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_MIDDLE) {
+                    SDL_Event paste;
+                    iZap(paste);
+                    paste.type           = SDL_KEYDOWN;
+                    paste.key.keysym.sym = SDLK_v;
+                    paste.key.keysym.mod = KMOD_PRIMARY;
+                    paste.key.state      = SDL_PRESSED;
+                    paste.key.timestamp  = SDL_GetTicks();
+                    wasUsed = dispatchEvent_Widget(widget, &paste);
+                }
+            }
             if (oldHover != hover_Widget()) {
                 postRefresh_App();
             }
