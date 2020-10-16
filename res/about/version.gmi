@@ -15,6 +15,7 @@
 * Preferences dialog remembers the previously open tab.
 * Paste from clipboard on middle mouse button click.
 * Fixed failure to find resources when launching via PATH.
+* Fixed color saturation setting not affecting the default color theme.
 
 ## 0.4.1
 * Set keyboard focus to URL input field after opening a new tab.
