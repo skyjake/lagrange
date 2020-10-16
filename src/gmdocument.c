@@ -713,6 +713,14 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
             set_Color(tmGopherLinkLastVisitDate_ColorId, get_Color(blue_ColorId));
         }
         set_Color(tmBadLink_ColorId, get_Color(red_ColorId));
+        /* Apply the saturation setting. */
+        for (int i = tmFirst_ColorId; i < max_ColorId; i++) {
+            if (!isLink_ColorId(i)) {
+                iHSLColor color = get_HSLColor(i);
+                color.sat *= prefs->saturation;
+                setHsl_Color(i, color);
+            }
+        }
     }
     if (seed && !isEmpty_Block(seed)) {
         d->themeSeed = crc32_Block(seed);
