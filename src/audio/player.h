@@ -54,6 +54,7 @@ void    stop_Player             (iPlayer *);
 void    setPaused_Player        (iPlayer *, iBool isPaused);
 void    setVolume_Player        (iPlayer *, float volume);
 void    setFlags_Player         (iPlayer *, int flags, iBool set);
+void    setNotIdle_Player       (iPlayer *);
 
 int     flags_Player            (const iPlayer *);
 const iString *tag_Player       (const iPlayer *, enum iPlayerTag tag);
@@ -64,4 +65,5 @@ float   time_Player             (const iPlayer *);
 float   duration_Player         (const iPlayer *);
 float   streamProgress_Player   (const iPlayer *); /* normalized 0...1 */
 
+uint32_t    idleTimeMs_Player       (const iPlayer *);
 iString *   metadataLabel_Player    (const iPlayer *);

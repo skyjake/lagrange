@@ -29,6 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/buffer.h>
 #include <the_Foundation/thread.h>
 #include <SDL_audio.h>
+#include <SDL_timer.h>
 
 #if defined (LAGRANGE_ENABLE_MPG123)
 #  include <mpg123.h>
@@ -443,6 +444,7 @@ struct Impl_Player {
     float             volume;
     int               flags;
     iInputBuf *       data;
+    uint32_t          lastInteraction;
     iDecoder *        decoder;
 };
 
@@ -695,12 +697,14 @@ iBool start_Player(iPlayer *d) {
     d->decoder = new_Decoder(d->data, &content);
     d->decoder->gain = d->volume;
     SDL_PauseAudioDevice(d->device, SDL_FALSE);
+    setNotIdle_Player(d);
     return iTrue;
 }
 
 void setPaused_Player(iPlayer *d, iBool isPaused) {
     if (isStarted_Player(d)) {
         SDL_PauseAudioDevice(d->device, isPaused ? SDL_TRUE : SDL_FALSE);
+        setNotIdle_Player(d);
     }
 }
 
@@ -720,10 +724,16 @@ void setVolume_Player(iPlayer *d, float volume) {
     if (d->decoder) {
         d->decoder->gain = d->volume;
     }
+    setNotIdle_Player(d);
 }
 
 void setFlags_Player(iPlayer *d, int flags, iBool set) {
     iChangeFlags(d->flags, flags, set);
+    setNotIdle_Player(d);
+}
+
+void setNotIdle_Player(iPlayer *d) {
+    d->lastInteraction = SDL_GetTicks();
 }
 
 int flags_Player(const iPlayer *d) {
@@ -758,6 +768,10 @@ float streamProgress_Player(const iPlayer *d) {
         return (float) iMin(1.0, (double) inputSize / (double) d->decoder->totalInputSize);
     }
     return 0;
+}
+
+uint32_t idleTimeMs_Player(const iPlayer *d) {
+    return SDL_GetTicks() - d->lastInteraction;
 }
 
 iString *metadataLabel_Player(const iPlayer *d) {

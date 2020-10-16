@@ -460,7 +460,12 @@ static void animatePlayingAudio_DocumentWidget_(void *widget) {
     if (document_App() != d) return;
     iConstForEach(PtrArray, i, &d->visiblePlayers) {
         const iGmRun *run = i.ptr;
-        iPlayer *plr = audioPlayer_Media(media_GmDocument(d->doc), run->audioId);
+        iPlayer *     plr = audioPlayer_Media(media_GmDocument(d->doc), run->audioId);
+        if (idleTimeMs_Player(plr) > 3000 && ~flags_Player(plr) & volumeGrabbed_PlayerFlag &&
+            flags_Player(plr) & adjustingVolume_PlayerFlag) {
+            setFlags_Player(plr, adjustingVolume_PlayerFlag, iFalse);
+            refresh_Widget(d);
+        }
         if (isStarted_Player(plr) && !isPaused_Player(plr)) {
             refresh_Widget(d);
             addTicker_App(animatePlayingAudio_DocumentWidget_, d);
