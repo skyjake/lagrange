@@ -31,7 +31,7 @@ SDL 2.0 and newer are available under the zlib license:
 
 ## mpg123
 
-mpg123 is a fast console MPEG audio player and decoder library. It is licensed under LGPL 2.1.
+mpg123 is a fast console MPEG audio player and decoder library. It is licensed under LGPL 2.1. Lagrange uses the libmpg123 decoder library when playing back MPEG audio.
 => https://www.gnu.org/licenses/old-licenses/lgpl-2.1.en.html GNU LGPL version 2.1
 => https://mpg123.org/ mpg123
 

@@ -28,6 +28,7 @@ Like Gemini, Lagrange has been designed with minimalism in mind. It depends on a
 * Select and copy text with the mouse
 * Find text on the page
 * Open image links inline on the same page
+* Audio playback: MP3, Ogg Vorbis, WAV
 * Open links via keyboard shortcuts
 * Instant back/forward navigation
 * Smooth scrolling
@@ -118,7 +119,7 @@ The sidebar can be toggled via menus or by pressing ${SHIFT+}${CTRL+}L. It has f
 * Bookmarks: List of bookmarks that you've created. These appear first in search results for quick and easy access.
 * History: Chronological list of visited URLs. This is not a full history of all the URLs you've accessed over time — only unique URLs are shown at the latest access time.
 * Identities: TLS client certificates.
-* Outline: List of the headings in the currently open tab. Useful when reading longer documents. 
+* Outline: List of the headings in the currently open tab. Useful when reading longer documents.
 
 ${CTRL+}1 through ${CTRL+}4 switch between the sidebar tabs, or hide the sidebar if the current tab's key is pressed.
 
