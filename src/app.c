@@ -76,6 +76,10 @@ static const char *dataDir_App_ = "~/AppData/Roaming/fi.skyjake.Lagrange";
 #define EMB_BIN  "../../share/lagrange/resources.binary"
 static const char *dataDir_App_ = "~/.config/lagrange";
 #endif
+#if defined (LAGRANGE_EMB_BIN) /* specified in build config */
+#  undef EMB_BIN
+#  define EMB_BIN LAGRANGE_EMB_BIN
+#endif
 #define EMB_BIN2 "../resources.binary" /* fallback from build/executable dir */
 static const char *prefsFileName_App_ = "prefs.cfg";
 static const char *stateFileName_App_ = "state.binary";

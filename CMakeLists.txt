@@ -277,6 +277,8 @@ MimeType=x-scheme-handler/gemini;
          RENAME fi.skyjake.lagrange.png
     )
     if (NOT ENABLE_RESOURCE_EMBED)
+        target_compile_definitions (app PUBLIC
+            LAGRANGE_EMB_BIN="${CMAKE_INSTALL_PREFIX}/share/lagrange/resources.binary")
         install (FILES ${EMB_BIN} DESTINATION share/lagrange)
     endif ()
 endif ()
