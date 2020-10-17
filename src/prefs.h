@@ -10,6 +10,7 @@
 iDeclareType(Prefs)
 
 struct Impl_Prefs {
+    int dialogTab;
     iBool retainWindowSize;
     float uiScale;    
     int zoomPercent;
@@ -20,6 +21,7 @@ struct Impl_Prefs {
     iString downloadDir;
     /* Content */
     enum iTextFont font;
+    enum iTextFont headingFont;
     int lineWidth;
     iBool bigFirstParagraph;
     iBool forceLineWrap;

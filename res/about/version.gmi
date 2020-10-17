@@ -6,6 +6,19 @@
 ```
 # Release notes
 
+## 0.5
+* Added MP3 support in the audio player (using mpg123).
+=> https://mpg123.org/ mpg123: MPEG audio player and decoder library
+* Added volume control in the audio player.
+* Metadata in Vorbis and MP3 audio content (title, artist, etc.) is shown in the audio player menu.
+* Added new serif fonts: EB Garamond and Literata.
+* Allow configuring separate fonts for headings and body text for better visual distinction.
+* Preferences dialog remembers the previously open tab.
+* Paste from clipboard on middle mouse button click.
+* Open links in new tab with middle mouse button.
+* Fixed failure to find resources when launching via PATH.
+* Fixed color saturation setting not affecting the default color theme.
+
 ## 0.4.1
 * Set keyboard focus to URL input field after opening a new tab.
 * Pause other audio players when a new one is started. One can still choose to have multiple audio players playing simultaneously by unpausing them again.

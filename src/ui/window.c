@@ -543,7 +543,7 @@ void init_Window(iWindow *d, iRect rect) {
     if (left_Rect(rect) >= 0 || top_Rect(rect) >= 0) {
         SDL_SetWindowPosition(d->win, left_Rect(rect), top_Rect(rect));
     }
-    const iInt2 minSize = init_I2(400, 250);
+    const iInt2 minSize = init_I2(425, 250);
     SDL_SetWindowMinimumSize(d->win, minSize.x, minSize.y);
     SDL_SetWindowTitle(d->win, "Lagrange");
     /* Some info. */ {
@@ -709,6 +709,20 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
             iWidget *oldHover = hover_Widget();
             /* Dispatch the event to the tree of widgets. */
             iBool wasUsed = dispatchEvent_Widget(widget, &event);
+            if (!wasUsed) {
+                /* As a special case, clicking the middle mouse button can be used for pasting
+                   from the clipboard. */
+                if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_MIDDLE) {
+                    SDL_Event paste;
+                    iZap(paste);
+                    paste.type           = SDL_KEYDOWN;
+                    paste.key.keysym.sym = SDLK_v;
+                    paste.key.keysym.mod = KMOD_PRIMARY;
+                    paste.key.state      = SDL_PRESSED;
+                    paste.key.timestamp  = SDL_GetTicks();
+                    wasUsed = dispatchEvent_Widget(widget, &paste);
+                }
+            }
             if (oldHover != hover_Widget()) {
                 postRefresh_App();
             }

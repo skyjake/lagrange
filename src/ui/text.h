@@ -40,8 +40,6 @@ enum iFontId {
     medium_FontId,
     big_FontId,
     italic_FontId,
-    bold_FontId,
-    bigBold_FontId,
     largeBold_FontId,
     hugeBold_FontId,
     largeLight_FontId,    
@@ -80,10 +78,11 @@ enum iFontId {
     fromSymbolsToEmojiOffset_FontId = 9,
 
     /* UI fonts: */
-    uiLabel_FontId        = default_FontId,
-    uiShortcuts_FontId    = default_FontId,
-    uiInput_FontId        = defaultMonospace_FontId,
-    uiContent_FontId      = defaultMedium_FontId,
+    uiLabel_FontId          = default_FontId,
+    uiShortcuts_FontId      = default_FontId,
+    uiInput_FontId          = defaultMonospace_FontId,
+    uiContent_FontId        = defaultMedium_FontId,
+    uiContentSymbols_FontId = defaultMediumSymbols_FontId,
     /* Document fonts: */
     paragraph_FontId         = regular_FontId,
     firstParagraph_FontId    = medium_FontId,
@@ -108,6 +107,8 @@ iLocalDef iBool isVariationSelector_Char(iChar ch) {
 enum iTextFont {
     nunito_TextFont,
     firaSans_TextFont,
+    literata_TextFont,
+    ebGaramond_TextFont,
 };
 
 extern int gap_Text; /* affected by content font size */
@@ -116,6 +117,7 @@ void    init_Text           (SDL_Renderer *);
 void    deinit_Text         (void);
 
 void    setContentFont_Text     (enum iTextFont font);
+void    setHeadingFont_Text     (enum iTextFont font);
 void    setContentFontSize_Text (float fontSizeFactor); /* affects all except `default*` fonts */
 void    resetFonts_Text         (void);
 

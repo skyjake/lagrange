@@ -20,48 +20,25 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-#include "app.h"
+#pragma once
 
-#if defined (iPlatformApple)
-#  include "macos.h"
-#endif
-#if defined (iPlatformMsys)
-#  include "win32.h"
-#  define SDL_MAIN_HANDLED
-#endif
-#if defined (LAGRANGE_ENABLE_MPG123)
-#  include <mpg123.h>
-#endif
+#include <the_Foundation/rect.h>
 
-#include <the_Foundation/commandline.h>
-#include <SDL.h>
-#include <stdio.h>
+iDeclareType(Paint)
+iDeclareType(Player)
+iDeclareType(PlayerUI)
 
-int main(int argc, char **argv) {
-    printf("Lagrange: A Beautiful Gemini Client\n");
-#if defined (iPlatformApple)
-    enableMomentumScroll_MacOS();
-    registerURLHandler_MacOS();
-#endif
-#if defined (iPlatformMsys)
-    /* MSYS runtime takes care of WinMain. */
-    setDPIAware_Win32();
-    SDL_SetMainReady();
-#endif
-    /* Initialize libraries. */
-#if defined (LAGRANGE_ENABLE_MPG123)
-    mpg123_init();
-#endif
-    init_Foundation();
-    SDL_SetHint(SDL_HINT_VIDEO_ALLOW_SCREENSAVER, "1");
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER)) {
-        fprintf(stderr, "SDL init failed: %s\n", SDL_GetError());
-        return -1;
-    }
-    run_App(argc, argv);
-    SDL_Quit();
-#if defined (LAGRANGE_ENABLE_MPG123)
-    mpg123_exit();
-#endif
-    return 0;
-}
+struct Impl_PlayerUI {
+    const iPlayer *player;
+    iRect bounds;
+    iRect playPauseRect;
+    iRect rewindRect;
+    iRect scrubberRect;
+    iRect volumeRect;
+    iRect volumeAdjustRect;
+    iRect volumeSlider;
+    iRect menuRect;
+};
+
+void    init_PlayerUI   (iPlayerUI *, const iPlayer *player, iRect bounds);
+void    draw_PlayerUI   (iPlayerUI *, iPaint *p);

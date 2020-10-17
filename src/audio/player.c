@@ -29,6 +29,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/buffer.h>
 #include <the_Foundation/thread.h>
 #include <SDL_audio.h>
+#include <SDL_timer.h>
+
+#if defined (LAGRANGE_ENABLE_MPG123)
+#  include <mpg123.h>
+#endif
 
 /*----------------------------------------------------------------------------------------------*/
 
@@ -67,7 +72,14 @@ struct Impl_Decoder {
     iArray            pendingOutput;
     uint64_t          currentSample;
     uint64_t          totalSamples; /* zero if unknown */
+    iMutex            tagMutex;
+    iString           tags[max_PlayerTag];
     stb_vorbis *      vorbis;
+#if defined (LAGRANGE_ENABLE_MPG123)
+    mpg123_handle *   mpeg;
+    mpg123_id3v1 *    id3v1;
+    mpg123_id3v2 *    id3v2;
+#endif
 };
 
 enum iDecoderStatus {
@@ -155,8 +167,18 @@ static enum iDecoderStatus decodeWav_Decoder_(iDecoder *d, iRanges inputRange) {
     return ok_DecoderStatus;
 }
 
-static enum iDecoderStatus decodeVorbis_Decoder_(iDecoder *d, iRanges inputRange) {
-    iUnused(inputRange);
+static void writePending_Decoder_(iDecoder *d) {
+    /* Write as much as we can. */
+    lock_Mutex(&d->outputMutex);
+    size_t avail = vacancy_SampleBuf(&d->output);
+    size_t n = iMin(avail, size_Array(&d->pendingOutput));
+    write_SampleBuf(&d->output, constData_Array(&d->pendingOutput), n);
+    removeN_Array(&d->pendingOutput, 0, n);
+    unlock_Mutex(&d->outputMutex);
+    d->currentSample += n;
+}
+
+static enum iDecoderStatus decodeVorbis_Decoder_(iDecoder *d) {
     const iBlock *input = &d->input->data;
     if (!d->vorbis) {
         lock_Mutex(&d->input->mtx);
@@ -169,6 +191,27 @@ static enum iDecoderStatus decodeVorbis_Decoder_(iDecoder *d, iRanges inputRange
         }
         d->inputPos += consumed;
         unlock_Mutex(&d->input->mtx);
+        /* Check the metadata. */ {
+            const stb_vorbis_comment com = stb_vorbis_get_comment(d->vorbis);
+            //        printf("vendor: {%s}\n", comment.vendor);
+            lock_Mutex(&d->tagMutex);
+            for (int i = 0; i < com.comment_list_length; ++i) {
+                const char *comStr = com.comment_list[i];
+                if (!iCmpStrN(comStr, "ARTIST=", 7)) {
+                    setCStr_String(&d->tags[artist_PlayerTag], comStr + 7);
+                }
+                else if (!iCmpStrN(comStr, "DATE=", 5)) {
+                    setCStr_String(&d->tags[date_PlayerTag], comStr + 5);
+                }
+                else if (!iCmpStrN(comStr, "TITLE=", 6)) {
+                    setCStr_String(&d->tags[title_PlayerTag], comStr + 6);
+                }
+                else if (!iCmpStrN(comStr, "GENRE=", 6)) {
+                    setCStr_String(&d->tags[genre_PlayerTag], comStr + 6);
+                }
+            }
+            unlock_Mutex(&d->tagMutex);
+        }
     }
     if (d->totalSamples == 0 && d->input->isComplete) {
         /* Time to check the stream size. */
@@ -203,23 +246,92 @@ static enum iDecoderStatus decodeVorbis_Decoder_(iDecoder *d, iRanges inputRange
             else continue;
         }
         /* Apply gain. */ {
+            const float gain = d->gain;
             float sample[2];
             for (size_t i = 0; i < (size_t) count; ++i) {
                 for (size_t chan = 0; chan < d->output.numChannels; chan++) {
-                    sample[chan] = samples[chan][i] * d->gain;
+                    sample[chan] = samples[chan][i] * gain;
                 }
                 pushBack_Array(&d->pendingOutput, sample);
             }
         }
     }
-    /* Write as much as we can. */
-    lock_Mutex(&d->outputMutex);
-    size_t avail = vacancy_SampleBuf(&d->output);
-    size_t n = iMin(avail, size_Array(&d->pendingOutput));
-    write_SampleBuf(&d->output, constData_Array(&d->pendingOutput), n);
-    removeN_Array(&d->pendingOutput, 0, n);
-    unlock_Mutex(&d->outputMutex);
-    d->currentSample += n;
+    writePending_Decoder_(d);
+    return status;
+}
+
+#if defined (LAGRANGE_ENABLE_MPG123)
+static const char *mpegStr_(const mpg123_string *str) {
+    return str ? str->p : "";
+}
+#endif
+
+enum iDecoderStatus decodeMpeg_Decoder_(iDecoder *d) {
+    enum iDecoderStatus status = ok_DecoderStatus;
+#if defined (LAGRANGE_ENABLE_MPG123)
+    const iBlock *input = &d->input->data;
+    if (!d->mpeg) {
+        d->inputPos = 0;
+        d->mpeg = mpg123_new(NULL, NULL);
+        mpg123_format_none(d->mpeg);
+        mpg123_format(d->mpeg, d->outputFreq, d->output.numChannels, MPG123_ENC_SIGNED_16);
+        mpg123_open_feed(d->mpeg);
+    }
+    /* Feed more input. */ {
+        lock_Mutex(&d->input->mtx);
+        if (d->input->isComplete) {
+            d->totalInputSize = size_Block(input);
+        }
+        if (d->inputPos < size_Block(input)) {
+            mpg123_feed(d->mpeg, constData_Block(input) + d->inputPos, size_Block(input) - d->inputPos);
+            if (d->inputPos == 0) {
+                long r; int ch, enc;
+                mpg123_getformat(d->mpeg, &r, &ch, &enc);
+                iAssert(r == d->outputFreq);
+                iAssert(ch == d->output.numChannels);
+                iAssert(enc == MPG123_ENC_SIGNED_16);
+            }
+            d->inputPos = size_Block(input);
+        }
+        unlock_Mutex(&d->input->mtx);
+    }
+    while (size_Array(&d->pendingOutput) < d->output.count) {
+        int16_t buffer[512];
+        size_t bytesRead = 0;
+        const int rc = mpg123_read(d->mpeg, (uint8_t *) buffer, sizeof(buffer), &bytesRead);
+        const float gain = d->gain;
+        for (size_t i = 0; i < bytesRead / 2; i++) {
+            buffer[i] *= gain;
+        }
+        pushBackN_Array(&d->pendingOutput, buffer, bytesRead / 2 / d->output.numChannels);
+        if (rc == MPG123_NEED_MORE) {
+            status = needMoreInput_DecoderStatus;
+            break;
+        }
+        else if (rc == MPG123_DONE || bytesRead == 0) {
+            break;
+        }
+    }
+    if (!d->id3v1 &&!d->id3v2) {
+        mpg123_id3(d->mpeg, &d->id3v1, &d->id3v2);
+        /* TODO: These tags can change during decoding, so checking just once isn't quite right.
+           Shouldn't check every time either, though... */
+        if (d->id3v2) {
+            lock_Mutex(&d->tagMutex);
+            setCStr_String(&d->tags[title_PlayerTag], mpegStr_(d->id3v2->title));
+            setCStr_String(&d->tags[artist_PlayerTag], mpegStr_(d->id3v2->artist));
+            setCStr_String(&d->tags[genre_PlayerTag], mpegStr_(d->id3v2->genre));
+            setCStr_String(&d->tags[date_PlayerTag], mpegStr_(d->id3v2->year));
+            unlock_Mutex(&d->tagMutex);
+        }
+    }
+    /* Check if we know the total length already. This info should be available eventually. */
+    const off_t off = mpg123_length(d->mpeg);
+    if (off > 0) {
+        d->totalSamples = off;
+    }
+    writePending_Decoder_(d);
+#endif
     return status;
 }
 
@@ -235,16 +347,18 @@ static iThreadResult run_Decoder_(iThread *thread) {
         if (!d->type) break;
         /* Have data to work on and a place to save output? */
         enum iDecoderStatus status = ok_DecoderStatus;
-        if (!isEmpty_Range(&inputRange)) {
-            switch (d->type) {
-                case wav_DecoderType:
-                    status = decodeWav_Decoder_(d, inputRange);
-                    break;
-                case vorbis_DecoderType:
-                    status = decodeVorbis_Decoder_(d, inputRange);
-                default:
-                    break;
-            }
+        switch (d->type) {
+            case wav_DecoderType:
+                status = decodeWav_Decoder_(d, inputRange);
+                break;
+            case vorbis_DecoderType:
+                status = decodeVorbis_Decoder_(d);
+                break;
+            case mpeg_DecoderType:
+                status = decodeMpeg_Decoder_(d);
+                break;
+            default:
+                break;
         }
         if (status == needMoreInput_DecoderStatus) {
             lock_Mutex(&d->input->mtx);
@@ -265,20 +379,29 @@ static iThreadResult run_Decoder_(iThread *thread) {
 
 void init_Decoder(iDecoder *d, iInputBuf *input, const iContentSpec *spec) {
     d->type           = spec->type;
-    d->gain           = 0.5f;
+    d->gain           = 1.0f;
     d->input          = input;
     d->inputPos       = spec->inputStartPos;
     d->inputFormat    = spec->inputFormat;
     d->totalInputSize = spec->totalInputSize;
     d->outputFreq     = spec->output.freq;
+    d->currentSample  = 0;
+    d->totalSamples   = spec->totalSamples;
     init_Array(&d->pendingOutput, spec->output.channels * SDL_AUDIO_BITSIZE(spec->output.format) / 8);
     init_SampleBuf(&d->output,
                    spec->output.format,
                    spec->output.channels,
                    spec->output.samples * 2);
-    d->currentSample = 0;
-    d->totalSamples  = spec->totalSamples;
+    init_Mutex(&d->tagMutex);
+    iForIndices(i, d->tags) {
+        init_String(&d->tags[i]);
+    }
     d->vorbis = NULL;
+#if defined (LAGRANGE_ENABLE_MPG123)
+    d->mpeg  = NULL;
+    d->id3v1 = NULL;
+    d->id3v2 = NULL;
+#endif
     init_Mutex(&d->outputMutex);
     d->thread = new_Thread(run_Decoder_);
     setUserData_Thread(d->thread, d);
@@ -294,6 +417,19 @@ void deinit_Decoder(iDecoder *d) {
     deinit_Mutex(&d->outputMutex);
     deinit_SampleBuf(&d->output);
     deinit_Array(&d->pendingOutput);
+    iForIndices(i, d->tags) {
+        deinit_String(&d->tags[i]);
+    }
+    deinit_Mutex(&d->tagMutex);
+    if (d->vorbis) {
+        stb_vorbis_close(d->vorbis);
+    }
+#if defined (LAGRANGE_ENABLE_MPG123)
+    if (d->mpeg) {
+        mpg123_close(d->mpeg);
+        mpg123_delete(d->mpeg);
+    }
+#endif
 }
 
 iDefineTypeConstructionArgs(Decoder, (iInputBuf *input, const iContentSpec *spec),
@@ -305,7 +441,10 @@ struct Impl_Player {
     SDL_AudioSpec     spec;
     SDL_AudioDeviceID device;
     iString           mime;
+    float             volume;
+    int               flags;
     iInputBuf *       data;
+    uint32_t          lastInteraction;
     iDecoder *        decoder;
 };
 
@@ -333,6 +472,11 @@ static iContentSpec contentSpec_Player_(const iPlayer *d) {
              !cmp_String(&d->mime, "audio/x-vorbis+ogg")) {
         content.type = vorbis_DecoderType;
     }
+#if defined (LAGRANGE_ENABLE_MPG123)
+    else if (!cmp_String(&d->mime, "audio/mpeg") || !cmp_String(&d->mime, "audio/mp3")) {
+        content.type = mpeg_DecoderType;
+    }
+#endif
     else {
         /* TODO: Could try decoders to see if one works? */
         content.type = none_DecoderType;
@@ -432,8 +576,26 @@ static iContentSpec contentSpec_Player_(const iPlayer *d) {
         content.output.freq     = info.sample_rate;
         content.output.channels = numChannels;
         content.output.format   = AUDIO_F32;
-        content.inputFormat     = AUDIO_F32; /* actually stb_vorbis provides floats */
+        content.inputFormat     = AUDIO_F32; /* actually stb_vorbis provides floats */        
         stb_vorbis_close(vrb);
+    }
+    else if (content.type == mpeg_DecoderType) {
+#if defined (LAGRANGE_ENABLE_MPG123)
+        mpg123_handle *mh = mpg123_new(NULL, NULL);
+        mpg123_open_feed(mh);
+        mpg123_feed(mh, constData_Block(&d->data->data), size_Block(&d->data->data));
+        long rate     = 0;
+        int  channels = 0;
+        int  encoding = 0;
+        if (mpg123_getformat(mh, &rate, &channels, &encoding) == MPG123_OK) {
+            content.output.freq     = rate;
+            content.output.channels = channels;
+            content.inputFormat     = AUDIO_S16;
+            content.output.format   = AUDIO_S16;
+        }
+        mpg123_close(mh);
+        mpg123_delete(mh);
+#endif
     }
     iAssert(content.inputFormat == content.output.format ||
             (content.inputFormat == AUDIO_S24LSB && content.output.format == AUDIO_S16) ||
@@ -464,6 +626,8 @@ void init_Player(iPlayer *d) {
     d->device  = 0;
     d->decoder = NULL;
     d->data    = new_InputBuf();
+    d->volume  = 1.0f;
+    d->flags   = 0;
 }
 
 void deinit_Player(iPlayer *d) {
@@ -479,6 +643,10 @@ iBool isStarted_Player(const iPlayer *d) {
 iBool isPaused_Player(const iPlayer *d) {
     if (!d->device) return iTrue;
     return SDL_GetAudioDeviceStatus(d->device) == SDL_AUDIO_PAUSED;
+}
+
+float volume_Player(const iPlayer *d) {
+    return d->volume;
 }
 
 void updateSourceData_Player(iPlayer *d, const iString *mimeType, const iBlock *data,
@@ -527,13 +695,16 @@ iBool start_Player(iPlayer *d) {
         return iFalse;
     }
     d->decoder = new_Decoder(d->data, &content);
+    d->decoder->gain = d->volume;
     SDL_PauseAudioDevice(d->device, SDL_FALSE);
+    setNotIdle_Player(d);
     return iTrue;
 }
 
 void setPaused_Player(iPlayer *d, iBool isPaused) {
     if (isStarted_Player(d)) {
         SDL_PauseAudioDevice(d->device, isPaused ? SDL_TRUE : SDL_FALSE);
+        setNotIdle_Player(d);
     }
 }
 
@@ -546,6 +717,37 @@ void stop_Player(iPlayer *d) {
         delete_Decoder(d->decoder);
         d->decoder = NULL;
     }
+}
+
+void setVolume_Player(iPlayer *d, float volume) {
+    d->volume = iClamp(volume, 0, 1);
+    if (d->decoder) {
+        d->decoder->gain = d->volume;
+    }
+    setNotIdle_Player(d);
+}
+
+void setFlags_Player(iPlayer *d, int flags, iBool set) {
+    iChangeFlags(d->flags, flags, set);
+    setNotIdle_Player(d);
+}
+
+void setNotIdle_Player(iPlayer *d) {
+    d->lastInteraction = SDL_GetTicks();
+}
+
+int flags_Player(const iPlayer *d) {
+    return d->flags;
+}
+
+const iString *tag_Player(const iPlayer *d, enum iPlayerTag tag) {
+    const iString *str = NULL;
+    if (d->decoder) {
+        lock_Mutex(&d->decoder->tagMutex);
+        str = collect_String(copy_String(&d->decoder->tags[tag]));
+        unlock_Mutex(&d->decoder->tagMutex);
+    }
+    return str ? str : collectNew_String();
 }
 
 float time_Player(const iPlayer *d) {
@@ -568,8 +770,31 @@ float streamProgress_Player(const iPlayer *d) {
     return 0;
 }
 
+uint32_t idleTimeMs_Player(const iPlayer *d) {
+    return SDL_GetTicks() - d->lastInteraction;
+}
+
 iString *metadataLabel_Player(const iPlayer *d) {
-    return newFormat_String("%d-bit %s %d Hz", SDL_AUDIO_BITSIZE(d->decoder->inputFormat),
+    iString *meta = new_String();
+    if (d->decoder) {
+        lock_Mutex(&d->decoder->tagMutex);
+        const iString *tags = d->decoder->tags;
+        if (!isEmpty_String(&tags[title_PlayerTag])) {
+            appendFormat_String(meta, "Title: %s\n", cstr_String(&tags[title_PlayerTag]));
+        }
+        if (!isEmpty_String(&tags[artist_PlayerTag])) {
+            appendFormat_String(meta, "Artist: %s\n", cstr_String(&tags[artist_PlayerTag]));
+        }
+        if (!isEmpty_String(&tags[genre_PlayerTag])) {
+            appendFormat_String(meta, "Genre: %s\n", cstr_String(&tags[genre_PlayerTag]));
+        }
+        if (!isEmpty_String(&tags[date_PlayerTag])) {
+            appendFormat_String(meta, "Date: %s\n", cstr_String(&tags[date_PlayerTag]));
+        }
+        unlock_Mutex(&d->decoder->tagMutex);
+    }
+    appendFormat_String(meta, "%d-bit %s %d Hz", SDL_AUDIO_BITSIZE(d->decoder->inputFormat),
                             SDL_AUDIO_ISFLOAT(d->decoder->inputFormat) ? "float" : "integer",
                             d->spec.freq);
+    return meta;
 }

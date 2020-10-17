@@ -713,6 +713,14 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
             set_Color(tmGopherLinkLastVisitDate_ColorId, get_Color(blue_ColorId));
         }
         set_Color(tmBadLink_ColorId, get_Color(red_ColorId));
+        /* Apply the saturation setting. */
+        for (int i = tmFirst_ColorId; i < max_ColorId; i++) {
+            if (!isLink_ColorId(i)) {
+                iHSLColor color = get_HSLColor(i);
+                color.sat *= prefs->saturation;
+                setHsl_Color(i, color);
+            }
+        }
     }
     if (seed && !isEmpty_Block(seed)) {
         d->themeSeed = crc32_Block(seed);
@@ -799,9 +807,9 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
 
             if (delta_Color(get_Color(tmHeading3_ColorId), get_Color(tmParagraph_ColorId)) <= 80) {
                 /* Smallest headings may be too close to body text color. */
-                iHSLColor clr = get_HSLColor(tmParagraph_ColorId);
-                clr.lum       = iMax(0.5f, clr.lum - 0.15f);
-                setHsl_Color(tmParagraph_ColorId, clr);
+//                iHSLColor clr = get_HSLColor(tmParagraph_ColorId);
+//                clr.lum       = iMax(0.5f, clr.lum - 0.15f);
+                //setHsl_Color(tmParagraph_ColorId, clr);
                 setHsl_Color(tmHeading3_ColorId,
                              addSatLum_HSLColor(get_HSLColor(tmHeading3_ColorId), 0, 0.15f));
             }
@@ -967,11 +975,18 @@ static void normalize_GmDocument(iGmDocument *d) {
             continue;
         }
         iBool isPrevSpace = iFalse;
+        int spaceCount = 0;
         for (const char *ch = line.start; ch != line.end; ch++) {
             char c = *ch;
             if (c == '\r') continue;
             if (isNormalizableSpace_(c)) {
                 if (isPrevSpace) {
+                    if (++spaceCount == 8) {
+                        /* There are several consecutive space characters. The author likely
+                           really wants to have some space here, so normalize to a tab stop. */
+                        popBack_Block(&normalized->chars);
+                        pushBack_Block(&normalized->chars, '\t');
+                    }
                     continue; /* skip repeated spaces */
                 }
                 c = ' ';
@@ -979,6 +994,7 @@ static void normalize_GmDocument(iGmDocument *d) {
             }
             else {
                 isPrevSpace = iFalse;
+                spaceCount = 0;
             }
             appendCStrN_String(normalized, &c, 1);
         }

@@ -19,13 +19,14 @@
 cmake_minimum_required (VERSION 3.9)
 
 project (Lagrange
-    VERSION 0.4.1
+    VERSION 0.5.0
     DESCRIPTION "Beautiful Gemini Client"
     LANGUAGES C
 )
 set (COPYRIGHT_YEAR 2020)
 
 # Build configuration.
+option (ENABLE_MPG123 "Use mpg123 for decoding MPEG audio" ON)
 option (ENABLE_X11_SWRENDER "Use software rendering under X11" OFF)
 option (ENABLE_KERNING "Enable kerning in font renderer (slower)" ON)
 option (ENABLE_RESOURCE_EMBED "Embed resources inside the executable" OFF)
@@ -47,6 +48,7 @@ else ()
 endif ()
 find_package (PkgConfig REQUIRED)
 pkg_check_modules (SDL2 REQUIRED sdl2)
+pkg_check_modules (MPG123 IMPORTED_TARGET libmpg123)
 
 # Embedded resources are written to a generated source file.
 message (STATUS "Preparing embedded resources...")
@@ -56,23 +58,30 @@ set (EMBED_RESOURCES
     res/about/lagrange.gmi
     res/about/license.gmi
     res/about/version.gmi
-    res/FiraMono-Regular.ttf
-    res/FiraSans-Bold.ttf
-    res/FiraSans-Italic.ttf
-    res/FiraSans-Light.ttf
-    res/FiraSans-Regular.ttf
-    res/KosugiMaru-Regular.ttf
-    res/NotoEmoji-Regular.ttf
-    res/Nunito-ExtraBold.ttf
-    res/Nunito-ExtraLight.ttf
-    res/Nunito-LightItalic.ttf
-    res/Nunito-Regular.ttf
-    res/SourceSansPro-Regular.ttf
-    res/Symbola.ttf
+    res/fonts/EBGaramond-Regular.ttf
+    res/fonts/EBGaramond-Italic.ttf
+    res/fonts/EBGaramond-Bold.ttf
+    res/fonts/FiraMono-Regular.ttf
+    res/fonts/FiraSans-Bold.ttf
+    res/fonts/FiraSans-Italic.ttf
+    res/fonts/FiraSans-Light.ttf
+    res/fonts/FiraSans-Regular.ttf
+    res/fonts/KosugiMaru-Regular.ttf
+    res/fonts/Literata-Regular-opsz=14.ttf
+    res/fonts/Literata-Bold-opsz=36.ttf
+    res/fonts/Literata-ExtraLight-opsz=18.ttf
+    res/fonts/Literata-LightItalic-opsz=10.ttf
+    res/fonts/NotoEmoji-Regular.ttf
+    res/fonts/Nunito-ExtraBold.ttf
+    res/fonts/Nunito-ExtraLight.ttf
+    res/fonts/Nunito-LightItalic.ttf
+    res/fonts/Nunito-Regular.ttf
+    res/fonts/SourceSansPro-Regular.ttf
+    res/fonts/Symbola.ttf
 )
- if (UNIX AND NOT APPLE)
-     list (APPEND EMBED_RESOURCES res/lagrange-64.png)
- endif ()
+if (UNIX AND NOT APPLE)
+    list (APPEND EMBED_RESOURCES res/lagrange-64.png)
+endif ()
 embed_make (${EMBED_RESOURCES})
 
 set (EMB_BIN ${CMAKE_CURRENT_BINARY_DIR}/resources.binary)
@@ -127,6 +136,8 @@ set (SOURCES
     src/ui/metrics.h
     src/ui/paint.c
     src/ui/paint.h
+    src/ui/playerui.c
+    src/ui/playerui.h
     src/ui/scrollwidget.c
     src/ui/scrollwidget.h
     src/ui/sidebarwidget.c
@@ -192,6 +203,10 @@ endif ()
 if (ENABLE_WINDOWPOS_FIX)
     target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_WINDOWPOS_FIX=1)
 endif ()
+if (ENABLE_MPG123 AND MPG123_FOUND)
+    target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_MPG123=1)
+    target_link_libraries (app PUBLIC PkgConfig::MPG123)
+endif ()
 target_link_libraries (app PUBLIC the_Foundation::the_Foundation)
 target_link_libraries (app PUBLIC ${SDL2_LDFLAGS})
 if (APPLE)
@@ -229,6 +244,9 @@ endif ()
 # Deployment.
 if (MSYS)
     install (TARGETS app DESTINATION .)
+    if (TARGET PkgConfig::MPG123)
+        install (PROGRAMS ${MPG123_LIBDIR}/../bin/msys-mpg123-0.dll DESTINATION .)
+    endif ()
     if (NOT ENABLE_RESOURCE_EMBED)
         install (FILES ${EMB_BIN} DESTINATION .)
     endif ()
@@ -262,6 +280,8 @@ MimeType=x-scheme-handler/gemini;
          RENAME fi.skyjake.lagrange.png
     )
     if (NOT ENABLE_RESOURCE_EMBED)
+        target_compile_definitions (app PUBLIC
+            LAGRANGE_EMB_BIN="${CMAKE_INSTALL_PREFIX}/share/lagrange/resources.binary")
         install (FILES ${EMB_BIN} DESTINATION share/lagrange)
     endif ()
 endif ()

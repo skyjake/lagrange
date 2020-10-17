@@ -14,6 +14,7 @@ Like Gemini, Lagrange has been designed with minimalism in mind. It depends on a
 * Sidebar for page outline, managing bookmarks and identities, and viewing history
 * Multiple tabs
 * Identity management — create and use TLS client certificates
+* Audio playback: MP3, Ogg Vorbis, WAV
 * And more! Open `about:help` in the app, or see [help.gmi](https://git.skyjake.fi/skyjake/lagrange/raw/branch/release/res/about/help.gmi)
 
 ## Downloads
@@ -25,11 +26,12 @@ Prebuilt binaries for Windows and macOS can be found in [Releases][rel].
 This is how to build Lagrange in a Unix-like environment. The required tools are a C11 compiler (e.g., Clang or GCC), CMake and `pkg-config`.
 
 1. Download and extract a source tarball from [Releases][rel]. Alternatively, you may also clone the repository and its submodules: `git clone --recursive --branch release https://git.skyjake.fi/skyjake/lagrange`
-2. Check that you have the dependencies installed: CMake, SDL 2, OpenSSL 1.1.1, libpcre, zlib, libunistring. For example, on macOS this would do the trick (using Homebrew): ```brew install cmake sdl2 openssl@1.1 pcre libunistring``` Or on Ubuntu: ```sudo apt install cmake libsdl2-dev libssl-dev libpcre3-dev zlib1g-dev libunistring-dev```
-3. Create a build directory.
-4. In your empty build directory, run CMake: ```cmake {path_of_lagrange_sources} -DCMAKE_BUILD_TYPE=Release```
-5. Build it: ```cmake --build .```
-6. Now you can run `lagrange`, `lagrange.exe`, or `Lagrange.app`.
+2. Check that you have the required dependencies installed: CMake, SDL 2, OpenSSL 1.1.1, libpcre, zlib, libunistring. For example, on macOS this would do the trick (using Homebrew): ```brew install cmake sdl2 openssl@1.1 pcre libunistring``` Or on Ubuntu: ```sudo apt install cmake libsdl2-dev libssl-dev libpcre3-dev zlib1g-dev libunistring-dev```
+3. Optionally, install the mpg123 decoder library for MPEG audio support. For example, the macOS Homebrew package is `mpg123` and on Ubuntu it is `libmpg123-dev`.
+4. Create a build directory.
+5. In your empty build directory, run CMake: ```cmake {path_of_lagrange_sources} -DCMAKE_BUILD_TYPE=Release```
+6. Build it: ```cmake --build .```
+7. Now you can run `lagrange`, `lagrange.exe`, or `Lagrange.app`.
 
 ### Installing to a directory
 

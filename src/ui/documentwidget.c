@@ -34,6 +34,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "labelwidget.h"
 #include "media.h"
 #include "paint.h"
+#include "playerui.h"
 #include "scrollwidget.h"
 #include "util.h"
 #include "visbuf.h"
@@ -142,7 +143,12 @@ struct Impl_OutlineItem {
 
 /*----------------------------------------------------------------------------------------------*/
 
-static const int smoothSpeed_DocumentWidget_ = 120; /* unit: gap_Text per second */
+static void animatePlayingAudio_DocumentWidget_(void *);
+
+static const int smoothSpeed_DocumentWidget_     = 120; /* unit: gap_Text per second */
+static const int outlineMinWidth_DocumentWdiget_ = 45;  /* times gap_UI */
+static const int outlineMaxWidth_DocumentWidget_ = 65;  /* times gap_UI */
+static const int outlinePadding_DocumentWidget_  = 3;   /* times gap_UI */
 
 enum iRequestState {
     blank_RequestState,
@@ -173,6 +179,8 @@ struct Impl_DocumentWidget {
     int            pageMargin;
     iPtrArray      visibleLinks;
     iPtrArray      visiblePlayers; /* currently playing audio */
+    const iGmRun * grabbedPlayer; /* currently adjusting volume in a player */
+    float          grabbedStartVolume;
     const iGmRun * hoverLink;
     const iGmRun * contextLink;
     iBool          noHoverWhileScrolling;
@@ -239,6 +247,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     init_Block(&d->sourceContent, 0);
     init_PtrArray(&d->visibleLinks);
     init_PtrArray(&d->visiblePlayers);
+    d->grabbedPlayer = NULL;
     init_Click(&d->click, d, SDL_BUTTON_LEFT);
     addChild_Widget(w, iClob(d->scroll = new_ScrollWidget()));
     d->menu = NULL; /* created when clicking */
@@ -250,8 +259,6 @@ void init_DocumentWidget(iDocumentWidget *d) {
     addAction_Widget(w, navigateBack_KeyShortcut, "navigate.back");
     addAction_Widget(w, navigateForward_KeyShortcut, "navigate.forward");
 }
-
-static void animatePlayingAudio_DocumentWidget_(void *);
 
 void deinit_DocumentWidget(iDocumentWidget *d) {
     removeTicker_App(animatePlayingAudio_DocumentWidget_, d);
@@ -268,6 +275,24 @@ void deinit_DocumentWidget(iDocumentWidget *d) {
     delete_String(d->certSubject);
     delete_String(d->titleUser);
     deinit_Model(&d->mod);
+}
+
+static void requestUpdated_DocumentWidget_(iAnyObject *obj) {
+    iDocumentWidget *d = obj;
+    const int wasUpdated = exchange_Atomic(&d->isRequestUpdated, iTrue);
+    if (!wasUpdated) {
+        postCommand_Widget(obj, "document.request.updated doc:%p request:%p", d, d->request);
+    }
+}
+
+static void requestTimedOut_DocumentWidget_(iAnyObject *obj) {
+    iDocumentWidget *d = obj;
+    postCommandf_App("document.request.timeout doc:%p request:%p", d, d->request);
+}
+
+static void requestFinished_DocumentWidget_(iAnyObject *obj) {
+    iDocumentWidget *d = obj;
+    postCommand_Widget(obj, "document.request.finished doc:%p request:%p", d, d->request);
 }
 
 static void resetSmoothScroll_DocumentWidget_(iDocumentWidget *d) {
@@ -318,24 +343,6 @@ static int forceBreakWidth_DocumentWidget_(const iDocumentWidget *d) {
 
 static iInt2 documentPos_DocumentWidget_(const iDocumentWidget *d, iInt2 pos) {
     return addY_I2(sub_I2(pos, topLeft_Rect(documentBounds_DocumentWidget_(d))), d->scrollY);
-}
-
-static void requestUpdated_DocumentWidget_(iAnyObject *obj) {
-    iDocumentWidget *d = obj;
-    const int wasUpdated = exchange_Atomic(&d->isRequestUpdated, iTrue);
-    if (!wasUpdated) {
-        postCommand_Widget(obj, "document.request.updated doc:%p request:%p", d, d->request);
-    }
-}
-
-static void requestTimedOut_DocumentWidget_(iAnyObject *obj) {
-    iDocumentWidget *d = obj;
-    postCommandf_App("document.request.timeout doc:%p request:%p", d, d->request);
-}
-
-static void requestFinished_DocumentWidget_(iAnyObject *obj) {
-    iDocumentWidget *d = obj;
-    postCommand_Widget(obj, "document.request.finished doc:%p request:%p", d, d->request);
 }
 
 static iRangei visibleRange_DocumentWidget_(const iDocumentWidget *d) {
@@ -453,7 +460,12 @@ static void animatePlayingAudio_DocumentWidget_(void *widget) {
     if (document_App() != d) return;
     iConstForEach(PtrArray, i, &d->visiblePlayers) {
         const iGmRun *run = i.ptr;
-        iPlayer *plr = audioPlayer_Media(media_GmDocument(d->doc), run->audioId);
+        iPlayer *     plr = audioPlayer_Media(media_GmDocument(d->doc), run->audioId);
+        if (idleTimeMs_Player(plr) > 3000 && ~flags_Player(plr) & volumeGrabbed_PlayerFlag &&
+            flags_Player(plr) & adjustingVolume_PlayerFlag) {
+            setFlags_Player(plr, adjustingVolume_PlayerFlag, iFalse);
+            refresh_Widget(d);
+        }
         if (isStarted_Player(plr) && !isPaused_Player(plr)) {
             refresh_Widget(d);
             addTicker_App(animatePlayingAudio_DocumentWidget_, d);
@@ -482,27 +494,6 @@ static void updateVisible_DocumentWidget_(iDocumentWidget *d) {
             recent->normScrollY = normScrollPos_DocumentWidget_(d);
         }
     }
-}
-
-const iString *bookmarkTitle_DocumentWidget(const iDocumentWidget *d) {
-    iStringArray *title = iClob(new_StringArray());
-    if (!isEmpty_String(title_GmDocument(d->doc))) {
-        pushBack_StringArray(title, title_GmDocument(d->doc));
-    }
-    if (!isEmpty_String(d->titleUser)) {
-        pushBack_StringArray(title, d->titleUser);
-    }
-    if (isEmpty_StringArray(title)) {
-        iUrl parts;
-        init_Url(&parts, d->mod.url);
-        if (!isEmpty_Range(&parts.host)) {
-            pushBackRange_StringArray(title, parts.host);
-        }
-    }
-    if (isEmpty_StringArray(title)) {
-        pushBackCStr_StringArray(title, "Blank Page");
-    }
-    return collect_String(joinCStr_StringArray(title, " \u2014 "));
 }
 
 static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
@@ -575,10 +566,6 @@ static void invalidate_DocumentWidget_(iDocumentWidget *d) {
     invalidate_VisBuf(d->visBuf);
     clear_PtrSet(d->invalidRuns);
 }
-
-static const int outlineMinWidth_DocumentWdiget_ = 45; /* times gap_UI */
-static const int outlineMaxWidth_DocumentWidget_ = 65; /* times gap_UI */
-static const int outlinePadding_DocumentWidget_  = 3;  /* times gap_UI */
 
 static int outlineWidth_DocumentWidget_(const iDocumentWidget *d) {
     const iWidget *w         = constAs_Widget(d);
@@ -865,18 +852,6 @@ static void updateTrust_DocumentWidget_(iDocumentWidget *d, const iGmResponse *r
     }
 }
 
-iHistory *history_DocumentWidget(iDocumentWidget *d) {
-    return d->mod.history;
-}
-
-const iString *url_DocumentWidget(const iDocumentWidget *d) {
-    return d->mod.url;
-}
-
-const iGmDocument *document_DocumentWidget(const iDocumentWidget *d) {
-    return d->doc;
-}
-
 static void parseUser_DocumentWidget_(iDocumentWidget *d) {
     clear_String(d->titleUser);
     iRegExp *userPats[2] = { new_RegExp("~([^/?]+)", 0),
@@ -916,57 +891,6 @@ static iBool updateFromHistory_DocumentWidget_(iDocumentWidget *d) {
         fetch_DocumentWidget_(d);
     }
     return iFalse;
-}
-
-void serializeState_DocumentWidget(const iDocumentWidget *d, iStream *outs) {
-    serialize_Model(&d->mod, outs);
-}
-
-void deserializeState_DocumentWidget(iDocumentWidget *d, iStream *ins) {
-    deserialize_Model(&d->mod, ins);
-    parseUser_DocumentWidget_(d);
-    updateFromHistory_DocumentWidget_(d);
-}
-
-void setUrlFromCache_DocumentWidget(iDocumentWidget *d, const iString *url, iBool isFromCache) {
-    if (cmpStringSc_String(d->mod.url, url, &iCaseInsensitive)) {
-        set_String(d->mod.url, url);
-        /* See if there a username in the URL. */
-        parseUser_DocumentWidget_(d);
-        if (!isFromCache || !updateFromHistory_DocumentWidget_(d)) {
-            fetch_DocumentWidget_(d);
-        }
-    }
-    else {
-        postCommandf_App("document.changed url:%s", cstr_String(d->mod.url));
-    }
-}
-
-iDocumentWidget *duplicate_DocumentWidget(const iDocumentWidget *orig) {
-    iDocumentWidget *d = new_DocumentWidget();
-    delete_History(d->mod.history);
-    d->initNormScrollY = normScrollPos_DocumentWidget_(d);
-    d->mod.history = copy_History(orig->mod.history);
-    setUrlFromCache_DocumentWidget(d, orig->mod.url, iTrue);
-    return d;
-}
-
-void setUrl_DocumentWidget(iDocumentWidget *d, const iString *url) {
-    setUrlFromCache_DocumentWidget(d, url, iFalse);
-}
-
-void setInitialScroll_DocumentWidget(iDocumentWidget *d, float normScrollY) {
-    d->initNormScrollY = normScrollY;
-}
-
-void setRedirectCount_DocumentWidget(iDocumentWidget *d, int count) {
-    d->redirectCount = count;
-}
-
-iBool isRequestOngoing_DocumentWidget(const iDocumentWidget *d) {
-    /*return d->state == fetching_RequestState ||
-            d->state == receivedPartialResponse_RequestState;*/
-    return d->request != NULL;
 }
 
 static void scroll_DocumentWidget_(iDocumentWidget *d, int offset) {
@@ -1248,14 +1172,6 @@ static void allocVisBuffer_DocumentWidget_(const iDocumentWidget *d) {
     else {
         dealloc_VisBuf(d->visBuf);
     }
-}
-
-void updateSize_DocumentWidget(iDocumentWidget *d) {
-    setWidth_GmDocument(
-        d->doc, documentWidth_DocumentWidget_(d), forceBreakWidth_DocumentWidget_(d));
-    updateOutline_DocumentWidget_(d);
-    updateVisible_DocumentWidget_(d);
-    invalidate_DocumentWidget_(d);
 }
 
 static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
@@ -1625,114 +1541,30 @@ static size_t visibleLinkOrdinal_DocumentWidget_(const iDocumentWidget *d, iGmLi
     return iInvalidPos;
 }
 
-iDeclareType(PlayerUI)
-
-struct Impl_PlayerUI {
-    const iPlayer *player;
-    iRect bounds;
-    iRect playPauseRect;
-    iRect rewindRect;
-    iRect scrubberRect;
-    iRect menuRect;
-};
-
-static void init_PlayerUI(iPlayerUI *d, const iPlayer *player, iRect bounds) {
-    d->player = player;
-    d->bounds = bounds;
-    const int height = height_Rect(bounds);
-    d->playPauseRect = (iRect){ addX_I2(topLeft_Rect(bounds), gap_UI / 2), init_I2(3 * height / 2, height) };
-    d->rewindRect    = (iRect){ topRight_Rect(d->playPauseRect), init1_I2(height) };
-    d->menuRect      = (iRect){ addX_I2(topRight_Rect(bounds), -height - gap_UI / 2), init1_I2(height) };
-    d->scrubberRect  = initCorners_Rect(topRight_Rect(d->rewindRect), bottomLeft_Rect(d->menuRect));
-}
-
-static void drawPlayerButton_(iPaint *p, iRect rect, const char *label) {
-    const iInt2 mouse     = mouseCoord_Window(get_Window());
-    const iBool isHover   = contains_Rect(rect, mouse);
-    const iBool isPressed = isHover && (SDL_GetMouseState(NULL, NULL) & SDL_BUTTON_LEFT) != 0;
-    const int frame = (isPressed ? uiTextCaution_ColorId : isHover ? uiHeading_ColorId : uiAnnotation_ColorId);
-    iRect frameRect = shrunk_Rect(rect, init_I2(gap_UI / 2, gap_UI));
-    drawRect_Paint(p, frameRect, frame);
-    if (isPressed) {
-        fillRect_Paint(
-            p,
-            adjusted_Rect(shrunk_Rect(frameRect, divi_I2(gap2_UI, 2)), zero_I2(), one_I2()),
-            frame);
-    }
-    const int fg = isPressed ? (permanent_ColorId | uiBackground_ColorId) : uiHeading_ColorId;
-    drawCentered_Text(uiContent_FontId, frameRect, iTrue, fg, "%s", label);
-}
-
-static int drawSevenSegmentTime_(iInt2 pos, int color, int align, int seconds) { /* returns width */
-    const uint32_t sevenSegmentDigit = 0x1fbf0;
-    const int hours = seconds / 3600;
-    const int mins  = (seconds / 60) % 60;
-    const int secs  = seconds % 60;
-    const int font  = uiLabel_FontId;
-    iString   num;
-    init_String(&num);
-    if (hours) {
-        appendChar_String(&num, sevenSegmentDigit + (hours % 10));
-        appendChar_String(&num, ':');
-    }
-    appendChar_String(&num, sevenSegmentDigit + (mins / 10) % 10);
-    appendChar_String(&num, sevenSegmentDigit + (mins % 10));
-    appendChar_String(&num, ':');
-    appendChar_String(&num, sevenSegmentDigit + (secs / 10) % 10);
-    appendChar_String(&num, sevenSegmentDigit + (secs % 10));
-    iInt2 size = advanceRange_Text(font, range_String(&num));
-    if (align == right_Alignment) {
-        pos.x -= size.x;
-    }
-    drawRange_Text(font, pos, color, range_String(&num));
-    deinit_String(&num);
-    return size.x;
-}
-
-static void draw_PlayerUI(iPlayerUI *d, iPaint *p) {
-    const int playerBackground_ColorId = uiBackground_ColorId;
-    const int playerFrame_ColorId      = uiSeparator_ColorId;
-    fillRect_Paint(p, d->bounds, playerBackground_ColorId);
-    drawRect_Paint(p, d->bounds, playerFrame_ColorId);
-    drawPlayerButton_(p, d->playPauseRect, isPaused_Player(d->player) ? "\U0001f782" : "\u23f8");
-    drawPlayerButton_(p, d->rewindRect, "\u23ee");
-    drawPlayerButton_(p, d->menuRect, "\U0001d362");
-    const int   hgt       = lineHeight_Text(uiLabel_FontId);
-    const int   yMid      = mid_Rect(d->scrubberRect).y;
-    const float playTime  = time_Player(d->player);
-    const float totalTime = duration_Player(d->player);
-    const int   bright    = uiHeading_ColorId;
-    const int   dim       = uiAnnotation_ColorId;
-    int leftWidth = drawSevenSegmentTime_(
-        init_I2(left_Rect(d->scrubberRect) + 2 * gap_UI, yMid - hgt / 2),
-        isPaused_Player(d->player) ? dim : bright,
-        left_Alignment,
-        iRound(playTime));
-    int rightWidth = 0;
-    if (totalTime > 0) {
-        rightWidth =
-            drawSevenSegmentTime_(init_I2(right_Rect(d->scrubberRect) - 2 * gap_UI, yMid - hgt / 2),
-                                  dim,
-                                  right_Alignment,
-                                  iRound(totalTime));
-    }
-    /* Scrubber. */
-    const int   s1      = left_Rect(d->scrubberRect) + leftWidth + 6 * gap_UI;
-    const int   s2      = right_Rect(d->scrubberRect) - rightWidth - 6 * gap_UI;
-    const float normPos = totalTime > 0 ? playTime / totalTime : 0.0f;
-    const int   part    = (s2 - s1) * normPos;
-    const int   scrubMax = (s2 - s1) * streamProgress_Player(d->player);
-    drawHLine_Paint(p, init_I2(s1, yMid), part, bright);
-    drawHLine_Paint(p, init_I2(s1 + part, yMid), scrubMax - part, dim);
-    draw_Text(uiLabel_FontId,
-              init_I2(s1 * (1.0f - normPos) + s2 * normPos - hgt / 3, yMid - hgt / 2),
-              bright,
-              "\u23fa");
-}
-
 static iRect audioPlayerRect_DocumentWidget_(const iDocumentWidget *d, const iGmRun *run) {
     const iRect docBounds = documentBounds_DocumentWidget_(d);
     return moved_Rect(run->bounds, addY_I2(topLeft_Rect(docBounds), -d->scrollY));
+}
+
+static void setGrabbedPlayer_DocumentWidget_(iDocumentWidget *d, const iGmRun *run) {
+    if (run) {
+        iPlayer *plr = audioPlayer_Media(media_GmDocument(d->doc), run->audioId);
+        setFlags_Player(plr, volumeGrabbed_PlayerFlag, iTrue);
+        d->grabbedStartVolume = volume_Player(plr);
+        d->grabbedPlayer      = run;
+        refresh_Widget(d);
+    }
+    else if (d->grabbedPlayer) {
+        setFlags_Player(
+            audioPlayer_Media(media_GmDocument(d->doc), d->grabbedPlayer->audioId),
+            volumeGrabbed_PlayerFlag,
+            iFalse);
+        d->grabbedPlayer = NULL;
+        refresh_Widget(d);
+    }
+    else {
+        iAssert(iFalse);
+    }
 }
 
 static iBool processAudioPlayerEvents_DocumentWidget_(iDocumentWidget *d, const SDL_Event *ev) {
@@ -1745,18 +1577,33 @@ static iBool processAudioPlayerEvents_DocumentWidget_(iDocumentWidget *d, const 
             return iFalse;
         }
     }
+    if (d->grabbedPlayer) {
+        /* Updated in the drag. */
+        return iFalse;
+    }
     const iInt2 mouse = init_I2(ev->button.x, ev->button.y);
     iConstForEach(PtrArray, i, &d->visiblePlayers) {
-        const iGmRun *run = i.ptr;
-        const iRect rect = audioPlayerRect_DocumentWidget_(d, run);
+        const iGmRun *run  = i.ptr;
+        const iRect   rect = audioPlayerRect_DocumentWidget_(d, run);
+        iPlayer *     plr  = audioPlayer_Media(media_GmDocument(d->doc), run->audioId);
         if (contains_Rect(rect, mouse)) {
-            if (ev->type == SDL_MOUSEBUTTONDOWN || ev->type == SDL_MOUSEMOTION) {
+            iPlayerUI ui;
+            init_PlayerUI(&ui, plr, rect);
+            if (ev->type == SDL_MOUSEBUTTONDOWN && flags_Player(plr) & adjustingVolume_PlayerFlag &&
+                contains_Rect(adjusted_Rect(ui.volumeAdjustRect,
+                                            zero_I2(),
+                                            init_I2(-height_Rect(ui.volumeAdjustRect), 0)),
+                              mouse)) {
+                setGrabbedPlayer_DocumentWidget_(d, run);
+                processEvent_Click(&d->click, ev);
+                /* The rest is done in the DocumentWidget click responder. */
                 refresh_Widget(d);
                 return iTrue;
             }
-            iPlayer *plr = audioPlayer_Media(media_GmDocument(d->doc), run->audioId);
-            iPlayerUI ui;
-            init_PlayerUI(&ui, plr, rect);
+            else if (ev->type == SDL_MOUSEBUTTONDOWN || ev->type == SDL_MOUSEMOTION) {
+                refresh_Widget(d);
+                return iTrue;
+            }
             if (contains_Rect(ui.playPauseRect, mouse)) {
                 setPaused_Player(plr, !isPaused_Player(plr));
                 animatePlayingAudio_DocumentWidget_(d);
@@ -1768,6 +1615,13 @@ static iBool processAudioPlayerEvents_DocumentWidget_(iDocumentWidget *d, const 
                     start_Player(plr);
                     setPaused_Player(plr, iTrue);
                 }
+                refresh_Widget(d);
+                return iTrue;
+            }
+            else if (contains_Rect(ui.volumeRect, mouse)) {
+                setFlags_Player(plr,
+                                adjustingVolume_PlayerFlag,
+                                !(flags_Player(plr) & adjustingVolume_PlayerFlag));
                 refresh_Widget(d);
                 return iTrue;
             }
@@ -1961,6 +1815,11 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             postCommand_App("navigate.forward");
             return iTrue;
         }
+        if (ev->button.button == SDL_BUTTON_MIDDLE && d->hoverLink) {
+            postCommandf_App("open newtab:1 url:%s",
+                             cstr_String(linkUrl_GmDocument(d->doc, d->hoverLink->linkId)));
+            return iTrue;
+        }
         if (ev->button.button == SDL_BUTTON_RIGHT) {
             if (!d->menu || !isVisible_Widget(d->menu)) {
                 d->contextLink = d->hoverLink;
@@ -2026,6 +1885,16 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             d->selecting = iFalse;
             return iTrue;
         case drag_ClickResult: {
+            if (d->grabbedPlayer) {
+                iPlayer *plr =
+                    audioPlayer_Media(media_GmDocument(d->doc), d->grabbedPlayer->audioId);
+                iPlayerUI ui;
+                init_PlayerUI(&ui, plr, audioPlayerRect_DocumentWidget_(d, d->grabbedPlayer));
+                float off = (float) delta_Click(&d->click).x / (float) width_Rect(ui.volumeSlider);
+                setVolume_Player(plr, d->grabbedStartVolume + off);
+                refresh_Widget(w);
+                return iTrue;
+            }
             /* Begin selecting a range of text. */
             if (!d->selecting) {
                 setFocus_Widget(NULL); /* TODO: Focus this document? */
@@ -2048,6 +1917,10 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             return iTrue;
         }
         case finished_ClickResult:
+            if (d->grabbedPlayer) {
+                setGrabbedPlayer_DocumentWidget_(d, NULL);
+                return iTrue;
+            }
             if (isVisible_Widget(d->menu)) {
                 closeMenu_Widget(d->menu);
             }
@@ -2122,6 +1995,10 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             return iTrue;
         case double_ClickResult:
         case aborted_ClickResult:
+            if (d->grabbedPlayer) {
+                setGrabbedPlayer_DocumentWidget_(d, NULL);
+                return iTrue;
+            }
             return iTrue;
         default:
             break;
@@ -2616,6 +2493,101 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
     }
     drawSideElements_DocumentWidget_(d);
     draw_Widget(w);
+}
+
+/*----------------------------------------------------------------------------------------------*/
+
+iHistory *history_DocumentWidget(iDocumentWidget *d) {
+    return d->mod.history;
+}
+
+const iString *url_DocumentWidget(const iDocumentWidget *d) {
+    return d->mod.url;
+}
+
+const iGmDocument *document_DocumentWidget(const iDocumentWidget *d) {
+    return d->doc;
+}
+
+const iString *bookmarkTitle_DocumentWidget(const iDocumentWidget *d) {
+    iStringArray *title = iClob(new_StringArray());
+    if (!isEmpty_String(title_GmDocument(d->doc))) {
+        pushBack_StringArray(title, title_GmDocument(d->doc));
+    }
+    if (!isEmpty_String(d->titleUser)) {
+        pushBack_StringArray(title, d->titleUser);
+    }
+    if (isEmpty_StringArray(title)) {
+        iUrl parts;
+        init_Url(&parts, d->mod.url);
+        if (!isEmpty_Range(&parts.host)) {
+            pushBackRange_StringArray(title, parts.host);
+        }
+    }
+    if (isEmpty_StringArray(title)) {
+        pushBackCStr_StringArray(title, "Blank Page");
+    }
+    return collect_String(joinCStr_StringArray(title, " \u2014 "));
+}
+
+
+void serializeState_DocumentWidget(const iDocumentWidget *d, iStream *outs) {
+    serialize_Model(&d->mod, outs);
+}
+
+void deserializeState_DocumentWidget(iDocumentWidget *d, iStream *ins) {
+    deserialize_Model(&d->mod, ins);
+    parseUser_DocumentWidget_(d);
+    updateFromHistory_DocumentWidget_(d);
+}
+
+void setUrlFromCache_DocumentWidget(iDocumentWidget *d, const iString *url, iBool isFromCache) {
+    if (cmpStringSc_String(d->mod.url, url, &iCaseInsensitive)) {
+        set_String(d->mod.url, url);
+        /* See if there a username in the URL. */
+        parseUser_DocumentWidget_(d);
+        if (!isFromCache || !updateFromHistory_DocumentWidget_(d)) {
+            fetch_DocumentWidget_(d);
+        }
+    }
+    else {
+        postCommandf_App("document.changed url:%s", cstr_String(d->mod.url));
+    }
+}
+
+iDocumentWidget *duplicate_DocumentWidget(const iDocumentWidget *orig) {
+    iDocumentWidget *d = new_DocumentWidget();
+    delete_History(d->mod.history);
+    d->initNormScrollY = normScrollPos_DocumentWidget_(d);
+    d->mod.history = copy_History(orig->mod.history);
+    setUrlFromCache_DocumentWidget(d, orig->mod.url, iTrue);
+    return d;
+}
+
+void setUrl_DocumentWidget(iDocumentWidget *d, const iString *url) {
+    setUrlFromCache_DocumentWidget(d, url, iFalse);
+}
+
+void setInitialScroll_DocumentWidget(iDocumentWidget *d, float normScrollY) {
+    d->initNormScrollY = normScrollY;
+}
+
+void setRedirectCount_DocumentWidget(iDocumentWidget *d, int count) {
+    d->redirectCount = count;
+}
+
+iBool isRequestOngoing_DocumentWidget(const iDocumentWidget *d) {
+    /*return d->state == fetching_RequestState ||
+            d->state == receivedPartialResponse_RequestState;*/
+    return d->request != NULL;
+}
+
+void updateSize_DocumentWidget(iDocumentWidget *d) {
+    setWidth_GmDocument(
+        d->doc, documentWidth_DocumentWidget_(d), forceBreakWidth_DocumentWidget_(d));
+    updateOutline_DocumentWidget_(d);
+    updateVisible_DocumentWidget_(d);
+    invalidate_DocumentWidget_(d);
 }
 
 iBeginDefineSubclass(DocumentWidget, Widget)

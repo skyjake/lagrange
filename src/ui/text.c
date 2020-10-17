@@ -145,6 +145,7 @@ struct Impl_CacheRow {
 
 struct Impl_Text {
     enum iTextFont contentFont;
+    enum iTextFont headingFont;
     float          contentFontSize;
     iFont          fonts[max_FontId];
     SDL_Renderer * render;
@@ -164,15 +165,39 @@ static void initFonts_Text_(iText *d) {
     const float monoSize = fontSize_UI * d->contentFontSize / contentScale_Text_ * 0.866f;
     const iBlock *regularFont = &fontNunitoRegular_Embedded;
     const iBlock *italicFont  = &fontNunitoLightItalic_Embedded;
-    const iBlock *boldFont    = &fontNunitoExtraBold_Embedded;
+    const iBlock *h12Font     = &fontNunitoExtraBold_Embedded;
+    const iBlock *h3Font      = &fontNunitoRegular_Embedded;
     const iBlock *lightFont   = &fontNunitoExtraLight_Embedded;
-    float         scaling     = 1.0f; /* additional glyph scaling (<=1), to increase line spacing */
+    float         scaling     = 1.0f; /* glyph scaling (<=1.0), for increasing line spacing */
+    float         h123Scaling = 1.0f; /* glyph scaling (<=1.0), for increasing line spacing */
     if (d->contentFont == firaSans_TextFont) {
         regularFont = &fontFiraSansRegular_Embedded;
-        italicFont  = &fontFiraSansItalic_Embedded;
-        boldFont    = &fontFiraSansBold_Embedded;
         lightFont   = &fontFiraSansLight_Embedded;
+        italicFont  = &fontFiraSansItalic_Embedded;
         scaling     = 0.85f;
+    }
+    else if (d->contentFont == ebGaramond_TextFont) {
+        regularFont = &fontEBGaramondRegular_Embedded;
+        lightFont   = &fontEBGaramondRegular_Embedded;
+        italicFont  = &fontEBGaramondItalic_Embedded;
+    }
+    else if (d->contentFont == literata_TextFont) {
+        regularFont = &fontLiterataRegularopsz14_Embedded;
+        italicFont  = &fontLiterataLightItalicopsz10_Embedded;
+        lightFont   = &fontLiterataExtraLightopsz18_Embedded;
+    }
+    if (d->headingFont == firaSans_TextFont) {
+        h12Font     = &fontFiraSansBold_Embedded;
+        h3Font      = &fontFiraSansRegular_Embedded;
+        h123Scaling = 0.85f;
+    }
+    else if (d->headingFont == ebGaramond_TextFont) {
+        h12Font = &fontEBGaramondBold_Embedded;
+        h3Font  = &fontEBGaramondRegular_Embedded;
+    }
+    else if (d->headingFont == literata_TextFont) {
+        h12Font = &fontLiterataBoldopsz36_Embedded;
+        h3Font  = &fontLiterataRegularopsz14_Embedded;
     }
     const struct {
         const iBlock *ttf;
@@ -188,13 +213,11 @@ static void initFonts_Text_(iText *d) {
         { &fontFiraMonoRegular_Embedded,      monoSize,             1.0f,    monospaceSymbols_FontId },
         { &fontFiraMonoRegular_Embedded,      monoSize * 0.750f,    1.0f,    monospaceSmallSymbols_FontId },
         { regularFont,                        textSize * 1.200f,    scaling, mediumSymbols_FontId },
-        { regularFont,                        textSize * 1.333f,    scaling, bigSymbols_FontId },
+        { h3Font,                             textSize * 1.333f,    scaling, bigSymbols_FontId },
         { italicFont,                         textSize,             scaling, symbols_FontId },
-        { boldFont,                           textSize,             scaling, symbols_FontId },
-        { boldFont,                           textSize * 1.333f,    scaling, mediumSymbols_FontId },
-        { boldFont,                           textSize * 1.666f,    scaling, largeSymbols_FontId },
-        { boldFont,                           textSize * 2.000f,    scaling, hugeSymbols_FontId },
-        { lightFont,                          textSize * 1.666f,    scaling, largeSymbols_FontId },
+        { h12Font,                            textSize * 1.666f,    h123Scaling, largeSymbols_FontId },
+        { h12Font,                            textSize * 2.000f,    h123Scaling, hugeSymbols_FontId },
+        { lightFont,                          textSize * 1.666f,    scaling,     largeSymbols_FontId },
         /* symbol fonts */
         { &fontSymbola_Embedded,              fontSize_UI,          1.0f, defaultSymbols_FontId },
         { &fontSymbola_Embedded,              fontSize_UI * 1.125f, 1.0f, defaultMediumSymbols_FontId },
@@ -247,7 +270,7 @@ static void initFonts_Text_(iText *d) {
         font_Text_(monospace_FontId)->japaneseFont        = monospaceJapanese_FontId;
         font_Text_(medium_FontId)->japaneseFont           = mediumJapanese_FontId;
         font_Text_(big_FontId)->japaneseFont              = bigJapanese_FontId;
-        font_Text_(bigBold_FontId)->japaneseFont          = bigJapanese_FontId;
+//        font_Text_(bigBold_FontId)->japaneseFont          = bigJapanese_FontId;
         font_Text_(largeBold_FontId)->japaneseFont        = largeJapanese_FontId;
         font_Text_(largeLight_FontId)->japaneseFont       = largeJapanese_FontId;
         font_Text_(hugeBold_FontId)->japaneseFont         = hugeJapanese_FontId;
@@ -296,7 +319,8 @@ static void deinitCache_Text_(iText *d) {
 void init_Text(SDL_Renderer *render) {
     iText *d = &text_;
     d->contentFont     = nunito_TextFont;
-    d->contentFontSize = contentScale_Text_;
+    d->headingFont     = nunito_TextFont;
+    d->contentFontSize = contentScale_Text_;    
     d->ansiEscape      = new_RegExp("\\[([0-9;]+)m", 0);
     d->render          = render;
     /* A grayscale palette for rasterized glyphs. */ {
@@ -327,6 +351,13 @@ void setOpacity_Text(float opacity) {
 void setContentFont_Text(enum iTextFont font) {
     if (text_.contentFont != font) {
         text_.contentFont = font;
+        resetFonts_Text();
+    }
+}
+
+void setHeadingFont_Text(enum iTextFont font) {
+    if (text_.headingFont != font) {
+        text_.headingFont = font;
         resetFonts_Text();
     }
 }
@@ -575,6 +606,12 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
                 xpos = pos.x;
                 pos.y += d->height;
                 prevCh = ch;
+                continue;
+            }
+            if (ch == '\t') {
+                const int tabStopWidth = d->height * 8;
+                xpos = pos.x + ((int) ((xpos - pos.x) / tabStopWidth) + 1) * tabStopWidth;
+                prevCh = 0;
                 continue;
             }
             if (ch == '\r') {

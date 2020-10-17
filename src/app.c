@@ -46,6 +46,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/sortedarray.h>
 #include <the_Foundation/time.h>
 #include <SDL_events.h>
+#include <SDL_filesystem.h>
 #include <SDL_render.h>
 #include <SDL_timer.h>
 #include <SDL_video.h>
@@ -75,6 +76,10 @@ static const char *dataDir_App_ = "~/AppData/Roaming/fi.skyjake.Lagrange";
 #define EMB_BIN  "../../share/lagrange/resources.binary"
 static const char *dataDir_App_ = "~/.config/lagrange";
 #endif
+#if defined (LAGRANGE_EMB_BIN) /* specified in build config */
+#  undef EMB_BIN
+#  define EMB_BIN LAGRANGE_EMB_BIN
+#endif
 #define EMB_BIN2 "../resources.binary" /* fallback from build/executable dir */
 static const char *prefsFileName_App_ = "prefs.cfg";
 static const char *stateFileName_App_ = "state.binary";
@@ -82,6 +87,7 @@ static const char *downloadDir_App_   = "~/Downloads";
 
 struct Impl_App {
     iCommandLine args;
+    iString *    execPath;
     iGmCerts *   certs;
     iVisited *   visited;
     iBookmarks * bookmarks;
@@ -168,7 +174,9 @@ static iString *serializePrefs_App_(const iApp *d) {
     }
     appendFormat_String(str, "sidebar.mode arg:%d\n", mode_SidebarWidget(sidebar));
     appendFormat_String(str, "uiscale arg:%f\n", uiScale_Window(d->window));
+    appendFormat_String(str, "prefs.dialogtab arg:%d\n", d->prefs.dialogTab);
     appendFormat_String(str, "font.set arg:%d\n", d->prefs.font);
+    appendFormat_String(str, "headingfont.set arg:%d\n", d->prefs.headingFont);
     appendFormat_String(str, "zoom.set arg:%d\n", d->prefs.zoomPercent);
     appendFormat_String(str, "linewidth.set arg:%d\n", d->prefs.lineWidth);
     appendFormat_String(str, "prefs.biglede.changed arg:%d\n", d->prefs.bigFirstParagraph);
@@ -311,12 +319,23 @@ static void init_App_(iApp *d, int argc, char **argv) {
     d->launchCommands      = new_StringList();
     iZap(d->lastDropTime);
     init_CommandLine(&d->args, argc, argv);
+    /* Where was the app started from? */ {
+        char *exec = SDL_GetBasePath();
+        if (exec) {
+            d->execPath = newCStr_String(concatPath_CStr(
+                exec, cstr_Rangecc(baseName_Path(executablePath_CommandLine(&d->args)))));
+        }
+        else {
+            d->execPath = copy_String(executablePath_CommandLine(&d->args));
+        }
+        SDL_free(exec);
+    }
     init_SortedArray(&d->tickers, sizeof(iTicker), cmp_Ticker_);
-    d->lastTickerTime    = SDL_GetTicks();
+    d->lastTickerTime         = SDL_GetTicks();
     d->elapsedSinceLastTicker = 0;
-    d->commandEcho       = checkArgument_CommandLine(&d->args, "echo") != NULL;
-    d->forceSoftwareRender = checkArgument_CommandLine(&d->args, "sw") != NULL;
-    d->initialWindowRect = init_Rect(-1, -1, 900, 560);
+    d->commandEcho            = checkArgument_CommandLine(&d->args, "echo") != NULL;
+    d->forceSoftwareRender    = checkArgument_CommandLine(&d->args, "sw") != NULL;
+    d->initialWindowRect      = init_Rect(-1, -1, 900, 560);
 #if defined (iPlatformMsys)
     /* Must scale by UI scaling factor. */
     mulfv_I2(&d->initialWindowRect.size, desktopDPI_Win32());
@@ -415,10 +434,11 @@ static void deinit_App(iApp *d) {
     d->window = NULL;
     deinit_CommandLine(&d->args);
     iRelease(d->launchCommands);
+    delete_String(d->execPath);
 }
 
 const iString *execPath_App(void) {
-    return executablePath_CommandLine(&app_.args);
+    return app_.execPath;
 }
 
 const iString *dataDir_App(void) {
@@ -694,6 +714,9 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
                          cstr_String(text_InputWidget(findChild_Widget(d, "prefs.proxy.http"))));
         postCommandf_App("proxy.gopher address:%s",
                          cstr_String(text_InputWidget(findChild_Widget(d, "prefs.proxy.gopher"))));
+        const iWidget *tabs = findChild_Widget(d, "prefs.tabs");
+        postCommandf_App("prefs.dialogtab arg:%u",
+                         tabPageIndex_Widget(tabs, currentTabPage_Widget(tabs)));
         destroy_Widget(d);
         return iTrue;
     }
@@ -818,7 +841,11 @@ static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
 
 iBool handleCommand_App(const char *cmd) {
     iApp *d = &app_;
-    if (equal_Command(cmd, "window.retain")) {
+    if (equal_Command(cmd, "prefs.dialogtab")) {
+        d->prefs.dialogTab = arg_Command(cmd);
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "window.retain")) {
         d->prefs.retainWindowSize = arg_Command(cmd);
         return iTrue;
     }
@@ -834,6 +861,14 @@ iBool handleCommand_App(const char *cmd) {
         postCommand_App("window.unfreeze");
         return iTrue;
     }
+    else if (equal_Command(cmd, "headingfont.set")) {
+        setFreezeDraw_Window(get_Window(), iTrue);
+        d->prefs.headingFont = arg_Command(cmd);
+        setHeadingFont_Text(d->prefs.headingFont);
+        postCommand_App("font.changed");
+        postCommand_App("window.unfreeze");
+        return iTrue;
+    }    
     else if (equal_Command(cmd, "zoom.set")) {
         setFreezeDraw_Window(get_Window(), iTrue); /* no intermediate draws before docs updated */
         d->prefs.zoomPercent = arg_Command(cmd);
@@ -1016,6 +1051,10 @@ iBool handleCommand_App(const char *cmd) {
                         selected_WidgetFlag,
                         iTrue);
         setFlags_Widget(
+            findChild_Widget(dlg, format_CStr("prefs.headingfont.%d", d->prefs.headingFont)),
+            selected_WidgetFlag,
+            iTrue);
+        setFlags_Widget(
             findChild_Widget(dlg, format_CStr("prefs.linewidth.%d", d->prefs.lineWidth)),
             selected_WidgetFlag,
             iTrue);
@@ -1030,6 +1069,8 @@ iBool handleCommand_App(const char *cmd) {
                             schemeProxy_App(range_CStr("http")));
         setText_InputWidget(findChild_Widget(dlg, "prefs.proxy.gopher"),
                             schemeProxy_App(range_CStr("gopher")));
+        iWidget *tabs = findChild_Widget(dlg, "prefs.tabs");
+        showTabPage_Widget(tabs, tabPage_Widget(tabs, d->prefs.dialogTab));
         setCommandHandler_Widget(dlg, handlePrefsCommands_);
     }
     else if (equal_Command(cmd, "navigate.home")) {
