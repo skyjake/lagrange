@@ -143,7 +143,7 @@ struct Impl_OutlineItem {
 
 /*----------------------------------------------------------------------------------------------*/
 
-static void animatePlayingAudio_DocumentWidget_(void *);
+static void animatePlayingAudio_DocumentWidget_(iDocumentWidget *d);
 
 static const int smoothSpeed_DocumentWidget_     = 120; /* unit: gap_Text per second */
 static const int outlineMinWidth_DocumentWdiget_ = 45;  /* times gap_UI */
@@ -181,6 +181,7 @@ struct Impl_DocumentWidget {
     iPtrArray      visiblePlayers; /* currently playing audio */
     const iGmRun * grabbedPlayer; /* currently adjusting volume in a player */
     float          grabbedStartVolume;
+    int            playerTimer;
     const iGmRun * hoverLink;
     const iGmRun * contextLink;
     iBool          noHoverWhileScrolling;
@@ -248,6 +249,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     init_PtrArray(&d->visibleLinks);
     init_PtrArray(&d->visiblePlayers);
     d->grabbedPlayer = NULL;
+    d->playerTimer = 0;
     init_Click(&d->click, d, SDL_BUTTON_LEFT);
     addChild_Widget(w, iClob(d->scroll = new_ScrollWidget()));
     d->menu = NULL; /* created when clicking */
@@ -261,7 +263,6 @@ void init_DocumentWidget(iDocumentWidget *d) {
 }
 
 void deinit_DocumentWidget(iDocumentWidget *d) {
-    removeTicker_App(animatePlayingAudio_DocumentWidget_, d);
     delete_VisBuf(d->visBuf);
     delete_PtrSet(d->invalidRuns);
     deinit_Array(&d->outline);
@@ -270,6 +271,9 @@ void deinit_DocumentWidget(iDocumentWidget *d) {
     deinit_Block(&d->sourceContent);
     deinit_String(&d->sourceMime);
     iRelease(d->doc);
+    if (d->playerTimer) {
+        SDL_RemoveTimer(d->playerTimer);
+    }
     deinit_PtrArray(&d->visiblePlayers);
     deinit_PtrArray(&d->visibleLinks);
     delete_String(d->certSubject);
@@ -455,21 +459,58 @@ static void updateOutlineOpacity_DocumentWidget_(iDocumentWidget *d) {
     animate_DocumentWidget_(d);
 }
 
-static void animatePlayingAudio_DocumentWidget_(void *widget) {
-    iDocumentWidget *d = widget;
-    if (document_App() != d) return;
+static uint32_t playerUpdateInterval_DocumentWidget_(const iDocumentWidget *d) {
+    if (document_App() != d) {
+        return 0;
+    }
+    uint32_t interval = 0;
     iConstForEach(PtrArray, i, &d->visiblePlayers) {
         const iGmRun *run = i.ptr;
         iPlayer *     plr = audioPlayer_Media(media_GmDocument(d->doc), run->audioId);
-        if (idleTimeMs_Player(plr) > 3000 && ~flags_Player(plr) & volumeGrabbed_PlayerFlag &&
-            flags_Player(plr) & adjustingVolume_PlayerFlag) {
-            setFlags_Player(plr, adjustingVolume_PlayerFlag, iFalse);
-            refresh_Widget(d);
+        if (flags_Player(plr) & adjustingVolume_PlayerFlag ||
+            (isStarted_Player(plr) && !isPaused_Player(plr))) {
+            interval = 1000 / 15;
         }
-        if (isStarted_Player(plr) && !isPaused_Player(plr)) {
-            refresh_Widget(d);
-            addTicker_App(animatePlayingAudio_DocumentWidget_, d);
+    }
+    return interval;
+}
+
+static uint32_t postPlayerUpdate_DocumentWidget_(uint32_t interval, void *context) {
+    /* Called in timer thread; don't access the widget. */
+    iUnused(context);
+    postCommand_App("media.player.update");
+    return interval;
+}
+
+static void updateAudioPlayers_DocumentWidget_(iDocumentWidget *d) {
+    if (document_App() == d) {
+        refresh_Widget(d);
+        iConstForEach(PtrArray, i, &d->visiblePlayers) {
+            const iGmRun *run = i.ptr;
+            iPlayer *     plr = audioPlayer_Media(media_GmDocument(d->doc), run->audioId);
+            if (idleTimeMs_Player(plr) > 3000 && ~flags_Player(plr) & volumeGrabbed_PlayerFlag &&
+                flags_Player(plr) & adjustingVolume_PlayerFlag) {
+                setFlags_Player(plr, adjustingVolume_PlayerFlag, iFalse);
+            }
         }
+    }
+    if (d->playerTimer && playerUpdateInterval_DocumentWidget_(d) == 0) {
+        SDL_RemoveTimer(d->playerTimer);
+        d->playerTimer = 0;
+    }
+}
+
+static void animatePlayingAudio_DocumentWidget_(iDocumentWidget *d) {
+    if (document_App() != d) {
+        if (d->playerTimer) {
+            SDL_RemoveTimer(d->playerTimer);
+            d->playerTimer = 0;
+        }
+        return;
+    }
+    uint32_t interval = playerUpdateInterval_DocumentWidget_(d);
+    if (interval && !d->playerTimer) {
+        d->playerTimer = SDL_AddTimer(interval, postPlayerUpdate_DocumentWidget_, d);
     }
 }
 
@@ -1349,6 +1390,10 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             }
         }
     }
+    else if (equal_Command(cmd, "media.player.update")) {
+        updateAudioPlayers_DocumentWidget_(d);
+        return iFalse;
+    }
     else if (equal_Command(cmd, "document.stop") && document_App() == d) {
         if (d->request) {
             postCommandf_App(
@@ -1622,6 +1667,7 @@ static iBool processAudioPlayerEvents_DocumentWidget_(iDocumentWidget *d, const 
                 setFlags_Player(plr,
                                 adjustingVolume_PlayerFlag,
                                 !(flags_Player(plr) & adjustingVolume_PlayerFlag));
+                animatePlayingAudio_DocumentWidget_(d);
                 refresh_Widget(d);
                 return iTrue;
             }
