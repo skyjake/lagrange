@@ -931,40 +931,9 @@ iWidget *makePreferences_Widget(void) {
         addChild_Widget(headings, iClob(makeHeading_Widget("UI scale factor:")));
         setId_Widget(addChild_Widget(values, iClob(new_InputWidget(8))), "prefs.uiscale");
     }
-    /* Layout. */ {
-        appendTwoColumnPage_(tabs, "Style", '2', &headings, &values);
-        /* Fonts. */ {
-            iWidget *fonts;
-            addChild_Widget(headings, iClob(makeHeading_Widget("Heading font:")));
-            fonts = new_Widget();
-            addFontButtons_(fonts, "headingfont");
-            addChildFlags_Widget(values, iClob(fonts), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
-            addChild_Widget(headings, iClob(makeHeading_Widget("Body font:")));
-            fonts = new_Widget();
-            addFontButtons_(fonts, "font");
-            addChildFlags_Widget(values, iClob(fonts), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
-        }
-        addChild_Widget(headings, iClob(makePadding_Widget(2 * gap_UI)));
-        addChild_Widget(values, iClob(makePadding_Widget(2 * gap_UI)));
-        addChild_Widget(headings, iClob(makeHeading_Widget("Line width:")));
-        iWidget *widths = new_Widget();
-        /* Line widths. */ {
-            addRadioButton_(widths, "prefs.linewidth.30", "\u20132", "linewidth.set arg:30");
-            addRadioButton_(widths, "prefs.linewidth.35", "\u20131", "linewidth.set arg:35");
-            addRadioButton_(widths, "prefs.linewidth.40", "Normal", "linewidth.set arg:40");
-            addRadioButton_(widths, "prefs.linewidth.45", "+1", "linewidth.set arg:45");
-            addRadioButton_(widths, "prefs.linewidth.50", "+2", "linewidth.set arg:50");
-            addRadioButton_(widths, "prefs.linewidth.1000", "Window", "linewidth.set arg:1000");
-        }
-        addChildFlags_Widget(values, iClob(widths), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
-        addChild_Widget(headings, iClob(makeHeading_Widget("Big 1st paragaph:")));
-        addChild_Widget(values, iClob(makeToggle_Widget("prefs.biglede")));
-        makeTwoColumnHeading_("WIDE LAYOUT", headings, values);
-        addChild_Widget(headings, iClob(makeHeading_Widget("Site icon:")));
-        addChild_Widget(values, iClob(makeToggle_Widget("prefs.sideicon")));
-    }
     /* Colors. */ {
-        appendTwoColumnPage_(tabs, "Colors", '3', &headings, &values);
+        appendTwoColumnPage_(tabs, "Colors", '2', &headings, &values);
+        makeTwoColumnHeading_("PAGE CONTENTS", headings, values);
         for (int i = 0; i < 2; ++i) {
             const iBool isDark = (i == 0);
             const char *mode = isDark ? "dark" : "light";
@@ -995,6 +964,38 @@ iWidget *makePreferences_Widget(void) {
             addRadioButton_(sats, "prefs.saturation.0", "Monochrome", "saturation.set arg:0");
         }
         addChildFlags_Widget(values, iClob(sats), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+    }
+    /* Layout. */ {
+        appendTwoColumnPage_(tabs, "Style", '3', &headings, &values);
+        /* Fonts. */ {
+            iWidget *fonts;
+            addChild_Widget(headings, iClob(makeHeading_Widget("Heading font:")));
+            fonts = new_Widget();
+            addFontButtons_(fonts, "headingfont");
+            addChildFlags_Widget(values, iClob(fonts), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+            addChild_Widget(headings, iClob(makeHeading_Widget("Body font:")));
+            fonts = new_Widget();
+            addFontButtons_(fonts, "font");
+            addChildFlags_Widget(values, iClob(fonts), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+        }
+        addChild_Widget(headings, iClob(makePadding_Widget(2 * gap_UI)));
+        addChild_Widget(values, iClob(makePadding_Widget(2 * gap_UI)));
+        addChild_Widget(headings, iClob(makeHeading_Widget("Line width:")));
+        iWidget *widths = new_Widget();
+        /* Line widths. */ {
+            addRadioButton_(widths, "prefs.linewidth.30", "\u20132", "linewidth.set arg:30");
+            addRadioButton_(widths, "prefs.linewidth.35", "\u20131", "linewidth.set arg:35");
+            addRadioButton_(widths, "prefs.linewidth.40", "Normal", "linewidth.set arg:40");
+            addRadioButton_(widths, "prefs.linewidth.45", "+1", "linewidth.set arg:45");
+            addRadioButton_(widths, "prefs.linewidth.50", "+2", "linewidth.set arg:50");
+            addRadioButton_(widths, "prefs.linewidth.1000", "Window", "linewidth.set arg:1000");
+        }
+        addChildFlags_Widget(values, iClob(widths), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+        addChild_Widget(headings, iClob(makeHeading_Widget("Big 1st paragaph:")));
+        addChild_Widget(values, iClob(makeToggle_Widget("prefs.biglede")));
+        makeTwoColumnHeading_("WIDE LAYOUT", headings, values);
+        addChild_Widget(headings, iClob(makeHeading_Widget("Site icon:")));
+        addChild_Widget(values, iClob(makeToggle_Widget("prefs.sideicon")));
     }
     /* Proxies. */ {
         appendTwoColumnPage_(tabs, "Proxies", '4', &headings, &values);
