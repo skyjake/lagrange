@@ -143,7 +143,7 @@ struct Impl_OutlineItem {
 
 /*----------------------------------------------------------------------------------------------*/
 
-static void animatePlayingAudio_DocumentWidget_(iDocumentWidget *d);
+static void animatePlayers_DocumentWidget_(iDocumentWidget *d);
 
 static const int smoothSpeed_DocumentWidget_     = 120; /* unit: gap_Text per second */
 static const int outlineMinWidth_DocumentWdiget_ = 45;  /* times gap_UI */
@@ -482,7 +482,7 @@ static uint32_t postPlayerUpdate_DocumentWidget_(uint32_t interval, void *contex
     return interval;
 }
 
-static void updateAudioPlayers_DocumentWidget_(iDocumentWidget *d) {
+static void updatePlayers_DocumentWidget_(iDocumentWidget *d) {
     if (document_App() == d) {
         refresh_Widget(d);
         iConstForEach(PtrArray, i, &d->visiblePlayers) {
@@ -500,7 +500,7 @@ static void updateAudioPlayers_DocumentWidget_(iDocumentWidget *d) {
     }
 }
 
-static void animatePlayingAudio_DocumentWidget_(iDocumentWidget *d) {
+static void animatePlayers_DocumentWidget_(iDocumentWidget *d) {
     if (document_App() != d) {
         if (d->playerTimer) {
             SDL_RemoveTimer(d->playerTimer);
@@ -528,7 +528,7 @@ static void updateVisible_DocumentWidget_(iDocumentWidget *d) {
     render_GmDocument(d->doc, visRange, addVisible_DocumentWidget_, d);
     updateHover_DocumentWidget_(d, mouseCoord_Window(get_Window()));
     updateSideOpacity_DocumentWidget_(d, iTrue);
-    animatePlayingAudio_DocumentWidget_(d);
+    animatePlayers_DocumentWidget_(d);
     /* Remember scroll positions of recently visited pages. */ {
         iRecentUrl *recent = mostRecentUrl_History(d->mod.history);
         if (recent && docSize && d->state == ready_RequestState) {
@@ -1257,7 +1257,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         updateOutlineOpacity_DocumentWidget_(d);
         updateWindowTitle_DocumentWidget_(d);
         allocVisBuffer_DocumentWidget_(d);
-        animatePlayingAudio_DocumentWidget_(d);
+        animatePlayers_DocumentWidget_(d);
         return iFalse;
     }
     else if (equal_Command(cmd, "server.showcert") && d == document_App()) {
@@ -1391,7 +1391,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         }
     }
     else if (equal_Command(cmd, "media.player.update")) {
-        updateAudioPlayers_DocumentWidget_(d);
+        updatePlayers_DocumentWidget_(d);
         return iFalse;
     }
     else if (equal_Command(cmd, "document.stop") && document_App() == d) {
@@ -1586,7 +1586,7 @@ static size_t visibleLinkOrdinal_DocumentWidget_(const iDocumentWidget *d, iGmLi
     return iInvalidPos;
 }
 
-static iRect audioPlayerRect_DocumentWidget_(const iDocumentWidget *d, const iGmRun *run) {
+static iRect playerRect_DocumentWidget_(const iDocumentWidget *d, const iGmRun *run) {
     const iRect docBounds = documentBounds_DocumentWidget_(d);
     return moved_Rect(run->bounds, addY_I2(topLeft_Rect(docBounds), -d->scrollY));
 }
@@ -1612,7 +1612,7 @@ static void setGrabbedPlayer_DocumentWidget_(iDocumentWidget *d, const iGmRun *r
     }
 }
 
-static iBool processAudioPlayerEvents_DocumentWidget_(iDocumentWidget *d, const SDL_Event *ev) {
+static iBool processPlayerEvents_DocumentWidget_(iDocumentWidget *d, const SDL_Event *ev) {
     if (ev->type != SDL_MOUSEBUTTONDOWN && ev->type != SDL_MOUSEBUTTONUP &&
         ev->type != SDL_MOUSEMOTION) {
         return iFalse;
@@ -1629,7 +1629,7 @@ static iBool processAudioPlayerEvents_DocumentWidget_(iDocumentWidget *d, const 
     const iInt2 mouse = init_I2(ev->button.x, ev->button.y);
     iConstForEach(PtrArray, i, &d->visiblePlayers) {
         const iGmRun *run  = i.ptr;
-        const iRect   rect = audioPlayerRect_DocumentWidget_(d, run);
+        const iRect   rect = playerRect_DocumentWidget_(d, run);
         iPlayer *     plr  = audioPlayer_Media(media_GmDocument(d->doc), run->audioId);
         if (contains_Rect(rect, mouse)) {
             iPlayerUI ui;
@@ -1651,7 +1651,7 @@ static iBool processAudioPlayerEvents_DocumentWidget_(iDocumentWidget *d, const 
             }
             if (contains_Rect(ui.playPauseRect, mouse)) {
                 setPaused_Player(plr, !isPaused_Player(plr));
-                animatePlayingAudio_DocumentWidget_(d);
+                animatePlayers_DocumentWidget_(d);
                 return iTrue;
             }
             else if (contains_Rect(ui.rewindRect, mouse)) {
@@ -1667,7 +1667,7 @@ static iBool processAudioPlayerEvents_DocumentWidget_(iDocumentWidget *d, const 
                 setFlags_Player(plr,
                                 adjustingVolume_PlayerFlag,
                                 !(flags_Player(plr) & adjustingVolume_PlayerFlag));
-                animatePlayingAudio_DocumentWidget_(d);
+                animatePlayers_DocumentWidget_(d);
                 refresh_Widget(d);
                 return iTrue;
             }
@@ -1923,7 +1923,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             processContextMenuEvent_Widget(d->menu, ev, d->hoverLink = NULL);
         }
     }
-    if (processAudioPlayerEvents_DocumentWidget_(d, ev)) {
+    if (processPlayerEvents_DocumentWidget_(d, ev)) {
         return iTrue;
     }
     switch (processEvent_Click(&d->click, ev)) {
@@ -1935,7 +1935,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 iPlayer *plr =
                     audioPlayer_Media(media_GmDocument(d->doc), d->grabbedPlayer->audioId);
                 iPlayerUI ui;
-                init_PlayerUI(&ui, plr, audioPlayerRect_DocumentWidget_(d, d->grabbedPlayer));
+                init_PlayerUI(&ui, plr, playerRect_DocumentWidget_(d, d->grabbedPlayer));
                 float off = (float) delta_Click(&d->click).x / (float) width_Rect(ui.volumeSlider);
                 setVolume_Player(plr, d->grabbedStartVolume + off);
                 refresh_Widget(w);
@@ -2436,11 +2436,11 @@ static void drawSideElements_DocumentWidget_(const iDocumentWidget *d) {
     unsetClip_Paint(&p);
 }
 
-static void drawAudioPlayers_DocumentWidget_(const iDocumentWidget *d, iPaint *p) {
+static void drawPlayers_DocumentWidget_(const iDocumentWidget *d, iPaint *p) {
     iConstForEach(PtrArray, i, &d->visiblePlayers) {
         const iGmRun * run = i.ptr;
         const iPlayer *plr = audioPlayer_Media(media_GmDocument(d->doc), run->audioId);
-        const iRect rect   = audioPlayerRect_DocumentWidget_(d, run);
+        const iRect rect   = playerRect_DocumentWidget_(d, run);
         iPlayerUI   ui;
         init_PlayerUI(&ui, plr, rect);
         draw_PlayerUI(&ui, p);
@@ -2522,7 +2522,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
         render_GmDocument(d->doc, vis, drawMark_DrawContext_, &ctx);
         SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_NONE);
     }
-    drawAudioPlayers_DocumentWidget_(d, &ctx.paint);
+    drawPlayers_DocumentWidget_(d, &ctx.paint);
     unsetClip_Paint(&ctx.paint);
     /* Fill the top and bottom, in case the document is short. */
     if (yTop > top_Rect(bounds)) {
