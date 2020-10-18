@@ -713,6 +713,20 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
             set_Color(tmBannerTitle_ColorId, get_Color(white_ColorId));
             set_Color(tmBannerIcon_ColorId, get_Color(orange_ColorId));
         }
+        else if (theme == colorfulLight_GmDocumentTheme) {
+            const iHSLColor base = { 190, 1.0f, 0.35f, 1.0f };
+            setHsl_Color(tmBackground_ColorId, base);
+            set_Color(tmParagraph_ColorId, get_Color(black_ColorId));
+            set_Color(tmFirstParagraph_ColorId, get_Color(black_ColorId));
+            setHsl_Color(tmQuote_ColorId, addSatLum_HSLColor(base, 0, -0.2f));
+            setHsl_Color(tmPreformatted_ColorId, addSatLum_HSLColor(base, 0, -0.3f));
+            set_Color(tmHeading1_ColorId, get_Color(white_ColorId));
+            set_Color(tmHeading2_ColorId, mix_Color(get_Color(tmBackground_ColorId), get_Color(white_ColorId), 0.85f));
+            set_Color(tmHeading3_ColorId, mix_Color(get_Color(tmBackground_ColorId), get_Color(white_ColorId), 0.75f));
+            setHsl_Color(tmBannerBackground_ColorId, base);
+            setHsl_Color(tmBannerIcon_ColorId, addSatLum_HSLColor(base, 0, -0.2f));
+            setHsl_Color(tmBannerTitle_ColorId, addSatLum_HSLColor(base, 0, -0.2f));
+        }
         else if (theme == black_GmDocumentTheme) {
             set_Color(tmBackground_ColorId, get_Color(black_ColorId));
             set_Color(tmParagraph_ColorId, get_Color(gray75_ColorId));
@@ -813,7 +827,9 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
             violet_Hue,
             pink_Hue
         };
-        static const float hues[] = { 5, 25, 40, 56, 80, 120, 160, 180, 208, 231, 270, 324 };
+        static const float hues[]    = { 5, 25, 40, 56, 80, 120, 160, 180, 208, 231, 270, 324 };
+        static const float normLum[] = { 0.65f, 0.5f, 0.4f, 0.45f, 0.3f, 0.4f,
+                                         0.35f, 0.35f, 0.55f, 0.7f, 0.7f, 0.65f };
         static const struct {
             int index[2];
         } altHues[iElemCount(hues)] = {
@@ -886,6 +902,30 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
             set_Color(tmQuote_ColorId, get_Color(tmPreformatted_ColorId));
             set_Color(tmInlineContentMetadata_ColorId, get_Color(tmHeading3_ColorId));
         }
+        else if (theme == colorfulLight_GmDocumentTheme) {
+            iHSLColor base = { hues[primIndex], 1.0f, normLum[primIndex], 1.0f };
+            printf("prim:%d norm:%f\n", primIndex, normLum[primIndex]); fflush(stdout);
+            if (primIndex == 1) {
+                base.sat -= 0.1f;
+            }
+            if (primIndex == 0 || primIndex == 3 || primIndex == 5 || primIndex == 11) {
+                base.sat -= 0.25f;
+            }
+            if (primIndex == 3) {
+                base.sat -= 0.4f;
+            }
+            setHsl_Color(tmBackground_ColorId, base);
+            set_Color(tmParagraph_ColorId, get_Color(black_ColorId));
+            set_Color(tmFirstParagraph_ColorId, get_Color(black_ColorId));
+            setHsl_Color(tmQuote_ColorId, addSatLum_HSLColor(base, 0, -base.lum * 0.5f));
+            setHsl_Color(tmPreformatted_ColorId, addSatLum_HSLColor(base, 0, -base.lum * 0.67f));
+            set_Color(tmHeading1_ColorId, get_Color(white_ColorId));
+            set_Color(tmHeading2_ColorId, mix_Color(get_Color(tmBackground_ColorId), get_Color(white_ColorId), 0.85f));
+            set_Color(tmHeading3_ColorId, mix_Color(get_Color(tmBackground_ColorId), get_Color(white_ColorId), 0.75f));
+            setHsl_Color(tmBannerBackground_ColorId, addSatLum_HSLColor(base, 0, -0.04f));
+            setHsl_Color(tmBannerIcon_ColorId, addSatLum_HSLColor(base, 0, -0.3f));
+            setHsl_Color(tmBannerTitle_ColorId, addSatLum_HSLColor(base, 0, -0.25f));
+        }
         else if (theme == white_GmDocumentTheme) {
             iHSLColor base    = { hues[primIndex], 1.0f, 0.3f, 1.0f };
             iHSLColor altBase = { altHue, base.sat, base.lum - 0.1f, 1 };
@@ -895,7 +935,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
             setHsl_Color(tmBannerTitle_ColorId, addSatLum_HSLColor(base, -0.6f, 0.25f));
             setHsl_Color(tmBannerIcon_ColorId, addSatLum_HSLColor(base, 0, 0));
 
-            setHsl_Color(tmHeading1_ColorId, base); //addSatLum_HSLColor(base, -0.5f, 0.125f));
+            setHsl_Color(tmHeading1_ColorId, base);
             set_Color(tmHeading2_ColorId, mix_Color(rgb_HSLColor(base), rgb_HSLColor(altBase), 0.5f));
             setHsl_Color(tmHeading3_ColorId, altBase);
 

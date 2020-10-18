@@ -259,7 +259,7 @@ iBool setMode_SidebarWidget(iSidebarWidget *d, enum iSidebarMode mode) {
     }
     const float heights[max_SidebarMode] = { 1.333f, 1.333f, 3.5f, 1.2f };
     setBackgroundColor_Widget(as_Widget(d->list),
-                              d->mode == documentOutline_SidebarMode ? tmBackground_ColorId
+                              d->mode == documentOutline_SidebarMode ? tmBannerBackground_ColorId
                                                                      : uiBackground_ColorId);
     setItemHeight_ListWidget(d->list, heights[mode] * lineHeight_Text(uiContent_FontId));
     /* Restore previous scroll position. */
