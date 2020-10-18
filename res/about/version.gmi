@@ -6,6 +6,10 @@
 ```
 # Release notes
 
+## 0.6
+* Added new color themes for page content: Colorful Light, Black, Gray, Sepia, High Contrast.
+* Dark and light mode page content themes can be chosen in Preferences.
+
 ## 0.5
 * Added MP3 support in the audio player (using mpg123).
 => https://mpg123.org/ mpg123: MPEG audio player and decoder library
