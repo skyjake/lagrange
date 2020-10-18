@@ -965,10 +965,27 @@ iWidget *makePreferences_Widget(void) {
     }
     /* Colors. */ {
         appendTwoColumnPage_(tabs, "Colors", '3', &headings, &values);
-        addChild_Widget(headings, iClob(makeHeading_Widget("Dark theme:")));
-        addChild_Widget(values, iClob(new_LabelWidget("Colorful", 0, 0, 0)));
-        addChild_Widget(headings, iClob(makeHeading_Widget("Light theme:")));
-        addChild_Widget(values, iClob(new_LabelWidget("White", 0, 0, 0)));
+        for (int i = 0; i < 2; ++i) {
+            const iBool isDark = (i == 0);
+            const char *mode = isDark ? "dark" : "light";
+            const iMenuItem themes[] = {
+                { "Colorful Dark", 0, 0, format_CStr("doctheme.%s.set arg:%d", mode, colorfulDark_GmDocumentTheme) },
+                { "Colorful Light", 0, 0, format_CStr("doctheme.%s.set arg:%d", mode, colorfulLight_GmDocumentTheme) },
+                { "Black", 0, 0, format_CStr("doctheme.%s.set arg:%d", mode, black_GmDocumentTheme) },
+                { "Gray", 0, 0, format_CStr("doctheme.%s.set arg:%d", mode, gray_GmDocumentTheme) },
+                { "Sepia", 0, 0, format_CStr("doctheme.%s.set arg:%d", mode, sepia_GmDocumentTheme) },
+                { "White", 0, 0, format_CStr("doctheme.%s.set arg:%d", mode, white_GmDocumentTheme) },
+                { "High Contrast", 0, 0, format_CStr("doctheme.%s.set arg:%d", mode, highContrast_GmDocumentTheme) },
+            };
+            addChild_Widget(headings, iClob(makeHeading_Widget(isDark ? "Dark theme:" : "Light theme:")));
+            setId_Widget(addChild_Widget(values,
+                                         iClob(makeMenuButton_LabelWidget(
+                                             themes[0].label, themes, iElemCount(themes)))),
+                         format_CStr("prefs.doctheme.%s", mode));
+        }
+        //addChild_Widget(values, iClob(new_LabelWidget("Colorful", 0, 0, 0)));
+//        addChild_Widget(headings, iClob(makeHeading_Widget("Light theme:")));
+//        addChild_Widget(values, iClob(new_LabelWidget("White", 0, 0, 0)));
         addChild_Widget(headings, iClob(makeHeading_Widget("Saturation:")));
         iWidget *sats = new_Widget();
         /* Saturation levels. */ {

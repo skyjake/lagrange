@@ -184,6 +184,8 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "prefs.hoveroutline.changed arg:%d\n", d->prefs.hoverOutline);
     appendFormat_String(str, "theme.set arg:%d auto:1\n", d->prefs.theme);
     appendFormat_String(str, "ostheme arg:%d\n", d->prefs.useSystemTheme);
+    appendFormat_String(str, "doctheme.dark.set arg:%d\n", d->prefs.docThemeDark);
+    appendFormat_String(str, "doctheme.light.set arg:%d\n", d->prefs.docThemeLight);
     appendFormat_String(str, "saturation.set arg:%d\n", (int) ((d->prefs.saturation * 100) + 0.5f));
     appendFormat_String(str, "proxy.gopher address:%s\n", cstr_String(&d->prefs.gopherProxy));
     appendFormat_String(str, "proxy.http address:%s\n", cstr_String(&d->prefs.httpProxy));
@@ -700,6 +702,18 @@ static void updatePrefsThemeButtons_(iWidget *d) {
     }
 }
 
+static void updateColorThemeButton_(iLabelWidget *button, int theme) {
+    const char *mode    = strstr(cstr_String(id_Widget(as_Widget(button))), ".dark") ? "dark" : "light";
+    const char *command = format_CStr("doctheme.%s.set arg:%d", mode, theme);
+    iForEach(ObjectList, i, children_Widget(findChild_Widget(as_Widget(button), "menu"))) {
+        iLabelWidget *item = i.object;
+        if (!cmp_String(command_LabelWidget(item), command)) {
+            updateText_LabelWidget(button, label_LabelWidget(item));
+            break;
+        }
+    }
+}
+
 static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
     if (equal_Command(cmd, "prefs.dismiss") || equal_Command(cmd, "preferences")) {
         setUiScale_Window(get_Window(),
@@ -719,6 +733,14 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
                          tabPageIndex_Widget(tabs, currentTabPage_Widget(tabs)));
         destroy_Widget(d);
         return iTrue;
+    }
+    else if (equal_Command(cmd, "doctheme.dark.set")) {
+        updateColorThemeButton_(findChild_Widget(d, "prefs.doctheme.dark"), arg_Command(cmd));
+        return iFalse;
+    }
+    else if (equal_Command(cmd, "doctheme.light.set")) {
+        updateColorThemeButton_(findChild_Widget(d, "prefs.doctheme.light"), arg_Command(cmd));
+        return iFalse;
     }
     else if (equal_Command(cmd, "prefs.ostheme.changed")) {
         postCommandf_App("ostheme arg:%d", arg_Command(cmd));
@@ -908,6 +930,16 @@ iBool handleCommand_App(const char *cmd) {
         d->prefs.useSystemTheme = arg_Command(cmd);
         return iTrue;
     }
+    else if (equal_Command(cmd, "doctheme.dark.set")) {
+        d->prefs.docThemeDark = arg_Command(cmd);
+        postCommand_App("theme.changed auto:1");
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "doctheme.light.set")) {
+        d->prefs.docThemeLight = arg_Command(cmd);
+        postCommand_App("theme.changed auto:1");
+        return iTrue;
+    }
     else if (equal_Command(cmd, "linewidth.set")) {
         d->prefs.lineWidth = iMax(20, arg_Command(cmd));
         postCommand_App("document.layout.changed");
@@ -1060,6 +1092,8 @@ iBool handleCommand_App(const char *cmd) {
             iTrue);
         setToggle_Widget(findChild_Widget(dlg, "prefs.biglede"), d->prefs.bigFirstParagraph);
         setToggle_Widget(findChild_Widget(dlg, "prefs.sideicon"), d->prefs.sideIcon);
+        updateColorThemeButton_(findChild_Widget(dlg, "prefs.doctheme.dark"), d->prefs.docThemeDark);
+        updateColorThemeButton_(findChild_Widget(dlg, "prefs.doctheme.light"), d->prefs.docThemeLight);
         setFlags_Widget(
             findChild_Widget(
                 dlg, format_CStr("prefs.saturation.%d", (int) (d->prefs.saturation * 3.99f))),

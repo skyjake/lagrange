@@ -36,8 +36,18 @@ iDeclareType(GmRun)
 
 enum iGmDocumentTheme {
     colorfulDark_GmDocumentTheme,
+    colorfulLight_GmDocumentTheme,
+    black_GmDocumentTheme,
+    gray_GmDocumentTheme,
     white_GmDocumentTheme,
+    sepia_GmDocumentTheme,
+    highContrast_GmDocumentTheme,
 };
+
+iLocalDef iBool isDark_GmDocumentTheme(enum iGmDocumentTheme d) {
+    return d == colorfulDark_GmDocumentTheme || d == black_GmDocumentTheme ||
+           d == gray_GmDocumentTheme;
+}
 
 typedef uint16_t iGmLinkId;
 
