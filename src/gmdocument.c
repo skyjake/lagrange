@@ -828,7 +828,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
             pink_Hue
         };
         static const float hues[]    = { 5, 25, 40, 56, 80, 120, 160, 180, 208, 231, 270, 324 };
-        static const float normLum[] = { 0.65f, 0.5f, 0.4f, 0.45f, 0.3f, 0.4f,
+        static const float normLum[] = { 0.65f, 0.5f, 0.4f, 0.45f, 0.35f, 0.45f,
                                          0.35f, 0.35f, 0.55f, 0.7f, 0.7f, 0.65f };
         static const struct {
             int index[2];
@@ -912,8 +912,9 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
                 base.sat -= 0.25f;
             }
             if (primIndex == 3) {
-                base.sat -= 0.4f;
+                base.sat -= 0.2f;
             }
+            base.sat *= 0.8f;
             setHsl_Color(tmBackground_ColorId, base);
             set_Color(tmParagraph_ColorId, get_Color(black_ColorId));
             set_Color(tmFirstParagraph_ColorId, get_Color(black_ColorId));
