@@ -265,10 +265,10 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         5, 10, 5, 10, 0, 0, 0, 5
     };
     static const float topMargin[max_GmLineType] = {
-        0.0f, 0.5f, 1.0f, 0.5f, 2.0f, 1.5f, 1.0f, 1.0f
+        0.0f, 0.333f, 1.0f, 0.5f, 2.0f, 1.5f, 1.0f, 1.0f
     };
     static const float bottomMargin[max_GmLineType] = {
-        0.0f, 0.5f, 1.0f, 0.5f, 0.5f, 0.5f, 0.5f, 1.0f
+        0.0f, 0.333f, 1.0f, 0.5f, 0.5f, 0.5f, 0.5f, 1.0f
     };
     static const char *arrow    = "\u27a4";
     static const char *envelope = "\U0001f4e7";
@@ -1010,6 +1010,13 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
             d->siteIcon = 0x264a; /* gemini symbol */
         }
     }
+#if 0
+    for (int i = tmFirst_ColorId; i < max_ColorId; ++i) {
+        const iColor tc = get_Color(i);
+        printf("%02i: #%02x%02x%02x\n", i, tc.r, tc.g, tc.b);
+    }
+    printf("---\n");
+#endif
 }
 
 void setFormat_GmDocument(iGmDocument *d, enum iGmDocumentFormat format) {
