@@ -22,6 +22,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "app.h"
 #include "bookmarks.h"
+#include "defs.h"
 #include "embedded.h"
 #include "gmcerts.h"
 #include "gmdocument.h"
@@ -255,9 +256,9 @@ static iBool loadState_App_(iApp *d) {
             printf("%s: format not recognized\n", cstr_String(path_File(f)));
             return iFalse;
         }
-        const int version = read32_File(f);
+        const uint32_t version = readU32_File(f);
         /* Check supported versions. */
-        if (version != 0) {
+        if (version > latest_FileVersion) {
             printf("%s: unsupported version\n", cstr_String(path_File(f)));
             return iFalse;
         }
@@ -303,7 +304,7 @@ static void saveState_App_(const iApp *d) {
     iFile *f = newCStr_File(concatPath_CStr(dataDir_App_, stateFileName_App_));
     if (open_File(f, writeOnly_FileMode)) {
         writeData_File(f, magicState_App_, 4);
-        write32_File(f, 0); /* version */
+        writeU32_File(f, latest_FileVersion); /* version */
         iConstForEach(ObjectList, i, iClob(listDocuments_App())) {
             if (isInstance_Object(i.object, &Class_DocumentWidget)) {
                 writeData_File(f, magicTabDocument_App_, 4);

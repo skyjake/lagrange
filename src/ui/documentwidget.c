@@ -25,6 +25,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "app.h"
 #include "audio/player.h"
 #include "command.h"
+#include "defs.h"
 #include "gmdocument.h"
 #include "gmrequest.h"
 #include "gmutil.h"
@@ -868,8 +869,6 @@ static void fetch_DocumentWidget_(iDocumentWidget *d) {
 }
 
 static void updateTrust_DocumentWidget_(iDocumentWidget *d, const iGmResponse *response) {
-#define openLock_CStr   "\U0001f513"
-#define closedLock_CStr "\U0001f512"
     if (response) {
         d->certFlags  = response->certFlags;
         d->certExpiry = response->certValidUntil;

@@ -21,6 +21,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "gmcerts.h"
+#include "defs.h"
 
 #include <the_Foundation/file.h>
 #include <the_Foundation/fileinfo.h>
@@ -202,7 +203,7 @@ static void saveIdentities_GmCerts_(const iGmCerts *d) {
     iFile *f = new_File(collect_String(concatCStr_Path(&d->saveDir, identsFilename_GmCerts_)));
     if (open_File(f, writeOnly_FileMode)) {
         writeData_File(f, magicIdMeta_GmCerts_, 4);
-        writeU32_File(f, 0); /* version */
+        writeU32_File(f, latest_FileVersion); /* version */
         iConstForEach(PtrArray, i, &d->idents) {
             const iGmIdentity *ident = i.ptr;
             if (~ident->flags & temporary_GmIdentityFlag) {
@@ -245,7 +246,12 @@ static void loadIdentities_GmCerts_(iGmCerts *d) {
             printf("%s: format not recognized\n", cstr_String(path_File(f)));
             return;
         }
-        setVersion_Stream(stream_File(f), readU32_File(f));
+        const uint32_t version = readU32_File(f);
+        if (version > latest_FileVersion) {
+            printf("%s: unsupported version\n", cstr_String(path_File(f)));
+            return;
+        }
+        setVersion_Stream(stream_File(f), version);
         while (!atEnd_File(f)) {
             readData_File(f, sizeof(magic), magic);
             if (!memcmp(magic, magicIdentity_GmCerts_, sizeof(magic))) {

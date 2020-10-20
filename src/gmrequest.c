@@ -26,6 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "app.h" /* dataDir_App() */
 #include "embedded.h"
 #include "ui/text.h"
+#include "defs.h"
 
 #include <the_Foundation/file.h>
 #include <the_Foundation/mutex.h>
@@ -86,7 +87,7 @@ void serialize_GmResponse(const iGmResponse *d, iStream *outs) {
     write32_Stream(outs, d->certFlags);
     serialize_Date(&d->certValidUntil, outs);
     serialize_String(&d->certSubject, outs);
-    /* TODO: Include the timestamp. */
+    writeU64_Stream(outs, d->when.ts.tv_sec);
 }
 
 void deserialize_GmResponse(iGmResponse *d, iStream *ins) {
@@ -96,6 +97,10 @@ void deserialize_GmResponse(iGmResponse *d, iStream *ins) {
     d->certFlags = read32_Stream(ins);
     deserialize_Date(&d->certValidUntil, ins);
     deserialize_String(&d->certSubject, ins);
+    iZap(d->when);
+    if (version_Stream(ins) >= addedResponseTimestamps_FileVersion) {
+        d->when.ts.tv_sec = readU64_Stream(ins);
+    }
 }
 
 /*----------------------------------------------------------------------------------------------*/
