@@ -214,7 +214,7 @@ static const struct {
         "The requested resource does not exist." } },
     { unsupportedMimeType_GmStatusCode,
       { 0x1f47d, /* alien */
-        "Unsupported MIME Type",
+        "Unsupported Content Type",
         "The received content cannot be viewed with this application." } },
     { invalidHeader_GmStatusCode,
       { 0x1f4a9, /* pile of poo */
