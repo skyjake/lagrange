@@ -290,7 +290,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     iRangecc         contentLine   = iNullRange;
     iInt2            pos           = zero_I2();
     iBool            isFirstText   = isGemini && prefs->bigFirstParagraph;
-    iBool            addQuoteIcon  = iTrue;
+    iBool            addQuoteIcon  = prefs->quoteIcon;
     iBool            isPreformat   = iFalse;
     iRangecc         preAltText    = iNullRange;
     int              preFont       = preformatted_FontId;
@@ -446,7 +446,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             pushBack_Array(&d->layout, &quoteRun);
         }
         else if (type != quote_GmLineType) {
-            addQuoteIcon = iTrue;
+            addQuoteIcon = prefs->quoteIcon;
         }
         /* Link icon. */
         if (type == link_GmLineType) {
@@ -485,6 +485,9 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         iRangecc runLine = line;
         /* Create one or more text runs for this line. */
         run.flags |= startOfLine_GmRunFlag;
+        if (!prefs->quoteIcon && type == quote_GmLineType) {
+            run.flags |= quoteBorder_GmRunFlag;
+        }
         iAssert(!isEmpty_Range(&runLine)); /* must have something at this point */
         while (!isEmpty_Range(&runLine)) {
             /* Little bit of breathing space between wrapped lines. */
@@ -835,7 +838,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
             violet_Hue,
             pink_Hue
         };
-        static const float hues[]    = { 5, 25, 40, 56, 80, 120, 160, 180, 208, 231, 270, 324 };
+        static const float hues[] = { 5, 25, 40, 56, 80, 120, 160, 180, 208, 231, 270, 324 };
         static const struct {
             int index[2];
         } altHues[iElemCount(hues)] = {

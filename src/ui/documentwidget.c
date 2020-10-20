@@ -1234,6 +1234,10 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         refresh_Widget(w);
         updateWindowTitle_DocumentWidget_(d);
     }
+    else if (equal_Command(cmd, "window.mouse.exited")) {
+        updateOutlineOpacity_DocumentWidget_(d);
+        return iFalse;
+    }
     else if (equal_Command(cmd, "theme.changed") && document_App() == d) {
         updateTheme_DocumentWidget_(d);
         invalidate_DocumentWidget_(d);
@@ -2116,7 +2120,6 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
     }
     else if (run->audioId) {
         /* Audio player UI is drawn afterwards as a dynamic overlay. */
-        //fillRect_Paint(&d->paint, moved_Rect(run->visBounds, origin), red_ColorId);
         return;
     }
     enum iColorId      fg  = run->color;
@@ -2180,6 +2183,12 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                                 collect_String(newUnicodeN_String(&ordChar, 1)));
                 goto runDrawn;
             }
+        }
+        if (run->flags & quoteBorder_GmRunFlag) {
+            drawVLine_Paint(&d->paint,
+                            addX_I2(visPos, -gap_Text * 5 / 2),
+                            height_Rect(run->visBounds),
+                            tmQuoteIcon_ColorId);
         }
         drawRange_Text(run->font, visPos, fg, run->text);
 //        printf("{%s}\n", cstr_Rangecc(run->text));

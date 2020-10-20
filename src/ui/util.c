@@ -991,6 +991,12 @@ iWidget *makePreferences_Widget(void) {
             addRadioButton_(widths, "prefs.linewidth.1000", "Window", "linewidth.set arg:1000");
         }
         addChildFlags_Widget(values, iClob(widths), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+        addChild_Widget(headings, iClob(makeHeading_Widget("Quote indicator:")));
+        iWidget *quote = new_Widget(); {
+            addRadioButton_(quote, "prefs.quoteicon.1", "Icon", "quoteicon.set arg:1");
+            addRadioButton_(quote, "prefs.quoteicon.0", "Line", "quoteicon.set arg:0");
+        }
+        addChildFlags_Widget(values, iClob(quote), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
         addChild_Widget(headings, iClob(makeHeading_Widget("Big 1st paragaph:")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.biglede")));
         makeTwoColumnHeading_("WIDE LAYOUT", headings, values);

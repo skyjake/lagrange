@@ -79,6 +79,7 @@ enum iGmRunFlags {
     startOfLine_GmRunFlag = iBit(2),
     endOfLine_GmRunFlag   = iBit(3),
     siteBanner_GmRunFlag  = iBit(4), /* area reserved for the site banner */
+    quoteBorder_GmRunFlag = iBit(5),
 };
 
 struct Impl_GmRun {

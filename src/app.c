@@ -182,6 +182,7 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "linewidth.set arg:%d\n", d->prefs.lineWidth);
     appendFormat_String(str, "prefs.biglede.changed arg:%d\n", d->prefs.bigFirstParagraph);
     appendFormat_String(str, "prefs.sideicon.changed arg:%d\n", d->prefs.sideIcon);
+    appendFormat_String(str, "quoteicon.set arg:%d\n", d->prefs.quoteIcon ? 1 : 0);
     appendFormat_String(str, "prefs.hoveroutline.changed arg:%d\n", d->prefs.hoverOutline);
     appendFormat_String(str, "theme.set arg:%d auto:1\n", d->prefs.theme);
     appendFormat_String(str, "ostheme arg:%d\n", d->prefs.useSystemTheme);
@@ -735,6 +736,12 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
         destroy_Widget(d);
         return iTrue;
     }
+    else if (equal_Command(cmd, "quoteicon.set")) {
+        const int arg = arg_Command(cmd);
+        setFlags_Widget(findChild_Widget(d, "prefs.quoteicon.0"), selected_WidgetFlag, arg == 0);
+        setFlags_Widget(findChild_Widget(d, "prefs.quoteicon.1"), selected_WidgetFlag, arg == 1);
+        return iFalse;
+    }
     else if (equal_Command(cmd, "doctheme.dark.set")) {
         updateColorThemeButton_(findChild_Widget(d, "prefs.doctheme.dark"), arg_Command(cmd));
         return iFalse;
@@ -946,6 +953,11 @@ iBool handleCommand_App(const char *cmd) {
         postCommand_App("document.layout.changed");
         return iTrue;
     }
+    else if (equal_Command(cmd, "quoteicon.set")) {
+        d->prefs.quoteIcon = arg_Command(cmd) != 0;
+        postCommand_App("document.layout.changed");
+        return iTrue;
+    }
     else if (equal_Command(cmd, "prefs.biglede.changed")) {
         d->prefs.bigFirstParagraph = arg_Command(cmd) != 0;
         postCommand_App("document.layout.changed");
@@ -1089,6 +1101,10 @@ iBool handleCommand_App(const char *cmd) {
             iTrue);
         setFlags_Widget(
             findChild_Widget(dlg, format_CStr("prefs.linewidth.%d", d->prefs.lineWidth)),
+            selected_WidgetFlag,
+            iTrue);
+        setFlags_Widget(
+            findChild_Widget(dlg, format_CStr("prefs.quoteicon.%d", d->prefs.quoteIcon)),
             selected_WidgetFlag,
             iTrue);
         setToggle_Widget(findChild_Widget(dlg, "prefs.biglede"), d->prefs.bigFirstParagraph);

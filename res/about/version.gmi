@@ -9,7 +9,9 @@
 ## 0.6
 * Added new color themes for page content: Colorful Light, Black, Gray, Sepia, High Contrast.
 * Dark and light mode page content themes can be chosen in Preferences.
+* Added quote indicator option: icon or vertical line.
 * macOS: Fixed glitchy window dragging during audio playback.
+* Fixed cached page timestamps.
 
 ## 0.5
 * Added MP3 support in the audio player (using mpg123).
