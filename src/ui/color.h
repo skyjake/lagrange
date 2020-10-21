@@ -118,6 +118,8 @@ enum iColorId {
     tmBannerTitle_ColorId,
     tmBannerIcon_ColorId,
     tmBannerSideTitle_ColorId,
+    tmOutlineHeadingAbove_ColorId,
+    tmOutlineHeadingBelow_ColorId,
     tmInlineContentMetadata_ColorId,
     tmBadLink_ColorId,
 

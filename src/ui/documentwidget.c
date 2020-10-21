@@ -138,8 +138,6 @@ struct Impl_OutlineItem {
     iRangecc text;
     int      font;
     iRect    rect;
-    int      seenColor; /* TODO: not used */
-    int      sepColor;
 };
 
 /*----------------------------------------------------------------------------------------------*/
@@ -651,14 +649,9 @@ static void updateOutline_DocumentWidget_(iDocumentWidget *d) {
         if (head->level == 0) {
             pos.y += gap_UI * 1.5f;
         }
-        pushBack_Array(&d->outline,
-                       &(iOutlineItem){ head->text,
-                                        uiLabel_FontId,
-                                        (iRect){ addX_I2(pos, indent), size },
-                                        head->level == 0 ? tmHeading1_ColorId
-                                                         : head->level == 1 ? tmHeading2_ColorId
-                                                                            : tmHeading3_ColorId,
-                                        head->level == 0 ? tmQuoteIcon_ColorId : none_ColorId });
+        pushBack_Array(
+            &d->outline,
+            &(iOutlineItem){ head->text, uiLabel_FontId, (iRect){ addX_I2(pos, indent), size } });
         pos.y += size.y;
     }
 }
@@ -2427,13 +2420,13 @@ static void drawSideElements_DocumentWidget_(const iDocumentWidget *d) {
             init_I2(outWidth, outHeight + outlinePadding_DocumentWidget_ * gap_UI * 1.5f)
         };
         fillRect_Paint(&p, outlineFrame, tmBannerBackground_ColorId);
-        const int textFg = drawSideRect_(&p, outlineFrame); //, 1);
+        drawSideRect_(&p, outlineFrame);
         iConstForEach(Array, i, &d->outline) {
             const iOutlineItem *item = i.value;
             iInt2 visPos = addX_I2(add_I2(pos, item->rect.pos), outlinePadding_DocumentWidget_ * gap_UI);
             const iBool isVisible = d->lastVisibleRun && d->lastVisibleRun->text.start >= item->text.start;
-            const int fg = index_ArrayConstIterator(&i) == 0 || isVisible ? textFg
-                                                                          : tmQuoteIcon_ColorId;
+            const int fg = index_ArrayConstIterator(&i) == 0 || isVisible ? tmOutlineHeadingAbove_ColorId
+                                                                          : tmOutlineHeadingBelow_ColorId;
             drawWrapRange_Text(
                 item->font, visPos, innerWidth - left_Rect(item->rect), fg, item->text);
             if (left_Rect(item->rect) > 0) {

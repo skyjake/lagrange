@@ -644,6 +644,16 @@ static float dimLightness_(float hue, float baseOffset) {
     return baseOffset + extra;
 }
 
+static void setDerivedThemeColors_(enum iGmDocumentTheme theme) {
+    set_Color(tmQuoteIcon_ColorId,
+              mix_Color(get_Color(tmQuote_ColorId), get_Color(tmBackground_ColorId), 0.55f));
+    set_Color(tmBannerSideTitle_ColorId,
+              mix_Color(get_Color(tmBannerTitle_ColorId), get_Color(tmBackground_ColorId),
+                        theme == colorfulDark_GmDocumentTheme ? 0.55f : 0));
+    set_Color(tmOutlineHeadingAbove_ColorId, get_Color(white_ColorId));
+    set_Color(tmOutlineHeadingBelow_ColorId, get_Color(black_ColorId));
+}
+
 void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
     const iPrefs *        prefs = prefs_App();
     enum iGmDocumentTheme theme =
@@ -701,7 +711,8 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
             set_Color(tmGopherLinkDomain_ColorId, get_Color(magenta_ColorId));
             set_Color(tmGopherLinkLastVisitDate_ColorId, get_Color(blue_ColorId));
         }
-        /* Set the non-link default colors. */
+        /* Set the non-link default colors. Note that some/most of these are overwritten later
+           if a theme seed if available. */
         if (theme == colorfulDark_GmDocumentTheme) {
             const iHSLColor base = { 200, 0, 0.15f, 1.0f };
             setHsl_Color(tmBackground_ColorId, base);
@@ -729,7 +740,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
             setHsl_Color(tmBannerBackground_ColorId, addSatLum_HSLColor(base, 0, -0.1f));
             setHsl_Color(tmBannerIcon_ColorId, addSatLum_HSLColor(base, 0, -0.2f));
             setHsl_Color(tmBannerTitle_ColorId, addSatLum_HSLColor(base, 0, -0.2f));
-            setHsl_Color(tmLinkIcon_ColorId, addSatLum_HSLColor(get_HSLColor(teal_ColorId), 0, 0.15f));
+            setHsl_Color(tmLinkIcon_ColorId, addSatLum_HSLColor(get_HSLColor(teal_ColorId), 0, 0));
             set_Color(tmLinkIconVisited_ColorId, mix_Color(get_Color(tmBackground_ColorId), get_Color(teal_ColorId), 0.35f));
             set_Color(tmLinkDomain_ColorId, get_Color(teal_ColorId));
             setHsl_Color(tmHypertextLinkIcon_ColorId, get_HSLColor(white_ColorId));
@@ -1009,11 +1020,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
         }
     }
     /* Derived colors. */
-    set_Color(tmQuoteIcon_ColorId,
-              mix_Color(get_Color(tmQuote_ColorId), get_Color(tmBackground_ColorId), 0.55f));
-    set_Color(tmBannerSideTitle_ColorId,
-              mix_Color(get_Color(tmBannerTitle_ColorId), get_Color(tmBackground_ColorId),
-                        theme == colorfulDark_GmDocumentTheme ? 0.55f : 0));
+    setDerivedThemeColors_(theme);
     /* Special exceptions. */
     if (seed) {
         if (equal_CStr(cstr_Block(seed), "gemini.circumlunar.space")) {
