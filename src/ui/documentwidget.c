@@ -1756,6 +1756,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 break;
             case SDLK_HOME:
                 d->scrollY = 0;
+                invalidate_VisBuf(d->visBuf);
                 resetSmoothScroll_DocumentWidget_(d);
                 scroll_DocumentWidget_(d, 0);
                 updateVisible_DocumentWidget_(d);
@@ -1763,6 +1764,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 return iTrue;
             case SDLK_END:
                 d->scrollY = scrollMax_DocumentWidget_(d);
+                invalidate_VisBuf(d->visBuf);
                 resetSmoothScroll_DocumentWidget_(d);
                 scroll_DocumentWidget_(d, 0);
                 updateVisible_DocumentWidget_(d);
