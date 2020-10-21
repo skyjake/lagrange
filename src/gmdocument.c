@@ -701,7 +701,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
             set_Color(tmGopherLinkDomain_ColorId, get_Color(magenta_ColorId));
             set_Color(tmGopherLinkLastVisitDate_ColorId, get_Color(blue_ColorId));
         }
-        /* Set the non-link colors. */
+        /* Set the non-link default colors. */
         if (theme == colorfulDark_GmDocumentTheme) {
             const iHSLColor base = { 200, 0, 0.15f, 1.0f };
             setHsl_Color(tmBackground_ColorId, base);
@@ -753,7 +753,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
         }
         else if (theme == gray_GmDocumentTheme) {
             set_Color(tmBackground_ColorId, mix_Color(get_Color(gray25_ColorId), get_Color(black_ColorId), 0.25f));
-            set_Color(tmParagraph_ColorId, mix_Color(get_Color(gray75_ColorId), get_Color(white_ColorId), 0.0f));
+            set_Color(tmParagraph_ColorId, mix_Color(get_Color(gray75_ColorId), get_Color(white_ColorId), 0.25f));
             set_Color(tmFirstParagraph_ColorId, mix_Color(get_Color(gray75_ColorId), get_Color(white_ColorId), 0.5f));
             set_Color(tmQuote_ColorId, get_Color(orange_ColorId));
             set_Color(tmPreformatted_ColorId, get_Color(orange_ColorId));
