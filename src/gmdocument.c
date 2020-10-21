@@ -634,16 +634,6 @@ void reset_GmDocument(iGmDocument *d) {
     d->themeSeed = 0;
 }
 
-static float dimLightness_(float hue, float baseOffset) {
-    const float blueDiff = iWrapf(hue - 245, -180, 180);
-    float extra = 0.0f;
-    const float maxDiff = 60;
-    if (iAbs(blueDiff) < maxDiff) {
-        extra = 0.2f * (1.0f - iAbs(blueDiff) / maxDiff);
-    }
-    return baseOffset + extra;
-}
-
 static void setDerivedThemeColors_(enum iGmDocumentTheme theme) {
     set_Color(tmQuoteIcon_ColorId,
               mix_Color(get_Color(tmQuote_ColorId), get_Color(tmBackground_ColorId), 0.55f));
@@ -652,6 +642,31 @@ static void setDerivedThemeColors_(enum iGmDocumentTheme theme) {
                         theme == colorfulDark_GmDocumentTheme ? 0.55f : 0));
     set_Color(tmOutlineHeadingAbove_ColorId, get_Color(white_ColorId));
     set_Color(tmOutlineHeadingBelow_ColorId, get_Color(black_ColorId));
+    switch (theme) {
+        case colorfulDark_GmDocumentTheme:
+            set_Color(tmOutlineHeadingBelow_ColorId, get_Color(tmBannerTitle_ColorId));
+            if (equal_Color(get_Color(tmOutlineHeadingAbove_ColorId),
+                            get_Color(tmOutlineHeadingBelow_ColorId))) {
+                set_Color(tmOutlineHeadingBelow_ColorId, get_Color(tmHeading3_ColorId));
+            }
+            break;
+        case colorfulLight_GmDocumentTheme:
+        case sepia_GmDocumentTheme:
+            set_Color(tmOutlineHeadingAbove_ColorId, get_Color(black_ColorId));
+            set_Color(tmOutlineHeadingBelow_ColorId, mix_Color(get_Color(tmBackground_ColorId), get_Color(black_ColorId), 0.6f));
+            break;
+        case gray_GmDocumentTheme:
+            set_Color(tmOutlineHeadingBelow_ColorId, get_Color(gray75_ColorId));
+            break;
+        case white_GmDocumentTheme:
+            set_Color(tmOutlineHeadingBelow_ColorId, mix_Color(get_Color(tmBannerIcon_ColorId), get_Color(white_ColorId), 0.6f));
+            break;
+        case highContrast_GmDocumentTheme:
+            set_Color(tmOutlineHeadingAbove_ColorId, get_Color(black_ColorId));
+            break;
+        default:
+            break;
+    }
 }
 
 void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
@@ -723,7 +738,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
             set_Color(tmHeading1_ColorId, get_Color(white_ColorId));
             setHsl_Color(tmHeading2_ColorId, addSatLum_HSLColor(base, 0.5f, 0.5f));
             setHsl_Color(tmHeading3_ColorId, addSatLum_HSLColor(base, 1.0f, 0.4f));
-            set_Color(tmBannerBackground_ColorId, get_Color(black_ColorId));
+            setHsl_Color(tmBannerBackground_ColorId, addSatLum_HSLColor(base, 0, -0.05f));
             set_Color(tmBannerTitle_ColorId, get_Color(white_ColorId));
             set_Color(tmBannerIcon_ColorId, get_Color(orange_ColorId));
         }
@@ -970,7 +985,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
         else if (theme == black_GmDocumentTheme || theme == gray_GmDocumentTheme) {
             const float primHue        = hues[primIndex];
             const iHSLColor primBright = { primHue, 1, 0.6f, 1 };
-            const iHSLColor primDim    = { primHue, 1, dimLightness_(primHue, theme == black_GmDocumentTheme ? 0.25f : 0.45f), 1};
+            const iHSLColor primDim    = { primHue, 1, normLum[primIndex] + (theme == gray_GmDocumentTheme ? 0.0f : -0.3f), 1};
             const iHSLColor altBright  = { altHue, 1, normLum[altIndex[0]] + (theme == gray_GmDocumentTheme ? 0.1f : 0.0f), 1 };
             setHsl_Color(tmQuote_ColorId, altBright);
             setHsl_Color(tmPreformatted_ColorId, altBright);

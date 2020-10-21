@@ -2421,16 +2421,26 @@ static void drawSideElements_DocumentWidget_(const iDocumentWidget *d) {
         };
         fillRect_Paint(&p, outlineFrame, tmBannerBackground_ColorId);
         drawSideRect_(&p, outlineFrame);
+        iBool wasAbove = iTrue;
         iConstForEach(Array, i, &d->outline) {
             const iOutlineItem *item = i.value;
             iInt2 visPos = addX_I2(add_I2(pos, item->rect.pos), outlinePadding_DocumentWidget_ * gap_UI);
             const iBool isVisible = d->lastVisibleRun && d->lastVisibleRun->text.start >= item->text.start;
             const int fg = index_ArrayConstIterator(&i) == 0 || isVisible ? tmOutlineHeadingAbove_ColorId
                                                                           : tmOutlineHeadingBelow_ColorId;
+            if (fg == tmOutlineHeadingBelow_ColorId) {
+                if (wasAbove) {
+                    drawHLine_Paint(&p,
+                                    init_I2(left_Rect(outlineFrame), visPos.y - 1),
+                                    width_Rect(outlineFrame),
+                                    tmOutlineHeadingBelow_ColorId);
+                    wasAbove = iFalse;
+                }
+            }
             drawWrapRange_Text(
                 item->font, visPos, innerWidth - left_Rect(item->rect), fg, item->text);
             if (left_Rect(item->rect) > 0) {
-                drawRange_Text(item->font, addX_I2(visPos, -3 * gap_UI), fg, range_CStr("\u2013"));
+                drawRange_Text(item->font, addX_I2(visPos, -2.75f * gap_UI), fg, range_CStr("\u2022"));
             }
         }
         setOpacity_Text(1.0f);
