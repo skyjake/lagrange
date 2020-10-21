@@ -26,11 +26,11 @@ project (Lagrange
 set (COPYRIGHT_YEAR 2020)
 
 # Build configuration.
-option (ENABLE_MPG123 "Use mpg123 for decoding MPEG audio" ON)
-option (ENABLE_X11_SWRENDER "Use software rendering under X11" OFF)
-option (ENABLE_KERNING "Enable kerning in font renderer (slower)" ON)
-option (ENABLE_RESOURCE_EMBED "Embed resources inside the executable" OFF)
-option (ENABLE_WINDOWPOS_FIX "Set position after showing window (workaround for SDL bug)" OFF)
+option (ENABLE_MPG123           "Use mpg123 for decoding MPEG audio" ON)
+option (ENABLE_X11_SWRENDER     "Use software rendering under X11" OFF)
+option (ENABLE_KERNING          "Enable kerning in font renderer (slower)" ON)
+option (ENABLE_RESOURCE_EMBED   "Embed resources inside the executable" OFF)
+option (ENABLE_WINDOWPOS_FIX    "Set position after showing window (workaround for SDL bug)" OFF)
 
 include (BuildType.cmake)
 include (Embed.cmake)
