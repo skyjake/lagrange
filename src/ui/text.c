@@ -529,9 +529,9 @@ iLocalDef iFont *characterFont_Font_(iFont *d, iChar ch, uint32_t *glyphIndex) {
     /* Fall back to Symbola for anything else. */
     iFont *font = font_Text_(d->symbolsFont);
     *glyphIndex = glyphIndex_Font_(font, ch);
-    if (!*glyphIndex) {
-        fprintf(stderr, "failed to find %08x (%lc)\n", ch, ch); fflush(stderr);
-    }
+//    if (!*glyphIndex) {
+//        fprintf(stderr, "failed to find %08x (%lc)\n", ch, ch); fflush(stderr);
+//    }
     return font;
 }
 
