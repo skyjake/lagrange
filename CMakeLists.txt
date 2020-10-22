@@ -71,6 +71,7 @@ set (EMBED_RESOURCES
     res/fonts/Literata-Bold-opsz=36.ttf
     res/fonts/Literata-ExtraLight-opsz=18.ttf
     res/fonts/Literata-LightItalic-opsz=10.ttf
+    res/fonts/NanumGothic-Regular.ttf
     res/fonts/NotoEmoji-Regular.ttf
     res/fonts/Nunito-ExtraBold.ttf
     res/fonts/Nunito-ExtraLight.ttf
