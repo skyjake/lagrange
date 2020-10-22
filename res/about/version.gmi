@@ -10,6 +10,7 @@
 * Added new color themes for page content: Colorful Light, Black, Gray, Sepia, High Contrast.
 * Dark and light mode page content themes can be chosen in Preferences.
 * Added quote indicator option: icon or vertical line.
+* Windows: Register Lagrange as a handler of "gemini:" URLs.
 * macOS: Fixed glitchy window dragging during audio playback.
 * Fixed cached page timestamps.
 
