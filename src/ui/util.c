@@ -135,8 +135,9 @@ iBool isFinished_Anim(const iAnim *d) {
 }
 
 void init_Anim(iAnim *d, float value) {
-    d->due = d->when = frameTime_Window(get_Window());
+    d->due = d->when = SDL_GetTicks(); // frameTime_Window(get_Window());
     d->from = d->to = value;
+    d->flags = 0;
 }
 
 void setValue_Anim(iAnim *d, float to, uint32_t span) {
@@ -149,6 +150,54 @@ void setValue_Anim(iAnim *d, float to, uint32_t span) {
     }
 }
 
+iLocalDef float pos_Anim_(const iAnim *d, uint32_t now) {
+    return (float) (now - d->when) / (float) (d->due - d->when);
+}
+
+void setValueEased_Anim(iAnim *d, float to, uint32_t span) {
+    if (fabsf(to - d->to) <= 0.00001f) {
+        d->to = to; /* Pretty much unchanged. */
+        return;
+    }
+    const uint32_t now = SDL_GetTicks();
+    if (isFinished_Anim(d)) {
+        d->from  = d->to;
+        d->when  = now;
+        d->flags = easeBoth_AnimFlag;
+    }
+    else {
+        d->from  = value_Anim(d);
+        d->when  = frameTime_Window(get_Window()); /* to match the timing of value_Anim */
+        d->flags = easeOut_AnimFlag;
+    }
+    d->to  = to;
+    d->due = now + span;
+}
+
+void setFlags_Anim(iAnim *d, int flags, iBool set) {
+    iChangeFlags(d->flags, flags, set);
+}
+
+void stop_Anim(iAnim *d) {
+    d->from = d->to = value_Anim(d);
+    d->when = d->due = SDL_GetTicks();
+}
+
+iLocalDef float easeIn_(float t) {
+    return t * t;
+}
+
+iLocalDef float easeOut_(float t) {
+    return t * (2.0f - t);
+}
+
+iLocalDef float easeBoth_(float t) {
+    if (t < 0.5f) {
+        return easeIn_(t * 2.0f) * 0.5f;
+    }
+    return 0.5f + easeOut_((t - 0.5f) * 2.0f) * 0.5f;
+}
+
 float value_Anim(const iAnim *d) {
     const uint32_t now = frameTime_Window(get_Window());
     if (now >= d->due) {
@@ -157,8 +206,17 @@ float value_Anim(const iAnim *d) {
     if (now <= d->when) {
         return d->from;
     }
-    const float pos = (float) (now - d->when) / (float) (d->due - d->when);
-    return d->from * (1.0f - pos) + d->to * pos;
+    float t = pos_Anim_(d, now);
+    if ((d->flags & easeBoth_AnimFlag) == easeBoth_AnimFlag) {
+        t = easeBoth_(t);
+    }
+    else if (d->flags & easeIn_AnimFlag) {
+        t = easeIn_(t);
+    }
+    else if (d->flags & easeOut_AnimFlag) {
+        t = easeOut_(t);
+    }
+    return d->from * (1.0f - t) + d->to * t;
 }
 
 /*-----------------------------------------------------------------------------------------------*/
