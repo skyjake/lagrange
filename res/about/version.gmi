@@ -8,11 +8,12 @@
 
 ## 0.6
 * Added new color themes for page content: Colorful Light, Black, Gray, Sepia, High Contrast.
-* Dark and light mode page content themes can be chosen in Preferences.
+* Added page content color theme selection in Preferences.
 * Added quote indicator option: icon or vertical line.
+* Added a new font for Korean glyhps.
 * Windows: Register Lagrange as a handler of "gemini:" URLs.
 * macOS: Fixed glitchy window dragging during audio playback.
-* Fixed cached page timestamps.
+* Fixed timestamps of cached pages.
 
 ## 0.5
 * Added MP3 support in the audio player (using mpg123).
