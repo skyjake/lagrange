@@ -166,6 +166,7 @@ struct Impl_DocumentWidget {
     iWidget        widget;
     enum iRequestState state;
     iModel         mod;
+    int            flags;
     iString *      titleUser;
     iGmRequest *   request;
     iAtomicInt     isRequestUpdated; /* request has new content, need to parse it */
@@ -178,8 +179,6 @@ struct Impl_DocumentWidget {
     iDate          certExpiry;
     iString *      certSubject;
     int            redirectCount;
-    int            flags;
-//    iBool          selecting;
     iRangecc       selectMark;
     iRangecc       foundMark;
     int            pageMargin;
@@ -190,17 +189,10 @@ struct Impl_DocumentWidget {
     int            playerTimer;
     const iGmRun * hoverLink;
     const iGmRun * contextLink;
-//    iBool          noHoverWhileScrolling;
-//    iBool          showLinkNumbers;
     const iGmRun * firstVisibleRun;
     const iGmRun * lastVisibleRun;
     iClick         click;
     float          initNormScrollY;
-//    int            scrollY;
-//    int            smoothScroll;
-//    int            smoothSpeed;
-//    int            smoothLastOffset;
-//    iBool          smoothContinue;
     iAnim          scrollY;
     iAnim          sideOpacity;
     iAnim          outlineOpacity;
@@ -220,6 +212,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     setId_Widget(w, "document000");
     setFlags_Widget(w, hover_WidgetFlag, iTrue);
     init_Model(&d->mod);
+    d->flags = 0;
     iZap(d->certExpiry);
     d->certFlags        = 0;
     d->certSubject      = new_String();
@@ -232,19 +225,11 @@ void init_DocumentWidget(iDocumentWidget *d) {
     d->redirectCount    = 0;
     d->initNormScrollY  = 0;
     init_Anim(&d->scrollY, 0);
-//    d->scrollY          = 0;
-//    d->smoothScroll     = 0;
-//    d->smoothSpeed      = 0;
-//    d->smoothLastOffset = 0;
-//    d->smoothContinue   = iFalse;
-    d->flags = 0;
     d->selectMark       = iNullRange;
     d->foundMark        = iNullRange;
     d->pageMargin       = 5;
     d->hoverLink        = NULL;
     d->contextLink      = NULL;
-//    d->noHoverWhileScrolling = iFalse;
-//    d->showLinkNumbers  = iFalse;
     d->firstVisibleRun  = NULL;
     d->lastVisibleRun   = NULL;
     d->visBuf           = new_VisBuf();
@@ -931,23 +916,8 @@ static iBool updateFromHistory_DocumentWidget_(iDocumentWidget *d) {
 
 static void refreshWhileScrolling_DocumentWidget_(iAny *ptr) {
     iDocumentWidget *d = ptr;
-//    if (isFinished_Anim(&d-> isSmoothScrolling_DocumentWidget_(d)) {
-//        return; /* was cancelled */
-//    }
-//    const double elapsed = (double) elapsedSinceLastTicker_App() / 1000.0;
-//    int delta = d->smoothSpeed * elapsed * iSign(d->smoothScroll);
-//    if (iAbs(d->smoothScroll) <= iAbs(delta)) {
-//        if (d->smoothContinue) {
-//            d->smoothScroll += d->smoothLastOffset;
-//        }
-//        else {
-//            delta = d->smoothScroll;
-//        }
-//    }
     updateVisible_DocumentWidget_(d);
     refresh_Widget(d);
-//    scroll_DocumentWidget_(d, delta);
-//    d->smoothScroll -= delta;
     if (!isFinished_Anim(&d->scrollY)) {
         addTicker_App(refreshWhileScrolling_DocumentWidget_, d);
     }
@@ -955,7 +925,6 @@ static void refreshWhileScrolling_DocumentWidget_(iAny *ptr) {
 
 static void smoothScroll_DocumentWidget_(iDocumentWidget *d, int offset, int duration) {
     int destY = targetValue_Anim(&d->scrollY) + offset;
-//    d->scrollY += offset;
     if (destY < 0) {
         destY = 0;
     }
@@ -969,14 +938,6 @@ static void smoothScroll_DocumentWidget_(iDocumentWidget *d, int offset, int dur
     setValueEased_Anim(&d->scrollY, destY, duration);
     updateVisible_DocumentWidget_(d);
     refresh_Widget(as_Widget(d));
-
-    //    if (speed == 0) {
-//        scroll_DocumentWidget_(d, offset);
-//        return;
-//    }
-//    d->smoothSpeed = speed;
-//    d->smoothScroll += offset;
-//    d->smoothLastOffset = offset;
     if (duration > 0) {
         iChangeFlags(d->flags, noHoverWhileScrolling_DocumentWidgetFlag, iTrue);
         addTicker_App(refreshWhileScrolling_DocumentWidget_, d);
@@ -984,12 +945,8 @@ static void smoothScroll_DocumentWidget_(iDocumentWidget *d, int offset, int dur
 }
 
 static void scroll_DocumentWidget_(iDocumentWidget *d, int offset) {
-    smoothScroll_DocumentWidget_(d, offset, 0 /* instant */);
+    smoothScroll_DocumentWidget_(d, offset, 0 /* instantly */);
 }
-
-//static iBool isSmoothScrolling_DocumentWidget_(const iDocumentWidget *d) {
-//    return d->smoothScroll != 0;
-//}
 
 static void scrollTo_DocumentWidget_(iDocumentWidget *d, int documentY, iBool centered) {
     init_Anim(&d->scrollY,
@@ -1515,12 +1472,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     else if (equalWidget_Command(cmd, w, "scroll.page")) {
         if (argLabel_Command(cmd, "repeat")) {
-//            if (!d->smoothContinue) {
-//                d->smoothContinue = iTrue;
-//            }
-//            else {
-//                return iTrue;
-//            }
+            /* TODO: Adjust scroll animation to be linear during repeated scroll? */
         }
         smoothScroll_DocumentWidget_(d,
                                      arg_Command(cmd) *
@@ -1845,8 +1797,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         smoothScroll_DocumentWidget_(
             d,
             -3 * ev->wheel.y * lineHeight_Text(paragraph_FontId) * acceleration,
-            smoothDuration_DocumentWidget_); /* +
-                (isSmoothScrolling_DocumentWidget_(d) ? d->smoothSpeed : 0)); */
+            smoothDuration_DocumentWidget_);
 #endif
         iChangeFlags(d->flags, noHoverWhileScrolling_DocumentWidgetFlag, iTrue);
         return iTrue;
@@ -2603,7 +2554,6 @@ const iString *bookmarkTitle_DocumentWidget(const iDocumentWidget *d) {
     return collect_String(joinCStr_StringArray(title, " \u2014 "));
 }
 
-
 void serializeState_DocumentWidget(const iDocumentWidget *d, iStream *outs) {
     serialize_Model(&d->mod, outs);
 }
@@ -2650,8 +2600,6 @@ void setRedirectCount_DocumentWidget(iDocumentWidget *d, int count) {
 }
 
 iBool isRequestOngoing_DocumentWidget(const iDocumentWidget *d) {
-    /*return d->state == fetching_RequestState ||
-            d->state == receivedPartialResponse_RequestState;*/
     return d->request != NULL;
 }
 
