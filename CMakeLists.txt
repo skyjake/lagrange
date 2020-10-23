@@ -10,7 +10,7 @@
 #   Windows for compiling everything, but the_Foundation still lacks
 #   native Win32 implementations for the Socket and Process classes.
 # - Windows builds should use the SDL 2 library precompiled for native
-#   Windows (MSVC variant) instead the version from MSYS2 (get it from
+#   Windows (MSVC variant) instead of the version from MSYS2 (get it from
 #   https://libsdl.org/). To make configuration easier, consider writing
 #   for your personal use a pkg-config sdl2.pc file that uses the Windows
 #   version of the library.
