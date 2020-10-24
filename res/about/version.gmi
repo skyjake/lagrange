@@ -11,7 +11,7 @@
 * Added new color themes for page content: Colorful Light, Black, Gray, Sepia, High Contrast.
 * Added page content color theme selection in Preferences.
 * Added quote indicator option: icon or vertical line.
-* Added a new font for Korean glyhps.
+* Added a new font for Korean glyphs.
 * Smoother smooth scrolling, making it easier to keep one's eyes on the content throughout the motion.
 * Windows: Register Lagrange as a handler of "gemini:" URLs.
 * macOS: Fixed glitchy window dragging during audio playback.
