@@ -30,6 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "gmrequest.h"
 #include "gmutil.h"
 #include "history.h"
+#include "indicatorwidget.h"
 #include "inputwidget.h"
 #include "keys.h"
 #include "labelwidget.h"
@@ -247,6 +248,9 @@ void init_DocumentWidget(iDocumentWidget *d) {
     addChild_Widget(w, iClob(d->scroll = new_ScrollWidget()));
     d->menu = NULL; /* created when clicking */
     d->playerMenu = NULL;
+    addChildFlags_Widget(w,
+                         iClob(new_IndicatorWidget()),
+                         resizeToParentWidth_WidgetFlag | resizeToParentHeight_WidgetFlag);
 #if !defined (iPlatformApple) /* in system menu */
     addAction_Widget(w, reload_KeyShortcut, "navigate.reload");
     addAction_Widget(w, SDLK_w, KMOD_PRIMARY, "tabs.close");

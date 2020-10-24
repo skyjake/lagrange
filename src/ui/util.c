@@ -135,52 +135,13 @@ iBool isFinished_Anim(const iAnim *d) {
 }
 
 void init_Anim(iAnim *d, float value) {
-    d->due = d->when = SDL_GetTicks(); // frameTime_Window(get_Window());
+    d->due = d->when = SDL_GetTicks();
     d->from = d->to = value;
     d->flags = 0;
 }
 
-void setValue_Anim(iAnim *d, float to, uint32_t span) {
-    if (fabsf(to - d->to) > 0.00001f) {
-        const uint32_t now = SDL_GetTicks();
-        d->from = value_Anim(d);
-        d->to   = to;
-        d->when = now;
-        d->due  = now + span;
-    }
-}
-
 iLocalDef float pos_Anim_(const iAnim *d, uint32_t now) {
     return (float) (now - d->when) / (float) (d->due - d->when);
-}
-
-void setValueEased_Anim(iAnim *d, float to, uint32_t span) {
-    if (fabsf(to - d->to) <= 0.00001f) {
-        d->to = to; /* Pretty much unchanged. */
-        return;
-    }
-    const uint32_t now = SDL_GetTicks();
-    if (isFinished_Anim(d)) {
-        d->from  = d->to;
-        d->when  = now;
-        d->flags = easeBoth_AnimFlag;
-    }
-    else {
-        d->from  = value_Anim(d);
-        d->when  = frameTime_Window(get_Window()); /* to match the timing of value_Anim */
-        d->flags = easeOut_AnimFlag;
-    }
-    d->to  = to;
-    d->due = now + span;
-}
-
-void setFlags_Anim(iAnim *d, int flags, iBool set) {
-    iChangeFlags(d->flags, flags, set);
-}
-
-void stop_Anim(iAnim *d) {
-    d->from = d->to = value_Anim(d);
-    d->when = d->due = SDL_GetTicks();
 }
 
 iLocalDef float easeIn_(float t) {
@@ -198,8 +159,7 @@ iLocalDef float easeBoth_(float t) {
     return 0.5f + easeOut_((t - 0.5f) * 2.0f) * 0.5f;
 }
 
-float value_Anim(const iAnim *d) {
-    const uint32_t now = frameTime_Window(get_Window());
+static float valueAt_Anim_(const iAnim *d, const uint32_t now) {
     if (now >= d->due) {
         return d->to;
     }
@@ -217,6 +177,52 @@ float value_Anim(const iAnim *d) {
         t = easeOut_(t);
     }
     return d->from * (1.0f - t) + d->to * t;
+}
+
+void setValue_Anim(iAnim *d, float to, uint32_t span) {
+    if (span == 0) {
+        d->from = d->to = to;
+        d->when = d->due = SDL_GetTicks();
+    }
+    else if (fabsf(to - d->to) > 0.00001f) {
+        const uint32_t now = SDL_GetTicks();
+        d->from = valueAt_Anim_(d, now);
+        d->to   = to;
+        d->when = now;
+        d->due  = now + span;
+    }
+}
+
+void setValueEased_Anim(iAnim *d, float to, uint32_t span) {
+    if (fabsf(to - d->to) <= 0.00001f) {
+        d->to = to; /* Pretty much unchanged. */
+        return;
+    }
+    const uint32_t now = SDL_GetTicks();
+    if (isFinished_Anim(d)) {
+        d->from  = d->to;
+        d->flags = easeBoth_AnimFlag;
+    }
+    else {
+        d->from  = valueAt_Anim_(d, now);
+        d->flags = easeOut_AnimFlag;
+    }
+    d->to   = to;
+    d->when = now;
+    d->due  = now + span;
+}
+
+void setFlags_Anim(iAnim *d, int flags, iBool set) {
+    iChangeFlags(d->flags, flags, set);
+}
+
+void stop_Anim(iAnim *d) {
+    d->from = d->to = value_Anim(d);
+    d->when = d->due = SDL_GetTicks();
+}
+
+float value_Anim(const iAnim *d) {
+    return valueAt_Anim_(d, frameTime_Window(get_Window()));
 }
 
 /*-----------------------------------------------------------------------------------------------*/

@@ -160,6 +160,13 @@ iLocalDef iObjectList *children_Widget(iAnyObject *d) {
     iAssert(isInstance_Object(d, &Class_Widget));
     return ((iWidget *) d)->children;
 }
+iLocalDef iWidget *parent_Widget(const iAnyObject *d) {
+    if (d) {
+        iAssert(isInstance_Object(d, &Class_Widget));
+        return ((iWidget *) d)->parent;
+    }
+    return NULL;
+}
 
 iBool   isVisible_Widget    (const iAnyObject *);
 iBool   isDisabled_Widget   (const iAnyObject *);

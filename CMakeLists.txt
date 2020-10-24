@@ -129,6 +129,8 @@ set (SOURCES
     src/ui/command.h
     src/ui/documentwidget.c
     src/ui/documentwidget.h
+    src/ui/indicatorwidget.c
+    src/ui/indicatorwidget.h
     src/ui/listwidget.c
     src/ui/listwidget.h
     src/ui/lookupwidget.c
