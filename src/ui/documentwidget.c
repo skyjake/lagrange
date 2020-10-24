@@ -1801,7 +1801,9 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         smoothScroll_DocumentWidget_(
             d,
             -3 * ev->wheel.y * lineHeight_Text(paragraph_FontId) * acceleration,
-            smoothDuration_DocumentWidget_);
+            smoothDuration_DocumentWidget_ *
+                (!isFinished_Anim(&d->scrollY) && pos_Anim(&d->scrollY) < 0.25f ? 0.5f : 1.0f));
+            /* accelerated speed for repeated wheelings */
 #endif
         iChangeFlags(d->flags, noHoverWhileScrolling_DocumentWidgetFlag, iTrue);
         return iTrue;

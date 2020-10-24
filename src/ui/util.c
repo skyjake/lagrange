@@ -221,6 +221,10 @@ void stop_Anim(iAnim *d) {
     d->when = d->due = SDL_GetTicks();
 }
 
+float pos_Anim(const iAnim *d) {
+    return pos_Anim_(d, frameTime_Window(get_Window()));
+}
+
 float value_Anim(const iAnim *d) {
     return valueAt_Anim_(d, frameTime_Window(get_Window()));
 }

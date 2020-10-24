@@ -89,6 +89,7 @@ void    setFlags_Anim       (iAnim *, int flags, iBool set);
 void    stop_Anim           (iAnim *);
 
 iBool   isFinished_Anim     (const iAnim *);
+float   pos_Anim            (const iAnim *);
 float   value_Anim          (const iAnim *);
 
 iLocalDef float targetValue_Anim(const iAnim *d) {
