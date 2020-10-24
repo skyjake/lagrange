@@ -7,6 +7,7 @@
 # Release notes
 
 ## 0.6
+* Added an indicator to visualize progress of network requests.
 * Added new color themes for page content: Colorful Light, Black, Gray, Sepia, High Contrast.
 * Added page content color theme selection in Preferences.
 * Added quote indicator option: icon or vertical line.
