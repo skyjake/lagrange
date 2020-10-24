@@ -80,9 +80,9 @@ iChar char_Glyph(const iGlyph *d) {
 
 iDefineTypeConstructionArgs(Glyph, (iChar ch), ch)
 
-/*-----------------------------------------------------------------------------------------------*/
+    /*-----------------------------------------------------------------------------------------------*/
 
-struct Impl_Font {
+    struct Impl_Font {
     iBlock *       data;
     stbtt_fontinfo font;
     float          scale;
@@ -92,8 +92,9 @@ struct Impl_Font {
     iHash          glyphs;
     iBool          isMonospaced;
     iBool          manualKernOnly;
-    enum iFontId   symbolsFont; /* font to use for symbols */
+    enum iFontId   symbolsFont;  /* font to use for symbols */
     enum iFontId   japaneseFont; /* font to use for Japanese glyphs */
+    enum iFontId   koreanFont;   /* font to use for Korean glyphs */
     uint32_t       indexTable[128 - 32];
 };
 
@@ -109,9 +110,10 @@ static void init_Font(iFont *d, const iBlock *data, int height, float scale, enu
     d->vertOffset = height * (1.0f - scale) / 2;
     int ascent;
     stbtt_GetFontVMetrics(&d->font, &ascent, NULL, NULL);
-    d->baseline = (int) ascent * d->scale;
-    d->symbolsFont = symbolsFont;
+    d->baseline     = (int) ascent * d->scale;
+    d->symbolsFont  = symbolsFont;
     d->japaneseFont = regularJapanese_FontId;
+    d->koreanFont   = regularKorean_FontId;
     d->isMonospaced = iFalse;
     memset(d->indexTable, 0xff, sizeof(d->indexTable));
 }
@@ -247,6 +249,15 @@ static void initFonts_Text_(iText *d) {
         { &fontKosugiMaruRegular_Embedded,    textSize * 1.333f,    1.0f, bigSymbols_FontId },
         { &fontKosugiMaruRegular_Embedded,    textSize * 1.666f,    1.0f, largeSymbols_FontId },
         { &fontKosugiMaruRegular_Embedded,    textSize * 2.000f,    1.0f, hugeSymbols_FontId },
+        /* korean fonts */
+        { &fontNanumGothicRegular_Embedded,   fontSize_UI,          1.0f, defaultSymbols_FontId },
+        { &fontNanumGothicRegular_Embedded,   monoSize * 0.750,     1.0f, monospaceSmallSymbols_FontId },
+        { &fontNanumGothicRegular_Embedded,   monoSize,             1.0f, monospaceSymbols_FontId },
+        { &fontNanumGothicRegular_Embedded,   textSize,             1.0f, symbols_FontId },
+        { &fontNanumGothicRegular_Embedded,   textSize * 1.200f,    1.0f, mediumSymbols_FontId },
+        { &fontNanumGothicRegular_Embedded,   textSize * 1.333f,    1.0f, bigSymbols_FontId },
+        { &fontNanumGothicRegular_Embedded,   textSize * 1.666f,    1.0f, largeSymbols_FontId },
+        { &fontNanumGothicRegular_Embedded,   textSize * 2.000f,    1.0f, hugeSymbols_FontId },
     };
     iForIndices(i, fontData) {
         iFont *font = &d->fonts[i];
@@ -262,7 +273,6 @@ static void initFonts_Text_(iText *d) {
     /* Japanese script. */ {
         /* Everything defaults to the regular sized japanese font, so these are just
            the other sizes. */
-        /* TODO: Add these to the table above... */
         font_Text_(default_FontId)->japaneseFont          = defaultJapanese_FontId;
         font_Text_(defaultMedium_FontId)->japaneseFont    = defaultJapanese_FontId;
         font_Text_(defaultMonospace_FontId)->japaneseFont = defaultJapanese_FontId;
@@ -270,10 +280,21 @@ static void initFonts_Text_(iText *d) {
         font_Text_(monospace_FontId)->japaneseFont        = monospaceJapanese_FontId;
         font_Text_(medium_FontId)->japaneseFont           = mediumJapanese_FontId;
         font_Text_(big_FontId)->japaneseFont              = bigJapanese_FontId;
-//        font_Text_(bigBold_FontId)->japaneseFont          = bigJapanese_FontId;
         font_Text_(largeBold_FontId)->japaneseFont        = largeJapanese_FontId;
         font_Text_(largeLight_FontId)->japaneseFont       = largeJapanese_FontId;
         font_Text_(hugeBold_FontId)->japaneseFont         = hugeJapanese_FontId;
+    }
+    /* Korean script. */ {
+        font_Text_(default_FontId)->koreanFont          = defaultKorean_FontId;
+        font_Text_(defaultMedium_FontId)->koreanFont    = defaultKorean_FontId;
+        font_Text_(defaultMonospace_FontId)->koreanFont = defaultKorean_FontId;
+        font_Text_(monospaceSmall_FontId)->koreanFont   = monospaceSmallKorean_FontId;
+        font_Text_(monospace_FontId)->koreanFont        = monospaceKorean_FontId;
+        font_Text_(medium_FontId)->koreanFont           = mediumKorean_FontId;
+        font_Text_(big_FontId)->koreanFont              = bigKorean_FontId;
+        font_Text_(largeBold_FontId)->koreanFont        = largeKorean_FontId;
+        font_Text_(largeLight_FontId)->koreanFont       = largeKorean_FontId;
+        font_Text_(hugeBold_FontId)->koreanFont         = hugeKorean_FontId;
     }
     gap_Text = iRound(gap_UI * d->contentFontSize);
 }
@@ -491,6 +512,13 @@ iLocalDef iFont *characterFont_Font_(iFont *d, iChar ch, uint32_t *glyphIndex) {
             return emoji;
         }
     }
+    /* Could be Korean. */
+    if (ch > 0x3000) {
+        iFont *korean = font_Text_(d->koreanFont);
+        if (korean != d && (*glyphIndex = glyphIndex_Font_(korean, ch)) != 0) {
+            return korean;
+        }
+    }
     /* Japanese perhaps? */
     if (ch > 0x3040) {
         iFont *japanese = font_Text_(d->japaneseFont);
@@ -501,6 +529,9 @@ iLocalDef iFont *characterFont_Font_(iFont *d, iChar ch, uint32_t *glyphIndex) {
     /* Fall back to Symbola for anything else. */
     iFont *font = font_Text_(d->symbolsFont);
     *glyphIndex = glyphIndex_Font_(font, ch);
+//    if (!*glyphIndex) {
+//        fprintf(stderr, "failed to find %08x (%lc)\n", ch, ch); fflush(stderr);
+//    }
     return font;
 }
 

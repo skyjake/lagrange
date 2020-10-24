@@ -68,15 +68,36 @@ iLocalDef iBool isOverlapping_Rangei(iRangei a, iRangei b) {
 
 iDeclareType(Anim)
 
+enum iAnimFlag {
+    indefinite_AnimFlag = iBit(1), /* does not end; must be linear */
+    easeIn_AnimFlag     = iBit(2),
+    easeOut_AnimFlag    = iBit(3),
+    easeBoth_AnimFlag = easeIn_AnimFlag | easeOut_AnimFlag,
+};
+
 struct Impl_Anim {
     float    from, to;
     uint32_t when, due;
+    int      flags;
 };
 
-void    init_Anim       (iAnim *, float value);
-void    setValue_Anim   (iAnim *, float to, uint32_t span);
-float   value_Anim      (const iAnim *);
-iBool   isFinished_Anim (const iAnim *);
+void    init_Anim           (iAnim *, float value);
+void    setValue_Anim       (iAnim *, float to, uint32_t span);
+void    setValueLinear_Anim (iAnim *, float to, uint32_t span);
+void    setValueEased_Anim  (iAnim *, float to, uint32_t span);
+void    setFlags_Anim       (iAnim *, int flags, iBool set);
+void    stop_Anim           (iAnim *);
+
+iBool   isFinished_Anim     (const iAnim *);
+float   pos_Anim            (const iAnim *);
+float   value_Anim          (const iAnim *);
+
+iLocalDef float targetValue_Anim(const iAnim *d) {
+    return d->to;
+}
+iLocalDef iBool isLinear_Anim(const iAnim *d) {
+    return (d->flags & (easeIn_AnimFlag | easeOut_AnimFlag)) == 0;
+}
 
 /*-----------------------------------------------------------------------------------------------*/
 

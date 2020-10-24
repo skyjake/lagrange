@@ -524,6 +524,7 @@ void init_Window(iWindow *d, iRect rect) {
     d->lastRect = rect;
     d->pendingCursor = NULL;
     d->isDrawFrozen = iTrue;
+    d->isMouseInside = iTrue;
     uint32_t flags = 0;
 #if defined (iPlatformApple)
     SDL_SetHint(SDL_HINT_RENDER_DRIVER, shouldDefaultToMetalRenderer_MacOS() ? "metal" : "opengl");
@@ -543,7 +544,7 @@ void init_Window(iWindow *d, iRect rect) {
     if (left_Rect(rect) >= 0 || top_Rect(rect) >= 0) {
         SDL_SetWindowPosition(d->win, left_Rect(rect), top_Rect(rect));
     }
-    const iInt2 minSize = init_I2(425, 250);
+    const iInt2 minSize = init_I2(425, 300);
     SDL_SetWindowMinimumSize(d->win, minSize.x, minSize.y);
     SDL_SetWindowTitle(d->win, "Lagrange");
     /* Some info. */ {
@@ -655,6 +656,12 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
             return iTrue;
         case SDL_WINDOWEVENT_LEAVE:
             unhover_Widget();
+            d->isMouseInside = iFalse;
+            postCommand_App("window.mouse.exited");
+            return iTrue;
+        case SDL_WINDOWEVENT_ENTER:
+            d->isMouseInside = iTrue;
+            postCommand_App("window.mouse.entered");
             return iTrue;
         default:
             break;
@@ -812,6 +819,9 @@ iInt2 coord_Window(const iWindow *d, int x, int y) {
 }
 
 iInt2 mouseCoord_Window(const iWindow *d) {
+    if (!d->isMouseInside) {
+        return init_I2(-1000000, -1000000);
+    }
     int x, y;
     SDL_GetMouseState(&x, &y);
     return coord_Window(d, x, y);

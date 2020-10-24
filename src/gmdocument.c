@@ -265,10 +265,10 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         5, 10, 5, 10, 0, 0, 0, 5
     };
     static const float topMargin[max_GmLineType] = {
-        0.0f, 0.5f, 1.0f, 0.5f, 2.0f, 1.5f, 1.0f, 1.0f
+        0.0f, 0.333f, 1.0f, 0.5f, 2.0f, 1.5f, 1.0f, 1.0f
     };
     static const float bottomMargin[max_GmLineType] = {
-        0.0f, 0.5f, 1.0f, 0.5f, 0.5f, 0.5f, 0.5f, 1.0f
+        0.0f, 0.333f, 1.0f, 0.5f, 0.5f, 0.5f, 0.5f, 1.0f
     };
     static const char *arrow    = "\u27a4";
     static const char *envelope = "\U0001f4e7";
@@ -290,7 +290,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     iRangecc         contentLine   = iNullRange;
     iInt2            pos           = zero_I2();
     iBool            isFirstText   = isGemini && prefs->bigFirstParagraph;
-    iBool            addQuoteIcon  = iTrue;
+    iBool            addQuoteIcon  = prefs->quoteIcon;
     iBool            isPreformat   = iFalse;
     iRangecc         preAltText    = iNullRange;
     int              preFont       = preformatted_FontId;
@@ -446,7 +446,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             pushBack_Array(&d->layout, &quoteRun);
         }
         else if (type != quote_GmLineType) {
-            addQuoteIcon = iTrue;
+            addQuoteIcon = prefs->quoteIcon;
         }
         /* Link icon. */
         if (type == link_GmLineType) {
@@ -485,6 +485,9 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         iRangecc runLine = line;
         /* Create one or more text runs for this line. */
         run.flags |= startOfLine_GmRunFlag;
+        if (!prefs->quoteIcon && type == quote_GmLineType) {
+            run.flags |= quoteBorder_GmRunFlag;
+        }
         iAssert(!isEmpty_Range(&runLine)); /* must have something at this point */
         while (!isEmpty_Range(&runLine)) {
             /* Little bit of breathing space between wrapped lines. */
@@ -631,12 +634,45 @@ void reset_GmDocument(iGmDocument *d) {
     d->themeSeed = 0;
 }
 
+static void setDerivedThemeColors_(enum iGmDocumentTheme theme) {
+    set_Color(tmQuoteIcon_ColorId,
+              mix_Color(get_Color(tmQuote_ColorId), get_Color(tmBackground_ColorId), 0.55f));
+    set_Color(tmBannerSideTitle_ColorId,
+              mix_Color(get_Color(tmBannerTitle_ColorId), get_Color(tmBackground_ColorId),
+                        theme == colorfulDark_GmDocumentTheme ? 0.55f : 0));
+    set_Color(tmOutlineHeadingAbove_ColorId, get_Color(white_ColorId));
+    set_Color(tmOutlineHeadingBelow_ColorId, get_Color(black_ColorId));
+    switch (theme) {
+        case colorfulDark_GmDocumentTheme:
+            set_Color(tmOutlineHeadingBelow_ColorId, get_Color(tmBannerTitle_ColorId));
+            if (equal_Color(get_Color(tmOutlineHeadingAbove_ColorId),
+                            get_Color(tmOutlineHeadingBelow_ColorId))) {
+                set_Color(tmOutlineHeadingBelow_ColorId, get_Color(tmHeading3_ColorId));
+            }
+            break;
+        case colorfulLight_GmDocumentTheme:
+        case sepia_GmDocumentTheme:
+            set_Color(tmOutlineHeadingAbove_ColorId, get_Color(black_ColorId));
+            set_Color(tmOutlineHeadingBelow_ColorId, mix_Color(get_Color(tmBackground_ColorId), get_Color(black_ColorId), 0.6f));
+            break;
+        case gray_GmDocumentTheme:
+            set_Color(tmOutlineHeadingBelow_ColorId, get_Color(gray75_ColorId));
+            break;
+        case white_GmDocumentTheme:
+            set_Color(tmOutlineHeadingBelow_ColorId, mix_Color(get_Color(tmBannerIcon_ColorId), get_Color(white_ColorId), 0.6f));
+            break;
+        case highContrast_GmDocumentTheme:
+            set_Color(tmOutlineHeadingAbove_ColorId, get_Color(black_ColorId));
+            break;
+        default:
+            break;
+    }
+}
+
 void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
-    const iPrefs *     prefs = prefs_App();
+    const iPrefs *        prefs = prefs_App();
     enum iGmDocumentTheme theme =
         (isDark_ColorTheme(colorTheme_App()) ? prefs->docThemeDark : prefs->docThemeLight);
-//    const iBool        isLightMode =  isLight_ColorTheme(colorTheme_App());
-//    const iBool        isDarkMode  = !isLightMode;
     static const iChar siteIcons[] = {
         0x203b,  0x2042,  0x205c,  0x2182,  0x25ed,  0x2600,  0x2601,  0x2604,  0x2605,  0x2606,
         0x265c,  0x265e,  0x2690,  0x2691,  0x2693,  0x2698,  0x2699,  0x26f0,  0x270e,  0x2728,
@@ -645,20 +681,10 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
         0x1f306, 0x1f308, 0x1f30a, 0x1f319, 0x1f31f, 0x1f320, 0x1f340, 0x1f4cd, 0x1f4e1, 0x1f531,
         0x1f533, 0x1f657, 0x1f659, 0x1f665, 0x1f668, 0x1f66b, 0x1f78b, 0x1f796, 0x1f79c,
     };
-    /* Default colors. */ {
-        if (theme == colorfulDark_GmDocumentTheme) {
-            const iHSLColor base = { 200, 0, 0.15f, 1.0f };
-            setHsl_Color(tmBackground_ColorId, base);
-            set_Color(tmParagraph_ColorId, get_Color(gray75_ColorId));
-            setHsl_Color(tmFirstParagraph_ColorId, addSatLum_HSLColor(base, 0, 0.75f));
-            set_Color(tmQuote_ColorId, get_Color(cyan_ColorId));
-            set_Color(tmPreformatted_ColorId, get_Color(cyan_ColorId));
-            set_Color(tmHeading1_ColorId, get_Color(white_ColorId));
-            setHsl_Color(tmHeading2_ColorId, addSatLum_HSLColor(base, 0.5f, 0.5f));
-            setHsl_Color(tmHeading3_ColorId, addSatLum_HSLColor(base, 1.0f, 0.4f));
-            set_Color(tmBannerBackground_ColorId, get_Color(black_ColorId));
-            set_Color(tmBannerTitle_ColorId, get_Color(white_ColorId));
-            set_Color(tmBannerIcon_ColorId, get_Color(orange_ColorId));
+    /* Default colors. These are used on "about:" pages and local files, for example. */ {
+        /* Link colors are generally the same in all themes. */
+        set_Color(tmBadLink_ColorId, get_Color(red_ColorId));
+        if (isDark_GmDocumentTheme(theme)) {
             set_Color(tmInlineContentMetadata_ColorId, get_Color(cyan_ColorId));
             set_Color(tmLinkText_ColorId, get_Color(white_ColorId));
             set_Color(tmLinkIcon_ColorId, get_Color(cyan_ColorId));
@@ -680,18 +706,6 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
             set_Color(tmGopherLinkLastVisitDate_ColorId, get_Color(blue_ColorId));
         }
         else {
-            const iHSLColor base = { 40, 0, 1.0f, 1.0f };
-            setHsl_Color(tmBackground_ColorId, base);
-            set_Color(tmParagraph_ColorId, get_Color(gray25_ColorId));
-            set_Color(tmFirstParagraph_ColorId, get_Color(black_ColorId));
-            set_Color(tmQuote_ColorId, get_Color(brown_ColorId));
-            set_Color(tmPreformatted_ColorId, get_Color(brown_ColorId));
-            set_Color(tmHeading1_ColorId, get_Color(black_ColorId));
-            setHsl_Color(tmHeading2_ColorId, addSatLum_HSLColor(base, 0.15f, -0.7f));
-            setHsl_Color(tmHeading3_ColorId, addSatLum_HSLColor(base, 0.3f, -0.6f));
-            set_Color(tmBannerBackground_ColorId, get_Color(white_ColorId));
-            set_Color(tmBannerTitle_ColorId, get_Color(gray50_ColorId));
-            set_Color(tmBannerIcon_ColorId, get_Color(teal_ColorId));
             set_Color(tmInlineContentMetadata_ColorId, get_Color(brown_ColorId));
             set_Color(tmLinkText_ColorId, get_Color(black_ColorId));
             set_Color(tmLinkIcon_ColorId, get_Color(teal_ColorId));
@@ -712,7 +726,111 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
             set_Color(tmGopherLinkDomain_ColorId, get_Color(magenta_ColorId));
             set_Color(tmGopherLinkLastVisitDate_ColorId, get_Color(blue_ColorId));
         }
-        set_Color(tmBadLink_ColorId, get_Color(red_ColorId));
+        /* Set the non-link default colors. Note that some/most of these are overwritten later
+           if a theme seed if available. */
+        if (theme == colorfulDark_GmDocumentTheme) {
+            const iHSLColor base = { 200, 0, 0.15f, 1.0f };
+            setHsl_Color(tmBackground_ColorId, base);
+            set_Color(tmParagraph_ColorId, get_Color(gray75_ColorId));
+            setHsl_Color(tmFirstParagraph_ColorId, addSatLum_HSLColor(base, 0, 0.75f));
+            set_Color(tmQuote_ColorId, get_Color(cyan_ColorId));
+            set_Color(tmPreformatted_ColorId, get_Color(cyan_ColorId));
+            set_Color(tmHeading1_ColorId, get_Color(white_ColorId));
+            setHsl_Color(tmHeading2_ColorId, addSatLum_HSLColor(base, 0.5f, 0.5f));
+            setHsl_Color(tmHeading3_ColorId, addSatLum_HSLColor(base, 1.0f, 0.4f));
+            setHsl_Color(tmBannerBackground_ColorId, addSatLum_HSLColor(base, 0, -0.05f));
+            set_Color(tmBannerTitle_ColorId, get_Color(white_ColorId));
+            set_Color(tmBannerIcon_ColorId, get_Color(orange_ColorId));
+        }
+        else if (theme == colorfulLight_GmDocumentTheme) {
+            const iHSLColor base = addSatLum_HSLColor(get_HSLColor(teal_ColorId), -0.3f, 0.5f);
+            setHsl_Color(tmBackground_ColorId, base);
+            set_Color(tmParagraph_ColorId, get_Color(black_ColorId));
+            set_Color(tmFirstParagraph_ColorId, get_Color(black_ColorId));
+            setHsl_Color(tmQuote_ColorId, addSatLum_HSLColor(base, 0, -0.25f));
+            setHsl_Color(tmPreformatted_ColorId, addSatLum_HSLColor(base, 0, -0.3f));
+            set_Color(tmHeading1_ColorId, get_Color(white_ColorId));
+            set_Color(tmHeading2_ColorId, mix_Color(get_Color(tmBackground_ColorId), get_Color(black_ColorId), 0.67f));
+            set_Color(tmHeading3_ColorId, mix_Color(get_Color(tmBackground_ColorId), get_Color(black_ColorId), 0.55f));
+            setHsl_Color(tmBannerBackground_ColorId, addSatLum_HSLColor(base, 0, -0.1f));
+            setHsl_Color(tmBannerIcon_ColorId, addSatLum_HSLColor(base, 0, -0.2f));
+            setHsl_Color(tmBannerTitle_ColorId, addSatLum_HSLColor(base, 0, -0.2f));
+            setHsl_Color(tmLinkIcon_ColorId, addSatLum_HSLColor(get_HSLColor(teal_ColorId), 0, 0));
+            set_Color(tmLinkIconVisited_ColorId, mix_Color(get_Color(tmBackground_ColorId), get_Color(teal_ColorId), 0.35f));
+            set_Color(tmLinkDomain_ColorId, get_Color(teal_ColorId));
+            setHsl_Color(tmHypertextLinkIcon_ColorId, get_HSLColor(white_ColorId));
+            set_Color(tmHypertextLinkIconVisited_ColorId, mix_Color(get_Color(tmBackground_ColorId), get_Color(white_ColorId), 0.5f));
+            set_Color(tmHypertextLinkDomain_ColorId, get_Color(brown_ColorId));
+            setHsl_Color(tmGopherLinkIcon_ColorId, addSatLum_HSLColor(get_HSLColor(tmGopherLinkIcon_ColorId), 0, -0.25f));
+            setHsl_Color(tmGopherLinkTextHover_ColorId, addSatLum_HSLColor(get_HSLColor(tmGopherLinkTextHover_ColorId), 0, -0.3f));
+        }
+        else if (theme == black_GmDocumentTheme) {
+            set_Color(tmBackground_ColorId, get_Color(black_ColorId));
+            set_Color(tmParagraph_ColorId, get_Color(gray75_ColorId));
+            set_Color(tmFirstParagraph_ColorId, mix_Color(get_Color(gray75_ColorId), get_Color(white_ColorId), 0.5f));
+            set_Color(tmQuote_ColorId, get_Color(orange_ColorId));
+            set_Color(tmPreformatted_ColorId, get_Color(orange_ColorId));
+            set_Color(tmHeading1_ColorId, get_Color(cyan_ColorId));
+            set_Color(tmHeading2_ColorId, mix_Color(get_Color(cyan_ColorId), get_Color(white_ColorId), 0.66f));
+            set_Color(tmHeading3_ColorId, get_Color(white_ColorId));
+            set_Color(tmBannerBackground_ColorId, get_Color(black_ColorId));
+            set_Color(tmBannerTitle_ColorId, get_Color(teal_ColorId));
+            set_Color(tmBannerIcon_ColorId, get_Color(teal_ColorId));
+        }
+        else if (theme == gray_GmDocumentTheme) {
+            set_Color(tmBackground_ColorId, mix_Color(get_Color(gray25_ColorId), get_Color(black_ColorId), 0.25f));
+            set_Color(tmParagraph_ColorId, mix_Color(get_Color(gray75_ColorId), get_Color(white_ColorId), 0.25f));
+            set_Color(tmFirstParagraph_ColorId, mix_Color(get_Color(gray75_ColorId), get_Color(white_ColorId), 0.5f));
+            set_Color(tmQuote_ColorId, get_Color(orange_ColorId));
+            set_Color(tmPreformatted_ColorId, get_Color(orange_ColorId));
+            set_Color(tmHeading1_ColorId, get_Color(cyan_ColorId));
+            set_Color(tmHeading2_ColorId, mix_Color(get_Color(cyan_ColorId), get_Color(white_ColorId), 0.66f));
+            set_Color(tmHeading3_ColorId, get_Color(white_ColorId));
+            set_Color(tmBannerBackground_ColorId, mix_Color(get_Color(gray25_ColorId), get_Color(black_ColorId), 0.5f));
+            set_Color(tmBannerTitle_ColorId, get_Color(teal_ColorId));
+            set_Color(tmBannerIcon_ColorId, get_Color(teal_ColorId));
+        }
+        else if (theme == sepia_GmDocumentTheme) {
+            const iHSLColor base = { 40, 0.6f, 0.9f, 1.0f };
+            setHsl_Color(tmBackground_ColorId, base);
+            set_Color(tmParagraph_ColorId, get_Color(black_ColorId));
+            set_Color(tmFirstParagraph_ColorId, get_Color(black_ColorId));
+            set_Color(tmQuote_ColorId, get_Color(brown_ColorId));
+            set_Color(tmPreformatted_ColorId, get_Color(brown_ColorId));
+            set_Color(tmHeading1_ColorId, get_Color(brown_ColorId));
+            set_Color(tmHeading2_ColorId, mix_Color(get_Color(brown_ColorId), get_Color(black_ColorId), 0.5f));
+            set_Color(tmHeading3_ColorId, get_Color(black_ColorId));
+            set_Color(tmBannerBackground_ColorId, mix_Color(get_Color(tmBackground_ColorId), get_Color(brown_ColorId), 0.15f));
+            set_Color(tmBannerTitle_ColorId, get_Color(brown_ColorId));
+            set_Color(tmBannerIcon_ColorId, get_Color(brown_ColorId));
+        }
+        else if (theme == white_GmDocumentTheme) {
+            const iHSLColor base = { 40, 0, 1.0f, 1.0f };
+            setHsl_Color(tmBackground_ColorId, base);
+            set_Color(tmParagraph_ColorId, get_Color(gray25_ColorId));
+            set_Color(tmFirstParagraph_ColorId, get_Color(black_ColorId));
+            set_Color(tmQuote_ColorId, get_Color(brown_ColorId));
+            set_Color(tmPreformatted_ColorId, get_Color(brown_ColorId));
+            set_Color(tmHeading1_ColorId, get_Color(black_ColorId));
+            setHsl_Color(tmHeading2_ColorId, addSatLum_HSLColor(base, 0.15f, -0.7f));
+            setHsl_Color(tmHeading3_ColorId, addSatLum_HSLColor(base, 0.3f, -0.6f));
+            set_Color(tmBannerBackground_ColorId, get_Color(white_ColorId));
+            set_Color(tmBannerTitle_ColorId, get_Color(gray50_ColorId));
+            set_Color(tmBannerIcon_ColorId, get_Color(teal_ColorId));
+        }
+        else if (theme == highContrast_GmDocumentTheme) {
+            set_Color(tmBackground_ColorId, get_Color(white_ColorId));
+            set_Color(tmParagraph_ColorId, get_Color(black_ColorId));
+            set_Color(tmFirstParagraph_ColorId, get_Color(black_ColorId));
+            set_Color(tmQuote_ColorId, get_Color(black_ColorId));
+            set_Color(tmPreformatted_ColorId, get_Color(black_ColorId));
+            set_Color(tmHeading1_ColorId, get_Color(black_ColorId));
+            set_Color(tmHeading2_ColorId, get_Color(black_ColorId));
+            set_Color(tmHeading3_ColorId, get_Color(black_ColorId));
+            set_Color(tmBannerBackground_ColorId, mix_Color(get_Color(gray75_ColorId), get_Color(white_ColorId), 0.75f));
+            set_Color(tmBannerTitle_ColorId, get_Color(black_ColorId));
+            set_Color(tmBannerIcon_ColorId, get_Color(black_ColorId));
+        }
         /* Apply the saturation setting. */
         for (int i = tmFirst_ColorId; i < max_ColorId; i++) {
             if (!isLink_ColorId(i)) {
@@ -773,8 +891,9 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
         const iBool isDarkBgSat =
             (d->themeSeed & 0x200000) != 0 && (primIndex < 1 || primIndex > 4);
 
-        //            printf("background: %d %f %f\n", (int) base.hue, base.sat, base.lum);
-        //            printf("isDarkBgSat: %d\n", isDarkBgSat);
+        static const float normLum[] = { 0.8f, 0.7f, 0.675f, 0.65f, 0.55f,
+                                         0.6f, 0.475f, 0.475f, 0.75f, 0.8f,
+                                         0.85f, 0.85f };
 
         if (theme == colorfulDark_GmDocumentTheme) {
             iHSLColor base    = { hues[primIndex],
@@ -819,7 +938,32 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
             set_Color(tmQuote_ColorId, get_Color(tmPreformatted_ColorId));
             set_Color(tmInlineContentMetadata_ColorId, get_Color(tmHeading3_ColorId));
         }
-        else {
+        else if (theme == colorfulLight_GmDocumentTheme) {
+//            static int primIndex = 0;
+//            primIndex = (primIndex + 1) % iElemCount(hues);
+            iHSLColor base = { hues[primIndex], 1.0f, normLum[primIndex], 1.0f };
+//            printf("prim:%d norm:%f\n", primIndex, normLum[primIndex]); fflush(stdout);
+            static const float normSat[] = {
+                0.85f, 0.9f, 1, 0.65f, 0.65f,
+                0.65f, 0.9f, 0.9f, 1, 0.9f,
+                1, 0.75f
+            };
+            iBool darkHeadings = iTrue;
+            base.sat *= normSat[primIndex] * 0.8f;
+            setHsl_Color(tmBackground_ColorId, base);
+            set_Color(tmParagraph_ColorId, get_Color(black_ColorId));
+            set_Color(tmFirstParagraph_ColorId, get_Color(black_ColorId));
+            setHsl_Color(tmQuote_ColorId, addSatLum_HSLColor(base, 0, -base.lum * 0.67f));
+            setHsl_Color(tmPreformatted_ColorId, addSatLum_HSLColor(base, 0, -base.lum * 0.75f));
+            set_Color(tmHeading1_ColorId, get_Color(white_ColorId));
+            set_Color(tmHeading2_ColorId, mix_Color(get_Color(tmBackground_ColorId), get_Color(darkHeadings ? black_ColorId : white_ColorId), 0.7f));
+            set_Color(tmHeading3_ColorId, mix_Color(get_Color(tmBackground_ColorId), get_Color(darkHeadings ? black_ColorId : white_ColorId), 0.6f));
+            setHsl_Color(tmBannerBackground_ColorId, addSatLum_HSLColor(base, 0, -0.04f));
+            setHsl_Color(tmBannerIcon_ColorId, addSatLum_HSLColor(base, 0, -0.3f));
+            setHsl_Color(tmBannerTitle_ColorId, addSatLum_HSLColor(base, 0, -0.25f));
+            set_Color(tmLinkIconVisited_ColorId, mix_Color(get_Color(tmBackground_ColorId), get_Color(teal_ColorId), 0.3f));
+        }
+        else if (theme == white_GmDocumentTheme) {
             iHSLColor base    = { hues[primIndex], 1.0f, 0.3f, 1.0f };
             iHSLColor altBase = { altHue, base.sat, base.lum - 0.1f, 1 };
 
@@ -828,7 +972,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
             setHsl_Color(tmBannerTitle_ColorId, addSatLum_HSLColor(base, -0.6f, 0.25f));
             setHsl_Color(tmBannerIcon_ColorId, addSatLum_HSLColor(base, 0, 0));
 
-            setHsl_Color(tmHeading1_ColorId, base); //addSatLum_HSLColor(base, -0.5f, 0.125f));
+            setHsl_Color(tmHeading1_ColorId, base);
             set_Color(tmHeading2_ColorId, mix_Color(rgb_HSLColor(base), rgb_HSLColor(altBase), 0.5f));
             setHsl_Color(tmHeading3_ColorId, altBase);
 
@@ -838,39 +982,23 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
             set_Color(tmQuote_ColorId, get_Color(tmPreformatted_ColorId));
             set_Color(tmInlineContentMetadata_ColorId, get_Color(tmHeading3_ColorId));
         }
+        else if (theme == black_GmDocumentTheme || theme == gray_GmDocumentTheme) {
+            const float primHue        = hues[primIndex];
+            const iHSLColor primBright = { primHue, 1, 0.6f, 1 };
+            const iHSLColor primDim    = { primHue, 1, normLum[primIndex] + (theme == gray_GmDocumentTheme ? 0.0f : -0.3f), 1};
+            const iHSLColor altBright  = { altHue, 1, normLum[altIndex[0]] + (theme == gray_GmDocumentTheme ? 0.1f : 0.0f), 1 };
+            setHsl_Color(tmQuote_ColorId, altBright);
+            setHsl_Color(tmPreformatted_ColorId, altBright);
+            setHsl_Color(tmHeading1_ColorId, primBright);
+            set_Color(tmHeading2_ColorId, mix_Color(get_Color(tmHeading1_ColorId), get_Color(white_ColorId), 0.66f));
+            setHsl_Color(tmBannerTitle_ColorId, primDim);
+            setHsl_Color(tmBannerIcon_ColorId, primDim);
+        }
 
         /* Adjust colors based on light/dark mode. */
         for (int i = tmFirst_ColorId; i < max_ColorId; i++) {
             iHSLColor color = hsl_Color(get_Color(i));
-            if (theme == white_GmDocumentTheme) {
-#if 0
-                if (isLink_ColorId(i)) continue;
-                color.lum = 1.0f - color.lum; /* All colors invert lightness. */
-                if (isRegularText_ColorId(i)) {
-                    /* Darken paragraphs and default state link text. */
-                    color.lum *= 0.5f;
-                }
-                else if (i == tmBackground_ColorId) {
-                    color.sat = (color.sat + 1) / 2;
-                    color.lum += 0.06f;
-                }
-                else if (i == tmHeading3_ColorId) {
-                    color.lum *= 0.75f;
-                }
-                else if (i == tmBannerIcon_ColorId || i == tmBannerTitle_ColorId) {
-                    color.sat = 1.0f;
-                    color.lum = 0.35f;
-                }
-                else if (i == tmBannerBackground_ColorId) {
-                    color = hsl_Color(get_Color(tmBackground_ColorId));
-                }
-                else if (isText_ColorId(i)) {
-                    color.sat = 0.9f;
-                    color.lum = (9 * color.lum + 0.5f) / 10;
-                }
-#endif
-            }
-            else { /* dark mode */
+            if (theme == colorfulDark_GmDocumentTheme) { /* dark mode */
                 if (!isLink_ColorId(i)) {
                     if (isDarkBgSat) {
                         /* Saturate background, desaturate text. */
@@ -907,17 +1035,20 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
         }
     }
     /* Derived colors. */
-    set_Color(tmQuoteIcon_ColorId,
-              mix_Color(get_Color(tmQuote_ColorId), get_Color(tmBackground_ColorId), 0.55f));
-    set_Color(tmBannerSideTitle_ColorId,
-              mix_Color(get_Color(tmBannerTitle_ColorId), get_Color(tmBackground_ColorId),
-                        theme == colorfulDark_GmDocumentTheme ? 0.55f : 0));
+    setDerivedThemeColors_(theme);
     /* Special exceptions. */
     if (seed) {
         if (equal_CStr(cstr_Block(seed), "gemini.circumlunar.space")) {
             d->siteIcon = 0x264a; /* gemini symbol */
         }
     }
+#if 0
+    for (int i = tmFirst_ColorId; i < max_ColorId; ++i) {
+        const iColor tc = get_Color(i);
+        printf("%02i: #%02x%02x%02x\n", i, tc.r, tc.g, tc.b);
+    }
+    printf("---\n");
+#endif
 }
 
 void setFormat_GmDocument(iGmDocument *d, enum iGmDocumentFormat format) {

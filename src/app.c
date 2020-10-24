@@ -22,6 +22,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "app.h"
 #include "bookmarks.h"
+#include "defs.h"
 #include "embedded.h"
 #include "gmcerts.h"
 #include "gmdocument.h"
@@ -181,9 +182,12 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "linewidth.set arg:%d\n", d->prefs.lineWidth);
     appendFormat_String(str, "prefs.biglede.changed arg:%d\n", d->prefs.bigFirstParagraph);
     appendFormat_String(str, "prefs.sideicon.changed arg:%d\n", d->prefs.sideIcon);
+    appendFormat_String(str, "quoteicon.set arg:%d\n", d->prefs.quoteIcon ? 1 : 0);
     appendFormat_String(str, "prefs.hoveroutline.changed arg:%d\n", d->prefs.hoverOutline);
     appendFormat_String(str, "theme.set arg:%d auto:1\n", d->prefs.theme);
     appendFormat_String(str, "ostheme arg:%d\n", d->prefs.useSystemTheme);
+    appendFormat_String(str, "doctheme.dark.set arg:%d\n", d->prefs.docThemeDark);
+    appendFormat_String(str, "doctheme.light.set arg:%d\n", d->prefs.docThemeLight);
     appendFormat_String(str, "saturation.set arg:%d\n", (int) ((d->prefs.saturation * 100) + 0.5f));
     appendFormat_String(str, "proxy.gopher address:%s\n", cstr_String(&d->prefs.gopherProxy));
     appendFormat_String(str, "proxy.http address:%s\n", cstr_String(&d->prefs.httpProxy));
@@ -253,9 +257,9 @@ static iBool loadState_App_(iApp *d) {
             printf("%s: format not recognized\n", cstr_String(path_File(f)));
             return iFalse;
         }
-        const int version = read32_File(f);
+        const uint32_t version = readU32_File(f);
         /* Check supported versions. */
-        if (version != 0) {
+        if (version > latest_FileVersion) {
             printf("%s: unsupported version\n", cstr_String(path_File(f)));
             return iFalse;
         }
@@ -301,7 +305,7 @@ static void saveState_App_(const iApp *d) {
     iFile *f = newCStr_File(concatPath_CStr(dataDir_App_, stateFileName_App_));
     if (open_File(f, writeOnly_FileMode)) {
         writeData_File(f, magicState_App_, 4);
-        write32_File(f, 0); /* version */
+        writeU32_File(f, latest_FileVersion); /* version */
         iConstForEach(ObjectList, i, iClob(listDocuments_App())) {
             if (isInstance_Object(i.object, &Class_DocumentWidget)) {
                 writeData_File(f, magicTabDocument_App_, 4);
@@ -700,6 +704,18 @@ static void updatePrefsThemeButtons_(iWidget *d) {
     }
 }
 
+static void updateColorThemeButton_(iLabelWidget *button, int theme) {
+    const char *mode    = strstr(cstr_String(id_Widget(as_Widget(button))), ".dark") ? "dark" : "light";
+    const char *command = format_CStr("doctheme.%s.set arg:%d", mode, theme);
+    iForEach(ObjectList, i, children_Widget(findChild_Widget(as_Widget(button), "menu"))) {
+        iLabelWidget *item = i.object;
+        if (!cmp_String(command_LabelWidget(item), command)) {
+            updateText_LabelWidget(button, label_LabelWidget(item));
+            break;
+        }
+    }
+}
+
 static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
     if (equal_Command(cmd, "prefs.dismiss") || equal_Command(cmd, "preferences")) {
         setUiScale_Window(get_Window(),
@@ -719,6 +735,20 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
                          tabPageIndex_Widget(tabs, currentTabPage_Widget(tabs)));
         destroy_Widget(d);
         return iTrue;
+    }
+    else if (equal_Command(cmd, "quoteicon.set")) {
+        const int arg = arg_Command(cmd);
+        setFlags_Widget(findChild_Widget(d, "prefs.quoteicon.0"), selected_WidgetFlag, arg == 0);
+        setFlags_Widget(findChild_Widget(d, "prefs.quoteicon.1"), selected_WidgetFlag, arg == 1);
+        return iFalse;
+    }
+    else if (equal_Command(cmd, "doctheme.dark.set")) {
+        updateColorThemeButton_(findChild_Widget(d, "prefs.doctheme.dark"), arg_Command(cmd));
+        return iFalse;
+    }
+    else if (equal_Command(cmd, "doctheme.light.set")) {
+        updateColorThemeButton_(findChild_Widget(d, "prefs.doctheme.light"), arg_Command(cmd));
+        return iFalse;
     }
     else if (equal_Command(cmd, "prefs.ostheme.changed")) {
         postCommandf_App("ostheme arg:%d", arg_Command(cmd));
@@ -908,8 +938,23 @@ iBool handleCommand_App(const char *cmd) {
         d->prefs.useSystemTheme = arg_Command(cmd);
         return iTrue;
     }
+    else if (equal_Command(cmd, "doctheme.dark.set")) {
+        d->prefs.docThemeDark = arg_Command(cmd);
+        postCommand_App("theme.changed auto:1");
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "doctheme.light.set")) {
+        d->prefs.docThemeLight = arg_Command(cmd);
+        postCommand_App("theme.changed auto:1");
+        return iTrue;
+    }
     else if (equal_Command(cmd, "linewidth.set")) {
         d->prefs.lineWidth = iMax(20, arg_Command(cmd));
+        postCommand_App("document.layout.changed");
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "quoteicon.set")) {
+        d->prefs.quoteIcon = arg_Command(cmd) != 0;
         postCommand_App("document.layout.changed");
         return iTrue;
     }
@@ -1058,8 +1103,14 @@ iBool handleCommand_App(const char *cmd) {
             findChild_Widget(dlg, format_CStr("prefs.linewidth.%d", d->prefs.lineWidth)),
             selected_WidgetFlag,
             iTrue);
+        setFlags_Widget(
+            findChild_Widget(dlg, format_CStr("prefs.quoteicon.%d", d->prefs.quoteIcon)),
+            selected_WidgetFlag,
+            iTrue);
         setToggle_Widget(findChild_Widget(dlg, "prefs.biglede"), d->prefs.bigFirstParagraph);
         setToggle_Widget(findChild_Widget(dlg, "prefs.sideicon"), d->prefs.sideIcon);
+        updateColorThemeButton_(findChild_Widget(dlg, "prefs.doctheme.dark"), d->prefs.docThemeDark);
+        updateColorThemeButton_(findChild_Widget(dlg, "prefs.doctheme.light"), d->prefs.docThemeLight);
         setFlags_Widget(
             findChild_Widget(
                 dlg, format_CStr("prefs.saturation.%d", (int) (d->prefs.saturation * 3.99f))),

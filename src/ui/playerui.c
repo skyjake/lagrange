@@ -145,7 +145,7 @@ void draw_PlayerUI(iPlayerUI *d, iPaint *p) {
     const int dotWidth = advance_Text(uiLabel_FontId, dot).x;
     draw_Text(uiLabel_FontId,
               init_I2(s1 * (1.0f - normPos) + s2 * normPos - dotWidth / 2, yMid - hgt / 2),
-              bright,
+              isPaused_Player(d->player) ? dim : bright,
               dot);
     /* Volume adjustment. */
     if (isAdjusting) {

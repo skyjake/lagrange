@@ -10,7 +10,7 @@
 #   Windows for compiling everything, but the_Foundation still lacks
 #   native Win32 implementations for the Socket and Process classes.
 # - Windows builds should use the SDL 2 library precompiled for native
-#   Windows (MSVC variant) instead the version from MSYS2 (get it from
+#   Windows (MSVC variant) instead of the version from MSYS2 (get it from
 #   https://libsdl.org/). To make configuration easier, consider writing
 #   for your personal use a pkg-config sdl2.pc file that uses the Windows
 #   version of the library.
@@ -19,18 +19,18 @@
 cmake_minimum_required (VERSION 3.9)
 
 project (Lagrange
-    VERSION 0.5.0
-    DESCRIPTION "Beautiful Gemini Client"
+    VERSION 0.6.0
+    DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
 set (COPYRIGHT_YEAR 2020)
 
 # Build configuration.
-option (ENABLE_MPG123 "Use mpg123 for decoding MPEG audio" ON)
-option (ENABLE_X11_SWRENDER "Use software rendering under X11" OFF)
-option (ENABLE_KERNING "Enable kerning in font renderer (slower)" ON)
-option (ENABLE_RESOURCE_EMBED "Embed resources inside the executable" OFF)
-option (ENABLE_WINDOWPOS_FIX "Set position after showing window (workaround for SDL bug)" OFF)
+option (ENABLE_MPG123           "Use mpg123 for decoding MPEG audio" ON)
+option (ENABLE_X11_SWRENDER     "Use software rendering under X11" OFF)
+option (ENABLE_KERNING          "Enable kerning in font renderer (slower)" ON)
+option (ENABLE_RESOURCE_EMBED   "Embed resources inside the executable" OFF)
+option (ENABLE_WINDOWPOS_FIX    "Set position after showing window (workaround for SDL bug)" OFF)
 
 include (BuildType.cmake)
 include (Embed.cmake)
@@ -71,6 +71,7 @@ set (EMBED_RESOURCES
     res/fonts/Literata-Bold-opsz=36.ttf
     res/fonts/Literata-ExtraLight-opsz=18.ttf
     res/fonts/Literata-LightItalic-opsz=10.ttf
+    res/fonts/NanumGothic-Regular.ttf
     res/fonts/NotoEmoji-Regular.ttf
     res/fonts/Nunito-ExtraBold.ttf
     res/fonts/Nunito-ExtraLight.ttf
@@ -94,6 +95,7 @@ set (SOURCES
     src/app.h
     src/bookmarks.c
     src/bookmarks.h
+    src/defs.h
     src/gmcerts.c
     src/gmcerts.h
     src/gmdocument.c
@@ -127,6 +129,8 @@ set (SOURCES
     src/ui/command.h
     src/ui/documentwidget.c
     src/ui/documentwidget.h
+    src/ui/indicatorwidget.c
+    src/ui/indicatorwidget.h
     src/ui/listwidget.c
     src/ui/listwidget.h
     src/ui/lookupwidget.c

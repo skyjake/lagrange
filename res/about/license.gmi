@@ -103,6 +103,7 @@ This application uses fonts licensed under the Open Font License.
 => https://fonts.google.com/specimen/EB+Garamond#license  EB Garamond
 => https://github.com/mozilla/Fira/blob/master/LICENSE  Fira Sans, Fira Mono
 => https://github.com/googlefonts/literata/blob/master/OFL.txt  Literata
+=> https://github.com/google/fonts/blob/master/ofl/nanumgothic/OFL.txt  Nanum Gothic
 => https://github.com/googlefonts/nunito/blob/master/OFL.txt  Nunito
 => https://github.com/adobe-fonts/source-sans-pro/blob/release/LICENSE.md  Source Sans Pro
 

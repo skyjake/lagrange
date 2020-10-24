@@ -6,6 +6,17 @@
 ```
 # Release notes
 
+## 0.6
+* Added an indicator to visualize progress of network requests.
+* Added new color themes for page content: Colorful Light, Black, Gray, Sepia, High Contrast.
+* Added page content color theme selection in Preferences.
+* Added quote indicator option: icon or vertical line.
+* Added a new font for Korean glyhps.
+* Smoother smooth scrolling, making it easier to keep one's eyes on the content throughout the motion.
+* Windows: Register Lagrange as a handler of "gemini:" URLs.
+* macOS: Fixed glitchy window dragging during audio playback.
+* Fixed timestamps of cached pages.
+
 ## 0.5
 * Added MP3 support in the audio player (using mpg123).
 => https://mpg123.org/ mpg123: MPEG audio player and decoder library

@@ -42,19 +42,44 @@ To install to "/dest/path":
 
 This will also install an XDG .desktop file for launching the app.
 
-### macOS-specific notes
+### Compiling on macOS
 
 When using OpenSSL 1.1.1 from Homebrew, you must add its pkgconfig path to your `PKG_CONFIG_PATH` environment variable, for example:
 
-    export PKG_CONFIG_PATH=/usr/local/Cellar/openssl@1.1/1.1.1g/lib/pkgconfig
+    export PKG_CONFIG_PATH=/usr/local/Cellar/openssl@1.1/1.1.1h/lib/pkgconfig
 
-Also, SDL's trackpad scrolling behavior on macOS is not optimal for regular GUI apps because it emulates a physical mouse wheel. This may change in a future release of SDL, but at least in 2.0.12 a [small patch](https://git.skyjake.fi/skyjake/lagrange/raw/branch/dev/sdl2-macos-mouse-scrolling-patch.diff) is required to allow momentum scrolling to come through as single-pixel mouse wheel events.
+Also, SDL's trackpad scrolling behavior on macOS is not optimal for regular GUI apps because it emulates a physical mouse wheel. This may change in a future release of SDL, but at least in 2.0.12 a [small patch](https://git.skyjake.fi/skyjake/lagrange/raw/branch/dev/sdl2-macos-mouse-scrolling-patch.diff) is required to allow momentum scrolling to come through as single-pixel mouse wheel events. Note that SDL comes with an Xcode project; use the "Shared Library" target and check that you are doing a Release build.
 
-### Raspberry Pi notes
+### Compiling on Windows
+
+Windows builds require [MSYS2](https://www.msys2.org). In theory, [Clang](https://clang.llvm.org/docs/MSVCCompatibility.html) or GCC (on [MinGW](http://mingw.org)) could be set up natively on Windows for compiling everything, but the_Foundation still lacks native Win32 implementations for the Socket and Process classes and these are required by Lagrange.
+
+You should use the SDL 2 library precompiled for native Windows (the MSVC variant) instead of the version from MSYS2 or MinGW. You can download a copy of the SDL binaries from https://libsdl.org/. To make configuration easier in your MSYS2 environment, consider writing a custom sdl2.pc file so `pkg-config` can automatically find the correct version of SDL. Below is an example of what your sdl2.pc might look like:
+
+```
+prefix=/c/SDK/SDL2-2.0.12/
+arch=x64
+libdir=${prefix}/lib/${arch}/
+incdir=${prefix}/include/
+
+Name: sdl2
+Description: Simple DirectMedia Layer
+Version: 2.0.12-msvc
+Libs: ${libdir}/SDL2.dll -mwindows
+Cflags: -I${incdir}
+```
+
+The *-mwindows* option is particularly important as that specifies the target is a GUI application. Also note that you are linking directly against the Windows DLL — do not use any prebuilt .lib files if available, as those as specific to MSVC.
+
+`pkg-config` will find your .pc file if it is on `PKG_CONFIG_PATH` or you place it in a system-wide pkgconfig directory.
+
+Once you have compiled a working binary under MSYS2, there is still an additional step required to allow running it directly from the Windows shell: the shared libraries from MSYS2 must be found either via `PATH` or by copying them to the same directory where `lagrange.exe` is located.
+
+### Compiling on Raspberry Pi
 
 You should use a version of SDL that is compiled to take advantage of the Broadcom VideoCore OpenGL ES hardware. This provides the best performance when running Lagrange in a console.
 
-When running under X11, software rendering is the best choice and in that case the SDL from Raspbian etc. is sufficient.
+At present time, OpenGL under X11 on Raspberry Pi is still quite slow/experimental. When running under X11, software rendering is the best choice and the SDL from Raspbian etc. is sufficient.
 
 The following build options are recommended on Raspberry Pi:
 

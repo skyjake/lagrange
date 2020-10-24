@@ -16,7 +16,7 @@ BEGIN
         BLOCK "040904B0"
         BEGIN
             VALUE "CompanyName",        "Jaakko Ker\xe4nen\0"
-            VALUE "FileDescription",    "${PROJECT_DESCRIPTION}\0"
+            VALUE "FileDescription",    "Lagrange: ${PROJECT_DESCRIPTION}\0"
             VALUE "FileVersion",        "${PROJECT_VERSION}\0"
             VALUE "InternalName",       "fi.skyjake.lagrange\0"
             VALUE "LegalCopyright",     "(c) ${COPYRIGHT_YEAR} Jaakko Ker\xe4nen\0"

@@ -135,30 +135,98 @@ iBool isFinished_Anim(const iAnim *d) {
 }
 
 void init_Anim(iAnim *d, float value) {
-    d->due = d->when = frameTime_Window(get_Window());
+    d->due = d->when = SDL_GetTicks();
     d->from = d->to = value;
+    d->flags = 0;
 }
 
-void setValue_Anim(iAnim *d, float to, uint32_t span) {
-    if (fabsf(to - d->to) > 0.00001f) {
-        const uint32_t now = SDL_GetTicks();
-        d->from = value_Anim(d);
-        d->to   = to;
-        d->when = now;
-        d->due  = now + span;
+iLocalDef float pos_Anim_(const iAnim *d, uint32_t now) {
+    return (float) (now - d->when) / (float) (d->due - d->when);
+}
+
+iLocalDef float easeIn_(float t) {
+    return t * t;
+}
+
+iLocalDef float easeOut_(float t) {
+    return t * (2.0f - t);
+}
+
+iLocalDef float easeBoth_(float t) {
+    if (t < 0.5f) {
+        return easeIn_(t * 2.0f) * 0.5f;
     }
+    return 0.5f + easeOut_((t - 0.5f) * 2.0f) * 0.5f;
 }
 
-float value_Anim(const iAnim *d) {
-    const uint32_t now = frameTime_Window(get_Window());
+static float valueAt_Anim_(const iAnim *d, const uint32_t now) {
     if (now >= d->due) {
         return d->to;
     }
     if (now <= d->when) {
         return d->from;
     }
-    const float pos = (float) (now - d->when) / (float) (d->due - d->when);
-    return d->from * (1.0f - pos) + d->to * pos;
+    float t = pos_Anim_(d, now);
+    if ((d->flags & easeBoth_AnimFlag) == easeBoth_AnimFlag) {
+        t = easeBoth_(t);
+    }
+    else if (d->flags & easeIn_AnimFlag) {
+        t = easeIn_(t);
+    }
+    else if (d->flags & easeOut_AnimFlag) {
+        t = easeOut_(t);
+    }
+    return d->from * (1.0f - t) + d->to * t;
+}
+
+void setValue_Anim(iAnim *d, float to, uint32_t span) {
+    if (span == 0) {
+        d->from = d->to = to;
+        d->when = d->due = SDL_GetTicks();
+    }
+    else if (fabsf(to - d->to) > 0.00001f) {
+        const uint32_t now = SDL_GetTicks();
+        d->from = valueAt_Anim_(d, now);
+        d->to   = to;
+        d->when = now;
+        d->due  = now + span;
+    }
+}
+
+void setValueEased_Anim(iAnim *d, float to, uint32_t span) {
+    if (fabsf(to - d->to) <= 0.00001f) {
+        d->to = to; /* Pretty much unchanged. */
+        return;
+    }
+    const uint32_t now = SDL_GetTicks();
+    if (isFinished_Anim(d)) {
+        d->from  = d->to;
+        d->flags = easeBoth_AnimFlag;
+    }
+    else {
+        d->from  = valueAt_Anim_(d, now);
+        d->flags = easeOut_AnimFlag;
+    }
+    d->to   = to;
+    d->when = now;
+    d->due  = now + span;
+}
+
+void setFlags_Anim(iAnim *d, int flags, iBool set) {
+    iChangeFlags(d->flags, flags, set);
+}
+
+void stop_Anim(iAnim *d) {
+    d->from = d->to = value_Anim(d);
+    d->when = d->due = SDL_GetTicks();
+}
+
+float pos_Anim(const iAnim *d) {
+    return pos_Anim_(d, frameTime_Window(get_Window()));
+}
+
+float value_Anim(const iAnim *d) {
+    return valueAt_Anim_(d, frameTime_Window(get_Window()));
 }
 
 /*-----------------------------------------------------------------------------------------------*/
@@ -931,8 +999,42 @@ iWidget *makePreferences_Widget(void) {
         addChild_Widget(headings, iClob(makeHeading_Widget("UI scale factor:")));
         setId_Widget(addChild_Widget(values, iClob(new_InputWidget(8))), "prefs.uiscale");
     }
+    /* Colors. */ {
+        appendTwoColumnPage_(tabs, "Colors", '2', &headings, &values);
+        makeTwoColumnHeading_("PAGE CONTENTS", headings, values);
+        for (int i = 0; i < 2; ++i) {
+            const iBool isDark = (i == 0);
+            const char *mode = isDark ? "dark" : "light";
+            const iMenuItem themes[] = {
+                { "Colorful Dark", 0, 0, format_CStr("doctheme.%s.set arg:%d", mode, colorfulDark_GmDocumentTheme) },
+                { "Colorful Light", 0, 0, format_CStr("doctheme.%s.set arg:%d", mode, colorfulLight_GmDocumentTheme) },
+                { "Black", 0, 0, format_CStr("doctheme.%s.set arg:%d", mode, black_GmDocumentTheme) },
+                { "Gray", 0, 0, format_CStr("doctheme.%s.set arg:%d", mode, gray_GmDocumentTheme) },
+                { "Sepia", 0, 0, format_CStr("doctheme.%s.set arg:%d", mode, sepia_GmDocumentTheme) },
+                { "White", 0, 0, format_CStr("doctheme.%s.set arg:%d", mode, white_GmDocumentTheme) },
+                { "High Contrast", 0, 0, format_CStr("doctheme.%s.set arg:%d", mode, highContrast_GmDocumentTheme) },
+            };
+            addChild_Widget(headings, iClob(makeHeading_Widget(isDark ? "Dark theme:" : "Light theme:")));
+            setId_Widget(addChild_Widget(values,
+                                         iClob(makeMenuButton_LabelWidget(
+                                             themes[0].label, themes, iElemCount(themes)))),
+                         format_CStr("prefs.doctheme.%s", mode));
+        }
+        //addChild_Widget(values, iClob(new_LabelWidget("Colorful", 0, 0, 0)));
+//        addChild_Widget(headings, iClob(makeHeading_Widget("Light theme:")));
+//        addChild_Widget(values, iClob(new_LabelWidget("White", 0, 0, 0)));
+        addChild_Widget(headings, iClob(makeHeading_Widget("Saturation:")));
+        iWidget *sats = new_Widget();
+        /* Saturation levels. */ {
+            addRadioButton_(sats, "prefs.saturation.3", "Full", "saturation.set arg:100");
+            addRadioButton_(sats, "prefs.saturation.2", "Reduced", "saturation.set arg:66");
+            addRadioButton_(sats, "prefs.saturation.1", "Minimal", "saturation.set arg:33");
+            addRadioButton_(sats, "prefs.saturation.0", "Monochrome", "saturation.set arg:0");
+        }
+        addChildFlags_Widget(values, iClob(sats), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+    }
     /* Layout. */ {
-        appendTwoColumnPage_(tabs, "Style", '2', &headings, &values);
+        appendTwoColumnPage_(tabs, "Style", '3', &headings, &values);
         /* Fonts. */ {
             iWidget *fonts;
             addChild_Widget(headings, iClob(makeHeading_Widget("Heading font:")));
@@ -957,27 +1059,17 @@ iWidget *makePreferences_Widget(void) {
             addRadioButton_(widths, "prefs.linewidth.1000", "Window", "linewidth.set arg:1000");
         }
         addChildFlags_Widget(values, iClob(widths), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+        addChild_Widget(headings, iClob(makeHeading_Widget("Quote indicator:")));
+        iWidget *quote = new_Widget(); {
+            addRadioButton_(quote, "prefs.quoteicon.1", "Icon", "quoteicon.set arg:1");
+            addRadioButton_(quote, "prefs.quoteicon.0", "Line", "quoteicon.set arg:0");
+        }
+        addChildFlags_Widget(values, iClob(quote), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
         addChild_Widget(headings, iClob(makeHeading_Widget("Big 1st paragaph:")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.biglede")));
         makeTwoColumnHeading_("WIDE LAYOUT", headings, values);
         addChild_Widget(headings, iClob(makeHeading_Widget("Site icon:")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.sideicon")));
-    }
-    /* Colors. */ {
-        appendTwoColumnPage_(tabs, "Colors", '3', &headings, &values);
-        addChild_Widget(headings, iClob(makeHeading_Widget("Dark theme:")));
-        addChild_Widget(values, iClob(new_LabelWidget("Colorful", 0, 0, 0)));
-        addChild_Widget(headings, iClob(makeHeading_Widget("Light theme:")));
-        addChild_Widget(values, iClob(new_LabelWidget("White", 0, 0, 0)));
-        addChild_Widget(headings, iClob(makeHeading_Widget("Saturation:")));
-        iWidget *sats = new_Widget();
-        /* Saturation levels. */ {
-            addRadioButton_(sats, "prefs.saturation.3", "Full", "saturation.set arg:100");
-            addRadioButton_(sats, "prefs.saturation.2", "Reduced", "saturation.set arg:66");
-            addRadioButton_(sats, "prefs.saturation.1", "Minimal", "saturation.set arg:33");
-            addRadioButton_(sats, "prefs.saturation.0", "Monochrome", "saturation.set arg:0");
-        }
-        addChildFlags_Widget(values, iClob(sats), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
     }
     /* Proxies. */ {
         appendTwoColumnPage_(tabs, "Proxies", '4', &headings, &values);

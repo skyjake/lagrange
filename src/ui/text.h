@@ -72,6 +72,15 @@ enum iFontId {
     bigJapanese_FontId,
     largeJapanese_FontId,
     hugeJapanese_FontId,
+    /* korean script */
+    defaultKorean_FontId,
+    monospaceSmallKorean_FontId,
+    monospaceKorean_FontId,
+    regularKorean_FontId,
+    mediumKorean_FontId,
+    bigKorean_FontId,
+    largeKorean_FontId,
+    hugeKorean_FontId,
     max_FontId,
 
     /* Meta: */
