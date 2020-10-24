@@ -24,7 +24,7 @@ Like Gemini, Lagrange has been designed with minimalism in mind. It depends on a
 * Sidebar for page outline, managing bookmarks and identities, and viewing history
 * Multiple tabs
 * Identity management — create and use TLS client certificates
-* Light and dark UI themes
+* Light and dark color themes
 * Select and copy text with the mouse
 * Find text on the page
 * Open image links inline on the same page
@@ -56,6 +56,7 @@ One way to browse Gemini content is via web browser extensions or proxies that t
 # User interface
 
 Lagrange's user interface is modeled after web browsers:
+
 * There is a navigation bar at the top with Back and Forward buttons.
 * There is a tab bar for switching tabs. The tab bar is hidden if there is only one tab open.
 * There is a sidebar for managing bookmarks and TLS identities, and viewing history and the page outline. The sidebar is hidden by default.
@@ -94,7 +95,7 @@ The page cache is saved to a file when Lagrange is shut down so it can be restor
 
 ### Opening links in a new tab
 
-Holding down ${CTRL} when clicking on a link causes it to open in a new tab.
+Holding down ${CTRL} when left-clicking on a link causes it to open in a new tab. Alternatively, middle-clicking a link has the same effect.
 
 Right-clicking on a link shows a link-specific context menu. From there, you can also open the link in a new background tab, which will keep the current tab open.
 
@@ -172,9 +173,26 @@ The 🔃 button on the right side of the URL input field is the Reload/Stop butt
 
 You can find a number of settings in Preferences to customize what the user interface and page contents look like.
 
-### Window color theme
+### Color themes
 
-...
+Lagrange supports configuring dark and light modes separately. You can select a different page content color theme for dark mode and light mode.
+
+There are four different UI color themes: two for dark mode, and two for light mode. These can be selected on the "General" tab of the Preferences dialog:
+
+* Dark mode: "Pure Black" and "Dark" have a fully black or dark gray UI.
+* Light mode: "Pure White" and "Light" have completety white or light gray UI.
+
+On macOS, Lagrange will automatically switch between dark and light modes if the "Use system theme" setting is enabled. On other platforms you'll need to switch manually.
+
+The page content color themes are selected on the "Colors" tab of Preferences. The "Dark theme" is active in dark mode, and the "Light theme" is active in light mode.
+
+* Colorful Dark: All elements of the page are colored; the background is dark and text is light. This mode provides the best visual distinction between different domains because more color combinations are available.
+* Colorful Light: A single, bright background color with black text. This is the most colorful light theme. Note that colored backgrounds may reduce readability.
+* Black: Gray body text and brightly colored headings on a black background.
+* Gray: Slightly brighter version of Black, i.e., gray body text and colored headings on a gray background.
+* White: Colored headings on a white background.
+* Sepia: Light sepia background with black text. Does not change depending on domain; use this for readability if you prefer a sepia reading experience.
+* High Contrast: White background with black text. Does not change depending on domain; use this for readability if you prefer maximum contrast between text and the background.
 
 ### Page style
 
