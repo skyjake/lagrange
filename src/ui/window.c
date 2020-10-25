@@ -634,6 +634,7 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
                 SDL_SetWindowPosition(d->win, d->initialPos.x + bx, d->initialPos.y + by);
                 d->initialPos = init1_I2(-1);
             }
+            postRefresh_App();
             return iFalse;
 #endif
         case SDL_WINDOWEVENT_MOVED: {
