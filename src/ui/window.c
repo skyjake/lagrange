@@ -525,6 +525,7 @@ void init_Window(iWindow *d, iRect rect) {
     d->pendingCursor = NULL;
     d->isDrawFrozen = iTrue;
     d->isMouseInside = iTrue;
+    d->focusGainedAt = 0;
     uint32_t flags = 0;
 #if defined (iPlatformApple)
     SDL_SetHint(SDL_HINT_RENDER_DRIVER, shouldDefaultToMetalRenderer_MacOS() ? "metal" : "opengl");
@@ -668,6 +669,12 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
             d->isMouseInside = iTrue;
             postCommand_App("window.mouse.entered");
             return iTrue;
+        case SDL_WINDOWEVENT_TAKE_FOCUS:
+            SDL_SetWindowInputFocus(d->win);
+            return iTrue;
+        case SDL_WINDOWEVENT_FOCUS_GAINED:
+            d->focusGainedAt = SDL_GetTicks();
+            return iFalse;
         default:
             break;
     }
@@ -698,6 +705,12 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
                 d->isDrawFrozen = iFalse;
                 postRefresh_App();
                 return iTrue;
+            }
+            if (event.type == SDL_KEYDOWN && SDL_GetTicks() - d->focusGainedAt < 10) {
+                /* Suspiciously close to when input focus was received. For example under openbox,
+                   closing xterm with Ctrl+D will cause the keydown event to "spill" over to us.
+                   As a workaround, ignore these events. */
+                return iFalse;
             }
             /* Map mouse pointer coordinate to our coordinate system. */
             if (event.type == SDL_MOUSEMOTION) {

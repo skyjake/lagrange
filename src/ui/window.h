@@ -38,6 +38,7 @@ struct Impl_Window {
     iRect         lastRect; /* updated when window is moved/resized */
     iBool         isDrawFrozen; /* avoids premature draws while restoring window state */
     iBool         isMouseInside;
+    uint32_t      focusGainedAt;
     SDL_Renderer *render;
     iWidget *     root;
     float         pixelRatio;
