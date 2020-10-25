@@ -626,17 +626,21 @@ static iBool isMaximized_Window_(const iWindow *d) {
 
 static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
     switch (ev->event) {
-#if defined (LAGRANGE_ENABLE_WINDOWPOS_FIX)
         case SDL_WINDOWEVENT_EXPOSED:
+            /* Since we are manually controlling when to redraw the window, we are responsible
+               for ensuring that window contents get redrawn after expose events. Under certain
+               circumstances (e.g., under openbox), not doing this would mean that the window
+               is missing contents until other events trigger a refresh. */
+            postRefresh_App();
+#if defined (LAGRANGE_ENABLE_WINDOWPOS_FIX)
             if (d->initialPos.x >= 0) {
                 int bx, by;
                 SDL_GetWindowBordersSize(d->win, &by, &bx, NULL, NULL);
                 SDL_SetWindowPosition(d->win, d->initialPos.x + bx, d->initialPos.y + by);
                 d->initialPos = init1_I2(-1);
             }
-            postRefresh_App();
-            return iFalse;
 #endif
+            return iFalse;
         case SDL_WINDOWEVENT_MOVED: {
             if (!isMaximized_Window_(d) && !d->isDrawFrozen) {
                 d->lastRect.pos = init_I2(ev->data1, ev->data2);
