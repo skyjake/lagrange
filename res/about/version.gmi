@@ -6,6 +6,9 @@
 ```
 # Release notes
 
+## 0.7
+* Fixed an issue where window contents were not being updated immediately after the window gets exposed when using, e.g., openbox or dwm.
+
 ## 0.6
 * Added an indicator to visualize progress of network requests.
 * Added new color themes for page content: Colorful Light, Black, Gray, Sepia, High Contrast.
