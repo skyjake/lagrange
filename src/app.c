@@ -1015,7 +1015,6 @@ iBool handleCommand_App(const char *cmd) {
                 add_History(history, url);
             }
         }
-        visitUrl_Visited(d->visited, url);
         setInitialScroll_DocumentWidget(doc, argfLabel_Command(cmd, "scroll"));
         setRedirectCount_DocumentWidget(doc, redirectCount);
         setUrlFromCache_DocumentWidget(doc, url, isHistory);

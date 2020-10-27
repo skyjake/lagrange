@@ -36,6 +36,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "../visited.h"
 #include "../gmcerts.h"
 #include "../gmutil.h"
+#include "../visited.h"
 #if defined (iPlatformMsys)
 #   include "../win32.h"
 #endif
@@ -251,6 +252,8 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
             if (equal_Command(cmd, "document.changed")) {
                 iInputWidget *url = findWidget_App("url");
                 const iString *urlStr = collect_String(suffix_Command(cmd, "url"));
+                visitUrl_Visited(visited_App(), urlStr);
+                postCommand_App("visited.changed"); /* sidebar will update */
                 setText_InputWidget(url, urlStr);
                 updateTextCStr_LabelWidget(reloadButton, reloadCStr_);
                 updateNavBarIdentity_(navBar);

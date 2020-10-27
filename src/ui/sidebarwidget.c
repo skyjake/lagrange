@@ -559,6 +559,9 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             }
             return iTrue;
         }
+        else if (equal_Command(cmd, "visited.changed") && d->mode == history_SidebarMode) {
+            updateItems_SidebarWidget_(d);
+        }
         else if (equal_Command(cmd, "bookmarks.changed") && d->mode == bookmarks_SidebarMode) {
             updateItems_SidebarWidget_(d);
         }
