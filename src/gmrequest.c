@@ -111,7 +111,8 @@ enum iGmRequestState {
     initialized_GmRequestState,
     receivingHeader_GmRequestState,
     receivingBody_GmRequestState,
-    finished_GmRequestState
+    finished_GmRequestState,
+    failure_GmRequestState,
 };
 
 struct Impl_GmRequest {
@@ -301,7 +302,12 @@ static void requestFinished_GmRequest_(iAnyObject *obj) {
     }
     SDL_RemoveTimer(d->timeoutId);
     d->timeoutId = 0;
-    d->state     = finished_GmRequestState;
+    d->state = (status_TlsRequest(d->req) == error_TlsRequestStatus ? failure_GmRequestState
+                                                                    : finished_GmRequestState);
+    if (d->state == failure_GmRequestState) {
+        d->resp.statusCode = tlsFailure_GmStatusCode;
+        set_String(&d->resp.meta, errorMessage_TlsRequest(d->req));
+    }
     checkServerCertificate_GmRequest_(d);
     unlock_Mutex(&d->mutex);
     iNotifyAudience(d, finished, GmRequestFinished);

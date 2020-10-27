@@ -666,6 +666,16 @@ static void setSource_DocumentWidget_(iDocumentWidget *d, const iString *source)
     refresh_Widget(as_Widget(d));
 }
 
+static void updateTheme_DocumentWidget_(iDocumentWidget *d) {
+    if (isEmpty_String(d->titleUser)) {
+        setThemeSeed_GmDocument(d->doc,
+                                collect_Block(newRange_Block(urlHost_String(d->mod.url))));
+    }
+    else {
+        setThemeSeed_GmDocument(d->doc, &d->titleUser->chars);
+    }
+}
+
 static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode code,
                                           const iString *meta) {
     iString *src = collectNewCStr_String("# ");
@@ -677,6 +687,9 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
             case nonGeminiRedirect_GmStatusCode:
             case tooManyRedirects_GmStatusCode:
                 appendFormat_String(src, "\n=> %s\n", cstr_String(meta));
+                break;
+            case tlsFailure_GmStatusCode:
+                appendFormat_String(src, "\n\n>%s\n", cstr_String(meta));
                 break;
             case failedToOpenFile_GmStatusCode:
             case certificateNotValid_GmStatusCode:
@@ -702,19 +715,10 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
         }
     }
     setSource_DocumentWidget_(d, src);
+    updateTheme_DocumentWidget_(d);
     init_Anim(&d->scrollY, 0);
     init_Anim(&d->sideOpacity, 0);
     d->state = ready_RequestState;
-}
-
-static void updateTheme_DocumentWidget_(iDocumentWidget *d) {
-    if (isEmpty_String(d->titleUser)) {
-        setThemeSeed_GmDocument(d->doc,
-                                collect_Block(newRange_Block(urlHost_String(d->mod.url))));
-    }
-    else {
-        setThemeSeed_GmDocument(d->doc, &d->titleUser->chars);
-    }
 }
 
 static void updateFetchProgress_DocumentWidget_(iDocumentWidget *d) {
