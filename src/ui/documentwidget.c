@@ -203,6 +203,8 @@ struct Impl_DocumentWidget {
     iWidget *      playerMenu;
     iVisBuf *      visBuf;
     iPtrSet *      invalidRuns;
+    SDL_Texture *  sideIconBuf;
+    iTextBuf *     timestampBuf;
 };
 
 iDefineObjectConstruction(DocumentWidget)
@@ -240,14 +242,17 @@ void init_DocumentWidget(iDocumentWidget *d) {
     init_Anim(&d->outlineOpacity, 0);
     init_String(&d->sourceMime);
     init_Block(&d->sourceContent, 0);
+    iZap(d->sourceTime);
     init_PtrArray(&d->visibleLinks);
     init_PtrArray(&d->visiblePlayers);
     d->grabbedPlayer = NULL;
-    d->playerTimer = 0;
+    d->playerTimer   = 0;
     init_Click(&d->click, d, SDL_BUTTON_LEFT);
     addChild_Widget(w, iClob(d->scroll = new_ScrollWidget()));
-    d->menu = NULL; /* created when clicking */
-    d->playerMenu = NULL;
+    d->menu         = NULL; /* created when clicking */
+    d->playerMenu   = NULL;
+    d->sideIconBuf  = NULL;
+    d->timestampBuf = NULL;
     addChildFlags_Widget(w,
                          iClob(new_IndicatorWidget()),
                          resizeToParentWidth_WidgetFlag | resizeToParentHeight_WidgetFlag);
@@ -260,6 +265,10 @@ void init_DocumentWidget(iDocumentWidget *d) {
 }
 
 void deinit_DocumentWidget(iDocumentWidget *d) {
+    if (d->sideIconBuf) {
+        SDL_DestroyTexture(d->sideIconBuf);
+    }
+    delete_TextBuf(d->timestampBuf);
     delete_VisBuf(d->visBuf);
     delete_PtrSet(d->invalidRuns);
     deinit_Array(&d->outline);
@@ -595,6 +604,18 @@ static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
     }
 }
 
+static void updateTimestampBuf_DocumentWidget_(iDocumentWidget *d) {
+    if (d->timestampBuf) {
+        delete_TextBuf(d->timestampBuf);
+        d->timestampBuf = NULL;
+    }
+    if (isValid_Time(&d->sourceTime)) {
+        d->timestampBuf = new_TextBuf(
+            uiLabel_FontId,
+            cstrCollect_String(format_Time(&d->sourceTime, "Received at %I:%M %p\non %b %d, %Y")));
+    }
+}
+
 static void invalidate_DocumentWidget_(iDocumentWidget *d) {
     invalidate_VisBuf(d->visBuf);
     clear_PtrSet(d->invalidRuns);
@@ -674,6 +695,7 @@ static void updateTheme_DocumentWidget_(iDocumentWidget *d) {
     else {
         setThemeSeed_GmDocument(d->doc, &d->titleUser->chars);
     }
+    updateTimestampBuf_DocumentWidget_(d);
 }
 
 static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode code,
@@ -756,6 +778,7 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse
         }
         clear_String(&d->sourceMime);
         d->sourceTime = response->when;
+        updateTimestampBuf_DocumentWidget_(d);
         initBlock_String(&str, &response->body);
         if (isSuccess_GmStatusCode(statusCode)) {
             /* Check the MIME type. */
@@ -909,6 +932,7 @@ static iBool updateFromHistory_DocumentWidget_(iDocumentWidget *d) {
         /* Use the cached response data. */
         updateTrust_DocumentWidget_(d, resp);
         d->sourceTime = resp->when;
+        updateTimestampBuf_DocumentWidget_(d);
         set_Block(&d->sourceContent, &resp->body);
         updateDocument_DocumentWidget_(d, resp, iTrue);
         init_Anim(&d->scrollY, d->initNormScrollY * size_GmDocument(d->doc).y);
@@ -2318,61 +2342,91 @@ static iRangecc currentHeading_DocumentWidget_(const iDocumentWidget *d) {
     return heading;
 }
 
+static int sideElementAvailWidth_DocumentWidget_(const iDocumentWidget *d) {
+    return left_Rect(documentBounds_DocumentWidget_(d)) -
+           left_Rect(bounds_Widget(constAs_Widget(d))) - 2 * d->pageMargin * gap_UI;
+}
+
+#if 0
+static void updateSideIconBuf_DocumentWidget_(iDocumentWidget *d) {
+    if (d->sideIconBuf) {
+        SDL_DestroyTexture(d->sideIconBuf);
+        d->sideIconBuf = NULL;
+    }
+    const iWidget *w             = constAs_Widget(d);
+    const iRect    bounds        = bounds_Widget(w);
+    const int      margin        = gap_UI * d->pageMargin;
+    const iGmRun * banner        = siteBanner_GmDocument(d->doc);
+    const int      minBannerSize = lineHeight_Text(banner_FontId) * 2;
+    const iChar    icon          = siteIcon_GmDocument(d->doc);
+    const int      avail         = sideElementAvailWidth_DocumentWidget_(d) - margin;
+    /* Determine the required size. */
+    iInt2 bufSize = init1_I2(minBannerSize);
+    const iInt2 headingSize = advanceWrapRange_Text(heading3_FontId, avail, currentHeading_DocumentWidget_(d));
+    bufSize.y += gap_Text + headingSize.y;
+    bufSize.x = iMax(bufSize.x, headingSize.x);
+
+//    iRect rect = { add_I2(topLeft_Rect(bounds), init1_I2(margin)), init1_I2(minBannerSize) };
+//    p.alpha = opacity * 255;
+//    rect.pos.y += height_Rect(bounds) / 2 - rect.size.y / 2 - (banner ? banner->visBounds.size.y / 2 : 0);
+    d->sideIconBuf = SDL_CreateTexture(renderer_Window(get_Window()),
+                                       SDL_PIXELFORMAT_RGBA4444,
+                                       SDL_TEXTUREACCESS_STATIC | SDL_TEXTUREACCESS_TARGET,
+                                       bufSize.x, bufSize.y);
+    iPaint p;
+    init_Paint(&p);
+    beginTarget_Paint(&p, d->sideIconBuf);
+    fillRect_Paint(&p, )
+    int fg = drawSideRect_(&p, rect);
+    iString str;
+    initUnicodeN_String(&str, &icon, 1);
+    drawCentered_Text(banner_FontId, rect, iTrue, fg, "%s", cstr_String(&str));
+    deinit_String(&str);
+    if (avail >= minBannerSize * 2.25f) {
+        iRangecc    text = currentHeading_DocumentWidget_(d);
+        iInt2       pos  = addY_I2(bottomLeft_Rect(rect), gap_Text);
+        const int   font = heading3_FontId;
+        drawWrapRange_Text(font, pos, avail - margin, tmBannerSideTitle_ColorId, text);
+    }
+    endTarget_Paint(&p);
+}
+#endif
+
 static void drawSideElements_DocumentWidget_(const iDocumentWidget *d) {
     const iWidget *w         = constAs_Widget(d);
     const iRect    bounds    = bounds_Widget(w);
     const iRect    docBounds = documentBounds_DocumentWidget_(d);
     const int      margin    = gap_UI * d->pageMargin;
-    const iGmRun * banner    = siteBanner_GmDocument(d->doc);
     float          opacity   = value_Anim(&d->sideOpacity);
-    const int      minBannerSize = lineHeight_Text(banner_FontId) * 2;
-    const int      avail         = left_Rect(docBounds) - left_Rect(bounds) - 2 * margin;
+    const int      avail     = left_Rect(docBounds) - left_Rect(bounds) - 2 * margin;
     iPaint      p;
     init_Paint(&p);
     setClip_Paint(&p, bounds);
-    if (prefs_App()->sideIcon && avail > minBannerSize) {
-        if (banner && opacity > 0) {
+#if 0
+    if (prefs_App()->sideIcon && opacity > 0 && d->sideIconBuf && avail > size_SDLTexture(d->sideIconBuf).x) {
+        if (banner) {
             setOpacity_Text(opacity);
             SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_BLEND);
-            const iChar icon = siteIcon_GmDocument(d->doc);
-            iRect       rect = { add_I2(topLeft_Rect(bounds), init1_I2(margin)), init1_I2(minBannerSize) };
-            p.alpha = opacity * 255;
-            rect.pos.y += height_Rect(bounds) / 2 - rect.size.y / 2 - (banner ? banner->visBounds.size.y / 2 : 0);
-            int fg = drawSideRect_(&p, rect);
-            iString str;
-            initUnicodeN_String(&str, &icon, 1);
-            drawCentered_Text(banner_FontId, rect, iTrue, fg, "%s", cstr_String(&str));
-            if (avail >= minBannerSize * 2.25f) {
-                iRangecc    text = currentHeading_DocumentWidget_(d);// bannerText_DocumentWidget_(d);
-                iInt2       pos  = addY_I2(bottomLeft_Rect(rect), gap_Text);
-                const int   font = heading3_FontId;
-                drawWrapRange_Text(font, pos, avail - margin, tmBannerSideTitle_ColorId, text);
-            }
             setOpacity_Text(1.0f);
             SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_NONE);
         }
     }
+#endif
     /* Reception timestamp. */
-    if (isValid_Time(&d->sourceTime)) {
-        const int font = uiLabel_FontId;
-        const iString *recv =
-            collect_String(format_Time(&d->sourceTime, "Received at %I:%M %p\non %b %d, %Y"));
-        const iInt2 size = advanceRange_Text(font, range_String(recv));
-        if (size.x <= avail) {
-            drawString_Text(
-                font,
-                add_I2(
-                    bottomLeft_Rect(bounds),
-                    init_I2(margin,
-                            -margin + -size.y +
-                                iMax(0, scrollMax_DocumentWidget_(d) - value_Anim(&d->scrollY)))),
-                tmQuoteIcon_ColorId,
-                recv);
-        }
+    if (d->timestampBuf && d->timestampBuf->size.x <= avail) {
+        draw_TextBuf(
+            d->timestampBuf,
+            add_I2(
+                bottomLeft_Rect(bounds),
+                init_I2(margin,
+                        -margin + -d->timestampBuf->size.y +
+                            iMax(0, scrollMax_DocumentWidget_(d) - value_Anim(&d->scrollY)))),
+            tmQuoteIcon_ColorId);
     }
     /* Outline on the right side. */
     const float outlineOpacity = value_Anim(&d->outlineOpacity);
     if (prefs_App()->hoverOutline && !isEmpty_Array(&d->outline) && outlineOpacity > 0.0f) {
+        /* TODO: This is very slow to draw; should be buffered appropriately. */
         const int innerWidth   = outlineWidth_DocumentWidget_(d);
         const int outWidth     = innerWidth + 2 * outlinePadding_DocumentWidget_ * gap_UI;
         const int topMargin    = 0;
