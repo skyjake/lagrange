@@ -682,6 +682,7 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
     const iGmError *msg = get_GmError(code);
     appendChar_String(src, msg->icon ? msg->icon : 0x2327); /* X in a box */
     appendFormat_String(src, " %s\n%s", msg->title, msg->info);
+    iBool useBanner = iTrue;
     if (meta) {
         switch (code) {
             case nonGeminiRedirect_GmStatusCode:
@@ -689,6 +690,7 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
                 appendFormat_String(src, "\n=> %s\n", cstr_String(meta));
                 break;
             case tlsFailure_GmStatusCode:
+                useBanner = iFalse; /* valid data wasn't received from host */
                 appendFormat_String(src, "\n\n>%s\n", cstr_String(meta));
                 break;
             case failedToOpenFile_GmStatusCode:
@@ -714,6 +716,7 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
                 break;
         }
     }
+    setSiteBannerEnabled_GmDocument(d->doc, useBanner);
     setSource_DocumentWidget_(d, src);
     updateTheme_DocumentWidget_(d);
     init_Anim(&d->scrollY, 0);

@@ -240,7 +240,7 @@ static const struct {
     { tlsFailure_GmStatusCode,
       { 0x1f5a7, /* networked computers */
         "Network/TLS Failure",
-        "We could not communicate with the requested host." } },
+        "Failed to communicate with the host. Here is the error message:" } },
     { temporaryFailure_GmStatusCode,
       { 0x1f50c, /* electric plug */
         "Temporary Failure",

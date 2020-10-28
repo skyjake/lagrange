@@ -107,6 +107,7 @@ enum iGmDocumentFormat {
 
 void    setThemeSeed_GmDocument (iGmDocument *, const iBlock *seed);
 void    setFormat_GmDocument    (iGmDocument *, enum iGmDocumentFormat format);
+void    setSiteBannerEnabled_GmDocument(iGmDocument *, iBool siteBannerEnabled);
 void    setWidth_GmDocument     (iGmDocument *, int width, int forceBreakWidth);
 void    redoLayout_GmDocument   (iGmDocument *);
 void    setUrl_GmDocument       (iGmDocument *, const iString *url);
