@@ -1020,11 +1020,13 @@ void init_TextBuf(iTextBuf *d, int font, const char *text) {
                                    SDL_TEXTUREACCESS_STATIC | SDL_TEXTUREACCESS_TARGET,
                                    d->size.x,
                                    d->size.y);
-    SDL_SetTextureBlendMode(d->texture, SDL_BLENDMODE_BLEND);
     SDL_Texture *oldTarget = SDL_GetRenderTarget(render);
     SDL_SetRenderTarget(render, d->texture);
+    SDL_SetTextureBlendMode(text_.cache, SDL_BLENDMODE_NONE); /* blended when TextBuf is drawn */
     draw_Text_(font, zero_I2(), white_ColorId, range_CStr(text));
+    SDL_SetTextureBlendMode(text_.cache, SDL_BLENDMODE_BLEND);
     SDL_SetRenderTarget(render, oldTarget);
+    SDL_SetTextureBlendMode(d->texture, SDL_BLENDMODE_BLEND);
 }
 
 void deinit_TextBuf(iTextBuf *d) {
