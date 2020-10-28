@@ -69,6 +69,7 @@ struct Impl_InputWidget {
     iClick          click;
     int             cursorVis;
     uint32_t        timer;
+    iTextBuf *      buffered;
 };
 
 iDefineObjectConstructionArgs(InputWidget, (size_t maxLen), maxLen)
@@ -108,9 +109,11 @@ void init_InputWidget(iInputWidget *d, size_t maxLen) {
     init_Click(&d->click, d, SDL_BUTTON_LEFT);
     d->timer = 0;
     d->cursorVis = 0;
+    d->buffered = NULL;
 }
 
 void deinit_InputWidget(iInputWidget *d) {
+    delete_TextBuf(d->buffered);
     clearUndo_InputWidget_(d);
     deinit_Array(&d->undoStack);
     if (d->timer) {
@@ -175,6 +178,36 @@ void setHint_InputWidget(iInputWidget *d, const char *hintText) {
     setCStr_String(&d->hint, hintText);
 }
 
+static const iChar sensitiveChar_ = 0x25cf; /* black circle */
+
+static iString *visText_InputWidget_(const iInputWidget *d) {
+    iString *text;
+    if (!d->isSensitive) {
+        text = newUnicodeN_String(constData_Array(&d->text), size_Array(&d->text));
+    }
+    else {
+        text = new_String();
+        for (size_t i = 0; i < size_Array(&d->text); ++i) {
+            appendChar_String(text, sensitiveChar_);
+        }
+    }
+    return text;
+}
+
+static void invalidateBuffered_InputWidget_(iInputWidget *d) {
+    if (d->buffered) {
+        delete_TextBuf(d->buffered);
+        d->buffered = NULL;
+    }
+}
+
+static void updateBuffered_InputWidget_(iInputWidget *d) {
+    invalidateBuffered_InputWidget_(d);
+    iString *visText = visText_InputWidget_(d);
+    d->buffered = new_TextBuf(d->font, cstr_String(visText));
+    delete_String(visText);
+}
+
 void setText_InputWidget(iInputWidget *d, const iString *text) {
     clearUndo_InputWidget_(d);
     clear_Array(&d->text);
@@ -188,6 +221,9 @@ void setText_InputWidget(iInputWidget *d, const iString *text) {
     else {
         d->cursor = iMin(d->cursor, size_Array(&d->text));
         iZap(d->mark);
+    }
+    if (!isFocused_Widget(d)) {
+        updateBuffered_InputWidget_(d);
     }
     refresh_Widget(as_Widget(d));
 }
@@ -221,6 +257,7 @@ void begin_InputWidget(iInputWidget *d) {
         /* Already active. */
         return;
     }
+    invalidateBuffered_InputWidget_(d);
     setFlags_Widget(w, hidden_WidgetFlag | disabled_WidgetFlag, iFalse);
     setCopy_Array(&d->oldText, &d->text);
     if (d->mode == overwrite_InputMode) {
@@ -252,6 +289,7 @@ void end_InputWidget(iInputWidget *d, iBool accept) {
     if (!accept) {
         setCopy_Array(&d->text, &d->oldText);
     }
+    updateBuffered_InputWidget_(d);
     SDL_RemoveTimer(d->timer);
     d->timer = 0;
     SDL_StopTextInput();
@@ -393,22 +431,6 @@ static size_t skipWord_InputWidget_(const iInputWidget *d, size_t pos, int dir) 
     return pos;
 }
 
-static const iChar sensitiveChar_ = 0x25cf; /* black circle */
-
-static iString *visText_InputWidget_(const iInputWidget *d) {
-    iString *text;
-    if (!d->isSensitive) {
-        text = newUnicodeN_String(constData_Array(&d->text), size_Array(&d->text));
-    }
-    else {
-        text = new_String();
-        for (size_t i = 0; i < size_Array(&d->text); ++i) {
-            appendChar_String(text, sensitiveChar_);
-        }
-    }
-    return text;
-}
-
 iLocalDef iInt2 padding_(void) {
     return init_I2(gap_UI / 2, gap_UI / 2);
 }
@@ -465,6 +487,12 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
     }
     else if (isCommand_Widget(w, ev, "focus.lost")) {
         end_InputWidget(d, iTrue);
+        return iFalse;
+    }
+    else if (isCommand_UserEvent(ev, "theme.changed")) {
+        if (d->buffered) {
+            updateBuffered_InputWidget_(d);
+        }
         return iFalse;
     }
     switch (processEvent_Click(&d->click, ev)) {
@@ -715,13 +743,19 @@ static void draw_InputWidget_(const iInputWidget *d) {
                                 init_I2(iAbs(m2 - m1), lineHeight_Text(d->font)) },
                        uiMarked_ColorId);
     }
-    draw_Text(d->font,
-              textOrigin,
-              isHint ? uiAnnotation_ColorId
-                     : isFocused && !isEmpty_Array(&d->text) ? uiInputTextFocused_ColorId
-                                                             : uiInputText_ColorId,
-              "%s",
-              cstr_String(text));
+    if (d->buffered && !isFocused && !isHint) {
+        /* Most input widgets will use this, since only one is focused at a time. */
+        draw_TextBuf(d->buffered, textOrigin, uiInputText_ColorId);
+    }
+    else {
+        draw_Text(d->font,
+                  textOrigin,
+                  isHint ? uiAnnotation_ColorId
+                         : isFocused && !isEmpty_Array(&d->text) ? uiInputTextFocused_ColorId
+                                                                 : uiInputText_ColorId,
+                  "%s",
+                  cstr_String(text));
+    }
     unsetClip_Paint(&p);
     /* Cursor blinking. */
     if (isFocused && d->cursorVis) {
