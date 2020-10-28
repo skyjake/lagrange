@@ -7,8 +7,9 @@
 # Release notes
 
 ## 0.7
+* Faster drawing of certain UI elements: site icon and current heading in the left margin, unfocused input fields, timestamp at the end of the page.
+* Fixed handling of TLS/SSL and hostname lookup errors — an appropriate error page is shown.
 * Improved opening connections when multiple IP addresses are found for a hostname.
-* Fixed handling of TLS/SSL and hostname lookup errors: an appropriate error page is shown.
 * History is not updated until a network request finishes.
 * Fixed an issue where window contents were not being updated immediately after the window gets exposed when using, e.g., openbox or dwm.
 
