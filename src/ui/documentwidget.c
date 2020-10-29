@@ -2404,13 +2404,16 @@ static void updateSideIconBuf_DocumentWidget_(iDocumentWidget *d) {
             isHeadingVisible = iFalse;
         }
     }
-    d->sideIconBuf = SDL_CreateTexture(renderer_Window(get_Window()),
+    SDL_Renderer *render = renderer_Window(get_Window());
+    d->sideIconBuf = SDL_CreateTexture(render,
                                        SDL_PIXELFORMAT_RGBA4444,
                                        SDL_TEXTUREACCESS_STATIC | SDL_TEXTUREACCESS_TARGET,
                                        bufSize.x, bufSize.y);
     iPaint p;
     init_Paint(&p);
     beginTarget_Paint(&p, d->sideIconBuf);
+    SDL_SetRenderDrawColor(render, 0, 0, 0, 0);
+    SDL_RenderClear(render);
     const iRect iconRect = { zero_I2(), init1_I2(minBannerSize) };
     int fg = drawSideRect_(&p, iconRect);
     iString str;
