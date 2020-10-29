@@ -7,6 +7,7 @@
 # Release notes
 
 ## 0.7
+* Sidebar: Added a "New Identity" button and a link to "about:help" if there no identities.
 * Faster drawing of certain UI elements: site icon and current heading in the left margin, unfocused input fields, timestamp at the end of the page.
 * History is not updated until a network request finishes.
 * Improved opening connections when multiple IP addresses are found for a hostname.
