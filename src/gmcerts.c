@@ -478,7 +478,7 @@ iGmIdentity *newIdentity_GmCerts(iGmCerts *d, int flags, iDate validUntil, const
 
 static const char *certPath_GmCerts_(const iGmCerts *d, const iGmIdentity *identity) {
     if (!(identity->flags & (temporary_GmIdentityFlag | imported_GmIdentityFlag))) {
-        const char *finger   = cstrCollect_String(hexEncode_Block(&identity->fingerprint));
+        const char *finger = cstrCollect_String(hexEncode_Block(&identity->fingerprint));
         return concatPath_CStr(cstr_String(&d->saveDir), format_CStr("idents/%s", finger));
     }
     return NULL;
