@@ -1018,6 +1018,12 @@ iBool handleCommand_App(const char *cmd) {
         setInitialScroll_DocumentWidget(doc, argfLabel_Command(cmd, "scroll"));
         setRedirectCount_DocumentWidget(doc, redirectCount);
         setUrlFromCache_DocumentWidget(doc, url, isHistory);
+        /* Optionally, jump to a text in the document. This will only work if the document
+           is already available, e.g., it's from "about:" or restored from cache. */
+        const iRangecc gotoHeading = range_Command(cmd, "gotoheading");
+        if (gotoHeading.start) {
+            postCommandf_App("document.goto heading:%s", cstr_Rangecc(gotoHeading));
+        }
     }
     else if (equal_Command(cmd, "document.request.cancelled")) {
         /* TODO: How should cancelled requests be treated in the history? */

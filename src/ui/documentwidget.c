@@ -1548,6 +1548,19 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equal_Command(cmd, "document.goto") && document_App() == d) {
+        const iRangecc heading = range_Command(cmd, "heading");
+        if (heading.start) {
+            const char *target = cstr_Rangecc(heading);
+            iConstForEach(Array, h, headings_GmDocument(d->doc)) {
+                const iGmHeading *head = h.value;
+                if (startsWithCase_Rangecc(head->text, target)) {
+                    /* TODO: A bit lazy here, the code is right down below. */
+                    postCommandf_App("document.goto loc:%p", head->text.start);
+                    break;
+                }
+            }
+            return iTrue;
+        }
         const char *loc = pointerLabel_Command(cmd, "loc");
         const iGmRun *run = findRunAtLoc_GmDocument(d->doc, loc);
         if (run) {

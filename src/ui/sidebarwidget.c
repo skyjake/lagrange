@@ -83,6 +83,7 @@ iDefineObjectConstruction(SidebarItem)
 struct Impl_SidebarWidget {
     iWidget widget;
     enum iSidebarMode mode;
+    iWidget *blank;
     iListWidget *list;
     int modeScroll[max_SidebarMode];
     int width;
@@ -106,6 +107,7 @@ static int cmpTitle_Bookmark_(const iBookmark **a, const iBookmark **b) {
 
 static void updateItems_SidebarWidget_(iSidebarWidget *d) {
     clear_ListWidget(d->list);
+    releaseChildren_Widget(d->blank);
     destroy_Widget(d->menu);
     d->menu = NULL;
     switch (d->mode) {
@@ -224,6 +226,28 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 addItem_ListWidget(d->list, item);
                 iRelease(item);
             }
+            if (isEmpty_ListWidget(d->list)) {
+                iWidget *div = makeVDiv_Widget();
+                setPadding_Widget(div, 3 * gap_UI, 0, 3 * gap_UI, 0);
+                addChildFlags_Widget(div, iClob(new_Widget()), expand_WidgetFlag); /* pad */
+                iLabelWidget *msg = new_LabelWidget("No Identities", 0, 0, NULL);
+                setFont_LabelWidget(msg, uiLabelLarge_FontId);
+                addChildFlags_Widget(div, iClob(msg), frameless_WidgetFlag);
+                addChild_Widget(div, iClob(makePadding_Widget(3 * gap_UI)));
+                addChild_Widget(div, iClob(new_LabelWidget("New Identity...", 0, 0, "ident.new")));
+                addChild_Widget(div, iClob(makePadding_Widget(3 * gap_UI)));
+                addChildFlags_Widget(
+                    div,
+                    iClob(new_LabelWidget("See " uiTextStrong_ColorEscape "Help" uiText_ColorEscape
+                                          " for more information about TLS client certificates.",
+                                          0,
+                                          0,
+                                          "!open newtab:1 gotoheading:Identities url:about:help")),
+                    frameless_WidgetFlag | fixedHeight_WidgetFlag | wrapText_WidgetFlag);
+                addChildFlags_Widget(div, iClob(new_Widget()), expand_WidgetFlag); /* pad */
+                addChild_Widget(d->blank, iClob(div));
+                arrange_Widget(d->blank);
+            }
             const iMenuItem menuItems[] = {
                 { "Use on This Page", 0, 0, "ident.use arg:1" },
                 { "Stop Using This Page", 0, 0, "ident.use arg:0" },
@@ -320,9 +344,14 @@ void init_SidebarWidget(iSidebarWidget *d) {
                          iClob(buttons),
                          arrangeHorizontal_WidgetFlag | resizeWidthOfChildren_WidgetFlag |
                              arrangeHeight_WidgetFlag | resizeToParentWidth_WidgetFlag);
+    iWidget *content = new_Widget();
+    setFlags_Widget(content, resizeChildren_WidgetFlag, iTrue);
     d->list = new_ListWidget();
     setPadding_Widget(as_Widget(d->list), 0, gap_UI, 0, gap_UI);
-    addChildFlags_Widget(vdiv, iClob(d->list), expand_WidgetFlag);
+    addChild_Widget(content, iClob(d->list));
+    d->blank = new_Widget();
+    addChildFlags_Widget(content, iClob(d->blank), resizeChildren_WidgetFlag);
+    addChildFlags_Widget(vdiv, iClob(content), expand_WidgetFlag);
     setMode_SidebarWidget(d, bookmarks_SidebarMode);
     d->resizer = addChildFlags_Widget(
         w,
