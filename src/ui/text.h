@@ -32,6 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 enum iFontId {
     default_FontId,
     defaultMedium_FontId,
+    defaultLarge_FontId,
     defaultMonospace_FontId,
     /* content fonts */
     regular_FontId,
@@ -46,6 +47,7 @@ enum iFontId {
     /* symbol fonts */
     defaultSymbols_FontId,
     defaultMediumSymbols_FontId,
+    defaultLargeSymbols_FontId,
     symbols_FontId,
     mediumSymbols_FontId,
     bigSymbols_FontId,
@@ -56,6 +58,7 @@ enum iFontId {
     /* emoji fonts */
     defaultEmoji_FontId,
     defaultMediumEmoji_FontId,
+    defaultLargeEmoji_FontId,
     emoji_FontId,
     mediumEmoji_FontId,
     bigEmoji_FontId,
@@ -84,10 +87,11 @@ enum iFontId {
     max_FontId,
 
     /* Meta: */
-    fromSymbolsToEmojiOffset_FontId = 9,
+    fromSymbolsToEmojiOffset_FontId = 10,
 
     /* UI fonts: */
     uiLabel_FontId          = default_FontId,
+    uiLabelLarge_FontId     = defaultLarge_FontId,
     uiShortcuts_FontId      = default_FontId,
     uiInput_FontId          = defaultMonospace_FontId,
     uiContent_FontId        = defaultMedium_FontId,

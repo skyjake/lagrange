@@ -209,6 +209,7 @@ static void initFonts_Text_(iText *d) {
     } fontData[max_FontId] = {
         { &fontSourceSansProRegular_Embedded, fontSize_UI,          1.0f, defaultSymbols_FontId },
         { &fontSourceSansProRegular_Embedded, fontSize_UI * 1.125f, 1.0f, defaultMediumSymbols_FontId },
+        { &fontSourceSansProRegular_Embedded, fontSize_UI * 1.666f, 1.0f, defaultLargeSymbols_FontId },
         { &fontFiraMonoRegular_Embedded,      fontSize_UI * 0.866f, 1.0f, defaultSymbols_FontId },
         /* content fonts */
         { regularFont,                        textSize,             scaling, symbols_FontId },
@@ -223,6 +224,7 @@ static void initFonts_Text_(iText *d) {
         /* symbol fonts */
         { &fontSymbola_Embedded,              fontSize_UI,          1.0f, defaultSymbols_FontId },
         { &fontSymbola_Embedded,              fontSize_UI * 1.125f, 1.0f, defaultMediumSymbols_FontId },
+        { &fontSymbola_Embedded,              fontSize_UI * 1.666f, 1.0f, defaultLargeSymbols_FontId },
         { &fontSymbola_Embedded,              textSize,             1.0f, symbols_FontId },
         { &fontSymbola_Embedded,              textSize * 1.200f,    1.0f, mediumSymbols_FontId },
         { &fontSymbola_Embedded,              textSize * 1.333f,    1.0f, bigSymbols_FontId },
@@ -233,6 +235,7 @@ static void initFonts_Text_(iText *d) {
         /* emoji fonts */
         { &fontNotoEmojiRegular_Embedded,     fontSize_UI,          1.0f, defaultSymbols_FontId },
         { &fontNotoEmojiRegular_Embedded,     fontSize_UI * 1.125f, 1.0f, defaultMediumSymbols_FontId },
+        { &fontNotoEmojiRegular_Embedded,     fontSize_UI * 1.666f, 1.0f, defaultLargeSymbols_FontId },
         { &fontNotoEmojiRegular_Embedded,     textSize,             1.0f, symbols_FontId },
         { &fontNotoEmojiRegular_Embedded,     textSize * 1.200f,    1.0f, mediumSymbols_FontId },
         { &fontNotoEmojiRegular_Embedded,     textSize * 1.333f,    1.0f, bigSymbols_FontId },
@@ -275,6 +278,7 @@ static void initFonts_Text_(iText *d) {
            the other sizes. */
         font_Text_(default_FontId)->japaneseFont          = defaultJapanese_FontId;
         font_Text_(defaultMedium_FontId)->japaneseFont    = defaultJapanese_FontId;
+        font_Text_(defaultLarge_FontId)->japaneseFont     = defaultJapanese_FontId;
         font_Text_(defaultMonospace_FontId)->japaneseFont = defaultJapanese_FontId;
         font_Text_(monospaceSmall_FontId)->japaneseFont   = monospaceSmallJapanese_FontId;
         font_Text_(monospace_FontId)->japaneseFont        = monospaceJapanese_FontId;
@@ -287,6 +291,7 @@ static void initFonts_Text_(iText *d) {
     /* Korean script. */ {
         font_Text_(default_FontId)->koreanFont          = defaultKorean_FontId;
         font_Text_(defaultMedium_FontId)->koreanFont    = defaultKorean_FontId;
+        font_Text_(defaultLarge_FontId)->koreanFont     = defaultKorean_FontId;
         font_Text_(defaultMonospace_FontId)->koreanFont = defaultKorean_FontId;
         font_Text_(monospaceSmall_FontId)->koreanFont   = monospaceSmallKorean_FontId;
         font_Text_(monospace_FontId)->koreanFont        = monospaceKorean_FontId;
