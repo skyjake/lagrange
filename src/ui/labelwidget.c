@@ -166,10 +166,10 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
 static void draw_LabelWidget_(const iLabelWidget *d) {
     const iWidget *w = constAs_Widget(d);
     draw_Widget(w);
-    const iBool isButton = d->click.button != 0;
-    const int   flags    = flags_Widget(w);
-    const iRect bounds   = bounds_Widget(w);
-    iRect       rect     = bounds;
+    const iBool   isButton = d->click.button != 0;
+    const int64_t flags    = flags_Widget(w);
+    const iRect   bounds   = bounds_Widget(w);
+    iRect         rect     = bounds;
     if (isButton) {
         shrink_Rect(&rect, divi_I2(gap2_UI, 4));
         adjustEdges_Rect(&rect, gap_UI / 8, 0, -gap_UI / 8, 0);
@@ -196,7 +196,12 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
         }
     }
     setClip_Paint(&p, rect);
-    if (flags & alignLeft_WidgetFlag) {
+    if (flags & wrapText_WidgetFlag) {
+        const iRect inner = innerBounds_Widget(w);
+        const int   wrap  = inner.size.x;
+        drawWrapRange_Text(d->font, topLeft_Rect(inner), wrap, fg, range_String(&d->label));
+    }
+    else if (flags & alignLeft_WidgetFlag) {
         draw_Text(d->font, add_I2(bounds.pos, padding_(flags)), fg, cstr_String(&d->label));
         if ((flags & drawKey_WidgetFlag) && d->key) {
             iString str;
@@ -235,11 +240,24 @@ void updateSize_LabelWidget(iLabelWidget *d) {
         size.x += 2 * gap_UI + measure_Text(uiShortcuts_FontId, cstr_String(&str)).x;
         deinit_String(&str);
     }
-    if (~flags & fixedWidth_WidgetFlag) {
+    /* Wrapped text implies that width must be defined by arrangement. */
+    if (!(flags & (fixedWidth_WidgetFlag | wrapText_WidgetFlag))) {
         w->rect.size.x = size.x;
     }
     if (~flags & fixedHeight_WidgetFlag) {
         w->rect.size.y = size.y;
+    }
+}
+
+static void sizeChanged_LabelWidget_(iLabelWidget *d) {
+    iWidget *w = as_Widget(d);
+    if (flags_Widget(w) & wrapText_WidgetFlag) {
+        if (flags_Widget(w) & fixedHeight_WidgetFlag) {
+            /* Calculate a new height based on the wrapping. */
+            w->rect.size.y = advanceWrapRange_Text(
+                                 d->font, innerBounds_Widget(w).size.x, range_String(&d->label))
+                                 .y;
+        }
     }
 }
 
@@ -312,4 +330,5 @@ iLabelWidget *newColor_LabelWidget(const char *text, int color) {
 iBeginDefineSubclass(LabelWidget, Widget)
     .processEvent = (iAny *) processEvent_LabelWidget_,
     .draw         = (iAny *) draw_LabelWidget_,
+   .sizeChanged   = (iAny *) sizeChanged_LabelWidget_,
 iEndDefineSubclass(LabelWidget)
