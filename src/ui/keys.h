@@ -43,6 +43,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #   define byLine_KeyModifier           0
 #endif
 
+iDeclareType(Binding)
+
+struct Impl_Binding {
+    int key;
+    int mods;
+    iString command;
+    iString label;
+};
+
 void            init_Keys           (void);
 void            deinit_Keys         (void);
 
@@ -51,6 +60,7 @@ void            save_Keys           (const char *saveDir);
 
 void            bind_Keys           (const char *command, int key, int mods);
 void            setLabel_Keys       (const char *command, const char *label);
+const iBinding *findCommand_Keys    (const char *command);
 
 //const iString * label_Keys          (const char *command);
 //const char *    shortcutLabel_Keys  (const char *command);

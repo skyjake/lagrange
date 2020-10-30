@@ -388,7 +388,7 @@ static void setupUserInterface_Window(iWindow *d) {
             addChildFlags_Widget(navBar, iClob(url), expand_WidgetFlag);
             /* Download progress indicator is inside the input field, but hidden normally. */
             setPadding_Widget(as_Widget(url),0, 0, gap_UI * 1, 0);
-            iLabelWidget *progress = new_LabelWidget(uiTextCaution_ColorEscape "00.000 MB", 0, 0, NULL);
+            iLabelWidget *progress = new_LabelWidget(uiTextCaution_ColorEscape "00.000 MB", NULL);
             setId_Widget(as_Widget(progress), "document.progress");
             setAlignVisually_LabelWidget(progress, iTrue);
             shrink_Rect(&as_Widget(progress)->rect, init_I2(0, gap_UI));
@@ -448,7 +448,7 @@ static void setupUserInterface_Window(iWindow *d) {
         setBackgroundColor_Widget(searchBar, uiBackground_ColorId);
         setCommandHandler_Widget(searchBar, handleSearchBarCommands_);
         addChildFlags_Widget(
-            searchBar, iClob(new_LabelWidget("\U0001f50d Text", 0, 0, NULL)), frameless_WidgetFlag);
+            searchBar, iClob(new_LabelWidget("\U0001f50d Text", NULL)), frameless_WidgetFlag);
         iInputWidget *input = new_InputWidget(0);
         setId_Widget(addChildFlags_Widget(searchBar, iClob(input), expand_WidgetFlag),
                      "find.input");
@@ -597,6 +597,7 @@ void init_Window(iWindow *d, iRect rect) {
     setId_Widget(d->root, "root");
     init_Text(d->render);
     setupUserInterface_Window(d);
+    postCommand_App("bindings.changed"); /* update from bindings */
     updateRootSize_Window_(d);
 }
 

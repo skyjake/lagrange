@@ -252,18 +252,16 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
             iWidget *div = makeVDiv_Widget();
             setPadding_Widget(div, 3 * gap_UI, 0, 3 * gap_UI, 2 * gap_UI);
             addChildFlags_Widget(div, iClob(new_Widget()), expand_WidgetFlag); /* pad */
-            iLabelWidget *msg = new_LabelWidget("No Identities", 0, 0, NULL);
+            iLabelWidget *msg = new_LabelWidget("No Identities", NULL);
             setFont_LabelWidget(msg, uiLabelLarge_FontId);
             addChildFlags_Widget(div, iClob(msg), frameless_WidgetFlag);
             addChild_Widget(div, iClob(makePadding_Widget(3 * gap_UI)));
-            addChild_Widget(div, iClob(new_LabelWidget("New Identity...", 0, 0, "ident.new")));
+            addChild_Widget(div, iClob(new_LabelWidget("New Identity...", "ident.new")));
             addChildFlags_Widget(div, iClob(new_Widget()), expand_WidgetFlag); /* pad */
             addChildFlags_Widget(
                 div,
                 iClob(new_LabelWidget("See " uiTextStrong_ColorEscape "Help" uiText_ColorEscape
                                       " for more information about TLS client certificates.",
-                                      0,
-                                      0,
                                       "!open newtab:1 gotoheading:Identities url:about:help")),
                 frameless_WidgetFlag | fixedHeight_WidgetFlag | wrapText_WidgetFlag);
             addChild_Widget(d->blank, iClob(div));
@@ -336,7 +334,7 @@ void init_SidebarWidget(iSidebarWidget *d) {
         d->modeButtons[i] = addChildFlags_Widget(
             buttons,
             iClob(
-                new_LabelWidget(tightModeLabels_[i], 0, 0, format_CStr("sidebar.mode arg:%d", i))),
+                new_LabelWidget(tightModeLabels_[i], format_CStr("sidebar.mode arg:%d", i))),
             frameless_WidgetFlag);
         d->maxButtonLabelWidth =
             iMaxi(d->maxButtonLabelWidth,

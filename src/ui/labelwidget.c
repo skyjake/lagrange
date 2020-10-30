@@ -26,6 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "paint.h"
 #include "app.h"
 #include "util.h"
+#include "keys.h"
 
 iLocalDef iInt2 padding_(int flags) {
     return init_I2(flags & tight_WidgetFlag ? 3 * gap_UI / 2 : (3 * gap_UI), gap_UI);
@@ -43,8 +44,8 @@ struct Impl_LabelWidget {
 };
 
 iDefineObjectConstructionArgs(LabelWidget,
-                              (const char *label, int key, int kmods, const char *cmd),
-                              label, key, kmods, cmd)
+                              (const char *label, const char *cmd),
+                              label, cmd)
 
 static iBool checkModifiers_(int have, int req) {
     return keyMods_Sym(req) == keyMods_Sym(have);
@@ -60,10 +61,25 @@ static void trigger_LabelWidget_(const iLabelWidget *d) {
     }
 }
 
+static void updateKey_LabelWidget_(iLabelWidget *d) {
+    if (!isEmpty_String(&d->command)) {
+        const iBinding *bind = findCommand_Keys(cstr_String(&d->command));
+        if (bind) {
+            d->key   = bind->key;
+            d->kmods = bind->mods;
+        }
+    }
+}
+
 static iBool processEvent_LabelWidget_(iLabelWidget *d, const SDL_Event *ev) {
     iWidget *w = &d->widget;
     if (isCommand_UserEvent(ev, "metrics.changed")) {
         updateSize_LabelWidget(d);
+    }
+    else if (isCommand_UserEvent(ev, "bindings.changed")) {
+        /* Update the key used to trigger this label. */
+        updateKey_LabelWidget_(d);
+        return iFalse;
     }
     if (!isEmpty_String(&d->command)) {
         switch (processEvent_Click(&d->click, ev)) {
@@ -229,6 +245,18 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
     unsetClip_Paint(&p);
 }
 
+static void sizeChanged_LabelWidget_(iLabelWidget *d) {
+    iWidget *w = as_Widget(d);
+    if (flags_Widget(w) & wrapText_WidgetFlag) {
+        if (flags_Widget(w) & fixedHeight_WidgetFlag) {
+            /* Calculate a new height based on the wrapping. */
+            w->rect.size.y = advanceWrapRange_Text(
+                                 d->font, innerBounds_Widget(w).size.x, range_String(&d->label))
+                                 .y;
+        }
+    }
+}
+
 void updateSize_LabelWidget(iLabelWidget *d) {
     iWidget *w = as_Widget(d);
     const int flags = flags_Widget(w);
@@ -249,19 +277,7 @@ void updateSize_LabelWidget(iLabelWidget *d) {
     }
 }
 
-static void sizeChanged_LabelWidget_(iLabelWidget *d) {
-    iWidget *w = as_Widget(d);
-    if (flags_Widget(w) & wrapText_WidgetFlag) {
-        if (flags_Widget(w) & fixedHeight_WidgetFlag) {
-            /* Calculate a new height based on the wrapping. */
-            w->rect.size.y = advanceWrapRange_Text(
-                                 d->font, innerBounds_Widget(w).size.x, range_String(&d->label))
-                                 .y;
-        }
-    }
-}
-
-void init_LabelWidget(iLabelWidget *d, const char *label, int key, int kmods, const char *cmd) {
+void init_LabelWidget(iLabelWidget *d, const char *label, const char *cmd) {
     init_Widget(&d->widget);
     d->font = uiLabel_FontId;
     initCStr_String(&d->label, label);
@@ -271,12 +287,13 @@ void init_LabelWidget(iLabelWidget *d, const char *label, int key, int kmods, co
     else {
         init_String(&d->command);
     }
-    d->key = key;
-    d->kmods = kmods;
+    d->key   = 0;
+    d->kmods = 0;
     init_Click(&d->click, d, !isEmpty_String(&d->command) ? SDL_BUTTON_LEFT : 0);
     setFlags_Widget(&d->widget, hover_WidgetFlag, d->click.button != 0);
     d->alignVisual = iFalse;
     updateSize_LabelWidget(d);
+    updateKey_LabelWidget_(d);
 }
 
 void deinit_LabelWidget(iLabelWidget *d) {
@@ -321,8 +338,15 @@ const iString *command_LabelWidget(const iLabelWidget *d) {
     return &d->command;
 }
 
+iLabelWidget *newKeyMods_LabelWidget(const char *label, int key, int kmods, const char *command) {
+    iLabelWidget *d = new_LabelWidget(label, command);
+    d->key = key;
+    d->kmods = kmods;
+    return d;
+}
+
 iLabelWidget *newColor_LabelWidget(const char *text, int color) {
-    iLabelWidget *d = new_LabelWidget(format_CStr("%s%s", escape_Color(color), text), 0, 0, NULL);
+    iLabelWidget *d = new_LabelWidget(format_CStr("%s%s", escape_Color(color), text), NULL);
     setFlags_Widget(as_Widget(d), frameless_WidgetFlag, iTrue);
     return d;
 }

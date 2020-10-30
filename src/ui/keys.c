@@ -27,14 +27,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/sortedarray.h>
 
 iDeclareType(Keys)
-iDeclareType(Binding)
-
-struct Impl_Binding {
-    int key;
-    int mods;
-    iString command;
-    iString label;
-};
 
 static int cmp_Binding_(const void *a, const void *b) {
     const iBinding *d = a, *other = b;
@@ -150,4 +142,8 @@ iBool processEvent_Keys(const SDL_Event *ev) {
         }
     }
     return iFalse;
+}
+
+const iBinding *findCommand_Keys(const char *command) {
+    return findCommand_Keys_(&keys_, command);
 }

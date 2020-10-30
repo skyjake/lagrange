@@ -27,7 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "widget.h"
 
 iDeclareWidgetClass(LabelWidget)
-iDeclareObjectConstructionArgs(LabelWidget, const char *label, int key, int kmods, const char *command)
+iDeclareObjectConstructionArgs(LabelWidget, const char *label, const char *command)
 
 void    setAlignVisually_LabelWidget(iLabelWidget *, iBool alignVisual);
 void    setFont_LabelWidget         (iLabelWidget *, int fontId);
@@ -41,13 +41,14 @@ void    updateTextCStr_LabelWidget  (iLabelWidget *, const char *text); /* not r
 const iString *label_LabelWidget    (const iLabelWidget *);
 const iString *command_LabelWidget  (const iLabelWidget *);
 
-iLabelWidget *newColor_LabelWidget(const char *text, int color);
+iLabelWidget *newKeyMods_LabelWidget(const char *label, int key, int kmods, const char *command);
+iLabelWidget *newColor_LabelWidget  (const char *text, int color);
 
 iLocalDef iLabelWidget *newEmpty_LabelWidget(void) {
-    return new_LabelWidget("", 0, 0, NULL);
+    return new_LabelWidget("", NULL);
 }
 iLocalDef iLabelWidget *newIcon_LabelWidget(const char *label, int key, int kmods, const char *command) {
-    iLabelWidget *d = new_LabelWidget(label, key, kmods, command);
+    iLabelWidget *d = newKeyMods_LabelWidget(label, key, kmods, command);
     setAlignVisually_LabelWidget(d, iTrue);
     return d;
 }
