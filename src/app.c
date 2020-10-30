@@ -32,6 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "ui/command.h"
 #include "ui/documentwidget.h"
 #include "ui/inputwidget.h"
+#include "ui/keys.h"
 #include "ui/labelwidget.h"
 #include "ui/sidebarwidget.h"
 #include "ui/text.h"
@@ -357,9 +358,11 @@ static void init_App_(iApp *d, int argc, char **argv) {
 #if defined (iPlatformApple)
     setupApplication_MacOS();
 #endif
+    init_Keys();
     loadPrefs_App_(d);
+    load_Keys(dataDir_App_);
     load_Visited(d->visited, dataDir_App_);
-    load_Bookmarks(d->bookmarks, dataDir_App_);
+    load_Bookmarks(d->bookmarks, dataDir_App_);    
     if (isFirstRun) {
         /* Create the default bookmarks for a quick start. */
         add_Bookmarks(d->bookmarks,
@@ -426,6 +429,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
 
 static void deinit_App(iApp *d) {
     saveState_App_(d);
+    save_Keys(dataDir_App_);
     savePrefs_App_(d);
     deinit_Prefs(&d->prefs);
     save_Bookmarks(d->bookmarks, dataDir_App_);
@@ -501,6 +505,10 @@ void processEvents_App(enum iAppEventMode eventMode) {
             }
             default: {
                 iBool wasUsed = processEvent_Window(d->window, &ev);
+                if (!wasUsed) {
+                    /* There may be a key bindings for this. */
+                    wasUsed = processEvent_Keys(&ev);
+                }
                 if (ev.type == SDL_USEREVENT && ev.user.code == command_UserEventCode) {
 #if defined (iPlatformApple) && !defined (iPlatformIOS)
                     handleCommand_MacOS(command_UserEvent(&ev));

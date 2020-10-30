@@ -1536,7 +1536,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         updateVisible_DocumentWidget_(d);
         return iTrue;
     }
-    else if (equalWidget_Command(cmd, w, "scroll.page")) {
+    else if (equal_Command(cmd, "scroll.page") && document_App() == d) {
         if (argLabel_Command(cmd, "repeat")) {
             /* TODO: Adjust scroll animation to be linear during repeated scroll? */
         }
@@ -1547,6 +1547,40 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                                      smoothDuration_DocumentWidget_);
         return iTrue;
     }
+    else if (equal_Command(cmd, "scroll.top") && document_App() == d) {
+        init_Anim(&d->scrollY, 0);
+        invalidate_VisBuf(d->visBuf);
+        scroll_DocumentWidget_(d, 0);
+        updateVisible_DocumentWidget_(d);
+        refresh_Widget(w);
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "scroll.bottom") && document_App() == d) {
+        init_Anim(&d->scrollY, scrollMax_DocumentWidget_(d));
+        invalidate_VisBuf(d->visBuf);
+        scroll_DocumentWidget_(d, 0);
+        updateVisible_DocumentWidget_(d);
+        refresh_Widget(w);
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "scroll.step") && document_App() == d) {
+        smoothScroll_DocumentWidget_(d,
+                                     3 * lineHeight_Text(paragraph_FontId) * arg_Command(cmd),
+                                     smoothDuration_DocumentWidget_);
+        return iTrue;
+    }
+#if 0
+        case SDLK_PAGEUP:
+        case SDLK_PAGEDOWN:
+        case SDLK_SPACE:
+            postCommand_Widget(
+                w,
+                "scroll.page arg:%d repeat:%d",
+                (key == SDLK_SPACE && mods & KMOD_SHIFT) || key == SDLK_PAGEUP ? -1 : +1,
+                ev->key.repeat != 0);
+            return iTrue;
+    }
+#endif
     else if (equal_Command(cmd, "document.goto") && document_App() == d) {
         const iRangecc heading = range_Command(cmd, "heading");
         if (heading.start) {
@@ -1790,45 +1824,6 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                     refresh_Widget(w);
                 }
                 break;
-            case SDLK_HOME:
-                init_Anim(&d->scrollY, 0);
-                invalidate_VisBuf(d->visBuf);
-                scroll_DocumentWidget_(d, 0);
-                updateVisible_DocumentWidget_(d);
-                refresh_Widget(w);
-                return iTrue;
-            case SDLK_END:
-                init_Anim(&d->scrollY, scrollMax_DocumentWidget_(d));
-                invalidate_VisBuf(d->visBuf);
-                scroll_DocumentWidget_(d, 0);
-                updateVisible_DocumentWidget_(d);
-                refresh_Widget(w);
-                return iTrue;
-            case SDLK_UP:
-            case SDLK_DOWN:
-                if (mods == 0) {
-                    if (ev->key.repeat) {
-//                        if (!d->smoothContinue) {
-//                            d->smoothContinue = iTrue;
-//                        }
-//                        else return iTrue;
-                    }
-                    smoothScroll_DocumentWidget_(d,
-                                                 3 * lineHeight_Text(paragraph_FontId) *
-                                                     (key == SDLK_UP ? -1 : 1),
-                                                 /*gap_Text * */smoothDuration_DocumentWidget_);
-                    return iTrue;
-                }
-                break;
-            case SDLK_PAGEUP:
-            case SDLK_PAGEDOWN:
-            case SDLK_SPACE:
-                postCommand_Widget(
-                    w,
-                    "scroll.page arg:%d repeat:%d",
-                    (key == SDLK_SPACE && mods & KMOD_SHIFT) || key == SDLK_PAGEUP ? -1 : +1,
-                    ev->key.repeat != 0);
-                return iTrue;
 #if 1
             case SDLK_KP_1:
             case '`': {

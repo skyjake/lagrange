@@ -22,7 +22,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
-#include <the_Foundation/defs.h>
+#include <the_Foundation/string.h>
+#include <SDL_events.h>
 
 #if defined (iPlatformApple)
 #   define reload_KeyShortcut           SDLK_r,             KMOD_PRIMARY
@@ -41,3 +42,17 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #   define byWord_KeyModifier           KMOD_CTRL
 #   define byLine_KeyModifier           0
 #endif
+
+void            init_Keys           (void);
+void            deinit_Keys         (void);
+
+void            load_Keys           (const char *saveDir);
+void            save_Keys           (const char *saveDir);
+
+void            bind_Keys           (const char *command, int key, int mods);
+void            setLabel_Keys       (const char *command, const char *label);
+
+//const iString * label_Keys          (const char *command);
+//const char *    shortcutLabel_Keys  (const char *command);
+
+iBool           processEvent_Keys   (const SDL_Event *);
