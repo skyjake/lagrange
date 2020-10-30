@@ -65,15 +65,14 @@ static void bindDefaults_(void) {
     bind_Keys("scroll.step arg:-1", SDLK_UP, 0);
     bind_Keys("scroll.step arg:1", SDLK_DOWN, 0);
     bind_Keys("scroll.page arg:-1", SDLK_PAGEUP, 0);
-    bind_Keys("scroll.page arg:-1", SDLK_SPACE, KMOD_SHIFT);
     bind_Keys("scroll.page arg:1", SDLK_PAGEDOWN, 0);
+    bind_Keys("scroll.page arg:-1", SDLK_SPACE, KMOD_SHIFT);
     bind_Keys("scroll.page arg:1", SDLK_SPACE, 0);
 }
 
 static iBinding *find_Keys_(iKeys *d, int key, int mods) {
-    const iBinding bind = { .key = key, .mods = mods };
     size_t pos;
-    if (locate_SortedArray(&d->bindings, &bind, &pos)) {
+    if (locate_SortedArray(&d->bindings, &(iBinding){ .key = key, .mods = mods }, &pos)) {
         return at_SortedArray(&d->bindings, pos);
     }
     return NULL;

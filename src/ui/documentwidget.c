@@ -1569,18 +1569,6 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                                      smoothDuration_DocumentWidget_);
         return iTrue;
     }
-#if 0
-        case SDLK_PAGEUP:
-        case SDLK_PAGEDOWN:
-        case SDLK_SPACE:
-            postCommand_Widget(
-                w,
-                "scroll.page arg:%d repeat:%d",
-                (key == SDLK_SPACE && mods & KMOD_SHIFT) || key == SDLK_PAGEUP ? -1 : +1,
-                ev->key.repeat != 0);
-            return iTrue;
-    }
-#endif
     else if (equal_Command(cmd, "document.goto") && document_App() == d) {
         const iRangecc heading = range_Command(cmd, "heading");
         if (heading.start) {
