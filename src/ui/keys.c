@@ -24,6 +24,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "util.h"
 #include "app.h"
 
+#include <the_Foundation/file.h>
+#include <the_Foundation/path.h>
 #include <the_Foundation/ptrset.h>
 
 iDeclareType(Keys)
@@ -116,6 +118,8 @@ void setKey_Binding(int id, int key, int mods) {
 
 /*----------------------------------------------------------------------------------------------*/
 
+static const char *filename_Keys_ = "bindings.txt";
+
 void init_Keys(void) {
     iKeys *d = &keys_;
     init_Array(&d->bindings, sizeof(iBinding));
@@ -132,11 +136,55 @@ void deinit_Keys(void) {
 }
 
 void load_Keys(const char *saveDir) {
-
+    iKeys *d = &keys_;
+    iFile *f = iClob(newCStr_File(concatPath_CStr(saveDir, filename_Keys_)));
+    if (open_File(f, readOnly_FileMode | text_FileMode)) {
+        iBlock * src  = collect_Block(readAll_File(f));
+        iRangecc line = iNullRange;
+        while (nextSplit_Rangecc(range_Block(src), "\n", &line)) {
+            int id, key;
+            char modBits[5];
+            iZap(modBits);
+            sscanf(line.start, "%d %x %4s", &id, &key, modBits);
+            iBinding *bind = findId_Keys_(d, id);
+            if (bind) {
+                bind->key = key;
+                bind->mods = 0;
+                const char *m = modBits;
+                for (int i = 0; i < 4 && *m; i++, m++) {
+                    if (*m == 's') bind->mods |= KMOD_SHIFT;
+                    if (*m == 'a') bind->mods |= KMOD_ALT;
+                    if (*m == 'c') bind->mods |= KMOD_CTRL;
+                    if (*m == 'g') bind->mods |= KMOD_GUI;
+                }
+            }
+        }
+    }
+    updateLookup_Keys_(d);
 }
 
 void save_Keys(const char *saveDir) {
-
+    iKeys *d = &keys_;
+    iFile *f = newCStr_File(concatPath_CStr(saveDir, filename_Keys_));
+    if (open_File(f, writeOnly_FileMode | text_FileMode)) {
+        iString *line = collectNew_String();
+        iConstForEach(Array, i, &d->bindings) {
+            const iBinding *bind = i.value;
+            format_String(line, "%d %x ", bind->id, bind->key);
+            if (bind->mods == 0) {
+                appendCStr_String(line, "0");
+            }
+            else {
+                if (bind->mods & KMOD_SHIFT) appendChar_String(line, 's');
+                if (bind->mods & KMOD_ALT) appendChar_String(line, 'a');
+                if (bind->mods & KMOD_CTRL) appendChar_String(line, 'c');
+                if (bind->mods & KMOD_GUI) appendChar_String(line, 'g');
+            }
+            appendChar_String(line, '\n');
+            write_File(f, &line->chars);
+        }
+        iRelease(f);
+    }
 }
 
 void bind_Keys(int id, const char *command, int key, int mods) {
