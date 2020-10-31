@@ -83,6 +83,7 @@ iDefineObjectConstruction(SidebarItem)
 struct Impl_SidebarWidget {
     iWidget widget;
     enum iSidebarMode mode;
+    iWidget *blank;
     iListWidget *list;
     int modeScroll[max_SidebarMode];
     int width;
@@ -106,6 +107,7 @@ static int cmpTitle_Bookmark_(const iBookmark **a, const iBookmark **b) {
 
 static void updateItems_SidebarWidget_(iSidebarWidget *d) {
     clear_ListWidget(d->list);
+    releaseChildren_Widget(d->blank);
     destroy_Widget(d->menu);
     d->menu = NULL;
     switch (d->mode) {
@@ -244,6 +246,28 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
     }
     updateVisible_ListWidget(d->list);
     invalidate_ListWidget(d->list);
+    /* Content for a blank tab. */
+    if (isEmpty_ListWidget(d->list)) {
+        if (d->mode == identities_SidebarMode) {
+            iWidget *div = makeVDiv_Widget();
+            setPadding_Widget(div, 3 * gap_UI, 0, 3 * gap_UI, 2 * gap_UI);
+            addChildFlags_Widget(div, iClob(new_Widget()), expand_WidgetFlag); /* pad */
+            iLabelWidget *msg = new_LabelWidget("No Identities", NULL);
+            setFont_LabelWidget(msg, uiLabelLarge_FontId);
+            addChildFlags_Widget(div, iClob(msg), frameless_WidgetFlag);
+            addChild_Widget(div, iClob(makePadding_Widget(3 * gap_UI)));
+            addChild_Widget(div, iClob(new_LabelWidget("New Identity...", "ident.new")));
+            addChildFlags_Widget(div, iClob(new_Widget()), expand_WidgetFlag); /* pad */
+            addChildFlags_Widget(
+                div,
+                iClob(new_LabelWidget("See " uiTextStrong_ColorEscape "Help" uiText_ColorEscape
+                                      " for more information about TLS client certificates.",
+                                      "!open newtab:1 gotoheading:Identities url:about:help")),
+                frameless_WidgetFlag | fixedHeight_WidgetFlag | wrapText_WidgetFlag);
+            addChild_Widget(d->blank, iClob(div));
+        }
+        arrange_Widget(d->blank);
+    }
 }
 
 iBool setMode_SidebarWidget(iSidebarWidget *d, enum iSidebarMode mode) {
@@ -310,7 +334,7 @@ void init_SidebarWidget(iSidebarWidget *d) {
         d->modeButtons[i] = addChildFlags_Widget(
             buttons,
             iClob(
-                new_LabelWidget(tightModeLabels_[i], 0, 0, format_CStr("sidebar.mode arg:%d", i))),
+                new_LabelWidget(tightModeLabels_[i], format_CStr("sidebar.mode arg:%d", i))),
             frameless_WidgetFlag);
         d->maxButtonLabelWidth =
             iMaxi(d->maxButtonLabelWidth,
@@ -320,9 +344,14 @@ void init_SidebarWidget(iSidebarWidget *d) {
                          iClob(buttons),
                          arrangeHorizontal_WidgetFlag | resizeWidthOfChildren_WidgetFlag |
                              arrangeHeight_WidgetFlag | resizeToParentWidth_WidgetFlag);
+    iWidget *content = new_Widget();
+    setFlags_Widget(content, resizeChildren_WidgetFlag, iTrue);
     d->list = new_ListWidget();
     setPadding_Widget(as_Widget(d->list), 0, gap_UI, 0, gap_UI);
-    addChildFlags_Widget(vdiv, iClob(d->list), expand_WidgetFlag);
+    addChild_Widget(content, iClob(d->list));
+    d->blank = new_Widget();
+    addChildFlags_Widget(content, iClob(d->blank), resizeChildren_WidgetFlag);
+    addChildFlags_Widget(vdiv, iClob(content), expand_WidgetFlag);
     setMode_SidebarWidget(d, bookmarks_SidebarMode);
     d->resizer = addChildFlags_Widget(
         w,
@@ -456,8 +485,6 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
     /* Handle commands. */
     if (isResize_UserEvent(ev)) {
         checkModeButtonLayout_SidebarWidget_(d);
-        updateVisible_ListWidget(d->list);
-        invalidate_ListWidget(d->list);
     }
     else if (ev->type == SDL_USEREVENT && ev->user.code == command_UserEventCode) {
         const char *cmd = command_UserEvent(ev);
@@ -558,6 +585,9 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                 postCommand_App("bookmarks.changed");
             }
             return iTrue;
+        }
+        else if (equal_Command(cmd, "visited.changed") && d->mode == history_SidebarMode) {
+            updateItems_SidebarWidget_(d);
         }
         else if (equal_Command(cmd, "bookmarks.changed") && d->mode == bookmarks_SidebarMode) {
             updateItems_SidebarWidget_(d);

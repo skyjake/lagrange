@@ -29,6 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "gmutil.h"
 #include "labelwidget.h"
 #include "inputwidget.h"
+#include "bindingswidget.h"
 #include "keys.h"
 #include "widget.h"
 #include "text.h"
@@ -103,6 +104,11 @@ void toString_Sym(int key, int kmods, iString *str) {
     else {
         appendCStr_String(str, SDL_GetKeyName(key));
     }
+}
+
+iBool isMod_Sym(int key) {
+    return key == SDLK_LALT || key == SDLK_RALT || key == SDLK_LCTRL || key == SDLK_RCTRL ||
+           key == SDLK_LGUI || key == SDLK_RGUI || key == SDLK_LSHIFT || key == SDLK_RSHIFT;
 }
 
 int keyMods_Sym(int kmods) {
@@ -319,7 +325,7 @@ iWidget *makePadding_Widget(int size) {
 }
 
 iLabelWidget *makeHeading_Widget(const char *text) {
-    iLabelWidget *heading = new_LabelWidget(text, 0, 0, NULL);
+    iLabelWidget *heading = new_LabelWidget(text, NULL);
     setFlags_Widget(as_Widget(heading), frameless_WidgetFlag | fixedSize_WidgetFlag, iTrue);
     setBackgroundColor_Widget(as_Widget(heading), none_ColorId);
     return heading;
@@ -338,7 +344,7 @@ iWidget *makeHDiv_Widget(void) {
 }
 
 iWidget *addAction_Widget(iWidget *parent, int key, int kmods, const char *command) {
-    iLabelWidget *action = new_LabelWidget("", key, kmods, command);
+    iLabelWidget *action = newKeyMods_LabelWidget("", key, kmods, command);
     setSize_Widget(as_Widget(action), zero_I2());
     addChildFlags_Widget(parent, iClob(action), hidden_WidgetFlag);
     return as_Widget(action);
@@ -394,7 +400,7 @@ iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
         else {
             iLabelWidget *label = addChildFlags_Widget(
                 menu,
-                iClob(new_LabelWidget(item->label, item->key, item->kmods, item->command)),
+                iClob(newKeyMods_LabelWidget(item->label, item->key, item->kmods, item->command)),
                 frameless_WidgetFlag | alignLeft_WidgetFlag | drawKey_WidgetFlag);
             updateSize_LabelWidget(label); /* drawKey was set */
         }
@@ -462,7 +468,7 @@ int checkContextMenu_Widget(iWidget *menu, const SDL_Event *ev) {
 }
 
 iLabelWidget *makeMenuButton_LabelWidget(const char *label, const iMenuItem *items, size_t n) {
-    iLabelWidget *button = new_LabelWidget(label, 0, 0, "menu.open");
+    iLabelWidget *button = new_LabelWidget(label, "menu.open");
     iWidget *menu = makeMenu_Widget(as_Widget(button), items, n);
     setId_Widget(menu, "menu");
     return button;
@@ -538,7 +544,7 @@ static void addTabPage_Widget_(iWidget *tabs, enum iWidgetAddPos addPos, iWidget
     iWidget *   buttons = findChild_Widget(tabs, "tabs.buttons");
     iWidget *   button  = addChildPos_Widget(
         buttons,
-        iClob(new_LabelWidget(label, key, kmods, format_CStr("tabs.switch page:%p", page))),
+        iClob(newKeyMods_LabelWidget(label, key, kmods, format_CStr("tabs.switch page:%p", page))),
         addPos);
     setFlags_Widget(buttons, hidden_WidgetFlag, iFalse);
     setFlags_Widget(button, selected_WidgetFlag, isSel);
@@ -732,7 +738,7 @@ void makeFilePath_Widget(iWidget *      parent,
     iWidget *dlg = makeSheet_Widget(command);
     setCommandHandler_Widget(dlg, filePathHandler_);
     addChild_Widget(parent, iClob(dlg));
-    addChildFlags_Widget(dlg, iClob(new_LabelWidget(title, 0, 0, NULL)), frameless_WidgetFlag);
+    addChildFlags_Widget(dlg, iClob(new_LabelWidget(title, NULL)), frameless_WidgetFlag);
     iInputWidget *input = addChild_Widget(dlg, iClob(new_InputWidget(0)));
     if (initialPath) {
         setText_InputWidget(input, collect_String(makeRelative_Path(initialPath)));
@@ -742,8 +748,8 @@ void makeFilePath_Widget(iWidget *      parent,
     addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
     iWidget *div = new_Widget(); {
         setFlags_Widget(div, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
-        addChild_Widget(div, iClob(new_LabelWidget("Cancel", SDLK_ESCAPE, 0, "filepath.cancel")));
-        addChild_Widget(div, iClob(new_LabelWidget(acceptLabel, SDLK_RETURN, 0, "filepath.accept")));
+        addChild_Widget(div, iClob(newKeyMods_LabelWidget("Cancel", SDLK_ESCAPE, 0, "filepath.cancel")));
+        addChild_Widget(div, iClob(newKeyMods_LabelWidget(acceptLabel, SDLK_RETURN, 0, "filepath.accept")));
     }
     addChild_Widget(dlg, iClob(div));
     centerSheet_Widget(dlg);
@@ -818,10 +824,10 @@ iWidget *makeValueInput_Widget(iWidget *parent, const iString *initialValue, con
         addChild_Widget(parent, iClob(dlg));
     }
     setId_Widget(
-        addChildFlags_Widget(dlg, iClob(new_LabelWidget(title, 0, 0, NULL)), frameless_WidgetFlag),
+        addChildFlags_Widget(dlg, iClob(new_LabelWidget(title, NULL)), frameless_WidgetFlag),
         "valueinput.title");
     setId_Widget(
-        addChildFlags_Widget(dlg, iClob(new_LabelWidget(prompt, 0, 0, NULL)), frameless_WidgetFlag),
+        addChildFlags_Widget(dlg, iClob(new_LabelWidget(prompt, NULL)), frameless_WidgetFlag),
         "valueinput.prompt");
     iInputWidget *input = addChild_Widget(dlg, iClob(new_InputWidget(0)));
     if (initialValue) {
@@ -832,12 +838,13 @@ iWidget *makeValueInput_Widget(iWidget *parent, const iString *initialValue, con
     addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
     iWidget *div = new_Widget(); {
         setFlags_Widget(div, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
-        addChild_Widget(div, iClob(new_LabelWidget("Cancel", SDLK_ESCAPE, 0, "cancel")));
-        addChild_Widget(div,
-                        iClob(new_LabelWidget(acceptLabel ? acceptLabel : uiTextAction_ColorEscape "OK",
-                                              SDLK_RETURN,
-                                              0,
-                                              "valueinput.accept")));
+        addChild_Widget(div, iClob(newKeyMods_LabelWidget("Cancel", SDLK_ESCAPE, 0, "cancel")));
+        addChild_Widget(
+            div,
+            iClob(newKeyMods_LabelWidget(acceptLabel ? acceptLabel : uiTextAction_ColorEscape "OK",
+                                         SDLK_RETURN,
+                                         0,
+                                         "valueinput.accept")));
     }
     addChild_Widget(dlg, iClob(div));
     centerSheet_Widget(dlg);
@@ -874,15 +881,15 @@ iWidget *makeQuestion_Widget(const char *title, const char *msg, const char *lab
     processEvents_App(postedEventsOnly_AppEventMode);
     iWidget *dlg = makeSheet_Widget("");
     setCommandHandler_Widget(dlg, messageHandler_);
-    addChildFlags_Widget(dlg, iClob(new_LabelWidget(title, 0, 0, NULL)), frameless_WidgetFlag);
-    addChildFlags_Widget(dlg, iClob(new_LabelWidget(msg, 0, 0, NULL)), frameless_WidgetFlag);
+    addChildFlags_Widget(dlg, iClob(new_LabelWidget(title, NULL)), frameless_WidgetFlag);
+    addChildFlags_Widget(dlg, iClob(new_LabelWidget(msg, NULL)), frameless_WidgetFlag);
     addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
     iWidget *div = new_Widget(); {
         setFlags_Widget(div, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
         for (size_t i = 0; i < count; ++i) {
             /* The last one is the default option. */
             const int key = (i == count - 1 ? SDLK_RETURN : 0);
-            addChild_Widget(div, iClob(new_LabelWidget(labels[i], key, 0, commands[i])));
+            addChild_Widget(div, iClob(newKeyMods_LabelWidget(labels[i], key, 0, commands[i])));
         }
     }
     addChild_Widget(dlg, iClob(div));
@@ -912,19 +919,29 @@ static iBool toggleHandler_(iWidget *d, const char *cmd) {
 }
 
 iWidget *makeToggle_Widget(const char *id) {
-    iWidget *toggle = as_Widget(new_LabelWidget("YES", 0, 0, "toggle")); /* "YES" for sizing */
+    iWidget *toggle = as_Widget(new_LabelWidget("YES", "toggle")); /* "YES" for sizing */
     setId_Widget(toggle, id);
     updateTextCStr_LabelWidget((iLabelWidget *) toggle, "NO"); /* actual initial value */
     setCommandHandler_Widget(toggle, toggleHandler_);
     return toggle;
 }
 
+static void appendFramelessTabPage_(iWidget *tabs, iWidget *page, const char *title, int shortcut,
+                                    int kmods) {
+    appendTabPage_Widget(tabs, page, title, shortcut, kmods);
+    setFlags_Widget(
+        (iWidget *) back_ObjectList(children_Widget(findChild_Widget(tabs, "tabs.buttons"))),
+        frameless_WidgetFlag,
+        iTrue);
+}
+
 static iWidget *appendTwoColumnPage_(iWidget *tabs, const char *title, int shortcut, iWidget **headings,
                                      iWidget **values) {
     iWidget *page = new_Widget();
     setFlags_Widget(page, arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag |
-                    resizeHeightOfChildren_WidgetFlag, iTrue);
+                    resizeHeightOfChildren_WidgetFlag | borderTop_WidgetFlag, iTrue);
     addChildFlags_Widget(page, iClob(new_Widget()), expand_WidgetFlag);
+    setPadding_Widget(page, 0, gap_UI, 0, gap_UI);
     iWidget *columns = new_Widget();
     addChildFlags_Widget(page, iClob(columns), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
     *headings = addChildFlags_Widget(
@@ -932,7 +949,7 @@ static iWidget *appendTwoColumnPage_(iWidget *tabs, const char *title, int short
     *values = addChildFlags_Widget(
         columns, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
     addChildFlags_Widget(page, iClob(new_Widget()), expand_WidgetFlag);
-    appendTabPage_Widget(tabs, page, title, shortcut, shortcut ? KMOD_PRIMARY : 0);
+    appendFramelessTabPage_(tabs, page, title, shortcut, shortcut ? KMOD_PRIMARY : 0);
     return page;
 }
 
@@ -950,7 +967,7 @@ static void expandInputFieldWidth_(iInputWidget *input) {
 
 static void addRadioButton_(iWidget *parent, const char *id, const char *label, const char *cmd) {
     setId_Widget(
-        addChildFlags_Widget(parent, iClob(new_LabelWidget(label, 0, 0, cmd)), radio_WidgetFlag),
+        addChildFlags_Widget(parent, iClob(new_LabelWidget(label, cmd)), radio_WidgetFlag),
         id);
 }
 
@@ -969,7 +986,7 @@ static void addFontButtons_(iWidget *parent, const char *id) {
 iWidget *makePreferences_Widget(void) {
     iWidget *dlg = makeSheet_Widget("prefs");
     addChildFlags_Widget(dlg,
-                         iClob(new_LabelWidget(uiHeading_ColorEscape "PREFERENCES", 0, 0, NULL)),
+                         iClob(new_LabelWidget(uiHeading_ColorEscape "PREFERENCES", NULL)),
                          frameless_WidgetFlag);
     iWidget *tabs = makeTabs_Widget(dlg);
     setId_Widget(tabs, "prefs.tabs");
@@ -988,10 +1005,10 @@ iWidget *makePreferences_Widget(void) {
         addChild_Widget(headings, iClob(makeHeading_Widget("Theme:")));
         iWidget *themes = new_Widget();
         /* Themes. */ {
-            setId_Widget(addChild_Widget(themes, iClob(new_LabelWidget("Pure Black", 0, 0, "theme.set arg:0"))), "prefs.theme.0");
-            setId_Widget(addChild_Widget(themes, iClob(new_LabelWidget("Dark", 0, 0, "theme.set arg:1"))), "prefs.theme.1");
-            setId_Widget(addChild_Widget(themes, iClob(new_LabelWidget("Light", 0, 0, "theme.set arg:2"))), "prefs.theme.2");
-            setId_Widget(addChild_Widget(themes, iClob(new_LabelWidget("Pure White", 0, 0, "theme.set arg:3"))), "prefs.theme.3");
+            setId_Widget(addChild_Widget(themes, iClob(new_LabelWidget("Pure Black", "theme.set arg:0"))), "prefs.theme.0");
+            setId_Widget(addChild_Widget(themes, iClob(new_LabelWidget("Dark", "theme.set arg:1"))), "prefs.theme.1");
+            setId_Widget(addChild_Widget(themes, iClob(new_LabelWidget("Light", "theme.set arg:2"))), "prefs.theme.2");
+            setId_Widget(addChild_Widget(themes, iClob(new_LabelWidget("Pure White", "theme.set arg:3"))), "prefs.theme.3");
         }
         addChildFlags_Widget(values, iClob(themes), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
         addChild_Widget(headings, iClob(makeHeading_Widget("Retain window size:")));
@@ -1010,8 +1027,8 @@ iWidget *makePreferences_Widget(void) {
                 { "Colorful Light", 0, 0, format_CStr("doctheme.%s.set arg:%d", mode, colorfulLight_GmDocumentTheme) },
                 { "Black", 0, 0, format_CStr("doctheme.%s.set arg:%d", mode, black_GmDocumentTheme) },
                 { "Gray", 0, 0, format_CStr("doctheme.%s.set arg:%d", mode, gray_GmDocumentTheme) },
-                { "Sepia", 0, 0, format_CStr("doctheme.%s.set arg:%d", mode, sepia_GmDocumentTheme) },
                 { "White", 0, 0, format_CStr("doctheme.%s.set arg:%d", mode, white_GmDocumentTheme) },
+                { "Sepia", 0, 0, format_CStr("doctheme.%s.set arg:%d", mode, sepia_GmDocumentTheme) },
                 { "High Contrast", 0, 0, format_CStr("doctheme.%s.set arg:%d", mode, highContrast_GmDocumentTheme) },
             };
             addChild_Widget(headings, iClob(makeHeading_Widget(isDark ? "Dark theme:" : "Light theme:")));
@@ -1020,9 +1037,6 @@ iWidget *makePreferences_Widget(void) {
                                              themes[0].label, themes, iElemCount(themes)))),
                          format_CStr("prefs.doctheme.%s", mode));
         }
-        //addChild_Widget(values, iClob(new_LabelWidget("Colorful", 0, 0, 0)));
-//        addChild_Widget(headings, iClob(makeHeading_Widget("Light theme:")));
-//        addChild_Widget(values, iClob(new_LabelWidget("White", 0, 0, 0)));
         addChild_Widget(headings, iClob(makeHeading_Widget("Saturation:")));
         iWidget *sats = new_Widget();
         /* Saturation levels. */ {
@@ -1078,6 +1092,11 @@ iWidget *makePreferences_Widget(void) {
         addChild_Widget(headings, iClob(makeHeading_Widget("HTTP proxy:")));
         setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.proxy.http");
     }
+    /* Keybindings. */ {
+        iBindingsWidget *bind = new_BindingsWidget();
+        setFlags_Widget(as_Widget(bind), borderTop_WidgetFlag, iTrue);
+        appendFramelessTabPage_(tabs, iClob(bind), "Bindings", '5', KMOD_PRIMARY);
+    }
     resizeToLargestPage_Widget(tabs);
     arrange_Widget(dlg);
     /* Set input field sizes. */ {
@@ -1087,7 +1106,7 @@ iWidget *makePreferences_Widget(void) {
     }
     iWidget *div = new_Widget(); {
         setFlags_Widget(div, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
-        addChild_Widget(div, iClob(new_LabelWidget("Dismiss", SDLK_ESCAPE, 0, "prefs.dismiss")));
+        addChild_Widget(div, iClob(newKeyMods_LabelWidget("Dismiss", SDLK_ESCAPE, 0, "prefs.dismiss")));
     }
     addChild_Widget(dlg, iClob(div));
     addAction_Widget(dlg, prevTab_KeyShortcut, "tabs.prev");
@@ -1101,7 +1120,7 @@ iWidget *makeBookmarkEditor_Widget(void) {
     iWidget *dlg = makeSheet_Widget("bmed");
     setId_Widget(addChildFlags_Widget(
                      dlg,
-                     iClob(new_LabelWidget(uiHeading_ColorEscape "EDIT BOOKMARK", 0, 0, NULL)),
+                     iClob(new_LabelWidget(uiHeading_ColorEscape "EDIT BOOKMARK", NULL)),
                      frameless_WidgetFlag),
                  "bmed.heading");
     iWidget *page = new_Widget();
@@ -1124,10 +1143,10 @@ iWidget *makeBookmarkEditor_Widget(void) {
     }
     iWidget *div = new_Widget(); {
         setFlags_Widget(div, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
-        addChild_Widget(div, iClob(new_LabelWidget("Cancel", SDLK_ESCAPE, 0, "cancel")));
+        addChild_Widget(div, iClob(newKeyMods_LabelWidget("Cancel", SDLK_ESCAPE, 0, "cancel")));
         addChild_Widget(
             div,
-            iClob(new_LabelWidget(
+            iClob(newKeyMods_LabelWidget(
                 uiTextCaution_ColorEscape "Save Bookmark", SDLK_RETURN, KMOD_PRIMARY, "bmed.accept")));
     }
     addChild_Widget(dlg, iClob(div));
@@ -1168,7 +1187,7 @@ iWidget *makeBookmarkCreation_Widget(const iString *url, const iString *title, i
     setId_Widget(
         addChildFlags_Widget(
             dlg,
-            iClob(new_LabelWidget(cstrCollect_String(newUnicodeN_String(&icon, 1)), 0, 0, NULL)),
+            iClob(new_LabelWidget(cstrCollect_String(newUnicodeN_String(&icon, 1)), NULL)),
             collapse_WidgetFlag | hidden_WidgetFlag | disabled_WidgetFlag),
         "bmed.icon");
     setCommandHandler_Widget(dlg, handleBookmarkCreationCommands_SidebarWidget_);
@@ -1179,14 +1198,14 @@ iWidget *makeIdentityCreation_Widget(void) {
     iWidget *dlg = makeSheet_Widget("ident");
     setId_Widget(addChildFlags_Widget(
                      dlg,
-                     iClob(new_LabelWidget(uiHeading_ColorEscape "NEW IDENTITY", 0, 0, NULL)),
+                     iClob(new_LabelWidget(uiHeading_ColorEscape "NEW IDENTITY", NULL)),
                      frameless_WidgetFlag),
                  "ident.heading");
     iWidget *page = new_Widget();
     addChildFlags_Widget(
         dlg,
         iClob(
-            new_LabelWidget("Creating a 2048-bit self-signed RSA certificate.", 0, 0, NULL)),
+            new_LabelWidget("Creating a 2048-bit self-signed RSA certificate.", NULL)),
         frameless_WidgetFlag);
     addChild_Widget(dlg, iClob(page));
     setFlags_Widget(page, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
@@ -1217,10 +1236,10 @@ iWidget *makeIdentityCreation_Widget(void) {
     }
     iWidget *div = new_Widget(); {
         setFlags_Widget(div, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
-        addChild_Widget(div, iClob(new_LabelWidget("Cancel", SDLK_ESCAPE, 0, "cancel")));
+        addChild_Widget(div, iClob(newKeyMods_LabelWidget("Cancel", SDLK_ESCAPE, 0, "cancel")));
         addChild_Widget(
             div,
-            iClob(new_LabelWidget(
+            iClob(newKeyMods_LabelWidget(
                 uiTextAction_ColorEscape "Create Identity", SDLK_RETURN, KMOD_PRIMARY, "ident.accept")));
     }
     addChild_Widget(dlg, iClob(div));

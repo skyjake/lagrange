@@ -22,33 +22,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
-/* Text label/button. */
-
 #include "widget.h"
 
-iDeclareWidgetClass(LabelWidget)
-iDeclareObjectConstructionArgs(LabelWidget, const char *label, const char *command)
-
-void    setAlignVisually_LabelWidget(iLabelWidget *, iBool alignVisual);
-void    setFont_LabelWidget         (iLabelWidget *, int fontId);
-void    setText_LabelWidget         (iLabelWidget *, const iString *text); /* resizes widget */
-void    setTextCStr_LabelWidget     (iLabelWidget *, const char *text);
-
-void    updateSize_LabelWidget      (iLabelWidget *);
-void    updateText_LabelWidget      (iLabelWidget *, const iString *text); /* not resized */
-void    updateTextCStr_LabelWidget  (iLabelWidget *, const char *text); /* not resized */
-
-const iString *label_LabelWidget    (const iLabelWidget *);
-const iString *command_LabelWidget  (const iLabelWidget *);
-
-iLabelWidget *newKeyMods_LabelWidget(const char *label, int key, int kmods, const char *command);
-iLabelWidget *newColor_LabelWidget  (const char *text, int color);
-
-iLocalDef iLabelWidget *newEmpty_LabelWidget(void) {
-    return new_LabelWidget("", NULL);
-}
-iLocalDef iLabelWidget *newIcon_LabelWidget(const char *label, int key, int kmods, const char *command) {
-    iLabelWidget *d = newKeyMods_LabelWidget(label, key, kmods, command);
-    setAlignVisually_LabelWidget(d, iTrue);
-    return d;
-}
+iDeclareWidgetClass(BindingsWidget)
+iDeclareObjectConstruction(BindingsWidget)

@@ -37,7 +37,7 @@ This is how to build Lagrange in a Unix-like environment. The required tools are
 
 To install to "/dest/path":
 
-1. `cmake {path_of_lagrange_sources} -DCMAKE_INSTALL_PREFIX=/dest/path`
+1. `cmake {path_of_lagrange_sources} -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/dest/path`
 2. `cmake --build . --target install`
 
 This will also install an XDG .desktop file for launching the app.
@@ -52,9 +52,9 @@ Also, SDL's trackpad scrolling behavior on macOS is not optimal for regular GUI 
 
 ### Compiling on Windows
 
-Windows builds require [MSYS2](https://www.msys2.org). In theory, [Clang](https://clang.llvm.org/docs/MSVCCompatibility.html) or GCC (on [MinGW](http://mingw.org)) could be set up natively on Windows for compiling everything, but the_Foundation still lacks native Win32 implementations for the Socket and Process classes and these are required by Lagrange.
+Windows builds require [MSYS2](https://www.msys2.org). In theory, [Clang](https://clang.llvm.org/docs/MSVCCompatibility.html) or GCC (on [MinGW](http://mingw.org)) could be set up natively on Windows for compiling everything, but the_Foundation still lacks Win32 implementations for the Socket and Process classes and these are required by Lagrange. [Cygwin](http://cygwin.org) is a possible alternative to MSYS2, although Cygwin builds have not been tested.
 
-You should use the SDL 2 library precompiled for native Windows (the MSVC variant) instead of the version from MSYS2 or MinGW. You can download a copy of the SDL binaries from https://libsdl.org/. To make configuration easier in your MSYS2 environment, consider writing a custom sdl2.pc file so `pkg-config` can automatically find the correct version of SDL. Below is an example of what your sdl2.pc might look like:
+You should use a version of the SDL 2 library that is compiled for native Windows (i.e., the MSVC variant) instead of the version from MSYS2 or MinGW. You can download a copy of the SDL binaries from [libsdl.org](https://libsdl.org/). To make configuration easier in your MSYS2 environment, consider writing a custom sdl2.pc file so `pkg-config` can automatically find the correct version of SDL. Below is an example of what your sdl2.pc might look like:
 
 ```
 prefix=/c/SDK/SDL2-2.0.12/

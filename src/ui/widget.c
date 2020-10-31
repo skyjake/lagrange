@@ -65,6 +65,10 @@ void destroyPending_Widget(void) {
     }
 }
 
+void releaseChildren_Widget(iWidget *d) {
+    iReleasePtr(&d->children);
+}
+
 iDefineObjectConstruction(Widget)
 
 void init_Widget(iWidget *d) {
@@ -80,7 +84,7 @@ void init_Widget(iWidget *d) {
 }
 
 void deinit_Widget(iWidget *d) {
-    iReleasePtr(&d->children);
+    releaseChildren_Widget(d);
     deinit_String(&d->id);
 }
 
@@ -191,14 +195,29 @@ static int widestChild_Widget_(const iWidget *d) {
 static void setWidth_Widget_(iWidget *d, int width) {
     iAssert(width >= 0);
     if (~d->flags & fixedWidth_WidgetFlag || d->flags & collapse_WidgetFlag) {
-        d->rect.size.x = width;
+        if (d->rect.size.x != width) {
+            d->rect.size.x = width;
+            if (class_Widget(d)->sizeChanged) {
+                const int oldHeight = d->rect.size.y;
+                class_Widget(d)->sizeChanged(d);
+                if (d->rect.size.y != oldHeight) {
+                    /* Widget updated its height. */
+                    arrange_Widget(d->parent);
+                }
+            }
+        }
     }
 }
 
 static void setHeight_Widget_(iWidget *d, int height) {
     iAssert(height >= 0);
     if (~d->flags & fixedHeight_WidgetFlag || d->flags & collapse_WidgetFlag) {
-        d->rect.size.y = height;
+        if (d->rect.size.y != height) {
+            d->rect.size.y = height;
+            if (class_Widget(d)->sizeChanged) {
+                class_Widget(d)->sizeChanged(d);
+            }
+        }
     }
 }
 
@@ -274,7 +293,7 @@ void arrange_Widget(iWidget *d) {
             iWidget *child = as_Widget(c.object);
             if (isCollapsed_Widget_(child)) {
                 if (d->flags & arrangeHorizontal_WidgetFlag) {
-                    setWidth_Widget_(child, 0);
+                    setWidth_Widget_(child, 0);                    
                 }
                 if (d->flags & arrangeVertical_WidgetFlag) {
                     setHeight_Widget_(child, 0);
@@ -580,6 +599,12 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
 
 void drawBackground_Widget(const iWidget *d) {
     if (d->flags & hidden_WidgetFlag) return;
+    if (flags_Widget(d) & borderTop_WidgetFlag) {
+        const iRect rect = bounds_Widget(d);
+        iPaint p;
+        init_Paint(&p);
+        drawHLine_Paint(&p, topLeft_Rect(rect), width_Rect(rect), uiBackgroundFramelessHover_ColorId);
+    }
     if (d->bgColor >= 0 || d->frameColor >= 0) {
         const iRect rect = bounds_Widget(d);
         iPaint p;

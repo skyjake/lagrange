@@ -41,6 +41,7 @@ iDeclareType(Widget)
 iBeginDeclareClass(Widget)
     iBool (*processEvent)   (iWidget *, const SDL_Event *);
     void  (*draw)           (const iWidget *);
+    void  (*sizeChanged)    (iWidget *); /* optional, defaults to NULL */
 iEndDeclareClass(Widget)
 
 enum iWidgetFlag {
@@ -85,6 +86,8 @@ enum iWidgetFlag {
 #define wasCollapsed_WidgetFlag             iBit64(32)
 #define centerHorizontal_WidgetFlag         iBit64(33)
 #define moveToParentRightEdge_WidgetFlag    iBit64(34)
+#define wrapText_WidgetFlag                 iBit64(35)
+#define borderTop_WidgetFlag                iBit64(36)
 
 enum iWidgetAddPos {
     back_WidgetAddPos,
@@ -131,8 +134,9 @@ iLocalDef const iWidget *constAs_Widget(const iAnyObject *d) {
     return (const iWidget *) d;
 }
 
-void    destroy_Widget      (iWidget *); /* widget removed and deleted later */
-void    destroyPending_Widget(void);
+void    destroy_Widget          (iWidget *); /* widget removed and deleted later */
+void    destroyPending_Widget   (void);
+void    releaseChildren_Widget  (iWidget *);
 
 const iString *id_Widget    (const iWidget *);
 int64_t flags_Widget        (const iWidget *);

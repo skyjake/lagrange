@@ -36,6 +36,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "../visited.h"
 #include "../gmcerts.h"
 #include "../gmutil.h"
+#include "../visited.h"
 #if defined (iPlatformMsys)
 #   include "../win32.h"
 #endif
@@ -251,6 +252,8 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
             if (equal_Command(cmd, "document.changed")) {
                 iInputWidget *url = findWidget_App("url");
                 const iString *urlStr = collect_String(suffix_Command(cmd, "url"));
+                visitUrl_Visited(visited_App(), urlStr);
+                postCommand_App("visited.changed"); /* sidebar will update */
                 setText_InputWidget(url, urlStr);
                 updateTextCStr_LabelWidget(reloadButton, reloadCStr_);
                 updateNavBarIdentity_(navBar);
@@ -336,6 +339,9 @@ static iBool handleSearchBarCommands_(iWidget *searchBar, const char *cmd) {
             }
             refresh_Widget(searchBar->parent);
         }
+        else if (isVisible_Widget(findWidget_App("sidebar"))) {
+            postCommand_App("sidebar.toggle");
+        }
         return iTrue;
     }
     return iFalse;
@@ -385,7 +391,7 @@ static void setupUserInterface_Window(iWindow *d) {
             addChildFlags_Widget(navBar, iClob(url), expand_WidgetFlag);
             /* Download progress indicator is inside the input field, but hidden normally. */
             setPadding_Widget(as_Widget(url),0, 0, gap_UI * 1, 0);
-            iLabelWidget *progress = new_LabelWidget(uiTextCaution_ColorEscape "00.000 MB", 0, 0, NULL);
+            iLabelWidget *progress = new_LabelWidget(uiTextCaution_ColorEscape "00.000 MB", NULL);
             setId_Widget(as_Widget(progress), "document.progress");
             setAlignVisually_LabelWidget(progress, iTrue);
             shrink_Rect(&as_Widget(progress)->rect, init_I2(0, gap_UI));
@@ -445,7 +451,7 @@ static void setupUserInterface_Window(iWindow *d) {
         setBackgroundColor_Widget(searchBar, uiBackground_ColorId);
         setCommandHandler_Widget(searchBar, handleSearchBarCommands_);
         addChildFlags_Widget(
-            searchBar, iClob(new_LabelWidget("\U0001f50d Text", 0, 0, NULL)), frameless_WidgetFlag);
+            searchBar, iClob(new_LabelWidget("\U0001f50d Text", NULL)), frameless_WidgetFlag);
         iInputWidget *input = new_InputWidget(0);
         setId_Widget(addChildFlags_Widget(searchBar, iClob(input), expand_WidgetFlag),
                      "find.input");
@@ -525,6 +531,7 @@ void init_Window(iWindow *d, iRect rect) {
     d->pendingCursor = NULL;
     d->isDrawFrozen = iTrue;
     d->isMouseInside = iTrue;
+    d->focusGainedAt = 0;
     uint32_t flags = 0;
 #if defined (iPlatformApple)
     SDL_SetHint(SDL_HINT_RENDER_DRIVER, shouldDefaultToMetalRenderer_MacOS() ? "metal" : "opengl");
@@ -593,6 +600,7 @@ void init_Window(iWindow *d, iRect rect) {
     setId_Widget(d->root, "root");
     init_Text(d->render);
     setupUserInterface_Window(d);
+    postCommand_App("bindings.changed"); /* update from bindings */
     updateRootSize_Window_(d);
 }
 
@@ -626,16 +634,21 @@ static iBool isMaximized_Window_(const iWindow *d) {
 
 static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
     switch (ev->event) {
-#if defined (LAGRANGE_ENABLE_WINDOWPOS_FIX)
         case SDL_WINDOWEVENT_EXPOSED:
+            /* Since we are manually controlling when to redraw the window, we are responsible
+               for ensuring that window contents get redrawn after expose events. Under certain
+               circumstances (e.g., under openbox), not doing this would mean that the window
+               is missing contents until other events trigger a refresh. */
+            postRefresh_App();
+#if defined (LAGRANGE_ENABLE_WINDOWPOS_FIX)
             if (d->initialPos.x >= 0) {
                 int bx, by;
                 SDL_GetWindowBordersSize(d->win, &by, &bx, NULL, NULL);
                 SDL_SetWindowPosition(d->win, d->initialPos.x + bx, d->initialPos.y + by);
                 d->initialPos = init1_I2(-1);
             }
-            return iFalse;
 #endif
+            return iFalse;
         case SDL_WINDOWEVENT_MOVED: {
             if (!isMaximized_Window_(d) && !d->isDrawFrozen) {
                 d->lastRect.pos = init_I2(ev->data1, ev->data2);
@@ -663,6 +676,12 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
             d->isMouseInside = iTrue;
             postCommand_App("window.mouse.entered");
             return iTrue;
+        case SDL_WINDOWEVENT_TAKE_FOCUS:
+            SDL_SetWindowInputFocus(d->win);
+            return iTrue;
+        case SDL_WINDOWEVENT_FOCUS_GAINED:
+            d->focusGainedAt = SDL_GetTicks();
+            return iFalse;
         default:
             break;
     }
@@ -693,6 +712,12 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
                 d->isDrawFrozen = iFalse;
                 postRefresh_App();
                 return iTrue;
+            }
+            if (event.type == SDL_KEYDOWN && SDL_GetTicks() - d->focusGainedAt < 10) {
+                /* Suspiciously close to when input focus was received. For example under openbox,
+                   closing xterm with Ctrl+D will cause the keydown event to "spill" over to us.
+                   As a workaround, ignore these events. */
+                return iFalse;
             }
             /* Map mouse pointer coordinate to our coordinate system. */
             if (event.type == SDL_MOUSEMOTION) {

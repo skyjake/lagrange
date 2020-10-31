@@ -237,6 +237,10 @@ static const struct {
         "Too Many Redirects",
         "You may be stuck in a redirection loop. The next redirected URL is below if you "
         "want to continue manually."} },
+    { tlsFailure_GmStatusCode,
+      { 0x1f5a7, /* networked computers */
+        "Network/TLS Failure",
+        "Failed to communicate with the host. Here is the error message:" } },
     { temporaryFailure_GmStatusCode,
       { 0x1f50c, /* electric plug */
         "Temporary Failure",

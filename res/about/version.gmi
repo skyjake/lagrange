@@ -6,6 +6,15 @@
 ```
 # Release notes
 
+## 0.7
+* Basic set of user-configurable key bindings.
+* Sidebar: Added a "New Identity" button and a link to "about:help" if there no identities.
+* Faster drawing of certain UI elements: site icon and current heading in the left margin, unfocused input fields, timestamp at the end of the page.
+* History is not updated until a network request finishes.
+* Improved opening connections when multiple IP addresses are found for a hostname.
+* Fixed handling of TLS/SSL errors and hostname lookup problems — an error page is shown.
+* Fixed an issue where window contents were not being updated immediately after the window gets exposed when using, e.g., openbox or dwm.
+
 ## 0.6
 * Added an indicator to visualize progress of network requests.
 * Added new color themes for page content: Colorful Light, Black, Gray, Sepia, High Contrast.

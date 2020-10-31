@@ -63,6 +63,7 @@ struct Impl_GmDocument {
     iString   url; /* for resolving relative links */
     iString   localHost;
     int       forceBreakWidth; /* force breaks on very long preformatted lines */
+    iBool     siteBannerEnabled;
     iInt2     size;
     iArray    layout; /* contents of source, laid out in document space */
     iPtrArray links;
@@ -295,7 +296,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     iRangecc         preAltText    = iNullRange;
     int              preFont       = preformatted_FontId;
     iBool            enableIndents = iFalse;
-    iBool            addSiteBanner = iTrue;
+    iBool            addSiteBanner = d->siteBannerEnabled;
     enum iGmLineType prevType      = text_GmLineType;
     if (d->format == plainText_GmDocumentFormat) {
         isPreformat = iTrue;
@@ -592,6 +593,7 @@ void init_GmDocument(iGmDocument *d) {
     init_String(&d->source);
     init_String(&d->url);
     init_String(&d->localHost);
+    d->siteBannerEnabled = iTrue;
     d->size = zero_I2();
     init_Array(&d->layout, sizeof(iGmRun));
     init_PtrArray(&d->links);
@@ -632,6 +634,7 @@ void reset_GmDocument(iGmDocument *d) {
     clear_String(&d->url);
     clear_String(&d->localHost);
     d->themeSeed = 0;
+    d->siteBannerEnabled = iTrue;
 }
 
 static void setDerivedThemeColors_(enum iGmDocumentTheme theme) {
@@ -1053,6 +1056,10 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
 
 void setFormat_GmDocument(iGmDocument *d, enum iGmDocumentFormat format) {
     d->format = format;
+}
+
+void setSiteBannerEnabled_GmDocument(iGmDocument *d, iBool siteBannerEnabled) {
+    d->siteBannerEnabled = siteBannerEnabled;
 }
 
 void setWidth_GmDocument(iGmDocument *d, int width, int forceBreakWidth) {

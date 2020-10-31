@@ -64,6 +64,8 @@ void    scrollOffset_ListWidget     (iListWidget *, int offset);
 void    updateVisible_ListWidget    (iListWidget *);
 void    updateMouseHover_ListWidget (iListWidget *);
 
+void                sort_ListWidget             (iListWidget *, int (*cmp)(const iListItem **item1, const iListItem **item2));
+
 iAnyObject *        item_ListWidget             (iListWidget *, size_t index);
 iAnyObject *        hoverItem_ListWidget        (iListWidget *);
 
@@ -72,5 +74,7 @@ int                 visCount_ListWidget         (const iListWidget *);
 size_t              itemIndex_ListWidget        (const iListWidget *, iInt2 pos);
 const iAnyObject *  constItem_ListWidget        (const iListWidget *, size_t index);
 const iAnyObject *  constHoverItem_ListWidget   (const iListWidget *);
+
+iLocalDef iBool isEmpty_ListWidget(const iListWidget *d) { return numItems_ListWidget(d) == 0; }
 
 iBool   isMouseDown_ListWidget      (const iListWidget *);

@@ -26,6 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "paint.h"
 #include "app.h"
 #include "util.h"
+#include "keys.h"
 
 iLocalDef iInt2 padding_(int flags) {
     return init_I2(flags & tight_WidgetFlag ? 3 * gap_UI / 2 : (3 * gap_UI), gap_UI);
@@ -43,8 +44,8 @@ struct Impl_LabelWidget {
 };
 
 iDefineObjectConstructionArgs(LabelWidget,
-                              (const char *label, int key, int kmods, const char *cmd),
-                              label, key, kmods, cmd)
+                              (const char *label, const char *cmd),
+                              label, cmd)
 
 static iBool checkModifiers_(int have, int req) {
     return keyMods_Sym(req) == keyMods_Sym(have);
@@ -60,10 +61,25 @@ static void trigger_LabelWidget_(const iLabelWidget *d) {
     }
 }
 
+static void updateKey_LabelWidget_(iLabelWidget *d) {
+    if (!isEmpty_String(&d->command)) {
+        const iBinding *bind = findCommand_Keys(cstr_String(&d->command));
+        if (bind) {
+            d->key   = bind->key;
+            d->kmods = bind->mods;
+        }
+    }
+}
+
 static iBool processEvent_LabelWidget_(iLabelWidget *d, const SDL_Event *ev) {
     iWidget *w = &d->widget;
     if (isCommand_UserEvent(ev, "metrics.changed")) {
         updateSize_LabelWidget(d);
+    }
+    else if (isCommand_UserEvent(ev, "bindings.changed")) {
+        /* Update the key used to trigger this label. */
+        updateKey_LabelWidget_(d);
+        return iFalse;
     }
     if (!isEmpty_String(&d->command)) {
         switch (processEvent_Click(&d->click, ev)) {
@@ -166,10 +182,10 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
 static void draw_LabelWidget_(const iLabelWidget *d) {
     const iWidget *w = constAs_Widget(d);
     draw_Widget(w);
-    const iBool isButton = d->click.button != 0;
-    const int   flags    = flags_Widget(w);
-    const iRect bounds   = bounds_Widget(w);
-    iRect       rect     = bounds;
+    const iBool   isButton = d->click.button != 0;
+    const int64_t flags    = flags_Widget(w);
+    const iRect   bounds   = bounds_Widget(w);
+    iRect         rect     = bounds;
     if (isButton) {
         shrink_Rect(&rect, divi_I2(gap2_UI, 4));
         adjustEdges_Rect(&rect, gap_UI / 8, 0, -gap_UI / 8, 0);
@@ -196,7 +212,12 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
         }
     }
     setClip_Paint(&p, rect);
-    if (flags & alignLeft_WidgetFlag) {
+    if (flags & wrapText_WidgetFlag) {
+        const iRect inner = innerBounds_Widget(w);
+        const int   wrap  = inner.size.x;
+        drawWrapRange_Text(d->font, topLeft_Rect(inner), wrap, fg, range_String(&d->label));
+    }
+    else if (flags & alignLeft_WidgetFlag) {
         draw_Text(d->font, add_I2(bounds.pos, padding_(flags)), fg, cstr_String(&d->label));
         if ((flags & drawKey_WidgetFlag) && d->key) {
             iString str;
@@ -224,6 +245,18 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
     unsetClip_Paint(&p);
 }
 
+static void sizeChanged_LabelWidget_(iLabelWidget *d) {
+    iWidget *w = as_Widget(d);
+    if (flags_Widget(w) & wrapText_WidgetFlag) {
+        if (flags_Widget(w) & fixedHeight_WidgetFlag) {
+            /* Calculate a new height based on the wrapping. */
+            w->rect.size.y = advanceWrapRange_Text(
+                                 d->font, innerBounds_Widget(w).size.x, range_String(&d->label))
+                                 .y;
+        }
+    }
+}
+
 void updateSize_LabelWidget(iLabelWidget *d) {
     iWidget *w = as_Widget(d);
     const int flags = flags_Widget(w);
@@ -235,7 +268,8 @@ void updateSize_LabelWidget(iLabelWidget *d) {
         size.x += 2 * gap_UI + measure_Text(uiShortcuts_FontId, cstr_String(&str)).x;
         deinit_String(&str);
     }
-    if (~flags & fixedWidth_WidgetFlag) {
+    /* Wrapped text implies that width must be defined by arrangement. */
+    if (!(flags & (fixedWidth_WidgetFlag | wrapText_WidgetFlag))) {
         w->rect.size.x = size.x;
     }
     if (~flags & fixedHeight_WidgetFlag) {
@@ -243,7 +277,7 @@ void updateSize_LabelWidget(iLabelWidget *d) {
     }
 }
 
-void init_LabelWidget(iLabelWidget *d, const char *label, int key, int kmods, const char *cmd) {
+void init_LabelWidget(iLabelWidget *d, const char *label, const char *cmd) {
     init_Widget(&d->widget);
     d->font = uiLabel_FontId;
     initCStr_String(&d->label, label);
@@ -253,12 +287,13 @@ void init_LabelWidget(iLabelWidget *d, const char *label, int key, int kmods, co
     else {
         init_String(&d->command);
     }
-    d->key = key;
-    d->kmods = kmods;
+    d->key   = 0;
+    d->kmods = 0;
     init_Click(&d->click, d, !isEmpty_String(&d->command) ? SDL_BUTTON_LEFT : 0);
     setFlags_Widget(&d->widget, hover_WidgetFlag, d->click.button != 0);
     d->alignVisual = iFalse;
     updateSize_LabelWidget(d);
+    updateKey_LabelWidget_(d);
 }
 
 void deinit_LabelWidget(iLabelWidget *d) {
@@ -303,8 +338,15 @@ const iString *command_LabelWidget(const iLabelWidget *d) {
     return &d->command;
 }
 
+iLabelWidget *newKeyMods_LabelWidget(const char *label, int key, int kmods, const char *command) {
+    iLabelWidget *d = new_LabelWidget(label, command);
+    d->key = key;
+    d->kmods = kmods;
+    return d;
+}
+
 iLabelWidget *newColor_LabelWidget(const char *text, int color) {
-    iLabelWidget *d = new_LabelWidget(format_CStr("%s%s", escape_Color(color), text), 0, 0, NULL);
+    iLabelWidget *d = new_LabelWidget(format_CStr("%s%s", escape_Color(color), text), NULL);
     setFlags_Widget(as_Widget(d), frameless_WidgetFlag, iTrue);
     return d;
 }
@@ -312,4 +354,5 @@ iLabelWidget *newColor_LabelWidget(const char *text, int color) {
 iBeginDefineSubclass(LabelWidget, Widget)
     .processEvent = (iAny *) processEvent_LabelWidget_,
     .draw         = (iAny *) draw_LabelWidget_,
+   .sizeChanged   = (iAny *) sizeChanged_LabelWidget_,
 iEndDefineSubclass(LabelWidget)

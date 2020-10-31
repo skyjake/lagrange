@@ -40,6 +40,8 @@ enum iGmStatusCode {
     failedToOpenFile_GmStatusCode,
     unknownStatusCode_GmStatusCode,
     invalidLocalResource_GmStatusCode,
+    tlsFailure_GmStatusCode,
+
     none_GmStatusCode                      = 0,
     /* general status code categories */
     categoryInput_GmStatusCode             = 1,

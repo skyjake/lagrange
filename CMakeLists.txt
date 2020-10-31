@@ -19,7 +19,7 @@
 cmake_minimum_required (VERSION 3.9)
 
 project (Lagrange
-    VERSION 0.6.0
+    VERSION 0.7.0
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
@@ -123,6 +123,8 @@ set (SOURCES
     src/audio/player.h
     src/audio/stb_vorbis.c
     # User interface:
+    src/ui/bindingswidget.c
+    src/ui/bindingswidget.h
     src/ui/color.c
     src/ui/color.h
     src/ui/command.c
@@ -135,6 +137,7 @@ set (SOURCES
     src/ui/listwidget.h
     src/ui/lookupwidget.c
     src/ui/lookupwidget.h
+    src/ui/keys.c
     src/ui/keys.h
     src/ui/metrics.c
     src/ui/metrics.h
