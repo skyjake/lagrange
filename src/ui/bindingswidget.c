@@ -107,6 +107,7 @@ void init_BindingsWidget(iBindingsWidget *d) {
     d->activePos = iInvalidPos;
     d->list = new_ListWidget();
     setItemHeight_ListWidget(d->list, lineHeight_Text(uiLabel_FontId) * 1.5f);
+    setPadding_Widget(as_Widget(d->list), 0, gap_UI, 0, gap_UI);
     addChild_Widget(w, iClob(d->list));
     updateItems_BindingsWidget_(d);
 }

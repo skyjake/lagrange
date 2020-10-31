@@ -35,6 +35,7 @@ Like Gemini, Lagrange has been designed with minimalism in mind. It depends on a
 * Scaling page content (50%...200%)
 * Scaling factor for the UI (for arbitrary monitor DPI)
 * Persistent app state — tabs and history are restored on next run
+* Configurable keybindings
 
 ## What is Gemini
 
@@ -171,7 +172,7 @@ The 🔃 button on the right side of the URL input field is the Reload/Stop butt
 
 ## Customization
 
-You can find a number of settings in Preferences to customize what the user interface and page contents look like.
+You can find a number of settings in Preferences to customize the user interface and page contents.
 
 ### Color themes
 
@@ -196,18 +197,32 @@ Page content color themes are selected on the "Colors" tab of Preferences. The "
 
 ### Page style
 
-Heading/body font.
+The fonts for headings and other text are selected separately. This way one can achieve a greater number of style variations. Also, headings that are in a different font are more visually distinct and thus easier for one's eyes to scan.
 
-There are two serif and two sans serif fonts. "Nunito" is a friendly rounded font. "Fira Sans" is bolder, narrower, and more angular.
+There are two sans-serif and two serif fonts:
 
-Line width: This setting determines the maximum width for text lines. "Window" disables the maximum limit and fits text lines to the full width of the window. Shorter lines are generally easier to read.
+* "Nunito" is a friendly rounded sans-serif font.
+* "Fira Sans" is a bolder, narrower, and more angular sans-serif font.
+* "Literata" is a heavy and serious serif font.
+* "EB Garamond" is a lighter and more decorative serif font. You may find it more readable on light backgrounds.
 
+Other style options:
+
+* Line width: This setting determines the maximum width for text lines. "Window" disables the maximum limit and fits text lines to the full width of the window. Shorter lines are generally easier to read.
+* Quote indicator: Quoted text is shown in an italic font. Additionally, you can select between a quotation mark icon and the traditional vertical line along the left edge of the quote.
 * Big 1st paragraph: When enabled, the leading paragraph on the page is shown in a slightly larger font.
-* Quote indicator
 
 Options for wide window sizes:
 
 * Site icon: If there is room on the left side of the page text, the site icon appears there along with the top level heading. This allows one to keep better track of the current reading position in long documents.
+
+### Bindings
+
+The Bindings tab lets you change which keys are bound to UI commands. Currently only basic page scrolling keybindings are available.
+
+Click on an item with the mouse and then press the new key combination that you want bound to it.
+
+To reset all bindings to their defaults, quit Lagrange and delete the "bindings.txt" file in Lagrange's runtime directory. This is a platform-dependent location; see below for more information (under "Runtime files").
 
 # OS integration
 
@@ -245,6 +260,7 @@ Lagrange stores user-specific persistent files in one of the following locations
 Other Unix : ~/.config/lagrange/
 ```
 
+* bindings.txt
 * bookmarks.txt
 * idents.binary and idents/
 * prefs.cfg
@@ -253,4 +269,5 @@ Other Unix : ~/.config/lagrange/
 * visited.txt
 
 # Open source licenses
+
 => about:license
