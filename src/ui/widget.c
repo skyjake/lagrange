@@ -599,6 +599,12 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
 
 void drawBackground_Widget(const iWidget *d) {
     if (d->flags & hidden_WidgetFlag) return;
+    if (flags_Widget(d) & borderTop_WidgetFlag) {
+        const iRect rect = bounds_Widget(d);
+        iPaint p;
+        init_Paint(&p);
+        drawHLine_Paint(&p, topLeft_Rect(rect), width_Rect(rect), uiBackgroundFramelessHover_ColorId);
+    }
     if (d->bgColor >= 0 || d->frameColor >= 0) {
         const iRect rect = bounds_Widget(d);
         iPaint p;

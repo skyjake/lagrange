@@ -87,6 +87,7 @@ enum iWidgetFlag {
 #define centerHorizontal_WidgetFlag         iBit64(33)
 #define moveToParentRightEdge_WidgetFlag    iBit64(34)
 #define wrapText_WidgetFlag                 iBit64(35)
+#define borderTop_WidgetFlag                iBit64(36)
 
 enum iWidgetAddPos {
     back_WidgetAddPos,

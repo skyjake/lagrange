@@ -924,7 +924,7 @@ static iWidget *appendTwoColumnPage_(iWidget *tabs, const char *title, int short
                                      iWidget **values) {
     iWidget *page = new_Widget();
     setFlags_Widget(page, arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag |
-                    resizeHeightOfChildren_WidgetFlag, iTrue);
+                    resizeHeightOfChildren_WidgetFlag | borderTop_WidgetFlag, iTrue);
     addChildFlags_Widget(page, iClob(new_Widget()), expand_WidgetFlag);
     iWidget *columns = new_Widget();
     addChildFlags_Widget(page, iClob(columns), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
@@ -934,6 +934,10 @@ static iWidget *appendTwoColumnPage_(iWidget *tabs, const char *title, int short
         columns, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
     addChildFlags_Widget(page, iClob(new_Widget()), expand_WidgetFlag);
     appendTabPage_Widget(tabs, page, title, shortcut, shortcut ? KMOD_PRIMARY : 0);
+    setFlags_Widget(
+        (iWidget *) back_ObjectList(children_Widget(findChild_Widget(tabs, "tabs.buttons"))),
+        frameless_WidgetFlag,
+        iTrue);
     return page;
 }
 
