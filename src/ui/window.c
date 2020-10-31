@@ -339,6 +339,9 @@ static iBool handleSearchBarCommands_(iWidget *searchBar, const char *cmd) {
             }
             refresh_Widget(searchBar->parent);
         }
+        else if (isVisible_Widget(findWidget_App("sidebar"))) {
+            postCommand_App("sidebar.toggle");
+        }
         return iTrue;
     }
     return iFalse;
