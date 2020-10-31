@@ -258,7 +258,6 @@ static void redrawHoverItem_ListWidget_(iListWidget *d) {
 }
 
 static void sizeChanged_ListWidget_(iListWidget *d) {
-    printf("ListWidget %p size changed: %d x %d\n", d, d->widget.rect.size.x, d->widget.rect.size.y); fflush(stdout);
     updateVisible_ListWidget(d);
     invalidate_ListWidget(d);
 }
