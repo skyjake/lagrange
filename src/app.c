@@ -430,6 +430,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
 static void deinit_App(iApp *d) {
     saveState_App_(d);
     save_Keys(dataDir_App_);
+    deinit_Keys();
     savePrefs_App_(d);
     deinit_Prefs(&d->prefs);
     save_Bookmarks(d->bookmarks, dataDir_App_);

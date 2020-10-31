@@ -120,6 +120,9 @@ void updateVisible_ListWidget(iListWidget *d) {
     const int   contentSize = size_PtrArray(&d->items) * d->itemHeight;
     const iRect bounds      = innerBounds_Widget(as_Widget(d));
     const iBool wasVisible  = isVisible_Widget(d->scroll);
+    if (area_Rect(bounds) == 0) {
+        return;
+    }
     setRange_ScrollWidget(d->scroll, (iRangei){ 0, scrollMax_ListWidget_(d) });
     setThumb_ScrollWidget(d->scroll,
                           d->scrollY,
@@ -245,9 +248,19 @@ void updateMouseHover_ListWidget(iListWidget *d) {
     setHoverItem_ListWidget_(d, itemIndex_ListWidget(d, mouse));
 }
 
+void sort_ListWidget(iListWidget *d, int (*cmp)(const iListItem **item1, const iListItem **item2)) {
+    sort_Array(&d->items, (iSortedArrayCompareElemFunc) cmp);
+}
+
 static void redrawHoverItem_ListWidget_(iListWidget *d) {
     insert_IntSet(&d->invalidItems, d->hoverItem);
     refresh_Widget(as_Widget(d));
+}
+
+static void sizeChanged_ListWidget_(iListWidget *d) {
+    printf("ListWidget %p size changed: %d x %d\n", d, d->widget.rect.size.x, d->widget.rect.size.y); fflush(stdout);
+    updateVisible_ListWidget(d);
+    invalidate_ListWidget(d);
 }
 
 static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
@@ -391,4 +404,5 @@ iBool isMouseDown_ListWidget(const iListWidget *d) {
 iBeginDefineSubclass(ListWidget, Widget)
     .processEvent = (iAny *) processEvent_ListWidget_,
     .draw         = (iAny *) draw_ListWidget_,
+    .sizeChanged  = (iAny *) sizeChanged_ListWidget_,
 iEndDefineSubclass(ListWidget)

@@ -64,6 +64,8 @@ void    scrollOffset_ListWidget     (iListWidget *, int offset);
 void    updateVisible_ListWidget    (iListWidget *);
 void    updateMouseHover_ListWidget (iListWidget *);
 
+void                sort_ListWidget             (iListWidget *, int (*cmp)(const iListItem **item1, const iListItem **item2));
+
 iAnyObject *        item_ListWidget             (iListWidget *, size_t index);
 iAnyObject *        hoverItem_ListWidget        (iListWidget *);
 

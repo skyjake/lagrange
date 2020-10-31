@@ -23,6 +23,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #pragma once
 
 #include <the_Foundation/string.h>
+#include <the_Foundation/ptrarray.h>
 #include <SDL_events.h>
 
 #if defined (iPlatformApple)
@@ -46,11 +47,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 iDeclareType(Binding)
 
 struct Impl_Binding {
+    int id;
     int key;
     int mods;
     iString command;
     iString label;
 };
+
+void            setKey_Binding      (int id, int key, int mods);
+
+/*----------------------------------------------------------------------------------------------*/
 
 void            init_Keys           (void);
 void            deinit_Keys         (void);
@@ -58,11 +64,15 @@ void            deinit_Keys         (void);
 void            load_Keys           (const char *saveDir);
 void            save_Keys           (const char *saveDir);
 
-void            bind_Keys           (const char *command, int key, int mods);
-void            setLabel_Keys       (const char *command, const char *label);
+void            bind_Keys           (int id, const char *command, int key, int mods);
+void            setLabel_Keys       (int id, const char *label);
+
+iLocalDef void bindLabel_Keys(int id, const char *command, int key, int mods, const char *label) {
+    bind_Keys(id, command, key, mods);
+    setLabel_Keys(id, label);
+}
+
 const iBinding *findCommand_Keys    (const char *command);
 
-//const iString * label_Keys          (const char *command);
-//const char *    shortcutLabel_Keys  (const char *command);
-
 iBool           processEvent_Keys   (const SDL_Event *);
+const iPtrArray *list_Keys          (void);

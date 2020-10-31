@@ -123,6 +123,8 @@ set (SOURCES
     src/audio/player.h
     src/audio/stb_vorbis.c
     # User interface:
+    src/ui/bindingswidget.c
+    src/ui/bindingswidget.h
     src/ui/color.c
     src/ui/color.h
     src/ui/command.c

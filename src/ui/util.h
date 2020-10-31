@@ -48,6 +48,7 @@ iLocalDef iBool isResize_UserEvent(const SDL_Event *d) {
 #   define KMOD_SECONDARY   KMOD_GUI
 #endif
 
+iBool       isMod_Sym           (int key);
 int         keyMods_Sym         (int kmods); /* shift, alt, control, or gui */
 void        toString_Sym        (int key, int kmods, iString *str);
 

@@ -29,6 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "gmutil.h"
 #include "labelwidget.h"
 #include "inputwidget.h"
+#include "bindingswidget.h"
 #include "keys.h"
 #include "widget.h"
 #include "text.h"
@@ -103,6 +104,11 @@ void toString_Sym(int key, int kmods, iString *str) {
     else {
         appendCStr_String(str, SDL_GetKeyName(key));
     }
+}
+
+iBool isMod_Sym(int key) {
+    return key == SDLK_LALT || key == SDLK_RALT || key == SDLK_LCTRL || key == SDLK_RCTRL ||
+           key == SDLK_LGUI || key == SDLK_RGUI || key == SDLK_LSHIFT || key == SDLK_RSHIFT;
 }
 
 int keyMods_Sym(int kmods) {
@@ -920,12 +926,22 @@ iWidget *makeToggle_Widget(const char *id) {
     return toggle;
 }
 
+static void appendFramelessTabPage_(iWidget *tabs, iWidget *page, const char *title, int shortcut,
+                                    int kmods) {
+    appendTabPage_Widget(tabs, page, title, shortcut, kmods);
+    setFlags_Widget(
+        (iWidget *) back_ObjectList(children_Widget(findChild_Widget(tabs, "tabs.buttons"))),
+        frameless_WidgetFlag,
+        iTrue);
+}
+
 static iWidget *appendTwoColumnPage_(iWidget *tabs, const char *title, int shortcut, iWidget **headings,
                                      iWidget **values) {
     iWidget *page = new_Widget();
     setFlags_Widget(page, arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag |
                     resizeHeightOfChildren_WidgetFlag | borderTop_WidgetFlag, iTrue);
     addChildFlags_Widget(page, iClob(new_Widget()), expand_WidgetFlag);
+    setPadding_Widget(page, 0, gap_UI, 0, gap_UI);
     iWidget *columns = new_Widget();
     addChildFlags_Widget(page, iClob(columns), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
     *headings = addChildFlags_Widget(
@@ -933,11 +949,7 @@ static iWidget *appendTwoColumnPage_(iWidget *tabs, const char *title, int short
     *values = addChildFlags_Widget(
         columns, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
     addChildFlags_Widget(page, iClob(new_Widget()), expand_WidgetFlag);
-    appendTabPage_Widget(tabs, page, title, shortcut, shortcut ? KMOD_PRIMARY : 0);
-    setFlags_Widget(
-        (iWidget *) back_ObjectList(children_Widget(findChild_Widget(tabs, "tabs.buttons"))),
-        frameless_WidgetFlag,
-        iTrue);
+    appendFramelessTabPage_(tabs, page, title, shortcut, shortcut ? KMOD_PRIMARY : 0);
     return page;
 }
 
@@ -1079,6 +1091,11 @@ iWidget *makePreferences_Widget(void) {
         setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.proxy.gopher");
         addChild_Widget(headings, iClob(makeHeading_Widget("HTTP proxy:")));
         setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.proxy.http");
+    }
+    /* Keybindings. */ {
+        iBindingsWidget *bind = new_BindingsWidget();
+        setFlags_Widget(as_Widget(bind), borderTop_WidgetFlag, iTrue);
+        appendFramelessTabPage_(tabs, iClob(bind), "Bindings", '5', KMOD_PRIMARY);
     }
     resizeToLargestPage_Widget(tabs);
     arrange_Widget(dlg);

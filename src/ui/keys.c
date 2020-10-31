@@ -24,12 +24,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "util.h"
 #include "app.h"
 
-#include <the_Foundation/sortedarray.h>
+#include <the_Foundation/ptrset.h>
 
 iDeclareType(Keys)
 
-static int cmp_Binding_(const void *a, const void *b) {
-    const iBinding *d = a, *other = b;
+static int cmpPtr_Binding_(const void *a, const void *b) {
+    const iBinding *d = *(const void **) a, *other = *(const void **) b;
     const int cmp = iCmp(d->key, other->key);
     if (cmp == 0) {
         return iCmp(d->mods, other->mods);
@@ -37,14 +37,17 @@ static int cmp_Binding_(const void *a, const void *b) {
     return cmp;
 }
 
+/*----------------------------------------------------------------------------------------------*/
+
 struct Impl_Keys {
-    iSortedArray bindings;
+    iArray  bindings;
+    iPtrSet lookup; /* quick key/mods lookup */
 };
 
 static iKeys keys_;
 
 static void clear_Keys_(iKeys *d) {
-    iForEach(Array, i, &d->bindings.values) {
+    iForEach(Array, i, &d->bindings) {
         iBinding *bind = i.value;
         deinit_String(&bind->command);
         deinit_String(&bind->label);
@@ -52,27 +55,41 @@ static void clear_Keys_(iKeys *d) {
 }
 
 static void bindDefaults_(void) {
-    bind_Keys("scroll.top", SDLK_HOME, 0);
-    bind_Keys("scroll.bottom", SDLK_END, 0);
-    bind_Keys("scroll.step arg:-1", SDLK_UP, 0);
-    bind_Keys("scroll.step arg:1", SDLK_DOWN, 0);
-    bind_Keys("scroll.page arg:-1", SDLK_PAGEUP, 0);
-    bind_Keys("scroll.page arg:1", SDLK_PAGEDOWN, 0);
-    bind_Keys("scroll.page arg:-1", SDLK_SPACE, KMOD_SHIFT);
-    bind_Keys("scroll.page arg:1", SDLK_SPACE, 0);
+    /* TODO: This indirection could be used for localization, although all UI strings
+       would need to be similarly handled. */
+    bindLabel_Keys(1, "scroll.top", SDLK_HOME, 0, "Jump to top");
+    bindLabel_Keys(2, "scroll.bottom", SDLK_END, 0, "Jump to bottom");
+    bindLabel_Keys(10, "scroll.step arg:-1", SDLK_UP, 0, "Scroll up");
+    bindLabel_Keys(11, "scroll.step arg:1", SDLK_DOWN, 0, "Scroll down");
+    bindLabel_Keys(20, "scroll.page arg:-1", SDLK_PAGEUP, 0, "Scroll up half a page");
+    bindLabel_Keys(21, "scroll.page arg:1", SDLK_PAGEDOWN, 0, "Scroll down half a page");
+    /* The following cannot currently be changed (built-in duplicates). */
+    bind_Keys(1000, "scroll.page arg:-1", SDLK_SPACE, KMOD_SHIFT);
+    bind_Keys(1001, "scroll.page arg:1", SDLK_SPACE, 0);
 }
 
 static iBinding *find_Keys_(iKeys *d, int key, int mods) {
     size_t pos;
-    if (locate_SortedArray(&d->bindings, &(iBinding){ .key = key, .mods = mods }, &pos)) {
-        return at_SortedArray(&d->bindings, pos);
+    const iBinding elem = { .key = key, .mods = mods };
+    if (locate_PtrSet(&d->lookup, &elem, &pos)) {
+        return at_PtrSet(&d->lookup, pos);
+    }
+    return NULL;
+}
+
+static iBinding *findId_Keys_(iKeys *d, int id) {
+    iForEach(Array, i, &d->bindings) {
+        iBinding *bind = i.value;
+        if (bind->id == id) {
+            return bind;
+        }
     }
     return NULL;
 }
 
 static iBinding *findCommand_Keys_(iKeys *d, const char *command) {
     /* Note: O(n) */
-    iForEach(Array, i, &d->bindings.values) {
+    iForEach(Array, i, &d->bindings) {
         iBinding *bind = i.value;
         if (!cmp_String(&bind->command, command)) {
             return bind;
@@ -81,18 +98,37 @@ static iBinding *findCommand_Keys_(iKeys *d, const char *command) {
     return NULL;
 }
 
+static void updateLookup_Keys_(iKeys *d) {
+    clear_PtrSet(&d->lookup);
+    iConstForEach(Array, i, &d->bindings) {
+        insert_PtrSet(&d->lookup, i.value);
+    }
+}
+
+void setKey_Binding(int id, int key, int mods) {
+    iBinding *bind = findId_Keys_(&keys_, id);
+    if (bind) {
+        bind->key = key;
+        bind->mods = mods;
+        updateLookup_Keys_(&keys_);
+    }
+}
+
 /*----------------------------------------------------------------------------------------------*/
 
 void init_Keys(void) {
     iKeys *d = &keys_;
-    init_SortedArray(&d->bindings, sizeof(iBinding), cmp_Binding_);
+    init_Array(&d->bindings, sizeof(iBinding));
+    initCmp_PtrSet(&d->lookup, cmpPtr_Binding_);
     bindDefaults_();
+    updateLookup_Keys_(d);
 }
 
 void deinit_Keys(void) {
     iKeys *d = &keys_;
     clear_Keys_(d);
-    deinit_SortedArray(&d->bindings);
+    deinit_PtrSet(&d->lookup);
+    deinit_Array(&d->bindings);
 }
 
 void load_Keys(const char *saveDir) {
@@ -103,34 +139,42 @@ void save_Keys(const char *saveDir) {
 
 }
 
-void bind_Keys(const char *command, int key, int mods) {
+void bind_Keys(int id, const char *command, int key, int mods) {
     iKeys *d = &keys_;
-    iBinding *bind = find_Keys_(d, key, mods);
-    if (bind) {
-        setCStr_String(&bind->command, command);
+    iBinding *bind = findId_Keys_(d, id);
+    if (!bind) {
+        iBinding elem = { .id = id, .key = key, .mods = mods };
+        initCStr_String(&elem.command, command);
+        init_String(&elem.label);
+        pushBack_Array(&d->bindings, &elem);
     }
     else {
-        iBinding bind;
-        bind.key = key;
-        bind.mods = mods;
-        initCStr_String(&bind.command, command);
-        init_String(&bind.label);
-        insert_SortedArray(&d->bindings, &bind);
+        setCStr_String(&bind->command, command);
+        bind->key  = key;
+        bind->mods = mods;
     }
 }
 
-void setLabel_Keys(const char *command, const char *label) {
-    iBinding *bind = findCommand_Keys_(&keys_, command);
+void setLabel_Keys(int id, const char *label) {
+    iBinding *bind = findId_Keys_(&keys_, id);
     if (bind) {
         setCStr_String(&bind->label, label);
     }
 }
 
-//const iString *label_Keys(const char *command) {
-
-//}
-
-//const char *shortcutLabel_Keys(const char *command) {}
+#if 0
+const iString *label_Keys(const char *command) {
+    iKeys *d = &keys_;
+    /* TODO: A hash wouldn't hurt here. */
+    iConstForEach(PtrSet, i, &d->bindings) {
+        const iBinding *bind = *i.value;
+        if (!cmp_String(&bind->command, command) && !isEmpty_String(&bind->label)) {
+            return &bind->label;
+        }
+    }
+    return collectNew_String();
+}
+#endif
 
 iBool processEvent_Keys(const SDL_Event *ev) {
     iKeys *d = &keys_;
@@ -146,4 +190,13 @@ iBool processEvent_Keys(const SDL_Event *ev) {
 
 const iBinding *findCommand_Keys(const char *command) {
     return findCommand_Keys_(&keys_, command);
+}
+
+const iPtrArray *list_Keys(void) {
+    iKeys *d = &keys_;
+    iPtrArray *list = collectNew_PtrArray();
+    iConstForEach(Array, i, &d->bindings) {
+        pushBack_PtrArray(list, i.value);
+    }
+    return list;
 }
