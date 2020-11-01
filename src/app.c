@@ -74,7 +74,7 @@ static const char *dataDir_App_ = "~/Library/Application Support/fi.skyjake.Lagr
 #define EMB_BIN "../resources.binary"
 static const char *dataDir_App_ = "~/AppData/Roaming/fi.skyjake.Lagrange";
 #endif
-#if defined (iPlatformLinux)
+#if defined (iPlatformLinux) || defined (iPlatformOther)
 #define EMB_BIN  "../../share/lagrange/resources.binary"
 static const char *dataDir_App_ = "~/.config/lagrange";
 #endif
@@ -1221,7 +1221,7 @@ void openInDefaultBrowser_App(const iString *url) {
     setArguments_Process(proc,
 #if defined (iPlatformApple)
                          iClob(newStringsCStr_StringList("/usr/bin/open", cstr_String(url), NULL))
-#elif defined (iPlatformLinux)
+#elif defined (iPlatformLinux) || defined (iPlatformOther)
                          iClob(newStringsCStr_StringList("/usr/bin/x-www-browser", cstr_String(url), NULL))
 #elif defined (iPlatformMsys)
         iClob(newStringsCStr_StringList(
