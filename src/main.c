@@ -59,9 +59,11 @@ int main(int argc, char **argv) {
         return -1;
     }
     run_App(argc, argv);
+    iRecycle();
     SDL_Quit();
 #if defined (LAGRANGE_ENABLE_MPG123)
     mpg123_exit();
 #endif
+    deinit_Foundation();
     return 0;
 }
