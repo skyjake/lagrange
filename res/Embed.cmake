@@ -3,8 +3,16 @@
 # License: BSD 2-Clause
 
 option (ENABLE_RESOURCE_EMBED "Embed resources inside the executable" OFF)
-# Note: If disabled, the Unix "cat" tool is required for concatenating
-# the resources into a single "resources.binary" file.
+
+# Build "bincat" for concatenating files.
+if (NOT ENABLE_RESOURCE_EMBED)
+    message (STATUS "Compiling bincat for merging resource files...")
+    set (_catDir ${CMAKE_BINARY_DIR}/res)
+    execute_process (COMMAND ${CMAKE_COMMAND} -E make_directory ${_catDir})
+    execute_process (COMMAND ${CMAKE_COMMAND} ${CMAKE_SOURCE_DIR}/res WORKING_DIRECTORY ${_catDir})
+    execute_process (COMMAND ${CMAKE_COMMAND} --build . WORKING_DIRECTORY ${_catDir})
+    set (BINCAT_COMMAND ${_catDir}/bincat)
+endif ()
 
 function (embed_getname output fn)
     get_filename_component (name ${fn} NAME_WE)
@@ -48,13 +56,6 @@ const iBlock ${name} = { &data_${name}_ };
     file (APPEND ${fnHeader} "${header}")
 endfunction (embed_write)
 
-function (embed_filesize path sizeVar)
-    file (READ ${path} data HEX)
-    string (LENGTH ${data} fsize)
-    math (EXPR fsize "${fsize}/2")
-    set (${sizeVar} ${fsize} PARENT_SCOPE)
-endfunction (embed_filesize)
-
 function (embed_make)
     set (EMB_H ${CMAKE_CURRENT_BINARY_DIR}/embedded.h)
     set (EMB_C ${CMAKE_CURRENT_BINARY_DIR}/embedded.c)
@@ -88,15 +89,17 @@ function (embed_make)
             # Collect resources in a single binary file.
             set (EMB_BIN ${CMAKE_CURRENT_BINARY_DIR}/resources.binary)
             file (REMOVE ${EMB_BIN})
-            execute_process (COMMAND cat ${ARGV} OUTPUT_FILE ${EMB_BIN}
-                WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+            list (LENGTH ARGV fileCount)            
+            execute_process (COMMAND ${BINCAT_COMMAND} ${EMB_BIN} ${ARGV}
+                WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+                OUTPUT_VARIABLE fileSizes
+            )
             set (offsets)
             set (fpos 0)
-            foreach (fn ${ARGV})
-                embed_filesize (${CMAKE_SOURCE_DIR}/${fn} fileSize)
+            foreach (fileSize ${fileSizes})
                 list (APPEND offsets "${fpos}")
                 math (EXPR fpos "${fpos} + ${fileSize}")
-            endforeach (fn)
+            endforeach (fileSize)
             file (WRITE ${EMB_H} "#include <the_Foundation/block.h>\n
 #define iHaveLoadEmbed 1
 iBool load_Embed(const char *path);\n\n")
@@ -116,7 +119,7 @@ static const iEmbedChunk chunks_Embed_[] = {
 ]])
             set (index 0)
             foreach (fn ${ARGV})
-                embed_filesize (${CMAKE_SOURCE_DIR}/${fn} fileSize)
+                list (GET fileSizes ${index} fileSize)
                 list (GET offsets ${index} fpos)
                 file (APPEND ${EMB_C} "    { ${fpos}, ${fileSize} },\n")
                 math (EXPR index "${index} + 1")

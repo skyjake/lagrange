@@ -14,7 +14,6 @@
 #   https://libsdl.org/). To make configuration easier, consider writing
 #   for your personal use a pkg-config sdl2.pc file that uses the Windows
 #   version of the library.
-# - `cat` is relied upon for merging all the resource files together.
 
 cmake_minimum_required (VERSION 3.9)
 
@@ -33,7 +32,7 @@ option (ENABLE_RESOURCE_EMBED   "Embed resources inside the executable" OFF)
 option (ENABLE_WINDOWPOS_FIX    "Set position after showing window (workaround for SDL bug)" OFF)
 
 include (BuildType.cmake)
-include (Embed.cmake)
+include (res/Embed.cmake)
 if (NOT EXISTS ${CMAKE_SOURCE_DIR}/lib/the_Foundation/CMakeLists.txt)
     set (INSTALL_THE_FOUNDATION YES)
     find_package (the_Foundation REQUIRED)
