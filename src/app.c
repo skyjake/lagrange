@@ -1222,7 +1222,7 @@ void openInDefaultBrowser_App(const iString *url) {
 #if defined (iPlatformApple)
                          iClob(newStringsCStr_StringList("/usr/bin/open", cstr_String(url), NULL))
 #elif defined (iPlatformLinux) || defined (iPlatformOther)
-                         iClob(newStringsCStr_StringList("/usr/bin/x-www-browser", cstr_String(url), NULL))
+                         iClob(newStringsCStr_StringList("/usr/bin/xdg-open", cstr_String(url), NULL))
 #elif defined (iPlatformMsys)
         iClob(newStringsCStr_StringList(
             concatPath_CStr(cstr_String(execPath_App()), "../urlopen.bat"),
