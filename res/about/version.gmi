@@ -6,6 +6,13 @@
 ```
 # Release notes
 
+## 0.7.1
+* Fixed build on OpenBSD.
+* Fixed a potential crash at app shutdown.
+* Fixed a potential crash when a thread exits.
+* Fixed a potential lockup when a thread exits.
+* Linux/Unix: Open "mailto:" links with xdg-open instead of the web browser.
+
 ## 0.7
 * Basic set of user-configurable key bindings.
 * Sidebar: Added a "New Identity" button and a link to "about:help" if there are no identities.
