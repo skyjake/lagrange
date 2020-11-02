@@ -444,6 +444,7 @@ static void deinit_App(iApp *d) {
     deinit_CommandLine(&d->args);
     iRelease(d->launchCommands);
     delete_String(d->execPath);
+    iRecycle();
 }
 
 const iString *execPath_App(void) {

@@ -605,6 +605,7 @@ void init_Window(iWindow *d, iRect rect) {
 }
 
 void deinit_Window(iWindow *d) {
+    iRecycle();
     if (theWindow_ == d) {
         theWindow_ = NULL;
     }
