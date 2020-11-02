@@ -8,6 +8,7 @@
 
 ## 0.7.1
 * Fixed build on OpenBSD.
+* Fixed build with LibreSSL.
 * Fixed a potential crash at app shutdown.
 * Fixed a potential crash when a thread exits.
 * Fixed a potential lockup when a thread exits.
