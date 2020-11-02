@@ -9,7 +9,9 @@ if (NOT ENABLE_RESOURCE_EMBED)
     message (STATUS "Compiling bincat for merging resource files...")
     set (_catDir ${CMAKE_BINARY_DIR}/res)
     execute_process (COMMAND ${CMAKE_COMMAND} -E make_directory ${_catDir})
-    execute_process (COMMAND ${CMAKE_COMMAND} ${CMAKE_SOURCE_DIR}/res WORKING_DIRECTORY ${_catDir})
+    execute_process (COMMAND ${CMAKE_COMMAND} ${CMAKE_SOURCE_DIR}/res -DCMAKE_BUILD_TYPE=MinSizeRel
+        WORKING_DIRECTORY ${_catDir}
+    )
     execute_process (COMMAND ${CMAKE_COMMAND} --build . WORKING_DIRECTORY ${_catDir})
     set (BINCAT_COMMAND ${_catDir}/bincat)
 endif ()
