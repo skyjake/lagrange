@@ -1796,9 +1796,13 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 const iGmRun *run = i.ptr;
                 if (run->flags & decoration_GmRunFlag &&
                     visibleLinkOrdinal_DocumentWidget_(d, run->linkId) == ord) {
+                    const int kmods = keyMods_Sym(SDL_GetModState());
                     postCommandf_App("open newtab:%d url:%s",
-                                     (SDL_GetModState() & KMOD_PRIMARY) != 0,
-                                     cstr_String(linkUrl_GmDocument(d->doc, run->linkId)));
+                                     ((kmods & KMOD_PRIMARY) && (kmods & KMOD_SHIFT)) ? 1
+                                     : (kmods & KMOD_PRIMARY)                         ? 2
+                                                                                      : 0,
+                                     cstr_String(absoluteUrl_String(
+                                     d->mod.url, linkUrl_GmDocument(d->doc, run->linkId))));
                     return iTrue;
                 }
             }
