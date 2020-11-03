@@ -55,81 +55,40 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <ctype.h>
 #include <errno.h>
 
-iDeclareClass(MediaRequest)
-
-struct Impl_MediaRequest {
-    iObject          object;
-    iDocumentWidget *doc;
-    iGmLinkId        linkId;
-    iGmRequest *     req;
-};
-
-static void updated_MediaRequest_(iAnyObject *obj) {
-    iMediaRequest *d = obj;
-    postCommandf_App("media.updated link:%u request:%p", d->linkId, d);
-}
-
-static void finished_MediaRequest_(iAnyObject *obj) {
-    iMediaRequest *d = obj;
-    postCommandf_App("media.finished link:%u request:%p", d->linkId, d);
-}
-
-void init_MediaRequest(iMediaRequest *d, iDocumentWidget *doc, iGmLinkId linkId, const iString *url) {
-    d->doc    = doc;
-    d->linkId = linkId;
-    d->req    = new_GmRequest(certs_App());
-    setUrl_GmRequest(d->req, url);
-    iConnect(GmRequest, d->req, updated, d, updated_MediaRequest_);
-    iConnect(GmRequest, d->req, finished, d, finished_MediaRequest_);
-    submit_GmRequest(d->req);
-}
-
-void deinit_MediaRequest(iMediaRequest *d) {
-    iDisconnect(GmRequest, d->req, updated, d, updated_MediaRequest_);
-    iDisconnect(GmRequest, d->req, finished, d, finished_MediaRequest_);
-    iRelease(d->req);
-}
-
-iDefineObjectConstructionArgs(MediaRequest,
-                              (iDocumentWidget *doc, iGmLinkId linkId, const iString *url),
-                              doc, linkId, url)
-iDefineClass(MediaRequest)
-
 /*----------------------------------------------------------------------------------------------*/
 
-iDeclareType(Model)
-iDeclareTypeConstruction(Model)
-iDeclareTypeSerialization(Model)
+iDeclareType(PersistentDocumentState)
+iDeclareTypeConstruction(PersistentDocumentState)
+iDeclareTypeSerialization(PersistentDocumentState)
 
-struct Impl_Model {
-    /* state that persists across sessions */
+struct Impl_PersistentDocumentState {
     iHistory *history;
     iString * url;
 };
 
-void init_Model(iModel *d) {
+void init_PersistentDocumentState(iPersistentDocumentState *d) {
     d->history = new_History();
     d->url     = new_String();
 }
 
-void deinit_Model(iModel *d) {
+void deinit_PersistentDocumentState(iPersistentDocumentState *d) {
     delete_String(d->url);
     delete_History(d->history);
 }
 
-void serialize_Model(const iModel *d, iStream *outs) {
+void serialize_PersistentDocumentState(const iPersistentDocumentState *d, iStream *outs) {
     serialize_String(d->url, outs);
     write16_Stream(outs, 0 /*d->zoomPercent*/);
     serialize_History(d->history, outs);
 }
 
-void deserialize_Model(iModel *d, iStream *ins) {
+void deserialize_PersistentDocumentState(iPersistentDocumentState *d, iStream *ins) {
     deserialize_String(d->url, ins);
     /*d->zoomPercent =*/ read16_Stream(ins);
     deserialize_History(d->history, ins);
 }
 
-iDefineTypeConstruction(Model)
+iDefineTypeConstruction(PersistentDocumentState)
 
 /*----------------------------------------------------------------------------------------------*/
 
@@ -167,7 +126,7 @@ enum iDocumentWidgetFlag {
 struct Impl_DocumentWidget {
     iWidget        widget;
     enum iRequestState state;
-    iModel         mod;
+    iPersistentDocumentState mod;
     int            flags;
     iString *      titleUser;
     iGmRequest *   request;
@@ -215,7 +174,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     init_Widget(w);
     setId_Widget(w, "document000");
     setFlags_Widget(w, hover_WidgetFlag, iTrue);
-    init_Model(&d->mod);
+    init_PersistentDocumentState(&d->mod);
     d->flags = 0;
     iZap(d->certExpiry);
     d->certFlags        = 0;
@@ -285,7 +244,7 @@ void deinit_DocumentWidget(iDocumentWidget *d) {
     deinit_PtrArray(&d->visibleLinks);
     delete_String(d->certSubject);
     delete_String(d->titleUser);
-    deinit_Model(&d->mod);
+    deinit_PersistentDocumentState(&d->mod);
 }
 
 static void requestUpdated_DocumentWidget_(iAnyObject *obj) {
@@ -1950,6 +1909,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
     if (processPlayerEvents_DocumentWidget_(d, ev)) {
         return iTrue;
     }
+    /* The left mouse button. */
     switch (processEvent_Click(&d->click, ev)) {
         case started_ClickResult:
             iChangeFlags(d->flags, selecting_DocumentWidgetFlag, iFalse);
@@ -2652,11 +2612,11 @@ const iString *bookmarkTitle_DocumentWidget(const iDocumentWidget *d) {
 }
 
 void serializeState_DocumentWidget(const iDocumentWidget *d, iStream *outs) {
-    serialize_Model(&d->mod, outs);
+    serialize_PersistentDocumentState(&d->mod, outs);
 }
 
 void deserializeState_DocumentWidget(iDocumentWidget *d, iStream *ins) {
-    deserialize_Model(&d->mod, ins);
+    deserialize_PersistentDocumentState(&d->mod, ins);
     parseUser_DocumentWidget_(d);
     updateFromHistory_DocumentWidget_(d);
 }
