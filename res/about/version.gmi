@@ -7,7 +7,11 @@
 # Release notes
 
 ## 0.8
-* ${CTRL+}Click opens tab in background, ${SHIFT+}${CTRL+}Click opens as foreground tab.
+* ${CTRL+}Click opens tab in background, ${SHIFT+}${CTRL+}Click opens as foreground tab. The same modifier keys work with keyboard navigation.
+
+## 0.7.2
+* Fixed parsing of the server's response. In some cases it was possible that the response was only partially read.
+* Fixed handling of TLS/SSL connection being closed without the socket being closed.
 
 ## 0.7.1
 * Fixed build on OpenBSD.

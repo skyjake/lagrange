@@ -256,7 +256,7 @@ static void readIncoming_GmRequest_(iAnyObject *obj) {
                 notifyDone         = iTrue;
             }
             const int code = toInt_String(&d->resp.meta);
-            if (code == 0 || cstr_String(&d->resp.meta)[2] != ' ') {
+            if (code == 0) {
                 clear_String(&d->resp.meta);
                 d->resp.statusCode = invalidHeader_GmStatusCode;
                 d->state           = finished_GmRequestState;
