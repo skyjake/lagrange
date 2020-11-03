@@ -659,11 +659,12 @@ static void setSource_DocumentWidget_(iDocumentWidget *d, const iString *source)
     setUrl_GmDocument(d->doc, d->mod.url);
     setSource_GmDocument(
         d->doc, source, documentWidth_DocumentWidget_(d), forceBreakWidth_DocumentWidget_(d));
-    d->foundMark      = iNullRange;
-    d->selectMark     = iNullRange;
-    d->hoverLink      = NULL;
-    d->contextLink    = NULL;
-    d->lastVisibleRun = NULL;
+    d->foundMark       = iNullRange;
+    d->selectMark      = iNullRange;
+    d->hoverLink       = NULL;
+    d->contextLink     = NULL;
+    d->firstVisibleRun = NULL;
+    d->lastVisibleRun  = NULL;
     setValue_Anim(&d->outlineOpacity, 0.0f, 0);
     updateWindowTitle_DocumentWidget_(d);
     updateVisible_DocumentWidget_(d);
