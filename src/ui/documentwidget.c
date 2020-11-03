@@ -2051,8 +2051,11 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                         refresh_Widget(w);
                     }
                     else {
+                        const int kmods = keyMods_Sym(SDL_GetModState());
                         postCommandf_App("open newtab:%d url:%s",
-                                         (SDL_GetModState() & KMOD_PRIMARY) != 0,
+                                         ((kmods & KMOD_PRIMARY) && (kmods & KMOD_SHIFT)) ? 1
+                                         : (kmods & KMOD_PRIMARY)                         ? 2
+                                                                                          : 0,
                                          cstr_String(absoluteUrl_String(
                                              d->mod.url, linkUrl_GmDocument(d->doc, linkId))));
                     }

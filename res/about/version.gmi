@@ -6,6 +6,9 @@
 ```
 # Release notes
 
+## 0.8
+* ${CTRL+}Click opens tab in background, ${SHIFT+}${CTRL+}Click opens as foreground tab.
+
 ## 0.7.1
 * Fixed build on OpenBSD.
 * Fixed build with LibreSSL.
