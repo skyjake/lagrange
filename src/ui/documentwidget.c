@@ -1716,6 +1716,48 @@ static iBool processPlayerEvents_DocumentWidget_(iDocumentWidget *d, const SDL_E
     return iFalse;
 }
 
+static size_t linkOrdinalFromKey_(int key) {
+    if (key >= '1' && key <= '9') {
+        return key - '1';
+    }
+    if (key < 'a' || key > 'z') {
+        return iInvalidPos;
+    }
+    int ord = key - 'a' + 9;
+#if defined (iPlatformApple)
+    /* Skip keys that would conflict with default system shortcuts: hide, minimize, quit, close. */
+    if (key == 'h' || key == 'm' || key == 'q' || key == 'w') {
+        return iInvalidPos;
+    }
+    if (key > 'h') ord--;
+    if (key > 'm') ord--;
+    if (key > 'q') ord--;
+    if (key > 'w') ord--;
+#endif
+    return ord;
+}
+
+static iChar linkOrdinalChar_(size_t ord) {
+    if (ord < 9) {
+        return 0x278a + ord;
+    }
+#if defined (iPlatformApple)
+    if (ord < 9 + 22) {
+        int key = 'a' + ord - 9;
+        if (key >= 'h') key++;
+        if (key >= 'm') key++;
+        if (key >= 'q') key++;
+        if (key >= 'w') key++;
+        return 0x24b6 + key - 'a';
+    }
+#else
+    if (ord < 9 + 26) {
+        return 0x24b6 + ord - 9;
+    }
+#endif
+    return 0;
+}
+
 static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
     if (ev->type == SDL_USEREVENT && ev->user.code == command_UserEventCode) {
@@ -1746,12 +1788,12 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         }
     }
     if (ev->type == SDL_KEYDOWN) {
-        const int mods = keyMods_Sym(ev->key.keysym.mod);
-        const int key  = ev->key.keysym.sym;
+        const int key = ev->key.keysym.sym;
         if ((d->flags & showLinkNumbers_DocumentWidgetFlag) &&
             ((key >= '1' && key <= '9') || (key >= 'a' && key <= 'z'))) {
-            const size_t ord = isdigit(key) ? key - SDLK_1 : (key - 'a' + 9);
+            const size_t ord = linkOrdinalFromKey_(key);
             iConstForEach(PtrArray, i, &d->visibleLinks) {
+                if (ord == iInvalidPos) break;
                 const iGmRun *run = i.ptr;
                 if (run->flags & decoration_GmRunFlag &&
                     visibleLinkOrdinal_DocumentWidget_(d, run->linkId) == ord) {
@@ -2160,8 +2202,8 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
     else {
         if (d->showLinkNumbers && run->linkId && run->flags & decoration_GmRunFlag) {
             const size_t ord = visibleLinkOrdinal_DocumentWidget_(d->widget, run->linkId);
-            if (ord < 9 + 26) {
-                const iChar ordChar = ord < 9 ? 0x278a + ord : (0x24b6 + ord - 9);
+            const iChar ordChar = linkOrdinalChar_(ord);
+            if (ordChar) {
                 drawString_Text(run->font,
                                 init_I2(d->viewPos.x - gap_UI / 3, visPos.y),
                                 fg,
