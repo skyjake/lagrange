@@ -586,11 +586,22 @@ static enum iFontId fontId_Text_(const iFont *font) {
     return font - text_.fonts;
 }
 
-iLocalDef iBool isWrapBoundary_(iChar a, iChar b) {
-    if (b == '/' || b == '-' || b == ',' || b == ';' || b == ':' || b == '.') {
+/* Line wrapping boundaries are determined by looking at a character and the
+ * last character processed. We want to wrap at natural word boundaries where
+ * possible, so normally we wrap at a space followed a non-space character. As
+ * an exception, we also wrap after punctuation used to break up words, so we
+ * can wrap text like foo/bar/baz-abc-def.xyz at any puncation boundaries,
+ * without wrapping on other punctuation used for expressive purposes like
+ * emoticons :-) */
+
+iLocalDef iBool isWrapBoundary_(iChar prevC, iChar c) {
+    if (isSpace_Char(prevC))
+        return iFalse;
+
+    if (c == '/' || c == '-' || c == ',' || c == ';' || c == ':' || c == '.')
         return iTrue;
-    }
-    return !isSpace_Char(a) && isSpace_Char(b);
+
+    return isSpace_Char(c);
 }
 
 iLocalDef iBool isMeasuring_(enum iRunMode mode) {
