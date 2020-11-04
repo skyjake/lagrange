@@ -1176,6 +1176,10 @@ iBool handleCommand_App(const char *cmd) {
         postCommand_App("focus.set id:bmed.title");
         return iTrue;
     }
+    else if (equal_Command(cmd, "bookmarks.changed")) {
+        save_Bookmarks(d->bookmarks, dataDir_App_);
+        return iFalse;
+    }
     else if (equal_Command(cmd, "ident.new")) {
         iWidget *dlg = makeIdentityCreation_Widget();
         setCommandHandler_Widget(dlg, handleIdentityCreationCommands_);
