@@ -362,7 +362,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     loadPrefs_App_(d);
     load_Keys(dataDir_App_);
     load_Visited(d->visited, dataDir_App_);
-    load_Bookmarks(d->bookmarks, dataDir_App_);    
+    load_Bookmarks(d->bookmarks, dataDir_App_);
     if (isFirstRun) {
         /* Create the default bookmarks for a quick start. */
         add_Bookmarks(d->bookmarks,
@@ -417,10 +417,10 @@ static void init_App_(iApp *d, int argc, char **argv) {
                 startsWithCase_String(arg, "gemini:") || startsWithCase_String(arg, "file:") ||
                 startsWithCase_String(arg, "data:")   || startsWithCase_String(arg, "about:");
             if (isKnownScheme || fileExists_FileInfo(arg)) {
-                postCommandf_App("open newtab:%d url:%s%s",
+                postCommandf_App("open newtab:%d url:%s",
                                  newTab,
-                                 isKnownScheme ? "" : "file://",
-                                 cstr_String(arg));
+                                 isKnownScheme ? cstr_String(arg)
+                                               : cstrCollect_String(makeFileUrl_String(arg)));
                 newTab = iTrue;
             }
         }
@@ -501,7 +501,8 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     postCommandf_App("~open newtab:%d url:%s", newTab, ev.drop.file);
                 }
                 else {
-                    postCommandf_App("~open newtab:%d url:file://%s", newTab, ev.drop.file);
+                    postCommandf_App(
+                        "~open newtab:%d url:%s", newTab, makeFileUrl_CStr(ev.drop.file));
                 }
                 break;
             }
@@ -908,7 +909,7 @@ iBool handleCommand_App(const char *cmd) {
         postCommand_App("font.changed");
         postCommand_App("window.unfreeze");
         return iTrue;
-    }    
+    }
     else if (equal_Command(cmd, "zoom.set")) {
         setFreezeDraw_Window(get_Window(), iTrue); /* no intermediate draws before docs updated */
         d->prefs.zoomPercent = arg_Command(cmd);

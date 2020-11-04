@@ -27,6 +27,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/path.h>
 
 void init_Url(iUrl *d, const iString *text) {
+    /* Handle "file:" as a special case since it only has the path part. */
+    if (startsWithCase_String(text, "file://")) {
+        iZap(*d);
+        const char *cstr = constBegin_String(text);
+        d->scheme = (iRangecc){ cstr, cstr + 4 };
+        d->path   = (iRangecc){ cstr + 7, constEnd_String(text) };
+        return;
+    }
     static iRegExp *absoluteUrlPattern_;
     static iRegExp *relativeUrlPattern_;
     if (!absoluteUrlPattern_) {
@@ -98,8 +106,11 @@ void cleanUrlPath_String(iString *d) {
         else if (equal_Rangecc(seg, ".")) {
             /* Skip it. */
         }
-        else {
-            appendCStr_String(&clean, "/");
+        else if (!isEmpty_Range(&seg)) {
+            /* Ensure the cleaned path starts with a slash if the original does. */
+            if (!isEmpty_String(&clean) || startsWith_Rangecc(parts.path, "/")) {
+                appendCStr_String(&clean, "/");
+            }
             appendRange_String(&clean, seg);
         }
     }
@@ -125,6 +136,10 @@ iRangecc urlHost_String(const iString *d) {
     iUrl url;
     init_Url(&url, d);
     return url.host;
+}
+
+static iBool isAbsolutePath_(iRangecc path) {
+    return isAbsolute_Path(collect_String(urlDecode_String(collect_String(newRange_String(path)))));
 }
 
 const iString *absoluteUrl_String(const iString *d, const iString *urlMaybeRelative) {
@@ -155,7 +170,7 @@ const iString *absoluteUrl_String(const iString *d, const iString *urlMaybeRelat
             appendRange_String(absolute, selHost->port);
         }
     }
-    if (isDef_(rel.scheme) || isDef_(rel.host) || startsWith_Rangecc(rel.path, "/")) {
+    if (isDef_(rel.scheme) || isDef_(rel.host) || isAbsolutePath_(rel.path)) {
         appendRange_String(absolute, isDef_(rel.path) ? rel.path : range_CStr("/")); /* absolute path */
     }
     else {
@@ -180,8 +195,13 @@ const iString *absoluteUrl_String(const iString *d, const iString *urlMaybeRelat
 iString *makeFileUrl_String(const iString *localFilePath) {
     iString *url = cleaned_Path(localFilePath);
     replace_Block(&url->chars, '\\', '/'); /* in case it's a Windows path */
+    set_String(url, collect_String(urlEncodeExclude_String(url, "/")));
     prependCStr_String(url, "file://");
     return url;
+}
+
+const char *makeFileUrl_CStr(const char *localFilePath) {
+    return cstrCollect_String(makeFileUrl_String(collectNewCStr_String(localFilePath)));
 }
 
 void urlEncodeSpaces_String(iString *d) {
