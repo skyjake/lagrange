@@ -19,7 +19,7 @@
 cmake_minimum_required (VERSION 3.9)
 
 project (Lagrange
-    VERSION 0.7.1
+    VERSION 0.7.2
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
