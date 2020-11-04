@@ -8,6 +8,7 @@
 
 ## 0.8
 * ${CTRL+}Click opens tab in background, ${SHIFT+}${CTRL+}Click opens as foreground tab. The same modifier keys work with keyboard navigation.
+* Windows: Fixed handling of drag'n'dropped and command line file paths.
 
 ## 0.7.2
 * Fixed parsing of the server's response. In some cases it was possible that the response was only partially read.
