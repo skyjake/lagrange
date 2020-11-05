@@ -417,8 +417,7 @@ static SDL_Surface *rasterizeGlyph_Font_(const iFont *d, uint32_t glyphIndex, fl
     int w, h;
     uint8_t *bmp = stbtt_GetGlyphBitmapSubpixel(
         &d->font, d->scale, d->scale, xShift, 0.0f, glyphIndex, &w, &h, 0, 0);
-    /* Note: `bmp` must be freed afterwards. */
-    collect_Garbage(bmp, freeBmp_);
+    collect_Garbage(bmp, freeBmp_); /* `bmp` must be freed afterwards. */
     SDL_Surface *surface8 =
         SDL_CreateRGBSurfaceWithFormatFrom(bmp, w, h, 8, w, SDL_PIXELFORMAT_INDEX8);
     SDL_SetSurfacePalette(surface8, text_.grayscale);
@@ -471,12 +470,6 @@ static void cache_Font_(iFont *d, iGlyph *glyph, int hoff) {
         if (hoff == 0) {
             int adv;
             const uint32_t gIndex = glyph->glyphIndex;
-//            float advScale = d->scale;
-//            if (isJapanese_FontId(d - text_.fonts)) {
-                /* Treat as monospace. */
-//                gIndex = stbtt_FindGlyphIndex(&d->font, 0x5712);
-//                advScale *= 2.0f;
-//            }
             stbtt_GetGlyphHMetrics(&d->font, gIndex, &adv, NULL);
             glyph->advance = d->scale * adv;
         }
@@ -541,8 +534,8 @@ iLocalDef iFont *characterFont_Font_(iFont *d, iChar ch, uint32_t *glyphIndex) {
 }
 
 static const iGlyph *glyph_Font_(iFont *d, iChar ch) {
-    /* It may actually come from a different font. */
     uint32_t glyphIndex = 0;
+    /* The glyph may actually come from a different font; look up the right font. */
     iFont *font = characterFont_Font_(d, ch, &glyphIndex);
     const void *node = value_Hash(&font->glyphs, ch);
     if (node) {
@@ -707,7 +700,6 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
         if (!isMeasuring_(mode)) {
             if (useMonoAdvance && dst.w > advance) {
                 dst.x -= (dst.w - advance) / 2;
-
             }
             SDL_RenderCopy(text_.render, text_.cache, (const SDL_Rect *) &glyph->rect[hoff], &dst);
         }
