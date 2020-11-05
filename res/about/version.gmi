@@ -7,6 +7,7 @@
 # Release notes
 
 ## 0.8
+* Added support for the full palette of 8-bit ANSI foreground colors.
 * Added keybindings for Back/Forward navigation.
 * ${CTRL+}Click opens tab in background, ${SHIFT+}${CTRL+}Click opens as foreground tab. The same modifier keys work with keyboard navigation.
 * Improved word wrapping of emoticons (:D).
