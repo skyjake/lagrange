@@ -694,7 +694,7 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
     iBool useBanner = iTrue;
     if (meta) {
         switch (code) {
-            case nonGeminiRedirect_GmStatusCode:
+            case schemeChangeRedirect_GmStatusCode:
             case tooManyRedirects_GmStatusCode:
                 appendFormat_String(src, "\n=> %s\n", cstr_String(meta));
                 break;
@@ -1031,12 +1031,15 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                     if (d->redirectCount >= 5) {
                         showErrorPage_DocumentWidget_(d, tooManyRedirects_GmStatusCode, dstUrl);
                     }
-                    else if (equalCase_Rangecc(urlScheme_String(dstUrl), "gemini")) {
+                    else if (equalCase_Rangecc(urlScheme_String(dstUrl),
+                                               cstr_Rangecc(urlScheme_String(d->mod.url)))) {
+                        /* Redirects with the same scheme are automatic. */
                         postCommandf_App(
                             "open redirect:%d url:%s", d->redirectCount + 1, cstr_String(dstUrl));
                     }
                     else {
-                        showErrorPage_DocumentWidget_(d, nonGeminiRedirect_GmStatusCode, dstUrl);
+                        /* Scheme changes must be manually approved. */
+                        showErrorPage_DocumentWidget_(d, schemeChangeRedirect_GmStatusCode, dstUrl);
                     }
                     iReleasePtr(&d->request);
                 }

@@ -13,6 +13,7 @@
 * Added a context menu item for opening HTTP links in the default browser even when a proxy is configured.
 * ${CTRL+}Click opens tab in background, ${SHIFT+}${CTRL+}Click opens as foreground tab. The same modifier keys work with keyboard navigation.
 * Improved word wrapping of emoticons (:D).
+* Automatic redirects allowed when the destination URL uses the same scheme as the originating URL. For example, when using a proxy, HTTP(S) is allowed to automatically redirect to other HTTP(S) URLs.
 * Windows: Fixed handling of drag-and-dropped and command line file paths.
 
 ## 0.7.2

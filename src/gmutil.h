@@ -33,7 +33,7 @@ enum iGmStatusCode {
     /* clientside status codes */
     clientSide_GmStatusCode = -100,
     invalidRedirect_GmStatusCode,
-    nonGeminiRedirect_GmStatusCode,
+    schemeChangeRedirect_GmStatusCode,
     tooManyRedirects_GmStatusCode,
     invalidHeader_GmStatusCode,
     unsupportedMimeType_GmStatusCode,
