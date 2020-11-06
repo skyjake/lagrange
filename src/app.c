@@ -1015,11 +1015,13 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "open")) {
         const iString *url = collectNewCStr_String(suffixPtr_Command(cmd, "url"));
+        const iBool noProxy = argLabel_Command(cmd, "noproxy");
         iUrl parts;
         init_Url(&parts, url);
         if (equalCase_Rangecc(parts.scheme, "mailto") ||
-            (isEmpty_String(&d->prefs.httpProxy) && (equalCase_Rangecc(parts.scheme, "http") ||
-                                                     equalCase_Rangecc(parts.scheme, "https")))) {
+            ((noProxy || isEmpty_String(&d->prefs.httpProxy)) &&
+             (equalCase_Rangecc(parts.scheme, "http") ||
+              equalCase_Rangecc(parts.scheme, "https")))) {
             openInDefaultBrowser_App(url);
             return iTrue;
         }
