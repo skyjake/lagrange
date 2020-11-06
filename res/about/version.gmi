@@ -8,7 +8,9 @@
 
 ## 0.8
 * Added support for the full palette of 8-bit ANSI foreground colors.
+* Added option to disable smooth scrolling.
 * Added keybindings for Back/Forward navigation.
+* Added a context menu item for opening HTTP links in the default browser even when a proxy is configured.
 * ${CTRL+}Click opens tab in background, ${SHIFT+}${CTRL+}Click opens as foreground tab. The same modifier keys work with keyboard navigation.
 * Improved word wrapping of emoticons (:D).
 * Windows: Fixed handling of drag-and-dropped and command line file paths.
