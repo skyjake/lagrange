@@ -1906,20 +1906,44 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 init_Array(&items, sizeof(iMenuItem));
                 if (d->contextLink) {
                     const iString *linkUrl = linkUrl_GmDocument(d->doc, d->contextLink->linkId);
-                    pushBackN_Array(
-                        &items,
-                        (iMenuItem[]){
-                            { "Open Link in New Tab",
-                              0,
-                              0,
-                              format_CStr("!open newtab:1 url:%s", cstr_String(linkUrl)) },
-                            { "Open Link in Background Tab",
-                              0,
-                              0,
-                              format_CStr("!open newtab:2 url:%s", cstr_String(linkUrl)) },
-                            { "---", 0, 0, NULL },
-                            { "Copy Link", 0, 0, "document.copylink" } },
-                        4);
+                    const iRangecc scheme = urlScheme_String(linkUrl);
+                    if (willUseProxy_App(scheme) || equalCase_Rangecc(scheme, "gemini")) {
+                        /* Regular Gemini links. */
+                        pushBackN_Array(
+                            &items,
+                            (iMenuItem[]){
+                                { "Open Link in New Tab",
+                                  0,
+                                  0,
+                                  format_CStr("!open newtab:1 url:%s", cstr_String(linkUrl)) },
+                                { "Open Link in Background Tab",
+                                  0,
+                                  0,
+                                  format_CStr("!open newtab:2 url:%s", cstr_String(linkUrl)) } },
+                            2);
+                    }
+                    else if (!willUseProxy_App(scheme)) {
+                        pushBack_Array(
+                            &items,
+                            &(iMenuItem){ "Open Link in Default Browser",
+                                          0,
+                                          0,
+                                          format_CStr("!open url:%s", cstr_String(linkUrl)) });
+                    }
+                    if (willUseProxy_App(scheme)) {
+                        pushBackN_Array(&items,
+                                        (iMenuItem[]){ { "---", 0, 0, NULL },
+                                                       { "Open Link in Default Browser",
+                                                         0,
+                                                         0,
+                                                         format_CStr("!open noproxy:1 url:%s",
+                                                                     cstr_String(linkUrl)) } },
+                                        2);
+                    }
+                    pushBackN_Array(&items,
+                                    (iMenuItem[]){ { "---", 0, 0, NULL },
+                                                   { "Copy Link", 0, 0, "document.copylink" } },
+                                    2);
                 }
                 else {
                     if (!isEmpty_Range(&d->selectMark)) {

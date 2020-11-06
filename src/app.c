@@ -880,6 +880,18 @@ static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
     return iFalse;
 }
 
+iBool willUseProxy_App(const iRangecc scheme) {
+    iApp *d = &app_;
+    if (!isEmpty_String(&d->prefs.httpProxy) && (equalCase_Rangecc(scheme, "http") ||
+                                                 equalCase_Rangecc(scheme, "https"))) {
+        return iTrue;
+    }
+    if (!isEmpty_String(&d->prefs.gopherProxy) && equalCase_Rangecc(scheme, "gopher")) {
+        return iTrue;
+    }
+    return iFalse;
+}
+
 iBool handleCommand_App(const char *cmd) {
     iApp *d = &app_;
     if (equal_Command(cmd, "prefs.dialogtab")) {
@@ -996,7 +1008,8 @@ iBool handleCommand_App(const char *cmd) {
     else if (equal_Command(cmd, "proxy.http")) {
         setCStr_String(&d->prefs.httpProxy, suffixPtr_Command(cmd, "address"));
         return iTrue;
-    }    else if (equal_Command(cmd, "downloads")) {
+    }
+    else if (equal_Command(cmd, "downloads")) {
         setCStr_String(&d->prefs.downloadDir, suffixPtr_Command(cmd, "path"));
         return iTrue;
     }

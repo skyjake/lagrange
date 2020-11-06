@@ -64,6 +64,7 @@ iBool               forceLineWrap_App   (void);
 iBool               forceSoftwareRender_App(void);
 enum iColorTheme    colorTheme_App      (void);
 const iString *     schemeProxy_App     (iRangecc scheme);
+iBool               willUseProxy_App    (const iRangecc scheme);
 
 iGmCerts *          certs_App           (void);
 iVisited *          visited_App         (void);
