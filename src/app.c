@@ -180,6 +180,7 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "font.set arg:%d\n", d->prefs.font);
     appendFormat_String(str, "headingfont.set arg:%d\n", d->prefs.headingFont);
     appendFormat_String(str, "zoom.set arg:%d\n", d->prefs.zoomPercent);
+    appendFormat_String(str, "smoothscroll arg:%d\n", d->prefs.smoothScrolling);
     appendFormat_String(str, "linewidth.set arg:%d\n", d->prefs.lineWidth);
     appendFormat_String(str, "prefs.biglede.changed arg:%d\n", d->prefs.bigFirstParagraph);
     appendFormat_String(str, "prefs.sideicon.changed arg:%d\n", d->prefs.sideIcon);
@@ -735,6 +736,8 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
                          cstr_String(text_InputWidget(findChild_Widget(d, "prefs.downloads"))));
         postCommandf_App("window.retain arg:%d",
                          isSelected_Widget(findChild_Widget(d, "prefs.retainwindow")));
+        postCommandf_App("smoothscroll arg:%d",
+                         isSelected_Widget(findChild_Widget(d, "prefs.smoothscroll")));
         postCommandf_App("ostheme arg:%d",
                          isSelected_Widget(findChild_Widget(d, "prefs.ostheme")));
         postCommandf_App("proxy.http address:%s",
@@ -942,6 +945,10 @@ iBool handleCommand_App(const char *cmd) {
         postCommand_App("window.unfreeze");
         return iTrue;
     }
+    else if (equal_Command(cmd, "smoothscroll")) {
+        d->prefs.smoothScrolling = arg_Command(cmd);
+        return iTrue;
+    }
     else if (equal_Command(cmd, "forcewrap.toggle")) {
         d->prefs.forceLineWrap = !d->prefs.forceLineWrap;
         updateSize_DocumentWidget(document_App());
@@ -1119,6 +1126,7 @@ iBool handleCommand_App(const char *cmd) {
         updatePrefsThemeButtons_(dlg);
         setText_InputWidget(findChild_Widget(dlg, "prefs.downloads"), &d->prefs.downloadDir);
         setToggle_Widget(findChild_Widget(dlg, "prefs.hoveroutline"), d->prefs.hoverOutline);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.smoothscroll"), d->prefs.smoothScrolling);
         setToggle_Widget(findChild_Widget(dlg, "prefs.ostheme"), d->prefs.useSystemTheme);
         setToggle_Widget(findChild_Widget(dlg, "prefs.retainwindow"), d->prefs.retainWindowSize);
         setText_InputWidget(findChild_Widget(dlg, "prefs.uiscale"),

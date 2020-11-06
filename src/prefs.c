@@ -28,6 +28,7 @@ void init_Prefs(iPrefs *d) {
     d->useSystemTheme    = iTrue;
     d->retainWindowSize  = iTrue;
     d->zoomPercent       = 100;
+    d->smoothScrolling   = iTrue;
     d->forceLineWrap     = iFalse;
     d->quoteIcon         = iTrue;
     d->font              = nunito_TextFont;

@@ -947,6 +947,9 @@ static void refreshWhileScrolling_DocumentWidget_(iAny *ptr) {
 }
 
 static void smoothScroll_DocumentWidget_(iDocumentWidget *d, int offset, int duration) {
+    if (!prefs_App()->smoothScrolling) {
+        duration = 0; /* always instant */
+    }
     int destY = targetValue_Anim(&d->scrollY) + offset;
     if (destY < 0) {
         destY = 0;
@@ -958,7 +961,12 @@ static void smoothScroll_DocumentWidget_(iDocumentWidget *d, int offset, int dur
     else {
         destY = 0;
     }
-    setValueEased_Anim(&d->scrollY, destY, duration);
+    if (duration) {
+        setValueEased_Anim(&d->scrollY, destY, duration);
+    }
+    else {
+        setValue_Anim(&d->scrollY, destY, 0);
+    }
     updateVisible_DocumentWidget_(d);
     refresh_Widget(as_Widget(d));
     if (duration > 0) {

@@ -188,7 +188,7 @@ static float valueAt_Anim_(const iAnim *d, const uint32_t now) {
 void setValue_Anim(iAnim *d, float to, uint32_t span) {
     if (span == 0) {
         d->from = d->to = to;
-        d->when = d->due = SDL_GetTicks();
+        d->when = d->due = frameTime_Window(get_Window()); /* effectively in the past */
     }
     else if (fabsf(to - d->to) > 0.00001f) {
         const uint32_t now = SDL_GetTicks();
@@ -997,6 +997,8 @@ iWidget *makePreferences_Widget(void) {
         setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.downloads");
         addChild_Widget(headings, iClob(makeHeading_Widget("Outline on scrollbar:")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.hoveroutline")));
+        addChild_Widget(headings, iClob(makeHeading_Widget("Smooth scrolling:")));
+        addChild_Widget(values, iClob(makeToggle_Widget("prefs.smoothscroll")));
         makeTwoColumnHeading_("WINDOW", headings, values);
 #if defined (iPlatformApple) || defined (iPlatformMSys)
         addChild_Widget(headings, iClob(makeHeading_Widget("Use system theme:")));
