@@ -105,8 +105,6 @@ void deserialize_GmResponse(iGmResponse *d, iStream *ins) {
 
 /*----------------------------------------------------------------------------------------------*/
 
-//static const int bodyTimeout_GmRequest_ = 3000; /* ms */
-
 enum iGmRequestState {
     initialized_GmRequestState,
     receivingHeader_GmRequestState,
@@ -123,86 +121,13 @@ struct Impl_GmRequest {
     iString              url;
     iTlsRequest *        req;
     iGmResponse          resp;
-    //uint32_t             timeoutId; /* in case server doesn't close the connection */
     iAudience *          updated;
-//    iAudience *          timeout;
     iAudience *          finished;
 };
 
 iDefineObjectConstructionArgs(GmRequest, (iGmCerts *certs), certs)
 iDefineAudienceGetter(GmRequest, updated)
-//iDefineAudienceGetter(GmRequest, timeout)
 iDefineAudienceGetter(GmRequest, finished)
-
-void init_GmRequest(iGmRequest *d, iGmCerts *certs) {
-    init_Mutex(&d->mutex);
-    init_GmResponse(&d->resp);
-    init_String(&d->url);
-    d->certs           = certs;
-//    d->timeoutId       = 0;
-    d->req             = NULL;
-    d->state           = initialized_GmRequestState;
-    d->updated         = NULL;
-//    d->timeout         = NULL;
-    d->finished        = NULL;
-}
-
-void deinit_GmRequest(iGmRequest *d) {
-    if (d->req) {
-        iDisconnectObject(TlsRequest, d->req, readyRead, d);
-        iDisconnectObject(TlsRequest, d->req, finished, d);
-    }
-    lock_Mutex(&d->mutex);
-//    if (d->timeoutId) {
-//        SDL_RemoveTimer(d->timeoutId);
-//    }
-    if (!isFinished_GmRequest(d)) {
-        unlock_Mutex(&d->mutex);
-        cancel_TlsRequest(d->req);
-        d->state = finished_GmRequestState;
-    }
-    else {
-        unlock_Mutex(&d->mutex);
-    }
-    iRelease(d->req);
-    d->req = NULL;
-//    delete_Audience(d->timeout);
-    delete_Audience(d->finished);
-    delete_Audience(d->updated);
-    deinit_GmResponse(&d->resp);
-    deinit_String(&d->url);
-    deinit_Mutex(&d->mutex);
-}
-
-void setUrl_GmRequest(iGmRequest *d, const iString *url) {
-    set_String(&d->url, url);
-    urlEncodeSpaces_String(&d->url);
-}
-
-#if 0
-static uint32_t timedOutWhileReceivingBody_GmRequest_(uint32_t interval, void *obj) {
-    /* Note: Called from SDL's timer thread. */
-    iGmRequest *d = obj;
-    //postCommandf_App("gmrequest.timeout request:%p", obj);
-    iNotifyAudience(d, timeout, GmRequestTimeout);
-    iUnused(interval);
-    return 0;
-}
-#endif
-
-void cancel_GmRequest(iGmRequest *d) {
-    cancel_TlsRequest(d->req);
-}
-
-#if 0
-static void restartTimeout_GmRequest_(iGmRequest *d) {
-    /* Note: `d` is currently locked. */
-    if (d->timeoutId) {
-        SDL_RemoveTimer(d->timeoutId);
-    }
-    d->timeoutId = SDL_AddTimer(bodyTimeout_GmRequest_, timedOutWhileReceivingBody_GmRequest_, d);
-}
-#endif
 
 static void checkServerCertificate_GmRequest_(iGmRequest *d) {
     const iTlsCertificate *cert = serverCertificate_TlsRequest(d->req);
@@ -418,6 +343,47 @@ static const iBlock *replaceVariables_(const iBlock *block) {
     return block;
 }
 
+/*----------------------------------------------------------------------------------------------*/
+
+void init_GmRequest(iGmRequest *d, iGmCerts *certs) {
+    init_Mutex(&d->mutex);
+    init_GmResponse(&d->resp);
+    init_String(&d->url);
+    d->certs    = certs;
+    d->req      = NULL;
+    d->state    = initialized_GmRequestState;
+    d->updated  = NULL;
+    d->finished = NULL;
+}
+
+void deinit_GmRequest(iGmRequest *d) {
+    if (d->req) {
+        iDisconnectObject(TlsRequest, d->req, readyRead, d);
+        iDisconnectObject(TlsRequest, d->req, finished, d);
+    }
+    lock_Mutex(&d->mutex);
+    if (!isFinished_GmRequest(d)) {
+        unlock_Mutex(&d->mutex);
+        cancel_TlsRequest(d->req);
+        d->state = finished_GmRequestState;
+    }
+    else {
+        unlock_Mutex(&d->mutex);
+    }
+    iRelease(d->req);
+    d->req = NULL;
+    delete_Audience(d->finished);
+    delete_Audience(d->updated);
+    deinit_GmResponse(&d->resp);
+    deinit_String(&d->url);
+    deinit_Mutex(&d->mutex);
+}
+
+void setUrl_GmRequest(iGmRequest *d, const iString *url) {
+    set_String(&d->url, url);
+    urlEncodeSpaces_String(&d->url);
+}
+
 void submit_GmRequest(iGmRequest *d) {
     iAssert(d->state == initialized_GmRequestState);
     if (d->state != initialized_GmRequestState) {
@@ -559,6 +525,10 @@ void submit_GmRequest(iGmRequest *d) {
     setContent_TlsRequest(d->req,
                           utf8_String(collectNewFormat_String("%s\r\n", cstr_String(&d->url))));
     submit_TlsRequest(d->req);
+}
+
+void cancel_GmRequest(iGmRequest *d) {
+    cancel_TlsRequest(d->req);
 }
 
 iBool isFinished_GmRequest(const iGmRequest *d) {
