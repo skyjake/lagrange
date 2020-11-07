@@ -23,6 +23,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "gmrequest.h"
 #include "gmutil.h"
 #include "gmcerts.h"
+#include "gopher.h"
 #include "app.h" /* dataDir_App() */
 #include "embedded.h"
 #include "ui/text.h"
@@ -121,10 +122,7 @@ struct Impl_GmRequest {
     enum iGmRequestState state;
     iString              url;
     iTlsRequest *        req;
-    iSocket *            gopher; /* socket for Gopher connections */
-    char                 gopherType;
-    iBlock               gopherBody;
-    iBool                gopherPre;
+    iGopher              gopher;
     iGmResponse          resp;
     iAudience *          updated;
     iAudience *          finished;
@@ -341,127 +339,13 @@ static const iBlock *replaceVariables_(const iBlock *block) {
     return block;
 }
 
-iLocalDef iBool isLineTerminator_(const char *str) {
-    return str[0] == '\r' && str[1] == '\n';
-}
-
-iLocalDef iBool isPreformatted_(iRangecc text) {
-    int numPunct = 0;
-    iBool isSpace = iFalse;
-    for (const char *ch = text.start; ch != text.end; ch++) {
-        if (ispunct(*ch)) {
-            if (++numPunct == 4)
-                return iTrue;
-        }
-        else {
-            numPunct = 0;
-        }
-        if (*ch == ' ' || *ch == '\n') {
-            if (isSpace) return iTrue;
-            isSpace = iTrue;
-        }
-        else {
-            isSpace = iFalse;
-        }
-    }
-    return iFalse;
-}
-
-static void setGopherPre_GmRequest_(iGmRequest *d, iBool pre) {
-    if (pre && !d->gopherPre) {
-        appendCStr_Block(&d->resp.body, "```\n");
-    }
-    else if (!pre && d->gopherPre) {
-        appendCStr_Block(&d->resp.body, "```\n");
-    }
-    d->gopherPre = pre;
-}
-
-static iBool convertGopherLines_GmRequest_(iGmRequest *d) {
-    iBool converted = iFalse;
-    iRangecc body = range_Block(&d->gopherBody);
-    iRegExp *pattern = new_RegExp("(.)([^\t]*)\t([^\t]*)\t([^\t]*)\t([0-9]+)", caseInsensitive_RegExpOption);
-    for (;;) {
-        /* Find the end of the line. */
-        iRangecc line = { body.start, body.start };
-        while (line.end < body.end - 1 && !isLineTerminator_(line.end)) {
-            line.end++;
-        }
-        if (line.end >= body.end - 1 || !isLineTerminator_(line.end)) {
-            /* Not a complete line. */
-            break;
-        }
-        body.start = line.end + 2;
-        iRegExpMatch m;
-        init_RegExpMatch(&m);
-        if (matchRange_RegExp(pattern, line, &m)) {
-            const char     lineType = *capturedRange_RegExpMatch(&m, 1).start;
-            const iRangecc text     = capturedRange_RegExpMatch(&m, 2);
-            const iRangecc path     = capturedRange_RegExpMatch(&m, 3);
-            const iRangecc domain   = capturedRange_RegExpMatch(&m, 4);
-            const iRangecc port     = capturedRange_RegExpMatch(&m, 5);
-            iString *out = new_String();
-            switch (lineType) {
-                case 'i':
-                case '3': {
-                    setGopherPre_GmRequest_(d, isPreformatted_(text));
-                    appendData_Block(&d->resp.body, text.start, size_Range(&text));
-                    appendCStr_Block(&d->resp.body, "\n");
-                    break;
-                }
-                case '0':
-                case '1':
-                case '7':
-                case '4':
-                case '5':
-                case '9':
-                case 'g':
-                case 'I':
-                case 's': {
-                    iBeginCollect();
-                    setGopherPre_GmRequest_(d, iFalse);
-                    format_String(out,
-                                  "=> gopher://%s:%s/%c%s %s\n",
-                                  cstr_Rangecc(domain),
-                                  cstr_Rangecc(port),
-                                  lineType,
-                                  cstr_Rangecc(path),
-                                  cstr_Rangecc(text));
-                    appendData_Block(&d->resp.body, constBegin_String(out), size_String(out));
-                    iEndCollect();
-                    break;
-                }
-                default:
-                    break; /* Ignore unknown types. */
-            }
-            delete_String(out);
-        }
-    }
-    iRelease(pattern);
-    remove_Block(&d->gopherBody, 0, body.start - constBegin_Block(&d->gopherBody));
-    return converted;
-}
-
 static void gopherRead_GmRequest_(iGmRequest *d, iSocket *socket) {
     iBool notifyUpdate = iFalse;
     lock_Mutex(&d->mutex);
     d->resp.statusCode = success_GmStatusCode;
     iBlock *data = readAll_Socket(socket);
     if (!isEmpty_Block(data)) {
-        if (d->gopherType == '1') {
-            setCStr_String(&d->resp.meta, "text/gemini");
-            append_Block(&d->gopherBody, data);
-            if (convertGopherLines_GmRequest_(d)) {
-                notifyUpdate = iTrue;
-            }
-        }
-        else {
-            if (d->gopherType == '0') {
-                setCStr_String(&d->resp.meta, "text/plain");
-            }
-            append_Block(&d->resp.body, data);
-            notifyUpdate = iTrue;
-        }
+        processResponse_Gopher(&d->gopher, data);
     }
     delete_Block(data);
     unlock_Mutex(&d->mutex);
@@ -499,28 +383,15 @@ static void beginGopherConnection_GmRequest_(iGmRequest *d, const iString *host,
     if (port == 0) {
         port = 70; /* default port */
     }
-    clear_Block(&d->gopherBody);
-    d->state = receivingBody_GmRequestState;
-    d->gopher = new_Socket(cstr_String(host), port);
-    iConnect(Socket, d->gopher, readyRead,    d, gopherRead_GmRequest_);
-    iConnect(Socket, d->gopher, disconnected, d, gopherDisconnected_GmRequest_);
-    iConnect(Socket, d->gopher, error,        d, gopherError_GmRequest_);
-    open_Socket(d->gopher);
-    iUrl parts;
-    init_Url(&parts, &d->url);
-    d->gopherType = '1';
-    if (!isEmpty_Range(&parts.path)) {
-        if (*parts.path.start == '/') {
-            parts.path.start++;
-        }
-        if (parts.path.start < parts.path.end) {
-            d->gopherType = *parts.path.start;
-            parts.path.start++;
-        }
-    }
-    d->gopherPre = iFalse;
-    writeData_Socket(d->gopher, parts.path.start, size_Range(&parts.path));
-    writeData_Socket(d->gopher, "\r\n", 2);
+    clear_Block(&d->gopher.source);
+    d->gopher.meta   = &d->resp.meta;
+    d->gopher.output = &d->resp.body;
+    d->state         = receivingBody_GmRequestState;
+    d->gopher.socket = new_Socket(cstr_String(host), port);
+    iConnect(Socket, d->gopher.socket, readyRead,    d, gopherRead_GmRequest_);
+    iConnect(Socket, d->gopher.socket, disconnected, d, gopherDisconnected_GmRequest_);
+    iConnect(Socket, d->gopher.socket, error,        d, gopherError_GmRequest_);
+    open_Gopher(&d->gopher, &d->url);
 }
 
 /*----------------------------------------------------------------------------------------------*/
@@ -529,11 +400,9 @@ void init_GmRequest(iGmRequest *d, iGmCerts *certs) {
     init_Mutex(&d->mutex);
     init_GmResponse(&d->resp);
     init_String(&d->url);
-    init_Block(&d->gopherBody, 0);
+    init_Gopher(&d->gopher);
     d->certs      = certs;
     d->req        = NULL;
-    d->gopher     = NULL;
-    d->gopherType = 0;
     d->updated    = NULL;
     d->finished   = NULL;
     d->state      = initialized_GmRequestState;
@@ -554,8 +423,7 @@ void deinit_GmRequest(iGmRequest *d) {
         unlock_Mutex(&d->mutex);
     }
     iReleasePtr(&d->req);
-    iReleasePtr(&d->gopher);
-    deinit_Block(&d->gopherBody);
+    deinit_Gopher(&d->gopher);
     delete_Audience(d->finished);
     delete_Audience(d->updated);
     deinit_GmResponse(&d->resp);
@@ -719,9 +587,7 @@ void cancel_GmRequest(iGmRequest *d) {
     if (d->req) {
         cancel_TlsRequest(d->req);
     }
-    if (d->gopher) {
-        close_Socket(d->gopher);
-    }
+    cancel_Gopher(&d->gopher);
 }
 
 iBool isFinished_GmRequest(const iGmRequest *d) {

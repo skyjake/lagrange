@@ -7,6 +7,7 @@
 # Release notes
 
 ## 0.8
+* Added support for Gopher.
 * Added support for the full palette of 8-bit ANSI foreground colors.
 * Added option to disable smooth scrolling.
 * Added keybindings for Back/Forward navigation.
