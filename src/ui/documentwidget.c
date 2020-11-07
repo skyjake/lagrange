@@ -298,6 +298,9 @@ static iRect documentBounds_DocumentWidget_(const iDocumentWidget *d) {
 }
 
 static int forceBreakWidth_DocumentWidget_(const iDocumentWidget *d) {
+    if (equalCase_Rangecc(urlScheme_String(d->mod.url), "gopher")) {
+        return documentWidth_DocumentWidget_(d);
+    }
     if (forceLineWrap_App()) {
         const iRect bounds    = bounds_Widget(constAs_Widget(d));
         const iRect docBounds = documentBounds_DocumentWidget_(d);
