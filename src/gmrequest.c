@@ -534,6 +534,12 @@ void submit_GmRequest(iGmRequest *d) {
             port = 0;
         }
     }
+    else if (!equalCase_Rangecc(url.scheme, "gemini")) {
+        d->resp.statusCode = unsupportedProtocol_GmStatusCode;
+        d->state = finished_GmRequestState;
+        iNotifyAudience(d, finished, GmRequestFinished);
+        return;
+    }
     d->state = receivingHeader_GmRequestState;
     d->req = new_TlsRequest();
     const iGmIdentity *identity = identityForUrl_GmCerts(d->certs, &d->url);

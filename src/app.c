@@ -612,13 +612,14 @@ enum iColorTheme colorTheme_App(void) {
 
 const iString *schemeProxy_App(iRangecc scheme) {
     iApp *d = &app_;
+    const iString *proxy = NULL;
     if (equalCase_Rangecc(scheme, "gopher")) {
-        return &d->prefs.gopherProxy;
+        proxy = &d->prefs.gopherProxy;
     }
     if (equalCase_Rangecc(scheme, "http") || equalCase_Rangecc(scheme, "https")) {
-        return &d->prefs.httpProxy;
+        proxy = &d->prefs.httpProxy;
     }
-    return NULL;
+    return !isEmpty_String(proxy) ? proxy : NULL;
 }
 
 int run_App(int argc, char **argv) {
@@ -884,15 +885,7 @@ static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
 }
 
 iBool willUseProxy_App(const iRangecc scheme) {
-    iApp *d = &app_;
-    if (!isEmpty_String(&d->prefs.httpProxy) && (equalCase_Rangecc(scheme, "http") ||
-                                                 equalCase_Rangecc(scheme, "https"))) {
-        return iTrue;
-    }
-    if (!isEmpty_String(&d->prefs.gopherProxy) && equalCase_Rangecc(scheme, "gopher")) {
-        return iTrue;
-    }
-    return iFalse;
+    return schemeProxy_App(scheme) != NULL;
 }
 
 iBool handleCommand_App(const char *cmd) {
@@ -1201,6 +1194,10 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "bookmarks.changed")) {
         save_Bookmarks(d->bookmarks, dataDir_App_);
+        return iFalse;
+    }
+    else if (equal_Command(cmd, "visited.changed")) {
+        save_Visited(d->visited, dataDir_App_);
         return iFalse;
     }
     else if (equal_Command(cmd, "ident.new")) {

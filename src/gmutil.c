@@ -236,6 +236,11 @@ static const struct {
       { 0x1f47d, /* alien */
         "Unsupported Content Type",
         "The received content cannot be viewed with this application." } },
+    { unsupportedProtocol_GmStatusCode,
+      { 0x1f61e, /* disappointed */
+        "Unsupported Protocol",
+        "The requested protocol is not supported by this application." },
+    },
     { invalidHeader_GmStatusCode,
       { 0x1f4a9, /* pile of poo */
         "Invalid Header",

@@ -37,6 +37,7 @@ enum iGmStatusCode {
     tooManyRedirects_GmStatusCode,
     invalidHeader_GmStatusCode,
     unsupportedMimeType_GmStatusCode,
+    unsupportedProtocol_GmStatusCode,
     failedToOpenFile_GmStatusCode,
     unknownStatusCode_GmStatusCode,
     invalidLocalResource_GmStatusCode,
