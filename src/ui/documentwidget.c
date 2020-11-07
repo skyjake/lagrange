@@ -255,10 +255,12 @@ static void requestUpdated_DocumentWidget_(iAnyObject *obj) {
     }
 }
 
+#if 0
 static void requestTimedOut_DocumentWidget_(iAnyObject *obj) {
     iDocumentWidget *d = obj;
     postCommandf_App("document.request.timeout doc:%p request:%p", d, d->request);
 }
+#endif
 
 static void requestFinished_DocumentWidget_(iAnyObject *obj) {
     iDocumentWidget *d = obj;
@@ -867,7 +869,7 @@ static void fetch_DocumentWidget_(iDocumentWidget *d) {
     d->request = new_GmRequest(certs_App());
     setUrl_GmRequest(d->request, d->mod.url);
     iConnect(GmRequest, d->request, updated, d, requestUpdated_DocumentWidget_);
-    iConnect(GmRequest, d->request, timeout, d, requestTimedOut_DocumentWidget_);
+//    iConnect(GmRequest, d->request, timeout, d, requestTimedOut_DocumentWidget_);
     iConnect(GmRequest, d->request, finished, d, requestFinished_DocumentWidget_);
     submit_GmRequest(d->request);
 }
@@ -1369,17 +1371,13 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         postCommandf_App("document.changed url:%s", cstr_String(d->mod.url));
         return iFalse;
     }
+#if 0
     else if (equal_Command(cmd, "document.request.timeout") &&
              pointerLabel_Command(cmd, "request") == d->request) {
         cancel_GmRequest(d->request);
         return iFalse;
     }
-    /*
-    else if (equal_Command(cmd, "document.request.cancelled") && document_Command(cmd) == d) {
-        postCommand_App("navigate.back");
-        return iFalse;
-    }
-    */
+#endif
     else if (equal_Command(cmd, "media.updated") || equal_Command(cmd, "media.finished")) {
         return handleMediaCommand_DocumentWidget_(d, cmd);
     }

@@ -105,7 +105,7 @@ void deserialize_GmResponse(iGmResponse *d, iStream *ins) {
 
 /*----------------------------------------------------------------------------------------------*/
 
-static const int bodyTimeout_GmRequest_ = 3000; /* ms */
+//static const int bodyTimeout_GmRequest_ = 3000; /* ms */
 
 enum iGmRequestState {
     initialized_GmRequestState,
@@ -123,15 +123,15 @@ struct Impl_GmRequest {
     iString              url;
     iTlsRequest *        req;
     iGmResponse          resp;
-    uint32_t             timeoutId; /* in case server doesn't close the connection */
+    //uint32_t             timeoutId; /* in case server doesn't close the connection */
     iAudience *          updated;
-    iAudience *          timeout;
+//    iAudience *          timeout;
     iAudience *          finished;
 };
 
 iDefineObjectConstructionArgs(GmRequest, (iGmCerts *certs), certs)
 iDefineAudienceGetter(GmRequest, updated)
-iDefineAudienceGetter(GmRequest, timeout)
+//iDefineAudienceGetter(GmRequest, timeout)
 iDefineAudienceGetter(GmRequest, finished)
 
 void init_GmRequest(iGmRequest *d, iGmCerts *certs) {
@@ -139,11 +139,11 @@ void init_GmRequest(iGmRequest *d, iGmCerts *certs) {
     init_GmResponse(&d->resp);
     init_String(&d->url);
     d->certs           = certs;
-    d->timeoutId       = 0;
+//    d->timeoutId       = 0;
     d->req             = NULL;
     d->state           = initialized_GmRequestState;
     d->updated         = NULL;
-    d->timeout         = NULL;
+//    d->timeout         = NULL;
     d->finished        = NULL;
 }
 
@@ -153,9 +153,9 @@ void deinit_GmRequest(iGmRequest *d) {
         iDisconnectObject(TlsRequest, d->req, finished, d);
     }
     lock_Mutex(&d->mutex);
-    if (d->timeoutId) {
-        SDL_RemoveTimer(d->timeoutId);
-    }
+//    if (d->timeoutId) {
+//        SDL_RemoveTimer(d->timeoutId);
+//    }
     if (!isFinished_GmRequest(d)) {
         unlock_Mutex(&d->mutex);
         cancel_TlsRequest(d->req);
@@ -166,7 +166,7 @@ void deinit_GmRequest(iGmRequest *d) {
     }
     iRelease(d->req);
     d->req = NULL;
-    delete_Audience(d->timeout);
+//    delete_Audience(d->timeout);
     delete_Audience(d->finished);
     delete_Audience(d->updated);
     deinit_GmResponse(&d->resp);
@@ -179,6 +179,7 @@ void setUrl_GmRequest(iGmRequest *d, const iString *url) {
     urlEncodeSpaces_String(&d->url);
 }
 
+#if 0
 static uint32_t timedOutWhileReceivingBody_GmRequest_(uint32_t interval, void *obj) {
     /* Note: Called from SDL's timer thread. */
     iGmRequest *d = obj;
@@ -187,11 +188,13 @@ static uint32_t timedOutWhileReceivingBody_GmRequest_(uint32_t interval, void *o
     iUnused(interval);
     return 0;
 }
+#endif
 
 void cancel_GmRequest(iGmRequest *d) {
     cancel_TlsRequest(d->req);
 }
 
+#if 0
 static void restartTimeout_GmRequest_(iGmRequest *d) {
     /* Note: `d` is currently locked. */
     if (d->timeoutId) {
@@ -199,6 +202,7 @@ static void restartTimeout_GmRequest_(iGmRequest *d) {
     }
     d->timeoutId = SDL_AddTimer(bodyTimeout_GmRequest_, timedOutWhileReceivingBody_GmRequest_, d);
 }
+#endif
 
 static void checkServerCertificate_GmRequest_(iGmRequest *d) {
     const iTlsCertificate *cert = serverCertificate_TlsRequest(d->req);
@@ -272,12 +276,12 @@ static void readIncoming_GmRequest_(iAnyObject *obj) {
             notifyUpdate = iTrue;
             /* Start a timeout for the remainder of the response, in case the connection
                remains open. */
-            restartTimeout_GmRequest_(d);
+//            restartTimeout_GmRequest_(d);
         }
     }
     else if (d->state == receivingBody_GmRequestState) {
         append_Block(&d->resp.body, data);
-        restartTimeout_GmRequest_(d);
+//        restartTimeout_GmRequest_(d);
         notifyUpdate = iTrue;
     }
     initCurrent_Time(&d->resp.when);
@@ -300,8 +304,8 @@ static void requestFinished_GmRequest_(iAnyObject *obj) {
         delete_Block(data);
         initCurrent_Time(&d->resp.when);
     }
-    SDL_RemoveTimer(d->timeoutId);
-    d->timeoutId = 0;
+//    SDL_RemoveTimer(d->timeoutId);
+//    d->timeoutId = 0;
     d->state = (status_TlsRequest(d->req) == error_TlsRequestStatus ? failure_GmRequestState
                                                                     : finished_GmRequestState);
     if (d->state == failure_GmRequestState) {
