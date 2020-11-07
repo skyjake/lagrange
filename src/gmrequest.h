@@ -58,10 +58,8 @@ iDeclareClass(GmRequest)
 iDeclareObjectConstructionArgs(GmRequest, iGmCerts *)
 
 iDeclareNotifyFunc(GmRequest, Updated)
-//iDeclareNotifyFunc(GmRequest, Timeout)
 iDeclareNotifyFunc(GmRequest, Finished)
 iDeclareAudienceGetter(GmRequest, updated)
-//iDeclareAudienceGetter(GmRequest, timeout)
 iDeclareAudienceGetter(GmRequest, finished)
 
 void                setUrl_GmRequest            (iGmRequest *, const iString *url);
