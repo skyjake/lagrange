@@ -726,6 +726,7 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
         }
     }
     setSiteBannerEnabled_GmDocument(d->doc, useBanner);
+    setFormat_GmDocument(d->doc, gemini_GmDocumentFormat);
     setSource_DocumentWidget_(d, src);
     updateTheme_DocumentWidget_(d);
     init_Anim(&d->scrollY, 0);
@@ -838,6 +839,7 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse
                 deinit_String(&str);
                 return;
             }
+            setFormat_GmDocument(d->doc, docFormat);
             /* Convert the source to UTF-8 if needed. */
             if (!equalCase_Rangecc(charset, "utf-8")) {
                 set_String(&str,
