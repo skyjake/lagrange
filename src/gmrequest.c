@@ -32,6 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/mutex.h>
 #include <the_Foundation/path.h>
 #include <the_Foundation/regexp.h>
+#include <the_Foundation/socket.h>
 #include <the_Foundation/tlsrequest.h>
 
 #include <SDL_timer.h>
@@ -120,6 +121,8 @@ struct Impl_GmRequest {
     enum iGmRequestState state;
     iString              url;
     iTlsRequest *        req;
+    iSocket *            gopher; /* socket for Gopher connections */
+    char                 gopherType;
     iGmResponse          resp;
     iAudience *          updated;
     iAudience *          finished;
@@ -160,13 +163,12 @@ static void checkServerCertificate_GmRequest_(iGmRequest *d) {
     }
 }
 
-static void readIncoming_GmRequest_(iAnyObject *obj) {
-    iGmRequest *d = (iGmRequest *) obj;
+static void readIncoming_GmRequest_(iGmRequest *d, iTlsRequest *req) {
     iBool notifyUpdate = iFalse;
-    iBool notifyDone = iFalse;
+    iBool notifyDone   = iFalse;
     lock_Mutex(&d->mutex);
     iAssert(d->state != finished_GmRequestState); /* notifications out of order? */
-    iBlock *data = readAll_TlsRequest(d->req);
+    iBlock *data = readAll_TlsRequest(req);
     if (d->state == receivingHeader_GmRequestState) {
         appendCStrN_String(&d->resp.meta, constData_Block(data), size_Block(data));
         /* Check if the header line is complete. */
@@ -199,14 +201,10 @@ static void readIncoming_GmRequest_(iAnyObject *obj) {
             d->state           = receivingBody_GmRequestState;
             checkServerCertificate_GmRequest_(d);
             notifyUpdate = iTrue;
-            /* Start a timeout for the remainder of the response, in case the connection
-               remains open. */
-//            restartTimeout_GmRequest_(d);
         }
     }
     else if (d->state == receivingBody_GmRequestState) {
         append_Block(&d->resp.body, data);
-//        restartTimeout_GmRequest_(d);
         notifyUpdate = iTrue;
     }
     initCurrent_Time(&d->resp.when);
@@ -220,22 +218,20 @@ static void readIncoming_GmRequest_(iAnyObject *obj) {
     }
 }
 
-static void requestFinished_GmRequest_(iAnyObject *obj) {
-    iGmRequest *d = (iGmRequest *) obj;
+static void requestFinished_GmRequest_(iGmRequest *d, iTlsRequest *req) {
+    iAssert(req == d->req);
     lock_Mutex(&d->mutex);
     /* There shouldn't be anything left to read. */ {
-        iBlock *data = readAll_TlsRequest(d->req);
+        iBlock *data = readAll_TlsRequest(req);
         iAssert(isEmpty_Block(data));
         delete_Block(data);
         initCurrent_Time(&d->resp.when);
     }
-//    SDL_RemoveTimer(d->timeoutId);
-//    d->timeoutId = 0;
-    d->state = (status_TlsRequest(d->req) == error_TlsRequestStatus ? failure_GmRequestState
-                                                                    : finished_GmRequestState);
+    d->state = (status_TlsRequest(req) == error_TlsRequestStatus ? failure_GmRequestState
+                                                                 : finished_GmRequestState);
     if (d->state == failure_GmRequestState) {
         d->resp.statusCode = tlsFailure_GmStatusCode;
-        set_String(&d->resp.meta, errorMessage_TlsRequest(d->req));
+        set_String(&d->resp.meta, errorMessage_TlsRequest(req));
     }
     checkServerCertificate_GmRequest_(d);
     unlock_Mutex(&d->mutex);
@@ -343,17 +339,87 @@ static const iBlock *replaceVariables_(const iBlock *block) {
     return block;
 }
 
+static void gopherRead_GmRequest_(iGmRequest *d, iSocket *socket) {
+    iBool notifyUpdate = iFalse;
+    lock_Mutex(&d->mutex);
+    iBlock *data = readAll_Socket(socket);
+    if (!isEmpty_Block(data)) {
+        append_Block(&d->resp.body, data);
+        notifyUpdate = iTrue;
+    }
+    delete_Block(data);
+    unlock_Mutex(&d->mutex);
+    if (notifyUpdate) {
+        iNotifyAudience(d, updated, GmRequestUpdated);
+    }
+}
+
+static void gopherDisconnected_GmRequest_(iGmRequest *d, iSocket *socket) {
+    iUnused(socket);
+    iBool notify = iFalse;
+//    gopherRead_GmRequest_(d, socket);
+    lock_Mutex(&d->mutex);
+    if (d->state != failure_GmRequestState) {
+        d->state = finished_GmRequestState;
+        notify = iTrue;
+        /* TODO: Convert the received text into text/gemini. */
+        setCStr_String(&d->resp.meta, "text/plain");
+        d->resp.statusCode = success_GmStatusCode;
+    }
+    unlock_Mutex(&d->mutex);
+    if (notify) {
+        iNotifyAudience(d, finished, GmRequestFinished);
+    }
+}
+
+static void gopherError_GmRequest_(iGmRequest *d, iSocket *socket, int error, const char *msg) {
+    iUnused(socket);
+    lock_Mutex(&d->mutex);
+    d->state = failure_GmRequestState;
+    d->resp.statusCode = tlsFailure_GmStatusCode;
+    format_String(&d->resp.meta, "(%d) %s", error, msg);
+    unlock_Mutex(&d->mutex);
+    iNotifyAudience(d, finished, GmRequestFinished);
+}
+
+static void beginGopherConnection_GmRequest_(iGmRequest *d, const iString *host, uint16_t port) {
+    if (port == 0) {
+        port = 70; /* default port */
+    }
+    d->state = receivingBody_GmRequestState;
+    d->gopher = new_Socket(cstr_String(host), port);
+    iConnect(Socket, d->gopher, readyRead,    d, gopherRead_GmRequest_);
+    iConnect(Socket, d->gopher, disconnected, d, gopherDisconnected_GmRequest_);
+    iConnect(Socket, d->gopher, error,        d, gopherError_GmRequest_);
+    open_Socket(d->gopher);
+    iUrl parts;
+    init_Url(&parts, &d->url);
+    if (!isEmpty_Range(&parts.path)) {
+        if (*parts.path.start == '/') {
+            parts.path.start++;
+        }
+        d->gopherType = *parts.path.start;
+        while (*parts.path.start != '/' && parts.path.start < parts.path.end) {
+            parts.path.start++;
+        }
+    }
+    writeData_Socket(d->gopher, parts.path.start, size_Range(&parts.path));
+    writeData_Socket(d->gopher, "\r\n", 2);
+}
+
 /*----------------------------------------------------------------------------------------------*/
 
 void init_GmRequest(iGmRequest *d, iGmCerts *certs) {
     init_Mutex(&d->mutex);
     init_GmResponse(&d->resp);
     init_String(&d->url);
-    d->certs    = certs;
-    d->req      = NULL;
-    d->state    = initialized_GmRequestState;
-    d->updated  = NULL;
-    d->finished = NULL;
+    d->certs      = certs;
+    d->req        = NULL;
+    d->gopher     = NULL;
+    d->gopherType = 0;
+    d->updated    = NULL;
+    d->finished   = NULL;
+    d->state      = initialized_GmRequestState;
 }
 
 void deinit_GmRequest(iGmRequest *d) {
@@ -364,14 +430,14 @@ void deinit_GmRequest(iGmRequest *d) {
     lock_Mutex(&d->mutex);
     if (!isFinished_GmRequest(d)) {
         unlock_Mutex(&d->mutex);
-        cancel_TlsRequest(d->req);
+        cancel_GmRequest(d);
         d->state = finished_GmRequestState;
     }
     else {
         unlock_Mutex(&d->mutex);
     }
-    iRelease(d->req);
-    d->req = NULL;
+    iReleasePtr(&d->req);
+    iReleasePtr(&d->gopher);
     delete_Audience(d->finished);
     delete_Audience(d->updated);
     deinit_GmResponse(&d->resp);
@@ -504,6 +570,10 @@ void submit_GmRequest(iGmRequest *d) {
             port = 0;
         }
     }
+    else if (equalCase_Rangecc(url.scheme, "gopher")) {
+        beginGopherConnection_GmRequest_(d, host, port);
+        return;
+    }
     else if (!equalCase_Rangecc(url.scheme, "gemini")) {
         d->resp.statusCode = unsupportedProtocol_GmStatusCode;
         d->state = finished_GmRequestState;
@@ -528,7 +598,12 @@ void submit_GmRequest(iGmRequest *d) {
 }
 
 void cancel_GmRequest(iGmRequest *d) {
-    cancel_TlsRequest(d->req);
+    if (d->req) {
+        cancel_TlsRequest(d->req);
+    }
+    if (d->gopher) {
+        close_Socket(d->gopher);
+    }
 }
 
 iBool isFinished_GmRequest(const iGmRequest *d) {
