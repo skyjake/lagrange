@@ -34,6 +34,7 @@ struct Impl_Gopher {
     char     type;
     iBlock   source;
     iBool    isPre;
+    iBool    needQueryArgs;
     iString *meta;
     iBlock * output;
 };

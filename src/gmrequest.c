@@ -373,7 +373,7 @@ static void gopherError_GmRequest_(iGmRequest *d, iSocket *socket, int error, co
     lock_Mutex(&d->mutex);
     d->state = failure_GmRequestState;
     d->resp.statusCode = tlsFailure_GmStatusCode;
-    format_String(&d->resp.meta, "(%d) %s", error, msg);
+    format_String(&d->resp.meta, "%s (errno %d)", msg, error);
     clear_Block(&d->resp.body);
     unlock_Mutex(&d->mutex);
     iNotifyAudience(d, finished, GmRequestFinished);
@@ -392,6 +392,12 @@ static void beginGopherConnection_GmRequest_(iGmRequest *d, const iString *host,
     iConnect(Socket, d->gopher.socket, disconnected, d, gopherDisconnected_GmRequest_);
     iConnect(Socket, d->gopher.socket, error,        d, gopherError_GmRequest_);
     open_Gopher(&d->gopher, &d->url);
+    if (d->gopher.needQueryArgs) {
+        d->resp.statusCode = input_GmStatusCode;
+        setCStr_String(&d->resp.meta, "Enter query:");
+        d->state = finished_GmRequestState;
+        iNotifyAudience(d, finished, GmRequestFinished);
+    }
 }
 
 /*----------------------------------------------------------------------------------------------*/

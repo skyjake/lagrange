@@ -30,16 +30,20 @@ iLocalDef iBool isLineTerminator_(const char *str) {
     return str[0] == '\r' && str[1] == '\n';
 }
 
+iLocalDef iBool isDiagram_(char ch) {
+    return strchr("^*_-=~/|\\<>()[]{}", ch) != NULL;
+}
+
 static iBool isPreformatted_(iRangecc text) {
-    int numPunct = 0;
+    int numDiag  = 0;
     int numSpace = 0;
     for (const char *ch = text.start; ch != text.end; ch++) {
-        if (*ch > 32 && ispunct(*ch)) {
-            if (++numPunct == 4)
+        if (isDiagram_(*ch)) {
+            if (++numDiag == 3)
                 return iTrue;
         }
         else {
-            numPunct = 0;
+            numDiag = 0;
         }
         if (*ch == ' ' || *ch == '\n') {
             if (++numSpace == 3) return iTrue;
@@ -131,6 +135,7 @@ void init_Gopher(iGopher *d) {
     d->socket = NULL;
     d->type = 0;
     init_Block(&d->source, 0);
+    d->needQueryArgs = iFalse;
     d->isPre = iFalse;
     d->meta = NULL;
     d->output = NULL;
@@ -142,9 +147,9 @@ void deinit_Gopher(iGopher *d) {
 }
 
 void open_Gopher(iGopher *d, const iString *url) {
-    open_Socket(d->socket);
     iUrl parts;
     init_Url(&parts, url);
+    /* Determine Gopher item type. */
     d->type = '1';
     if (!isEmpty_Range(&parts.path)) {
         if (*parts.path.start == '/') {
@@ -155,12 +160,18 @@ void open_Gopher(iGopher *d, const iString *url) {
             parts.path.start++;
         }
     }
-    /* MIME type determined by the URI. */
+    if (d->type == '7' && isEmpty_Range(&parts.query)) {
+        /* Ask for the query parameters first. */
+        d->needQueryArgs = iTrue;
+        return;
+    }
+    /* MIME type determined by the item type. */
     switch (d->type) {
         case '0':
             setCStr_String(d->meta, "text/plain");
             break;
         case '1':
+        case '7':
             setCStr_String(d->meta, "text/gemini");
             break;
         case '4':
@@ -168,6 +179,12 @@ void open_Gopher(iGopher *d, const iString *url) {
             break;
         case 'g':
             setCStr_String(d->meta, "image/gif");
+            break;
+        case 'h':
+            setCStr_String(d->meta, "text/html");
+            break;
+        case 'M':
+            setCStr_String(d->meta, "multipart/mixed");
             break;
         case 'I':
             setCStr_String(d->meta, "image/generic");
@@ -180,7 +197,14 @@ void open_Gopher(iGopher *d, const iString *url) {
             break;
     }
     d->isPre = iFalse;
+    open_Socket(d->socket);
     writeData_Socket(d->socket, parts.path.start, size_Range(&parts.path));
+    if (!isEmpty_Range(&parts.query)) {
+        iAssert(*parts.query.start == '?');
+        parts.query.start++;
+        writeData_Socket(d->socket, "\t", 1);
+        writeData_Socket(d->socket, parts.query.start, size_Range(&parts.query));
+    }
     writeData_Socket(d->socket, "\r\n", 2);
 }
 
@@ -192,7 +216,7 @@ void cancel_Gopher(iGopher *d) {
 
 iBool processResponse_Gopher(iGopher *d, const iBlock *data) {
     iBool changed = iFalse;
-    if (d->type == '1') {
+    if (d->type == '1' || d->type == '7') {
         append_Block(&d->source, data);
         if (convertSource_Gopher_(d)) {
             changed = iTrue;
