@@ -1,0 +1,70 @@
+name: packages
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+
+env:
+  RELEASE_VERSION: 0.8.0
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: '0'
+          submodules: 'recursive'
+      - name: install-dependencies
+        run: |
+          git submodule sync
+          sudo apt-get update -qq -y
+          sudo apt-get install -y -qq --no-install-recommends cmake libsdl2-dev libssl-dev libpcre3-dev zlib1g-dev libunistring-dev libmpg123-dev debhelper dh-make devscripts fakeroot build-essential
+      - name: package-build
+        run: |
+          git archive --format=tar.gz --prefix=lagrange-${RELEASE_VERSION}/ HEAD >lagrange-${RELEASE_VERSION}.tar.gz
+          tar -xvzf lagrange-${RELEASE_VERSION}.tar.gz
+          ln -s lagrange-${RELEASE_VERSION}.tar.gz lagrange_${RELEASE_VERSION}.orig.tar.gz 
+          cd lagrange-${RELEASE_VERSION}
+          debuild
+          cd ..
+          mkdir -p artifacts
+          mv *deb artifacts/
+        shell: bash
+      - name: plain-build
+        run: |
+          mkdir builddir
+          cd builddir
+          cmake .. -DCMAKE_BUILD_TYPE=Release
+          cmake --build .
+          mkdir -p ../artifacts/
+          tar -czvf ../artifacts/lagrange-${RELEASE_VERSION}-linux-amd64.tar.gz lagrange
+          cd ..
+      - name: upload-artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: ubuntu-latest
+          path: artifacts
+  debian_build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: '0'
+          submodules: 'recursive'
+      - name: get-repo-name
+        run: |
+          echo "REPOSITORY_NAME="$(echo $GITHUB_REPOSITORY | awk -F / '{print $2}' | sed -e "s/:refs//") >> $GITHUB_ENV
+        shell: bash
+      - name: install-dependencies
+        run: |
+          git submodule sync
+      - name: debian_docker
+        uses: ./.github/workflows/docker-debian/
+      - name: upload-debian-artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: debian
+          path: /home/runner/work/${{env.REPOSITORY_NAME}}/${{env.REPOSITORY_NAME}}/artifacts
