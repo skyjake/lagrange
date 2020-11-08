@@ -45,6 +45,7 @@ void init_GmResponse(iGmResponse *d) {
     init_String(&d->meta);
     init_Block(&d->body, 0);
     d->certFlags = 0;
+    init_Block(&d->certFingerprint, 0);
     iZap(d->certValidUntil);
     init_String(&d->certSubject);
     iZap(d->when);
@@ -55,6 +56,7 @@ void initCopy_GmResponse(iGmResponse *d, const iGmResponse *other) {
     initCopy_String(&d->meta, &other->meta);
     initCopy_Block(&d->body, &other->body);
     d->certFlags = other->certFlags;
+    initCopy_Block(&d->certFingerprint, &other->certFingerprint);
     d->certValidUntil = other->certValidUntil;
     initCopy_String(&d->certSubject, &other->certSubject);
     d->when = other->when;
@@ -63,6 +65,7 @@ void initCopy_GmResponse(iGmResponse *d, const iGmResponse *other) {
 void deinit_GmResponse(iGmResponse *d) {
     deinit_String(&d->certSubject);
     deinit_Block(&d->body);
+    deinit_Block(&d->certFingerprint);
     deinit_String(&d->meta);
 }
 
@@ -71,6 +74,7 @@ void clear_GmResponse(iGmResponse *d) {
     clear_String(&d->meta);
     clear_Block(&d->body);
     d->certFlags = 0;
+    clear_Block(&d->certFingerprint);
     iZap(d->certValidUntil);
     clear_String(&d->certSubject);
     iZap(d->when);
@@ -86,7 +90,8 @@ void serialize_GmResponse(const iGmResponse *d, iStream *outs) {
     write32_Stream(outs, d->statusCode);
     serialize_String(&d->meta, outs);
     serialize_Block(&d->body, outs);
-    write32_Stream(outs, d->certFlags);
+    /* TODO: Add certificate fingerprint, but need to bump file version first. */
+    write32_Stream(outs, d->certFlags & ~haveFingerprint_GmCertFlag);
     serialize_Date(&d->certValidUntil, outs);
     serialize_String(&d->certSubject, outs);
     writeU64_Stream(outs, d->when.ts.tv_sec);
@@ -100,6 +105,7 @@ void deserialize_GmResponse(iGmResponse *d, iStream *ins) {
     deserialize_Date(&d->certValidUntil, ins);
     deserialize_String(&d->certSubject, ins);
     iZap(d->when);
+    clear_Block(&d->certFingerprint);
     if (version_Stream(ins) >= addedResponseTimestamps_FileVersion) {
         d->when.ts.tv_sec = readU64_Stream(ins);
     }
@@ -138,6 +144,8 @@ static void checkServerCertificate_GmRequest_(iGmRequest *d) {
     if (cert) {
         const iRangecc domain = range_String(hostName_Address(address_TlsRequest(d->req)));
         d->resp.certFlags |= available_GmCertFlag;
+        set_Block(&d->resp.certFingerprint, collect_Block(fingerprint_TlsCertificate(cert)));
+        d->resp.certFlags |= haveFingerprint_GmCertFlag;
         if (!isExpired_TlsCertificate(cert)) {
             d->resp.certFlags |= timeVerified_GmCertFlag;
         }

@@ -31,10 +31,11 @@ iDeclareType(GmCerts)
 iDeclareType(GmResponse)
 
 enum iGmCertFlags {
-    available_GmCertFlag      = iBit(1), /* certificate provided by server */
-    trusted_GmCertFlag        = iBit(2), /* TOFU status */
-    timeVerified_GmCertFlag   = iBit(3), /* has not expired */
-    domainVerified_GmCertFlag = iBit(4), /* cert matches server domain */
+    available_GmCertFlag       = iBit(1), /* certificate provided by server */
+    trusted_GmCertFlag         = iBit(2), /* TOFU status */
+    timeVerified_GmCertFlag    = iBit(3), /* has not expired */
+    domainVerified_GmCertFlag  = iBit(4), /* cert matches server domain */
+    haveFingerprint_GmCertFlag = iBit(5),
 };
 
 struct Impl_GmResponse {
@@ -42,6 +43,7 @@ struct Impl_GmResponse {
     iString            meta; /* MIME type or other metadata */
     iBlock             body;
     int                certFlags;
+    iBlock             certFingerprint;
     iDate              certValidUntil;
     iString            certSubject;
     iTime              when;

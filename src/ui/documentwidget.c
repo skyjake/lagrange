@@ -26,6 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "audio/player.h"
 #include "command.h"
 #include "defs.h"
+#include "gmcerts.h"
 #include "gmdocument.h"
 #include "gmrequest.h"
 #include "gmutil.h"
@@ -137,6 +138,7 @@ struct Impl_DocumentWidget {
     iTime          sourceTime;
     iGmDocument *  doc;
     int            certFlags;
+    iBlock *       certFingerprint;
     iDate          certExpiry;
     iString *      certSubject;
     int            redirectCount;
@@ -177,6 +179,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     init_PersistentDocumentState(&d->mod);
     d->flags = 0;
     iZap(d->certExpiry);
+    d->certFingerprint  = new_Block(0);
     d->certFlags        = 0;
     d->certSubject      = new_String();
     d->state            = blank_RequestState;
@@ -242,6 +245,7 @@ void deinit_DocumentWidget(iDocumentWidget *d) {
     }
     deinit_PtrArray(&d->visiblePlayers);
     deinit_PtrArray(&d->visibleLinks);
+    delete_Block(d->certFingerprint);
     delete_String(d->certSubject);
     delete_String(d->titleUser);
     deinit_PersistentDocumentState(&d->mod);
@@ -881,6 +885,7 @@ static void updateTrust_DocumentWidget_(iDocumentWidget *d, const iGmResponse *r
     if (response) {
         d->certFlags  = response->certFlags;
         d->certExpiry = response->certValidUntil;
+        set_Block(d->certFingerprint, &response->certFingerprint);
         set_String(d->certSubject, &response->certSubject);
     }
     iLabelWidget *lock = findWidget_App("navbar.lock");
@@ -1271,9 +1276,14 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iFalse;
     }
     else if (equal_Command(cmd, "server.showcert") && d == document_App()) {
-        const char *unchecked = red_ColorEscape   "\u2610";
-        const char *checked   = green_ColorEscape "\u2611";
-        makeMessage_Widget(
+        const char *unchecked      = red_ColorEscape "\u2610";
+        const char *checked        = green_ColorEscape "\u2611";
+        const char *actionLabels[] = { "Dismiss", uiTextCaution_ColorEscape "Trust" };
+        const char *actionCmds[]   = { "message.ok", "server.trustcert" };
+        const iBool canTrust =
+            (d->certFlags == (available_GmCertFlag | haveFingerprint_GmCertFlag |
+                              timeVerified_GmCertFlag | domainVerified_GmCertFlag));
+        iWidget *dlg = makeQuestion_Widget(
             uiHeading_ColorEscape "CERTIFICATE STATUS",
             format_CStr("%s%s  Domain name %s%s\n"
                         "%s%s  %s (%04d-%02d-%02d %02d:%02d:%02d)\n"
@@ -1295,8 +1305,21 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                         d->certExpiry.second,
                         d->certFlags & trusted_GmCertFlag ? checked : unchecked,
                         uiText_ColorEscape,
-                        d->certFlags & trusted_GmCertFlag ? "Trusted on first use"
-                                                          : "Not trusted"));
+                        d->certFlags & trusted_GmCertFlag ? "Trusted" : "Not trusted"),
+            actionLabels,
+            actionCmds,
+            canTrust ? 2 : 1);
+        addAction_Widget(dlg, SDLK_ESCAPE, 0, "message.ok");
+        addAction_Widget(dlg, SDLK_SPACE, 0, "message.ok");
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "server.trustcert")) {
+        const iRangecc host = urlHost_String(d->mod.url);
+        if (!isEmpty_Block(d->certFingerprint) && !isEmpty_Range(&host)) {
+            setTrusted_GmCerts(certs_App(), host, d->certFingerprint, &d->certExpiry);
+            d->certFlags |= trusted_GmCertFlag;
+            postCommand_App("server.showcert");
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "copy") && document_App() == d && !focus_Widget()) {

@@ -381,6 +381,7 @@ iBool checkTrust_GmCerts(iGmCerts *d, iRangecc domain, const iTlsCertificate *ce
     if (!verifyDomain_TlsCertificate(cert, domain)) {
         return iFalse;
     }
+    /* TODO: Could call setTrusted_GmCerts() instead of duplicating the trust-setting. */
     /* Good certificate. If not already trusted, add it now. */
     iString *key = newRange_String(domain);
     iDate until;
@@ -413,6 +414,22 @@ iBool checkTrust_GmCerts(iGmCerts *d, iRangecc domain, const iTlsCertificate *ce
     delete_Block(fingerprint);
     delete_String(key);
     return iTrue;
+}
+
+void setTrusted_GmCerts(iGmCerts *d, iRangecc domain, const iBlock *fingerprint,
+                        const iDate *validUntil) {
+    iString *key = collect_String(newRange_String(domain));
+    lock_Mutex(d->mtx);
+    iTrustEntry *trust = value_StringHash(d->trusted, key);
+    if (trust) {
+        init_Time(&trust->validUntil, validUntil);
+        set_Block(&trust->fingerprint, fingerprint);
+    }
+    else {
+        insert_StringHash(d->trusted, key, iClob(trust = new_TrustEntry(fingerprint, validUntil)));
+    }
+    save_GmCerts_(d);
+    unlock_Mutex(d->mtx);
 }
 
 iGmIdentity *identity_GmCerts(iGmCerts *d, unsigned int id) {
