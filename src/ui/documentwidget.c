@@ -1944,8 +1944,9 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 if (d->contextLink) {
                     const iString *linkUrl = linkUrl_GmDocument(d->doc, d->contextLink->linkId);
                     const iRangecc scheme = urlScheme_String(linkUrl);
-                    if (willUseProxy_App(scheme) || equalCase_Rangecc(scheme, "gemini")) {
-                        /* Regular Gemini links. */
+                    if (willUseProxy_App(scheme) || equalCase_Rangecc(scheme, "gemini") ||
+                        equalCase_Rangecc(scheme, "gopher")) {
+                        /* Regular links that we can open. */
                         pushBackN_Array(
                             &items,
                             (iMenuItem[]){
