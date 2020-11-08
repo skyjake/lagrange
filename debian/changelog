@@ -1,4 +1,4 @@
-lagrange (0.8.0) unstable; urgency=low
+lagrange (0.8.0-1) unstable; urgency=low
 
   * Added support for Gopher.
   * Added support for the full palette of 8-bit ANSI foreground colors.
