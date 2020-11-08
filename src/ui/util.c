@@ -1229,7 +1229,7 @@ iWidget *makeIdentityCreation_Widget(void) {
             addChildFlags_Widget(
                 tmpGroup,
                 iClob(new_LabelWidget(uiTextCaution_ColorEscape "\u26a0  not saved to disk", NULL)),
-                hidden_WidgetFlag),
+                hidden_WidgetFlag | frameless_WidgetFlag),
             "ident.temp.note");
         addChild_Widget(values, iClob(tmpGroup));
     }
