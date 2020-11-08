@@ -823,6 +823,11 @@ iDocumentWidget *newTab_App(const iDocumentWidget *duplicateOf, iBool switchToNe
 
 static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
     iApp *d = &app_;
+    if (equal_Command(cmd, "ident.temp.changed")) {
+        setFlags_Widget(
+            findChild_Widget(dlg, "ident.temp.note"), hidden_WidgetFlag, !arg_Command(cmd));
+        return iFalse;
+    }
     if (equal_Command(cmd, "ident.accept") || equal_Command(cmd, "cancel")) {
         if (equal_Command(cmd, "ident.accept")) {
             const iString *commonName   = text_InputWidget (findChild_Widget(dlg, "ident.common"));
