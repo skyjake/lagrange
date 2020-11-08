@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 env:
-  RELEASE_VERSION: 0.6.1
+  RELEASE_VERSION: 0.8.0
 
 jobs:
   build:
@@ -40,7 +40,7 @@ jobs:
           cmake .. -DCMAKE_BUILD_TYPE=Release
           cmake --build .
           mkdir -p ../artifacts/
-          tar -czvf ../artifacts/langrange-${RELEASE_VERSION}-linux-amd64.tar.gz lagrange
+          tar -czvf ../artifacts/lagrange-${RELEASE_VERSION}-linux-amd64.tar.gz lagrange
           cd ..
       - name: upload-artifact
         uses: actions/upload-artifact@v2

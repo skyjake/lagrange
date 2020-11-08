@@ -12,4 +12,3 @@ debuild
 cd ..
 mkdir -p artifacts
 mv *deb artifacts/
-
