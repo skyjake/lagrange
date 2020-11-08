@@ -1,0 +1,14 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: lagrange
+Upstream-Contact: Jaakko Keränen (skyjake) <jaakko.keranen@iki.fi>
+Source: https://codeberg.org/skyjake/lagrange
+
+Files: *
+Copyright: 2020 Jaakko Keränen
+License: BSD-2-Clause
+
+Files: src/audio/stb_vorbic.c
+       src/stb_image.h
+       src/stb_truetype.h
+Copyright: 2007 Sean Barrett
+License: MIT

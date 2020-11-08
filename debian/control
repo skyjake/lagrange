@@ -1,0 +1,18 @@
+Source: lagrange
+Section: net
+Priority: optional
+Maintainer: Jaakko Keränen (skyjake) <jaakko.keranen@iki.fi>
+Build-Depends: cmake, debhelper (>=11~), libsdl2-dev, libssl-dev, libpcre3-dev, zlib1g-dev, libunistring-dev, libmpg123-dev
+Standards-Version: 4.1.4
+Homepage: https://gmi.skyjake.fi/lagrange/
+
+Package: lagrange
+Architecture: any
+Multi-Arch: foreign
+Depends: ${misc:Depends}, ${shlibs:Depends}
+Description: Lagrange - A Beautiful Gemini Client
+ Lagrange is a desktop GUI client for browsing Geminispace.
+ It offers modern conveniences familiar from web browsers, 
+ such as smooth scrolling, inline image viewing, multiple 
+ tabs, visual themes, Unicode fonts, bookmarks, history,
+ and page outlines.
