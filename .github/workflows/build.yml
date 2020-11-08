@@ -22,6 +22,13 @@ jobs:
           git submodule sync
           sudo apt-get update -qq -y
           sudo apt-get install -y -qq --no-install-recommends cmake libsdl2-dev libssl-dev libpcre3-dev zlib1g-dev libunistring-dev libmpg123-dev debhelper dh-make devscripts fakeroot build-essential
+      - name: import-signing-key
+        run: |
+          mkdir -p ~/.gnupg/
+          printf "$GPG_SIGNING_KEY" | base64 --decode > ~/.gnupg/private.key
+          gpg --import ~/.gnupg/private.key
+        env:
+          GPG_SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY }}
       - name: package-build
         run: |
           git archive --format=tar.gz --prefix=lagrange-${RELEASE_VERSION}/ HEAD >lagrange-${RELEASE_VERSION}.tar.gz
