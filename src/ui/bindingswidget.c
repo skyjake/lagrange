@@ -180,7 +180,7 @@ static void draw_BindingItem_(const iBindingItem *d, iPaint *p, iRect itemRect,
                    fg,
                    range_String(&d->label));
     drawAlign_Text(d->isWaitingForEvent ? uiContent_FontId : font,
-                   init_I2(right_Rect(itemRect) - 3 * gap_UI,
+                   init_I2(right_Rect(itemRect) - 6 * gap_UI,
                            y - (lineHeight_Text(uiContent_FontId) - line) / 2),
                    fg,
                    right_Alignment,

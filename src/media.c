@@ -22,6 +22,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "media.h"
 #include "gmdocument.h"
+#include "gmrequest.h"
 #include "ui/window.h"
 #include "audio/player.h"
 #include "app.h"
@@ -295,3 +296,36 @@ iPlayer *audioPlayer_Media(const iMedia *d, iMediaId audioId) {
     }
     return NULL;
 }
+
+/*----------------------------------------------------------------------------------------------*/
+
+static void updated_MediaRequest_(iAnyObject *obj) {
+    iMediaRequest *d = obj;
+    postCommandf_App("media.updated link:%u request:%p", d->linkId, d);
+}
+
+static void finished_MediaRequest_(iAnyObject *obj) {
+    iMediaRequest *d = obj;
+    postCommandf_App("media.finished link:%u request:%p", d->linkId, d);
+}
+
+void init_MediaRequest(iMediaRequest *d, iDocumentWidget *doc, unsigned int linkId, const iString *url) {
+    d->doc    = doc;
+    d->linkId = linkId;
+    d->req    = new_GmRequest(certs_App());
+    setUrl_GmRequest(d->req, url);
+    iConnect(GmRequest, d->req, updated, d, updated_MediaRequest_);
+    iConnect(GmRequest, d->req, finished, d, finished_MediaRequest_);
+    submit_GmRequest(d->req);
+}
+
+void deinit_MediaRequest(iMediaRequest *d) {
+    iDisconnect(GmRequest, d->req, updated, d, updated_MediaRequest_);
+    iDisconnect(GmRequest, d->req, finished, d, finished_MediaRequest_);
+    iRelease(d->req);
+}
+
+iDefineObjectConstructionArgs(MediaRequest,
+                              (iDocumentWidget *doc, unsigned int linkId, const iString *url),
+                              doc, linkId, url)
+iDefineClass(MediaRequest)

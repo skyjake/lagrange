@@ -35,8 +35,9 @@ iDeclareType(Prefs)
 struct Impl_Prefs {
     int dialogTab;
     iBool retainWindowSize;
-    float uiScale;    
+    float uiScale;
     int zoomPercent;
+    iBool smoothScrolling;
     iBool useSystemTheme;
     enum iColorTheme theme;
     iString gopherProxy;

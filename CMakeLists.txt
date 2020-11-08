@@ -14,12 +14,11 @@
 #   https://libsdl.org/). To make configuration easier, consider writing
 #   for your personal use a pkg-config sdl2.pc file that uses the Windows
 #   version of the library.
-# - `cat` is relied upon for merging all the resource files together.
 
 cmake_minimum_required (VERSION 3.9)
 
 project (Lagrange
-    VERSION 0.7.2
+    VERSION 0.8.0
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
@@ -33,7 +32,7 @@ option (ENABLE_RESOURCE_EMBED   "Embed resources inside the executable" OFF)
 option (ENABLE_WINDOWPOS_FIX    "Set position after showing window (workaround for SDL bug)" OFF)
 
 include (BuildType.cmake)
-include (Embed.cmake)
+include (res/Embed.cmake)
 if (NOT EXISTS ${CMAKE_SOURCE_DIR}/lib/the_Foundation/CMakeLists.txt)
     set (INSTALL_THE_FOUNDATION YES)
     find_package (the_Foundation REQUIRED)
@@ -104,6 +103,8 @@ set (SOURCES
     src/gmrequest.h
     src/gmutil.c
     src/gmutil.h
+    src/gopher.c
+    src/gopher.h
     src/history.c
     src/history.h
     src/lookup.c

@@ -64,3 +64,21 @@ size_t          numAudio_Media      (const iMedia *);
 iMediaId        findLinkAudio_Media (const iMedia *, uint16_t linkId);
 iBool           audioInfo_Media     (const iMedia *, iMediaId audioId, iGmAudioInfo *info_out);
 iPlayer *       audioPlayer_Media   (const iMedia *, iMediaId audioId);
+
+
+/*----------------------------------------------------------------------------------------------*/
+
+iDeclareType(GmRequest)
+iDeclareType(DocumentWidget)
+
+iDeclareClass(MediaRequest)
+
+struct Impl_MediaRequest {
+    iObject          object;
+    iDocumentWidget *doc;
+    unsigned int     linkId;
+    iGmRequest *     req;
+};
+
+iDeclareObjectConstructionArgs(MediaRequest, iDocumentWidget *doc, unsigned int linkId,
+                               const iString *url)

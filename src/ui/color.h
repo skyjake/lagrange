@@ -227,5 +227,5 @@ iLocalDef void setHsl_Color(int color, iHSLColor hsl) {
 
 void            setThemePalette_Color   (enum iColorTheme theme);
 
-iColor          ansi_Color      (iRangecc escapeSequence, int fallback);
-const char *    escape_Color    (int color);
+iColor          ansiForeground_Color    (iRangecc escapeSequence, int fallback);
+const char *    escape_Color            (int color);

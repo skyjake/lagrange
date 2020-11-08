@@ -80,9 +80,9 @@ iChar char_Glyph(const iGlyph *d) {
 
 iDefineTypeConstructionArgs(Glyph, (iChar ch), ch)
 
-    /*-----------------------------------------------------------------------------------------------*/
+/*-----------------------------------------------------------------------------------------------*/
 
-    struct Impl_Font {
+struct Impl_Font {
     iBlock *       data;
     stbtt_fontinfo font;
     float          scale;
@@ -417,8 +417,7 @@ static SDL_Surface *rasterizeGlyph_Font_(const iFont *d, uint32_t glyphIndex, fl
     int w, h;
     uint8_t *bmp = stbtt_GetGlyphBitmapSubpixel(
         &d->font, d->scale, d->scale, xShift, 0.0f, glyphIndex, &w, &h, 0, 0);
-    /* Note: `bmp` must be freed afterwards. */
-    collect_Garbage(bmp, freeBmp_);
+    collect_Garbage(bmp, freeBmp_); /* `bmp` must be freed afterwards. */
     SDL_Surface *surface8 =
         SDL_CreateRGBSurfaceWithFormatFrom(bmp, w, h, 8, w, SDL_PIXELFORMAT_INDEX8);
     SDL_SetSurfacePalette(surface8, text_.grayscale);
@@ -471,12 +470,6 @@ static void cache_Font_(iFont *d, iGlyph *glyph, int hoff) {
         if (hoff == 0) {
             int adv;
             const uint32_t gIndex = glyph->glyphIndex;
-//            float advScale = d->scale;
-//            if (isJapanese_FontId(d - text_.fonts)) {
-                /* Treat as monospace. */
-//                gIndex = stbtt_FindGlyphIndex(&d->font, 0x5712);
-//                advScale *= 2.0f;
-//            }
             stbtt_GetGlyphHMetrics(&d->font, gIndex, &adv, NULL);
             glyph->advance = d->scale * adv;
         }
@@ -541,8 +534,8 @@ iLocalDef iFont *characterFont_Font_(iFont *d, iChar ch, uint32_t *glyphIndex) {
 }
 
 static const iGlyph *glyph_Font_(iFont *d, iChar ch) {
-    /* It may actually come from a different font. */
     uint32_t glyphIndex = 0;
+    /* The glyph may actually come from a different font; look up the right font. */
     iFont *font = characterFont_Font_(d, ch, &glyphIndex);
     const void *node = value_Hash(&font->glyphs, ch);
     if (node) {
@@ -586,11 +579,21 @@ static enum iFontId fontId_Text_(const iFont *font) {
     return font - text_.fonts;
 }
 
-iLocalDef iBool isWrapBoundary_(iChar a, iChar b) {
-    if (b == '/' || b == '-' || b == ',' || b == ';' || b == ':' || b == '.') {
+iLocalDef iBool isWrapBoundary_(iChar prevC, iChar c) {
+    /* Line wrapping boundaries are determined by looking at a character and the
+       last character processed. We want to wrap at natural word boundaries where
+       possible, so normally we wrap at a space followed a non-space character. As
+       an exception, we also wrap after punctuation used to break up words, so we
+       can wrap text like foo/bar/baz-abc-def.xyz at any puncation boundaries,
+       without wrapping on other punctuation used for expressive purposes like
+       emoticons :-) */
+    if (isSpace_Char(prevC)) {
+        return iFalse;
+    }
+    if (c == '/' || c == '-' || c == ',' || c == ';' || c == ':' || c == '.') {
         return iTrue;
     }
-    return !isSpace_Char(a) && isSpace_Char(b);
+    return isSpace_Char(c);
 }
 
 iLocalDef iBool isMeasuring_(enum iRunMode mode) {
@@ -625,7 +628,8 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
             if (match_RegExp(text_.ansiEscape, chPos, text.end - chPos, &m)) {
                 if (mode == draw_RunMode) {
                     /* Change the color. */
-                    const iColor clr = ansi_Color(capturedRange_RegExpMatch(&m, 1), tmParagraph_ColorId);
+                    const iColor clr =
+                        ansiForeground_Color(capturedRange_RegExpMatch(&m, 1), tmParagraph_ColorId);
                     SDL_SetTextureColorMod(text_.cache, clr.r, clr.g, clr.b);
                 }
                 chPos = end_RegExpMatch(&m);
@@ -697,7 +701,6 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
         if (!isMeasuring_(mode)) {
             if (useMonoAdvance && dst.w > advance) {
                 dst.x -= (dst.w - advance) / 2;
-
             }
             SDL_RenderCopy(text_.render, text_.cache, (const SDL_Rect *) &glyph->rect[hoff], &dst);
         }

@@ -180,6 +180,7 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "font.set arg:%d\n", d->prefs.font);
     appendFormat_String(str, "headingfont.set arg:%d\n", d->prefs.headingFont);
     appendFormat_String(str, "zoom.set arg:%d\n", d->prefs.zoomPercent);
+    appendFormat_String(str, "smoothscroll arg:%d\n", d->prefs.smoothScrolling);
     appendFormat_String(str, "linewidth.set arg:%d\n", d->prefs.lineWidth);
     appendFormat_String(str, "prefs.biglede.changed arg:%d\n", d->prefs.bigFirstParagraph);
     appendFormat_String(str, "prefs.sideicon.changed arg:%d\n", d->prefs.sideIcon);
@@ -362,7 +363,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     loadPrefs_App_(d);
     load_Keys(dataDir_App_);
     load_Visited(d->visited, dataDir_App_);
-    load_Bookmarks(d->bookmarks, dataDir_App_);    
+    load_Bookmarks(d->bookmarks, dataDir_App_);
     if (isFirstRun) {
         /* Create the default bookmarks for a quick start. */
         add_Bookmarks(d->bookmarks,
@@ -417,10 +418,10 @@ static void init_App_(iApp *d, int argc, char **argv) {
                 startsWithCase_String(arg, "gemini:") || startsWithCase_String(arg, "file:") ||
                 startsWithCase_String(arg, "data:")   || startsWithCase_String(arg, "about:");
             if (isKnownScheme || fileExists_FileInfo(arg)) {
-                postCommandf_App("open newtab:%d url:%s%s",
+                postCommandf_App("open newtab:%d url:%s",
                                  newTab,
-                                 isKnownScheme ? "" : "file://",
-                                 cstr_String(arg));
+                                 isKnownScheme ? cstr_String(arg)
+                                               : cstrCollect_String(makeFileUrl_String(arg)));
                 newTab = iTrue;
             }
         }
@@ -501,7 +502,8 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     postCommandf_App("~open newtab:%d url:%s", newTab, ev.drop.file);
                 }
                 else {
-                    postCommandf_App("~open newtab:%d url:file://%s", newTab, ev.drop.file);
+                    postCommandf_App(
+                        "~open newtab:%d url:%s", newTab, makeFileUrl_CStr(ev.drop.file));
                 }
                 break;
             }
@@ -610,13 +612,14 @@ enum iColorTheme colorTheme_App(void) {
 
 const iString *schemeProxy_App(iRangecc scheme) {
     iApp *d = &app_;
+    const iString *proxy = NULL;
     if (equalCase_Rangecc(scheme, "gopher")) {
-        return &d->prefs.gopherProxy;
+        proxy = &d->prefs.gopherProxy;
     }
     if (equalCase_Rangecc(scheme, "http") || equalCase_Rangecc(scheme, "https")) {
-        return &d->prefs.httpProxy;
+        proxy = &d->prefs.httpProxy;
     }
-    return NULL;
+    return !isEmpty_String(proxy) ? proxy : NULL;
 }
 
 int run_App(int argc, char **argv) {
@@ -734,6 +737,8 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
                          cstr_String(text_InputWidget(findChild_Widget(d, "prefs.downloads"))));
         postCommandf_App("window.retain arg:%d",
                          isSelected_Widget(findChild_Widget(d, "prefs.retainwindow")));
+        postCommandf_App("smoothscroll arg:%d",
+                         isSelected_Widget(findChild_Widget(d, "prefs.smoothscroll")));
         postCommandf_App("ostheme arg:%d",
                          isSelected_Widget(findChild_Widget(d, "prefs.ostheme")));
         postCommandf_App("proxy.http address:%s",
@@ -818,6 +823,11 @@ iDocumentWidget *newTab_App(const iDocumentWidget *duplicateOf, iBool switchToNe
 
 static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
     iApp *d = &app_;
+    if (equal_Command(cmd, "ident.temp.changed")) {
+        setFlags_Widget(
+            findChild_Widget(dlg, "ident.temp.note"), hidden_WidgetFlag, !arg_Command(cmd));
+        return iFalse;
+    }
     if (equal_Command(cmd, "ident.accept") || equal_Command(cmd, "cancel")) {
         if (equal_Command(cmd, "ident.accept")) {
             const iString *commonName   = text_InputWidget (findChild_Widget(dlg, "ident.common"));
@@ -879,6 +889,10 @@ static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
     return iFalse;
 }
 
+iBool willUseProxy_App(const iRangecc scheme) {
+    return schemeProxy_App(scheme) != NULL;
+}
+
 iBool handleCommand_App(const char *cmd) {
     iApp *d = &app_;
     if (equal_Command(cmd, "prefs.dialogtab")) {
@@ -908,7 +922,7 @@ iBool handleCommand_App(const char *cmd) {
         postCommand_App("font.changed");
         postCommand_App("window.unfreeze");
         return iTrue;
-    }    
+    }
     else if (equal_Command(cmd, "zoom.set")) {
         setFreezeDraw_Window(get_Window(), iTrue); /* no intermediate draws before docs updated */
         d->prefs.zoomPercent = arg_Command(cmd);
@@ -927,6 +941,10 @@ iBool handleCommand_App(const char *cmd) {
         setContentFontSize_Text((float) d->prefs.zoomPercent / 100.0f);
         postCommand_App("font.changed");
         postCommand_App("window.unfreeze");
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "smoothscroll")) {
+        d->prefs.smoothScrolling = arg_Command(cmd);
         return iTrue;
     }
     else if (equal_Command(cmd, "forcewrap.toggle")) {
@@ -995,17 +1013,20 @@ iBool handleCommand_App(const char *cmd) {
     else if (equal_Command(cmd, "proxy.http")) {
         setCStr_String(&d->prefs.httpProxy, suffixPtr_Command(cmd, "address"));
         return iTrue;
-    }    else if (equal_Command(cmd, "downloads")) {
+    }
+    else if (equal_Command(cmd, "downloads")) {
         setCStr_String(&d->prefs.downloadDir, suffixPtr_Command(cmd, "path"));
         return iTrue;
     }
     else if (equal_Command(cmd, "open")) {
         const iString *url = collectNewCStr_String(suffixPtr_Command(cmd, "url"));
+        const iBool noProxy = argLabel_Command(cmd, "noproxy");
         iUrl parts;
         init_Url(&parts, url);
         if (equalCase_Rangecc(parts.scheme, "mailto") ||
-            (isEmpty_String(&d->prefs.httpProxy) && (equalCase_Rangecc(parts.scheme, "http") ||
-                                                     equalCase_Rangecc(parts.scheme, "https")))) {
+            ((noProxy || isEmpty_String(&d->prefs.httpProxy)) &&
+             (equalCase_Rangecc(parts.scheme, "http") ||
+              equalCase_Rangecc(parts.scheme, "https")))) {
             openInDefaultBrowser_App(url);
             return iTrue;
         }
@@ -1103,6 +1124,7 @@ iBool handleCommand_App(const char *cmd) {
         updatePrefsThemeButtons_(dlg);
         setText_InputWidget(findChild_Widget(dlg, "prefs.downloads"), &d->prefs.downloadDir);
         setToggle_Widget(findChild_Widget(dlg, "prefs.hoveroutline"), d->prefs.hoverOutline);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.smoothscroll"), d->prefs.smoothScrolling);
         setToggle_Widget(findChild_Widget(dlg, "prefs.ostheme"), d->prefs.useSystemTheme);
         setToggle_Widget(findChild_Widget(dlg, "prefs.retainwindow"), d->prefs.retainWindowSize);
         setText_InputWidget(findChild_Widget(dlg, "prefs.uiscale"),
@@ -1174,6 +1196,14 @@ iBool handleCommand_App(const char *cmd) {
                                     siteIcon_GmDocument(document_DocumentWidget(doc)));
         postCommand_App("focus.set id:bmed.title");
         return iTrue;
+    }
+    else if (equal_Command(cmd, "bookmarks.changed")) {
+        save_Bookmarks(d->bookmarks, dataDir_App_);
+        return iFalse;
+    }
+    else if (equal_Command(cmd, "visited.changed")) {
+        save_Visited(d->visited, dataDir_App_);
+        return iFalse;
     }
     else if (equal_Command(cmd, "ident.new")) {
         iWidget *dlg = makeIdentityCreation_Widget();

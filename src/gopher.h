@@ -20,33 +20,27 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-#include "prefs.h"
+#pragma once
 
-void init_Prefs(iPrefs *d) {
-    d->dialogTab         = 0;
-    d->theme             = dark_ColorTheme;
-    d->useSystemTheme    = iTrue;
-    d->retainWindowSize  = iTrue;
-    d->zoomPercent       = 100;
-    d->smoothScrolling   = iTrue;
-    d->forceLineWrap     = iFalse;
-    d->quoteIcon         = iTrue;
-    d->font              = nunito_TextFont;
-    d->headingFont       = nunito_TextFont;
-    d->lineWidth         = 40;
-    d->bigFirstParagraph = iTrue;
-    d->sideIcon          = iTrue;
-    d->hoverOutline      = iFalse;
-    d->docThemeDark      = colorfulDark_GmDocumentTheme;
-    d->docThemeLight     = white_GmDocumentTheme;
-    d->saturation        = 1.0f;
-    init_String(&d->gopherProxy);
-    init_String(&d->httpProxy);
-    init_String(&d->downloadDir);
-}
+#include "gmutil.h"
 
-void deinit_Prefs(iPrefs *d) {
-    deinit_String(&d->gopherProxy);
-    deinit_String(&d->httpProxy);
-    deinit_String(&d->downloadDir);
-}
+#include <the_Foundation/regexp.h>
+#include <the_Foundation/socket.h>
+
+iDeclareType(Gopher)
+
+struct Impl_Gopher {
+    iSocket *socket;
+    char     type;
+    iBlock   source;
+    iBool    isPre;
+    iBool    needQueryArgs;
+    iString *meta;
+    iBlock * output;
+};
+
+iDeclareTypeConstruction(Gopher)
+
+void    open_Gopher             (iGopher *, const iString *url);
+iBool   processResponse_Gopher  (iGopher *, const iBlock *data);
+void    cancel_Gopher           (iGopher *);

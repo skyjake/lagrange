@@ -235,12 +235,14 @@ static void clearLinks_GmDocument_(iGmDocument *d) {
     clear_PtrArray(&d->links);
 }
 
+#if 0
 static iBool isGopher_GmDocument_(const iGmDocument *d) {
     return equalCase_Rangecc(urlScheme_String(&d->url), "gopher");
 }
+#endif
 
 static void doLayout_GmDocument_(iGmDocument *d) {
-    const iBool isGemini = !isGopher_GmDocument_(d);
+    const iBool isGemini = iTrue; // !isGopher_GmDocument_(d);
     /* TODO: Collect these parameters into a GmTheme. */
     const int fonts[max_GmLineType] = {
         isGemini ? paragraph_FontId : preformatted_FontId,
@@ -1081,7 +1083,7 @@ static void normalize_GmDocument(iGmDocument *d) {
     iRangecc src = range_String(&d->source);
     iRangecc line = iNullRange;
     iBool isPreformat = iFalse;
-    if (d->format == plainText_GmDocumentFormat || isGopher_GmDocument_(d)) {
+    if (d->format == plainText_GmDocumentFormat) { // || isGopher_GmDocument_(d)) {
         isPreformat = iTrue; /* Cannot be turned off. */
     }
     const int preTabWidth = 4; /* TODO: user-configurable parameter */

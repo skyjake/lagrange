@@ -65,6 +65,8 @@ static void bindDefaults_(void) {
     bindLabel_Keys(11, "scroll.step arg:1", SDLK_DOWN, 0, "Scroll down");
     bindLabel_Keys(20, "scroll.page arg:-1", SDLK_PAGEUP, 0, "Scroll up half a page");
     bindLabel_Keys(21, "scroll.page arg:1", SDLK_PAGEDOWN, 0, "Scroll down half a page");
+    bindLabel_Keys(30, "navigate.back", navigateBack_KeyShortcut, "Navigate back");
+    bindLabel_Keys(31, "navigate.forward", navigateForward_KeyShortcut, "Navigate forward");
     /* The following cannot currently be changed (built-in duplicates). */
     bind_Keys(1000, "scroll.page arg:-1", SDLK_SPACE, KMOD_SHIFT);
     bind_Keys(1001, "scroll.page arg:1", SDLK_SPACE, 0);

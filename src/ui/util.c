@@ -188,7 +188,7 @@ static float valueAt_Anim_(const iAnim *d, const uint32_t now) {
 void setValue_Anim(iAnim *d, float to, uint32_t span) {
     if (span == 0) {
         d->from = d->to = to;
-        d->when = d->due = SDL_GetTicks();
+        d->when = d->due = frameTime_Window(get_Window()); /* effectively in the past */
     }
     else if (fabsf(to - d->to) > 0.00001f) {
         const uint32_t now = SDL_GetTicks();
@@ -997,6 +997,8 @@ iWidget *makePreferences_Widget(void) {
         setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.downloads");
         addChild_Widget(headings, iClob(makeHeading_Widget("Outline on scrollbar:")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.hoveroutline")));
+        addChild_Widget(headings, iClob(makeHeading_Widget("Smooth scrolling:")));
+        addChild_Widget(values, iClob(makeToggle_Widget("prefs.smoothscroll")));
         makeTwoColumnHeading_("WINDOW", headings, values);
 #if defined (iPlatformApple) || defined (iPlatformMSys)
         addChild_Widget(headings, iClob(makeHeading_Widget("Use system theme:")));
@@ -1214,8 +1216,25 @@ iWidget *makeIdentityCreation_Widget(void) {
     iWidget *values = addChildFlags_Widget(
         page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
     iInputWidget *inputs[6];
+    addChild_Widget(headings, iClob(makeHeading_Widget("Valid until:")));
+    setId_Widget(addChild_Widget(values, iClob(newHint_InputWidget(19, "YYYY-MM-DD HH:MM:SS"))), "ident.until");
     addChild_Widget(headings, iClob(makeHeading_Widget("Common name:")));
     setId_Widget(addChild_Widget(values, iClob(inputs[0] = new_InputWidget(0))), "ident.common");
+    /* Temporary? */ {
+        addChild_Widget(headings, iClob(makeHeading_Widget("Temporary:")));
+        iWidget *tmpGroup = new_Widget();
+        setFlags_Widget(tmpGroup, arrangeSize_WidgetFlag | arrangeHorizontal_WidgetFlag, iTrue);
+        addChild_Widget(tmpGroup, iClob(makeToggle_Widget("ident.temp")));
+        setId_Widget(
+            addChildFlags_Widget(
+                tmpGroup,
+                iClob(new_LabelWidget(uiTextCaution_ColorEscape "\u26a0  not saved to disk", NULL)),
+                hidden_WidgetFlag),
+            "ident.temp.note");
+        addChild_Widget(values, iClob(tmpGroup));
+    }
+    addChild_Widget(headings, iClob(makePadding_Widget(gap_UI)));
+    addChild_Widget(values, iClob(makePadding_Widget(gap_UI)));
     addChild_Widget(headings, iClob(makeHeading_Widget("Email:")));
     setId_Widget(addChild_Widget(values, iClob(inputs[1] = newHint_InputWidget(0, "optional"))), "ident.email");
     addChild_Widget(headings, iClob(makeHeading_Widget("User ID:")));
@@ -1226,10 +1245,6 @@ iWidget *makeIdentityCreation_Widget(void) {
     setId_Widget(addChild_Widget(values, iClob(inputs[4] = newHint_InputWidget(0, "optional"))), "ident.org");
     addChild_Widget(headings, iClob(makeHeading_Widget("Country:")));
     setId_Widget(addChild_Widget(values, iClob(inputs[5] = newHint_InputWidget(0, "optional"))), "ident.country");
-    addChild_Widget(headings, iClob(makeHeading_Widget("Valid until:")));
-    setId_Widget(addChild_Widget(values, iClob(newHint_InputWidget(19, "YYYY-MM-DD HH:MM:SS"))), "ident.until");
-    addChild_Widget(headings, iClob(makeHeading_Widget("Temporary:")));
-    addChild_Widget(values, iClob(makeToggle_Widget("ident.temp")));
     arrange_Widget(dlg);
     for (size_t i = 0; i < iElemCount(inputs); ++i) {
         as_Widget(inputs[i])->rect.size.x = 100 * gap_UI - headings->rect.size.x;

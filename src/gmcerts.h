@@ -60,7 +60,8 @@ iDeclareTypeConstructionArgs(GmCerts, const char *saveDir)
 typedef iBool (*iGmCertsIdentityFilterFunc)(void *context, const iGmIdentity *);
 
 iBool               checkTrust_GmCerts      (iGmCerts *, iRangecc domain, const iTlsCertificate *cert);
-
+void                setTrusted_GmCerts      (iGmCerts *, iRangecc domain, const iBlock *fingerprint,
+                                             const iDate *validUntil);
 /**
  * Create a new self-signed TLS client certificate for identifying the user.
  * @a commonName and the other name parameters are inserted in the subject field

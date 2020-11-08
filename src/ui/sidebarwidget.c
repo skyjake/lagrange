@@ -500,6 +500,8 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                     setFlags_Widget(d->resizer, pressed_WidgetFlag, iFalse);
                     setBackgroundColor_Widget(d->resizer, none_ColorId);
                     setMouseGrab_Widget(NULL);
+                    /* Final size update in case it was resized. */
+                    updateSize_DocumentWidget(document_App());
                     refresh_Widget(d->resizer);
                 }
             }

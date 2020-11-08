@@ -26,6 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "audio/player.h"
 #include "command.h"
 #include "defs.h"
+#include "gmcerts.h"
 #include "gmdocument.h"
 #include "gmrequest.h"
 #include "gmutil.h"
@@ -55,81 +56,40 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <ctype.h>
 #include <errno.h>
 
-iDeclareClass(MediaRequest)
-
-struct Impl_MediaRequest {
-    iObject          object;
-    iDocumentWidget *doc;
-    iGmLinkId        linkId;
-    iGmRequest *     req;
-};
-
-static void updated_MediaRequest_(iAnyObject *obj) {
-    iMediaRequest *d = obj;
-    postCommandf_App("media.updated link:%u request:%p", d->linkId, d);
-}
-
-static void finished_MediaRequest_(iAnyObject *obj) {
-    iMediaRequest *d = obj;
-    postCommandf_App("media.finished link:%u request:%p", d->linkId, d);
-}
-
-void init_MediaRequest(iMediaRequest *d, iDocumentWidget *doc, iGmLinkId linkId, const iString *url) {
-    d->doc    = doc;
-    d->linkId = linkId;
-    d->req    = new_GmRequest(certs_App());
-    setUrl_GmRequest(d->req, url);
-    iConnect(GmRequest, d->req, updated, d, updated_MediaRequest_);
-    iConnect(GmRequest, d->req, finished, d, finished_MediaRequest_);
-    submit_GmRequest(d->req);
-}
-
-void deinit_MediaRequest(iMediaRequest *d) {
-    iDisconnect(GmRequest, d->req, updated, d, updated_MediaRequest_);
-    iDisconnect(GmRequest, d->req, finished, d, finished_MediaRequest_);
-    iRelease(d->req);
-}
-
-iDefineObjectConstructionArgs(MediaRequest,
-                              (iDocumentWidget *doc, iGmLinkId linkId, const iString *url),
-                              doc, linkId, url)
-iDefineClass(MediaRequest)
-
 /*----------------------------------------------------------------------------------------------*/
 
-iDeclareType(Model)
-iDeclareTypeConstruction(Model)
-iDeclareTypeSerialization(Model)
+iDeclareType(PersistentDocumentState)
+iDeclareTypeConstruction(PersistentDocumentState)
+iDeclareTypeSerialization(PersistentDocumentState)
 
-struct Impl_Model {
-    /* state that persists across sessions */
+struct Impl_PersistentDocumentState {
     iHistory *history;
     iString * url;
 };
 
-void init_Model(iModel *d) {
+void init_PersistentDocumentState(iPersistentDocumentState *d) {
     d->history = new_History();
     d->url     = new_String();
 }
 
-void deinit_Model(iModel *d) {
+void deinit_PersistentDocumentState(iPersistentDocumentState *d) {
     delete_String(d->url);
     delete_History(d->history);
 }
 
-void serialize_Model(const iModel *d, iStream *outs) {
+void serialize_PersistentDocumentState(const iPersistentDocumentState *d, iStream *outs) {
     serialize_String(d->url, outs);
     write16_Stream(outs, 0 /*d->zoomPercent*/);
     serialize_History(d->history, outs);
 }
 
-void deserialize_Model(iModel *d, iStream *ins) {
+void deserialize_PersistentDocumentState(iPersistentDocumentState *d, iStream *ins) {
     deserialize_String(d->url, ins);
     /*d->zoomPercent =*/ read16_Stream(ins);
     deserialize_History(d->history, ins);
 }
 
-iDefineTypeConstruction(Model)
+iDefineTypeConstruction(PersistentDocumentState)
 
 /*----------------------------------------------------------------------------------------------*/
 
@@ -167,7 +127,7 @@ enum iDocumentWidgetFlag {
 struct Impl_DocumentWidget {
     iWidget        widget;
     enum iRequestState state;
-    iModel         mod;
+    iPersistentDocumentState mod;
     int            flags;
     iString *      titleUser;
     iGmRequest *   request;
@@ -178,6 +138,7 @@ struct Impl_DocumentWidget {
     iTime          sourceTime;
     iGmDocument *  doc;
     int            certFlags;
+    iBlock *       certFingerprint;
     iDate          certExpiry;
     iString *      certSubject;
     int            redirectCount;
@@ -215,9 +176,10 @@ void init_DocumentWidget(iDocumentWidget *d) {
     init_Widget(w);
     setId_Widget(w, "document000");
     setFlags_Widget(w, hover_WidgetFlag, iTrue);
-    init_Model(&d->mod);
+    init_PersistentDocumentState(&d->mod);
     d->flags = 0;
     iZap(d->certExpiry);
+    d->certFingerprint  = new_Block(0);
     d->certFlags        = 0;
     d->certSubject      = new_String();
     d->state            = blank_RequestState;
@@ -283,9 +245,10 @@ void deinit_DocumentWidget(iDocumentWidget *d) {
     }
     deinit_PtrArray(&d->visiblePlayers);
     deinit_PtrArray(&d->visibleLinks);
+    delete_Block(d->certFingerprint);
     delete_String(d->certSubject);
     delete_String(d->titleUser);
-    deinit_Model(&d->mod);
+    deinit_PersistentDocumentState(&d->mod);
 }
 
 static void requestUpdated_DocumentWidget_(iAnyObject *obj) {
@@ -296,10 +259,12 @@ static void requestUpdated_DocumentWidget_(iAnyObject *obj) {
     }
 }
 
+#if 0
 static void requestTimedOut_DocumentWidget_(iAnyObject *obj) {
     iDocumentWidget *d = obj;
     postCommandf_App("document.request.timeout doc:%p request:%p", d, d->request);
 }
+#endif
 
 static void requestFinished_DocumentWidget_(iAnyObject *obj) {
     iDocumentWidget *d = obj;
@@ -337,6 +302,9 @@ static iRect documentBounds_DocumentWidget_(const iDocumentWidget *d) {
 }
 
 static int forceBreakWidth_DocumentWidget_(const iDocumentWidget *d) {
+    if (equalCase_Rangecc(urlScheme_String(d->mod.url), "gopher")) {
+        return documentWidth_DocumentWidget_(d);
+    }
     if (forceLineWrap_App()) {
         const iRect bounds    = bounds_Widget(constAs_Widget(d));
         const iRect docBounds = documentBounds_DocumentWidget_(d);
@@ -735,7 +703,7 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
     iBool useBanner = iTrue;
     if (meta) {
         switch (code) {
-            case nonGeminiRedirect_GmStatusCode:
+            case schemeChangeRedirect_GmStatusCode:
             case tooManyRedirects_GmStatusCode:
                 appendFormat_String(src, "\n=> %s\n", cstr_String(meta));
                 break;
@@ -767,6 +735,7 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
         }
     }
     setSiteBannerEnabled_GmDocument(d->doc, useBanner);
+    setFormat_GmDocument(d->doc, gemini_GmDocumentFormat);
     setSource_DocumentWidget_(d, src);
     updateTheme_DocumentWidget_(d);
     init_Anim(&d->scrollY, 0);
@@ -879,6 +848,7 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse
                 deinit_String(&str);
                 return;
             }
+            setFormat_GmDocument(d->doc, docFormat);
             /* Convert the source to UTF-8 if needed. */
             if (!equalCase_Rangecc(charset, "utf-8")) {
                 set_String(&str,
@@ -906,7 +876,7 @@ static void fetch_DocumentWidget_(iDocumentWidget *d) {
     d->request = new_GmRequest(certs_App());
     setUrl_GmRequest(d->request, d->mod.url);
     iConnect(GmRequest, d->request, updated, d, requestUpdated_DocumentWidget_);
-    iConnect(GmRequest, d->request, timeout, d, requestTimedOut_DocumentWidget_);
+//    iConnect(GmRequest, d->request, timeout, d, requestTimedOut_DocumentWidget_);
     iConnect(GmRequest, d->request, finished, d, requestFinished_DocumentWidget_);
     submit_GmRequest(d->request);
 }
@@ -915,6 +885,7 @@ static void updateTrust_DocumentWidget_(iDocumentWidget *d, const iGmResponse *r
     if (response) {
         d->certFlags  = response->certFlags;
         d->certExpiry = response->certValidUntil;
+        set_Block(d->certFingerprint, &response->certFingerprint);
         set_String(d->certSubject, &response->certSubject);
     }
     iLabelWidget *lock = findWidget_App("navbar.lock");
@@ -988,6 +959,9 @@ static void refreshWhileScrolling_DocumentWidget_(iAny *ptr) {
 }
 
 static void smoothScroll_DocumentWidget_(iDocumentWidget *d, int offset, int duration) {
+    if (!prefs_App()->smoothScrolling) {
+        duration = 0; /* always instant */
+    }
     int destY = targetValue_Anim(&d->scrollY) + offset;
     if (destY < 0) {
         destY = 0;
@@ -999,7 +973,12 @@ static void smoothScroll_DocumentWidget_(iDocumentWidget *d, int offset, int dur
     else {
         destY = 0;
     }
-    setValueEased_Anim(&d->scrollY, destY, duration);
+    if (duration) {
+        setValueEased_Anim(&d->scrollY, destY, duration);
+    }
+    else {
+        setValue_Anim(&d->scrollY, destY, 0);
+    }
     updateVisible_DocumentWidget_(d);
     refresh_Widget(as_Widget(d));
     if (duration > 0) {
@@ -1064,12 +1043,15 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                     if (d->redirectCount >= 5) {
                         showErrorPage_DocumentWidget_(d, tooManyRedirects_GmStatusCode, dstUrl);
                     }
-                    else if (equalCase_Rangecc(urlScheme_String(dstUrl), "gemini")) {
+                    else if (equalCase_Rangecc(urlScheme_String(dstUrl),
+                                               cstr_Rangecc(urlScheme_String(d->mod.url)))) {
+                        /* Redirects with the same scheme are automatic. */
                         postCommandf_App(
                             "open redirect:%d url:%s", d->redirectCount + 1, cstr_String(dstUrl));
                     }
                     else {
-                        showErrorPage_DocumentWidget_(d, nonGeminiRedirect_GmStatusCode, dstUrl);
+                        /* Scheme changes must be manually approved. */
+                        showErrorPage_DocumentWidget_(d, schemeChangeRedirect_GmStatusCode, dstUrl);
                     }
                     iReleasePtr(&d->request);
                 }
@@ -1294,9 +1276,14 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iFalse;
     }
     else if (equal_Command(cmd, "server.showcert") && d == document_App()) {
-        const char *unchecked = red_ColorEscape   "\u2610";
-        const char *checked   = green_ColorEscape "\u2611";
-        makeMessage_Widget(
+        const char *unchecked      = red_ColorEscape "\u2610";
+        const char *checked        = green_ColorEscape "\u2611";
+        const char *actionLabels[] = { "Dismiss", uiTextCaution_ColorEscape "Trust" };
+        const char *actionCmds[]   = { "message.ok", "server.trustcert" };
+        const iBool canTrust =
+            (d->certFlags == (available_GmCertFlag | haveFingerprint_GmCertFlag |
+                              timeVerified_GmCertFlag | domainVerified_GmCertFlag));
+        iWidget *dlg = makeQuestion_Widget(
             uiHeading_ColorEscape "CERTIFICATE STATUS",
             format_CStr("%s%s  Domain name %s%s\n"
                         "%s%s  %s (%04d-%02d-%02d %02d:%02d:%02d)\n"
@@ -1318,8 +1305,21 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                         d->certExpiry.second,
                         d->certFlags & trusted_GmCertFlag ? checked : unchecked,
                         uiText_ColorEscape,
-                        d->certFlags & trusted_GmCertFlag ? "Trusted on first use"
-                                                          : "Not trusted"));
+                        d->certFlags & trusted_GmCertFlag ? "Trusted" : "Not trusted"),
+            actionLabels,
+            actionCmds,
+            canTrust ? 2 : 1);
+        addAction_Widget(dlg, SDLK_ESCAPE, 0, "message.ok");
+        addAction_Widget(dlg, SDLK_SPACE, 0, "message.ok");
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "server.trustcert")) {
+        const iRangecc host = urlHost_String(d->mod.url);
+        if (!isEmpty_Block(d->certFingerprint) && !isEmpty_Range(&host)) {
+            setTrusted_GmCerts(certs_App(), host, d->certFingerprint, &d->certExpiry);
+            d->certFlags |= trusted_GmCertFlag;
+            postCommand_App("server.showcert");
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "copy") && document_App() == d && !focus_Widget()) {
@@ -1397,17 +1397,13 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         postCommandf_App("document.changed url:%s", cstr_String(d->mod.url));
         return iFalse;
     }
+#if 0
     else if (equal_Command(cmd, "document.request.timeout") &&
              pointerLabel_Command(cmd, "request") == d->request) {
         cancel_GmRequest(d->request);
         return iFalse;
     }
-    /*
-    else if (equal_Command(cmd, "document.request.cancelled") && document_Command(cmd) == d) {
-        postCommand_App("navigate.back");
-        return iFalse;
-    }
-    */
+#endif
     else if (equal_Command(cmd, "media.updated") || equal_Command(cmd, "media.finished")) {
         return handleMediaCommand_DocumentWidget_(d, cmd);
     }
@@ -1758,6 +1754,48 @@ static iBool processPlayerEvents_DocumentWidget_(iDocumentWidget *d, const SDL_E
     return iFalse;
 }
 
+static size_t linkOrdinalFromKey_(int key) {
+    if (key >= '1' && key <= '9') {
+        return key - '1';
+    }
+    if (key < 'a' || key > 'z') {
+        return iInvalidPos;
+    }
+    int ord = key - 'a' + 9;
+#if defined (iPlatformApple)
+    /* Skip keys that would conflict with default system shortcuts: hide, minimize, quit, close. */
+    if (key == 'h' || key == 'm' || key == 'q' || key == 'w') {
+        return iInvalidPos;
+    }
+    if (key > 'h') ord--;
+    if (key > 'm') ord--;
+    if (key > 'q') ord--;
+    if (key > 'w') ord--;
+#endif
+    return ord;
+}
+
+static iChar linkOrdinalChar_(size_t ord) {
+    if (ord < 9) {
+        return 0x278a + ord;
+    }
+#if defined (iPlatformApple)
+    if (ord < 9 + 22) {
+        int key = 'a' + ord - 9;
+        if (key >= 'h') key++;
+        if (key >= 'm') key++;
+        if (key >= 'q') key++;
+        if (key >= 'w') key++;
+        return 0x24b6 + key - 'a';
+    }
+#else
+    if (ord < 9 + 26) {
+        return 0x24b6 + ord - 9;
+    }
+#endif
+    return 0;
+}
+
 static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
     if (ev->type == SDL_USEREVENT && ev->user.code == command_UserEventCode) {
@@ -1788,18 +1826,22 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         }
     }
     if (ev->type == SDL_KEYDOWN) {
-        const int mods = keyMods_Sym(ev->key.keysym.mod);
-        const int key  = ev->key.keysym.sym;
+        const int key = ev->key.keysym.sym;
         if ((d->flags & showLinkNumbers_DocumentWidgetFlag) &&
             ((key >= '1' && key <= '9') || (key >= 'a' && key <= 'z'))) {
-            const size_t ord = isdigit(key) ? key - SDLK_1 : (key - 'a' + 9);
+            const size_t ord = linkOrdinalFromKey_(key);
             iConstForEach(PtrArray, i, &d->visibleLinks) {
+                if (ord == iInvalidPos) break;
                 const iGmRun *run = i.ptr;
                 if (run->flags & decoration_GmRunFlag &&
                     visibleLinkOrdinal_DocumentWidget_(d, run->linkId) == ord) {
+                    const int kmods = keyMods_Sym(SDL_GetModState());
                     postCommandf_App("open newtab:%d url:%s",
-                                     (SDL_GetModState() & KMOD_PRIMARY) != 0,
-                                     cstr_String(linkUrl_GmDocument(d->doc, run->linkId)));
+                                     ((kmods & KMOD_PRIMARY) && (kmods & KMOD_SHIFT)) ? 1
+                                     : (kmods & KMOD_PRIMARY)                         ? 2
+                                                                                      : 0,
+                                     cstr_String(absoluteUrl_String(
+                                     d->mod.url, linkUrl_GmDocument(d->doc, run->linkId))));
                     return iTrue;
                 }
             }
@@ -1901,20 +1943,45 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 init_Array(&items, sizeof(iMenuItem));
                 if (d->contextLink) {
                     const iString *linkUrl = linkUrl_GmDocument(d->doc, d->contextLink->linkId);
-                    pushBackN_Array(
-                        &items,
-                        (iMenuItem[]){
-                            { "Open Link in New Tab",
-                              0,
-                              0,
-                              format_CStr("!open newtab:1 url:%s", cstr_String(linkUrl)) },
-                            { "Open Link in Background Tab",
-                              0,
-                              0,
-                              format_CStr("!open newtab:2 url:%s", cstr_String(linkUrl)) },
-                            { "---", 0, 0, NULL },
-                            { "Copy Link", 0, 0, "document.copylink" } },
-                        4);
+                    const iRangecc scheme = urlScheme_String(linkUrl);
+                    if (willUseProxy_App(scheme) || equalCase_Rangecc(scheme, "gemini") ||
+                        equalCase_Rangecc(scheme, "gopher")) {
+                        /* Regular links that we can open. */
+                        pushBackN_Array(
+                            &items,
+                            (iMenuItem[]){
+                                { "Open Link in New Tab",
+                                  0,
+                                  0,
+                                  format_CStr("!open newtab:1 url:%s", cstr_String(linkUrl)) },
+                                { "Open Link in Background Tab",
+                                  0,
+                                  0,
+                                  format_CStr("!open newtab:2 url:%s", cstr_String(linkUrl)) } },
+                            2);
+                    }
+                    else if (!willUseProxy_App(scheme)) {
+                        pushBack_Array(
+                            &items,
+                            &(iMenuItem){ "Open Link in Default Browser",
+                                          0,
+                                          0,
+                                          format_CStr("!open url:%s", cstr_String(linkUrl)) });
+                    }
+                    if (willUseProxy_App(scheme)) {
+                        pushBackN_Array(&items,
+                                        (iMenuItem[]){ { "---", 0, 0, NULL },
+                                                       { "Open Link in Default Browser",
+                                                         0,
+                                                         0,
+                                                         format_CStr("!open noproxy:1 url:%s",
+                                                                     cstr_String(linkUrl)) } },
+                                        2);
+                    }
+                    pushBackN_Array(&items,
+                                    (iMenuItem[]){ { "---", 0, 0, NULL },
+                                                   { "Copy Link", 0, 0, "document.copylink" } },
+                                    2);
                 }
                 else {
                     if (!isEmpty_Range(&d->selectMark)) {
@@ -1951,6 +2018,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
     if (processPlayerEvents_DocumentWidget_(d, ev)) {
         return iTrue;
     }
+    /* The left mouse button. */
     switch (processEvent_Click(&d->click, ev)) {
         case started_ClickResult:
             iChangeFlags(d->flags, selecting_DocumentWidgetFlag, iFalse);
@@ -2052,8 +2120,11 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                         refresh_Widget(w);
                     }
                     else {
+                        const int kmods = keyMods_Sym(SDL_GetModState());
                         postCommandf_App("open newtab:%d url:%s",
-                                         (SDL_GetModState() & KMOD_PRIMARY) != 0,
+                                         ((kmods & KMOD_PRIMARY) && (kmods & KMOD_SHIFT)) ? 1
+                                         : (kmods & KMOD_PRIMARY)                         ? 2
+                                                                                          : 0,
                                          cstr_String(absoluteUrl_String(
                                              d->mod.url, linkUrl_GmDocument(d->doc, linkId))));
                     }
@@ -2198,8 +2269,8 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
     else {
         if (d->showLinkNumbers && run->linkId && run->flags & decoration_GmRunFlag) {
             const size_t ord = visibleLinkOrdinal_DocumentWidget_(d->widget, run->linkId);
-            if (ord < 9 + 26) {
-                const iChar ordChar = ord < 9 ? 0x278a + ord : (0x24b6 + ord - 9);
+            const iChar ordChar = linkOrdinalChar_(ord);
+            if (ordChar) {
                 drawString_Text(run->font,
                                 init_I2(d->viewPos.x - gap_UI / 3, visPos.y),
                                 fg,
@@ -2650,11 +2721,11 @@ const iString *bookmarkTitle_DocumentWidget(const iDocumentWidget *d) {
 }
 
 void serializeState_DocumentWidget(const iDocumentWidget *d, iStream *outs) {
-    serialize_Model(&d->mod, outs);
+    serialize_PersistentDocumentState(&d->mod, outs);
 }
 
 void deserializeState_DocumentWidget(iDocumentWidget *d, iStream *ins) {
-    deserialize_Model(&d->mod, ins);
+    deserialize_PersistentDocumentState(&d->mod, ins);
     parseUser_DocumentWidget_(d);
     updateFromHistory_DocumentWidget_(d);
 }

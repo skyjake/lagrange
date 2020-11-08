@@ -293,7 +293,7 @@ void init_LabelWidget(iLabelWidget *d, const char *label, const char *cmd) {
     setFlags_Widget(&d->widget, hover_WidgetFlag, d->click.button != 0);
     d->alignVisual = iFalse;
     updateSize_LabelWidget(d);
-    updateKey_LabelWidget_(d);
+    updateKey_LabelWidget_(d); /* could be bound to another key */
 }
 
 void deinit_LabelWidget(iLabelWidget *d) {
@@ -342,6 +342,7 @@ iLabelWidget *newKeyMods_LabelWidget(const char *label, int key, int kmods, cons
     iLabelWidget *d = new_LabelWidget(label, command);
     d->key = key;
     d->kmods = kmods;
+    updateKey_LabelWidget_(d); /* could be bound to a different key */
     return d;
 }
 

@@ -33,10 +33,11 @@ enum iGmStatusCode {
     /* clientside status codes */
     clientSide_GmStatusCode = -100,
     invalidRedirect_GmStatusCode,
-    nonGeminiRedirect_GmStatusCode,
+    schemeChangeRedirect_GmStatusCode,
     tooManyRedirects_GmStatusCode,
     invalidHeader_GmStatusCode,
     unsupportedMimeType_GmStatusCode,
+    unsupportedProtocol_GmStatusCode,
     failedToOpenFile_GmStatusCode,
     unknownStatusCode_GmStatusCode,
     invalidLocalResource_GmStatusCode,
@@ -103,4 +104,5 @@ iRangecc        urlScheme_String        (const iString *);
 iRangecc        urlHost_String          (const iString *);
 const iString * absoluteUrl_String      (const iString *, const iString *urlMaybeRelative);
 iString *       makeFileUrl_String      (const iString *localFilePath);
+const char *    makeFileUrl_CStr        (const char *localFilePath);
 void            urlEncodeSpaces_String  (iString *);
