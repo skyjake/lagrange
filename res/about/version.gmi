@@ -13,6 +13,7 @@
 * Added button to manually set server certificate as trusted (if the certificate is valid but untrusted).
 * Added keybindings for Back/Forward navigation.
 * Added a context menu item for opening HTTP links in the default browser even when a proxy is configured.
+* Revised identity creation dialog: changed field order, added warning about temporary identities not being saved.
 * ${CTRL+}Click opens tab in background, ${SHIFT+}${CTRL+}Click opens as foreground tab. The same modifier keys work with keyboard navigation.
 * Improved word wrapping of emoticons (:D).
 * Automatic redirects allowed when the destination URL uses the same scheme as the originating URL. For example, when using a proxy, HTTP(S) is allowed to automatically redirect to other HTTP(S) URLs.
