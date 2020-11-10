@@ -1891,21 +1891,32 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             }
         }
 #if defined (iPlatformApple)
-        /* Momentum scrolling. */
-        stop_Anim(&d->scrollY);
-        scroll_DocumentWidget_(d, -ev->wheel.y * get_Window()->pixelRatio * acceleration);
-#else
-        if (keyMods_Sym(SDL_GetModState()) == KMOD_PRIMARY) {
-            postCommandf_App("zoom.delta arg:%d", ev->wheel.y > 0 ? 10 : -10);
-            return iTrue;
+        /* On macOS, we handle both trackpad and mouse events. We expect SDL to identify
+           which device is sending the event. */
+        if (ev->wheel.which == 0) { /* Trackpad with precise scrolling w/inertia. */
+            stop_Anim(&d->scrollY);
+            scroll_DocumentWidget_(d, -ev->wheel.y * get_Window()->pixelRatio * acceleration);
         }
-        smoothScroll_DocumentWidget_(
-            d,
-            -3 * ev->wheel.y * lineHeight_Text(paragraph_FontId) * acceleration,
-            smoothDuration_DocumentWidget_ *
-                (!isFinished_Anim(&d->scrollY) && pos_Anim(&d->scrollY) < 0.25f ? 0.5f : 1.0f));
-            /* accelerated speed for repeated wheelings */
+        else
 #endif
+        /* Traditional mouse wheel. */ {
+#if defined (iPlatformApple)
+            /* Disregard wheel acceleration applied by the OS. */
+            const int amount = iSign(ev->wheel.y);
+#else
+            const int amount = ev->wheel.y;
+#endif
+            if (keyMods_Sym(SDL_GetModState()) == KMOD_PRIMARY) {
+                postCommandf_App("zoom.delta arg:%d", amount > 0 ? 10 : -10);
+                return iTrue;
+            }
+            smoothScroll_DocumentWidget_(
+                d,
+                -3 * amount * lineHeight_Text(paragraph_FontId) * acceleration,
+                smoothDuration_DocumentWidget_ *
+                    (!isFinished_Anim(&d->scrollY) && pos_Anim(&d->scrollY) < 0.25f ? 0.5f : 1.0f));
+                /* accelerated speed for repeated wheelings */
+        }
         iChangeFlags(d->flags, noHoverWhileScrolling_DocumentWidgetFlag, iTrue);
         return iTrue;
     }
