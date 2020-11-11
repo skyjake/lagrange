@@ -11,7 +11,7 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2
         with:
@@ -33,7 +33,7 @@ jobs:
         run: |
           git archive --format=tar.gz --prefix=lagrange-${RELEASE_VERSION}/ HEAD >lagrange-${RELEASE_VERSION}.tar.gz
           tar -xvzf lagrange-${RELEASE_VERSION}.tar.gz
-          ln -s lagrange-${RELEASE_VERSION}.tar.gz lagrange_${RELEASE_VERSION}.orig.tar.gz 
+          ln -s lagrange-${RELEASE_VERSION}.tar.gz lagrange_${RELEASE_VERSION}.orig.tar.gz
           cd lagrange-${RELEASE_VERSION}
           debuild
           cd ..
