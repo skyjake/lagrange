@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 env:
-  RELEASE_VERSION: 0.8.0
+  RELEASE_VERSION: 0.8.1
 
 jobs:
   build:
