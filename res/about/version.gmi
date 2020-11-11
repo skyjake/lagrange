@@ -6,6 +6,10 @@
 ```
 # Release notes
 
+## 0.8.1
+* Fixed potential lockup when navigating back to a query prompt.
+* macOS: Improved handling of scroll wheel events from a mouse.
+
 ## 0.8
 * Added support for Gopher.
 * Added support for the full palette of 8-bit ANSI foreground colors.
