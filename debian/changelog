@@ -1,3 +1,9 @@
+lagrange (0.8.1-1) unstable; urgency=medium
+
+  * Fixed potential lockup when navigating back to a query prompt.
+
+ -- Jaakko Keränen (skyjake) <jaakko.keranen@iki.fi>  Wed, 11 Nov 2020 08:29:38 +0200
+
 lagrange (0.8.0-1) unstable; urgency=low
 
   * Added support for Gopher.
