@@ -515,7 +515,7 @@ static void drawBlank_Window_(iWindow *d) {
 }
 
 iBool create_Window_(iWindow *d, iRect rect, uint32_t flags) {
-    flags |= SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI;
+    flags |= SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_HIDDEN;
     if (SDL_CreateWindowAndRenderer(
             width_Rect(rect), height_Rect(rect), flags, &d->win, &d->render)) {
         return iFalse;
@@ -711,6 +711,13 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
             SDL_Event event = *ev;
             if (event.type == SDL_USEREVENT && isCommand_UserEvent(ev, "window.unfreeze")) {
                 d->isDrawFrozen = iFalse;
+                /* When the window is shown for the first time, ensure glyphs get
+                   re-cached correctly. */
+                if (SDL_GetWindowFlags(d->win) & SDL_WINDOW_HIDDEN) {
+                    SDL_ShowWindow(d->win);
+                    resetFonts_Text();
+                    postCommand_App("theme.changed");
+                }
                 postRefresh_App();
                 return iTrue;
             }

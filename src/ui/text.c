@@ -488,11 +488,11 @@ static void cache_Font_(iFont *d, iGlyph *glyph, int hoff) {
         SDL_SetTextureBlendMode(tex, SDL_BLENDMODE_NONE);
         glRect->size = init_I2(surface->w, surface->h);
     }
-    /* Determine placement in the glyph cache texture, advancing in rows. */
-    glRect->pos = assignCachePos_Text_(txt, glRect->size);
-    const SDL_Rect dstRect = sdlRect_(*glRect);
-    SDL_RenderCopy(render, tex, &(SDL_Rect){ 0, 0, dstRect.w, dstRect.h }, &dstRect);
     if (tex) {
+        /* Determine placement in the glyph cache texture, advancing in rows. */
+        glRect->pos = assignCachePos_Text_(txt, glRect->size);
+        const SDL_Rect dstRect = sdlRect_(*glRect);
+        SDL_RenderCopy(render, tex, &(SDL_Rect){ 0, 0, dstRect.w, dstRect.h }, &dstRect);
         SDL_DestroyTexture(tex);
         iAssert(surface);
         SDL_FreeSurface(surface);
