@@ -775,7 +775,7 @@ static void draw_InputWidget_(const iInputWidget *d) {
         const iInt2 curPos     = addX_I2(textOrigin, prefixSize.x);
         const iRect curRect    = { curPos, addX_I2(advance_Text(d->font, cstr_String(&cur)), 1) };
         fillRect_Paint(&p, curRect, uiInputCursor_ColorId);
-        draw_Text(d->font, curPos, uiInputCursorText_ColorId, cstr_String(&cur));
+        draw_Text(d->font, curPos, uiInputCursorText_ColorId, "%s", cstr_String(&cur));
         deinit_String(&cur);
     }
     delete_String(text);
