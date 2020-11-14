@@ -211,6 +211,7 @@ static void initFonts_Text_(iText *d) {
         { &fontSourceSansProRegular_Embedded, fontSize_UI * 1.125f, 1.0f, defaultMediumSymbols_FontId },
         { &fontSourceSansProRegular_Embedded, fontSize_UI * 1.666f, 1.0f, defaultLargeSymbols_FontId },
         { &fontFiraMonoRegular_Embedded,      fontSize_UI * 0.866f, 1.0f, defaultSymbols_FontId },
+        { &fontSourceSansProRegular_Embedded, textSize,             scaling, symbols_FontId },
         /* content fonts */
         { regularFont,                        textSize,             scaling, symbols_FontId },
         { &fontFiraMonoRegular_Embedded,      monoSize,             1.0f,    monospaceSymbols_FontId },
@@ -467,7 +468,7 @@ static void cache_Font_(iFont *d, iGlyph *glyph, int hoff) {
     iRect *glRect = &glyph->rect[hoff];
     /* Rasterize the glyph using stbtt. */ {
         surface = rasterizeGlyph_Font_(d, glyph->glyphIndex, hoff * 0.5f);
-        if (hoff == 0) {
+        if (hoff == 0) { /* hoff==1 uses same `glyph` */
             int adv;
             const uint32_t gIndex = glyph->glyphIndex;
             stbtt_GetGlyphHMetrics(&d->font, gIndex, &adv, NULL);
@@ -499,7 +500,7 @@ static void cache_Font_(iFont *d, iGlyph *glyph, int hoff) {
     }
 }
 
-iLocalDef iFont *characterFont_Font_(iFont *d, iChar ch, uint32_t *glyphIndex) {    
+iLocalDef iFont *characterFont_Font_(iFont *d, iChar ch, uint32_t *glyphIndex) {
     if ((*glyphIndex = glyphIndex_Font_(d, ch)) != 0) {
         return d;
     }
@@ -524,6 +525,14 @@ iLocalDef iFont *characterFont_Font_(iFont *d, iChar ch, uint32_t *glyphIndex) {
             return japanese;
         }
     }
+#if defined (iPlatformApple)
+    /* White up arrow is used for the Shift key on macOS. Symbola's glyph is not a great
+       match to the other text, so use the UI font instead. */
+    if ((ch == 0x2318 || ch == 0x21e7) && d == font_Text_(regular_FontId)) {
+        *glyphIndex = glyphIndex_Font_(d = font_Text_(defaultContentSized_FontId), ch);
+        return d;
+    }
+#endif
     /* Fall back to Symbola for anything else. */
     iFont *font = font_Text_(d->symbolsFont);
     *glyphIndex = glyphIndex_Font_(font, ch);
