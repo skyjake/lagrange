@@ -92,6 +92,12 @@ void toString_Sym(int key, int kmods, iString *str) {
     else if (key == SDLK_RIGHT) {
         appendChar_String(str, 0x2192);
     }
+    else if (key == SDLK_UP) {
+        appendChar_String(str, 0x2191);
+    }
+    else if (key == SDLK_DOWN) {
+        appendChar_String(str, 0x2193);
+    }
     else if (key < 128 && (isalnum(key) || ispunct(key))) {
         appendChar_String(str, upper_Char(key));
     }
