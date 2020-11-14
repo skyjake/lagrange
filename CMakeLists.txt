@@ -279,7 +279,7 @@ Exec=${CMAKE_INSTALL_PREFIX}/bin/lagrange %U
 Terminal=false
 Type=Application
 Icon=fi.skyjake.lagrange
-MimeType=x-scheme-handler/gemini;
+MimeType=x-scheme-handler/gemini;x-scheme-handler/gopher
 ")
     install (TARGETS app DESTINATION bin)
     install (FILES ${desktop} DESTINATION share/applications)
