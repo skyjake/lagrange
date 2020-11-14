@@ -25,6 +25,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "ui/command.h"
 #include "ui/widget.h"
 #include "ui/color.h"
+#include "ui/window.h"
+
+#include <SDL_timer.h>
 
 #import <AppKit/AppKit.h>
 
@@ -217,7 +220,6 @@ static void appearanceChanged_MacOS_(NSString *name) {
     }
 }
 
-#if 1
 - (NSTouchBar *)makeTouchBar {
     NSTouchBar *bar = [[NSTouchBar alloc] init];
     bar.delegate = self;
@@ -235,7 +237,6 @@ static void appearanceChanged_MacOS_(NSString *name) {
     }
     return bar;
 }
-#endif
 
 - (void)showPreferences {
     postCommand_App("preferences");
@@ -249,6 +250,11 @@ static void appearanceChanged_MacOS_(NSString *name) {
     NSString *command = [menuCommands objectForKey:[(NSMenuItem *)sender title]];
     if (command) {
         postCommand_App([command cStringUsingEncoding:NSUTF8StringEncoding]);
+        /* Shouldn't double-activate menu items in case the same key is used in our widgets.
+           SDL ignores menu key equivalents so the keydown events will be posted regardless.
+           This is quite a kludge, but we can achieve this by taking advantage of Window's
+           focus-acquisition threshold for ignoring key events. */
+        get_Window()->focusGainedAt = SDL_GetTicks();
     }
 }
 
@@ -512,6 +518,12 @@ void insertMenuItems_MacOS(const char *menuLabel, int atIndex, const iMenuItem *
             }
             else if (items[i].key == SDLK_RIGHT) {
                 appendChar_String(&key, 0x2192);
+            }
+            else if (items[i].key == SDLK_UP) {
+                appendChar_String(&key, 0x2191);
+            }
+            else if (items[i].key == SDLK_DOWN) {
+                appendChar_String(&key, 0x2193);
             }
             else if (items[i].key) {
                 appendChar_String(&key, items[i].key);
