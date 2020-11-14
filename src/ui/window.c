@@ -125,7 +125,7 @@ static const iMenuItem fileMenuItems[] = {
 };
 
 static const iMenuItem editMenuItems[] = {
-    { "Copy Source Text", SDLK_c, KMOD_PRIMARY, "copy" },
+    { "Copy", SDLK_c, KMOD_PRIMARY, "copy" },
     { "Copy Link to Page", SDLK_c, KMOD_PRIMARY | KMOD_SHIFT, "document.copylink" },
     { "---", 0, 0, NULL },
     { "Find", SDLK_f, KMOD_PRIMARY, "focus.set id:find.input" },
