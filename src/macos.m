@@ -491,6 +491,15 @@ void setupApplication_MacOS(void) {
     windowCloseItem.action = @selector(closeTab);
 }
 
+void enableMenu_MacOS(const char *menuLabel, iBool enable) {
+    NSApplication *app = [NSApplication sharedApplication];
+    NSMenu *appMenu = [app mainMenu];
+    NSString *label = [NSString stringWithUTF8String:menuLabel];
+    NSMenuItem *menuItem = [appMenu itemAtIndex:[appMenu indexOfItemWithTitle:label]];
+    [menuItem setEnabled:enable];
+    [label release];
+}
+
 void insertMenuItems_MacOS(const char *menuLabel, int atIndex, const iMenuItem *items, size_t count) {
     NSApplication *app = [NSApplication sharedApplication];
     MyDelegate *myDel = (MyDelegate *) app.delegate;
