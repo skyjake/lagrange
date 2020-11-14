@@ -415,8 +415,9 @@ static void init_App_(iApp *d, int argc, char **argv) {
         for (size_t i = 1; i < size_StringList(args_CommandLine(&d->args)); i++) {
             const iString *arg = constAt_StringList(args_CommandLine(&d->args), i);
             const iBool    isKnownScheme =
-                startsWithCase_String(arg, "gemini:") || startsWithCase_String(arg, "file:") ||
-                startsWithCase_String(arg, "data:")   || startsWithCase_String(arg, "about:");
+                startsWithCase_String(arg, "gemini:") || startsWithCase_String(arg, "gopher:") ||
+                startsWithCase_String(arg, "file:")   || startsWithCase_String(arg, "data:")   ||
+                startsWithCase_String(arg, "about:");
             if (isKnownScheme || fileExists_FileInfo(arg)) {
                 postCommandf_App("open newtab:%d url:%s",
                                  newTab,
