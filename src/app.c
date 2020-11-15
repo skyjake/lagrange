@@ -1004,14 +1004,6 @@ iBool handleCommand_App(const char *cmd) {
         postCommand_App("window.unfreeze");
         return iTrue;
     }
-    else if (equal_Command(cmd, "prefs.mono.gopher.changed")) {
-        setFreezeDraw_Window(d->window, iTrue);
-        d->prefs.monospaceGopher = arg_Command(cmd) != 0;
-        resetFonts_Text(); /* clear the glyph cache */
-        postCommand_App("font.changed");
-        postCommand_App("window.unfreeze");
-        return iTrue;
-    }
     else if (equal_Command(cmd, "prefs.biglede.changed")) {
         d->prefs.bigFirstParagraph = arg_Command(cmd) != 0;
         postCommand_App("document.layout.changed");
