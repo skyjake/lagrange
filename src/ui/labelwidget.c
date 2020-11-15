@@ -330,7 +330,7 @@ void setTextCStr_LabelWidget(iLabelWidget *d, const char *text) {
     updateSize_LabelWidget(d);
 }
 
-const iString *label_LabelWidget(const iLabelWidget *d) {
+const iString *text_LabelWidget(const iLabelWidget *d) {
     return &d->label;
 }
 

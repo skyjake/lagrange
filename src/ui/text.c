@@ -213,15 +213,17 @@ static void initFonts_Text_(iText *d) {
         { &fontFiraMonoRegular_Embedded,      fontSize_UI * 0.866f, 1.0f, defaultSymbols_FontId },
         { &fontSourceSansProRegular_Embedded, textSize,             scaling, symbols_FontId },
         /* content fonts */
-        { regularFont,                        textSize,             scaling, symbols_FontId },
-        { &fontFiraMonoRegular_Embedded,      monoSize,             1.0f,    monospaceSymbols_FontId },
-        { &fontFiraMonoRegular_Embedded,      monoSize * 0.750f,    1.0f,    monospaceSmallSymbols_FontId },
-        { regularFont,                        textSize * 1.200f,    scaling, mediumSymbols_FontId },
-        { h3Font,                             textSize * 1.333f,    scaling, bigSymbols_FontId },
-        { italicFont,                         textSize,             scaling, symbols_FontId },
+        { regularFont,                        textSize,             scaling,     symbols_FontId },
+        { &fontFiraMonoRegular_Embedded,      monoSize,             1.0f,        monospaceSymbols_FontId },
+        { &fontFiraMonoRegular_Embedded,      monoSize * 0.750f,    1.0f,        monospaceSmallSymbols_FontId },
+        { regularFont,                        textSize * 1.200f,    scaling,     mediumSymbols_FontId },
+        { h3Font,                             textSize * 1.333f,    scaling,     bigSymbols_FontId },
+        { italicFont,                         textSize,             scaling,     symbols_FontId },
         { h12Font,                            textSize * 1.666f,    h123Scaling, largeSymbols_FontId },
         { h12Font,                            textSize * 2.000f,    h123Scaling, hugeSymbols_FontId },
         { lightFont,                          textSize * 1.666f,    scaling,     largeSymbols_FontId },
+        /* monospace content fonts */
+        { &fontFiraMonoRegular_Embedded,      textSize,             0.8f, symbols_FontId },
         /* symbol fonts */
         { &fontSymbola_Embedded,              fontSize_UI,          1.0f, defaultSymbols_FontId },
         { &fontSymbola_Embedded,              fontSize_UI * 1.125f, 1.0f, defaultMediumSymbols_FontId },

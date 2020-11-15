@@ -179,6 +179,8 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "prefs.dialogtab arg:%d\n", d->prefs.dialogTab);
     appendFormat_String(str, "font.set arg:%d\n", d->prefs.font);
     appendFormat_String(str, "headingfont.set arg:%d\n", d->prefs.headingFont);
+    appendFormat_String(str, "prefs.mono.gemini.changed arg:%d\n", d->prefs.monospaceGemini);
+    appendFormat_String(str, "prefs.mono.gopher.changed arg:%d\n", d->prefs.monospaceGopher);
     appendFormat_String(str, "zoom.set arg:%d\n", d->prefs.zoomPercent);
     appendFormat_String(str, "smoothscroll arg:%d\n", d->prefs.smoothScrolling);
     appendFormat_String(str, "linewidth.set arg:%d\n", d->prefs.lineWidth);
@@ -724,7 +726,7 @@ static void updateColorThemeButton_(iLabelWidget *button, int theme) {
     iForEach(ObjectList, i, children_Widget(findChild_Widget(as_Widget(button), "menu"))) {
         iLabelWidget *item = i.object;
         if (!cmp_String(command_LabelWidget(item), command)) {
-            updateText_LabelWidget(button, label_LabelWidget(item));
+            updateText_LabelWidget(button, text_LabelWidget(item));
             break;
         }
     }
@@ -987,6 +989,29 @@ iBool handleCommand_App(const char *cmd) {
         postCommand_App("document.layout.changed");
         return iTrue;
     }
+    else if (equal_Command(cmd, "prefs.mono.gemini.changed") ||
+             equal_Command(cmd, "prefs.mono.gopher.changed")) {
+        const iBool isSet = (arg_Command(cmd) != 0);
+        setFreezeDraw_Window(d->window, iTrue);
+        if (startsWith_CStr(cmd, "prefs.mono.gemini")) {
+            d->prefs.monospaceGemini = isSet;
+        }
+        else {
+            d->prefs.monospaceGopher = isSet;
+        }
+        resetFonts_Text(); /* clear the glyph cache */
+        postCommand_App("font.changed");
+        postCommand_App("window.unfreeze");
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "prefs.mono.gopher.changed")) {
+        setFreezeDraw_Window(d->window, iTrue);
+        d->prefs.monospaceGopher = arg_Command(cmd) != 0;
+        resetFonts_Text(); /* clear the glyph cache */
+        postCommand_App("font.changed");
+        postCommand_App("window.unfreeze");
+        return iTrue;
+    }
     else if (equal_Command(cmd, "prefs.biglede.changed")) {
         d->prefs.bigFirstParagraph = arg_Command(cmd) != 0;
         postCommand_App("document.layout.changed");
@@ -1137,6 +1162,12 @@ iBool handleCommand_App(const char *cmd) {
             findChild_Widget(dlg, format_CStr("prefs.headingfont.%d", d->prefs.headingFont)),
             selected_WidgetFlag,
             iTrue);
+        setFlags_Widget(findChild_Widget(dlg, "prefs.mono.gemini"),
+                        selected_WidgetFlag,
+                        d->prefs.monospaceGemini);
+        setFlags_Widget(findChild_Widget(dlg, "prefs.mono.gopher"),
+                        selected_WidgetFlag,
+                        d->prefs.monospaceGopher);
         setFlags_Widget(
             findChild_Widget(dlg, format_CStr("prefs.linewidth.%d", d->prefs.lineWidth)),
             selected_WidgetFlag,
