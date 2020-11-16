@@ -34,6 +34,7 @@ enum iFontId {
     defaultMedium_FontId,
     defaultLarge_FontId,
     defaultMonospace_FontId,
+    defaultContentSized_FontId,
     /* content fonts */
     regular_FontId,
     monospace_FontId,
@@ -43,7 +44,9 @@ enum iFontId {
     italic_FontId,
     largeBold_FontId,
     hugeBold_FontId,
-    largeLight_FontId,    
+    largeLight_FontId,
+    /* monospace content fonts */
+    regularMonospace_FontId,
     /* symbol fonts */
     defaultSymbols_FontId,
     defaultMediumSymbols_FontId,

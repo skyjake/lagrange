@@ -18,7 +18,7 @@
 cmake_minimum_required (VERSION 3.9)
 
 project (Lagrange
-    VERSION 0.8.1
+    VERSION 0.9.0
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
@@ -279,7 +279,7 @@ Exec=${CMAKE_INSTALL_PREFIX}/bin/lagrange %U
 Terminal=false
 Type=Application
 Icon=fi.skyjake.lagrange
-MimeType=x-scheme-handler/gemini;
+MimeType=x-scheme-handler/gemini;x-scheme-handler/gopher
 ")
     install (TARGETS app DESTINATION bin)
     install (FILES ${desktop} DESTINATION share/applications)

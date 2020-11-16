@@ -92,6 +92,12 @@ void toString_Sym(int key, int kmods, iString *str) {
     else if (key == SDLK_RIGHT) {
         appendChar_String(str, 0x2192);
     }
+    else if (key == SDLK_UP) {
+        appendChar_String(str, 0x2191);
+    }
+    else if (key == SDLK_DOWN) {
+        appendChar_String(str, 0x2193);
+    }
     else if (key < 128 && (isalnum(key) || ispunct(key))) {
         appendChar_String(str, upper_Char(key));
     }
@@ -901,8 +907,15 @@ iWidget *makeQuestion_Widget(const char *title, const char *msg, const char *lab
 void setToggle_Widget(iWidget *d, iBool active) {
     if (d) {
         setFlags_Widget(d, selected_WidgetFlag, active);
-        updateText_LabelWidget((iLabelWidget *) d,
-                               collectNewFormat_String("%s", isSelected_Widget(d) ? "YES" : "NO"));
+        iLabelWidget *label = (iLabelWidget *) d;
+        if (!cmp_String(text_LabelWidget(label), "YES") ||
+            !cmp_String(text_LabelWidget(label), "NO")) {
+            updateText_LabelWidget((iLabelWidget *) d,
+                                   collectNewFormat_String("%s", isSelected_Widget(d) ? "YES" : "NO"));
+        }
+        else {
+            refresh_Widget(d);
+        }
     }
 }
 
@@ -1061,6 +1074,14 @@ iWidget *makePreferences_Widget(void) {
             fonts = new_Widget();
             addFontButtons_(fonts, "font");
             addChildFlags_Widget(values, iClob(fonts), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+            addChild_Widget(headings, iClob(makeHeading_Widget("Monospace body:")));
+            iWidget *mono = new_Widget();
+            /* TODO: Needs labels! */
+            setTextCStr_LabelWidget(
+                addChild_Widget(mono, iClob(makeToggle_Widget("prefs.mono.gemini"))), "Gemini");
+            setTextCStr_LabelWidget(
+                addChild_Widget(mono, iClob(makeToggle_Widget("prefs.mono.gopher"))), "Gopher");
+            addChildFlags_Widget(values, iClob(mono), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
         }
         addChild_Widget(headings, iClob(makePadding_Widget(2 * gap_UI)));
         addChild_Widget(values, iClob(makePadding_Widget(2 * gap_UI)));
@@ -1167,7 +1188,7 @@ static iBool handleBookmarkCreationCommands_SidebarWidget_(iWidget *editor, cons
                           url,
                           title,
                           tags,
-                          first_String(label_LabelWidget(findChild_Widget(editor, "bmed.icon"))));
+                          first_String(text_LabelWidget(findChild_Widget(editor, "bmed.icon"))));
             postCommand_App("bookmarks.changed");
         }
         destroy_Widget(editor);

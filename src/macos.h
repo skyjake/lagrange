@@ -32,4 +32,5 @@ void    enableMomentumScroll_MacOS  (void);
 void    registerURLHandler_MacOS    (void);
 void    setupApplication_MacOS      (void);
 void    insertMenuItems_MacOS       (const char *menuLabel, int atIndex, const iMenuItem *items, size_t count);
+void    enableMenu_MacOS            (const char *menuLabel, iBool enable);
 void    handleCommand_MacOS         (const char *cmd);

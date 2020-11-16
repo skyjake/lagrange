@@ -41,6 +41,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "scrollwidget.h"
 #include "util.h"
 #include "visbuf.h"
+#include "visited.h"
 
 #include <the_Foundation/file.h>
 #include <the_Foundation/fileinfo.h>
@@ -225,6 +226,8 @@ void init_DocumentWidget(iDocumentWidget *d) {
 #endif
     addAction_Widget(w, navigateBack_KeyShortcut, "navigate.back");
     addAction_Widget(w, navigateForward_KeyShortcut, "navigate.forward");
+    addAction_Widget(w, navigateParent_KeyShortcut, "navigate.parent");
+    addAction_Widget(w, navigateRoot_KeyShortcut, "navigate.root");
 }
 
 void deinit_DocumentWidget(iDocumentWidget *d) {
@@ -259,13 +262,6 @@ static void requestUpdated_DocumentWidget_(iAnyObject *obj) {
     }
 }
 
-#if 0
-static void requestTimedOut_DocumentWidget_(iAnyObject *obj) {
-    iDocumentWidget *d = obj;
-    postCommandf_App("document.request.timeout doc:%p request:%p", d, d->request);
-}
-#endif
-
 static void requestFinished_DocumentWidget_(iAnyObject *obj) {
     iDocumentWidget *d = obj;
     postCommand_Widget(obj, "document.request.finished doc:%p request:%p", d, d->request);
@@ -299,6 +295,16 @@ static iRect documentBounds_DocumentWidget_(const iDocumentWidget *d) {
         rect.size.y = docSize.y;
     }
     return rect;
+}
+
+static iRect siteBannerRect_DocumentWidget_(const iDocumentWidget *d) {
+    const iGmRun *banner = siteBanner_GmDocument(d->doc);
+    if (!banner) {
+        return zero_Rect();
+    }
+    const iRect docBounds = documentBounds_DocumentWidget_(d);
+    const iInt2 origin = addY_I2(topLeft_Rect(docBounds), -value_Anim(&d->scrollY));
+    return moved_Rect(banner->visBounds, origin);
 }
 
 static int forceBreakWidth_DocumentWidget_(const iDocumentWidget *d) {
@@ -1046,6 +1052,7 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                     else if (equalCase_Rangecc(urlScheme_String(dstUrl),
                                                cstr_Rangecc(urlScheme_String(d->mod.url)))) {
                         /* Redirects with the same scheme are automatic. */
+                        visitUrl_Visited(visited_App(), d->mod.url, transient_VisitedUrlFlag);
                         postCommandf_App(
                             "open redirect:%d url:%s", d->redirectCount + 1, cstr_String(dstUrl));
                     }
@@ -1397,13 +1404,6 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         postCommandf_App("document.changed url:%s", cstr_String(d->mod.url));
         return iFalse;
     }
-#if 0
-    else if (equal_Command(cmd, "document.request.timeout") &&
-             pointerLabel_Command(cmd, "request") == d->request) {
-        cancel_GmRequest(d->request);
-        return iFalse;
-    }
-#endif
     else if (equal_Command(cmd, "media.updated") || equal_Command(cmd, "media.finished")) {
         return handleMediaCommand_DocumentWidget_(d, cmd);
     }
@@ -1526,6 +1526,32 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     else if (equal_Command(cmd, "navigate.forward") && document_App() == d) {
         goForward_History(d->mod.history);
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "navigate.parent") && document_App() == d) {
+        iUrl parts;
+        init_Url(&parts, d->mod.url);
+        /* Remove the last path segment. */
+        if (size_Range(&parts.path) > 1) {
+            if (parts.path.end[-1] == '/') {
+                parts.path.end--;
+            }
+            while (parts.path.end > parts.path.start) {
+                if (parts.path.end[-1] == '/') break;
+                parts.path.end--;
+            }
+            postCommandf_App(
+                "open url:%s",
+                cstr_Rangecc((iRangecc){ constBegin_String(d->mod.url), parts.path.end }));
+        }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "navigate.root") && document_App() == d) {
+        iUrl parts;
+        init_Url(&parts, d->mod.url);
+        postCommandf_App(
+            "open url:%s/",
+            cstr_Rangecc((iRangecc){ constBegin_String(d->mod.url), parts.path.start }));
         return iTrue;
     }
     else if (equalWidget_Command(cmd, w, "scroll.moved")) {
@@ -1922,11 +1948,15 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
     }
     else if (ev->type == SDL_MOUSEMOTION) {
         iChangeFlags(d->flags, noHoverWhileScrolling_DocumentWidgetFlag, iFalse);
+        const iInt2 mpos = init_I2(ev->motion.x, ev->motion.y);
         if (isVisible_Widget(d->menu)) {
             setCursor_Window(get_Window(), SDL_SYSTEM_CURSOR_ARROW);
         }
+        else if (contains_Rect(siteBannerRect_DocumentWidget_(d), mpos)) {
+            setCursor_Window(get_Window(), SDL_SYSTEM_CURSOR_HAND);
+        }
         else {
-            updateHover_DocumentWidget_(d, init_I2(ev->motion.x, ev->motion.y));
+            updateHover_DocumentWidget_(d, mpos);
         }
         updateOutlineOpacity_DocumentWidget_(d);
     }
@@ -2006,11 +2036,13 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                         (iMenuItem[]){
                             { "Go Back", navigateBack_KeyShortcut, "navigate.back" },
                             { "Go Forward", navigateForward_KeyShortcut, "navigate.forward" },
+                            { "Go to Parent", navigateParent_KeyShortcut, "navigate.parent" },
+                            { "Go to Root", navigateRoot_KeyShortcut, "navigate.root" },
+                            { "---", 0, 0, NULL },
                             { "Reload Page", reload_KeyShortcut, "navigate.reload" },
                             { "---", 0, 0, NULL },
-                            { "Copy Page URL", 0, 0, "document.copylink" },
-                            { "---", 0, 0, NULL } },
-                        6);
+                            { "Copy Page URL", 0, 0, "document.copylink" } },
+                        8);
                     if (isEmpty_Range(&d->selectMark)) {
                         pushBackN_Array(
                             &items,
@@ -2143,6 +2175,10 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 if (d->selectMark.start) {
                     d->selectMark = iNullRange;
                     refresh_Widget(w);
+                }
+                /* Clicking on the top/side banner navigates to site root. */
+                if (contains_Rect(siteBannerRect_DocumentWidget_(d), pos_Click(&d->click))) {
+                    postCommand_Widget(d, "navigate.root");
                 }
             }
             return iTrue;

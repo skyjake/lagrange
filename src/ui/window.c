@@ -125,7 +125,7 @@ static const iMenuItem fileMenuItems[] = {
 };
 
 static const iMenuItem editMenuItems[] = {
-    { "Copy Source Text", SDLK_c, KMOD_PRIMARY, "copy" },
+    { "Copy", SDLK_c, KMOD_PRIMARY, "copy" },
     { "Copy Link to Page", SDLK_c, KMOD_PRIMARY | KMOD_SHIFT, "document.copylink" },
     { "---", 0, 0, NULL },
     { "Find", SDLK_f, KMOD_PRIMARY, "focus.set id:find.input" },
@@ -146,6 +146,8 @@ static const iMenuItem viewMenuItems[] = {
     { "---", 0, 0, NULL },
     { "Go Back", SDLK_LEFTBRACKET, KMOD_PRIMARY, "navigate.back" },
     { "Go Forward", SDLK_RIGHTBRACKET, KMOD_PRIMARY, "navigate.forward" },
+    { "Go to Parent", navigateParent_KeyShortcut, "navigate.parent" },
+    { "Go to Root", navigateRoot_KeyShortcut, "navigate.root" },
     { "Reload Page", reload_KeyShortcut, "navigate.reload" },
     { "---", 0, 0, NULL },
     { "Zoom In", SDLK_EQUALS, KMOD_PRIMARY, "zoom.delta arg:10" },
@@ -252,7 +254,7 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
             if (equal_Command(cmd, "document.changed")) {
                 iInputWidget *url = findWidget_App("url");
                 const iString *urlStr = collect_String(suffix_Command(cmd, "url"));
-                visitUrl_Visited(visited_App(), urlStr);
+                visitUrl_Visited(visited_App(), urlStr, 0);
                 postCommand_App("visited.changed"); /* sidebar will update */
                 setText_InputWidget(url, urlStr);
                 updateTextCStr_LabelWidget(reloadButton, reloadCStr_);
@@ -473,14 +475,12 @@ static void setupUserInterface_Window(iWindow *d) {
     /* Global keyboard shortcuts. */ {
         addAction_Widget(d->root, prevTab_KeyShortcut, "tabs.prev");
         addAction_Widget(d->root, nextTab_KeyShortcut, "tabs.next");
-#if !defined (iHaveNativeMenus)
         addAction_Widget(d->root, 'l', KMOD_PRIMARY, "navigate.focus");
         addAction_Widget(d->root, 'f', KMOD_PRIMARY, "focus.set id:find.input");
         addAction_Widget(d->root, '1', KMOD_PRIMARY, "sidebar.mode arg:0 toggle:1");
         addAction_Widget(d->root, '2', KMOD_PRIMARY, "sidebar.mode arg:1 toggle:1");
         addAction_Widget(d->root, '3', KMOD_PRIMARY, "sidebar.mode arg:2 toggle:1");
         addAction_Widget(d->root, '4', KMOD_PRIMARY, "sidebar.mode arg:3 toggle:1");
-#endif
     }
 }
 
@@ -515,7 +515,7 @@ static void drawBlank_Window_(iWindow *d) {
 }
 
 iBool create_Window_(iWindow *d, iRect rect, uint32_t flags) {
-    flags |= SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI;
+    flags |= SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_HIDDEN;
     if (SDL_CreateWindowAndRenderer(
             width_Rect(rect), height_Rect(rect), flags, &d->win, &d->render)) {
         return iFalse;
@@ -711,6 +711,13 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
             SDL_Event event = *ev;
             if (event.type == SDL_USEREVENT && isCommand_UserEvent(ev, "window.unfreeze")) {
                 d->isDrawFrozen = iFalse;
+                /* When the window is shown for the first time, ensure glyphs get
+                   re-cached correctly. */
+                if (SDL_GetWindowFlags(d->win) & SDL_WINDOW_HIDDEN) {
+                    SDL_ShowWindow(d->win);
+                    resetFonts_Text();
+                    postCommand_App("theme.changed");
+                }
                 postRefresh_App();
                 return iTrue;
             }

@@ -235,24 +235,29 @@ static void clearLinks_GmDocument_(iGmDocument *d) {
     clear_PtrArray(&d->links);
 }
 
-#if 0
-static iBool isGopher_GmDocument_(const iGmDocument *d) {
-    return equalCase_Rangecc(urlScheme_String(&d->url), "gopher");
+static iBool isForcedMonospace_GmDocument_(const iGmDocument *d) {
+    const iRangecc scheme = urlScheme_String(&d->url);
+    if (equalCase_Rangecc(scheme, "gemini")) {
+        return prefs_App()->monospaceGemini;
+    }
+    if (equalCase_Rangecc(scheme, "gopher")) {
+        return prefs_App()->monospaceGopher;
+    }
+    return iFalse;
 }
-#endif
 
 static void doLayout_GmDocument_(iGmDocument *d) {
-    const iBool isGemini = iTrue; // !isGopher_GmDocument_(d);
+    const iBool isMono = isForcedMonospace_GmDocument_(d);
     /* TODO: Collect these parameters into a GmTheme. */
     const int fonts[max_GmLineType] = {
-        isGemini ? paragraph_FontId : preformatted_FontId,
-        isGemini ? paragraph_FontId : preformatted_FontId, /* bullet */
+        isMono ? regularMonospace_FontId : paragraph_FontId,
+        isMono ? regularMonospace_FontId : paragraph_FontId, /* bullet */
         preformatted_FontId,
-        quote_FontId,
-        isGemini ? heading1_FontId : preformatted_FontId,
-        isGemini ? heading2_FontId : preformatted_FontId,
-        isGemini ? heading3_FontId : preformatted_FontId,
-        regular_FontId,
+        isMono ? regularMonospace_FontId : quote_FontId,
+        heading1_FontId,
+        heading2_FontId,
+        heading3_FontId,
+        isMono ? regularMonospace_FontId : regular_FontId,
     };
     static const int colors[max_GmLineType] = {
         tmParagraph_ColorId,
@@ -292,7 +297,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     const iRangecc   content       = range_String(&d->source);
     iRangecc         contentLine   = iNullRange;
     iInt2            pos           = zero_I2();
-    iBool            isFirstText   = isGemini && prefs->bigFirstParagraph;
+    iBool            isFirstText   = prefs->bigFirstParagraph;
     iBool            addQuoteIcon  = prefs->quoteIcon;
     iBool            isPreformat   = iFalse;
     iRangecc         preAltText    = iNullRange;
@@ -363,7 +368,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 addSiteBanner = iFalse; /* overrides the banner */
                 continue;
             }
-            run.font = preFont;
+            run.font = (d->format == plainText_GmDocumentFormat ? regularMonospace_FontId : preFont);
             indent = indents[type];
         }
         if (addSiteBanner) {
@@ -463,6 +468,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                                        : link->flags & mailto_GmLinkFlag
                                              ? envelope
                                              : link->flags & remote_GmLinkFlag ? globe : arrow);
+            icon.font = regular_FontId;
             if (link->flags & remote_GmLinkFlag) {
                 icon.visBounds.pos.x -= gap_Text / 2;
             }
@@ -477,7 +483,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         /* Special formatting for the first paragraph (e.g., subtitle, introduction, or lede). */
         int bigCount = 0;
         if (type == text_GmLineType && isFirstText) {
-            run.font = firstParagraph_FontId;
+            if (!isMono) run.font = firstParagraph_FontId;
             run.color = tmFirstParagraph_ColorId;
             bigCount = 15; /* max lines -- what if the whole document is one paragraph? */
             isFirstText = iFalse;
@@ -520,7 +526,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             trimStart_Rangecc(&runLine);
             pos.y += lineHeight_Text(run.font);
             if (--bigCount == 0) {
-                run.font = paragraph_FontId;
+                run.font = fonts[text_GmLineType];
                 run.color = colors[text_GmLineType];
             }
         }

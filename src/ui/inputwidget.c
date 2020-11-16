@@ -479,6 +479,21 @@ static size_t coordIndex_InputWidget_(const iInputWidget *d, iInt2 coord) {
     return index;
 }
 
+static iBool copy_InputWidget_(iInputWidget *d, iBool doCut) {
+    if (!isEmpty_Range(&d->mark)) {
+        const iRanges m = mark_InputWidget_(d);
+        SDL_SetClipboardText(cstrCollect_String(
+            newUnicodeN_String(constAt_Array(&d->text, m.start), size_Range(&m))));
+        if (doCut) {
+            pushUndo_InputWidget_(d);
+            deleteMarked_InputWidget_(d);
+            contentsWereChanged_InputWidget_(d);
+        }
+        return iTrue;
+    }
+    return iFalse;
+}
+
 static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
     if (isCommand_Widget(w, ev, "focus.gained")) {
@@ -494,6 +509,10 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
             updateBuffered_InputWidget_(d);
         }
         return iFalse;
+    }
+    else if (isFocused_Widget(d) && isCommand_UserEvent(ev, "copy")) {
+        copy_InputWidget_(d, iFalse);
+        return iTrue;
     }
     switch (processEvent_Click(&d->click, ev)) {
         case none_ClickResult:
@@ -531,16 +550,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
             switch (key) {
                 case 'c':
                 case 'x':
-                    if (!isEmpty_Range(&d->mark)) {
-                        const iRanges m = mark_InputWidget_(d);
-                        SDL_SetClipboardText(cstrCollect_String(
-                            newUnicodeN_String(constAt_Array(&d->text, m.start), size_Range(&m))));
-                        if (key == 'x') {
-                            pushUndo_InputWidget_(d);
-                            deleteMarked_InputWidget_(d);
-                            contentsWereChanged_InputWidget_(d);
-                        }
-                    }
+                    copy_InputWidget_(d, key == 'x');
                     return iTrue;
                 case 'v':
                     if (SDL_HasClipboardText()) {
@@ -775,7 +785,7 @@ static void draw_InputWidget_(const iInputWidget *d) {
         const iInt2 curPos     = addX_I2(textOrigin, prefixSize.x);
         const iRect curRect    = { curPos, addX_I2(advance_Text(d->font, cstr_String(&cur)), 1) };
         fillRect_Paint(&p, curRect, uiInputCursor_ColorId);
-        draw_Text(d->font, curPos, uiInputCursorText_ColorId, cstr_String(&cur));
+        draw_Text(d->font, curPos, uiInputCursorText_ColorId, "%s", cstr_String(&cur));
         deinit_String(&cur);
     }
     delete_String(text);

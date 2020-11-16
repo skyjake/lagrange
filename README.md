@@ -77,11 +77,12 @@ Once you have compiled a working binary under MSYS2, there is still an additiona
 
 ### Compiling on Raspberry Pi
 
-You should use a version of SDL that is compiled to take advantage of the Broadcom VideoCore OpenGL ES hardware. This provides the best performance when running Lagrange in a console.
+On Raspberry Pi 4/400, you can compile and run Lagrange just like on a regular desktop PC. Accelerated OpenGL graphics should work fine under X11.
 
-At present time, OpenGL under X11 on Raspberry Pi is still quite slow/experimental. When running under X11, software rendering is the best choice and the SDL from Raspbian etc. is sufficient.
+On Raspberry Pi 3 or earlier, you should use a version of SDL that is compiled to take advantage of the Broadcom VideoCore OpenGL ES hardware. This provides the best performance when running Lagrange in a console. OpenGL under X11 on Raspberry Pi 2/3 is quite 
+slow/experimental. When running under X11, software rendering is the best choice and the SDL from Raspbian etc. is sufficient.
 
-The following build options are recommended on Raspberry Pi:
+The following build options are recommended on Raspberry Pi 2/3:
 
 * `ENABLE_KERNING=NO`: faster text rendering without noticeable loss of quality
 * `ENABLE_WINDOWPOS_FIX=YES`: workaround for window position restore issues (SDL bug)

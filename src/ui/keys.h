@@ -32,6 +32,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #   define nextTab_KeyShortcut          SDLK_RIGHTBRACKET,  KMOD_SHIFT | KMOD_PRIMARY
 #   define navigateBack_KeyShortcut     SDLK_LEFT,          KMOD_PRIMARY
 #   define navigateForward_KeyShortcut  SDLK_RIGHT,         KMOD_PRIMARY
+#   define navigateParent_KeyShortcut   SDLK_UP,            KMOD_PRIMARY
+#   define navigateRoot_KeyShortcut     SDLK_UP,            KMOD_SHIFT | KMOD_PRIMARY
 #   define byWord_KeyModifier           KMOD_ALT
 #   define byLine_KeyModifier           KMOD_PRIMARY
 #else
@@ -40,6 +42,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #   define nextTab_KeyShortcut          SDLK_PAGEDOWN,      KMOD_PRIMARY
 #   define navigateBack_KeyShortcut     SDLK_LEFT,          KMOD_ALT
 #   define navigateForward_KeyShortcut  SDLK_RIGHT,         KMOD_ALT
+#   define navigateParent_KeyShortcut   SDLK_UP,            KMOD_ALT
+#   define navigateRoot_KeyShortcut     SDLK_UP,            KMOD_SHIFT | KMOD_ALT
 #   define byWord_KeyModifier           KMOD_CTRL
 #   define byLine_KeyModifier           0
 #endif

@@ -211,16 +211,19 @@ static void initFonts_Text_(iText *d) {
         { &fontSourceSansProRegular_Embedded, fontSize_UI * 1.125f, 1.0f, defaultMediumSymbols_FontId },
         { &fontSourceSansProRegular_Embedded, fontSize_UI * 1.666f, 1.0f, defaultLargeSymbols_FontId },
         { &fontFiraMonoRegular_Embedded,      fontSize_UI * 0.866f, 1.0f, defaultSymbols_FontId },
+        { &fontSourceSansProRegular_Embedded, textSize,             scaling, symbols_FontId },
         /* content fonts */
-        { regularFont,                        textSize,             scaling, symbols_FontId },
-        { &fontFiraMonoRegular_Embedded,      monoSize,             1.0f,    monospaceSymbols_FontId },
-        { &fontFiraMonoRegular_Embedded,      monoSize * 0.750f,    1.0f,    monospaceSmallSymbols_FontId },
-        { regularFont,                        textSize * 1.200f,    scaling, mediumSymbols_FontId },
-        { h3Font,                             textSize * 1.333f,    scaling, bigSymbols_FontId },
-        { italicFont,                         textSize,             scaling, symbols_FontId },
+        { regularFont,                        textSize,             scaling,     symbols_FontId },
+        { &fontFiraMonoRegular_Embedded,      monoSize,             1.0f,        monospaceSymbols_FontId },
+        { &fontFiraMonoRegular_Embedded,      monoSize * 0.750f,    1.0f,        monospaceSmallSymbols_FontId },
+        { regularFont,                        textSize * 1.200f,    scaling,     mediumSymbols_FontId },
+        { h3Font,                             textSize * 1.333f,    scaling,     bigSymbols_FontId },
+        { italicFont,                         textSize,             scaling,     symbols_FontId },
         { h12Font,                            textSize * 1.666f,    h123Scaling, largeSymbols_FontId },
         { h12Font,                            textSize * 2.000f,    h123Scaling, hugeSymbols_FontId },
         { lightFont,                          textSize * 1.666f,    scaling,     largeSymbols_FontId },
+        /* monospace content fonts */
+        { &fontFiraMonoRegular_Embedded,      textSize,             0.8f, symbols_FontId },
         /* symbol fonts */
         { &fontSymbola_Embedded,              fontSize_UI,          1.0f, defaultSymbols_FontId },
         { &fontSymbola_Embedded,              fontSize_UI * 1.125f, 1.0f, defaultMediumSymbols_FontId },
@@ -467,7 +470,7 @@ static void cache_Font_(iFont *d, iGlyph *glyph, int hoff) {
     iRect *glRect = &glyph->rect[hoff];
     /* Rasterize the glyph using stbtt. */ {
         surface = rasterizeGlyph_Font_(d, glyph->glyphIndex, hoff * 0.5f);
-        if (hoff == 0) {
+        if (hoff == 0) { /* hoff==1 uses same `glyph` */
             int adv;
             const uint32_t gIndex = glyph->glyphIndex;
             stbtt_GetGlyphHMetrics(&d->font, gIndex, &adv, NULL);
@@ -488,18 +491,18 @@ static void cache_Font_(iFont *d, iGlyph *glyph, int hoff) {
         SDL_SetTextureBlendMode(tex, SDL_BLENDMODE_NONE);
         glRect->size = init_I2(surface->w, surface->h);
     }
-    /* Determine placement in the glyph cache texture, advancing in rows. */
-    glRect->pos = assignCachePos_Text_(txt, glRect->size);
-    const SDL_Rect dstRect = sdlRect_(*glRect);
-    SDL_RenderCopy(render, tex, &(SDL_Rect){ 0, 0, dstRect.w, dstRect.h }, &dstRect);
     if (tex) {
+        /* Determine placement in the glyph cache texture, advancing in rows. */
+        glRect->pos = assignCachePos_Text_(txt, glRect->size);
+        const SDL_Rect dstRect = sdlRect_(*glRect);
+        SDL_RenderCopy(render, tex, &(SDL_Rect){ 0, 0, dstRect.w, dstRect.h }, &dstRect);
         SDL_DestroyTexture(tex);
         iAssert(surface);
         SDL_FreeSurface(surface);
     }
 }
 
-iLocalDef iFont *characterFont_Font_(iFont *d, iChar ch, uint32_t *glyphIndex) {    
+iLocalDef iFont *characterFont_Font_(iFont *d, iChar ch, uint32_t *glyphIndex) {
     if ((*glyphIndex = glyphIndex_Font_(d, ch)) != 0) {
         return d;
     }
@@ -524,6 +527,14 @@ iLocalDef iFont *characterFont_Font_(iFont *d, iChar ch, uint32_t *glyphIndex) {
             return japanese;
         }
     }
+#if defined (iPlatformApple)
+    /* White up arrow is used for the Shift key on macOS. Symbola's glyph is not a great
+       match to the other text, so use the UI font instead. */
+    if ((ch == 0x2318 || ch == 0x21e7) && d == font_Text_(regular_FontId)) {
+        *glyphIndex = glyphIndex_Font_(d = font_Text_(defaultContentSized_FontId), ch);
+        return d;
+    }
+#endif
     /* Fall back to Symbola for anything else. */
     iFont *font = font_Text_(d->symbolsFont);
     *glyphIndex = glyphIndex_Font_(font, ch);
