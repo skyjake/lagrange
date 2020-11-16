@@ -228,6 +228,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     addAction_Widget(w, navigateForward_KeyShortcut, "navigate.forward");
     addAction_Widget(w, navigateParent_KeyShortcut, "navigate.parent");
     addAction_Widget(w, navigateRoot_KeyShortcut, "navigate.root");
+    addAction_Widget(w, 'f', 0, "document.linkkeys");
 }
 
 void deinit_DocumentWidget(iDocumentWidget *d) {
@@ -965,6 +966,11 @@ static void refreshWhileScrolling_DocumentWidget_(iAny *ptr) {
 }
 
 static void smoothScroll_DocumentWidget_(iDocumentWidget *d, int offset, int duration) {
+    /* Get rid of link numbers when scrolling. */
+    if (offset && d->flags & showLinkNumbers_DocumentWidgetFlag) {
+        d->flags &= ~showLinkNumbers_DocumentWidgetFlag;
+        invalidate_DocumentWidget_(d);
+    }
     if (!prefs_App()->smoothScrolling) {
         duration = 0; /* always instant */
     }
@@ -1520,6 +1526,12 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         fetch_DocumentWidget_(d);
         return iTrue;
     }
+    else if (equal_Command(cmd, "document.linkkeys") && document_App() == d) {
+        iChangeFlags(d->flags, showLinkNumbers_DocumentWidgetFlag, iTrue);
+        invalidate_DocumentWidget_(d);
+        refresh_Widget(d);
+        return iTrue;
+    }
     else if (equal_Command(cmd, "navigate.back") && document_App() == d) {
         goBack_History(d->mod.history);
         return iTrue;
@@ -1868,11 +1880,20 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                                                                       : 0,
                                      cstr_String(absoluteUrl_String(
                                      d->mod.url, linkUrl_GmDocument(d->doc, run->linkId))));
+                    iChangeFlags(d->flags, showLinkNumbers_DocumentWidgetFlag, iFalse);
                     return iTrue;
                 }
             }
         }
         switch (key) {
+            case SDLK_ESCAPE:
+                if (d->flags & showLinkNumbers_DocumentWidgetFlag && document_App() == d) {
+                    iChangeFlags(d->flags, showLinkNumbers_DocumentWidgetFlag, iFalse);
+                    invalidate_DocumentWidget_(d);
+                    refresh_Widget(d);
+                    return iTrue;
+                }
+                break;
             case SDLK_LALT:
             case SDLK_RALT:
                 if (document_App() == d) {

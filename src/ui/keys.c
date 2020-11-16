@@ -69,6 +69,7 @@ static void bindDefaults_(void) {
     bindLabel_Keys(31, "navigate.forward", navigateForward_KeyShortcut, "Go forward");
     bindLabel_Keys(32, "navigate.parent", navigateParent_KeyShortcut, "Go to parent directory");
     bindLabel_Keys(33, "navigate.root", navigateRoot_KeyShortcut, "Go to site root");
+    bindLabel_Keys(40, "document.linkkeys", 'f', 0, "Open link via keyboard");
     /* The following cannot currently be changed (built-in duplicates). */
     bind_Keys(1000, "scroll.page arg:-1", SDLK_SPACE, KMOD_SHIFT);
     bind_Keys(1001, "scroll.page arg:1", SDLK_SPACE, 0);
