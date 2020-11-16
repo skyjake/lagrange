@@ -41,6 +41,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "scrollwidget.h"
 #include "util.h"
 #include "visbuf.h"
+#include "visited.h"
 
 #include <the_Foundation/file.h>
 #include <the_Foundation/fileinfo.h>
@@ -1051,6 +1052,7 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                     else if (equalCase_Rangecc(urlScheme_String(dstUrl),
                                                cstr_Rangecc(urlScheme_String(d->mod.url)))) {
                         /* Redirects with the same scheme are automatic. */
+                        visitUrl_Visited(visited_App(), d->mod.url, transient_VisitedUrlFlag);
                         postCommandf_App(
                             "open redirect:%d url:%s", d->redirectCount + 1, cstr_String(dstUrl));
                     }

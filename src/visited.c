@@ -34,6 +34,7 @@ static const size_t maxAgeVisited_Visited_ = 3600 * 24 * 30; /* one month */
 void init_VisitedUrl(iVisitedUrl *d) {
     initCurrent_Time(&d->when);
     init_String(&d->url);
+    d->flags = 0;
 }
 
 void deinit_VisitedUrl(iVisitedUrl *d) {
@@ -81,13 +82,14 @@ void save_Visited(const iVisited *d, const char *dirPath) {
             iDate date;
             init_Date(&date, &item->when);
             format_String(line,
-                          "%04d-%02d-%02dT%02d:%02d:%02d %s\n",
+                          "%04d-%02d-%02dT%02d:%02d:%02d %04x %s\n",
                           date.year,
                           date.month,
                           date.day,
                           date.hour,
                           date.minute,
                           date.second,
+                          item->flags,
                           cstr_String(&item->url));
             writeData_File(f, cstr_String(line), size_String(line));
         }
@@ -106,11 +108,16 @@ void load_Visited(iVisited *d, const char *dirPath) {
         iTime          now;
         initCurrent_Time(&now);
         while (nextSplit_Rangecc(src, "\n", &line)) {
-            if (isEmpty_Range(&line)) continue;
+            if (size_Range(&line) < 22) continue;
             int y, m, D, H, M, S;
             sscanf(line.start, "%04d-%02d-%02dT%02d:%02d:%02d ", &y, &m, &D, &H, &M, &S);
             if (!y) break;
             iVisitedUrl item;
+            const char *urlStart = line.start + 20;
+            if (*urlStart == '0' && size_Range(&line) >= 25) {
+                item.flags = strtoul(line.start + 20, NULL, 16);
+                urlStart += 5;
+            }
             init_VisitedUrl(&item);
             init_Time(
                 &item.when,
@@ -118,7 +125,7 @@ void load_Visited(iVisited *d, const char *dirPath) {
             if (secondsSince_Time(&now, &item.when) > maxAgeVisited_Visited_) {
                 continue; /* Too old. */
             }
-            initRange_String(&item.url, (iRangecc){ line.start + 20, line.end });
+            initRange_String(&item.url, (iRangecc){ urlStart, line.end });
             insert_SortedArray(&d->visited, &item);
         }
         unlock_Mutex(d->mtx);
@@ -147,10 +154,11 @@ static size_t find_Visited_(const iVisited *d, const iString *url) {
     return pos;
 }
 
-void visitUrl_Visited(iVisited *d, const iString *url) {
+void visitUrl_Visited(iVisited *d, const iString *url, uint16_t visitFlags) {
     if (isEmpty_String(url)) return;
     iVisitedUrl visit;
     init_VisitedUrl(&visit);
+    visit.flags = visitFlags;
     set_String(&visit.url, url);
     size_t pos;
     lock_Mutex(d->mtx);
@@ -158,6 +166,7 @@ void visitUrl_Visited(iVisited *d, const iString *url) {
         iVisitedUrl *old = at_SortedArray(&d->visited, pos);
         if (cmpNewer_VisitedUrl_(&visit, old)) {
             old->when = visit.when;
+            old->flags = visitFlags;
             unlock_Mutex(d->mtx);
             deinit_VisitedUrl(&visit);
             return;
@@ -200,7 +209,10 @@ const iArray *list_Visited(const iVisited *d, size_t count) {
     iPtrArray *urls = collectNew_PtrArray();
     iGuardMutex(d->mtx, {
         iConstForEach(Array, i, &d->visited.values) {
-            pushBack_PtrArray(urls, i.value);
+            const iVisitedUrl *vis = i.value;
+            if (~vis->flags & transient_VisitedUrlFlag) {
+                pushBack_PtrArray(urls, vis);
+            }
         }
     });
     sort_Array(urls, cmpWhenDescending_VisitedUrlPtr_);
