@@ -6,6 +6,19 @@
 ```
 # Release notes
 
+## 0.9
+* Clicking on the top banner of a page (where the site icon and hostname are shown) navigates to the root directory of the site.
+* Added menu items and keybindings for navigating to site root or the parent directory.
+* Added option to use a monospace body text font on all Gemini and/or Gopher pages.
+* Remember redirect source URLs as visited but not shown in the History tab. Note that "visited.txt" is no longer fully compatible if opened in an older version of Lagrange.
+* "gopher:" scheme is allowed in command line arguments.
+* XDG: .desktop file declares support for opening Gopher URLs.
+* Fixed an issue where copying the URL input field would not place anything on the clipboard.
+* Fixed the Lagrange window visibly changing position during launch.
+* Fixed crash when a single percent sign was typed in an input field.
+* macOS: Fixed native menu keyboard shortcuts causing redundant command activations.
+* macOS: Fixed assigning keybindings when there is an equivalent native menu shortcut.
+
 ## 0.8.1
 * Fixed potential lockup when navigating back to a query prompt.
 * macOS: Improved handling of scroll wheel events from a mouse.
