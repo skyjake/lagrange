@@ -868,7 +868,8 @@ void updateValueInput_Widget(iWidget *d, const char *title, const char *prompt) 
 
 static iBool messageHandler_(iWidget *msg, const char *cmd) {
     /* Almost any command dismisses the sheet. */
-    if (!(equal_Command(cmd, "media.updated") || equal_Command(cmd, "document.request.updated"))) {
+    if (!(equal_Command(cmd, "media.updated") || equal_Command(cmd, "document.request.updated") ||
+          startsWith_CStr(cmd, "window."))) {
         destroy_Widget(msg);
     }
     return iFalse;

@@ -680,6 +680,10 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
             return iTrue;
         case SDL_WINDOWEVENT_FOCUS_GAINED:
             d->focusGainedAt = SDL_GetTicks();
+            postCommand_App("window.focus.gained");
+            return iFalse;
+        case SDL_WINDOWEVENT_FOCUS_LOST:
+            postCommand_App("window.focus.lost");
             return iFalse;
         default:
             break;
