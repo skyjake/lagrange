@@ -74,7 +74,7 @@ void deinit_Glyph(iGlyph *d) {
     iUnused(d);
 }
 
-iChar char_Glyph(const iGlyph *d) {
+iChar codepoint_Glyph(const iGlyph *d) {
     return d->node.key;
 }
 
@@ -514,7 +514,7 @@ iLocalDef iFont *characterFont_Font_(iFont *d, iChar ch, uint32_t *glyphIndex) {
         }
     }
     /* Could be Korean. */
-    if (ch > 0x3000) {
+    if (ch >= 0x3000) {
         iFont *korean = font_Text_(d->koreanFont);
         if (korean != d && (*glyphIndex = glyphIndex_Font_(korean, ch)) != 0) {
             return korean;
