@@ -161,7 +161,7 @@ const iString *absoluteUrl_String(const iString *d, const iString *urlMaybeRelat
     if (isDef_(rel.scheme) || isDef_(rel.host) || isAbsolutePath_(rel.path)) {
         appendRange_String(absolute, isDef_(rel.path) ? rel.path : range_CStr("/")); /* absolute path */
     }
-    else {
+    else if (isDef_(rel.path)) {
         if (!endsWith_Rangecc(orig.path, "/")) {
             /* Referencing a file. */
             appendRange_String(absolute, dirPath_(orig.path));
@@ -174,6 +174,10 @@ const iString *absoluteUrl_String(const iString *d, const iString *urlMaybeRelat
             appendCStr_String(absolute, "/");
         }
         appendRange_String(absolute, rel.path);
+    }
+    else if (isDef_(rel.query)) {
+        /* Just a new query. */
+        appendRange_String(absolute, orig.path);
     }
     appendRange_String(absolute, rel.query);
     cleanUrlPath_String(absolute);
