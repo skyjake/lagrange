@@ -6,6 +6,9 @@
 ```
 # Release notes
 
+## 0.10
+* Improvements to URL parsing with regard to RFC 3986.
+
 ## 0.9
 * Clicking on the top banner of a page (where the site icon and hostname are shown) navigates to the root directory of the site.
 * Added menu items and keybindings for navigating to site root or the parent directory.
