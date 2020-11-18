@@ -65,6 +65,13 @@ Lagrange's user interface is modeled after web browsers:
 
 Tip: Try pressing ${CTRL+}4 now to see the page outline.
 
+The user interface has been designed for both mouse and keyboard based use. The most commonly needed features are available via context menus, for example by right-clicking on the currently open page. Keyboard shortcuts on the other hand can provide a very quick and fluid user experience. For example, to open the "CAPCOM" bookmark, one might use the following keyboard shortcuts:
+
+* ${CTRL+}L to activate the URL input field
+* Type "cap" which shows the "CAPCOM" bookmark as the first lookup result
+* Tab (or ↓) to move focus to the lookup results
+* Enter to select "CAPCOM"
+
 ## Navigation
 
 ### URL entry and quick search
@@ -156,6 +163,8 @@ You will need to select an identity when you encounter this error message:
 > 🔑 Certificate Required
 
 Clicking on an identity in the sidebar will toggle it on/off for the currently open URL. On subsequent page loads, the certificate will then be sent to the server when the URL or any URL under it is fetched. You can click on the 👤 button in the navigation bar to see which identity is being used for the current page.
+
+As the sidebar is not keyboard-navigable, note that identities can also be accessed via lookup results. Identities matching the search terms are shown as the last category in the lookup results list. From there, one can toggle an identity for the current page, or stop using it on all pages.
 
 ### Importing existing certificates
 
