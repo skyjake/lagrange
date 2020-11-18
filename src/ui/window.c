@@ -241,9 +241,11 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
         }
         if (arg_Command(cmd) && argLabel_Command(cmd, "enter") &&
             !isFocused_Widget(findWidget_App("lookup"))) {
+            iString *newUrl = copy_String(text_InputWidget(url));
+            trim_String(newUrl);
             postCommandf_App(
                 "open url:%s",
-                cstr_String(absoluteUrl_String(&iStringLiteral(""), text_InputWidget(url))));
+                cstr_String(absoluteUrl_String(&iStringLiteral(""), collect_String(newUrl))));
             return iTrue;
         }
     }
