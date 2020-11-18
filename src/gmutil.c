@@ -159,7 +159,10 @@ const iString *absoluteUrl_String(const iString *d, const iString *urlMaybeRelat
         }
     }
     if (isDef_(rel.scheme) || isDef_(rel.host) || isAbsolutePath_(rel.path)) {
-        appendRange_String(absolute, isDef_(rel.path) ? rel.path : range_CStr("/")); /* absolute path */
+        if (!startsWith_Rangecc(rel.path, "/")) {
+            appendCStr_String(absolute, "/");
+        }
+        appendRange_String(absolute, rel.path);
     }
     else if (isDef_(rel.path)) {
         if (!endsWith_Rangecc(orig.path, "/")) {
