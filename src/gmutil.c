@@ -42,8 +42,8 @@ void init_Url(iUrl *d, const iString *text) {
                                  "([^?#]*)(\\?([^#]*))?(#(.*))?",
                                  caseInsensitive_RegExpOption);
         authPattern_ = new_RegExp("(([^@]+)@)?(([^:\\[\\]]+)"
-				 "|(\\[[0-9a-f:]+\\]))(:([0-9]+))?", 
-				 caseInsensitive_RegExpOption);
+                                  "|(\\[[0-9a-f:]+\\]))(:([0-9]+))?",
+                                  caseInsensitive_RegExpOption);
     }
     iZap(*d);
     iRegExpMatch m;
