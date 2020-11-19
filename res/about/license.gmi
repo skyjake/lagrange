@@ -104,11 +104,11 @@ This application uses fonts licensed under the Open Font License.
 => https://github.com/mozilla/Fira/blob/master/LICENSE  Fira Sans, Fira Mono
 => https://github.com/googlefonts/literata/blob/master/OFL.txt  Literata
 => https://github.com/google/fonts/blob/master/ofl/nanumgothic/OFL.txt  Nanum Gothic
+=> https://www.google.com/get/noto/help/cjk/  Noto Sans CJK JP
 => https://github.com/googlefonts/nunito/blob/master/OFL.txt  Nunito
 => https://github.com/adobe-fonts/source-sans-pro/blob/release/LICENSE.md  Source Sans Pro
 
 Additional fonts:
 
-=> https://fonts.google.com/specimen/Kosugi+Maru#license  Kosugi Maru (Apache License 2.0)
 => https://github.com/googlefonts/noto-emoji/blob/master/LICENSE  Noto Emoji (Apache License 2.0)
 => https://dn-works.com/ufas/  Symbola (Public Domain)

@@ -65,13 +65,13 @@ set (EMBED_RESOURCES
     res/fonts/FiraSans-Italic.ttf
     res/fonts/FiraSans-Light.ttf
     res/fonts/FiraSans-Regular.ttf
-    res/fonts/KosugiMaru-Regular.ttf
     res/fonts/Literata-Regular-opsz=14.ttf
     res/fonts/Literata-Bold-opsz=36.ttf
     res/fonts/Literata-ExtraLight-opsz=18.ttf
     res/fonts/Literata-LightItalic-opsz=10.ttf
     res/fonts/NanumGothic-Regular.ttf
     res/fonts/NotoEmoji-Regular.ttf
+    res/fonts/NotoSansJP-Regular.ttf
     res/fonts/Nunito-ExtraBold.ttf
     res/fonts/Nunito-ExtraLight.ttf
     res/fonts/Nunito-LightItalic.ttf
