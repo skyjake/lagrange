@@ -41,7 +41,9 @@ void init_Url(iUrl *d, const iString *text) {
         urlPattern_  = new_RegExp("^(([^:/?#]+):)?(//([^/?#]*))?"
                                  "([^?#]*)(\\?([^#]*))?(#(.*))?",
                                  caseInsensitive_RegExpOption);
-        authPattern_ = new_RegExp("([^:]+)(:([0-9]+))?", caseInsensitive_RegExpOption);
+        authPattern_ = new_RegExp("(([^@]+)@)?(([^:\\[\\]]+)"
+				 "|(\\[[0-9a-f:]+\\]))(:([0-9]+))?", 
+				 caseInsensitive_RegExpOption);
     }
     iZap(*d);
     iRegExpMatch m;
@@ -55,8 +57,8 @@ void init_Url(iUrl *d, const iString *text) {
         /* Check if the authority contains a port. */
         init_RegExpMatch(&m);
         if (matchRange_RegExp(authPattern_, d->host, &m)) {
-            d->host = capturedRange_RegExpMatch(&m, 1);
-            d->port = capturedRange_RegExpMatch(&m, 3);
+            d->host = capturedRange_RegExpMatch(&m, 3);
+            d->port = capturedRange_RegExpMatch(&m, 7);
         }
     }
 }
