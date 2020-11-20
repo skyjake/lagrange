@@ -7,7 +7,10 @@
 # Release notes
 
 ## 0.10
-* Improvements to URL parsing with regard to RFC 3986.
+* Added a keybinding to activate keyboard link navigation mode (default is "F").
+* Improvements to URI parsing with regard to RFC 3986. Cases that are handled better are double slashes, query-only relative URIs, relative URIs that being with a tilde, IPv6 literals, username in the authority.
+* Replaced EB Garamond with Tinos for improved readability.
+* Replaced Kosugi Maru with Noto Sans CJK JP for better glyph coverage.
 
 ## 0.9
 * Clicking on the top banner of a page (where the site icon and hostname are shown) navigates to the root directory of the site.
