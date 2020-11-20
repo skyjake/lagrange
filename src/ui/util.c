@@ -1111,6 +1111,8 @@ iWidget *makePreferences_Widget(void) {
     }
     /* Proxies. */ {
         appendTwoColumnPage_(tabs, "Proxies", '4', &headings, &values);
+        addChild_Widget(headings, iClob(makeHeading_Widget("Gemini proxy:")));
+        setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.proxy.gemini");
         addChild_Widget(headings, iClob(makeHeading_Widget("Gopher proxy:")));
         setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.proxy.gopher");
         addChild_Widget(headings, iClob(makeHeading_Widget("HTTP proxy:")));
@@ -1125,8 +1127,9 @@ iWidget *makePreferences_Widget(void) {
     arrange_Widget(dlg);
     /* Set input field sizes. */ {
         expandInputFieldWidth_(findChild_Widget(tabs, "prefs.downloads"));
-        expandInputFieldWidth_(findChild_Widget(tabs, "prefs.proxy.http"));
+        expandInputFieldWidth_(findChild_Widget(tabs, "prefs.proxy.gemini"));
         expandInputFieldWidth_(findChild_Widget(tabs, "prefs.proxy.gopher"));
+        expandInputFieldWidth_(findChild_Widget(tabs, "prefs.proxy.http"));
     }
     iWidget *div = new_Widget(); {
         setFlags_Widget(div, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);

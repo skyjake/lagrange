@@ -2004,9 +2004,10 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 iArray items;
                 init_Array(&items, sizeof(iMenuItem));
                 if (d->contextLink) {
-                    const iString *linkUrl = linkUrl_GmDocument(d->doc, d->contextLink->linkId);
-                    const iRangecc scheme = urlScheme_String(linkUrl);
-                    if (willUseProxy_App(scheme) || equalCase_Rangecc(scheme, "gemini") ||
+                    const iString *linkUrl  = linkUrl_GmDocument(d->doc, d->contextLink->linkId);
+                    const iRangecc scheme   = urlScheme_String(linkUrl);
+                    const iBool    isGemini = equalCase_Rangecc(scheme, "gemini");
+                    if (willUseProxy_App(scheme) || isGemini ||
                         equalCase_Rangecc(scheme, "gopher")) {
                         /* Regular links that we can open. */
                         pushBackN_Array(
@@ -2031,14 +2032,15 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                           format_CStr("!open url:%s", cstr_String(linkUrl)) });
                     }
                     if (willUseProxy_App(scheme)) {
-                        pushBackN_Array(&items,
-                                        (iMenuItem[]){ { "---", 0, 0, NULL },
-                                                       { "Open Link in Default Browser",
-                                                         0,
-                                                         0,
-                                                         format_CStr("!open noproxy:1 url:%s",
-                                                                     cstr_String(linkUrl)) } },
-                                        2);
+                        pushBackN_Array(
+                            &items,
+                            (iMenuItem[]){
+                                { "---", 0, 0, NULL },
+                                { isGemini ? "Open without Proxy" : "Open Link in Default Browser",
+                                  0,
+                                  0,
+                                  format_CStr("!open noproxy:1 url:%s", cstr_String(linkUrl)) } },
+                            2);
                     }
                     pushBackN_Array(&items,
                                     (iMenuItem[]){ { "---", 0, 0, NULL },

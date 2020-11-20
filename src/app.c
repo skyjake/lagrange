@@ -193,6 +193,7 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "doctheme.dark.set arg:%d\n", d->prefs.docThemeDark);
     appendFormat_String(str, "doctheme.light.set arg:%d\n", d->prefs.docThemeLight);
     appendFormat_String(str, "saturation.set arg:%d\n", (int) ((d->prefs.saturation * 100) + 0.5f));
+    appendFormat_String(str, "proxy.gemini address:%s\n", cstr_String(&d->prefs.geminiProxy));
     appendFormat_String(str, "proxy.gopher address:%s\n", cstr_String(&d->prefs.gopherProxy));
     appendFormat_String(str, "proxy.http address:%s\n", cstr_String(&d->prefs.httpProxy));
     appendFormat_String(str, "downloads path:%s\n", cstr_String(&d->prefs.downloadDir));
@@ -616,13 +617,16 @@ enum iColorTheme colorTheme_App(void) {
 const iString *schemeProxy_App(iRangecc scheme) {
     iApp *d = &app_;
     const iString *proxy = NULL;
-    if (equalCase_Rangecc(scheme, "gopher")) {
+    if (equalCase_Rangecc(scheme, "gemini")) {
+        proxy = &d->prefs.geminiProxy;
+    }
+    else if (equalCase_Rangecc(scheme, "gopher")) {
         proxy = &d->prefs.gopherProxy;
     }
-    if (equalCase_Rangecc(scheme, "http") || equalCase_Rangecc(scheme, "https")) {
+    else if (equalCase_Rangecc(scheme, "http") || equalCase_Rangecc(scheme, "https")) {
         proxy = &d->prefs.httpProxy;
     }
-    return !isEmpty_String(proxy) ? proxy : NULL;
+    return isEmpty_String(proxy) ? NULL : proxy;
 }
 
 int run_App(int argc, char **argv) {
@@ -744,10 +748,12 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
                          isSelected_Widget(findChild_Widget(d, "prefs.smoothscroll")));
         postCommandf_App("ostheme arg:%d",
                          isSelected_Widget(findChild_Widget(d, "prefs.ostheme")));
-        postCommandf_App("proxy.http address:%s",
-                         cstr_String(text_InputWidget(findChild_Widget(d, "prefs.proxy.http"))));
+        postCommandf_App("proxy.gemini address:%s",
+                         cstr_String(text_InputWidget(findChild_Widget(d, "prefs.proxy.gemini"))));
         postCommandf_App("proxy.gopher address:%s",
                          cstr_String(text_InputWidget(findChild_Widget(d, "prefs.proxy.gopher"))));
+        postCommandf_App("proxy.http address:%s",
+                         cstr_String(text_InputWidget(findChild_Widget(d, "prefs.proxy.http"))));
         const iWidget *tabs = findChild_Widget(d, "prefs.tabs");
         postCommandf_App("prefs.dialogtab arg:%u",
                          tabPageIndex_Widget(tabs, currentTabPage_Widget(tabs)));
@@ -1024,6 +1030,10 @@ iBool handleCommand_App(const char *cmd) {
         postCommandf_App("theme.changed auto:1");
         return iTrue;
     }
+    else if (equal_Command(cmd, "proxy.gemini")) {
+        setCStr_String(&d->prefs.geminiProxy, suffixPtr_Command(cmd, "address"));
+        return iTrue;
+    }
     else if (equal_Command(cmd, "proxy.gopher")) {
         setCStr_String(&d->prefs.gopherProxy, suffixPtr_Command(cmd, "address"));
         return iTrue;
@@ -1177,10 +1187,9 @@ iBool handleCommand_App(const char *cmd) {
                 dlg, format_CStr("prefs.saturation.%d", (int) (d->prefs.saturation * 3.99f))),
             selected_WidgetFlag,
             iTrue);
-        setText_InputWidget(findChild_Widget(dlg, "prefs.proxy.http"),
-                            schemeProxy_App(range_CStr("http")));
-        setText_InputWidget(findChild_Widget(dlg, "prefs.proxy.gopher"),
-                            schemeProxy_App(range_CStr("gopher")));
+        setText_InputWidget(findChild_Widget(dlg, "prefs.proxy.gemini"), &d->prefs.geminiProxy);
+        setText_InputWidget(findChild_Widget(dlg, "prefs.proxy.gopher"), &d->prefs.gopherProxy);
+        setText_InputWidget(findChild_Widget(dlg, "prefs.proxy.http"), &d->prefs.httpProxy);
         iWidget *tabs = findChild_Widget(dlg, "prefs.tabs");
         showTabPage_Widget(tabs, tabPage_Widget(tabs, d->prefs.dialogTab));
         setCommandHandler_Widget(dlg, handlePrefsCommands_);

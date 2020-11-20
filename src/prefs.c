@@ -42,12 +42,14 @@ void init_Prefs(iPrefs *d) {
     d->docThemeDark      = colorfulDark_GmDocumentTheme;
     d->docThemeLight     = white_GmDocumentTheme;
     d->saturation        = 1.0f;
+    init_String(&d->geminiProxy);
     init_String(&d->gopherProxy);
     init_String(&d->httpProxy);
     init_String(&d->downloadDir);
 }
 
 void deinit_Prefs(iPrefs *d) {
+    deinit_String(&d->geminiProxy);
     deinit_String(&d->gopherProxy);
     deinit_String(&d->httpProxy);
     deinit_String(&d->downloadDir);

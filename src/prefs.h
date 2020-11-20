@@ -40,6 +40,7 @@ struct Impl_Prefs {
     iBool smoothScrolling;
     iBool useSystemTheme;
     enum iColorTheme theme;
+    iString geminiProxy;
     iString gopherProxy;
     iString httpProxy;
     iString downloadDir;
