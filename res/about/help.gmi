@@ -215,7 +215,7 @@ There are two sans-serif and two serif fonts:
 * "Nunito" is a friendly rounded sans-serif font.
 * "Fira Sans" is a bolder, narrower, and more angular sans-serif font.
 * "Literata" is a heavy and serious serif font.
-* "EB Garamond" is a lighter and more decorative serif font. You may find it more readable on light backgrounds.
+* "Tinos" is a lighter serif font.
 
 Other style options:
 

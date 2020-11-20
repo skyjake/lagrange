@@ -100,7 +100,6 @@ The libunistring library is covered by the GNU Lesser General Public License (LG
 
 This application uses fonts licensed under the Open Font License.
 
-=> https://fonts.google.com/specimen/EB+Garamond#license  EB Garamond
 => https://github.com/mozilla/Fira/blob/master/LICENSE  Fira Sans, Fira Mono
 => https://github.com/googlefonts/literata/blob/master/OFL.txt  Literata
 => https://github.com/google/fonts/blob/master/ofl/nanumgothic/OFL.txt  Nanum Gothic
@@ -112,3 +111,4 @@ Additional fonts:
 
 => https://github.com/googlefonts/noto-emoji/blob/master/LICENSE  Noto Emoji (Apache License 2.0)
 => https://dn-works.com/ufas/  Symbola (Public Domain)
+=> https://fonts.google.com/specimen/Tinos#license  Tinos (Apache License 2.0)

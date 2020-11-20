@@ -987,7 +987,7 @@ static void addRadioButton_(iWidget *parent, const char *id, const char *label, 
 
 static void addFontButtons_(iWidget *parent, const char *id) {
     const char *fontNames[] = {
-        "Nunito", "Fira Sans", "Literata", "EB Garamond"
+        "Nunito", "Fira Sans", "Literata", "Tinos"
     };
     iForIndices(i, fontNames) {
         addRadioButton_(parent,

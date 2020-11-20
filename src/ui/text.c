@@ -165,23 +165,25 @@ static iText text_;
 static void initFonts_Text_(iText *d) {
     const float textSize = fontSize_UI * d->contentFontSize;
     const float monoSize = fontSize_UI * d->contentFontSize / contentScale_Text_ * 0.866f;
-    const iBlock *regularFont = &fontNunitoRegular_Embedded;
-    const iBlock *italicFont  = &fontNunitoLightItalic_Embedded;
-    const iBlock *h12Font     = &fontNunitoExtraBold_Embedded;
-    const iBlock *h3Font      = &fontNunitoRegular_Embedded;
-    const iBlock *lightFont   = &fontNunitoExtraLight_Embedded;
-    float         scaling     = 1.0f; /* glyph scaling (<=1.0), for increasing line spacing */
-    float         h123Scaling = 1.0f; /* glyph scaling (<=1.0), for increasing line spacing */
+    const iBlock *regularFont  = &fontNunitoRegular_Embedded;
+    const iBlock *italicFont   = &fontNunitoLightItalic_Embedded;
+    const iBlock *h12Font      = &fontNunitoExtraBold_Embedded;
+    const iBlock *h3Font       = &fontNunitoRegular_Embedded;
+    const iBlock *lightFont    = &fontNunitoExtraLight_Embedded;
+    float         scaling      = 1.0f; /* glyph scaling (<=1.0), for increasing line spacing */
+    float         lightScaling = 1.0f;
+    float         h123Scaling  = 1.0f; /* glyph scaling (<=1.0), for increasing line spacing */
     if (d->contentFont == firaSans_TextFont) {
         regularFont = &fontFiraSansRegular_Embedded;
         lightFont   = &fontFiraSansLight_Embedded;
         italicFont  = &fontFiraSansItalic_Embedded;
-        scaling     = 0.85f;
+        scaling     = lightScaling = 0.85f;
     }
-    else if (d->contentFont == ebGaramond_TextFont) {
-        regularFont = &fontEBGaramondRegular_Embedded;
-        lightFont   = &fontEBGaramondRegular_Embedded;
-        italicFont  = &fontEBGaramondItalic_Embedded;
+    else if (d->contentFont == tinos_TextFont) {
+        regularFont = &fontTinosRegular_Embedded;
+        lightFont   = &fontLiterataExtraLightopsz18_Embedded;
+        italicFont  = &fontTinosItalic_Embedded;
+        scaling      = 0.85f;
     }
     else if (d->contentFont == literata_TextFont) {
         regularFont = &fontLiterataRegularopsz14_Embedded;
@@ -193,9 +195,10 @@ static void initFonts_Text_(iText *d) {
         h3Font      = &fontFiraSansRegular_Embedded;
         h123Scaling = 0.85f;
     }
-    else if (d->headingFont == ebGaramond_TextFont) {
-        h12Font = &fontEBGaramondBold_Embedded;
-        h3Font  = &fontEBGaramondRegular_Embedded;
+    else if (d->headingFont == tinos_TextFont) {
+        h12Font = &fontTinosBold_Embedded;
+        h3Font  = &fontTinosRegular_Embedded;
+        h123Scaling = 0.85f;
     }
     else if (d->headingFont == literata_TextFont) {
         h12Font = &fontLiterataBoldopsz36_Embedded;
@@ -213,15 +216,15 @@ static void initFonts_Text_(iText *d) {
         { &fontFiraMonoRegular_Embedded,      fontSize_UI * 0.866f, 1.0f, defaultSymbols_FontId },
         { &fontSourceSansProRegular_Embedded, textSize,             scaling, symbols_FontId },
         /* content fonts */
-        { regularFont,                        textSize,             scaling,     symbols_FontId },
-        { &fontFiraMonoRegular_Embedded,      monoSize,             1.0f,        monospaceSymbols_FontId },
-        { &fontFiraMonoRegular_Embedded,      monoSize * 0.750f,    1.0f,        monospaceSmallSymbols_FontId },
-        { regularFont,                        textSize * 1.200f,    scaling,     mediumSymbols_FontId },
-        { h3Font,                             textSize * 1.333f,    scaling,     bigSymbols_FontId },
-        { italicFont,                         textSize,             scaling,     symbols_FontId },
-        { h12Font,                            textSize * 1.666f,    h123Scaling, largeSymbols_FontId },
-        { h12Font,                            textSize * 2.000f,    h123Scaling, hugeSymbols_FontId },
-        { lightFont,                          textSize * 1.666f,    scaling,     largeSymbols_FontId },
+        { regularFont,                        textSize,             scaling,      symbols_FontId },
+        { &fontFiraMonoRegular_Embedded,      monoSize,             1.0f,         monospaceSymbols_FontId },
+        { &fontFiraMonoRegular_Embedded,      monoSize * 0.750f,    1.0f,         monospaceSmallSymbols_FontId },
+        { regularFont,                        textSize * 1.200f,    scaling,      mediumSymbols_FontId },
+        { h3Font,                             textSize * 1.333f,    scaling,      bigSymbols_FontId },
+        { italicFont,                         textSize,             scaling,      symbols_FontId },
+        { h12Font,                            textSize * 1.666f,    h123Scaling,  largeSymbols_FontId },
+        { h12Font,                            textSize * 2.000f,    h123Scaling,  hugeSymbols_FontId },
+        { lightFont,                          textSize * 1.666f,    lightScaling, largeSymbols_FontId },
         /* monospace content fonts */
         { &fontFiraMonoRegular_Embedded,      textSize,             0.8f, symbols_FontId },
         /* symbol fonts */

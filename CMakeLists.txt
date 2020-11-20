@@ -57,9 +57,9 @@ set (EMBED_RESOURCES
     res/about/lagrange.gmi
     res/about/license.gmi
     res/about/version.gmi
-    res/fonts/EBGaramond-Regular.ttf
-    res/fonts/EBGaramond-Italic.ttf
-    res/fonts/EBGaramond-Bold.ttf
+    res/fonts/Tinos-Regular.ttf
+    res/fonts/Tinos-Italic.ttf
+    res/fonts/Tinos-Bold.ttf
     res/fonts/FiraMono-Regular.ttf
     res/fonts/FiraSans-Bold.ttf
     res/fonts/FiraSans-Italic.ttf
