@@ -220,7 +220,7 @@ static void initFonts_Text_(iText *d) {
         { &fontFiraMonoRegular_Embedded,      monoSize,             1.0f,         monospaceSymbols_FontId },
         { &fontFiraMonoRegular_Embedded,      monoSize * 0.750f,    1.0f,         monospaceSmallSymbols_FontId },
         { regularFont,                        textSize * 1.200f,    scaling,      mediumSymbols_FontId },
-        { h3Font,                             textSize * 1.333f,    scaling,      bigSymbols_FontId },
+        { h3Font,                             textSize * 1.333f,    h123Scaling,  bigSymbols_FontId },
         { italicFont,                         textSize,             scaling,      symbols_FontId },
         { h12Font,                            textSize * 1.666f,    h123Scaling,  largeSymbols_FontId },
         { h12Font,                            textSize * 2.000f,    h123Scaling,  hugeSymbols_FontId },
