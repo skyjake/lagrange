@@ -81,6 +81,10 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
         setFocus_Widget(findWidget_App(cstr_Rangecc(range_Command(cmd, "id"))));
         return iTrue;
     }
+    else if (equal_Command(cmd, "window.focus.lost")) {
+        setFocus_Widget(NULL);
+        return iFalse;
+    }
     else if (handleCommand_App(cmd)) {
         return iTrue;
     }
@@ -241,9 +245,11 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
         }
         if (arg_Command(cmd) && argLabel_Command(cmd, "enter") &&
             !isFocused_Widget(findWidget_App("lookup"))) {
+            iString *newUrl = copy_String(text_InputWidget(url));
+            trim_String(newUrl);
             postCommandf_App(
                 "open url:%s",
-                cstr_String(absoluteUrl_String(&iStringLiteral(""), text_InputWidget(url))));
+                cstr_String(absoluteUrl_String(&iStringLiteral(""), collect_String(newUrl))));
             return iTrue;
         }
     }
@@ -326,7 +332,7 @@ static iBool handleSearchBarCommands_(iWidget *searchBar, const char *cmd) {
     else if (equal_Command(cmd, "focus.gained")) {
         if (pointer_Command(cmd) == findChild_Widget(searchBar, "find.input")) {
             if (!isVisible_Widget(searchBar)) {
-                setFlags_Widget(searchBar, hidden_WidgetFlag, iFalse);
+                setFlags_Widget(searchBar, hidden_WidgetFlag | disabled_WidgetFlag, iFalse);
                 arrange_Widget(get_Window()->root);
                 refresh_App();
             }
@@ -334,15 +340,12 @@ static iBool handleSearchBarCommands_(iWidget *searchBar, const char *cmd) {
     }
     else if (equal_Command(cmd, "find.close")) {
         if (isVisible_Widget(searchBar)) {
-            setFlags_Widget(searchBar, hidden_WidgetFlag, iTrue);
+            setFlags_Widget(searchBar, hidden_WidgetFlag | disabled_WidgetFlag, iTrue);
             arrange_Widget(searchBar->parent);
             if (isFocused_Widget(findChild_Widget(searchBar, "find.input"))) {
                 setFocus_Widget(NULL);
             }
             refresh_Widget(searchBar->parent);
-        }
-        else if (isVisible_Widget(findWidget_App("sidebar"))) {
-            postCommand_App("sidebar.toggle");
         }
         return iTrue;
     }
@@ -446,8 +449,9 @@ static void setupUserInterface_Window(iWindow *d) {
         iWidget *searchBar = new_Widget();
         setId_Widget(searchBar, "search");
         setFlags_Widget(searchBar,
-                        hidden_WidgetFlag | collapse_WidgetFlag | arrangeHeight_WidgetFlag |
-                            resizeChildren_WidgetFlag | arrangeHorizontal_WidgetFlag,
+                        hidden_WidgetFlag | disabled_WidgetFlag | collapse_WidgetFlag |
+                            arrangeHeight_WidgetFlag | resizeChildren_WidgetFlag |
+                            arrangeHorizontal_WidgetFlag,
                         iTrue);
         addChild_Widget(div, iClob(searchBar));
         setBackgroundColor_Widget(searchBar, uiBackground_ColorId);
@@ -682,6 +686,10 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
             return iTrue;
         case SDL_WINDOWEVENT_FOCUS_GAINED:
             d->focusGainedAt = SDL_GetTicks();
+            postCommand_App("window.focus.gained");
+            return iFalse;
+        case SDL_WINDOWEVENT_FOCUS_LOST:
+            postCommand_App("window.focus.lost");
             return iFalse;
         default:
             break;

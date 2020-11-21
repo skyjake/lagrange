@@ -74,6 +74,7 @@ int                 visCount_ListWidget         (const iListWidget *);
 size_t              itemIndex_ListWidget        (const iListWidget *, iInt2 pos);
 const iAnyObject *  constItem_ListWidget        (const iListWidget *, size_t index);
 const iAnyObject *  constHoverItem_ListWidget   (const iListWidget *);
+size_t              hoverItemIndex_ListWidget   (const iListWidget *);
 
 iLocalDef iBool isEmpty_ListWidget(const iListWidget *d) { return numItems_ListWidget(d) == 0; }
 

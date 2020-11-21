@@ -75,6 +75,8 @@ struct Impl_BindingsWidget {
     iWidget widget;
     iListWidget *list;
     size_t activePos;
+    size_t contextPos;
+    iWidget *menu;
 };
 
 iDefineObjectConstruction(BindingsWidget)
@@ -108,11 +110,17 @@ void init_BindingsWidget(iBindingsWidget *d) {
     init_Widget(w);
     setFlags_Widget(w, resizeChildren_WidgetFlag, iTrue);
     d->activePos = iInvalidPos;
+    d->contextPos = iInvalidPos;
     d->list = new_ListWidget();
     setItemHeight_ListWidget(d->list, lineHeight_Text(uiLabel_FontId) * 1.5f);
     setPadding_Widget(as_Widget(d->list), 0, gap_UI, 0, gap_UI);
     addChild_Widget(w, iClob(d->list));
     updateItems_BindingsWidget_(d);
+    d->menu = makeMenu_Widget(
+        w,
+        (iMenuItem[]){ { "Reset to Default", 0, 0, "binding.reset" },
+                       { uiTextCaution_ColorEscape "Clear", 0, 0, "binding.clear" } },
+        2);
 }
 
 void deinit_BindingsWidget(iBindingsWidget *d) {
@@ -145,8 +153,37 @@ static iBool processEvent_BindingsWidget_(iBindingsWidget *d, const SDL_Event *e
     iWidget *   w   = as_Widget(d);
     const char *cmd = command_UserEvent(ev);
     if (isCommand_Widget(w, ev, "list.clicked")) {
-        setActiveItem_BindingsWidget_(d, arg_Command(cmd));
+        const size_t index = (size_t) arg_Command(cmd);
+        setActiveItem_BindingsWidget_(d, d->activePos != index ? index : iInvalidPos);
         return iTrue;
+    }
+    else if (isCommand_Widget(w, ev, "menu.closed")) {
+        invalidateItem_ListWidget(d->list, d->contextPos);
+    }
+    else if (isCommand_Widget(w, ev, "binding.reset")) {
+        iBindingItem *item = item_ListWidget(d->list, d->contextPos);
+        if (item) {
+            reset_Binding(item->id);
+            updateItems_BindingsWidget_(d);
+        }
+        return iTrue;
+    }
+    else if (isCommand_Widget(w, ev, "binding.clear")) {
+        setKey_BindingItem_(item_ListWidget(d->list, d->contextPos), 0, 0);
+        invalidateItem_ListWidget(d->list, d->contextPos);
+        d->contextPos = iInvalidPos;
+        postCommand_App("bindings.changed");
+        return iTrue;
+    }
+    if (ev->type == SDL_MOUSEBUTTONDOWN && ev->button.button == SDL_BUTTON_RIGHT) {
+        if (!isVisible_Widget(d->menu)) {
+            d->contextPos = hoverItemIndex_ListWidget(d->list);
+        }
+    }
+    if (d->contextPos != iInvalidPos) {
+        processContextMenuEvent_Widget(d->menu, ev, {
+            setActiveItem_BindingsWidget_(d, iInvalidPos);
+        });
     }
     /* Waiting for a keypress? */
     if (d->activePos != iInvalidPos) {
@@ -154,6 +191,12 @@ static iBool processEvent_BindingsWidget_(iBindingsWidget *d, const SDL_Event *e
             setKey_BindingItem_(item_ListWidget(d->list, d->activePos),
                                 ev->key.keysym.sym,
                                 keyMods_Sym(ev->key.keysym.mod));
+            setActiveItem_BindingsWidget_(d, iInvalidPos);
+            postCommand_App("bindings.changed");
+            return iTrue;
+        }
+        else if (ev->type == SDL_KEYUP && isMod_Sym(ev->key.keysym.sym)) {
+            setKey_BindingItem_(item_ListWidget(d->list, d->activePos), ev->key.keysym.sym, 0);
             setActiveItem_BindingsWidget_(d, iInvalidPos);
             postCommand_App("bindings.changed");
             return iTrue;
@@ -175,8 +218,11 @@ static void draw_BindingItem_(const iBindingItem *d, iPaint *p, iRect itemRect,
     const int   line       = lineHeight_Text(font);
     int         fg         = uiText_ColorId;
     const iBool isPressing = isMouseDown_ListWidget(list) || d->isWaitingForEvent;
-    const iBool isHover    = (isHover_Widget(constAs_Widget(list)) &&
-                              constHoverItem_ListWidget(list) == d);
+    const iBindingsWidget *parent = (const iBindingsWidget *) parent_Widget(list);
+    const iBool isMenuOpen = isVisible_Widget(parent->menu);
+    const iBool isHover = ((!isMenuOpen && isHover_Widget(constAs_Widget(list)) &&
+                            constHoverItem_ListWidget(list) == d) ||
+                           (isMenuOpen && constItem_ListWidget(list, parent->contextPos) == d));
     if (isHover || isPressing) {
         fg = isPressing ? uiTextPressed_ColorId : uiTextFramelessHover_ColorId;
         fillRect_Paint(p,

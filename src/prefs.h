@@ -33,30 +33,37 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 iDeclareType(Prefs)
 
 struct Impl_Prefs {
-    int dialogTab;
-    iBool retainWindowSize;
-    float uiScale;
-    int zoomPercent;
-    iBool smoothScrolling;
-    iBool useSystemTheme;
+    /* UI state */
+    int              dialogTab;
+    /* Window */
+    iBool            useSystemTheme;
     enum iColorTheme theme;
-    iString gopherProxy;
-    iString httpProxy;
-    iString downloadDir;
-    /* Content */
-    enum iTextFont font;
-    enum iTextFont headingFont;
-    iBool monospaceGemini;
-    iBool monospaceGopher;
-    int lineWidth;
-    iBool bigFirstParagraph;
-    iBool forceLineWrap;
-    iBool quoteIcon;
-    iBool sideIcon;
-    iBool hoverOutline;
+    iBool            retainWindowSize;
+    float            uiScale;
+    int              zoomPercent;
+    iBool            sideIcon;
+    /* Behavior */
+    iString          downloadDir;
+    iBool            hoverOutline;
+    iBool            smoothScrolling;
+    iBool            loadImageInsteadOfScrolling;
+    /* Network */
+    iString          geminiProxy;
+    iString          gopherProxy;
+    iString          httpProxy;
+    /* Style */
+    enum iTextFont   font;
+    enum iTextFont   headingFont;
+    iBool            monospaceGemini;
+    iBool            monospaceGopher;
+    int              lineWidth;
+    iBool            bigFirstParagraph;
+    iBool            forceLineWrap;
+    iBool            quoteIcon;
+    /* Colors */
     enum iGmDocumentTheme docThemeDark;
     enum iGmDocumentTheme docThemeLight;
-    float saturation;
+    float                 saturation;
 };
 
 iDeclareTypeConstruction(Prefs)

@@ -124,7 +124,7 @@ enum iTextFont {
     nunito_TextFont,
     firaSans_TextFont,
     literata_TextFont,
-    ebGaramond_TextFont,
+    tinos_TextFont,
 };
 
 extern int gap_Text; /* affected by content font size */

@@ -117,6 +117,14 @@ iBool isMod_Sym(int key) {
            key == SDLK_LGUI || key == SDLK_RGUI || key == SDLK_LSHIFT || key == SDLK_RSHIFT;
 }
 
+int normalizedMod_Sym(int key) {
+    if (key == SDLK_RSHIFT) key = SDLK_LSHIFT;
+    if (key == SDLK_RCTRL) key = SDLK_LCTRL;
+    if (key == SDLK_RALT) key = SDLK_LALT;
+    if (key == SDLK_RGUI) key = SDLK_LGUI;
+    return key;
+}
+
 int keyMods_Sym(int kmods) {
     kmods &= (KMOD_SHIFT | KMOD_ALT | KMOD_CTRL | KMOD_GUI);
     /* Don't treat left/right modifiers differently. */
@@ -359,8 +367,8 @@ iWidget *addAction_Widget(iWidget *parent, int key, int kmods, const char *comma
 /*-----------------------------------------------------------------------------------------------*/
 
 static iBool isCommandIgnoredByMenus_(const char *cmd) {
-    return equal_Command(cmd, "media.updated") || equal_Command(cmd, "document.request.updated") ||
-           equal_Command(cmd, "window.resized") ||
+    return equal_Command(cmd, "media.updated") || equal_Command(cmd, "media.player.update") ||
+           equal_Command(cmd, "document.request.updated") || equal_Command(cmd, "window.resized") ||
            (equal_Command(cmd, "mouse.clicked") && !arg_Command(cmd)); /* button released */
 }
 
@@ -868,7 +876,8 @@ void updateValueInput_Widget(iWidget *d, const char *title, const char *prompt) 
 
 static iBool messageHandler_(iWidget *msg, const char *cmd) {
     /* Almost any command dismisses the sheet. */
-    if (!(equal_Command(cmd, "media.updated") || equal_Command(cmd, "document.request.updated"))) {
+    if (!(equal_Command(cmd, "media.updated") || equal_Command(cmd, "media.player.update") ||
+          equal_Command(cmd, "document.request.updated") || startsWith_CStr(cmd, "window."))) {
         destroy_Widget(msg);
     }
     return iFalse;
@@ -986,7 +995,7 @@ static void addRadioButton_(iWidget *parent, const char *id, const char *label, 
 
 static void addFontButtons_(iWidget *parent, const char *id) {
     const char *fontNames[] = {
-        "Nunito", "Fira Sans", "Literata", "EB Garamond"
+        "Nunito", "Fira Sans", "Literata", "Tinos"
     };
     iForIndices(i, fontNames) {
         addRadioButton_(parent,
@@ -1012,7 +1021,11 @@ iWidget *makePreferences_Widget(void) {
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.hoveroutline")));
         addChild_Widget(headings, iClob(makeHeading_Widget("Smooth scrolling:")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.smoothscroll")));
-        makeTwoColumnHeading_("WINDOW", headings, values);
+        addChild_Widget(headings, iClob(makeHeading_Widget("Load image on scroll:")));
+        addChild_Widget(values, iClob(makeToggle_Widget("prefs.imageloadscroll")));
+    }
+    /* Window. */ {
+        appendTwoColumnPage_(tabs, "Window", '2', &headings, &values);
 #if defined (iPlatformApple) || defined (iPlatformMSys)
         addChild_Widget(headings, iClob(makeHeading_Widget("Use system theme:")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.ostheme")));
@@ -1030,9 +1043,12 @@ iWidget *makePreferences_Widget(void) {
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.retainwindow")));
         addChild_Widget(headings, iClob(makeHeading_Widget("UI scale factor:")));
         setId_Widget(addChild_Widget(values, iClob(new_InputWidget(8))), "prefs.uiscale");
+        makeTwoColumnHeading_("WIDE LAYOUT", headings, values);
+        addChild_Widget(headings, iClob(makeHeading_Widget("Site icon:")));
+        addChild_Widget(values, iClob(makeToggle_Widget("prefs.sideicon")));
     }
     /* Colors. */ {
-        appendTwoColumnPage_(tabs, "Colors", '2', &headings, &values);
+        appendTwoColumnPage_(tabs, "Colors", '3', &headings, &values);
         makeTwoColumnHeading_("PAGE CONTENTS", headings, values);
         for (int i = 0; i < 2; ++i) {
             const iBool isDark = (i == 0);
@@ -1063,7 +1079,7 @@ iWidget *makePreferences_Widget(void) {
         addChildFlags_Widget(values, iClob(sats), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
     }
     /* Layout. */ {
-        appendTwoColumnPage_(tabs, "Style", '3', &headings, &values);
+        appendTwoColumnPage_(tabs, "Style", '4', &headings, &values);
         /* Fonts. */ {
             iWidget *fonts;
             addChild_Widget(headings, iClob(makeHeading_Widget("Heading font:")));
@@ -1104,12 +1120,11 @@ iWidget *makePreferences_Widget(void) {
         addChildFlags_Widget(values, iClob(quote), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
         addChild_Widget(headings, iClob(makeHeading_Widget("Big 1st paragaph:")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.biglede")));
-        makeTwoColumnHeading_("WIDE LAYOUT", headings, values);
-        addChild_Widget(headings, iClob(makeHeading_Widget("Site icon:")));
-        addChild_Widget(values, iClob(makeToggle_Widget("prefs.sideicon")));
     }
     /* Proxies. */ {
-        appendTwoColumnPage_(tabs, "Proxies", '4', &headings, &values);
+        appendTwoColumnPage_(tabs, "Proxies", '5', &headings, &values);
+        addChild_Widget(headings, iClob(makeHeading_Widget("Gemini proxy:")));
+        setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.proxy.gemini");
         addChild_Widget(headings, iClob(makeHeading_Widget("Gopher proxy:")));
         setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.proxy.gopher");
         addChild_Widget(headings, iClob(makeHeading_Widget("HTTP proxy:")));
@@ -1118,14 +1133,15 @@ iWidget *makePreferences_Widget(void) {
     /* Keybindings. */ {
         iBindingsWidget *bind = new_BindingsWidget();
         setFlags_Widget(as_Widget(bind), borderTop_WidgetFlag, iTrue);
-        appendFramelessTabPage_(tabs, iClob(bind), "Bindings", '5', KMOD_PRIMARY);
+        appendFramelessTabPage_(tabs, iClob(bind), "Keys", '6', KMOD_PRIMARY);
     }
     resizeToLargestPage_Widget(tabs);
     arrange_Widget(dlg);
     /* Set input field sizes. */ {
         expandInputFieldWidth_(findChild_Widget(tabs, "prefs.downloads"));
-        expandInputFieldWidth_(findChild_Widget(tabs, "prefs.proxy.http"));
+        expandInputFieldWidth_(findChild_Widget(tabs, "prefs.proxy.gemini"));
         expandInputFieldWidth_(findChild_Widget(tabs, "prefs.proxy.gopher"));
+        expandInputFieldWidth_(findChild_Widget(tabs, "prefs.proxy.http"));
     }
     iWidget *div = new_Widget(); {
         setFlags_Widget(div, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);

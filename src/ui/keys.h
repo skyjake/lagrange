@@ -52,6 +52,7 @@ iDeclareType(Binding)
 
 struct Impl_Binding {
     int id;
+    int flags;
     int key;
     int mods;
     iString command;
@@ -59,6 +60,7 @@ struct Impl_Binding {
 };
 
 void            setKey_Binding      (int id, int key, int mods);
+void            reset_Binding       (int id);
 
 /*----------------------------------------------------------------------------------------------*/
 

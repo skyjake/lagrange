@@ -228,6 +228,10 @@ iAnyObject *hoverItem_ListWidget(iListWidget *d) {
     return item_ListWidget(d, d->hoverItem);
 }
 
+size_t hoverItemIndex_ListWidget(const iListWidget *d) {
+    return d->hoverItem;
+}
+
 static void setHoverItem_ListWidget_(iListWidget *d, size_t index) {
     if (index < size_PtrArray(&d->items)) {
         const iListItem *item = at_PtrArray(&d->items, index);

@@ -38,12 +38,14 @@ iDeclareType(GmLink)
 
 struct Impl_GmLink {
     iString url;
+    iRangecc urlRange; /* URL in the source */
     iTime when;
     int flags;
 };
 
 void init_GmLink(iGmLink *d) {
     init_String(&d->url);
+    d->urlRange = iNullRange;
     iZap(d->when);
     d->flags = 0;
 }
@@ -161,7 +163,8 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
     init_RegExpMatch(&m);
     if (matchRange_RegExp(pattern_, line, &m)) {
         iGmLink *link = new_GmLink();
-        setRange_String(&link->url, capturedRange_RegExpMatch(&m, 1));
+        link->urlRange = capturedRange_RegExpMatch(&m, 1);
+        setRange_String(&link->url, link->urlRange);
         set_String(&link->url, absoluteUrl_String(&d->url, &link->url));
         /* Check the URL. */ {
             iUrl parts;
@@ -1296,6 +1299,11 @@ const iString *linkUrl_GmDocument(const iGmDocument *d, iGmLinkId linkId) {
     return link ? &link->url : NULL;
 }
 
+iRangecc linkUrlRange_GmDocument(const iGmDocument *d, iGmLinkId linkId) {
+    const iGmLink *link = link_GmDocument_(d, linkId);
+    return link->urlRange;
+}
+
 int linkFlags_GmDocument(const iGmDocument *d, iGmLinkId linkId) {
     const iGmLink *link = link_GmDocument_(d, linkId);
     return link ? link->flags : 0;
@@ -1366,8 +1374,14 @@ enum iColorId linkColor_GmDocument(const iGmDocument *d, iGmLinkId linkId, enum 
 }
 
 iBool isMediaLink_GmDocument(const iGmDocument *d, iGmLinkId linkId) {
-    return (linkFlags_GmDocument(d, linkId) &
-            (imageFileExtension_GmLinkFlag | audioFileExtension_GmLinkFlag)) != 0;
+    const iString *dstUrl = absoluteUrl_String(&d->url, linkUrl_GmDocument(d, linkId));
+    const iRangecc scheme = urlScheme_String(dstUrl);
+    if (equalCase_Rangecc(scheme, "gemini") || equalCase_Rangecc(scheme, "gopher") ||
+        equalCase_Rangecc(scheme, "file") || willUseProxy_App(scheme)) {
+        return (linkFlags_GmDocument(d, linkId) &
+                (imageFileExtension_GmLinkFlag | audioFileExtension_GmLinkFlag)) != 0;
+    }
+    return iFalse;
 }
 
 const iString *title_GmDocument(const iGmDocument *d) {

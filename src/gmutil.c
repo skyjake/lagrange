@@ -35,41 +35,31 @@ void init_Url(iUrl *d, const iString *text) {
         d->path   = (iRangecc){ cstr + 7, constEnd_String(text) };
         return;
     }
-    static iRegExp *absoluteUrlPattern_;
-    static iRegExp *relativeUrlPattern_;
-    if (!absoluteUrlPattern_) {
-        absoluteUrlPattern_ = new_RegExp("([a-z]+:)?(//[^/:?]*)(:[0-9]+)?([^?]*)(\\?.*)?",
-                                         caseInsensitive_RegExpOption);
+    static iRegExp *urlPattern_;
+    static iRegExp *authPattern_;
+    if (!urlPattern_) {
+        urlPattern_  = new_RegExp("^(([^:/?#]+):)?(//([^/?#]*))?"
+                                 "([^?#]*)(\\?([^#]*))?(#(.*))?",
+                                 caseInsensitive_RegExpOption);
+        authPattern_ = new_RegExp("(([^@]+)@)?(([^:\\[\\]]+)"
+                                  "|(\\[[0-9a-f:]+\\]))(:([0-9]+))?",
+                                  caseInsensitive_RegExpOption);
     }
+    iZap(*d);
     iRegExpMatch m;
     init_RegExpMatch(&m);
-    if (matchString_RegExp(absoluteUrlPattern_, text, &m)) {
-        d->scheme = capturedRange_RegExpMatch(&m, 1);
-        d->host   = capturedRange_RegExpMatch(&m, 2);
-        if (!isEmpty_Range(&d->host)) {
-            d->host.start += 2; /* skip the double slash */
+    if (matchString_RegExp(urlPattern_, text, &m)) {
+        d->scheme = capturedRange_RegExpMatch(&m, 2);
+        d->host   = capturedRange_RegExpMatch(&m, 4);
+        d->port   = (iRangecc){ d->host.end, d->host.end };
+        d->path   = capturedRange_RegExpMatch(&m, 5);
+        d->query  = capturedRange_RegExpMatch(&m, 6);
+        /* Check if the authority contains a port. */
+        init_RegExpMatch(&m);
+        if (matchRange_RegExp(authPattern_, d->host, &m)) {
+            d->host = capturedRange_RegExpMatch(&m, 3);
+            d->port = capturedRange_RegExpMatch(&m, 7);
         }
-        d->port = capturedRange_RegExpMatch(&m, 3);
-        if (!isEmpty_Range(&d->port)) {
-            d->port.start++; /* omit the colon */
-        }
-        d->path  = capturedRange_RegExpMatch(&m, 4);
-        d->query = capturedRange_RegExpMatch(&m, 5);
-    }
-    else {
-        /* Must be a relative path. */
-        iZap(*d);
-        if (!relativeUrlPattern_) {
-            relativeUrlPattern_ = new_RegExp("([a-z]+:)?([^?]*)(\\?.*)?", 0);
-        }
-        if (matchString_RegExp(relativeUrlPattern_, text, &m)) {
-            d->scheme = capturedRange_RegExpMatch(&m, 1);
-            d->path   = capturedRange_RegExpMatch(&m, 2);
-            d->query  = capturedRange_RegExpMatch(&m, 3);
-        }
-    }
-    if (!isEmpty_Range(&d->scheme)) {
-        d->scheme.end--; /* omit the colon */
     }
 }
 
@@ -171,9 +161,12 @@ const iString *absoluteUrl_String(const iString *d, const iString *urlMaybeRelat
         }
     }
     if (isDef_(rel.scheme) || isDef_(rel.host) || isAbsolutePath_(rel.path)) {
-        appendRange_String(absolute, isDef_(rel.path) ? rel.path : range_CStr("/")); /* absolute path */
+        if (!startsWith_Rangecc(rel.path, "/")) {
+            appendCStr_String(absolute, "/");
+        }
+        appendRange_String(absolute, rel.path);
     }
-    else {
+    else if (isDef_(rel.path)) {
         if (!endsWith_Rangecc(orig.path, "/")) {
             /* Referencing a file. */
             appendRange_String(absolute, dirPath_(orig.path));
@@ -186,6 +179,10 @@ const iString *absoluteUrl_String(const iString *d, const iString *urlMaybeRelat
             appendCStr_String(absolute, "/");
         }
         appendRange_String(absolute, rel.path);
+    }
+    else if (isDef_(rel.query)) {
+        /* Just a new query. */
+        appendRange_String(absolute, orig.path);
     }
     appendRange_String(absolute, rel.query);
     cleanUrlPath_String(absolute);

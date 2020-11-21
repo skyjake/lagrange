@@ -56,32 +56,30 @@ static void clear_Keys_(iKeys *d) {
     }
 }
 
-static void bindDefaults_(void) {
-    /* TODO: This indirection could be used for localization, although all UI strings
-       would need to be similarly handled. */
-    bindLabel_Keys(1, "scroll.top", SDLK_HOME, 0, "Jump to top");
-    bindLabel_Keys(2, "scroll.bottom", SDLK_END, 0, "Jump to bottom");
-    bindLabel_Keys(10, "scroll.step arg:-1", SDLK_UP, 0, "Scroll up");
-    bindLabel_Keys(11, "scroll.step arg:1", SDLK_DOWN, 0, "Scroll down");
-    bindLabel_Keys(20, "scroll.page arg:-1", SDLK_PAGEUP, 0, "Scroll up half a page");
-    bindLabel_Keys(21, "scroll.page arg:1", SDLK_PAGEDOWN, 0, "Scroll down half a page");
-    bindLabel_Keys(30, "navigate.back", navigateBack_KeyShortcut, "Go back");
-    bindLabel_Keys(31, "navigate.forward", navigateForward_KeyShortcut, "Go forward");
-    bindLabel_Keys(32, "navigate.parent", navigateParent_KeyShortcut, "Go to parent directory");
-    bindLabel_Keys(33, "navigate.root", navigateRoot_KeyShortcut, "Go to site root");
-    /* The following cannot currently be changed (built-in duplicates). */
-    bind_Keys(1000, "scroll.page arg:-1", SDLK_SPACE, KMOD_SHIFT);
-    bind_Keys(1001, "scroll.page arg:1", SDLK_SPACE, 0);
-}
+enum iBindFlag {
+    argRepeat_BindFlag  = iBit(1),
+    argRelease_BindFlag = iBit(2),
+};
 
-static iBinding *find_Keys_(iKeys *d, int key, int mods) {
-    size_t pos;
-    const iBinding elem = { .key = key, .mods = mods };
-    if (locate_PtrSet(&d->lookup, &elem, &pos)) {
-        return at_PtrSet(&d->lookup, pos);
-    }
-    return NULL;
-}
+/* TODO: This indirection could be used for localization, although all UI strings
+   would need to be similarly handled. */
+static const struct { int id; iMenuItem bind; int flags; } defaultBindings_[] = {
+    { 1,  { "Jump to top",               SDLK_HOME, 0,                  "scroll.top"         }, 0 },
+    { 2,  { "Jump to bottom",            SDLK_END, 0,                   "scroll.bottom"      }, 0 },
+    { 10, { "Scroll up",                 SDLK_UP, 0,                    "scroll.step arg:-1" }, argRepeat_BindFlag },
+    { 11, { "Scroll down",               SDLK_DOWN, 0,                  "scroll.step arg:1"  }, argRepeat_BindFlag },
+    { 20, { "Scroll up half a page",     SDLK_PAGEUP, 0,                "scroll.page arg:-1" }, argRepeat_BindFlag },
+    { 21, { "Scroll down half a page",   SDLK_PAGEDOWN, 0,              "scroll.page arg:1"  }, argRepeat_BindFlag },
+    { 30, { "Go back",                   navigateBack_KeyShortcut,      "navigate.back"      }, 0 },
+    { 31, { "Go forward",                navigateForward_KeyShortcut,   "navigate.forward"   }, 0 },
+    { 32, { "Go to parent directory",    navigateParent_KeyShortcut,    "navigate.parent"    }, 0 },
+    { 33, { "Go to site root",           navigateRoot_KeyShortcut,      "navigate.root"      }, 0 },
+    { 40, { "Open link via home row keys", 'f', 0,                      "document.linkkeys arg:1" }, 0 },
+    { 41, { "Open link via modifier key", SDLK_LALT, 0,                 "document.linkkeys arg:0" }, argRelease_BindFlag },
+    /* The following cannot currently be changed (built-in duplicates). */
+    { 1000, { NULL, SDLK_SPACE, KMOD_SHIFT, "scroll.page arg:-1" }, argRepeat_BindFlag },
+    { 1001, { NULL, SDLK_SPACE, 0, "scroll.page arg:1" }, argRepeat_BindFlag },
+};
 
 static iBinding *findId_Keys_(iKeys *d, int id) {
     iForEach(Array, i, &d->bindings) {
@@ -89,6 +87,39 @@ static iBinding *findId_Keys_(iKeys *d, int id) {
         if (bind->id == id) {
             return bind;
         }
+    }
+    return NULL;
+}
+
+static void setFlags_Keys_(int id, int bindFlags) {
+    iBinding *bind = findId_Keys_(&keys_, id);
+    if (bind) {
+        bind->flags = bindFlags;
+    }
+}
+
+static void bindDefaults_(void) {
+    iForIndices(i, defaultBindings_) {
+        const int       id   = defaultBindings_[i].id;
+        const iMenuItem bind = defaultBindings_[i].bind;
+        bind_Keys(id, bind.command, bind.key, bind.kmods);
+        if (bind.label) {
+            setLabel_Keys(id, bind.label);
+        }
+        setFlags_Keys_(id, defaultBindings_[i].flags);
+    }
+}
+
+static iBinding *find_Keys_(iKeys *d, int key, int mods) {
+    size_t pos;
+    /* Do not differentiate between left and right modifier keys. */
+    key = normalizedMod_Sym(key);
+    if (isMod_Sym(key)) {
+        mods = 0;
+    }
+    const iBinding elem = { .key = key, .mods = mods };
+    if (locate_PtrSet(&d->lookup, &elem, &pos)) {
+        return at_PtrSet(&d->lookup, pos);
     }
     return NULL;
 }
@@ -114,9 +145,23 @@ static void updateLookup_Keys_(iKeys *d) {
 void setKey_Binding(int id, int key, int mods) {
     iBinding *bind = findId_Keys_(&keys_, id);
     if (bind) {
-        bind->key = key;
-        bind->mods = mods;
+        bind->key  = normalizedMod_Sym(key);
+        bind->mods = isMod_Sym(key) ? 0 : mods;
         updateLookup_Keys_(&keys_);
+    }
+}
+
+void reset_Binding(int id) {
+    iBinding *bind = findId_Keys_(&keys_, id);
+    if (bind) {
+        iForIndices(i, defaultBindings_) {
+            if (defaultBindings_[i].id == id) {
+                bind->key  = defaultBindings_[i].bind.key;
+                bind->mods = defaultBindings_[i].bind.kmods;
+                updateLookup_Keys_(&keys_);
+                break;
+            }
+        }
     }
 }
 
@@ -214,26 +259,24 @@ void setLabel_Keys(int id, const char *label) {
     }
 }
 
-#if 0
-const iString *label_Keys(const char *command) {
-    iKeys *d = &keys_;
-    /* TODO: A hash wouldn't hurt here. */
-    iConstForEach(PtrSet, i, &d->bindings) {
-        const iBinding *bind = *i.value;
-        if (!cmp_String(&bind->command, command) && !isEmpty_String(&bind->label)) {
-            return &bind->label;
-        }
-    }
-    return collectNew_String();
-}
-#endif
-
 iBool processEvent_Keys(const SDL_Event *ev) {
     iKeys *d = &keys_;
-    if (ev->type == SDL_KEYDOWN) {
+    if (ev->type == SDL_KEYDOWN || ev->type == SDL_KEYUP) {
         const iBinding *bind = find_Keys_(d, ev->key.keysym.sym, keyMods_Sym(ev->key.keysym.mod));
         if (bind) {
-            postCommandString_App(&bind->command);
+            if (ev->type == SDL_KEYUP) {
+                if (bind->flags & argRelease_BindFlag) {
+                    postCommandf_App("%s release:1", cstr_String(&bind->command));
+                    return iTrue;
+                }
+                return iFalse;
+            }
+            if (ev->key.repeat && (bind->flags & argRepeat_BindFlag)) {
+                postCommandf_App("%s repeat:1", cstr_String(&bind->command));
+            }
+            else {
+                postCommandString_App(&bind->command);
+            }
             return iTrue;
         }
     }

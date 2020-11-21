@@ -125,11 +125,17 @@ enum iDocumentWidgetFlag {
     showLinkNumbers_DocumentWidgetFlag       = iBit(3),
 };
 
+enum iDocumentLinkOrdinalMode {
+    numbersAndAlphabet_DocumentLinkOrdinalMode,
+    homeRow_DocumentLinkOrdinalMode,
+};
+
 struct Impl_DocumentWidget {
     iWidget        widget;
     enum iRequestState state;
     iPersistentDocumentState mod;
     int            flags;
+    enum iDocumentLinkOrdinalMode ordinalMode;
     iString *      titleUser;
     iGmRequest *   request;
     iAtomicInt     isRequestUpdated; /* request has new content, need to parse it */
@@ -365,6 +371,15 @@ static void invalidateLink_DocumentWidget_(iDocumentWidget *d, iGmLinkId id) {
     iConstForEach(PtrArray, i, &d->visibleLinks) {
         const iGmRun *run = i.ptr;
         if (run->linkId == id) {
+            insert_PtrSet(d->invalidRuns, run);
+        }
+    }
+}
+
+static void invalidateVisibleLinks_DocumentWidget_(iDocumentWidget *d) {
+    iConstForEach(PtrArray, i, &d->visibleLinks) {
+        const iGmRun *run = i.ptr;
+        if (run->linkId) {
             insert_PtrSet(d->invalidRuns, run);
         }
     }
@@ -965,6 +980,11 @@ static void refreshWhileScrolling_DocumentWidget_(iAny *ptr) {
 }
 
 static void smoothScroll_DocumentWidget_(iDocumentWidget *d, int offset, int duration) {
+    /* Get rid of link numbers when scrolling. */
+    if (offset && d->flags & showLinkNumbers_DocumentWidgetFlag) {
+        d->flags &= ~showLinkNumbers_DocumentWidgetFlag;
+        invalidateVisibleLinks_DocumentWidget_(d);
+    }
     if (!prefs_App()->smoothScrolling) {
         duration = 0; /* always instant */
     }
@@ -1145,10 +1165,8 @@ static iMediaRequest *findMediaRequest_DocumentWidget_(const iDocumentWidget *d,
 
 static iBool requestMedia_DocumentWidget_(iDocumentWidget *d, iGmLinkId linkId) {
     if (!findMediaRequest_DocumentWidget_(d, linkId)) {
-        pushBack_ObjectList(
-            d->media,
-            iClob(new_MediaRequest(
-                d, linkId, absoluteUrl_String(d->mod.url, linkUrl_GmDocument(d->doc, linkId)))));
+        const iString *imageUrl = absoluteUrl_String(d->mod.url, linkUrl_GmDocument(d->doc, linkId));
+        pushBack_ObjectList(d->media, iClob(new_MediaRequest(d, linkId, imageUrl)));
         invalidate_DocumentWidget_(d);
         return iTrue;
     }
@@ -1227,6 +1245,95 @@ static void allocVisBuffer_DocumentWidget_(const iDocumentWidget *d) {
     else {
         dealloc_VisBuf(d->visBuf);
     }
+}
+
+static iBool fetchNextUnfetchedImage_DocumentWidget_(iDocumentWidget *d) {
+    iConstForEach(PtrArray, i, &d->visibleLinks) {
+        const iGmRun *run = i.ptr;
+        if (run->linkId && !run->imageId && ~run->flags & decoration_GmRunFlag) {
+            const int linkFlags = linkFlags_GmDocument(d->doc, run->linkId);
+            if (isMediaLink_GmDocument(d->doc, run->linkId) &&
+                linkFlags & imageFileExtension_GmLinkFlag &&
+                ~linkFlags & content_GmLinkFlag && ~linkFlags & permanent_GmLinkFlag ) {
+                if (requestMedia_DocumentWidget_(d, run->linkId)) {
+                    return iTrue;
+                }
+            }
+        }
+    }
+    return iFalse;
+}
+
+static void saveToDownloads_(const iString *url, const iString *mime, const iBlock *content) {
+    /* Figure out a file name from the URL. */
+    iUrl parts;
+    init_Url(&parts, url);
+    while (startsWith_Rangecc(parts.path, "/")) {
+        parts.path.start++;
+    }
+    while (endsWith_Rangecc(parts.path, "/")) {
+        parts.path.end--;
+    }
+    iString *name = collectNewCStr_String("pagecontent");
+    if (isEmpty_Range(&parts.path)) {
+        if (!isEmpty_Range(&parts.host)) {
+            setRange_String(name, parts.host);
+            replace_Block(&name->chars, '.', '_');
+        }
+    }
+    else {
+        iRangecc fn = { parts.path.start + lastIndexOfCStr_Rangecc(parts.path, "/") + 1,
+                        parts.path.end };
+        if (!isEmpty_Range(&fn)) {
+            setRange_String(name, fn);
+        }
+    }
+    if (startsWith_String(name, "~")) {
+        /* This would be interpreted as a reference to a home directory. */
+        remove_Block(&name->chars, 0, 1);
+    }
+    iString *savePath = concat_Path(downloadDir_App(), name);
+    if (lastIndexOfCStr_String(savePath, ".") == iInvalidPos) {
+        /* No extension specified in URL. */
+        if (startsWith_String(mime, "text/gemini")) {
+            appendCStr_String(savePath, ".gmi");
+        }
+        else if (startsWith_String(mime, "text/")) {
+            appendCStr_String(savePath, ".txt");
+        }
+        else if (startsWith_String(mime, "image/")) {
+            appendCStr_String(savePath, cstr_String(mime) + 6);
+        }
+    }
+    if (fileExists_FileInfo(savePath)) {
+        /* Make it unique. */
+        iDate now;
+        initCurrent_Date(&now);
+        size_t insPos = lastIndexOfCStr_String(savePath, ".");
+        if (insPos == iInvalidPos) {
+            insPos = size_String(savePath);
+        }
+        const iString *date = collect_String(format_Date(&now, "_%Y-%m-%d_%H%M%S"));
+        insertData_Block(&savePath->chars, insPos, cstr_String(date), size_String(date));
+    }
+    /* Write the file. */ {
+        iFile *f = new_File(savePath);
+        if (open_File(f, writeOnly_FileMode)) {
+            write_File(f, content);
+            const size_t size   = size_Block(content);
+            const iBool  isMega = size >= 1000000;
+            makeMessage_Widget(uiHeading_ColorEscape "FILE SAVED",
+                               format_CStr("%s\nSize: %.3f %s", cstr_String(path_File(f)),
+                                           isMega ? size / 1.0e6f : (size / 1.0e3f),
+                                           isMega ? "MB" : "KB"));
+        }
+        else {
+            makeMessage_Widget(uiTextCaution_ColorEscape "ERROR SAVING FILE",
+                               strerror(errno));
+        }
+        iRelease(f);
+    }
+    delete_String(savePath);
 }
 
 static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
@@ -1436,82 +1543,21 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             return iTrue;
         }
     }
+    else if (equalWidget_Command(cmd, w, "document.media.save")) {
+        const iGmLinkId      linkId = argLabel_Command(cmd, "link");
+        const iMediaRequest *media  = findMediaRequest_DocumentWidget_(d, linkId);
+        if (media) {
+            saveToDownloads_(url_GmRequest(media->req), meta_GmRequest(media->req),
+                             body_GmRequest(media->req));
+        }
+    }
     else if (equal_Command(cmd, "document.save") && document_App() == d) {
         if (d->request) {
             makeMessage_Widget(uiTextCaution_ColorEscape "PAGE INCOMPLETE",
                                "The page contents are still being downloaded.");
         }
         else if (!isEmpty_Block(&d->sourceContent)) {
-            /* Figure out a file name from the URL. */
-            /* TODO: Make this a utility function. */
-            iUrl parts;
-            init_Url(&parts, d->mod.url);
-            while (startsWith_Rangecc(parts.path, "/")) {
-                parts.path.start++;
-            }
-            while (endsWith_Rangecc(parts.path, "/")) {
-                parts.path.end--;
-            }
-            iString *name = collectNewCStr_String("pagecontent");
-            if (isEmpty_Range(&parts.path)) {
-                if (!isEmpty_Range(&parts.host)) {
-                    setRange_String(name, parts.host);
-                    replace_Block(&name->chars, '.', '_');
-                }
-            }
-            else {
-                iRangecc fn = { parts.path.start + lastIndexOfCStr_Rangecc(parts.path, "/") + 1,
-                                parts.path.end };
-                if (!isEmpty_Range(&fn)) {
-                    setRange_String(name, fn);
-                }
-            }
-            if (startsWith_String(name, "~")) {
-                /* This would be interpreted as a reference to a home directory. */
-                remove_Block(&name->chars, 0, 1);
-            }
-            iString *savePath = concat_Path(downloadDir_App(), name);
-            if (lastIndexOfCStr_String(savePath, ".") == iInvalidPos) {
-                /* No extension specified in URL. */
-                if (startsWith_String(&d->sourceMime, "text/gemini")) {
-                    appendCStr_String(savePath, ".gmi");
-                }
-                else if (startsWith_String(&d->sourceMime, "text/")) {
-                    appendCStr_String(savePath, ".txt");
-                }
-                else if (startsWith_String(&d->sourceMime, "image/")) {
-                    appendCStr_String(savePath, cstr_String(&d->sourceMime) + 6);
-                }
-            }
-            if (fileExists_FileInfo(savePath)) {
-                /* Make it unique. */
-                iDate now;
-                initCurrent_Date(&now);
-                size_t insPos = lastIndexOfCStr_String(savePath, ".");
-                if (insPos == iInvalidPos) {
-                    insPos = size_String(savePath);
-                }
-                const iString *date = collect_String(format_Date(&now, "_%Y-%m-%d_%H%M%S"));
-                insertData_Block(&savePath->chars, insPos, cstr_String(date), size_String(date));
-            }
-            /* Write the file. */ {
-                iFile *f = new_File(savePath);
-                if (open_File(f, writeOnly_FileMode)) {
-                    write_File(f, &d->sourceContent);
-                    const size_t size   = size_Block(&d->sourceContent);
-                    const iBool  isMega = size >= 1000000;
-                    makeMessage_Widget(uiHeading_ColorEscape "PAGE SAVED",
-                                       format_CStr("%s\nSize: %.3f %s", cstr_String(path_File(f)),
-                                                   isMega ? size / 1.0e6f : (size / 1.0e3f),
-                                                   isMega ? "MB" : "KB"));
-                }
-                else {
-                    makeMessage_Widget(uiTextCaution_ColorEscape "ERROR SAVING PAGE",
-                                       strerror(errno));
-                }
-                iRelease(f);
-            }
-            delete_String(savePath);
+            saveToDownloads_(d->mod.url, &d->sourceMime, &d->sourceContent);
         }
         return iTrue;
     }
@@ -1520,7 +1566,25 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         fetch_DocumentWidget_(d);
         return iTrue;
     }
+    else if (equal_Command(cmd, "document.linkkeys") && document_App() == d) {
+        if (argLabel_Command(cmd, "release")) {
+            iChangeFlags(d->flags, showLinkNumbers_DocumentWidgetFlag, iFalse);
+        }
+        else {
+            d->ordinalMode = arg_Command(cmd);
+            iChangeFlags(d->flags, showLinkNumbers_DocumentWidgetFlag, iTrue);
+        }
+        invalidateVisibleLinks_DocumentWidget_(d);
+        refresh_Widget(d);
+        return iTrue;
+    }
     else if (equal_Command(cmd, "navigate.back") && document_App() == d) {
+        if (d->request) {
+            postCommandf_App(
+                "document.request.cancelled doc:%p url:%s", d, cstr_String(d->mod.url));
+            iReleasePtr(&d->request);
+            updateFetchProgress_DocumentWidget_(d);
+        }
         goBack_History(d->mod.history);
         return iTrue;
     }
@@ -1560,13 +1624,15 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equal_Command(cmd, "scroll.page") && document_App() == d) {
-        if (argLabel_Command(cmd, "repeat")) {
-            /* TODO: Adjust scroll animation to be linear during repeated scroll? */
+        const int dir = arg_Command(cmd);
+        if (dir > 0 && !argLabel_Command(cmd, "repeat") &&
+            prefs_App()->loadImageInsteadOfScrolling &&
+            fetchNextUnfetchedImage_DocumentWidget_(d)) {
+            return iTrue;
         }
         smoothScroll_DocumentWidget_(d,
-                                     arg_Command(cmd) *
-                                         (0.5f * height_Rect(documentBounds_DocumentWidget_(d)) -
-                                          0 * lineHeight_Text(paragraph_FontId)),
+                                     dir * (0.5f * height_Rect(documentBounds_DocumentWidget_(d)) -
+                                            0 * lineHeight_Text(paragraph_FontId)),
                                      smoothDuration_DocumentWidget_);
         return iTrue;
     }
@@ -1587,8 +1653,14 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equal_Command(cmd, "scroll.step") && document_App() == d) {
+        const int dir = arg_Command(cmd);
+        if (dir > 0 && !argLabel_Command(cmd, "repeat") &&
+            prefs_App()->loadImageInsteadOfScrolling &&
+            fetchNextUnfetchedImage_DocumentWidget_(d)) {
+            return iTrue;
+        }
         smoothScroll_DocumentWidget_(d,
-                                     3 * lineHeight_Text(paragraph_FontId) * arg_Command(cmd),
+                                     3 * lineHeight_Text(paragraph_FontId) * dir,
                                      smoothDuration_DocumentWidget_);
         return iTrue;
     }
@@ -1780,45 +1852,75 @@ static iBool processPlayerEvents_DocumentWidget_(iDocumentWidget *d, const SDL_E
     return iFalse;
 }
 
-static size_t linkOrdinalFromKey_(int key) {
-    if (key >= '1' && key <= '9') {
-        return key - '1';
-    }
-    if (key < 'a' || key > 'z') {
-        return iInvalidPos;
-    }
-    int ord = key - 'a' + 9;
+/* Sorted by proximity to F and J. */
+static const int homeRowKeys_[] = {
+    'f', 'd', 's', 'a',
+    'j', 'k', 'l',
+    'r', 'e', 'w', 'q',
+    'u', 'i', 'o', 'p',
+    'v', 'c', 'x', 'z',
+    'm', 'n',
+    'g', 'h',
+    'b',
+    't', 'y', 'u',
+};
+
+static size_t linkOrdinalFromKey_DocumentWidget_(const iDocumentWidget *d, int key) {
+    size_t ord = iInvalidPos;
+    if (d->ordinalMode == numbersAndAlphabet_DocumentLinkOrdinalMode) {
+        if (key >= '1' && key <= '9') {
+            return key - '1';
+        }
+        if (key < 'a' || key > 'z') {
+            return iInvalidPos;
+        }
+        ord = key - 'a' + 9;
 #if defined (iPlatformApple)
-    /* Skip keys that would conflict with default system shortcuts: hide, minimize, quit, close. */
-    if (key == 'h' || key == 'm' || key == 'q' || key == 'w') {
-        return iInvalidPos;
-    }
-    if (key > 'h') ord--;
-    if (key > 'm') ord--;
-    if (key > 'q') ord--;
-    if (key > 'w') ord--;
+        /* Skip keys that would conflict with default system shortcuts: hide, minimize, quit, close. */
+        if (key == 'h' || key == 'm' || key == 'q' || key == 'w') {
+            return iInvalidPos;
+        }
+        if (key > 'h') ord--;
+        if (key > 'm') ord--;
+        if (key > 'q') ord--;
+        if (key > 'w') ord--;
 #endif
+    }
+    else {
+        iForIndices(i, homeRowKeys_) {
+            if (homeRowKeys_[i] == key) {
+                return i;
+            }
+        }
+    }
     return ord;
 }
 
-static iChar linkOrdinalChar_(size_t ord) {
-    if (ord < 9) {
-        return 0x278a + ord;
-    }
+static iChar linkOrdinalChar_DocumentWidget_(const iDocumentWidget *d, size_t ord) {
+    if (d->ordinalMode == numbersAndAlphabet_DocumentLinkOrdinalMode) {
+        if (ord < 9) {
+            return 0x278a + ord;
+        }
 #if defined (iPlatformApple)
-    if (ord < 9 + 22) {
-        int key = 'a' + ord - 9;
-        if (key >= 'h') key++;
-        if (key >= 'm') key++;
-        if (key >= 'q') key++;
-        if (key >= 'w') key++;
-        return 0x24b6 + key - 'a';
-    }
+        if (ord < 9 + 22) {
+            int key = 'a' + ord - 9;
+            if (key >= 'h') key++;
+            if (key >= 'm') key++;
+            if (key >= 'q') key++;
+            if (key >= 'w') key++;
+            return 0x24b6 + key - 'a';
+        }
 #else
-    if (ord < 9 + 26) {
-        return 0x24b6 + ord - 9;
-    }
+        if (ord < 9 + 26) {
+            return 0x24b6 + ord - 9;
+        }
 #endif
+    }
+    else {
+        if (ord < iElemCount(homeRowKeys_)) {
+            return 0x24b6 + homeRowKeys_[ord] - 'a';
+        }
+    }
     return 0;
 }
 
@@ -1831,31 +1933,11 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         }
         return iTrue;
     }
-    if (ev->type == SDL_KEYUP) {
-        const int key = ev->key.keysym.sym;
-        switch (key) {
-            case SDLK_LALT:
-            case SDLK_RALT:
-                if (document_App() == d) {
-                    iChangeFlags(d->flags, showLinkNumbers_DocumentWidgetFlag, iFalse);
-                    invalidate_DocumentWidget_(d);
-                    refresh_Widget(w);
-                }
-                break;
-            case SDLK_PAGEUP:
-            case SDLK_PAGEDOWN:
-            case SDLK_SPACE:
-            case SDLK_UP:
-            case SDLK_DOWN:
-//                d->smoothContinue = iFalse;
-                break;
-        }
-    }
     if (ev->type == SDL_KEYDOWN) {
         const int key = ev->key.keysym.sym;
         if ((d->flags & showLinkNumbers_DocumentWidgetFlag) &&
             ((key >= '1' && key <= '9') || (key >= 'a' && key <= 'z'))) {
-            const size_t ord = linkOrdinalFromKey_(key);
+            const size_t ord = linkOrdinalFromKey_DocumentWidget_(d, key);
             iConstForEach(PtrArray, i, &d->visibleLinks) {
                 if (ord == iInvalidPos) break;
                 const iGmRun *run = i.ptr;
@@ -1868,17 +1950,20 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                                                                       : 0,
                                      cstr_String(absoluteUrl_String(
                                      d->mod.url, linkUrl_GmDocument(d->doc, run->linkId))));
+                    iChangeFlags(d->flags, showLinkNumbers_DocumentWidgetFlag, iFalse);
+                    invalidateVisibleLinks_DocumentWidget_(d);
+                    refresh_Widget(d);
                     return iTrue;
                 }
             }
         }
         switch (key) {
-            case SDLK_LALT:
-            case SDLK_RALT:
-                if (document_App() == d) {
-                    iChangeFlags(d->flags, showLinkNumbers_DocumentWidgetFlag, iTrue);
-                    invalidate_DocumentWidget_(d);
-                    refresh_Widget(w);
+            case SDLK_ESCAPE:
+                if (d->flags & showLinkNumbers_DocumentWidgetFlag && document_App() == d) {
+                    iChangeFlags(d->flags, showLinkNumbers_DocumentWidgetFlag, iFalse);
+                    invalidateVisibleLinks_DocumentWidget_(d);
+                    refresh_Widget(d);
+                    return iTrue;
                 }
                 break;
 #if 1
@@ -1983,9 +2068,10 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 iArray items;
                 init_Array(&items, sizeof(iMenuItem));
                 if (d->contextLink) {
-                    const iString *linkUrl = linkUrl_GmDocument(d->doc, d->contextLink->linkId);
-                    const iRangecc scheme = urlScheme_String(linkUrl);
-                    if (willUseProxy_App(scheme) || equalCase_Rangecc(scheme, "gemini") ||
+                    const iString *linkUrl  = linkUrl_GmDocument(d->doc, d->contextLink->linkId);
+                    const iRangecc scheme   = urlScheme_String(linkUrl);
+                    const iBool    isGemini = equalCase_Rangecc(scheme, "gemini");
+                    if (willUseProxy_App(scheme) || isGemini ||
                         equalCase_Rangecc(scheme, "gopher")) {
                         /* Regular links that we can open. */
                         pushBackN_Array(
@@ -2010,19 +2096,31 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                           format_CStr("!open url:%s", cstr_String(linkUrl)) });
                     }
                     if (willUseProxy_App(scheme)) {
-                        pushBackN_Array(&items,
-                                        (iMenuItem[]){ { "---", 0, 0, NULL },
-                                                       { "Open Link in Default Browser",
-                                                         0,
-                                                         0,
-                                                         format_CStr("!open noproxy:1 url:%s",
-                                                                     cstr_String(linkUrl)) } },
-                                        2);
+                        pushBackN_Array(
+                            &items,
+                            (iMenuItem[]){
+                                { "---", 0, 0, NULL },
+                                { isGemini ? "Open without Proxy" : "Open Link in Default Browser",
+                                  0,
+                                  0,
+                                  format_CStr("!open noproxy:1 url:%s", cstr_String(linkUrl)) } },
+                            2);
                     }
                     pushBackN_Array(&items,
                                     (iMenuItem[]){ { "---", 0, 0, NULL },
                                                    { "Copy Link", 0, 0, "document.copylink" } },
                                     2);
+                    iMediaRequest *mediaReq;
+                    if ((mediaReq = findMediaRequest_DocumentWidget_(d, d->contextLink->linkId)) != NULL) {
+                        if (isFinished_GmRequest(mediaReq->req)) {
+                            pushBack_Array(&items,
+                                           &(iMenuItem){ "Save to Downloads",
+                                                         0,
+                                                         0,
+                                                         format_CStr("document.media.save link:%u",
+                                                                     d->contextLink->linkId) });
+                        }
+                    }
                 }
                 else {
                     if (!isEmpty_Range(&d->selectMark)) {
@@ -2219,7 +2317,7 @@ static void fillRange_DrawContext_(iDrawContext *d, const iGmRun *run, enum iCol
         if (!*isInside) {
             x = advanceRange_Text(run->font, (iRangecc){ run->text.start, mark.start }).x;
         }
-        int w = width_Rect(run->bounds) - x;
+        int w = width_Rect(run->visBounds) - x;
         if (contains_Range(&run->text, mark.end) || run->text.end == mark.end) {
             w = advanceRange_Text(run->font,
                                   !*isInside ? mark : (iRangecc){ run->text.start, mark.end }).x;
@@ -2235,6 +2333,18 @@ static void fillRange_DrawContext_(iDrawContext *d, const iGmRun *run, enum iCol
             add_I2(run->bounds.pos, addY_I2(d->viewPos, -value_Anim(&d->widget->scrollY)));
         fillRect_Paint(&d->paint, (iRect){ addX_I2(visPos, x),
                                            init_I2(w, height_Rect(run->bounds)) }, color);
+    }
+    /* Link URLs are not part of the visible document, so they are ignored above. Handle
+       these ranges as a special case. */
+    if (run->linkId && run->flags & decoration_GmRunFlag) {
+        const iRangecc url = linkUrlRange_GmDocument(d->widget->doc, run->linkId);
+        if (contains_Range(&url, mark.start) &&
+            (contains_Range(&url, mark.end) || url.end == mark.end)) {
+            fillRect_Paint(
+                &d->paint,
+                moved_Rect(run->visBounds, addY_I2(d->viewPos, -value_Anim(&d->widget->scrollY))),
+                color);
+        }
     }
 }
 
@@ -2316,11 +2426,11 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
     else {
         if (d->showLinkNumbers && run->linkId && run->flags & decoration_GmRunFlag) {
             const size_t ord = visibleLinkOrdinal_DocumentWidget_(d->widget, run->linkId);
-            const iChar ordChar = linkOrdinalChar_(ord);
+            const iChar ordChar = linkOrdinalChar_DocumentWidget_(d->widget, ord);
             if (ordChar) {
                 drawString_Text(run->font,
                                 init_I2(d->viewPos.x - gap_UI / 3, visPos.y),
-                                fg,
+                                tmQuote_ColorId,
                                 collect_String(newUnicodeN_String(&ordChar, 1)));
                 goto runDrawn;
             }
@@ -2696,7 +2806,6 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
                 }
             }
             endTarget_Paint(&ctx.paint);
-//            fflush(stdout);
         }
         validate_VisBuf(visBuf);
         clear_PtrSet(d->invalidRuns);

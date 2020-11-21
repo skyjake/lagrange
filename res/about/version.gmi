@@ -6,6 +6,21 @@
 ```
 # Release notes
 
+## 0.10
+* Added option to load inline images when pressing Space or ↓ for a more focused reading experience — just keep tapping a single key to proceed. If an image link is visible, it will be loaded instead of scrolling. This option is disabled by default.
+* Added context menu item to save inline images to Downloads.
+* Added an option to use a proxy server for Gemini requests.
+* Added a new keyboard link navigation mode focusing on the home row keys. The default keybinding for this is "F".
+* Added a keybinding to activate keyboard link modifier mode. The keyboard link keys are active while the modifier is held down. The default is ${ALT}.
+* Clearing and resetting keybindings via a context menu.
+* Added a Window tab in the Preferences dialog; moved some of the settings around for better organization.
+* Improved page search visualization: if the match is inside a link URL, the link icon is now highlighted. Previously these matches were not visualized in any way.
+* Improvements to URI parsing with regard to RFC 3986. Cases that are handled better are double slashes, query-only relative URIs, relative URIs that begin with a tilde, IPv6 literals, username in the authority.
+* Replaced EB Garamond with Tinos for improved readability.
+* Replaced Kosugi Maru with Noto Sans CJK JP for better glyph coverage.
+* Fixed font sizing of level 3 headings.
+* Fixed download progress indicators sometimes remaining visible even after leaving the page.
+
 ## 0.9
 * Clicking on the top banner of a page (where the site icon and hostname are shown) navigates to the root directory of the site.
 * Added menu items and keybindings for navigating to site root or the parent directory.

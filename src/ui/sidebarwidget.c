@@ -771,6 +771,18 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             }
         }
     }
+    if (ev->type == SDL_KEYDOWN) {
+        const int key   = ev->key.keysym.sym;
+        const int kmods = keyMods_Sym(ev->key.keysym.mod);
+        /* Hide the sidebar when Escape is pressed. */
+        if (kmods == 0 && key == SDLK_ESCAPE && isVisible_Widget(d)) {
+            setFlags_Widget(w, hidden_WidgetFlag, iTrue);
+            arrange_Widget(w->parent);
+            updateSize_DocumentWidget(document_App());
+            refresh_Widget(w->parent);
+            return iTrue;
+        }
+    }
     if (hoverItem_ListWidget(d->list) || isVisible_Widget(d->menu)) {
         processContextMenuEvent_Widget(d->menu, ev, {});
     }

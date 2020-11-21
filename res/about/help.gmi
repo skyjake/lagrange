@@ -36,6 +36,8 @@ Like Gemini, Lagrange has been designed with minimalism in mind. It depends on a
 * Scaling factor for the UI (for arbitrary monitor DPI)
 * Persistent app state — tabs and history are restored on next run
 * Configurable keybindings
+* Built-in support for Gopher
+* Use proxy servers for HTTP, Gopher, or Gemini content
 
 ## What is Gemini
 
@@ -65,13 +67,20 @@ Lagrange's user interface is modeled after web browsers:
 
 Tip: Try pressing ${CTRL+}4 now to see the page outline.
 
+The user interface has been designed for both mouse and keyboard based use. When using a mouse the most commonly needed features are available via context menus, for example by right-clicking on the currently open page. Keyboard shortcuts on the other hand can provide a very quick and fluid user experience. For example, to open the "CAPCOM" bookmark, one might use the following keyboard shortcuts:
+
+* ${CTRL+}L to activate the URL input field
+* Type "cap" which shows the "CAPCOM" bookmark as the first lookup result
+* Tab (or ↓) to move focus to the lookup results
+* Enter to select "CAPCOM"
+
 ## Navigation
 
 ### URL entry and quick search
 
-The URL input field is in its typical location in the navigation bar. It can be accessed quickly by pressing ${CTRL+}L.
+The URL input field is in its typical location in the navigation bar. It can be accessed quickly by pressing ${CTRL+}L. You can then type or paste an URL and press Enter to load the page.
 
-As you enter text, Lagrange starts looking for matches in bookmarks, history, content of cached pages, and identities. Search results appear below the URL input field in a popup. Press Tab or ↓ to switch input focus to the results.
+As you enter text in the URL input field, Lagrange starts looking for matches in bookmarks, history, identities, and content of cached pages. This provides an easy way to return to a page you've been on recently. Press Tab or ↓ to switch input focus to the results.
 
 Search within cached pages is limited to the (small) set of pages that Lagrange keeps in memory for back navigation. Search terms are case insensitive, and if many words are entered, they are all required to appear in the specified order in any matched content.
 
@@ -84,9 +93,11 @@ The type and destination of a link are indicated by the link's icon and color: �
 * Blue for Gemini
 * Purple for Gopher
 * Orange for HTTP(S)
-* Red for other (cannot be opened)
+* Red for other/unknown/invalid (cannot be opened)
 
-When you move the mouse over a link, additional information about it will appear: the destination domain, with the URL scheme shown for non-Gemini links, and the date of the last visit to the URL.
+Link colors remain the same regardless of which color theme is being used for page content. (Color themes are discussed in the Customization section.)
+
+When you move the mouse cursor over a link, additional information will appear: the destination domain, with the URL scheme shown for non-Gemini links, and the date of the last visit to the URL.
 
 ### Note about caching
 
@@ -102,11 +113,11 @@ Right-clicking on a link shows a link-specific context menu. From there, you can
 
 ### Opening links using the keyboard
 
-When navigating via keyboard, hold down ${ALT} to see link shortcut keys. Try doing so now and see how the link icon below is replaced with a number.
+Lagrange has two modes for navigating links with the keyboard. The first uses a modifier key (${ALT} by default): while the modifier is pressed, alphanumeric shortcuts are shown for each visible link in the window. You can then press the corresponding key, still holding the modifier, to open a link. The second mode is based on letters only and focuses on the home row keys. You press and release the activation key ("F" by default) to show the link shortcut letters. In this mode the shortcuts are not in alphabetic order, but instead roughly sorted based on proximity to the F and J keys. You may find this easier to use since it is a simple sequence of key presses without using modifiers, allowing one to keep fingers on or near the home row.
+
+You can give it a try now with the link below. Either hold down ${ALT}, or press and release F.
 
 => gemini://gemini.circumlunar.space/ Project Gemini
-
-Each visible link on the page gets an alphanumeric shortcut. For example, the first link can be opened by pressing ${ALT+}1. The tenth link is ${ALT+}A. Additionally hold down ${CTRL} to open the link in a new tab.
 
 ## Tabs
 
@@ -123,11 +134,13 @@ The sidebar can be toggled via menus or by pressing ${SHIFT+}${CTRL+}L. It has f
 * Identities: TLS client certificates.
 * Outline: List of the headings in the currently open tab. Useful when reading longer documents.
 
-${CTRL+}1 through ${CTRL+}4 switch between the sidebar tabs, or hide the sidebar if the current tab's key is pressed.
+${CTRL+}1 through ${CTRL+}4 switch between the sidebar tabs, or hide the sidebar if the current tab's key is pressed. You can also press Escape to dismiss the sidebar.
 
 ## Bookmarks
 
 Press ${CTRL+}D to bookmark the currently open URL.
+
+Bookmarks are listed in alphabetic order in the sidebar. There is no support for folders or manual sorting.
 
 In addition to a title, bookmarks can have tags. Some tags have a special meaning, but you are free to enter whatever you want in the tags field. In quick search results, tags are given extra weight so they appear higher in results.
 
@@ -137,7 +150,7 @@ In addition to a title, bookmarks can have tags. Some tags have a special meanin
 
 ## Identities (client certificates)
 
-Gemini uses TLS client certificates for manual user/session identification purposes. This is analogous to logging into a web site, except you are in full control of the information. The term "Identity" is used in Lagrange to refer to client certificates.
+Gemini uses TLS client certificates for user/session identification purposes. Unlike on the web where user identity tracking is covert and automatic, client certificates must be manually taken into use, and you are able to define how long each certificate remains valid. The term "Identity" is used in Lagrange to refer to client certificates.
 
 The Identities sidebar tab shows all identities known to Lagrange. Press ${CTRL+}3 to show it. This includes identities created in Lagrange and any identities based on imported X.509 certificates.
 
@@ -145,7 +158,7 @@ The Identities sidebar tab shows all identities known to Lagrange. Press ${CTRL+
 
 Click on the 👤 button in the navigation bar and select "New Identity...". The shortcut for this is ${SHIFT+}${CTRL+}N.
 
-Consider any information you enter in the certificate as public; only the Common Name is required and will appear as the issuer and subject of the certificate. This makes it clear that the certificate is self-signed. The other required field is the expiration date in "Valid until". Entering a year is sufficient, and means that the certificate is valid until the end of that year.
+Consider any information you enter in the certificate as public — only the Common Name is required to be non-empty. The generated certificate will use the Common Name as the issuer and subject of the certificate, making it clear that the certificate is self-signed. The other required field is the expiration date in "Valid until". Entering a year is sufficient, and means that the certificate is valid until the end of that year.
 
 The "Temporary" option prevents the identity from being saved persistently — it will be deleted as soon as you quit Lagrange. Otherwise, the certificate and its private key are written to .crt and .pem files.
 
@@ -156,6 +169,8 @@ You will need to select an identity when you encounter this error message:
 > 🔑 Certificate Required
 
 Clicking on an identity in the sidebar will toggle it on/off for the currently open URL. On subsequent page loads, the certificate will then be sent to the server when the URL or any URL under it is fetched. You can click on the 👤 button in the navigation bar to see which identity is being used for the current page.
+
+As the sidebar is not keyboard-navigable, note that identities can also be accessed via lookup results. Identities matching the search terms are shown as the last category in the lookup results list. From there, one can toggle an identity for the current page, or stop using it on all pages.
 
 ### Importing existing certificates
 
@@ -168,26 +183,40 @@ Lagrange will add a note to the imported identities to mark them as "Imported".
 
 Press ${CTRL+}S to save the contents of the current page to the Downloads folder. This works on all pages regardless of whether Lagrange can display the contents or not.
 
-The location where downloaded files are saved can be set in Preferences.
+When image or audio content is displayed inline, you can right-click on it and select "Save to Downloads" in the context menu.
 
 The 🔃 button on the right side of the URL input field is the Reload/Stop button — it reloads the current page or stops an ongoing download. During large downloads, an additional progress indicator appears next to the Stop button.
+
+The location where downloaded files are saved can be changed in Preferences. The default location is "Downloads" in your home directory.
 
 ## Customization
 
 You can find a number of settings in Preferences to customize the user interface and page contents.
 
-### Color themes
+### Browsing behavior
 
-Lagrange supports configuring dark and light modes separately. You can select a different page content color theme for dark mode and light mode.
+The "Outline on scrollbar" option shows the page outline when the mouse cursor is moved over the scrollbar, allowing one to better navigate long documents. The outline will disappear after the mouse cursor is moved away. If you need a persistent outline, one is always available in the sidebar.
 
-There are four different UI color themes: two for dark mode, and two for light mode. These can be selected on the "General" tab of the Preferences dialog:
+One important characteristic of Gemini is that you remain in control of what gets loaded and when. The browser will not suddenly fetch a ton of images, autoplay videos, or make surreptitious connections to any tracking servers — each network request is purposeful and manually triggered. The "Load image on scroll" option is provided to assist keyboard-only browsing and to facilitate a focused reading experience. When enabled, if there is an image link visible on the page and you press Space or ↓, it will be loaded and shown inline _instead_ of the view scrolling down. This allows you to read and see all the content of the page while only tapping on a single key on the keyboard.
+
+### Window and UI options
+
+Lagrange supports configuring dark and light UI modes separately.
+
+There are four different color schemes for the UI: two for dark mode, and two for light mode. These can be selected on the "Window" tab of the Preferences dialog:
 
 * Dark mode: "Pure Black" and "Dark" have a fully black or dark gray UI.
 * Light mode: "Pure White" and "Light" have completety white or light gray UI.
 
 On macOS, Lagrange will automatically switch between dark and light modes if the "Use system theme" setting is enabled. On other platforms you'll need to switch manually.
 
-Page content color themes are selected on the "Colors" tab of Preferences. The "Dark theme" is active in dark mode, and the "Light theme" is active in light mode.
+Options for wide window sizes:
+
+* Site icon: If there is room on the left side of the page text, the site icon appears there along with the top level heading. This allows one to keep better track of the current reading position in long documents.
+
+### Color themes
+
+Page content color themes are selected on the "Colors" tab of Preferences. The "Dark theme" is active in dark UI mode, and the "Light theme" is active in light UI mode.
 
 * Colorful Dark: All elements of the page are colored; the background is dark and text is light. This mode provides the best visual distinction between different domains because more color combinations are available.
 * Colorful Light: A single, bright background color with black text. This is the most colorful light theme. Note that colored backgrounds may reduce readability.
@@ -199,6 +228,8 @@ Page content color themes are selected on the "Colors" tab of Preferences. The "
 
 ### Page style
 
+The "Style" tab of the Preferences dialog lets you customize the appearance and layout of page content.
+
 The fonts for headings and other text are selected separately. This way one can achieve a greater number of style variations. Also, headings that are in a different font are more visually distinct and thus easier for one's eyes to scan.
 
 There are two sans-serif and two serif fonts:
@@ -206,7 +237,7 @@ There are two sans-serif and two serif fonts:
 * "Nunito" is a friendly rounded sans-serif font.
 * "Fira Sans" is a bolder, narrower, and more angular sans-serif font.
 * "Literata" is a heavy and serious serif font.
-* "EB Garamond" is a lighter and more decorative serif font. You may find it more readable on light backgrounds.
+* "Tinos" is a lighter serif font.
 
 Other style options:
 
@@ -214,15 +245,13 @@ Other style options:
 * Quote indicator: Quoted text is shown in an italic font. Additionally, you can select between a quotation mark icon and the traditional vertical line along the left edge of the quote.
 * Big 1st paragraph: When enabled, the leading paragraph on the page is shown in a slightly larger font.
 
-Options for wide window sizes:
+### Proxies
 
-* Site icon: If there is room on the left side of the page text, the site icon appears there along with the top level heading. This allows one to keep better track of the current reading position in long documents.
+### Keybindings
 
-### Bindings
+The "Keys" tab lets you change which keys are bound to UI commands. Click on an item with the mouse and then press the new key combination that you want bound to it. Right-click on a binding to erase it or reset it to the default.
 
-The Bindings tab lets you change which keys are bound to UI commands. Currently only basic page scrolling keybindings are available.
-
-Click on an item with the mouse and then press the new key combination that you want bound to it.
+Erasing a binding can be useful to disable certain features. For example, if you have no use for keyboard navigation of links via a modifier key, that binding can be erased and use of the modifier key for other purposes will no longer distract you by showing the link shortcuts.
 
 To reset all bindings to their defaults, quit Lagrange and delete the "bindings.txt" file in Lagrange's runtime directory. This is a platform-dependent location; see below for more information (under "Runtime files").
 
@@ -257,7 +286,7 @@ You can drag and drop .gmi files on the Lagrange window to open them in the curr
 Lagrange stores user-specific persistent files in one of the following locations (depending on the operating system):
 
 ```
-   Windows : C:\Users\Name\AppData\Roaming\fi.skyjake.Lagrange\
+   Windows : C:\Users\Name\AppData\Roaming\fi.skyjake.Lagrange
      macOS : ~/Library/Application Support/fi.skyjake.Lagrange/
 Other Unix : ~/.config/lagrange/
 ```
