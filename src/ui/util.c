@@ -1013,7 +1013,9 @@ iWidget *makePreferences_Widget(void) {
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.hoveroutline")));
         addChild_Widget(headings, iClob(makeHeading_Widget("Smooth scrolling:")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.smoothscroll")));
-        makeTwoColumnHeading_("WINDOW", headings, values);
+    }
+    /* Window. */ {
+        appendTwoColumnPage_(tabs, "Window", '2', &headings, &values);
 #if defined (iPlatformApple) || defined (iPlatformMSys)
         addChild_Widget(headings, iClob(makeHeading_Widget("Use system theme:")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.ostheme")));
@@ -1031,9 +1033,12 @@ iWidget *makePreferences_Widget(void) {
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.retainwindow")));
         addChild_Widget(headings, iClob(makeHeading_Widget("UI scale factor:")));
         setId_Widget(addChild_Widget(values, iClob(new_InputWidget(8))), "prefs.uiscale");
+        makeTwoColumnHeading_("WIDE LAYOUT", headings, values);
+        addChild_Widget(headings, iClob(makeHeading_Widget("Site icon:")));
+        addChild_Widget(values, iClob(makeToggle_Widget("prefs.sideicon")));
     }
     /* Colors. */ {
-        appendTwoColumnPage_(tabs, "Colors", '2', &headings, &values);
+        appendTwoColumnPage_(tabs, "Colors", '3', &headings, &values);
         makeTwoColumnHeading_("PAGE CONTENTS", headings, values);
         for (int i = 0; i < 2; ++i) {
             const iBool isDark = (i == 0);
@@ -1064,7 +1069,7 @@ iWidget *makePreferences_Widget(void) {
         addChildFlags_Widget(values, iClob(sats), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
     }
     /* Layout. */ {
-        appendTwoColumnPage_(tabs, "Style", '3', &headings, &values);
+        appendTwoColumnPage_(tabs, "Style", '4', &headings, &values);
         /* Fonts. */ {
             iWidget *fonts;
             addChild_Widget(headings, iClob(makeHeading_Widget("Heading font:")));
@@ -1105,12 +1110,9 @@ iWidget *makePreferences_Widget(void) {
         addChildFlags_Widget(values, iClob(quote), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
         addChild_Widget(headings, iClob(makeHeading_Widget("Big 1st paragaph:")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.biglede")));
-        makeTwoColumnHeading_("WIDE LAYOUT", headings, values);
-        addChild_Widget(headings, iClob(makeHeading_Widget("Site icon:")));
-        addChild_Widget(values, iClob(makeToggle_Widget("prefs.sideicon")));
     }
     /* Proxies. */ {
-        appendTwoColumnPage_(tabs, "Proxies", '4', &headings, &values);
+        appendTwoColumnPage_(tabs, "Proxies", '5', &headings, &values);
         addChild_Widget(headings, iClob(makeHeading_Widget("Gemini proxy:")));
         setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.proxy.gemini");
         addChild_Widget(headings, iClob(makeHeading_Widget("Gopher proxy:")));
@@ -1121,7 +1123,7 @@ iWidget *makePreferences_Widget(void) {
     /* Keybindings. */ {
         iBindingsWidget *bind = new_BindingsWidget();
         setFlags_Widget(as_Widget(bind), borderTop_WidgetFlag, iTrue);
-        appendFramelessTabPage_(tabs, iClob(bind), "Bindings", '5', KMOD_PRIMARY);
+        appendFramelessTabPage_(tabs, iClob(bind), "Keys", '6', KMOD_PRIMARY);
     }
     resizeToLargestPage_Widget(tabs);
     arrange_Widget(dlg);
