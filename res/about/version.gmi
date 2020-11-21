@@ -8,6 +8,7 @@
 
 ## 0.10
 * Added option to load inline images when pressing Space or ↓ for a more focused reading experience — just keep tapping a single key to proceed. If an image link is visible, it will be loaded instead of scrolling. This option is disabled by default.
+* Added context menu item to save inline images to Downloads.
 * Added an option to use a proxy server for Gemini requests.
 * Added a new keyboard link navigation mode focusing on the home row keys. The default keybinding for this is "F".
 * Added a keybinding to activate keyboard link modifier mode. The keyboard link keys are active while the modifier is held down. The default is ${ALT}.

@@ -1083,6 +1083,7 @@ iBool handleCommand_App(const char *cmd) {
         }
         setInitialScroll_DocumentWidget(doc, argfLabel_Command(cmd, "scroll"));
         setRedirectCount_DocumentWidget(doc, redirectCount);
+        setFlags_Widget(findWidget_App("document.progress"), hidden_WidgetFlag, iTrue);
         setUrlFromCache_DocumentWidget(doc, url, isHistory);
         /* Optionally, jump to a text in the document. This will only work if the document
            is already available, e.g., it's from "about:" or restored from cache. */

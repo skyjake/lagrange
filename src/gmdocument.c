@@ -1377,7 +1377,7 @@ iBool isMediaLink_GmDocument(const iGmDocument *d, iGmLinkId linkId) {
     const iString *dstUrl = absoluteUrl_String(&d->url, linkUrl_GmDocument(d, linkId));
     const iRangecc scheme = urlScheme_String(dstUrl);
     if (equalCase_Rangecc(scheme, "gemini") || equalCase_Rangecc(scheme, "gopher") ||
-        willUseProxy_App(scheme)) {
+        equalCase_Rangecc(scheme, "file") || willUseProxy_App(scheme)) {
         return (linkFlags_GmDocument(d, linkId) &
                 (imageFileExtension_GmLinkFlag | audioFileExtension_GmLinkFlag)) != 0;
     }

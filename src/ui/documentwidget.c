@@ -1264,6 +1264,78 @@ static iBool fetchNextUnfetchedImage_DocumentWidget_(iDocumentWidget *d) {
     return iFalse;
 }
 
+static void saveToDownloads_(const iString *url, const iString *mime, const iBlock *content) {
+    /* Figure out a file name from the URL. */
+    iUrl parts;
+    init_Url(&parts, url);
+    while (startsWith_Rangecc(parts.path, "/")) {
+        parts.path.start++;
+    }
+    while (endsWith_Rangecc(parts.path, "/")) {
+        parts.path.end--;
+    }
+    iString *name = collectNewCStr_String("pagecontent");
+    if (isEmpty_Range(&parts.path)) {
+        if (!isEmpty_Range(&parts.host)) {
+            setRange_String(name, parts.host);
+            replace_Block(&name->chars, '.', '_');
+        }
+    }
+    else {
+        iRangecc fn = { parts.path.start + lastIndexOfCStr_Rangecc(parts.path, "/") + 1,
+                        parts.path.end };
+        if (!isEmpty_Range(&fn)) {
+            setRange_String(name, fn);
+        }
+    }
+    if (startsWith_String(name, "~")) {
+        /* This would be interpreted as a reference to a home directory. */
+        remove_Block(&name->chars, 0, 1);
+    }
+    iString *savePath = concat_Path(downloadDir_App(), name);
+    if (lastIndexOfCStr_String(savePath, ".") == iInvalidPos) {
+        /* No extension specified in URL. */
+        if (startsWith_String(mime, "text/gemini")) {
+            appendCStr_String(savePath, ".gmi");
+        }
+        else if (startsWith_String(mime, "text/")) {
+            appendCStr_String(savePath, ".txt");
+        }
+        else if (startsWith_String(mime, "image/")) {
+            appendCStr_String(savePath, cstr_String(mime) + 6);
+        }
+    }
+    if (fileExists_FileInfo(savePath)) {
+        /* Make it unique. */
+        iDate now;
+        initCurrent_Date(&now);
+        size_t insPos = lastIndexOfCStr_String(savePath, ".");
+        if (insPos == iInvalidPos) {
+            insPos = size_String(savePath);
+        }
+        const iString *date = collect_String(format_Date(&now, "_%Y-%m-%d_%H%M%S"));
+        insertData_Block(&savePath->chars, insPos, cstr_String(date), size_String(date));
+    }
+    /* Write the file. */ {
+        iFile *f = new_File(savePath);
+        if (open_File(f, writeOnly_FileMode)) {
+            write_File(f, content);
+            const size_t size   = size_Block(content);
+            const iBool  isMega = size >= 1000000;
+            makeMessage_Widget(uiHeading_ColorEscape "FILE SAVED",
+                               format_CStr("%s\nSize: %.3f %s", cstr_String(path_File(f)),
+                                           isMega ? size / 1.0e6f : (size / 1.0e3f),
+                                           isMega ? "MB" : "KB"));
+        }
+        else {
+            makeMessage_Widget(uiTextCaution_ColorEscape "ERROR SAVING FILE",
+                               strerror(errno));
+        }
+        iRelease(f);
+    }
+    delete_String(savePath);
+}
+
 static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
     iWidget *w = as_Widget(d);
     if (equal_Command(cmd, "window.resized") || equal_Command(cmd, "font.changed")) {
@@ -1471,82 +1543,21 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             return iTrue;
         }
     }
+    else if (equalWidget_Command(cmd, w, "document.media.save")) {
+        const iGmLinkId      linkId = argLabel_Command(cmd, "link");
+        const iMediaRequest *media  = findMediaRequest_DocumentWidget_(d, linkId);
+        if (media) {
+            saveToDownloads_(url_GmRequest(media->req), meta_GmRequest(media->req),
+                             body_GmRequest(media->req));
+        }
+    }
     else if (equal_Command(cmd, "document.save") && document_App() == d) {
         if (d->request) {
             makeMessage_Widget(uiTextCaution_ColorEscape "PAGE INCOMPLETE",
                                "The page contents are still being downloaded.");
         }
         else if (!isEmpty_Block(&d->sourceContent)) {
-            /* Figure out a file name from the URL. */
-            /* TODO: Make this a utility function. */
-            iUrl parts;
-            init_Url(&parts, d->mod.url);
-            while (startsWith_Rangecc(parts.path, "/")) {
-                parts.path.start++;
-            }
-            while (endsWith_Rangecc(parts.path, "/")) {
-                parts.path.end--;
-            }
-            iString *name = collectNewCStr_String("pagecontent");
-            if (isEmpty_Range(&parts.path)) {
-                if (!isEmpty_Range(&parts.host)) {
-                    setRange_String(name, parts.host);
-                    replace_Block(&name->chars, '.', '_');
-                }
-            }
-            else {
-                iRangecc fn = { parts.path.start + lastIndexOfCStr_Rangecc(parts.path, "/") + 1,
-                                parts.path.end };
-                if (!isEmpty_Range(&fn)) {
-                    setRange_String(name, fn);
-                }
-            }
-            if (startsWith_String(name, "~")) {
-                /* This would be interpreted as a reference to a home directory. */
-                remove_Block(&name->chars, 0, 1);
-            }
-            iString *savePath = concat_Path(downloadDir_App(), name);
-            if (lastIndexOfCStr_String(savePath, ".") == iInvalidPos) {
-                /* No extension specified in URL. */
-                if (startsWith_String(&d->sourceMime, "text/gemini")) {
-                    appendCStr_String(savePath, ".gmi");
-                }
-                else if (startsWith_String(&d->sourceMime, "text/")) {
-                    appendCStr_String(savePath, ".txt");
-                }
-                else if (startsWith_String(&d->sourceMime, "image/")) {
-                    appendCStr_String(savePath, cstr_String(&d->sourceMime) + 6);
-                }
-            }
-            if (fileExists_FileInfo(savePath)) {
-                /* Make it unique. */
-                iDate now;
-                initCurrent_Date(&now);
-                size_t insPos = lastIndexOfCStr_String(savePath, ".");
-                if (insPos == iInvalidPos) {
-                    insPos = size_String(savePath);
-                }
-                const iString *date = collect_String(format_Date(&now, "_%Y-%m-%d_%H%M%S"));
-                insertData_Block(&savePath->chars, insPos, cstr_String(date), size_String(date));
-            }
-            /* Write the file. */ {
-                iFile *f = new_File(savePath);
-                if (open_File(f, writeOnly_FileMode)) {
-                    write_File(f, &d->sourceContent);
-                    const size_t size   = size_Block(&d->sourceContent);
-                    const iBool  isMega = size >= 1000000;
-                    makeMessage_Widget(uiHeading_ColorEscape "PAGE SAVED",
-                                       format_CStr("%s\nSize: %.3f %s", cstr_String(path_File(f)),
-                                                   isMega ? size / 1.0e6f : (size / 1.0e3f),
-                                                   isMega ? "MB" : "KB"));
-                }
-                else {
-                    makeMessage_Widget(uiTextCaution_ColorEscape "ERROR SAVING PAGE",
-                                       strerror(errno));
-                }
-                iRelease(f);
-            }
-            delete_String(savePath);
+            saveToDownloads_(d->mod.url, &d->sourceMime, &d->sourceContent);
         }
         return iTrue;
     }
@@ -1568,6 +1579,12 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equal_Command(cmd, "navigate.back") && document_App() == d) {
+        if (d->request) {
+            postCommandf_App(
+                "document.request.cancelled doc:%p url:%s", d, cstr_String(d->mod.url));
+            iReleasePtr(&d->request);
+            updateFetchProgress_DocumentWidget_(d);
+        }
         goBack_History(d->mod.history);
         return iTrue;
     }
@@ -2093,6 +2110,17 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                     (iMenuItem[]){ { "---", 0, 0, NULL },
                                                    { "Copy Link", 0, 0, "document.copylink" } },
                                     2);
+                    iMediaRequest *mediaReq;
+                    if ((mediaReq = findMediaRequest_DocumentWidget_(d, d->contextLink->linkId)) != NULL) {
+                        if (isFinished_GmRequest(mediaReq->req)) {
+                            pushBack_Array(&items,
+                                           &(iMenuItem){ "Save to Downloads",
+                                                         0,
+                                                         0,
+                                                         format_CStr("document.media.save link:%u",
+                                                                     d->contextLink->linkId) });
+                        }
+                    }
                 }
                 else {
                     if (!isEmpty_Range(&d->selectMark)) {
@@ -2778,7 +2806,6 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
                 }
             }
             endTarget_Paint(&ctx.paint);
-//            fflush(stdout);
         }
         validate_VisBuf(visBuf);
         clear_PtrSet(d->invalidRuns);
