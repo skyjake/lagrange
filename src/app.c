@@ -1293,9 +1293,9 @@ void openInDefaultBrowser_App(const iString *url) {
     iProcess *proc = new_Process();
     setArguments_Process(proc,
 #if defined (iPlatformApple)
-                         iClob(newStringsCStr_StringList("/usr/bin/open", cstr_String(url), NULL))
+                         iClob(newStringsCStr_StringList("/usr/bin/env", "open", cstr_String(url), NULL))
 #elif defined (iPlatformLinux) || defined (iPlatformOther)
-                         iClob(newStringsCStr_StringList("/usr/bin/xdg-open", cstr_String(url), NULL))
+                         iClob(newStringsCStr_StringList("/usr/bin/env", "xdg-open", cstr_String(url), NULL))
 #elif defined (iPlatformMsys)
         iClob(newStringsCStr_StringList(
             concatPath_CStr(cstr_String(execPath_App()), "../urlopen.bat"),
@@ -1341,7 +1341,7 @@ void revealPath_App(const iString *path) {
     }
     iProcess *proc = new_Process();
     setArguments_Process(
-        proc, iClob(newStringsCStr_StringList("/usr/bin/xdg-open", cstr_Rangecc(target), NULL)));
+        proc, iClob(newStringsCStr_StringList("/usr/bin/env", "xdg-open", cstr_Rangecc(target), NULL)));
     start_Process(proc);
     iRelease(proc);
 #else
