@@ -195,6 +195,12 @@ static iBool processEvent_BindingsWidget_(iBindingsWidget *d, const SDL_Event *e
             postCommand_App("bindings.changed");
             return iTrue;
         }
+        else if (ev->type == SDL_KEYUP && isMod_Sym(ev->key.keysym.sym)) {
+            setKey_BindingItem_(item_ListWidget(d->list, d->activePos), ev->key.keysym.sym, 0);
+            setActiveItem_BindingsWidget_(d, iInvalidPos);
+            postCommand_App("bindings.changed");
+            return iTrue;
+        }
     }
     return processEvent_Widget(w, ev);
 }

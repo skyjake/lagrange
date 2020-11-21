@@ -7,9 +7,10 @@
 # Release notes
 
 ## 0.10
-* Added option to load inline images when pressing Space or ↓ for a more focused reading experience — just keep tapping on a single key to proceed. If an image link is visible, it will be loaded instead of scrolling. This option is disabled by default.
+* Added option to load inline images when pressing Space or ↓ for a more focused reading experience — just keep tapping a single key to proceed. If an image link is visible, it will be loaded instead of scrolling. This option is disabled by default.
 * Added an option to use a proxy server for Gemini requests.
-* Added a keybinding to activate keyboard link navigation mode (default is "F").
+* Added a new keyboard link navigation mode focusing on the home row keys. The default keybinding for this is "F".
+* Added a keybinding to activate keyboard link modifier mode. The keyboard link keys are active while the modifier is held down. The default is ${ALT}.
 * Clearing and resetting keybindings via a context menu.
 * Added a Window tab in the Preferences dialog; moved some of the settings around for better organization.
 * Improved page search visualization: if the match is inside a link URL, the link icon is now highlighted. Previously these matches were not visualized in any way.

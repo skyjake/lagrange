@@ -57,7 +57,8 @@ static void clear_Keys_(iKeys *d) {
 }
 
 enum iBindFlag {
-    argRepeat_BindFlag = iBit(1),
+    argRepeat_BindFlag  = iBit(1),
+    argRelease_BindFlag = iBit(2),
 };
 
 /* TODO: This indirection could be used for localization, although all UI strings
@@ -73,7 +74,8 @@ static const struct { int id; iMenuItem bind; int flags; } defaultBindings_[] = 
     { 31, { "Go forward",                navigateForward_KeyShortcut,   "navigate.forward"   }, 0 },
     { 32, { "Go to parent directory",    navigateParent_KeyShortcut,    "navigate.parent"    }, 0 },
     { 33, { "Go to site root",           navigateRoot_KeyShortcut,      "navigate.root"      }, 0 },
-    { 40, { "Open link via keyboard",    'f', 0,                        "document.linkkeys"  }, 0 },
+    { 40, { "Open link via home row keys", 'f', 0,                      "document.linkkeys arg:1" }, 0 },
+    { 41, { "Open link via modifier key", SDLK_LALT, 0,                 "document.linkkeys arg:0" }, argRelease_BindFlag },
     /* The following cannot currently be changed (built-in duplicates). */
     { 1000, { NULL, SDLK_SPACE, KMOD_SHIFT, "scroll.page arg:-1" }, argRepeat_BindFlag },
     { 1001, { NULL, SDLK_SPACE, 0, "scroll.page arg:1" }, argRepeat_BindFlag },
@@ -110,6 +112,11 @@ static void bindDefaults_(void) {
 
 static iBinding *find_Keys_(iKeys *d, int key, int mods) {
     size_t pos;
+    /* Do not differentiate between left and right modifier keys. */
+    key = normalizedMod_Sym(key);
+    if (isMod_Sym(key)) {
+        mods = 0;
+    }
     const iBinding elem = { .key = key, .mods = mods };
     if (locate_PtrSet(&d->lookup, &elem, &pos)) {
         return at_PtrSet(&d->lookup, pos);
@@ -138,8 +145,8 @@ static void updateLookup_Keys_(iKeys *d) {
 void setKey_Binding(int id, int key, int mods) {
     iBinding *bind = findId_Keys_(&keys_, id);
     if (bind) {
-        bind->key = key;
-        bind->mods = mods;
+        bind->key  = normalizedMod_Sym(key);
+        bind->mods = isMod_Sym(key) ? 0 : mods;
         updateLookup_Keys_(&keys_);
     }
 }
@@ -252,25 +259,18 @@ void setLabel_Keys(int id, const char *label) {
     }
 }
 
-#if 0
-const iString *label_Keys(const char *command) {
-    iKeys *d = &keys_;
-    /* TODO: A hash wouldn't hurt here. */
-    iConstForEach(PtrSet, i, &d->bindings) {
-        const iBinding *bind = *i.value;
-        if (!cmp_String(&bind->command, command) && !isEmpty_String(&bind->label)) {
-            return &bind->label;
-        }
-    }
-    return collectNew_String();
-}
-#endif
-
 iBool processEvent_Keys(const SDL_Event *ev) {
     iKeys *d = &keys_;
-    if (ev->type == SDL_KEYDOWN) {
+    if (ev->type == SDL_KEYDOWN || ev->type == SDL_KEYUP) {
         const iBinding *bind = find_Keys_(d, ev->key.keysym.sym, keyMods_Sym(ev->key.keysym.mod));
         if (bind) {
+            if (ev->type == SDL_KEYUP) {
+                if (bind->flags & argRelease_BindFlag) {
+                    postCommandf_App("%s release:1", cstr_String(&bind->command));
+                    return iTrue;
+                }
+                return iFalse;
+            }
             if (ev->key.repeat && (bind->flags & argRepeat_BindFlag)) {
                 postCommandf_App("%s repeat:1", cstr_String(&bind->command));
             }

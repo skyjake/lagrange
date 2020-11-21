@@ -125,11 +125,17 @@ enum iDocumentWidgetFlag {
     showLinkNumbers_DocumentWidgetFlag       = iBit(3),
 };
 
+enum iDocumentLinkOrdinalMode {
+    numbersAndAlphabet_DocumentLinkOrdinalMode,
+    homeRow_DocumentLinkOrdinalMode,
+};
+
 struct Impl_DocumentWidget {
     iWidget        widget;
     enum iRequestState state;
     iPersistentDocumentState mod;
     int            flags;
+    enum iDocumentLinkOrdinalMode ordinalMode;
     iString *      titleUser;
     iGmRequest *   request;
     iAtomicInt     isRequestUpdated; /* request has new content, need to parse it */
@@ -228,7 +234,6 @@ void init_DocumentWidget(iDocumentWidget *d) {
     addAction_Widget(w, navigateForward_KeyShortcut, "navigate.forward");
     addAction_Widget(w, navigateParent_KeyShortcut, "navigate.parent");
     addAction_Widget(w, navigateRoot_KeyShortcut, "navigate.root");
-    addAction_Widget(w, 'f', 0, "document.linkkeys");
 }
 
 void deinit_DocumentWidget(iDocumentWidget *d) {
@@ -366,6 +371,15 @@ static void invalidateLink_DocumentWidget_(iDocumentWidget *d, iGmLinkId id) {
     iConstForEach(PtrArray, i, &d->visibleLinks) {
         const iGmRun *run = i.ptr;
         if (run->linkId == id) {
+            insert_PtrSet(d->invalidRuns, run);
+        }
+    }
+}
+
+static void invalidateVisibleLinks_DocumentWidget_(iDocumentWidget *d) {
+    iConstForEach(PtrArray, i, &d->visibleLinks) {
+        const iGmRun *run = i.ptr;
+        if (run->linkId) {
             insert_PtrSet(d->invalidRuns, run);
         }
     }
@@ -969,7 +983,7 @@ static void smoothScroll_DocumentWidget_(iDocumentWidget *d, int offset, int dur
     /* Get rid of link numbers when scrolling. */
     if (offset && d->flags & showLinkNumbers_DocumentWidgetFlag) {
         d->flags &= ~showLinkNumbers_DocumentWidgetFlag;
-        invalidate_DocumentWidget_(d);
+        invalidateVisibleLinks_DocumentWidget_(d);
     }
     if (!prefs_App()->smoothScrolling) {
         duration = 0; /* always instant */
@@ -1542,8 +1556,14 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equal_Command(cmd, "document.linkkeys") && document_App() == d) {
-        iChangeFlags(d->flags, showLinkNumbers_DocumentWidgetFlag, iTrue);
-        invalidate_DocumentWidget_(d);
+        if (argLabel_Command(cmd, "release")) {
+            iChangeFlags(d->flags, showLinkNumbers_DocumentWidgetFlag, iFalse);
+        }
+        else {
+            d->ordinalMode = arg_Command(cmd);
+            iChangeFlags(d->flags, showLinkNumbers_DocumentWidgetFlag, iTrue);
+        }
+        invalidateVisibleLinks_DocumentWidget_(d);
         refresh_Widget(d);
         return iTrue;
     }
@@ -1815,45 +1835,75 @@ static iBool processPlayerEvents_DocumentWidget_(iDocumentWidget *d, const SDL_E
     return iFalse;
 }
 
-static size_t linkOrdinalFromKey_(int key) {
-    if (key >= '1' && key <= '9') {
-        return key - '1';
-    }
-    if (key < 'a' || key > 'z') {
-        return iInvalidPos;
-    }
-    int ord = key - 'a' + 9;
+/* Sorted by proximity to F and J. */
+static const int homeRowKeys_[] = {
+    'f', 'd', 's', 'a',
+    'j', 'k', 'l',
+    'r', 'e', 'w', 'q',
+    'u', 'i', 'o', 'p',
+    'v', 'c', 'x', 'z',
+    'm', 'n',
+    'g', 'h',
+    'b',
+    't', 'y', 'u',
+};
+
+static size_t linkOrdinalFromKey_DocumentWidget_(const iDocumentWidget *d, int key) {
+    size_t ord = iInvalidPos;
+    if (d->ordinalMode == numbersAndAlphabet_DocumentLinkOrdinalMode) {
+        if (key >= '1' && key <= '9') {
+            return key - '1';
+        }
+        if (key < 'a' || key > 'z') {
+            return iInvalidPos;
+        }
+        ord = key - 'a' + 9;
 #if defined (iPlatformApple)
-    /* Skip keys that would conflict with default system shortcuts: hide, minimize, quit, close. */
-    if (key == 'h' || key == 'm' || key == 'q' || key == 'w') {
-        return iInvalidPos;
-    }
-    if (key > 'h') ord--;
-    if (key > 'm') ord--;
-    if (key > 'q') ord--;
-    if (key > 'w') ord--;
+        /* Skip keys that would conflict with default system shortcuts: hide, minimize, quit, close. */
+        if (key == 'h' || key == 'm' || key == 'q' || key == 'w') {
+            return iInvalidPos;
+        }
+        if (key > 'h') ord--;
+        if (key > 'm') ord--;
+        if (key > 'q') ord--;
+        if (key > 'w') ord--;
 #endif
+    }
+    else {
+        iForIndices(i, homeRowKeys_) {
+            if (homeRowKeys_[i] == key) {
+                return i;
+            }
+        }
+    }
     return ord;
 }
 
-static iChar linkOrdinalChar_(size_t ord) {
-    if (ord < 9) {
-        return 0x278a + ord;
-    }
+static iChar linkOrdinalChar_DocumentWidget_(const iDocumentWidget *d, size_t ord) {
+    if (d->ordinalMode == numbersAndAlphabet_DocumentLinkOrdinalMode) {
+        if (ord < 9) {
+            return 0x278a + ord;
+        }
 #if defined (iPlatformApple)
-    if (ord < 9 + 22) {
-        int key = 'a' + ord - 9;
-        if (key >= 'h') key++;
-        if (key >= 'm') key++;
-        if (key >= 'q') key++;
-        if (key >= 'w') key++;
-        return 0x24b6 + key - 'a';
-    }
+        if (ord < 9 + 22) {
+            int key = 'a' + ord - 9;
+            if (key >= 'h') key++;
+            if (key >= 'm') key++;
+            if (key >= 'q') key++;
+            if (key >= 'w') key++;
+            return 0x24b6 + key - 'a';
+        }
 #else
-    if (ord < 9 + 26) {
-        return 0x24b6 + ord - 9;
-    }
+        if (ord < 9 + 26) {
+            return 0x24b6 + ord - 9;
+        }
 #endif
+    }
+    else {
+        if (ord < iElemCount(homeRowKeys_)) {
+            return 0x24b6 + homeRowKeys_[ord] - 'a';
+        }
+    }
     return 0;
 }
 
@@ -1866,31 +1916,11 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         }
         return iTrue;
     }
-    if (ev->type == SDL_KEYUP) {
-        const int key = ev->key.keysym.sym;
-        switch (key) {
-            case SDLK_LALT:
-            case SDLK_RALT:
-                if (document_App() == d) {
-                    iChangeFlags(d->flags, showLinkNumbers_DocumentWidgetFlag, iFalse);
-                    invalidate_DocumentWidget_(d);
-                    refresh_Widget(w);
-                }
-                break;
-            case SDLK_PAGEUP:
-            case SDLK_PAGEDOWN:
-            case SDLK_SPACE:
-            case SDLK_UP:
-            case SDLK_DOWN:
-//                d->smoothContinue = iFalse;
-                break;
-        }
-    }
     if (ev->type == SDL_KEYDOWN) {
         const int key = ev->key.keysym.sym;
         if ((d->flags & showLinkNumbers_DocumentWidgetFlag) &&
             ((key >= '1' && key <= '9') || (key >= 'a' && key <= 'z'))) {
-            const size_t ord = linkOrdinalFromKey_(key);
+            const size_t ord = linkOrdinalFromKey_DocumentWidget_(d, key);
             iConstForEach(PtrArray, i, &d->visibleLinks) {
                 if (ord == iInvalidPos) break;
                 const iGmRun *run = i.ptr;
@@ -1904,6 +1934,8 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                      cstr_String(absoluteUrl_String(
                                      d->mod.url, linkUrl_GmDocument(d->doc, run->linkId))));
                     iChangeFlags(d->flags, showLinkNumbers_DocumentWidgetFlag, iFalse);
+                    invalidateVisibleLinks_DocumentWidget_(d);
+                    refresh_Widget(d);
                     return iTrue;
                 }
             }
@@ -1912,17 +1944,9 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             case SDLK_ESCAPE:
                 if (d->flags & showLinkNumbers_DocumentWidgetFlag && document_App() == d) {
                     iChangeFlags(d->flags, showLinkNumbers_DocumentWidgetFlag, iFalse);
-                    invalidate_DocumentWidget_(d);
+                    invalidateVisibleLinks_DocumentWidget_(d);
                     refresh_Widget(d);
                     return iTrue;
-                }
-                break;
-            case SDLK_LALT:
-            case SDLK_RALT:
-                if (document_App() == d) {
-                    iChangeFlags(d->flags, showLinkNumbers_DocumentWidgetFlag, iTrue);
-                    invalidate_DocumentWidget_(d);
-                    refresh_Widget(w);
                 }
                 break;
 #if 1
@@ -2374,11 +2398,11 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
     else {
         if (d->showLinkNumbers && run->linkId && run->flags & decoration_GmRunFlag) {
             const size_t ord = visibleLinkOrdinal_DocumentWidget_(d->widget, run->linkId);
-            const iChar ordChar = linkOrdinalChar_(ord);
+            const iChar ordChar = linkOrdinalChar_DocumentWidget_(d->widget, ord);
             if (ordChar) {
                 drawString_Text(run->font,
                                 init_I2(d->viewPos.x - gap_UI / 3, visPos.y),
-                                fg,
+                                tmQuote_ColorId,
                                 collect_String(newUnicodeN_String(&ordChar, 1)));
                 goto runDrawn;
             }
