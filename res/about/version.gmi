@@ -7,6 +7,7 @@
 # Release notes
 
 ## 0.10
+* Added option to load inline images when pressing Space or ↓. If an image link is visible, the image will be loaded instead of scrolling. This option is disabled by default.
 * Added an option to use a proxy server for Gemini requests.
 * Added a keybinding to activate keyboard link navigation mode (default is "F").
 * Clearing and resetting keybindings via a context menu.

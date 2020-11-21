@@ -1151,10 +1151,8 @@ static iMediaRequest *findMediaRequest_DocumentWidget_(const iDocumentWidget *d,
 
 static iBool requestMedia_DocumentWidget_(iDocumentWidget *d, iGmLinkId linkId) {
     if (!findMediaRequest_DocumentWidget_(d, linkId)) {
-        pushBack_ObjectList(
-            d->media,
-            iClob(new_MediaRequest(
-                d, linkId, absoluteUrl_String(d->mod.url, linkUrl_GmDocument(d->doc, linkId)))));
+        const iString *imageUrl = absoluteUrl_String(d->mod.url, linkUrl_GmDocument(d->doc, linkId));
+        pushBack_ObjectList(d->media, iClob(new_MediaRequest(d, linkId, imageUrl)));
         invalidate_DocumentWidget_(d);
         return iTrue;
     }
@@ -1233,6 +1231,22 @@ static void allocVisBuffer_DocumentWidget_(const iDocumentWidget *d) {
     else {
         dealloc_VisBuf(d->visBuf);
     }
+}
+
+static iBool fetchNextUnfetchedImage_DocumentWidget_(iDocumentWidget *d) {
+    iConstForEach(PtrArray, i, &d->visibleLinks) {
+        const iGmRun *run = i.ptr;
+        if (run->linkId && !run->imageId && ~run->flags & decoration_GmRunFlag) {
+            const int linkFlags = linkFlags_GmDocument(d->doc, run->linkId);
+            if (isMediaLink_GmDocument(d->doc, run->linkId) &&
+                ~linkFlags & content_GmLinkFlag && ~linkFlags & permanent_GmLinkFlag ) {
+                if (requestMedia_DocumentWidget_(d, run->linkId)) {
+                    return iTrue;
+                }
+            }
+        }
+    }
+    return iFalse;
 }
 
 static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
@@ -1572,13 +1586,16 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equal_Command(cmd, "scroll.page") && document_App() == d) {
-        if (argLabel_Command(cmd, "repeat")) {
-            /* TODO: Adjust scroll animation to be linear during repeated scroll? */
+        const int dir = arg_Command(cmd);
+        if (!argLabel_Command(cmd, "repeat") && prefs_App()->loadImageInsteadOfScrolling &&
+            dir > 0) {
+            if (fetchNextUnfetchedImage_DocumentWidget_(d)) {
+                return iTrue;
+            }
         }
         smoothScroll_DocumentWidget_(d,
-                                     arg_Command(cmd) *
-                                         (0.5f * height_Rect(documentBounds_DocumentWidget_(d)) -
-                                          0 * lineHeight_Text(paragraph_FontId)),
+                                     dir * (0.5f * height_Rect(documentBounds_DocumentWidget_(d)) -
+                                            0 * lineHeight_Text(paragraph_FontId)),
                                      smoothDuration_DocumentWidget_);
         return iTrue;
     }
@@ -1599,8 +1616,15 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equal_Command(cmd, "scroll.step") && document_App() == d) {
+        const int dir = arg_Command(cmd);
+        if (!argLabel_Command(cmd, "repeat") && prefs_App()->loadImageInsteadOfScrolling &&
+            dir > 0) {
+            if (fetchNextUnfetchedImage_DocumentWidget_(d)) {
+                return iTrue;
+            }
+        }
         smoothScroll_DocumentWidget_(d,
-                                     3 * lineHeight_Text(paragraph_FontId) * arg_Command(cmd),
+                                     3 * lineHeight_Text(paragraph_FontId) * dir,
                                      smoothDuration_DocumentWidget_);
         return iTrue;
     }

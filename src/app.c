@@ -183,6 +183,7 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "prefs.mono.gopher.changed arg:%d\n", d->prefs.monospaceGopher);
     appendFormat_String(str, "zoom.set arg:%d\n", d->prefs.zoomPercent);
     appendFormat_String(str, "smoothscroll arg:%d\n", d->prefs.smoothScrolling);
+    appendFormat_String(str, "imageloadscroll arg:%d\n", d->prefs.loadImageInsteadOfScrolling);
     appendFormat_String(str, "linewidth.set arg:%d\n", d->prefs.lineWidth);
     appendFormat_String(str, "prefs.biglede.changed arg:%d\n", d->prefs.bigFirstParagraph);
     appendFormat_String(str, "prefs.sideicon.changed arg:%d\n", d->prefs.sideIcon);
@@ -746,6 +747,8 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
                          isSelected_Widget(findChild_Widget(d, "prefs.retainwindow")));
         postCommandf_App("smoothscroll arg:%d",
                          isSelected_Widget(findChild_Widget(d, "prefs.smoothscroll")));
+        postCommandf_App("imageloadscroll arg:%d",
+                         isSelected_Widget(findChild_Widget(d, "prefs.imageloadscroll")));
         postCommandf_App("ostheme arg:%d",
                          isSelected_Widget(findChild_Widget(d, "prefs.ostheme")));
         postCommandf_App("proxy.gemini address:%s",
@@ -956,6 +959,10 @@ iBool handleCommand_App(const char *cmd) {
         d->prefs.smoothScrolling = arg_Command(cmd);
         return iTrue;
     }
+    else if (equal_Command(cmd, "imageloadscroll")) {
+        d->prefs.loadImageInsteadOfScrolling = arg_Command(cmd);
+        return iTrue;
+    }
     else if (equal_Command(cmd, "forcewrap.toggle")) {
         d->prefs.forceLineWrap = !d->prefs.forceLineWrap;
         updateSize_DocumentWidget(document_App());
@@ -1153,6 +1160,7 @@ iBool handleCommand_App(const char *cmd) {
         setText_InputWidget(findChild_Widget(dlg, "prefs.downloads"), &d->prefs.downloadDir);
         setToggle_Widget(findChild_Widget(dlg, "prefs.hoveroutline"), d->prefs.hoverOutline);
         setToggle_Widget(findChild_Widget(dlg, "prefs.smoothscroll"), d->prefs.smoothScrolling);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.imageloadscroll"), d->prefs.loadImageInsteadOfScrolling);
         setToggle_Widget(findChild_Widget(dlg, "prefs.ostheme"), d->prefs.useSystemTheme);
         setToggle_Widget(findChild_Widget(dlg, "prefs.retainwindow"), d->prefs.retainWindowSize);
         setText_InputWidget(findChild_Widget(dlg, "prefs.uiscale"),

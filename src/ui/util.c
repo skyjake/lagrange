@@ -1013,6 +1013,8 @@ iWidget *makePreferences_Widget(void) {
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.hoveroutline")));
         addChild_Widget(headings, iClob(makeHeading_Widget("Smooth scrolling:")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.smoothscroll")));
+        addChild_Widget(headings, iClob(makeHeading_Widget("Load image on scroll:")));
+        addChild_Widget(values, iClob(makeToggle_Widget("prefs.imageloadscroll")));
     }
     /* Window. */ {
         appendTwoColumnPage_(tabs, "Window", '2', &headings, &values);

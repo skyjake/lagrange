@@ -52,6 +52,7 @@ iDeclareType(Binding)
 
 struct Impl_Binding {
     int id;
+    int flags;
     int key;
     int mods;
     iString command;

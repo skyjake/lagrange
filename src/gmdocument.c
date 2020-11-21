@@ -1366,8 +1366,14 @@ enum iColorId linkColor_GmDocument(const iGmDocument *d, iGmLinkId linkId, enum 
 }
 
 iBool isMediaLink_GmDocument(const iGmDocument *d, iGmLinkId linkId) {
-    return (linkFlags_GmDocument(d, linkId) &
-            (imageFileExtension_GmLinkFlag | audioFileExtension_GmLinkFlag)) != 0;
+    const iString *dstUrl = absoluteUrl_String(&d->url, linkUrl_GmDocument(d, linkId));
+    const iRangecc scheme = urlScheme_String(dstUrl);
+    if (equalCase_Rangecc(scheme, "gemini") || equalCase_Rangecc(scheme, "gopher") ||
+        willUseProxy_App(scheme)) {
+        return (linkFlags_GmDocument(d, linkId) &
+                (imageFileExtension_GmLinkFlag | audioFileExtension_GmLinkFlag)) != 0;
+    }
+    return iFalse;
 }
 
 const iString *title_GmDocument(const iGmDocument *d) {

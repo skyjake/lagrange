@@ -24,21 +24,23 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 void init_Prefs(iPrefs *d) {
     d->dialogTab         = 0;
-    d->theme             = dark_ColorTheme;
     d->useSystemTheme    = iTrue;
+    d->theme             = dark_ColorTheme;
     d->retainWindowSize  = iTrue;
+    d->uiScale           = 1.0f; /* default set elsewhere */
     d->zoomPercent       = 100;
+    d->sideIcon          = iTrue;
+    d->hoverOutline      = iFalse;
     d->smoothScrolling   = iTrue;
-    d->forceLineWrap     = iFalse;
-    d->quoteIcon         = iTrue;
+    d->loadImageInsteadOfScrolling = iFalse;
     d->font              = nunito_TextFont;
     d->headingFont       = nunito_TextFont;
     d->monospaceGemini   = iFalse;
     d->monospaceGopher   = iFalse;
     d->lineWidth         = 40;
     d->bigFirstParagraph = iTrue;
-    d->sideIcon          = iTrue;
-    d->hoverOutline      = iFalse;
+    d->forceLineWrap     = iFalse;
+    d->quoteIcon         = iTrue;
     d->docThemeDark      = colorfulDark_GmDocumentTheme;
     d->docThemeLight     = white_GmDocumentTheme;
     d->saturation        = 1.0f;
