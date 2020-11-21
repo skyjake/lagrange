@@ -2317,7 +2317,7 @@ static void fillRange_DrawContext_(iDrawContext *d, const iGmRun *run, enum iCol
         if (!*isInside) {
             x = advanceRange_Text(run->font, (iRangecc){ run->text.start, mark.start }).x;
         }
-        int w = width_Rect(run->bounds) - x;
+        int w = width_Rect(run->visBounds) - x;
         if (contains_Range(&run->text, mark.end) || run->text.end == mark.end) {
             w = advanceRange_Text(run->font,
                                   !*isInside ? mark : (iRangecc){ run->text.start, mark.end }).x;
@@ -2326,8 +2326,8 @@ static void fillRange_DrawContext_(iDrawContext *d, const iGmRun *run, enum iCol
         else {
             *isInside = iTrue; /* at least until the next run */
         }
-        if (w > width_Rect(run->bounds) - x) {
-            w = width_Rect(run->bounds) - x;
+        if (w > width_Rect(run->visBounds) - x) {
+            w = width_Rect(run->visBounds) - x;
         }
         const iInt2 visPos =
             add_I2(run->bounds.pos, addY_I2(d->viewPos, -value_Anim(&d->widget->scrollY)));
