@@ -19,6 +19,7 @@
 * Replaced EB Garamond with Tinos for improved readability.
 * Replaced Kosugi Maru with Noto Sans CJK JP for better glyph coverage.
 * Fixed font sizing of level 3 headings.
+* Fixed download progress indicators sometimes remaining visible even after leaving the page.
 
 ## 0.9
 * Clicking on the top banner of a page (where the site icon and hostname are shown) navigates to the root directory of the site.
