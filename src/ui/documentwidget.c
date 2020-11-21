@@ -1239,6 +1239,7 @@ static iBool fetchNextUnfetchedImage_DocumentWidget_(iDocumentWidget *d) {
         if (run->linkId && !run->imageId && ~run->flags & decoration_GmRunFlag) {
             const int linkFlags = linkFlags_GmDocument(d->doc, run->linkId);
             if (isMediaLink_GmDocument(d->doc, run->linkId) &&
+                linkFlags & imageFileExtension_GmLinkFlag &&
                 ~linkFlags & content_GmLinkFlag && ~linkFlags & permanent_GmLinkFlag ) {
                 if (requestMedia_DocumentWidget_(d, run->linkId)) {
                     return iTrue;
@@ -1587,11 +1588,10 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     else if (equal_Command(cmd, "scroll.page") && document_App() == d) {
         const int dir = arg_Command(cmd);
-        if (!argLabel_Command(cmd, "repeat") && prefs_App()->loadImageInsteadOfScrolling &&
-            dir > 0) {
-            if (fetchNextUnfetchedImage_DocumentWidget_(d)) {
-                return iTrue;
-            }
+        if (dir > 0 && !argLabel_Command(cmd, "repeat") &&
+            prefs_App()->loadImageInsteadOfScrolling &&
+            fetchNextUnfetchedImage_DocumentWidget_(d)) {
+            return iTrue;
         }
         smoothScroll_DocumentWidget_(d,
                                      dir * (0.5f * height_Rect(documentBounds_DocumentWidget_(d)) -
@@ -1617,11 +1617,10 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     else if (equal_Command(cmd, "scroll.step") && document_App() == d) {
         const int dir = arg_Command(cmd);
-        if (!argLabel_Command(cmd, "repeat") && prefs_App()->loadImageInsteadOfScrolling &&
-            dir > 0) {
-            if (fetchNextUnfetchedImage_DocumentWidget_(d)) {
-                return iTrue;
-            }
+        if (dir > 0 && !argLabel_Command(cmd, "repeat") &&
+            prefs_App()->loadImageInsteadOfScrolling &&
+            fetchNextUnfetchedImage_DocumentWidget_(d)) {
+            return iTrue;
         }
         smoothScroll_DocumentWidget_(d,
                                      3 * lineHeight_Text(paragraph_FontId) * dir,
