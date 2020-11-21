@@ -56,23 +56,34 @@ static void clear_Keys_(iKeys *d) {
     }
 }
 
-static void bindDefaults_(void) {
-    /* TODO: This indirection could be used for localization, although all UI strings
-       would need to be similarly handled. */
-    bindLabel_Keys(1, "scroll.top", SDLK_HOME, 0, "Jump to top");
-    bindLabel_Keys(2, "scroll.bottom", SDLK_END, 0, "Jump to bottom");
-    bindLabel_Keys(10, "scroll.step arg:-1", SDLK_UP, 0, "Scroll up");
-    bindLabel_Keys(11, "scroll.step arg:1", SDLK_DOWN, 0, "Scroll down");
-    bindLabel_Keys(20, "scroll.page arg:-1", SDLK_PAGEUP, 0, "Scroll up half a page");
-    bindLabel_Keys(21, "scroll.page arg:1", SDLK_PAGEDOWN, 0, "Scroll down half a page");
-    bindLabel_Keys(30, "navigate.back", navigateBack_KeyShortcut, "Go back");
-    bindLabel_Keys(31, "navigate.forward", navigateForward_KeyShortcut, "Go forward");
-    bindLabel_Keys(32, "navigate.parent", navigateParent_KeyShortcut, "Go to parent directory");
-    bindLabel_Keys(33, "navigate.root", navigateRoot_KeyShortcut, "Go to site root");
-    bindLabel_Keys(40, "document.linkkeys", 'f', 0, "Open link via keyboard");
+/* TODO: This indirection could be used for localization, although all UI strings
+   would need to be similarly handled. */
+static const struct { int id; iMenuItem bind; } defaultBindings_[] = {
+    { 1,  { "Jump to top",               SDLK_HOME, 0,                  "scroll.top"         } },
+    { 2,  { "Jump to bottom",            SDLK_END, 0,                   "scroll.bottom"      } },
+    { 10, { "Scroll up",                 SDLK_UP, 0,                    "scroll.step arg:-1" } },
+    { 11, { "Scroll down",               SDLK_DOWN, 0,                  "scroll.step arg:1"  } },
+    { 20, { "Scroll up half a page",     SDLK_PAGEUP, 0,                "scroll.page arg:-1" } },
+    { 21, { "Scroll down half a page",   SDLK_PAGEDOWN, 0,              "scroll.page arg:1"  } },
+    { 30, { "Go back",                   navigateBack_KeyShortcut,      "navigate.back"      } },
+    { 31, { "Go forward",                navigateForward_KeyShortcut,   "navigate.forward"   } },
+    { 32, { "Go to parent directory",    navigateParent_KeyShortcut,    "navigate.parent"    } },
+    { 33, { "Go to site root",           navigateRoot_KeyShortcut,      "navigate.root"      } },
+    { 40, { "Open link via keyboard",    'f', 0,                        "document.linkkeys"} },
     /* The following cannot currently be changed (built-in duplicates). */
-    bind_Keys(1000, "scroll.page arg:-1", SDLK_SPACE, KMOD_SHIFT);
-    bind_Keys(1001, "scroll.page arg:1", SDLK_SPACE, 0);
+    { 1000, { NULL, SDLK_SPACE, KMOD_SHIFT, "scroll.page arg:-1" } },
+    { 1001, { NULL, SDLK_SPACE, 0, "scroll.page arg:1" } },
+};
+
+static void bindDefaults_(void) {
+    iForIndices(i, defaultBindings_) {
+        const int       id   = defaultBindings_[i].id;
+        const iMenuItem bind = defaultBindings_[i].bind;
+        bind_Keys(id, bind.command, bind.key, bind.kmods);
+        if (bind.label) {
+            setLabel_Keys(id, bind.label);
+        }
+    }
 }
 
 static iBinding *find_Keys_(iKeys *d, int key, int mods) {
@@ -118,6 +129,20 @@ void setKey_Binding(int id, int key, int mods) {
         bind->key = key;
         bind->mods = mods;
         updateLookup_Keys_(&keys_);
+    }
+}
+
+void reset_Binding(int id) {
+    iBinding *bind = findId_Keys_(&keys_, id);
+    if (bind) {
+        iForIndices(i, defaultBindings_) {
+            if (defaultBindings_[i].id == id) {
+                bind->key  = defaultBindings_[i].bind.key;
+                bind->mods = defaultBindings_[i].bind.kmods;
+                updateLookup_Keys_(&keys_);
+                break;
+            }
+        }
     }
 }
 
