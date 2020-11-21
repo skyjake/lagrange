@@ -2274,13 +2274,25 @@ static void fillRange_DrawContext_(iDrawContext *d, const iGmRun *run, enum iCol
         else {
             *isInside = iTrue; /* at least until the next run */
         }
-        if (w > width_Rect(run->visBounds) - x) {
-            w = width_Rect(run->visBounds) - x;
+        if (w > width_Rect(run->bounds) - x) {
+            w = width_Rect(run->bounds) - x;
         }
         const iInt2 visPos =
             add_I2(run->bounds.pos, addY_I2(d->viewPos, -value_Anim(&d->widget->scrollY)));
         fillRect_Paint(&d->paint, (iRect){ addX_I2(visPos, x),
                                            init_I2(w, height_Rect(run->bounds)) }, color);
+    }
+    /* Link URLs are not part of the visible document, so they are ignored above. Handle
+       these ranges as a special case. */
+    if (run->linkId && run->flags & decoration_GmRunFlag) {
+        const iRangecc url = linkUrlRange_GmDocument(d->widget->doc, run->linkId);
+        if (contains_Range(&url, mark.start) &&
+            (contains_Range(&url, mark.end) || url.end == mark.end)) {
+            fillRect_Paint(
+                &d->paint,
+                moved_Rect(run->visBounds, addY_I2(d->viewPos, -value_Anim(&d->widget->scrollY))),
+                color);
+        }
     }
 }
 
