@@ -131,14 +131,15 @@ static iBool processEvent_ScrollWidget_(iScrollWidget *d, const SDL_Event *ev) {
 }
 
 static void draw_ScrollWidget_(const iScrollWidget *d) {
-    const iWidget *w = constAs_Widget(d);
-    const iRect bounds = bounds_Widget(w);
-    const iBool isPressed = (flags_Widget(w) & pressed_WidgetFlag) != 0;
+    const iWidget *w         = constAs_Widget(d);
+    const iRect    bounds    = bounds_Widget(w);
+    const iBool    isPressed = (flags_Widget(w) & pressed_WidgetFlag) != 0;
     if (bounds.size.x > 0) {
         iPaint p;
         init_Paint(&p);
         drawVLine_Paint(&p, topLeft_Rect(bounds), height_Rect(bounds), uiSeparator_ColorId);
-        const iRect thumbRect = shrunk_Rect(thumbRect_ScrollWidget_(d), init_I2(gap_UI, gap_UI / 2));
+        const iRect thumbRect = shrunk_Rect(
+            thumbRect_ScrollWidget_(d), init_I2(isPressed ? gap_UI : (gap_UI * 4 / 3), gap_UI / 2));
         fillRect_Paint(&p, thumbRect, isPressed ? uiBackgroundPressed_ColorId : tmQuote_ColorId);
     }
 }

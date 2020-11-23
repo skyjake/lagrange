@@ -114,6 +114,8 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
     switch (d->mode) {
         case feeds_SidebarMode: {
             iDate on;
+            initCurrent_Date(&on);
+            const int thisYear = on.year;
             iZap(on);
             iConstForEach(PtrArray, i, listEntries_Feeds()) {
                 const iFeedEntry *entry = i.ptr;
@@ -125,7 +127,7 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                         on = entryDate;
                         iSidebarItem *sep = new_SidebarItem();
                         sep->listItem.isSeparator = iTrue;
-                        iString *text = format_Date(&on, "%Y %b %d");
+                        iString *text = format_Date(&on, on.year == thisYear ? "%b %d" : "%Y %b %d");
                         set_String(&sep->meta, text);
                         delete_String(text);
                         addItem_ListWidget(d->list, sep);
@@ -142,7 +144,11 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 set_String(&item->label, &entry->title);
                 const iBookmark *bm = get_Bookmarks(bookmarks_App(), entry->bookmarkId);
                 if (bm) {
-                    set_String(&item->meta, &bm->title);
+//                    appendCStr_String(&item->meta, uiTextCaution_ColorEscape);
+//                    appendChar_String(&item->meta, bm->icon);
+//                    appendChar_String(&item->meta, ' ');
+//                    appendCStr_String(&item->meta, uiText_ColorEscape);
+                    append_String(&item->meta, &bm->title);
                 }
                 addItem_ListWidget(d->list, item);
                 iRelease(item);
@@ -199,7 +205,7 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                     iSidebarItem *sep = new_SidebarItem();
                     sep->listItem.isSeparator = iTrue;
                     const iString *text = collect_String(format_Date(
-                        &date, date.year != thisYear ? "%b %d %Y" : "%b %d"));
+                        &date, date.year != thisYear ? "%Y %b %d" : "%b %d"));
                     set_String(&sep->meta, text);
                     const int yOffset = itemHeight_ListWidget(d->list) * 2 / 3;
                     sep->id = yOffset;
@@ -879,32 +885,59 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                 uiLabelLarge_FontId,
                 add_I2(pos,
                        init_I2(3 * gap_UI,
-                               itemHeight - lineHeight_Text(uiLabelLarge_FontId) - 2 * gap_UI)),
+                               itemHeight - lineHeight_Text(uiLabelLarge_FontId) - 1 * gap_UI)),
                 uiIcon_ColorId,
                 range_String(&d->meta));
         }
         else {
+            const iBool isUnread = (d->icon != 0);
             const int h1 = lineHeight_Text(uiLabel_FontId);
             const int h2 = lineHeight_Text(uiContent_FontId);
-            const iRect iconArea = { addY_I2(pos, h1), init_I2(7 * gap_UI, itemHeight - h1) };
-            if (d->icon) {
+            const int iconPad = 4 * gap_UI;
+            const iRect iconArea = { addY_I2(pos, 0), init_I2(iconPad, itemHeight) };
+            if (isUnread) {
+                /*
                 iString str;
                 initUnicodeN_String(&str, &d->icon, 1);
-                drawCentered_Text(uiContent_FontId, iconArea, iFalse, iconColor, "%s", cstr_String(&str));
-                deinit_String(&str);
+                drawCentered_Text(
+                    uiContent_FontId, iconArea, iFalse, iconColor, "%s", cstr_String(&str));
+                deinit_String(&str);*/
+                fillRect_Paint(
+                    p,
+                    (iRect){ topLeft_Rect(iconArea), init_I2(gap_UI, height_Rect(iconArea)) },
+                    iconColor);
             }
-            pos = add_I2(pos, init_I2(7 * gap_UI, (itemHeight - h1 - h2) / 2));
-            draw_Text(uiLabel_FontId,
-                      pos,
-                      isPressing ? fg : uiHeading_ColorId,
-                      "%s",
-                      cstr_String(&d->meta));
-            pos.y += h1;
-            draw_Text(uiContent_FontId,
-                      pos,
-                      isPressing ? fg : uiTextStrong_ColorId,
-                      "%s",
-                      cstr_String(&d->label));
+            /* Select the layout based on how the title fits. */
+            iInt2       titleSize = advanceRange_Text(uiContent_FontId, range_String(&d->label));
+            const iInt2 metaSize  = advanceRange_Text(uiLabel_FontId, range_String(&d->meta));
+            pos.x += iconPad;
+            const int avail = width_Rect(itemRect) - iconPad - 3 * gap_UI;
+            const int labelFg = isPressing ? fg : (isUnread ? uiTextStrong_ColorId : uiText_ColorId);
+            if (titleSize.x > avail && metaSize.x < avail * 0.75f) {
+                /* Must wrap the title. */
+                pos.y += (itemHeight - h2 - h2) / 2;
+                draw_Text(
+                    uiLabel_FontId, addY_I2(pos, h2 - h1 - gap_UI / 8), fg, "%s \u2014 ", cstr_String(&d->meta));
+                int skip  = metaSize.x + advance_Text(uiLabel_FontId, " \u2014 ").x;
+                iInt2 cur = addX_I2(pos, skip);
+                const char *endPos;
+                tryAdvance_Text(
+                    uiContent_FontId, range_String(&d->label), avail - skip, &endPos);
+                drawRange_Text(uiContent_FontId,
+                               cur,
+                               labelFg,
+                               (iRangecc){ constBegin_String(&d->label), endPos });
+                if (endPos < constEnd_String(&d->label)) {
+                    drawRange_Text(uiContent_FontId,
+                                   addY_I2(pos, h2), labelFg,
+                                   (iRangecc){ endPos, constEnd_String(&d->label) });
+                }
+            }
+            else {
+                pos.y += (itemHeight - h1 - h2) / 2;
+                drawRange_Text(uiLabel_FontId, pos, fg, range_String(&d->meta));
+                drawRange_Text(uiContent_FontId, addY_I2(pos, h1), labelFg, range_String(&d->label));
+            }
         }
     }
     else if (sidebar->mode == bookmarks_SidebarMode) {

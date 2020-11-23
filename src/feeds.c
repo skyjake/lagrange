@@ -151,12 +151,10 @@ static void parseResult_FeedJob_(iFeedJob *d) {
                 const iRangecc url   = capturedRange_RegExpMatch(&m, 1);
                 const iRangecc date  = capturedRange_RegExpMatch(&m, 2);
                 const iRangecc title = capturedRange_RegExpMatch(&m, 3);
-                iFeedEntry *entry = new_FeedEntry();
+                iFeedEntry *   entry = new_FeedEntry();
                 entry->bookmarkId = d->bookmarkId;
                 setRange_String(&entry->url, url);
-                set_String(&entry->url,
-                           absoluteUrl_String(url_GmRequest(d->request),
-                                              collect_String(lower_String(&entry->url))));
+                set_String(&entry->url, absoluteUrl_String(url_GmRequest(d->request), &entry->url));
                 setRange_String(&entry->title, title);
                 trimTitle_(&entry->title);
                 int year, month, day;
@@ -293,7 +291,7 @@ static void stopWorker_Feeds_(iFeeds *d) {
 
 static int cmp_FeedEntryPtr_(const void *a, const void *b) {
     const iFeedEntry * const *elem[2] = { a, b };
-    return cmpStringCase_String(&(*elem[0])->url, &(*elem[1])->url);
+    return cmpString_String(&(*elem[0])->url, &(*elem[1])->url);
 }
 
 static void save_Feeds_(iFeeds *d) {
