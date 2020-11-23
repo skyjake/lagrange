@@ -113,9 +113,25 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
     d->menu = NULL;
     switch (d->mode) {
         case feeds_SidebarMode: {
+            iDate on;
+            iZap(on);
             iConstForEach(PtrArray, i, listEntries_Feeds()) {
                 const iFeedEntry *entry = i.ptr;
-                /* TODO: Insert date separators. */
+                /* Insert date separators. */ {
+                    iDate entryDate;
+                    init_Date(&entryDate, &entry->timestamp);
+                    if (on.year != entryDate.year || on.month != entryDate.month ||
+                        on.day != entryDate.day) {
+                        on = entryDate;
+                        iSidebarItem *sep = new_SidebarItem();
+                        sep->listItem.isSeparator = iTrue;
+                        iString *text = format_Date(&on, "%Y %b %d");
+                        set_String(&sep->meta, text);
+                        delete_String(text);
+                        addItem_ListWidget(d->list, sep);
+                        iRelease(sep);
+                    }
+                }
                 iSidebarItem *item = new_SidebarItem();
                 item->icon = 0;
                 const iTime visitTime = urlVisitTime_Visited(visited_App(), &entry->url);
@@ -303,7 +319,7 @@ iBool setMode_SidebarWidget(iSidebarWidget *d, enum iSidebarMode mode) {
     for (enum iSidebarMode i = 0; i < max_SidebarMode; i++) {
         setFlags_Widget(as_Widget(d->modeButtons[i]), selected_WidgetFlag, i == d->mode);
     }
-    const float heights[max_SidebarMode] = { 2.5f, 1.333f, 1.333f, 3.5f, 1.2f };
+    const float heights[max_SidebarMode] = { 2.333f, 1.333f, 1.333f, 3.5f, 1.2f };
     setBackgroundColor_Widget(as_Widget(d->list),
                               d->mode == documentOutline_SidebarMode ? tmBannerBackground_ColorId
                                                                      : uiBackground_ColorId);
@@ -858,27 +874,38 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
     else if (sidebar->mode == feeds_SidebarMode) {
         const int fg = isHover ? (isPressing ? uiTextPressed_ColorId : uiTextFramelessHover_ColorId)
                                : uiText_ColorId;
-        const int h1 = lineHeight_Text(uiLabel_FontId);
-        const int h2 = lineHeight_Text(uiContent_FontId);
-        const iRect iconArea = { addY_I2(pos, h1), init_I2(7 * gap_UI, itemHeight - h1) };
-        if (d->icon) {
-            iString str;
-            initUnicodeN_String(&str, &d->icon, 1);
-            drawCentered_Text(uiContent_FontId, iconArea, iFalse, iconColor, "%s", cstr_String(&str));
-            deinit_String(&str);
+        if (d->listItem.isSeparator) {
+            drawRange_Text(
+                uiLabelLarge_FontId,
+                add_I2(pos,
+                       init_I2(3 * gap_UI,
+                               itemHeight - lineHeight_Text(uiLabelLarge_FontId) - 2 * gap_UI)),
+                uiIcon_ColorId,
+                range_String(&d->meta));
         }
-        pos = add_I2(pos, init_I2(7 * gap_UI, (itemHeight - h1 - h2) / 2));
-        draw_Text(uiLabel_FontId,
-                  pos,
-                  isPressing ? fg : uiHeading_ColorId,
-                  "%s",
-                  cstr_String(&d->meta));
-        pos.y += h1;
-        draw_Text(uiContent_FontId,
-                  pos,
-                  isPressing ? fg : uiTextStrong_ColorId,
-                  "%s",
-                  cstr_String(&d->label));
+        else {
+            const int h1 = lineHeight_Text(uiLabel_FontId);
+            const int h2 = lineHeight_Text(uiContent_FontId);
+            const iRect iconArea = { addY_I2(pos, h1), init_I2(7 * gap_UI, itemHeight - h1) };
+            if (d->icon) {
+                iString str;
+                initUnicodeN_String(&str, &d->icon, 1);
+                drawCentered_Text(uiContent_FontId, iconArea, iFalse, iconColor, "%s", cstr_String(&str));
+                deinit_String(&str);
+            }
+            pos = add_I2(pos, init_I2(7 * gap_UI, (itemHeight - h1 - h2) / 2));
+            draw_Text(uiLabel_FontId,
+                      pos,
+                      isPressing ? fg : uiHeading_ColorId,
+                      "%s",
+                      cstr_String(&d->meta));
+            pos.y += h1;
+            draw_Text(uiContent_FontId,
+                      pos,
+                      isPressing ? fg : uiTextStrong_ColorId,
+                      "%s",
+                      cstr_String(&d->label));
+        }
     }
     else if (sidebar->mode == bookmarks_SidebarMode) {
         const int fg = isHover ? (isPressing ? uiTextPressed_ColorId : uiTextFramelessHover_ColorId)
@@ -899,11 +926,11 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
         if (d->listItem.isSeparator) {
             if (!isEmpty_String(&d->meta)) {
                 iInt2 drawPos = addY_I2(topLeft_Rect(itemRect), d->id);
-                drawHLine_Paint(p, drawPos, width_Rect(itemRect), uiIcon_ColorId);
+                drawHLine_Paint(p, addY_I2(drawPos, -gap_UI), width_Rect(itemRect), uiIcon_ColorId);
                 drawRange_Text(
-                    default_FontId,
+                    uiLabelLarge_FontId,
                     add_I2(drawPos,
-                           init_I2(3 * gap_UI, (itemHeight - lineHeight_Text(default_FontId)) / 2)),
+                           init_I2(3 * gap_UI, (itemHeight - lineHeight_Text(uiLabelLarge_FontId)) / 2)),
                     uiIcon_ColorId,
                     range_String(&d->meta));
             }

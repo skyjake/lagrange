@@ -440,6 +440,11 @@ void deinit_Feeds(void) {
     deinit_SortedArray(&d->entries);
 }
 
+static int cmpTimeDescending_FeedEntryPtr_(const void *a, const void *b) {
+    const iFeedEntry * const *e1 = a, * const *e2 = b;
+    return -cmp_Time(&(*e1)->timestamp, &(*e2)->timestamp);
+}
+
 const iPtrArray *listEntries_Feeds(void) {
     iFeeds *d = &feeds_;
     lock_Mutex(d->mtx);
@@ -447,6 +452,6 @@ const iPtrArray *listEntries_Feeds(void) {
        of the array in case the worker modifies it. */
     iPtrArray *list = collect_PtrArray(copy_Array(&d->entries.values));
     unlock_Mutex(d->mtx);
-    /* TODO: Sort the entries based on time. */
+    sort_Array(list, cmpTimeDescending_FeedEntryPtr_);
     return list;
 }
