@@ -95,6 +95,8 @@ set (SOURCES
     src/bookmarks.c
     src/bookmarks.h
     src/defs.h
+    src/feeds.c
+    src/feeds.h
     src/gmcerts.c
     src/gmcerts.h
     src/gmdocument.c

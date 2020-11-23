@@ -24,6 +24,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "bookmarks.h"
 #include "defs.h"
 #include "embedded.h"
+#include "feeds.h"
 #include "gmcerts.h"
 #include "gmdocument.h"
 #include "gmutil.h"
@@ -402,6 +403,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     }
 #endif
     d->window = new_Window(d->initialWindowRect);
+    init_Feeds(dataDir_App_);
     /* Widget state init. */
     processEvents_App(postedEventsOnly_AppEventMode);
     if (!loadState_App_(d)) {
@@ -435,6 +437,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
 
 static void deinit_App(iApp *d) {
     saveState_App_(d);
+    deinit_Feeds();
     save_Keys(dataDir_App_);
     deinit_Keys();
     savePrefs_App_(d);
