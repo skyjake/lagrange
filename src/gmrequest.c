@@ -606,7 +606,8 @@ void cancel_GmRequest(iGmRequest *d) {
 
 iBool isFinished_GmRequest(const iGmRequest *d) {
     iBool done;
-    iGuardMutex(&d->mutex, done = (d->state == finished_GmRequestState));
+    iGuardMutex(&d->mutex,
+                done = (d->state == finished_GmRequestState || d->state == failure_GmRequestState));
     return done;
 }
 
