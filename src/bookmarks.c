@@ -54,7 +54,7 @@ static const char *fileName_Bookmarks_ = "bookmarks.txt";
 struct Impl_Bookmarks {
     iMutex *mtx;
     int     idEnum;
-    iHash   bookmarks;
+    iHash   bookmarks; /* bookmark ID is the hash key */
 };
 
 iDefineTypeConstruction(Bookmarks)
@@ -171,6 +171,17 @@ iBool filterTagsRegExp_Bookmarks(void *regExp, const iBookmark *bm) {
     iRegExpMatch m;
     init_RegExpMatch(&m);
     return matchString_RegExp(regExp, &bm->tags, &m);
+}
+
+static iBool matchUrl_(void *url, const iBookmark *bm) {
+    return equalCase_String(url, &bm->url);
+}
+
+uint32_t findUrl_Bookmarks(const iBookmarks *d, const iString *url) {
+    /* TODO: O(n), boo */
+    const iPtrArray *found = list_Bookmarks(d, NULL, matchUrl_, (void *) url);
+    if (isEmpty_PtrArray(found)) return 0;
+    return id_Bookmark(constFront_PtrArray(found));
 }
 
 const iPtrArray *list_Bookmarks(const iBookmarks *d, iBookmarksCompareFunc cmp,
