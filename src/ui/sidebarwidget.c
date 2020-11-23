@@ -26,6 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "bookmarks.h"
 #include "command.h"
 #include "documentwidget.h"
+#include "feeds.h"
 #include "gmcerts.h"
 #include "gmdocument.h"
 #include "inputwidget.h"
@@ -111,6 +112,27 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
     destroy_Widget(d->menu);
     d->menu = NULL;
     switch (d->mode) {
+        case feeds_SidebarMode: {
+            iConstForEach(PtrArray, i, listEntries_Feeds()) {
+                const iFeedEntry *entry = i.ptr;
+                /* TODO: Insert date separators. */
+                iSidebarItem *item = new_SidebarItem();
+                item->icon = 0;
+                const iTime visitTime = urlVisitTime_Visited(visited_App(), &entry->url);
+                if (!isValid_Time(&visitTime)) {
+                    item->icon = 0x25cf; /* black circle */
+                }
+                set_String(&item->url, &entry->url);
+                set_String(&item->label, &entry->title);
+                const iBookmark *bm = get_Bookmarks(bookmarks_App(), entry->bookmarkId);
+                if (bm) {
+                    set_String(&item->meta, &bm->title);
+                }
+                addItem_ListWidget(d->list, item);
+                iRelease(item);
+            }
+            break;
+        }
         case documentOutline_SidebarMode: {
             const iGmDocument *doc = document_DocumentWidget(document_App());
             iConstForEach(Array, i, headings_GmDocument(doc)) {
@@ -281,7 +303,7 @@ iBool setMode_SidebarWidget(iSidebarWidget *d, enum iSidebarMode mode) {
     for (enum iSidebarMode i = 0; i < max_SidebarMode; i++) {
         setFlags_Widget(as_Widget(d->modeButtons[i]), selected_WidgetFlag, i == d->mode);
     }
-    const float heights[max_SidebarMode] = { 1.333f, 1.333f, 3.5f, 1.2f };
+    const float heights[max_SidebarMode] = { 2.5f, 1.333f, 1.333f, 3.5f, 1.2f };
     setBackgroundColor_Widget(as_Widget(d->list),
                               d->mode == documentOutline_SidebarMode ? tmBannerBackground_ColorId
                                                                      : uiBackground_ColorId);
@@ -300,6 +322,7 @@ int width_SidebarWidget(const iSidebarWidget *d) {
 }
 
 static const char *normalModeLabels_[max_SidebarMode] = {
+    "\U00002605 Feeds",
     "\U0001f588 Bookmarks",
     "\U0001f553 History",
     "\U0001f464 Identities",
@@ -307,6 +330,7 @@ static const char *normalModeLabels_[max_SidebarMode] = {
 };
 
 static const char *tightModeLabels_[max_SidebarMode] = {
+    "\U00002605",
     "\U0001f588",
     "\U0001f553",
     "\U0001f464",
@@ -401,6 +425,11 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, const iSidebarItem *it
             postCommandf_App("document.goto loc:%p", head->text.start);
             break;
         }
+        case feeds_SidebarMode:
+            if (!isEmpty_String(&item->url)) {
+                postCommandf_App("open url:%s", cstr_String(&item->url));
+            }
+            break;
         case bookmarks_SidebarMode:
         case history_SidebarMode: {
             if (!isEmpty_String(&item->url)) {
@@ -825,6 +854,31 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                                mid_Rect(itemRect).y - lineHeight_Text(font) / 2),
                        fg,
                        range_String(&d->label));
+    }
+    else if (sidebar->mode == feeds_SidebarMode) {
+        const int fg = isHover ? (isPressing ? uiTextPressed_ColorId : uiTextFramelessHover_ColorId)
+                               : uiText_ColorId;
+        const int h1 = lineHeight_Text(uiLabel_FontId);
+        const int h2 = lineHeight_Text(uiContent_FontId);
+        const iRect iconArea = { addY_I2(pos, h1), init_I2(7 * gap_UI, itemHeight - h1) };
+        if (d->icon) {
+            iString str;
+            initUnicodeN_String(&str, &d->icon, 1);
+            drawCentered_Text(uiContent_FontId, iconArea, iFalse, iconColor, "%s", cstr_String(&str));
+            deinit_String(&str);
+        }
+        pos = add_I2(pos, init_I2(7 * gap_UI, (itemHeight - h1 - h2) / 2));
+        draw_Text(uiLabel_FontId,
+                  pos,
+                  isPressing ? fg : uiHeading_ColorId,
+                  "%s",
+                  cstr_String(&d->meta));
+        pos.y += h1;
+        draw_Text(uiContent_FontId,
+                  pos,
+                  isPressing ? fg : uiTextStrong_ColorId,
+                  "%s",
+                  cstr_String(&d->label));
     }
     else if (sidebar->mode == bookmarks_SidebarMode) {
         const int fg = isHover ? (isPressing ? uiTextPressed_ColorId : uiTextFramelessHover_ColorId)

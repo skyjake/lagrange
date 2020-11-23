@@ -35,6 +35,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/stringset.h>
 #include <the_Foundation/thread.h>
 #include <SDL_timer.h>
+#include <ctype.h>
 
 iDeclareType(Feeds)
 iDeclareType(FeedJob)
@@ -109,12 +110,24 @@ static void submit_FeedJob_(iFeedJob *d) {
 }
 
 static iFeedJob *startNextJob_Feeds_(iFeeds *d) {
-    iFeedJob *job;
-    if (take_PtrArray(&d->jobs, 0, (void **) &job)) {
-        submit_FeedJob_(job);
-        return job;
+    if (isEmpty_PtrArray(&d->jobs)) {
+        return NULL;
     }
-    return NULL;
+    iFeedJob *job;
+    take_PtrArray(&d->jobs, 0, (void **) &job);
+    submit_FeedJob_(job);
+    return job;
+}
+
+static void trimTitle_(iString *title) {
+    const char *start = constBegin_String(title);
+    iConstForEach(String, i, title) {
+        start = i.pos;
+        if (!isSpace_Char(i.value) && !(i.value < 128 && ispunct(i.value))) {
+            break;
+        }
+    }
+    remove_Block(&title->chars, 0, start - constBegin_String(title));
 }
 
 static void parseResult_FeedJob_(iFeedJob *d) {
@@ -123,7 +136,7 @@ static void parseResult_FeedJob_(iFeedJob *d) {
         iBeginCollect();
         iRegExp *linkPattern =
             new_RegExp("^=>\\s*([^\\s]+)\\s+"
-                       "([0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9])"
+                       "([0-9][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9])"
                        "([^0-9].*)",
                        0);
         iString src;
@@ -141,8 +154,11 @@ static void parseResult_FeedJob_(iFeedJob *d) {
                 iFeedEntry *entry = new_FeedEntry();
                 entry->bookmarkId = d->bookmarkId;
                 setRange_String(&entry->url, url);
-                set_String(&entry->url, collect_String(lower_String(&entry->url)));
+                set_String(&entry->url,
+                           absoluteUrl_String(url_GmRequest(d->request),
+                                              collect_String(lower_String(&entry->url))));
                 setRange_String(&entry->title, title);
+                trimTitle_(&entry->title);
                 int year, month, day;
                 sscanf(date.start, "%04d-%02d-%02d", &year, &month, &day);
                 init_Time(
@@ -177,7 +193,7 @@ static iBool updateEntries_Feeds_(iFeeds *d, iPtrArray *incoming) {
             delete_FeedEntry(entry);
             if (changed) {
                 /* TODO: better to use a new flag for read feed entries? */
-                removeUrl_Visited(visited_App(), &entry->url);
+                removeUrl_Visited(visited_App(), &existing->url);
                 gotNew = iTrue;
             }
         }
@@ -206,6 +222,7 @@ static iThreadResult fetch_Feeds_(iThread *thread) {
             }
         }
         sleep_Thread(0.5); /* TODO: wait on a Condition so we can exit quickly */
+        if (d->stopWorker) break;
         size_t ongoing = 0;
         iForIndices(i, work) {
             if (work[i]) {
@@ -241,16 +258,18 @@ static iBool startWorker_Feeds_(iFeeds *d) {
     if (d->worker) {
         return iFalse; /* Oops? */
     }
-    d->worker = new_Thread(fetch_Feeds_);
     /* Queue up all the subscriptions for the worker. */
     iConstForEach(PtrArray, i, list_Bookmarks(bookmarks_App(), NULL, isSubscribed_, NULL)) {
-        iFeedJob job;
-        init_FeedJob(&job, i.ptr);
-        pushBack_Array(&d->jobs, &job);
+        iFeedJob* job = new_FeedJob(i.ptr);
+        pushBack_PtrArray(&d->jobs, job);
     }
-    d->stopWorker = iFalse;
-    start_Thread(d->worker);
-    return iTrue;
+    if (!isEmpty_Array(&d->jobs)) {
+        d->worker = new_Thread(fetch_Feeds_);
+        d->stopWorker = iFalse;
+        start_Thread(d->worker);
+        return iTrue;
+    }
+    return iFalse;
 }
 
 static uint32_t refresh_Feeds_(uint32_t interval, void *data) {
@@ -265,7 +284,11 @@ static void stopWorker_Feeds_(iFeeds *d) {
         join_Thread(d->worker);
         iReleasePtr(&d->worker);
     }
-    /* TODO: Clear jobs */
+    /* Clear remaining jobs. */
+    iForEach(PtrArray, i, &d->jobs) {
+        delete_FeedJob(i.ptr);
+    }
+    clear_PtrArray(&d->jobs);
 }
 
 static int cmp_FeedEntryPtr_(const void *a, const void *b) {
@@ -308,7 +331,7 @@ iDeclareType(FeedHashNode)
 
 struct Impl_FeedHashNode {
     iHashNode node;
-    uint32_t bookmarkId;
+    uint32_t  bookmarkId;
 };
 
 static void load_Feeds_(iFeeds *d) {
@@ -353,27 +376,26 @@ static void load_Feeds_(iFeeds *d) {
                 }
                 case 2: {
                     const uint32_t feedId = strtoul(line.start, NULL, 16);
-                    nextSplit_Rangecc(range_Block(src), "\n", &line);
+                    if (!nextSplit_Rangecc(range_Block(src), "\n", &line)) break;
                     const unsigned long long ts = strtoull(line.start, NULL, 10);
-                    nextSplit_Rangecc(range_Block(src), "\n", &line);
-                    iString url;
-                    initRange_String(&url, line);
-                    nextSplit_Rangecc(range_Block(src), "\n", &line);
-                    iString title;
-                    initRange_String(&title, line);
-                    nextSplit_Rangecc(range_Block(src), "\n", &line);
+                    if (!nextSplit_Rangecc(range_Block(src), "\n", &line)) break;
+                    const iRangecc urlRange = line;
+                    if (!nextSplit_Rangecc(range_Block(src), "\n", &line)) break;
+                    const iRangecc titleRange = line;
+                    iString *url   = newRange_String(urlRange);
+                    iString *title = newRange_String(titleRange);
                     /* Look it up in the hash. */
                     const iFeedHashNode *node = (iFeedHashNode *) value_Hash(feeds, feedId);
                     if (node) {
                         iFeedEntry *entry = new_FeedEntry();
                         entry->bookmarkId = node->bookmarkId;
                         entry->timestamp.ts.tv_sec = ts;
-                        set_String(&entry->url, &url);
-                        set_String(&entry->title, &title);
+                        set_String(&entry->url, url);
+                        set_String(&entry->title, title);
                         insert_SortedArray(&d->entries, &entry);
                     }
-                    deinit_String(&title);
-                    deinit_String(&url);
+                    delete_String(title);
+                    delete_String(url);
                     break;
                 }
             }

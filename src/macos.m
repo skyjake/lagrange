@@ -287,7 +287,7 @@ static void appearanceChanged_MacOS_(NSString *name) {
     else if ([identifier isEqualToString:sidebarMode_TouchId_]) {
         NSCustomTouchBarItem *item = [[NSCustomTouchBarItem alloc] initWithIdentifier:sidebarMode_TouchId_];
         NSSegmentedControl *seg =
-            [NSSegmentedControl segmentedControlWithLabels:@[ @"Bookmarks", @"History", @"Identities", @"Outline"]
+            [NSSegmentedControl segmentedControlWithLabels:@[ @"Feeds", @"Bookmarks", @"History", @"Idents", @"Outline"]
                                               trackingMode:NSSegmentSwitchTrackingMomentary
                                                     target:[[NSApplication sharedApplication] delegate]
                                                     action:@selector(sidebarModePressed:)];

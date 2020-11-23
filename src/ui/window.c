@@ -142,10 +142,11 @@ static const iMenuItem identityMenuItems[] = {
 };
 
 static const iMenuItem viewMenuItems[] = {
-    { "Show Bookmarks", '1', KMOD_PRIMARY, "sidebar.mode arg:0 toggle:1" },
-    { "Show History", '2', KMOD_PRIMARY, "sidebar.mode arg:1 toggle:1" },
-    { "Show Identities", '3', KMOD_PRIMARY, "sidebar.mode arg:2 toggle:1" },
-    { "Show Page Outline", '4', KMOD_PRIMARY, "sidebar.mode arg:3 toggle:1" },
+    { "Show Feeds", '1', KMOD_PRIMARY, "sidebar.mode arg:0 toggle:1" },
+    { "Show Bookmarks", '2', KMOD_PRIMARY, "sidebar.mode arg:1 toggle:1" },
+    { "Show History", '3', KMOD_PRIMARY, "sidebar.mode arg:2 toggle:1" },
+    { "Show Identities", '4', KMOD_PRIMARY, "sidebar.mode arg:3 toggle:1" },
+    { "Show Page Outline", '5', KMOD_PRIMARY, "sidebar.mode arg:4 toggle:1" },
     { "Toggle Sidebar", SDLK_l, KMOD_PRIMARY | KMOD_SHIFT, "sidebar.toggle" },
     { "---", 0, 0, NULL },
     { "Go Back", SDLK_LEFTBRACKET, KMOD_PRIMARY, "navigate.back" },
@@ -485,6 +486,7 @@ static void setupUserInterface_Window(iWindow *d) {
         addAction_Widget(d->root, '2', KMOD_PRIMARY, "sidebar.mode arg:1 toggle:1");
         addAction_Widget(d->root, '3', KMOD_PRIMARY, "sidebar.mode arg:2 toggle:1");
         addAction_Widget(d->root, '4', KMOD_PRIMARY, "sidebar.mode arg:3 toggle:1");
+        addAction_Widget(d->root, '5', KMOD_PRIMARY, "sidebar.mode arg:4 toggle:1");
     }
 }
 
