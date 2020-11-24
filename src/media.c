@@ -154,12 +154,13 @@ void clear_Media(iMedia *d) {
     clear_PtrArray(&d->audio);
 }
 
-void setData_Media(iMedia *d, iGmLinkId linkId, const iString *mime, const iBlock *data,
-                   int flags) {
+iBool setData_Media(iMedia *d, iGmLinkId linkId, const iString *mime, const iBlock *data,
+                    int flags) {
     const iBool isPartial  = (flags & partialData_MediaFlag) != 0;
     const iBool allowHide  = (flags & allowHide_MediaFlag) != 0;
     const iBool isDeleting = (!mime || !data);
-    iMediaId    existing   = findLinkImage_Media(d, linkId);    
+    iMediaId    existing   = findLinkImage_Media(d, linkId);
+    iBool       isNew      = iFalse;
     if (existing) {
         iGmImage *img;
         if (isDeleting) {
@@ -205,6 +206,7 @@ void setData_Media(iMedia *d, iGmLinkId linkId, const iString *mime, const iBloc
             if (!isPartial) {
                 makeTexture_GmImage(img);
             }
+            isNew = iTrue;
         }
         else if (startsWith_String(mime, "audio/")) {
             iGmAudio *audio = new_GmAudio();
@@ -219,8 +221,10 @@ void setData_Media(iMedia *d, iGmLinkId linkId, const iString *mime, const iBloc
             /* Start playing right away. */
             start_Player(audio->player);
             postCommandf_App("media.player.started player:%p", audio->player);
+            isNew = iTrue;
         }
     }
+    return isNew;
 }
 
 iMediaId findLinkImage_Media(const iMedia *d, iGmLinkId linkId) {

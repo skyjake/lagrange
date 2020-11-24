@@ -766,7 +766,7 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
 
 static void updateFetchProgress_DocumentWidget_(iDocumentWidget *d) {
     iLabelWidget *prog   = findWidget_App("document.progress");
-    const size_t  dlSize = d->request ? size_Block(body_GmRequest(d->request)) : 0;
+    const size_t  dlSize = d->request ? bodySize_GmRequest(d->request) : 0;
     setFlags_Widget(as_Widget(prog), hidden_WidgetFlag, dlSize < 250000);
     if (isVisible_Widget(prog)) {
         updateText_LabelWidget(prog,
@@ -1032,9 +1032,10 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
     if (statusCode == none_GmStatusCode) {
         return;
     }
+    iGmResponse *resp = lockResponse_GmRequest(d->request);
     if (d->state == fetching_RequestState) {
         d->state = receivedPartialResponse_RequestState;
-        updateTrust_DocumentWidget_(d, response_GmRequest(d->request));
+        updateTrust_DocumentWidget_(d, resp);
         init_Anim(&d->sideOpacity, 0);
         switch (category_GmStatusCode(statusCode)) {
             case categoryInput_GmStatusCode: {
@@ -1045,9 +1046,9 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                     as_Widget(d),
                     NULL,
                     format_CStr(uiHeading_ColorEscape "%s", cstr_Rangecc(parts.host)),
-                    isEmpty_String(meta_GmRequest(d->request))
+                    isEmpty_String(&resp->meta)
                         ? format_CStr("Please enter input for %s:", cstr_Rangecc(parts.path))
-                        : cstr_String(meta_GmRequest(d->request)),
+                        : cstr_String(&resp->meta),
                     uiTextCaution_ColorEscape "Send \u21d2",
                     "document.input.submit");
                 setSensitive_InputWidget(findChild_Widget(dlg, "input"),
@@ -1057,15 +1058,15 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
             case categorySuccess_GmStatusCode:
                 init_Anim(&d->scrollY, 0);
                 reset_GmDocument(d->doc); /* new content incoming */
-                updateDocument_DocumentWidget_(d, response_GmRequest(d->request), iTrue);
+                updateDocument_DocumentWidget_(d, resp, iTrue);
                 break;
             case categoryRedirect_GmStatusCode:
-                if (isEmpty_String(meta_GmRequest(d->request))) {
+                if (isEmpty_String(&resp->meta)) {
                     showErrorPage_DocumentWidget_(d, invalidRedirect_GmStatusCode, NULL);
                 }
                 else {
                     /* Only accept redirects that use gemini scheme. */
-                    const iString *dstUrl = absoluteUrl_String(d->mod.url, meta_GmRequest(d->request));
+                    const iString *dstUrl = absoluteUrl_String(d->mod.url, &resp->meta);
                     if (d->redirectCount >= 5) {
                         showErrorPage_DocumentWidget_(d, tooManyRedirects_GmStatusCode, dstUrl);
                     }
@@ -1085,17 +1086,17 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                 break;
             default:
                 if (isDefined_GmError(statusCode)) {
-                    showErrorPage_DocumentWidget_(d, statusCode, meta_GmRequest(d->request));
+                    showErrorPage_DocumentWidget_(d, statusCode, &resp->meta);
                 }
                 else if (category_GmStatusCode(statusCode) ==
                          categoryTemporaryFailure_GmStatusCode) {
                     showErrorPage_DocumentWidget_(
-                        d, temporaryFailure_GmStatusCode, meta_GmRequest(d->request));
+                        d, temporaryFailure_GmStatusCode, &resp->meta);
                 }
                 else if (category_GmStatusCode(statusCode) ==
                          categoryPermanentFailure_GmStatusCode) {
                     showErrorPage_DocumentWidget_(
-                        d, permanentFailure_GmStatusCode, meta_GmRequest(d->request));
+                        d, permanentFailure_GmStatusCode, &resp->meta);
                 }
                 break;
         }
@@ -1104,12 +1105,13 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
         switch (category_GmStatusCode(statusCode)) {
             case categorySuccess_GmStatusCode:
                 /* More content available. */
-                updateDocument_DocumentWidget_(d, response_GmRequest(d->request), iFalse);
+                updateDocument_DocumentWidget_(d, resp, iFalse);
                 break;
             default:
                 break;
         }
     }
+    unlockResponse_GmRequest(d->request);
 }
 
 static const char *sourceLoc_DocumentWidget_(const iDocumentWidget *d, iInt2 pos) {
@@ -1190,18 +1192,21 @@ static iBool handleMediaCommand_DocumentWidget_(iDocumentWidget *d, const char *
         /* Pass new data to media players. */
         const enum iGmStatusCode code = status_GmRequest(req->req);
         if (isSuccess_GmStatusCode(code)) {
-            if (startsWith_String(meta_GmRequest(req->req), "audio/")) {
+            iGmResponse *resp = lockResponse_GmRequest(req->req);
+            if (startsWith_String(&resp->meta, "audio/")) {
                 /* TODO: Use a helper? This is same as below except for the partialData flag. */
-                setData_Media(media_GmDocument(d->doc),
-                              req->linkId,
-                              meta_GmRequest(req->req),
-                              body_GmRequest(req->req),
-                              partialData_MediaFlag | allowHide_MediaFlag);
-                redoLayout_GmDocument(d->doc);
+                if (setData_Media(media_GmDocument(d->doc),
+                                  req->linkId,
+                                  &resp->meta,
+                                  &resp->body,
+                                  partialData_MediaFlag | allowHide_MediaFlag)) {
+                    redoLayout_GmDocument(d->doc);
+                }
                 updateVisible_DocumentWidget_(d);
                 invalidate_DocumentWidget_(d);
                 refresh_Widget(as_Widget(d));
             }
+            unlockResponse_GmRequest(req->req);
         }
         /* Update the link's progress. */
         invalidateLink_DocumentWidget_(d, req->linkId);
@@ -1482,8 +1487,9 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equalWidget_Command(cmd, w, "document.request.updated") &&
-             pointerLabel_Command(cmd, "request") == d->request) {
-        set_Block(&d->sourceContent, body_GmRequest(d->request));
+             d->request && pointerLabel_Command(cmd, "request") == d->request) {
+        set_Block(&d->sourceContent, &lockResponse_GmRequest(d->request)->body);
+        unlockResponse_GmRequest(d->request);
         if (document_App() == d) {
             updateFetchProgress_DocumentWidget_(d);
         }
@@ -1501,7 +1507,8 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         /* The response may be cached. */ {
             if (!equal_Rangecc(urlScheme_String(d->mod.url), "about") &&
                 startsWithCase_String(meta_GmRequest(d->request), "text/")) {
-                setCachedResponse_History(d->mod.history, response_GmRequest(d->request));
+                setCachedResponse_History(d->mod.history, lockResponse_GmRequest(d->request));
+                unlockResponse_GmRequest(d->request);
             }
         }
         iReleasePtr(&d->request);
@@ -2496,7 +2503,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                           topRight_Rect(linkRect),
                           tmInlineContentMetadata_ColorId,
                           " \u2014 Fetching\u2026 (%.1f MB)",
-                          (float) size_Block(body_GmRequest(mr->req)) / 1.0e6f);
+                          (float) bodySize_GmRequest(mr->req) / 1.0e6f);
             }
         }
         else if (isHover) {

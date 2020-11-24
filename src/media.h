@@ -54,7 +54,7 @@ enum iMediaFlags {
 };
 
 void    clear_Media     (iMedia *);
-void    setData_Media   (iMedia *, uint16_t linkId, const iString *mime, const iBlock *data, int flags);
+iBool   setData_Media   (iMedia *, uint16_t linkId, const iString *mime, const iBlock *data, int flags);
 
 iMediaId        findLinkImage_Media (const iMedia *, uint16_t linkId);
 iBool           imageInfo_Media     (const iMedia *, iMediaId imageId, iGmImageInfo *info_out);

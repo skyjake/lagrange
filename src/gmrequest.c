@@ -123,13 +123,15 @@ enum iGmRequestState {
 
 struct Impl_GmRequest {
     iObject              object;
-    iMutex               mutex;
+    iMutex *             mtx;
     iGmCerts *           certs; /* not owned */
     enum iGmRequestState state;
     iString              url;
     iTlsRequest *        req;
     iGopher              gopher;
-    iGmResponse          resp;
+    iGmResponse *        resp;
+    iBool                respLocked;
+    iAtomicInt           allowUpdate;
     iAudience *          updated;
     iAudience *          finished;
 };
@@ -140,85 +142,77 @@ iDefineAudienceGetter(GmRequest, finished)
 
 static void checkServerCertificate_GmRequest_(iGmRequest *d) {
     const iTlsCertificate *cert = serverCertificate_TlsRequest(d->req);
-    d->resp.certFlags = 0;
+    iGmResponse *resp = d->resp;
+    resp->certFlags = 0;
     if (cert) {
         const iRangecc domain = range_String(hostName_Address(address_TlsRequest(d->req)));
-        d->resp.certFlags |= available_GmCertFlag;
-        set_Block(&d->resp.certFingerprint, collect_Block(fingerprint_TlsCertificate(cert)));
-        d->resp.certFlags |= haveFingerprint_GmCertFlag;
+        resp->certFlags |= available_GmCertFlag;
+        set_Block(&resp->certFingerprint, collect_Block(fingerprint_TlsCertificate(cert)));
+        resp->certFlags |= haveFingerprint_GmCertFlag;
         if (!isExpired_TlsCertificate(cert)) {
-            d->resp.certFlags |= timeVerified_GmCertFlag;
+            resp->certFlags |= timeVerified_GmCertFlag;
         }
-        /* TODO: Check for IP too (see below), because it may be specified in the SAN. */
-#if 0
-        iString *ip = toStringFlags_Address(address_TlsRequest(d->req), noPort_SocketStringFlag, 0);
-        if (verifyIp_TlsCertificate(cert, ip)) {
-            printf("[GmRequest] IP address %s matches!\n", cstr_String(ip));
-        }
-        else {
-            printf("[GmRequest] IP address %s not matched\n", cstr_String(ip));
-        }
-        delete_String(ip);
-#endif
         if (verifyDomain_TlsCertificate(cert, domain)) {
-            d->resp.certFlags |= domainVerified_GmCertFlag;
+            resp->certFlags |= domainVerified_GmCertFlag;
         }
         if (checkTrust_GmCerts(d->certs, domain, cert)) {
-            d->resp.certFlags |= trusted_GmCertFlag;
+            resp->certFlags |= trusted_GmCertFlag;
         }
-        validUntil_TlsCertificate(cert, &d->resp.certValidUntil);
-        set_String(&d->resp.certSubject, collect_String(subject_TlsCertificate(cert)));
+        validUntil_TlsCertificate(cert, &resp->certValidUntil);
+        set_String(&resp->certSubject, collect_String(subject_TlsCertificate(cert)));
     }
 }
 
 static void readIncoming_GmRequest_(iGmRequest *d, iTlsRequest *req) {
     iBool notifyUpdate = iFalse;
     iBool notifyDone   = iFalse;
-    lock_Mutex(&d->mutex);
+    lock_Mutex(d->mtx);
+    iGmResponse *resp =d->resp;
     iAssert(d->state != finished_GmRequestState); /* notifications out of order? */
     iBlock *data = readAll_TlsRequest(req);
     if (d->state == receivingHeader_GmRequestState) {
-        appendCStrN_String(&d->resp.meta, constData_Block(data), size_Block(data));
+        appendCStrN_String(&resp->meta, constData_Block(data), size_Block(data));
         /* Check if the header line is complete. */
-        size_t endPos = indexOfCStr_String(&d->resp.meta, "\r\n");
+        size_t endPos = indexOfCStr_String(&resp->meta, "\r\n");
         if (endPos != iInvalidPos) {
             /* Move remainder to the body. */
-            setData_Block(&d->resp.body,
-                          constBegin_String(&d->resp.meta) + endPos + 2,
-                          size_String(&d->resp.meta) - endPos - 2);
-            remove_Block(&d->resp.meta.chars, endPos, iInvalidSize);
+            setData_Block(&resp->body,
+                          constBegin_String(&resp->meta) + endPos + 2,
+                          size_String(&resp->meta) - endPos - 2);
+            remove_Block(&resp->meta.chars, endPos, iInvalidSize);
             /* parse and remove the code */
-            if (size_String(&d->resp.meta) < 3) {
-                clear_String(&d->resp.meta);
-                d->resp.statusCode = invalidHeader_GmStatusCode;
+            if (size_String(&resp->meta) < 3) {
+                clear_String(&resp->meta);
+                resp->statusCode = invalidHeader_GmStatusCode;
                 d->state           = finished_GmRequestState;
                 notifyDone         = iTrue;
             }
-            const int code = toInt_String(&d->resp.meta);
+            const int code = toInt_String(&resp->meta);
             if (code == 0) {
-                clear_String(&d->resp.meta);
-                d->resp.statusCode = invalidHeader_GmStatusCode;
+                clear_String(&resp->meta);
+                resp->statusCode = invalidHeader_GmStatusCode;
                 d->state           = finished_GmRequestState;
                 notifyDone         = iTrue;
             }
-            remove_Block(&d->resp.meta.chars, 0, 3); /* just the meta */
-            if (code == success_GmStatusCode && isEmpty_String(&d->resp.meta)) {
-                setCStr_String(&d->resp.meta, "text/gemini; charset=utf-8"); /* default */
+            remove_Block(&resp->meta.chars, 0, 3); /* just the meta */
+            if (code == success_GmStatusCode && isEmpty_String(&resp->meta)) {
+                setCStr_String(&resp->meta, "text/gemini; charset=utf-8"); /* default */
             }
-            d->resp.statusCode = code;
+            resp->statusCode = code;
             d->state           = receivingBody_GmRequestState;
             checkServerCertificate_GmRequest_(d);
             notifyUpdate = iTrue;
         }
     }
     else if (d->state == receivingBody_GmRequestState) {
-        append_Block(&d->resp.body, data);
+        append_Block(&resp->body, data);
         notifyUpdate = iTrue;
     }
-    initCurrent_Time(&d->resp.when);
+    initCurrent_Time(&resp->when);
     delete_Block(data);
-    unlock_Mutex(&d->mutex);
-    if (notifyUpdate) {
+    unlock_Mutex(d->mtx);
+    const iBool allowed = exchange_Atomic(&d->allowUpdate, iFalse);
+    if (notifyUpdate && allowed) {
         iNotifyAudience(d, updated, GmRequestUpdated);
     }
     if (notifyDone) {
@@ -228,21 +222,21 @@ static void readIncoming_GmRequest_(iGmRequest *d, iTlsRequest *req) {
 
 static void requestFinished_GmRequest_(iGmRequest *d, iTlsRequest *req) {
     iAssert(req == d->req);
-    lock_Mutex(&d->mutex);
+    lock_Mutex(d->mtx);
     /* There shouldn't be anything left to read. */ {
         iBlock *data = readAll_TlsRequest(req);
         iAssert(isEmpty_Block(data));
         delete_Block(data);
-        initCurrent_Time(&d->resp.when);
+        initCurrent_Time(&d->resp->when);
     }
     d->state = (status_TlsRequest(req) == error_TlsRequestStatus ? failure_GmRequestState
                                                                  : finished_GmRequestState);
     if (d->state == failure_GmRequestState) {
-        d->resp.statusCode = tlsFailure_GmStatusCode;
-        set_String(&d->resp.meta, errorMessage_TlsRequest(req));
+        d->resp->statusCode = tlsFailure_GmStatusCode;
+        set_String(&d->resp->meta, errorMessage_TlsRequest(req));
     }
     checkServerCertificate_GmRequest_(d);
-    unlock_Mutex(&d->mutex);
+    unlock_Mutex(d->mtx);
     iNotifyAudience(d, finished, GmRequestFinished);
 }
 
@@ -349,14 +343,14 @@ static const iBlock *replaceVariables_(const iBlock *block) {
 
 static void gopherRead_GmRequest_(iGmRequest *d, iSocket *socket) {
     iBool notifyUpdate = iFalse;
-    lock_Mutex(&d->mutex);
-    d->resp.statusCode = success_GmStatusCode;
+    lock_Mutex(d->mtx);
+    d->resp->statusCode = success_GmStatusCode;
     iBlock *data = readAll_Socket(socket);
     if (!isEmpty_Block(data)) {
         processResponse_Gopher(&d->gopher, data);
     }
     delete_Block(data);
-    unlock_Mutex(&d->mutex);
+    unlock_Mutex(d->mtx);
     if (notifyUpdate) {
         iNotifyAudience(d, updated, GmRequestUpdated);
     }
@@ -365,12 +359,12 @@ static void gopherRead_GmRequest_(iGmRequest *d, iSocket *socket) {
 static void gopherDisconnected_GmRequest_(iGmRequest *d, iSocket *socket) {
     iUnused(socket);
     iBool notify = iFalse;
-    lock_Mutex(&d->mutex);
+    lock_Mutex(d->mtx);
     if (d->state != failure_GmRequestState) {
         d->state = finished_GmRequestState;
         notify = iTrue;
     }
-    unlock_Mutex(&d->mutex);
+    unlock_Mutex(d->mtx);
     if (notify) {
         iNotifyAudience(d, finished, GmRequestFinished);
     }
@@ -378,12 +372,12 @@ static void gopherDisconnected_GmRequest_(iGmRequest *d, iSocket *socket) {
 
 static void gopherError_GmRequest_(iGmRequest *d, iSocket *socket, int error, const char *msg) {
     iUnused(socket);
-    lock_Mutex(&d->mutex);
+    lock_Mutex(d->mtx);
     d->state = failure_GmRequestState;
-    d->resp.statusCode = tlsFailure_GmStatusCode;
-    format_String(&d->resp.meta, "%s (errno %d)", msg, error);
-    clear_Block(&d->resp.body);
-    unlock_Mutex(&d->mutex);
+    d->resp->statusCode = tlsFailure_GmStatusCode;
+    format_String(&d->resp->meta, "%s (errno %d)", msg, error);
+    clear_Block(&d->resp->body);
+    unlock_Mutex(d->mtx);
     iNotifyAudience(d, finished, GmRequestFinished);
 }
 
@@ -392,8 +386,9 @@ static void beginGopherConnection_GmRequest_(iGmRequest *d, const iString *host,
         port = 70; /* default port */
     }
     clear_Block(&d->gopher.source);
-    d->gopher.meta   = &d->resp.meta;
-    d->gopher.output = &d->resp.body;
+    iGmResponse *resp = d->resp;
+    d->gopher.meta   = &resp->meta;
+    d->gopher.output = &resp->body;
     d->state         = receivingBody_GmRequestState;
     d->gopher.socket = new_Socket(cstr_String(host), port);
     iConnect(Socket, d->gopher.socket, readyRead,    d, gopherRead_GmRequest_);
@@ -401,8 +396,8 @@ static void beginGopherConnection_GmRequest_(iGmRequest *d, const iString *host,
     iConnect(Socket, d->gopher.socket, error,        d, gopherError_GmRequest_);
     open_Gopher(&d->gopher, &d->url);
     if (d->gopher.needQueryArgs) {
-        d->resp.statusCode = input_GmStatusCode;
-        setCStr_String(&d->resp.meta, "Enter query:");
+        resp->statusCode = input_GmStatusCode;
+        setCStr_String(&resp->meta, "Enter query:");
         d->state = finished_GmRequestState;
         iNotifyAudience(d, finished, GmRequestFinished);
     }
@@ -411,8 +406,10 @@ static void beginGopherConnection_GmRequest_(iGmRequest *d, const iString *host,
 /*----------------------------------------------------------------------------------------------*/
 
 void init_GmRequest(iGmRequest *d, iGmCerts *certs) {
-    init_Mutex(&d->mutex);
-    init_GmResponse(&d->resp);
+    d->mtx = new_Mutex();
+    d->resp = new_GmResponse();
+    d->respLocked = iFalse;
+    set_Atomic(&d->allowUpdate, iTrue);
     init_String(&d->url);
     init_Gopher(&d->gopher);
     d->certs      = certs;
@@ -427,22 +424,24 @@ void deinit_GmRequest(iGmRequest *d) {
         iDisconnectObject(TlsRequest, d->req, readyRead, d);
         iDisconnectObject(TlsRequest, d->req, finished, d);
     }
-    lock_Mutex(&d->mutex);
+    lock_Mutex(d->mtx);
     if (!isFinished_GmRequest(d)) {
-        unlock_Mutex(&d->mutex);
+        unlock_Mutex(d->mtx);
         cancel_GmRequest(d);
         d->state = finished_GmRequestState;
     }
     else {
-        unlock_Mutex(&d->mutex);
+        unlock_Mutex(d->mtx);
     }
     iReleasePtr(&d->req);
     deinit_Gopher(&d->gopher);
     delete_Audience(d->finished);
     delete_Audience(d->updated);
-    deinit_GmResponse(&d->resp);
+//    delete_GmResponse(d->respPub);
+//    deinit_GmResponse(&d->respInt);
+    delete_GmResponse(d->resp);
     deinit_String(&d->url);
-    deinit_Mutex(&d->mutex);
+    delete_Mutex(d->mtx);
 }
 
 void setUrl_GmRequest(iGmRequest *d, const iString *url) {
@@ -455,7 +454,9 @@ void submit_GmRequest(iGmRequest *d) {
     if (d->state != initialized_GmRequestState) {
         return;
     }
-    clear_GmResponse(&d->resp);
+    set_Atomic(&d->allowUpdate, iTrue);
+    iGmResponse *resp = d->resp;
+    clear_GmResponse(resp);
     iUrl url;
     init_Url(&url, &d->url);
     /* Check for special schemes. */
@@ -466,14 +467,14 @@ void submit_GmRequest(iGmRequest *d) {
     if (equalCase_Rangecc(url.scheme, "about")) {
         const iBlock *src = aboutPageSource_(url.path);
         if (src) {
-            d->resp.statusCode = success_GmStatusCode;
-            setCStr_String(&d->resp.meta, "text/gemini; charset=utf-8");
-            set_Block(&d->resp.body, replaceVariables_(src));
+            resp->statusCode = success_GmStatusCode;
+            setCStr_String(&resp->meta, "text/gemini; charset=utf-8");
+            set_Block(&resp->body, replaceVariables_(src));
             d->state = receivingBody_GmRequestState;
             iNotifyAudience(d, updated, GmRequestUpdated);
         }
         else {
-            d->resp.statusCode = invalidLocalResource_GmStatusCode;
+            resp->statusCode = invalidLocalResource_GmStatusCode;
         }
         d->state = finished_GmRequestState;
         iNotifyAudience(d, finished, GmRequestFinished);
@@ -485,41 +486,41 @@ void submit_GmRequest(iGmRequest *d) {
         if (open_File(f, readOnly_FileMode)) {
             /* TODO: Check supported file types: images, audio */
             /* TODO: Detect text files based on contents? E.g., is the content valid UTF-8. */
-            d->resp.statusCode = success_GmStatusCode;
+            resp->statusCode = success_GmStatusCode;
             if (endsWithCase_String(path, ".gmi") || endsWithCase_String(path, ".gemini")) {
-                setCStr_String(&d->resp.meta, "text/gemini; charset=utf-8");
+                setCStr_String(&resp->meta, "text/gemini; charset=utf-8");
             }
             else if (endsWithCase_String(path, ".txt")) {
-                setCStr_String(&d->resp.meta, "text/plain");
+                setCStr_String(&resp->meta, "text/plain");
             }
             else if (endsWithCase_String(path, ".png")) {
-                setCStr_String(&d->resp.meta, "image/png");
+                setCStr_String(&resp->meta, "image/png");
             }
             else if (endsWithCase_String(path, ".jpg") || endsWithCase_String(path, ".jpeg")) {
-                setCStr_String(&d->resp.meta, "image/jpeg");
+                setCStr_String(&resp->meta, "image/jpeg");
             }
             else if (endsWithCase_String(path, ".gif")) {
-                setCStr_String(&d->resp.meta, "image/gif");
+                setCStr_String(&resp->meta, "image/gif");
             }
             else if (endsWithCase_String(path, ".wav")) {
-                setCStr_String(&d->resp.meta, "audio/wave");
+                setCStr_String(&resp->meta, "audio/wave");
             }
             else if (endsWithCase_String(path, ".ogg")) {
-                setCStr_String(&d->resp.meta, "audio/ogg");
+                setCStr_String(&resp->meta, "audio/ogg");
             }
             else if (endsWithCase_String(path, ".mp3")) {
-                setCStr_String(&d->resp.meta, "audio/mpeg");
+                setCStr_String(&resp->meta, "audio/mpeg");
             }
             else {
-                setCStr_String(&d->resp.meta, "application/octet-stream");
+                setCStr_String(&resp->meta, "application/octet-stream");
             }
-            set_Block(&d->resp.body, collect_Block(readAll_File(f)));
+            set_Block(&resp->body, collect_Block(readAll_File(f)));
             d->state = receivingBody_GmRequestState;
             iNotifyAudience(d, updated, GmRequestUpdated);
         }
         else {
-            d->resp.statusCode = failedToOpenFile_GmStatusCode;
-            setCStr_String(&d->resp.meta, cstr_String(path));
+            resp->statusCode = failedToOpenFile_GmStatusCode;
+            setCStr_String(&resp->meta, cstr_String(path));
         }
         iRelease(f);
         d->state = finished_GmRequestState;
@@ -527,14 +528,14 @@ void submit_GmRequest(iGmRequest *d) {
         return;
     }
     else if (equalCase_Rangecc(url.scheme, "data")) {
-        d->resp.statusCode = success_GmStatusCode;
+        resp->statusCode = success_GmStatusCode;
         iString *src = collectNewCStr_String(url.scheme.start + 5);
         iRangecc header = { constBegin_String(src), constBegin_String(src) };
         while (header.end < constEnd_String(src) && *header.end != ',') {
             header.end++;
         }
         iBool isBase64 = iFalse;
-        setRange_String(&d->resp.meta, header);
+        setRange_String(&resp->meta, header);
         /* Check what's in the header. */ {
             iRangecc entry = iNullRange;
             while (nextSplit_Rangecc(header, ";", &entry)) {
@@ -550,7 +551,7 @@ void submit_GmRequest(iGmRequest *d) {
         else {
             set_String(src, collect_String(urlDecode_String(src)));
         }
-        set_Block(&d->resp.body, &src->chars);
+        set_Block(&resp->body, &src->chars);
         d->state = receivingBody_GmRequestState;
         iNotifyAudience(d, updated, GmRequestUpdated);
         d->state = finished_GmRequestState;
@@ -575,7 +576,7 @@ void submit_GmRequest(iGmRequest *d) {
         return;
     }
     else if (!equalCase_Rangecc(url.scheme, "gemini")) {
-        d->resp.statusCode = unsupportedProtocol_GmStatusCode;
+        resp->statusCode = unsupportedProtocol_GmStatusCode;
         d->state = finished_GmRequestState;
         iNotifyAudience(d, finished, GmRequestFinished);
         return;
@@ -604,45 +605,63 @@ void cancel_GmRequest(iGmRequest *d) {
     cancel_Gopher(&d->gopher);
 }
 
+iGmResponse *lockResponse_GmRequest(iGmRequest *d) {
+    iAssert(!d->respLocked);
+    lock_Mutex(d->mtx);
+    d->respLocked = iTrue;
+    return d->resp;
+}
+
+void unlockResponse_GmRequest(iGmRequest *d) {
+    iAssert(d->respLocked);
+    d->respLocked = iFalse;
+    set_Atomic(&d->allowUpdate, iTrue);
+    unlock_Mutex(d->mtx);
+}
+
 iBool isFinished_GmRequest(const iGmRequest *d) {
     iBool done;
-    iGuardMutex(&d->mutex,
+    iGuardMutex(d->mtx,
                 done = (d->state == finished_GmRequestState || d->state == failure_GmRequestState));
     return done;
 }
 
 enum iGmStatusCode status_GmRequest(const iGmRequest *d) {
-    return d->resp.statusCode;
+    enum iGmStatusCode code;
+    iGuardMutex(d->mtx, code = d->resp->statusCode);
+    return code;
 }
 
 const iString *meta_GmRequest(const iGmRequest *d) {
-    if (d->state >= receivingBody_GmRequestState) {
-        return &d->resp.meta;
-    }
-    return collectNew_String();
+    iAssert(isFinished_GmRequest(d));
+    return &d->resp->meta;
 }
 
 const iBlock *body_GmRequest(const iGmRequest *d) {
-    iBlock *body;
-    iGuardMutex(&d->mutex, body = collect_Block(copy_Block(&d->resp.body)));
-    return body;
+    iAssert(isFinished_GmRequest(d));
+    return &d->resp->body;
+}
+
+size_t bodySize_GmRequest(const iGmRequest *d) {
+    size_t size;
+    iGuardMutex(d->mtx, size = size_Block(&d->resp->body));
+    return size;
 }
 
 const iString *url_GmRequest(const iGmRequest *d) {
     return &d->url;
 }
 
-const iGmResponse *response_GmRequest(const iGmRequest *d) {
-    iAssert(d->state != initialized_GmRequestState);
-    return &d->resp;
-}
-
 int certFlags_GmRequest(const iGmRequest *d) {
-    return d->resp.certFlags;
+    int flags;
+    iGuardMutex(d->mtx, flags = d->resp->certFlags);
+    return flags;
 }
 
 iDate certExpirationDate_GmRequest(const iGmRequest *d) {
-    return d->resp.certValidUntil;
+    iDate expr;
+    iGuardMutex(d->mtx, expr = d->resp->certValidUntil);
+    return expr;
 }
 
 iDefineClass(GmRequest)

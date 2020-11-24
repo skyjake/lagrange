@@ -99,7 +99,7 @@ struct Impl_App {
     uint32_t     lastTickerTime;
     uint32_t     elapsedSinceLastTicker;
     iBool        running;
-    iBool        pendingRefresh;
+    iAtomicInt   pendingRefresh;
     int          tabEnum;
     iStringList *launchCommands;
     iBool        isFinishedLaunching;
@@ -355,7 +355,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     setCStr_String(&d->prefs.downloadDir, downloadDir_App_);
     d->running           = iFalse;
     d->window            = NULL;
-    d->pendingRefresh    = iFalse;
+    set_Atomic(&d->pendingRefresh, iFalse);
     d->certs             = new_GmCerts(dataDir_App_);
     d->visited           = new_Visited();
     d->bookmarks         = new_Bookmarks();
@@ -484,7 +484,7 @@ const iString *debugInfo_App(void) {
 }
 
 iLocalDef iBool isWaitingAllowed_App_(const iApp *d) {
-    return !d->pendingRefresh && isEmpty_SortedArray(&d->tickers);
+    return !value_Atomic(&d->pendingRefresh) && isEmpty_SortedArray(&d->tickers);
 }
 
 void processEvents_App(enum iAppEventMode eventMode) {
@@ -583,11 +583,11 @@ void refresh_App(void) {
     iApp *d = &app_;
     destroyPending_Widget();
     draw_Window(d->window);
-    d->pendingRefresh = iFalse;
+    set_Atomic(&d->pendingRefresh, iFalse);
 }
 
 iBool isRefreshPending_App(void) {
-    return app_.pendingRefresh;
+    return value_Atomic(&app_.pendingRefresh);
 }
 
 uint32_t elapsedSinceLastTicker_App(void) {
@@ -642,8 +642,8 @@ int run_App(int argc, char **argv) {
 
 void postRefresh_App(void) {
     iApp *d = &app_;
-    if (!d->pendingRefresh) {
-        d->pendingRefresh = iTrue;
+    const iBool wasPending = exchange_Atomic(&d->pendingRefresh, iTrue);
+    if (!wasPending) {
         SDL_Event ev;
         ev.user.type     = SDL_USEREVENT;
         ev.user.code     = refresh_UserEventCode;

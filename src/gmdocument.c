@@ -535,7 +535,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         }
         /* Flag the end of line, too. */
         ((iGmRun *) back_Array(&d->layout))->flags |= endOfLine_GmRunFlag;
-        /* Image content. */
+        /* Image or audio content. */
         if (type == link_GmLineType) {
             const iMediaId imageId = findLinkImage_Media(d->media, run.linkId);
             const iMediaId audioId = !imageId ? findLinkAudio_Media(d->media, run.linkId) : 0;
