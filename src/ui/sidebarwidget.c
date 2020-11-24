@@ -127,7 +127,7 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                         on = entryDate;
                         iSidebarItem *sep = new_SidebarItem();
                         sep->listItem.isSeparator = iTrue;
-                        iString *text = format_Date(&on, on.year == thisYear ? "%b %d" : "%Y %b %d");
+                        iString *text = format_Date(&on, on.year == thisYear ? "%b. %d" : "%b. %d, %Y");
                         set_String(&sep->meta, text);
                         delete_String(text);
                         addItem_ListWidget(d->list, sep);
@@ -205,7 +205,7 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                     iSidebarItem *sep = new_SidebarItem();
                     sep->listItem.isSeparator = iTrue;
                     const iString *text = collect_String(format_Date(
-                        &date, date.year != thisYear ? "%Y %b %d" : "%b %d"));
+                        &date, date.year != thisYear ? "%b. %d, %Y" : "%b. %d"));
                     set_String(&sep->meta, text);
                     const int yOffset = itemHeight_ListWidget(d->list) * 2 / 3;
                     sep->id = yOffset;
