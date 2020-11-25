@@ -142,8 +142,8 @@ static const iMenuItem identityMenuItems[] = {
 };
 
 static const iMenuItem viewMenuItems[] = {
-    { "Show Feeds", '1', KMOD_PRIMARY, "sidebar.mode arg:0 toggle:1" },
-    { "Show Bookmarks", '2', KMOD_PRIMARY, "sidebar.mode arg:1 toggle:1" },
+    { "Show Bookmarks", '1', KMOD_PRIMARY, "sidebar.mode arg:0 toggle:1" },
+    { "Show Feeds", '2', KMOD_PRIMARY, "sidebar.mode arg:1 toggle:1" },
     { "Show History", '3', KMOD_PRIMARY, "sidebar.mode arg:2 toggle:1" },
     { "Show Identities", '4', KMOD_PRIMARY, "sidebar.mode arg:3 toggle:1" },
     { "Show Page Outline", '5', KMOD_PRIMARY, "sidebar.mode arg:4 toggle:1" },
@@ -174,11 +174,11 @@ static const iMenuItem identityButtonMenuItems[] = {
 #if !defined (iHaveNativeMenus)
     { "New Identity...", SDLK_n, KMOD_PRIMARY | KMOD_SHIFT, "ident.new" },
     { "---", 0, 0, NULL },
-    { "Show Identities", '3', KMOD_PRIMARY, "sidebar.mode arg:2 show:1" },
+    { "Show Identities", '4', KMOD_PRIMARY, "sidebar.mode arg:3 show:1" },
 #else
     { "New Identity...", 0, 0, "ident.new" },
     { "---", 0, 0, NULL },
-    { "Show Identities", 0, 0, "sidebar.mode arg:2 show:1" },
+    { "Show Identities", 0, 0, "sidebar.mode arg:3 show:1" },
 #endif
 };
 

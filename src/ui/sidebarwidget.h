@@ -25,8 +25,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "widget.h"
 
 enum iSidebarMode {
-    feeds_SidebarMode,
     bookmarks_SidebarMode,
+    feeds_SidebarMode,
     history_SidebarMode,
     identities_SidebarMode,
     documentOutline_SidebarMode,

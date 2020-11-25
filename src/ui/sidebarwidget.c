@@ -325,7 +325,7 @@ iBool setMode_SidebarWidget(iSidebarWidget *d, enum iSidebarMode mode) {
     for (enum iSidebarMode i = 0; i < max_SidebarMode; i++) {
         setFlags_Widget(as_Widget(d->modeButtons[i]), selected_WidgetFlag, i == d->mode);
     }
-    const float heights[max_SidebarMode] = { 2.333f, 1.333f, 1.333f, 3.5f, 1.2f };
+    const float heights[max_SidebarMode] = { 1.333f, 2.333f, 1.333f, 3.5f, 1.2f };
     setBackgroundColor_Widget(as_Widget(d->list),
                               d->mode == documentOutline_SidebarMode ? tmBannerBackground_ColorId
                                                                      : uiBackground_ColorId);
@@ -344,16 +344,16 @@ int width_SidebarWidget(const iSidebarWidget *d) {
 }
 
 static const char *normalModeLabels_[max_SidebarMode] = {
-    "\U00002605 Feeds",
     "\U0001f588 Bookmarks",
+    "\U00002605 Feeds",
     "\U0001f553 History",
     "\U0001f464 Identities",
     "\U0001f5b9 Outline",
 };
 
 static const char *tightModeLabels_[max_SidebarMode] = {
-    "\U00002605",
     "\U0001f588",
+    "\U00002605",
     "\U0001f553",
     "\U0001f464",
     "\U0001f5b9",
