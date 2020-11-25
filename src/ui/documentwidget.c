@@ -1081,6 +1081,7 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                         /* Scheme changes must be manually approved. */
                         showErrorPage_DocumentWidget_(d, schemeChangeRedirect_GmStatusCode, dstUrl);
                     }
+                    unlockResponse_GmRequest(d->request);
                     iReleasePtr(&d->request);
                 }
                 break;

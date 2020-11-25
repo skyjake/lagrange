@@ -615,10 +615,12 @@ iGmResponse *lockResponse_GmRequest(iGmRequest *d) {
 }
 
 void unlockResponse_GmRequest(iGmRequest *d) {
-    iAssert(d->respLocked);
-    d->respLocked = iFalse;
-    set_Atomic(&d->allowUpdate, iTrue);
-    unlock_Mutex(d->mtx);
+    if (d) {
+        iAssert(d->respLocked);
+        d->respLocked = iFalse;
+        set_Atomic(&d->allowUpdate, iTrue);
+        unlock_Mutex(d->mtx);
+    }
 }
 
 iBool isFinished_GmRequest(const iGmRequest *d) {
