@@ -1105,10 +1105,10 @@ iWidget *makePreferences_Widget(void) {
         iWidget *widths = new_Widget();
         /* Line widths. */ {
             addRadioButton_(widths, "prefs.linewidth.30", "\u20132", "linewidth.set arg:30");
-            addRadioButton_(widths, "prefs.linewidth.35", "\u20131", "linewidth.set arg:35");
-            addRadioButton_(widths, "prefs.linewidth.40", "Normal", "linewidth.set arg:40");
-            addRadioButton_(widths, "prefs.linewidth.45", "+1", "linewidth.set arg:45");
-            addRadioButton_(widths, "prefs.linewidth.50", "+2", "linewidth.set arg:50");
+            addRadioButton_(widths, "prefs.linewidth.34", "\u20131", "linewidth.set arg:34");
+            addRadioButton_(widths, "prefs.linewidth.38", "Normal", "linewidth.set arg:38");
+            addRadioButton_(widths, "prefs.linewidth.43", "+1", "linewidth.set arg:43");
+            addRadioButton_(widths, "prefs.linewidth.48", "+2", "linewidth.set arg:48");
             addRadioButton_(widths, "prefs.linewidth.1000", "Window", "linewidth.set arg:1000");
         }
         addChildFlags_Widget(values, iClob(widths), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
