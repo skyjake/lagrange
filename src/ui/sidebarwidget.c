@@ -140,15 +140,15 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 if (equal_String(docUrl, &entry->url)) {
                     item->listItem.isSelected = iTrue; /* currently being viewed */
                 }
-                item->icon = 0;
                 const iTime visitTime = urlVisitTime_Visited(visited_App(), &entry->url);
                 if (!isValid_Time(&visitTime)) {
-                    item->icon = 0x25cf; /* black circle */
+                    item->indent = 1; /* unread */
                 }
                 set_String(&item->url, &entry->url);
                 set_String(&item->label, &entry->title);
                 const iBookmark *bm = get_Bookmarks(bookmarks_App(), entry->bookmarkId);
                 if (bm) {
+                    item->icon = bm->icon;
 //                    appendCStr_String(&item->meta, uiTextCaution_ColorEscape);
 //                    appendChar_String(&item->meta, bm->icon);
 //                    appendChar_String(&item->meta, ' ');
@@ -938,11 +938,11 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                 range_String(&d->meta));
         }
         else {
-            const iBool isUnread = (d->icon != 0);
+            const iBool isUnread = (d->indent != 0);
             const int h1 = lineHeight_Text(uiLabel_FontId);
             const int h2 = lineHeight_Text(uiContent_FontId);
-            const int iconPad = 4 * gap_UI;
-            const iRect iconArea = { addY_I2(pos, 0), init_I2(iconPad, itemHeight) };
+            const int iconPad = 9 * gap_UI;
+            iRect iconArea = { addY_I2(pos, 0), init_I2(iconPad, itemHeight) };
             if (isUnread) {
                 /*
                 iString str;
@@ -952,8 +952,20 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                 deinit_String(&str);*/
                 fillRect_Paint(
                     p,
-                    (iRect){ topLeft_Rect(iconArea), init_I2(gap_UI, height_Rect(iconArea)) },
+                    (iRect){ topLeft_Rect(iconArea), init_I2(gap_UI / 2, height_Rect(iconArea)) },
                     iconColor);
+            }
+            /* Icon. */ {
+                /* TODO: Use the primary hue from the theme of this site. */
+                iString str;
+                initUnicodeN_String(&str, &d->icon, 1);
+                drawCentered_Text(uiContent_FontId,
+                                  adjusted_Rect(iconArea, init_I2(gap_UI, 0), zero_I2()),
+                                  iTrue,
+                                  isHover && isPressing ? iconColor : uiTextCaution_ColorId,
+                                  "%s",
+                                  cstr_String(&str));
+                deinit_String(&str);
             }
             /* Select the layout based on how the title fits. */
             iInt2       titleSize = advanceRange_Text(uiContent_FontId, range_String(&d->label));
