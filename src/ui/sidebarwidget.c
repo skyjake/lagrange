@@ -38,6 +38,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "visited.h"
 
 #include <the_Foundation/intset.h>
+#include <the_Foundation/regexp.h>
 #include <the_Foundation/stringarray.h>
 #include <SDL_clipboard.h>
 #include <SDL_mouse.h>
@@ -113,6 +114,7 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
     d->menu = NULL;
     switch (d->mode) {
         case feeds_SidebarMode: {
+            const iString *docUrl = url_DocumentWidget(document_App());
             iDate on;
             initCurrent_Date(&on);
             const int thisYear = on.year;
@@ -135,6 +137,9 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                     }
                 }
                 iSidebarItem *item = new_SidebarItem();
+                if (equal_String(docUrl, &entry->url)) {
+                    item->listItem.isSelected = iTrue; /* currently being viewed */
+                }
                 item->icon = 0;
                 const iTime visitTime = urlVisitTime_Visited(visited_App(), &entry->url);
                 if (!isValid_Time(&visitTime)) {
@@ -169,6 +174,8 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
             break;
         }
         case bookmarks_SidebarMode: {
+            iRegExp *homeTag = iClob(new_RegExp("\\bhomepage\\b", caseSensitive_RegExpOption));
+            iRegExp *subTag  = iClob(new_RegExp("\\bsubscribed\\b", caseSensitive_RegExpOption));
             iConstForEach(PtrArray, i, list_Bookmarks(bookmarks_App(), cmpTitle_Bookmark_, NULL, NULL)) {
                 const iBookmark *bm = i.ptr;
                 iSidebarItem *item = new_SidebarItem();
@@ -176,7 +183,17 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 item->icon = bm->icon;
                 set_String(&item->url, &bm->url);
                 set_String(&item->label, &bm->title);
-                set_String(&item->meta, &bm->tags);
+                /* Icons for special tags. */ {
+                    iRegExpMatch m;
+                    init_RegExpMatch(&m);
+                    if (matchString_RegExp(subTag, &bm->tags, &m)) {
+                        appendChar_String(&item->meta, 0x2605);
+                    }
+                    init_RegExpMatch(&m);
+                    if (matchString_RegExp(homeTag, &bm->tags, &m)) {
+                        appendChar_String(&item->meta, 0x1f3e0);
+                    }
+                }
                 addItem_ListWidget(d->list, item);
                 iRelease(item);
             }
@@ -185,8 +202,9 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 (iMenuItem[]){ { "Edit Bookmark...", 0, 0, "bookmark.edit" },
                                { "Copy URL", 0, 0, "bookmark.copy" },
                                { "---", 0, 0, NULL },
+                               { "---", 0, 0, NULL },
                                { uiTextCaution_ColorEscape "Delete Bookmark", 0, 0, "bookmark.delete" } },
-                4);
+                5);
             break;
         }
         case history_SidebarMode: {
@@ -639,7 +657,8 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             }
             return iTrue;
         }
-        else if (equal_Command(cmd, "visited.changed") && d->mode == history_SidebarMode) {
+        else if (equal_Command(cmd, "visited.changed") &&
+                 (d->mode == history_SidebarMode || d->mode == feeds_SidebarMode)) {
             updateItems_SidebarWidget_(d);
         }
         else if (equal_Command(cmd, "bookmarks.changed") && d->mode == bookmarks_SidebarMode) {
@@ -852,22 +871,31 @@ static void draw_SidebarWidget_(const iSidebarWidget *d) {
 
 static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                               const iListWidget *list) {
-    const int             font       = uiContent_FontId;
-    const iSidebarWidget *sidebar    = findParentClass_Widget(constAs_Widget(list),
-                                                              &Class_SidebarWidget);
-    const iBool           isPressing = isMouseDown_ListWidget(list);
-    const iBool           isHover =
+    const iSidebarWidget *sidebar =
+        findParentClass_Widget(constAs_Widget(list), &Class_SidebarWidget);
+    const iBool isPressing = isMouseDown_ListWidget(list);
+    const iBool isHover =
         isHover_Widget(constAs_Widget(list)) && constHoverItem_ListWidget(list) == d;
-    const int itemHeight = height_Rect(itemRect);
+    const int scrollBarWidth = scrollBarWidth_ListWidget(list);
+    const int itemHeight     = height_Rect(itemRect);
     const int iconColor =
         isHover ? (isPressing ? uiTextPressed_ColorId : uiIconHover_ColorId) : uiIcon_ColorId;
+    const int font = uiContent_FontId;
+    int bg = uiBackground_ColorId;
     if (isHover) {
-        fillRect_Paint(p,
-                       itemRect,
-                       isPressing ? uiBackgroundPressed_ColorId
-                                  : uiBackgroundFramelessHover_ColorId);
+        bg = isPressing ? uiBackgroundPressed_ColorId
+                        : uiBackgroundFramelessHover_ColorId;
+        fillRect_Paint(p, itemRect, bg);
     }
     iInt2 pos = itemRect.pos;
+    /* Selection indicator. */
+    if (d->listItem.isSelected && (sidebar->mode == feeds_SidebarMode ||
+                                   sidebar->mode == identities_SidebarMode)) {
+        drawRectThickness_Paint(p,
+                                adjusted_Rect(itemRect, zero_I2(), init_I2(-2 - scrollBarWidth, -1)),
+                                gap_UI / 4,
+                                isHover && isPressing ? uiTextPressed_ColorId : uiIcon_ColorId);
+    }
     if (sidebar->mode == documentOutline_SidebarMode) {
         const int fg = isHover ? (isPressing ? uiTextPressed_ColorId : uiTextFramelessHover_ColorId)
                                : (tmHeading1_ColorId + d->indent / (4 * gap_UI));
@@ -949,8 +977,22 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
         const iRect iconArea = { addX_I2(pos, gap_UI), init_I2(7 * gap_UI, itemHeight) };
         drawCentered_Text(font, iconArea, iTrue, iconColor, "%s", cstr_String(&str));
         deinit_String(&str);
-        iInt2 textPos = addY_I2(topRight_Rect(iconArea), (itemHeight - lineHeight_Text(font)) / 2);
+        const iInt2 textPos = addY_I2(topRight_Rect(iconArea), (itemHeight - lineHeight_Text(font)) / 2);
         drawRange_Text(font, textPos, fg, range_String(&d->label));
+        const iInt2 metaPos =
+            init_I2(right_Rect(itemRect) - advanceRange_Text(font, range_String(&d->meta)).x -
+                        2 * gap_UI - (scrollBarWidth ? scrollBarWidth - gap_UI : 0),
+                    textPos.y);
+        fillRect_Paint(p,
+                       init_Rect(metaPos.x,
+                                 top_Rect(itemRect),
+                                 right_Rect(itemRect) - metaPos.x,
+                                 height_Rect(itemRect)),
+                       bg);
+        drawRange_Text(font,
+                       metaPos,
+                       isHover && isPressing ? fg : uiTextCaution_ColorId,
+                       range_String(&d->meta));
     }
     else if (sidebar->mode == history_SidebarMode) {
         iBeginCollect();
@@ -959,7 +1001,10 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
         if (d->listItem.isSeparator) {
             if (!isEmpty_String(&d->meta)) {
                 iInt2 drawPos = addY_I2(topLeft_Rect(itemRect), d->id);
-                drawHLine_Paint(p, addY_I2(drawPos, -gap_UI), width_Rect(itemRect), uiIcon_ColorId);
+                drawHLine_Paint(p,
+                                addY_I2(drawPos, -gap_UI),
+                                width_Rect(itemRect) - scrollBarWidth,
+                                uiIcon_ColorId);
                 drawRange_Text(
                     uiLabelLarge_FontId,
                     add_I2(drawPos,
@@ -991,12 +1036,6 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
     else if (sidebar->mode == identities_SidebarMode) {
         const int fg = isHover ? (isPressing ? uiTextPressed_ColorId : uiTextFramelessHover_ColorId)
                                : uiTextStrong_ColorId;
-        if (d->listItem.isSelected) {
-            drawRectThickness_Paint(p,
-                                    adjusted_Rect(itemRect, zero_I2(), init_I2(-2, -1)),
-                                    gap_UI / 4,
-                                    isHover && isPressing ? uiTextPressed_ColorId : uiIcon_ColorId);
-        }
         iString icon;
         initUnicodeN_String(&icon, &d->icon, 1);
         iInt2 cPos = topLeft_Rect(itemRect);
