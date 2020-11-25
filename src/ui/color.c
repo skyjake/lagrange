@@ -52,10 +52,10 @@ static const iColor lightPalette_[] = {
     { 235, 235, 235, 255 },
     { 255, 255, 255, 255 },
 
-    { 112, 80,  20,  255 },
-    { 255, 200, 86,  255 },
-    { 0,   80,  118, 255 },
-    { 120, 200, 220, 255 },
+    { 142, 100,  20,  255 },
+    { 215, 210, 200,  255 },
+    { 10,  85,  112, 255 },
+    { 150, 205, 220, 255 },
 
     { 255, 255, 32,  255 },
     { 255, 64,  64,  255 },
@@ -728,6 +728,12 @@ iColor ansiForeground_Color(iRangecc escapeSequence, int fallback) {
                 clr = ansi8BitColors_[8 + arg - 90];
                 break;
         }
+    }
+    /* On light backgrounds, darken the colors to make them more legible. */
+    if (get_HSLColor(tmBackground_ColorId).lum > 0.5f) {
+        clr.r /= 2;
+        clr.g /= 2;
+        clr.b /= 2;
     }
     return clr;
 }
