@@ -368,6 +368,7 @@ iWidget *addAction_Widget(iWidget *parent, int key, int kmods, const char *comma
 
 static iBool isCommandIgnoredByMenus_(const char *cmd) {
     return equal_Command(cmd, "media.updated") || equal_Command(cmd, "media.player.update") ||
+           startsWith_CStr(cmd, "feeds.update.") ||
            equal_Command(cmd, "document.request.updated") || equal_Command(cmd, "window.resized") ||
            (equal_Command(cmd, "mouse.clicked") && !arg_Command(cmd)); /* button released */
 }

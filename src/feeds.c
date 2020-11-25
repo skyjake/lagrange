@@ -85,7 +85,8 @@ iDefineTypeConstructionArgs(FeedJob, (const iBookmark *bm), bm)
 
 /*----------------------------------------------------------------------------------------------*/
 
-static const char *feedsFilename_Feeds_ = "feeds.txt";
+static const char *feedsFilename_Feeds_         = "feeds.txt";
+static const int   updateIntervalSeconds_Feeds_ = 2 * 60 * 60;
 
 struct Impl_Feeds {
     iMutex *  mtx;
@@ -273,7 +274,7 @@ static iBool startWorker_Feeds_(iFeeds *d) {
 static uint32_t refresh_Feeds_(uint32_t interval, void *data) {
     /* Called in the SDL timer thread, so let's start a worker thread for running the update. */
     startWorker_Feeds_(&feeds_);
-    return 1000 * 60 * 60;
+    return 1000 * updateIntervalSeconds_Feeds_;
 }
 
 static void stopWorker_Feeds_(iFeeds *d) {
@@ -419,7 +420,13 @@ void init_Feeds(const char *saveDir) {
     init_PtrArray(&d->jobs);
     init_SortedArray(&d->entries, sizeof(iFeedEntry *), cmp_FeedEntryPtr_);
     load_Feeds_(d);
-    d->refreshTimer = SDL_AddTimer(5000, refresh_Feeds_, NULL);
+    /* Update feeds if it has been a while. */
+    int intervalSec = updateIntervalSeconds_Feeds_;
+    if (isValid_Time(&d->lastRefreshedAt)) {
+        const double elapsed = elapsedSeconds_Time(&d->lastRefreshedAt);
+        intervalSec = iMax(1, updateIntervalSeconds_Feeds_ - elapsed);
+    }
+    d->refreshTimer = SDL_AddTimer(1000 * intervalSec, refresh_Feeds_, NULL);
 }
 
 void deinit_Feeds(void) {
