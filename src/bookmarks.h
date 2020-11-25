@@ -41,6 +41,8 @@ struct Impl_Bookmark {
 
 iLocalDef uint32_t  id_Bookmark (const iBookmark *d) { return d->node.key; }
 
+iBool   hasTag_Bookmark     (const iBookmark *d, const char *tag);
+
 iDeclareType(Bookmarks)
 iDeclareTypeConstruction(Bookmarks)
 

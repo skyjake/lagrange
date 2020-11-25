@@ -41,6 +41,15 @@ void deinit_Bookmark(iBookmark *d) {
     deinit_String(&d->url);
 }
 
+iBool hasTag_Bookmark(const iBookmark *d, const char *tag) {
+    iRegExp *pattern = new_RegExp(format_CStr("\\b%s\\b", tag), caseSensitive_RegExpOption);
+    iRegExpMatch m;
+    init_RegExpMatch(&m);
+    const iBool found = matchString_RegExp(pattern, &d->tags, &m);
+    iRelease(pattern);
+    return found;
+}
+
 iDefineTypeConstruction(Bookmark)
 
 static int cmpTimeDescending_Bookmark_(const iBookmark **a, const iBookmark **b) {

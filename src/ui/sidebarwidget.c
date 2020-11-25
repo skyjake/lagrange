@@ -202,9 +202,11 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 (iMenuItem[]){ { "Edit Bookmark...", 0, 0, "bookmark.edit" },
                                { "Copy URL", 0, 0, "bookmark.copy" },
                                { "---", 0, 0, NULL },
+                               { "Subscribe", 0, 0, "bookmark.tag tag:subscribed" },
+                               { "Use as Homepage", 0, 0, "bookmark.tag tag:homepage" },
                                { "---", 0, 0, NULL },
                                { uiTextCaution_ColorEscape "Delete Bookmark", 0, 0, "bookmark.delete" } },
-                5);
+               7);
             break;
         }
         case history_SidebarMode: {
@@ -647,6 +649,24 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                 setText_InputWidget(findChild_Widget(dlg, "bmed.tags"), &bm->tags);
                 setCommandHandler_Widget(dlg, handleBookmarkEditorCommands_SidebarWidget_);
                 setFocus_Widget(findChild_Widget(dlg, "bmed.title"));
+            }
+            return iTrue;
+        }
+        else if (equal_Command(cmd, "bookmark.tag")) {
+            const iSidebarItem *item = d->menuItem;
+            if (d->mode == bookmarks_SidebarMode && item) {
+                const char *tag = cstr_String(string_Command(cmd, "tag"));
+                iBookmark *bm = get_Bookmarks(bookmarks_App(), item->id);
+                if (hasTag_Bookmark(bm, tag)) {
+                    size_t pos = indexOfCStr_String(&bm->tags, tag);
+                    remove_Block(&bm->tags.chars, pos, strlen(tag));
+                    trim_String(&bm->tags);
+                }
+                else {
+                    appendChar_String(&bm->tags, ' ');
+                    appendCStr_String(&bm->tags, tag);
+                }
+                postCommand_App("bookmarks.changed");
             }
             return iTrue;
         }
