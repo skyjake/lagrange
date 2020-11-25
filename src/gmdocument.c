@@ -713,9 +713,9 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
             set_Color(tmHypertextLinkDomain_ColorId, get_Color(brown_ColorId));
             set_Color(tmHypertextLinkLastVisitDate_ColorId, get_Color(orange_ColorId));
             set_Color(tmGopherLinkText_ColorId, get_Color(white_ColorId));
-            set_Color(tmGopherLinkIcon_ColorId, get_Color(blue_ColorId));
+            set_Color(tmGopherLinkIcon_ColorId, get_Color(magenta_ColorId));
             set_Color(tmGopherLinkTextHover_ColorId, get_Color(blue_ColorId));
-            set_Color(tmGopherLinkIconVisited_ColorId, get_Color(magenta_ColorId));
+            set_Color(tmGopherLinkIconVisited_ColorId, get_Color(blue_ColorId));
             set_Color(tmGopherLinkDomain_ColorId, get_Color(magenta_ColorId));
             set_Color(tmGopherLinkLastVisitDate_ColorId, get_Color(blue_ColorId));
         }
@@ -734,9 +734,9 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
             set_Color(tmHypertextLinkDomain_ColorId, get_Color(orange_ColorId));
             set_Color(tmHypertextLinkLastVisitDate_ColorId, get_Color(brown_ColorId));
             set_Color(tmGopherLinkText_ColorId, get_Color(black_ColorId));
-            set_Color(tmGopherLinkIcon_ColorId, get_Color(blue_ColorId));
+            set_Color(tmGopherLinkIcon_ColorId, get_Color(magenta_ColorId));
             set_Color(tmGopherLinkTextHover_ColorId, get_Color(blue_ColorId));
-            set_Color(tmGopherLinkIconVisited_ColorId, get_Color(magenta_ColorId));
+            set_Color(tmGopherLinkIconVisited_ColorId, get_Color(blue_ColorId));
             set_Color(tmGopherLinkDomain_ColorId, get_Color(magenta_ColorId));
             set_Color(tmGopherLinkLastVisitDate_ColorId, get_Color(blue_ColorId));
         }
