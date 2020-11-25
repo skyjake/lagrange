@@ -211,9 +211,11 @@ static void readIncoming_GmRequest_(iGmRequest *d, iTlsRequest *req) {
     initCurrent_Time(&resp->when);
     delete_Block(data);
     unlock_Mutex(d->mtx);
-    const iBool allowed = exchange_Atomic(&d->allowUpdate, iFalse);
-    if (notifyUpdate && allowed) {
-        iNotifyAudience(d, updated, GmRequestUpdated);
+    if (notifyUpdate) {
+        const iBool allowed = exchange_Atomic(&d->allowUpdate, iFalse);
+        if (allowed) {
+            iNotifyAudience(d, updated, GmRequestUpdated);
+        }
     }
     if (notifyDone) {
         iNotifyAudience(d, finished, GmRequestFinished);
