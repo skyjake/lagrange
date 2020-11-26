@@ -83,18 +83,18 @@ iDefineObjectConstruction(SidebarItem)
 /*----------------------------------------------------------------------------------------------*/
 
 struct Impl_SidebarWidget {
-    iWidget widget;
+    iWidget           widget;
     enum iSidebarMode mode;
-    iWidget *blank;
-    iListWidget *list;
-    int modeScroll[max_SidebarMode];
-    int width;
-    iLabelWidget *modeButtons[max_SidebarMode];
-    int maxButtonLabelWidth;
-    iWidget *resizer;
-    SDL_Cursor *resizeCursor;
-    iWidget *menu;
-    iSidebarItem *menuItem; /* list item accessed in the context menu */
+    iWidget *         blank;
+    iListWidget *     list;
+    int               modeScroll[max_SidebarMode];
+    iLabelWidget *    modeButtons[max_SidebarMode];
+    int               maxButtonLabelWidth;
+    int               width;
+    iWidget *         resizer;
+    SDL_Cursor *      resizeCursor;
+    iWidget *         menu;
+    iSidebarItem *    menuItem; /* list item accessed in the context menu */
 };
 
 iDefineObjectConstruction(SidebarWidget)
@@ -149,10 +149,6 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 const iBookmark *bm = get_Bookmarks(bookmarks_App(), entry->bookmarkId);
                 if (bm) {
                     item->icon = bm->icon;
-//                    appendCStr_String(&item->meta, uiTextCaution_ColorEscape);
-//                    appendChar_String(&item->meta, bm->icon);
-//                    appendChar_String(&item->meta, ' ');
-//                    appendCStr_String(&item->meta, uiText_ColorEscape);
                     append_String(&item->meta, &bm->title);
                 }
                 addItem_ListWidget(d->list, item);
@@ -167,8 +163,10 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                                { "Add Bookmark...", 0, 0, "feed.entry.bookmark" },
                                { "Edit Feed...", 0, 0, "feed.entry.edit" },
                                { "---", 0, 0, NULL },
-                               { uiTextCaution_ColorEscape "Unsubscribe", 0, 0, "feed.entry.unsubscribe" } },
-                8);
+                               { uiTextCaution_ColorEscape "Unsubscribe...", 0, 0, "feed.entry.unsubscribe" },
+                               { "---", 0, 0, NULL },
+                               { "Refresh Feeds", SDLK_r, KMOD_PRIMARY | KMOD_SHIFT, "feeds.refresh" } },
+                10);
             break;
         }
         case documentOutline_SidebarMode: {
@@ -942,6 +940,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
     }
     iInt2 pos = itemRect.pos;
     /* Selection indicator. */
+    /* TODO: Make a better-looking one. */
     if (d->listItem.isSelected && (sidebar->mode == feeds_SidebarMode ||
                                    sidebar->mode == identities_SidebarMode)) {
         drawRectThickness_Paint(p,
@@ -962,7 +961,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
         const int fg = isHover ? (isPressing ? uiTextPressed_ColorId : uiTextFramelessHover_ColorId)
                                : uiText_ColorId;
         if (d->listItem.isSeparator) {
-            if (itemRect.pos.y > 0) {
+            if (d != constItem_ListWidget(list, 0)) {
                 drawHLine_Paint(p,
                                 addY_I2(pos, 2 * gap_UI),
                                 width_Rect(itemRect) - scrollBarWidth,
@@ -995,7 +994,9 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                 drawCentered_Text(uiContent_FontId,
                                   adjusted_Rect(iconArea, init_I2(gap_UI, 0), zero_I2()),
                                   iTrue,
-                                  isHover && isPressing ? iconColor : uiTextCaution_ColorId,
+                                  isHover && isPressing
+                                      ? iconColor
+                                      : (isUnread ? uiTextCaution_ColorId : iconColor),
                                   "%s",
                                   cstr_String(&str));
                 deinit_String(&str);

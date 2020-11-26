@@ -97,7 +97,7 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
 
 #if !defined (iHaveNativeMenus)
 /* TODO: Submenus wouldn't hurt here. */
-static const iMenuItem navMenuItems[] = {
+static const iMenuItem navMenuItems_[] = {
     { "New Tab", 't', KMOD_PRIMARY, "tabs.new" },
     { "Open Location...", SDLK_l, KMOD_PRIMARY, "navigate.focus" },
     { "---", 0, 0, NULL },
@@ -121,27 +121,21 @@ static const iMenuItem navMenuItems[] = {
 
 #if defined (iHaveNativeMenus)
 /* Using native menus. */
-static const iMenuItem fileMenuItems[] = {
+static const iMenuItem fileMenuItems_[] = {
     { "New Tab", SDLK_t, KMOD_PRIMARY, "tabs.new" },
     { "Open Location...", SDLK_l, KMOD_PRIMARY, "navigate.focus" },
     { "---", 0, 0, NULL },
     { "Save to Downloads", SDLK_s, KMOD_PRIMARY, "document.save" },
 };
 
-static const iMenuItem editMenuItems[] = {
+static const iMenuItem editMenuItems_[] = {
     { "Copy", SDLK_c, KMOD_PRIMARY, "copy" },
     { "Copy Link to Page", SDLK_c, KMOD_PRIMARY | KMOD_SHIFT, "document.copylink" },
     { "---", 0, 0, NULL },
     { "Find", SDLK_f, KMOD_PRIMARY, "focus.set id:find.input" },
-    { "---", 0, 0, NULL },
-    { "Bookmark This Page...", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
 };
 
-static const iMenuItem identityMenuItems[] = {
-    { "New Identity...", SDLK_n, KMOD_PRIMARY | KMOD_SHIFT, "ident.new" },
-};
-
-static const iMenuItem viewMenuItems[] = {
+static const iMenuItem viewMenuItems_[] = {
     { "Show Bookmarks", '1', KMOD_PRIMARY, "sidebar.mode arg:0 toggle:1" },
     { "Show Feeds", '2', KMOD_PRIMARY, "sidebar.mode arg:1 toggle:1" },
     { "Show History", '3', KMOD_PRIMARY, "sidebar.mode arg:2 toggle:1" },
@@ -162,13 +156,25 @@ static const iMenuItem viewMenuItems[] = {
     { "Wrap Preformatted", 0, 0, "forcewrap.toggle" }
 };
 
-static const iMenuItem helpMenuItems[] = {
+static iMenuItem bookmarksMenuItems_[] = {
+    { "Bookmark This Page...", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
+    { "---", 0, 0, NULL },
+    { "Subscribe as Feed", 0, 0, "bookmark.addtag tag:subscribed" },
+    { "---", 0, 0, NULL },
+    { "Refresh Feeds", SDLK_r, KMOD_PRIMARY | KMOD_SHIFT, "feeds.refresh" },
+};
+
+static const iMenuItem identityMenuItems_[] = {
+    { "New Identity...", SDLK_n, KMOD_PRIMARY | KMOD_SHIFT, "ident.new" },
+};
+
+static const iMenuItem helpMenuItems_[] = {
     { "Help", 0, 0, "!open url:about:help" },
     { "Release Notes", 0, 0, "!open url:about:version" },
 };
 #endif
 
-static const iMenuItem identityButtonMenuItems[] = {
+static const iMenuItem identityButtonMenuItems_[] = {
     { "No Active Identity", 0, 0, "ident.showactive" },
     { "---", 0, 0, NULL },
 #if !defined (iHaveNativeMenus)
@@ -377,7 +383,7 @@ static void setupUserInterface_Window(iWindow *d) {
         addChild_Widget(navBar, iClob(newIcon_LabelWidget("\U0001f870", 0, 0, "navigate.back")));
         addChild_Widget(navBar, iClob(newIcon_LabelWidget("\U0001f872", 0, 0, "navigate.forward")));
         iLabelWidget *idMenu = makeMenuButton_LabelWidget(
-            "\U0001f464", identityButtonMenuItems, iElemCount(identityButtonMenuItems));
+            "\U0001f464", identityButtonMenuItems_, iElemCount(identityButtonMenuItems_));
         setAlignVisually_LabelWidget(idMenu, iTrue);
         addChild_Widget(navBar, iClob(idMenu));
         setId_Widget(as_Widget(idMenu), "navbar.ident");
@@ -414,15 +420,16 @@ static void setupUserInterface_Window(iWindow *d) {
                             "\U0001f3e0", SDLK_h, KMOD_PRIMARY | KMOD_SHIFT, "navigate.home")));
 #if !defined (iHaveNativeMenus)
         iLabelWidget *navMenu =
-            makeMenuButton_LabelWidget("\U0001d362", navMenuItems, iElemCount(navMenuItems));
+            makeMenuButton_LabelWidget("\U0001d362", navMenuItems_, iElemCount(navMenuItems_));
         setAlignVisually_LabelWidget(navMenu, iTrue);
         addChild_Widget(navBar, iClob(navMenu));
 #else
-        insertMenuItems_MacOS("File", 1, fileMenuItems, iElemCount(fileMenuItems));
-        insertMenuItems_MacOS("Edit", 2, editMenuItems, iElemCount(editMenuItems));
-        insertMenuItems_MacOS("View", 3, viewMenuItems, iElemCount(viewMenuItems));
-        insertMenuItems_MacOS("Identity", 4, identityMenuItems, iElemCount(identityMenuItems));
-        insertMenuItems_MacOS("Help", 6, helpMenuItems, iElemCount(helpMenuItems));
+        insertMenuItems_MacOS("File", 1, fileMenuItems_, iElemCount(fileMenuItems_));
+        insertMenuItems_MacOS("Edit", 2, editMenuItems_, iElemCount(editMenuItems_));
+        insertMenuItems_MacOS("View", 3, viewMenuItems_, iElemCount(viewMenuItems_));
+        insertMenuItems_MacOS("Bookmarks", 4, bookmarksMenuItems_, iElemCount(bookmarksMenuItems_));
+        insertMenuItems_MacOS("Identity", 5, identityMenuItems_, iElemCount(identityMenuItems_));
+        insertMenuItems_MacOS("Help", 7, helpMenuItems_, iElemCount(helpMenuItems_));
 #endif
     }
     /* Tab bar. */ {
