@@ -1082,6 +1082,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
         else {
             iUrl parts;
             init_Url(&parts, &d->url);
+            const iBool isAbout  = equalCase_Rangecc(parts.scheme, "about");
             const iBool isGemini = equalCase_Rangecc(parts.scheme, "gemini");
             draw_Text(font,
                       add_I2(topLeft_Rect(itemRect),
@@ -1089,7 +1090,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                       fg,
                       "%s%s%s%s%s%s",
                       isGemini ? "" : cstr_Rangecc(parts.scheme),
-                      isGemini ? "" : "://",
+                      isGemini ? "" : isAbout ? ":" : "://",
                       escape_Color(isHover ? (isPressing ? uiTextPressed_ColorId
                                                          : uiTextFramelessHover_ColorId)
                                            : uiTextStrong_ColorId),
