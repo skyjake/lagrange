@@ -938,16 +938,12 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                         : uiBackgroundFramelessHover_ColorId;
         fillRect_Paint(p, itemRect, bg);
     }
-    iInt2 pos = itemRect.pos;
-    /* Selection indicator. */
-    /* TODO: Make a better-looking one. */
-    if (d->listItem.isSelected && (sidebar->mode == feeds_SidebarMode ||
-                                   sidebar->mode == identities_SidebarMode)) {
-        drawRectThickness_Paint(p,
-                                adjusted_Rect(itemRect, zero_I2(), init_I2(-2 - scrollBarWidth, -1)),
-                                gap_UI / 4,
-                                isHover && isPressing ? uiTextPressed_ColorId : uiIcon_ColorId);
+    else if (d->listItem.isSelected &&
+             (sidebar->mode == feeds_SidebarMode || sidebar->mode == identities_SidebarMode)) {
+        bg = uiBackgroundUnfocusedSelection_ColorId;
+        fillRect_Paint(p, itemRect, bg);
     }
+    iInt2 pos = itemRect.pos;
     if (sidebar->mode == documentOutline_SidebarMode) {
         const int fg = isHover ? (isPressing ? uiTextPressed_ColorId : uiTextFramelessHover_ColorId)
                                : (tmHeading1_ColorId + d->indent / (4 * gap_UI));
