@@ -214,7 +214,7 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                                { "Copy URL", 0, 0, "bookmark.copy" },
                                { "---", 0, 0, NULL },
                                { "Subscribe to Feed", 0, 0, "bookmark.tag tag:subscribed" },
-                               { "Use as Homepage", 0, 0, "bookmark.tag tag:homepage" },
+                               { "", 0, 0, "bookmark.tag tag:homepage" },
                                { "---", 0, 0, NULL },
                                { uiTextCaution_ColorEscape "Delete Bookmark", 0, 0, "bookmark.delete" } },
                7);
@@ -844,7 +844,29 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             if (constHoverItem_ListWidget(d->list) || isVisible_Widget(d->menu)) {
                 d->menuItem = hoverItem_ListWidget(d->list);
                 /* Update menu items. */
-                if (d->mode == identities_SidebarMode) {
+                /* TODO: Some callback-based mechanism would be nice for updating menus right
+                   before they open? */
+                if (d->mode == bookmarks_SidebarMode && d->menuItem) {
+                    const iBookmark *bm = get_Bookmarks(bookmarks_App(), d->menuItem->id);
+                    if (bm) {
+                        iLabelWidget *menuItem = findMenuItem_Widget(d->menu,
+                                                                     "bookmark.tag tag:homepage");
+                        if (menuItem) {
+                            setTextCStr_LabelWidget(menuItem,
+                                                    hasTag_Bookmark(bm, "homepage")
+                                                        ? "Remove Homepage"
+                                                        : "Use as Homepage");
+                        }
+                        menuItem = findMenuItem_Widget(d->menu, "bookmark.tag tag:subscribed");
+                        if (menuItem) {
+                            setTextCStr_LabelWidget(menuItem,
+                                                    hasTag_Bookmark(bm, "subscribed")
+                                                        ? "Unsubscribe from Feed"
+                                                        : "Subscribe to Feed");
+                        }
+                    }
+                }
+                else if (d->mode == identities_SidebarMode) {
                     const iGmIdentity *ident  = constHoverIdentity_SidebarWidget_(d);
                     const iString *    docUrl = url_DocumentWidget(document_App());
                     iForEach(ObjectList, i, children_Widget(d->menu)) {

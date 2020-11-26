@@ -157,7 +157,9 @@ iWidget *   makeMenu_Widget     (iWidget *parent, const iMenuItem *items, size_t
 void        openMenu_Widget     (iWidget *, iInt2 coord);
 void        closeMenu_Widget    (iWidget *);
 
-int         checkContextMenu_Widget   (iWidget *, const SDL_Event *ev); /* see macro below */
+iLabelWidget *  findMenuItem_Widget (iWidget *menu, const char *command);
+
+int         checkContextMenu_Widget (iWidget *, const SDL_Event *ev); /* see macro below */
 
 #define processContextMenuEvent_Widget(menu, sdlEvent, stmtEaten) \
     for (const int result = checkContextMenu_Widget((menu), (sdlEvent));;) { \

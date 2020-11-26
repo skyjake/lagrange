@@ -467,6 +467,18 @@ void closeMenu_Widget(iWidget *d) {
     postCommand_Widget(d, "menu.closed");
 }
 
+iLabelWidget *findMenuItem_Widget(iWidget *menu, const char *command) {
+    iForEach(ObjectList, i, children_Widget(menu)) {
+        if (isInstance_Object(i.object, &Class_LabelWidget)) {
+            iLabelWidget *menuItem = i.object;
+            if (!cmp_String(command_LabelWidget(menuItem), command)) {
+                return menuItem;
+            }
+        }
+    }
+    return NULL;
+}
+
 int checkContextMenu_Widget(iWidget *menu, const SDL_Event *ev) {
     if (menu && ev->type == SDL_MOUSEBUTTONDOWN && ev->button.button == SDL_BUTTON_RIGHT) {
         if (isVisible_Widget(menu)) {
