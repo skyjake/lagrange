@@ -259,7 +259,7 @@ static const iPtrArray *listSubscriptions_(void) {
 
 static iBool startWorker_Feeds_(iFeeds *d) {
     if (d->worker) {
-        return iFalse; /* Oops? */
+        return iFalse; /* Refresh is already ongoing. */
     }
     /* Queue up all the subscriptions for the worker. */
     iConstForEach(PtrArray, i, listSubscriptions_()) {
@@ -449,6 +449,14 @@ void deinit_Feeds(void) {
     deinit_SortedArray(&d->entries);
 }
 
+void refresh_Feeds(void) {
+    startWorker_Feeds_(&feeds_);
+}
+
+void refreshFinished_Feeds(void) {
+    stopWorker_Feeds_(&feeds_);
+}
+
 static int cmpTimeDescending_FeedEntryPtr_(const void *a, const void *b) {
     const iFeedEntry * const *e1 = a, * const *e2 = b;
     return -cmp_Time(&(*e1)->timestamp, &(*e2)->timestamp);
@@ -470,7 +478,7 @@ const iPtrArray *listEntries_Feeds(void) {
 const iString *entryListPage_Feeds(void) {
     iFeeds *d = &feeds_;
     iString *src = collectNew_String();
-    format_String(src, "# Aggregated Gemini feeds\n");
+    format_String(src, "# Feed entries\n\n");
     lock_Mutex(d->mtx);
     const iPtrArray *subs = listSubscriptions_();
     int elapsed = elapsedSeconds_Time(&d->lastRefreshedAt) / 60;

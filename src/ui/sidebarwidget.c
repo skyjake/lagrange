@@ -690,6 +690,9 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                  (d->mode == history_SidebarMode || d->mode == feeds_SidebarMode)) {
             updateItems_SidebarWidget_(d);
         }
+        else if (equal_Command(cmd, "feeds.update.finished") && d->mode == feeds_SidebarMode) {
+            updateItems_SidebarWidget_(d);
+        }
         else if (equal_Command(cmd, "bookmarks.changed") && d->mode == bookmarks_SidebarMode) {
             updateItems_SidebarWidget_(d);
         }

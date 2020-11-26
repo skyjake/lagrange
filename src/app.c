@@ -1246,6 +1246,21 @@ iBool handleCommand_App(const char *cmd) {
         save_Bookmarks(d->bookmarks, dataDir_App_);
         return iFalse;
     }
+    else if (equal_Command(cmd, "feeds.refresh")) {
+        refresh_Feeds();
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "feeds.update.started")) {
+        setFlags_Widget(findWidget_App("feeds.progress"), hidden_WidgetFlag, iFalse);
+        refresh_App();
+        return iFalse;
+    }
+    else if (equal_Command(cmd, "feeds.update.finished")) {
+        setFlags_Widget(findWidget_App("feeds.progress"), hidden_WidgetFlag, iTrue);
+        refreshFinished_Feeds();
+        refresh_App();
+        return iFalse;
+    }
     else if (equal_Command(cmd, "visited.changed")) {
         save_Visited(d->visited, dataDir_App_);
         return iFalse;

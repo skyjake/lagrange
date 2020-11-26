@@ -159,8 +159,9 @@ static const iMenuItem viewMenuItems_[] = {
 static iMenuItem bookmarksMenuItems_[] = {
     { "Bookmark This Page...", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
     { "---", 0, 0, NULL },
-    { "Subscribe as Feed", 0, 0, "bookmark.addtag tag:subscribed" },
+    { "Subscribe to This Page", 0, 0, "bookmark.addtag tag:subscribed" },
     { "---", 0, 0, NULL },
+    { "Show Feed Entries", 0, 0, "open url:about:feeds" },
     { "Refresh Feeds", SDLK_r, KMOD_PRIMARY | KMOD_SHIFT, "feeds.refresh" },
 };
 
@@ -401,16 +402,29 @@ static void setupUserInterface_Window(iWindow *d) {
             setNotifyEdits_InputWidget(url, iTrue);
             setTextCStr_InputWidget(url, "gemini://");
             addChildFlags_Widget(navBar, iClob(url), expand_WidgetFlag);
-            /* Download progress indicator is inside the input field, but hidden normally. */
             setPadding_Widget(as_Widget(url),0, 0, gap_UI * 1, 0);
-            iLabelWidget *progress = new_LabelWidget(uiTextCaution_ColorEscape "00.000 MB", NULL);
-            setId_Widget(as_Widget(progress), "document.progress");
-            setAlignVisually_LabelWidget(progress, iTrue);
-            shrink_Rect(&as_Widget(progress)->rect, init_I2(0, gap_UI));
-            addChildFlags_Widget(as_Widget(url),
-                                 iClob(progress),
-                                 moveToParentRightEdge_WidgetFlag);
-            setBackgroundColor_Widget(as_Widget(progress), uiBackground_ColorId);
+            /* Feeds refresh indicator is inside the input field. */ {
+                iLabelWidget *fprog = new_LabelWidget(uiTextCaution_ColorEscape
+                                                      "\u2605 Refreshing Feeds...", NULL);
+                setId_Widget(as_Widget(fprog), "feeds.progress");
+                setBackgroundColor_Widget(as_Widget(fprog), uiBackground_ColorId);
+                setAlignVisually_LabelWidget(fprog, iTrue);
+                shrink_Rect(&as_Widget(fprog)->rect, init_I2(0, gap_UI));
+                addChildFlags_Widget(as_Widget(url),
+                                     iClob(fprog),
+                                     moveToParentRightEdge_WidgetFlag | hidden_WidgetFlag);
+            }
+            /* Download progress indicator is also inside the input field, but hidden normally.
+               TODO: It shouldn't overlap the feeds indicator... */ {
+                iLabelWidget *progress = new_LabelWidget(uiTextCaution_ColorEscape "00.000 MB", NULL);
+                setId_Widget(as_Widget(progress), "document.progress");
+                setBackgroundColor_Widget(as_Widget(progress), uiBackground_ColorId);
+                setAlignVisually_LabelWidget(progress, iTrue);
+                shrink_Rect(&as_Widget(progress)->rect, init_I2(0, gap_UI));
+                addChildFlags_Widget(as_Widget(url),
+                                     iClob(progress),
+                                     moveToParentRightEdge_WidgetFlag);
+            }
         }
         setId_Widget(addChild_Widget(
                          navBar, iClob(newIcon_LabelWidget(reloadCStr_, 0, 0, "navigate.reload"))),

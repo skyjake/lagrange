@@ -36,7 +36,9 @@ struct Impl_FeedEntry {
 
 void    init_Feeds      (const char *saveDir);
 void    deinit_Feeds    (void);
+void    refresh_Feeds   (void);
+
+void    refreshFinished_Feeds  (void); /* called on "feeds.update.finished" */
 
 const iPtrArray *   listEntries_Feeds   (void);
-
 const iString *     entryListPage_Feeds (void);
