@@ -25,8 +25,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "gmcerts.h"
 #include "gopher.h"
 #include "app.h" /* dataDir_App() */
-#include "embedded.h"
+#include "feeds.h"
 #include "ui/text.h"
+#include "embedded.h"
 #include "defs.h"
 
 #include <the_Foundation/file.h>
@@ -258,6 +259,9 @@ static const iBlock *aboutPageSource_(iRangecc path) {
     }
     if (equalCase_Rangecc(path, "debug")) {
         return utf8_String(debugInfo_App());
+    }
+    if (equalCase_Rangecc(path, "feeds")) {
+        return utf8_String(entryListPage_Feeds());
     }
     return src;
 }

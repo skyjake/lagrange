@@ -253,12 +253,16 @@ static iBool isSubscribed_(void *context, const iBookmark *bm) {
     return indexOfCStr_String(&bm->tags, "subscribed") != iInvalidPos; /* TODO: RegExp with \b */
 }
 
+static const iPtrArray *listSubscriptions_(void) {
+    return list_Bookmarks(bookmarks_App(), NULL, isSubscribed_, NULL);
+}
+
 static iBool startWorker_Feeds_(iFeeds *d) {
     if (d->worker) {
         return iFalse; /* Oops? */
     }
     /* Queue up all the subscriptions for the worker. */
-    iConstForEach(PtrArray, i, list_Bookmarks(bookmarks_App(), NULL, isSubscribed_, NULL)) {
+    iConstForEach(PtrArray, i, listSubscriptions_()) {
         iFeedJob* job = new_FeedJob(i.ptr);
         pushBack_PtrArray(&d->jobs, job);
     }
@@ -303,7 +307,7 @@ static void save_Feeds_(iFeeds *d) {
         format_String(str, "%llu\n# Feeds\n", integralSeconds_Time(&d->lastRefreshedAt));
         write_File(f, utf8_String(str));
         /* Index of feeds for IDs. */ {
-            iConstForEach(PtrArray, i, list_Bookmarks(bookmarks_App(), NULL, isSubscribed_, NULL)) {
+            iConstForEach(PtrArray, i, listSubscriptions_()) {
                 const iBookmark *bm = i.ptr;
                 format_String(str, "%08x %s\n", id_Bookmark(bm), cstr_String(&bm->url));
                 write_File(f, utf8_String(str));
@@ -459,4 +463,39 @@ const iPtrArray *listEntries_Feeds(void) {
     unlock_Mutex(d->mtx);
     sort_Array(list, cmpTimeDescending_FeedEntryPtr_);
     return list;
+}
+
+const iString *entryListPage_Feeds(void) {
+    iFeeds *d = &feeds_;
+    iString *src = collectNew_String();
+    format_String(src, "# Aggregated Gemini feeds\n");
+    lock_Mutex(d->mtx);
+    const iPtrArray *subs = listSubscriptions_();
+    appendFormat_String(src, "You are subscribed to %zu feed%s that contain%s a total of %zu entries.\n",
+                        size_PtrArray(subs),
+                        size_PtrArray(subs) != 1 ? "s" : "",
+                        size_PtrArray(subs) == 1 ? "s" : "",
+                        size_SortedArray(&d->entries));
+    iDate on;
+    iZap(on);
+    iConstForEach(PtrArray, i, listEntries_Feeds()) {
+        const iFeedEntry *entry = i.ptr;
+        iDate entryDate;
+        init_Date(&entryDate, &entry->timestamp);
+        if (on.year != entryDate.year || on.month != entryDate.month || on.day != entryDate.day) {
+            appendFormat_String(
+                src, "## %s\n", cstrCollect_String(format_Date(&entryDate, "%Y-%m-%d")));
+            on = entryDate;
+        }
+        const iBookmark *bm = get_Bookmarks(bookmarks_App(), entry->bookmarkId);
+        if (bm) {
+            appendFormat_String(src,
+                                "=> %s %s - %s\n",
+                                cstr_String(&entry->url),
+                                cstr_String(&bm->title),
+                                cstr_String(&entry->title));
+        }
+    }
+    unlock_Mutex(d->mtx);
+    return src;
 }

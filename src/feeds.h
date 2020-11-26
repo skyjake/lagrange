@@ -38,3 +38,5 @@ void    init_Feeds      (const char *saveDir);
 void    deinit_Feeds    (void);
 
 const iPtrArray *   listEntries_Feeds   (void);
+
+const iString *     entryListPage_Feeds (void);
