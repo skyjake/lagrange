@@ -148,6 +148,7 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 set_String(&item->label, &entry->title);
                 const iBookmark *bm = get_Bookmarks(bookmarks_App(), entry->bookmarkId);
                 if (bm) {
+                    item->id = entry->bookmarkId;
                     item->icon = bm->icon;
                     append_String(&item->meta, &bm->title);
                 }
@@ -692,6 +693,34 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         }
         else if (equal_Command(cmd, "feeds.update.finished") && d->mode == feeds_SidebarMode) {
             updateItems_SidebarWidget_(d);
+        }
+        else if (startsWith_CStr(cmd, "feed.entry.") && d->mode == feeds_SidebarMode) {
+            const iSidebarItem *item = d->menuItem;
+            if (item) {
+                if (equal_Command(cmd, "feed.entry.opentab")) {
+                    postCommandf_App("open newtab:1 url:%s", cstr_String(&item->url));
+                    return iTrue;
+                }
+                if (equal_Command(cmd, "feed.entry.toggleread")) {
+                    iVisited *vis = visited_App();
+                    const iTime visit = urlVisitTime_Visited(vis, &item->url);
+                    if (isValid_Time(&visit)) {
+                        removeUrl_Visited(vis, &item->url);
+                    }
+                    else {
+                        visitUrl_Visited(vis, &item->url, transient_VisitedUrlFlag);
+                    }
+                    postCommand_App("visited.changed");
+                    return iTrue;
+                }
+                const iBookmark *feedBookmark = get_Bookmarks(bookmarks_App(), item->id);
+                if (feedBookmark) {
+                    if (equal_Command(cmd, "feed.entry.openfeed")) {
+                        postCommandf_App("open url:%s", cstr_String(&feedBookmark->url));
+                        return iTrue;
+                    }
+                }
+            }
         }
         else if (equal_Command(cmd, "bookmarks.changed") && d->mode == bookmarks_SidebarMode) {
             updateItems_SidebarWidget_(d);
