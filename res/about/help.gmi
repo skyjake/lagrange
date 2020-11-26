@@ -24,6 +24,7 @@ Like Gemini, Lagrange has been designed with minimalism in mind. It depends on a
 * Sidebar for page outline, managing bookmarks and identities, and viewing history
 * Multiple tabs
 * Identity management — create and use TLS client certificates
+* Subscribe to Gemini feeds
 * Light and dark color themes
 * Select and copy text with the mouse
 * Find text on the page
@@ -44,7 +45,7 @@ Like Gemini, Lagrange has been designed with minimalism in mind. It depends on a
 Gemini is a simple protocol for serving content over the internet. It specifies a Markdown inspired format allowing basic plain text document markup. Compared to HTTP and HTML, Gemini is vastly simpler and easier to work with.
 
 => gemini://gemini.circumlunar.space/docs/faq.gmi Project Gemini FAQ
-=> gemini://gemini.circumlunar.space/docs/specification.gmi Protocol and text/gemini specification
+=> gemini://gemini.circumlunar.space/docs/specification.gmi Protocol and 'text/gemini' specification
 
 ## Why not just use a web browser
 
@@ -65,7 +66,7 @@ Lagrange's user interface is modeled after web browsers:
 * There is a sidebar for managing bookmarks and TLS identities, and viewing history and the page outline. The sidebar is hidden by default.
 * There is a search bar that appears at the bottom when searching text on the page.
 
-Tip: Try pressing ${CTRL+}4 now to see the page outline.
+Tip: Try pressing ${CTRL+}5 now to see the page outline.
 
 The user interface has been designed for both mouse and keyboard based use. When using a mouse the most commonly needed features are available via context menus, for example by right-clicking on the currently open page. Keyboard shortcuts on the other hand can provide a very quick and fluid user experience. For example, to open the "CAPCOM" bookmark, one might use the following keyboard shortcuts:
 
@@ -113,7 +114,7 @@ Right-clicking on a link shows a link-specific context menu. From there, you can
 
 ### Opening links using the keyboard
 
-Lagrange has two modes for navigating links with the keyboard. The first uses a modifier key (${ALT} by default): while the modifier is pressed, alphanumeric shortcuts are shown for each visible link in the window. You can then press the corresponding key, still holding the modifier, to open a link. The second mode is based on letters only and focuses on the home row keys. You press and release the activation key ("F" by default) to show the link shortcut letters. In this mode the shortcuts are not in alphabetic order, but instead roughly sorted based on proximity to the F and J keys. You may find this easier to use since it is a simple sequence of key presses without using modifiers, allowing one to keep fingers on or near the home row.
+Lagrange has two modes for navigating links with the keyboard. The first uses a modifier key (${ALT} by default): while the modifier is pressed, alphanumeric shortcuts are shown for each visible link in the window. You can then press the corresponding key, still holding the modifier, to open a link. The second mode is based on letters only and focuses on the page row keys. You press and release the activation key ("F" by default) to show the link shortcut letters. In this mode the shortcuts are not in alphabetic order, but instead roughly sorted based on proximity to the F and J keys. You may find this easier to use since it is a simple sequence of key presses without using modifiers, allowing one to keep fingers on or near the home row.
 
 You can give it a try now with the link below. Either hold down ${ALT}, or press and release F.
 
@@ -127,14 +128,15 @@ The set of open tabs is restored when you launch Lagrange.
 
 ## Sidebar
 
-The sidebar can be toggled via menus or by pressing ${SHIFT+}${CTRL+}L. It has four tabs:
+The sidebar can be toggled via menus or by pressing ${SHIFT+}${CTRL+}L. It has five tabs:
 
 * Bookmarks: List of bookmarks that you've created. These appear first in search results for quick and easy access.
+* Feeds: Entries found on subscribed feed index pages.
 * History: Chronological list of visited URLs. This is not a full history of all the URLs you've accessed over time — only unique URLs are shown at the latest access time.
 * Identities: TLS client certificates.
 * Outline: List of the headings in the currently open tab. Useful when reading longer documents.
 
-${CTRL+}1 through ${CTRL+}4 switch between the sidebar tabs, or hide the sidebar if the current tab's key is pressed. You can also press Escape to dismiss the sidebar.
+${CTRL+}1 through ${CTRL+}5 switch between the sidebar tabs, or hide the sidebar if the current tab's key is pressed. You can also press Escape to dismiss the sidebar.
 
 ## Bookmarks
 
@@ -146,13 +148,22 @@ In addition to a title, bookmarks can have tags. Some tags have a special meanin
 
 ### Special tags
 
-* Set a "homepage" tag on a bookmark to make it one of the pages that will be opened when pressing the 🏠 button.
+* Set a "homepage" tag on a bookmark to make it one of the pages that will be opened when pressing the 🏠 button. If multiple bookmarks are tagged as homepages, a random one is selected.
+* A "subscribed" tag means that Lagrange will periodically fetch the bookmarked page and look for Gemini feed links. All the found links that match the required style ("YYYY-MM-DD Entry title") will appear in the Feeds sidebar tab.
+
+## Feeds
+
+A Gemini feed is simply a regular 'text/gemini' page that contains one or more links whose labels are formatted in a particular way.
+
+=> gemini://gemini.circumlunar.space/docs/companion/subscription.gmi  See "Subscribing to Gemini pages" for more information.
+
+Subscriptions are managed via bookmarks. When you subscribe to a feed page, a bookmark is created and the special "subscribed" tag is applied on it. In the Bookmarks list, this is indicated by a ★ icon. There is no other difference between normal bookmarks and feed subscriptions — you may tag any bookmark as "subscribed" and Lagrange will look through it for feed-style links.
 
 ## Identities (client certificates)
 
 Gemini uses TLS client certificates for user/session identification purposes. Unlike on the web where user identity tracking is covert and automatic, client certificates must be manually taken into use, and you are able to define how long each certificate remains valid. The term "Identity" is used in Lagrange to refer to client certificates.
 
-The Identities sidebar tab shows all identities known to Lagrange. Press ${CTRL+}3 to show it. This includes identities created in Lagrange and any identities based on imported X.509 certificates.
+The Identities sidebar tab shows all identities known to Lagrange. Press ${CTRL+}4 to show it. This includes identities created in Lagrange and any identities based on imported X.509 certificates.
 
 ### Creating a new identity
 
@@ -197,7 +208,7 @@ You can find a number of settings in Preferences to customize the user interface
 
 The "Outline on scrollbar" option shows the page outline when the mouse cursor is moved over the scrollbar, allowing one to better navigate long documents. The outline will disappear after the mouse cursor is moved away. If you need a persistent outline, one is always available in the sidebar.
 
-One important characteristic of Gemini is that you remain in control of what gets loaded and when. The browser will not suddenly fetch a ton of images, autoplay videos, or make surreptitious connections to any tracking servers — each network request is purposeful and manually triggered. The "Load image on scroll" option is provided to assist keyboard-only browsing and to facilitate a focused reading experience. When enabled, if there is an image link visible on the page and you press Space or ↓, it will be loaded and shown inline _instead_ of the view scrolling down. This allows you to read and see all the content of the page while only tapping on a single key on the keyboard.
+One important characteristic of Gemini is that you remain in control of what gets loaded and when. The browser will not suddenly fetch a ton of images, autoplay videos, or make surreptitious connections to any tracking servers — each network request is purposeful and manually triggered. With this in mind, the "Load image on scroll" option is provided to assist keyboard-only browsing and to facilitate a focused reading experience. When enabled, if there is an image link visible on the page and you press Space or ↓, it will be loaded and shown inline _instead_ of the view scrolling down. This allows you to read and see all the content of the page while only tapping on a single key on the keyboard.
 
 ### Window and UI options
 
@@ -246,6 +257,10 @@ Other style options:
 * Big 1st paragraph: When enabled, the leading paragraph on the page is shown in a slightly larger font.
 
 ### Proxies
+
+Gemini allows relaying requests via a proxy server. On the "Proxies" tab, you can configure proxy servers for Gemini, Gopher, and HTTP/HTTPS requests.
+
+When an HTTP proxy server is configured, HTTP/HTTPS links will no longer open in the system's default web browser but will be loaded via the proxy, expecting it to serve a 'text/gemini' version of the link contents.
 
 ### Keybindings
 
