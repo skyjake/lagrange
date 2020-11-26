@@ -263,6 +263,9 @@ static const iBlock *aboutPageSource_(iRangecc path) {
     if (equalCase_Rangecc(path, "feeds")) {
         return utf8_String(entryListPage_Feeds());
     }
+    if (equalCase_Rangecc(path, "blank")) {
+        return utf8_String(collectNewCStr_String("\n"));
+    }
     return src;
 }
 
