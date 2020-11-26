@@ -158,6 +158,17 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 addItem_ListWidget(d->list, item);
                 iRelease(item);
             }
+            d->menu = makeMenu_Widget(
+                as_Widget(d),
+                (iMenuItem[]){ { "Open Entry in New Tab", 0, 0, "feed.entry.opentab" },
+                               { "Open Feed Page", 0, 0, "feed.entry.openfeed" },
+                               { "---", 0, 0, NULL },
+                               { "Mark as Read", 0, 0, "feed.entry.toggleread" },
+                               { "Add Bookmark...", 0, 0, "feed.entry.bookmark" },
+                               { "Edit Feed...", 0, 0, "feed.entry.edit" },
+                               { "---", 0, 0, NULL },
+                               { uiTextCaution_ColorEscape "Unsubscribe", 0, 0, "feed.entry.unsubscribe" } },
+                8);
             break;
         }
         case documentOutline_SidebarMode: {
@@ -202,7 +213,7 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 (iMenuItem[]){ { "Edit Bookmark...", 0, 0, "bookmark.edit" },
                                { "Copy URL", 0, 0, "bookmark.copy" },
                                { "---", 0, 0, NULL },
-                               { "Subscribe", 0, 0, "bookmark.tag tag:subscribed" },
+                               { "Subscribe to Feed", 0, 0, "bookmark.tag tag:subscribed" },
                                { "Use as Homepage", 0, 0, "bookmark.tag tag:homepage" },
                                { "---", 0, 0, NULL },
                                { uiTextCaution_ColorEscape "Delete Bookmark", 0, 0, "bookmark.delete" } },
@@ -248,7 +259,7 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                     { "Copy URL", 0, 0, "history.copy" },
                     { "Add Bookmark...", 0, 0, "history.addbookmark" },
                     { "---", 0, 0, NULL },
-                    { "Remove URL", 0, 0, "history.delete" },
+                    { "Forget URL", 0, 0, "history.delete" },
                     { "---", 0, 0, NULL },
                     { uiTextCaution_ColorEscape "Clear History...", 0, 0, "history.clear confirm:1" },
                 }, 6);
@@ -929,6 +940,12 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
         const int fg = isHover ? (isPressing ? uiTextPressed_ColorId : uiTextFramelessHover_ColorId)
                                : uiText_ColorId;
         if (d->listItem.isSeparator) {
+            if (itemRect.pos.y > 0) {
+                drawHLine_Paint(p,
+                                addY_I2(pos, 2 * gap_UI),
+                                width_Rect(itemRect) - scrollBarWidth,
+                                uiSeparator_ColorId);
+            }
             drawRange_Text(
                 uiLabelLarge_FontId,
                 add_I2(pos,
@@ -944,12 +961,6 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
             const int iconPad = 9 * gap_UI;
             iRect iconArea = { addY_I2(pos, 0), init_I2(iconPad, itemHeight) };
             if (isUnread) {
-                /*
-                iString str;
-                initUnicodeN_String(&str, &d->icon, 1);
-                drawCentered_Text(
-                    uiContent_FontId, iconArea, iFalse, iconColor, "%s", cstr_String(&str));
-                deinit_String(&str);*/
                 fillRect_Paint(
                     p,
                     (iRect){ topLeft_Rect(iconArea), init_I2(gap_UI / 2, height_Rect(iconArea)) },
@@ -1036,7 +1047,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                 drawHLine_Paint(p,
                                 addY_I2(drawPos, -gap_UI),
                                 width_Rect(itemRect) - scrollBarWidth,
-                                uiIcon_ColorId);
+                                uiSeparator_ColorId);
                 drawRange_Text(
                     uiLabelLarge_FontId,
                     add_I2(drawPos,
