@@ -465,17 +465,27 @@ const iPtrArray *listEntries_Feeds(void) {
     return list;
 }
 
+#define iPluralS(c) ((c) != 1 ? "s" : "")
+
 const iString *entryListPage_Feeds(void) {
     iFeeds *d = &feeds_;
     iString *src = collectNew_String();
     format_String(src, "# Aggregated Gemini feeds\n");
     lock_Mutex(d->mtx);
     const iPtrArray *subs = listSubscriptions_();
-    appendFormat_String(src, "You are subscribed to %zu feed%s that contain%s a total of %zu entries.\n",
-                        size_PtrArray(subs),
-                        size_PtrArray(subs) != 1 ? "s" : "",
-                        size_PtrArray(subs) == 1 ? "s" : "",
-                        size_SortedArray(&d->entries));
+    int elapsed = elapsedSeconds_Time(&d->lastRefreshedAt) / 60;
+    appendFormat_String(
+        src,
+        "You are subscribed to %zu feed%s that contain%s a total of %zu entries.\n\n"
+        "The latest refresh occurred %s.\n",
+        size_PtrArray(subs),
+        iPluralS(size_PtrArray(subs)),
+        size_PtrArray(subs) == 1 ? "s" : "",
+        size_SortedArray(&d->entries),
+        elapsed == 0     ? "just a moment ago"
+        : elapsed < 60   ? format_CStr("%d minute%s ago", elapsed, iPluralS(elapsed))
+        : elapsed < 1440 ? format_CStr("%d hour%s ago", elapsed / 60, iPluralS(elapsed / 60))
+                         : format_CStr("%d day%s ago", elapsed / 1440, iPluralS(elapsed / 1440)));
     iDate on;
     iZap(on);
     iConstForEach(PtrArray, i, listEntries_Feeds()) {
