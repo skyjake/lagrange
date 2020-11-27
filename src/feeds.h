@@ -28,7 +28,8 @@ iDeclareType(FeedEntry)
 iDeclareTypeConstruction(FeedEntry)
 
 struct Impl_FeedEntry {
-    iTime timestamp;
+    iTime posted;
+    iTime discovered;
     iString url;
     iString title;
     uint32_t bookmarkId; /* note: runtime only, not a persistent ID */

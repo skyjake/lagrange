@@ -43,7 +43,8 @@ iDeclareType(FeedJob)
 iDefineTypeConstruction(FeedEntry)
 
 void init_FeedEntry(iFeedEntry *d) {
-    iZap(d->timestamp);
+    iZap(d->posted);
+    iZap(d->discovered);
     init_String(&d->url);
     init_String(&d->title);
     d->bookmarkId = 0;
@@ -135,6 +136,8 @@ static void parseResult_FeedJob_(iFeedJob *d) {
     /* TODO: Should tell the user if the request failed. */
     if (isSuccess_GmStatusCode(status_GmRequest(d->request))) {
         iBeginCollect();
+        iTime now;
+        initCurrent_Time(&now);
         iRegExp *linkPattern =
             new_RegExp("^=>\\s*([^\\s]+)\\s+"
                        "([0-9][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9])"
@@ -153,6 +156,7 @@ static void parseResult_FeedJob_(iFeedJob *d) {
                 const iRangecc date  = capturedRange_RegExpMatch(&m, 2);
                 const iRangecc title = capturedRange_RegExpMatch(&m, 3);
                 iFeedEntry *   entry = new_FeedEntry();
+                entry->discovered = now;
                 entry->bookmarkId = d->bookmarkId;
                 setRange_String(&entry->url, url);
                 set_String(&entry->url, absoluteUrl_String(url_GmRequest(d->request), &entry->url));
@@ -161,7 +165,7 @@ static void parseResult_FeedJob_(iFeedJob *d) {
                 int year, month, day;
                 sscanf(date.start, "%04d-%02d-%02d", &year, &month, &day);
                 init_Time(
-                    &entry->timestamp,
+                    &entry->posted,
                     &(iDate){
                         .year = year, .month = month, .day = day, .hour = 12 /* noon UTC */ });
                 pushBack_PtrArray(&d->results, entry);
@@ -185,15 +189,15 @@ static iBool updateEntries_Feeds_(iFeeds *d, iPtrArray *incoming) {
             iBool changed = iFalse;
             iDate newDate;
             iDate oldDate;
-            init_Date(&newDate, &entry->timestamp);
-            init_Date(&oldDate, &existing->timestamp);
+            init_Date(&newDate, &entry->posted);
+            init_Date(&oldDate, &existing->posted);
             if (!equalCase_String(&existing->title, &entry->title) ||
                 (newDate.year != oldDate.year || newDate.month != oldDate.month ||
                  newDate.day != oldDate.day)) {
                 changed = iTrue;
             }
             set_String(&existing->title, &entry->title);
-            existing->timestamp = entry->timestamp;
+            existing->posted = entry->posted;
             delete_FeedEntry(entry);
             if (changed) {
                 /* TODO: better to use a new flag for read feed entries? */
@@ -321,9 +325,10 @@ static void save_Feeds_(iFeeds *d) {
         writeData_File(f, "# Entries\n", 10);
         iConstForEach(Array, i, &d->entries.values) {
             const iFeedEntry *entry = *(const iFeedEntry **) i.value;
-            format_String(str, "%x\n%llu\n%s\n%s\n",
+            format_String(str, "%x\n%llu\n%llu\n%s\n%s\n",
                           entry->bookmarkId,
-                          integralSeconds_Time(&entry->timestamp),
+                          integralSeconds_Time(&entry->posted),
+                          integralSeconds_Time(&entry->discovered),
                           cstr_String(&entry->url),
                           cstr_String(&entry->title));
             write_File(f, utf8_String(str));
@@ -385,7 +390,11 @@ static void load_Feeds_(iFeeds *d) {
                 case 2: {
                     const uint32_t feedId = strtoul(line.start, NULL, 16);
                     if (!nextSplit_Rangecc(range_Block(src), "\n", &line)) break;
-                    const unsigned long long ts = strtoull(line.start, NULL, 10);
+                    const unsigned long long posted = strtoull(line.start, NULL, 10);
+                    if (posted == 0) break;
+                    if (!nextSplit_Rangecc(range_Block(src), "\n", &line)) break;
+                    const unsigned long long discovered = strtoull(line.start, NULL, 10);
+                    if (discovered == 0) break;
                     if (!nextSplit_Rangecc(range_Block(src), "\n", &line)) break;
                     const iRangecc urlRange = line;
                     if (!nextSplit_Rangecc(range_Block(src), "\n", &line)) break;
@@ -396,8 +405,9 @@ static void load_Feeds_(iFeeds *d) {
                     const iFeedHashNode *node = (iFeedHashNode *) value_Hash(feeds, feedId);
                     if (node) {
                         iFeedEntry *entry = new_FeedEntry();
-                        entry->bookmarkId = node->bookmarkId;
-                        entry->timestamp.ts.tv_sec = ts;
+                        entry->bookmarkId           = node->bookmarkId;
+                        entry->posted.ts.tv_sec     = posted;
+                        entry->discovered.ts.tv_sec = discovered;
                         set_String(&entry->url, url);
                         set_String(&entry->title, title);
                         insert_SortedArray(&d->entries, &entry);
@@ -475,7 +485,7 @@ void removeEntries_Feeds(uint32_t feedBookmarkId) {
 
 static int cmpTimeDescending_FeedEntryPtr_(const void *a, const void *b) {
     const iFeedEntry * const *e1 = a, * const *e2 = b;
-    return -cmp_Time(&(*e1)->timestamp, &(*e2)->timestamp);
+    return -cmp_Time(&(*e1)->posted, &(*e2)->posted);
 }
 
 const iPtrArray *listEntries_Feeds(void) {
@@ -519,7 +529,7 @@ const iString *entryListPage_Feeds(void) {
     iConstForEach(PtrArray, i, listEntries_Feeds()) {
         const iFeedEntry *entry = i.ptr;
         iDate entryDate;
-        init_Date(&entryDate, &entry->timestamp);
+        init_Date(&entryDate, &entry->posted);
         if (on.year != entryDate.year || on.month != entryDate.month || on.day != entryDate.day) {
             appendFormat_String(
                 src, "## %s\n", cstrCollect_String(format_Date(&entryDate, "%Y-%m-%d")));

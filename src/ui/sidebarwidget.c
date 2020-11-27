@@ -124,12 +124,12 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
             iConstForEach(PtrArray, i, listEntries_Feeds()) {
                 const iFeedEntry *entry = i.ptr;
                 /* Exclude entries that are too old for Visited to keep track of. */
-                if (secondsSince_Time(&now, &entry->timestamp) > maxAge_Visited) {
+                if (secondsSince_Time(&now, &entry->discovered) > maxAge_Visited) {
                     break; /* the rest are even older */
                 }
                 /* Insert date separators. */ {
                     iDate entryDate;
-                    init_Date(&entryDate, &entry->timestamp);
+                    init_Date(&entryDate, &entry->posted);
                     if (on.year != entryDate.year || on.month != entryDate.month ||
                         on.day != entryDate.day) {
                         on = entryDate;
@@ -444,6 +444,7 @@ void init_SidebarWidget(iSidebarWidget *d) {
     setBackgroundColor_Widget(d->resizer, none_ColorId);
     d->resizeCursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZEWE);
     d->menu = NULL;
+    addAction_Widget(w, SDLK_r, KMOD_PRIMARY | KMOD_SHIFT, "feeds.refresh");
 }
 
 void deinit_SidebarWidget(iSidebarWidget *d) {
@@ -925,7 +926,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                 d->contextItem = hoverItem_ListWidget(d->list);
                 /* Update menu items. */
                 /* TODO: Some callback-based mechanism would be nice for updating menus right
-                   before they open? */                
+                   before they open? */
                 if (d->mode == bookmarks_SidebarMode && d->contextItem) {
                     const iBookmark *bm = get_Bookmarks(bookmarks_App(), d->contextItem->id);
                     if (bm) {
