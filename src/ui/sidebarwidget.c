@@ -708,10 +708,25 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                     postCommand_App("visited.changed");
                     return iTrue;
                 }
+                if (equal_Command(cmd, "feed.entry.bookmark")) {
+                    makeBookmarkCreation_Widget(&item->url, &item->label, item->icon);
+                    postCommand_App("focus.set id:bmed.title");
+                    return iTrue;
+                }
                 iBookmark *feedBookmark = get_Bookmarks(bookmarks_App(), item->id);
                 if (feedBookmark) {
                     if (equal_Command(cmd, "feed.entry.openfeed")) {
                         postCommandf_App("open url:%s", cstr_String(&feedBookmark->url));
+                        return iTrue;
+                    }
+                    if (equal_Command(cmd, "feed.entry.edit")) {
+                        setFlags_Widget(w, disabled_WidgetFlag, iTrue);
+                        iWidget *dlg = makeBookmarkEditor_Widget();
+                        setText_InputWidget(findChild_Widget(dlg, "bmed.title"), &feedBookmark->title);
+                        setText_InputWidget(findChild_Widget(dlg, "bmed.url"), &feedBookmark->url);
+                        setText_InputWidget(findChild_Widget(dlg, "bmed.tags"), &feedBookmark->tags);
+                        setCommandHandler_Widget(dlg, handleBookmarkEditorCommands_SidebarWidget_);
+                        setFocus_Widget(findChild_Widget(dlg, "bmed.title"));
                         return iTrue;
                     }
                     if (equal_Command(cmd, "feed.entry.unsubscribe")) {
@@ -719,7 +734,6 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                             removeTag_Bookmark(feedBookmark, "subscribed");
                             removeEntries_Feeds(id_Bookmark(feedBookmark));
                             updateItems_SidebarWidget_(d);
-                            return iTrue;
                         }
                         else {
                             makeQuestion_Widget(
@@ -731,11 +745,13 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                                 (const char *[]){ "cancel", "feed.entry.unsubscribe arg:1" },
                                 2);
                         }
+                        return iTrue;
                     }
                 }
             }
         }
-        else if (equal_Command(cmd, "bookmarks.changed") && d->mode == bookmarks_SidebarMode) {
+        else if (equal_Command(cmd, "bookmarks.changed") && (d->mode == bookmarks_SidebarMode ||
+                                                             d->mode == feeds_SidebarMode)) {
             updateItems_SidebarWidget_(d);
         }
         else if (equal_Command(cmd, "idents.changed") && d->mode == identities_SidebarMode) {
