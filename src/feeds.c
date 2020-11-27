@@ -323,8 +323,13 @@ static void save_Feeds_(iFeeds *d) {
             }
         }
         writeData_File(f, "# Entries\n", 10);
+        iTime now;
+        initCurrent_Time(&now);
         iConstForEach(Array, i, &d->entries.values) {
             const iFeedEntry *entry = *(const iFeedEntry **) i.value;
+            if (secondsSince_Time(&now, &entry->discovered) > maxAge_Visited) {
+                continue; /* Forget entries discovered long ago. */
+            }
             format_String(str, "%x\n%llu\n%llu\n%s\n%s\n",
                           entry->bookmarkId,
                           integralSeconds_Time(&entry->posted),
