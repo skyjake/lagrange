@@ -200,6 +200,11 @@ iTime urlVisitTime_Visited(const iVisited *d, const iString *url) {
     return item.when;
 }
 
+iBool containsUrl_Visited(const iVisited *d, const iString *url) {
+    const iTime time = urlVisitTime_Visited(d, url);
+    return isValid_Time(&time);
+}
+
 static int cmpWhenDescending_VisitedUrlPtr_(const void *a, const void *b) {
     const iVisitedUrl *s = *(const void **) a, *t = *(const void **) b;
     return -cmp_Time(&s->when, &t->when);

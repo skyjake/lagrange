@@ -94,7 +94,7 @@ struct Impl_SidebarWidget {
     iWidget *         resizer;
     SDL_Cursor *      resizeCursor;
     iWidget *         menu;
-    iSidebarItem *    menuItem; /* list item accessed in the context menu */
+    iSidebarItem *    contextItem; /* list item accessed in the context menu */
 };
 
 iDefineObjectConstruction(SidebarWidget)
@@ -140,8 +140,7 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 if (equal_String(docUrl, &entry->url)) {
                     item->listItem.isSelected = iTrue; /* currently being viewed */
                 }
-                const iTime visitTime = urlVisitTime_Visited(visited_App(), &entry->url);
-                if (!isValid_Time(&visitTime)) {
+                if (!containsUrl_Visited(visited_App(), &entry->url)) {
                     item->indent = 1; /* unread */
                 }
                 set_String(&item->url, &entry->url);
@@ -457,8 +456,8 @@ static const iGmIdentity *constHoverIdentity_SidebarWidget_(const iSidebarWidget
 
 static iGmIdentity *menuIdentity_SidebarWidget_(const iSidebarWidget *d) {
     if (d->mode == identities_SidebarMode) {
-        if (d->menuItem) {
-            return identity_GmCerts(certs_App(), d->menuItem->id);
+        if (d->contextItem) {
+            return identity_GmCerts(certs_App(), d->contextItem->id);
         }
     }
     return NULL;
@@ -642,14 +641,14 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             scrollOffset_ListWidget(d->list, 0);
         }
         else if (equal_Command(cmd, "bookmark.copy")) {
-            const iSidebarItem *item = d->menuItem;
+            const iSidebarItem *item = d->contextItem;
             if (d->mode == bookmarks_SidebarMode && item) {
                 SDL_SetClipboardText(cstr_String(&item->url));
             }
             return iTrue;
         }
         else if (equal_Command(cmd, "bookmark.edit")) {
-            const iSidebarItem *item = d->menuItem;
+            const iSidebarItem *item = d->contextItem;
             if (d->mode == bookmarks_SidebarMode && item) {
                 setFlags_Widget(w, disabled_WidgetFlag, iTrue);
                 iWidget *dlg = makeBookmarkEditor_Widget();
@@ -663,25 +662,22 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             return iTrue;
         }
         else if (equal_Command(cmd, "bookmark.tag")) {
-            const iSidebarItem *item = d->menuItem;
+            const iSidebarItem *item = d->contextItem;
             if (d->mode == bookmarks_SidebarMode && item) {
                 const char *tag = cstr_String(string_Command(cmd, "tag"));
                 iBookmark *bm = get_Bookmarks(bookmarks_App(), item->id);
                 if (hasTag_Bookmark(bm, tag)) {
-                    size_t pos = indexOfCStr_String(&bm->tags, tag);
-                    remove_Block(&bm->tags.chars, pos, strlen(tag));
-                    trim_String(&bm->tags);
+                    removeTag_Bookmark(bm, tag);
                 }
                 else {
-                    appendChar_String(&bm->tags, ' ');
-                    appendCStr_String(&bm->tags, tag);
+                    addTag_Bookmark(bm, tag);
                 }
                 postCommand_App("bookmarks.changed");
             }
             return iTrue;
         }
         else if (equal_Command(cmd, "bookmark.delete")) {
-            const iSidebarItem *item = d->menuItem;
+            const iSidebarItem *item = d->contextItem;
             if (d->mode == bookmarks_SidebarMode && item && remove_Bookmarks(bookmarks_App(), item->id)) {
                 postCommand_App("bookmarks.changed");
             }
@@ -695,7 +691,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             updateItems_SidebarWidget_(d);
         }
         else if (startsWith_CStr(cmd, "feed.entry.") && d->mode == feeds_SidebarMode) {
-            const iSidebarItem *item = d->menuItem;
+            const iSidebarItem *item = d->contextItem;
             if (item) {
                 if (equal_Command(cmd, "feed.entry.opentab")) {
                     postCommandf_App("open newtab:1 url:%s", cstr_String(&item->url));
@@ -703,8 +699,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                 }
                 if (equal_Command(cmd, "feed.entry.toggleread")) {
                     iVisited *vis = visited_App();
-                    const iTime visit = urlVisitTime_Visited(vis, &item->url);
-                    if (isValid_Time(&visit)) {
+                    if (containsUrl_Visited(vis, &item->url)) {
                         removeUrl_Visited(vis, &item->url);
                     }
                     else {
@@ -713,11 +708,29 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                     postCommand_App("visited.changed");
                     return iTrue;
                 }
-                const iBookmark *feedBookmark = get_Bookmarks(bookmarks_App(), item->id);
+                iBookmark *feedBookmark = get_Bookmarks(bookmarks_App(), item->id);
                 if (feedBookmark) {
                     if (equal_Command(cmd, "feed.entry.openfeed")) {
                         postCommandf_App("open url:%s", cstr_String(&feedBookmark->url));
                         return iTrue;
+                    }
+                    if (equal_Command(cmd, "feed.entry.unsubscribe")) {
+                        if (arg_Command(cmd)) {
+                            removeTag_Bookmark(feedBookmark, "subscribed");
+                            removeEntries_Feeds(id_Bookmark(feedBookmark));
+                            updateItems_SidebarWidget_(d);
+                            return iTrue;
+                        }
+                        else {
+                            makeQuestion_Widget(
+                                uiTextCaution_ColorEscape "UNSUBSCRIBE",
+                                format_CStr("Really unsubscribe from feed\n\"%s\"?",
+                                            cstr_String(&feedBookmark->title)),
+                                (const char *[]){ "Cancel",
+                                                  uiTextCaution_ColorEscape "Unsubscribe" },
+                                (const char *[]){ "cancel", "feed.entry.unsubscribe arg:1" },
+                                2);
+                        }
                     }
                 }
             }
@@ -787,7 +800,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             return iTrue;
         }
         else if (equal_Command(cmd, "ident.delete")) {
-            iSidebarItem *item = d->menuItem;
+            iSidebarItem *item = d->contextItem;
             if (argLabel_Command(cmd, "confirm")) {
                 makeQuestion_Widget(uiTextCaution_ColorEscape "DELETE IDENTITY",
                                     format_CStr("Do you really want to delete the identity\n"
@@ -807,22 +820,22 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             return iTrue;
         }
         else if (equal_Command(cmd, "history.delete")) {
-            if (d->menuItem && !isEmpty_String(&d->menuItem->url)) {
-                removeUrl_Visited(visited_App(), &d->menuItem->url);
+            if (d->contextItem && !isEmpty_String(&d->contextItem->url)) {
+                removeUrl_Visited(visited_App(), &d->contextItem->url);
                 updateItems_SidebarWidget_(d);
                 scrollOffset_ListWidget(d->list, 0);
             }
             return iTrue;
         }
         else if (equal_Command(cmd, "history.copy")) {
-            const iSidebarItem *item = d->menuItem;
+            const iSidebarItem *item = d->contextItem;
             if (item && !isEmpty_String(&item->url)) {
                 SDL_SetClipboardText(cstr_String(&item->url));
             }
             return iTrue;
         }
         else if (equal_Command(cmd, "history.addbookmark")) {
-            const iSidebarItem *item = d->menuItem;
+            const iSidebarItem *item = d->contextItem;
             if (!isEmpty_String(&item->url)) {
                 makeBookmarkCreation_Widget(
                     &item->url,
@@ -872,12 +885,12 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                 updateMouseHover_ListWidget(d->list);
             }
             if (constHoverItem_ListWidget(d->list) || isVisible_Widget(d->menu)) {
-                d->menuItem = hoverItem_ListWidget(d->list);
+                d->contextItem = hoverItem_ListWidget(d->list);
                 /* Update menu items. */
                 /* TODO: Some callback-based mechanism would be nice for updating menus right
-                   before they open? */
-                if (d->mode == bookmarks_SidebarMode && d->menuItem) {
-                    const iBookmark *bm = get_Bookmarks(bookmarks_App(), d->menuItem->id);
+                   before they open? */                
+                if (d->mode == bookmarks_SidebarMode && d->contextItem) {
+                    const iBookmark *bm = get_Bookmarks(bookmarks_App(), d->contextItem->id);
                     if (bm) {
                         iLabelWidget *menuItem = findMenuItem_Widget(d->menu,
                                                                      "bookmark.tag tag:homepage");
@@ -895,6 +908,11 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                                                         : "Subscribe to Feed");
                         }
                     }
+                }
+                else if (d->mode == feeds_SidebarMode && d->contextItem) {
+                    iLabelWidget *menuItem = findMenuItem_Widget(d->menu, "feed.entry.toggleread");
+                    const iBool isRead = containsUrl_Visited(visited_App(), &d->contextItem->url);
+                    setTextCStr_LabelWidget(menuItem, isRead ? "Mark as Unread" : "Mark as Read");
                 }
                 else if (d->mode == identities_SidebarMode) {
                     const iGmIdentity *ident  = constHoverIdentity_SidebarWidget_(d);
