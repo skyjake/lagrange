@@ -111,6 +111,8 @@ static const iMenuItem navMenuItems_[] = {
     { "Zoom Out", SDLK_MINUS, KMOD_PRIMARY, "zoom.delta arg:-10" },
     { "Reset Zoom", SDLK_0, KMOD_PRIMARY, "zoom.set arg:100" },
     { "---", 0, 0, NULL },
+    { "Show Feed Entries", 0, 0, "!open url:about:feeds" },
+    { "---", 0, 0, NULL },
     { "Preferences...", SDLK_COMMA, KMOD_PRIMARY, "preferences" },
     { "Help", SDLK_F1, 0, "!open url:about:help" },
     { "Release Notes", 0, 0, "!open url:about:version" },
