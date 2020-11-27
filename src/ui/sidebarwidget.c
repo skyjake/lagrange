@@ -327,7 +327,15 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
     invalidate_ListWidget(d->list);
     /* Content for a blank tab. */
     if (isEmpty_ListWidget(d->list)) {
-        if (d->mode == identities_SidebarMode) {
+        if (d->mode == feeds_SidebarMode) {
+            iWidget *div = makeVDiv_Widget();
+            setPadding_Widget(div, 3 * gap_UI, 0, 3 * gap_UI, 2 * gap_UI);
+            addChildFlags_Widget(div, iClob(new_Widget()), expand_WidgetFlag); /* pad */
+            addChild_Widget(div, iClob(new_LabelWidget("Refresh Feeds", "feeds.refresh")));
+            addChildFlags_Widget(div, iClob(new_Widget()), expand_WidgetFlag); /* pad */
+            addChild_Widget(d->blank, iClob(div));
+        }
+        else if (d->mode == identities_SidebarMode) {
             iWidget *div = makeVDiv_Widget();
             setPadding_Widget(div, 3 * gap_UI, 0, 3 * gap_UI, 2 * gap_UI);
             addChildFlags_Widget(div, iClob(new_Widget()), expand_WidgetFlag); /* pad */
