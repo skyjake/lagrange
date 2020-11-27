@@ -44,3 +44,4 @@ void    refreshFinished_Feeds   (void); /* called on "feeds.update.finished" */
 
 const iPtrArray *   listEntries_Feeds   (void);
 const iString *     entryListPage_Feeds (void);
+size_t              numSubscribed_Feeds (void);

@@ -504,6 +504,10 @@ const iPtrArray *listEntries_Feeds(void) {
     return list;
 }
 
+size_t numSubscribed_Feeds(void) {
+    return size_PtrArray(listSubscriptions_());
+}
+
 #define iPluralS(c) ((c) != 1 ? "s" : "")
 
 const iString *entryListPage_Feeds(void) {

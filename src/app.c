@@ -1243,18 +1243,22 @@ iBool handleCommand_App(const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "bookmark.addtag")) {
-        const iString *tag     = string_Command(cmd, "tag");
-        const iString *feedUrl = url_DocumentWidget(document_App());
-        if (!isEmpty_String(feedUrl)) {
-            uint32_t id = findUrl_Bookmarks(d->bookmarks, feedUrl);
+        const iString *tag = string_Command(cmd, "tag");
+        const iString *url = url_DocumentWidget(document_App());
+        const size_t numSubs = numSubscribed_Feeds();
+        if (!isEmpty_String(url)) {
+            uint32_t id = findUrl_Bookmarks(d->bookmarks, url);
             if (id) {
                 addTag_Bookmark(get_Bookmarks(d->bookmarks, id), cstr_String(tag));
             }
             else {
-                add_Bookmarks(d->bookmarks, feedUrl, bookmarkTitle_DocumentWidget(document_App()),
+                add_Bookmarks(d->bookmarks, url, bookmarkTitle_DocumentWidget(document_App()),
                               tag, siteIcon_GmDocument(document_DocumentWidget(document_App())));
             }
             postCommand_App("bookmarks.changed");
+            if (numSubs == 0 && !cmp_String(tag, "subscribed")) {
+                postCommand_App("feeds.refresh");
+            }
         }
         return iTrue;
     }
