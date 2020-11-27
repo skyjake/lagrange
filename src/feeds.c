@@ -183,8 +183,13 @@ static iBool updateEntries_Feeds_(iFeeds *d, iPtrArray *incoming) {
             iFeedEntry *existing = *(iFeedEntry **) at_SortedArray(&d->entries, pos);
             /* Already known, but update it, maybe the time and label have changed. */
             iBool changed = iFalse;
+            iDate newDate;
+            iDate oldDate;
+            init_Date(&newDate, &entry->timestamp);
+            init_Date(&oldDate, &existing->timestamp);
             if (!equalCase_String(&existing->title, &entry->title) ||
-                cmp_Time(&existing->timestamp, &entry->timestamp)) {
+                (newDate.year != oldDate.year || newDate.month != oldDate.month ||
+                 newDate.day != oldDate.day)) {
                 changed = iTrue;
             }
             set_String(&existing->title, &entry->title);

@@ -31,6 +31,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 iDeclareType(VisitedUrl)
 iDeclareTypeConstruction(VisitedUrl)
 
+extern const int maxAge_Visited; /* seconds */
+
 struct Impl_VisitedUrl {
     iString  url;
     iTime    when;

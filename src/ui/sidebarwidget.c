@@ -115,12 +115,18 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
     switch (d->mode) {
         case feeds_SidebarMode: {
             const iString *docUrl = url_DocumentWidget(document_App());
+            iTime now;
             iDate on;
-            initCurrent_Date(&on);
+            initCurrent_Time(&now);
+            init_Date(&on, &now);
             const int thisYear = on.year;
             iZap(on);
             iConstForEach(PtrArray, i, listEntries_Feeds()) {
                 const iFeedEntry *entry = i.ptr;
+                /* Exclude entries that are too old for Visited to keep track of. */
+                if (secondsSince_Time(&now, &entry->timestamp) > maxAge_Visited) {
+                    break; /* the rest are even older */
+                }
                 /* Insert date separators. */ {
                     iDate entryDate;
                     init_Date(&entryDate, &entry->timestamp);
@@ -158,13 +164,13 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 as_Widget(d),
                 (iMenuItem[]){ { "Open Entry in New Tab", 0, 0, "feed.entry.opentab" },
                                { "Open Feed Page", 0, 0, "feed.entry.openfeed" },
-                               { "---", 0, 0, NULL },
                                { "Mark as Read", 0, 0, "feed.entry.toggleread" },
                                { "Add Bookmark...", 0, 0, "feed.entry.bookmark" },
-                               { "Edit Feed...", 0, 0, "feed.entry.edit" },
                                { "---", 0, 0, NULL },
+                               { "Edit Feed...", 0, 0, "feed.entry.edit" },
                                { uiTextCaution_ColorEscape "Unsubscribe...", 0, 0, "feed.entry.unsubscribe" },
                                { "---", 0, 0, NULL },
+                               { "Mark All as Read", SDLK_a, KMOD_SHIFT, "feeds.markallread" },
                                { "Refresh Feeds", SDLK_r, KMOD_PRIMARY | KMOD_SHIFT, "feeds.refresh" } },
                 10);
             break;
@@ -693,6 +699,17 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         }
         else if (equal_Command(cmd, "feeds.update.finished") && d->mode == feeds_SidebarMode) {
             updateItems_SidebarWidget_(d);
+        }
+        else if (equal_Command(cmd, "feeds.markallread") && d->mode == feeds_SidebarMode) {
+            iConstForEach(PtrArray, i, listEntries_Feeds()) {
+                const iFeedEntry *entry = i.ptr;
+                const iString *url = &entry->url;
+                if (!containsUrl_Visited(visited_App(), url)) {
+                    visitUrl_Visited(visited_App(), url, transient_VisitedUrlFlag);
+                }
+            }
+            postCommand_App("visited.changed");
+            return iTrue;
         }
         else if (startsWith_CStr(cmd, "feed.entry.") && d->mode == feeds_SidebarMode) {
             const iSidebarItem *item = d->contextItem;

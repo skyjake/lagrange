@@ -29,7 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/ptrarray.h>
 #include <the_Foundation/sortedarray.h>
 
-static const size_t maxAgeVisited_Visited_ = 2 * 3600 * 24 * 30; /* two months */
+const int maxAge_Visited = 2 * 3600 * 24 * 30; /* two months */
 
 void init_VisitedUrl(iVisitedUrl *d) {
     initCurrent_Time(&d->when);
@@ -113,16 +113,16 @@ void load_Visited(iVisited *d, const char *dirPath) {
             sscanf(line.start, "%04d-%02d-%02dT%02d:%02d:%02d ", &y, &m, &D, &H, &M, &S);
             if (!y) break;
             iVisitedUrl item;
+            init_VisitedUrl(&item);
             const char *urlStart = line.start + 20;
             if (*urlStart == '0' && size_Range(&line) >= 25) {
                 item.flags = strtoul(line.start + 20, NULL, 16);
                 urlStart += 5;
             }
-            init_VisitedUrl(&item);
             init_Time(
                 &item.when,
                 &(iDate){ .year = y, .month = m, .day = D, .hour = H, .minute = M, .second = S });
-            if (secondsSince_Time(&now, &item.when) > maxAgeVisited_Visited_) {
+            if (secondsSince_Time(&now, &item.when) > maxAge_Visited) {
                 continue; /* Too old. */
             }
             initRange_String(&item.url, (iRangecc){ urlStart, line.end });
@@ -179,9 +179,12 @@ void visitUrl_Visited(iVisited *d, const iString *url, uint16_t visitFlags) {
 void removeUrl_Visited(iVisited *d, const iString *url) {
     iGuardMutex(d->mtx, {
         size_t pos = find_Visited_(d, url);
-        if (pos != iInvalidPos) {
-            deinit_VisitedUrl(at_SortedArray(&d->visited, pos));
-            remove_Array(&d->visited.values, pos);
+        if (pos < size_SortedArray(&d->visited)) {
+            iVisitedUrl *visUrl = at_SortedArray(&d->visited, pos);
+            if (equal_String(&visUrl->url, url)) {
+                deinit_VisitedUrl(visUrl);
+                remove_Array(&d->visited.values, pos);
+            }
         }
     });
 }
