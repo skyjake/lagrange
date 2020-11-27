@@ -668,6 +668,9 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                 iBookmark *bm = get_Bookmarks(bookmarks_App(), item->id);
                 if (hasTag_Bookmark(bm, tag)) {
                     removeTag_Bookmark(bm, tag);
+                    if (!iCmpStr(tag, "subscribed")) {
+                        removeEntries_Feeds(item->id);
+                    }
                 }
                 else {
                     addTag_Bookmark(bm, tag);
@@ -679,6 +682,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         else if (equal_Command(cmd, "bookmark.delete")) {
             const iSidebarItem *item = d->contextItem;
             if (d->mode == bookmarks_SidebarMode && item && remove_Bookmarks(bookmarks_App(), item->id)) {
+                removeEntries_Feeds(item->id);
                 postCommand_App("bookmarks.changed");
             }
             return iTrue;

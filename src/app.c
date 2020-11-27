@@ -1242,6 +1242,22 @@ iBool handleCommand_App(const char *cmd) {
         postCommand_App("focus.set id:bmed.title");
         return iTrue;
     }
+    else if (equal_Command(cmd, "bookmark.addtag")) {
+        const iString *tag     = string_Command(cmd, "tag");
+        const iString *feedUrl = url_DocumentWidget(document_App());
+        if (!isEmpty_String(feedUrl)) {
+            uint32_t id = findUrl_Bookmarks(d->bookmarks, feedUrl);
+            if (id) {
+                addTag_Bookmark(get_Bookmarks(d->bookmarks, id), cstr_String(tag));
+            }
+            else {
+                add_Bookmarks(d->bookmarks, feedUrl, bookmarkTitle_DocumentWidget(document_App()),
+                              tag, siteIcon_GmDocument(document_DocumentWidget(document_App())));
+            }
+            postCommand_App("bookmarks.changed");
+        }
+        return iTrue;
+    }
     else if (equal_Command(cmd, "bookmarks.changed")) {
         save_Bookmarks(d->bookmarks, dataDir_App_);
         return iFalse;
