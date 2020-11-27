@@ -402,7 +402,7 @@ iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
     setFlags_Widget(menu,
                     keepOnTop_WidgetFlag | collapse_WidgetFlag | hidden_WidgetFlag |
                         arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag |
-                        resizeChildrenToWidestChild_WidgetFlag,
+                        resizeChildrenToWidestChild_WidgetFlag | overflowScrollable_WidgetFlag,
                     iTrue);
     for (size_t i = 0; i < n; ++i) {
         const iMenuItem *item = &items[i];
@@ -740,7 +740,8 @@ iWidget *makeSheet_Widget(const char *id) {
     setBackgroundColor_Widget(sheet, uiBackground_ColorId);
     setFlags_Widget(sheet,
                     mouseModal_WidgetFlag | keepOnTop_WidgetFlag | arrangeVertical_WidgetFlag |
-                        arrangeSize_WidgetFlag | centerHorizontal_WidgetFlag,
+                        arrangeSize_WidgetFlag | centerHorizontal_WidgetFlag |
+                        overflowScrollable_WidgetFlag,
                     iTrue);
     return sheet;
 }
