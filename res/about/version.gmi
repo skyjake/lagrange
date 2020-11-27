@@ -6,6 +6,16 @@
 ```
 # Release notes
 
+## 0.11
+* Added feed subscriptions. A subscription is any bookmark with the "subscribed" tag.
+* Added a new sidebar tab for feeds.
+* Added "about:feeds" to show all discovered feed entries on one page.
+* Line widths are slightly narrower for improved readability.
+* Improved stability; fixed data races, undefined behavior, thread leaks.
+* Fixed large downloads (10MB+) stopping prematurely due to a TLS decryption error.
+* Fixed build on FreeBSD (tested on 12.1).
+* Unix: Location of `xdg-open` is no longer hardcoded.
+
 ## 0.10
 * Added option to load inline images when pressing Space or ↓ for a more focused reading experience — just keep tapping a single key to proceed. If an image link is visible, it will be loaded instead of scrolling. This option is disabled by default.
 * Added context menu item to save inline images to Downloads.
