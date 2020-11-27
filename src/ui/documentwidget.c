@@ -896,6 +896,7 @@ static void fetch_DocumentWidget_(iDocumentWidget *d) {
     postCommandf_App("document.request.started doc:%p url:%s", d, cstr_String(d->mod.url));
     clear_ObjectList(d->media);
     d->certFlags = 0;
+    d->flags &= ~showLinkNumbers_DocumentWidgetFlag;
     d->state = fetching_RequestState;
     set_Atomic(&d->isRequestUpdated, iFalse);
     d->request = new_GmRequest(certs_App());
@@ -1368,6 +1369,14 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         dealloc_VisBuf(d->visBuf);
         updateWindowTitle_DocumentWidget_(d);
         refresh_Widget(w);
+    }
+    else if (equal_Command(cmd, "window.focus.lost")) {
+        if (d->flags & showLinkNumbers_DocumentWidgetFlag) {
+            d->flags &= ~showLinkNumbers_DocumentWidgetFlag;
+            invalidateVisibleLinks_DocumentWidget_(d);
+            refresh_Widget(w);
+        }
+        return iFalse;
     }
     else if (equal_Command(cmd, "window.mouse.exited")) {
         updateOutlineOpacity_DocumentWidget_(d);
@@ -2899,6 +2908,7 @@ void deserializeState_DocumentWidget(iDocumentWidget *d, iStream *ins) {
 }
 
 void setUrlFromCache_DocumentWidget(iDocumentWidget *d, const iString *url, iBool isFromCache) {
+    d->flags &= ~showLinkNumbers_DocumentWidgetFlag;
     if (cmpStringSc_String(d->mod.url, url, &iCaseInsensitive)) {
         set_String(d->mod.url, url);
         /* See if there a username in the URL. */
