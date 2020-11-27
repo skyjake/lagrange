@@ -50,6 +50,19 @@ iBool hasTag_Bookmark(const iBookmark *d, const char *tag) {
     return found;
 }
 
+void addTag_Bookmark(iBookmark *d, const char *tag) {
+    if (!isEmpty_String(&d->tags)) {
+        appendChar_String(&d->tags, ' ');
+    }
+    appendCStr_String(&d->tags, tag);
+}
+
+void removeTag_Bookmark(iBookmark *d, const char *tag) {
+    const size_t pos = indexOfCStr_String(&d->tags, tag);
+    remove_Block(&d->tags.chars, pos, strlen(tag));
+    trim_String(&d->tags);
+}
+
 iDefineTypeConstruction(Bookmark)
 
 static int cmpTimeDescending_Bookmark_(const iBookmark **a, const iBookmark **b) {
