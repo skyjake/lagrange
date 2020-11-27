@@ -86,6 +86,10 @@ void serialize_PersistentDocumentState(const iPersistentDocumentState *d, iStrea
 
 void deserialize_PersistentDocumentState(iPersistentDocumentState *d, iStream *ins) {
     deserialize_String(d->url, ins);
+    if (indexOfCStr_String(d->url, " ptr:0x") != iInvalidPos) {
+        /* Oopsie, this should not have been written; invalid URL. */
+        clear_String(d->url);
+    }
     /*d->zoomPercent =*/ read16_Stream(ins);
     deserialize_History(d->history, ins);
 }
