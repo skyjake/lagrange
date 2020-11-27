@@ -457,6 +457,17 @@ void refreshFinished_Feeds(void) {
     stopWorker_Feeds_(&feeds_);
 }
 
+void removeEntries_Feeds(uint32_t feedBookmarkId) {
+    iFeeds *d = &feeds_;
+    iForEach(Array, i, &d->entries.values) {
+        iFeedEntry **entry = i.value;
+        if ((*entry)->bookmarkId == feedBookmarkId) {
+            delete_FeedEntry(*entry);
+            remove_ArrayIterator(&i);
+        }
+    }
+}
+
 static int cmpTimeDescending_FeedEntryPtr_(const void *a, const void *b) {
     const iFeedEntry * const *e1 = a, * const *e2 = b;
     return -cmp_Time(&(*e1)->timestamp, &(*e2)->timestamp);

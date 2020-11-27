@@ -34,11 +34,12 @@ struct Impl_FeedEntry {
     uint32_t bookmarkId; /* note: runtime only, not a persistent ID */
 };
 
-void    init_Feeds      (const char *saveDir);
-void    deinit_Feeds    (void);
-void    refresh_Feeds   (void);
+void    init_Feeds              (const char *saveDir);
+void    deinit_Feeds            (void);
+void    refresh_Feeds           (void);
+void    removeEntries_Feeds     (uint32_t feedBookmarkId);
 
-void    refreshFinished_Feeds  (void); /* called on "feeds.update.finished" */
+void    refreshFinished_Feeds   (void); /* called on "feeds.update.finished" */
 
 const iPtrArray *   listEntries_Feeds   (void);
 const iString *     entryListPage_Feeds (void);
