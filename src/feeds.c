@@ -87,7 +87,7 @@ iDefineTypeConstructionArgs(FeedJob, (const iBookmark *bm), bm)
 /*----------------------------------------------------------------------------------------------*/
 
 static const char *feedsFilename_Feeds_         = "feeds.txt";
-static const int   updateIntervalSeconds_Feeds_ = 2 * 60 * 60;
+static const int   updateIntervalSeconds_Feeds_ = 4 * 60 * 60;
 
 struct Impl_Feeds {
     iMutex *  mtx;
