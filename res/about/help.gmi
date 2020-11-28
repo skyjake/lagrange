@@ -159,11 +159,11 @@ You may be familiar with RSS and Atom XML feeds from the web. Lagrange does _not
 
 Subscriptions are managed via bookmarks. When you subscribe to a feed page, a bookmark is created and the special "subscribed" tag is applied on it. In the Bookmarks list, this is indicated by a ★ icon. There is no other difference between normal bookmarks and feed subscriptions — you may tag any bookmark as "subscribed" and Lagrange will look through it for feed-style links. The bookmark title is used as the feed title. This defaults to the top heading of the feed index page, but you can edit it to suit your needs.
 
-Feeds are refreshed periodically while Lagrange is running, and after launching if it has been a while since the previous refresh. You may also manually refresh all feeds via the menus or by pressing ${SHIFT+}${CTRL+}R.
+Feeds are refreshed periodically while Lagrange is running, and also immediately after launching if it has been a while since the previous refresh. You may also manually refresh all feeds via the menus or by pressing ${SHIFT+}${CTRL+}R.
 
 The Feeds sidebar tab displays recent feed entries. From there you can open entries and mark them as read/unread.
 
-To see all entries from all feeds, open the "Feed entries" page. It also shows how long has it been since the previous feed refresh.
+To see all entries from all feeds, open the "Feed entries" page. This page also shows how long has it been since the previous feed refresh.
 => about:feeds
 
 ## Identities (client certificates)
