@@ -159,6 +159,9 @@ struct Impl_DocumentWidget {
     iPtrArray      visibleLinks;
     iPtrArray      visibleWideRuns; /* scrollable blocks */
     iArray         wideRunOffsets;
+    iAnim          animWideRunOffset;
+    uint16_t       animWideRunId;
+    iGmRunRange    animWideRunRange;
     iPtrArray      visiblePlayers; /* currently playing audio */
     const iGmRun * grabbedPlayer; /* currently adjusting volume in a player */
     float          grabbedStartVolume;
@@ -204,6 +207,8 @@ void init_DocumentWidget(iDocumentWidget *d) {
     d->redirectCount    = 0;
     d->initNormScrollY  = 0;
     init_Anim(&d->scrollY, 0);
+    d->animWideRunId = 0;
+    init_Anim(&d->animWideRunOffset, 0);
     d->selectMark       = iNullRange;
     d->foundMark        = iNullRange;
     d->pageMargin       = 5;
@@ -268,6 +273,13 @@ void deinit_DocumentWidget(iDocumentWidget *d) {
     delete_String(d->certSubject);
     delete_String(d->titleUser);
     deinit_PersistentDocumentState(&d->mod);
+}
+
+static void resetWideRuns_DocumentWidget_(iDocumentWidget *d) {
+    clear_Array(&d->wideRunOffsets);
+    d->animWideRunId = 0;
+    init_Anim(&d->animWideRunOffset, 0);
+    iZap(d->animWideRunRange);
 }
 
 static void requestUpdated_DocumentWidget_(iAnyObject *obj) {
@@ -381,6 +393,29 @@ static void invalidateVisibleLinks_DocumentWidget_(iDocumentWidget *d) {
     iConstForEach(PtrArray, i, &d->visibleLinks) {
         const iGmRun *run = i.ptr;
         if (run->linkId) {
+            insert_PtrSet(d->invalidRuns, run);
+        }
+    }
+}
+
+static int runOffset_DocumentWidget_(const iDocumentWidget *d, const iGmRun *run) {
+    if (run->preId && run->flags & wide_GmRunFlag) {
+        if (d->animWideRunId == run->preId) {
+            return -value_Anim(&d->animWideRunOffset);
+        }
+        const size_t numOffsets = size_Array(&d->wideRunOffsets);
+        const int *offsets = constData_Array(&d->wideRunOffsets);
+        if (run->preId <= numOffsets) {
+            return -offsets[run->preId - 1];
+        }
+    }
+    return 0;
+}
+
+static void invalidateWideRunsWithNonzeroOffset_DocumentWidget_(iDocumentWidget *d) {
+    iConstForEach(PtrArray, i, &d->visibleWideRuns) {
+        const iGmRun *run = i.ptr;
+        if (runOffset_DocumentWidget_(d, run)) {
             insert_PtrSet(d->invalidRuns, run);
         }
     }
@@ -762,7 +797,7 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
     updateTheme_DocumentWidget_(d);
     init_Anim(&d->scrollY, 0);
     init_Anim(&d->sideOpacity, 0);
-    clear_Array(&d->wideRunOffsets);
+    resetWideRuns_DocumentWidget_(d);
     d->state = ready_RequestState;
 }
 
@@ -951,7 +986,7 @@ static iBool updateFromHistory_DocumentWidget_(iDocumentWidget *d) {
         reset_GmDocument(d->doc);
         d->state = fetching_RequestState;
         d->initNormScrollY = recent->normScrollY;
-        clear_Array(&d->wideRunOffsets);
+        resetWideRuns_DocumentWidget_(d);
         /* Use the cached response data. */
         updateTrust_DocumentWidget_(d, resp);
         d->sourceTime = resp->when;
@@ -977,15 +1012,20 @@ static void refreshWhileScrolling_DocumentWidget_(iAny *ptr) {
     iDocumentWidget *d = ptr;
     updateVisible_DocumentWidget_(d);
     refresh_Widget(d);
-    if (!isFinished_Anim(&d->scrollY)) {
+    if (d->animWideRunId) {
+        for (const iGmRun *r = d->animWideRunRange.start; r != d->animWideRunRange.end; r++) {
+            insert_PtrSet(d->invalidRuns, r);
+        }
+    }
+    if (isFinished_Anim(&d->animWideRunOffset)) {
+        d->animWideRunId = 0;
+    }
+    if (!isFinished_Anim(&d->scrollY) || !isFinished_Anim(&d->animWideRunOffset)) {
         addTicker_App(refreshWhileScrolling_DocumentWidget_, d);
     }
 }
 
 static void smoothScroll_DocumentWidget_(iDocumentWidget *d, int offset, int duration) {
-    if (offset == 0) {
-        return;
-    }
     /* Get rid of link numbers when scrolling. */
     if (offset && d->flags & showLinkNumbers_DocumentWidgetFlag) {
         d->flags &= ~showLinkNumbers_DocumentWidgetFlag;
@@ -1030,7 +1070,8 @@ static void scrollTo_DocumentWidget_(iDocumentWidget *d, int documentY, iBool ce
     scroll_DocumentWidget_(d, 0); /* clamp it */
 }
 
-static void scrollWideBlock_DocumentWidget_(iDocumentWidget *d, iInt2 mousePos, int delta) {
+static void scrollWideBlock_DocumentWidget_(iDocumentWidget *d, iInt2 mousePos, int delta,
+                                            int duration) {
     if (delta == 0) {
         return;
     }
@@ -1057,6 +1098,21 @@ static void scrollWideBlock_DocumentWidget_(iDocumentWidget *d, iInt2 mousePos, 
                     insert_PtrSet(d->invalidRuns, r);
                 }
                 refresh_Widget(d);
+                d->selectMark = iNullRange;
+                d->foundMark  = iNullRange;
+            }
+            if (duration) {
+                if (d->animWideRunId != run->preId || isFinished_Anim(&d->animWideRunOffset)) {
+                    d->animWideRunId = run->preId;
+                    init_Anim(&d->animWideRunOffset, oldOffset);
+                }
+                setValueEased_Anim(&d->animWideRunOffset, *offset, duration);
+                d->animWideRunRange = range;
+                addTicker_App(refreshWhileScrolling_DocumentWidget_, d);
+            }
+            else {
+                d->animWideRunId = 0;
+                init_Anim(&d->animWideRunOffset, 0);
             }
             break;
         }
@@ -1097,7 +1153,7 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
             case categorySuccess_GmStatusCode:
                 init_Anim(&d->scrollY, 0);
                 reset_GmDocument(d->doc); /* new content incoming */
-                clear_Array(&d->wideRunOffsets);
+                resetWideRuns_DocumentWidget_(d);
                 updateDocument_DocumentWidget_(d, resp, iTrue);
                 break;
             case categoryRedirect_GmStatusCode:
@@ -1764,6 +1820,8 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                 }
             }
         }
+        invalidateWideRunsWithNonzeroOffset_DocumentWidget_(d); /* markers don't support offsets */
+        resetWideRuns_DocumentWidget_(d);
         refresh_Widget(w);
         return iTrue;
     }
@@ -2063,6 +2121,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         if (ev->wheel.which == 0) { /* Trackpad with precise scrolling w/inertia. */
             stop_Anim(&d->scrollY);
             iInt2 wheel = init_I2(ev->wheel.x, ev->wheel.y);
+            /* Only scroll on one axis at a time. */
             if (iAbs(wheel.x) > iAbs(wheel.y)) {
                 wheel.y = 0;
             }
@@ -2070,7 +2129,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 wheel.x = 0;
             }
             scroll_DocumentWidget_(d, -wheel.y * get_Window()->pixelRatio * acceleration);
-            scrollWideBlock_DocumentWidget_(d, mouseCoord, wheel.x * get_Window()->pixelRatio);
+            scrollWideBlock_DocumentWidget_(d, mouseCoord, wheel.x * get_Window()->pixelRatio, 0);
         }
         else
 #endif
@@ -2092,7 +2151,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                     /* accelerated speed for repeated wheelings */
                     (!isFinished_Anim(&d->scrollY) && pos_Anim(&d->scrollY) < 0.25f ? 0.5f : 1.0f));
             scrollWideBlock_DocumentWidget_(
-                d, mouseCoord, ev->wheel.x * lineHeight_Text(paragraph_FontId));
+                d, mouseCoord, ev->wheel.x * lineHeight_Text(paragraph_FontId) * 3, 167);
         }
         iChangeFlags(d->flags, noHoverWhileScrolling_DocumentWidgetFlag, iTrue);
         return iTrue;
@@ -2244,6 +2303,8 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             /* Begin selecting a range of text. */
             if (~d->flags & selecting_DocumentWidgetFlag) {
                 setFocus_Widget(NULL); /* TODO: Focus this document? */
+                invalidateWideRunsWithNonzeroOffset_DocumentWidget_(d);
+                resetWideRuns_DocumentWidget_(d); /* Selections don't support horizontal scrolling. */
                 iChangeFlags(d->flags, selecting_DocumentWidgetFlag, iTrue);
                 d->selectMark.start = d->selectMark.end =
                     sourceLoc_DocumentWidget_(d, d->click.startPos);
@@ -2444,15 +2505,9 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
     const iBool        isHover =
         (run->linkId && d->widget->hoverLink && run->linkId == d->widget->hoverLink->linkId &&
          ~run->flags & decoration_GmRunFlag);
-    iInt2 visPos = add_I2(run->visBounds.pos, origin);
-    /* Preformatted runs can be scrolled. */
-    if (run->preId && run->flags & wide_GmRunFlag) {
-        const size_t numOffsets = size_Array(&d->widget->wideRunOffsets);
-        const int *offsets = constData_Array(&d->widget->wideRunOffsets);
-        if (run->preId <= numOffsets) {
-            visPos.x -= offsets[run->preId - 1];
-        }
-    }
+    const iInt2 visPos = addX_I2(add_I2(run->visBounds.pos, origin),
+                                 /* Preformatted runs can be scrolled. */
+                                 runOffset_DocumentWidget_(d->widget, run));
     fillRect_Paint(&d->paint, (iRect){ visPos, run->visBounds.size }, tmBackground_ColorId);
     if (run->linkId && ~run->flags & decoration_GmRunFlag) {
         fg = linkColor_GmDocument(doc, run->linkId, isHover ? textHover_GmLinkPart : text_GmLinkPart);
@@ -3015,7 +3070,7 @@ iBool isRequestOngoing_DocumentWidget(const iDocumentWidget *d) {
 
 void updateSize_DocumentWidget(iDocumentWidget *d) {
     setWidth_GmDocument(d->doc, documentWidth_DocumentWidget_(d));
-    clear_Array(&d->wideRunOffsets);
+    resetWideRuns_DocumentWidget_(d);
     updateSideIconBuf_DocumentWidget_(d);
     updateOutline_DocumentWidget_(d);
     updateVisible_DocumentWidget_(d);
