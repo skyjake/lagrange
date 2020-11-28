@@ -105,21 +105,10 @@ struct Impl_App {
     iBool        isFinishedLaunching;
     iTime        lastDropTime; /* for detecting drops of multiple items */
     /* Preferences: */
-    iBool        commandEcho; /* --echo */
+    iBool        commandEcho;         /* --echo */
     iBool        forceSoftwareRender; /* --sw */
     iRect        initialWindowRect;
     iPrefs       prefs;
-#if 0
-    iBool        retainWindowSize;
-    float        uiScale;
-    int          zoomPercent;
-    iBool        forceWrap;
-    enum iColorTheme theme;
-    iBool        useSystemTheme;
-    iString      gopherProxy;
-    iString      httpProxy;
-    iString      downloadDir;
-#endif
 };
 
 static iApp app_;
@@ -171,9 +160,6 @@ static iString *serializePrefs_App_(const iApp *d) {
     }
     if (isVisible_Widget(sidebar)) {
         appendCStr_String(str, "sidebar.toggle\n");
-    }
-    if (d->prefs.forceLineWrap) {
-        appendFormat_String(str, "forcewrap.toggle\n");
     }
     appendFormat_String(str, "sidebar.mode arg:%d\n", mode_SidebarWidget(sidebar));
     appendFormat_String(str, "uiscale arg:%f\n", uiScale_Window(d->window));
@@ -617,10 +603,6 @@ const iPrefs *prefs_App(void) {
     return &app_.prefs;
 }
 
-iBool forceLineWrap_App(void) {
-    return app_.prefs.forceLineWrap;
-}
-
 iBool forceSoftwareRender_App(void) {
     if (app_.forceSoftwareRender) {
         return iTrue;
@@ -983,11 +965,6 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "imageloadscroll")) {
         d->prefs.loadImageInsteadOfScrolling = arg_Command(cmd);
-        return iTrue;
-    }
-    else if (equal_Command(cmd, "forcewrap.toggle")) {
-        d->prefs.forceLineWrap = !d->prefs.forceLineWrap;
-        updateSize_DocumentWidget(document_App());
         return iTrue;
     }
     else if (equal_Command(cmd, "theme.set")) {

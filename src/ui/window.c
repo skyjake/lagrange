@@ -155,8 +155,6 @@ static const iMenuItem viewMenuItems_[] = {
     { "Zoom In", SDLK_EQUALS, KMOD_PRIMARY, "zoom.delta arg:10" },
     { "Zoom Out", SDLK_MINUS, KMOD_PRIMARY, "zoom.delta arg:-10" },
     { "Reset Zoom", SDLK_0, KMOD_PRIMARY, "zoom.set arg:100" },
-    { "---", 0, 0, NULL },
-    { "Wrap Preformatted", 0, 0, "forcewrap.toggle" } /* TODO: remove this; should scroll preformatted */
 };
 
 static iMenuItem bookmarksMenuItems_[] = {

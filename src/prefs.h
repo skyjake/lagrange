@@ -58,7 +58,6 @@ struct Impl_Prefs {
     iBool            monospaceGopher;
     int              lineWidth;
     iBool            bigFirstParagraph;
-    iBool            forceLineWrap;
     iBool            quoteIcon;
     /* Colors */
     enum iGmDocumentTheme docThemeDark;

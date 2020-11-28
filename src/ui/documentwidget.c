@@ -317,6 +317,7 @@ static iRect siteBannerRect_DocumentWidget_(const iDocumentWidget *d) {
     return moved_Rect(banner->visBounds, origin);
 }
 
+#if 0
 static int forceBreakWidth_DocumentWidget_(const iDocumentWidget *d) {
     if (equalCase_Rangecc(urlScheme_String(d->mod.url), "gopher")) {
         return documentWidth_DocumentWidget_(d);
@@ -328,6 +329,7 @@ static int forceBreakWidth_DocumentWidget_(const iDocumentWidget *d) {
     }
     return 0;
 }
+#endif
 
 static iInt2 documentPos_DocumentWidget_(const iDocumentWidget *d, iInt2 pos) {
     return addY_I2(sub_I2(pos, topLeft_Rect(documentBounds_DocumentWidget_(d))),
@@ -691,8 +693,7 @@ static void updateOutline_DocumentWidget_(iDocumentWidget *d) {
 
 static void setSource_DocumentWidget_(iDocumentWidget *d, const iString *source) {
     setUrl_GmDocument(d->doc, d->mod.url);
-    setSource_GmDocument(
-        d->doc, source, documentWidth_DocumentWidget_(d), forceBreakWidth_DocumentWidget_(d));
+    setSource_GmDocument(d->doc, source, documentWidth_DocumentWidget_(d));
     d->foundMark       = iNullRange;
     d->selectMark      = iNullRange;
     d->hoverLink       = NULL;
@@ -1354,8 +1355,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         const char *midLoc = (mid ? mid->text.start : NULL);
         /* Alt/Option key may be involved in window size changes. */
         iChangeFlags(d->flags, showLinkNumbers_DocumentWidgetFlag, iFalse);
-        setWidth_GmDocument(
-            d->doc, documentWidth_DocumentWidget_(d), forceBreakWidth_DocumentWidget_(d));
+        setWidth_GmDocument(d->doc, documentWidth_DocumentWidget_(d));
         scroll_DocumentWidget_(d, 0);
         if (midLoc) {
             mid = findRunAtLoc_GmDocument(d->doc, midLoc);
@@ -2948,8 +2948,7 @@ iBool isRequestOngoing_DocumentWidget(const iDocumentWidget *d) {
 }
 
 void updateSize_DocumentWidget(iDocumentWidget *d) {
-    setWidth_GmDocument(
-        d->doc, documentWidth_DocumentWidget_(d), forceBreakWidth_DocumentWidget_(d));
+    setWidth_GmDocument(d->doc, documentWidth_DocumentWidget_(d));
     updateSideIconBuf_DocumentWidget_(d);
     updateOutline_DocumentWidget_(d);
     updateVisible_DocumentWidget_(d);

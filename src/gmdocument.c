@@ -64,7 +64,6 @@ struct Impl_GmDocument {
     iString   source;
     iString   url; /* for resolving relative links */
     iString   localHost;
-    int       forceBreakWidth; /* force breaks on very long preformatted lines */
     iBool     siteBannerEnabled;
     iInt2     size;
     iArray    layout; /* contents of source, laid out in document space */
@@ -510,7 +509,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             }
             run.bounds.pos = addX_I2(pos, indent * gap_Text);
             const char *contPos;
-            const int   avail = (isPreformat ? d->forceBreakWidth : d->size.x) - run.bounds.pos.x;
+            const int   avail = d->size.x - run.bounds.pos.x;
             const iInt2 dims  = tryAdvance_Text(run.font, runLine, avail, &contPos);
             run.bounds.size.x = iMax(avail, dims.x); /* Extends to the right edge for selection. */
             run.bounds.size.y = dims.y;
@@ -1073,8 +1072,7 @@ void setSiteBannerEnabled_GmDocument(iGmDocument *d, iBool siteBannerEnabled) {
     d->siteBannerEnabled = siteBannerEnabled;
 }
 
-void setWidth_GmDocument(iGmDocument *d, int width, int forceBreakWidth) {
-    d->forceBreakWidth = forceBreakWidth;
+void setWidth_GmDocument(iGmDocument *d, int width) {
     d->size.x = width;
     doLayout_GmDocument_(d); /* TODO: just flag need-layout and do it later */
 }
@@ -1159,10 +1157,10 @@ void setUrl_GmDocument(iGmDocument *d, const iString *url) {
     setRange_String(&d->localHost, parts.host);
 }
 
-void setSource_GmDocument(iGmDocument *d, const iString *source, int width, int forceBreakWidth) {
+void setSource_GmDocument(iGmDocument *d, const iString *source, int width) {
     set_String(&d->source, source);
     normalize_GmDocument(d);
-    setWidth_GmDocument(d, width, forceBreakWidth); /* re-do layout */
+    setWidth_GmDocument(d, width); /* re-do layout */
 }
 
 void render_GmDocument(const iGmDocument *d, iRangei visRangeY, iGmDocumentRenderFunc render,

@@ -80,6 +80,7 @@ enum iGmRunFlags {
     endOfLine_GmRunFlag   = iBit(3),
     siteBanner_GmRunFlag  = iBit(4), /* area reserved for the site banner */
     quoteBorder_GmRunFlag = iBit(5),
+    wide_GmRunFlag        = iBit(6), /* horizontally scrollable */
 };
 
 struct Impl_GmRun {
@@ -108,10 +109,10 @@ enum iGmDocumentFormat {
 void    setThemeSeed_GmDocument (iGmDocument *, const iBlock *seed);
 void    setFormat_GmDocument    (iGmDocument *, enum iGmDocumentFormat format);
 void    setSiteBannerEnabled_GmDocument(iGmDocument *, iBool siteBannerEnabled);
-void    setWidth_GmDocument     (iGmDocument *, int width, int forceBreakWidth);
+void    setWidth_GmDocument     (iGmDocument *, int width);
 void    redoLayout_GmDocument   (iGmDocument *);
 void    setUrl_GmDocument       (iGmDocument *, const iString *url);
-void    setSource_GmDocument    (iGmDocument *, const iString *source, int width, int forceBreakWidth);
+void    setSource_GmDocument    (iGmDocument *, const iString *source, int width);
 
 void    reset_GmDocument        (iGmDocument *); /* free images */
 
