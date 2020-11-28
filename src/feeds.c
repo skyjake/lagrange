@@ -393,16 +393,30 @@ static void load_Feeds_(iFeeds *d) {
                     break;
                 }
                 case 2: {
+                    /* TODO: All right, this could maybe use a bit more robust, structured
+                       format. The code below is messy. */
                     const uint32_t feedId = strtoul(line.start, NULL, 16);
-                    if (!nextSplit_Rangecc(range_Block(src), "\n", &line)) break;
+                    if (!nextSplit_Rangecc(range_Block(src), "\n", &line)) {
+                        goto aborted;
+                    }
                     const unsigned long long posted = strtoull(line.start, NULL, 10);
-                    if (posted == 0) break;
-                    if (!nextSplit_Rangecc(range_Block(src), "\n", &line)) break;
+                    if (posted == 0) {
+                        goto aborted;
+                    }
+                    if (!nextSplit_Rangecc(range_Block(src), "\n", &line)) {
+                        goto aborted;
+                    }
                     const unsigned long long discovered = strtoull(line.start, NULL, 10);
-                    if (discovered == 0) break;
-                    if (!nextSplit_Rangecc(range_Block(src), "\n", &line)) break;
+                    if (discovered == 0) {
+                        goto aborted;
+                    }
+                    if (!nextSplit_Rangecc(range_Block(src), "\n", &line)) {
+                        goto aborted;
+                    }
                     const iRangecc urlRange = line;
-                    if (!nextSplit_Rangecc(range_Block(src), "\n", &line)) break;
+                    if (!nextSplit_Rangecc(range_Block(src), "\n", &line)) {
+                        goto aborted;
+                    }
                     const iRangecc titleRange = line;
                     iString *url   = newRange_String(urlRange);
                     iString *title = newRange_String(titleRange);
@@ -423,6 +437,7 @@ static void load_Feeds_(iFeeds *d) {
                 }
             }
         }
+    aborted:
         /* Cleanup. */
         delete_Block(src);
         iForEach(Hash, i, feeds) {
