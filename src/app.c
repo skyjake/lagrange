@@ -469,7 +469,7 @@ const iString *debugInfo_App(void) {
     return msg;
 }
 
-iLocalDef iBool isWaitingAllowed_App_(const iApp *d) {
+iLocalDef iBool isWaitingAllowed_App_(iApp *d) {
     return !value_Atomic(&d->pendingRefresh) && isEmpty_SortedArray(&d->tickers);
 }
 
