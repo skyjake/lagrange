@@ -19,6 +19,7 @@
 * Fixed large downloads (10 MB+) stopping prematurely due to a decryption error.
 * Fixed build on FreeBSD (tested on 12.1).
 * Fixed displaying of "about:" URLs in history.
+* Fixed window contents not being updated during window resizing.
 * macOS: Control-Click works as a right mouse click.
 * Unix: Location of `xdg-open` is no longer hardcoded.
 

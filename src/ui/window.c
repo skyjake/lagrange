@@ -700,7 +700,6 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
             return iTrue;
         }
         case SDL_WINDOWEVENT_RESIZED:
-//        case SDL_WINDOWEVENT_SIZE_CHANGED:
             if (!isMaximized_Window_(d) && !d->isDrawFrozen) {
                 d->lastRect.size = init_I2(ev->data1, ev->data2);
             }
