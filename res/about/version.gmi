@@ -7,7 +7,7 @@
 # Release notes
 
 ## 0.11
-* Added feed subscriptions. A subscription is any bookmark with the "subscribed" tag. Subscriptions are refreshed in the background every two hours while Lagrange is running.
+* Added feed subscriptions. A subscription is any bookmark with the "subscribed" tag. Subscriptions are refreshed in the background while Lagrange is running.
 * Added a new sidebar tab for feeds.
 * Added "about:feeds" to show entries from all subscriptions on one page.
 * Added icons for special bookmark tags, and context menu items for toggling "homepage" and "subscribed".
