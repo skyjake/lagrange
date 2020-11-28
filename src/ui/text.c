@@ -165,6 +165,7 @@ static iText text_;
 static void initFonts_Text_(iText *d) {
     const float textSize = fontSize_UI * d->contentFontSize;
     const float monoSize = fontSize_UI * d->contentFontSize / contentScale_Text_ * 0.866f;
+    const float smallMonoSize = monoSize * 0.866f;
     const iBlock *regularFont  = &fontNunitoRegular_Embedded;
     const iBlock *italicFont   = &fontNunitoLightItalic_Embedded;
     const iBlock *h12Font      = &fontNunitoExtraBold_Embedded;
@@ -218,7 +219,7 @@ static void initFonts_Text_(iText *d) {
         /* content fonts */
         { regularFont,                        textSize,             scaling,      symbols_FontId },
         { &fontFiraMonoRegular_Embedded,      monoSize,             1.0f,         monospaceSymbols_FontId },
-        { &fontFiraMonoRegular_Embedded,      monoSize * 0.750f,    1.0f,         monospaceSmallSymbols_FontId },
+        { &fontFiraMonoRegular_Embedded,      smallMonoSize,        1.0f,         monospaceSmallSymbols_FontId },
         { regularFont,                        textSize * 1.200f,    scaling,      mediumSymbols_FontId },
         { h3Font,                             textSize * 1.333f,    h123Scaling,  bigSymbols_FontId },
         { italicFont,                         textSize,             scaling,      symbols_FontId },
@@ -237,7 +238,7 @@ static void initFonts_Text_(iText *d) {
         { &fontSymbola_Embedded,              textSize * 1.666f,    1.0f, largeSymbols_FontId },
         { &fontSymbola_Embedded,              textSize * 2.000f,    1.0f, hugeSymbols_FontId },
         { &fontSymbola_Embedded,              monoSize,             1.0f, monospaceSymbols_FontId },
-        { &fontSymbola_Embedded,              monoSize * 0.750f,    1.0f, monospaceSmallSymbols_FontId },
+        { &fontSymbola_Embedded,              smallMonoSize,        1.0f, monospaceSmallSymbols_FontId },
         /* emoji fonts */
         { &fontNotoEmojiRegular_Embedded,     fontSize_UI,          1.0f, defaultSymbols_FontId },
         { &fontNotoEmojiRegular_Embedded,     fontSize_UI * 1.125f, 1.0f, defaultMediumSymbols_FontId },
@@ -248,10 +249,10 @@ static void initFonts_Text_(iText *d) {
         { &fontNotoEmojiRegular_Embedded,     textSize * 1.666f,    1.0f, largeSymbols_FontId },
         { &fontNotoEmojiRegular_Embedded,     textSize * 2.000f,    1.0f, hugeSymbols_FontId },
         { &fontNotoEmojiRegular_Embedded,     monoSize,             1.0f, monospaceSymbols_FontId },
-        { &fontNotoEmojiRegular_Embedded,     monoSize * 0.750f,    1.0f, monospaceSmallSymbols_FontId },
+        { &fontNotoEmojiRegular_Embedded,     smallMonoSize,        1.0f, monospaceSmallSymbols_FontId },
         /* japanese fonts */
         { &fontNotoSansJPRegular_Embedded,    fontSize_UI,          1.0f, defaultSymbols_FontId },
-        { &fontNotoSansJPRegular_Embedded,    monoSize * 0.750,     1.0f, monospaceSmallSymbols_FontId },
+        { &fontNotoSansJPRegular_Embedded,    smallMonoSize,        1.0f, monospaceSmallSymbols_FontId },
         { &fontNotoSansJPRegular_Embedded,    monoSize,             1.0f, monospaceSymbols_FontId },
         { &fontNotoSansJPRegular_Embedded,    textSize,             1.0f, symbols_FontId },
         { &fontNotoSansJPRegular_Embedded,    textSize * 1.200f,    1.0f, mediumSymbols_FontId },
@@ -260,7 +261,7 @@ static void initFonts_Text_(iText *d) {
         { &fontNotoSansJPRegular_Embedded,    textSize * 2.000f,    1.0f, hugeSymbols_FontId },
         /* korean fonts */
         { &fontNanumGothicRegular_Embedded,   fontSize_UI,          1.0f, defaultSymbols_FontId },
-        { &fontNanumGothicRegular_Embedded,   monoSize * 0.750,     1.0f, monospaceSmallSymbols_FontId },
+        { &fontNanumGothicRegular_Embedded,   smallMonoSize,        1.0f, monospaceSmallSymbols_FontId },
         { &fontNanumGothicRegular_Embedded,   monoSize,             1.0f, monospaceSymbols_FontId },
         { &fontNanumGothicRegular_Embedded,   textSize,             1.0f, symbols_FontId },
         { &fontNanumGothicRegular_Embedded,   textSize * 1.200f,    1.0f, mediumSymbols_FontId },

@@ -51,6 +51,7 @@ struct Impl_Window {
 
 iBool       processEvent_Window     (iWindow *, const SDL_Event *);
 void        draw_Window             (iWindow *);
+void        drawWhileResizing_Window(iWindow *d, int w, int h); /* workaround for SDL bug */
 void        resize_Window           (iWindow *, int w, int h);
 void        setTitle_Window         (iWindow *, const iString *title);
 void        setUiScale_Window       (iWindow *, float uiScale);

@@ -68,12 +68,15 @@ void                setUrl_GmRequest            (iGmRequest *, const iString *ur
 void                submit_GmRequest            (iGmRequest *);
 void                cancel_GmRequest            (iGmRequest *);
 
+iGmResponse *       lockResponse_GmRequest      (iGmRequest *);
+void                unlockResponse_GmRequest    (iGmRequest *);
+
 iBool               isFinished_GmRequest        (const iGmRequest *);
 enum iGmStatusCode  status_GmRequest            (const iGmRequest *);
 const iString *     meta_GmRequest              (const iGmRequest *);
 const iBlock  *     body_GmRequest              (const iGmRequest *);
+size_t              bodySize_GmRequest          (const iGmRequest *);
 const iString *     url_GmRequest               (const iGmRequest *);
-const iGmResponse * response_GmRequest          (const iGmRequest *);
 
 int                 certFlags_GmRequest         (const iGmRequest *);
 iDate               certExpirationDate_GmRequest(const iGmRequest *);

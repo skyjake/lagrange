@@ -97,19 +97,22 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
 
 #if !defined (iHaveNativeMenus)
 /* TODO: Submenus wouldn't hurt here. */
-static const iMenuItem navMenuItems[] = {
+static const iMenuItem navMenuItems_[] = {
     { "New Tab", 't', KMOD_PRIMARY, "tabs.new" },
     { "Open Location...", SDLK_l, KMOD_PRIMARY, "navigate.focus" },
     { "---", 0, 0, NULL },
     { "Save to Downloads", SDLK_s, KMOD_PRIMARY, "document.save" },
     { "---", 0, 0, NULL },
     { "Copy Source Text", SDLK_c, KMOD_PRIMARY, "copy" },
-    { "Bookmark This Page", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
+    { "Bookmark Page", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
+    { "Subscribe to Page", 0, 0, "bookmark.addtag tag:subscribed" },
     { "---", 0, 0, NULL },
     { "Toggle Sidebar", SDLK_l, KMOD_PRIMARY | KMOD_SHIFT, "sidebar.toggle" },
     { "Zoom In", SDLK_EQUALS, KMOD_PRIMARY, "zoom.delta arg:10" },
     { "Zoom Out", SDLK_MINUS, KMOD_PRIMARY, "zoom.delta arg:-10" },
     { "Reset Zoom", SDLK_0, KMOD_PRIMARY, "zoom.set arg:100" },
+    { "---", 0, 0, NULL },
+    { "Show Feed Entries", 0, 0, "!open url:about:feeds" },
     { "---", 0, 0, NULL },
     { "Preferences...", SDLK_COMMA, KMOD_PRIMARY, "preferences" },
     { "Help", SDLK_F1, 0, "!open url:about:help" },
@@ -121,31 +124,26 @@ static const iMenuItem navMenuItems[] = {
 
 #if defined (iHaveNativeMenus)
 /* Using native menus. */
-static const iMenuItem fileMenuItems[] = {
+static const iMenuItem fileMenuItems_[] = {
     { "New Tab", SDLK_t, KMOD_PRIMARY, "tabs.new" },
     { "Open Location...", SDLK_l, KMOD_PRIMARY, "navigate.focus" },
     { "---", 0, 0, NULL },
     { "Save to Downloads", SDLK_s, KMOD_PRIMARY, "document.save" },
 };
 
-static const iMenuItem editMenuItems[] = {
+static const iMenuItem editMenuItems_[] = {
     { "Copy", SDLK_c, KMOD_PRIMARY, "copy" },
     { "Copy Link to Page", SDLK_c, KMOD_PRIMARY | KMOD_SHIFT, "document.copylink" },
     { "---", 0, 0, NULL },
     { "Find", SDLK_f, KMOD_PRIMARY, "focus.set id:find.input" },
-    { "---", 0, 0, NULL },
-    { "Bookmark This Page...", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
 };
 
-static const iMenuItem identityMenuItems[] = {
-    { "New Identity...", SDLK_n, KMOD_PRIMARY | KMOD_SHIFT, "ident.new" },
-};
-
-static const iMenuItem viewMenuItems[] = {
+static const iMenuItem viewMenuItems_[] = {
     { "Show Bookmarks", '1', KMOD_PRIMARY, "sidebar.mode arg:0 toggle:1" },
-    { "Show History", '2', KMOD_PRIMARY, "sidebar.mode arg:1 toggle:1" },
-    { "Show Identities", '3', KMOD_PRIMARY, "sidebar.mode arg:2 toggle:1" },
-    { "Show Page Outline", '4', KMOD_PRIMARY, "sidebar.mode arg:3 toggle:1" },
+    { "Show Feeds", '2', KMOD_PRIMARY, "sidebar.mode arg:1 toggle:1" },
+    { "Show History", '3', KMOD_PRIMARY, "sidebar.mode arg:2 toggle:1" },
+    { "Show Identities", '4', KMOD_PRIMARY, "sidebar.mode arg:3 toggle:1" },
+    { "Show Page Outline", '5', KMOD_PRIMARY, "sidebar.mode arg:4 toggle:1" },
     { "Toggle Sidebar", SDLK_l, KMOD_PRIMARY | KMOD_SHIFT, "sidebar.toggle" },
     { "---", 0, 0, NULL },
     { "Go Back", SDLK_LEFTBRACKET, KMOD_PRIMARY, "navigate.back" },
@@ -157,27 +155,38 @@ static const iMenuItem viewMenuItems[] = {
     { "Zoom In", SDLK_EQUALS, KMOD_PRIMARY, "zoom.delta arg:10" },
     { "Zoom Out", SDLK_MINUS, KMOD_PRIMARY, "zoom.delta arg:-10" },
     { "Reset Zoom", SDLK_0, KMOD_PRIMARY, "zoom.set arg:100" },
-    { "---", 0, 0, NULL },
-    { "Wrap Preformatted", 0, 0, "forcewrap.toggle" }
 };
 
-static const iMenuItem helpMenuItems[] = {
+static iMenuItem bookmarksMenuItems_[] = {
+    { "Bookmark This Page...", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
+    { "---", 0, 0, NULL },
+    { "Subscribe to This Page", 0, 0, "bookmark.addtag tag:subscribed" },
+    { "---", 0, 0, NULL },
+    { "Show Feed Entries", 0, 0, "open url:about:feeds" },
+    { "Refresh Feeds", SDLK_r, KMOD_PRIMARY | KMOD_SHIFT, "feeds.refresh" },
+};
+
+static const iMenuItem identityMenuItems_[] = {
+    { "New Identity...", SDLK_n, KMOD_PRIMARY | KMOD_SHIFT, "ident.new" },
+};
+
+static const iMenuItem helpMenuItems_[] = {
     { "Help", 0, 0, "!open url:about:help" },
     { "Release Notes", 0, 0, "!open url:about:version" },
 };
 #endif
 
-static const iMenuItem identityButtonMenuItems[] = {
+static const iMenuItem identityButtonMenuItems_[] = {
     { "No Active Identity", 0, 0, "ident.showactive" },
     { "---", 0, 0, NULL },
 #if !defined (iHaveNativeMenus)
     { "New Identity...", SDLK_n, KMOD_PRIMARY | KMOD_SHIFT, "ident.new" },
     { "---", 0, 0, NULL },
-    { "Show Identities", '3', KMOD_PRIMARY, "sidebar.mode arg:2 show:1" },
+    { "Show Identities", '4', KMOD_PRIMARY, "sidebar.mode arg:3 show:1" },
 #else
     { "New Identity...", 0, 0, "ident.new" },
     { "---", 0, 0, NULL },
-    { "Show Identities", 0, 0, "sidebar.mode arg:2 show:1" },
+    { "Show Identities", 0, 0, "sidebar.mode arg:3 show:1" },
 #endif
 };
 
@@ -376,7 +385,7 @@ static void setupUserInterface_Window(iWindow *d) {
         addChild_Widget(navBar, iClob(newIcon_LabelWidget("\U0001f870", 0, 0, "navigate.back")));
         addChild_Widget(navBar, iClob(newIcon_LabelWidget("\U0001f872", 0, 0, "navigate.forward")));
         iLabelWidget *idMenu = makeMenuButton_LabelWidget(
-            "\U0001f464", identityButtonMenuItems, iElemCount(identityButtonMenuItems));
+            "\U0001f464", identityButtonMenuItems_, iElemCount(identityButtonMenuItems_));
         setAlignVisually_LabelWidget(idMenu, iTrue);
         addChild_Widget(navBar, iClob(idMenu));
         setId_Widget(as_Widget(idMenu), "navbar.ident");
@@ -394,16 +403,29 @@ static void setupUserInterface_Window(iWindow *d) {
             setNotifyEdits_InputWidget(url, iTrue);
             setTextCStr_InputWidget(url, "gemini://");
             addChildFlags_Widget(navBar, iClob(url), expand_WidgetFlag);
-            /* Download progress indicator is inside the input field, but hidden normally. */
             setPadding_Widget(as_Widget(url),0, 0, gap_UI * 1, 0);
-            iLabelWidget *progress = new_LabelWidget(uiTextCaution_ColorEscape "00.000 MB", NULL);
-            setId_Widget(as_Widget(progress), "document.progress");
-            setAlignVisually_LabelWidget(progress, iTrue);
-            shrink_Rect(&as_Widget(progress)->rect, init_I2(0, gap_UI));
-            addChildFlags_Widget(as_Widget(url),
-                                 iClob(progress),
-                                 moveToParentRightEdge_WidgetFlag);
-            setBackgroundColor_Widget(as_Widget(progress), uiBackground_ColorId);
+            /* Feeds refresh indicator is inside the input field. */ {
+                iLabelWidget *fprog = new_LabelWidget(uiTextCaution_ColorEscape
+                                                      "\u2605 Refreshing Feeds...", NULL);
+                setId_Widget(as_Widget(fprog), "feeds.progress");
+                setBackgroundColor_Widget(as_Widget(fprog), uiBackground_ColorId);
+                setAlignVisually_LabelWidget(fprog, iTrue);
+                shrink_Rect(&as_Widget(fprog)->rect, init_I2(0, gap_UI));
+                addChildFlags_Widget(as_Widget(url),
+                                     iClob(fprog),
+                                     moveToParentRightEdge_WidgetFlag | hidden_WidgetFlag);
+            }
+            /* Download progress indicator is also inside the input field, but hidden normally.
+               TODO: It shouldn't overlap the feeds indicator... */ {
+                iLabelWidget *progress = new_LabelWidget(uiTextCaution_ColorEscape "00.000 MB", NULL);
+                setId_Widget(as_Widget(progress), "document.progress");
+                setBackgroundColor_Widget(as_Widget(progress), uiBackground_ColorId);
+                setAlignVisually_LabelWidget(progress, iTrue);
+                shrink_Rect(&as_Widget(progress)->rect, init_I2(0, gap_UI));
+                addChildFlags_Widget(as_Widget(url),
+                                     iClob(progress),
+                                     moveToParentRightEdge_WidgetFlag);
+            }
         }
         setId_Widget(addChild_Widget(
                          navBar, iClob(newIcon_LabelWidget(reloadCStr_, 0, 0, "navigate.reload"))),
@@ -413,15 +435,16 @@ static void setupUserInterface_Window(iWindow *d) {
                             "\U0001f3e0", SDLK_h, KMOD_PRIMARY | KMOD_SHIFT, "navigate.home")));
 #if !defined (iHaveNativeMenus)
         iLabelWidget *navMenu =
-            makeMenuButton_LabelWidget("\U0001d362", navMenuItems, iElemCount(navMenuItems));
+            makeMenuButton_LabelWidget("\U0001d362", navMenuItems_, iElemCount(navMenuItems_));
         setAlignVisually_LabelWidget(navMenu, iTrue);
         addChild_Widget(navBar, iClob(navMenu));
 #else
-        insertMenuItems_MacOS("File", 1, fileMenuItems, iElemCount(fileMenuItems));
-        insertMenuItems_MacOS("Edit", 2, editMenuItems, iElemCount(editMenuItems));
-        insertMenuItems_MacOS("View", 3, viewMenuItems, iElemCount(viewMenuItems));
-        insertMenuItems_MacOS("Identity", 4, identityMenuItems, iElemCount(identityMenuItems));
-        insertMenuItems_MacOS("Help", 6, helpMenuItems, iElemCount(helpMenuItems));
+        insertMenuItems_MacOS("File", 1, fileMenuItems_, iElemCount(fileMenuItems_));
+        insertMenuItems_MacOS("Edit", 2, editMenuItems_, iElemCount(editMenuItems_));
+        insertMenuItems_MacOS("View", 3, viewMenuItems_, iElemCount(viewMenuItems_));
+        insertMenuItems_MacOS("Bookmarks", 4, bookmarksMenuItems_, iElemCount(bookmarksMenuItems_));
+        insertMenuItems_MacOS("Identity", 5, identityMenuItems_, iElemCount(identityMenuItems_));
+        insertMenuItems_MacOS("Help", 7, helpMenuItems_, iElemCount(helpMenuItems_));
 #endif
     }
     /* Tab bar. */ {
@@ -485,18 +508,27 @@ static void setupUserInterface_Window(iWindow *d) {
         addAction_Widget(d->root, '2', KMOD_PRIMARY, "sidebar.mode arg:1 toggle:1");
         addAction_Widget(d->root, '3', KMOD_PRIMARY, "sidebar.mode arg:2 toggle:1");
         addAction_Widget(d->root, '4', KMOD_PRIMARY, "sidebar.mode arg:3 toggle:1");
+        addAction_Widget(d->root, '5', KMOD_PRIMARY, "sidebar.mode arg:4 toggle:1");
     }
 }
 
-static void updateRootSize_Window_(iWindow *d) {
+static void updateRootSize_Window_(iWindow *d, iBool notifyAlways) {
     iInt2 *size = &d->root->rect.size;
     const iInt2 oldSize = *size;
     SDL_GetRendererOutputSize(d->render, &size->x, &size->y);
-    if (!isEqual_I2(oldSize, *size)) {
+    if (notifyAlways || !isEqual_I2(oldSize, *size)) {
         arrange_Widget(d->root);
         postCommandf_App("window.resized width:%d height:%d", size->x, size->y);
         postRefresh_App();
     }
+}
+
+void drawWhileResizing_Window(iWindow *d, int w, int h) {
+    /* This is called while a window resize is in progress, so we can be pretty confident
+       the size has actually changed. */
+    d->root->rect.size = coord_Window(d, w, h);
+    arrange_Widget(d->root);
+    draw_Window(d);
 }
 
 static float pixelRatio_Window_(const iWindow *d) {
@@ -605,7 +637,7 @@ void init_Window(iWindow *d, iRect rect) {
     init_Text(d->render);
     setupUserInterface_Window(d);
     postCommand_App("bindings.changed"); /* update from bindings */
-    updateRootSize_Window_(d);
+    updateRootSize_Window_(d, iFalse);
 }
 
 void deinit_Window(iWindow *d) {
@@ -666,11 +698,10 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
             return iTrue;
         }
         case SDL_WINDOWEVENT_RESIZED:
-        case SDL_WINDOWEVENT_SIZE_CHANGED:
             if (!isMaximized_Window_(d) && !d->isDrawFrozen) {
                 d->lastRect.size = init_I2(ev->data1, ev->data2);
             }
-            updateRootSize_Window_(d);
+            updateRootSize_Window_(d, iTrue /* we were already redrawing during the resize */);
             return iTrue;
         case SDL_WINDOWEVENT_LEAVE:
             unhover_Widget();
@@ -810,7 +841,7 @@ void draw_Window(iWindow *d) {
 
 void resize_Window(iWindow *d, int w, int h) {
     SDL_SetWindowSize(d->win, w, h);
-    updateRootSize_Window_(d);
+    updateRootSize_Window_(d, iFalse);
 }
 
 void setTitle_Window(iWindow *d, const iString *title) {

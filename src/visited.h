@@ -31,6 +31,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 iDeclareType(VisitedUrl)
 iDeclareTypeConstruction(VisitedUrl)
 
+extern const int maxAge_Visited; /* seconds */
+
 struct Impl_VisitedUrl {
     iString  url;
     iTime    when;
@@ -51,5 +53,6 @@ void    save_Visited            (const iVisited *, const char *dirPath);
 iTime   urlVisitTime_Visited    (const iVisited *, const iString *url);
 void    visitUrl_Visited        (iVisited *, const iString *url, uint16_t visitFlags); /* adds URL to the visited URLs set */
 void    removeUrl_Visited       (iVisited *, const iString *url);
+iBool   containsUrl_Visited     (const iVisited *, const iString *url);
 
 const iPtrArray *  list_Visited (const iVisited *, size_t count); /* returns collected */

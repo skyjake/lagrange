@@ -20,24 +20,28 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-#pragma once
+#include <the_Foundation/ptrarray.h>
+#include <the_Foundation/string.h>
+#include <the_Foundation/time.h>
 
-#include "widget.h"
+iDeclareType(FeedEntry)
+iDeclareTypeConstruction(FeedEntry)
 
-enum iSidebarMode {
-    bookmarks_SidebarMode,
-    feeds_SidebarMode,
-    history_SidebarMode,
-    identities_SidebarMode,
-    documentOutline_SidebarMode,
-    max_SidebarMode
+struct Impl_FeedEntry {
+    iTime posted;
+    iTime discovered;
+    iString url;
+    iString title;
+    uint32_t bookmarkId; /* note: runtime only, not a persistent ID */
 };
 
-iDeclareWidgetClass(SidebarWidget)
-iDeclareObjectConstruction(SidebarWidget)
+void    init_Feeds              (const char *saveDir);
+void    deinit_Feeds            (void);
+void    refresh_Feeds           (void);
+void    removeEntries_Feeds     (uint32_t feedBookmarkId);
 
-iBool               setMode_SidebarWidget   (iSidebarWidget *, enum iSidebarMode mode);
+void    refreshFinished_Feeds   (void); /* called on "feeds.update.finished" */
 
-enum iSidebarMode   mode_SidebarWidget      (const iSidebarWidget *);
-int                 width_SidebarWidget     (const iSidebarWidget *);
-void                setWidth_SidebarWidget  (iSidebarWidget *, int width);
+const iPtrArray *   listEntries_Feeds   (void);
+const iString *     entryListPage_Feeds (void);
+size_t              numSubscribed_Feeds (void);

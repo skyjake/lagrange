@@ -41,6 +41,28 @@ void deinit_Bookmark(iBookmark *d) {
     deinit_String(&d->url);
 }
 
+iBool hasTag_Bookmark(const iBookmark *d, const char *tag) {
+    iRegExp *pattern = new_RegExp(format_CStr("\\b%s\\b", tag), caseSensitive_RegExpOption);
+    iRegExpMatch m;
+    init_RegExpMatch(&m);
+    const iBool found = matchString_RegExp(pattern, &d->tags, &m);
+    iRelease(pattern);
+    return found;
+}
+
+void addTag_Bookmark(iBookmark *d, const char *tag) {
+    if (!isEmpty_String(&d->tags)) {
+        appendChar_String(&d->tags, ' ');
+    }
+    appendCStr_String(&d->tags, tag);
+}
+
+void removeTag_Bookmark(iBookmark *d, const char *tag) {
+    const size_t pos = indexOfCStr_String(&d->tags, tag);
+    remove_Block(&d->tags.chars, pos, strlen(tag));
+    trim_String(&d->tags);
+}
+
 iDefineTypeConstruction(Bookmark)
 
 static int cmpTimeDescending_Bookmark_(const iBookmark **a, const iBookmark **b) {
@@ -54,7 +76,7 @@ static const char *fileName_Bookmarks_ = "bookmarks.txt";
 struct Impl_Bookmarks {
     iMutex *mtx;
     int     idEnum;
-    iHash   bookmarks;
+    iHash   bookmarks; /* bookmark ID is the hash key */
 };
 
 iDefineTypeConstruction(Bookmarks)
@@ -171,6 +193,17 @@ iBool filterTagsRegExp_Bookmarks(void *regExp, const iBookmark *bm) {
     iRegExpMatch m;
     init_RegExpMatch(&m);
     return matchString_RegExp(regExp, &bm->tags, &m);
+}
+
+static iBool matchUrl_(void *url, const iBookmark *bm) {
+    return equalCase_String(url, &bm->url);
+}
+
+uint32_t findUrl_Bookmarks(const iBookmarks *d, const iString *url) {
+    /* TODO: O(n), boo */
+    const iPtrArray *found = list_Bookmarks(d, NULL, matchUrl_, (void *) url);
+    if (isEmpty_PtrArray(found)) return 0;
+    return id_Bookmark(constFront_PtrArray(found));
 }
 
 const iPtrArray *list_Bookmarks(const iBookmarks *d, iBookmarksCompareFunc cmp,

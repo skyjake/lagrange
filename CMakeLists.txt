@@ -18,7 +18,7 @@
 cmake_minimum_required (VERSION 3.9)
 
 project (Lagrange
-    VERSION 0.10.0
+    VERSION 0.11.0
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
@@ -95,6 +95,8 @@ set (SOURCES
     src/bookmarks.c
     src/bookmarks.h
     src/defs.h
+    src/feeds.c
+    src/feeds.h
     src/gmcerts.c
     src/gmcerts.h
     src/gmdocument.c

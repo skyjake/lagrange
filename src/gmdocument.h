@@ -80,6 +80,7 @@ enum iGmRunFlags {
     endOfLine_GmRunFlag   = iBit(3),
     siteBanner_GmRunFlag  = iBit(4), /* area reserved for the site banner */
     quoteBorder_GmRunFlag = iBit(5),
+    wide_GmRunFlag        = iBit(6), /* horizontally scrollable */
 };
 
 struct Impl_GmRun {
@@ -89,9 +90,17 @@ struct Impl_GmRun {
     uint8_t   flags;
     iRect     bounds;    /* used for hit testing, may extend to edges */
     iRect     visBounds; /* actual visual bounds */
+    uint16_t  preId;     /* preformatted block ID (sequential) */
     iGmLinkId linkId;    /* zero for non-links */
     uint16_t  imageId;   /* zero if not an image */
     uint16_t  audioId;   /* zero if not audio */
+};
+
+iDeclareType(GmRunRange)
+
+struct Impl_GmRunRange {
+    const iGmRun *start;
+    const iGmRun *end;
 };
 
 const char *    findLoc_GmRun   (const iGmRun *, iInt2 pos);
@@ -108,10 +117,10 @@ enum iGmDocumentFormat {
 void    setThemeSeed_GmDocument (iGmDocument *, const iBlock *seed);
 void    setFormat_GmDocument    (iGmDocument *, enum iGmDocumentFormat format);
 void    setSiteBannerEnabled_GmDocument(iGmDocument *, iBool siteBannerEnabled);
-void    setWidth_GmDocument     (iGmDocument *, int width, int forceBreakWidth);
+void    setWidth_GmDocument     (iGmDocument *, int width);
 void    redoLayout_GmDocument   (iGmDocument *);
 void    setUrl_GmDocument       (iGmDocument *, const iString *url);
-void    setSource_GmDocument    (iGmDocument *, const iString *source, int width, int forceBreakWidth);
+void    setSource_GmDocument    (iGmDocument *, const iString *source, int width);
 
 void    reset_GmDocument        (iGmDocument *); /* free images */
 
@@ -129,8 +138,9 @@ const iString * bannerText_GmDocument       (const iGmDocument *);
 const iArray *  headings_GmDocument         (const iGmDocument *); /* array of GmHeadings */
 const iString * source_GmDocument           (const iGmDocument *);
 
-iRangecc        findText_GmDocument         (const iGmDocument *, const iString *text, const char *start);
-iRangecc        findTextBefore_GmDocument   (const iGmDocument *, const iString *text, const char *before);
+iRangecc        findText_GmDocument                 (const iGmDocument *, const iString *text, const char *start);
+iRangecc        findTextBefore_GmDocument           (const iGmDocument *, const iString *text, const char *before);
+iGmRunRange     findPreformattedRange_GmDocument    (const iGmDocument *, const iGmRun *run);
 
 enum iGmLinkPart {
     icon_GmLinkPart,

@@ -667,7 +667,7 @@ void updateSourceData_Player(iPlayer *d, const iString *mimeType, const iBlock *
             const size_t newSize = size_Block(data);
             iAssert(newSize >= oldSize);
             /* The old parts cannot have changed. */
-            iAssert(memcmp(constData_Block(&input->data), constData_Block(data), oldSize) == 0);
+//            iAssert(memcmp(constData_Block(&input->data), constData_Block(data), oldSize) == 0);
             appendData_Block(&input->data, constBegin_Block(data) + oldSize, newSize - oldSize);
             input->isComplete = iFalse;
             break;

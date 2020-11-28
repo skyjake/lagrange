@@ -26,6 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "bookmarks.h"
 #include "command.h"
 #include "documentwidget.h"
+#include "feeds.h"
 #include "gmcerts.h"
 #include "gmdocument.h"
 #include "inputwidget.h"
@@ -37,6 +38,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "visited.h"
 
 #include <the_Foundation/intset.h>
+#include <the_Foundation/regexp.h>
 #include <the_Foundation/stringarray.h>
 #include <SDL_clipboard.h>
 #include <SDL_mouse.h>
@@ -81,18 +83,18 @@ iDefineObjectConstruction(SidebarItem)
 /*----------------------------------------------------------------------------------------------*/
 
 struct Impl_SidebarWidget {
-    iWidget widget;
+    iWidget           widget;
     enum iSidebarMode mode;
-    iWidget *blank;
-    iListWidget *list;
-    int modeScroll[max_SidebarMode];
-    int width;
-    iLabelWidget *modeButtons[max_SidebarMode];
-    int maxButtonLabelWidth;
-    iWidget *resizer;
-    SDL_Cursor *resizeCursor;
-    iWidget *menu;
-    iSidebarItem *menuItem; /* list item accessed in the context menu */
+    iWidget *         blank;
+    iListWidget *     list;
+    int               modeScroll[max_SidebarMode];
+    iLabelWidget *    modeButtons[max_SidebarMode];
+    int               maxButtonLabelWidth;
+    int               width;
+    iWidget *         resizer;
+    SDL_Cursor *      resizeCursor;
+    iWidget *         menu;
+    iSidebarItem *    contextItem; /* list item accessed in the context menu */
 };
 
 iDefineObjectConstruction(SidebarWidget)
@@ -111,6 +113,68 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
     destroy_Widget(d->menu);
     d->menu = NULL;
     switch (d->mode) {
+        case feeds_SidebarMode: {
+            const iString *docUrl = url_DocumentWidget(document_App());
+            iTime now;
+            iDate on;
+            initCurrent_Time(&now);
+            init_Date(&on, &now);
+            const int thisYear = on.year;
+            iZap(on);
+            iConstForEach(PtrArray, i, listEntries_Feeds()) {
+                const iFeedEntry *entry = i.ptr;
+                /* Exclude entries that are too old for Visited to keep track of. */
+                if (secondsSince_Time(&now, &entry->discovered) > maxAge_Visited) {
+                    break; /* the rest are even older */
+                }
+                /* Insert date separators. */ {
+                    iDate entryDate;
+                    init_Date(&entryDate, &entry->posted);
+                    if (on.year != entryDate.year || on.month != entryDate.month ||
+                        on.day != entryDate.day) {
+                        on = entryDate;
+                        iSidebarItem *sep = new_SidebarItem();
+                        sep->listItem.isSeparator = iTrue;
+                        iString *text = format_Date(&on, on.year == thisYear ? "%b. %d" : "%b. %d, %Y");
+                        set_String(&sep->meta, text);
+                        delete_String(text);
+                        addItem_ListWidget(d->list, sep);
+                        iRelease(sep);
+                    }
+                }
+                iSidebarItem *item = new_SidebarItem();
+                if (equal_String(docUrl, &entry->url)) {
+                    item->listItem.isSelected = iTrue; /* currently being viewed */
+                }
+                if (!containsUrl_Visited(visited_App(), &entry->url)) {
+                    item->indent = 1; /* unread */
+                }
+                set_String(&item->url, &entry->url);
+                set_String(&item->label, &entry->title);
+                const iBookmark *bm = get_Bookmarks(bookmarks_App(), entry->bookmarkId);
+                if (bm) {
+                    item->id = entry->bookmarkId;
+                    item->icon = bm->icon;
+                    append_String(&item->meta, &bm->title);
+                }
+                addItem_ListWidget(d->list, item);
+                iRelease(item);
+            }
+            d->menu = makeMenu_Widget(
+                as_Widget(d),
+                (iMenuItem[]){ { "Open Entry in New Tab", 0, 0, "feed.entry.opentab" },
+                               { "Open Feed Page", 0, 0, "feed.entry.openfeed" },
+                               { "Mark as Read", 0, 0, "feed.entry.toggleread" },
+                               { "Add Bookmark...", 0, 0, "feed.entry.bookmark" },
+                               { "---", 0, 0, NULL },
+                               { "Edit Feed...", 0, 0, "feed.entry.edit" },
+                               { uiTextCaution_ColorEscape "Unsubscribe...", 0, 0, "feed.entry.unsubscribe" },
+                               { "---", 0, 0, NULL },
+                               { "Mark All as Read", SDLK_a, KMOD_SHIFT, "feeds.markallread" },
+                               { "Refresh Feeds", SDLK_r, KMOD_PRIMARY | KMOD_SHIFT, "feeds.refresh" } },
+                10);
+            break;
+        }
         case documentOutline_SidebarMode: {
             const iGmDocument *doc = document_DocumentWidget(document_App());
             iConstForEach(Array, i, headings_GmDocument(doc)) {
@@ -125,6 +189,8 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
             break;
         }
         case bookmarks_SidebarMode: {
+            iRegExp *homeTag = iClob(new_RegExp("\\bhomepage\\b", caseSensitive_RegExpOption));
+            iRegExp *subTag  = iClob(new_RegExp("\\bsubscribed\\b", caseSensitive_RegExpOption));
             iConstForEach(PtrArray, i, list_Bookmarks(bookmarks_App(), cmpTitle_Bookmark_, NULL, NULL)) {
                 const iBookmark *bm = i.ptr;
                 iSidebarItem *item = new_SidebarItem();
@@ -132,7 +198,17 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 item->icon = bm->icon;
                 set_String(&item->url, &bm->url);
                 set_String(&item->label, &bm->title);
-                set_String(&item->meta, &bm->tags);
+                /* Icons for special tags. */ {
+                    iRegExpMatch m;
+                    init_RegExpMatch(&m);
+                    if (matchString_RegExp(subTag, &bm->tags, &m)) {
+                        appendChar_String(&item->meta, 0x2605);
+                    }
+                    init_RegExpMatch(&m);
+                    if (matchString_RegExp(homeTag, &bm->tags, &m)) {
+                        appendChar_String(&item->meta, 0x1f3e0);
+                    }
+                }
                 addItem_ListWidget(d->list, item);
                 iRelease(item);
             }
@@ -141,8 +217,11 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 (iMenuItem[]){ { "Edit Bookmark...", 0, 0, "bookmark.edit" },
                                { "Copy URL", 0, 0, "bookmark.copy" },
                                { "---", 0, 0, NULL },
+                               { "Subscribe to Feed", 0, 0, "bookmark.tag tag:subscribed" },
+                               { "", 0, 0, "bookmark.tag tag:homepage" },
+                               { "---", 0, 0, NULL },
                                { uiTextCaution_ColorEscape "Delete Bookmark", 0, 0, "bookmark.delete" } },
-                4);
+               7);
             break;
         }
         case history_SidebarMode: {
@@ -161,7 +240,7 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                     iSidebarItem *sep = new_SidebarItem();
                     sep->listItem.isSeparator = iTrue;
                     const iString *text = collect_String(format_Date(
-                        &date, date.year != thisYear ? "%b %d %Y" : "%b %d"));
+                        &date, date.year != thisYear ? "%b. %d, %Y" : "%b. %d"));
                     set_String(&sep->meta, text);
                     const int yOffset = itemHeight_ListWidget(d->list) * 2 / 3;
                     sep->id = yOffset;
@@ -184,7 +263,7 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                     { "Copy URL", 0, 0, "history.copy" },
                     { "Add Bookmark...", 0, 0, "history.addbookmark" },
                     { "---", 0, 0, NULL },
-                    { "Remove URL", 0, 0, "history.delete" },
+                    { "Forget URL", 0, 0, "history.delete" },
                     { "---", 0, 0, NULL },
                     { uiTextCaution_ColorEscape "Clear History...", 0, 0, "history.clear confirm:1" },
                 }, 6);
@@ -248,7 +327,15 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
     invalidate_ListWidget(d->list);
     /* Content for a blank tab. */
     if (isEmpty_ListWidget(d->list)) {
-        if (d->mode == identities_SidebarMode) {
+        if (d->mode == feeds_SidebarMode) {
+            iWidget *div = makeVDiv_Widget();
+            setPadding_Widget(div, 3 * gap_UI, 0, 3 * gap_UI, 2 * gap_UI);
+            addChildFlags_Widget(div, iClob(new_Widget()), expand_WidgetFlag); /* pad */
+            addChild_Widget(div, iClob(new_LabelWidget("Refresh Feeds", "feeds.refresh")));
+            addChildFlags_Widget(div, iClob(new_Widget()), expand_WidgetFlag); /* pad */
+            addChild_Widget(d->blank, iClob(div));
+        }
+        else if (d->mode == identities_SidebarMode) {
             iWidget *div = makeVDiv_Widget();
             setPadding_Widget(div, 3 * gap_UI, 0, 3 * gap_UI, 2 * gap_UI);
             addChildFlags_Widget(div, iClob(new_Widget()), expand_WidgetFlag); /* pad */
@@ -281,7 +368,7 @@ iBool setMode_SidebarWidget(iSidebarWidget *d, enum iSidebarMode mode) {
     for (enum iSidebarMode i = 0; i < max_SidebarMode; i++) {
         setFlags_Widget(as_Widget(d->modeButtons[i]), selected_WidgetFlag, i == d->mode);
     }
-    const float heights[max_SidebarMode] = { 1.333f, 1.333f, 3.5f, 1.2f };
+    const float heights[max_SidebarMode] = { 1.333f, 2.333f, 1.333f, 3.5f, 1.2f };
     setBackgroundColor_Widget(as_Widget(d->list),
                               d->mode == documentOutline_SidebarMode ? tmBannerBackground_ColorId
                                                                      : uiBackground_ColorId);
@@ -301,6 +388,7 @@ int width_SidebarWidget(const iSidebarWidget *d) {
 
 static const char *normalModeLabels_[max_SidebarMode] = {
     "\U0001f588 Bookmarks",
+    "\U00002605 Feeds",
     "\U0001f553 History",
     "\U0001f464 Identities",
     "\U0001f5b9 Outline",
@@ -308,6 +396,7 @@ static const char *normalModeLabels_[max_SidebarMode] = {
 
 static const char *tightModeLabels_[max_SidebarMode] = {
     "\U0001f588",
+    "\U00002605",
     "\U0001f553",
     "\U0001f464",
     "\U0001f5b9",
@@ -363,6 +452,7 @@ void init_SidebarWidget(iSidebarWidget *d) {
     setBackgroundColor_Widget(d->resizer, none_ColorId);
     d->resizeCursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZEWE);
     d->menu = NULL;
+    addAction_Widget(w, SDLK_r, KMOD_PRIMARY | KMOD_SHIFT, "feeds.refresh");
 }
 
 void deinit_SidebarWidget(iSidebarWidget *d) {
@@ -381,8 +471,8 @@ static const iGmIdentity *constHoverIdentity_SidebarWidget_(const iSidebarWidget
 
 static iGmIdentity *menuIdentity_SidebarWidget_(const iSidebarWidget *d) {
     if (d->mode == identities_SidebarMode) {
-        if (d->menuItem) {
-            return identity_GmCerts(certs_App(), d->menuItem->id);
+        if (d->contextItem) {
+            return identity_GmCerts(certs_App(), d->contextItem->id);
         }
     }
     return NULL;
@@ -401,6 +491,11 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, const iSidebarItem *it
             postCommandf_App("document.goto loc:%p", head->text.start);
             break;
         }
+        case feeds_SidebarMode:
+            if (!isEmpty_String(&item->url)) {
+                postCommandf_App("open url:%s", cstr_String(&item->url));
+            }
+            break;
         case bookmarks_SidebarMode:
         case history_SidebarMode: {
             if (!isEmpty_String(&item->url)) {
@@ -561,14 +656,14 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             scrollOffset_ListWidget(d->list, 0);
         }
         else if (equal_Command(cmd, "bookmark.copy")) {
-            const iSidebarItem *item = d->menuItem;
+            const iSidebarItem *item = d->contextItem;
             if (d->mode == bookmarks_SidebarMode && item) {
                 SDL_SetClipboardText(cstr_String(&item->url));
             }
             return iTrue;
         }
         else if (equal_Command(cmd, "bookmark.edit")) {
-            const iSidebarItem *item = d->menuItem;
+            const iSidebarItem *item = d->contextItem;
             if (d->mode == bookmarks_SidebarMode && item) {
                 setFlags_Widget(w, disabled_WidgetFlag, iTrue);
                 iWidget *dlg = makeBookmarkEditor_Widget();
@@ -581,17 +676,112 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             }
             return iTrue;
         }
-        else if (equal_Command(cmd, "bookmark.delete")) {
-            const iSidebarItem *item = d->menuItem;
-            if (d->mode == bookmarks_SidebarMode && item && remove_Bookmarks(bookmarks_App(), item->id)) {
+        else if (equal_Command(cmd, "bookmark.tag")) {
+            const iSidebarItem *item = d->contextItem;
+            if (d->mode == bookmarks_SidebarMode && item) {
+                const char *tag = cstr_String(string_Command(cmd, "tag"));
+                iBookmark *bm = get_Bookmarks(bookmarks_App(), item->id);
+                if (hasTag_Bookmark(bm, tag)) {
+                    removeTag_Bookmark(bm, tag);
+                    if (!iCmpStr(tag, "subscribed")) {
+                        removeEntries_Feeds(item->id);
+                    }
+                }
+                else {
+                    addTag_Bookmark(bm, tag);
+                }
                 postCommand_App("bookmarks.changed");
             }
             return iTrue;
         }
-        else if (equal_Command(cmd, "visited.changed") && d->mode == history_SidebarMode) {
+        else if (equal_Command(cmd, "bookmark.delete")) {
+            const iSidebarItem *item = d->contextItem;
+            if (d->mode == bookmarks_SidebarMode && item && remove_Bookmarks(bookmarks_App(), item->id)) {
+                removeEntries_Feeds(item->id);
+                postCommand_App("bookmarks.changed");
+            }
+            return iTrue;
+        }
+        else if (equal_Command(cmd, "visited.changed") &&
+                 (d->mode == history_SidebarMode || d->mode == feeds_SidebarMode)) {
             updateItems_SidebarWidget_(d);
         }
-        else if (equal_Command(cmd, "bookmarks.changed") && d->mode == bookmarks_SidebarMode) {
+        else if (equal_Command(cmd, "feeds.update.finished") && d->mode == feeds_SidebarMode) {
+            updateItems_SidebarWidget_(d);
+        }
+        else if (equal_Command(cmd, "feeds.markallread") && d->mode == feeds_SidebarMode) {
+            iConstForEach(PtrArray, i, listEntries_Feeds()) {
+                const iFeedEntry *entry = i.ptr;
+                const iString *url = &entry->url;
+                if (!containsUrl_Visited(visited_App(), url)) {
+                    visitUrl_Visited(visited_App(), url, transient_VisitedUrlFlag);
+                }
+            }
+            postCommand_App("visited.changed");
+            return iTrue;
+        }
+        else if (startsWith_CStr(cmd, "feed.entry.") && d->mode == feeds_SidebarMode) {
+            const iSidebarItem *item = d->contextItem;
+            if (item) {
+                if (equal_Command(cmd, "feed.entry.opentab")) {
+                    postCommandf_App("open newtab:1 url:%s", cstr_String(&item->url));
+                    return iTrue;
+                }
+                if (equal_Command(cmd, "feed.entry.toggleread")) {
+                    iVisited *vis = visited_App();
+                    if (containsUrl_Visited(vis, &item->url)) {
+                        removeUrl_Visited(vis, &item->url);
+                    }
+                    else {
+                        visitUrl_Visited(vis, &item->url, transient_VisitedUrlFlag);
+                    }
+                    postCommand_App("visited.changed");
+                    return iTrue;
+                }
+                if (equal_Command(cmd, "feed.entry.bookmark")) {
+                    makeBookmarkCreation_Widget(&item->url, &item->label, item->icon);
+                    postCommand_App("focus.set id:bmed.title");
+                    return iTrue;
+                }
+                iBookmark *feedBookmark = get_Bookmarks(bookmarks_App(), item->id);
+                if (feedBookmark) {
+                    if (equal_Command(cmd, "feed.entry.openfeed")) {
+                        postCommandf_App("open url:%s", cstr_String(&feedBookmark->url));
+                        return iTrue;
+                    }
+                    if (equal_Command(cmd, "feed.entry.edit")) {
+                        setFlags_Widget(w, disabled_WidgetFlag, iTrue);
+                        iWidget *dlg = makeBookmarkEditor_Widget();
+                        setText_InputWidget(findChild_Widget(dlg, "bmed.title"), &feedBookmark->title);
+                        setText_InputWidget(findChild_Widget(dlg, "bmed.url"), &feedBookmark->url);
+                        setText_InputWidget(findChild_Widget(dlg, "bmed.tags"), &feedBookmark->tags);
+                        setCommandHandler_Widget(dlg, handleBookmarkEditorCommands_SidebarWidget_);
+                        setFocus_Widget(findChild_Widget(dlg, "bmed.title"));
+                        return iTrue;
+                    }
+                    if (equal_Command(cmd, "feed.entry.unsubscribe")) {
+                        if (arg_Command(cmd)) {
+                            removeTag_Bookmark(feedBookmark, "subscribed");
+                            removeEntries_Feeds(id_Bookmark(feedBookmark));
+                            updateItems_SidebarWidget_(d);
+                        }
+                        else {
+                            makeQuestion_Widget(
+                                uiTextCaution_ColorEscape "UNSUBSCRIBE",
+                                format_CStr("Really unsubscribe from feed\n\"%s\"?",
+                                            cstr_String(&feedBookmark->title)),
+                                (const char *[]){ "Cancel",
+                                                  uiTextCaution_ColorEscape "Unsubscribe" },
+                                (const char *[]){ "cancel", "feed.entry.unsubscribe arg:1" },
+                                2);
+                        }
+                        return iTrue;
+                    }
+                }
+            }
+        }
+        else if (equal_Command(cmd, "bookmarks.changed") && (d->mode == bookmarks_SidebarMode ||
+                                                             d->mode == feeds_SidebarMode)) {
             updateItems_SidebarWidget_(d);
         }
         else if (equal_Command(cmd, "idents.changed") && d->mode == identities_SidebarMode) {
@@ -656,7 +846,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             return iTrue;
         }
         else if (equal_Command(cmd, "ident.delete")) {
-            iSidebarItem *item = d->menuItem;
+            iSidebarItem *item = d->contextItem;
             if (argLabel_Command(cmd, "confirm")) {
                 makeQuestion_Widget(uiTextCaution_ColorEscape "DELETE IDENTITY",
                                     format_CStr("Do you really want to delete the identity\n"
@@ -676,22 +866,22 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             return iTrue;
         }
         else if (equal_Command(cmd, "history.delete")) {
-            if (d->menuItem && !isEmpty_String(&d->menuItem->url)) {
-                removeUrl_Visited(visited_App(), &d->menuItem->url);
+            if (d->contextItem && !isEmpty_String(&d->contextItem->url)) {
+                removeUrl_Visited(visited_App(), &d->contextItem->url);
                 updateItems_SidebarWidget_(d);
                 scrollOffset_ListWidget(d->list, 0);
             }
             return iTrue;
         }
         else if (equal_Command(cmd, "history.copy")) {
-            const iSidebarItem *item = d->menuItem;
+            const iSidebarItem *item = d->contextItem;
             if (item && !isEmpty_String(&item->url)) {
                 SDL_SetClipboardText(cstr_String(&item->url));
             }
             return iTrue;
         }
         else if (equal_Command(cmd, "history.addbookmark")) {
-            const iSidebarItem *item = d->menuItem;
+            const iSidebarItem *item = d->contextItem;
             if (!isEmpty_String(&item->url)) {
                 makeBookmarkCreation_Widget(
                     &item->url,
@@ -741,9 +931,36 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                 updateMouseHover_ListWidget(d->list);
             }
             if (constHoverItem_ListWidget(d->list) || isVisible_Widget(d->menu)) {
-                d->menuItem = hoverItem_ListWidget(d->list);
+                d->contextItem = hoverItem_ListWidget(d->list);
                 /* Update menu items. */
-                if (d->mode == identities_SidebarMode) {
+                /* TODO: Some callback-based mechanism would be nice for updating menus right
+                   before they open? */
+                if (d->mode == bookmarks_SidebarMode && d->contextItem) {
+                    const iBookmark *bm = get_Bookmarks(bookmarks_App(), d->contextItem->id);
+                    if (bm) {
+                        iLabelWidget *menuItem = findMenuItem_Widget(d->menu,
+                                                                     "bookmark.tag tag:homepage");
+                        if (menuItem) {
+                            setTextCStr_LabelWidget(menuItem,
+                                                    hasTag_Bookmark(bm, "homepage")
+                                                        ? "Remove Homepage"
+                                                        : "Use as Homepage");
+                        }
+                        menuItem = findMenuItem_Widget(d->menu, "bookmark.tag tag:subscribed");
+                        if (menuItem) {
+                            setTextCStr_LabelWidget(menuItem,
+                                                    hasTag_Bookmark(bm, "subscribed")
+                                                        ? "Unsubscribe from Feed"
+                                                        : "Subscribe to Feed");
+                        }
+                    }
+                }
+                else if (d->mode == feeds_SidebarMode && d->contextItem) {
+                    iLabelWidget *menuItem = findMenuItem_Widget(d->menu, "feed.entry.toggleread");
+                    const iBool isRead = containsUrl_Visited(visited_App(), &d->contextItem->url);
+                    setTextCStr_LabelWidget(menuItem, isRead ? "Mark as Unread" : "Mark as Read");
+                }
+                else if (d->mode == identities_SidebarMode) {
                     const iGmIdentity *ident  = constHoverIdentity_SidebarWidget_(d);
                     const iString *    docUrl = url_DocumentWidget(document_App());
                     iForEach(ObjectList, i, children_Widget(d->menu)) {
@@ -801,20 +1018,26 @@ static void draw_SidebarWidget_(const iSidebarWidget *d) {
 
 static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                               const iListWidget *list) {
-    const int             font       = uiContent_FontId;
-    const iSidebarWidget *sidebar    = findParentClass_Widget(constAs_Widget(list),
-                                                              &Class_SidebarWidget);
-    const iBool           isPressing = isMouseDown_ListWidget(list);
-    const iBool           isHover =
+    const iSidebarWidget *sidebar =
+        findParentClass_Widget(constAs_Widget(list), &Class_SidebarWidget);
+    const iBool isPressing = isMouseDown_ListWidget(list);
+    const iBool isHover =
         isHover_Widget(constAs_Widget(list)) && constHoverItem_ListWidget(list) == d;
-    const int itemHeight = height_Rect(itemRect);
+    const int scrollBarWidth = scrollBarWidth_ListWidget(list);
+    const int itemHeight     = height_Rect(itemRect);
     const int iconColor =
         isHover ? (isPressing ? uiTextPressed_ColorId : uiIconHover_ColorId) : uiIcon_ColorId;
+    const int font = uiContent_FontId;
+    int bg = uiBackground_ColorId;
     if (isHover) {
-        fillRect_Paint(p,
-                       itemRect,
-                       isPressing ? uiBackgroundPressed_ColorId
-                                  : uiBackgroundFramelessHover_ColorId);
+        bg = isPressing ? uiBackgroundPressed_ColorId
+                        : uiBackgroundFramelessHover_ColorId;
+        fillRect_Paint(p, itemRect, bg);
+    }
+    else if (d->listItem.isSelected &&
+             (sidebar->mode == feeds_SidebarMode || sidebar->mode == identities_SidebarMode)) {
+        bg = uiBackgroundUnfocusedSelection_ColorId;
+        fillRect_Paint(p, itemRect, bg);
     }
     iInt2 pos = itemRect.pos;
     if (sidebar->mode == documentOutline_SidebarMode) {
@@ -826,6 +1049,83 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                        fg,
                        range_String(&d->label));
     }
+    else if (sidebar->mode == feeds_SidebarMode) {
+        const int fg = isHover ? (isPressing ? uiTextPressed_ColorId : uiTextFramelessHover_ColorId)
+                               : uiText_ColorId;
+        if (d->listItem.isSeparator) {
+            if (d != constItem_ListWidget(list, 0)) {
+                drawHLine_Paint(p,
+                                addY_I2(pos, 2 * gap_UI),
+                                width_Rect(itemRect) - scrollBarWidth,
+                                uiSeparator_ColorId);
+            }
+            drawRange_Text(
+                uiLabelLarge_FontId,
+                add_I2(pos,
+                       init_I2(3 * gap_UI,
+                               itemHeight - lineHeight_Text(uiLabelLarge_FontId) - 1 * gap_UI)),
+                uiIcon_ColorId,
+                range_String(&d->meta));
+        }
+        else {
+            const iBool isUnread = (d->indent != 0);
+            const int h1 = lineHeight_Text(uiLabel_FontId);
+            const int h2 = lineHeight_Text(uiContent_FontId);
+            const int iconPad = 9 * gap_UI;
+            iRect iconArea = { addY_I2(pos, 0), init_I2(iconPad, itemHeight) };
+            if (isUnread) {
+                fillRect_Paint(
+                    p,
+                    (iRect){ topLeft_Rect(iconArea), init_I2(gap_UI / 2, height_Rect(iconArea)) },
+                    iconColor);
+            }
+            /* Icon. */ {
+                /* TODO: Use the primary hue from the theme of this site. */
+                iString str;
+                initUnicodeN_String(&str, &d->icon, 1);
+                drawCentered_Text(uiContent_FontId,
+                                  adjusted_Rect(iconArea, init_I2(gap_UI, 0), zero_I2()),
+                                  iTrue,
+                                  isHover && isPressing
+                                      ? iconColor
+                                      : (isUnread ? uiTextCaution_ColorId : iconColor),
+                                  "%s",
+                                  cstr_String(&str));
+                deinit_String(&str);
+            }
+            /* Select the layout based on how the title fits. */
+            iInt2       titleSize = advanceRange_Text(uiContent_FontId, range_String(&d->label));
+            const iInt2 metaSize  = advanceRange_Text(uiLabel_FontId, range_String(&d->meta));
+            pos.x += iconPad;
+            const int avail = width_Rect(itemRect) - iconPad - 3 * gap_UI;
+            const int labelFg = isPressing ? fg : (isUnread ? uiTextStrong_ColorId : uiText_ColorId);
+            if (titleSize.x > avail && metaSize.x < avail * 0.75f) {
+                /* Must wrap the title. */
+                pos.y += (itemHeight - h2 - h2) / 2;
+                draw_Text(
+                    uiLabel_FontId, addY_I2(pos, h2 - h1 - gap_UI / 8), fg, "%s \u2014 ", cstr_String(&d->meta));
+                int skip  = metaSize.x + advance_Text(uiLabel_FontId, " \u2014 ").x;
+                iInt2 cur = addX_I2(pos, skip);
+                const char *endPos;
+                tryAdvance_Text(
+                    uiContent_FontId, range_String(&d->label), avail - skip, &endPos);
+                drawRange_Text(uiContent_FontId,
+                               cur,
+                               labelFg,
+                               (iRangecc){ constBegin_String(&d->label), endPos });
+                if (endPos < constEnd_String(&d->label)) {
+                    drawRange_Text(uiContent_FontId,
+                                   addY_I2(pos, h2), labelFg,
+                                   (iRangecc){ endPos, constEnd_String(&d->label) });
+                }
+            }
+            else {
+                pos.y += (itemHeight - h1 - h2) / 2;
+                drawRange_Text(uiLabel_FontId, pos, fg, range_String(&d->meta));
+                drawRange_Text(uiContent_FontId, addY_I2(pos, h1), labelFg, range_String(&d->label));
+            }
+        }
+    }
     else if (sidebar->mode == bookmarks_SidebarMode) {
         const int fg = isHover ? (isPressing ? uiTextPressed_ColorId : uiTextFramelessHover_ColorId)
                                : uiText_ColorId;
@@ -835,8 +1135,22 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
         const iRect iconArea = { addX_I2(pos, gap_UI), init_I2(7 * gap_UI, itemHeight) };
         drawCentered_Text(font, iconArea, iTrue, iconColor, "%s", cstr_String(&str));
         deinit_String(&str);
-        iInt2 textPos = addY_I2(topRight_Rect(iconArea), (itemHeight - lineHeight_Text(font)) / 2);
+        const iInt2 textPos = addY_I2(topRight_Rect(iconArea), (itemHeight - lineHeight_Text(font)) / 2);
         drawRange_Text(font, textPos, fg, range_String(&d->label));
+        const iInt2 metaPos =
+            init_I2(right_Rect(itemRect) - advanceRange_Text(font, range_String(&d->meta)).x -
+                        2 * gap_UI - (scrollBarWidth ? scrollBarWidth - gap_UI : 0),
+                    textPos.y);
+        fillRect_Paint(p,
+                       init_Rect(metaPos.x,
+                                 top_Rect(itemRect),
+                                 right_Rect(itemRect) - metaPos.x,
+                                 height_Rect(itemRect)),
+                       bg);
+        drawRange_Text(font,
+                       metaPos,
+                       isHover && isPressing ? fg : uiTextCaution_ColorId,
+                       range_String(&d->meta));
     }
     else if (sidebar->mode == history_SidebarMode) {
         iBeginCollect();
@@ -845,11 +1159,14 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
         if (d->listItem.isSeparator) {
             if (!isEmpty_String(&d->meta)) {
                 iInt2 drawPos = addY_I2(topLeft_Rect(itemRect), d->id);
-                drawHLine_Paint(p, drawPos, width_Rect(itemRect), uiIcon_ColorId);
+                drawHLine_Paint(p,
+                                addY_I2(drawPos, -gap_UI),
+                                width_Rect(itemRect) - scrollBarWidth,
+                                uiSeparator_ColorId);
                 drawRange_Text(
-                    default_FontId,
+                    uiLabelLarge_FontId,
                     add_I2(drawPos,
-                           init_I2(3 * gap_UI, (itemHeight - lineHeight_Text(default_FontId)) / 2)),
+                           init_I2(3 * gap_UI, (itemHeight - lineHeight_Text(uiLabelLarge_FontId)) / 2)),
                     uiIcon_ColorId,
                     range_String(&d->meta));
             }
@@ -857,6 +1174,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
         else {
             iUrl parts;
             init_Url(&parts, &d->url);
+            const iBool isAbout  = equalCase_Rangecc(parts.scheme, "about");
             const iBool isGemini = equalCase_Rangecc(parts.scheme, "gemini");
             draw_Text(font,
                       add_I2(topLeft_Rect(itemRect),
@@ -864,7 +1182,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                       fg,
                       "%s%s%s%s%s%s",
                       isGemini ? "" : cstr_Rangecc(parts.scheme),
-                      isGemini ? "" : "://",
+                      isGemini ? "" : isAbout ? ":" : "://",
                       escape_Color(isHover ? (isPressing ? uiTextPressed_ColorId
                                                          : uiTextFramelessHover_ColorId)
                                            : uiTextStrong_ColorId),
@@ -877,12 +1195,6 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
     else if (sidebar->mode == identities_SidebarMode) {
         const int fg = isHover ? (isPressing ? uiTextPressed_ColorId : uiTextFramelessHover_ColorId)
                                : uiTextStrong_ColorId;
-        if (d->listItem.isSelected) {
-            drawRectThickness_Paint(p,
-                                    adjusted_Rect(itemRect, zero_I2(), init_I2(-2, -1)),
-                                    gap_UI / 4,
-                                    isHover && isPressing ? uiTextPressed_ColorId : uiIcon_ColorId);
-        }
         iString icon;
         initUnicodeN_String(&icon, &d->icon, 1);
         iInt2 cPos = topLeft_Rect(itemRect);

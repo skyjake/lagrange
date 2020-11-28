@@ -572,6 +572,26 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
         postCommand_Widget(d, "mouse.moved coord:%d %d", ev->motion.x, ev->motion.y);
         return iTrue;
     }
+    else if (d->flags & overflowScrollable_WidgetFlag && ev->type == SDL_MOUSEWHEEL) {
+        iRect bounds = bounds_Widget(d);
+        const iInt2 winSize = rootSize_Window(get_Window());
+        if (height_Rect(bounds) > winSize.y) {
+            int step = ev->wheel.y;
+#if !defined (iPlatformApple)
+            step *= lineHeight_Text(uiLabel_FontId);
+#endif
+            bounds.pos.y += step;
+            if (step > 0) {
+                bounds.pos.y = iMin(bounds.pos.y, 0);
+            }
+            else {
+                bounds.pos.y = iMax(bounds.pos.y, winSize.y - height_Rect(bounds));
+            }
+            d->rect.pos = localCoord_Widget(d->parent, bounds.pos);
+            refresh_Widget(d);
+            return iTrue;
+        }
+    }
     switch (ev->type) {
         case SDL_USEREVENT: {
             if (ev->user.code == command_UserEventCode && d->commandHandler &&

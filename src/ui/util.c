@@ -368,6 +368,7 @@ iWidget *addAction_Widget(iWidget *parent, int key, int kmods, const char *comma
 
 static iBool isCommandIgnoredByMenus_(const char *cmd) {
     return equal_Command(cmd, "media.updated") || equal_Command(cmd, "media.player.update") ||
+           startsWith_CStr(cmd, "feeds.update.") ||
            equal_Command(cmd, "document.request.updated") || equal_Command(cmd, "window.resized") ||
            (equal_Command(cmd, "mouse.clicked") && !arg_Command(cmd)); /* button released */
 }
@@ -401,7 +402,7 @@ iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
     setFlags_Widget(menu,
                     keepOnTop_WidgetFlag | collapse_WidgetFlag | hidden_WidgetFlag |
                         arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag |
-                        resizeChildrenToWidestChild_WidgetFlag,
+                        resizeChildrenToWidestChild_WidgetFlag | overflowScrollable_WidgetFlag,
                     iTrue);
     for (size_t i = 0; i < n; ++i) {
         const iMenuItem *item = &items[i];
@@ -464,6 +465,18 @@ void closeMenu_Widget(iWidget *d) {
     setFlags_Widget(findChild_Widget(d, "menu.cancel"), disabled_WidgetFlag, iTrue);
     refresh_App();
     postCommand_Widget(d, "menu.closed");
+}
+
+iLabelWidget *findMenuItem_Widget(iWidget *menu, const char *command) {
+    iForEach(ObjectList, i, children_Widget(menu)) {
+        if (isInstance_Object(i.object, &Class_LabelWidget)) {
+            iLabelWidget *menuItem = i.object;
+            if (!cmp_String(command_LabelWidget(menuItem), command)) {
+                return menuItem;
+            }
+        }
+    }
+    return NULL;
 }
 
 int checkContextMenu_Widget(iWidget *menu, const SDL_Event *ev) {
@@ -727,7 +740,8 @@ iWidget *makeSheet_Widget(const char *id) {
     setBackgroundColor_Widget(sheet, uiBackground_ColorId);
     setFlags_Widget(sheet,
                     mouseModal_WidgetFlag | keepOnTop_WidgetFlag | arrangeVertical_WidgetFlag |
-                        arrangeSize_WidgetFlag | centerHorizontal_WidgetFlag,
+                        arrangeSize_WidgetFlag | centerHorizontal_WidgetFlag |
+                        overflowScrollable_WidgetFlag,
                     iTrue);
     return sheet;
 }
@@ -1105,10 +1119,10 @@ iWidget *makePreferences_Widget(void) {
         iWidget *widths = new_Widget();
         /* Line widths. */ {
             addRadioButton_(widths, "prefs.linewidth.30", "\u20132", "linewidth.set arg:30");
-            addRadioButton_(widths, "prefs.linewidth.35", "\u20131", "linewidth.set arg:35");
-            addRadioButton_(widths, "prefs.linewidth.40", "Normal", "linewidth.set arg:40");
-            addRadioButton_(widths, "prefs.linewidth.45", "+1", "linewidth.set arg:45");
-            addRadioButton_(widths, "prefs.linewidth.50", "+2", "linewidth.set arg:50");
+            addRadioButton_(widths, "prefs.linewidth.34", "\u20131", "linewidth.set arg:34");
+            addRadioButton_(widths, "prefs.linewidth.38", "Normal", "linewidth.set arg:38");
+            addRadioButton_(widths, "prefs.linewidth.43", "+1", "linewidth.set arg:43");
+            addRadioButton_(widths, "prefs.linewidth.48", "+2", "linewidth.set arg:48");
             addRadioButton_(widths, "prefs.linewidth.1000", "Window", "linewidth.set arg:1000");
         }
         addChildFlags_Widget(values, iClob(widths), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);

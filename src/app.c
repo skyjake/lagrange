@@ -24,6 +24,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "bookmarks.h"
 #include "defs.h"
 #include "embedded.h"
+#include "feeds.h"
 #include "gmcerts.h"
 #include "gmdocument.h"
 #include "gmutil.h"
@@ -98,27 +99,16 @@ struct Impl_App {
     uint32_t     lastTickerTime;
     uint32_t     elapsedSinceLastTicker;
     iBool        running;
-    iBool        pendingRefresh;
+    iAtomicInt   pendingRefresh;
     int          tabEnum;
     iStringList *launchCommands;
     iBool        isFinishedLaunching;
     iTime        lastDropTime; /* for detecting drops of multiple items */
     /* Preferences: */
-    iBool        commandEcho; /* --echo */
+    iBool        commandEcho;         /* --echo */
     iBool        forceSoftwareRender; /* --sw */
     iRect        initialWindowRect;
     iPrefs       prefs;
-#if 0
-    iBool        retainWindowSize;
-    float        uiScale;
-    int          zoomPercent;
-    iBool        forceWrap;
-    enum iColorTheme theme;
-    iBool        useSystemTheme;
-    iString      gopherProxy;
-    iString      httpProxy;
-    iString      downloadDir;
-#endif
 };
 
 static iApp app_;
@@ -170,9 +160,6 @@ static iString *serializePrefs_App_(const iApp *d) {
     }
     if (isVisible_Widget(sidebar)) {
         appendCStr_String(str, "sidebar.toggle\n");
-    }
-    if (d->prefs.forceLineWrap) {
-        appendFormat_String(str, "forcewrap.toggle\n");
     }
     appendFormat_String(str, "sidebar.mode arg:%d\n", mode_SidebarWidget(sidebar));
     appendFormat_String(str, "uiscale arg:%f\n", uiScale_Window(d->window));
@@ -354,7 +341,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     setCStr_String(&d->prefs.downloadDir, downloadDir_App_);
     d->running           = iFalse;
     d->window            = NULL;
-    d->pendingRefresh    = iFalse;
+    set_Atomic(&d->pendingRefresh, iFalse);
     d->certs             = new_GmCerts(dataDir_App_);
     d->visited           = new_Visited();
     d->bookmarks         = new_Bookmarks();
@@ -402,6 +389,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     }
 #endif
     d->window = new_Window(d->initialWindowRect);
+    init_Feeds(dataDir_App_);
     /* Widget state init. */
     processEvents_App(postedEventsOnly_AppEventMode);
     if (!loadState_App_(d)) {
@@ -435,6 +423,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
 
 static void deinit_App(iApp *d) {
     saveState_App_(d);
+    deinit_Feeds();
     save_Keys(dataDir_App_);
     deinit_Keys();
     savePrefs_App_(d);
@@ -481,7 +470,7 @@ const iString *debugInfo_App(void) {
 }
 
 iLocalDef iBool isWaitingAllowed_App_(const iApp *d) {
-    return !d->pendingRefresh && isEmpty_SortedArray(&d->tickers);
+    return !value_Atomic(&d->pendingRefresh) && isEmpty_SortedArray(&d->tickers);
 }
 
 void processEvents_App(enum iAppEventMode eventMode) {
@@ -563,10 +552,29 @@ static void runTickers_App_(iApp *d) {
     }
 }
 
+static int resizeWatcher_(void *user, SDL_Event *event) {
+    iApp *d = user;
+    if (event->type == SDL_WINDOWEVENT && event->window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
+        const SDL_WindowEvent *winev = &event->window;
+#if defined (iPlatformMsys)
+        resetFonts_Text(); {
+            SDL_Event u = { .type = SDL_USEREVENT };
+            u.user.code = command_UserEventCode;
+            u.user.data1 = strdup("theme.changed");
+            u.user.windowID = SDL_GetWindowID(d->window->win);
+            dispatchEvent_Widget(d->window->root, &u);
+        }
+#endif
+        drawWhileResizing_Window(d->window, winev->data1, winev->data2);
+    }
+    return 0;
+}
+
 static int run_App_(iApp *d) {
     arrange_Widget(findWidget_App("root"));
     d->running = iTrue;
     SDL_EventState(SDL_DROPFILE, SDL_ENABLE); /* open files via drag'n'drop */
+    SDL_AddEventWatch(resizeWatcher_, d);
     while (d->running) {
         processEvents_App(waitForNewEvents_AppEventMode);
         runTickers_App_(d);
@@ -580,11 +588,11 @@ void refresh_App(void) {
     iApp *d = &app_;
     destroyPending_Widget();
     draw_Window(d->window);
-    d->pendingRefresh = iFalse;
+    set_Atomic(&d->pendingRefresh, iFalse);
 }
 
 iBool isRefreshPending_App(void) {
-    return app_.pendingRefresh;
+    return value_Atomic(&app_.pendingRefresh);
 }
 
 uint32_t elapsedSinceLastTicker_App(void) {
@@ -593,10 +601,6 @@ uint32_t elapsedSinceLastTicker_App(void) {
 
 const iPrefs *prefs_App(void) {
     return &app_.prefs;
-}
-
-iBool forceLineWrap_App(void) {
-    return app_.prefs.forceLineWrap;
 }
 
 iBool forceSoftwareRender_App(void) {
@@ -639,8 +643,8 @@ int run_App(int argc, char **argv) {
 
 void postRefresh_App(void) {
     iApp *d = &app_;
-    if (!d->pendingRefresh) {
-        d->pendingRefresh = iTrue;
+    const iBool wasPending = exchange_Atomic(&d->pendingRefresh, iTrue);
+    if (!wasPending) {
         SDL_Event ev;
         ev.user.type     = SDL_USEREVENT;
         ev.user.code     = refresh_UserEventCode;
@@ -963,11 +967,6 @@ iBool handleCommand_App(const char *cmd) {
         d->prefs.loadImageInsteadOfScrolling = arg_Command(cmd);
         return iTrue;
     }
-    else if (equal_Command(cmd, "forcewrap.toggle")) {
-        d->prefs.forceLineWrap = !d->prefs.forceLineWrap;
-        updateSize_DocumentWidget(document_App());
-        return iTrue;
-    }
     else if (equal_Command(cmd, "theme.set")) {
         const int isAuto = argLabel_Command(cmd, "auto");
         d->prefs.theme = arg_Command(cmd);
@@ -1239,8 +1238,43 @@ iBool handleCommand_App(const char *cmd) {
         postCommand_App("focus.set id:bmed.title");
         return iTrue;
     }
+    else if (equal_Command(cmd, "bookmark.addtag")) {
+        const iString *tag = string_Command(cmd, "tag");
+        const iString *url = url_DocumentWidget(document_App());
+        const size_t numSubs = numSubscribed_Feeds();
+        if (!isEmpty_String(url)) {
+            uint32_t id = findUrl_Bookmarks(d->bookmarks, url);
+            if (id) {
+                addTag_Bookmark(get_Bookmarks(d->bookmarks, id), cstr_String(tag));
+            }
+            else {
+                add_Bookmarks(d->bookmarks, url, bookmarkTitle_DocumentWidget(document_App()),
+                              tag, siteIcon_GmDocument(document_DocumentWidget(document_App())));
+            }
+            postCommand_App("bookmarks.changed");
+            if (numSubs == 0 && !cmp_String(tag, "subscribed")) {
+                postCommand_App("feeds.refresh");
+            }
+        }
+        return iTrue;
+    }
     else if (equal_Command(cmd, "bookmarks.changed")) {
         save_Bookmarks(d->bookmarks, dataDir_App_);
+        return iFalse;
+    }
+    else if (equal_Command(cmd, "feeds.refresh")) {
+        refresh_Feeds();
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "feeds.update.started")) {
+        setFlags_Widget(findWidget_App("feeds.progress"), hidden_WidgetFlag, iFalse);
+        refresh_App();
+        return iFalse;
+    }
+    else if (equal_Command(cmd, "feeds.update.finished")) {
+        setFlags_Widget(findWidget_App("feeds.progress"), hidden_WidgetFlag, iTrue);
+        refreshFinished_Feeds();
+        refresh_App();
         return iFalse;
     }
     else if (equal_Command(cmd, "visited.changed")) {
@@ -1293,9 +1327,9 @@ void openInDefaultBrowser_App(const iString *url) {
     iProcess *proc = new_Process();
     setArguments_Process(proc,
 #if defined (iPlatformApple)
-                         iClob(newStringsCStr_StringList("/usr/bin/open", cstr_String(url), NULL))
+                         iClob(newStringsCStr_StringList("/usr/bin/env", "open", cstr_String(url), NULL))
 #elif defined (iPlatformLinux) || defined (iPlatformOther)
-                         iClob(newStringsCStr_StringList("/usr/bin/xdg-open", cstr_String(url), NULL))
+                         iClob(newStringsCStr_StringList("/usr/bin/env", "xdg-open", cstr_String(url), NULL))
 #elif defined (iPlatformMsys)
         iClob(newStringsCStr_StringList(
             concatPath_CStr(cstr_String(execPath_App()), "../urlopen.bat"),
@@ -1341,7 +1375,7 @@ void revealPath_App(const iString *path) {
     }
     iProcess *proc = new_Process();
     setArguments_Process(
-        proc, iClob(newStringsCStr_StringList("/usr/bin/xdg-open", cstr_Rangecc(target), NULL)));
+        proc, iClob(newStringsCStr_StringList("/usr/bin/env", "xdg-open", cstr_Rangecc(target), NULL)));
     start_Process(proc);
     iRelease(proc);
 #else

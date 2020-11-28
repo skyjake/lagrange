@@ -139,6 +139,10 @@ void setItemHeight_ListWidget(iListWidget *d, int itemHeight) {
     invalidate_ListWidget(d);
 }
 
+int scrollBarWidth_ListWidget(const iListWidget *d) {
+    return isVisible_Widget(d->scroll) ? width_Widget(d->scroll) : 0;
+}
+
 int itemHeight_ListWidget(const iListWidget *d) {
     return d->itemHeight;
 }
@@ -318,6 +322,7 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
     return processEvent_Widget(w, ev);
 }
 
+#if 0
 static void drawItem_ListWidget_(const iListWidget *d, iPaint *p, size_t index, iInt2 pos) {
     const iWidget *  w         = constAs_Widget(d);
     const iRect      bounds    = innerBounds_Widget(w);
@@ -325,6 +330,7 @@ static void drawItem_ListWidget_(const iListWidget *d, iPaint *p, size_t index, 
     const iRect      itemRect  = { pos, init_I2(width_Rect(bounds), d->itemHeight) };
     class_ListItem(item)->draw(item, p, itemRect, d);
 }
+#endif
 
 static const iListItem *item_ListWidget_(const iListWidget *d, size_t pos) {
     return constAt_PtrArray(&d->items, pos);
@@ -364,6 +370,9 @@ static void draw_ListWidget_(const iListWidget *d) {
                 beginTarget_Paint(&p, buf->texture);
                 fillRect_Paint(&p, (iRect){ zero_I2(), d->visBuf->texSize }, bg[i]);
             }
+            const iRect sbBlankRect =
+                { init_I2(d->visBuf->texSize.x - scrollBarWidth_ListWidget(d), 0),
+                         init_I2(scrollBarWidth_ListWidget(d), d->itemHeight) };
             iConstForEach(IntSet, v, &d->invalidItems) {
                 const size_t index = *v.value;
                 if (contains_Range(&drawItems, index)) {
@@ -373,6 +382,7 @@ static void draw_ListWidget_(const iListWidget *d) {
                     beginTarget_Paint(&p, buf->texture);
                     fillRect_Paint(&p, itemRect, bg[i]);
                     class_ListItem(item)->draw(item, &p, itemRect, d);
+                    fillRect_Paint(&p, moved_Rect(sbBlankRect, init_I2(0, top_Rect(itemRect))), bg[i]);
                 }
             }
             /* Visible range is not fully covered. Fill in the new items. */
@@ -386,6 +396,7 @@ static void draw_ListWidget_(const iListWidget *d) {
                                                   init_I2(d->visBuf->texSize.x, d->itemHeight) };
                     fillRect_Paint(&p, itemRect, bg[i]);
                     class_ListItem(item)->draw(item, &p, itemRect, d);
+                    fillRect_Paint(&p, moved_Rect(sbBlankRect, init_I2(0, top_Rect(itemRect))), bg[i]);
                 }
             }
             endTarget_Paint(&p);

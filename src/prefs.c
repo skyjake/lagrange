@@ -39,7 +39,6 @@ void init_Prefs(iPrefs *d) {
     d->monospaceGopher   = iFalse;
     d->lineWidth         = 40;
     d->bigFirstParagraph = iTrue;
-    d->forceLineWrap     = iFalse;
     d->quoteIcon         = iTrue;
     d->docThemeDark      = colorfulDark_GmDocumentTheme;
     d->docThemeLight     = white_GmDocumentTheme;
