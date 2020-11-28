@@ -566,10 +566,20 @@ static void runTickers_App_(iApp *d) {
     }
 }
 
+static int resizeWatcher_(void *user, SDL_Event *event) {
+    iApp *d = user;
+    if (event->type == SDL_WINDOWEVENT && event->window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
+        const SDL_WindowEvent *winev = &event->window;
+        drawWhileResizing_Window(d->window, winev->data1, winev->data2);
+    }
+    return 0;
+}
+
 static int run_App_(iApp *d) {
     arrange_Widget(findWidget_App("root"));
     d->running = iTrue;
     SDL_EventState(SDL_DROPFILE, SDL_ENABLE); /* open files via drag'n'drop */
+    SDL_AddEventWatch(resizeWatcher_, d);
     while (d->running) {
         processEvents_App(waitForNewEvents_AppEventMode);
         runTickers_App_(d);

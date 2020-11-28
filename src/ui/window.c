@@ -514,15 +514,23 @@ static void setupUserInterface_Window(iWindow *d) {
     }
 }
 
-static void updateRootSize_Window_(iWindow *d) {
+static void updateRootSize_Window_(iWindow *d, iBool notifyAlways) {
     iInt2 *size = &d->root->rect.size;
     const iInt2 oldSize = *size;
     SDL_GetRendererOutputSize(d->render, &size->x, &size->y);
-    if (!isEqual_I2(oldSize, *size)) {
+    if (notifyAlways || !isEqual_I2(oldSize, *size)) {
         arrange_Widget(d->root);
         postCommandf_App("window.resized width:%d height:%d", size->x, size->y);
         postRefresh_App();
     }
+}
+
+void drawWhileResizing_Window(iWindow *d, int w, int h) {
+    /* This is called while a window resize is in progress, so we can be pretty confident
+       the size has actually changed. */
+    d->root->rect.size = mulf_I2(init_I2(w, h), d->pixelRatio);
+    arrange_Widget(d->root);
+    draw_Window(d);
 }
 
 static float pixelRatio_Window_(const iWindow *d) {
@@ -631,7 +639,7 @@ void init_Window(iWindow *d, iRect rect) {
     init_Text(d->render);
     setupUserInterface_Window(d);
     postCommand_App("bindings.changed"); /* update from bindings */
-    updateRootSize_Window_(d);
+    updateRootSize_Window_(d, iFalse);
 }
 
 void deinit_Window(iWindow *d) {
@@ -692,11 +700,11 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
             return iTrue;
         }
         case SDL_WINDOWEVENT_RESIZED:
-        case SDL_WINDOWEVENT_SIZE_CHANGED:
+//        case SDL_WINDOWEVENT_SIZE_CHANGED:
             if (!isMaximized_Window_(d) && !d->isDrawFrozen) {
                 d->lastRect.size = init_I2(ev->data1, ev->data2);
             }
-            updateRootSize_Window_(d);
+            updateRootSize_Window_(d, iTrue /* we were already redrawing during the resize */);
             return iTrue;
         case SDL_WINDOWEVENT_LEAVE:
             unhover_Widget();
@@ -836,7 +844,7 @@ void draw_Window(iWindow *d) {
 
 void resize_Window(iWindow *d, int w, int h) {
     SDL_SetWindowSize(d->win, w, h);
-    updateRootSize_Window_(d);
+    updateRootSize_Window_(d, iFalse);
 }
 
 void setTitle_Window(iWindow *d, const iString *title) {
