@@ -2840,6 +2840,19 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
                                    isDark_ColorTheme(colorTheme_App()) ? SDL_BLENDMODE_ADD
                                                                        : SDL_BLENDMODE_BLEND);
         ctx.viewPos = topLeft_Rect(docBounds);
+        /* Marker starting outside the visible range? */
+        if (d->firstVisibleRun) {
+            if (!isEmpty_Range(&d->selectMark) &&
+                d->selectMark.start < d->firstVisibleRun->text.start &&
+                d->selectMark.end > d->firstVisibleRun->text.start) {
+                ctx.inSelectMark = iTrue;
+            }
+            if (isEmpty_Range(&d->foundMark) &&
+                d->foundMark.start < d->firstVisibleRun->text.start &&
+                d->foundMark.end > d->firstVisibleRun->text.start) {
+                ctx.inFoundMark = iTrue;
+            }
+        }
         render_GmDocument(d->doc, vis, drawMark_DrawContext_, &ctx);
         SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_NONE);
     }
