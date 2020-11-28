@@ -304,6 +304,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     iBool            isPreformat   = iFalse;
     iRangecc         preAltText    = iNullRange;
     int              preFont       = preformatted_FontId;
+    uint16_t         preId         = 0;
     iBool            enableIndents = iFalse;
     iBool            addSiteBanner = d->siteBannerEnabled;
     enum iGmLineType prevType      = text_GmLineType;
@@ -313,12 +314,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     }
     while (nextSplit_Rangecc(content, "\n", &contentLine)) {
         iRangecc line = contentLine; /* `line` will be trimmed later; would confuse nextSplit */
-        iGmRun run;
-        run.flags = 0;
-        run.color = white_ColorId;
-        run.linkId = 0;
-        run.imageId = 0;
-        run.audioId = 0;
+        iGmRun run = { .color = white_ColorId };
         enum iGmLineType type;
         int indent = 0;
         /* Detect the type of the line. */
@@ -330,6 +326,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             indent = indents[type];
             if (type == preformatted_GmLineType) {
                 isPreformat = iTrue;
+                preId++;
                 preFont = preformatted_FontId;
                 /* Use a smaller font if the block contents are wide. */
                 if (measurePreformattedBlock_GmDocument_(d, line.start, preFont).x >
@@ -370,6 +367,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 addSiteBanner = iFalse; /* overrides the banner */
                 continue;
             }
+            run.preId = preId;
             run.font = (d->format == plainText_GmDocumentFormat ? regularMonospace_FontId : preFont);
             indent = indents[type];
         }
@@ -509,8 +507,9 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             }
             run.bounds.pos = addX_I2(pos, indent * gap_Text);
             const char *contPos;
-            const int   avail = d->size.x - run.bounds.pos.x;
+            const int   avail = isPreformat ? 0 : (d->size.x - run.bounds.pos.x);
             const iInt2 dims  = tryAdvance_Text(run.font, runLine, avail, &contPos);
+            iChangeFlags(run.flags, wide_GmRunFlag, (isPreformat && dims.x > d->size.x));
             run.bounds.size.x = iMax(avail, dims.x); /* Extends to the right edge for selection. */
             run.bounds.size.y = dims.y;
             run.visBounds     = run.bounds;
@@ -596,6 +595,19 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         prevType = type;
     }
     d->size.y = pos.y;
+    /* Go over the preformatted blocks and mark them wide if at least one run is wide. */ {
+        iForEach(Array, i, &d->layout) {
+            iGmRun *run = i.value;
+            if (run->preId && run->flags & wide_GmRunFlag) {
+                iGmRunRange block = findPreformattedRange_GmDocument(d, run);
+                for (const iGmRun *j = block.start; j != block.end; j++) {
+                    iConstCast(iGmRun *, j)->flags |= wide_GmRunFlag;
+                }
+                /* Skip to the end of the block. */
+                i.pos = block.end - (const iGmRun *) constData_Array(&d->layout) - 1;
+            }
+        }
+    }
 }
 
 void init_GmDocument(iGmDocument *d) {
@@ -1235,6 +1247,23 @@ iRangecc findTextBefore_GmDocument(const iGmDocument *d, const iString *text, co
         start = range.end;
     }
     return found;
+}
+
+iGmRunRange findPreformattedRange_GmDocument(const iGmDocument *d, const iGmRun *run) {
+    iAssert(run->preId);
+    iGmRunRange range = { run, run };
+    /* Find the beginning. */
+    while (range.start > (const iGmRun *) constData_Array(&d->layout)) {
+        const iGmRun *prev = range.start - 1;
+        if (prev->preId != run->preId) break;
+        range.start = prev;
+    }
+    /* Find the ending. */
+    while (range.end < (const iGmRun *) constEnd_Array(&d->layout)) {
+        if (range.end->preId != run->preId) break;
+        range.end++;
+    }
+    return range;
 }
 
 const iGmRun *findRun_GmDocument(const iGmDocument *d, iInt2 pos) {
