@@ -2150,8 +2150,13 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 smoothDuration_DocumentWidget_ *
                     /* accelerated speed for repeated wheelings */
                     (!isFinished_Anim(&d->scrollY) && pos_Anim(&d->scrollY) < 0.25f ? 0.5f : 1.0f));
+#if defined (iPlatformMsys)
+            const int horizStep = ev->wheel.x * 3;
+#else
+            const int horizStep = ev->wheel.x * -3;
+#endif
             scrollWideBlock_DocumentWidget_(
-                d, mouseCoord, -ev->wheel.x * lineHeight_Text(paragraph_FontId) * 3, 167);
+                d, mouseCoord, horizStep * lineHeight_Text(paragraph_FontId), 167);
         }
         iChangeFlags(d->flags, noHoverWhileScrolling_DocumentWidgetFlag, iTrue);
         return iTrue;
@@ -2343,7 +2348,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                further to do. */
                             return iTrue;
                         }
-                        if (!requestMedia_DocumentWidget_(d, linkId)) {                            
+                        if (!requestMedia_DocumentWidget_(d, linkId)) {
                             if (linkFlags & content_GmLinkFlag) {
                                 /* Dismiss shown content on click. */
                                 setData_Media(media_GmDocument(d->doc),
