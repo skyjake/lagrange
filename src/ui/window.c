@@ -528,7 +528,7 @@ static void updateRootSize_Window_(iWindow *d, iBool notifyAlways) {
 void drawWhileResizing_Window(iWindow *d, int w, int h) {
     /* This is called while a window resize is in progress, so we can be pretty confident
        the size has actually changed. */
-    d->root->rect.size = mulf_I2(init_I2(w, h), d->pixelRatio);
+    d->root->rect.size = coord_Window(d, w, h);
     arrange_Widget(d->root);
     draw_Window(d);
 }

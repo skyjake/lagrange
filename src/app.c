@@ -570,6 +570,15 @@ static int resizeWatcher_(void *user, SDL_Event *event) {
     iApp *d = user;
     if (event->type == SDL_WINDOWEVENT && event->window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
         const SDL_WindowEvent *winev = &event->window;
+#if defined (iPlatformMsys)
+        resetFonts_Text(); {
+            SDL_Event u = { .type = SDL_USEREVENT };
+            u.user.code = command_UserEventCode;
+            u.user.data1 = strdup("theme.changed");
+            u.user.windowID = SDL_GetWindowID(d->window->win);
+            dispatchEvent_Widget(d->window->root, &u);
+        }
+#endif
         drawWhileResizing_Window(d->window, winev->data1, winev->data2);
     }
     return 0;
