@@ -2151,7 +2151,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                     /* accelerated speed for repeated wheelings */
                     (!isFinished_Anim(&d->scrollY) && pos_Anim(&d->scrollY) < 0.25f ? 0.5f : 1.0f));
             scrollWideBlock_DocumentWidget_(
-                d, mouseCoord, ev->wheel.x * lineHeight_Text(paragraph_FontId) * 3, 167);
+                d, mouseCoord, -ev->wheel.x * lineHeight_Text(paragraph_FontId) * 3, 167);
         }
         iChangeFlags(d->flags, noHoverWhileScrolling_DocumentWidgetFlag, iTrue);
         return iTrue;
