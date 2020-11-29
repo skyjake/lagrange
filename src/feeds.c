@@ -134,7 +134,9 @@ static void trimTitle_(iString *title) {
     const char *start = constBegin_String(title);
     iConstForEach(String, i, title) {
         start = i.pos;
-        if (!isSpace_Char(i.value) && !(i.value < 128 && ispunct(i.value))) {
+        if (!isSpace_Char(i.value) &&
+            /* Dashes or punctuation? */
+            !(i.value == 0x2013 || i.value == 0x2014 || (i.value < 128 && ispunct(i.value)))) {
             break;
         }
     }
