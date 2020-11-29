@@ -32,7 +32,7 @@ jobs:
           GPG_SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY }}
       - name: package-build
         run: |
-          set RELEASE_VERSION=`git tag | sort -rV | head -n1 | sed 's/v\(.*\)/\1/'`
+          export RELEASE_VERSION=`git tag | sort -rV | head -n1 | sed 's/v\(.*\)/\1/'`
           git archive --format=tar.gz --prefix=lagrange-${RELEASE_VERSION}/ HEAD >lagrange-${RELEASE_VERSION}.tar.gz
           tar -xvzf lagrange-${RELEASE_VERSION}.tar.gz
           ln -s lagrange-${RELEASE_VERSION}.tar.gz lagrange_${RELEASE_VERSION}.orig.tar.gz
@@ -46,7 +46,7 @@ jobs:
         shell: bash
       - name: plain-build
         run: |
-          set RELEASE_VERSION=`git tag | sort -rV | head -n1 | sed 's/v\(.*\)/\1/'`
+          export RELEASE_VERSION=`git tag | sort -rV | head -n1 | sed 's/v\(.*\)/\1/'`
           mkdir builddir
           cd builddir
           cmake .. -DCMAKE_BUILD_TYPE=Release
