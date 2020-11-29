@@ -7,7 +7,8 @@ on:
   workflow_dispatch:
 
 env:
-  RELEASE_VERSION: 0.8.0
+  DEBEMAIL: jaakko.keranen@iki.fi
+  DEBFULLNAME: Jaakko Keränen (skyjake)
 
 jobs:
   build:
@@ -31,10 +32,13 @@ jobs:
           GPG_SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY }}
       - name: package-build
         run: |
+          set RELEASE_VERSION=`git tag | sort -rV | head -n1 | sed 's/v\(.*\)/\1/'`
           git archive --format=tar.gz --prefix=lagrange-${RELEASE_VERSION}/ HEAD >lagrange-${RELEASE_VERSION}.tar.gz
           tar -xvzf lagrange-${RELEASE_VERSION}.tar.gz
           ln -s lagrange-${RELEASE_VERSION}.tar.gz lagrange_${RELEASE_VERSION}.orig.tar.gz
           cd lagrange-${RELEASE_VERSION}
+          dch -v ${RELEASE_VERSION}-1 "Built by GitHub CI."
+          dch -r ""
           debuild
           cd ..
           mkdir -p artifacts
@@ -42,6 +46,7 @@ jobs:
         shell: bash
       - name: plain-build
         run: |
+          set RELEASE_VERSION=`git tag | sort -rV | head -n1 | sed 's/v\(.*\)/\1/'`
           mkdir builddir
           cd builddir
           cmake .. -DCMAKE_BUILD_TYPE=Release
