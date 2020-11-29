@@ -57,7 +57,7 @@ jobs:
       - name: upload-artifact
         uses: actions/upload-artifact@v2
         with:
-          name: ubuntu-latest
+          name: lagrange_ubuntu-18.04
           path: artifacts
   debian_build:
     runs-on: ubuntu-latest
@@ -78,5 +78,5 @@ jobs:
       - name: upload-debian-artifact
         uses: actions/upload-artifact@v2
         with:
-          name: debian
+          name: lagrange_debian-buster
           path: /home/runner/work/${{env.REPOSITORY_NAME}}/${{env.REPOSITORY_NAME}}/artifacts
