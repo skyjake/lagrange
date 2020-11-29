@@ -111,6 +111,15 @@ static void submit_FeedJob_(iFeedJob *d) {
     submit_GmRequest(d->request);
 }
 
+static iBool isSubscribed_(void *context, const iBookmark *bm) {
+    iUnused(context);
+    return indexOfCStr_String(&bm->tags, "subscribed") != iInvalidPos; /* TODO: RegExp with \b */
+}
+
+static const iPtrArray *listSubscriptions_(void) {
+    return list_Bookmarks(bookmarks_App(), NULL, isSubscribed_, NULL);
+}
+
 static iFeedJob *startNextJob_Feeds_(iFeeds *d) {
     if (isEmpty_PtrArray(&d->jobs)) {
         return NULL;
@@ -175,6 +184,43 @@ static void parseResult_FeedJob_(iFeedJob *d) {
         iRelease(linkPattern);
         iEndCollect();
     }
+}
+
+static void save_Feeds_(iFeeds *d) {
+    iFile *f = new_File(collect_String(concatCStr_Path(&d->saveDir, feedsFilename_Feeds_)));
+    if (open_File(f, write_FileMode | text_FileMode)) {
+        lock_Mutex(d->mtx);
+        iString *str = new_String();
+        format_String(str, "%llu\n# Feeds\n", integralSeconds_Time(&d->lastRefreshedAt));
+        write_File(f, utf8_String(str));
+        /* Index of feeds for IDs. */ {
+            iConstForEach(PtrArray, i, listSubscriptions_()) {
+                const iBookmark *bm = i.ptr;
+                format_String(str, "%08x %s\n", id_Bookmark(bm), cstr_String(&bm->url));
+                write_File(f, utf8_String(str));
+            }
+        }
+        writeData_File(f, "# Entries\n", 10);
+        iTime now;
+        initCurrent_Time(&now);
+        iConstForEach(Array, i, &d->entries.values) {
+            const iFeedEntry *entry = *(const iFeedEntry **) i.value;
+            if (secondsSince_Time(&now, &entry->discovered) > maxAge_Visited) {
+                continue; /* Forget entries discovered long ago. */
+            }
+            format_String(str, "%x\n%llu\n%llu\n%s\n%s\n",
+                          entry->bookmarkId,
+                          integralSeconds_Time(&entry->posted),
+                          integralSeconds_Time(&entry->discovered),
+                          cstr_String(&entry->url),
+                          cstr_String(&entry->title));
+            write_File(f, utf8_String(str));
+        }
+        delete_String(str);
+        close_File(f);
+        unlock_Mutex(d->mtx);
+    }
+    iRelease(f);
 }
 
 static iBool updateEntries_Feeds_(iFeeds *d, iPtrArray *incoming) {
@@ -252,18 +298,10 @@ static iThreadResult fetch_Feeds_(iThread *thread) {
             break;
         }
     }
+    save_Feeds_(d);
     postCommandf_App("feeds.update.finished arg:%d", gotNew ? 1 : 0);
     initCurrent_Time(&d->lastRefreshedAt);
     return 0;
-}
-
-static iBool isSubscribed_(void *context, const iBookmark *bm) {
-    iUnused(context);
-    return indexOfCStr_String(&bm->tags, "subscribed") != iInvalidPos; /* TODO: RegExp with \b */
-}
-
-static const iPtrArray *listSubscriptions_(void) {
-    return list_Bookmarks(bookmarks_App(), NULL, isSubscribed_, NULL);
 }
 
 static iBool startWorker_Feeds_(iFeeds *d) {
@@ -306,43 +344,6 @@ static void stopWorker_Feeds_(iFeeds *d) {
 static int cmp_FeedEntryPtr_(const void *a, const void *b) {
     const iFeedEntry * const *elem[2] = { a, b };
     return cmpString_String(&(*elem[0])->url, &(*elem[1])->url);
-}
-
-static void save_Feeds_(iFeeds *d) {
-    iFile *f = new_File(collect_String(concatCStr_Path(&d->saveDir, feedsFilename_Feeds_)));
-    if (open_File(f, write_FileMode | text_FileMode)) {
-        lock_Mutex(d->mtx);
-        iString *str = new_String();
-        format_String(str, "%llu\n# Feeds\n", integralSeconds_Time(&d->lastRefreshedAt));
-        write_File(f, utf8_String(str));
-        /* Index of feeds for IDs. */ {
-            iConstForEach(PtrArray, i, listSubscriptions_()) {
-                const iBookmark *bm = i.ptr;
-                format_String(str, "%08x %s\n", id_Bookmark(bm), cstr_String(&bm->url));
-                write_File(f, utf8_String(str));
-            }
-        }
-        writeData_File(f, "# Entries\n", 10);
-        iTime now;
-        initCurrent_Time(&now);
-        iConstForEach(Array, i, &d->entries.values) {
-            const iFeedEntry *entry = *(const iFeedEntry **) i.value;
-            if (secondsSince_Time(&now, &entry->discovered) > maxAge_Visited) {
-                continue; /* Forget entries discovered long ago. */
-            }
-            format_String(str, "%x\n%llu\n%llu\n%s\n%s\n",
-                          entry->bookmarkId,
-                          integralSeconds_Time(&entry->posted),
-                          integralSeconds_Time(&entry->discovered),
-                          cstr_String(&entry->url),
-                          cstr_String(&entry->title));
-            write_File(f, utf8_String(str));
-        }
-        delete_String(str);
-        close_File(f);
-        unlock_Mutex(d->mtx);
-    }
-    iRelease(f);
 }
 
 iDeclareType(FeedHashNode)
@@ -474,7 +475,6 @@ void deinit_Feeds(void) {
     stopWorker_Feeds_(d);
     iAssert(isEmpty_PtrArray(&d->jobs));
     deinit_PtrArray(&d->jobs);
-    save_Feeds_(d);
     deinit_String(&d->saveDir);
     delete_Mutex(d->mtx);
     iForEach(Array, i, &d->entries.values) {
