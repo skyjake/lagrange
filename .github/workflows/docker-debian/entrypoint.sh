@@ -1,4 +1,5 @@
 #!/bin/sh -xv
+export LC_ALL=en_US.UTF-8
 
 apt-get update -qq -y
 apt-get install -y -qq --no-install-recommends cmake libsdl2-dev libssl-dev libpcre3-dev zlib1g-dev libunistring-dev libmpg123-dev debhelper dh-make devscripts fakeroot git build-essential
