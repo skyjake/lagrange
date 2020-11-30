@@ -179,6 +179,9 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
             }
             else if (equalCase_Rangecc(parts.scheme, "gopher")) {
                 link->flags |= gopher_GmLinkFlag;
+                if (startsWith_Rangecc(parts.path, "/7")) {
+                    link->flags |= query_GmLinkFlag;
+                }
             }
             else if (equalCase_Rangecc(parts.scheme, "file")) {
                 link->flags |= file_GmLinkFlag;
@@ -280,12 +283,13 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     static const float bottomMargin[max_GmLineType] = {
         0.0f, 0.333f, 1.0f, 0.5f, 0.5f, 0.5f, 0.5f, 1.0f
     };
-    static const char *arrow    = "\u27a4";
-    static const char *envelope = "\U0001f4e7";
-    static const char *bullet   = "\u2022";
-    static const char *folder   = "\U0001f4c1";
-    static const char *globe    = "\U0001f310";
-    static const char *quote    = "\u201c";
+    static const char *arrow           = "\u27a4";
+    static const char *envelope        = "\U0001f4e7";
+    static const char *bullet          = "\u2022";
+    static const char *folder          = "\U0001f4c1";
+    static const char *globe           = "\U0001f310";
+    static const char *quote           = "\u201c";
+    static const char *magnifyingGlass = "\U0001f50d";
     const float midRunSkip = 0; /*0.120f;*/ /* extra space between wrapped text/quote lines */
     const iPrefs *prefs = prefs_App();
     clear_Array(&d->layout);
@@ -463,11 +467,11 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             icon.visBounds.size = init_I2(indent * gap_Text, lineHeight_Text(run.font));
             icon.bounds         = zero_Rect(); /* just visual */
             const iGmLink *link = constAt_PtrArray(&d->links, run.linkId - 1);
-            icon.text           = range_CStr(link->flags & file_GmLinkFlag
-                                       ? folder
-                                       : link->flags & mailto_GmLinkFlag
-                                             ? envelope
-                                             : link->flags & remote_GmLinkFlag ? globe : arrow);
+            icon.text           = range_CStr(link->flags & query_GmLinkFlag    ? magnifyingGlass
+                                             : link->flags & file_GmLinkFlag   ? folder
+                                             : link->flags & mailto_GmLinkFlag ? envelope
+                                             : link->flags & remote_GmLinkFlag ? globe
+                                                                               : arrow);
             icon.font = regular_FontId;
             if (link->flags & remote_GmLinkFlag) {
                 icon.visBounds.pos.x -= gap_Text / 2;
@@ -596,6 +600,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     }
     d->size.y = pos.y;
     /* Go over the preformatted blocks and mark them wide if at least one run is wide. */ {
+        /* TODO: Store the dimensions and ranges for later access. */
         iForEach(Array, i, &d->layout) {
             iGmRun *run = i.value;
             if (run->preId && run->flags & wide_GmRunFlag) {

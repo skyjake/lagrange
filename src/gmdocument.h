@@ -67,6 +67,7 @@ enum iGmLinkFlags {
     content_GmLinkFlag            = iBit(13), /* content visible below */
     visited_GmLinkFlag            = iBit(14), /* in the history */
     permanent_GmLinkFlag          = iBit(15), /* content cannot be dismissed; media link */
+    query_GmLinkFlag              = iBit(16), /* Gopher query link */
 };
 
 struct Impl_GmHeading {
