@@ -2337,6 +2337,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 closeMenu_Widget(d->menu);
             }
             if (!isMoved_Click(&d->click)) {
+                setFocus_Widget(NULL);
                 if (d->hoverLink) {
                     const iGmLinkId linkId = d->hoverLink->linkId;
                     iAssert(linkId);
