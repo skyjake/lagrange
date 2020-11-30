@@ -500,8 +500,6 @@ static void setupUserInterface_Window(iWindow *d) {
                                         6);
     setId_Widget(tabsMenu, "doctabs.menu");
     /* Global keyboard shortcuts. */ {
-        addAction_Widget(d->root, prevTab_KeyShortcut, "tabs.prev");
-        addAction_Widget(d->root, nextTab_KeyShortcut, "tabs.next");
         addAction_Widget(d->root, 'l', KMOD_PRIMARY, "navigate.focus");
         addAction_Widget(d->root, 'f', KMOD_PRIMARY, "focus.set id:find.input");
         addAction_Widget(d->root, '1', KMOD_PRIMARY, "sidebar.mode arg:0 toggle:1");

@@ -76,6 +76,8 @@ static const struct { int id; iMenuItem bind; int flags; } defaultBindings_[] = 
     { 33, { "Go to site root",           navigateRoot_KeyShortcut,      "navigate.root"      }, 0 },
     { 40, { "Open link via home row keys", 'f', 0,                      "document.linkkeys arg:1" }, 0 },
     { 41, { "Open link via modifier key", SDLK_LALT, 0,                 "document.linkkeys arg:0" }, argRelease_BindFlag },
+    { 80, { "Previous tab",              prevTab_KeyShortcut,           "tabs.prev"          }, 0 },
+    { 81, { "Next tab",                  nextTab_KeyShortcut,           "tabs.next"          }, 0 },
     /* The following cannot currently be changed (built-in duplicates). */
     { 1000, { NULL, SDLK_SPACE, KMOD_SHIFT, "scroll.page arg:-1" }, argRepeat_BindFlag },
     { 1001, { NULL, SDLK_SPACE, 0, "scroll.page arg:1" }, argRepeat_BindFlag },

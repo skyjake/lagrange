@@ -1162,8 +1162,6 @@ iWidget *makePreferences_Widget(void) {
         addChild_Widget(div, iClob(newKeyMods_LabelWidget("Dismiss", SDLK_ESCAPE, 0, "prefs.dismiss")));
     }
     addChild_Widget(dlg, iClob(div));
-    addAction_Widget(dlg, prevTab_KeyShortcut, "tabs.prev");
-    addAction_Widget(dlg, nextTab_KeyShortcut, "tabs.next");
     addChild_Widget(get_Window()->root, iClob(dlg));
     centerSheet_Widget(dlg);    
     return dlg;
