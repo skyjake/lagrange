@@ -300,9 +300,9 @@ static iThreadResult fetch_Feeds_(iThread *thread) {
             break;
         }
     }
+    initCurrent_Time(&d->lastRefreshedAt);
     save_Feeds_(d);
     postCommandf_App("feeds.update.finished arg:%d", gotNew ? 1 : 0);
-    initCurrent_Time(&d->lastRefreshedAt);
     return 0;
 }
 
