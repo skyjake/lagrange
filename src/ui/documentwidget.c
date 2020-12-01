@@ -1195,6 +1195,9 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                     showErrorPage_DocumentWidget_(
                         d, permanentFailure_GmStatusCode, &resp->meta);
                 }
+                else {
+                    showErrorPage_DocumentWidget_(d, unknownStatusCode_GmStatusCode, &resp->meta);
+                }
                 break;
         }
     }

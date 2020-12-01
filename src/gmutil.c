@@ -217,9 +217,8 @@ static const struct {
     { unknownStatusCode_GmStatusCode, /* keep this as the first one (fallback return value) */
       { 0x1f4ab, /* dizzy */
         "Unknown Status Code",
-        "The server responded with a status code that is not specified in the Gemini "
-        "protocol as known to this client. Maybe the server is from the future? Or "
-        "just malfunctioning."} },
+        "The server responded with a status code that is not in the Gemini specification. "
+        "Maybe the server is from the future? Or just malfunctioning." } },
     { failedToOpenFile_GmStatusCode,
       { 0x1f4c1, /* file folder */
         "Failed to Open File",
