@@ -605,7 +605,7 @@ iLocalDef iBool isWrapBoundary_(iChar prevC, iChar c) {
     if (isSpace_Char(prevC)) {
         return iFalse;
     }
-    if (c == '/' || c == '-' || c == ',' || c == ';' || c == ':' || c == '.') {
+    if (c == '/' || c == '-' || c == ',' || c == ';' || c == ':' || c == '.' || c == 0xad) {
         return iTrue;
     }
     return isSpace_Char(c);
@@ -657,6 +657,27 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
             ch = nextChar_(&chPos, text.end); /* just ignore */
         }
         /* Special instructions. */ {
+            if (ch == 0xad) { /* soft hyphen */
+                lastWordEnd = chPos;
+                if (isMeasuring_(mode)) {
+                    if (xposLimit > 0) {
+                        const char *postHyphen = chPos;
+                        iChar       nextCh     = nextChar_(&postHyphen, text.end);
+                        if ((int) xpos + glyph_Font_(d, ch)->rect[0].size.x +
+                            glyph_Font_(d, nextCh)->rect[0].size.x > xposLimit) {
+                            /* Wraps after hyphen, should show it. */
+                        }
+                        else continue;
+                    }
+                    else continue;
+                }
+                else {
+                    /* Only show it at the end. */
+                    if (chPos != text.end) {
+                        continue;
+                    }
+                }
+            }
             if (ch == '\n') {
                 xpos = pos.x;
                 pos.y += d->height;
