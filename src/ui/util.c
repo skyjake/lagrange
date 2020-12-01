@@ -1245,6 +1245,46 @@ iWidget *makeBookmarkCreation_Widget(const iString *url, const iString *title, i
     return dlg;
 }
 
+iWidget *makeFeedSettings_Widget(uint32_t bookmarkId) {
+    iWidget *dlg = makeSheet_Widget("feedcfg");
+    setId_Widget(addChildFlags_Widget(
+                     dlg,
+                     iClob(new_LabelWidget(uiHeading_ColorEscape "FEED SETTINGS", NULL)),
+                     frameless_WidgetFlag),
+                 "feedcfg.heading");
+    iWidget *page = new_Widget();
+    addChild_Widget(dlg, iClob(page));
+    setFlags_Widget(page, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
+    iWidget *headings = addChildFlags_Widget(
+        page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
+    iWidget *values = addChildFlags_Widget(
+        page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
+    addChild_Widget(headings, iClob(makeHeading_Widget("Feed title:")));
+    setId_Widget(
+        addChildFlags_Widget(values, iClob(new_LabelWidget("", NULL)), frameless_WidgetFlag),
+        "feedcfg.title");
+    addChild_Widget(headings, iClob(makeHeading_Widget("Entry type:")));
+    iWidget *types = new_Widget(); {
+        addRadioButton_(types, "feedcfg.type.gemini", "YYYY-MM-DD", "feedcfg.type arg:0");
+        addRadioButton_(types, "feedcfg.type.headings", "New Headings", "feedcfg.type arg:1");
+    }
+    addChildFlags_Widget(values, iClob(types), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+    iWidget *div = new_Widget(); {
+        setFlags_Widget(div, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
+        addChild_Widget(div, iClob(newKeyMods_LabelWidget("Cancel", SDLK_ESCAPE, 0, "cancel")));
+        setId_Widget(addChild_Widget(
+            div,
+            iClob(newKeyMods_LabelWidget(
+                uiTextCaution_ColorEscape "Save Settings", SDLK_RETURN, KMOD_PRIMARY,
+                             format_CStr("feedcfg.accept bmid:%d", bookmarkId)))),
+                     "feedcfg.save");
+    }
+    addChild_Widget(dlg, iClob(div));
+    addChild_Widget(get_Window()->root, iClob(dlg));
+    centerSheet_Widget(dlg);
+    return dlg;
+}
+
 iWidget *makeIdentityCreation_Widget(void) {
     iWidget *dlg = makeSheet_Widget("ident");
     setId_Widget(addChildFlags_Widget(

@@ -105,7 +105,7 @@ static const iMenuItem navMenuItems_[] = {
     { "Copy Source Text", SDLK_c, KMOD_PRIMARY, "copy" },
     { "---", 0, 0, NULL },
     { "Bookmark Page", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
-    { "Subscribe to Page", subscribeToPage_KeyModifier, "bookmark.addtag tag:subscribed" },
+    { "Subscribe to Page", subscribeToPage_KeyModifier, "feeds.subscribe" },
     { "---", 0, 0, NULL },
     { "Show Feed Entries", 0, 0, "!open url:about:feeds" },
     { "---", 0, 0, NULL },
@@ -160,7 +160,7 @@ static const iMenuItem viewMenuItems_[] = {
 static iMenuItem bookmarksMenuItems_[] = {
     { "Bookmark This Page...", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
     { "---", 0, 0, NULL },
-    { "Subscribe to This Page", subscribeToPage_KeyModifier, "bookmark.addtag tag:subscribed" },
+    { "Subscribe to This Page", subscribeToPage_KeyModifier, "feeds.subscribe" },
     { "---", 0, 0, NULL },
     { "Show Feed Entries", 0, 0, "open url:about:feeds" },
     { "Refresh Feeds", SDLK_r, KMOD_PRIMARY | KMOD_SHIFT, "feeds.refresh" },
