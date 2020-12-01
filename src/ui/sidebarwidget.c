@@ -123,6 +123,11 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
             iZap(on);
             iConstForEach(PtrArray, i, listEntries_Feeds()) {
                 const iFeedEntry *entry = i.ptr;
+                /* For more items, one can always see "about:feeds". A large number of items
+                   is a bit difficult to navigate in the sidebar. */
+                if (numItems_ListWidget(d->list) == 100) {
+                    break;
+                }
                 /* Exclude entries that are too old for Visited to keep track of. */
                 if (secondsSince_Time(&now, &entry->discovered) > maxAge_Visited) {
                     break; /* the rest are even older */
