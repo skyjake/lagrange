@@ -332,7 +332,7 @@ static void initCache_Text_(iText *d) {
     d->cacheRowAllocStep = iMax(2, textSize / 6);
     /* Allocate initial (empty) rows. These will be assigned actual locations in the cache
        once at least one glyph is stored. */
-    for (int h = d->cacheRowAllocStep; h <= 2 * textSize; h += d->cacheRowAllocStep) {
+    for (int h = d->cacheRowAllocStep; h <= 2 * textSize + d->cacheRowAllocStep; h += d->cacheRowAllocStep) {
         pushBack_Array(&d->cacheRows, &(iCacheRow){ .height = 0 });
     }
     d->cacheBottom = 0;
