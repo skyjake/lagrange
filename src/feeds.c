@@ -27,10 +27,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "app.h"
 
 #include <the_Foundation/file.h>
-#include <the_Foundation/mutex.h>
 #include <the_Foundation/hash.h>
-#include <the_Foundation/queue.h>
+#include <the_Foundation/intset.h>
+#include <the_Foundation/mutex.h>
 #include <the_Foundation/path.h>
+#include <the_Foundation/queue.h>
 #include <the_Foundation/regexp.h>
 #include <the_Foundation/stringset.h>
 #include <the_Foundation/thread.h>
@@ -55,12 +56,36 @@ void deinit_FeedEntry(iFeedEntry *d) {
     deinit_String(&d->url);
 }
 
+const iString *url_FeedEntry(const iFeedEntry *d) {
+    const size_t fragPos = indexOf_String(&d->url, '#');
+    if (fragPos != iInvalidPos) {
+        return collect_String(newRange_String((iRangecc){ constBegin_String(&d->url),
+                                                          constBegin_String(&d->url) + fragPos }));
+    }
+    return &d->url;
+}
+
+iBool isUnread_FeedEntry(const iFeedEntry *d) {
+    const size_t fragPos = indexOf_String(&d->url, '#');
+    if (fragPos != iInvalidPos) {
+        /* Check if the entry is newer than the latest visit. */
+        const iTime visTime = urlVisitTime_Visited(visited_App(), url_FeedEntry(d));
+        return cmp_Time(&visTime, &d->posted) < 0;
+    }
+    if (!containsUrl_Visited(visited_App(), &d->url)) {
+        return iTrue;
+    }
+    return iFalse;
+}
+
 /*----------------------------------------------------------------------------------------------*/
 
 struct Impl_FeedJob {
     iString     url;
     uint32_t    bookmarkId;
     iTime       startTime;
+    iBool       isFirstUpdate; /* hasn't been checked ever before */
+    iBool       checkHeadings;
     iGmRequest *request;
     iPtrArray   results;
 };
@@ -71,6 +96,8 @@ static void init_FeedJob(iFeedJob *d, const iBookmark *bookmark) {
     d->request = NULL;
     init_PtrArray(&d->results);
     iZap(d->startTime);
+    d->isFirstUpdate = iFalse;
+    d->checkHeadings = hasTag_Bookmark(bookmark, "headings");
 }
 
 static void deinit_FeedJob(iFeedJob *d) {
@@ -92,6 +119,7 @@ static const int   updateIntervalSeconds_Feeds_ = 4 * 60 * 60;
 struct Impl_Feeds {
     iMutex *  mtx;
     iString   saveDir;
+    iIntSet   previouslyCheckedFeeds; /* bookmark IDs */
     iTime     lastRefreshedAt;
     int       refreshTimer;
     iThread * worker;
@@ -113,7 +141,13 @@ static void submit_FeedJob_(iFeedJob *d) {
 
 static iBool isSubscribed_(void *context, const iBookmark *bm) {
     iUnused(context);
-    return indexOfCStr_String(&bm->tags, "subscribed") != iInvalidPos; /* TODO: RegExp with \b */
+    static iRegExp *pattern_ = NULL;
+    if (!pattern_) {
+        pattern_ = new_RegExp("\\bsubscribed\\b", caseSensitive_RegExpOption);
+    }
+    iRegExpMatch m;
+    init_RegExpMatch(&m);
+    return matchString_RegExp(pattern_, &bm->tags, &m);
 }
 
 static const iPtrArray *listSubscriptions_(void) {
@@ -181,6 +215,28 @@ static void parseResult_FeedJob_(iFeedJob *d) {
                         .year = year, .month = month, .day = day, .hour = 12 /* noon UTC */ });
                 pushBack_PtrArray(&d->results, entry);
             }
+            if (d->checkHeadings) {
+                init_RegExpMatch(&m);
+                if (startsWith_Rangecc(line, "#")) {
+                    while (*line.start == '#' && line.start < line.end) {
+                        line.start++;
+                    }
+                    trimStart_Rangecc(&line);
+                    iFeedEntry *entry = new_FeedEntry();
+                    entry->posted = now;
+                    if (!d->isFirstUpdate) {
+                        entry->discovered = now;
+                    }
+                    entry->bookmarkId = d->bookmarkId;
+                    iString *title = newRange_String(line);
+                    set_String(&entry->title, title);
+                    set_String(&entry->url, &d->url);
+                    appendChar_String(&entry->url, '#');
+                    append_String(&entry->url, collect_String(urlEncode_String(title)));
+                    delete_String(title);
+                    pushBack_PtrArray(&d->results, entry);
+                }
+            }
         }
         deinit_String(&src);
         iRelease(linkPattern);
@@ -207,7 +263,8 @@ static void save_Feeds_(iFeeds *d) {
         initCurrent_Time(&now);
         iConstForEach(Array, i, &d->entries.values) {
             const iFeedEntry *entry = *(const iFeedEntry **) i.value;
-            if (secondsSince_Time(&now, &entry->discovered) > maxAge_Visited) {
+            if (isValid_Time(&entry->discovered) &&
+                secondsSince_Time(&now, &entry->discovered) > maxAge_Visited) {
                 continue; /* Forget entries discovered long ago. */
             }
             format_String(str, "%x\n%llu\n%llu\n%s\n%s\n",
@@ -225,6 +282,10 @@ static void save_Feeds_(iFeeds *d) {
     iRelease(f);
 }
 
+static iBool isHeadingEntry_FeedEntry_(const iFeedEntry *d) {
+    return contains_String(&d->url, '#');
+}
+
 static iBool updateEntries_Feeds_(iFeeds *d, iPtrArray *incoming) {
     iBool gotNew = iFalse;
     lock_Mutex(d->mtx);
@@ -234,23 +295,25 @@ static iBool updateEntries_Feeds_(iFeeds *d, iPtrArray *incoming) {
         if (locate_SortedArray(&d->entries, &entry, &pos)) {
             iFeedEntry *existing = *(iFeedEntry **) at_SortedArray(&d->entries, pos);
             /* Already known, but update it, maybe the time and label have changed. */
-            iBool changed = iFalse;
-            iDate newDate;
-            iDate oldDate;
-            init_Date(&newDate, &entry->posted);
-            init_Date(&oldDate, &existing->posted);
-            if (!equalCase_String(&existing->title, &entry->title) ||
-                (newDate.year != oldDate.year || newDate.month != oldDate.month ||
-                 newDate.day != oldDate.day)) {
-                changed = iTrue;
-            }
-            set_String(&existing->title, &entry->title);
-            existing->posted = entry->posted;
-            delete_FeedEntry(entry);
-            if (changed) {
-                /* TODO: better to use a new flag for read feed entries? */
-                removeUrl_Visited(visited_App(), &existing->url);
-                gotNew = iTrue;
+            if (!isHeadingEntry_FeedEntry_(existing)) {
+                iBool changed = iFalse;
+                iDate newDate;
+                iDate oldDate;
+                init_Date(&newDate, &entry->posted);
+                init_Date(&oldDate, &existing->posted);
+                if (!equalCase_String(&existing->title, &entry->title) ||
+                    (newDate.year != oldDate.year || newDate.month != oldDate.month ||
+                     newDate.day != oldDate.day)) {
+                    changed = iTrue;
+                }
+                set_String(&existing->title, &entry->title);
+                existing->posted = entry->posted;
+                delete_FeedEntry(entry);
+                if (changed) {
+                    /* TODO: better to use a new flag for read feed entries? */
+                    removeUrl_Visited(visited_App(), &existing->url);
+                    gotNew = iTrue;
+                }
             }
         }
         else {
@@ -312,7 +375,14 @@ static iBool startWorker_Feeds_(iFeeds *d) {
     }
     /* Queue up all the subscriptions for the worker. */
     iConstForEach(PtrArray, i, listSubscriptions_()) {
-        iFeedJob* job = new_FeedJob(i.ptr);
+        const iBookmark *bm = i.ptr;
+        iFeedJob *job = new_FeedJob(bm);
+        if (!contains_IntSet(&d->previouslyCheckedFeeds, id_Bookmark(bm))) {
+            job->isFirstUpdate = iTrue;
+            printf("first check of %x: %s\n", id_Bookmark(bm), cstr_String(&bm->title));
+            fflush(stdout);
+            insert_IntSet(&d->previouslyCheckedFeeds, id_Bookmark(bm));
+        }
         pushBack_PtrArray(&d->jobs, job);
     }
     if (!isEmpty_Array(&d->jobs)) {
@@ -344,7 +414,7 @@ static void stopWorker_Feeds_(iFeeds *d) {
 }
 
 static int cmp_FeedEntryPtr_(const void *a, const void *b) {
-    const iFeedEntry * const *elem[2] = { a, b };
+    const iFeedEntry * const *elem[2] = { a, b };    
     return cmpString_String(&(*elem[0])->url, &(*elem[1])->url);
 }
 
@@ -391,6 +461,7 @@ static void load_Feeds_(iFeeds *d) {
                             node->node.key      = id;
                             node->bookmarkId    = bookmarkId;
                             insert_Hash(feeds, &node->node);
+                            insert_IntSet(&d->previouslyCheckedFeeds, id);
                         }
                     }
                     break;
@@ -409,8 +480,9 @@ static void load_Feeds_(iFeeds *d) {
                     if (!nextSplit_Rangecc(range_Block(src), "\n", &line)) {
                         goto aborted;
                     }
-                    const unsigned long long discovered = strtoull(line.start, NULL, 10);
-                    if (discovered == 0) {
+                    char *endp = NULL;
+                    const unsigned long long discovered = strtoull(line.start, &endp, 10);
+                    if (endp != line.end) {
                         goto aborted;
                     }
                     if (!nextSplit_Rangecc(range_Block(src), "\n", &line)) {
@@ -457,6 +529,7 @@ void init_Feeds(const char *saveDir) {
     iFeeds *d = &feeds_;
     d->mtx = new_Mutex();
     initCStr_String(&d->saveDir, saveDir);
+    init_IntSet(&d->previouslyCheckedFeeds);
     iZap(d->lastRefreshedAt);
     d->worker = NULL;
     init_PtrArray(&d->jobs);
@@ -483,6 +556,7 @@ void deinit_Feeds(void) {
         iFeedEntry **entry = i.value;
         delete_FeedEntry(*entry);
     }
+    deinit_IntSet(&d->previouslyCheckedFeeds);
     deinit_SortedArray(&d->entries);
 }
 
@@ -554,6 +628,9 @@ const iString *entryListPage_Feeds(void) {
     iZap(on);
     iConstForEach(PtrArray, i, listEntries_Feeds()) {
         const iFeedEntry *entry = i.ptr;
+        if (isHidden_FeedEntry(entry)) {
+            continue; /* A hidden entry. */
+        }
         iDate entryDate;
         init_Date(&entryDate, &entry->posted);
         if (on.year != entryDate.year || on.month != entryDate.month || on.day != entryDate.day) {

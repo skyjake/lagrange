@@ -1090,6 +1090,12 @@ iBool handleCommand_App(const char *cmd) {
         if (gotoHeading.start) {
             postCommandf_App("document.goto heading:%s", cstr_Rangecc(gotoHeading));
         }
+        const iRangecc gotoUrlHeading = range_Command(cmd, "gotourlheading");
+        if (gotoUrlHeading.start) {
+            postCommandf_App("document.goto heading:%s",
+                             cstrCollect_String(urlDecode_String(
+                                 collect_String(newRange_String(gotoUrlHeading)))));
+        }
     }
     else if (equal_Command(cmd, "document.request.cancelled")) {
         /* TODO: How should cancelled requests be treated in the history? */

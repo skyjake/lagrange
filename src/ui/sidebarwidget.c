@@ -123,6 +123,9 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
             iZap(on);
             iConstForEach(PtrArray, i, listEntries_Feeds()) {
                 const iFeedEntry *entry = i.ptr;
+                if (isHidden_FeedEntry(entry)) {
+                    continue; /* A hidden entry. */
+                }
                 /* For more items, one can always see "about:feeds". A large number of items
                    is a bit difficult to navigate in the sidebar. */
                 if (numItems_ListWidget(d->list) == 100) {
@@ -151,9 +154,7 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 if (equal_String(docUrl, &entry->url)) {
                     item->listItem.isSelected = iTrue; /* currently being viewed */
                 }
-                if (!containsUrl_Visited(visited_App(), &entry->url)) {
-                    item->indent = 1; /* unread */
-                }
+                item->indent = isUnread_FeedEntry(entry);
                 set_String(&item->url, &entry->url);
                 set_String(&item->label, &entry->title);
                 const iBookmark *bm = get_Bookmarks(bookmarks_App(), entry->bookmarkId);
@@ -498,7 +499,20 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, const iSidebarItem *it
         }
         case feeds_SidebarMode:
             if (!isEmpty_String(&item->url)) {
-                postCommandf_App("open url:%s", cstr_String(&item->url));
+                const size_t fragPos = indexOf_String(&item->url, '#');
+                if (fragPos != iInvalidPos) {
+                    iString *head = collect_String(
+                        newRange_String((iRangecc){ constBegin_String(&item->url) + fragPos + 1,
+                                                    constEnd_String(&item->url) }));
+                    postCommandf_App(
+                        "open gotourlheading:%s url:%s",
+                        cstr_String(head),
+                        cstr_Rangecc((iRangecc){ constBegin_String(&item->url),
+                                                 constBegin_String(&item->url) + fragPos }));
+                }
+                else {
+                    postCommandf_App("open url:%s", cstr_String(&item->url));
+                }
             }
             break;
         case bookmarks_SidebarMode:

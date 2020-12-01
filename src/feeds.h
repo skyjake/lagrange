@@ -35,6 +35,15 @@ struct Impl_FeedEntry {
     uint32_t bookmarkId; /* note: runtime only, not a persistent ID */
 };
 
+iLocalDef iBool isHidden_FeedEntry(const iFeedEntry *d) {
+    return !isValid_Time(&d->discovered);
+}
+
+const iString * url_FeedEntry       (const iFeedEntry *);
+iBool           isUnread_FeedEntry  (const iFeedEntry *);
+
+/*----------------------------------------------------------------------------------------------*/
+
 void    init_Feeds              (const char *saveDir);
 void    deinit_Feeds            (void);
 void    refresh_Feeds           (void);

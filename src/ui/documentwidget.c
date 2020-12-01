@@ -171,6 +171,7 @@ struct Impl_DocumentWidget {
     const iGmRun * firstVisibleRun;
     const iGmRun * lastVisibleRun;
     iClick         click;
+    iString        pendingGotoHeading;
     float          initNormScrollY;
     iAnim          scrollY;
     iAnim          sideOpacity;
@@ -230,6 +231,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     init_PtrArray(&d->visiblePlayers);
     d->grabbedPlayer = NULL;
     d->playerTimer   = 0;
+    init_String(&d->pendingGotoHeading);
     init_Click(&d->click, d, SDL_BUTTON_LEFT);
     addChild_Widget(w, iClob(d->scroll = new_ScrollWidget()));
     d->menu         = NULL; /* created when clicking */
@@ -259,6 +261,7 @@ void deinit_DocumentWidget(iDocumentWidget *d) {
     deinit_Array(&d->outline);
     iRelease(d->media);
     iRelease(d->request);
+    deinit_String(&d->pendingGotoHeading);
     deinit_Block(&d->sourceContent);
     deinit_String(&d->sourceMime);
     iRelease(d->doc);
@@ -1070,6 +1073,16 @@ static void scrollTo_DocumentWidget_(iDocumentWidget *d, int documentY, iBool ce
     scroll_DocumentWidget_(d, 0); /* clamp it */
 }
 
+static void scrollToHeading_DocumentWidget_(iDocumentWidget *d, const char *heading) {
+    iConstForEach(Array, h, headings_GmDocument(d->doc)) {
+        const iGmHeading *head = h.value;
+        if (startsWithCase_Rangecc(head->text, heading)) {
+            postCommandf_App("document.goto loc:%p", head->text.start);
+            break;
+        }
+    }
+}
+
 static void scrollWideBlock_DocumentWidget_(iDocumentWidget *d, iInt2 mousePos, int delta,
                                             int duration) {
     if (delta == 0) {
@@ -1623,6 +1636,11 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         updateSideIconBuf_DocumentWidget_(d);
         updateOutline_DocumentWidget_(d);
         postCommandf_App("document.changed url:%s", cstr_String(d->mod.url));
+        /* Check for a pending goto. */
+        if (!isEmpty_String(&d->pendingGotoHeading)) {
+            scrollToHeading_DocumentWidget_(d, cstr_String(&d->pendingGotoHeading));
+            clear_String(&d->pendingGotoHeading);
+        }
         return iFalse;
     }
     else if (equal_Command(cmd, "media.updated") || equal_Command(cmd, "media.finished")) {
@@ -1779,17 +1797,14 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equal_Command(cmd, "document.goto") && document_App() == d) {
-        const iRangecc heading = range_Command(cmd, "heading");
-        if (heading.start) {
-            const char *target = cstr_Rangecc(heading);
-            iConstForEach(Array, h, headings_GmDocument(d->doc)) {
-                const iGmHeading *head = h.value;
-                if (startsWithCase_Rangecc(head->text, target)) {
-                    /* TODO: A bit lazy here, the code is right down below. */
-                    postCommandf_App("document.goto loc:%p", head->text.start);
-                    break;
-                }
+        const char *heading = suffixPtr_Command(cmd, "heading");
+        if (heading) {
+            if (isRequestOngoing_DocumentWidget(d)) {
+                /* Scroll position set when request finishes. */
+                setCStr_String(&d->pendingGotoHeading, heading);
+                return iTrue;
             }
+            scrollToHeading_DocumentWidget_(d, heading);
             return iTrue;
         }
         const char *loc = pointerLabel_Command(cmd, "loc");

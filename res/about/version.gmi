@@ -7,6 +7,7 @@
 # Release notes
 
 ## 0.12
+* Subscribe to new headings on pages.
 
 ## 0.11
 * Added feed subscriptions. A subscription is any bookmark with the "subscribed" tag. Subscribed feeds are refreshed in the background while Lagrange is running.
