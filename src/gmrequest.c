@@ -181,28 +181,36 @@ static void readIncoming_GmRequest_(iGmRequest *d, iTlsRequest *req) {
                           constBegin_String(&resp->meta) + endPos + 2,
                           size_String(&resp->meta) - endPos - 2);
             remove_Block(&resp->meta.chars, endPos, iInvalidSize);
-            /* parse and remove the code */
-            if (size_String(&resp->meta) < 3) {
-                clear_String(&resp->meta);
-                resp->statusCode = invalidHeader_GmStatusCode;
-                d->state           = finished_GmRequestState;
-                notifyDone         = iTrue;
+            /* Parse and remove the code. */
+            iRegExp *metaPattern = new_RegExp("^([0-9][0-9])(( )(.*))?", 0);
+            /* TODO: Empty <META> means no <SPACE>? Not according to the spec? */
+            iRegExpMatch m;
+            init_RegExpMatch(&m);
+            int code = 0;
+            if (matchString_RegExp(metaPattern, &resp->meta, &m)) {
+                code = atoi(capturedRange_RegExpMatch(&m, 1).start);
+                remove_Block(&resp->meta.chars,
+                             0,
+                             capturedRange_RegExpMatch(&m, 1).end -
+                                 constBegin_String(&resp->meta)); /* leave just the <META> */
+                trimStart_String(&resp->meta);
             }
-            const int code = toInt_String(&resp->meta);
             if (code == 0) {
                 clear_String(&resp->meta);
                 resp->statusCode = invalidHeader_GmStatusCode;
-                d->state           = finished_GmRequestState;
-                notifyDone         = iTrue;
+                d->state         = finished_GmRequestState;
+                notifyDone       = iTrue;
             }
-            remove_Block(&resp->meta.chars, 0, 3); /* just the meta */
-            if (code == success_GmStatusCode && isEmpty_String(&resp->meta)) {
-                setCStr_String(&resp->meta, "text/gemini; charset=utf-8"); /* default */
+            else {
+                if (code == success_GmStatusCode && isEmpty_String(&resp->meta)) {
+                    setCStr_String(&resp->meta, "text/gemini; charset=utf-8"); /* default */
+                }
+                resp->statusCode = code;
+                d->state         = receivingBody_GmRequestState;
+                notifyUpdate     = iTrue;
             }
-            resp->statusCode = code;
-            d->state           = receivingBody_GmRequestState;
             checkServerCertificate_GmRequest_(d);
-            notifyUpdate = iTrue;
+            iRelease(metaPattern);
         }
     }
     else if (d->state == receivingBody_GmRequestState) {
