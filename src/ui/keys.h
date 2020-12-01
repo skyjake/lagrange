@@ -36,6 +36,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #   define navigateRoot_KeyShortcut     SDLK_UP,            KMOD_SHIFT | KMOD_PRIMARY
 #   define byWord_KeyModifier           KMOD_ALT
 #   define byLine_KeyModifier           KMOD_PRIMARY
+#   define subscribeToPage_KeyModifier  SDLK_d,             KMOD_SHIFT | KMOD_PRIMARY
 #else
 #   define reload_KeyShortcut           SDLK_r,             KMOD_PRIMARY
 #   define prevTab_KeyShortcut          SDLK_PAGEUP,        KMOD_PRIMARY
@@ -46,6 +47,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #   define navigateRoot_KeyShortcut     SDLK_UP,            KMOD_SHIFT | KMOD_ALT
 #   define byWord_KeyModifier           KMOD_CTRL
 #   define byLine_KeyModifier           0
+#   define subscribeToPage_KeyModifier  SDLK_d,             KMOD_SHIFT | KMOD_PRIMARY
 #endif
 
 iDeclareType(Binding)
