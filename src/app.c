@@ -912,6 +912,12 @@ static iBool handleFeedSettingCommands_(iWidget *dlg, const char *cmd) {
         return iTrue;
     }
     if (equal_Command(cmd, "feedcfg.accept")) {
+        iString *feedTitle =
+            collect_String(copy_String(text_InputWidget(findChild_Widget(dlg, "feedcfg.title"))));
+        trim_String(feedTitle);
+        if (isEmpty_String(feedTitle)) {
+            return iTrue;
+        }
         int id = argLabel_Command(cmd, "bmid");
         const iBool headings = isSelected_Widget(findChild_Widget(dlg, "feedcfg.type.headings"));
         const iString *tags = collectNewFormat_String("subscribed%s", headings ? " headings" : "");
@@ -920,7 +926,7 @@ static iBool handleFeedSettingCommands_(iWidget *dlg, const char *cmd) {
             const iString *url   = url_DocumentWidget(document_App());
             add_Bookmarks(d->bookmarks,
                           url,
-                          bookmarkTitle_DocumentWidget(document_App()),
+                          feedTitle,
                           tags,
                           siteIcon_GmDocument(document_DocumentWidget(document_App())));
             if (numSubs == 0) {
@@ -931,6 +937,7 @@ static iBool handleFeedSettingCommands_(iWidget *dlg, const char *cmd) {
         else {
             iBookmark *bm = get_Bookmarks(d->bookmarks, id);
             if (bm) {
+                set_String(&bm->title, feedTitle);
                 set_String(&bm->tags, tags);
             }
         }
@@ -1288,11 +1295,8 @@ iBool handleCommand_App(const char *cmd) {
         uint32_t         id  = findUrl_Bookmarks(d->bookmarks, url);
         const iBookmark *bm  = id ? get_Bookmarks(d->bookmarks, id) : NULL;
         iWidget *        dlg = makeFeedSettings_Widget(id);
-        setText_LabelWidget(findChild_Widget(dlg, "feedcfg.title"),
-                            collectNewFormat_String(
-                                uiHeading_ColorEscape "%s",
-                                bm ? cstr_String(&bm->title)
-                                   : cstr_String(bookmarkTitle_DocumentWidget(document_App()))));
+        setText_InputWidget(findChild_Widget(dlg, "feedcfg.title"),
+                            bm ? &bm->title : feedTitle_DocumentWidget(document_App()));
         setFlags_Widget(findChild_Widget(dlg,
                                          hasTag_Bookmark(bm, "headings") ? "feedcfg.type.headings"
                                                                          : "feedcfg.type.gemini"),

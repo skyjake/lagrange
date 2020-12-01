@@ -3021,6 +3021,13 @@ const iGmDocument *document_DocumentWidget(const iDocumentWidget *d) {
     return d->doc;
 }
 
+const iString *feedTitle_DocumentWidget(const iDocumentWidget *d) {
+    if (!isEmpty_String(title_GmDocument(d->doc))) {
+        return title_GmDocument(d->doc);
+    }
+    return bookmarkTitle_DocumentWidget(d);
+}
+
 const iString *bookmarkTitle_DocumentWidget(const iDocumentWidget *d) {
     iStringArray *title = iClob(new_StringArray());
     if (!isEmpty_String(title_GmDocument(d->doc))) {
