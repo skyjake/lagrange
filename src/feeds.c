@@ -461,7 +461,7 @@ static void load_Feeds_(iFeeds *d) {
                             node->node.key      = id;
                             node->bookmarkId    = bookmarkId;
                             insert_Hash(feeds, &node->node);
-                            insert_IntSet(&d->previouslyCheckedFeeds, id);
+                            insert_IntSet(&d->previouslyCheckedFeeds, bookmarkId);
                         }
                     }
                     break;
