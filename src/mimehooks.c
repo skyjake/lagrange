@@ -125,6 +125,7 @@ void load_MimeHooks(iMimeHooks *d, const char *saveDir) {
                 setMimePattern_FilterHook(hook, collect_String(newRange_String(lines[1])));
                 setCommand_FilterHook(hook, collect_String(newRange_String(lines[2])));
                 pushBack_PtrArray(&d->filters, hook);
+                pos = 0;
             }
         }
         delete_Block(src);
