@@ -45,8 +45,7 @@ iBlock *run_FilterHook_(const iFilterHook *d, const iString *mime, const iBlock 
     iRelease(args);
     start_Process(proc);
     writeInput_Process(proc, body);
-    waitForFinished_Process(proc);
-    iBlock *output = readOutput_Process(proc);
+    iBlock *output = readOutputUntilClosed_Process(proc);
     if (!startsWith_Rangecc(range_Block(output), "20")) {
         /* Didn't produce valid output. */
         delete_Block(output);
