@@ -34,6 +34,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 iDeclareType(Bookmarks)
 iDeclareType(DocumentWidget)
 iDeclareType(GmCerts)
+iDeclareType(MimeHooks)
 iDeclareType(Visited)
 iDeclareType(Window)
 
@@ -65,6 +66,7 @@ enum iColorTheme    colorTheme_App      (void);
 const iString *     schemeProxy_App     (iRangecc scheme);
 iBool               willUseProxy_App    (const iRangecc scheme);
 
+iMimeHooks *        mimeHooks_App       (void);
 iGmCerts *          certs_App           (void);
 iVisited *          visited_App         (void);
 iBookmarks *        bookmarks_App       (void);

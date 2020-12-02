@@ -113,6 +113,8 @@ set (SOURCES
     src/lookup.h
     src/media.c
     src/media.h
+    src/mimehooks.c
+    src/mimehooks.h
     src/prefs.c
     src/prefs.h
     src/stb_image.h

@@ -25,6 +25,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "gmcerts.h"
 #include "gopher.h"
 #include "app.h" /* dataDir_App() */
+#include "mimehooks.h"
 #include "feeds.h"
 #include "ui/text.h"
 #include "embedded.h"
@@ -131,7 +132,8 @@ struct Impl_GmRequest {
     iTlsRequest *        req;
     iGopher              gopher;
     iGmResponse *        resp;
-    iBool                respLocked;
+    iBool                isRespLocked;
+    iBool                isRespFiltered;
     iAtomicInt           allowUpdate;
     iAudience *          updated;
     iAudience *          finished;
@@ -164,13 +166,10 @@ static void checkServerCertificate_GmRequest_(iGmRequest *d) {
     }
 }
 
-static void readIncoming_GmRequest_(iGmRequest *d, iTlsRequest *req) {
-    iBool notifyUpdate = iFalse;
-    iBool notifyDone   = iFalse;
-    lock_Mutex(d->mtx);
-    iGmResponse *resp =d->resp;
-    iAssert(d->state != finished_GmRequestState); /* notifications out of order? */
-    iBlock *data = readAll_TlsRequest(req);
+static int processIncomingData_GmRequest_(iGmRequest *d, const iBlock *data) {
+    iBool        notifyUpdate = iFalse;
+    iBool        notifyDone   = iFalse;
+    iGmResponse *resp         = d->resp;
     if (d->state == receivingHeader_GmRequestState) {
         appendCStrN_String(&resp->meta, constData_Block(data), size_Block(data));
         /* Check if the header line is complete. */
@@ -208,6 +207,9 @@ static void readIncoming_GmRequest_(iGmRequest *d, iTlsRequest *req) {
                 resp->statusCode = code;
                 d->state         = receivingBody_GmRequestState;
                 notifyUpdate     = iTrue;
+                if (willTryFilter_MimeHooks(mimeHooks_App(), &resp->meta)) {
+                    d->isRespFiltered = iTrue;
+                }
             }
             checkServerCertificate_GmRequest_(d);
             iRelease(metaPattern);
@@ -217,10 +219,21 @@ static void readIncoming_GmRequest_(iGmRequest *d, iTlsRequest *req) {
         append_Block(&resp->body, data);
         notifyUpdate = iTrue;
     }
+    return (notifyUpdate ? 1 : 0) | (notifyDone ? 2 : 0);
+}
+
+static void readIncoming_GmRequest_(iGmRequest *d, iTlsRequest *req) {
+    lock_Mutex(d->mtx);
+    iGmResponse *resp = d->resp;
+    iAssert(d->state != finished_GmRequestState); /* notifications out of order? */
+    iBlock *  data         = readAll_TlsRequest(req);
+    const int ubits        = processIncomingData_GmRequest_(d, data);
+    iBool     notifyUpdate = (ubits & 1) != 0;
+    iBool     notifyDone   = (ubits & 2) != 0;
     initCurrent_Time(&resp->when);
     delete_Block(data);
     unlock_Mutex(d->mtx);
-    if (notifyUpdate) {
+    if (notifyUpdate && !d->isRespFiltered) {
         const iBool allowed = exchange_Atomic(&d->allowUpdate, iFalse);
         if (allowed) {
             iNotifyAudience(d, updated, GmRequestUpdated);
@@ -247,7 +260,18 @@ static void requestFinished_GmRequest_(iGmRequest *d, iTlsRequest *req) {
         set_String(&d->resp->meta, errorMessage_TlsRequest(req));
     }
     checkServerCertificate_GmRequest_(d);
-    unlock_Mutex(d->mtx);
+    /* Check for mimehooks. */
+    if (d->isRespFiltered && d->state == finished_GmRequestState) {
+        iBlock *xbody = tryFilter_MimeHooks(mimeHooks_App(), &d->resp->meta, &d->resp->body);
+        if (xbody) {
+            clear_String(&d->resp->meta);
+            clear_Block(&d->resp->body);
+            d->state = receivingHeader_GmRequestState;
+            processIncomingData_GmRequest_(d, xbody);
+            d->state = finished_GmRequestState;
+        }
+    }
+    unlock_Mutex(d->mtx);    
     iNotifyAudience(d, finished, GmRequestFinished);
 }
 
@@ -425,7 +449,8 @@ static void beginGopherConnection_GmRequest_(iGmRequest *d, const iString *host,
 void init_GmRequest(iGmRequest *d, iGmCerts *certs) {
     d->mtx = new_Mutex();
     d->resp = new_GmResponse();
-    d->respLocked = iFalse;
+    d->isRespLocked = iFalse;
+    d->isRespFiltered = iFalse;
     set_Atomic(&d->allowUpdate, iTrue);
     init_String(&d->url);
     init_Gopher(&d->gopher);
@@ -623,16 +648,16 @@ void cancel_GmRequest(iGmRequest *d) {
 }
 
 iGmResponse *lockResponse_GmRequest(iGmRequest *d) {
-    iAssert(!d->respLocked);
+    iAssert(!d->isRespLocked);
     lock_Mutex(d->mtx);
-    d->respLocked = iTrue;
+    d->isRespLocked = iTrue;
     return d->resp;
 }
 
 void unlockResponse_GmRequest(iGmRequest *d) {
     if (d) {
-        iAssert(d->respLocked);
-        d->respLocked = iFalse;
+        iAssert(d->isRespLocked);
+        d->isRespLocked = iFalse;
         set_Atomic(&d->allowUpdate, iTrue);
         unlock_Mutex(d->mtx);
     }

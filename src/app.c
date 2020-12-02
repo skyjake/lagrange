@@ -25,6 +25,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "defs.h"
 #include "embedded.h"
 #include "feeds.h"
+#include "mimehooks.h"
 #include "gmcerts.h"
 #include "gmdocument.h"
 #include "gmutil.h"
@@ -91,6 +92,7 @@ static const char *downloadDir_App_   = "~/Downloads";
 struct Impl_App {
     iCommandLine args;
     iString *    execPath;
+    iMimeHooks * mimehooks;
     iGmCerts *   certs;
     iVisited *   visited;
     iBookmarks * bookmarks;
@@ -342,6 +344,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     d->running           = iFalse;
     d->window            = NULL;
     set_Atomic(&d->pendingRefresh, iFalse);
+    d->mimehooks         = new_MimeHooks();
     d->certs             = new_GmCerts(dataDir_App_);
     d->visited           = new_Visited();
     d->bookmarks         = new_Bookmarks();
@@ -355,6 +358,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     load_Keys(dataDir_App_);
     load_Visited(d->visited, dataDir_App_);
     load_Bookmarks(d->bookmarks, dataDir_App_);
+    load_MimeHooks(d->mimehooks, dataDir_App_);
     if (isFirstRun) {
         /* Create the default bookmarks for a quick start. */
         add_Bookmarks(d->bookmarks,
@@ -433,6 +437,8 @@ static void deinit_App(iApp *d) {
     save_Visited(d->visited, dataDir_App_);
     delete_Visited(d->visited);
     delete_GmCerts(d->certs);
+    save_MimeHooks(d->mimehooks);
+    delete_MimeHooks(d->mimehooks);
     deinit_SortedArray(&d->tickers);
     delete_Window(d->window);
     d->window = NULL;
@@ -707,6 +713,10 @@ void addTicker_App(iTickerFunc ticker, iAny *context) {
 void removeTicker_App(iTickerFunc ticker, iAny *context) {
     iApp *d = &app_;
     remove_SortedArray(&d->tickers, &(iTicker){ context, ticker });
+}
+
+iMimeHooks *mimeHooks_App(void) {
+    return app_.mimehooks;
 }
 
 iGmCerts *certs_App(void) {
