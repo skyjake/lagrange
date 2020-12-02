@@ -754,6 +754,16 @@ static void updateTheme_DocumentWidget_(iDocumentWidget *d) {
     updateTimestampBuf_DocumentWidget_(d);
 }
 
+static enum iGmDocumentBanner bannerType_DocumentWidget_(const iDocumentWidget *d) {
+    if (d->certFlags & available_GmCertFlag) {
+        const int req = domainVerified_GmCertFlag | timeVerified_GmCertFlag | trusted_GmCertFlag;
+        if ((d->certFlags & req) != req) {
+            return certificateWarning_GmDocumentBanner;
+        }
+    }
+    return siteDomain_GmDocumentBanner;
+}
+
 static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode code,
                                           const iString *meta) {
     iString *src = collectNewCStr_String("# ");
@@ -794,7 +804,7 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
                 break;
         }
     }
-    setSiteBannerEnabled_GmDocument(d->doc, useBanner);
+    setBanner_GmDocument(d->doc, useBanner ? bannerType_DocumentWidget_(d) : none_GmDocumentBanner);
     setFormat_GmDocument(d->doc, gemini_GmDocumentFormat);
     setSource_DocumentWidget_(d, src);
     updateTheme_DocumentWidget_(d);
@@ -956,15 +966,18 @@ static void updateTrust_DocumentWidget_(iDocumentWidget *d, const iGmResponse *r
         return;
     }
     setFlags_Widget(as_Widget(lock), disabled_WidgetFlag, iFalse);
+    const iBool isDarkMode = isDark_ColorTheme(colorTheme_App());
     if (~d->certFlags & domainVerified_GmCertFlag) {
-        updateTextCStr_LabelWidget(lock, red_ColorEscape closedLock_CStr);
+        updateTextCStr_LabelWidget(lock, red_ColorEscape openLock_CStr);
     }
     else if (d->certFlags & trusted_GmCertFlag) {
         updateTextCStr_LabelWidget(lock, green_ColorEscape closedLock_CStr);
     }
-    else {
-        updateTextCStr_LabelWidget(lock, orange_ColorEscape closedLock_CStr);
+    else {        
+        updateTextCStr_LabelWidget(lock, isDarkMode ? orange_ColorEscape closedLock_CStr
+            : black_ColorEscape closedLock_CStr);
     }
+    setBanner_GmDocument(d->doc, bannerType_DocumentWidget_(d));
 }
 
 static void parseUser_DocumentWidget_(iDocumentWidget *d) {
@@ -1490,6 +1503,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     else if (equal_Command(cmd, "theme.changed") && document_App() == d) {
         updateTheme_DocumentWidget_(d);
+        updateTrust_DocumentWidget_(d, NULL);
         updateSideIconBuf_DocumentWidget_(d);
         invalidate_DocumentWidget_(d);
         refresh_Widget(w);
@@ -2507,6 +2521,83 @@ static void drawMark_DrawContext_(void *context, const iGmRun *run) {
     }
 }
 
+static void drawBannerRun_DrawContext_(iDrawContext *d, const iGmRun *run, iInt2 visPos) {
+    const iGmDocument *doc  = d->widget->doc;
+    const iChar        icon = siteIcon_GmDocument(doc);
+    iString            str;
+    init_String(&str);
+    iInt2 bpos = add_I2(visPos, init_I2(0, lineHeight_Text(banner_FontId) / 2));
+    if (icon) {
+        appendChar_String(&str, icon);
+        const iRect iconRect = visualBounds_Text(run->font, range_String(&str));
+        drawRange_Text(
+            run->font,
+            addY_I2(bpos, -mid_Rect(iconRect).y + lineHeight_Text(run->font) / 2),
+            tmBannerIcon_ColorId,
+            range_String(&str));
+        bpos.x += right_Rect(iconRect) + 3 * gap_Text;
+    }
+    drawRange_Text(run->font,
+                   bpos,
+                   tmBannerTitle_ColorId,
+                   bannerText_DocumentWidget_(d->widget));
+    if (bannerType_GmDocument(doc) == certificateWarning_GmDocumentBanner) {
+        const int domainHeight = lineHeight_Text(banner_FontId) * 2;
+        iRect rect = { add_I2(visPos, init_I2(0, domainHeight)),
+                       addY_I2(run->visBounds.size, -domainHeight - lineHeight_Text(uiContent_FontId)) };
+        format_String(&str, "UNTRUSTED CERTIFICATE");
+        const int certFlags = d->widget->certFlags;
+        if (certFlags & timeVerified_GmCertFlag && certFlags & domainVerified_GmCertFlag) {
+            iUrl parts;
+            init_Url(&parts, d->widget->mod.url);
+            const iTime oldUntil = domainValidUntil_GmCerts(certs_App(), parts.host);
+            iDate exp;
+            init_Date(&exp, &oldUntil);
+            iTime now;
+            initCurrent_Time(&now);
+            const int days = secondsSince_Time(&oldUntil, &now) / 3600 / 24;
+            if (days <= 30) {
+                appendFormat_String(&str,
+                                    "\nThe received certificate may have been recently renewed \u2014 it is "
+                                    "for the correct domain and has not expired. The currently trusted "
+                                    "certificate will expire on %s, in %d days.",
+                                    cstrCollect_String(format_Date(&exp, "%Y-%m-%d")),
+                                    days);
+            }
+            else {
+                appendFormat_String(&str, "\nThe received certificate is valid but different than "
+                                          "the one we trust.");
+            }
+        }
+        else if (certFlags & domainVerified_GmCertFlag) {
+            appendFormat_String(&str, "\nThe received certificate has expired on %s.",
+                                cstrCollect_String(format_Date(&d->widget->certExpiry, "%Y-%m-%d")));
+        }
+        if (certFlags & haveFingerprint_GmCertFlag) {
+
+        }
+        const iInt2 dims = advanceWrapRange_Text(
+            uiContent_FontId, width_Rect(rect) - 16 * gap_UI, range_String(&str));
+        fillRect_Paint(&d->paint,
+                       init_Rect(0,
+                                 visPos.y + domainHeight,
+                                 d->widgetBounds.size.x,
+                                 dims.y + lineHeight_Text(uiContent_FontId) / 2),
+                       orange_ColorId);
+        const int fg = black_ColorId;
+        bpos = topLeft_Rect(rect);
+        draw_Text(uiLabelLarge_FontId, bpos, fg, "\u26a0");
+        adjustEdges_Rect(&rect, 0, -8 * gap_UI, 0, 8 * gap_UI);
+        drawWrapRange_Text(uiContent_FontId,
+                           addY_I2(topLeft_Rect(rect), (lineHeight_Text(uiLabelLarge_FontId) -
+                                                        lineHeight_Text(uiContent_FontId)) / 2),
+                           width_Rect(rect),
+                           fg,
+                           range_String(&str));
+    }
+    deinit_String(&str);
+}
+
 static void drawRun_DrawContext_(void *context, const iGmRun *run) {
     iDrawContext *d      = context;
     const iInt2   origin = d->viewPos;
@@ -2540,41 +2631,14 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
         }
     }
     if (run->flags & siteBanner_GmRunFlag) {
-        /* Draw the site banner. */
+        /* Banner background. */
         fillRect_Paint(
             &d->paint,
             initCorners_Rect(topLeft_Rect(d->widgetBounds),
                              init_I2(right_Rect(bounds_Widget(constAs_Widget(d->widget))),
                                      visPos.y + height_Rect(run->visBounds))),
             tmBannerBackground_ColorId);
-        const iChar icon = siteIcon_GmDocument(doc);
-        iString bannerText;
-        init_String(&bannerText);
-        iInt2 bpos = add_I2(visPos, init_I2(0, lineHeight_Text(banner_FontId) / 2));
-        if (icon) {
-//            appendChar_String(&bannerText, 0x2b24); // icon);
-//            const iRect iconRect = visualBounds_Text(hugeBold_FontId, range_String(&bannerText));
-//            drawRange_Text(hugeBold_FontId, /*run->font,*/
-//                           addY_I2(bpos, -mid_Rect(iconRect).y + lineHeight_Text(run->font) / 2),
-//                           tmBannerIcon_ColorId,
-//                           range_String(&bannerText));
-//            clear_String(&bannerText);
-            appendChar_String(&bannerText, icon);
-            const iRect iconRect = visualBounds_Text(run->font, range_String(&bannerText));
-            drawRange_Text(
-                run->font,
-                addY_I2(bpos, -mid_Rect(iconRect).y + lineHeight_Text(run->font) / 2),
-                tmBannerIcon_ColorId,
-                range_String(&bannerText));
-            bpos.x += right_Rect(iconRect) + 3 * gap_Text;
-        }
-        drawRange_Text(run->font,
-                       bpos,
-                       tmBannerTitle_ColorId,
-                       bannerText_DocumentWidget_(d->widget));
-//                       isEmpty_String(d->widget->titleUser) ? run->text
-//                                                            : range_String(d->widget->titleUser));
-        deinit_String(&bannerText);
+        drawBannerRun_DrawContext_(d, run, visPos);
     }
     else {
         if (d->showLinkNumbers && run->linkId && run->flags & decoration_GmRunFlag) {

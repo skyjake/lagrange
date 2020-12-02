@@ -64,10 +64,10 @@ struct Impl_GmDocument {
     iString   source;
     iString   url; /* for resolving relative links */
     iString   localHost;
-    iBool     siteBannerEnabled;
     iInt2     size;
     iArray    layout; /* contents of source, laid out in document space */
     iPtrArray links;
+    enum iGmDocumentBanner bannerType;
     iString   bannerText;
     iString   title; /* the first top-level title */
     iArray    headings;
@@ -310,7 +310,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     int              preFont       = preformatted_FontId;
     uint16_t         preId         = 0;
     iBool            enableIndents = iFalse;
-    iBool            addSiteBanner = d->siteBannerEnabled;
+    iBool            addSiteBanner = d->bannerType != none_GmDocumentBanner;
     enum iGmLineType prevType      = text_GmLineType;
     if (d->format == plainText_GmDocumentFormat) {
         isPreformat = iTrue;
@@ -383,6 +383,10 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 iGmRun banner    = { .flags = decoration_GmRunFlag | siteBanner_GmRunFlag };
                 banner.bounds    = zero_Rect();
                 banner.visBounds = init_Rect(0, 0, d->size.x, lineHeight_Text(banner_FontId) * 2);
+                if (d->bannerType == certificateWarning_GmDocumentBanner) {
+                    banner.visBounds.size.y += iMaxi(6000 * lineHeight_Text(uiLabel_FontId) /
+                                                         d->size.x, lineHeight_Text(uiLabel_FontId) * 5);
+                }
                 banner.font      = banner_FontId;
                 banner.text      = bannerText;
                 banner.color     = tmBannerTitle_ColorId;
@@ -620,7 +624,7 @@ void init_GmDocument(iGmDocument *d) {
     init_String(&d->source);
     init_String(&d->url);
     init_String(&d->localHost);
-    d->siteBannerEnabled = iTrue;
+    d->bannerType = siteDomain_GmDocumentBanner;
     d->size = zero_I2();
     init_Array(&d->layout, sizeof(iGmRun));
     init_PtrArray(&d->links);
@@ -661,7 +665,6 @@ void reset_GmDocument(iGmDocument *d) {
     clear_String(&d->url);
     clear_String(&d->localHost);
     d->themeSeed = 0;
-    d->siteBannerEnabled = iTrue;
 }
 
 static void setDerivedThemeColors_(enum iGmDocumentTheme theme) {
@@ -1085,8 +1088,8 @@ void setFormat_GmDocument(iGmDocument *d, enum iGmDocumentFormat format) {
     d->format = format;
 }
 
-void setSiteBannerEnabled_GmDocument(iGmDocument *d, iBool siteBannerEnabled) {
-    d->siteBannerEnabled = siteBannerEnabled;
+void setBanner_GmDocument(iGmDocument *d, enum iGmDocumentBanner type) {
+    d->bannerType = type;
 }
 
 void setWidth_GmDocument(iGmDocument *d, int width) {
@@ -1201,6 +1204,10 @@ void render_GmDocument(const iGmDocument *d, iRangei visRangeY, iGmDocumentRende
 
 iInt2 size_GmDocument(const iGmDocument *d) {
     return d->size;
+}
+
+enum iGmDocumentBanner bannerType_GmDocument(const iGmDocument *d) {
+    return d->bannerType;
 }
 
 iBool hasSiteBanner_GmDocument(const iGmDocument *d) {

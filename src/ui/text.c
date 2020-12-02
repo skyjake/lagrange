@@ -919,10 +919,10 @@ iInt2 advanceWrapRange_Text(int fontId, int maxWidth, iRangecc text) {
 int drawWrapRange_Text(int fontId, iInt2 pos, int maxWidth, int color, iRangecc text) {
     const char *endp;
     while (!isEmpty_Range(&text)) {
-        tryAdvance_Text(fontId, text, maxWidth, &endp);
+        const iInt2 adv = tryAdvance_Text(fontId, text, maxWidth, &endp);
         drawRange_Text(fontId, pos, color, (iRangecc){ text.start, endp });
         text.start = endp;
-        pos.y += lineHeight_Text(fontId);
+        pos.y += adv.y;
     }
     return pos.y;
 }
