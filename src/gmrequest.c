@@ -260,18 +260,20 @@ static void requestFinished_GmRequest_(iGmRequest *d, iTlsRequest *req) {
         set_String(&d->resp->meta, errorMessage_TlsRequest(req));
     }
     checkServerCertificate_GmRequest_(d);
+    unlock_Mutex(d->mtx);
     /* Check for mimehooks. */
-    if (d->isRespFiltered && d->state == finished_GmRequestState) {
+    if (d->isRespFiltered && d->state == finished_GmRequestState) {       
         iBlock *xbody = tryFilter_MimeHooks(mimeHooks_App(), &d->resp->meta, &d->resp->body);
         if (xbody) {
+            lock_Mutex(d->mtx);
             clear_String(&d->resp->meta);
             clear_Block(&d->resp->body);
             d->state = receivingHeader_GmRequestState;
             processIncomingData_GmRequest_(d, xbody);
             d->state = finished_GmRequestState;
+            unlock_Mutex(d->mtx);
         }
     }
-    unlock_Mutex(d->mtx);    
     iNotifyAudience(d, finished, GmRequestFinished);
 }
 
