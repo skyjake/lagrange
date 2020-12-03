@@ -968,14 +968,14 @@ static void updateTrust_DocumentWidget_(iDocumentWidget *d, const iGmResponse *r
     setFlags_Widget(as_Widget(lock), disabled_WidgetFlag, iFalse);
     const iBool isDarkMode = isDark_ColorTheme(colorTheme_App());
     if (~d->certFlags & domainVerified_GmCertFlag) {
-        updateTextCStr_LabelWidget(lock, red_ColorEscape openLock_CStr);
+        updateTextCStr_LabelWidget(lock, red_ColorEscape "\u26a0");
     }
     else if (d->certFlags & trusted_GmCertFlag) {
         updateTextCStr_LabelWidget(lock, green_ColorEscape closedLock_CStr);
     }
     else {        
-        updateTextCStr_LabelWidget(lock, isDarkMode ? orange_ColorEscape closedLock_CStr
-            : black_ColorEscape closedLock_CStr);
+        updateTextCStr_LabelWidget(lock, isDarkMode ? orange_ColorEscape "\u26a0"
+            : black_ColorEscape "\u26a0");
     }
     setBanner_GmDocument(d->doc, bannerType_DocumentWidget_(d));
 }
@@ -2558,9 +2558,10 @@ static void drawBannerRun_DrawContext_(iDrawContext *d, const iGmRun *run, iInt2
             const int days = secondsSince_Time(&oldUntil, &now) / 3600 / 24;
             if (days <= 30) {
                 appendFormat_String(&str,
-                                    "\nThe received certificate may have been recently renewed \u2014 it is "
-                                    "for the correct domain and has not expired. The currently trusted "
-                                    "certificate will expire on %s, in %d days.",
+                                    "\nThe received certificate may have been recently renewed "
+                                    "\u2014 it is for the correct domain and has not expired. "
+                                    "The currently trusted certificate will expire on %s, "
+                                    "in %d days.",
                                     cstrCollect_String(format_Date(&exp, "%Y-%m-%d")),
                                     days);
             }
@@ -2573,24 +2574,36 @@ static void drawBannerRun_DrawContext_(iDrawContext *d, const iGmRun *run, iInt2
             appendFormat_String(&str, "\nThe received certificate has expired on %s.",
                                 cstrCollect_String(format_Date(&d->widget->certExpiry, "%Y-%m-%d")));
         }
-        if (certFlags & haveFingerprint_GmCertFlag) {
-
+        else if (certFlags & timeVerified_GmCertFlag) {
+            appendFormat_String(&str, "\nThe received certificate is for the wrong domain (%s). "
+                                "This may be a server configuration problem.",
+                                cstr_String(d->widget->certSubject));
+        }
+        else {
+            appendFormat_String(&str, "\nThe received certificate is expired AND for the "
+                                      "wrong domain.");
         }
         const iInt2 dims = advanceWrapRange_Text(
             uiContent_FontId, width_Rect(rect) - 16 * gap_UI, range_String(&str));
-        fillRect_Paint(&d->paint,
-                       init_Rect(0,
-                                 visPos.y + domainHeight,
-                                 d->widgetBounds.size.x,
-                                 dims.y + lineHeight_Text(uiContent_FontId) / 2),
-                       orange_ColorId);
+        const int warnHeight = run->visBounds.size.y - domainHeight;
+        const int yOff = (lineHeight_Text(uiLabelLarge_FontId) -
+                          lineHeight_Text(uiContent_FontId)) / 2;
+        const iRect bgRect =
+            init_Rect(0, visPos.y + domainHeight, d->widgetBounds.size.x, warnHeight);
+        fillRect_Paint(&d->paint, bgRect, orange_ColorId);
+        if (!isDark_ColorTheme(colorTheme_App())) {
+            drawHLine_Paint(&d->paint,
+                            topLeft_Rect(bgRect), width_Rect(bgRect), tmBannerTitle_ColorId);
+            drawHLine_Paint(&d->paint,
+                            bottomLeft_Rect(bgRect), width_Rect(bgRect), tmBannerTitle_ColorId);
+        }
         const int fg = black_ColorId;
+        adjustEdges_Rect(&rect, warnHeight / 2 - dims.y / 2 - yOff, 0, 0, 0);
         bpos = topLeft_Rect(rect);
         draw_Text(uiLabelLarge_FontId, bpos, fg, "\u26a0");
         adjustEdges_Rect(&rect, 0, -8 * gap_UI, 0, 8 * gap_UI);
         drawWrapRange_Text(uiContent_FontId,
-                           addY_I2(topLeft_Rect(rect), (lineHeight_Text(uiLabelLarge_FontId) -
-                                                        lineHeight_Text(uiContent_FontId)) / 2),
+                           addY_I2(topLeft_Rect(rect), yOff),
                            width_Rect(rect),
                            fg,
                            range_String(&str));
