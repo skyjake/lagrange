@@ -735,7 +735,8 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
             monoAdvance > 0 && !isJapanese_FontId(fontId_Text_(glyph->font));
         const float advance = (useMonoAdvance ? monoAdvance : glyph->advance);
         if (!isMeasuring_(mode)) {
-            if (useMonoAdvance && dst.w > advance) {
+            if (useMonoAdvance && dst.w > advance && glyph->font != d) {
+                /* Glyphs from a different font may need recentering to look better. */
                 dst.x -= (dst.w - advance) / 2;
             }
             SDL_RenderCopy(text_.render, text_.cache, (const SDL_Rect *) &glyph->rect[hoff], &dst);
