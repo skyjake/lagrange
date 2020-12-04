@@ -564,8 +564,11 @@ static void checkModeButtonLayout_SidebarWidget_(iSidebarWidget *d) {
 }
 
 void setWidth_SidebarWidget(iSidebarWidget *d, int width) {
-    iWidget *w = as_Widget(d);
-    width = iClamp(width, 30 * gap_UI, rootSize_Window(get_Window()).x - 50 * gap_UI);
+    iWidget * w = as_Widget(d);
+    /* Even less space if the other sidebar is visible, too. */
+    const int otherWidth =
+        width_Widget(findWidget_App(d->side == left_SideBarSide ? "sidebar2" : "sidebar"));
+    width = iClamp(width, 30 * gap_UI, rootSize_Window(get_Window()).x - 50 * gap_UI - otherWidth);
     d->width = width;
     if (isVisible_Widget(w)) {
         w->rect.size.x = width;

@@ -302,7 +302,7 @@ static int documentWidth_DocumentWidget_(const iDocumentWidget *d) {
     const iWidget *w      = constAs_Widget(d);
     const iRect    bounds = bounds_Widget(w);
     const iPrefs * prefs  = prefs_App();
-    return iMini(bounds.size.x - gap_UI * d->pageMargin * 2,
+    return iMini(iMax(50 * gap_UI, bounds.size.x - gap_UI * d->pageMargin * 2),
                  fontSize_UI * prefs->lineWidth * prefs->zoomPercent / 100);
 }
 
@@ -2984,6 +2984,9 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
     const iWidget *w        = constAs_Widget(d);
     const iRect    bounds   = bounds_Widget(w);
     iVisBuf *      visBuf   = d->visBuf; /* will be updated now */
+    if (width_Rect(bounds) <= 0) {
+        return;
+    }
     draw_Widget(w);
     allocVisBuffer_DocumentWidget_(d);
     const iRect ctxWidgetBounds = init_Rect(
