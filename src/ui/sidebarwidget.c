@@ -826,7 +826,9 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                                             cstr_String(&feedBookmark->title)),
                                 (const char *[]){ "Cancel",
                                                   uiTextCaution_ColorEscape "Unsubscribe" },
-                                (const char *[]){ "cancel", "feed.entry.unsubscribe arg:1" }, /* FIXME: which sidebar */
+                                (const char *[]){
+                                    "cancel",
+                                    format_CStr("!feed.entry.unsubscribe arg:1 ptr:%p", d) },
                                 2);
                         }
                         return iTrue;
@@ -895,21 +897,21 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         else if (isCommand_Widget(w, ev, "ident.delete")) {
             iSidebarItem *item = d->contextItem;
             if (argLabel_Command(cmd, "confirm")) {
-                makeQuestion_Widget(uiTextCaution_ColorEscape "DELETE IDENTITY",
-                                    format_CStr("Do you really want to delete the identity\n"
-                                                uiTextAction_ColorEscape "%s\n"
-                                                uiText_ColorEscape
-                                                "including its certificate and private key files?",
-                                                cstr_String(&item->label)),
-                                    (const char *[]){ "Cancel",
-                                                      uiTextCaution_ColorEscape
-                                                      "Delete Identity and Files" },
-                                    (const char *[]){ "cancel", "ident.delete confirm:0" }, /* FIXME: which sidebar */
-                                    2);
+                makeQuestion_Widget(
+                    uiTextCaution_ColorEscape "DELETE IDENTITY",
+                    format_CStr(
+                        "Do you really want to delete the identity\n" uiTextAction_ColorEscape
+                        "%s\n" uiText_ColorEscape
+                        "including its certificate and private key files?",
+                        cstr_String(&item->label)),
+                    (const char *[]){ "Cancel",
+                                      uiTextCaution_ColorEscape "Delete Identity and Files" },
+                    (const char *[]){ "cancel", format_CStr("!ident.delete confirm:0 ptr:%p", d) },
+                    2);
                 return iTrue;
             }
             deleteIdentity_GmCerts(certs_App(), hoverIdentity_SidebarWidget_(d));
-            updateItems_SidebarWidget_(d);
+            postCommand_App("idents.changed");
             return iTrue;
         }
         else if (isCommand_Widget(w, ev, "history.delete")) {
