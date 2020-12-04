@@ -192,7 +192,10 @@ const iString *absoluteUrl_String(const iString *d, const iString *urlMaybeRelat
 iString *makeFileUrl_String(const iString *localFilePath) {
     iString *url = cleaned_Path(localFilePath);
     replace_Block(&url->chars, '\\', '/'); /* in case it's a Windows path */
-    set_String(url, collect_String(urlEncodeExclude_String(url, "/")));
+    set_String(url, collect_String(urlEncodeExclude_String(url, "/:")));
+#if defined (iPlatformMsys)
+    prependChar_String(url, '/'); /* three slashes */
+#endif
     prependCStr_String(url, "file://");
     return url;
 }

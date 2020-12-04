@@ -526,6 +526,12 @@ void submit_GmRequest(iGmRequest *d) {
     }
     else if (equalCase_Rangecc(url.scheme, "file")) {
         iString *path = collect_String(urlDecode_String(collect_String(newRange_String(url.path))));
+#if defined (iPlatformMsys)
+        /* Remove the extra slash from the beginning. */
+        if (startsWith_String(path, "/")) {
+            remove_Block(&path->chars, 0, 1);
+        }
+#endif
         iFile *  f    = new_File(path);
         if (open_File(f, readOnly_FileMode)) {
             /* TODO: Check supported file types: images, audio */
@@ -554,6 +560,9 @@ void submit_GmRequest(iGmRequest *d) {
             }
             else if (endsWithCase_String(path, ".mp3")) {
                 setCStr_String(&resp->meta, "audio/mpeg");
+            }
+            else if (endsWithCase_String(path, ".mid")) {
+                setCStr_String(&resp->meta, "audio/midi");
             }
             else {
                 setCStr_String(&resp->meta, "application/octet-stream");
