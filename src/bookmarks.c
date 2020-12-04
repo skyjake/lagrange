@@ -42,6 +42,7 @@ void deinit_Bookmark(iBookmark *d) {
 }
 
 iBool hasTag_Bookmark(const iBookmark *d, const char *tag) {
+    if (!d) return iFalse;
     iRegExp *pattern = new_RegExp(format_CStr("\\b%s\\b", tag), caseSensitive_RegExpOption);
     iRegExpMatch m;
     init_RegExpMatch(&m);

@@ -33,6 +33,7 @@ void    setAlignVisually_LabelWidget(iLabelWidget *, iBool alignVisual);
 void    setFont_LabelWidget         (iLabelWidget *, int fontId);
 void    setText_LabelWidget         (iLabelWidget *, const iString *text); /* resizes widget */
 void    setTextCStr_LabelWidget     (iLabelWidget *, const char *text);
+void    setCommand_LabelWidget      (iLabelWidget *, const iString *command);
 
 void    updateSize_LabelWidget      (iLabelWidget *);
 void    updateText_LabelWidget      (iLabelWidget *, const iString *text); /* not resized */

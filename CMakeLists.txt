@@ -18,7 +18,7 @@
 cmake_minimum_required (VERSION 3.9)
 
 project (Lagrange
-    VERSION 0.11.0
+    VERSION 0.12.0
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
@@ -113,6 +113,8 @@ set (SOURCES
     src/lookup.h
     src/media.c
     src/media.h
+    src/mimehooks.c
+    src/mimehooks.h
     src/prefs.c
     src/prefs.h
     src/stb_image.h

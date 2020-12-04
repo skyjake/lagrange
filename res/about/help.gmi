@@ -315,11 +315,98 @@ Other Unix : ~/.config/lagrange/
 
 * bindings.txt
 * bookmarks.txt
+* feeds.txt
 * idents.binary and idents/
+* mimehooks.txt
 * prefs.cfg
 * state.binary
 * trusted.txt
 * visited.txt
+
+# MIME hooks
+
+MIME hooks enable piping Gemini responses through external programs for arbitrary processing. This allows leveraging scripting languages and binary executables to perform format conversions, content transformation, and data analysis.
+
+Hooks are configured using the file "mimehooks.txt" in Lagrange's config directory. Each hook has a regexp that is matched against the response MIME type and parameters, and each matching hook is offered the response body via stdin. The called external programs are free to rewrite the entire response, including the MIME type. If one of the hooks returns a valid response, it is used as the final response of the Gemini request.
+
+Example use cases:
+* Parsing an Atom XML feed and generating a Gemini feed index page
+* Rendering a MIDI file using Timidity as PCM WAV
+* Generate a graph PNG based on values in a CSV
+* Converting HTML or Markdown to 'text/gemini'
+* Language translations
+
+## Interface
+
+When a hook is called, it is given the MIME type and parameters via command line arguments. The response body is provided via stdin.
+
+The MIME type and parameters are split at semicolons, so "text/gemini; lang=ja" would be called as:
+```
+hookprogram text/gemini lang=ja 
+```
+
+Output from the program (via stdout) must be a valid "20" Gemini response that includes the new MIME type:
+```
+20 text/gemini; lang=en\r\n
+{...body...}
+```
+
+Any output that does not follow this format is considered to mean that the hook refused to process the contents. The next hook will be offered the response instead.
+
+## mimehooks.txt syntax
+
+Like other Lagrange configuration lines, mimehooks.txt has a simple line-oriented syntax. Lagrange must be restarted for changes to the configuration file to take effect.
+
+Each hook is specified as three lines:
+* A human-readable label (for reporting to the user)
+* MIME type/parameter regular expression
+* Command to execute, plus additional arguments each separated with semicolons
+
+For example:
+```
+Convert Atom to Gemini feed
+application/xml
+/usr/bin/python3;/home/jaakko/atomconv.py
+```
+
+The hook program is executed directly without involving the shell. This means scripts must be invoked via the interpreter executable.
+
+## Example: Converting from Atom to Gemini
+
+The following simple Python script demonstrates how a MIME hook could be used to parse an Atom XML document using Python 3 and output a Gemini feed index page based on the parsed entries. This is just a simple example; a more robust script could include more content from the Atom feed and handle errors, too.
+```
+import sys
+import xml.etree.ElementTree as ET
+
+def atomtag(n):
+    return '{http://www.w3.org/2005/Atom}' + n
+
+root = ET.fromstring(sys.stdin.read())
+if root.tag != atomtag('feed'): 
+    sys.exit(0)
+feed_title = ''
+feed_author = ''
+feed_entries = []
+for child in root:
+    if child.tag == atomtag('title'):
+        feed_title = child.text
+    elif child.tag == atomtag('entry'):
+        feed_entries.append(child)        
+print("20 text/gemini\r")
+print(f'# {feed_title}')
+for entry in feed_entries:   
+    entry_date = ''
+    entry_title = ''
+    entry_link = ''
+    for child in entry:        
+        if child.tag == atomtag('updated'): 
+            entry_date = child.text[:10]
+        elif child.tag == atomtag('title'):
+            entry_title = child.text
+        elif child.tag == atomtag('link'): 
+            entry_link = child.attrib['href']
+    print(f'=> {entry_link} {entry_date} {entry_title}')
+```
 
 # Open source licenses
 

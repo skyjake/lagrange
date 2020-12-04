@@ -432,6 +432,21 @@ void setTrusted_GmCerts(iGmCerts *d, iRangecc domain, const iBlock *fingerprint,
     unlock_Mutex(d->mtx);
 }
 
+iTime domainValidUntil_GmCerts(const iGmCerts *d, iRangecc domain) {
+    iTime expiry;
+    iZap(expiry);
+    lock_Mutex(d->mtx);
+    iString key;
+    initRange_String(&key, domain);
+    const iTrustEntry *trust = constValue_StringHash(d->trusted, &key);
+    if (trust) {
+        expiry = trust->validUntil;
+    }
+    deinit_String(&key);
+    unlock_Mutex(d->mtx);
+    return expiry;
+}
+
 iGmIdentity *identity_GmCerts(iGmCerts *d, unsigned int id) {
     return at_PtrArray(&d->idents, id);
 }

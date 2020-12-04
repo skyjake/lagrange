@@ -332,7 +332,7 @@ static void initCache_Text_(iText *d) {
     d->cacheRowAllocStep = iMax(2, textSize / 6);
     /* Allocate initial (empty) rows. These will be assigned actual locations in the cache
        once at least one glyph is stored. */
-    for (int h = d->cacheRowAllocStep; h <= 2 * textSize; h += d->cacheRowAllocStep) {
+    for (int h = d->cacheRowAllocStep; h <= 2 * textSize + d->cacheRowAllocStep; h += d->cacheRowAllocStep) {
         pushBack_Array(&d->cacheRows, &(iCacheRow){ .height = 0 });
     }
     d->cacheBottom = 0;
@@ -605,7 +605,7 @@ iLocalDef iBool isWrapBoundary_(iChar prevC, iChar c) {
     if (isSpace_Char(prevC)) {
         return iFalse;
     }
-    if (c == '/' || c == '-' || c == ',' || c == ';' || c == ':' || c == '.') {
+    if (c == '/' || c == '-' || c == ',' || c == ';' || c == ':' || c == '.' || c == 0xad) {
         return iTrue;
     }
     return isSpace_Char(c);
@@ -657,6 +657,27 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
             ch = nextChar_(&chPos, text.end); /* just ignore */
         }
         /* Special instructions. */ {
+            if (ch == 0xad) { /* soft hyphen */
+                lastWordEnd = chPos;
+                if (isMeasuring_(mode)) {
+                    if (xposLimit > 0) {
+                        const char *postHyphen = chPos;
+                        iChar       nextCh     = nextChar_(&postHyphen, text.end);
+                        if ((int) xpos + glyph_Font_(d, ch)->rect[0].size.x +
+                            glyph_Font_(d, nextCh)->rect[0].size.x > xposLimit) {
+                            /* Wraps after hyphen, should show it. */
+                        }
+                        else continue;
+                    }
+                    else continue;
+                }
+                else {
+                    /* Only show it at the end. */
+                    if (chPos != text.end) {
+                        continue;
+                    }
+                }
+            }
             if (ch == '\n') {
                 xpos = pos.x;
                 pos.y += d->height;
@@ -714,7 +735,8 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
             monoAdvance > 0 && !isJapanese_FontId(fontId_Text_(glyph->font));
         const float advance = (useMonoAdvance ? monoAdvance : glyph->advance);
         if (!isMeasuring_(mode)) {
-            if (useMonoAdvance && dst.w > advance) {
+            if (useMonoAdvance && dst.w > advance && glyph->font != d) {
+                /* Glyphs from a different font may need recentering to look better. */
                 dst.x -= (dst.w - advance) / 2;
             }
             SDL_RenderCopy(text_.render, text_.cache, (const SDL_Rect *) &glyph->rect[hoff], &dst);
@@ -898,10 +920,10 @@ iInt2 advanceWrapRange_Text(int fontId, int maxWidth, iRangecc text) {
 int drawWrapRange_Text(int fontId, iInt2 pos, int maxWidth, int color, iRangecc text) {
     const char *endp;
     while (!isEmpty_Range(&text)) {
-        tryAdvance_Text(fontId, text, maxWidth, &endp);
+        const iInt2 adv = tryAdvance_Text(fontId, text, maxWidth, &endp);
         drawRange_Text(fontId, pos, color, (iRangecc){ text.start, endp });
         text.start = endp;
-        pos.y += lineHeight_Text(fontId);
+        pos.y += adv.y;
     }
     return pos.y;
 }

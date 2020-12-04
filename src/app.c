@@ -25,6 +25,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "defs.h"
 #include "embedded.h"
 #include "feeds.h"
+#include "mimehooks.h"
 #include "gmcerts.h"
 #include "gmdocument.h"
 #include "gmutil.h"
@@ -91,6 +92,7 @@ static const char *downloadDir_App_   = "~/Downloads";
 struct Impl_App {
     iCommandLine args;
     iString *    execPath;
+    iMimeHooks * mimehooks;
     iGmCerts *   certs;
     iVisited *   visited;
     iBookmarks * bookmarks;
@@ -137,7 +139,8 @@ const iString *dateStr_(const iDate *date) {
 
 static iString *serializePrefs_App_(const iApp *d) {
     iString *str = new_String();
-    const iSidebarWidget *sidebar = findWidget_App("sidebar");
+    const iSidebarWidget *sidebar  = findWidget_App("sidebar");
+    const iSidebarWidget *sidebar2 = findWidget_App("sidebar2");
     appendFormat_String(str, "window.retain arg:%d\n", d->prefs.retainWindowSize);
     if (d->prefs.retainWindowSize) {
         const iBool isMaximized = (SDL_GetWindowFlags(d->window->win) & SDL_WINDOW_MAXIMIZED) != 0;
@@ -148,6 +151,7 @@ static iString *serializePrefs_App_(const iApp *d) {
         h = d->window->lastRect.size.y;
         appendFormat_String(str, "window.setrect width:%d height:%d coord:%d %d\n", w, h, x, y);
         appendFormat_String(str, "sidebar.width arg:%d\n", width_SidebarWidget(sidebar));
+        appendFormat_String(str, "sidebar2.width arg:%d\n", width_SidebarWidget(sidebar2));
         /* On macOS, maximization should be applied at creation time or the window will take
            a moment to animate to its maximized size. */
 #if !defined (iPlatformApple)
@@ -158,10 +162,16 @@ static iString *serializePrefs_App_(const iApp *d) {
         iUnused(isMaximized);
 #endif
     }
-    if (isVisible_Widget(sidebar)) {
-        appendCStr_String(str, "sidebar.toggle\n");
+    /* Sidebars. */ {
+        if (isVisible_Widget(sidebar)) {
+            appendCStr_String(str, "sidebar.toggle\n");
+        }
+        appendFormat_String(str, "sidebar.mode arg:%d\n", mode_SidebarWidget(sidebar));
+        if (isVisible_Widget(sidebar2)) {
+            appendCStr_String(str, "sidebar2.toggle\n");
+        }
+        appendFormat_String(str, "sidebar2.mode arg:%d\n", mode_SidebarWidget(sidebar2));
     }
-    appendFormat_String(str, "sidebar.mode arg:%d\n", mode_SidebarWidget(sidebar));
     appendFormat_String(str, "uiscale arg:%f\n", uiScale_Window(d->window));
     appendFormat_String(str, "prefs.dialogtab arg:%d\n", d->prefs.dialogTab);
     appendFormat_String(str, "font.set arg:%d\n", d->prefs.font);
@@ -342,6 +352,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     d->running           = iFalse;
     d->window            = NULL;
     set_Atomic(&d->pendingRefresh, iFalse);
+    d->mimehooks         = new_MimeHooks();
     d->certs             = new_GmCerts(dataDir_App_);
     d->visited           = new_Visited();
     d->bookmarks         = new_Bookmarks();
@@ -355,6 +366,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     load_Keys(dataDir_App_);
     load_Visited(d->visited, dataDir_App_);
     load_Bookmarks(d->bookmarks, dataDir_App_);
+    load_MimeHooks(d->mimehooks, dataDir_App_);
     if (isFirstRun) {
         /* Create the default bookmarks for a quick start. */
         add_Bookmarks(d->bookmarks,
@@ -433,6 +445,8 @@ static void deinit_App(iApp *d) {
     save_Visited(d->visited, dataDir_App_);
     delete_Visited(d->visited);
     delete_GmCerts(d->certs);
+    save_MimeHooks(d->mimehooks);
+    delete_MimeHooks(d->mimehooks);
     deinit_SortedArray(&d->tickers);
     delete_Window(d->window);
     d->window = NULL;
@@ -709,6 +723,10 @@ void removeTicker_App(iTickerFunc ticker, iAny *context) {
     remove_SortedArray(&d->tickers, &(iTicker){ context, ticker });
 }
 
+iMimeHooks *mimeHooks_App(void) {
+    return app_.mimehooks;
+}
+
 iGmCerts *certs_App(void) {
     return app_.certs;
 }
@@ -905,6 +923,49 @@ static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
     return iFalse;
 }
 
+static iBool handleFeedSettingCommands_(iWidget *dlg, const char *cmd) {
+    iApp *d = &app_;
+    if (equal_Command(cmd, "cancel")) {
+        destroy_Widget(dlg);
+        return iTrue;
+    }
+    if (equal_Command(cmd, "feedcfg.accept")) {
+        iString *feedTitle =
+            collect_String(copy_String(text_InputWidget(findChild_Widget(dlg, "feedcfg.title"))));
+        trim_String(feedTitle);
+        if (isEmpty_String(feedTitle)) {
+            return iTrue;
+        }
+        int id = argLabel_Command(cmd, "bmid");
+        const iBool headings = isSelected_Widget(findChild_Widget(dlg, "feedcfg.type.headings"));
+        const iString *tags = collectNewFormat_String("subscribed%s", headings ? " headings" : "");
+        if (!id) {
+            const size_t numSubs = numSubscribed_Feeds();
+            const iString *url   = url_DocumentWidget(document_App());
+            add_Bookmarks(d->bookmarks,
+                          url,
+                          feedTitle,
+                          tags,
+                          siteIcon_GmDocument(document_DocumentWidget(document_App())));
+            if (numSubs == 0) {
+                /* Auto-refresh after first addition. */
+                postCommand_App("feeds.refresh");
+            }
+        }
+        else {
+            iBookmark *bm = get_Bookmarks(d->bookmarks, id);
+            if (bm) {
+                set_String(&bm->title, feedTitle);
+                set_String(&bm->tags, tags);
+            }
+        }
+        postCommand_App("bookmarks.changed");
+        destroy_Widget(dlg);
+        return iTrue;
+    }
+    return iFalse;
+}
+
 iBool willUseProxy_App(const iRangecc scheme) {
     return schemeProxy_App(scheme) != NULL;
 }
@@ -1090,6 +1151,12 @@ iBool handleCommand_App(const char *cmd) {
         if (gotoHeading.start) {
             postCommandf_App("document.goto heading:%s", cstr_Rangecc(gotoHeading));
         }
+        const iRangecc gotoUrlHeading = range_Command(cmd, "gotourlheading");
+        if (gotoUrlHeading.start) {
+            postCommandf_App("document.goto heading:%s",
+                             cstrCollect_String(urlDecode_String(
+                                 collect_String(newRange_String(gotoUrlHeading)))));
+        }
     }
     else if (equal_Command(cmd, "document.request.cancelled")) {
         /* TODO: How should cancelled requests be treated in the history? */
@@ -1238,7 +1305,43 @@ iBool handleCommand_App(const char *cmd) {
         postCommand_App("focus.set id:bmed.title");
         return iTrue;
     }
-    else if (equal_Command(cmd, "bookmark.addtag")) {
+    else if (equal_Command(cmd, "feeds.subscribe")) {
+        const iString *url = url_DocumentWidget(document_App());
+        if (isEmpty_String(url)) {
+            return iTrue;
+        }
+        uint32_t         id  = findUrl_Bookmarks(d->bookmarks, url);
+        const iBookmark *bm  = id ? get_Bookmarks(d->bookmarks, id) : NULL;
+        iWidget *        dlg = makeFeedSettings_Widget(id);
+        setText_InputWidget(findChild_Widget(dlg, "feedcfg.title"),
+                            bm ? &bm->title : feedTitle_DocumentWidget(document_App()));
+        setFlags_Widget(findChild_Widget(dlg,
+                                         hasTag_Bookmark(bm, "headings") ? "feedcfg.type.headings"
+                                                                         : "feedcfg.type.gemini"),
+                        selected_WidgetFlag,
+                        iTrue);
+        setCommandHandler_Widget(dlg, handleFeedSettingCommands_);
+        return iTrue;
+#if 0
+        const size_t numSubs = numSubscribed_Feeds();
+        if (!isEmpty_String(url)) {
+            iBool wasCreated = iFalse;
+            uint32_t id = findUrl_Bookmarks(d->bookmarks, url);
+            if (!id) {
+                add_Bookmarks(d->bookmarks,
+                              url,
+                              bookmarkTitle_DocumentWidget(document_App()),
+                              collectNewCStr_String("subscribed"),
+                              siteIcon_GmDocument(document_DocumentWidget(document_App())));
+                wasCreated = iTrue;
+            }
+
+            if (numSubs == 0 && !cmp_String(tag, "subscribed")) {
+                postCommand_App("feeds.refresh");
+            }
+        }
+#endif
+#if 0
         const iString *tag = string_Command(cmd, "tag");
         const iString *url = url_DocumentWidget(document_App());
         const size_t numSubs = numSubscribed_Feeds();
@@ -1257,6 +1360,7 @@ iBool handleCommand_App(const char *cmd) {
             }
         }
         return iTrue;
+#endif
     }
     else if (equal_Command(cmd, "bookmarks.changed")) {
         save_Bookmarks(d->bookmarks, dataDir_App_);

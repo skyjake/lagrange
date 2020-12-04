@@ -67,6 +67,7 @@ enum iGmLinkFlags {
     content_GmLinkFlag            = iBit(13), /* content visible below */
     visited_GmLinkFlag            = iBit(14), /* in the history */
     permanent_GmLinkFlag          = iBit(15), /* content cannot be dismissed; media link */
+    query_GmLinkFlag              = iBit(16), /* Gopher query link */
 };
 
 struct Impl_GmHeading {
@@ -114,9 +115,15 @@ enum iGmDocumentFormat {
     plainText_GmDocumentFormat,
 };
 
+enum iGmDocumentBanner {
+    none_GmDocumentBanner,
+    siteDomain_GmDocumentBanner,
+    certificateWarning_GmDocumentBanner,
+};
+
 void    setThemeSeed_GmDocument (iGmDocument *, const iBlock *seed);
 void    setFormat_GmDocument    (iGmDocument *, enum iGmDocumentFormat format);
-void    setSiteBannerEnabled_GmDocument(iGmDocument *, iBool siteBannerEnabled);
+void    setBanner_GmDocument    (iGmDocument *, enum iGmDocumentBanner type);
 void    setWidth_GmDocument     (iGmDocument *, int width);
 void    redoLayout_GmDocument   (iGmDocument *);
 void    setUrl_GmDocument       (iGmDocument *, const iString *url);
@@ -134,6 +141,7 @@ void            render_GmDocument           (const iGmDocument *, iRangei visRan
 iInt2           size_GmDocument             (const iGmDocument *);
 const iGmRun *  siteBanner_GmDocument       (const iGmDocument *);
 iBool           hasSiteBanner_GmDocument    (const iGmDocument *);
+enum iGmDocumentBanner bannerType_GmDocument(const iGmDocument *);
 const iString * bannerText_GmDocument       (const iGmDocument *);
 const iArray *  headings_GmDocument         (const iGmDocument *); /* array of GmHeadings */
 const iString * source_GmDocument           (const iGmDocument *);

@@ -21,6 +21,13 @@ Like Gemini, Lagrange has been designed with minimalism in mind. It depends on a
 
 Prebuilt binaries for Windows and macOS can be found in [Releases][rel].
 
+On macOS you can also install via a Homebrew tap:
+
+```
+$ brew tap skyjake/lagrange
+$ brew install lagrange
+```
+
 ## How to compile
 
 This is how to build Lagrange in a POSIX-compatible environment. The required tools are a C11 compiler (e.g., Clang or GCC), CMake and `pkg-config`.

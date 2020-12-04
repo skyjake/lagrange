@@ -192,7 +192,10 @@ const iString *absoluteUrl_String(const iString *d, const iString *urlMaybeRelat
 iString *makeFileUrl_String(const iString *localFilePath) {
     iString *url = cleaned_Path(localFilePath);
     replace_Block(&url->chars, '\\', '/'); /* in case it's a Windows path */
-    set_String(url, collect_String(urlEncodeExclude_String(url, "/")));
+    set_String(url, collect_String(urlEncodeExclude_String(url, "/:")));
+#if defined (iPlatformMsys)
+    prependChar_String(url, '/'); /* three slashes */
+#endif
     prependCStr_String(url, "file://");
     return url;
 }
@@ -217,9 +220,8 @@ static const struct {
     { unknownStatusCode_GmStatusCode, /* keep this as the first one (fallback return value) */
       { 0x1f4ab, /* dizzy */
         "Unknown Status Code",
-        "The server responded with a status code that is not specified in the Gemini "
-        "protocol as known to this client. Maybe the server is from the future? Or "
-        "just malfunctioning."} },
+        "The server responded with a status code that is not in the Gemini specification. "
+        "Maybe the server is from the future? Or just malfunctioning." } },
     { failedToOpenFile_GmStatusCode,
       { 0x1f4c1, /* file folder */
         "Failed to Open File",

@@ -64,10 +64,10 @@ struct Impl_GmDocument {
     iString   source;
     iString   url; /* for resolving relative links */
     iString   localHost;
-    iBool     siteBannerEnabled;
     iInt2     size;
     iArray    layout; /* contents of source, laid out in document space */
     iPtrArray links;
+    enum iGmDocumentBanner bannerType;
     iString   bannerText;
     iString   title; /* the first top-level title */
     iArray    headings;
@@ -179,6 +179,9 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
             }
             else if (equalCase_Rangecc(parts.scheme, "gopher")) {
                 link->flags |= gopher_GmLinkFlag;
+                if (startsWith_Rangecc(parts.path, "/7")) {
+                    link->flags |= query_GmLinkFlag;
+                }
             }
             else if (equalCase_Rangecc(parts.scheme, "file")) {
                 link->flags |= file_GmLinkFlag;
@@ -275,17 +278,18 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         5, 10, 5, 10, 0, 0, 0, 5
     };
     static const float topMargin[max_GmLineType] = {
-        0.0f, 0.333f, 1.0f, 0.5f, 2.0f, 1.5f, 1.0f, 1.0f
+        0.0f, 0.333f, 1.0f, 0.5f, 2.0f, 1.5f, 1.0f, 0.5f
     };
     static const float bottomMargin[max_GmLineType] = {
-        0.0f, 0.333f, 1.0f, 0.5f, 0.5f, 0.5f, 0.5f, 1.0f
+        0.0f, 0.333f, 1.0f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f
     };
-    static const char *arrow    = "\u27a4";
-    static const char *envelope = "\U0001f4e7";
-    static const char *bullet   = "\u2022";
-    static const char *folder   = "\U0001f4c1";
-    static const char *globe    = "\U0001f310";
-    static const char *quote    = "\u201c";
+    static const char *arrow           = "\u27a4";
+    static const char *envelope        = "\U0001f4e7";
+    static const char *bullet          = "\u2022";
+    static const char *folder          = "\U0001f4c1";
+    static const char *globe           = "\U0001f310";
+    static const char *quote           = "\u201c";
+    static const char *magnifyingGlass = "\U0001f50d";
     const float midRunSkip = 0; /*0.120f;*/ /* extra space between wrapped text/quote lines */
     const iPrefs *prefs = prefs_App();
     clear_Array(&d->layout);
@@ -306,7 +310,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     int              preFont       = preformatted_FontId;
     uint16_t         preId         = 0;
     iBool            enableIndents = iFalse;
-    iBool            addSiteBanner = d->siteBannerEnabled;
+    iBool            addSiteBanner = d->bannerType != none_GmDocumentBanner;
     enum iGmLineType prevType      = text_GmLineType;
     if (d->format == plainText_GmDocumentFormat) {
         isPreformat = iTrue;
@@ -379,6 +383,10 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 iGmRun banner    = { .flags = decoration_GmRunFlag | siteBanner_GmRunFlag };
                 banner.bounds    = zero_Rect();
                 banner.visBounds = init_Rect(0, 0, d->size.x, lineHeight_Text(banner_FontId) * 2);
+                if (d->bannerType == certificateWarning_GmDocumentBanner) {
+                    banner.visBounds.size.y += iMaxi(6000 * lineHeight_Text(uiLabel_FontId) /
+                                                         d->size.x, lineHeight_Text(uiLabel_FontId) * 5);
+                }
                 banner.font      = banner_FontId;
                 banner.text      = bannerText;
                 banner.color     = tmBannerTitle_ColorId;
@@ -463,11 +471,11 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             icon.visBounds.size = init_I2(indent * gap_Text, lineHeight_Text(run.font));
             icon.bounds         = zero_Rect(); /* just visual */
             const iGmLink *link = constAt_PtrArray(&d->links, run.linkId - 1);
-            icon.text           = range_CStr(link->flags & file_GmLinkFlag
-                                       ? folder
-                                       : link->flags & mailto_GmLinkFlag
-                                             ? envelope
-                                             : link->flags & remote_GmLinkFlag ? globe : arrow);
+            icon.text           = range_CStr(link->flags & query_GmLinkFlag    ? magnifyingGlass
+                                             : link->flags & file_GmLinkFlag   ? folder
+                                             : link->flags & mailto_GmLinkFlag ? envelope
+                                             : link->flags & remote_GmLinkFlag ? globe
+                                                                               : arrow);
             icon.font = regular_FontId;
             if (link->flags & remote_GmLinkFlag) {
                 icon.visBounds.pos.x -= gap_Text / 2;
@@ -596,6 +604,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     }
     d->size.y = pos.y;
     /* Go over the preformatted blocks and mark them wide if at least one run is wide. */ {
+        /* TODO: Store the dimensions and ranges for later access. */
         iForEach(Array, i, &d->layout) {
             iGmRun *run = i.value;
             if (run->preId && run->flags & wide_GmRunFlag) {
@@ -615,7 +624,7 @@ void init_GmDocument(iGmDocument *d) {
     init_String(&d->source);
     init_String(&d->url);
     init_String(&d->localHost);
-    d->siteBannerEnabled = iTrue;
+    d->bannerType = siteDomain_GmDocumentBanner;
     d->size = zero_I2();
     init_Array(&d->layout, sizeof(iGmRun));
     init_PtrArray(&d->links);
@@ -656,7 +665,6 @@ void reset_GmDocument(iGmDocument *d) {
     clear_String(&d->url);
     clear_String(&d->localHost);
     d->themeSeed = 0;
-    d->siteBannerEnabled = iTrue;
 }
 
 static void setDerivedThemeColors_(enum iGmDocumentTheme theme) {
@@ -1080,8 +1088,8 @@ void setFormat_GmDocument(iGmDocument *d, enum iGmDocumentFormat format) {
     d->format = format;
 }
 
-void setSiteBannerEnabled_GmDocument(iGmDocument *d, iBool siteBannerEnabled) {
-    d->siteBannerEnabled = siteBannerEnabled;
+void setBanner_GmDocument(iGmDocument *d, enum iGmDocumentBanner type) {
+    d->bannerType = type;
 }
 
 void setWidth_GmDocument(iGmDocument *d, int width) {
@@ -1196,6 +1204,10 @@ void render_GmDocument(const iGmDocument *d, iRangei visRangeY, iGmDocumentRende
 
 iInt2 size_GmDocument(const iGmDocument *d) {
     return d->size;
+}
+
+enum iGmDocumentBanner bannerType_GmDocument(const iGmDocument *d) {
+    return d->bannerType;
 }
 
 iBool hasSiteBanner_GmDocument(const iGmDocument *d) {

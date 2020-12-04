@@ -33,8 +33,13 @@ enum iSidebarMode {
     max_SidebarMode
 };
 
+enum iSidebarSide {
+    left_SideBarSide,
+    right_SideBarSide,
+};
+
 iDeclareWidgetClass(SidebarWidget)
-iDeclareObjectConstruction(SidebarWidget)
+iDeclareObjectConstructionArgs(SidebarWidget, enum iSidebarSide side)
 
 iBool               setMode_SidebarWidget   (iSidebarWidget *, enum iSidebarMode mode);
 
