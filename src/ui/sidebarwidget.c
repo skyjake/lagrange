@@ -580,7 +580,8 @@ void setWidth_SidebarWidget(iSidebarWidget *d, int width) {
 
 iBool handleBookmarkEditorCommands_SidebarWidget_(iWidget *editor, const char *cmd) {
     if (equal_Command(cmd, "bmed.accept") || equal_Command(cmd, "cancel")) {
-        iSidebarWidget *d = findWidget_App("sidebar");
+        iAssert(startsWith_String(id_Widget(editor), "bmed."));
+        iSidebarWidget *d = findWidget_App(cstr_String(id_Widget(editor)) + 5); /* bmed.sidebar */
         if (equal_Command(cmd, "bmed.accept")) {
             const iString *title = text_InputWidget(findChild_Widget(editor, "bmed.title"));
             const iString *url   = text_InputWidget(findChild_Widget(editor, "bmed.url"));
@@ -719,6 +720,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             if (d->mode == bookmarks_SidebarMode && item) {
                 setFlags_Widget(w, disabled_WidgetFlag, iTrue);
                 iWidget *dlg = makeBookmarkEditor_Widget();
+                setId_Widget(dlg, format_CStr("bmed.%s", cstr_String(id_Widget(w))));
                 iBookmark *bm = get_Bookmarks(bookmarks_App(), item->id);
                 setText_InputWidget(findChild_Widget(dlg, "bmed.title"), &bm->title);
                 setText_InputWidget(findChild_Widget(dlg, "bmed.url"), &bm->url);
@@ -800,6 +802,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                     if (isCommand_Widget(w, ev, "feed.entry.edit")) {
                         setFlags_Widget(w, disabled_WidgetFlag, iTrue);
                         iWidget *dlg = makeBookmarkEditor_Widget();
+                        setId_Widget(dlg, format_CStr("bmed.%s", cstr_String(id_Widget(w))));
                         setText_InputWidget(findChild_Widget(dlg, "bmed.title"), &feedBookmark->title);
                         setText_InputWidget(findChild_Widget(dlg, "bmed.url"), &feedBookmark->url);
                         setText_InputWidget(findChild_Widget(dlg, "bmed.tags"), &feedBookmark->tags);

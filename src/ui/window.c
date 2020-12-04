@@ -511,6 +511,11 @@ static void setupUserInterface_Window(iWindow *d) {
         addAction_Widget(d->root, '3', KMOD_PRIMARY, "sidebar.mode arg:2 toggle:1");
         addAction_Widget(d->root, '4', KMOD_PRIMARY, "sidebar.mode arg:3 toggle:1");
         addAction_Widget(d->root, '5', KMOD_PRIMARY, "sidebar.mode arg:4 toggle:1");
+        addAction_Widget(d->root, '1', rightSidebar_KeyModifier, "sidebar2.mode arg:0 toggle:1");
+        addAction_Widget(d->root, '2', rightSidebar_KeyModifier, "sidebar2.mode arg:1 toggle:1");
+        addAction_Widget(d->root, '3', rightSidebar_KeyModifier, "sidebar2.mode arg:2 toggle:1");
+        addAction_Widget(d->root, '4', rightSidebar_KeyModifier, "sidebar2.mode arg:3 toggle:1");
+        addAction_Widget(d->root, '5', rightSidebar_KeyModifier, "sidebar2.mode arg:4 toggle:1");
     }
 }
 
