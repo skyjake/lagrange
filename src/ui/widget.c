@@ -263,10 +263,13 @@ void arrange_Widget(iWidget *d) {
         setFlags_Widget(d, wasCollapsed_WidgetFlag, iTrue);
         return;
     }
-    if (d->flags & moveToParentRightEdge_WidgetFlag) {
+    if (d->flags & moveToParentLeftEdge_WidgetFlag) {
+        d->rect.pos.x = d->padding[0];
+    }
+    else if (d->flags & moveToParentRightEdge_WidgetFlag) {
         d->rect.pos.x = width_Rect(innerRect_Widget_(d->parent)) - width_Rect(d->rect);
     }
-    if (d->flags & centerHorizontal_WidgetFlag) {
+    else if (d->flags & centerHorizontal_WidgetFlag) {
         centerHorizontal_Widget_(d);
     }
     if (d->flags & resizeToParentWidth_WidgetFlag) {
@@ -388,7 +391,8 @@ void arrange_Widget(iWidget *d) {
             continue;
         }
         if (d->flags & (arrangeHorizontal_WidgetFlag | arrangeVertical_WidgetFlag)) {
-            if (child->flags & moveToParentRightEdge_WidgetFlag) {
+            if (child->flags &
+                (moveToParentLeftEdge_WidgetFlag | moveToParentRightEdge_WidgetFlag)) {
                 continue; /* Not part of the sequential arrangement .*/
             }
             child->rect.pos = pos;
@@ -422,7 +426,8 @@ void arrange_Widget(iWidget *d) {
             iForEach(ObjectList, j, d->children) {
                 iWidget *child = as_Widget(j.object);
                 if (child->flags &
-                    (resizeToParentWidth_WidgetFlag | moveToParentRightEdge_WidgetFlag)) {
+                    (resizeToParentWidth_WidgetFlag | moveToParentLeftEdge_WidgetFlag |
+                     moveToParentRightEdge_WidgetFlag)) {
                     arrange_Widget(child);
                 }
             }

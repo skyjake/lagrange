@@ -2909,6 +2909,7 @@ static void drawSideElements_DocumentWidget_(const iDocumentWidget *d) {
                             iMax(0, scrollMax_DocumentWidget_(d) - value_Anim(&d->scrollY)))),
             tmQuoteIcon_ColorId);
     }
+#if 0
     /* Outline on the right side. */
     const float outlineOpacity = value_Anim(&d->outlineOpacity);
     if (prefs_App()->hoverOutline && !isEmpty_Array(&d->outline) && outlineOpacity > 0.0f) {
@@ -2964,8 +2965,9 @@ static void drawSideElements_DocumentWidget_(const iDocumentWidget *d) {
         setOpacity_Text(1.0f);
         SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_NONE);
     }
+#endif
     unsetClip_Paint(&p);
-    }
+}
 
 static void drawPlayers_DocumentWidget_(const iDocumentWidget *d, iPaint *p) {
     iConstForEach(PtrArray, i, &d->visiblePlayers) {

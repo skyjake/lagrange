@@ -139,7 +139,8 @@ const iString *dateStr_(const iDate *date) {
 
 static iString *serializePrefs_App_(const iApp *d) {
     iString *str = new_String();
-    const iSidebarWidget *sidebar = findWidget_App("sidebar");
+    const iSidebarWidget *sidebar  = findWidget_App("sidebar");
+    const iSidebarWidget *sidebar2 = findWidget_App("sidebar2");
     appendFormat_String(str, "window.retain arg:%d\n", d->prefs.retainWindowSize);
     if (d->prefs.retainWindowSize) {
         const iBool isMaximized = (SDL_GetWindowFlags(d->window->win) & SDL_WINDOW_MAXIMIZED) != 0;
@@ -150,6 +151,7 @@ static iString *serializePrefs_App_(const iApp *d) {
         h = d->window->lastRect.size.y;
         appendFormat_String(str, "window.setrect width:%d height:%d coord:%d %d\n", w, h, x, y);
         appendFormat_String(str, "sidebar.width arg:%d\n", width_SidebarWidget(sidebar));
+        appendFormat_String(str, "sidebar2.width arg:%d\n", width_SidebarWidget(sidebar2));
         /* On macOS, maximization should be applied at creation time or the window will take
            a moment to animate to its maximized size. */
 #if !defined (iPlatformApple)
@@ -160,10 +162,16 @@ static iString *serializePrefs_App_(const iApp *d) {
         iUnused(isMaximized);
 #endif
     }
-    if (isVisible_Widget(sidebar)) {
-        appendCStr_String(str, "sidebar.toggle\n");
+    /* Sidebars. */ {
+        if (isVisible_Widget(sidebar)) {
+            appendCStr_String(str, "sidebar.toggle\n");
+        }
+        appendFormat_String(str, "sidebar.mode arg:%d\n", mode_SidebarWidget(sidebar));
+        if (isVisible_Widget(sidebar2)) {
+            appendCStr_String(str, "sidebar2.toggle\n");
+        }
+        appendFormat_String(str, "sidebar2.mode arg:%d\n", mode_SidebarWidget(sidebar2));
     }
-    appendFormat_String(str, "sidebar.mode arg:%d\n", mode_SidebarWidget(sidebar));
     appendFormat_String(str, "uiscale arg:%f\n", uiScale_Window(d->window));
     appendFormat_String(str, "prefs.dialogtab arg:%d\n", d->prefs.dialogTab);
     appendFormat_String(str, "font.set arg:%d\n", d->prefs.font);
