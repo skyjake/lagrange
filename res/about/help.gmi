@@ -63,7 +63,7 @@ Lagrange's user interface is modeled after web browsers:
 
 * There is a navigation bar at the top with Back and Forward buttons.
 * There is a tab bar for switching tabs. The tab bar is hidden if there is only one tab open.
-* There is a sidebar for managing bookmarks and TLS identities, and viewing history and the page outline. The sidebar is hidden by default.
+* There is a sidebar for managing bookmarks and TLS identities, and viewing history and the page outline. Sidebars are hidden by default.
 * There is a search bar that appears at the bottom when searching text on the page.
 
 Tip: Try pressing ${CTRL+}5 now to see the page outline.
@@ -126,17 +126,17 @@ Press ${CTRL+}T to open a new tab, and ${CTRL+}W to close the current tab. Right
 
 The set of open tabs is restored when you launch Lagrange.
 
-## Sidebar
+## Sidebars
 
-The sidebar can be toggled via menus or by pressing ${SHIFT+}${CTRL+}L. It has five tabs:
+The sidebars can be toggled via menus or by pressing ${SHIFT+}${CTRL+}L or ${SHIFT+}${CTRL+}P (for the left/right sidebar, respectively). Both sidebars have five tabs:
 
 * Bookmarks: List of bookmarks that you've created. These appear first in search results for quick and easy access.
-* Feeds: Entries found on subscribed feed index pages.
+* Feeds: Entries found on subscribed pages.
 * History: Chronological list of visited URLs. This is not a full history of all the URLs you've accessed over time — only unique URLs are shown at the latest access time.
 * Identities: TLS client certificates.
 * Outline: List of the headings in the currently open tab. Useful when reading longer documents.
 
-${CTRL+}1 through ${CTRL+}5 switch between the sidebar tabs, or hide the sidebar if the current tab's key is pressed. You can also press Escape to dismiss the sidebar.
+${CTRL+}1 through ${CTRL+}5 switch between the left sidebar tabs, or hide the sidebar if the current tab's key is pressed. You can also press Escape to dismiss sidebars.
 
 ## Bookmarks
 
@@ -150,10 +150,11 @@ In addition to a title, bookmarks can have tags. Some tags have a special meanin
 
 * Set a "homepage" tag on a bookmark to make it one of the pages that will be opened when pressing the 🏠 button. If multiple bookmarks are tagged as homepages, a random one is selected.
 * A "subscribed" tag means that Lagrange will periodically fetch the bookmarked page and look for Gemini feed links. All the found links that match the required style ("YYYY-MM-DD Entry title") will appear in the Feeds sidebar tab.
+* "headings" can be used together with "subscribed" to subscribe to new headings instead of Gemini feed links.
 
 ## Feeds
 
-You may be familiar with RSS and Atom XML feeds from the web. Lagrange does _not_ support RSS/Atom, only Gemini feeds. A Gemini feed is simply a regular 'text/gemini' page that contains one or more links whose labels are formatted in a particular way.
+You may be familiar with RSS and Atom XML feeds from the web. Lagrange does _not_ support RSS or Atom, only Gemini feeds. A Gemini feed is simply a regular 'text/gemini' page that contains one or more links whose labels are formatted in a particular way.
 
 => gemini://gemini.circumlunar.space/docs/companion/subscription.gmi  See "Subscribing to Gemini pages" for more information.
 
@@ -212,8 +213,6 @@ The location where downloaded files are saved can be changed in Preferences. The
 You can find a number of settings in Preferences to customize the user interface and page contents.
 
 ### Browsing behavior
-
-The "Outline on scrollbar" option shows the page outline when the mouse cursor is moved over the scrollbar, allowing one to better navigate long documents. The outline will disappear after the mouse cursor is moved away. If you need a persistent outline, one is always available in the sidebar.
 
 One important characteristic of Gemini is that you remain in control of what gets loaded and when. The browser will not suddenly fetch a ton of images, autoplay videos, or make surreptitious connections to any tracking servers — each network request is purposeful and manually triggered. With this in mind, the "Load image on scroll" option is provided to assist keyboard-only browsing and to facilitate a focused reading experience. When enabled, if there is an image link visible on the page and you press Space or ↓, it will be loaded and shown inline _instead_ of the view scrolling down. This allows you to read and see all the content of the page while only tapping on a single key on the keyboard.
 
