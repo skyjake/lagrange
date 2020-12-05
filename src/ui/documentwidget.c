@@ -859,12 +859,13 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse
             while (nextSplit_Rangecc(mime, ";", &seg)) {
                 iRangecc param = seg;
                 trim_Rangecc(&param);
-                if (equal_Rangecc(param, "text/plain")) {
-                    docFormat = plainText_GmDocumentFormat;
+                if (equal_Rangecc(param, "text/gemini")) {
+                    docFormat = gemini_GmDocumentFormat;
                     setRange_String(&d->sourceMime, param);
                 }
-                else if (equal_Rangecc(param, "text/gemini")) {
-                    docFormat = gemini_GmDocumentFormat;
+                else if (startsWith_Rangecc(param, "text/") ||
+                         equal_Rangecc(param, "application/json")) {
+                    docFormat = plainText_GmDocumentFormat;
                     setRange_String(&d->sourceMime, param);
                 }
                 else if (startsWith_Rangecc(param, "image/") ||
