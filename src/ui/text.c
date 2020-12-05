@@ -110,7 +110,7 @@ static void init_Font(iFont *d, const iBlock *data, int height, float scale, enu
     d->vertOffset = height * (1.0f - scale) / 2;
     int ascent;
     stbtt_GetFontVMetrics(&d->font, &ascent, NULL, NULL);
-    d->baseline     = (int) ascent * d->scale;
+    d->baseline     = ceil(ascent * d->scale);
     d->symbolsFont  = symbolsFont;
     d->japaneseFont = regularJapanese_FontId;
     d->koreanFont   = regularKorean_FontId;
@@ -714,6 +714,7 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
             }
             break;
         }
+        const int yLineMax = pos.y + d->height;
         SDL_Rect dst = { x1 + glyph->d[hoff].x,
                          pos.y + glyph->font->baseline + glyph->d[hoff].y,
                          glyph->rect[hoff].size.x,
@@ -733,13 +734,26 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
         }
         const iBool useMonoAdvance =
             monoAdvance > 0 && !isJapanese_FontId(fontId_Text_(glyph->font));
-        const float advance = (useMonoAdvance ? monoAdvance : glyph->advance);
+        /* The -0.25f is to mitigate issues with box-drawing characters sometimes rounding
+           up to leave a hairline gap with the previous character. The purpose is to overlap
+           the glyphs slightly, since they are rendered antialiased and unhinted, which means
+           the right edge pixels may end up partially non-opaque. */
+        const float advance = (useMonoAdvance ? monoAdvance - 0.25f : glyph->advance);
         if (!isMeasuring_(mode)) {
             if (useMonoAdvance && dst.w > advance && glyph->font != d) {
                 /* Glyphs from a different font may need recentering to look better. */
                 dst.x -= (dst.w - advance) / 2;
             }
-            SDL_RenderCopy(text_.render, text_.cache, (const SDL_Rect *) &glyph->rect[hoff], &dst);
+            SDL_Rect src;
+            memcpy(&src, &glyph->rect[hoff], sizeof(SDL_Rect));
+            /* Clip the glyphs to the font's height. This is useful when the font's line spacing
+               has been reduced or when the glyph is from a different font. */
+            if (dst.y + dst.h > yLineMax) {
+                const int over = dst.y + dst.h - yLineMax;
+                src.h -= over;
+                dst.h -= over;
+            }
+            SDL_RenderCopy(text_.render, text_.cache, &src, &dst);
         }
         /* Symbols and emojis are NOT monospaced, so must conform when the primary font
            is monospaced. Except with Japanese script, that's larger than the normal monospace. */
