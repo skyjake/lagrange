@@ -262,7 +262,8 @@ static void requestFinished_GmRequest_(iGmRequest *d, iTlsRequest *req) {
     checkServerCertificate_GmRequest_(d);
     unlock_Mutex(d->mtx);
     /* Check for mimehooks. */
-    if (d->isRespFiltered && d->state == finished_GmRequestState) {       
+    if (d->isRespFiltered && d->state == finished_GmRequestState) {
+        setenv("REQUEST_URL", cstr_String(&d->url), 1);
         iBlock *xbody = tryFilter_MimeHooks(mimeHooks_App(), &d->resp->meta, &d->resp->body);
         if (xbody) {
             lock_Mutex(d->mtx);

@@ -337,7 +337,7 @@ Example use cases:
 
 ## Interface
 
-When a hook is called, it is given the MIME type and parameters via command line arguments. The response body is provided via stdin.
+When a hook is called, it is given the MIME type and parameters via command line arguments. The response body is provided via stdin. The request's URL is available in the REQUEST_URL environment variable.
 
 The MIME type and parameters are split at semicolons, so "text/gemini; lang=ja" would be called as:
 ```
