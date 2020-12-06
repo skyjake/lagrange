@@ -1529,6 +1529,11 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         animatePlayers_DocumentWidget_(d);
         return iFalse;
     }
+    else if (equal_Command(cmd, "tab.created")) {
+        /* Space for tab buttons has changed. */
+        updateWindowTitle_DocumentWidget_(d);
+        return iFalse;
+    }
     else if (equal_Command(cmd, "server.showcert") && d == document_App()) {
         const char *unchecked      = red_ColorEscape "\u2610";
         const char *checked        = green_ColorEscape "\u2611";
@@ -2228,6 +2233,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 if (d->menu) {
                     destroy_Widget(d->menu);
                 }
+                setFocus_Widget(NULL);
                 iArray items;
                 init_Array(&items, sizeof(iMenuItem));
                 if (d->contextLink) {

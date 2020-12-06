@@ -852,6 +852,7 @@ iDocumentWidget *newTab_App(const iDocumentWidget *duplicateOf, iBool switchToNe
     }
     arrange_Widget(tabs);
     refresh_Widget(tabs);
+    postCommandf_App("tab.created id:%s", cstr_String(id_Widget(as_Widget(doc))));
     return doc;
 }
 
