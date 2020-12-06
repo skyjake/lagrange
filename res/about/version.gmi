@@ -10,6 +10,7 @@
 * 'text/*' content falls back to plain text.
 * Reduced visual artifacts in Unicode box-drawing characters (overlapping/gaps).
 * Fixed truncated tab titles when opening tabs in background.
+* macOS: Fixed excessive CPU usage while idling.
 
 ## 0.12
 * Added MIME hooks: pipe Gemini responses through external programs for arbitrary processing. (See "about:help" for usage.)
