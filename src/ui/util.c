@@ -456,14 +456,14 @@ void openMenu_Widget(iWidget *d, iInt2 coord) {
     if (leftExcess > 0) {
         d->rect.pos.x += leftExcess;
     }
-    refresh_App();
+    postRefresh_App();
     postCommand_Widget(d, "menu.opened");
 }
 
 void closeMenu_Widget(iWidget *d) {
     setFlags_Widget(d, hidden_WidgetFlag, iTrue);
     setFlags_Widget(findChild_Widget(d, "menu.cancel"), disabled_WidgetFlag, iTrue);
-    refresh_App();
+    postRefresh_App();
     postCommand_Widget(d, "menu.closed");
 }
 
