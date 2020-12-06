@@ -9,6 +9,7 @@
 ## 0.12.1
 * 'text/*' content falls back to plain text.
 * Reduced visual artifacts in Unicode box-drawing characters (overlapping/gaps).
+* Fixed truncated tab titles when opening tabs in background.
 
 ## 0.12
 * Added MIME hooks: pipe Gemini responses through external programs for arbitrary processing. (See "about:help" for usage.)
