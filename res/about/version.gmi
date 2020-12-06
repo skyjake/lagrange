@@ -6,6 +6,10 @@
 ```
 # Release notes
 
+## 0.12.1
+* 'text/*' content falls back to plain text.
+* Reduced visual artifacts in Unicode box-drawing characters (overlapping/gaps).
+
 ## 0.12
 * Added MIME hooks: pipe Gemini responses through external programs for arbitrary processing. (See "about:help" for usage.)
 * Added a right-hand sidebar; have a sidebar on the right or on both sides at once.
