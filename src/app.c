@@ -502,6 +502,8 @@ const iString *debugInfo_App(void) {
     iConstForEach(StringList, j, d->launchCommands) {
         appendFormat_String(msg, "%s\n", cstr_String(j.value));
     }
+    appendFormat_String(msg, "## MIME hooks\n");
+    append_String(msg, debugInfo_MimeHooks(d->mimehooks));
     return msg;
 }
 
@@ -1034,7 +1036,13 @@ iBool willUseProxy_App(const iRangecc scheme) {
 
 iBool handleCommand_App(const char *cmd) {
     iApp *d = &app_;
-    if (equal_Command(cmd, "prefs.dialogtab")) {
+    if (equal_Command(cmd, "config.error")) {
+        makeMessage_Widget(uiTextCaution_ColorEscape "CONFIG ERROR",
+                           format_CStr("Error in config file: %s\nSee \"about:debug\" for details.",
+                                       suffixPtr_Command(cmd, "where")));
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "prefs.dialogtab")) {
         d->prefs.dialogTab = arg_Command(cmd);
         return iTrue;
     }

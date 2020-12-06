@@ -1,6 +1,8 @@
 #include "mimehooks.h"
+#include "app.h"
 
 #include <the_Foundation/file.h>
+#include <the_Foundation/fileinfo.h>
 #include <the_Foundation/path.h>
 #include <the_Foundation/process.h>
 #include <the_Foundation/stringlist.h>
@@ -23,6 +25,7 @@ void deinit_FilterHook(iFilterHook *d) {
 
 void setMimePattern_FilterHook(iFilterHook *d, const iString *pattern) {
     iReleasePtr(&d->mimeRegex);
+    set_String(&d->mimePattern, pattern);
     d->mimeRegex = new_RegExp(cstr_String(pattern), caseInsensitive_RegExpOption);
 }
 
@@ -105,6 +108,7 @@ iBlock *tryFilter_MimeHooks(const iMimeHooks *d, const iString *mime, const iBlo
 static const char *mimeHooksFilename_MimeHooks_ = "mimehooks.txt";
 
 void load_MimeHooks(iMimeHooks *d, const char *saveDir) {
+    iBool reportError = iFalse;
     iFile *f = newCStr_File(concatPath_CStr(saveDir, mimeHooksFilename_MimeHooks_));
     if (open_File(f, read_FileMode | text_FileMode)) {
         iBlock * src     = readAll_File(f);
@@ -124,6 +128,15 @@ void load_MimeHooks(iMimeHooks *d, const char *saveDir) {
                 setRange_String(&hook->label, lines[0]);
                 setMimePattern_FilterHook(hook, collect_String(newRange_String(lines[1])));
                 setCommand_FilterHook(hook, collect_String(newRange_String(lines[2])));
+                /* Check if commmand is valid. */ {
+                    iRangecc seg = iNullRange;
+                    while (nextSplit_Rangecc(range_String(&hook->command), ";", &seg)) {
+                        if (!fileExistsCStr_FileInfo(cstr_Rangecc(seg))) {
+                            reportError = iTrue;
+                        }
+                        break;
+                    }
+                }
                 pushBack_PtrArray(&d->filters, hook);
                 pos = 0;
             }
@@ -131,9 +144,37 @@ void load_MimeHooks(iMimeHooks *d, const char *saveDir) {
         delete_Block(src);
     }
     iRelease(f);
+    if (reportError) {
+        postCommand_App("~config.error where:mimehooks.txt");
+    }
 }
 
 void save_MimeHooks(const iMimeHooks *d) {
     iUnused(d);
 }
 
+const iString *debugInfo_MimeHooks(const iMimeHooks *d) {
+    iString *str = collectNew_String();
+    size_t index = 0;
+    iConstForEach(PtrArray, i, &d->filters) {
+        const iFilterHook *filter = i.ptr;
+        appendFormat_String(str, "### %d: %s\n", index, cstr_String(&filter->label));
+        appendFormat_String(str, "MIME regex:\n```\n%s\n```\n", cstr_String(&filter->mimePattern));
+        iStringList *args = iClob(split_String(&filter->command, ";"));
+        if (isEmpty_StringList(args)) {
+            appendFormat_String(str, "\u26a0 Command not specified!\n");
+            continue;
+        }
+        const iString *exec = constAt_StringList(args, 0);
+        if (isEmpty_String(exec)) {
+            appendFormat_String(str, "\u26a0 Command not specified!\n");
+        }
+        else {
+            appendFormat_String(str, "Executable: %s\n```\n%s\n```\n",
+                                fileExists_FileInfo(exec) ? "" : "\u26a0 FILE NOT FOUND",
+                                cstr_String(exec));
+        }
+        index++;
+    }
+    return str;
+}

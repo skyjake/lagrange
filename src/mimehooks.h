@@ -29,3 +29,5 @@ iBlock *    tryFilter_MimeHooks     (const iMimeHooks *, const iString *mime,
 
 void        load_MimeHooks          (iMimeHooks *, const char *saveDir);
 void        save_MimeHooks          (const iMimeHooks *);
+
+const iString *debugInfo_MimeHooks  (const iMimeHooks *);
