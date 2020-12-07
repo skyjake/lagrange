@@ -50,8 +50,8 @@ iBlock *run_FilterHook_(const iFilterHook *d, const iString *mime, const iBlock 
     if (!isEmpty_String(requestUrl)) {
         setEnvironment_Process(
             proc,
-            newStrings_StringList(
-                collectNewFormat_String("REQUEST_URL=%s", cstr_String(requestUrl)), NULL));
+            iClob(newStrings_StringList(
+                collectNewFormat_String("REQUEST_URL=%s", cstr_String(requestUrl)), NULL)));
     }
     iBlock *output = NULL;
     if (start_Process(proc)) {
