@@ -46,13 +46,15 @@ iBlock *run_FilterHook_(const iFilterHook *d, const iString *mime, const iBlock 
     }
     setArguments_Process(proc, args);
     iRelease(args);
-    start_Process(proc);
-    writeInput_Process(proc, body);
-    iBlock *output = readOutputUntilClosed_Process(proc);
-    if (!startsWith_Rangecc(range_Block(output), "20")) {
-        /* Didn't produce valid output. */
-        delete_Block(output);
-        output = NULL;
+    iBlock *output = NULL;
+    if (start_Process(proc)) {
+        writeInput_Process(proc, body);
+        output = readOutputUntilClosed_Process(proc);
+        if (!startsWith_Rangecc(range_Block(output), "20")) {
+            /* Didn't produce valid output. */
+            delete_Block(output);
+            output = NULL;
+        }
     }
     iRelease(proc);
     return output;
