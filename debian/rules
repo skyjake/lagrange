@@ -6,7 +6,7 @@ export DEB_BUILD_MAINT_OPTIONS=hardening=-format
 	dh $@  
 
 override_dh_auto_configure:
-	cmake .. -DENABLE_WINDOWPOS_FIX=YES -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(pwd)/../usr
+	cmake .. -DCMAKE_BUILD_TYPE=Release -DENABLE_WINDOWPOS_FIX=YES -DTFDN_ENABLE_SSE41=NO -DCMAKE_INSTALL_PREFIX=$(pwd)/../usr
 
 override_dh_build_configure:
 	cmake --build .
