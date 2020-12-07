@@ -25,7 +25,7 @@ iDeclareTypeConstruction(MimeHooks)
 
 iBool       willTryFilter_MimeHooks (const iMimeHooks *, const iString *mime);
 iBlock *    tryFilter_MimeHooks     (const iMimeHooks *, const iString *mime,
-                                     const iBlock *body);
+                                     const iBlock *body, const iString *requestUrl);
 
 void        load_MimeHooks          (iMimeHooks *, const char *saveDir);
 void        save_MimeHooks          (const iMimeHooks *);

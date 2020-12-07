@@ -33,7 +33,8 @@ void setCommand_FilterHook(iFilterHook *d, const iString *command) {
     set_String(&d->command, command);
 }
 
-iBlock *run_FilterHook_(const iFilterHook *d, const iString *mime, const iBlock *body) {
+iBlock *run_FilterHook_(const iFilterHook *d, const iString *mime, const iBlock *body,
+                        const iString *requestUrl) {
     iProcess *   proc = new_Process();
     iStringList *args = new_StringList();
     iRangecc     seg  = iNullRange;
@@ -46,6 +47,12 @@ iBlock *run_FilterHook_(const iFilterHook *d, const iString *mime, const iBlock 
     }
     setArguments_Process(proc, args);
     iRelease(args);
+    if (!isEmpty_String(requestUrl)) {
+        setEnvironment_Process(
+            proc,
+            newStrings_StringList(
+                collectNewFormat_String("REQUEST_URL=%s", cstr_String(requestUrl)), NULL));
+    }
     iBlock *output = NULL;
     if (start_Process(proc)) {
         writeInput_Process(proc, body);
@@ -92,13 +99,14 @@ iBool willTryFilter_MimeHooks(const iMimeHooks *d, const iString *mime) {
     return iFalse;
 }
 
-iBlock *tryFilter_MimeHooks(const iMimeHooks *d, const iString *mime, const iBlock *body) {
+iBlock *tryFilter_MimeHooks(const iMimeHooks *d, const iString *mime, const iBlock *body,
+                            const iString *requestUrl) {
     iRegExpMatch m;
     iConstForEach(PtrArray, i, &d->filters) {
         const iFilterHook *xc = i.ptr;
         init_RegExpMatch(&m);
         if (matchString_RegExp(xc->mimeRegex, mime, &m)) {
-            iBlock *result = run_FilterHook_(xc, mime, body);
+            iBlock *result = run_FilterHook_(xc, mime, body, requestUrl);
             if (result) {
                 return result;
             }

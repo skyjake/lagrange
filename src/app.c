@@ -550,7 +550,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
                 if (ev.type == SDL_USEREVENT && ev.user.code == asleep_UserEventCode) {
                     if (SDL_GetTicks() - d->lastEventTime > idleThreshold_App_) {
                         if (!d->isIdling) {
-                            printf("[App] idling...\n");
+//                            printf("[App] idling...\n");
                             fflush(stdout);
                         }
                         d->isIdling = iTrue;
@@ -559,7 +559,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
                 }
                 d->lastEventTime = SDL_GetTicks();
                 if (d->isIdling) {
-                    printf("[App] ...woke up\n");
+//                    printf("[App] ...woke up\n");
                     fflush(stdout);
                 }
                 d->isIdling = iFalse;
