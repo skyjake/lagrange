@@ -665,6 +665,17 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
             }
         }
         iChar ch = nextChar_(&chPos, text.end);
+        if (ch == 0x200d) { /* zero-width joiner */
+            /* We don't have the composited Emojis. */
+            if (isEmoji_Char(prevCh)) {
+                /* skip */
+                ch = nextChar_(&chPos, text.end);
+                ch = nextChar_(&chPos, text.end);
+            }
+            else {
+                printf("it's %x\n", prevCh);
+            }
+        }
         if (isVariationSelector_Char(ch)) {
             /* TODO: VS15: Should peek ahead for this and prefer the Emoji font. */
             ch = nextChar_(&chPos, text.end); /* just ignore */
@@ -710,6 +721,9 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
                     SDL_SetTextureColorMod(text_.cache, clr.r, clr.g, clr.b);
                 }
                 prevCh = 0;
+                continue;
+            }
+            if (isDefaultIgnorable_Char(ch) || isFitzpatrickType_Char(ch)) {
                 continue;
             }
         }
@@ -1000,7 +1014,7 @@ iString *renderBlockChars_Text(const iBlock *fontData, int height, enum iTextBlo
     size_t      strRemain = length_String(text);
     iConstForEach(String, i, text) {
         if (!strRemain) break;
-        if (i.value == variationSelectorEmoji_Char) {
+        if (isVariationSelector_Char(i.value) || isDefaultIgnorable_Char(i.value)) {
             strRemain--;
             continue;
         }
