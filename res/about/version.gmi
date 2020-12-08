@@ -6,6 +6,8 @@
 ```
 # Release notes
 
+## 0.12.2
+
 ## 0.12.1
 * 'text/*' content falls back to plain text.
 * Minimized visual artifacts in Unicode box-drawing characters (overlapping/gaps) by fine-tuning glyph scaling.
