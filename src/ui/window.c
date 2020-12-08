@@ -345,7 +345,7 @@ static iBool handleSearchBarCommands_(iWidget *searchBar, const char *cmd) {
             if (!isVisible_Widget(searchBar)) {
                 setFlags_Widget(searchBar, hidden_WidgetFlag | disabled_WidgetFlag, iFalse);
                 arrange_Widget(get_Window()->root);
-                refresh_App();
+                postRefresh_App();
             }
         }
     }

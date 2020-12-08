@@ -6,6 +6,15 @@
 ```
 # Release notes
 
+## 0.12.1
+* 'text/*' content falls back to plain text.
+* Minimized visual artifacts in Unicode box-drawing characters (overlapping/gaps) by fine-tuning glyph scaling.
+* Fixed truncated tab titles when opening tabs in background.
+* Fixed possible exit if hook program not found (SIGPIPE).
+* REQUEST_URL is set in the environment when running MIME hooks.
+* "about:debug" lists the configured MIME hooks.
+* macOS: Fixed excessive CPU usage while idling.
+
 ## 0.12
 * Added MIME hooks: pipe Gemini responses through external programs for arbitrary processing. (See "about:help" for usage.)
 * Added a right-hand sidebar; have a sidebar on the right or on both sides at once.
