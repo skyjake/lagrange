@@ -165,6 +165,7 @@ static iBool processEvent_BindingsWidget_(iBindingsWidget *d, const SDL_Event *e
         if (item) {
             reset_Binding(item->id);
             updateItems_BindingsWidget_(d);
+            postCommand_App("bindings.changed");
         }
         return iTrue;
     }
