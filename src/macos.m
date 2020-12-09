@@ -22,9 +22,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "macos.h"
 #include "app.h"
-#include "ui/command.h"
-#include "ui/widget.h"
 #include "ui/color.h"
+#include "ui/command.h"
+#include "ui/keys.h"
+#include "ui/widget.h"
 #include "ui/window.h"
 
 #include <SDL_timer.h>
@@ -246,6 +247,10 @@ static void appearanceChanged_MacOS_(NSString *name) {
     postCommand_App("tabs.close");
 }
 
+- (NSString *)commandForItem:(NSMenuItem *)menuItem {
+    return [menuCommands objectForKey:[menuItem title]];
+}
+
 - (void)postMenuItemCommand:(id)sender {
     NSString *command = [menuCommands objectForKey:[(NSMenuItem *)sender title]];
     if (command) {
@@ -300,144 +305,6 @@ static void appearanceChanged_MacOS_(NSString *name) {
                                                   widget:nil
                                                  command:@"tabs.new"];
     }
-#if 0
-    if ([identifier isEqualToString:play_TouchId_]) {
-        return [NSButtonTouchBarItem
-            buttonTouchBarItemWithIdentifier:identifier
-                                       image:[NSImage imageNamed:NSImageNameTouchBarPlayPauseTemplate]
-                                      target:self
-                                      action:@selector(playPressed)];
-    }
-    else if ([identifier isEqualToString:restart_TouchId_]) {
-        return [NSButtonTouchBarItem
-            buttonTouchBarItemWithIdentifier:identifier
-                                       image:[NSImage imageNamed:NSImageNameTouchBarSkipToStartTemplate]
-                                      target:self
-                                      action:@selector(restartPressed)];
-    }
-    else if ([identifier isEqualToString:seqMoveUp_TouchId_]) {
-        return [[CommandButton alloc] initWithIdentifier:identifier
-                                                   title:@"Seq\u2b06"
-                                                  widget:findWidget_App("sequence")
-                                                 command:@"sequence.swap arg:-1"];
-    }
-    else if ([identifier isEqualToString:seqMoveDown_TouchId_]) {
-        return [[CommandButton alloc] initWithIdentifier:identifier
-                                                   title:@"Seq\u2b07"
-                                                  widget:findWidget_App("sequence")
-                                                 command:@"sequence.swap arg:1"];
-    }
-    else if ([identifier isEqualToString:goto_TouchId_]) {
-        return [[CommandButton alloc] initWithIdentifier:identifier
-                                                   title:@"Go to…"
-                                                 command:@"pattern.goto arg:-1"];
-    }
-    else if ([identifier isEqualToString:event_TouchId_]) {
-        NSTouchBar *events = [[NSTouchBar alloc] init];
-        events.delegate = self;
-        events.defaultItemIdentifiers = @[ eventList_TouchId_ ];
-        NSPopoverTouchBarItem *pop = [[NSPopoverTouchBarItem alloc] initWithIdentifier:identifier];
-        pop.collapsedRepresentationLabel = @"Event";
-        pop.popoverTouchBar = events;
-        [events release];
-        return pop;
-    }
-    else if ([identifier isEqualToString:eventList_TouchId_]) {
-        const struct {
-            NSTouchBarItemIdentifier id;
-            const char *title;
-            const char *command;
-        } buttonDefs_[] = {
-            { voiceEvent_TouchId_, "Voice", "tracker.setevent type:2" },
-            { panEvent_TouchId_, "Pan", "tracker.setevent type:3 arg:128" },
-            { gainEvent_TouchId_, "Gain", "tracker.setevent type:4 arg:128" },
-            { fadeEvent_TouchId_, "Fade", "tracker.setevent type:5" },
-            { tremoloEvent_TouchId_, "Trem", "tracker.setevent type:9" },
-            { pitchSpeedEvent_TouchId_, "P.Spd", "tracker.setevent type:6" },
-            { pitchBendUpEvent_TouchId_, "BnUp", "tracker.setevent type:7" },
-            { pitchBendDownEvent_TouchId_, "BnDn", "tracker.setevent type:8" },
-            { masterGainEvent_TouchId_, "M.Gain", "tracker.setevent type:10 arg:64" },
-            { resetEvent_TouchId_, "Reset", "tracker.setevent type:1" },
-        };
-        NSMutableArray *items = [[NSMutableArray alloc] init];
-        iForIndices(i, buttonDefs_) {
-            CommandButton *button = [[CommandButton alloc]
-                initWithIdentifier:buttonDefs_[i].id
-                             title:[NSString stringWithUTF8String:buttonDefs_[i].title]
-                            widget:findWidget_App("tracker")
-                           command:[NSString stringWithUTF8String:buttonDefs_[i].command]
-            ];
-            [items addObject:button];
-        }
-        NSGroupTouchBarItem *group = [NSGroupTouchBarItem groupItemWithIdentifier:identifier
-                                                                            items:items];
-        [items release];
-        return group;
-    }
-    else if ([identifier isEqualToString:mute_TouchId_]) {
-        return [[CommandButton alloc] initWithIdentifier:identifier
-                                                   title:@"Mute"
-                                                  widget:findWidget_App("tracker")
-                                                 command:@"tracker.mute"];
-    }
-    else if ([identifier isEqualToString:solo_TouchId_]) {
-        return [[CommandButton alloc] initWithIdentifier:identifier
-                                                   title:@"Solo"
-                                                  widget:findWidget_App("tracker")
-                                                 command:@"tracker.solo"];
-    }
-    else if ([identifier isEqualToString:color_TouchId_]) {
-        NSTouchBar *colors = [[NSTouchBar alloc] init];
-        colors.delegate = self;
-        colors.defaultItemIdentifiers = @[ NSTouchBarItemIdentifierFlexibleSpace,
-                                           whiteColor_TouchId_,
-                                           yellowColor_TouchId_,
-                                           orangeColor_TouchId_,
-                                           redColor_TouchId_,
-                                           magentaColor_TouchId_,
-                                           blueColor_TouchId_,
-                                           cyanColor_TouchId_,
-                                           greenColor_TouchId_,
-                                           NSTouchBarItemIdentifierFlexibleSpace ];
-        NSPopoverTouchBarItem *pop = [[NSPopoverTouchBarItem alloc] initWithIdentifier:identifier];
-        pop.collapsedRepresentationImage = [NSImage imageNamed:NSImageNameTouchBarColorPickerFill];
-        pop.popoverTouchBar = colors;
-        [colors release];
-        return pop;
-    }
-    else if ([identifier isEqualToString:whiteColor_TouchId_]) {
-        return [[ColorButton alloc] initWithIdentifier:identifier
-                                            trackColor:white_TrackColor];
-    }
-    else if ([identifier isEqualToString:yellowColor_TouchId_]) {
-        return [[ColorButton alloc] initWithIdentifier:identifier
-                                            trackColor:yellow_TrackColor];
-    }
-    else if ([identifier isEqualToString:orangeColor_TouchId_]) {
-        return [[ColorButton alloc] initWithIdentifier:identifier
-                                            trackColor:orange_TrackColor];
-    }
-    else if ([identifier isEqualToString:redColor_TouchId_]) {
-        return [[ColorButton alloc] initWithIdentifier:identifier
-                                            trackColor:red_TrackColor];
-    }
-    else if ([identifier isEqualToString:magentaColor_TouchId_]) {
-        return [[ColorButton alloc] initWithIdentifier:identifier
-                                            trackColor:magenta_TrackColor];
-    }
-    else if ([identifier isEqualToString:blueColor_TouchId_]) {
-        return [[ColorButton alloc] initWithIdentifier:identifier
-                                            trackColor:blue_TrackColor];
-    }
-    else if ([identifier isEqualToString:cyanColor_TouchId_]) {
-        return [[ColorButton alloc] initWithIdentifier:identifier
-                                            trackColor:cyan_TrackColor];
-    }
-    else if ([identifier isEqualToString:greenColor_TouchId_]) {
-        return [[ColorButton alloc] initWithIdentifier:identifier
-                                            trackColor:green_TrackColor];
-    }
-#endif
     return nil;
 }
 
@@ -500,6 +367,42 @@ void enableMenu_MacOS(const char *menuLabel, iBool enable) {
     [label release];
 }
 
+static void setShortcut_NSMenuItem_(NSMenuItem *item, int key, int kmods) {
+    iString str;
+    init_String(&str);
+    if (key == SDLK_LEFT) {
+        appendChar_String(&str, 0x2190);
+    }
+    else if (key == SDLK_RIGHT) {
+        appendChar_String(&str, 0x2192);
+    }
+    else if (key == SDLK_UP) {
+        appendChar_String(&str, 0x2191);
+    }
+    else if (key == SDLK_DOWN) {
+        appendChar_String(&str, 0x2193);
+    }
+    else if (key) {
+        appendChar_String(&str, key);
+    }
+    NSEventModifierFlags modMask = 0;
+    if (kmods & KMOD_GUI) {
+        modMask |= NSEventModifierFlagCommand;
+    }
+    if (kmods & KMOD_ALT) {
+        modMask |= NSEventModifierFlagOption;
+    }
+    if (kmods & KMOD_CTRL) {
+        modMask |= NSEventModifierFlagControl;
+    }
+    if (kmods & KMOD_SHIFT) {
+        modMask |= NSEventModifierFlagShift;
+    }
+    [item setKeyEquivalentModifierMask:modMask];
+    [item setKeyEquivalent:[NSString stringWithUTF8String:cstr_String(&str)]];
+    deinit_String(&str);
+}
+
 void insertMenuItems_MacOS(const char *menuLabel, int atIndex, const iMenuItem *items, size_t count) {
     NSApplication *app = [NSApplication sharedApplication];
     MyDelegate *myDel = (MyDelegate *) app.delegate;
@@ -520,44 +423,21 @@ void insertMenuItems_MacOS(const char *menuLabel, int atIndex, const iMenuItem *
         }
         else {
             const iBool hasCommand = (items[i].command && items[i].command[0]);
-            iString key;
-            init_String(&key);
-            if (items[i].key == SDLK_LEFT) {
-                appendChar_String(&key, 0x2190);
-            }
-            else if (items[i].key == SDLK_RIGHT) {
-                appendChar_String(&key, 0x2192);
-            }
-            else if (items[i].key == SDLK_UP) {
-                appendChar_String(&key, 0x2191);
-            }
-            else if (items[i].key == SDLK_DOWN) {
-                appendChar_String(&key, 0x2193);
-            }
-            else if (items[i].key) {
-                appendChar_String(&key, items[i].key);
-            }
             NSMenuItem *item = [menu addItemWithTitle:[NSString stringWithUTF8String:label]
                                                action:(hasCommand ? @selector(postMenuItemCommand:) : nil)
-                                        keyEquivalent:[NSString stringWithUTF8String:cstr_String(&key)]];
-            NSEventModifierFlags modMask = 0;
-            if (items[i].kmods & KMOD_GUI) {
-                modMask |= NSEventModifierFlagCommand;
-            }
-            if (items[i].kmods & KMOD_ALT) {
-                modMask |= NSEventModifierFlagOption;
-            }
-            if (items[i].kmods & KMOD_CTRL) {
-                modMask |= NSEventModifierFlagControl;
-            }
-            if (items[i].kmods & KMOD_SHIFT) {
-                modMask |= NSEventModifierFlagShift;
-            }
-            [item setKeyEquivalentModifierMask:modMask];
+                                        keyEquivalent:@""];
+            int key   = items[i].key;
+            int kmods = items[i].kmods;
             if (hasCommand) {
                 [myDel setCommand:[NSString stringWithUTF8String:items[i].command] forMenuItem:item];
+                /* Bindings may have a different key. */
+                const iBinding *bind = findCommand_Keys(items[i].command);
+                if (bind) {
+                    key   = bind->key;
+                    kmods = bind->mods;
+                }
             }
-            deinit_String(&key);
+            setShortcut_NSMenuItem_(item, key, kmods);
         }
     }
     [mainItem setSubmenu:menu];
@@ -570,13 +450,26 @@ void handleCommand_MacOS(const char *cmd) {
             appearanceChanged_MacOS_(currentSystemAppearance_());
         }
     }
-#if 0
-    if (equal_Command(cmd, "tabs.changed")) {
-        MyDelegate *myDel = (MyDelegate *) [[NSApplication sharedApplication] delegate];
-        const char *tabId = suffixPtr_Command(cmd, "id");
-        [myDel setTouchBarVariant:default_TouchBarVariant];
+    else if (equal_Command(cmd, "bindings.changed")) {
+        NSApplication *app = [NSApplication sharedApplication];
+        MyDelegate *myDel = (MyDelegate *) app.delegate;
+        NSMenu *appMenu = [app mainMenu];
+        for (NSMenuItem *mainMenuItem in appMenu.itemArray) {
+            NSMenu *menu = mainMenuItem.submenu;
+            if (menu) {
+                for (NSMenuItem *menuItem in menu.itemArray) {
+                    NSString *command = [myDel commandForItem:menuItem];
+                    if (command) {
+                        const iBinding *bind = findCommand_Keys(
+                            [command cStringUsingEncoding:NSUTF8StringEncoding]);
+                        if (bind) {
+                            setShortcut_NSMenuItem_(menuItem, bind->key, bind->mods);
+                        }
+                    }
+                }
+            }
+        }
     }
-#endif
 }
 
 void log_MacOS(const char *msg) {

@@ -773,7 +773,7 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
                 /* Suspiciously close to when input focus was received. For example under openbox,
                    closing xterm with Ctrl+D will cause the keydown event to "spill" over to us.
                    As a workaround, ignore these events. */
-                return iFalse;
+                return iTrue; /* won't go to bindings, either */
             }
             /* Map mouse pointer coordinate to our coordinate system. */
             if (event.type == SDL_MOUSEMOTION) {
