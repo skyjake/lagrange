@@ -630,6 +630,8 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
             invalidate_ListWidget(d->list);
         }
         arrange_Widget(w->parent);
+        /* BUG: Rearranging because the arrange above didn't fully resolve the height. */
+        arrange_Widget(w);
         updateSize_DocumentWidget(document_App());
         if (isVisible_Widget(w)) {
             updateItems_SidebarWidget_(d);
