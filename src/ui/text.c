@@ -672,9 +672,6 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
                 ch = nextChar_(&chPos, text.end);
                 ch = nextChar_(&chPos, text.end);
             }
-            else {
-                printf("it's %x\n", prevCh);
-            }
         }
         if (isVariationSelector_Char(ch)) {
             /* TODO: VS15: Should peek ahead for this and prefer the Emoji font. */
