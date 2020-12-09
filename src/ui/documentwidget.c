@@ -2447,8 +2447,17 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                     refresh_Widget(w);
                 }
                 /* Clicking on the top/side banner navigates to site root. */
-                if (contains_Rect(siteBannerRect_DocumentWidget_(d), pos_Click(&d->click))) {
-                    postCommand_Widget(d, "navigate.root");
+                const iRect banRect = siteBannerRect_DocumentWidget_(d);
+                if (contains_Rect(banRect, pos_Click(&d->click))) {
+                    /* Clicking on a warning? */
+                    if (bannerType_DocumentWidget_(d) == certificateWarning_GmDocumentBanner &&
+                        pos_Click(&d->click).y - top_Rect(banRect) >
+                            lineHeight_Text(banner_FontId) * 2) {
+                        postCommand_App("server.showcert");
+                    }
+                    else {
+                        postCommand_Widget(d, "navigate.root");
+                    }
                 }
             }
             return iTrue;
