@@ -89,6 +89,8 @@ static const char *prefsFileName_App_ = "prefs.cfg";
 static const char *stateFileName_App_ = "state.binary";
 static const char *downloadDir_App_   = "~/Downloads";
 
+static const int idleThreshold_App_ = 1000; /* ms */
+
 struct Impl_App {
     iCommandLine args;
     iString *    execPath;
@@ -100,7 +102,12 @@ struct Impl_App {
     iSortedArray tickers;
     uint32_t     lastTickerTime;
     uint32_t     elapsedSinceLastTicker;
-    iBool        running;
+    iBool        isRunning;
+#if defined (LAGRANGE_IDLE_SLEEP)
+    iBool        isIdling;
+    uint32_t     lastEventTime;
+    int          sleepTimer;
+#endif
     iAtomicInt   pendingRefresh;
     int          tabEnum;
     iStringList *launchCommands;
@@ -139,7 +146,8 @@ const iString *dateStr_(const iDate *date) {
 
 static iString *serializePrefs_App_(const iApp *d) {
     iString *str = new_String();
-    const iSidebarWidget *sidebar = findWidget_App("sidebar");
+    const iSidebarWidget *sidebar  = findWidget_App("sidebar");
+    const iSidebarWidget *sidebar2 = findWidget_App("sidebar2");
     appendFormat_String(str, "window.retain arg:%d\n", d->prefs.retainWindowSize);
     if (d->prefs.retainWindowSize) {
         const iBool isMaximized = (SDL_GetWindowFlags(d->window->win) & SDL_WINDOW_MAXIMIZED) != 0;
@@ -150,6 +158,7 @@ static iString *serializePrefs_App_(const iApp *d) {
         h = d->window->lastRect.size.y;
         appendFormat_String(str, "window.setrect width:%d height:%d coord:%d %d\n", w, h, x, y);
         appendFormat_String(str, "sidebar.width arg:%d\n", width_SidebarWidget(sidebar));
+        appendFormat_String(str, "sidebar2.width arg:%d\n", width_SidebarWidget(sidebar2));
         /* On macOS, maximization should be applied at creation time or the window will take
            a moment to animate to its maximized size. */
 #if !defined (iPlatformApple)
@@ -160,10 +169,16 @@ static iString *serializePrefs_App_(const iApp *d) {
         iUnused(isMaximized);
 #endif
     }
-    if (isVisible_Widget(sidebar)) {
-        appendCStr_String(str, "sidebar.toggle\n");
+    /* Sidebars. */ {
+        if (isVisible_Widget(sidebar)) {
+            appendCStr_String(str, "sidebar.toggle\n");
+        }
+        appendFormat_String(str, "sidebar.mode arg:%d\n", mode_SidebarWidget(sidebar));
+        if (isVisible_Widget(sidebar2)) {
+            appendCStr_String(str, "sidebar2.toggle\n");
+        }
+        appendFormat_String(str, "sidebar2.mode arg:%d\n", mode_SidebarWidget(sidebar2));
     }
-    appendFormat_String(str, "sidebar.mode arg:%d\n", mode_SidebarWidget(sidebar));
     appendFormat_String(str, "uiscale arg:%f\n", uiScale_Window(d->window));
     appendFormat_String(str, "prefs.dialogtab arg:%d\n", d->prefs.dialogTab);
     appendFormat_String(str, "font.set arg:%d\n", d->prefs.font);
@@ -312,6 +327,16 @@ static void saveState_App_(const iApp *d) {
     iRelease(f);
 }
 
+#if defined (LAGRANGE_IDLE_SLEEP)
+static uint32_t checkAsleep_App_(uint32_t interval, void *param) {
+    iApp *d = param;
+    SDL_Event ev = { .type = SDL_USEREVENT };
+    ev.user.code = asleep_UserEventCode;
+    SDL_PushEvent(&ev);
+    return interval;
+}
+#endif
+
 static void init_App_(iApp *d, int argc, char **argv) {
     const iBool isFirstRun = !fileExistsCStr_FileInfo(cleanedPath_CStr(dataDir_App_));
     d->isFinishedLaunching = iFalse;
@@ -341,7 +366,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
 #endif
     init_Prefs(&d->prefs);
     setCStr_String(&d->prefs.downloadDir, downloadDir_App_);
-    d->running           = iFalse;
+    d->isRunning         = iFalse;
     d->window            = NULL;
     set_Atomic(&d->pendingRefresh, iFalse);
     d->mimehooks         = new_MimeHooks();
@@ -350,6 +375,11 @@ static void init_App_(iApp *d, int argc, char **argv) {
     d->bookmarks         = new_Bookmarks();
     d->tabEnum           = 0; /* generates unique IDs for tab pages */
     setThemePalette_Color(d->prefs.theme);
+#if defined (LAGRANGE_IDLE_SLEEP)
+    d->isIdling      = iFalse;
+    d->lastEventTime = 0;
+    d->sleepTimer    = SDL_AddTimer(1000, checkAsleep_App_, d);
+#endif
 #if defined (iPlatformApple)
     setupApplication_MacOS();
 #endif
@@ -472,23 +502,31 @@ const iString *debugInfo_App(void) {
     iConstForEach(StringList, j, d->launchCommands) {
         appendFormat_String(msg, "%s\n", cstr_String(j.value));
     }
+    appendFormat_String(msg, "## MIME hooks\n");
+    append_String(msg, debugInfo_MimeHooks(d->mimehooks));
     return msg;
 }
 
 iLocalDef iBool isWaitingAllowed_App_(iApp *d) {
+#if defined (LAGRANGE_IDLE_SLEEP)
+    if (d->isIdling) {
+        return iFalse;
+    }
+#endif
     return !value_Atomic(&d->pendingRefresh) && isEmpty_SortedArray(&d->tickers);
 }
 
 void processEvents_App(enum iAppEventMode eventMode) {
     iApp *d = &app_;
     SDL_Event ev;
+    iBool gotEvents = iFalse;
     while ((isWaitingAllowed_App_(d) && eventMode == waitForNewEvents_AppEventMode &&
             SDL_WaitEvent(&ev)) ||
            ((!isWaitingAllowed_App_(d) || eventMode == postedEventsOnly_AppEventMode) &&
             SDL_PollEvent(&ev))) {
         switch (ev.type) {
             case SDL_QUIT:
-                d->running = iFalse;
+                d->isRunning = iFalse;
                 goto backToMainLoop;
             case SDL_DROPFILE: {
                 iBool newTab = iFalse;
@@ -508,6 +546,25 @@ void processEvents_App(enum iAppEventMode eventMode) {
                 break;
             }
             default: {
+#if defined (LAGRANGE_IDLE_SLEEP)
+                if (ev.type == SDL_USEREVENT && ev.user.code == asleep_UserEventCode) {
+                    if (SDL_GetTicks() - d->lastEventTime > idleThreshold_App_) {
+                        if (!d->isIdling) {
+//                            printf("[App] idling...\n");
+                            fflush(stdout);
+                        }
+                        d->isIdling = iTrue;
+                    }
+                    continue;
+                }
+                d->lastEventTime = SDL_GetTicks();
+                if (d->isIdling) {
+//                    printf("[App] ...woke up\n");
+                    fflush(stdout);
+                }
+                d->isIdling = iFalse;
+#endif
+                gotEvents = iTrue;
                 iBool wasUsed = processEvent_Window(d->window, &ev);
                 if (!wasUsed) {
                     /* There may be a key bindings for this. */
@@ -531,6 +588,14 @@ void processEvents_App(enum iAppEventMode eventMode) {
             }
         }
     }
+#if defined (LAGRANGE_IDLE_SLEEP)
+    if (d->isIdling && !gotEvents) {
+        /* This is where we spend most of our time when idle. 60 Hz still quite a lot but we
+           can't wait too long after the user tries to interact again with the app. In any
+           case, on macOS SDL_WaitEvent() seems to use 10x more CPU time than sleeping. */
+        SDL_Delay(1000 / 60);
+    }
+#endif
 backToMainLoop:;
 }
 
@@ -578,10 +643,10 @@ static int resizeWatcher_(void *user, SDL_Event *event) {
 
 static int run_App_(iApp *d) {
     arrange_Widget(findWidget_App("root"));
-    d->running = iTrue;
+    d->isRunning = iTrue;
     SDL_EventState(SDL_DROPFILE, SDL_ENABLE); /* open files via drag'n'drop */
     SDL_AddEventWatch(resizeWatcher_, d);
-    while (d->running) {
+    while (d->isRunning) {
         processEvents_App(waitForNewEvents_AppEventMode);
         runTickers_App_(d);
         refresh_App();
@@ -592,6 +657,9 @@ static int run_App_(iApp *d) {
 
 void refresh_App(void) {
     iApp *d = &app_;
+#if defined (LAGRANGE_IDLE_SLEEP)
+    if (d->isIdling) return;
+#endif
     destroyPending_Widget();
     draw_Window(d->window);
     set_Atomic(&d->pendingRefresh, iFalse);
@@ -649,6 +717,9 @@ int run_App(int argc, char **argv) {
 
 void postRefresh_App(void) {
     iApp *d = &app_;
+#if defined (LAGRANGE_IDLE_SLEEP)
+    d->isIdling = iFalse;
+#endif
     const iBool wasPending = exchange_Atomic(&d->pendingRefresh, iTrue);
     if (!wasPending) {
         SDL_Event ev;
@@ -844,6 +915,7 @@ iDocumentWidget *newTab_App(const iDocumentWidget *duplicateOf, iBool switchToNe
     }
     arrange_Widget(tabs);
     refresh_Widget(tabs);
+    postCommandf_App("tab.created id:%s", cstr_String(id_Widget(as_Widget(doc))));
     return doc;
 }
 
@@ -964,7 +1036,13 @@ iBool willUseProxy_App(const iRangecc scheme) {
 
 iBool handleCommand_App(const char *cmd) {
     iApp *d = &app_;
-    if (equal_Command(cmd, "prefs.dialogtab")) {
+    if (equal_Command(cmd, "config.error")) {
+        makeMessage_Widget(uiTextCaution_ColorEscape "CONFIG ERROR",
+                           format_CStr("Error in config file: %s\nSee \"about:debug\" for details.",
+                                       suffixPtr_Command(cmd, "where")));
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "prefs.dialogtab")) {
         d->prefs.dialogTab = arg_Command(cmd);
         return iTrue;
     }
@@ -1076,12 +1154,12 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "prefs.sideicon.changed")) {
         d->prefs.sideIcon = arg_Command(cmd) != 0;
-        refresh_App();
+        postRefresh_App();
         return iTrue;
     }
     else if (equal_Command(cmd, "prefs.hoveroutline.changed")) {
         d->prefs.hoverOutline = arg_Command(cmd) != 0;
-        refresh_App();
+        postRefresh_App();
         return iTrue;
     }
     else if (equal_Command(cmd, "saturation.set")) {
@@ -1364,13 +1442,13 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "feeds.update.started")) {
         setFlags_Widget(findWidget_App("feeds.progress"), hidden_WidgetFlag, iFalse);
-        refresh_App();
+        postRefresh_App();
         return iFalse;
     }
     else if (equal_Command(cmd, "feeds.update.finished")) {
         setFlags_Widget(findWidget_App("feeds.progress"), hidden_WidgetFlag, iTrue);
         refreshFinished_Feeds();
-        refresh_App();
+        postRefresh_App();
         return iFalse;
     }
     else if (equal_Command(cmd, "visited.changed")) {

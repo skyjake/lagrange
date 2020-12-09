@@ -6,8 +6,35 @@
 ```
 # Release notes
 
+## 0.12.2
+
+## 0.12.1
+* 'text/*' content falls back to plain text.
+* Minimized visual artifacts in Unicode box-drawing characters (overlapping/gaps) by fine-tuning glyph scaling.
+* Fixed truncated tab titles when opening tabs in background.
+* Fixed possible exit if hook program not found (SIGPIPE).
+* REQUEST_URL is set in the environment when running MIME hooks.
+* "about:debug" lists the configured MIME hooks.
+* macOS: Fixed excessive CPU usage while idling.
+
 ## 0.12
-* Subscribe to new headings on pages.
+* Added MIME hooks: pipe Gemini responses through external programs for arbitrary processing. (See "about:help" for usage.)
+* Added a right-hand sidebar; have a sidebar on the right or on both sides at once.
+* Added a clear warning banner when there is an issue with the server's TLS certificate.
+* Follow Weiph/pikkulogs — subscribe to new headings on pages.
+* Added UI for subscribing: feed name, entry type (Gemini feed or new headings).
+* Added keyboard shortcut ${SHIFT+}${CTRL+}D for subscribing to page.
+* Feeds sidebar is capped to 100 entries. "about:feeds" shows all known entries.
+* Network connections have a timeout in case server doesn't respond at all.
+* Adjusted spacing before/after links to reflect use of empty lines in the source.
+* Clicking on page area unfocuses URL input field.
+* Added keybindings for switching tabs.
+* Gopher: Query links have a 🔍 icon.
+* Fixed handling of "file:///" URIs on Windows.
+* Fixed misaligned Unicode box-drawing characters.
+* Fixed missing error page if status code is unknown (torture test 34).
+* Fixed detection of invalid headers (torture test 39).
+* Fixed rendering of soft hyphens (torture test 50).
 
 ## 0.11
 * Added feed subscriptions. A subscription is any bookmark with the "subscribed" tag. Subscribed feeds are refreshed in the background while Lagrange is running.

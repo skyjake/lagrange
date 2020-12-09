@@ -84,7 +84,9 @@ iDefineObjectConstruction(SidebarItem)
 
 struct Impl_SidebarWidget {
     iWidget           widget;
+    enum iSidebarSide side;
     enum iSidebarMode mode;
+    iString           cmdPrefix;
     iWidget *         blank;
     iListWidget *     list;
     int               modeScroll[max_SidebarMode];
@@ -92,12 +94,11 @@ struct Impl_SidebarWidget {
     int               maxButtonLabelWidth;
     int               width;
     iWidget *         resizer;
-    SDL_Cursor *      resizeCursor;
     iWidget *         menu;
     iSidebarItem *    contextItem; /* list item accessed in the context menu */
 };
 
-iDefineObjectConstruction(SidebarWidget)
+iDefineObjectConstructionArgs(SidebarWidget, (enum iSidebarSide side), side)
 
 static iBool isResizing_SidebarWidget_(const iSidebarWidget *d) {
     return (flags_Widget(d->resizer) & pressed_WidgetFlag) != 0;
@@ -408,16 +409,19 @@ static const char *tightModeLabels_[max_SidebarMode] = {
     "\U0001f5b9",
 };
 
-void init_SidebarWidget(iSidebarWidget *d) {
+void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     iWidget *w = as_Widget(d);
     init_Widget(w);
-    setId_Widget(w, "sidebar");
+    setId_Widget(w, side == left_SideBarSide ? "sidebar" : "sidebar2");
+    initCopy_String(&d->cmdPrefix, id_Widget(w));
+    appendChar_String(&d->cmdPrefix, '.');
     setBackgroundColor_Widget(w, none_ColorId);
     setFlags_Widget(w,
                     collapse_WidgetFlag | hidden_WidgetFlag | arrangeHorizontal_WidgetFlag |
                         resizeWidthOfChildren_WidgetFlag,
                     iTrue);
     iZap(d->modeScroll);
+    d->side = side;
     d->mode  = -1;
     d->width = 60 * gap_UI;
     setFlags_Widget(w, fixedWidth_WidgetFlag, iTrue);
@@ -428,8 +432,9 @@ void init_SidebarWidget(iSidebarWidget *d) {
     for (int i = 0; i < max_SidebarMode; i++) {
         d->modeButtons[i] = addChildFlags_Widget(
             buttons,
-            iClob(
-                new_LabelWidget(tightModeLabels_[i], format_CStr("sidebar.mode arg:%d", i))),
+            iClob(new_LabelWidget(
+                tightModeLabels_[i],
+                format_CStr("%s.mode arg:%d", cstr_String(id_Widget(w)), i))),
             frameless_WidgetFlag);
         d->maxButtonLabelWidth =
             iMaxi(d->maxButtonLabelWidth,
@@ -448,21 +453,22 @@ void init_SidebarWidget(iSidebarWidget *d) {
     addChildFlags_Widget(content, iClob(d->blank), resizeChildren_WidgetFlag);
     addChildFlags_Widget(vdiv, iClob(content), expand_WidgetFlag);
     setMode_SidebarWidget(d, bookmarks_SidebarMode);
-    d->resizer = addChildFlags_Widget(
-        w,
-        iClob(new_Widget()),
-        hover_WidgetFlag | commandOnClick_WidgetFlag | fixedWidth_WidgetFlag |
-            resizeToParentHeight_WidgetFlag | moveToParentRightEdge_WidgetFlag);
-    setId_Widget(d->resizer, "sidebar.grab");
+    d->resizer =
+        addChildFlags_Widget(w,
+                             iClob(new_Widget()),
+                             hover_WidgetFlag | commandOnClick_WidgetFlag | fixedWidth_WidgetFlag |
+                                 resizeToParentHeight_WidgetFlag |
+                                 (side == left_SideBarSide ? moveToParentRightEdge_WidgetFlag
+                                                           : moveToParentLeftEdge_WidgetFlag));
+    setId_Widget(d->resizer, side == left_SideBarSide ? "sidebar.grab" : "sidebar2.grab");
     d->resizer->rect.size.x = gap_UI;
     setBackgroundColor_Widget(d->resizer, none_ColorId);
-    d->resizeCursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZEWE);
     d->menu = NULL;
     addAction_Widget(w, SDLK_r, KMOD_PRIMARY | KMOD_SHIFT, "feeds.refresh");
 }
 
 void deinit_SidebarWidget(iSidebarWidget *d) {
-    SDL_FreeCursor(d->resizeCursor);
+    deinit_String(&d->cmdPrefix);
 }
 
 static const iGmIdentity *constHoverIdentity_SidebarWidget_(const iSidebarWidget *d) {
@@ -558,8 +564,11 @@ static void checkModeButtonLayout_SidebarWidget_(iSidebarWidget *d) {
 }
 
 void setWidth_SidebarWidget(iSidebarWidget *d, int width) {
-    iWidget *w = as_Widget(d);
-    width = iClamp(width, 30 * gap_UI, rootSize_Window(get_Window()).x - 50 * gap_UI);
+    iWidget * w = as_Widget(d);
+    /* Even less space if the other sidebar is visible, too. */
+    const int otherWidth =
+        width_Widget(findWidget_App(d->side == left_SideBarSide ? "sidebar2" : "sidebar"));
+    width = iClamp(width, 30 * gap_UI, rootSize_Window(get_Window()).x - 50 * gap_UI - otherWidth);
     d->width = width;
     if (isVisible_Widget(w)) {
         w->rect.size.x = width;
@@ -574,7 +583,8 @@ void setWidth_SidebarWidget(iSidebarWidget *d, int width) {
 
 iBool handleBookmarkEditorCommands_SidebarWidget_(iWidget *editor, const char *cmd) {
     if (equal_Command(cmd, "bmed.accept") || equal_Command(cmd, "cancel")) {
-        iSidebarWidget *d = findWidget_App("sidebar");
+        iAssert(startsWith_String(id_Widget(editor), "bmed."));
+        iSidebarWidget *d = findWidget_App(cstr_String(id_Widget(editor)) + 5); /* bmed.sidebar */
         if (equal_Command(cmd, "bmed.accept")) {
             const iString *title = text_InputWidget(findChild_Widget(editor, "bmed.title"));
             const iString *url   = text_InputWidget(findChild_Widget(editor, "bmed.url"));
@@ -594,6 +604,43 @@ iBool handleBookmarkEditorCommands_SidebarWidget_(iWidget *editor, const char *c
     return iFalse;
 }
 
+static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *cmd) {
+    iWidget *w = as_Widget(d);
+    if (equal_Command(cmd, "width")) {
+        setWidth_SidebarWidget(d, arg_Command(cmd));
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "mode")) {
+        const iBool wasChanged = setMode_SidebarWidget(d, arg_Command(cmd));
+        updateItems_SidebarWidget_(d);
+        if ((argLabel_Command(cmd, "show") && !isVisible_Widget(w)) ||
+            (argLabel_Command(cmd, "toggle") && (!isVisible_Widget(w) || !wasChanged))) {
+            postCommandf_App("%s.toggle", cstr_String(id_Widget(w)));
+        }
+        scrollOffset_ListWidget(d->list, 0);
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "toggle")) {
+        if (arg_Command(cmd) && isVisible_Widget(w)) {
+            return iTrue;
+        }
+        setFlags_Widget(w, hidden_WidgetFlag, isVisible_Widget(w));
+        if (isVisible_Widget(w)) {
+            w->rect.size.x = d->width;
+            invalidate_ListWidget(d->list);
+        }
+        arrange_Widget(w->parent);
+        updateSize_DocumentWidget(document_App());
+        if (isVisible_Widget(w)) {
+            updateItems_SidebarWidget_(d);
+            scrollOffset_ListWidget(d->list, 0);
+        }
+        refresh_Widget(w->parent);
+        return iTrue;
+    }
+    return iFalse;
+}
+
 static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
     /* Handle commands. */
@@ -602,7 +649,27 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
     }
     else if (ev->type == SDL_USEREVENT && ev->user.code == command_UserEventCode) {
         const char *cmd = command_UserEvent(ev);
-        if (isCommand_Widget(w, ev, "mouse.clicked")) {
+        if (equal_Command(cmd, "tabs.changed") || equal_Command(cmd, "document.changed")) {
+            updateItems_SidebarWidget_(d);
+            scrollOffset_ListWidget(d->list, 0);
+        }
+        else if (equal_Command(cmd, "visited.changed") &&
+                 (d->mode == history_SidebarMode || d->mode == feeds_SidebarMode)) {
+            updateItems_SidebarWidget_(d);
+        }
+        else if (equal_Command(cmd, "bookmarks.changed") && (d->mode == bookmarks_SidebarMode ||
+                                                             d->mode == feeds_SidebarMode)) {
+            updateItems_SidebarWidget_(d);
+        }
+        else if (equal_Command(cmd, "idents.changed") && d->mode == identities_SidebarMode) {
+            updateItems_SidebarWidget_(d);
+        }
+        else if (startsWith_CStr(cmd, cstr_String(&d->cmdPrefix))) {
+            if (handleSidebarCommand_SidebarWidget_(d, cmd + size_String(&d->cmdPrefix))) {
+                return iTrue;
+            }
+        }
+        else if (isCommand_Widget(w, ev, "mouse.clicked")) {
             if (argLabel_Command(cmd, "button") == SDL_BUTTON_LEFT) {
                 if (arg_Command(cmd)) {
                     setFlags_Widget(d->resizer, pressed_WidgetFlag, iTrue);
@@ -624,7 +691,13 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         else if (isCommand_Widget(w, ev, "mouse.moved")) {
             if (isResizing_SidebarWidget_(d)) {
                 const iInt2 local = localCoord_Widget(w, coord_Command(cmd));
-                setWidth_SidebarWidget(d, local.x + d->resizer->rect.size.x / 2);
+                const int resMid = d->resizer->rect.size.x / 2;
+                setWidth_SidebarWidget(
+                    d,
+                    (d->side == left_SideBarSide
+                         ? local.x
+                         : (rootSize_Window(get_Window()).x - coord_Command(cmd).x)) +
+                        resMid);
             }
             return iTrue;
         }
@@ -638,54 +711,19 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         else if (isCommand_Widget(w, ev, "menu.closed")) {
             setFlags_Widget(as_Widget(d->list), disabled_WidgetFlag, iFalse);
         }
-        else if (equal_Command(cmd, "sidebar.width")) {
-            setWidth_SidebarWidget(d, arg_Command(cmd));
-            return iTrue;
-        }
-        else if (equal_Command(cmd, "sidebar.mode")) {
-            const iBool wasChanged = setMode_SidebarWidget(d, arg_Command(cmd));
-            updateItems_SidebarWidget_(d);
-            if ((argLabel_Command(cmd, "show") && !isVisible_Widget(w)) ||
-                (argLabel_Command(cmd, "toggle") && (!isVisible_Widget(w) || !wasChanged))) {
-                postCommand_App("sidebar.toggle");
-            }
-            scrollOffset_ListWidget(d->list, 0);
-            return iTrue;
-        }
-        else if (equal_Command(cmd, "sidebar.toggle")) {
-            if (arg_Command(cmd) && isVisible_Widget(w)) {
-                return iTrue;
-            }
-            setFlags_Widget(w, hidden_WidgetFlag, isVisible_Widget(w));
-            if (isVisible_Widget(w)) {
-                w->rect.size.x = d->width;
-                invalidate_ListWidget(d->list);
-            }
-            arrange_Widget(w->parent);
-            updateSize_DocumentWidget(document_App());
-            if (isVisible_Widget(w)) {
-                updateItems_SidebarWidget_(d);
-                scrollOffset_ListWidget(d->list, 0);
-            }
-            refresh_Widget(w->parent);
-            return iTrue;
-        }
-        else if (equal_Command(cmd, "tabs.changed") || equal_Command(cmd, "document.changed")) {
-            updateItems_SidebarWidget_(d);
-            scrollOffset_ListWidget(d->list, 0);
-        }
-        else if (equal_Command(cmd, "bookmark.copy")) {
+        else if (isCommand_Widget(w, ev, "bookmark.copy")) {
             const iSidebarItem *item = d->contextItem;
             if (d->mode == bookmarks_SidebarMode && item) {
                 SDL_SetClipboardText(cstr_String(&item->url));
             }
             return iTrue;
         }
-        else if (equal_Command(cmd, "bookmark.edit")) {
+        else if (isCommand_Widget(w, ev, "bookmark.edit")) {
             const iSidebarItem *item = d->contextItem;
             if (d->mode == bookmarks_SidebarMode && item) {
                 setFlags_Widget(w, disabled_WidgetFlag, iTrue);
                 iWidget *dlg = makeBookmarkEditor_Widget();
+                setId_Widget(dlg, format_CStr("bmed.%s", cstr_String(id_Widget(w))));
                 iBookmark *bm = get_Bookmarks(bookmarks_App(), item->id);
                 setText_InputWidget(findChild_Widget(dlg, "bmed.title"), &bm->title);
                 setText_InputWidget(findChild_Widget(dlg, "bmed.url"), &bm->url);
@@ -695,7 +733,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             }
             return iTrue;
         }
-        else if (equal_Command(cmd, "bookmark.tag")) {
+        else if (isCommand_Widget(w, ev, "bookmark.tag")) {
             const iSidebarItem *item = d->contextItem;
             if (d->mode == bookmarks_SidebarMode && item) {
                 const char *tag = cstr_String(string_Command(cmd, "tag"));
@@ -713,17 +751,13 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             }
             return iTrue;
         }
-        else if (equal_Command(cmd, "bookmark.delete")) {
+        else if (isCommand_Widget(w, ev, "bookmark.delete")) {
             const iSidebarItem *item = d->contextItem;
             if (d->mode == bookmarks_SidebarMode && item && remove_Bookmarks(bookmarks_App(), item->id)) {
                 removeEntries_Feeds(item->id);
                 postCommand_App("bookmarks.changed");
             }
             return iTrue;
-        }
-        else if (equal_Command(cmd, "visited.changed") &&
-                 (d->mode == history_SidebarMode || d->mode == feeds_SidebarMode)) {
-            updateItems_SidebarWidget_(d);
         }
         else if (equal_Command(cmd, "feeds.update.finished") && d->mode == feeds_SidebarMode) {
             updateItems_SidebarWidget_(d);
@@ -742,11 +776,11 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         else if (startsWith_CStr(cmd, "feed.entry.") && d->mode == feeds_SidebarMode) {
             const iSidebarItem *item = d->contextItem;
             if (item) {
-                if (equal_Command(cmd, "feed.entry.opentab")) {
+                if (isCommand_Widget(w, ev, "feed.entry.opentab")) {
                     postCommandf_App("open newtab:1 url:%s", cstr_String(&item->url));
                     return iTrue;
                 }
-                if (equal_Command(cmd, "feed.entry.toggleread")) {
+                if (isCommand_Widget(w, ev, "feed.entry.toggleread")) {
                     iVisited *vis = visited_App();
                     if (containsUrl_Visited(vis, &item->url)) {
                         removeUrl_Visited(vis, &item->url);
@@ -757,20 +791,21 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                     postCommand_App("visited.changed");
                     return iTrue;
                 }
-                if (equal_Command(cmd, "feed.entry.bookmark")) {
+                if (isCommand_Widget(w, ev, "feed.entry.bookmark")) {
                     makeBookmarkCreation_Widget(&item->url, &item->label, item->icon);
                     postCommand_App("focus.set id:bmed.title");
                     return iTrue;
                 }
                 iBookmark *feedBookmark = get_Bookmarks(bookmarks_App(), item->id);
                 if (feedBookmark) {
-                    if (equal_Command(cmd, "feed.entry.openfeed")) {
+                    if (isCommand_Widget(w, ev, "feed.entry.openfeed")) {
                         postCommandf_App("open url:%s", cstr_String(&feedBookmark->url));
                         return iTrue;
                     }
-                    if (equal_Command(cmd, "feed.entry.edit")) {
+                    if (isCommand_Widget(w, ev, "feed.entry.edit")) {
                         setFlags_Widget(w, disabled_WidgetFlag, iTrue);
                         iWidget *dlg = makeBookmarkEditor_Widget();
+                        setId_Widget(dlg, format_CStr("bmed.%s", cstr_String(id_Widget(w))));
                         setText_InputWidget(findChild_Widget(dlg, "bmed.title"), &feedBookmark->title);
                         setText_InputWidget(findChild_Widget(dlg, "bmed.url"), &feedBookmark->url);
                         setText_InputWidget(findChild_Widget(dlg, "bmed.tags"), &feedBookmark->tags);
@@ -778,7 +813,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                         setFocus_Widget(findChild_Widget(dlg, "bmed.title"));
                         return iTrue;
                     }
-                    if (equal_Command(cmd, "feed.entry.unsubscribe")) {
+                    if (isCommand_Widget(w, ev, "feed.entry.unsubscribe")) {
                         if (arg_Command(cmd)) {
                             removeTag_Bookmark(feedBookmark, "subscribed");
                             removeEntries_Feeds(id_Bookmark(feedBookmark));
@@ -791,20 +826,15 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                                             cstr_String(&feedBookmark->title)),
                                 (const char *[]){ "Cancel",
                                                   uiTextCaution_ColorEscape "Unsubscribe" },
-                                (const char *[]){ "cancel", "feed.entry.unsubscribe arg:1" },
+                                (const char *[]){
+                                    "cancel",
+                                    format_CStr("!feed.entry.unsubscribe arg:1 ptr:%p", d) },
                                 2);
                         }
                         return iTrue;
                     }
                 }
             }
-        }
-        else if (equal_Command(cmd, "bookmarks.changed") && (d->mode == bookmarks_SidebarMode ||
-                                                             d->mode == feeds_SidebarMode)) {
-            updateItems_SidebarWidget_(d);
-        }
-        else if (equal_Command(cmd, "idents.changed") && d->mode == identities_SidebarMode) {
-            updateItems_SidebarWidget_(d);
         }
         else if (isCommand_Widget(w, ev, "ident.use")) {
             iGmIdentity *  ident  = menuIdentity_SidebarWidget_(d);
@@ -843,7 +873,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             }
             return iTrue;
         }
-        else if (equal_Command(cmd, "ident.setnotes")) {
+        else if (isCommand_Widget(w, ev, "ident.setnotes")) {
             iGmIdentity *ident = pointerLabel_Command(cmd, "ident");
             if (ident) {
                 setCStr_String(&ident->notes, suffixPtr_Command(cmd, "value"));
@@ -864,27 +894,27 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             }
             return iTrue;
         }
-        else if (equal_Command(cmd, "ident.delete")) {
+        else if (isCommand_Widget(w, ev, "ident.delete")) {
             iSidebarItem *item = d->contextItem;
             if (argLabel_Command(cmd, "confirm")) {
-                makeQuestion_Widget(uiTextCaution_ColorEscape "DELETE IDENTITY",
-                                    format_CStr("Do you really want to delete the identity\n"
-                                                uiTextAction_ColorEscape "%s\n"
-                                                uiText_ColorEscape
-                                                "including its certificate and private key files?",
-                                                cstr_String(&item->label)),
-                                    (const char *[]){ "Cancel",
-                                                      uiTextCaution_ColorEscape
-                                                      "Delete Identity and Files" },
-                                    (const char *[]){ "cancel", "ident.delete confirm:0" },
-                                    2);
+                makeQuestion_Widget(
+                    uiTextCaution_ColorEscape "DELETE IDENTITY",
+                    format_CStr(
+                        "Do you really want to delete the identity\n" uiTextAction_ColorEscape
+                        "%s\n" uiText_ColorEscape
+                        "including its certificate and private key files?",
+                        cstr_String(&item->label)),
+                    (const char *[]){ "Cancel",
+                                      uiTextCaution_ColorEscape "Delete Identity and Files" },
+                    (const char *[]){ "cancel", format_CStr("!ident.delete confirm:0 ptr:%p", d) },
+                    2);
                 return iTrue;
             }
             deleteIdentity_GmCerts(certs_App(), hoverIdentity_SidebarWidget_(d));
-            updateItems_SidebarWidget_(d);
+            postCommand_App("idents.changed");
             return iTrue;
         }
-        else if (equal_Command(cmd, "history.delete")) {
+        else if (isCommand_Widget(w, ev, "history.delete")) {
             if (d->contextItem && !isEmpty_String(&d->contextItem->url)) {
                 removeUrl_Visited(visited_App(), &d->contextItem->url);
                 updateItems_SidebarWidget_(d);
@@ -892,14 +922,14 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             }
             return iTrue;
         }
-        else if (equal_Command(cmd, "history.copy")) {
+        else if (isCommand_Widget(w, ev, "history.copy")) {
             const iSidebarItem *item = d->contextItem;
             if (item && !isEmpty_String(&item->url)) {
                 SDL_SetClipboardText(cstr_String(&item->url));
             }
             return iTrue;
         }
-        else if (equal_Command(cmd, "history.addbookmark")) {
+        else if (isCommand_Widget(w, ev, "history.addbookmark")) {
             const iSidebarItem *item = d->contextItem;
             if (!isEmpty_String(&item->url)) {
                 makeBookmarkCreation_Widget(

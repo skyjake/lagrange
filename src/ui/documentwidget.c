@@ -302,7 +302,7 @@ static int documentWidth_DocumentWidget_(const iDocumentWidget *d) {
     const iWidget *w      = constAs_Widget(d);
     const iRect    bounds = bounds_Widget(w);
     const iPrefs * prefs  = prefs_App();
-    return iMini(bounds.size.x - gap_UI * d->pageMargin * 2,
+    return iMini(iMax(50 * gap_UI, bounds.size.x - gap_UI * d->pageMargin * 2),
                  fontSize_UI * prefs->lineWidth * prefs->zoomPercent / 100);
 }
 
@@ -859,12 +859,13 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse
             while (nextSplit_Rangecc(mime, ";", &seg)) {
                 iRangecc param = seg;
                 trim_Rangecc(&param);
-                if (equal_Rangecc(param, "text/plain")) {
-                    docFormat = plainText_GmDocumentFormat;
+                if (equal_Rangecc(param, "text/gemini")) {
+                    docFormat = gemini_GmDocumentFormat;
                     setRange_String(&d->sourceMime, param);
                 }
-                else if (equal_Rangecc(param, "text/gemini")) {
-                    docFormat = gemini_GmDocumentFormat;
+                else if (startsWith_Rangecc(param, "text/") ||
+                         equal_Rangecc(param, "application/json")) {
+                    docFormat = plainText_GmDocumentFormat;
                     setRange_String(&d->sourceMime, param);
                 }
                 else if (startsWith_Rangecc(param, "image/") ||
@@ -1526,6 +1527,11 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         updateWindowTitle_DocumentWidget_(d);
         allocVisBuffer_DocumentWidget_(d);
         animatePlayers_DocumentWidget_(d);
+        return iFalse;
+    }
+    else if (equal_Command(cmd, "tab.created")) {
+        /* Space for tab buttons has changed. */
+        updateWindowTitle_DocumentWidget_(d);
         return iFalse;
     }
     else if (equal_Command(cmd, "server.showcert") && d == document_App()) {
@@ -2227,6 +2233,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 if (d->menu) {
                     destroy_Widget(d->menu);
                 }
+                setFocus_Widget(NULL);
                 iArray items;
                 init_Array(&items, sizeof(iMenuItem));
                 if (d->contextLink) {
@@ -2909,6 +2916,7 @@ static void drawSideElements_DocumentWidget_(const iDocumentWidget *d) {
                             iMax(0, scrollMax_DocumentWidget_(d) - value_Anim(&d->scrollY)))),
             tmQuoteIcon_ColorId);
     }
+#if 0
     /* Outline on the right side. */
     const float outlineOpacity = value_Anim(&d->outlineOpacity);
     if (prefs_App()->hoverOutline && !isEmpty_Array(&d->outline) && outlineOpacity > 0.0f) {
@@ -2964,8 +2972,9 @@ static void drawSideElements_DocumentWidget_(const iDocumentWidget *d) {
         setOpacity_Text(1.0f);
         SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_NONE);
     }
+#endif
     unsetClip_Paint(&p);
-    }
+}
 
 static void drawPlayers_DocumentWidget_(const iDocumentWidget *d, iPaint *p) {
     iConstForEach(PtrArray, i, &d->visiblePlayers) {
@@ -2982,6 +2991,9 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
     const iWidget *w        = constAs_Widget(d);
     const iRect    bounds   = bounds_Widget(w);
     iVisBuf *      visBuf   = d->visBuf; /* will be updated now */
+    if (width_Rect(bounds) <= 0) {
+        return;
+    }
     draw_Widget(w);
     allocVisBuffer_DocumentWidget_(d);
     const iRect ctxWidgetBounds = init_Rect(

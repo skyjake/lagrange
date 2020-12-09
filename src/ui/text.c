@@ -85,7 +85,7 @@ iDefineTypeConstructionArgs(Glyph, (iChar ch), ch)
 struct Impl_Font {
     iBlock *       data;
     stbtt_fontinfo font;
-    float          scale;
+    float          xScale, yScale;
     int            vertOffset; /* offset due to scaling */
     int            height;
     int            baseline;
@@ -100,21 +100,33 @@ struct Impl_Font {
 
 static iFont *font_Text_(enum iFontId id);
 
-static void init_Font(iFont *d, const iBlock *data, int height, float scale, enum iFontId symbolsFont) {
+static void init_Font(iFont *d, const iBlock *data, int height, float scale,
+                      enum iFontId symbolsFont, iBool isMonospaced) {
     init_Hash(&d->glyphs);
     d->data = NULL;
+    d->isMonospaced = isMonospaced;
     d->height = height;
     iZap(d->font);
     stbtt_InitFont(&d->font, constData_Block(data), 0);
-    d->scale = stbtt_ScaleForPixelHeight(&d->font, height) * scale;
+    d->xScale = d->yScale = stbtt_ScaleForPixelHeight(&d->font, height) * scale;
+    if (d->isMonospaced) {
+        /* It is important that monospaced fonts align 1:1 with the pixel grid so that
+           box-drawing characters don't have partially occupied edge pixels, leading to seams
+           between adjacent glyphs. */
+        int adv;
+        stbtt_GetCodepointHMetrics(&d->font, 'M', &adv, NULL);
+        const float advance = (float) adv * d->xScale;
+        if (advance > 4) { /* not too tiny */
+            d->xScale *= floorf(advance) / advance;
+        }
+    }
     d->vertOffset = height * (1.0f - scale) / 2;
     int ascent;
     stbtt_GetFontVMetrics(&d->font, &ascent, NULL, NULL);
-    d->baseline     = (int) ascent * d->scale;
+    d->baseline     = ceil(ascent * d->yScale);
     d->symbolsFont  = symbolsFont;
     d->japaneseFont = regularJapanese_FontId;
     d->koreanFont   = regularKorean_FontId;
-    d->isMonospaced = iFalse;
     memset(d->indexTable, 0xff, sizeof(d->indexTable));
 }
 
@@ -271,11 +283,12 @@ static void initFonts_Text_(iText *d) {
     };
     iForIndices(i, fontData) {
         iFont *font = &d->fonts[i];
-        init_Font(
-            font, fontData[i].ttf, fontData[i].size, fontData[i].scaling, fontData[i].symbolsFont);
-        if (fontData[i].ttf == &fontFiraMonoRegular_Embedded) {
-            font->isMonospaced = iTrue;
-        }
+        init_Font(font,
+                  fontData[i].ttf,
+                  fontData[i].size,
+                  fontData[i].scaling,
+                  fontData[i].symbolsFont,
+                  fontData[i].ttf == &fontFiraMonoRegular_Embedded);
         if (i == default_FontId || i == defaultMedium_FontId) {
             font->manualKernOnly = iTrue;
         }
@@ -423,7 +436,7 @@ static void freeBmp_(void *ptr) {
 static SDL_Surface *rasterizeGlyph_Font_(const iFont *d, uint32_t glyphIndex, float xShift) {
     int w, h;
     uint8_t *bmp = stbtt_GetGlyphBitmapSubpixel(
-        &d->font, d->scale, d->scale, xShift, 0.0f, glyphIndex, &w, &h, 0, 0);
+        &d->font, d->xScale, d->yScale, xShift, 0.0f, glyphIndex, &w, &h, 0, 0);
     collect_Garbage(bmp, freeBmp_); /* `bmp` must be freed afterwards. */
     SDL_Surface *surface8 =
         SDL_CreateRGBSurfaceWithFormatFrom(bmp, w, h, 8, w, SDL_PIXELFORMAT_INDEX8);
@@ -478,12 +491,12 @@ static void cache_Font_(iFont *d, iGlyph *glyph, int hoff) {
             int adv;
             const uint32_t gIndex = glyph->glyphIndex;
             stbtt_GetGlyphHMetrics(&d->font, gIndex, &adv, NULL);
-            glyph->advance = d->scale * adv;
+            glyph->advance = d->xScale * adv;
         }
         stbtt_GetGlyphBitmapBoxSubpixel(&d->font,
                                         glyph->glyphIndex,
-                                        d->scale,
-                                        d->scale,
+                                        d->xScale,
+                                        d->yScale,
                                         hoff * 0.5f,
                                         0.0f,
                                         &glyph->d[hoff].x,
@@ -652,6 +665,17 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
             }
         }
         iChar ch = nextChar_(&chPos, text.end);
+        if (ch == 0x200d) { /* zero-width joiner */
+            /* We don't have the composited Emojis. */
+            if (isEmoji_Char(prevCh)) {
+                /* skip */
+                ch = nextChar_(&chPos, text.end);
+                ch = nextChar_(&chPos, text.end);
+            }
+            else {
+                printf("it's %x\n", prevCh);
+            }
+        }
         if (isVariationSelector_Char(ch)) {
             /* TODO: VS15: Should peek ahead for this and prefer the Emoji font. */
             ch = nextChar_(&chPos, text.end); /* just ignore */
@@ -699,6 +723,9 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
                 prevCh = 0;
                 continue;
             }
+            if (isDefaultIgnorable_Char(ch) || isFitzpatrickType_Char(ch)) {
+                continue;
+            }
         }
         const iGlyph *glyph = glyph_Font_(d, ch);
         int x1 = xpos;
@@ -714,6 +741,7 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
             }
             break;
         }
+        const int yLineMax = pos.y + d->height;
         SDL_Rect dst = { x1 + glyph->d[hoff].x,
                          pos.y + glyph->font->baseline + glyph->d[hoff].y,
                          glyph->rect[hoff].size.x,
@@ -739,7 +767,16 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
                 /* Glyphs from a different font may need recentering to look better. */
                 dst.x -= (dst.w - advance) / 2;
             }
-            SDL_RenderCopy(text_.render, text_.cache, (const SDL_Rect *) &glyph->rect[hoff], &dst);
+            SDL_Rect src;
+            memcpy(&src, &glyph->rect[hoff], sizeof(SDL_Rect));
+            /* Clip the glyphs to the font's height. This is useful when the font's line spacing
+               has been reduced or when the glyph is from a different font. */
+            if (dst.y + dst.h > yLineMax) {
+                const int over = dst.y + dst.h - yLineMax;
+                src.h -= over;
+                dst.h -= over;
+            }
+            SDL_RenderCopy(text_.render, text_.cache, &src, &dst);
         }
         /* Symbols and emojis are NOT monospaced, so must conform when the primary font
            is monospaced. Except with Japanese script, that's larger than the normal monospace. */
@@ -755,7 +792,7 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
             const char *peek = chPos;
             const iChar next = nextChar_(&peek, text.end);
             if (enableKerning_Text && !d->manualKernOnly && next) {
-                xpos += d->scale * stbtt_GetGlyphKernAdvance(&d->font, glyph->glyphIndex, next);
+                xpos += d->xScale * stbtt_GetGlyphKernAdvance(&d->font, glyph->glyphIndex, next);
             }
         }
 #endif
@@ -977,7 +1014,7 @@ iString *renderBlockChars_Text(const iBlock *fontData, int height, enum iTextBlo
     size_t      strRemain = length_String(text);
     iConstForEach(String, i, text) {
         if (!strRemain) break;
-        if (i.value == variationSelectorEmoji_Char) {
+        if (isVariationSelector_Char(i.value) || isDefaultIgnorable_Char(i.value)) {
             strRemain--;
             continue;
         }

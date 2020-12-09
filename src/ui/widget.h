@@ -85,10 +85,11 @@ enum iWidgetFlag {
 /* 64-bit extended flags */
 #define wasCollapsed_WidgetFlag             iBit64(32)
 #define centerHorizontal_WidgetFlag         iBit64(33)
-#define moveToParentRightEdge_WidgetFlag    iBit64(34)
-#define wrapText_WidgetFlag                 iBit64(35)
-#define borderTop_WidgetFlag                iBit64(36)
-#define overflowScrollable_WidgetFlag       iBit64(37)
+#define moveToParentLeftEdge_WidgetFlag     iBit64(34)
+#define moveToParentRightEdge_WidgetFlag    iBit64(35)
+#define wrapText_WidgetFlag                 iBit64(36)
+#define borderTop_WidgetFlag                iBit64(37)
+#define overflowScrollable_WidgetFlag       iBit64(38)
 
 enum iWidgetAddPos {
     back_WidgetAddPos,

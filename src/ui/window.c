@@ -109,7 +109,8 @@ static const iMenuItem navMenuItems_[] = {
     { "---", 0, 0, NULL },
     { "Show Feed Entries", 0, 0, "!open url:about:feeds" },
     { "---", 0, 0, NULL },
-    { "Toggle Sidebar", SDLK_l, KMOD_PRIMARY | KMOD_SHIFT, "sidebar.toggle" },
+    { "Toggle Left Sidebar", SDLK_l, KMOD_PRIMARY | KMOD_SHIFT, "sidebar.toggle" },
+    { "Toggle Right Sidebar", SDLK_p, KMOD_PRIMARY | KMOD_SHIFT, "sidebar2.toggle" },
     { "Zoom In", SDLK_EQUALS, KMOD_PRIMARY, "zoom.delta arg:10" },
     { "Zoom Out", SDLK_MINUS, KMOD_PRIMARY, "zoom.delta arg:-10" },
     { "Reset Zoom", SDLK_0, KMOD_PRIMARY, "zoom.set arg:100" },
@@ -144,7 +145,8 @@ static const iMenuItem viewMenuItems_[] = {
     { "Show History", '3', KMOD_PRIMARY, "sidebar.mode arg:2 toggle:1" },
     { "Show Identities", '4', KMOD_PRIMARY, "sidebar.mode arg:3 toggle:1" },
     { "Show Page Outline", '5', KMOD_PRIMARY, "sidebar.mode arg:4 toggle:1" },
-    { "Toggle Sidebar", SDLK_l, KMOD_PRIMARY | KMOD_SHIFT, "sidebar.toggle" },
+    { "Toggle Left Sidebar", SDLK_l, KMOD_PRIMARY | KMOD_SHIFT, "sidebar.toggle" },
+    { "Toggle Right Sidebar", SDLK_p, KMOD_PRIMARY | KMOD_SHIFT, "sidebar2.toggle" },
     { "---", 0, 0, NULL },
     { "Go Back", SDLK_LEFTBRACKET, KMOD_PRIMARY, "navigate.back" },
     { "Go Forward", SDLK_RIGHTBRACKET, KMOD_PRIMARY, "navigate.forward" },
@@ -343,7 +345,7 @@ static iBool handleSearchBarCommands_(iWidget *searchBar, const char *cmd) {
             if (!isVisible_Widget(searchBar)) {
                 setFlags_Widget(searchBar, hidden_WidgetFlag | disabled_WidgetFlag, iFalse);
                 arrange_Widget(get_Window()->root);
-                refresh_App();
+                postRefresh_App();
             }
         }
     }
@@ -459,10 +461,12 @@ static void setupUserInterface_Window(iWindow *d) {
             addChild_Widget(buttons, iClob(newIcon_LabelWidget("\u2795", 0, 0, "tabs.new"))),
             "newtab");
     }
-    /* Side bar. */ {
+    /* Side bars. */ {
         iWidget *content = findChild_Widget(d->root, "tabs.content");
-        iSidebarWidget *sidebar = new_SidebarWidget();
-        addChildPos_Widget(content, iClob(sidebar), front_WidgetAddPos);
+        iSidebarWidget *sidebar1 = new_SidebarWidget(left_SideBarSide);
+        addChildPos_Widget(content, iClob(sidebar1), front_WidgetAddPos);
+        iSidebarWidget *sidebar2 = new_SidebarWidget(right_SideBarSide);
+        addChildPos_Widget(content, iClob(sidebar2), back_WidgetAddPos);
     }
     /* Lookup results. */ {
         iLookupWidget *lookup = new_LookupWidget();
@@ -507,6 +511,11 @@ static void setupUserInterface_Window(iWindow *d) {
         addAction_Widget(d->root, '3', KMOD_PRIMARY, "sidebar.mode arg:2 toggle:1");
         addAction_Widget(d->root, '4', KMOD_PRIMARY, "sidebar.mode arg:3 toggle:1");
         addAction_Widget(d->root, '5', KMOD_PRIMARY, "sidebar.mode arg:4 toggle:1");
+        addAction_Widget(d->root, '1', rightSidebar_KeyModifier, "sidebar2.mode arg:0 toggle:1");
+        addAction_Widget(d->root, '2', rightSidebar_KeyModifier, "sidebar2.mode arg:1 toggle:1");
+        addAction_Widget(d->root, '3', rightSidebar_KeyModifier, "sidebar2.mode arg:2 toggle:1");
+        addAction_Widget(d->root, '4', rightSidebar_KeyModifier, "sidebar2.mode arg:3 toggle:1");
+        addAction_Widget(d->root, '5', rightSidebar_KeyModifier, "sidebar2.mode arg:4 toggle:1");
     }
 }
 

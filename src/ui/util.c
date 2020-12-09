@@ -456,14 +456,14 @@ void openMenu_Widget(iWidget *d, iInt2 coord) {
     if (leftExcess > 0) {
         d->rect.pos.x += leftExcess;
     }
-    refresh_App();
+    postRefresh_App();
     postCommand_Widget(d, "menu.opened");
 }
 
 void closeMenu_Widget(iWidget *d) {
     setFlags_Widget(d, hidden_WidgetFlag, iTrue);
     setFlags_Widget(findChild_Widget(d, "menu.cancel"), disabled_WidgetFlag, iTrue);
-    refresh_App();
+    postRefresh_App();
     postCommand_Widget(d, "menu.closed");
 }
 
@@ -1031,8 +1031,8 @@ iWidget *makePreferences_Widget(void) {
         appendTwoColumnPage_(tabs, "General", '1', &headings, &values);
         addChild_Widget(headings, iClob(makeHeading_Widget("Downloads folder:")));
         setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.downloads");
-        addChild_Widget(headings, iClob(makeHeading_Widget("Outline on scrollbar:")));
-        addChild_Widget(values, iClob(makeToggle_Widget("prefs.hoveroutline")));
+        /*addChild_Widget(headings, iClob(makeHeading_Widget("Outline on scrollbar:")));
+        addChild_Widget(values, iClob(makeToggle_Widget("prefs.hoveroutline")));*/
         addChild_Widget(headings, iClob(makeHeading_Widget("Smooth scrolling:")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.smoothscroll")));
         addChild_Widget(headings, iClob(makeHeading_Widget("Load image on scroll:")));
