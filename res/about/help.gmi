@@ -57,7 +57,7 @@ If one seeks to just read text and view images, this is absurd overkill. Having 
 
 One way to browse Gemini content is via web browser extensions or proxies that translate the content for the web. This may be a sufficient and easy solution for you. However, native clients such as Lagrange also benefit from the simpleness of the protocol and the content. The experience can be optimized, and the software runs well even on simple hardware like the Raspberry Pi.
 
-# User interface
+# 1 User interface
 
 Lagrange's user interface is modeled after web browsers:
 
@@ -75,9 +75,9 @@ The user interface has been designed for both mouse and keyboard based use. When
 * Tab (or ↓) to move focus to the lookup results
 * Enter to select "CAPCOM"
 
-## Navigation
+## 1.1 Navigation
 
-### URL entry and quick search
+### 1.1.1 URL entry and quick search
 
 The URL input field is in its typical location in the navigation bar. It can be accessed quickly by pressing ${CTRL+}L. You can then type or paste an URL and press Enter to load the page.
 
@@ -87,7 +87,7 @@ Search within cached pages is limited to the (small) set of pages that Lagrange 
 
 Note that the navigation stack is saved to a file when Lagrange is shut down and restored on the next launch. This means the next time you launch Lagrange, you can still search the contents of past pages. However, navigation stacks are tab-specific, so closing a tab will delete its history as well.
 
-### Links
+### 1.1.2 Links
 
 The type and destination of a link are indicated by the link's icon and color: ➤ links to the same domain, and 🌐 to a different domain. The colors are:
 
@@ -100,19 +100,19 @@ Link colors remain the same regardless of which color theme is being used for pa
 
 When you move the mouse cursor over a link, additional information will appear: the destination domain, with the URL scheme shown for non-Gemini links, and the date of the last visit to the URL.
 
-### Note about caching
+### 1.1.3 Page caching
 
 When navigating to a new page, the old page is cached in memory. If you navigate back, the cached copy of the page is restored. Think of it as rewinding time — you return to a past time as if nothing had happened. The same applies to forward navigation; cached pages are loaded if available. This allows back and forward navigation to happen instantly, without any network requests.
 
 The page cache is saved to a file when Lagrange is shut down so it can be restored on the next launch.
 
-### Opening links in a new tab
+### 1.1.4 Opening links in a new tab
 
 Holding down ${CTRL} when left-clicking on a link causes it to open in a new tab. Alternatively, middle-clicking a link has the same effect.
 
 Right-clicking on a link shows a link-specific context menu. From there, you can also open the link in a new background tab, which will keep the current tab open.
 
-### Opening links using the keyboard
+### 1.1.5 Opening links using the keyboard
 
 Lagrange has two modes for navigating links with the keyboard. The first uses a modifier key (${ALT} by default): while the modifier is pressed, alphanumeric shortcuts are shown for each visible link in the window. You can then press the corresponding key, still holding the modifier, to open a link. The second mode is based on letters only and focuses on the page row keys. You press and release the activation key ("F" by default) to show the link shortcut letters. In this mode the shortcuts are not in alphabetic order, but instead roughly sorted based on proximity to the F and J keys. You may find this easier to use since it is a simple sequence of key presses without using modifiers, allowing one to keep fingers on or near the home row.
 
@@ -120,13 +120,13 @@ You can give it a try now with the link below. Either hold down ${ALT}, or press
 
 => gemini://gemini.circumlunar.space/ Project Gemini
 
-## Tabs
+## 1.2 Tabs
 
 Press ${CTRL+}T to open a new tab, and ${CTRL+}W to close the current tab. Right-clicking on buttons in the tab bar shows a context menu for additional tab-related functions.
 
 The set of open tabs is restored when you launch Lagrange.
 
-## Sidebars
+## 1.3 Sidebars
 
 The sidebars can be toggled via menus or by pressing ${SHIFT+}${CTRL+}L or ${SHIFT+}${CTRL+}P (for the left/right sidebar, respectively). Both sidebars have five tabs:
 
@@ -138,7 +138,7 @@ The sidebars can be toggled via menus or by pressing ${SHIFT+}${CTRL+}L or ${SHI
 
 ${CTRL+}1 through ${CTRL+}5 switch between the left sidebar tabs, or hide the sidebar if the current tab's key is pressed. You can also press Escape to dismiss sidebars.
 
-## Bookmarks
+## 1.4 Bookmarks
 
 Press ${CTRL+}D to bookmark the currently open URL.
 
@@ -152,7 +152,7 @@ In addition to a title, bookmarks can have tags. Some tags have a special meanin
 * A "subscribed" tag means that Lagrange will periodically fetch the bookmarked page and look for Gemini feed links. All the found links that match the required style ("YYYY-MM-DD Entry title") will appear in the Feeds sidebar tab.
 * "headings" can be used together with "subscribed" to subscribe to new headings instead of Gemini feed links.
 
-## Feeds
+## 1.5 Feeds
 
 You may be familiar with RSS and Atom XML feeds from the web. Lagrange does _not_ support RSS or Atom, only Gemini feeds. A Gemini feed is simply a regular 'text/gemini' page that contains one or more links whose labels are formatted in a particular way.
 
@@ -167,13 +167,13 @@ The Feeds sidebar tab displays recent feed entries. From there you can open entr
 To see all entries from all feeds, open the "Feed entries" page. This page also shows how long has it been since the previous feed refresh.
 => about:feeds
 
-## Identities (client certificates)
+## 1.6 Identities (client certificates)
 
 Gemini uses TLS client certificates for user/session identification purposes. Unlike on the web where user identity tracking is covert and automatic, client certificates must be manually taken into use, and you are able to define how long each certificate remains valid. The term "Identity" is used in Lagrange to refer to client certificates.
 
 The Identities sidebar tab shows all identities known to Lagrange. Press ${CTRL+}4 to show it. This includes identities created in Lagrange and any identities based on imported X.509 certificates.
 
-### Creating a new identity
+### 1.6.1 Creating a new identity
 
 Click on the 👤 button in the navigation bar and select "New Identity...". The shortcut for this is ${SHIFT+}${CTRL+}N.
 
@@ -181,7 +181,7 @@ Consider any information you enter in the certificate as public — only the Com
 
 The "Temporary" option prevents the identity from being saved persistently — it will be deleted as soon as you quit Lagrange. Otherwise, the certificate and its private key are written to .crt and .pem files.
 
-### Using an identity
+### 1.6.2 Using an identity
 
 You will need to select an identity when you encounter this error message:
 
@@ -191,14 +191,14 @@ Clicking on an identity in the sidebar will toggle it on/off for the currently o
 
 As the sidebar is not keyboard-navigable, note that identities can also be accessed via lookup results. Identities matching the search terms are shown as the last category in the lookup results list. From there, one can toggle an identity for the current page, or stop using it on all pages.
 
-### Importing existing certificates
+### 1.6.3 Importing existing certificates
 
 At launch, Lagrange looks through its "idents" directory to see if any new certificates have been copied there. (See "Runtime files" below for the location.) The file format must be PEM. Both a certificate (.crt) and its private key (.key) must be found in "idents" and they must have matching file names. For example:
 * mycert.crt
 * mycert.key
 Lagrange will add a note to the imported identities to mark them as "Imported".
 
-## Downloads
+## 1.7 Downloads
 
 Press ${CTRL+}S to save the contents of the current page to the Downloads folder. This works on all pages regardless of whether Lagrange can display the contents or not.
 
@@ -208,15 +208,15 @@ The 🔃 button on the right side of the URL input field is the Reload/Stop butt
 
 The location where downloaded files are saved can be changed in Preferences. The default location is "Downloads" in your home directory.
 
-## Customization
+# 2 Customization
 
 You can find a number of settings in Preferences to customize the user interface and page contents.
 
-### Browsing behavior
+## 2.1 Browsing behavior
 
 One important characteristic of Gemini is that you remain in control of what gets loaded and when. The browser will not suddenly fetch a ton of images, autoplay videos, or make surreptitious connections to any tracking servers — each network request is purposeful and manually triggered. With this in mind, the "Load image on scroll" option is provided to assist keyboard-only browsing and to facilitate a focused reading experience. When enabled, if there is an image link visible on the page and you press Space or ↓, it will be loaded and shown inline _instead_ of the view scrolling down. This allows you to read and see all the content of the page while only tapping on a single key on the keyboard.
 
-### Window and UI options
+## 2.2 Window and UI options
 
 Lagrange supports configuring dark and light UI modes separately.
 
@@ -231,7 +231,7 @@ Options for wide window sizes:
 
 * Site icon: If there is room on the left side of the page text, the site icon appears there along with the top level heading. This allows one to keep better track of the current reading position in long documents.
 
-### Color themes
+## 2.3 Color themes
 
 Page content color themes are selected on the "Colors" tab of Preferences. The "Dark theme" is active in dark UI mode, and the "Light theme" is active in light UI mode.
 
@@ -243,7 +243,7 @@ Page content color themes are selected on the "Colors" tab of Preferences. The "
 * Sepia: Light sepia background with black text. Does not change depending on domain; use this for readability if you prefer a sepia reading experience.
 * High Contrast: White background with black text. Does not change depending on domain; use this for readability if you prefer maximum contrast between text and the background.
 
-### Page style
+## 2.4 Page style
 
 The "Style" tab of the Preferences dialog lets you customize the appearance and layout of page content.
 
@@ -262,13 +262,13 @@ Other style options:
 * Quote indicator: Quoted text is shown in an italic font. Additionally, you can select between a quotation mark icon and the traditional vertical line along the left edge of the quote.
 * Big 1st paragraph: When enabled, the leading paragraph on the page is shown in a slightly larger font.
 
-### Proxies
+## 2.5 Proxies
 
 Gemini allows relaying requests via a proxy server. On the "Proxies" tab, you can configure proxy servers for Gemini, Gopher, and HTTP/HTTPS requests.
 
 When an HTTP proxy server is configured, HTTP/HTTPS links will no longer open in the system's default web browser but will be loaded via the proxy, expecting it to serve a 'text/gemini' version of the link contents.
 
-### Keybindings
+## 2.6 Keybindings
 
 The "Keys" tab lets you change which keys are bound to UI commands. Click on an item with the mouse and then press the new key combination that you want bound to it. Right-click on a binding to erase it or reset it to the default.
 
@@ -276,9 +276,9 @@ Erasing a binding can be useful to disable certain features. For example, if you
 
 To reset all bindings to their defaults, quit Lagrange and delete the "bindings.txt" file in Lagrange's runtime directory. This is a platform-dependent location; see below for more information (under "Runtime files").
 
-# OS integration
+# 3 OS integration
 
-## Command line options
+## 3.1 Command line options
 
 ### URLs
 URLs on the command line are opened after Lagrange has launched. If more than one URL is given, multiple tabs will be opened. For example:
@@ -292,17 +292,17 @@ Debugging utility: internal events are printed to stdout.
 ### --sw
 Disable hardware accelerated graphics. Note that software rendering is anyway used as a fallback, so usually this option should not be necessary.
 
-## Opening Gemini links
+## 3.2 Opening Gemini links
 
 On macOS and Windows, Lagrange registers itself as a "gemini:" URL scheme handler, so you can click on Gemini links in any application to open Lagrange with that URL.
 
 Likewise (on macOS), .gmi/.gemini file extensions are registered as file formats that Lagrange can view so Finder will know how to open those automatically using Lagrange.
 
-## Drop and drop
+## 3.3 Drop and drop
 
 You can drag and drop .gmi files on the Lagrange window to open them in the current tab. Dropping multiple files opens them in separate tabs. This is the recommended way to view local files, because there is no "Open File" menu item. You may also type "file://" URLs in the URL field.
 
-## Runtime files
+## 3.4 Runtime files
 
 Lagrange stores user-specific persistent files in one of the following locations (depending on the operating system):
 
@@ -322,7 +322,7 @@ Other Unix : ~/.config/lagrange/
 * trusted.txt
 * visited.txt
 
-# MIME hooks
+# 4 MIME hooks
 
 MIME hooks enable piping Gemini responses through external programs for arbitrary processing. This allows leveraging scripting languages and binary executables to perform format conversions, content transformation, and data analysis.
 
@@ -335,13 +335,13 @@ Example use cases:
 * Converting HTML or Markdown to 'text/gemini'
 * Language translations
 
-## Interface
+## 4.1 Interface
 
 When a hook is called, it is given the MIME type and parameters via command line arguments. The response body is provided via stdin. The request's URL is available in the REQUEST_URL environment variable.
 
 The MIME type and parameters are split at semicolons, so "text/gemini; lang=ja" would be called as:
 ```
-hookprogram text/gemini lang=ja 
+hookprogram text/gemini lang=ja
 ```
 
 Output from the program (via stdout) must be a valid "20" Gemini response that includes the new MIME type:
@@ -352,7 +352,7 @@ Output from the program (via stdout) must be a valid "20" Gemini response that i
 
 Any output that does not follow this format is considered to mean that the hook refused to process the contents. The next hook will be offered the response instead.
 
-## mimehooks.txt syntax
+## 4.2 mimehooks.txt syntax
 
 Like other Lagrange configuration lines, mimehooks.txt has a simple line-oriented syntax. Lagrange must be restarted for changes to the configuration file to take effect.
 
@@ -370,7 +370,7 @@ application/xml
 
 The hook program is executed directly without involving the shell. This means scripts must be invoked via the interpreter executable.
 
-## Example: Converting from Atom to Gemini
+## 4.3 Example: Converting from Atom to Gemini
 
 The following simple Python script demonstrates how a MIME hook could be used to parse an Atom XML document using Python 3 and output a Gemini feed index page based on the parsed entries. This is just a simple example; a more robust script could include more content from the Atom feed and handle errors, too.
 ```
@@ -381,7 +381,7 @@ def atomtag(n):
     return '{http://www.w3.org/2005/Atom}' + n
 
 root = ET.fromstring(sys.stdin.read())
-if root.tag != atomtag('feed'): 
+if root.tag != atomtag('feed'):
     sys.exit(0)
 feed_title = ''
 feed_author = ''
@@ -390,19 +390,19 @@ for child in root:
     if child.tag == atomtag('title'):
         feed_title = child.text
     elif child.tag == atomtag('entry'):
-        feed_entries.append(child)        
+        feed_entries.append(child)
 print("20 text/gemini\r")
 print(f'# {feed_title}')
-for entry in feed_entries:   
+for entry in feed_entries:
     entry_date = ''
     entry_title = ''
     entry_link = ''
-    for child in entry:        
-        if child.tag == atomtag('updated'): 
+    for child in entry:
+        if child.tag == atomtag('updated'):
             entry_date = child.text[:10]
         elif child.tag == atomtag('title'):
             entry_title = child.text
-        elif child.tag == atomtag('link'): 
+        elif child.tag == atomtag('link'):
             entry_link = child.attrib['href']
     print(f'=> {entry_link} {entry_date} {entry_title}')
 ```
