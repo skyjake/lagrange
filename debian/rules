@@ -1,12 +1,26 @@
 #!/usr/bin/make -f
 export DH_VERBOSE = 1
 export DEB_BUILD_MAINT_OPTIONS=hardening=-format
+export LAGRANGE_CMAKE_FLAGS= -DCMAKE_BUILD_TYPE=Release -DENABLE_WINDOWPOS_FIX=YES
+
+# SSE4.1 support (or lack thereof) is only a concern on x86_64/x86 machines
+ifeq ($(DEB_BUILD_ARCH), amd64)
+	LAGRANGE_CMAKE_FLAGS += -DTFDN_ENABLE_SSE41=NO
+else ifeq ($(DEB_BUILD_ARCH), i386)
+	LAGRANGE_CMAKE_FLAGS += -DTFDN_ENABLE_SSE41=NO
+endif
+
+# on non x86_64/x86, specifically armhf, arm64, arm, OpenGL hw acceleration under X11 is a bit too slow.
+ifneq ($(DEB_BUILD_ARCH), amd64)
+	LAGRANGE_CMAKE_FLAGS += -DENABLE_KERNING=NO -DENABLE_X11_SWRENDER=YES
+endif
+
 
 %:
-	dh $@  
+	dh $@
 
 override_dh_auto_configure:
-	cmake .. -DCMAKE_BUILD_TYPE=Release -DENABLE_WINDOWPOS_FIX=YES -DTFDN_ENABLE_SSE41=NO -DCMAKE_INSTALL_PREFIX=$(pwd)/../usr
+	cmake . $(LAGRANGE_CMAKE_FLAGS) -DCMAKE_INSTALL_PREFIX=/usr/
 
-override_dh_build_configure:
+override_dh_auto_build:
 	cmake --build .
