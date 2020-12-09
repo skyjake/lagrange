@@ -41,6 +41,7 @@ void    setTextCStr_InputWidget (iInputWidget *, const char *cstr);
 void    setCursor_InputWidget   (iInputWidget *, size_t pos);
 void    setSelectAllOnFocus_InputWidget (iInputWidget *, iBool selectAllOnFocus);
 void    setNotifyEdits_InputWidget      (iInputWidget *, iBool notifyEdits);
+void    setEatEscape_InputWidget(iInputWidget *, iBool eatEscape);
 void    begin_InputWidget       (iInputWidget *);
 void    end_InputWidget         (iInputWidget *, iBool accept);
 void    selectAll_InputWidget   (iInputWidget *);

@@ -486,6 +486,8 @@ static void setupUserInterface_Window(iWindow *d) {
         addChildFlags_Widget(
             searchBar, iClob(new_LabelWidget("\U0001f50d Text", NULL)), frameless_WidgetFlag);
         iInputWidget *input = new_InputWidget(0);
+        setSelectAllOnFocus_InputWidget(input, iTrue);
+        setEatEscape_InputWidget(input, iFalse); /* unfocus and close with one keypress */
         setId_Widget(addChildFlags_Widget(searchBar, iClob(input), expand_WidgetFlag),
                      "find.input");
         addChild_Widget(searchBar, iClob(newIcon_LabelWidget("  \u2b9f  ", 'g', KMOD_PRIMARY, "find.next")));
