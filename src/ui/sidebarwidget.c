@@ -291,7 +291,7 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 format_String(
                     &item->meta,
                     "%s",
-                    isActive ? "Using"
+                    isActive ? "Using on this page"
                              : isUsed_GmIdentity(ident)
                                    ? format_CStr("Used on %zu URLs", size_StringSet(ident->useUrls))
                                    : "Not used");
@@ -315,7 +315,7 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
             }
             const iMenuItem menuItems[] = {
                 { "Use on This Page", 0, 0, "ident.use arg:1" },
-                { "Stop Using This Page", 0, 0, "ident.use arg:0" },
+                { "Stop Using on This Page", 0, 0, "ident.use arg:0" },
                 { "Stop Using Everywhere", 0, 0, "ident.use arg:0 clear:1" },
                 { "Show Usage", 0, 0, "ident.showuse" },
                 { "---", 0, 0, NULL },
@@ -1056,17 +1056,17 @@ static void draw_SidebarWidget_(const iSidebarWidget *d) {
 
 static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                               const iListWidget *list) {
-    const iSidebarWidget *sidebar =
-        findParentClass_Widget(constAs_Widget(list), &Class_SidebarWidget);
-    const iBool isPressing = isMouseDown_ListWidget(list);
-    const iBool isHover =
-        isHover_Widget(constAs_Widget(list)) && constHoverItem_ListWidget(list) == d;
+    const iSidebarWidget *sidebar = findParentClass_Widget(constAs_Widget(list),
+                                                           &Class_SidebarWidget);
+    const iBool isPressing   = isMouseDown_ListWidget(list);
+    const iBool isHover      = isHover_Widget(constAs_Widget(list)) &&
+                               constHoverItem_ListWidget(list) == d;
     const int scrollBarWidth = scrollBarWidth_ListWidget(list);
     const int itemHeight     = height_Rect(itemRect);
-    const int iconColor =
-        isHover ? (isPressing ? uiTextPressed_ColorId : uiIconHover_ColorId) : uiIcon_ColorId;
+    const int iconColor      = isHover ? (isPressing ? uiTextPressed_ColorId : uiIconHover_ColorId)
+                                       : uiIcon_ColorId;
     const int font = uiContent_FontId;
-    int bg = uiBackground_ColorId;
+    int       bg   = uiBackground_ColorId;
     if (isHover) {
         bg = isPressing ? uiBackgroundPressed_ColorId
                         : uiBackgroundFramelessHover_ColorId;
