@@ -6,7 +6,7 @@
 ```
 # Release notes
 
-## 0.12.2
+## 0.13.0
 
 ## 0.12.1
 * 'text/*' content falls back to plain text.
