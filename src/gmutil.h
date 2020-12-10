@@ -106,3 +106,5 @@ const iString * absoluteUrl_String      (const iString *, const iString *urlMayb
 iString *       makeFileUrl_String      (const iString *localFilePath);
 const char *    makeFileUrl_CStr        (const char *localFilePath);
 void            urlEncodeSpaces_String  (iString *);
+
+const iString * feedEntryOpenCommand_String (const iString *url); /* checks fragment */

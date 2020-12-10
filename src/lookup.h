@@ -30,6 +30,7 @@ iDeclareType(LookupResult)
 enum iLookupResultType {
     none_LookupResultType,
     bookmark_LookupResultType,
+    feedEntry_LookupResultType,
     history_LookupResultType, /* visited URLs */
     content_LookupResultType, /* one of the pages in history, including current page */
     identity_LookupResultType,

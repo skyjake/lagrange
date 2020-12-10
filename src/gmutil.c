@@ -213,6 +213,28 @@ void urlEncodeSpaces_String(iString *d) {
     }
 }
 
+const iString *feedEntryOpenCommand_String(const iString *url) {
+    if (!isEmpty_String(url)) {
+        iString *cmd = collectNew_String();
+        const size_t fragPos = indexOf_String(url, '#');
+        if (fragPos != iInvalidPos) {
+            iString *head = newRange_String(
+                (iRangecc){ constBegin_String(url) + fragPos + 1, constEnd_String(url) });
+            format_String(cmd,
+                          "open gotourlheading:%s url:%s",
+                          cstr_String(head),
+                          cstr_Rangecc((iRangecc){ constBegin_String(url),
+                                                   constBegin_String(url) + fragPos }));
+            delete_String(head);
+        }
+        else {
+            format_String(cmd, "open url:%s", cstr_String(url));
+        }
+        return cmd;
+    }
+    return NULL;
+}
+
 static const struct {
     enum iGmStatusCode code;
     iGmError           err;

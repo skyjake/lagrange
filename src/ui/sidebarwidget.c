@@ -28,6 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "documentwidget.h"
 #include "feeds.h"
 #include "gmcerts.h"
+#include "gmutil.h"
 #include "gmdocument.h"
 #include "inputwidget.h"
 #include "labelwidget.h"
@@ -503,24 +504,10 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, const iSidebarItem *it
             postCommandf_App("document.goto loc:%p", head->text.start);
             break;
         }
-        case feeds_SidebarMode:
-            if (!isEmpty_String(&item->url)) {
-                const size_t fragPos = indexOf_String(&item->url, '#');
-                if (fragPos != iInvalidPos) {
-                    iString *head = collect_String(
-                        newRange_String((iRangecc){ constBegin_String(&item->url) + fragPos + 1,
-                                                    constEnd_String(&item->url) }));
-                    postCommandf_App(
-                        "open gotourlheading:%s url:%s",
-                        cstr_String(head),
-                        cstr_Rangecc((iRangecc){ constBegin_String(&item->url),
-                                                 constBegin_String(&item->url) + fragPos }));
-                }
-                else {
-                    postCommandf_App("open url:%s", cstr_String(&item->url));
-                }
-            }
+        case feeds_SidebarMode: {
+            postCommandString_App(feedEntryOpenCommand_String(&item->url));
             break;
+        }
         case bookmarks_SidebarMode:
         case history_SidebarMode: {
             if (!isEmpty_String(&item->url)) {

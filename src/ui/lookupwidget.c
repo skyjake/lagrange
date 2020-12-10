@@ -26,6 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "bookmarks.h"
 #include "command.h"
 #include "documentwidget.h"
+#include "feeds.h"
 #include "gmcerts.h"
 #include "gmutil.h"
 #include "history.h"
@@ -158,6 +159,16 @@ static float bookmarkRelevance_LookupJob_(const iLookupJob *d, const iBookmark *
     return h + iMax(p, t) + 2 * g; /* extra weight for tags */
 }
 
+static float feedEntryRelevance_LookupJob_(const iLookupJob *d, const iFeedEntry *entry) {
+    iUrl parts;
+    init_Url(&parts, &entry->url);
+    const float t = scoreMatch_(d->term, range_String(&entry->title));
+    const float h = scoreMatch_(d->term, parts.host);
+    const float p = scoreMatch_(d->term, parts.path);
+    const double age = secondsSince_Time(&d->now, &entry->posted) / 3600.0 / 24.0; /* days */
+    return (t * 3 + h + p) / (age + 1); /* extra weight for title, recency */
+}
+
 static float identityRelevance_LookupJob_(const iLookupJob *d, const iGmIdentity *identity) {
     iString *cn = subject_TlsCertificate(identity->cert);
     const float c = scoreMatch_(d->term, range_String(cn));
@@ -190,15 +201,38 @@ static void searchBookmarks_LookupJob_(iLookupJob *d) {
         const iBookmark *bm  = i.ptr;
         iLookupResult *  res = new_LookupResult();
         res->type            = bookmark_LookupResultType;
+        res->when            = bm->when;
         res->relevance       = bookmarkRelevance_LookupJob_(d, bm);
         appendChar_String(&res->label, bm->icon);
         appendChar_String(&res->label, ' ');
         append_String(&res->label, &bm->title);
-//        set_String(&res->label, &bm->title);
-//        appendFormat_String(&res->label, " (%f)", res->relevance);
         set_String(&res->url, &bm->url);
-        res->when = bm->when;
         pushBack_PtrArray(&d->results, res);
+    }
+}
+
+static void searchFeeds_LookupJob_(iLookupJob *d) {
+    iConstForEach(PtrArray, i, listEntries_Feeds()) {
+        const iFeedEntry *entry = i.ptr;
+        const iBookmark *bm = get_Bookmarks(bookmarks_App(), entry->bookmarkId);
+        if (!bm) {
+            continue;
+        }
+        const float relevance = feedEntryRelevance_LookupJob_(d, entry);
+        if (relevance > 0) {
+            iLookupResult *res = new_LookupResult();
+            res->type          = feedEntry_LookupResultType;
+            res->when          = entry->posted;
+            res->relevance     = relevance;
+            set_String(&res->url, &entry->url);
+            set_String(&res->meta, &bm->title);
+            if (bm->icon) {
+                appendChar_String(&res->label, bm->icon);
+                appendChar_String(&res->label, ' ');
+            }
+            append_String(&res->label, &entry->title);
+            pushBack_PtrArray(&d->results, res);
+        }
     }
 }
 
@@ -300,6 +334,7 @@ static iThreadResult worker_LookupWidget_(iThread *thread) {
         unlock_Mutex(d->mtx);
         /* Do the lookup. */ {
             searchBookmarks_LookupJob_(job);
+            searchFeeds_LookupJob_(job);
             searchVisited_LookupJob_(job);
             if (termLen >= 3) {
                 searchHistory_LookupJob_(job);
@@ -401,6 +436,8 @@ static const char *cstr_LookupResultType(enum iLookupResultType d) {
     switch (d) {
         case bookmark_LookupResultType:
             return "BOOKMARKS";
+        case feedEntry_LookupResultType:
+            return "FEEDS";
         case history_LookupResultType:
             return "HISTORY";
         case content_LookupResultType:
@@ -488,6 +525,20 @@ static void presentResults_LookupWidget_(iLookupWidget *d) {
                               uiText_ColorEscape,
                               url);
                 format_String(&item->command, "open url:%s", cstr_String(&res->url));
+                break;
+            }
+            case feedEntry_LookupResultType: {
+                item->fg = uiTextStrong_ColorId;
+                item->font = uiLabel_FontId;
+                format_String(&item->text,
+                              "%s %s\u2014 %s",
+                              cstr_String(&res->label),
+                              uiText_ColorEscape,
+                              cstr_String(&res->meta));
+                const iString *cmd = feedEntryOpenCommand_String(&res->url);
+                if (cmd) {
+                    set_String(&item->command, cmd);
+                }
                 break;
             }
             case history_LookupResultType: {
