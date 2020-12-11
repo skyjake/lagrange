@@ -491,6 +491,9 @@ void deinit_GmRequest(iGmRequest *d) {
 
 void setUrl_GmRequest(iGmRequest *d, const iString *url) {
     set_String(&d->url, url);
+    /* Encode hostname to Punycode here because we want to submit the Punycode domain name
+       in the request. (TODO: Pending possible Gemini spec change.) */
+    punyEncodeUrlHost_String(&d->url);
     urlEncodeSpaces_String(&d->url);
 }
 
@@ -646,7 +649,7 @@ void submit_GmRequest(iGmRequest *d) {
     if (port == 0) {
         port = 1965; /* default Gemini port */
     }
-    setUrl_TlsRequest(d->req, host, port);
+    setHost_TlsRequest(d->req, host, port);
     setContent_TlsRequest(d->req,
                           utf8_String(collectNewFormat_String("%s\r\n", cstr_String(&d->url))));
     submit_TlsRequest(d->req);

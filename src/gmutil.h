@@ -103,6 +103,7 @@ void            init_Url                (iUrl *, const iString *text);
 iRangecc        urlScheme_String        (const iString *);
 iRangecc        urlHost_String          (const iString *);
 const iString * absoluteUrl_String      (const iString *, const iString *urlMaybeRelative);
+void            punyEncodeUrlHost_String(iString *);
 iString *       makeFileUrl_String      (const iString *localFilePath);
 const char *    makeFileUrl_CStr        (const char *localFilePath);
 void            urlEncodeSpaces_String  (iString *);

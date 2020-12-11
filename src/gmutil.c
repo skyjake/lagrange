@@ -185,8 +185,49 @@ const iString *absoluteUrl_String(const iString *d, const iString *urlMaybeRelat
         appendRange_String(absolute, orig.path);
     }
     appendRange_String(absolute, rel.query);
+    normalize_String(absolute);
     cleanUrlPath_String(absolute);
     return absolute;
+}
+
+static iBool equalPuny_(const iString *d, iRangecc orig) {
+    if (!endsWith_String(d, "-")) {
+        return iFalse; /* This is a sufficient condition? */
+    }
+    if (size_String(d) != size_Range(&orig) + 1) {
+        return iFalse;
+    }
+    return iCmpStrN(cstr_String(d), orig.start, size_Range(&orig)) == 0;
+}
+
+void punyEncodeUrlHost_String(iString *d) {
+    /* `d` should be an absolute URL. */
+    iUrl url;
+    init_Url(&url, d);
+    iString *encoded = new_String();
+    setRange_String(encoded, (iRangecc){ url.scheme.start, url.host.start });
+    /* The domain name needs to be split into segments. */ {
+        iRangecc seg     = iNullRange;
+        iBool    isFirst = iTrue;
+        while (nextSplit_Rangecc(url.host, ".", &seg)) {
+            if (!isFirst) {
+                appendChar_String(encoded, '.');
+            }
+            isFirst = iFalse;
+            iString *puny = punyEncode_Rangecc(seg);
+            if (!isEmpty_String(puny) && !equalPuny_(puny, seg)) {
+                appendCStr_String(encoded, "xn--");
+                append_String(encoded, puny);
+            }
+            else {
+                appendRange_String(encoded, seg);
+            }
+            delete_String(puny);
+        }
+    }
+    appendRange_String(encoded, (iRangecc){ url.host.end, constEnd_String(d) });
+    set_String(d, encoded);
+    delete_String(encoded);
 }
 
 iString *makeFileUrl_String(const iString *localFilePath) {
