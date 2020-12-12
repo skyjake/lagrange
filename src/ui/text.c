@@ -108,6 +108,8 @@ static void init_Font(iFont *d, const iBlock *data, int height, float scale,
     d->height = height;
     iZap(d->font);
     stbtt_InitFont(&d->font, constData_Block(data), 0);
+    int ascent, descent;
+    stbtt_GetFontVMetrics(&d->font, &ascent, &descent, NULL);
     d->xScale = d->yScale = stbtt_ScaleForPixelHeight(&d->font, height) * scale;
     if (d->isMonospaced) {
         /* It is important that monospaced fonts align 1:1 with the pixel grid so that
@@ -120,10 +122,8 @@ static void init_Font(iFont *d, const iBlock *data, int height, float scale,
             d->xScale *= floorf(advance) / advance;
         }
     }
-    d->vertOffset = height * (1.0f - scale) / 2;    
-    int ascent;
-    stbtt_GetFontVMetrics(&d->font, &ascent, NULL, NULL);
-    d->baseline     = /*ceil*/(ascent * d->yScale);
+    d->vertOffset   = height * (1.0f - scale) / 2;
+    d->baseline     = ascent * d->yScale;
     d->symbolsFont  = symbolsFont;
     d->japaneseFont = regularJapanese_FontId;
     d->koreanFont   = regularKorean_FontId;
@@ -796,6 +796,13 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
                 const int over = dst.y + dst.h - yLineMax;
                 src.h -= over;
                 dst.h -= over;
+            }
+            if (dst.y < pos.y) {
+                const int over = pos.y - dst.y;
+                dst.y += over;
+                dst.h -= over;
+                src.y += over;
+                src.h -= over;
             }
             SDL_RenderCopy(text_.render, text_.cache, &src, &dst);
         }
