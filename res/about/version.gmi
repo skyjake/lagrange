@@ -6,6 +6,9 @@
 ```
 # Release notes
 
+## 0.13.1
+* Fixed build failure on Linux.
+
 ## 0.13
 * Support for Internationalized Domain Names (IDN) in network requests.
 * Percent-encoded URL paths are shown decoded in the UI, and encoded in outgoing requests.
