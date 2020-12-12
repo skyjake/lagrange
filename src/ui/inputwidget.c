@@ -522,6 +522,9 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
         copy_InputWidget_(d, iFalse);
         return iTrue;
     }
+    if (ev->type == SDL_MOUSEMOTION && isHover_Widget(d)) {
+        setCursor_Window(get_Window(), SDL_SYSTEM_CURSOR_IBEAM);
+    }
     switch (processEvent_Click(&d->click, ev)) {
         case none_ClickResult:
             break;
@@ -532,7 +535,11 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
             d->inFlags &= ~isMarking_InputWidgetFlag;
             return iTrue;
         case double_ClickResult:
+            selectAll_InputWidget(d);
+            d->inFlags &= ~isMarking_InputWidgetFlag;
+            return iTrue;
         case aborted_ClickResult:
+            d->inFlags &= ~isMarking_InputWidgetFlag;
             return iTrue;
         case drag_ClickResult:
             showCursor_InputWidget_(d);
