@@ -482,8 +482,6 @@ void deinit_GmRequest(iGmRequest *d) {
     deinit_Gopher(&d->gopher);
     delete_Audience(d->finished);
     delete_Audience(d->updated);
-//    delete_GmResponse(d->respPub);
-//    deinit_GmResponse(&d->respInt);
     delete_GmResponse(d->resp);
     deinit_String(&d->url);
     delete_Mutex(d->mtx);
@@ -491,6 +489,13 @@ void deinit_GmRequest(iGmRequest *d) {
 
 void setUrl_GmRequest(iGmRequest *d, const iString *url) {
     set_String(&d->url, url);
+    /* Encode hostname to Punycode here because we want to submit the Punycode domain name
+       in the request. (TODO: Pending possible Gemini spec change.) */
+    punyEncodeUrlHost_String(&d->url);
+    /* TODO: Gemini spec allows UTF-8 encoded URLs, but still need to percent-encode non-ASCII
+       characters? Could be a server-side issue, e.g., if they're using a URL parser meant for
+       the web. */
+    urlEncodePath_String(&d->url);
     urlEncodeSpaces_String(&d->url);
 }
 
@@ -502,6 +507,7 @@ void submit_GmRequest(iGmRequest *d) {
     set_Atomic(&d->allowUpdate, iTrue);
     iGmResponse *resp = d->resp;
     clear_GmResponse(resp);
+//    printf("[GmRequest] URL: %s\n", cstr_String(&d->url));
     iUrl url;
     init_Url(&url, &d->url);
     /* Check for special schemes. */
@@ -646,7 +652,7 @@ void submit_GmRequest(iGmRequest *d) {
     if (port == 0) {
         port = 1965; /* default Gemini port */
     }
-    setUrl_TlsRequest(d->req, host, port);
+    setHost_TlsRequest(d->req, host, port);
     setContent_TlsRequest(d->req,
                           utf8_String(collectNewFormat_String("%s\r\n", cstr_String(&d->url))));
     submit_TlsRequest(d->req);

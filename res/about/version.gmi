@@ -6,6 +6,23 @@
 ```
 # Release notes
 
+## 0.13
+* Support for Internationalized Domain Names (IDN) in network requests.
+* Percent-encoded URL paths are shown decoded in the UI, and encoded in outgoing requests.
+* Added option to disable decoding of percent-encoded paths for the UI.
+* Quick search via URL bar shows entries from subscribed feeds.
+* Added keybindings for zooming.
+* Improved usability of page content searching (${CTRL+}F, Escape).
+* Clicking on a certificate warning shows the Certificate Status dialog.
+* macOS: Keyboard shortcuts in native menus are updated according to bindings.
+* Tweaked handling of Emojis in monospace text. They are given more space as needed, but the original monospace spacing is restored after whitespace.
+* Fira Mono replaced with Iosevka Term Extended.
+* Fixed use of variable-width fonts in input fields.
+* Fixed handling of Unicode joiners and modifiers (by ignoring them, since we lack the glyphs).
+* Fixed a layout issue with sidebars where the bottommost content line was occasionally not visible.
+* Fixed exit when a hook program didn't read its input.
+* Fixed crash when using an identity (with LibreSSL on OpenBSD).
+
 ## 0.12.1
 * 'text/*' content falls back to plain text.
 * Minimized visual artifacts in Unicode box-drawing characters (overlapping/gaps) by fine-tuning glyph scaling.

@@ -120,10 +120,10 @@ static void init_Font(iFont *d, const iBlock *data, int height, float scale,
             d->xScale *= floorf(advance) / advance;
         }
     }
-    d->vertOffset = height * (1.0f - scale) / 2;
+    d->vertOffset = height * (1.0f - scale) / 2;    
     int ascent;
     stbtt_GetFontVMetrics(&d->font, &ascent, NULL, NULL);
-    d->baseline     = ceil(ascent * d->yScale);
+    d->baseline     = /*ceil*/(ascent * d->yScale);
     d->symbolsFont  = symbolsFont;
     d->japaneseFont = regularJapanese_FontId;
     d->koreanFont   = regularKorean_FontId;
@@ -176,8 +176,8 @@ static iText text_;
 
 static void initFonts_Text_(iText *d) {
     const float textSize = fontSize_UI * d->contentFontSize;
-    const float monoSize = fontSize_UI * d->contentFontSize / contentScale_Text_ * 0.866f;
-    const float smallMonoSize = monoSize * 0.866f;
+    const float monoSize = textSize * 0.71f; //fontSize_UI * d->contentFontSize / contentScale_Text_ * 1.0f; //0.866f;
+    const float smallMonoSize = monoSize * 0.8f;
     const iBlock *regularFont  = &fontNunitoRegular_Embedded;
     const iBlock *italicFont   = &fontNunitoLightItalic_Embedded;
     const iBlock *h12Font      = &fontNunitoExtraBold_Embedded;
@@ -226,12 +226,12 @@ static void initFonts_Text_(iText *d) {
         { &fontSourceSansProRegular_Embedded, fontSize_UI,          1.0f, defaultSymbols_FontId },
         { &fontSourceSansProRegular_Embedded, fontSize_UI * 1.125f, 1.0f, defaultMediumSymbols_FontId },
         { &fontSourceSansProRegular_Embedded, fontSize_UI * 1.666f, 1.0f, defaultLargeSymbols_FontId },
-        { &fontFiraMonoRegular_Embedded,      fontSize_UI * 0.866f, 1.0f, defaultSymbols_FontId },
+        { &fontIosevkaTermExtended_Embedded,  fontSize_UI * 0.866f, 1.0f, defaultSymbols_FontId },
         { &fontSourceSansProRegular_Embedded, textSize,             scaling, symbols_FontId },
         /* content fonts */
         { regularFont,                        textSize,             scaling,      symbols_FontId },
-        { &fontFiraMonoRegular_Embedded,      monoSize,             1.0f,         monospaceSymbols_FontId },
-        { &fontFiraMonoRegular_Embedded,      smallMonoSize,        1.0f,         monospaceSmallSymbols_FontId },
+        { &fontIosevkaTermExtended_Embedded,  monoSize,             1.0f,         monospaceSymbols_FontId },
+        { &fontIosevkaTermExtended_Embedded,  smallMonoSize,        1.0f,         monospaceSmallSymbols_FontId },
         { regularFont,                        textSize * 1.200f,    scaling,      mediumSymbols_FontId },
         { h3Font,                             textSize * 1.333f,    h123Scaling,  bigSymbols_FontId },
         { italicFont,                         textSize,             scaling,      symbols_FontId },
@@ -239,7 +239,7 @@ static void initFonts_Text_(iText *d) {
         { h12Font,                            textSize * 2.000f,    h123Scaling,  hugeSymbols_FontId },
         { lightFont,                          textSize * 1.666f,    lightScaling, largeSymbols_FontId },
         /* monospace content fonts */
-        { &fontFiraMonoRegular_Embedded,      textSize,             0.8f, symbols_FontId },
+        { &fontIosevkaTermExtended_Embedded,  textSize,             0.75f, symbols_FontId },
         /* symbol fonts */
         { &fontSymbola_Embedded,              fontSize_UI,          1.0f, defaultSymbols_FontId },
         { &fontSymbola_Embedded,              fontSize_UI * 1.125f, 1.0f, defaultMediumSymbols_FontId },
@@ -288,7 +288,7 @@ static void initFonts_Text_(iText *d) {
                   fontData[i].size,
                   fontData[i].scaling,
                   fontData[i].symbolsFont,
-                  fontData[i].ttf == &fontFiraMonoRegular_Embedded);
+                  fontData[i].ttf == &fontIosevkaTermExtended_Embedded);
         if (i == default_FontId || i == defaultMedium_FontId) {
             font->manualKernOnly = iTrue;
         }
@@ -426,7 +426,7 @@ void resetFonts_Text(void) {
 }
 
 iLocalDef iFont *font_Text_(enum iFontId id) {
-    return &text_.fonts[id];
+    return &text_.fonts[id & mask_FontId];
 }
 
 static void freeBmp_(void *ptr) {
@@ -582,11 +582,14 @@ static const iGlyph *glyph_Font_(iFont *d, iChar ch) {
 }
 
 enum iRunMode {
-    measure_RunMode,
-    measureNoWrap_RunMode,
-    measureVisual_RunMode, /* actual visible bounding box of the glyph, e.g., for icons */
-    draw_RunMode,
-    drawPermanentColor_RunMode
+    measure_RunMode    = 0,
+    draw_RunMode       = 1,
+    modeMask_RunMode   = 0x00ff,
+    flagsMask_RunMode  = 0xff00,
+    noWrapFlag_RunMode = iBit(9),
+    visualFlag_RunMode = iBit(10), /* actual visible bounding box of the glyph, e.g., for icons */
+    permanentColorFlag_RunMode      = iBit(11),
+    alwaysVariableWidthFlag_RunMode = iBit(12),
 };
 
 static iChar nextChar_(const char **chPos, const char *end) {
@@ -625,8 +628,7 @@ iLocalDef iBool isWrapBoundary_(iChar prevC, iChar c) {
 }
 
 iLocalDef iBool isMeasuring_(enum iRunMode mode) {
-    return mode == measure_RunMode || mode == measureNoWrap_RunMode ||
-           mode == measureVisual_RunMode;
+    return (mode & modeMask_RunMode) == measure_RunMode;
 }
 
 static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLen, iInt2 pos,
@@ -634,6 +636,7 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
     iRect bounds = zero_Rect();
     const iInt2 orig = pos;
     float xpos = pos.x;
+    float xposExtend = pos.x; /* allows wide glyphs to use more space; restored by whitespace */
     float xposMax = xpos;
     float monoAdvance = 0;
     iAssert(xposLimit == 0 || isMeasuring_(mode));
@@ -642,7 +645,8 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
         *continueFrom_out = text.end;
     }
     iChar prevCh = 0;
-    if (d->isMonospaced) {
+    const iBool isMonospaced = d->isMonospaced && !(mode & alwaysVariableWidthFlag_RunMode);
+    if (isMonospaced) {
         monoAdvance = glyph_Font_(d, 'M')->advance;
     }
     for (const char *chPos = text.start; chPos != text.end; ) {
@@ -654,7 +658,7 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
             iRegExpMatch m;
             init_RegExpMatch(&m);
             if (match_RegExp(text_.ansiEscape, chPos, text.end - chPos, &m)) {
-                if (mode == draw_RunMode) {
+                if (mode & draw_RunMode) {
                     /* Change the color. */
                     const iColor clr =
                         ansiForeground_Color(capturedRange_RegExpMatch(&m, 1), tmParagraph_ColorId);
@@ -665,9 +669,28 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
             }
         }
         iChar ch = nextChar_(&chPos, text.end);
+        iBool isEmoji = isEmoji_Char(ch);
+        if (ch == 0x200d) { /* zero-width joiner */
+            /* We don't have the composited Emojis. */
+            if (isEmoji_Char(prevCh)) {
+                /* skip */
+                ch = nextChar_(&chPos, text.end);
+                ch = nextChar_(&chPos, text.end);
+            }
+        }
+#if 0
+        iChar nextCh = 0; {
+            /* TODO: Since we're peeking ahead, should use this on the next loop iteration. */
+            const char *ncp = chPos;
+            nextCh = nextChar_(&ncp, text.end);
+        }
+        /* VS15: Peek ahead and treat as Emoji font. */
+        if (nextCh == emojiVariationSelector_Char) {
+            isEmoji = iTrue;
+        }
+#endif
         if (isVariationSelector_Char(ch)) {
-            /* TODO: VS15: Should peek ahead for this and prefer the Emoji font. */
-            ch = nextChar_(&chPos, text.end); /* just ignore */
+            ch = nextChar_(&chPos, text.end); /* skip it */
         }
         /* Special instructions. */ {
             if (ch == 0xad) { /* soft hyphen */
@@ -692,7 +715,7 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
                 }
             }
             if (ch == '\n') {
-                xpos = pos.x;
+                xpos = xposExtend = pos.x;
                 pos.y += d->height;
                 prevCh = ch;
                 continue;
@@ -700,21 +723,25 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
             if (ch == '\t') {
                 const int tabStopWidth = d->height * 8;
                 xpos = pos.x + ((int) ((xpos - pos.x) / tabStopWidth) + 1) * tabStopWidth;
+                xposExtend = iMax(xposExtend, xpos);
                 prevCh = 0;
                 continue;
             }
             if (ch == '\r') {
                 const iChar esc = nextChar_(&chPos, text.end);
-                if (mode == draw_RunMode) {
+                if (mode & draw_RunMode) {
                     const iColor clr = get_Color(esc - asciiBase_ColorEscape);
                     SDL_SetTextureColorMod(text_.cache, clr.r, clr.g, clr.b);
                 }
                 prevCh = 0;
                 continue;
             }
+            if (isDefaultIgnorable_Char(ch) || isFitzpatrickType_Char(ch)) {
+                continue;
+            }
         }
         const iGlyph *glyph = glyph_Font_(d, ch);
-        int x1 = xpos;
+        int x1 = iMax(xpos, xposExtend);
         const int hoff = enableHalfPixelGlyphs_Text ? (xpos - x1 > 0.5f ? 1 : 0) : 0;
         int x2 = x1 + glyph->rect[hoff].size.x;
         /* Out of the allotted space? */
@@ -732,8 +759,14 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
                          pos.y + glyph->font->baseline + glyph->d[hoff].y,
                          glyph->rect[hoff].size.x,
                          glyph->rect[hoff].size.y };
+        if (glyph->font != d) {
+            if (glyph->font->height > d->height) {
+                /* Center-align vertically so the baseline isn't totally offset. */
+                dst.y -= (glyph->font->height - d->height) / 2;
+            }
+        }
         /* Update the bounding box. */
-        if (mode == measureVisual_RunMode) {
+        if (mode & visualFlag_RunMode) {
             if (isEmpty_Rect(bounds)) {
                 bounds = init_Rect(dst.x, dst.y, dst.w, dst.h);
             }
@@ -745,11 +778,13 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
             bounds.size.x = iMax(bounds.size.x, x2 - orig.x);
             bounds.size.y = iMax(bounds.size.y, pos.y + glyph->font->height - orig.y);
         }
+        /* Symbols and emojis are NOT monospaced, so must conform when the primary font
+           is monospaced. Except with Japanese script, that's larger than the normal monospace. */
         const iBool useMonoAdvance =
             monoAdvance > 0 && !isJapanese_FontId(fontId_Text_(glyph->font));
         const float advance = (useMonoAdvance ? monoAdvance : glyph->advance);
         if (!isMeasuring_(mode)) {
-            if (useMonoAdvance && dst.w > advance && glyph->font != d) {
+            if (useMonoAdvance && dst.w > advance && glyph->font != d && !isEmoji) {
                 /* Glyphs from a different font may need recentering to look better. */
                 dst.x -= (dst.w - advance) / 2;
             }
@@ -764,16 +799,18 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
             }
             SDL_RenderCopy(text_.render, text_.cache, &src, &dst);
         }
-        /* Symbols and emojis are NOT monospaced, so must conform when the primary font
-           is monospaced. Except with Japanese script, that's larger than the normal monospace. */
         xpos += advance;
-        xposMax = iMax(xposMax, xpos);
-        if (continueFrom_out && (mode == measureNoWrap_RunMode || isWrapBoundary_(prevCh, ch))) {
+        if (!isSpace_Char(ch)) {
+            xposExtend += isEmoji ? glyph->advance : advance;
+        }
+        xposExtend = iMax(xposExtend, xpos);
+        xposMax    = iMax(xposMax, xposExtend);
+        if (continueFrom_out && ((mode & noWrapFlag_RunMode) || isWrapBoundary_(prevCh, ch))) {
             lastWordEnd = chPos;
         }
 #if defined (LAGRANGE_ENABLE_KERNING)
         /* Check the next character. */
-        if (!d->isMonospaced && glyph->font == d) {
+        if (!isMonospaced && glyph->font == d) {
             /* TODO: No need to decode the next char twice; check this on the next iteration. */
             const char *peek = chPos;
             const iChar next = nextChar_(&peek, text.end);
@@ -794,14 +831,14 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
 }
 
 int lineHeight_Text(int fontId) {
-    return text_.fonts[fontId].height;
+    return font_Text_(fontId)->height;
 }
 
 iInt2 measureRange_Text(int fontId, iRangecc text) {
     if (isEmpty_Range(&text)) {
         return init_I2(0, lineHeight_Text(fontId));
     }
-    return run_Font_(&text_.fonts[fontId],
+    return run_Font_(font_Text_(fontId),
                      measure_RunMode,
                      text,
                      iInvalidSize,
@@ -812,18 +849,32 @@ iInt2 measureRange_Text(int fontId, iRangecc text) {
 }
 
 iRect visualBounds_Text(int fontId, iRangecc text) {
-    return run_Font_(
-        font_Text_(fontId), measureVisual_RunMode, text, iInvalidSize, zero_I2(), 0, NULL, NULL);
+    return run_Font_(font_Text_(fontId),
+                     measure_RunMode | visualFlag_RunMode,
+                     text,
+                     iInvalidSize,
+                     zero_I2(),
+                     0,
+                     NULL,
+                     NULL);
 }
 
 iInt2 measure_Text(int fontId, const char *text) {
     return measureRange_Text(fontId, range_CStr(text));
 }
 
+static int runFlagsFromId_(enum iFontId fontId) {
+    int runFlags = 0;
+    if (fontId & alwaysVariableFlag_FontId) {
+        runFlags |= alwaysVariableWidthFlag_RunMode;
+    }
+    return runFlags;
+}
+
 iInt2 advanceRange_Text(int fontId, iRangecc text) {
     int advance;
-    const int height = run_Font_(&text_.fonts[fontId],
-                                 measure_RunMode,
+    const int height = run_Font_(font_Text_(fontId),
+                                 measure_RunMode | runFlagsFromId_(fontId),
                                  text,
                                  iInvalidSize,
                                  zero_I2(),
@@ -836,8 +887,8 @@ iInt2 advanceRange_Text(int fontId, iRangecc text) {
 
 iInt2 tryAdvance_Text(int fontId, iRangecc text, int width, const char **endPos) {
     int advance;
-    const int height = run_Font_(&text_.fonts[fontId],
-                                 measure_RunMode,
+    const int height = run_Font_(font_Text_(fontId),
+                                 measure_RunMode | runFlagsFromId_(fontId),
                                  text,
                                  iInvalidSize,
                                  zero_I2(),
@@ -850,8 +901,8 @@ iInt2 tryAdvance_Text(int fontId, iRangecc text, int width, const char **endPos)
 
 iInt2 tryAdvanceNoWrap_Text(int fontId, iRangecc text, int width, const char **endPos) {
     int advance;
-    const int height = run_Font_(&text_.fonts[fontId],
-                                 measureNoWrap_RunMode,
+    const int height = run_Font_(font_Text_(fontId),
+                                 measure_RunMode | noWrapFlag_RunMode | runFlagsFromId_(fontId),
                                  text,
                                  iInvalidSize,
                                  zero_I2(),
@@ -871,8 +922,14 @@ iInt2 advanceN_Text(int fontId, const char *text, size_t n) {
         return init_I2(0, lineHeight_Text(fontId));
     }
     int advance;
-    run_Font_(
-        &text_.fonts[fontId], measure_RunMode, range_CStr(text), n, zero_I2(), 0, NULL, &advance);
+    run_Font_(font_Text_(fontId),
+              measure_RunMode | runFlagsFromId_(fontId),
+              range_CStr(text),
+              n,
+              zero_I2(),
+              0,
+              NULL,
+              &advance);
     return init_I2(advance, lineHeight_Text(fontId));
 }
 
@@ -880,8 +937,9 @@ static void draw_Text_(int fontId, iInt2 pos, int color, iRangecc text) {
     iText *d = &text_;
     const iColor clr = get_Color(color & mask_ColorId);
     SDL_SetTextureColorMod(d->cache, clr.r, clr.g, clr.b);
-    run_Font_(&d->fonts[fontId],
-              color & permanent_ColorId ? drawPermanentColor_RunMode : draw_RunMode,
+    run_Font_(font_Text_(fontId),
+              draw_RunMode | (color & permanent_ColorId ? permanentColorFlag_RunMode : 0) |
+                  runFlagsFromId_(fontId),
               text,
               iInvalidSize,
               pos,
@@ -1000,7 +1058,7 @@ iString *renderBlockChars_Text(const iBlock *fontData, int height, enum iTextBlo
     size_t      strRemain = length_String(text);
     iConstForEach(String, i, text) {
         if (!strRemain) break;
-        if (i.value == variationSelectorEmoji_Char) {
+        if (isVariationSelector_Char(i.value) || isDefaultIgnorable_Char(i.value)) {
             strRemain--;
             continue;
         }

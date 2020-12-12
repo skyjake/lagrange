@@ -86,7 +86,9 @@ void        postCommand_App     (const char *command);
 void        postCommandf_App    (const char *command, ...);
 
 iLocalDef void postCommandString_App(const iString *command) {
-    postCommand_App(cstr_String(command));
+    if (command) {
+        postCommand_App(cstr_String(command));
+    }
 }
 
 void        openInDefaultBrowser_App    (const iString *url);

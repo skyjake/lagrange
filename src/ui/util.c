@@ -1136,7 +1136,9 @@ iWidget *makePreferences_Widget(void) {
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.biglede")));
     }
     /* Proxies. */ {
-        appendTwoColumnPage_(tabs, "Proxies", '5', &headings, &values);
+        appendTwoColumnPage_(tabs, "Network", '5', &headings, &values);
+        addChild_Widget(headings, iClob(makeHeading_Widget("Decode paths:")));
+        addChild_Widget(values, iClob(makeToggle_Widget("prefs.decodeurls")));
         addChild_Widget(headings, iClob(makeHeading_Widget("Gemini proxy:")));
         setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.proxy.gemini");
         addChild_Widget(headings, iClob(makeHeading_Widget("Gopher proxy:")));

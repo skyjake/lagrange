@@ -18,7 +18,7 @@
 cmake_minimum_required (VERSION 3.9)
 
 project (Lagrange
-    VERSION 0.12.1
+    VERSION 0.13.0
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
@@ -61,7 +61,7 @@ set (EMBED_RESOURCES
     res/fonts/Tinos-Regular.ttf
     res/fonts/Tinos-Italic.ttf
     res/fonts/Tinos-Bold.ttf
-    res/fonts/FiraMono-Regular.ttf
+    res/fonts/IosevkaTerm-Extended.ttf
     res/fonts/FiraSans-Bold.ttf
     res/fonts/FiraSans-Italic.ttf
     res/fonts/FiraSans-Light.ttf

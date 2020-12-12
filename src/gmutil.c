@@ -132,6 +132,61 @@ static iBool isAbsolutePath_(iRangecc path) {
     return isAbsolute_Path(collect_String(urlDecode_String(collect_String(newRange_String(path)))));
 }
 
+static iString *punyDecodeHost_(iRangecc host) {
+    iString *result = new_String();
+    iRangecc label = iNullRange;
+    while (nextSplit_Rangecc(host, ".", &label)) {
+        if (!isEmpty_String(result)) {
+            appendChar_String(result, '.');
+        }
+        if (startsWithCase_Rangecc(label, "xn--")) {
+            iString *dec = punyDecode_Rangecc((iRangecc){ label.start + 4, label.end });
+            if (!isEmpty_String(dec)) {
+                append_String(result, dec);
+                continue;
+            }
+        }
+        appendRange_String(result, label);
+    }
+    return result;
+}
+
+void urlDecodePath_String(iString *d) {
+    iUrl url;
+    init_Url(&url, d);
+    if (isEmpty_Range(&url.path)) {
+        return;
+    }
+    iString *decoded = new_String();
+    appendRange_String(decoded, (iRangecc){ constBegin_String(d), url.path.start });
+    iString *path    = newRange_String(url.path);
+    iString *decPath = urlDecode_String(path);
+    append_String(decoded, decPath);
+    delete_String(decPath);
+    delete_String(path);
+    appendRange_String(decoded, (iRangecc){ url.path.end, constEnd_String(d) });
+    set_String(d, decoded);
+    delete_String(decoded);
+}
+
+void urlEncodePath_String(iString *d) {
+    iUrl url;
+    init_Url(&url, d);
+    if (isEmpty_Range(&url.path)) {
+        return;
+    }
+    iString *encoded = new_String();
+    appendRange_String(encoded , (iRangecc){ constBegin_String(d), url.path.start });
+    iString *path    = newRange_String(url.path);
+    iString *encPath = urlEncodeExclude_String(path, "%/ ");
+    append_String(encoded, encPath);
+    delete_String(encPath);
+    delete_String(path);
+    appendRange_String(encoded, (iRangecc){ url.path.end, constEnd_String(d) });
+    set_String(d, encoded);
+    delete_String(encoded);
+}
+
 const iString *absoluteUrl_String(const iString *d, const iString *urlMaybeRelative) {
     iUrl orig;
     iUrl rel;
@@ -152,9 +207,12 @@ const iString *absoluteUrl_String(const iString *d, const iString *urlMaybeRelat
     }
     iString *absolute = collectNew_String();
     appendRange_String(absolute, scheme);
-    appendCStr_String(absolute, "://"); {
+    appendCStr_String(absolute, "://");
+    /* Authority. */ {
         const iUrl *selHost = isDef_(rel.host) ? &rel : &orig;
-        appendRange_String(absolute, selHost->host);
+        iString *decHost = punyDecodeHost_(selHost->host);
+        append_String(absolute, decHost);
+        delete_String(decHost);
         if (!isEmpty_Range(&selHost->port)) {
             appendCStr_String(absolute, ":");
             appendRange_String(absolute, selHost->port);
@@ -185,8 +243,52 @@ const iString *absoluteUrl_String(const iString *d, const iString *urlMaybeRelat
         appendRange_String(absolute, orig.path);
     }
     appendRange_String(absolute, rel.query);
+    normalize_String(absolute);
     cleanUrlPath_String(absolute);
     return absolute;
+}
+
+static iBool equalPuny_(const iString *d, iRangecc orig) {
+    if (!endsWith_String(d, "-")) {
+        return iFalse; /* This is a sufficient condition? */
+    }
+    if (size_String(d) != size_Range(&orig) + 1) {
+        return iFalse;
+    }
+    return iCmpStrN(cstr_String(d), orig.start, size_Range(&orig)) == 0;
+}
+
+void punyEncodeUrlHost_String(iString *d) {
+    /* `d` should be an absolute URL. */
+    iUrl url;
+    init_Url(&url, d);
+    if (isEmpty_Range(&url.host)) {
+        return;
+    }
+    iString *encoded = new_String();
+    setRange_String(encoded, (iRangecc){ url.scheme.start, url.host.start });
+    /* The domain name needs to be split into labels. */ {
+        iRangecc label   = iNullRange;
+        iBool    isFirst = iTrue;
+        while (nextSplit_Rangecc(url.host, ".", &label)) {
+            if (!isFirst) {
+                appendChar_String(encoded, '.');
+            }
+            isFirst = iFalse;
+            iString *puny = punyEncode_Rangecc(label);
+            if (!isEmpty_String(puny) && !equalPuny_(puny, label)) {
+                appendCStr_String(encoded, "xn--");
+                append_String(encoded, puny);
+            }
+            else {
+                appendRange_String(encoded, label);
+            }
+            delete_String(puny);
+        }
+    }
+    appendRange_String(encoded, (iRangecc){ url.host.end, constEnd_String(d) });
+    set_String(d, encoded);
+    delete_String(encoded);
 }
 
 iString *makeFileUrl_String(const iString *localFilePath) {
@@ -211,6 +313,28 @@ void urlEncodeSpaces_String(iString *d) {
         remove_Block(&d->chars, pos, 1);
         insertData_Block(&d->chars, pos, "%20", 3);
     }
+}
+
+const iString *feedEntryOpenCommand_String(const iString *url) {
+    if (!isEmpty_String(url)) {
+        iString *cmd = collectNew_String();
+        const size_t fragPos = indexOf_String(url, '#');
+        if (fragPos != iInvalidPos) {
+            iString *head = newRange_String(
+                (iRangecc){ constBegin_String(url) + fragPos + 1, constEnd_String(url) });
+            format_String(cmd,
+                          "open gotourlheading:%s url:%s",
+                          cstr_String(head),
+                          cstr_Rangecc((iRangecc){ constBegin_String(url),
+                                                   constBegin_String(url) + fragPos }));
+            delete_String(head);
+        }
+        else {
+            format_String(cmd, "open url:%s", cstr_String(url));
+        }
+        return cmd;
+    }
+    return NULL;
 }
 
 static const struct {

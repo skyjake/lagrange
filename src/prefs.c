@@ -33,6 +33,7 @@ void init_Prefs(iPrefs *d) {
     d->hoverOutline      = iFalse;
     d->smoothScrolling   = iTrue;
     d->loadImageInsteadOfScrolling = iFalse;
+    d->decodeUserVisibleURLs = iTrue;
     d->font              = nunito_TextFont;
     d->headingFont       = nunito_TextFont;
     d->monospaceGemini   = iFalse;

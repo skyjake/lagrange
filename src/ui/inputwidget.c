@@ -49,20 +49,25 @@ static void deinit_InputUndo_(iInputUndo *d) {
     deinit_Array(&d->text);
 }
 
+enum iInputWidgetFlag {
+    isSensitive_InputWidgetFlag      = iBit(1),
+    enterPressed_InputWidgetFlag     = iBit(2),
+    selectAllOnFocus_InputWidgetFlag = iBit(3),
+    notifyEdits_InputWidgetFlag      = iBit(4),
+    eatEscape_InputWidgetFlag        = iBit(5),
+    isMarking_InputWidgetFlag        = iBit(6),
+};
+
 struct Impl_InputWidget {
     iWidget         widget;
     enum iInputMode mode;
-    iBool           isSensitive;
-    iBool           enterPressed;
-    iBool           selectAllOnFocus;
-    iBool           notifyEdits;
+    int             inFlags;
     size_t          maxLen;
     iArray          text;    /* iChar[] */
     iArray          oldText; /* iChar[] */
     iString         hint;
     size_t          cursor;
     size_t          lastCursor;
-    iBool           isMarking;
     iRanges         mark;
     iArray          undoStack;
     int             font;
@@ -93,14 +98,10 @@ void init_InputWidget(iInputWidget *d, size_t maxLen) {
     init_Array(&d->oldText, sizeof(iChar));
     init_String(&d->hint);
     init_Array(&d->undoStack, sizeof(iInputUndo));
-    d->font             = uiInput_FontId;
+    d->font             = uiInput_FontId | alwaysVariableFlag_FontId;
     d->cursor           = 0;
     d->lastCursor       = 0;
-    d->isMarking        = iFalse;
-    d->isSensitive      = iFalse;
-    d->enterPressed     = iFalse;
-    d->selectAllOnFocus = iFalse;
-    d->notifyEdits      = iFalse;
+    d->inFlags          = eatEscape_InputWidgetFlag;
     iZap(d->mark);
     setMaxLen_InputWidget(d, maxLen);
     /* Caller must arrange the width, but the height is fixed. */
@@ -152,7 +153,7 @@ void setMode_InputWidget(iInputWidget *d, enum iInputMode mode) {
 }
 
 void setSensitive_InputWidget(iInputWidget *d, iBool isSensitive) {
-    d->isSensitive = isSensitive;
+    iChangeFlags(d->inFlags, isSensitive_InputWidgetFlag, isSensitive);
 }
 
 const iString *text_InputWidget(const iInputWidget *d) {
@@ -182,7 +183,7 @@ static const iChar sensitiveChar_ = 0x25cf; /* black circle */
 
 static iString *visText_InputWidget_(const iInputWidget *d) {
     iString *text;
-    if (!d->isSensitive) {
+    if (~d->inFlags & isSensitive_InputWidgetFlag) {
         text = newUnicodeN_String(constData_Array(&d->text), size_Array(&d->text));
     }
     else {
@@ -271,8 +272,8 @@ void begin_InputWidget(iInputWidget *d) {
     showCursor_InputWidget_(d);
     refresh_Widget(w);
     d->timer = SDL_AddTimer(refreshInterval_InputWidget_, cursorTimer_, d);
-    d->enterPressed = iFalse;
-    if (d->selectAllOnFocus) {
+    d->inFlags &= ~enterPressed_InputWidgetFlag;
+    if (d->inFlags & selectAllOnFocus_InputWidgetFlag) {
         d->mark = (iRanges){ 0, size_Array(&d->text) };
     }
     else {
@@ -297,8 +298,11 @@ void end_InputWidget(iInputWidget *d, iBool accept) {
     const char *id = cstr_String(id_Widget(as_Widget(d)));
     if (!*id) id = "_";
     refresh_Widget(w);
-    postCommand_Widget(
-        w, "input.ended id:%s enter:%d arg:%d", id, d->enterPressed ? 1 : 0, accept ? 1 : 0);
+    postCommand_Widget(w,
+                       "input.ended id:%s enter:%d arg:%d",
+                       id,
+                       d->inFlags & enterPressed_InputWidgetFlag ? 1 : 0,
+                       accept ? 1 : 0);
 }
 
 static void insertChar_InputWidget_(iInputWidget *d, iChar chr) {
@@ -351,11 +355,15 @@ void setCursor_InputWidget(iInputWidget *d, size_t pos) {
 }
 
 void setSelectAllOnFocus_InputWidget(iInputWidget *d, iBool selectAllOnFocus) {
-    d->selectAllOnFocus = selectAllOnFocus;
+    iChangeFlags(d->inFlags, selectAllOnFocus_InputWidgetFlag, selectAllOnFocus);
 }
 
 void setNotifyEdits_InputWidget(iInputWidget *d, iBool notifyEdits) {
-    d->notifyEdits = notifyEdits;
+    iChangeFlags(d->inFlags, notifyEdits_InputWidgetFlag, notifyEdits);
+}
+
+void setEatEscape_InputWidget(iInputWidget *d, iBool eatEscape) {
+    iChangeFlags(d->inFlags, eatEscape_InputWidgetFlag, eatEscape);
 }
 
 static iRanges mark_InputWidget_(const iInputWidget *d) {
@@ -366,7 +374,7 @@ static iRanges mark_InputWidget_(const iInputWidget *d) {
 }
 
 static void contentsWereChanged_InputWidget_(iInputWidget *d) {
-    if (d->notifyEdits) {
+    if (d->inFlags & notifyEdits_InputWidgetFlag) {
         postCommand_Widget(d, "input.edited id:%s", cstr_String(id_Widget(constAs_Widget(d))));
     }
 }
@@ -514,6 +522,9 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
         copy_InputWidget_(d, iFalse);
         return iTrue;
     }
+    if (ev->type == SDL_MOUSEMOTION && isHover_Widget(d)) {
+        setCursor_Window(get_Window(), SDL_SYSTEM_CURSOR_IBEAM);
+    }
     switch (processEvent_Click(&d->click, ev)) {
         case none_ClickResult:
             break;
@@ -521,16 +532,20 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
             setFocus_Widget(w);
             setCursor_InputWidget(d, coordIndex_InputWidget_(d, pos_Click(&d->click)));
             iZap(d->mark);
-            d->isMarking = iFalse;
+            d->inFlags &= ~isMarking_InputWidgetFlag;
             return iTrue;
         case double_ClickResult:
+            selectAll_InputWidget(d);
+            d->inFlags &= ~isMarking_InputWidgetFlag;
+            return iTrue;
         case aborted_ClickResult:
+            d->inFlags &= ~isMarking_InputWidgetFlag;
             return iTrue;
         case drag_ClickResult:
             showCursor_InputWidget_(d);
             d->cursor = coordIndex_InputWidget_(d, pos_Click(&d->click));
-            if (!d->isMarking) {
-                d->isMarking = iTrue;
+            if (~d->inFlags & isMarking_InputWidgetFlag) {
+                d->inFlags |= isMarking_InputWidgetFlag;
                 d->mark.start = d->cursor;
             }
             d->mark.end = d->cursor;
@@ -577,13 +592,13 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
         switch (key) {
             case SDLK_RETURN:
             case SDLK_KP_ENTER:
-                d->enterPressed = iTrue;
+                d->inFlags |= enterPressed_InputWidgetFlag;
                 setFocus_Widget(NULL);
                 return iTrue;
             case SDLK_ESCAPE:
                 end_InputWidget(d, iFalse);
                 setFocus_Widget(NULL);
-                return iTrue;
+                return (d->inFlags & eatEscape_InputWidgetFlag) != 0;
             case SDLK_BACKSPACE:
                 if (!isEmpty_Range(&d->mark)) {
                     pushUndo_InputWidget_(d);
@@ -771,7 +786,7 @@ static void draw_InputWidget_(const iInputWidget *d) {
     if (isFocused && d->cursorVis) {
         iString cur;
         if (d->cursor < size_Array(&d->text)) {
-            if (!d->isSensitive) {
+            if (~d->inFlags & isSensitive_InputWidgetFlag) {
                 initUnicodeN_String(&cur, constAt_Array(&d->text, d->cursor), 1);
             }
             else {
@@ -781,11 +796,13 @@ static void draw_InputWidget_(const iInputWidget *d) {
         else {
             initCStr_String(&cur, " ");
         }
+        /* The `gap_UI` offsets below are a hack. They are used because for some reason the
+           cursor rect and the glyph inside don't quite position like during `run_Text_()`. */
         const iInt2 prefixSize = advanceN_Text(d->font, cstr_String(text), d->cursor);
         const iInt2 curPos     = addX_I2(textOrigin, prefixSize.x);
-        const iRect curRect    = { curPos, addX_I2(advance_Text(d->font, cstr_String(&cur)), 1) };
+        const iRect curRect    = { curPos, addX_I2(advance_Text(d->font, cstr_String(&cur)), iMin(2, gap_UI / 4)) };
         fillRect_Paint(&p, curRect, uiInputCursor_ColorId);
-        draw_Text(d->font, curPos, uiInputCursorText_ColorId, "%s", cstr_String(&cur));
+        draw_Text(d->font, addX_I2(curPos, iMin(1, gap_UI / 8)), uiInputCursorText_ColorId, "%s", cstr_String(&cur));
         deinit_String(&cur);
     }
     delete_String(text);

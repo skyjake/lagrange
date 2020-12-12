@@ -36,9 +36,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/commandline.h>
 #include <SDL.h>
 #include <stdio.h>
+#include <signal.h>
 
 int main(int argc, char **argv) {
     printf("Lagrange: A Beautiful Gemini Client\n");
+    signal(SIGPIPE, SIG_IGN);
 #if defined (iPlatformApple)
     enableMomentumScroll_MacOS();
     registerURLHandler_MacOS();

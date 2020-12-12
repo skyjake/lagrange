@@ -48,6 +48,7 @@ struct Impl_Prefs {
     iBool            smoothScrolling;
     iBool            loadImageInsteadOfScrolling;
     /* Network */
+    iBool            decodeUserVisibleURLs;
     iString          geminiProxy;
     iString          gopherProxy;
     iString          httpProxy;
