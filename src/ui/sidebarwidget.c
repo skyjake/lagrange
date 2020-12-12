@@ -240,6 +240,13 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 const iVisitedUrl *visit = i.ptr;
                 iSidebarItem *item = new_SidebarItem();
                 set_String(&item->url, &visit->url);
+                set_String(&item->label, &visit->url);
+                if (prefs_App()->decodeUserVisibleURLs) {
+                    urlDecodePath_String(&item->label);
+                }
+                else {
+                    urlEncodePath_String(&item->label);
+                }
                 iDate date;
                 init_Date(&date, &visit->when);
                 if (date.day != on.day || date.month != on.month || date.year != on.year) {
@@ -1211,7 +1218,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
         }
         else {
             iUrl parts;
-            init_Url(&parts, &d->url);
+            init_Url(&parts, &d->label);
             const iBool isAbout  = equalCase_Rangecc(parts.scheme, "about");
             const iBool isGemini = equalCase_Rangecc(parts.scheme, "gemini");
             draw_Text(font,

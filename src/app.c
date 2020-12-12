@@ -188,6 +188,7 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "zoom.set arg:%d\n", d->prefs.zoomPercent);
     appendFormat_String(str, "smoothscroll arg:%d\n", d->prefs.smoothScrolling);
     appendFormat_String(str, "imageloadscroll arg:%d\n", d->prefs.loadImageInsteadOfScrolling);
+    appendFormat_String(str, "decodeurls arg:%d\n", d->prefs.decodeUserVisibleURLs);
     appendFormat_String(str, "linewidth.set arg:%d\n", d->prefs.lineWidth);
     appendFormat_String(str, "prefs.biglede.changed arg:%d\n", d->prefs.bigFirstParagraph);
     appendFormat_String(str, "prefs.sideicon.changed arg:%d\n", d->prefs.sideIcon);
@@ -836,6 +837,8 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
                          isSelected_Widget(findChild_Widget(d, "prefs.imageloadscroll")));
         postCommandf_App("ostheme arg:%d",
                          isSelected_Widget(findChild_Widget(d, "prefs.ostheme")));
+        postCommandf_App("decodeurls arg:%d",
+                         isSelected_Widget(findChild_Widget(d, "prefs.decodeurls")));
         postCommandf_App("proxy.gemini address:%s",
                          cstr_String(text_InputWidget(findChild_Widget(d, "prefs.proxy.gemini"))));
         postCommandf_App("proxy.gopher address:%s",
@@ -1094,6 +1097,10 @@ iBool handleCommand_App(const char *cmd) {
         d->prefs.smoothScrolling = arg_Command(cmd);
         return iTrue;
     }
+    else if (equal_Command(cmd, "decodeurls")) {
+        d->prefs.decodeUserVisibleURLs = arg_Command(cmd);
+        return iTrue;
+    }
     else if (equal_Command(cmd, "imageloadscroll")) {
         d->prefs.loadImageInsteadOfScrolling = arg_Command(cmd);
         return iTrue;
@@ -1184,7 +1191,7 @@ iBool handleCommand_App(const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "open")) {
-        const iString *url = collectNewCStr_String(suffixPtr_Command(cmd, "url"));
+        iString *url = collectNewCStr_String(suffixPtr_Command(cmd, "url"));
         const iBool noProxy = argLabel_Command(cmd, "noproxy");
         iUrl parts;
         init_Url(&parts, url);
@@ -1214,6 +1221,12 @@ iBool handleCommand_App(const char *cmd) {
         setInitialScroll_DocumentWidget(doc, argfLabel_Command(cmd, "scroll"));
         setRedirectCount_DocumentWidget(doc, redirectCount);
         setFlags_Widget(findWidget_App("document.progress"), hidden_WidgetFlag, iTrue);
+        if (prefs_App()->decodeUserVisibleURLs) {
+            urlDecodePath_String(url);
+        }
+        else {
+            urlEncodePath_String(url);
+        }
         setUrlFromCache_DocumentWidget(doc, url, isHistory);
         /* Optionally, jump to a text in the document. This will only work if the document
            is already available, e.g., it's from "about:" or restored from cache. */
@@ -1332,6 +1345,7 @@ iBool handleCommand_App(const char *cmd) {
                 dlg, format_CStr("prefs.saturation.%d", (int) (d->prefs.saturation * 3.99f))),
             selected_WidgetFlag,
             iTrue);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.decodeurls"), d->prefs.decodeUserVisibleURLs);
         setText_InputWidget(findChild_Widget(dlg, "prefs.proxy.gemini"), &d->prefs.geminiProxy);
         setText_InputWidget(findChild_Widget(dlg, "prefs.proxy.gopher"), &d->prefs.gopherProxy);
         setText_InputWidget(findChild_Widget(dlg, "prefs.proxy.http"), &d->prefs.httpProxy);

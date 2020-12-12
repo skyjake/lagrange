@@ -482,8 +482,6 @@ void deinit_GmRequest(iGmRequest *d) {
     deinit_Gopher(&d->gopher);
     delete_Audience(d->finished);
     delete_Audience(d->updated);
-//    delete_GmResponse(d->respPub);
-//    deinit_GmResponse(&d->respInt);
     delete_GmResponse(d->resp);
     deinit_String(&d->url);
     delete_Mutex(d->mtx);
@@ -494,6 +492,10 @@ void setUrl_GmRequest(iGmRequest *d, const iString *url) {
     /* Encode hostname to Punycode here because we want to submit the Punycode domain name
        in the request. (TODO: Pending possible Gemini spec change.) */
     punyEncodeUrlHost_String(&d->url);
+    /* TODO: Gemini spec allows UTF-8 encoded URLs, but still need to percent-encode non-ASCII
+       characters? Could be a server-side issue, e.g., if they're using a URL parser meant for
+       the web. */
+    urlEncodePath_String(&d->url);
     urlEncodeSpaces_String(&d->url);
 }
 

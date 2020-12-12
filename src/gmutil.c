@@ -151,6 +151,42 @@ static iString *punyDecodeHost_(iRangecc host) {
     return result;
 }
 
+void urlDecodePath_String(iString *d) {
+    iUrl url;
+    init_Url(&url, d);
+    if (isEmpty_Range(&url.path)) {
+        return;
+    }
+    iString *decoded = new_String();
+    appendRange_String(decoded, (iRangecc){ constBegin_String(d), url.path.start });
+    iString *path    = newRange_String(url.path);
+    iString *decPath = urlDecode_String(path);
+    append_String(decoded, decPath);
+    delete_String(decPath);
+    delete_String(path);
+    appendRange_String(decoded, (iRangecc){ url.path.end, constEnd_String(d) });
+    set_String(d, decoded);
+    delete_String(decoded);
+}
+
+void urlEncodePath_String(iString *d) {
+    iUrl url;
+    init_Url(&url, d);
+    if (isEmpty_Range(&url.path)) {
+        return;
+    }
+    iString *encoded = new_String();
+    appendRange_String(encoded , (iRangecc){ constBegin_String(d), url.path.start });
+    iString *path    = newRange_String(url.path);
+    iString *encPath = urlEncodeExclude_String(path, "%/ ");
+    append_String(encoded, encPath);
+    delete_String(encPath);
+    delete_String(path);
+    appendRange_String(encoded, (iRangecc){ url.path.end, constEnd_String(d) });
+    set_String(d, encoded);
+    delete_String(encoded);
+}
+
 const iString *absoluteUrl_String(const iString *d, const iString *urlMaybeRelative) {
     iUrl orig;
     iUrl rel;
