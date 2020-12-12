@@ -505,6 +505,7 @@ void submit_GmRequest(iGmRequest *d) {
     set_Atomic(&d->allowUpdate, iTrue);
     iGmResponse *resp = d->resp;
     clear_GmResponse(resp);
+//    printf("[GmRequest] URL: %s\n", cstr_String(&d->url));
     iUrl url;
     init_Url(&url, &d->url);
     /* Check for special schemes. */

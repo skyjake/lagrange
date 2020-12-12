@@ -132,6 +132,25 @@ static iBool isAbsolutePath_(iRangecc path) {
     return isAbsolute_Path(collect_String(urlDecode_String(collect_String(newRange_String(path)))));
 }
 
+static iString *punyDecodeHost_(iRangecc host) {
+    iString *result = new_String();
+    iRangecc label = iNullRange;
+    while (nextSplit_Rangecc(host, ".", &label)) {
+        if (!isEmpty_String(result)) {
+            appendChar_String(result, '.');
+        }
+        if (startsWithCase_Rangecc(label, "xn--")) {
+            iString *dec = punyDecode_Rangecc((iRangecc){ label.start + 4, label.end });
+            if (!isEmpty_String(dec)) {
+                append_String(result, dec);
+                continue;
+            }
+        }
+        appendRange_String(result, label);
+    }
+    return result;
+}
+
 const iString *absoluteUrl_String(const iString *d, const iString *urlMaybeRelative) {
     iUrl orig;
     iUrl rel;
@@ -152,9 +171,12 @@ const iString *absoluteUrl_String(const iString *d, const iString *urlMaybeRelat
     }
     iString *absolute = collectNew_String();
     appendRange_String(absolute, scheme);
-    appendCStr_String(absolute, "://"); {
+    appendCStr_String(absolute, "://");
+    /* Authority. */ {
         const iUrl *selHost = isDef_(rel.host) ? &rel : &orig;
-        appendRange_String(absolute, selHost->host);
+        iString *decHost = punyDecodeHost_(selHost->host);
+        append_String(absolute, decHost);
+        delete_String(decHost);
         if (!isEmpty_Range(&selHost->port)) {
             appendCStr_String(absolute, ":");
             appendRange_String(absolute, selHost->port);
@@ -204,23 +226,26 @@ void punyEncodeUrlHost_String(iString *d) {
     /* `d` should be an absolute URL. */
     iUrl url;
     init_Url(&url, d);
+    if (isEmpty_Range(&url.host)) {
+        return;
+    }
     iString *encoded = new_String();
     setRange_String(encoded, (iRangecc){ url.scheme.start, url.host.start });
-    /* The domain name needs to be split into segments. */ {
-        iRangecc seg     = iNullRange;
+    /* The domain name needs to be split into labels. */ {
+        iRangecc label   = iNullRange;
         iBool    isFirst = iTrue;
-        while (nextSplit_Rangecc(url.host, ".", &seg)) {
+        while (nextSplit_Rangecc(url.host, ".", &label)) {
             if (!isFirst) {
                 appendChar_String(encoded, '.');
             }
             isFirst = iFalse;
-            iString *puny = punyEncode_Rangecc(seg);
-            if (!isEmpty_String(puny) && !equalPuny_(puny, seg)) {
+            iString *puny = punyEncode_Rangecc(label);
+            if (!isEmpty_String(puny) && !equalPuny_(puny, label)) {
                 appendCStr_String(encoded, "xn--");
                 append_String(encoded, puny);
             }
             else {
-                appendRange_String(encoded, seg);
+                appendRange_String(encoded, label);
             }
             delete_String(puny);
         }

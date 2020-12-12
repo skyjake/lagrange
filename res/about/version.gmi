@@ -7,7 +7,7 @@
 # Release notes
 
 ## 0.13
-* Support for Internationalized Domain Names (IDN) in Gemini requests.
+* Support for Internationalized Domain Names (IDN) in network requests.
 * Quick search via URL bar shows entries from subscribed feeds.
 * Added keybindings for zooming.
 * Improved usability of page content searching (${CTRL+}F, Escape).
