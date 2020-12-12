@@ -98,7 +98,7 @@ void init_InputWidget(iInputWidget *d, size_t maxLen) {
     init_Array(&d->oldText, sizeof(iChar));
     init_String(&d->hint);
     init_Array(&d->undoStack, sizeof(iInputUndo));
-    d->font             = uiInput_FontId;
+    d->font             = uiInput_FontId | alwaysVariableFlag_FontId;
     d->cursor           = 0;
     d->lastCursor       = 0;
     d->inFlags          = eatEscape_InputWidgetFlag;
@@ -789,11 +789,13 @@ static void draw_InputWidget_(const iInputWidget *d) {
         else {
             initCStr_String(&cur, " ");
         }
+        /* The `gap_UI` offsets below are a hack. They are used because for some reason the
+           cursor rect and the glyph inside don't quite position like during `run_Text_()`. */
         const iInt2 prefixSize = advanceN_Text(d->font, cstr_String(text), d->cursor);
         const iInt2 curPos     = addX_I2(textOrigin, prefixSize.x);
-        const iRect curRect    = { curPos, addX_I2(advance_Text(d->font, cstr_String(&cur)), 1) };
+        const iRect curRect    = { curPos, addX_I2(advance_Text(d->font, cstr_String(&cur)), iMin(2, gap_UI / 4)) };
         fillRect_Paint(&p, curRect, uiInputCursor_ColorId);
-        draw_Text(d->font, curPos, uiInputCursorText_ColorId, "%s", cstr_String(&cur));
+        draw_Text(d->font, addX_I2(curPos, iMin(1, gap_UI / 8)), uiInputCursorText_ColorId, "%s", cstr_String(&cur));
         deinit_String(&cur);
     }
     delete_String(text);

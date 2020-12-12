@@ -91,6 +91,8 @@ enum iFontId {
 
     /* Meta: */
     fromSymbolsToEmojiOffset_FontId = 10,
+    mask_FontId                     = 0xffff,
+    alwaysVariableFlag_FontId       = 0x10000,
 
     /* UI fonts: */
     uiLabel_FontId          = default_FontId,

@@ -426,7 +426,7 @@ void resetFonts_Text(void) {
 }
 
 iLocalDef iFont *font_Text_(enum iFontId id) {
-    return &text_.fonts[id];
+    return &text_.fonts[id & mask_FontId];
 }
 
 static void freeBmp_(void *ptr) {
@@ -582,11 +582,14 @@ static const iGlyph *glyph_Font_(iFont *d, iChar ch) {
 }
 
 enum iRunMode {
-    measure_RunMode,
-    measureNoWrap_RunMode,
-    measureVisual_RunMode, /* actual visible bounding box of the glyph, e.g., for icons */
-    draw_RunMode,
-    drawPermanentColor_RunMode
+    measure_RunMode    = 0,
+    draw_RunMode       = 1,
+    modeMask_RunMode   = 0x00ff,
+    flagsMask_RunMode  = 0xff00,
+    noWrapFlag_RunMode = iBit(9),
+    visualFlag_RunMode = iBit(10), /* actual visible bounding box of the glyph, e.g., for icons */
+    permanentColorFlag_RunMode      = iBit(11),
+    alwaysVariableWidthFlag_RunMode = iBit(12),
 };
 
 static iChar nextChar_(const char **chPos, const char *end) {
@@ -625,8 +628,7 @@ iLocalDef iBool isWrapBoundary_(iChar prevC, iChar c) {
 }
 
 iLocalDef iBool isMeasuring_(enum iRunMode mode) {
-    return mode == measure_RunMode || mode == measureNoWrap_RunMode ||
-           mode == measureVisual_RunMode;
+    return (mode & modeMask_RunMode) == measure_RunMode;
 }
 
 static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLen, iInt2 pos,
@@ -642,7 +644,8 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
         *continueFrom_out = text.end;
     }
     iChar prevCh = 0;
-    if (d->isMonospaced) {
+    const iBool isMonospaced = d->isMonospaced && !(mode & alwaysVariableWidthFlag_RunMode);
+    if (isMonospaced) {
         monoAdvance = glyph_Font_(d, 'M')->advance;
     }
     for (const char *chPos = text.start; chPos != text.end; ) {
@@ -654,7 +657,7 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
             iRegExpMatch m;
             init_RegExpMatch(&m);
             if (match_RegExp(text_.ansiEscape, chPos, text.end - chPos, &m)) {
-                if (mode == draw_RunMode) {
+                if (mode & draw_RunMode) {
                     /* Change the color. */
                     const iColor clr =
                         ansiForeground_Color(capturedRange_RegExpMatch(&m, 1), tmParagraph_ColorId);
@@ -713,7 +716,7 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
             }
             if (ch == '\r') {
                 const iChar esc = nextChar_(&chPos, text.end);
-                if (mode == draw_RunMode) {
+                if (mode & draw_RunMode) {
                     const iColor clr = get_Color(esc - asciiBase_ColorEscape);
                     SDL_SetTextureColorMod(text_.cache, clr.r, clr.g, clr.b);
                 }
@@ -743,8 +746,14 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
                          pos.y + glyph->font->baseline + glyph->d[hoff].y,
                          glyph->rect[hoff].size.x,
                          glyph->rect[hoff].size.y };
+        if (glyph->font != d) {
+            if (glyph->font->height > d->height) {
+                /* Center-align vertically so the baseline isn't totally offset. */
+                dst.y -= (glyph->font->height - d->height) / 2;
+            }
+        }
         /* Update the bounding box. */
-        if (mode == measureVisual_RunMode) {
+        if (mode & visualFlag_RunMode) {
             if (isEmpty_Rect(bounds)) {
                 bounds = init_Rect(dst.x, dst.y, dst.w, dst.h);
             }
@@ -779,12 +788,12 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
            is monospaced. Except with Japanese script, that's larger than the normal monospace. */
         xpos += advance;
         xposMax = iMax(xposMax, xpos);
-        if (continueFrom_out && (mode == measureNoWrap_RunMode || isWrapBoundary_(prevCh, ch))) {
+        if (continueFrom_out && ((mode & noWrapFlag_RunMode) || isWrapBoundary_(prevCh, ch))) {
             lastWordEnd = chPos;
         }
 #if defined (LAGRANGE_ENABLE_KERNING)
         /* Check the next character. */
-        if (!d->isMonospaced && glyph->font == d) {
+        if (!isMonospaced && glyph->font == d) {
             /* TODO: No need to decode the next char twice; check this on the next iteration. */
             const char *peek = chPos;
             const iChar next = nextChar_(&peek, text.end);
@@ -805,14 +814,14 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
 }
 
 int lineHeight_Text(int fontId) {
-    return text_.fonts[fontId].height;
+    return font_Text_(fontId)->height;
 }
 
 iInt2 measureRange_Text(int fontId, iRangecc text) {
     if (isEmpty_Range(&text)) {
         return init_I2(0, lineHeight_Text(fontId));
     }
-    return run_Font_(&text_.fonts[fontId],
+    return run_Font_(font_Text_(fontId),
                      measure_RunMode,
                      text,
                      iInvalidSize,
@@ -823,18 +832,32 @@ iInt2 measureRange_Text(int fontId, iRangecc text) {
 }
 
 iRect visualBounds_Text(int fontId, iRangecc text) {
-    return run_Font_(
-        font_Text_(fontId), measureVisual_RunMode, text, iInvalidSize, zero_I2(), 0, NULL, NULL);
+    return run_Font_(font_Text_(fontId),
+                     measure_RunMode | visualFlag_RunMode,
+                     text,
+                     iInvalidSize,
+                     zero_I2(),
+                     0,
+                     NULL,
+                     NULL);
 }
 
 iInt2 measure_Text(int fontId, const char *text) {
     return measureRange_Text(fontId, range_CStr(text));
 }
 
+static int runFlagsFromId_(enum iFontId fontId) {
+    int runFlags = 0;
+    if (fontId & alwaysVariableFlag_FontId) {
+        runFlags |= alwaysVariableWidthFlag_RunMode;
+    }
+    return runFlags;
+}
+
 iInt2 advanceRange_Text(int fontId, iRangecc text) {
     int advance;
-    const int height = run_Font_(&text_.fonts[fontId],
-                                 measure_RunMode,
+    const int height = run_Font_(font_Text_(fontId),
+                                 measure_RunMode | runFlagsFromId_(fontId),
                                  text,
                                  iInvalidSize,
                                  zero_I2(),
@@ -847,8 +870,8 @@ iInt2 advanceRange_Text(int fontId, iRangecc text) {
 
 iInt2 tryAdvance_Text(int fontId, iRangecc text, int width, const char **endPos) {
     int advance;
-    const int height = run_Font_(&text_.fonts[fontId],
-                                 measure_RunMode,
+    const int height = run_Font_(font_Text_(fontId),
+                                 measure_RunMode | runFlagsFromId_(fontId),
                                  text,
                                  iInvalidSize,
                                  zero_I2(),
@@ -861,8 +884,8 @@ iInt2 tryAdvance_Text(int fontId, iRangecc text, int width, const char **endPos)
 
 iInt2 tryAdvanceNoWrap_Text(int fontId, iRangecc text, int width, const char **endPos) {
     int advance;
-    const int height = run_Font_(&text_.fonts[fontId],
-                                 measureNoWrap_RunMode,
+    const int height = run_Font_(font_Text_(fontId),
+                                 measure_RunMode | noWrapFlag_RunMode | runFlagsFromId_(fontId),
                                  text,
                                  iInvalidSize,
                                  zero_I2(),
@@ -882,8 +905,14 @@ iInt2 advanceN_Text(int fontId, const char *text, size_t n) {
         return init_I2(0, lineHeight_Text(fontId));
     }
     int advance;
-    run_Font_(
-        &text_.fonts[fontId], measure_RunMode, range_CStr(text), n, zero_I2(), 0, NULL, &advance);
+    run_Font_(font_Text_(fontId),
+              measure_RunMode | runFlagsFromId_(fontId),
+              range_CStr(text),
+              n,
+              zero_I2(),
+              0,
+              NULL,
+              &advance);
     return init_I2(advance, lineHeight_Text(fontId));
 }
 
@@ -891,8 +920,9 @@ static void draw_Text_(int fontId, iInt2 pos, int color, iRangecc text) {
     iText *d = &text_;
     const iColor clr = get_Color(color & mask_ColorId);
     SDL_SetTextureColorMod(d->cache, clr.r, clr.g, clr.b);
-    run_Font_(&d->fonts[fontId],
-              color & permanent_ColorId ? drawPermanentColor_RunMode : draw_RunMode,
+    run_Font_(font_Text_(fontId),
+              draw_RunMode | (color & permanent_ColorId ? permanentColorFlag_RunMode : 0) |
+                  runFlagsFromId_(fontId),
               text,
               iInvalidSize,
               pos,
