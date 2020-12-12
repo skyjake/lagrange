@@ -61,7 +61,7 @@ set (EMBED_RESOURCES
     res/fonts/Tinos-Regular.ttf
     res/fonts/Tinos-Italic.ttf
     res/fonts/Tinos-Bold.ttf
-    res/fonts/FiraMono-Regular.ttf
+    res/fonts/IosevkaTerm-Extended.ttf
     res/fonts/FiraSans-Bold.ttf
     res/fonts/FiraSans-Italic.ttf
     res/fonts/FiraSans-Light.ttf

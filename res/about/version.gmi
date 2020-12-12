@@ -8,9 +8,9 @@
 
 ## 0.13
 * Support for Internationalized Domain Names (IDN) in network requests.
-* IDNs show up in decoded form in the UI.
+* UI shows decoded IDNs.
 * Percent-encoded Unicode characters in URL paths are decoded for the UI, and encoded in outgoing requests.
-* Added option to disable decoding of percent-encoded paths.
+* Added option to disable decoding of percent-encoded paths for the UI.
 * Quick search via URL bar shows entries from subscribed feeds.
 * Added keybindings for zooming.
 * Improved usability of page content searching (${CTRL+}F, Escape).
@@ -19,6 +19,7 @@
 * Fixed handling of Unicode joiners and modifiers (by ignoring them, since we lack the glyphs).
 * Fixed a layout issue with sidebars where the bottommost content line was occasionally not visible.
 * Fixed exit when a hook program didn't read its input.
+* Fixed use of variable-width fonts in input fields.
 * Fixed crash when using an identity (with LibreSSL on OpenBSD).
 
 ## 0.12.1

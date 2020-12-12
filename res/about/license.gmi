@@ -100,7 +100,8 @@ The libunistring library is covered by the GNU Lesser General Public License (LG
 
 This application uses fonts licensed under the Open Font License.
 
-=> https://github.com/mozilla/Fira/blob/master/LICENSE  Fira Sans, Fira Mono
+=> https://github.com/mozilla/Fira/blob/master/LICENSE  Fira Sans
+=> https://typeof.net/Iosevka/  Iosevka
 => https://github.com/googlefonts/literata/blob/master/OFL.txt  Literata
 => https://github.com/google/fonts/blob/master/ofl/nanumgothic/OFL.txt  Nanum Gothic
 => https://www.google.com/get/noto/help/cjk/  Noto Sans CJK JP

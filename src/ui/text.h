@@ -127,7 +127,8 @@ iLocalDef iBool isDefaultIgnorable_Char(iChar c) {
            c == 0xfeff;
 }
 iLocalDef iBool isEmoji_Char(iChar c) {
-    return (c >= 0x1f300 && c < 0x1f700) || (c >= 0x1f900 && c <= 0x1f9ff);
+    return (c >= 0x1f300 && c < 0x1f700) || (c >= 0x1f7e0 && c <= 0x1f7eb) ||
+           (c >= 0x1f900 && c <= 0x1f9ff);
 }
 
 #define emojiVariationSelector_Char     ((iChar) 0xfe0f)
@@ -141,21 +142,21 @@ enum iTextFont {
 
 extern int gap_Text; /* affected by content font size */
 
-void    init_Text           (SDL_Renderer *);
-void    deinit_Text         (void);
+void    init_Text               (SDL_Renderer *);
+void    deinit_Text             (void);
 
 void    setContentFont_Text     (enum iTextFont font);
 void    setHeadingFont_Text     (enum iTextFont font);
 void    setContentFontSize_Text (float fontSizeFactor); /* affects all except `default*` fonts */
 void    resetFonts_Text         (void);
 
-int     lineHeight_Text     (int fontId);
-iInt2   measure_Text        (int fontId, const char *text);
-iInt2   measureRange_Text   (int fontId, iRangecc text);
-iRect   visualBounds_Text   (int fontId, iRangecc text);
-iInt2   advance_Text        (int fontId, const char *text);
-iInt2   advanceN_Text       (int fontId, const char *text, size_t n); /* `n` in characters */
-iInt2   advanceRange_Text   (int fontId, iRangecc text);
+int     lineHeight_Text         (int fontId);
+iInt2   measure_Text            (int fontId, const char *text);
+iInt2   measureRange_Text       (int fontId, iRangecc text);
+iRect   visualBounds_Text       (int fontId, iRangecc text);
+iInt2   advance_Text            (int fontId, const char *text);
+iInt2   advanceN_Text           (int fontId, const char *text, size_t n); /* `n` in characters */
+iInt2   advanceRange_Text       (int fontId, iRangecc text);
 iInt2   advanceWrapRange_Text   (int fontId, int maxWidth, iRangecc text);
 
 iInt2   tryAdvance_Text         (int fontId, iRangecc text, int width, const char **endPos);

@@ -120,10 +120,10 @@ static void init_Font(iFont *d, const iBlock *data, int height, float scale,
             d->xScale *= floorf(advance) / advance;
         }
     }
-    d->vertOffset = height * (1.0f - scale) / 2;
+    d->vertOffset = height * (1.0f - scale) / 2;    
     int ascent;
     stbtt_GetFontVMetrics(&d->font, &ascent, NULL, NULL);
-    d->baseline     = ceil(ascent * d->yScale);
+    d->baseline     = /*ceil*/(ascent * d->yScale);
     d->symbolsFont  = symbolsFont;
     d->japaneseFont = regularJapanese_FontId;
     d->koreanFont   = regularKorean_FontId;
@@ -176,8 +176,8 @@ static iText text_;
 
 static void initFonts_Text_(iText *d) {
     const float textSize = fontSize_UI * d->contentFontSize;
-    const float monoSize = fontSize_UI * d->contentFontSize / contentScale_Text_ * 0.866f;
-    const float smallMonoSize = monoSize * 0.866f;
+    const float monoSize = textSize * 0.71f; //fontSize_UI * d->contentFontSize / contentScale_Text_ * 1.0f; //0.866f;
+    const float smallMonoSize = monoSize * 0.8f;
     const iBlock *regularFont  = &fontNunitoRegular_Embedded;
     const iBlock *italicFont   = &fontNunitoLightItalic_Embedded;
     const iBlock *h12Font      = &fontNunitoExtraBold_Embedded;
@@ -226,12 +226,12 @@ static void initFonts_Text_(iText *d) {
         { &fontSourceSansProRegular_Embedded, fontSize_UI,          1.0f, defaultSymbols_FontId },
         { &fontSourceSansProRegular_Embedded, fontSize_UI * 1.125f, 1.0f, defaultMediumSymbols_FontId },
         { &fontSourceSansProRegular_Embedded, fontSize_UI * 1.666f, 1.0f, defaultLargeSymbols_FontId },
-        { &fontFiraMonoRegular_Embedded,      fontSize_UI * 0.866f, 1.0f, defaultSymbols_FontId },
+        { &fontIosevkaTermExtended_Embedded,  fontSize_UI * 0.866f, 1.0f, defaultSymbols_FontId },
         { &fontSourceSansProRegular_Embedded, textSize,             scaling, symbols_FontId },
         /* content fonts */
         { regularFont,                        textSize,             scaling,      symbols_FontId },
-        { &fontFiraMonoRegular_Embedded,      monoSize,             1.0f,         monospaceSymbols_FontId },
-        { &fontFiraMonoRegular_Embedded,      smallMonoSize,        1.0f,         monospaceSmallSymbols_FontId },
+        { &fontIosevkaTermExtended_Embedded,  monoSize,             1.0f,         monospaceSymbols_FontId },
+        { &fontIosevkaTermExtended_Embedded,  smallMonoSize,        1.0f,         monospaceSmallSymbols_FontId },
         { regularFont,                        textSize * 1.200f,    scaling,      mediumSymbols_FontId },
         { h3Font,                             textSize * 1.333f,    h123Scaling,  bigSymbols_FontId },
         { italicFont,                         textSize,             scaling,      symbols_FontId },
@@ -239,7 +239,7 @@ static void initFonts_Text_(iText *d) {
         { h12Font,                            textSize * 2.000f,    h123Scaling,  hugeSymbols_FontId },
         { lightFont,                          textSize * 1.666f,    lightScaling, largeSymbols_FontId },
         /* monospace content fonts */
-        { &fontFiraMonoRegular_Embedded,      textSize,             0.8f, symbols_FontId },
+        { &fontIosevkaTermExtended_Embedded,  textSize,             0.866f, symbols_FontId },
         /* symbol fonts */
         { &fontSymbola_Embedded,              fontSize_UI,          1.0f, defaultSymbols_FontId },
         { &fontSymbola_Embedded,              fontSize_UI * 1.125f, 1.0f, defaultMediumSymbols_FontId },
@@ -288,7 +288,7 @@ static void initFonts_Text_(iText *d) {
                   fontData[i].size,
                   fontData[i].scaling,
                   fontData[i].symbolsFont,
-                  fontData[i].ttf == &fontFiraMonoRegular_Embedded);
+                  fontData[i].ttf == &fontIosevkaTermExtended_Embedded);
         if (i == default_FontId || i == defaultMedium_FontId) {
             font->manualKernOnly = iTrue;
         }
@@ -636,6 +636,7 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
     iRect bounds = zero_Rect();
     const iInt2 orig = pos;
     float xpos = pos.x;
+    float xposExtend = pos.x; /* allows wide glyphs to use more space; restored by whitespace */
     float xposMax = xpos;
     float monoAdvance = 0;
     iAssert(xposLimit == 0 || isMeasuring_(mode));
@@ -668,6 +669,7 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
             }
         }
         iChar ch = nextChar_(&chPos, text.end);
+        iBool isEmoji = isEmoji_Char(ch);
         if (ch == 0x200d) { /* zero-width joiner */
             /* We don't have the composited Emojis. */
             if (isEmoji_Char(prevCh)) {
@@ -676,9 +678,19 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
                 ch = nextChar_(&chPos, text.end);
             }
         }
+#if 0
+        iChar nextCh = 0; {
+            /* TODO: Since we're peeking ahead, should use this on the next loop iteration. */
+            const char *ncp = chPos;
+            nextCh = nextChar_(&ncp, text.end);
+        }
+        /* VS15: Peek ahead and treat as Emoji font. */
+        if (nextCh == emojiVariationSelector_Char) {
+            isEmoji = iTrue;
+        }
+#endif
         if (isVariationSelector_Char(ch)) {
-            /* TODO: VS15: Should peek ahead for this and prefer the Emoji font. */
-            ch = nextChar_(&chPos, text.end); /* just ignore */
+            ch = nextChar_(&chPos, text.end); /* skip it */
         }
         /* Special instructions. */ {
             if (ch == 0xad) { /* soft hyphen */
@@ -703,7 +715,7 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
                 }
             }
             if (ch == '\n') {
-                xpos = pos.x;
+                xpos = xposExtend = pos.x;
                 pos.y += d->height;
                 prevCh = ch;
                 continue;
@@ -711,6 +723,7 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
             if (ch == '\t') {
                 const int tabStopWidth = d->height * 8;
                 xpos = pos.x + ((int) ((xpos - pos.x) / tabStopWidth) + 1) * tabStopWidth;
+                xposExtend = iMax(xposExtend, xpos);
                 prevCh = 0;
                 continue;
             }
@@ -728,7 +741,7 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
             }
         }
         const iGlyph *glyph = glyph_Font_(d, ch);
-        int x1 = xpos;
+        int x1 = iMax(xpos, xposExtend);
         const int hoff = enableHalfPixelGlyphs_Text ? (xpos - x1 > 0.5f ? 1 : 0) : 0;
         int x2 = x1 + glyph->rect[hoff].size.x;
         /* Out of the allotted space? */
@@ -765,11 +778,13 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
             bounds.size.x = iMax(bounds.size.x, x2 - orig.x);
             bounds.size.y = iMax(bounds.size.y, pos.y + glyph->font->height - orig.y);
         }
+        /* Symbols and emojis are NOT monospaced, so must conform when the primary font
+           is monospaced. Except with Japanese script, that's larger than the normal monospace. */
         const iBool useMonoAdvance =
             monoAdvance > 0 && !isJapanese_FontId(fontId_Text_(glyph->font));
         const float advance = (useMonoAdvance ? monoAdvance : glyph->advance);
         if (!isMeasuring_(mode)) {
-            if (useMonoAdvance && dst.w > advance && glyph->font != d) {
+            if (useMonoAdvance && dst.w > advance && glyph->font != d && !isEmoji) {
                 /* Glyphs from a different font may need recentering to look better. */
                 dst.x -= (dst.w - advance) / 2;
             }
@@ -784,10 +799,12 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
             }
             SDL_RenderCopy(text_.render, text_.cache, &src, &dst);
         }
-        /* Symbols and emojis are NOT monospaced, so must conform when the primary font
-           is monospaced. Except with Japanese script, that's larger than the normal monospace. */
         xpos += advance;
-        xposMax = iMax(xposMax, xpos);
+        if (!isSpace_Char(ch)) {
+            xposExtend += isEmoji ? glyph->advance : advance;
+        }
+        xposExtend = iMax(xposExtend, xpos);
+        xposMax    = iMax(xposMax, xposExtend);
         if (continueFrom_out && ((mode & noWrapFlag_RunMode) || isWrapBoundary_(prevCh, ch))) {
             lastWordEnd = chPos;
         }
