@@ -239,7 +239,7 @@ static void initFonts_Text_(iText *d) {
         { h12Font,                            textSize * 2.000f,    h123Scaling,  hugeSymbols_FontId },
         { lightFont,                          textSize * 1.666f,    lightScaling, largeSymbols_FontId },
         /* monospace content fonts */
-        { &fontIosevkaTermExtended_Embedded,  textSize,             0.866f, symbols_FontId },
+        { &fontIosevkaTermExtended_Embedded,  textSize,             0.75f, symbols_FontId },
         /* symbol fonts */
         { &fontSymbola_Embedded,              fontSize_UI,          1.0f, defaultSymbols_FontId },
         { &fontSymbola_Embedded,              fontSize_UI * 1.125f, 1.0f, defaultMediumSymbols_FontId },
