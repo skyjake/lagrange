@@ -264,7 +264,7 @@ Other style options:
 
 ## 2.5 Proxies
 
-Gemini allows relaying requests via a proxy server. On the "Proxies" tab, you can configure proxy servers for Gemini, Gopher, and HTTP/HTTPS requests.
+Gemini allows relaying requests via a proxy server. On the "Network" tab, you can configure proxy servers for Gemini, Gopher, and HTTP/HTTPS requests.
 
 When an HTTP proxy server is configured, HTTP/HTTPS links will no longer open in the system's default web browser but will be loaded via the proxy, expecting it to serve a 'text/gemini' version of the link contents.
 
