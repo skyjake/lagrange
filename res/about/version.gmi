@@ -6,6 +6,9 @@
 ```
 # Release notes
 
+## 0.13.2
+* Fixed incorrect text colors in the UI (e.g., selected lookup result).
+
 ## 0.13.1
 * Fixed build failure on Linux.
 
