@@ -367,40 +367,86 @@ void enableMenu_MacOS(const char *menuLabel, iBool enable) {
     [label release];
 }
 
-static void setShortcut_NSMenuItem_(NSMenuItem *item, int key, int kmods) {
-    iString str;
-    init_String(&str);
+void enableMenuItem_MacOS(const char *menuItemCommand, iBool enable) {
+    NSApplication *app = [NSApplication sharedApplication];
+    NSMenu *appMenu = [app mainMenu];
+    MyDelegate *myDel = (MyDelegate *) app.delegate;
+    for (NSMenuItem *mainMenuItem in appMenu.itemArray) {
+        NSMenu *menu = mainMenuItem.submenu;
+        if (menu) {
+            for (NSMenuItem *menuItem in menu.itemArray) {
+                NSString *command = [myDel commandForItem:menuItem];
+                if (command) {
+                    if (!iCmpStr([command cStringUsingEncoding:NSUTF8StringEncoding],
+                                 menuItemCommand)) {
+                        [menuItem setEnabled:enable];
+                        return;
+                    }
+                }
+            }
+        }
+    }
+}
+
+static iString *composeKeyEquivalent_(int key, int kmods, NSEventModifierFlags *modMask) {
+    iString *str = new_String();
     if (key == SDLK_LEFT) {
-        appendChar_String(&str, 0x2190);
+        appendChar_String(str, 0x2190);
     }
     else if (key == SDLK_RIGHT) {
-        appendChar_String(&str, 0x2192);
+        appendChar_String(str, 0x2192);
     }
     else if (key == SDLK_UP) {
-        appendChar_String(&str, 0x2191);
+        appendChar_String(str, 0x2191);
     }
     else if (key == SDLK_DOWN) {
-        appendChar_String(&str, 0x2193);
+        appendChar_String(str, 0x2193);
     }
     else if (key) {
-        appendChar_String(&str, key);
+        appendChar_String(str, key);
     }
-    NSEventModifierFlags modMask = 0;
+    *modMask = 0;
     if (kmods & KMOD_GUI) {
-        modMask |= NSEventModifierFlagCommand;
+        *modMask |= NSEventModifierFlagCommand;
     }
     if (kmods & KMOD_ALT) {
-        modMask |= NSEventModifierFlagOption;
+        *modMask |= NSEventModifierFlagOption;
     }
     if (kmods & KMOD_CTRL) {
-        modMask |= NSEventModifierFlagControl;
+        *modMask |= NSEventModifierFlagControl;
     }
     if (kmods & KMOD_SHIFT) {
-        modMask |= NSEventModifierFlagShift;
+        *modMask |= NSEventModifierFlagShift;
     }
+    return str;
+}
+
+void enableMenuItemsByKey_MacOS(int key, int kmods, iBool enable) {
+    NSApplication *app = [NSApplication sharedApplication];
+    NSMenu *appMenu = [app mainMenu];
+    NSEventModifierFlags modMask;
+    iString *keyEquiv = composeKeyEquivalent_(key, kmods, &modMask);
+    for (NSMenuItem *mainMenuItem in appMenu.itemArray) {
+        NSMenu *menu = mainMenuItem.submenu;
+        if (menu) {
+            for (NSMenuItem *menuItem in menu.itemArray) {
+                if (menuItem.keyEquivalentModifierMask == modMask &&
+                    !iCmpStr([menuItem.keyEquivalent cStringUsingEncoding:NSUTF8StringEncoding],
+                             cstr_String(keyEquiv))) {
+                    [menuItem setEnabled:enable];
+                }
+            }
+        }
+    }
+    delete_String(keyEquiv);
+}
+
+static void setShortcut_NSMenuItem_(NSMenuItem *item, int key, int kmods) {
+    NSEventModifierFlags modMask;
+    iString *str = composeKeyEquivalent_(key, kmods, &modMask);
     [item setKeyEquivalentModifierMask:modMask];
-    [item setKeyEquivalent:[NSString stringWithUTF8String:cstr_String(&str)]];
-    deinit_String(&str);
+    [item setKeyEquivalent:[NSString stringWithUTF8String:cstr_String(str)]];
+    delete_String(str);
 }
 
 void insertMenuItems_MacOS(const char *menuLabel, int atIndex, const iMenuItem *items, size_t count) {
@@ -412,6 +458,7 @@ void insertMenuItems_MacOS(const char *menuLabel, int atIndex, const iMenuItem *
                                           keyEquivalent:@""
                                                 atIndex:atIndex];
     NSMenu *menu = [[NSMenu alloc] initWithTitle:[NSString stringWithUTF8String:menuLabel]];
+    [menu setAutoenablesItems:NO];
     for (size_t i = 0; i < count; ++i) {
         const char *label = items[i].label;
         if (label[0] == '\r') {

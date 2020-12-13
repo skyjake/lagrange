@@ -30,8 +30,21 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <SDL_clipboard.h>
 #include <SDL_timer.h>
 
+#if defined (iPlatformApple)
+#   include "macos.h"
+#endif
+
 static const int    refreshInterval_InputWidget_ = 256;
 static const size_t maxUndo_InputWidget_         = 64;
+
+static void enableEditorKeysInMenus_(iBool enable) {
+#if defined (iPlatformApple)
+    enableMenuItemsByKey_MacOS(SDLK_LEFT, KMOD_PRIMARY, enable);
+    enableMenuItemsByKey_MacOS(SDLK_RIGHT, KMOD_PRIMARY, enable);
+#else
+    iUnused(enable);
+#endif
+}
 
 iDeclareType(InputUndo)
 
@@ -114,6 +127,9 @@ void init_InputWidget(iInputWidget *d, size_t maxLen) {
 }
 
 void deinit_InputWidget(iInputWidget *d) {
+    if (isSelected_Widget(d)) {
+        enableEditorKeysInMenus_(iTrue);
+    }
     delete_TextBuf(d->buffered);
     clearUndo_InputWidget_(d);
     deinit_Array(&d->undoStack);
@@ -279,6 +295,7 @@ void begin_InputWidget(iInputWidget *d) {
     else {
         iZap(d->mark);
     }
+    enableEditorKeysInMenus_(iFalse);
 }
 
 void end_InputWidget(iInputWidget *d, iBool accept) {
@@ -287,6 +304,7 @@ void end_InputWidget(iInputWidget *d, iBool accept) {
         /* Was not active. */
         return;
     }
+    enableEditorKeysInMenus_(iTrue);
     if (!accept) {
         setCopy_Array(&d->text, &d->oldText);
     }
