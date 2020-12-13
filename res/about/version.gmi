@@ -8,6 +8,7 @@
 
 ## 0.13.2
 * Fixed incorrect text colors in the UI (e.g., selected lookup result).
+* macOS: Disable ⌘← and ⌘→ in menu shortcuts when editing text.
 
 ## 0.13.1
 * Fixed build failure on Linux.
