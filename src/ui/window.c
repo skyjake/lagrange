@@ -193,7 +193,15 @@ static const iMenuItem identityButtonMenuItems_[] = {
 };
 
 static const char *reloadCStr_ = "\U0001f503";
+
+/* TODO: A preference for these, maybe? */
 static const char *stopSeqCStr_[] = {
+    /* Corners */
+    uiTextCaution_ColorEscape "\U0000230c",
+    uiTextCaution_ColorEscape "\U0000230d",
+    uiTextCaution_ColorEscape "\U0000230f",
+    uiTextCaution_ColorEscape "\U0000230e",
+#if 0
     /* Rotating arrow */
     uiTextCaution_ColorEscape "\U00002b62",
     uiTextCaution_ColorEscape "\U00002b68",
@@ -203,6 +211,7 @@ static const char *stopSeqCStr_[] = {
     uiTextCaution_ColorEscape "\U00002b66",
     uiTextCaution_ColorEscape "\U00002b61",
     uiTextCaution_ColorEscape "\U00002b67",
+#endif
 #if 0
     /* Star */
     uiTextCaution_ColorEscape "\u2bcc",
@@ -280,7 +289,7 @@ static void updateNavBarIdentity_(iWidget *navBar) {
     setFlags_Widget(as_Widget(idItem), disabled_WidgetFlag, !ident);
 }
 
-static const int loadAnimIntervalMs_ = 266;
+static const int loadAnimIntervalMs_ = 133;
 static int       loadAnimIndex_      = 0;
 
 static const char *loadAnimationCStr_(void) {
