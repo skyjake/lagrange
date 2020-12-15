@@ -194,6 +194,44 @@ static const iMenuItem identityButtonMenuItems_[] = {
 
 static const char *reloadCStr_ = "\U0001f503";
 static const char *stopSeqCStr_[] = {
+    /* Rotating arrow */
+    uiTextCaution_ColorEscape "\U00002b62",
+    uiTextCaution_ColorEscape "\U00002b68",
+    uiTextCaution_ColorEscape "\U00002b63",
+    uiTextCaution_ColorEscape "\U00002b69",
+    uiTextCaution_ColorEscape "\U00002b60",
+    uiTextCaution_ColorEscape "\U00002b66",
+    uiTextCaution_ColorEscape "\U00002b61",
+    uiTextCaution_ColorEscape "\U00002b67",
+#if 0
+    /* Star */
+    uiTextCaution_ColorEscape "\u2bcc",
+    uiTextCaution_ColorEscape "\u2bcd",
+    uiTextCaution_ColorEscape "\u2bcc",
+    uiTextCaution_ColorEscape "\u2bcd",
+    uiTextCaution_ColorEscape "\u2bcc",
+    uiTextCaution_ColorEscape "\u2bcd",
+    uiTextCaution_ColorEscape "\u2bce",
+    uiTextCaution_ColorEscape "\u2bcf",
+    uiTextCaution_ColorEscape "\u2bce",
+    uiTextCaution_ColorEscape "\u2bcf",
+    uiTextCaution_ColorEscape "\u2bce",
+    uiTextCaution_ColorEscape "\u2bcf",
+#endif
+#if 0
+    /* Pulsing circle */
+    uiTextCaution_ColorEscape "\U0001f785",
+    uiTextCaution_ColorEscape "\U0001f786",
+    uiTextCaution_ColorEscape "\U0001f787",
+    uiTextCaution_ColorEscape "\U0001f788",
+    uiTextCaution_ColorEscape "\U0001f789",
+    uiTextCaution_ColorEscape "\U0001f789",
+    uiTextCaution_ColorEscape "\U0001f788",
+    uiTextCaution_ColorEscape "\U0001f787",
+    uiTextCaution_ColorEscape "\U0001f786",
+#endif
+#if 0
+    /* Dancing dots */
     uiTextCaution_ColorEscape "\U0001fb00",
     uiTextCaution_ColorEscape "\U0001fb01",
     uiTextCaution_ColorEscape "\U0001fb07",
@@ -224,6 +262,7 @@ static const char *stopSeqCStr_[] = {
     uiTextCaution_ColorEscape "\U0001fb1e",
     uiTextCaution_ColorEscape "\U0001fb07",
     uiTextCaution_ColorEscape "\U0001fb03",
+#endif
 };
 
 static void updateNavBarIdentity_(iWidget *navBar) {
@@ -241,8 +280,8 @@ static void updateNavBarIdentity_(iWidget *navBar) {
     setFlags_Widget(as_Widget(idItem), disabled_WidgetFlag, !ident);
 }
 
-static const int loadAnimIntervalMs_ = 200;
-static int loadAnimIndex_ = 0;
+static const int loadAnimIntervalMs_ = 266;
+static int       loadAnimIndex_      = 0;
 
 static const char *loadAnimationCStr_(void) {
     return stopSeqCStr_[loadAnimIndex_ % iElemCount(stopSeqCStr_)];
