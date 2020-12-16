@@ -364,7 +364,7 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 div,
                 iClob(new_LabelWidget("See " uiTextStrong_ColorEscape "Help" uiText_ColorEscape
                                       " for more information about TLS client certificates.",
-                                      "!open newtab:1 gotoheading:Identities url:about:help")),
+                                      "!open newtab:1 gotoheading:1.6 url:about:help")),
                 frameless_WidgetFlag | fixedHeight_WidgetFlag | wrapText_WidgetFlag);
             addChild_Widget(d->blank, iClob(div));
         }
