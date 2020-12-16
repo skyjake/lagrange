@@ -7,8 +7,11 @@
 # Release notes
 
 ## 0.13.2
+* Added a little spinner to indicate ongoing requests.
+* Fixed very thin progress bar on HiDPI displays.
+* Fixed link to Help page from the Identities sidebar tab.
 * Fixed incorrect text colors in the UI (e.g., selected lookup result).
-* macOS: Disable ⌘← and ⌘→ in menu shortcuts when editing text.
+* macOS: Disable menu shortcuts for navigation when editing text to prevent accidental page changes.
 
 ## 0.13.1
 * Fixed build failure on Linux.
