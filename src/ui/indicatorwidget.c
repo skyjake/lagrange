@@ -103,11 +103,13 @@ void draw_IndicatorWidget_(const iIndicatorWidget *d) {
         const iRect rect = innerBounds_Widget(w);
         iPaint p;
         init_Paint(&p);
-        drawHLine_Paint(&p,
-                        topLeft_Rect(rect),
-                        pos * width_Rect(rect),
-                        isCompleted_IndicatorWidget_(d) ? uiTextAction_ColorId
-                                                        : uiTextCaution_ColorId);
+        int colors[2] = { uiTextCaution_ColorId, uiTextAction_ColorId };
+        if (isLight_ColorTheme(colorTheme_App())) {
+            colors[0] = black_ColorId;
+        }
+        fillRect_Paint(&p,
+                       (iRect){ topLeft_Rect(rect), init_I2(pos * width_Rect(rect), gap_UI / 4)},
+                       colors[isCompleted_IndicatorWidget_(d) ? 1 : 0]);
     }
 }
 
