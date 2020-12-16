@@ -1184,6 +1184,7 @@ iWidget *makeBookmarkEditor_Widget(void) {
     setId_Widget(addChild_Widget(values, iClob(inputs[0] = new_InputWidget(0))), "bmed.title");
     addChild_Widget(headings, iClob(makeHeading_Widget("URL:")));
     setId_Widget(addChild_Widget(values, iClob(inputs[1] = new_InputWidget(0))), "bmed.url");
+    setUrlContent_InputWidget(inputs[1], iTrue);
     addChild_Widget(headings, iClob(makeHeading_Widget("Tags:")));
     setId_Widget(addChild_Widget(values, iClob(inputs[2] = new_InputWidget(0))), "bmed.tags");
     arrange_Widget(dlg);

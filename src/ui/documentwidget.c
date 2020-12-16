@@ -1173,8 +1173,8 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                         : cstr_String(&resp->meta),
                     uiTextCaution_ColorEscape "Send \u21d2",
                     "document.input.submit");
-                setSensitive_InputWidget(findChild_Widget(dlg, "input"),
-                                         statusCode == sensitiveInput_GmStatusCode);
+                setSensitiveContent_InputWidget(findChild_Widget(dlg, "input"),
+                                                statusCode == sensitiveInput_GmStatusCode);
                 break;
             }
             case categorySuccess_GmStatusCode:
