@@ -24,14 +24,28 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "paint.h"
 #include "util.h"
 #include "keys.h"
+#include "prefs.h"
 #include "app.h"
 
 #include <the_Foundation/array.h>
 #include <SDL_clipboard.h>
 #include <SDL_timer.h>
 
+#if defined (iPlatformApple)
+#   include "macos.h"
+#endif
+
 static const int    refreshInterval_InputWidget_ = 256;
 static const size_t maxUndo_InputWidget_         = 64;
+
+static void enableEditorKeysInMenus_(iBool enable) {
+#if defined (iPlatformApple)
+    enableMenuItemsByKey_MacOS(SDLK_LEFT, KMOD_PRIMARY, enable);
+    enableMenuItemsByKey_MacOS(SDLK_RIGHT, KMOD_PRIMARY, enable);
+#else
+    iUnused(enable);
+#endif
+}
 
 iDeclareType(InputUndo)
 
@@ -51,11 +65,12 @@ static void deinit_InputUndo_(iInputUndo *d) {
 
 enum iInputWidgetFlag {
     isSensitive_InputWidgetFlag      = iBit(1),
-    enterPressed_InputWidgetFlag     = iBit(2),
-    selectAllOnFocus_InputWidgetFlag = iBit(3),
-    notifyEdits_InputWidgetFlag      = iBit(4),
-    eatEscape_InputWidgetFlag        = iBit(5),
-    isMarking_InputWidgetFlag        = iBit(6),
+    isUrl_InputWidgetFlag            = iBit(2), /* affected by decoding preference */
+    enterPressed_InputWidgetFlag     = iBit(3),
+    selectAllOnFocus_InputWidgetFlag = iBit(4),
+    notifyEdits_InputWidgetFlag      = iBit(5),
+    eatEscape_InputWidgetFlag        = iBit(6),
+    isMarking_InputWidgetFlag        = iBit(7),
 };
 
 struct Impl_InputWidget {
@@ -114,6 +129,9 @@ void init_InputWidget(iInputWidget *d, size_t maxLen) {
 }
 
 void deinit_InputWidget(iInputWidget *d) {
+    if (isSelected_Widget(d)) {
+        enableEditorKeysInMenus_(iTrue);
+    }
     delete_TextBuf(d->buffered);
     clearUndo_InputWidget_(d);
     deinit_Array(&d->undoStack);
@@ -150,10 +168,6 @@ static iBool popUndo_InputWidget_(iInputWidget *d) {
 
 void setMode_InputWidget(iInputWidget *d, enum iInputMode mode) {
     d->mode = mode;
-}
-
-void setSensitive_InputWidget(iInputWidget *d, iBool isSensitive) {
-    iChangeFlags(d->inFlags, isSensitive_InputWidgetFlag, isSensitive);
 }
 
 const iString *text_InputWidget(const iInputWidget *d) {
@@ -279,6 +293,7 @@ void begin_InputWidget(iInputWidget *d) {
     else {
         iZap(d->mark);
     }
+    enableEditorKeysInMenus_(iFalse);
 }
 
 void end_InputWidget(iInputWidget *d, iBool accept) {
@@ -287,6 +302,7 @@ void end_InputWidget(iInputWidget *d, iBool accept) {
         /* Was not active. */
         return;
     }
+    enableEditorKeysInMenus_(iTrue);
     if (!accept) {
         setCopy_Array(&d->text, &d->oldText);
     }
@@ -352,6 +368,14 @@ void setCursor_InputWidget(iInputWidget *d, size_t pos) {
     else {
         iZap(d->mark);
     }
+}
+
+void setSensitiveContent_InputWidget(iInputWidget *d, iBool isSensitive) {
+    iChangeFlags(d->inFlags, isSensitive_InputWidgetFlag, isSensitive);
+}
+
+void setUrlContent_InputWidget(iInputWidget *d, iBool isUrl) {
+    iChangeFlags(d->inFlags, isUrl_InputWidgetFlag, isUrl);
 }
 
 void setSelectAllOnFocus_InputWidget(iInputWidget *d, iBool selectAllOnFocus) {
@@ -573,6 +597,15 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                         deleteMarked_InputWidget_(d);
                         char *text = SDL_GetClipboardText();
                         iString *paste = collect_String(newCStr_String(text));
+                        /* Url decoding. */
+                        if (d->inFlags & isUrl_InputWidgetFlag) {
+                            if (prefs_App()->decodeUserVisibleURLs) {
+                                paste = collect_String(urlDecode_String(paste));
+                            }
+                            else {
+                                urlEncodePath_String(paste);
+                            }
+                        }
                         SDL_free(text);
                         iConstForEach(String, i, paste) {
                             insertChar_InputWidget_(d, i.value);

@@ -33,18 +33,20 @@ enum iInputMode {
 };
 
 void    setHint_InputWidget     (iInputWidget *, const char *hintText);
-void    setSensitive_InputWidget(iInputWidget *, iBool isSensitive);
 void    setMode_InputWidget     (iInputWidget *, enum iInputMode mode);
 void    setMaxLen_InputWidget   (iInputWidget *, size_t maxLen);
 void    setText_InputWidget     (iInputWidget *, const iString *text);
 void    setTextCStr_InputWidget (iInputWidget *, const char *cstr);
 void    setCursor_InputWidget   (iInputWidget *, size_t pos);
-void    setSelectAllOnFocus_InputWidget (iInputWidget *, iBool selectAllOnFocus);
-void    setNotifyEdits_InputWidget      (iInputWidget *, iBool notifyEdits);
-void    setEatEscape_InputWidget(iInputWidget *, iBool eatEscape);
 void    begin_InputWidget       (iInputWidget *);
 void    end_InputWidget         (iInputWidget *, iBool accept);
 void    selectAll_InputWidget   (iInputWidget *);
+
+void    setSelectAllOnFocus_InputWidget (iInputWidget *, iBool selectAllOnFocus);
+void    setSensitiveContent_InputWidget (iInputWidget *, iBool isSensitive);
+void    setUrlContent_InputWidget       (iInputWidget *, iBool isUrl);
+void    setNotifyEdits_InputWidget      (iInputWidget *, iBool notifyEdits);
+void    setEatEscape_InputWidget        (iInputWidget *, iBool eatEscape);
 
 const iString * text_InputWidget    (const iInputWidget *);
 

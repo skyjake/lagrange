@@ -370,6 +370,7 @@ static iBool isCommandIgnoredByMenus_(const char *cmd) {
     return equal_Command(cmd, "media.updated") || equal_Command(cmd, "media.player.update") ||
            startsWith_CStr(cmd, "feeds.update.") ||
            equal_Command(cmd, "document.request.updated") || equal_Command(cmd, "window.resized") ||
+           equal_Command(cmd, "window.reload.update") ||
            (equal_Command(cmd, "mouse.clicked") && !arg_Command(cmd)); /* button released */
 }
 
@@ -748,11 +749,6 @@ iWidget *makeSheet_Widget(const char *id) {
 
 void centerSheet_Widget(iWidget *sheet) {
     arrange_Widget(sheet->parent);
-//    const iInt2 rootSize = rootSize_Window(get_Window());
-//    const iInt2 orig     = localCoord_Widget(
-//        sheet->parent,
-//        init_I2(rootSize.x / 2 - sheet->rect.size.x / 2, bounds_Widget(sheet).pos.y));
-//    sheet->rect.pos = orig;
     postRefresh_App();
 }
 
@@ -1188,6 +1184,7 @@ iWidget *makeBookmarkEditor_Widget(void) {
     setId_Widget(addChild_Widget(values, iClob(inputs[0] = new_InputWidget(0))), "bmed.title");
     addChild_Widget(headings, iClob(makeHeading_Widget("URL:")));
     setId_Widget(addChild_Widget(values, iClob(inputs[1] = new_InputWidget(0))), "bmed.url");
+    setUrlContent_InputWidget(inputs[1], iTrue);
     addChild_Widget(headings, iClob(makeHeading_Widget("Tags:")));
     setId_Widget(addChild_Widget(values, iClob(inputs[2] = new_InputWidget(0))), "bmed.tags");
     arrange_Widget(dlg);

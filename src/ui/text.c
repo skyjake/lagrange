@@ -658,7 +658,7 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
             iRegExpMatch m;
             init_RegExpMatch(&m);
             if (match_RegExp(text_.ansiEscape, chPos, text.end - chPos, &m)) {
-                if (mode & draw_RunMode) {
+                if (mode & draw_RunMode && ~mode & permanentColorFlag_RunMode) {
                     /* Change the color. */
                     const iColor clr =
                         ansiForeground_Color(capturedRange_RegExpMatch(&m, 1), tmParagraph_ColorId);
@@ -729,7 +729,7 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
             }
             if (ch == '\r') {
                 const iChar esc = nextChar_(&chPos, text.end);
-                if (mode & draw_RunMode) {
+                if (mode & draw_RunMode && ~mode & permanentColorFlag_RunMode) {
                     const iColor clr = get_Color(esc - asciiBase_ColorEscape);
                     SDL_SetTextureColorMod(text_.cache, clr.r, clr.g, clr.b);
                 }

@@ -193,7 +193,86 @@ static const iMenuItem identityButtonMenuItems_[] = {
 };
 
 static const char *reloadCStr_ = "\U0001f503";
-static const char *stopCStr_   = uiTextCaution_ColorEscape "\U0001f310";
+
+/* TODO: A preference for these, maybe? */
+static const char *stopSeqCStr_[] = {
+    /* Corners */
+    uiTextCaution_ColorEscape "\U0000230c",
+    uiTextCaution_ColorEscape "\U0000230d",
+    uiTextCaution_ColorEscape "\U0000230f",
+    uiTextCaution_ColorEscape "\U0000230e",
+#if 0
+    /* Rotating arrow */
+    uiTextCaution_ColorEscape "\U00002b62",
+    uiTextCaution_ColorEscape "\U00002b68",
+    uiTextCaution_ColorEscape "\U00002b63",
+    uiTextCaution_ColorEscape "\U00002b69",
+    uiTextCaution_ColorEscape "\U00002b60",
+    uiTextCaution_ColorEscape "\U00002b66",
+    uiTextCaution_ColorEscape "\U00002b61",
+    uiTextCaution_ColorEscape "\U00002b67",
+#endif
+#if 0
+    /* Star */
+    uiTextCaution_ColorEscape "\u2bcc",
+    uiTextCaution_ColorEscape "\u2bcd",
+    uiTextCaution_ColorEscape "\u2bcc",
+    uiTextCaution_ColorEscape "\u2bcd",
+    uiTextCaution_ColorEscape "\u2bcc",
+    uiTextCaution_ColorEscape "\u2bcd",
+    uiTextCaution_ColorEscape "\u2bce",
+    uiTextCaution_ColorEscape "\u2bcf",
+    uiTextCaution_ColorEscape "\u2bce",
+    uiTextCaution_ColorEscape "\u2bcf",
+    uiTextCaution_ColorEscape "\u2bce",
+    uiTextCaution_ColorEscape "\u2bcf",
+#endif
+#if 0
+    /* Pulsing circle */
+    uiTextCaution_ColorEscape "\U0001f785",
+    uiTextCaution_ColorEscape "\U0001f786",
+    uiTextCaution_ColorEscape "\U0001f787",
+    uiTextCaution_ColorEscape "\U0001f788",
+    uiTextCaution_ColorEscape "\U0001f789",
+    uiTextCaution_ColorEscape "\U0001f789",
+    uiTextCaution_ColorEscape "\U0001f788",
+    uiTextCaution_ColorEscape "\U0001f787",
+    uiTextCaution_ColorEscape "\U0001f786",
+#endif
+#if 0
+    /* Dancing dots */
+    uiTextCaution_ColorEscape "\U0001fb00",
+    uiTextCaution_ColorEscape "\U0001fb01",
+    uiTextCaution_ColorEscape "\U0001fb07",
+    uiTextCaution_ColorEscape "\U0001fb1e",
+    uiTextCaution_ColorEscape "\U0001fb0f",
+    uiTextCaution_ColorEscape "\U0001fb03",
+    uiTextCaution_ColorEscape "\U0001fb00",
+    uiTextCaution_ColorEscape "\U0001fb01",
+    uiTextCaution_ColorEscape "\U0001fb07",
+    uiTextCaution_ColorEscape "\U0001fb1e",
+    uiTextCaution_ColorEscape "\U0001fb0f",
+    uiTextCaution_ColorEscape "\U0001fb03",
+
+    uiTextCaution_ColorEscape "\U0001fb7d",
+    uiTextCaution_ColorEscape "\U0001fb7e",
+    uiTextCaution_ColorEscape "\U0001fb7f",
+    uiTextCaution_ColorEscape "\U0001fb7c",
+    uiTextCaution_ColorEscape "\U0001fb7d",
+    uiTextCaution_ColorEscape "\U0001fb7e",
+    uiTextCaution_ColorEscape "\U0001fb7f",
+    uiTextCaution_ColorEscape "\U0001fb7c",
+
+    uiTextCaution_ColorEscape "\U0001fb00",
+    uiTextCaution_ColorEscape "\U0001fb01",
+    uiTextCaution_ColorEscape "\U0001fb07",
+    uiTextCaution_ColorEscape "\U0001fb03",
+    uiTextCaution_ColorEscape "\U0001fb0f",
+    uiTextCaution_ColorEscape "\U0001fb1e",
+    uiTextCaution_ColorEscape "\U0001fb07",
+    uiTextCaution_ColorEscape "\U0001fb03",
+#endif
+};
 
 static void updateNavBarIdentity_(iWidget *navBar) {
     const iGmIdentity *ident =
@@ -208,6 +287,37 @@ static void updateNavBarIdentity_(iWidget *navBar) {
                             cstrCollect_String(subject_TlsCertificate(ident->cert)))
               : "No Active Identity");
     setFlags_Widget(as_Widget(idItem), disabled_WidgetFlag, !ident);
+}
+
+static const int loadAnimIntervalMs_ = 133;
+static int       loadAnimIndex_      = 0;
+
+static const char *loadAnimationCStr_(void) {
+    return stopSeqCStr_[loadAnimIndex_ % iElemCount(stopSeqCStr_)];
+}
+
+static uint32_t updateReloadAnimation_Window_(uint32_t interval, void *window) {
+    iUnused(window);
+    loadAnimIndex_++;
+    postCommand_App("window.reload.update");
+    return interval;
+}
+
+static void setReloadLabel_Window_(iWindow *d, iBool animating) {
+    updateTextCStr_LabelWidget(findChild_Widget(d->root, "reload"),
+                               animating ? loadAnimationCStr_() : reloadCStr_);
+}
+
+static void checkLoadAnimation_Window_(iWindow *d) {
+    const iBool isOngoing = isRequestOngoing_DocumentWidget(document_App());
+    if (isOngoing && !d->loadAnimTimer) {
+        d->loadAnimTimer = SDL_AddTimer(loadAnimIntervalMs_, updateReloadAnimation_Window_, d);
+    }
+    else if (!isOngoing && d->loadAnimTimer) {
+        SDL_RemoveTimer(d->loadAnimTimer);
+        d->loadAnimTimer = 0;
+    }
+    setReloadLabel_Window_(d, isOngoing);
 }
 
 static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
@@ -229,6 +339,10 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
         refresh_Widget(navBar);
         postCommand_Widget(navBar, "layout.changed id:navbar");
         return iFalse;
+    }
+    else if (equal_Command(cmd, "window.reload.update")) {
+        checkLoadAnimation_Window_(get_Window());
+        return iTrue;
     }
     else if (equal_Command(cmd, "navigate.focus")) {
         iWidget *url = findChild_Widget(navBar, "url");
@@ -267,25 +381,24 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
     else if (startsWith_CStr(cmd, "document.")) {
         /* React to the current document only. */
         if (document_Command(cmd) == document_App()) {
-            iLabelWidget *reloadButton = findChild_Widget(navBar, "reload");
             if (equal_Command(cmd, "document.changed")) {
                 iInputWidget *url = findWidget_App("url");
                 const iString *urlStr = collect_String(suffix_Command(cmd, "url"));
                 visitUrl_Visited(visited_App(), urlStr, 0);
                 postCommand_App("visited.changed"); /* sidebar will update */
                 setText_InputWidget(url, urlStr);
-                updateTextCStr_LabelWidget(reloadButton, reloadCStr_);
+                checkLoadAnimation_Window_(get_Window());
                 updateNavBarIdentity_(navBar);
                 return iFalse;
             }
             else if (equal_Command(cmd, "document.request.cancelled")) {
-                updateTextCStr_LabelWidget(reloadButton, reloadCStr_);
+                checkLoadAnimation_Window_(get_Window());
                 return iFalse;
             }
             else if (equal_Command(cmd, "document.request.started")) {
                 iInputWidget *url = findChild_Widget(navBar, "url");
                 setTextCStr_InputWidget(url, suffixPtr_Command(cmd, "url"));
-                updateTextCStr_LabelWidget(reloadButton, stopCStr_);
+                checkLoadAnimation_Window_(get_Window());
                 return iFalse;
             }
         }
@@ -295,8 +408,7 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
         iDocumentWidget *doc = document_App();
         if (doc) {
             setText_InputWidget(findChild_Widget(navBar, "url"), url_DocumentWidget(doc));
-            updateTextCStr_LabelWidget(findChild_Widget(navBar, "reload"),
-                                       isRequestOngoing_DocumentWidget(doc) ? stopCStr_ : reloadCStr_);
+            checkLoadAnimation_Window_(get_Window());
             updateNavBarIdentity_(navBar);
         }
         setFocus_Widget(NULL);
@@ -402,6 +514,7 @@ static void setupUserInterface_Window(iWindow *d) {
             iInputWidget *url = new_InputWidget(0);
             setSelectAllOnFocus_InputWidget(url, iTrue);
             setId_Widget(as_Widget(url), "url");
+            setUrlContent_InputWidget(url, iTrue);
             setNotifyEdits_InputWidget(url, iTrue);
             setTextCStr_InputWidget(url, "gemini://");
             addChildFlags_Widget(navBar, iClob(url), expand_WidgetFlag);
@@ -642,6 +755,7 @@ void init_Window(iWindow *d, iRect rect) {
     d->root = new_Widget();
     d->presentTime = 0.0;
     d->frameTime = SDL_GetTicks();
+    d->loadAnimTimer = 0;
     setId_Widget(d->root, "root");
     init_Text(d->render);
     setupUserInterface_Window(d);
