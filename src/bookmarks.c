@@ -70,6 +70,10 @@ static int cmpTimeDescending_Bookmark_(const iBookmark **a, const iBookmark **b)
     return iCmp(seconds_Time(&(*b)->when), seconds_Time(&(*a)->when));
 }
 
+static int cmpTitleAscending_Bookmark_(const iBookmark **a, const iBookmark **b) {
+    return cmpStringCase_String(&(*a)->title, &(*b)->title);
+}
+
 /*----------------------------------------------------------------------------------------------*/
 
 static const char *fileName_Bookmarks_ = "bookmarks.txt";
@@ -221,4 +225,36 @@ const iPtrArray *list_Bookmarks(const iBookmarks *d, iBookmarksCompareFunc cmp,
     if (!cmp) cmp = cmpTimeDescending_Bookmark_;
     sort_Array(list, (int (*)(const void *, const void *)) cmp);
     return list;
+}
+
+const iString *bookmarkListPage_Bookmarks(const iBookmarks *d) {
+    iString *str = collectNew_String();
+    setCStr_String(str, "Here are all your bookmarks. "
+                        "You can save this page to export them, or you can copy them to "
+                        "the clipboard.\n");
+    lock_Mutex(d->mtx);
+    iConstForEach(PtrArray, i, list_Bookmarks(d, cmpTitleAscending_Bookmark_, NULL, NULL)) {
+        const iBookmark *bm = i.ptr;
+        appendFormat_String(str, "\n=> %s %s\n", cstr_String(&bm->url), cstr_String(&bm->title));
+        iRangecc tag = iNullRange;
+        while (nextSplit_Rangecc(range_String(&bm->tags), " ", &tag)) {
+            if (!isEmpty_Range(&tag)) {
+                appendCStr_String(str, "* ");
+                appendRange_String(str, tag);
+                appendChar_String(str, '\n');
+            }
+        }
+    }
+    unlock_Mutex(d->mtx);
+    appendCStr_String(str,
+                      "\nPAGE FORMAT: "
+                      "Text lines and preformatted text are comments and should be ignored. "
+                      "Each link line represents a bookmark. "
+                      "Folder structure is defined by headings. "
+                      "All links before the first heading are root level bookmarks. "
+                      "Bullet lines following a link are used for tags; each tag gets its own "
+                      "bullet line. Quotes are reserved for additional information about a "
+                      "bookmark.\n");
+    appendCStr_String(str, "\nLagrange v" LAGRANGE_APP_VERSION "\n");
+    return str;
 }

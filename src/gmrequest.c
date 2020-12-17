@@ -27,6 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "app.h" /* dataDir_App() */
 #include "mimehooks.h"
 #include "feeds.h"
+#include "bookmarks.h"
 #include "ui/text.h"
 #include "embedded.h"
 #include "defs.h"
@@ -297,6 +298,9 @@ static const iBlock *aboutPageSource_(iRangecc path) {
     }
     if (equalCase_Rangecc(path, "feeds")) {
         return utf8_String(entryListPage_Feeds());
+    }
+    if (equalCase_Rangecc(path, "bookmarks")) {
+        return utf8_String(bookmarkListPage_Bookmarks(bookmarks_App()));
     }
     if (equalCase_Rangecc(path, "blank")) {
         return utf8_String(collectNewCStr_String("\n"));
