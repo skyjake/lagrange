@@ -244,6 +244,8 @@ void init_DocumentWidget(iDocumentWidget *d) {
 #if !defined (iPlatformApple) /* in system menu */
     addAction_Widget(w, reload_KeyShortcut, "navigate.reload");
     addAction_Widget(w, SDLK_w, KMOD_PRIMARY, "tabs.close");
+    addAction_Widget(w, SDLK_d, KMOD_PRIMARY, "bookmark.add");
+    addAction_Widget(w, subscribeToPage_KeyModifier, "feeds.subscribe");
 #endif
     addAction_Widget(w, navigateBack_KeyShortcut, "navigate.back");
     addAction_Widget(w, navigateForward_KeyShortcut, "navigate.forward");
@@ -2308,8 +2310,11 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                             { "---", 0, 0, NULL },
                             { "Reload Page", reload_KeyShortcut, "navigate.reload" },
                             { "---", 0, 0, NULL },
+                            { "Bookmark Page...", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
+                            { "Subscribe to Page...", subscribeToPage_KeyModifier, "feeds.subscribe" },
+                            { "---", 0, 0, NULL },
                             { "Copy Page URL", 0, 0, "document.copylink" } },
-                        8);
+                        11);
                     if (isEmpty_Range(&d->selectMark)) {
                         pushBackN_Array(
                             &items,
