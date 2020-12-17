@@ -79,4 +79,10 @@ iBool   filterTagsRegExp_Bookmarks  (void *regExp, const iBookmark *);
 const iPtrArray *list_Bookmarks(const iBookmarks *, iBookmarksCompareFunc cmp,
                                 iBookmarksFilterFunc filter, void *context);
 
-const iString * bookmarkListPage_Bookmarks  (const iBookmarks *);
+enum iBookmarkListType {
+    listByFolder_BookmarkListType,
+    listByTag_BookmarkListType,
+    listByCreationTime_BookmarkListType,
+};
+
+const iString * bookmarkListPage_Bookmarks  (const iBookmarks *, enum iBookmarkListType listType);

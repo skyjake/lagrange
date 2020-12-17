@@ -21,12 +21,15 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "bookmarks.h"
+#include "visited.h"
+#include "app.h"
 
 #include <the_Foundation/file.h>
 #include <the_Foundation/hash.h>
 #include <the_Foundation/mutex.h>
 #include <the_Foundation/path.h>
 #include <the_Foundation/regexp.h>
+#include <the_Foundation/stringset.h>
 
 void init_Bookmark(iBookmark *d) {
     init_String(&d->url);
@@ -227,35 +230,92 @@ const iPtrArray *list_Bookmarks(const iBookmarks *d, iBookmarksCompareFunc cmp,
     return list;
 }
 
-const iString *bookmarkListPage_Bookmarks(const iBookmarks *d) {
+const iString *bookmarkListPage_Bookmarks(const iBookmarks *d, enum iBookmarkListType listType) {
     iString *str = collectNew_String();
     lock_Mutex(d->mtx);
     format_String(str,
-                  "You have %d bookmark%s.\n\n"
-                  "Save this page to export them, or you can copy them to "
-                  "the clipboard.\n\n",
-                  size_Hash(&d->bookmarks),
-                  size_Hash(&d->bookmarks) != 1 ? "s" : "");
-    iConstForEach(PtrArray, i, list_Bookmarks(d, cmpTitleAscending_Bookmark_, NULL, NULL)) {
+                  "# %s\n\n",
+                  listType == listByFolder_BookmarkListType ? "Bookmarks"
+                  : listType == listByTag_BookmarkListType  ? "Bookmark tags"
+                                                            : "Created bookmarks");
+    if (listType == listByFolder_BookmarkListType) {
+        appendFormat_String(str,
+                            "You have %d bookmark%s.\n\n"
+                            "Save this page to export them, or you can copy them to "
+                            "the clipboard.\n\n",
+                            size_Hash(&d->bookmarks),
+                            size_Hash(&d->bookmarks) != 1 ? "s" : "");
+    }
+    else if (listType == listByTag_BookmarkListType) {
+        appendFormat_String(str, "In this list each heading represents a bookmark tag. "
+                                 "Bookmarks with multiple tags are repeated under each tag.\n\n");
+    }
+    iStringSet *tags = new_StringSet();
+    const iPtrArray *bmList = list_Bookmarks(d,
+                                             listType == listByCreationTime_BookmarkListType
+                                                 ? cmpTimeDescending_Bookmark_
+                                                 : cmpTitleAscending_Bookmark_,
+                                             NULL,
+                                             NULL);
+    iConstForEach(PtrArray, i, bmList) {
         const iBookmark *bm = i.ptr;
-        appendFormat_String(str, "=> %s %s\n", cstr_String(&bm->url), cstr_String(&bm->title));
+        if (listType == listByFolder_BookmarkListType) {
+            appendFormat_String(str, "=> %s %s\n", cstr_String(&bm->url), cstr_String(&bm->title));
+        }
+        else if (listType == listByCreationTime_BookmarkListType) {
+            appendFormat_String(str, "=> %s %s - %s\n", cstr_String(&bm->url),
+                                cstrCollect_String(format_Time(&bm->when, "%Y-%m-%d")),
+                                cstr_String(&bm->title));
+        }
         iRangecc tag = iNullRange;
         while (nextSplit_Rangecc(range_String(&bm->tags), " ", &tag)) {
             if (!isEmpty_Range(&tag)) {
-                appendCStr_String(str, "* ");
-                appendRange_String(str, tag);
-                appendChar_String(str, '\n');
+                iString t;
+                initRange_String(&t, tag);
+                insert_StringSet(tags, &t);
+                deinit_String(&t);
             }
         }
     }
+    if (listType == listByTag_BookmarkListType) {
+        iConstForEach(StringSet, t, tags) {
+            const iString *tag = t.value;
+            appendFormat_String(str, "\n## %s\n", cstr_String(tag));
+            iConstForEach(PtrArray, i, bmList) {
+                const iBookmark *bm = i.ptr;
+                iRangecc bmTag = iNullRange;
+                iBool isTagged = iFalse;
+                while (nextSplit_Rangecc(range_String(&bm->tags), " ", &bmTag)) {
+                    if (equal_Rangecc(bmTag, cstr_String(tag))) {
+                        isTagged = iTrue;
+                        break;
+                    }
+                }
+                if (isTagged) {
+                    appendFormat_String(
+                        str, "=> %s %s\n", cstr_String(&bm->url), cstr_String(&bm->title));
+                }
+            }
+        }
+    }
+    iRelease(tags);
     unlock_Mutex(d->mtx);
-    appendCStr_String(str,
-                      "\nText lines and preformatted text are comments and should be ignored. "
-                      "Each link line represents a bookmark. "
-                      "Folder structure is defined by headings. "
-                      "All links before the first heading are root level bookmarks. "
-                      "Bullet lines following a link are used for tags; each tag gets its own "
-                      "bullet line. Quotes are reserved for additional information about a "
-                      "bookmark.\n");
+    if (listType == listByCreationTime_BookmarkListType) {
+        appendCStr_String(str, "\nThis page is formatted according to the "
+                               "\"Subscribing to Gemini pages\" companion specification.\n");
+    }
+    else {
+        appendFormat_String(str,
+                            "\nEach link represents a bookmark. "
+                            "%s"
+                            "Bullet lines and quotes are reserved for additional information about "
+                            "the preceding bookmark. Text lines and preformatted text are considered "
+                            "comments and should be ignored.\n",
+                            listType == listByFolder_BookmarkListType
+                                ? "Folder structure is defined by level 2/3 headings. "
+                            : listType == listByTag_BookmarkListType
+                                ? "Tags are defined by level 2 headings. "
+                                : "");
+    }
     return str;
 }
