@@ -2692,8 +2692,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                             height_Rect(run->visBounds),
                             tmQuoteIcon_ColorId);
         }
-        drawRange_Text(run->font, visPos, fg, run->text);
-//        printf("{%s}\n", cstr_Rangecc(run->text));
+        drawBoundRange_Text(run->font, visPos, width_Rect(run->bounds), fg, run->text);
     runDrawn:;
     }
     /* Presentation of links. */
