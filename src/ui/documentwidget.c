@@ -20,10 +20,14 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
+/* TODO: This file is a little too large. DocumentWidget could be split into
+   a couple of smaller objects. One for rendering the document, for instance. */
+
 #include "documentwidget.h"
 
 #include "app.h"
 #include "audio/player.h"
+#include "bookmarks.h"
 #include "command.h"
 #include "defs.h"
 #include "gmcerts.h"
@@ -1470,6 +1474,13 @@ static void saveToDownloads_(const iString *url, const iString *mime, const iBlo
     delete_String(savePath);
 }
 
+static void addAllLinks_(void *context, const iGmRun *run) {
+    iPtrArray *links = context;
+    if (~run->flags & decoration_GmRunFlag && run->linkId) {
+        pushBack_PtrArray(links, run);
+    }
+}
+
 static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
     iWidget *w = as_Widget(d);
     if (equal_Command(cmd, "window.resized") || equal_Command(cmd, "font.changed")) {
@@ -1869,6 +1880,46 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         if (d->foundMark.start) {
             d->foundMark = iNullRange;
             refresh_Widget(w);
+        }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "bookmark.links") && document_App() == d) {
+        iPtrArray *links = collectNew_PtrArray();
+        render_GmDocument(d->doc, (iRangei){ 0, size_GmDocument(d->doc).y }, addAllLinks_, links);
+        /* Find links that aren't already bookmarked. */
+        iForEach(PtrArray, i, links) {
+            const iGmRun *run = i.ptr;
+            if (findUrl_Bookmarks(bookmarks_App(), linkUrl_GmDocument(d->doc, run->linkId))) {
+                remove_PtrArrayIterator(&i);
+            }
+        }
+        if (!isEmpty_PtrArray(links)) {
+            if (argLabel_Command(cmd, "confirm")) {
+                const char *plural = size_PtrArray(links) != 1 ? "s" : "";
+                makeQuestion_Widget(
+                    uiHeading_ColorEscape "IMPORT BOOKMARKS",
+                    format_CStr("Found %d new link%s on the page.", size_PtrArray(links), plural),
+                    (const char *[]){ "Cancel",
+                                      format_CStr(uiTextAction_ColorEscape "Add %d Bookmark%s",
+                                                  size_PtrArray(links), plural) },
+                    (const char *[]){ "cancel", "bookmark.links" },
+                    2);
+            }
+            else {
+                iConstForEach(PtrArray, j, links) {
+                    const iGmRun *run = j.ptr;
+                    add_Bookmarks(bookmarks_App(),
+                                  linkUrl_GmDocument(d->doc, run->linkId),
+                                  collect_String(newRange_String(run->text)),
+                                  NULL,
+                                  0x1f588 /* pin */);
+                }
+                postCommand_App("bookmarks.changed");
+            }
+        }
+        else {
+            makeMessage_Widget(uiHeading_ColorEscape "IMPORT BOOKMARKS",
+                               "All links on this page are already bookmarked.");
         }
         return iTrue;
     }
@@ -2313,8 +2364,10 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                             { "Bookmark Page...", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
                             { "Subscribe to Page...", subscribeToPage_KeyModifier, "feeds.subscribe" },
                             { "---", 0, 0, NULL },
+                            { "Import Links as Bookmarks...", 0, 0, "bookmark.links confirm:1" },
+                            { "---", 0, 0, NULL },
                             { "Copy Page URL", 0, 0, "document.copylink" } },
-                        11);
+                        13);
                     if (isEmpty_Range(&d->selectMark)) {
                         pushBackN_Array(
                             &items,

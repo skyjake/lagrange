@@ -162,6 +162,7 @@ static const iMenuItem viewMenuItems_[] = {
 
 static iMenuItem bookmarksMenuItems_[] = {
     { "Bookmark This Page...", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
+    { "Import All Links on Page", 0, 0, "bookmark.links confirm:1" },
     { "---", 0, 0, NULL },
     { "List All", 0, 0, "open url:about:bookmarks" },
     { "List by Tag", 0, 0, "open url:about:bookmarks?tags" },

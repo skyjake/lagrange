@@ -6,6 +6,11 @@
 ```
 # Release notes
 
+## 1.0
+* Export bookmarks via "about:bookmarks".
+* Listing all bookmarks by tag or creation time.
+* Import all links on page as bookmark.
+
 ## 0.13.2
 * Added a little spinner to indicate ongoing requests.
 * Fixed very thin progress bar on HiDPI displays.
