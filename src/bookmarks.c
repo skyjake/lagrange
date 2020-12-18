@@ -139,6 +139,13 @@ void load_Bookmarks(iBookmarks *d, const char *dirPath) {
             initSeconds_Time(&bm->when, strtod(line.start, &endPos));
             line.start = skipSpace_CStr(endPos);
             setRange_String(&bm->url, line);
+            /* Clean up the URL. */ {
+                iUrl parts;
+                init_Url(&parts, &bm->url);
+                if (isEmpty_Range(&parts.path) && isEmpty_Range(&parts.query)) {
+                    appendChar_String(&bm->url, '/');
+                }
+            }
             nextSplit_Rangecc(src, "\n", &line);
             setRange_String(&bm->title, line);
             nextSplit_Rangecc(src, "\n", &line);
