@@ -327,9 +327,9 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 { "Show Usage", 0, 0, "ident.showuse" },
                 { "---", 0, 0, NULL },
                 { "Edit Notes...", 0, 0, "ident.edit" },
-                { "Pick Icon...", 0, 0, "ident.pickicon" },
+//                { "Pick Icon...", 0, 0, "ident.pickicon" },
                 { "---", 0, 0, NULL },
-                { "Reveal Files", 0, 0, "ident.reveal" },
+                //{ "Reveal Files", 0, 0, "ident.reveal" },
                 { uiTextCaution_ColorEscape "Delete Identity...", 0, 0, "ident.delete confirm:1" },
             };
             d->menu = makeMenu_Widget(as_Widget(d), menuItems, iElemCount(menuItems));
