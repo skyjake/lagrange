@@ -147,17 +147,29 @@ Bookmarks are listed in alphabetic order in the sidebar. There is no support for
 
 In addition to a title, bookmarks can have tags. Some tags have a special meaning, but you are free to enter whatever you want in the tags field. In quick search results, tags are given extra weight so they appear higher in results.
 
-### 1.4.1 Remote bookmarks
+### 1.4.1 Exporting and importing
+
+=> about:bookmarks  The special page "about:bookmarks" is used for exporting bookmarks out of Lagrange.
+It has three different modes that can be opened via menus:
+* listing bookmarks alphabetically
+* listing bookmarks grouped by tag
+* listing bookmarks as a feed with creation dates
+
+The generated page can be saved to Downloads or you can copy all or parts of it to the clipboard.
+
+To import all links on a page as bookmarks, use the page context menu to select "Import Links as Bookmarks...". You can also right-click on individual links and select "Bookmark Link...".
+
+### 1.4.2 Remote bookmarks
 
 This version of Lagrange does not support automatic bookmark synchronization. By default all bookmarks are stored locally. However, a remote bookmarks feature is provided to allow accessing a set of bookmarks from everywhere. This way you can set up your own centralized bookmark pages or use any public Gemini page as a source of bookmarks.
 
-A local bookmark can be turned into a source for remote bookmarks via the Bookmarks context menu. Right-click the bookmark and select "Use as Remote Source". A ☁️ icon is used to indicate remote sources in the Bookmarks list. Remote sources are checked when launching Lagrange and manually with the "Refresh Remote Sources" menu item.
+A local bookmark can be turned into a source for remote bookmarks via the Bookmarks context menu. Right-click the bookmark and select "Use as Remote Source". The ⤓ icon is used to indicate remote items in the Bookmarks list. Remote sources are checked when launching Lagrange and manually with the "Refresh Remote Sources" menu item.
 
 All links found in the remote sources become remote bookmarks and are included in the Bookmarks list. If an URL is already bookmarked locally, any remote bookmarks with a matching URL are not shown.
 
 Note that remote bookmarks are read-only: they cannot be edited or tagged. This means you cannot subscribe to a remote bookmark without first making a local duplicate of it. If you want to make local copies of all the links in the remote source, open the remote source page and use the "Import Links as Bookmarks..." context menu item on it. After refreshing remote sources, the remote copies of the bookmarks will not be shown any more.
 
-### 1.4.2 Special tags
+### 1.4.3 Special tags
 
 * Set a "homepage" tag on a bookmark to make it one of the pages that will be opened when pressing the 🏠 button. If multiple bookmarks are tagged as homepages, a random one is selected.
 * A "subscribed" tag means that Lagrange will periodically fetch the bookmarked page and look for Gemini feed links. All the found links that match the required style ("YYYY-MM-DD Entry title") will appear in the Feeds sidebar tab.
