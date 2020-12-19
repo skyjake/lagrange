@@ -1069,6 +1069,25 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         }
     }
     if (hoverItem_ListWidget(d->list) || isVisible_Widget(d->menu)) {
+        /* Update the menu before opening. */
+        if (d->mode == bookmarks_SidebarMode && !isVisible_Widget(d->menu)) {
+            /* Remote bookmarks have limitations. */
+            const iSidebarItem *hoverItem = hoverItem_ListWidget(d->list);
+            iAssert(hoverItem);
+            const iBookmark *  bm              = get_Bookmarks(bookmarks_App(), hoverItem->id);
+            const iBool        isRemote        = hasTag_Bookmark(bm, "remote");
+            static const char *localOnlyCmds[] = { "bookmark.edit",
+                                                   "bookmark.delete",
+                                                   "bookmark.tag tag:subscribed",
+                                                   "bookmark.tag tag:homepage",
+                                                   "bookmark.tag tag:remotesource",
+                                                   "bookmark.tag tag:subscribed" };
+            iForIndices(i, localOnlyCmds) {
+                setFlags_Widget(as_Widget(findMenuItem_Widget(d->menu, localOnlyCmds[i])),
+                                disabled_WidgetFlag,
+                                isRemote);
+            }
+        }
         processContextMenuEvent_Widget(d->menu, ev, {});
     }
     return processEvent_Widget(w, ev);
