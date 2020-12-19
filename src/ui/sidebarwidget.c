@@ -219,7 +219,7 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                     }
                     init_RegExpMatch(&m);
                     if (matchString_RegExp(remoteSourceTag, &bm->tags, &m)) {
-                        appendChar_String(&item->meta, 0x2601);
+                        appendChar_String(&item->meta, 0x2913);
                     }
                 }
                 addItem_ListWidget(d->list, item);
@@ -1241,7 +1241,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                           iconArea,
                           iTrue,
                           isPressing                       ? iconColor
-                          : d->icon == 0x2601 /* remote */ ? uiTextCaution_ColorId
+                          : d->icon == 0x2913 /* remote */ ? uiTextCaution_ColorId
                                                            : iconColor,
                           "%s",
                           cstr_String(&str));

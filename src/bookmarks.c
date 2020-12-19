@@ -385,7 +385,7 @@ void requestFinished_Bookmarks(iBookmarks *d, iGmRequest *req) {
                 const iString *absUrl = absoluteUrl_String(url_GmRequest(req), urlStr);
                 if (!findUrl_Bookmarks(d, absUrl)) {
                     iString *titleStr = newRange_String(title);
-                    add_Bookmarks(d, absUrl, titleStr, remoteTag, 0x2601 /* cloud */);
+                    add_Bookmarks(d, absUrl, titleStr, remoteTag, 0x2913 /* arrow down */);
                     delete_String(titleStr);
                 }
                 delete_String(urlStr);
