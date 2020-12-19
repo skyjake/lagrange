@@ -27,6 +27,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/string.h>
 #include <the_Foundation/time.h>
 
+iDeclareType(GmRequest)
+
 iDeclareType(Bookmark)
 iDeclareTypeConstruction(Bookmark)
 
@@ -53,6 +55,9 @@ iDeclareTypeConstruction(Bookmarks)
 void        clear_Bookmarks     (iBookmarks *);
 void        load_Bookmarks      (iBookmarks *, const char *dirPath);
 void        save_Bookmarks      (const iBookmarks *, const char *dirPath);
+
+void        fetchRemote_Bookmarks       (iBookmarks *);
+void        requestFinished_Bookmarks   (iBookmarks *, iGmRequest *req);
 
 void        add_Bookmarks       (iBookmarks *, const iString *url, const iString *title,
                                  const iString *tags, iChar icon);

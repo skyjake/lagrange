@@ -1363,6 +1363,14 @@ iBool handleCommand_App(const char *cmd) {
         makeFeedSettings_Widget(findUrl_Bookmarks(d->bookmarks, url));
         return iTrue;
     }
+    else if (equal_Command(cmd, "bookmarks.reload.remote")) {
+        fetchRemote_Bookmarks(bookmarks_App());
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "bookmarks.request.finished")) {
+        requestFinished_Bookmarks(bookmarks_App(), pointerLabel_Command(cmd, "req"));
+        return iTrue;
+    }
     else if (equal_Command(cmd, "bookmarks.changed")) {
         save_Bookmarks(d->bookmarks, dataDir_App_);
         return iFalse;

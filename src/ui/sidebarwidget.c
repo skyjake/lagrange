@@ -199,6 +199,7 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
         case bookmarks_SidebarMode: {
             iRegExp *homeTag = iClob(new_RegExp("\\bhomepage\\b", caseSensitive_RegExpOption));
             iRegExp *subTag  = iClob(new_RegExp("\\bsubscribed\\b", caseSensitive_RegExpOption));
+            iRegExp *remoteSourceTag = iClob(new_RegExp("\\bremotesource\\b", caseSensitive_RegExpOption));
             iConstForEach(PtrArray, i, list_Bookmarks(bookmarks_App(), cmpTitle_Bookmark_, NULL, NULL)) {
                 const iBookmark *bm = i.ptr;
                 iSidebarItem *item = new_SidebarItem();
@@ -216,6 +217,10 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                     if (matchString_RegExp(homeTag, &bm->tags, &m)) {
                         appendChar_String(&item->meta, 0x1f3e0);
                     }
+                    init_RegExpMatch(&m);
+                    if (matchString_RegExp(remoteSourceTag, &bm->tags, &m)) {
+                        appendChar_String(&item->meta, 0x2601);
+                    }
                 }
                 addItem_ListWidget(d->list, item);
                 iRelease(item);
@@ -228,11 +233,14 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                                { "Edit Bookmark...", 0, 0, "bookmark.edit" },
                                { "Copy URL", 0, 0, "bookmark.copy" },
                                { "---", 0, 0, NULL },
-                               { "Subscribe to Feed", 0, 0, "bookmark.tag tag:subscribed" },
-                               { "", 0, 0, "bookmark.tag tag:homepage" },
+                               { "?", 0, 0, "bookmark.tag tag:subscribed" },
+                               { "?", 0, 0, "bookmark.tag tag:homepage" },
+                               { "?", 0, 0, "bookmark.tag tag:remotesource" },
                                { "---", 0, 0, NULL },
-                               { uiTextCaution_ColorEscape "Delete Bookmark", 0, 0, "bookmark.delete" } },
-               10);
+                               { uiTextCaution_ColorEscape "Delete Bookmark", 0, 0, "bookmark.delete" },
+                               { "---", 0, 0, NULL },
+                               { "Refresh Remote Bookmarks", 0, 0, "bookmarks.reload.remote" } },
+               13);
             break;
         }
         case history_SidebarMode: {
@@ -1005,6 +1013,13 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                                                     hasTag_Bookmark(bm, "subscribed")
                                                         ? "Unsubscribe from Feed"
                                                         : "Subscribe to Feed");
+                        }
+                        menuItem = findMenuItem_Widget(d->menu, "bookmark.tag tag:remotesource");
+                        if (menuItem) {
+                            setTextCStr_LabelWidget(menuItem,
+                                                    hasTag_Bookmark(bm, "remotesource")
+                                                        ? "Remove Bookmark Source"
+                                                        : "Use as Bookmark Source");
                         }
                     }
                 }

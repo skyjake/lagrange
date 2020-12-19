@@ -376,7 +376,9 @@ iWidget *addAction_Widget(iWidget *parent, int key, int kmods, const char *comma
 static iBool isCommandIgnoredByMenus_(const char *cmd) {
     return equal_Command(cmd, "media.updated") || equal_Command(cmd, "media.player.update") ||
            startsWith_CStr(cmd, "feeds.update.") ||
-           equal_Command(cmd, "document.request.updated") || equal_Command(cmd, "window.resized") ||
+           equal_Command(cmd, "document.request.updated") ||
+           equal_Command(cmd, "bookmarks.request.finished") ||
+           equal_Command(cmd, "window.resized") ||
            equal_Command(cmd, "window.reload.update") ||
            (equal_Command(cmd, "mouse.clicked") && !arg_Command(cmd)); /* button released */
 }
@@ -893,7 +895,9 @@ void updateValueInput_Widget(iWidget *d, const char *title, const char *prompt) 
 
 static iBool messageHandler_(iWidget *msg, const char *cmd) {
     /* Almost any command dismisses the sheet. */
-    if (!(equal_Command(cmd, "media.updated") || equal_Command(cmd, "media.player.update") ||
+    if (!(equal_Command(cmd, "media.updated") ||
+          equal_Command(cmd, "media.player.update") ||
+          equal_Command(cmd, "bookmarks.request.finished") ||
           equal_Command(cmd, "document.request.updated") || startsWith_CStr(cmd, "window."))) {
         destroy_Widget(msg);
     }
