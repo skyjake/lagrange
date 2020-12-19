@@ -135,6 +135,11 @@ int keyMods_Sym(int kmods) {
     return kmods;
 }
 
+int openTabMode_Sym(int kmods) {
+    const int km = keyMods_Sym(kmods);
+    return ((km & KMOD_PRIMARY) && (km & KMOD_SHIFT)) ? 1 : (km & KMOD_PRIMARY) ? 2 : 0;
+}
+
 iRangei intersect_Rangei(iRangei a, iRangei b) {
     if (a.end < b.start || a.start > b.end) {
         return (iRangei){ 0, 0 };

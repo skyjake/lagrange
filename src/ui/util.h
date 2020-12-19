@@ -52,6 +52,7 @@ iBool       isMod_Sym           (int key);
 int         normalizedMod_Sym   (int key);
 int         keyMods_Sym         (int kmods); /* shift, alt, control, or gui */
 void        toString_Sym        (int key, int kmods, iString *str);
+int         openTabMode_Sym     (int kmods);
 
 iRangei     intersect_Rangei    (iRangei a, iRangei b);
 iRangei     union_Rangei        (iRangei a, iRangei b);

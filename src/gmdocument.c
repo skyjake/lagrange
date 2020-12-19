@@ -1365,9 +1365,9 @@ enum iColorId linkColor_GmDocument(const iGmDocument *d, iGmLinkId linkId, enum 
     const iGmLink *link = link_GmDocument_(d, linkId);
     const int www_GmLinkFlag = http_GmLinkFlag | mailto_GmLinkFlag;
     if (link) {
-        const iBool isBad = (link->flags & supportedProtocol_GmLinkFlag) == 0;
+        const iBool isUnsupported = (link->flags & supportedProtocol_GmLinkFlag) == 0;
         if (part == icon_GmLinkPart) {
-            if (isBad) {
+            if (isUnsupported) {
                 return tmBadLink_ColorId;
             }
             if (link->flags & visited_GmLinkFlag) {
@@ -1394,7 +1394,7 @@ enum iColorId linkColor_GmDocument(const iGmDocument *d, iGmLinkId linkId, enum 
                                                          : tmLinkTextHover_ColorId;
         }
         if (part == domain_GmLinkPart) {
-            if (isBad) {
+            if (isUnsupported) {
                 return tmBadLink_ColorId;
             }
             return link->flags & www_GmLinkFlag

@@ -370,7 +370,7 @@ static void addVisible_DocumentWidget_(void *context, const iGmRun *run) {
     if (run->audioId) {
         pushBack_PtrArray(&d->visiblePlayers, run);
     }
-    if (run->linkId && linkFlags_GmDocument(d->doc, run->linkId) & supportedProtocol_GmLinkFlag) {
+    if (run->linkId) {
         pushBack_PtrArray(&d->visibleLinks, run);
     }
 }
@@ -2147,13 +2147,10 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 const iGmRun *run = i.ptr;
                 if (run->flags & decoration_GmRunFlag &&
                     visibleLinkOrdinal_DocumentWidget_(d, run->linkId) == ord) {
-                    const int kmods = keyMods_Sym(SDL_GetModState());
                     postCommandf_App("open newtab:%d url:%s",
-                                     ((kmods & KMOD_PRIMARY) && (kmods & KMOD_SHIFT)) ? 1
-                                     : (kmods & KMOD_PRIMARY)                         ? 2
-                                                                                      : 0,
+                                     openTabMode_Sym(SDL_GetModState()),
                                      cstr_String(absoluteUrl_String(
-                                     d->mod.url, linkUrl_GmDocument(d->doc, run->linkId))));
+                                         d->mod.url, linkUrl_GmDocument(d->doc, run->linkId))));
                     iChangeFlags(d->flags, showLinkNumbers_DocumentWidgetFlag, iFalse);
                     invalidateVisibleLinks_DocumentWidget_(d);
                     refresh_Widget(d);
@@ -2315,7 +2312,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                             &(iMenuItem){ "Open Link in Default Browser",
                                           0,
                                           0,
-                                          format_CStr("!open url:%s", cstr_String(linkUrl)) });
+                                          format_CStr("!open default:1 url:%s", cstr_String(linkUrl)) });
                     }
                     if (willUseProxy_App(scheme)) {
                         pushBackN_Array(
@@ -2437,10 +2434,10 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 setFocus_Widget(NULL);
                 if (d->hoverLink) {
                     const iGmLinkId linkId = d->hoverLink->linkId;
+                    const int linkFlags = linkFlags_GmDocument(d->doc, linkId);
                     iAssert(linkId);
                     /* Media links are opened inline by default. */
-                    if (isMediaLink_GmDocument(d->doc, linkId)) {
-                        const int linkFlags = linkFlags_GmDocument(d->doc, linkId);
+                    if (isMediaLink_GmDocument(d->doc, linkId)) {                        
                         if (linkFlags & content_GmLinkFlag && linkFlags & permanent_GmLinkFlag) {
                             /* We have the content and it cannot be dismissed, so nothing
                                further to do. */
@@ -2490,14 +2487,25 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                         }
                         refresh_Widget(w);
                     }
-                    else {
-                        const int kmods = keyMods_Sym(SDL_GetModState());
+                    else if (linkFlags & supportedProtocol_GmLinkFlag) {
                         postCommandf_App("open newtab:%d url:%s",
-                                         ((kmods & KMOD_PRIMARY) && (kmods & KMOD_SHIFT)) ? 1
-                                         : (kmods & KMOD_PRIMARY)                         ? 2
-                                                                                          : 0,
+                                         openTabMode_Sym(SDL_GetModState()),
                                          cstr_String(absoluteUrl_String(
                                              d->mod.url, linkUrl_GmDocument(d->doc, linkId))));
+                    }
+                    else {
+                        const iString *url = absoluteUrl_String(
+                            d->mod.url, linkUrl_GmDocument(d->doc, linkId));
+                        makeQuestion_Widget(
+                            uiTextCaution_ColorEscape "OPEN LINK",
+                            format_CStr(
+                                "Open this link in the default browser?\n" uiTextAction_ColorEscape
+                                "%s",
+                                cstr_String(url)),
+                            (const char *[]){ "Cancel", uiTextCaution_ColorEscape "Open Link" },
+                            (const char *[]){
+                                "cancel", format_CStr("!open default:1 url:%s", cstr_String(url)) },
+                            2);
                     }
                 }
                 if (d->selectMark.start) {

@@ -7,9 +7,10 @@
 # Release notes
 
 ## 1.0
-* Export bookmarks via "about:bookmarks".
+* Export bookmarks via "about:bookmarks". Added a menu item for showing this page.
 * Listing all bookmarks by tag or creation time.
-* Import all links on page as bookmark.
+* Import all links on page as bookmarks.
+* Open links with an unrecognized scheme in the default browser.
 
 ## 0.13.2
 * Added a little spinner to indicate ongoing requests.

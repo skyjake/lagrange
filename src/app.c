@@ -1195,7 +1195,7 @@ iBool handleCommand_App(const char *cmd) {
         const iBool noProxy = argLabel_Command(cmd, "noproxy");
         iUrl parts;
         init_Url(&parts, url);
-        if (equalCase_Rangecc(parts.scheme, "mailto") ||
+        if (argLabel_Command(cmd, "default") || equalCase_Rangecc(parts.scheme, "mailto") ||
             ((noProxy || isEmpty_String(&d->prefs.httpProxy)) &&
              (equalCase_Rangecc(parts.scheme, "http") ||
               equalCase_Rangecc(parts.scheme, "https")))) {
@@ -1205,7 +1205,7 @@ iBool handleCommand_App(const char *cmd) {
         iDocumentWidget *doc = document_Command(cmd);
         const int newTab = argLabel_Command(cmd, "newtab");
         if (newTab) {
-            doc = newTab_App(NULL, (newTab & 1) != 0); /* newtab:2 to open in background */
+            doc = newTab_App(NULL, (newTab & 1) != 0); /* "newtab:2" to open in background */
         }
         iHistory *history = history_DocumentWidget(doc);
         const iBool isHistory = argLabel_Command(cmd, "history") != 0;
