@@ -230,7 +230,8 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 (iMenuItem[]){ { "Open in New Tab", 0, 0, "bookmark.open newtab:1" },
                                { "Open in Background Tab", 0, 0, "bookmark.open newtab:2" },
                                { "---", 0, 0, NULL },
-                               { "Edit Bookmark...", 0, 0, "bookmark.edit" },
+                               { "Edit...", 0, 0, "bookmark.edit" },
+                               { "Duplicate...", 0, 0, "bookmark.dup" },
                                { "Copy URL", 0, 0, "bookmark.copy" },
                                { "---", 0, 0, NULL },
                                { "?", 0, 0, "bookmark.tag tag:subscribed" },
@@ -239,8 +240,8 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                                { "---", 0, 0, NULL },
                                { uiTextCaution_ColorEscape "Delete Bookmark", 0, 0, "bookmark.delete" },
                                { "---", 0, 0, NULL },
-                               { "Refresh Remote Bookmarks", 0, 0, "bookmarks.reload.remote" } },
-               13);
+                               { "Refresh Remote Sources", 0, 0, "bookmarks.reload.remote" } },
+               14);
             break;
         }
         case history_SidebarMode: {
@@ -751,6 +752,22 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             }
             return iTrue;
         }
+        else if (isCommand_Widget(w, ev, "bookmark.dup")) {
+            const iSidebarItem *item = d->contextItem;
+            if (d->mode == bookmarks_SidebarMode && item) {
+                setFlags_Widget(w, disabled_WidgetFlag, iTrue);
+                iBookmark *bm = get_Bookmarks(bookmarks_App(), item->id);
+                const iBool isRemote = hasTag_Bookmark(bm, "remote");
+                iChar icon = isRemote ? 0x1f588 : bm->icon;
+                iWidget *dlg = makeBookmarkCreation_Widget(&bm->url, &bm->title, icon);
+                setId_Widget(dlg, format_CStr("bmed.%s", cstr_String(id_Widget(w))));
+                if (!isRemote) {
+                    setText_InputWidget(findChild_Widget(dlg, "bmed.tags"), &bm->tags);
+                }
+                setFocus_Widget(findChild_Widget(dlg, "bmed.title"));
+            }
+            return iTrue;
+        }
         else if (isCommand_Widget(w, ev, "bookmark.tag")) {
             const iSidebarItem *item = d->contextItem;
             if (d->mode == bookmarks_SidebarMode && item) {
@@ -1220,7 +1237,14 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
         init_String(&str);
         appendChar_String(&str, d->icon ? d->icon : 0x1f588);
         const iRect iconArea = { addX_I2(pos, gap_UI), init_I2(7 * gap_UI, itemHeight) };
-        drawCentered_Text(font, iconArea, iTrue, iconColor, "%s", cstr_String(&str));
+        drawCentered_Text(font,
+                          iconArea,
+                          iTrue,
+                          isPressing                       ? iconColor
+                          : d->icon == 0x2601 /* remote */ ? uiTextCaution_ColorId
+                                                           : iconColor,
+                          "%s",
+                          cstr_String(&str));
         deinit_String(&str);
         const iInt2 textPos = addY_I2(topRight_Rect(iconArea), (itemHeight - lineHeight_Text(font)) / 2);
         drawRange_Text(font, textPos, fg, range_String(&d->label));

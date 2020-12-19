@@ -167,7 +167,7 @@ static iMenuItem bookmarksMenuItems_[] = {
     { "List All", 0, 0, "open url:about:bookmarks" },
     { "List by Tag", 0, 0, "open url:about:bookmarks?tags" },
     { "List by Creation Time", 0, 0, "open url:about:bookmarks?created" },
-    { "Refresh Remote Bookmarks", 0, 0, "bookmarks.reload.remote" },
+    { "Refresh Remote Sources", 0, 0, "bookmarks.reload.remote" },
     { "---", 0, 0, NULL },
     { "Subscribe to This Page...", subscribeToPage_KeyModifier, "feeds.subscribe" },
     { "---", 0, 0, NULL },
