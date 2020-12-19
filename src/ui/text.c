@@ -366,8 +366,8 @@ void init_Text(SDL_Renderer *render) {
     iText *d = &text_;
     d->contentFont     = nunito_TextFont;
     d->headingFont     = nunito_TextFont;
-    d->contentFontSize = contentScale_Text_;    
-    d->ansiEscape      = new_RegExp("\\[([0-9;]+)m", 0);
+    d->contentFontSize = contentScale_Text_;
+    d->ansiEscape      = new_RegExp("[[()]([0-9;AB]*)m", 0);
     d->render          = render;
     /* A grayscale palette for rasterized glyphs. */ {
         SDL_Color colors[256];
