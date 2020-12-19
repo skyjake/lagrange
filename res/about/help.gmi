@@ -25,6 +25,7 @@ Like Gemini, Lagrange has been designed with minimalism in mind. It depends on a
 * Multiple tabs
 * Identity management — create and use TLS client certificates
 * Subscribe to Gemini feeds
+* Use Gemini pages as a source of bookmarks
 * Light and dark color themes
 * Select and copy text with the mouse
 * Find text on the page
@@ -146,13 +147,25 @@ Bookmarks are listed in alphabetic order in the sidebar. There is no support for
 
 In addition to a title, bookmarks can have tags. Some tags have a special meaning, but you are free to enter whatever you want in the tags field. In quick search results, tags are given extra weight so they appear higher in results.
 
-### Special tags
+### 1.4.1 Remote bookmarks
+
+This version of Lagrange does not support automatic bookmark synchronization. By default all bookmarks are stored locally. However, a remote bookmarks feature is provided to allow accessing a set of bookmarks from everywhere. This way you can set up your own centralized bookmark pages or use any public Gemini page as a source of bookmarks.
+
+A local bookmark can be turned into a source for remote bookmarks via the Bookmarks context menu. Right-click the bookmark and select "Use as Remote Source". A ☁️ icon is used to indicate remote sources in the Bookmarks list. Remote sources are checked when launching Lagrange and manually with the "Refresh Remote Sources" menu item.
+
+All links found in the remote sources become remote bookmarks and are included in the Bookmarks list. If an URL is already bookmarked locally, any remote bookmarks with a matching URL are not shown.
+
+Note that remote bookmarks are read-only: they cannot be edited or tagged. This means you cannot subscribe to a remote bookmark without first making a local duplicate of it. If you want to make local copies of all the links in the remote source, open the remote source page and use the "Import Links as Bookmarks..." context menu item on it. After refreshing remote sources, the remote copies of the bookmarks will not be shown any more.
+
+### 1.4.2 Special tags
 
 * Set a "homepage" tag on a bookmark to make it one of the pages that will be opened when pressing the 🏠 button. If multiple bookmarks are tagged as homepages, a random one is selected.
 * A "subscribed" tag means that Lagrange will periodically fetch the bookmarked page and look for Gemini feed links. All the found links that match the required style ("YYYY-MM-DD Entry title") will appear in the Feeds sidebar tab.
 * "headings" can be used together with "subscribed" to subscribe to new headings instead of Gemini feed links.
+* The "remotesource" tag marks the bookmark as a source of remote bookmarks. All links on the source pages are shown as remote bookmarks in the Bookmarks list.
+* The "remote" tag is used for remote bookmarks. These bookmarks cannot be edited or tagged, but you can make a local duplicate to turn it into a regular bookmark.
 
-## 1.5 Feeds
+## 1.5 Subscribing to feeds
 
 You may be familiar with RSS and Atom XML feeds from the web. Lagrange does _not_ support RSS or Atom, only Gemini feeds. A Gemini feed is simply a regular 'text/gemini' page that contains one or more links whose labels are formatted in a particular way.
 
