@@ -10,7 +10,9 @@
 * Export bookmarks via "about:bookmarks". Added a menu item for showing the page.
 * Listing all bookmarks by tag or creation time.
 * Import all links on page as bookmarks.
+* Links can be bookmarked via context menu.
 * Open links with an unrecognized scheme in the default browser.
+* "Edit Feed..." menu item shows the Feed Settings dialog.
 * Removed unimplemented menu items.
 
 ## 0.13.2

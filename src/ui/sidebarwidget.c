@@ -800,13 +800,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                     }
                     if (isCommand_Widget(w, ev, "feed.entry.edit")) {
                         setFlags_Widget(w, disabled_WidgetFlag, iTrue);
-                        iWidget *dlg = makeBookmarkEditor_Widget();
-                        setId_Widget(dlg, format_CStr("bmed.%s", cstr_String(id_Widget(w))));
-                        setText_InputWidget(findChild_Widget(dlg, "bmed.title"), &feedBookmark->title);
-                        setText_InputWidget(findChild_Widget(dlg, "bmed.url"), &feedBookmark->url);
-                        setText_InputWidget(findChild_Widget(dlg, "bmed.tags"), &feedBookmark->tags);
-                        setCommandHandler_Widget(dlg, handleBookmarkEditorCommands_SidebarWidget_);
-                        setFocus_Widget(findChild_Widget(dlg, "bmed.title"));
+                        makeFeedSettings_Widget(id_Bookmark(feedBookmark));
                         return iTrue;
                     }
                     if (isCommand_Widget(w, ev, "feed.entry.unsubscribe")) {

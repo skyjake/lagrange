@@ -26,7 +26,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "bookmarks.h"
 #include "color.h"
 #include "command.h"
+#include "documentwidget.h"
 #include "gmutil.h"
+#include "feeds.h"
 #include "labelwidget.h"
 #include "inputwidget.h"
 #include "bindingswidget.h"
@@ -1249,6 +1251,55 @@ iWidget *makeBookmarkCreation_Widget(const iString *url, const iString *title, i
     return dlg;
 }
 
+
+static iBool handleFeedSettingCommands_(iWidget *dlg, const char *cmd) {
+    if (equal_Command(cmd, "cancel")) {
+        destroy_Widget(dlg);
+        /* Sidebars are disabled when a dialog is opened. */
+        setFlags_Widget(findWidget_App("sidebar"), disabled_WidgetFlag, iFalse);
+        setFlags_Widget(findWidget_App("sidebar2"), disabled_WidgetFlag, iFalse);
+        return iTrue;
+    }
+    if (equal_Command(cmd, "feedcfg.accept")) {
+        iString *feedTitle =
+            collect_String(copy_String(text_InputWidget(findChild_Widget(dlg, "feedcfg.title"))));
+        trim_String(feedTitle);
+        if (isEmpty_String(feedTitle)) {
+            return iTrue;
+        }
+        int id = argLabel_Command(cmd, "bmid");
+        const iBool headings = isSelected_Widget(findChild_Widget(dlg, "feedcfg.type.headings"));
+        const iString *tags = collectNewFormat_String("subscribed%s", headings ? " headings" : "");
+        if (!id) {
+            const size_t numSubs = numSubscribed_Feeds();
+            const iString *url   = url_DocumentWidget(document_App());
+            add_Bookmarks(bookmarks_App(),
+                          url,
+                          feedTitle,
+                          tags,
+                          siteIcon_GmDocument(document_DocumentWidget(document_App())));
+            if (numSubs == 0) {
+                /* Auto-refresh after first addition. */
+                postCommand_App("feeds.refresh");
+            }
+        }
+        else {
+            iBookmark *bm = get_Bookmarks(bookmarks_App(), id);
+            if (bm) {
+                set_String(&bm->title, feedTitle);
+                set_String(&bm->tags, tags);
+            }
+        }
+        postCommand_App("bookmarks.changed");
+        destroy_Widget(dlg);
+        /* Sidebars are disabled when a dialog is opened. */
+        setFlags_Widget(findWidget_App("sidebar"), disabled_WidgetFlag, iFalse);
+        setFlags_Widget(findWidget_App("sidebar2"), disabled_WidgetFlag, iFalse);
+        return iTrue;
+    }
+    return iFalse;
+}
+
 iWidget *makeFeedSettings_Widget(uint32_t bookmarkId) {
     iWidget *dlg = makeSheet_Widget("feedcfg");
     setId_Widget(addChildFlags_Widget(
@@ -1291,6 +1342,17 @@ iWidget *makeFeedSettings_Widget(uint32_t bookmarkId) {
     as_Widget(input)->rect.size.x = 100 * gap_UI - headings->rect.size.x;
     addChild_Widget(get_Window()->root, iClob(dlg));
     centerSheet_Widget(dlg);
+    /* Initialize. */ {
+        const iBookmark *bm  = bookmarkId ? get_Bookmarks(bookmarks_App(), bookmarkId) : NULL;
+        setText_InputWidget(findChild_Widget(dlg, "feedcfg.title"),
+                            bm ? &bm->title : feedTitle_DocumentWidget(document_App()));
+        setFlags_Widget(findChild_Widget(dlg,
+                                         hasTag_Bookmark(bm, "headings") ? "feedcfg.type.headings"
+                                                                         : "feedcfg.type.gemini"),
+                        selected_WidgetFlag,
+                        iTrue);
+        setCommandHandler_Widget(dlg, handleFeedSettingCommands_);
+    }
     return dlg;
 }
 
