@@ -163,9 +163,9 @@ To import all links on a page as bookmarks, use the page context menu to select 
 
 This version of Lagrange does not support automatic bookmark synchronization. By default all bookmarks are stored locally. However, a remote bookmarks feature is provided to allow accessing a set of bookmarks from everywhere. This way you can set up your own centralized bookmark pages or use any public Gemini page as a source of bookmarks.
 
-A local bookmark can be turned into a source for remote bookmarks via the Bookmarks context menu. Right-click the bookmark and select "Use as Remote Source". The ⤓ icon is used to indicate remote items in the Bookmarks list. Remote sources are checked when launching Lagrange and manually with the "Refresh Remote Sources" menu item.
+A local bookmark can be turned into a source of remote bookmarks via the Bookmarks context menu. Right-click the bookmark and select "Use as Remote Source". The ⤓ icon is used to indicate remote items in the Bookmarks list. Remote sources are checked when launching Lagrange and manually with the "Refresh Remote Sources" menu item.
 
-All links found in the remote sources become remote bookmarks and are included in the Bookmarks list. If an URL is already bookmarked locally, any remote bookmarks with a matching URL are not shown.
+All links found in the remote sources become remote bookmarks and are included in the Bookmarks list. If a URL is already bookmarked locally, any remote bookmarks with a matching URL are not shown.
 
 Note that remote bookmarks are read-only: they cannot be edited or tagged. This means you cannot subscribe to a remote bookmark without first making a local duplicate of it. If you want to make local copies of all the links in the remote source, open the remote source page and use the "Import Links as Bookmarks..." context menu item on it. After refreshing remote sources, the remote copies of the bookmarks will not be shown any more.
 
