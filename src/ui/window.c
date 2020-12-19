@@ -162,7 +162,8 @@ static const iMenuItem viewMenuItems_[] = {
 
 static iMenuItem bookmarksMenuItems_[] = {
     { "Bookmark This Page...", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
-    { "Import All Links on Page", 0, 0, "bookmark.links confirm:1" },
+    { "---", 0, 0, NULL },
+    { "Import All Links on Page...", 0, 0, "bookmark.links confirm:1" },
     { "---", 0, 0, NULL },
     { "List All", 0, 0, "open url:about:bookmarks" },
     { "List by Tag", 0, 0, "open url:about:bookmarks?tags" },
@@ -170,7 +171,6 @@ static iMenuItem bookmarksMenuItems_[] = {
     { "Refresh Remote Sources", 0, 0, "bookmarks.reload.remote" },
     { "---", 0, 0, NULL },
     { "Subscribe to This Page...", subscribeToPage_KeyModifier, "feeds.subscribe" },
-    { "---", 0, 0, NULL },
     { "Show Feed Entries", 0, 0, "open url:about:feeds" },
     { "Refresh Feeds", SDLK_r, KMOD_PRIMARY | KMOD_SHIFT, "feeds.refresh" },
 };
