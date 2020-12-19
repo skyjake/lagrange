@@ -413,8 +413,8 @@ void fetchRemote_Bookmarks(iBookmarks *d) {
         iForEach(Hash, i, &d->bookmarks) {
             iBookmark *bm = (iBookmark *) i.value;
             if (hasTag_Bookmark(bm, "remote")) {
-                delete_Bookmark(bm);
                 remove_HashIterator(&i);
+                delete_Bookmark(bm);
                 numRemoved++;
             }
         }
