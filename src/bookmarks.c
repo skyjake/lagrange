@@ -255,6 +255,7 @@ const iString *bookmarkListPage_Bookmarks(const iBookmarks *d, enum iBookmarkLis
     }
     else if (listType == listByTag_BookmarkListType) {
         appendFormat_String(str, "In this list each heading represents a bookmark tag. "
+                                 "Only tagged bookmarks are listed. "
                                  "Bookmarks with multiple tags are repeated under each tag.\n\n");
     }
     iStringSet *tags = new_StringSet();
