@@ -618,6 +618,10 @@ iLocalDef iBool isWrapBoundary_(iChar prevC, iChar c) {
        can wrap text like foo/bar/baz-abc-def.xyz at any puncation boundaries,
        without wrapping on other punctuation used for expressive purposes like
        emoticons :-) */
+    if (c == '.' && (prevC == '(' || prevC == '[' || prevC == '.')) {
+        /* Start of a [...], perhaps? */
+        return iFalse;
+    }
     if (isSpace_Char(prevC)) {
         return iFalse;
     }
