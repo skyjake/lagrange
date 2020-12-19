@@ -12,6 +12,7 @@
 * Import all links on page as bookmarks.
 * Links can be bookmarked via context menu.
 * Open links with an unrecognized scheme in the default browser.
+* Sidebar: Open links in new/background tab via context menu or modifier keys.
 * "Edit Feed..." menu item shows the Feed Settings dialog.
 * Removed unimplemented menu items.
 

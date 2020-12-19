@@ -222,14 +222,17 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
             }
             d->menu = makeMenu_Widget(
                 as_Widget(d),
-                (iMenuItem[]){ { "Edit Bookmark...", 0, 0, "bookmark.edit" },
+                (iMenuItem[]){ { "Open in New Tab", 0, 0, "bookmark.open newtab:1" },
+                               { "Open in Background Tab", 0, 0, "bookmark.open newtab:2" },
+                               { "---", 0, 0, NULL },
+                               { "Edit Bookmark...", 0, 0, "bookmark.edit" },
                                { "Copy URL", 0, 0, "bookmark.copy" },
                                { "---", 0, 0, NULL },
                                { "Subscribe to Feed", 0, 0, "bookmark.tag tag:subscribed" },
                                { "", 0, 0, "bookmark.tag tag:homepage" },
                                { "---", 0, 0, NULL },
                                { uiTextCaution_ColorEscape "Delete Bookmark", 0, 0, "bookmark.delete" } },
-               7);
+               10);
             break;
         }
         case history_SidebarMode: {
@@ -518,7 +521,9 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, const iSidebarItem *it
         case bookmarks_SidebarMode:
         case history_SidebarMode: {
             if (!isEmpty_String(&item->url)) {
-                postCommandf_App("open url:%s", cstr_String(&item->url));
+                postCommandf_App("open newtab:%d url:%s",
+                                 openTabMode_Sym(SDL_GetModState()),
+                                 cstr_String(&item->url));
             }
             break;
         }
@@ -706,6 +711,15 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         }
         else if (isCommand_Widget(w, ev, "menu.closed")) {
             setFlags_Widget(as_Widget(d->list), disabled_WidgetFlag, iFalse);
+        }
+        else if (isCommand_Widget(w, ev, "bookmark.open")) {
+            const iSidebarItem *item = d->contextItem;
+            if (d->mode == bookmarks_SidebarMode && item) {
+                postCommandf_App("open newtab:%d url:%s",
+                                 argLabel_Command(cmd, "newtab"),
+                                 cstr_String(&item->url));
+            }
+            return iTrue;
         }
         else if (isCommand_Widget(w, ev, "bookmark.copy")) {
             const iSidebarItem *item = d->contextItem;
