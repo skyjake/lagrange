@@ -2325,10 +2325,18 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                   format_CStr("!open noproxy:1 url:%s", cstr_String(linkUrl)) } },
                             2);
                     }
+                    iString *linkLabel = collect_String(newRange_String(d->contextLink->text));
+                    urlEncodeSpaces_String(linkLabel);
                     pushBackN_Array(&items,
                                     (iMenuItem[]){ { "---", 0, 0, NULL },
-                                                   { "Copy Link", 0, 0, "document.copylink" } },
-                                    2);
+                                                   { "Copy Link", 0, 0, "document.copylink" },
+                                                   { "Bookmark Link...",
+                                                     0,
+                                                     0,
+                                                     format_CStr("!bookmark.add title:%s url:%s",
+                                                                 cstr_String(linkLabel),
+                                                                 cstr_String(linkUrl)) } },
+                                    3);
                     iMediaRequest *mediaReq;
                     if ((mediaReq = findMediaRequest_DocumentWidget_(d, d->contextLink->linkId)) != NULL) {
                         if (isFinished_GmRequest(mediaReq->req)) {

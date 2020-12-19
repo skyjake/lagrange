@@ -1383,9 +1383,18 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "bookmark.add")) {
         iDocumentWidget *doc = document_App();
-        makeBookmarkCreation_Widget(url_DocumentWidget(doc),
-                                    bookmarkTitle_DocumentWidget(doc),
-                                    siteIcon_GmDocument(document_DocumentWidget(doc)));
+        if (suffixPtr_Command(cmd, "url")) {
+            iString *title = collect_String(newRange_String(range_Command(cmd, "title")));
+            replace_String(title, "%20", " ");
+            makeBookmarkCreation_Widget(collect_String(suffix_Command(cmd, "url")),
+                                        title,
+                                        0x1f588 /* pin */);
+        }
+        else {
+            makeBookmarkCreation_Widget(url_DocumentWidget(doc),
+                                        bookmarkTitle_DocumentWidget(doc),
+                                        siteIcon_GmDocument(document_DocumentWidget(doc)));
+        }
         postCommand_App("focus.set id:bmed.title");
         return iTrue;
     }
