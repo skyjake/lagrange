@@ -693,7 +693,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
             /* We don't have the composited Emojis. */
             if (isEmoji_Char(prevCh)) {
                 /* skip */
-                ch = nextChar_(&chPos, args->text.end);
+                nextChar_(&chPos, args->text.end);
                 ch = nextChar_(&chPos, args->text.end);
             }
         }
@@ -776,11 +776,13 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
         int x2 = x1 + glyph->rect[hoff].size.x;
         /* Out of the allotted space? */
         if (args->xposLimit > 0 && x2 > args->xposLimit) {
-            if (lastWordEnd != args->text.start) {
-                *args->continueFrom_out = lastWordEnd;
-            }
-            else {
-                *args->continueFrom_out = currentPos; /* forced break */
+            if (args->continueFrom_out) {
+                if (lastWordEnd != args->text.start) {
+                    *args->continueFrom_out = lastWordEnd;
+                }
+                else {
+                    *args->continueFrom_out = currentPos; /* forced break */
+                }
             }
             break;
         }
