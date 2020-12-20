@@ -990,49 +990,6 @@ static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
     return iFalse;
 }
 
-static iBool handleFeedSettingCommands_(iWidget *dlg, const char *cmd) {
-    iApp *d = &app_;
-    if (equal_Command(cmd, "cancel")) {
-        destroy_Widget(dlg);
-        return iTrue;
-    }
-    if (equal_Command(cmd, "feedcfg.accept")) {
-        iString *feedTitle =
-            collect_String(copy_String(text_InputWidget(findChild_Widget(dlg, "feedcfg.title"))));
-        trim_String(feedTitle);
-        if (isEmpty_String(feedTitle)) {
-            return iTrue;
-        }
-        int id = argLabel_Command(cmd, "bmid");
-        const iBool headings = isSelected_Widget(findChild_Widget(dlg, "feedcfg.type.headings"));
-        const iString *tags = collectNewFormat_String("subscribed%s", headings ? " headings" : "");
-        if (!id) {
-            const size_t numSubs = numSubscribed_Feeds();
-            const iString *url   = url_DocumentWidget(document_App());
-            add_Bookmarks(d->bookmarks,
-                          url,
-                          feedTitle,
-                          tags,
-                          siteIcon_GmDocument(document_DocumentWidget(document_App())));
-            if (numSubs == 0) {
-                /* Auto-refresh after first addition. */
-                postCommand_App("feeds.refresh");
-            }
-        }
-        else {
-            iBookmark *bm = get_Bookmarks(d->bookmarks, id);
-            if (bm) {
-                set_String(&bm->title, feedTitle);
-                set_String(&bm->tags, tags);
-            }
-        }
-        postCommand_App("bookmarks.changed");
-        destroy_Widget(dlg);
-        return iTrue;
-    }
-    return iFalse;
-}
-
 iBool willUseProxy_App(const iRangecc scheme) {
     return schemeProxy_App(scheme) != NULL;
 }
@@ -1195,7 +1152,7 @@ iBool handleCommand_App(const char *cmd) {
         const iBool noProxy = argLabel_Command(cmd, "noproxy");
         iUrl parts;
         init_Url(&parts, url);
-        if (equalCase_Rangecc(parts.scheme, "mailto") ||
+        if (argLabel_Command(cmd, "default") || equalCase_Rangecc(parts.scheme, "mailto") ||
             ((noProxy || isEmpty_String(&d->prefs.httpProxy)) &&
              (equalCase_Rangecc(parts.scheme, "http") ||
               equalCase_Rangecc(parts.scheme, "https")))) {
@@ -1205,7 +1162,7 @@ iBool handleCommand_App(const char *cmd) {
         iDocumentWidget *doc = document_Command(cmd);
         const int newTab = argLabel_Command(cmd, "newtab");
         if (newTab) {
-            doc = newTab_App(NULL, (newTab & 1) != 0); /* newtab:2 to open in background */
+            doc = newTab_App(NULL, (newTab & 1) != 0); /* "newtab:2" to open in background */
         }
         iHistory *history = history_DocumentWidget(doc);
         const iBool isHistory = argLabel_Command(cmd, "history") != 0;
@@ -1383,9 +1340,18 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "bookmark.add")) {
         iDocumentWidget *doc = document_App();
-        makeBookmarkCreation_Widget(url_DocumentWidget(doc),
-                                    bookmarkTitle_DocumentWidget(doc),
-                                    siteIcon_GmDocument(document_DocumentWidget(doc)));
+        if (suffixPtr_Command(cmd, "url")) {
+            iString *title = collect_String(newRange_String(range_Command(cmd, "title")));
+            replace_String(title, "%20", " ");
+            makeBookmarkCreation_Widget(collect_String(suffix_Command(cmd, "url")),
+                                        title,
+                                        0x1f588 /* pin */);
+        }
+        else {
+            makeBookmarkCreation_Widget(url_DocumentWidget(doc),
+                                        bookmarkTitle_DocumentWidget(doc),
+                                        siteIcon_GmDocument(document_DocumentWidget(doc)));
+        }
         postCommand_App("focus.set id:bmed.title");
         return iTrue;
     }
@@ -1394,57 +1360,16 @@ iBool handleCommand_App(const char *cmd) {
         if (isEmpty_String(url)) {
             return iTrue;
         }
-        uint32_t         id  = findUrl_Bookmarks(d->bookmarks, url);
-        const iBookmark *bm  = id ? get_Bookmarks(d->bookmarks, id) : NULL;
-        iWidget *        dlg = makeFeedSettings_Widget(id);
-        setText_InputWidget(findChild_Widget(dlg, "feedcfg.title"),
-                            bm ? &bm->title : feedTitle_DocumentWidget(document_App()));
-        setFlags_Widget(findChild_Widget(dlg,
-                                         hasTag_Bookmark(bm, "headings") ? "feedcfg.type.headings"
-                                                                         : "feedcfg.type.gemini"),
-                        selected_WidgetFlag,
-                        iTrue);
-        setCommandHandler_Widget(dlg, handleFeedSettingCommands_);
+        makeFeedSettings_Widget(findUrl_Bookmarks(d->bookmarks, url));
         return iTrue;
-#if 0
-        const size_t numSubs = numSubscribed_Feeds();
-        if (!isEmpty_String(url)) {
-            iBool wasCreated = iFalse;
-            uint32_t id = findUrl_Bookmarks(d->bookmarks, url);
-            if (!id) {
-                add_Bookmarks(d->bookmarks,
-                              url,
-                              bookmarkTitle_DocumentWidget(document_App()),
-                              collectNewCStr_String("subscribed"),
-                              siteIcon_GmDocument(document_DocumentWidget(document_App())));
-                wasCreated = iTrue;
-            }
-
-            if (numSubs == 0 && !cmp_String(tag, "subscribed")) {
-                postCommand_App("feeds.refresh");
-            }
-        }
-#endif
-#if 0
-        const iString *tag = string_Command(cmd, "tag");
-        const iString *url = url_DocumentWidget(document_App());
-        const size_t numSubs = numSubscribed_Feeds();
-        if (!isEmpty_String(url)) {
-            uint32_t id = findUrl_Bookmarks(d->bookmarks, url);
-            if (id) {
-                addTag_Bookmark(get_Bookmarks(d->bookmarks, id), cstr_String(tag));
-            }
-            else {
-                add_Bookmarks(d->bookmarks, url, bookmarkTitle_DocumentWidget(document_App()),
-                              tag, siteIcon_GmDocument(document_DocumentWidget(document_App())));
-            }
-            postCommand_App("bookmarks.changed");
-            if (numSubs == 0 && !cmp_String(tag, "subscribed")) {
-                postCommand_App("feeds.refresh");
-            }
-        }
+    }
+    else if (equal_Command(cmd, "bookmarks.reload.remote")) {
+        fetchRemote_Bookmarks(bookmarks_App());
         return iTrue;
-#endif
+    }
+    else if (equal_Command(cmd, "bookmarks.request.finished")) {
+        requestFinished_Bookmarks(bookmarks_App(), pointerLabel_Command(cmd, "req"));
+        return iTrue;
     }
     else if (equal_Command(cmd, "bookmarks.changed")) {
         save_Bookmarks(d->bookmarks, dataDir_App_);

@@ -199,6 +199,7 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
         case bookmarks_SidebarMode: {
             iRegExp *homeTag = iClob(new_RegExp("\\bhomepage\\b", caseSensitive_RegExpOption));
             iRegExp *subTag  = iClob(new_RegExp("\\bsubscribed\\b", caseSensitive_RegExpOption));
+            iRegExp *remoteSourceTag = iClob(new_RegExp("\\bremotesource\\b", caseSensitive_RegExpOption));
             iConstForEach(PtrArray, i, list_Bookmarks(bookmarks_App(), cmpTitle_Bookmark_, NULL, NULL)) {
                 const iBookmark *bm = i.ptr;
                 iSidebarItem *item = new_SidebarItem();
@@ -216,20 +217,31 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                     if (matchString_RegExp(homeTag, &bm->tags, &m)) {
                         appendChar_String(&item->meta, 0x1f3e0);
                     }
+                    init_RegExpMatch(&m);
+                    if (matchString_RegExp(remoteSourceTag, &bm->tags, &m)) {
+                        appendChar_String(&item->meta, 0x2913);
+                    }
                 }
                 addItem_ListWidget(d->list, item);
                 iRelease(item);
             }
             d->menu = makeMenu_Widget(
                 as_Widget(d),
-                (iMenuItem[]){ { "Edit Bookmark...", 0, 0, "bookmark.edit" },
+                (iMenuItem[]){ { "Open in New Tab", 0, 0, "bookmark.open newtab:1" },
+                               { "Open in Background Tab", 0, 0, "bookmark.open newtab:2" },
+                               { "---", 0, 0, NULL },
+                               { "Edit...", 0, 0, "bookmark.edit" },
+                               { "Duplicate...", 0, 0, "bookmark.dup" },
                                { "Copy URL", 0, 0, "bookmark.copy" },
                                { "---", 0, 0, NULL },
-                               { "Subscribe to Feed", 0, 0, "bookmark.tag tag:subscribed" },
-                               { "", 0, 0, "bookmark.tag tag:homepage" },
+                               { "?", 0, 0, "bookmark.tag tag:subscribed" },
+                               { "?", 0, 0, "bookmark.tag tag:homepage" },
+                               { "?", 0, 0, "bookmark.tag tag:remotesource" },
                                { "---", 0, 0, NULL },
-                               { uiTextCaution_ColorEscape "Delete Bookmark", 0, 0, "bookmark.delete" } },
-               7);
+                               { uiTextCaution_ColorEscape "Delete Bookmark", 0, 0, "bookmark.delete" },
+                               { "---", 0, 0, NULL },
+                               { "Refresh Remote Sources", 0, 0, "bookmarks.reload.remote" } },
+               14);
             break;
         }
         case history_SidebarMode: {
@@ -327,9 +339,9 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 { "Show Usage", 0, 0, "ident.showuse" },
                 { "---", 0, 0, NULL },
                 { "Edit Notes...", 0, 0, "ident.edit" },
-                { "Pick Icon...", 0, 0, "ident.pickicon" },
+//                { "Pick Icon...", 0, 0, "ident.pickicon" },
                 { "---", 0, 0, NULL },
-                { "Reveal Files", 0, 0, "ident.reveal" },
+                //{ "Reveal Files", 0, 0, "ident.reveal" },
                 { uiTextCaution_ColorEscape "Delete Identity...", 0, 0, "ident.delete confirm:1" },
             };
             d->menu = makeMenu_Widget(as_Widget(d), menuItems, iElemCount(menuItems));
@@ -518,7 +530,9 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, const iSidebarItem *it
         case bookmarks_SidebarMode:
         case history_SidebarMode: {
             if (!isEmpty_String(&item->url)) {
-                postCommandf_App("open url:%s", cstr_String(&item->url));
+                postCommandf_App("open newtab:%d url:%s",
+                                 openTabMode_Sym(SDL_GetModState()),
+                                 cstr_String(&item->url));
             }
             break;
         }
@@ -707,6 +721,15 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         else if (isCommand_Widget(w, ev, "menu.closed")) {
             setFlags_Widget(as_Widget(d->list), disabled_WidgetFlag, iFalse);
         }
+        else if (isCommand_Widget(w, ev, "bookmark.open")) {
+            const iSidebarItem *item = d->contextItem;
+            if (d->mode == bookmarks_SidebarMode && item) {
+                postCommandf_App("open newtab:%d url:%s",
+                                 argLabel_Command(cmd, "newtab"),
+                                 cstr_String(&item->url));
+            }
+            return iTrue;
+        }
         else if (isCommand_Widget(w, ev, "bookmark.copy")) {
             const iSidebarItem *item = d->contextItem;
             if (d->mode == bookmarks_SidebarMode && item) {
@@ -725,6 +748,22 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                 setText_InputWidget(findChild_Widget(dlg, "bmed.url"), &bm->url);
                 setText_InputWidget(findChild_Widget(dlg, "bmed.tags"), &bm->tags);
                 setCommandHandler_Widget(dlg, handleBookmarkEditorCommands_SidebarWidget_);
+                setFocus_Widget(findChild_Widget(dlg, "bmed.title"));
+            }
+            return iTrue;
+        }
+        else if (isCommand_Widget(w, ev, "bookmark.dup")) {
+            const iSidebarItem *item = d->contextItem;
+            if (d->mode == bookmarks_SidebarMode && item) {
+                setFlags_Widget(w, disabled_WidgetFlag, iTrue);
+                iBookmark *bm = get_Bookmarks(bookmarks_App(), item->id);
+                const iBool isRemote = hasTag_Bookmark(bm, "remote");
+                iChar icon = isRemote ? 0x1f588 : bm->icon;
+                iWidget *dlg = makeBookmarkCreation_Widget(&bm->url, &bm->title, icon);
+                setId_Widget(dlg, format_CStr("bmed.%s", cstr_String(id_Widget(w))));
+                if (!isRemote) {
+                    setText_InputWidget(findChild_Widget(dlg, "bmed.tags"), &bm->tags);
+                }
                 setFocus_Widget(findChild_Widget(dlg, "bmed.title"));
             }
             return iTrue;
@@ -800,13 +839,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                     }
                     if (isCommand_Widget(w, ev, "feed.entry.edit")) {
                         setFlags_Widget(w, disabled_WidgetFlag, iTrue);
-                        iWidget *dlg = makeBookmarkEditor_Widget();
-                        setId_Widget(dlg, format_CStr("bmed.%s", cstr_String(id_Widget(w))));
-                        setText_InputWidget(findChild_Widget(dlg, "bmed.title"), &feedBookmark->title);
-                        setText_InputWidget(findChild_Widget(dlg, "bmed.url"), &feedBookmark->url);
-                        setText_InputWidget(findChild_Widget(dlg, "bmed.tags"), &feedBookmark->tags);
-                        setCommandHandler_Widget(dlg, handleBookmarkEditorCommands_SidebarWidget_);
-                        setFocus_Widget(findChild_Widget(dlg, "bmed.title"));
+                        makeFeedSettings_Widget(id_Bookmark(feedBookmark));
                         return iTrue;
                     }
                     if (isCommand_Widget(w, ev, "feed.entry.unsubscribe")) {
@@ -998,6 +1031,13 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                                                         ? "Unsubscribe from Feed"
                                                         : "Subscribe to Feed");
                         }
+                        menuItem = findMenuItem_Widget(d->menu, "bookmark.tag tag:remotesource");
+                        if (menuItem) {
+                            setTextCStr_LabelWidget(menuItem,
+                                                    hasTag_Bookmark(bm, "remotesource")
+                                                        ? "Remove Bookmark Source"
+                                                        : "Use as Bookmark Source");
+                        }
                     }
                 }
                 else if (d->mode == feeds_SidebarMode && d->contextItem) {
@@ -1046,6 +1086,25 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         }
     }
     if (hoverItem_ListWidget(d->list) || isVisible_Widget(d->menu)) {
+        /* Update the menu before opening. */
+        if (d->mode == bookmarks_SidebarMode && !isVisible_Widget(d->menu)) {
+            /* Remote bookmarks have limitations. */
+            const iSidebarItem *hoverItem = hoverItem_ListWidget(d->list);
+            iAssert(hoverItem);
+            const iBookmark *  bm              = get_Bookmarks(bookmarks_App(), hoverItem->id);
+            const iBool        isRemote        = hasTag_Bookmark(bm, "remote");
+            static const char *localOnlyCmds[] = { "bookmark.edit",
+                                                   "bookmark.delete",
+                                                   "bookmark.tag tag:subscribed",
+                                                   "bookmark.tag tag:homepage",
+                                                   "bookmark.tag tag:remotesource",
+                                                   "bookmark.tag tag:subscribed" };
+            iForIndices(i, localOnlyCmds) {
+                setFlags_Widget(as_Widget(findMenuItem_Widget(d->menu, localOnlyCmds[i])),
+                                disabled_WidgetFlag,
+                                isRemote);
+            }
+        }
         processContextMenuEvent_Widget(d->menu, ev, {});
     }
     return processEvent_Widget(w, ev);
@@ -1178,7 +1237,14 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
         init_String(&str);
         appendChar_String(&str, d->icon ? d->icon : 0x1f588);
         const iRect iconArea = { addX_I2(pos, gap_UI), init_I2(7 * gap_UI, itemHeight) };
-        drawCentered_Text(font, iconArea, iTrue, iconColor, "%s", cstr_String(&str));
+        drawCentered_Text(font,
+                          iconArea,
+                          iTrue,
+                          isPressing                       ? iconColor
+                          : d->icon == 0x2913 /* remote */ ? uiTextCaution_ColorId
+                                                           : iconColor,
+                          "%s",
+                          cstr_String(&str));
         deinit_String(&str);
         const iInt2 textPos = addY_I2(topRight_Rect(iconArea), (itemHeight - lineHeight_Text(font)) / 2);
         drawRange_Text(font, textPos, fg, range_String(&d->label));

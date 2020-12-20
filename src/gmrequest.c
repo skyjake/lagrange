@@ -27,6 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "app.h" /* dataDir_App() */
 #include "mimehooks.h"
 #include "feeds.h"
+#include "bookmarks.h"
 #include "ui/text.h"
 #include "embedded.h"
 #include "defs.h"
@@ -278,7 +279,7 @@ static void requestFinished_GmRequest_(iGmRequest *d, iTlsRequest *req) {
     iNotifyAudience(d, finished, GmRequestFinished);
 }
 
-static const iBlock *aboutPageSource_(iRangecc path) {
+static const iBlock *aboutPageSource_(iRangecc path, iRangecc query) {
     const iBlock *src = NULL;
     if (equalCase_Rangecc(path, "lagrange")) {
         return &blobLagrange_Embedded;
@@ -297,6 +298,13 @@ static const iBlock *aboutPageSource_(iRangecc path) {
     }
     if (equalCase_Rangecc(path, "feeds")) {
         return utf8_String(entryListPage_Feeds());
+    }
+    if (equalCase_Rangecc(path, "bookmarks")) {
+        return utf8_String(bookmarkListPage_Bookmarks(
+            bookmarks_App(),
+            equal_Rangecc(query, "?tags")      ? listByTag_BookmarkListType
+            : equal_Rangecc(query, "?created") ? listByCreationTime_BookmarkListType
+                                               : listByFolder_BookmarkListType));
     }
     if (equalCase_Rangecc(path, "blank")) {
         return utf8_String(collectNewCStr_String("\n"));
@@ -516,7 +524,7 @@ void submit_GmRequest(iGmRequest *d) {
     const iString *host = collect_String(newRange_String(url.host));
     uint16_t       port = toInt_String(collect_String(newRange_String(url.port)));
     if (equalCase_Rangecc(url.scheme, "about")) {
-        const iBlock *src = aboutPageSource_(url.path);
+        const iBlock *src = aboutPageSource_(url.path, url.query);
         if (src) {
             resp->statusCode = success_GmStatusCode;
             setCStr_String(&resp->meta, "text/gemini; charset=utf-8");

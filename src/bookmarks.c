@@ -21,12 +21,16 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "bookmarks.h"
+#include "visited.h"
+#include "gmrequest.h"
+#include "app.h"
 
 #include <the_Foundation/file.h>
 #include <the_Foundation/hash.h>
 #include <the_Foundation/mutex.h>
 #include <the_Foundation/path.h>
 #include <the_Foundation/regexp.h>
+#include <the_Foundation/stringset.h>
 
 void init_Bookmark(iBookmark *d) {
     init_String(&d->url);
@@ -70,14 +74,19 @@ static int cmpTimeDescending_Bookmark_(const iBookmark **a, const iBookmark **b)
     return iCmp(seconds_Time(&(*b)->when), seconds_Time(&(*a)->when));
 }
 
+static int cmpTitleAscending_Bookmark_(const iBookmark **a, const iBookmark **b) {
+    return cmpStringCase_String(&(*a)->title, &(*b)->title);
+}
+
 /*----------------------------------------------------------------------------------------------*/
 
 static const char *fileName_Bookmarks_ = "bookmarks.txt";
 
 struct Impl_Bookmarks {
-    iMutex *mtx;
-    int     idEnum;
-    iHash   bookmarks; /* bookmark ID is the hash key */
+    iMutex *  mtx;
+    int       idEnum;
+    iHash     bookmarks; /* bookmark ID is the hash key */
+    iPtrArray remoteRequests;
 };
 
 iDefineTypeConstruction(Bookmarks)
@@ -86,9 +95,15 @@ void init_Bookmarks(iBookmarks *d) {
     d->mtx = new_Mutex();
     d->idEnum = 0;
     init_Hash(&d->bookmarks);
+    init_PtrArray(&d->remoteRequests);
 }
 
 void deinit_Bookmarks(iBookmarks *d) {
+    iForEach(PtrArray, i, &d->remoteRequests) {
+        cancel_GmRequest(i.ptr);
+        iRelease(i.ptr);
+    }
+    deinit_PtrArray(&d->remoteRequests);
     clear_Bookmarks(d);
     deinit_Hash(&d->bookmarks);
     delete_Mutex(d->mtx);
@@ -132,6 +147,13 @@ void load_Bookmarks(iBookmarks *d, const char *dirPath) {
             initSeconds_Time(&bm->when, strtod(line.start, &endPos));
             line.start = skipSpace_CStr(endPos);
             setRange_String(&bm->url, line);
+            /* Clean up the URL. */ {
+                iUrl parts;
+                init_Url(&parts, &bm->url);
+                if (isEmpty_Range(&parts.path) && isEmpty_Range(&parts.query)) {
+                    appendChar_String(&bm->url, '/');
+                }
+            }
             nextSplit_Rangecc(src, "\n", &line);
             setRange_String(&bm->title, line);
             nextSplit_Rangecc(src, "\n", &line);
@@ -140,15 +162,23 @@ void load_Bookmarks(iBookmarks *d, const char *dirPath) {
         }
     }
     iRelease(f);
+    fetchRemote_Bookmarks(d);
 }
 
 void save_Bookmarks(const iBookmarks *d, const char *dirPath) {
     lock_Mutex(d->mtx);
+    iRegExp *remotePattern = iClob(new_RegExp("\\bremote\\b", caseSensitive_RegExpOption));
     iFile *f = newCStr_File(concatPath_CStr(dirPath, fileName_Bookmarks_));
     if (open_File(f, writeOnly_FileMode | text_FileMode)) {
         iString *str = collectNew_String();
         iConstForEach(Hash, i, &d->bookmarks) {
             const iBookmark *bm = (const iBookmark *) i.value;
+            iRegExpMatch m;
+            init_RegExpMatch(&m);
+            if (matchString_RegExp(remotePattern, &bm->tags, &m)) {
+                /* Remote bookmarks are not saved. */
+                continue;
+            }
             format_String(str,
                           "%08x %lf %s\n%s\n%s\n",
                           bm->icon,
@@ -221,4 +251,184 @@ const iPtrArray *list_Bookmarks(const iBookmarks *d, iBookmarksCompareFunc cmp,
     if (!cmp) cmp = cmpTimeDescending_Bookmark_;
     sort_Array(list, (int (*)(const void *, const void *)) cmp);
     return list;
+}
+
+const iString *bookmarkListPage_Bookmarks(const iBookmarks *d, enum iBookmarkListType listType) {
+    iString *str = collectNew_String();
+    lock_Mutex(d->mtx);
+    format_String(str,
+                  "# %s\n\n",
+                  listType == listByFolder_BookmarkListType ? "Bookmarks"
+                  : listType == listByTag_BookmarkListType  ? "Bookmark tags"
+                                                            : "Created bookmarks");
+    if (listType == listByFolder_BookmarkListType) {
+        appendFormat_String(str,
+                            "You have %d bookmark%s.\n\n"
+                            "Save this page to export them, or you can copy them to "
+                            "the clipboard.\n\n",
+                            size_Hash(&d->bookmarks),
+                            size_Hash(&d->bookmarks) != 1 ? "s" : "");
+    }
+    else if (listType == listByTag_BookmarkListType) {
+        appendFormat_String(str, "In this list each heading represents a bookmark tag. "
+                                 "Only tagged bookmarks are listed. "
+                                 "Bookmarks with multiple tags are repeated under each tag.\n\n");
+    }
+    iStringSet *tags = new_StringSet();
+    const iPtrArray *bmList = list_Bookmarks(d,
+                                             listType == listByCreationTime_BookmarkListType
+                                                 ? cmpTimeDescending_Bookmark_
+                                                 : cmpTitleAscending_Bookmark_,
+                                             NULL,
+                                             NULL);
+    iConstForEach(PtrArray, i, bmList) {
+        const iBookmark *bm = i.ptr;
+        if (listType == listByFolder_BookmarkListType) {
+            appendFormat_String(str, "=> %s %s\n", cstr_String(&bm->url), cstr_String(&bm->title));
+        }
+        else if (listType == listByCreationTime_BookmarkListType) {
+            appendFormat_String(str, "=> %s %s - %s\n", cstr_String(&bm->url),
+                                cstrCollect_String(format_Time(&bm->when, "%Y-%m-%d")),
+                                cstr_String(&bm->title));
+        }
+        iRangecc tag = iNullRange;
+        while (nextSplit_Rangecc(range_String(&bm->tags), " ", &tag)) {
+            if (!isEmpty_Range(&tag)) {
+                iString t;
+                initRange_String(&t, tag);
+                insert_StringSet(tags, &t);
+                deinit_String(&t);
+            }
+        }
+    }
+    if (listType == listByTag_BookmarkListType) {
+        iConstForEach(StringSet, t, tags) {
+            const iString *tag = t.value;
+            appendFormat_String(str, "\n## %s\n", cstr_String(tag));
+            iConstForEach(PtrArray, i, bmList) {
+                const iBookmark *bm = i.ptr;
+                iRangecc bmTag = iNullRange;
+                iBool isTagged = iFalse;
+                while (nextSplit_Rangecc(range_String(&bm->tags), " ", &bmTag)) {
+                    if (equal_Rangecc(bmTag, cstr_String(tag))) {
+                        isTagged = iTrue;
+                        break;
+                    }
+                }
+                if (isTagged) {
+                    appendFormat_String(
+                        str, "=> %s %s\n", cstr_String(&bm->url), cstr_String(&bm->title));
+                }
+            }
+        }
+    }
+    iRelease(tags);
+    unlock_Mutex(d->mtx);
+    if (listType == listByCreationTime_BookmarkListType) {
+        appendCStr_String(str, "\nThis page is formatted according to the "
+                               "\"Subscribing to Gemini pages\" companion specification.\n");
+    }
+    else {
+        appendFormat_String(str,
+                            "\nEach link represents a bookmark. "
+                            "%s"
+                            "Bullet lines and quotes are reserved for additional information about "
+                            "the preceding bookmark. Text lines and preformatted text are considered "
+                            "comments and should be ignored.\n",
+                            listType == listByFolder_BookmarkListType
+                                ? "Folder structure is defined by level 2/3 headings. "
+                            : listType == listByTag_BookmarkListType
+                                ? "Tags are defined by level 2 headings. "
+                                : "");
+    }
+    return str;
+}
+
+static iBool isRemoteSource_Bookmark_(void *context, const iBookmark *d) {
+    iUnused(context);
+    return hasTag_Bookmark(d, "remotesource");
+}
+
+void remoteRequestFinished_Bookmarks_(iBookmarks *d, iGmRequest *req) {
+    iUnused(d);
+    postCommandf_App("bookmarks.request.finished req:%p", req);
+}
+
+void requestFinished_Bookmarks(iBookmarks *d, iGmRequest *req) {
+    iBool found = iFalse;
+    iForEach(PtrArray, i, &d->remoteRequests) {
+        if (i.ptr == req) {
+            remove_PtrArrayIterator(&i);
+            found = iTrue;
+            break;
+        }
+    }
+    iAssert(found);
+    /* Parse all links in the result. */
+    if (isSuccess_GmStatusCode(status_GmRequest(req))) {
+        iTime now;
+        initCurrent_Time(&now);
+        iRegExp *linkPattern = new_RegExp("^=>\\s*([^\\s]+)\\s+(.*)", 0);
+        iString src;
+        const iString *remoteTag = collectNewCStr_String("remote");
+        initBlock_String(&src, body_GmRequest(req));
+        iRangecc srcLine = iNullRange;
+        while (nextSplit_Rangecc(range_String(&src), "\n", &srcLine)) {
+            iRangecc line = srcLine;
+            trimEnd_Rangecc(&line);
+            iRegExpMatch m;
+            init_RegExpMatch(&m);            
+            if (matchRange_RegExp(linkPattern, line, &m)) {
+                const iRangecc url    = capturedRange_RegExpMatch(&m, 1);
+                const iRangecc title  = capturedRange_RegExpMatch(&m, 2);
+                iString *      urlStr = newRange_String(url);
+                const iString *absUrl = absoluteUrl_String(url_GmRequest(req), urlStr);
+                if (!findUrl_Bookmarks(d, absUrl)) {
+                    iString *titleStr = newRange_String(title);
+                    add_Bookmarks(d, absUrl, titleStr, remoteTag, 0x2913 /* arrow down */);
+                    delete_String(titleStr);
+                }
+                delete_String(urlStr);
+            }
+        }
+        deinit_String(&src);
+        iRelease(linkPattern);
+    }
+    else {
+        /* TODO: Show error? */
+    }
+    iRelease(req);
+    if (isEmpty_PtrArray(&d->remoteRequests)) {
+        postCommand_App("bookmarks.changed");
+    }
+}
+
+void fetchRemote_Bookmarks(iBookmarks *d) {
+    if (!isEmpty_PtrArray(&d->remoteRequests)) {
+        return; /* Already ongoing. */
+    }
+    lock_Mutex(d->mtx);
+    /* Remove all current remote bookmarks. */ {
+        size_t numRemoved = 0;
+        iForEach(Hash, i, &d->bookmarks) {
+            iBookmark *bm = (iBookmark *) i.value;
+            if (hasTag_Bookmark(bm, "remote")) {
+                remove_HashIterator(&i);
+                delete_Bookmark(bm);
+                numRemoved++;
+            }
+        }
+        if (numRemoved) {
+            postCommand_App("bookmarks.changed");
+        }
+    }
+    iConstForEach(PtrArray, i, list_Bookmarks(d, NULL, isRemoteSource_Bookmark_, NULL)) {
+        const iBookmark *bm = i.ptr;
+        iGmRequest *req = new_GmRequest(certs_App());
+        pushBack_PtrArray(&d->remoteRequests, req);
+        setUrl_GmRequest(req, &bm->url);
+        iConnect(GmRequest, req, finished, req, remoteRequestFinished_Bookmarks_);
+        submit_GmRequest(req);
+    }
+    unlock_Mutex(d->mtx);
 }

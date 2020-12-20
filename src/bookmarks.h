@@ -27,6 +27,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/string.h>
 #include <the_Foundation/time.h>
 
+iDeclareType(GmRequest)
+
 iDeclareType(Bookmark)
 iDeclareTypeConstruction(Bookmark)
 
@@ -45,17 +47,23 @@ iBool   hasTag_Bookmark     (const iBookmark *d, const char *tag);
 void    addTag_Bookmark     (iBookmark *d, const char *tag);
 void    removeTag_Bookmark  (iBookmark *d, const char *tag);
 
+/*----------------------------------------------------------------------------------------------*/
+
 iDeclareType(Bookmarks)
 iDeclareTypeConstruction(Bookmarks)
 
-void    clear_Bookmarks     (iBookmarks *);
-void    load_Bookmarks      (iBookmarks *, const char *dirPath);
-void    save_Bookmarks      (const iBookmarks *, const char *dirPath);
+void        clear_Bookmarks     (iBookmarks *);
+void        load_Bookmarks      (iBookmarks *, const char *dirPath);
+void        save_Bookmarks      (const iBookmarks *, const char *dirPath);
 
-void    add_Bookmarks       (iBookmarks *, const iString *url, const iString *title, const iString *tags, iChar icon);
-iBool   remove_Bookmarks    (iBookmarks *, uint32_t id);
-iBookmark *get_Bookmarks    (iBookmarks *, uint32_t id);
-uint32_t findUrl_Bookmarks  (const iBookmarks *, const iString *url); /* O(n) */
+void        fetchRemote_Bookmarks       (iBookmarks *);
+void        requestFinished_Bookmarks   (iBookmarks *, iGmRequest *req);
+
+void        add_Bookmarks       (iBookmarks *, const iString *url, const iString *title,
+                                 const iString *tags, iChar icon);
+iBool       remove_Bookmarks    (iBookmarks *, uint32_t id);
+iBookmark * get_Bookmarks       (iBookmarks *, uint32_t id);
+uint32_t    findUrl_Bookmarks   (const iBookmarks *, const iString *url); /* O(n) */
 
 typedef iBool (*iBookmarksFilterFunc) (void *context, const iBookmark *);
 typedef int   (*iBookmarksCompareFunc)(const iBookmark **, const iBookmark **);
@@ -75,3 +83,11 @@ iBool   filterTagsRegExp_Bookmarks  (void *regExp, const iBookmark *);
  */
 const iPtrArray *list_Bookmarks(const iBookmarks *, iBookmarksCompareFunc cmp,
                                 iBookmarksFilterFunc filter, void *context);
+
+enum iBookmarkListType {
+    listByFolder_BookmarkListType,
+    listByTag_BookmarkListType,
+    listByCreationTime_BookmarkListType,
+};
+
+const iString * bookmarkListPage_Bookmarks  (const iBookmarks *, enum iBookmarkListType listType);

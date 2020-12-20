@@ -6,6 +6,17 @@
 ```
 # Release notes
 
+## 1.0
+* Added remote bookmarks. Any bookmarked 'text/gemini' page with the "remotesource" tag is a source of remote bookmarks. Each link on the page is shown as a remote bookmark in Bookmarks.
+* Added a way to export bookmarks via the special page "about:bookmarks". The page can also list all bookmarks by tag or by creation date.
+* Added context menu item for duplicating a bookmark.
+* Import all links on a page as bookmarks. (Importing tags is not supported in this version.)
+* Links can be bookmarked via context menu.
+* Open links with an unrecognized scheme in the default browser.
+* Open sidebar items in new/background tab via context menu or modifier keys.
+* "Edit Feed..." menu item shows the Feed Settings dialog.
+* Removed unimplemented menu items.
+
 ## 0.13.2
 * Added a little spinner to indicate ongoing requests.
 * Fixed very thin progress bar on HiDPI displays.

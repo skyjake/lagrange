@@ -26,7 +26,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "bookmarks.h"
 #include "color.h"
 #include "command.h"
+#include "documentwidget.h"
 #include "gmutil.h"
+#include "feeds.h"
 #include "labelwidget.h"
 #include "inputwidget.h"
 #include "bindingswidget.h"
@@ -133,6 +135,11 @@ int keyMods_Sym(int kmods) {
     if (kmods & KMOD_CTRL)  kmods |= KMOD_CTRL;
     if (kmods & KMOD_GUI)   kmods |= KMOD_GUI;
     return kmods;
+}
+
+int openTabMode_Sym(int kmods) {
+    const int km = keyMods_Sym(kmods);
+    return ((km & KMOD_PRIMARY) && (km & KMOD_SHIFT)) ? 1 : (km & KMOD_PRIMARY) ? 2 : 0;
 }
 
 iRangei intersect_Rangei(iRangei a, iRangei b) {
@@ -369,7 +376,9 @@ iWidget *addAction_Widget(iWidget *parent, int key, int kmods, const char *comma
 static iBool isCommandIgnoredByMenus_(const char *cmd) {
     return equal_Command(cmd, "media.updated") || equal_Command(cmd, "media.player.update") ||
            startsWith_CStr(cmd, "feeds.update.") ||
-           equal_Command(cmd, "document.request.updated") || equal_Command(cmd, "window.resized") ||
+           equal_Command(cmd, "document.request.updated") ||
+           equal_Command(cmd, "bookmarks.request.finished") ||
+           equal_Command(cmd, "window.resized") ||
            equal_Command(cmd, "window.reload.update") ||
            (equal_Command(cmd, "mouse.clicked") && !arg_Command(cmd)); /* button released */
 }
@@ -886,7 +895,9 @@ void updateValueInput_Widget(iWidget *d, const char *title, const char *prompt) 
 
 static iBool messageHandler_(iWidget *msg, const char *cmd) {
     /* Almost any command dismisses the sheet. */
-    if (!(equal_Command(cmd, "media.updated") || equal_Command(cmd, "media.player.update") ||
+    if (!(equal_Command(cmd, "media.updated") ||
+          equal_Command(cmd, "media.player.update") ||
+          equal_Command(cmd, "bookmarks.request.finished") ||
           equal_Command(cmd, "document.request.updated") || startsWith_CStr(cmd, "window."))) {
         destroy_Widget(msg);
     }
@@ -1205,6 +1216,11 @@ iWidget *makeBookmarkEditor_Widget(void) {
     return dlg;
 }
 
+static void enableSidebars_(void) {
+    setFlags_Widget(findWidget_App("sidebar"), disabled_WidgetFlag, iFalse);
+    setFlags_Widget(findWidget_App("sidebar2"), disabled_WidgetFlag, iFalse);
+}
+
 static iBool handleBookmarkCreationCommands_SidebarWidget_(iWidget *editor, const char *cmd) {
     if (equal_Command(cmd, "bmed.accept") || equal_Command(cmd, "cancel")) {
         if (equal_Command(cmd, "bmed.accept")) {
@@ -1219,6 +1235,8 @@ static iBool handleBookmarkCreationCommands_SidebarWidget_(iWidget *editor, cons
             postCommand_App("bookmarks.changed");
         }
         destroy_Widget(editor);
+        /* Sidebars are disabled when a dialog is opened. */
+        enableSidebars_();
         return iTrue;
     }
     return iFalse;
@@ -1242,6 +1260,53 @@ iWidget *makeBookmarkCreation_Widget(const iString *url, const iString *title, i
         "bmed.icon");
     setCommandHandler_Widget(dlg, handleBookmarkCreationCommands_SidebarWidget_);
     return dlg;
+}
+
+
+static iBool handleFeedSettingCommands_(iWidget *dlg, const char *cmd) {
+    if (equal_Command(cmd, "cancel")) {
+        destroy_Widget(dlg);
+        /* Sidebars are disabled when a dialog is opened. */
+        enableSidebars_();
+        return iTrue;
+    }
+    if (equal_Command(cmd, "feedcfg.accept")) {
+        iString *feedTitle =
+            collect_String(copy_String(text_InputWidget(findChild_Widget(dlg, "feedcfg.title"))));
+        trim_String(feedTitle);
+        if (isEmpty_String(feedTitle)) {
+            return iTrue;
+        }
+        int id = argLabel_Command(cmd, "bmid");
+        const iBool headings = isSelected_Widget(findChild_Widget(dlg, "feedcfg.type.headings"));
+        const iString *tags = collectNewFormat_String("subscribed%s", headings ? " headings" : "");
+        if (!id) {
+            const size_t numSubs = numSubscribed_Feeds();
+            const iString *url   = url_DocumentWidget(document_App());
+            add_Bookmarks(bookmarks_App(),
+                          url,
+                          feedTitle,
+                          tags,
+                          siteIcon_GmDocument(document_DocumentWidget(document_App())));
+            if (numSubs == 0) {
+                /* Auto-refresh after first addition. */
+                postCommand_App("feeds.refresh");
+            }
+        }
+        else {
+            iBookmark *bm = get_Bookmarks(bookmarks_App(), id);
+            if (bm) {
+                set_String(&bm->title, feedTitle);
+                set_String(&bm->tags, tags);
+            }
+        }
+        postCommand_App("bookmarks.changed");
+        destroy_Widget(dlg);
+        /* Sidebars are disabled when a dialog is opened. */
+        enableSidebars_();
+        return iTrue;
+    }
+    return iFalse;
 }
 
 iWidget *makeFeedSettings_Widget(uint32_t bookmarkId) {
@@ -1286,6 +1351,17 @@ iWidget *makeFeedSettings_Widget(uint32_t bookmarkId) {
     as_Widget(input)->rect.size.x = 100 * gap_UI - headings->rect.size.x;
     addChild_Widget(get_Window()->root, iClob(dlg));
     centerSheet_Widget(dlg);
+    /* Initialize. */ {
+        const iBookmark *bm  = bookmarkId ? get_Bookmarks(bookmarks_App(), bookmarkId) : NULL;
+        setText_InputWidget(findChild_Widget(dlg, "feedcfg.title"),
+                            bm ? &bm->title : feedTitle_DocumentWidget(document_App()));
+        setFlags_Widget(findChild_Widget(dlg,
+                                         hasTag_Bookmark(bm, "headings") ? "feedcfg.type.headings"
+                                                                         : "feedcfg.type.gemini"),
+                        selected_WidgetFlag,
+                        iTrue);
+        setCommandHandler_Widget(dlg, handleFeedSettingCommands_);
+    }
     return dlg;
 }
 

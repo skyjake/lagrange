@@ -176,7 +176,7 @@ static iText text_;
 
 static void initFonts_Text_(iText *d) {
     const float textSize = fontSize_UI * d->contentFontSize;
-    const float monoSize = textSize * 0.71f; //fontSize_UI * d->contentFontSize / contentScale_Text_ * 1.0f; //0.866f;
+    const float monoSize = textSize * 0.71f;
     const float smallMonoSize = monoSize * 0.8f;
     const iBlock *regularFont  = &fontNunitoRegular_Embedded;
     const iBlock *italicFont   = &fontNunitoLightItalic_Embedded;
@@ -239,7 +239,7 @@ static void initFonts_Text_(iText *d) {
         { h12Font,                            textSize * 2.000f,    h123Scaling,  hugeSymbols_FontId },
         { lightFont,                          textSize * 1.666f,    lightScaling, largeSymbols_FontId },
         /* monospace content fonts */
-        { &fontIosevkaTermExtended_Embedded,  textSize,             0.75f, symbols_FontId },
+        { &fontIosevkaTermExtended_Embedded,  textSize,             0.866f, symbols_FontId },
         /* symbol fonts */
         { &fontSymbola_Embedded,              fontSize_UI,          1.0f, defaultSymbols_FontId },
         { &fontSymbola_Embedded,              fontSize_UI * 1.125f, 1.0f, defaultMediumSymbols_FontId },
@@ -366,8 +366,8 @@ void init_Text(SDL_Renderer *render) {
     iText *d = &text_;
     d->contentFont     = nunito_TextFont;
     d->headingFont     = nunito_TextFont;
-    d->contentFontSize = contentScale_Text_;    
-    d->ansiEscape      = new_RegExp("\\[([0-9;]+)m", 0);
+    d->contentFontSize = contentScale_Text_;
+    d->ansiEscape      = new_RegExp("[[()]([0-9;AB]*)m", 0);
     d->render          = render;
     /* A grayscale palette for rasterized glyphs. */ {
         SDL_Color colors[256];
@@ -618,6 +618,10 @@ iLocalDef iBool isWrapBoundary_(iChar prevC, iChar c) {
        can wrap text like foo/bar/baz-abc-def.xyz at any puncation boundaries,
        without wrapping on other punctuation used for expressive purposes like
        emoticons :-) */
+    if (c == '.' && (prevC == '(' || prevC == '[' || prevC == '.')) {
+        /* Start of a [...], perhaps? */
+        return iFalse;
+    }
     if (isSpace_Char(prevC)) {
         return iFalse;
     }
@@ -631,33 +635,48 @@ iLocalDef iBool isMeasuring_(enum iRunMode mode) {
     return (mode & modeMask_RunMode) == measure_RunMode;
 }
 
-static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLen, iInt2 pos,
-                       int xposLimit, const char **continueFrom_out, int *runAdvance_out) {
-    iRect bounds = zero_Rect();
-    const iInt2 orig = pos;
-    float xpos = pos.x;
-    float xposExtend = pos.x; /* allows wide glyphs to use more space; restored by whitespace */
-    float xposMax = xpos;
-    float monoAdvance = 0;
-    iAssert(xposLimit == 0 || isMeasuring_(mode));
-    const char *lastWordEnd = text.start;
-    if (continueFrom_out) {
-        *continueFrom_out = text.end;
+iDeclareType(RunArgs)
+
+struct Impl_RunArgs {
+    enum iRunMode mode;
+    iRangecc      text;
+    size_t        maxLen; /* max characters to process */
+    iInt2         pos;
+    int           xposLimit;       /* hard limit for wrapping */
+    int           xposLayoutBound; /* visible bound for layout purposes; does not affect wrapping */
+    const char ** continueFrom_out;
+    int *         runAdvance_out;
+};
+
+static iRect run_Font_(iFont *d, const iRunArgs *args) {
+    iRect       bounds      = zero_Rect();
+    const iInt2 orig        = args->pos;
+    float       xpos        = orig.x;
+    float       xposMax     = xpos;
+    float       monoAdvance = 0;
+    int         ypos        = orig.y;
+    size_t      maxLen      = args->maxLen ? args->maxLen : iInvalidSize;
+    float       xposExtend  = orig.x; /* allows wide glyphs to use more space; restored by whitespace */
+    const enum iRunMode mode        = args->mode;
+    const char *        lastWordEnd = args->text.start;
+    iAssert(args->xposLimit == 0 || isMeasuring_(mode));
+    if (args->continueFrom_out) {
+        *args->continueFrom_out = args->text.end;
     }
     iChar prevCh = 0;
     const iBool isMonospaced = d->isMonospaced && !(mode & alwaysVariableWidthFlag_RunMode);
     if (isMonospaced) {
         monoAdvance = glyph_Font_(d, 'M')->advance;
     }
-    for (const char *chPos = text.start; chPos != text.end; ) {
-        iAssert(chPos < text.end);
+    for (const char *chPos = args->text.start; chPos != args->text.end; ) {
+        iAssert(chPos < args->text.end);
         const char *currentPos = chPos;
         if (*chPos == 0x1b) {
             /* ANSI escape. */
             chPos++;
             iRegExpMatch m;
             init_RegExpMatch(&m);
-            if (match_RegExp(text_.ansiEscape, chPos, text.end - chPos, &m)) {
+            if (match_RegExp(text_.ansiEscape, chPos, args->text.end - chPos, &m)) {
                 if (mode & draw_RunMode && ~mode & permanentColorFlag_RunMode) {
                     /* Change the color. */
                     const iColor clr =
@@ -668,14 +687,14 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
                 continue;
             }
         }
-        iChar ch = nextChar_(&chPos, text.end);
+        iChar ch = nextChar_(&chPos, args->text.end);
         iBool isEmoji = isEmoji_Char(ch);
         if (ch == 0x200d) { /* zero-width joiner */
             /* We don't have the composited Emojis. */
             if (isEmoji_Char(prevCh)) {
                 /* skip */
-                ch = nextChar_(&chPos, text.end);
-                ch = nextChar_(&chPos, text.end);
+                nextChar_(&chPos, args->text.end);
+                ch = nextChar_(&chPos, args->text.end);
             }
         }
 #if 0
@@ -690,17 +709,17 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
         }
 #endif
         if (isVariationSelector_Char(ch)) {
-            ch = nextChar_(&chPos, text.end); /* skip it */
+            ch = nextChar_(&chPos, args->text.end); /* skip it */
         }
         /* Special instructions. */ {
             if (ch == 0xad) { /* soft hyphen */
                 lastWordEnd = chPos;
                 if (isMeasuring_(mode)) {
-                    if (xposLimit > 0) {
+                    if (args->xposLimit > 0) {
                         const char *postHyphen = chPos;
-                        iChar       nextCh     = nextChar_(&postHyphen, text.end);
+                        iChar       nextCh     = nextChar_(&postHyphen, args->text.end);
                         if ((int) xpos + glyph_Font_(d, ch)->rect[0].size.x +
-                            glyph_Font_(d, nextCh)->rect[0].size.x > xposLimit) {
+                            glyph_Font_(d, nextCh)->rect[0].size.x > args->xposLimit) {
                             /* Wraps after hyphen, should show it. */
                         }
                         else continue;
@@ -709,26 +728,37 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
                 }
                 else {
                     /* Only show it at the end. */
-                    if (chPos != text.end) {
+                    if (chPos != args->text.end) {
                         continue;
                     }
                 }
             }
             if (ch == '\n') {
-                xpos = xposExtend = pos.x;
-                pos.y += d->height;
+                xpos = xposExtend = orig.x;
+                ypos += d->height;
                 prevCh = ch;
                 continue;
             }
             if (ch == '\t') {
-                const int tabStopWidth = d->height * 8;
-                xpos = pos.x + ((int) ((xpos - pos.x) / tabStopWidth) + 1) * tabStopWidth;
+                const int tabStopWidth = d->height * 10;
+                const int halfWidth    = (iMax(args->xposLimit, args->xposLayoutBound) - orig.x) / 2;
+                const int xRel         = xpos - orig.x;
+                /* First stop is always to half width. */
+                if (halfWidth > 0 && xRel < halfWidth) {
+                    xpos = orig.x + halfWidth;
+                }
+                else if (halfWidth > 0 && xRel < halfWidth * 3 / 2) {
+                    xpos = orig.x + halfWidth * 3 / 2;
+                }
+                else {
+                    xpos = orig.x + ((xRel / tabStopWidth) + 1) * tabStopWidth;
+                }
                 xposExtend = iMax(xposExtend, xpos);
                 prevCh = 0;
                 continue;
             }
             if (ch == '\r') {
-                const iChar esc = nextChar_(&chPos, text.end);
+                const iChar esc = nextChar_(&chPos, args->text.end);
                 if (mode & draw_RunMode && ~mode & permanentColorFlag_RunMode) {
                     const iColor clr = get_Color(esc - asciiBase_ColorEscape);
                     SDL_SetTextureColorMod(text_.cache, clr.r, clr.g, clr.b);
@@ -745,18 +775,20 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
         const int hoff = enableHalfPixelGlyphs_Text ? (xpos - x1 > 0.5f ? 1 : 0) : 0;
         int x2 = x1 + glyph->rect[hoff].size.x;
         /* Out of the allotted space? */
-        if (xposLimit > 0 && x2 > xposLimit) {
-            if (lastWordEnd != text.start) {
-                *continueFrom_out = lastWordEnd;
-            }
-            else {
-                *continueFrom_out = currentPos; /* forced break */
+        if (args->xposLimit > 0 && x2 > args->xposLimit) {
+            if (args->continueFrom_out) {
+                if (lastWordEnd != args->text.start) {
+                    *args->continueFrom_out = lastWordEnd;
+                }
+                else {
+                    *args->continueFrom_out = currentPos; /* forced break */
+                }
             }
             break;
         }
-        const int yLineMax = pos.y + d->height;
+        const int yLineMax = ypos + d->height;
         SDL_Rect dst = { x1 + glyph->d[hoff].x,
-                         pos.y + glyph->font->baseline + glyph->d[hoff].y,
+                         ypos + glyph->font->baseline + glyph->d[hoff].y,
                          glyph->rect[hoff].size.x,
                          glyph->rect[hoff].size.y };
         if (glyph->font != d) {
@@ -776,7 +808,7 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
         }
         else {
             bounds.size.x = iMax(bounds.size.x, x2 - orig.x);
-            bounds.size.y = iMax(bounds.size.y, pos.y + glyph->font->height - orig.y);
+            bounds.size.y = iMax(bounds.size.y, ypos + glyph->font->height - orig.y);
         }
         /* Symbols and emojis are NOT monospaced, so must conform when the primary font
            is monospaced. Except with Japanese script, that's larger than the normal monospace. */
@@ -797,8 +829,8 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
                 src.h -= over;
                 dst.h -= over;
             }
-            if (dst.y < pos.y) {
-                const int over = pos.y - dst.y;
+            if (dst.y < ypos) {
+                const int over = ypos - dst.y;
                 dst.y += over;
                 dst.h -= over;
                 src.y += over;
@@ -812,7 +844,7 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
         }
         xposExtend = iMax(xposExtend, xpos);
         xposMax    = iMax(xposMax, xposExtend);
-        if (continueFrom_out && ((mode & noWrapFlag_RunMode) || isWrapBoundary_(prevCh, ch))) {
+        if (args->continueFrom_out && ((mode & noWrapFlag_RunMode) || isWrapBoundary_(prevCh, ch))) {
             lastWordEnd = chPos;
         }
 #if defined (LAGRANGE_ENABLE_KERNING)
@@ -820,19 +852,19 @@ static iRect run_Font_(iFont *d, enum iRunMode mode, iRangecc text, size_t maxLe
         if (!isMonospaced && glyph->font == d) {
             /* TODO: No need to decode the next char twice; check this on the next iteration. */
             const char *peek = chPos;
-            const iChar next = nextChar_(&peek, text.end);
+            const iChar next = nextChar_(&peek, args->text.end);
             if (enableKerning_Text && !d->manualKernOnly && next) {
                 xpos += d->xScale * stbtt_GetGlyphKernAdvance(&d->font, glyph->glyphIndex, next);
             }
         }
 #endif
         prevCh = ch;
-        if (--maxLen == 0) {
+        if (maxLen == 0) {
             break;
         }
     }
-    if (runAdvance_out) {
-        *runAdvance_out = xposMax - orig.x;
+    if (args->runAdvance_out) {
+        *args->runAdvance_out = xposMax - orig.x;
     }
     return bounds;
 }
@@ -845,25 +877,15 @@ iInt2 measureRange_Text(int fontId, iRangecc text) {
     if (isEmpty_Range(&text)) {
         return init_I2(0, lineHeight_Text(fontId));
     }
-    return run_Font_(font_Text_(fontId),
-                     measure_RunMode,
-                     text,
-                     iInvalidSize,
-                     zero_I2(),
-                     0,
-                     NULL,
-                     NULL).size;
+    return run_Font_(font_Text_(fontId), &(iRunArgs){ .mode = measure_RunMode, .text = text }).size;
 }
 
 iRect visualBounds_Text(int fontId, iRangecc text) {
     return run_Font_(font_Text_(fontId),
-                     measure_RunMode | visualFlag_RunMode,
-                     text,
-                     iInvalidSize,
-                     zero_I2(),
-                     0,
-                     NULL,
-                     NULL);
+                     &(iRunArgs){
+                         .mode = measure_RunMode | visualFlag_RunMode,
+                         .text = text,
+                     });
 }
 
 iInt2 measure_Text(int fontId, const char *text) {
@@ -881,13 +903,9 @@ static int runFlagsFromId_(enum iFontId fontId) {
 iInt2 advanceRange_Text(int fontId, iRangecc text) {
     int advance;
     const int height = run_Font_(font_Text_(fontId),
-                                 measure_RunMode | runFlagsFromId_(fontId),
-                                 text,
-                                 iInvalidSize,
-                                 zero_I2(),
-                                 0,
-                                 NULL,
-                                 &advance)
+                                 &(iRunArgs){ .mode = measure_RunMode | runFlagsFromId_(fontId),
+                                              .text = text,
+                                              .runAdvance_out = &advance })
                            .size.y;
     return init_I2(advance, height);
 }
@@ -895,13 +913,11 @@ iInt2 advanceRange_Text(int fontId, iRangecc text) {
 iInt2 tryAdvance_Text(int fontId, iRangecc text, int width, const char **endPos) {
     int advance;
     const int height = run_Font_(font_Text_(fontId),
-                                 measure_RunMode | runFlagsFromId_(fontId),
-                                 text,
-                                 iInvalidSize,
-                                 zero_I2(),
-                                 width,
-                                 endPos,
-                                 &advance)
+                                 &(iRunArgs){ .mode = measure_RunMode | runFlagsFromId_(fontId),
+                                              .text = text,
+                                              .xposLimit        = width,
+                                              .continueFrom_out = endPos,
+                                              .runAdvance_out   = &advance })
                            .size.y;
     return init_I2(advance, height);
 }
@@ -909,13 +925,12 @@ iInt2 tryAdvance_Text(int fontId, iRangecc text, int width, const char **endPos)
 iInt2 tryAdvanceNoWrap_Text(int fontId, iRangecc text, int width, const char **endPos) {
     int advance;
     const int height = run_Font_(font_Text_(fontId),
-                                 measure_RunMode | noWrapFlag_RunMode | runFlagsFromId_(fontId),
-                                 text,
-                                 iInvalidSize,
-                                 zero_I2(),
-                                 width,
-                                 endPos,
-                                 &advance)
+                                 &(iRunArgs){ .mode = measure_RunMode | noWrapFlag_RunMode |
+                                                      runFlagsFromId_(fontId),
+                                              .text             = text,
+                                              .xposLimit        = width,
+                                              .continueFrom_out = endPos,
+                                              .runAdvance_out   = &advance })
                            .size.y;
     return init_I2(advance, height);
 }
@@ -930,29 +945,28 @@ iInt2 advanceN_Text(int fontId, const char *text, size_t n) {
     }
     int advance;
     run_Font_(font_Text_(fontId),
-              measure_RunMode | runFlagsFromId_(fontId),
-              range_CStr(text),
-              n,
-              zero_I2(),
-              0,
-              NULL,
-              &advance);
+              &(iRunArgs){ .mode           = measure_RunMode | runFlagsFromId_(fontId),
+                           .text           = range_CStr(text),
+                           .maxLen         = n,
+                           .runAdvance_out = &advance });
     return init_I2(advance, lineHeight_Text(fontId));
 }
 
-static void draw_Text_(int fontId, iInt2 pos, int color, iRangecc text) {
+static void drawBounded_Text_(int fontId, iInt2 pos, int xposBound, int color, iRangecc text) {
     iText *d = &text_;
     const iColor clr = get_Color(color & mask_ColorId);
     SDL_SetTextureColorMod(d->cache, clr.r, clr.g, clr.b);
     run_Font_(font_Text_(fontId),
-              draw_RunMode | (color & permanent_ColorId ? permanentColorFlag_RunMode : 0) |
-                  runFlagsFromId_(fontId),
-              text,
-              iInvalidSize,
-              pos,
-              0,
-              NULL,
-              NULL);
+              &(iRunArgs){ .mode = draw_RunMode |
+                                   (color & permanent_ColorId ? permanentColorFlag_RunMode : 0) |
+                                   runFlagsFromId_(fontId),
+                           .text = text,
+                           .pos  = pos,
+                           .xposLayoutBound = xposBound });
+}
+
+static void draw_Text_(int fontId, iInt2 pos, int color, iRangecc text) {
+    drawBounded_Text_(fontId, pos, 0, color, text);
 }
 
 void drawAlign_Text(int fontId, iInt2 pos, int color, enum iAlignment align, const char *text, ...) {
@@ -1003,6 +1017,12 @@ iInt2 advanceWrapRange_Text(int fontId, int maxWidth, iRangecc text) {
         size.y += line.y;
     }
     return size;
+}
+
+void drawBoundRange_Text(int fontId, iInt2 pos, int boundWidth, int color, iRangecc text) {
+    /* This function is used together with text that has already been wrapped, so we'll know
+       the bound width but don't have to re-wrap the text. */
+    drawBounded_Text_(fontId, pos, pos.x + boundWidth, color, text);
 }
 
 int drawWrapRange_Text(int fontId, iInt2 pos, int maxWidth, int color, iRangecc text) {

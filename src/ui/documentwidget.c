@@ -20,10 +20,14 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
+/* TODO: This file is a little too large. DocumentWidget could be split into
+   a couple of smaller objects. One for rendering the document, for instance. */
+
 #include "documentwidget.h"
 
 #include "app.h"
 #include "audio/player.h"
+#include "bookmarks.h"
 #include "command.h"
 #include "defs.h"
 #include "gmcerts.h"
@@ -244,6 +248,8 @@ void init_DocumentWidget(iDocumentWidget *d) {
 #if !defined (iPlatformApple) /* in system menu */
     addAction_Widget(w, reload_KeyShortcut, "navigate.reload");
     addAction_Widget(w, SDLK_w, KMOD_PRIMARY, "tabs.close");
+    addAction_Widget(w, SDLK_d, KMOD_PRIMARY, "bookmark.add");
+    addAction_Widget(w, subscribeToPage_KeyModifier, "feeds.subscribe");
 #endif
     addAction_Widget(w, navigateBack_KeyShortcut, "navigate.back");
     addAction_Widget(w, navigateForward_KeyShortcut, "navigate.forward");
@@ -364,7 +370,7 @@ static void addVisible_DocumentWidget_(void *context, const iGmRun *run) {
     if (run->audioId) {
         pushBack_PtrArray(&d->visiblePlayers, run);
     }
-    if (run->linkId && linkFlags_GmDocument(d->doc, run->linkId) & supportedProtocol_GmLinkFlag) {
+    if (run->linkId) {
         pushBack_PtrArray(&d->visibleLinks, run);
     }
 }
@@ -1468,6 +1474,13 @@ static void saveToDownloads_(const iString *url, const iString *mime, const iBlo
     delete_String(savePath);
 }
 
+static void addAllLinks_(void *context, const iGmRun *run) {
+    iPtrArray *links = context;
+    if (~run->flags & decoration_GmRunFlag && run->linkId) {
+        pushBack_PtrArray(links, run);
+    }
+}
+
 static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
     iWidget *w = as_Widget(d);
     if (equal_Command(cmd, "window.resized") || equal_Command(cmd, "font.changed")) {
@@ -1870,6 +1883,46 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         }
         return iTrue;
     }
+    else if (equal_Command(cmd, "bookmark.links") && document_App() == d) {
+        iPtrArray *links = collectNew_PtrArray();
+        render_GmDocument(d->doc, (iRangei){ 0, size_GmDocument(d->doc).y }, addAllLinks_, links);
+        /* Find links that aren't already bookmarked. */
+        iForEach(PtrArray, i, links) {
+            const iGmRun *run = i.ptr;
+            if (findUrl_Bookmarks(bookmarks_App(), linkUrl_GmDocument(d->doc, run->linkId))) {
+                remove_PtrArrayIterator(&i);
+            }
+        }
+        if (!isEmpty_PtrArray(links)) {
+            if (argLabel_Command(cmd, "confirm")) {
+                const char *plural = size_PtrArray(links) != 1 ? "s" : "";
+                makeQuestion_Widget(
+                    uiHeading_ColorEscape "IMPORT BOOKMARKS",
+                    format_CStr("Found %d new link%s on the page.", size_PtrArray(links), plural),
+                    (const char *[]){ "Cancel",
+                                      format_CStr(uiTextAction_ColorEscape "Add %d Bookmark%s",
+                                                  size_PtrArray(links), plural) },
+                    (const char *[]){ "cancel", "bookmark.links" },
+                    2);
+            }
+            else {
+                iConstForEach(PtrArray, j, links) {
+                    const iGmRun *run = j.ptr;
+                    add_Bookmarks(bookmarks_App(),
+                                  linkUrl_GmDocument(d->doc, run->linkId),
+                                  collect_String(newRange_String(run->text)),
+                                  NULL,
+                                  0x1f588 /* pin */);
+                }
+                postCommand_App("bookmarks.changed");
+            }
+        }
+        else {
+            makeMessage_Widget(uiHeading_ColorEscape "IMPORT BOOKMARKS",
+                               "All links on this page are already bookmarked.");
+        }
+        return iTrue;
+    }
     return iFalse;
 }
 
@@ -2094,13 +2147,10 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 const iGmRun *run = i.ptr;
                 if (run->flags & decoration_GmRunFlag &&
                     visibleLinkOrdinal_DocumentWidget_(d, run->linkId) == ord) {
-                    const int kmods = keyMods_Sym(SDL_GetModState());
                     postCommandf_App("open newtab:%d url:%s",
-                                     ((kmods & KMOD_PRIMARY) && (kmods & KMOD_SHIFT)) ? 1
-                                     : (kmods & KMOD_PRIMARY)                         ? 2
-                                                                                      : 0,
+                                     openTabMode_Sym(SDL_GetModState()),
                                      cstr_String(absoluteUrl_String(
-                                     d->mod.url, linkUrl_GmDocument(d->doc, run->linkId))));
+                                         d->mod.url, linkUrl_GmDocument(d->doc, run->linkId))));
                     iChangeFlags(d->flags, showLinkNumbers_DocumentWidgetFlag, iFalse);
                     invalidateVisibleLinks_DocumentWidget_(d);
                     refresh_Widget(d);
@@ -2262,7 +2312,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                             &(iMenuItem){ "Open Link in Default Browser",
                                           0,
                                           0,
-                                          format_CStr("!open url:%s", cstr_String(linkUrl)) });
+                                          format_CStr("!open default:1 url:%s", cstr_String(linkUrl)) });
                     }
                     if (willUseProxy_App(scheme)) {
                         pushBackN_Array(
@@ -2275,10 +2325,18 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                   format_CStr("!open noproxy:1 url:%s", cstr_String(linkUrl)) } },
                             2);
                     }
+                    iString *linkLabel = collect_String(newRange_String(d->contextLink->text));
+                    urlEncodeSpaces_String(linkLabel);
                     pushBackN_Array(&items,
                                     (iMenuItem[]){ { "---", 0, 0, NULL },
-                                                   { "Copy Link", 0, 0, "document.copylink" } },
-                                    2);
+                                                   { "Copy Link", 0, 0, "document.copylink" },
+                                                   { "Bookmark Link...",
+                                                     0,
+                                                     0,
+                                                     format_CStr("!bookmark.add title:%s url:%s",
+                                                                 cstr_String(linkLabel),
+                                                                 cstr_String(linkUrl)) } },
+                                    3);
                     iMediaRequest *mediaReq;
                     if ((mediaReq = findMediaRequest_DocumentWidget_(d, d->contextLink->linkId)) != NULL) {
                         if (isFinished_GmRequest(mediaReq->req)) {
@@ -2308,8 +2366,13 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                             { "---", 0, 0, NULL },
                             { "Reload Page", reload_KeyShortcut, "navigate.reload" },
                             { "---", 0, 0, NULL },
+                            { "Bookmark Page...", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
+                            { "Subscribe to Page...", subscribeToPage_KeyModifier, "feeds.subscribe" },
+                            { "---", 0, 0, NULL },
+                            { "Import Links as Bookmarks...", 0, 0, "bookmark.links confirm:1" },
+                            { "---", 0, 0, NULL },
                             { "Copy Page URL", 0, 0, "document.copylink" } },
-                        8);
+                        13);
                     if (isEmpty_Range(&d->selectMark)) {
                         pushBackN_Array(
                             &items,
@@ -2379,10 +2442,10 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 setFocus_Widget(NULL);
                 if (d->hoverLink) {
                     const iGmLinkId linkId = d->hoverLink->linkId;
+                    const int linkFlags = linkFlags_GmDocument(d->doc, linkId);
                     iAssert(linkId);
                     /* Media links are opened inline by default. */
-                    if (isMediaLink_GmDocument(d->doc, linkId)) {
-                        const int linkFlags = linkFlags_GmDocument(d->doc, linkId);
+                    if (isMediaLink_GmDocument(d->doc, linkId)) {                        
                         if (linkFlags & content_GmLinkFlag && linkFlags & permanent_GmLinkFlag) {
                             /* We have the content and it cannot be dismissed, so nothing
                                further to do. */
@@ -2432,14 +2495,25 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                         }
                         refresh_Widget(w);
                     }
-                    else {
-                        const int kmods = keyMods_Sym(SDL_GetModState());
+                    else if (linkFlags & supportedProtocol_GmLinkFlag) {
                         postCommandf_App("open newtab:%d url:%s",
-                                         ((kmods & KMOD_PRIMARY) && (kmods & KMOD_SHIFT)) ? 1
-                                         : (kmods & KMOD_PRIMARY)                         ? 2
-                                                                                          : 0,
+                                         openTabMode_Sym(SDL_GetModState()),
                                          cstr_String(absoluteUrl_String(
                                              d->mod.url, linkUrl_GmDocument(d->doc, linkId))));
+                    }
+                    else {
+                        const iString *url = absoluteUrl_String(
+                            d->mod.url, linkUrl_GmDocument(d->doc, linkId));
+                        makeQuestion_Widget(
+                            uiTextCaution_ColorEscape "OPEN LINK",
+                            format_CStr(
+                                "Open this link in the default browser?\n" uiTextAction_ColorEscape
+                                "%s",
+                                cstr_String(url)),
+                            (const char *[]){ "Cancel", uiTextCaution_ColorEscape "Open Link" },
+                            (const char *[]){
+                                "cancel", format_CStr("!open default:1 url:%s", cstr_String(url)) },
+                            2);
                     }
                 }
                 if (d->selectMark.start) {
@@ -2687,8 +2761,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                             height_Rect(run->visBounds),
                             tmQuoteIcon_ColorId);
         }
-        drawRange_Text(run->font, visPos, fg, run->text);
-//        printf("{%s}\n", cstr_Rangecc(run->text));
+        drawBoundRange_Text(run->font, visPos, width_Rect(run->bounds), fg, run->text);
     runDrawn:;
     }
     /* Presentation of links. */
