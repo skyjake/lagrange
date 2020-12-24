@@ -7,6 +7,7 @@
 # Release notes
 
 ## 1.0.1
+* Fixed percent-encoding of the query string.
 * Fixed cursor positioning in input fields.
 
 ## 1.0
