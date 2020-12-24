@@ -859,7 +859,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
         }
 #endif
         prevCh = ch;
-        if (maxLen == 0) {
+        if (--maxLen == 0) {
             break;
         }
     }
