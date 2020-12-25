@@ -1376,7 +1376,7 @@ iWidget *makeIdentityCreation_Widget(void) {
     addChildFlags_Widget(
         dlg,
         iClob(
-            new_LabelWidget("Creating a 2048-bit self-signed RSA certificate.", NULL)),
+            new_LabelWidget("Creating a self-signed 2048-bit RSA certificate.", NULL)),
         frameless_WidgetFlag);
     addChild_Widget(dlg, iClob(page));
     setFlags_Widget(page, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);

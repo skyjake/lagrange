@@ -6,6 +6,10 @@
 ```
 # Release notes
 
+## 1.0.1
+* Fixed percent-encoding of the query string.
+* Fixed cursor positioning in input fields.
+
 ## 1.0
 * Added remote bookmarks. Any bookmarked 'text/gemini' page with the "remotesource" tag is a source of remote bookmarks. Each link on the page is shown as a remote bookmark in Bookmarks.
 * Added a way to export bookmarks via the special page "about:bookmarks". The page can also list all bookmarks by tag or by creation date.

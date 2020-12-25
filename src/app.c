@@ -54,6 +54,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <SDL_render.h>
 #include <SDL_timer.h>
 #include <SDL_video.h>
+#include <SDL_misc.h>
+#include <SDL_version.h>
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -1437,6 +1439,11 @@ iBool handleCommand_App(const char *cmd) {
 }
 
 void openInDefaultBrowser_App(const iString *url) {
+#if SDL_VERSION_ATLEAST(2, 0, 14)
+    if (SDL_OpenURL(cstr_String(url)) == 0) {
+        return;
+    }
+#endif
     iProcess *proc = new_Process();
     setArguments_Process(proc,
 #if defined (iPlatformApple)
