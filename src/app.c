@@ -54,7 +54,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <SDL_render.h>
 #include <SDL_timer.h>
 #include <SDL_video.h>
-#include <SDL_misc.h>
 #include <SDL_version.h>
 
 #include <stdio.h>
@@ -66,6 +65,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #endif
 #if defined (iPlatformMsys)
 #   include "win32.h"
+#endif
+#if SDL_VERSION_ATLEAST(2, 0, 14)
+#   include <SDL_misc.h>
 #endif
 
 iDeclareType(App)
