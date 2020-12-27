@@ -898,7 +898,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                                       uiHeading_ColorEscape "IDENTITY NOTES",
                                       format_CStr("Notes about %s:", cstr_String(name_GmIdentity(ident))),
                                       uiTextAction_ColorEscape "OK",
-                                      format_CStr("ident.setnotes ident:%p", ident));
+                                      format_CStr("!ident.setnotes ident:%p ptr:%p", ident, d));
             }
             return iTrue;
         }
