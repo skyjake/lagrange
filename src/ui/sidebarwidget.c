@@ -524,7 +524,8 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, const iSidebarItem *it
             break;
         }
         case feeds_SidebarMode: {
-            postCommandString_App(feedEntryOpenCommand_String(&item->url));
+            postCommandString_App(
+                feedEntryOpenCommand_String(&item->url, openTabMode_Sym(SDL_GetModState())));
             break;
         }
         case bookmarks_SidebarMode:

@@ -535,7 +535,7 @@ static void presentResults_LookupWidget_(iLookupWidget *d) {
                               cstr_String(&res->label),
                               uiText_ColorEscape,
                               cstr_String(&res->meta));
-                const iString *cmd = feedEntryOpenCommand_String(&res->url);
+                const iString *cmd = feedEntryOpenCommand_String(&res->url, 0);
                 if (cmd) {
                     set_String(&item->command, cmd);
                 }

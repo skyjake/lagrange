@@ -7,6 +7,7 @@
 # Release notes
 
 ## 1.0.2
+* Fixed opening sidebar feed entries in new/background tab with modifier keys.
 * Fixed editing identity notes. The entered new notes were not being applied.
 
 ## 1.0.1
