@@ -110,4 +110,4 @@ iString *       makeFileUrl_String      (const iString *localFilePath);
 const char *    makeFileUrl_CStr        (const char *localFilePath);
 void            urlEncodeSpaces_String  (iString *);
 
-const iString * feedEntryOpenCommand_String (const iString *url); /* checks fragment */
+const iString * feedEntryOpenCommand_String (const iString *url, int newTab); /* checks fragment */
