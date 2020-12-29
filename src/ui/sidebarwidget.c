@@ -1284,7 +1284,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
         }
         else {
             const int fg = isHover ? (isPressing ? uiTextPressed_ColorId : uiTextFramelessHover_ColorId)
-                                   : uiHeading_ColorId;
+                                   : uiTextDim_ColorId;
             iUrl parts;
             init_Url(&parts, &d->label);
             const iBool isAbout  = equalCase_Rangecc(parts.scheme, "about");
@@ -1317,7 +1317,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                             2));
         const int metaFg = isHover ? permanent_ColorId | (isPressing ? uiTextPressed_ColorId
                                                                      : uiTextFramelessHover_ColorId)
-                                   : uiText_ColorId;
+                                   : uiTextDim_ColorId;
         drawRange_Text(
             font, cPos, d->listItem.isSelected ? iconColor : metaFg, range_String(&icon));
         deinit_String(&icon);
