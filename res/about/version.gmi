@@ -6,6 +6,9 @@
 ```
 # Release notes
 
+## 1.1
+* Added a bold UI font. It is used for unread feed entries and default dialog buttons.
+
 ## 1.0.2
 * Fixed opening sidebar feed entries in new/background tab with modifier keys.
 * Fixed editing identity notes. The entered new notes were not being applied.
