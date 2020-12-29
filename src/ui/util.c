@@ -872,12 +872,13 @@ iWidget *makeValueInput_Widget(iWidget *parent, const iString *initialValue, con
     iWidget *div = new_Widget(); {
         setFlags_Widget(div, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
         addChild_Widget(div, iClob(newKeyMods_LabelWidget("Cancel", SDLK_ESCAPE, 0, "cancel")));
-        addChild_Widget(
+        iLabelWidget *accept = addChild_Widget(
             div,
             iClob(newKeyMods_LabelWidget(acceptLabel ? acceptLabel : uiTextAction_ColorEscape "OK",
                                          SDLK_RETURN,
                                          0,
                                          "valueinput.accept")));
+        setFont_LabelWidget(accept, uiLabelBold_FontId);
     }
     addChild_Widget(dlg, iClob(div));
     centerSheet_Widget(dlg);
@@ -924,8 +925,12 @@ iWidget *makeQuestion_Widget(const char *title, const char *msg, const char *lab
         setFlags_Widget(div, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
         for (size_t i = 0; i < count; ++i) {
             /* The last one is the default option. */
-            const int key = (i == count - 1 ? SDLK_RETURN : 0);
-            addChild_Widget(div, iClob(newKeyMods_LabelWidget(labels[i], key, 0, commands[i])));
+            const int     key = (i == count - 1 ? SDLK_RETURN : 0);
+            iLabelWidget *btn =
+                addChild_Widget(div, iClob(newKeyMods_LabelWidget(labels[i], key, 0, commands[i])));
+            if (key) {
+                setFont_LabelWidget(btn, uiLabelBold_FontId);
+            }
         }
     }
     addChild_Widget(dlg, iClob(div));
@@ -1168,7 +1173,10 @@ iWidget *makePreferences_Widget(void) {
     }
     iWidget *div = new_Widget(); {
         setFlags_Widget(div, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
-        addChild_Widget(div, iClob(newKeyMods_LabelWidget("Dismiss", SDLK_ESCAPE, 0, "prefs.dismiss")));
+        setFont_LabelWidget(
+            addChild_Widget(
+                div, iClob(newKeyMods_LabelWidget("Dismiss", SDLK_ESCAPE, 0, "prefs.dismiss"))),
+            uiLabelBold_FontId);
     }
     addChild_Widget(dlg, iClob(div));
     addChild_Widget(get_Window()->root, iClob(dlg));
@@ -1205,10 +1213,11 @@ iWidget *makeBookmarkEditor_Widget(void) {
     iWidget *div = new_Widget(); {
         setFlags_Widget(div, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
         addChild_Widget(div, iClob(newKeyMods_LabelWidget("Cancel", SDLK_ESCAPE, 0, "cancel")));
-        addChild_Widget(
+        iLabelWidget *accept = addChild_Widget(
             div,
             iClob(newKeyMods_LabelWidget(
                 uiTextCaution_ColorEscape "Save Bookmark", SDLK_RETURN, KMOD_PRIMARY, "bmed.accept")));
+        setFont_LabelWidget(accept, uiLabelBold_FontId);
     }
     addChild_Widget(dlg, iClob(div));
     addChild_Widget(get_Window()->root, iClob(dlg));
@@ -1345,6 +1354,7 @@ iWidget *makeFeedSettings_Widget(uint32_t bookmarkId) {
                                          KMOD_PRIMARY,
                                          format_CStr("feedcfg.accept bmid:%d", bookmarkId)))),
                      "feedcfg.save");
+        setFont_LabelWidget(findChild_Widget(div, "feedcfg.save"), uiLabelBold_FontId);
     }
     addChild_Widget(dlg, iClob(div));
     arrange_Widget(dlg);
@@ -1421,10 +1431,11 @@ iWidget *makeIdentityCreation_Widget(void) {
     iWidget *div = new_Widget(); {
         setFlags_Widget(div, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
         addChild_Widget(div, iClob(newKeyMods_LabelWidget("Cancel", SDLK_ESCAPE, 0, "cancel")));
-        addChild_Widget(
+        iLabelWidget *accept = addChild_Widget(
             div,
             iClob(newKeyMods_LabelWidget(
                 uiTextAction_ColorEscape "Create Identity", SDLK_RETURN, KMOD_PRIMARY, "ident.accept")));
+        setFont_LabelWidget(accept, uiLabelBold_FontId);
     }
     addChild_Widget(dlg, iClob(div));
     addChild_Widget(get_Window()->root, iClob(dlg));

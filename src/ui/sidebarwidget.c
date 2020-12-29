@@ -1174,8 +1174,9 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
         }
         else {
             const iBool isUnread = (d->indent != 0);
+            const int titleFont = isUnread ? uiContentBold_FontId : uiContent_FontId;
             const int h1 = lineHeight_Text(uiLabel_FontId);
-            const int h2 = lineHeight_Text(uiContent_FontId);
+            const int h2 = lineHeight_Text(titleFont);
             const int iconPad = 9 * gap_UI;
             iRect iconArea = { addY_I2(pos, 0), init_I2(iconPad, itemHeight) };
             if (isUnread) {
@@ -1199,7 +1200,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                 deinit_String(&str);
             }
             /* Select the layout based on how the title fits. */
-            iInt2       titleSize = advanceRange_Text(uiContent_FontId, range_String(&d->label));
+            iInt2       titleSize = advanceRange_Text(titleFont, range_String(&d->label));
             const iInt2 metaSize  = advanceRange_Text(uiLabel_FontId, range_String(&d->meta));
             pos.x += iconPad;
             const int avail = width_Rect(itemRect) - iconPad - 3 * gap_UI;
@@ -1214,12 +1215,12 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                 const char *endPos;
                 tryAdvance_Text(
                     uiContent_FontId, range_String(&d->label), avail - skip, &endPos);
-                drawRange_Text(uiContent_FontId,
+                drawRange_Text(titleFont,
                                cur,
                                labelFg,
                                (iRangecc){ constBegin_String(&d->label), endPos });
                 if (endPos < constEnd_String(&d->label)) {
-                    drawRange_Text(uiContent_FontId,
+                    drawRange_Text(titleFont,
                                    addY_I2(pos, h2), labelFg,
                                    (iRangecc){ endPos, constEnd_String(&d->label) });
                 }
@@ -1227,7 +1228,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
             else {
                 pos.y += (itemHeight - h1 - h2) / 2;
                 drawRange_Text(uiLabel_FontId, pos, fg, range_String(&d->meta));
-                drawRange_Text(uiContent_FontId, addY_I2(pos, h1), labelFg, range_String(&d->label));
+                drawRange_Text(titleFont, addY_I2(pos, h1), labelFg, range_String(&d->label));
             }
         }
     }
@@ -1266,8 +1267,6 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
     }
     else if (sidebar->mode == history_SidebarMode) {
         iBeginCollect();
-        const int fg = isHover ? (isPressing ? uiTextPressed_ColorId : uiTextFramelessHover_ColorId)
-                               : uiText_ColorId;
         if (d->listItem.isSeparator) {
             if (!isEmpty_String(&d->meta)) {
                 iInt2 drawPos = addY_I2(topLeft_Rect(itemRect), d->id);
@@ -1284,6 +1283,8 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
             }
         }
         else {
+            const int fg = isHover ? (isPressing ? uiTextPressed_ColorId : uiTextFramelessHover_ColorId)
+                                   : uiHeading_ColorId;
             iUrl parts;
             init_Url(&parts, &d->label);
             const iBool isAbout  = equalCase_Rangecc(parts.scheme, "about");
@@ -1320,7 +1321,10 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
         drawRange_Text(
             font, cPos, d->listItem.isSelected ? iconColor : metaFg, range_String(&icon));
         deinit_String(&icon);
-        drawRange_Text(font, add_I2(cPos, init_I2(6 * gap_UI, 0)), fg, range_String(&d->label));
+        drawRange_Text(d->listItem.isSelected ? uiContentBold_FontId : font,
+                       add_I2(cPos, init_I2(6 * gap_UI, 0)),
+                       fg,
+                       range_String(&d->label));
         drawRange_Text(default_FontId,
                        add_I2(cPos, init_I2(6 * gap_UI, lineHeight_Text(font))),
                        metaFg,

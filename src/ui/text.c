@@ -224,7 +224,9 @@ static void initFonts_Text_(iText *d) {
         int symbolsFont;
     } fontData[max_FontId] = {
         { &fontSourceSansProRegular_Embedded, fontSize_UI,          1.0f, defaultSymbols_FontId },
+        { &fontSourceSansProBold_Embedded,    fontSize_UI,          1.0f, defaultSymbols_FontId },
         { &fontSourceSansProRegular_Embedded, fontSize_UI * 1.125f, 1.0f, defaultMediumSymbols_FontId },
+        { &fontSourceSansProBold_Embedded,    fontSize_UI * 1.125f, 1.0f, defaultMediumSymbols_FontId },
         { &fontSourceSansProRegular_Embedded, fontSize_UI * 1.666f, 1.0f, defaultLargeSymbols_FontId },
         { &fontIosevkaTermExtended_Embedded,  fontSize_UI * 0.866f, 1.0f, defaultSymbols_FontId },
         { &fontSourceSansProRegular_Embedded, textSize,             scaling, symbols_FontId },

@@ -31,10 +31,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 enum iFontId {
     default_FontId,
+    defaultBold_FontId,
     defaultMedium_FontId,
+    defaultMediumBold_FontId,
     defaultLarge_FontId,
     defaultMonospace_FontId,
-    defaultContentSized_FontId,
+    defaultContentSized_FontId,    
     /* content fonts */
     regular_FontId,
     monospace_FontId,
@@ -96,10 +98,12 @@ enum iFontId {
 
     /* UI fonts: */
     uiLabel_FontId          = default_FontId,
+    uiLabelBold_FontId      = defaultBold_FontId,
     uiLabelLarge_FontId     = defaultLarge_FontId,
     uiShortcuts_FontId      = default_FontId,
     uiInput_FontId          = defaultMonospace_FontId,
     uiContent_FontId        = defaultMedium_FontId,
+    uiContentBold_FontId    = defaultMediumBold_FontId,
     uiContentSymbols_FontId = defaultMediumSymbols_FontId,
     /* Document fonts: */
     paragraph_FontId         = regular_FontId,

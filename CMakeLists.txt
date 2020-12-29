@@ -78,6 +78,7 @@ set (EMBED_RESOURCES
     res/fonts/Nunito-LightItalic.ttf
     res/fonts/Nunito-Regular.ttf
     res/fonts/SourceSansPro-Regular.ttf
+    res/fonts/SourceSansPro-Bold.ttf
     res/fonts/Symbola.ttf
 )
 if (UNIX AND NOT APPLE)

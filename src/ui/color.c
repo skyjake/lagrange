@@ -167,7 +167,7 @@ void setThemePalette_Color(enum iColorTheme theme) {
             copy_(uiBackgroundPressed_ColorId, cyan_ColorId);
             copy_(uiBackgroundFramelessHover_ColorId, orange_ColorId);
             copy_(uiText_ColorId, black_ColorId);
-            copy_(uiTextStrong_ColorId, teal_ColorId);
+            copy_(uiTextStrong_ColorId, black_ColorId);
             copy_(uiTextPressed_ColorId, black_ColorId);
             copy_(uiTextSelected_ColorId, black_ColorId);
             copy_(uiTextDisabled_ColorId, gray50_ColorId);
