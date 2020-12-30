@@ -62,6 +62,7 @@ void        requestFinished_Bookmarks   (iBookmarks *, iGmRequest *req);
 void        add_Bookmarks       (iBookmarks *, const iString *url, const iString *title,
                                  const iString *tags, iChar icon);
 iBool       remove_Bookmarks    (iBookmarks *, uint32_t id);
+iBool       updateBookmarkIcon_Bookmarks    (iBookmarks *, const iString *url, iChar icon);
 iBookmark * get_Bookmarks       (iBookmarks *, uint32_t id);
 uint32_t    findUrl_Bookmarks   (const iBookmarks *, const iString *url); /* O(n) */
 

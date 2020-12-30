@@ -216,6 +216,23 @@ iBool remove_Bookmarks(iBookmarks *d, uint32_t id) {
     return bm != NULL;
 }
 
+iBool updateBookmarkIcon_Bookmarks(iBookmarks *d, const iString *url, iChar icon) {
+    iBool changed = iFalse;
+    lock_Mutex(d->mtx);
+    const uint32_t id = findUrl_Bookmarks(d, url);
+    if (id) {
+        iBookmark *bm = get_Bookmarks(d, id);
+        if (!hasTag_Bookmark(bm, "remote")) {
+            if (icon != bm->icon) {
+                bm->icon = icon;
+                changed = iTrue;
+            }
+        }
+    }
+    unlock_Mutex(d->mtx);
+    return changed;
+}
+
 iBookmark *get_Bookmarks(iBookmarks *d, uint32_t id) {
     return (iBookmark *) value_Hash(&d->bookmarks, id);
 }

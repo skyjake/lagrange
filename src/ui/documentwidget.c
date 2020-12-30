@@ -1181,6 +1181,7 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                     "document.input.submit");
                 setSensitiveContent_InputWidget(findChild_Widget(dlg, "input"),
                                                 statusCode == sensitiveInput_GmStatusCode);
+                updateTheme_DocumentWidget_(d);
                 break;
             }
             case categorySuccess_GmStatusCode:

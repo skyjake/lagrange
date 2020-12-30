@@ -27,6 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "documentwidget.h"
 #include "sidebarwidget.h"
 #include "lookupwidget.h"
+#include "bookmarks.h"
 #include "embedded.h"
 #include "command.h"
 #include "paint.h"
@@ -396,6 +397,14 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
                 setText_InputWidget(url, urlStr);
                 checkLoadAnimation_Window_(get_Window());
                 updateNavBarIdentity_(navBar);
+                /* Icon updates should be limited to automatically chosen icons if the user
+                   is allowed to pick their own in the future. */
+                if (updateBookmarkIcon_Bookmarks(
+                    bookmarks_App(),
+                    urlStr,
+                        siteIcon_GmDocument(document_DocumentWidget(document_App())))) {
+                    postCommand_App("bookmarks.changed");
+                }
                 return iFalse;
             }
             else if (equal_Command(cmd, "document.request.cancelled")) {
