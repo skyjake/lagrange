@@ -12,6 +12,7 @@
 ## 1.0.2
 * Fixed opening sidebar feed entries in new/background tab with modifier keys.
 * Fixed editing identity notes. The entered new notes were not being applied.
+* Server certificate domain name check accepts a matching CN even when SAN doesn't match.
 
 ## 1.0.1
 * Fixed percent-encoding of the query string.
