@@ -969,7 +969,7 @@ void draw_Window(iWindow *d) {
 #if 0
     /* Text cache debugging. */ {
         SDL_Texture *cache = glyphCache_Text();
-        SDL_Rect rect = { d->root->rect.size.x - 640, 0, 640, 5 * 640 };
+        SDL_Rect rect = { d->root->rect.size.x - 640, 0, 640, 2.5 * 640 };
         SDL_SetRenderDrawColor(d->render, 0, 0, 0, 255);
         SDL_RenderFillRect(d->render, &rect);
         SDL_RenderCopy(d->render, glyphCache_Text(), NULL, &rect);

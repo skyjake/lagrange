@@ -130,10 +130,15 @@ static void init_Font(iFont *d, const iBlock *data, int height, float scale,
     memset(d->indexTable, 0xff, sizeof(d->indexTable));
 }
 
-static void deinit_Font(iFont *d) {
+static void clearGlyphs_Font_(iFont *d) {
     iForEach(Hash, i, &d->glyphs) {
         delete_Glyph((iGlyph *) i.value);
     }
+    clear_Hash(&d->glyphs);
+}
+
+static void deinit_Font(iFont *d) {
+    clearGlyphs_Font_(d);
     deinit_Hash(&d->glyphs);
     delete_Block(d->data);
 }
@@ -148,6 +153,8 @@ static uint32_t glyphIndex_Font_(iFont *d, iChar ch) {
     }
     return stbtt_FindGlyphIndex(&d->font, ch);
 }
+
+/*----------------------------------------------------------------------------------------------*/
 
 iDeclareType(Text)
 iDeclareType(CacheRow)
@@ -332,11 +339,15 @@ static void deinitFonts_Text_(iText *d) {
     }
 }
 
+static int maxGlyphHeight_Text_(const iText *d) {
+    return 2 * d->contentFontSize * fontSize_UI;
+}
+
 static void initCache_Text_(iText *d) {
     init_Array(&d->cacheRows, sizeof(iCacheRow));
     const int textSize = d->contentFontSize * fontSize_UI;
     iAssert(textSize > 0);
-    const iInt2 cacheDims = init_I2(16, 80);
+    const iInt2 cacheDims = init_I2(16, 40);
     d->cacheSize = mul_I2(cacheDims, init1_I2(iMax(textSize, fontSize_UI)));
     SDL_RendererInfo renderInfo;
     SDL_GetRendererInfo(d->render, &renderInfo);
@@ -417,6 +428,14 @@ void setContentFontSize_Text(float fontSizeFactor) {
         text_.contentFontSize = fontSizeFactor;
         resetFonts_Text();
     }
+}
+
+static void resetCache_Text_(iText *d) {
+    deinitCache_Text_(d);
+    for (int i = 0; i < max_FontId; i++) {
+        clearGlyphs_Font_(&d->fonts[i]);
+    }
+    initCache_Text_(d);
 }
 
 void resetFonts_Text(void) {
@@ -574,6 +593,13 @@ static const iGlyph *glyph_Font_(iFont *d, iChar ch) {
     iGlyph *glyph     = new_Glyph(ch);
     glyph->glyphIndex = glyphIndex;
     glyph->font       = font;
+    /* If the cache is running out of space, clear it and we'll recache what's needed currently. */
+    if (text_.cacheBottom > text_.cacheSize.y - maxGlyphHeight_Text_(&text_)) {
+#if !defined (NDEBUG)
+        printf("[Text] glyph cache is full, clearing!\n"); fflush(stdout);
+#endif
+        resetCache_Text_(&text_);
+    }
     SDL_Texture *oldTarget = SDL_GetRenderTarget(text_.render);
     SDL_SetRenderTarget(text_.render, text_.cache);
     cache_Font_(font, glyph, 0);
