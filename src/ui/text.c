@@ -369,7 +369,7 @@ static void initCache_Text_(iText *d) {
     init_Array(&d->cacheRows, sizeof(iCacheRow));
     const int textSize = d->contentFontSize * fontSize_UI;
     iAssert(textSize > 0);
-    const iInt2 cacheDims = init_I2(16, 80);
+    const iInt2 cacheDims = init_I2(16, 40);
     d->cacheSize = mul_I2(cacheDims, init1_I2(iMax(textSize, fontSize_UI)));
     SDL_RendererInfo renderInfo;
     SDL_GetRendererInfo(d->render, &renderInfo);
