@@ -9,6 +9,7 @@
 ## 1.1
 * Added a bold UI font. It is used for unread feed entries and default dialog buttons.
 * A bookmark's icon is updated after loading the page so it matches the site.
+* Fixed parts of text disappearing when the glyph cache fills up.
 
 ## 1.0.2
 * Fixed opening sidebar feed entries in new/background tab with modifier keys.
