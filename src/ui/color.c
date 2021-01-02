@@ -254,6 +254,12 @@ void setThemePalette_Color(enum iColorTheme theme) {
     set_Color(uiBackgroundUnfocusedSelection_ColorId, mix_Color(get_Color(uiBackground_ColorId),
                                                                 get_Color(uiBackgroundSelected_ColorId),
                                                                isDark_ColorTheme(theme) ? 0.25f : 0.66f));
+    setHsl_Color(uiBackgroundFolder_ColorId,
+                 addSatLum_HSLColor(get_HSLColor(uiBackground_ColorId),
+                                    0,
+                                    theme == pureBlack_ColorTheme ? 0.075
+                                    : theme == dark_ColorTheme    ? -0.033
+                                                                  : -0.075));
     palette_[uiMarked_ColorId].a = 128;
     palette_[uiMatching_ColorId].a = 128;
 }

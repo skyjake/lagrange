@@ -1163,6 +1163,12 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
         bg = uiBackgroundUnfocusedSelection_ColorId;
         fillRect_Paint(p, itemRect, bg);
     }
+    else if (sidebar->mode == bookmarks_SidebarMode) {
+        if (d->icon == 0x2913) { /* TODO: Remote icon; meaning: is this in a folder? */
+            bg = uiBackgroundFolder_ColorId;
+            fillRect_Paint(p, itemRect, bg);
+        }
+    }
     iInt2 pos = itemRect.pos;
     if (sidebar->mode == documentOutline_SidebarMode) {
         const int fg = isHover ? (isPressing ? uiTextPressed_ColorId : uiTextFramelessHover_ColorId)

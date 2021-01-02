@@ -103,6 +103,7 @@ enum iColorId {
     uiMarked_ColorId,
     uiMatching_ColorId,
     uiBackgroundUnfocusedSelection_ColorId,
+    uiBackgroundFolder_ColorId,
     uiTextDim_ColorId,
 
     /* content theme colors */
