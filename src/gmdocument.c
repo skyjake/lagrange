@@ -177,8 +177,9 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
             else if (startsWithCase_Rangecc(parts.scheme, "http")) {
                 link->flags |= http_GmLinkFlag;
             }
-            else if (equalCase_Rangecc(parts.scheme, "gopher")) {
-                link->flags |= gopher_GmLinkFlag;
+            else if (equalCase_Rangecc(parts.scheme, "gopher") ||
+                     equalCase_Rangecc(parts.scheme, "finger")) {
+                link->flags |= gopher_finger_GmLinkFlag;
                 if (startsWith_Rangecc(parts.path, "/7")) {
                     link->flags |= query_GmLinkFlag;
                 }
@@ -187,7 +188,6 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
                 link->flags |= file_GmLinkFlag;
             }
             else if (equalCase_Rangecc(parts.scheme, "data")) {
-                link->flags |= data_GmLinkFlag;
             }
             else if (equalCase_Rangecc(parts.scheme, "about")) {
                 link->flags |= about_GmLinkFlag;
@@ -245,7 +245,8 @@ static iBool isForcedMonospace_GmDocument_(const iGmDocument *d) {
     if (equalCase_Rangecc(scheme, "gemini")) {
         return prefs_App()->monospaceGemini;
     }
-    if (equalCase_Rangecc(scheme, "gopher")) {
+    if (equalCase_Rangecc(scheme, "gopher") ||
+        equalCase_Rangecc(scheme, "finger")) {
         return prefs_App()->monospaceGopher;
     }
     return iFalse;
@@ -1373,24 +1374,24 @@ enum iColorId linkColor_GmDocument(const iGmDocument *d, iGmLinkId linkId, enum 
             if (link->flags & visited_GmLinkFlag) {
                 return link->flags & www_GmLinkFlag
                            ? tmHypertextLinkIconVisited_ColorId
-                           : link->flags & gopher_GmLinkFlag ? tmGopherLinkIconVisited_ColorId
+                           : link->flags & gopher_finger_GmLinkFlag ? tmGopherLinkIconVisited_ColorId
                                                              : tmLinkIconVisited_ColorId;
             }
             return link->flags & www_GmLinkFlag
                        ? tmHypertextLinkIcon_ColorId
-                       : link->flags & gopher_GmLinkFlag ? tmGopherLinkIcon_ColorId
+                       : link->flags & gopher_finger_GmLinkFlag ? tmGopherLinkIcon_ColorId
                                                          : tmLinkIcon_ColorId;
         }
         if (part == text_GmLinkPart) {
             return link->flags & www_GmLinkFlag
                        ? tmHypertextLinkText_ColorId
-                       : link->flags & gopher_GmLinkFlag ? tmGopherLinkText_ColorId
+                       : link->flags & gopher_finger_GmLinkFlag ? tmGopherLinkText_ColorId
                                                          : tmLinkText_ColorId;
         }
         if (part == textHover_GmLinkPart) {
             return link->flags & www_GmLinkFlag
                        ? tmHypertextLinkTextHover_ColorId
-                       : link->flags & gopher_GmLinkFlag ? tmGopherLinkTextHover_ColorId
+                       : link->flags & gopher_finger_GmLinkFlag ? tmGopherLinkTextHover_ColorId
                                                          : tmLinkTextHover_ColorId;
         }
         if (part == domain_GmLinkPart) {
@@ -1399,13 +1400,13 @@ enum iColorId linkColor_GmDocument(const iGmDocument *d, iGmLinkId linkId, enum 
             }
             return link->flags & www_GmLinkFlag
                        ? tmHypertextLinkDomain_ColorId
-                       : link->flags & gopher_GmLinkFlag ? tmGopherLinkDomain_ColorId
+                       : link->flags & gopher_finger_GmLinkFlag ? tmGopherLinkDomain_ColorId
                                                          : tmLinkDomain_ColorId;
         }
         if (part == visited_GmLinkPart) {
             return link->flags & www_GmLinkFlag
                        ? tmHypertextLinkLastVisitDate_ColorId
-                       : link->flags & gopher_GmLinkFlag ? tmGopherLinkLastVisitDate_ColorId
+                       : link->flags & gopher_finger_GmLinkFlag ? tmGopherLinkLastVisitDate_ColorId
                                                          : tmLinkLastVisitDate_ColorId;
         }
     }
@@ -1416,6 +1417,7 @@ iBool isMediaLink_GmDocument(const iGmDocument *d, iGmLinkId linkId) {
     const iString *dstUrl = absoluteUrl_String(&d->url, linkUrl_GmDocument(d, linkId));
     const iRangecc scheme = urlScheme_String(dstUrl);
     if (equalCase_Rangecc(scheme, "gemini") || equalCase_Rangecc(scheme, "gopher") ||
+        equalCase_Rangecc(scheme, "finger") ||
         equalCase_Rangecc(scheme, "file") || willUseProxy_App(scheme)) {
         return (linkFlags_GmDocument(d, linkId) &
                 (imageFileExtension_GmLinkFlag | audioFileExtension_GmLinkFlag)) != 0;

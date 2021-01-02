@@ -53,7 +53,7 @@ typedef uint16_t iGmLinkId;
 
 enum iGmLinkFlags {
     gemini_GmLinkFlag             = iBit(1),
-    gopher_GmLinkFlag             = iBit(2),
+    gopher_finger_GmLinkFlag      = iBit(2),
     http_GmLinkFlag               = iBit(3),
     file_GmLinkFlag               = iBit(4),
     data_GmLinkFlag               = iBit(5),
