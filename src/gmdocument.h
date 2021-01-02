@@ -54,11 +54,12 @@ typedef uint16_t iGmLinkId;
 enum iGmLinkFlags {
     gemini_GmLinkFlag             = iBit(1),
     gopher_GmLinkFlag             = iBit(2),
-    http_GmLinkFlag               = iBit(3),
-    file_GmLinkFlag               = iBit(4),
-    data_GmLinkFlag               = iBit(5),
-    about_GmLinkFlag              = iBit(6),
-    mailto_GmLinkFlag             = iBit(7),
+    finger_GmLinkFlag             = iBit(3),
+    http_GmLinkFlag               = iBit(4),
+    file_GmLinkFlag               = iBit(5),
+    data_GmLinkFlag               = iBit(6),
+    about_GmLinkFlag              = iBit(7),
+    mailto_GmLinkFlag             = iBit(8),
     supportedProtocol_GmLinkFlag  = 0xff,
     remote_GmLinkFlag             = iBit(9),
     humanReadable_GmLinkFlag      = iBit(10), /* link has a human-readable description */

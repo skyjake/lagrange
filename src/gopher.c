@@ -149,16 +149,21 @@ void deinit_Gopher(iGopher *d) {
 void open_Gopher(iGopher *d, const iString *url) {
     iUrl parts;
     init_Url(&parts, url);
-    /* Determine Gopher item type. */
-    d->type = '1';
     if (!isEmpty_Range(&parts.path)) {
         if (*parts.path.start == '/') {
             parts.path.start++;
         }
-        if (parts.path.start < parts.path.end) {
-            d->type = *parts.path.start;
-            parts.path.start++;
-        }
+    }
+    /* Determine Gopher item type (finger is type 0). */
+    if (equalCase_Rangecc(parts.scheme, "finger")) {
+        d->type = '0';
+    }
+    else if (parts.path.start < parts.path.end) {
+                d->type = *parts.path.start;
+                parts.path.start++;
+    }
+    else {
+      d->type = '1';
     }
     if (d->type == '7' && isEmpty_Range(&parts.query)) {
         /* Ask for the query parameters first. */

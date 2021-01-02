@@ -434,9 +434,6 @@ static void gopherError_GmRequest_(iGmRequest *d, iSocket *socket, int error, co
 }
 
 static void beginGopherConnection_GmRequest_(iGmRequest *d, const iString *host, uint16_t port) {
-    if (port == 0) {
-        port = 70; /* default port */
-    }
     clear_Block(&d->gopher.source);
     iGmResponse *resp = d->resp;
     d->gopher.meta   = &resp->meta;
@@ -642,7 +639,11 @@ void submit_GmRequest(iGmRequest *d) {
         }
     }
     else if (equalCase_Rangecc(url.scheme, "gopher")) {
-        beginGopherConnection_GmRequest_(d, host, port);
+        beginGopherConnection_GmRequest_(d, host, port ? port : 70);
+        return;
+    }
+    else if (equalCase_Rangecc(url.scheme, "finger")) {
+        beginGopherConnection_GmRequest_(d, host, port ? port : 79);
         return;
     }
     else if (!equalCase_Rangecc(url.scheme, "gemini")) {
