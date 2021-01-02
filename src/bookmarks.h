@@ -39,6 +39,7 @@ struct Impl_Bookmark {
     iString tags;
     iChar icon;
     iTime when;
+    uint32_t sourceId; /* remote */
 };
 
 iLocalDef uint32_t  id_Bookmark (const iBookmark *d) { return d->node.key; }
@@ -59,7 +60,7 @@ void        save_Bookmarks      (const iBookmarks *, const char *dirPath);
 void        fetchRemote_Bookmarks       (iBookmarks *);
 void        requestFinished_Bookmarks   (iBookmarks *, iGmRequest *req);
 
-void        add_Bookmarks       (iBookmarks *, const iString *url, const iString *title,
+uint32_t    add_Bookmarks       (iBookmarks *, const iString *url, const iString *title,
                                  const iString *tags, iChar icon);
 iBool       remove_Bookmarks    (iBookmarks *, uint32_t id);
 iBool       updateBookmarkIcon_Bookmarks    (iBookmarks *, const iString *url, iChar icon);

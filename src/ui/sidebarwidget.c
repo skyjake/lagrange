@@ -52,6 +52,7 @@ struct Impl_SidebarItem {
     uint32_t  id;
     int       indent;
     iChar     icon;
+    iBool     isBold;
     iString   label;
     iString   meta;
     iString   url;
@@ -62,6 +63,7 @@ void init_SidebarItem(iSidebarItem *d) {
     d->id     = 0;
     d->indent = 0;
     d->icon   = 0;
+    d->isBold = iFalse;
     init_String(&d->label);
     init_String(&d->meta);
     init_String(&d->url);
@@ -106,7 +108,23 @@ static iBool isResizing_SidebarWidget_(const iSidebarWidget *d) {
 }
 
 static int cmpTitle_Bookmark_(const iBookmark **a, const iBookmark **b) {
-    return cmpStringCase_String(&(*a)->title, &(*b)->title);
+    const iBookmark *bm1 = *a, *bm2 = *b;
+    if (bm2->sourceId == id_Bookmark(bm1)) {
+        return -1;
+    }
+    if (bm1->sourceId == id_Bookmark(bm2)) {
+        return 1;
+    }
+    if (bm1->sourceId == bm2->sourceId) {
+        return cmpStringCase_String(&bm1->title, &bm2->title);
+    }
+    if (bm1->sourceId) {
+        bm1 = get_Bookmarks(bookmarks_App(), bm1->sourceId);
+    }
+    if (bm2->sourceId) {
+        bm2 = get_Bookmarks(bookmarks_App(), bm2->sourceId);
+    }
+    return cmpStringCase_String(&bm1->title, &bm2->title);
 }
 
 static void updateItems_SidebarWidget_(iSidebarWidget *d) {
@@ -220,6 +238,7 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                     init_RegExpMatch(&m);
                     if (matchString_RegExp(remoteSourceTag, &bm->tags, &m)) {
                         appendChar_String(&item->meta, 0x2913);
+                        item->isBold = iTrue;
                     }
                 }
                 addItem_ListWidget(d->list, item);
@@ -1132,8 +1151,8 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
     const int itemHeight     = height_Rect(itemRect);
     const int iconColor      = isHover ? (isPressing ? uiTextPressed_ColorId : uiIconHover_ColorId)
                                        : uiIcon_ColorId;
-    const int font = uiContent_FontId;
-    int       bg   = uiBackground_ColorId;
+    const int font = d->isBold ? uiContentBold_FontId : uiContent_FontId;
+    int bg         = uiBackground_ColorId;
     if (isHover) {
         bg = isPressing ? uiBackgroundPressed_ColorId
                         : uiBackgroundFramelessHover_ColorId;

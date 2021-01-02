@@ -37,6 +37,7 @@ void init_Bookmark(iBookmark *d) {
     init_String(&d->title);
     init_String(&d->tags);
     iZap(d->when);
+    d->sourceId = 0;
 }
 
 void deinit_Bookmark(iBookmark *d) {
@@ -101,6 +102,7 @@ void init_Bookmarks(iBookmarks *d) {
 void deinit_Bookmarks(iBookmarks *d) {
     iForEach(PtrArray, i, &d->remoteRequests) {
         cancel_GmRequest(i.ptr);
+        free(userData_Object(i.ptr));
         iRelease(i.ptr);
     }
     deinit_PtrArray(&d->remoteRequests);
@@ -193,8 +195,8 @@ void save_Bookmarks(const iBookmarks *d, const char *dirPath) {
     unlock_Mutex(d->mtx);
 }
 
-void add_Bookmarks(iBookmarks *d, const iString *url, const iString *title, const iString *tags,
-                   iChar icon) {
+uint32_t add_Bookmarks(iBookmarks *d, const iString *url, const iString *title,
+                               const iString *tags, iChar icon) {
     lock_Mutex(d->mtx);
     iBookmark *bm = new_Bookmark();
     set_String(&bm->url, url);
@@ -204,6 +206,7 @@ void add_Bookmarks(iBookmarks *d, const iString *url, const iString *title, cons
     initCurrent_Time(&bm->when);
     insert_Bookmarks_(d, bm);
     unlock_Mutex(d->mtx);
+    return id_Bookmark(bm);
 }
 
 iBool remove_Bookmarks(iBookmarks *d, uint32_t id) {
@@ -402,7 +405,9 @@ void requestFinished_Bookmarks(iBookmarks *d, iGmRequest *req) {
                 const iString *absUrl = absoluteUrl_String(url_GmRequest(req), urlStr);
                 if (!findUrl_Bookmarks(d, absUrl)) {
                     iString *titleStr = newRange_String(title);
-                    add_Bookmarks(d, absUrl, titleStr, remoteTag, 0x2913 /* arrow down */);
+                    const uint32_t bmId = add_Bookmarks(d, absUrl, titleStr, remoteTag, 0x2913);
+                    iBookmark *bm = get_Bookmarks(d, bmId);
+                    bm->sourceId = *(uint32_t *) userData_Object(req);
                     delete_String(titleStr);
                 }
                 delete_String(urlStr);
@@ -414,6 +419,7 @@ void requestFinished_Bookmarks(iBookmarks *d, iGmRequest *req) {
     else {
         /* TODO: Show error? */
     }
+    free(userData_Object(req));
     iRelease(req);
     if (isEmpty_PtrArray(&d->remoteRequests)) {
         postCommand_App("bookmarks.changed");
@@ -440,8 +446,11 @@ void fetchRemote_Bookmarks(iBookmarks *d) {
         }
     }
     iConstForEach(PtrArray, i, list_Bookmarks(d, NULL, isRemoteSource_Bookmark_, NULL)) {
-        const iBookmark *bm = i.ptr;
-        iGmRequest *req = new_GmRequest(certs_App());
+        const iBookmark *bm   = i.ptr;
+        iGmRequest *     req  = new_GmRequest(certs_App());
+        uint32_t *       bmId = malloc(4);
+        *bmId                 = id_Bookmark(bm);
+        setUserData_Object(req, bmId);
         pushBack_PtrArray(&d->remoteRequests, req);
         setUrl_GmRequest(req, &bm->url);
         iConnect(GmRequest, req, finished, req, remoteRequestFinished_Bookmarks_);

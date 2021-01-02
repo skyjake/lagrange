@@ -9,6 +9,7 @@
 ## 1.1
 * Added a bold UI font. It is used for unread feed entries and default dialog buttons.
 * Added support for Finger links (courtesy of John Cowan).
+* Remote bookmarks are grouped under their source in the bookmark list.
 * A bookmark's icon is updated after loading the page so it matches the site.
 * Fixed parts of text disappearing when the glyph cache fills up.
 
