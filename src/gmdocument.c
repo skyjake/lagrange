@@ -177,12 +177,14 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
             else if (startsWithCase_Rangecc(parts.scheme, "http")) {
                 link->flags |= http_GmLinkFlag;
             }
-            else if (equalCase_Rangecc(parts.scheme, "gopher") ||
-                     equalCase_Rangecc(parts.scheme, "finger")) {
-                link->flags |= gopher_finger_GmLinkFlag;
+            else if (equalCase_Rangecc(parts.scheme, "gopher")) {
+                link->flags |= gopher_GmLinkFlag;
                 if (startsWith_Rangecc(parts.path, "/7")) {
                     link->flags |= query_GmLinkFlag;
                 }
+            }
+            else if (equalCase_Rangecc(parts.scheme, "finger")) {
+                link->flags |= finger_GmLinkFlag;
             }
             else if (equalCase_Rangecc(parts.scheme, "file")) {
                 link->flags |= file_GmLinkFlag;
@@ -291,6 +293,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     static const char *globe           = "\U0001f310";
     static const char *quote           = "\u201c";
     static const char *magnifyingGlass = "\U0001f50d";
+    static const char *pointingFinger  = "\U0001f449";
     const float midRunSkip = 0; /*0.120f;*/ /* extra space between wrapped text/quote lines */
     const iPrefs *prefs = prefs_App();
     clear_Array(&d->layout);
@@ -307,7 +310,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     iBool            isFirstText   = prefs->bigFirstParagraph;
     iBool            addQuoteIcon  = prefs->quoteIcon;
     iBool            isPreformat   = iFalse;
-    iRangecc         preAltText    = iNullRange;
+    iRangecc         preAltText    = iNullRange; /* TODO: alt text is being ignored */
     int              preFont       = preformatted_FontId;
     uint16_t         preId         = 0;
     iBool            enableIndents = iFalse;
@@ -474,6 +477,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             const iGmLink *link = constAt_PtrArray(&d->links, run.linkId - 1);
             icon.text           = range_CStr(link->flags & query_GmLinkFlag    ? magnifyingGlass
                                              : link->flags & file_GmLinkFlag   ? folder
+                                             : link->flags & finger_GmLinkFlag ? pointingFinger
                                              : link->flags & mailto_GmLinkFlag ? envelope
                                              : link->flags & remote_GmLinkFlag ? globe
                                                                                : arrow);
@@ -1111,7 +1115,7 @@ static void normalize_GmDocument(iGmDocument *d) {
     iRangecc src = range_String(&d->source);
     iRangecc line = iNullRange;
     iBool isPreformat = iFalse;
-    if (d->format == plainText_GmDocumentFormat) { // || isGopher_GmDocument_(d)) {
+    if (d->format == plainText_GmDocumentFormat) {
         isPreformat = iTrue; /* Cannot be turned off. */
     }
     const int preTabWidth = 4; /* TODO: user-configurable parameter */
@@ -1364,7 +1368,8 @@ iMediaId linkAudio_GmDocument(const iGmDocument *d, iGmLinkId linkId) {
 
 enum iColorId linkColor_GmDocument(const iGmDocument *d, iGmLinkId linkId, enum iGmLinkPart part) {
     const iGmLink *link = link_GmDocument_(d, linkId);
-    const int www_GmLinkFlag = http_GmLinkFlag | mailto_GmLinkFlag;
+    const int www_GmLinkFlag            = http_GmLinkFlag | mailto_GmLinkFlag;
+    const int gopherOrFinger_GmLinkFlag = gopher_GmLinkFlag | finger_GmLinkFlag;
     if (link) {
         const iBool isUnsupported = (link->flags & supportedProtocol_GmLinkFlag) == 0;
         if (part == icon_GmLinkPart) {
@@ -1372,42 +1377,36 @@ enum iColorId linkColor_GmDocument(const iGmDocument *d, iGmLinkId linkId, enum 
                 return tmBadLink_ColorId;
             }
             if (link->flags & visited_GmLinkFlag) {
-                return link->flags & www_GmLinkFlag
-                           ? tmHypertextLinkIconVisited_ColorId
-                           : link->flags & gopher_finger_GmLinkFlag ? tmGopherLinkIconVisited_ColorId
-                                                             : tmLinkIconVisited_ColorId;
+                return link->flags & www_GmLinkFlag ? tmHypertextLinkIconVisited_ColorId
+                       : link->flags & gopherOrFinger_GmLinkFlag ? tmGopherLinkIconVisited_ColorId
+                                                                 : tmLinkIconVisited_ColorId;
             }
-            return link->flags & www_GmLinkFlag
-                       ? tmHypertextLinkIcon_ColorId
-                       : link->flags & gopher_finger_GmLinkFlag ? tmGopherLinkIcon_ColorId
-                                                         : tmLinkIcon_ColorId;
+            return link->flags & www_GmLinkFlag              ? tmHypertextLinkIcon_ColorId
+                   : link->flags & gopherOrFinger_GmLinkFlag ? tmGopherLinkIcon_ColorId
+                                                             : tmLinkIcon_ColorId;
         }
         if (part == text_GmLinkPart) {
-            return link->flags & www_GmLinkFlag
-                       ? tmHypertextLinkText_ColorId
-                       : link->flags & gopher_finger_GmLinkFlag ? tmGopherLinkText_ColorId
-                                                         : tmLinkText_ColorId;
+            return link->flags & www_GmLinkFlag              ? tmHypertextLinkText_ColorId
+                   : link->flags & gopherOrFinger_GmLinkFlag ? tmGopherLinkText_ColorId
+                                                             : tmLinkText_ColorId;
         }
         if (part == textHover_GmLinkPart) {
-            return link->flags & www_GmLinkFlag
-                       ? tmHypertextLinkTextHover_ColorId
-                       : link->flags & gopher_finger_GmLinkFlag ? tmGopherLinkTextHover_ColorId
-                                                         : tmLinkTextHover_ColorId;
+            return link->flags & www_GmLinkFlag              ? tmHypertextLinkTextHover_ColorId
+                   : link->flags & gopherOrFinger_GmLinkFlag ? tmGopherLinkTextHover_ColorId
+                                                             : tmLinkTextHover_ColorId;
         }
         if (part == domain_GmLinkPart) {
             if (isUnsupported) {
                 return tmBadLink_ColorId;
             }
-            return link->flags & www_GmLinkFlag
-                       ? tmHypertextLinkDomain_ColorId
-                       : link->flags & gopher_finger_GmLinkFlag ? tmGopherLinkDomain_ColorId
-                                                         : tmLinkDomain_ColorId;
+            return link->flags & www_GmLinkFlag              ? tmHypertextLinkDomain_ColorId
+                   : link->flags & gopherOrFinger_GmLinkFlag ? tmGopherLinkDomain_ColorId
+                                                             : tmLinkDomain_ColorId;
         }
         if (part == visited_GmLinkPart) {
-            return link->flags & www_GmLinkFlag
-                       ? tmHypertextLinkLastVisitDate_ColorId
-                       : link->flags & gopher_finger_GmLinkFlag ? tmGopherLinkLastVisitDate_ColorId
-                                                         : tmLinkLastVisitDate_ColorId;
+            return link->flags & www_GmLinkFlag              ? tmHypertextLinkLastVisitDate_ColorId
+                   : link->flags & gopherOrFinger_GmLinkFlag ? tmGopherLinkLastVisitDate_ColorId
+                                                             : tmLinkLastVisitDate_ColorId;
         }
     }
     return tmLinkText_ColorId;
