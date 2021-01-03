@@ -212,7 +212,8 @@ void setThemePalette_Color(enum iColorTheme theme) {
             copy_(uiBackgroundSelected_ColorId, orange_ColorId);
             copy_(uiBackgroundPressed_ColorId, cyan_ColorId);
             copy_(uiBackgroundFramelessHover_ColorId, orange_ColorId);
-            copy_(uiText_ColorId, gray25_ColorId);
+            set_Color(uiText_ColorId,
+                      mix_Color(get_Color(black_ColorId), get_Color(gray25_ColorId), 0.5f));
             copy_(uiTextPressed_ColorId, black_ColorId);
             copy_(uiTextDisabled_ColorId, gray75_ColorId);
             copy_(uiTextStrong_ColorId, black_ColorId);
