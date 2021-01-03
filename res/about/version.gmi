@@ -12,6 +12,7 @@
 * Remote bookmarks are grouped under their source in the bookmark list.
 * A bookmark's icon is updated after loading the page so it matches the site.
 * Fixed parts of text disappearing when the glyph cache fills up.
+* Fixed handling of redirection in a background tab — redirected URL would open in the current tab.
 
 ## 1.0.2
 * Fixed URL input field showing the wrong URL when opening tabs in the background.
