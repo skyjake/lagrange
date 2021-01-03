@@ -178,6 +178,8 @@ static iMenuItem bookmarksMenuItems_[] = {
 
 static const iMenuItem identityMenuItems_[] = {
     { "New Identity...", SDLK_n, KMOD_PRIMARY | KMOD_SHIFT, "ident.new" },
+    { "---", 0, 0, NULL },
+    { "Import...", 0, 0, "ident.import" },
 };
 
 static const iMenuItem helpMenuItems_[] = {
@@ -191,6 +193,7 @@ static const iMenuItem identityButtonMenuItems_[] = {
     { "---", 0, 0, NULL },
 #if !defined (iHaveNativeMenus)
     { "New Identity...", SDLK_n, KMOD_PRIMARY | KMOD_SHIFT, "ident.new" },
+    { "Import...", 0, 0, "ident.import" },
     { "---", 0, 0, NULL },
     { "Show Identities", '4', KMOD_PRIMARY, "sidebar.mode arg:3 show:1" },
 #else
@@ -521,7 +524,7 @@ static void setupUserInterface_Window(iWindow *d) {
         setId_Widget(as_Widget(idMenu), "navbar.ident");
         iLabelWidget *lock =
             addChildFlags_Widget(navBar,
-                                 iClob(newIcon_LabelWidget("\U0001f513", 0, 0, "server.showcert")),
+                                 iClob(newIcon_LabelWidget("\U0001f513", SDLK_i, KMOD_PRIMARY, "document.info")),
                                  frameless_WidgetFlag | tight_WidgetFlag);
         setId_Widget(as_Widget(lock), "navbar.lock");
         setFont_LabelWidget(lock, defaultSymbols_FontId);
