@@ -1585,7 +1585,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         addAction_Widget(dlg, SDLK_SPACE, 0, "message.ok");
         return iTrue;
     }
-    else if (equal_Command(cmd, "server.trustcert")) {
+    else if (equal_Command(cmd, "server.trustcert") && document_App() == d) {
         const iRangecc host = urlHost_String(d->mod.url);
         if (!isEmpty_Block(d->certFingerprint) && !isEmpty_Range(&host)) {
             setTrusted_GmCerts(certs_App(), host, d->certFingerprint, &d->certExpiry);
