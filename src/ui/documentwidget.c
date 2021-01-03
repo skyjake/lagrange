@@ -1593,6 +1593,11 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                                            actionLabels + (canTrust ? 0 : haveFingerprint ? 1 : 2),
                                            actionCmds + (canTrust ? 0 : haveFingerprint ? 1 : 2),
                                            canTrust ? 3 : haveFingerprint ? 2 : 1);
+        /* Enforce a minimum size. */
+        iWidget *sizer = new_Widget();
+        setSize_Widget(sizer, init_I2(gap_UI * 90, 1));
+        addChildFlags_Widget(dlg, iClob(sizer), frameless_WidgetFlag);
+        arrange_Widget(dlg);
         addAction_Widget(dlg, SDLK_ESCAPE, 0, "message.ok");
         addAction_Widget(dlg, SDLK_SPACE, 0, "message.ok");
         return iTrue;
@@ -1601,9 +1606,12 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         const iRangecc host = urlHost_String(d->mod.url);
         if (!isEmpty_Block(d->certFingerprint) && !isEmpty_Range(&host)) {
             setTrusted_GmCerts(certs_App(), host, d->certFingerprint, &d->certExpiry);
-            d->certFlags |= trusted_GmCertFlag;
-            postCommand_App("document.reload");
+            d->certFlags |= trusted_GmCertFlag;            
             postCommand_App("document.info");
+            updateTrust_DocumentWidget_(d, NULL);
+            redoLayout_GmDocument(d->doc);
+            invalidate_DocumentWidget_(d);
+            refresh_Widget(d);
         }
         return iTrue;
     }
