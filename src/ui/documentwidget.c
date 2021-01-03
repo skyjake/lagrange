@@ -1548,51 +1548,85 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         updateWindowTitle_DocumentWidget_(d);
         return iFalse;
     }
-    else if (equal_Command(cmd, "server.showcert") && d == document_App()) {
+    else if (equal_Command(cmd, "document.info") && d == document_App()) {
         const char *unchecked      = red_ColorEscape "\u2610";
         const char *checked        = green_ColorEscape "\u2611";
-        const char *actionLabels[] = { "Dismiss", uiTextCaution_ColorEscape "Trust" };
-        const char *actionCmds[]   = { "message.ok", "server.trustcert" };
+        const char *actionLabels[] = { uiTextCaution_ColorEscape "Trust", "Copy Fingerprint", "Dismiss" };
+        const char *actionCmds[]   = { "server.trustcert", "server.copycert", "message.ok" };
         const iBool canTrust =
             (d->certFlags == (available_GmCertFlag | haveFingerprint_GmCertFlag |
                               timeVerified_GmCertFlag | domainVerified_GmCertFlag));
-        iWidget *dlg = makeQuestion_Widget(
-            uiHeading_ColorEscape "CERTIFICATE STATUS",
-            format_CStr("%s%s  Domain name %s%s\n"
-                        "%s%s  %s (%04d-%02d-%02d %02d:%02d:%02d)\n"
-                        "%s%s  %s",
-                        d->certFlags & domainVerified_GmCertFlag ? checked : unchecked,
-                        uiText_ColorEscape,
-                        d->certFlags & domainVerified_GmCertFlag ? "matches" : "mismatch",
-                        ~d->certFlags & domainVerified_GmCertFlag
-                            ? format_CStr(" (%s)", cstr_String(d->certSubject))
-                            : "",
-                        d->certFlags & timeVerified_GmCertFlag ? checked : unchecked,
-                        uiText_ColorEscape,
-                        d->certFlags & timeVerified_GmCertFlag ? "Not expired" : "Expired",
-                        d->certExpiry.year,
-                        d->certExpiry.month,
-                        d->certExpiry.day,
-                        d->certExpiry.hour,
-                        d->certExpiry.minute,
-                        d->certExpiry.second,
-                        d->certFlags & trusted_GmCertFlag ? checked : unchecked,
-                        uiText_ColorEscape,
-                        d->certFlags & trusted_GmCertFlag ? "Trusted" : "Not trusted"),
-            actionLabels,
-            actionCmds,
-            canTrust ? 2 : 1);
+        const iRecentUrl *recent = findUrl_History(d->mod.history, d->mod.url);
+        const iString *meta = &d->sourceMime;
+        if (recent && recent->cachedResponse) {
+            meta = &recent->cachedResponse->meta;
+        }
+        iString *msg = collectNew_String();
+        format_String(msg,
+                      "%sCertificate Status:\n%s%s  Domain name %s%s\n"
+                      "%s%s  %s (%04d-%02d-%02d %02d:%02d:%02d)\n"
+                      "%s%s  %s",
+                      uiHeading_ColorEscape,
+                      d->certFlags & domainVerified_GmCertFlag ? checked : unchecked,
+                      uiText_ColorEscape,
+                      d->certFlags & domainVerified_GmCertFlag ? "matches" : "mismatch",
+                      ~d->certFlags & domainVerified_GmCertFlag
+                          ? format_CStr(" (%s)", cstr_String(d->certSubject))
+                          : "",
+                      d->certFlags & timeVerified_GmCertFlag ? checked : unchecked,
+                      uiText_ColorEscape,
+                      d->certFlags & timeVerified_GmCertFlag ? "Not expired" : "Expired",
+                      d->certExpiry.year,
+                      d->certExpiry.month,
+                      d->certExpiry.day,
+                      d->certExpiry.hour,
+                      d->certExpiry.minute,
+                      d->certExpiry.second,
+                      d->certFlags & trusted_GmCertFlag ? checked : unchecked,
+                      uiText_ColorEscape,
+                      d->certFlags & trusted_GmCertFlag ? "Trusted" : "Not trusted");
+        iString *fp = collect_String(hexEncode_Block(d->certFingerprint));
+        if (isEmpty_String(fp)) {
+            setCStr_String(fp, "(not cached)");
+        }
+        else {
+            insertData_Block(&fp->chars, size_String(fp) / 2, "\n", 1);
+        }
+        appendFormat_String(msg,
+                            "\n%sFingerprint:\n%s%s",
+                            uiHeading_ColorEscape,
+                            uiText_ColorEscape,
+                            cstr_String(fp));
+        appendFormat_String(msg,
+                            "\n%sMedia Type:\n%s%s",
+                            uiHeading_ColorEscape,
+                            uiText_ColorEscape,
+                            cstr_String(meta));
+        appendFormat_String(msg,
+                            "\n%sContent Length:\n%s%zu",
+                            uiHeading_ColorEscape,
+                            uiText_ColorEscape,
+                            size_Block(&d->sourceContent));
+        iWidget *dlg = makeQuestion_Widget(uiHeading_ColorEscape "PAGE INFORMATION",
+                                           cstr_String(msg),
+                                           actionLabels + (canTrust ? 0 : 1),
+                                           actionCmds + (canTrust ? 0 : 1),
+                                           canTrust ? 3 : 2);
         addAction_Widget(dlg, SDLK_ESCAPE, 0, "message.ok");
         addAction_Widget(dlg, SDLK_SPACE, 0, "message.ok");
         return iTrue;
     }
-    else if (equal_Command(cmd, "server.trustcert")) {
+    else if (equal_Command(cmd, "server.trustcert") && document_App() == d) {
         const iRangecc host = urlHost_String(d->mod.url);
         if (!isEmpty_Block(d->certFingerprint) && !isEmpty_Range(&host)) {
             setTrusted_GmCerts(certs_App(), host, d->certFingerprint, &d->certExpiry);
             d->certFlags |= trusted_GmCertFlag;
-            postCommand_App("server.showcert");
+            postCommand_App("document.info");
         }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "server.copycert") && document_App() == d) {
+        SDL_SetClipboardText(cstrCollect_String(hexEncode_Block(d->certFingerprint)));
         return iTrue;
     }
     else if (equal_Command(cmd, "copy") && document_App() == d && !focus_Widget()) {
@@ -2530,7 +2564,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                     if (bannerType_DocumentWidget_(d) == certificateWarning_GmDocumentBanner &&
                         pos_Click(&d->click).y - top_Rect(banRect) >
                             lineHeight_Text(banner_FontId) * 2) {
-                        postCommand_App("server.showcert");
+                        postCommand_App("document.info");
                     }
                     else {
                         postCommand_Widget(d, "navigate.root");
