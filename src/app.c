@@ -994,6 +994,14 @@ static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
     return iFalse;
 }
 
+iBool handleCertificateImportCommands_(iWidget *dlg, const char *cmd) {
+    if (equal_Command(cmd, "certimport.accept") || equal_Command(cmd, "cancel")) {
+        destroy_Widget(dlg);
+        return iTrue;
+    }
+    return iFalse;
+}
+
 iBool willUseProxy_App(const iRangecc scheme) {
     return schemeProxy_App(scheme) != NULL;
 }
@@ -1401,6 +1409,11 @@ iBool handleCommand_App(const char *cmd) {
     else if (equal_Command(cmd, "ident.new")) {
         iWidget *dlg = makeIdentityCreation_Widget();
         setCommandHandler_Widget(dlg, handleIdentityCreationCommands_);
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "ident.import")) {
+        iWidget *dlg = makeCertificateImport_Widget();
+        setCommandHandler_Widget(dlg, handleCertificateImportCommands_);
         return iTrue;
     }
     else if (equal_Command(cmd, "ident.signin")) {

@@ -1442,3 +1442,58 @@ iWidget *makeIdentityCreation_Widget(void) {
     centerSheet_Widget(dlg);
     return dlg;
 }
+
+iWidget *makeCertificateImport_Widget(void) {
+    iWidget *dlg = makeSheet_Widget("certimport");
+    setId_Widget(
+        addChildFlags_Widget(dlg,
+                             iClob(new_LabelWidget(uiHeading_ColorEscape "IMPORT CERTIFICATE", NULL)),
+                             frameless_WidgetFlag),
+        "certimport.heading");
+    addAction_Widget(dlg, SDLK_v, KMOD_PRIMARY, "certimport.paste");
+    addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
+    iLabelWidget *crt = new_LabelWidget("No Certificate", NULL);
+    setFont_LabelWidget(crt, uiContent_FontId);
+    addChildFlags_Widget(dlg, iClob(crt), 0);
+    setFrameColor_Widget(as_Widget(crt), uiTextDim_ColorId);
+    iLabelWidget *key = new_LabelWidget("No Private Key", NULL);
+    setFont_LabelWidget(key, uiContent_FontId);
+    addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
+    addChildFlags_Widget(dlg, iClob(key), 0);
+    setFrameColor_Widget(as_Widget(key), uiTextDim_ColorId);
+    addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
+    iWidget *page = new_Widget(); {
+        setFlags_Widget(page, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
+        iWidget *headings = addChildFlags_Widget(
+            page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
+        iWidget *values = addChildFlags_Widget(
+            page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
+        addChild_Widget(headings, iClob(makeHeading_Widget("Save as:")));
+        void *inputs[2];
+        addChild_Widget(values, iClob(inputs[0] = new_InputWidget(0)));
+        setHint_InputWidget(inputs[0], "filename (no extension)");
+        addChild_Widget(headings, iClob(makeHeading_Widget("Notes:")));
+        addChild_Widget(values, iClob(inputs[1] = new_InputWidget(0)));
+        setHint_InputWidget(inputs[1], "e.g., site name");
+        as_Widget(inputs[0])->rect.size.x = gap_UI * 60;
+        as_Widget(inputs[1])->rect.size.x = gap_UI * 60;
+    }
+    addChild_Widget(dlg, iClob(page));
+    arrange_Widget(dlg);
+    setSize_Widget(as_Widget(crt), init_I2(width_Widget(dlg), gap_UI * 15));
+    setSize_Widget(as_Widget(key), init_I2(width_Widget(dlg), gap_UI * 15));
+    /* Buttons. */
+    iWidget *div = new_Widget(); {
+        setFlags_Widget(div, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
+        addChild_Widget(div, iClob(newKeyMods_LabelWidget("Cancel", SDLK_ESCAPE, 0, "cancel")));
+        iLabelWidget *accept = addChild_Widget(
+            div,
+            iClob(newKeyMods_LabelWidget(
+                uiTextAction_ColorEscape "Import", SDLK_RETURN, KMOD_PRIMARY, "certimport.accept")));
+        setFont_LabelWidget(accept, uiLabelBold_FontId);
+    }
+    addChild_Widget(dlg, iClob(div));
+    addChild_Widget(get_Window()->root, iClob(dlg));
+    centerSheet_Widget(dlg);
+    return dlg;
+}
