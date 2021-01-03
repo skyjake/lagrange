@@ -1704,7 +1704,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         updateVisible_DocumentWidget_(d);
         updateSideIconBuf_DocumentWidget_(d);
         updateOutline_DocumentWidget_(d);
-        postCommandf_App("document.changed url:%s", cstr_String(d->mod.url));
+        postCommandf_App("document.changed doc:%p url:%s", d, cstr_String(d->mod.url));
         /* Check for a pending goto. */
         if (!isEmpty_String(&d->pendingGotoHeading)) {
             scrollToHeading_DocumentWidget_(d, cstr_String(&d->pendingGotoHeading));
@@ -3278,7 +3278,7 @@ void setUrlFromCache_DocumentWidget(iDocumentWidget *d, const iString *url, iBoo
         }
     }
     else {
-        postCommandf_App("document.changed url:%s", cstr_String(d->mod.url));
+        postCommandf_App("document.changed doc:%p url:%s", d, cstr_String(d->mod.url));
     }
 }
 
