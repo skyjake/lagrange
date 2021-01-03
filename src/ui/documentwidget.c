@@ -1553,6 +1553,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         const char *checked        = green_ColorEscape "\u2611";
         const char *actionLabels[] = { uiTextCaution_ColorEscape "Trust", "Copy Fingerprint", "Dismiss" };
         const char *actionCmds[]   = { "server.trustcert", "server.copycert", "message.ok" };
+        const iBool haveFingerprint = (d->certFlags & haveFingerprint_GmCertFlag) != 0;
         const iBool canTrust =
             (d->certFlags == (available_GmCertFlag | haveFingerprint_GmCertFlag |
                               timeVerified_GmCertFlag | domainVerified_GmCertFlag));
@@ -1562,8 +1563,9 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             meta = &recent->cachedResponse->meta;
         }
         iString *msg = collectNew_String();
-        format_String(msg,
-                      "%sCertificate Status:\n%s%s  Domain name %s%s\n"
+        appendFormat_String(msg, "%s\n%zu bytes\n", cstr_String(meta), size_Block(&d->sourceContent));
+        appendFormat_String(msg,
+                      "\n%sCertificate Status:\n%s%s  Domain name %s%s\n"
                       "%s%s  %s (%04d-%02d-%02d %02d:%02d:%02d)\n"
                       "%s%s  %s",
                       uiHeading_ColorEscape,
@@ -1585,33 +1587,12 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                       d->certFlags & trusted_GmCertFlag ? checked : unchecked,
                       uiText_ColorEscape,
                       d->certFlags & trusted_GmCertFlag ? "Trusted" : "Not trusted");
-        iString *fp = collect_String(hexEncode_Block(d->certFingerprint));
-        if (isEmpty_String(fp)) {
-            setCStr_String(fp, "(not cached)");
-        }
-        else {
-            insertData_Block(&fp->chars, size_String(fp) / 2, "\n", 1);
-        }
-        appendFormat_String(msg,
-                            "\n%sFingerprint:\n%s%s",
-                            uiHeading_ColorEscape,
-                            uiText_ColorEscape,
-                            cstr_String(fp));
-        appendFormat_String(msg,
-                            "\n%sMedia Type:\n%s%s",
-                            uiHeading_ColorEscape,
-                            uiText_ColorEscape,
-                            cstr_String(meta));
-        appendFormat_String(msg,
-                            "\n%sContent Length:\n%s%zu",
-                            uiHeading_ColorEscape,
-                            uiText_ColorEscape,
-                            size_Block(&d->sourceContent));
+        setFocus_Widget(NULL);
         iWidget *dlg = makeQuestion_Widget(uiHeading_ColorEscape "PAGE INFORMATION",
                                            cstr_String(msg),
-                                           actionLabels + (canTrust ? 0 : 1),
-                                           actionCmds + (canTrust ? 0 : 1),
-                                           canTrust ? 3 : 2);
+                                           actionLabels + (canTrust ? 0 : haveFingerprint ? 1 : 2),
+                                           actionCmds + (canTrust ? 0 : haveFingerprint ? 1 : 2),
+                                           canTrust ? 3 : haveFingerprint ? 2 : 1);
         addAction_Widget(dlg, SDLK_ESCAPE, 0, "message.ok");
         addAction_Widget(dlg, SDLK_SPACE, 0, "message.ok");
         return iTrue;
@@ -1621,6 +1602,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         if (!isEmpty_Block(d->certFingerprint) && !isEmpty_Range(&host)) {
             setTrusted_GmCerts(certs_App(), host, d->certFingerprint, &d->certExpiry);
             d->certFlags |= trusted_GmCertFlag;
+            postCommand_App("document.reload");
             postCommand_App("document.info");
         }
         return iTrue;
