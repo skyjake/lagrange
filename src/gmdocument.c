@@ -398,6 +398,9 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         if (isEmpty_Range(&line)) {
             pos.y += lineHeight_Text(run.font);
             prevType = type;
+            if (type != quote_GmLineType) {
+                addQuoteIcon = prefs->quoteIcon;
+            }
             /* TODO: Extra skip needed here? */
             continue;
         }
