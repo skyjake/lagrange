@@ -400,6 +400,15 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         }
         /* Empty lines don't produce text runs. */
         if (isEmpty_Range(&line)) {
+            if (type == quote_GmLineType && !prefs->quoteIcon) {
+                /* For quote indicators we still need to produce a run. */
+                run.visBounds.pos  = addX_I2(pos, indents[type] * gap_Text);
+                run.visBounds.size = init_I2(gap_Text, lineHeight_Text(run.font));
+                run.bounds         = zero_Rect(); /* just visual */
+                run.flags          = quoteBorder_GmRunFlag | decoration_GmRunFlag;
+                run.text           = iNullRange;
+                pushBack_Array(&d->layout, &run);
+            }
             pos.y += lineHeight_Text(run.font);
             prevType = type;
             if (type != quote_GmLineType) {
