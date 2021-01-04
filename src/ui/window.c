@@ -193,7 +193,7 @@ static const iMenuItem identityButtonMenuItems_[] = {
     { "---", 0, 0, NULL },
 #if !defined (iHaveNativeMenus)
     { "New Identity...", SDLK_n, KMOD_PRIMARY | KMOD_SHIFT, "ident.new" },
-    { "Import...", 0, 0, "ident.import" },
+    { "Import...", SDLK_i, KMOD_PRIMARY | KMOD_SHIFT, "ident.import" },
     { "---", 0, 0, NULL },
     { "Show Identities", '4', KMOD_PRIMARY, "sidebar.mode arg:3 show:1" },
 #else
