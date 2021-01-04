@@ -7,6 +7,7 @@
 # Release notes
 
 ## 1.0.3
+* Quote border line shows up on empty quote lines, too.
 * Fixed handling of redirection in a background tab — redirected URL would open in the current tab.
 
 ## 1.0.2
