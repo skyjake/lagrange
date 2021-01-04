@@ -473,21 +473,9 @@ done:
     return found;
 }
 
-iGmIdentity *newIdentity_GmCerts(iGmCerts *d, int flags, iDate validUntil, const iString *commonName,
-                                 const iString *email, const iString *userId, const iString *domain,
-                                 const iString *org, const iString *country) {
-    const iTlsCertificateName names[] = {
-        { issuerCommonName_TlsCertificateNameType,    commonName },
-        { subjectCommonName_TlsCertificateNameType,   commonName },
-        { subjectEmailAddress_TlsCertificateNameType, !isEmpty_String(email)   ? email   : NULL },
-        { subjectUserId_TlsCertificateNameType,       !isEmpty_String(userId)  ? userId  : NULL },
-        { subjectDomain_TlsCertificateNameType,       !isEmpty_String(domain)  ? domain  : NULL },
-        { subjectOrganization_TlsCertificateNameType, !isEmpty_String(org)     ? org     : NULL },
-        { subjectCountry_TlsCertificateNameType,      !isEmpty_String(country) ? country : NULL },
-        { 0, NULL }
-    };
+static iGmIdentity *add_GmCerts_(iGmCerts *d, iTlsCertificate *cert, int flags) {
     iGmIdentity *id = new_GmIdentity();
-    setCertificate_GmIdentity_(id, newSelfSignedRSA_TlsCertificate(2048, validUntil, names));
+    setCertificate_GmIdentity_(id, cert);
     /* Save the certificate and private key as PEM files. */
     if (~flags & temporary_GmIdentityFlag) {
         const char *finger = cstrCollect_String(hexEncode_Block(&id->fingerprint));
@@ -506,6 +494,27 @@ iGmIdentity *newIdentity_GmCerts(iGmCerts *d, int flags, iDate validUntil, const
     }
     iGuardMutex(d->mtx, pushBack_PtrArray(&d->idents, id));
     return id;
+}
+
+iGmIdentity *newIdentity_GmCerts(iGmCerts *d, int flags, iDate validUntil, const iString *commonName,
+                                 const iString *email, const iString *userId, const iString *domain,
+                                 const iString *org, const iString *country) {
+    const iTlsCertificateName names[] = {
+        { issuerCommonName_TlsCertificateNameType,    commonName },
+        { subjectCommonName_TlsCertificateNameType,   commonName },
+        { subjectEmailAddress_TlsCertificateNameType, !isEmpty_String(email)   ? email   : NULL },
+        { subjectUserId_TlsCertificateNameType,       !isEmpty_String(userId)  ? userId  : NULL },
+        { subjectDomain_TlsCertificateNameType,       !isEmpty_String(domain)  ? domain  : NULL },
+        { subjectOrganization_TlsCertificateNameType, !isEmpty_String(org)     ? org     : NULL },
+        { subjectCountry_TlsCertificateNameType,      !isEmpty_String(country) ? country : NULL },
+        { 0, NULL }
+    };
+    return add_GmCerts_(d, newSelfSignedRSA_TlsCertificate(2048, validUntil, names), flags);
+}
+
+void importIdentity_GmCerts(iGmCerts *d, iTlsCertificate *cert, const iString *notes) {
+    iGmIdentity *id = add_GmCerts_(d, cert, 0);
+    set_String(&id->notes, notes);
 }
 
 static const char *certPath_GmCerts_(const iGmCerts *d, const iGmIdentity *identity) {
