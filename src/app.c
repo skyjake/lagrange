@@ -535,19 +535,22 @@ void processEvents_App(enum iAppEventMode eventMode) {
                 d->isRunning = iFalse;
                 goto backToMainLoop;
             case SDL_DROPFILE: {
-                iBool newTab = iFalse;
-                if (elapsedSeconds_Time(&d->lastDropTime) < 0.1) {
-                    /* Each additional drop gets a new tab. */
-                    newTab = iTrue;
-                }
-                d->lastDropTime = now_Time();
-                if (startsWithCase_CStr(ev.drop.file, "gemini:") ||
-                    startsWithCase_CStr(ev.drop.file, "file:")) {
-                    postCommandf_App("~open newtab:%d url:%s", newTab, ev.drop.file);
-                }
-                else {
-                    postCommandf_App(
-                        "~open newtab:%d url:%s", newTab, makeFileUrl_CStr(ev.drop.file));
+                iBool wasUsed = processEvent_Window(d->window, &ev);
+                if (!wasUsed) {
+                    iBool newTab = iFalse;
+                    if (elapsedSeconds_Time(&d->lastDropTime) < 0.1) {
+                        /* Each additional drop gets a new tab. */
+                        newTab = iTrue;
+                    }
+                    d->lastDropTime = now_Time();
+                    if (startsWithCase_CStr(ev.drop.file, "gemini:") ||
+                        startsWithCase_CStr(ev.drop.file, "file:")) {
+                        postCommandf_App("~open newtab:%d url:%s", newTab, ev.drop.file);
+                    }
+                    else {
+                        postCommandf_App(
+                            "~open newtab:%d url:%s", newTab, makeFileUrl_CStr(ev.drop.file));
+                    }
                 }
                 break;
             }
