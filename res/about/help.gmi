@@ -218,7 +218,7 @@ As the sidebar is not keyboard-navigable, note that identities can also be acces
 
 ### 1.6.3 Importing existing certificates
 
-To import an existing X.509 certificate as an identity, press ${SHIFT+}${CTRL+}I or click on 👤 and select "Import..." (macOS: Identities menu → Import...).
+To import an existing X.509 certificate as an identity, press ${SHIFT+}${CTRL+}I or click on 👤 and select "Import..." (macOS: Identity menu → Import...).
 
 When the Import Identity dialog opens, it checks the currently open page for any certificates and private keys in PEM format. If found, these are automatically loaded in. You can also press ${CTRL+}V to paste PEM-formatted certificates and/or private keys, or drag-and-drop a PEM-formatted .crt/.key files on the Lagrange window while the dialog is open.
 
