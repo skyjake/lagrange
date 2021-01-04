@@ -21,14 +21,19 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "certimportwidget.h"
-#include "labelwidget.h"
-#include "inputwidget.h"
+
+#include "app.h"
 #include "color.h"
+#include "command.h"
+#include "gmcerts.h"
+#include "inputwidget.h"
+#include "labelwidget.h"
 #include "text.h"
 #include "ui/util.h"
-#include "app.h"
 
+#include <the_Foundation/file.h>
 #include <the_Foundation/tlsrequest.h>
+#include <the_Foundation/path.h>
 #include <SDL_clipboard.h>
 
 iDefineObjectConstruction(CertImportWidget)
@@ -38,7 +43,6 @@ struct Impl_CertImportWidget {
     iLabelWidget *info;
     iLabelWidget *crtLabel;
     iLabelWidget *keyLabel;
-    iInputWidget *filename;
     iInputWidget *notes;
     iTlsCertificate *cert;
 };
@@ -137,13 +141,9 @@ void init_CertImportWidget(iCertImportWidget *d) {
             page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
         iWidget *values = addChildFlags_Widget(
             page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
-        addChild_Widget(headings, iClob(makeHeading_Widget("Save as:")));
-        addChild_Widget(values, iClob(d->filename = new_InputWidget(0)));
-        setHint_InputWidget(d->filename, "filename (no extension)");
         addChild_Widget(headings, iClob(makeHeading_Widget("Notes:")));
         addChild_Widget(values, iClob(d->notes = new_InputWidget(0)));
-        setHint_InputWidget(d->notes, "e.g., site name");
-        as_Widget(d->filename)->rect.size.x = gap_UI * 70;
+        setHint_InputWidget(d->notes, "description");
         as_Widget(d->notes)->rect.size.x = gap_UI * 70;
     }
     addChild_Widget(w, iClob(page));
@@ -176,7 +176,7 @@ void setPageContent_CertImportWidget(iCertImportWidget *d, const iBlock *content
     if (tryImport_CertImportWidget_(d, content)) {
         setTextCStr_LabelWidget(d->info, infoText_);
         if (isComplete_CertImportWidget_(d)) {
-            setFocus_Widget(as_Widget(d->filename));
+            setFocus_Widget(as_Widget(d->notes));
         }
     }
     else {
@@ -206,9 +206,29 @@ static iBool processEvent_CertImportWidget_(iCertImportWidget *d, const SDL_Even
         return iTrue;
     }
     if (isCommand_Widget(w, ev, "certimport.accept")) {
-        if (d->cert) {
+        if (d->cert && !isEmpty_TlsCertificate(d->cert) && hasPrivateKey_TlsCertificate(d->cert)) {
+            importIdentity_GmCerts(certs_App(), d->cert, text_InputWidget(d->notes));
+            d->cert = NULL; /* taken */
             destroy_Widget(w);
+            postCommand_App("idents.changed");
         }
+        return iTrue;
+    }
+    if (ev->type == SDL_DROPFILE) {
+        const iString *name = collectNewCStr_String(ev->drop.file);
+        iFile *f = new_File(name);
+        if (open_File(f, readOnly_FileMode | text_FileMode)) {
+            if (tryImport_CertImportWidget_(d, collect_Block(readAll_File(f)))) {
+                if (isComplete_CertImportWidget_(d)) {
+                    setFocus_Widget(as_Widget(d->notes));
+                }
+            }
+            else {
+                makeMessage_Widget(uiTextCaution_ColorEscape "DROPPED FILE",
+                                   "No certificate or private key was found.");
+            }
+        }
+        iRelease(f);
         return iTrue;
     }
     return processEvent_Widget(w, ev);
