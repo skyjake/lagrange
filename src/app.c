@@ -30,6 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "gmdocument.h"
 #include "gmutil.h"
 #include "history.h"
+#include "ui/certimportwidget.h"
 #include "ui/color.h"
 #include "ui/command.h"
 #include "ui/documentwidget.h"
@@ -994,14 +995,6 @@ static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
     return iFalse;
 }
 
-iBool handleCertificateImportCommands_(iWidget *dlg, const char *cmd) {
-    if (equal_Command(cmd, "certimport.accept") || equal_Command(cmd, "cancel")) {
-        destroy_Widget(dlg);
-        return iTrue;
-    }
-    return iFalse;
-}
-
 iBool willUseProxy_App(const iRangecc scheme) {
     return schemeProxy_App(scheme) != NULL;
 }
@@ -1412,8 +1405,10 @@ iBool handleCommand_App(const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "ident.import")) {
-        iWidget *dlg = makeCertificateImport_Widget();
-        setCommandHandler_Widget(dlg, handleCertificateImportCommands_);
+        iCertImportWidget *imp = new_CertImportWidget();
+        setPageContent_CertImportWidget(imp, sourceContent_DocumentWidget(document_App()));
+        addChild_Widget(d->window->root, iClob(imp));
+        postRefresh_App();
         return iTrue;
     }
     else if (equal_Command(cmd, "ident.signin")) {

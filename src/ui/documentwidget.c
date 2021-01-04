@@ -3219,6 +3219,10 @@ const iGmDocument *document_DocumentWidget(const iDocumentWidget *d) {
     return d->doc;
 }
 
+const iBlock *sourceContent_DocumentWidget(const iDocumentWidget *d) {
+    return &d->sourceContent;
+}
+
 const iString *feedTitle_DocumentWidget(const iDocumentWidget *d) {
     if (!isEmpty_String(title_GmDocument(d->doc))) {
         return title_GmDocument(d->doc);

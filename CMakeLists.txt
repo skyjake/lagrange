@@ -132,6 +132,8 @@ set (SOURCES
     # User interface:
     src/ui/bindingswidget.c
     src/ui/bindingswidget.h
+    src/ui/certimportwidget.c
+    src/ui/certimportwidget.h
     src/ui/color.c
     src/ui/color.h
     src/ui/command.c

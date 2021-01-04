@@ -163,23 +163,23 @@ static const iMenuItem viewMenuItems_[] = {
 
 static iMenuItem bookmarksMenuItems_[] = {
     { "Bookmark This Page...", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
+    { "Subscribe to This Page...", subscribeToPage_KeyModifier, "feeds.subscribe" },
     { "---", 0, 0, NULL },
     { "Import All Links on Page...", 0, 0, "bookmark.links confirm:1" },
     { "---", 0, 0, NULL },
     { "List All", 0, 0, "open url:about:bookmarks" },
     { "List by Tag", 0, 0, "open url:about:bookmarks?tags" },
     { "List by Creation Time", 0, 0, "open url:about:bookmarks?created" },
-    { "Refresh Remote Sources", 0, 0, "bookmarks.reload.remote" },
-    { "---", 0, 0, NULL },
-    { "Subscribe to This Page...", subscribeToPage_KeyModifier, "feeds.subscribe" },
     { "Show Feed Entries", 0, 0, "open url:about:feeds" },
+    { "---", 0, 0, NULL },
+    { "Refresh Remote Bookmarks", 0, 0, "bookmarks.reload.remote" },
     { "Refresh Feeds", SDLK_r, KMOD_PRIMARY | KMOD_SHIFT, "feeds.refresh" },
 };
 
 static const iMenuItem identityMenuItems_[] = {
     { "New Identity...", SDLK_n, KMOD_PRIMARY | KMOD_SHIFT, "ident.new" },
     { "---", 0, 0, NULL },
-    { "Import...", 0, 0, "ident.import" },
+    { "Import...", SDLK_i, KMOD_PRIMARY | KMOD_SHIFT, "ident.import" },
 };
 
 static const iMenuItem helpMenuItems_[] = {

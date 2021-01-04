@@ -39,6 +39,7 @@ iHistory *          history_DocumentWidget          (iDocumentWidget *);
 
 const iString *     url_DocumentWidget              (const iDocumentWidget *);
 iBool               isRequestOngoing_DocumentWidget (const iDocumentWidget *);
+const iBlock *      sourceContent_DocumentWidget    (const iDocumentWidget *);
 const iGmDocument * document_DocumentWidget         (const iDocumentWidget *);
 const iString *     bookmarkTitle_DocumentWidget    (const iDocumentWidget *);
 const iString *     feedTitle_DocumentWidget        (const iDocumentWidget *);
