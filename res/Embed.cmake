@@ -3,7 +3,7 @@
 # License: BSD 2-Clause
 
 option (ENABLE_RESOURCE_EMBED "Embed resources inside the executable" OFF)
-option (ENABLE_BINCAT_SH "Prepare resource files using the 'bincat.sh' shell script" ON)
+option (ENABLE_BINCAT_SH "Prepare resource files using the 'bincat.sh' shell script" OFF)
 
 if (ENABLE_BINCAT_SH OR CMAKE_CROSSCOMPILING)
     set (embed_use_bincat_sh YES)
