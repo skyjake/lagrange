@@ -3,9 +3,16 @@
 # License: BSD 2-Clause
 
 option (ENABLE_RESOURCE_EMBED "Embed resources inside the executable" OFF)
+option (ENABLE_BINCAT_SH "Prepare resource files using the 'bincat.sh' shell script" ON)
+
+if (ENABLE_BINCAT_SH OR CMAKE_CROSSCOMPILING)
+    set (embed_use_bincat_sh YES)
+endif ()
 
 # Build "bincat" for concatenating files.
-if (NOT ENABLE_RESOURCE_EMBED)
+if (embed_use_bincat_sh)
+    set (BINCAT_COMMAND ${CMAKE_SOURCE_DIR}/res/bincat.sh)
+elseif (NOT ENABLE_RESOURCE_EMBED)
     message (STATUS "Compiling bincat for merging resource files...")
     set (_catDir ${CMAKE_BINARY_DIR}/res)
     execute_process (COMMAND ${CMAKE_COMMAND} -E make_directory ${_catDir})
