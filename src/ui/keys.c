@@ -74,6 +74,7 @@ static const struct { int id; iMenuItem bind; int flags; } defaultBindings_[] = 
     { 31, { "Go forward",                navigateForward_KeyShortcut,   "navigate.forward"   }, 0 },
     { 32, { "Go to parent directory",    navigateParent_KeyShortcut,    "navigate.parent"    }, 0 },
     { 33, { "Go to site root",           navigateRoot_KeyShortcut,      "navigate.root"      }, 0 },
+    { 35, { "Reload page",               reload_KeyShortcut,            "document.reload"    }, 0 },
     { 40, { "Open link via home row keys", 'f', 0,                      "document.linkkeys arg:1" }, 0 },
     { 41, { "Open link via modifier key", SDLK_LALT, 0,                 "document.linkkeys arg:0" }, argRelease_BindFlag },
     { 70, { "Zoom in",                   SDLK_EQUALS, KMOD_PRIMARY,     "zoom.delta arg:10"  }, 0 },
@@ -88,6 +89,7 @@ static const struct { int id; iMenuItem bind; int flags; } defaultBindings_[] = 
     { 1002, { NULL, SDLK_LEFTBRACKET, KMOD_PRIMARY, "navigate.back" }, 0 },
     { 1003, { NULL, SDLK_RIGHTBRACKET, KMOD_PRIMARY, "navigate.forward" }, 0 },
 #endif
+    { 1004, { NULL, SDLK_F5, 0, "document.reload" }, 0 },
 };
 
 static iBinding *findId_Keys_(iKeys *d, int id) {
