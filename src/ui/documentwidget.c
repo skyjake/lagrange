@@ -131,6 +131,7 @@ enum iDocumentWidgetFlag {
     selecting_DocumentWidgetFlag             = iBit(1),
     noHoverWhileScrolling_DocumentWidgetFlag = iBit(2),
     showLinkNumbers_DocumentWidgetFlag       = iBit(3),
+    setHoverViaKeys_DocumentWidgetFlag       = iBit(4),
 };
 
 enum iDocumentLinkOrdinalMode {
@@ -1786,6 +1787,8 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         else {
             d->ordinalMode = arg_Command(cmd);
             iChangeFlags(d->flags, showLinkNumbers_DocumentWidgetFlag, iTrue);
+            iChangeFlags(d->flags, setHoverViaKeys_DocumentWidgetFlag,
+                         argLabel_Command(cmd, "hover") != 0);
         }
         invalidateVisibleLinks_DocumentWidget_(d);
         refresh_Widget(d);
@@ -2195,10 +2198,15 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 const iGmRun *run = i.ptr;
                 if (run->flags & decoration_GmRunFlag &&
                     visibleLinkOrdinal_DocumentWidget_(d, run->linkId) == ord) {
-                    postCommandf_App("open newtab:%d url:%s",
-                                     openTabMode_Sym(SDL_GetModState()),
-                                     cstr_String(absoluteUrl_String(
-                                         d->mod.url, linkUrl_GmDocument(d->doc, run->linkId))));
+                    if (d->flags & setHoverViaKeys_DocumentWidgetFlag) {
+                        d->hoverLink = run;
+                    }
+                    else {
+                        postCommandf_App("open newtab:%d url:%s",
+                                         openTabMode_Sym(SDL_GetModState()),
+                                         cstr_String(absoluteUrl_String(
+                                             d->mod.url, linkUrl_GmDocument(d->doc, run->linkId))));
+                    }
                     iChangeFlags(d->flags, showLinkNumbers_DocumentWidgetFlag, iFalse);
                     invalidateVisibleLinks_DocumentWidget_(d);
                     refresh_Widget(d);
