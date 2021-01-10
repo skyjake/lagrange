@@ -44,7 +44,7 @@ struct Impl_Prefs {
     iBool            sideIcon;
     /* Behavior */
     iString          downloadDir;
-    iBool            hoverOutline;
+    iBool            hoverLink;
     iBool            smoothScrolling;
     iBool            loadImageInsteadOfScrolling;
     /* Network */

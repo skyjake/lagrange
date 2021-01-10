@@ -3194,6 +3194,15 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
                        tmBackground_ColorId);
     }
     drawSideElements_DocumentWidget_(d);
+    if (prefs_App()->hoverLink && d->hoverLink) {
+        const int      font     = uiLabel_FontId;
+        const iRangecc linkUrl  = range_String(linkUrl_GmDocument(d->doc, d->hoverLink->linkId));
+        const iInt2    size     = measureRange_Text(font, linkUrl);
+        const iRect    linkRect = { addY_I2(bottomLeft_Rect(bounds), -size.y),
+                                    addX_I2(size, 2 * gap_UI) };
+        fillRect_Paint(&ctx.paint, linkRect, tmBackground_ColorId);
+        drawRange_Text(font, addX_I2(topLeft_Rect(linkRect), gap_UI), tmParagraph_ColorId, linkUrl);
+    }
     draw_Widget(w);
 }
 

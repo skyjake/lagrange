@@ -10,6 +10,7 @@
 * Added identity importing: existing client certificates in PEM format can be imported from the current page, from clipboard, or from drag-and-dropped files.
 * Added a bold UI font. It is used for unread feed entries and default dialog buttons.
 * Added support for Finger links (courtesy of John Cowan).
+* Added option to show full link URL when hovering on it.
 * Remote bookmarks are grouped under their source in the bookmark list.
 * A bookmark's icon is updated after loading the page so it matches the site.
 * Quote border line shows up on empty quote lines, too.
