@@ -164,13 +164,19 @@ static iFeedJob *startNextJob_Feeds_(iFeeds *d) {
     return job;
 }
 
+static iBool isTrimmablePunctuation_(iChar c) {
+    if (c == '(' || c == '[' || c == '{' || c == '<') {
+        return iFalse;
+    }
+    /* Dashes or punctuation? */
+    return c == 0x2013 || c == 0x2014 || (c < 128 && ispunct(c));
+}
+
 static void trimTitle_(iString *title) {
     const char *start = constBegin_String(title);
     iConstForEach(String, i, title) {
         start = i.pos;
-        if (!isSpace_Char(i.value) &&
-            /* Dashes or punctuation? */
-            !(i.value == 0x2013 || i.value == 0x2014 || (i.value < 128 && ispunct(i.value)))) {
+        if (!isSpace_Char(i.value) && !isTrimmablePunctuation_(i.value)) {
             break;
         }
     }
