@@ -2220,15 +2220,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         }
     }
     else if (ev->type == SDL_MOUSEWHEEL && isHover_Widget(w)) {
-        float acceleration = 1.0f;
         const iInt2 mouseCoord = mouseCoord_Window(get_Window());
-        if (prefs_App()->hoverOutline &&
-            contains_Widget(constAs_Widget(d->scroll), mouseCoord)) {
-            const int outHeight = outlineHeight_DocumentWidget_(d);
-            if (outHeight > height_Rect(bounds_Widget(w))) {
-                acceleration = (float) size_GmDocument(d->doc).y / (float) outHeight;
-            }
-        }
 #if defined (iPlatformApple)
         /* On macOS, we handle both trackpad and mouse events. We expect SDL to identify
            which device is sending the event. */
@@ -2242,7 +2234,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             else {
                 wheel.x = 0;
             }
-            scroll_DocumentWidget_(d, -wheel.y * get_Window()->pixelRatio * acceleration);
+            scroll_DocumentWidget_(d, -wheel.y * get_Window()->pixelRatio);
             scrollWideBlock_DocumentWidget_(d, mouseCoord, wheel.x * get_Window()->pixelRatio, 0);
         }
         else
@@ -2260,7 +2252,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             }
             smoothScroll_DocumentWidget_(
                 d,
-                -3 * amount * lineHeight_Text(paragraph_FontId) * acceleration,
+                -3 * amount * lineHeight_Text(paragraph_FontId),
                 smoothDuration_DocumentWidget_ *
                     /* accelerated speed for repeated wheelings */
                     (!isFinished_Anim(&d->scrollY) && pos_Anim(&d->scrollY) < 0.25f ? 0.5f : 1.0f));
