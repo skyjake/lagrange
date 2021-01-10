@@ -64,6 +64,14 @@
 				<string>gemini</string>
 			</array>
 		</dict>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>Gopher</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>gopher</string>
+			</array>
+		</dict>
 	</array>
 </dict>
 </plist>
