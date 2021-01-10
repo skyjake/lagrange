@@ -52,8 +52,16 @@ int gap_Text;                           /* cf. gap_UI in metrics.h */
 int enableHalfPixelGlyphs_Text = iTrue; /* debug setting */
 int enableKerning_Text         = iTrue; /* looking up kern pairs is slow */
 
+static iBool enableRaster_Text_ = iTrue;
+
+enum iGlyphFlag {
+    rasterized0_GlyphFlag = iBit(1),    /* zero offset */
+    rasterized1_GlyphFlag = iBit(2),    /* half-pixel offset */
+};
+
 struct Impl_Glyph {
     iHashNode node;
+    int flags;
     uint32_t glyphIndex;
     const iFont *font; /* may come from symbols/emoji */
     iRect rect[2]; /* zero and half pixel offset */
@@ -63,6 +71,7 @@ struct Impl_Glyph {
 
 void init_Glyph(iGlyph *d, iChar ch) {
     d->node.key   = ch;
+    d->flags      = 0;
     d->glyphIndex = 0;
     d->font       = NULL;
     d->rect[0]    = zero_Rect();
@@ -74,8 +83,21 @@ void deinit_Glyph(iGlyph *d) {
     iUnused(d);
 }
 
-iChar codepoint_Glyph(const iGlyph *d) {
+static iChar codepoint_Glyph_(const iGlyph *d) {
     return d->node.key;
+}
+
+iLocalDef iBool isRasterized_Glyph_(const iGlyph *d, int hoff) {
+    return (d->flags & (rasterized0_GlyphFlag << hoff)) != 0;
+}
+
+iLocalDef iBool isFullyRasterized_Glyph_(const iGlyph *d) {
+    return (d->flags & (rasterized0_GlyphFlag | rasterized1_GlyphFlag)) ==
+           (rasterized0_GlyphFlag | rasterized1_GlyphFlag);
+}
+
+iLocalDef void setRasterized_Glyph_(iGlyph *d, int hoff) {
+    d->flags |= rasterized0_GlyphFlag << hoff;
 }
 
 iDefineTypeConstructionArgs(Glyph, (iChar ch), ch)
@@ -496,41 +518,41 @@ static iInt2 assignCachePos_Text_(iText *d, iInt2 size) {
     return assigned;
 }
 
-static void cache_Font_(iFont *d, iGlyph *glyph, int hoff) {
-    iText *txt = &text_;
-    SDL_Renderer *render = txt->render;
-    SDL_Texture *tex = NULL;
-    SDL_Surface *surface = NULL;
+static void allocate_Font_(iFont *d, iGlyph *glyph, int hoff) {
     iRect *glRect = &glyph->rect[hoff];
-    /* Rasterize the glyph using stbtt. */ {
-        surface = rasterizeGlyph_Font_(d, glyph->glyphIndex, hoff * 0.5f);
-        if (hoff == 0) { /* hoff==1 uses same `glyph` */
-            int adv;
-            const uint32_t gIndex = glyph->glyphIndex;
-            stbtt_GetGlyphHMetrics(&d->font, gIndex, &adv, NULL);
-            glyph->advance = d->xScale * adv;
-        }
-        stbtt_GetGlyphBitmapBoxSubpixel(&d->font,
-                                        glyph->glyphIndex,
-                                        d->xScale,
-                                        d->yScale,
-                                        hoff * 0.5f,
-                                        0.0f,
-                                        &glyph->d[hoff].x,
-                                        &glyph->d[hoff].y,
-                                        NULL,
-                                        NULL);
-        glyph->d[hoff].y += d->vertOffset;
-        tex = SDL_CreateTextureFromSurface(render, surface);
-        SDL_SetTextureBlendMode(tex, SDL_BLENDMODE_NONE);
-        glRect->size = init_I2(surface->w, surface->h);
+    int    x0, y0, x1, y1;
+    stbtt_GetGlyphBitmapBoxSubpixel(
+        &d->font, glyph->glyphIndex, d->xScale, d->yScale, hoff * 0.5f, 0.0f, &x0, &y0, &x1, &y1);
+    glRect->size = init_I2(x1 - x0, y1 - y0);
+    /* Determine placement in the glyph cache texture, advancing in rows. */
+    glRect->pos    = assignCachePos_Text_(&text_, glRect->size);
+    glyph->d[hoff] = init_I2(x0, y0);
+    glyph->d[hoff].y += d->vertOffset;
+    if (hoff == 0) { /* hoff==1 uses same metrics as `glyph` */
+        int adv;
+        const uint32_t gIndex = glyph->glyphIndex;
+        stbtt_GetGlyphHMetrics(&d->font, gIndex, &adv, NULL);
+        glyph->advance = d->xScale * adv;
     }
+}
+
+static void cache_Font_(iFont *d, iGlyph *glyph, int hoff) {
+    iText *       txt     = &text_;
+    SDL_Renderer *render  = txt->render;
+    SDL_Texture * tex     = NULL;
+    SDL_Surface * surface = NULL;
+    iRect *       glRect  = &glyph->rect[hoff];
+    /* Rasterize the glyph using stbtt. */
+    iAssert(!isRasterized_Glyph_(glyph, hoff));
+    surface = rasterizeGlyph_Font_(d, glyph->glyphIndex, hoff * 0.5f);
+    tex = SDL_CreateTextureFromSurface(render, surface);
+    iAssert(isEqual_I2(glRect->size, init_I2(surface->w, surface->h)));
     if (tex) {
-        /* Determine placement in the glyph cache texture, advancing in rows. */
-        glRect->pos = assignCachePos_Text_(txt, glRect->size);
+        SDL_SetTextureBlendMode(tex, SDL_BLENDMODE_NONE);
         const SDL_Rect dstRect = sdlRect_(*glRect);
         SDL_RenderCopy(render, tex, &(SDL_Rect){ 0, 0, dstRect.w, dstRect.h }, &dstRect);
         SDL_DestroyTexture(tex);
+        setRasterized_Glyph_(glyph, hoff);
     }
     if (surface) {
         SDL_FreeSurface(surface);
@@ -580,29 +602,42 @@ iLocalDef iFont *characterFont_Font_(iFont *d, iChar ch, uint32_t *glyphIndex) {
 }
 
 static const iGlyph *glyph_Font_(iFont *d, iChar ch) {
+    iGlyph * glyph;
     uint32_t glyphIndex = 0;
     /* The glyph may actually come from a different font; look up the right font. */
     iFont *font = characterFont_Font_(d, ch, &glyphIndex);
-    const void *node = value_Hash(&font->glyphs, ch);
+    void * node = value_Hash(&font->glyphs, ch);
     if (node) {
-        return node;
+        glyph = node;
     }
-    iGlyph *glyph     = new_Glyph(ch);
-    glyph->glyphIndex = glyphIndex;
-    glyph->font       = font;
-    /* If the cache is running out of space, clear it and we'll recache what's needed currently. */
-    if (text_.cacheBottom > text_.cacheSize.y - maxGlyphHeight_Text_(&text_)) {
+    else {
+        /* If the cache is running out of space, clear it and we'll recache what's needed currently. */
+        if (text_.cacheBottom > text_.cacheSize.y - maxGlyphHeight_Text_(&text_)) {
 #if !defined (NDEBUG)
-        printf("[Text] glyph cache is full, clearing!\n"); fflush(stdout);
+            printf("[Text] glyph cache is full, clearing!\n"); fflush(stdout);
 #endif
-        resetCache_Text_(&text_);
+            resetCache_Text_(&text_);
+        }
+        glyph             = new_Glyph(ch);
+        glyph->glyphIndex = glyphIndex;
+        glyph->font       = font;
+        /* New glyphs are always allocated at least. This reserves a position in the cache
+           and updates the glyph metrics. */
+        allocate_Font_(font, glyph, 0);
+        allocate_Font_(font, glyph, 1);
+        insert_Hash(&font->glyphs, &glyph->node);
     }
-    SDL_Texture *oldTarget = SDL_GetRenderTarget(text_.render);
-    SDL_SetRenderTarget(text_.render, text_.cache);
-    cache_Font_(font, glyph, 0);
-    cache_Font_(font, glyph, 1); /* half-pixel offset */
-    SDL_SetRenderTarget(text_.render, oldTarget);
-    insert_Hash(&font->glyphs, &glyph->node);
+    if (enableRaster_Text_ && !isFullyRasterized_Glyph_(glyph)) {
+        SDL_Texture *oldTarget = SDL_GetRenderTarget(text_.render);
+        SDL_SetRenderTarget(text_.render, text_.cache);
+        if (!isRasterized_Glyph_(glyph, 0)) {
+            cache_Font_(font, glyph, 0);
+        }
+        if (!isRasterized_Glyph_(glyph, 1)) {
+            cache_Font_(font, glyph, 1); /* half-pixel offset */
+        }
+        SDL_SetRenderTarget(text_.render, oldTarget);
+    }
     return glyph;
 }
 
@@ -693,6 +728,8 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
     if (isMonospaced) {
         monoAdvance = glyph_Font_(d, 'M')->advance;
     }
+    /* Global flag that allows glyph rasterization. */
+    enableRaster_Text_ = !isMeasuring_(mode);
     for (const char *chPos = args->text.start; chPos != args->text.end; ) {
         iAssert(chPos < args->text.end);
         const char *currentPos = chPos;
