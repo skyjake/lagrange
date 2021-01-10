@@ -14,6 +14,7 @@
 * A bookmark's icon is updated after loading the page so it matches the site.
 * Quote border line shows up on empty quote lines, too.
 * Trusting a new server certificate manually will update the current page without reloading.
+* Improved font glyph caching: only rasterize when drawing, and retry after failure. This makes initial document layout faster and avoids issues with permanently lost glyphs.
 * Fixed parts of text disappearing when the glyph cache fills up.
 * Fixed handling of redirection in a background tab — redirected URL would open in the current tab.
 
