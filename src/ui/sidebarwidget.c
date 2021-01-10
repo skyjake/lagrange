@@ -1043,7 +1043,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                 }
                 else if (d->mode == feeds_SidebarMode && d->contextItem) {
                     iLabelWidget *menuItem = findMenuItem_Widget(d->menu, "feed.entry.toggleread");
-                    const iBool isRead = containsUrl_Visited(visited_App(), &d->contextItem->url);
+                    const iBool isRead = d->contextItem->indent == 0;
                     setTextCStr_LabelWidget(menuItem, isRead ? "Mark as Unread" : "Mark as Read");
                 }
                 else if (d->mode == identities_SidebarMode) {
