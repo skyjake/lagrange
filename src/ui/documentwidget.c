@@ -148,6 +148,7 @@ struct Impl_DocumentWidget {
     iGmRequest *   request;
     iAtomicInt     isRequestUpdated; /* request has new content, need to parse it */
     iObjectList *  media;
+    iString        sourceHeader;
     iString        sourceMime;
     iBlock         sourceContent; /* original content as received, for saving */
     iTime          sourceTime;
@@ -226,6 +227,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     init_Array(&d->outline, sizeof(iOutlineItem));
     init_Anim(&d->sideOpacity, 0);
     init_Anim(&d->outlineOpacity, 0);
+    init_String(&d->sourceHeader);
     init_String(&d->sourceMime);
     init_Block(&d->sourceContent, 0);
     iZap(d->sourceTime);
@@ -270,6 +272,7 @@ void deinit_DocumentWidget(iDocumentWidget *d) {
     deinit_String(&d->pendingGotoHeading);
     deinit_Block(&d->sourceContent);
     deinit_String(&d->sourceMime);
+    deinit_String(&d->sourceHeader);
     iRelease(d->doc);
     if (d->playerTimer) {
         SDL_RemoveTimer(d->playerTimer);
@@ -1013,6 +1016,7 @@ static iBool updateFromHistory_DocumentWidget_(iDocumentWidget *d) {
         /* Use the cached response data. */
         updateTrust_DocumentWidget_(d, resp);
         d->sourceTime = resp->when;
+        format_String(&d->sourceHeader, "(cached content)");
         updateTimestampBuf_DocumentWidget_(d);
         set_Block(&d->sourceContent, &resp->body);
         updateDocument_DocumentWidget_(d, resp, iTrue);
@@ -1165,6 +1169,7 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
         d->state = receivedPartialResponse_RequestState;
         updateTrust_DocumentWidget_(d, resp);
         init_Anim(&d->sideOpacity, 0);
+        format_String(&d->sourceHeader, "%d %s", statusCode, get_GmError(statusCode)->title);
         switch (category_GmStatusCode(statusCode)) {
             case categoryInput_GmStatusCode: {
                 iUrl parts;
@@ -1563,7 +1568,15 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             meta = &recent->cachedResponse->meta;
         }
         iString *msg = collectNew_String();
-        appendFormat_String(msg, "%s\n%zu bytes\n", cstr_String(meta), size_Block(&d->sourceContent));
+        if (isEmpty_String(&d->sourceHeader)) {
+            appendFormat_String(msg, "%s\n%zu bytes\n", cstr_String(meta), size_Block(&d->sourceContent));
+        }
+        else {
+            appendFormat_String(msg, "%s\n", cstr_String(&d->sourceHeader));
+            if (size_Block(&d->sourceContent)) {
+                appendFormat_String(msg, "%zu bytes\n", size_Block(&d->sourceContent));
+            }
+        }
         appendFormat_String(msg,
                       "\n%sCertificate Status:\n%s%s  Domain name %s%s\n"
                       "%s%s  %s (%04d-%02d-%02d %02d:%02d:%02d)\n"
@@ -1679,6 +1692,15 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     else if (equalWidget_Command(cmd, w, "document.request.finished") &&
              pointerLabel_Command(cmd, "request") == d->request) {
         set_Block(&d->sourceContent, body_GmRequest(d->request));
+        if (!isSuccess_GmStatusCode(status_GmRequest(d->request))) {
+            format_String(&d->sourceHeader,
+                          "%d %s",
+                          status_GmRequest(d->request),
+                          cstr_String(meta_GmRequest(d->request)));
+        }
+        else {
+            clear_String(&d->sourceHeader);
+        }
         updateFetchProgress_DocumentWidget_(d);
         checkResponse_DocumentWidget_(d);
         init_Anim(&d->scrollY, d->initNormScrollY * size_GmDocument(d->doc).y);
