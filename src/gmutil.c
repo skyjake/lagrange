@@ -213,7 +213,9 @@ const iString *absoluteUrl_String(const iString *d, const iString *urlMaybeRelat
         iString *decHost = punyDecodeHost_(selHost->host);
         append_String(absolute, decHost);
         delete_String(decHost);
-        if (!isEmpty_Range(&selHost->port)) {
+        /* Default Gemini port is removed as redundant; normalization. */
+        if (!isEmpty_Range(&selHost->port) && (!equalCase_Rangecc(scheme, "gemini")
+                                               || !equal_Rangecc(selHost->port, "1965"))) {
             appendCStr_String(absolute, ":");
             appendRange_String(absolute, selHost->port);
         }
