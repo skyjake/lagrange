@@ -6,6 +6,9 @@
 ```
 # Release notes
 
+## 1.0.3
+* Fixed handling of redirection in a background tab — redirected URL would open in the current tab.
+
 ## 1.0.2
 * Fixed URL input field showing the wrong URL when opening tabs in the background.
 * Fixed trusting a renewed server certificate when multiple tabs are open.

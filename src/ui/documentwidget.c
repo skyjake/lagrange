@@ -1204,7 +1204,7 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                         /* Redirects with the same scheme are automatic. */
                         visitUrl_Visited(visited_App(), d->mod.url, transient_VisitedUrlFlag);
                         postCommandf_App(
-                            "open redirect:%d url:%s", d->redirectCount + 1, cstr_String(dstUrl));
+                            "open doc:%p redirect:%d url:%s", d, d->redirectCount + 1, cstr_String(dstUrl));
                     }
                     else {
                         /* Scheme changes must be manually approved. */
