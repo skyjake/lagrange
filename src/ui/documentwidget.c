@@ -132,6 +132,7 @@ enum iDocumentWidgetFlag {
     noHoverWhileScrolling_DocumentWidgetFlag = iBit(2),
     showLinkNumbers_DocumentWidgetFlag       = iBit(3),
     setHoverViaKeys_DocumentWidgetFlag       = iBit(4),
+    newTabViaHomeKeys_DocumentWidgetFlag     = iBit(5),
 };
 
 enum iDocumentLinkOrdinalMode {
@@ -1789,6 +1790,8 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             iChangeFlags(d->flags, showLinkNumbers_DocumentWidgetFlag, iTrue);
             iChangeFlags(d->flags, setHoverViaKeys_DocumentWidgetFlag,
                          argLabel_Command(cmd, "hover") != 0);
+            iChangeFlags(d->flags, newTabViaHomeKeys_DocumentWidgetFlag,
+                         argLabel_Command(cmd, "newtab") != 0);
         }
         invalidateVisibleLinks_DocumentWidget_(d);
         refresh_Widget(d);
@@ -2203,7 +2206,10 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                     }
                     else {
                         postCommandf_App("open newtab:%d url:%s",
-                                         openTabMode_Sym(SDL_GetModState()),
+                                         d->ordinalMode ==
+                                                 numbersAndAlphabet_DocumentLinkOrdinalMode
+                                             ? openTabMode_Sym(SDL_GetModState())
+                                             : (d->flags & newTabViaHomeKeys_DocumentWidgetFlag ? 1 : 0),
                                          cstr_String(absoluteUrl_String(
                                              d->mod.url, linkUrl_GmDocument(d->doc, run->linkId))));
                     }
