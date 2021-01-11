@@ -11,14 +11,22 @@
 * Added a bold UI font. It is used for unread feed entries and default dialog buttons.
 * Added support for Finger links (courtesy of John Cowan).
 * Added option to show full link URL when hovering on it.
-* Added keybinding for page reload.
+* Added keybindings for page reload, opening link in new tab via home row keys (${SHIFT+}F), and hovering on a link via home row keys (H).
 * Remote bookmarks are grouped under their source in the bookmark list.
 * A bookmark's icon is updated after loading the page so it matches the site.
-* Quote border line shows up on empty quote lines, too.
 * Trusting a new server certificate manually will update the current page without reloading.
-* Improved font glyph caching: only rasterize when drawing, and retry after failure. This makes initial document layout faster and avoids issues with permanently lost glyphs.
-* Fixed parts of text disappearing when the glyph cache fills up.
+
+## 1.0.3
+* Improved font glyph caching: only rasterize glyphs when drawing text, and retry after failure. This makes initial document layout faster and avoids issues with permanently lost glyphs.
+* Fixed parts of text disappearing when the glyph cache fills up. The cache also uses less memory now.
+* Fixed feed entry context menu showing the wrong menu item for Mark as Read/Unread.
+* Fixed parentheses and brackets being trimmed from feed entry titles.
+* Fixed quotes appearing continuous even when there are empty lines in between.
+* Fixed quote border line not showing up on empty quote lines.
 * Fixed handling of redirection in a background tab — redirected URL would open in the current tab.
+* Fixed Gemini URL normalization with regard to default port.
+* Fixed a very minor memory leak.
+* Fixed missing "gopher:" URL scheme registration on macOS.
 
 ## 1.0.2
 * Fixed URL input field showing the wrong URL when opening tabs in the background.
