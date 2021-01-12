@@ -81,6 +81,16 @@ static iRangecc prevPathSeg_(const char *end, const char *start) {
     return seg;
 }
 
+void stripDefaultUrlPort_String(iString *d) {
+    iUrl parts;
+    init_Url(&parts, d);
+    if (equalCase_Rangecc(parts.scheme, "gemini") && equal_Rangecc(parts.port, "1965")) {
+        /* Always preceded by a colon. */
+        remove_Block(&d->chars, parts.port.start - 1 - constBegin_String(d),
+                     size_Range(&parts.port) + 1);
+    }
+}
+
 void cleanUrlPath_String(iString *d) {
     iString clean;
     init_String(&clean);
