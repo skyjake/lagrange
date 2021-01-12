@@ -509,6 +509,7 @@ static void load_Feeds_(iFeeds *d) {
                         entry->posted.ts.tv_sec     = posted;
                         entry->discovered.ts.tv_sec = discovered;
                         set_String(&entry->url, url);
+                        stripDefaultUrlPort_String(&entry->url);
                         set_String(&entry->title, title);
                         insert_SortedArray(&d->entries, &entry);
                     }
