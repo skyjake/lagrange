@@ -514,8 +514,10 @@ static size_t coordIndex_InputWidget_(const iInputWidget *d, iInt2 coord) {
 static iBool copy_InputWidget_(iInputWidget *d, iBool doCut) {
     if (!isEmpty_Range(&d->mark)) {
         const iRanges m = mark_InputWidget_(d);
-        SDL_SetClipboardText(cstrCollect_String(
-            newUnicodeN_String(constAt_Array(&d->text, m.start), size_Range(&m))));
+        iString *str = collect_String(newUnicodeN_String(constAt_Array(&d->text, m.start),
+                                                         size_Range(&m)));
+        SDL_SetClipboardText(
+            cstr_String(d->inFlags & isUrl_InputWidgetFlag ? withSpacesEncoded_String(str) : str));
         if (doCut) {
             pushUndo_InputWidget_(d);
             deleteMarked_InputWidget_(d);

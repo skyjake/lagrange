@@ -753,7 +753,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         else if (isCommand_Widget(w, ev, "bookmark.copy")) {
             const iSidebarItem *item = d->contextItem;
             if (d->mode == bookmarks_SidebarMode && item) {
-                SDL_SetClipboardText(cstr_String(&item->url));
+                SDL_SetClipboardText(cstr_String(withSpacesEncoded_String(&item->url)));
             }
             return iTrue;
         }
@@ -974,7 +974,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         else if (isCommand_Widget(w, ev, "history.copy")) {
             const iSidebarItem *item = d->contextItem;
             if (item && !isEmpty_String(&item->url)) {
-                SDL_SetClipboardText(cstr_String(&item->url));
+                SDL_SetClipboardText(cstr_String(withSpacesEncoded_String(&item->url)));
             }
             return iTrue;
         }
