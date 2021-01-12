@@ -7,8 +7,16 @@
 # Release notes
 
 ## 1.0.3
-* Quote border line shows up on empty quote lines, too.
+* Improved font glyph caching: only rasterize glyphs when drawing text, and retry after failure. This makes initial document layout faster and avoids issues with permanently lost glyphs.
+* Fixed parts of text disappearing when the glyph cache fills up. The cache also uses less memory now.
+* Fixed feed entry context menu showing the wrong menu item for Mark as Read/Unread.
+* Fixed parentheses and brackets being trimmed from feed entry titles.
+* Fixed quotes appearing continuous even when there are empty lines in between.
+* Fixed quote border line not showing up on empty quote lines.
 * Fixed handling of redirection in a background tab — redirected URL would open in the current tab.
+* Fixed Gemini URL normalization with regard to default port.
+* Fixed a very minor memory leak.
+* Fixed missing "gopher:" URL scheme registration on macOS.
 
 ## 1.0.2
 * Fixed URL input field showing the wrong URL when opening tabs in the background.
