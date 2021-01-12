@@ -77,6 +77,7 @@ struct Impl_LookupItem {
     iLookupResult *result;
     int font;
     int fg;
+    iString icon;
     iString text;
     iString command;
 };
@@ -86,6 +87,10 @@ static void init_LookupItem(iLookupItem *d, const iLookupResult *res) {
     d->result = res ? copy_LookupResult(res) : NULL;
     d->font = uiContent_FontId;
     d->fg = uiText_ColorId;
+    init_String(&d->icon);
+    if (res && res->icon) {
+        appendChar_String(&d->icon, res->icon);
+    }
     init_String(&d->text);
     init_String(&d->command);
 }
@@ -93,6 +98,7 @@ static void init_LookupItem(iLookupItem *d, const iLookupResult *res) {
 static void deinit_LookupItem(iLookupItem *d) {
     deinit_String(&d->command);
     deinit_String(&d->text);
+    deinit_String(&d->icon);
     delete_LookupResult(d->result);
 }
 
@@ -110,10 +116,19 @@ static void draw_LookupItem_(iLookupItem *d, iPaint *p, iRect rect, const iListW
                  ? permanent_ColorId | (isPressing || isCursor ? uiTextPressed_ColorId
                                                                : uiTextFramelessHover_ColorId)
                  : d->fg;
-    const iInt2 size = measure_Text(d->font, cstr_String(&d->text));
+    const iInt2 size = measureRange_Text(d->font, range_String(&d->text));
     iInt2       pos  = init_I2(left_Rect(rect) + 3 * gap_UI, mid_Rect(rect).y - size.y / 2);
     if (d->listItem.isSeparator) {
         pos.y = bottom_Rect(rect) - lineHeight_Text(d->font);
+    }
+    if (!isEmpty_String(&d->icon)) {
+        const iRect iconRect = { pos, init_I2(gap_UI * 5, height_Rect(rect)) };
+        const iInt2 iconSize = measureRange_Text(d->font, range_String(&d->icon));
+        drawRange_Text(d->font,
+                       addX_I2(pos, width_Rect(iconRect) / 2 - iconSize.x / 2),
+                       fg,
+                       range_String(&d->icon));
+        pos.x += width_Rect(iconRect) + gap_UI;
     }
     drawRange_Text(d->font, pos, fg, range_String(&d->text));
 }
@@ -203,9 +218,8 @@ static void searchBookmarks_LookupJob_(iLookupJob *d) {
         res->type            = bookmark_LookupResultType;
         res->when            = bm->when;
         res->relevance       = bookmarkRelevance_LookupJob_(d, bm);
-        appendChar_String(&res->label, bm->icon);
-        appendChar_String(&res->label, ' ');
-        append_String(&res->label, &bm->title);
+        res->icon            = bm->icon;
+        set_String(&res->label, &bm->title);
         set_String(&res->url, &bm->url);
         pushBack_PtrArray(&d->results, res);
     }
@@ -226,11 +240,8 @@ static void searchFeeds_LookupJob_(iLookupJob *d) {
             res->relevance     = relevance;
             set_String(&res->url, &entry->url);
             set_String(&res->meta, &bm->title);
-            if (bm->icon) {
-                appendChar_String(&res->label, bm->icon);
-                appendChar_String(&res->label, ' ');
-            }
-            append_String(&res->label, &entry->title);
+            set_String(&res->label, &entry->title);
+            res->icon = bm->icon;
             pushBack_PtrArray(&d->results, res);
         }
     }
@@ -285,10 +296,9 @@ static void searchIdentities_LookupJob_(iLookupJob *d) {
         iLookupResult *res = new_LookupResult();
         res->type = identity_LookupResultType;
         res->relevance = identityRelevance_LookupJob_(d, identity);
-        appendChar_String(&res->label, identity->icon);
-        appendChar_String(&res->label, ' ');
+        res->icon = identity->icon;
         iString *cn = subject_TlsCertificate(identity->cert);
-        append_String(&res->label, cn);
+        set_String(&res->label, cn);
         delete_String(cn);
         set_String(&res->meta,
                    collect_String(

@@ -39,6 +39,7 @@ enum iLookupResultType {
 struct Impl_LookupResult {
     enum iLookupResultType type;
     float relevance; /* used for sorting results */
+    iChar icon;
     iString label;
     iString url;
     iString meta;

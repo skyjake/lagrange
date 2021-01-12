@@ -27,6 +27,7 @@ iDefineTypeConstruction(LookupResult)
 void init_LookupResult(iLookupResult *d) {
     d->type = none_LookupResultType;
     d->relevance = 0;
+    d->icon = 0;
     init_String(&d->label);
     init_String(&d->url);
     init_String(&d->meta);
@@ -43,6 +44,7 @@ iLookupResult *copy_LookupResult(const iLookupResult *d) {
     iLookupResult *copy = new_LookupResult();
     copy->type = d->type;
     copy->relevance = d->relevance;
+    copy->icon = d->icon;
     set_String(&copy->label, &d->label);
     set_String(&copy->url, &d->url);
     set_String(&copy->meta, &d->meta);
