@@ -83,9 +83,11 @@ void deinit_Glyph(iGlyph *d) {
     iUnused(d);
 }
 
+#if 0
 static iChar codepoint_Glyph_(const iGlyph *d) {
     return d->node.key;
 }
+#endif
 
 iLocalDef iBool isRasterized_Glyph_(const iGlyph *d, int hoff) {
     return (d->flags & (rasterized0_GlyphFlag << hoff)) != 0;
@@ -152,10 +154,15 @@ static void init_Font(iFont *d, const iBlock *data, int height, float scale,
     memset(d->indexTable, 0xff, sizeof(d->indexTable));
 }
 
-static void deinit_Font(iFont *d) {
+static void clearGlyphs_Font_(iFont *d) {
     iForEach(Hash, i, &d->glyphs) {
         delete_Glyph((iGlyph *) i.value);
     }
+    clear_Hash(&d->glyphs);
+}
+
+static void deinit_Font(iFont *d) {
+    clearGlyphs_Font_(d);
     deinit_Hash(&d->glyphs);
     delete_Block(d->data);
 }
@@ -352,6 +359,10 @@ static void deinitFonts_Text_(iText *d) {
     iForIndices(i, d->fonts) {
         deinit_Font(&d->fonts[i]);
     }
+}
+
+static int maxGlyphHeight_Text_(const iText *d) {
+    return 2 * d->contentFontSize * fontSize_UI;
 }
 
 static void initCache_Text_(iText *d) {
