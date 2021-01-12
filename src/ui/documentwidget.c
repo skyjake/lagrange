@@ -1613,11 +1613,11 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     else if (equal_Command(cmd, "document.copylink") && document_App() == d) {
         if (d->contextLink) {
-            SDL_SetClipboardText(cstr_String(
-                absoluteUrl_String(d->mod.url, linkUrl_GmDocument(d->doc, d->contextLink->linkId))));
+            SDL_SetClipboardText(cstr_String(withSpacesEncoded_String(absoluteUrl_String(
+                d->mod.url, linkUrl_GmDocument(d->doc, d->contextLink->linkId)))));
         }
         else {
-            SDL_SetClipboardText(cstr_String(d->mod.url));
+            SDL_SetClipboardText(cstr_String(withSpacesEncoded_String(d->mod.url)));
         }
         return iTrue;
     }

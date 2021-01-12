@@ -9,6 +9,7 @@
 ## 1.0.3
 * Improved font glyph caching: only rasterize glyphs when drawing text, and retry after failure. This makes initial document layout faster and avoids issues with permanently lost glyphs.
 * Fixed parts of text disappearing when the glyph cache fills up. The cache also uses less memory now.
+* Fixed percent-encoding of spaces when copying URLs to clipboard.
 * Fixed feed entry context menu showing the wrong menu item for Mark as Read/Unread.
 * Fixed parentheses and brackets being trimmed from feed entry titles.
 * Fixed quotes appearing continuous even when there are empty lines in between.

@@ -327,6 +327,12 @@ void urlEncodeSpaces_String(iString *d) {
     }
 }
 
+const iString *withSpacesEncoded_String(const iString *d) {
+    iString *enc = copy_String(d);
+    urlEncodeSpaces_String(enc);
+    return collect_String(enc);
+}
+
 const iString *feedEntryOpenCommand_String(const iString *url, int newTab) {
     if (!isEmpty_String(url)) {
         iString *cmd = collectNew_String();
