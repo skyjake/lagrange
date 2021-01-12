@@ -141,15 +141,11 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
             init_Date(&on, &now);
             const int thisYear = on.year;
             iZap(on);
+            size_t numItems = 0;
             iConstForEach(PtrArray, i, listEntries_Feeds()) {
                 const iFeedEntry *entry = i.ptr;
                 if (isHidden_FeedEntry(entry)) {
                     continue; /* A hidden entry. */
-                }
-                /* For more items, one can always see "about:feeds". A large number of items
-                   is a bit difficult to navigate in the sidebar. */
-                if (numItems_ListWidget(d->list) == 100) {
-                    break;
                 }
                 /* Exclude entries that are too old for Visited to keep track of. */
                 if (secondsSince_Time(&now, &entry->discovered) > maxAge_Visited) {
@@ -185,6 +181,11 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 }
                 addItem_ListWidget(d->list, item);
                 iRelease(item);
+                if (++numItems == 100) {
+                    /* For more items, one can always see "about:feeds". A large number of items
+                       is a bit difficult to navigate in the sidebar. */
+                    break;
+                }
             }
             d->menu = makeMenu_Widget(
                 as_Widget(d),
