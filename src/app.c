@@ -1134,6 +1134,11 @@ iBool handleCommand_App(const char *cmd) {
         postRefresh_App();
         return iTrue;
     }
+    else if (equal_Command(cmd, "prefs.hoverlink.toggle")) {
+        d->prefs.hoverLink = !d->prefs.hoverLink;
+        postRefresh_App();
+        return iTrue;
+    }
     else if (equal_Command(cmd, "saturation.set")) {
         d->prefs.saturation = (float) arg_Command(cmd) / 100.0f;
         postCommandf_App("theme.changed auto:1");

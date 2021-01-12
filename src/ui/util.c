@@ -1043,7 +1043,7 @@ iWidget *makePreferences_Widget(void) {
         appendTwoColumnPage_(tabs, "General", '1', &headings, &values);
         addChild_Widget(headings, iClob(makeHeading_Widget("Downloads folder:")));
         setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.downloads");
-        addChild_Widget(headings, iClob(makeHeading_Widget("Full link on hover:")));
+        addChild_Widget(headings, iClob(makeHeading_Widget("Show URL on hover:")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.hoverlink")));
         addChild_Widget(headings, iClob(makeHeading_Widget("Smooth scrolling:")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.smoothscroll")));
