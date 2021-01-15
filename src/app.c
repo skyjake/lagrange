@@ -323,11 +323,10 @@ static void saveState_App_(const iApp *d) {
         writeData_File(f, magicState_App_, 4);
         writeU32_File(f, latest_FileVersion); /* version */
         iConstForEach(ObjectList, i, iClob(listDocuments_App())) {
-            if (isInstance_Object(i.object, &Class_DocumentWidget)) {
-                writeData_File(f, magicTabDocument_App_, 4);
-                write8_File(f, document_App() == i.object ? 1 : 0);
-                serializeState_DocumentWidget(i.object, stream_File(f));
-            }
+            iAssert(isInstance_Object(i.object, &Class_DocumentWidget));
+            writeData_File(f, magicTabDocument_App_, 4);
+            write8_File(f, document_App() == i.object ? 1 : 0);
+            serializeState_DocumentWidget(i.object, stream_File(f));
         }
     }
     iRelease(f);
@@ -500,14 +499,22 @@ const iString *debugInfo_App(void) {
     iApp *d = &app_;
     iString *msg = collectNew_String();
     format_String(msg, "# Debug information\n");
-    appendFormat_String(msg, "## Launch arguments\n");
-    iConstForEach(StringList, i, args_CommandLine(&d->args)) {
-        appendFormat_String(msg, "* %zu: %s\n", i.pos, cstr_String(i.value));
+    appendFormat_String(msg, "## Documents\n");
+    iForEach(ObjectList, k, listDocuments_App()) {
+        iDocumentWidget *doc = k.object;
+        appendFormat_String(msg, "### Tab %zu: %s\n",
+                            childIndex_Widget(constAs_Widget(doc)->parent, k.object),
+                            cstr_String(bookmarkTitle_DocumentWidget(doc)));
+        append_String(msg, collect_String(debugInfo_History(history_DocumentWidget(doc))));
     }
-    appendFormat_String(msg, "## Launch commands\n");
+    appendFormat_String(msg, "## Launch arguments\n```\n");
+    iConstForEach(StringList, i, args_CommandLine(&d->args)) {
+        appendFormat_String(msg, "%3zu : %s\n", i.pos, cstr_String(i.value));
+    }
+    appendFormat_String(msg, "```\n## Launch commands\n");
     iConstForEach(StringList, j, d->launchCommands) {
         appendFormat_String(msg, "%s\n", cstr_String(j.value));
-    }
+    }    
     appendFormat_String(msg, "## MIME hooks\n");
     append_String(msg, debugInfo_MimeHooks(d->mimehooks));
     return msg;

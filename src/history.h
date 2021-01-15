@@ -68,3 +68,5 @@ const iRecentUrl *
 const iGmResponse *
             cachedResponse_History      (const iHistory *);
 
+iString *   debugInfo_History           (const iHistory *);
+

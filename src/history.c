@@ -86,6 +86,38 @@ iHistory *copy_History(const iHistory *d) {
     return copy;
 }
 
+iString *debugInfo_History(const iHistory *d) {
+    iString *str = new_String();
+    format_String(str,
+                  "```\n"
+                  "Idx |    Size | SP%% | URL\n"
+                  "----+---------+-----+-----\n");
+    size_t totalSize = 0;
+    iConstForEach(Array, i, &d->recent) {
+        const iRecentUrl *item = i.value;
+        appendFormat_String(
+            str, " %2zu | ", size_Array(&d->recent) - index_ArrayConstIterator(&i) - 1);
+        if (item->cachedResponse) {
+            appendFormat_String(str, "%7zu", size_Block(&item->cachedResponse->body));
+            totalSize += size_Block(&item->cachedResponse->body);
+        }
+        else {
+            appendFormat_String(str, "     --");
+        }
+        appendFormat_String(str,
+                            " | %3d | %s\n",
+                            iRound(100.0f * item->normScrollY),
+                            cstr_String(&item->url));
+    }
+    appendFormat_String(str, "\n```\n");
+    appendFormat_String(str,
+                        "Total cached data: %.3f MB\n"
+                        "Navigation position: %zu\n\n",
+                        totalSize / 1.0e6f,
+                        d->recentPos);
+    return str;
+}
+
 void serialize_History(const iHistory *d, iStream *outs) {
     lock_Mutex(d->mtx);
     writeU16_Stream(outs, d->recentPos);
