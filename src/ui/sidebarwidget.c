@@ -359,6 +359,7 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 { "Show Usage", 0, 0, "ident.showuse" },
                 { "---", 0, 0, NULL },
                 { "Edit Notes...", 0, 0, "ident.edit" },
+                { "Copy Fingerprint", 0, 0, "ident.fingerprint" },
 //                { "Pick Icon...", 0, 0, "ident.pickicon" },
                 { "---", 0, 0, NULL },
                 //{ "Reveal Files", 0, 0, "ident.reveal" },
@@ -920,6 +921,15 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                                       format_CStr("Notes about %s:", cstr_String(name_GmIdentity(ident))),
                                       uiTextAction_ColorEscape "OK",
                                       format_CStr("!ident.setnotes ident:%p ptr:%p", ident, d));
+            }
+            return iTrue;
+        }
+        else if (isCommand_Widget(w, ev, "ident.fingerprint")) {
+            const iGmIdentity *ident = menuIdentity_SidebarWidget_(d);
+            if (ident) {
+                const iString *fps = collect_String(
+                    hexEncode_Block(collect_Block(fingerprint_TlsCertificate(ident->cert))));
+                SDL_SetClipboardText(cstr_String(fps));
             }
             return iTrue;
         }
