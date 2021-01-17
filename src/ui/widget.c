@@ -728,6 +728,17 @@ size_t childIndex_Widget(const iWidget *d, const iAnyObject *child) {
     return iInvalidPos;
 }
 
+iAny *hitChild_Widget(const iWidget *d, iInt2 coord) {
+    iConstForEach(ObjectList, i, d->children) {
+        iAny *found = hitChild_Widget(constAs_Widget(i.object), coord);
+        if (found) return found;
+    }
+    if (contains_Widget(d, coord)) {
+        return iConstCast(iWidget *, d);
+    }
+    return NULL;
+}
+
 iAny *findChild_Widget(const iWidget *d, const char *id) {
     if (cmp_String(id_Widget(d), id) == 0) {
         return iConstCast(iAny *, d);

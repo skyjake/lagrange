@@ -380,7 +380,19 @@ static iBool isCommandIgnoredByMenus_(const char *cmd) {
            equal_Command(cmd, "bookmarks.request.finished") ||
            equal_Command(cmd, "window.resized") ||
            equal_Command(cmd, "window.reload.update") ||
+           equal_Command(cmd, "window.mouse.exited") ||
+           equal_Command(cmd, "window.mouse.entered") ||
            (equal_Command(cmd, "mouse.clicked") && !arg_Command(cmd)); /* button released */
+}
+
+static iLabelWidget *parentMenuButton_(const iWidget *menu) {
+    if (isInstance_Object(menu->parent, &Class_LabelWidget)) {
+        iLabelWidget *button = (iLabelWidget *) menu->parent;
+        if (!cmp_String(command_LabelWidget(button), "menu.open")) {
+            return button;
+        }
+    }
+    return NULL;
 }
 
 static iBool menuHandler_(iWidget *menu, const char *cmd) {
@@ -394,6 +406,9 @@ static iBool menuHandler_(iWidget *menu, const char *cmd) {
         }
         if ((equal_Command(cmd, "mouse.clicked") || equal_Command(cmd, "mouse.missed")) &&
             arg_Command(cmd)) {
+            if (hitChild_Widget(get_Window()->root, coord_Command(cmd)) == parentMenuButton_(menu)) {
+                return iFalse;
+            }
             /* Dismiss open menus when clicking outside them. */
             closeMenu_Widget(menu);
             return iTrue;
