@@ -185,6 +185,8 @@ static const iMenuItem identityMenuItems_[] = {
 static const iMenuItem helpMenuItems_[] = {
     { "Help", 0, 0, "!open url:about:help" },
     { "Release Notes", 0, 0, "!open url:about:version" },
+    { "---", 0, 0, NULL },
+    { "Debug Information", 0, 0, "!open url:about:debug" },
 };
 #endif
 
