@@ -57,12 +57,7 @@ void deinit_FeedEntry(iFeedEntry *d) {
 }
 
 const iString *url_FeedEntry(const iFeedEntry *d) {
-    const size_t fragPos = indexOf_String(&d->url, '#');
-    if (fragPos != iInvalidPos) {
-        return collect_String(newRange_String((iRangecc){ constBegin_String(&d->url),
-                                                          constBegin_String(&d->url) + fragPos }));
-    }
-    return &d->url;
+    return urlFragmentStripped_String(&d->url);
 }
 
 iBool isUnread_FeedEntry(const iFeedEntry *d) {
@@ -300,6 +295,7 @@ static iBool updateEntries_Feeds_(iFeeds *d, iPtrArray *incoming) {
         size_t pos;
         if (locate_SortedArray(&d->entries, &entry, &pos)) {
             iFeedEntry *existing = *(iFeedEntry **) at_SortedArray(&d->entries, pos);
+            iAssert(isHeadingEntry_FeedEntry_(existing) == isHeadingEntry_FeedEntry_(entry));
             /* Already known, but update it, maybe the time and label have changed. */
             if (!isHeadingEntry_FeedEntry_(existing)) {
                 iBool changed = iFalse;

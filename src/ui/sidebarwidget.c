@@ -822,7 +822,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         else if (equal_Command(cmd, "feeds.markallread") && d->mode == feeds_SidebarMode) {
             iConstForEach(PtrArray, i, listEntries_Feeds()) {
                 const iFeedEntry *entry = i.ptr;
-                const iString *url = &entry->url;
+                const iString *url = url_FeedEntry(entry);
                 if (!containsUrl_Visited(visited_App(), url)) {
                     visitUrl_Visited(visited_App(), url, transient_VisitedUrlFlag);
                 }
@@ -834,16 +834,17 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             const iSidebarItem *item = d->contextItem;
             if (item) {
                 if (isCommand_Widget(w, ev, "feed.entry.opentab")) {
-                    postCommandf_App("open newtab:1 url:%s", cstr_String(&item->url));
+                    postCommandString_App(feedEntryOpenCommand_String(&item->url, 1));
                     return iTrue;
                 }
                 if (isCommand_Widget(w, ev, "feed.entry.toggleread")) {
                     iVisited *vis = visited_App();
-                    if (containsUrl_Visited(vis, &item->url)) {
-                        removeUrl_Visited(vis, &item->url);
+                    const iString *url = urlFragmentStripped_String(&item->url);
+                    if (containsUrl_Visited(vis, url)) {
+                        removeUrl_Visited(vis, url);
                     }
                     else {
-                        visitUrl_Visited(vis, &item->url, transient_VisitedUrlFlag);
+                        visitUrl_Visited(vis, url, transient_VisitedUrlFlag);
                     }
                     postCommand_App("visited.changed");
                     return iTrue;

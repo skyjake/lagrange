@@ -105,6 +105,7 @@ iRangecc        urlHost_String          (const iString *);
 const iString * absoluteUrl_String      (const iString *, const iString *urlMaybeRelative);
 void            punyEncodeUrlHost_String(iString *);
 void            stripDefaultUrlPort_String(iString *);
+const iString * urlFragmentStripped_String(const iString *);
 void            urlDecodePath_String    (iString *);
 void            urlEncodePath_String    (iString *);
 iString *       makeFileUrl_String      (const iString *localFilePath);
