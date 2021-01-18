@@ -34,9 +34,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/time.h>
 #include <ctype.h>
 
-static const char *filename_GmCerts_       = "trusted.txt";
-static const char *identsDir_GmCerts_      = "idents";
-static const char *identsFilename_GmCerts_ = "idents.binary";
+static const char *filename_GmCerts_          = "trusted.txt";
+static const char *identsDir_GmCerts_         = "idents";
+static const char *oldIdentsFilename_GmCerts_ = "idents.binary";
+static const char *identsFilename_GmCerts_    = "idents.lgr";
 
 iDeclareClass(TrustEntry)
 
@@ -237,8 +238,9 @@ static void save_GmCerts_(const iGmCerts *d) {
 }
 
 static void loadIdentities_GmCerts_(iGmCerts *d) {
-    iFile *f =
-        iClob(new_File(collect_String(concatCStr_Path(&d->saveDir, identsFilename_GmCerts_))));
+    const iString *oldPath = collect_String(concatCStr_Path(&d->saveDir, oldIdentsFilename_GmCerts_));
+    const iString *path    = collect_String(concatCStr_Path(&d->saveDir, identsFilename_GmCerts_));
+    iFile *f = iClob(new_File(fileExists_FileInfo(path) ? path : oldPath));
     if (open_File(f, readOnly_FileMode)) {
         char magic[4];
         readData_File(f, sizeof(magic), magic);

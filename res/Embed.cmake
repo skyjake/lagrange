@@ -96,7 +96,7 @@ function (embed_make)
             endforeach (fn)
         else ()
             # Collect resources in a single binary file.
-            set (EMB_BIN ${CMAKE_CURRENT_BINARY_DIR}/resources.binary)
+            set (EMB_BIN ${CMAKE_CURRENT_BINARY_DIR}/resources.lgr)
             file (REMOVE ${EMB_BIN})
             list (LENGTH ARGV fileCount)            
             execute_process (COMMAND ${BINCAT_COMMAND} ${EMB_BIN} ${ARGV}

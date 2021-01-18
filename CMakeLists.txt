@@ -86,7 +86,7 @@ if (UNIX AND NOT APPLE)
 endif ()
 embed_make (${EMBED_RESOURCES})
 
-set (EMB_BIN ${CMAKE_CURRENT_BINARY_DIR}/resources.binary)
+set (EMB_BIN ${CMAKE_CURRENT_BINARY_DIR}/resources.lgr)
 set_source_files_properties (${EMB_BIN} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
 
 # Source files.
@@ -177,7 +177,7 @@ set (SOURCES
     res/about/help.gmi
     res/about/lagrange.gmi
     res/about/version.gmi
-    ${CMAKE_CURRENT_BINARY_DIR}/resources.binary
+    ${CMAKE_CURRENT_BINARY_DIR}/resources.lgr
     ${CMAKE_CURRENT_BINARY_DIR}/embedded.c
     ${CMAKE_CURRENT_BINARY_DIR}/embedded.h
 )
@@ -301,7 +301,7 @@ MimeType=x-scheme-handler/gemini;x-scheme-handler/gopher
     )
     if (NOT ENABLE_RESOURCE_EMBED)
         target_compile_definitions (app PUBLIC
-            LAGRANGE_EMB_BIN="${CMAKE_INSTALL_PREFIX}/share/lagrange/resources.binary")
+            LAGRANGE_EMB_BIN="${CMAKE_INSTALL_PREFIX}/share/lagrange/resources.lgr")
         install (FILES ${EMB_BIN} DESTINATION share/lagrange)
     endif ()
 endif ()

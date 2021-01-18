@@ -74,25 +74,26 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 iDeclareType(App)
 
 #if defined (iPlatformApple)
-#define EMB_BIN "../../Resources/resources.binary"
+#define EMB_BIN "../../Resources/resources.lgr"
 static const char *dataDir_App_ = "~/Library/Application Support/fi.skyjake.Lagrange";
 #endif
 #if defined (iPlatformMsys)
-#define EMB_BIN "../resources.binary"
+#define EMB_BIN "../resources.lgr"
 static const char *dataDir_App_ = "~/AppData/Roaming/fi.skyjake.Lagrange";
 #endif
 #if defined (iPlatformLinux) || defined (iPlatformOther)
-#define EMB_BIN  "../../share/lagrange/resources.binary"
+#define EMB_BIN  "../../share/lagrange/resources.lgr"
 static const char *dataDir_App_ = "~/.config/lagrange";
 #endif
 #if defined (LAGRANGE_EMB_BIN) /* specified in build config */
 #  undef EMB_BIN
 #  define EMB_BIN LAGRANGE_EMB_BIN
 #endif
-#define EMB_BIN2 "../resources.binary" /* fallback from build/executable dir */
-static const char *prefsFileName_App_ = "prefs.cfg";
-static const char *stateFileName_App_ = "state.binary";
-static const char *downloadDir_App_   = "~/Downloads";
+#define EMB_BIN2 "../resources.lgr" /* fallback from build/executable dir */
+static const char *prefsFileName_App_    = "prefs.cfg";
+static const char *oldStateFileName_App_ = "state.binary";
+static const char *stateFileName_App_    = "state.lgr";
+static const char *downloadDir_App_      = "~/Downloads";
 
 static const int idleThreshold_App_ = 1000; /* ms */
 
@@ -265,7 +266,9 @@ static const char *magicTabDocument_App_ = "tabd";
 
 static iBool loadState_App_(iApp *d) {
     iUnused(d);
-    iFile *f = iClob(newCStr_File(concatPath_CStr(dataDir_App_, stateFileName_App_)));
+    const char *oldPath = concatPath_CStr(dataDir_App_, oldStateFileName_App_);
+    const char *path    = concatPath_CStr(dataDir_App_, stateFileName_App_);
+    iFile *f = iClob(newCStr_File(fileExistsCStr_FileInfo(path) ? path : oldPath));
     if (open_File(f, readOnly_FileMode)) {
         char magic[4];
         readData_File(f, 4, magic);

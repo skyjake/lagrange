@@ -344,10 +344,10 @@ Other Unix : ~/.config/lagrange/
 * bindings.txt
 * bookmarks.txt
 * feeds.txt
-* idents.binary and idents/
+* idents.lgr and idents/
 * mimehooks.txt
 * prefs.cfg
-* state.binary
+* state.lgr
 * trusted.txt
 * visited.txt
 
