@@ -74,7 +74,7 @@ void deinit_Visited(iVisited *d) {
 
 void save_Visited(const iVisited *d, const char *dirPath) {
     iString *line = new_String();
-    iFile *f = newCStr_File(concatPath_CStr(dirPath, "visited2.txt"));
+    iFile *f = newCStr_File(concatPath_CStr(dirPath, "visited.2.txt"));
     if (open_File(f, writeOnly_FileMode | text_FileMode)) {
         lock_Mutex(d->mtx);
         iConstForEach(Array, i, &d->visited.values) {
@@ -93,7 +93,7 @@ void save_Visited(const iVisited *d, const char *dirPath) {
 }
 
 void load_Visited(iVisited *d, const char *dirPath) {
-    iFile *f = newCStr_File(concatPath_CStr(dirPath, "visited2.txt"));
+    iFile *f = newCStr_File(concatPath_CStr(dirPath, "visited.2.txt"));
     if (open_File(f, readOnly_FileMode | text_FileMode)) {
         lock_Mutex(d->mtx);
         const iRangecc src  = range_Block(collect_Block(readAll_File(f)));

@@ -349,7 +349,7 @@ Other Unix : ~/.config/lagrange/
 * prefs.cfg
 * state.lgr
 * trusted.txt
-* visited.txt
+* visited.2.txt
 
 # 4 MIME hooks
 
