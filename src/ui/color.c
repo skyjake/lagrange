@@ -252,6 +252,10 @@ void setThemePalette_Color(enum iColorTheme theme) {
             copy_(uiMatching_ColorId, orange_ColorId);
             break;
     }
+    set_Color(uiSubheading_ColorId,
+              mix_Color(get_Color(uiText_ColorId),
+                        get_Color(uiIcon_ColorId),
+                        isDark_ColorTheme(theme) ? 0.5f : 0.75f));
     set_Color(uiBackgroundUnfocusedSelection_ColorId, mix_Color(get_Color(uiBackground_ColorId),
                                                                 get_Color(uiBackgroundSelected_ColorId),
                                                                isDark_ColorTheme(theme) ? 0.25f : 0.66f));

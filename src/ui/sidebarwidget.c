@@ -1236,6 +1236,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                 deinit_String(&str);
             }
             /* Select the layout based on how the title fits. */
+            int         metaFg    = isPressing ? fg : uiSubheading_ColorId;
             iInt2       titleSize = advanceRange_Text(titleFont, range_String(&d->label));
             const iInt2 metaSize  = advanceRange_Text(uiLabel_FontId, range_String(&d->meta));
             pos.x += iconPad;
@@ -1245,7 +1246,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                 /* Must wrap the title. */
                 pos.y += (itemHeight - h2 - h2) / 2;
                 draw_Text(
-                    uiLabel_FontId, addY_I2(pos, h2 - h1 - gap_UI / 8), fg, "%s \u2014 ", cstr_String(&d->meta));
+                    uiLabel_FontId, addY_I2(pos, h2 - h1 - gap_UI / 8), metaFg, "%s \u2014 ", cstr_String(&d->meta));
                 int skip  = metaSize.x + advance_Text(uiLabel_FontId, " \u2014 ").x;
                 iInt2 cur = addX_I2(pos, skip);
                 const char *endPos;
@@ -1263,7 +1264,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
             }
             else {
                 pos.y += (itemHeight - h1 - h2) / 2;
-                drawRange_Text(uiLabel_FontId, pos, fg, range_String(&d->meta));
+                drawRange_Text(uiLabel_FontId, pos, metaFg, range_String(&d->meta));
                 drawRange_Text(titleFont, addY_I2(pos, h1), labelFg, range_String(&d->label));
             }
         }

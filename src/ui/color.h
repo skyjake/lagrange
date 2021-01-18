@@ -105,6 +105,7 @@ enum iColorId {
     uiBackgroundUnfocusedSelection_ColorId,
     uiBackgroundFolder_ColorId,
     uiTextDim_ColorId,
+    uiSubheading_ColorId,
 
     /* content theme colors */
     tmFirst_ColorId,
