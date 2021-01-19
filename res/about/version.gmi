@@ -18,6 +18,7 @@
 * Trusting a new server certificate manually will update the current page without reloading.
 * Middle-clicking on a tab title closes the tab.
 * Fixed timestamps of visited URLs. Your browsing history will be erased but can still be found in "visited.txt".
+* Fixed issue where "heading" feed entries would turn unread after a while.
 
 ## 1.0.3
 * Improved font glyph caching: only rasterize glyphs when drawing text, and retry after failure. This makes initial document layout faster and avoids issues with permanently lost glyphs.

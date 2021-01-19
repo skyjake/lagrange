@@ -160,6 +160,9 @@ static iFeedJob *startNextJob_Feeds_(iFeeds *d) {
 }
 
 static iBool isTrimmablePunctuation_(iChar c) {
+    if (c == '"') {
+        return iFalse; /* Probably quoted text. */
+    }
     if (c == '(' || c == '[' || c == '{' || c == '<') {
         return iFalse;
     }
