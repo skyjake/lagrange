@@ -437,11 +437,17 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
     else if (equal_Command(cmd, "mouse.clicked") && arg_Command(cmd)) {
         iWidget *widget = pointer_Command(cmd);
         iWidget *menu = findWidget_App("doctabs.menu");
-        if (isTabButton_Widget(widget) && !isVisible_Widget(menu)) {
-            iWidget *tabs = findWidget_App("doctabs");
-            showTabPage_Widget(tabs,
-                               tabPage_Widget(tabs, childIndex_Widget(widget->parent, widget)));
-            openMenu_Widget(menu, coord_Command(cmd));
+        if (isTabButton_Widget(widget)) {
+            if (!isVisible_Widget(menu)) {
+                iWidget *tabs = findWidget_App("doctabs");
+                iWidget *page = tabPage_Widget(tabs, childIndex_Widget(widget->parent, widget));
+                if (argLabel_Command(cmd, "button") == SDL_BUTTON_MIDDLE) {
+                    postCommandf_App("tabs.close id:%s", cstr_String(id_Widget(page)));
+                    return iTrue;
+                }
+                showTabPage_Widget(tabs, page);
+                openMenu_Widget(menu, coord_Command(cmd));
+            }
         }
     }
     else if (equal_Command(cmd, "navigate.reload")) {

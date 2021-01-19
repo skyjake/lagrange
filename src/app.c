@@ -1245,9 +1245,13 @@ iBool handleCommand_App(const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "tabs.close")) {
-        iWidget *tabs = findWidget_App("doctabs");
-        size_t index = tabPageIndex_Widget(tabs, document_App());
-        iBool wasClosed = iFalse;
+        iWidget *      tabs  = findWidget_App("doctabs");
+        const iRangecc tabId = range_Command(cmd, "id");
+        iWidget *      doc   = !isEmpty_Range(&tabId) ? findWidget_App(cstr_Rangecc(tabId))
+                                                      : document_App();
+        iBool  wasCurrent = (doc == (iWidget *) document_App());
+        size_t index      = tabPageIndex_Widget(tabs, doc);
+        iBool  wasClosed  = iFalse;
         if (argLabel_Command(cmd, "toright")) {
             while (tabCount_Widget(tabs) > index + 1) {
                 destroy_Widget(removeTabPage_Widget(tabs, index + 1));
@@ -1272,7 +1276,9 @@ iBool handleCommand_App(const char *cmd) {
                 index--;
             }
             arrange_Widget(tabs);
-            postCommandf_App("tabs.switch page:%p", tabPage_Widget(tabs, index));
+            if (wasCurrent) {
+                postCommandf_App("tabs.switch page:%p", tabPage_Widget(tabs, index));
+            }
         }
         else {
             postCommand_App("quit");
