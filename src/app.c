@@ -1207,6 +1207,11 @@ iBool handleCommand_App(const char *cmd) {
         else {
             urlEncodePath_String(url);
         }
+       
+        /* Prevent address bar spoofing (mentioned as IDN homograph attack
+        in issue 73) */
+        punyEncodeUrlHost_String(url);
+       
         setUrlFromCache_DocumentWidget(doc, url, isHistory);
         /* Optionally, jump to a text in the document. This will only work if the document
            is already available, e.g., it's from "about:" or restored from cache. */
