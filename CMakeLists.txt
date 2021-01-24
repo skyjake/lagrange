@@ -299,10 +299,12 @@ MimeType=x-scheme-handler/gemini;x-scheme-handler/gopher
          DESTINATION share/icons/hicolor/256x256/apps
          RENAME fi.skyjake.lagrange.png
     )
+    install (FILES res/fi.skyjake.Lagrange.appdata.xml
+        DESTINATION share/metainfo
+    )
     if (NOT ENABLE_RESOURCE_EMBED)
         target_compile_definitions (app PUBLIC
             LAGRANGE_EMB_BIN="${CMAKE_INSTALL_PREFIX}/share/lagrange/resources.lgr")
         install (FILES ${EMB_BIN} DESTINATION share/lagrange)
     endif ()
 endif ()
-
