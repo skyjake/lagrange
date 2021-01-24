@@ -146,6 +146,7 @@ struct Impl_DocumentWidget {
     iPersistentDocumentState mod;
     int            flags;
     enum iDocumentLinkOrdinalMode ordinalMode;
+    size_t         ordinalBase;
     iString *      titleUser;
     iGmRequest *   request;
     iAtomicInt     isRequestUpdated; /* request has new content, need to parse it */
@@ -213,6 +214,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     d->media            = new_ObjectList();
     d->doc              = new_GmDocument();
     d->redirectCount    = 0;
+    d->ordinalBase      = 0;
     d->initNormScrollY  = 0;
     init_Anim(&d->scrollY, 0);
     d->animWideRunId = 0;
@@ -378,6 +380,16 @@ static void addVisible_DocumentWidget_(void *context, const iGmRun *run) {
     if (run->linkId) {
         pushBack_PtrArray(&d->visibleLinks, run);
     }
+}
+
+static const iGmRun *lastVisibleLink_DocumentWidget_(const iDocumentWidget *d) {
+    iReverseConstForEach(PtrArray, i, &d->visibleLinks) {
+        const iGmRun *run = i.ptr;
+        if (run->flags & decoration_GmRunFlag && run->linkId) {
+            return run;
+        }
+    }
+    return NULL;
 }
 
 static float normScrollPos_DocumentWidget_(const iDocumentWidget *d) {
@@ -1489,6 +1501,34 @@ static void addAllLinks_(void *context, const iGmRun *run) {
     }
 }
 
+static size_t visibleLinkOrdinal_DocumentWidget_(const iDocumentWidget *d, iGmLinkId linkId) {
+    size_t ord = 0;
+    const iRangei visRange = visibleRange_DocumentWidget_(d);
+    iConstForEach(PtrArray, i, &d->visibleLinks) {
+        const iGmRun *run = i.ptr;
+        if (top_Rect(run->visBounds) >= visRange.start + gap_UI * d->pageMargin * 4 / 5) {
+            if (run->flags & decoration_GmRunFlag && run->linkId) {
+                if (run->linkId == linkId) return ord;
+                ord++;
+            }
+        }
+    }
+    return iInvalidPos;
+}
+
+/* Sorted by proximity to F and J. */
+static const int homeRowKeys_[] = {
+    'f', 'd', 's', 'a',
+    'j', 'k', 'l',
+    'r', 'e', 'w', 'q',
+    'u', 'i', 'o', 'p',
+    'v', 'c', 'x', 'z',
+    'm', 'n',
+    'g', 'h',
+    'b',
+    't', 'y',
+};
+
 static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
     iWidget *w = as_Widget(d);
     if (equal_Command(cmd, "window.resized") || equal_Command(cmd, "font.changed")) {
@@ -1785,8 +1825,30 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         if (argLabel_Command(cmd, "release")) {
             iChangeFlags(d->flags, showLinkNumbers_DocumentWidgetFlag, iFalse);
         }
+        else if (argLabel_Command(cmd, "more")) {
+            if (d->flags & showLinkNumbers_DocumentWidgetFlag &&
+                d->ordinalMode == homeRow_DocumentLinkOrdinalMode) {
+                const size_t numKeys = iElemCount(homeRowKeys_);
+                const iGmRun *last = lastVisibleLink_DocumentWidget_(d);
+                if (!last) {
+                    d->ordinalBase = 0;
+                }
+                else {
+                    d->ordinalBase += numKeys;
+                    if (visibleLinkOrdinal_DocumentWidget_(d, last->linkId) < d->ordinalBase) {
+                        d->ordinalBase = 0;
+                    }
+                }
+            }
+            else if (~d->flags & showLinkNumbers_DocumentWidgetFlag) {
+                d->ordinalMode = homeRow_DocumentLinkOrdinalMode;
+                d->ordinalBase = 0;
+                iChangeFlags(d->flags, showLinkNumbers_DocumentWidgetFlag, iTrue);
+            }
+        }
         else {
             d->ordinalMode = arg_Command(cmd);
+            d->ordinalBase = 0;
             iChangeFlags(d->flags, showLinkNumbers_DocumentWidgetFlag, iTrue);
             iChangeFlags(d->flags, setHoverViaKeys_DocumentWidgetFlag,
                          argLabel_Command(cmd, "hover") != 0);
@@ -1980,25 +2042,12 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     return iFalse;
 }
 
+#if 0
 static int outlineHeight_DocumentWidget_(const iDocumentWidget *d) {
     if (isEmpty_Array(&d->outline)) return 0;
     return bottom_Rect(((const iOutlineItem *) constBack_Array(&d->outline))->rect);
 }
-
-static size_t visibleLinkOrdinal_DocumentWidget_(const iDocumentWidget *d, iGmLinkId linkId) {
-    size_t ord = 0;
-    const iRangei visRange = visibleRange_DocumentWidget_(d);
-    iConstForEach(PtrArray, i, &d->visibleLinks) {
-        const iGmRun *run = i.ptr;
-        if (top_Rect(run->visBounds) >= visRange.start + gap_UI * d->pageMargin * 4 / 5) {
-            if (run->flags & decoration_GmRunFlag && run->linkId) {
-                if (run->linkId == linkId) return ord;
-                ord++;
-            }
-        }
-    }
-    return iInvalidPos;
-}
+#endif
 
 static iRect playerRect_DocumentWidget_(const iDocumentWidget *d, const iGmRun *run) {
     const iRect docBounds = documentBounds_DocumentWidget_(d);
@@ -2110,19 +2159,6 @@ static iBool processPlayerEvents_DocumentWidget_(iDocumentWidget *d, const SDL_E
     return iFalse;
 }
 
-/* Sorted by proximity to F and J. */
-static const int homeRowKeys_[] = {
-    'f', 'd', 's', 'a',
-    'j', 'k', 'l',
-    'r', 'e', 'w', 'q',
-    'u', 'i', 'o', 'p',
-    'v', 'c', 'x', 'z',
-    'm', 'n',
-    'g', 'h',
-    'b',
-    't', 'y', 'u',
-};
-
 static size_t linkOrdinalFromKey_DocumentWidget_(const iDocumentWidget *d, int key) {
     size_t ord = iInvalidPos;
     if (d->ordinalMode == numbersAndAlphabet_DocumentLinkOrdinalMode) {
@@ -2195,7 +2231,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         const int key = ev->key.keysym.sym;
         if ((d->flags & showLinkNumbers_DocumentWidgetFlag) &&
             ((key >= '1' && key <= '9') || (key >= 'a' && key <= 'z'))) {
-            const size_t ord = linkOrdinalFromKey_DocumentWidget_(d, key);
+            const size_t ord = linkOrdinalFromKey_DocumentWidget_(d, key) + d->ordinalBase;
             iConstForEach(PtrArray, i, &d->visibleLinks) {
                 if (ord == iInvalidPos) break;
                 const iGmRun *run = i.ptr;
@@ -2801,13 +2837,16 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
     else {
         if (d->showLinkNumbers && run->linkId && run->flags & decoration_GmRunFlag) {
             const size_t ord = visibleLinkOrdinal_DocumentWidget_(d->widget, run->linkId);
-            const iChar ordChar = linkOrdinalChar_DocumentWidget_(d->widget, ord);
-            if (ordChar) {
-                drawString_Text(run->font,
-                                init_I2(d->viewPos.x - gap_UI / 3, visPos.y),
-                                tmQuote_ColorId,
-                                collect_String(newUnicodeN_String(&ordChar, 1)));
-                goto runDrawn;
+            if (ord >= d->widget->ordinalBase) {
+                const iChar ordChar =
+                    linkOrdinalChar_DocumentWidget_(d->widget, ord - d->widget->ordinalBase);
+                if (ordChar) {
+                    drawString_Text(run->font,
+                                    init_I2(d->viewPos.x - gap_UI / 3, visPos.y),
+                                    tmQuote_ColorId,
+                                    collect_String(newUnicodeN_String(&ordChar, 1)));
+                    goto runDrawn;
+                }
             }
         }
         if (run->flags & quoteBorder_GmRunFlag) {

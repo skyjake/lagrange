@@ -12,6 +12,7 @@
 * Added support for Finger links (courtesy of John Cowan).
 * Added option to show full link URL when hovering on it.
 * Added keybindings for page reload, opening link in new tab via home row keys (${SHIFT+}F), and hovering on a link via home row keys (H).
+* Added new keybinding for switching to next set of links for home row navigation.
 * Better alignment of quick lookup result icons and labels.
 * Remote bookmarks are grouped under their source in the bookmark list.
 * A bookmark's icon is updated after loading the page so it matches the site.
@@ -19,6 +20,7 @@
 * Middle-clicking on a tab title closes the tab.
 * Fixed timestamps of visited URLs. Your browsing history will be erased but can still be found in "visited.txt".
 * Fixed issue where "heading" feed entries would turn unread after a while.
+* Fixed duplicate U key for home row navigation.
 
 ## 1.0.3
 * Improved font glyph caching: only rasterize glyphs when drawing text, and retry after failure. This makes initial document layout faster and avoids issues with permanently lost glyphs.
