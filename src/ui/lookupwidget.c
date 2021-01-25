@@ -324,12 +324,15 @@ static iThreadResult worker_LookupWidget_(iThread *thread) {
             while (nextSplit_Rangecc(range_String(&d->pendingTerm), " ", &word)) {
                 if (isEmpty_Range(&word)) continue;
                 if (!isFirst) appendCStr_String(pattern, ".*");
-                for (const char *ch = word.start; ch != word.end; ch++) {
+                const iString wordStr = { iBlockLiteral(word.start,
+                                                        word.end - word.start,
+                                                        word.end - word.start) };
+                iConstForEach(String, ch, &wordStr) {
                     /* Escape regular expression characters. */
-                    if (isSyntaxChar_RegExp(*ch)) {
+                    if (isSyntaxChar_RegExp(ch.value)) {
                         appendChar_String(pattern, '\\');
                     }
-                    appendChar_String(pattern, *ch);
+                    appendChar_String(pattern, ch.value);
                 }
                 isFirst = iFalse;
             }
@@ -337,7 +340,7 @@ static iThreadResult worker_LookupWidget_(iThread *thread) {
             job->term = new_RegExp(cstr_String(pattern), caseInsensitive_RegExpOption);
             delete_String(pattern);
         }
-        const size_t termLen = size_String(&d->pendingTerm);
+        const size_t termLen = length_String(&d->pendingTerm); /* characters */
         clear_String(&d->pendingTerm);
         job->docs = d->pendingDocs;
         d->pendingDocs = NULL;
