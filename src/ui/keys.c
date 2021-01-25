@@ -85,6 +85,7 @@ static const struct { int id; iMenuItem bind; int flags; } defaultBindings_[] = 
     { 72, { "Reset zoom",                SDLK_0, KMOD_PRIMARY,          "zoom.set arg:100"   }, 0 },
     { 80, { "Previous tab",              prevTab_KeyShortcut,           "tabs.prev"          }, 0 },
     { 81, { "Next tab",                  nextTab_KeyShortcut,           "tabs.next"          }, 0 },
+    { 82, { "Close tab",                 'c', 0,                        "tabs.close"         }, 0 },
     { 100,{ "Toggle show URL on hover",  '/', KMOD_PRIMARY,             "prefs.hoverlink.toggle" }, 0 },
     /* The following cannot currently be changed (built-in duplicates). */
     { 1000, { NULL, SDLK_SPACE, KMOD_SHIFT, "scroll.page arg:-1" }, argRepeat_BindFlag },
