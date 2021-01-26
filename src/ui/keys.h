@@ -28,6 +28,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #if defined (iPlatformApple)
 #   define reload_KeyShortcut           SDLK_r,             KMOD_PRIMARY
+#   define newTab_KeyShortcut           SDLK_t,             KMOD_PRIMARY
+#   define closeTab_KeyShortcut         SDLK_w,             KMOD_PRIMARY
 #   define prevTab_KeyShortcut          SDLK_LEFTBRACKET,   KMOD_SHIFT | KMOD_PRIMARY
 #   define nextTab_KeyShortcut          SDLK_RIGHTBRACKET,  KMOD_SHIFT | KMOD_PRIMARY
 #   define navigateBack_KeyShortcut     SDLK_LEFT,          KMOD_PRIMARY
@@ -40,6 +42,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #   define subscribeToPage_KeyModifier  SDLK_d,             KMOD_SHIFT | KMOD_PRIMARY
 #else
 #   define reload_KeyShortcut           SDLK_r,             KMOD_PRIMARY
+#   define newTab_KeyShortcut           SDLK_t,             KMOD_PRIMARY
+#   define closeTab_KeyShortcut         SDLK_w,             KMOD_PRIMARY
 #   define prevTab_KeyShortcut          SDLK_PAGEUP,        KMOD_PRIMARY
 #   define nextTab_KeyShortcut          SDLK_PAGEDOWN,      KMOD_PRIMARY
 #   define navigateBack_KeyShortcut     SDLK_LEFT,          KMOD_ALT

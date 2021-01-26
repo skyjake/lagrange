@@ -241,10 +241,20 @@ static void appearanceChanged_MacOS_(NSString *name) {
 
 - (void)showPreferences {
     postCommand_App("preferences");
+    ignoreImmediateKeyDownEvents_();
+}
+
+static void ignoreImmediateKeyDownEvents_(void) {
+    /* SDL ignores menu key equivalents so the keydown events will be posted regardless.
+       However, we shouldn't double-activate menu items when a shortcut key is used in our
+       widgets. Quite a kludge: take advantage of Window's focus-acquisition threshold to
+       ignore the immediately following key down events. */
+    get_Window()->focusGainedAt = SDL_GetTicks();
 }
 
 - (void)closeTab {
     postCommand_App("tabs.close");
+    ignoreImmediateKeyDownEvents_();
 }
 
 - (NSString *)commandForItem:(NSMenuItem *)menuItem {
@@ -255,11 +265,7 @@ static void appearanceChanged_MacOS_(NSString *name) {
     NSString *command = [menuCommands objectForKey:[(NSMenuItem *)sender title]];
     if (command) {
         postCommand_App([command cStringUsingEncoding:NSUTF8StringEncoding]);
-        /* Shouldn't double-activate menu items in case the same key is used in our widgets.
-           SDL ignores menu key equivalents so the keydown events will be posted regardless.
-           This is quite a kludge, but we can achieve this by taking advantage of Window's
-           focus-acquisition threshold for ignoring key events. */
-        get_Window()->focusGainedAt = SDL_GetTicks();
+        ignoreImmediateKeyDownEvents_();
     }
 }
 
@@ -501,11 +507,17 @@ void handleCommand_MacOS(const char *cmd) {
         NSApplication *app = [NSApplication sharedApplication];
         MyDelegate *myDel = (MyDelegate *) app.delegate;
         NSMenu *appMenu = [app mainMenu];
+        int mainIndex = 0;
         for (NSMenuItem *mainMenuItem in appMenu.itemArray) {
             NSMenu *menu = mainMenuItem.submenu;
             if (menu) {
-                for (NSMenuItem *menuItem in menu.itemArray) {
+                int itemIndex = 0;
+                for (NSMenuItem *menuItem in menu.itemArray) {                    
                     NSString *command = [myDel commandForItem:menuItem];
+                    if (!command && mainIndex == 6 && itemIndex == 0) {
+                        /* Window > Close */
+                        command = @"tabs.close";
+                    }
                     if (command) {
                         const iBinding *bind = findCommand_Keys(
                             [command cStringUsingEncoding:NSUTF8StringEncoding]);
@@ -513,8 +525,10 @@ void handleCommand_MacOS(const char *cmd) {
                             setShortcut_NSMenuItem_(menuItem, bind->key, bind->mods);
                         }
                     }
+                    itemIndex++;
                 }
             }
+            mainIndex++;
         }
     }
 }
