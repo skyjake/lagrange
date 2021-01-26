@@ -12,7 +12,8 @@
 * Added support for Finger links (courtesy of John Cowan).
 * Added option to show full link URL when hovering on it.
 * Added keybindings for page reload, opening link in new tab via home row keys (${SHIFT+}F), and hovering on a link via home row keys (H).
-* Added new keybinding for switching to next set of links for home row navigation.
+* Added keybinding for switching to next set of links for home row navigation.
+* Added keybindings for new tab, close tab, adding a bookmark.
 * Better alignment of quick lookup result icons and labels.
 * Remote bookmarks are grouped under their source in the bookmark list.
 * A bookmark's icon is updated after loading the page so it matches the site.
