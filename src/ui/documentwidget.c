@@ -253,7 +253,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
                          resizeToParentWidth_WidgetFlag | resizeToParentHeight_WidgetFlag);
 #if !defined (iPlatformApple) /* in system menu */
     addAction_Widget(w, reload_KeyShortcut, "navigate.reload");
-    addAction_Widget(w, SDLK_w, KMOD_PRIMARY, "tabs.close");
+    addAction_Widget(w, closeTab_KeyShortcut, "tabs.close");
     addAction_Widget(w, SDLK_d, KMOD_PRIMARY, "bookmark.add");
     addAction_Widget(w, subscribeToPage_KeyModifier, "feeds.subscribe");
 #endif

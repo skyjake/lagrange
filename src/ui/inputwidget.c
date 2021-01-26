@@ -224,6 +224,16 @@ static void updateBuffered_InputWidget_(iInputWidget *d) {
 }
 
 void setText_InputWidget(iInputWidget *d, const iString *text) {
+    if (d->inFlags & isUrl_InputWidgetFlag) {
+        /* If user wants URLs encoded, also Punycode the domain. */
+        if (!prefs_App()->decodeUserVisibleURLs) {
+            iString *enc = collect_String(copy_String(text));
+            /* Prevent address bar spoofing (mentioned as IDN homograph attack in
+               https://github.com/skyjake/lagrange/issues/73) */
+            punyEncodeUrlHost_String(enc);
+            text = enc;
+        }
+    }
     clearUndo_InputWidget_(d);
     clear_Array(&d->text);
     iConstForEach(String, i, text) {
