@@ -49,6 +49,7 @@ struct Impl_Prefs {
     iBool            loadImageInsteadOfScrolling;
     /* Network */
     iBool            decodeUserVisibleURLs;
+    int              maxCacheSize; /* MB */
     iString          geminiProxy;
     iString          gopherProxy;
     iString          httpProxy;

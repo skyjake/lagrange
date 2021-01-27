@@ -1090,7 +1090,7 @@ iWidget *makePreferences_Widget(void) {
     }
     /* Colors. */ {
         appendTwoColumnPage_(tabs, "Colors", '3', &headings, &values);
-        makeTwoColumnHeading_("PAGE CONTENTS", headings, values);
+        makeTwoColumnHeading_("PAGE CONTENT", headings, values);
         for (int i = 0; i < 2; ++i) {
             const iBool isDark = (i == 0);
             const char *mode = isDark ? "dark" : "light";
@@ -1121,6 +1121,7 @@ iWidget *makePreferences_Widget(void) {
     }
     /* Layout. */ {
         appendTwoColumnPage_(tabs, "Style", '4', &headings, &values);
+        makeTwoColumnHeading_("FONTS", headings, values);
         /* Fonts. */ {
             iWidget *fonts;
             addChild_Widget(headings, iClob(makeHeading_Widget("Heading font:")));
@@ -1140,8 +1141,7 @@ iWidget *makePreferences_Widget(void) {
                 addChild_Widget(mono, iClob(makeToggle_Widget("prefs.mono.gopher"))), "Gopher");
             addChildFlags_Widget(values, iClob(mono), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
         }
-        addChild_Widget(headings, iClob(makePadding_Widget(2 * gap_UI)));
-        addChild_Widget(values, iClob(makePadding_Widget(2 * gap_UI)));
+        makeTwoColumnHeading_("PARAGRAPH", headings, values);
         addChild_Widget(headings, iClob(makeHeading_Widget("Line width:")));
         iWidget *widths = new_Widget();
         /* Line widths. */ {
@@ -1162,10 +1162,19 @@ iWidget *makePreferences_Widget(void) {
         addChild_Widget(headings, iClob(makeHeading_Widget("Big 1st paragaph:")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.biglede")));
     }
-    /* Proxies. */ {
+    /* Network. */ {
         appendTwoColumnPage_(tabs, "Network", '5', &headings, &values);
-        addChild_Widget(headings, iClob(makeHeading_Widget("Decode paths:")));
+        addChild_Widget(headings, iClob(makeHeading_Widget("Cache size:")));
+        iWidget *cacheGroup = new_Widget(); {
+            iInputWidget *cache = new_InputWidget(4);
+            setSelectAllOnFocus_InputWidget(cache, iTrue);
+            setId_Widget(addChild_Widget(cacheGroup, iClob(cache)), "prefs.cachesize");
+            addChildFlags_Widget(cacheGroup, iClob(new_LabelWidget("MB", NULL)), frameless_WidgetFlag);
+        }
+        addChildFlags_Widget(values, iClob(cacheGroup), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+        addChild_Widget(headings, iClob(makeHeading_Widget("Decode URLs:")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.decodeurls")));
+        makeTwoColumnHeading_("PROXIES", headings, values);
         addChild_Widget(headings, iClob(makeHeading_Widget("Gemini proxy:")));
         setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.proxy.gemini");
         addChild_Widget(headings, iClob(makeHeading_Widget("Gopher proxy:")));

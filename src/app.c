@@ -194,6 +194,7 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "zoom.set arg:%d\n", d->prefs.zoomPercent);
     appendFormat_String(str, "smoothscroll arg:%d\n", d->prefs.smoothScrolling);
     appendFormat_String(str, "imageloadscroll arg:%d\n", d->prefs.loadImageInsteadOfScrolling);
+    appendFormat_String(str, "cachesize.set arg:%d\n", d->prefs.maxCacheSize);
     appendFormat_String(str, "decodeurls arg:%d\n", d->prefs.decodeUserVisibleURLs);
     appendFormat_String(str, "linewidth.set arg:%d\n", d->prefs.lineWidth);
     appendFormat_String(str, "prefs.biglede.changed arg:%d\n", d->prefs.bigFirstParagraph);
@@ -321,6 +322,7 @@ iObjectList *listDocuments_App(void) {
 
 static void saveState_App_(const iApp *d) {
     iUnused(d);
+    trimCache_App();
     iFile *f = newCStr_File(concatPath_CStr(dataDir_App_, stateFileName_App_));
     if (open_File(f, writeOnly_FileMode)) {
         writeData_File(f, magicState_App_, 4);
@@ -503,7 +505,7 @@ const iString *debugInfo_App(void) {
     iString *msg = collectNew_String();
     format_String(msg, "# Debug information\n");
     appendFormat_String(msg, "## Documents\n");
-    iForEach(ObjectList, k, listDocuments_App()) {
+    iForEach(ObjectList, k, iClob(listDocuments_App())) {
         iDocumentWidget *doc = k.object;
         appendFormat_String(msg, "### Tab %zu: %s\n",
                             childIndex_Widget(constAs_Widget(doc)->parent, k.object),
@@ -857,6 +859,8 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
                          isSelected_Widget(findChild_Widget(d, "prefs.ostheme")));
         postCommandf_App("decodeurls arg:%d",
                          isSelected_Widget(findChild_Widget(d, "prefs.decodeurls")));
+        postCommandf_App("cachesize.set arg:%d",
+                         toInt_String(text_InputWidget(findChild_Widget(d, "prefs.cachesize"))));
         postCommandf_App("proxy.gemini address:%s",
                          cstr_String(text_InputWidget(findChild_Widget(d, "prefs.proxy.gemini"))));
         postCommandf_App("proxy.gopher address:%s",
@@ -938,6 +942,33 @@ iDocumentWidget *newTab_App(const iDocumentWidget *duplicateOf, iBool switchToNe
     refresh_Widget(tabs);
     postCommandf_App("tab.created id:%s", cstr_String(id_Widget(as_Widget(doc))));
     return doc;
+}
+
+void trimCache_App(void) {
+    iApp *d = &app_;
+    size_t cacheSize = 0;
+    const size_t limit = d->prefs.maxCacheSize * 1000000;
+    iObjectList *docs = listDocuments_App();
+    iForEach(ObjectList, i, docs) {
+        cacheSize += cacheSize_History(history_DocumentWidget(i.object));
+    }
+    init_ObjectListIterator(&i, docs);
+    iBool wasPruned = iFalse;
+    while (cacheSize > limit) {
+        iDocumentWidget *doc = i.object;
+        const size_t pruned = pruneLeastImportant_History(history_DocumentWidget(doc));
+        if (pruned) {
+            cacheSize -= pruned;
+            wasPruned = iTrue;
+        }
+        next_ObjectListIterator(&i);
+        if (!i.value) {
+            if (!wasPruned) break;
+            wasPruned = iFalse;
+            init_ObjectListIterator(&i, docs);
+        }
+    }
+    iRelease(docs);
 }
 
 static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
@@ -1154,6 +1185,13 @@ iBool handleCommand_App(const char *cmd) {
         postCommandf_App("theme.changed auto:1");
         return iTrue;
     }
+    else if (equal_Command(cmd, "cachesize.set")) {
+        d->prefs.maxCacheSize = arg_Command(cmd);
+        if (d->prefs.maxCacheSize <= 0) {
+            d->prefs.maxCacheSize = 0;
+        }
+        return iTrue;
+    }
     else if (equal_Command(cmd, "proxy.gemini")) {
         setCStr_String(&d->prefs.geminiProxy, suffixPtr_Command(cmd, "address"));
         return iTrue;
@@ -1331,6 +1369,8 @@ iBool handleCommand_App(const char *cmd) {
                 dlg, format_CStr("prefs.saturation.%d", (int) (d->prefs.saturation * 3.99f))),
             selected_WidgetFlag,
             iTrue);
+        setText_InputWidget(findChild_Widget(dlg, "prefs.cachesize"),
+                            collectNewFormat_String("%d", d->prefs.maxCacheSize));
         setToggle_Widget(findChild_Widget(dlg, "prefs.decodeurls"), d->prefs.decodeUserVisibleURLs);
         setText_InputWidget(findChild_Widget(dlg, "prefs.proxy.gemini"), &d->prefs.geminiProxy);
         setText_InputWidget(findChild_Widget(dlg, "prefs.proxy.gopher"), &d->prefs.gopherProxy);

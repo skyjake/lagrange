@@ -61,20 +61,20 @@ void        refresh_App                 (void);
 iBool       isRefreshPending_App        (void);
 uint32_t    elapsedSinceLastTicker_App  (void); /* milliseconds */
 
+iGmCerts *          certs_App           (void);
+iVisited *          visited_App         (void);
+iBookmarks *        bookmarks_App       (void);
+iMimeHooks *        mimeHooks_App       (void);
+iDocumentWidget *   document_App        (void);
+iObjectList *       listDocuments_App   (void);
+iDocumentWidget *   newTab_App          (const iDocumentWidget *duplicateOf, iBool switchToNew);
+void                trimCache_App       (void);
+
 const iPrefs *      prefs_App           (void);
 iBool               forceSoftwareRender_App(void);
 enum iColorTheme    colorTheme_App      (void);
 const iString *     schemeProxy_App     (iRangecc scheme);
 iBool               willUseProxy_App    (const iRangecc scheme);
-
-iMimeHooks *        mimeHooks_App       (void);
-iGmCerts *          certs_App           (void);
-iVisited *          visited_App         (void);
-iBookmarks *        bookmarks_App       (void);
-iDocumentWidget *   document_App        (void);
-iObjectList *       listDocuments_App   (void);
-iDocumentWidget *   document_Command    (const char *cmd);
-iDocumentWidget *   newTab_App          (const iDocumentWidget *duplicateOf, iBool switchToNew);
 
 typedef void (*iTickerFunc)(iAny *);
 
@@ -90,6 +90,8 @@ iLocalDef void postCommandString_App(const iString *command) {
         postCommand_App(cstr_String(command));
     }
 }
+
+iDocumentWidget *   document_Command    (const char *cmd);
 
 void        openInDefaultBrowser_App    (const iString *url);
 void        revealPath_App              (const iString *path);

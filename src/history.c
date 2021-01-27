@@ -27,6 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/mutex.h>
 #include <the_Foundation/path.h>
 #include <the_Foundation/stringset.h>
+#include <math.h>
 
 static const size_t maxStack_History_ = 50; /* back/forward navigable items */
 
@@ -283,6 +284,48 @@ void setCachedResponse_History(iHistory *d, const iGmResponse *response) {
         }
     }
     unlock_Mutex(d->mtx);
+}
+
+size_t cacheSize_History(const iHistory *d) {
+    size_t cached = 0;
+    lock_Mutex(d->mtx);
+    iConstForEach(Array, i, &d->recent) {
+        const iRecentUrl *url = i.value;
+        if (url->cachedResponse) {
+            cached += size_Block(&url->cachedResponse->body);
+        }
+    }
+    unlock_Mutex(d->mtx);
+    return cached;
+}
+
+size_t pruneLeastImportant_History(iHistory *d) {
+    size_t delta  = 0;
+    size_t chosen = iInvalidPos;
+    double score  = 0.0f;
+    iTime now;
+    initCurrent_Time(&now);
+    lock_Mutex(d->mtx);
+    iConstForEach(Array, i, &d->recent) {
+        const iRecentUrl *url = i.value;
+        if (url->cachedResponse) {
+            const double urlScore =
+                size_Block(&url->cachedResponse->body) *
+                pow(secondsSince_Time(&now, &url->cachedResponse->when) / 60.0, 1.25);
+            if (urlScore > score) {
+                chosen = index_ArrayConstIterator(&i);
+                score  = urlScore;
+            }
+        }
+    }
+    if (chosen != iInvalidPos) {
+        iRecentUrl *url = at_Array(&d->recent, chosen);
+        delta = size_Block(&url->cachedResponse->body);
+        delete_GmResponse(url->cachedResponse);
+        url->cachedResponse = NULL;
+    }
+    unlock_Mutex(d->mtx);
+    return delta;
 }
 
 const iStringArray *searchContents_History(const iHistory *d, const iRegExp *pattern) {

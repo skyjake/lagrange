@@ -34,6 +34,7 @@ void init_Prefs(iPrefs *d) {
     d->smoothScrolling   = iTrue;
     d->loadImageInsteadOfScrolling = iFalse;
     d->decodeUserVisibleURLs = iTrue;
+    d->maxCacheSize      = 10;
     d->font              = nunito_TextFont;
     d->headingFont       = nunito_TextFont;
     d->monospaceGemini   = iFalse;
