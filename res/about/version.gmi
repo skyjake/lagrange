@@ -20,7 +20,8 @@
 * A bookmark's icon is updated after loading the page so it matches the site.
 * Trusting a new server certificate manually will update the current page without reloading.
 * Middle-clicking on a tab title closes the tab.
-* Fixed timestamps of visited URLs. Your browsing history will be erased but can still be found in "visited.txt".
+* Internal state files now use an ".lgr" extension. If downgrading after running v1.1, note that the old version will not read these.
+* Fixed timestamps of visited URLs. Your browsing history will be cleared but can still be viewed manually in "visited.txt".
 * Fixed issue where "heading" feed entries would turn unread after a while.
 * Fixed duplicate U key for home row navigation.
 * Fixed an issue with Unicode characters in quick lookup search terms.
