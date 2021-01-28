@@ -45,6 +45,24 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.1" date="2021-01-28">
+            <description>
+                <p>
+                    This version adds new features to enhance user experience 
+                    and fixes incorrect behavior.
+                </p>
+                <ul>
+                    <li>Import existing X.509 client certificates via the UI.</li>
+                    <li>Setting for maximum cache size.</li>
+                    <li>Option to show full URL when hovering mouse over a link.</li>
+                    <li>Support for Finger links.</li>
+                    <li>More keybindings: e.g., opening and closing tabs.</li>
+                    <li>Visual UI improvements.</li> 
+                    <li>Fix for history timestamps that were shifting on every launch.</li>
+                </ul>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.1.0</url>
+        </release>
         <release version="1.0.3" date="2021-01-12">
             <description>
                 <p>This release contains bug fixes and performance improvements.</p>
