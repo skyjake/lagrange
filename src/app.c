@@ -194,6 +194,7 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "zoom.set arg:%d\n", d->prefs.zoomPercent);
     appendFormat_String(str, "smoothscroll arg:%d\n", d->prefs.smoothScrolling);
     appendFormat_String(str, "imageloadscroll arg:%d\n", d->prefs.loadImageInsteadOfScrolling);
+    appendFormat_String(str, "privateMode arg:%d\n", d->prefs.privateMode);
     appendFormat_String(str, "cachesize.set arg:%d\n", d->prefs.maxCacheSize);
     appendFormat_String(str, "decodeurls arg:%d\n", d->prefs.decodeUserVisibleURLs);
     appendFormat_String(str, "linewidth.set arg:%d\n", d->prefs.lineWidth);
@@ -466,7 +467,8 @@ static void init_App_(iApp *d, int argc, char **argv) {
 }
 
 static void deinit_App(iApp *d) {
-    saveState_App_(d);
+    if (d->prefs.privateMode == iFalse)
+        saveState_App_(d);
     deinit_Feeds();
     save_Keys(dataDir_App_);
     deinit_Keys();
@@ -474,7 +476,8 @@ static void deinit_App(iApp *d) {
     deinit_Prefs(&d->prefs);
     save_Bookmarks(d->bookmarks, dataDir_App_);
     delete_Bookmarks(d->bookmarks);
-    save_Visited(d->visited, dataDir_App_);
+    if (d->prefs.privateMode == iFalse)
+        save_Visited(d->visited, dataDir_App_);
     delete_Visited(d->visited);
     delete_GmCerts(d->certs);
     save_MimeHooks(d->mimehooks);
@@ -855,6 +858,8 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
                          isSelected_Widget(findChild_Widget(d, "prefs.smoothscroll")));
         postCommandf_App("imageloadscroll arg:%d",
                          isSelected_Widget(findChild_Widget(d, "prefs.imageloadscroll")));
+        postCommandf_App("privateMode arg:%d",
+                         isSelected_Widget(findChild_Widget(d, "prefs.privateMode")));
         postCommandf_App("ostheme arg:%d",
                          isSelected_Widget(findChild_Widget(d, "prefs.ostheme")));
         postCommandf_App("decodeurls arg:%d",
@@ -1180,6 +1185,10 @@ iBool handleCommand_App(const char *cmd) {
         postRefresh_App();
         return iTrue;
     }
+    else if (equal_Command(cmd, "prefs.privateMode")) {
+        d->prefs.privateMode = arg_Command(cmd);
+        return iTrue;
+    }
     else if (equal_Command(cmd, "saturation.set")) {
         d->prefs.saturation = (float) arg_Command(cmd) / 100.0f;
         postCommandf_App("theme.changed auto:1");
@@ -1334,7 +1343,8 @@ iBool handleCommand_App(const char *cmd) {
         setText_InputWidget(findChild_Widget(dlg, "prefs.downloads"), &d->prefs.downloadDir);
         setToggle_Widget(findChild_Widget(dlg, "prefs.hoverlink"), d->prefs.hoverLink);
         setToggle_Widget(findChild_Widget(dlg, "prefs.smoothscroll"), d->prefs.smoothScrolling);
-        setToggle_Widget(findChild_Widget(dlg, "prefs.imageloadscroll"), d->prefs.loadImageInsteadOfScrolling);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.imageloadscroll"), d->prefs.loadImageInsteadOfScrolling);        
+        setToggle_Widget(findChild_Widget(dlg, "prefs.privateMode"), d->prefs.privateMode);
         setToggle_Widget(findChild_Widget(dlg, "prefs.ostheme"), d->prefs.useSystemTheme);
         setToggle_Widget(findChild_Widget(dlg, "prefs.retainwindow"), d->prefs.retainWindowSize);
         setText_InputWidget(findChild_Widget(dlg, "prefs.uiscale"),
@@ -1460,7 +1470,8 @@ iBool handleCommand_App(const char *cmd) {
         return iFalse;
     }
     else if (equal_Command(cmd, "visited.changed")) {
-        save_Visited(d->visited, dataDir_App_);
+        if (d->prefs.privateMode == iFalse)
+            save_Visited(d->visited, dataDir_App_);
         return iFalse;
     }
     else if (equal_Command(cmd, "ident.new")) {
