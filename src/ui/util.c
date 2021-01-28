@@ -1064,6 +1064,8 @@ iWidget *makePreferences_Widget(void) {
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.smoothscroll")));
         addChild_Widget(headings, iClob(makeHeading_Widget("Load image on scroll:")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.imageloadscroll")));
+        addChild_Widget(headings, iClob(makeHeading_Widget("Private browsing")));
+        addChild_Widget(values, iClob(makeToggle_Widget("prefs.privateMode")));
     }
     /* Window. */ {
         appendTwoColumnPage_(tabs, "Window", '2', &headings, &values);
