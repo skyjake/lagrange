@@ -18,7 +18,7 @@
 cmake_minimum_required (VERSION 3.9)
 
 project (Lagrange
-    VERSION 1.0.3
+    VERSION 1.1.0
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
@@ -78,6 +78,7 @@ set (EMBED_RESOURCES
     res/fonts/Nunito-LightItalic.ttf
     res/fonts/Nunito-Regular.ttf
     res/fonts/SourceSansPro-Regular.ttf
+    res/fonts/SourceSansPro-Bold.ttf
     res/fonts/Symbola.ttf
 )
 if (UNIX AND NOT APPLE)
@@ -85,7 +86,7 @@ if (UNIX AND NOT APPLE)
 endif ()
 embed_make (${EMBED_RESOURCES})
 
-set (EMB_BIN ${CMAKE_CURRENT_BINARY_DIR}/resources.binary)
+set (EMB_BIN ${CMAKE_CURRENT_BINARY_DIR}/resources.lgr)
 set_source_files_properties (${EMB_BIN} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
 
 # Source files.
@@ -131,6 +132,8 @@ set (SOURCES
     # User interface:
     src/ui/bindingswidget.c
     src/ui/bindingswidget.h
+    src/ui/certimportwidget.c
+    src/ui/certimportwidget.h
     src/ui/color.c
     src/ui/color.h
     src/ui/command.c
@@ -174,7 +177,7 @@ set (SOURCES
     res/about/help.gmi
     res/about/lagrange.gmi
     res/about/version.gmi
-    ${CMAKE_CURRENT_BINARY_DIR}/resources.binary
+    ${CMAKE_CURRENT_BINARY_DIR}/resources.lgr
     ${CMAKE_CURRENT_BINARY_DIR}/embedded.c
     ${CMAKE_CURRENT_BINARY_DIR}/embedded.h
 )
@@ -248,6 +251,7 @@ if (APPLE)
         MACOSX_BUNDLE_SHORT_VERSION_STRING "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}"
         MACOSX_BUNDLE_GUI_IDENTIFIER "fi.skyjake.Lagrange"
         MACOSX_BUNDLE_COPYRIGHT "© ${COPYRIGHT_YEAR} Jaakko Keränen"
+        XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "fi.skyjake.Lagrange"
     )
 endif ()
 if (MSYS)
@@ -295,10 +299,12 @@ MimeType=x-scheme-handler/gemini;x-scheme-handler/gopher
          DESTINATION share/icons/hicolor/256x256/apps
          RENAME fi.skyjake.lagrange.png
     )
+    install (FILES res/fi.skyjake.Lagrange.appdata.xml
+        DESTINATION share/metainfo
+    )
     if (NOT ENABLE_RESOURCE_EMBED)
         target_compile_definitions (app PUBLIC
-            LAGRANGE_EMB_BIN="${CMAKE_INSTALL_PREFIX}/share/lagrange/resources.binary")
+            LAGRANGE_EMB_BIN="${CMAKE_INSTALL_PREFIX}/share/lagrange/resources.lgr")
         install (FILES ${EMB_BIN} DESTINATION share/lagrange)
     endif ()
 endif ()
-

@@ -34,9 +34,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/time.h>
 #include <ctype.h>
 
-static const char *filename_GmCerts_       = "trusted.txt";
-static const char *identsDir_GmCerts_      = "idents";
-static const char *identsFilename_GmCerts_ = "idents.binary";
+static const char *filename_GmCerts_          = "trusted.txt";
+static const char *identsDir_GmCerts_         = "idents";
+static const char *oldIdentsFilename_GmCerts_ = "idents.binary";
+static const char *identsFilename_GmCerts_    = "idents.lgr";
 
 iDeclareClass(TrustEntry)
 
@@ -237,8 +238,9 @@ static void save_GmCerts_(const iGmCerts *d) {
 }
 
 static void loadIdentities_GmCerts_(iGmCerts *d) {
-    iFile *f =
-        iClob(new_File(collect_String(concatCStr_Path(&d->saveDir, identsFilename_GmCerts_))));
+    const iString *oldPath = collect_String(concatCStr_Path(&d->saveDir, oldIdentsFilename_GmCerts_));
+    const iString *path    = collect_String(concatCStr_Path(&d->saveDir, identsFilename_GmCerts_));
+    iFile *f = iClob(new_File(fileExists_FileInfo(path) ? path : oldPath));
     if (open_File(f, readOnly_FileMode)) {
         char magic[4];
         readData_File(f, sizeof(magic), magic);
@@ -473,21 +475,9 @@ done:
     return found;
 }
 
-iGmIdentity *newIdentity_GmCerts(iGmCerts *d, int flags, iDate validUntil, const iString *commonName,
-                                 const iString *email, const iString *userId, const iString *domain,
-                                 const iString *org, const iString *country) {
-    const iTlsCertificateName names[] = {
-        { issuerCommonName_TlsCertificateNameType,    commonName },
-        { subjectCommonName_TlsCertificateNameType,   commonName },
-        { subjectEmailAddress_TlsCertificateNameType, !isEmpty_String(email)   ? email   : NULL },
-        { subjectUserId_TlsCertificateNameType,       !isEmpty_String(userId)  ? userId  : NULL },
-        { subjectDomain_TlsCertificateNameType,       !isEmpty_String(domain)  ? domain  : NULL },
-        { subjectOrganization_TlsCertificateNameType, !isEmpty_String(org)     ? org     : NULL },
-        { subjectCountry_TlsCertificateNameType,      !isEmpty_String(country) ? country : NULL },
-        { 0, NULL }
-    };
+static iGmIdentity *add_GmCerts_(iGmCerts *d, iTlsCertificate *cert, int flags) {
     iGmIdentity *id = new_GmIdentity();
-    setCertificate_GmIdentity_(id, newSelfSignedRSA_TlsCertificate(2048, validUntil, names));
+    setCertificate_GmIdentity_(id, cert);
     /* Save the certificate and private key as PEM files. */
     if (~flags & temporary_GmIdentityFlag) {
         const char *finger = cstrCollect_String(hexEncode_Block(&id->fingerprint));
@@ -506,6 +496,27 @@ iGmIdentity *newIdentity_GmCerts(iGmCerts *d, int flags, iDate validUntil, const
     }
     iGuardMutex(d->mtx, pushBack_PtrArray(&d->idents, id));
     return id;
+}
+
+iGmIdentity *newIdentity_GmCerts(iGmCerts *d, int flags, iDate validUntil, const iString *commonName,
+                                 const iString *email, const iString *userId, const iString *domain,
+                                 const iString *org, const iString *country) {
+    const iTlsCertificateName names[] = {
+        { issuerCommonName_TlsCertificateNameType,    commonName },
+        { subjectCommonName_TlsCertificateNameType,   commonName },
+        { subjectEmailAddress_TlsCertificateNameType, !isEmpty_String(email)   ? email   : NULL },
+        { subjectUserId_TlsCertificateNameType,       !isEmpty_String(userId)  ? userId  : NULL },
+        { subjectDomain_TlsCertificateNameType,       !isEmpty_String(domain)  ? domain  : NULL },
+        { subjectOrganization_TlsCertificateNameType, !isEmpty_String(org)     ? org     : NULL },
+        { subjectCountry_TlsCertificateNameType,      !isEmpty_String(country) ? country : NULL },
+        { 0, NULL }
+    };
+    return add_GmCerts_(d, newSelfSignedRSA_TlsCertificate(2048, validUntil, names), flags);
+}
+
+void importIdentity_GmCerts(iGmCerts *d, iTlsCertificate *cert, const iString *notes) {
+    iGmIdentity *id = add_GmCerts_(d, cert, 0);
+    set_String(&id->notes, notes);
 }
 
 static const char *certPath_GmCerts_(const iGmCerts *d, const iGmIdentity *identity) {

@@ -6,6 +6,26 @@
 ```
 # Release notes
 
+## 1.1
+* Added identity importing: existing client certificates in PEM format can be imported from the current page, from clipboard, or from drag-and-dropped files.
+* Added setting for maximum cache size. This is the amount of fetched data kept in memory for page navigation and content lookup. The default is 10 MB.
+* Added option to show full link URL when hovering on it.
+* Added support for Finger links (courtesy of John Cowan).
+* Added keybindings for page reload, opening link in new tab via home row keys (${SHIFT+}F), and hovering on a link via home row keys (H).
+* Added keybinding for switching to next set of links for home row navigation.
+* Added keybindings for new tab, close tab, adding a bookmark.
+* Added a bold UI font. It is used for unread feed entries and default dialog buttons.
+* Better alignment of quick lookup result icons and labels.
+* Remote bookmarks are grouped under their source in the bookmark list.
+* A bookmark's icon is updated after loading the page so it matches the site.
+* Trusting a new server certificate manually will update the current page without reloading.
+* Middle-clicking on a tab title closes the tab.
+* Internal state files now use an ".lgr" extension. If downgrading after running v1.1, note that the old version will not read these.
+* Fixed timestamps of visited URLs. Your browsing history will be cleared but can still be viewed manually in "visited.txt".
+* Fixed issue where "heading" feed entries would turn unread after a while.
+* Fixed duplicate U key for home row navigation.
+* Fixed an issue with Unicode characters in quick lookup search terms.
+
 ## 1.0.3
 * Improved font glyph caching: only rasterize glyphs when drawing text, and retry after failure. This makes initial document layout faster and avoids issues with permanently lost glyphs.
 * Fixed parts of text disappearing when the glyph cache fills up. The cache also uses less memory now.

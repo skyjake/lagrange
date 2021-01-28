@@ -146,6 +146,7 @@ iRect   bounds_Widget       (const iWidget *); /* outer bounds */
 iRect   innerBounds_Widget  (const iWidget *);
 iInt2   localCoord_Widget   (const iWidget *, iInt2 coord);
 iBool   contains_Widget     (const iWidget *, iInt2 coord);
+iAny *  hitChild_Widget     (const iWidget *, iInt2 coord);
 iAny *  findChild_Widget    (const iWidget *, const char *id);
 iAny *  findParentClass_Widget(const iWidget *, const iAnyClass *class);
 iAny *  findFocusable_Widget(const iWidget *startFrom, enum iWidgetFocusDir focusDir);

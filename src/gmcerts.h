@@ -80,6 +80,7 @@ iGmIdentity *       newIdentity_GmCerts     (iGmCerts *, int flags, iDate validU
                                              const iString *userId, const iString *domain,
                                              const iString *org, const iString *country);
 
+void                importIdentity_GmCerts  (iGmCerts *, iTlsCertificate *cert, const iString *notes); /* takes ownership */
 void                deleteIdentity_GmCerts  (iGmCerts *, iGmIdentity *identity);
 
 const iString *     certificatePath_GmCerts (const iGmCerts *, const iGmIdentity *identity);

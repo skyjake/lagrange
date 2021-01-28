@@ -380,7 +380,19 @@ static iBool isCommandIgnoredByMenus_(const char *cmd) {
            equal_Command(cmd, "bookmarks.request.finished") ||
            equal_Command(cmd, "window.resized") ||
            equal_Command(cmd, "window.reload.update") ||
+           equal_Command(cmd, "window.mouse.exited") ||
+           equal_Command(cmd, "window.mouse.entered") ||
            (equal_Command(cmd, "mouse.clicked") && !arg_Command(cmd)); /* button released */
+}
+
+static iLabelWidget *parentMenuButton_(const iWidget *menu) {
+    if (isInstance_Object(menu->parent, &Class_LabelWidget)) {
+        iLabelWidget *button = (iLabelWidget *) menu->parent;
+        if (!cmp_String(command_LabelWidget(button), "menu.open")) {
+            return button;
+        }
+    }
+    return NULL;
 }
 
 static iBool menuHandler_(iWidget *menu, const char *cmd) {
@@ -394,6 +406,9 @@ static iBool menuHandler_(iWidget *menu, const char *cmd) {
         }
         if ((equal_Command(cmd, "mouse.clicked") || equal_Command(cmd, "mouse.missed")) &&
             arg_Command(cmd)) {
+            if (hitChild_Widget(get_Window()->root, coord_Command(cmd)) == parentMenuButton_(menu)) {
+                return iFalse;
+            }
             /* Dismiss open menus when clicking outside them. */
             closeMenu_Widget(menu);
             return iTrue;
@@ -744,8 +759,8 @@ iBool filePathHandler_(iWidget *dlg, const char *cmd) {
 
 iWidget *makeSheet_Widget(const char *id) {
     iWidget *sheet = new_Widget();
-    setPadding1_Widget(sheet, 3 * gap_UI);
     setId_Widget(sheet, id);
+    setPadding1_Widget(sheet, 3 * gap_UI);
     setFrameColor_Widget(sheet, uiSeparator_ColorId);
     setBackgroundColor_Widget(sheet, uiBackground_ColorId);
     setFlags_Widget(sheet,
@@ -872,12 +887,13 @@ iWidget *makeValueInput_Widget(iWidget *parent, const iString *initialValue, con
     iWidget *div = new_Widget(); {
         setFlags_Widget(div, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
         addChild_Widget(div, iClob(newKeyMods_LabelWidget("Cancel", SDLK_ESCAPE, 0, "cancel")));
-        addChild_Widget(
+        iLabelWidget *accept = addChild_Widget(
             div,
             iClob(newKeyMods_LabelWidget(acceptLabel ? acceptLabel : uiTextAction_ColorEscape "OK",
                                          SDLK_RETURN,
                                          0,
                                          "valueinput.accept")));
+        setFont_LabelWidget(accept, uiLabelBold_FontId);
     }
     addChild_Widget(dlg, iClob(div));
     centerSheet_Widget(dlg);
@@ -924,8 +940,12 @@ iWidget *makeQuestion_Widget(const char *title, const char *msg, const char *lab
         setFlags_Widget(div, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
         for (size_t i = 0; i < count; ++i) {
             /* The last one is the default option. */
-            const int key = (i == count - 1 ? SDLK_RETURN : 0);
-            addChild_Widget(div, iClob(newKeyMods_LabelWidget(labels[i], key, 0, commands[i])));
+            const int     key = (i == count - 1 ? SDLK_RETURN : 0);
+            iLabelWidget *btn =
+                addChild_Widget(div, iClob(newKeyMods_LabelWidget(labels[i], key, 0, commands[i])));
+            if (key) {
+                setFont_LabelWidget(btn, uiLabelBold_FontId);
+            }
         }
     }
     addChild_Widget(dlg, iClob(div));
@@ -1038,8 +1058,8 @@ iWidget *makePreferences_Widget(void) {
         appendTwoColumnPage_(tabs, "General", '1', &headings, &values);
         addChild_Widget(headings, iClob(makeHeading_Widget("Downloads folder:")));
         setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.downloads");
-        /*addChild_Widget(headings, iClob(makeHeading_Widget("Outline on scrollbar:")));
-        addChild_Widget(values, iClob(makeToggle_Widget("prefs.hoveroutline")));*/
+        addChild_Widget(headings, iClob(makeHeading_Widget("Show URL on hover:")));
+        addChild_Widget(values, iClob(makeToggle_Widget("prefs.hoverlink")));
         addChild_Widget(headings, iClob(makeHeading_Widget("Smooth scrolling:")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.smoothscroll")));
         addChild_Widget(headings, iClob(makeHeading_Widget("Load image on scroll:")));
@@ -1070,7 +1090,7 @@ iWidget *makePreferences_Widget(void) {
     }
     /* Colors. */ {
         appendTwoColumnPage_(tabs, "Colors", '3', &headings, &values);
-        makeTwoColumnHeading_("PAGE CONTENTS", headings, values);
+        makeTwoColumnHeading_("PAGE CONTENT", headings, values);
         for (int i = 0; i < 2; ++i) {
             const iBool isDark = (i == 0);
             const char *mode = isDark ? "dark" : "light";
@@ -1101,6 +1121,7 @@ iWidget *makePreferences_Widget(void) {
     }
     /* Layout. */ {
         appendTwoColumnPage_(tabs, "Style", '4', &headings, &values);
+        makeTwoColumnHeading_("FONTS", headings, values);
         /* Fonts. */ {
             iWidget *fonts;
             addChild_Widget(headings, iClob(makeHeading_Widget("Heading font:")));
@@ -1120,8 +1141,7 @@ iWidget *makePreferences_Widget(void) {
                 addChild_Widget(mono, iClob(makeToggle_Widget("prefs.mono.gopher"))), "Gopher");
             addChildFlags_Widget(values, iClob(mono), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
         }
-        addChild_Widget(headings, iClob(makePadding_Widget(2 * gap_UI)));
-        addChild_Widget(values, iClob(makePadding_Widget(2 * gap_UI)));
+        makeTwoColumnHeading_("PARAGRAPH", headings, values);
         addChild_Widget(headings, iClob(makeHeading_Widget("Line width:")));
         iWidget *widths = new_Widget();
         /* Line widths. */ {
@@ -1142,10 +1162,19 @@ iWidget *makePreferences_Widget(void) {
         addChild_Widget(headings, iClob(makeHeading_Widget("Big 1st paragaph:")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.biglede")));
     }
-    /* Proxies. */ {
+    /* Network. */ {
         appendTwoColumnPage_(tabs, "Network", '5', &headings, &values);
-        addChild_Widget(headings, iClob(makeHeading_Widget("Decode paths:")));
+        addChild_Widget(headings, iClob(makeHeading_Widget("Cache size:")));
+        iWidget *cacheGroup = new_Widget(); {
+            iInputWidget *cache = new_InputWidget(4);
+            setSelectAllOnFocus_InputWidget(cache, iTrue);
+            setId_Widget(addChild_Widget(cacheGroup, iClob(cache)), "prefs.cachesize");
+            addChildFlags_Widget(cacheGroup, iClob(new_LabelWidget("MB", NULL)), frameless_WidgetFlag);
+        }
+        addChildFlags_Widget(values, iClob(cacheGroup), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+        addChild_Widget(headings, iClob(makeHeading_Widget("Decode URLs:")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.decodeurls")));
+        makeTwoColumnHeading_("PROXIES", headings, values);
         addChild_Widget(headings, iClob(makeHeading_Widget("Gemini proxy:")));
         setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.proxy.gemini");
         addChild_Widget(headings, iClob(makeHeading_Widget("Gopher proxy:")));
@@ -1168,7 +1197,10 @@ iWidget *makePreferences_Widget(void) {
     }
     iWidget *div = new_Widget(); {
         setFlags_Widget(div, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
-        addChild_Widget(div, iClob(newKeyMods_LabelWidget("Dismiss", SDLK_ESCAPE, 0, "prefs.dismiss")));
+        setFont_LabelWidget(
+            addChild_Widget(
+                div, iClob(newKeyMods_LabelWidget("Dismiss", SDLK_ESCAPE, 0, "prefs.dismiss"))),
+            uiLabelBold_FontId);
     }
     addChild_Widget(dlg, iClob(div));
     addChild_Widget(get_Window()->root, iClob(dlg));
@@ -1205,10 +1237,11 @@ iWidget *makeBookmarkEditor_Widget(void) {
     iWidget *div = new_Widget(); {
         setFlags_Widget(div, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
         addChild_Widget(div, iClob(newKeyMods_LabelWidget("Cancel", SDLK_ESCAPE, 0, "cancel")));
-        addChild_Widget(
+        iLabelWidget *accept = addChild_Widget(
             div,
             iClob(newKeyMods_LabelWidget(
                 uiTextCaution_ColorEscape "Save Bookmark", SDLK_RETURN, KMOD_PRIMARY, "bmed.accept")));
+        setFont_LabelWidget(accept, uiLabelBold_FontId);
     }
     addChild_Widget(dlg, iClob(div));
     addChild_Widget(get_Window()->root, iClob(dlg));
@@ -1345,6 +1378,7 @@ iWidget *makeFeedSettings_Widget(uint32_t bookmarkId) {
                                          KMOD_PRIMARY,
                                          format_CStr("feedcfg.accept bmid:%d", bookmarkId)))),
                      "feedcfg.save");
+        setFont_LabelWidget(findChild_Widget(div, "feedcfg.save"), uiLabelBold_FontId);
     }
     addChild_Widget(dlg, iClob(div));
     arrange_Widget(dlg);
@@ -1421,10 +1455,11 @@ iWidget *makeIdentityCreation_Widget(void) {
     iWidget *div = new_Widget(); {
         setFlags_Widget(div, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
         addChild_Widget(div, iClob(newKeyMods_LabelWidget("Cancel", SDLK_ESCAPE, 0, "cancel")));
-        addChild_Widget(
+        iLabelWidget *accept = addChild_Widget(
             div,
             iClob(newKeyMods_LabelWidget(
                 uiTextAction_ColorEscape "Create Identity", SDLK_RETURN, KMOD_PRIMARY, "ident.accept")));
+        setFont_LabelWidget(accept, uiLabelBold_FontId);
     }
     addChild_Widget(dlg, iClob(div));
     addChild_Widget(get_Window()->root, iClob(dlg));

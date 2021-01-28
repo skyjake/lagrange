@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright 2021 Jaakko Keränen <jaakko.keranen@iki.fi> -->
+<component type="desktop-application">
+    <id>fi.skyjake.Lagrange</id>
+    <metadata_license>CC0-1.0</metadata_license>
+    <project_license>BSD-2-Clause</project_license>
+    <name>Lagrange</name>
+    <summary>A Beautiful Gemini Client</summary>
+    <description>
+        <p>
+            Lagrange is a desktop GUI client for browsing Geminispace. 
+            It offers modern conveniences familiar from web browsers, 
+            such as smooth scrolling, inline image viewing, multiple 
+            tabs, visual themes, Unicode fonts, bookmarks, history, and
+            page outlines.
+        </p>
+        <p>
+            Like the Gemini protocol, Lagrange has been designed with
+            minimalism in mind. It depends on a small number of essential
+            libraries. It is written in C and uses SDL for 
+            hardware-accelerated graphics. OpenSSL is used for secure
+            communications.
+        </p>
+    </description>
+    <content_rating type="oars-1.1" />
+    
+    <launchable type="desktop-id">fi.skyjake.Lagrange.desktop</launchable>
+
+    <screenshots>
+        <screenshot type="default">
+            <image>https://gmi.skyjake.fi/lagrange/flathub_screenshot.jpg</image>
+        </screenshot>
+    </screenshots>
+
+    <url type="homepage">https://gmi.skyjake.fi/lagrange</url>
+    <url type="bugtracker">https://github.com/skyjake/lagrange/issues</url>
+    <url type="contact">https://skyjake.fi/@jk</url>
+
+    <developer_name>Jaakko Keränen</developer_name>
+
+    <provides>
+        <binary>lagrange</binary>
+    </provides>
+
+    <update_contact>jaakko.keranen@iki.fi</update_contact>
+
+    <releases>
+        <release version="1.1" date="2021-01-28">
+            <description>
+                <p>
+                    This version adds new features to enhance user experience 
+                    and fixes incorrect behavior.
+                </p>
+                <ul>
+                    <li>Import existing X.509 client certificates via the UI.</li>
+                    <li>Setting for maximum cache size.</li>
+                    <li>Option to show full URL when hovering mouse over a link.</li>
+                    <li>Support for Finger links.</li>
+                    <li>More keybindings: e.g., opening and closing tabs.</li>
+                    <li>Visual UI improvements.</li> 
+                    <li>Fix for history timestamps that were shifting on every launch.</li>
+                </ul>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.1.0</url>
+        </release>
+        <release version="1.0.3" date="2021-01-12">
+            <description>
+                <p>This release contains bug fixes and performance improvements.</p>
+                <p>Version 1.0 is the first stable release of Lagrange.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.0.3</url>
+        </release>
+    </releases>
+</component>

@@ -91,6 +91,15 @@ void stripDefaultUrlPort_String(iString *d) {
     }
 }
 
+const iString *urlFragmentStripped_String(const iString *d) {
+    const size_t fragPos = indexOf_String(d, '#');
+    if (fragPos != iInvalidPos) {
+        return collect_String(newRange_String((iRangecc){ constBegin_String(d),
+                                                          constBegin_String(d) + fragPos }));
+    }
+    return d;
+}
+
 void cleanUrlPath_String(iString *d) {
     iString clean;
     init_String(&clean);

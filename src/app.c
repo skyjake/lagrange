@@ -30,6 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "gmdocument.h"
 #include "gmutil.h"
 #include "history.h"
+#include "ui/certimportwidget.h"
 #include "ui/color.h"
 #include "ui/command.h"
 #include "ui/documentwidget.h"
@@ -73,25 +74,26 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 iDeclareType(App)
 
 #if defined (iPlatformApple)
-#define EMB_BIN "../../Resources/resources.binary"
+#define EMB_BIN "../../Resources/resources.lgr"
 static const char *dataDir_App_ = "~/Library/Application Support/fi.skyjake.Lagrange";
 #endif
 #if defined (iPlatformMsys)
-#define EMB_BIN "../resources.binary"
+#define EMB_BIN "../resources.lgr"
 static const char *dataDir_App_ = "~/AppData/Roaming/fi.skyjake.Lagrange";
 #endif
 #if defined (iPlatformLinux) || defined (iPlatformOther)
-#define EMB_BIN  "../../share/lagrange/resources.binary"
+#define EMB_BIN  "../../share/lagrange/resources.lgr"
 static const char *dataDir_App_ = "~/.config/lagrange";
 #endif
 #if defined (LAGRANGE_EMB_BIN) /* specified in build config */
 #  undef EMB_BIN
 #  define EMB_BIN LAGRANGE_EMB_BIN
 #endif
-#define EMB_BIN2 "../resources.binary" /* fallback from build/executable dir */
-static const char *prefsFileName_App_ = "prefs.cfg";
-static const char *stateFileName_App_ = "state.binary";
-static const char *downloadDir_App_   = "~/Downloads";
+#define EMB_BIN2 "../resources.lgr" /* fallback from build/executable dir */
+static const char *prefsFileName_App_    = "prefs.cfg";
+static const char *oldStateFileName_App_ = "state.binary";
+static const char *stateFileName_App_    = "state.lgr";
+static const char *downloadDir_App_      = "~/Downloads";
 
 static const int idleThreshold_App_ = 1000; /* ms */
 
@@ -192,12 +194,13 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "zoom.set arg:%d\n", d->prefs.zoomPercent);
     appendFormat_String(str, "smoothscroll arg:%d\n", d->prefs.smoothScrolling);
     appendFormat_String(str, "imageloadscroll arg:%d\n", d->prefs.loadImageInsteadOfScrolling);
+    appendFormat_String(str, "cachesize.set arg:%d\n", d->prefs.maxCacheSize);
     appendFormat_String(str, "decodeurls arg:%d\n", d->prefs.decodeUserVisibleURLs);
     appendFormat_String(str, "linewidth.set arg:%d\n", d->prefs.lineWidth);
     appendFormat_String(str, "prefs.biglede.changed arg:%d\n", d->prefs.bigFirstParagraph);
     appendFormat_String(str, "prefs.sideicon.changed arg:%d\n", d->prefs.sideIcon);
     appendFormat_String(str, "quoteicon.set arg:%d\n", d->prefs.quoteIcon ? 1 : 0);
-    appendFormat_String(str, "prefs.hoveroutline.changed arg:%d\n", d->prefs.hoverOutline);
+    appendFormat_String(str, "prefs.hoverlink.changed arg:%d\n", d->prefs.hoverLink);
     appendFormat_String(str, "theme.set arg:%d auto:1\n", d->prefs.theme);
     appendFormat_String(str, "ostheme arg:%d\n", d->prefs.useSystemTheme);
     appendFormat_String(str, "doctheme.dark.set arg:%d\n", d->prefs.docThemeDark);
@@ -264,7 +267,9 @@ static const char *magicTabDocument_App_ = "tabd";
 
 static iBool loadState_App_(iApp *d) {
     iUnused(d);
-    iFile *f = iClob(newCStr_File(concatPath_CStr(dataDir_App_, stateFileName_App_)));
+    const char *oldPath = concatPath_CStr(dataDir_App_, oldStateFileName_App_);
+    const char *path    = concatPath_CStr(dataDir_App_, stateFileName_App_);
+    iFile *f = iClob(newCStr_File(fileExistsCStr_FileInfo(path) ? path : oldPath));
     if (open_File(f, readOnly_FileMode)) {
         char magic[4];
         readData_File(f, 4, magic);
@@ -317,16 +322,16 @@ iObjectList *listDocuments_App(void) {
 
 static void saveState_App_(const iApp *d) {
     iUnused(d);
+    trimCache_App();
     iFile *f = newCStr_File(concatPath_CStr(dataDir_App_, stateFileName_App_));
     if (open_File(f, writeOnly_FileMode)) {
         writeData_File(f, magicState_App_, 4);
         writeU32_File(f, latest_FileVersion); /* version */
         iConstForEach(ObjectList, i, iClob(listDocuments_App())) {
-            if (isInstance_Object(i.object, &Class_DocumentWidget)) {
-                writeData_File(f, magicTabDocument_App_, 4);
-                write8_File(f, document_App() == i.object ? 1 : 0);
-                serializeState_DocumentWidget(i.object, stream_File(f));
-            }
+            iAssert(isInstance_Object(i.object, &Class_DocumentWidget));
+            writeData_File(f, magicTabDocument_App_, 4);
+            write8_File(f, document_App() == i.object ? 1 : 0);
+            serializeState_DocumentWidget(i.object, stream_File(f));
         }
     }
     iRelease(f);
@@ -499,14 +504,22 @@ const iString *debugInfo_App(void) {
     iApp *d = &app_;
     iString *msg = collectNew_String();
     format_String(msg, "# Debug information\n");
-    appendFormat_String(msg, "## Launch arguments\n");
-    iConstForEach(StringList, i, args_CommandLine(&d->args)) {
-        appendFormat_String(msg, "* %zu: %s\n", i.pos, cstr_String(i.value));
+    appendFormat_String(msg, "## Documents\n");
+    iForEach(ObjectList, k, iClob(listDocuments_App())) {
+        iDocumentWidget *doc = k.object;
+        appendFormat_String(msg, "### Tab %zu: %s\n",
+                            childIndex_Widget(constAs_Widget(doc)->parent, k.object),
+                            cstr_String(bookmarkTitle_DocumentWidget(doc)));
+        append_String(msg, collect_String(debugInfo_History(history_DocumentWidget(doc))));
     }
-    appendFormat_String(msg, "## Launch commands\n");
+    appendFormat_String(msg, "## Launch arguments\n```\n");
+    iConstForEach(StringList, i, args_CommandLine(&d->args)) {
+        appendFormat_String(msg, "%3zu : %s\n", i.pos, cstr_String(i.value));
+    }
+    appendFormat_String(msg, "```\n## Launch commands\n");
     iConstForEach(StringList, j, d->launchCommands) {
         appendFormat_String(msg, "%s\n", cstr_String(j.value));
-    }
+    }    
     appendFormat_String(msg, "## MIME hooks\n");
     append_String(msg, debugInfo_MimeHooks(d->mimehooks));
     return msg;
@@ -534,19 +547,22 @@ void processEvents_App(enum iAppEventMode eventMode) {
                 d->isRunning = iFalse;
                 goto backToMainLoop;
             case SDL_DROPFILE: {
-                iBool newTab = iFalse;
-                if (elapsedSeconds_Time(&d->lastDropTime) < 0.1) {
-                    /* Each additional drop gets a new tab. */
-                    newTab = iTrue;
-                }
-                d->lastDropTime = now_Time();
-                if (startsWithCase_CStr(ev.drop.file, "gemini:") ||
-                    startsWithCase_CStr(ev.drop.file, "file:")) {
-                    postCommandf_App("~open newtab:%d url:%s", newTab, ev.drop.file);
-                }
-                else {
-                    postCommandf_App(
-                        "~open newtab:%d url:%s", newTab, makeFileUrl_CStr(ev.drop.file));
+                iBool wasUsed = processEvent_Window(d->window, &ev);
+                if (!wasUsed) {
+                    iBool newTab = iFalse;
+                    if (elapsedSeconds_Time(&d->lastDropTime) < 0.1) {
+                        /* Each additional drop gets a new tab. */
+                        newTab = iTrue;
+                    }
+                    d->lastDropTime = now_Time();
+                    if (startsWithCase_CStr(ev.drop.file, "gemini:") ||
+                        startsWithCase_CStr(ev.drop.file, "file:")) {
+                        postCommandf_App("~open newtab:%d url:%s", newTab, ev.drop.file);
+                    }
+                    else {
+                        postCommandf_App(
+                            "~open newtab:%d url:%s", newTab, makeFileUrl_CStr(ev.drop.file));
+                    }
                 }
                 break;
             }
@@ -843,6 +859,8 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
                          isSelected_Widget(findChild_Widget(d, "prefs.ostheme")));
         postCommandf_App("decodeurls arg:%d",
                          isSelected_Widget(findChild_Widget(d, "prefs.decodeurls")));
+        postCommandf_App("cachesize.set arg:%d",
+                         toInt_String(text_InputWidget(findChild_Widget(d, "prefs.cachesize"))));
         postCommandf_App("proxy.gemini address:%s",
                          cstr_String(text_InputWidget(findChild_Widget(d, "prefs.proxy.gemini"))));
         postCommandf_App("proxy.gopher address:%s",
@@ -924,6 +942,33 @@ iDocumentWidget *newTab_App(const iDocumentWidget *duplicateOf, iBool switchToNe
     refresh_Widget(tabs);
     postCommandf_App("tab.created id:%s", cstr_String(id_Widget(as_Widget(doc))));
     return doc;
+}
+
+void trimCache_App(void) {
+    iApp *d = &app_;
+    size_t cacheSize = 0;
+    const size_t limit = d->prefs.maxCacheSize * 1000000;
+    iObjectList *docs = listDocuments_App();
+    iForEach(ObjectList, i, docs) {
+        cacheSize += cacheSize_History(history_DocumentWidget(i.object));
+    }
+    init_ObjectListIterator(&i, docs);
+    iBool wasPruned = iFalse;
+    while (cacheSize > limit) {
+        iDocumentWidget *doc = i.object;
+        const size_t pruned = pruneLeastImportant_History(history_DocumentWidget(doc));
+        if (pruned) {
+            cacheSize -= pruned;
+            wasPruned = iTrue;
+        }
+        next_ObjectListIterator(&i);
+        if (!i.value) {
+            if (!wasPruned) break;
+            wasPruned = iFalse;
+            init_ObjectListIterator(&i, docs);
+        }
+    }
+    iRelease(docs);
 }
 
 static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
@@ -1125,14 +1170,26 @@ iBool handleCommand_App(const char *cmd) {
         postRefresh_App();
         return iTrue;
     }
-    else if (equal_Command(cmd, "prefs.hoveroutline.changed")) {
-        d->prefs.hoverOutline = arg_Command(cmd) != 0;
+    else if (equal_Command(cmd, "prefs.hoverlink.changed")) {
+        d->prefs.hoverLink = arg_Command(cmd) != 0;
+        postRefresh_App();
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "prefs.hoverlink.toggle")) {
+        d->prefs.hoverLink = !d->prefs.hoverLink;
         postRefresh_App();
         return iTrue;
     }
     else if (equal_Command(cmd, "saturation.set")) {
         d->prefs.saturation = (float) arg_Command(cmd) / 100.0f;
         postCommandf_App("theme.changed auto:1");
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "cachesize.set")) {
+        d->prefs.maxCacheSize = arg_Command(cmd);
+        if (d->prefs.maxCacheSize <= 0) {
+            d->prefs.maxCacheSize = 0;
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "proxy.gemini")) {
@@ -1226,9 +1283,13 @@ iBool handleCommand_App(const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "tabs.close")) {
-        iWidget *tabs = findWidget_App("doctabs");
-        size_t index = tabPageIndex_Widget(tabs, document_App());
-        iBool wasClosed = iFalse;
+        iWidget *      tabs  = findWidget_App("doctabs");
+        const iRangecc tabId = range_Command(cmd, "id");
+        iWidget *      doc   = !isEmpty_Range(&tabId) ? findWidget_App(cstr_Rangecc(tabId))
+                                                      : document_App();
+        iBool  wasCurrent = (doc == (iWidget *) document_App());
+        size_t index      = tabPageIndex_Widget(tabs, doc);
+        iBool  wasClosed  = iFalse;
         if (argLabel_Command(cmd, "toright")) {
             while (tabCount_Widget(tabs) > index + 1) {
                 destroy_Widget(removeTabPage_Widget(tabs, index + 1));
@@ -1253,7 +1314,9 @@ iBool handleCommand_App(const char *cmd) {
                 index--;
             }
             arrange_Widget(tabs);
-            postCommandf_App("tabs.switch page:%p", tabPage_Widget(tabs, index));
+            if (wasCurrent) {
+                postCommandf_App("tabs.switch page:%p", tabPage_Widget(tabs, index));
+            }
         }
         else {
             postCommand_App("quit");
@@ -1269,7 +1332,7 @@ iBool handleCommand_App(const char *cmd) {
         iWidget *dlg = makePreferences_Widget();
         updatePrefsThemeButtons_(dlg);
         setText_InputWidget(findChild_Widget(dlg, "prefs.downloads"), &d->prefs.downloadDir);
-        setToggle_Widget(findChild_Widget(dlg, "prefs.hoveroutline"), d->prefs.hoverOutline);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.hoverlink"), d->prefs.hoverLink);
         setToggle_Widget(findChild_Widget(dlg, "prefs.smoothscroll"), d->prefs.smoothScrolling);
         setToggle_Widget(findChild_Widget(dlg, "prefs.imageloadscroll"), d->prefs.loadImageInsteadOfScrolling);
         setToggle_Widget(findChild_Widget(dlg, "prefs.ostheme"), d->prefs.useSystemTheme);
@@ -1306,6 +1369,8 @@ iBool handleCommand_App(const char *cmd) {
                 dlg, format_CStr("prefs.saturation.%d", (int) (d->prefs.saturation * 3.99f))),
             selected_WidgetFlag,
             iTrue);
+        setText_InputWidget(findChild_Widget(dlg, "prefs.cachesize"),
+                            collectNewFormat_String("%d", d->prefs.maxCacheSize));
         setToggle_Widget(findChild_Widget(dlg, "prefs.decodeurls"), d->prefs.decodeUserVisibleURLs);
         setText_InputWidget(findChild_Widget(dlg, "prefs.proxy.gemini"), &d->prefs.geminiProxy);
         setText_InputWidget(findChild_Widget(dlg, "prefs.proxy.gopher"), &d->prefs.gopherProxy);
@@ -1401,6 +1466,13 @@ iBool handleCommand_App(const char *cmd) {
     else if (equal_Command(cmd, "ident.new")) {
         iWidget *dlg = makeIdentityCreation_Widget();
         setCommandHandler_Widget(dlg, handleIdentityCreationCommands_);
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "ident.import")) {
+        iCertImportWidget *imp = new_CertImportWidget();
+        setPageContent_CertImportWidget(imp, sourceContent_DocumentWidget(document_App()));
+        addChild_Widget(d->window->root, iClob(imp));
+        postRefresh_App();
         return iTrue;
     }
     else if (equal_Command(cmd, "ident.signin")) {

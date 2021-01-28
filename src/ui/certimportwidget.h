@@ -22,49 +22,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
-#include <the_Foundation/string.h>
+#include "widget.h"
 
-#include "gmdocument.h"
-#include "ui/color.h"
-#include "ui/text.h"
+iDeclareWidgetClass(CertImportWidget)
+iDeclareObjectConstruction(CertImportWidget)
 
-/* User preferences */
-
-iDeclareType(Prefs)
-
-struct Impl_Prefs {
-    /* UI state */
-    int              dialogTab;
-    /* Window */
-    iBool            useSystemTheme;
-    enum iColorTheme theme;
-    iBool            retainWindowSize;
-    float            uiScale;
-    int              zoomPercent;
-    iBool            sideIcon;
-    /* Behavior */
-    iString          downloadDir;
-    iBool            hoverLink;
-    iBool            smoothScrolling;
-    iBool            loadImageInsteadOfScrolling;
-    /* Network */
-    iBool            decodeUserVisibleURLs;
-    int              maxCacheSize; /* MB */
-    iString          geminiProxy;
-    iString          gopherProxy;
-    iString          httpProxy;
-    /* Style */
-    enum iTextFont   font;
-    enum iTextFont   headingFont;
-    iBool            monospaceGemini;
-    iBool            monospaceGopher;
-    int              lineWidth;
-    iBool            bigFirstParagraph;
-    iBool            quoteIcon;
-    /* Colors */
-    enum iGmDocumentTheme docThemeDark;
-    enum iGmDocumentTheme docThemeLight;
-    float                 saturation;
-};
-
-iDeclareTypeConstruction(Prefs)
+void    setPageContent_CertImportWidget (iCertImportWidget *, const iBlock *);

@@ -27,6 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "documentwidget.h"
 #include "sidebarwidget.h"
 #include "lookupwidget.h"
+#include "bookmarks.h"
 #include "embedded.h"
 #include "command.h"
 #include "paint.h"
@@ -162,26 +163,30 @@ static const iMenuItem viewMenuItems_[] = {
 
 static iMenuItem bookmarksMenuItems_[] = {
     { "Bookmark This Page...", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
+    { "Subscribe to This Page...", subscribeToPage_KeyModifier, "feeds.subscribe" },
     { "---", 0, 0, NULL },
     { "Import All Links on Page...", 0, 0, "bookmark.links confirm:1" },
     { "---", 0, 0, NULL },
     { "List All", 0, 0, "open url:about:bookmarks" },
     { "List by Tag", 0, 0, "open url:about:bookmarks?tags" },
     { "List by Creation Time", 0, 0, "open url:about:bookmarks?created" },
-    { "Refresh Remote Sources", 0, 0, "bookmarks.reload.remote" },
-    { "---", 0, 0, NULL },
-    { "Subscribe to This Page...", subscribeToPage_KeyModifier, "feeds.subscribe" },
     { "Show Feed Entries", 0, 0, "open url:about:feeds" },
+    { "---", 0, 0, NULL },
+    { "Refresh Remote Bookmarks", 0, 0, "bookmarks.reload.remote" },
     { "Refresh Feeds", SDLK_r, KMOD_PRIMARY | KMOD_SHIFT, "feeds.refresh" },
 };
 
 static const iMenuItem identityMenuItems_[] = {
     { "New Identity...", SDLK_n, KMOD_PRIMARY | KMOD_SHIFT, "ident.new" },
+    { "---", 0, 0, NULL },
+    { "Import...", SDLK_i, KMOD_PRIMARY | KMOD_SHIFT, "ident.import" },
 };
 
 static const iMenuItem helpMenuItems_[] = {
     { "Help", 0, 0, "!open url:about:help" },
     { "Release Notes", 0, 0, "!open url:about:version" },
+    { "---", 0, 0, NULL },
+    { "Debug Information", 0, 0, "!open url:about:debug" },
 };
 #endif
 
@@ -190,6 +195,7 @@ static const iMenuItem identityButtonMenuItems_[] = {
     { "---", 0, 0, NULL },
 #if !defined (iHaveNativeMenus)
     { "New Identity...", SDLK_n, KMOD_PRIMARY | KMOD_SHIFT, "ident.new" },
+    { "Import...", SDLK_i, KMOD_PRIMARY | KMOD_SHIFT, "ident.import" },
     { "---", 0, 0, NULL },
     { "Show Identities", '4', KMOD_PRIMARY, "sidebar.mode arg:3 show:1" },
 #else
@@ -391,11 +397,20 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
             if (equal_Command(cmd, "document.changed")) {
                 iInputWidget *url = findWidget_App("url");
                 const iString *urlStr = collect_String(suffix_Command(cmd, "url"));
+                trimCache_App();
                 visitUrl_Visited(visited_App(), urlStr, 0);
                 postCommand_App("visited.changed"); /* sidebar will update */
                 setText_InputWidget(url, urlStr);
                 checkLoadAnimation_Window_(get_Window());
                 updateNavBarIdentity_(navBar);
+                /* Icon updates should be limited to automatically chosen icons if the user
+                   is allowed to pick their own in the future. */
+                if (updateBookmarkIcon_Bookmarks(
+                    bookmarks_App(),
+                    urlStr,
+                        siteIcon_GmDocument(document_DocumentWidget(document_App())))) {
+                    postCommand_App("bookmarks.changed");
+                }
                 return iFalse;
             }
             else if (equal_Command(cmd, "document.request.cancelled")) {
@@ -423,11 +438,17 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
     else if (equal_Command(cmd, "mouse.clicked") && arg_Command(cmd)) {
         iWidget *widget = pointer_Command(cmd);
         iWidget *menu = findWidget_App("doctabs.menu");
-        if (isTabButton_Widget(widget) && !isVisible_Widget(menu)) {
-            iWidget *tabs = findWidget_App("doctabs");
-            showTabPage_Widget(tabs,
-                               tabPage_Widget(tabs, childIndex_Widget(widget->parent, widget)));
-            openMenu_Widget(menu, coord_Command(cmd));
+        if (isTabButton_Widget(widget)) {
+            if (!isVisible_Widget(menu)) {
+                iWidget *tabs = findWidget_App("doctabs");
+                iWidget *page = tabPage_Widget(tabs, childIndex_Widget(widget->parent, widget));
+                if (argLabel_Command(cmd, "button") == SDL_BUTTON_MIDDLE) {
+                    postCommandf_App("tabs.close id:%s", cstr_String(id_Widget(page)));
+                    return iTrue;
+                }
+                showTabPage_Widget(tabs, page);
+                openMenu_Widget(menu, coord_Command(cmd));
+            }
         }
     }
     else if (equal_Command(cmd, "navigate.reload")) {
@@ -512,7 +533,7 @@ static void setupUserInterface_Window(iWindow *d) {
         setId_Widget(as_Widget(idMenu), "navbar.ident");
         iLabelWidget *lock =
             addChildFlags_Widget(navBar,
-                                 iClob(newIcon_LabelWidget("\U0001f513", 0, 0, "server.showcert")),
+                                 iClob(newIcon_LabelWidget("\U0001f513", SDLK_i, KMOD_PRIMARY, "document.info")),
                                  frameless_WidgetFlag | tight_WidgetFlag);
         setId_Widget(as_Widget(lock), "navbar.lock");
         setFont_LabelWidget(lock, defaultSymbols_FontId);

@@ -42,20 +42,32 @@ This is how to build Lagrange in a POSIX-compatible environment. The required to
 
 ### Installing to a directory
 
-To install to "/dest/path":
+Set `CMAKE_INSTALL_PREFIX` to install to a directory of your choosing.
 
 1. `cmake {path_of_lagrange_sources} -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/dest/path`
 2. `cmake --build . --target install`
 
 This will also install an XDG .desktop file for launching the app.
 
+### Build options
+
+| CMake Option | Description |
+| ------------ | ----------- |
+| `ENABLE_BINCAT_SH` | Merge resource files (fonts, etc.) together using a Bash shell script. By default this is **OFF**, so _res/bincat.c_ is compiled as a native executable for this purpose. However, when cross-compiling, native binaries built during the CMake run may be targeted for the wrong architecture. Set this to **ON** if you are having problems with bincat while running CMake. |
+| `ENABLE_IDLE_SLEEP` | Sleep in the main thread instead of waiting for events. On some platforms, `SDL_WaitEvent()` may have a relatively high CPU usage. Setting this to **ON** polls for events periodically but otherwise keeps the main thread sleeping, reducing CPU usage. The drawback is that there is a slightly increased latency reacting to new events after idle mode ends. |
+| `ENABLE_KERNING` | Use kerning information in the fonts to adjust glyph placement. Setting this **ON** improves text appearance in subtle ways but slows down text rendering. It may be a good idea to set this to **OFF** when running on a slow CPU. |
+| `ENABLE_MPG123` | Use the mpg123 library for decoding MPEG audio files. |
+| `ENABLE_RESOURCE_EMBED` | Embed all resource files into the Lagrange executable instead of keeping them in a separate file that gets loaded at launch. Setting this **ON** makes it much slower to run CMake and to compile Lagrange. |
+| `ENABLE_WINDOWPOS_FIX` | Set correct window position after the window has already been shown. This may be necessary on some platforms to prevent the window from being restored to the wrong position. |
+| `ENABLE_X11_SWRENDER` | Default to software rendering when running under X11. By default Lagrange attempts to use the GPU for rendering the user interface. You can also use the `--sw` option at launch to force software rendering. |
+
 ### Compiling on macOS
 
 When using OpenSSL 1.1.1 from Homebrew, you must add its pkgconfig path to your `PKG_CONFIG_PATH` environment variable, for example:
 
-    export PKG_CONFIG_PATH=/usr/local/Cellar/openssl@1.1/1.1.1h/lib/pkgconfig
+    export PKG_CONFIG_PATH=/opt/homebrew/Cellar/openssl@1.1/1.1.1i/lib/pkgconfig
 
-Also, SDL's trackpad scrolling behavior on macOS is not optimal for regular GUI apps because it emulates a physical mouse wheel. This may change in a future release of SDL, but at least in 2.0.12 a [small patch](https://git.skyjake.fi/skyjake/lagrange/raw/branch/dev/sdl2-macos-mouse-scrolling.diff) is required to allow momentum scrolling to come through as single-pixel mouse wheel events. Note that SDL comes with an Xcode project; use the "Shared Library" target and check that you are doing a Release build.
+Also, SDL's trackpad scrolling behavior on macOS is not optimal for regular GUI apps because it emulates a physical mouse wheel. This may change in a future release of SDL, but at least in 2.0.14 (and earlier) a [small patch](https://git.skyjake.fi/skyjake/lagrange/raw/branch/dev/sdl2-macos-mouse-scrolling.diff) is required to allow momentum scrolling to come through as single-pixel mouse wheel events. Note that SDL comes with an Xcode project; use the "Shared Library" target and check that you are doing a Release build.
 
 ### Compiling on Windows
 

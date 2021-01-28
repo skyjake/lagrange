@@ -74,21 +74,14 @@ void deinit_Visited(iVisited *d) {
 
 void save_Visited(const iVisited *d, const char *dirPath) {
     iString *line = new_String();
-    iFile *f = newCStr_File(concatPath_CStr(dirPath, "visited.txt"));
+    iFile *f = newCStr_File(concatPath_CStr(dirPath, "visited.2.txt"));
     if (open_File(f, writeOnly_FileMode | text_FileMode)) {
         lock_Mutex(d->mtx);
         iConstForEach(Array, i, &d->visited.values) {
             const iVisitedUrl *item = i.value;
-            iDate date;
-            init_Date(&date, &item->when);
             format_String(line,
-                          "%04d-%02d-%02dT%02d:%02d:%02d %04x %s\n",
-                          date.year,
-                          date.month,
-                          date.day,
-                          date.hour,
-                          date.minute,
-                          date.second,
+                          "%llu %04x %s\n",
+                          (unsigned long long) integralSeconds_Time(&item->when),
                           item->flags,
                           cstr_String(&item->url));
             writeData_File(f, cstr_String(line), size_String(line));
@@ -100,7 +93,7 @@ void save_Visited(const iVisited *d, const char *dirPath) {
 }
 
 void load_Visited(iVisited *d, const char *dirPath) {
-    iFile *f = newCStr_File(concatPath_CStr(dirPath, "visited.txt"));
+    iFile *f = newCStr_File(concatPath_CStr(dirPath, "visited.2.txt"));
     if (open_File(f, readOnly_FileMode | text_FileMode)) {
         lock_Mutex(d->mtx);
         const iRangecc src  = range_Block(collect_Block(readAll_File(f)));
@@ -108,23 +101,18 @@ void load_Visited(iVisited *d, const char *dirPath) {
         iTime          now;
         initCurrent_Time(&now);
         while (nextSplit_Rangecc(src, "\n", &line)) {
-            if (size_Range(&line) < 22) continue;
-            int y, m, D, H, M, S;
-            sscanf(line.start, "%04d-%02d-%02dT%02d:%02d:%02d ", &y, &m, &D, &H, &M, &S);
-            if (!y) break;
+            if (size_Range(&line) < 8) continue;
+            char *endp = NULL;
+            const unsigned long long ts = strtoull(line.start, &endp, 10);
+            if (ts == 0) break;
+            const uint32_t flags = strtoul(skipSpace_CStr(endp), &endp, 16);
+            const char *urlStart = skipSpace_CStr(endp);
             iVisitedUrl item;
-            init_VisitedUrl(&item);
-            const char *urlStart = line.start + 20;
-            if (*urlStart == '0' && size_Range(&line) >= 25) {
-                item.flags = strtoul(line.start + 20, NULL, 16);
-                urlStart += 5;
-            }
-            init_Time(
-                &item.when,
-                &(iDate){ .year = y, .month = m, .day = D, .hour = H, .minute = M, .second = S });
+            item.when.ts = (struct timespec){ .tv_sec = ts };
             if (secondsSince_Time(&now, &item.when) > maxAge_Visited) {
                 continue; /* Too old. */
             }
+            item.flags = flags;
             initRange_String(&item.url, (iRangecc){ urlStart, line.end });
             insert_SortedArray(&d->visited, &item);
         }

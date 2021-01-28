@@ -107,6 +107,8 @@ When navigating to a new page, the old page is cached in memory. If you navigate
 
 The page cache is saved to a file when Lagrange is shut down so it can be restored on the next launch.
 
+Maximum size of the cache can be configured on the "Network" tab of Preferences. Note that the entire cache is kept in memory at runtime. When the cache fills up, the oldest and largest page content is removed — both factors contribute to the removal. You can set the maximum size to 0 to disable caching altogether, but that will also disable the page content quick search feature.
+
 ### 1.1.4 Opening links in a new tab
 
 Holding down ${CTRL} when left-clicking on a link causes it to open in a new tab. Alternatively, middle-clicking a link has the same effect.
@@ -151,6 +153,7 @@ In addition to a title, bookmarks can have tags. Some tags have a special meanin
 
 => about:bookmarks  The special page "about:bookmarks" is used for exporting bookmarks out of Lagrange.
 It has three different modes that can be opened via menus:
+
 * listing bookmarks alphabetically
 * listing bookmarks grouped by tag
 * listing bookmarks as a feed with creation dates
@@ -218,7 +221,11 @@ As the sidebar is not keyboard-navigable, note that identities can also be acces
 
 ### 1.6.3 Importing existing certificates
 
-At launch, Lagrange looks through its "idents" directory to see if any new certificates have been copied there. (See "Runtime files" below for the location.) The file format must be PEM. Both a certificate (.crt) and its private key (.key) must be found in "idents" and they must have matching file names. For example:
+To import an existing X.509 certificate as an identity, press ${SHIFT+}${CTRL+}I or click on 👤 and select "Import..." (macOS: Identity menu → Import...).
+
+When the Import Identity dialog opens, it checks the currently open page for any certificates and private keys in PEM format. If found, these are automatically loaded in. You can also press ${CTRL+}V to paste PEM-formatted certificates and/or private keys, or drag-and-drop a PEM-formatted .crt/.key files on the Lagrange window while the dialog is open.
+
+Alternatively, you can manually copy the certificate files so Lagrange can find them. At launch, Lagrange looks through its "idents" directory to see if any new certificates have been copied there. (See "Runtime files" below for the location; it is platform-specific) The file format must be PEM. Both a certificate (.crt) and its private key (.key) must be found in "idents" and they must have matching file names. For example:
 * mycert.crt
 * mycert.key
 Lagrange will add a note to the imported identities to mark them as "Imported".
@@ -340,12 +347,12 @@ Other Unix : ~/.config/lagrange/
 * bindings.txt
 * bookmarks.txt
 * feeds.txt
-* idents.binary and idents/
+* idents.lgr and idents/
 * mimehooks.txt
 * prefs.cfg
-* state.binary
+* state.lgr
 * trusted.txt
-* visited.txt
+* visited.2.txt
 
 # 4 MIME hooks
 
