@@ -9,12 +9,12 @@
 ## 1.1
 * Added identity importing: existing client certificates in PEM format can be imported from the current page, from clipboard, or from drag-and-dropped files.
 * Added setting for maximum cache size. This is the amount of fetched data kept in memory for page navigation and content lookup. The default is 10 MB.
-* Added a bold UI font. It is used for unread feed entries and default dialog buttons.
-* Added support for Finger links (courtesy of John Cowan).
 * Added option to show full link URL when hovering on it.
+* Added support for Finger links (courtesy of John Cowan).
 * Added keybindings for page reload, opening link in new tab via home row keys (${SHIFT+}F), and hovering on a link via home row keys (H).
 * Added keybinding for switching to next set of links for home row navigation.
 * Added keybindings for new tab, close tab, adding a bookmark.
+* Added a bold UI font. It is used for unread feed entries and default dialog buttons.
 * Better alignment of quick lookup result icons and labels.
 * Remote bookmarks are grouped under their source in the bookmark list.
 * A bookmark's icon is updated after loading the page so it matches the site.
