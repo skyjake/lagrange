@@ -1156,6 +1156,7 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "privateMode")) {
         d->prefs.privateMode = arg_Command(cmd);
+        
         return iTrue;
     }
     else if (equal_Command(cmd, "saturation.set")) {
@@ -1345,6 +1346,7 @@ iBool handleCommand_App(const char *cmd) {
                 dlg, format_CStr("prefs.saturation.%d", (int) (d->prefs.saturation * 3.99f))),
             selected_WidgetFlag,
             iTrue);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.privateMode"), d->prefs.privateMode);
         setToggle_Widget(findChild_Widget(dlg, "prefs.decodeurls"), d->prefs.decodeUserVisibleURLs);
         setText_InputWidget(findChild_Widget(dlg, "prefs.proxy.gemini"), &d->prefs.geminiProxy);
         setText_InputWidget(findChild_Widget(dlg, "prefs.proxy.gopher"), &d->prefs.gopherProxy);
