@@ -47,6 +47,7 @@ struct Impl_Prefs {
     iBool            hoverLink;
     iBool            smoothScrolling;
     iBool            loadImageInsteadOfScrolling;
+    iBool            privateMode;
     /* Network */
     iBool            decodeUserVisibleURLs;
     iString          geminiProxy;
