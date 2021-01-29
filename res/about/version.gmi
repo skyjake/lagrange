@@ -6,6 +6,9 @@
 ```
 # Release notes
 
+## 1.1.1
+* Fixed word wrapping issue in unread feed entry titles.
+
 ## 1.1
 * Added identity importing: existing client certificates in PEM format can be imported from the current page, from clipboard, or from drag-and-dropped files.
 * Added setting for maximum cache size. This is the amount of fetched data kept in memory for page navigation and content lookup. The default is 10 MB.
