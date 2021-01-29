@@ -637,7 +637,7 @@ void drawBackground_Widget(const iWidget *d) {
         if (d->bgColor >= 0) {
             fillRect_Paint(&p, rect, d->bgColor);
         }
-        if (d->frameColor >= 0) {
+        if (d->frameColor >= 0 && ~d->flags & frameless_WidgetFlag) {
             drawRectThickness_Paint(&p, rect, gap_UI / 4, d->frameColor);
         }
     }

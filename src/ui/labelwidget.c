@@ -128,7 +128,7 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
     /* Default color state. */
     *bg     = isButton ? uiBackground_ColorId : none_ColorId;
     *fg     = uiText_ColorId;
-    *frame1 = isButton ? uiEmboss1_ColorId : uiFrame_ColorId;
+    *frame1 = isButton ? uiEmboss1_ColorId : d->widget.frameColor;
     *frame2 = isButton ? uiEmboss2_ColorId : *frame1;
     if (flags_Widget(w) & disabled_WidgetFlag && isButton) {
         *fg = uiTextDisabled_ColorId;
@@ -207,9 +207,6 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
             drawLines_Paint(&p, points + 2, 3, frame2);
             drawLines_Paint(&p, points, 3, frame);
         }
-        else {
-            drawRect_Paint(&p, frameRect, frame);
-        }
     }
     setClip_Paint(&p, rect);
     if (flags & wrapText_WidgetFlag) {
@@ -285,6 +282,7 @@ void init_LabelWidget(iLabelWidget *d, const char *label, const char *cmd) {
         initCStr_String(&d->command, cmd);
     }
     else {
+        setFrameColor_Widget(&d->widget, uiFrame_ColorId);
         init_String(&d->command);
     }
     d->key   = 0;
