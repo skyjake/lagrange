@@ -1251,8 +1251,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                 int skip  = metaSize.x + advance_Text(uiLabel_FontId, " \u2014 ").x;
                 iInt2 cur = addX_I2(pos, skip);
                 const char *endPos;
-                tryAdvance_Text(
-                    uiContent_FontId, range_String(&d->label), avail - skip, &endPos);
+                tryAdvance_Text(titleFont, range_String(&d->label), avail - skip, &endPos);
                 drawRange_Text(titleFont,
                                cur,
                                labelFg,
