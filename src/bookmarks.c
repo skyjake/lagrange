@@ -155,6 +155,7 @@ void load_Bookmarks(iBookmarks *d, const char *dirPath) {
                 if (isEmpty_Range(&parts.path) && isEmpty_Range(&parts.query)) {
                     appendChar_String(&bm->url, '/');
                 }
+                stripDefaultUrlPort_String(&bm->url);
             }
             nextSplit_Rangecc(src, "\n", &line);
             setRange_String(&bm->title, line);
