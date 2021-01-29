@@ -2005,8 +2005,14 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         /* Find links that aren't already bookmarked. */
         iForEach(PtrArray, i, links) {
             const iGmRun *run = i.ptr;
-            if (findUrl_Bookmarks(bookmarks_App(), linkUrl_GmDocument(d->doc, run->linkId))) {
-                remove_PtrArrayIterator(&i);
+            uint32_t      bmid;
+            if ((bmid = findUrl_Bookmarks(bookmarks_App(),
+                                          linkUrl_GmDocument(d->doc, run->linkId))) != 0) {
+                const iBookmark *bm = get_Bookmarks(bookmarks_App(), bmid);
+                /* We can import local copies of remote bookmarks. */
+                if (!hasTag_Bookmark(bm, "remote")) {
+                    remove_PtrArrayIterator(&i);
+                }
             }
         }
         if (!isEmpty_PtrArray(links)) {
