@@ -9,6 +9,7 @@
 ## 1.1.1
 * Fixed word wrapping issue in unread feed entry titles.
 * Fixed "Import Links as Bookmarks" so it can be used to import local copies of remote bookmarks when viewing the remote source page.
+* Fixed a cosmetic issue in the Import Identity dialog where part of the widget frames were not drawn.
 * Bookmark URLs are normalized by removing the default Gemini port.
 
 ## 1.1
