@@ -3345,16 +3345,11 @@ void deserializeState_DocumentWidget(iDocumentWidget *d, iStream *ins) {
 
 void setUrlFromCache_DocumentWidget(iDocumentWidget *d, const iString *url, iBool isFromCache) {
     d->flags &= ~showLinkNumbers_DocumentWidgetFlag;
-    if (cmpStringSc_String(d->mod.url, url, &iCaseInsensitive)) {
-        set_String(d->mod.url, url);
-        /* See if there a username in the URL. */
-        parseUser_DocumentWidget_(d);
-        if (!isFromCache || !updateFromHistory_DocumentWidget_(d)) {
-            fetch_DocumentWidget_(d);
-        }
-    }
-    else {
-        postCommandf_App("document.changed doc:%p url:%s", d, cstr_String(d->mod.url));
+    set_String(d->mod.url, url);
+    /* See if there a username in the URL. */
+    parseUser_DocumentWidget_(d);
+    if (!isFromCache || !updateFromHistory_DocumentWidget_(d)) {
+        fetch_DocumentWidget_(d);
     }
 }
 
