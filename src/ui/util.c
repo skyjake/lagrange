@@ -764,9 +764,9 @@ iWidget *makeSheet_Widget(const char *id) {
     setFrameColor_Widget(sheet, uiSeparator_ColorId);
     setBackgroundColor_Widget(sheet, uiBackground_ColorId);
     setFlags_Widget(sheet,
-                    mouseModal_WidgetFlag | keepOnTop_WidgetFlag | arrangeVertical_WidgetFlag |
-                        arrangeSize_WidgetFlag | centerHorizontal_WidgetFlag |
-                        overflowScrollable_WidgetFlag,
+                    focusRoot_WidgetFlag | mouseModal_WidgetFlag | keepOnTop_WidgetFlag |
+                        arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag |
+                        centerHorizontal_WidgetFlag | overflowScrollable_WidgetFlag,
                     iTrue);
     return sheet;
 }

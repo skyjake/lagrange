@@ -877,8 +877,22 @@ static const iWidget *findFocusable_Widget_(const iWidget *d, const iWidget *sta
     return NULL;
 }
 
+static const iWidget *findFocusRoot_Widget_(const iWidget *d) {
+    iForEach(ObjectList, i, d->children) {
+        const iWidget *root = findFocusRoot_Widget_(constAs_Widget(i.object));
+        if (root) {
+            return root;
+        }
+    }
+    if (d->flags & focusRoot_WidgetFlag) {
+        return d;
+    }
+    return NULL;
+}
+
 iAny *findFocusable_Widget(const iWidget *startFrom, enum iWidgetFocusDir focusDir) {
-    iWidget *root = get_Window()->root;
+    const iWidget *root = findFocusRoot_Widget_(get_Window()->root);
+    iAssert(root != NULL);
     iBool getNext = (startFrom ? iFalse : iTrue);
     const iWidget *found = findFocusable_Widget_(root, startFrom, &getNext, focusDir);
     if (!found && startFrom) {
