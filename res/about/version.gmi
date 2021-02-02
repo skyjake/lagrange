@@ -12,6 +12,7 @@
 * Fixed word wrapping issue in unread feed entry titles.
 * Fixed "Import Links as Bookmarks" so it can be used to import local copies of remote bookmarks when viewing the remote source page.
 * Fixed a cosmetic issue in the Import Identity dialog where part of the widget frames were not drawn.
+* Fixed opening a URI that contains a fragment in the default browser. The fragment is no longer omitted.
 * Allow reloading the same URL when clicking on a link or bookmark, or pressing Enter in the navbar.
 * Bookmark URLs are normalized by removing the default Gemini port.
 
