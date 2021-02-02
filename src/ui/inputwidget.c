@@ -177,7 +177,6 @@ const iString *text_InputWidget(const iInputWidget *d) {
 void setMaxLen_InputWidget(iInputWidget *d, size_t maxLen) {
     d->maxLen = maxLen;
     d->mode   = (maxLen == 0 ? insert_InputMode : overwrite_InputMode);
-    resize_Array(&d->text, maxLen);
     if (maxLen) {
         /* Set a fixed size. */
         iBlock *content = new_Block(maxLen);
