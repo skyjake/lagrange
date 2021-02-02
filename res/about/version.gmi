@@ -7,6 +7,7 @@
 # Release notes
 
 ## 1.1.1
+* Fixed focus cycling inside dialogs. Widgets outside a dialog are not allowed to be focused.
 * Fixed missing cursor in the New Identity "Valid until" field.
 * Fixed word wrapping issue in unread feed entry titles.
 * Fixed "Import Links as Bookmarks" so it can be used to import local copies of remote bookmarks when viewing the remote source page.

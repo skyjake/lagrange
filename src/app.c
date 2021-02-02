@@ -1008,7 +1008,7 @@ static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
                     sscanf(cstr_String(text_InputWidget(findChild_Widget(dlg, "ident.until"))),
                            "%04u-%u-%u %u:%u:%u",
                            &val[0], &val[1], &val[2], &val[3], &val[4], &val[5]);
-                if (n <= 0 || val[0] < (unsigned) today.year) {
+                if (n <= 0) {
                     makeMessage_Widget(orange_ColorEscape "INVALID DATE",
                                        "Please check the \"Valid until\" date. Examples:\n"
                                        "\u2022 2030\n"
@@ -1022,6 +1022,7 @@ static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
                 until.hour   = n >= 4 ? val[3] : 0;
                 until.minute = n >= 5 ? val[4] : 0;
                 until.second = n == 6 ? val[5] : 0;
+                until.gmtOffsetSeconds = today.gmtOffsetSeconds;
                 /* In the past? */ {
                     iTime now, t;
                     initCurrent_Time(&now);
@@ -1471,6 +1472,7 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "ident.new")) {
         iWidget *dlg = makeIdentityCreation_Widget();
+        setFocus_Widget(findChild_Widget(dlg, "ident.until"));
         setCommandHandler_Widget(dlg, handleIdentityCreationCommands_);
         return iTrue;
     }

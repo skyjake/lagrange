@@ -781,6 +781,7 @@ void init_Window(iWindow *d, iRect rect) {
     }
 #endif
     d->root = new_Widget();
+    setFlags_Widget(d->root, focusRoot_WidgetFlag, iTrue);
     d->presentTime = 0.0;
     d->frameTime = SDL_GetTicks();
     d->loadAnimTimer = 0;

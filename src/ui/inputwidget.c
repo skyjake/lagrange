@@ -331,6 +331,7 @@ void end_InputWidget(iInputWidget *d, iBool accept) {
 }
 
 static void insertChar_InputWidget_(iInputWidget *d, iChar chr) {
+    iWidget *w = as_Widget(d);
     if (d->mode == insert_InputMode) {
         insert_Array(&d->text, d->cursor, &chr);
         d->cursor++;
@@ -341,7 +342,8 @@ static void insertChar_InputWidget_(iInputWidget *d, iChar chr) {
         }
         set_Array(&d->text, d->cursor++, &chr);
         if (d->maxLen && d->cursor == d->maxLen) {
-            setFocus_Widget(NULL);
+            iWidget *nextFocus = findFocusable_Widget(w, forward_WidgetFocusDir);
+            setFocus_Widget(nextFocus == w ? NULL : nextFocus);
         }
     }
     showCursor_InputWidget_(d);
