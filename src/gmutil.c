@@ -49,11 +49,12 @@ void init_Url(iUrl *d, const iString *text) {
     iRegExpMatch m;
     init_RegExpMatch(&m);
     if (matchString_RegExp(urlPattern_, text, &m)) {
-        d->scheme = capturedRange_RegExpMatch(&m, 2);
-        d->host   = capturedRange_RegExpMatch(&m, 4);
-        d->port   = (iRangecc){ d->host.end, d->host.end };
-        d->path   = capturedRange_RegExpMatch(&m, 5);
-        d->query  = capturedRange_RegExpMatch(&m, 6);
+        d->scheme   = capturedRange_RegExpMatch(&m, 2);
+        d->host     = capturedRange_RegExpMatch(&m, 4);
+        d->port     = (iRangecc){ d->host.end, d->host.end };
+        d->path     = capturedRange_RegExpMatch(&m, 5);
+        d->query    = capturedRange_RegExpMatch(&m, 6);
+        d->fragment = capturedRange_RegExpMatch(&m, 8); /* starts with a hash */
         /* Check if the authority contains a port. */
         init_RegExpMatch(&m);
         if (matchRange_RegExp(authPattern_, d->host, &m)) {
@@ -92,6 +93,7 @@ void stripDefaultUrlPort_String(iString *d) {
 }
 
 const iString *urlFragmentStripped_String(const iString *d) {
+    /* Note: Could use `iUrl` here and leave out the fragment. */
     const size_t fragPos = indexOf_String(d, '#');
     if (fragPos != iInvalidPos) {
         return collect_String(newRange_String((iRangecc){ constBegin_String(d),
@@ -264,6 +266,7 @@ const iString *absoluteUrl_String(const iString *d, const iString *urlMaybeRelat
         appendRange_String(absolute, orig.path);
     }
     appendRange_String(absolute, rel.query);
+    appendRange_String(absolute, rel.fragment);
     normalize_String(absolute);
     cleanUrlPath_String(absolute);
     return absolute;

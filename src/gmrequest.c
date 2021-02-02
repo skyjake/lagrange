@@ -493,7 +493,7 @@ void deinit_GmRequest(iGmRequest *d) {
 }
 
 void setUrl_GmRequest(iGmRequest *d, const iString *url) {
-    set_String(&d->url, url);
+    set_String(&d->url, urlFragmentStripped_String(url));
     /* Encode hostname to Punycode here because we want to submit the Punycode domain name
        in the request. (TODO: Pending possible Gemini spec change.) */
     punyEncodeUrlHost_String(&d->url);
