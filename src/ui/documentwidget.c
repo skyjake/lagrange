@@ -3345,7 +3345,7 @@ void deserializeState_DocumentWidget(iDocumentWidget *d, iStream *ins) {
 
 void setUrlFromCache_DocumentWidget(iDocumentWidget *d, const iString *url, iBool isFromCache) {
     d->flags &= ~showLinkNumbers_DocumentWidgetFlag;
-    set_String(d->mod.url, url);
+    set_String(d->mod.url, urlFragmentStripped_String(url));
     /* See if there a username in the URL. */
     parseUser_DocumentWidget_(d);
     if (!isFromCache || !updateFromHistory_DocumentWidget_(d)) {

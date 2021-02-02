@@ -96,6 +96,7 @@ struct Impl_Url {
     iRangecc port;
     iRangecc path;
     iRangecc query;
+    iRangecc fragment;
 };
 
 void            init_Url                (iUrl *, const iString *text);
