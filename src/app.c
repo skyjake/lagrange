@@ -501,6 +501,7 @@ const iString *downloadDir_App(void) {
 }
 
 const iString *debugInfo_App(void) {
+    extern char **environ; /* The environment variables. */
     iApp *d = &app_;
     iString *msg = collectNew_String();
     format_String(msg, "# Debug information\n");
@@ -512,6 +513,11 @@ const iString *debugInfo_App(void) {
                             cstr_String(bookmarkTitle_DocumentWidget(doc)));
         append_String(msg, collect_String(debugInfo_History(history_DocumentWidget(doc))));
     }
+    appendCStr_String(msg, "## Environment\n```\n");
+    for (char **env = environ; *env; env++) {
+        appendFormat_String(msg, "%s\n", *env);
+    }
+    appendCStr_String(msg, "```\n");
     appendFormat_String(msg, "## Launch arguments\n```\n");
     iConstForEach(StringList, i, args_CommandLine(&d->args)) {
         appendFormat_String(msg, "%3zu : %s\n", i.pos, cstr_String(i.value));
@@ -519,7 +525,7 @@ const iString *debugInfo_App(void) {
     appendFormat_String(msg, "```\n## Launch commands\n");
     iConstForEach(StringList, j, d->launchCommands) {
         appendFormat_String(msg, "%s\n", cstr_String(j.value));
-    }    
+    }
     appendFormat_String(msg, "## MIME hooks\n");
     append_String(msg, debugInfo_MimeHooks(d->mimehooks));
     return msg;
