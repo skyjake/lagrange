@@ -685,7 +685,12 @@ static float pixelRatio_Window_(const iWindow *d) {
 #if defined (iPlatformMsys)
     iUnused(d);
     return desktopDPI_Win32();
-#else
+#elif defined (iPlatformLinux)
+    float vdpi = 0.0f;
+    SDL_GetDisplayDPI(SDL_GetWindowDisplayIndex(d->win), NULL, NULL, &vdpi);
+    const float factor = vdpi / 96.0f;
+    return iMax(1.0f, factor);
+#else    
     int dx, x;
     SDL_GetRendererOutputSize(d->render, &dx, NULL);
     SDL_GetWindowSize(d->win, &x, NULL);
@@ -764,6 +769,7 @@ void init_Window(iWindow *d, iRect rect) {
     useExecutableIconResource_SDLWindow(d->win);
 #endif
 #if defined (iPlatformLinux)
+    SDL_SetWindowMinimumSize(d->win, minSize.x * d->pixelRatio, minSize.y * d->pixelRatio);
     /* Load the window icon. */ {
         int w, h, num;
         const iBlock *icon = &imageLagrange64_Embedded;
@@ -1033,7 +1039,7 @@ iInt2 rootSize_Window(const iWindow *d) {
 }
 
 iInt2 coord_Window(const iWindow *d, int x, int y) {
-#if defined (iPlatformMsys)
+#if defined (iPlatformMsys) || defined (iPlatformLinux)
     /* On Windows, surface coordinates are in pixels. */
     return init_I2(x, y);
 #else

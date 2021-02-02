@@ -374,6 +374,14 @@ static void init_App_(iApp *d, int argc, char **argv) {
     /* Must scale by UI scaling factor. */
     mulfv_I2(&d->initialWindowRect.size, desktopDPI_Win32());
 #endif
+#if defined (iPlatformLinux)
+    /* Scale by the primary (?) monitor DPI. */ {
+        float vdpi;
+        SDL_GetDisplayDPI(0, NULL, NULL, &vdpi);
+        const float factor = vdpi / 96.0f;
+        mulfv_I2(&d->initialWindowRect.size, iMax(factor, 1.0f));
+    }
+#endif
     init_Prefs(&d->prefs);
     setCStr_String(&d->prefs.downloadDir, downloadDir_App_);
     d->isRunning         = iFalse;
