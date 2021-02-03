@@ -84,6 +84,9 @@ static const struct { int id; iMenuItem bind; int flags; } defaultBindings_[] = 
     { 70, { "Zoom in",                   SDLK_EQUALS, KMOD_PRIMARY,     "zoom.delta arg:10"  }, 0 },
     { 71, { "Zoom out",                  SDLK_MINUS, KMOD_PRIMARY,      "zoom.delta arg:-10" }, 0 },
     { 72, { "Reset zoom",                SDLK_0, KMOD_PRIMARY,          "zoom.set arg:100"   }, 0 },
+#if !defined (iPlatformApple) /* Ctrl-Cmd-F on macOS */
+    { 73, { "Toggle fullscreen mode",    SDLK_F11, 0,                   "window.fullscreen"  }, 0 },
+#endif
     { 76, { "New tab",                   newTab_KeyShortcut,            "tabs.new"           }, 0 },
     { 77, { "Close tab",                 closeTab_KeyShortcut,          "tabs.close"         }, 0 },
     { 80, { "Previous tab",              prevTab_KeyShortcut,           "tabs.prev"          }, 0 },

@@ -1078,6 +1078,13 @@ iBool handleCommand_App(const char *cmd) {
         SDL_MaximizeWindow(d->window->win);
         return iTrue;
     }
+    else if (equal_Command(cmd, "window.fullscreen")) {
+        SDL_SetWindowFullscreen(d->window->win,
+                                SDL_GetWindowFlags(d->window->win) & SDL_WINDOW_FULLSCREEN_DESKTOP
+                                    ? 0
+                                    : SDL_WINDOW_FULLSCREEN_DESKTOP);
+        return iTrue;
+    }
     else if (equal_Command(cmd, "font.set")) {
         setFreezeDraw_Window(get_Window(), iTrue);
         d->prefs.font = arg_Command(cmd);
