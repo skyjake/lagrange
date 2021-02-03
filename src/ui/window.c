@@ -827,6 +827,10 @@ static iBool isMaximized_Window_(const iWindow *d) {
 #endif
 }
 
+iBool isFullscreen_Window(const iWindow *d) {
+    return (SDL_GetWindowFlags(d->win) & SDL_WINDOW_FULLSCREEN_DESKTOP) != 0;
+}
+
 static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
     switch (ev->event) {
         case SDL_WINDOWEVENT_EXPOSED:
@@ -845,7 +849,7 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
 #endif
             return iFalse;
         case SDL_WINDOWEVENT_MOVED: {
-            if (!isMaximized_Window_(d) && !d->isDrawFrozen) {
+            if (!isMaximized_Window_(d) && !isFullscreen_Window(d) && !d->isDrawFrozen) {
                 d->lastRect.pos = init_I2(ev->data1, ev->data2);
                 iInt2 border = zero_I2();
 #if !defined (iPlatformApple)
@@ -856,7 +860,7 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
             return iTrue;
         }
         case SDL_WINDOWEVENT_RESIZED:
-            if (!isMaximized_Window_(d) && !d->isDrawFrozen) {
+            if (!isMaximized_Window_(d) && !isFullscreen_Window(d) && !d->isDrawFrozen) {
                 d->lastRect.size = init_I2(ev->data1, ev->data2);
             }
             updateRootSize_Window_(d, iTrue /* we were already redrawing during the resize */);

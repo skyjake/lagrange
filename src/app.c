@@ -340,6 +340,7 @@ static void saveState_App_(const iApp *d) {
 #if defined (LAGRANGE_IDLE_SLEEP)
 static uint32_t checkAsleep_App_(uint32_t interval, void *param) {
     iApp *d = param;
+    iUnused(d);
     SDL_Event ev = { .type = SDL_USEREVENT };
     ev.user.code = asleep_UserEventCode;
     SDL_PushEvent(&ev);
