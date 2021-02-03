@@ -39,7 +39,7 @@ void init_Prefs(iPrefs *d) {
     d->headingFont       = nunito_TextFont;
     d->monospaceGemini   = iFalse;
     d->monospaceGopher   = iFalse;
-    d->lineWidth         = 40;
+    d->lineWidth         = 38;
     d->bigFirstParagraph = iTrue;
     d->quoteIcon         = iTrue;
     d->docThemeDark      = colorfulDark_GmDocumentTheme;
