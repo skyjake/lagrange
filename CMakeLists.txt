@@ -22,7 +22,7 @@ project (Lagrange
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
-set (COPYRIGHT_YEAR 2020)
+set (COPYRIGHT_YEAR 2021)
 
 # Build configuration.
 option (ENABLE_MPG123           "Use mpg123 for decoding MPEG audio" ON)
