@@ -6,6 +6,9 @@
 ```
 # Release notes
 
+## 1.2
+* Added keybinding (F11) for toggling fullscreen mode. On macOS, the shortcut is ⌃⌘F as before.
+
 ## 1.1.1
 * Fixed focus cycling inside dialogs. Widgets outside a dialog are not allowed to be focused.
 * Fixed missing cursor in the New Identity "Valid until" field.
