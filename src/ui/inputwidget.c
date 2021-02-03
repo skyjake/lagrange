@@ -223,6 +223,7 @@ static void updateBuffered_InputWidget_(iInputWidget *d) {
 }
 
 void setText_InputWidget(iInputWidget *d, const iString *text) {
+    if (!d) return;
     if (d->inFlags & isUrl_InputWidgetFlag) {
         /* If user wants URLs encoded, also Punycode the domain. */
         if (!prefs_App()->decodeUserVisibleURLs) {

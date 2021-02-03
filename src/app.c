@@ -83,17 +83,17 @@ static const char *dataDir_App_ = "~/AppData/Roaming/fi.skyjake.Lagrange";
 #endif
 #if defined (iPlatformLinux) || defined (iPlatformOther)
 #define EMB_BIN  "../../share/lagrange/resources.lgr"
-static const char *dataDir_App_ = "~/.config/lagrange";
+static const char *defaultDataDir_App_ = "~/.config/lagrange";
 #endif
 #if defined (LAGRANGE_EMB_BIN) /* specified in build config */
 #  undef EMB_BIN
 #  define EMB_BIN LAGRANGE_EMB_BIN
 #endif
 #define EMB_BIN2 "../resources.lgr" /* fallback from build/executable dir */
-static const char *prefsFileName_App_    = "prefs.cfg";
-static const char *oldStateFileName_App_ = "state.binary";
-static const char *stateFileName_App_    = "state.lgr";
-static const char *downloadDir_App_      = "~/Downloads";
+static const char *prefsFileName_App_      = "prefs.cfg";
+static const char *oldStateFileName_App_   = "state.binary";
+static const char *stateFileName_App_      = "state.lgr";
+static const char *defaultDownloadDir_App_ = "~/Downloads";
 
 static const int idleThreshold_App_ = 1000; /* ms */
 
@@ -213,14 +213,42 @@ static iString *serializePrefs_App_(const iApp *d) {
     return str;
 }
 
+static const char *dataDir_App_(void) {
+#if defined (iPlatformLinux) || defined (iPlatformOther)
+    const char *configHome = getenv("XDG_CONFIG_HOME");
+    if (configHome) {
+        return concatPath_CStr(configHome, "lagrange");
+    }
+#endif
+    return defaultDataDir_App_;
+}
+
+static const char *downloadDir_App_(void) {
+#if defined (iPlatformLinux) || defined (iPlatformOther)
+    /* Parse user-dirs.dirs using the `xdg-user-dir` tool. */
+    iProcess *proc = iClob(new_Process());
+    setArguments_Process(
+        proc, iClob(newStringsCStr_StringList("/usr/bin/env", "xdg-user-dir", "DOWNLOAD", NULL)));
+    if (start_Process(proc)) {
+        iString *path = collect_String(newLocal_String(collect_Block(
+            readOutputUntilClosed_Process(proc))));
+        trim_String(path);
+        if (!isEmpty_String(path)) {
+            return cstr_String(path);
+        }
+    }
+#endif
+    return defaultDownloadDir_App_;
+}
+
 static const iString *prefsFileName_(void) {
-    return collect_String(concatCStr_Path(&iStringLiteral(dataDir_App_), prefsFileName_App_));
+    return collectNewCStr_String(concatPath_CStr(dataDir_App_(), prefsFileName_App_));
 }
 
 static void loadPrefs_App_(iApp *d) {
     iUnused(d);
     /* Create the data dir if it doesn't exist yet. */
-    makeDirs_Path(collectNewCStr_String(dataDir_App_));
+    makeDirs_Path(collectNewCStr_String(dataDir_App_()));
     iFile *f = new_File(prefsFileName_());
     if (open_File(f, readOnly_FileMode | text_FileMode)) {
         iString *str = readString_File(f);
@@ -267,8 +295,8 @@ static const char *magicTabDocument_App_ = "tabd";
 
 static iBool loadState_App_(iApp *d) {
     iUnused(d);
-    const char *oldPath = concatPath_CStr(dataDir_App_, oldStateFileName_App_);
-    const char *path    = concatPath_CStr(dataDir_App_, stateFileName_App_);
+    const char *oldPath = concatPath_CStr(dataDir_App_(), oldStateFileName_App_);
+    const char *path    = concatPath_CStr(dataDir_App_(), stateFileName_App_);
     iFile *f = iClob(newCStr_File(fileExistsCStr_FileInfo(path) ? path : oldPath));
     if (open_File(f, readOnly_FileMode)) {
         char magic[4];
@@ -323,7 +351,7 @@ iObjectList *listDocuments_App(void) {
 static void saveState_App_(const iApp *d) {
     iUnused(d);
     trimCache_App();
-    iFile *f = newCStr_File(concatPath_CStr(dataDir_App_, stateFileName_App_));
+    iFile *f = newCStr_File(concatPath_CStr(dataDir_App_(), stateFileName_App_));
     if (open_File(f, writeOnly_FileMode)) {
         writeData_File(f, magicState_App_, 4);
         writeU32_File(f, latest_FileVersion); /* version */
@@ -349,7 +377,7 @@ static uint32_t checkAsleep_App_(uint32_t interval, void *param) {
 #endif
 
 static void init_App_(iApp *d, int argc, char **argv) {
-    const iBool isFirstRun = !fileExistsCStr_FileInfo(cleanedPath_CStr(dataDir_App_));
+    const iBool isFirstRun = !fileExistsCStr_FileInfo(cleanedPath_CStr(dataDir_App_()));
     d->isFinishedLaunching = iFalse;
     d->launchCommands      = new_StringList();
     iZap(d->lastDropTime);
@@ -386,12 +414,12 @@ static void init_App_(iApp *d, int argc, char **argv) {
     }
 #endif
     init_Prefs(&d->prefs);
-    setCStr_String(&d->prefs.downloadDir, downloadDir_App_);
+    setCStr_String(&d->prefs.downloadDir, downloadDir_App_());
     d->isRunning         = iFalse;
     d->window            = NULL;
     set_Atomic(&d->pendingRefresh, iFalse);
     d->mimehooks         = new_MimeHooks();
-    d->certs             = new_GmCerts(dataDir_App_);
+    d->certs             = new_GmCerts(dataDir_App_());
     d->visited           = new_Visited();
     d->bookmarks         = new_Bookmarks();
     d->tabEnum           = 0; /* generates unique IDs for tab pages */
@@ -406,10 +434,10 @@ static void init_App_(iApp *d, int argc, char **argv) {
 #endif
     init_Keys();
     loadPrefs_App_(d);
-    load_Keys(dataDir_App_);
-    load_Visited(d->visited, dataDir_App_);
-    load_Bookmarks(d->bookmarks, dataDir_App_);
-    load_MimeHooks(d->mimehooks, dataDir_App_);
+    load_Keys(dataDir_App_());
+    load_Visited(d->visited, dataDir_App_());
+    load_Bookmarks(d->bookmarks, dataDir_App_());
+    load_MimeHooks(d->mimehooks, dataDir_App_());
     if (isFirstRun) {
         /* Create the default bookmarks for a quick start. */
         add_Bookmarks(d->bookmarks,
@@ -435,7 +463,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     }
 #endif
     d->window = new_Window(d->initialWindowRect);
-    init_Feeds(dataDir_App_);
+    init_Feeds(dataDir_App_());
     /* Widget state init. */
     processEvents_App(postedEventsOnly_AppEventMode);
     if (!loadState_App_(d)) {
@@ -470,13 +498,13 @@ static void init_App_(iApp *d, int argc, char **argv) {
 static void deinit_App(iApp *d) {
     saveState_App_(d);
     deinit_Feeds();
-    save_Keys(dataDir_App_);
+    save_Keys(dataDir_App_());
     deinit_Keys();
     savePrefs_App_(d);
     deinit_Prefs(&d->prefs);
-    save_Bookmarks(d->bookmarks, dataDir_App_);
+    save_Bookmarks(d->bookmarks, dataDir_App_());
     delete_Bookmarks(d->bookmarks);
-    save_Visited(d->visited, dataDir_App_);
+    save_Visited(d->visited, dataDir_App_());
     delete_Visited(d->visited);
     delete_GmCerts(d->certs);
     save_MimeHooks(d->mimehooks);
@@ -495,7 +523,7 @@ const iString *execPath_App(void) {
 }
 
 const iString *dataDir_App(void) {
-    return collect_String(cleanedCStr_Path(dataDir_App_));
+    return collect_String(cleanedCStr_Path(dataDir_App_()));
 }
 
 const iString *downloadDir_App(void) {
@@ -855,8 +883,10 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
     if (equal_Command(cmd, "prefs.dismiss") || equal_Command(cmd, "preferences")) {
         setUiScale_Window(get_Window(),
                           toFloat_String(text_InputWidget(findChild_Widget(d, "prefs.uiscale"))));
+#if defined (LAGRANGE_DOWNLOAD_EDIT)
         postCommandf_App("downloads path:%s",
                          cstr_String(text_InputWidget(findChild_Widget(d, "prefs.downloads"))));
+#endif
         postCommandf_App("window.retain arg:%d",
                          isSelected_Widget(findChild_Widget(d, "prefs.retainwindow")));
         postCommandf_App("smoothscroll arg:%d",
@@ -1457,7 +1487,7 @@ iBool handleCommand_App(const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "bookmarks.changed")) {
-        save_Bookmarks(d->bookmarks, dataDir_App_);
+        save_Bookmarks(d->bookmarks, dataDir_App_());
         return iFalse;
     }
     else if (equal_Command(cmd, "feeds.refresh")) {
@@ -1476,7 +1506,7 @@ iBool handleCommand_App(const char *cmd) {
         return iFalse;
     }
     else if (equal_Command(cmd, "visited.changed")) {
-        save_Visited(d->visited, dataDir_App_);
+        save_Visited(d->visited, dataDir_App_());
         return iFalse;
     }
     else if (equal_Command(cmd, "ident.new")) {
