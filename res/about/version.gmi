@@ -9,12 +9,19 @@
 ## 1.1.1
 * Fixed focus cycling inside dialogs. Widgets outside a dialog are not allowed to be focused.
 * Fixed missing cursor in the New Identity "Valid until" field.
-* Fixed word wrapping issue in unread feed entry titles.
 * Fixed "Import Links as Bookmarks" so it can be used to import local copies of remote bookmarks when viewing the remote source page.
 * Fixed a cosmetic issue in the Import Identity dialog where part of the widget frames were not drawn.
+* Fixed word wrapping issue in unread feed entry titles.
 * Fixed opening a URI that contains a fragment in the default browser. The fragment is no longer omitted.
+* Fixed default value for the Line Width setting.
+* Linux: Check monitor DPI for UI scaling like on Windows and macOS.
 * Allow reloading the same URL when clicking on a link or bookmark, or pressing Enter in the navbar.
 * Bookmark URLs are normalized by removing the default Gemini port.
+* Added a list of environment variables to "about:debug".
+* XDG: Respect `XDG_CONFIG_HOME` environment variable for storing user files.
+* XDG: Use the configured XDG download directory as default Downloads location.
+* The default set of bookmarks now uses a remote source.
+=> gemini://skyjake.fi/lagrange/getting_started.gmi  "Getting Started" bookmarks
 
 ## 1.1
 * Added identity importing: existing client certificates in PEM format can be imported from the current page, from clipboard, or from drag-and-dropped files.
