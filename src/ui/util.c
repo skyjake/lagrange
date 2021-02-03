@@ -1023,6 +1023,7 @@ static void makeTwoColumnHeading_(const char *title, iWidget *headings, iWidget 
 }
 
 static void expandInputFieldWidth_(iInputWidget *input) {
+    if (!input) return;
     iWidget *page = as_Widget(input)->parent->parent->parent->parent; /* tabs > page > values > input */
     as_Widget(input)->rect.size.x =
         right_Rect(bounds_Widget(page)) - left_Rect(bounds_Widget(constAs_Widget(input)));
@@ -1056,8 +1057,10 @@ iWidget *makePreferences_Widget(void) {
     iWidget *headings, *values;
     /* General preferences. */ {
         appendTwoColumnPage_(tabs, "General", '1', &headings, &values);
+#if defined (LAGRANGE_DOWNLOAD_EDIT)
         addChild_Widget(headings, iClob(makeHeading_Widget("Downloads folder:")));
         setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.downloads");
+#endif
         addChild_Widget(headings, iClob(makeHeading_Widget("Show URL on hover:")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.hoverlink")));
         addChild_Widget(headings, iClob(makeHeading_Widget("Smooth scrolling:")));
