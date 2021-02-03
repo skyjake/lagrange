@@ -45,6 +45,26 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.1.1" date="2021-02-03">
+            <description>
+                <p>Miscellaneous fixes for bugs and other incorrect behavior:</p>
+                <ul>
+                    <li>Monitor DPI will now affect UI scaling.</li>
+                    <li>Input focus can no longer be cycled outside an open dialog.</li>
+                    <li>Missing cursor and invalid data in the New Identity "Valid until" field.</li>
+                    <li>Missing frames in the Import Identity dialog.</li>
+                    <li>Word wrapping slightly off in unread feed entry titles.</li>
+                    <li>URI fragments should not be stripped from all links.</li>
+                    <li>Allow reloading the same URL when clicking on a link or bookmark, 
+                        or pressing Enter in the navbar.</li>
+                    <li>Existing bookmark URLs are normalized like all other URLs.</li>
+                    <li>"Import Links as Bookmarks" can be used on an active bookmark source page.</li>
+                    <li>Fixed default values for preferences: line width, Downloads directory.</li>
+                    <li>Store files in XDG user directories.</li>
+                </ul>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.1.1</url>
+        </release>
         <release version="1.1" date="2021-01-28">
             <description>
                 <p>
