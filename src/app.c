@@ -353,7 +353,9 @@ static void init_App_(iApp *d, int argc, char **argv) {
     d->launchCommands      = new_StringList();
     iZap(d->lastDropTime);
     init_CommandLine(&d->args, argc, argv);
-    /* Where was the app started from? */ {
+    /* Where was the app started from? We ask SDL first because the command line alone is
+       not a reliable source of this information, particularly when it comes to different
+       operating systems. */ {
         char *exec = SDL_GetBasePath();
         if (exec) {
             d->execPath = newCStr_String(concatPath_CStr(
@@ -410,25 +412,16 @@ static void init_App_(iApp *d, int argc, char **argv) {
     if (isFirstRun) {
         /* Create the default bookmarks for a quick start. */
         add_Bookmarks(d->bookmarks,
-                      collectNewCStr_String("gemini://gemini.circumlunar.space/"),
-                      collectNewCStr_String("Project Gemini"),
-                      NULL,
-                      0x264a /* Gemini symbol */);
-        add_Bookmarks(d->bookmarks,
-                      collectNewCStr_String("gemini://gemini.circumlunar.space/capcom/"),
-                      collectNewCStr_String("CAPCOM Geminispace aggregator"),
-                      NULL,
-                      0x264a /* Gemini symbol */);
-        add_Bookmarks(d->bookmarks,
-                      collectNewCStr_String("gemini://gus.guru/"),
-                      collectNewCStr_String("GUS - Gemini Universal Search"),
-                      NULL,
-                      0x2690);
-        add_Bookmarks(d->bookmarks,
                       collectNewCStr_String("gemini://skyjake.fi/lagrange/"),
                       collectNewCStr_String("Lagrange"),
                       NULL,
                       0x1f306);
+        add_Bookmarks(d->bookmarks,
+                      collectNewCStr_String("gemini://skyjake.fi/lagrange/getting_started.gmi"),
+                      collectNewCStr_String("Getting Started"),
+                      collectNewCStr_String("remotesource"),
+                      0x1f306);
+        fetchRemote_Bookmarks(d->bookmarks);
     }
 #if defined (iHaveLoadEmbed)
     /* Load the resources from a file. */ {
