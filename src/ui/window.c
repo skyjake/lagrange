@@ -831,6 +831,11 @@ iBool isFullscreen_Window(const iWindow *d) {
     return (SDL_GetWindowFlags(d->win) & SDL_WINDOW_FULLSCREEN_DESKTOP) != 0;
 }
 
+static void invalidate_Window_(iWindow *d) {
+    resetFonts_Text();
+    postCommand_App("theme.changed"); /* forces UI invalidation */
+}
+
 static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
     switch (ev->event) {
         case SDL_WINDOWEVENT_EXPOSED:
@@ -864,6 +869,9 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
                 d->lastRect.size = init_I2(ev->data1, ev->data2);
             }
             updateRootSize_Window_(d, iTrue /* we were already redrawing during the resize */);
+            return iTrue;
+        case SDL_WINDOWEVENT_RESTORED:
+            invalidate_Window_(d);
             return iTrue;
         case SDL_WINDOWEVENT_LEAVE:
             unhover_Widget();
@@ -904,8 +912,7 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
         }
         case SDL_RENDER_TARGETS_RESET:
         case SDL_RENDER_DEVICE_RESET: {
-            resetFonts_Text();
-            postCommand_App("theme.changed"); /* forces UI invalidation */
+            invalidate_Window_(d);
             break;
         }
         default: {
