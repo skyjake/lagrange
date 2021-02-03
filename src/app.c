@@ -75,11 +75,11 @@ iDeclareType(App)
 
 #if defined (iPlatformApple)
 #define EMB_BIN "../../Resources/resources.lgr"
-static const char *dataDir_App_ = "~/Library/Application Support/fi.skyjake.Lagrange";
+static const char *defaultDataDir_App_ = "~/Library/Application Support/fi.skyjake.Lagrange";
 #endif
 #if defined (iPlatformMsys)
 #define EMB_BIN "../resources.lgr"
-static const char *dataDir_App_ = "~/AppData/Roaming/fi.skyjake.Lagrange";
+static const char *defaultDataDir_App_ = "~/AppData/Roaming/fi.skyjake.Lagrange";
 #endif
 #if defined (iPlatformLinux) || defined (iPlatformOther)
 #define EMB_BIN  "../../share/lagrange/resources.lgr"
@@ -1585,7 +1585,7 @@ void openInDefaultBrowser_App(const iString *url) {
 
 void revealPath_App(const iString *path) {
 #if defined (iPlatformApple)
-    const char *scriptPath = concatPath_CStr(dataDir_App_, "revealfile.scpt");
+    const char *scriptPath = concatPath_CStr(dataDir_App_(), "revealfile.scpt");
     iFile *f = newCStr_File(scriptPath);
     if (open_File(f, writeOnly_FileMode | text_FileMode)) {
         /* AppleScript to select a specific file. */
