@@ -75,11 +75,11 @@ iDeclareType(App)
 
 #if defined (iPlatformApple)
 #define EMB_BIN "../../Resources/resources.lgr"
-static const char *dataDir_App_ = "~/Library/Application Support/fi.skyjake.Lagrange";
+static const char *defaultDataDir_App_ = "~/Library/Application Support/fi.skyjake.Lagrange";
 #endif
 #if defined (iPlatformMsys)
 #define EMB_BIN "../resources.lgr"
-static const char *dataDir_App_ = "~/AppData/Roaming/fi.skyjake.Lagrange";
+static const char *defaultDataDir_App_ = "~/AppData/Roaming/fi.skyjake.Lagrange";
 #endif
 #if defined (iPlatformLinux) || defined (iPlatformOther)
 #define EMB_BIN  "../../share/lagrange/resources.lgr"
@@ -368,6 +368,7 @@ static void saveState_App_(const iApp *d) {
 #if defined (LAGRANGE_IDLE_SLEEP)
 static uint32_t checkAsleep_App_(uint32_t interval, void *param) {
     iApp *d = param;
+    iUnused(d);
     SDL_Event ev = { .type = SDL_USEREVENT };
     ev.user.code = asleep_UserEventCode;
     SDL_PushEvent(&ev);
@@ -1577,7 +1578,7 @@ void openInDefaultBrowser_App(const iString *url) {
 
 void revealPath_App(const iString *path) {
 #if defined (iPlatformApple)
-    const char *scriptPath = concatPath_CStr(dataDir_App_, "revealfile.scpt");
+    const char *scriptPath = concatPath_CStr(dataDir_App_(), "revealfile.scpt");
     iFile *f = newCStr_File(scriptPath);
     if (open_File(f, writeOnly_FileMode | text_FileMode)) {
         /* AppleScript to select a specific file. */
