@@ -7,7 +7,9 @@
 # Release notes
 
 ## 1.2
+* The default set of bookmarks now use a remote source.
 * Added keybinding (F11) for toggling fullscreen mode. On macOS, the shortcut is ⌃⌘F as before.
+=> gemini://skyjake.fi/lagrange/getting_started.gmi  "Getting Started" bookmarks
 
 ## 1.1.1
 * Fixed focus cycling inside dialogs. Widgets outside a dialog are not allowed to be focused.
@@ -227,7 +229,6 @@
 
 ## 0.5
 * Added MP3 support in the audio player (using mpg123).
-=> https://mpg123.org/ mpg123: MPEG audio player and decoder library
 * Added volume control in the audio player.
 * Metadata in Vorbis and MP3 audio content (title, artist, etc.) is shown in the audio player menu.
 * Added new serif fonts: EB Garamond and Literata.
@@ -237,6 +238,7 @@
 * Open links in new tab with middle mouse button.
 * Fixed failure to find resources when launching via PATH.
 * Fixed color saturation setting not affecting the default color theme.
+=> https://mpg123.org/ mpg123: MPEG audio player and decoder library
 
 ## 0.4.1
 * Set keyboard focus to URL input field after opening a new tab.
@@ -248,8 +250,7 @@
 * Windows: All binaries are signed.
 
 ## 0.4
-* Added audio playback with support for streaming. Supported audio formats in this release are WAV (PCM, mono/stereo, 8/16/24/32 integer/float) and Ogg Vorbis. Shoutout to Sean Barrett et al. for stb_vorbis:
-=> https://github.com/nothings/stb stb: single-file public domain libraries for C/C++
+* Added audio playback with support for streaming. Supported audio formats in this release are WAV (PCM, mono/stereo, 8/16/24/32 integer/float) and Ogg Vorbis. Shoutout to Sean Barrett et al. for stb_vorbis.
 * Added inline audio player that works like inline images. Clicking on an audio link opens the audio player below the link (works for URLs that have file extension .wav/.ogg).
 * Visual fine-tuning: increased Fira Sans line spacing; list bullets use an accent color; adjusted accent colors in the light mode palette.
 * Sidebar has a maximum width — the document must remain visible.
@@ -257,6 +258,7 @@
 * macOS: Use OpenGL on 10.13 for potentially better compatibility.
 * Fixed a memory leak when closing tabs.
 * Fixed unnecessary continual window redrawing related to the scrollbar hover outline.
+=> https://github.com/nothings/stb stb: single-file public domain libraries for C/C++
 
 ## 0.3
 * Added style customization.
