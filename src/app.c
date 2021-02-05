@@ -61,7 +61,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <stdarg.h>
 #include <errno.h>
 
-#if defined (iPlatformApple) && !defined (iPlatformIOS)
+#if defined (iPlatformAppleDesktop)
 #   include "macos.h"
 #endif
 #if defined (iPlatformMsys)
@@ -73,9 +73,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 iDeclareType(App)
 
-#if defined (iPlatformApple)
+#if defined (iPlatformAppleDesktop)
 #define EMB_BIN "../../Resources/resources.lgr"
 static const char *defaultDataDir_App_ = "~/Library/Application Support/fi.skyjake.Lagrange";
+#endif
+#if defined (iPlatformAppleMobile)
+#define EMB_BIN "../../Resources/resources.lgr"
+static const char *defaultDataDir_App_ = "~/config";
 #endif
 #if defined (iPlatformMsys)
 #define EMB_BIN "../resources.lgr"
@@ -429,7 +433,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     d->lastEventTime = 0;
     d->sleepTimer    = SDL_AddTimer(1000, checkAsleep_App_, d);
 #endif
-#if defined (iPlatformApple)
+#if defined (iPlatformAppleDesktop)
     setupApplication_MacOS();
 #endif
     init_Keys();
@@ -628,7 +632,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     wasUsed = processEvent_Keys(&ev);
                 }
                 if (ev.type == SDL_USEREVENT && ev.user.code == command_UserEventCode) {
-#if defined (iPlatformApple) && !defined (iPlatformIOS)
+#if defined (iPlatformAppleDesktop)
                     handleCommand_MacOS(command_UserEvent(&ev));
 #endif
                     if (isCommand_UserEvent(&ev, "metrics.changed")) {
@@ -1565,9 +1569,10 @@ void openInDefaultBrowser_App(const iString *url) {
         return;
     }
 #endif
+#if !defined (iPlatformAppleMobile)
     iProcess *proc = new_Process();
     setArguments_Process(proc,
-#if defined (iPlatformApple)
+#if defined (iPlatformAppleDesktop)
                          iClob(newStringsCStr_StringList("/usr/bin/env", "open", cstr_String(url), NULL))
 #elif defined (iPlatformLinux) || defined (iPlatformOther)
                          iClob(newStringsCStr_StringList("/usr/bin/env", "xdg-open", cstr_String(url), NULL))
@@ -1581,10 +1586,11 @@ void openInDefaultBrowser_App(const iString *url) {
     );
     start_Process(proc);
     iRelease(proc);
+#endif
 }
 
 void revealPath_App(const iString *path) {
-#if defined (iPlatformApple)
+#if defined (iPlatformAppleDesktop)
     const char *scriptPath = concatPath_CStr(dataDir_App_(), "revealfile.scpt");
     iFile *f = newCStr_File(scriptPath);
     if (open_File(f, writeOnly_FileMode | text_FileMode)) {

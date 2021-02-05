@@ -22,8 +22,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "app.h"
 
-#if defined (iPlatformApple)
+#if defined (iPlatformAppleDesktop)
 #  include "macos.h"
+#endif
+#if defined (iPlatformAppleMobile)
+#  include "ios.h"
 #endif
 #if defined (iPlatformMsys)
 #  include "win32.h"
@@ -41,7 +44,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 int main(int argc, char **argv) {
     printf("Lagrange: A Beautiful Gemini Client\n");
     signal(SIGPIPE, SIG_IGN);
-#if defined (iPlatformApple)
+#if defined (iPlatformAppleDesktop)
     enableMomentumScroll_MacOS();
     registerURLHandler_MacOS();
 #endif

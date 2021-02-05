@@ -251,7 +251,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     addChildFlags_Widget(w,
                          iClob(new_IndicatorWidget()),
                          resizeToParentWidth_WidgetFlag | resizeToParentHeight_WidgetFlag);
-#if !defined (iPlatformApple) /* in system menu */
+#if !defined (iPlatformAppleDesktop) /* in system menu */
     addAction_Widget(w, reload_KeyShortcut, "navigate.reload");
     addAction_Widget(w, closeTab_KeyShortcut, "tabs.close");
     addAction_Widget(w, SDLK_d, KMOD_PRIMARY, "bookmark.add");

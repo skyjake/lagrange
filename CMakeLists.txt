@@ -35,21 +35,7 @@ option (ENABLE_DOWNLOAD_EDIT    "Allow changing the Downloads directory" ON)
 
 include (BuildType.cmake)
 include (res/Embed.cmake)
-if (NOT EXISTS ${CMAKE_SOURCE_DIR}/lib/the_Foundation/CMakeLists.txt)
-    set (INSTALL_THE_FOUNDATION YES)
-    find_package (the_Foundation REQUIRED)
-else ()
-    set (INSTALL_THE_FOUNDATION NO)
-    set (TFDN_STATIC_LIBRARY    ON  CACHE BOOL "")
-    set (TFDN_ENABLE_INSTALL    OFF CACHE BOOL "")
-    set (TFDN_ENABLE_TESTS      OFF CACHE BOOL "")
-    set (TFDN_ENABLE_WEBREQUEST OFF CACHE BOOL "")
-    add_subdirectory (lib/the_Foundation)
-    add_library (the_Foundation::the_Foundation ALIAS the_Foundation)
-endif ()
-find_package (PkgConfig REQUIRED)
-pkg_check_modules (SDL2 REQUIRED sdl2)
-pkg_check_modules (MPG123 IMPORTED_TARGET libmpg123)
+include (Depends.cmake)
 
 # Embedded resources are written to a generated source file.
 message (STATUS "Preparing embedded resources...")
@@ -183,7 +169,10 @@ set (SOURCES
     ${CMAKE_CURRENT_BINARY_DIR}/embedded.h
 )
 if (IOS)
+    add_definitions (-DiPlatformAppleMobile=1)
+    list (APPEND SOURCES src/ios.m src/ios.h)
 elseif (APPLE)
+    add_definitions (-DiPlatformAppleDesktop=1)
     list (APPEND SOURCES src/macos.m src/macos.h)
     list (APPEND RESOURCES "res/Lagrange.icns")
 endif ()
@@ -238,13 +227,20 @@ if (APPLE)
     else ()
         target_link_libraries (app PUBLIC "-framework AppKit")
     endif ()
-    if (CMAKE_OSX_DEPLOYMENT_TARGET)
+    if (CMAKE_OSX_DEPLOYMENT_TARGET AND NOT IOS)
         target_compile_options (app PUBLIC -mmacosx-version-min=${CMAKE_OSX_DEPLOYMENT_TARGET})
         target_link_options (app PUBLIC -mmacosx-version-min=${CMAKE_OSX_DEPLOYMENT_TARGET})
     endif ()
+    if (XCODE_DEVELOPMENT_TEAM)
+        set_property (TARGET app PROPERTY 
+            XCODE_ATTRIBUTE_DEVELOPMENT_TEAM ${XCODE_DEVELOPMENT_TEAM}
+        )
+    endif ()
+    if (SDL2_LIBRARY_DIRS)
+        set_property (TARGET app PROPERTY BUILD_RPATH ${SDL2_LIBRARY_DIRS})
+    endif ()
     set_target_properties (app PROPERTIES
         OUTPUT_NAME "Lagrange"
-        BUILD_RPATH ${SDL2_LIBRARY_DIRS}
         MACOSX_BUNDLE YES
         MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_LIST_DIR}/res/MacOSXBundleInfo.plist.in"
         MACOSX_BUNDLE_BUNDLE_NAME "Lagrange"

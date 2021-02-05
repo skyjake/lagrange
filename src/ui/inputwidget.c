@@ -31,7 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <SDL_clipboard.h>
 #include <SDL_timer.h>
 
-#if defined (iPlatformApple)
+#if defined (iPlatformAppleDesktop)
 #   include "macos.h"
 #endif
 
@@ -39,7 +39,7 @@ static const int    refreshInterval_InputWidget_ = 256;
 static const size_t maxUndo_InputWidget_         = 64;
 
 static void enableEditorKeysInMenus_(iBool enable) {
-#if defined (iPlatformApple)
+#if defined (iPlatformAppleDesktop)
     enableMenuItemsByKey_MacOS(SDLK_LEFT, KMOD_PRIMARY, enable);
     enableMenuItemsByKey_MacOS(SDLK_RIGHT, KMOD_PRIMARY, enable);
 #else

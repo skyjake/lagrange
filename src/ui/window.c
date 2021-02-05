@@ -41,7 +41,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #if defined (iPlatformMsys)
 #   include "../win32.h"
 #endif
-#if defined (iPlatformApple) && !defined (iPlatformIOS)
+#if defined (iPlatformAppleDesktop)
 #   include "macos.h"
 #endif
 
@@ -92,7 +92,7 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
     return iFalse;
 }
 
-#if defined (iPlatformApple)
+#if defined (iPlatformAppleDesktop)
 #  define iHaveNativeMenus
 #endif
 
@@ -724,8 +724,10 @@ void init_Window(iWindow *d, iRect rect) {
     d->isMouseInside = iTrue;
     d->focusGainedAt = 0;
     uint32_t flags = 0;
-#if defined (iPlatformApple)
+#if defined (iPlatformAppleDesktop)
     SDL_SetHint(SDL_HINT_RENDER_DRIVER, shouldDefaultToMetalRenderer_MacOS() ? "metal" : "opengl");
+#elif defined (iPlatformAppleMobile)
+    SDL_SetHint(SDL_HINT_RENDER_DRIVER, "metal");
 #else
     flags |= SDL_WINDOW_OPENGL;
 #endif

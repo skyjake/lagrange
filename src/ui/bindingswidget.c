@@ -26,7 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "command.h"
 #include "util.h"
 #include "app.h"
-#if defined (iPlatformApple)
+#if defined (iPlatformAppleDesktop)
 #   include "macos.h"
 #endif
 
@@ -140,7 +140,7 @@ static void setActiveItem_BindingsWidget_(iBindingsWidget *d, size_t pos) {
         item->isWaitingForEvent = iTrue;
         invalidateItem_ListWidget(d->list, d->activePos);
     }
-#if defined (iPlatformApple)
+#if defined (iPlatformAppleDesktop)
     /* Native menus must be disabled while grabbing keys so the shortcuts don't trigger. */
     const iBool enableNativeMenus = (d->activePos == iInvalidPos);
     enableMenu_MacOS("Edit", enableNativeMenus);
