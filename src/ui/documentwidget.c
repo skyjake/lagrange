@@ -450,28 +450,26 @@ static void invalidateWideRunsWithNonzeroOffset_DocumentWidget_(iDocumentWidget 
 static void updateHover_DocumentWidget_(iDocumentWidget *d, iInt2 mouse) {
     const iWidget *w            = constAs_Widget(d);
     const iRect    docBounds    = documentBounds_DocumentWidget_(d);
-    const iGmRun * oldHoverLink = d->hoverLink;
-    d->hoverLink                = NULL;
     const iInt2 hoverPos = addY_I2(sub_I2(mouse, topLeft_Rect(docBounds)), value_Anim(&d->scrollY));
+
+    if (d->hoverLink) {
+        invalidateLink_DocumentWidget_(d, d->hoverLink->linkId);
+        d->hoverLink = NULL;
+    }
+
     if (isHover_Widget(w) && (~d->flags & noHoverWhileScrolling_DocumentWidgetFlag) &&
         (d->state == ready_RequestState || d->state == receivedPartialResponse_RequestState)) {
         iConstForEach(PtrArray, i, &d->visibleLinks) {
             const iGmRun *run = i.ptr;
+            invalidateLink_DocumentWidget_(d, run->linkId);
             if (contains_Rect(run->bounds, hoverPos)) {
                 d->hoverLink = run;
                 break;
             }
         }
     }
-    if (d->hoverLink != oldHoverLink) {
-        if (oldHoverLink) {
-            invalidateLink_DocumentWidget_(d, oldHoverLink->linkId);
-        }
-        if (d->hoverLink) {
-            invalidateLink_DocumentWidget_(d, d->hoverLink->linkId);
-        }
-        refresh_Widget(as_Widget(d));
-    }
+    refresh_Widget(as_Widget(d));
+
     if (isHover_Widget(w) && !contains_Widget(constAs_Widget(d->scroll), mouse)) {
         setCursor_Window(get_Window(),
                          d->hoverLink ? SDL_SYSTEM_CURSOR_HAND : SDL_SYSTEM_CURSOR_IBEAM);
@@ -2493,6 +2491,8 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
     switch (processEvent_Click(&d->click, ev)) {
         case started_ClickResult:
             iChangeFlags(d->flags, selecting_DocumentWidgetFlag, iFalse);
+            const iInt2 mpos = init_I2(ev->motion.x, ev->motion.y);
+            updateHover_DocumentWidget_(d, mpos);
             return iTrue;
         case drag_ClickResult: {
             if (d->grabbedPlayer) {
