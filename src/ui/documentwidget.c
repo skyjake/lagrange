@@ -1188,7 +1188,6 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
             case categoryInput_GmStatusCode: {
                 iUrl parts;
                 init_Url(&parts, d->mod.url);
-//                printf("%s\n", cstr_String(meta_GmRequest(d->request)));
                 iWidget *dlg = makeValueInput_Widget(
                     as_Widget(d),
                     NULL,
@@ -1197,10 +1196,12 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                         ? format_CStr("Please enter input for %s:", cstr_Rangecc(parts.path))
                         : cstr_String(&resp->meta),
                     uiTextCaution_ColorEscape "Send \u21d2",
-                    "document.input.submit");
+                    format_CStr("!document.input.submit doc:%p", d));
                 setSensitiveContent_InputWidget(findChild_Widget(dlg, "input"),
                                                 statusCode == sensitiveInput_GmStatusCode);
-                updateTheme_DocumentWidget_(d);
+                if (document_App() != d) {
+                    postCommandf_App("tabs.switch page:%p", d);
+                }
                 break;
             }
             case categorySuccess_GmStatusCode:
@@ -1701,7 +1702,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         }
         return iTrue;
     }
-    else if (equal_Command(cmd, "document.input.submit") && document_App() == d) {
+    else if (equal_Command(cmd, "document.input.submit") && document_Command(cmd) == d) {
         iString *value = suffix_Command(cmd, "value");
         set_String(value, collect_String(urlEncode_String(value)));
         iString *url = collect_String(copy_String(d->mod.url));
