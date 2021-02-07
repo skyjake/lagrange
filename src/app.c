@@ -224,6 +224,14 @@ static const char *dataDir_App_(void) {
         return concatPath_CStr(configHome, "lagrange");
     }
 #endif
+#if defined (iPlatformMsys)
+    /* Check for a portable userdata directory. */
+    iApp *d = &app_;
+    const char *userDir = concatPath_CStr(cstr_String(d->execPath), "..\\userdata");
+    if (fileExistsCStr_FileInfo(userDir)) {
+        return userDir;
+    }
+#endif
     return defaultDataDir_App_;
 }
 
@@ -381,10 +389,6 @@ static uint32_t checkAsleep_App_(uint32_t interval, void *param) {
 #endif
 
 static void init_App_(iApp *d, int argc, char **argv) {
-    const iBool isFirstRun = !fileExistsCStr_FileInfo(cleanedPath_CStr(dataDir_App_()));
-    d->isFinishedLaunching = iFalse;
-    d->launchCommands      = new_StringList();
-    iZap(d->lastDropTime);
     init_CommandLine(&d->args, argc, argv);
     /* Where was the app started from? We ask SDL first because the command line alone is
        not a reliable source of this information, particularly when it comes to different
@@ -399,6 +403,10 @@ static void init_App_(iApp *d, int argc, char **argv) {
         }
         SDL_free(exec);
     }
+    const iBool isFirstRun = !fileExistsCStr_FileInfo(cleanedPath_CStr(dataDir_App_()));
+    d->isFinishedLaunching = iFalse;
+    d->launchCommands      = new_StringList();
+    iZap(d->lastDropTime);
     init_SortedArray(&d->tickers, sizeof(iTicker), cmp_Ticker_);
     d->lastTickerTime         = SDL_GetTicks();
     d->elapsedSinceLastTicker = 0;
