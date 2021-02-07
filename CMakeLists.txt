@@ -29,6 +29,7 @@ option (ENABLE_MPG123           "Use mpg123 for decoding MPEG audio" ON)
 option (ENABLE_X11_SWRENDER     "Use software rendering under X11" OFF)
 option (ENABLE_KERNING          "Enable kerning in font renderer (slower)" ON)
 option (ENABLE_RESOURCE_EMBED   "Embed resources inside the executable" OFF)
+option (ENABLE_RELATIVE_EMBED   "Resources should always be found via relative path" OFF)
 option (ENABLE_WINDOWPOS_FIX    "Set position after showing window (workaround for SDL bug)" OFF)
 option (ENABLE_IDLE_SLEEP       "While idle, sleep in the main thread instead of waiting for events" ON)
 option (ENABLE_DOWNLOAD_EDIT    "Allow changing the Downloads directory" ON)
@@ -307,8 +308,10 @@ MimeType=x-scheme-handler/gemini;x-scheme-handler/gopher
         DESTINATION share/metainfo
     )
     if (NOT ENABLE_RESOURCE_EMBED)
-        target_compile_definitions (app PUBLIC
-            LAGRANGE_EMB_BIN="${CMAKE_INSTALL_PREFIX}/share/lagrange/resources.lgr")
+        if (NOT ENABLE_RELATIVE_EMBED)
+            target_compile_definitions (app PUBLIC
+                LAGRANGE_EMB_BIN="${CMAKE_INSTALL_PREFIX}/share/lagrange/resources.lgr")
+        endif ()
         install (FILES ${EMB_BIN} DESTINATION share/lagrange)
     endif ()
 endif ()
