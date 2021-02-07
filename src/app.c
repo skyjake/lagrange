@@ -403,7 +403,8 @@ static void init_App_(iApp *d, int argc, char **argv) {
         }
         SDL_free(exec);
     }
-    const iBool isFirstRun = !fileExistsCStr_FileInfo(cleanedPath_CStr(dataDir_App_()));
+    const iBool isFirstRun =
+        !fileExistsCStr_FileInfo(cleanedPath_CStr(concatPath_CStr(dataDir_App_(), "prefs.cfg")));
     d->isFinishedLaunching = iFalse;
     d->launchCommands      = new_StringList();
     iZap(d->lastDropTime);
