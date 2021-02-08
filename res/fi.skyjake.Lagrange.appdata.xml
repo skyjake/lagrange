@@ -22,6 +22,7 @@
             communications.
         </p>
     </description>
+    <content_rating type="oars-1.0" />
 
     <launchable type="desktop-id">fi.skyjake.Lagrange.desktop</launchable>
 
