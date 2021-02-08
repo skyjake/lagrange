@@ -8,6 +8,7 @@
 
 ## 1.2
 * Added keybinding (F11) for toggling fullscreen mode. On macOS, the shortcut is ⌃⌘F as before.
+* Windows: Added support for portable deployment. Check for a "userdata" subdirectory in the "lagrange.exe" directory. If found, all user files are stored there.
 
 ## 1.1.2
 * Fixed input query from a background tab being applied to the foreground tab. An input query now forces a tab to the foreground.
