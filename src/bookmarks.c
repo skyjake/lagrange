@@ -389,7 +389,7 @@ void requestFinished_Bookmarks(iBookmarks *d, iGmRequest *req) {
     if (isSuccess_GmStatusCode(status_GmRequest(req))) {
         iTime now;
         initCurrent_Time(&now);
-        iRegExp *linkPattern = new_RegExp("^=>\\s*([^\\s]+)\\s+(.*)", 0);
+        iRegExp *linkPattern = new_RegExp("^=>\\s*([^\\s]+)(\\s+(.*))?", 0);
         iString src;
         const iString *remoteTag = collectNewCStr_String("remote");
         initBlock_String(&src, body_GmRequest(req));
@@ -401,11 +401,14 @@ void requestFinished_Bookmarks(iBookmarks *d, iGmRequest *req) {
             init_RegExpMatch(&m);            
             if (matchRange_RegExp(linkPattern, line, &m)) {
                 const iRangecc url    = capturedRange_RegExpMatch(&m, 1);
-                const iRangecc title  = capturedRange_RegExpMatch(&m, 2);
+                const iRangecc title  = capturedRange_RegExpMatch(&m, 3);
                 iString *      urlStr = newRange_String(url);
                 const iString *absUrl = absoluteUrl_String(url_GmRequest(req), urlStr);
                 if (!findUrl_Bookmarks(d, absUrl)) {
                     iString *titleStr = newRange_String(title);
+                    if (isEmpty_String(titleStr)) {
+                        setRange_String(titleStr, urlHost_String(urlStr));
+                    }
                     const uint32_t bmId = add_Bookmarks(d, absUrl, titleStr, remoteTag, 0x2913);
                     iBookmark *bm = get_Bookmarks(d, bmId);
                     bm->sourceId = *(uint32_t *) userData_Object(req);
