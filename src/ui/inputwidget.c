@@ -540,6 +540,29 @@ static iBool copy_InputWidget_(iInputWidget *d, iBool doCut) {
     return iFalse;
 }
 
+static void process_Paste_(iInputWidget *d) {
+    if (SDL_HasClipboardText()) {
+	    pushUndo_InputWidget_(d);
+	    deleteMarked_InputWidget_(d);
+	    char *text = SDL_GetClipboardText();
+	    iString *paste = collect_String(newCStr_String(text));
+	    /* Url decoding. */
+	    if (d->inFlags & isUrl_InputWidgetFlag) {
+	        if (prefs_App()->decodeUserVisibleURLs) {
+		        paste = collect_String(urlDecode_String(paste));
+	        }
+	        else {
+		        urlEncodePath_String(paste);
+	        }
+	    }
+	    SDL_free(text);
+	    iConstForEach(String, i, paste) {
+	        insertChar_InputWidget_(d, i.value);
+	    }
+	    contentsWereChanged_InputWidget_(d);
+    }
+}
+
 static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
     if (isCommand_Widget(w, ev, "focus.gained")) {
@@ -606,26 +629,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                     copy_InputWidget_(d, key == 'x');
                     return iTrue;
                 case 'v':
-                    if (SDL_HasClipboardText()) {
-                        pushUndo_InputWidget_(d);
-                        deleteMarked_InputWidget_(d);
-                        char *text = SDL_GetClipboardText();
-                        iString *paste = collect_String(newCStr_String(text));
-                        /* Url decoding. */
-                        if (d->inFlags & isUrl_InputWidgetFlag) {
-                            if (prefs_App()->decodeUserVisibleURLs) {
-                                paste = collect_String(urlDecode_String(paste));
-                            }
-                            else {
-                                urlEncodePath_String(paste);
-                            }
-                        }
-                        SDL_free(text);
-                        iConstForEach(String, i, paste) {
-                            insertChar_InputWidget_(d, i.value);
-                        }
-                        contentsWereChanged_InputWidget_(d);
-                    }
+                    process_Paste_(d);
                     return iTrue;
                 case 'z':
                     if (popUndo_InputWidget_(d)) {
@@ -637,6 +641,11 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
         }
         d->lastCursor = d->cursor;
         switch (key) {
+            case SDLK_INSERT:
+                if (mods == KMOD_SHIFT) {
+                    process_Paste_(d);
+                }
+                return iTrue;
             case SDLK_RETURN:
             case SDLK_KP_ENTER:
                 d->inFlags |= enterPressed_InputWidgetFlag;
