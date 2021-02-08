@@ -2045,6 +2045,9 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         }
         return iTrue;
     }
+    else if (equalWidget_Command(cmd, w, "menu.closed")) {
+        updateHover_DocumentWidget_(d, mouseCoord_Window(get_Window()));
+    }
     return iFalse;
 }
 
@@ -2482,7 +2485,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 d->menu = makeMenu_Widget(w, data_Array(&items), size_Array(&items));
                 deinit_Array(&items);
             }
-            processContextMenuEvent_Widget(d->menu, ev, d->hoverLink = NULL);
+            processContextMenuEvent_Widget(d->menu, ev, {});
         }
     }
     if (processPlayerEvents_DocumentWidget_(d, ev)) {
