@@ -540,26 +540,24 @@ static iBool copy_InputWidget_(iInputWidget *d, iBool doCut) {
     return iFalse;
 }
 
-static void process_Paste_(iInputWidget *d) {
+static void paste_InputWidget_(iInputWidget *d) {
     if (SDL_HasClipboardText()) {
-	    pushUndo_InputWidget_(d);
-	    deleteMarked_InputWidget_(d);
-	    char *text = SDL_GetClipboardText();
-	    iString *paste = collect_String(newCStr_String(text));
-	    /* Url decoding. */
-	    if (d->inFlags & isUrl_InputWidgetFlag) {
-	        if (prefs_App()->decodeUserVisibleURLs) {
-		        paste = collect_String(urlDecode_String(paste));
-	        }
-	        else {
-		        urlEncodePath_String(paste);
-	        }
-	    }
-	    SDL_free(text);
-	    iConstForEach(String, i, paste) {
-	        insertChar_InputWidget_(d, i.value);
-	    }
-	    contentsWereChanged_InputWidget_(d);
+        pushUndo_InputWidget_(d);
+        deleteMarked_InputWidget_(d);
+        char *   text  = SDL_GetClipboardText();
+        iString *paste = collect_String(newCStr_String(text));
+        /* Url decoding. */
+        if (d->inFlags & isUrl_InputWidgetFlag) {
+            if (prefs_App()->decodeUserVisibleURLs) {
+                paste = collect_String(urlDecode_String(paste));
+            }
+            else {
+                urlEncodePath_String(paste);
+            }
+        }
+        SDL_free(text);
+        iConstForEach(String, i, paste) { insertChar_InputWidget_(d, i.value); }
+        contentsWereChanged_InputWidget_(d);
     }
 }
 
@@ -629,7 +627,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                     copy_InputWidget_(d, key == 'x');
                     return iTrue;
                 case 'v':
-                    process_Paste_(d);
+                    paste_InputWidget_(d);
                     return iTrue;
                 case 'z':
                     if (popUndo_InputWidget_(d)) {
@@ -643,7 +641,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
         switch (key) {
             case SDLK_INSERT:
                 if (mods == KMOD_SHIFT) {
-                    process_Paste_(d);
+                    paste_InputWidget_(d);
                 }
                 return iTrue;
             case SDLK_RETURN:
