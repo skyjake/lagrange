@@ -283,7 +283,7 @@ elseif (UNIX AND NOT APPLE)
     set_target_properties (app PROPERTIES
         INSTALL_RPATH_USE_LINK_PATH YES
     )
-    set (desktop ${CMAKE_CURRENT_BINARY_DIR}/fi.skyjake.lagrange.desktop)
+    set (desktop ${CMAKE_CURRENT_BINARY_DIR}/fi.skyjake.Lagrange.desktop)
     file (WRITE ${desktop} "[Desktop Entry]
 Name=Lagrange
 Comment=${PROJECT_DESCRIPTION}
@@ -291,14 +291,14 @@ Categories=Network
 Exec=${CMAKE_INSTALL_PREFIX}/bin/lagrange %U
 Terminal=false
 Type=Application
-Icon=fi.skyjake.lagrange
+Icon=fi.skyjake.Lagrange
 MimeType=x-scheme-handler/gemini;x-scheme-handler/gopher
 ")
     install (TARGETS app DESTINATION bin)
     install (FILES ${desktop} DESTINATION share/applications)
     install (FILES res/lagrange-256.png
          DESTINATION share/icons/hicolor/256x256/apps
-         RENAME fi.skyjake.lagrange.png
+         RENAME fi.skyjake.Lagrange.png
     )
     install (FILES res/fi.skyjake.Lagrange.appdata.xml
         DESTINATION share/metainfo
