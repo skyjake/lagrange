@@ -10,6 +10,7 @@
 * Fixed input query from a background tab being applied to the foreground tab. An input query now forces a tab to the foreground.
 * Fixed hover state not being cleared when right-clicking links.
 * Fixed remote bookmarks not appearing if they lacked a user-friendly name on the source page.
+* Fixed feed refresh waiting forever if a server doesn't respond.
 
 ## 1.1.1
 * Fixed focus cycling inside dialogs. Widgets outside a dialog are not allowed to be focused.
