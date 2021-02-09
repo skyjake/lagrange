@@ -75,6 +75,8 @@ iBool isUnread_FeedEntry(const iFeedEntry *d) {
 
 /*----------------------------------------------------------------------------------------------*/
 
+static int requestTimeoutSeconds_FeedJob_ = 10.0f;
+
 struct Impl_FeedJob {
     iString     url;
     uint32_t    bookmarkId;
@@ -102,6 +104,10 @@ static void deinit_FeedJob(iFeedJob *d) {
     }
     deinit_PtrArray(&d->results);
     deinit_String(&d->url);
+}
+
+static iBool isTimedOut_FeedJob_(iFeedJob *d) {
+    return elapsedSeconds_Time(&d->startTime) > requestTimeoutSeconds_FeedJob_;
 }
 
 iDefineTypeConstructionArgs(FeedJob, (const iBookmark *bm), bm)
@@ -354,6 +360,11 @@ static iThreadResult fetch_Feeds_(iThread *thread) {
                     /* TODO: Handle redirects. Need to resubmit the job with new URL. */
                     parseResult_FeedJob_(work[i]);
                     gotNew |= updateEntries_Feeds_(d, &work[i]->results);
+                    delete_FeedJob(work[i]);
+                    work[i] = NULL;
+                }
+                else if (isTimedOut_FeedJob_(work[i])) {
+                    /* Maybe we'll get it next time! */
                     delete_FeedJob(work[i]);
                     work[i] = NULL;
                 }
