@@ -214,6 +214,17 @@ iBool remove_Bookmarks(iBookmarks *d, uint32_t id) {
     lock_Mutex(d->mtx);
     iBookmark *bm = (iBookmark *) remove_Hash(&d->bookmarks, id);
     if (bm) {
+        /* If this is a remote source, make sure all the remote bookmarks are
+           removed as well. */
+        if (hasTag_Bookmark(bm, "remotesource")) {
+            iForEach(Hash, i, &d->bookmarks) {
+                iBookmark *j = (iBookmark *) i.value;
+                if (j->sourceId == id_Bookmark(bm)) {
+                    remove_HashIterator(&i);
+                    delete_Bookmark(j);
+                }
+            }
+        }
         delete_Bookmark(bm);
     }
     unlock_Mutex(d->mtx);
