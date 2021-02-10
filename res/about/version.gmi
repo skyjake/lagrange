@@ -11,6 +11,9 @@
 * Windows: Added support for portable deployment. Check for a "userdata" subdirectory in the "lagrange.exe" directory. If found, all user files are stored there.
 * Shift+Insert can be used for pasting clipboard contents into input fields.
 
+## 1.1.3
+* Fixed crash when deleting a bookmark that was being used as a remote bookmark source.
+
 ## 1.1.2
 * Fixed potential crash at launch.
 * Fixed input query from a background tab being applied to the foreground tab. An input query now forces a tab to the foreground.
