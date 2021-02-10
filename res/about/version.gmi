@@ -8,6 +8,7 @@
 
 ## 1.1.3
 * Fixed crash when deleting a bookmark that was being used as a remote bookmark source.
+* Fixed URL path decoding not respecting reserved characters.
 * Fixed Windows portable build so it stores user files under the "userdata" directory and not under AppData\Roaming\.
 
 ## 1.1.2
