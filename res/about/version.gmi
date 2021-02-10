@@ -6,6 +6,10 @@
 ```
 # Release notes
 
+## 1.1.3
+* Fixed crash when deleting a bookmark that was being used as a remote bookmark source.
+* Fixed Windows portable build so it stores user files under the "userdata" directory and not under AppData\Roaming\.
+
 ## 1.1.2
 * Fixed potential crash at launch.
 * Fixed input query from a background tab being applied to the foreground tab. An input query now forces a tab to the foreground.
