@@ -45,6 +45,23 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.1.2" date="2021-02-10">
+            <description>
+                <p>Bug fixes:</p>
+                <ul>
+                    <li>Potential crash at launch.</li>
+                    <li>Input query from a background tab was being applied to 
+                        the foreground tab. An input query now forces a tab to 
+                        the foreground.</li>
+                    <li>Window scroll position moving when resizing vertically.</li>
+                    <li>Feed refresh waiting forever if a server doesn't respond.</li>
+                    <li>Hover state not being cleared when right-clicking links.</li>
+                    <li>Remote bookmarks not appearing if they lack a user-friendly 
+                        name on the source page.</li>
+                </ul>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.1.2</url>
+        </release>
         <release version="1.1.1" date="2021-02-03">
             <description>
                 <p>Miscellaneous fixes for bugs and other incorrect behavior:</p>
