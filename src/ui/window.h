@@ -36,6 +36,7 @@ struct Impl_Window {
     SDL_Window *  win;
     iInt2         initialPos;
     iRect         lastRect; /* updated when window is moved/resized */
+    iInt2         lastNotifiedSize; /* keep track of horizontal/vertical notifications */
     iBool         isDrawFrozen; /* avoids premature draws while restoring window state */
     iBool         isMouseInside;
     uint32_t      focusGainedAt;

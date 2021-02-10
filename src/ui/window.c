@@ -667,9 +667,16 @@ static void updateRootSize_Window_(iWindow *d, iBool notifyAlways) {
     const iInt2 oldSize = *size;
     SDL_GetRendererOutputSize(d->render, &size->x, &size->y);
     if (notifyAlways || !isEqual_I2(oldSize, *size)) {
+        const iBool isHoriz = (d->lastNotifiedSize.x != size->x);
+        const iBool isVert  = (d->lastNotifiedSize.y != size->y);
         arrange_Widget(d->root);
-        postCommandf_App("window.resized width:%d height:%d", size->x, size->y);
+        postCommandf_App("window.resized width:%d height:%d horiz:%d vert:%d",
+                         size->x,
+                         size->y,
+                         isHoriz,
+                         isVert);
         postRefresh_App();
+        d->lastNotifiedSize = *size;
     }
 }
 
@@ -719,6 +726,7 @@ void init_Window(iWindow *d, iRect rect) {
     iZap(d->cursors);
     d->initialPos = rect.pos;
     d->lastRect = rect;
+    d->lastNotifiedSize = zero_I2();
     d->pendingCursor = NULL;
     d->isDrawFrozen = iTrue;
     d->isMouseInside = iTrue;
