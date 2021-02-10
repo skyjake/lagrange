@@ -12,8 +12,12 @@
 * Shift+Insert can be used for pasting clipboard contents into input fields.
 
 ## 1.1.2
+* Fixed potential crash at launch.
 * Fixed input query from a background tab being applied to the foreground tab. An input query now forces a tab to the foreground.
+* Fixed window scroll position moving when resizing vertically.
+* Fixed feed refresh waiting forever if a server doesn't respond.
 * Fixed hover state not being cleared when right-clicking links.
+* Fixed remote bookmarks not appearing if they lacked a user-friendly name on the source page.
 
 ## 1.1.1
 * Fixed focus cycling inside dialogs. Widgets outside a dialog are not allowed to be focused.
