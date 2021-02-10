@@ -1533,11 +1533,14 @@ static const int homeRowKeys_[] = {
 static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
     iWidget *w = as_Widget(d);
     if (equal_Command(cmd, "window.resized") || equal_Command(cmd, "font.changed")) {
-        const iBool isHorizontalOnly =
-            argLabel_Command(cmd, "horiz") != 0 && !argLabel_Command(cmd, "vert");
+        const iBool isVerticalOnly =
+            !argLabel_Command(cmd, "horiz") && argLabel_Command(cmd, "vert");
         /* Alt/Option key may be involved in window size changes. */
         iChangeFlags(d->flags, showLinkNumbers_DocumentWidgetFlag, iFalse);
-        if (isHorizontalOnly) {
+        if (isVerticalOnly) {
+            scroll_DocumentWidget_(d, 0); /* prevent overscroll */
+        }
+        else {
             const iGmRun *mid = middleRun_DocumentWidget_(d);
             const char *midLoc = (mid ? mid->text.start : NULL);
             setWidth_GmDocument(d->doc, documentWidth_DocumentWidget_(d));
@@ -1548,9 +1551,6 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                     scrollTo_DocumentWidget_(d, mid_Rect(mid->bounds).y, iTrue);
                 }
             }
-        }
-        else {
-            scroll_DocumentWidget_(d, 0); /* prevent overscroll */
         }
         updateSideIconBuf_DocumentWidget_(d);
         updateOutline_DocumentWidget_(d);
