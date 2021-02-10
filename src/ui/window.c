@@ -1042,6 +1042,10 @@ void setCursor_Window(iWindow *d, int cursor) {
     d->pendingCursor = d->cursors[cursor];
 }
 
+uint32_t id_Window(const iWindow *d) {
+    return d && d->win ? SDL_GetWindowID(d->win) : 0;
+}
+
 iInt2 rootSize_Window(const iWindow *d) {
     return d->root->rect.size;
 }

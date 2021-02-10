@@ -689,7 +689,7 @@ static int resizeWatcher_(void *user, SDL_Event *event) {
             SDL_Event u = { .type = SDL_USEREVENT };
             u.user.code = command_UserEventCode;
             u.user.data1 = strdup("theme.changed");
-            u.user.windowID = SDL_GetWindowID(d->window->win);
+            u.user.windowID = id_Window(d->window);
             dispatchEvent_Widget(d->window->root, &u);
         }
 #endif
@@ -782,7 +782,7 @@ void postRefresh_App(void) {
         SDL_Event ev;
         ev.user.type     = SDL_USEREVENT;
         ev.user.code     = refresh_UserEventCode;
-        ev.user.windowID = get_Window() ? SDL_GetWindowID(get_Window()->win) : 0;
+        ev.user.windowID = id_Window(get_Window());
         ev.user.data1    = NULL;
         ev.user.data2    = NULL;
         SDL_PushEvent(&ev);
@@ -807,7 +807,7 @@ void postCommand_App(const char *command) {
     }
     ev.user.type     = SDL_USEREVENT;
     ev.user.code     = command_UserEventCode;
-    ev.user.windowID = get_Window() ? SDL_GetWindowID(get_Window()->win) : 0;
+    ev.user.windowID = id_Window(get_Window());
     ev.user.data1    = strdup(command);
     ev.user.data2    = NULL;
     SDL_PushEvent(&ev);

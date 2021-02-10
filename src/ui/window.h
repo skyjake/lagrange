@@ -60,6 +60,7 @@ void        setUiScale_Window       (iWindow *, float uiScale);
 void        setFreezeDraw_Window    (iWindow *, iBool freezeDraw);
 void        setCursor_Window        (iWindow *, int cursor);
 
+uint32_t    id_Window               (const iWindow *);
 iInt2       rootSize_Window         (const iWindow *);
 float       uiScale_Window          (const iWindow *);
 iInt2       coord_Window            (const iWindow *, int x, int y);
