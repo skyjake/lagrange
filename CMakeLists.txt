@@ -33,6 +33,7 @@ option (ENABLE_RELATIVE_EMBED   "Resources should always be found via relative p
 option (ENABLE_WINDOWPOS_FIX    "Set position after showing window (workaround for SDL bug)" OFF)
 option (ENABLE_IDLE_SLEEP       "While idle, sleep in the main thread instead of waiting for events" ON)
 option (ENABLE_DOWNLOAD_EDIT    "Allow changing the Downloads directory" ON)
+option (ENABLE_CUSTOM_FRAME     "Draw a custom window frame (Windows)" OFF)
 
 include (BuildType.cmake)
 include (res/Embed.cmake)
@@ -220,6 +221,9 @@ endif ()
 if (ENABLE_DOWNLOAD_EDIT)
     target_compile_definitions (app PUBLIC LAGRANGE_DOWNLOAD_EDIT=1)
 endif ()
+if (ENABLE_CUSTOM_FRAME AND MSYS)
+    target_compile_definitions (app PUBLIC LAGRANGE_CUSTOM_FRAME=1)
+endif ()
 target_link_libraries (app PUBLIC the_Foundation::the_Foundation)
 target_link_libraries (app PUBLIC ${SDL2_LDFLAGS})
 if (APPLE)
@@ -233,7 +237,7 @@ if (APPLE)
         target_link_options (app PUBLIC -mmacosx-version-min=${CMAKE_OSX_DEPLOYMENT_TARGET})
     endif ()
     if (XCODE_DEVELOPMENT_TEAM)
-        set_property (TARGET app PROPERTY 
+        set_property (TARGET app PROPERTY
             XCODE_ATTRIBUTE_DEVELOPMENT_TEAM ${XCODE_DEVELOPMENT_TEAM}
         )
     endif ()

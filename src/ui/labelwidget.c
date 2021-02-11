@@ -38,6 +38,7 @@ struct Impl_LabelWidget {
     int     font;
     int     key;
     int     kmods;
+    int     forceFg;
     iString command;
     iBool   alignVisual; /* align according to visible bounds, not typography */
     iClick  click;
@@ -177,6 +178,9 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
         }
         *fg = uiTextPressed_ColorId | permanent_ColorId;
     }
+    if (d->forceFg >= 0) {
+        *fg = d->forceFg;
+    }
 }
 
 static void draw_LabelWidget_(const iLabelWidget *d) {
@@ -277,6 +281,7 @@ void updateSize_LabelWidget(iLabelWidget *d) {
 void init_LabelWidget(iLabelWidget *d, const char *label, const char *cmd) {
     init_Widget(&d->widget);
     d->font = uiLabel_FontId;
+    d->forceFg = none_ColorId;
     initCStr_String(&d->label, label);
     if (cmd) {
         initCStr_String(&d->command, cmd);
@@ -302,6 +307,13 @@ void deinit_LabelWidget(iLabelWidget *d) {
 void setFont_LabelWidget(iLabelWidget *d, int fontId) {
     d->font = fontId;
     updateSize_LabelWidget(d);
+}
+
+void setTextColor_LabelWidget(iLabelWidget *d, int color) {
+    if (d && d->forceFg != color) {
+        d->forceFg = color;
+        refresh_Widget(d);
+    }
 }
 
 void setText_LabelWidget(iLabelWidget *d, const iString *text) {

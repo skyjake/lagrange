@@ -84,7 +84,31 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
     }
     else if (equal_Command(cmd, "window.focus.lost")) {
         setFocus_Widget(NULL);
+        setTextColor_LabelWidget(findWidget_App("winbar.app"), uiAnnotation_ColorId);
+        setTextColor_LabelWidget(findWidget_App("winbar.title"), uiAnnotation_ColorId);
         return iFalse;
+    }
+    else if (equal_Command(cmd, "window.focus.gained")) {
+        setTextColor_LabelWidget(findWidget_App("winbar.app"), uiTextCaution_ColorId);
+        setTextColor_LabelWidget(findWidget_App("winbar.title"), uiTextStrong_ColorId);
+        return iFalse;
+    }
+    else if (equal_Command(cmd, "window.fullscreen.changed")) {
+        iWidget *winBar = findWidget_App("winbar");
+        if (winBar) {
+            setFlags_Widget(winBar, hidden_WidgetFlag, arg_Command(cmd));
+            arrange_Widget(get_Window()->root);
+            postRefresh_App();
+        }
+        return iFalse;
+    }
+    else if (equal_Command(cmd, "window.minimize")) {
+        SDL_MinimizeWindow(get_Window()->win);
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "window.close")) {
+        SDL_PushEvent(&(SDL_Event){ .type = SDL_QUIT });
+        return iTrue;
     }
     else if (handleCommand_App(cmd)) {
         return iTrue;
@@ -503,6 +527,12 @@ static iBool handleSearchBarCommands_(iWidget *searchBar, const char *cmd) {
     return iFalse;
 }
 
+static iLabelWidget *newLargeIcon_LabelWidget(const char *text, const char *cmd) {
+    iLabelWidget *lab = newIcon_LabelWidget(text, 0, 0, cmd);
+    setFont_LabelWidget(lab, uiLabelLarge_FontId);
+    return lab;
+}
+
 static void setupUserInterface_Window(iWindow *d) {
     /* Children of root cover the entire window. */
     setFlags_Widget(d->root, resizeChildren_WidgetFlag, iTrue);
@@ -512,11 +542,58 @@ static void setupUserInterface_Window(iWindow *d) {
     setId_Widget(div, "navdiv");
     addChild_Widget(d->root, iClob(div));
 
+#if defined (LAGRANGE_CUSTOM_FRAME)
+    /* Window title bar. */ {
+        const int border = gap_UI / 4;
+        setPadding1_Widget(div, border); /* draggable edges */
+        iWidget *winBar = new_Widget();
+        setId_Widget(winBar, "winbar");
+        setFlags_Widget(winBar,
+                        arrangeHeight_WidgetFlag | resizeChildren_WidgetFlag |
+                            arrangeHorizontal_WidgetFlag | collapse_WidgetFlag,
+                        iTrue);
+        iLabelWidget *appButton =
+            addChildFlags_Widget(winBar,
+                                 iClob(new_LabelWidget("Lagrange", NULL)),
+                                 fixedHeight_WidgetFlag | frameless_WidgetFlag);
+        setTextColor_LabelWidget(appButton, uiTextCaution_ColorId);
+        setId_Widget(as_Widget(appButton), "winbar.app");
+        iLabelWidget *appTitle;
+        setFont_LabelWidget(appButton, uiContentBold_FontId);
+        setId_Widget(addChildFlags_Widget(winBar,
+                                          iClob(appTitle = new_LabelWidget("", NULL)),
+                                          expand_WidgetFlag | alignLeft_WidgetFlag |
+                                              fixedHeight_WidgetFlag | frameless_WidgetFlag |
+                                              commandOnClick_WidgetFlag),
+                     "winbar.title");
+        setTextColor_LabelWidget(appTitle, uiTextStrong_ColorId);
+        iLabelWidget *appMin, *appMax, *appClose;
+        setId_Widget(addChildFlags_Widget(
+                         winBar,
+                         iClob(appMin = newLargeIcon_LabelWidget("\u2014", "window.minimize")),
+                         frameless_WidgetFlag),
+                     "winbar.min");
+        setSize_Widget(as_Widget(appMin),
+                       init_I2(gap_UI * 11.5f, height_Widget(appTitle)));
+        addChildFlags_Widget(
+            winBar,
+            iClob(appMax = newLargeIcon_LabelWidget("\u25a1", "window.maximize toggle:1")),
+            frameless_WidgetFlag);
+        addChildFlags_Widget(winBar,
+                             iClob(appClose = newLargeIcon_LabelWidget("\u2a2f", "window.close")),
+                             frameless_WidgetFlag);
+        setSize_Widget(as_Widget(appMax), as_Widget(appMin)->rect.size);
+        setSize_Widget(as_Widget(appClose), as_Widget(appMin)->rect.size);
+        addChild_Widget(div, iClob(winBar));
+        setBackgroundColor_Widget(winBar, uiBackground_ColorId);
+    }
+#endif
+
     /* Navigation bar. */ {
         iWidget *navBar = new_Widget();
         setId_Widget(navBar, "navbar");
-        /*setPadding_Widget(navBar, gap_UI / 2, 0, gap_UI / 2, 0);*/
-        setPadding_Widget(navBar, gap_UI, gap_UI / 2, gap_UI, gap_UI / 2);
+        int topPad = !findChild_Widget(div, "winbar") ? gap_UI / 2 : 0;
+        setPadding_Widget(navBar, gap_UI, topPad, gap_UI, gap_UI / 2);
         setFlags_Widget(navBar,
                         arrangeHeight_WidgetFlag | resizeChildren_WidgetFlag |
                             arrangeHorizontal_WidgetFlag,
@@ -697,7 +774,7 @@ static float pixelRatio_Window_(const iWindow *d) {
     SDL_GetDisplayDPI(SDL_GetWindowDisplayIndex(d->win), NULL, NULL, &vdpi);
     const float factor = vdpi / 96.0f;
     return iMax(1.0f, factor);
-#else    
+#else
     int dx, x;
     SDL_GetRendererOutputSize(d->render, &dx, NULL);
     SDL_GetWindowSize(d->win, &x, NULL);
@@ -712,12 +789,61 @@ static void drawBlank_Window_(iWindow *d) {
     SDL_RenderPresent(d->render);
 }
 
+#if defined (LAGRANGE_CUSTOM_FRAME)
+static SDL_HitTestResult hitTest_Window_(SDL_Window *win, const SDL_Point *pos, void *data) {
+    iWindow *d = data;
+    iAssert(d->win == win);
+    int w, h;
+    SDL_GetWindowSize(win, &w, &h);
+    /* TODO: Check if inside the caption label widget. */    
+    const iBool isLeft   = pos->x < gap_UI;
+    const iBool isRight  = pos->x >= w - gap_UI;
+    const iBool isTop    = pos->y < gap_UI;
+    const iBool isBottom = pos->y >= h - gap_UI;
+    const int captionHeight = lineHeight_Text(uiContent_FontId) + gap_UI * 2;
+    const int rightEdge = left_Rect(bounds_Widget(findChild_Widget(d->root, "winbar.min")));
+    if (isLeft) {
+        return pos->y < captionHeight       ? SDL_HITTEST_RESIZE_TOPLEFT
+               : pos->y > h - captionHeight ? SDL_HITTEST_RESIZE_BOTTOMLEFT
+                                            : SDL_HITTEST_RESIZE_LEFT;
+    }
+    if (isRight) {
+        return pos->y < captionHeight       ? SDL_HITTEST_RESIZE_TOPRIGHT
+               : pos->y > h - captionHeight ? SDL_HITTEST_RESIZE_BOTTOMRIGHT
+                                            : SDL_HITTEST_RESIZE_RIGHT;
+    }
+    if (isTop) {
+        return pos->x < captionHeight       ? SDL_HITTEST_RESIZE_TOPLEFT
+               : pos->x > w - captionHeight ? SDL_HITTEST_RESIZE_TOPRIGHT
+                                            : SDL_HITTEST_RESIZE_TOP;
+    }
+    if (isBottom) {
+        return pos->x < captionHeight       ? SDL_HITTEST_RESIZE_BOTTOMLEFT
+               : pos->x > w - captionHeight ? SDL_HITTEST_RESIZE_BOTTOMRIGHT
+                                            : SDL_HITTEST_RESIZE_BOTTOM;
+    }
+    if (pos->x < rightEdge && pos->y < captionHeight) {
+        return SDL_HITTEST_DRAGGABLE;
+    }
+    return SDL_HITTEST_NORMAL;
+}
+#endif
+
 iBool create_Window_(iWindow *d, iRect rect, uint32_t flags) {
     flags |= SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_HIDDEN;
+#if defined (LAGRANGE_CUSTOM_FRAME)
+    /* We are drawing a custom frame so hide the default one. */
+    flags |= SDL_WINDOW_BORDERLESS;
+#endif
     if (SDL_CreateWindowAndRenderer(
             width_Rect(rect), height_Rect(rect), flags, &d->win, &d->render)) {
         return iFalse;
     }
+#if defined (LAGRANGE_CUSTOM_FRAME)
+    /* Register a handler for window hit testing (drag, resize). */
+    SDL_SetWindowHitTest(d->win, hitTest_Window_, d);    
+    SDL_SetWindowResizable(d->win, SDL_TRUE);
+#endif
     return iTrue;
 }
 
@@ -776,6 +902,9 @@ void init_Window(iWindow *d, iRect rect) {
     d->pixelRatio = pixelRatio_Window_(d);
     setPixelRatio_Metrics(d->pixelRatio * d->uiScale);
 #if defined (iPlatformMsys)
+    SDL_Rect usable;
+    SDL_GetDisplayUsableBounds(0, &usable);
+    SDL_SetWindowMaximumSize(d->win, usable.w, usable.h);
     SDL_SetWindowMinimumSize(d->win, minSize.x * d->pixelRatio, minSize.y * d->pixelRatio);
     useExecutableIconResource_SDLWindow(d->win);
 #endif
@@ -1006,7 +1135,8 @@ void draw_Window(iWindow *d) {
 //    printf("draw %d\n", d->frameTime); fflush(stdout);
 //#endif
     /* Clear the window. */
-    SDL_SetRenderDrawColor(d->render, 0, 0, 0, 255);
+    const iColor back = get_Color(uiSeparator_ColorId);
+    SDL_SetRenderDrawColor(d->render, back.r, back.g, back.b, 255);
     SDL_RenderClear(d->render);
     /* Draw widgets. */
     d->frameTime = SDL_GetTicks();
@@ -1030,6 +1160,10 @@ void resize_Window(iWindow *d, int w, int h) {
 
 void setTitle_Window(iWindow *d, const iString *title) {
     SDL_SetWindowTitle(d->win, cstr_String(title));
+    iLabelWidget *bar = findChild_Widget(d->root, "winbar.title");
+    if (bar) {
+        updateText_LabelWidget(bar, title);
+    }
 }
 
 void setUiScale_Window(iWindow *d, float uiScale) {

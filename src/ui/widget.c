@@ -149,6 +149,8 @@ void setPos_Widget(iWidget *d, iInt2 pos) {
 }
 
 void setSize_Widget(iWidget *d, iInt2 size) {
+    if (size.x < 0) size.x = d->rect.size.x;
+    if (size.y < 0) size.y = d->rect.size.y;
     d->rect.size = size;
     setFlags_Widget(d, fixedSize_WidgetFlag, iTrue);
 }

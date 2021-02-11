@@ -633,7 +633,9 @@ static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
         iUrl parts;
         init_Url(&parts, d->mod.url);
         if (equalCase_Rangecc(parts.scheme, "about")) {
-            pushBackCStr_StringArray(title, "Lagrange");
+            if (!findWidget_App("winbar")) {
+                pushBackCStr_StringArray(title, "Lagrange");
+            }
         }
         else if (!isEmpty_Range(&parts.host)) {
             pushBackRange_StringArray(title, parts.host);

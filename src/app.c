@@ -1112,14 +1112,24 @@ iBool handleCommand_App(const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "window.maximize")) {
-        SDL_MaximizeWindow(d->window->win);
+        if (!argLabel_Command(cmd, "toggle")) {
+            SDL_MaximizeWindow(d->window->win);
+        }
+        else {
+            if (SDL_GetWindowFlags(d->window->win) & SDL_WINDOW_MAXIMIZED) {
+                SDL_RestoreWindow(d->window->win);
+            }
+            else {
+                SDL_MaximizeWindow(d->window->win);
+            }
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "window.fullscreen")) {
-        SDL_SetWindowFullscreen(d->window->win,
-                                SDL_GetWindowFlags(d->window->win) & SDL_WINDOW_FULLSCREEN_DESKTOP
-                                    ? 0
-                                    : SDL_WINDOW_FULLSCREEN_DESKTOP);
+        const iBool wasFull =
+            (SDL_GetWindowFlags(d->window->win) & SDL_WINDOW_FULLSCREEN_DESKTOP) != 0;
+        SDL_SetWindowFullscreen(d->window->win, wasFull ? 0 : SDL_WINDOW_FULLSCREEN_DESKTOP);
+        postCommandf_App("window.fullscreen.changed arg:%d", !wasFull);
         return iTrue;
     }
     else if (equal_Command(cmd, "font.set")) {
