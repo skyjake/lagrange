@@ -729,6 +729,7 @@ void init_Window(iWindow *d, iRect rect) {
     d->lastNotifiedSize = zero_I2();
     d->pendingCursor = NULL;
     d->isDrawFrozen = iTrue;
+    d->isExposed = iFalse;
     d->isMouseInside = iTrue;
     d->focusGainedAt = 0;
     uint32_t flags = 0;
@@ -849,6 +850,10 @@ static void invalidate_Window_(iWindow *d) {
 static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
     switch (ev->event) {
         case SDL_WINDOWEVENT_EXPOSED:
+            if (!d->isExposed) {
+                drawBlank_Window_(d); /* avoid showing system-provided contents */
+                d->isExposed = iTrue;
+            }
             /* Since we are manually controlling when to redraw the window, we are responsible
                for ensuring that window contents get redrawn after expose events. Under certain
                circumstances (e.g., under openbox), not doing this would mean that the window

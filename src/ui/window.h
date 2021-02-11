@@ -38,6 +38,7 @@ struct Impl_Window {
     iRect         lastRect; /* updated when window is moved/resized */
     iInt2         lastNotifiedSize; /* keep track of horizontal/vertical notifications */
     iBool         isDrawFrozen; /* avoids premature draws while restoring window state */
+    iBool         isExposed;
     iBool         isMouseInside;
     uint32_t      focusGainedAt;
     SDL_Renderer *render;
