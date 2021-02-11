@@ -81,6 +81,7 @@ static const struct { int id; iMenuItem bind; int flags; } defaultBindings_[] = 
     { 46, { "Hover on link via home row keys", 'h', 0,                  "document.linkkeys arg:1 hover:1" }, 0 },
     { 47, { "Next set of home row key links", '.', 0,                   "document.linkkeys more:1" }, 0 },
     { 50, { "Add bookmark",              'd', KMOD_PRIMARY,             "bookmark.add"       }, 0 },
+    { 60, { "Find text on page",         'f', KMOD_PRIMARY,             "focus.set id:find.input" }, 0 },
     { 70, { "Zoom in",                   SDLK_EQUALS, KMOD_PRIMARY,     "zoom.delta arg:10"  }, 0 },
     { 71, { "Zoom out",                  SDLK_MINUS, KMOD_PRIMARY,      "zoom.delta arg:-10" }, 0 },
     { 72, { "Reset zoom",                SDLK_0, KMOD_PRIMARY,          "zoom.set arg:100"   }, 0 },
