@@ -8,7 +8,7 @@
 
 ## 1.2
 * Added keybinding (F11) for toggling fullscreen mode. On macOS, the shortcut is ⌃⌘F as before.
-* Windows: Added support for portable deployment. Check for a "userdata" subdirectory in the "lagrange.exe" directory. If found, all user files are stored there.
+* Added keybinding for finding text on page.
 * Shift+Insert can be used for pasting clipboard contents into input fields.
 
 ## 1.1.3
