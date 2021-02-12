@@ -160,12 +160,12 @@ static iString *serializePrefs_App_(const iApp *d) {
     const iSidebarWidget *sidebar2 = findWidget_App("sidebar2");
     appendFormat_String(str, "window.retain arg:%d\n", d->prefs.retainWindowSize);
     if (d->prefs.retainWindowSize) {
-        const iBool isMaximized = (SDL_GetWindowFlags(d->window->win) & SDL_WINDOW_MAXIMIZED) != 0;
+        const iBool isMaximized = snap_Window(d->window) == maximized_WindowSnap;
         int w, h, x, y;
-        x = d->window->lastRect.pos.x;
-        y = d->window->lastRect.pos.y;
-        w = d->window->lastRect.size.x;
-        h = d->window->lastRect.size.y;
+        x = d->window->place.normalRect.pos.x;
+        y = d->window->place.normalRect.pos.y;
+        w = d->window->place.normalRect.size.x;
+        h = d->window->place.normalRect.size.y;
         appendFormat_String(str, "window.setrect width:%d height:%d coord:%d %d\n", w, h, x, y);
         appendFormat_String(str, "sidebar.width arg:%d\n", width_SidebarWidget(sidebar));
         appendFormat_String(str, "sidebar2.width arg:%d\n", width_SidebarWidget(sidebar2));
@@ -1113,22 +1113,17 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "window.maximize")) {
         if (!argLabel_Command(cmd, "toggle")) {
-            SDL_MaximizeWindow(d->window->win);
+            setSnap_Window(d->window, maximized_WindowSnap);
         }
         else {
-            if (SDL_GetWindowFlags(d->window->win) & SDL_WINDOW_MAXIMIZED) {
-                SDL_RestoreWindow(d->window->win);
-            }
-            else {
-                SDL_MaximizeWindow(d->window->win);
-            }
+            setSnap_Window(d->window, snap_Window(d->window) == maximized_WindowSnap ? 0 : 
+                           maximized_WindowSnap);
         }
         return iTrue;
     }
     else if (equal_Command(cmd, "window.fullscreen")) {
-        const iBool wasFull =
-            (SDL_GetWindowFlags(d->window->win) & SDL_WINDOW_FULLSCREEN_DESKTOP) != 0;
-        SDL_SetWindowFullscreen(d->window->win, wasFull ? 0 : SDL_WINDOW_FULLSCREEN_DESKTOP);
+        const iBool wasFull = snap_Window(d->window) == fullscreen_WindowSnap;
+        setSnap_Window(d->window, wasFull ? 0 : fullscreen_WindowSnap);
         postCommandf_App("window.fullscreen.changed arg:%d", !wasFull);
         return iTrue;
     }

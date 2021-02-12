@@ -93,15 +93,6 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
         setTextColor_LabelWidget(findWidget_App("winbar.title"), uiTextStrong_ColorId);
         return iFalse;
     }
-    else if (equal_Command(cmd, "window.fullscreen.changed")) {
-        iWidget *winBar = findWidget_App("winbar");
-        if (winBar) {
-            setFlags_Widget(winBar, hidden_WidgetFlag, arg_Command(cmd));
-            arrange_Widget(get_Window()->root);
-            postRefresh_App();
-        }
-        return iFalse;
-    }
     else if (equal_Command(cmd, "window.minimize")) {
         SDL_MinimizeWindow(get_Window()->win);
         return iTrue;
@@ -562,7 +553,7 @@ static void setupUserInterface_Window(iWindow *d) {
         setFont_LabelWidget(appButton, uiContentBold_FontId);
         setId_Widget(addChildFlags_Widget(winBar,
                                           iClob(appTitle = new_LabelWidget("", NULL)),
-                                          expand_WidgetFlag | alignLeft_WidgetFlag |
+                                          expand_WidgetFlag | /*alignLeft_WidgetFlag |*/
                                               fixedHeight_WidgetFlag | frameless_WidgetFlag |
                                               commandOnClick_WidgetFlag),
                      "winbar.title");
@@ -570,7 +561,7 @@ static void setupUserInterface_Window(iWindow *d) {
         iLabelWidget *appMin, *appMax, *appClose;
         setId_Widget(addChildFlags_Widget(
                          winBar,
-                         iClob(appMin = newLargeIcon_LabelWidget("\u2014", "window.minimize")),
+                         iClob(appMin = newLargeIcon_LabelWidget("\u2013", "window.minimize")),
                          frameless_WidgetFlag),
                      "winbar.min");
         setSize_Widget(as_Widget(appMin),
@@ -582,6 +573,7 @@ static void setupUserInterface_Window(iWindow *d) {
         addChildFlags_Widget(winBar,
                              iClob(appClose = newLargeIcon_LabelWidget("\u2a2f", "window.close")),
                              frameless_WidgetFlag);
+        setFont_LabelWidget(appClose, uiContent_FontId);
         setSize_Widget(as_Widget(appMax), as_Widget(appMin)->rect.size);
         setSize_Widget(as_Widget(appClose), as_Widget(appMin)->rect.size);
         addChild_Widget(div, iClob(winBar));
@@ -744,8 +736,8 @@ static void updateRootSize_Window_(iWindow *d, iBool notifyAlways) {
     const iInt2 oldSize = *size;
     SDL_GetRendererOutputSize(d->render, &size->x, &size->y);
     if (notifyAlways || !isEqual_I2(oldSize, *size)) {
-        const iBool isHoriz = (d->lastNotifiedSize.x != size->x);
-        const iBool isVert  = (d->lastNotifiedSize.y != size->y);
+        const iBool isHoriz = (d->place.lastNotifiedSize.x != size->x);
+        const iBool isVert  = (d->place.lastNotifiedSize.y != size->y);
         arrange_Widget(d->root);
         postCommandf_App("window.resized width:%d height:%d horiz:%d vert:%d",
                          size->x,
@@ -753,7 +745,7 @@ static void updateRootSize_Window_(iWindow *d, iBool notifyAlways) {
                          isHoriz,
                          isVert);
         postRefresh_App();
-        d->lastNotifiedSize = *size;
+        d->place.lastNotifiedSize = *size;
     }
 }
 
@@ -793,6 +785,9 @@ static void drawBlank_Window_(iWindow *d) {
 static SDL_HitTestResult hitTest_Window_(SDL_Window *win, const SDL_Point *pos, void *data) {
     iWindow *d = data;
     iAssert(d->win == win);
+    if (SDL_GetWindowFlags(d->win) & SDL_WINDOW_MOUSE_CAPTURE) {
+        return SDL_HITTEST_NORMAL;
+    }
     int w, h;
     SDL_GetWindowSize(win, &w, &h);
     /* TODO: Check if inside the caption label widget. */    
@@ -802,15 +797,16 @@ static SDL_HitTestResult hitTest_Window_(SDL_Window *win, const SDL_Point *pos, 
     const iBool isBottom = pos->y >= h - gap_UI;
     const int captionHeight = lineHeight_Text(uiContent_FontId) + gap_UI * 2;
     const int rightEdge = left_Rect(bounds_Widget(findChild_Widget(d->root, "winbar.min")));
+    d->place.lastHit = SDL_HITTEST_NORMAL;
     if (isLeft) {
         return pos->y < captionHeight       ? SDL_HITTEST_RESIZE_TOPLEFT
                : pos->y > h - captionHeight ? SDL_HITTEST_RESIZE_BOTTOMLEFT
-                                            : SDL_HITTEST_RESIZE_LEFT;
+                                            : (d->place.lastHit = SDL_HITTEST_RESIZE_LEFT);
     }
     if (isRight) {
         return pos->y < captionHeight       ? SDL_HITTEST_RESIZE_TOPRIGHT
                : pos->y > h - captionHeight ? SDL_HITTEST_RESIZE_BOTTOMRIGHT
-                                            : SDL_HITTEST_RESIZE_RIGHT;
+                                            : (d->place.lastHit = SDL_HITTEST_RESIZE_RIGHT);
     }
     if (isTop) {
         return pos->x < captionHeight       ? SDL_HITTEST_RESIZE_TOPLEFT
@@ -827,6 +823,10 @@ static SDL_HitTestResult hitTest_Window_(SDL_Window *win, const SDL_Point *pos, 
     }
     return SDL_HITTEST_NORMAL;
 }
+
+SDL_HitTestResult hitTest_Window(const iWindow *d, iInt2 pos) {
+    return hitTest_Window_(d->win, &(SDL_Point){ pos.x, pos.y }, iConstCast(void *, d));
+}
 #endif
 
 iBool create_Window_(iWindow *d, iRect rect, uint32_t flags) {
@@ -841,7 +841,7 @@ iBool create_Window_(iWindow *d, iRect rect, uint32_t flags) {
     }
 #if defined (LAGRANGE_CUSTOM_FRAME)
     /* Register a handler for window hit testing (drag, resize). */
-    SDL_SetWindowHitTest(d->win, hitTest_Window_, d);    
+    SDL_SetWindowHitTest(d->win, hitTest_Window_, d);
     SDL_SetWindowResizable(d->win, SDL_TRUE);
 #endif
     return iTrue;
@@ -850,12 +850,13 @@ iBool create_Window_(iWindow *d, iRect rect, uint32_t flags) {
 void init_Window(iWindow *d, iRect rect) {
     theWindow_ = d;
     iZap(d->cursors);
-    d->initialPos = rect.pos;
-    d->lastRect = rect;
-    d->lastNotifiedSize = zero_I2();
+    d->place.initialPos = rect.pos;
+    d->place.normalRect = rect;
+    d->place.lastNotifiedSize = zero_I2();
     d->pendingCursor = NULL;
     d->isDrawFrozen = iTrue;
     d->isExposed = iFalse;
+    d->isMinimized = iFalse;
     d->isMouseInside = iTrue;
     d->focusGainedAt = 0;
     uint32_t flags = 0;
@@ -936,6 +937,9 @@ void init_Window(iWindow *d, iRect rect) {
     setupUserInterface_Window(d);
     postCommand_App("bindings.changed"); /* update from bindings */
     updateRootSize_Window_(d, iFalse);
+#if defined (LAGRANGE_CUSTOM_FRAME)
+    SDL_EventState(SDL_SYSWMEVENT, SDL_TRUE);
+#endif
 }
 
 void deinit_Window(iWindow *d) {
@@ -958,22 +962,38 @@ SDL_Renderer *renderer_Window(const iWindow *d) {
     return d->render;
 }
 
-static iBool isMaximized_Window_(const iWindow *d) {
-#if !defined (iPlatformApple)
-    return (SDL_GetWindowFlags(d->win) & (SDL_WINDOW_MINIMIZED | SDL_WINDOW_MAXIMIZED)) != 0;
-#else
-    iUnused(d);
-    return iFalse; /* There is fullscreen mode but that is not handled at the moment. */
-#endif
-}
-
 iBool isFullscreen_Window(const iWindow *d) {
-    return (SDL_GetWindowFlags(d->win) & SDL_WINDOW_FULLSCREEN_DESKTOP) != 0;
+    return snap_Window(d) == fullscreen_WindowSnap;
 }
 
 static void invalidate_Window_(iWindow *d) {
     resetFonts_Text();
     postCommand_App("theme.changed"); /* forces UI invalidation */
+}
+
+static iBool isNormalPlacement_Window_(const iWindow *d) {
+    if (snap_Window(d) || d->isDrawFrozen) return iFalse;
+    return !(SDL_GetWindowFlags(d->win) & SDL_WINDOW_MINIMIZED);
+}
+
+static iBool unsnap_Window_(iWindow *d, const iInt2 *newPos) {
+#if defined (LAGRANGE_CUSTOM_FRAME)
+    const int snap = snap_Window(d);
+    if (snap == yMaximized_WindowSnap &&
+        (!newPos || (d->place.lastHit == SDL_HITTEST_RESIZE_LEFT ||
+                     d->place.lastHit == SDL_HITTEST_RESIZE_RIGHT))) {
+        return iFalse;
+    }
+    if (snap && snap != fullscreen_WindowSnap) {
+        if (snap_Window(d) == yMaximized_WindowSnap && newPos) {
+            d->place.normalRect.pos = *newPos;
+        }
+        printf("unsnap\n"); fflush(stdout);
+        setSnap_Window(d, none_WindowSnap);
+        return iTrue;
+    }
+#endif
+    return iFalse;
 }
 
 static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
@@ -989,33 +1009,62 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
                is missing contents until other events trigger a refresh. */
             postRefresh_App();
 #if defined (LAGRANGE_ENABLE_WINDOWPOS_FIX)
-            if (d->initialPos.x >= 0) {
+            if (d->place.initialPos.x >= 0) {
                 int bx, by;
                 SDL_GetWindowBordersSize(d->win, &by, &bx, NULL, NULL);
-                SDL_SetWindowPosition(d->win, d->initialPos.x + bx, d->initialPos.y + by);
-                d->initialPos = init1_I2(-1);
+                SDL_SetWindowPosition(d->win, d->place.initialPos.x + bx, d->place.initialPos.y + by);
+                d->place.initialPos = init1_I2(-1);
             }
 #endif
             return iFalse;
         case SDL_WINDOWEVENT_MOVED: {
-            if (!isMaximized_Window_(d) && !isFullscreen_Window(d) && !d->isDrawFrozen) {
-                d->lastRect.pos = init_I2(ev->data1, ev->data2);
+            if (d->isMinimized) { 
+                return iFalse;
+            }
+            const iInt2 newPos = init_I2(ev->data1, ev->data2);
+            if (isEqual_I2(newPos, init1_I2(-32000))) { /* magic! */
+                /* Maybe minimized? Seems like a Windows constant of some kind. */
+                d->isMinimized = iTrue;
+                return iFalse;
+            }
+            //printf("MOVED: %d, %d\n", ev->data1, ev->data2); fflush(stdout);
+            if (unsnap_Window_(d, &newPos)) {
+                return iTrue;
+            }
+            if (isNormalPlacement_Window_(d)) {
+                d->place.normalRect.pos = newPos;
+                //printf("normal rect set (move)\n"); fflush(stdout);
                 iInt2 border = zero_I2();
 #if !defined (iPlatformApple)
                 SDL_GetWindowBordersSize(d->win, &border.y, &border.x, NULL, NULL);
 #endif
-                d->lastRect.pos = max_I2(zero_I2(), sub_I2(d->lastRect.pos, border));
+                d->place.normalRect.pos = max_I2(zero_I2(), sub_I2(d->place.normalRect.pos, border));
             }
             return iTrue;
         }
         case SDL_WINDOWEVENT_RESIZED:
-            if (!isMaximized_Window_(d) && !isFullscreen_Window(d) && !d->isDrawFrozen) {
-                d->lastRect.size = init_I2(ev->data1, ev->data2);
+            if (d->isMinimized) { 
+                updateRootSize_Window_(d, iTrue);
+                return iTrue;
+            }
+            if (unsnap_Window_(d, NULL)) {
+                return iTrue;
+            }
+            if (isNormalPlacement_Window_(d)) {
+                d->place.normalRect.size = init_I2(ev->data1, ev->data2);
+                //printf("normal rect set (resize)\n"); fflush(stdout);
             }
             updateRootSize_Window_(d, iTrue /* we were already redrawing during the resize */);
             return iTrue;
         case SDL_WINDOWEVENT_RESTORED:
+            //updateRootSize_Window_(d, iTrue);
             invalidate_Window_(d);
+            d->isMinimized = iFalse;
+            //printf("restored %d\n", snap_Window(d)); fflush(stdout);
+            return iTrue;
+        case SDL_WINDOWEVENT_MINIMIZED:
+            d->isMinimized = iTrue;
+            //printf("minimized\n"); fflush(stdout);
             return iTrue;
         case SDL_WINDOWEVENT_LEAVE:
             unhover_Widget();
@@ -1051,6 +1100,16 @@ static void applyCursor_Window_(iWindow *d) {
 
 iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
     switch (ev->type) {
+#if defined (LAGRANGE_CUSTOM_FRAME)
+        case SDL_SYSWMEVENT: {
+            /* We observe native Win32 messages for better user interaction with the 
+               window frame. Mouse clicks especially will not generate normal SDL 
+               events if they happen on the custom hit-tested regions. These events
+               are processed only there; the UI widgets do not get involved. */
+            processNativeEvent_Win32(ev->syswm.msg, d);
+            break;
+        }       
+#endif
         case SDL_WINDOWEVENT: {
             return handleWindowEvent_Window_(d, &ev->window);
         }
@@ -1232,3 +1291,89 @@ uint32_t frameTime_Window(const iWindow *d) {
 iWindow *get_Window(void) {
     return theWindow_;
 }
+
+#if !defined (LAGRANGE_CUSTOM_FRAME)
+void setSnap_Window(iWindow *d, int snapMode) {
+    if (snapMode == maximized_WindowSnap) {
+        SDL_MaximizeWindow(d->win);
+    }
+    else if (snapMode == fullscreen_WindowSnap) {
+        SDL_SetWindowFullscreen(d->win, SDL_WINDOW_FULLSCREEN_DESKTOP);
+    }
+    else {
+        SDL_RestoreWindow(d->win);
+    }
+}
+
+int snap_Window(const iWindow *d) {
+    const int flags = SDL_GetWindowFlags(d->win);
+    if (flags & SDL_WINDOW_FULLSCREEN_DESKTOP) {
+        return fullscreen_WindowSnap;
+    }
+    else if (flags & SDL_WINDOW_MAXIMIZED) {
+        return maximized_WindowSnap;
+    }
+    return none_WindowSnap;
+}
+#endif
+
+#if defined (LAGRANGE_CUSTOM_FRAME)
+void setSnap_Window(iWindow *d, int snapMode) {
+    if (d->place.snap == snapMode) {
+        return;
+    }
+    iRect newRect = zero_Rect();   
+    SDL_Rect usable;
+    SDL_GetDisplayUsableBounds(SDL_GetWindowDisplayIndex(d->win), &usable);
+    if (d->place.snap == fullscreen_WindowSnap) {
+        SDL_SetWindowFullscreen(d->win, 0);
+    }
+    d->place.snap = snapMode;
+    switch (snapMode & mask_WindowSnap) {
+        case none_WindowSnap:
+            newRect = d->place.normalRect;
+            break;
+        case left_WindowSnap:
+            newRect = init_Rect(usable.x, usable.y, usable.w / 2, usable.h);
+            break;
+        case right_WindowSnap:
+            newRect = init_Rect(usable.x, usable.y + usable.w / 2, usable.w / 2, usable.h);
+            break;
+        case maximized_WindowSnap:
+            newRect = init_Rect(usable.x, usable.y, usable.w, usable.h);
+            break;
+        case yMaximized_WindowSnap:
+            newRect.pos.y = 0;
+            newRect.size.y = usable.h;
+            SDL_GetWindowPosition(d->win, &newRect.pos.x, NULL);
+            SDL_GetWindowSize(d->win, &newRect.size.x, NULL);
+            break;
+        case fullscreen_WindowSnap:
+            SDL_SetWindowFullscreen(d->win, SDL_WINDOW_FULLSCREEN_DESKTOP);
+            break;
+    }
+    if (snapMode & (topBit_WindowSnap | bottomBit_WindowSnap)) {
+        newRect.size.y /= 2;
+    }
+    if (snapMode & bottomBit_WindowSnap) {
+        newRect.pos.y += newRect.size.y;
+    }
+    /* Show and hide the title bar. */
+    iWidget *winBar = findWidget_App("winbar");
+    const iBool wasVisible = isVisible_Widget(winBar);
+    setFlags_Widget(winBar, hidden_WidgetFlag, snapMode == fullscreen_WindowSnap);
+    if (newRect.size.x) {
+        SDL_SetWindowPosition(d->win, newRect.pos.x, newRect.pos.y);
+        SDL_SetWindowSize(d->win, newRect.size.x, newRect.size.y);
+        postCommand_App("window.resized");
+    }
+    if (wasVisible != isVisible_Widget(winBar)) {
+        arrange_Widget(d->root);
+        postRefresh_App();
+    }
+}
+
+int snap_Window(const iWindow *d) {
+    return d->place.snap;
+}
+#endif

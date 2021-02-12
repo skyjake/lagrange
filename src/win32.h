@@ -21,8 +21,14 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
+
+#include <the_Foundation/defs.h>
 #include <SDL_video.h>
+#include <SDL_syswm.h>
+
+iDeclareType(Window)
 
 void  setDPIAware_Win32(void);
 float desktopDPI_Win32(void);
 void  useExecutableIconResource_SDLWindow(SDL_Window *win);
+void  processNativeEvent_Win32(const struct SDL_SysWMmsg *msg, iWindow *window);

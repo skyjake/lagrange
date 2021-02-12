@@ -21,10 +21,13 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "win32.h"
+#include "ui/window.h"
+#include "app.h"
 #include <SDL_syswm.h>
 
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
+#include <windowsx.h>
 #include <d2d1.h>
 
 void setDPIAware_Win32(void) {
@@ -59,3 +62,53 @@ void useExecutableIconResource_SDLWindow(SDL_Window *win) {
         }
     }
 }
+
+#if 0
+void setup_SDLWindow(SDL_Window *win) {
+    SDL_SysWMinfo wmInfo;
+    SDL_VERSION(&wmInfo.version);
+    if (SDL_GetWindowWMInfo(win, &wmInfo)) {
+        HWND hwnd = wmInfo.info.win.window;
+//        printf("configuring window\n");
+//        SetWindowLong(hwnd, GWL_STYLE, GetWindowLong(hwnd, GWL_STYLE) | WS_SYSMENU);
+    }
+}
+#endif
+
+#if defined (LAGRANGE_CUSTOM_FRAME)
+void processNativeEvent_Win32(const struct SDL_SysWMmsg *msg, iWindow *window) {
+    HWND hwnd = msg->msg.win.hwnd;
+//    printf("[syswm] %x\n", msg->msg.win.msg); fflush(stdout);
+    switch (msg->msg.win.msg) {
+        case WM_NCLBUTTONDBLCLK: {
+            POINT point = { GET_X_LPARAM(msg->msg.win.lParam), GET_Y_LPARAM(msg->msg.win.lParam) };
+            ScreenToClient(hwnd, &point);
+            iInt2 pos = init_I2(point.x, point.y);
+            switch (hitTest_Window(window, pos)) {
+                case SDL_HITTEST_DRAGGABLE:
+                    postCommand_App("window.maximize toggle:1");
+                    break;
+                case SDL_HITTEST_RESIZE_TOP:
+                case SDL_HITTEST_RESIZE_BOTTOM: {
+                    setSnap_Window(window, yMaximized_WindowSnap);
+                    break;
+                }
+            }
+            //fflush(stdout);
+            break;
+        }
+#if 0
+        /* SDL does not use WS_SYSMENU on the window, so we can't display the system menu.
+           However, the only useful function in the menu would be moving-via-keyboard,
+           but that doesn't work with a custom frame. We could show a custom system menu? */
+        case WM_NCRBUTTONUP: {
+            POINT point = { GET_X_LPARAM(msg->msg.win.lParam), GET_Y_LPARAM(msg->msg.win.lParam) };
+            HMENU menu = GetSystemMenu(hwnd, FALSE);
+            printf("menu at %d,%d menu:%p\n", point.x, point.y, menu); fflush(stdout);
+            TrackPopupMenu(menu, TPM_RIGHTBUTTON, point.x, point.y, 0, hwnd, NULL);
+            break;
+        }
+#endif
+    }
+}
+#endif /* defined (LAGRANGE_CUSTOM_FRAME) */
