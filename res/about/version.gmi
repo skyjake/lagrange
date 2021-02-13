@@ -8,6 +8,7 @@
 
 ## 1.1.3
 * Fixed crash when deleting a bookmark that was being used as a remote bookmark source.
+* Fixed potential crash at shutdown.
 * Fixed URL path decoding not respecting reserved characters.
 * AppImage: Disable SSE 4.1 for improved compatibility.
 * Windows: Fixed portable build so it stores user files under the "userdata" directory and not under AppData\Roaming\.
