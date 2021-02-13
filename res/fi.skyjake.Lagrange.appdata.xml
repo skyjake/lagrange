@@ -45,6 +45,18 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.1.3" date="2021-02-14">
+            <description>
+                <p>Bug fixes:</p>
+                <ul>
+                    <li>Crash when deleting a bookmark that was being used as 
+                        a remote bookmark source.</li>
+                    <li>Potential crash at shutdown.</li>
+                    <li>URL path decoding not respecting reserved characters.</li>
+                </ul>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.1.3</url>
+        </release>
         <release version="1.1.2" date="2021-02-10">
             <description>
                 <p>Bug fixes:</p>
