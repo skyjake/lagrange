@@ -31,6 +31,9 @@ iDeclareType(Window)
 void  setDPIAware_Win32(void);
 float desktopDPI_Win32(void);
 void  useExecutableIconResource_SDLWindow(SDL_Window *win);
-void  processNativeEvent_Win32(const struct SDL_SysWMmsg *msg, iWindow *window);
 
+#if defined (LAGRANGE_CUSTOM_FRAME)
 iInt2 cursor_Win32(void);
+void  processNativeEvent_Win32(const struct SDL_SysWMmsg *msg, iWindow *window);
+void  setup_SDLWindow(SDL_Window *);
+#endif

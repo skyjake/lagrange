@@ -28,6 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <windowsx.h>
+#include <dwmapi.h>
 #include <d2d1.h>
 
 void setDPIAware_Win32(void) {
@@ -63,18 +64,6 @@ void useExecutableIconResource_SDLWindow(SDL_Window *win) {
     }
 }
 
-#if 0
-void setup_SDLWindow(SDL_Window *win) {
-    SDL_SysWMinfo wmInfo;
-    SDL_VERSION(&wmInfo.version);
-    if (SDL_GetWindowWMInfo(win, &wmInfo)) {
-        HWND hwnd = wmInfo.info.win.window;
-//        printf("configuring window\n");
-//        SetWindowLong(hwnd, GWL_STYLE, GetWindowLong(hwnd, GWL_STYLE) | WS_SYSMENU);
-    }
-}
-#endif
-
 #if defined (LAGRANGE_CUSTOM_FRAME)
 iInt2 cursor_Win32(void) {
     POINT p;
@@ -85,12 +74,17 @@ iInt2 cursor_Win32(void) {
 void processNativeEvent_Win32(const struct SDL_SysWMmsg *msg, iWindow *window) {
     static int winDown_[2] = { 0, 0 };
     HWND hwnd = msg->msg.win.hwnd;
-    printf("[syswm] %x\n", msg->msg.win.msg); fflush(stdout);
+    //printf("[syswm] %x\n", msg->msg.win.msg); fflush(stdout);
     const WPARAM wp = msg->msg.win.wParam;
     switch (msg->msg.win.msg) {
+        case WM_ACTIVATE: {
+            //LONG style = GetWindowLong(hwnd, GWL_STYLE);
+            //SetWindowLog(hwnd, GWL_STYLE, style);
+            break;
+        }
         case WM_KEYDOWN: {
             if (wp == VK_LWIN) {
-                printf("lwin down\n"); fflush(stdout);
+                //printf("lwin down\n"); fflush(stdout);
                 winDown_[0] = iTrue;
             }
             else if (wp == VK_RWIN) {
