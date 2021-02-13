@@ -13,3 +13,5 @@ o888ooooood8 `Y888""8o `8oooooo.  d888b    `Y888""8o o888o o888o `8oooooo.  `Y8b
 ## Version ${APP_VERSION}
 => https://skyjake.fi/@jk by @jk@skyjake.fi
 Powered by SDL 2, OpenSSL, and ☕️
+
+=> gemini://gemini.circumlunar.space/ Don't know where to start? Click here!
