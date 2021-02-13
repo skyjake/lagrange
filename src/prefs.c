@@ -26,6 +26,7 @@ void init_Prefs(iPrefs *d) {
     d->dialogTab         = 0;
     d->useSystemTheme    = iTrue;
     d->theme             = dark_ColorTheme;
+    d->customFrame       = iTrue;
     d->retainWindowSize  = iTrue;
     d->uiScale           = 1.0f; /* default set elsewhere */
     d->zoomPercent       = 100;

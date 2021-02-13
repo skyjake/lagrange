@@ -91,7 +91,7 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
         return iFalse;
     }
     else if (equal_Command(cmd, "window.focus.gained")) {
-        setTextColor_LabelWidget(findWidget_App("winbar.app"), uiTextShortcut_ColorId);
+        setTextColor_LabelWidget(findWidget_App("winbar.app"), uiTextAppTitle_ColorId);
         setTextColor_LabelWidget(findWidget_App("winbar.title"), uiTextStrong_ColorId);
         return iFalse;
     }
@@ -557,7 +557,8 @@ static void setupUserInterface_Window(iWindow *d) {
     addChild_Widget(d->root, iClob(div));
 
 #if defined (LAGRANGE_CUSTOM_FRAME)
-    /* Window title bar. */ {
+    /* Window title bar. */ 
+    if (prefs_App()->customFrame) {
         setPadding1_Widget(div, 1);
         iWidget *winBar = new_Widget();
         setPadding_Widget(winBar, 0, gap_UI / 3, 0, 0);
@@ -573,7 +574,7 @@ static void setupUserInterface_Window(iWindow *d) {
             addChildFlags_Widget(winBar,
                                  iClob(new_LabelWidget("Lagrange", NULL)),
                                  fixedHeight_WidgetFlag | frameless_WidgetFlag);
-        setTextColor_LabelWidget(appButton, uiTextShortcut_ColorId);
+        setTextColor_LabelWidget(appButton, uiTextAppTitle_ColorId);
         setId_Widget(as_Widget(appButton), "winbar.app");
         iLabelWidget *appTitle;
         setFont_LabelWidget(appButton, uiContentBold_FontId);
@@ -862,17 +863,21 @@ SDL_HitTestResult hitTest_Window(const iWindow *d, iInt2 pos) {
 iBool create_Window_(iWindow *d, iRect rect, uint32_t flags) {
     flags |= SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_HIDDEN;
 #if defined (LAGRANGE_CUSTOM_FRAME)
-    /* We are drawing a custom frame so hide the default one. */
-    flags |= SDL_WINDOW_BORDERLESS;
+    if (prefs_App()->customFrame) {
+        /* We are drawing a custom frame so hide the default one. */
+        flags |= SDL_WINDOW_BORDERLESS;
+    }
 #endif
     if (SDL_CreateWindowAndRenderer(
             width_Rect(rect), height_Rect(rect), flags, &d->win, &d->render)) {
         return iFalse;
     }
 #if defined (LAGRANGE_CUSTOM_FRAME)
-    /* Register a handler for window hit testing (drag, resize). */
-    SDL_SetWindowHitTest(d->win, hitTest_Window_, d);
-    SDL_SetWindowResizable(d->win, SDL_TRUE);
+    if (prefs_App()->customFrame) {
+        /* Register a handler for window hit testing (drag, resize). */
+        SDL_SetWindowHitTest(d->win, hitTest_Window_, d);
+        SDL_SetWindowResizable(d->win, SDL_TRUE);
+    }
 #endif
     return iTrue;
 }
@@ -979,15 +984,16 @@ void init_Window(iWindow *d, iRect rect) {
     updateRootSize_Window_(d, iFalse);
     d->appIcon = NULL;
 #if defined (LAGRANGE_CUSTOM_FRAME)
-    /* Load the app icon for drawing in the title bar. */ {
+    /* Load the app icon for drawing in the title bar. */ 
+    if (prefs_App()->customFrame) {
         SDL_Surface *surf = loadAppIconSurface_(appIconSize_());
         SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
         d->appIcon = SDL_CreateTextureFromSurface(d->render, surf);
         free(surf->pixels);
         SDL_FreeSurface(surf);
+        /* We need to observe non-client-area events. */
+        SDL_EventState(SDL_SYSWMEVENT, SDL_TRUE);
     }
-    /* We need to observe non-client-area events. */
-    SDL_EventState(SDL_SYSWMEVENT, SDL_TRUE);
 #endif
 }
 
@@ -1027,6 +1033,9 @@ static iBool isNormalPlacement_Window_(const iWindow *d) {
 
 static iBool unsnap_Window_(iWindow *d, const iInt2 *newPos) {
 #if defined (LAGRANGE_CUSTOM_FRAME)
+    if (!prefs_App()->customFrame) {
+        return iFalse;
+    }
     const int snap = snap_Window(d);
     if (snap == yMaximized_WindowSnap || snap == left_WindowSnap || snap == right_WindowSnap) {
         if (!newPos || (d->place.lastHit == SDL_HITTEST_RESIZE_LEFT ||
@@ -1088,7 +1097,8 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
                 return iFalse;
             }
 #if defined (LAGRANGE_CUSTOM_FRAME)
-            /* Set the snap position depending on where the mouse cursor is. */ {
+            /* Set the snap position depending on where the mouse cursor is. */ 
+            if (prefs_App()->customFrame) {
                 SDL_Rect usable;
                 iInt2 mouse = cursor_Win32(); /* SDL is unaware of the current cursor pos */
                 SDL_GetDisplayUsableBounds(SDL_GetWindowDisplayIndex(d->win), &usable);
@@ -1281,17 +1291,17 @@ void draw_Window(iWindow *d) {
     if (d->isDrawFrozen) {
         return;
     }
-//#if !defined (NDEBUG)
-//    printf("draw %d\n", d->frameTime); fflush(stdout);
-//#endif
-    /* Clear the window. */
-    const int winFlags = SDL_GetWindowFlags(d->win);
-    const iColor back =
-        get_Color(winFlags & SDL_WINDOW_INPUT_FOCUS && d->place.snap != maximized_WindowSnap
-                      ? uiAnnotation_ColorId
-                      : uiSeparator_ColorId);
-    SDL_SetRenderDrawColor(d->render, back.r, back.g, back.b, 255);
-    SDL_RenderClear(d->render);
+    const int   winFlags = SDL_GetWindowFlags(d->win);
+    const iBool gotFocus = (winFlags & SDL_WINDOW_INPUT_FOCUS) != 0;
+    /* Clear the window. The clear color is visible as a border around the window
+       when the custom frame is being used. */ {
+        const iColor back = get_Color(gotFocus && d->place.snap != maximized_WindowSnap &&
+                                              ~winFlags & SDL_WINDOW_FULLSCREEN_DESKTOP
+                                          ? uiAnnotation_ColorId
+                                          : uiSeparator_ColorId);
+        SDL_SetRenderDrawColor(d->render, back.r, back.g, back.b, 255);
+        SDL_RenderClear(d->render);
+    }
     /* Draw widgets. */
     d->frameTime = SDL_GetTicks();
     draw_Widget(d->root);
@@ -1302,6 +1312,10 @@ void draw_Window(iWindow *d) {
         const int   size = appIconSize_();
         const iRect rect = bounds_Widget(appIcon);
         const iInt2 mid = mid_Rect(rect);
+        const iBool isLight = isLight_ColorTheme(colorTheme_App());
+        iColor      iconColor = get_Color(gotFocus || isLight ? white_ColorId : cyan_ColorId);
+        SDL_SetTextureColorMod(d->appIcon, iconColor.r, iconColor.g, iconColor.b);
+        SDL_SetTextureAlphaMod(d->appIcon, gotFocus || !isLight ? 255 : 92);
         SDL_RenderCopy(
             d->render,
             d->appIcon,
@@ -1401,38 +1415,25 @@ iWindow *get_Window(void) {
     return theWindow_;
 }
 
-#if !defined (LAGRANGE_CUSTOM_FRAME)
 void setSnap_Window(iWindow *d, int snapMode) {
-    if (snapMode == maximized_WindowSnap) {
-        SDL_MaximizeWindow(d->win);
-    }
-    else if (snapMode == fullscreen_WindowSnap) {
-        SDL_SetWindowFullscreen(d->win, SDL_WINDOW_FULLSCREEN_DESKTOP);
-    }
-    else {
-        if (snap_Window(d) == fullscreen_WindowSnap) {
-            SDL_SetWindowFullscreen(d->win, 0);
+    if (!prefs_App()->customFrame) {
+        if (snapMode == maximized_WindowSnap) {
+            SDL_MaximizeWindow(d->win);
+        }
+        else if (snapMode == fullscreen_WindowSnap) {
+            SDL_SetWindowFullscreen(d->win, SDL_WINDOW_FULLSCREEN_DESKTOP);
         }
         else {
-            SDL_RestoreWindow(d->win);
+            if (snap_Window(d) == fullscreen_WindowSnap) {
+                SDL_SetWindowFullscreen(d->win, 0);
+            }
+            else {
+                SDL_RestoreWindow(d->win);
+            }
         }
+        return;
     }
-}
-
-int snap_Window(const iWindow *d) {
-    const int flags = SDL_GetWindowFlags(d->win);
-    if (flags & SDL_WINDOW_FULLSCREEN_DESKTOP) {
-        return fullscreen_WindowSnap;
-    }
-    else if (flags & SDL_WINDOW_MAXIMIZED) {
-        return maximized_WindowSnap;
-    }
-    return none_WindowSnap;
-}
-#endif
-
 #if defined (LAGRANGE_CUSTOM_FRAME)
-void setSnap_Window(iWindow *d, int snapMode) {
     if (d->place.snap == snapMode) {
         return;
     }
@@ -1497,9 +1498,19 @@ void setSnap_Window(iWindow *d, int snapMode) {
         arrange_Widget(d->root);
         postRefresh_App();
     }
+#endif /* defined (LAGRANGE_CUSTOM_FRAME) */
 }
 
 int snap_Window(const iWindow *d) {
+    if (!prefs_App()->customFrame) {
+        const int flags = SDL_GetWindowFlags(d->win);
+        if (flags & SDL_WINDOW_FULLSCREEN_DESKTOP) {
+            return fullscreen_WindowSnap;
+        }
+        else if (flags & SDL_WINDOW_MAXIMIZED) {
+            return maximized_WindowSnap;
+        }
+        return none_WindowSnap;
+    }
     return d->place.snap;
 }
-#endif

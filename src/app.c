@@ -158,6 +158,9 @@ static iString *serializePrefs_App_(const iApp *d) {
     iString *str = new_String();
     const iSidebarWidget *sidebar  = findWidget_App("sidebar");
     const iSidebarWidget *sidebar2 = findWidget_App("sidebar2");
+#if defined (LAGRANGE_CUSTOM_FRAME)
+    appendFormat_String(str, "customframe arg:%d\n", d->prefs.customFrame);
+#endif
     appendFormat_String(str, "window.retain arg:%d\n", d->prefs.retainWindowSize);
     if (d->prefs.retainWindowSize) {
         int w, h, x, y;
@@ -283,6 +286,9 @@ static void loadPrefs_App_(iApp *d) {
             if (equal_Command(cmd, "uiscale")) {
                 setUiScale_Window(get_Window(), argf_Command(cmd));
             }
+            else if (equal_Command(cmd, "customframe")) {
+                d->prefs.customFrame = arg_Command(cmd);
+            }
             else if (equal_Command(cmd, "window.setrect") && !argLabel_Command(cmd, "snap")) {
                 const iInt2 pos = coord_Command(cmd);
                 d->initialWindowRect = init_Rect(
@@ -298,6 +304,9 @@ static void loadPrefs_App_(iApp *d) {
     else {
         /* default preference values */
     }
+#if !defined (LAGRANGE_CUSTOM_FRAME)
+    d->prefs.customFrame = iFalse;
+#endif
     iRelease(f);
 }
 
@@ -603,6 +612,11 @@ void processEvents_App(enum iAppEventMode eventMode) {
         switch (ev.type) {
             case SDL_QUIT:
                 d->isRunning = iFalse;
+                if (findWidget_App("prefs")) {
+                    /* Make sure changed preferences get saved. */
+                    postCommand_App("prefs.dismiss");
+                    processEvents_App(postedEventsOnly_AppEventMode);
+                }
                 goto backToMainLoop;
             case SDL_DROPFILE: {
                 iBool wasUsed = processEvent_Window(d->window, &ev);
@@ -909,6 +923,8 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
         postCommandf_App("downloads path:%s",
                          cstr_String(text_InputWidget(findChild_Widget(d, "prefs.downloads"))));
 #endif
+        postCommandf_App("customframe arg:%d",
+                         isSelected_Widget(findChild_Widget(d, "prefs.customframe")));
         postCommandf_App("window.retain arg:%d",
                          isSelected_Widget(findChild_Widget(d, "prefs.retainwindow")));
         postCommandf_App("smoothscroll arg:%d",
@@ -1118,6 +1134,10 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "window.retain")) {
         d->prefs.retainWindowSize = arg_Command(cmd);
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "customframe")) {
+        d->prefs.customFrame = arg_Command(cmd);
         return iTrue;
     }
     else if (equal_Command(cmd, "window.maximize")) {
@@ -1409,6 +1429,7 @@ iBool handleCommand_App(const char *cmd) {
         setToggle_Widget(findChild_Widget(dlg, "prefs.smoothscroll"), d->prefs.smoothScrolling);
         setToggle_Widget(findChild_Widget(dlg, "prefs.imageloadscroll"), d->prefs.loadImageInsteadOfScrolling);
         setToggle_Widget(findChild_Widget(dlg, "prefs.ostheme"), d->prefs.useSystemTheme);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.customframe"), d->prefs.customFrame);
         setToggle_Widget(findChild_Widget(dlg, "prefs.retainwindow"), d->prefs.retainWindowSize);
         setText_InputWidget(findChild_Widget(dlg, "prefs.uiscale"),
                             collectNewFormat_String("%g", uiScale_Window(d->window)));

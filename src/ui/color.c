@@ -89,6 +89,7 @@ void setThemePalette_Color(enum iColorTheme theme) {
             copy_(uiTextShortcut_ColorId, cyan_ColorId);
             copy_(uiTextAction_ColorId, cyan_ColorId);
             copy_(uiTextCaution_ColorId, orange_ColorId);
+            copy_(uiTextAppTitle_ColorId, cyan_ColorId);
             copy_(uiFrame_ColorId, black_ColorId);
             copy_(uiEmboss1_ColorId, gray25_ColorId);
             copy_(uiEmboss2_ColorId, black_ColorId);
@@ -134,6 +135,7 @@ void setThemePalette_Color(enum iColorTheme theme) {
             copy_(uiTextShortcut_ColorId, cyan_ColorId);
             copy_(uiTextAction_ColorId, cyan_ColorId);
             copy_(uiTextCaution_ColorId, orange_ColorId);
+            copy_(uiTextAppTitle_ColorId, cyan_ColorId);
             copy_(uiFrame_ColorId, gray25_ColorId);
             copy_(uiEmboss1_ColorId, gray50_ColorId);
             copy_(uiEmboss2_ColorId, black_ColorId);
@@ -178,6 +180,7 @@ void setThemePalette_Color(enum iColorTheme theme) {
             copy_(uiTextShortcut_ColorId, brown_ColorId);
             copy_(uiTextAction_ColorId, brown_ColorId);
             copy_(uiTextCaution_ColorId, teal_ColorId);
+            copy_(uiTextAppTitle_ColorId, teal_ColorId);
             copy_(uiFrame_ColorId, gray50_ColorId);
             copy_(uiEmboss1_ColorId, white_ColorId);
             copy_(uiEmboss2_ColorId, gray50_ColorId);
@@ -223,6 +226,7 @@ void setThemePalette_Color(enum iColorTheme theme) {
             copy_(uiTextShortcut_ColorId, brown_ColorId);
             copy_(uiTextAction_ColorId, brown_ColorId);
             copy_(uiTextCaution_ColorId, teal_ColorId);
+            copy_(uiTextAppTitle_ColorId, teal_ColorId);
             copy_(uiFrame_ColorId, gray75_ColorId);
             copy_(uiEmboss1_ColorId, white_ColorId);
             copy_(uiEmboss2_ColorId, white_ColorId);

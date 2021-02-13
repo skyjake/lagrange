@@ -38,6 +38,7 @@ struct Impl_Prefs {
     /* Window */
     iBool            useSystemTheme;
     enum iColorTheme theme;
+    iBool            customFrame; /* when LAGRANGE_CUSTOM_FRAME is defined */
     iBool            retainWindowSize;
     float            uiScale;
     int              zoomPercent;

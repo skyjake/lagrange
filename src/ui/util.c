@@ -1083,10 +1083,15 @@ iWidget *makePreferences_Widget(void) {
             setId_Widget(addChild_Widget(themes, iClob(new_LabelWidget("Pure White", "theme.set arg:3"))), "prefs.theme.3");
         }
         addChildFlags_Widget(values, iClob(themes), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
-        addChild_Widget(headings, iClob(makeHeading_Widget("Retain window size:")));
-        addChild_Widget(values, iClob(makeToggle_Widget("prefs.retainwindow")));
+#if defined (LAGRANGE_CUSTOM_FRAME)
+        addChild_Widget(headings, iClob(makeHeading_Widget("Custom window frame:")));
+        addChild_Widget(values, iClob(makeToggle_Widget("prefs.customframe")));
+#endif
+        makeTwoColumnHeading_("SIZING", headings, values);
         addChild_Widget(headings, iClob(makeHeading_Widget("UI scale factor:")));
         setId_Widget(addChild_Widget(values, iClob(new_InputWidget(8))), "prefs.uiscale");
+        addChild_Widget(headings, iClob(makeHeading_Widget("Retain placement:")));
+        addChild_Widget(values, iClob(makeToggle_Widget("prefs.retainwindow")));
         makeTwoColumnHeading_("WIDE LAYOUT", headings, values);
         addChild_Widget(headings, iClob(makeHeading_Widget("Site icon:")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.sideicon")));
