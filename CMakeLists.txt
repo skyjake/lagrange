@@ -70,7 +70,7 @@ set (EMBED_RESOURCES
     res/fonts/SourceSansPro-Bold.ttf
     res/fonts/Symbola.ttf
 )
-if (UNIX AND NOT APPLE)
+if ((UNIX AND NOT APPLE) OR MSYS)
     list (APPEND EMBED_RESOURCES res/lagrange-64.png)
 endif ()
 embed_make (${EMBED_RESOURCES})
@@ -260,7 +260,7 @@ if (APPLE)
     )
 endif ()
 if (MSYS)
-    target_link_libraries (app PUBLIC d2d1 uuid) # querying DPI
+    target_link_libraries (app PUBLIC d2d1 uuid dwmapi) # querying DPI
 endif ()
 if (UNIX)
     target_link_libraries (app PUBLIC m)
