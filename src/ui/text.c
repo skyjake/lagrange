@@ -1110,6 +1110,7 @@ void drawCentered_Text(int fontId, iRect rect, iBool alignVisual, int color, con
     iRect          textBounds = alignVisual ? visualBounds_Text(fontId, text)
                                    : (iRect){ zero_I2(), advanceRange_Text(fontId, text) };
     textBounds.pos = sub_I2(mid_Rect(rect), mid_Rect(textBounds));
+    textBounds.pos.x = iMax(textBounds.pos.x, left_Rect(rect)); /* keep left edge visible */
     draw_Text_(fontId, textBounds.pos, color, text);
     deinit_Block(&chars);
 }

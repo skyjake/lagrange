@@ -93,6 +93,19 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
         setTextColor_LabelWidget(findWidget_App("winbar.title"), uiTextStrong_ColorId);
         return iFalse;
     }
+    else if (equal_Command(cmd, "window.setrect")) {
+        const int snap = argLabel_Command(cmd, "snap");
+        if (snap) {
+            iWindow *window = get_Window();
+            iInt2 coord = coord_Command(cmd);
+            iInt2 size = init_I2(argLabel_Command(cmd, "width"),
+                                 argLabel_Command(cmd, "height"));
+            SDL_SetWindowPosition(window->win, coord.x, coord.y);
+            SDL_SetWindowSize(window->win, size.x, size.y);
+            window->place.snap = snap;
+            return iTrue;
+        }
+    }
     else if (equal_Command(cmd, "window.restore")) {
         setSnap_Window(get_Window(), none_WindowSnap);
         return iTrue;
@@ -542,6 +555,7 @@ static void setupUserInterface_Window(iWindow *d) {
         const int border = gap_UI / 4;
         setPadding1_Widget(div, border); /* draggable edges */
         iWidget *winBar = new_Widget();
+        setPadding_Widget(winBar, 0, gap_UI / 3, 0, 0);
         setId_Widget(winBar, "winbar");
         setFlags_Widget(winBar,
                         arrangeHeight_WidgetFlag | resizeChildren_WidgetFlag |
@@ -792,13 +806,14 @@ static SDL_HitTestResult hitTest_Window_(SDL_Window *win, const SDL_Point *pos, 
     if (SDL_GetWindowFlags(d->win) & (SDL_WINDOW_MOUSE_CAPTURE | SDL_WINDOW_FULLSCREEN_DESKTOP)) {
         return SDL_HITTEST_NORMAL;
     }
+    const int snap = snap_Window(d);
     int w, h;
     SDL_GetWindowSize(win, &w, &h);
     /* TODO: Check if inside the caption label widget. */    
     const iBool isLeft   = pos->x < gap_UI;
     const iBool isRight  = pos->x >= w - gap_UI;
-    const iBool isTop    = pos->y < gap_UI;
-    const iBool isBottom = pos->y >= h - gap_UI;
+    const iBool isTop    = pos->y < gap_UI && snap != yMaximized_WindowSnap;
+    const iBool isBottom = pos->y >= h - gap_UI && snap != yMaximized_WindowSnap;
     const int captionHeight = lineHeight_Text(uiContent_FontId) + gap_UI * 2;
     const int rightEdge = left_Rect(bounds_Widget(findChild_Widget(d->root, "winbar.min")));
     d->place.lastHit = SDL_HITTEST_NORMAL;
@@ -862,6 +877,7 @@ void init_Window(iWindow *d, iRect rect) {
     d->isExposed = iFalse;
     d->isMinimized = iFalse;
     d->isMouseInside = iTrue;
+    d->ignoreClick = iFalse;
     d->focusGainedAt = 0;
     uint32_t flags = 0;
 #if defined (iPlatformAppleDesktop)
@@ -1180,21 +1196,10 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
                    As a workaround, ignore these events. */
                 return iTrue; /* won't go to bindings, either */
             }
-#if 0 //defined (LAGRANGE_CUSTOM_FRAME)
-            if (event.type == SDL_KEYDOWN) {
-                if (keyMods_Sym(event.key.keysym.mod) == KMOD_PRIMARY) {
-                    printf("got! %x\n", event.key.keysym.sym); fflush(stdout);
-                    /* Emulate window snapping keys. */
-                    switch (event.key.keysym.sym) {
-                        default:
-                            break;
-                        case SDLK_LEFT:
-                            setSnap_Window(d, left_WindowSnap);
-                            return iTrue;
-                    }
-                }
+            if (event.type == SDL_MOUSEBUTTONDOWN && d->ignoreClick) {
+                d->ignoreClick = iFalse;
+                return iTrue;
             }
-#endif
             /* Map mouse pointer coordinate to our coordinate system. */
             if (event.type == SDL_MOUSEMOTION) {
                 setCursor_Window(d, SDL_SYSTEM_CURSOR_ARROW); /* default cursor */

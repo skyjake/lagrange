@@ -160,7 +160,6 @@ static iString *serializePrefs_App_(const iApp *d) {
     const iSidebarWidget *sidebar2 = findWidget_App("sidebar2");
     appendFormat_String(str, "window.retain arg:%d\n", d->prefs.retainWindowSize);
     if (d->prefs.retainWindowSize) {
-        const iBool isMaximized = snap_Window(d->window) == maximized_WindowSnap;
         int w, h, x, y;
         x = d->window->place.normalRect.pos.x;
         y = d->window->place.normalRect.pos.y;
@@ -171,12 +170,22 @@ static iString *serializePrefs_App_(const iApp *d) {
         appendFormat_String(str, "sidebar2.width arg:%d\n", width_SidebarWidget(sidebar2));
         /* On macOS, maximization should be applied at creation time or the window will take
            a moment to animate to its maximized size. */
-#if !defined (iPlatformApple)
-        if (isMaximized) {
+#if defined (LAGRANGE_CUSTOM_FRAME)
+        if (snap_Window(d->window)) {
+            if (~SDL_GetWindowFlags(d->window->win) & SDL_WINDOW_MINIMIZED) {
+                /* Save the actual visible window position, too, because snapped windows may
+                   still be resized/moved without affecting normalRect. */
+                SDL_GetWindowPosition(d->window->win, &x, &y);
+                SDL_GetWindowSize(d->window->win, &w, &h);
+                appendFormat_String(
+                    str, "~window.setrect snap:%d width:%d height:%d coord:%d %d\n", 
+                    snap_Window(d->window), w, h, x, y);
+            }          
+        }
+#elif !defined (iPlatformApple)
+        if (snap_Window(d->window) == maximized_WindowSnap) {
             appendFormat_String(str, "~window.maximize\n");
         }
-#else
-        iUnused(isMaximized);
 #endif
     }
     /* Sidebars. */ {
@@ -274,7 +283,7 @@ static void loadPrefs_App_(iApp *d) {
             if (equal_Command(cmd, "uiscale")) {
                 setUiScale_Window(get_Window(), argf_Command(cmd));
             }
-            else if (equal_Command(cmd, "window.setrect")) {
+            else if (equal_Command(cmd, "window.setrect") && !argLabel_Command(cmd, "snap")) {
                 const iInt2 pos = coord_Command(cmd);
                 d->initialWindowRect = init_Rect(
                     pos.x, pos.y, argLabel_Command(cmd, "width"), argLabel_Command(cmd, "height"));

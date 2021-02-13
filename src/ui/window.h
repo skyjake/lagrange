@@ -63,6 +63,7 @@ struct Impl_Window {
     iBool         isExposed;
     iBool         isMinimized;
     iBool         isMouseInside;
+    iBool         ignoreClick;
     uint32_t      focusGainedAt;
     SDL_Renderer *render;
     iWidget *     root;

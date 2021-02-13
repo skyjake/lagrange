@@ -153,6 +153,7 @@ void processNativeEvent_Win32(const struct SDL_SysWMmsg *msg, iWindow *window) {
                     break;
                 case SDL_HITTEST_RESIZE_TOP:
                 case SDL_HITTEST_RESIZE_BOTTOM: {
+                    window->ignoreClick = iTrue; /* avoid hitting something inside the window */
                     setSnap_Window(window, yMaximized_WindowSnap);
                     break;
                 }
