@@ -42,6 +42,7 @@ enum iWindowSnap {
     mask_WindowSnap       = 0xff,
     topBit_WindowSnap     = iBit(9),
     bottomBit_WindowSnap  = iBit(10),
+    redo_WindowSnap       = iBit(11),
 };
 
 iDeclareType(WindowPlacement)

@@ -76,17 +76,86 @@ void setup_SDLWindow(SDL_Window *win) {
 #endif
 
 #if defined (LAGRANGE_CUSTOM_FRAME)
+iInt2 cursor_Win32(void) {
+    POINT p;
+    GetPhysicalCursorPos(&p);
+    return init_I2(p.x, p.y);
+}
+
 void processNativeEvent_Win32(const struct SDL_SysWMmsg *msg, iWindow *window) {
+    static int winDown_[2] = { 0, 0 };
     HWND hwnd = msg->msg.win.hwnd;
-//    printf("[syswm] %x\n", msg->msg.win.msg); fflush(stdout);
+    printf("[syswm] %x\n", msg->msg.win.msg); fflush(stdout);
+    const WPARAM wp = msg->msg.win.wParam;
     switch (msg->msg.win.msg) {
+        case WM_KEYDOWN: {
+            if (wp == VK_LWIN) {
+                printf("lwin down\n"); fflush(stdout);
+                winDown_[0] = iTrue;
+            }
+            else if (wp == VK_RWIN) {
+                //printf("rwin down\n"); fflush(stdout);
+                winDown_[1] = iTrue;
+            }
+            break;
+        }
+        case WM_KEYUP: {
+            if (winDown_[0] || winDown_[1]) {
+                /* Emulate the default window snapping behavior. */
+                int snap = snap_Window(window);
+                if (wp == VK_LEFT) {
+                    snap &= ~(topBit_WindowSnap | bottomBit_WindowSnap);
+                    setSnap_Window(window,
+                                   snap == right_WindowSnap ? 0 : left_WindowSnap);
+                }
+                else if (wp == VK_RIGHT) {
+                    snap &= ~(topBit_WindowSnap | bottomBit_WindowSnap);
+                    setSnap_Window(window,
+                                   snap == left_WindowSnap ? 0 : right_WindowSnap);
+                }
+                else if (wp == VK_UP) {
+                    if (~snap & topBit_WindowSnap) {
+                        setSnap_Window(window,
+                                       snap & bottomBit_WindowSnap ? snap & ~bottomBit_WindowSnap
+                                       : snap == left_WindowSnap || snap == right_WindowSnap
+                                           ? snap | topBit_WindowSnap
+                                           : maximized_WindowSnap);
+                    }
+                    else {
+                        postCommand_App("window.maximize");
+                    }
+                }
+                else if (wp == VK_DOWN) {
+                    if (snap == 0 || snap & bottomBit_WindowSnap) {
+                        postCommand_App("window.minimize");
+                    }
+                    else {
+                        setSnap_Window(window,
+                                       snap == maximized_WindowSnap ? 0
+                                       : snap & topBit_WindowSnap   ? snap & ~topBit_WindowSnap
+                                       : snap == left_WindowSnap || snap == right_WindowSnap
+                                           ? snap | bottomBit_WindowSnap
+                                           : 0);
+                    }
+                }
+            }
+            if (wp == VK_LWIN) {
+                winDown_[0] = iFalse;
+            }
+            if (wp == VK_RWIN) {
+                winDown_[1] = iFalse;
+            }
+            break;            
+        }
         case WM_NCLBUTTONDBLCLK: {
-            POINT point = { GET_X_LPARAM(msg->msg.win.lParam), GET_Y_LPARAM(msg->msg.win.lParam) };
+            POINT point = { GET_X_LPARAM(msg->msg.win.lParam), 
+                            GET_Y_LPARAM(msg->msg.win.lParam) };
             ScreenToClient(hwnd, &point);
             iInt2 pos = init_I2(point.x, point.y);
             switch (hitTest_Window(window, pos)) {
                 case SDL_HITTEST_DRAGGABLE:
-                    postCommand_App("window.maximize toggle:1");
+                    postCommandf_App("window.%s",
+                                     snap_Window(window) ? "restore" : "maximize toggle:1");
                     break;
                 case SDL_HITTEST_RESIZE_TOP:
                 case SDL_HITTEST_RESIZE_BOTTOM: {
@@ -98,11 +167,25 @@ void processNativeEvent_Win32(const struct SDL_SysWMmsg *msg, iWindow *window) {
             break;
         }
 #if 0
+        case WM_NCLBUTTONUP: {
+            POINT point = { GET_X_LPARAM(msg->msg.win.lParam), 
+                            GET_Y_LPARAM(msg->msg.win.lParam) };
+            printf("%d,%d\n", point.x, point.y); fflush(stdout);
+            ScreenToClient(hwnd, &point);
+            iInt2 pos = init_I2(point.x, point.y);
+            if (hitTest_Window(window, pos) == SDL_HITTEST_DRAGGABLE) {
+                printf("released draggable\n"); fflush(stdout);
+            }
+            break;
+        }
+#endif
+#if 0
         /* SDL does not use WS_SYSMENU on the window, so we can't display the system menu.
            However, the only useful function in the menu would be moving-via-keyboard,
            but that doesn't work with a custom frame. We could show a custom system menu? */
         case WM_NCRBUTTONUP: {
-            POINT point = { GET_X_LPARAM(msg->msg.win.lParam), GET_Y_LPARAM(msg->msg.win.lParam) };
+            POINT point = { GET_X_LPARAM(msg->msg.win.lParam), 
+                            GET_Y_LPARAM(msg->msg.win.lParam) };
             HMENU menu = GetSystemMenu(hwnd, FALSE);
             printf("menu at %d,%d menu:%p\n", point.x, point.y, menu); fflush(stdout);
             TrackPopupMenu(menu, TPM_RIGHTBUTTON, point.x, point.y, 0, hwnd, NULL);

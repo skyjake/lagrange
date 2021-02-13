@@ -93,6 +93,10 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
         setTextColor_LabelWidget(findWidget_App("winbar.title"), uiTextStrong_ColorId);
         return iFalse;
     }
+    else if (equal_Command(cmd, "window.restore")) {
+        setSnap_Window(get_Window(), none_WindowSnap);
+        return iTrue;
+    }
     else if (equal_Command(cmd, "window.minimize")) {
         SDL_MinimizeWindow(get_Window()->win);
         return iTrue;
@@ -553,9 +557,8 @@ static void setupUserInterface_Window(iWindow *d) {
         setFont_LabelWidget(appButton, uiContentBold_FontId);
         setId_Widget(addChildFlags_Widget(winBar,
                                           iClob(appTitle = new_LabelWidget("", NULL)),
-                                          expand_WidgetFlag | /*alignLeft_WidgetFlag |*/
-                                              fixedHeight_WidgetFlag | frameless_WidgetFlag |
-                                              commandOnClick_WidgetFlag),
+                                          expand_WidgetFlag | fixedHeight_WidgetFlag |
+                                              frameless_WidgetFlag | commandOnClick_WidgetFlag),
                      "winbar.title");
         setTextColor_LabelWidget(appTitle, uiTextStrong_ColorId);
         iLabelWidget *appMin, *appMax, *appClose;
@@ -570,6 +573,7 @@ static void setupUserInterface_Window(iWindow *d) {
             winBar,
             iClob(appMax = newLargeIcon_LabelWidget("\u25a1", "window.maximize toggle:1")),
             frameless_WidgetFlag);
+        setId_Widget(as_Widget(appMax), "winbar.max");
         addChildFlags_Widget(winBar,
                              iClob(appClose = newLargeIcon_LabelWidget("\u2a2f", "window.close")),
                              frameless_WidgetFlag);
@@ -785,7 +789,7 @@ static void drawBlank_Window_(iWindow *d) {
 static SDL_HitTestResult hitTest_Window_(SDL_Window *win, const SDL_Point *pos, void *data) {
     iWindow *d = data;
     iAssert(d->win == win);
-    if (SDL_GetWindowFlags(d->win) & SDL_WINDOW_MOUSE_CAPTURE) {
+    if (SDL_GetWindowFlags(d->win) & (SDL_WINDOW_MOUSE_CAPTURE | SDL_WINDOW_FULLSCREEN_DESKTOP)) {
         return SDL_HITTEST_NORMAL;
     }
     int w, h;
@@ -979,10 +983,21 @@ static iBool isNormalPlacement_Window_(const iWindow *d) {
 static iBool unsnap_Window_(iWindow *d, const iInt2 *newPos) {
 #if defined (LAGRANGE_CUSTOM_FRAME)
     const int snap = snap_Window(d);
-    if (snap == yMaximized_WindowSnap &&
-        (!newPos || (d->place.lastHit == SDL_HITTEST_RESIZE_LEFT ||
-                     d->place.lastHit == SDL_HITTEST_RESIZE_RIGHT))) {
-        return iFalse;
+    if (snap == yMaximized_WindowSnap || snap == left_WindowSnap || snap == right_WindowSnap) {
+        if (!newPos || (d->place.lastHit == SDL_HITTEST_RESIZE_LEFT ||
+                        d->place.lastHit == SDL_HITTEST_RESIZE_RIGHT)) {
+            return iFalse;
+        }
+        if (newPos) {
+            SDL_Rect usable;
+            SDL_GetDisplayUsableBounds(SDL_GetWindowDisplayIndex(d->win), &usable);
+            /* Snap to top. */
+            if (snap == yMaximized_WindowSnap &&
+                iAbs(newPos->y - usable.y) < lineHeight_Text(uiContent_FontId) * 2) {
+                setSnap_Window(d, redo_WindowSnap | yMaximized_WindowSnap);
+                return iFalse;
+            }
+        }
     }
     if (snap && snap != fullscreen_WindowSnap) {
         if (snap_Window(d) == yMaximized_WindowSnap && newPos) {
@@ -1027,6 +1042,33 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
                 d->isMinimized = iTrue;
                 return iFalse;
             }
+#if defined (LAGRANGE_CUSTOM_FRAME)
+            /* Set the snap position depending on where the mouse cursor is. */ {
+                SDL_Rect usable;
+                iInt2 mouse = cursor_Win32(); /* SDL is unaware of the current cursor pos */
+                SDL_GetDisplayUsableBounds(SDL_GetWindowDisplayIndex(d->win), &usable);
+                const iBool isTop = iAbs(mouse.y - usable.y) < gap_UI * 20;
+                const iBool isBottom = iAbs(usable.y + usable.h - mouse.y) < gap_UI * 20;
+                if (iAbs(mouse.x - usable.x) < gap_UI) {
+                    setSnap_Window(d,
+                                   redo_WindowSnap | left_WindowSnap |
+                                       (isTop ? topBit_WindowSnap : 0) |
+                                       (isBottom ? bottomBit_WindowSnap : 0));
+                    return iTrue;
+                }
+                if (iAbs(mouse.x - usable.x - usable.w) < gap_UI) {
+                    setSnap_Window(d,
+                                   redo_WindowSnap | right_WindowSnap |
+                                       (isTop ? topBit_WindowSnap : 0) |
+                                       (isBottom ? bottomBit_WindowSnap : 0));
+                    return iTrue;
+                }
+                if (iAbs(mouse.y - usable.y) < 2) {
+                    setSnap_Window(d, redo_WindowSnap | maximized_WindowSnap);
+                    return iTrue;
+                }
+            }
+#endif
             //printf("MOVED: %d, %d\n", ev->data1, ev->data2); fflush(stdout);
             if (unsnap_Window_(d, &newPos)) {
                 return iTrue;
@@ -1138,6 +1180,21 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
                    As a workaround, ignore these events. */
                 return iTrue; /* won't go to bindings, either */
             }
+#if 0 //defined (LAGRANGE_CUSTOM_FRAME)
+            if (event.type == SDL_KEYDOWN) {
+                if (keyMods_Sym(event.key.keysym.mod) == KMOD_PRIMARY) {
+                    printf("got! %x\n", event.key.keysym.sym); fflush(stdout);
+                    /* Emulate window snapping keys. */
+                    switch (event.key.keysym.sym) {
+                        default:
+                            break;
+                        case SDLK_LEFT:
+                            setSnap_Window(d, left_WindowSnap);
+                            return iTrue;
+                    }
+                }
+            }
+#endif
             /* Map mouse pointer coordinate to our coordinate system. */
             if (event.type == SDL_MOUSEMOTION) {
                 setCursor_Window(d, SDL_SYSTEM_CURSOR_ARROW); /* default cursor */
@@ -1322,13 +1379,14 @@ void setSnap_Window(iWindow *d, int snapMode) {
     if (d->place.snap == snapMode) {
         return;
     }
+    const int snapDist = gap_UI * 4;
     iRect newRect = zero_Rect();   
     SDL_Rect usable;
     SDL_GetDisplayUsableBounds(SDL_GetWindowDisplayIndex(d->win), &usable);
     if (d->place.snap == fullscreen_WindowSnap) {
         SDL_SetWindowFullscreen(d->win, 0);
     }
-    d->place.snap = snapMode;
+    d->place.snap = snapMode & ~redo_WindowSnap;
     switch (snapMode & mask_WindowSnap) {
         case none_WindowSnap:
             newRect = d->place.normalRect;
@@ -1337,7 +1395,8 @@ void setSnap_Window(iWindow *d, int snapMode) {
             newRect = init_Rect(usable.x, usable.y, usable.w / 2, usable.h);
             break;
         case right_WindowSnap:
-            newRect = init_Rect(usable.x, usable.y + usable.w / 2, usable.w / 2, usable.h);
+            newRect =
+                init_Rect(usable.x + usable.w / 2, usable.y, usable.w - usable.w / 2, usable.h);
             break;
         case maximized_WindowSnap:
             newRect = init_Rect(usable.x, usable.y, usable.w, usable.h);
@@ -1345,8 +1404,15 @@ void setSnap_Window(iWindow *d, int snapMode) {
         case yMaximized_WindowSnap:
             newRect.pos.y = 0;
             newRect.size.y = usable.h;
-            SDL_GetWindowPosition(d->win, &newRect.pos.x, NULL);
             SDL_GetWindowSize(d->win, &newRect.size.x, NULL);
+            SDL_GetWindowPosition(d->win, &newRect.pos.x, NULL);
+            /* Snap the window to left/right edges, if close by. */
+            if (iAbs(right_Rect(newRect) - (usable.x + usable.w)) < snapDist) {
+                newRect.pos.x = usable.x + usable.w - width_Rect(newRect);
+            }
+            if (iAbs(newRect.pos.x - usable.x) < snapDist) {
+                newRect.pos.x = usable.x;
+            }
             break;
         case fullscreen_WindowSnap:
             SDL_SetWindowFullscreen(d->win, SDL_WINDOW_FULLSCREEN_DESKTOP);
@@ -1358,10 +1424,13 @@ void setSnap_Window(iWindow *d, int snapMode) {
     if (snapMode & bottomBit_WindowSnap) {
         newRect.pos.y += newRect.size.y;
     }
-    /* Show and hide the title bar. */
+    /* Update window controls. */
     iWidget *winBar = findWidget_App("winbar");
+    updateTextCStr_LabelWidget(findChild_Widget(winBar, "winbar.max"),
+                               d->place.snap == maximized_WindowSnap ? "\u25a2" : "\u25a1");
+    /* Show and hide the title bar. */
     const iBool wasVisible = isVisible_Widget(winBar);
-    setFlags_Widget(winBar, hidden_WidgetFlag, snapMode == fullscreen_WindowSnap);
+    setFlags_Widget(winBar, hidden_WidgetFlag, d->place.snap == fullscreen_WindowSnap);
     if (newRect.size.x) {
         SDL_SetWindowPosition(d->win, newRect.pos.x, newRect.pos.y);
         SDL_SetWindowSize(d->win, newRect.size.x, newRect.size.y);
