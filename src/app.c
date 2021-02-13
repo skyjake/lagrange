@@ -745,6 +745,7 @@ static int run_App_(iApp *d) {
         refresh_App();
         recycle_Garbage();
     }
+    SDL_DelEventWatch(resizeWatcher_, d);
     return 0;
 }
 
