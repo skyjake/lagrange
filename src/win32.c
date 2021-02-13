@@ -80,6 +80,7 @@ void processNativeEvent_Win32(const struct SDL_SysWMmsg *msg, iWindow *window) {
         case WM_ACTIVATE: {
             //LONG style = GetWindowLong(hwnd, GWL_STYLE);
             //SetWindowLog(hwnd, GWL_STYLE, style);
+            iZap(winDown_); /* may have hidden the up event */
             break;
         }
         case WM_KEYDOWN: {
@@ -148,6 +149,7 @@ void processNativeEvent_Win32(const struct SDL_SysWMmsg *msg, iWindow *window) {
             iInt2 pos = init_I2(point.x, point.y);
             switch (hitTest_Window(window, pos)) {
                 case SDL_HITTEST_DRAGGABLE:
+                    window->ignoreClick = iTrue; /* avoid hitting something inside the window */
                     postCommandf_App("window.%s",
                                      snap_Window(window) ? "restore" : "maximize toggle:1");
                     break;

@@ -52,7 +52,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <SDL_syswm.h>
 
 #define STB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_RESIZE_IMPLEMENTATION
 #include "stb_image.h"
+#include "stb_image_resize.h"
 
 static iWindow *theWindow_ = NULL;
 
@@ -89,7 +91,7 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
         return iFalse;
     }
     else if (equal_Command(cmd, "window.focus.gained")) {
-        setTextColor_LabelWidget(findWidget_App("winbar.app"), uiTextCaution_ColorId);
+        setTextColor_LabelWidget(findWidget_App("winbar.app"), uiTextShortcut_ColorId);
         setTextColor_LabelWidget(findWidget_App("winbar.title"), uiTextStrong_ColorId);
         return iFalse;
     }
@@ -541,6 +543,10 @@ static iLabelWidget *newLargeIcon_LabelWidget(const char *text, const char *cmd)
     return lab;
 }
 
+static int appIconSize_(void) {
+    return lineHeight_Text(uiContent_FontId);
+}
+
 static void setupUserInterface_Window(iWindow *d) {
     /* Children of root cover the entire window. */
     setFlags_Widget(d->root, resizeChildren_WidgetFlag, iTrue);
@@ -552,8 +558,7 @@ static void setupUserInterface_Window(iWindow *d) {
 
 #if defined (LAGRANGE_CUSTOM_FRAME)
     /* Window title bar. */ {
-        const int border = gap_UI / 4;
-        setPadding1_Widget(div, border); /* draggable edges */
+        setPadding1_Widget(div, 1);
         iWidget *winBar = new_Widget();
         setPadding_Widget(winBar, 0, gap_UI / 3, 0, 0);
         setId_Widget(winBar, "winbar");
@@ -561,11 +566,14 @@ static void setupUserInterface_Window(iWindow *d) {
                         arrangeHeight_WidgetFlag | resizeChildren_WidgetFlag |
                             arrangeHorizontal_WidgetFlag | collapse_WidgetFlag,
                         iTrue);
+        iWidget *appIcon;
+        setId_Widget(
+            addChild_Widget(winBar, iClob(appIcon = makePadding_Widget(0))), "winbar.icon");
         iLabelWidget *appButton =
             addChildFlags_Widget(winBar,
                                  iClob(new_LabelWidget("Lagrange", NULL)),
                                  fixedHeight_WidgetFlag | frameless_WidgetFlag);
-        setTextColor_LabelWidget(appButton, uiTextCaution_ColorId);
+        setTextColor_LabelWidget(appButton, uiTextShortcut_ColorId);
         setId_Widget(as_Widget(appButton), "winbar.app");
         iLabelWidget *appTitle;
         setFont_LabelWidget(appButton, uiContentBold_FontId);
@@ -594,6 +602,7 @@ static void setupUserInterface_Window(iWindow *d) {
         setFont_LabelWidget(appClose, uiContent_FontId);
         setSize_Widget(as_Widget(appMax), as_Widget(appMin)->rect.size);
         setSize_Widget(as_Widget(appClose), as_Widget(appMin)->rect.size);
+        setSize_Widget(appIcon, init_I2(appIconSize_(), as_Widget(appMin)->rect.size.y));
         addChild_Widget(div, iClob(winBar));
         setBackgroundColor_Widget(winBar, uiBackground_ColorId);
     }
@@ -817,25 +826,27 @@ static SDL_HitTestResult hitTest_Window_(SDL_Window *win, const SDL_Point *pos, 
     const int captionHeight = lineHeight_Text(uiContent_FontId) + gap_UI * 2;
     const int rightEdge = left_Rect(bounds_Widget(findChild_Widget(d->root, "winbar.min")));
     d->place.lastHit = SDL_HITTEST_NORMAL;
-    if (isLeft) {
-        return pos->y < captionHeight       ? SDL_HITTEST_RESIZE_TOPLEFT
-               : pos->y > h - captionHeight ? SDL_HITTEST_RESIZE_BOTTOMLEFT
-                                            : (d->place.lastHit = SDL_HITTEST_RESIZE_LEFT);
-    }
-    if (isRight) {
-        return pos->y < captionHeight       ? SDL_HITTEST_RESIZE_TOPRIGHT
-               : pos->y > h - captionHeight ? SDL_HITTEST_RESIZE_BOTTOMRIGHT
-                                            : (d->place.lastHit = SDL_HITTEST_RESIZE_RIGHT);
-    }
-    if (isTop) {
-        return pos->x < captionHeight       ? SDL_HITTEST_RESIZE_TOPLEFT
-               : pos->x > w - captionHeight ? SDL_HITTEST_RESIZE_TOPRIGHT
-                                            : SDL_HITTEST_RESIZE_TOP;
-    }
-    if (isBottom) {
-        return pos->x < captionHeight       ? SDL_HITTEST_RESIZE_BOTTOMLEFT
-               : pos->x > w - captionHeight ? SDL_HITTEST_RESIZE_BOTTOMRIGHT
-                                            : SDL_HITTEST_RESIZE_BOTTOM;
+    if (snap != maximized_WindowSnap) {
+        if (isLeft) {
+            return pos->y < captionHeight       ? SDL_HITTEST_RESIZE_TOPLEFT
+                   : pos->y > h - captionHeight ? SDL_HITTEST_RESIZE_BOTTOMLEFT
+                                                : (d->place.lastHit = SDL_HITTEST_RESIZE_LEFT);
+        }
+        if (isRight) {
+            return pos->y < captionHeight       ? SDL_HITTEST_RESIZE_TOPRIGHT
+                   : pos->y > h - captionHeight ? SDL_HITTEST_RESIZE_BOTTOMRIGHT
+                                                : (d->place.lastHit = SDL_HITTEST_RESIZE_RIGHT);
+        }
+        if (isTop) {
+            return pos->x < captionHeight       ? SDL_HITTEST_RESIZE_TOPLEFT
+                   : pos->x > w - captionHeight ? SDL_HITTEST_RESIZE_TOPRIGHT
+                                                : SDL_HITTEST_RESIZE_TOP;
+        }
+        if (isBottom) {
+            return pos->x < captionHeight       ? SDL_HITTEST_RESIZE_BOTTOMLEFT
+                   : pos->x > w - captionHeight ? SDL_HITTEST_RESIZE_BOTTOMRIGHT
+                                                : SDL_HITTEST_RESIZE_BOTTOM;
+        }
     }
     if (pos->x < rightEdge && pos->y < captionHeight) {
         return SDL_HITTEST_DRAGGABLE;
@@ -865,6 +876,24 @@ iBool create_Window_(iWindow *d, iRect rect, uint32_t flags) {
 #endif
     return iTrue;
 }
+
+#if defined (iPlatformLinux) || defined (LAGRANGE_CUSTOM_FRAME)
+static SDL_Surface *loadAppIconSurface_(int resized) {
+    const iBlock *icon = &imageLagrange64_Embedded;
+    int           w, h, num;
+    stbi_uc *     pixels = stbi_load_from_memory(
+        constData_Block(icon), size_Block(icon), &w, &h, &num, STBI_rgb_alpha);
+    if (resized) {
+        stbi_uc * rsPixels = malloc(num * resized * resized);
+        stbir_resize_uint8(pixels, w, h, 0, rsPixels, resized, resized, 0, num);
+        free(pixels);
+        pixels = rsPixels;
+        w = h = resized;
+    }
+    return SDL_CreateRGBSurfaceWithFormatFrom(
+        pixels, w, h, 8 * num, w * num, SDL_PIXELFORMAT_RGBA32);
+}
+#endif
 
 void init_Window(iWindow *d, iRect rect) {
     theWindow_ = d;
@@ -932,19 +961,10 @@ void init_Window(iWindow *d, iRect rect) {
 #if defined (iPlatformLinux)
     SDL_SetWindowMinimumSize(d->win, minSize.x * d->pixelRatio, minSize.y * d->pixelRatio);
     /* Load the window icon. */ {
-        int w, h, num;
-        const iBlock *icon = &imageLagrange64_Embedded;
-        stbi_uc *pixels = stbi_load_from_memory(constData_Block(icon),
-                                                size_Block(icon),
-                                                &w,
-                                                &h,
-                                                &num,
-                                                STBI_rgb_alpha);
-        SDL_Surface *surf =
-            SDL_CreateRGBSurfaceWithFormatFrom(pixels, w, h, 32, 4 * w, SDL_PIXELFORMAT_RGBA32);
+        SDL_Surface *surf = loadAppIconSurface_(0);
         SDL_SetWindowIcon(d->win, surf);
+        free(surf->pixels);
         SDL_FreeSurface(surf);
-        stbi_image_free(pixels);
     }
 #endif
     d->root = new_Widget();
@@ -957,7 +977,16 @@ void init_Window(iWindow *d, iRect rect) {
     setupUserInterface_Window(d);
     postCommand_App("bindings.changed"); /* update from bindings */
     updateRootSize_Window_(d, iFalse);
+    d->appIcon = NULL;
 #if defined (LAGRANGE_CUSTOM_FRAME)
+    /* Load the app icon for drawing in the title bar. */ {
+        SDL_Surface *surf = loadAppIconSurface_(appIconSize_());
+        SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
+        d->appIcon = SDL_CreateTextureFromSurface(d->render, surf);
+        free(surf->pixels);
+        SDL_FreeSurface(surf);
+    }
+    /* We need to observe non-client-area events. */
     SDL_EventState(SDL_SYSWMEVENT, SDL_TRUE);
 #endif
 }
@@ -1256,12 +1285,30 @@ void draw_Window(iWindow *d) {
 //    printf("draw %d\n", d->frameTime); fflush(stdout);
 //#endif
     /* Clear the window. */
-    const iColor back = get_Color(uiSeparator_ColorId);
+    const int winFlags = SDL_GetWindowFlags(d->win);
+    const iColor back =
+        get_Color(winFlags & SDL_WINDOW_INPUT_FOCUS && d->place.snap != maximized_WindowSnap
+                      ? uiAnnotation_ColorId
+                      : uiSeparator_ColorId);
     SDL_SetRenderDrawColor(d->render, back.r, back.g, back.b, 255);
     SDL_RenderClear(d->render);
     /* Draw widgets. */
     d->frameTime = SDL_GetTicks();
     draw_Widget(d->root);
+#if defined (LAGRANGE_CUSTOM_FRAME)
+    /* App icon. */
+    const iWidget *appIcon = findChild_Widget(d->root, "winbar.icon");
+    if (isVisible_Widget(appIcon)) {
+        const int   size = appIconSize_();
+        const iRect rect = bounds_Widget(appIcon);
+        const iInt2 mid = mid_Rect(rect);
+        SDL_RenderCopy(
+            d->render,
+            d->appIcon,
+            NULL,
+            &(SDL_Rect){ left_Rect(rect) + gap_UI * 1.25f, mid.y - size / 2, size, size });
+    }
+#endif
 #if 0
     /* Text cache debugging. */ {
         SDL_Texture *cache = glyphCache_Text();
@@ -1363,7 +1410,12 @@ void setSnap_Window(iWindow *d, int snapMode) {
         SDL_SetWindowFullscreen(d->win, SDL_WINDOW_FULLSCREEN_DESKTOP);
     }
     else {
-        SDL_RestoreWindow(d->win);
+        if (snap_Window(d) == fullscreen_WindowSnap) {
+            SDL_SetWindowFullscreen(d->win, 0);
+        }
+        else {
+            SDL_RestoreWindow(d->win);
+        }
     }
 }
 

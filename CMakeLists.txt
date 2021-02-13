@@ -109,6 +109,7 @@ set (SOURCES
     src/prefs.c
     src/prefs.h
     src/stb_image.h
+    src/stb_image_resize.h
     src/stb_truetype.h
     src/visited.c
     src/visited.h
