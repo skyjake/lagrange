@@ -384,6 +384,7 @@ static void initCache_Text_(iText *d) {
         pushBack_Array(&d->cacheRows, &(iCacheRow){ .height = 0 });
     }
     d->cacheBottom = 0;
+    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
     d->cache = SDL_CreateTexture(d->render,
                                  SDL_PIXELFORMAT_RGBA4444,
                                  SDL_TEXTUREACCESS_STATIC | SDL_TEXTUREACCESS_TARGET,
@@ -1231,6 +1232,7 @@ iDefineTypeConstructionArgs(TextBuf, (int font, const char *text), font, text)
 void init_TextBuf(iTextBuf *d, int font, const char *text) {
     SDL_Renderer *render = text_.render;
     d->size    = advance_Text(font, text);
+    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
     d->texture = SDL_CreateTexture(render,
                                    SDL_PIXELFORMAT_RGBA4444,
                                    SDL_TEXTUREACCESS_STATIC | SDL_TEXTUREACCESS_TARGET,
