@@ -498,7 +498,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     /* Widget state init. */
     processEvents_App(postedEventsOnly_AppEventMode);
     if (!loadState_App_(d)) {
-        postCommand_App("navigate.home");
+        postCommand_App("open url:about:help");
     }
     postCommand_App("window.unfreeze");
     d->isFinishedLaunching = iTrue;

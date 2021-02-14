@@ -6,6 +6,13 @@
 ```
 # Help
 
+## What is Gemini
+
+Gemini is a simple protocol for serving content over the internet. It specifies a Markdown inspired format allowing basic plain text document markup. Compared to HTTP and HTML, Gemini is vastly simpler and easier to work with.
+
+=> gemini://gemini.circumlunar.space/docs/faq.gmi Project Gemini FAQ
+=> gemini://gemini.circumlunar.space/docs/specification.gmi Protocol and 'text/gemini' specification
+
 ## What is Lagrange
 
 Lagrange is a GUI client for browsing Geminispace. It offers modern conveniences familiar from web browsers, such as smooth scrolling, inline image viewing, multiple tabs, visual themes, Unicode fonts, bookmarks, history, and page outlines.
@@ -40,13 +47,6 @@ Like Gemini, Lagrange has been designed with minimalism in mind. It depends on a
 * Configurable keybindings
 * Built-in support for Gopher
 * Use proxy servers for HTTP, Gopher, or Gemini content
-
-## What is Gemini
-
-Gemini is a simple protocol for serving content over the internet. It specifies a Markdown inspired format allowing basic plain text document markup. Compared to HTTP and HTML, Gemini is vastly simpler and easier to work with.
-
-=> gemini://gemini.circumlunar.space/docs/faq.gmi Project Gemini FAQ
-=> gemini://gemini.circumlunar.space/docs/specification.gmi Protocol and 'text/gemini' specification
 
 ## Why not just use a web browser
 
