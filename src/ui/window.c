@@ -398,7 +398,7 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
                 iInputWidget *url = findWidget_App("url");
                 const iString *urlStr = collect_String(suffix_Command(cmd, "url"));
                 trimCache_App();
-                visitUrl_Visited(visited_App(), urlStr, 0);
+                visitUrl_Visited(visited_App(), withSpacesEncoded_String(urlStr), 0); /* TODO: internal URI normalization */
                 postCommand_App("visited.changed"); /* sidebar will update */
                 setText_InputWidget(url, urlStr);
                 checkLoadAnimation_Window_(get_Window());
@@ -723,6 +723,7 @@ iBool create_Window_(iWindow *d, iRect rect, uint32_t flags) {
 
 void init_Window(iWindow *d, iRect rect) {
     theWindow_ = d;
+    d->win = NULL;
     iZap(d->cursors);
     d->initialPos = rect.pos;
     d->lastRect = rect;

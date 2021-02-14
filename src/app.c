@@ -1272,7 +1272,7 @@ iBool handleCommand_App(const char *cmd) {
         iDocumentWidget *doc = document_Command(cmd);
         const int newTab = argLabel_Command(cmd, "newtab");
         if (newTab) {
-            doc = newTab_App(NULL, (newTab & 1) != 0); /* "newtab:2" to open in background */
+            doc = newTab_App(NULL, (newTab & 1) != 0); /* `newtab:2` to open in background */
         }
         iHistory *history = history_DocumentWidget(doc);
         const iBool isHistory = argLabel_Command(cmd, "history") != 0;

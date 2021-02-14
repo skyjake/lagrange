@@ -134,7 +134,8 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
     d->menu = NULL;
     switch (d->mode) {
         case feeds_SidebarMode: {
-            const iString *docUrl = url_DocumentWidget(document_App());
+            const iString *docUrl = withSpacesEncoded_String(url_DocumentWidget(document_App()));
+                                    /* TODO: internal URI normalization */
             iTime now;
             iDate on;
             initCurrent_Time(&now);
@@ -490,6 +491,7 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     d->list = new_ListWidget();
     setPadding_Widget(as_Widget(d->list), 0, gap_UI, 0, gap_UI);
     addChild_Widget(content, iClob(d->list));
+    d->contextItem = NULL;
     d->blank = new_Widget();
     addChildFlags_Widget(content, iClob(d->blank), resizeChildren_WidgetFlag);
     addChildFlags_Widget(vdiv, iClob(content), expand_WidgetFlag);
@@ -1037,6 +1039,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
     }
     if (d->menu && ev->type == SDL_MOUSEBUTTONDOWN) {
         if (ev->button.button == SDL_BUTTON_RIGHT) {
+            d->contextItem = NULL;
             if (!isVisible_Widget(d->menu)) {
                 updateMouseHover_ListWidget(d->list);
             }
