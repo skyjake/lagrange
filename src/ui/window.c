@@ -432,7 +432,7 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
                 iInputWidget *url = findWidget_App("url");
                 const iString *urlStr = collect_String(suffix_Command(cmd, "url"));
                 trimCache_App();
-                visitUrl_Visited(visited_App(), urlStr, 0);
+                visitUrl_Visited(visited_App(), withSpacesEncoded_String(urlStr), 0); /* TODO: internal URI normalization */
                 postCommand_App("visited.changed"); /* sidebar will update */
                 setText_InputWidget(url, urlStr);
                 checkLoadAnimation_Window_(get_Window());
@@ -902,6 +902,7 @@ static SDL_Surface *loadAppIconSurface_(int resized) {
 
 void init_Window(iWindow *d, iRect rect) {
     theWindow_ = d;
+    d->win = NULL;
     iZap(d->cursors);
     d->place.initialPos = rect.pos;
     d->place.normalRect = rect;
