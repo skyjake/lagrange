@@ -427,8 +427,12 @@ const char *escape_Color(int color) {
     if (color >= 0 && color < (int) iElemCount(esc)) {
         return esc[color];
     }
-    iAssert(asciiBase_ColorEscape + color <= 127);
-    return format_CStr("\r%c", asciiBase_ColorEscape + color);
+    /* Double-\r is used for range extension. */
+    if (color + asciiBase_ColorEscape > 127) {
+        iAssert(color - asciiExtended_ColorEscape + asciiBase_ColorEscape <= 127);
+        return format_CStr("\r\r%c", color - asciiExtended_ColorEscape + asciiBase_ColorEscape);
+    }
+    return format_CStr("\r%c", color + asciiBase_ColorEscape);
 }
 
 iHSLColor setSat_HSLColor(iHSLColor d, float sat) {

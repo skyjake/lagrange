@@ -734,8 +734,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
     for (const char *chPos = args->text.start; chPos != args->text.end; ) {
         iAssert(chPos < args->text.end);
         const char *currentPos = chPos;
-        if (*chPos == 0x1b) {
-            /* ANSI escape. */
+        if (*chPos == 0x1b) { /* ANSI escape. */
             chPos++;
             iRegExpMatch m;
             init_RegExpMatch(&m);
@@ -821,7 +820,10 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                 continue;
             }
             if (ch == '\r') {
-                const iChar esc = nextChar_(&chPos, args->text.end);
+                iChar esc = nextChar_(&chPos, args->text.end);
+                if (esc == '\r') { /* Extended range. */
+                    esc = nextChar_(&chPos, args->text.end) + asciiExtended_ColorEscape;
+                }
                 if (mode & draw_RunMode && ~mode & permanentColorFlag_RunMode) {
                     const iColor clr = get_Color(esc - asciiBase_ColorEscape);
                     SDL_SetTextureColorMod(text_.cache, clr.r, clr.g, clr.b);
