@@ -841,12 +841,12 @@ static SDL_HitTestResult hitTest_Window_(SDL_Window *win, const SDL_Point *pos, 
         if (isTop) {
             return pos->x < captionHeight       ? SDL_HITTEST_RESIZE_TOPLEFT
                    : pos->x > w - captionHeight ? SDL_HITTEST_RESIZE_TOPRIGHT
-                                                : SDL_HITTEST_RESIZE_TOP;
+                                                : (d->place.lastHit = SDL_HITTEST_RESIZE_TOP);
         }
         if (isBottom) {
             return pos->x < captionHeight       ? SDL_HITTEST_RESIZE_BOTTOMLEFT
                    : pos->x > w - captionHeight ? SDL_HITTEST_RESIZE_BOTTOMRIGHT
-                                                : SDL_HITTEST_RESIZE_BOTTOM;
+                                                : (d->place.lastHit = SDL_HITTEST_RESIZE_BOTTOM);
         }
     }
     if (pos->x < rightEdge && pos->y < captionHeight) {
@@ -1058,7 +1058,7 @@ static iBool unsnap_Window_(iWindow *d, const iInt2 *newPos) {
         if (snap_Window(d) == yMaximized_WindowSnap && newPos) {
             d->place.normalRect.pos = *newPos;
         }
-        printf("unsnap\n"); fflush(stdout);
+        //printf("unsnap\n"); fflush(stdout);
         setSnap_Window(d, none_WindowSnap);
         return iTrue;
     }
@@ -1120,7 +1120,10 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
                     return iTrue;
                 }
                 if (iAbs(mouse.y - usable.y) < 2) {
-                    setSnap_Window(d, redo_WindowSnap | maximized_WindowSnap);
+                    setSnap_Window(d,
+                                   redo_WindowSnap | (d->place.lastHit == SDL_HITTEST_RESIZE_TOP
+                                                          ? yMaximized_WindowSnap
+                                                          : maximized_WindowSnap));
                     return iTrue;
                 }
             }
@@ -1448,7 +1451,8 @@ void setSnap_Window(iWindow *d, int snapMode) {
     d->place.snap = snapMode & ~redo_WindowSnap;
     switch (snapMode & mask_WindowSnap) {
         case none_WindowSnap:
-            newRect = d->place.normalRect;
+            newRect = intersect_Rect(d->place.normalRect,
+                                     init_Rect(usable.x, usable.y, usable.w, usable.h));
             break;
         case left_WindowSnap:
             newRect = init_Rect(usable.x, usable.y, usable.w / 2, usable.h);
