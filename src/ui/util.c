@@ -1063,6 +1063,9 @@ iWidget *makePreferences_Widget(void) {
 #endif
         addChild_Widget(headings, iClob(makeHeading_Widget("Show URL on hover:")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.hoverlink")));
+        addChild_Widget(headings, iClob(makeHeading_Widget("Vertical centering:")));
+        addChild_Widget(values, iClob(makeToggle_Widget("prefs.centershort")));
+        makeTwoColumnHeading_("SCROLLING", headings, values);
         addChild_Widget(headings, iClob(makeHeading_Widget("Smooth scrolling:")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.smoothscroll")));
         addChild_Widget(headings, iClob(makeHeading_Widget("Load image on scroll:")));

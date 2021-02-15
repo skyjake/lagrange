@@ -215,6 +215,7 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "linewidth.set arg:%d\n", d->prefs.lineWidth);
     appendFormat_String(str, "prefs.biglede.changed arg:%d\n", d->prefs.bigFirstParagraph);
     appendFormat_String(str, "prefs.sideicon.changed arg:%d\n", d->prefs.sideIcon);
+    appendFormat_String(str, "prefs.centershort.changed arg:%d\n", d->prefs.centerShortDocs);
     appendFormat_String(str, "quoteicon.set arg:%d\n", d->prefs.quoteIcon ? 1 : 0);
     appendFormat_String(str, "prefs.hoverlink.changed arg:%d\n", d->prefs.hoverLink);
     appendFormat_String(str, "theme.set arg:%d auto:1\n", d->prefs.theme);
@@ -1264,6 +1265,11 @@ iBool handleCommand_App(const char *cmd) {
         postRefresh_App();
         return iTrue;
     }
+    else if (equal_Command(cmd, "prefs.centershort.changed")) {
+        d->prefs.centerShortDocs = arg_Command(cmd) != 0;
+        postCommand_App("theme.changed");
+        return iTrue;
+    }
     else if (equal_Command(cmd, "prefs.hoverlink.changed")) {
         d->prefs.hoverLink = arg_Command(cmd) != 0;
         postRefresh_App();
@@ -1457,6 +1463,7 @@ iBool handleCommand_App(const char *cmd) {
             iTrue);
         setToggle_Widget(findChild_Widget(dlg, "prefs.biglede"), d->prefs.bigFirstParagraph);
         setToggle_Widget(findChild_Widget(dlg, "prefs.sideicon"), d->prefs.sideIcon);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.centershort"), d->prefs.centerShortDocs);
         updateColorThemeButton_(findChild_Widget(dlg, "prefs.doctheme.dark"), d->prefs.docThemeDark);
         updateColorThemeButton_(findChild_Widget(dlg, "prefs.doctheme.light"), d->prefs.docThemeLight);
         setFlags_Widget(

@@ -62,6 +62,7 @@ struct Impl_Prefs {
     int              lineWidth;
     iBool            bigFirstParagraph;
     iBool            quoteIcon;
+    iBool            centerShortDocs;
     /* Colors */
     enum iGmDocumentTheme docThemeDark;
     enum iGmDocumentTheme docThemeLight;

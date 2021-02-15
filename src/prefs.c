@@ -43,6 +43,7 @@ void init_Prefs(iPrefs *d) {
     d->lineWidth         = 38;
     d->bigFirstParagraph = iTrue;
     d->quoteIcon         = iTrue;
+    d->centerShortDocs   = iTrue;
     d->docThemeDark      = colorfulDark_GmDocumentTheme;
     d->docThemeLight     = white_GmDocumentTheme;
     d->saturation        = 1.0f;

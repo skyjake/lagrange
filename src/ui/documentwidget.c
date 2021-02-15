@@ -332,15 +332,17 @@ static iRect documentBounds_DocumentWidget_(const iDocumentWidget *d) {
         rect.pos.y += margin;
         rect.size.y -= margin;
     }
-    const iInt2 docSize = size_GmDocument(d->doc);
-    if (docSize.y < rect.size.y) {
-        /* Center vertically if short. There is one empty paragraph line's worth of margin
-           between the banner and the page contents. */
-        const int bannerHeight = banner ? height_Rect(banner->visBounds) : 0;
-        int offset = iMax(0, (rect.size.y + margin - docSize.y - bannerHeight -
-                              lineHeight_Text(paragraph_FontId)) / 2);
-        rect.pos.y += offset;
-        rect.size.y = docSize.y;
+    if (prefs_App()->centerShortDocs) {
+        const iInt2 docSize = size_GmDocument(d->doc);
+        if (docSize.y < rect.size.y) {
+            /* Center vertically if short. There is one empty paragraph line's worth of margin
+               between the banner and the page contents. */
+            const int bannerHeight = banner ? height_Rect(banner->visBounds) : 0;
+            int offset = iMax(0, (rect.size.y + margin - docSize.y - bannerHeight -
+                                  lineHeight_Text(paragraph_FontId)) / 2);
+            rect.pos.y += offset;
+            rect.size.y = docSize.y;
+        }
     }
     return rect;
 }
