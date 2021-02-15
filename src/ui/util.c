@@ -1123,10 +1123,10 @@ iWidget *makePreferences_Widget(void) {
         addChild_Widget(headings, iClob(makeHeading_Widget("Saturation:")));
         iWidget *sats = new_Widget();
         /* Saturation levels. */ {
-            addRadioButton_(sats, "prefs.saturation.3", "Full", "saturation.set arg:100");
-            addRadioButton_(sats, "prefs.saturation.2", "Reduced", "saturation.set arg:66");
-            addRadioButton_(sats, "prefs.saturation.1", "Minimal", "saturation.set arg:33");
-            addRadioButton_(sats, "prefs.saturation.0", "Monochrome", "saturation.set arg:0");
+            addRadioButton_(sats, "prefs.saturation.3", "100 %%", "saturation.set arg:100");
+            addRadioButton_(sats, "prefs.saturation.2", "66 %%", "saturation.set arg:66");
+            addRadioButton_(sats, "prefs.saturation.1", "33 %%", "saturation.set arg:33");
+            addRadioButton_(sats, "prefs.saturation.0", "0 %%", "saturation.set arg:0");
         }
         addChildFlags_Widget(values, iClob(sats), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
     }
