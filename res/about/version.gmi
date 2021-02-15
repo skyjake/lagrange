@@ -12,7 +12,8 @@
 * Shift+Insert can be used for pasting clipboard contents into input fields.
 * Added keybinding (F11) for toggling fullscreen mode. On macOS, the shortcut is ⌃⌘F as before.
 * Added keybinding for finding text on page.
-* Windows: Added a custom window frame to replace the default Windows one. This looks nicer but does not behave exactly like a native window frame. Added a setting to Preferences > Window for switching back to the default frame.
+* Scroll position remains fixed while horizontally resizing the window or sidebars.
+* Windows: Added a custom window frame to replace the default Windows one. This looks nicer but does not behave exactly like a native window frame. Added a setting to Preferences for switching back to the default frame.
 * Windows: Fixed a flash of white when the window is first opened.
 
 ## 1.1.3

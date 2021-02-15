@@ -1113,6 +1113,9 @@ static void scroll_DocumentWidget_(iDocumentWidget *d, int offset) {
 }
 
 static void scrollTo_DocumentWidget_(iDocumentWidget *d, int documentY, iBool centered) {
+    if (!hasSiteBanner_GmDocument(d->doc)) {
+        documentY += d->pageMargin * gap_UI;
+    }
     init_Anim(&d->scrollY,
               documentY - (centered ? documentBounds_DocumentWidget_(d).size.y / 2
                                     : lineHeight_Text(paragraph_FontId)));
@@ -1538,28 +1541,43 @@ static const int homeRowKeys_[] = {
     't', 'y',
 };
 
+static void updateDocumentWidthRetainingScrollPosition_DocumentWidget_(iDocumentWidget *d,
+                                                                       iBool keepCenter) {
+    /* Font changes (i.e., zooming) will keep the view centered, otherwise keep the top
+       of the visible area fixed. */
+    const iGmRun *run     = keepCenter ? middleRun_DocumentWidget_(d) : d->firstVisibleRun;
+    const char *  runLoc  = (run ? run->text.start : NULL);
+    int           voffset = 0;
+    if (!keepCenter && run) {
+        /* Keep the first visible run visible at the same position. */
+        /* TODO: First *fully* visible run? */
+        voffset = visibleRange_DocumentWidget_(d).start - top_Rect(run->visBounds);
+    }
+    setWidth_GmDocument(d->doc, documentWidth_DocumentWidget_(d));
+    if (runLoc && !keepCenter) {
+        run = findRunAtLoc_GmDocument(d->doc, runLoc);
+        if (run) {
+            scrollTo_DocumentWidget_(d,
+                                     top_Rect(run->visBounds) +
+                                         lineHeight_Text(paragraph_FontId) + voffset,
+                                     iFalse);
+        }
+    }
+    else if (runLoc && keepCenter) {
+        run = findRunAtLoc_GmDocument(d->doc, runLoc);
+        if (run) {
+            scrollTo_DocumentWidget_(d, mid_Rect(run->bounds).y, iTrue);
+        }
+    }
+}
+
 static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
     iWidget *w = as_Widget(d);
     if (equal_Command(cmd, "window.resized") || equal_Command(cmd, "font.changed")) {
-        const iBool isVerticalOnly =
-            !argLabel_Command(cmd, "horiz") && argLabel_Command(cmd, "vert");
         /* Alt/Option key may be involved in window size changes. */
         iChangeFlags(d->flags, showLinkNumbers_DocumentWidgetFlag, iFalse);
-        if (isVerticalOnly) {
-            scroll_DocumentWidget_(d, 0); /* prevent overscroll */
-        }
-        else {
-            const iGmRun *mid = middleRun_DocumentWidget_(d);
-            const char *midLoc = (mid ? mid->text.start : NULL);
-            setWidth_GmDocument(d->doc, documentWidth_DocumentWidget_(d));
-            scroll_DocumentWidget_(d, 0);
-            if (midLoc) {
-                mid = findRunAtLoc_GmDocument(d->doc, midLoc);
-                if (mid) {
-                    scrollTo_DocumentWidget_(d, mid_Rect(mid->bounds).y, iTrue);
-                }
-            }
-        }
+        const iBool   keepCenter = equal_Command(cmd, "font.changed");
+        updateDocumentWidthRetainingScrollPosition_DocumentWidget_(d, keepCenter);
         updateSideIconBuf_DocumentWidget_(d);
         updateOutline_DocumentWidget_(d);
         invalidate_DocumentWidget_(d);
@@ -3398,7 +3416,7 @@ iBool isRequestOngoing_DocumentWidget(const iDocumentWidget *d) {
 }
 
 void updateSize_DocumentWidget(iDocumentWidget *d) {
-    setWidth_GmDocument(d->doc, documentWidth_DocumentWidget_(d));
+    updateDocumentWidthRetainingScrollPosition_DocumentWidget_(d, iFalse);
     resetWideRuns_DocumentWidget_(d);
     updateSideIconBuf_DocumentWidget_(d);
     updateOutline_DocumentWidget_(d);
