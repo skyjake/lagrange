@@ -133,6 +133,7 @@ enum iDocumentWidgetFlag {
     showLinkNumbers_DocumentWidgetFlag       = iBit(3),
     setHoverViaKeys_DocumentWidgetFlag       = iBit(4),
     newTabViaHomeKeys_DocumentWidgetFlag     = iBit(5),
+    centerVertically_DocumentWidgetFlag      = iBit(6),
 };
 
 enum iDocumentLinkOrdinalMode {
@@ -151,6 +152,7 @@ struct Impl_DocumentWidget {
     iGmRequest *   request;
     iAtomicInt     isRequestUpdated; /* request has new content, need to parse it */
     iObjectList *  media;
+    enum iGmStatusCode sourceStatus;
     iString        sourceHeader;
     iString        sourceMime;
     iBlock         sourceContent; /* original content as received, for saving */
@@ -231,6 +233,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     init_Array(&d->outline, sizeof(iOutlineItem));
     init_Anim(&d->sideOpacity, 0);
     init_Anim(&d->outlineOpacity, 0);
+    d->sourceStatus = none_GmStatusCode;
     init_String(&d->sourceHeader);
     init_String(&d->sourceMime);
     init_Block(&d->sourceContent, 0);
@@ -332,7 +335,7 @@ static iRect documentBounds_DocumentWidget_(const iDocumentWidget *d) {
         rect.pos.y += margin;
         rect.size.y -= margin;
     }
-    if (prefs_App()->centerShortDocs) {
+    if (d->flags & centerVertically_DocumentWidgetFlag) {
         const iInt2 docSize = size_GmDocument(d->doc);
         if (docSize.y < rect.size.y) {
             /* Center vertically if short. There is one empty paragraph line's worth of margin
@@ -592,6 +595,10 @@ static iRangecc currentHeading_DocumentWidget_(const iDocumentWidget *d) {
 }
 
 static void updateVisible_DocumentWidget_(iDocumentWidget *d) {
+    iChangeFlags(d->flags,
+                 centerVertically_DocumentWidgetFlag,
+                 prefs_App()->centerShortDocs || startsWithCase_String(d->mod.url, "about:") ||
+                     !isSuccess_GmStatusCode(d->sourceStatus));
     const iRangei visRange = visibleRange_DocumentWidget_(d);
     const iRect   bounds   = bounds_Widget(as_Widget(d));
     setRange_ScrollWidget(d->scroll, (iRangei){ 0, scrollMax_DocumentWidget_(d) });
@@ -1038,6 +1045,7 @@ static iBool updateFromHistory_DocumentWidget_(iDocumentWidget *d) {
         /* Use the cached response data. */
         updateTrust_DocumentWidget_(d, resp);
         d->sourceTime = resp->when;
+        d->sourceStatus = success_GmStatusCode;
         format_String(&d->sourceHeader, "(cached content)");
         updateTimestampBuf_DocumentWidget_(d);
         set_Block(&d->sourceContent, &resp->body);
@@ -1195,6 +1203,7 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
         updateTrust_DocumentWidget_(d, resp);
         init_Anim(&d->sideOpacity, 0);
         format_String(&d->sourceHeader, "%d %s", statusCode, get_GmError(statusCode)->title);
+        d->sourceStatus = statusCode;
         switch (category_GmStatusCode(statusCode)) {
             case categoryInput_GmStatusCode: {
                 iUrl parts;
@@ -1576,7 +1585,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     if (equal_Command(cmd, "window.resized") || equal_Command(cmd, "font.changed")) {
         /* Alt/Option key may be involved in window size changes. */
         iChangeFlags(d->flags, showLinkNumbers_DocumentWidgetFlag, iFalse);
-        const iBool   keepCenter = equal_Command(cmd, "font.changed");
+        const iBool keepCenter = equal_Command(cmd, "font.changed");
         updateDocumentWidthRetainingScrollPosition_DocumentWidget_(d, keepCenter);
         updateSideIconBuf_DocumentWidget_(d);
         updateOutline_DocumentWidget_(d);
@@ -1599,6 +1608,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     else if (equal_Command(cmd, "theme.changed") && document_App() == d) {
         updateTheme_DocumentWidget_(d);
+        updateVisible_DocumentWidget_(d);
         updateTrust_DocumentWidget_(d, NULL);
         updateSideIconBuf_DocumentWidget_(d);
         invalidate_DocumentWidget_(d);
