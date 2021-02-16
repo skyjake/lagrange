@@ -272,6 +272,21 @@ const iString *absoluteUrl_String(const iString *d, const iString *urlMaybeRelat
     return absolute;
 }
 
+iBool isLikelyUrl_String(const iString *d) {
+    /* Guess whether a human intends the string to be an URL. This is supposed to be fuzzy;
+       not completely per-spec: a) begins with a scheme; b) has something that looks like a
+       hostname */
+    iRegExp *pattern = new_RegExp("^([a-z]+:)?//.*|"
+                                  "^(//)?([^/?#: ]+)([/?#:].*)$|"
+                                  "^(\\w+(\\.\\w+)+|localhost)$",
+                                  caseInsensitive_RegExpOption);
+    iRegExpMatch m;
+    init_RegExpMatch(&m);
+    const iBool likelyUrl = matchString_RegExp(pattern, d, &m);
+    iRelease(pattern);
+    return likelyUrl;
+}
+
 static iBool equalPuny_(const iString *d, iRangecc orig) {
     if (!endsWith_String(d, "-")) {
         return iFalse; /* This is a sufficient condition? */

@@ -1175,6 +1175,10 @@ iWidget *makePreferences_Widget(void) {
     }
     /* Network. */ {
         appendTwoColumnPage_(tabs, "Network", '5', &headings, &values);
+        addChild_Widget(headings, iClob(makeHeading_Widget("Search URL:")));
+        setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.searchurl");
+        addChild_Widget(headings, iClob(makeHeading_Widget("Decode URLs:")));
+        addChild_Widget(values, iClob(makeToggle_Widget("prefs.decodeurls")));
         addChild_Widget(headings, iClob(makeHeading_Widget("Cache size:")));
         iWidget *cacheGroup = new_Widget(); {
             iInputWidget *cache = new_InputWidget(4);
@@ -1183,8 +1187,6 @@ iWidget *makePreferences_Widget(void) {
             addChildFlags_Widget(cacheGroup, iClob(new_LabelWidget("MB", NULL)), frameless_WidgetFlag);
         }
         addChildFlags_Widget(values, iClob(cacheGroup), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
-        addChild_Widget(headings, iClob(makeHeading_Widget("Decode URLs:")));
-        addChild_Widget(values, iClob(makeToggle_Widget("prefs.decodeurls")));
         makeTwoColumnHeading_("PROXIES", headings, values);
         addChild_Widget(headings, iClob(makeHeading_Widget("Gemini proxy:")));
         setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.proxy.gemini");
@@ -1201,6 +1203,7 @@ iWidget *makePreferences_Widget(void) {
     resizeToLargestPage_Widget(tabs);
     arrange_Widget(dlg);
     /* Set input field sizes. */ {
+        expandInputFieldWidth_(findChild_Widget(tabs, "prefs.searchurl"));
         expandInputFieldWidth_(findChild_Widget(tabs, "prefs.downloads"));
         expandInputFieldWidth_(findChild_Widget(tabs, "prefs.proxy.gemini"));
         expandInputFieldWidth_(findChild_Widget(tabs, "prefs.proxy.gopher"));
