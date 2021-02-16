@@ -1028,7 +1028,14 @@ static void invalidate_Window_(iWindow *d) {
 }
 
 static iBool isNormalPlacement_Window_(const iWindow *d) {
-    if (snap_Window(d) || d->isDrawFrozen) return iFalse;
+    if (d->isDrawFrozen) return iFalse;
+#if defined (iPlatformApple)
+    /* Maximized mode is not special on macOS. */
+    if (snap_Window(d) == maximized_WindowSnap) {
+        return iTrue;
+    }
+#endif
+    if (snap_Window(d)) return iFalse;
     return !(SDL_GetWindowFlags(d->win) & SDL_WINDOW_MINIMIZED);
 }
 
