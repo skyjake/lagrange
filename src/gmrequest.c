@@ -133,6 +133,7 @@ struct Impl_GmRequest {
     iTlsRequest *        req;
     iGopher              gopher;
     iGmResponse *        resp;
+    iBool                isFilterEnabled;
     iBool                isRespLocked;
     iBool                isRespFiltered;
     iAtomicInt           allowUpdate;
@@ -208,7 +209,7 @@ static int processIncomingData_GmRequest_(iGmRequest *d, const iBlock *data) {
                 resp->statusCode = code;
                 d->state         = receivingBody_GmRequestState;
                 notifyUpdate     = iTrue;
-                if (willTryFilter_MimeHooks(mimeHooks_App(), &resp->meta)) {
+                if (d->isFilterEnabled && willTryFilter_MimeHooks(mimeHooks_App(), &resp->meta)) {
                     d->isRespFiltered = iTrue;
                 }
             }
@@ -457,8 +458,9 @@ static void beginGopherConnection_GmRequest_(iGmRequest *d, const iString *host,
 void init_GmRequest(iGmRequest *d, iGmCerts *certs) {
     d->mtx = new_Mutex();
     d->resp = new_GmResponse();
-    d->isRespLocked = iFalse;
-    d->isRespFiltered = iFalse;
+    d->isFilterEnabled = iTrue;
+    d->isRespLocked    = iFalse;
+    d->isRespFiltered  = iFalse;
     set_Atomic(&d->allowUpdate, iTrue);
     init_String(&d->url);
     init_Gopher(&d->gopher);
