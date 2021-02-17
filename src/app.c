@@ -227,6 +227,7 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "proxy.gopher address:%s\n", cstr_String(&d->prefs.gopherProxy));
     appendFormat_String(str, "proxy.http address:%s\n", cstr_String(&d->prefs.httpProxy));
     appendFormat_String(str, "downloads path:%s\n", cstr_String(&d->prefs.downloadDir));
+    appendFormat_String(str, "searchurl address:%s\n", cstr_String(&d->prefs.searchUrl));
     return str;
 }
 
@@ -937,6 +938,8 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
                          isSelected_Widget(findChild_Widget(d, "prefs.ostheme")));
         postCommandf_App("decodeurls arg:%d",
                          isSelected_Widget(findChild_Widget(d, "prefs.decodeurls")));
+        postCommandf_App("searchurl address:%s",
+                         cstr_String(text_InputWidget(findChild_Widget(d, "prefs.searchurl"))));
         postCommandf_App("cachesize.set arg:%d",
                          toInt_String(text_InputWidget(findChild_Widget(d, "prefs.cachesize"))));
         postCommandf_App("proxy.gemini address:%s",
@@ -1122,6 +1125,15 @@ iBool willUseProxy_App(const iRangecc scheme) {
     return schemeProxy_App(scheme) != NULL;
 }
 
+const iString *searchQueryUrl_App(const iString *queryStringUnescaped) {
+    iApp *d = &app_;
+    if (isEmpty_String(&d->prefs.searchUrl)) {
+        return collectNew_String();
+    }
+    const iString *escaped = urlEncode_String(queryStringUnescaped);
+    return collectNewFormat_String("%s?%s", cstr_String(&d->prefs.searchUrl), cstr_String(escaped));
+}
+
 iBool handleCommand_App(const char *cmd) {
     iApp *d = &app_;
     if (equal_Command(cmd, "config.error")) {
@@ -1290,6 +1302,10 @@ iBool handleCommand_App(const char *cmd) {
         if (d->prefs.maxCacheSize <= 0) {
             d->prefs.maxCacheSize = 0;
         }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "searchurl")) {
+        setCStr_String(&d->prefs.searchUrl, suffixPtr_Command(cmd, "address"));
         return iTrue;
     }
     else if (equal_Command(cmd, "proxy.gemini")) {
@@ -1474,6 +1490,7 @@ iBool handleCommand_App(const char *cmd) {
         setText_InputWidget(findChild_Widget(dlg, "prefs.cachesize"),
                             collectNewFormat_String("%d", d->prefs.maxCacheSize));
         setToggle_Widget(findChild_Widget(dlg, "prefs.decodeurls"), d->prefs.decodeUserVisibleURLs);
+        setText_InputWidget(findChild_Widget(dlg, "prefs.searchurl"), &d->prefs.searchUrl);
         setText_InputWidget(findChild_Widget(dlg, "prefs.proxy.gemini"), &d->prefs.geminiProxy);
         setText_InputWidget(findChild_Widget(dlg, "prefs.proxy.gopher"), &d->prefs.gopherProxy);
         setText_InputWidget(findChild_Widget(dlg, "prefs.proxy.http"), &d->prefs.httpProxy);

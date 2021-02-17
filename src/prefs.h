@@ -48,6 +48,7 @@ struct Impl_Prefs {
     iBool            hoverLink;
     iBool            smoothScrolling;
     iBool            loadImageInsteadOfScrolling;
+    iString          searchUrl;
     /* Network */
     iBool            decodeUserVisibleURLs;
     int              maxCacheSize; /* MB */

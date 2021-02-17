@@ -75,6 +75,7 @@ iBool               forceSoftwareRender_App(void);
 enum iColorTheme    colorTheme_App      (void);
 const iString *     schemeProxy_App     (iRangecc scheme);
 iBool               willUseProxy_App    (const iRangecc scheme);
+const iString *     searchQueryUrl_App  (const iString *queryStringUnescaped);
 
 typedef void (*iTickerFunc)(iAny *);
 

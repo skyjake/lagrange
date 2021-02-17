@@ -47,6 +47,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <the_Foundation/file.h>
 #include <the_Foundation/path.h>
+#include <the_Foundation/regexp.h>
 #include <SDL_hints.h>
 #include <SDL_timer.h>
 #include <SDL_syswm.h>
@@ -419,9 +420,14 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
             !isFocused_Widget(findWidget_App("lookup"))) {
             iString *newUrl = copy_String(text_InputWidget(url));
             trim_String(newUrl);
-            postCommandf_App(
-                "open url:%s",
-                cstr_String(absoluteUrl_String(&iStringLiteral(""), collect_String(newUrl))));
+            if (!isEmpty_String(&prefs_App()->searchUrl) && !isLikelyUrl_String(newUrl)) {
+                postCommandf_App("open url:%s", cstr_String(searchQueryUrl_App(newUrl)));
+            }
+            else {
+                postCommandf_App(
+                    "open url:%s",
+                    cstr_String(absoluteUrl_String(&iStringLiteral(""), collect_String(newUrl))));
+            }
             return iTrue;
         }
     }
@@ -1028,7 +1034,14 @@ static void invalidate_Window_(iWindow *d) {
 }
 
 static iBool isNormalPlacement_Window_(const iWindow *d) {
-    if (snap_Window(d) || d->isDrawFrozen) return iFalse;
+    if (d->isDrawFrozen) return iFalse;
+#if defined (iPlatformApple)
+    /* Maximized mode is not special on macOS. */
+    if (snap_Window(d) == maximized_WindowSnap) {
+        return iTrue;
+    }
+#endif
+    if (snap_Window(d)) return iFalse;
     return !(SDL_GetWindowFlags(d->win) & SDL_WINDOW_MINIMIZED);
 }
 
@@ -1161,7 +1174,7 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
             //updateRootSize_Window_(d, iTrue);
             invalidate_Window_(d);
             d->isMinimized = iFalse;
-            //printf("restored %d\n", snap_Window(d)); fflush(stdout);
+            printf("restored %d\n", snap_Window(d)); fflush(stdout);
             return iTrue;
         case SDL_WINDOWEVENT_MINIMIZED:
             d->isMinimized = iTrue;
