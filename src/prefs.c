@@ -51,7 +51,7 @@ void init_Prefs(iPrefs *d) {
     init_String(&d->gopherProxy);
     init_String(&d->httpProxy);
     init_String(&d->downloadDir);
-    initCStr_String(&d->searchUrl, "gemini://gus.guru/search");
+    init_String(&d->searchUrl);
 }
 
 void deinit_Prefs(iPrefs *d) {
