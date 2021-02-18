@@ -2351,7 +2351,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
            which device is sending the event. */
         if (ev->wheel.which == 0) { /* Trackpad with precise scrolling w/inertia. */
             stop_Anim(&d->scrollY);
-            iInt2 wheel = init_I2(ev->wheel.x, ev->wheel.y);
+            iInt2 wheel = mulf_I2(init_I2(ev->wheel.x, ev->wheel.y), get_Window()->pixelRatio);
             /* Only scroll on one axis at a time. */
             if (iAbs(wheel.x) > iAbs(wheel.y)) {
                 wheel.y = 0;
@@ -2359,8 +2359,11 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             else {
                 wheel.x = 0;
             }
-            scroll_DocumentWidget_(d, -wheel.y * get_Window()->pixelRatio);
-            scrollWideBlock_DocumentWidget_(d, mouseCoord, wheel.x * get_Window()->pixelRatio, 0);
+            scroll_DocumentWidget_(d, -wheel.y);
+#if defined (iPlatformAppleMobile)
+            wheel.x = -wheel.x;
+#endif
+            scrollWideBlock_DocumentWidget_(d, mouseCoord, wheel.x, 0);
         }
         else
 #endif

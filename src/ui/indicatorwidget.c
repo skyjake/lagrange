@@ -72,6 +72,7 @@ void init_IndicatorWidget(iIndicatorWidget *d) {
     iWidget *w = &d->widget;
     init_Widget(w);
     init_Anim(&d->pos, 0);
+    setFlags_Widget(w, unhittable_WidgetFlag, iTrue);
 }
 
 static void startTimer_IndicatorWidget_(iIndicatorWidget *d) {

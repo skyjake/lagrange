@@ -64,6 +64,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #if defined (iPlatformAppleDesktop)
 #   include "macos.h"
 #endif
+#if defined (iPlatformAppleMobile)
+#   include "ios.h"
+#endif
 #if defined (iPlatformMsys)
 #   include "win32.h"
 #endif
@@ -464,6 +467,9 @@ static void init_App_(iApp *d, int argc, char **argv) {
 #endif
 #if defined (iPlatformAppleDesktop)
     setupApplication_MacOS();
+#endif
+#if defined (iPlatformAppleMobile)
+    setupApplication_iOS();
 #endif
     init_Keys();
     loadPrefs_App_(d);

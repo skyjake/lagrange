@@ -33,6 +33,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "paint.h"
 #include "util.h"
 #include "keys.h"
+#include "touch.h"
 #include "../app.h"
 #include "../visited.h"
 #include "../gmcerts.h"
@@ -1244,6 +1245,9 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
                     postCommand_App("theme.changed");
                 }
                 postRefresh_App();
+                return iTrue;
+            }
+            if (processEvent_Touch(&event)) {
                 return iTrue;
             }
             if (event.type == SDL_KEYDOWN && SDL_GetTicks() - d->focusGainedAt < 10) {

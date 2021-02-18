@@ -150,6 +150,8 @@ set (SOURCES
     src/ui/sidebarwidget.h
     src/ui/text.c
     src/ui/text.h
+    src/ui/touch.c
+    src/ui/touch.h
     src/ui/util.c
     src/ui/util.h
     src/ui/visbuf.c
@@ -230,6 +232,9 @@ target_link_libraries (app PUBLIC ${SDL2_LDFLAGS})
 if (APPLE)
     if (IOS)
         target_link_libraries (app PUBLIC "-framework UIKit")
+        set_target_properties (app PROPERTIES
+            XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY 2
+        )
     else ()
         target_link_libraries (app PUBLIC "-framework AppKit")
     endif ()

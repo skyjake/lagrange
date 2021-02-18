@@ -668,7 +668,7 @@ static iChar nextChar_(const char **chPos, const char *end) {
 }
 
 static enum iFontId fontId_Text_(const iFont *font) {
-    return font - text_.fonts;
+    return (enum iFontId) (font - text_.fonts);
 }
 
 iLocalDef iBool isWrapBoundary_(iChar prevC, iChar c) {

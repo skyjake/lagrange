@@ -322,7 +322,7 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
             iConstForEach(PtrArray, i, identities_GmCerts(certs_App())) {
                 const iGmIdentity *ident = i.ptr;
                 iSidebarItem *item = new_SidebarItem();
-                item->id = index_PtrArrayConstIterator(&i);
+                item->id = (uint32_t) index_PtrArrayConstIterator(&i);
                 item->icon = ident->icon;
                 set_String(&item->label, collect_String(subject_TlsCertificate(ident->cert)));
                 iDate until;

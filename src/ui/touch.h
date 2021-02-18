@@ -22,7 +22,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
-#include "ui/util.h"
+#include <the_Foundation/defs.h>
+#include <SDL_events.h>
 
-void    setupApplication_iOS    (void);
-
+iBool   processEvent_Touch  (const SDL_Event *);
+void    update_Touch        (void);

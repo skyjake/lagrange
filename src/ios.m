@@ -21,3 +21,15 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "ios.h"
+
+#include <SDL_events.h>
+
+static void enableMouse_(iBool yes) {
+    SDL_EventState(SDL_MOUSEBUTTONDOWN, yes);
+    SDL_EventState(SDL_MOUSEMOTION, yes);
+    SDL_EventState(SDL_MOUSEBUTTONUP, yes);
+}
+
+void setupApplication_iOS(void) {
+    enableMouse_(iFalse);
+}

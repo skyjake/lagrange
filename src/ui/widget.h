@@ -91,6 +91,7 @@ enum iWidgetFlag {
 #define borderTop_WidgetFlag                iBit64(37)
 #define overflowScrollable_WidgetFlag       iBit64(38)
 #define focusRoot_WidgetFlag                iBit64(39)
+#define unhittable_WidgetFlag               iBit64(40)
 
 enum iWidgetAddPos {
     back_WidgetAddPos,

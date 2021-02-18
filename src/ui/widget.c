@@ -731,6 +731,9 @@ size_t childIndex_Widget(const iWidget *d, const iAnyObject *child) {
 }
 
 iAny *hitChild_Widget(const iWidget *d, iInt2 coord) {
+    if (d->flags & unhittable_WidgetFlag) {
+        return NULL;
+    }
     iConstForEach(ObjectList, i, d->children) {
         iAny *found = hitChild_Widget(constAs_Widget(i.object), coord);
         if (found) return found;
