@@ -19,13 +19,19 @@ Like Gemini, Lagrange has been designed with minimalism in mind. It depends on a
 
 ## Downloads
 
-Prebuilt binaries for Windows and macOS can be found in [Releases][rel].
+Prebuilt binaries for Windows, macOS and Linux can be found in [Releases][rel].
 
 On macOS you can also install via a Homebrew tap:
 
 ```
 $ brew tap skyjake/lagrange
 $ brew install lagrange
+```
+
+On openSUSE Tumbleweed:
+
+```
+sudo zypper install lagrange
 ```
 
 ## How to compile
