@@ -114,7 +114,8 @@ static iBool convertSource_Gopher_(iGopher *d) {
                                   cstr_Rangecc(domain),
                                   cstr_Rangecc(port),
                                   lineType,
-                                  cstr_Rangecc(path),
+                                  cstrCollect_String(
+                                      urlEncodeExclude_String(collectNewRange_String(path), "/")),
                                   cstr_Rangecc(text));
                     appendData_Block(d->output, constBegin_String(buf), size_String(buf));
                     iEndCollect();
