@@ -4,5 +4,4 @@
 build-*
 /.vsbuild
 /.vscode
-
-
+/app
