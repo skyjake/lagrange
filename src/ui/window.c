@@ -136,6 +136,7 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
 #endif
 
 #if !defined (iHaveNativeMenus)
+#if !defined (iPlatformAppleMobile)
 /* TODO: Submenus wouldn't hurt here. */
 static const iMenuItem navMenuItems_[] = {
     { "New Tab", 't', KMOD_PRIMARY, "tabs.new" },
@@ -162,6 +163,31 @@ static const iMenuItem navMenuItems_[] = {
     { "---", 0, 0, NULL },
     { "Quit Lagrange", 'q', KMOD_PRIMARY, "quit" }
 };
+#else
+static const iMenuItem navMenuItems_[] = {
+    { "New Tab", 't', KMOD_PRIMARY, "tabs.new" },
+    { "Close Tab", 'w', KMOD_PRIMARY, "tabs.close" },
+    { "---", 0, 0, NULL },
+    { "Save to Downloads", SDLK_s, KMOD_PRIMARY, "document.save" },
+    { "Copy Source Text", SDLK_c, KMOD_PRIMARY, "copy" },
+    { "---", 0, 0, NULL },
+    { "Toggle Left Sidebar", SDLK_l, KMOD_PRIMARY | KMOD_SHIFT, "sidebar.toggle" },
+    { "Toggle Right Sidebar", SDLK_p, KMOD_PRIMARY | KMOD_SHIFT, "sidebar2.toggle" },
+    { "Zoom In", SDLK_EQUALS, KMOD_PRIMARY, "zoom.delta arg:10" },
+    { "Zoom Out", SDLK_MINUS, KMOD_PRIMARY, "zoom.delta arg:-10" },
+    { "Reset Zoom", SDLK_0, KMOD_PRIMARY, "zoom.set arg:100" },
+    { "---", 0, 0, NULL },
+    { "List All Bookmarks", 0, 0, "!open url:about:bookmarks" },
+    { "List Bookmarks by Tag", 0, 0, "!open url:about:bookmarks?tags" },
+    { "List Bookmarks by Creation Time", 0, 0, "!open url:about:bookmarks?created" },
+    { "---", 0, 0, NULL },
+    { "Show Feed Entries", 0, 0, "!open url:about:feeds" },
+    { "---", 0, 0, NULL },
+    { "Preferences...", SDLK_COMMA, KMOD_PRIMARY, "preferences" },
+    { "Help", SDLK_F1, 0, "!open url:about:help" },
+    { "Release Notes", 0, 0, "!open url:about:version" },
+};
+#endif /* AppleMobile */
 #endif
 
 #if defined (iHaveNativeMenus)

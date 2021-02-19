@@ -82,7 +82,7 @@ static const char *defaultDataDir_App_ = "~/Library/Application Support/fi.skyja
 #endif
 #if defined (iPlatformAppleMobile)
 #define EMB_BIN "../../Resources/resources.lgr"
-static const char *defaultDataDir_App_ = "~/config";
+static const char *defaultDataDir_App_ = "~/Library/Application Support";
 #endif
 #if defined (iPlatformMsys)
 #define EMB_BIN "../resources.lgr"
@@ -397,6 +397,9 @@ static void saveState_App_(const iApp *d) {
             serializeState_DocumentWidget(i.object, stream_File(f));
         }
     }
+    else {
+        fprintf(stderr, "[App] failed to save state: %s\n", strerror(errno));
+    }
     iRelease(f);
 }
 
@@ -600,6 +603,39 @@ const iString *debugInfo_App(void) {
     return msg;
 }
 
+static void clearCache_App_(void) {
+    iForEach(ObjectList, i, iClob(listDocuments_App())) {
+        clearCache_History(history_DocumentWidget(i.object));
+    }
+}
+
+void trimCache_App(void) {
+    iApp *d = &app_;
+    size_t cacheSize = 0;
+    const size_t limit = d->prefs.maxCacheSize * 1000000;
+    iObjectList *docs = listDocuments_App();
+    iForEach(ObjectList, i, docs) {
+        cacheSize += cacheSize_History(history_DocumentWidget(i.object));
+    }
+    init_ObjectListIterator(&i, docs);
+    iBool wasPruned = iFalse;
+    while (cacheSize > limit) {
+        iDocumentWidget *doc = i.object;
+        const size_t pruned = pruneLeastImportant_History(history_DocumentWidget(doc));
+        if (pruned) {
+            cacheSize -= pruned;
+            wasPruned = iTrue;
+        }
+        next_ObjectListIterator(&i);
+        if (!i.value) {
+            if (!wasPruned) break;
+            wasPruned = iFalse;
+            init_ObjectListIterator(&i, docs);
+        }
+    }
+    iRelease(docs);
+}
+
 iLocalDef iBool isWaitingAllowed_App_(iApp *d) {
 #if defined (LAGRANGE_IDLE_SLEEP)
     if (d->isIdling) {
@@ -631,6 +667,14 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     processEvents_App(postedEventsOnly_AppEventMode);
                 }
                 goto backToMainLoop;
+            case SDL_APP_LOWMEMORY:
+                clearCache_App_();
+                break;
+            case SDL_APP_TERMINATING:
+            case SDL_APP_WILLENTERBACKGROUND:
+                savePrefs_App_(d);
+                saveState_App_(d);
+                break;
             case SDL_DROPFILE: {
                 iBool wasUsed = processEvent_Window(d->window, &ev);
                 if (!wasUsed) {
@@ -963,6 +1007,7 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
         postCommandf_App("prefs.dialogtab arg:%u",
                          tabPageIndex_Widget(tabs, currentTabPage_Widget(tabs)));
         destroy_Widget(d);
+        postCommand_App("prefs.changed");
         return iTrue;
     }
     else if (equal_Command(cmd, "quoteicon.set")) {
@@ -1034,33 +1079,6 @@ iDocumentWidget *newTab_App(const iDocumentWidget *duplicateOf, iBool switchToNe
     refresh_Widget(tabs);
     postCommandf_App("tab.created id:%s", cstr_String(id_Widget(as_Widget(doc))));
     return doc;
-}
-
-void trimCache_App(void) {
-    iApp *d = &app_;
-    size_t cacheSize = 0;
-    const size_t limit = d->prefs.maxCacheSize * 1000000;
-    iObjectList *docs = listDocuments_App();
-    iForEach(ObjectList, i, docs) {
-        cacheSize += cacheSize_History(history_DocumentWidget(i.object));
-    }
-    init_ObjectListIterator(&i, docs);
-    iBool wasPruned = iFalse;
-    while (cacheSize > limit) {
-        iDocumentWidget *doc = i.object;
-        const size_t pruned = pruneLeastImportant_History(history_DocumentWidget(doc));
-        if (pruned) {
-            cacheSize -= pruned;
-            wasPruned = iTrue;
-        }
-        next_ObjectListIterator(&i);
-        if (!i.value) {
-            if (!wasPruned) break;
-            wasPruned = iFalse;
-            init_ObjectListIterator(&i, docs);
-        }
-    }
-    iRelease(docs);
 }
 
 static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
@@ -1151,6 +1169,10 @@ iBool handleCommand_App(const char *cmd) {
         makeMessage_Widget(uiTextCaution_ColorEscape "CONFIG ERROR",
                            format_CStr("Error in config file: %s\nSee \"about:debug\" for details.",
                                        suffixPtr_Command(cmd, "where")));
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "prefs.changed")) {
+        savePrefs_App_(d);
         return iTrue;
     }
     else if (equal_Command(cmd, "prefs.dialogtab")) {
@@ -1410,7 +1432,13 @@ iBool handleCommand_App(const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "tabs.close")) {
-        iWidget *      tabs  = findWidget_App("doctabs");
+        iWidget *tabs = findWidget_App("doctabs");
+#if defined (iPlatformAppleMobile)
+        /* Can't close the last on mobile. */
+        if (tabCount_Widget(tabs) == 1) {
+            return iTrue;
+        }
+#endif
         const iRangecc tabId = range_Command(cmd, "id");
         iWidget *      doc   = !isEmpty_Range(&tabId) ? findWidget_App(cstr_Rangecc(tabId))
                                                       : document_App();

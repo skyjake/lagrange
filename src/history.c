@@ -299,6 +299,18 @@ size_t cacheSize_History(const iHistory *d) {
     return cached;
 }
 
+void clearCache_History(iHistory *d) {
+    lock_Mutex(d->mtx);
+    iForEach(Array, i, &d->recent) {
+        iRecentUrl *url = i.value;
+        if (url->cachedResponse) {
+            delete_GmResponse(url->cachedResponse);
+            url->cachedResponse = NULL;
+        }
+    }
+    unlock_Mutex(d->mtx);
+}
+
 size_t pruneLeastImportant_History(iHistory *d) {
     size_t delta  = 0;
     size_t chosen = iInvalidPos;

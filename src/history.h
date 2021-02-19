@@ -56,6 +56,7 @@ iBool       goForward_History           (iHistory *);
 iRecentUrl *recentUrl_History           (iHistory *, size_t pos);
 iRecentUrl *mostRecentUrl_History       (iHistory *);
 iRecentUrl *findUrl_History             (iHistory *, const iString *url);
+void        clearCache_History          (iHistory *);
 size_t      pruneLeastImportant_History (iHistory *);
 
 const iStringArray *   searchContents_History   (const iHistory *, const iRegExp *pattern); /* chronologically ascending */

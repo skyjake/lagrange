@@ -137,7 +137,7 @@ static void draw_ScrollWidget_(const iScrollWidget *d) {
     if (bounds.size.x > 0) {
         iPaint p;
         init_Paint(&p);
-        drawVLine_Paint(&p, topLeft_Rect(bounds), height_Rect(bounds), uiSeparator_ColorId);
+        //drawVLine_Paint(&p, topLeft_Rect(bounds), height_Rect(bounds), uiSeparator_ColorId);
         const iRect thumbRect = shrunk_Rect(
             thumbRect_ScrollWidget_(d), init_I2(isPressed ? gap_UI : (gap_UI * 4 / 3), gap_UI / 2));
         fillRect_Paint(&p, thumbRect, isPressed ? uiBackgroundPressed_ColorId : tmQuote_ColorId);
