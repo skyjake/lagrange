@@ -28,8 +28,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "util.h"
 #include "keys.h"
 
-iLocalDef iInt2 padding_(int flags) {
+iLocalDef iInt2 padding_(int64_t flags) {
+#if defined (iPlatformAppleMobile)
+    return init_I2(flags & tight_WidgetFlag ? 4 * gap_UI / 2 : (4 * gap_UI), 3 * gap_UI / 2);
+#else
     return init_I2(flags & tight_WidgetFlag ? 3 * gap_UI / 2 : (3 * gap_UI), gap_UI);
+#endif
 }
 
 struct Impl_LabelWidget {
@@ -83,6 +87,19 @@ static iBool processEvent_LabelWidget_(iLabelWidget *d, const SDL_Event *ev) {
         return iFalse;
     }
     if (!isEmpty_String(&d->command)) {
+#if 0 && defined (iPlatformAppleMobile)
+        /* Touch allows activating any button on release. */
+        switch (ev->type) {
+            case SDL_MOUSEBUTTONUP: {
+                const iInt2 mouse = init_I2(ev->button.x, ev->button.y);
+                if (contains_Widget(w, mouse)) {
+                    trigger_LabelWidget_(d);
+                    refresh_Widget(w);
+                }
+                break;
+            }
+        }
+#endif
         switch (processEvent_Click(&d->click, ev)) {
             case started_ClickResult:
                 setFlags_Widget(w, pressed_WidgetFlag, iTrue);
@@ -260,7 +277,7 @@ static void sizeChanged_LabelWidget_(iLabelWidget *d) {
 
 void updateSize_LabelWidget(iLabelWidget *d) {
     iWidget *w = as_Widget(d);
-    const int flags = flags_Widget(w);
+    const int64_t flags = flags_Widget(w);
     iInt2 size = add_I2(measure_Text(d->font, cstr_String(&d->label)), muli_I2(padding_(flags), 2));
     if ((flags & drawKey_WidgetFlag) && d->key) {
         iString str;

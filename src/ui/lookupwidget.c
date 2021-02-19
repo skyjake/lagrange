@@ -377,6 +377,9 @@ void init_LookupWidget(iLookupWidget *d) {
     init_Widget(w);
     setId_Widget(w, "lookup");
     setFlags_Widget(w, focusable_WidgetFlag | resizeChildren_WidgetFlag, iTrue);
+#if defined (iPlatformAppleMobile)
+    setFlags_Widget(w, unhittable_WidgetFlag, iTrue);
+#endif
     d->list = addChild_Widget(w, iClob(new_ListWidget()));
     setItemHeight_ListWidget(d->list, lineHeight_Text(uiContent_FontId) * 1.25f);
     d->cursor = iInvalidPos;
@@ -639,6 +642,14 @@ static iBool processEvent_LookupWidget_(iLookupWidget *d, const SDL_Event *ev) {
         /* Position the lookup popup under the URL bar. */ {
             setSize_Widget(w, init_I2(width_Widget(findWidget_App("url")),
                                       get_Window()->root->rect.size.y / 2));
+#if defined (iPlatformAppleMobile)
+            /* TODO: Ask the system how tall the keyboard is. */ {
+                const iInt2 rootSize = rootSize_Window(get_Window());
+                if (rootSize.x > rootSize.y) {
+                    w->rect.size.y = rootSize.y * 4 / 10;
+                }
+            }
+#endif
             setPos_Widget(w, bottomLeft_Rect(bounds_Widget(findWidget_App("url"))));
             arrange_Widget(w);
         }

@@ -121,6 +121,9 @@ void init_InputWidget(iInputWidget *d, size_t maxLen) {
     setMaxLen_InputWidget(d, maxLen);
     /* Caller must arrange the width, but the height is fixed. */
     w->rect.size.y = lineHeight_Text(default_FontId) + 2 * gap_UI;
+#if defined (iPlatformAppleMobile)
+    w->rect.size.y += 2 * gap_UI;
+#endif
     setFlags_Widget(w, fixedHeight_WidgetFlag, iTrue);
     init_Click(&d->click, d, SDL_BUTTON_LEFT);
     d->timer = 0;

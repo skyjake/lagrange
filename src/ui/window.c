@@ -45,6 +45,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #if defined (iPlatformAppleDesktop)
 #   include "macos.h"
 #endif
+#if defined (iPlatformAppleMobile)
+#   include "ios.h"
+#endif
 
 #include <the_Foundation/file.h>
 #include <the_Foundation/path.h>
@@ -562,6 +565,11 @@ static void setupUserInterface_Window(iWindow *d) {
     iWidget *div = makeVDiv_Widget();
     setId_Widget(div, "navdiv");
     addChild_Widget(d->root, iClob(div));
+    
+#if defined (iPlatformAppleMobile)
+    /* System status bar needs space. */
+    setPadding_Widget(div, 0, 4 * gap_UI, 0, 0);
+#endif
 
 #if defined (LAGRANGE_CUSTOM_FRAME)
     /* Window title bar. */ 
@@ -650,7 +658,7 @@ static void setupUserInterface_Window(iWindow *d) {
             setNotifyEdits_InputWidget(url, iTrue);
             setTextCStr_InputWidget(url, "gemini://");
             addChildFlags_Widget(navBar, iClob(url), expand_WidgetFlag);
-            setPadding_Widget(as_Widget(url),0, 0, gap_UI * 1, 0);
+            setPadding_Widget(as_Widget(url), 0, 0, gap_UI * 1, 0);
             /* Feeds refresh indicator is inside the input field. */ {
                 iLabelWidget *fprog = new_LabelWidget(uiTextCaution_ColorEscape
                                                       "\u2605 Refreshing Feeds...", NULL);
@@ -980,6 +988,9 @@ void init_Window(iWindow *d, iRect rect) {
         SDL_FreeSurface(surf);
     }
 #endif
+#if defined (iPlatformAppleMobile)
+    setupWindow_iOS(d);
+#endif
     d->root = new_Widget();
     setFlags_Widget(d->root, focusRoot_WidgetFlag, iTrue);
     d->presentTime = 0.0;
@@ -1175,7 +1186,6 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
             //updateRootSize_Window_(d, iTrue);
             invalidate_Window_(d);
             d->isMinimized = iFalse;
-            printf("restored %d\n", snap_Window(d)); fflush(stdout);
             return iTrue;
         case SDL_WINDOWEVENT_MINIMIZED:
             d->isMinimized = iTrue;
@@ -1316,10 +1326,14 @@ void draw_Window(iWindow *d) {
     const iBool gotFocus = (winFlags & SDL_WINDOW_INPUT_FOCUS) != 0;
     /* Clear the window. The clear color is visible as a border around the window
        when the custom frame is being used. */ {
+#if defined (iPlatformAppleMobile)
+        const iColor back = get_Color(uiBackground_ColorId);
+#else
         const iColor back = get_Color(gotFocus && d->place.snap != maximized_WindowSnap &&
                                               ~winFlags & SDL_WINDOW_FULLSCREEN_DESKTOP
                                           ? uiAnnotation_ColorId
                                           : uiSeparator_ColorId);
+#endif
         SDL_SetRenderDrawColor(d->render, back.r, back.g, back.b, 255);
         SDL_RenderClear(d->render);
     }

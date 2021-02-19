@@ -617,6 +617,11 @@ void processEvents_App(enum iAppEventMode eventMode) {
             SDL_WaitEvent(&ev)) ||
            ((!isWaitingAllowed_App_(d) || eventMode == postedEventsOnly_AppEventMode) &&
             SDL_PollEvent(&ev))) {
+#if defined (iPlatformAppleMobile)
+        if (processEvent_iOS(&ev)) {
+            continue;
+        }
+#endif
         switch (ev.type) {
             case SDL_QUIT:
                 d->isRunning = iFalse;

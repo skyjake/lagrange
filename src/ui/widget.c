@@ -734,9 +734,19 @@ iAny *hitChild_Widget(const iWidget *d, iInt2 coord) {
     if (d->flags & unhittable_WidgetFlag) {
         return NULL;
     }
-    iConstForEach(ObjectList, i, d->children) {
-        iAny *found = hitChild_Widget(constAs_Widget(i.object), coord);
-        if (found) return found;
+    /* Check for on-top widgets first. */
+    if (!d->parent) {
+        iForEach(PtrArray, i, onTop_RootData_()) {
+            iAny *found = hitChild_Widget(constAs_Widget(i.ptr), coord);
+            if (found) return found;
+        }
+    }
+    iForEach(ObjectList, i, d->children) {
+        const iWidget *child = constAs_Widget(i.object);
+        if (~child->flags & keepOnTop_WidgetFlag) {
+            iAny *found = hitChild_Widget(child, coord);
+            if (found) return found;
+        }
     }
     if (contains_Widget(d, coord)) {
         return iConstCast(iWidget *, d);

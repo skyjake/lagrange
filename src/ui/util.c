@@ -463,12 +463,23 @@ void openMenu_Widget(iWidget *d, iInt2 coord) {
     arrange_Widget(d);
     d->rect.pos = coord;
     /* Ensure the full menu is visible. */
-    const iInt2 rootSize     = rootSize_Window(get_Window());
+    const iInt2 rootSize = rootSize_Window(get_Window());
+#if defined (iPlatformAppleMobile)
+    /* Move out from under the user's hand/finger. */
+    if (!parentMenuButton_(d)) {
+        const float normX = (float) left_Rect(bounds_Widget(d)) / rootSize.x;
+        subv_I2(&d->rect.pos, init_I2(normX * width_Rect(d->rect), height_Rect(d->rect)));
+    }
+#endif
     const iRect bounds       = bounds_Widget(d);
     const int   leftExcess   = -left_Rect(bounds);
     const int   rightExcess  = right_Rect(bounds) - rootSize.x;
-    const int   topExcess    = -top_Rect(bounds);
+    int         topExcess    = -top_Rect(bounds);
     const int   bottomExcess = bottom_Rect(bounds) - rootSize.y;
+#if defined (iPlatformAppleMobile)
+    /* Reserve space for the system status bar. */
+    topExcess += 4.5 * gap_UI;
+#endif
     if (bottomExcess > 0) {
         d->rect.pos.y -= bottomExcess;
     }

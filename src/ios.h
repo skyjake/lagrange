@@ -24,5 +24,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "ui/util.h"
 
-void    setupApplication_iOS    (void);
+iDeclareType(Window)
 
+void    setupApplication_iOS    (void);
+void    setupWindow_iOS         (iWindow *window);
+iBool   processEvent_iOS        (const SDL_Event *);

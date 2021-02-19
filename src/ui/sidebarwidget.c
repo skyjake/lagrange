@@ -466,6 +466,9 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     d->side = side;
     d->mode  = -1;
     d->width = 60 * gap_UI;
+#if defined (iPlatformAppleMobile)
+    d->width = 73 * gap_UI;
+#endif
     setFlags_Widget(w, fixedWidth_WidgetFlag, iTrue);
     d->maxButtonLabelWidth = 0;
     iWidget *vdiv = makeVDiv_Widget();

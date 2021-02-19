@@ -187,6 +187,19 @@ static void update_TouchState_(void *ptr) {
     }
 }
 
+static void dispatchButtonUp_Touch_(iFloat3 pos) {
+    dispatchEvent_Widget(get_Window()->root, (SDL_Event *) &(SDL_MouseButtonEvent){
+        .type = SDL_MOUSEBUTTONUP,
+        .timestamp = SDL_GetTicks(),
+        .clicks = 1,
+        .state = SDL_RELEASED,
+        .which = SDL_TOUCH_MOUSEID,
+        .button = SDL_BUTTON_LEFT,
+        .x = x_F3(pos),
+        .y = y_F3(pos)
+    });
+}
+
 iBool processEvent_Touch(const SDL_Event *ev) {
     /* We only handle finger events here. */
     if (ev->type != SDL_FINGERDOWN && ev->type != SDL_FINGERMOTION && ev->type != SDL_FINGERUP) {
@@ -258,6 +271,13 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                 });
                 return iTrue;
             }
+            /*dispatchEvent_Widget(window->root, (SDL_Event *) &(SDL_MouseMotionEvent){
+                .type = SDL_MOUSEMOTION,
+                .timestamp = fing->timestamp,
+                .which = SDL_TOUCH_MOUSEID,
+                .x = x_F3(pos),
+                .y = y_F3(pos)
+            });*/
             /* Update touch position. */
             pushPos_Touch_(touch, pos, nowTime);
             const iFloat3 amount = add_F3(touch->remainder,
@@ -304,16 +324,7 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                 continue;
             }
             if (flags_Widget(touch->affinity) & touchDrag_WidgetFlag) {
-                dispatchEvent_Widget(window->root, (SDL_Event *) &(SDL_MouseButtonEvent){
-                    .type = SDL_MOUSEBUTTONUP,
-                    .timestamp = fing->timestamp,
-                    .clicks = 1,
-                    .state = SDL_RELEASED,
-                    .which = SDL_TOUCH_MOUSEID,
-                    .button = SDL_BUTTON_LEFT,
-                    .x = x_F3(pos),
-                    .y = y_F3(pos)
-                });
+                dispatchButtonUp_Touch_(pos);
                 remove_ArrayIterator(&i);
                 continue;
             }
@@ -356,6 +367,9 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                         d->lastMomTime = nowTime;
                     }
                     pushBack_Array(d->moms, &mom);
+                }
+                else {
+                    dispatchButtonUp_Touch_(pos);
                 }
             }
             remove_ArrayIterator(&i);
