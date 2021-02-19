@@ -212,9 +212,23 @@ iBool processEvent_Touch(const SDL_Event *ev) {
             edge = right_TouchEdge;
         }
         iWidget *aff = hitChild_Widget(window->root, init_I2(iRound(x), iRound(y_F3(pos))));
+        if (flags_Widget(aff) & touchDrag_WidgetFlag) {
+            dispatchEvent_Widget(window->root, (SDL_Event *) &(SDL_MouseButtonEvent){
+                .type = SDL_MOUSEBUTTONDOWN,
+                .timestamp = fing->timestamp,
+                .clicks = 1,
+                .state = SDL_PRESSED,
+                .which = SDL_TOUCH_MOUSEID,
+                .button = SDL_BUTTON_LEFT,
+                .x = x_F3(pos),
+                .y = y_F3(pos)
+            });
+            edge = none_TouchEdge;
+        }
         pushBack_Array(d->touches, &(iTouch){
             .id = fing->fingerId,
             .affinity = aff,
+            .hasMoved = (flags_Widget(aff) & touchDrag_WidgetFlag) != 0,
             .edge = edge,
             .startTime = nowTime,
             .startPos = pos,
@@ -223,7 +237,7 @@ iBool processEvent_Touch(const SDL_Event *ev) {
         /* Some widgets rely on hover state. */
         dispatchEvent_Widget(window->root, (SDL_Event *) &(SDL_MouseMotionEvent){
             .type = SDL_MOUSEMOTION,
-            .timestamp = SDL_GetTicks(),
+            .timestamp = fing->timestamp,
             .which = SDL_TOUCH_MOUSEID,
             .x = x_F3(pos),
             .y = y_F3(pos)
@@ -233,6 +247,17 @@ iBool processEvent_Touch(const SDL_Event *ev) {
     else if (ev->type == SDL_FINGERMOTION) {
         iTouch *touch = find_TouchState_(d, fing->fingerId);
         if (touch && touch->affinity) {
+            if (flags_Widget(touch->affinity) & touchDrag_WidgetFlag) {
+                dispatchEvent_Widget(window->root, (SDL_Event *) &(SDL_MouseMotionEvent){
+                    .type = SDL_MOUSEMOTION,
+                    .timestamp = fing->timestamp,
+                    .which = SDL_TOUCH_MOUSEID,
+                    .state = SDL_BUTTON_LMASK,
+                    .x = x_F3(pos),
+                    .y = y_F3(pos)
+                });
+                return iTrue;
+            }
             /* Update touch position. */
             pushPos_Touch_(touch, pos, nowTime);
             const iFloat3 amount = add_F3(touch->remainder,
@@ -276,6 +301,20 @@ iBool processEvent_Touch(const SDL_Event *ev) {
         iForEach(Array, i, d->touches) {
             iTouch *touch = i.value;
             if (touch->id != fing->fingerId) {
+                continue;
+            }
+            if (flags_Widget(touch->affinity) & touchDrag_WidgetFlag) {
+                dispatchEvent_Widget(window->root, (SDL_Event *) &(SDL_MouseButtonEvent){
+                    .type = SDL_MOUSEBUTTONUP,
+                    .timestamp = fing->timestamp,
+                    .clicks = 1,
+                    .state = SDL_RELEASED,
+                    .which = SDL_TOUCH_MOUSEID,
+                    .button = SDL_BUTTON_LEFT,
+                    .x = x_F3(pos),
+                    .y = y_F3(pos)
+                });
+                remove_ArrayIterator(&i);
                 continue;
             }
             /* Edge swipes do not generate momentum. */

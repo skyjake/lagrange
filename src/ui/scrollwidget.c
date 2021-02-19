@@ -41,7 +41,7 @@ void init_ScrollWidget(iScrollWidget *d) {
     setId_Widget(w, "scroll");
     setFlags_Widget(w,
                     fixedWidth_WidgetFlag | resizeToParentHeight_WidgetFlag |
-                        moveToParentRightEdge_WidgetFlag,
+                        moveToParentRightEdge_WidgetFlag | touchDrag_WidgetFlag,
                     iTrue);
     w->rect.size.x = gap_UI * 3;
     init_Click(&d->click, d, SDL_BUTTON_LEFT);

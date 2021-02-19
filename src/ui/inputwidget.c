@@ -108,7 +108,7 @@ static void showCursor_InputWidget_(iInputWidget *d) {
 void init_InputWidget(iInputWidget *d, size_t maxLen) {
     iWidget *w = &d->widget;
     init_Widget(w);
-    setFlags_Widget(w, focusable_WidgetFlag | hover_WidgetFlag, iTrue);
+    setFlags_Widget(w, focusable_WidgetFlag | hover_WidgetFlag | touchDrag_WidgetFlag, iTrue);
     init_Array(&d->text, sizeof(iChar));
     init_Array(&d->oldText, sizeof(iChar));
     init_String(&d->hint);

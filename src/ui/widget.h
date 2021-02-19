@@ -92,6 +92,7 @@ enum iWidgetFlag {
 #define overflowScrollable_WidgetFlag       iBit64(38)
 #define focusRoot_WidgetFlag                iBit64(39)
 #define unhittable_WidgetFlag               iBit64(40)
+#define touchDrag_WidgetFlag                iBit64(41) /* touch event behavior: immediate drag */
 
 enum iWidgetAddPos {
     back_WidgetAddPos,
