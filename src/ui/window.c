@@ -125,6 +125,20 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
         SDL_PushEvent(&(SDL_Event){ .type = SDL_QUIT });
         return iTrue;
     }
+    else if (deviceType_App() == phone_AppDeviceType && equal_Command(cmd, "window.resized")) {
+        /* Place the sidebar next to or under doctabs depending on orientation. */
+        iSidebarWidget *sidebar = findChild_Widget(root, "sidebar");
+        removeChild_Widget(parent_Widget(sidebar), sidebar);
+        if (isLandscape_App()) {
+            addChildPos_Widget(findChild_Widget(root, "tabs.content"), iClob(sidebar), front_WidgetAddPos);
+            setWidth_SidebarWidget(sidebar, 73 * gap_UI);
+        }
+        else {
+            addChildPos_Widget(findChild_Widget(root, "stack"), iClob(sidebar), back_WidgetAddPos);
+            setWidth_SidebarWidget(sidebar, width_Widget(root));
+        }
+        return iFalse;
+    }
     else if (handleCommand_App(cmd)) {
         return iTrue;
     }
@@ -353,7 +367,9 @@ static void updateNavBarIdentity_(iWidget *navBar) {
     const iGmIdentity *ident =
         identityForUrl_GmCerts(certs_App(), url_DocumentWidget(document_App()));
     iWidget *button = findChild_Widget(navBar, "navbar.ident");
+    iWidget *tool = findWidget_App("toolbar.ident");
     setFlags_Widget(button, selected_WidgetFlag, ident != NULL);
+    setFlags_Widget(tool, selected_WidgetFlag, ident != NULL);
     /* Update menu. */
     iLabelWidget *idItem = child_Widget(findChild_Widget(button, "menu"), 0);
     setTextCStr_LabelWidget(
@@ -761,9 +777,12 @@ static void setupUserInterface_Window(iWindow *d) {
 #endif
     }
     /* Tab bar. */ {
-        iWidget *tabBar = makeTabs_Widget(div);
+        iWidget *mainStack = new_Widget();
+        setId_Widget(mainStack, "stack");
+        addChildFlags_Widget(div, iClob(mainStack), resizeChildren_WidgetFlag | expand_WidgetFlag |
+                             unhittable_WidgetFlag);
+        iWidget *tabBar = makeTabs_Widget(mainStack);
         setId_Widget(tabBar, "doctabs");
-        setFlags_Widget(tabBar, expand_WidgetFlag, iTrue);
         setBackgroundColor_Widget(tabBar, uiBackground_ColorId);
         appendTabPage_Widget(tabBar, iClob(new_DocumentWidget()), "Document", 0, 0);
         iWidget *buttons = findChild_Widget(tabBar, "tabs.buttons");
@@ -822,7 +841,8 @@ static void setupUserInterface_Window(iWindow *d) {
         setBackgroundColor_Widget(toolBar, tmBannerBackground_ColorId);
         addChildFlags_Widget(toolBar, iClob(newLargeIcon_LabelWidget("\U0001f870", "navigate.back")), frameless_WidgetFlag);
         addChildFlags_Widget(toolBar, iClob(newLargeIcon_LabelWidget("\U0001f872", "navigate.forward")), frameless_WidgetFlag);
-        addChildFlags_Widget(toolBar, iClob(newLargeIcon_LabelWidget("\U0001f464", "sidebar.mode arg:3 show:1")), frameless_WidgetFlag);
+        setId_Widget(addChildFlags_Widget(toolBar, iClob(newLargeIcon_LabelWidget("\U0001f464", "sidebar.mode arg:3 toggle:1")), frameless_WidgetFlag), "toolbar.ident");
+        addChildFlags_Widget(toolBar, iClob(newLargeIcon_LabelWidget("\U0001f588", "sidebar.mode arg:0 toggle:1")), frameless_WidgetFlag);
         iLabelWidget *menuButton = makeMenuButton_LabelWidget("\U0001d362", navMenuItems_, iElemCount(navMenuItems_));
         setFont_LabelWidget(menuButton, uiLabelLarge_FontId);
         addChildFlags_Widget(toolBar, iClob(menuButton), frameless_WidgetFlag);

@@ -510,6 +510,9 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
                                  resizeToParentHeight_WidgetFlag |
                                  (side == left_SideBarSide ? moveToParentRightEdge_WidgetFlag
                                                            : moveToParentLeftEdge_WidgetFlag));
+    if (deviceType_App() == phone_AppDeviceType) {
+        setFlags_Widget(d->resizer, hidden_WidgetFlag | disabled_WidgetFlag, iTrue);
+    }
     setId_Widget(d->resizer, side == left_SideBarSide ? "sidebar.grab" : "sidebar2.grab");
     d->resizer->rect.size.x = gap_UI;
     setBackgroundColor_Widget(d->resizer, none_ColorId);
@@ -603,16 +606,18 @@ static void checkModeButtonLayout_SidebarWidget_(iSidebarWidget *d) {
 }
 
 void setWidth_SidebarWidget(iSidebarWidget *d, int width) {
-    iWidget * w = as_Widget(d);
-    /* Even less space if the other sidebar is visible, too. */
-    const int otherWidth =
-        width_Widget(findWidget_App(d->side == left_SideBarSide ? "sidebar2" : "sidebar"));
-    width = iClamp(width, 30 * gap_UI, rootSize_Window(get_Window()).x - 50 * gap_UI - otherWidth);
+    iWidget *w = as_Widget(d);
+    if (deviceType_App() != phone_AppDeviceType) { /* phone doesn't allow resizing */
+        /* Even less space if the other sidebar is visible, too. */
+        const int otherWidth =
+            width_Widget(findWidget_App(d->side == left_SideBarSide ? "sidebar2" : "sidebar"));
+        width = iClamp(width, 30 * gap_UI, rootSize_Window(get_Window()).x - 50 * gap_UI - otherWidth);
+    }
     d->width = width;
     if (isVisible_Widget(w)) {
         w->rect.size.x = width;
     }
-    arrange_Widget(findWidget_App("doctabs"));
+    arrange_Widget(findWidget_App("stack"));
     checkModeButtonLayout_SidebarWidget_(d);
     if (!isRefreshPending_App()) {
         updateSize_DocumentWidget(document_App());

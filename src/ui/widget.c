@@ -763,7 +763,7 @@ size_t childIndex_Widget(const iWidget *d, const iAnyObject *child) {
 }
 
 iAny *hitChild_Widget(const iWidget *d, iInt2 coord) {
-    if (d->flags & (unhittable_WidgetFlag | hidden_WidgetFlag)) {
+    if (d->flags & hidden_WidgetFlag) {
         return NULL;
     }
     /* Check for on-top widgets first. */
@@ -773,14 +773,17 @@ iAny *hitChild_Widget(const iWidget *d, iInt2 coord) {
             if (found) return found;
         }
     }
-    iForEach(ObjectList, i, d->children) {
+    iReverseForEach(ObjectList, i, d->children) {
         const iWidget *child = constAs_Widget(i.object);
         if (~child->flags & keepOnTop_WidgetFlag) {
             iAny *found = hitChild_Widget(child, coord);
             if (found) return found;
         }
     }
-    if (contains_Widget(d, coord)) {
+    if (class_Widget(d) == &Class_Widget) {
+        return NULL; /* Plain widgets are not hittable. */
+    }
+    if (~d->flags & unhittable_WidgetFlag && contains_Widget(d, coord)) {
         return iConstCast(iWidget *, d);
     }
     return NULL;

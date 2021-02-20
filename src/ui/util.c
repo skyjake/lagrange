@@ -358,13 +358,13 @@ iLabelWidget *makeHeading_Widget(const char *text) {
 
 iWidget *makeVDiv_Widget(void) {
     iWidget *div = new_Widget();
-    setFlags_Widget(div, resizeChildren_WidgetFlag | arrangeVertical_WidgetFlag, iTrue);
+    setFlags_Widget(div, resizeChildren_WidgetFlag | arrangeVertical_WidgetFlag | unhittable_WidgetFlag, iTrue);
     return div;
 }
 
 iWidget *makeHDiv_Widget(void) {
     iWidget *div = new_Widget();
-    setFlags_Widget(div, resizeChildren_WidgetFlag | arrangeHorizontal_WidgetFlag, iTrue);
+    setFlags_Widget(div, resizeChildren_WidgetFlag | arrangeHorizontal_WidgetFlag | unhittable_WidgetFlag, iTrue);
     return div;
 }
 
@@ -382,7 +382,7 @@ static iBool isCommandIgnoredByMenus_(const char *cmd) {
            startsWith_CStr(cmd, "feeds.update.") ||
            equal_Command(cmd, "document.request.updated") ||
            equal_Command(cmd, "bookmarks.request.finished") ||
-           equal_Command(cmd, "window.resized") ||
+           (deviceType_App() == desktop_AppDeviceType && equal_Command(cmd, "window.resized")) ||
            equal_Command(cmd, "window.reload.update") ||
            equal_Command(cmd, "window.mouse.exited") ||
            equal_Command(cmd, "window.mouse.entered") ||
