@@ -164,6 +164,7 @@ static const iMenuItem navMenuItems_[] = {
     { "Quit Lagrange", 'q', KMOD_PRIMARY, "quit" }
 };
 #else
+/* Phone menu. */
 static const iMenuItem navMenuItems_[] = {
     { "New Tab", 't', KMOD_PRIMARY, "tabs.new" },
     { "Close Tab", 'w', KMOD_PRIMARY, "tabs.close" },
@@ -171,19 +172,15 @@ static const iMenuItem navMenuItems_[] = {
     { "Save to Downloads", SDLK_s, KMOD_PRIMARY, "document.save" },
     { "Copy Source Text", SDLK_c, KMOD_PRIMARY, "copy" },
     { "---", 0, 0, NULL },
-    { "Toggle Left Sidebar", SDLK_l, KMOD_PRIMARY | KMOD_SHIFT, "sidebar.toggle" },
-    { "Toggle Right Sidebar", SDLK_p, KMOD_PRIMARY | KMOD_SHIFT, "sidebar2.toggle" },
+    { "Toggle Sidebar", SDLK_l, KMOD_PRIMARY | KMOD_SHIFT, "sidebar.toggle" },
     { "Zoom In", SDLK_EQUALS, KMOD_PRIMARY, "zoom.delta arg:10" },
     { "Zoom Out", SDLK_MINUS, KMOD_PRIMARY, "zoom.delta arg:-10" },
     { "Reset Zoom", SDLK_0, KMOD_PRIMARY, "zoom.set arg:100" },
     { "---", 0, 0, NULL },
     { "List All Bookmarks", 0, 0, "!open url:about:bookmarks" },
-    { "List Bookmarks by Tag", 0, 0, "!open url:about:bookmarks?tags" },
-    { "List Bookmarks by Creation Time", 0, 0, "!open url:about:bookmarks?created" },
+    { "List Feed Entries", 0, 0, "!open url:about:feeds" },
     { "---", 0, 0, NULL },
-    { "Show Feed Entries", 0, 0, "!open url:about:feeds" },
-    { "---", 0, 0, NULL },
-    { "Preferences...", SDLK_COMMA, KMOD_PRIMARY, "preferences" },
+    { "Settings...", SDLK_COMMA, KMOD_PRIMARY, "preferences" },
     { "Help", SDLK_F1, 0, "!open url:about:help" },
     { "Release Notes", 0, 0, "!open url:about:version" },
 };
@@ -450,8 +447,6 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
         else {
             arrange_Widget(navBar);
         }
-        printf("navbar hgt:%i\n", height_Widget(findWidget_App("navbar")));
-        printf("navbar.child[0] w:%i\n", width_Widget(child_Widget(findWidget_App("navbar"), 0)));
         refresh_Widget(navBar);
         postCommand_Widget(navBar, "layout.changed id:navbar");
         return iFalse;
@@ -689,8 +684,11 @@ static void setupUserInterface_Window(iWindow *d) {
         int topPad = !findChild_Widget(div, "winbar") ? gap_UI / 2 : 0;
         setPadding_Widget(navBar, gap_UI, topPad, gap_UI, gap_UI / 2);
         setFlags_Widget(navBar,
-                        arrangeHeight_WidgetFlag | resizeChildren_WidgetFlag |
-                            arrangeHorizontal_WidgetFlag,
+                        arrangeHeight_WidgetFlag |
+                        resizeChildren_WidgetFlag |
+                        arrangeHorizontal_WidgetFlag |
+                        drawBackgroundToHorizontalSafeArea_WidgetFlag |
+                        drawBackgroundToVerticalSafeArea_WidgetFlag,
                         iTrue);
         addChild_Widget(div, iClob(navBar));
         setBackgroundColor_Widget(navBar, uiBackground_ColorId);
@@ -769,7 +767,11 @@ static void setupUserInterface_Window(iWindow *d) {
         setBackgroundColor_Widget(tabBar, uiBackground_ColorId);
         appendTabPage_Widget(tabBar, iClob(new_DocumentWidget()), "Document", 0, 0);
         iWidget *buttons = findChild_Widget(tabBar, "tabs.buttons");
-        setFlags_Widget(buttons, collapse_WidgetFlag | hidden_WidgetFlag, iTrue);
+        setFlags_Widget(buttons, collapse_WidgetFlag | hidden_WidgetFlag |
+                        drawBackgroundToHorizontalSafeArea_WidgetFlag, iTrue);
+        if (deviceType_App() == phone_AppDeviceType) {
+            setBackgroundColor_Widget(buttons, uiBackground_ColorId);
+        }
         setId_Widget(
             addChild_Widget(buttons, iClob(newIcon_LabelWidget("\u2795", 0, 0, "tabs.new"))),
             "newtab");
@@ -778,8 +780,10 @@ static void setupUserInterface_Window(iWindow *d) {
         iWidget *content = findChild_Widget(d->root, "tabs.content");
         iSidebarWidget *sidebar1 = new_SidebarWidget(left_SideBarSide);
         addChildPos_Widget(content, iClob(sidebar1), front_WidgetAddPos);
-        iSidebarWidget *sidebar2 = new_SidebarWidget(right_SideBarSide);
-        addChildPos_Widget(content, iClob(sidebar2), back_WidgetAddPos);
+        if (deviceType_App() != phone_AppDeviceType) {
+            iSidebarWidget *sidebar2 = new_SidebarWidget(right_SideBarSide);
+            addChildPos_Widget(content, iClob(sidebar2), back_WidgetAddPos);
+        }
     }
     /* Lookup results. */ {
         iLookupWidget *lookup = new_LookupWidget();
@@ -815,13 +819,18 @@ static void setupUserInterface_Window(iWindow *d) {
         setId_Widget(toolBar, "toolbar");
         setFlags_Widget(toolBar, collapse_WidgetFlag | resizeWidthOfChildren_WidgetFlag |
                         arrangeHeight_WidgetFlag | arrangeHorizontal_WidgetFlag, iTrue);
-        setBackgroundColor_Widget(toolBar, uiBackground_ColorId);
+        setBackgroundColor_Widget(toolBar, tmBannerBackground_ColorId);
         addChildFlags_Widget(toolBar, iClob(newLargeIcon_LabelWidget("\U0001f870", "navigate.back")), frameless_WidgetFlag);
         addChildFlags_Widget(toolBar, iClob(newLargeIcon_LabelWidget("\U0001f872", "navigate.forward")), frameless_WidgetFlag);
         addChildFlags_Widget(toolBar, iClob(newLargeIcon_LabelWidget("\U0001f464", "sidebar.mode arg:3 show:1")), frameless_WidgetFlag);
         iLabelWidget *menuButton = makeMenuButton_LabelWidget("\U0001d362", navMenuItems_, iElemCount(navMenuItems_));
         setFont_LabelWidget(menuButton, uiLabelLarge_FontId);
         addChildFlags_Widget(toolBar, iClob(menuButton), frameless_WidgetFlag);
+        iForEach(ObjectList, i, children_Widget(toolBar)) {
+            iLabelWidget *btn = i.object;
+            setFlags_Widget(i.object, noBackground_WidgetFlag, iTrue);
+            setTextColor_LabelWidget(i.object, tmBannerIcon_ColorId);            
+        }
     }
 #endif
     updatePadding_Window_(d);

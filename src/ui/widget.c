@@ -629,7 +629,9 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
 }
 
 void drawBackground_Widget(const iWidget *d) {
-    if (d->flags & hidden_WidgetFlag) return;
+    if (d->flags & (hidden_WidgetFlag | noBackground_WidgetFlag)) {
+        return;
+    }
     if (flags_Widget(d) & borderTop_WidgetFlag) {
         const iRect rect = bounds_Widget(d);
         iPaint p;
@@ -637,10 +639,36 @@ void drawBackground_Widget(const iWidget *d) {
         drawHLine_Paint(&p, topLeft_Rect(rect), width_Rect(rect), uiBackgroundFramelessHover_ColorId);
     }
     if (d->bgColor >= 0 || d->frameColor >= 0) {
-        const iRect rect = bounds_Widget(d);
+        iRect rect = bounds_Widget(d);
         iPaint p;
         init_Paint(&p);
         if (d->bgColor >= 0) {
+#if defined (iPlatformAppleMobile)
+            if (d->flags & (drawBackgroundToHorizontalSafeArea_WidgetFlag |
+                            drawBackgroundToVerticalSafeArea_WidgetFlag)) {
+                const iInt2 rootSize = rootSize_Window(get_Window());
+                const iInt2 center = divi_I2(rootSize, 2);
+                int top = 0, right = 0, bottom = 0, left = 0;
+                if (d->flags & drawBackgroundToHorizontalSafeArea_WidgetFlag) {
+                    const iBool isWide = width_Rect(rect) > rootSize.x * 9 / 10;
+                    if (isWide || mid_Rect(rect).x < center.x) {
+                        left = -left_Rect(rect);
+                    }
+                    if (isWide || mid_Rect(rect).x > center.x) {
+                        right = rootSize.x - right_Rect(rect);
+                    }
+                }
+                if (d->flags & drawBackgroundToVerticalSafeArea_WidgetFlag) {
+                    if (top_Rect(rect) > center.y) {
+                        bottom = rootSize.y - bottom_Rect(rect);
+                    }
+                    if (bottom_Rect(rect) < center.y) {
+                        top = -top_Rect(rect);
+                    }
+                }
+                adjustEdges_Rect(&rect, top, right, bottom, left);
+            }
+#endif
             fillRect_Paint(&p, rect, d->bgColor);
         }
         if (d->frameColor >= 0 && ~d->flags & frameless_WidgetFlag) {

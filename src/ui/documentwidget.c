@@ -2894,12 +2894,10 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
     }
     if (run->flags & siteBanner_GmRunFlag) {
         /* Banner background. */
-        fillRect_Paint(
-            &d->paint,
-            initCorners_Rect(topLeft_Rect(d->widgetBounds),
-                             init_I2(right_Rect(bounds_Widget(constAs_Widget(d->widget))),
-                                     visPos.y + height_Rect(run->visBounds))),
-            tmBannerBackground_ColorId);
+        iRect bannerBack = initCorners_Rect(topLeft_Rect(d->widgetBounds),
+                                            init_I2(right_Rect(bounds_Widget(constAs_Widget(d->widget))),
+                                                    visPos.y + height_Rect(run->visBounds)));
+        fillRect_Paint(&d->paint, bannerBack, tmBannerBackground_ColorId);
         drawBannerRun_DrawContext_(d, run, visPos);
     }
     else {

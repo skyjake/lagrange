@@ -139,16 +139,17 @@ static void keyStr_LabelWidget_(const iLabelWidget *d, iString *str) {
 
 static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int *frame1, int *frame2) {
     const iWidget *w           = constAs_Widget(d);
-    const iBool    isPress     = (flags_Widget(w) & pressed_WidgetFlag) != 0;
-    const iBool    isSel       = (flags_Widget(w) & selected_WidgetFlag) != 0;
-    const iBool    isFrameless = (flags_Widget(w) & frameless_WidgetFlag) != 0;
+    const int64_t  flags       = flags_Widget(w);
+    const iBool    isPress     = (flags & pressed_WidgetFlag) != 0;
+    const iBool    isSel       = (flags & selected_WidgetFlag) != 0;
+    const iBool    isFrameless = (flags & frameless_WidgetFlag) != 0;
     const iBool    isButton    = d->click.button != 0;
     /* Default color state. */
-    *bg     = isButton ? uiBackground_ColorId : none_ColorId;
+    *bg     = isButton && ~flags & noBackground_WidgetFlag ? uiBackground_ColorId : none_ColorId;
     *fg     = uiText_ColorId;
     *frame1 = isButton ? uiEmboss1_ColorId : d->widget.frameColor;
     *frame2 = isButton ? uiEmboss2_ColorId : *frame1;
-    if (flags_Widget(w) & disabled_WidgetFlag && isButton) {
+    if (flags & disabled_WidgetFlag && isButton) {
         *fg = uiTextDisabled_ColorId;
     }
     if (isSel) {

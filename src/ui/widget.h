@@ -93,6 +93,9 @@ enum iWidgetFlag {
 #define focusRoot_WidgetFlag                iBit64(39)
 #define unhittable_WidgetFlag               iBit64(40)
 #define touchDrag_WidgetFlag                iBit64(41) /* touch event behavior: immediate drag */
+#define noBackground_WidgetFlag             iBit64(42)
+#define drawBackgroundToHorizontalSafeArea_WidgetFlag   iBit64(43)
+#define drawBackgroundToVerticalSafeArea_WidgetFlag     iBit64(44)
 
 enum iWidgetAddPos {
     back_WidgetAddPos,
@@ -159,12 +162,18 @@ void    drawBackground_Widget(const iWidget *);
 void    drawChildren_Widget (const iWidget *);
 
 iLocalDef int width_Widget(const iAnyObject *d) {
-    iAssert(isInstance_Object(d, &Class_Widget));
-    return ((const iWidget *) d)->rect.size.x;
+    if (d) {
+        iAssert(isInstance_Object(d, &Class_Widget));
+        return ((const iWidget *) d)->rect.size.x;
+    }
+    return 0;
 }
 iLocalDef int height_Widget(const iAnyObject *d) {
-    iAssert(isInstance_Object(d, &Class_Widget));
-    return ((const iWidget *) d)->rect.size.y;
+    if (d) {
+        iAssert(isInstance_Object(d, &Class_Widget));
+        return ((const iWidget *) d)->rect.size.y;
+    }
+    return 0;
 }
 iLocalDef iObjectList *children_Widget(iAnyObject *d) {
     iAssert(isInstance_Object(d, &Class_Widget));

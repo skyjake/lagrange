@@ -428,11 +428,11 @@ iBool setMode_SidebarWidget(iSidebarWidget *d, enum iSidebarMode mode) {
 }
 
 enum iSidebarMode mode_SidebarWidget(const iSidebarWidget *d) {
-    return d->mode;
+    return d ? d->mode : 0;
 }
 
 int width_SidebarWidget(const iSidebarWidget *d) {
-    return d->width;
+    return d ? d->width : 0;
 }
 
 static const char *normalModeLabels_[max_SidebarMode] = {
@@ -488,12 +488,16 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     addChildFlags_Widget(vdiv,
                          iClob(buttons),
                          arrangeHorizontal_WidgetFlag | resizeWidthOfChildren_WidgetFlag |
-                             arrangeHeight_WidgetFlag | resizeToParentWidth_WidgetFlag);
+                             arrangeHeight_WidgetFlag | resizeToParentWidth_WidgetFlag |
+                         drawBackgroundToHorizontalSafeArea_WidgetFlag);
+    if (deviceType_App() == phone_AppDeviceType) {
+        setBackgroundColor_Widget(buttons, uiBackground_ColorId);
+    }
     iWidget *content = new_Widget();
     setFlags_Widget(content, resizeChildren_WidgetFlag, iTrue);
     d->list = new_ListWidget();
     setPadding_Widget(as_Widget(d->list), 0, gap_UI, 0, gap_UI);
-    addChild_Widget(content, iClob(d->list));
+    addChildFlags_Widget(content, iClob(d->list), drawBackgroundToHorizontalSafeArea_WidgetFlag);
     d->contextItem = NULL;
     d->blank = new_Widget();
     addChildFlags_Widget(content, iClob(d->blank), resizeChildren_WidgetFlag);
