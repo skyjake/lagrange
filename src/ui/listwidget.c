@@ -26,6 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "util.h"
 #include "command.h"
 #include "visbuf.h"
+#include "app.h"
 
 #include <the_Foundation/intset.h>
 
@@ -136,6 +137,9 @@ void updateVisible_ListWidget(iListWidget *d) {
 
 void setItemHeight_ListWidget(iListWidget *d, int itemHeight) {
     d->itemHeight = itemHeight;
+    if (deviceType_App() != desktop_AppDeviceType) {
+        d->itemHeight += gap_UI;
+    }
     invalidate_ListWidget(d);
 }
 

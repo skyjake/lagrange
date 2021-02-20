@@ -102,6 +102,17 @@ static iBool isStationary_Touch_(const iTouch *d) {
            length_F3(sub_F3(d->pos[0], d->startPos)) < tapRadiusPt_ * get_Window()->pixelRatio;
 }
 
+static void dispatchMotion_Touch_(iFloat3 pos, int buttonState) {
+    dispatchEvent_Widget(get_Window()->root, (SDL_Event *) &(SDL_MouseMotionEvent){
+        .type = SDL_MOUSEMOTION,
+        .timestamp = SDL_GetTicks(),
+        .which = SDL_TOUCH_MOUSEID,
+        .state = buttonState,
+        .x = x_F3(pos),
+        .y = y_F3(pos)
+    });
+}
+
 static void dispatchClick_Touch_(const iTouch *d, int button) {
     const iFloat3 tapPos = d->pos[0];
     SDL_MouseButtonEvent btn = {
@@ -120,6 +131,7 @@ static void dispatchClick_Touch_(const iTouch *d, int button) {
     btn.state = SDL_RELEASED;
     btn.timestamp = SDL_GetTicks();
     dispatchEvent_Widget(get_Window()->root, (SDL_Event *) &btn);
+    dispatchMotion_Touch_(zero_F3(), 0);
 }
 
 static void clearWidgetMomentum_TouchState_(iTouchState *d, iWidget *widget) {
@@ -186,17 +198,6 @@ static void update_TouchState_(void *ptr) {
     if (!isEmpty_Array(d->touches) || !isEmpty_Array(d->moms)) {
         addTicker_App(update_TouchState_, ptr);
     }
-}
-
-static void dispatchMotion_Touch_(iFloat3 pos, int buttonState) {
-    dispatchEvent_Widget(get_Window()->root, (SDL_Event *) &(SDL_MouseMotionEvent){
-        .type = SDL_MOUSEMOTION,
-        .timestamp = SDL_GetTicks(),
-        .which = SDL_TOUCH_MOUSEID,
-        .state = buttonState,
-        .x = x_F3(pos),
-        .y = y_F3(pos)
-    });
 }
 
 static void dispatchButtonUp_Touch_(iFloat3 pos) {

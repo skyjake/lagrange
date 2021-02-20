@@ -540,6 +540,11 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
                 iInputWidget *url = findChild_Widget(navBar, "url");
                 setTextCStr_InputWidget(url, suffixPtr_Command(cmd, "url"));
                 checkLoadAnimation_Window_(get_Window());
+                if (deviceType_App() == phone_AppDeviceType && isPortrait_App()) {
+                    if (isVisible_Widget(findWidget_App("sidebar"))) {
+                        postCommand_App("sidebar.toggle");
+                    }
+                }
                 return iFalse;
             }
         }
