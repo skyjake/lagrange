@@ -398,9 +398,21 @@ static void checkLoadAnimation_Window_(iWindow *d) {
     setReloadLabel_Window_(d, isOngoing);
 }
 
+static void updatePadding_Window_(iWindow *d) {
+#if defined (iPlatformAppleMobile)
+    /* Respect the safe area insets. */ {
+        float left, top, right, bottom;
+        safeAreaInsets_iOS(&left, &top, &right, &bottom);
+        setPadding_Widget(findChild_Widget(d->root, "navdiv"), left, top, right, 0);
+        setPadding_Widget(findChild_Widget(d->root, "toolbar"), left, 0, right, bottom);
+    }
+#endif
+}
+
 static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
     if (equal_Command(cmd, "window.resized")) {
-        const iBool isNarrow = width_Rect(bounds_Widget(navBar)) / gap_UI < 140;
+        const iBool isPhone = deviceType_App() == phone_AppDeviceType;
+        const iBool isNarrow = !isPhone && width_Rect(bounds_Widget(navBar)) / gap_UI < 140;
         if (isNarrow ^ ((flags_Widget(navBar) & tight_WidgetFlag) != 0)) {
             setFlags_Widget(navBar, tight_WidgetFlag, isNarrow);
             iForEach(ObjectList, i, navBar->children) {
@@ -412,6 +424,14 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
                     updateSize_LabelWidget(label);
                 }
             }
+        }
+        if (isPhone) {
+            setFlags_Widget(findWidget_App("toolbar"), hidden_WidgetFlag, isLandscape_App());
+            setFlags_Widget(findWidget_App("navbar.back"), hidden_WidgetFlag, isPortrait_App());
+            setFlags_Widget(findWidget_App("navbar.forward"), hidden_WidgetFlag, isPortrait_App());
+            setFlags_Widget(findWidget_App("navbar.ident"), hidden_WidgetFlag, isPortrait_App());
+            setFlags_Widget(findWidget_App("navbar.home"), hidden_WidgetFlag, isPortrait_App());
+            setFlags_Widget(findWidget_App("navbar.menu"), hidden_WidgetFlag, isPortrait_App());
         }
         arrange_Widget(navBar);
         refresh_Widget(navBar);
@@ -592,11 +612,6 @@ static void setupUserInterface_Window(iWindow *d) {
     setId_Widget(div, "navdiv");
     addChild_Widget(d->root, iClob(div));
     
-#if defined (iPlatformAppleMobile)
-    /* System status bar needs space. */
-    setPadding_Widget(div, 0, 4 * gap_UI, 0, 0);
-#endif
-
 #if defined (LAGRANGE_CUSTOM_FRAME)
     /* Window title bar. */ 
     if (prefs_App()->customFrame) {
@@ -662,13 +677,12 @@ static void setupUserInterface_Window(iWindow *d) {
         addChild_Widget(div, iClob(navBar));
         setBackgroundColor_Widget(navBar, uiBackground_ColorId);
         setCommandHandler_Widget(navBar, handleNavBarCommands_);
-        addChild_Widget(navBar, iClob(newIcon_LabelWidget("\U0001f870", 0, 0, "navigate.back")));
-        addChild_Widget(navBar, iClob(newIcon_LabelWidget("\U0001f872", 0, 0, "navigate.forward")));
+        setId_Widget(addChildFlags_Widget(navBar, iClob(newIcon_LabelWidget("\U0001f870", 0, 0, "navigate.back")), collapse_WidgetFlag), "navbar.back");
+        setId_Widget(addChildFlags_Widget(navBar, iClob(newIcon_LabelWidget("\U0001f872", 0, 0, "navigate.forward")), collapse_WidgetFlag), "navbar.forward");
         iLabelWidget *idMenu = makeMenuButton_LabelWidget(
             "\U0001f464", identityButtonMenuItems_, iElemCount(identityButtonMenuItems_));
         setAlignVisually_LabelWidget(idMenu, iTrue);
-        addChild_Widget(navBar, iClob(idMenu));
-        setId_Widget(as_Widget(idMenu), "navbar.ident");
+        setId_Widget(addChildFlags_Widget(navBar, iClob(idMenu), collapse_WidgetFlag), "navbar.ident");
         iLabelWidget *lock =
             addChildFlags_Widget(navBar,
                                  iClob(newIcon_LabelWidget("\U0001f513", SDLK_i, KMOD_PRIMARY, "document.info")),
@@ -711,14 +725,16 @@ static void setupUserInterface_Window(iWindow *d) {
         setId_Widget(addChild_Widget(
                          navBar, iClob(newIcon_LabelWidget(reloadCStr_, 0, 0, "navigate.reload"))),
                      "reload");
-        addChild_Widget(navBar,
+        setId_Widget(addChildFlags_Widget(navBar,
                         iClob(newIcon_LabelWidget(
-                            "\U0001f3e0", SDLK_h, KMOD_PRIMARY | KMOD_SHIFT, "navigate.home")));
+                            "\U0001f3e0", SDLK_h, KMOD_PRIMARY | KMOD_SHIFT, "navigate.home")),
+                        collapse_WidgetFlag),
+                     "navbar.home");
 #if !defined (iHaveNativeMenus)
         iLabelWidget *navMenu =
             makeMenuButton_LabelWidget("\U0001d362", navMenuItems_, iElemCount(navMenuItems_));
         setAlignVisually_LabelWidget(navMenu, iTrue);
-        addChild_Widget(navBar, iClob(navMenu));
+        setId_Widget(addChildFlags_Widget(navBar, iClob(navMenu), collapse_WidgetFlag), "navbar.menu");
 #else
         insertMenuItems_MacOS("File", 1, fileMenuItems_, iElemCount(fileMenuItems_));
         insertMenuItems_MacOS("Edit", 2, editMenuItems_, iElemCount(editMenuItems_));
@@ -773,6 +789,24 @@ static void setupUserInterface_Window(iWindow *d) {
         addChild_Widget(searchBar, iClob(newIcon_LabelWidget("  \u2b9d  ", 'g', KMOD_PRIMARY | KMOD_SHIFT, "find.prev")));
         addChild_Widget(searchBar, iClob(newIcon_LabelWidget("\u2a2f", SDLK_ESCAPE, 0, "find.close")));
     }
+#if defined (iPlatformAppleMobile)
+    /* Bottom toolbar. */
+    if (isPhone_iOS()) {
+        iWidget *toolBar = new_Widget();
+        addChild_Widget(div, iClob(toolBar));
+        setId_Widget(toolBar, "toolbar");
+        setFlags_Widget(toolBar, collapse_WidgetFlag | resizeWidthOfChildren_WidgetFlag |
+                        arrangeHeight_WidgetFlag | arrangeHorizontal_WidgetFlag, iTrue);
+        setBackgroundColor_Widget(toolBar, uiBackground_ColorId);
+        addChildFlags_Widget(toolBar, iClob(newLargeIcon_LabelWidget("\U0001f870", "navigate.back")), frameless_WidgetFlag);
+        addChildFlags_Widget(toolBar, iClob(newLargeIcon_LabelWidget("\U0001f872", "navigate.forward")), frameless_WidgetFlag);
+        addChildFlags_Widget(toolBar, iClob(newLargeIcon_LabelWidget("\U0001f464", "sidebar.mode arg:3 show:1")), frameless_WidgetFlag);
+        iLabelWidget *menuButton = makeMenuButton_LabelWidget("\U0001d362", navMenuItems_, iElemCount(navMenuItems_));
+        setFont_LabelWidget(menuButton, uiLabelLarge_FontId);
+        addChildFlags_Widget(toolBar, iClob(menuButton), frameless_WidgetFlag);
+    }
+#endif
+    updatePadding_Window_(d);
     iWidget *tabsMenu = makeMenu_Widget(d->root,
                                         (iMenuItem[]){
                                             { "Close Tab", 0, 0, "tabs.close" },
@@ -1195,6 +1229,7 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
             return iTrue;
         }
         case SDL_WINDOWEVENT_RESIZED:
+            updatePadding_Window_(d);
             if (d->isMinimized) { 
                 updateRootSize_Window_(d, iTrue);
                 return iTrue;
@@ -1353,7 +1388,7 @@ void draw_Window(iWindow *d) {
     /* Clear the window. The clear color is visible as a border around the window
        when the custom frame is being used. */ {
 #if defined (iPlatformAppleMobile)
-        const iColor back = get_Color(uiBackground_ColorId);
+        const iColor back = get_Color(tmBackground_ColorId);
 #else
         const iColor back = get_Color(gotFocus && d->place.snap != maximized_WindowSnap &&
                                               ~winFlags & SDL_WINDOW_FULLSCREEN_DESKTOP

@@ -29,6 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #import <UIKit/UIKit.h>
 
 static iBool isSystemDarkMode_ = iFalse;
+static iBool isPhone_ = iFalse;
 
 static void enableMouse_(iBool yes) {
     SDL_EventState(SDL_MOUSEBUTTONDOWN, yes);
@@ -38,6 +39,10 @@ static void enableMouse_(iBool yes) {
 
 void setupApplication_iOS(void) {
     enableMouse_(iFalse);
+    NSString *deviceModel = [[UIDevice currentDevice] model];
+    if ([deviceModel isEqualToString:@"iPhone"]) {
+        isPhone_ = iTrue;
+    }
 }
 
 static UIViewController *viewController_(iWindow *window) {
@@ -61,7 +66,27 @@ static iBool isDarkMode_(iWindow *window) {
     return iFalse;
 }
 
+void safeAreaInsets_iOS(float *left, float *top, float *right, float *bottom) {
+    iWindow *window = get_Window();
+    UIViewController *ctl = viewController_(window);
+    if (@available(iOS 11.0, *)) {
+        const UIEdgeInsets safe = ctl.view.safeAreaInsets;
+        *left = safe.left * window->pixelRatio;
+        *top = safe.top * window->pixelRatio;
+        *right = safe.right * window->pixelRatio;
+        *bottom = safe.bottom * window->pixelRatio;
+    } else {
+        // Fallback on earlier versions
+        *left = *top = *right = *bottom = 0.0f;
+    }
+}
+
+iBool isPhone_iOS(void) {
+    return isPhone_;
+}
+
 void setupWindow_iOS(iWindow *window) {
+    UIViewController *ctl = viewController_(window);
     isSystemDarkMode_ = isDarkMode_(window);
     postCommandf_App("~os.theme.changed dark:%d contrast:1", isSystemDarkMode_ ? 1 : 0);
 }

@@ -52,6 +52,9 @@ void init_Prefs(iPrefs *d) {
     init_String(&d->httpProxy);
     init_String(&d->downloadDir);
     init_String(&d->searchUrl);
+#if defined (iPlatformAppleMobile)
+    d->hoverLink = iFalse;
+#endif
 }
 
 void deinit_Prefs(iPrefs *d) {

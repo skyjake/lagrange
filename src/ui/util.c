@@ -37,6 +37,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "text.h"
 #include "window.h"
 
+#if defined (iPlatformAppleMobile)
+#   include "../ios.h"
+#endif
+
 #include <the_Foundation/math.h>
 #include <the_Foundation/path.h>
 #include <SDL_timer.h>
@@ -472,13 +476,19 @@ void openMenu_Widget(iWidget *d, iInt2 coord) {
     }
 #endif
     const iRect bounds       = bounds_Widget(d);
-    const int   leftExcess   = -left_Rect(bounds);
-    const int   rightExcess  = right_Rect(bounds) - rootSize.x;
+    int         leftExcess   = -left_Rect(bounds);
+    int         rightExcess  = right_Rect(bounds) - rootSize.x;
     int         topExcess    = -top_Rect(bounds);
-    const int   bottomExcess = bottom_Rect(bounds) - rootSize.y;
+    int         bottomExcess = bottom_Rect(bounds) - rootSize.y;
 #if defined (iPlatformAppleMobile)
-    /* Reserve space for the system status bar. */
-    topExcess += 4.5 * gap_UI;
+    /* Reserve space for the system status bar. */ {
+        float l, t, r, b;
+        safeAreaInsets_iOS(&l, &t, &r, &b);
+        topExcess    += t;
+        bottomExcess += b;
+        leftExcess   += l;
+        rightExcess  += r;
+    }
 #endif
     if (bottomExcess > 0) {
         d->rect.pos.y -= bottomExcess;

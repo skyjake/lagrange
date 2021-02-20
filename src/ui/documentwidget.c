@@ -1701,6 +1701,8 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         iWidget *sizer = new_Widget();
         setSize_Widget(sizer, init_I2(gap_UI * 90, 1));
         addChildFlags_Widget(dlg, iClob(sizer), frameless_WidgetFlag);
+        setFlags_Widget(dlg, centerHorizontal_WidgetFlag, iFalse);
+        setPos_Widget(dlg, bottomLeft_Rect(bounds_Widget(findWidget_App("navbar.lock"))));
         arrange_Widget(dlg);
         addAction_Widget(dlg, SDLK_ESCAPE, 0, "message.ok");
         addAction_Widget(dlg, SDLK_SPACE, 0, "message.ok");
@@ -2350,16 +2352,20 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         }
     }
     else if (ev->type == SDL_MOUSEWHEEL && isHover_Widget(w)) {
+        /* TODO: Maybe clean this up a bit? Wheel events are used for scrolling
+           but they are calculated differently based on device/mouse/trackpad. */
         const iInt2 mouseCoord = mouseCoord_Window(get_Window());
 #if defined (iPlatformApple)
         /* On macOS, we handle both trackpad and mouse events. We expect SDL to identify
            which device is sending the event. */
         if (ev->wheel.which == 0) { /* Trackpad with precise scrolling w/inertia. */
             stop_Anim(&d->scrollY);
-            iInt2 wheel = mulf_I2(init_I2(ev->wheel.x, ev->wheel.y), get_Window()->pixelRatio);
-#if defined (iPlatformAppleMobile)
+            iInt2 wheel = init_I2(ev->wheel.x, ev->wheel.y);
+#   if defined (iPlatformAppleMobile)
             wheel.x = -wheel.x;
-#else
+#   else
+            /* Wheel mounts are in points. */
+            mulfv_I2(&wheel, get_Window()->pixelRatio);
             /* Only scroll on one axis at a time. */
             if (iAbs(wheel.x) > iAbs(wheel.y)) {
                 wheel.y = 0;
@@ -2367,7 +2373,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             else {
                 wheel.x = 0;
             }
-#endif
+#   endif
             scroll_DocumentWidget_(d, -wheel.y);
             scrollWideBlock_DocumentWidget_(d, mouseCoord, wheel.x, 0);
         }

@@ -126,11 +126,15 @@ const iString *id_Widget(const iWidget *d) {
 }
 
 int64_t flags_Widget(const iWidget *d) {
-    return d->flags;
+    return d ? d->flags : 0;
 }
 
 void setFlags_Widget(iWidget *d, int64_t flags, iBool set) {
     if (d) {
+        if (deviceType_App() == phone_AppDeviceType) {
+            /* Phones rarely have keyboards attached so don't bother with the shortcuts. */
+            flags &= ~drawKey_WidgetFlag;
+        }
         iChangeFlags(d->flags, flags, set);
         if (flags & keepOnTop_WidgetFlag) {
             if (set) {
@@ -731,7 +735,7 @@ size_t childIndex_Widget(const iWidget *d, const iAnyObject *child) {
 }
 
 iAny *hitChild_Widget(const iWidget *d, iInt2 coord) {
-    if (d->flags & unhittable_WidgetFlag) {
+    if (d->flags & (unhittable_WidgetFlag | hidden_WidgetFlag)) {
         return NULL;
     }
     /* Check for on-top widgets first. */

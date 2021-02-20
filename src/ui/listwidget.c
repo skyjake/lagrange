@@ -292,12 +292,16 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
         setHoverItem_ListWidget_(d, hover);
     }
     if (ev->type == SDL_MOUSEWHEEL && isHover_Widget(w)) {
+        int amount = -ev->wheel.y;
 #if defined (iPlatformApple)
-        /* Momentum scrolling. */
-        scrollOffset_ListWidget(d, -ev->wheel.y * get_Window()->pixelRatio);
+#   if defined (iPlatformAppleDesktop)
+        /* Momentum scrolling (in points). */
+        amount *= get_Window()->pixelRatio;
+#   endif
 #else
-        scrollOffset_ListWidget(d, -ev->wheel.y * 3 * d->itemHeight);
+        amount *= 3 * d->itemHeight;
 #endif
+        scrollOffset_ListWidget(d, amount);
         return iTrue;
     }
     switch (processEvent_Click(&d->click, ev)) {

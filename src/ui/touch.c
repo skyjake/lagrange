@@ -50,7 +50,7 @@ struct Impl_Touch {
     iFloat3 startPos;
     uint32_t posTime[numHistory_Touch_];
     iFloat3 pos[numHistory_Touch_];
-    iFloat3 remainder;
+    iFloat3 accum;
 };
 
 iLocalDef void pushPos_Touch_(iTouch *d, const iFloat3 pos, uint32_t time) {
@@ -103,7 +103,7 @@ static iBool isStationary_Touch_(const iTouch *d) {
 }
 
 static void dispatchClick_Touch_(const iTouch *d, int button) {
-    const iFloat3 tapPos = d->pos[0]; //divf_F3(add_F3(d->pos[0], d->startPos), 2);
+    const iFloat3 tapPos = d->pos[0];
     SDL_MouseButtonEvent btn = {
         .type = SDL_MOUSEBUTTONDOWN,
         .button = button,
@@ -151,13 +151,14 @@ static void update_TouchState_(void *ptr) {
     }
     /* Update/cancel momentum scrolling. */ {
         const float minSpeed = 15.0f;
-        const float momFriction = 0.98f; /* per step */
+        const float momFriction = 0.985f; /* per step */
         const float stepDurationMs = 1000.0f / 120.0f;
         double momAvailMs = nowTime - d->lastMomTime;
         int numSteps = (int) (momAvailMs / stepDurationMs);
         d->lastMomTime += numSteps * stepDurationMs;
         numSteps = iMin(numSteps, 10); /* don't spend too much time here */
 //        printf("mom steps:%d\n", numSteps);
+        iWindow *window = get_Window();
         iForEach(Array, m, d->moms) {
             if (numSteps == 0) break;
             iMomentum *mom = m.value;
@@ -165,15 +166,15 @@ static void update_TouchState_(void *ptr) {
                 mulvf_F3(&mom->velocity, momFriction);
                 addv_F3(&mom->accum, mulf_F3(mom->velocity, stepDurationMs / 1000.0f));
             }
-            const iInt2 pixels = initF3_I2(mom->accum);
-            if (pixels.x || pixels.y) {
-                subv_F3(&mom->accum, initI2_F3(pixels));
+            const iInt2 points = initF3_I2(mom->accum);
+            if (points.x || points.y) {
+                subv_F3(&mom->accum, initI2_F3(points));
                 dispatchEvent_Widget(mom->affinity, (SDL_Event *) &(SDL_MouseWheelEvent){
                     .type = SDL_MOUSEWHEEL,
                     .timestamp = nowTime,
                     .which = 0, /* means "precise scrolling" in DocumentWidget */
-                    .x = pixels.x,
-                    .y = pixels.y
+                    .x = points.x,
+                    .y = points.y
                 });
             }
             if (length_F3(mom->velocity) < minSpeed) {
@@ -185,6 +186,17 @@ static void update_TouchState_(void *ptr) {
     if (!isEmpty_Array(d->touches) || !isEmpty_Array(d->moms)) {
         addTicker_App(update_TouchState_, ptr);
     }
+}
+
+static void dispatchMotion_Touch_(iFloat3 pos, int buttonState) {
+    dispatchEvent_Widget(get_Window()->root, (SDL_Event *) &(SDL_MouseMotionEvent){
+        .type = SDL_MOUSEMOTION,
+        .timestamp = SDL_GetTicks(),
+        .which = SDL_TOUCH_MOUSEID,
+        .state = buttonState,
+        .x = x_F3(pos),
+        .y = y_F3(pos)
+    });
 }
 
 static void dispatchButtonUp_Touch_(iFloat3 pos) {
@@ -206,12 +218,10 @@ iBool processEvent_Touch(const SDL_Event *ev) {
         return iFalse;
     }
     iTouchState *d = touchState_();
-    const SDL_TouchFingerEvent *fing = &ev->tfinger;
     iWindow *window = get_Window();
     const iInt2 rootSize = rootSize_Window(window);
-    const iFloat3 pos = init_F3(fing->x * rootSize.x, fing->y * rootSize.y, 0);
-    //printf("%2d: %f: touch %f, %f\n", ev->type, z_F3(pos), x_F3(pos), y_F3(pos));
-    //fflush(stdout);
+    const SDL_TouchFingerEvent *fing = &ev->tfinger;
+    const iFloat3 pos = init_F3(fing->x * rootSize.x, fing->y * rootSize.y, 0); /* pixels */
     const uint32_t nowTime = SDL_GetTicks();
     if (ev->type == SDL_FINGERDOWN) {
         /* Register the new touch. */
@@ -225,6 +235,9 @@ iBool processEvent_Touch(const SDL_Event *ev) {
             edge = right_TouchEdge;
         }
         iWidget *aff = hitChild_Widget(window->root, init_I2(iRound(x), iRound(y_F3(pos))));
+        /* TODO: We must retain a reference to the affinity widget, or otherwise it might
+           be destroyed during the gesture. */
+//        printf("aff:%p (%s)\n", aff, aff ? class_Widget(aff)->name : "-");
         if (flags_Widget(aff) & touchDrag_WidgetFlag) {
             dispatchEvent_Widget(window->root, (SDL_Event *) &(SDL_MouseButtonEvent){
                 .type = SDL_MOUSEBUTTONDOWN,
@@ -248,46 +261,24 @@ iBool processEvent_Touch(const SDL_Event *ev) {
             .pos = pos
         });
         /* Some widgets rely on hover state. */
-        dispatchEvent_Widget(window->root, (SDL_Event *) &(SDL_MouseMotionEvent){
-            .type = SDL_MOUSEMOTION,
-            .timestamp = fing->timestamp,
-            .which = SDL_TOUCH_MOUSEID,
-            .x = x_F3(pos),
-            .y = y_F3(pos)
-        });
+        dispatchMotion_Touch_(pos, 0);
         addTicker_App(update_TouchState_, d);
     }
     else if (ev->type == SDL_FINGERMOTION) {
         iTouch *touch = find_TouchState_(d, fing->fingerId);
         if (touch && touch->affinity) {
             if (flags_Widget(touch->affinity) & touchDrag_WidgetFlag) {
-                dispatchEvent_Widget(window->root, (SDL_Event *) &(SDL_MouseMotionEvent){
-                    .type = SDL_MOUSEMOTION,
-                    .timestamp = fing->timestamp,
-                    .which = SDL_TOUCH_MOUSEID,
-                    .state = SDL_BUTTON_LMASK,
-                    .x = x_F3(pos),
-                    .y = y_F3(pos)
-                });
+                dispatchMotion_Touch_(pos, SDL_BUTTON_LMASK);
                 return iTrue;
             }
-            /*dispatchEvent_Widget(window->root, (SDL_Event *) &(SDL_MouseMotionEvent){
-                .type = SDL_MOUSEMOTION,
-                .timestamp = fing->timestamp,
-                .which = SDL_TOUCH_MOUSEID,
-                .x = x_F3(pos),
-                .y = y_F3(pos)
-            });*/
             /* Update touch position. */
             pushPos_Touch_(touch, pos, nowTime);
-            const iFloat3 amount = add_F3(touch->remainder,
-                                          divf_F3(mul_F3(init_F3(fing->dx, fing->dy, 0),
-                                                         init_F3(rootSize.x, rootSize.y, 0)),
-                                                  window->pixelRatio));
-            iInt2 pixels = init_I2(iRound(x_F3(amount)), iRound(y_F3(amount)));
+            const iFloat3 amount = mul_F3(init_F3(fing->dx, fing->dy, 0),
+                                          init_F3(rootSize.x, rootSize.y, 0));
+            addv_F3(&touch->accum, amount);
+            iInt2 pixels = initF3_I2(touch->accum);
             /* We're reporting scrolling as full points, so keep track of the precise distance. */
-            iFloat3 remainder = sub_F3(amount, initI2_F3(pixels));
-            touch->remainder = remainder;
+            subv_F3(&touch->accum, initI2_F3(pixels));
             if (!touch->hasMoved && !isStationary_Touch_(touch)) {
                 touch->hasMoved = iTrue;
             }
@@ -301,15 +292,17 @@ iBool processEvent_Touch(const SDL_Event *ev) {
             if (touch->edge) {
                 pixels.y = 0;
             }
+//            printf("%p (%s) py: %i wy: %f acc: %f\n",
+//                   touch->affinity,
+//                   class_Widget(touch->affinity)->name,
+//                   pixels.y, y_F3(amount), y_F3(touch->accum));
             if (pixels.x || pixels.y) {
-//                printf("%p (%s) wy: %f\n", touch->affinity, class_Widget(touch->affinity)->name,
-//                       fing->dy * rootSize.y / window->pixelRatio);
                 dispatchEvent_Widget(touch->affinity, (SDL_Event *) &(SDL_MouseWheelEvent){
                     .type = SDL_MOUSEWHEEL,
                     .timestamp = SDL_GetTicks(),
                     .which = 0, /* means "precise scrolling" in DocumentWidget */
                     .x = pixels.x,
-                    .y = pixels.y
+                    .y = pixels.y,
                 });
                 /* TODO: Keep increasing movement if the direction is the same. */
                 clearWidgetMomentum_TouchState_(d, touch->affinity);
@@ -340,7 +333,7 @@ iBool processEvent_Touch(const SDL_Event *ev) {
             else {
                 const uint32_t elapsed = fing->timestamp - touch->posTime[lastIndex_Touch_];
                 const float minVelocity = 400.0f;
-                if (elapsed < 40) {
+                if (elapsed < 75) {
                     velocity = divf_F3(sub_F3(pos, touch->pos[lastIndex_Touch_]),
                                        (float) elapsed / 1000.0f);
                     if (fabsf(x_F3(velocity)) < minVelocity) {
@@ -350,9 +343,11 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                         setY_F3(&velocity, 0.0f);
                     }
                 }
+//                printf("elap:%ums vel:%f\n", elapsed, length_F3(velocity));
                 pushPos_Touch_(touch, pos, nowTime);
                 /* If short and didn't move far, do a tap (left click). */
                 if (duration < longPressSpanMs_ && isStationary_Touch_(touch)) {
+                    dispatchMotion_Touch_(pos, SDL_BUTTON_LMASK);
                     dispatchClick_Touch_(touch, SDL_BUTTON_LEFT);
                 }
                 else if (length_F3(velocity) > 0.0f) {

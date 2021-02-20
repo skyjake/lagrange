@@ -38,6 +38,12 @@ iDeclareType(MimeHooks)
 iDeclareType(Visited)
 iDeclareType(Window)
 
+enum iAppDeviceType {
+    desktop_AppDeviceType,
+    tablet_AppDeviceType,
+    phone_AppDeviceType,
+};
+
 enum iAppEventMode {
     waitForNewEvents_AppEventMode,
     postedEventsOnly_AppEventMode,
@@ -61,6 +67,9 @@ void        refresh_App                 (void);
 iBool       isRefreshPending_App        (void);
 uint32_t    elapsedSinceLastTicker_App  (void); /* milliseconds */
 
+iBool               isLandscape_App     (void);
+iLocalDef iBool     isPortrait_App      (void) { return !isLandscape_App(); }
+enum iAppDeviceType deviceType_App      (void);
 iGmCerts *          certs_App           (void);
 iVisited *          visited_App         (void);
 iBookmarks *        bookmarks_App       (void);

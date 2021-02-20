@@ -941,6 +941,20 @@ iMimeHooks *mimeHooks_App(void) {
     return app_.mimehooks;
 }
 
+iBool isLandscape_App(void) {
+    const iApp *d = &app_;
+    const iInt2 size = rootSize_Window(d->window);
+    return size.x > size.y;
+}
+
+enum iAppDeviceType deviceType_App(void) {
+#if defined (iPlatformAppleMobile)
+    return isPhone_iOS() ? phone_AppDeviceType : tablet_AppDeviceType;
+#else
+    return desktop_AppDeviceType;
+#endif
+}
+
 iGmCerts *certs_App(void) {
     return app_.certs;
 }
