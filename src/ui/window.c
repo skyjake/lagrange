@@ -404,7 +404,13 @@ static void updatePadding_Window_(iWindow *d) {
         float left, top, right, bottom;
         safeAreaInsets_iOS(&left, &top, &right, &bottom);
         setPadding_Widget(findChild_Widget(d->root, "navdiv"), left, top, right, 0);
-        setPadding_Widget(findChild_Widget(d->root, "toolbar"), left, 0, right, bottom);
+        iWidget *toolBar = findChild_Widget(d->root, "toolbar");
+        if (isPortrait_App()) {
+            setPadding_Widget(toolBar, left, 0, right, bottom);
+        }
+        else {
+            setPadding1_Widget(toolBar, 0);
+        }
     }
 #endif
 }
@@ -426,14 +432,26 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
             }
         }
         if (isPhone) {
+            static const char *buttons[] = {
+                "navbar.back", "navbar.forward", "navbar.ident", "navbar.home", "navbar.menu"
+            };
             setFlags_Widget(findWidget_App("toolbar"), hidden_WidgetFlag, isLandscape_App());
-            setFlags_Widget(findWidget_App("navbar.back"), hidden_WidgetFlag, isPortrait_App());
-            setFlags_Widget(findWidget_App("navbar.forward"), hidden_WidgetFlag, isPortrait_App());
-            setFlags_Widget(findWidget_App("navbar.ident"), hidden_WidgetFlag, isPortrait_App());
-            setFlags_Widget(findWidget_App("navbar.home"), hidden_WidgetFlag, isPortrait_App());
-            setFlags_Widget(findWidget_App("navbar.menu"), hidden_WidgetFlag, isPortrait_App());
+            iForIndices(i, buttons) {
+                iLabelWidget *btn = findChild_Widget(navBar, buttons[i]);
+                setFlags_Widget(as_Widget(btn), hidden_WidgetFlag, isPortrait_App());
+                if (isLandscape_App()) {
+                    /* Collapsing sets size to zero and the label doesn't know when to update
+                       its own size automatically. */
+                    updateSize_LabelWidget(btn);
+                }
+            }
+            arrange_Widget(get_Window()->root);
         }
-        arrange_Widget(navBar);
+        else {
+            arrange_Widget(navBar);
+        }
+        printf("navbar hgt:%i\n", height_Widget(findWidget_App("navbar")));
+        printf("navbar.child[0] w:%i\n", width_Widget(child_Widget(findWidget_App("navbar"), 0)));
         refresh_Widget(navBar);
         postCommand_Widget(navBar, "layout.changed id:navbar");
         return iFalse;
@@ -1477,7 +1495,7 @@ uint32_t id_Window(const iWindow *d) {
 }
 
 iInt2 rootSize_Window(const iWindow *d) {
-    return d->root->rect.size;
+    return d ? d->root->rect.size : zero_I2();
 }
 
 iInt2 coord_Window(const iWindow *d, int x, int y) {
