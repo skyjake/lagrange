@@ -477,6 +477,19 @@ void openMenu_Widget(iWidget *d, iInt2 coord) {
     setFlags_Widget(d, hidden_WidgetFlag, iFalse);
     setFlags_Widget(d, commandOnMouseMiss_WidgetFlag, iTrue);
     setFlags_Widget(findChild_Widget(d, "menu.cancel"), disabled_WidgetFlag, iFalse);
+    if (deviceType_App() == phone_AppDeviceType) {
+        if (isPortrait_App()) {
+            setFlags_Widget(d, arrangeWidth_WidgetFlag | resizeChildrenToWidestChild_WidgetFlag, iFalse);
+            setFlags_Widget(d, resizeWidthOfChildren_WidgetFlag, iTrue);
+            d->rect.size.x = rootSize_Window(get_Window()).x;
+            iForEach(ObjectList, i, children_Widget(d)) {
+                if (isInstance_Object(i.object, &Class_LabelWidget)) {
+                    iLabelWidget *label = i.object;
+                    setFont_LabelWidget(label, defaultBig_FontId);
+                }
+            }
+        }
+    }
     arrange_Widget(d);
     d->rect.pos = coord;
     /* Ensure the full menu is visible. */

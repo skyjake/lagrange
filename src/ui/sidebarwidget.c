@@ -476,8 +476,6 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     setFlags_Widget(w, fixedWidth_WidgetFlag, iTrue);
     iWidget *vdiv = makeVDiv_Widget();
     addChildFlags_Widget(w, vdiv, resizeToParentWidth_WidgetFlag | resizeToParentHeight_WidgetFlag);
-    if (deviceType_App() == phone_AppDeviceType && d->side == left_SideBarSide) {
-    }
     iZap(d->modeButtons);
     /* On a phone, the right sidebar is used exclusively for Identities. */
     const iBool isPhone = deviceType_App() == phone_AppDeviceType;

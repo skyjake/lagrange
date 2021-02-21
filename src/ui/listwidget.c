@@ -138,7 +138,7 @@ void updateVisible_ListWidget(iListWidget *d) {
 void setItemHeight_ListWidget(iListWidget *d, int itemHeight) {
     d->itemHeight = itemHeight;
     if (deviceType_App() != desktop_AppDeviceType) {
-        d->itemHeight += gap_UI;
+        d->itemHeight += 1.5 * gap_UI;
     }
     invalidate_ListWidget(d);
 }
