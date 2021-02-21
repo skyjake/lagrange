@@ -185,8 +185,30 @@ static const iMenuItem navMenuItems_[] = {
     { "Quit Lagrange", 'q', KMOD_PRIMARY, "quit" }
 };
 #else
+/* Tablet menu. */
+static const iMenuItem tabletNavMenuItems_[] = {
+    { "New Tab", 't', KMOD_PRIMARY, "tabs.new" },
+    { "Close Tab", 'w', KMOD_PRIMARY, "tabs.close" },
+    { "---", 0, 0, NULL },
+    { "Save to Downloads", SDLK_s, KMOD_PRIMARY, "document.save" },
+    { "---", 0, 0, NULL },
+    { "Toggle Left Sidebar", SDLK_l, KMOD_PRIMARY | KMOD_SHIFT, "sidebar.toggle" },
+    { "Toggle Right Sidebar", SDLK_p, KMOD_PRIMARY | KMOD_SHIFT, "sidebar2.toggle" },
+    { "Zoom In", SDLK_EQUALS, KMOD_PRIMARY, "zoom.delta arg:10" },
+    { "Zoom Out", SDLK_MINUS, KMOD_PRIMARY, "zoom.delta arg:-10" },
+    { "Reset Zoom", SDLK_0, KMOD_PRIMARY, "zoom.set arg:100" },
+    { "---", 0, 0, NULL },
+    { "List All Bookmarks", 0, 0, "!open url:about:bookmarks" },
+    { "List Bookmarks by Tag", 0, 0, "!open url:about:bookmarks?tags" },
+    { "List Feed Entries", 0, 0, "!open url:about:feeds" },
+    { "---", 0, 0, NULL },
+    { "Settings...", SDLK_COMMA, KMOD_PRIMARY, "preferences" },
+    { "Help", SDLK_F1, 0, "!open url:about:help" },
+    { "Release Notes", 0, 0, "!open url:about:version" },
+};
+
 /* Phone menu. */
-static const iMenuItem navMenuItems_[] = {
+static const iMenuItem phoneNavMenuItems_[] = {
     { "New Tab", 't', KMOD_PRIMARY, "tabs.new" },
     { "Close Tab", 'w', KMOD_PRIMARY, "tabs.close" },
     { "---", 0, 0, NULL },
@@ -434,7 +456,9 @@ static void updatePadding_Window_(iWindow *d) {
         safeAreaInsets_iOS(&left, &top, &right, &bottom);
         setPadding_Widget(findChild_Widget(d->root, "navdiv"), left, top, right, 0);
         iWidget *toolBar = findChild_Widget(d->root, "toolbar");
-        setPadding_Widget(toolBar, left, 0, right, bottom);
+        if (toolBar) {
+            setPadding_Widget(toolBar, left, 0, right, bottom);
+        }
     }
 #endif
 }
@@ -732,6 +756,7 @@ static int appIconSize_(void) {
 }
 
 static void setupUserInterface_Window(iWindow *d) {
+    const iBool isPhone = (deviceType_App() == phone_AppDeviceType);
     /* Children of root cover the entire window. */
     setFlags_Widget(d->root, resizeChildren_WidgetFlag, iTrue);
     setCommandHandler_Widget(d->root, handleRootCommands_);
@@ -817,7 +842,8 @@ static void setupUserInterface_Window(iWindow *d) {
         iLabelWidget *lock =
             addChildFlags_Widget(navBar,
                                  iClob(newIcon_LabelWidget("\U0001f513", SDLK_i, KMOD_PRIMARY, "document.info")),
-                                 frameless_WidgetFlag | tight_WidgetFlag);
+                                 frameless_WidgetFlag |
+                                 (deviceType_App() == desktop_AppDeviceType ? tight_WidgetFlag : 0));
         setId_Widget(as_Widget(lock), "navbar.lock");
         setFont_LabelWidget(lock, defaultSymbols_FontId);
         updateTextCStr_LabelWidget(lock, "\U0001f512");
@@ -856,14 +882,21 @@ static void setupUserInterface_Window(iWindow *d) {
         setId_Widget(addChild_Widget(
                          navBar, iClob(newIcon_LabelWidget(reloadCStr_, 0, 0, "navigate.reload"))),
                      "reload");
+        
         setId_Widget(addChildFlags_Widget(navBar,
                         iClob(newIcon_LabelWidget(
                             "\U0001f3e0", SDLK_h, KMOD_PRIMARY | KMOD_SHIFT, "navigate.home")),
                         collapse_WidgetFlag),
                      "navbar.home");
 #if !defined (iHaveNativeMenus)
+#   if defined (iPlatformAppleMobile)
+        iLabelWidget *navMenu =
+            makeMenuButton_LabelWidget("\U0001d362", isPhone ? phoneNavMenuItems_ : tabletNavMenuItems_,
+                                       isPhone ? iElemCount(phoneNavMenuItems_) : iElemCount(tabletNavMenuItems_));
+#   else
         iLabelWidget *navMenu =
             makeMenuButton_LabelWidget("\U0001d362", navMenuItems_, iElemCount(navMenuItems_));
+#   endif
         setAlignVisually_LabelWidget(navMenu, iTrue);
         setId_Widget(addChildFlags_Widget(navBar, iClob(navMenu), collapse_WidgetFlag), "navbar.menu");
 #else
@@ -949,7 +982,8 @@ static void setupUserInterface_Window(iWindow *d) {
         setId_Widget(addChildFlags_Widget(toolBar, iClob(newLargeIcon_LabelWidget("\U0001f464", "toolbar.showident")), frameless_WidgetFlag), "toolbar.ident");
         setId_Widget(addChildFlags_Widget(toolBar, iClob(newLargeIcon_LabelWidget("\U0001f588", "toolbar.showview arg:-1")),
                              frameless_WidgetFlag | commandOnClick_WidgetFlag), "toolbar.view");
-        iLabelWidget *menuButton = makeMenuButton_LabelWidget("\U0001d362", navMenuItems_, iElemCount(navMenuItems_));
+        iLabelWidget *menuButton = makeMenuButton_LabelWidget("\U0001d362", phoneNavMenuItems_,
+                                                              iElemCount(phoneNavMenuItems_));
         setFont_LabelWidget(menuButton, uiLabelLarge_FontId);
         addChildFlags_Widget(toolBar, iClob(menuButton), frameless_WidgetFlag);
         iForEach(ObjectList, i, children_Widget(toolBar)) {
@@ -1410,6 +1444,7 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
             //updateRootSize_Window_(d, iTrue);
             invalidate_Window_(d);
             d->isMinimized = iFalse;
+            postRefresh_App();
             return iTrue;
         case SDL_WINDOWEVENT_MINIMIZED:
             d->isMinimized = iTrue;
