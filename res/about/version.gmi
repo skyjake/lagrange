@@ -8,6 +8,8 @@
 
 ## 1.1.4
 * Fixed feed entry highlight/read status issue in the sidebar.
+* Fixed Gopher menu links that contain spaces.
+* Fixed vertical alignment of short pages: top banner is excluded because it is not part of the content.
 
 ## 1.1.3
 * Fixed crash when deleting a bookmark that was being used as a remote bookmark source.
