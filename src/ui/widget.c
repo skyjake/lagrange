@@ -77,6 +77,7 @@ void init_Widget(iWidget *d) {
     d->rect           = zero_Rect();
     d->bgColor        = none_ColorId;
     d->frameColor     = none_ColorId;
+    init_Anim(&d->visualOffset, 0.0f);
     d->children       = NULL;
     d->parent         = NULL;
     d->commandHandler = NULL;
@@ -86,6 +87,10 @@ void init_Widget(iWidget *d) {
 void deinit_Widget(iWidget *d) {
     releaseChildren_Widget(d);
     deinit_String(&d->id);
+//    printf("widget %p deleted (on top:%d)\n", d, d->flags & keepOnTop_WidgetFlag ? 1 : 0);
+    if (d->flags & keepOnTop_WidgetFlag) {
+        removeAll_PtrArray(onTop_RootData_(), d);
+    }
 }
 
 static void aboutToBeDestroyed_Widget_(iWidget *d) {
@@ -166,8 +171,33 @@ void setPadding_Widget(iWidget *d, int left, int top, int right, int bottom) {
     d->padding[3] = bottom;
 }
 
+static void visualOffsetAnimation_Widget_(void *ptr) {
+    iWidget *d = ptr;
+    postRefresh_App();
+    if (!isFinished_Anim(&d->visualOffset)) {
+        addTicker_App(visualOffsetAnimation_Widget_, ptr);
+    }
+    else {
+        setFlags_Widget(d, visualOffset_WidgetFlag, iFalse);
+    }
+}
+
+void setVisualOffset_Widget(iWidget *d, int value, uint32_t span, int animFlags) {
+    setFlags_Widget(d, visualOffset_WidgetFlag, iTrue);
+    if (span == 0) {
+        init_Anim(&d->visualOffset, value);
+    }
+    else {
+        setValue_Anim(&d->visualOffset, value, span);
+        d->visualOffset.flags = animFlags;
+        addTicker_App(visualOffsetAnimation_Widget_, d);
+    }
+}
+
 void setBackgroundColor_Widget(iWidget *d, int bgColor) {
-    d->bgColor = bgColor;
+    if (d) {
+        d->bgColor = bgColor;
+    }
 }
 
 void setFrameColor_Widget(iWidget *d, int frameColor) {
@@ -456,8 +486,15 @@ void arrange_Widget(iWidget *d) {
 
 iRect bounds_Widget(const iWidget *d) {
     iRect bounds = d->rect;
+    if (d->flags & visualOffset_WidgetFlag) {
+        bounds.pos.y += iRound(value_Anim(&d->visualOffset));
+    }
     for (const iWidget *w = d->parent; w; w = w->parent) {
-        addv_I2(&bounds.pos, w->rect.pos);
+        iInt2 pos = w->rect.pos;
+        if (w->flags & visualOffset_WidgetFlag) {
+            pos.y += iRound(value_Anim(&w->visualOffset));
+        }
+        addv_I2(&bounds.pos, pos);
     }
     return bounds;
 }
@@ -677,11 +714,17 @@ void drawBackground_Widget(const iWidget *d) {
     }
 }
 
+iLocalDef iBool isDrawn_Widget_(const iWidget *d) {
+    return ~d->flags & hidden_WidgetFlag || d->flags & visualOffset_WidgetFlag;
+}
+
 void drawChildren_Widget(const iWidget *d) {
-    if (d->flags & hidden_WidgetFlag) return;
+    if (!isDrawn_Widget_(d)) {
+        return;
+    }
     iConstForEach(ObjectList, i, d->children) {
         const iWidget *child = constAs_Widget(i.object);
-        if (~child->flags & keepOnTop_WidgetFlag && ~child->flags & hidden_WidgetFlag) {
+        if (~child->flags & keepOnTop_WidgetFlag && isDrawn_Widget_(child)) {
             class_Widget(child)->draw(child);
         }
     }

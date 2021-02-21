@@ -198,14 +198,18 @@ static float valueAt_Anim_(const iAnim *d, const uint32_t now) {
         return d->from;
     }
     float t = pos_Anim_(d, now);
+    const iBool isSoft = (d->flags & softer_AnimFlag) != 0;
     if ((d->flags & easeBoth_AnimFlag) == easeBoth_AnimFlag) {
         t = easeBoth_(t);
+        if (isSoft) t = easeBoth_(t);
     }
     else if (d->flags & easeIn_AnimFlag) {
         t = easeIn_(t);
+        if (isSoft) t = easeIn_(t);
     }
     else if (d->flags & easeOut_AnimFlag) {
         t = easeOut_(t);
+        if (isSoft) t = easeOut_(t);
     }
     return d->from * (1.0f - t) + d->to * t;
 }
@@ -428,6 +432,9 @@ iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
     iWidget *menu = new_Widget();
     setFrameColor_Widget(menu, uiSeparator_ColorId);
     setBackgroundColor_Widget(menu, uiBackground_ColorId);
+    if (deviceType_App() != desktop_AppDeviceType) {
+        setPadding1_Widget(menu, gap_UI);
+    }
     setFlags_Widget(menu,
                     keepOnTop_WidgetFlag | collapse_WidgetFlag | hidden_WidgetFlag |
                         arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag |
@@ -439,6 +446,9 @@ iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
             iWidget *sep = addChild_Widget(menu, iClob(new_Widget()));
             setBackgroundColor_Widget(sep, uiSeparator_ColorId);
             sep->rect.size.y = gap_UI / 3;
+            if (deviceType_App() != desktop_AppDeviceType) {
+                sep->rect.size.y = gap_UI / 2;
+            }
             setFlags_Widget(sep, hover_WidgetFlag | fixedHeight_WidgetFlag, iTrue);
         }
         else {
@@ -447,6 +457,9 @@ iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
                 iClob(newKeyMods_LabelWidget(item->label, item->key, item->kmods, item->command)),
                 frameless_WidgetFlag | alignLeft_WidgetFlag | drawKey_WidgetFlag);
             updateSize_LabelWidget(label); /* drawKey was set */
+            if (deviceType_App() != desktop_AppDeviceType) {
+                setFont_LabelWidget(label, uiContent_FontId);
+            }
         }
     }
     addChild_Widget(parent, iClob(menu));
@@ -468,13 +481,6 @@ void openMenu_Widget(iWidget *d, iInt2 coord) {
     d->rect.pos = coord;
     /* Ensure the full menu is visible. */
     const iInt2 rootSize = rootSize_Window(get_Window());
-#if defined (iPlatformAppleMobile)
-    /* Move out from under the user's hand/finger. */
-    if (!parentMenuButton_(d)) {
-        const float normX = (float) left_Rect(bounds_Widget(d)) / rootSize.x;
-        subv_I2(&d->rect.pos, init_I2(normX * width_Rect(d->rect), height_Rect(d->rect)));
-    }
-#endif
     const iRect bounds       = bounds_Widget(d);
     int         leftExcess   = -left_Rect(bounds);
     int         rightExcess  = right_Rect(bounds) - rootSize.x;

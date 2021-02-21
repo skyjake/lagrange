@@ -133,6 +133,7 @@ void init_InputWidget(iInputWidget *d, size_t maxLen) {
 
 void deinit_InputWidget(iInputWidget *d) {
     if (isSelected_Widget(d)) {
+        SDL_StopTextInput();
         enableEditorKeysInMenus_(iTrue);
     }
     delete_TextBuf(d->buffered);

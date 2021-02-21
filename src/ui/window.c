@@ -129,9 +129,16 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
         /* Place the sidebar next to or under doctabs depending on orientation. */
         iSidebarWidget *sidebar = findChild_Widget(root, "sidebar");
         removeChild_Widget(parent_Widget(sidebar), sidebar);
+        setButtonFont_SidebarWidget(sidebar, isLandscape_App() ? uiLabel_FontId : uiLabelLarge_FontId);
+        setBackgroundColor_Widget(findChild_Widget(as_Widget(sidebar), "buttons"),
+                                  isPortrait_App() ? uiBackgroundUnfocusedSelection_ColorId
+                                                   : uiBackground_ColorId);
         if (isLandscape_App()) {
             addChildPos_Widget(findChild_Widget(root, "tabs.content"), iClob(sidebar), front_WidgetAddPos);
             setWidth_SidebarWidget(sidebar, 73 * gap_UI);
+            if (isVisible_Widget(findWidget_App("sidebar2"))) {
+                postCommand_App("sidebar2.toggle");
+            }
         }
         else {
             addChildPos_Widget(findChild_Widget(root, "stack"), iClob(sidebar), back_WidgetAddPos);
@@ -184,9 +191,7 @@ static const iMenuItem navMenuItems_[] = {
     { "Close Tab", 'w', KMOD_PRIMARY, "tabs.close" },
     { "---", 0, 0, NULL },
     { "Save to Downloads", SDLK_s, KMOD_PRIMARY, "document.save" },
-    { "Copy Source Text", SDLK_c, KMOD_PRIMARY, "copy" },
     { "---", 0, 0, NULL },
-    { "Toggle Sidebar", SDLK_l, KMOD_PRIMARY | KMOD_SHIFT, "sidebar.toggle" },
     { "Zoom In", SDLK_EQUALS, KMOD_PRIMARY, "zoom.delta arg:10" },
     { "Zoom Out", SDLK_MINUS, KMOD_PRIMARY, "zoom.delta arg:-10" },
     { "Reset Zoom", SDLK_0, KMOD_PRIMARY, "zoom.set arg:100" },
@@ -266,20 +271,31 @@ static const iMenuItem helpMenuItems_[] = {
 };
 #endif
 
+#if defined (iPlatformAppleMobile)
 static const iMenuItem identityButtonMenuItems_[] = {
     { "No Active Identity", 0, 0, "ident.showactive" },
     { "---", 0, 0, NULL },
-#if !defined (iHaveNativeMenus)
+    { "New Identity...", SDLK_n, KMOD_PRIMARY | KMOD_SHIFT, "ident.new" },
+    { "Import...", SDLK_i, KMOD_PRIMARY | KMOD_SHIFT, "ident.import" },
+    { "---", 0, 0, NULL },
+    { "Show Identities", 0, 0, "toolbar.showident" },
+};
+#else /* desktop */
+static const iMenuItem identityButtonMenuItems_[] = {
+    { "No Active Identity", 0, 0, "ident.showactive" },
+    { "---", 0, 0, NULL },
+#   if !defined (iHaveNativeMenus)
     { "New Identity...", SDLK_n, KMOD_PRIMARY | KMOD_SHIFT, "ident.new" },
     { "Import...", SDLK_i, KMOD_PRIMARY | KMOD_SHIFT, "ident.import" },
     { "---", 0, 0, NULL },
     { "Show Identities", '4', KMOD_PRIMARY, "sidebar.mode arg:3 show:1" },
-#else
+#   else
     { "New Identity...", 0, 0, "ident.new" },
     { "---", 0, 0, NULL },
     { "Show Identities", 0, 0, "sidebar.mode arg:3 show:1" },
 #endif
 };
+#endif
 
 static const char *reloadCStr_ = "\U0001f503";
 
@@ -418,14 +434,26 @@ static void updatePadding_Window_(iWindow *d) {
         safeAreaInsets_iOS(&left, &top, &right, &bottom);
         setPadding_Widget(findChild_Widget(d->root, "navdiv"), left, top, right, 0);
         iWidget *toolBar = findChild_Widget(d->root, "toolbar");
-        if (isPortrait_App()) {
-            setPadding_Widget(toolBar, left, 0, right, bottom);
-        }
-        else {
-            setPadding1_Widget(toolBar, 0);
-        }
+        setPadding_Widget(toolBar, left, 0, right, bottom);
     }
 #endif
+}
+
+static void dismissPortraitPhoneSidebars_(void) {
+    if (deviceType_App() == phone_AppDeviceType && isPortrait_App()) {
+        iWidget *sidebar = findWidget_App("sidebar");
+        iWidget *sidebar2 = findWidget_App("sidebar2");
+        if (isVisible_Widget(sidebar)) {
+            postCommand_App("sidebar.toggle");
+            setVisualOffset_Widget(sidebar, height_Widget(sidebar), 250, easeIn_AnimFlag);
+        }
+        if (isVisible_Widget(sidebar2)) {
+            postCommand_App("sidebar2.toggle");
+            setVisualOffset_Widget(sidebar2, height_Widget(sidebar2), 250, easeIn_AnimFlag);
+        }
+        setFlags_Widget(findWidget_App("toolbar.ident"), noBackground_WidgetFlag, iTrue);
+        setFlags_Widget(findWidget_App("toolbar.view"), noBackground_WidgetFlag, iTrue);
+    }
 }
 
 static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
@@ -521,12 +549,11 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
                 postCommand_App("visited.changed"); /* sidebar will update */
                 setText_InputWidget(url, urlStr);
                 checkLoadAnimation_Window_(get_Window());
+                dismissPortraitPhoneSidebars_();
                 updateNavBarIdentity_(navBar);
                 /* Icon updates should be limited to automatically chosen icons if the user
                    is allowed to pick their own in the future. */
-                if (updateBookmarkIcon_Bookmarks(
-                    bookmarks_App(),
-                    urlStr,
+                if (updateBookmarkIcon_Bookmarks(bookmarks_App(), urlStr,
                         siteIcon_GmDocument(document_DocumentWidget(document_App())))) {
                     postCommand_App("bookmarks.changed");
                 }
@@ -540,11 +567,7 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
                 iInputWidget *url = findChild_Widget(navBar, "url");
                 setTextCStr_InputWidget(url, suffixPtr_Command(cmd, "url"));
                 checkLoadAnimation_Window_(get_Window());
-                if (deviceType_App() == phone_AppDeviceType && isPortrait_App()) {
-                    if (isVisible_Widget(findWidget_App("sidebar"))) {
-                        postCommand_App("sidebar.toggle");
-                    }
-                }
+                dismissPortraitPhoneSidebars_();
                 return iFalse;
             }
         }
@@ -626,6 +649,77 @@ static iBool handleSearchBarCommands_(iWidget *searchBar, const char *cmd) {
     }
     return iFalse;
 }
+
+#if defined (iPlatformAppleMobile)
+static void dismissSidebar_(iWidget *sidebar, const char *toolButtonId) {
+    if (isVisible_Widget(sidebar)) {
+        postCommandf_App("%s.toggle", cstr_String(id_Widget(sidebar)));
+        if (toolButtonId) {
+            setFlags_Widget(findWidget_App(toolButtonId), noBackground_WidgetFlag, iTrue);
+        }
+        setVisualOffset_Widget(sidebar, height_Widget(sidebar), 250, easeIn_AnimFlag);
+    }
+}
+
+static iBool handleToolBarCommands_(iWidget *toolBar, const char *cmd) {
+    if (equalWidget_Command(cmd, toolBar, "mouse.clicked") && arg_Command(cmd) &&
+        argLabel_Command(cmd, "button") == SDL_BUTTON_RIGHT) {
+        iWidget *menu = findChild_Widget(toolBar, "toolbar.menu");
+        arrange_Widget(menu);
+        openMenu_Widget(menu, init_I2(0, -height_Widget(menu)));
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "toolbar.showview")) {
+        iWidget *sidebar  = findWidget_App("sidebar");
+        iWidget *sidebar2 = findWidget_App("sidebar2");
+        dismissSidebar_(sidebar2, "toolbar.ident");
+        const iBool isVisible = isVisible_Widget(sidebar);
+        setFlags_Widget(findChild_Widget(toolBar, "toolbar.view"), noBackground_WidgetFlag,
+                        isVisible);
+        if (arg_Command(cmd) >= 0) {
+            postCommandf_App("sidebar.mode arg:%d show:1", arg_Command(cmd));
+            if (!isVisible) {
+                setVisualOffset_Widget(sidebar, height_Widget(sidebar), 0, 0);
+                setVisualOffset_Widget(sidebar, 0, 400, easeOut_AnimFlag | softer_AnimFlag);
+            }
+        }
+        else {
+            postCommandf_App("sidebar.toggle");
+            if (isVisible) {
+                setVisualOffset_Widget(sidebar, height_Widget(sidebar), 250, easeIn_AnimFlag);
+            }
+            else {
+                setVisualOffset_Widget(sidebar, height_Widget(sidebar), 0, 0);
+                setVisualOffset_Widget(sidebar, 0, 400, easeOut_AnimFlag | softer_AnimFlag);
+            }
+        }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "toolbar.showident")) {
+        iWidget *sidebar  = findWidget_App("sidebar");
+        iWidget *sidebar2 = findWidget_App("sidebar2");
+        dismissSidebar_(sidebar, "toolbar.view");
+        const iBool isVisible = isVisible_Widget(sidebar2);
+        setFlags_Widget(findChild_Widget(toolBar, "toolbar.ident"), noBackground_WidgetFlag,
+                        isVisible);
+        if (isVisible) {            
+            dismissSidebar_(sidebar2, NULL);
+        }
+        else {
+            postCommand_App("sidebar2.mode arg:3 show:1");
+            setVisualOffset_Widget(sidebar2, height_Widget(sidebar2), 0, 0);
+            setVisualOffset_Widget(sidebar2, 0, 400, easeOut_AnimFlag | softer_AnimFlag);
+        }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "sidebar.mode.changed")) {
+        iLabelWidget *viewTool = findChild_Widget(toolBar, "toolbar.view");
+        updateTextCStr_LabelWidget(viewTool, icon_SidebarMode(arg_Command(cmd)));
+        return iFalse;
+    }
+    return iFalse;
+}
+#endif /* defined (iPlatformAppleMobile) */
 
 static iLabelWidget *newLargeIcon_LabelWidget(const char *text, const char *cmd) {
     iLabelWidget *lab = newIcon_LabelWidget(text, 0, 0, cmd);
@@ -804,9 +898,14 @@ static void setupUserInterface_Window(iWindow *d) {
         iWidget *content = findChild_Widget(d->root, "tabs.content");
         iSidebarWidget *sidebar1 = new_SidebarWidget(left_SideBarSide);
         addChildPos_Widget(content, iClob(sidebar1), front_WidgetAddPos);
+        iSidebarWidget *sidebar2 = new_SidebarWidget(right_SideBarSide);
         if (deviceType_App() != phone_AppDeviceType) {
-            iSidebarWidget *sidebar2 = new_SidebarWidget(right_SideBarSide);
             addChildPos_Widget(content, iClob(sidebar2), back_WidgetAddPos);
+        }
+        else {
+            /* The identities sidebar is always in the main area. */
+            addChild_Widget(findChild_Widget(d->root, "stack"), iClob(sidebar2));
+            setFlags_Widget(as_Widget(sidebar2), hidden_WidgetFlag, iTrue);
         }
     }
     /* Lookup results. */ {
@@ -841,21 +940,33 @@ static void setupUserInterface_Window(iWindow *d) {
         iWidget *toolBar = new_Widget();
         addChild_Widget(div, iClob(toolBar));
         setId_Widget(toolBar, "toolbar");
+        setCommandHandler_Widget(toolBar, handleToolBarCommands_);
         setFlags_Widget(toolBar, collapse_WidgetFlag | resizeWidthOfChildren_WidgetFlag |
                         arrangeHeight_WidgetFlag | arrangeHorizontal_WidgetFlag, iTrue);
         setBackgroundColor_Widget(toolBar, tmBannerBackground_ColorId);
         addChildFlags_Widget(toolBar, iClob(newLargeIcon_LabelWidget("\U0001f870", "navigate.back")), frameless_WidgetFlag);
         addChildFlags_Widget(toolBar, iClob(newLargeIcon_LabelWidget("\U0001f872", "navigate.forward")), frameless_WidgetFlag);
-        setId_Widget(addChildFlags_Widget(toolBar, iClob(newLargeIcon_LabelWidget("\U0001f464", "sidebar.mode arg:3 toggle:1")), frameless_WidgetFlag), "toolbar.ident");
-        addChildFlags_Widget(toolBar, iClob(newLargeIcon_LabelWidget("\U0001f588", "sidebar.mode arg:0 toggle:1")), frameless_WidgetFlag);
+        setId_Widget(addChildFlags_Widget(toolBar, iClob(newLargeIcon_LabelWidget("\U0001f464", "toolbar.showident")), frameless_WidgetFlag), "toolbar.ident");
+        setId_Widget(addChildFlags_Widget(toolBar, iClob(newLargeIcon_LabelWidget("\U0001f588", "toolbar.showview arg:-1")),
+                             frameless_WidgetFlag | commandOnClick_WidgetFlag), "toolbar.view");
         iLabelWidget *menuButton = makeMenuButton_LabelWidget("\U0001d362", navMenuItems_, iElemCount(navMenuItems_));
         setFont_LabelWidget(menuButton, uiLabelLarge_FontId);
         addChildFlags_Widget(toolBar, iClob(menuButton), frameless_WidgetFlag);
         iForEach(ObjectList, i, children_Widget(toolBar)) {
             iLabelWidget *btn = i.object;
             setFlags_Widget(i.object, noBackground_WidgetFlag, iTrue);
-            setTextColor_LabelWidget(i.object, tmBannerIcon_ColorId);            
+            setTextColor_LabelWidget(i.object, tmBannerIcon_ColorId);
+            setBackgroundColor_Widget(i.object, tmBannerSideTitle_ColorId);
         }
+        const iMenuItem items[] = {
+            { "Bookmarks", 0, 0, "toolbar.showview arg:0" },
+            { "Feeds", 0, 0, "toolbar.showview arg:1" },
+            { "History", 0, 0, "toolbar.showview arg:2" },
+            { "Page Outline", 0, 0, "toolbar.showview arg:4" },
+        };
+        iWidget *menu = makeMenu_Widget(findChild_Widget(toolBar, "toolbar.view"),
+                                        items, iElemCount(items));
+        setId_Widget(menu, "toolbar.menu");
     }
 #endif
     updatePadding_Window_(d);

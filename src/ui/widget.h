@@ -25,6 +25,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 /* Base class for UI widgets. */
 
 #include "metrics.h"
+#include "util.h"
 
 #include <the_Foundation/object.h>
 #include <the_Foundation/objectlist.h>
@@ -96,6 +97,7 @@ enum iWidgetFlag {
 #define noBackground_WidgetFlag             iBit64(42)
 #define drawBackgroundToHorizontalSafeArea_WidgetFlag   iBit64(43)
 #define drawBackgroundToVerticalSafeArea_WidgetFlag     iBit64(44)
+#define visualOffset_WidgetFlag             iBit64(45)
 
 enum iWidgetAddPos {
     back_WidgetAddPos,
@@ -113,6 +115,7 @@ struct Impl_Widget {
     int64_t      flags;
     iRect        rect;
     int          padding[4]; /* left, top, right, bottom */
+    iAnim        visualOffset;
     int          bgColor;
     int          frameColor;
     iObjectList *children;
@@ -200,6 +203,7 @@ void    setPos_Widget       (iWidget *, iInt2 pos);
 void    setSize_Widget      (iWidget *, iInt2 size);
 void    setPadding_Widget   (iWidget *, int left, int top, int right, int bottom);
 iLocalDef void setPadding1_Widget   (iWidget *d, int padding) { setPadding_Widget(d, padding, padding, padding, padding); }
+void    setVisualOffset_Widget      (iWidget *d, int value, uint32_t span, int animFlags);
 void    setBackgroundColor_Widget   (iWidget *, int bgColor);
 void    setFrameColor_Widget        (iWidget *, int frameColor);
 void    setCommandHandler_Widget    (iWidget *, iBool (*handler)(iWidget *, const char *));

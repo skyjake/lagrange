@@ -33,6 +33,8 @@ enum iSidebarMode {
     max_SidebarMode
 };
 
+const char *    icon_SidebarMode    (enum iSidebarMode mode);
+
 enum iSidebarSide {
     left_SideBarSide,
     right_SideBarSide,
@@ -41,8 +43,9 @@ enum iSidebarSide {
 iDeclareWidgetClass(SidebarWidget)
 iDeclareObjectConstructionArgs(SidebarWidget, enum iSidebarSide side)
 
-iBool               setMode_SidebarWidget   (iSidebarWidget *, enum iSidebarMode mode);
+iBool               setMode_SidebarWidget       (iSidebarWidget *, enum iSidebarMode mode);
+void                setButtonFont_SidebarWidget (iSidebarWidget *, int font);
 
-enum iSidebarMode   mode_SidebarWidget      (const iSidebarWidget *);
-int                 width_SidebarWidget     (const iSidebarWidget *);
-void                setWidth_SidebarWidget  (iSidebarWidget *, int width);
+enum iSidebarMode   mode_SidebarWidget          (const iSidebarWidget *);
+int                 width_SidebarWidget         (const iSidebarWidget *);
+void                setWidth_SidebarWidget      (iSidebarWidget *, int width);

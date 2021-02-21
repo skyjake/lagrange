@@ -75,7 +75,8 @@ enum iAnimFlag {
     indefinite_AnimFlag = iBit(1), /* does not end; must be linear */
     easeIn_AnimFlag     = iBit(2),
     easeOut_AnimFlag    = iBit(3),
-    easeBoth_AnimFlag = easeIn_AnimFlag | easeOut_AnimFlag,
+    easeBoth_AnimFlag   = easeIn_AnimFlag | easeOut_AnimFlag,
+    softer_AnimFlag     = iBit(4),
 };
 
 struct Impl_Anim {

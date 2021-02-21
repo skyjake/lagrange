@@ -451,6 +451,10 @@ static const char *tightModeLabels_[max_SidebarMode] = {
     "\U0001f5b9",
 };
 
+const char *icon_SidebarMode(enum iSidebarMode mode) {
+    return tightModeLabels_[mode];
+}
+
 void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     iWidget *w = as_Widget(d);
     init_Widget(w);
@@ -470,28 +474,43 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     d->width = 73 * gap_UI;
 #endif
     setFlags_Widget(w, fixedWidth_WidgetFlag, iTrue);
-    d->maxButtonLabelWidth = 0;
     iWidget *vdiv = makeVDiv_Widget();
     addChildFlags_Widget(w, vdiv, resizeToParentWidth_WidgetFlag | resizeToParentHeight_WidgetFlag);
-    iWidget *buttons = new_Widget();
-    for (int i = 0; i < max_SidebarMode; i++) {
-        d->modeButtons[i] = addChildFlags_Widget(
-            buttons,
-            iClob(new_LabelWidget(
-                tightModeLabels_[i],
-                format_CStr("%s.mode arg:%d", cstr_String(id_Widget(w)), i))),
-            frameless_WidgetFlag);
-        d->maxButtonLabelWidth =
-            iMaxi(d->maxButtonLabelWidth,
-                  3 * gap_UI + measure_Text(uiLabel_FontId, normalModeLabels_[i]).x);
+    if (deviceType_App() == phone_AppDeviceType && d->side == left_SideBarSide) {
     }
-    addChildFlags_Widget(vdiv,
-                         iClob(buttons),
-                         arrangeHorizontal_WidgetFlag | resizeWidthOfChildren_WidgetFlag |
+    iZap(d->modeButtons);
+    /* On a phone, the right sidebar is used exclusively for Identities. */
+    const iBool isPhone = deviceType_App() == phone_AppDeviceType;
+    if (!isPhone || d->side == left_SideBarSide) {
+        iWidget *buttons = new_Widget();
+        setId_Widget(buttons, "buttons");
+        for (int i = 0; i < max_SidebarMode; i++) {
+            if (deviceType_App() == phone_AppDeviceType && i == identities_SidebarMode) {
+                continue;
+            }
+            d->modeButtons[i] = addChildFlags_Widget(
+                buttons,
+                iClob(new_LabelWidget(
+                    tightModeLabels_[i],
+                    format_CStr("%s.mode arg:%d", cstr_String(id_Widget(w)), i))),
+                    frameless_WidgetFlag | (isPhone ? noBackground_WidgetFlag : 0));
+        }
+        setButtonFont_SidebarWidget(d, isPhone ? uiLabelLarge_FontId : uiLabel_FontId);
+        addChildFlags_Widget(vdiv,
+                             iClob(buttons),
+                             arrangeHorizontal_WidgetFlag | resizeWidthOfChildren_WidgetFlag |
                              arrangeHeight_WidgetFlag | resizeToParentWidth_WidgetFlag |
-                         drawBackgroundToHorizontalSafeArea_WidgetFlag);
-    if (deviceType_App() == phone_AppDeviceType) {
-        setBackgroundColor_Widget(buttons, uiBackground_ColorId);
+                             drawBackgroundToHorizontalSafeArea_WidgetFlag);
+        if (deviceType_App() == phone_AppDeviceType) {
+            setBackgroundColor_Widget(buttons, uiBackground_ColorId);
+        }
+    }
+    else {
+        iLabelWidget *heading = new_LabelWidget("Identities", NULL);
+        setBackgroundColor_Widget(as_Widget(heading), uiBackgroundUnfocusedSelection_ColorId);
+        setTextColor_LabelWidget(heading, uiIcon_ColorId);
+        setFont_LabelWidget(addChild_Widget(vdiv, iClob(heading)),
+                            uiLabelLarge_FontId);
     }
     iWidget *content = new_Widget();
     setFlags_Widget(content, resizeChildren_WidgetFlag, iTrue);
@@ -502,7 +521,9 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     d->blank = new_Widget();
     addChildFlags_Widget(content, iClob(d->blank), resizeChildren_WidgetFlag);
     addChildFlags_Widget(vdiv, iClob(content), expand_WidgetFlag);
-    setMode_SidebarWidget(d, bookmarks_SidebarMode);
+    setMode_SidebarWidget(d,
+                          deviceType_App() == phone_AppDeviceType && d->side == right_SideBarSide ?
+                          identities_SidebarMode : bookmarks_SidebarMode);
     d->resizer =
         addChildFlags_Widget(w,
                              iClob(new_Widget()),
@@ -522,6 +543,18 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
 
 void deinit_SidebarWidget(iSidebarWidget *d) {
     deinit_String(&d->cmdPrefix);
+}
+
+void setButtonFont_SidebarWidget(iSidebarWidget *d, int font) {
+    d->maxButtonLabelWidth = 0;
+    for (int i = 0; i < max_SidebarMode; i++) {
+        if (d->modeButtons[i]) {
+            setFont_LabelWidget(d->modeButtons[i], font);
+            d->maxButtonLabelWidth =
+                iMaxi(d->maxButtonLabelWidth,
+                      3 * gap_UI + measure_Text(font, normalModeLabels_[i]).x);
+        }
+    }
 }
 
 static const iGmIdentity *constHoverIdentity_SidebarWidget_(const iSidebarWidget *d) {
@@ -591,9 +624,11 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, const iSidebarItem *it
 }
 
 static void checkModeButtonLayout_SidebarWidget_(iSidebarWidget *d) {
+    if (!d->modeButtons[0]) return;
     const iBool isTight =
         (width_Rect(bounds_Widget(as_Widget(d->modeButtons[0]))) < d->maxButtonLabelWidth);
     for (int i = 0; i < max_SidebarMode; i++) {
+        if (!d->modeButtons[i]) continue;
         if (isTight && ~flags_Widget(as_Widget(d->modeButtons[i])) & tight_WidgetFlag) {
             setFlags_Widget(as_Widget(d->modeButtons[i]), tight_WidgetFlag, iTrue);
             updateTextCStr_LabelWidget(d->modeButtons[i], tightModeLabels_[i]);
@@ -662,6 +697,9 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
             postCommandf_App("%s.toggle", cstr_String(id_Widget(w)));
         }
         scrollOffset_ListWidget(d->list, 0);
+        if (wasChanged) {
+            postCommandf_App("%s.mode.changed arg:%d", cstr_String(id_Widget(w)), d->mode);
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "toggle")) {
