@@ -670,7 +670,7 @@ static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
         const iChar siteIcon = siteIcon_GmDocument(d->doc);
         if (siteIcon) {
             if (!isEmpty_String(text)) {
-                prependCStr_String(text, " ");
+                prependCStr_String(text, "  ");
             }
             prependChar_String(text, siteIcon);
         }

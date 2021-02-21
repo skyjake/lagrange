@@ -803,8 +803,8 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
             set_Color(tmHeading2_ColorId, mix_Color(get_Color(tmBackground_ColorId), get_Color(black_ColorId), 0.67f));
             set_Color(tmHeading3_ColorId, mix_Color(get_Color(tmBackground_ColorId), get_Color(black_ColorId), 0.55f));
             setHsl_Color(tmBannerBackground_ColorId, addSatLum_HSLColor(base, 0, -0.1f));
-            setHsl_Color(tmBannerIcon_ColorId, addSatLum_HSLColor(base, 0, -0.2f));
-            setHsl_Color(tmBannerTitle_ColorId, addSatLum_HSLColor(base, 0, -0.2f));
+            setHsl_Color(tmBannerIcon_ColorId, addSatLum_HSLColor(base, 0, -0.4f));
+            setHsl_Color(tmBannerTitle_ColorId, addSatLum_HSLColor(base, 0, -0.4f));
             setHsl_Color(tmLinkIcon_ColorId, addSatLum_HSLColor(get_HSLColor(teal_ColorId), 0, 0));
             set_Color(tmLinkIconVisited_ColorId, mix_Color(get_Color(tmBackground_ColorId), get_Color(teal_ColorId), 0.35f));
             set_Color(tmLinkDomain_ColorId, get_Color(teal_ColorId));

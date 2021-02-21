@@ -670,6 +670,9 @@ void processEvents_App(enum iAppEventMode eventMode) {
             case SDL_APP_LOWMEMORY:
                 clearCache_App_();
                 break;
+            case SDL_APP_WILLENTERFOREGROUND:
+                postRefresh_App();
+                break;
             case SDL_APP_TERMINATING:
             case SDL_APP_WILLENTERBACKGROUND:
                 savePrefs_App_(d);
