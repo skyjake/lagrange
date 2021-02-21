@@ -34,6 +34,7 @@ enum iFontId {
     defaultBold_FontId,
     defaultMedium_FontId,
     defaultMediumBold_FontId,
+    defaultBig_FontId,
     defaultLarge_FontId,
     defaultMonospace_FontId,
     defaultContentSized_FontId,    
@@ -52,6 +53,7 @@ enum iFontId {
     /* symbol fonts */
     defaultSymbols_FontId,
     defaultMediumSymbols_FontId,
+    defaultBigSymbols_FontId,
     defaultLargeSymbols_FontId,
     symbols_FontId,
     mediumSymbols_FontId,
@@ -63,6 +65,7 @@ enum iFontId {
     /* emoji fonts */
     defaultEmoji_FontId,
     defaultMediumEmoji_FontId,
+    defaultBigEmoji_FontId,
     defaultLargeEmoji_FontId,
     emoji_FontId,
     mediumEmoji_FontId,
@@ -92,7 +95,7 @@ enum iFontId {
     max_FontId,
 
     /* Meta: */
-    fromSymbolsToEmojiOffset_FontId = 10,
+    fromSymbolsToEmojiOffset_FontId = 11,
     mask_FontId                     = 0xffff,
     alwaysVariableFlag_FontId       = 0x10000,
 
