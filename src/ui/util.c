@@ -1053,21 +1053,6 @@ iWidget *makeQuestion_Widget(const char *title, const char *msg,
     addChildFlags_Widget(dlg, iClob(new_LabelWidget(title, NULL)), frameless_WidgetFlag);
     addChildFlags_Widget(dlg, iClob(new_LabelWidget(msg, NULL)), frameless_WidgetFlag);
     addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
-#if 0
-    iWidget *div = new_Widget(); {
-        setFlags_Widget(div, arrangeHorizontal_WidgetFlag | arrangeHeight_WidgetFlag, iTrue);
-        for (size_t i = 0; i < numItems; ++i) {
-            /* The last one is the default option. */
-            const int     key = (i == count - 1 ? SDLK_RETURN : 0);
-            iLabelWidget *btn =
-                addChild_Widget(div, iClob(newKeyMods_LabelWidget(labels[i], key, 0, commands[i])));
-            if (key) {
-                setFont_LabelWidget(btn, uiLabelBold_FontId);
-            }
-        }
-    }
-    addChild_Widget(dlg, iClob(div));
-#endif
     iWidget *buttons = addChild_Widget(dlg, iClob(makeDialogButtons_(items, numItems)));
     addChild_Widget(get_Window()->root, iClob(dlg));
     arrange_Widget(dlg); /* BUG: This extra arrange shouldn't be needed but the dialog won't
@@ -1331,16 +1316,6 @@ iWidget *makePreferences_Widget(void) {
         expandInputFieldWidth_(findChild_Widget(tabs, "prefs.proxy.gopher"));
         expandInputFieldWidth_(findChild_Widget(tabs, "prefs.proxy.http"));
     }
-#if 0
-    iWidget *div = new_Widget(); {
-        setFlags_Widget(div, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
-        setFont_LabelWidget(
-            addChild_Widget(
-                div, iClob(newKeyMods_LabelWidget("Dismiss", SDLK_ESCAPE, 0, "prefs.dismiss"))),
-            uiLabelBold_FontId);
-    }
-    addChild_Widget(dlg, iClob(div));
-#endif
     addChild_Widget(dlg,
                     iClob(makeDialogButtons_(
                         (iMenuItem[]){ { "Dismiss", SDLK_ESCAPE, 0, "prefs.dismiss" } }, 1)));
@@ -1363,7 +1338,7 @@ iWidget *makeBookmarkEditor_Widget(void) {
         page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
     iWidget *values = addChildFlags_Widget(
         page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
-    iInputWidget *inputs[3];
+    iInputWidget *inputs[4];
     addChild_Widget(headings, iClob(makeHeading_Widget("Title:")));
     setId_Widget(addChild_Widget(values, iClob(inputs[0] = new_InputWidget(0))), "bmed.title");
     addChild_Widget(headings, iClob(makeHeading_Widget("URL:")));
@@ -1371,22 +1346,12 @@ iWidget *makeBookmarkEditor_Widget(void) {
     setUrlContent_InputWidget(inputs[1], iTrue);
     addChild_Widget(headings, iClob(makeHeading_Widget("Tags:")));
     setId_Widget(addChild_Widget(values, iClob(inputs[2] = new_InputWidget(0))), "bmed.tags");
+    addChild_Widget(headings, iClob(makeHeading_Widget("Icon:")));
+    setId_Widget(addChild_Widget(values, iClob(inputs[3] = new_InputWidget(1))), "bmed.icon");
     arrange_Widget(dlg);
     for (int i = 0; i < 3; ++i) {
         as_Widget(inputs[i])->rect.size.x = 100 * gap_UI - headings->rect.size.x;
     }
-#if 0
-    iWidget *div = new_Widget(); {
-        setFlags_Widget(div, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
-        addChild_Widget(div, iClob(newKeyMods_LabelWidget("Cancel", SDLK_ESCAPE, 0, "cancel")));
-        iLabelWidget *accept = addChild_Widget(
-            div,
-            iClob(newKeyMods_LabelWidget(
-                uiTextCaution_ColorEscape "Save Bookmark", SDLK_RETURN, KMOD_PRIMARY, "bmed.accept")));
-        setFont_LabelWidget(accept, uiLabelBold_FontId);
-    }
-    addChild_Widget(dlg, iClob(div));
-#endif
     addChild_Widget(
         dlg,
         iClob(makeDialogButtons_((iMenuItem[]){ { "Cancel", 0, 0, NULL },
@@ -1411,11 +1376,14 @@ static iBool handleBookmarkCreationCommands_SidebarWidget_(iWidget *editor, cons
             const iString *title = text_InputWidget(findChild_Widget(editor, "bmed.title"));
             const iString *url   = text_InputWidget(findChild_Widget(editor, "bmed.url"));
             const iString *tags  = text_InputWidget(findChild_Widget(editor, "bmed.tags"));
-            add_Bookmarks(bookmarks_App(),
-                          url,
-                          title,
-                          tags,
-                          first_String(text_LabelWidget(findChild_Widget(editor, "bmed.icon"))));
+            const iString *icon  = collect_String(trimmed_String(text_LabelWidget(findChild_Widget(editor, "bmed.icon"))));
+            const uint32_t id    = add_Bookmarks(bookmarks_App(), url, title, tags, first_String(icon));
+            if (!isEmpty_String(icon)) {
+                iBookmark *bm = get_Bookmarks(bookmarks_App(), id);
+                if (!hasTag_Bookmark(bm, "usericon")) {
+                    addTag_Bookmark(bm, "usericon");
+                }
+            }
             postCommand_App("bookmarks.changed");
         }
         destroy_Widget(editor);
@@ -1518,22 +1486,6 @@ iWidget *makeFeedSettings_Widget(uint32_t bookmarkId) {
         addRadioButton_(types, "feedcfg.type.headings", "New Headings", "feedcfg.type arg:1");
     }
     addChildFlags_Widget(values, iClob(types), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
-#if 0
-    iWidget *div = new_Widget(); {
-        setFlags_Widget(div, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
-        addChild_Widget(div, iClob(newKeyMods_LabelWidget("Cancel", SDLK_ESCAPE, 0, "cancel")));
-        setId_Widget(addChild_Widget(div,
-                                     iClob(newKeyMods_LabelWidget(
-                                         bookmarkId ? uiTextCaution_ColorEscape "Save Settings"
-                                                    : uiTextCaution_ColorEscape "Subscribe",
-                                         SDLK_RETURN,
-                                         KMOD_PRIMARY,
-                                         format_CStr("feedcfg.accept bmid:%d", bookmarkId)))),
-                     "feedcfg.save");
-        setFont_LabelWidget(findChild_Widget(div, "feedcfg.save"), uiLabelBold_FontId);
-    }
-    addChild_Widget(dlg, iClob(div));
-#endif
     iWidget *buttons =
         addChild_Widget(dlg,
                         iClob(makeDialogButtons_(
@@ -1616,18 +1568,6 @@ iWidget *makeIdentityCreation_Widget(void) {
     for (size_t i = 0; i < iElemCount(inputs); ++i) {
         as_Widget(inputs[i])->rect.size.x = 100 * gap_UI - headings->rect.size.x;
     }
-#if 0
-    iWidget *div = new_Widget(); {
-        setFlags_Widget(div, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
-        addChild_Widget(div, iClob(newKeyMods_LabelWidget("Cancel", SDLK_ESCAPE, 0, "cancel")));
-        iLabelWidget *accept = addChild_Widget(
-            div,
-            iClob(newKeyMods_LabelWidget(
-                uiTextAction_ColorEscape "Create Identity", SDLK_RETURN, KMOD_PRIMARY, "ident.accept")));
-        setFont_LabelWidget(accept, uiLabelBold_FontId);
-    }
-    addChild_Widget(dlg, iClob(div));
-#endif
     addChild_Widget(
         dlg,
         iClob(makeDialogButtons_((iMenuItem[]){ { "Cancel", 0, 0, NULL },

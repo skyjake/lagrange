@@ -237,7 +237,7 @@ iBool updateBookmarkIcon_Bookmarks(iBookmarks *d, const iString *url, iChar icon
     const uint32_t id = findUrl_Bookmarks(d, url);
     if (id) {
         iBookmark *bm = get_Bookmarks(d, id);
-        if (!hasTag_Bookmark(bm, "remote")) {
+        if (!hasTag_Bookmark(bm, "remote") && !hasTag_Bookmark(bm, "usericon")) {
             if (icon != bm->icon) {
                 bm->icon = icon;
                 changed = iTrue;

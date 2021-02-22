@@ -677,12 +677,22 @@ iBool handleBookmarkEditorCommands_SidebarWidget_(iWidget *editor, const char *c
             const iString *title = text_InputWidget(findChild_Widget(editor, "bmed.title"));
             const iString *url   = text_InputWidget(findChild_Widget(editor, "bmed.url"));
             const iString *tags  = text_InputWidget(findChild_Widget(editor, "bmed.tags"));
+            const iString *icon  = collect_String(trimmed_String(
+                                        text_InputWidget(findChild_Widget(editor, "bmed.icon"))));
             const iSidebarItem *item = hoverItem_ListWidget(d->list);
             iAssert(item); /* hover item cannot have been changed */
             iBookmark *bm = get_Bookmarks(bookmarks_App(), item->id);
             set_String(&bm->title, title);
             set_String(&bm->url, url);
             set_String(&bm->tags, tags);
+            if (isEmpty_String(icon)) {
+                removeTag_Bookmark(bm, "usericon");
+                bm->icon = 0;
+            }
+            else if (!hasTag_Bookmark(bm, "usericon")) {
+                addTag_Bookmark(bm, "usericon");
+                bm->icon = first_String(icon);
+            }
             postCommand_App("bookmarks.changed");
         }
         setFlags_Widget(as_Widget(d), disabled_WidgetFlag, iFalse);
@@ -830,6 +840,10 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                 setText_InputWidget(findChild_Widget(dlg, "bmed.title"), &bm->title);
                 setText_InputWidget(findChild_Widget(dlg, "bmed.url"), &bm->url);
                 setText_InputWidget(findChild_Widget(dlg, "bmed.tags"), &bm->tags);
+                if (hasTag_Bookmark(bm, "usericon")) {
+                    setText_InputWidget(findChild_Widget(dlg, "bmed.icon"),
+                                        collect_String(newUnicodeN_String(&bm->icon, 1)));
+                }
                 setCommandHandler_Widget(dlg, handleBookmarkEditorCommands_SidebarWidget_);
                 setFocus_Widget(findChild_Widget(dlg, "bmed.title"));
             }
