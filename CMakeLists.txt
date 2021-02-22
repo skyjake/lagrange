@@ -175,7 +175,15 @@ set (SOURCES
 )
 if (IOS)
     add_definitions (-DiPlatformAppleMobile=1)
-    list (APPEND SOURCES src/ios.m src/ios.h)
+    list (APPEND SOURCES 
+        src/ios.m
+        src/ios.h
+        app/Images.xcassets
+        res/LaunchScreen.storyboard
+    )
+    set_source_files_properties(app/Images.xcassets PROPERTIES
+        MACOSX_PACKAGE_LOCATION Resources
+    )
 elseif (APPLE)
     add_definitions (-DiPlatformAppleDesktop=1)
     list (APPEND SOURCES src/macos.m src/macos.h)
@@ -232,20 +240,12 @@ target_link_libraries (app PUBLIC ${SDL2_LDFLAGS})
 if (APPLE)
     if (IOS)
         target_link_libraries (app PUBLIC "-framework UIKit")
-        set_target_properties (app PROPERTIES
-            XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY 2
-        )
     else ()
         target_link_libraries (app PUBLIC "-framework AppKit")
     endif ()
     if (CMAKE_OSX_DEPLOYMENT_TARGET AND NOT IOS)
         target_compile_options (app PUBLIC -mmacosx-version-min=${CMAKE_OSX_DEPLOYMENT_TARGET})
         target_link_options (app PUBLIC -mmacosx-version-min=${CMAKE_OSX_DEPLOYMENT_TARGET})
-    endif ()
-    if (XCODE_DEVELOPMENT_TEAM)
-        set_property (TARGET app PROPERTY
-            XCODE_ATTRIBUTE_DEVELOPMENT_TEAM ${XCODE_DEVELOPMENT_TEAM}
-        )
     endif ()
     if (SDL2_LIBRARY_DIRS)
         set_property (TARGET app PROPERTY BUILD_RPATH ${SDL2_LIBRARY_DIRS})
@@ -264,6 +264,18 @@ if (APPLE)
         MACOSX_BUNDLE_COPYRIGHT "© ${COPYRIGHT_YEAR} Jaakko Keränen"
         XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "fi.skyjake.Lagrange"
     )
+    if (IOS)
+        set_target_properties (app PROPERTIES
+            XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2"
+            XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME "AppIcon"
+            MACOSX_BUNDLE_ICON_FILE "AppIcon"
+        )
+    endif ()
+    if (XCODE_DEVELOPMENT_TEAM)
+        set_property (TARGET app PROPERTY
+            XCODE_ATTRIBUTE_DEVELOPMENT_TEAM ${XCODE_DEVELOPMENT_TEAM}
+        )
+    endif ()
 endif ()
 if (MSYS)
     target_link_libraries (app PUBLIC d2d1 uuid dwmapi) # querying DPI
