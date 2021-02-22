@@ -195,11 +195,11 @@ static iString *serializePrefs_App_(const iApp *d) {
 #endif
     }
     /* Sidebars. */ {
-        if (isVisible_Widget(sidebar)) {
+        if (isVisible_Widget(sidebar) && deviceType_App() != phone_AppDeviceType) {
             appendCStr_String(str, "sidebar.toggle\n");
         }
         appendFormat_String(str, "sidebar.mode arg:%d\n", mode_SidebarWidget(sidebar));
-        if (isVisible_Widget(sidebar2)) {
+        if (isVisible_Widget(sidebar2) && deviceType_App() != phone_AppDeviceType) {
             appendCStr_String(str, "sidebar2.toggle\n");
         }
         appendFormat_String(str, "sidebar2.mode arg:%d\n", mode_SidebarWidget(sidebar2));

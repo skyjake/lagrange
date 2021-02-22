@@ -428,6 +428,17 @@ static iBool menuHandler_(iWidget *menu, const char *cmd) {
     return iFalse;
 }
 
+static iWidget *makeMenuSeparator_(void) {
+    iWidget *sep = new_Widget();
+    setBackgroundColor_Widget(sep, uiSeparator_ColorId);
+    sep->rect.size.y = gap_UI / 3;
+    if (deviceType_App() != desktop_AppDeviceType) {
+        sep->rect.size.y = gap_UI / 2;
+    }
+    setFlags_Widget(sep, hover_WidgetFlag | fixedHeight_WidgetFlag, iTrue);
+    return sep;
+}
+
 iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
     iWidget *menu = new_Widget();
     setFrameColor_Widget(menu, uiSeparator_ColorId);
@@ -443,13 +454,7 @@ iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
     for (size_t i = 0; i < n; ++i) {
         const iMenuItem *item = &items[i];
         if (equal_CStr(item->label, "---")) {
-            iWidget *sep = addChild_Widget(menu, iClob(new_Widget()));
-            setBackgroundColor_Widget(sep, uiSeparator_ColorId);
-            sep->rect.size.y = gap_UI / 3;
-            if (deviceType_App() != desktop_AppDeviceType) {
-                sep->rect.size.y = gap_UI / 2;
-            }
-            setFlags_Widget(sep, hover_WidgetFlag | fixedHeight_WidgetFlag, iTrue);
+            addChild_Widget(menu, iClob(makeMenuSeparator_()));
         }
         else {
             iLabelWidget *label = addChildFlags_Widget(
@@ -462,6 +467,12 @@ iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
             }
         }
     }
+    if (deviceType_App() == phone_AppDeviceType) {
+        addChild_Widget(menu, iClob(makeMenuSeparator_()));
+        setFont_LabelWidget(addChildFlags_Widget(menu, iClob(new_LabelWidget("Cancel", "cancel")),
+                                                 frameless_WidgetFlag | alignLeft_WidgetFlag),
+                            defaultBig_FontId);
+    }
     addChild_Widget(parent, iClob(menu));
     setCommandHandler_Widget(menu, menuHandler_);
     iWidget *cancel = addAction_Widget(menu, SDLK_ESCAPE, 0, "cancel");
@@ -471,29 +482,33 @@ iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
 }
 
 void openMenu_Widget(iWidget *d, iInt2 coord) {
+    const iInt2 rootSize        = rootSize_Window(get_Window());
+    const iBool isPortraitPhone = (deviceType_App() == phone_AppDeviceType && isPortrait_App());
     /* Menu closes when commands are emitted, so handle any pending ones beforehand. */
     postCommand_App("cancel"); /* dismiss any other menus */
     processEvents_App(postedEventsOnly_AppEventMode);
     setFlags_Widget(d, hidden_WidgetFlag, iFalse);
     setFlags_Widget(d, commandOnMouseMiss_WidgetFlag, iTrue);
     setFlags_Widget(findChild_Widget(d, "menu.cancel"), disabled_WidgetFlag, iFalse);
-    if (deviceType_App() == phone_AppDeviceType) {
-        if (isPortrait_App()) {
-            setFlags_Widget(d, arrangeWidth_WidgetFlag | resizeChildrenToWidestChild_WidgetFlag, iFalse);
-            setFlags_Widget(d, resizeWidthOfChildren_WidgetFlag, iTrue);
-            d->rect.size.x = rootSize_Window(get_Window()).x;
-            iForEach(ObjectList, i, children_Widget(d)) {
-                if (isInstance_Object(i.object, &Class_LabelWidget)) {
-                    iLabelWidget *label = i.object;
-                    setFont_LabelWidget(label, defaultBig_FontId);
-                }
+    if (isPortraitPhone) {
+        setFlags_Widget(d, arrangeWidth_WidgetFlag | resizeChildrenToWidestChild_WidgetFlag, iFalse);
+        setFlags_Widget(d, resizeWidthOfChildren_WidgetFlag, iTrue);
+        d->rect.size.x = rootSize_Window(get_Window()).x;
+        iForEach(ObjectList, i, children_Widget(d)) {
+            if (isInstance_Object(i.object, &Class_LabelWidget)) {
+                iLabelWidget *label = i.object;
+                setFont_LabelWidget(label, defaultBig_FontId);
             }
         }
     }
     arrange_Widget(d);
-    d->rect.pos = coord;
+    if (isPortraitPhone) {
+        d->rect.pos = init_I2(0, rootSize.y);
+    }
+    else {
+        d->rect.pos = coord;
+    }
     /* Ensure the full menu is visible. */
-    const iInt2 rootSize = rootSize_Window(get_Window());
     const iRect bounds       = bounds_Widget(d);
     int         leftExcess   = -left_Rect(bounds);
     int         rightExcess  = right_Rect(bounds) - rootSize.x;
@@ -523,6 +538,10 @@ void openMenu_Widget(iWidget *d, iInt2 coord) {
     }
     postRefresh_App();
     postCommand_Widget(d, "menu.opened");
+    if (isPortraitPhone) {
+        setVisualOffset_Widget(d, height_Widget(d), 0, 0);
+        setVisualOffset_Widget(d, 0, 330, easeOut_AnimFlag | softer_AnimFlag);
+    }
 }
 
 void closeMenu_Widget(iWidget *d) {

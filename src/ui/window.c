@@ -475,8 +475,8 @@ static void dismissPortraitPhoneSidebars_(void) {
             postCommand_App("sidebar2.toggle");
             setVisualOffset_Widget(sidebar2, height_Widget(sidebar2), 250, easeIn_AnimFlag);
         }
-        setFlags_Widget(findWidget_App("toolbar.ident"), noBackground_WidgetFlag, iTrue);
-        setFlags_Widget(findWidget_App("toolbar.view"), noBackground_WidgetFlag, iTrue);
+//        setFlags_Widget(findWidget_App("toolbar.ident"), noBackground_WidgetFlag, iTrue);
+//        setFlags_Widget(findWidget_App("toolbar.view"), noBackground_WidgetFlag, iTrue);
     }
 }
 
@@ -679,7 +679,7 @@ static void dismissSidebar_(iWidget *sidebar, const char *toolButtonId) {
     if (isVisible_Widget(sidebar)) {
         postCommandf_App("%s.toggle", cstr_String(id_Widget(sidebar)));
         if (toolButtonId) {
-            setFlags_Widget(findWidget_App(toolButtonId), noBackground_WidgetFlag, iTrue);
+//            setFlags_Widget(findWidget_App(toolButtonId), noBackground_WidgetFlag, iTrue);
         }
         setVisualOffset_Widget(sidebar, height_Widget(sidebar), 250, easeIn_AnimFlag);
     }
@@ -694,16 +694,19 @@ static iBool handleToolBarCommands_(iWidget *toolBar, const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "toolbar.showview")) {
+        /* TODO: Clean this up. */
         iWidget *sidebar  = findWidget_App("sidebar");
         iWidget *sidebar2 = findWidget_App("sidebar2");
         dismissSidebar_(sidebar2, "toolbar.ident");
         const iBool isVisible = isVisible_Widget(sidebar);
-        setFlags_Widget(findChild_Widget(toolBar, "toolbar.view"), noBackground_WidgetFlag,
-                        isVisible);
+//        setFlags_Widget(findChild_Widget(toolBar, "toolbar.view"), noBackground_WidgetFlag,
+//                        isVisible);
+        /* If a sidebar hasn't been shown yet, it's height is zero. */
+        const int viewHeight = rootSize_Window(get_Window()).y;
         if (arg_Command(cmd) >= 0) {
             postCommandf_App("sidebar.mode arg:%d show:1", arg_Command(cmd));
             if (!isVisible) {
-                setVisualOffset_Widget(sidebar, height_Widget(sidebar), 0, 0);
+                setVisualOffset_Widget(sidebar, viewHeight, 0, 0);
                 setVisualOffset_Widget(sidebar, 0, 400, easeOut_AnimFlag | softer_AnimFlag);
             }
         }
@@ -713,25 +716,30 @@ static iBool handleToolBarCommands_(iWidget *toolBar, const char *cmd) {
                 setVisualOffset_Widget(sidebar, height_Widget(sidebar), 250, easeIn_AnimFlag);
             }
             else {
-                setVisualOffset_Widget(sidebar, height_Widget(sidebar), 0, 0);
+                setVisualOffset_Widget(sidebar, viewHeight, 0, 0);
                 setVisualOffset_Widget(sidebar, 0, 400, easeOut_AnimFlag | softer_AnimFlag);
             }
         }
         return iTrue;
     }
     else if (equal_Command(cmd, "toolbar.showident")) {
+        /* TODO: Clean this up. */
         iWidget *sidebar  = findWidget_App("sidebar");
         iWidget *sidebar2 = findWidget_App("sidebar2");
         dismissSidebar_(sidebar, "toolbar.view");
         const iBool isVisible = isVisible_Widget(sidebar2);
-        setFlags_Widget(findChild_Widget(toolBar, "toolbar.ident"), noBackground_WidgetFlag,
-                        isVisible);
-        if (isVisible) {            
+//        setFlags_Widget(findChild_Widget(toolBar, "toolbar.ident"), noBackground_WidgetFlag,
+//                        isVisible);
+        /* If a sidebar hasn't been shown yet, it's height is zero. */
+        const int viewHeight = rootSize_Window(get_Window()).y;
+        if (isVisible) {
             dismissSidebar_(sidebar2, NULL);
         }
         else {
             postCommand_App("sidebar2.mode arg:3 show:1");
-            setVisualOffset_Widget(sidebar2, height_Widget(sidebar2), 0, 0);
+            int offset = height_Widget(sidebar2);
+            if (offset == 0) offset = rootSize_Window(get_Window()).y;
+            setVisualOffset_Widget(sidebar2, offset, 0, 0);
             setVisualOffset_Widget(sidebar2, 0, 400, easeOut_AnimFlag | softer_AnimFlag);
         }
         return iTrue;
@@ -990,7 +998,7 @@ static void setupUserInterface_Window(iWindow *d) {
             iLabelWidget *btn = i.object;
             setFlags_Widget(i.object, noBackground_WidgetFlag, iTrue);
             setTextColor_LabelWidget(i.object, tmBannerIcon_ColorId);
-            setBackgroundColor_Widget(i.object, tmBannerSideTitle_ColorId);
+//            setBackgroundColor_Widget(i.object, tmBannerSideTitle_ColorId);
         }
         const iMenuItem items[] = {
             { "Bookmarks", 0, 0, "toolbar.showview arg:0" },

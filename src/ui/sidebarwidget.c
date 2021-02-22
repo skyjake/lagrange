@@ -96,6 +96,7 @@ struct Impl_SidebarWidget {
     iLabelWidget *    modeButtons[max_SidebarMode];
     int               maxButtonLabelWidth;
     int               width;
+    int               itemFonts[2];
     iWidget *         resizer;
     iWidget *         menu;
     iSidebarItem *    contextItem; /* list item accessed in the context menu */
@@ -408,7 +409,7 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
 
 static void updateItemHeight_SidebarWidget_(iSidebarWidget *d) {
     const float heights[max_SidebarMode] = { 1.333f, 2.333f, 1.333f, 3.5f, 1.2f };
-    setItemHeight_ListWidget(d->list, heights[d->mode] * lineHeight_Text(uiContent_FontId));
+    setItemHeight_ListWidget(d->list, heights[d->mode] * lineHeight_Text(d->itemFonts[0]));
 }
 
 iBool setMode_SidebarWidget(iSidebarWidget *d, enum iSidebarMode mode) {
@@ -473,9 +474,14 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     iZap(d->modeScroll);
     d->side = side;
     d->mode  = -1;
-    d->width = 60 * gap_UI;
 #if defined (iPlatformAppleMobile)
     d->width = 73 * gap_UI;
+    d->itemFonts[0] = defaultBig_FontId;
+    d->itemFonts[1] = defaultBigBold_FontId;
+#else
+    d->width = 60 * gap_UI;
+    d->itemFonts[0] = uiContent_FontId;
+    d->itemFonts[1] = uiContentBold_FontId;
 #endif
     setFlags_Widget(w, fixedWidth_WidgetFlag, iTrue);
     iWidget *vdiv = makeVDiv_Widget();
@@ -1219,7 +1225,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
     const int itemHeight     = height_Rect(itemRect);
     const int iconColor      = isHover ? (isPressing ? uiTextPressed_ColorId : uiIconHover_ColorId)
                                        : uiIcon_ColorId;
-    const int font = d->isBold ? uiContentBold_FontId : uiContent_FontId;
+    const int font = sidebar->itemFonts[d->isBold ? 1 : 0];
     int bg         = uiBackground_ColorId;
     if (isHover) {
         bg = isPressing ? uiBackgroundPressed_ColorId
@@ -1250,7 +1256,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
     else if (sidebar->mode == feeds_SidebarMode) {
         const int fg = isHover ? (isPressing ? uiTextPressed_ColorId : uiTextFramelessHover_ColorId)
                                : uiText_ColorId;
-        const int iconPad = 11 * gap_UI;
+        const int iconPad = 12 * gap_UI;
         if (d->listItem.isSeparator) {
             if (d != constItem_ListWidget(list, 0)) {
                 drawHLine_Paint(p,
@@ -1268,7 +1274,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
         }
         else {
             const iBool isUnread = (d->indent != 0);
-            const int titleFont = isUnread ? uiContentBold_FontId : uiContent_FontId;
+            const int titleFont = sidebar->itemFonts[isUnread ? 1 : 0];
             const int h1 = lineHeight_Text(uiLabel_FontId);
             const int h2 = lineHeight_Text(titleFont);
             iRect iconArea = { addY_I2(pos, 0), init_I2(iconPad, itemHeight) };
