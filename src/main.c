@@ -42,7 +42,28 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <signal.h>
 
 int main(int argc, char **argv) {
+    int enable_audio;
+    enable_audio = 1;
+
     printf("Lagrange: A Beautiful Gemini Client\n");
+
+    if (argc == 2) {
+	if (memcmp(argv[1], "help", 4) == 0) {
+	    printf("\n==== Help ====\n");
+	    printf("%s [option/url]\n", argv[0]);
+	    printf("help - Help command\n");
+	    printf("noaudio - Disables audio support\n");
+	} else if (memcmp(argv[1], "noaudio", 7) == 0)
+	    enable_audio = 0;
+        else if (memcmp(argv[1], "gemini://", 9) != 0) {
+	    printf("Unknown command. Please use %s help\n", argv[0]);
+	    return 0;
+	}
+    } else if (argc != 1) {
+	printf("Too many arguments. Please use %s help\n", argv[0]);
+	return 0;
+    }
+
     signal(SIGPIPE, SIG_IGN);
 #if defined (iPlatformAppleDesktop)
     enableMomentumScroll_MacOS();
@@ -55,7 +76,8 @@ int main(int argc, char **argv) {
 #endif
     /* Initialize libraries. */
 #if defined (LAGRANGE_ENABLE_MPG123)
-    mpg123_init();
+    if (enable_audio == 1)
+    	mpg123_init();
 #endif
     init_Foundation();
     SDL_SetHint(SDL_HINT_VIDEO_ALLOW_SCREENSAVER, "1");
@@ -67,7 +89,8 @@ int main(int argc, char **argv) {
     run_App(argc, argv);
     SDL_Quit();
 #if defined (LAGRANGE_ENABLE_MPG123)
-    mpg123_exit();
+    if (enable_audio == 1)
+        mpg123_exit();
 #endif
     deinit_Foundation();
     return 0;
