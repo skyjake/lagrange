@@ -50,7 +50,7 @@ int main(int argc, char **argv) {
     if (argc == 2) {
 	if (memcmp(argv[1], "help", 4) == 0) {
 	    printf("\n==== Help ====\n");
-	    printf("%s [option/url]\n", argv[0]);
+	    printf("%s [url] [option]\n", argv[0]);
 	    printf("help - Help command\n");
 	    printf("noaudio - Disables audio support\n");
 	} else if (memcmp(argv[1], "noaudio", 7) == 0)
@@ -59,6 +59,15 @@ int main(int argc, char **argv) {
 	    printf("Unknown command. Please use %s help\n", argv[0]);
 	    return 0;
 	}
+    } else if (argc == 3) {
+        if (memcmp(argv[1], "gemini://", 9) != 0) {
+            printf("Unknown command. Please use %s help\n", argv[0]);
+	    return 0;
+	}
+
+        if (memcmp(argv[2], "noaudio", 7) == 0)
+	    enable_audio = 0;
+
     } else if (argc != 1) {
 	printf("Too many arguments. Please use %s help\n", argv[0]);
 	return 0;
