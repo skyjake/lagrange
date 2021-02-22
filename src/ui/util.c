@@ -823,7 +823,8 @@ iWidget *makeSheet_Widget(const char *id) {
     setFrameColor_Widget(sheet, uiSeparator_ColorId);
     setBackgroundColor_Widget(sheet, uiBackground_ColorId);
     setFlags_Widget(sheet,
-                    focusRoot_WidgetFlag | mouseModal_WidgetFlag | keepOnTop_WidgetFlag |
+                    parentCannotResize_WidgetFlag |
+                        focusRoot_WidgetFlag | mouseModal_WidgetFlag | keepOnTop_WidgetFlag |
                         arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag |
                         centerHorizontal_WidgetFlag | overflowScrollable_WidgetFlag,
                     iTrue);
@@ -831,7 +832,7 @@ iWidget *makeSheet_Widget(const char *id) {
 }
 
 void centerSheet_Widget(iWidget *sheet) {
-    arrange_Widget(sheet->parent);
+    arrange_Widget(sheet);
     postRefresh_App();
 }
 
@@ -919,11 +920,62 @@ iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
     return iFalse;
 }
 
+static iWidget *makeDialogButtons_(const iMenuItem *actions, size_t numActions) {
+    iWidget *div = new_Widget();
+    setFlags_Widget(div,
+                    arrangeHorizontal_WidgetFlag | arrangeHeight_WidgetFlag |
+                        resizeToParentWidth_WidgetFlag |
+                        resizeWidthOfChildren_WidgetFlag,
+                    iTrue);
+    /* If there is no separator, align everything to the right. */
+    iBool haveSep = iFalse;
+    for (size_t i = 0; i < numActions; i++) {
+        if (!iCmpStr(actions[i].label, "---")) {
+            haveSep = iTrue;
+            break;
+        }
+    }
+    if (!haveSep) {
+        addChildFlags_Widget(div, iClob(new_Widget()), expand_WidgetFlag);
+    }
+    for (size_t i = 0; i < numActions; i++) {
+        const char *label     = actions[i].label;
+        const char *cmd       = actions[i].command;
+        int         key       = actions[i].key;
+        int         kmods     = actions[i].kmods;
+        const iBool isDefault = (i == numActions - 1);
+        if (!iCmpStr(label, "---")) {
+            /* Separator.*/
+            addChildFlags_Widget(div, iClob(new_Widget()), expand_WidgetFlag);
+            continue;
+        }
+        if (!iCmpStr(label, "Cancel") && !cmd) {
+            cmd = "cancel";
+            key = SDLK_ESCAPE;
+            kmods = 0;
+        }
+        if (isDefault) {
+            if (!key) {
+                key = SDLK_RETURN;
+                kmods = 0;
+            }
+            if (label == NULL) {
+                label = uiTextAction_ColorEscape " OK ";
+            }
+        }
+        iLabelWidget *button =
+            addChild_Widget(div, iClob(newKeyMods_LabelWidget(actions[i].label, key, kmods, cmd)));
+        if (isDefault) {
+            setFont_LabelWidget(button, uiLabelBold_FontId);
+        }
+    }
+    return div;
+}
+
 iWidget *makeValueInput_Widget(iWidget *parent, const iString *initialValue, const char *title,
                                const char *prompt, const char *acceptLabel, const char *command) {
     if (parent) {
         setFocus_Widget(NULL);
-//        processEvents_App(postedEventsOnly_AppEventMode);
     }
     iWidget *dlg = makeSheet_Widget(command);
     setCommandHandler_Widget(dlg, valueInputHandler_);
@@ -943,18 +995,24 @@ iWidget *makeValueInput_Widget(iWidget *parent, const iString *initialValue, con
     setId_Widget(as_Widget(input), "input");
     updateValueInputWidth_(dlg);
     addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
-    iWidget *div = new_Widget(); {
-        setFlags_Widget(div, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
-        addChild_Widget(div, iClob(newKeyMods_LabelWidget("Cancel", SDLK_ESCAPE, 0, "cancel")));
-        iLabelWidget *accept = addChild_Widget(
-            div,
-            iClob(newKeyMods_LabelWidget(acceptLabel ? acceptLabel : uiTextAction_ColorEscape "OK",
-                                         SDLK_RETURN,
-                                         0,
-                                         "valueinput.accept")));
-        setFont_LabelWidget(accept, uiLabelBold_FontId);
-    }
-    addChild_Widget(dlg, iClob(div));
+//    iWidget *div = new_Widget(); {
+//        setFlags_Widget(div, arrangeHorizontal_WidgetFlag | resizeWidthOfChildren_WidgetFlag |
+//                        arrangeHeight_WidgetFlag | resizeToParentWidth_WidgetFlag, iTrue);
+//        addChildFlags_Widget(div, iClob(new_Widget()), expand_WidgetFlag);
+//        addChild_Widget(div, iClob(newKeyMods_LabelWidget("Cancel", SDLK_ESCAPE, 0, "cancel")));
+//        iLabelWidget *accept = addChild_Widget(
+//            div,
+//            iClob(newKeyMods_LabelWidget(acceptLabel ? acceptLabel : uiTextAction_ColorEscape "OK",
+//                                         SDLK_RETURN,
+//                                         0,
+//                                         "valueinput.accept")));
+//        setFont_LabelWidget(accept, uiLabelBold_FontId);
+//    }
+    addChild_Widget(
+        dlg,
+        iClob(makeDialogButtons_(
+            (iMenuItem[]){ { "Cancel", 0, 0, NULL }, { acceptLabel, 0, 0, "valueinput.accept" } },
+            2)));
     centerSheet_Widget(dlg);
     if (parent) {
         setFocus_Widget(as_Widget(input));
@@ -980,24 +1038,25 @@ static iBool messageHandler_(iWidget *msg, const char *cmd) {
 }
 
 iWidget *makeMessage_Widget(const char *title, const char *msg) {
-    iWidget *dlg = makeQuestion_Widget(
-        title, msg, (const char *[]){ "Continue" }, (const char *[]){ "message.ok" }, 1);
+    iWidget *dlg =
+        makeQuestion_Widget(title, msg, (iMenuItem[]){ { "Continue", 0, 0, "message.ok" } }, 1);
     addAction_Widget(dlg, SDLK_ESCAPE, 0, "message.ok");
     addAction_Widget(dlg, SDLK_SPACE, 0, "message.ok");
     return dlg;
 }
 
-iWidget *makeQuestion_Widget(const char *title, const char *msg, const char *labels[],
-                             const char *commands[], size_t count) {
+iWidget *makeQuestion_Widget(const char *title, const char *msg,
+                             const iMenuItem *items, size_t numItems) {
     processEvents_App(postedEventsOnly_AppEventMode);
     iWidget *dlg = makeSheet_Widget("");
     setCommandHandler_Widget(dlg, messageHandler_);
     addChildFlags_Widget(dlg, iClob(new_LabelWidget(title, NULL)), frameless_WidgetFlag);
     addChildFlags_Widget(dlg, iClob(new_LabelWidget(msg, NULL)), frameless_WidgetFlag);
     addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
+#if 0
     iWidget *div = new_Widget(); {
-        setFlags_Widget(div, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
-        for (size_t i = 0; i < count; ++i) {
+        setFlags_Widget(div, arrangeHorizontal_WidgetFlag | arrangeHeight_WidgetFlag, iTrue);
+        for (size_t i = 0; i < numItems; ++i) {
             /* The last one is the default option. */
             const int     key = (i == count - 1 ? SDLK_RETURN : 0);
             iLabelWidget *btn =
@@ -1008,7 +1067,11 @@ iWidget *makeQuestion_Widget(const char *title, const char *msg, const char *lab
         }
     }
     addChild_Widget(dlg, iClob(div));
+#endif
+    iWidget *buttons = addChild_Widget(dlg, iClob(makeDialogButtons_(items, numItems)));
     addChild_Widget(get_Window()->root, iClob(dlg));
+    arrange_Widget(dlg); /* BUG: This extra arrange shouldn't be needed but the dialog won't
+                            be arranged correctly unless it's here. */
     centerSheet_Widget(dlg);
     return dlg;
 }
@@ -1268,6 +1331,7 @@ iWidget *makePreferences_Widget(void) {
         expandInputFieldWidth_(findChild_Widget(tabs, "prefs.proxy.gopher"));
         expandInputFieldWidth_(findChild_Widget(tabs, "prefs.proxy.http"));
     }
+#if 0
     iWidget *div = new_Widget(); {
         setFlags_Widget(div, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
         setFont_LabelWidget(
@@ -1276,6 +1340,10 @@ iWidget *makePreferences_Widget(void) {
             uiLabelBold_FontId);
     }
     addChild_Widget(dlg, iClob(div));
+#endif
+    addChild_Widget(dlg,
+                    iClob(makeDialogButtons_(
+                        (iMenuItem[]){ { "Dismiss", SDLK_ESCAPE, 0, "prefs.dismiss" } }, 1)));
     addChild_Widget(get_Window()->root, iClob(dlg));
     centerSheet_Widget(dlg);    
     return dlg;
@@ -1307,6 +1375,7 @@ iWidget *makeBookmarkEditor_Widget(void) {
     for (int i = 0; i < 3; ++i) {
         as_Widget(inputs[i])->rect.size.x = 100 * gap_UI - headings->rect.size.x;
     }
+#if 0
     iWidget *div = new_Widget(); {
         setFlags_Widget(div, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
         addChild_Widget(div, iClob(newKeyMods_LabelWidget("Cancel", SDLK_ESCAPE, 0, "cancel")));
@@ -1317,6 +1386,15 @@ iWidget *makeBookmarkEditor_Widget(void) {
         setFont_LabelWidget(accept, uiLabelBold_FontId);
     }
     addChild_Widget(dlg, iClob(div));
+#endif
+    addChild_Widget(
+        dlg,
+        iClob(makeDialogButtons_((iMenuItem[]){ { "Cancel", 0, 0, NULL },
+                                                { uiTextCaution_ColorEscape "Save Bookmark",
+                                                  SDLK_RETURN,
+                                                  KMOD_PRIMARY,
+                                                  "bmed.accept" } },
+                                 2)));
     addChild_Widget(get_Window()->root, iClob(dlg));
     centerSheet_Widget(dlg);
     return dlg;
@@ -1440,6 +1518,7 @@ iWidget *makeFeedSettings_Widget(uint32_t bookmarkId) {
         addRadioButton_(types, "feedcfg.type.headings", "New Headings", "feedcfg.type arg:1");
     }
     addChildFlags_Widget(values, iClob(types), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+#if 0
     iWidget *div = new_Widget(); {
         setFlags_Widget(div, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
         addChild_Widget(div, iClob(newKeyMods_LabelWidget("Cancel", SDLK_ESCAPE, 0, "cancel")));
@@ -1454,6 +1533,18 @@ iWidget *makeFeedSettings_Widget(uint32_t bookmarkId) {
         setFont_LabelWidget(findChild_Widget(div, "feedcfg.save"), uiLabelBold_FontId);
     }
     addChild_Widget(dlg, iClob(div));
+#endif
+    iWidget *buttons =
+        addChild_Widget(dlg,
+                        iClob(makeDialogButtons_(
+                            (iMenuItem[]){ { "Cancel", 0, 0, NULL },
+                                           { bookmarkId ? uiTextCaution_ColorEscape "Save Settings"
+                                                        : uiTextCaution_ColorEscape "Subscribe",
+                                             SDLK_RETURN,
+                                             KMOD_PRIMARY,
+                                             format_CStr("feedcfg.accept bmid:%d", bookmarkId) } },
+                            2)));
+    setId_Widget(child_Widget(buttons, childCount_Widget(buttons) - 1), "feedcfg.save");
     arrange_Widget(dlg);
     as_Widget(input)->rect.size.x = 100 * gap_UI - headings->rect.size.x;
     addChild_Widget(get_Window()->root, iClob(dlg));
@@ -1525,6 +1616,7 @@ iWidget *makeIdentityCreation_Widget(void) {
     for (size_t i = 0; i < iElemCount(inputs); ++i) {
         as_Widget(inputs[i])->rect.size.x = 100 * gap_UI - headings->rect.size.x;
     }
+#if 0
     iWidget *div = new_Widget(); {
         setFlags_Widget(div, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
         addChild_Widget(div, iClob(newKeyMods_LabelWidget("Cancel", SDLK_ESCAPE, 0, "cancel")));
@@ -1535,6 +1627,15 @@ iWidget *makeIdentityCreation_Widget(void) {
         setFont_LabelWidget(accept, uiLabelBold_FontId);
     }
     addChild_Widget(dlg, iClob(div));
+#endif
+    addChild_Widget(
+        dlg,
+        iClob(makeDialogButtons_((iMenuItem[]){ { "Cancel", 0, 0, NULL },
+                                                { uiTextAction_ColorEscape "Create Identity",
+                                                  SDLK_RETURN,
+                                                  KMOD_PRIMARY,
+                                                  "ident.accept" } },
+                                 2)));
     addChild_Widget(get_Window()->root, iClob(dlg));
     centerSheet_Widget(dlg);
     return dlg;

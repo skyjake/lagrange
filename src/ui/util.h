@@ -199,7 +199,7 @@ iWidget *   makeValueInput_Widget   (iWidget *parent, const iString *initialValu
 void        updateValueInput_Widget (iWidget *, const char *title, const char *prompt);
 iWidget *   makeMessage_Widget      (const char *title, const char *msg);
 iWidget *   makeQuestion_Widget     (const char *title, const char *msg,
-                                     const char *labels[], const char *commands[], size_t count);
+                                     const iMenuItem *items, size_t numItems);
 
 iWidget *   makePreferences_Widget      (void);
 iWidget *   makeBookmarkEditor_Widget   (void);

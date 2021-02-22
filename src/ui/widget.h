@@ -98,6 +98,7 @@ enum iWidgetFlag {
 #define drawBackgroundToHorizontalSafeArea_WidgetFlag   iBit64(43)
 #define drawBackgroundToVerticalSafeArea_WidgetFlag     iBit64(44)
 #define visualOffset_WidgetFlag             iBit64(45)
+#define parentCannotResize_WidgetFlag       iBit64(46)
 
 enum iWidgetAddPos {
     back_WidgetAddPos,

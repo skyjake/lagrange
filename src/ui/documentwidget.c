@@ -1645,10 +1645,8 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iFalse;
     }
     else if (equal_Command(cmd, "document.info") && d == document_App()) {
-        const char *unchecked      = red_ColorEscape "\u2610";
-        const char *checked        = green_ColorEscape "\u2611";
-        const char *actionLabels[] = { uiTextCaution_ColorEscape "Trust", "Copy Fingerprint", "Dismiss" };
-        const char *actionCmds[]   = { "server.trustcert", "server.copycert", "message.ok" };
+        const char *unchecked       = red_ColorEscape "\u2610";
+        const char *checked         = green_ColorEscape "\u2611";
         const iBool haveFingerprint = (d->certFlags & haveFingerprint_GmCertFlag) != 0;
         const iBool canTrust =
             (d->certFlags == (available_GmCertFlag | haveFingerprint_GmCertFlag |
@@ -1692,11 +1690,23 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                       uiText_ColorEscape,
                       d->certFlags & trusted_GmCertFlag ? "Trusted" : "Not trusted");
         setFocus_Widget(NULL);
+        iArray *items = new_Array(sizeof(iMenuItem));
+        if (canTrust) {
+            pushBack_Array(
+                items, &(iMenuItem){ uiTextCaution_ColorEscape "Trust", 0, 0, "server.trustcert" });
+        }
+        if (haveFingerprint) {
+            pushBack_Array(items, &(iMenuItem){ "Copy Fingerprint", 0, 0, "server.copycert" });
+        }
+        if (!isEmpty_Array(items)) {
+            pushBack_Array(items, &(iMenuItem){ "---", 0, 0, 0 });
+        }
+        pushBack_Array(items, &(iMenuItem){ "Dismiss", 0, 0, "message.ok" });
         iWidget *dlg = makeQuestion_Widget(uiHeading_ColorEscape "PAGE INFORMATION",
                                            cstr_String(msg),
-                                           actionLabels + (canTrust ? 0 : haveFingerprint ? 1 : 2),
-                                           actionCmds + (canTrust ? 0 : haveFingerprint ? 1 : 2),
-                                           canTrust ? 3 : haveFingerprint ? 2 : 1);
+                                           data_Array(items),
+                                           size_Array(items));
+        delete_Array(items);
         /* Enforce a minimum size. */
         iWidget *sizer = new_Widget();
         setSize_Widget(sizer, init_I2(gap_UI * 90, 1));
@@ -2072,11 +2082,18 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                 makeQuestion_Widget(
                     uiHeading_ColorEscape "IMPORT BOOKMARKS",
                     format_CStr("Found %d new link%s on the page.", size_PtrArray(links), plural),
-                    (const char *[]){ "Cancel",
-                                      format_CStr(uiTextAction_ColorEscape "Add %d Bookmark%s",
-                                                  size_PtrArray(links), plural) },
-                    (const char *[]){ "cancel", "bookmark.links" },
+                    (iMenuItem[]){ { "Cancel", 0, 0, NULL },
+                                   { format_CStr(uiTextAction_ColorEscape "Add %d Bookmark%s",
+                                                 size_PtrArray(links),
+                                                 plural), 0, 0, "bookmark.links" } },
                     2);
+
+                //                    (const char *[]){ "Cancel",
+                //                                      format_CStr(uiTextAction_ColorEscape "Add %d
+                //                                      Bookmark%s",
+                //                                                  size_PtrArray(links), plural) },
+                //                    (const char *[]){ "cancel", "bookmark.links" },
+                //                    2);
             }
             else {
                 iConstForEach(PtrArray, j, links) {
@@ -2669,9 +2686,10 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                 "Open this link in the default browser?\n" uiTextAction_ColorEscape
                                 "%s",
                                 cstr_String(url)),
-                            (const char *[]){ "Cancel", uiTextCaution_ColorEscape "Open Link" },
-                            (const char *[]){
-                                "cancel", format_CStr("!open default:1 url:%s", cstr_String(url)) },
+                            (iMenuItem[]){
+                                { "Cancel", 0, 0, NULL },
+                                { uiTextCaution_ColorEscape "Open Link",
+                                  0, 0, format_CStr("!open default:1 url:%s", cstr_String(url)) } },
                             2);
                     }
                 }

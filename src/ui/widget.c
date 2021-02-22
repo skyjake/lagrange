@@ -369,8 +369,8 @@ void arrange_Widget(iWidget *d) {
             avail = divi_I2(max_I2(zero_I2(), avail), expCount);
             iForEach(ObjectList, j, d->children) {
                 iWidget *child = as_Widget(j.object);
-                if (isCollapsed_Widget_(child)) continue;
-                if (child->flags & fixedPosition_WidgetFlag) {
+                if (isCollapsed_Widget_(child) ||
+                    child->flags & (parentCannotResize_WidgetFlag | fixedPosition_WidgetFlag)) {
                     continue;
                 }
                 if (child->flags & expand_WidgetFlag) {
@@ -405,7 +405,7 @@ void arrange_Widget(iWidget *d) {
             }
             iForEach(ObjectList, i, d->children) {
                 iWidget *child = as_Widget(i.object);
-                if (!isCollapsed_Widget_(child)) {
+                if (!isCollapsed_Widget_(child) && ~child->flags & parentCannotResize_WidgetFlag) {
                     if (dirs.x) setWidth_Widget_(child, childSize.x);
                     if (dirs.y) setHeight_Widget_(child, childSize.y);
                 }

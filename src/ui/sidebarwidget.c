@@ -937,11 +937,12 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                                 uiTextCaution_ColorEscape "UNSUBSCRIBE",
                                 format_CStr("Really unsubscribe from feed\n\"%s\"?",
                                             cstr_String(&feedBookmark->title)),
-                                (const char *[]){ "Cancel",
-                                                  uiTextCaution_ColorEscape "Unsubscribe" },
-                                (const char *[]){
-                                    "cancel",
-                                    format_CStr("!feed.entry.unsubscribe arg:1 ptr:%p", d) },
+                                (iMenuItem[]){
+                                    { "Cancel", 0, 0, NULL },
+                                    { uiTextCaution_ColorEscape "Unsubscribe",
+                                      0,
+                                      0,
+                                      format_CStr("!feed.entry.unsubscribe arg:1 ptr:%p", d) } },
                                 2);
                         }
                         return iTrue;
@@ -1026,9 +1027,9 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                         "%s\n" uiText_ColorEscape
                         "including its certificate and private key files?",
                         cstr_String(&item->label)),
-                    (const char *[]){ "Cancel",
-                                      uiTextCaution_ColorEscape "Delete Identity and Files" },
-                    (const char *[]){ "cancel", format_CStr("!ident.delete confirm:0 ptr:%p", d) },
+                    (iMenuItem[]){ { "Cancel", 0, 0, NULL },
+                                   { uiTextCaution_ColorEscape "Delete Identity and Files",
+                                     0, 0, format_CStr("!ident.delete confirm:0 ptr:%p", d) } },
                     2);
                 return iTrue;
             }
@@ -1063,12 +1064,12 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         }
         else if (equal_Command(cmd, "history.clear")) {
             if (argLabel_Command(cmd, "confirm")) {
-                makeQuestion_Widget(
-                    uiTextCaution_ColorEscape "CLEAR HISTORY",
-                    "Do you really want to erase the history of all visited pages?",
-                    (const char *[]){ "Cancel", uiTextCaution_ColorEscape "Clear History" },
-                    (const char *[]){ "cancel", "history.clear confirm:0" },
-                    2);
+                makeQuestion_Widget(uiTextCaution_ColorEscape "CLEAR HISTORY",
+                                    "Do you really want to erase the history of all visited pages?",
+                                    (iMenuItem[]){ { "Cancel", 0, 0, NULL },
+                                                   { uiTextCaution_ColorEscape "Clear History",
+                                                     0, 0, "history.clear confirm:0" } },
+                                    2);
             }
             else {
                 clear_Visited(visited_App());
