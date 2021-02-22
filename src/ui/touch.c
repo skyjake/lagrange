@@ -45,6 +45,7 @@ struct Impl_Touch {
     SDL_FingerID id;
     iWidget *affinity; /* widget on which the touch started */
     iBool hasMoved;
+    iBool isTapAndHold;
     enum iTouchEdge edge;
     uint32_t startTime;
     iFloat3 startPos;
@@ -155,9 +156,12 @@ static void update_TouchState_(void *ptr) {
             if (nowTime - touch->startTime > 25) {
                 clearWidgetMomentum_TouchState_(d, touch->affinity);
             }
-            if (nowTime - touch->startTime >= longPressSpanMs_ && touch->affinity) {
+            if (!touch->isTapAndHold && nowTime - touch->startTime >= longPressSpanMs_ &&
+                touch->affinity) {
                 dispatchClick_Touch_(touch, SDL_BUTTON_RIGHT);
-                remove_ArrayIterator(&i);
+                touch->isTapAndHold = iTrue;
+                touch->hasMoved = iFalse;
+                touch->startPos = touch->pos[0];
             }
         }
     }
@@ -197,6 +201,22 @@ static void update_TouchState_(void *ptr) {
     /* Keep updating if interaction is still ongoing. */
     if (!isEmpty_Array(d->touches) || !isEmpty_Array(d->moms)) {
         addTicker_App(update_TouchState_, ptr);
+    }
+}
+
+void widgetDestroyed_Touch(iWidget *widget) {
+    iTouchState *d = touchState_();
+    iForEach(Array, i, d->touches) {
+        iTouch *touch = i.value;
+        if (touch->affinity == widget) {
+            remove_ArrayIterator(&i);
+        }
+    }
+    iForEach(Array, m, d->moms) {
+        iMomentum *mom = m.value;
+        if (mom->affinity == widget) {
+            remove_ArrayIterator(&m);
+        }
     }
 }
 
@@ -268,6 +288,14 @@ iBool processEvent_Touch(const SDL_Event *ev) {
     else if (ev->type == SDL_FINGERMOTION) {
         iTouch *touch = find_TouchState_(d, fing->fingerId);
         if (touch && touch->affinity) {
+            if (touch->isTapAndHold) {
+                pushPos_Touch_(touch, pos, fing->timestamp);
+                if (!touch->hasMoved && !isStationary_Touch_(touch)) {
+                    touch->hasMoved = iTrue;
+                }
+                dispatchMotion_Touch_(pos, 0);
+                return iTrue;
+            }
             if (flags_Widget(touch->affinity) & touchDrag_WidgetFlag) {
                 dispatchMotion_Touch_(pos, SDL_BUTTON_LMASK);
                 return iTrue;
@@ -298,6 +326,7 @@ iBool processEvent_Touch(const SDL_Event *ev) {
 //                   class_Widget(touch->affinity)->name,
 //                   pixels.y, y_F3(amount), y_F3(touch->accum));
             if (pixels.x || pixels.y) {
+                dispatchMotion_Touch_(pos, 0);
                 dispatchEvent_Widget(touch->affinity, (SDL_Event *) &(SDL_MouseWheelEvent){
                     .type = SDL_MOUSEWHEEL,
                     .timestamp = SDL_GetTicks(),
@@ -305,6 +334,7 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                     .x = pixels.x,
                     .y = pixels.y,
                 });
+                dispatchMotion_Touch_(zero_F3(), 0);
                 /* TODO: Keep increasing movement if the direction is the same. */
                 clearWidgetMomentum_TouchState_(d, touch->affinity);
             }
@@ -315,6 +345,13 @@ iBool processEvent_Touch(const SDL_Event *ev) {
         iForEach(Array, i, d->touches) {
             iTouch *touch = i.value;
             if (touch->id != fing->fingerId) {
+                continue;
+            }
+            if (touch->isTapAndHold) {
+                if (!isStationary_Touch_(touch)) {
+                    dispatchClick_Touch_(touch, SDL_BUTTON_LEFT);
+                }
+                remove_ArrayIterator(&i);
                 continue;
             }
             if (flags_Widget(touch->affinity) & touchDrag_WidgetFlag) {
@@ -363,6 +400,7 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                         d->lastMomTime = nowTime;
                     }
                     pushBack_Array(d->moms, &mom);
+                    dispatchMotion_Touch_(touch->startPos, 0);
                 }
                 else {
                     dispatchButtonUp_Touch_(pos);

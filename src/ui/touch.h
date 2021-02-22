@@ -25,5 +25,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/defs.h>
 #include <SDL_events.h>
 
-iBool   processEvent_Touch  (const SDL_Event *);
-void    update_Touch        (void);
+iDeclareType(Widget)
+
+iBool   processEvent_Touch      (const SDL_Event *);
+void    update_Touch            (void);
+void    widgetDestroyed_Touch   (iWidget *widget);

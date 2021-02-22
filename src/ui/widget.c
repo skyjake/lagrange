@@ -23,6 +23,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "widget.h"
 
 #include "app.h"
+#include "touch.h"
 #include "command.h"
 #include "paint.h"
 #include "util.h"
@@ -91,6 +92,7 @@ void deinit_Widget(iWidget *d) {
     if (d->flags & keepOnTop_WidgetFlag) {
         removeAll_PtrArray(onTop_RootData_(), d);
     }
+    widgetDestroyed_Touch(d);
 }
 
 static void aboutToBeDestroyed_Widget_(iWidget *d) {
