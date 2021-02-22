@@ -191,10 +191,10 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
             d->menu = makeMenu_Widget(
                 as_Widget(d),
                 (iMenuItem[]){ { "Open Entry in New Tab", 0, 0, "feed.entry.opentab" },
-                               { "Open Feed Page", 0, 0, "feed.entry.openfeed" },
                                { "Mark as Read", 0, 0, "feed.entry.toggleread" },
                                { "Add Bookmark...", 0, 0, "feed.entry.bookmark" },
                                { "---", 0, 0, NULL },
+                               { "Open Feed Page", 0, 0, "feed.entry.openfeed" },
                                { "Edit Feed...", 0, 0, "feed.entry.edit" },
                                { uiTextCaution_ColorEscape "Unsubscribe...", 0, 0, "feed.entry.unsubscribe" },
                                { "---", 0, 0, NULL },
@@ -406,6 +406,11 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
     }
 }
 
+static void updateItemHeight_SidebarWidget_(iSidebarWidget *d) {
+    const float heights[max_SidebarMode] = { 1.333f, 2.333f, 1.333f, 3.5f, 1.2f };
+    setItemHeight_ListWidget(d->list, heights[d->mode] * lineHeight_Text(uiContent_FontId));
+}
+
 iBool setMode_SidebarWidget(iSidebarWidget *d, enum iSidebarMode mode) {
     if (d->mode == mode) {
         return iFalse;
@@ -417,11 +422,10 @@ iBool setMode_SidebarWidget(iSidebarWidget *d, enum iSidebarMode mode) {
     for (enum iSidebarMode i = 0; i < max_SidebarMode; i++) {
         setFlags_Widget(as_Widget(d->modeButtons[i]), selected_WidgetFlag, i == d->mode);
     }
-    const float heights[max_SidebarMode] = { 1.333f, 2.333f, 1.333f, 3.5f, 1.2f };
     setBackgroundColor_Widget(as_Widget(d->list),
                               d->mode == documentOutline_SidebarMode ? tmBannerBackground_ColorId
                                                                      : uiBackground_ColorId);
-    setItemHeight_ListWidget(d->list, heights[mode] * lineHeight_Text(uiContent_FontId));
+    updateItemHeight_SidebarWidget_(d);
     /* Restore previous scroll position. */
     setScrollPos_ListWidget(d->list, d->modeScroll[mode]);
     return iTrue;
@@ -652,6 +656,7 @@ void setWidth_SidebarWidget(iSidebarWidget *d, int width) {
     }
     arrange_Widget(findWidget_App("stack"));
     checkModeButtonLayout_SidebarWidget_(d);
+    updateItemHeight_SidebarWidget_(d);
     if (!isRefreshPending_App()) {
         updateSize_DocumentWidget(document_App());
         invalidate_ListWidget(d->list);
@@ -1245,6 +1250,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
     else if (sidebar->mode == feeds_SidebarMode) {
         const int fg = isHover ? (isPressing ? uiTextPressed_ColorId : uiTextFramelessHover_ColorId)
                                : uiText_ColorId;
+        const int iconPad = 11 * gap_UI;
         if (d->listItem.isSeparator) {
             if (d != constItem_ListWidget(list, 0)) {
                 drawHLine_Paint(p,
@@ -1265,7 +1271,6 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
             const int titleFont = isUnread ? uiContentBold_FontId : uiContent_FontId;
             const int h1 = lineHeight_Text(uiLabel_FontId);
             const int h2 = lineHeight_Text(titleFont);
-            const int iconPad = 9 * gap_UI;
             iRect iconArea = { addY_I2(pos, 0), init_I2(iconPad, itemHeight) };
             if (isUnread) {
                 fillRect_Paint(
@@ -1277,12 +1282,14 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                 /* TODO: Use the primary hue from the theme of this site. */
                 iString str;
                 initUnicodeN_String(&str, &d->icon, 1);
-                drawCentered_Text(uiContent_FontId,
+                drawCentered_Text(uiLabelLarge_FontId,
                                   adjusted_Rect(iconArea, init_I2(gap_UI, 0), zero_I2()),
                                   iTrue,
                                   isHover && isPressing
                                       ? iconColor
-                                      : (isUnread ? uiTextCaution_ColorId : iconColor),
+                                      : isUnread ? uiTextCaution_ColorId
+                                      : d->listItem.isSelected ? iconColor
+                                      : uiText_ColorId,
                                   "%s",
                                   cstr_String(&str));
                 deinit_String(&str);

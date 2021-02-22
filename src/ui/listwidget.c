@@ -136,11 +136,13 @@ void updateVisible_ListWidget(iListWidget *d) {
 }
 
 void setItemHeight_ListWidget(iListWidget *d, int itemHeight) {
-    d->itemHeight = itemHeight;
     if (deviceType_App() != desktop_AppDeviceType) {
-        d->itemHeight += 1.5 * gap_UI;
+        itemHeight += 1.5 * gap_UI;
     }
-    invalidate_ListWidget(d);
+    if (d->itemHeight != itemHeight) {
+        d->itemHeight = itemHeight;
+        invalidate_ListWidget(d);
+    }
 }
 
 int scrollBarWidth_ListWidget(const iListWidget *d) {
