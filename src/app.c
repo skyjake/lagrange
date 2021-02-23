@@ -1360,7 +1360,7 @@ iBool handleCommand_App(const char *cmd) {
         if (startsWith_String(url, "//")) {
             prependCStr_String(url, "gemini:");
         }
-        if (!startsWithCase_String(url, "gemini://")) {
+        if (!isEmpty_String(url) && !startsWithCase_String(url, "gemini://")) {
             prependCStr_String(url, "gemini://");
         }
         return iTrue;
