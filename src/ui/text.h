@@ -37,6 +37,7 @@ enum iFontId {
     defaultBig_FontId,
     defaultBigBold_FontId,
     defaultLarge_FontId,
+    defaultLargeBold_FontId,
     defaultMonospace_FontId,
     defaultContentSized_FontId,    
     /* content fonts */
@@ -104,6 +105,7 @@ enum iFontId {
     uiLabel_FontId          = default_FontId,
     uiLabelBold_FontId      = defaultBold_FontId,
     uiLabelLarge_FontId     = defaultLarge_FontId,
+    uiLabelLargeBold_FontId = defaultLargeBold_FontId,
     uiShortcuts_FontId      = default_FontId,
     uiInput_FontId          = defaultMonospace_FontId,
     uiContent_FontId        = defaultMedium_FontId,

@@ -264,6 +264,7 @@ static void initFonts_Text_(iText *d) {
         { &fontSourceSansProRegular_Embedded, uiSize * 1.333f,      1.0f, defaultBigSymbols_FontId },
         { &fontSourceSansProBold_Embedded,    uiSize * 1.333f,      1.0f, defaultBigSymbols_FontId },
         { &fontSourceSansProRegular_Embedded, uiSize * 1.666f,      1.0f, defaultLargeSymbols_FontId },
+        { &fontSourceSansProBold_Embedded,    uiSize * 1.666f,      1.0f, defaultLargeSymbols_FontId },
         { &fontIosevkaTermExtended_Embedded,  uiSize * 0.866f,      1.0f, defaultSymbols_FontId },
         { &fontSourceSansProRegular_Embedded, textSize,             scaling, symbols_FontId },
         /* content fonts */
