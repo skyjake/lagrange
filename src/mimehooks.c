@@ -80,6 +80,7 @@ static iRegExp *xmlMimePattern_(void) {
 
 static iBlock *translateAtomXmlToGeminiFeed_(const iString *mime, const iBlock *source,
                                              const iString *requestUrl) {
+    iUnused(requestUrl); /* TODO: Use for what? */
     iRegExpMatch m;
     init_RegExpMatch(&m);
     if (!matchString_RegExp(xmlMimePattern_(), mime, &m)) {
@@ -126,12 +127,17 @@ static iBlock *translateAtomXmlToGeminiFeed_(const iString *mime, const iBlock *
         if (isEmpty_String(title)) {
             continue;
         }
+        const iString *published =
+            collect_String(decodedContent_XmlElement(child_XmlElement(entry, "published")));
         const iString *updated =
             collect_String(decodedContent_XmlElement(child_XmlElement(entry, "updated")));
         iRegExpMatch m;
         init_RegExpMatch(&m);
         if (!matchString_RegExp(datePattern, updated, &m)) {
-            continue;
+            init_RegExpMatch(&m);
+            if (!matchString_RegExp(datePattern, published, &m)) {
+                continue;
+            }
         }
         iRangecc url = iNullRange;
         iConstForEach(PtrArray, j, &entry->children) {
@@ -140,7 +146,7 @@ static iBlock *translateAtomXmlToGeminiFeed_(const iString *mime, const iBlock *
                 continue;
             }
             const iRangecc href = attribute_XmlElement(link, "href");
-            const iRangecc rel = attribute_XmlElement(link, "rel");
+            const iRangecc rel  = attribute_XmlElement(link, "rel");
             const iRangecc type = attribute_XmlElement(link, "type");
             if (startsWithCase_Rangecc(href, "gemini:")) {
                 url = href;
