@@ -175,6 +175,7 @@ iLocalDef iBool isRegularText_ColorId(enum iColorId d) {
 #define asciiBase_ColorEscape       33
 #define asciiExtended_ColorEscape   (128 - asciiBase_ColorEscape)
 
+#define restore_ColorEscape         "\r\x24" /* ASCII Cancel */
 #define black_ColorEscape           "\r!"
 #define gray25_ColorEscape          "\r\""
 #define gray50_ColorEscape          "\r#"

@@ -716,6 +716,7 @@ struct Impl_RunArgs {
     iInt2         pos;
     int           xposLimit;       /* hard limit for wrapping */
     int           xposLayoutBound; /* visible bound for layout purposes; does not affect wrapping */
+    int           color;
     const char ** continueFrom_out;
     int *         runAdvance_out;
 };
@@ -770,17 +771,6 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                 ch = nextChar_(&chPos, args->text.end);
             }
         }
-#if 0
-        iChar nextCh = 0; {
-            /* TODO: Since we're peeking ahead, should use this on the next loop iteration. */
-            const char *ncp = chPos;
-            nextCh = nextChar_(&ncp, text.end);
-        }
-        /* VS15: Peek ahead and treat as Emoji font. */
-        if (nextCh == emojiVariationSelector_Char) {
-            isEmoji = iTrue;
-        }
-#endif
         if (isVariationSelector_Char(ch)) {
             ch = nextChar_(&chPos, args->text.end); /* skip it */
         }
@@ -832,11 +822,16 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
             }
             if (ch == '\r') {
                 iChar esc = nextChar_(&chPos, args->text.end);
-                if (esc == '\r') { /* Extended range. */
+                int colorNum = args->color;
+                if (esc != 0x24) { /* ASCII Cancel */
+                    colorNum = esc - asciiBase_ColorEscape;
+                }
+                else if (esc == '\r') { /* Extended range. */
                     esc = nextChar_(&chPos, args->text.end) + asciiExtended_ColorEscape;
+                    colorNum = esc - asciiBase_ColorEscape;
                 }
                 if (mode & draw_RunMode && ~mode & permanentColorFlag_RunMode) {
-                    const iColor clr = get_Color(esc - asciiBase_ColorEscape);
+                    const iColor clr = get_Color(colorNum);
                     SDL_SetTextureColorMod(text_.cache, clr.r, clr.g, clr.b);
                 }
                 prevCh = 0;
@@ -1036,9 +1031,10 @@ static void drawBounded_Text_(int fontId, iInt2 pos, int xposBound, int color, i
               &(iRunArgs){ .mode = draw_RunMode |
                                    (color & permanent_ColorId ? permanentColorFlag_RunMode : 0) |
                                    runFlagsFromId_(fontId),
-                           .text = text,
-                           .pos  = pos,
-                           .xposLayoutBound = xposBound });
+                           .text            = text,
+                           .pos             = pos,
+                           .xposLayoutBound = xposBound,
+                           .color           = color });
 }
 
 static void draw_Text_(int fontId, iInt2 pos, int color, iRangecc text) {
