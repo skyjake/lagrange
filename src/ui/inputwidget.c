@@ -346,9 +346,12 @@ static void insertChar_InputWidget_(iInputWidget *d, iChar chr) {
             resize_Array(&d->text, d->cursor + 1);
         }
         set_Array(&d->text, d->cursor++, &chr);
-        if (d->maxLen && d->cursor == d->maxLen) {
+        if (d->maxLen > 1 && d->cursor == d->maxLen) {
             iWidget *nextFocus = findFocusable_Widget(w, forward_WidgetFocusDir);
             setFocus_Widget(nextFocus == w ? NULL : nextFocus);
+        }
+        else if (d->maxLen == 1) {
+            d->cursor = 0;
         }
     }
     showCursor_InputWidget_(d);
@@ -673,6 +676,11 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                 else if (d->cursor > 0) {
                     pushUndo_InputWidget_(d);
                     remove_Array(&d->text, --d->cursor);
+                    contentsWereChanged_InputWidget_(d);
+                }
+                else if (d->cursor == 0 && d->maxLen == 1) {
+                    pushUndo_InputWidget_(d);
+                    clear_Array(&d->text);
                     contentsWereChanged_InputWidget_(d);
                 }
                 showCursor_InputWidget_(d);

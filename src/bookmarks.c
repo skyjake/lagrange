@@ -248,6 +248,31 @@ iBool updateBookmarkIcon_Bookmarks(iBookmarks *d, const iString *url, iChar icon
     return changed;
 }
 
+iChar siteIcon_Bookmarks(const iBookmarks *d, iRangecc hostName) {
+    iChar        icon         = 0;
+    const size_t hostSize     = size_Range(&hostName);
+    size_t       matchingSize = iInvalidSize; /* we'll pick the shortest matching */
+    lock_Mutex(d->mtx);
+    iConstForEach(Hash, i, &d->bookmarks) {
+        const iBookmark *bm = (const iBookmark *) i.value;
+        iUrl parts;
+        init_Url(&parts, &bm->url);
+        if (!hasTag_Bookmark(bm, "usericon")) { /* TODO: Inefficient! RegExp rebuilt every time. */
+            continue;
+        }
+        if (size_Range(&hostName) == size_Range(&parts.host) &&
+            iCmpStrNCase(hostName.start, parts.host.start, hostSize) == 0) {
+            const size_t n = size_String(&bm->url);
+            if (n < matchingSize && bm->icon) {
+                matchingSize = n;
+                icon = bm->icon;
+            }
+        }
+    }
+    unlock_Mutex(d->mtx);
+    return icon;
+}
+
 iBookmark *get_Bookmarks(iBookmarks *d, uint32_t id) {
     return (iBookmark *) value_Hash(&d->bookmarks, id);
 }

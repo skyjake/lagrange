@@ -8,6 +8,7 @@
 
 ## 1.2
 * Help is opened on first run instead of the "About Lagrange" page to make it easier to discover important Gemini links like the FAQ.
+* Added editable bookmark icons: use your favorite Unicode character as the symbol to represent a bookmarked site in Lagrange.
 * Added search engine support: non-URL text entered in the navbar is passed onto the configured search query URL (Preferences > Network).
 * Short pages are centered vertically on actual page content excluding the top banner.
 * Added user preference for aligning all pages to the top of the window.

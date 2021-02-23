@@ -689,8 +689,10 @@ iBool handleBookmarkEditorCommands_SidebarWidget_(iWidget *editor, const char *c
                 removeTag_Bookmark(bm, "usericon");
                 bm->icon = 0;
             }
-            else if (!hasTag_Bookmark(bm, "usericon")) {
-                addTag_Bookmark(bm, "usericon");
+            else {
+                if (!hasTag_Bookmark(bm, "usericon")) {
+                    addTag_Bookmark(bm, "usericon");
+                }
                 bm->icon = first_String(icon);
             }
             postCommand_App("bookmarks.changed");

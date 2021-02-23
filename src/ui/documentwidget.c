@@ -670,9 +670,10 @@ static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
         const iChar siteIcon = siteIcon_GmDocument(d->doc);
         if (siteIcon) {
             if (!isEmpty_String(text)) {
-                prependCStr_String(text, "  ");
+                prependCStr_String(text, "  " restore_ColorEscape);
             }
             prependChar_String(text, siteIcon);
+            prependCStr_String(text, escape_Color(uiIcon_ColorId));
         }
         const int width = advanceRange_Text(default_FontId, range_String(text)).x;
         if (width <= avail ||

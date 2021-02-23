@@ -27,6 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "ui/metrics.h"
 #include "ui/window.h"
 #include "visited.h"
+#include "bookmarks.h"
 #include "app.h"
 
 #include <the_Foundation/ptrarray.h>
@@ -1090,6 +1091,10 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
     if (seed) {
         if (equal_CStr(cstr_Block(seed), "gemini.circumlunar.space")) {
             d->siteIcon = 0x264a; /* gemini symbol */
+        }
+        const iChar userIcon = siteIcon_Bookmarks(bookmarks_App(), urlHost_String(&d->url));
+        if (userIcon) {
+            d->siteIcon = userIcon;
         }
     }
 #if 0
