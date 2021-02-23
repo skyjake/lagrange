@@ -65,8 +65,10 @@ void addTag_Bookmark(iBookmark *d, const char *tag) {
 
 void removeTag_Bookmark(iBookmark *d, const char *tag) {
     const size_t pos = indexOfCStr_String(&d->tags, tag);
-    remove_Block(&d->tags.chars, pos, strlen(tag));
-    trim_String(&d->tags);
+    if (pos != iInvalidPos) {
+        remove_Block(&d->tags.chars, pos, strlen(tag));
+        trim_String(&d->tags);
+    }
 }
 
 iDefineTypeConstruction(Bookmark)
