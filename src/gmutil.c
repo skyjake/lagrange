@@ -76,6 +76,9 @@ iLocalDef iBool isDef_(iRangecc cc) {
 
 static iRangecc prevPathSeg_(const char *end, const char *start) {
     iRangecc seg = { end, end };
+    if (start == end) {
+        return seg;
+    }
     do {
         seg.start--;
     } while (*seg.start != '/' && seg.start != start);
