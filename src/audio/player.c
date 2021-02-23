@@ -796,8 +796,10 @@ iString *metadataLabel_Player(const iPlayer *d) {
         }
         unlock_Mutex(&d->decoder->tagMutex);
     }
-    appendFormat_String(meta, "%d-bit %s %d Hz", SDL_AUDIO_BITSIZE(d->decoder->inputFormat),
-                            SDL_AUDIO_ISFLOAT(d->decoder->inputFormat) ? "float" : "integer",
-                            d->spec.freq);
+    if (d->decoder) {
+        appendFormat_String(meta, "%d-bit %s %d Hz", SDL_AUDIO_BITSIZE(d->decoder->inputFormat),
+                                SDL_AUDIO_ISFLOAT(d->decoder->inputFormat) ? "float" : "integer",
+                                d->spec.freq);
+    }
     return meta;
 }
