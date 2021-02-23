@@ -930,7 +930,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
             { 8, 3 },  /* reddish orange */
             { 7, 9 },  /* yellowish orange */
             { 5, 7 },  /* yellow */
-            { 11, 2 }, /* greenish yellow */
+            { 8, 2 },  /* greenish yellow */
             { 1, 3 },  /* green */
             { 2, 4 },  /* bluish green */
             { 2, 11 }, /* cyan */
