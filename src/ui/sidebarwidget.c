@@ -1356,7 +1356,8 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
         iString str;
         init_String(&str);
         appendChar_String(&str, d->icon ? d->icon : 0x1f588);
-        const iRect iconArea = { addX_I2(pos, gap_UI), init_I2(1.9f * lineHeight_Text(font), itemHeight) };
+        const iRect iconArea = { addX_I2(pos, gap_UI),
+                                 init_I2(1.75f * lineHeight_Text(font), itemHeight) };
         drawCentered_Text(font,
                           iconArea,
                           iTrue,

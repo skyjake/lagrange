@@ -67,14 +67,49 @@ iDeclareType(PersistentDocumentState)
 iDeclareTypeConstruction(PersistentDocumentState)
 iDeclareTypeSerialization(PersistentDocumentState)
 
+enum iReloadInterval {
+    never_RelodPeriod,
+    minute_ReloadInterval,
+    fiveMinutes_ReloadInterval,
+    fifteenMinutes_ReloadInterval,
+    hour_ReloadInterval,
+    fourHours_ReloadInterval,
+    twicePerDay_ReloadInterval,
+    day_ReloadInterval,
+    max_ReloadInterval
+};
+
+static int seconds_ReloadInterval_(enum iReloadInterval d) {
+    static const int times[] = { 0, 1, 5, 15, 60, 4 * 60, 12 * 60, 24 * 60 };
+    if (d < 0 || d >= max_ReloadInterval) return 0;
+    return times[d];
+}
+
+static const char *label_ReloadInterval_(enum iReloadInterval d) {
+    static const char *labels[] = {
+        "Never",
+        "1 minute",
+        "5 minutes",
+        "15 minutes",
+        "1 hour",
+        "4 hours",
+        "12 hours",
+        "Once per day"
+    };
+    if (d < 0 || d >= max_ReloadInterval) return 0;
+    return labels[d];
+}
+
 struct Impl_PersistentDocumentState {
     iHistory *history;
     iString * url;
+    enum iReloadInterval reloadInterval;
 };
 
 void init_PersistentDocumentState(iPersistentDocumentState *d) {
-    d->history = new_History();
-    d->url     = new_String();
+    d->history        = new_History();
+    d->url            = new_String();
+    d->reloadInterval = 0;
 }
 
 void deinit_PersistentDocumentState(iPersistentDocumentState *d) {
@@ -84,7 +119,7 @@ void deinit_PersistentDocumentState(iPersistentDocumentState *d) {
 
 void serialize_PersistentDocumentState(const iPersistentDocumentState *d, iStream *outs) {
     serialize_String(d->url, outs);
-    write16_Stream(outs, 0 /*d->zoomPercent*/);
+    writeU16_Stream(outs, d->reloadInterval & 7);
     serialize_History(d->history, outs);
 }
 
@@ -94,7 +129,8 @@ void deserialize_PersistentDocumentState(iPersistentDocumentState *d, iStream *i
         /* Oopsie, this should not have been written; invalid URL. */
         clear_String(d->url);
     }
-    /*d->zoomPercent =*/ read16_Stream(ins);
+    const uint16_t params = readU16_Stream(ins);
+    d->reloadInterval = params & 7;
     deserialize_History(d->history, ins);
 }
 
@@ -1868,7 +1904,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         }
         return iTrue;
     }
-    else if (equal_Command(cmd, "document.reload") && document_App() == d) {
+    else if (equal_Command(cmd, "document.reload") && document_Command(cmd) == d) {
         d->initNormScrollY = normScrollPos_DocumentWidget_(d);
         fetch_DocumentWidget_(d);
         return iTrue;
@@ -2083,13 +2119,6 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                                                  size_PtrArray(links),
                                                  plural), 0, 0, "bookmark.links" } },
                     2);
-
-                //                    (const char *[]){ "Cancel",
-                //                                      format_CStr(uiTextAction_ColorEscape "Add %d
-                //                                      Bookmark%s",
-                //                                                  size_PtrArray(links), plural) },
-                //                    (const char *[]){ "cancel", "bookmark.links" },
-                //                    2);
             }
             else {
                 iConstForEach(PtrArray, j, links) {
@@ -2112,15 +2141,37 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     else if (equalWidget_Command(cmd, w, "menu.closed")) {
         updateHover_DocumentWidget_(d, mouseCoord_Window(get_Window()));
     }
+    else if (equal_Command(cmd, "document.autoreload")) {
+        if (d->mod.reloadInterval) {
+            if (isValid_Time(&d->sourceTime) &&
+                elapsedSeconds_Time(&d->sourceTime) >=
+                    seconds_ReloadInterval_(d->mod.reloadInterval)) {
+                postCommand_Widget(w, "document.reload");
+            }
+        }
+    }
+    else if (equal_Command(cmd, "document.autoreload.menu") && document_App() == d) {
+        iWidget *dlg = makeQuestion_Widget(uiTextAction_ColorEscape "AUTO-RELOAD",
+                                           "Select the auto-reload interval for this tab.",
+                                           (iMenuItem[]){ { "Cancel", 0, 0, NULL } },
+                                           1);
+        for (int i = 0; i < max_ReloadInterval; ++i) {
+            insertChildAfterFlags_Widget(
+                dlg,
+                iClob(new_LabelWidget(label_ReloadInterval_(i),
+                                      format_CStr("document.autoreload.set arg:%d", i))),
+                i + 1,
+                resizeToParentWidth_WidgetFlag |
+                    ((int) d->mod.reloadInterval == i ? selected_WidgetFlag : 0));
+        }
+        arrange_Widget(dlg);
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "document.autoreload.set") && document_App() == d) {
+        d->mod.reloadInterval = arg_Command(cmd);
+    }
     return iFalse;
 }
-
-#if 0
-static int outlineHeight_DocumentWidget_(const iDocumentWidget *d) {
-    if (isEmpty_Array(&d->outline)) return 0;
-    return bottom_Rect(((const iOutlineItem *) constBack_Array(&d->outline))->rect);
-}
-#endif
 
 static iRect playerRect_DocumentWidget_(const iDocumentWidget *d, const iGmRun *run) {
     const iRect docBounds = documentBounds_DocumentWidget_(d);
@@ -2538,6 +2589,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                             { "Go to Root", navigateRoot_KeyShortcut, "navigate.root" },
                             { "---", 0, 0, NULL },
                             { "Reload Page", reload_KeyShortcut, "navigate.reload" },
+                            { "Set Auto-Reload...", 0, 0, "document.autoreload.menu" },
                             { "---", 0, 0, NULL },
                             { "Bookmark Page...", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
                             { "Subscribe to Page...", subscribeToPage_KeyModifier, "feeds.subscribe" },

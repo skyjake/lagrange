@@ -126,6 +126,7 @@ struct Impl_App {
     iStringList *launchCommands;
     iBool        isFinishedLaunching;
     iTime        lastDropTime; /* for detecting drops of multiple items */
+    int          autoReloadTimer;
     /* Preferences: */
     iBool        commandEcho;         /* --echo */
     iBool        forceSoftwareRender; /* --sw */
@@ -414,6 +415,12 @@ static uint32_t checkAsleep_App_(uint32_t interval, void *param) {
 }
 #endif
 
+static uint32_t postAutoReloadCommand_App_(uint32_t interval, void *param) {
+    iUnused(param);
+    postCommand_App("document.autoreload");
+    return interval;
+}
+
 static void init_App_(iApp *d, int argc, char **argv) {
     init_CommandLine(&d->args, argc, argv);
     /* Where was the app started from? We ask SDL first because the command line alone is
@@ -512,7 +519,9 @@ static void init_App_(iApp *d, int argc, char **argv) {
         postCommand_App("open url:about:help");
     }
     postCommand_App("window.unfreeze");
-    d->isFinishedLaunching = iTrue;
+    d->autoReloadTimer = SDL_AddTimer(60 * 1000, postAutoReloadCommand_App_, NULL);
+    postCommand_App("document.autoreload");
+    d->isFinishedLaunching = iTrue;    
     /* Run any commands that were pending completion of launch. */ {
         iForEach(StringList, i, d->launchCommands) {
             postCommandString_App(i.value);

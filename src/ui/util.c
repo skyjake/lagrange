@@ -382,10 +382,20 @@ iWidget *addAction_Widget(iWidget *parent, int key, int kmods, const char *comma
 /*-----------------------------------------------------------------------------------------------*/
 
 static iBool isCommandIgnoredByMenus_(const char *cmd) {
-    return equal_Command(cmd, "media.updated") || equal_Command(cmd, "media.player.update") ||
+    /* TODO: Perhaps a common way of indicating which commands are notifications and should not
+       be reacted to by menus? */
+    return equal_Command(cmd, "media.updated") ||
+           equal_Command(cmd, "media.player.update") ||
            startsWith_CStr(cmd, "feeds.update.") ||
-           equal_Command(cmd, "document.request.updated") ||
+           equal_Command(cmd, "bookmarks.request.started") ||
            equal_Command(cmd, "bookmarks.request.finished") ||
+           equal_Command(cmd, "document.autoreload") ||
+           equal_Command(cmd, "document.reload") ||
+           equal_Command(cmd, "document.request.started") ||
+           equal_Command(cmd, "document.request.updated") ||
+           equal_Command(cmd, "document.request.finished") ||
+           equal_Command(cmd, "document.changed") ||
+           equal_Command(cmd, "visited.changed") ||
            (deviceType_App() == desktop_AppDeviceType && equal_Command(cmd, "window.resized")) ||
            equal_Command(cmd, "window.reload.update") ||
            equal_Command(cmd, "window.mouse.exited") ||
@@ -1028,10 +1038,13 @@ void updateValueInput_Widget(iWidget *d, const char *title, const char *prompt) 
 
 static iBool messageHandler_(iWidget *msg, const char *cmd) {
     /* Almost any command dismisses the sheet. */
-    if (!(equal_Command(cmd, "media.updated") ||
+    if (!(equal_Command(cmd, "media.updated") ||          
           equal_Command(cmd, "media.player.update") ||
           equal_Command(cmd, "bookmarks.request.finished") ||
-          equal_Command(cmd, "document.request.updated") || startsWith_CStr(cmd, "window."))) {
+          equal_Command(cmd, "document.autoreload") ||
+          equal_Command(cmd, "document.reload") ||
+          equal_Command(cmd, "document.request.updated") ||
+          startsWith_CStr(cmd, "window."))) {
         destroy_Widget(msg);
     }
     return iFalse;
@@ -1053,7 +1066,7 @@ iWidget *makeQuestion_Widget(const char *title, const char *msg,
     addChildFlags_Widget(dlg, iClob(new_LabelWidget(title, NULL)), frameless_WidgetFlag);
     addChildFlags_Widget(dlg, iClob(new_LabelWidget(msg, NULL)), frameless_WidgetFlag);
     addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
-    iWidget *buttons = addChild_Widget(dlg, iClob(makeDialogButtons_(items, numItems)));
+    addChild_Widget(dlg, iClob(makeDialogButtons_(items, numItems)));
     addChild_Widget(get_Window()->root, iClob(dlg));
     arrange_Widget(dlg); /* BUG: This extra arrange shouldn't be needed but the dialog won't
                             be arranged correctly unless it's here. */
@@ -1307,6 +1320,7 @@ iWidget *makePreferences_Widget(void) {
         setFlags_Widget(as_Widget(bind), borderTop_WidgetFlag, iTrue);
         appendFramelessTabPage_(tabs, iClob(bind), "Keys", '6', KMOD_PRIMARY);
     }
+    addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
     resizeToLargestPage_Widget(tabs);
     arrange_Widget(dlg);
     /* Set input field sizes. */ {
