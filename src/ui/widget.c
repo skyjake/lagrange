@@ -765,6 +765,28 @@ iAny *addChildPos_Widget(iWidget *d, iAnyObject *child, enum iWidgetAddPos addPo
     return child;
 }
 
+iAny *insertChildAfter_Widget(iWidget *d, iAnyObject *child, size_t afterIndex) {
+    iAssert(child);
+    iAssert(d != child);
+    iWidget *widget = as_Widget(child);
+    iAssert(!widget->parent);
+    iAssert(d->children);
+    iAssert(afterIndex < size_ObjectList(d->children));
+    iForEach(ObjectList, i, d->children) {
+        if (afterIndex-- == 0) {
+            insertAfter_ObjectList(d->children, i.value, child);
+            break;
+        }
+    }
+    widget->parent = d;
+    return child;
+}
+
+iAny *insertChildAfterFlags_Widget(iWidget *d, iAnyObject *child, size_t afterIndex, int64_t childFlags) {
+    setFlags_Widget(child, childFlags, iTrue);
+    return insertChildAfter_Widget(d, child, afterIndex);
+}
+
 iAny *addChildFlags_Widget(iWidget *d, iAnyObject *child, int64_t childFlags) {
     setFlags_Widget(child, childFlags, iTrue);
     return addChild_Widget(d, child);
