@@ -149,6 +149,21 @@ iRangecc urlHost_String(const iString *d) {
     return url.host;
 }
 
+iRangecc urlUser_String(const iString *d) {
+    iRegExp *userPats[2] = { new_RegExp("~([^/?]+)", 0),
+                             new_RegExp("/users/([^/?]+)", caseInsensitive_RegExpOption) };
+    iRegExpMatch m;
+    init_RegExpMatch(&m);
+    iRangecc found = iNullRange;
+    iForIndices(i, userPats) {
+        if (matchString_RegExp(userPats[i], d, &m)) {
+            found = capturedRange_RegExpMatch(&m, 1);
+        }
+        iRelease(userPats[i]);
+    }
+    return found;
+}
+
 static iBool isAbsolutePath_(iRangecc path) {
     return isAbsolute_Path(collect_String(urlDecode_String(collect_String(newRange_String(path)))));
 }

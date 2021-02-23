@@ -1025,17 +1025,7 @@ static void updateTrust_DocumentWidget_(iDocumentWidget *d, const iGmResponse *r
 }
 
 static void parseUser_DocumentWidget_(iDocumentWidget *d) {
-    clear_String(d->titleUser);
-    iRegExp *userPats[2] = { new_RegExp("~([^/?]+)", 0),
-                             new_RegExp("/users/([^/?]+)", caseInsensitive_RegExpOption) };
-    iRegExpMatch m;
-    init_RegExpMatch(&m);
-    iForIndices(i, userPats) {
-        if (matchString_RegExp(userPats[i], d->mod.url, &m)) {
-            setRange_String(d->titleUser, capturedRange_RegExpMatch(&m, 1));
-        }
-        iRelease(userPats[i]);
-    }
+    setRange_String(d->titleUser, urlUser_String(d->mod.url));
 }
 
 static iBool updateFromHistory_DocumentWidget_(iDocumentWidget *d) {
@@ -1956,9 +1946,14 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     else if (equal_Command(cmd, "navigate.root") && document_App() == d) {
         iUrl parts;
         init_Url(&parts, d->mod.url);
+        const char *rootEnd = parts.path.start;
+        const iRangecc user = urlUser_String(d->mod.url);
+        if (!isEmpty_Range(&user)) {
+            rootEnd = user.end;
+        }
         postCommandf_App(
             "open url:%s/",
-            cstr_Rangecc((iRangecc){ constBegin_String(d->mod.url), parts.path.start }));
+            cstr_Rangecc((iRangecc){ constBegin_String(d->mod.url), rootEnd }));
         return iTrue;
     }
     else if (equalWidget_Command(cmd, w, "scroll.moved")) {
