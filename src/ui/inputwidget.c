@@ -81,6 +81,8 @@ struct Impl_InputWidget {
     iArray          text;    /* iChar[] */
     iArray          oldText; /* iChar[] */
     iString         hint;
+    int             leftPadding;
+    int             rightPadding;
     size_t          cursor;
     size_t          lastCursor;
     iRanges         mark;
@@ -114,6 +116,8 @@ void init_InputWidget(iInputWidget *d, size_t maxLen) {
     init_String(&d->hint);
     init_Array(&d->undoStack, sizeof(iInputUndo));
     d->font             = uiInput_FontId | alwaysVariableFlag_FontId;
+    d->leftPadding      = 0;
+    d->rightPadding     = 0;
     d->cursor           = 0;
     d->lastCursor       = 0;
     d->inFlags          = eatEscape_InputWidgetFlag;
@@ -194,6 +198,12 @@ void setMaxLen_InputWidget(iInputWidget *d, size_t maxLen) {
 
 void setHint_InputWidget(iInputWidget *d, const char *hintText) {
     setCStr_String(&d->hint, hintText);
+}
+
+void setContentPadding_InputWidget(iInputWidget *d, int left, int right) {
+    d->leftPadding = left;
+    d->rightPadding = right;
+    refresh_Widget(d);
 }
 
 static const iChar sensitiveChar_ = 0x25cf; /* black circle */
@@ -488,7 +498,9 @@ iLocalDef iInt2 padding_(void) {
 
 static iInt2 textOrigin_InputWidget_(const iInputWidget *d, const char *visText) {
     const iWidget *w         = constAs_Widget(d);
-    iRect          bounds    = adjusted_Rect(bounds_Widget(w), padding_(), neg_I2(padding_()));
+    iRect          bounds    = adjusted_Rect(bounds_Widget(w),
+                                 addX_I2(padding_(), d->leftPadding),
+                                 neg_I2(addX_I2(padding_(), d->rightPadding)));
     const iInt2    emSize    = advance_Text(d->font, "M");
     const int      textWidth = advance_Text(d->font, visText).x;
     const int      cursorX   = advanceN_Text(d->font, visText, d->cursor).x;

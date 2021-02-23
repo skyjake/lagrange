@@ -1355,7 +1355,14 @@ iBool handleCommand_App(const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "searchurl")) {
-        setCStr_String(&d->prefs.searchUrl, suffixPtr_Command(cmd, "address"));
+        iString *url = &d->prefs.searchUrl;
+        setCStr_String(url, suffixPtr_Command(cmd, "address"));
+        if (startsWith_String(url, "//")) {
+            prependCStr_String(url, "gemini:");
+        }
+        if (!startsWithCase_String(url, "gemini://")) {
+            prependCStr_String(url, "gemini://");
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "proxy.gemini")) {

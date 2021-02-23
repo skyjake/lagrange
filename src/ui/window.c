@@ -480,6 +480,21 @@ static void dismissPortraitPhoneSidebars_(void) {
     }
 }
 
+static iBool willPerformSearchQuery_(const iString *userInput) {
+    const iString *clean = collect_String(trimmed_String(userInput));
+    if (isEmpty_String(clean)) {
+        return iFalse;
+    }
+    return !isEmpty_String(&prefs_App()->searchUrl) && !isLikelyUrl_String(userInput);
+}
+
+static void showSearchQueryIndicator_(iBool show) {
+    iWidget *indicator = findWidget_App("input.indicator.search");
+    setFlags_Widget(indicator, hidden_WidgetFlag, !show);
+    setContentPadding_InputWidget(
+        (iInputWidget *) parent_Widget(indicator), 0, show ? width_Widget(indicator) : 0);
+}
+
 static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
     if (equal_Command(cmd, "window.resized")) {
         const iBool isPhone = deviceType_App() == phone_AppDeviceType;
@@ -534,14 +549,18 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "input.edited")) {
-        iAnyObject *url = findChild_Widget(navBar, "url");
+        iAnyObject *   url  = findChild_Widget(navBar, "url");
+        const iString *text = text_InputWidget(url);
+        const iBool show = willPerformSearchQuery_(text);
+        showSearchQueryIndicator_(show);
         if (pointer_Command(cmd) == url) {
-            submit_LookupWidget(findWidget_App("lookup"), text_InputWidget(url));
+            submit_LookupWidget(findWidget_App("lookup"), text);
             return iTrue;
         }
     }
     else if (startsWith_CStr(cmd, "input.ended id:url ")) {
         iInputWidget *url = findChild_Widget(navBar, "url");
+        showSearchQueryIndicator_(iFalse);
         if (isEmpty_String(text_InputWidget(url))) {
             /* User entered nothing; restore the current URL. */
             setText_InputWidget(url, url_DocumentWidget(document_App()));
@@ -551,7 +570,7 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
             !isFocused_Widget(findWidget_App("lookup"))) {
             iString *newUrl = copy_String(text_InputWidget(url));
             trim_String(newUrl);
-            if (!isEmpty_String(&prefs_App()->searchUrl) && !isLikelyUrl_String(newUrl)) {
+            if (willPerformSearchQuery_(newUrl)) {
                 postCommandf_App("open url:%s", cstr_String(searchQueryUrl_App(newUrl)));
             }
             else {
@@ -885,6 +904,18 @@ static void setupUserInterface_Window(iWindow *d) {
                 addChildFlags_Widget(as_Widget(url),
                                      iClob(progress),
                                      moveToParentRightEdge_WidgetFlag);
+            }
+            /* Feeds refresh indicator is inside the input field. */ {
+                iLabelWidget *queryInd =
+                    new_LabelWidget(uiTextAction_ColorEscape "\u21d2 Search Query", NULL);
+                setId_Widget(as_Widget(queryInd), "input.indicator.search");
+                setBackgroundColor_Widget(as_Widget(queryInd), uiBackground_ColorId);
+                setFrameColor_Widget(as_Widget(queryInd), uiTextAction_ColorId);
+                setAlignVisually_LabelWidget(queryInd, iTrue);
+                shrink_Rect(&as_Widget(queryInd)->rect, init_I2(0, gap_UI));
+                addChildFlags_Widget(as_Widget(url),
+                                     iClob(queryInd),
+                                     moveToParentRightEdge_WidgetFlag | hidden_WidgetFlag);
             }
         }
         setId_Widget(addChild_Widget(

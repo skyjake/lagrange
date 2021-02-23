@@ -38,6 +38,7 @@ void    setMaxLen_InputWidget   (iInputWidget *, size_t maxLen);
 void    setText_InputWidget     (iInputWidget *, const iString *text);
 void    setTextCStr_InputWidget (iInputWidget *, const char *cstr);
 void    setCursor_InputWidget   (iInputWidget *, size_t pos);
+void    setContentPadding_InputWidget   (iInputWidget *, int left, int right); /* only affects the text entry */
 void    begin_InputWidget       (iInputWidget *);
 void    end_InputWidget         (iInputWidget *, iBool accept);
 void    selectAll_InputWidget   (iInputWidget *);
