@@ -2444,7 +2444,8 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             return iTrue;
         }
         if (ev->button.button == SDL_BUTTON_MIDDLE && d->hoverLink) {
-            postCommandf_App("open newtab:1 url:%s",
+            postCommandf_App("open newtab:%d url:%s",
+                             SDL_GetModState() & KMOD_SHIFT ? 1 : 2,
                              cstr_String(linkUrl_GmDocument(d->doc, d->hoverLink->linkId)));
             return iTrue;
         }
