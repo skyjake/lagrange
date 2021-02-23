@@ -720,6 +720,13 @@ static void setDerivedThemeColors_(enum iGmDocumentTheme theme) {
     }
 }
 
+static void updateIconBasedOnUrl_GmDocument_(iGmDocument *d) {
+    const iChar userIcon = siteIcon_Bookmarks(bookmarks_App(), &d->url);
+    if (userIcon) {
+        d->siteIcon = userIcon;
+    }
+}
+
 void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
     const iPrefs *        prefs = prefs_App();
     enum iGmDocumentTheme theme =
@@ -1092,10 +1099,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
         if (equal_CStr(cstr_Block(seed), "gemini.circumlunar.space")) {
             d->siteIcon = 0x264a; /* gemini symbol */
         }
-        const iChar userIcon = siteIcon_Bookmarks(bookmarks_App(), urlHost_String(&d->url));
-        if (userIcon) {
-            d->siteIcon = userIcon;
-        }
+        updateIconBasedOnUrl_GmDocument_(d);
     }
 #if 0
     for (int i = tmFirst_ColorId; i < max_ColorId; ++i) {
@@ -1197,6 +1201,7 @@ void setUrl_GmDocument(iGmDocument *d, const iString *url) {
     iUrl parts;
     init_Url(&parts, url);
     setRange_String(&d->localHost, parts.host);
+    updateIconBasedOnUrl_GmDocument_(d);
 }
 
 void setSource_GmDocument(iGmDocument *d, const iString *source, int width) {

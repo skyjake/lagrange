@@ -250,8 +250,12 @@ iBool updateBookmarkIcon_Bookmarks(iBookmarks *d, const iString *url, iChar icon
     return changed;
 }
 
-iChar siteIcon_Bookmarks(const iBookmarks *d, iRangecc hostName) {
+iChar siteIcon_Bookmarks(const iBookmarks *d, const iString *url) {
+    if (isEmpty_String(url)) {
+        return 0;
+    }
     iChar        icon         = 0;
+    iRangecc     hostName     = urlHost_String(url);
     const size_t hostSize     = size_Range(&hostName);
     size_t       matchingSize = iInvalidSize; /* we'll pick the shortest matching */
     lock_Mutex(d->mtx);
@@ -265,6 +269,9 @@ iChar siteIcon_Bookmarks(const iBookmarks *d, iRangecc hostName) {
         if (size_Range(&hostName) == size_Range(&parts.host) &&
             iCmpStrNCase(hostName.start, parts.host.start, hostSize) == 0) {
             const size_t n = size_String(&bm->url);
+            if (n > size_String(url)) {
+                continue; /* Bookmark must be higher up in the path tree. */
+            }
             if (n < matchingSize && bm->icon) {
                 matchingSize = n;
                 icon = bm->icon;

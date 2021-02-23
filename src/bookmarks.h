@@ -62,7 +62,7 @@ iBookmark * get_Bookmarks               (iBookmarks *, uint32_t id);
 void        fetchRemote_Bookmarks       (iBookmarks *);
 void        requestFinished_Bookmarks   (iBookmarks *, iGmRequest *req);
 iBool       updateBookmarkIcon_Bookmarks(iBookmarks *, const iString *url, iChar icon);
-iChar       siteIcon_Bookmarks          (const iBookmarks *, iRangecc hostName);
+iChar       siteIcon_Bookmarks          (const iBookmarks *, const iString *url);
 
 void        save_Bookmarks              (const iBookmarks *, const char *dirPath);
 uint32_t    findUrl_Bookmarks           (const iBookmarks *, const iString *url); /* O(n) */
