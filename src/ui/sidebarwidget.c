@@ -1282,10 +1282,10 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                                 uiSeparator_ColorId);
             }
             drawRange_Text(
-                uiLabelLarge_FontId,
+                uiLabelLargeBold_FontId,
                 add_I2(pos,
                        init_I2(3 * gap_UI,
-                               itemHeight - lineHeight_Text(uiLabelLarge_FontId) - 1 * gap_UI)),
+                               itemHeight - lineHeight_Text(uiLabelLargeBold_FontId) - 1 * gap_UI)),
                 uiIcon_ColorId,
                 range_String(&d->meta));
         }
@@ -1356,7 +1356,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
         iString str;
         init_String(&str);
         appendChar_String(&str, d->icon ? d->icon : 0x1f588);
-        const iRect iconArea = { addX_I2(pos, gap_UI), init_I2(7 * gap_UI, itemHeight) };
+        const iRect iconArea = { addX_I2(pos, gap_UI), init_I2(1.9f * lineHeight_Text(font), itemHeight) };
         drawCentered_Text(font,
                           iconArea,
                           iTrue,
@@ -1393,9 +1393,9 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                                 width_Rect(itemRect) - scrollBarWidth,
                                 uiSeparator_ColorId);
                 drawRange_Text(
-                    uiLabelLarge_FontId,
+                    uiLabelLargeBold_FontId,
                     add_I2(drawPos,
-                           init_I2(3 * gap_UI, (itemHeight - lineHeight_Text(uiLabelLarge_FontId)) / 2)),
+                           init_I2(3 * gap_UI, (itemHeight - lineHeight_Text(uiLabelLargeBold_FontId)) / 2)),
                     uiIcon_ColorId,
                     range_String(&d->meta));
             }
