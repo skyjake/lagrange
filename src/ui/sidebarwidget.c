@@ -212,6 +212,7 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 item->id = index_ArrayConstIterator(&i);
                 setRange_String(&item->label, head->text);
                 item->indent = head->level * 5 * gap_UI;
+                item->isBold = head->level == 0;
                 addItem_ListWidget(d->list, item);
                 iRelease(item);
             }
@@ -425,7 +426,7 @@ iBool setMode_SidebarWidget(iSidebarWidget *d, enum iSidebarMode mode) {
     }
     setBackgroundColor_Widget(as_Widget(d->list),
                               d->mode == documentOutline_SidebarMode ? tmBannerBackground_ColorId
-                                                                     : uiBackground_ColorId);
+                                                                     : uiBackgroundSidebar_ColorId);
     updateItemHeight_SidebarWidget_(d);
     /* Restore previous scroll position. */
     setScrollPos_ListWidget(d->list, d->modeScroll[mode]);
@@ -473,7 +474,7 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
                     iTrue);
     iZap(d->modeScroll);
     d->side = side;
-    d->mode  = -1;
+    d->mode = -1;
 #if defined (iPlatformAppleMobile)
     d->width = 73 * gap_UI;
     d->itemFonts[0] = defaultBig_FontId;
@@ -501,17 +502,18 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
                 iClob(new_LabelWidget(
                     tightModeLabels_[i],
                     format_CStr("%s.mode arg:%d", cstr_String(id_Widget(w)), i))),
-                    frameless_WidgetFlag | (isPhone ? noBackground_WidgetFlag : 0));
+                    frameless_WidgetFlag | noBackground_WidgetFlag);
         }
         setButtonFont_SidebarWidget(d, isPhone ? uiLabelLarge_FontId : uiLabel_FontId);
         addChildFlags_Widget(vdiv,
                              iClob(buttons),
-                             arrangeHorizontal_WidgetFlag | resizeWidthOfChildren_WidgetFlag |
+                             arrangeHorizontal_WidgetFlag |
+                                 resizeWidthOfChildren_WidgetFlag |
                              arrangeHeight_WidgetFlag | resizeToParentWidth_WidgetFlag |
                              drawBackgroundToHorizontalSafeArea_WidgetFlag);
-        if (deviceType_App() == phone_AppDeviceType) {
-            setBackgroundColor_Widget(buttons, uiBackground_ColorId);
-        }
+//        if (deviceType_App() == phone_AppDeviceType) {
+        setBackgroundColor_Widget(buttons, uiBackgroundSidebar_ColorId);
+  //      }
     }
     else {
         iLabelWidget *heading = new_LabelWidget("Identities", NULL);
@@ -1227,8 +1229,10 @@ static void draw_SidebarWidget_(const iSidebarWidget *d) {
     iPaint p;
     init_Paint(&p);
     draw_Widget(w);
-    drawVLine_Paint(
-        &p, addX_I2(topRight_Rect(bounds), -1), height_Rect(bounds), uiSeparator_ColorId);
+    if (d->mode == documentOutline_SidebarMode) {
+        drawVLine_Paint(
+            &p, addX_I2(topRight_Rect(bounds), -1), height_Rect(bounds), uiSeparator_ColorId);
+    }
 }
 
 static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
@@ -1243,7 +1247,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
     const int iconColor      = isHover ? (isPressing ? uiTextPressed_ColorId : uiIconHover_ColorId)
                                        : uiIcon_ColorId;
     const int font = sidebar->itemFonts[d->isBold ? 1 : 0];
-    int bg         = uiBackground_ColorId;
+    int bg         = uiBackgroundSidebar_ColorId;
     if (isHover) {
         bg = isPressing ? uiBackgroundPressed_ColorId
                         : uiBackgroundFramelessHover_ColorId;
