@@ -8,16 +8,24 @@
 
 ## 1.2
 * Help is opened on first run instead of the "About Lagrange" page to make it easier to discover important Gemini links like the FAQ.
+* Added tab auto-reloading. Configure the reloading interval via the page context menu ("Set Auto-Reload..."). The interval is part of the persistent state of the tab.
 * Added editable bookmark icons: use your favorite Unicode character as the symbol to represent a bookmarked site in Lagrange.
-* Added search engine support: non-URL text entered in the navbar is passed onto the configured search query URL (Preferences > Network).
+* Added search engine support: non-URL text entered in the navbar is passed onto the configured search query URL (Preferences > Network). An indicator is shown if a query will take place.
 * Short pages are centered vertically on actual page content excluding the top banner.
 * Added user preference for aligning all pages to the top of the window.
 * Shift+Insert can be used for pasting clipboard contents into input fields.
 * Added keybinding (F11) for toggling fullscreen mode. On macOS, the shortcut is ⌃⌘F as before.
 * Added keybinding for finding text on page.
+* "Go to Root" respects a user name found in the URL. One can still "Go to Parent" to get above the user level.
 * Scroll position remains fixed while horizontally resizing the window or sidebars.
+* Middle-clicking on links: open new tab in background or foreground depending on the Shift key.
+* Feed entries are sorted by refresh time if they are published on the same date.
+* Dialog buttons are aligned to the right edge, leaving room for additional action buttons on the left.
+* Site icons use a different color in tab titles for visual distinction.
 * Windows: Added a custom window frame to replace the default Windows one. This looks nicer but does not behave exactly like a native window frame. Added a setting to Preferences for switching back to the default frame.
 * Windows: Fixed a flash of white when the window is first opened.
+* Removed a strange violet-on-green color theme pairing.
+* Fixed a crash when opening the audio player menu.
 
 ## 1.1.3
 * Fixed crash when deleting a bookmark that was being used as a remote bookmark source.
