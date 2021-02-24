@@ -903,7 +903,7 @@ iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
         return iFalse;
     }
     if (equal_Command(cmd, "input.ended")) {
-        if (hasParent_Widget(ptr, dlg)) {
+        if (argLabel_Command(cmd, "enter") && hasParent_Widget(ptr, dlg)) {
             if (arg_Command(cmd)) {
                 acceptValueInput_(dlg);
             }
@@ -1005,19 +1005,6 @@ iWidget *makeValueInput_Widget(iWidget *parent, const iString *initialValue, con
     setId_Widget(as_Widget(input), "input");
     updateValueInputWidth_(dlg);
     addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
-//    iWidget *div = new_Widget(); {
-//        setFlags_Widget(div, arrangeHorizontal_WidgetFlag | resizeWidthOfChildren_WidgetFlag |
-//                        arrangeHeight_WidgetFlag | resizeToParentWidth_WidgetFlag, iTrue);
-//        addChildFlags_Widget(div, iClob(new_Widget()), expand_WidgetFlag);
-//        addChild_Widget(div, iClob(newKeyMods_LabelWidget("Cancel", SDLK_ESCAPE, 0, "cancel")));
-//        iLabelWidget *accept = addChild_Widget(
-//            div,
-//            iClob(newKeyMods_LabelWidget(acceptLabel ? acceptLabel : uiTextAction_ColorEscape "OK",
-//                                         SDLK_RETURN,
-//                                         0,
-//                                         "valueinput.accept")));
-//        setFont_LabelWidget(accept, uiLabelBold_FontId);
-//    }
     addChild_Widget(
         dlg,
         iClob(makeDialogButtons_(

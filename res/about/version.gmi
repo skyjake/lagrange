@@ -25,6 +25,7 @@
 * Windows: Added a custom window frame to replace the default Windows one. This looks nicer but does not behave exactly like a native window frame. Added a setting to Preferences for switching back to the default frame.
 * Windows: Fixed a flash of white when the window is first opened.
 * Removed a strange violet-on-green color theme pairing.
+* Fixed text prompt dialogs closing and accepting the entered text when switching focus away from the app.
 * Fixed a crash when opening the audio player menu.
 
 ## 1.1.4
