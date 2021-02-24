@@ -295,7 +295,6 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     static const char *quote           = "\u201c";
     static const char *magnifyingGlass = "\U0001f50d";
     static const char *pointingFinger  = "\U0001f449";
-    const float midRunSkip = 0; /*0.120f;*/ /* extra space between wrapped text/quote lines */
     const iPrefs *prefs = prefs_App();
     clear_Array(&d->layout);
     clearLinks_GmDocument_(d);
@@ -326,6 +325,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         iGmRun run = { .color = white_ColorId };
         enum iGmLineType type;
         int indent = 0;
+        int rightMargin = 0;
         /* Detect the type of the line. */
         if (!isPreformat) {
             type = lineType_GmDocument_(d, line);
@@ -432,8 +432,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             if ((type == link_GmLineType && prevType == link_GmLineType) ||
                 (type == quote_GmLineType && prevType == quote_GmLineType)) {
                 /* No margin between consecutive links/quote lines. */
-                required =
-                    (type == link_GmLineType ? midRunSkip * lineHeight_Text(paragraph_FontId) : 0);
+                required = 0;
             }
             if (isEmpty_Array(&d->layout)) {
                 required = 0; /* top of document */
@@ -523,17 +522,13 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         if (!prefs->quoteIcon && type == quote_GmLineType) {
             run.flags |= quoteBorder_GmRunFlag;
         }
+        rightMargin = (type == text_GmLineType || type == bullet_GmLineType ||
+                       type == link_GmLineType || type == quote_GmLineType ? 5 : 0);
         iAssert(!isEmpty_Range(&runLine)); /* must have something at this point */
         while (!isEmpty_Range(&runLine)) {
-            /* Little bit of breathing space between wrapped lines. */
-            if ((type == text_GmLineType || type == quote_GmLineType ||
-                 type == bullet_GmLineType) &&
-                runLine.start != line.start) {
-                pos.y += midRunSkip * lineHeight_Text(run.font);
-            }
             run.bounds.pos = addX_I2(pos, indent * gap_Text);
             const char *contPos;
-            const int   avail = isPreformat ? 0 : (d->size.x - run.bounds.pos.x);
+            const int   avail = isPreformat ? 0 : (d->size.x - run.bounds.pos.x - rightMargin * gap_Text);
             const iInt2 dims  = tryAdvance_Text(run.font, runLine, avail, &contPos);
             iChangeFlags(run.flags, wide_GmRunFlag, (isPreformat && dims.x > d->size.x));
             run.bounds.size.x = iMax(avail, dims.x); /* Extends to the right edge for selection. */
