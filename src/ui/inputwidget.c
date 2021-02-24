@@ -201,8 +201,12 @@ void setHint_InputWidget(iInputWidget *d, const char *hintText) {
 }
 
 void setContentPadding_InputWidget(iInputWidget *d, int left, int right) {
-    d->leftPadding = left;
-    d->rightPadding = right;
+    if (left >= 0) {
+        d->leftPadding = left;
+    }
+    if (right >= 0) {
+        d->rightPadding = right;
+    }
     refresh_Widget(d);
 }
 
@@ -863,25 +867,37 @@ static void draw_InputWidget_(const iInputWidget *d) {
     /* Cursor blinking. */
     if (isFocused && d->cursorVis) {
         iString cur;
-        if (d->cursor < size_Array(&d->text)) {
-            if (~d->inFlags & isSensitive_InputWidgetFlag) {
-                initUnicodeN_String(&cur, constAt_Array(&d->text, d->cursor), 1);
+        iInt2 curSize;
+        if (d->mode == overwrite_InputMode) {
+            /* Block cursor that overlaps a character. */
+            if (d->cursor < size_Array(&d->text)) {
+                if (~d->inFlags & isSensitive_InputWidgetFlag) {
+                    initUnicodeN_String(&cur, constAt_Array(&d->text, d->cursor), 1);
+                }
+                else {
+                    initUnicodeN_String(&cur, &sensitiveChar_, 1);
+                }
             }
             else {
-                initUnicodeN_String(&cur, &sensitiveChar_, 1);
+                initCStr_String(&cur, " ");
             }
+            curSize = addX_I2(advance_Text(d->font, cstr_String(&cur)), iMin(2, gap_UI / 4));
         }
         else {
-            initCStr_String(&cur, " ");
+            /* Bar cursor. */
+            curSize = init_I2(gap_UI / 2, lineHeight_Text(d->font));
         }
         /* The `gap_UI` offsets below are a hack. They are used because for some reason the
            cursor rect and the glyph inside don't quite position like during `run_Text_()`. */
         const iInt2 prefixSize = advanceN_Text(d->font, cstr_String(text), d->cursor);
-        const iInt2 curPos     = addX_I2(textOrigin, prefixSize.x);
-        const iRect curRect    = { curPos, addX_I2(advance_Text(d->font, cstr_String(&cur)), iMin(2, gap_UI / 4)) };
+        const iInt2 curPos     = addX_I2(textOrigin, prefixSize.x +
+                                         (d->mode == insert_InputMode ? -curSize.x / 2 : 0));
+        const iRect curRect    = { curPos, curSize };
         fillRect_Paint(&p, curRect, uiInputCursor_ColorId);
-        draw_Text(d->font, addX_I2(curPos, iMin(1, gap_UI / 8)), uiInputCursorText_ColorId, "%s", cstr_String(&cur));
-        deinit_String(&cur);
+        if (d->mode == overwrite_InputMode) {
+            draw_Text(d->font, addX_I2(curPos, iMin(1, gap_UI / 8)), uiInputCursorText_ColorId, "%s", cstr_String(&cur));
+            deinit_String(&cur);
+        }
     }
     delete_String(text);
     drawChildren_Widget(w);
