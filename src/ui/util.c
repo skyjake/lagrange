@@ -1144,14 +1144,21 @@ static void addRadioButton_(iWidget *parent, const char *id, const char *label, 
 
 static void addFontButtons_(iWidget *parent, const char *id) {
     const char *fontNames[] = {
-        "Nunito", "Fira Sans", "Literata", "Tinos"
+        "Nunito", "Fira Sans", "Literata", "Tinos", "Source Sans Pro", "Iosevka"
     };
+    iArray *items = new_Array(sizeof(iMenuItem));
     iForIndices(i, fontNames) {
-        addRadioButton_(parent,
-                        format_CStr("prefs.%s.%u", id, i),
-                        fontNames[i],
-                        format_CStr("%s.set arg:%u", id, i));
+        pushBack_Array(items,
+                       &(iMenuItem){ fontNames[i], 0, 0, format_CStr("!%s.set arg:%d", id, i) });
     }
+//        addRadioButton_(parent,
+//                        format_CStr("prefs.%s.%u", id, i),
+//                        fontNames[i],
+//                        format_CStr("%s.set arg:%u", id, i));
+    iLabelWidget *button = makeMenuButton_LabelWidget("Source Sans Pro", data_Array(items), size_Array(items));
+    setId_Widget(as_Widget(button), format_CStr("prefs.%s", id));
+    addChild_Widget(parent, iClob(button));
+    delete_Array(items);
 }
 
 iWidget *makePreferences_Widget(void) {
@@ -1243,13 +1250,13 @@ iWidget *makePreferences_Widget(void) {
         /* Fonts. */ {
             iWidget *fonts;
             addChild_Widget(headings, iClob(makeHeading_Widget("Heading font:")));
-            fonts = new_Widget();
-            addFontButtons_(fonts, "headingfont");
-            addChildFlags_Widget(values, iClob(fonts), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+//            fonts = new_Widget();
+            addFontButtons_(values, "headingfont");
+//            addChildFlags_Widget(values, iClob(fonts), 0); //arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
             addChild_Widget(headings, iClob(makeHeading_Widget("Body font:")));
-            fonts = new_Widget();
-            addFontButtons_(fonts, "font");
-            addChildFlags_Widget(values, iClob(fonts), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+//            fonts = new_Widget();
+            addFontButtons_(values, "font");
+//            addChildFlags_Widget(values, iClob(fonts), 0); //arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
             addChild_Widget(headings, iClob(makeHeading_Widget("Monospace body:")));
             iWidget *mono = new_Widget();
             /* TODO: Needs labels! */

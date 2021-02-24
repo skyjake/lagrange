@@ -987,16 +987,25 @@ static void updatePrefsThemeButtons_(iWidget *d) {
     }
 }
 
-static void updateColorThemeButton_(iLabelWidget *button, int theme) {
-    const char *mode    = strstr(cstr_String(id_Widget(as_Widget(button))), ".dark") ? "dark" : "light";
-    const char *command = format_CStr("doctheme.%s.set arg:%d", mode, theme);
-    iForEach(ObjectList, i, children_Widget(findChild_Widget(as_Widget(button), "menu"))) {
+static void updateDropdownSelection_(iLabelWidget *dropButton, const char *selectedCommand) {
+    iForEach(ObjectList, i, children_Widget(findChild_Widget(as_Widget(dropButton), "menu"))) {
         iLabelWidget *item = i.object;
-        if (!cmp_String(command_LabelWidget(item), command)) {
-            updateText_LabelWidget(button, text_LabelWidget(item));
-            break;
+        const iBool isSelected = endsWith_String(command_LabelWidget(item), selectedCommand);
+        setFlags_Widget(as_Widget(item), selected_WidgetFlag, isSelected);
+        if (isSelected) {
+            updateText_LabelWidget(dropButton, text_LabelWidget(item));
         }
     }
+}
+
+static void updateColorThemeButton_(iLabelWidget *button, int theme) {
+//    const char *mode = strstr(cstr_String(id_Widget(as_Widget(button))), ".dark")
+//                           ? "dark" : "light";
+    updateDropdownSelection_(button, format_CStr(".set arg:%d", theme));
+}
+
+static void updateFontButton_(iLabelWidget *button, int font) {
+    updateDropdownSelection_(button, format_CStr(".set arg:%d", font));
 }
 
 static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
@@ -1048,6 +1057,14 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
     }
     else if (equal_Command(cmd, "doctheme.light.set")) {
         updateColorThemeButton_(findChild_Widget(d, "prefs.doctheme.light"), arg_Command(cmd));
+        return iFalse;
+    }
+    else if (equal_Command(cmd, "font.set")) {
+        updateFontButton_(findChild_Widget(d, "prefs.font"), arg_Command(cmd));
+        return iFalse;
+    }
+    else if (equal_Command(cmd, "headingfont.set")) {
+        updateFontButton_(findChild_Widget(d, "prefs.headingfont"), arg_Command(cmd));
         return iFalse;
     }
     else if (equal_Command(cmd, "prefs.ostheme.changed")) {
@@ -1518,7 +1535,7 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "preferences")) {
         iWidget *dlg = makePreferences_Widget();
-        updatePrefsThemeButtons_(dlg);
+        updatePrefsThemeButtons_(dlg);        
         setText_InputWidget(findChild_Widget(dlg, "prefs.downloads"), &d->prefs.downloadDir);
         setToggle_Widget(findChild_Widget(dlg, "prefs.hoverlink"), d->prefs.hoverLink);
         setToggle_Widget(findChild_Widget(dlg, "prefs.smoothscroll"), d->prefs.smoothScrolling);
@@ -1554,6 +1571,8 @@ iBool handleCommand_App(const char *cmd) {
         setToggle_Widget(findChild_Widget(dlg, "prefs.centershort"), d->prefs.centerShortDocs);
         updateColorThemeButton_(findChild_Widget(dlg, "prefs.doctheme.dark"), d->prefs.docThemeDark);
         updateColorThemeButton_(findChild_Widget(dlg, "prefs.doctheme.light"), d->prefs.docThemeLight);
+        updateFontButton_(findChild_Widget(dlg, "prefs.font"), d->prefs.font);
+        updateFontButton_(findChild_Widget(dlg, "prefs.headingfont"), d->prefs.headingFont);
         setFlags_Widget(
             findChild_Widget(
                 dlg, format_CStr("prefs.saturation.%d", (int) (d->prefs.saturation * 3.99f))),

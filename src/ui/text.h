@@ -148,6 +148,8 @@ enum iTextFont {
     firaSans_TextFont,
     literata_TextFont,
     tinos_TextFont,
+    sourceSansPro_TextFont,
+    iosevka_TextFont,
 };
 
 extern int gap_Text; /* affected by content font size */

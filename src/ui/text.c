@@ -232,6 +232,18 @@ static void initFonts_Text_(iText *d) {
         italicFont  = &fontLiterataLightItalicopsz10_Embedded;
         lightFont   = &fontLiterataExtraLightopsz18_Embedded;
     }
+    else if (d->contentFont == sourceSansPro_TextFont) {
+        regularFont = &fontSourceSansProRegular_Embedded;
+        italicFont  = &fontFiraSansItalic_Embedded;
+        lightFont   = &fontFiraSansLight_Embedded;
+        lightScaling = 0.85f;
+    }
+    else if (d->contentFont == iosevka_TextFont) {
+        regularFont = &fontIosevkaTermExtended_Embedded;
+        italicFont  = &fontIosevkaTermExtended_Embedded;
+        lightFont   = &fontIosevkaTermExtended_Embedded;
+        scaling     = lightScaling = 0.866f;
+    }
     if (d->headingFont == firaSans_TextFont) {
         h12Font     = &fontFiraSansBold_Embedded;
         h3Font      = &fontFiraSansRegular_Embedded;
@@ -245,6 +257,14 @@ static void initFonts_Text_(iText *d) {
     else if (d->headingFont == literata_TextFont) {
         h12Font = &fontLiterataBoldopsz36_Embedded;
         h3Font  = &fontLiterataRegularopsz14_Embedded;
+    }
+    else if (d->headingFont == sourceSansPro_TextFont) {
+        h12Font = &fontSourceSansProBold_Embedded;
+        h3Font = &fontSourceSansProRegular_Embedded;
+    }
+    else if (d->headingFont == iosevka_TextFont) {
+        h12Font = &fontIosevkaTermExtended_Embedded;
+        h3Font  = &fontIosevkaTermExtended_Embedded;
     }
 #if defined (iPlatformAppleMobile)
     const float uiSize = fontSize_UI * 1.1f;
