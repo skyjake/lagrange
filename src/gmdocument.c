@@ -523,7 +523,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             run.flags |= quoteBorder_GmRunFlag;
         }
         rightMargin = (type == text_GmLineType || type == bullet_GmLineType ||
-                       type == link_GmLineType || type == quote_GmLineType ? 5 : 0);
+                       type == quote_GmLineType ? 4 : 0);
         iAssert(!isEmpty_Range(&runLine)); /* must have something at this point */
         while (!isEmpty_Range(&runLine)) {
             run.bounds.pos = addX_I2(pos, indent * gap_Text);
