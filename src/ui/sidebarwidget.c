@@ -1229,10 +1229,8 @@ static void draw_SidebarWidget_(const iSidebarWidget *d) {
     iPaint p;
     init_Paint(&p);
     draw_Widget(w);
-    if (d->mode == documentOutline_SidebarMode) {
-        drawVLine_Paint(
-            &p, addX_I2(topRight_Rect(bounds), -1), height_Rect(bounds), uiSeparator_ColorId);
-    }
+    drawVLine_Paint(
+        &p, addX_I2(topRight_Rect(bounds), -1), height_Rect(bounds), uiSeparator_ColorId);
 }
 
 static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
