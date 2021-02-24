@@ -128,7 +128,7 @@ void setThemePalette_Color(enum iColorTheme theme) {
             copy_(uiBackgroundSelected_ColorId, teal_ColorId);
             copy_(uiBackgroundFramelessHover_ColorId, teal_ColorId);
             set_Color(uiBackgroundSidebar_ColorId,
-                      mix_Color(get_Color(black_ColorId), get_Color(gray25_ColorId), 0.66f));
+                      mix_Color(get_Color(black_ColorId), get_Color(gray25_ColorId), 0.75f));
             copy_(uiText_ColorId, gray75_ColorId);
             copy_(uiTextPressed_ColorId, black_ColorId);
             copy_(uiTextStrong_ColorId, white_ColorId);
