@@ -254,27 +254,26 @@ iChar siteIcon_Bookmarks(const iBookmarks *d, const iString *url) {
     if (isEmpty_String(url)) {
         return 0;
     }
-    iChar        icon         = 0;
-    iRangecc     hostName     = urlHost_String(url);
-    const size_t hostSize     = size_Range(&hostName);
-    size_t       matchingSize = iInvalidSize; /* we'll pick the shortest matching */
+    static iRegExp *tagPattern_;
+    if (!tagPattern_) {
+        tagPattern_ = new_RegExp("\\busericon\\b", caseSensitive_RegExpOption);
+    }
+    const iRangecc urlRoot      = urlRoot_String(url);
+    size_t         matchingSize = iInvalidSize; /* we'll pick the shortest matching */
+    iChar          icon         = 0;
     lock_Mutex(d->mtx);
     iConstForEach(Hash, i, &d->bookmarks) {
         const iBookmark *bm = (const iBookmark *) i.value;
-        iUrl parts;
-        init_Url(&parts, &bm->url);
-        if (!hasTag_Bookmark(bm, "usericon")) { /* TODO: Inefficient! RegExp rebuilt every time. */
-            continue;
-        }
-        if (size_Range(&hostName) == size_Range(&parts.host) &&
-            iCmpStrNCase(hostName.start, parts.host.start, hostSize) == 0) {
-            const size_t n = size_String(&bm->url);
-            if (n > size_String(url)) {
-                continue; /* Bookmark must be higher up in the path tree. */
-            }
-            if (n < matchingSize && bm->icon) {
-                matchingSize = n;
-                icon = bm->icon;
+        iRegExpMatch m;
+        init_RegExpMatch(&m);
+        if (bm->icon && matchString_RegExp(tagPattern_, &bm->tags, &m)) {
+            const iRangecc bmRoot = urlRoot_String(&bm->url);
+            if (equalRangeCase_Rangecc(urlRoot, bmRoot)) {
+                const size_t n = size_String(&bm->url);
+                if (n < matchingSize) {
+                    matchingSize = n;
+                    icon = bm->icon;
+                }
             }
         }
     }

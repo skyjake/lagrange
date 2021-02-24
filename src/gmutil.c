@@ -153,18 +153,34 @@ iRangecc urlHost_String(const iString *d) {
 }
 
 iRangecc urlUser_String(const iString *d) {
-    iRegExp *userPats[2] = { new_RegExp("~([^/?]+)", 0),
-                             new_RegExp("/users/([^/?]+)", caseInsensitive_RegExpOption) };
+    static iRegExp *userPats_[2];
+    if (!userPats_[0]) {
+        userPats_[0] = new_RegExp("~([^/?]+)", 0);
+        userPats_[1] = new_RegExp("/users/([^/?]+)", caseInsensitive_RegExpOption);
+    }
     iRegExpMatch m;
     init_RegExpMatch(&m);
     iRangecc found = iNullRange;
-    iForIndices(i, userPats) {
-        if (matchString_RegExp(userPats[i], d, &m)) {
+    iForIndices(i, userPats_) {
+        if (matchString_RegExp(userPats_[i], d, &m)) {
             found = capturedRange_RegExpMatch(&m, 1);
         }
-        iRelease(userPats[i]);
     }
     return found;
+}
+
+iRangecc urlRoot_String(const iString *d) {
+    const char *rootEnd;
+    const iRangecc user = urlUser_String(d);
+    if (!isEmpty_Range(&user)) {
+        rootEnd = user.end;
+    }
+    else {
+        iUrl parts;
+        init_Url(&parts, d);
+        rootEnd = parts.path.start;
+    }
+    return (iRangecc){ constBegin_String(d), rootEnd };
 }
 
 static iBool isAbsolutePath_(iRangecc path) {
