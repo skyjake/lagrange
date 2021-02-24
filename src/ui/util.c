@@ -1151,13 +1151,10 @@ static void addFontButtons_(iWidget *parent, const char *id) {
         pushBack_Array(items,
                        &(iMenuItem){ fontNames[i], 0, 0, format_CStr("!%s.set arg:%d", id, i) });
     }
-//        addRadioButton_(parent,
-//                        format_CStr("prefs.%s.%u", id, i),
-//                        fontNames[i],
-//                        format_CStr("%s.set arg:%u", id, i));
     iLabelWidget *button = makeMenuButton_LabelWidget("Source Sans Pro", data_Array(items), size_Array(items));
+//    setFrameColor_Widget(findChild_Widget(as_Widget(button), "menu"), uiBackgroundSelected_ColorId);
     setId_Widget(as_Widget(button), format_CStr("prefs.%s", id));
-    addChild_Widget(parent, iClob(button));
+    addChildFlags_Widget(parent, iClob(button), alignLeft_WidgetFlag);
     delete_Array(items);
 }
 
@@ -1229,9 +1226,11 @@ iWidget *makePreferences_Widget(void) {
                 { "High Contrast", 0, 0, format_CStr("doctheme.%s.set arg:%d", mode, highContrast_GmDocumentTheme) },
             };
             addChild_Widget(headings, iClob(makeHeading_Widget(isDark ? "Dark theme:" : "Light theme:")));
-            setId_Widget(addChild_Widget(values,
-                                         iClob(makeMenuButton_LabelWidget(
-                                             themes[0].label, themes, iElemCount(themes)))),
+            iLabelWidget *button =
+                makeMenuButton_LabelWidget(themes[1].label, themes, iElemCount(themes));
+//            setFrameColor_Widget(findChild_Widget(as_Widget(button), "menu"),
+//                                 uiBackgroundSelected_ColorId);
+            setId_Widget(addChildFlags_Widget(values, iClob(button), alignLeft_WidgetFlag),
                          format_CStr("prefs.doctheme.%s", mode));
         }
         addChild_Widget(headings, iClob(makeHeading_Widget("Saturation:")));
