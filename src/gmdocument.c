@@ -282,7 +282,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         5, 10, 5, 10, 0, 0, 0, 5
     };
     static const float topMargin[max_GmLineType] = {
-        0.0f, 0.333f, 1.0f, 0.5f, 2.0f, 1.5f, 1.0f, 0.5f
+        0.0f, 0.333f, 1.0f, 0.5f, 2.0f, 1.5f, 1.0f, 0.25f
     };
     static const float bottomMargin[max_GmLineType] = {
         0.0f, 0.333f, 1.0f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f
