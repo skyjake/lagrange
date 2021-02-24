@@ -681,6 +681,26 @@ void drawBackground_Widget(const iWidget *d) {
         iRect rect = bounds_Widget(d);
         iPaint p;
         init_Paint(&p);
+        if (d->flags & mouseModal_WidgetFlag) {
+            p.alpha = 128;
+            SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_BLEND);
+            int fadeColor;
+            switch (colorTheme_App()) {
+                default:
+                    fadeColor = black_ColorId;
+                    break;
+                case light_ColorTheme:
+                    fadeColor = gray25_ColorId;
+                    break;
+                case pureWhite_ColorTheme:
+                    fadeColor = gray50_ColorId;
+                    break;
+            }
+            fillRect_Paint(&p,
+                           initCorners_Rect(zero_I2(), rootSize_Window(get_Window())),
+                           fadeColor);
+            SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_NONE);
+        }
         if (d->bgColor >= 0) {
 #if defined (iPlatformAppleMobile)
             if (d->flags & (drawBackgroundToHorizontalSafeArea_WidgetFlag |
