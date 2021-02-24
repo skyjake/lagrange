@@ -1980,16 +1980,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equal_Command(cmd, "navigate.root") && document_App() == d) {
-        iUrl parts;
-        init_Url(&parts, d->mod.url);
-        const char *rootEnd = parts.path.start;
-        const iRangecc user = urlUser_String(d->mod.url);
-        if (!isEmpty_Range(&user)) {
-            rootEnd = user.end;
-        }
-        postCommandf_App(
-            "open url:%s/",
-            cstr_Rangecc((iRangecc){ constBegin_String(d->mod.url), rootEnd }));
+        postCommandf_App("open url:%s/", cstr_Rangecc(urlRoot_String(d->mod.url)));
         return iTrue;
     }
     else if (equalWidget_Command(cmd, w, "scroll.moved")) {
