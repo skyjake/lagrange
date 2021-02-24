@@ -492,7 +492,7 @@ static void showSearchQueryIndicator_(iBool show) {
     iWidget *indicator = findWidget_App("input.indicator.search");
     setFlags_Widget(indicator, hidden_WidgetFlag, !show);
     setContentPadding_InputWidget(
-        (iInputWidget *) parent_Widget(indicator), 0, show ? width_Widget(indicator) : 0);
+        (iInputWidget *) parent_Widget(indicator), -1, show ? width_Widget(indicator) : 0);
 }
 
 static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
@@ -504,12 +504,17 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
             iForEach(ObjectList, i, navBar->children) {
                 iWidget *child = as_Widget(i.object);
                 setFlags_Widget(
-                    child, tight_WidgetFlag, isNarrow || !cmp_String(id_Widget(child), "lock"));
+                    child, tight_WidgetFlag, isNarrow);
                 if (isInstance_Object(i.object, &Class_LabelWidget)) {
                     iLabelWidget *label = i.object;
                     updateSize_LabelWidget(label);
                 }
             }
+            /* Note that InputWidget uses the `tight` flag to adjust its inner padding. */
+            setContentPadding_InputWidget(findChild_Widget(navBar, "url"),
+                                          width_Widget(findChild_Widget(navBar, "navbar.lock")) -
+                                              (isNarrow ? 2.0f : 2.75f) * gap_UI,
+                                          -1);
         }
         if (isPhone) {
             static const char *buttons[] = {
@@ -866,14 +871,6 @@ static void setupUserInterface_Window(iWindow *d) {
             "\U0001f464", identityButtonMenuItems_, iElemCount(identityButtonMenuItems_));
         setAlignVisually_LabelWidget(idMenu, iTrue);
         setId_Widget(addChildFlags_Widget(navBar, iClob(idMenu), collapse_WidgetFlag), "navbar.ident");
-        iLabelWidget *lock =
-            addChildFlags_Widget(navBar,
-                                 iClob(newIcon_LabelWidget("\U0001f513", SDLK_i, KMOD_PRIMARY, "document.info")),
-                                 frameless_WidgetFlag |
-                                 (deviceType_App() == desktop_AppDeviceType ? tight_WidgetFlag : 0));
-        setId_Widget(as_Widget(lock), "navbar.lock");
-        setFont_LabelWidget(lock, defaultSymbols_FontId);
-        updateTextCStr_LabelWidget(lock, "\U0001f512");
         /* URL input field. */ {
             iInputWidget *url = new_InputWidget(0);
             setSelectAllOnFocus_InputWidget(url, iTrue);
@@ -882,7 +879,18 @@ static void setupUserInterface_Window(iWindow *d) {
             setNotifyEdits_InputWidget(url, iTrue);
             setTextCStr_InputWidget(url, "gemini://");
             addChildFlags_Widget(navBar, iClob(url), expand_WidgetFlag);
-            setPadding_Widget(as_Widget(url), 0, 0, gap_UI * 1, 0);
+            setPadding_Widget(as_Widget(url), 0, 0, gap_UI, 0);
+            /* Page information/certificate warning. */ {
+                iLabelWidget *lock =
+                    addChildFlags_Widget(as_Widget(url),
+                                         iClob(newIcon_LabelWidget("\U0001f513", SDLK_i, KMOD_PRIMARY, "document.info")),
+                                         noBackground_WidgetFlag | frameless_WidgetFlag | moveToParentLeftEdge_WidgetFlag |
+                                             (deviceType_App() == desktop_AppDeviceType ? tight_WidgetFlag : 0));
+                setId_Widget(as_Widget(lock), "navbar.lock");
+                setFont_LabelWidget(lock, defaultSymbols_FontId);
+                updateTextCStr_LabelWidget(lock, "\U0001f512");
+                setContentPadding_InputWidget(url, width_Widget(lock) - 2.75f * gap_UI, -1);
+            }
             /* Feeds refresh indicator is inside the input field. */ {
                 iLabelWidget *fprog = new_LabelWidget(uiTextCaution_ColorEscape
                                                       "\u2605 Refreshing Feeds...", NULL);

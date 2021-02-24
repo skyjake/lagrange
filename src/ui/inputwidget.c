@@ -605,7 +605,11 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
         return iTrue;
     }
     if (ev->type == SDL_MOUSEMOTION && isHover_Widget(d)) {
-        setCursor_Window(get_Window(), SDL_SYSTEM_CURSOR_IBEAM);
+        const iInt2 local = localCoord_Widget(w, init_I2(ev->motion.x, ev->motion.y));
+        setCursor_Window(get_Window(),
+                         local.x >= 2 * gap_UI + d->leftPadding && local.x < width_Widget(w) - d->rightPadding
+                             ? SDL_SYSTEM_CURSOR_IBEAM
+                             : SDL_SYSTEM_CURSOR_ARROW);
     }
     switch (processEvent_Click(&d->click, ev)) {
         case none_ClickResult:
@@ -839,7 +843,7 @@ static void draw_InputWidget_(const iInputWidget *d) {
                             isFocused ? gap_UI / 4 : 1,
                             isFocused ? uiInputFrameFocused_ColorId
                                       : isHover ? uiInputFrameHover_ColorId : uiInputFrame_ColorId);
-    setClip_Paint(&p, bounds);
+    setClip_Paint(&p, adjusted_Rect(bounds, init_I2(d->leftPadding, 0), init_I2(-d->rightPadding, 0)));
     const iInt2 textOrigin = textOrigin_InputWidget_(d, cstr_String(text));
     if (isFocused && !isEmpty_Range(&d->mark)) {
         /* Draw the selected range. */
