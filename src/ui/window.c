@@ -513,7 +513,7 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
             /* Note that InputWidget uses the `tight` flag to adjust its inner padding. */
             setContentPadding_InputWidget(findChild_Widget(navBar, "url"),
                                           width_Widget(findChild_Widget(navBar, "navbar.lock")) -
-                                              (isNarrow ? 2.0f : 2.75f) * gap_UI,
+                                              1.5 * gap_UI,
                                           -1);
         }
         if (isPhone) {
@@ -889,7 +889,7 @@ static void setupUserInterface_Window(iWindow *d) {
                 setId_Widget(as_Widget(lock), "navbar.lock");
                 setFont_LabelWidget(lock, defaultSymbols_FontId);
                 updateTextCStr_LabelWidget(lock, "\U0001f512");
-                setContentPadding_InputWidget(url, width_Widget(lock) - 2.75f * gap_UI, -1);
+                setContentPadding_InputWidget(url, width_Widget(lock) - 1.5 * gap_UI, -1);
             }
             /* Feeds refresh indicator is inside the input field. */ {
                 iLabelWidget *fprog = new_LabelWidget(uiTextCaution_ColorEscape
