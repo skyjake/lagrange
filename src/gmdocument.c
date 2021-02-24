@@ -285,7 +285,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         0.0f, 0.333f, 1.0f, 0.5f, 2.0f, 1.5f, 1.0f, 0.25f
     };
     static const float bottomMargin[max_GmLineType] = {
-        0.0f, 0.333f, 1.0f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f
+        0.0f, 0.333f, 1.0f, 0.5f, 0.5f, 0.5f, 0.5f, 0.25f
     };
     static const char *arrow           = "\u27a4";
     static const char *envelope        = "\U0001f4e7";
@@ -578,15 +578,17 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 const iInt2 maxSize = mulf_I2(img.size, get_Window()->pixelRatio);
                 if (width_Rect(run.visBounds) > maxSize.x) {
                     /* Don't scale the image up. */
-                    run.visBounds.size.y = run.visBounds.size.y * maxSize.x / width_Rect(run.visBounds);
+                    run.visBounds.size.y =
+                        run.visBounds.size.y * maxSize.x / width_Rect(run.visBounds);
                     run.visBounds.size.x = maxSize.x;
-                    run.visBounds.pos.x = run.bounds.size.x / 2 - width_Rect(run.visBounds) / 2;
-                    run.bounds.size.y = run.visBounds.size.y;
+                    run.visBounds.pos.x  = run.bounds.size.x / 2 - width_Rect(run.visBounds) / 2;
+                    run.bounds.size.y    = run.visBounds.size.y;
                 }
-                run.text    = iNullRange;
-                run.font    = 0;
-                run.color   = 0;
-                run.imageId = imageId;
+                run.text      = iNullRange;
+                run.font      = 0;
+                run.color     = 0;
+                run.mediaType = image_GmRunMediaType;
+                run.mediaId   = imageId;
                 pushBack_Array(&d->layout, &run);
                 pos.y += run.bounds.size.y + margin;
             }
@@ -608,7 +610,8 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 run.visBounds     = run.bounds;
                 run.text          = iNullRange;
                 run.color         = 0;
-                run.audioId       = audioId;
+                run.mediaType     = audio_GmRunMediaType;
+                run.mediaId       = audioId;
                 pushBack_Array(&d->layout, &run);
                 pos.y += run.bounds.size.y + margin;
             }

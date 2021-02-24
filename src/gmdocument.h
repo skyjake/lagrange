@@ -85,17 +85,24 @@ enum iGmRunFlags {
     wide_GmRunFlag        = iBit(6), /* horizontally scrollable */
 };
 
+enum iGmRunMediaType {
+    none_GmRunMediaType,
+    image_GmRunMediaType,
+    audio_GmRunMediaType,
+    download_GmRunMediaType,
+};
+
 struct Impl_GmRun {
     iRangecc  text;
     uint8_t   font;
     uint8_t   color;
     uint8_t   flags;
+    uint8_t   mediaType;
     iRect     bounds;    /* used for hit testing, may extend to edges */
     iRect     visBounds; /* actual visual bounds */
     uint16_t  preId;     /* preformatted block ID (sequential) */
     iGmLinkId linkId;    /* zero for non-links */
-    uint16_t  imageId;   /* zero if not an image */
-    uint16_t  audioId;   /* zero if not audio */
+    uint16_t  mediaId;   /* zero if not an image */
 };
 
 iDeclareType(GmRunRange)

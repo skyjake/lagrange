@@ -414,7 +414,7 @@ static iRangei visibleRange_DocumentWidget_(const iDocumentWidget *d) {
 
 static void addVisible_DocumentWidget_(void *context, const iGmRun *run) {
     iDocumentWidget *d = context;
-    if (~run->flags & decoration_GmRunFlag && !run->imageId) {
+    if (~run->flags & decoration_GmRunFlag && !run->mediaId) {
         if (!d->firstVisibleRun) {
             d->firstVisibleRun = run;
         }
@@ -423,7 +423,8 @@ static void addVisible_DocumentWidget_(void *context, const iGmRun *run) {
     if (run->preId && run->flags & wide_GmRunFlag) {
         pushBack_PtrArray(&d->visibleWideRuns, run);
     }
-    if (run->audioId) {
+    if (run->mediaType == audio_GmRunMediaType) {
+        iAssert(run->mediaId);
         pushBack_PtrArray(&d->visiblePlayers, run);
     }
     if (run->linkId) {
@@ -568,7 +569,7 @@ static uint32_t playerUpdateInterval_DocumentWidget_(const iDocumentWidget *d) {
     uint32_t interval = 0;
     iConstForEach(PtrArray, i, &d->visiblePlayers) {
         const iGmRun *run = i.ptr;
-        iPlayer *     plr = audioPlayer_Media(media_GmDocument(d->doc), run->audioId);
+        iPlayer *     plr = audioPlayer_Media(media_GmDocument(d->doc), run->mediaId);
         if (flags_Player(plr) & adjustingVolume_PlayerFlag ||
             (isStarted_Player(plr) && !isPaused_Player(plr))) {
             interval = 1000 / 15;
@@ -589,7 +590,7 @@ static void updatePlayers_DocumentWidget_(iDocumentWidget *d) {
         refresh_Widget(d);
         iConstForEach(PtrArray, i, &d->visiblePlayers) {
             const iGmRun *run = i.ptr;
-            iPlayer *     plr = audioPlayer_Media(media_GmDocument(d->doc), run->audioId);
+            iPlayer *     plr = audioPlayer_Media(media_GmDocument(d->doc), run->mediaId);
             if (idleTimeMs_Player(plr) > 3000 && ~flags_Player(plr) & volumeGrabbed_PlayerFlag &&
                 flags_Player(plr) & adjustingVolume_PlayerFlag) {
                 setFlags_Player(plr, adjustingVolume_PlayerFlag, iFalse);
@@ -1464,7 +1465,8 @@ static void allocVisBuffer_DocumentWidget_(const iDocumentWidget *d) {
 static iBool fetchNextUnfetchedImage_DocumentWidget_(iDocumentWidget *d) {
     iConstForEach(PtrArray, i, &d->visibleLinks) {
         const iGmRun *run = i.ptr;
-        if (run->linkId && !run->imageId && ~run->flags & decoration_GmRunFlag) {
+        if (run->linkId && run->mediaType == none_GmRunMediaType &&
+            ~run->flags & decoration_GmRunFlag) {
             const int linkFlags = linkFlags_GmDocument(d->doc, run->linkId);
             if (isMediaLink_GmDocument(d->doc, run->linkId) &&
                 linkFlags & imageFileExtension_GmLinkFlag &&
@@ -2174,8 +2176,8 @@ static iRect playerRect_DocumentWidget_(const iDocumentWidget *d, const iGmRun *
 }
 
 static void setGrabbedPlayer_DocumentWidget_(iDocumentWidget *d, const iGmRun *run) {
-    if (run) {
-        iPlayer *plr = audioPlayer_Media(media_GmDocument(d->doc), run->audioId);
+    if (run && run->mediaType == audio_GmRunMediaType) {
+        iPlayer *plr = audioPlayer_Media(media_GmDocument(d->doc), run->mediaId);
         setFlags_Player(plr, volumeGrabbed_PlayerFlag, iTrue);
         d->grabbedStartVolume = volume_Player(plr);
         d->grabbedPlayer      = run;
@@ -2183,7 +2185,7 @@ static void setGrabbedPlayer_DocumentWidget_(iDocumentWidget *d, const iGmRun *r
     }
     else if (d->grabbedPlayer) {
         setFlags_Player(
-            audioPlayer_Media(media_GmDocument(d->doc), d->grabbedPlayer->audioId),
+            audioPlayer_Media(media_GmDocument(d->doc), d->grabbedPlayer->mediaId),
             volumeGrabbed_PlayerFlag,
             iFalse);
         d->grabbedPlayer = NULL;
@@ -2212,7 +2214,7 @@ static iBool processPlayerEvents_DocumentWidget_(iDocumentWidget *d, const SDL_E
     iConstForEach(PtrArray, i, &d->visiblePlayers) {
         const iGmRun *run  = i.ptr;
         const iRect   rect = playerRect_DocumentWidget_(d, run);
-        iPlayer *     plr  = audioPlayer_Media(media_GmDocument(d->doc), run->audioId);
+        iPlayer *     plr  = audioPlayer_Media(media_GmDocument(d->doc), run->mediaId);
         if (contains_Rect(rect, mouse)) {
             iPlayerUI ui;
             init_PlayerUI(&ui, plr, rect);
@@ -2619,7 +2621,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         case drag_ClickResult: {
             if (d->grabbedPlayer) {
                 iPlayer *plr =
-                    audioPlayer_Media(media_GmDocument(d->doc), d->grabbedPlayer->audioId);
+                    audioPlayer_Media(media_GmDocument(d->doc), d->grabbedPlayer->mediaId);
                 iPlayerUI ui;
                 init_PlayerUI(&ui, plr, playerRect_DocumentWidget_(d, d->grabbedPlayer));
                 float off = (float) delta_Click(&d->click).x / (float) width_Rect(ui.volumeSlider);
@@ -2826,7 +2828,7 @@ static void fillRange_DrawContext_(iDrawContext *d, const iGmRun *run, enum iCol
 
 static void drawMark_DrawContext_(void *context, const iGmRun *run) {
     iDrawContext *d = context;
-    if (!run->imageId) {
+    if (run->mediaType == none_GmRunMediaType) {
         fillRange_DrawContext_(d, run, uiMatching_ColorId, d->widget->foundMark, &d->inFoundMark);
         fillRange_DrawContext_(d, run, uiMarked_ColorId, d->widget->selectMark, &d->inSelectMark);
     }
@@ -2925,8 +2927,8 @@ static void drawBannerRun_DrawContext_(iDrawContext *d, const iGmRun *run, iInt2
 static void drawRun_DrawContext_(void *context, const iGmRun *run) {
     iDrawContext *d      = context;
     const iInt2   origin = d->viewPos;
-    if (run->imageId) {
-        SDL_Texture *tex = imageTexture_Media(media_GmDocument(d->widget->doc), run->imageId);
+    if (run->mediaType == image_GmRunMediaType) {
+        SDL_Texture *tex = imageTexture_Media(media_GmDocument(d->widget->doc), run->mediaId);
         if (tex) {
             const iRect dst = moved_Rect(run->visBounds, origin);
             fillRect_Paint(&d->paint, dst, tmBackground_ColorId); /* in case the image has alpha */
@@ -2935,7 +2937,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
         }
         return;
     }
-    else if (run->audioId) {
+    else if (run->mediaType == audio_GmRunMediaType) {
         /* Audio player UI is drawn afterwards as a dynamic overlay. */
         return;
     }
@@ -3283,7 +3285,7 @@ static void drawSideElements_DocumentWidget_(const iDocumentWidget *d) {
 static void drawPlayers_DocumentWidget_(const iDocumentWidget *d, iPaint *p) {
     iConstForEach(PtrArray, i, &d->visiblePlayers) {
         const iGmRun * run = i.ptr;
-        const iPlayer *plr = audioPlayer_Media(media_GmDocument(d->doc), run->audioId);
+        const iPlayer *plr = audioPlayer_Media(media_GmDocument(d->doc), run->mediaId);
         const iRect rect   = playerRect_DocumentWidget_(d, run);
         iPlayerUI   ui;
         init_PlayerUI(&ui, plr, rect);
