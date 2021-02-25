@@ -151,7 +151,8 @@ void setThemePalette_Color(enum iColorTheme theme) {
             copy_(uiEmbossSelected2_ColorId, black_ColorId);
             copy_(uiEmbossSelectedHover1_ColorId, white_ColorId);
             copy_(uiEmbossSelectedHover2_ColorId, cyan_ColorId);
-            set_Color(uiInputBackground_ColorId, mix_Color(get_Color(black_ColorId), get_Color(gray25_ColorId), 0.7f));
+            set_Color(uiInputBackground_ColorId,
+                      mix_Color(get_Color(black_ColorId), get_Color(gray25_ColorId), 0.7f));
             copy_(uiInputBackgroundFocused_ColorId, black_ColorId);
             copy_(uiInputText_ColorId, gray75_ColorId);
             copy_(uiInputTextFocused_ColorId, white_ColorId);
