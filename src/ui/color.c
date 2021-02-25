@@ -80,7 +80,7 @@ void setThemePalette_Color(enum iColorTheme theme) {
             copy_(uiBackgroundSelected_ColorId, teal_ColorId);
             copy_(uiBackgroundFramelessHover_ColorId, teal_ColorId);
             set_Color(uiBackgroundSidebar_ColorId,
-                      mix_Color(get_Color(black_ColorId), get_Color(gray25_ColorId), 0.66f));
+                      mix_Color(get_Color(black_ColorId), get_Color(gray25_ColorId), 0.55f));
             copy_(uiText_ColorId, gray75_ColorId);
             copy_(uiTextPressed_ColorId, black_ColorId);
             copy_(uiTextStrong_ColorId, white_ColorId);
@@ -151,11 +151,11 @@ void setThemePalette_Color(enum iColorTheme theme) {
             copy_(uiEmbossSelected2_ColorId, black_ColorId);
             copy_(uiEmbossSelectedHover1_ColorId, white_ColorId);
             copy_(uiEmbossSelectedHover2_ColorId, cyan_ColorId);
-            copy_(uiInputBackground_ColorId, black_ColorId);
+            set_Color(uiInputBackground_ColorId, mix_Color(get_Color(black_ColorId), get_Color(gray25_ColorId), 0.7f));
             copy_(uiInputBackgroundFocused_ColorId, black_ColorId);
             copy_(uiInputText_ColorId, gray75_ColorId);
             copy_(uiInputTextFocused_ColorId, white_ColorId);
-            copy_(uiInputFrame_ColorId, gray50_ColorId);
+            copy_(uiInputFrame_ColorId, uiInputBackground_ColorId);
             copy_(uiInputFrameHover_ColorId, cyan_ColorId);
             copy_(uiInputFrameFocused_ColorId, orange_ColorId);
             copy_(uiInputCursor_ColorId, orange_ColorId);
@@ -202,7 +202,8 @@ void setThemePalette_Color(enum iColorTheme theme) {
             copy_(uiInputBackgroundFocused_ColorId, white_ColorId);
             copy_(uiInputText_ColorId, gray25_ColorId);
             copy_(uiInputTextFocused_ColorId, black_ColorId);
-            copy_(uiInputFrame_ColorId, gray50_ColorId);
+            set_Color(uiInputFrame_ColorId,
+                      mix_Color(get_Color(gray50_ColorId), get_Color(gray75_ColorId), 0.5f));
             copy_(uiInputFrameHover_ColorId, brown_ColorId);
             copy_(uiInputFrameFocused_ColorId, teal_ColorId);
             copy_(uiInputCursor_ColorId, teal_ColorId);
@@ -211,7 +212,8 @@ void setThemePalette_Color(enum iColorTheme theme) {
             copy_(uiAnnotation_ColorId, gray50_ColorId);
             copy_(uiIcon_ColorId, brown_ColorId);
             copy_(uiIconHover_ColorId, brown_ColorId);
-            copy_(uiSeparator_ColorId, gray50_ColorId);
+            set_Color(uiSeparator_ColorId,
+                      mix_Color(get_Color(gray50_ColorId), get_Color(gray75_ColorId), 0.5f));
             copy_(uiMarked_ColorId, cyan_ColorId);
             copy_(uiMatching_ColorId, orange_ColorId);
             break;
