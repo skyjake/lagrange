@@ -37,16 +37,19 @@ iDeclareType(GmMediaProps)
 struct Impl_GmMediaProps {
     iGmLinkId linkId;
     iString   mime;
+    iString   url;
     iBool     isPermanent;
 };
 
 static void init_GmMediaProps_(iGmMediaProps *d) {
     d->linkId = 0;
     init_String(&d->mime);
+    init_String(&d->url);
     d->isPermanent = iFalse;
 }
 
 static void deinit_GmMediaProps_(iGmMediaProps *d) {
+    deinit_String(&d->url);
     deinit_String(&d->mime);
 }
 
@@ -125,9 +128,29 @@ iDefineTypeConstruction(GmAudio)
 
 /*----------------------------------------------------------------------------------------------*/
 
+iDeclareType(GmDownload)
+
+struct Impl_GmDownload {
+    iGmMediaProps props;
+    /* TODO: Speed statistics. */
+};
+
+void init_GmDownload(iGmDownload *d) {
+    init_GmMediaProps_(&d->props);
+}
+
+void deinit_GmDownload(iGmDownload *d) {
+    deinit_GmMediaProps_(&d->props);
+}
+
+iDefineTypeConstruction(GmDownload)
+
+/*----------------------------------------------------------------------------------------------*/
+
 struct Impl_Media {
     iPtrArray images;
-    iPtrArray audio;   
+    iPtrArray audio;
+    iPtrArray downloads;
 };
 
 iDefineTypeConstruction(Media)
@@ -135,10 +158,12 @@ iDefineTypeConstruction(Media)
 void init_Media(iMedia *d) {
     init_PtrArray(&d->images);
     init_PtrArray(&d->audio);
+    init_PtrArray(&d->downloads);
 }
 
 void deinit_Media(iMedia *d) {
     clear_Media(d);
+    deinit_PtrArray(&d->downloads);
     deinit_PtrArray(&d->audio);
     deinit_PtrArray(&d->images);
 }
@@ -152,6 +177,29 @@ void clear_Media(iMedia *d) {
         deinit_GmAudio(a.ptr);
     }
     clear_PtrArray(&d->audio);
+    iForEach(PtrArray, n, &d->downloads) {
+        deinit_GmDownload(n.ptr);
+    }
+    clear_PtrArray(&d->downloads);
+}
+
+iBool setUrl_Media(iMedia *d, iGmLinkId linkId, const iString *url) {
+    iGmDownload *dl       = NULL;
+    iMediaId     existing = findLinkDownload_Media(d, linkId);
+    iBool        isNew    = iFalse;
+    if (!existing) {
+        isNew = iTrue;
+        dl = new_GmDownload();
+        dl->props.linkId = linkId;
+        dl->props.isPermanent = iTrue;
+        set_String(&dl->props.url, url);
+        pushBack_PtrArray(&d->downloads, dl);
+    }
+    else {
+        iGmDownload *dl = at_PtrArray(&d->downloads, existing - 1);
+        set_String(&dl->props.url, url);
+    }
+    return isNew;
 }
 
 iBool setData_Media(iMedia *d, iGmLinkId linkId, const iString *mime, const iBlock *data,
@@ -193,6 +241,18 @@ iBool setData_Media(iMedia *d, iGmLinkId linkId, const iString *mime, const iBlo
             if (!isPartial) {
                 updateSourceData_Player(audio->player, NULL, NULL, complete_PlayerUpdate);
             }
+        }
+    }
+    else if ((existing = findLinkDownload_Media(d, linkId)) != 0) {
+        iGmDownload *dl;
+        if (isDeleting) {
+            take_PtrArray(&d->downloads, existing - 1, (void **) &dl);
+            delete_GmDownload(dl);
+        }
+        else {
+            dl = at_PtrArray(&d->downloads, existing - 1);
+            iAssert(equal_String(&dl->props.mime, mime)); /* MIME cannot change */
+            /* TODO: Write data chunk to file. */
         }
     }
     else if (!isDeleting) {
@@ -253,6 +313,24 @@ iMediaId findLinkAudio_Media(const iMedia *d, iGmLinkId linkId) {
     return 0;
 }
 
+iMediaId findLinkDownload_Media(const iMedia *d, uint16_t linkId) {
+    iConstForEach(PtrArray, i, &d->downloads) {
+        const iGmDownload *dl = i.ptr;
+        if (dl->props.linkId == linkId) {
+            return index_PtrArrayConstIterator(&i) + 1;
+        }
+    }
+    return 0;
+}
+
+iInt2 imageSize_Media(const iMedia *d, iMediaId imageId) {
+    if (imageId > 0 && imageId <= size_PtrArray(&d->images)) {
+        const iGmImage *img = constAt_PtrArray(&d->images, imageId - 1);
+        return img->size;
+    }
+    return zero_I2();
+}
+
 SDL_Texture *imageTexture_Media(const iMedia *d, uint16_t imageId) {
     if (imageId > 0 && imageId <= size_PtrArray(&d->images)) {
         const iGmImage *img = constAt_PtrArray(&d->images, imageId - 1);
@@ -261,12 +339,11 @@ SDL_Texture *imageTexture_Media(const iMedia *d, uint16_t imageId) {
     return NULL;
 }
 
-iBool imageInfo_Media(const iMedia *d, iMediaId imageId, iGmImageInfo *info_out) {
+iBool imageInfo_Media(const iMedia *d, iMediaId imageId, iGmMediaInfo *info_out) {
     if (imageId > 0 && imageId <= size_PtrArray(&d->images)) {
         const iGmImage *img   = constAt_PtrArray(&d->images, imageId - 1);
-        info_out->size        = img->size;
         info_out->numBytes    = img->numBytes;
-        info_out->mime        = cstr_String(&img->props.mime);
+        info_out->type        = cstr_String(&img->props.mime);
         info_out->isPermanent = img->props.isPermanent;
         return iTrue;
     }
@@ -282,10 +359,10 @@ iPlayer *audioData_Media(const iMedia *d, iMediaId audioId) {
     return NULL;
 }
 
-iBool audioInfo_Media(const iMedia *d, iMediaId audioId, iGmAudioInfo *info_out) {
+iBool audioInfo_Media(const iMedia *d, iMediaId audioId, iGmMediaInfo *info_out) {
     if (audioId > 0 && audioId <= size_PtrArray(&d->audio)) {
         const iGmAudio *audio = constAt_PtrArray(&d->audio, audioId - 1);
-        info_out->mime        = cstr_String(&audio->props.mime);
+        info_out->type        = cstr_String(&audio->props.mime);
         info_out->isPermanent = audio->props.isPermanent;
         return iTrue;
     }

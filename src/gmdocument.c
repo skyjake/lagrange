@@ -559,8 +559,9 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             const iMediaId imageId = findLinkImage_Media(d->media, run.linkId);
             const iMediaId audioId = !imageId ? findLinkAudio_Media(d->media, run.linkId) : 0;
             if (imageId) {
-                iGmImageInfo img;
+                iGmMediaInfo img;
                 imageInfo_Media(d->media, imageId, &img);
+                const iInt2 imgSize = imageSize_Media(d->media, imageId);
                 /* Mark the link as having content. */ {
                     iGmLink *link = at_PtrArray(&d->links, run.linkId - 1);
                     link->flags |= content_GmLinkFlag;
@@ -572,10 +573,10 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 pos.y += margin;
                 run.bounds.pos = pos;
                 run.bounds.size.x = d->size.x;
-                const float aspect = (float) img.size.y / (float) img.size.x;
+                const float aspect = (float) imgSize.y / (float) imgSize.x;
                 run.bounds.size.y = d->size.x * aspect;
                 run.visBounds = run.bounds;
-                const iInt2 maxSize = mulf_I2(img.size, get_Window()->pixelRatio);
+                const iInt2 maxSize = mulf_I2(imgSize, get_Window()->pixelRatio);
                 if (width_Rect(run.visBounds) > maxSize.x) {
                     /* Don't scale the image up. */
                     run.visBounds.size.y =
@@ -593,7 +594,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 pos.y += run.bounds.size.y + margin;
             }
             else if (audioId) {
-                iGmAudioInfo info;
+                iGmMediaInfo info;
                 audioInfo_Media(d->media, audioId, &info);
                 /* Mark the link as having content. */ {
                     iGmLink *link = at_PtrArray(&d->links, run.linkId - 1);

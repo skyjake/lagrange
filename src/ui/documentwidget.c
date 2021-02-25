@@ -1058,7 +1058,7 @@ static void updateTrust_DocumentWidget_(iDocumentWidget *d, const iGmResponse *r
     else if (d->certFlags & trusted_GmCertFlag) {
         updateTextCStr_LabelWidget(lock, green_ColorEscape closedLock_CStr);
     }
-    else {        
+    else {
         updateTextCStr_LabelWidget(lock, isDarkMode ? orange_ColorEscape "\u26a0"
             : black_ColorEscape "\u26a0");
     }
@@ -1755,7 +1755,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         const iRangecc host = urlHost_String(d->mod.url);
         if (!isEmpty_Block(d->certFingerprint) && !isEmpty_Range(&host)) {
             setTrusted_GmCerts(certs_App(), host, d->certFingerprint, &d->certExpiry);
-            d->certFlags |= trusted_GmCertFlag;            
+            d->certFlags |= trusted_GmCertFlag;
             postCommand_App("document.info");
             updateTrust_DocumentWidget_(d, NULL);
             redoLayout_GmDocument(d->doc);
@@ -2667,7 +2667,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                     const int linkFlags = linkFlags_GmDocument(d->doc, linkId);
                     iAssert(linkId);
                     /* Media links are opened inline by default. */
-                    if (isMediaLink_GmDocument(d->doc, linkId)) {                        
+                    if (isMediaLink_GmDocument(d->doc, linkId)) {
                         if (linkFlags & content_GmLinkFlag && linkFlags & permanent_GmLinkFlag) {
                             /* We have the content and it cannot be dismissed, so nothing
                                further to do. */
@@ -3005,15 +3005,16 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
             iAssert(imageId || audioId);
             if (imageId) {
                 iAssert(!isEmpty_Rect(run->bounds));
-                iGmImageInfo info;
+                iGmMediaInfo info;
                 imageInfo_Media(constMedia_GmDocument(doc), imageId, &info);
+                const iInt2 imgSize = imageSize_Media(constMedia_GmDocument(doc), imageId);
                 format_String(&text, "%s \u2014 %d x %d \u2014 %.1fMB",
-                              info.mime, info.size.x, info.size.y, info.numBytes / 1.0e6f);
+                              info.type, imgSize.x, imgSize.y, info.numBytes / 1.0e6f);
             }
             else if (audioId) {
-                iGmAudioInfo info;
+                iGmMediaInfo info;
                 audioInfo_Media(constMedia_GmDocument(doc), audioId, &info);
-                format_String(&text, "%s", info.mime);
+                format_String(&text, "%s", info.type);
             }
             if (findMediaRequest_DocumentWidget_(d->widget, run->linkId)) {
                 appendFormat_String(

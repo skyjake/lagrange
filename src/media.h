@@ -30,18 +30,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 typedef uint16_t iMediaId;
 
 iDeclareType(Player)
-iDeclareType(GmImageInfo)
-iDeclareType(GmAudioInfo)
+iDeclareType(GmMediaInfo)
 
-struct Impl_GmImageInfo {
-    iInt2       size;
+struct Impl_GmMediaInfo {
+    const char *type; /* MIME */
     size_t      numBytes;
-    const char *mime;
-    iBool       isPermanent;
-};
-
-struct Impl_GmAudioInfo {
-    const char *mime;
     iBool       isPermanent;
 };
 
@@ -54,17 +47,20 @@ enum iMediaFlags {
 };
 
 void    clear_Media     (iMedia *);
+iBool   setUrl_Media    (iMedia *, uint16_t linkId, const iString *url);
 iBool   setData_Media   (iMedia *, uint16_t linkId, const iString *mime, const iBlock *data, int flags);
 
 iMediaId        findLinkImage_Media (const iMedia *, uint16_t linkId);
-iBool           imageInfo_Media     (const iMedia *, iMediaId imageId, iGmImageInfo *info_out);
+iBool           imageInfo_Media     (const iMedia *, iMediaId imageId, iGmMediaInfo *info_out);
+iInt2           imageSize_Media     (const iMedia *, iMediaId imageId);
 SDL_Texture *   imageTexture_Media  (const iMedia *, iMediaId imageId);
 
 size_t          numAudio_Media      (const iMedia *);
 iMediaId        findLinkAudio_Media (const iMedia *, uint16_t linkId);
-iBool           audioInfo_Media     (const iMedia *, iMediaId audioId, iGmAudioInfo *info_out);
+iBool           audioInfo_Media     (const iMedia *, iMediaId audioId, iGmMediaInfo *info_out);
 iPlayer *       audioPlayer_Media   (const iMedia *, iMediaId audioId);
 
+iMediaId        findLinkDownload_Media  (const iMedia *, uint16_t linkId);
 
 /*----------------------------------------------------------------------------------------------*/
 
