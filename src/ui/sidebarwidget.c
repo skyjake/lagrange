@@ -149,6 +149,10 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 if (isHidden_FeedEntry(entry)) {
                     continue; /* A hidden entry. */
                 }
+                /* Don't show entries in the far future. */
+                if (secondsSince_Time(&now, &entry->posted) < -24 * 60 * 60) {
+                    continue;
+                }
                 /* Exclude entries that are too old for Visited to keep track of. */
                 if (secondsSince_Time(&now, &entry->discovered) > maxAge_Visited) {
                     break; /* the rest are even older */
