@@ -990,6 +990,8 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
             setHsl_Color(tmHeading2_ColorId, setLum_HSLColor(altBase, titleLum + 0.70f));
             setHsl_Color(tmHeading3_ColorId, setLum_HSLColor(altBase, titleLum + 0.60f));
 
+//            printf("titleLum: %f\n", titleLum);
+
             setHsl_Color(tmParagraph_ColorId, addSatLum_HSLColor(base, 0.1f, 0.6f));
 
 //            printf("heading3: %d,%d,%d\n", get_Color(tmHeading3_ColorId).r,  get_Color(tmHeading3_ColorId).g,  get_Color(tmHeading3_ColorId).b);
@@ -998,11 +1000,8 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
 
             if (delta_Color(get_Color(tmHeading3_ColorId), get_Color(tmParagraph_ColorId)) <= 80) {
                 /* Smallest headings may be too close to body text color. */
-//                iHSLColor clr = get_HSLColor(tmParagraph_ColorId);
-//                clr.lum       = iMax(0.5f, clr.lum - 0.15f);
-                //setHsl_Color(tmParagraph_ColorId, clr);
-                setHsl_Color(tmHeading3_ColorId,
-                             addSatLum_HSLColor(get_HSLColor(tmHeading3_ColorId), 0, 0.15f));
+                setHsl_Color(tmHeading2_ColorId, addSatLum_HSLColor(get_HSLColor(tmHeading2_ColorId), 0.5f, -0.12f));
+                setHsl_Color(tmHeading3_ColorId, addSatLum_HSLColor(get_HSLColor(tmHeading3_ColorId), 0.5f, -0.2f));
             }
 
             setHsl_Color(tmFirstParagraph_ColorId, addSatLum_HSLColor(base, 0.2f, 0.72f));
