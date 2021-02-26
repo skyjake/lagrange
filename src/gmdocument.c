@@ -921,7 +921,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
             violet_Hue,
             pink_Hue
         };
-        static const float hues[] = { 5, 25, 40, 56, 80, 120, 160, 180, 208, 231, 270, 324 };
+        static const float hues[] = { 5, 25, 40, 56, 80 + 15, 120, 160, 180, 208, 231, 270, 324 };
         static const struct {
             int index[2];
         } altHues[iElemCount(hues)] = {
@@ -929,7 +929,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
             { 8, 3 },  /* reddish orange */
             { 7, 9 },  /* yellowish orange */
             { 5, 7 },  /* yellow */
-            { 8, 2 },  /* greenish yellow */
+            { 6, 2 },  /* greenish yellow */
             { 1, 3 },  /* green */
             { 2, 4 },  /* bluish green */
             { 2, 11 }, /* cyan */
