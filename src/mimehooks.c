@@ -113,6 +113,9 @@ static iBlock *translateAtomXmlToGeminiFeed_(const iString *mime, const iBlock *
     if (!isEmpty_String(subtitle)) {
         appendFormat_String(&out, "## %s\n\n", cstr_String(subtitle));
     }
+    appendCStr_String(&out,
+                      "This Atom XML document has been automatically translated to a Gemini feed "
+                      "to allow subscribing to it.\n\n");
     iRegExp *datePattern =
         iClob(new_RegExp("^([0-9][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9])T.*", caseSensitive_RegExpOption));
     iBeginCollect();
@@ -166,9 +169,6 @@ static iBlock *translateAtomXmlToGeminiFeed_(const iString *mime, const iBlock *
                             cstr_String(title));
     }
     iEndCollect();
-    appendCStr_String(&out,
-                      "This Atom XML document has been automatically translated to a Gemini feed "
-                      "to allow subscribing to it.\n");
     output = copy_Block(utf8_String(&out));
     deinit_String(&out);
 finished:
