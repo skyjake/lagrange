@@ -7,26 +7,47 @@
 # Release notes
 
 ## 1.2
-* Help is opened on first run instead of the "About Lagrange" page to make it easier to discover important Gemini links like the FAQ.
-* Added tab auto-reloading. Configure the reloading interval via the page context menu ("Set Auto-Reload..."). The interval is part of the persistent state of the tab.
-* Added editable bookmark icons: use your favorite Unicode character as the symbol to represent a bookmarked site in Lagrange.
-* Added search engine support: non-URL text entered in the navbar is passed onto the configured search query URL (Preferences > Network). An indicator is shown if a query will take place.
-* Short pages are centered vertically on actual page content excluding the top banner.
-* Added user preference for aligning all pages to the top of the window.
-* Shift+Insert can be used for pasting clipboard contents into input fields.
-* Added keybinding (F11) for toggling fullscreen mode. On macOS, the shortcut is ⌃⌘F as before.
-* Added keybinding for finding text on page.
-* "Go to Root" respects a user name found in the URL. One can still "Go to Parent" to get above the user level.
-* Scroll position remains fixed while horizontally resizing the window or sidebars.
-* Middle-clicking on links: open new tab in background or foreground depending on the Shift key.
-* Feed entries are sorted by refresh time if they are published on the same date.
+
+New features:
+* Atom feed subscriptions: Atom XML documents are automatically converted to Gemini feed index pages. This is a built-in version of the Atom-to-Gemini example on the Help page.
+* Inline downloads: right-click on any link that is openable inside Lagrange and select "Download Linked File".
+* Editable bookmark icons: use your favorite Unicode character as the symbol to represent a bookmarked site.
+* Searching via URL field: non-URL text entered in the field is passed onto the configured search query URL (Preferences > Network). An indicator is shown if a query will take place.
+* Tab auto-reloading: configure a reloading interval using the page context menu ("Set Auto-Reload..."). Auto-reloading is part of the persistent state of the tab.
+* "Iosevka" and "Source Sans Pro" (the UI font) can be used as heading and body fonts.
+* User preference for aligning all pages to the top of the window.
+* Keybinding (F11) for toggling fullscreen mode. On macOS, the shortcut is ⌃⌘F as before.
+* Keybinding for finding text on page.
+
+UI design:
+* Enhanced navbar: adjusted spacing, URL field has a maximum width, tab titles have less pronounced borders.
+* Improved sidebar appearance: bold subheadings, larger feed icons, adjusted spacing, background color.
+* Font consistency: all UI elements use the same font (i.e., no more monospace input fields).
+* Added setting for UI accent color (teal, orange).
+* General fine-tuning of the color palette.
 * Dialog buttons are aligned to the right edge, leaving room for additional action buttons on the left.
+* Page Information button is embedded in the URL field.
+* Page Information dialog is attached to its button.
 * Site icons use a different color in tab titles for visual distinction.
+* Fade background behind modal dialogs.
+* Responsive page margins.
 * Windows: Added a custom window frame to replace the default Windows one. This looks nicer but does not behave exactly like a native window frame. Added a setting to Preferences for switching back to the default frame.
-* Windows: Fixed a flash of white when the window is first opened.
+
+Other changes:
+* Help is opened on first run instead of the "About Lagrange" page to make it easier to discover important Gemini links like the FAQ.
+* "Go to Root" respects a user name found in the URL. One can still "Go to Parent" to get above the user level.
+* Feed entries are sorted by refresh time if they are published on the same date.
+* Don't show future-dated feed entries in Feeds.
+* Middle-clicking on links: open new tab in background or foreground depending on the Shift key.
+* Shift+Insert can be used for pasting clipboard contents into input fields.
 * Removed a strange violet-on-green color theme pairing.
+
+Bug fixes:
 * Fixed text prompt dialogs closing and accepting the entered text when switching focus away from the app.
+* Scroll position remains fixed while horizontally resizing the window or sidebars.
 * Fixed a crash when opening the audio player menu.
+* Fixed Gopher requests that were using URL (percent) encoded characters.
+* Windows: Fixed a flash of white when the window is first opened.
 
 ## 1.1.4
 * Fixed feed entry highlight/read status issue in the sidebar.
