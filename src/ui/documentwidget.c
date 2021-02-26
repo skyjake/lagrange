@@ -2037,8 +2037,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     else if (equal_Command(cmd, "document.autoreload")) {
         if (d->mod.reloadInterval) {
-            if (isValid_Time(&d->sourceTime) &&
-                elapsedSeconds_Time(&d->sourceTime) >=
+            if (!isValid_Time(&d->sourceTime) || elapsedSeconds_Time(&d->sourceTime) >=
                     seconds_ReloadInterval_(d->mod.reloadInterval)) {
                 postCommand_Widget(w, "document.reload");
             }
