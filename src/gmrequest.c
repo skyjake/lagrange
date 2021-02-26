@@ -494,6 +494,10 @@ void deinit_GmRequest(iGmRequest *d) {
     delete_Mutex(d->mtx);
 }
 
+void enableFilters_GmRequest(iGmRequest *d, iBool enable) {
+    d->isFilterEnabled = enable;
+}
+
 void setUrl_GmRequest(iGmRequest *d, const iString *url) {
     set_String(&d->url, urlFragmentStripped_String(url));
     /* Encode hostname to Punycode here because we want to submit the Punycode domain name

@@ -475,11 +475,13 @@ static void finished_MediaRequest_(iAnyObject *obj) {
     postCommandf_App("media.finished link:%u request:%p", d->linkId, d);
 }
 
-void init_MediaRequest(iMediaRequest *d, iDocumentWidget *doc, unsigned int linkId, const iString *url) {
+void init_MediaRequest(iMediaRequest *d, iDocumentWidget *doc, unsigned int linkId,
+                       const iString *url, iBool enableFilters) {
     d->doc    = doc;
     d->linkId = linkId;
     d->req    = new_GmRequest(certs_App());
     setUrl_GmRequest(d->req, url);
+    enableFilters_GmRequest(d->req, enableFilters);
     iConnect(GmRequest, d->req, updated, d, updated_MediaRequest_);
     iConnect(GmRequest, d->req, finished, d, finished_MediaRequest_);
     submit_GmRequest(d->req);
@@ -492,6 +494,7 @@ void deinit_MediaRequest(iMediaRequest *d) {
 }
 
 iDefineObjectConstructionArgs(MediaRequest,
-                              (iDocumentWidget *doc, unsigned int linkId, const iString *url),
-                              doc, linkId, url)
+                              (iDocumentWidget *doc, unsigned int linkId, const iString *url,
+                               iBool enableFilters),
+                              doc, linkId, url, enableFilters)
 iDefineClass(MediaRequest)

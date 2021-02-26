@@ -1308,10 +1308,10 @@ static iMediaRequest *findMediaRequest_DocumentWidget_(const iDocumentWidget *d,
     return NULL;
 }
 
-static iBool requestMedia_DocumentWidget_(iDocumentWidget *d, iGmLinkId linkId) {
+static iBool requestMedia_DocumentWidget_(iDocumentWidget *d, iGmLinkId linkId, iBool enableFilters) {
     if (!findMediaRequest_DocumentWidget_(d, linkId)) {
         const iString *mediaUrl = absoluteUrl_String(d->mod.url, linkUrl_GmDocument(d->doc, linkId));
-        pushBack_ObjectList(d->media, iClob(new_MediaRequest(d, linkId, mediaUrl)));
+        pushBack_ObjectList(d->media, iClob(new_MediaRequest(d, linkId, mediaUrl, enableFilters)));
         invalidate_DocumentWidget_(d);
         return iTrue;
     }
@@ -1410,7 +1410,7 @@ static iBool fetchNextUnfetchedImage_DocumentWidget_(iDocumentWidget *d) {
             if (isMediaLink_GmDocument(d->doc, run->linkId) &&
                 linkFlags & imageFileExtension_GmLinkFlag &&
                 ~linkFlags & content_GmLinkFlag && ~linkFlags & permanent_GmLinkFlag ) {
-                if (requestMedia_DocumentWidget_(d, run->linkId)) {
+                if (requestMedia_DocumentWidget_(d, run->linkId, iTrue)) {
                     return iTrue;
                 }
             }
@@ -1685,7 +1685,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             const iGmLinkId linkId = d->contextLink->linkId;
             setDownloadUrl_Media(
                 media_GmDocument(d->doc), linkId, linkUrl_GmDocument(d->doc, linkId));
-            requestMedia_DocumentWidget_(d, linkId);
+            requestMedia_DocumentWidget_(d, linkId, iFalse /* no filters */);
             redoLayout_GmDocument(d->doc); /* inline downloader becomes visible */
             updateVisible_DocumentWidget_(d);
             invalidate_DocumentWidget_(d);
@@ -2583,7 +2583,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                further to do. */
                             return iTrue;
                         }
-                        if (!requestMedia_DocumentWidget_(d, linkId)) {
+                        if (!requestMedia_DocumentWidget_(d, linkId, iTrue)) {
                             if (linkFlags & content_GmLinkFlag) {
                                 /* Dismiss shown content on click. */
                                 setData_Media(media_GmDocument(d->doc),

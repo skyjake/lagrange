@@ -80,4 +80,4 @@ struct Impl_MediaRequest {
 };
 
 iDeclareObjectConstructionArgs(MediaRequest, iDocumentWidget *doc, unsigned int linkId,
-                               const iString *url)
+                               const iString *url, iBool enableFilters)
