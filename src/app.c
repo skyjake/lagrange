@@ -581,6 +581,61 @@ const iString *downloadDir_App(void) {
     return collect_String(cleaned_Path(&app_.prefs.downloadDir));
 }
 
+const iString *downloadPathForUrl_App(const iString *url, const iString *mime) {
+    /* Figure out a file name from the URL. */
+    iUrl parts;
+    init_Url(&parts, url);
+    while (startsWith_Rangecc(parts.path, "/")) {
+        parts.path.start++;
+    }
+    while (endsWith_Rangecc(parts.path, "/")) {
+        parts.path.end--;
+    }
+    iString *name = collectNewCStr_String("pagecontent");
+    if (isEmpty_Range(&parts.path)) {
+        if (!isEmpty_Range(&parts.host)) {
+            setRange_String(name, parts.host);
+            replace_Block(&name->chars, '.', '_');
+        }
+    }
+    else {
+        iRangecc fn = { parts.path.start + lastIndexOfCStr_Rangecc(parts.path, "/") + 1,
+                        parts.path.end };
+        if (!isEmpty_Range(&fn)) {
+            setRange_String(name, fn);
+        }
+    }
+    if (startsWith_String(name, "~")) {
+        /* This would be interpreted as a reference to a home directory. */
+        remove_Block(&name->chars, 0, 1);
+    }
+    iString *savePath = concat_Path(downloadDir_App(), name);
+    if (lastIndexOfCStr_String(savePath, ".") == iInvalidPos) {
+        /* No extension specified in URL. */
+        if (startsWith_String(mime, "text/gemini")) {
+            appendCStr_String(savePath, ".gmi");
+        }
+        else if (startsWith_String(mime, "text/")) {
+            appendCStr_String(savePath, ".txt");
+        }
+        else if (startsWith_String(mime, "image/")) {
+            appendCStr_String(savePath, cstr_String(mime) + 6);
+        }
+    }
+    if (fileExists_FileInfo(savePath)) {
+        /* Make it unique. */
+        iDate now;
+        initCurrent_Date(&now);
+        size_t insPos = lastIndexOfCStr_String(savePath, ".");
+        if (insPos == iInvalidPos) {
+            insPos = size_String(savePath);
+        }
+        const iString *date = collect_String(format_Date(&now, "_%Y-%m-%d_%H%M%S"));
+        insertData_Block(&savePath->chars, insPos, cstr_String(date), size_String(date));
+    }
+    return collect_String(savePath);
+}
+
 const iString *debugInfo_App(void) {
     extern char **environ; /* The environment variables. */
     iApp *d = &app_;

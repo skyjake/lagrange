@@ -23,6 +23,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #pragma once
 
 #include <the_Foundation/rect.h>
+#include <SDL_events.h>
 
 iDeclareType(Paint)
 iDeclareType(Player)
@@ -42,3 +43,19 @@ struct Impl_PlayerUI {
 
 void    init_PlayerUI   (iPlayerUI *, const iPlayer *player, iRect bounds);
 void    draw_PlayerUI   (iPlayerUI *, iPaint *p);
+
+/*----------------------------------------------------------------------------------------------*/
+
+iDeclareType(DocumentWidget)
+iDeclareType(Media)
+iDeclareType(DownloadUI)
+
+struct Impl_DownloadUI {
+    const iDocumentWidget *doc;
+    uint16_t mediaId;
+    iRect bounds;
+};
+
+void    init_DownloadUI         (iDownloadUI *, const iDocumentWidget *doc, uint16_t mediaId, iRect bounds);
+iBool   processEvent_DownloadUI (iDownloadUI *, const SDL_Event *ev);
+void    draw_DownloadUI         (const iDownloadUI *, iPaint *p);

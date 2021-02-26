@@ -85,6 +85,7 @@ enum iColorTheme    colorTheme_App      (void);
 const iString *     schemeProxy_App     (iRangecc scheme);
 iBool               willUseProxy_App    (const iRangecc scheme);
 const iString *     searchQueryUrl_App  (const iString *queryStringUnescaped);
+const iString *     downloadPathForUrl_App(const iString *url, const iString *mime);
 
 typedef void (*iTickerFunc)(iAny *);
 

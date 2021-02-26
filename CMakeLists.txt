@@ -142,8 +142,8 @@ set (SOURCES
     src/ui/metrics.h
     src/ui/paint.c
     src/ui/paint.h
-    src/ui/playerui.c
-    src/ui/playerui.h
+    src/ui/mediaui.c
+    src/ui/mediaui.h
     src/ui/scrollwidget.c
     src/ui/scrollwidget.h
     src/ui/sidebarwidget.c
@@ -175,7 +175,7 @@ set (SOURCES
 )
 if (IOS)
     add_definitions (-DiPlatformAppleMobile=1)
-    list (APPEND SOURCES 
+    list (APPEND SOURCES
         src/ios.m
         src/ios.h
         app/Images.xcassets

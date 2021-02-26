@@ -255,6 +255,15 @@ static iBool isForcedMonospace_GmDocument_(const iGmDocument *d) {
     return iFalse;
 }
 
+static void linkContentLaidOut_GmDocument_(iGmDocument *d, const iGmMediaInfo *mediaInfo,
+                                           uint16_t linkId) {
+    iGmLink *link = at_PtrArray(&d->links, linkId - 1);
+    link->flags |= content_GmLinkFlag;
+    if (mediaInfo && mediaInfo->isPermanent) {
+        link->flags |= permanent_GmLinkFlag;
+    }
+}
+
 static void doLayout_GmDocument_(iGmDocument *d) {
     const iBool isMono = isForcedMonospace_GmDocument_(d);
     /* TODO: Collect these parameters into a GmTheme. */
@@ -558,17 +567,12 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         if (type == link_GmLineType) {
             const iMediaId imageId = findLinkImage_Media(d->media, run.linkId);
             const iMediaId audioId = !imageId ? findLinkAudio_Media(d->media, run.linkId) : 0;
+            const iMediaId downloadId = !imageId && !audioId ? findLinkDownload_Media(d->media, run.linkId) : 0;
             if (imageId) {
                 iGmMediaInfo img;
                 imageInfo_Media(d->media, imageId, &img);
                 const iInt2 imgSize = imageSize_Media(d->media, imageId);
-                /* Mark the link as having content. */ {
-                    iGmLink *link = at_PtrArray(&d->links, run.linkId - 1);
-                    link->flags |= content_GmLinkFlag;
-                    if (img.isPermanent) {
-                        link->flags |= permanent_GmLinkFlag;
-                    }
-                }
+                linkContentLaidOut_GmDocument_(d, &img, run.linkId);
                 const int margin = lineHeight_Text(paragraph_FontId) / 2;
                 pos.y += margin;
                 run.bounds.pos = pos;
@@ -596,13 +600,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             else if (audioId) {
                 iGmMediaInfo info;
                 audioInfo_Media(d->media, audioId, &info);
-                /* Mark the link as having content. */ {
-                    iGmLink *link = at_PtrArray(&d->links, run.linkId - 1);
-                    link->flags |= content_GmLinkFlag;
-                    if (info.isPermanent) {
-                        link->flags |= permanent_GmLinkFlag;
-                    }
-                }
+                linkContentLaidOut_GmDocument_(d, &info, run.linkId);
                 const int margin = lineHeight_Text(paragraph_FontId) / 2;
                 pos.y += margin;
                 run.bounds.pos    = pos;
@@ -613,6 +611,23 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 run.color         = 0;
                 run.mediaType     = audio_GmRunMediaType;
                 run.mediaId       = audioId;
+                pushBack_Array(&d->layout, &run);
+                pos.y += run.bounds.size.y + margin;
+            }
+            else if (downloadId) {
+                iGmMediaInfo info;
+                downloadInfo_Media(d->media, downloadId, &info);
+                linkContentLaidOut_GmDocument_(d, &info, run.linkId);
+                const int margin = lineHeight_Text(paragraph_FontId) / 2;
+                pos.y += margin;
+                run.bounds.pos    = pos;
+                run.bounds.size.x = d->size.x;
+                run.bounds.size.y = 2 * lineHeight_Text(uiContent_FontId) + 4 * gap_UI;
+                run.visBounds     = run.bounds;
+                run.text          = iNullRange;
+                run.color         = 0;
+                run.mediaType     = download_GmRunMediaType;
+                run.mediaId       = downloadId;
                 pushBack_Array(&d->layout, &run);
                 pos.y += run.bounds.size.y + margin;
             }

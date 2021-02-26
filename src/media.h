@@ -46,9 +46,9 @@ enum iMediaFlags {
     partialData_MediaFlag = iBit(2),
 };
 
-void    clear_Media     (iMedia *);
-iBool   setUrl_Media    (iMedia *, uint16_t linkId, const iString *url);
-iBool   setData_Media   (iMedia *, uint16_t linkId, const iString *mime, const iBlock *data, int flags);
+void    clear_Media             (iMedia *);
+iBool   setDownloadUrl_Media    (iMedia *, uint16_t linkId, const iString *url);
+iBool   setData_Media           (iMedia *, uint16_t linkId, const iString *mime, const iBlock *data, int flags);
 
 iMediaId        findLinkImage_Media (const iMedia *, uint16_t linkId);
 iBool           imageInfo_Media     (const iMedia *, iMediaId imageId, iGmMediaInfo *info_out);
@@ -61,6 +61,9 @@ iBool           audioInfo_Media     (const iMedia *, iMediaId audioId, iGmMediaI
 iPlayer *       audioPlayer_Media   (const iMedia *, iMediaId audioId);
 
 iMediaId        findLinkDownload_Media  (const iMedia *, uint16_t linkId);
+iBool           downloadInfo_Media      (const iMedia *, iMediaId downloadId, iGmMediaInfo *info_out);
+void            downloadStats_Media     (const iMedia *, iMediaId downloadId, const iString **path_out,
+                                         float *bytesPerSecond_out, iBool *isFinished_out);
 
 /*----------------------------------------------------------------------------------------------*/
 
