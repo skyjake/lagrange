@@ -195,7 +195,7 @@ void setThemePalette_Color(enum iColorTheme theme) {
             copy_(uiTextShortcut_ColorId, accentLo);
             copy_(uiTextAction_ColorId, accentLo);
             copy_(uiTextCaution_ColorId, altAccentLo);
-            copy_(uiTextAppTitle_ColorId, altAccentLo);
+            copy_(uiTextAppTitle_ColorId, accentLo);
             copy_(uiFrame_ColorId, gray50_ColorId);
             copy_(uiEmboss1_ColorId, white_ColorId);
             copy_(uiEmboss2_ColorId, gray50_ColorId);
@@ -245,7 +245,7 @@ void setThemePalette_Color(enum iColorTheme theme) {
             copy_(uiTextShortcut_ColorId, accentLo);
             copy_(uiTextAction_ColorId, accentLo);
             copy_(uiTextCaution_ColorId, altAccentLo);
-            copy_(uiTextAppTitle_ColorId, altAccentLo);
+            copy_(uiTextAppTitle_ColorId, accentLo);
             copy_(uiFrame_ColorId, gray75_ColorId);
             copy_(uiEmboss1_ColorId, white_ColorId);
             copy_(uiEmboss2_ColorId, white_ColorId);
