@@ -334,7 +334,7 @@ void arrange_Widget(iWidget *d) {
             iWidget *child = as_Widget(c.object);
             if (isCollapsed_Widget_(child)) {
                 if (d->flags & arrangeHorizontal_WidgetFlag) {
-                    setWidth_Widget_(child, 0);                    
+                    setWidth_Widget_(child, 0);
                 }
                 if (d->flags & arrangeVertical_WidgetFlag) {
                     setHeight_Widget_(child, 0);
@@ -682,7 +682,7 @@ void drawBackground_Widget(const iWidget *d) {
         iPaint p;
         init_Paint(&p);
         if (d->flags & mouseModal_WidgetFlag) {
-            p.alpha = 128;
+            p.alpha = 0x60;
             SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_BLEND);
             int fadeColor;
             switch (colorTheme_App()) {

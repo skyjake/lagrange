@@ -227,7 +227,8 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
                 bottomRight_Rect(frameRect), bottomLeft_Rect(frameRect)
             };
             drawLines_Paint(&p, points + 2, 3, frame2);
-            drawLines_Paint(&p, points, 3, frame);
+            drawLines_Paint(
+                &p, points, !isHover_Widget(w) && flags & noTopFrame_WidgetFlag ? 2 : 3, frame);
         }
     }
     setClip_Paint(&p, rect);

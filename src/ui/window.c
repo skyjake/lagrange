@@ -433,8 +433,8 @@ static uint32_t updateReloadAnimation_Window_(uint32_t interval, void *window) {
 }
 
 static void setReloadLabel_Window_(iWindow *d, iBool animating) {
-    updateTextCStr_LabelWidget(findChild_Widget(d->root, "reload"),
-                               animating ? loadAnimationCStr_() : reloadCStr_);
+    iLabelWidget *label = findChild_Widget(d->root, "reload");
+    updateTextCStr_LabelWidget(label, animating ? loadAnimationCStr_() : reloadCStr_);
 }
 
 static void checkLoadAnimation_Window_(iWindow *d) {
@@ -495,10 +495,30 @@ static void showSearchQueryIndicator_(iBool show) {
         (iInputWidget *) parent_Widget(indicator), -1, show ? width_Widget(indicator) : 0);
 }
 
+static int navBarAvailableSpace_(iWidget *navBar) {
+    int avail = width_Rect(innerBounds_Widget(navBar));
+    iConstForEach(ObjectList, i, children_Widget(navBar)) {
+        const iWidget *child = i.object;
+        if (~flags_Widget(child) & expand_WidgetFlag &&
+            isVisible_Widget(child) &&
+            cmp_String(id_Widget(child), "url")) {
+            avail -= width_Widget(child);
+        }
+    }
+    return avail;
+}
+
 static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
     if (equal_Command(cmd, "window.resized")) {
         const iBool isPhone = deviceType_App() == phone_AppDeviceType;
         const iBool isNarrow = !isPhone && width_Rect(bounds_Widget(navBar)) / gap_UI < 140;
+        /* Adjust navbar padding. */ {
+            int hPad = isPhone || isNarrow ? gap_UI / 2 : gap_UI * 3 / 2;
+            int vPad = gap_UI * 3 / 2;
+            int topPad = !findWidget_App("winbar") ? gap_UI / 2 : 0;
+            setPadding_Widget(navBar, hPad, vPad / 2 + topPad, hPad, vPad / 2);
+        }
+        /* Button sizing. */
         if (isNarrow ^ ((flags_Widget(navBar) & tight_WidgetFlag) != 0)) {
             setFlags_Widget(navBar, tight_WidgetFlag, isNarrow);
             iForEach(ObjectList, i, navBar->children) {
@@ -531,7 +551,9 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
             }
             arrange_Widget(get_Window()->root);
         }
-        else {
+        /* Resize the URL input field. */ {
+            iWidget *urlBar = findChild_Widget(navBar, "url");
+            urlBar->rect.size.x = iMini(navBarAvailableSpace_(navBar), 167 * gap_UI);
             arrange_Widget(navBar);
         }
         refresh_Widget(navBar);
@@ -795,9 +817,9 @@ static void setupUserInterface_Window(iWindow *d) {
     iWidget *div = makeVDiv_Widget();
     setId_Widget(div, "navdiv");
     addChild_Widget(d->root, iClob(div));
-    
+
 #if defined (LAGRANGE_CUSTOM_FRAME)
-    /* Window title bar. */ 
+    /* Window title bar. */
     if (prefs_App()->customFrame) {
         setPadding1_Widget(div, 1);
         iWidget *winBar = new_Widget();
@@ -852,8 +874,6 @@ static void setupUserInterface_Window(iWindow *d) {
     /* Navigation bar. */ {
         iWidget *navBar = new_Widget();
         setId_Widget(navBar, "navbar");
-        int topPad = !findChild_Widget(div, "winbar") ? gap_UI / 2 : 0;
-        setPadding_Widget(navBar, gap_UI, topPad, gap_UI, gap_UI / 2);
         setFlags_Widget(navBar,
                         arrangeHeight_WidgetFlag |
                         resizeChildren_WidgetFlag |
@@ -866,6 +886,7 @@ static void setupUserInterface_Window(iWindow *d) {
         setCommandHandler_Widget(navBar, handleNavBarCommands_);
         setId_Widget(addChildFlags_Widget(navBar, iClob(newIcon_LabelWidget("\U0001f870", 0, 0, "navigate.back")), collapse_WidgetFlag), "navbar.back");
         setId_Widget(addChildFlags_Widget(navBar, iClob(newIcon_LabelWidget("\U0001f872", 0, 0, "navigate.forward")), collapse_WidgetFlag), "navbar.forward");
+        addChildFlags_Widget(navBar, iClob(new_Widget()), expand_WidgetFlag);
         iLabelWidget *idMenu = makeMenuButton_LabelWidget(
             "\U0001f464", identityButtonMenuItems_, iElemCount(identityButtonMenuItems_));
         setAlignVisually_LabelWidget(idMenu, iTrue);
@@ -877,7 +898,7 @@ static void setupUserInterface_Window(iWindow *d) {
             setUrlContent_InputWidget(url, iTrue);
             setNotifyEdits_InputWidget(url, iTrue);
             setTextCStr_InputWidget(url, "gemini://");
-            addChildFlags_Widget(navBar, iClob(url), expand_WidgetFlag);
+            addChildFlags_Widget(navBar, iClob(url), 0);
             setPadding_Widget(as_Widget(url), 0, 0, gap_UI, 0);
             /* Page information/certificate warning. */ {
                 iLabelWidget *lock =
@@ -928,7 +949,7 @@ static void setupUserInterface_Window(iWindow *d) {
         setId_Widget(addChild_Widget(
                          navBar, iClob(newIcon_LabelWidget(reloadCStr_, 0, 0, "navigate.reload"))),
                      "reload");
-        
+        addChildFlags_Widget(navBar, iClob(new_Widget()), expand_WidgetFlag);
         setId_Widget(addChildFlags_Widget(navBar,
                         iClob(newIcon_LabelWidget(
                             "\U0001f3e0", SDLK_h, KMOD_PRIMARY | KMOD_SHIFT, "navigate.home")),
@@ -1137,7 +1158,7 @@ static SDL_HitTestResult hitTest_Window_(SDL_Window *win, const SDL_Point *pos, 
     const int snap = snap_Window(d);
     int w, h;
     SDL_GetWindowSize(win, &w, &h);
-    /* TODO: Check if inside the caption label widget. */    
+    /* TODO: Check if inside the caption label widget. */
     const iBool isLeft   = pos->x < gap_UI;
     const iBool isRight  = pos->x >= w - gap_UI;
     const iBool isTop    = pos->y < gap_UI && snap != yMaximized_WindowSnap;
@@ -1306,7 +1327,7 @@ void init_Window(iWindow *d, iRect rect) {
     updateRootSize_Window_(d, iFalse);
     d->appIcon = NULL;
 #if defined (LAGRANGE_CUSTOM_FRAME)
-    /* Load the app icon for drawing in the title bar. */ 
+    /* Load the app icon for drawing in the title bar. */
     if (prefs_App()->customFrame) {
         SDL_Surface *surf = loadAppIconSurface_(appIconSize_());
         SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
@@ -1416,7 +1437,7 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
 #endif
             return iFalse;
         case SDL_WINDOWEVENT_MOVED: {
-            if (d->isMinimized) { 
+            if (d->isMinimized) {
                 return iFalse;
             }
             const iInt2 newPos = init_I2(ev->data1, ev->data2);
@@ -1426,7 +1447,7 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
                 return iFalse;
             }
 #if defined (LAGRANGE_CUSTOM_FRAME)
-            /* Set the snap position depending on where the mouse cursor is. */ 
+            /* Set the snap position depending on where the mouse cursor is. */
             if (prefs_App()->customFrame) {
                 SDL_Rect usable;
                 iInt2 mouse = cursor_Win32(); /* SDL is unaware of the current cursor pos */
@@ -1473,7 +1494,7 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
         }
         case SDL_WINDOWEVENT_RESIZED:
             updatePadding_Window_(d);
-            if (d->isMinimized) { 
+            if (d->isMinimized) {
                 updateRootSize_Window_(d, iTrue);
                 return iTrue;
             }
@@ -1485,16 +1506,16 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
                 //printf("normal rect set (resize)\n"); fflush(stdout);
             }
             updateRootSize_Window_(d, iTrue /* we were already redrawing during the resize */);
+            postRefresh_App();
             return iTrue;
         case SDL_WINDOWEVENT_RESTORED:
-            //updateRootSize_Window_(d, iTrue);
+            updateRootSize_Window_(d, iTrue);
             invalidate_Window_(d);
             d->isMinimized = iFalse;
             postRefresh_App();
             return iTrue;
         case SDL_WINDOWEVENT_MINIMIZED:
             d->isMinimized = iTrue;
-            //printf("minimized\n"); fflush(stdout);
             return iTrue;
         case SDL_WINDOWEVENT_LEAVE:
             unhover_Widget();
@@ -1507,6 +1528,7 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
             return iTrue;
         case SDL_WINDOWEVENT_TAKE_FOCUS:
             SDL_SetWindowInputFocus(d->win);
+            postRefresh_App();
             return iTrue;
         case SDL_WINDOWEVENT_FOCUS_GAINED:
             d->focusGainedAt = SDL_GetTicks();
@@ -1532,13 +1554,13 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
     switch (ev->type) {
 #if defined (LAGRANGE_CUSTOM_FRAME)
         case SDL_SYSWMEVENT: {
-            /* We observe native Win32 messages for better user interaction with the 
-               window frame. Mouse clicks especially will not generate normal SDL 
+            /* We observe native Win32 messages for better user interaction with the
+               window frame. Mouse clicks especially will not generate normal SDL
                events if they happen on the custom hit-tested regions. These events
                are processed only there; the UI widgets do not get involved. */
             processNativeEvent_Win32(ev->syswm.msg, d);
             break;
-        }       
+        }
 #endif
         case SDL_WINDOWEVENT: {
             return handleWindowEvent_Window_(d, &ev->window);
@@ -1778,7 +1800,7 @@ void setSnap_Window(iWindow *d, int snapMode) {
         return;
     }
     const int snapDist = gap_UI * 4;
-    iRect newRect = zero_Rect();   
+    iRect newRect = zero_Rect();
     SDL_Rect usable;
     SDL_GetDisplayUsableBounds(SDL_GetWindowDisplayIndex(d->win), &usable);
     if (d->place.snap == fullscreen_WindowSnap) {

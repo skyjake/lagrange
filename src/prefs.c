@@ -26,6 +26,7 @@ void init_Prefs(iPrefs *d) {
     d->dialogTab         = 0;
     d->useSystemTheme    = iTrue;
     d->theme             = dark_ColorTheme;
+    d->accent            = cyan_ColorAccent;
     d->customFrame       = iFalse; /* needs some more work to be default */
     d->retainWindowSize  = iTrue;
     d->uiScale           = 1.0f; /* default set elsewhere */

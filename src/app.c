@@ -185,9 +185,9 @@ static iString *serializePrefs_App_(const iApp *d) {
                 SDL_GetWindowPosition(d->window->win, &x, &y);
                 SDL_GetWindowSize(d->window->win, &w, &h);
                 appendFormat_String(
-                    str, "~window.setrect snap:%d width:%d height:%d coord:%d %d\n", 
+                    str, "~window.setrect snap:%d width:%d height:%d coord:%d %d\n",
                     snap_Window(d->window), w, h, x, y);
-            }          
+            }
         }
 #elif !defined (iPlatformApple)
         if (snap_Window(d->window) == maximized_WindowSnap) {
@@ -223,6 +223,7 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "quoteicon.set arg:%d\n", d->prefs.quoteIcon ? 1 : 0);
     appendFormat_String(str, "prefs.hoverlink.changed arg:%d\n", d->prefs.hoverLink);
     appendFormat_String(str, "theme.set arg:%d auto:1\n", d->prefs.theme);
+    appendFormat_String(str, "accent.set arg:%d\n", d->prefs.accent);
     appendFormat_String(str, "ostheme arg:%d\n", d->prefs.useSystemTheme);
     appendFormat_String(str, "doctheme.dark.set arg:%d\n", d->prefs.docThemeDark);
     appendFormat_String(str, "doctheme.light.set arg:%d\n", d->prefs.docThemeLight);
@@ -521,7 +522,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     postCommand_App("window.unfreeze");
     d->autoReloadTimer = SDL_AddTimer(60 * 1000, postAutoReloadCommand_App_, NULL);
     postCommand_App("document.autoreload");
-    d->isFinishedLaunching = iTrue;    
+    d->isFinishedLaunching = iTrue;
     /* Run any commands that were pending completion of launch. */ {
         iForEach(StringList, i, d->launchCommands) {
             postCommandString_App(i.value);
@@ -1040,6 +1041,11 @@ static void updatePrefsThemeButtons_(iWidget *d) {
                         selected_WidgetFlag,
                         colorTheme_App() == i);
     }
+    for (size_t i = 0; i < max_ColorAccent; i++) {
+        setFlags_Widget(findChild_Widget(d, format_CStr("prefs.accent.%u", i)),
+                        selected_WidgetFlag,
+                        prefs_App()->accent == i);
+    }
 }
 
 static void updateDropdownSelection_(iLabelWidget *dropButton, const char *selectedCommand) {
@@ -1290,7 +1296,7 @@ iBool handleCommand_App(const char *cmd) {
             setSnap_Window(d->window, maximized_WindowSnap);
         }
         else {
-            setSnap_Window(d->window, snap_Window(d->window) == maximized_WindowSnap ? 0 : 
+            setSnap_Window(d->window, snap_Window(d->window) == maximized_WindowSnap ? 0 :
                            maximized_WindowSnap);
         }
         return iTrue;
@@ -1357,6 +1363,12 @@ iBool handleCommand_App(const char *cmd) {
         }
         setThemePalette_Color(d->prefs.theme);
         postCommandf_App("theme.changed auto:%d", isAuto);
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "accent.set")) {
+        d->prefs.accent = arg_Command(cmd);
+        setThemePalette_Color(d->prefs.theme);
+        postCommandf_App("theme.changed auto:1");
         return iTrue;
     }
     else if (equal_Command(cmd, "ostheme")) {
@@ -1590,7 +1602,7 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "preferences")) {
         iWidget *dlg = makePreferences_Widget();
-        updatePrefsThemeButtons_(dlg);        
+        updatePrefsThemeButtons_(dlg);
         setText_InputWidget(findChild_Widget(dlg, "prefs.downloads"), &d->prefs.downloadDir);
         setToggle_Widget(findChild_Widget(dlg, "prefs.hoverlink"), d->prefs.hoverLink);
         setToggle_Widget(findChild_Widget(dlg, "prefs.smoothscroll"), d->prefs.smoothScrolling);

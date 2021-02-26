@@ -472,8 +472,12 @@ iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
                 iClob(newKeyMods_LabelWidget(item->label, item->key, item->kmods, item->command)),
                 frameless_WidgetFlag | alignLeft_WidgetFlag | drawKey_WidgetFlag);
             updateSize_LabelWidget(label); /* drawKey was set */
-            if (deviceType_App() != desktop_AppDeviceType) {
-                setFont_LabelWidget(label, uiContent_FontId);
+            const iBool isCaution = startsWith_CStr(item->label, uiTextCaution_ColorEscape);
+            if (deviceType_App() == tablet_AppDeviceType) {
+                setFont_LabelWidget(label, isCaution ? uiContentBold_FontId : uiContent_FontId);
+            }
+            else if (deviceType_App() == desktop_AppDeviceType) {
+                setFont_LabelWidget(label, isCaution ? uiLabelBold_FontId : uiLabel_FontId);
             }
         }
     }
@@ -669,7 +673,8 @@ static void addTabPage_Widget_(iWidget *tabs, enum iWidgetAddPos addPos, iWidget
         addPos);
     setFlags_Widget(buttons, hidden_WidgetFlag, iFalse);
     setFlags_Widget(button, selected_WidgetFlag, isSel);
-    setFlags_Widget(button, commandOnClick_WidgetFlag | expand_WidgetFlag, iTrue);
+    setFlags_Widget(
+        button, noTopFrame_WidgetFlag | commandOnClick_WidgetFlag | expand_WidgetFlag, iTrue);
     addChildPos_Widget(pages, page, addPos);
     setFlags_Widget(page, hidden_WidgetFlag | disabled_WidgetFlag, !isSel);
 }
@@ -1025,7 +1030,7 @@ void updateValueInput_Widget(iWidget *d, const char *title, const char *prompt) 
 
 static iBool messageHandler_(iWidget *msg, const char *cmd) {
     /* Almost any command dismisses the sheet. */
-    if (!(equal_Command(cmd, "media.updated") ||          
+    if (!(equal_Command(cmd, "media.updated") ||
           equal_Command(cmd, "media.player.update") ||
           equal_Command(cmd, "bookmarks.request.finished") ||
           equal_Command(cmd, "document.autoreload") ||
@@ -1197,6 +1202,13 @@ iWidget *makePreferences_Widget(void) {
             setId_Widget(addChild_Widget(themes, iClob(new_LabelWidget("Pure White", "theme.set arg:3"))), "prefs.theme.3");
         }
         addChildFlags_Widget(values, iClob(themes), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+        /* Accents. */
+        iWidget *accent = new_Widget(); {
+            setId_Widget(addChild_Widget(accent, iClob(new_LabelWidget("Teal", "accent.set arg:0"))), "prefs.accent.0");
+            setId_Widget(addChild_Widget(accent, iClob(new_LabelWidget("Orange", "accent.set arg:1"))), "prefs.accent.1");
+        }
+        addChild_Widget(headings, iClob(makeHeading_Widget("Accent color:")));
+        addChildFlags_Widget(values, iClob(accent), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
 #if defined (LAGRANGE_CUSTOM_FRAME)
         addChild_Widget(headings, iClob(makeHeading_Widget("Custom window frame:")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.customframe")));
@@ -1327,7 +1339,7 @@ iWidget *makePreferences_Widget(void) {
                     iClob(makeDialogButtons_(
                         (iMenuItem[]){ { "Dismiss", SDLK_ESCAPE, 0, "prefs.dismiss" } }, 1)));
     addChild_Widget(get_Window()->root, iClob(dlg));
-    centerSheet_Widget(dlg);    
+    centerSheet_Widget(dlg);
     return dlg;
 }
 

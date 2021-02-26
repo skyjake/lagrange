@@ -43,6 +43,7 @@ const iBlock *      sourceContent_DocumentWidget    (const iDocumentWidget *);
 const iGmDocument * document_DocumentWidget         (const iDocumentWidget *);
 const iString *     bookmarkTitle_DocumentWidget    (const iDocumentWidget *);
 const iString *     feedTitle_DocumentWidget        (const iDocumentWidget *);
+int                 documentWidth_DocumentWidget    (const iDocumentWidget *);
 
 void    setUrl_DocumentWidget           (iDocumentWidget *, const iString *url);
 void    setUrlFromCache_DocumentWidget  (iDocumentWidget *, const iString *url, iBool isFromCache);

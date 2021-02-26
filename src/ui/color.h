@@ -33,6 +33,12 @@ enum iColorTheme {
     max_ColorTheme
 };
 
+enum iColorAccent {
+    cyan_ColorAccent,
+    orange_ColorAccent,
+    max_ColorAccent
+};
+
 iLocalDef iBool isDark_ColorTheme(enum iColorTheme d) {
     return d == pureBlack_ColorTheme || d == dark_ColorTheme;
 }
