@@ -31,11 +31,12 @@ Like Gemini, Lagrange has been designed with minimalism in mind. It depends on a
 * Sidebar for page outline, managing bookmarks and identities, and viewing history
 * Multiple tabs
 * Identity management — create and use TLS client certificates
-* Subscribe to Gemini feeds
+* Subscribe to Gemini and Atom feeds
 * Use Gemini pages as a source of bookmarks
 * Light and dark color themes
 * Select and copy text with the mouse
 * Find text on the page
+* Search engine integration
 * Open image links inline on the same page
 * Audio playback: MP3, Ogg Vorbis, WAV
 * Open links via keyboard shortcuts
@@ -88,6 +89,8 @@ Search within cached pages is limited to the (small) set of pages that Lagrange 
 
 Note that the navigation stack is saved to a file when Lagrange is shut down and restored on the next launch. This means the next time you launch Lagrange, you can still search the contents of past pages. However, navigation stacks are tab-specific, so closing a tab will delete its history as well.
 
+You can also make online search queries via the URL input field. When a search URL is configured on the "Network" tab of Preferences, text entered in the URL field is passed to the search URL as a query parameter. A search query will only occur when Enter is pressed while the [⇒ Search Query] indicator is visible.
+
 ### 1.1.2 Links
 
 The type and destination of a link are indicated by the link's icon and color: ➤ links to the same domain, and 🌐 to a different domain. The colors are:
@@ -127,7 +130,13 @@ You can give it a try now with the link below. Either hold down ${ALT}, or press
 
 Press ${CTRL+}T to open a new tab, and ${CTRL+}W to close the current tab. Right-clicking on buttons in the tab bar shows a context menu for additional tab-related functions.
 
-The set of open tabs is restored when you launch Lagrange.
+The set of open tabs and their full contents are saved when you quit the application and restored when relaunch it.
+
+### 1.2.1 Auto-reloading
+
+A tab can be set to auto-reload at given intervals. The setting is remembered until the tab is closed. This is helpful if you keep a  periodically updated page open for longer periods of time.
+
+The feature can be found in the page context menu: right-click and select "Set Auto-Reload...".
 
 ## 1.3 Sidebars
 
@@ -148,6 +157,8 @@ Press ${CTRL+}D to bookmark the currently open URL.
 Bookmarks are listed in alphabetic order in the sidebar. There is no support for folders or manual sorting.
 
 In addition to a title, bookmarks can have tags. Some tags have a special meaning, but you are free to enter whatever you want in the tags field. In quick search results, tags are given extra weight so they appear higher in results.
+
+By default bookmarks are assigned random icons. You can enter a custom icon for a bookmark in the bookmark edit dialog to make it easier to recognize a particular site at a glance. The icon must be a single Unicode character. It will appear in the bookmark list, tab titles, feed entry list, quick search results, and page top banners.
 
 ### 1.4.1 Exporting and importing
 
@@ -183,9 +194,10 @@ Note that remote bookmarks are read-only: they cannot be edited or tagged. This 
 
 ## 1.5 Subscribing to feeds
 
-You may be familiar with RSS and Atom XML feeds from the web. Lagrange does _not_ support RSS or Atom, only Gemini feeds. A Gemini feed is simply a regular 'text/gemini' page that contains one or more links whose labels are formatted in a particular way.
-
+You may be familiar with XML-based RSS and Atom feeds from the web. The Gemini equivalent of these is Gemini feeds. A Gemini feed is simply a regular 'text/gemini' page that contains one or more links whose labels are formatted in a particular way. This makes it very easy to write pages that clients can subscribe to.
 => gemini://gemini.circumlunar.space/docs/companion/subscription.gmi  See "Subscribing to Gemini pages" for more information.
+
+Lagrange supports Gemini and Atom feed subscriptions. Atom feeds are  automatically translated to the Gemini feed format so they can be viewed and subscribed to like a normal 'text/gemini' page. RSS feeds are not supported.
 
 Subscriptions are managed via bookmarks. When you subscribe to a feed page, a bookmark is created and the special "subscribed" tag is applied on it. In the Bookmarks list, this is indicated by a ★ icon. There is no other difference between normal bookmarks and feed subscriptions — you may tag any bookmark as "subscribed" and Lagrange will look through it for feed-style links. The bookmark title is used as the feed title. This defaults to the top heading of the feed index page, but you can edit it to suit your needs.
 
@@ -260,6 +272,8 @@ There are four different color schemes for the UI: two for dark mode, and two fo
 
 On macOS, Lagrange will automatically switch between dark and light modes if the "Use system theme" setting is enabled. On other platforms you'll need to switch manually.
 
+On Windows, an option is provided to use a custom window frame. This provides a more consistent visual style for the application. However, the custom frame overrides default behaviors of the window, so if you are a Windows power user expect it to not support all the special interactions. For example, when pressing the Windows+Left/Right key, the window is resized to take over one half of the screen. Normally, Windows would then prompt to select another window to fill the rest of the screen, but this does not happen with the custom window frame.
+
 Options for wide window sizes:
 
 * Site icon: If there is room on the left side of the page text, the site icon appears there along with the top level heading. This allows one to keep better track of the current reading position in long documents.
@@ -282,12 +296,14 @@ The "Style" tab of the Preferences dialog lets you customize the appearance and 
 
 The fonts for headings and other text are selected separately. This way one can achieve a greater number of style variations. Also, headings that are in a different font are more visually distinct and thus easier for one's eyes to scan.
 
-There are two sans-serif and two serif fonts:
+There are six fonts available:
 
 * "Nunito" is a friendly rounded sans-serif font.
 * "Fira Sans" is a bolder, narrower, and more angular sans-serif font.
 * "Literata" is a heavy and serious serif font.
 * "Tinos" is a lighter serif font.
+* "Source Sans Pro" is the Lagrange UI font.
+* "Iosevka" is the monospace font.
 
 Other style options:
 
@@ -388,7 +404,7 @@ Any output that does not follow this format is considered to mean that the hook 
 ## 4.2 mimehooks.txt syntax
 
 Like other Lagrange configuration lines, mimehooks.txt has a simple line-oriented syntax. Lagrange must be restarted for changes to the configuration file to take effect.
-
+≈
 Each hook is specified as three lines:
 * A human-readable label (for reporting to the user)
 * MIME type/parameter regular expression
