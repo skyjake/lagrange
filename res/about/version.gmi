@@ -6,6 +6,9 @@
 ```
 # Release notes
 
+## 1.2.1
+* Fixed crash when creating a bookmark.
+
 ## 1.2
 
 New features:

@@ -1395,7 +1395,7 @@ static iBool handleBookmarkCreationCommands_SidebarWidget_(iWidget *editor, cons
             const iString *title = text_InputWidget(findChild_Widget(editor, "bmed.title"));
             const iString *url   = text_InputWidget(findChild_Widget(editor, "bmed.url"));
             const iString *tags  = text_InputWidget(findChild_Widget(editor, "bmed.tags"));
-            const iString *icon  = collect_String(trimmed_String(text_LabelWidget(findChild_Widget(editor, "bmed.icon"))));
+            const iString *icon  = collect_String(trimmed_String(text_InputWidget(findChild_Widget(editor, "bmed.icon"))));
             const uint32_t id    = add_Bookmarks(bookmarks_App(), url, title, tags, first_String(icon));
             if (!isEmpty_String(icon)) {
                 iBookmark *bm = get_Bookmarks(bookmarks_App(), id);
