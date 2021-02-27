@@ -1133,7 +1133,7 @@ static float pixelRatio_Window_(const iWindow *d) {
     SDL_GetDisplayDPI(SDL_GetWindowDisplayIndex(d->win), NULL, NULL, &vdpi);
     const float factor = vdpi / 96.0f;
     return iMax(1.0f, factor);
-#else    
+#else
     int dx, x;
     SDL_GetRendererOutputSize(d->render, &dx, NULL);
     SDL_GetWindowSize(d->win, &x, NULL);

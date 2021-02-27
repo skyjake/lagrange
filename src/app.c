@@ -478,8 +478,8 @@ static void init_App_(iApp *d, int argc, char **argv) {
 #endif
 #if defined (iPlatformAppleDesktop)
     setupApplication_MacOS();
-#if defined (iPlatformAppleMobile)
 #endif
+#if defined (iPlatformAppleMobile)
     setupApplication_iOS();
 #endif
     init_Keys();
@@ -1122,9 +1122,9 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
     }
     else if (equal_Command(cmd, "font.set")) {
         updateFontButton_(findChild_Widget(d, "prefs.font"), arg_Command(cmd));
-    else if (equal_Command(cmd, "headingfont.set")) {
         return iFalse;
     }
+    else if (equal_Command(cmd, "headingfont.set")) {
         updateFontButton_(findChild_Widget(d, "prefs.headingfont"), arg_Command(cmd));
         return iFalse;
     }
