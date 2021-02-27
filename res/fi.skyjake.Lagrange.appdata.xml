@@ -22,8 +22,8 @@
             communications.
         </p>
     </description>
-    <content_rating type="oars-1.0" />
-
+    <content_rating type="oars-1.1" />
+    
     <launchable type="desktop-id">fi.skyjake.Lagrange.desktop</launchable>
 
     <screenshots>
@@ -34,6 +34,7 @@
 
     <url type="homepage">https://gmi.skyjake.fi/lagrange</url>
     <url type="bugtracker">https://github.com/skyjake/lagrange/issues</url>
+    <url type="contact">https://skyjake.fi/@jk</url>
 
     <developer_name>Jaakko Keränen</developer_name>
 
@@ -44,6 +45,67 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.2" date="2021-02-27">
+            <description>
+                <p> This is a major feature update that also has a number of user 
+                    interface design changes.
+                </p>
+                <p> New features include viewing and subscribing to Atom feeds,
+                    downloading any link as a file, editable bookmark icons,
+                    search engine integration, tab auto-reloading, fullscreen mode,
+                    and new font options for page content.
+                </p>
+                <p> UI enhancements include improved navbar and sidebar appearance,
+                    setting for UI accent color, and placement of dialog
+                    buttons.
+                </p>
+                <p> The full release notes can be viewed inside the app by opening
+                    the "about:version" page.
+                </p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.2.0</url>                        
+        </release>
+        <release version="1.1.4" date="2021-02-22">
+            <description>
+                <p>Bug fixes:</p>
+                <ul>
+                    <li>Broken Gopher menu links.</li>
+                    <li>Incorrect feed entry highlight/read status in the sidebar.</li>
+                    <li>Vertical alignment of short pages: top banner is excluded 
+                        because it is not part of the content.</li>
+                </ul>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.1.4</url>
+        </release>
+        <release version="1.1.3" date="2021-02-14">
+            <description>
+                <p>Bug fixes:</p>
+                <ul>
+                    <li>Crash when deleting a bookmark that was being used as 
+                        a remote bookmark source.</li>
+                    <li>Potential crash at shutdown.</li>
+                    <li>URL path decoding not respecting reserved characters.</li>
+                </ul>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.1.3</url>
+        </release>
+        <release version="1.1.2" date="2021-02-10">
+            <description>
+                <p>Bug fixes:</p>
+                <ul>
+                    <li>Potential crash at launch.</li>
+                    <li>Input query from a background tab was being applied to 
+                        the foreground tab. An input query now forces a tab to 
+                        the foreground.</li>
+                    <li>Window scroll position moving when resizing vertically.</li>
+                    <li>Feed refresh waiting forever if a server doesn't respond.</li>
+                    <li>Hover state not being cleared when right-clicking links.</li>
+                    <li>Remote bookmarks not appearing if they lack a user-friendly 
+                        name on the source page.</li>
+                </ul>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.1.2</url>
+        </release>
         <release version="1.1.1" date="2021-02-03">
             <description>
                 <p>Miscellaneous fixes for bugs and other incorrect behavior:</p>
