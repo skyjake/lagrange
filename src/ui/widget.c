@@ -23,6 +23,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "widget.h"
 
 #include "app.h"
+#include "touch.h"
 #include "command.h"
 #include "paint.h"
 #include "util.h"
@@ -77,6 +78,7 @@ void init_Widget(iWidget *d) {
     d->rect           = zero_Rect();
     d->bgColor        = none_ColorId;
     d->frameColor     = none_ColorId;
+    init_Anim(&d->visualOffset, 0.0f);
     d->children       = NULL;
     d->parent         = NULL;
     d->commandHandler = NULL;
@@ -86,6 +88,11 @@ void init_Widget(iWidget *d) {
 void deinit_Widget(iWidget *d) {
     releaseChildren_Widget(d);
     deinit_String(&d->id);
+//    printf("widget %p deleted (on top:%d)\n", d, d->flags & keepOnTop_WidgetFlag ? 1 : 0);
+    if (d->flags & keepOnTop_WidgetFlag) {
+        removeAll_PtrArray(onTop_RootData_(), d);
+    }
+    widgetDestroyed_Touch(d);
 }
 
 static void aboutToBeDestroyed_Widget_(iWidget *d) {
@@ -126,11 +133,15 @@ const iString *id_Widget(const iWidget *d) {
 }
 
 int64_t flags_Widget(const iWidget *d) {
-    return d->flags;
+    return d ? d->flags : 0;
 }
 
 void setFlags_Widget(iWidget *d, int64_t flags, iBool set) {
     if (d) {
+        if (deviceType_App() == phone_AppDeviceType) {
+            /* Phones rarely have keyboards attached so don't bother with the shortcuts. */
+            flags &= ~drawKey_WidgetFlag;
+        }
         iChangeFlags(d->flags, flags, set);
         if (flags & keepOnTop_WidgetFlag) {
             if (set) {
@@ -149,6 +160,8 @@ void setPos_Widget(iWidget *d, iInt2 pos) {
 }
 
 void setSize_Widget(iWidget *d, iInt2 size) {
+    if (size.x < 0) size.x = d->rect.size.x;
+    if (size.y < 0) size.y = d->rect.size.y;
     d->rect.size = size;
     setFlags_Widget(d, fixedSize_WidgetFlag, iTrue);
 }
@@ -160,8 +173,33 @@ void setPadding_Widget(iWidget *d, int left, int top, int right, int bottom) {
     d->padding[3] = bottom;
 }
 
+static void visualOffsetAnimation_Widget_(void *ptr) {
+    iWidget *d = ptr;
+    postRefresh_App();
+    if (!isFinished_Anim(&d->visualOffset)) {
+        addTicker_App(visualOffsetAnimation_Widget_, ptr);
+    }
+    else {
+        setFlags_Widget(d, visualOffset_WidgetFlag, iFalse);
+    }
+}
+
+void setVisualOffset_Widget(iWidget *d, int value, uint32_t span, int animFlags) {
+    setFlags_Widget(d, visualOffset_WidgetFlag, iTrue);
+    if (span == 0) {
+        init_Anim(&d->visualOffset, value);
+    }
+    else {
+        setValue_Anim(&d->visualOffset, value, span);
+        d->visualOffset.flags = animFlags;
+        addTicker_App(visualOffsetAnimation_Widget_, d);
+    }
+}
+
 void setBackgroundColor_Widget(iWidget *d, int bgColor) {
-    d->bgColor = bgColor;
+    if (d) {
+        d->bgColor = bgColor;
+    }
 }
 
 void setFrameColor_Widget(iWidget *d, int frameColor) {
@@ -296,7 +334,7 @@ void arrange_Widget(iWidget *d) {
             iWidget *child = as_Widget(c.object);
             if (isCollapsed_Widget_(child)) {
                 if (d->flags & arrangeHorizontal_WidgetFlag) {
-                    setWidth_Widget_(child, 0);                    
+                    setWidth_Widget_(child, 0);
                 }
                 if (d->flags & arrangeVertical_WidgetFlag) {
                     setHeight_Widget_(child, 0);
@@ -331,8 +369,8 @@ void arrange_Widget(iWidget *d) {
             avail = divi_I2(max_I2(zero_I2(), avail), expCount);
             iForEach(ObjectList, j, d->children) {
                 iWidget *child = as_Widget(j.object);
-                if (isCollapsed_Widget_(child)) continue;
-                if (child->flags & fixedPosition_WidgetFlag) {
+                if (isCollapsed_Widget_(child) ||
+                    child->flags & (parentCannotResize_WidgetFlag | fixedPosition_WidgetFlag)) {
                     continue;
                 }
                 if (child->flags & expand_WidgetFlag) {
@@ -367,7 +405,7 @@ void arrange_Widget(iWidget *d) {
             }
             iForEach(ObjectList, i, d->children) {
                 iWidget *child = as_Widget(i.object);
-                if (!isCollapsed_Widget_(child)) {
+                if (!isCollapsed_Widget_(child) && ~child->flags & parentCannotResize_WidgetFlag) {
                     if (dirs.x) setWidth_Widget_(child, childSize.x);
                     if (dirs.y) setHeight_Widget_(child, childSize.y);
                 }
@@ -450,8 +488,15 @@ void arrange_Widget(iWidget *d) {
 
 iRect bounds_Widget(const iWidget *d) {
     iRect bounds = d->rect;
+    if (d->flags & visualOffset_WidgetFlag) {
+        bounds.pos.y += iRound(value_Anim(&d->visualOffset));
+    }
     for (const iWidget *w = d->parent; w; w = w->parent) {
-        addv_I2(&bounds.pos, w->rect.pos);
+        iInt2 pos = w->rect.pos;
+        if (w->flags & visualOffset_WidgetFlag) {
+            pos.y += iRound(value_Anim(&w->visualOffset));
+        }
+        addv_I2(&bounds.pos, pos);
     }
     return bounds;
 }
@@ -623,7 +668,9 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
 }
 
 void drawBackground_Widget(const iWidget *d) {
-    if (d->flags & hidden_WidgetFlag) return;
+    if (d->flags & (hidden_WidgetFlag | noBackground_WidgetFlag)) {
+        return;
+    }
     if (flags_Widget(d) & borderTop_WidgetFlag) {
         const iRect rect = bounds_Widget(d);
         iPaint p;
@@ -631,10 +678,56 @@ void drawBackground_Widget(const iWidget *d) {
         drawHLine_Paint(&p, topLeft_Rect(rect), width_Rect(rect), uiBackgroundFramelessHover_ColorId);
     }
     if (d->bgColor >= 0 || d->frameColor >= 0) {
-        const iRect rect = bounds_Widget(d);
+        iRect rect = bounds_Widget(d);
         iPaint p;
         init_Paint(&p);
+        if (d->flags & mouseModal_WidgetFlag) {
+            p.alpha = 0x60;
+            SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_BLEND);
+            int fadeColor;
+            switch (colorTheme_App()) {
+                default:
+                    fadeColor = black_ColorId;
+                    break;
+                case light_ColorTheme:
+                    fadeColor = gray25_ColorId;
+                    break;
+                case pureWhite_ColorTheme:
+                    fadeColor = gray50_ColorId;
+                    break;
+            }
+            fillRect_Paint(&p,
+                           initCorners_Rect(zero_I2(), rootSize_Window(get_Window())),
+                           fadeColor);
+            SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_NONE);
+        }
         if (d->bgColor >= 0) {
+#if defined (iPlatformAppleMobile)
+            if (d->flags & (drawBackgroundToHorizontalSafeArea_WidgetFlag |
+                            drawBackgroundToVerticalSafeArea_WidgetFlag)) {
+                const iInt2 rootSize = rootSize_Window(get_Window());
+                const iInt2 center = divi_I2(rootSize, 2);
+                int top = 0, right = 0, bottom = 0, left = 0;
+                if (d->flags & drawBackgroundToHorizontalSafeArea_WidgetFlag) {
+                    const iBool isWide = width_Rect(rect) > rootSize.x * 9 / 10;
+                    if (isWide || mid_Rect(rect).x < center.x) {
+                        left = -left_Rect(rect);
+                    }
+                    if (isWide || mid_Rect(rect).x > center.x) {
+                        right = rootSize.x - right_Rect(rect);
+                    }
+                }
+                if (d->flags & drawBackgroundToVerticalSafeArea_WidgetFlag) {
+                    if (top_Rect(rect) > center.y) {
+                        bottom = rootSize.y - bottom_Rect(rect);
+                    }
+                    if (bottom_Rect(rect) < center.y) {
+                        top = -top_Rect(rect);
+                    }
+                }
+                adjustEdges_Rect(&rect, top, right, bottom, left);
+            }
+#endif
             fillRect_Paint(&p, rect, d->bgColor);
         }
         if (d->frameColor >= 0 && ~d->flags & frameless_WidgetFlag) {
@@ -643,11 +736,17 @@ void drawBackground_Widget(const iWidget *d) {
     }
 }
 
+iLocalDef iBool isDrawn_Widget_(const iWidget *d) {
+    return ~d->flags & hidden_WidgetFlag || d->flags & visualOffset_WidgetFlag;
+}
+
 void drawChildren_Widget(const iWidget *d) {
-    if (d->flags & hidden_WidgetFlag) return;
+    if (!isDrawn_Widget_(d)) {
+        return;
+    }
     iConstForEach(ObjectList, i, d->children) {
         const iWidget *child = constAs_Widget(i.object);
-        if (~child->flags & keepOnTop_WidgetFlag && ~child->flags & hidden_WidgetFlag) {
+        if (~child->flags & keepOnTop_WidgetFlag && isDrawn_Widget_(child)) {
             class_Widget(child)->draw(child);
         }
     }
@@ -684,6 +783,28 @@ iAny *addChildPos_Widget(iWidget *d, iAnyObject *child, enum iWidgetAddPos addPo
     }
     widget->parent = d;
     return child;
+}
+
+iAny *insertChildAfter_Widget(iWidget *d, iAnyObject *child, size_t afterIndex) {
+    iAssert(child);
+    iAssert(d != child);
+    iWidget *widget = as_Widget(child);
+    iAssert(!widget->parent);
+    iAssert(d->children);
+    iAssert(afterIndex < size_ObjectList(d->children));
+    iForEach(ObjectList, i, d->children) {
+        if (afterIndex-- == 0) {
+            insertAfter_ObjectList(d->children, i.value, child);
+            break;
+        }
+    }
+    widget->parent = d;
+    return child;
+}
+
+iAny *insertChildAfterFlags_Widget(iWidget *d, iAnyObject *child, size_t afterIndex, int64_t childFlags) {
+    setFlags_Widget(child, childFlags, iTrue);
+    return insertChildAfter_Widget(d, child, afterIndex);
 }
 
 iAny *addChildFlags_Widget(iWidget *d, iAnyObject *child, int64_t childFlags) {
@@ -729,11 +850,27 @@ size_t childIndex_Widget(const iWidget *d, const iAnyObject *child) {
 }
 
 iAny *hitChild_Widget(const iWidget *d, iInt2 coord) {
-    iConstForEach(ObjectList, i, d->children) {
-        iAny *found = hitChild_Widget(constAs_Widget(i.object), coord);
-        if (found) return found;
+    if (d->flags & hidden_WidgetFlag) {
+        return NULL;
     }
-    if (contains_Widget(d, coord)) {
+    /* Check for on-top widgets first. */
+    if (!d->parent) {
+        iForEach(PtrArray, i, onTop_RootData_()) {
+            iAny *found = hitChild_Widget(constAs_Widget(i.ptr), coord);
+            if (found) return found;
+        }
+    }
+    iReverseForEach(ObjectList, i, d->children) {
+        const iWidget *child = constAs_Widget(i.object);
+        if (~child->flags & keepOnTop_WidgetFlag) {
+            iAny *found = hitChild_Widget(child, coord);
+            if (found) return found;
+        }
+    }
+    if (class_Widget(d) == &Class_Widget) {
+        return NULL; /* Plain widgets are not hittable. */
+    }
+    if (~d->flags & unhittable_WidgetFlag && contains_Widget(d, coord)) {
         return iConstCast(iWidget *, d);
     }
     return NULL;

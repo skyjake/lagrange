@@ -32,13 +32,38 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 iDeclareType(Window)
 iDeclareTypeConstructionArgs(Window, iRect rect)
 
+enum iWindowSnap {
+    none_WindowSnap       = 0,
+    left_WindowSnap       = 1,
+    right_WindowSnap      = 2,
+    maximized_WindowSnap  = 3,
+    yMaximized_WindowSnap = 4,
+    fullscreen_WindowSnap = 5,
+    mask_WindowSnap       = 0xff,
+    topBit_WindowSnap     = iBit(9),
+    bottomBit_WindowSnap  = iBit(10),
+    redo_WindowSnap       = iBit(11),
+};
+
+iDeclareType(WindowPlacement)
+
+/* Tracking of window placement. */
+struct Impl_WindowPlacement {
+    iInt2 initialPos;
+    iRect normalRect;       /* updated when window is moved/resized */
+    iInt2 lastNotifiedSize; /* keep track of horizontal/vertical notifications */
+    int   snap;             /* LAGRANGE_CUSTOM_FRAME */
+    int   lastHit;
+};
+
 struct Impl_Window {
     SDL_Window *  win;
-    iInt2         initialPos;
-    iRect         lastRect; /* updated when window is moved/resized */
-    iInt2         lastNotifiedSize; /* keep track of horizontal/vertical notifications */
+    iWindowPlacement place;
     iBool         isDrawFrozen; /* avoids premature draws while restoring window state */
+    iBool         isExposed;
+    iBool         isMinimized;
     iBool         isMouseInside;
+    iBool         ignoreClick;
     uint32_t      focusGainedAt;
     SDL_Renderer *render;
     iWidget *     root;
@@ -46,6 +71,7 @@ struct Impl_Window {
     float         uiScale;
     uint32_t      frameTime;
     double        presentTime;
+    SDL_Texture * appIcon;
     SDL_Cursor *  cursors[SDL_NUM_SYSTEM_CURSORS];
     SDL_Cursor *  pendingCursor;
     int           loadAnimTimer;
@@ -59,6 +85,7 @@ void        setTitle_Window         (iWindow *, const iString *title);
 void        setUiScale_Window       (iWindow *, float uiScale);
 void        setFreezeDraw_Window    (iWindow *, iBool freezeDraw);
 void        setCursor_Window        (iWindow *, int cursor);
+void        setSnap_Window          (iWindow *, int snapMode);
 
 uint32_t    id_Window               (const iWindow *);
 iInt2       rootSize_Window         (const iWindow *);
@@ -67,5 +94,11 @@ iInt2       coord_Window            (const iWindow *, int x, int y);
 iInt2       mouseCoord_Window       (const iWindow *);
 uint32_t    frameTime_Window        (const iWindow *);
 SDL_Renderer *renderer_Window       (const iWindow *);
+int         snap_Window             (const iWindow *);
+iBool       isFullscreen_Window     (const iWindow *);
 
 iWindow *   get_Window              (void);
+
+#if defined (LAGRANGE_CUSTOM_FRAME)
+SDL_HitTestResult hitTest_Window(const iWindow *d, iInt2 pos);
+#endif

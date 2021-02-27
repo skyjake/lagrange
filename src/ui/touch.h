@@ -1,4 +1,4 @@
-/* Copyright 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
+/* Copyright 2021 Jaakko Keränen <jaakko.keranen@iki.fi>
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -22,23 +22,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
-#include <the_Foundation/rect.h>
+#include <the_Foundation/defs.h>
+#include <SDL_events.h>
 
-iDeclareType(Paint)
-iDeclareType(Player)
-iDeclareType(PlayerUI)
+iDeclareType(Widget)
 
-struct Impl_PlayerUI {
-    const iPlayer *player;
-    iRect bounds;
-    iRect playPauseRect;
-    iRect rewindRect;
-    iRect scrubberRect;
-    iRect volumeRect;
-    iRect volumeAdjustRect;
-    iRect volumeSlider;
-    iRect menuRect;
-};
-
-void    init_PlayerUI   (iPlayerUI *, const iPlayer *player, iRect bounds);
-void    draw_PlayerUI   (iPlayerUI *, iPaint *p);
+iBool   processEvent_Touch      (const SDL_Event *);
+void    update_Touch            (void);
+void    widgetDestroyed_Touch   (iWidget *widget);

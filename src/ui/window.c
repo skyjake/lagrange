@@ -33,6 +33,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "paint.h"
 #include "util.h"
 #include "keys.h"
+#include "touch.h"
 #include "../app.h"
 #include "../visited.h"
 #include "../gmcerts.h"
@@ -41,18 +42,24 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #if defined (iPlatformMsys)
 #   include "../win32.h"
 #endif
-#if defined (iPlatformApple) && !defined (iPlatformIOS)
+#if defined (iPlatformAppleDesktop)
 #   include "macos.h"
+#endif
+#if defined (iPlatformAppleMobile)
+#   include "ios.h"
 #endif
 
 #include <the_Foundation/file.h>
 #include <the_Foundation/path.h>
+#include <the_Foundation/regexp.h>
 #include <SDL_hints.h>
 #include <SDL_timer.h>
 #include <SDL_syswm.h>
 
 #define STB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_RESIZE_IMPLEMENTATION
 #include "stb_image.h"
+#include "stb_image_resize.h"
 
 static iWindow *theWindow_ = NULL;
 
@@ -84,6 +91,59 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
     }
     else if (equal_Command(cmd, "window.focus.lost")) {
         setFocus_Widget(NULL);
+        setTextColor_LabelWidget(findWidget_App("winbar.app"), uiAnnotation_ColorId);
+        setTextColor_LabelWidget(findWidget_App("winbar.title"), uiAnnotation_ColorId);
+        return iFalse;
+    }
+    else if (equal_Command(cmd, "window.focus.gained")) {
+        setTextColor_LabelWidget(findWidget_App("winbar.app"), uiTextAppTitle_ColorId);
+        setTextColor_LabelWidget(findWidget_App("winbar.title"), uiTextStrong_ColorId);
+        return iFalse;
+    }
+    else if (equal_Command(cmd, "window.setrect")) {
+        const int snap = argLabel_Command(cmd, "snap");
+        if (snap) {
+            iWindow *window = get_Window();
+            iInt2 coord = coord_Command(cmd);
+            iInt2 size = init_I2(argLabel_Command(cmd, "width"),
+                                 argLabel_Command(cmd, "height"));
+            SDL_SetWindowPosition(window->win, coord.x, coord.y);
+            SDL_SetWindowSize(window->win, size.x, size.y);
+            window->place.snap = snap;
+            return iTrue;
+        }
+    }
+    else if (equal_Command(cmd, "window.restore")) {
+        setSnap_Window(get_Window(), none_WindowSnap);
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "window.minimize")) {
+        SDL_MinimizeWindow(get_Window()->win);
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "window.close")) {
+        SDL_PushEvent(&(SDL_Event){ .type = SDL_QUIT });
+        return iTrue;
+    }
+    else if (deviceType_App() == phone_AppDeviceType && equal_Command(cmd, "window.resized")) {
+        /* Place the sidebar next to or under doctabs depending on orientation. */
+        iSidebarWidget *sidebar = findChild_Widget(root, "sidebar");
+        removeChild_Widget(parent_Widget(sidebar), sidebar);
+        setButtonFont_SidebarWidget(sidebar, isLandscape_App() ? uiLabel_FontId : uiLabelLarge_FontId);
+        setBackgroundColor_Widget(findChild_Widget(as_Widget(sidebar), "buttons"),
+                                  isPortrait_App() ? uiBackgroundUnfocusedSelection_ColorId
+                                                   : uiBackground_ColorId);
+        if (isLandscape_App()) {
+            addChildPos_Widget(findChild_Widget(root, "tabs.content"), iClob(sidebar), front_WidgetAddPos);
+            setWidth_SidebarWidget(sidebar, 73 * gap_UI);
+            if (isVisible_Widget(findWidget_App("sidebar2"))) {
+                postCommand_App("sidebar2.toggle");
+            }
+        }
+        else {
+            addChildPos_Widget(findChild_Widget(root, "stack"), iClob(sidebar), back_WidgetAddPos);
+            setWidth_SidebarWidget(sidebar, width_Widget(root));
+        }
         return iFalse;
     }
     else if (handleCommand_App(cmd)) {
@@ -92,11 +152,12 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
     return iFalse;
 }
 
-#if defined (iPlatformApple)
+#if defined (iPlatformAppleDesktop)
 #  define iHaveNativeMenus
 #endif
 
 #if !defined (iHaveNativeMenus)
+#if !defined (iPlatformAppleMobile)
 /* TODO: Submenus wouldn't hurt here. */
 static const iMenuItem navMenuItems_[] = {
     { "New Tab", 't', KMOD_PRIMARY, "tabs.new" },
@@ -123,6 +184,48 @@ static const iMenuItem navMenuItems_[] = {
     { "---", 0, 0, NULL },
     { "Quit Lagrange", 'q', KMOD_PRIMARY, "quit" }
 };
+#else
+/* Tablet menu. */
+static const iMenuItem tabletNavMenuItems_[] = {
+    { "New Tab", 't', KMOD_PRIMARY, "tabs.new" },
+    { "Close Tab", 'w', KMOD_PRIMARY, "tabs.close" },
+    { "---", 0, 0, NULL },
+    { "Save to Downloads", SDLK_s, KMOD_PRIMARY, "document.save" },
+    { "---", 0, 0, NULL },
+    { "Toggle Left Sidebar", SDLK_l, KMOD_PRIMARY | KMOD_SHIFT, "sidebar.toggle" },
+    { "Toggle Right Sidebar", SDLK_p, KMOD_PRIMARY | KMOD_SHIFT, "sidebar2.toggle" },
+    { "Zoom In", SDLK_EQUALS, KMOD_PRIMARY, "zoom.delta arg:10" },
+    { "Zoom Out", SDLK_MINUS, KMOD_PRIMARY, "zoom.delta arg:-10" },
+    { "Reset Zoom", SDLK_0, KMOD_PRIMARY, "zoom.set arg:100" },
+    { "---", 0, 0, NULL },
+    { "List All Bookmarks", 0, 0, "!open url:about:bookmarks" },
+    { "List Bookmarks by Tag", 0, 0, "!open url:about:bookmarks?tags" },
+    { "List Feed Entries", 0, 0, "!open url:about:feeds" },
+    { "---", 0, 0, NULL },
+    { "Settings...", SDLK_COMMA, KMOD_PRIMARY, "preferences" },
+    { "Help", SDLK_F1, 0, "!open url:about:help" },
+    { "Release Notes", 0, 0, "!open url:about:version" },
+};
+
+/* Phone menu. */
+static const iMenuItem phoneNavMenuItems_[] = {
+    { "New Tab", 't', KMOD_PRIMARY, "tabs.new" },
+    { "Close Tab", 'w', KMOD_PRIMARY, "tabs.close" },
+    { "---", 0, 0, NULL },
+    { "Save to Downloads", SDLK_s, KMOD_PRIMARY, "document.save" },
+    { "---", 0, 0, NULL },
+    { "Zoom In", SDLK_EQUALS, KMOD_PRIMARY, "zoom.delta arg:10" },
+    { "Zoom Out", SDLK_MINUS, KMOD_PRIMARY, "zoom.delta arg:-10" },
+    { "Reset Zoom", SDLK_0, KMOD_PRIMARY, "zoom.set arg:100" },
+    { "---", 0, 0, NULL },
+    { "List All Bookmarks", 0, 0, "!open url:about:bookmarks" },
+    { "List Feed Entries", 0, 0, "!open url:about:feeds" },
+    { "---", 0, 0, NULL },
+    { "Settings...", SDLK_COMMA, KMOD_PRIMARY, "preferences" },
+    { "Help", SDLK_F1, 0, "!open url:about:help" },
+    { "Release Notes", 0, 0, "!open url:about:version" },
+};
+#endif /* AppleMobile */
 #endif
 
 #if defined (iHaveNativeMenus)
@@ -190,20 +293,31 @@ static const iMenuItem helpMenuItems_[] = {
 };
 #endif
 
+#if defined (iPlatformAppleMobile)
 static const iMenuItem identityButtonMenuItems_[] = {
     { "No Active Identity", 0, 0, "ident.showactive" },
     { "---", 0, 0, NULL },
-#if !defined (iHaveNativeMenus)
+    { "New Identity...", SDLK_n, KMOD_PRIMARY | KMOD_SHIFT, "ident.new" },
+    { "Import...", SDLK_i, KMOD_PRIMARY | KMOD_SHIFT, "ident.import" },
+    { "---", 0, 0, NULL },
+    { "Show Identities", 0, 0, "toolbar.showident" },
+};
+#else /* desktop */
+static const iMenuItem identityButtonMenuItems_[] = {
+    { "No Active Identity", 0, 0, "ident.showactive" },
+    { "---", 0, 0, NULL },
+#   if !defined (iHaveNativeMenus)
     { "New Identity...", SDLK_n, KMOD_PRIMARY | KMOD_SHIFT, "ident.new" },
     { "Import...", SDLK_i, KMOD_PRIMARY | KMOD_SHIFT, "ident.import" },
     { "---", 0, 0, NULL },
     { "Show Identities", '4', KMOD_PRIMARY, "sidebar.mode arg:3 show:1" },
-#else
+#   else
     { "New Identity...", 0, 0, "ident.new" },
     { "---", 0, 0, NULL },
     { "Show Identities", 0, 0, "sidebar.mode arg:3 show:1" },
 #endif
 };
+#endif
 
 static const char *reloadCStr_ = "\U0001f503";
 
@@ -291,7 +405,9 @@ static void updateNavBarIdentity_(iWidget *navBar) {
     const iGmIdentity *ident =
         identityForUrl_GmCerts(certs_App(), url_DocumentWidget(document_App()));
     iWidget *button = findChild_Widget(navBar, "navbar.ident");
+    iWidget *tool = findWidget_App("toolbar.ident");
     setFlags_Widget(button, selected_WidgetFlag, ident != NULL);
+    setFlags_Widget(tool, selected_WidgetFlag, ident != NULL);
     /* Update menu. */
     iLabelWidget *idItem = child_Widget(findChild_Widget(button, "menu"), 0);
     setTextCStr_LabelWidget(
@@ -317,8 +433,8 @@ static uint32_t updateReloadAnimation_Window_(uint32_t interval, void *window) {
 }
 
 static void setReloadLabel_Window_(iWindow *d, iBool animating) {
-    updateTextCStr_LabelWidget(findChild_Widget(d->root, "reload"),
-                               animating ? loadAnimationCStr_() : reloadCStr_);
+    iLabelWidget *label = findChild_Widget(d->root, "reload");
+    updateTextCStr_LabelWidget(label, animating ? loadAnimationCStr_() : reloadCStr_);
 }
 
 static void checkLoadAnimation_Window_(iWindow *d) {
@@ -333,22 +449,113 @@ static void checkLoadAnimation_Window_(iWindow *d) {
     setReloadLabel_Window_(d, isOngoing);
 }
 
+static void updatePadding_Window_(iWindow *d) {
+#if defined (iPlatformAppleMobile)
+    /* Respect the safe area insets. */ {
+        float left, top, right, bottom;
+        safeAreaInsets_iOS(&left, &top, &right, &bottom);
+        setPadding_Widget(findChild_Widget(d->root, "navdiv"), left, top, right, 0);
+        iWidget *toolBar = findChild_Widget(d->root, "toolbar");
+        if (toolBar) {
+            setPadding_Widget(toolBar, left, 0, right, bottom);
+        }
+    }
+#endif
+}
+
+static void dismissPortraitPhoneSidebars_(void) {
+    if (deviceType_App() == phone_AppDeviceType && isPortrait_App()) {
+        iWidget *sidebar = findWidget_App("sidebar");
+        iWidget *sidebar2 = findWidget_App("sidebar2");
+        if (isVisible_Widget(sidebar)) {
+            postCommand_App("sidebar.toggle");
+            setVisualOffset_Widget(sidebar, height_Widget(sidebar), 250, easeIn_AnimFlag);
+        }
+        if (isVisible_Widget(sidebar2)) {
+            postCommand_App("sidebar2.toggle");
+            setVisualOffset_Widget(sidebar2, height_Widget(sidebar2), 250, easeIn_AnimFlag);
+        }
+//        setFlags_Widget(findWidget_App("toolbar.ident"), noBackground_WidgetFlag, iTrue);
+//        setFlags_Widget(findWidget_App("toolbar.view"), noBackground_WidgetFlag, iTrue);
+    }
+}
+
+static iBool willPerformSearchQuery_(const iString *userInput) {
+    const iString *clean = collect_String(trimmed_String(userInput));
+    if (isEmpty_String(clean)) {
+        return iFalse;
+    }
+    return !isEmpty_String(&prefs_App()->searchUrl) && !isLikelyUrl_String(userInput);
+}
+
+static void showSearchQueryIndicator_(iBool show) {
+    iWidget *indicator = findWidget_App("input.indicator.search");
+    setFlags_Widget(indicator, hidden_WidgetFlag, !show);
+    setContentPadding_InputWidget(
+        (iInputWidget *) parent_Widget(indicator), -1, show ? width_Widget(indicator) : 0);
+}
+
+static int navBarAvailableSpace_(iWidget *navBar) {
+    int avail = width_Rect(innerBounds_Widget(navBar));
+    iConstForEach(ObjectList, i, children_Widget(navBar)) {
+        const iWidget *child = i.object;
+        if (~flags_Widget(child) & expand_WidgetFlag &&
+            isVisible_Widget(child) &&
+            cmp_String(id_Widget(child), "url")) {
+            avail -= width_Widget(child);
+        }
+    }
+    return avail;
+}
+
 static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
     if (equal_Command(cmd, "window.resized")) {
-        const iBool isNarrow = width_Rect(bounds_Widget(navBar)) / gap_UI < 140;
+        const iBool isPhone = deviceType_App() == phone_AppDeviceType;
+        const iBool isNarrow = !isPhone && width_Rect(bounds_Widget(navBar)) / gap_UI < 140;
+        /* Adjust navbar padding. */ {
+            int hPad = isPhone || isNarrow ? gap_UI / 2 : gap_UI * 3 / 2;
+            int vPad = gap_UI * 3 / 2;
+            int topPad = !findWidget_App("winbar") ? gap_UI / 2 : 0;
+            setPadding_Widget(navBar, hPad, vPad / 2 + topPad, hPad, vPad / 2);
+        }
+        /* Button sizing. */
         if (isNarrow ^ ((flags_Widget(navBar) & tight_WidgetFlag) != 0)) {
             setFlags_Widget(navBar, tight_WidgetFlag, isNarrow);
             iForEach(ObjectList, i, navBar->children) {
                 iWidget *child = as_Widget(i.object);
                 setFlags_Widget(
-                    child, tight_WidgetFlag, isNarrow || !cmp_String(id_Widget(child), "lock"));
+                    child, tight_WidgetFlag, isNarrow);
                 if (isInstance_Object(i.object, &Class_LabelWidget)) {
                     iLabelWidget *label = i.object;
                     updateSize_LabelWidget(label);
                 }
             }
+            /* Note that InputWidget uses the `tight` flag to adjust its inner padding. */
+            setContentPadding_InputWidget(findChild_Widget(navBar, "url"),
+                                          width_Widget(findChild_Widget(navBar, "navbar.lock")) * 0.75,
+                                          -1);
         }
-        arrange_Widget(navBar);
+        if (isPhone) {
+            static const char *buttons[] = {
+                "navbar.back", "navbar.forward", "navbar.ident", "navbar.home", "navbar.menu"
+            };
+            setFlags_Widget(findWidget_App("toolbar"), hidden_WidgetFlag, isLandscape_App());
+            iForIndices(i, buttons) {
+                iLabelWidget *btn = findChild_Widget(navBar, buttons[i]);
+                setFlags_Widget(as_Widget(btn), hidden_WidgetFlag, isPortrait_App());
+                if (isLandscape_App()) {
+                    /* Collapsing sets size to zero and the label doesn't know when to update
+                       its own size automatically. */
+                    updateSize_LabelWidget(btn);
+                }
+            }
+            arrange_Widget(get_Window()->root);
+        }
+        /* Resize the URL input field. */ {
+            iWidget *urlBar = findChild_Widget(navBar, "url");
+            urlBar->rect.size.x = iMini(navBarAvailableSpace_(navBar), 167 * gap_UI);
+            arrange_Widget(navBar);
+        }
         refresh_Widget(navBar);
         postCommand_Widget(navBar, "layout.changed id:navbar");
         return iFalse;
@@ -368,14 +575,18 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "input.edited")) {
-        iAnyObject *url = findChild_Widget(navBar, "url");
+        iAnyObject *   url  = findChild_Widget(navBar, "url");
+        const iString *text = text_InputWidget(url);
+        const iBool show = willPerformSearchQuery_(text);
+        showSearchQueryIndicator_(show);
         if (pointer_Command(cmd) == url) {
-            submit_LookupWidget(findWidget_App("lookup"), text_InputWidget(url));
+            submit_LookupWidget(findWidget_App("lookup"), text);
             return iTrue;
         }
     }
     else if (startsWith_CStr(cmd, "input.ended id:url ")) {
         iInputWidget *url = findChild_Widget(navBar, "url");
+        showSearchQueryIndicator_(iFalse);
         if (isEmpty_String(text_InputWidget(url))) {
             /* User entered nothing; restore the current URL. */
             setText_InputWidget(url, url_DocumentWidget(document_App()));
@@ -385,9 +596,14 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
             !isFocused_Widget(findWidget_App("lookup"))) {
             iString *newUrl = copy_String(text_InputWidget(url));
             trim_String(newUrl);
-            postCommandf_App(
-                "open url:%s",
-                cstr_String(absoluteUrl_String(&iStringLiteral(""), collect_String(newUrl))));
+            if (willPerformSearchQuery_(newUrl)) {
+                postCommandf_App("open url:%s", cstr_String(searchQueryUrl_App(newUrl)));
+            }
+            else {
+                postCommandf_App(
+                    "open url:%s",
+                    cstr_String(absoluteUrl_String(&iStringLiteral(""), collect_String(newUrl))));
+            }
             return iTrue;
         }
     }
@@ -402,12 +618,11 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
                 postCommand_App("visited.changed"); /* sidebar will update */
                 setText_InputWidget(url, urlStr);
                 checkLoadAnimation_Window_(get_Window());
+                dismissPortraitPhoneSidebars_();
                 updateNavBarIdentity_(navBar);
                 /* Icon updates should be limited to automatically chosen icons if the user
                    is allowed to pick their own in the future. */
-                if (updateBookmarkIcon_Bookmarks(
-                    bookmarks_App(),
-                    urlStr,
+                if (updateBookmarkIcon_Bookmarks(bookmarks_App(), urlStr,
                         siteIcon_GmDocument(document_DocumentWidget(document_App())))) {
                     postCommand_App("bookmarks.changed");
                 }
@@ -421,6 +636,7 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
                 iInputWidget *url = findChild_Widget(navBar, "url");
                 setTextCStr_InputWidget(url, suffixPtr_Command(cmd, "url"));
                 checkLoadAnimation_Window_(get_Window());
+                dismissPortraitPhoneSidebars_();
                 return iFalse;
             }
         }
@@ -503,7 +719,97 @@ static iBool handleSearchBarCommands_(iWidget *searchBar, const char *cmd) {
     return iFalse;
 }
 
+#if defined (iPlatformAppleMobile)
+static void dismissSidebar_(iWidget *sidebar, const char *toolButtonId) {
+    if (isVisible_Widget(sidebar)) {
+        postCommandf_App("%s.toggle", cstr_String(id_Widget(sidebar)));
+        if (toolButtonId) {
+//            setFlags_Widget(findWidget_App(toolButtonId), noBackground_WidgetFlag, iTrue);
+        }
+        setVisualOffset_Widget(sidebar, height_Widget(sidebar), 250, easeIn_AnimFlag);
+    }
+}
+
+static iBool handleToolBarCommands_(iWidget *toolBar, const char *cmd) {
+    if (equalWidget_Command(cmd, toolBar, "mouse.clicked") && arg_Command(cmd) &&
+        argLabel_Command(cmd, "button") == SDL_BUTTON_RIGHT) {
+        iWidget *menu = findChild_Widget(toolBar, "toolbar.menu");
+        arrange_Widget(menu);
+        openMenu_Widget(menu, init_I2(0, -height_Widget(menu)));
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "toolbar.showview")) {
+        /* TODO: Clean this up. */
+        iWidget *sidebar  = findWidget_App("sidebar");
+        iWidget *sidebar2 = findWidget_App("sidebar2");
+        dismissSidebar_(sidebar2, "toolbar.ident");
+        const iBool isVisible = isVisible_Widget(sidebar);
+//        setFlags_Widget(findChild_Widget(toolBar, "toolbar.view"), noBackground_WidgetFlag,
+//                        isVisible);
+        /* If a sidebar hasn't been shown yet, it's height is zero. */
+        const int viewHeight = rootSize_Window(get_Window()).y;
+        if (arg_Command(cmd) >= 0) {
+            postCommandf_App("sidebar.mode arg:%d show:1", arg_Command(cmd));
+            if (!isVisible) {
+                setVisualOffset_Widget(sidebar, viewHeight, 0, 0);
+                setVisualOffset_Widget(sidebar, 0, 400, easeOut_AnimFlag | softer_AnimFlag);
+            }
+        }
+        else {
+            postCommandf_App("sidebar.toggle");
+            if (isVisible) {
+                setVisualOffset_Widget(sidebar, height_Widget(sidebar), 250, easeIn_AnimFlag);
+            }
+            else {
+                setVisualOffset_Widget(sidebar, viewHeight, 0, 0);
+                setVisualOffset_Widget(sidebar, 0, 400, easeOut_AnimFlag | softer_AnimFlag);
+            }
+        }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "toolbar.showident")) {
+        /* TODO: Clean this up. */
+        iWidget *sidebar  = findWidget_App("sidebar");
+        iWidget *sidebar2 = findWidget_App("sidebar2");
+        dismissSidebar_(sidebar, "toolbar.view");
+        const iBool isVisible = isVisible_Widget(sidebar2);
+//        setFlags_Widget(findChild_Widget(toolBar, "toolbar.ident"), noBackground_WidgetFlag,
+//                        isVisible);
+        /* If a sidebar hasn't been shown yet, it's height is zero. */
+        const int viewHeight = rootSize_Window(get_Window()).y;
+        if (isVisible) {
+            dismissSidebar_(sidebar2, NULL);
+        }
+        else {
+            postCommand_App("sidebar2.mode arg:3 show:1");
+            int offset = height_Widget(sidebar2);
+            if (offset == 0) offset = rootSize_Window(get_Window()).y;
+            setVisualOffset_Widget(sidebar2, offset, 0, 0);
+            setVisualOffset_Widget(sidebar2, 0, 400, easeOut_AnimFlag | softer_AnimFlag);
+        }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "sidebar.mode.changed")) {
+        iLabelWidget *viewTool = findChild_Widget(toolBar, "toolbar.view");
+        updateTextCStr_LabelWidget(viewTool, icon_SidebarMode(arg_Command(cmd)));
+        return iFalse;
+    }
+    return iFalse;
+}
+#endif /* defined (iPlatformAppleMobile) */
+
+static iLabelWidget *newLargeIcon_LabelWidget(const char *text, const char *cmd) {
+    iLabelWidget *lab = newIcon_LabelWidget(text, 0, 0, cmd);
+    setFont_LabelWidget(lab, uiLabelLarge_FontId);
+    return lab;
+}
+
+static int appIconSize_(void) {
+    return lineHeight_Text(uiContent_FontId);
+}
+
 static void setupUserInterface_Window(iWindow *d) {
+    const iBool isPhone = (deviceType_App() == phone_AppDeviceType);
     /* Children of root cover the entire window. */
     setFlags_Widget(d->root, resizeChildren_WidgetFlag, iTrue);
     setCommandHandler_Widget(d->root, handleRootCommands_);
@@ -512,32 +818,79 @@ static void setupUserInterface_Window(iWindow *d) {
     setId_Widget(div, "navdiv");
     addChild_Widget(d->root, iClob(div));
 
+#if defined (LAGRANGE_CUSTOM_FRAME)
+    /* Window title bar. */
+    if (prefs_App()->customFrame) {
+        setPadding1_Widget(div, 1);
+        iWidget *winBar = new_Widget();
+        setPadding_Widget(winBar, 0, gap_UI / 3, 0, 0);
+        setId_Widget(winBar, "winbar");
+        setFlags_Widget(winBar,
+                        arrangeHeight_WidgetFlag | resizeChildren_WidgetFlag |
+                            arrangeHorizontal_WidgetFlag | collapse_WidgetFlag,
+                        iTrue);
+        iWidget *appIcon;
+        setId_Widget(
+            addChild_Widget(winBar, iClob(appIcon = makePadding_Widget(0))), "winbar.icon");
+        iLabelWidget *appButton =
+            addChildFlags_Widget(winBar,
+                                 iClob(new_LabelWidget("Lagrange", NULL)),
+                                 fixedHeight_WidgetFlag | frameless_WidgetFlag);
+        setTextColor_LabelWidget(appButton, uiTextAppTitle_ColorId);
+        setId_Widget(as_Widget(appButton), "winbar.app");
+        iLabelWidget *appTitle;
+        setFont_LabelWidget(appButton, uiContentBold_FontId);
+        setId_Widget(addChildFlags_Widget(winBar,
+                                          iClob(appTitle = new_LabelWidget("", NULL)),
+                                          expand_WidgetFlag | fixedHeight_WidgetFlag |
+                                              frameless_WidgetFlag | commandOnClick_WidgetFlag),
+                     "winbar.title");
+        setTextColor_LabelWidget(appTitle, uiTextStrong_ColorId);
+        iLabelWidget *appMin, *appMax, *appClose;
+        setId_Widget(addChildFlags_Widget(
+                         winBar,
+                         iClob(appMin = newLargeIcon_LabelWidget("\u2013", "window.minimize")),
+                         frameless_WidgetFlag),
+                     "winbar.min");
+        setSize_Widget(as_Widget(appMin),
+                       init_I2(gap_UI * 11.5f, height_Widget(appTitle)));
+        addChildFlags_Widget(
+            winBar,
+            iClob(appMax = newLargeIcon_LabelWidget("\u25a1", "window.maximize toggle:1")),
+            frameless_WidgetFlag);
+        setId_Widget(as_Widget(appMax), "winbar.max");
+        addChildFlags_Widget(winBar,
+                             iClob(appClose = newLargeIcon_LabelWidget("\u2a2f", "window.close")),
+                             frameless_WidgetFlag);
+        setFont_LabelWidget(appClose, uiContent_FontId);
+        setSize_Widget(as_Widget(appMax), as_Widget(appMin)->rect.size);
+        setSize_Widget(as_Widget(appClose), as_Widget(appMin)->rect.size);
+        setSize_Widget(appIcon, init_I2(appIconSize_(), as_Widget(appMin)->rect.size.y));
+        addChild_Widget(div, iClob(winBar));
+        setBackgroundColor_Widget(winBar, uiBackground_ColorId);
+    }
+#endif
+
     /* Navigation bar. */ {
         iWidget *navBar = new_Widget();
         setId_Widget(navBar, "navbar");
-        /*setPadding_Widget(navBar, gap_UI / 2, 0, gap_UI / 2, 0);*/
-        setPadding_Widget(navBar, gap_UI, gap_UI / 2, gap_UI, gap_UI / 2);
         setFlags_Widget(navBar,
-                        arrangeHeight_WidgetFlag | resizeChildren_WidgetFlag |
-                            arrangeHorizontal_WidgetFlag,
+                        arrangeHeight_WidgetFlag |
+                        resizeChildren_WidgetFlag |
+                        arrangeHorizontal_WidgetFlag |
+                        drawBackgroundToHorizontalSafeArea_WidgetFlag |
+                        drawBackgroundToVerticalSafeArea_WidgetFlag,
                         iTrue);
         addChild_Widget(div, iClob(navBar));
         setBackgroundColor_Widget(navBar, uiBackground_ColorId);
         setCommandHandler_Widget(navBar, handleNavBarCommands_);
-        addChild_Widget(navBar, iClob(newIcon_LabelWidget("\U0001f870", 0, 0, "navigate.back")));
-        addChild_Widget(navBar, iClob(newIcon_LabelWidget("\U0001f872", 0, 0, "navigate.forward")));
+        setId_Widget(addChildFlags_Widget(navBar, iClob(newIcon_LabelWidget("\U0001f870", 0, 0, "navigate.back")), collapse_WidgetFlag), "navbar.back");
+        setId_Widget(addChildFlags_Widget(navBar, iClob(newIcon_LabelWidget("\U0001f872", 0, 0, "navigate.forward")), collapse_WidgetFlag), "navbar.forward");
+        addChildFlags_Widget(navBar, iClob(new_Widget()), expand_WidgetFlag);
         iLabelWidget *idMenu = makeMenuButton_LabelWidget(
             "\U0001f464", identityButtonMenuItems_, iElemCount(identityButtonMenuItems_));
         setAlignVisually_LabelWidget(idMenu, iTrue);
-        addChild_Widget(navBar, iClob(idMenu));
-        setId_Widget(as_Widget(idMenu), "navbar.ident");
-        iLabelWidget *lock =
-            addChildFlags_Widget(navBar,
-                                 iClob(newIcon_LabelWidget("\U0001f513", SDLK_i, KMOD_PRIMARY, "document.info")),
-                                 frameless_WidgetFlag | tight_WidgetFlag);
-        setId_Widget(as_Widget(lock), "navbar.lock");
-        setFont_LabelWidget(lock, defaultSymbols_FontId);
-        updateTextCStr_LabelWidget(lock, "\U0001f512");
+        setId_Widget(addChildFlags_Widget(navBar, iClob(idMenu), collapse_WidgetFlag), "navbar.ident");
         /* URL input field. */ {
             iInputWidget *url = new_InputWidget(0);
             setSelectAllOnFocus_InputWidget(url, iTrue);
@@ -545,8 +898,19 @@ static void setupUserInterface_Window(iWindow *d) {
             setUrlContent_InputWidget(url, iTrue);
             setNotifyEdits_InputWidget(url, iTrue);
             setTextCStr_InputWidget(url, "gemini://");
-            addChildFlags_Widget(navBar, iClob(url), expand_WidgetFlag);
-            setPadding_Widget(as_Widget(url),0, 0, gap_UI * 1, 0);
+            addChildFlags_Widget(navBar, iClob(url), 0);
+            setPadding_Widget(as_Widget(url), 0, 0, gap_UI, 0);
+            /* Page information/certificate warning. */ {
+                iLabelWidget *lock =
+                    addChildFlags_Widget(as_Widget(url),
+                                         iClob(newIcon_LabelWidget("\U0001f513", SDLK_i, KMOD_PRIMARY, "document.info")),
+                                         noBackground_WidgetFlag | frameless_WidgetFlag | moveToParentLeftEdge_WidgetFlag |
+                                             (deviceType_App() == desktop_AppDeviceType ? tight_WidgetFlag : 0));
+                setId_Widget(as_Widget(lock), "navbar.lock");
+                setFont_LabelWidget(lock, defaultSymbols_FontId);
+                updateTextCStr_LabelWidget(lock, "\U0001f512");
+                setContentPadding_InputWidget(url, width_Widget(lock) * 0.75, -1);
+            }
             /* Feeds refresh indicator is inside the input field. */ {
                 iLabelWidget *fprog = new_LabelWidget(uiTextCaution_ColorEscape
                                                       "\u2605 Refreshing Feeds...", NULL);
@@ -569,18 +933,39 @@ static void setupUserInterface_Window(iWindow *d) {
                                      iClob(progress),
                                      moveToParentRightEdge_WidgetFlag);
             }
+            /* Feeds refresh indicator is inside the input field. */ {
+                iLabelWidget *queryInd =
+                    new_LabelWidget(uiTextAction_ColorEscape "\u21d2 Search Query", NULL);
+                setId_Widget(as_Widget(queryInd), "input.indicator.search");
+                setBackgroundColor_Widget(as_Widget(queryInd), uiBackground_ColorId);
+                setFrameColor_Widget(as_Widget(queryInd), uiTextAction_ColorId);
+                setAlignVisually_LabelWidget(queryInd, iTrue);
+                shrink_Rect(&as_Widget(queryInd)->rect, init_I2(0, gap_UI));
+                addChildFlags_Widget(as_Widget(url),
+                                     iClob(queryInd),
+                                     moveToParentRightEdge_WidgetFlag | hidden_WidgetFlag);
+            }
         }
         setId_Widget(addChild_Widget(
                          navBar, iClob(newIcon_LabelWidget(reloadCStr_, 0, 0, "navigate.reload"))),
                      "reload");
-        addChild_Widget(navBar,
+        addChildFlags_Widget(navBar, iClob(new_Widget()), expand_WidgetFlag);
+        setId_Widget(addChildFlags_Widget(navBar,
                         iClob(newIcon_LabelWidget(
-                            "\U0001f3e0", SDLK_h, KMOD_PRIMARY | KMOD_SHIFT, "navigate.home")));
+                            "\U0001f3e0", SDLK_h, KMOD_PRIMARY | KMOD_SHIFT, "navigate.home")),
+                        collapse_WidgetFlag),
+                     "navbar.home");
 #if !defined (iHaveNativeMenus)
+#   if defined (iPlatformAppleMobile)
+        iLabelWidget *navMenu =
+            makeMenuButton_LabelWidget("\U0001d362", isPhone ? phoneNavMenuItems_ : tabletNavMenuItems_,
+                                       isPhone ? iElemCount(phoneNavMenuItems_) : iElemCount(tabletNavMenuItems_));
+#   else
         iLabelWidget *navMenu =
             makeMenuButton_LabelWidget("\U0001d362", navMenuItems_, iElemCount(navMenuItems_));
+#   endif
         setAlignVisually_LabelWidget(navMenu, iTrue);
-        addChild_Widget(navBar, iClob(navMenu));
+        setId_Widget(addChildFlags_Widget(navBar, iClob(navMenu), collapse_WidgetFlag), "navbar.menu");
 #else
         insertMenuItems_MacOS("File", 1, fileMenuItems_, iElemCount(fileMenuItems_));
         insertMenuItems_MacOS("Edit", 2, editMenuItems_, iElemCount(editMenuItems_));
@@ -591,13 +976,20 @@ static void setupUserInterface_Window(iWindow *d) {
 #endif
     }
     /* Tab bar. */ {
-        iWidget *tabBar = makeTabs_Widget(div);
+        iWidget *mainStack = new_Widget();
+        setId_Widget(mainStack, "stack");
+        addChildFlags_Widget(div, iClob(mainStack), resizeChildren_WidgetFlag | expand_WidgetFlag |
+                             unhittable_WidgetFlag);
+        iWidget *tabBar = makeTabs_Widget(mainStack);
         setId_Widget(tabBar, "doctabs");
-        setFlags_Widget(tabBar, expand_WidgetFlag, iTrue);
         setBackgroundColor_Widget(tabBar, uiBackground_ColorId);
         appendTabPage_Widget(tabBar, iClob(new_DocumentWidget()), "Document", 0, 0);
         iWidget *buttons = findChild_Widget(tabBar, "tabs.buttons");
-        setFlags_Widget(buttons, collapse_WidgetFlag | hidden_WidgetFlag, iTrue);
+        setFlags_Widget(buttons, collapse_WidgetFlag | hidden_WidgetFlag |
+                        drawBackgroundToHorizontalSafeArea_WidgetFlag, iTrue);
+        if (deviceType_App() == phone_AppDeviceType) {
+            setBackgroundColor_Widget(buttons, uiBackground_ColorId);
+        }
         setId_Widget(
             addChild_Widget(buttons, iClob(newIcon_LabelWidget("\u2795", 0, 0, "tabs.new"))),
             "newtab");
@@ -607,7 +999,14 @@ static void setupUserInterface_Window(iWindow *d) {
         iSidebarWidget *sidebar1 = new_SidebarWidget(left_SideBarSide);
         addChildPos_Widget(content, iClob(sidebar1), front_WidgetAddPos);
         iSidebarWidget *sidebar2 = new_SidebarWidget(right_SideBarSide);
-        addChildPos_Widget(content, iClob(sidebar2), back_WidgetAddPos);
+        if (deviceType_App() != phone_AppDeviceType) {
+            addChildPos_Widget(content, iClob(sidebar2), back_WidgetAddPos);
+        }
+        else {
+            /* The identities sidebar is always in the main area. */
+            addChild_Widget(findChild_Widget(d->root, "stack"), iClob(sidebar2));
+            setFlags_Widget(as_Widget(sidebar2), hidden_WidgetFlag, iTrue);
+        }
     }
     /* Lookup results. */ {
         iLookupWidget *lookup = new_LookupWidget();
@@ -635,6 +1034,43 @@ static void setupUserInterface_Window(iWindow *d) {
         addChild_Widget(searchBar, iClob(newIcon_LabelWidget("  \u2b9d  ", 'g', KMOD_PRIMARY | KMOD_SHIFT, "find.prev")));
         addChild_Widget(searchBar, iClob(newIcon_LabelWidget("\u2a2f", SDLK_ESCAPE, 0, "find.close")));
     }
+#if defined (iPlatformAppleMobile)
+    /* Bottom toolbar. */
+    if (isPhone_iOS()) {
+        iWidget *toolBar = new_Widget();
+        addChild_Widget(div, iClob(toolBar));
+        setId_Widget(toolBar, "toolbar");
+        setCommandHandler_Widget(toolBar, handleToolBarCommands_);
+        setFlags_Widget(toolBar, collapse_WidgetFlag | resizeWidthOfChildren_WidgetFlag |
+                        arrangeHeight_WidgetFlag | arrangeHorizontal_WidgetFlag, iTrue);
+        setBackgroundColor_Widget(toolBar, tmBannerBackground_ColorId);
+        addChildFlags_Widget(toolBar, iClob(newLargeIcon_LabelWidget("\U0001f870", "navigate.back")), frameless_WidgetFlag);
+        addChildFlags_Widget(toolBar, iClob(newLargeIcon_LabelWidget("\U0001f872", "navigate.forward")), frameless_WidgetFlag);
+        setId_Widget(addChildFlags_Widget(toolBar, iClob(newLargeIcon_LabelWidget("\U0001f464", "toolbar.showident")), frameless_WidgetFlag), "toolbar.ident");
+        setId_Widget(addChildFlags_Widget(toolBar, iClob(newLargeIcon_LabelWidget("\U0001f588", "toolbar.showview arg:-1")),
+                             frameless_WidgetFlag | commandOnClick_WidgetFlag), "toolbar.view");
+        iLabelWidget *menuButton = makeMenuButton_LabelWidget("\U0001d362", phoneNavMenuItems_,
+                                                              iElemCount(phoneNavMenuItems_));
+        setFont_LabelWidget(menuButton, uiLabelLarge_FontId);
+        addChildFlags_Widget(toolBar, iClob(menuButton), frameless_WidgetFlag);
+        iForEach(ObjectList, i, children_Widget(toolBar)) {
+            iLabelWidget *btn = i.object;
+            setFlags_Widget(i.object, noBackground_WidgetFlag, iTrue);
+            setTextColor_LabelWidget(i.object, tmBannerIcon_ColorId);
+//            setBackgroundColor_Widget(i.object, tmBannerSideTitle_ColorId);
+        }
+        const iMenuItem items[] = {
+            { "Bookmarks", 0, 0, "toolbar.showview arg:0" },
+            { "Feeds", 0, 0, "toolbar.showview arg:1" },
+            { "History", 0, 0, "toolbar.showview arg:2" },
+            { "Page Outline", 0, 0, "toolbar.showview arg:4" },
+        };
+        iWidget *menu = makeMenu_Widget(findChild_Widget(toolBar, "toolbar.view"),
+                                        items, iElemCount(items));
+        setId_Widget(menu, "toolbar.menu");
+    }
+#endif
+    updatePadding_Window_(d);
     iWidget *tabsMenu = makeMenu_Widget(d->root,
                                         (iMenuItem[]){
                                             { "Close Tab", 0, 0, "tabs.close" },
@@ -667,8 +1103,8 @@ static void updateRootSize_Window_(iWindow *d, iBool notifyAlways) {
     const iInt2 oldSize = *size;
     SDL_GetRendererOutputSize(d->render, &size->x, &size->y);
     if (notifyAlways || !isEqual_I2(oldSize, *size)) {
-        const iBool isHoriz = (d->lastNotifiedSize.x != size->x);
-        const iBool isVert  = (d->lastNotifiedSize.y != size->y);
+        const iBool isHoriz = (d->place.lastNotifiedSize.x != size->x);
+        const iBool isVert  = (d->place.lastNotifiedSize.y != size->y);
         arrange_Widget(d->root);
         postCommandf_App("window.resized width:%d height:%d horiz:%d vert:%d",
                          size->x,
@@ -676,7 +1112,7 @@ static void updateRootSize_Window_(iWindow *d, iBool notifyAlways) {
                          isHoriz,
                          isVert);
         postRefresh_App();
-        d->lastNotifiedSize = *size;
+        d->place.lastNotifiedSize = *size;
     }
 }
 
@@ -712,29 +1148,116 @@ static void drawBlank_Window_(iWindow *d) {
     SDL_RenderPresent(d->render);
 }
 
+#if defined (LAGRANGE_CUSTOM_FRAME)
+static SDL_HitTestResult hitTest_Window_(SDL_Window *win, const SDL_Point *pos, void *data) {
+    iWindow *d = data;
+    iAssert(d->win == win);
+    if (SDL_GetWindowFlags(d->win) & (SDL_WINDOW_MOUSE_CAPTURE | SDL_WINDOW_FULLSCREEN_DESKTOP)) {
+        return SDL_HITTEST_NORMAL;
+    }
+    const int snap = snap_Window(d);
+    int w, h;
+    SDL_GetWindowSize(win, &w, &h);
+    /* TODO: Check if inside the caption label widget. */
+    const iBool isLeft   = pos->x < gap_UI;
+    const iBool isRight  = pos->x >= w - gap_UI;
+    const iBool isTop    = pos->y < gap_UI && snap != yMaximized_WindowSnap;
+    const iBool isBottom = pos->y >= h - gap_UI && snap != yMaximized_WindowSnap;
+    const int captionHeight = lineHeight_Text(uiContent_FontId) + gap_UI * 2;
+    const int rightEdge = left_Rect(bounds_Widget(findChild_Widget(d->root, "winbar.min")));
+    d->place.lastHit = SDL_HITTEST_NORMAL;
+    if (snap != maximized_WindowSnap) {
+        if (isLeft) {
+            return pos->y < captionHeight       ? SDL_HITTEST_RESIZE_TOPLEFT
+                   : pos->y > h - captionHeight ? SDL_HITTEST_RESIZE_BOTTOMLEFT
+                                                : (d->place.lastHit = SDL_HITTEST_RESIZE_LEFT);
+        }
+        if (isRight) {
+            return pos->y < captionHeight       ? SDL_HITTEST_RESIZE_TOPRIGHT
+                   : pos->y > h - captionHeight ? SDL_HITTEST_RESIZE_BOTTOMRIGHT
+                                                : (d->place.lastHit = SDL_HITTEST_RESIZE_RIGHT);
+        }
+        if (isTop) {
+            return pos->x < captionHeight       ? SDL_HITTEST_RESIZE_TOPLEFT
+                   : pos->x > w - captionHeight ? SDL_HITTEST_RESIZE_TOPRIGHT
+                                                : (d->place.lastHit = SDL_HITTEST_RESIZE_TOP);
+        }
+        if (isBottom) {
+            return pos->x < captionHeight       ? SDL_HITTEST_RESIZE_BOTTOMLEFT
+                   : pos->x > w - captionHeight ? SDL_HITTEST_RESIZE_BOTTOMRIGHT
+                                                : (d->place.lastHit = SDL_HITTEST_RESIZE_BOTTOM);
+        }
+    }
+    if (pos->x < rightEdge && pos->y < captionHeight) {
+        return SDL_HITTEST_DRAGGABLE;
+    }
+    return SDL_HITTEST_NORMAL;
+}
+
+SDL_HitTestResult hitTest_Window(const iWindow *d, iInt2 pos) {
+    return hitTest_Window_(d->win, &(SDL_Point){ pos.x, pos.y }, iConstCast(void *, d));
+}
+#endif
+
 iBool create_Window_(iWindow *d, iRect rect, uint32_t flags) {
     flags |= SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_HIDDEN;
+#if defined (LAGRANGE_CUSTOM_FRAME)
+    if (prefs_App()->customFrame) {
+        /* We are drawing a custom frame so hide the default one. */
+        flags |= SDL_WINDOW_BORDERLESS;
+    }
+#endif
     if (SDL_CreateWindowAndRenderer(
             width_Rect(rect), height_Rect(rect), flags, &d->win, &d->render)) {
         return iFalse;
     }
+#if defined (LAGRANGE_CUSTOM_FRAME)
+    if (prefs_App()->customFrame) {
+        /* Register a handler for window hit testing (drag, resize). */
+        SDL_SetWindowHitTest(d->win, hitTest_Window_, d);
+        SDL_SetWindowResizable(d->win, SDL_TRUE);
+    }
+#endif
     return iTrue;
 }
+
+#if defined (iPlatformLinux) || defined (LAGRANGE_CUSTOM_FRAME)
+static SDL_Surface *loadAppIconSurface_(int resized) {
+    const iBlock *icon = &imageLagrange64_Embedded;
+    int           w, h, num;
+    stbi_uc *     pixels = stbi_load_from_memory(
+        constData_Block(icon), size_Block(icon), &w, &h, &num, STBI_rgb_alpha);
+    if (resized) {
+        stbi_uc * rsPixels = malloc(num * resized * resized);
+        stbir_resize_uint8(pixels, w, h, 0, rsPixels, resized, resized, 0, num);
+        free(pixels);
+        pixels = rsPixels;
+        w = h = resized;
+    }
+    return SDL_CreateRGBSurfaceWithFormatFrom(
+        pixels, w, h, 8 * num, w * num, SDL_PIXELFORMAT_RGBA32);
+}
+#endif
 
 void init_Window(iWindow *d, iRect rect) {
     theWindow_ = d;
     d->win = NULL;
     iZap(d->cursors);
-    d->initialPos = rect.pos;
-    d->lastRect = rect;
-    d->lastNotifiedSize = zero_I2();
+    d->place.initialPos = rect.pos;
+    d->place.normalRect = rect;
+    d->place.lastNotifiedSize = zero_I2();
     d->pendingCursor = NULL;
     d->isDrawFrozen = iTrue;
+    d->isExposed = iFalse;
+    d->isMinimized = iFalse;
     d->isMouseInside = iTrue;
+    d->ignoreClick = iFalse;
     d->focusGainedAt = 0;
     uint32_t flags = 0;
-#if defined (iPlatformApple)
+#if defined (iPlatformAppleDesktop)
     SDL_SetHint(SDL_HINT_RENDER_DRIVER, shouldDefaultToMetalRenderer_MacOS() ? "metal" : "opengl");
+#elif defined (iPlatformAppleMobile)
+    SDL_SetHint(SDL_HINT_RENDER_DRIVER, "metal");
 #else
     flags |= SDL_WINDOW_OPENGL;
 #endif
@@ -751,7 +1274,7 @@ void init_Window(iWindow *d, iRect rect) {
     if (left_Rect(rect) >= 0 || top_Rect(rect) >= 0) {
         SDL_SetWindowPosition(d->win, left_Rect(rect), top_Rect(rect));
     }
-    const iInt2 minSize = init_I2(425, 300);
+    const iInt2 minSize = init_I2(425, 325);
     SDL_SetWindowMinimumSize(d->win, minSize.x, minSize.y);
     SDL_SetWindowTitle(d->win, "Lagrange");
     /* Some info. */ {
@@ -774,26 +1297,23 @@ void init_Window(iWindow *d, iRect rect) {
     d->pixelRatio = pixelRatio_Window_(d);
     setPixelRatio_Metrics(d->pixelRatio * d->uiScale);
 #if defined (iPlatformMsys)
+    SDL_Rect usable;
+    SDL_GetDisplayUsableBounds(0, &usable);
+    SDL_SetWindowMaximumSize(d->win, usable.w, usable.h);
     SDL_SetWindowMinimumSize(d->win, minSize.x * d->pixelRatio, minSize.y * d->pixelRatio);
     useExecutableIconResource_SDLWindow(d->win);
 #endif
 #if defined (iPlatformLinux)
     SDL_SetWindowMinimumSize(d->win, minSize.x * d->pixelRatio, minSize.y * d->pixelRatio);
     /* Load the window icon. */ {
-        int w, h, num;
-        const iBlock *icon = &imageLagrange64_Embedded;
-        stbi_uc *pixels = stbi_load_from_memory(constData_Block(icon),
-                                                size_Block(icon),
-                                                &w,
-                                                &h,
-                                                &num,
-                                                STBI_rgb_alpha);
-        SDL_Surface *surf =
-            SDL_CreateRGBSurfaceWithFormatFrom(pixels, w, h, 32, 4 * w, SDL_PIXELFORMAT_RGBA32);
+        SDL_Surface *surf = loadAppIconSurface_(0);
         SDL_SetWindowIcon(d->win, surf);
+        free(surf->pixels);
         SDL_FreeSurface(surf);
-        stbi_image_free(pixels);
     }
+#endif
+#if defined (iPlatformAppleMobile)
+    setupWindow_iOS(d);
 #endif
     d->root = new_Widget();
     setFlags_Widget(d->root, focusRoot_WidgetFlag, iTrue);
@@ -805,6 +1325,19 @@ void init_Window(iWindow *d, iRect rect) {
     setupUserInterface_Window(d);
     postCommand_App("bindings.changed"); /* update from bindings */
     updateRootSize_Window_(d, iFalse);
+    d->appIcon = NULL;
+#if defined (LAGRANGE_CUSTOM_FRAME)
+    /* Load the app icon for drawing in the title bar. */
+    if (prefs_App()->customFrame) {
+        SDL_Surface *surf = loadAppIconSurface_(appIconSize_());
+        SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
+        d->appIcon = SDL_CreateTextureFromSurface(d->render, surf);
+        free(surf->pixels);
+        SDL_FreeSurface(surf);
+        /* We need to observe non-client-area events. */
+        SDL_EventState(SDL_SYSWMEVENT, SDL_TRUE);
+    }
+#endif
 }
 
 void deinit_Window(iWindow *d) {
@@ -827,48 +1360,162 @@ SDL_Renderer *renderer_Window(const iWindow *d) {
     return d->render;
 }
 
-static iBool isMaximized_Window_(const iWindow *d) {
-#if !defined (iPlatformApple)
-    return (SDL_GetWindowFlags(d->win) & (SDL_WINDOW_MINIMIZED | SDL_WINDOW_MAXIMIZED)) != 0;
-#else
-    iUnused(d);
-    return iFalse; /* There is fullscreen mode but that is not handled at the moment. */
+iBool isFullscreen_Window(const iWindow *d) {
+    return snap_Window(d) == fullscreen_WindowSnap;
+}
+
+static void invalidate_Window_(iWindow *d) {
+    resetFonts_Text();
+    postCommand_App("theme.changed"); /* forces UI invalidation */
+}
+
+static iBool isNormalPlacement_Window_(const iWindow *d) {
+    if (d->isDrawFrozen) return iFalse;
+#if defined (iPlatformApple)
+    /* Maximized mode is not special on macOS. */
+    if (snap_Window(d) == maximized_WindowSnap) {
+        return iTrue;
+    }
 #endif
+    if (snap_Window(d)) return iFalse;
+    return !(SDL_GetWindowFlags(d->win) & SDL_WINDOW_MINIMIZED);
+}
+
+static iBool unsnap_Window_(iWindow *d, const iInt2 *newPos) {
+#if defined (LAGRANGE_CUSTOM_FRAME)
+    if (!prefs_App()->customFrame) {
+        return iFalse;
+    }
+    const int snap = snap_Window(d);
+    if (snap == yMaximized_WindowSnap || snap == left_WindowSnap || snap == right_WindowSnap) {
+        if (!newPos || (d->place.lastHit == SDL_HITTEST_RESIZE_LEFT ||
+                        d->place.lastHit == SDL_HITTEST_RESIZE_RIGHT)) {
+            return iFalse;
+        }
+        if (newPos) {
+            SDL_Rect usable;
+            SDL_GetDisplayUsableBounds(SDL_GetWindowDisplayIndex(d->win), &usable);
+            /* Snap to top. */
+            if (snap == yMaximized_WindowSnap &&
+                iAbs(newPos->y - usable.y) < lineHeight_Text(uiContent_FontId) * 2) {
+                setSnap_Window(d, redo_WindowSnap | yMaximized_WindowSnap);
+                return iFalse;
+            }
+        }
+    }
+    if (snap && snap != fullscreen_WindowSnap) {
+        if (snap_Window(d) == yMaximized_WindowSnap && newPos) {
+            d->place.normalRect.pos = *newPos;
+        }
+        //printf("unsnap\n"); fflush(stdout);
+        setSnap_Window(d, none_WindowSnap);
+        return iTrue;
+    }
+#endif
+    return iFalse;
 }
 
 static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
     switch (ev->event) {
         case SDL_WINDOWEVENT_EXPOSED:
+            if (!d->isExposed) {
+                drawBlank_Window_(d); /* avoid showing system-provided contents */
+                d->isExposed = iTrue;
+            }
             /* Since we are manually controlling when to redraw the window, we are responsible
                for ensuring that window contents get redrawn after expose events. Under certain
                circumstances (e.g., under openbox), not doing this would mean that the window
                is missing contents until other events trigger a refresh. */
             postRefresh_App();
 #if defined (LAGRANGE_ENABLE_WINDOWPOS_FIX)
-            if (d->initialPos.x >= 0) {
+            if (d->place.initialPos.x >= 0) {
                 int bx, by;
                 SDL_GetWindowBordersSize(d->win, &by, &bx, NULL, NULL);
-                SDL_SetWindowPosition(d->win, d->initialPos.x + bx, d->initialPos.y + by);
-                d->initialPos = init1_I2(-1);
+                SDL_SetWindowPosition(d->win, d->place.initialPos.x + bx, d->place.initialPos.y + by);
+                d->place.initialPos = init1_I2(-1);
             }
 #endif
             return iFalse;
         case SDL_WINDOWEVENT_MOVED: {
-            if (!isMaximized_Window_(d) && !d->isDrawFrozen) {
-                d->lastRect.pos = init_I2(ev->data1, ev->data2);
+            if (d->isMinimized) {
+                return iFalse;
+            }
+            const iInt2 newPos = init_I2(ev->data1, ev->data2);
+            if (isEqual_I2(newPos, init1_I2(-32000))) { /* magic! */
+                /* Maybe minimized? Seems like a Windows constant of some kind. */
+                d->isMinimized = iTrue;
+                return iFalse;
+            }
+#if defined (LAGRANGE_CUSTOM_FRAME)
+            /* Set the snap position depending on where the mouse cursor is. */
+            if (prefs_App()->customFrame) {
+                SDL_Rect usable;
+                iInt2 mouse = cursor_Win32(); /* SDL is unaware of the current cursor pos */
+                SDL_GetDisplayUsableBounds(SDL_GetWindowDisplayIndex(d->win), &usable);
+                const iBool isTop = iAbs(mouse.y - usable.y) < gap_UI * 20;
+                const iBool isBottom = iAbs(usable.y + usable.h - mouse.y) < gap_UI * 20;
+                if (iAbs(mouse.x - usable.x) < gap_UI) {
+                    setSnap_Window(d,
+                                   redo_WindowSnap | left_WindowSnap |
+                                       (isTop ? topBit_WindowSnap : 0) |
+                                       (isBottom ? bottomBit_WindowSnap : 0));
+                    return iTrue;
+                }
+                if (iAbs(mouse.x - usable.x - usable.w) < gap_UI) {
+                    setSnap_Window(d,
+                                   redo_WindowSnap | right_WindowSnap |
+                                       (isTop ? topBit_WindowSnap : 0) |
+                                       (isBottom ? bottomBit_WindowSnap : 0));
+                    return iTrue;
+                }
+                if (iAbs(mouse.y - usable.y) < 2) {
+                    setSnap_Window(d,
+                                   redo_WindowSnap | (d->place.lastHit == SDL_HITTEST_RESIZE_TOP
+                                                          ? yMaximized_WindowSnap
+                                                          : maximized_WindowSnap));
+                    return iTrue;
+                }
+            }
+#endif
+            //printf("MOVED: %d, %d\n", ev->data1, ev->data2); fflush(stdout);
+            if (unsnap_Window_(d, &newPos)) {
+                return iTrue;
+            }
+            if (isNormalPlacement_Window_(d)) {
+                d->place.normalRect.pos = newPos;
+                //printf("normal rect set (move)\n"); fflush(stdout);
                 iInt2 border = zero_I2();
 #if !defined (iPlatformApple)
                 SDL_GetWindowBordersSize(d->win, &border.y, &border.x, NULL, NULL);
 #endif
-                d->lastRect.pos = max_I2(zero_I2(), sub_I2(d->lastRect.pos, border));
+                d->place.normalRect.pos = max_I2(zero_I2(), sub_I2(d->place.normalRect.pos, border));
             }
             return iTrue;
         }
         case SDL_WINDOWEVENT_RESIZED:
-            if (!isMaximized_Window_(d) && !d->isDrawFrozen) {
-                d->lastRect.size = init_I2(ev->data1, ev->data2);
+            updatePadding_Window_(d);
+            if (d->isMinimized) {
+                updateRootSize_Window_(d, iTrue);
+                return iTrue;
+            }
+            if (unsnap_Window_(d, NULL)) {
+                return iTrue;
+            }
+            if (isNormalPlacement_Window_(d)) {
+                d->place.normalRect.size = init_I2(ev->data1, ev->data2);
+                //printf("normal rect set (resize)\n"); fflush(stdout);
             }
             updateRootSize_Window_(d, iTrue /* we were already redrawing during the resize */);
+            postRefresh_App();
+            return iTrue;
+        case SDL_WINDOWEVENT_RESTORED:
+            updateRootSize_Window_(d, iTrue);
+            invalidate_Window_(d);
+            d->isMinimized = iFalse;
+            postRefresh_App();
+            return iTrue;
+        case SDL_WINDOWEVENT_MINIMIZED:
+            d->isMinimized = iTrue;
             return iTrue;
         case SDL_WINDOWEVENT_LEAVE:
             unhover_Widget();
@@ -881,6 +1528,7 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
             return iTrue;
         case SDL_WINDOWEVENT_TAKE_FOCUS:
             SDL_SetWindowInputFocus(d->win);
+            postRefresh_App();
             return iTrue;
         case SDL_WINDOWEVENT_FOCUS_GAINED:
             d->focusGainedAt = SDL_GetTicks();
@@ -904,13 +1552,22 @@ static void applyCursor_Window_(iWindow *d) {
 
 iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
     switch (ev->type) {
+#if defined (LAGRANGE_CUSTOM_FRAME)
+        case SDL_SYSWMEVENT: {
+            /* We observe native Win32 messages for better user interaction with the
+               window frame. Mouse clicks especially will not generate normal SDL
+               events if they happen on the custom hit-tested regions. These events
+               are processed only there; the UI widgets do not get involved. */
+            processNativeEvent_Win32(ev->syswm.msg, d);
+            break;
+        }
+#endif
         case SDL_WINDOWEVENT: {
             return handleWindowEvent_Window_(d, &ev->window);
         }
         case SDL_RENDER_TARGETS_RESET:
         case SDL_RENDER_DEVICE_RESET: {
-            resetFonts_Text();
-            postCommand_App("theme.changed"); /* forces UI invalidation */
+            invalidate_Window_(d);
             break;
         }
         default: {
@@ -927,11 +1584,18 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
                 postRefresh_App();
                 return iTrue;
             }
+            if (processEvent_Touch(&event)) {
+                return iTrue;
+            }
             if (event.type == SDL_KEYDOWN && SDL_GetTicks() - d->focusGainedAt < 10) {
                 /* Suspiciously close to when input focus was received. For example under openbox,
                    closing xterm with Ctrl+D will cause the keydown event to "spill" over to us.
                    As a workaround, ignore these events. */
                 return iTrue; /* won't go to bindings, either */
+            }
+            if (event.type == SDL_MOUSEBUTTONDOWN && d->ignoreClick) {
+                d->ignoreClick = iFalse;
+                return iTrue;
             }
             /* Map mouse pointer coordinate to our coordinate system. */
             if (event.type == SDL_MOUSEMOTION) {
@@ -985,15 +1649,42 @@ void draw_Window(iWindow *d) {
     if (d->isDrawFrozen) {
         return;
     }
-//#if !defined (NDEBUG)
-//    printf("draw %d\n", d->frameTime); fflush(stdout);
-//#endif
-    /* Clear the window. */
-    SDL_SetRenderDrawColor(d->render, 0, 0, 0, 255);
-    SDL_RenderClear(d->render);
+    const int   winFlags = SDL_GetWindowFlags(d->win);
+    const iBool gotFocus = (winFlags & SDL_WINDOW_INPUT_FOCUS) != 0;
+    /* Clear the window. The clear color is visible as a border around the window
+       when the custom frame is being used. */ {
+#if defined (iPlatformAppleMobile)
+        const iColor back = get_Color(tmBackground_ColorId);
+#else
+        const iColor back = get_Color(gotFocus && d->place.snap != maximized_WindowSnap &&
+                                              ~winFlags & SDL_WINDOW_FULLSCREEN_DESKTOP
+                                          ? uiAnnotation_ColorId
+                                          : uiSeparator_ColorId);
+#endif
+        SDL_SetRenderDrawColor(d->render, back.r, back.g, back.b, 255);
+        SDL_RenderClear(d->render);
+    }
     /* Draw widgets. */
     d->frameTime = SDL_GetTicks();
     draw_Widget(d->root);
+#if defined (LAGRANGE_CUSTOM_FRAME)
+    /* App icon. */
+    const iWidget *appIcon = findChild_Widget(d->root, "winbar.icon");
+    if (isVisible_Widget(appIcon)) {
+        const int   size = appIconSize_();
+        const iRect rect = bounds_Widget(appIcon);
+        const iInt2 mid = mid_Rect(rect);
+        const iBool isLight = isLight_ColorTheme(colorTheme_App());
+        iColor      iconColor = get_Color(gotFocus || isLight ? white_ColorId : cyan_ColorId);
+        SDL_SetTextureColorMod(d->appIcon, iconColor.r, iconColor.g, iconColor.b);
+        SDL_SetTextureAlphaMod(d->appIcon, gotFocus || !isLight ? 255 : 92);
+        SDL_RenderCopy(
+            d->render,
+            d->appIcon,
+            NULL,
+            &(SDL_Rect){ left_Rect(rect) + gap_UI * 1.25f, mid.y - size / 2, size, size });
+    }
+#endif
 #if 0
     /* Text cache debugging. */ {
         SDL_Texture *cache = glyphCache_Text();
@@ -1013,6 +1704,10 @@ void resize_Window(iWindow *d, int w, int h) {
 
 void setTitle_Window(iWindow *d, const iString *title) {
     SDL_SetWindowTitle(d->win, cstr_String(title));
+    iLabelWidget *bar = findChild_Widget(d->root, "winbar.title");
+    if (bar) {
+        updateText_LabelWidget(bar, title);
+    }
 }
 
 void setUiScale_Window(iWindow *d, float uiScale) {
@@ -1048,7 +1743,7 @@ uint32_t id_Window(const iWindow *d) {
 }
 
 iInt2 rootSize_Window(const iWindow *d) {
-    return d->root->rect.size;
+    return d ? d->root->rect.size : zero_I2();
 }
 
 iInt2 coord_Window(const iWindow *d, int x, int y) {
@@ -1080,4 +1775,105 @@ uint32_t frameTime_Window(const iWindow *d) {
 
 iWindow *get_Window(void) {
     return theWindow_;
+}
+
+void setSnap_Window(iWindow *d, int snapMode) {
+    if (!prefs_App()->customFrame) {
+        if (snapMode == maximized_WindowSnap) {
+            SDL_MaximizeWindow(d->win);
+        }
+        else if (snapMode == fullscreen_WindowSnap) {
+            SDL_SetWindowFullscreen(d->win, SDL_WINDOW_FULLSCREEN_DESKTOP);
+        }
+        else {
+            if (snap_Window(d) == fullscreen_WindowSnap) {
+                SDL_SetWindowFullscreen(d->win, 0);
+            }
+            else {
+                SDL_RestoreWindow(d->win);
+            }
+        }
+        return;
+    }
+#if defined (LAGRANGE_CUSTOM_FRAME)
+    if (d->place.snap == snapMode) {
+        return;
+    }
+    const int snapDist = gap_UI * 4;
+    iRect newRect = zero_Rect();
+    SDL_Rect usable;
+    SDL_GetDisplayUsableBounds(SDL_GetWindowDisplayIndex(d->win), &usable);
+    if (d->place.snap == fullscreen_WindowSnap) {
+        SDL_SetWindowFullscreen(d->win, 0);
+    }
+    d->place.snap = snapMode & ~redo_WindowSnap;
+    switch (snapMode & mask_WindowSnap) {
+        case none_WindowSnap:
+            newRect = intersect_Rect(d->place.normalRect,
+                                     init_Rect(usable.x, usable.y, usable.w, usable.h));
+            break;
+        case left_WindowSnap:
+            newRect = init_Rect(usable.x, usable.y, usable.w / 2, usable.h);
+            break;
+        case right_WindowSnap:
+            newRect =
+                init_Rect(usable.x + usable.w / 2, usable.y, usable.w - usable.w / 2, usable.h);
+            break;
+        case maximized_WindowSnap:
+            newRect = init_Rect(usable.x, usable.y, usable.w, usable.h);
+            break;
+        case yMaximized_WindowSnap:
+            newRect.pos.y = 0;
+            newRect.size.y = usable.h;
+            SDL_GetWindowSize(d->win, &newRect.size.x, NULL);
+            SDL_GetWindowPosition(d->win, &newRect.pos.x, NULL);
+            /* Snap the window to left/right edges, if close by. */
+            if (iAbs(right_Rect(newRect) - (usable.x + usable.w)) < snapDist) {
+                newRect.pos.x = usable.x + usable.w - width_Rect(newRect);
+            }
+            if (iAbs(newRect.pos.x - usable.x) < snapDist) {
+                newRect.pos.x = usable.x;
+            }
+            break;
+        case fullscreen_WindowSnap:
+            SDL_SetWindowFullscreen(d->win, SDL_WINDOW_FULLSCREEN_DESKTOP);
+            break;
+    }
+    if (snapMode & (topBit_WindowSnap | bottomBit_WindowSnap)) {
+        newRect.size.y /= 2;
+    }
+    if (snapMode & bottomBit_WindowSnap) {
+        newRect.pos.y += newRect.size.y;
+    }
+    /* Update window controls. */
+    iWidget *winBar = findWidget_App("winbar");
+    updateTextCStr_LabelWidget(findChild_Widget(winBar, "winbar.max"),
+                               d->place.snap == maximized_WindowSnap ? "\u25a2" : "\u25a1");
+    /* Show and hide the title bar. */
+    const iBool wasVisible = isVisible_Widget(winBar);
+    setFlags_Widget(winBar, hidden_WidgetFlag, d->place.snap == fullscreen_WindowSnap);
+    if (newRect.size.x) {
+        SDL_SetWindowPosition(d->win, newRect.pos.x, newRect.pos.y);
+        SDL_SetWindowSize(d->win, newRect.size.x, newRect.size.y);
+        postCommand_App("window.resized");
+    }
+    if (wasVisible != isVisible_Widget(winBar)) {
+        arrange_Widget(d->root);
+        postRefresh_App();
+    }
+#endif /* defined (LAGRANGE_CUSTOM_FRAME) */
+}
+
+int snap_Window(const iWindow *d) {
+    if (!prefs_App()->customFrame) {
+        const int flags = SDL_GetWindowFlags(d->win);
+        if (flags & SDL_WINDOW_FULLSCREEN_DESKTOP) {
+            return fullscreen_WindowSnap;
+        }
+        else if (flags & SDL_WINDOW_MAXIMIZED) {
+            return maximized_WindowSnap;
+        }
+        return none_WindowSnap;
+    }
+    return d->place.snap;
 }

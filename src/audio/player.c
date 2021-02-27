@@ -566,6 +566,9 @@ static iContentSpec contentSpec_Player_(const iPlayer *d) {
         stb_vorbis *vrb = stb_vorbis_open_pushdata(
             constData_Block(&d->data->data), size_Block(&d->data->data), &consumed, &error, NULL);
         if (!vrb) {
+            if (error != VORBIS_need_more_data) {
+                content.type = none_DecoderType;
+            }
             return content;
         }
         const stb_vorbis_info info = stb_vorbis_get_info(vrb);
@@ -793,8 +796,10 @@ iString *metadataLabel_Player(const iPlayer *d) {
         }
         unlock_Mutex(&d->decoder->tagMutex);
     }
-    appendFormat_String(meta, "%d-bit %s %d Hz", SDL_AUDIO_BITSIZE(d->decoder->inputFormat),
-                            SDL_AUDIO_ISFLOAT(d->decoder->inputFormat) ? "float" : "integer",
-                            d->spec.freq);
+    if (d->decoder) {
+        appendFormat_String(meta, "%d-bit %s %d Hz", SDL_AUDIO_BITSIZE(d->decoder->inputFormat),
+                                SDL_AUDIO_ISFLOAT(d->decoder->inputFormat) ? "float" : "integer",
+                                d->spec.freq);
+    }
     return meta;
 }

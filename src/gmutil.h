@@ -103,7 +103,10 @@ void            init_Url                (iUrl *, const iString *text);
 
 iRangecc        urlScheme_String        (const iString *);
 iRangecc        urlHost_String          (const iString *);
+iRangecc        urlUser_String          (const iString *);
+iRangecc        urlRoot_String          (const iString *);
 const iString * absoluteUrl_String      (const iString *, const iString *urlMaybeRelative);
+iBool           isLikelyUrl_String      (const iString *);
 void            punyEncodeUrlHost_String(iString *);
 void            stripDefaultUrlPort_String(iString *);
 const iString * urlFragmentStripped_String(const iString *);

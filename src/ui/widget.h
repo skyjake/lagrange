@@ -25,6 +25,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 /* Base class for UI widgets. */
 
 #include "metrics.h"
+#include "util.h"
 
 #include <the_Foundation/object.h>
 #include <the_Foundation/objectlist.h>
@@ -91,6 +92,14 @@ enum iWidgetFlag {
 #define borderTop_WidgetFlag                iBit64(37)
 #define overflowScrollable_WidgetFlag       iBit64(38)
 #define focusRoot_WidgetFlag                iBit64(39)
+#define unhittable_WidgetFlag               iBit64(40)
+#define touchDrag_WidgetFlag                iBit64(41) /* touch event behavior: immediate drag */
+#define noBackground_WidgetFlag             iBit64(42)
+#define drawBackgroundToHorizontalSafeArea_WidgetFlag   iBit64(43)
+#define drawBackgroundToVerticalSafeArea_WidgetFlag     iBit64(44)
+#define visualOffset_WidgetFlag             iBit64(45)
+#define parentCannotResize_WidgetFlag       iBit64(46)
+#define noTopFrame_WidgetFlag               iBit64(47)
 
 enum iWidgetAddPos {
     back_WidgetAddPos,
@@ -108,6 +117,7 @@ struct Impl_Widget {
     int64_t      flags;
     iRect        rect;
     int          padding[4]; /* left, top, right, bottom */
+    iAnim        visualOffset;
     int          bgColor;
     int          frameColor;
     iObjectList *children;
@@ -157,12 +167,18 @@ void    drawBackground_Widget(const iWidget *);
 void    drawChildren_Widget (const iWidget *);
 
 iLocalDef int width_Widget(const iAnyObject *d) {
-    iAssert(isInstance_Object(d, &Class_Widget));
-    return ((const iWidget *) d)->rect.size.x;
+    if (d) {
+        iAssert(isInstance_Object(d, &Class_Widget));
+        return ((const iWidget *) d)->rect.size.x;
+    }
+    return 0;
 }
 iLocalDef int height_Widget(const iAnyObject *d) {
-    iAssert(isInstance_Object(d, &Class_Widget));
-    return ((const iWidget *) d)->rect.size.y;
+    if (d) {
+        iAssert(isInstance_Object(d, &Class_Widget));
+        return ((const iWidget *) d)->rect.size.y;
+    }
+    return 0;
 }
 iLocalDef iObjectList *children_Widget(iAnyObject *d) {
     iAssert(isInstance_Object(d, &Class_Widget));
@@ -189,12 +205,15 @@ void    setPos_Widget       (iWidget *, iInt2 pos);
 void    setSize_Widget      (iWidget *, iInt2 size);
 void    setPadding_Widget   (iWidget *, int left, int top, int right, int bottom);
 iLocalDef void setPadding1_Widget   (iWidget *d, int padding) { setPadding_Widget(d, padding, padding, padding, padding); }
+void    setVisualOffset_Widget      (iWidget *d, int value, uint32_t span, int animFlags);
 void    setBackgroundColor_Widget   (iWidget *, int bgColor);
 void    setFrameColor_Widget        (iWidget *, int frameColor);
 void    setCommandHandler_Widget    (iWidget *, iBool (*handler)(iWidget *, const char *));
-iAny *  addChild_Widget     (iWidget *, iAnyObject *child); /* holds a ref */
-iAny *  addChildPos_Widget  (iWidget *, iAnyObject *child, enum iWidgetAddPos addPos);
-iAny *  addChildFlags_Widget(iWidget *, iAnyObject *child, int64_t childFlags); /* holds a ref */
+iAny *  addChild_Widget             (iWidget *, iAnyObject *child); /* holds a ref */
+iAny *  addChildPos_Widget          (iWidget *, iAnyObject *child, enum iWidgetAddPos addPos);
+iAny *  addChildFlags_Widget        (iWidget *, iAnyObject *child, int64_t childFlags); /* holds a ref */
+iAny *  insertChildAfter_Widget     (iWidget *, iAnyObject *child, size_t afterIndex);
+iAny *  insertChildAfterFlags_Widget(iWidget *, iAnyObject *child, size_t afterIndex, int64_t childFlags);
 iAny *  removeChild_Widget  (iWidget *, iAnyObject *child); /* returns a ref */
 iAny *  child_Widget        (iWidget *, size_t index); /* O(n) */
 size_t  childIndex_Widget   (const iWidget *, const iAnyObject *child); /* O(n) */

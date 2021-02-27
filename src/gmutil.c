@@ -76,6 +76,9 @@ iLocalDef iBool isDef_(iRangecc cc) {
 
 static iRangecc prevPathSeg_(const char *end, const char *start) {
     iRangecc seg = { end, end };
+    if (start == end) {
+        return seg;
+    }
     do {
         seg.start--;
     } while (*seg.start != '/' && seg.start != start);
@@ -149,6 +152,37 @@ iRangecc urlHost_String(const iString *d) {
     return url.host;
 }
 
+iRangecc urlUser_String(const iString *d) {
+    static iRegExp *userPats_[2];
+    if (!userPats_[0]) {
+        userPats_[0] = new_RegExp("~([^/?]+)", 0);
+        userPats_[1] = new_RegExp("/users/([^/?]+)", caseInsensitive_RegExpOption);
+    }
+    iRegExpMatch m;
+    init_RegExpMatch(&m);
+    iRangecc found = iNullRange;
+    iForIndices(i, userPats_) {
+        if (matchString_RegExp(userPats_[i], d, &m)) {
+            found = capturedRange_RegExpMatch(&m, 1);
+        }
+    }
+    return found;
+}
+
+iRangecc urlRoot_String(const iString *d) {
+    const char *rootEnd;
+    const iRangecc user = urlUser_String(d);
+    if (!isEmpty_Range(&user)) {
+        rootEnd = user.end;
+    }
+    else {
+        iUrl parts;
+        init_Url(&parts, d);
+        rootEnd = parts.path.start;
+    }
+    return (iRangecc){ constBegin_String(d), rootEnd };
+}
+
 static iBool isAbsolutePath_(iRangecc path) {
     return isAbsolute_Path(collect_String(urlDecode_String(collect_String(newRange_String(path)))));
 }
@@ -197,7 +231,7 @@ void urlEncodePath_String(iString *d) {
         return;
     }
     iString *encoded = new_String();
-    appendRange_String(encoded , (iRangecc){ constBegin_String(d), url.path.start });
+    appendRange_String(encoded, (iRangecc){ constBegin_String(d), url.path.start });
     iString *path    = newRange_String(url.path);
     iString *encPath = urlEncodeExclude_String(path, "%/ ");
     append_String(encoded, encPath);
@@ -270,6 +304,21 @@ const iString *absoluteUrl_String(const iString *d, const iString *urlMaybeRelat
     normalize_String(absolute);
     cleanUrlPath_String(absolute);
     return absolute;
+}
+
+iBool isLikelyUrl_String(const iString *d) {
+    /* Guess whether a human intends the string to be an URL. This is supposed to be fuzzy;
+       not completely per-spec: a) begins with a scheme; b) has something that looks like a
+       hostname */
+    iRegExp *pattern = new_RegExp("^([a-z]+:)?//.*|"
+                                  "^(//)?([^/?#: ]+)([/?#:].*)$|"
+                                  "^(\\w+(\\.\\w+)+|localhost)$",
+                                  caseInsensitive_RegExpOption);
+    iRegExpMatch m;
+    init_RegExpMatch(&m);
+    const iBool likelyUrl = matchString_RegExp(pattern, d, &m);
+    iRelease(pattern);
+    return likelyUrl;
 }
 
 static iBool equalPuny_(const iString *d, iRangecc orig) {

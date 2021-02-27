@@ -28,8 +28,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "util.h"
 #include "keys.h"
 
-iLocalDef iInt2 padding_(int flags) {
+iLocalDef iInt2 padding_(int64_t flags) {
+#if defined (iPlatformAppleMobile)
+    return init_I2(flags & tight_WidgetFlag ? 4 * gap_UI / 2 : (4 * gap_UI), 3 * gap_UI / 2);
+#else
     return init_I2(flags & tight_WidgetFlag ? 3 * gap_UI / 2 : (3 * gap_UI), gap_UI);
+#endif
 }
 
 struct Impl_LabelWidget {
@@ -38,6 +42,7 @@ struct Impl_LabelWidget {
     int     font;
     int     key;
     int     kmods;
+    int     forceFg;
     iString command;
     iBool   alignVisual; /* align according to visible bounds, not typography */
     iClick  click;
@@ -82,6 +87,19 @@ static iBool processEvent_LabelWidget_(iLabelWidget *d, const SDL_Event *ev) {
         return iFalse;
     }
     if (!isEmpty_String(&d->command)) {
+#if 0 && defined (iPlatformAppleMobile)
+        /* Touch allows activating any button on release. */
+        switch (ev->type) {
+            case SDL_MOUSEBUTTONUP: {
+                const iInt2 mouse = init_I2(ev->button.x, ev->button.y);
+                if (contains_Widget(w, mouse)) {
+                    trigger_LabelWidget_(d);
+                    refresh_Widget(w);
+                }
+                break;
+            }
+        }
+#endif
         switch (processEvent_Click(&d->click, ev)) {
             case started_ClickResult:
                 setFlags_Widget(w, pressed_WidgetFlag, iTrue);
@@ -121,16 +139,17 @@ static void keyStr_LabelWidget_(const iLabelWidget *d, iString *str) {
 
 static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int *frame1, int *frame2) {
     const iWidget *w           = constAs_Widget(d);
-    const iBool    isPress     = (flags_Widget(w) & pressed_WidgetFlag) != 0;
-    const iBool    isSel       = (flags_Widget(w) & selected_WidgetFlag) != 0;
-    const iBool    isFrameless = (flags_Widget(w) & frameless_WidgetFlag) != 0;
+    const int64_t  flags       = flags_Widget(w);
+    const iBool    isPress     = (flags & pressed_WidgetFlag) != 0;
+    const iBool    isSel       = (flags & selected_WidgetFlag) != 0;
+    const iBool    isFrameless = (flags & frameless_WidgetFlag) != 0;
     const iBool    isButton    = d->click.button != 0;
     /* Default color state. */
-    *bg     = isButton ? uiBackground_ColorId : none_ColorId;
+    *bg     = isButton && ~flags & noBackground_WidgetFlag ? uiBackground_ColorId : none_ColorId;
     *fg     = uiText_ColorId;
     *frame1 = isButton ? uiEmboss1_ColorId : d->widget.frameColor;
     *frame2 = isButton ? uiEmboss2_ColorId : *frame1;
-    if (flags_Widget(w) & disabled_WidgetFlag && isButton) {
+    if (flags & disabled_WidgetFlag && isButton) {
         *fg = uiTextDisabled_ColorId;
     }
     if (isSel) {
@@ -177,6 +196,9 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
         }
         *fg = uiTextPressed_ColorId | permanent_ColorId;
     }
+    if (d->forceFg >= 0) {
+        *fg = d->forceFg;
+    }
 }
 
 static void draw_LabelWidget_(const iLabelWidget *d) {
@@ -205,7 +227,8 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
                 bottomRight_Rect(frameRect), bottomLeft_Rect(frameRect)
             };
             drawLines_Paint(&p, points + 2, 3, frame2);
-            drawLines_Paint(&p, points, 3, frame);
+            drawLines_Paint(
+                &p, points, !isHover_Widget(w) && flags & noTopFrame_WidgetFlag ? 2 : 3, frame);
         }
     }
     setClip_Paint(&p, rect);
@@ -256,7 +279,7 @@ static void sizeChanged_LabelWidget_(iLabelWidget *d) {
 
 void updateSize_LabelWidget(iLabelWidget *d) {
     iWidget *w = as_Widget(d);
-    const int flags = flags_Widget(w);
+    const int64_t flags = flags_Widget(w);
     iInt2 size = add_I2(measure_Text(d->font, cstr_String(&d->label)), muli_I2(padding_(flags), 2));
     if ((flags & drawKey_WidgetFlag) && d->key) {
         iString str;
@@ -277,6 +300,7 @@ void updateSize_LabelWidget(iLabelWidget *d) {
 void init_LabelWidget(iLabelWidget *d, const char *label, const char *cmd) {
     init_Widget(&d->widget);
     d->font = uiLabel_FontId;
+    d->forceFg = none_ColorId;
     initCStr_String(&d->label, label);
     if (cmd) {
         initCStr_String(&d->command, cmd);
@@ -302,6 +326,13 @@ void deinit_LabelWidget(iLabelWidget *d) {
 void setFont_LabelWidget(iLabelWidget *d, int fontId) {
     d->font = fontId;
     updateSize_LabelWidget(d);
+}
+
+void setTextColor_LabelWidget(iLabelWidget *d, int color) {
+    if (d && d->forceFg != color) {
+        d->forceFg = color;
+        refresh_Widget(d);
+    }
 }
 
 void setText_LabelWidget(iLabelWidget *d, const iString *text) {

@@ -38,6 +38,8 @@ struct Impl_Prefs {
     /* Window */
     iBool            useSystemTheme;
     enum iColorTheme theme;
+    enum iColorAccent accent;
+    iBool            customFrame; /* when LAGRANGE_CUSTOM_FRAME is defined */
     iBool            retainWindowSize;
     float            uiScale;
     int              zoomPercent;
@@ -47,6 +49,7 @@ struct Impl_Prefs {
     iBool            hoverLink;
     iBool            smoothScrolling;
     iBool            loadImageInsteadOfScrolling;
+    iString          searchUrl;
     /* Network */
     iBool            decodeUserVisibleURLs;
     int              maxCacheSize; /* MB */
@@ -61,6 +64,7 @@ struct Impl_Prefs {
     int              lineWidth;
     iBool            bigFirstParagraph;
     iBool            quoteIcon;
+    iBool            centerShortDocs;
     /* Colors */
     enum iGmDocumentTheme docThemeDark;
     enum iGmDocumentTheme docThemeLight;

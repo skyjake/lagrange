@@ -598,7 +598,10 @@ void removeEntries_Feeds(uint32_t feedBookmarkId) {
 
 static int cmpTimeDescending_FeedEntryPtr_(const void *a, const void *b) {
     const iFeedEntry * const *e1 = a, * const *e2 = b;
-    return -cmp_Time(&(*e1)->posted, &(*e2)->posted);
+    const int cmpPosted = -cmp_Time(&(*e1)->posted, &(*e2)->posted);
+    if (cmpPosted) return cmpPosted;
+    /* Posting timestamps may only be accurate to a day, so also sort by discovery time. */
+    return -cmp_Time(&(*e1)->discovered, &(*e2)->discovered);
 }
 
 const iPtrArray *listEntries_Feeds(void) {

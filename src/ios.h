@@ -1,4 +1,4 @@
-/* Copyright 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
+/* Copyright 2021 Jaakko Keränen <jaakko.keranen@iki.fi>
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -22,30 +22,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
-#include "widget.h"
+#include "ui/util.h"
 
-enum iSidebarMode {
-    bookmarks_SidebarMode,
-    feeds_SidebarMode,
-    history_SidebarMode,
-    identities_SidebarMode,
-    documentOutline_SidebarMode,
-    max_SidebarMode
-};
+iDeclareType(Window)
 
-const char *    icon_SidebarMode    (enum iSidebarMode mode);
-
-enum iSidebarSide {
-    left_SideBarSide,
-    right_SideBarSide,
-};
-
-iDeclareWidgetClass(SidebarWidget)
-iDeclareObjectConstructionArgs(SidebarWidget, enum iSidebarSide side)
-
-iBool               setMode_SidebarWidget       (iSidebarWidget *, enum iSidebarMode mode);
-void                setButtonFont_SidebarWidget (iSidebarWidget *, int font);
-
-enum iSidebarMode   mode_SidebarWidget          (const iSidebarWidget *);
-int                 width_SidebarWidget         (const iSidebarWidget *);
-void                setWidth_SidebarWidget      (iSidebarWidget *, int width);
+void    setupApplication_iOS    (void);
+void    setupWindow_iOS         (iWindow *window);
+iBool   isPhone_iOS             (void);
+void    safeAreaInsets_iOS      (float *left, float *top, float *right, float *bottom);
+iBool   processEvent_iOS        (const SDL_Event *);

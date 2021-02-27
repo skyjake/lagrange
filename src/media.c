@@ -27,26 +27,31 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "audio/player.h"
 #include "app.h"
 
+#include <the_Foundation/file.h>
 #include <the_Foundation/ptrarray.h>
 #include <stb_image.h>
 #include <SDL_hints.h>
 #include <SDL_render.h>
+#include <SDL_timer.h>
 
 iDeclareType(GmMediaProps)
 
 struct Impl_GmMediaProps {
     iGmLinkId linkId;
     iString   mime;
+    iString   url;
     iBool     isPermanent;
 };
 
 static void init_GmMediaProps_(iGmMediaProps *d) {
     d->linkId = 0;
     init_String(&d->mime);
+    init_String(&d->url);
     d->isPermanent = iFalse;
 }
 
 static void deinit_GmMediaProps_(iGmMediaProps *d) {
+    deinit_String(&d->url);
     deinit_String(&d->mime);
 }
 
@@ -125,9 +130,77 @@ iDefineTypeConstruction(GmAudio)
 
 /*----------------------------------------------------------------------------------------------*/
 
+iDeclareType(GmDownload)
+
+struct Impl_GmDownload {
+    iGmMediaProps props;
+    uint64_t      numBytes;
+    iTime         startTime;
+    uint32_t      rateStartTime;
+    size_t        rateNumBytes;
+    float         currentRate;
+    iString *     path;
+    iFile *       file;
+};
+
+static iBool openFile_GmDownload_(iGmDownload *d) {
+    iAssert(!isEmpty_String(&d->props.url));
+    d->path = copy_String(downloadPathForUrl_App(&d->props.url, &d->props.mime));
+    d->file = new_File(d->path);
+    if (!open_File(d->file, writeOnly_FileMode)) {
+        return iFalse;
+    }
+    return iTrue;
+}
+
+static void closeFile_GmDownload_(iGmDownload *d) {
+    d->currentRate = (float) (d->numBytes / elapsedSeconds_Time(&d->startTime));
+    iReleasePtr(&d->file);
+}
+
+void init_GmDownload(iGmDownload *d) {
+    init_GmMediaProps_(&d->props);
+    initCurrent_Time(&d->startTime);
+    d->numBytes      = 0;
+    d->rateStartTime = SDL_GetTicks();
+    d->rateNumBytes  = 0;
+    d->currentRate   = 0.0f;
+    d->path          = NULL;
+    d->file          = NULL;
+}
+
+void deinit_GmDownload(iGmDownload *d) {
+    closeFile_GmDownload_(d);
+    deinit_GmMediaProps_(&d->props);
+    delete_String(d->path);
+}
+
+static void writeToFile_GmDownload_(iGmDownload *d, const iBlock *data) {
+    const static unsigned rateInterval_ = 1000;
+    iAssert(d->file);
+    writeData_File(d->file,
+                   constBegin_Block(data) + d->numBytes,
+                   size_Block(data) - d->numBytes);
+    const size_t newBytes = size_Block(data) - d->numBytes;
+    d->numBytes = size_Block(data);
+    d->rateNumBytes += newBytes;
+    const uint32_t now = SDL_GetTicks();
+    if (now - d->rateStartTime > rateInterval_) {
+        const double elapsed = (double) (now - d->rateStartTime) / 1000.0;
+        d->rateStartTime     = now;
+        d->currentRate       = (float) (d->rateNumBytes / elapsed);
+        d->rateNumBytes      = 0;
+    }
+}
+
+iDefineTypeConstruction(GmDownload)
+
+/*----------------------------------------------------------------------------------------------*/
+
 struct Impl_Media {
     iPtrArray images;
-    iPtrArray audio;   
+    iPtrArray audio;
+    iPtrArray downloads;
 };
 
 iDefineTypeConstruction(Media)
@@ -135,10 +208,12 @@ iDefineTypeConstruction(Media)
 void init_Media(iMedia *d) {
     init_PtrArray(&d->images);
     init_PtrArray(&d->audio);
+    init_PtrArray(&d->downloads);
 }
 
 void deinit_Media(iMedia *d) {
     clear_Media(d);
+    deinit_PtrArray(&d->downloads);
     deinit_PtrArray(&d->audio);
     deinit_PtrArray(&d->images);
 }
@@ -152,6 +227,29 @@ void clear_Media(iMedia *d) {
         deinit_GmAudio(a.ptr);
     }
     clear_PtrArray(&d->audio);
+    iForEach(PtrArray, n, &d->downloads) {
+        deinit_GmDownload(n.ptr);
+    }
+    clear_PtrArray(&d->downloads);
+}
+
+iBool setDownloadUrl_Media(iMedia *d, iGmLinkId linkId, const iString *url) {
+    iGmDownload *dl       = NULL;
+    iMediaId     existing = findLinkDownload_Media(d, linkId);
+    iBool        isNew    = iFalse;
+    if (!existing) {
+        isNew = iTrue;
+        dl = new_GmDownload();
+        dl->props.linkId = linkId;
+        dl->props.isPermanent = iTrue;
+        set_String(&dl->props.url, url);
+        pushBack_PtrArray(&d->downloads, dl);
+    }
+    else {
+        iGmDownload *dl = at_PtrArray(&d->downloads, existing - 1);
+        set_String(&dl->props.url, url);
+    }
+    return isNew;
 }
 
 iBool setData_Media(iMedia *d, iGmLinkId linkId, const iString *mime, const iBlock *data,
@@ -192,6 +290,26 @@ iBool setData_Media(iMedia *d, iGmLinkId linkId, const iString *mime, const iBlo
             }
             if (!isPartial) {
                 updateSourceData_Player(audio->player, NULL, NULL, complete_PlayerUpdate);
+            }
+        }
+    }
+    else if ((existing = findLinkDownload_Media(d, linkId)) != 0) {
+        iGmDownload *dl;
+        if (isDeleting) {
+            take_PtrArray(&d->downloads, existing - 1, (void **) &dl);
+            delete_GmDownload(dl);
+        }
+        else {
+            dl = at_PtrArray(&d->downloads, existing - 1);
+            if (isEmpty_String(&dl->props.mime)) {
+                set_String(&dl->props.mime, mime);
+            }
+            if (!dl->file) {
+                openFile_GmDownload_(dl);
+            }
+            writeToFile_GmDownload_(dl, data);
+            if (!isPartial) {
+                closeFile_GmDownload_(dl);
             }
         }
     }
@@ -253,6 +371,24 @@ iMediaId findLinkAudio_Media(const iMedia *d, iGmLinkId linkId) {
     return 0;
 }
 
+iMediaId findLinkDownload_Media(const iMedia *d, uint16_t linkId) {
+    iConstForEach(PtrArray, i, &d->downloads) {
+        const iGmDownload *dl = i.ptr;
+        if (dl->props.linkId == linkId) {
+            return index_PtrArrayConstIterator(&i) + 1;
+        }
+    }
+    return 0;
+}
+
+iInt2 imageSize_Media(const iMedia *d, iMediaId imageId) {
+    if (imageId > 0 && imageId <= size_PtrArray(&d->images)) {
+        const iGmImage *img = constAt_PtrArray(&d->images, imageId - 1);
+        return img->size;
+    }
+    return zero_I2();
+}
+
 SDL_Texture *imageTexture_Media(const iMedia *d, uint16_t imageId) {
     if (imageId > 0 && imageId <= size_PtrArray(&d->images)) {
         const iGmImage *img = constAt_PtrArray(&d->images, imageId - 1);
@@ -261,12 +397,11 @@ SDL_Texture *imageTexture_Media(const iMedia *d, uint16_t imageId) {
     return NULL;
 }
 
-iBool imageInfo_Media(const iMedia *d, iMediaId imageId, iGmImageInfo *info_out) {
+iBool imageInfo_Media(const iMedia *d, iMediaId imageId, iGmMediaInfo *info_out) {
     if (imageId > 0 && imageId <= size_PtrArray(&d->images)) {
         const iGmImage *img   = constAt_PtrArray(&d->images, imageId - 1);
-        info_out->size        = img->size;
         info_out->numBytes    = img->numBytes;
-        info_out->mime        = cstr_String(&img->props.mime);
+        info_out->type        = cstr_String(&img->props.mime);
         info_out->isPermanent = img->props.isPermanent;
         return iTrue;
     }
@@ -282,10 +417,10 @@ iPlayer *audioData_Media(const iMedia *d, iMediaId audioId) {
     return NULL;
 }
 
-iBool audioInfo_Media(const iMedia *d, iMediaId audioId, iGmAudioInfo *info_out) {
+iBool audioInfo_Media(const iMedia *d, iMediaId audioId, iGmMediaInfo *info_out) {
     if (audioId > 0 && audioId <= size_PtrArray(&d->audio)) {
         const iGmAudio *audio = constAt_PtrArray(&d->audio, audioId - 1);
-        info_out->mime        = cstr_String(&audio->props.mime);
+        info_out->type        = cstr_String(&audio->props.mime);
         info_out->isPermanent = audio->props.isPermanent;
         return iTrue;
     }
@@ -301,6 +436,33 @@ iPlayer *audioPlayer_Media(const iMedia *d, iMediaId audioId) {
     return NULL;
 }
 
+iBool downloadInfo_Media(const iMedia *d, iMediaId downloadId, iGmMediaInfo *info_out) {
+    if (downloadId > 0 && downloadId <= size_PtrArray(&d->downloads)) {
+        const iGmDownload *dl = constAt_PtrArray(&d->downloads, downloadId - 1);
+        info_out->type = cstr_String(&dl->props.mime);
+        info_out->isPermanent = dl->props.isPermanent;
+        info_out->numBytes = dl->numBytes;
+        return iTrue;
+    }
+    iZap(*info_out);
+    return iFalse;
+}
+
+void downloadStats_Media(const iMedia *d, iMediaId downloadId, const iString **path_out,
+                         float *bytesPerSecond_out, iBool *isFinished_out) {
+    *path_out = NULL;
+    *bytesPerSecond_out = 0.0f;
+    *isFinished_out = iFalse;
+    if (downloadId > 0 && downloadId <= size_PtrArray(&d->downloads)) {
+        const iGmDownload *dl = constAt_PtrArray(&d->downloads, downloadId - 1);
+        if (dl->path) {
+            *path_out = dl->path;
+        }
+        *bytesPerSecond_out = dl->currentRate;
+        *isFinished_out = (dl->path && !dl->file);
+    }
+}
+
 /*----------------------------------------------------------------------------------------------*/
 
 static void updated_MediaRequest_(iAnyObject *obj) {
@@ -313,11 +475,13 @@ static void finished_MediaRequest_(iAnyObject *obj) {
     postCommandf_App("media.finished link:%u request:%p", d->linkId, d);
 }
 
-void init_MediaRequest(iMediaRequest *d, iDocumentWidget *doc, unsigned int linkId, const iString *url) {
+void init_MediaRequest(iMediaRequest *d, iDocumentWidget *doc, unsigned int linkId,
+                       const iString *url, iBool enableFilters) {
     d->doc    = doc;
     d->linkId = linkId;
     d->req    = new_GmRequest(certs_App());
     setUrl_GmRequest(d->req, url);
+    enableFilters_GmRequest(d->req, enableFilters);
     iConnect(GmRequest, d->req, updated, d, updated_MediaRequest_);
     iConnect(GmRequest, d->req, finished, d, finished_MediaRequest_);
     submit_GmRequest(d->req);
@@ -330,6 +494,7 @@ void deinit_MediaRequest(iMediaRequest *d) {
 }
 
 iDefineObjectConstructionArgs(MediaRequest,
-                              (iDocumentWidget *doc, unsigned int linkId, const iString *url),
-                              doc, linkId, url)
+                              (iDocumentWidget *doc, unsigned int linkId, const iString *url,
+                               iBool enableFilters),
+                              doc, linkId, url, enableFilters)
 iDefineClass(MediaRequest)

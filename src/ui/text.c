@@ -234,6 +234,18 @@ static void initFonts_Text_(iText *d) {
         italicFont  = &fontLiterataLightItalicopsz10_Embedded;
         lightFont   = &fontLiterataExtraLightopsz18_Embedded;
     }
+    else if (d->contentFont == sourceSansPro_TextFont) {
+        regularFont = &fontSourceSansProRegular_Embedded;
+        italicFont  = &fontFiraSansItalic_Embedded;
+        lightFont   = &fontFiraSansLight_Embedded;
+        lightScaling = 0.85f;
+    }
+    else if (d->contentFont == iosevka_TextFont) {
+        regularFont = &fontIosevkaTermExtended_Embedded;
+        italicFont  = &fontIosevkaTermExtended_Embedded;
+        lightFont   = &fontIosevkaTermExtended_Embedded;
+        scaling     = lightScaling = 0.866f;
+    }
     if (d->headingFont == firaSans_TextFont) {
         h12Font     = &fontFiraSansBold_Embedded;
         h3Font      = &fontFiraSansRegular_Embedded;
@@ -248,18 +260,34 @@ static void initFonts_Text_(iText *d) {
         h12Font = &fontLiterataBoldopsz36_Embedded;
         h3Font  = &fontLiterataRegularopsz14_Embedded;
     }
+    else if (d->headingFont == sourceSansPro_TextFont) {
+        h12Font = &fontSourceSansProBold_Embedded;
+        h3Font = &fontSourceSansProRegular_Embedded;
+    }
+    else if (d->headingFont == iosevka_TextFont) {
+        h12Font = &fontIosevkaTermExtended_Embedded;
+        h3Font  = &fontIosevkaTermExtended_Embedded;
+    }
+#if defined (iPlatformAppleMobile)
+    const float uiSize = fontSize_UI * 1.1f;
+#else
+    const float uiSize = fontSize_UI;
+#endif
     const struct {
         const iBlock *ttf;
         int size;
         float scaling;
         int symbolsFont;
     } fontData[max_FontId] = {
-        { &fontSourceSansProRegular_Embedded, fontSize_UI,          1.0f, defaultSymbols_FontId },
-        { &fontSourceSansProBold_Embedded,    fontSize_UI,          1.0f, defaultSymbols_FontId },
-        { &fontSourceSansProRegular_Embedded, fontSize_UI * 1.125f, 1.0f, defaultMediumSymbols_FontId },
-        { &fontSourceSansProBold_Embedded,    fontSize_UI * 1.125f, 1.0f, defaultMediumSymbols_FontId },
-        { &fontSourceSansProRegular_Embedded, fontSize_UI * 1.666f, 1.0f, defaultLargeSymbols_FontId },
-        { &fontIosevkaTermExtended_Embedded,  fontSize_UI * 0.866f, 1.0f, defaultSymbols_FontId },
+        { &fontSourceSansProRegular_Embedded, uiSize,               1.0f, defaultSymbols_FontId },
+        { &fontSourceSansProBold_Embedded,    uiSize,               1.0f, defaultSymbols_FontId },
+        { &fontSourceSansProRegular_Embedded, uiSize * 1.125f,      1.0f, defaultMediumSymbols_FontId },
+        { &fontSourceSansProBold_Embedded,    uiSize * 1.125f,      1.0f, defaultMediumSymbols_FontId },
+        { &fontSourceSansProRegular_Embedded, uiSize * 1.333f,      1.0f, defaultBigSymbols_FontId },
+        { &fontSourceSansProBold_Embedded,    uiSize * 1.333f,      1.0f, defaultBigSymbols_FontId },
+        { &fontSourceSansProRegular_Embedded, uiSize * 1.666f,      1.0f, defaultLargeSymbols_FontId },
+        { &fontSourceSansProBold_Embedded,    uiSize * 1.666f,      1.0f, defaultLargeSymbols_FontId },
+        { &fontIosevkaTermExtended_Embedded,  uiSize * 0.866f,      1.0f, defaultSymbols_FontId },
         { &fontSourceSansProRegular_Embedded, textSize,             scaling, symbols_FontId },
         /* content fonts */
         { regularFont,                        textSize,             scaling,      symbols_FontId },
@@ -274,9 +302,10 @@ static void initFonts_Text_(iText *d) {
         /* monospace content fonts */
         { &fontIosevkaTermExtended_Embedded,  textSize,             0.866f, symbols_FontId },
         /* symbol fonts */
-        { &fontSymbola_Embedded,              fontSize_UI,          1.0f, defaultSymbols_FontId },
-        { &fontSymbola_Embedded,              fontSize_UI * 1.125f, 1.0f, defaultMediumSymbols_FontId },
-        { &fontSymbola_Embedded,              fontSize_UI * 1.666f, 1.0f, defaultLargeSymbols_FontId },
+        { &fontSymbola_Embedded,              uiSize,               1.0f, defaultSymbols_FontId },
+        { &fontSymbola_Embedded,              uiSize * 1.125f,      1.0f, defaultMediumSymbols_FontId },
+        { &fontSymbola_Embedded,              uiSize * 1.333f,      1.0f, defaultBigSymbols_FontId },
+        { &fontSymbola_Embedded,              uiSize * 1.666f,      1.0f, defaultLargeSymbols_FontId },
         { &fontSymbola_Embedded,              textSize,             1.0f, symbols_FontId },
         { &fontSymbola_Embedded,              textSize * 1.200f,    1.0f, mediumSymbols_FontId },
         { &fontSymbola_Embedded,              textSize * 1.333f,    1.0f, bigSymbols_FontId },
@@ -285,9 +314,10 @@ static void initFonts_Text_(iText *d) {
         { &fontSymbola_Embedded,              monoSize,             1.0f, monospaceSymbols_FontId },
         { &fontSymbola_Embedded,              smallMonoSize,        1.0f, monospaceSmallSymbols_FontId },
         /* emoji fonts */
-        { &fontNotoEmojiRegular_Embedded,     fontSize_UI,          1.0f, defaultSymbols_FontId },
-        { &fontNotoEmojiRegular_Embedded,     fontSize_UI * 1.125f, 1.0f, defaultMediumSymbols_FontId },
-        { &fontNotoEmojiRegular_Embedded,     fontSize_UI * 1.666f, 1.0f, defaultLargeSymbols_FontId },
+        { &fontNotoEmojiRegular_Embedded,     uiSize,               1.0f, defaultSymbols_FontId },
+        { &fontNotoEmojiRegular_Embedded,     uiSize * 1.125f,      1.0f, defaultMediumSymbols_FontId },
+        { &fontNotoEmojiRegular_Embedded,     uiSize * 1.333f,      1.0f, defaultBigSymbols_FontId },
+        { &fontNotoEmojiRegular_Embedded,     uiSize * 1.666f,      1.0f, defaultLargeSymbols_FontId },
         { &fontNotoEmojiRegular_Embedded,     textSize,             1.0f, symbols_FontId },
         { &fontNotoEmojiRegular_Embedded,     textSize * 1.200f,    1.0f, mediumSymbols_FontId },
         { &fontNotoEmojiRegular_Embedded,     textSize * 1.333f,    1.0f, bigSymbols_FontId },
@@ -296,7 +326,7 @@ static void initFonts_Text_(iText *d) {
         { &fontNotoEmojiRegular_Embedded,     monoSize,             1.0f, monospaceSymbols_FontId },
         { &fontNotoEmojiRegular_Embedded,     smallMonoSize,        1.0f, monospaceSmallSymbols_FontId },
         /* japanese fonts */
-        { &fontNotoSansJPRegular_Embedded,    fontSize_UI,          1.0f, defaultSymbols_FontId },
+        { &fontNotoSansJPRegular_Embedded,    uiSize,               1.0f, defaultSymbols_FontId },
         { &fontNotoSansJPRegular_Embedded,    smallMonoSize,        1.0f, monospaceSmallSymbols_FontId },
         { &fontNotoSansJPRegular_Embedded,    monoSize,             1.0f, monospaceSymbols_FontId },
         { &fontNotoSansJPRegular_Embedded,    textSize,             1.0f, symbols_FontId },
@@ -305,7 +335,7 @@ static void initFonts_Text_(iText *d) {
         { &fontNotoSansJPRegular_Embedded,    textSize * 1.666f,    1.0f, largeSymbols_FontId },
         { &fontNotoSansJPRegular_Embedded,    textSize * 2.000f,    1.0f, hugeSymbols_FontId },
         /* korean fonts */
-        { &fontNanumGothicRegular_Embedded,   fontSize_UI,          1.0f, defaultSymbols_FontId },
+        { &fontNanumGothicRegular_Embedded,   uiSize,               1.0f, defaultSymbols_FontId },
         { &fontNanumGothicRegular_Embedded,   smallMonoSize,        1.0f, monospaceSmallSymbols_FontId },
         { &fontNanumGothicRegular_Embedded,   monoSize,             1.0f, monospaceSymbols_FontId },
         { &fontNanumGothicRegular_Embedded,   textSize,             1.0f, symbols_FontId },
@@ -331,6 +361,7 @@ static void initFonts_Text_(iText *d) {
            the other sizes. */
         font_Text_(default_FontId)->japaneseFont          = defaultJapanese_FontId;
         font_Text_(defaultMedium_FontId)->japaneseFont    = defaultJapanese_FontId;
+        font_Text_(defaultBig_FontId)->japaneseFont       = defaultJapanese_FontId;
         font_Text_(defaultLarge_FontId)->japaneseFont     = defaultJapanese_FontId;
         font_Text_(defaultMonospace_FontId)->japaneseFont = defaultJapanese_FontId;
         font_Text_(monospaceSmall_FontId)->japaneseFont   = monospaceSmallJapanese_FontId;
@@ -344,6 +375,7 @@ static void initFonts_Text_(iText *d) {
     /* Korean script. */ {
         font_Text_(default_FontId)->koreanFont          = defaultKorean_FontId;
         font_Text_(defaultMedium_FontId)->koreanFont    = defaultKorean_FontId;
+        font_Text_(defaultBig_FontId)->koreanFont       = defaultKorean_FontId;
         font_Text_(defaultLarge_FontId)->koreanFont     = defaultKorean_FontId;
         font_Text_(defaultMonospace_FontId)->koreanFont = defaultKorean_FontId;
         font_Text_(monospaceSmall_FontId)->koreanFont   = monospaceSmallKorean_FontId;
@@ -386,6 +418,7 @@ static void initCache_Text_(iText *d) {
         pushBack_Array(&d->cacheRows, &(iCacheRow){ .height = 0 });
     }
     d->cacheBottom = 0;
+    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
     d->cache = SDL_CreateTexture(d->render,
                                  SDL_PIXELFORMAT_RGBA4444,
                                  SDL_TEXTUREACCESS_STATIC | SDL_TEXTUREACCESS_TARGET,
@@ -669,7 +702,7 @@ static iChar nextChar_(const char **chPos, const char *end) {
 }
 
 static enum iFontId fontId_Text_(const iFont *font) {
-    return font - text_.fonts;
+    return (enum iFontId) (font - text_.fonts);
 }
 
 iLocalDef iBool isWrapBoundary_(iChar prevC, iChar c) {
@@ -706,6 +739,7 @@ struct Impl_RunArgs {
     iInt2         pos;
     int           xposLimit;       /* hard limit for wrapping */
     int           xposLayoutBound; /* visible bound for layout purposes; does not affect wrapping */
+    int           color;
     const char ** continueFrom_out;
     int *         runAdvance_out;
 };
@@ -735,8 +769,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
     for (const char *chPos = args->text.start; chPos != args->text.end; ) {
         iAssert(chPos < args->text.end);
         const char *currentPos = chPos;
-        if (*chPos == 0x1b) {
-            /* ANSI escape. */
+        if (*chPos == 0x1b) { /* ANSI escape. */
             chPos++;
             iRegExpMatch m;
             init_RegExpMatch(&m);
@@ -761,17 +794,6 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                 ch = nextChar_(&chPos, args->text.end);
             }
         }
-#if 0
-        iChar nextCh = 0; {
-            /* TODO: Since we're peeking ahead, should use this on the next loop iteration. */
-            const char *ncp = chPos;
-            nextCh = nextChar_(&ncp, text.end);
-        }
-        /* VS15: Peek ahead and treat as Emoji font. */
-        if (nextCh == emojiVariationSelector_Char) {
-            isEmoji = iTrue;
-        }
-#endif
         if (isVariationSelector_Char(ch)) {
             ch = nextChar_(&chPos, args->text.end); /* skip it */
         }
@@ -822,9 +844,17 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                 continue;
             }
             if (ch == '\r') {
-                const iChar esc = nextChar_(&chPos, args->text.end);
+                iChar esc = nextChar_(&chPos, args->text.end);
+                int colorNum = args->color;
+                if (esc != 0x24) { /* ASCII Cancel */
+                    colorNum = esc - asciiBase_ColorEscape;
+                }
+                else if (esc == '\r') { /* Extended range. */
+                    esc = nextChar_(&chPos, args->text.end) + asciiExtended_ColorEscape;
+                    colorNum = esc - asciiBase_ColorEscape;
+                }
                 if (mode & draw_RunMode && ~mode & permanentColorFlag_RunMode) {
-                    const iColor clr = get_Color(esc - asciiBase_ColorEscape);
+                    const iColor clr = get_Color(colorNum);
                     SDL_SetTextureColorMod(text_.cache, clr.r, clr.g, clr.b);
                 }
                 prevCh = 0;
@@ -1024,9 +1054,10 @@ static void drawBounded_Text_(int fontId, iInt2 pos, int xposBound, int color, i
               &(iRunArgs){ .mode = draw_RunMode |
                                    (color & permanent_ColorId ? permanentColorFlag_RunMode : 0) |
                                    runFlagsFromId_(fontId),
-                           .text = text,
-                           .pos  = pos,
-                           .xposLayoutBound = xposBound });
+                           .text            = text,
+                           .pos             = pos,
+                           .xposLayoutBound = xposBound,
+                           .color           = color });
 }
 
 static void draw_Text_(int fontId, iInt2 pos, int color, iRangecc text) {
@@ -1112,6 +1143,7 @@ void drawCentered_Text(int fontId, iRect rect, iBool alignVisual, int color, con
     iRect          textBounds = alignVisual ? visualBounds_Text(fontId, text)
                                    : (iRect){ zero_I2(), advanceRange_Text(fontId, text) };
     textBounds.pos = sub_I2(mid_Rect(rect), mid_Rect(textBounds));
+    textBounds.pos.x = iMax(textBounds.pos.x, left_Rect(rect)); /* keep left edge visible */
     draw_Text_(fontId, textBounds.pos, color, text);
     deinit_Block(&chars);
 }
@@ -1232,6 +1264,7 @@ iDefineTypeConstructionArgs(TextBuf, (int font, const char *text), font, text)
 void init_TextBuf(iTextBuf *d, int font, const char *text) {
     SDL_Renderer *render = text_.render;
     d->size    = advance_Text(font, text);
+    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
     d->texture = SDL_CreateTexture(render,
                                    SDL_PIXELFORMAT_RGBA4444,
                                    SDL_TEXTUREACCESS_STATIC | SDL_TEXTUREACCESS_TARGET,

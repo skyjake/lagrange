@@ -61,8 +61,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <stdarg.h>
 #include <errno.h>
 
-#if defined (iPlatformApple) && !defined (iPlatformIOS)
+#if defined (iPlatformAppleDesktop)
 #   include "macos.h"
+#endif
+#if defined (iPlatformAppleMobile)
+#   include "ios.h"
 #endif
 #if defined (iPlatformMsys)
 #   include "win32.h"
@@ -73,9 +76,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 iDeclareType(App)
 
-#if defined (iPlatformApple)
+#if defined (iPlatformAppleDesktop)
 #define EMB_BIN "../../Resources/resources.lgr"
 static const char *defaultDataDir_App_ = "~/Library/Application Support/fi.skyjake.Lagrange";
+#endif
+#if defined (iPlatformAppleMobile)
+#define EMB_BIN "../../Resources/resources.lgr"
+static const char *defaultDataDir_App_ = "~/Library/Application Support";
 #endif
 #if defined (iPlatformMsys)
 #define EMB_BIN "../resources.lgr"
@@ -119,6 +126,7 @@ struct Impl_App {
     iStringList *launchCommands;
     iBool        isFinishedLaunching;
     iTime        lastDropTime; /* for detecting drops of multiple items */
+    int          autoReloadTimer;
     /* Preferences: */
     iBool        commandEcho;         /* --echo */
     iBool        forceSoftwareRender; /* --sw */
@@ -154,33 +162,45 @@ static iString *serializePrefs_App_(const iApp *d) {
     iString *str = new_String();
     const iSidebarWidget *sidebar  = findWidget_App("sidebar");
     const iSidebarWidget *sidebar2 = findWidget_App("sidebar2");
+#if defined (LAGRANGE_CUSTOM_FRAME)
+    appendFormat_String(str, "customframe arg:%d\n", d->prefs.customFrame);
+#endif
     appendFormat_String(str, "window.retain arg:%d\n", d->prefs.retainWindowSize);
     if (d->prefs.retainWindowSize) {
-        const iBool isMaximized = (SDL_GetWindowFlags(d->window->win) & SDL_WINDOW_MAXIMIZED) != 0;
         int w, h, x, y;
-        x = d->window->lastRect.pos.x;
-        y = d->window->lastRect.pos.y;
-        w = d->window->lastRect.size.x;
-        h = d->window->lastRect.size.y;
+        x = d->window->place.normalRect.pos.x;
+        y = d->window->place.normalRect.pos.y;
+        w = d->window->place.normalRect.size.x;
+        h = d->window->place.normalRect.size.y;
         appendFormat_String(str, "window.setrect width:%d height:%d coord:%d %d\n", w, h, x, y);
         appendFormat_String(str, "sidebar.width arg:%d\n", width_SidebarWidget(sidebar));
         appendFormat_String(str, "sidebar2.width arg:%d\n", width_SidebarWidget(sidebar2));
         /* On macOS, maximization should be applied at creation time or the window will take
            a moment to animate to its maximized size. */
-#if !defined (iPlatformApple)
-        if (isMaximized) {
+#if defined (LAGRANGE_CUSTOM_FRAME)
+        if (snap_Window(d->window)) {
+            if (~SDL_GetWindowFlags(d->window->win) & SDL_WINDOW_MINIMIZED) {
+                /* Save the actual visible window position, too, because snapped windows may
+                   still be resized/moved without affecting normalRect. */
+                SDL_GetWindowPosition(d->window->win, &x, &y);
+                SDL_GetWindowSize(d->window->win, &w, &h);
+                appendFormat_String(
+                    str, "~window.setrect snap:%d width:%d height:%d coord:%d %d\n",
+                    snap_Window(d->window), w, h, x, y);
+            }
+        }
+#elif !defined (iPlatformApple)
+        if (snap_Window(d->window) == maximized_WindowSnap) {
             appendFormat_String(str, "~window.maximize\n");
         }
-#else
-        iUnused(isMaximized);
 #endif
     }
     /* Sidebars. */ {
-        if (isVisible_Widget(sidebar)) {
+        if (isVisible_Widget(sidebar) && deviceType_App() != phone_AppDeviceType) {
             appendCStr_String(str, "sidebar.toggle\n");
         }
         appendFormat_String(str, "sidebar.mode arg:%d\n", mode_SidebarWidget(sidebar));
-        if (isVisible_Widget(sidebar2)) {
+        if (isVisible_Widget(sidebar2) && deviceType_App() != phone_AppDeviceType) {
             appendCStr_String(str, "sidebar2.toggle\n");
         }
         appendFormat_String(str, "sidebar2.mode arg:%d\n", mode_SidebarWidget(sidebar2));
@@ -199,9 +219,11 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "linewidth.set arg:%d\n", d->prefs.lineWidth);
     appendFormat_String(str, "prefs.biglede.changed arg:%d\n", d->prefs.bigFirstParagraph);
     appendFormat_String(str, "prefs.sideicon.changed arg:%d\n", d->prefs.sideIcon);
+    appendFormat_String(str, "prefs.centershort.changed arg:%d\n", d->prefs.centerShortDocs);
     appendFormat_String(str, "quoteicon.set arg:%d\n", d->prefs.quoteIcon ? 1 : 0);
     appendFormat_String(str, "prefs.hoverlink.changed arg:%d\n", d->prefs.hoverLink);
     appendFormat_String(str, "theme.set arg:%d auto:1\n", d->prefs.theme);
+    appendFormat_String(str, "accent.set arg:%d\n", d->prefs.accent);
     appendFormat_String(str, "ostheme arg:%d\n", d->prefs.useSystemTheme);
     appendFormat_String(str, "doctheme.dark.set arg:%d\n", d->prefs.docThemeDark);
     appendFormat_String(str, "doctheme.light.set arg:%d\n", d->prefs.docThemeLight);
@@ -210,6 +232,7 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "proxy.gopher address:%s\n", cstr_String(&d->prefs.gopherProxy));
     appendFormat_String(str, "proxy.http address:%s\n", cstr_String(&d->prefs.httpProxy));
     appendFormat_String(str, "downloads path:%s\n", cstr_String(&d->prefs.downloadDir));
+    appendFormat_String(str, "searchurl address:%s\n", cstr_String(&d->prefs.searchUrl));
     return str;
 }
 
@@ -270,7 +293,10 @@ static void loadPrefs_App_(iApp *d) {
             if (equal_Command(cmd, "uiscale")) {
                 setUiScale_Window(get_Window(), argf_Command(cmd));
             }
-            else if (equal_Command(cmd, "window.setrect")) {
+            else if (equal_Command(cmd, "customframe")) {
+                d->prefs.customFrame = arg_Command(cmd);
+            }
+            else if (equal_Command(cmd, "window.setrect") && !argLabel_Command(cmd, "snap")) {
                 const iInt2 pos = coord_Command(cmd);
                 d->initialWindowRect = init_Rect(
                     pos.x, pos.y, argLabel_Command(cmd, "width"), argLabel_Command(cmd, "height"));
@@ -285,6 +311,9 @@ static void loadPrefs_App_(iApp *d) {
     else {
         /* default preference values */
     }
+#if !defined (LAGRANGE_CUSTOM_FRAME)
+    d->prefs.customFrame = iFalse;
+#endif
     iRelease(f);
 }
 
@@ -370,6 +399,9 @@ static void saveState_App_(const iApp *d) {
             serializeState_DocumentWidget(i.object, stream_File(f));
         }
     }
+    else {
+        fprintf(stderr, "[App] failed to save state: %s\n", strerror(errno));
+    }
     iRelease(f);
 }
 
@@ -383,6 +415,12 @@ static uint32_t checkAsleep_App_(uint32_t interval, void *param) {
     return interval;
 }
 #endif
+
+static uint32_t postAutoReloadCommand_App_(uint32_t interval, void *param) {
+    iUnused(param);
+    postCommand_App("document.autoreload");
+    return interval;
+}
 
 static void init_App_(iApp *d, int argc, char **argv) {
     init_CommandLine(&d->args, argc, argv);
@@ -438,8 +476,11 @@ static void init_App_(iApp *d, int argc, char **argv) {
     d->lastEventTime = 0;
     d->sleepTimer    = SDL_AddTimer(1000, checkAsleep_App_, d);
 #endif
-#if defined (iPlatformApple)
+#if defined (iPlatformAppleDesktop)
     setupApplication_MacOS();
+#if defined (iPlatformAppleMobile)
+#endif
+    setupApplication_iOS();
 #endif
     init_Keys();
     loadPrefs_App_(d);
@@ -476,9 +517,11 @@ static void init_App_(iApp *d, int argc, char **argv) {
     /* Widget state init. */
     processEvents_App(postedEventsOnly_AppEventMode);
     if (!loadState_App_(d)) {
-        postCommand_App("navigate.home");
+        postCommand_App("open url:about:help");
     }
     postCommand_App("window.unfreeze");
+    d->autoReloadTimer = SDL_AddTimer(60 * 1000, postAutoReloadCommand_App_, NULL);
+    postCommand_App("document.autoreload");
     d->isFinishedLaunching = iTrue;
     /* Run any commands that were pending completion of launch. */ {
         iForEach(StringList, i, d->launchCommands) {
@@ -539,6 +582,61 @@ const iString *downloadDir_App(void) {
     return collect_String(cleaned_Path(&app_.prefs.downloadDir));
 }
 
+const iString *downloadPathForUrl_App(const iString *url, const iString *mime) {
+    /* Figure out a file name from the URL. */
+    iUrl parts;
+    init_Url(&parts, url);
+    while (startsWith_Rangecc(parts.path, "/")) {
+        parts.path.start++;
+    }
+    while (endsWith_Rangecc(parts.path, "/")) {
+        parts.path.end--;
+    }
+    iString *name = collectNewCStr_String("pagecontent");
+    if (isEmpty_Range(&parts.path)) {
+        if (!isEmpty_Range(&parts.host)) {
+            setRange_String(name, parts.host);
+            replace_Block(&name->chars, '.', '_');
+        }
+    }
+    else {
+        iRangecc fn = { parts.path.start + lastIndexOfCStr_Rangecc(parts.path, "/") + 1,
+                        parts.path.end };
+        if (!isEmpty_Range(&fn)) {
+            setRange_String(name, fn);
+        }
+    }
+    if (startsWith_String(name, "~")) {
+        /* This would be interpreted as a reference to a home directory. */
+        remove_Block(&name->chars, 0, 1);
+    }
+    iString *savePath = concat_Path(downloadDir_App(), name);
+    if (lastIndexOfCStr_String(savePath, ".") == iInvalidPos) {
+        /* No extension specified in URL. */
+        if (startsWith_String(mime, "text/gemini")) {
+            appendCStr_String(savePath, ".gmi");
+        }
+        else if (startsWith_String(mime, "text/")) {
+            appendCStr_String(savePath, ".txt");
+        }
+        else if (startsWith_String(mime, "image/")) {
+            appendCStr_String(savePath, cstr_String(mime) + 6);
+        }
+    }
+    if (fileExists_FileInfo(savePath)) {
+        /* Make it unique. */
+        iDate now;
+        initCurrent_Date(&now);
+        size_t insPos = lastIndexOfCStr_String(savePath, ".");
+        if (insPos == iInvalidPos) {
+            insPos = size_String(savePath);
+        }
+        const iString *date = collect_String(format_Date(&now, "_%Y-%m-%d_%H%M%S"));
+        insertData_Block(&savePath->chars, insPos, cstr_String(date), size_String(date));
+    }
+    return collect_String(savePath);
+}
+
 const iString *debugInfo_App(void) {
     extern char **environ; /* The environment variables. */
     iApp *d = &app_;
@@ -570,6 +668,39 @@ const iString *debugInfo_App(void) {
     return msg;
 }
 
+static void clearCache_App_(void) {
+    iForEach(ObjectList, i, iClob(listDocuments_App())) {
+        clearCache_History(history_DocumentWidget(i.object));
+    }
+}
+
+void trimCache_App(void) {
+    iApp *d = &app_;
+    size_t cacheSize = 0;
+    const size_t limit = d->prefs.maxCacheSize * 1000000;
+    iObjectList *docs = listDocuments_App();
+    iForEach(ObjectList, i, docs) {
+        cacheSize += cacheSize_History(history_DocumentWidget(i.object));
+    }
+    init_ObjectListIterator(&i, docs);
+    iBool wasPruned = iFalse;
+    while (cacheSize > limit) {
+        iDocumentWidget *doc = i.object;
+        const size_t pruned = pruneLeastImportant_History(history_DocumentWidget(doc));
+        if (pruned) {
+            cacheSize -= pruned;
+            wasPruned = iTrue;
+        }
+        next_ObjectListIterator(&i);
+        if (!i.value) {
+            if (!wasPruned) break;
+            wasPruned = iFalse;
+            init_ObjectListIterator(&i, docs);
+        }
+    }
+    iRelease(docs);
+}
+
 iLocalDef iBool isWaitingAllowed_App_(iApp *d) {
 #if defined (LAGRANGE_IDLE_SLEEP)
     if (d->isIdling) {
@@ -587,10 +718,31 @@ void processEvents_App(enum iAppEventMode eventMode) {
             SDL_WaitEvent(&ev)) ||
            ((!isWaitingAllowed_App_(d) || eventMode == postedEventsOnly_AppEventMode) &&
             SDL_PollEvent(&ev))) {
+#if defined (iPlatformAppleMobile)
+        if (processEvent_iOS(&ev)) {
+            continue;
+        }
+#endif
         switch (ev.type) {
             case SDL_QUIT:
                 d->isRunning = iFalse;
+                if (findWidget_App("prefs")) {
+                    /* Make sure changed preferences get saved. */
+                    postCommand_App("prefs.dismiss");
+                    processEvents_App(postedEventsOnly_AppEventMode);
+                }
                 goto backToMainLoop;
+            case SDL_APP_LOWMEMORY:
+                clearCache_App_();
+                break;
+            case SDL_APP_WILLENTERFOREGROUND:
+                postRefresh_App();
+                break;
+            case SDL_APP_TERMINATING:
+            case SDL_APP_WILLENTERBACKGROUND:
+                savePrefs_App_(d);
+                saveState_App_(d);
+                break;
             case SDL_DROPFILE: {
                 iBool wasUsed = processEvent_Window(d->window, &ev);
                 if (!wasUsed) {
@@ -637,7 +789,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     wasUsed = processEvent_Keys(&ev);
                 }
                 if (ev.type == SDL_USEREVENT && ev.user.code == command_UserEventCode) {
-#if defined (iPlatformApple) && !defined (iPlatformIOS)
+#if defined (iPlatformAppleDesktop)
                     handleCommand_MacOS(command_UserEvent(&ev));
 #endif
                     if (isCommand_UserEvent(&ev, "metrics.changed")) {
@@ -857,6 +1009,20 @@ iMimeHooks *mimeHooks_App(void) {
     return app_.mimehooks;
 }
 
+iBool isLandscape_App(void) {
+    const iApp *d = &app_;
+    const iInt2 size = rootSize_Window(d->window);
+    return size.x > size.y;
+}
+
+enum iAppDeviceType deviceType_App(void) {
+#if defined (iPlatformAppleMobile)
+    return isPhone_iOS() ? phone_AppDeviceType : tablet_AppDeviceType;
+#else
+    return desktop_AppDeviceType;
+#endif
+}
+
 iGmCerts *certs_App(void) {
     return app_.certs;
 }
@@ -875,18 +1041,32 @@ static void updatePrefsThemeButtons_(iWidget *d) {
                         selected_WidgetFlag,
                         colorTheme_App() == i);
     }
+    for (size_t i = 0; i < max_ColorAccent; i++) {
+        setFlags_Widget(findChild_Widget(d, format_CStr("prefs.accent.%u", i)),
+                        selected_WidgetFlag,
+                        prefs_App()->accent == i);
+    }
+}
+
+static void updateDropdownSelection_(iLabelWidget *dropButton, const char *selectedCommand) {
+    iForEach(ObjectList, i, children_Widget(findChild_Widget(as_Widget(dropButton), "menu"))) {
+        iLabelWidget *item = i.object;
+        const iBool isSelected = endsWith_String(command_LabelWidget(item), selectedCommand);
+        setFlags_Widget(as_Widget(item), selected_WidgetFlag, isSelected);
+        if (isSelected) {
+            updateText_LabelWidget(dropButton, text_LabelWidget(item));
+        }
+    }
 }
 
 static void updateColorThemeButton_(iLabelWidget *button, int theme) {
-    const char *mode    = strstr(cstr_String(id_Widget(as_Widget(button))), ".dark") ? "dark" : "light";
-    const char *command = format_CStr("doctheme.%s.set arg:%d", mode, theme);
-    iForEach(ObjectList, i, children_Widget(findChild_Widget(as_Widget(button), "menu"))) {
-        iLabelWidget *item = i.object;
-        if (!cmp_String(command_LabelWidget(item), command)) {
-            updateText_LabelWidget(button, text_LabelWidget(item));
-            break;
-        }
-    }
+//    const char *mode = strstr(cstr_String(id_Widget(as_Widget(button))), ".dark")
+//                           ? "dark" : "light";
+    updateDropdownSelection_(button, format_CStr(".set arg:%d", theme));
+}
+
+static void updateFontButton_(iLabelWidget *button, int font) {
+    updateDropdownSelection_(button, format_CStr(".set arg:%d", font));
 }
 
 static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
@@ -897,6 +1077,8 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
         postCommandf_App("downloads path:%s",
                          cstr_String(text_InputWidget(findChild_Widget(d, "prefs.downloads"))));
 #endif
+        postCommandf_App("customframe arg:%d",
+                         isSelected_Widget(findChild_Widget(d, "prefs.customframe")));
         postCommandf_App("window.retain arg:%d",
                          isSelected_Widget(findChild_Widget(d, "prefs.retainwindow")));
         postCommandf_App("smoothscroll arg:%d",
@@ -907,6 +1089,8 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
                          isSelected_Widget(findChild_Widget(d, "prefs.ostheme")));
         postCommandf_App("decodeurls arg:%d",
                          isSelected_Widget(findChild_Widget(d, "prefs.decodeurls")));
+        postCommandf_App("searchurl address:%s",
+                         cstr_String(text_InputWidget(findChild_Widget(d, "prefs.searchurl"))));
         postCommandf_App("cachesize.set arg:%d",
                          toInt_String(text_InputWidget(findChild_Widget(d, "prefs.cachesize"))));
         postCommandf_App("proxy.gemini address:%s",
@@ -919,6 +1103,7 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
         postCommandf_App("prefs.dialogtab arg:%u",
                          tabPageIndex_Widget(tabs, currentTabPage_Widget(tabs)));
         destroy_Widget(d);
+        postCommand_App("prefs.changed");
         return iTrue;
     }
     else if (equal_Command(cmd, "quoteicon.set")) {
@@ -933,6 +1118,14 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
     }
     else if (equal_Command(cmd, "doctheme.light.set")) {
         updateColorThemeButton_(findChild_Widget(d, "prefs.doctheme.light"), arg_Command(cmd));
+        return iFalse;
+    }
+    else if (equal_Command(cmd, "font.set")) {
+        updateFontButton_(findChild_Widget(d, "prefs.font"), arg_Command(cmd));
+    else if (equal_Command(cmd, "headingfont.set")) {
+        return iFalse;
+    }
+        updateFontButton_(findChild_Widget(d, "prefs.headingfont"), arg_Command(cmd));
         return iFalse;
     }
     else if (equal_Command(cmd, "prefs.ostheme.changed")) {
@@ -990,33 +1183,6 @@ iDocumentWidget *newTab_App(const iDocumentWidget *duplicateOf, iBool switchToNe
     refresh_Widget(tabs);
     postCommandf_App("tab.created id:%s", cstr_String(id_Widget(as_Widget(doc))));
     return doc;
-}
-
-void trimCache_App(void) {
-    iApp *d = &app_;
-    size_t cacheSize = 0;
-    const size_t limit = d->prefs.maxCacheSize * 1000000;
-    iObjectList *docs = listDocuments_App();
-    iForEach(ObjectList, i, docs) {
-        cacheSize += cacheSize_History(history_DocumentWidget(i.object));
-    }
-    init_ObjectListIterator(&i, docs);
-    iBool wasPruned = iFalse;
-    while (cacheSize > limit) {
-        iDocumentWidget *doc = i.object;
-        const size_t pruned = pruneLeastImportant_History(history_DocumentWidget(doc));
-        if (pruned) {
-            cacheSize -= pruned;
-            wasPruned = iTrue;
-        }
-        next_ObjectListIterator(&i);
-        if (!i.value) {
-            if (!wasPruned) break;
-            wasPruned = iFalse;
-            init_ObjectListIterator(&i, docs);
-        }
-    }
-    iRelease(docs);
 }
 
 static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
@@ -1092,12 +1258,25 @@ iBool willUseProxy_App(const iRangecc scheme) {
     return schemeProxy_App(scheme) != NULL;
 }
 
+const iString *searchQueryUrl_App(const iString *queryStringUnescaped) {
+    iApp *d = &app_;
+    if (isEmpty_String(&d->prefs.searchUrl)) {
+        return collectNew_String();
+    }
+    const iString *escaped = urlEncode_String(queryStringUnescaped);
+    return collectNewFormat_String("%s?%s", cstr_String(&d->prefs.searchUrl), cstr_String(escaped));
+}
+
 iBool handleCommand_App(const char *cmd) {
     iApp *d = &app_;
     if (equal_Command(cmd, "config.error")) {
         makeMessage_Widget(uiTextCaution_ColorEscape "CONFIG ERROR",
                            format_CStr("Error in config file: %s\nSee \"about:debug\" for details.",
                                        suffixPtr_Command(cmd, "where")));
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "prefs.changed")) {
+        savePrefs_App_(d);
         return iTrue;
     }
     else if (equal_Command(cmd, "prefs.dialogtab")) {
@@ -1108,8 +1287,24 @@ iBool handleCommand_App(const char *cmd) {
         d->prefs.retainWindowSize = arg_Command(cmd);
         return iTrue;
     }
+    else if (equal_Command(cmd, "customframe")) {
+        d->prefs.customFrame = arg_Command(cmd);
+        return iTrue;
+    }
     else if (equal_Command(cmd, "window.maximize")) {
-        SDL_MaximizeWindow(d->window->win);
+        if (!argLabel_Command(cmd, "toggle")) {
+            setSnap_Window(d->window, maximized_WindowSnap);
+        }
+        else {
+            setSnap_Window(d->window, snap_Window(d->window) == maximized_WindowSnap ? 0 :
+                           maximized_WindowSnap);
+        }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "window.fullscreen")) {
+        const iBool wasFull = snap_Window(d->window) == fullscreen_WindowSnap;
+        setSnap_Window(d->window, wasFull ? 0 : fullscreen_WindowSnap);
+        postCommandf_App("window.fullscreen.changed arg:%d", !wasFull);
         return iTrue;
     }
     else if (equal_Command(cmd, "font.set")) {
@@ -1170,6 +1365,12 @@ iBool handleCommand_App(const char *cmd) {
         postCommandf_App("theme.changed auto:%d", isAuto);
         return iTrue;
     }
+    else if (equal_Command(cmd, "accent.set")) {
+        d->prefs.accent = arg_Command(cmd);
+        setThemePalette_Color(d->prefs.theme);
+        postCommandf_App("theme.changed auto:1");
+        return iTrue;
+    }
     else if (equal_Command(cmd, "ostheme")) {
         d->prefs.useSystemTheme = arg_Command(cmd);
         return iTrue;
@@ -1219,6 +1420,11 @@ iBool handleCommand_App(const char *cmd) {
         postRefresh_App();
         return iTrue;
     }
+    else if (equal_Command(cmd, "prefs.centershort.changed")) {
+        d->prefs.centerShortDocs = arg_Command(cmd) != 0;
+        postCommand_App("theme.changed");
+        return iTrue;
+    }
     else if (equal_Command(cmd, "prefs.hoverlink.changed")) {
         d->prefs.hoverLink = arg_Command(cmd) != 0;
         postRefresh_App();
@@ -1238,6 +1444,17 @@ iBool handleCommand_App(const char *cmd) {
         d->prefs.maxCacheSize = arg_Command(cmd);
         if (d->prefs.maxCacheSize <= 0) {
             d->prefs.maxCacheSize = 0;
+        }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "searchurl")) {
+        iString *url = &d->prefs.searchUrl;
+        setCStr_String(url, suffixPtr_Command(cmd, "address"));
+        if (startsWith_String(url, "//")) {
+            prependCStr_String(url, "gemini:");
+        }
+        if (!isEmpty_String(url) && !startsWithCase_String(url, "gemini://")) {
+            prependCStr_String(url, "gemini://");
         }
         return iTrue;
     }
@@ -1332,7 +1549,13 @@ iBool handleCommand_App(const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "tabs.close")) {
-        iWidget *      tabs  = findWidget_App("doctabs");
+        iWidget *tabs = findWidget_App("doctabs");
+#if defined (iPlatformAppleMobile)
+        /* Can't close the last on mobile. */
+        if (tabCount_Widget(tabs) == 1) {
+            return iTrue;
+        }
+#endif
         const iRangecc tabId = range_Command(cmd, "id");
         iWidget *      doc   = !isEmpty_Range(&tabId) ? findWidget_App(cstr_Rangecc(tabId))
                                                       : document_App();
@@ -1385,6 +1608,7 @@ iBool handleCommand_App(const char *cmd) {
         setToggle_Widget(findChild_Widget(dlg, "prefs.smoothscroll"), d->prefs.smoothScrolling);
         setToggle_Widget(findChild_Widget(dlg, "prefs.imageloadscroll"), d->prefs.loadImageInsteadOfScrolling);
         setToggle_Widget(findChild_Widget(dlg, "prefs.ostheme"), d->prefs.useSystemTheme);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.customframe"), d->prefs.customFrame);
         setToggle_Widget(findChild_Widget(dlg, "prefs.retainwindow"), d->prefs.retainWindowSize);
         setText_InputWidget(findChild_Widget(dlg, "prefs.uiscale"),
                             collectNewFormat_String("%g", uiScale_Window(d->window)));
@@ -1411,8 +1635,11 @@ iBool handleCommand_App(const char *cmd) {
             iTrue);
         setToggle_Widget(findChild_Widget(dlg, "prefs.biglede"), d->prefs.bigFirstParagraph);
         setToggle_Widget(findChild_Widget(dlg, "prefs.sideicon"), d->prefs.sideIcon);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.centershort"), d->prefs.centerShortDocs);
         updateColorThemeButton_(findChild_Widget(dlg, "prefs.doctheme.dark"), d->prefs.docThemeDark);
         updateColorThemeButton_(findChild_Widget(dlg, "prefs.doctheme.light"), d->prefs.docThemeLight);
+        updateFontButton_(findChild_Widget(dlg, "prefs.font"), d->prefs.font);
+        updateFontButton_(findChild_Widget(dlg, "prefs.headingfont"), d->prefs.headingFont);
         setFlags_Widget(
             findChild_Widget(
                 dlg, format_CStr("prefs.saturation.%d", (int) (d->prefs.saturation * 3.99f))),
@@ -1421,6 +1648,7 @@ iBool handleCommand_App(const char *cmd) {
         setText_InputWidget(findChild_Widget(dlg, "prefs.cachesize"),
                             collectNewFormat_String("%d", d->prefs.maxCacheSize));
         setToggle_Widget(findChild_Widget(dlg, "prefs.decodeurls"), d->prefs.decodeUserVisibleURLs);
+        setText_InputWidget(findChild_Widget(dlg, "prefs.searchurl"), &d->prefs.searchUrl);
         setText_InputWidget(findChild_Widget(dlg, "prefs.proxy.gemini"), &d->prefs.geminiProxy);
         setText_InputWidget(findChild_Widget(dlg, "prefs.proxy.gopher"), &d->prefs.gopherProxy);
         setText_InputWidget(findChild_Widget(dlg, "prefs.proxy.http"), &d->prefs.httpProxy);
@@ -1568,9 +1796,10 @@ void openInDefaultBrowser_App(const iString *url) {
         return;
     }
 #endif
+#if !defined (iPlatformAppleMobile)
     iProcess *proc = new_Process();
     setArguments_Process(proc,
-#if defined (iPlatformApple)
+#if defined (iPlatformAppleDesktop)
                          iClob(newStringsCStr_StringList("/usr/bin/env", "open", cstr_String(url), NULL))
 #elif defined (iPlatformLinux) || defined (iPlatformOther)
                          iClob(newStringsCStr_StringList("/usr/bin/env", "xdg-open", cstr_String(url), NULL))
@@ -1584,10 +1813,11 @@ void openInDefaultBrowser_App(const iString *url) {
     );
     start_Process(proc);
     iRelease(proc);
+#endif
 }
 
 void revealPath_App(const iString *path) {
-#if defined (iPlatformApple)
+#if defined (iPlatformAppleDesktop)
     const char *scriptPath = concatPath_CStr(dataDir_App_(), "revealfile.scpt");
     iFile *f = newCStr_File(scriptPath);
     if (open_File(f, writeOnly_FileMode | text_FileMode)) {

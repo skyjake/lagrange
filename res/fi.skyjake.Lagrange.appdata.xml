@@ -45,6 +45,26 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.2" date="2021-02-27">
+            <description>
+                <p> This is a major feature update that also has a number of user 
+                    interface design changes.
+                </p>
+                <p> New features include viewing and subscribing to Atom feeds,
+                    downloading any link as a file, editable bookmark icons,
+                    search engine integration, tab auto-reloading, fullscreen mode,
+                    and new font options for page content.
+                </p>
+                <p> UI enhancements include improved navbar and sidebar appearance,
+                    setting for UI accent color, and placement of dialog
+                    buttons.
+                </p>
+                <p> The full release notes can be viewed inside the app by opening
+                    the "about:version" page.
+                </p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.2.0</url>                        
+        </release>
         <release version="1.1.4" date="2021-02-22">
             <description>
                 <p>Bug fixes:</p>

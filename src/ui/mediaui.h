@@ -22,30 +22,40 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
-#include "widget.h"
+#include <the_Foundation/rect.h>
+#include <SDL_events.h>
 
-enum iSidebarMode {
-    bookmarks_SidebarMode,
-    feeds_SidebarMode,
-    history_SidebarMode,
-    identities_SidebarMode,
-    documentOutline_SidebarMode,
-    max_SidebarMode
+iDeclareType(Paint)
+iDeclareType(Player)
+iDeclareType(PlayerUI)
+
+struct Impl_PlayerUI {
+    const iPlayer *player;
+    iRect bounds;
+    iRect playPauseRect;
+    iRect rewindRect;
+    iRect scrubberRect;
+    iRect volumeRect;
+    iRect volumeAdjustRect;
+    iRect volumeSlider;
+    iRect menuRect;
 };
 
-const char *    icon_SidebarMode    (enum iSidebarMode mode);
+void    init_PlayerUI   (iPlayerUI *, const iPlayer *player, iRect bounds);
+void    draw_PlayerUI   (iPlayerUI *, iPaint *p);
 
-enum iSidebarSide {
-    left_SideBarSide,
-    right_SideBarSide,
+/*----------------------------------------------------------------------------------------------*/
+
+iDeclareType(DocumentWidget)
+iDeclareType(Media)
+iDeclareType(DownloadUI)
+
+struct Impl_DownloadUI {
+    const iDocumentWidget *doc;
+    uint16_t mediaId;
+    iRect bounds;
 };
 
-iDeclareWidgetClass(SidebarWidget)
-iDeclareObjectConstructionArgs(SidebarWidget, enum iSidebarSide side)
-
-iBool               setMode_SidebarWidget       (iSidebarWidget *, enum iSidebarMode mode);
-void                setButtonFont_SidebarWidget (iSidebarWidget *, int font);
-
-enum iSidebarMode   mode_SidebarWidget          (const iSidebarWidget *);
-int                 width_SidebarWidget         (const iSidebarWidget *);
-void                setWidth_SidebarWidget      (iSidebarWidget *, int width);
+void    init_DownloadUI         (iDownloadUI *, const iDocumentWidget *doc, uint16_t mediaId, iRect bounds);
+iBool   processEvent_DownloadUI (iDownloadUI *, const SDL_Event *ev);
+void    draw_DownloadUI         (const iDownloadUI *, iPaint *p);

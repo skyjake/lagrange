@@ -34,7 +34,10 @@ enum iFontId {
     defaultBold_FontId,
     defaultMedium_FontId,
     defaultMediumBold_FontId,
+    defaultBig_FontId,
+    defaultBigBold_FontId,
     defaultLarge_FontId,
+    defaultLargeBold_FontId,
     defaultMonospace_FontId,
     defaultContentSized_FontId,    
     /* content fonts */
@@ -52,6 +55,7 @@ enum iFontId {
     /* symbol fonts */
     defaultSymbols_FontId,
     defaultMediumSymbols_FontId,
+    defaultBigSymbols_FontId,
     defaultLargeSymbols_FontId,
     symbols_FontId,
     mediumSymbols_FontId,
@@ -63,6 +67,7 @@ enum iFontId {
     /* emoji fonts */
     defaultEmoji_FontId,
     defaultMediumEmoji_FontId,
+    defaultBigEmoji_FontId,
     defaultLargeEmoji_FontId,
     emoji_FontId,
     mediumEmoji_FontId,
@@ -92,7 +97,7 @@ enum iFontId {
     max_FontId,
 
     /* Meta: */
-    fromSymbolsToEmojiOffset_FontId = 10,
+    fromSymbolsToEmojiOffset_FontId = 11,
     mask_FontId                     = 0xffff,
     alwaysVariableFlag_FontId       = 0x10000,
 
@@ -100,8 +105,9 @@ enum iFontId {
     uiLabel_FontId          = default_FontId,
     uiLabelBold_FontId      = defaultBold_FontId,
     uiLabelLarge_FontId     = defaultLarge_FontId,
+    uiLabelLargeBold_FontId = defaultLargeBold_FontId,
     uiShortcuts_FontId      = default_FontId,
-    uiInput_FontId          = defaultMonospace_FontId,
+    uiInput_FontId          = defaultMedium_FontId,
     uiContent_FontId        = defaultMedium_FontId,
     uiContentBold_FontId    = defaultMediumBold_FontId,
     uiContentSymbols_FontId = defaultMediumSymbols_FontId,
@@ -142,6 +148,8 @@ enum iTextFont {
     firaSans_TextFont,
     literata_TextFont,
     tinos_TextFont,
+    sourceSansPro_TextFont,
+    iosevka_TextFont,
 };
 
 extern int gap_Text; /* affected by content font size */

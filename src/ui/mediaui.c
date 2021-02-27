@@ -20,10 +20,15 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-#include "playerui.h"
+#include "mediaui.h"
+#include "media.h"
+#include "documentwidget.h"
+#include "gmdocument.h"
 #include "audio/player.h"
 #include "paint.h"
 #include "util.h"
+
+#include <the_Foundation/path.h>
 
 static const char *volumeChar_(float volume) {
     if (volume <= 0) {
@@ -72,8 +77,11 @@ static void drawPlayerButton_(iPaint *p, iRect rect, const char *label, int font
     drawCentered_Text(font, frameRect, iTrue, fg, "%s", label);
 }
 
+static const uint32_t sevenSegmentDigit_ = 0x1fbf0;
+
+static const char *sevenSegmentStr_ = "\U0001fbf0";
+
 static int drawSevenSegmentTime_(iInt2 pos, int color, int align, int seconds) { /* returns width */
-    const uint32_t sevenSegmentDigit = 0x1fbf0;
     const int hours = seconds / 3600;
     const int mins  = (seconds / 60) % 60;
     const int secs  = seconds % 60;
@@ -81,14 +89,14 @@ static int drawSevenSegmentTime_(iInt2 pos, int color, int align, int seconds) {
     iString   num;
     init_String(&num);
     if (hours) {
-        appendChar_String(&num, sevenSegmentDigit + (hours % 10));
+        appendChar_String(&num, sevenSegmentDigit_ + (hours % 10));
         appendChar_String(&num, ':');
     }
-    appendChar_String(&num, sevenSegmentDigit + (mins / 10) % 10);
-    appendChar_String(&num, sevenSegmentDigit + (mins % 10));
+    appendChar_String(&num, sevenSegmentDigit_ + (mins / 10) % 10);
+    appendChar_String(&num, sevenSegmentDigit_ + (mins % 10));
     appendChar_String(&num, ':');
-    appendChar_String(&num, sevenSegmentDigit + (secs / 10) % 10);
-    appendChar_String(&num, sevenSegmentDigit + (secs % 10));
+    appendChar_String(&num, sevenSegmentDigit_ + (secs / 10) % 10);
+    appendChar_String(&num, sevenSegmentDigit_ + (secs % 10));
     iInt2 size = advanceRange_Text(font, range_String(&num));
     if (align == right_Alignment) {
         pos.x -= size.x;
@@ -134,10 +142,10 @@ void draw_PlayerUI(iPlayerUI *d, iPaint *p) {
                                   iRound(totalTime));
     }
     /* Scrubber. */
-    const int   s1      = left_Rect(d->scrubberRect) + leftWidth + 6 * gap_UI;
-    const int   s2      = right_Rect(d->scrubberRect) - rightWidth - 6 * gap_UI;
-    const float normPos = totalTime > 0 ? playTime / totalTime : 0.0f;
-    const int   part    = (s2 - s1) * normPos;
+    const int   s1       = left_Rect(d->scrubberRect) + leftWidth + 6 * gap_UI;
+    const int   s2       = right_Rect(d->scrubberRect) - rightWidth - 6 * gap_UI;
+    const float normPos  = totalTime > 0 ? playTime / totalTime : 0.0f;
+    const int   part     = (s2 - s1) * normPos;
     const int   scrubMax = (s2 - s1) * streamProgress_Player(d->player);
     drawHLine_Paint(p, init_I2(s1, yMid), part, bright);
     drawHLine_Paint(p, init_I2(s1 + part, yMid), scrubMax - part, dim);
@@ -180,5 +188,86 @@ void draw_PlayerUI(iPlayerUI *d, iPaint *p) {
                   init_I2(left_Rect(d->volumeSlider) + volPart - dotWidth / 2, yMid - hgt / 2),
                   volColor,
                   dot);
+    }
+}
+
+/*----------------------------------------------------------------------------------------------*/
+
+static void drawSevenSegmentBytes_(iInt2 pos, int color, size_t numBytes) {
+    iString digits;
+    init_String(&digits);
+    if (numBytes == 0) {
+        appendChar_String(&digits, sevenSegmentDigit_);
+    }
+    else {
+        int magnitude = 0;
+        while (numBytes) {
+            if (magnitude == 3) {
+                prependCStr_String(&digits, "\u2024");
+            }
+            else if (magnitude == 6) {
+                prependCStr_String(&digits, restore_ColorEscape "\u2024");
+            }
+            else if (magnitude == 9) {
+                prependCStr_String(&digits, "\u2024");
+            }
+            prependChar_String(&digits, sevenSegmentDigit_ + (numBytes % 10));
+            numBytes /= 10;
+            magnitude++;
+        }
+        if (magnitude > 6) {
+            prependCStr_String(&digits, uiTextStrong_ColorEscape);
+        }
+    }
+    const int font = uiLabel_FontId;
+    const iInt2 dims = advanceRange_Text(font, range_String(&digits));
+    drawRange_Text(font, addX_I2(pos, -dims.x), color, range_String(&digits));
+    deinit_String(&digits);
+}
+
+void init_DownloadUI(iDownloadUI *d, const iDocumentWidget *doc, uint16_t mediaId, iRect bounds) {
+    d->doc     = doc;
+    d->mediaId = mediaId;
+    d->bounds  = bounds;
+}
+
+iBool processEvent_DownloadUI(iDownloadUI *d, const SDL_Event *ev) {
+    return iFalse;
+}
+
+void draw_DownloadUI(const iDownloadUI *d, iPaint *p) {
+    const iMedia *media = constMedia_GmDocument(document_DocumentWidget(d->doc));
+    iGmMediaInfo info;
+    float bytesPerSecond;
+    const iString *path;
+    iBool isFinished;
+    downloadInfo_Media(media, d->mediaId, &info);
+    downloadStats_Media(media, d->mediaId, &path, &bytesPerSecond, &isFinished);
+    fillRect_Paint(p, d->bounds, uiBackground_ColorId);
+    drawRect_Paint(p, d->bounds, uiSeparator_ColorId);
+    iRect rect = d->bounds;
+    shrink_Rect(&rect, init_I2(3 * gap_UI, 0));
+    const int fonts[2] = { uiContentBold_FontId, uiLabel_FontId };
+    const int contentHeight = lineHeight_Text(fonts[0]) + lineHeight_Text(fonts[1]);
+    const int x = left_Rect(rect);
+    const int y1 = mid_Rect(rect).y - contentHeight / 2;
+    const int y2 = y1 + lineHeight_Text(fonts[1]);
+    if (path) {
+        drawRange_Text(fonts[0], init_I2(x, y1), uiHeading_ColorId, baseName_Path(path));
+    }
+    draw_Text(uiLabel_FontId,
+              init_I2(x, y2),
+              isFinished ? uiTextAction_ColorId : uiTextDim_ColorId,
+              isFinished ? "Download completed."
+                         : "Download will be cancelled if this tab is closed.");
+    const int x2 = right_Rect(rect);
+    drawSevenSegmentBytes_(init_I2(x2, y1), uiTextDim_ColorId, info.numBytes);
+    const iInt2 pos = init_I2(x2, y2);
+    if (bytesPerSecond > 0) {
+        drawAlign_Text(uiLabel_FontId, pos, uiTextDim_ColorId, right_Alignment, "%.3f MB/s",
+                       bytesPerSecond / 1.0e6);
+    }
+    else {
+        drawAlign_Text(uiLabel_FontId, pos, uiTextDim_ColorId, right_Alignment, "\u2014 MB/s");
     }
 }

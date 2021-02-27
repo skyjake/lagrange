@@ -160,11 +160,11 @@ void open_Gopher(iGopher *d, const iString *url) {
         d->type = '0';
     }
     else if (parts.path.start < parts.path.end) {
-                d->type = *parts.path.start;
-                parts.path.start++;
+        d->type = *parts.path.start;
+        parts.path.start++;
     }
     else {
-      d->type = '1';
+        d->type = '1';
     }
     if (d->type == '7' && isEmpty_Range(&parts.query)) {
         /* Ask for the query parameters first. */
@@ -204,12 +204,16 @@ void open_Gopher(iGopher *d, const iString *url) {
     }
     d->isPre = iFalse;
     open_Socket(d->socket);
-    writeData_Socket(d->socket, parts.path.start, size_Range(&parts.path));
+    const iString *reqPath =
+        collect_String(urlDecodeExclude_String(collectNewRange_String(parts.path), "\t"));
+    writeData_Socket(d->socket, cstr_String(reqPath), size_String(reqPath));
     if (!isEmpty_Range(&parts.query)) {
         iAssert(*parts.query.start == '?');
         parts.query.start++;
         writeData_Socket(d->socket, "\t", 1);
-        writeData_Socket(d->socket, parts.query.start, size_Range(&parts.query));
+        const iString *reqQuery =
+            collect_String(urlDecode_String(collectNewRange_String(parts.query)));
+        writeData_Socket(d->socket, cstr_String(reqQuery), size_String(reqQuery));
     }
     writeData_Socket(d->socket, "\r\n", 2);
 }

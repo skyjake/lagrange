@@ -377,6 +377,9 @@ void init_LookupWidget(iLookupWidget *d) {
     init_Widget(w);
     setId_Widget(w, "lookup");
     setFlags_Widget(w, focusable_WidgetFlag | resizeChildren_WidgetFlag, iTrue);
+#if defined (iPlatformAppleMobile)
+    setFlags_Widget(w, unhittable_WidgetFlag, iTrue);
+#endif
     d->list = addChild_Widget(w, iClob(new_ListWidget()));
     setItemHeight_ListWidget(d->list, lineHeight_Text(uiContent_FontId) * 1.25f);
     d->cursor = iInvalidPos;
@@ -626,9 +629,6 @@ static iBool moveCursor_LookupWidget_(iLookupWidget *d, int delta) {
 static iBool processEvent_LookupWidget_(iLookupWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
     const char *cmd = command_UserEvent(ev);
-//    if (ev->type == SDL_MOUSEMOTION && contains_Widget(w, init_I2(ev->motion.x, ev->motion.y))) {
-//        setCursor_Window(get_Window(), SDL_SYSTEM_CURSOR_ARROW);
-//    }
     if (isCommand_Widget(w, ev, "lookup.ready")) {
         /* Take the results and present them in the list. */
         presentResults_LookupWidget_(d);
@@ -637,9 +637,23 @@ static iBool processEvent_LookupWidget_(iLookupWidget *d, const SDL_Event *ev) {
     if (isResize_UserEvent(ev) || (equal_Command(cmd, "layout.changed") &&
                                    equal_Rangecc(range_Command(cmd, "id"), "navbar"))) {
         /* Position the lookup popup under the URL bar. */ {
+            const iWindow *window = get_Window();
+            const iInt2 rootSize = rootSize_Window(window);
+            const iRect navBarBounds = bounds_Widget(findWidget_App("navbar"));
             setSize_Widget(w, init_I2(width_Widget(findWidget_App("url")),
-                                      get_Window()->root->rect.size.y / 2));
+                                      (rootSize.y - bottom_Rect(navBarBounds)) / 2));
             setPos_Widget(w, bottomLeft_Rect(bounds_Widget(findWidget_App("url"))));
+#if defined (iPlatformAppleMobile)
+            /* TODO: Ask the system how tall the keyboard is. */ {
+                if (isLandscape_App()) {
+                    w->rect.size.y = rootSize.y * 4 / 10;
+                }
+                else if (deviceType_App() == phone_AppDeviceType) {
+                    w->rect.size.x = rootSize.x;
+                    w->rect.pos.x  = 0;
+                }
+            }
+#endif
             arrange_Widget(w);
         }
         updateVisible_ListWidget(d->list);

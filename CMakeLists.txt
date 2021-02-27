@@ -18,7 +18,7 @@
 cmake_minimum_required (VERSION 3.9)
 
 project (Lagrange
-    VERSION 1.1.4
+    VERSION 1.2.0
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
@@ -33,24 +33,11 @@ option (ENABLE_RELATIVE_EMBED   "Resources should always be found via relative p
 option (ENABLE_WINDOWPOS_FIX    "Set position after showing window (workaround for SDL bug)" OFF)
 option (ENABLE_IDLE_SLEEP       "While idle, sleep in the main thread instead of waiting for events" ON)
 option (ENABLE_DOWNLOAD_EDIT    "Allow changing the Downloads directory" ON)
+option (ENABLE_CUSTOM_FRAME     "Draw a custom window frame (Windows)" OFF)
 
 include (BuildType.cmake)
 include (res/Embed.cmake)
-if (NOT EXISTS ${CMAKE_SOURCE_DIR}/lib/the_Foundation/CMakeLists.txt)
-    set (INSTALL_THE_FOUNDATION YES)
-    find_package (the_Foundation REQUIRED)
-else ()
-    set (INSTALL_THE_FOUNDATION NO)
-    set (TFDN_STATIC_LIBRARY    ON  CACHE BOOL "")
-    set (TFDN_ENABLE_INSTALL    OFF CACHE BOOL "")
-    set (TFDN_ENABLE_TESTS      OFF CACHE BOOL "")
-    set (TFDN_ENABLE_WEBREQUEST OFF CACHE BOOL "")
-    add_subdirectory (lib/the_Foundation)
-    add_library (the_Foundation::the_Foundation ALIAS the_Foundation)
-endif ()
-find_package (PkgConfig REQUIRED)
-pkg_check_modules (SDL2 REQUIRED sdl2)
-pkg_check_modules (MPG123 IMPORTED_TARGET libmpg123)
+include (Depends.cmake)
 
 # Embedded resources are written to a generated source file.
 message (STATUS "Preparing embedded resources...")
@@ -83,7 +70,7 @@ set (EMBED_RESOURCES
     res/fonts/SourceSansPro-Bold.ttf
     res/fonts/Symbola.ttf
 )
-if (UNIX AND NOT APPLE)
+if ((UNIX AND NOT APPLE) OR MSYS)
     list (APPEND EMBED_RESOURCES res/lagrange-64.png)
 endif ()
 embed_make (${EMBED_RESOURCES})
@@ -122,6 +109,7 @@ set (SOURCES
     src/prefs.c
     src/prefs.h
     src/stb_image.h
+    src/stb_image_resize.h
     src/stb_truetype.h
     src/visited.c
     src/visited.h
@@ -154,14 +142,16 @@ set (SOURCES
     src/ui/metrics.h
     src/ui/paint.c
     src/ui/paint.h
-    src/ui/playerui.c
-    src/ui/playerui.h
+    src/ui/mediaui.c
+    src/ui/mediaui.h
     src/ui/scrollwidget.c
     src/ui/scrollwidget.h
     src/ui/sidebarwidget.c
     src/ui/sidebarwidget.h
     src/ui/text.c
     src/ui/text.h
+    src/ui/touch.c
+    src/ui/touch.h
     src/ui/util.c
     src/ui/util.h
     src/ui/visbuf.c
@@ -184,7 +174,18 @@ set (SOURCES
     ${CMAKE_CURRENT_BINARY_DIR}/embedded.h
 )
 if (IOS)
+    add_definitions (-DiPlatformAppleMobile=1)
+    list (APPEND SOURCES
+        src/ios.m
+        src/ios.h
+        app/Images.xcassets
+        res/LaunchScreen.storyboard
+    )
+    set_source_files_properties(app/Images.xcassets PROPERTIES
+        MACOSX_PACKAGE_LOCATION Resources
+    )
 elseif (APPLE)
+    add_definitions (-DiPlatformAppleDesktop=1)
     list (APPEND SOURCES src/macos.m src/macos.h)
     list (APPEND RESOURCES "res/Lagrange.icns")
 endif ()
@@ -231,6 +232,9 @@ endif ()
 if (ENABLE_DOWNLOAD_EDIT)
     target_compile_definitions (app PUBLIC LAGRANGE_DOWNLOAD_EDIT=1)
 endif ()
+if (ENABLE_CUSTOM_FRAME AND MSYS)
+    target_compile_definitions (app PUBLIC LAGRANGE_CUSTOM_FRAME=1)
+endif ()
 target_link_libraries (app PUBLIC the_Foundation::the_Foundation)
 target_link_libraries (app PUBLIC ${SDL2_LDFLAGS})
 if (APPLE)
@@ -239,13 +243,15 @@ if (APPLE)
     else ()
         target_link_libraries (app PUBLIC "-framework AppKit")
     endif ()
-    if (CMAKE_OSX_DEPLOYMENT_TARGET)
+    if (CMAKE_OSX_DEPLOYMENT_TARGET AND NOT IOS)
         target_compile_options (app PUBLIC -mmacosx-version-min=${CMAKE_OSX_DEPLOYMENT_TARGET})
         target_link_options (app PUBLIC -mmacosx-version-min=${CMAKE_OSX_DEPLOYMENT_TARGET})
     endif ()
+    if (SDL2_LIBRARY_DIRS)
+        set_property (TARGET app PROPERTY BUILD_RPATH ${SDL2_LIBRARY_DIRS})
+    endif ()
     set_target_properties (app PROPERTIES
         OUTPUT_NAME "Lagrange"
-        BUILD_RPATH ${SDL2_LIBRARY_DIRS}
         MACOSX_BUNDLE YES
         MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_LIST_DIR}/res/MacOSXBundleInfo.plist.in"
         MACOSX_BUNDLE_BUNDLE_NAME "Lagrange"
@@ -258,9 +264,21 @@ if (APPLE)
         MACOSX_BUNDLE_COPYRIGHT "© ${COPYRIGHT_YEAR} Jaakko Keränen"
         XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "fi.skyjake.Lagrange"
     )
+    if (IOS)
+        set_target_properties (app PROPERTIES
+            XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2"
+            XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME "AppIcon"
+            MACOSX_BUNDLE_ICON_FILE "AppIcon"
+        )
+    endif ()
+    if (XCODE_DEVELOPMENT_TEAM)
+        set_property (TARGET app PROPERTY
+            XCODE_ATTRIBUTE_DEVELOPMENT_TEAM ${XCODE_DEVELOPMENT_TEAM}
+        )
+    endif ()
 endif ()
 if (MSYS)
-    target_link_libraries (app PUBLIC d2d1 uuid) # querying DPI
+    target_link_libraries (app PUBLIC d2d1 uuid dwmapi) # querying DPI
 endif ()
 if (UNIX)
     target_link_libraries (app PUBLIC m)

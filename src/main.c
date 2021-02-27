@@ -22,8 +22,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "app.h"
 
-#if defined (iPlatformApple)
+#if defined (iPlatformAppleDesktop)
 #  include "macos.h"
+#endif
+#if defined (iPlatformAppleMobile)
+#  include "ios.h"
 #endif
 #if defined (iPlatformMsys)
 #  include "win32.h"
@@ -34,6 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #endif
 
 #include <the_Foundation/commandline.h>
+#include <the_Foundation/tlsrequest.h>
 #include <SDL.h>
 #include <stdio.h>
 #include <signal.h>
@@ -41,7 +45,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 int main(int argc, char **argv) {
     printf("Lagrange: A Beautiful Gemini Client\n");
     signal(SIGPIPE, SIG_IGN);
-#if defined (iPlatformApple)
+#if defined (iPlatformAppleDesktop)
     enableMomentumScroll_MacOS();
     registerURLHandler_MacOS();
 #endif
@@ -55,6 +59,13 @@ int main(int argc, char **argv) {
     mpg123_init();
 #endif
     init_Foundation();
+    /* IssueID #122: Recommended set of TLS ciphers for Gemini */
+    setCiphers_TlsRequest("ECDHE-ECDSA-AES256-GCM-SHA384:"
+                          "ECDHE-ECDSA-CHACHA20-POLY1305:"
+                          "ECDHE-ECDSA-AES128-GCM-SHA256:"
+                          "ECDHE-RSA-AES256-GCM-SHA384:"
+                          "ECDHE-RSA-CHACHA20-POLY1305:"
+                          "ECDHE-RSA-AES128-GCM-SHA256");
     SDL_SetHint(SDL_HINT_VIDEO_ALLOW_SCREENSAVER, "1");
     SDL_SetHint(SDL_HINT_MAC_CTRL_CLICK_EMULATE_RIGHT_CLICK, "1");
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER)) {

@@ -33,6 +33,12 @@ enum iColorTheme {
     max_ColorTheme
 };
 
+enum iColorAccent {
+    cyan_ColorAccent,
+    orange_ColorAccent,
+    max_ColorAccent
+};
+
 iLocalDef iBool isDark_ColorTheme(enum iColorTheme d) {
     return d == pureBlack_ColorTheme || d == dark_ColorTheme;
 }
@@ -106,6 +112,8 @@ enum iColorId {
     uiBackgroundFolder_ColorId,
     uiTextDim_ColorId,
     uiSubheading_ColorId,
+    uiTextAppTitle_ColorId,
+    uiBackgroundSidebar_ColorId,
 
     /* content theme colors */
     tmFirst_ColorId,
@@ -172,7 +180,9 @@ iLocalDef iBool isRegularText_ColorId(enum iColorId d) {
 #define permanent_ColorId           0x80 /* cannot be changed via escapes */
 
 #define asciiBase_ColorEscape       33
+#define asciiExtended_ColorEscape   (128 - asciiBase_ColorEscape)
 
+#define restore_ColorEscape         "\r\x24" /* ASCII Cancel */
 #define black_ColorEscape           "\r!"
 #define gray25_ColorEscape          "\r\""
 #define gray50_ColorEscape          "\r#"

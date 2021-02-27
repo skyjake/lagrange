@@ -65,8 +65,10 @@ void addTag_Bookmark(iBookmark *d, const char *tag) {
 
 void removeTag_Bookmark(iBookmark *d, const char *tag) {
     const size_t pos = indexOfCStr_String(&d->tags, tag);
-    remove_Block(&d->tags.chars, pos, strlen(tag));
-    trim_String(&d->tags);
+    if (pos != iInvalidPos) {
+        remove_Block(&d->tags.chars, pos, strlen(tag));
+        trim_String(&d->tags);
+    }
 }
 
 iDefineTypeConstruction(Bookmark)
@@ -237,7 +239,7 @@ iBool updateBookmarkIcon_Bookmarks(iBookmarks *d, const iString *url, iChar icon
     const uint32_t id = findUrl_Bookmarks(d, url);
     if (id) {
         iBookmark *bm = get_Bookmarks(d, id);
-        if (!hasTag_Bookmark(bm, "remote")) {
+        if (!hasTag_Bookmark(bm, "remote") && !hasTag_Bookmark(bm, "usericon")) {
             if (icon != bm->icon) {
                 bm->icon = icon;
                 changed = iTrue;
@@ -246,6 +248,37 @@ iBool updateBookmarkIcon_Bookmarks(iBookmarks *d, const iString *url, iChar icon
     }
     unlock_Mutex(d->mtx);
     return changed;
+}
+
+iChar siteIcon_Bookmarks(const iBookmarks *d, const iString *url) {
+    if (isEmpty_String(url)) {
+        return 0;
+    }
+    static iRegExp *tagPattern_;
+    if (!tagPattern_) {
+        tagPattern_ = new_RegExp("\\busericon\\b", caseSensitive_RegExpOption);
+    }
+    const iRangecc urlRoot      = urlRoot_String(url);
+    size_t         matchingSize = iInvalidSize; /* we'll pick the shortest matching */
+    iChar          icon         = 0;
+    lock_Mutex(d->mtx);
+    iConstForEach(Hash, i, &d->bookmarks) {
+        const iBookmark *bm = (const iBookmark *) i.value;
+        iRegExpMatch m;
+        init_RegExpMatch(&m);
+        if (bm->icon && matchString_RegExp(tagPattern_, &bm->tags, &m)) {
+            const iRangecc bmRoot = urlRoot_String(&bm->url);
+            if (equalRangeCase_Rangecc(urlRoot, bmRoot)) {
+                const size_t n = size_String(&bm->url);
+                if (n < matchingSize) {
+                    matchingSize = n;
+                    icon = bm->icon;
+                }
+            }
+        }
+    }
+    unlock_Mutex(d->mtx);
+    return icon;
 }
 
 iBookmark *get_Bookmarks(iBookmarks *d, uint32_t id) {

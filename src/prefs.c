@@ -26,6 +26,8 @@ void init_Prefs(iPrefs *d) {
     d->dialogTab         = 0;
     d->useSystemTheme    = iTrue;
     d->theme             = dark_ColorTheme;
+    d->accent            = cyan_ColorAccent;
+    d->customFrame       = iFalse; /* needs some more work to be default */
     d->retainWindowSize  = iTrue;
     d->uiScale           = 1.0f; /* default set elsewhere */
     d->zoomPercent       = 100;
@@ -42,6 +44,7 @@ void init_Prefs(iPrefs *d) {
     d->lineWidth         = 38;
     d->bigFirstParagraph = iTrue;
     d->quoteIcon         = iTrue;
+    d->centerShortDocs   = iTrue;
     d->docThemeDark      = colorfulDark_GmDocumentTheme;
     d->docThemeLight     = white_GmDocumentTheme;
     d->saturation        = 1.0f;
@@ -49,9 +52,14 @@ void init_Prefs(iPrefs *d) {
     init_String(&d->gopherProxy);
     init_String(&d->httpProxy);
     init_String(&d->downloadDir);
+    init_String(&d->searchUrl);
+#if defined (iPlatformAppleMobile)
+    d->hoverLink = iFalse;
+#endif
 }
 
 void deinit_Prefs(iPrefs *d) {
+    deinit_String(&d->searchUrl);
     deinit_String(&d->geminiProxy);
     deinit_String(&d->gopherProxy);
     deinit_String(&d->httpProxy);

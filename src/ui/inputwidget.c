@@ -31,7 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <SDL_clipboard.h>
 #include <SDL_timer.h>
 
-#if defined (iPlatformApple)
+#if defined (iPlatformAppleDesktop)
 #   include "macos.h"
 #endif
 
@@ -39,7 +39,7 @@ static const int    refreshInterval_InputWidget_ = 256;
 static const size_t maxUndo_InputWidget_         = 64;
 
 static void enableEditorKeysInMenus_(iBool enable) {
-#if defined (iPlatformApple)
+#if defined (iPlatformAppleDesktop)
     enableMenuItemsByKey_MacOS(SDLK_LEFT, KMOD_PRIMARY, enable);
     enableMenuItemsByKey_MacOS(SDLK_RIGHT, KMOD_PRIMARY, enable);
 #else
@@ -81,6 +81,8 @@ struct Impl_InputWidget {
     iArray          text;    /* iChar[] */
     iArray          oldText; /* iChar[] */
     iString         hint;
+    int             leftPadding;
+    int             rightPadding;
     size_t          cursor;
     size_t          lastCursor;
     iRanges         mark;
@@ -108,12 +110,14 @@ static void showCursor_InputWidget_(iInputWidget *d) {
 void init_InputWidget(iInputWidget *d, size_t maxLen) {
     iWidget *w = &d->widget;
     init_Widget(w);
-    setFlags_Widget(w, focusable_WidgetFlag | hover_WidgetFlag, iTrue);
+    setFlags_Widget(w, focusable_WidgetFlag | hover_WidgetFlag | touchDrag_WidgetFlag, iTrue);
     init_Array(&d->text, sizeof(iChar));
     init_Array(&d->oldText, sizeof(iChar));
     init_String(&d->hint);
     init_Array(&d->undoStack, sizeof(iInputUndo));
     d->font             = uiInput_FontId | alwaysVariableFlag_FontId;
+    d->leftPadding      = 0;
+    d->rightPadding     = 0;
     d->cursor           = 0;
     d->lastCursor       = 0;
     d->inFlags          = eatEscape_InputWidgetFlag;
@@ -121,6 +125,9 @@ void init_InputWidget(iInputWidget *d, size_t maxLen) {
     setMaxLen_InputWidget(d, maxLen);
     /* Caller must arrange the width, but the height is fixed. */
     w->rect.size.y = lineHeight_Text(default_FontId) + 2 * gap_UI;
+#if defined (iPlatformAppleMobile)
+    w->rect.size.y += 2 * gap_UI;
+#endif
     setFlags_Widget(w, fixedHeight_WidgetFlag, iTrue);
     init_Click(&d->click, d, SDL_BUTTON_LEFT);
     d->timer = 0;
@@ -130,6 +137,7 @@ void init_InputWidget(iInputWidget *d, size_t maxLen) {
 
 void deinit_InputWidget(iInputWidget *d) {
     if (isSelected_Widget(d)) {
+        SDL_StopTextInput();
         enableEditorKeysInMenus_(iTrue);
     }
     delete_TextBuf(d->buffered);
@@ -190,6 +198,16 @@ void setMaxLen_InputWidget(iInputWidget *d, size_t maxLen) {
 
 void setHint_InputWidget(iInputWidget *d, const char *hintText) {
     setCStr_String(&d->hint, hintText);
+}
+
+void setContentPadding_InputWidget(iInputWidget *d, int left, int right) {
+    if (left >= 0) {
+        d->leftPadding = left;
+    }
+    if (right >= 0) {
+        d->rightPadding = right;
+    }
+    refresh_Widget(d);
 }
 
 static const iChar sensitiveChar_ = 0x25cf; /* black circle */
@@ -342,9 +360,12 @@ static void insertChar_InputWidget_(iInputWidget *d, iChar chr) {
             resize_Array(&d->text, d->cursor + 1);
         }
         set_Array(&d->text, d->cursor++, &chr);
-        if (d->maxLen && d->cursor == d->maxLen) {
+        if (d->maxLen > 1 && d->cursor == d->maxLen) {
             iWidget *nextFocus = findFocusable_Widget(w, forward_WidgetFocusDir);
             setFocus_Widget(nextFocus == w ? NULL : nextFocus);
+        }
+        else if (d->maxLen == 1) {
+            d->cursor = 0;
         }
     }
     showCursor_InputWidget_(d);
@@ -481,7 +502,9 @@ iLocalDef iInt2 padding_(void) {
 
 static iInt2 textOrigin_InputWidget_(const iInputWidget *d, const char *visText) {
     const iWidget *w         = constAs_Widget(d);
-    iRect          bounds    = adjusted_Rect(bounds_Widget(w), padding_(), neg_I2(padding_()));
+    iRect          bounds    = adjusted_Rect(bounds_Widget(w),
+                                 addX_I2(padding_(), d->leftPadding),
+                                 neg_I2(addX_I2(padding_(), d->rightPadding)));
     const iInt2    emSize    = advance_Text(d->font, "M");
     const int      textWidth = advance_Text(d->font, visText).x;
     const int      cursorX   = advanceN_Text(d->font, visText, d->cursor).x;
@@ -540,6 +563,27 @@ static iBool copy_InputWidget_(iInputWidget *d, iBool doCut) {
     return iFalse;
 }
 
+static void paste_InputWidget_(iInputWidget *d) {
+    if (SDL_HasClipboardText()) {
+        pushUndo_InputWidget_(d);
+        deleteMarked_InputWidget_(d);
+        char *   text  = SDL_GetClipboardText();
+        iString *paste = collect_String(newCStr_String(text));
+        /* Url decoding. */
+        if (d->inFlags & isUrl_InputWidgetFlag) {
+            if (prefs_App()->decodeUserVisibleURLs) {
+                paste = collect_String(urlDecode_String(paste));
+            }
+            else {
+                urlEncodePath_String(paste);
+            }
+        }
+        SDL_free(text);
+        iConstForEach(String, i, paste) { insertChar_InputWidget_(d, i.value); }
+        contentsWereChanged_InputWidget_(d);
+    }
+}
+
 static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
     if (isCommand_Widget(w, ev, "focus.gained")) {
@@ -561,7 +605,11 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
         return iTrue;
     }
     if (ev->type == SDL_MOUSEMOTION && isHover_Widget(d)) {
-        setCursor_Window(get_Window(), SDL_SYSTEM_CURSOR_IBEAM);
+        const iInt2 local = localCoord_Widget(w, init_I2(ev->motion.x, ev->motion.y));
+        setCursor_Window(get_Window(),
+                         local.x >= 2 * gap_UI + d->leftPadding && local.x < width_Widget(w) - d->rightPadding
+                             ? SDL_SYSTEM_CURSOR_IBEAM
+                             : SDL_SYSTEM_CURSOR_ARROW);
     }
     switch (processEvent_Click(&d->click, ev)) {
         case none_ClickResult:
@@ -606,26 +654,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                     copy_InputWidget_(d, key == 'x');
                     return iTrue;
                 case 'v':
-                    if (SDL_HasClipboardText()) {
-                        pushUndo_InputWidget_(d);
-                        deleteMarked_InputWidget_(d);
-                        char *text = SDL_GetClipboardText();
-                        iString *paste = collect_String(newCStr_String(text));
-                        /* Url decoding. */
-                        if (d->inFlags & isUrl_InputWidgetFlag) {
-                            if (prefs_App()->decodeUserVisibleURLs) {
-                                paste = collect_String(urlDecode_String(paste));
-                            }
-                            else {
-                                urlEncodePath_String(paste);
-                            }
-                        }
-                        SDL_free(text);
-                        iConstForEach(String, i, paste) {
-                            insertChar_InputWidget_(d, i.value);
-                        }
-                        contentsWereChanged_InputWidget_(d);
-                    }
+                    paste_InputWidget_(d);
                     return iTrue;
                 case 'z':
                     if (popUndo_InputWidget_(d)) {
@@ -637,6 +666,11 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
         }
         d->lastCursor = d->cursor;
         switch (key) {
+            case SDLK_INSERT:
+                if (mods == KMOD_SHIFT) {
+                    paste_InputWidget_(d);
+                }
+                return iTrue;
             case SDLK_RETURN:
             case SDLK_KP_ENTER:
                 d->inFlags |= enterPressed_InputWidgetFlag;
@@ -662,6 +696,11 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                 else if (d->cursor > 0) {
                     pushUndo_InputWidget_(d);
                     remove_Array(&d->text, --d->cursor);
+                    contentsWereChanged_InputWidget_(d);
+                }
+                else if (d->cursor == 0 && d->maxLen == 1) {
+                    pushUndo_InputWidget_(d);
+                    clear_Array(&d->text);
                     contentsWereChanged_InputWidget_(d);
                 }
                 showCursor_InputWidget_(d);
@@ -804,7 +843,7 @@ static void draw_InputWidget_(const iInputWidget *d) {
                             isFocused ? gap_UI / 4 : 1,
                             isFocused ? uiInputFrameFocused_ColorId
                                       : isHover ? uiInputFrameHover_ColorId : uiInputFrame_ColorId);
-    setClip_Paint(&p, bounds);
+    setClip_Paint(&p, adjusted_Rect(bounds, init_I2(d->leftPadding, 0), init_I2(-d->rightPadding, 0)));
     const iInt2 textOrigin = textOrigin_InputWidget_(d, cstr_String(text));
     if (isFocused && !isEmpty_Range(&d->mark)) {
         /* Draw the selected range. */
@@ -832,25 +871,37 @@ static void draw_InputWidget_(const iInputWidget *d) {
     /* Cursor blinking. */
     if (isFocused && d->cursorVis) {
         iString cur;
-        if (d->cursor < size_Array(&d->text)) {
-            if (~d->inFlags & isSensitive_InputWidgetFlag) {
-                initUnicodeN_String(&cur, constAt_Array(&d->text, d->cursor), 1);
+        iInt2 curSize;
+        if (d->mode == overwrite_InputMode) {
+            /* Block cursor that overlaps a character. */
+            if (d->cursor < size_Array(&d->text)) {
+                if (~d->inFlags & isSensitive_InputWidgetFlag) {
+                    initUnicodeN_String(&cur, constAt_Array(&d->text, d->cursor), 1);
+                }
+                else {
+                    initUnicodeN_String(&cur, &sensitiveChar_, 1);
+                }
             }
             else {
-                initUnicodeN_String(&cur, &sensitiveChar_, 1);
+                initCStr_String(&cur, " ");
             }
+            curSize = addX_I2(advance_Text(d->font, cstr_String(&cur)), iMin(2, gap_UI / 4));
         }
         else {
-            initCStr_String(&cur, " ");
+            /* Bar cursor. */
+            curSize = init_I2(gap_UI / 2, lineHeight_Text(d->font));
         }
         /* The `gap_UI` offsets below are a hack. They are used because for some reason the
            cursor rect and the glyph inside don't quite position like during `run_Text_()`. */
         const iInt2 prefixSize = advanceN_Text(d->font, cstr_String(text), d->cursor);
-        const iInt2 curPos     = addX_I2(textOrigin, prefixSize.x);
-        const iRect curRect    = { curPos, addX_I2(advance_Text(d->font, cstr_String(&cur)), iMin(2, gap_UI / 4)) };
+        const iInt2 curPos     = addX_I2(textOrigin, prefixSize.x +
+                                         (d->mode == insert_InputMode ? -curSize.x / 2 : 0));
+        const iRect curRect    = { curPos, curSize };
         fillRect_Paint(&p, curRect, uiInputCursor_ColorId);
-        draw_Text(d->font, addX_I2(curPos, iMin(1, gap_UI / 8)), uiInputCursorText_ColorId, "%s", cstr_String(&cur));
-        deinit_String(&cur);
+        if (d->mode == overwrite_InputMode) {
+            draw_Text(d->font, addX_I2(curPos, iMin(1, gap_UI / 8)), uiInputCursorText_ColorId, "%s", cstr_String(&cur));
+            deinit_String(&cur);
+        }
     }
     delete_String(text);
     drawChildren_Widget(w);

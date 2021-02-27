@@ -6,6 +6,7 @@
 #include <the_Foundation/path.h>
 #include <the_Foundation/process.h>
 #include <the_Foundation/stringlist.h>
+#include <the_Foundation/xml.h>
 
 iDefineTypeConstruction(FilterHook)
 
@@ -69,6 +70,115 @@ iBlock *run_FilterHook_(const iFilterHook *d, const iString *mime, const iBlock 
 
 /*----------------------------------------------------------------------------------------------*/
 
+static iRegExp *xmlMimePattern_(void) {
+    static iRegExp *xmlMime_;
+    if (!xmlMime_) {
+        xmlMime_ = new_RegExp("(application|text)/(atom\\+)?xml", caseInsensitive_RegExpOption);
+    }
+    return xmlMime_;
+}
+
+static iBlock *translateAtomXmlToGeminiFeed_(const iString *mime, const iBlock *source,
+                                             const iString *requestUrl) {
+    iUnused(requestUrl); /* TODO: Use for what? */
+    iRegExpMatch m;
+    init_RegExpMatch(&m);
+    if (!matchString_RegExp(xmlMimePattern_(), mime, &m)) {
+        return NULL;
+    }
+    iBlock *      output = NULL;
+    iXmlDocument *doc    = new_XmlDocument();
+    iString       src;
+    initBlock_String(&src, source); /* assume it's UTF-8 */
+    if (!parse_XmlDocument(doc, &src)) {
+        goto finished;
+    }
+    const iXmlElement *feed = &doc->root;
+    if (!equal_Rangecc(feed->name, "feed")) {
+        goto finished;
+    }
+    if (!equal_Rangecc(attribute_XmlElement(feed, "xmlns"), "http://www.w3.org/2005/Atom")) {
+        goto finished;
+    }
+    iString *title = collect_String(decodedContent_XmlElement(child_XmlElement(feed, "title")));
+    if (isEmpty_String(title)) {
+        goto finished;
+    }
+    iString *subtitle = collect_String(decodedContent_XmlElement(child_XmlElement(feed, "subtitle")));
+    iString out;
+    init_String(&out);
+    format_String(&out,
+                  "20 text/gemini\r\n"
+                  "# %s\n\n", cstr_String(title));
+    if (!isEmpty_String(subtitle)) {
+        appendFormat_String(&out, "## %s\n\n", cstr_String(subtitle));
+    }
+    appendCStr_String(&out,
+                      "This Atom XML document has been automatically translated to a Gemini feed "
+                      "to allow subscribing to it.\n\n");
+    iRegExp *datePattern =
+        iClob(new_RegExp("^([0-9][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9])T.*", caseSensitive_RegExpOption));
+    iBeginCollect();
+    iConstForEach(PtrArray, i, &feed->children) {
+        iEndCollect();
+        iBeginCollect();
+        const iXmlElement *entry = i.ptr;
+        if (!equal_Rangecc(entry->name, "entry")) {
+            continue;
+        }
+        title = collect_String(decodedContent_XmlElement(child_XmlElement(entry, "title")));
+        if (isEmpty_String(title)) {
+            continue;
+        }
+        const iString *published =
+            collect_String(decodedContent_XmlElement(child_XmlElement(entry, "published")));
+        const iString *updated =
+            collect_String(decodedContent_XmlElement(child_XmlElement(entry, "updated")));
+        iRegExpMatch m;
+        init_RegExpMatch(&m);
+        if (!matchString_RegExp(datePattern, updated, &m)) {
+            init_RegExpMatch(&m);
+            if (!matchString_RegExp(datePattern, published, &m)) {
+                continue;
+            }
+        }
+        iRangecc url = iNullRange;
+        iConstForEach(PtrArray, j, &entry->children) {
+            const iXmlElement *link = j.ptr;
+            if (!equal_Rangecc(link->name, "link")) {
+                continue;
+            }
+            const iRangecc href = attribute_XmlElement(link, "href");
+            const iRangecc rel  = attribute_XmlElement(link, "rel");
+            const iRangecc type = attribute_XmlElement(link, "type");
+            if (startsWithCase_Rangecc(href, "gemini:")) {
+                url = href;
+                /* We're happy with the first gemini URL. */
+                /* TODO: Are we? */
+                break;
+            }
+            url = href;
+            iUnused(rel, type);
+        }
+        if (isEmpty_Range(&url)) {
+            continue;
+        }
+        appendFormat_String(&out, "=> %s %s - %s\n",
+                            cstr_Rangecc(url),
+                            cstr_Rangecc(capturedRange_RegExpMatch(&m, 1)),
+                            cstr_String(title));
+    }
+    iEndCollect();
+    output = copy_Block(utf8_String(&out));
+    deinit_String(&out);
+finished:
+    delete_XmlDocument(doc);
+    deinit_String(&src);
+    return output;
+}
+
+/*----------------------------------------------------------------------------------------------*/
+
 struct Impl_MimeHooks {
     iPtrArray filters;
 };
@@ -87,7 +197,7 @@ void deinit_MimeHooks(iMimeHooks *d) {
 }
 
 iBool willTryFilter_MimeHooks(const iMimeHooks *d, const iString *mime) {
-    /* TODO: Combine this function with tryFilter_MimeHooks? */
+    /* TODO: Combine this function with tryFilter_MimeHooks! */
     iRegExpMatch m;
     iConstForEach(PtrArray, i, &d->filters) {
         const iFilterHook *xc = i.ptr;
@@ -95,6 +205,11 @@ iBool willTryFilter_MimeHooks(const iMimeHooks *d, const iString *mime) {
         if (matchString_RegExp(xc->mimeRegex, mime, &m)) {
             return iTrue;
         }
+    }
+    /* Built-in filters. */
+    init_RegExpMatch(&m);
+    if (matchString_RegExp(xmlMimePattern_(), mime, &m)) {
+        return iTrue;
     }
     return iFalse;
 }
@@ -110,6 +225,14 @@ iBlock *tryFilter_MimeHooks(const iMimeHooks *d, const iString *mime, const iBlo
             if (result) {
                 return result;
             }
+        }
+    }
+    /* Built-in filters. */
+    init_RegExpMatch(&m);
+    if (matchString_RegExp(xmlMimePattern_(), mime, &m)) {
+        iBlock *result = translateAtomXmlToGeminiFeed_(mime, body, requestUrl);
+        if (result) {
+            return result;
         }
     }
     return NULL;

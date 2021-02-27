@@ -31,6 +31,7 @@ iDeclareObjectConstructionArgs(LabelWidget, const char *label, const char *comma
 
 void    setAlignVisually_LabelWidget(iLabelWidget *, iBool alignVisual);
 void    setFont_LabelWidget         (iLabelWidget *, int fontId);
+void    setTextColor_LabelWidget    (iLabelWidget *, int color);
 void    setText_LabelWidget         (iLabelWidget *, const iString *text); /* resizes widget */
 void    setTextCStr_LabelWidget     (iLabelWidget *, const char *text);
 void    setCommand_LabelWidget      (iLabelWidget *, const iString *command);
