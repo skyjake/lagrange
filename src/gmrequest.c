@@ -227,7 +227,12 @@ static int processIncomingData_GmRequest_(iGmRequest *d, const iBlock *data) {
 static void readIncoming_GmRequest_(iGmRequest *d, iTlsRequest *req) {
     lock_Mutex(d->mtx);
     iGmResponse *resp = d->resp;
-    iAssert(d->state != finished_GmRequestState); /* notifications out of order? */
+    if (d->state == finished_GmRequestState || d->state == failure_GmRequestState) {
+        /* The request has already finished or been aborted (e.g., invalid header). */
+        delete_Block(readAll_TlsRequest(req));
+        unlock_Mutex(d->mtx);
+        return;
+    }
     iBlock *  data         = readAll_TlsRequest(req);
     const int ubits        = processIncomingData_GmRequest_(d, data);
     iBool     notifyUpdate = (ubits & 1) != 0;
@@ -552,7 +557,7 @@ void submit_GmRequest(iGmRequest *d) {
             remove_Block(&path->chars, 0, 1);
         }
 #endif
-        iFile *  f    = new_File(path);
+        iFile *f = new_File(path);
         if (open_File(f, readOnly_FileMode)) {
             /* TODO: Check supported file types: images, audio */
             /* TODO: Detect text files based on contents? E.g., is the content valid UTF-8. */
