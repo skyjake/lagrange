@@ -115,3 +115,15 @@ The following build options are recommended on Raspberry Pi 2/3:
 
 [rel]: https://git.skyjake.fi/skyjake/lagrange/releases
 [tf]:  https://git.skyjake.fi/skyjake/the_Foundation
+
+## User files
+
+On Windows, user files are stored in `%HOMEPATH%/AppData/Roaming/fi.skyjake.Lagrange/`, unless one is using the portable distribution and there is a `userdata` subdirectory present in the executable directory.
+
+On macOS, user files are stored in `~/Library/Application Support/fi.skyjake.Lagrange/`.
+
+On Linux/*BSD/other operating systems, user files stored in `~/.config/lagrange` unless you have customized the XDG directories, in which case the `XDG_CONFIG_HOME` environment variable is used to determine where user files saved.
+
+The usage and contents of the user files are described in the Help document. You can delete one or more of the files while Lagrange is not running to reset the corresponding data to the default/empty state.
+
+One instance of Lagrange can be running at a time per user file directory.
