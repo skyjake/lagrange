@@ -365,7 +365,7 @@ void punyEncodeUrlHost_String(iString *d) {
 }
 
 iString *makeFileUrl_String(const iString *localFilePath) {
-    iString *url = cleaned_Path(localFilePath);
+    iString *url = makeAbsolute_Path(collect_String(cleaned_Path(localFilePath)));
     replace_Block(&url->chars, '\\', '/'); /* in case it's a Windows path */
     set_String(url, collect_String(urlEncodeExclude_String(url, "/:")));
 #if defined (iPlatformMsys)
