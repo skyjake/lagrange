@@ -395,7 +395,7 @@ static iBool startWorker_Feeds_(iFeeds *d) {
         iFeedJob *job = new_FeedJob(bm);
         if (!contains_IntSet(&d->previouslyCheckedFeeds, id_Bookmark(bm))) {
             job->isFirstUpdate = iTrue;
-            printf("first check of %x: %s\n", id_Bookmark(bm), cstr_String(&bm->title));
+//            printf("first check of %x: %s\n", id_Bookmark(bm), cstr_String(&bm->title));
             fflush(stdout);
             insert_IntSet(&d->previouslyCheckedFeeds, id_Bookmark(bm));
         }
@@ -430,7 +430,7 @@ static void stopWorker_Feeds_(iFeeds *d) {
 }
 
 static int cmp_FeedEntryPtr_(const void *a, const void *b) {
-    const iFeedEntry * const *elem[2] = { a, b };    
+    const iFeedEntry * const *elem[2] = { a, b };
     return cmpString_String(&(*elem[0])->url, &(*elem[1])->url);
 }
 
