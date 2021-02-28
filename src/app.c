@@ -30,6 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "gmdocument.h"
 #include "gmutil.h"
 #include "history.h"
+#include "ipc.h"
 #include "ui/certimportwidget.h"
 #include "ui/color.h"
 #include "ui/command.h"
@@ -50,12 +51,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/process.h>
 #include <the_Foundation/sortedarray.h>
 #include <the_Foundation/time.h>
-#include <SDL_events.h>
-#include <SDL_filesystem.h>
-#include <SDL_render.h>
-#include <SDL_timer.h>
-#include <SDL_video.h>
-#include <SDL_version.h>
+#include <SDL.h>
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -422,8 +418,116 @@ static uint32_t postAutoReloadCommand_App_(uint32_t interval, void *param) {
     return interval;
 }
 
+static void terminate_App_(int rc) {
+    SDL_Quit();
+    deinit_Foundation();
+    exit(rc);
+}
+
+static void communicateWithRunningInstance_App_(iApp *d, iProcessId instance,
+                                                const iStringList *openCmds) {
+    iString *cmds = new_String();
+    const iProcessId pid = currentId_Process();
+    iConstForEach(CommandLine, i, &d->args) {
+        if (i.argType == value_CommandLineArgType) {
+            continue;
+        }
+        if (equal_CommandLineConstIterator(&i, "go-home")) {
+            appendCStr_String(cmds, "navigate.home\n");
+        }
+        else if (equal_CommandLineConstIterator(&i, "new-tab")) {
+            iCommandLineArg *arg = argument_CommandLineConstIterator(&i);
+            if (!isEmpty_StringList(&arg->values)) {
+                appendFormat_String(cmds, "open newtab:1 url:%s\n",
+                                    cstr_String(constAt_StringList(&arg->values, 0)));
+            }
+            else {
+                appendCStr_String(cmds, "tabs.new\n");
+            }
+            iRelease(arg);
+        }
+        else if (equal_CommandLineConstIterator(&i, "close-tab")) {
+            appendCStr_String(cmds, "tabs.close\n");
+        }
+        else if (equal_CommandLineConstIterator(&i, "list-tab-urls;L")) {
+            appendFormat_String(cmds, "ipc.list.urls pid:%d\n", pid);
+        }
+    }
+    if (!isEmpty_StringList(openCmds)) {
+        append_String(cmds, collect_String(joinCStr_StringList(openCmds, "\n")));
+    }
+    if (isEmpty_String(cmds)) {
+        /* By default open a new tab. */
+        appendCStr_String(cmds, "tabs.new\n");
+    }
+    if (!isEmpty_String(cmds)) {
+        iString *result = communicate_Ipc(cmds);
+        if (result) {
+            puts(cstr_String(result));
+        }
+        delete_String(result);
+    }
+    iUnused(instance);
+//    else {
+//        printf("Lagrange already running (PID %d)\n", instance);
+//    }
+    terminate_App_(0);
+}
+
 static void init_App_(iApp *d, int argc, char **argv) {
     init_CommandLine(&d->args, argc, argv);
+    /* Configure the valid command line options. */ {
+        defineValues_CommandLine(&d->args, "close-tab", 0);
+        defineValues_CommandLine(&d->args, "echo;E", 0);
+        defineValues_CommandLine(&d->args, "go-home", 0);
+        defineValues_CommandLine(&d->args, "help", 0);
+        defineValues_CommandLine(&d->args, "list-tab-urls;L", 0);
+        defineValuesN_CommandLine(&d->args, "new-tab", 0, 1);
+        defineValues_CommandLine(&d->args, "sw", 0);
+        defineValues_CommandLine(&d->args, "version;V", 0);
+    }
+    iStringList *openCmds = new_StringList();
+    /* Handle command line options. */ {
+        if (contains_CommandLine(&d->args, "help")) {
+            printf("Usage: lagrange [options] [URLs] [paths]\n");
+            terminate_App_(0);
+        }
+        if (contains_CommandLine(&d->args, "version;V")) {
+            printf("Lagrange version " LAGRANGE_APP_VERSION "\n");
+            terminate_App_(0);
+        }
+        /* Check for URLs. */
+        iBool newTab = iFalse;
+        iConstForEach(CommandLine, i, &d->args) {
+            const iRangecc arg = i.entry;
+            if (i.argType == value_CommandLineArgType) {
+                /* URLs and file paths accepted. */
+                const iBool isKnownScheme =
+                    startsWithCase_Rangecc(arg, "gemini:") || startsWithCase_Rangecc(arg, "gopher:") ||
+                    startsWithCase_Rangecc(arg, "finger:") || startsWithCase_Rangecc(arg, "file:")   ||
+                    startsWithCase_Rangecc(arg, "data:")   || startsWithCase_Rangecc(arg, "about:");
+                if (isKnownScheme || fileExistsCStr_FileInfo(cstr_Rangecc(arg))) {
+                    pushBack_StringList(
+                        openCmds,
+                        collectNewFormat_String("open newtab:%d url:%s",
+                                                newTab,
+                                                isKnownScheme
+                                                    ? cstr_Rangecc(arg)
+                                                    : cstrCollect_String(makeFileUrl_String(
+                                                          collectNewRange_String(arg)))));
+                    newTab = iTrue;
+                }
+                else {
+                    fprintf(stderr, "Invalid URL/file: %s\n", cstr_Rangecc(arg));
+                    terminate_App_(1);
+                }
+            }
+            else if (!isDefined_CommandLine(&d->args, collectNewRange_String(i.entry))) {
+                fprintf(stderr, "Unknown option: %s\n", cstr_Rangecc(arg));
+                terminate_App_(1);
+            }
+        }
+    }
     /* Where was the app started from? We ask SDL first because the command line alone is
        not a reliable source of this information, particularly when it comes to different
        operating systems. */ {
@@ -437,6 +541,17 @@ static void init_App_(iApp *d, int argc, char **argv) {
         }
         SDL_free(exec);
     }
+    init_Ipc(dataDir_App_());
+    /* Only one instance is allowed to run at a time; the runtime files (bookmarks, etc.)
+       are not shareable. */ {
+        const iProcessId instance = check_Ipc();
+        if (instance) {
+            communicateWithRunningInstance_App_(d, instance, openCmds);
+            terminate_App_(0);
+        }
+        listen_Ipc(); /* We'll respond to commands from other instances. */
+    }
+    printf("Lagrange: A Beautiful Gemini Client\n");
     const iBool isFirstRun =
         !fileExistsCStr_FileInfo(cleanedPath_CStr(concatPath_CStr(dataDir_App_(), "prefs.cfg")));
     d->isFinishedLaunching = iFalse;
@@ -445,7 +560,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     init_SortedArray(&d->tickers, sizeof(iTicker), cmp_Ticker_);
     d->lastTickerTime         = SDL_GetTicks();
     d->elapsedSinceLastTicker = 0;
-    d->commandEcho            = checkArgument_CommandLine(&d->args, "echo") != NULL;
+    d->commandEcho            = checkArgument_CommandLine(&d->args, "echo;E") != NULL;
     d->forceSoftwareRender    = checkArgument_CommandLine(&d->args, "sw") != NULL;
     d->initialWindowRect      = init_Rect(-1, -1, 900, 560);
 #if defined (iPlatformMsys)
@@ -529,21 +644,10 @@ static void init_App_(iApp *d, int argc, char **argv) {
         }
     }
     /* URLs from the command line. */ {
-        iBool newTab = iFalse;
-        for (size_t i = 1; i < size_StringList(args_CommandLine(&d->args)); i++) {
-            const iString *arg = constAt_StringList(args_CommandLine(&d->args), i);
-            const iBool    isKnownScheme =
-                startsWithCase_String(arg, "gemini:") || startsWithCase_String(arg, "gopher:") ||
-                startsWithCase_String(arg, "file:")   || startsWithCase_String(arg, "data:")   ||
-                startsWithCase_String(arg, "about:");
-            if (isKnownScheme || fileExists_FileInfo(arg)) {
-                postCommandf_App("open newtab:%d url:%s",
-                                 newTab,
-                                 isKnownScheme ? cstr_String(arg)
-                                               : cstrCollect_String(makeFileUrl_String(arg)));
-                newTab = iTrue;
-            }
+        iConstForEach(StringList, i, openCmds) {
+            postCommandString_App(i.value);
         }
+        iRelease(openCmds);
     }
 }
 
@@ -567,6 +671,7 @@ static void deinit_App(iApp *d) {
     deinit_CommandLine(&d->args);
     iRelease(d->launchCommands);
     delete_String(d->execPath);
+    deinit_Ipc();
     iRecycle();
 }
 
@@ -954,6 +1059,9 @@ void postRefresh_App(void) {
 void postCommand_App(const char *command) {
     iApp *d = &app_;
     iAssert(command);
+    if (strlen(command) == 0) {
+        return;
+    }
     SDL_Event ev;
     if (*command == '!') {
         /* Global command; this is global context so just ignore. */
@@ -1783,6 +1891,22 @@ iBool handleCommand_App(const char *cmd) {
                                   : (contrast ? pureWhite_ColorTheme : light_ColorTheme));
         }
         return iFalse;
+    }
+    else if (equal_Command(cmd, "ipc.list.urls")) {
+        iProcessId pid = argLabel_Command(cmd, "pid");
+        if (pid) {
+            iString *urls = collectNew_String();
+            iConstForEach(ObjectList, i, iClob(listDocuments_App())) {
+                append_String(urls, url_DocumentWidget(i.object));
+                appendCStr_String(urls, "\n");
+            }
+            write_Ipc(pid, urls, response_IpcWrite);
+        }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "ipc.signal")) {
+        signal_Ipc(arg_Command(cmd));
+        return iTrue;
     }
     else {
         return iFalse;

@@ -100,6 +100,8 @@ set (SOURCES
     src/gopher.h
     src/history.c
     src/history.h
+    src/ipc.c
+    src/ipc.h
     src/lookup.c
     src/lookup.h
     src/media.c

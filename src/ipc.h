@@ -22,5 +22,20 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
-#include <the_Foundation/defs.h>
+#include <the_Foundation/string.h>
+#include <the_Foundation/process.h>
 
+void        init_Ipc    (const char *runDir);
+void        deinit_Ipc  (void);
+
+iProcessId  check_Ipc           (void);
+void        listen_Ipc          (void);
+iString *   communicate_Ipc     (const iString *command);
+void        signal_Ipc          (iProcessId pid);
+
+enum iIpcWrite {
+    command_IpcWrite,
+    response_IpcWrite,
+};
+
+iBool       write_Ipc           (iProcessId pid, const iString *input, enum iIpcWrite type);
