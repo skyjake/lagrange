@@ -158,6 +158,7 @@ iBool load_Embed(const char *path) {
                 return iFalse;
             }
             init_Block(data, chunk->size);
+            fill_Block(data, 0);
             seek_File(f, chunk->pos);
             readData_File(f, chunk->size, data_Block(data));
         }
