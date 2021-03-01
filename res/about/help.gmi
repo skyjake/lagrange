@@ -1,4 +1,4 @@
-```
+``` "Lagrange" written in all caps
            __   __             __   ___
 |     /\  / _` |__)  /\  |\ | / _` |__
 |___ /~~\ \__> |  \ /~~\ | \| \__> |___
@@ -355,7 +355,7 @@ You can drag and drop .gmi files on the Lagrange window to open them in the curr
 
 Lagrange stores user-specific persistent files in one of the following locations (depending on the operating system):
 
-```
+```User file directories on different operating systems
    Windows : C:\Users\Name\AppData\Roaming\fi.skyjake.Lagrange
      macOS : ~/Library/Application Support/fi.skyjake.Lagrange/
 Other Unix : ~/.config/lagrange/
