@@ -1,0 +1,19 @@
+Usage: lagrange [options] [URLs] [paths]
+
+URLs and local files are opened in separate tabs. By default the first 
+URL/path opens in the currently open tab.
+
+General options:
+
+  -E, --echo            Print all internal app events to stdout.
+      --help            Print these instructions.
+      --sw              Disable hardware accelerated rendering.
+  -V, --version         Print the application version.
+
+Options that control a running instance of Lagrange:
+
+      --close-tab       Close the current tab.
+  -L, --list-tab-urls   Print the URLs of open tabs to stdout. If the app isn't
+                        running, nothing is printed.
+      --new-tab [URL]   Open a new tab. If the URL is omitted, the user's
+                        homepage is opened.                              

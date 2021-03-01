@@ -476,6 +476,29 @@ static void communicateWithRunningInstance_App_(iApp *d, iProcessId instance,
 
 static void init_App_(iApp *d, int argc, char **argv) {
     init_CommandLine(&d->args, argc, argv);
+    /* Where was the app started from? We ask SDL first because the command line alone is
+       not a reliable source of this information, particularly when it comes to different
+       operating systems. */ {
+        char *exec = SDL_GetBasePath();
+        if (exec) {
+            d->execPath = newCStr_String(concatPath_CStr(
+                exec, cstr_Rangecc(baseName_Path(executablePath_CommandLine(&d->args)))));
+        }
+        else {
+            d->execPath = copy_String(executablePath_CommandLine(&d->args));
+        }
+        SDL_free(exec);
+    }
+#if defined (iHaveLoadEmbed)
+    /* Load the resources from a file. */ {
+        if (!load_Embed(concatPath_CStr(cstr_String(execPath_App()), EMB_BIN))) {
+            if (!load_Embed(concatPath_CStr(cstr_String(execPath_App()), EMB_BIN2))) {
+                fprintf(stderr, "failed to load resources: %s\n", strerror(errno));
+                exit(-1);
+            }
+        }
+    }
+#endif
     /* Configure the valid command line options. */ {
         defineValues_CommandLine(&d->args, "close-tab", 0);
         defineValues_CommandLine(&d->args, "echo;E", 0);
@@ -489,7 +512,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     iStringList *openCmds = new_StringList();
     /* Handle command line options. */ {
         if (contains_CommandLine(&d->args, "help")) {
-            printf("Usage: lagrange [options] [URLs] [paths]\n");
+            puts(cstr_Block(&blobArghelp_Embedded));
             terminate_App_(0);
         }
         if (contains_CommandLine(&d->args, "version;V")) {
@@ -528,22 +551,9 @@ static void init_App_(iApp *d, int argc, char **argv) {
             }
         }
     }
-    /* Where was the app started from? We ask SDL first because the command line alone is
-       not a reliable source of this information, particularly when it comes to different
-       operating systems. */ {
-        char *exec = SDL_GetBasePath();
-        if (exec) {
-            d->execPath = newCStr_String(concatPath_CStr(
-                exec, cstr_Rangecc(baseName_Path(executablePath_CommandLine(&d->args)))));
-        }
-        else {
-            d->execPath = copy_String(executablePath_CommandLine(&d->args));
-        }
-        SDL_free(exec);
-    }
-    init_Ipc(dataDir_App_());
     /* Only one instance is allowed to run at a time; the runtime files (bookmarks, etc.)
        are not shareable. */ {
+        init_Ipc(dataDir_App_());
         const iProcessId instance = check_Ipc();
         if (instance) {
             communicateWithRunningInstance_App_(d, instance, openCmds);
@@ -621,16 +631,6 @@ static void init_App_(iApp *d, int argc, char **argv) {
                       0x1f306);
         fetchRemote_Bookmarks(d->bookmarks);
     }
-#if defined (iHaveLoadEmbed)
-    /* Load the resources from a file. */ {
-        if (!load_Embed(concatPath_CStr(cstr_String(execPath_App()), EMB_BIN))) {
-            if (!load_Embed(concatPath_CStr(cstr_String(execPath_App()), EMB_BIN2))) {
-                fprintf(stderr, "failed to load resources: %s\n", strerror(errno));
-                exit(-1);
-            }
-        }
-    }
-#endif
     d->window = new_Window(d->initialWindowRect);
     init_Feeds(dataDir_App_());
     /* Widget state init. */

@@ -47,6 +47,7 @@ set (EMBED_RESOURCES
     res/about/lagrange.gmi
     res/about/license.gmi
     res/about/version.gmi
+    res/arg-help.txt
     res/fonts/Tinos-Regular.ttf
     res/fonts/Tinos-Italic.ttf
     res/fonts/Tinos-Bold.ttf
