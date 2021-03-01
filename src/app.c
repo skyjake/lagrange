@@ -449,7 +449,7 @@ static void communicateWithRunningInstance_App_(iApp *d, iProcessId instance,
         else if (equal_CommandLineConstIterator(&i, "close-tab")) {
             appendCStr_String(cmds, "tabs.close\n");
         }
-        else if (equal_CommandLineConstIterator(&i, "list-tab-urls;L")) {
+        else if (equal_CommandLineConstIterator(&i, listTabUrls_CommandLineOption)) {
             appendFormat_String(cmds, "ipc.list.urls pid:%d\n", pid);
         }
     }
@@ -481,7 +481,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
         defineValues_CommandLine(&d->args, "echo;E", 0);
         defineValues_CommandLine(&d->args, "go-home", 0);
         defineValues_CommandLine(&d->args, "help", 0);
-        defineValues_CommandLine(&d->args, "list-tab-urls;L", 0);
+        defineValues_CommandLine(&d->args, listTabUrls_CommandLineOption, 0);
         defineValuesN_CommandLine(&d->args, "new-tab", 0, 1);
         defineValues_CommandLine(&d->args, "sw", 0);
         defineValues_CommandLine(&d->args, "version;V", 0);
@@ -547,6 +547,10 @@ static void init_App_(iApp *d, int argc, char **argv) {
         const iProcessId instance = check_Ipc();
         if (instance) {
             communicateWithRunningInstance_App_(d, instance, openCmds);
+            terminate_App_(0);
+        }
+        /* Some options are intended only for controlling other instances. */
+        if (contains_CommandLine(&d->args, listTabUrls_CommandLineOption)) {
             terminate_App_(0);
         }
         listen_Ipc(); /* We'll respond to commands from other instances. */

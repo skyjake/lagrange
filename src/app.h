@@ -38,6 +38,9 @@ iDeclareType(MimeHooks)
 iDeclareType(Visited)
 iDeclareType(Window)
 
+/* Command line options strings. */
+#define listTabUrls_CommandLineOption   "list-tab-urls;L"
+
 enum iAppDeviceType {
     desktop_AppDeviceType,
     tablet_AppDeviceType,
