@@ -22,6 +22,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "prefs.h"
 
+#include <the_Foundation/fileinfo.h>
+
 void init_Prefs(iPrefs *d) {
     d->dialogTab         = 0;
     d->useSystemTheme    = iTrue;
@@ -48,6 +50,8 @@ void init_Prefs(iPrefs *d) {
     d->docThemeDark      = colorfulDark_GmDocumentTheme;
     d->docThemeLight     = white_GmDocumentTheme;
     d->saturation        = 1.0f;
+    init_String(&d->caFile);
+    init_String(&d->caPath);
     init_String(&d->geminiProxy);
     init_String(&d->gopherProxy);
     init_String(&d->httpProxy);
@@ -56,6 +60,10 @@ void init_Prefs(iPrefs *d) {
 #if defined (iPlatformAppleMobile)
     d->hoverLink = iFalse;
 #endif
+    /* TODO: Add some platform-specific common locations? */
+    if (fileExistsCStr_FileInfo("/etc/ssl/certs")) {
+        setCStr_String(&d->caPath, "/etc/ssl/certs");
+    }
 }
 
 void deinit_Prefs(iPrefs *d) {
@@ -64,4 +72,6 @@ void deinit_Prefs(iPrefs *d) {
     deinit_String(&d->gopherProxy);
     deinit_String(&d->httpProxy);
     deinit_String(&d->downloadDir);
+    deinit_String(&d->caPath);
+    deinit_String(&d->caFile);
 }

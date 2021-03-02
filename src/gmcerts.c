@@ -380,7 +380,9 @@ iBool checkTrust_GmCerts(iGmCerts *d, iRangecc domain, const iTlsCertificate *ce
     if (isExpired_TlsCertificate(cert)) {
         return iFalse;
     }
-    if (!verifyDomain_TlsCertificate(cert, domain)) {
+    /* We trust CA verification implicitly. */
+    const iBool isAuth = verify_TlsCertificate(cert) == authority_TlsCertificateVerifyStatus;
+    if (!isAuth && !verifyDomain_TlsCertificate(cert, domain)) {
         return iFalse;
     }
     /* TODO: Could call setTrusted_GmCerts() instead of duplicating the trust-setting. */
@@ -394,9 +396,7 @@ iBool checkTrust_GmCerts(iGmCerts *d, iRangecc domain, const iTlsCertificate *ce
     if (trust) {
         /* We already have it, check if it matches the one we trust for this domain (if it's
            still valid. */
-        iTime now;
-        initCurrent_Time(&now);
-        if (secondsSince_Time(&trust->validUntil, &now) > 0) {
+        if (!isAuth && elapsedSeconds_Time(&trust->validUntil) > 0) {
             /* Trusted cert is still valid. */
             const iBool isTrusted = cmp_Block(fingerprint, &trust->fingerprint) == 0;
             unlock_Mutex(d->mtx);

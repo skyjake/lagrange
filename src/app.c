@@ -224,6 +224,8 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "doctheme.dark.set arg:%d\n", d->prefs.docThemeDark);
     appendFormat_String(str, "doctheme.light.set arg:%d\n", d->prefs.docThemeLight);
     appendFormat_String(str, "saturation.set arg:%d\n", (int) ((d->prefs.saturation * 100) + 0.5f));
+    appendFormat_String(str, "ca.file noset:1 path:%s\n", cstr_String(&d->prefs.caFile));
+    appendFormat_String(str, "ca.path path:%s\n", cstr_String(&d->prefs.caPath));
     appendFormat_String(str, "proxy.gemini address:%s\n", cstr_String(&d->prefs.geminiProxy));
     appendFormat_String(str, "proxy.gopher address:%s\n", cstr_String(&d->prefs.gopherProxy));
     appendFormat_String(str, "proxy.http address:%s\n", cstr_String(&d->prefs.httpProxy));
@@ -306,6 +308,7 @@ static void loadPrefs_App_(iApp *d) {
     }
     else {
         /* default preference values */
+        setCACertificates_TlsRequest(&d->prefs.caFile, &d->prefs.caPath);
     }
 #if !defined (LAGRANGE_CUSTOM_FRAME)
     d->prefs.customFrame = iFalse;
@@ -1205,6 +1208,10 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
                          cstr_String(text_InputWidget(findChild_Widget(d, "prefs.searchurl"))));
         postCommandf_App("cachesize.set arg:%d",
                          toInt_String(text_InputWidget(findChild_Widget(d, "prefs.cachesize"))));
+        postCommandf_App("ca.file path:%s",
+                         cstr_String(text_InputWidget(findChild_Widget(d, "prefs.ca.file"))));
+        postCommandf_App("ca.path path:%s",
+                         cstr_String(text_InputWidget(findChild_Widget(d, "prefs.ca.path"))));
         postCommandf_App("proxy.gemini address:%s",
                          cstr_String(text_InputWidget(findChild_Widget(d, "prefs.proxy.gemini"))));
         postCommandf_App("proxy.gopher address:%s",
@@ -1586,6 +1593,20 @@ iBool handleCommand_App(const char *cmd) {
         setCStr_String(&d->prefs.downloadDir, suffixPtr_Command(cmd, "path"));
         return iTrue;
     }
+    else if (equal_Command(cmd, "ca.file")) {
+        setCStr_String(&d->prefs.caFile, suffixPtr_Command(cmd, "path"));
+        if (!argLabel_Command(cmd, "noset")) {
+            setCACertificates_TlsRequest(&d->prefs.caFile, &d->prefs.caPath);
+        }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "ca.path")) {
+        setCStr_String(&d->prefs.caPath, suffixPtr_Command(cmd, "path"));
+        if (!argLabel_Command(cmd, "noset")) {
+            setCACertificates_TlsRequest(&d->prefs.caFile, &d->prefs.caPath);
+        }
+        return iTrue;
+    }
     else if (equal_Command(cmd, "open")) {
         iString *url = collectNewCStr_String(suffixPtr_Command(cmd, "url"));
         const iBool noProxy = argLabel_Command(cmd, "noproxy");
@@ -1761,6 +1782,8 @@ iBool handleCommand_App(const char *cmd) {
                             collectNewFormat_String("%d", d->prefs.maxCacheSize));
         setToggle_Widget(findChild_Widget(dlg, "prefs.decodeurls"), d->prefs.decodeUserVisibleURLs);
         setText_InputWidget(findChild_Widget(dlg, "prefs.searchurl"), &d->prefs.searchUrl);
+        setText_InputWidget(findChild_Widget(dlg, "prefs.ca.file"), &d->prefs.caFile);
+        setText_InputWidget(findChild_Widget(dlg, "prefs.ca.path"), &d->prefs.caPath);
         setText_InputWidget(findChild_Widget(dlg, "prefs.proxy.gemini"), &d->prefs.geminiProxy);
         setText_InputWidget(findChild_Widget(dlg, "prefs.proxy.gopher"), &d->prefs.gopherProxy);
         setText_InputWidget(findChild_Widget(dlg, "prefs.proxy.http"), &d->prefs.httpProxy);

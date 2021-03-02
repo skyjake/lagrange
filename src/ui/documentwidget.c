@@ -1585,10 +1585,16 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             }
         }
         appendFormat_String(msg,
-                      "\n%sCertificate Status:\n%s%s  Domain name %s%s\n"
+                      "\n%sCertificate Status:\n"
+                      "%s%s  %s by CA\n"
+                      "%s%s  Domain name %s%s\n"
                       "%s%s  %s (%04d-%02d-%02d %02d:%02d:%02d)\n"
                       "%s%s  %s",
                       uiHeading_ColorEscape,
+                      d->certFlags & authorityVerified_GmCertFlag ?
+                            checked : uiTextAction_ColorEscape "\u2610",
+                      uiText_ColorEscape,
+                      d->certFlags & authorityVerified_GmCertFlag ? "Verified" : "Not verified",
                       d->certFlags & domainVerified_GmCertFlag ? checked : unchecked,
                       uiText_ColorEscape,
                       d->certFlags & domainVerified_GmCertFlag ? "matches" : "mismatch",

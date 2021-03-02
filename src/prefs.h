@@ -51,6 +51,8 @@ struct Impl_Prefs {
     iBool            loadImageInsteadOfScrolling;
     iString          searchUrl;
     /* Network */
+    iString          caFile;
+    iString          caPath;
     iBool            decodeUserVisibleURLs;
     int              maxCacheSize; /* MB */
     iString          geminiProxy;

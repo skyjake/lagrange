@@ -163,6 +163,9 @@ static void checkServerCertificate_GmRequest_(iGmRequest *d) {
         if (checkTrust_GmCerts(d->certs, domain, cert)) {
             resp->certFlags |= trusted_GmCertFlag;
         }
+        if (verify_TlsCertificate(cert) == authority_TlsCertificateVerifyStatus) {
+            resp->certFlags |= authorityVerified_GmCertFlag;
+        }
         validUntil_TlsCertificate(cert, &resp->certValidUntil);
         set_String(&resp->certSubject, collect_String(subject_TlsCertificate(cert)));
     }

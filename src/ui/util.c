@@ -1177,6 +1177,8 @@ iWidget *makePreferences_Widget(void) {
         addChild_Widget(headings, iClob(makeHeading_Widget("Downloads folder:")));
         setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.downloads");
 #endif
+        addChild_Widget(headings, iClob(makeHeading_Widget("Search URL:")));
+        setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.searchurl");
         addChild_Widget(headings, iClob(makeHeading_Widget("Show URL on hover:")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.hoverlink")));
         addChild_Widget(headings, iClob(makeHeading_Widget("Vertical centering:")));
@@ -1300,8 +1302,6 @@ iWidget *makePreferences_Widget(void) {
     }
     /* Network. */ {
         appendTwoColumnPage_(tabs, "Network", '5', &headings, &values);
-        addChild_Widget(headings, iClob(makeHeading_Widget("Search URL:")));
-        setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.searchurl");
         addChild_Widget(headings, iClob(makeHeading_Widget("Decode URLs:")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.decodeurls")));
         addChild_Widget(headings, iClob(makeHeading_Widget("Cache size:")));
@@ -1312,6 +1312,11 @@ iWidget *makePreferences_Widget(void) {
             addChildFlags_Widget(cacheGroup, iClob(new_LabelWidget("MB", NULL)), frameless_WidgetFlag);
         }
         addChildFlags_Widget(values, iClob(cacheGroup), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+        makeTwoColumnHeading_("CERTIFICATES", headings, values);
+        addChild_Widget(headings, iClob(makeHeading_Widget("CA file:")));
+        setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.ca.file");
+        addChild_Widget(headings, iClob(makeHeading_Widget("CA path:")));
+        setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.ca.path");
         makeTwoColumnHeading_("PROXIES", headings, values);
         addChild_Widget(headings, iClob(makeHeading_Widget("Gemini proxy:")));
         setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.proxy.gemini");
@@ -1331,6 +1336,8 @@ iWidget *makePreferences_Widget(void) {
     /* Set input field sizes. */ {
         expandInputFieldWidth_(findChild_Widget(tabs, "prefs.searchurl"));
         expandInputFieldWidth_(findChild_Widget(tabs, "prefs.downloads"));
+        expandInputFieldWidth_(findChild_Widget(tabs, "prefs.ca.file"));
+        expandInputFieldWidth_(findChild_Widget(tabs, "prefs.ca.path"));
         expandInputFieldWidth_(findChild_Widget(tabs, "prefs.proxy.gemini"));
         expandInputFieldWidth_(findChild_Widget(tabs, "prefs.proxy.gopher"));
         expandInputFieldWidth_(findChild_Widget(tabs, "prefs.proxy.http"));
