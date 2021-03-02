@@ -264,6 +264,17 @@ static void linkContentLaidOut_GmDocument_(iGmDocument *d, const iGmMediaInfo *m
     }
 }
 
+static iBool isNormalized_GmDocument_(const iGmDocument *d) {
+    const iPrefs *prefs = prefs_App();
+    if (startsWithCase_String(&d->url, "gemini:") && prefs->monospaceGemini) {
+        return iFalse;
+    }
+    if (startsWithCase_String(&d->url, "gopher:") && prefs->monospaceGopher) {
+        return iFalse;
+    }
+    return iTrue;
+}
+
 static void doLayout_GmDocument_(iGmDocument *d) {
     const iBool isMono = isForcedMonospace_GmDocument_(d);
     /* TODO: Collect these parameters into a GmTheme. */
@@ -324,6 +335,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     uint16_t         preId         = 0;
     iBool            enableIndents = iFalse;
     iBool            addSiteBanner = d->bannerType != none_GmDocumentBanner;
+    const iBool      isNormalized  = isNormalized_GmDocument_(d);
     enum iGmLineType prevType      = text_GmLineType;
     if (d->format == plainText_GmDocumentFormat) {
         isPreformat = iTrue;
@@ -363,7 +375,9 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                     type = text_GmLineType;
                 }
             }
-            trimLine_Rangecc_(&line, type);
+            if (isNormalized) {
+                trimLine_Rangecc_(&line, type);
+            }
             run.font = fonts[type];
             /* Remember headings for the document outline. */
             if (type == heading1_GmLineType || type == heading2_GmLineType || type == heading3_GmLineType) {
@@ -1219,7 +1233,9 @@ void setUrl_GmDocument(iGmDocument *d, const iString *url) {
 
 void setSource_GmDocument(iGmDocument *d, const iString *source, int width) {
     set_String(&d->source, source);
-    normalize_GmDocument(d);
+    if (isNormalized_GmDocument_(d)) {
+        normalize_GmDocument(d);
+    }
     setWidth_GmDocument(d, width); /* re-do layout */
 }
 
