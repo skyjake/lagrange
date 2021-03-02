@@ -466,7 +466,8 @@ static void communicateWithRunningInstance_App_(iApp *d, iProcessId instance,
     if (!isEmpty_String(cmds)) {
         iString *result = communicate_Ipc(cmds);
         if (result) {
-            puts(cstr_String(result));
+            fwrite(cstr_String(result), 1, size_String(result), stdout);
+            fflush(stdout);
         }
         delete_String(result);
     }
