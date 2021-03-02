@@ -6,6 +6,10 @@
 ```
 # Release notes
 
+## 1.2.2
+* Whitespace is not normalized when using the monospace body setting.
+* macOS: Try to prevent forced use of high-performance GPU.
+
 ## 1.2.1
 * Fixed crash when creating a bookmark.
 
