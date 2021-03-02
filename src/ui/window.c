@@ -516,7 +516,7 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
             int hPad = isPhone || isNarrow ? gap_UI / 2 : gap_UI * 3 / 2;
             int vPad = gap_UI * 3 / 2;
             int topPad = !findWidget_App("winbar") ? gap_UI / 2 : 0;
-            setPadding_Widget(navBar, hPad, vPad / 2 + topPad, hPad, vPad / 2);
+            setPadding_Widget(navBar, hPad, vPad / 3 + topPad, hPad, vPad / 2);
         }
         /* Button sizing. */
         if (isNarrow ^ ((flags_Widget(navBar) & tight_WidgetFlag) != 0)) {
