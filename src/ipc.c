@@ -217,10 +217,7 @@ iString *communicate_Ipc(const iString *command) {
 }
 
 void signal_Ipc(iProcessId pid) {
-    if (kill(pid, SIGUSR1)) {
-        printf("kill failed: %s\n", strerror(errno));
-        fflush(stdout);
-    }
+    kill(pid, SIGUSR1);
 }
 
 #endif
