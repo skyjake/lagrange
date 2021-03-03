@@ -43,6 +43,29 @@ enum iModMap {
     max_ModMap
 };
 
+static const char *modToStr_[max_ModMap] = {
+    "none",
+    "Lshift",
+    "Lctrl",
+    "Lalt",
+    "Lgui",
+    "Rshift",
+    "Rctrl",
+    "Ralt",
+    "Rgui",
+    "caps",
+};
+
+static int strToMod_(iRangecc str) {
+    trim_Rangecc(&str);
+    for (int i = 0; i < max_ModMap; i++) {
+        if (equalCase_Rangecc(str, modToStr_[i])) {
+            return i;
+        }
+    }
+    return none_ModMap;
+}
+
 static int modMap_[max_ModMap];
 static iBool capsLockDown_;
 
@@ -85,6 +108,50 @@ int modState_Keys(void) {
 
 void setCapsLockDown_Keys(iBool isDown) {
     capsLockDown_ = isDown;
+}
+
+static void loadModMap_Keys_(const char *saveDir) {
+    iFile *f = iClob(newCStr_File(concatPath_CStr(saveDir, "modmap.txt")));
+    if (open_File(f, readOnly_FileMode | text_FileMode)) {
+        const iString *text = collect_String(readString_File(f));
+        iRangecc textLine = iNullRange;
+        while (nextSplit_Rangecc(range_String(text), "\n", &textLine)) {
+            iRangecc line = textLine;
+            trim_Rangecc(&line);
+            if (isEmpty_Range(&line) || startsWith_Rangecc(line, "#")) {
+                continue; /* comment */
+            }
+            iRangecc seg = iNullRange;
+            if (nextSplit_Rangecc(line, "->", &seg)) {
+                const int fromMod = strToMod_(seg);
+                if (fromMod && nextSplit_Rangecc(line, "->", &seg)) {
+                    const int toMod = strToMod_(seg);
+                    modMap_[fromMod] = toMod;
+                }
+            }
+        }
+        close_File(f);
+    }
+    else {
+        open_File(f, writeOnly_FileMode | text_FileMode);
+        printf_Stream(stream_File(f),
+                      "# This is a translation table for keyboard modifiers. The syntax is:\n"
+                      "#\n"
+                      "# (hardware key) -> (effective modifier)\n"
+                      "#\n"
+                      "# A modifier can be mapped to \"none\" to disable it. For example:\n"
+                      "#\n"
+                      "# Lalt -> none\n"
+                      "#\n"
+                      "# When using CapsLock as a modifier key, its toggled state will still affect\n"
+                      "# text entry. You may need to remap or disable CapsLock in your window system.\n"
+                      "#\n"
+                      "# You may delete this file and it will be recreated with the default mapping.\n\n");
+        for (int i = 1; i < max_ModMap; i++) {
+            printf_Stream(stream_File(f), "%s -> %s\n", modToStr_[i], modToStr_[i]);
+        }
+        close_File(f);
+    }
 }
 
 /*----------------------------------------------------------------------------------------------*/
@@ -270,6 +337,7 @@ void deinit_Keys(void) {
 
 void load_Keys(const char *saveDir) {
     iKeys *d = &keys_;
+    loadModMap_Keys_(saveDir);
     iFile *f = iClob(newCStr_File(concatPath_CStr(saveDir, filename_Keys_)));
     if (open_File(f, readOnly_FileMode | text_FileMode)) {
         iBlock * src  = collect_Block(readAll_File(f));

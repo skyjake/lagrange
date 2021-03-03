@@ -896,6 +896,15 @@ void processEvents_App(enum iAppEventMode eventMode) {
                 d->isIdling = iFalse;
 #endif
                 gotEvents = iTrue;
+                /* Keyboard modifier mapping. */ {
+                    if (ev.type == SDL_KEYDOWN || ev.type == SDL_KEYUP) {
+                        /* Track Caps Lock state as a modifier. */
+                        if (ev.key.keysym.sym == SDLK_CAPSLOCK) {
+                            setCapsLockDown_Keys(ev.key.state == SDL_PRESSED);
+                        }
+                        ev.key.keysym.mod = mapMods_Keys(ev.key.keysym.mod & ~KMOD_CAPS);
+                    }
+                }
                 iBool wasUsed = processEvent_Window(d->window, &ev);
                 if (!wasUsed) {
                     /* There may be a key bindings for this. */
