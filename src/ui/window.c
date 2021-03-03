@@ -152,6 +152,8 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
     return iFalse;
 }
 
+/* TODO: Define menus per platform. */
+
 #if defined (iPlatformAppleDesktop)
 #  define iHaveNativeMenus
 #endif

@@ -176,7 +176,12 @@ set (SOURCES
     ${CMAKE_CURRENT_BINARY_DIR}/embedded.c
     ${CMAKE_CURRENT_BINARY_DIR}/embedded.h
 )
+if (ANDROID)
+    set (MOBILE 1)
+    add_definitions (-DiPlatformAndroidMobile=1)
+endif ()
 if (IOS)
+    set (MOBILE 1)
     add_definitions (-DiPlatformAppleMobile=1)
     list (APPEND SOURCES
         src/ios.m
@@ -199,6 +204,14 @@ if (MSYS)
     list (APPEND SOURCES src/win32.c src/win32.h ${CMAKE_CURRENT_BINARY_DIR}/lagrange.rc)
 endif ()
 set_source_files_properties (${RESOURCES} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
+if (MSYS OR (APPLE AND NOT MOBILE) OR (UNIX AND NOT MOBILE))
+    add_definitions (-DiPlatformPcDesktop=1)
+endif ()
+if (MOBILE)
+    add_definitions (-DiPlatformMobile=1)
+else ()
+    add_definitions (-DiPlatformDesktop=1)
+endif ()
 
 # Target.
 add_executable (app ${SOURCES} ${RESOURCES})
