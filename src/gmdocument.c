@@ -719,6 +719,14 @@ static void setDerivedThemeColors_(enum iGmDocumentTheme theme) {
     set_Color(tmBannerSideTitle_ColorId,
               mix_Color(get_Color(tmBannerTitle_ColorId), get_Color(tmBackground_ColorId),
                         theme == colorfulDark_GmDocumentTheme ? 0.55f : 0));
+    if (theme == colorfulDark_GmDocumentTheme) {
+        /* Ensure paragraph text and link text aren't too similarly colored. */
+        if (delta_Color(get_Color(tmLinkText_ColorId), get_Color(tmParagraph_ColorId)) < 100) {
+            setHsl_Color(tmParagraph_ColorId,
+                         addSatLum_HSLColor(get_HSLColor(tmParagraph_ColorId), 0.3f, -0.025f));
+        }
+    }
+#if 0
     set_Color(tmOutlineHeadingAbove_ColorId, get_Color(white_ColorId));
     set_Color(tmOutlineHeadingBelow_ColorId, get_Color(black_ColorId));
     switch (theme) {
@@ -746,6 +754,7 @@ static void setDerivedThemeColors_(enum iGmDocumentTheme theme) {
         default:
             break;
     }
+#endif
 }
 
 static void updateIconBasedOnUrl_GmDocument_(iGmDocument *d) {
