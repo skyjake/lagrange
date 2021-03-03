@@ -33,6 +33,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "inputwidget.h"
 #include "labelwidget.h"
 #include "listwidget.h"
+#include "keys.h"
 #include "paint.h"
 #include "scrollwidget.h"
 #include "util.h"
@@ -605,14 +606,14 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, const iSidebarItem *it
         }
         case feeds_SidebarMode: {
             postCommandString_App(
-                feedEntryOpenCommand_String(&item->url, openTabMode_Sym(SDL_GetModState())));
+                feedEntryOpenCommand_String(&item->url, openTabMode_Sym(modState_Keys())));
             break;
         }
         case bookmarks_SidebarMode:
         case history_SidebarMode: {
             if (!isEmpty_String(&item->url)) {
                 postCommandf_App("open newtab:%d url:%s",
-                                 openTabMode_Sym(SDL_GetModState()),
+                                 openTabMode_Sym(modState_Keys()),
                                  cstr_String(&item->url));
             }
             break;

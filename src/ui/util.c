@@ -89,6 +89,9 @@ void toString_Sym(int key, int kmods, iString *str) {
         appendCStr_String(str, "Meta+");
     }
 #endif
+    if (kmods & KMOD_CAPS) {
+        appendCStr_String(str, "Caps+");
+    }
     if (key == 0x20) {
         appendCStr_String(str, "Space");
     }
@@ -120,7 +123,8 @@ void toString_Sym(int key, int kmods, iString *str) {
 
 iBool isMod_Sym(int key) {
     return key == SDLK_LALT || key == SDLK_RALT || key == SDLK_LCTRL || key == SDLK_RCTRL ||
-           key == SDLK_LGUI || key == SDLK_RGUI || key == SDLK_LSHIFT || key == SDLK_RSHIFT;
+           key == SDLK_LGUI || key == SDLK_RGUI || key == SDLK_LSHIFT || key == SDLK_RSHIFT ||
+           key == SDLK_CAPSLOCK;
 }
 
 int normalizedMod_Sym(int key) {
@@ -132,7 +136,7 @@ int normalizedMod_Sym(int key) {
 }
 
 int keyMods_Sym(int kmods) {
-    kmods &= (KMOD_SHIFT | KMOD_ALT | KMOD_CTRL | KMOD_GUI);
+    kmods &= (KMOD_SHIFT | KMOD_ALT | KMOD_CTRL | KMOD_GUI | KMOD_CAPS);
     /* Don't treat left/right modifiers differently. */
     if (kmods & KMOD_SHIFT) kmods |= KMOD_SHIFT;
     if (kmods & KMOD_ALT)   kmods |= KMOD_ALT;

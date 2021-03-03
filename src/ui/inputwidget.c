@@ -377,7 +377,7 @@ iLocalDef size_t cursorMax_InputWidget_(const iInputWidget *d) {
 }
 
 iLocalDef iBool isMarking_(void) {
-    return (SDL_GetModState() & KMOD_SHIFT) != 0;
+    return (modState_Keys() & KMOD_SHIFT) != 0;
 }
 
 void setCursor_InputWidget(iInputWidget *d, size_t pos) {

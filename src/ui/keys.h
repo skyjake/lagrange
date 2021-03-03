@@ -90,3 +90,7 @@ const iBinding *findCommand_Keys    (const char *command);
 
 iBool           processEvent_Keys   (const SDL_Event *);
 const iPtrArray *list_Keys          (void);
+
+int             mapMods_Keys        (int modFlags);
+int             modState_Keys       (void); /* current modifier key state */
+void            setCapsLockDown_Keys(iBool isDown);

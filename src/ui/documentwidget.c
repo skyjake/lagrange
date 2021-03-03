@@ -2270,7 +2270,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                         postCommandf_App("open newtab:%d url:%s",
                                          d->ordinalMode ==
                                                  numbersAndAlphabet_DocumentLinkOrdinalMode
-                                             ? openTabMode_Sym(SDL_GetModState())
+                                             ? openTabMode_Sym(modState_Keys())
                                              : (d->flags & newTabViaHomeKeys_DocumentWidgetFlag ? 1 : 0),
                                          cstr_String(absoluteUrl_String(
                                              d->mod.url, linkUrl_GmDocument(d->doc, run->linkId))));
@@ -2352,7 +2352,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
 #else
             const int amount = ev->wheel.y;
 #endif
-            if (keyMods_Sym(SDL_GetModState()) == KMOD_PRIMARY) {
+            if (keyMods_Sym(modState_Keys()) == KMOD_PRIMARY) {
                 postCommandf_App("zoom.delta arg:%d", amount > 0 ? 10 : -10);
                 return iTrue;
             }
@@ -2397,7 +2397,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         }
         if (ev->button.button == SDL_BUTTON_MIDDLE && d->hoverLink) {
             postCommandf_App("open newtab:%d url:%s",
-                             SDL_GetModState() & KMOD_SHIFT ? 1 : 2,
+                             modState_Keys() & KMOD_SHIFT ? 1 : 2,
                              cstr_String(linkUrl_GmDocument(d->doc, d->hoverLink->linkId)));
             return iTrue;
         }
@@ -2634,7 +2634,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                     }
                     else if (linkFlags & supportedProtocol_GmLinkFlag) {
                         postCommandf_App("open newtab:%d url:%s",
-                                         openTabMode_Sym(SDL_GetModState()),
+                                         openTabMode_Sym(modState_Keys()),
                                          cstr_String(absoluteUrl_String(
                                              d->mod.url, linkUrl_GmDocument(d->doc, linkId))));
                     }

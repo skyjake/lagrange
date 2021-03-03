@@ -27,6 +27,67 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/file.h>
 #include <the_Foundation/path.h>
 #include <the_Foundation/ptrset.h>
+#include <SDL_keyboard.h>
+
+enum iModMap {
+    none_ModMap,
+    leftShift_ModMap,
+    leftControl_ModMap,
+    leftAlt_ModMap,
+    leftGui_ModMap,
+    rightShift_ModMap,
+    rightControl_ModMap,
+    rightAlt_ModMap,
+    rightGui_ModMap,
+    capsLock_ModMap,
+    max_ModMap
+};
+
+static int modMap_[max_ModMap];
+static iBool capsLockDown_;
+
+static void init_ModMap_(void) {
+    for (int i = 0; i < max_ModMap; i++) {
+        modMap_[i] = i;
+    }
+}
+
+int mapMods_Keys(int modFlags) {
+    static const int bits[max_ModMap] = {
+        0,
+        KMOD_LSHIFT,
+        KMOD_LCTRL,
+        KMOD_LALT,
+        KMOD_LGUI,
+        KMOD_RSHIFT,
+        KMOD_RCTRL,
+        KMOD_RALT,
+        KMOD_RGUI,
+        KMOD_CAPS,
+    };
+    int mapped = 0;
+    /* Treat capslock as a modifier key. */
+    modFlags |= (capsLockDown_ ? KMOD_CAPS : 0);
+    for (int i = 0; i < max_ModMap; ++i) {
+        if (modFlags & bits[i]) {
+            mapped |= bits[modMap_[i]];
+        }
+    }
+    return mapped;
+}
+
+int modState_Keys(void) {
+    int state = SDL_GetModState() & ~(KMOD_NUM | KMOD_MODE | KMOD_CAPS);
+    /* Treat capslock as a modifier key. */
+    if (capsLockDown_) state |= KMOD_CAPS;
+    return mapMods_Keys(state);
+}
+
+void setCapsLockDown_Keys(iBool isDown) {
+    capsLockDown_ = isDown;
+}
+
+/*----------------------------------------------------------------------------------------------*/
 
 iDeclareType(Keys)
 
@@ -64,35 +125,35 @@ enum iBindFlag {
 /* TODO: This indirection could be used for localization, although all UI strings
    would need to be similarly handled. */
 static const struct { int id; iMenuItem bind; int flags; } defaultBindings_[] = {
-    { 1,  { "Jump to top",               SDLK_HOME, 0,                  "scroll.top"         }, 0 },
-    { 2,  { "Jump to bottom",            SDLK_END, 0,                   "scroll.bottom"      }, 0 },
-    { 10, { "Scroll up",                 SDLK_UP, 0,                    "scroll.step arg:-1" }, argRepeat_BindFlag },
-    { 11, { "Scroll down",               SDLK_DOWN, 0,                  "scroll.step arg:1"  }, argRepeat_BindFlag },
-    { 20, { "Scroll up half a page",     SDLK_PAGEUP, 0,                "scroll.page arg:-1" }, argRepeat_BindFlag },
-    { 21, { "Scroll down half a page",   SDLK_PAGEDOWN, 0,              "scroll.page arg:1"  }, argRepeat_BindFlag },
-    { 30, { "Go back",                   navigateBack_KeyShortcut,      "navigate.back"      }, 0 },
-    { 31, { "Go forward",                navigateForward_KeyShortcut,   "navigate.forward"   }, 0 },
-    { 32, { "Go to parent directory",    navigateParent_KeyShortcut,    "navigate.parent"    }, 0 },
-    { 33, { "Go to site root",           navigateRoot_KeyShortcut,      "navigate.root"      }, 0 },
-    { 35, { "Reload page",               reload_KeyShortcut,            "document.reload"    }, 0 },
-    { 41, { "Open link via modifier key", SDLK_LALT, 0,                 "document.linkkeys arg:0" }, argRelease_BindFlag },
-    { 42, { "Open link via home row keys", 'f', 0,                      "document.linkkeys arg:1" }, 0 },
-    { 45, { "Open link in new tab via home row keys", 'f', KMOD_SHIFT,  "document.linkkeys arg:1 newtab:1" }, 0 },
-    { 46, { "Hover on link via home row keys", 'h', 0,                  "document.linkkeys arg:1 hover:1" }, 0 },
-    { 47, { "Next set of home row key links", '.', 0,                   "document.linkkeys more:1" }, 0 },
-    { 50, { "Add bookmark",              'd', KMOD_PRIMARY,             "bookmark.add"       }, 0 },
-    { 60, { "Find text on page",         'f', KMOD_PRIMARY,             "focus.set id:find.input" }, 0 },
-    { 70, { "Zoom in",                   SDLK_EQUALS, KMOD_PRIMARY,     "zoom.delta arg:10"  }, 0 },
-    { 71, { "Zoom out",                  SDLK_MINUS, KMOD_PRIMARY,      "zoom.delta arg:-10" }, 0 },
-    { 72, { "Reset zoom",                SDLK_0, KMOD_PRIMARY,          "zoom.set arg:100"   }, 0 },
+    { 1,  { "Jump to top",               SDLK_HOME, 0,                  "scroll.top"                        }, 0 },
+    { 2,  { "Jump to bottom",            SDLK_END, 0,                   "scroll.bottom"                     }, 0 },
+    { 10, { "Scroll up",                 SDLK_UP, 0,                    "scroll.step arg:-1"                }, argRepeat_BindFlag },
+    { 11, { "Scroll down",               SDLK_DOWN, 0,                  "scroll.step arg:1"                 }, argRepeat_BindFlag },
+    { 20, { "Scroll up half a page",     SDLK_PAGEUP, 0,                "scroll.page arg:-1"                }, argRepeat_BindFlag },
+    { 21, { "Scroll down half a page",   SDLK_PAGEDOWN, 0,              "scroll.page arg:1"                 }, argRepeat_BindFlag },
+    { 30, { "Go back",                   navigateBack_KeyShortcut,      "navigate.back"                     }, 0 },
+    { 31, { "Go forward",                navigateForward_KeyShortcut,   "navigate.forward"                  }, 0 },
+    { 32, { "Go to parent directory",    navigateParent_KeyShortcut,    "navigate.parent"                   }, 0 },
+    { 33, { "Go to site root",           navigateRoot_KeyShortcut,      "navigate.root"                     }, 0 },
+    { 35, { "Reload page",               reload_KeyShortcut,            "document.reload"                   }, 0 },
+    { 41, { "Open link via modifier key", SDLK_LALT, 0,                 "document.linkkeys arg:0"           }, argRelease_BindFlag },
+    { 42, { "Open link via home row keys", 'f', 0,                      "document.linkkeys arg:1"           }, 0 },
+    { 45, { "Open link in new tab via home row keys", 'f', KMOD_SHIFT,  "document.linkkeys arg:1 newtab:1"  }, 0 },
+    { 46, { "Hover on link via home row keys", 'h', 0,                  "document.linkkeys arg:1 hover:1"   }, 0 },
+    { 47, { "Next set of home row key links", '.', 0,                   "document.linkkeys more:1"          }, 0 },
+    { 50, { "Add bookmark",              'd', KMOD_PRIMARY,             "bookmark.add"                      }, 0 },
+    { 60, { "Find text on page",         'f', KMOD_PRIMARY,             "focus.set id:find.input"           }, 0 },
+    { 70, { "Zoom in",                   SDLK_EQUALS, KMOD_PRIMARY,     "zoom.delta arg:10"                 }, 0 },
+    { 71, { "Zoom out",                  SDLK_MINUS, KMOD_PRIMARY,      "zoom.delta arg:-10"                }, 0 },
+    { 72, { "Reset zoom",                SDLK_0, KMOD_PRIMARY,          "zoom.set arg:100"                  }, 0 },
 #if !defined (iPlatformApple) /* Ctrl-Cmd-F on macOS */
-    { 73, { "Toggle fullscreen mode",    SDLK_F11, 0,                   "window.fullscreen"  }, 0 },
+    { 73, { "Toggle fullscreen mode",    SDLK_F11, 0,                   "window.fullscreen"                 }, 0 },
 #endif
-    { 76, { "New tab",                   newTab_KeyShortcut,            "tabs.new"           }, 0 },
-    { 77, { "Close tab",                 closeTab_KeyShortcut,          "tabs.close"         }, 0 },
-    { 80, { "Previous tab",              prevTab_KeyShortcut,           "tabs.prev"          }, 0 },
-    { 81, { "Next tab",                  nextTab_KeyShortcut,           "tabs.next"          }, 0 },
-    { 100,{ "Toggle show URL on hover",  '/', KMOD_PRIMARY,             "prefs.hoverlink.toggle" }, 0 },
+    { 76, { "New tab",                   newTab_KeyShortcut,            "tabs.new"                          }, 0 },
+    { 77, { "Close tab",                 closeTab_KeyShortcut,          "tabs.close"                        }, 0 },
+    { 80, { "Previous tab",              prevTab_KeyShortcut,           "tabs.prev"                         }, 0 },
+    { 81, { "Next tab",                  nextTab_KeyShortcut,           "tabs.next"                         }, 0 },
+    { 100,{ "Toggle show URL on hover",  '/', KMOD_PRIMARY,             "prefs.hoverlink.toggle"            }, 0 },
     /* The following cannot currently be changed (built-in duplicates). */
     { 1000, { NULL, SDLK_SPACE, KMOD_SHIFT, "scroll.page arg:-1" }, argRepeat_BindFlag },
     { 1001, { NULL, SDLK_SPACE, 0, "scroll.page arg:1" }, argRepeat_BindFlag },
@@ -193,6 +254,7 @@ static const char *filename_Keys_ = "bindings.txt";
 
 void init_Keys(void) {
     iKeys *d = &keys_;
+    init_ModMap_();
     init_Array(&d->bindings, sizeof(iBinding));
     initCmp_PtrSet(&d->lookup, cmpPtr_Binding_);
     bindDefaults_();
@@ -227,6 +289,7 @@ void load_Keys(const char *saveDir) {
                     if (*m == 'a') bind->mods |= KMOD_ALT;
                     if (*m == 'c') bind->mods |= KMOD_CTRL;
                     if (*m == 'g') bind->mods |= KMOD_GUI;
+                    if (*m == 'k') bind->mods |= KMOD_CAPS;
                 }
             }
         }
@@ -250,6 +313,7 @@ void save_Keys(const char *saveDir) {
                 if (bind->mods & KMOD_ALT) appendChar_String(line, 'a');
                 if (bind->mods & KMOD_CTRL) appendChar_String(line, 'c');
                 if (bind->mods & KMOD_GUI) appendChar_String(line, 'g');
+                if (bind->mods & KMOD_CAPS) appendChar_String(line, 'k');
             }
             appendChar_String(line, '\n');
             write_File(f, &line->chars);

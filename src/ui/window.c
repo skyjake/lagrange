@@ -1532,6 +1532,7 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
             return iTrue;
         case SDL_WINDOWEVENT_FOCUS_GAINED:
             d->focusGainedAt = SDL_GetTicks();
+            setCapsLockDown_Keys(iFalse);
             postCommand_App("window.focus.gained");
             return iFalse;
         case SDL_WINDOWEVENT_FOCUS_LOST:
@@ -1592,6 +1593,13 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
                    closing xterm with Ctrl+D will cause the keydown event to "spill" over to us.
                    As a workaround, ignore these events. */
                 return iTrue; /* won't go to bindings, either */
+            }
+            /* Apply keyboard modifier mapping. */
+            if (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP) {
+                if (event.key.keysym.sym == SDLK_CAPSLOCK) {
+                    setCapsLockDown_Keys(event.key.state == SDL_PRESSED);
+                }
+                event.key.keysym.mod = mapMods_Keys(event.key.keysym.mod & ~KMOD_CAPS);
             }
             if (event.type == SDL_MOUSEBUTTONDOWN && d->ignoreClick) {
                 d->ignoreClick = iFalse;
