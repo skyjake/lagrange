@@ -950,7 +950,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
             violet_Hue,
             pink_Hue
         };
-        static const float hues[] = { 5, 25, 40, 56, 80 + 15, 120, 160, 180, 208, 231, 270, 324 };
+        static const float hues[] = { 5, 25, 40, 56, 80 + 15, 120, 160, 180, 208, 231, 270, 324 + 10 };
         static const struct {
             int index[2];
         } altHues[iElemCount(hues)] = {
@@ -994,10 +994,11 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
             setHsl_Color(tmBannerTitle_ColorId, setLum_HSLColor(addSatLum_HSLColor(base, 0.1f, 0), 0.55f));
             setHsl_Color(tmBannerIcon_ColorId, setLum_HSLColor(addSatLum_HSLColor(base, 0.35f, 0), 0.65f));
 
-//            printf("primHue: %zu  alts: %d %d\n",
+//            printf("primHue: %zu  alts: %d %d  isDarkBgSat: %d\n",
 //                   primIndex,
 //                   altHues[primIndex].index[altIndex[0]],
-//                   altHues[primIndex].index[altIndex[1]]);
+//                   altHues[primIndex].index[altIndex[1]],
+//                   isDarkBgSat);
 
             const float titleLum = 0.2f * ((d->themeSeed >> 17) & 0x7) / 7.0f;
             setHsl_Color(tmHeading1_ColorId, setLum_HSLColor(altBase, titleLum + 0.80f));
@@ -1014,8 +1015,8 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
 
             if (delta_Color(get_Color(tmHeading3_ColorId), get_Color(tmParagraph_ColorId)) <= 80) {
                 /* Smallest headings may be too close to body text color. */
-                setHsl_Color(tmHeading2_ColorId, addSatLum_HSLColor(get_HSLColor(tmHeading2_ColorId), 0.5f, -0.12f));
-                setHsl_Color(tmHeading3_ColorId, addSatLum_HSLColor(get_HSLColor(tmHeading3_ColorId), 0.5f, -0.2f));
+                setHsl_Color(tmHeading2_ColorId, addSatLum_HSLColor(get_HSLColor(tmHeading2_ColorId), 0.4f, -0.12f));
+                setHsl_Color(tmHeading3_ColorId, addSatLum_HSLColor(get_HSLColor(tmHeading3_ColorId), 0.4f, -0.2f));
             }
 
             setHsl_Color(tmFirstParagraph_ColorId, addSatLum_HSLColor(base, 0.2f, 0.72f));
@@ -1088,7 +1089,10 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
                     if (isDarkBgSat) {
                         /* Saturate background, desaturate text. */
                         if (isBackground_ColorId(i)) {
-                            if (primIndex != green_Hue) {
+                            if (primIndex == pink_Hue) {
+                                color.sat = (4 * color.sat + 1) / 5;
+                            }
+                            else if (primIndex != green_Hue) {
                                 color.sat = (color.sat + 1) / 2;
                             }
                             else {
@@ -1104,6 +1108,12 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
                         /* Desaturate background, saturate text. */
                         if (isBackground_ColorId(i)) {
                             color.sat *= 0.333f;
+                            if (primIndex == pink_Hue) {
+                                color.sat *= 0.5f;
+                            }
+                            if (primIndex == greenishYellow_Hue || primIndex == green_Hue) {
+                                color.sat *= 0.333f;
+                            }
                         }
                         else if (isText_ColorId(i)) {
                             color.sat = (color.sat + 2) / 3;
