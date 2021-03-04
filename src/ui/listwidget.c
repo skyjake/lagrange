@@ -67,6 +67,7 @@ void init_ListWidget(iListWidget *d) {
     addChild_Widget(w, iClob(d->scroll = new_ScrollWidget()));
     setThumb_ScrollWidget(d->scroll, 0, 0);
     d->scrollY = 0;
+    d->itemHeight = 0;
     init_PtrArray(&d->items);
     d->hoverItem = iInvalidPos;
     init_Click(&d->click, d, SDL_BUTTON_LEFT);

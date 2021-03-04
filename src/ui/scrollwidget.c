@@ -75,7 +75,9 @@ static iRect thumbRect_ScrollWidget_(const iScrollWidget *d) {
 }
 
 static void checkVisible_ScrollWidget_(iScrollWidget *d) {
-    setFlags_Widget(as_Widget(d), hidden_WidgetFlag, height_Rect(thumbRect_ScrollWidget_(d)) == 0);
+    setFlags_Widget(as_Widget(d),
+                    hidden_WidgetFlag,
+                    d->thumbSize != 0 ? height_Rect(thumbRect_ScrollWidget_(d)) == 0 : iTrue);
 }
 
 void setRange_ScrollWidget(iScrollWidget *d, iRangei range) {
