@@ -61,6 +61,9 @@ void init_Prefs(iPrefs *d) {
     d->hoverLink = iFalse;
 #endif
     /* TODO: Add some platform-specific common locations? */
+    if (fileExistsCStr_FileInfo("/etc/ssl/cert.pem")) { /* macOS */
+        setCStr_String(&d->caFile, "/etc/ssl/cert.pem");
+    }
     if (fileExistsCStr_FileInfo("/etc/ssl/certs")) {
         setCStr_String(&d->caPath, "/etc/ssl/certs");
     }
