@@ -151,17 +151,18 @@ void init_CertImportWidget(iCertImportWidget *d) {
     setSize_Widget(as_Widget(d->crtLabel), init_I2(width_Widget(w) - 6.5 * gap_UI, gap_UI * 12));
     setSize_Widget(as_Widget(d->keyLabel), init_I2(width_Widget(w) - 6.5 * gap_UI, gap_UI * 12));
     /* Buttons. */
-    iWidget *div = new_Widget(); {
-        setFlags_Widget(div, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
-        addChild_Widget(div, iClob(newKeyMods_LabelWidget("Cancel", SDLK_ESCAPE, 0, "cancel")));
-        iLabelWidget *accept = addChild_Widget(
-            div,
-            iClob(newKeyMods_LabelWidget(
-                uiTextAction_ColorEscape "Import", SDLK_RETURN, KMOD_PRIMARY, "certimport.accept")));
-        setFont_LabelWidget(accept, uiLabelBold_FontId);
-    }
-    addChild_Widget(w, iClob(div));
+    addChild_Widget(w, iClob(makePadding_Widget(gap_UI)));
+    iWidget *buttons = makeDialogButtons_Widget(
+        (iMenuItem[]){
+            { "Cancel", 0, 0, NULL },
+            { uiTextAction_ColorEscape "Import", SDLK_RETURN, KMOD_PRIMARY, "certimport.accept" } },
+        2);
+    addChild_Widget(w, iClob(buttons));
     arrange_Widget(w);
+    if (deviceType_App() != desktop_AppDeviceType) {
+        /* Try auto-pasting. */
+        postCommand_App("certimport.paste");
+    }
 }
 
 void deinit_CertImportWidget(iCertImportWidget *d) {
@@ -186,20 +187,27 @@ void setPageContent_CertImportWidget(iCertImportWidget *d, const iBlock *content
     arrange_Widget(as_Widget(d));
 }
 
+static iBool tryImportFromClipboard_CertImportWidget_(iCertImportWidget *d) {
+    return tryImport_CertImportWidget_(d, collect_Block(newCStr_Block(SDL_GetClipboardText())));
+}
+
 static iBool processEvent_CertImportWidget_(iCertImportWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
     if (ev->type == SDL_KEYDOWN) {
         const int key  = ev->key.keysym.sym;
         const int mods = keyMods_Sym(ev->key.keysym.mod);
         if (key == SDLK_v && mods == KMOD_PRIMARY) {
-            if (!tryImport_CertImportWidget_(
-                    d, collect_Block(newCStr_Block(SDL_GetClipboardText())))) {
+            if (!tryImportFromClipboard_CertImportWidget_(d)) {
                 makeMessage_Widget(uiTextCaution_ColorEscape "PASTED FROM CLIPBOARD",
                                    "No certificate or private key was found.");
             }
             postRefresh_App();
             return iTrue;
         }
+    }
+    if (isCommand_UserEvent(ev, "certimport.paste")) {
+        tryImportFromClipboard_CertImportWidget_(d);
+        return iTrue;
     }
     if (isCommand_Widget(w, ev, "cancel")) {
         destroy_Widget(w);

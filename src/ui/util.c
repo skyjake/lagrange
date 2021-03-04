@@ -939,7 +939,7 @@ iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
     return iFalse;
 }
 
-static iWidget *makeDialogButtons_(const iMenuItem *actions, size_t numActions) {
+iWidget *makeDialogButtons_Widget(const iMenuItem *actions, size_t numActions) {
     iWidget *div = new_Widget();
     setFlags_Widget(div,
                     arrangeHorizontal_WidgetFlag | arrangeHeight_WidgetFlag |
@@ -1016,7 +1016,7 @@ iWidget *makeValueInput_Widget(iWidget *parent, const iString *initialValue, con
     addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
     addChild_Widget(
         dlg,
-        iClob(makeDialogButtons_(
+        iClob(makeDialogButtons_Widget(
             (iMenuItem[]){ { "Cancel", 0, 0, NULL }, { acceptLabel, 0, 0, "valueinput.accept" } },
             2)));
     centerSheet_Widget(dlg);
@@ -1062,7 +1062,7 @@ iWidget *makeQuestion_Widget(const char *title, const char *msg,
     addChildFlags_Widget(dlg, iClob(new_LabelWidget(title, NULL)), frameless_WidgetFlag);
     addChildFlags_Widget(dlg, iClob(new_LabelWidget(msg, NULL)), frameless_WidgetFlag);
     addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
-    addChild_Widget(dlg, iClob(makeDialogButtons_(items, numItems)));
+    addChild_Widget(dlg, iClob(makeDialogButtons_Widget(items, numItems)));
     addChild_Widget(get_Window()->root, iClob(dlg));
     arrange_Widget(dlg); /* BUG: This extra arrange shouldn't be needed but the dialog won't
                             be arranged correctly unless it's here. */
@@ -1347,7 +1347,7 @@ iWidget *makePreferences_Widget(void) {
         expandInputFieldWidth_(findChild_Widget(tabs, "prefs.proxy.http"));
     }
     addChild_Widget(dlg,
-                    iClob(makeDialogButtons_(
+                    iClob(makeDialogButtons_Widget(
                         (iMenuItem[]){ { "Dismiss", SDLK_ESCAPE, 0, "prefs.dismiss" } }, 1)));
     addChild_Widget(get_Window()->root, iClob(dlg));
     centerSheet_Widget(dlg);
@@ -1384,7 +1384,7 @@ iWidget *makeBookmarkEditor_Widget(void) {
     }
     addChild_Widget(
         dlg,
-        iClob(makeDialogButtons_((iMenuItem[]){ { "Cancel", 0, 0, NULL },
+        iClob(makeDialogButtons_Widget((iMenuItem[]){ { "Cancel", 0, 0, NULL },
                                                 { uiTextCaution_ColorEscape "Save Bookmark",
                                                   SDLK_RETURN,
                                                   KMOD_PRIMARY,
@@ -1518,7 +1518,7 @@ iWidget *makeFeedSettings_Widget(uint32_t bookmarkId) {
     addChildFlags_Widget(values, iClob(types), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
     iWidget *buttons =
         addChild_Widget(dlg,
-                        iClob(makeDialogButtons_(
+                        iClob(makeDialogButtons_Widget(
                             (iMenuItem[]){ { "Cancel", 0, 0, NULL },
                                            { bookmarkId ? uiTextCaution_ColorEscape "Save Settings"
                                                         : uiTextCaution_ColorEscape "Subscribe",
@@ -1600,7 +1600,7 @@ iWidget *makeIdentityCreation_Widget(void) {
     }
     addChild_Widget(
         dlg,
-        iClob(makeDialogButtons_((iMenuItem[]){ { "Cancel", 0, 0, NULL },
+        iClob(makeDialogButtons_Widget((iMenuItem[]){ { "Cancel", 0, 0, NULL },
                                                 { uiTextAction_ColorEscape "Create Identity",
                                                   SDLK_RETURN,
                                                   KMOD_PRIMARY,
