@@ -32,13 +32,19 @@ iDeclareType(Touch)
 iDeclareType(TouchState)
 iDeclareType(Momentum)
 
-#define numHistory_Touch_   3
+#define numHistory_Touch_   5
 #define lastIndex_Touch_    (numHistory_Touch_ - 1)
 
 enum iTouchEdge {
     none_TouchEdge,
     left_TouchEdge,
     right_TouchEdge,
+};
+
+enum iTouchAxis {
+    none_TouchAxis,
+    x_TouchAxis,
+    y_TouchAxis
 };
 
 struct Impl_Touch {
@@ -49,8 +55,10 @@ struct Impl_Touch {
     enum iTouchEdge edge;
     uint32_t startTime;
     iFloat3 startPos;
+    enum iTouchAxis axis;
     uint32_t posTime[numHistory_Touch_];
     iFloat3 pos[numHistory_Touch_];
+    size_t posCount;
     iFloat3 accum;
 };
 
@@ -59,6 +67,7 @@ iLocalDef void pushPos_Touch_(iTouch *d, const iFloat3 pos, uint32_t time) {
     memmove(d->pos + 1, d->pos, (numHistory_Touch_ - 1) * sizeof(d->pos[0]));
     d->posTime[0] = time;
     d->pos[0]     = pos;
+    d->posCount++;
 }
 
 struct Impl_Momentum {
@@ -96,11 +105,14 @@ static iTouch *find_TouchState_(iTouchState *d, SDL_FingerID id) {
 }
 
 static const uint32_t longPressSpanMs_ = 425;
-static const int      tapRadiusPt_     = 15;
+static const int      tapRadiusPt_     = 5;
+
+iLocalDef float distance_Touch_(const iTouch *d) {
+    return length_F3(sub_F3(d->pos[0], d->startPos));
+}
 
 static iBool isStationary_Touch_(const iTouch *d) {
-    return !d->hasMoved &&
-           length_F3(sub_F3(d->pos[0], d->startPos)) < tapRadiusPt_ * get_Window()->pixelRatio;
+    return !d->hasMoved && distance_Touch_(d) < tapRadiusPt_ * get_Window()->pixelRatio;
 }
 
 static void dispatchMotion_Touch_(iFloat3 pos, int buttonState) {
@@ -272,15 +284,16 @@ iBool processEvent_Touch(const SDL_Event *ev) {
             });
             edge = none_TouchEdge;
         }
-        pushBack_Array(d->touches, &(iTouch){
+        iTouch newTouch = {
             .id = fing->fingerId,
             .affinity = aff,
             .hasMoved = (flags_Widget(aff) & touchDrag_WidgetFlag) != 0,
             .edge = edge,
             .startTime = nowTime,
             .startPos = pos,
-            .pos = pos
-        });
+        };
+        pushPos_Touch_(&newTouch, pos, fing->timestamp);
+        pushBack_Array(d->touches, &newTouch);
         /* Some widgets rely on hover state. */
         dispatchMotion_Touch_(pos, 0);
         addTicker_App(update_TouchState_, d);
@@ -308,8 +321,30 @@ iBool processEvent_Touch(const SDL_Event *ev) {
             iInt2 pixels = initF3_I2(touch->accum);
             /* We're reporting scrolling as full points, so keep track of the precise distance. */
             subv_F3(&touch->accum, initI2_F3(pixels));
-            if (!touch->hasMoved && !isStationary_Touch_(touch)) {
-                touch->hasMoved = iTrue;
+            if (!touch->hasMoved) {
+                if (!isStationary_Touch_(touch)) {
+                    touch->hasMoved = iTrue;
+                    /* The first FINGERMOTION seems to be larger than the subsequence ones.
+                       Maybe SDL does its own stationary threshold? We'll counter by reducing
+                       the first one. */
+                    divvf_F3(&touch->accum, 3);
+                    divfv_I2(&pixels, 3);
+                }
+                else {
+                    touch->accum = zero_F3();
+                    pixels       = zero_I2();
+                }
+            }
+            else if (!touch->axis &&
+                     distance_Touch_(touch) > tapRadiusPt_ * 3 * window->pixelRatio) {
+                /* Lock swipe direction to an axis. */
+                if (iAbs(x_F3(touch->startPos) - x_F3(pos)) >
+                    iAbs(y_F3(touch->startPos) - y_F3(pos)) * 1.5f) {
+                    touch->axis = x_TouchAxis;
+                }
+                else {
+                    touch->axis = y_TouchAxis;
+                }
             }
             /* Edge swipe aborted? */
             if (touch->edge == left_TouchEdge && fing->dx < 0) {
@@ -320,6 +355,12 @@ iBool processEvent_Touch(const SDL_Event *ev) {
             }
             if (touch->edge) {
                 pixels.y = 0;
+            }
+            if (touch->axis == x_TouchAxis) {
+                pixels.y = 0;
+            }
+            if (touch->axis == y_TouchAxis) {
+                pixels.x = 0;
             }
 //            printf("%p (%s) py: %i wy: %f acc: %f\n",
 //                   touch->affinity,
@@ -369,15 +410,16 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                                                                           : SDL_BUTTON_X2);
             }
             else {
-                const uint32_t elapsed = fing->timestamp - touch->posTime[lastIndex_Touch_];
+                const size_t lastIndex = iMin(touch->posCount - 1, lastIndex_Touch_);
+                const uint32_t elapsed = fing->timestamp - touch->posTime[lastIndex];
                 const float minVelocity = 400.0f;
-                if (elapsed < 75) {
-                    velocity = divf_F3(sub_F3(pos, touch->pos[lastIndex_Touch_]),
+                if (elapsed < 85) {
+                    velocity = divf_F3(sub_F3(pos, touch->pos[lastIndex]),
                                        (float) elapsed / 1000.0f);
-                    if (fabsf(x_F3(velocity)) < minVelocity) {
+                    if (touch->axis == y_TouchAxis || fabsf(x_F3(velocity)) < minVelocity) {
                         setX_F3(&velocity, 0.0f);
                     }
-                    if (fabsf(y_F3(velocity)) < minVelocity) {
+                    if (touch->axis == x_TouchAxis || fabsf(y_F3(velocity)) < minVelocity) {
                         setY_F3(&velocity, 0.0f);
                     }
                 }
