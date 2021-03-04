@@ -7,11 +7,15 @@
 # Release notes
 
 ## 1.3
+* UI scaling factor is applied immediately when closing Preferences, restarting no longer necessary.
 * Only one instance of Lagrange is allowed to run per user directory.
 * A previously started instance can be controlled with command line options.
 * `--list-tab-urls` prints a list of the currently open URLs.
 * Added `--help`, `--version` options.
 * A server certificate can also be verified by Certificate Authorities. When "CA file" and/or "CA path" are set in Preferences, CA verification will mark a certificate as trusted.
+* Adjustments to the "Colorful Dark" theme.
+* Keyboard modifiers can be customized using the `modmap.txt` configuration file.
+* Caps Lock can be used as a modifier key.
 
 ## 1.2.1
 * Fixed crash when creating a bookmark.
