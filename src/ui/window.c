@@ -1092,10 +1092,10 @@ static void setupUserInterface_Window(iWindow *d) {
 //            setBackgroundColor_Widget(i.object, tmBannerSideTitle_ColorId);
         }
         const iMenuItem items[] = {
-            { "Bookmarks", 0, 0, "toolbar.showview arg:0" },
-            { "Feeds", 0, 0, "toolbar.showview arg:1" },
-            { "History", 0, 0, "toolbar.showview arg:2" },
-            { "Page Outline", 0, 0, "toolbar.showview arg:4" },
+            { "\U0001f588 Bookmarks", 0, 0, "toolbar.showview arg:0" },
+            { "\U00002605 Feeds", 0, 0, "toolbar.showview arg:1" },
+            { "\U0001f553 History", 0, 0, "toolbar.showview arg:2" },
+            { "\U0001f5b9 Page Outline", 0, 0, "toolbar.showview arg:4" },
         };
         iWidget *menu = makeMenu_Widget(findChild_Widget(toolBar, "toolbar.view"),
                                         items, iElemCount(items));

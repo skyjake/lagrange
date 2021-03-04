@@ -35,7 +35,9 @@ void    setTextColor_LabelWidget    (iLabelWidget *, int color);
 void    setText_LabelWidget         (iLabelWidget *, const iString *text); /* resizes widget */
 void    setTextCStr_LabelWidget     (iLabelWidget *, const char *text);
 void    setCommand_LabelWidget      (iLabelWidget *, const iString *command);
+void    setIcon_LabelWidget         (iLabelWidget *, iChar icon);
 
+iBool   checkIcon_LabelWidget       (iLabelWidget *);
 void    updateSize_LabelWidget      (iLabelWidget *);
 void    updateText_LabelWidget      (iLabelWidget *, const iString *text); /* not resized */
 void    updateTextCStr_LabelWidget  (iLabelWidget *, const char *text); /* not resized */
@@ -44,6 +46,7 @@ iInt2           defaultSize_LabelWidget (const iLabelWidget *);
 int             font_LabelWidget        (const iLabelWidget *);
 const iString * text_LabelWidget        (const iLabelWidget *);
 const iString * command_LabelWidget     (const iLabelWidget *);
+iChar           icon_LabelWidget        (const iLabelWidget *);
 
 iLabelWidget *newKeyMods_LabelWidget(const char *label, int key, int kmods, const char *command);
 iLabelWidget *newColor_LabelWidget  (const char *text, int color);

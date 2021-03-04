@@ -458,13 +458,17 @@ iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
     setFrameColor_Widget(menu, uiSeparator_ColorId);
     setBackgroundColor_Widget(menu, uiBackground_ColorId);
     if (deviceType_App() != desktop_AppDeviceType) {
-        setPadding1_Widget(menu, gap_UI);
+        setPadding1_Widget(menu, 2 * gap_UI);
     }
     setFlags_Widget(menu,
                     keepOnTop_WidgetFlag | collapse_WidgetFlag | hidden_WidgetFlag |
                         arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag |
                         resizeChildrenToWidestChild_WidgetFlag | overflowScrollable_WidgetFlag,
                     iTrue);
+    const iBool isPortraitPhone = (deviceType_App() == phone_AppDeviceType && isPortrait_App());
+    int64_t itemFlags = (deviceType_App() != desktop_AppDeviceType ? 0 : 0) |
+                        (isPortraitPhone ? extraPadding_WidgetFlag : 0);
+    iBool haveIcons = iFalse;
     for (size_t i = 0; i < n; ++i) {
         const iMenuItem *item = &items[i];
         if (equal_CStr(item->label, "---")) {
@@ -474,22 +478,27 @@ iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
             iLabelWidget *label = addChildFlags_Widget(
                 menu,
                 iClob(newKeyMods_LabelWidget(item->label, item->key, item->kmods, item->command)),
-                frameless_WidgetFlag | alignLeft_WidgetFlag | drawKey_WidgetFlag);
+                frameless_WidgetFlag | alignLeft_WidgetFlag | drawKey_WidgetFlag | itemFlags);
+            haveIcons |= checkIcon_LabelWidget(label);
             updateSize_LabelWidget(label); /* drawKey was set */
-            const iBool isCaution = startsWith_CStr(item->label, uiTextCaution_ColorEscape);
-            if (deviceType_App() == tablet_AppDeviceType) {
-                setFont_LabelWidget(label, isCaution ? uiContentBold_FontId : uiContent_FontId);
-            }
-            else if (deviceType_App() == desktop_AppDeviceType) {
-                setFont_LabelWidget(label, isCaution ? uiLabelBold_FontId : uiLabel_FontId);
-            }
         }
     }
     if (deviceType_App() == phone_AppDeviceType) {
         addChild_Widget(menu, iClob(makeMenuSeparator_()));
-        setFont_LabelWidget(addChildFlags_Widget(menu, iClob(new_LabelWidget("Cancel", "cancel")),
-                                                 frameless_WidgetFlag | alignLeft_WidgetFlag),
-                            defaultBig_FontId);
+        addChildFlags_Widget(menu,
+                             iClob(new_LabelWidget("Cancel", "cancel")),
+                             itemFlags | frameless_WidgetFlag | alignLeft_WidgetFlag);
+    }
+    if (haveIcons) {
+        /* All items must have icons if at least one of them has. */
+        iForEach(ObjectList, i, children_Widget(menu)) {
+            if (isInstance_Object(i.object, &Class_LabelWidget)) {
+                iLabelWidget *label = i.object;
+                if (icon_LabelWidget(label) == 0) {
+                    setIcon_LabelWidget(label, ' ');
+                }
+            }
+        }
     }
     addChild_Widget(parent, iClob(menu));
     setCommandHandler_Widget(menu, menuHandler_);
@@ -512,10 +521,21 @@ void openMenu_Widget(iWidget *d, iInt2 coord) {
         setFlags_Widget(d, arrangeWidth_WidgetFlag | resizeChildrenToWidestChild_WidgetFlag, iFalse);
         setFlags_Widget(d, resizeWidthOfChildren_WidgetFlag, iTrue);
         d->rect.size.x = rootSize_Window(get_Window()).x;
+    }
+    /* Update item fonts. */ {
         iForEach(ObjectList, i, children_Widget(d)) {
             if (isInstance_Object(i.object, &Class_LabelWidget)) {
                 iLabelWidget *label = i.object;
-                setFont_LabelWidget(label, defaultBig_FontId);
+                const iBool isCaution = startsWith_String(text_LabelWidget(label), uiTextCaution_ColorEscape);
+                if (deviceType_App() == desktop_AppDeviceType) {
+                    setFont_LabelWidget(label, isCaution ? uiLabelBold_FontId : uiLabel_FontId);
+                }
+                else if (isPortraitPhone) {
+                    setFont_LabelWidget(label, isCaution ? defaultBigBold_FontId : defaultBig_FontId);
+                }
+                else {
+                    setFont_LabelWidget(label, isCaution ? uiContentBold_FontId : uiContent_FontId);
+                }
             }
         }
     }

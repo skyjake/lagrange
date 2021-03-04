@@ -30,7 +30,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 iLocalDef iInt2 padding_(int64_t flags) {
 #if defined (iPlatformAppleMobile)
-    return init_I2(flags & tight_WidgetFlag ? 4 * gap_UI / 2 : (4 * gap_UI), 3 * gap_UI / 2);
+    return init_I2(flags & tight_WidgetFlag ? 2 * gap_UI : (4 * gap_UI),
+                   (flags & extraPadding_WidgetFlag ? 1.5f : 1) * 3 * gap_UI / 2);
 #else
     return init_I2(flags & tight_WidgetFlag ? 3 * gap_UI / 2 : (3 * gap_UI), gap_UI);
 #endif
@@ -42,6 +43,7 @@ struct Impl_LabelWidget {
     int     font;
     int     key;
     int     kmods;
+    iChar   icon;
     int     forceFg;
     iString command;
     iBool   alignVisual; /* align according to visible bounds, not typography */
@@ -201,6 +203,10 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
     }
 }
 
+iLocalDef int iconPadding_LabelWidget_(const iLabelWidget *d) {
+    return d->icon ? iRound(lineHeight_Text(d->font) * 1.5f) : 0;
+}
+
 static void draw_LabelWidget_(const iLabelWidget *d) {
     const iWidget *w = constAs_Widget(d);
     draw_Widget(w);
@@ -208,6 +214,7 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
     const int64_t flags    = flags_Widget(w);
     const iRect   bounds   = bounds_Widget(w);
     iRect         rect     = bounds;
+    const iBool   isHover  = isHover_Widget(w);
     if (isButton) {
         shrink_Rect(&rect, divi_I2(gap2_UI, 4));
         adjustEdges_Rect(&rect, gap_UI / 8, 0, -gap_UI / 8, 0);
@@ -228,17 +235,32 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
             };
             drawLines_Paint(&p, points + 2, 3, frame2);
             drawLines_Paint(
-                &p, points, !isHover_Widget(w) && flags & noTopFrame_WidgetFlag ? 2 : 3, frame);
+                &p, points, !isHover && flags & noTopFrame_WidgetFlag ? 2 : 3, frame);
         }
     }
     setClip_Paint(&p, rect);
+    const int iconPad = iconPadding_LabelWidget_(d);
+    if (d->icon && d->icon != 0x20) { /* no need to draw an empty icon */
+        iString str;
+        initUnicodeN_String(&str, &d->icon, 1);
+        drawCentered_Text(d->font,
+                          (iRect){ addX_I2(add_I2(bounds.pos, padding_(flags)), -2 * gap_UI),
+                                   init_I2(iconPad, lineHeight_Text(d->font)) },
+                          iTrue,
+                          flags & pressed_WidgetFlag ? fg
+                          : isHover                  ? uiIconHover_ColorId
+                                                     : uiIcon_ColorId,
+                          "%s",
+                          cstr_String(&str));
+        deinit_String(&str);
+    }
     if (flags & wrapText_WidgetFlag) {
-        const iRect inner = innerBounds_Widget(w);
+        const iRect inner = adjusted_Rect(innerBounds_Widget(w), init_I2(iconPad, 0), zero_I2());
         const int   wrap  = inner.size.x;
         drawWrapRange_Text(d->font, topLeft_Rect(inner), wrap, fg, range_String(&d->label));
     }
     else if (flags & alignLeft_WidgetFlag) {
-        draw_Text(d->font, add_I2(bounds.pos, padding_(flags)), fg, cstr_String(&d->label));
+        draw_Text(d->font, add_I2(bounds.pos, addX_I2(padding_(flags), iconPad)), fg, cstr_String(&d->label));
         if ((flags & drawKey_WidgetFlag) && d->key) {
             iString str;
             init_String(&str);
@@ -260,7 +282,11 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
             cstr_String(&d->label));
     }
     else {
-        drawCentered_Text(d->font, bounds, d->alignVisual, fg, cstr_String(&d->label));
+        drawCentered_Text(d->font,
+                          adjusted_Rect(bounds, init_I2(iconPad, 0), zero_I2()),
+                          d->alignVisual,
+                          fg,
+                          cstr_String(&d->label));
     }
     unsetClip_Paint(&p);
 }
@@ -288,6 +314,7 @@ iInt2 defaultSize_LabelWidget(const iLabelWidget *d) {
         size.x += 2 * gap_UI + measure_Text(uiShortcuts_FontId, cstr_String(&str)).x;
         deinit_String(&str);
     }
+    size.x += iconPadding_LabelWidget_(d);
     return size;
 }
 
@@ -312,6 +339,7 @@ void init_LabelWidget(iLabelWidget *d, const char *label, const char *cmd) {
     init_Widget(&d->widget);
     d->font = uiLabel_FontId;
     d->forceFg = none_ColorId;
+    d->icon = 0;
     initCStr_String(&d->label, label);
     if (cmd) {
         initCStr_String(&d->command, cmd);
@@ -372,6 +400,32 @@ void setTextCStr_LabelWidget(iLabelWidget *d, const char *text) {
 
 void setCommand_LabelWidget(iLabelWidget *d, const iString *command) {
     set_String(&d->command, command);
+}
+
+void setIcon_LabelWidget(iLabelWidget *d, iChar icon) {
+    if (d->icon != icon) {
+        d->icon = icon;
+        updateSize_LabelWidget(d);
+    }
+}
+
+iBool checkIcon_LabelWidget(iLabelWidget *d) {
+    if (!d->icon) {
+        iStringConstIterator iter;
+        init_StringConstIterator(&iter, &d->label);
+        const iChar icon = iter.value;
+        next_StringConstIterator(&iter);
+        if (iter.value == ' ' && icon >= 0x100) {
+            d->icon = icon;
+            remove_Block(&d->label.chars, 0, iter.next - constBegin_String(&d->label));
+            return iTrue;
+        }
+    }
+    return iFalse;
+}
+
+iChar icon_LabelWidget(const iLabelWidget *d) {
+    return d->icon;
 }
 
 const iString *text_LabelWidget(const iLabelWidget *d) {
