@@ -896,7 +896,7 @@ static void setupUserInterface_Window(iWindow *d) {
         addChildFlags_Widget(winBar,
                              iClob(appClose = newLargeIcon_LabelWidget("\u2a2f", "window.close")),
                              frameless_WidgetFlag);
-        setId_Widget(appClose, "winbar.close");
+        setId_Widget(as_Widget(appClose), "winbar.close");
         setFont_LabelWidget(appClose, uiContent_FontId);
         addChild_Widget(div, iClob(winBar));
         setBackgroundColor_Widget(winBar, uiBackground_ColorId);
