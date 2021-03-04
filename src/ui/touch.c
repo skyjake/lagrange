@@ -327,8 +327,8 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                     /* The first FINGERMOTION seems to be larger than the subsequence ones.
                        Maybe SDL does its own stationary threshold? We'll counter by reducing
                        the first one. */
-                    divvf_F3(&touch->accum, 3);
-                    divfv_I2(&pixels, 3);
+                    divvf_F3(&touch->accum, 6);
+                    divfv_I2(&pixels, 6);
                 }
                 else {
                     touch->accum = zero_F3();
