@@ -104,8 +104,8 @@ static iTouch *find_TouchState_(iTouchState *d, SDL_FingerID id) {
     return NULL;
 }
 
-static const uint32_t longPressSpanMs_ = 425;
-static const int      tapRadiusPt_     = 5;
+static const uint32_t longPressSpanMs_ = 500;
+static const int      tapRadiusPt_     = 10;
 
 iLocalDef float distance_Touch_(const iTouch *d) {
     return length_F3(sub_F3(d->pos[0], d->startPos));
