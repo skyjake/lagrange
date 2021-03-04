@@ -1175,11 +1175,13 @@ static void updatePrefsThemeButtons_(iWidget *d) {
 
 static void updateDropdownSelection_(iLabelWidget *dropButton, const char *selectedCommand) {
     iForEach(ObjectList, i, children_Widget(findChild_Widget(as_Widget(dropButton), "menu"))) {
-        iLabelWidget *item = i.object;
-        const iBool isSelected = endsWith_String(command_LabelWidget(item), selectedCommand);
-        setFlags_Widget(as_Widget(item), selected_WidgetFlag, isSelected);
-        if (isSelected) {
-            updateText_LabelWidget(dropButton, text_LabelWidget(item));
+        if (isInstance_Object(i.object, &Class_LabelWidget)) {
+            iLabelWidget *item = i.object;
+            const iBool isSelected = endsWith_String(command_LabelWidget(item), selectedCommand);
+            setFlags_Widget(as_Widget(item), selected_WidgetFlag, isSelected);
+            if (isSelected) {
+                updateText_LabelWidget(dropButton, text_LabelWidget(item));
+            }
         }
     }
 }
