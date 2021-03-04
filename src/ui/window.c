@@ -1448,6 +1448,21 @@ static iBool unsnap_Window_(iWindow *d, const iInt2 *newPos) {
     return iFalse;
 }
 
+static void notifyMetricsChange_Window_(const iWindow *d) {
+    /* Dynamic UI metrics change. Widgets need to update themselves. */
+    setPixelRatio_Metrics(d->pixelRatio * d->uiScale);
+    resetFonts_Text();
+    postCommand_App("metrics.changed");
+}
+
+static void checkPixelRatioChange_Window_(iWindow *d) {
+    const float ratio = pixelRatio_Window_(d);
+    if (iAbs(ratio - d->pixelRatio) > 0.001f) {
+        d->pixelRatio = ratio;
+        notifyMetricsChange_Window_(d);
+    }
+}
+
 static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
     switch (ev->event) {
         case SDL_WINDOWEVENT_EXPOSED:
@@ -1473,6 +1488,7 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
             if (d->isMinimized) {
                 return iFalse;
             }
+            checkPixelRatioChange_Window_(d);
             const iInt2 newPos = init_I2(ev->data1, ev->data2);
             if (isEqual_I2(newPos, init1_I2(-32000))) { /* magic! */
                 /* Maybe minimized? Seems like a Windows constant of some kind. */
@@ -1538,6 +1554,7 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
                 d->place.normalRect.size = init_I2(ev->data1, ev->data2);
                 //printf("normal rect set (resize)\n"); fflush(stdout);
             }
+            checkPixelRatioChange_Window_(d);
             updateRootSize_Window_(d, iTrue /* we were already redrawing during the resize */);
             postRefresh_App();
             return iTrue;
@@ -1752,10 +1769,7 @@ void setUiScale_Window(iWindow *d, float uiScale) {
     if (d) {
         if (iAbs(d->uiScale - uiScale) > 0.0001f) {
             d->uiScale = uiScale;
-            /* Dynamic UI metrics change. Widgets need to update themselves. */
-            setPixelRatio_Metrics(d->pixelRatio * d->uiScale);
-            resetFonts_Text();
-            postCommand_App("metrics.changed");
+            notifyMetricsChange_Window_(d);
         }
     }
     else {
