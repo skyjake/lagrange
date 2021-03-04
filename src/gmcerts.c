@@ -200,7 +200,7 @@ static const char *magicIdentity_GmCerts_ = "iden";
 
 iDefineTypeConstructionArgs(GmCerts, (const char *saveDir), saveDir)
 
-static void saveIdentities_GmCerts_(const iGmCerts *d) {
+void saveIdentities_GmCerts(const iGmCerts *d) {
     iFile *f = new_File(collect_String(concatCStr_Path(&d->saveDir, identsFilename_GmCerts_)));
     if (open_File(f, writeOnly_FileMode)) {
         writeData_File(f, magicIdMeta_GmCerts_, 4);
@@ -362,7 +362,7 @@ void init_GmCerts(iGmCerts *d, const char *saveDir) {
 
 void deinit_GmCerts(iGmCerts *d) {
     iGuardMutex(d->mtx, {
-        saveIdentities_GmCerts_(d);
+        saveIdentities_GmCerts(d);
         iForEach(PtrArray, i, &d->idents) {
             delete_GmIdentity(i.ptr);
         }

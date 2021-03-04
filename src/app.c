@@ -1921,6 +1921,10 @@ iBool handleCommand_App(const char *cmd) {
         postCommand_App("idents.changed");
         return iTrue;
     }
+    else if (equal_Command(cmd, "idents.changed")) {
+        saveIdentities_GmCerts(d->certs);
+        return iFalse;
+    }
     else if (equal_Command(cmd, "os.theme.changed")) {
         if (d->prefs.useSystemTheme) {
             const int dark     = argLabel_Command(cmd, "dark");

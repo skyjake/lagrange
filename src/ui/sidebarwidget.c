@@ -1008,6 +1008,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                 else {
                     signOut_GmCerts(certs_App(), tabUrl);
                 }
+                saveIdentities_GmCerts(certs_App());
                 updateItems_SidebarWidget_(d);
             }
             return iTrue;
@@ -1459,6 +1460,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
         iString icon;
         initUnicodeN_String(&icon, &d->icon, 1);
         iInt2 cPos = topLeft_Rect(itemRect);
+        const int indent = 1.4f * lineHeight_Text(font);
         addv_I2(&cPos,
                 init_I2(3 * gap_UI,
                         (itemHeight - lineHeight_Text(default_FontId) * 2 - lineHeight_Text(font)) /
@@ -1470,11 +1472,11 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
             font, cPos, d->listItem.isSelected ? iconColor : metaFg, range_String(&icon));
         deinit_String(&icon);
         drawRange_Text(d->listItem.isSelected ? uiContentBold_FontId : font,
-                       add_I2(cPos, init_I2(6 * gap_UI, 0)),
+                       add_I2(cPos, init_I2(indent, 0)),
                        fg,
                        range_String(&d->label));
         drawRange_Text(default_FontId,
-                       add_I2(cPos, init_I2(6 * gap_UI, lineHeight_Text(font))),
+                       add_I2(cPos, init_I2(indent, lineHeight_Text(font))),
                        metaFg,
                        range_String(&d->meta));
     }
