@@ -372,6 +372,10 @@ static iThreadResult worker_LookupWidget_(iThread *thread) {
 
 iDefineObjectConstruction(LookupWidget)
 
+static void updateMetrics_LookupWidget_(iLookupWidget *d) {
+    setItemHeight_ListWidget(d->list, lineHeight_Text(uiContent_FontId) * 1.25f);
+}
+
 void init_LookupWidget(iLookupWidget *d) {
     iWidget *w = as_Widget(d);
     init_Widget(w);
@@ -381,7 +385,6 @@ void init_LookupWidget(iLookupWidget *d) {
     setFlags_Widget(w, unhittable_WidgetFlag, iTrue);
 #endif
     d->list = addChild_Widget(w, iClob(new_ListWidget()));
-    setItemHeight_ListWidget(d->list, lineHeight_Text(uiContent_FontId) * 1.25f);
     d->cursor = iInvalidPos;
     d->work = new_Thread(worker_LookupWidget_);
     setUserData_Thread(d->work, d);
@@ -390,6 +393,7 @@ void init_LookupWidget(iLookupWidget *d) {
     init_String(&d->pendingTerm);
     d->pendingDocs = NULL;
     d->finishedJob = NULL;
+    updateMetrics_LookupWidget_(d);
     start_Thread(d->work);
 }
 
@@ -634,8 +638,11 @@ static iBool processEvent_LookupWidget_(iLookupWidget *d, const SDL_Event *ev) {
         presentResults_LookupWidget_(d);
         return iTrue;
     }
-    if (isResize_UserEvent(ev) || (equal_Command(cmd, "layout.changed") &&
-                                   equal_Rangecc(range_Command(cmd, "id"), "navbar"))) {
+    if (isMetricsChange_UserEvent(ev)) {
+        updateMetrics_LookupWidget_(d);
+    }
+    else if (isResize_UserEvent(ev) || (equal_Command(cmd, "layout.changed") &&
+                                        equal_Rangecc(range_Command(cmd, "id"), "navbar"))) {
         /* Position the lookup popup under the URL bar. */ {
             const iWindow *window = get_Window();
             const iInt2 rootSize = rootSize_Window(window);

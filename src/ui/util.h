@@ -39,6 +39,9 @@ const char *    command_UserEvent   (const SDL_Event *);
 iLocalDef iBool isResize_UserEvent(const SDL_Event *d) {
     return isCommand_UserEvent(d, "window.resized");
 }
+iLocalDef iBool isMetricsChange_UserEvent(const SDL_Event *d) {
+    return isCommand_UserEvent(d, "metrics.changed");
+}
 
 #if defined (iPlatformApple)
 #   define KMOD_PRIMARY     KMOD_GUI

@@ -414,8 +414,10 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
 }
 
 static void updateItemHeight_SidebarWidget_(iSidebarWidget *d) {
-    const float heights[max_SidebarMode] = { 1.333f, 2.333f, 1.333f, 3.5f, 1.2f };
-    setItemHeight_ListWidget(d->list, heights[d->mode] * lineHeight_Text(d->itemFonts[0]));
+    if (d->list) {
+        const float heights[max_SidebarMode] = { 1.333f, 2.333f, 1.333f, 3.5f, 1.2f };
+        setItemHeight_ListWidget(d->list, heights[d->mode] * lineHeight_Text(d->itemFonts[0]));
+    }
 }
 
 iBool setMode_SidebarWidget(iSidebarWidget *d, enum iSidebarMode mode) {
@@ -466,6 +468,22 @@ const char *icon_SidebarMode(enum iSidebarMode mode) {
     return tightModeLabels_[mode];
 }
 
+static void updateMetrics_SidebarWidget_(iSidebarWidget *d) {
+    if (d->resizer) {
+        d->resizer->rect.size.x = gap_UI;
+    }
+    d->maxButtonLabelWidth = 0;
+    for (int i = 0; i < max_SidebarMode; i++) {
+        if (d->modeButtons[i]) {
+            d->maxButtonLabelWidth = iMaxi(
+                d->maxButtonLabelWidth,
+                3 * gap_UI +
+                    measure_Text(font_LabelWidget(d->modeButtons[i]), normalModeLabels_[i]).x);
+        }
+    }
+    updateItemHeight_SidebarWidget_(d);
+}
+
 void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     iWidget *w = as_Widget(d);
     init_Widget(w);
@@ -493,6 +511,8 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     iWidget *vdiv = makeVDiv_Widget();
     addChildFlags_Widget(w, vdiv, resizeToParentWidth_WidgetFlag | resizeToParentHeight_WidgetFlag);
     iZap(d->modeButtons);
+    d->resizer = NULL;
+    d->list = NULL;
     /* On a phone, the right sidebar is used exclusively for Identities. */
     const iBool isPhone = deviceType_App() == phone_AppDeviceType;
     if (!isPhone || d->side == left_SideBarSide) {
@@ -550,10 +570,10 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
         setFlags_Widget(d->resizer, hidden_WidgetFlag | disabled_WidgetFlag, iTrue);
     }
     setId_Widget(d->resizer, side == left_SideBarSide ? "sidebar.grab" : "sidebar2.grab");
-    d->resizer->rect.size.x = gap_UI;
     setBackgroundColor_Widget(d->resizer, none_ColorId);
     d->menu = NULL;
     addAction_Widget(w, SDLK_r, KMOD_PRIMARY | KMOD_SHIFT, "feeds.refresh");
+    updateMetrics_SidebarWidget_(d);
 }
 
 void deinit_SidebarWidget(iSidebarWidget *d) {
@@ -561,15 +581,12 @@ void deinit_SidebarWidget(iSidebarWidget *d) {
 }
 
 void setButtonFont_SidebarWidget(iSidebarWidget *d, int font) {
-    d->maxButtonLabelWidth = 0;
     for (int i = 0; i < max_SidebarMode; i++) {
         if (d->modeButtons[i]) {
             setFont_LabelWidget(d->modeButtons[i], font);
-            d->maxButtonLabelWidth =
-                iMaxi(d->maxButtonLabelWidth,
-                      3 * gap_UI + measure_Text(font, normalModeLabels_[i]).x);
         }
     }
+    updateMetrics_SidebarWidget_(d);
 }
 
 static const iGmIdentity *constHoverIdentity_SidebarWidget_(const iSidebarWidget *d) {
@@ -757,6 +774,11 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
     iWidget *w = as_Widget(d);
     /* Handle commands. */
     if (isResize_UserEvent(ev)) {
+        checkModeButtonLayout_SidebarWidget_(d);
+    }
+    else if (isMetricsChange_UserEvent(ev)) {
+        updateMetrics_SidebarWidget_(d);
+        arrange_Widget(w);
         checkModeButtonLayout_SidebarWidget_(d);
     }
     else if (ev->type == SDL_USEREVENT && ev->user.code == command_UserEventCode) {

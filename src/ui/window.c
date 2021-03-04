@@ -511,7 +511,7 @@ static int navBarAvailableSpace_(iWidget *navBar) {
 }
 
 static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
-    if (equal_Command(cmd, "window.resized")) {
+    if (equal_Command(cmd, "window.resized") || equal_Command(cmd, "metrics.changed")) {
         const iBool isPhone = deviceType_App() == phone_AppDeviceType;
         const iBool isNarrow = !isPhone && width_Rect(bounds_Widget(navBar)) / gap_UI < 140;
         /* Adjust navbar padding. */ {
@@ -810,8 +810,43 @@ static int appIconSize_(void) {
     return lineHeight_Text(uiContent_FontId);
 }
 
+static void updateMetrics_Window_(iWindow *d) {
+    /* Custom frame. */
+    iWidget *winBar = findChild_Widget(d->root, "winbar");
+    if (winBar) {
+        iWidget *appIcon  = findChild_Widget(winBar, "winbar.icon");
+        iWidget *appTitle = findChild_Widget(winBar, "winbar.title");
+        iWidget *appMin   = findChild_Widget(winBar, "winbar.min");
+        iWidget *appMax   = findChild_Widget(winBar, "winbar.max");
+        iWidget *appClose = findChild_Widget(winBar, "winbar.close");
+        setPadding_Widget(winBar, 0, gap_UI / 3, 0, 0);
+        setSize_Widget(appMin, init_I2(gap_UI * 11.5f, height_Widget(appTitle)));
+        setSize_Widget(appMax, appMin->rect.size);
+        setSize_Widget(appClose, appMin->rect.size);
+        setSize_Widget(appIcon, init_I2(appIconSize_(), appMin->rect.size.y));
+    }
+    iWidget *navBar    = findChild_Widget(d->root, "navbar");
+    iWidget *lock      = findChild_Widget(navBar, "navbar.lock");
+    iWidget *url       = findChild_Widget(d->root, "url");
+    iWidget *fprog     = findChild_Widget(navBar, "feeds.progress");
+    iWidget *docProg   = findChild_Widget(navBar, "document.progress");
+    iWidget *indSearch = findChild_Widget(navBar, "input.indicator.search");
+    setPadding_Widget(as_Widget(url), 0, gap_UI, gap_UI, gap_UI);
+    navBar->rect.size.y = 0; /* recalculate height based on children (FIXME: shouldn't be needed) */
+    updateSize_LabelWidget((iLabelWidget *) lock);
+    setContentPadding_InputWidget((iInputWidget *) url, width_Widget(lock) * 0.75, -1);
+    fprog->rect.pos.y = gap_UI;
+    docProg->rect.pos.y = gap_UI;
+    indSearch->rect.pos.y = gap_UI;
+    updatePadding_Window_(d);
+    arrange_Widget(d->root);
+    postRefresh_App();
+}
+
 static void setupUserInterface_Window(iWindow *d) {
+#if defined (iPlatformMobile)
     const iBool isPhone = (deviceType_App() == phone_AppDeviceType);
+#endif
     /* Children of root cover the entire window. */
     setFlags_Widget(d->root, resizeChildren_WidgetFlag, iTrue);
     setCommandHandler_Widget(d->root, handleRootCommands_);
@@ -825,7 +860,6 @@ static void setupUserInterface_Window(iWindow *d) {
     if (prefs_App()->customFrame) {
         setPadding1_Widget(div, 1);
         iWidget *winBar = new_Widget();
-        setPadding_Widget(winBar, 0, gap_UI / 3, 0, 0);
         setId_Widget(winBar, "winbar");
         setFlags_Widget(winBar,
                         arrangeHeight_WidgetFlag | resizeChildren_WidgetFlag |
@@ -854,8 +888,6 @@ static void setupUserInterface_Window(iWindow *d) {
                          iClob(appMin = newLargeIcon_LabelWidget("\u2013", "window.minimize")),
                          frameless_WidgetFlag),
                      "winbar.min");
-        setSize_Widget(as_Widget(appMin),
-                       init_I2(gap_UI * 11.5f, height_Widget(appTitle)));
         addChildFlags_Widget(
             winBar,
             iClob(appMax = newLargeIcon_LabelWidget("\u25a1", "window.maximize toggle:1")),
@@ -864,10 +896,8 @@ static void setupUserInterface_Window(iWindow *d) {
         addChildFlags_Widget(winBar,
                              iClob(appClose = newLargeIcon_LabelWidget("\u2a2f", "window.close")),
                              frameless_WidgetFlag);
+        setId_Widget(appClose, "winbar.close");
         setFont_LabelWidget(appClose, uiContent_FontId);
-        setSize_Widget(as_Widget(appMax), as_Widget(appMin)->rect.size);
-        setSize_Widget(as_Widget(appClose), as_Widget(appMin)->rect.size);
-        setSize_Widget(appIcon, init_I2(appIconSize_(), as_Widget(appMin)->rect.size.y));
         addChild_Widget(div, iClob(winBar));
         setBackgroundColor_Widget(winBar, uiBackground_ColorId);
     }
@@ -895,23 +925,23 @@ static void setupUserInterface_Window(iWindow *d) {
         setId_Widget(addChildFlags_Widget(navBar, iClob(idMenu), collapse_WidgetFlag), "navbar.ident");
         /* URL input field. */ {
             iInputWidget *url = new_InputWidget(0);
+            setFlags_Widget(as_Widget(url), resizeHeightOfChildren_WidgetFlag, iTrue);
             setSelectAllOnFocus_InputWidget(url, iTrue);
             setId_Widget(as_Widget(url), "url");
             setUrlContent_InputWidget(url, iTrue);
             setNotifyEdits_InputWidget(url, iTrue);
             setTextCStr_InputWidget(url, "gemini://");
             addChildFlags_Widget(navBar, iClob(url), 0);
-            setPadding_Widget(as_Widget(url), 0, 0, gap_UI, 0);
             /* Page information/certificate warning. */ {
                 iLabelWidget *lock =
                     addChildFlags_Widget(as_Widget(url),
                                          iClob(newIcon_LabelWidget("\U0001f513", SDLK_i, KMOD_PRIMARY, "document.info")),
-                                         noBackground_WidgetFlag | frameless_WidgetFlag | moveToParentLeftEdge_WidgetFlag |
+                                         noBackground_WidgetFlag | frameless_WidgetFlag |  moveToParentLeftEdge_WidgetFlag |
+                                         unpadded_WidgetFlag |
                                              (deviceType_App() == desktop_AppDeviceType ? tight_WidgetFlag : 0));
                 setId_Widget(as_Widget(lock), "navbar.lock");
                 setFont_LabelWidget(lock, defaultSymbols_FontId);
                 updateTextCStr_LabelWidget(lock, "\U0001f512");
-                setContentPadding_InputWidget(url, width_Widget(lock) * 0.75, -1);
             }
             /* Feeds refresh indicator is inside the input field. */ {
                 iLabelWidget *fprog = new_LabelWidget(uiTextCaution_ColorEscape
@@ -919,7 +949,7 @@ static void setupUserInterface_Window(iWindow *d) {
                 setId_Widget(as_Widget(fprog), "feeds.progress");
                 setBackgroundColor_Widget(as_Widget(fprog), uiBackground_ColorId);
                 setAlignVisually_LabelWidget(fprog, iTrue);
-                shrink_Rect(&as_Widget(fprog)->rect, init_I2(0, gap_UI));
+//                shrink_Rect(&as_Widget(fprog)->rect, init_I2(0, gap_UI));
                 addChildFlags_Widget(as_Widget(url),
                                      iClob(fprog),
                                      moveToParentRightEdge_WidgetFlag | hidden_WidgetFlag);
@@ -930,7 +960,7 @@ static void setupUserInterface_Window(iWindow *d) {
                 setId_Widget(as_Widget(progress), "document.progress");
                 setBackgroundColor_Widget(as_Widget(progress), uiBackground_ColorId);
                 setAlignVisually_LabelWidget(progress, iTrue);
-                shrink_Rect(&as_Widget(progress)->rect, init_I2(0, gap_UI));
+//                shrink_Rect(&as_Widget(progress)->rect, init_I2(0, gap_UI));
                 addChildFlags_Widget(as_Widget(url),
                                      iClob(progress),
                                      moveToParentRightEdge_WidgetFlag);
@@ -942,7 +972,7 @@ static void setupUserInterface_Window(iWindow *d) {
                 setBackgroundColor_Widget(as_Widget(queryInd), uiBackground_ColorId);
                 setFrameColor_Widget(as_Widget(queryInd), uiTextAction_ColorId);
                 setAlignVisually_LabelWidget(queryInd, iTrue);
-                shrink_Rect(&as_Widget(queryInd)->rect, init_I2(0, gap_UI));
+//                shrink_Rect(&as_Widget(queryInd)->rect, init_I2(0, gap_UI));
                 addChildFlags_Widget(as_Widget(url),
                                      iClob(queryInd),
                                      moveToParentRightEdge_WidgetFlag | hidden_WidgetFlag);
@@ -1098,6 +1128,7 @@ static void setupUserInterface_Window(iWindow *d) {
         addAction_Widget(d->root, '4', rightSidebar_KeyModifier, "sidebar2.mode arg:3 toggle:1");
         addAction_Widget(d->root, '5', rightSidebar_KeyModifier, "sidebar2.mode arg:4 toggle:1");
     }
+    updateMetrics_Window_(d);
 }
 
 static void updateRootSize_Window_(iWindow *d, iBool notifyAlways) {
@@ -1636,6 +1667,9 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
                     wasUsed = dispatchEvent_Widget(widget, &paste);
                 }
             }
+            if (isMetricsChange_UserEvent(&event)) {
+                updateMetrics_Window_(d);
+            }
             if (oldHover != hover_Widget()) {
                 postRefresh_App();
             }
@@ -1716,14 +1750,13 @@ void setTitle_Window(iWindow *d, const iString *title) {
 void setUiScale_Window(iWindow *d, float uiScale) {
     uiScale = iClamp(uiScale, 0.5f, 4.0f);
     if (d) {
-        d->uiScale = uiScale;
-#if 0
-        deinit_Text();
-        setPixelRatio_Metrics(d->pixelRatio * d->uiScale);
-        init_Text(d->render);
-        postCommand_App("metrics.changed");
-        /* TODO: Dynamic UI metrics change. Widgets need to update themselves. */
-#endif
+        if (iAbs(d->uiScale - uiScale) > 0.0001f) {
+            d->uiScale = uiScale;
+            /* Dynamic UI metrics change. Widgets need to update themselves. */
+            setPixelRatio_Metrics(d->pixelRatio * d->uiScale);
+            resetFonts_Text();
+            postCommand_App("metrics.changed");
+        }
     }
     else {
         initialUiScale_ = uiScale;

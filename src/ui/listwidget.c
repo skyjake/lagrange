@@ -278,7 +278,10 @@ static void sizeChanged_ListWidget_(iListWidget *d) {
 
 static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
-    if (isCommand_SDLEvent(ev)) {
+    if (isMetricsChange_UserEvent(ev)) {
+        invalidate_ListWidget(d);        
+    }
+    else if (isCommand_SDLEvent(ev)) {
         const char *cmd = command_UserEvent(ev);
         if (equal_Command(cmd, "theme.changed")) {
             invalidate_ListWidget(d);

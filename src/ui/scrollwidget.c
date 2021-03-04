@@ -35,6 +35,10 @@ struct Impl_ScrollWidget {
     int startThumb;
 };
 
+static void updateMetrics_ScrollWidget_(iScrollWidget *d) {
+    as_Widget(d)->rect.size.x = gap_UI * 3;
+}
+
 void init_ScrollWidget(iScrollWidget *d) {
     iWidget *w = as_Widget(d);
     init_Widget(w);
@@ -43,7 +47,7 @@ void init_ScrollWidget(iScrollWidget *d) {
                     fixedWidth_WidgetFlag | resizeToParentHeight_WidgetFlag |
                         moveToParentRightEdge_WidgetFlag | touchDrag_WidgetFlag,
                     iTrue);
-    w->rect.size.x = gap_UI * 3;
+    updateMetrics_ScrollWidget_(d);
     init_Click(&d->click, d, SDL_BUTTON_LEFT);
 }
 
@@ -88,6 +92,9 @@ void setThumb_ScrollWidget(iScrollWidget *d, int thumb, int thumbSize) {
 
 static iBool processEvent_ScrollWidget_(iScrollWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
+    if (isMetricsChange_UserEvent(ev)) {
+        updateMetrics_ScrollWidget_(d);
+    }
     switch (processEvent_Click(&d->click, ev)) {
         case started_ClickResult:
             setFlags_Widget(w, pressed_WidgetFlag, iTrue);

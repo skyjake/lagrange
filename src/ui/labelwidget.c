@@ -78,7 +78,7 @@ static void updateKey_LabelWidget_(iLabelWidget *d) {
 
 static iBool processEvent_LabelWidget_(iLabelWidget *d, const SDL_Event *ev) {
     iWidget *w = &d->widget;
-    if (isCommand_UserEvent(ev, "metrics.changed")) {
+    if (isMetricsChange_UserEvent(ev)) {
         updateSize_LabelWidget(d);
     }
     else if (isCommand_UserEvent(ev, "bindings.changed")) {
@@ -277,8 +277,8 @@ static void sizeChanged_LabelWidget_(iLabelWidget *d) {
     }
 }
 
-void updateSize_LabelWidget(iLabelWidget *d) {
-    iWidget *w = as_Widget(d);
+iInt2 defaultSize_LabelWidget(const iLabelWidget *d) {
+    const iWidget *w = constAs_Widget(d);
     const int64_t flags = flags_Widget(w);
     iInt2 size = add_I2(measure_Text(d->font, cstr_String(&d->label)), muli_I2(padding_(flags), 2));
     if ((flags & drawKey_WidgetFlag) && d->key) {
@@ -288,6 +288,17 @@ void updateSize_LabelWidget(iLabelWidget *d) {
         size.x += 2 * gap_UI + measure_Text(uiShortcuts_FontId, cstr_String(&str)).x;
         deinit_String(&str);
     }
+    return size;
+}
+
+int font_LabelWidget(const iLabelWidget *d) {
+    return d->font;
+}
+
+void updateSize_LabelWidget(iLabelWidget *d) {
+    iWidget *w = as_Widget(d);
+    const int64_t flags = flags_Widget(w);
+    const iInt2 size = defaultSize_LabelWidget(d);
     /* Wrapped text implies that width must be defined by arrangement. */
     if (!(flags & (fixedWidth_WidgetFlag | wrapText_WidgetFlag))) {
         w->rect.size.x = size.x;

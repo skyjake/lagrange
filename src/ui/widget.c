@@ -397,17 +397,20 @@ void arrange_Widget(iWidget *d) {
         else {
             /* Evenly size all children. */
             iInt2 childSize = innerRect_Widget_(d).size;
+            iInt2 unpaddedChildSize = d->rect.size;
             if (d->flags & arrangeHorizontal_WidgetFlag) {
                 childSize.x /= childCount;
+                unpaddedChildSize.x /= childCount;
             }
             else if (d->flags & arrangeVertical_WidgetFlag) {
                 childSize.y /= childCount;
+                unpaddedChildSize.y /= childCount;
             }
             iForEach(ObjectList, i, d->children) {
                 iWidget *child = as_Widget(i.object);
                 if (!isCollapsed_Widget_(child) && ~child->flags & parentCannotResize_WidgetFlag) {
-                    if (dirs.x) setWidth_Widget_(child, childSize.x);
-                    if (dirs.y) setHeight_Widget_(child, childSize.y);
+                    if (dirs.x) setWidth_Widget_(child, child->flags & unpadded_WidgetFlag ? unpaddedChildSize.x : childSize.x);
+                    if (dirs.y) setHeight_Widget_(child, child->flags & unpadded_WidgetFlag ? unpaddedChildSize.y : childSize.y);
                 }
             }
         }
@@ -441,7 +444,7 @@ void arrange_Widget(iWidget *d) {
                 pos.y += child->rect.size.y;
             }
         }
-        else if (d->flags & resizeChildren_WidgetFlag) {
+        else if ((d->flags & resizeChildren_WidgetFlag) == resizeChildren_WidgetFlag) {
             child->rect.pos = pos;
         }
     }

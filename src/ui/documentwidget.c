@@ -2246,7 +2246,10 @@ static iChar linkOrdinalChar_DocumentWidget_(const iDocumentWidget *d, size_t or
 
 static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
-    if (ev->type == SDL_USEREVENT && ev->user.code == command_UserEventCode) {
+    if (isMetricsChange_UserEvent(ev)) {
+        updateSize_DocumentWidget(d);
+    }
+    else if (ev->type == SDL_USEREVENT && ev->user.code == command_UserEventCode) {
         if (!handleCommand_DocumentWidget_(d, command_UserEvent(ev))) {
             /* Base class commands. */
             return processEvent_Widget(w, ev);

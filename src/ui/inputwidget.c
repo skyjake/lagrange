@@ -107,6 +107,24 @@ static void showCursor_InputWidget_(iInputWidget *d) {
     d->cursorVis = 2;
 }
 
+static void invalidateBuffered_InputWidget_(iInputWidget *d) {
+    if (d->buffered) {
+        delete_TextBuf(d->buffered);
+        d->buffered = NULL;
+    }
+}
+
+static void updateMetrics_InputWidget_(iInputWidget *d) {
+    iWidget *w = as_Widget(d);
+    /* Caller must arrange the width, but the height is fixed. */
+    w->rect.size.y = lineHeight_Text(default_FontId) + 2 * gap_UI;
+#if defined (iPlatformAppleMobile)
+    w->rect.size.y += 2 * gap_UI;
+#endif
+    invalidateBuffered_InputWidget_(d);
+    arrange_Widget(w);
+}
+
 void init_InputWidget(iInputWidget *d, size_t maxLen) {
     iWidget *w = &d->widget;
     init_Widget(w);
@@ -115,24 +133,20 @@ void init_InputWidget(iInputWidget *d, size_t maxLen) {
     init_Array(&d->oldText, sizeof(iChar));
     init_String(&d->hint);
     init_Array(&d->undoStack, sizeof(iInputUndo));
-    d->font             = uiInput_FontId | alwaysVariableFlag_FontId;
-    d->leftPadding      = 0;
-    d->rightPadding     = 0;
-    d->cursor           = 0;
-    d->lastCursor       = 0;
-    d->inFlags          = eatEscape_InputWidgetFlag;
+    d->font         = uiInput_FontId | alwaysVariableFlag_FontId;
+    d->leftPadding  = 0;
+    d->rightPadding = 0;
+    d->cursor       = 0;
+    d->lastCursor   = 0;
+    d->inFlags      = eatEscape_InputWidgetFlag;
     iZap(d->mark);
     setMaxLen_InputWidget(d, maxLen);
-    /* Caller must arrange the width, but the height is fixed. */
-    w->rect.size.y = lineHeight_Text(default_FontId) + 2 * gap_UI;
-#if defined (iPlatformAppleMobile)
-    w->rect.size.y += 2 * gap_UI;
-#endif
     setFlags_Widget(w, fixedHeight_WidgetFlag, iTrue);
     init_Click(&d->click, d, SDL_BUTTON_LEFT);
     d->timer = 0;
     d->cursorVis = 0;
     d->buffered = NULL;
+    updateMetrics_InputWidget_(d);
 }
 
 void deinit_InputWidget(iInputWidget *d) {
@@ -224,13 +238,6 @@ static iString *visText_InputWidget_(const iInputWidget *d) {
         }
     }
     return text;
-}
-
-static void invalidateBuffered_InputWidget_(iInputWidget *d) {
-    if (d->buffered) {
-        delete_TextBuf(d->buffered);
-        d->buffered = NULL;
-    }
 }
 
 static void updateBuffered_InputWidget_(iInputWidget *d) {
@@ -599,6 +606,9 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
             updateBuffered_InputWidget_(d);
         }
         return iFalse;
+    }
+    else if (isMetricsChange_UserEvent(ev)) {
+        updateMetrics_InputWidget_(d);
     }
     else if (isFocused_Widget(d) && isCommand_UserEvent(ev, "copy")) {
         copy_InputWidget_(d, iFalse);

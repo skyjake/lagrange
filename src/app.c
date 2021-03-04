@@ -914,7 +914,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
 #if defined (iPlatformAppleDesktop)
                     handleCommand_MacOS(command_UserEvent(&ev));
 #endif
-                    if (isCommand_UserEvent(&ev, "metrics.changed")) {
+                    if (isMetricsChange_UserEvent(&ev)) {
                         arrange_Widget(d->window->root);
                     }
                     if (!wasUsed) {
