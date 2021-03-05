@@ -204,7 +204,8 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
 }
 
 iLocalDef int iconPadding_LabelWidget_(const iLabelWidget *d) {
-    return d->icon ? iRound(lineHeight_Text(d->font) * 1.5f) : 0;
+    const float amount = flags_Widget(constAs_Widget(d)) & extraPadding_WidgetFlag ? 1.5f : 1.15f;
+    return d->icon ? iRound(lineHeight_Text(d->font) * amount) : 0;
 }
 
 static void draw_LabelWidget_(const iLabelWidget *d) {
@@ -244,7 +245,8 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
         iString str;
         initUnicodeN_String(&str, &d->icon, 1);
         drawCentered_Text(d->font,
-                          (iRect){ addX_I2(add_I2(bounds.pos, padding_(flags)), -2 * gap_UI),
+                          (iRect){ addX_I2(add_I2(bounds.pos, padding_(flags)),
+                                           (flags & extraPadding_WidgetFlag ? -2 : -1) * gap_UI),
                                    init_I2(iconPad, lineHeight_Text(d->font)) },
                           iTrue,
                           startsWith_String(&d->label, uiTextCaution_ColorEscape)

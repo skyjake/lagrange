@@ -197,13 +197,13 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
             }
             d->menu = makeMenu_Widget(
                 as_Widget(d),
-                (iMenuItem[]){ { open_Icon " Open Entry in New Tab", 0, 0, "feed.entry.opentab" },
-                               { "Mark as Read", 0, 0, "feed.entry.toggleread" },
+                (iMenuItem[]){ { openTab_Icon " Open Entry in New Tab", 0, 0, "feed.entry.opentab" },
+                               { circle_Icon " Mark as Read", 0, 0, "feed.entry.toggleread" },
                                { pin_Icon " Add Bookmark...", 0, 0, "feed.entry.bookmark" },
                                { "---", 0, 0, NULL },
-                               { "Open Feed Page", 0, 0, "feed.entry.openfeed" },
+                               { page_Icon " Open Feed Page", 0, 0, "feed.entry.openfeed" },
                                { edit_Icon " Edit Feed...", 0, 0, "feed.entry.edit" },
-                               { star_Icon " " uiTextCaution_ColorEscape "Unsubscribe...", 0, 0, "feed.entry.unsubscribe" },
+                               { whiteStar_Icon " " uiTextCaution_ColorEscape "Unsubscribe...", 0, 0, "feed.entry.unsubscribe" },
                                { "---", 0, 0, NULL },
                                { check_Icon " Mark All as Read", SDLK_a, KMOD_SHIFT, "feeds.markallread" },
                                { reload_Icon " Refresh Feeds", SDLK_r, KMOD_PRIMARY | KMOD_SHIFT, "feeds.refresh" } },
@@ -256,8 +256,8 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
             }
             d->menu = makeMenu_Widget(
                 as_Widget(d),
-                (iMenuItem[]){ { open_Icon " Open in New Tab", 0, 0, "bookmark.open newtab:1" },
-                               { "Open in Background Tab", 0, 0, "bookmark.open newtab:2" },
+                (iMenuItem[]){ { openTab_Icon " Open in New Tab", 0, 0, "bookmark.open newtab:1" },
+                               { openTabBg_Icon " Open in Background Tab", 0, 0, "bookmark.open newtab:2" },
                                { "---", 0, 0, NULL },
                                { edit_Icon " Edit...", 0, 0, "bookmark.edit" },
                                { copy_Icon " Duplicate...", 0, 0, "bookmark.dup" },
@@ -319,7 +319,7 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                     { "Copy URL", 0, 0, "history.copy" },
                     { pin_Icon " Add Bookmark...", 0, 0, "history.addbookmark" },
                     { "---", 0, 0, NULL },
-                    { "Forget URL", 0, 0, "history.delete" },
+                    { close_Icon " Forget URL", 0, 0, "history.delete" },
                     { "---", 0, 0, NULL },
                     { delete_Icon " " uiTextCaution_ColorEscape "Clear History...", 0, 0, "history.clear confirm:1" },
                 }, 6);
@@ -454,7 +454,7 @@ static const char *normalModeLabels_[max_SidebarMode] = {
     star_Icon " Feeds",
     clock_Icon " History",
     person_Icon " Identities",
-    "\U0001f5b9 Outline",
+    page_Icon " Outline",
 };
 
 static const char *tightModeLabels_[max_SidebarMode] = {
@@ -462,7 +462,7 @@ static const char *tightModeLabels_[max_SidebarMode] = {
     star_Icon,
     clock_Icon,
     person_Icon,
-    "\U0001f5b9",
+    page_Icon,
 };
 
 const char *icon_SidebarMode(enum iSidebarMode mode) {
@@ -1187,8 +1187,11 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                 }
                 else if (d->mode == feeds_SidebarMode && d->contextItem) {
                     iLabelWidget *menuItem = findMenuItem_Widget(d->menu, "feed.entry.toggleread");
-                    const iBool isRead = d->contextItem->indent == 0;
-                    setTextCStr_LabelWidget(menuItem, isRead ? "Mark as Unread" : "Mark as Read");
+                    const iBool   isRead   = d->contextItem->indent == 0;
+                    setTextCStr_LabelWidget(menuItem,
+                                            isRead ? circle_Icon " Mark as Unread"
+                                                   : circleWhite_Icon " Mark as Read");
+                    checkIcon_LabelWidget(menuItem);
                 }
                 else if (d->mode == identities_SidebarMode) {
                     const iGmIdentity *ident  = constHoverIdentity_SidebarWidget_(d);

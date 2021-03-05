@@ -987,14 +987,14 @@ static void updateTrust_DocumentWidget_(iDocumentWidget *d, const iGmResponse *r
     setFlags_Widget(as_Widget(lock), disabled_WidgetFlag, iFalse);
     const iBool isDarkMode = isDark_ColorTheme(colorTheme_App());
     if (~d->certFlags & domainVerified_GmCertFlag) {
-        updateTextCStr_LabelWidget(lock, red_ColorEscape "\u26a0");
+        updateTextCStr_LabelWidget(lock, red_ColorEscape warning_Icon);
     }
     else if (d->certFlags & trusted_GmCertFlag) {
         updateTextCStr_LabelWidget(lock, green_ColorEscape closedLock_Icon);
     }
     else {
-        updateTextCStr_LabelWidget(lock, isDarkMode ? orange_ColorEscape "\u26a0"
-            : black_ColorEscape "\u26a0");
+        updateTextCStr_LabelWidget(lock, isDarkMode ? orange_ColorEscape warning_Icon
+            : black_ColorEscape warning_Icon);
     }
     setBanner_GmDocument(d->doc, bannerType_DocumentWidget_(d));
 }
@@ -2427,11 +2427,11 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                         pushBackN_Array(
                             &items,
                             (iMenuItem[]){
-                                { open_Icon " Open Link in New Tab",
+                                { openTab_Icon " Open Link in New Tab",
                                   0,
                                   0,
                                   format_CStr("!open newtab:1 url:%s", cstr_String(linkUrl)) },
-                                { "Open Link in Background Tab",
+                                { openTabBg_Icon " Open Link in Background Tab",
                                   0,
                                   0,
                                   format_CStr("!open newtab:2 url:%s", cstr_String(linkUrl)) } },
@@ -2440,7 +2440,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                     else if (!willUseProxy_App(scheme)) {
                         pushBack_Array(
                             &items,
-                            &(iMenuItem){ "Open Link in Default Browser",
+                            &(iMenuItem){ openExt_Icon " Open Link in Default Browser",
                                           0,
                                           0,
                                           format_CStr("!open default:1 url:%s", cstr_String(linkUrl)) });
@@ -2450,7 +2450,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                             &items,
                             (iMenuItem[]){
                                 { "---", 0, 0, NULL },
-                                { isGemini ? "Open without Proxy" : "Open Link in Default Browser",
+                                { isGemini ? "Open without Proxy" : openExt_Icon " Open Link in Default Browser",
                                   0,
                                   0,
                                   format_CStr("!open noproxy:1 url:%s", cstr_String(linkUrl)) } },
