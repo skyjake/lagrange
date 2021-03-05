@@ -57,16 +57,19 @@ void destroyPending_Widget(void) {
     iForEach(PtrSet, i, rootData_.pendingDestruction) {
         iWidget *widget = *i.value;
         if (widget->parent) {
-            iRelease(removeChild_Widget(widget->parent, widget));
+            removeChild_Widget(widget->parent, widget);
         }
-        else {
-            iRelease(widget);
-        }
+        iAssert(widget->parent == NULL);
+//        iAssert(widget->object.refCount == 1); /* ref could be held in garbage still */
+        iRelease(widget);
         remove_PtrSetIterator(&i);
     }
 }
 
 void releaseChildren_Widget(iWidget *d) {
+    iForEach(ObjectList, i, d->children) {
+        ((iWidget *) i.object)->parent = NULL; /* the actual reference being held */
+    }
     iReleasePtr(&d->children);
 }
 
@@ -87,8 +90,11 @@ void init_Widget(iWidget *d) {
 
 void deinit_Widget(iWidget *d) {
     releaseChildren_Widget(d);
+#if !defined (NDEBUG)
+    printf("widget %p (%s) deleted (on top:%d)\n", d, cstr_String(&d->id),
+           d->flags & keepOnTop_WidgetFlag ? 1 : 0);
+#endif
     deinit_String(&d->id);
-//    printf("widget %p deleted (on top:%d)\n", d, d->flags & keepOnTop_WidgetFlag ? 1 : 0);
     if (d->flags & keepOnTop_WidgetFlag) {
         removeAll_PtrArray(onTop_RootData_(), d);
     }
@@ -817,7 +823,7 @@ iAny *addChildFlags_Widget(iWidget *d, iAnyObject *child, int64_t childFlags) {
 
 iAny *removeChild_Widget(iWidget *d, iAnyObject *child) {
     iAssert(child);
-    ref_Object(child);
+    ref_Object(child); /* we take a reference, parent releases its */
     iBool found = iFalse;
     iForEach(ObjectList, i, d->children) {
         if (i.object == child) {
@@ -859,7 +865,12 @@ iAny *hitChild_Widget(const iWidget *d, iInt2 coord) {
     /* Check for on-top widgets first. */
     if (!d->parent) {
         iForEach(PtrArray, i, onTop_RootData_()) {
-            iAny *found = hitChild_Widget(constAs_Widget(i.ptr), coord);
+            iWidget *child = i.ptr;
+//            printf("ontop: %s (%s) hidden:%d hittable:%d\n", cstr_String(id_Widget(child)),
+//                   class_Widget(child)->name,
+//                   child->flags & hidden_WidgetFlag ? 1 : 0,
+//                   child->flags & unhittable_WidgetFlag ? 0 : 1);
+            iAny *found = hitChild_Widget(constAs_Widget(child), coord);
             if (found) return found;
         }
     }
@@ -870,10 +881,9 @@ iAny *hitChild_Widget(const iWidget *d, iInt2 coord) {
             if (found) return found;
         }
     }
-    if (class_Widget(d) == &Class_Widget) {
-        return NULL; /* Plain widgets are not hittable. */
-    }
-    if (~d->flags & unhittable_WidgetFlag && contains_Widget(d, coord)) {
+    if ((d->flags & overflowScrollable_WidgetFlag || class_Widget(d) != &Class_Widget) &&
+        ~d->flags & unhittable_WidgetFlag &&
+        contains_Widget(d, coord)) {
         return iConstCast(iWidget *, d);
     }
     return NULL;
@@ -1083,7 +1093,29 @@ void refresh_Widget(const iAnyObject *d) {
     postRefresh_App();
 }
 
+#include "labelwidget.h"
+static void printTree_Widget_(const iWidget *d, int indent) {
+    for (int i = 0; i < indent; ++i) {
+        fwrite("    ", 4, 1, stdout);
+    }
+    printf("[%p] %s:\"%s\" ", d, class_Widget(d)->name, cstr_String(&d->id));
+    if (isInstance_Object(d, &Class_LabelWidget)) {
+        printf("(%s|%s) ",
+               cstr_String(text_LabelWidget((const iLabelWidget *) d)),
+               cstr_String(command_LabelWidget((const iLabelWidget *) d)));
+    }
+    printf("size:%dx%d flags:%08llx\n", d->rect.size.x, d->rect.size.y, d->flags);
+    iConstForEach(ObjectList, i, d->children) {
+        printTree_Widget_(i.object, indent + 1);
+    }
+}
+
+void printTree_Widget(const iWidget *d) {
+    printTree_Widget_(d, 0);
+}
+
 iBeginDefineClass(Widget)
     .processEvent = processEvent_Widget,
     .draw         = draw_Widget,
 iEndDefineClass(Widget)
+
