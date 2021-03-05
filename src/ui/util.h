@@ -193,7 +193,7 @@ size_t          tabCount_Widget         (const iWidget *tabs);
 /*-----------------------------------------------------------------------------------------------*/
 
 iWidget *   makeSheet_Widget        (const char *id);
-void        centerSheet_Widget      (iWidget *sheet);
+void        finalizeSheet_Widget    (iWidget *sheet);
 iWidget *   makeDialogButtons_Widget(const iMenuItem *actions, size_t numActions);
 
 void        makeFilePath_Widget     (iWidget *parent, const iString *initialPath, const char *title,

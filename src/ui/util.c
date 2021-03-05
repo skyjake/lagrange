@@ -500,7 +500,8 @@ iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
             }
         }
     }
-    addChild_Widget(parent, iClob(menu));
+    addChild_Widget(parent, menu);
+    iRelease(menu); /* owned by parent now */
     setCommandHandler_Widget(menu, menuHandler_);
     iWidget *cancel = addAction_Widget(menu, SDLK_ESCAPE, 0, "cancel");
     setId_Widget(cancel, "menu.cancel");
@@ -756,6 +757,9 @@ iLabelWidget *tabButtonForPage_Widget_(iWidget *tabs, const iWidget *page) {
 }
 
 void showTabPage_Widget(iWidget *tabs, const iWidget *page) {
+    if (!page) {
+        return;
+    }
     /* Select the corresponding button. */ {
         iWidget *buttons = findChild_Widget(tabs, "tabs.buttons");
         iForEach(ObjectList, i, buttons->children) {
@@ -870,8 +874,107 @@ iWidget *makeSheet_Widget(const char *id) {
     return sheet;
 }
 
-void centerSheet_Widget(iWidget *sheet) {
-    arrange_Widget(sheet);
+static iBool isTwoColumnPage_(iWidget *d) {
+    if (class_Widget(d) == &Class_Widget && childCount_Widget(d) == 2) {
+        return class_Widget(child_Widget(d, 0)) == &Class_Widget &&
+               class_Widget(child_Widget(d, 1)) == &Class_Widget;
+    }
+    return iFalse;
+}
+
+void finalizeSheet_Widget(iWidget *sheet) {
+    if (deviceType_App() == phone_AppDeviceType) {
+        /* The sheet contents are completely rearranged on a phone. We'll set up a linear
+           fullscreen arrangement of the widgets. Sheets are already scrollable so they
+           can be taller than the display. */
+#if defined (iPlatformAppleMobile)
+        /* Safe area insets. */ {
+            /* TODO: Must be updated when orientation changes; use a widget flag? */
+            float l, t, r, b;
+            safeAreaInsets_iOS(&l, &t, &r, &b);
+            setPadding_Widget(sheet, l, t, r, b);
+        }
+#endif
+        setFlags_Widget(sheet,
+                        parentCannotResize_WidgetFlag | arrangeWidth_WidgetFlag |
+                            centerHorizontal_WidgetFlag,
+                        iFalse);
+        setFlags_Widget(sheet, frameless_WidgetFlag | resizeWidthOfChildren_WidgetFlag, iTrue);
+        iPtrArray *contents = collect_PtrArray(new_PtrArray()); /* two-column pages */
+        iWidget *tabs = findChild_Widget(sheet, "prefs.tabs");
+        if (tabs) {
+            /* Pull out the pages and make them sequential. */
+            iWidget *pages = findChild_Widget(tabs, "tabs.pages");
+            size_t pageCount = tabCount_Widget(tabs);
+            for (size_t i = 0; i < pageCount; i++) {
+                iWidget *page = removeTabPage_Widget(tabs, 0);
+                iWidget *pageContent = child_Widget(page, 1); /* surrounded by padding widgets */
+                pushBack_PtrArray(contents, ref_Object(pageContent));
+                iRelease(page);
+            }
+            destroy_Widget(tabs);
+        }
+        else {
+            iForEach(ObjectList, i, children_Widget(sheet)) {
+                iWidget *child = i.object;
+                if (isTwoColumnPage_(child)) {
+                    pushBack_PtrArray(contents, removeChild_Widget(sheet, child));
+                }
+            }
+        }
+        iForEach(PtrArray, j, contents) {
+            iWidget *pageContent = j.ptr;
+            iWidget *headings = child_Widget(pageContent, 0);
+            iWidget *values   = child_Widget(pageContent, 1);
+            while (!isEmpty_ObjectList(children_Widget(headings))) {
+                iWidget *heading = child_Widget(headings, 0);
+                iWidget *value   = child_Widget(values, 0);
+                removeChild_Widget(headings, heading);
+                removeChild_Widget(values, value);
+                iLabelWidget *valueLabel = NULL;
+                if (isInstance_Object(value, &Class_LabelWidget)) {
+                    valueLabel = (iLabelWidget *) value;
+                }
+                /* Toggles have the button on the right. */
+                if (valueLabel && cmp_String(command_LabelWidget(valueLabel), "toggle") == 0) {
+                    iWidget *div = new_Widget();
+                    addChildFlags_Widget(div, iClob(heading), 0);
+                    addChildFlags_Widget(div, iClob(new_Widget()), expand_WidgetFlag);
+                    addChild_Widget(div, iClob(value));
+                    addChildFlags_Widget(sheet,
+                                         iClob(div),
+                                         arrangeHeight_WidgetFlag |
+                                            resizeWidthOfChildren_WidgetFlag |
+                                            arrangeHorizontal_WidgetFlag);
+                }
+                else {
+                    if (valueLabel && isEmpty_String(text_LabelWidget(valueLabel))) {
+                        /* Subheading padding goes above. */
+                        addChild_Widget(sheet, iClob(value));
+                        addChild_Widget(sheet, iClob(heading));
+                    }
+                    else {
+                        addChild_Widget(sheet, iClob(heading));
+                        addChild_Widget(sheet, iClob(value));
+                        /* Align radio buttons to the right. */
+                        if (childCount_Widget(value)) {
+                            setFlags_Widget(value,
+                                            resizeToParentWidth_WidgetFlag |
+                                            resizeWidthOfChildren_WidgetFlag,
+                                            iTrue);
+                        }
+                    }
+                }
+            }
+            destroy_Widget(pageContent);
+        }
+        destroyPending_Widget();
+        arrange_Widget(sheet->parent);
+        printTree_Widget(sheet);
+    }
+    else {
+        arrange_Widget(sheet);
+    }
     postRefresh_App();
 }
 
@@ -899,7 +1002,7 @@ void makeFilePath_Widget(iWidget *      parent,
         addChild_Widget(div, iClob(newKeyMods_LabelWidget(acceptLabel, SDLK_RETURN, 0, "filepath.accept")));
     }
     addChild_Widget(dlg, iClob(div));
-    centerSheet_Widget(dlg);
+    finalizeSheet_Widget(dlg);
     setFocus_Widget(as_Widget(input));
 }
 
@@ -920,7 +1023,7 @@ static void updateValueInputWidth_(iWidget *dlg) {
     iWidget *   prompt   = findChild_Widget(dlg, "valueinput.prompt");
     dlg->rect.size.x     = iMaxi(iMaxi(rootSize.x / 2, title->rect.size.x), prompt->rect.size.x);
     as_Widget(findChild_Widget(dlg, "input"))->rect.size.x = dlg->rect.size.x;
-    centerSheet_Widget(dlg);
+    finalizeSheet_Widget(dlg);
 }
 
 iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
@@ -1039,7 +1142,7 @@ iWidget *makeValueInput_Widget(iWidget *parent, const iString *initialValue, con
         iClob(makeDialogButtons_Widget(
             (iMenuItem[]){ { "Cancel", 0, 0, NULL }, { acceptLabel, 0, 0, "valueinput.accept" } },
             2)));
-    centerSheet_Widget(dlg);
+    finalizeSheet_Widget(dlg);
     if (parent) {
         setFocus_Widget(as_Widget(input));
     }
@@ -1086,7 +1189,7 @@ iWidget *makeQuestion_Widget(const char *title, const char *msg,
     addChild_Widget(get_Window()->root, iClob(dlg));
     arrange_Widget(dlg); /* BUG: This extra arrange shouldn't be needed but the dialog won't
                             be arranged correctly unless it's here. */
-    centerSheet_Widget(dlg);
+    finalizeSheet_Widget(dlg);
     return dlg;
 }
 
@@ -1148,7 +1251,7 @@ static iWidget *appendTwoColumnPage_(iWidget *tabs, const char *title, int short
     *values = addChildFlags_Widget(
         columns, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
     addChildFlags_Widget(page, iClob(new_Widget()), expand_WidgetFlag);
-    appendFramelessTabPage_(tabs, page, title, shortcut, shortcut ? KMOD_PRIMARY : 0);
+    appendFramelessTabPage_(tabs, iClob(page), title, shortcut, shortcut ? KMOD_PRIMARY : 0);
     return page;
 }
 
@@ -1349,7 +1452,8 @@ iWidget *makePreferences_Widget(void) {
         addChild_Widget(headings, iClob(makeHeading_Widget("HTTP proxy:")));
         setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.proxy.http");
     }
-    /* Keybindings. */ {
+    /* Keybindings. */
+    if (deviceType_App() == desktop_AppDeviceType) {
         iBindingsWidget *bind = new_BindingsWidget();
         setFlags_Widget(as_Widget(bind), borderTop_WidgetFlag, iTrue);
         appendFramelessTabPage_(tabs, iClob(bind), "Keys", '6', KMOD_PRIMARY);
@@ -1370,7 +1474,7 @@ iWidget *makePreferences_Widget(void) {
                     iClob(makeDialogButtons_Widget(
                         (iMenuItem[]){ { "Dismiss", SDLK_ESCAPE, 0, "prefs.dismiss" } }, 1)));
     addChild_Widget(get_Window()->root, iClob(dlg));
-    centerSheet_Widget(dlg);
+    finalizeSheet_Widget(dlg);
     return dlg;
 }
 
@@ -1411,7 +1515,7 @@ iWidget *makeBookmarkEditor_Widget(void) {
                                                   "bmed.accept" } },
                                  2)));
     addChild_Widget(get_Window()->root, iClob(dlg));
-    centerSheet_Widget(dlg);
+    finalizeSheet_Widget(dlg);
     return dlg;
 }
 
@@ -1550,7 +1654,7 @@ iWidget *makeFeedSettings_Widget(uint32_t bookmarkId) {
     arrange_Widget(dlg);
     as_Widget(input)->rect.size.x = 100 * gap_UI - headings->rect.size.x;
     addChild_Widget(get_Window()->root, iClob(dlg));
-    centerSheet_Widget(dlg);
+    finalizeSheet_Widget(dlg);
     /* Initialize. */ {
         const iBookmark *bm  = bookmarkId ? get_Bookmarks(bookmarks_App(), bookmarkId) : NULL;
         setText_InputWidget(findChild_Widget(dlg, "feedcfg.title"),
@@ -1627,6 +1731,6 @@ iWidget *makeIdentityCreation_Widget(void) {
                                                   "ident.accept" } },
                                  2)));
     addChild_Widget(get_Window()->root, iClob(dlg));
-    centerSheet_Widget(dlg);
+    finalizeSheet_Widget(dlg);
     return dlg;
 }

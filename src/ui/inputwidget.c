@@ -193,7 +193,10 @@ void setMode_InputWidget(iInputWidget *d, enum iInputMode mode) {
 }
 
 const iString *text_InputWidget(const iInputWidget *d) {
-    return collect_String(newUnicodeN_String(constData_Array(&d->text), size_Array(&d->text)));
+    if (d) {
+        return collect_String(newUnicodeN_String(constData_Array(&d->text), size_Array(&d->text)));
+    }
+    return collectNew_String();
 }
 
 void setMaxLen_InputWidget(iInputWidget *d, size_t maxLen) {

@@ -1231,8 +1231,10 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
         postCommandf_App("proxy.http address:%s",
                          cstr_String(text_InputWidget(findChild_Widget(d, "prefs.proxy.http"))));
         const iWidget *tabs = findChild_Widget(d, "prefs.tabs");
-        postCommandf_App("prefs.dialogtab arg:%u",
-                         tabPageIndex_Widget(tabs, currentTabPage_Widget(tabs)));
+        if (tabs) {
+            postCommandf_App("prefs.dialogtab arg:%u",
+                             tabPageIndex_Widget(tabs, currentTabPage_Widget(tabs)));
+        }
         destroy_Widget(d);
         postCommand_App("prefs.changed");
         return iTrue;
@@ -1800,7 +1802,9 @@ iBool handleCommand_App(const char *cmd) {
         setText_InputWidget(findChild_Widget(dlg, "prefs.proxy.gopher"), &d->prefs.gopherProxy);
         setText_InputWidget(findChild_Widget(dlg, "prefs.proxy.http"), &d->prefs.httpProxy);
         iWidget *tabs = findChild_Widget(dlg, "prefs.tabs");
-        showTabPage_Widget(tabs, tabPage_Widget(tabs, d->prefs.dialogTab));
+        if (tabs) {
+            showTabPage_Widget(tabs, tabPage_Widget(tabs, d->prefs.dialogTab));
+        }
         setCommandHandler_Widget(dlg, handlePrefsCommands_);
     }
     else if (equal_Command(cmd, "navigate.home")) {
