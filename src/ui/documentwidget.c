@@ -3001,7 +3001,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                                   ? asciiBase_ColorEscape + fg
                                   : (asciiBase_ColorEscape +
                                      linkColor_GmDocument(doc, run->linkId, domain_GmLinkPart)),
-                              showImage ? " View Image \U0001f5bc"
+                              showImage ? " View Image \U0001f5bb"
                                         : showAudio ? " Play Audio \U0001f3b5" : "");
             }
             if (run->flags & endOfLine_GmRunFlag && flags & visited_GmLinkFlag) {

@@ -65,6 +65,6 @@ enum iFileVersion {
 #define openTabBg_Icon      "\u2b1a"
 #define openExt_Icon        "\u27a0"
 #define add_Icon            "\u2795"
-#define page_Icon           "\U0001d363" // "\U0001f5b9"
+#define page_Icon           "\U00010117" // "\U0001d363" // "\U0001f5b9"
 #define circle_Icon         "\u25cf"
 #define circleWhite_Icon    "\u25cb"
