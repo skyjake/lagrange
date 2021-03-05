@@ -680,18 +680,30 @@ void drawBackground_Widget(const iWidget *d) {
     if (d->flags & (hidden_WidgetFlag | noBackground_WidgetFlag)) {
         return;
     }
-    if (flags_Widget(d) & borderTop_WidgetFlag) {
+    if (d->flags & borderTop_WidgetFlag) {
         const iRect rect = bounds_Widget(d);
         iPaint p;
         init_Paint(&p);
         drawHLine_Paint(&p, topLeft_Rect(rect), width_Rect(rect), uiBackgroundFramelessHover_ColorId);
     }
+    /* Popup menus have a shadowed border. */
+    if (d->flags & keepOnTop_WidgetFlag && ~d->flags & mouseModal_WidgetFlag) {
+        iPaint p;
+        init_Paint(&p);
+        const iBool isLight = isLight_ColorTheme(colorTheme_App());
+        p.alpha = isLight ? 0x40 : 0x20;
+        SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_BLEND);
+        iRect shadowRect = expanded_Rect(bounds_Widget(d), mulf_I2(gap2_UI, 1));
+        fillRect_Paint(&p, shadowRect, isLight ? white_ColorId : black_ColorId);
+        SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_NONE);
+    }
     if (d->bgColor >= 0 || d->frameColor >= 0) {
         iRect rect = bounds_Widget(d);
         iPaint p;
         init_Paint(&p);
+        /* Dialogs fade out the entire background. */
         if (d->flags & mouseModal_WidgetFlag) {
-            p.alpha = 0x60;
+            p.alpha = 0x50;
             SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_BLEND);
             int fadeColor;
             switch (colorTheme_App()) {
