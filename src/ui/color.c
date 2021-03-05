@@ -87,6 +87,7 @@ void setThemePalette_Color(enum iColorTheme theme) {
             copy_(uiBackgroundFramelessHover_ColorId, accentLo);
             set_Color(uiBackgroundSidebar_ColorId,
                       mix_Color(get_Color(black_ColorId), get_Color(gray25_ColorId), 0.55f));
+            copy_(uiBackgroundMenu_ColorId, uiBackground_ColorId);
             copy_(uiText_ColorId, gray75_ColorId);
             copy_(uiTextPressed_ColorId, black_ColorId);
             copy_(uiTextStrong_ColorId, white_ColorId);
@@ -136,6 +137,7 @@ void setThemePalette_Color(enum iColorTheme theme) {
             copy_(uiBackgroundFramelessHover_ColorId, accentLo);
             set_Color(uiBackgroundSidebar_ColorId,
                       mix_Color(get_Color(black_ColorId), get_Color(gray25_ColorId), 0.75f));
+            copy_(uiBackgroundMenu_ColorId, uiBackground_ColorId);
             copy_(uiText_ColorId, gray75_ColorId);
             copy_(uiTextPressed_ColorId, black_ColorId);
             copy_(uiTextStrong_ColorId, white_ColorId);
@@ -185,6 +187,7 @@ void setThemePalette_Color(enum iColorTheme theme) {
             copy_(uiBackgroundFramelessHover_ColorId, accentHi);
             set_Color(uiBackgroundSidebar_ColorId,
                       mix_Color(get_Color(white_ColorId), get_Color(gray75_ColorId), 0.5f));
+            copy_(uiBackgroundMenu_ColorId, white_ColorId);
             copy_(uiText_ColorId, black_ColorId);
             copy_(uiTextStrong_ColorId, black_ColorId);
             copy_(uiTextDim_ColorId, gray25_ColorId);
@@ -234,6 +237,7 @@ void setThemePalette_Color(enum iColorTheme theme) {
             copy_(uiBackgroundFramelessHover_ColorId, accentHi);
             set_Color(uiBackgroundSidebar_ColorId,
                       mix_Color(get_Color(white_ColorId), get_Color(gray75_ColorId), 0.5f));
+            copy_(uiBackgroundMenu_ColorId, uiBackground_ColorId);
             set_Color(uiText_ColorId,
                       mix_Color(get_Color(black_ColorId), get_Color(gray25_ColorId), 0.5f));
             copy_(uiTextPressed_ColorId, black_ColorId);
@@ -290,6 +294,9 @@ void setThemePalette_Color(enum iColorTheme theme) {
                                     theme == pureBlack_ColorTheme ? -1
                                     : theme == dark_ColorTheme    ? -0.04
                                                                   : -0.075));
+    set_Color(uiTextShortcut_ColorId, mix_Color(get_Color(uiTextShortcut_ColorId),
+                                                get_Color(uiBackground_ColorId),
+                                                0.4f));
     palette_[uiMarked_ColorId].a = 128;
     palette_[uiMatching_ColorId].a = 128;
 }

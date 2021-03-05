@@ -224,8 +224,9 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
     init_Paint(&p);
     int bg, fg, frame, frame2;
     getColors_LabelWidget_(d, &bg, &fg, &frame, &frame2);
+    const iBool isCaution = startsWith_String(&d->label, uiTextCaution_ColorEscape);
     if (bg >= 0) {
-        fillRect_Paint(&p, rect, bg);
+        fillRect_Paint(&p, rect, isCaution && isHover ? uiMarked_ColorId : bg);
     }
     if (~flags & frameless_WidgetFlag) {
         iRect frameRect = adjusted_Rect(rect, zero_I2(), init1_I2(-1));
@@ -249,8 +250,7 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
                                            (flags & extraPadding_WidgetFlag ? -2 : -1) * gap_UI),
                                    init_I2(iconPad, lineHeight_Text(d->font)) },
                           iTrue,
-                          startsWith_String(&d->label, uiTextCaution_ColorEscape)
-                              ? uiTextCaution_ColorId
+                          isCaution ? uiTextCaution_ColorId
                           : flags & (disabled_WidgetFlag | pressed_WidgetFlag) ? fg
                           : isHover                                            ? uiIconHover_ColorId
                                                                                : uiIcon_ColorId,

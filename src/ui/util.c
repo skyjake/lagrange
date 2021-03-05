@@ -478,7 +478,7 @@ iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
             iLabelWidget *label = addChildFlags_Widget(
                 menu,
                 iClob(newKeyMods_LabelWidget(item->label, item->key, item->kmods, item->command)),
-                frameless_WidgetFlag | alignLeft_WidgetFlag | drawKey_WidgetFlag | itemFlags);
+                noBackground_WidgetFlag | frameless_WidgetFlag | alignLeft_WidgetFlag | drawKey_WidgetFlag | itemFlags);
             haveIcons |= checkIcon_LabelWidget(label);
             updateSize_LabelWidget(label); /* drawKey was set */
         }
@@ -1284,7 +1284,7 @@ static void addFontButtons_(iWidget *parent, const char *id) {
                        &(iMenuItem){ fontNames[i], 0, 0, format_CStr("!%s.set arg:%d", id, i) });
     }
     iLabelWidget *button = makeMenuButton_LabelWidget("Source Sans Pro", data_Array(items), size_Array(items));
-//    setFrameColor_Widget(findChild_Widget(as_Widget(button), "menu"), uiBackgroundSelected_ColorId);
+    setBackgroundColor_Widget(findChild_Widget(as_Widget(button), "menu"), uiBackgroundMenu_ColorId);
     setId_Widget(as_Widget(button), format_CStr("prefs.%s", id));
     addChildFlags_Widget(parent, iClob(button), alignLeft_WidgetFlag);
     delete_Array(items);
@@ -1371,6 +1371,7 @@ iWidget *makePreferences_Widget(void) {
                 makeMenuButton_LabelWidget(themes[1].label, themes, iElemCount(themes));
 //            setFrameColor_Widget(findChild_Widget(as_Widget(button), "menu"),
 //                                 uiBackgroundSelected_ColorId);
+            setBackgroundColor_Widget(findChild_Widget(as_Widget(button), "menu"), uiBackgroundMenu_ColorId);
             setId_Widget(addChildFlags_Widget(values, iClob(button), alignLeft_WidgetFlag),
                          format_CStr("prefs.doctheme.%s", mode));
         }
@@ -1390,13 +1391,9 @@ iWidget *makePreferences_Widget(void) {
         /* Fonts. */ {
             iWidget *fonts;
             addChild_Widget(headings, iClob(makeHeading_Widget("Heading font:")));
-//            fonts = new_Widget();
             addFontButtons_(values, "headingfont");
-//            addChildFlags_Widget(values, iClob(fonts), 0); //arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
             addChild_Widget(headings, iClob(makeHeading_Widget("Body font:")));
-//            fonts = new_Widget();
             addFontButtons_(values, "font");
-//            addChildFlags_Widget(values, iClob(fonts), 0); //arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
             addChild_Widget(headings, iClob(makeHeading_Widget("Monospace body:")));
             iWidget *mono = new_Widget();
             /* TODO: Needs labels! */

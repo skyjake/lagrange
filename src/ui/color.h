@@ -114,6 +114,7 @@ enum iColorId {
     uiSubheading_ColorId,
     uiTextAppTitle_ColorId,
     uiBackgroundSidebar_ColorId,
+    uiBackgroundMenu_ColorId,
 
     /* content theme colors */
     tmFirst_ColorId,

@@ -687,7 +687,9 @@ void drawBackground_Widget(const iWidget *d) {
         drawHLine_Paint(&p, topLeft_Rect(rect), width_Rect(rect), uiBackgroundFramelessHover_ColorId);
     }
     /* Popup menus have a shadowed border. */
-    if (d->flags & keepOnTop_WidgetFlag && ~d->flags & mouseModal_WidgetFlag) {
+    const iBool shadowBorder =
+        (d->flags & keepOnTop_WidgetFlag && ~d->flags & mouseModal_WidgetFlag) != 0;
+    if (shadowBorder) {
         iPaint p;
         init_Paint(&p);
         const iBool isLight = isLight_ColorTheme(colorTheme_App());
