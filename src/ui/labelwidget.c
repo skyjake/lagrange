@@ -247,9 +247,11 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
                           (iRect){ addX_I2(add_I2(bounds.pos, padding_(flags)), -2 * gap_UI),
                                    init_I2(iconPad, lineHeight_Text(d->font)) },
                           iTrue,
-                          flags & pressed_WidgetFlag ? fg
-                          : isHover                  ? uiIconHover_ColorId
-                                                     : uiIcon_ColorId,
+                          startsWith_String(&d->label, uiTextCaution_ColorEscape)
+                              ? uiTextCaution_ColorId
+                          : flags & (disabled_WidgetFlag | pressed_WidgetFlag) ? fg
+                          : isHover                                            ? uiIconHover_ColorId
+                                                                               : uiIcon_ColorId,
                           "%s",
                           cstr_String(&str));
         deinit_String(&str);
@@ -410,16 +412,17 @@ void setIcon_LabelWidget(iLabelWidget *d, iChar icon) {
 }
 
 iBool checkIcon_LabelWidget(iLabelWidget *d) {
-    if (!d->icon) {
-        iStringConstIterator iter;
-        init_StringConstIterator(&iter, &d->label);
-        const iChar icon = iter.value;
-        next_StringConstIterator(&iter);
-        if (iter.value == ' ' && icon >= 0x100) {
-            d->icon = icon;
-            remove_Block(&d->label.chars, 0, iter.next - constBegin_String(&d->label));
-            return iTrue;
-        }
+    iStringConstIterator iter;
+    init_StringConstIterator(&iter, &d->label);
+    const iChar icon = iter.value;
+    next_StringConstIterator(&iter);
+    if (iter.value == ' ' && icon >= 0x100) {
+        d->icon = icon;
+        remove_Block(&d->label.chars, 0, iter.next - constBegin_String(&d->label));
+        return iTrue;
+    }
+    else {
+        d->icon = 0;
     }
     return iFalse;
 }

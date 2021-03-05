@@ -23,6 +23,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "sidebarwidget.h"
 
 #include "app.h"
+#include "defs.h"
 #include "bookmarks.h"
 #include "command.h"
 #include "documentwidget.h"
@@ -196,16 +197,16 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
             }
             d->menu = makeMenu_Widget(
                 as_Widget(d),
-                (iMenuItem[]){ { "Open Entry in New Tab", 0, 0, "feed.entry.opentab" },
+                (iMenuItem[]){ { open_Icon " Open Entry in New Tab", 0, 0, "feed.entry.opentab" },
                                { "Mark as Read", 0, 0, "feed.entry.toggleread" },
-                               { "Add Bookmark...", 0, 0, "feed.entry.bookmark" },
+                               { pin_Icon " Add Bookmark...", 0, 0, "feed.entry.bookmark" },
                                { "---", 0, 0, NULL },
                                { "Open Feed Page", 0, 0, "feed.entry.openfeed" },
-                               { "Edit Feed...", 0, 0, "feed.entry.edit" },
-                               { uiTextCaution_ColorEscape "Unsubscribe...", 0, 0, "feed.entry.unsubscribe" },
+                               { edit_Icon " Edit Feed...", 0, 0, "feed.entry.edit" },
+                               { star_Icon " " uiTextCaution_ColorEscape "Unsubscribe...", 0, 0, "feed.entry.unsubscribe" },
                                { "---", 0, 0, NULL },
-                               { "Mark All as Read", SDLK_a, KMOD_SHIFT, "feeds.markallread" },
-                               { "Refresh Feeds", SDLK_r, KMOD_PRIMARY | KMOD_SHIFT, "feeds.refresh" } },
+                               { check_Icon " Mark All as Read", SDLK_a, KMOD_SHIFT, "feeds.markallread" },
+                               { reload_Icon " Refresh Feeds", SDLK_r, KMOD_PRIMARY | KMOD_SHIFT, "feeds.refresh" } },
                 10);
             break;
         }
@@ -255,20 +256,20 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
             }
             d->menu = makeMenu_Widget(
                 as_Widget(d),
-                (iMenuItem[]){ { "Open in New Tab", 0, 0, "bookmark.open newtab:1" },
+                (iMenuItem[]){ { open_Icon " Open in New Tab", 0, 0, "bookmark.open newtab:1" },
                                { "Open in Background Tab", 0, 0, "bookmark.open newtab:2" },
                                { "---", 0, 0, NULL },
-                               { "Edit...", 0, 0, "bookmark.edit" },
-                               { "Duplicate...", 0, 0, "bookmark.dup" },
+                               { edit_Icon " Edit...", 0, 0, "bookmark.edit" },
+                               { copy_Icon " Duplicate...", 0, 0, "bookmark.dup" },
                                { "Copy URL", 0, 0, "bookmark.copy" },
                                { "---", 0, 0, NULL },
                                { "?", 0, 0, "bookmark.tag tag:subscribed" },
                                { "?", 0, 0, "bookmark.tag tag:homepage" },
                                { "?", 0, 0, "bookmark.tag tag:remotesource" },
                                { "---", 0, 0, NULL },
-                               { uiTextCaution_ColorEscape "Delete Bookmark", 0, 0, "bookmark.delete" },
+                               { delete_Icon " " uiTextCaution_ColorEscape "Delete Bookmark", 0, 0, "bookmark.delete" },
                                { "---", 0, 0, NULL },
-                               { "Refresh Remote Sources", 0, 0, "bookmarks.reload.remote" } },
+                               { reload_Icon " Refresh Remote Sources", 0, 0, "bookmarks.reload.remote" } },
                14);
             break;
         }
@@ -316,11 +317,11 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 as_Widget(d),
                 (iMenuItem[]){
                     { "Copy URL", 0, 0, "history.copy" },
-                    { "Add Bookmark...", 0, 0, "history.addbookmark" },
+                    { pin_Icon " Add Bookmark...", 0, 0, "history.addbookmark" },
                     { "---", 0, 0, NULL },
                     { "Forget URL", 0, 0, "history.delete" },
                     { "---", 0, 0, NULL },
-                    { uiTextCaution_ColorEscape "Clear History...", 0, 0, "history.clear confirm:1" },
+                    { delete_Icon " " uiTextCaution_ColorEscape "Clear History...", 0, 0, "history.clear confirm:1" },
                 }, 6);
             break;
         }
@@ -361,17 +362,17 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 iRelease(item);
             }
             const iMenuItem menuItems[] = {
-                { "Use on This Page", 0, 0, "ident.use arg:1" },
-                { "Stop Using on This Page", 0, 0, "ident.use arg:0" },
-                { "Stop Using Everywhere", 0, 0, "ident.use arg:0 clear:1" },
+                { person_Icon " Use on This Page", 0, 0, "ident.use arg:1" },
+                { close_Icon " Stop Using on This Page", 0, 0, "ident.use arg:0" },
+                { close_Icon " Stop Using Everywhere", 0, 0, "ident.use arg:0 clear:1" },
                 { "Show Usage", 0, 0, "ident.showuse" },
                 { "---", 0, 0, NULL },
-                { "Edit Notes...", 0, 0, "ident.edit" },
+                { edit_Icon " Edit Notes...", 0, 0, "ident.edit" },
                 { "Copy Fingerprint", 0, 0, "ident.fingerprint" },
 //                { "Pick Icon...", 0, 0, "ident.pickicon" },
                 { "---", 0, 0, NULL },
                 //{ "Reveal Files", 0, 0, "ident.reveal" },
-                { uiTextCaution_ColorEscape "Delete Identity...", 0, 0, "ident.delete confirm:1" },
+                { delete_Icon " " uiTextCaution_ColorEscape "Delete Identity...", 0, 0, "ident.delete confirm:1" },
             };
             d->menu = makeMenu_Widget(as_Widget(d), menuItems, iElemCount(menuItems));
             break;
@@ -449,18 +450,18 @@ int width_SidebarWidget(const iSidebarWidget *d) {
 }
 
 static const char *normalModeLabels_[max_SidebarMode] = {
-    "\U0001f588 Bookmarks",
-    "\U00002605 Feeds",
-    "\U0001f553 History",
-    "\U0001f464 Identities",
+    pin_Icon " Bookmarks",
+    star_Icon " Feeds",
+    clock_Icon " History",
+    person_Icon " Identities",
     "\U0001f5b9 Outline",
 };
 
 static const char *tightModeLabels_[max_SidebarMode] = {
-    "\U0001f588",
-    "\U00002605",
-    "\U0001f553",
-    "\U0001f464",
+    pin_Icon,
+    star_Icon,
+    clock_Icon,
+    person_Icon,
     "\U0001f5b9",
 };
 
@@ -1162,22 +1163,25 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                         if (menuItem) {
                             setTextCStr_LabelWidget(menuItem,
                                                     hasTag_Bookmark(bm, "homepage")
-                                                        ? "Remove Homepage"
-                                                        : "Use as Homepage");
+                                                        ? home_Icon " Remove Homepage"
+                                                        : home_Icon " Use as Homepage");
+                            checkIcon_LabelWidget(menuItem);
                         }
                         menuItem = findMenuItem_Widget(d->menu, "bookmark.tag tag:subscribed");
                         if (menuItem) {
                             setTextCStr_LabelWidget(menuItem,
                                                     hasTag_Bookmark(bm, "subscribed")
-                                                        ? "Unsubscribe from Feed"
-                                                        : "Subscribe to Feed");
+                                                        ? star_Icon " Unsubscribe from Feed"
+                                                        : star_Icon " Subscribe to Feed");
+                            checkIcon_LabelWidget(menuItem);
                         }
                         menuItem = findMenuItem_Widget(d->menu, "bookmark.tag tag:remotesource");
                         if (menuItem) {
                             setTextCStr_LabelWidget(menuItem,
                                                     hasTag_Bookmark(bm, "remotesource")
-                                                        ? "Remove Bookmark Source"
-                                                        : "Use as Bookmark Source");
+                                                        ? downArrowBar_Icon " Remove Bookmark Source"
+                                                        : downArrowBar_Icon " Use as Bookmark Source");
+                            checkIcon_LabelWidget(menuItem);
                         }
                     }
                 }

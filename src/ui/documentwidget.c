@@ -981,7 +981,7 @@ static void updateTrust_DocumentWidget_(iDocumentWidget *d, const iGmResponse *r
     iLabelWidget *lock = findWidget_App("navbar.lock");
     if (~d->certFlags & available_GmCertFlag) {
         setFlags_Widget(as_Widget(lock), disabled_WidgetFlag, iTrue);
-        updateTextCStr_LabelWidget(lock, gray50_ColorEscape openLock_CStr);
+        updateTextCStr_LabelWidget(lock, gray50_ColorEscape openLock_Icon);
         return;
     }
     setFlags_Widget(as_Widget(lock), disabled_WidgetFlag, iFalse);
@@ -990,7 +990,7 @@ static void updateTrust_DocumentWidget_(iDocumentWidget *d, const iGmResponse *r
         updateTextCStr_LabelWidget(lock, red_ColorEscape "\u26a0");
     }
     else if (d->certFlags & trusted_GmCertFlag) {
-        updateTextCStr_LabelWidget(lock, green_ColorEscape closedLock_CStr);
+        updateTextCStr_LabelWidget(lock, green_ColorEscape closedLock_Icon);
     }
     else {
         updateTextCStr_LabelWidget(lock, isDarkMode ? orange_ColorEscape "\u26a0"
@@ -2427,7 +2427,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                         pushBackN_Array(
                             &items,
                             (iMenuItem[]){
-                                { "Open Link in New Tab",
+                                { open_Icon " Open Link in New Tab",
                                   0,
                                   0,
                                   format_CStr("!open newtab:1 url:%s", cstr_String(linkUrl)) },
@@ -2461,7 +2461,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                     pushBackN_Array(&items,
                                     (iMenuItem[]){ { "---", 0, 0, NULL },
                                                    { "Copy Link", 0, 0, "document.copylink" },
-                                                   { "Bookmark Link...",
+                                                   { pin_Icon " Bookmark Link...",
                                                      0,
                                                      0,
                                                      format_CStr("!bookmark.add title:%s url:%s",
@@ -2472,7 +2472,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                     if (isNative && d->contextLink->mediaType != download_GmRunMediaType) {
                         pushBackN_Array(&items, (iMenuItem[]){
                             { "---", 0, 0, NULL },
-                            { "Download Linked File", 0, 0, "document.downloadlink" },
+                            { download_Icon " Download Linked File", 0, 0, "document.downloadlink" },
                         }, 2);
                     }
                     iMediaRequest *mediaReq;
@@ -2480,7 +2480,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                         d->contextLink->mediaType != download_GmRunMediaType) {
                         if (isFinished_GmRequest(mediaReq->req)) {
                             pushBack_Array(&items,
-                                           &(iMenuItem){ "Save to Downloads",
+                                           &(iMenuItem){ download_Icon " Save to Downloads",
                                                          0,
                                                          0,
                                                          format_CStr("document.media.save link:%u",
@@ -2500,16 +2500,16 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                         (iMenuItem[]){
                             { "Go Back", navigateBack_KeyShortcut, "navigate.back" },
                             { "Go Forward", navigateForward_KeyShortcut, "navigate.forward" },
-                            { "Go to Parent", navigateParent_KeyShortcut, "navigate.parent" },
-                            { "Go to Root", navigateRoot_KeyShortcut, "navigate.root" },
+                            { upArrow_Icon " Go to Parent", navigateParent_KeyShortcut, "navigate.parent" },
+                            { upArrowBar_Icon " Go to Root", navigateRoot_KeyShortcut, "navigate.root" },
                             { "---", 0, 0, NULL },
-                            { "Reload Page", reload_KeyShortcut, "navigate.reload" },
-                            { "Set Auto-Reload...", 0, 0, "document.autoreload.menu" },
+                            { reload_Icon " Reload Page", reload_KeyShortcut, "navigate.reload" },
+                            { timer_Icon " Set Auto-Reload...", 0, 0, "document.autoreload.menu" },
                             { "---", 0, 0, NULL },
-                            { "Bookmark Page...", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
-                            { "Subscribe to Page...", subscribeToPage_KeyModifier, "feeds.subscribe" },
+                            { pin_Icon " Bookmark Page...", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
+                            { star_Icon " Subscribe to Page...", subscribeToPage_KeyModifier, "feeds.subscribe" },
                             { "---", 0, 0, NULL },
-                            { "Import Links as Bookmarks...", 0, 0, "bookmark.links confirm:1" },
+                            { book_Icon " Import Links as Bookmarks...", 0, 0, "bookmark.links confirm:1" },
                             { "---", 0, 0, NULL },
                             { "Copy Page URL", 0, 0, "document.copylink" } },
                         13);
@@ -2518,7 +2518,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                             &items,
                             (iMenuItem[]){
                                 { "Copy Page Source", 'c', KMOD_PRIMARY, "copy" },
-                                { "Save to Downloads", SDLK_s, KMOD_PRIMARY, "document.save" } },
+                                { download_Icon " Save to Downloads", SDLK_s, KMOD_PRIMARY, "document.save" } },
                             2);
                     }
                 }
@@ -2943,7 +2943,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
             }
             if (findMediaRequest_DocumentWidget_(d->widget, run->linkId)) {
                 appendFormat_String(
-                    &text, "  %s\u2a2f", isHover ? escape_Color(tmLinkText_ColorId) : "");
+                    &text, "  %s" close_Icon, isHover ? escape_Color(tmLinkText_ColorId) : "");
             }
             const iInt2 size = measureRange_Text(metaFont, range_String(&text));
             fillRect_Paint(

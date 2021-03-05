@@ -22,6 +22,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "window.h"
 
+#include "defs.h"
 #include "labelwidget.h"
 #include "inputwidget.h"
 #include "documentwidget.h"
@@ -162,7 +163,7 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
 #if !defined (iPlatformAppleMobile)
 /* TODO: Submenus wouldn't hurt here. */
 static const iMenuItem navMenuItems_[] = {
-    { "New Tab", 't', KMOD_PRIMARY, "tabs.new" },
+    { add_Icon " New Tab", 't', KMOD_PRIMARY, "tabs.new" },
     { "Open Location...", SDLK_l, KMOD_PRIMARY, "navigate.focus" },
     { "---", 0, 0, NULL },
     { "Save to Downloads", SDLK_s, KMOD_PRIMARY, "document.save" },
@@ -314,14 +315,14 @@ static const iMenuItem identityButtonMenuItems_[] = {
     { "---", 0, 0, NULL },
     { "Show Identities", '4', KMOD_PRIMARY, "sidebar.mode arg:3 show:1" },
 #   else
-    { "New Identity...", 0, 0, "ident.new" },
+    { add_Icon " New Identity...", 0, 0, "ident.new" },
     { "---", 0, 0, NULL },
-    { "Show Identities", 0, 0, "sidebar.mode arg:3 show:1" },
+    { person_Icon " Show Identities", 0, 0, "sidebar.mode arg:3 show:1" },
 #endif
 };
 #endif
 
-static const char *reloadCStr_ = "\U0001f503";
+static const char *reloadCStr_ = reload_Icon;
 
 /* TODO: A preference for these, maybe? */
 static const char *stopSeqCStr_[] = {
@@ -894,7 +895,7 @@ static void setupUserInterface_Window(iWindow *d) {
             frameless_WidgetFlag);
         setId_Widget(as_Widget(appMax), "winbar.max");
         addChildFlags_Widget(winBar,
-                             iClob(appClose = newLargeIcon_LabelWidget("\u2a2f", "window.close")),
+                             iClob(appClose = newLargeIcon_LabelWidget(close_Icon, "window.close")),
                              frameless_WidgetFlag);
         setId_Widget(as_Widget(appClose), "winbar.close");
         setFont_LabelWidget(appClose, uiContent_FontId);
@@ -916,8 +917,8 @@ static void setupUserInterface_Window(iWindow *d) {
         addChild_Widget(div, iClob(navBar));
         setBackgroundColor_Widget(navBar, uiBackground_ColorId);
         setCommandHandler_Widget(navBar, handleNavBarCommands_);
-        setId_Widget(addChildFlags_Widget(navBar, iClob(newIcon_LabelWidget("\U0001f870", 0, 0, "navigate.back")), collapse_WidgetFlag), "navbar.back");
-        setId_Widget(addChildFlags_Widget(navBar, iClob(newIcon_LabelWidget("\U0001f872", 0, 0, "navigate.forward")), collapse_WidgetFlag), "navbar.forward");
+        setId_Widget(addChildFlags_Widget(navBar, iClob(newIcon_LabelWidget(backArrow_Icon, 0, 0, "navigate.back")), collapse_WidgetFlag), "navbar.back");
+        setId_Widget(addChildFlags_Widget(navBar, iClob(newIcon_LabelWidget(forwardArrow_Icon, 0, 0, "navigate.forward")), collapse_WidgetFlag), "navbar.forward");
         addChildFlags_Widget(navBar, iClob(new_Widget()), expand_WidgetFlag);
         iLabelWidget *idMenu = makeMenuButton_LabelWidget(
             "\U0001f464", identityButtonMenuItems_, iElemCount(identityButtonMenuItems_));
@@ -984,7 +985,7 @@ static void setupUserInterface_Window(iWindow *d) {
         addChildFlags_Widget(navBar, iClob(new_Widget()), expand_WidgetFlag);
         setId_Widget(addChildFlags_Widget(navBar,
                         iClob(newIcon_LabelWidget(
-                            "\U0001f3e0", SDLK_h, KMOD_PRIMARY | KMOD_SHIFT, "navigate.home")),
+                            home_Icon, SDLK_h, KMOD_PRIMARY | KMOD_SHIFT, "navigate.home")),
                         collapse_WidgetFlag),
                      "navbar.home");
 #if !defined (iHaveNativeMenus)
@@ -1023,7 +1024,7 @@ static void setupUserInterface_Window(iWindow *d) {
             setBackgroundColor_Widget(buttons, uiBackground_ColorId);
         }
         setId_Widget(
-            addChild_Widget(buttons, iClob(newIcon_LabelWidget("\u2795", 0, 0, "tabs.new"))),
+            addChild_Widget(buttons, iClob(newIcon_LabelWidget(add_Icon, 0, 0, "tabs.new"))),
             "newtab");
     }
     /* Side bars. */ {
@@ -1064,7 +1065,7 @@ static void setupUserInterface_Window(iWindow *d) {
                      "find.input");
         addChild_Widget(searchBar, iClob(newIcon_LabelWidget("  \u2b9f  ", 'g', KMOD_PRIMARY, "find.next")));
         addChild_Widget(searchBar, iClob(newIcon_LabelWidget("  \u2b9d  ", 'g', KMOD_PRIMARY | KMOD_SHIFT, "find.prev")));
-        addChild_Widget(searchBar, iClob(newIcon_LabelWidget("\u2a2f", SDLK_ESCAPE, 0, "find.close")));
+        addChild_Widget(searchBar, iClob(newIcon_LabelWidget(close_Icon, SDLK_ESCAPE, 0, "find.close")));
     }
 #if defined (iPlatformAppleMobile)
     /* Bottom toolbar. */
@@ -1094,7 +1095,7 @@ static void setupUserInterface_Window(iWindow *d) {
         const iMenuItem items[] = {
             { "\U0001f588 Bookmarks", 0, 0, "toolbar.showview arg:0" },
             { "\U00002605 Feeds", 0, 0, "toolbar.showview arg:1" },
-            { "\U0001f553 History", 0, 0, "toolbar.showview arg:2" },
+            { clock_Icon " History", 0, 0, "toolbar.showview arg:2" },
             { "\U0001f5b9 Page Outline", 0, 0, "toolbar.showview arg:4" },
         };
         iWidget *menu = makeMenu_Widget(findChild_Widget(toolBar, "toolbar.view"),
@@ -1105,12 +1106,12 @@ static void setupUserInterface_Window(iWindow *d) {
     updatePadding_Window_(d);
     iWidget *tabsMenu = makeMenu_Widget(d->root,
                                         (iMenuItem[]){
-                                            { "Close Tab", 0, 0, "tabs.close" },
-                                            { "Duplicate Tab", 0, 0, "tabs.new duplicate:1" },
+                                            { close_Icon " Close Tab", 0, 0, "tabs.close" },
+                                            { copy_Icon " Duplicate Tab", 0, 0, "tabs.new duplicate:1" },
                                             { "---", 0, 0, NULL },
                                             { "Close Other Tabs", 0, 0, "tabs.close toleft:1 toright:1" },
-                                            { "Close Tabs To Left", 0, 0, "tabs.close toleft:1" },
-                                            { "Close Tabs To Right", 0, 0, "tabs.close toright:1" },
+                                            { barLeftArrow_Icon " Close Tabs To Left", 0, 0, "tabs.close toleft:1" },
+                                            { barRightArrow_Icon " Close Tabs To Right", 0, 0, "tabs.close toright:1" },
                                         },
                                         6);
     setId_Widget(tabsMenu, "doctabs.menu");
