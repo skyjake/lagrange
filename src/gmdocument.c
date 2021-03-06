@@ -277,6 +277,7 @@ static iBool isNormalized_GmDocument_(const iGmDocument *d) {
 
 static void doLayout_GmDocument_(iGmDocument *d) {
     const iBool isMono = isForcedMonospace_GmDocument_(d);
+    const iBool isNarrow = d->size.x < 90 * gap_Text;
     /* TODO: Collect these parameters into a GmTheme. */
     const int fonts[max_GmLineType] = {
         isMono ? regularMonospace_FontId : paragraph_FontId,
@@ -298,8 +299,8 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         tmHeading3_ColorId,
         tmLinkText_ColorId,
     };
-    static const int indents[max_GmLineType] = {
-        5, 10, 5, 10, 0, 0, 0, 5
+    const float indents[max_GmLineType] = {
+        5, 10, 5, isNarrow ? 5 : 10, 0, 0, 2.5f, 5
     };
     static const float topMargin[max_GmLineType] = {
         0.0f, 0.333f, 1.0f, 0.5f, 2.0f, 1.5f, 1.0f, 0.25f
@@ -345,7 +346,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         iRangecc line = contentLine; /* `line` will be trimmed later; would confuse nextSplit */
         iGmRun run = { .color = white_ColorId };
         enum iGmLineType type;
-        int indent = 0;
+        float indent = 0.0f;
         int rightMargin = 0;
         /* Detect the type of the line. */
         if (!isPreformat) {
@@ -360,7 +361,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 preFont = preformatted_FontId;
                 /* Use a smaller font if the block contents are wide. */
                 if (measurePreformattedBlock_GmDocument_(d, line.start, preFont).x >
-                    d->size.x - indents[preformatted_GmLineType]) {
+                    d->size.x - indents[preformatted_GmLineType] * gap_Text) {
                     preFont = preformattedSmall_FontId;
                 }
                 trimLine_Rangecc_(&line, type);
@@ -494,7 +495,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             quoteRun.visBounds.size = advance_Text(quoteRun.font, quote);
             quoteRun.visBounds.pos =
                 add_I2(pos,
-                       init_I2(indents[text_GmLineType] * gap_Text,
+                       init_I2((indents[quote_GmLineType] - 5) * gap_Text,
                                lineHeight_Text(quote_FontId) / 2 - bottom_Rect(vis)));
             quoteRun.bounds = zero_Rect(); /* just visual */
             quoteRun.flags |= decoration_GmRunFlag;
