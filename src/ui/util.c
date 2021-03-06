@@ -359,7 +359,7 @@ iWidget *makePadding_Widget(int size) {
 
 iLabelWidget *makeHeading_Widget(const char *text) {
     iLabelWidget *heading = new_LabelWidget(text, NULL);
-    setFlags_Widget(as_Widget(heading), frameless_WidgetFlag | fixedSize_WidgetFlag, iTrue);
+    setFlags_Widget(as_Widget(heading), frameless_WidgetFlag | alignLeft_WidgetFlag /*| fixedSize_WidgetFlag*/, iTrue);
     setBackgroundColor_Widget(as_Widget(heading), none_ColorId);
     return heading;
 }
@@ -931,14 +931,32 @@ void finalizeSheet_Widget(iWidget *sheet) {
                 iWidget *value   = child_Widget(values, 0);
                 removeChild_Widget(headings, heading);
                 removeChild_Widget(values, value);
+                iLabelWidget *headingLabel = NULL;
                 iLabelWidget *valueLabel = NULL;
+                iInputWidget *valueInput = NULL;
+                if (isInstance_Object(heading, &Class_LabelWidget)) {
+                    headingLabel = (iLabelWidget *) heading;
+                }
                 if (isInstance_Object(value, &Class_LabelWidget)) {
                     valueLabel = (iLabelWidget *) value;
+                }
+                if (isInstance_Object(value, &Class_InputWidget)) {
+                    valueInput = (iInputWidget *) value;
+                }
+                if (valueLabel) {
+                    setFont_LabelWidget(valueLabel, defaultBig_FontId);
+                }
+                if (valueInput) {
+                    setFont_InputWidget(valueInput, defaultBig_FontId);
+                    setContentPadding_InputWidget(valueInput, 3 * gap_UI, 3 * gap_UI);
                 }
                 /* Toggles have the button on the right. */
                 if (valueLabel && cmp_String(command_LabelWidget(valueLabel), "toggle") == 0) {
                     iWidget *div = new_Widget();
+                    setFrameColor_Widget(div, uiSeparator_ColorId);
+                    setPadding_Widget(div, gap_UI, gap_UI, 4 * gap_UI, gap_UI);
                     addChildFlags_Widget(div, iClob(heading), 0);
+                    setFont_LabelWidget((iLabelWidget *) heading, defaultBig_FontId);
                     addChildFlags_Widget(div, iClob(new_Widget()), expand_WidgetFlag);
                     addChild_Widget(div, iClob(value));
                     addChildFlags_Widget(sheet,
@@ -952,9 +970,15 @@ void finalizeSheet_Widget(iWidget *sheet) {
                         /* Subheading padding goes above. */
                         addChild_Widget(sheet, iClob(value));
                         addChild_Widget(sheet, iClob(heading));
+                        setFont_LabelWidget(headingLabel, uiLabelBold_FontId);
                     }
                     else {
                         addChild_Widget(sheet, iClob(heading));
+                        if (headingLabel) {
+                            setTextColor_LabelWidget(headingLabel, uiSubheading_ColorId);
+                            setText_LabelWidget(headingLabel,
+                                                collect_String(upper_String(text_LabelWidget(headingLabel))));
+                        }
                         addChild_Widget(sheet, iClob(value));
                         /* Align radio buttons to the right. */
                         if (childCount_Widget(value)) {
@@ -962,6 +986,12 @@ void finalizeSheet_Widget(iWidget *sheet) {
                                             resizeToParentWidth_WidgetFlag |
                                             resizeWidthOfChildren_WidgetFlag,
                                             iTrue);
+                            iForEach(ObjectList, sub, children_Widget(value)) {
+                                if (isInstance_Object(sub.object, &Class_LabelWidget)) {
+                                    iLabelWidget *opt = sub.object;
+                                    setFont_LabelWidget(opt, defaultBig_FontId);
+                                }
+                            }
                         }
                     }
                 }

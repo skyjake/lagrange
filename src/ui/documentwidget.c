@@ -2495,11 +2495,17 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                             (iMenuItem[]){ { "Copy", 0, 0, "copy" }, { "---", 0, 0, NULL } },
                             2);
                     }
+                    if (deviceType_App() == desktop_AppDeviceType) {
+                        pushBackN_Array(
+                            &items,
+                            (iMenuItem[]){
+                                { "Go Back", navigateBack_KeyShortcut, "navigate.back" },
+                            { "Go Forward", navigateForward_KeyShortcut, "navigate.forward" } },
+                        2);
+                    }
                     pushBackN_Array(
                         &items,
                         (iMenuItem[]){
-                            { "Go Back", navigateBack_KeyShortcut, "navigate.back" },
-                            { "Go Forward", navigateForward_KeyShortcut, "navigate.forward" },
                             { upArrow_Icon " Go to Parent", navigateParent_KeyShortcut, "navigate.parent" },
                             { upArrowBar_Icon " Go to Root", navigateRoot_KeyShortcut, "navigate.root" },
                             { "---", 0, 0, NULL },
@@ -2512,7 +2518,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                             { book_Icon " Import Links as Bookmarks...", 0, 0, "bookmark.links confirm:1" },
                             { "---", 0, 0, NULL },
                             { "Copy Page URL", 0, 0, "document.copylink" } },
-                        13);
+                        11);
                     if (isEmpty_Range(&d->selectMark)) {
                         pushBackN_Array(
                             &items,

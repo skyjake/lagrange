@@ -165,6 +165,11 @@ void deinit_InputWidget(iInputWidget *d) {
     deinit_Array(&d->text);
 }
 
+void setFont_InputWidget(iInputWidget *d, int fontId) {
+    d->font = fontId;
+    updateMetrics_InputWidget_(d);
+}
+
 static void pushUndo_InputWidget_(iInputWidget *d) {
     iInputUndo undo;
     init_InputUndo_(&undo, &d->text, d->cursor);

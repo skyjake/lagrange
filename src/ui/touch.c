@@ -245,6 +245,16 @@ static void dispatchButtonUp_Touch_(iFloat3 pos) {
     });
 }
 
+static iWidget *findOverflowScrollable_Widget_(iWidget *d) {
+    const iInt2 rootSize = rootSize_Window(get_Window());
+    for (iWidget *w = d; w; w = parent_Widget(w)) {
+        if (flags_Widget(w) & overflowScrollable_WidgetFlag && height_Widget(w) > rootSize.y) {
+            return w;
+        }
+    }
+    return NULL;
+}
+
 iBool processEvent_Touch(const SDL_Event *ev) {
     /* We only handle finger events here. */
     if (ev->type != SDL_FINGERDOWN && ev->type != SDL_FINGERMOTION && ev->type != SDL_FINGERUP) {
@@ -329,6 +339,11 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                        the first one. */
                     divvf_F3(&touch->accum, 6);
                     divfv_I2(&pixels, 6);
+                    /* Allow scrolling a scrollable widget. */
+                    iWidget *flow = findOverflowScrollable_Widget_(touch->affinity);
+                    if (flow) {
+                        touch->affinity = flow;
+                    }
                 }
                 else {
                     touch->accum = zero_F3();
@@ -367,6 +382,7 @@ iBool processEvent_Touch(const SDL_Event *ev) {
 //                   class_Widget(touch->affinity)->name,
 //                   pixels.y, y_F3(amount), y_F3(touch->accum));
             if (pixels.x || pixels.y) {
+                setFocus_Widget(NULL);
                 dispatchMotion_Touch_(pos, 0);
                 dispatchEvent_Widget(touch->affinity, (SDL_Event *) &(SDL_MouseWheelEvent){
                     .type = SDL_MOUSEWHEEL,
