@@ -704,7 +704,7 @@ iBool handleBookmarkEditorCommands_SidebarWidget_(iWidget *editor, const char *c
             const iString *tags  = text_InputWidget(findChild_Widget(editor, "bmed.tags"));
             const iString *icon  = collect_String(trimmed_String(
                                         text_InputWidget(findChild_Widget(editor, "bmed.icon"))));
-            const iSidebarItem *item = hoverItem_ListWidget(d->list);
+            const iSidebarItem *item = d->contextItem;
             iAssert(item); /* hover item cannot have been changed */
             iBookmark *bm = get_Bookmarks(bookmarks_App(), item->id);
             set_String(&bm->title, title);
