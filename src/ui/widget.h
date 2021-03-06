@@ -102,6 +102,7 @@ enum iWidgetFlag {
 #define noTopFrame_WidgetFlag               iBit64(47)
 #define unpadded_WidgetFlag                 iBit64(48) /* ignore parent's padding */
 #define extraPadding_WidgetFlag             iBit64(49)
+#define borderBottom_WidgetFlag             iBit64(50)
 
 enum iWidgetAddPos {
     back_WidgetAddPos,

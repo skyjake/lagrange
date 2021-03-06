@@ -299,6 +299,10 @@ void setThemePalette_Color(enum iColorTheme theme) {
                                                 0.4f));
     palette_[uiMarked_ColorId].a = 128;
     palette_[uiMatching_ColorId].a = 128;
+    if (deviceType_App() == phone_AppDeviceType) {
+        copy_(uiInputBackground_ColorId, uiBackgroundSidebar_ColorId);
+        copy_(uiInputFrame_ColorId, uiBackgroundSidebar_ColorId);
+    }
 }
 
 iColor get_Color(int color) {

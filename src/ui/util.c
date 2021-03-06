@@ -455,19 +455,22 @@ static iWidget *makeMenuSeparator_(void) {
 
 iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
     iWidget *menu = new_Widget();
-    setFrameColor_Widget(menu, uiSeparator_ColorId);
     setBackgroundColor_Widget(menu, uiBackground_ColorId);
     if (deviceType_App() != desktop_AppDeviceType) {
         setPadding1_Widget(menu, 2 * gap_UI);
     }
-    setFlags_Widget(menu,
-                    keepOnTop_WidgetFlag | collapse_WidgetFlag | hidden_WidgetFlag |
-                        arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag |
-                        resizeChildrenToWidestChild_WidgetFlag | overflowScrollable_WidgetFlag,
-                    iTrue);
     const iBool isPortraitPhone = (deviceType_App() == phone_AppDeviceType && isPortrait_App());
     int64_t itemFlags = (deviceType_App() != desktop_AppDeviceType ? 0 : 0) |
                         (isPortraitPhone ? extraPadding_WidgetFlag : 0);
+    setFlags_Widget(menu,
+                    keepOnTop_WidgetFlag | collapse_WidgetFlag | hidden_WidgetFlag |
+                        arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag |
+                        resizeChildrenToWidestChild_WidgetFlag | overflowScrollable_WidgetFlag |
+                        (isPortraitPhone ? drawBackgroundToVerticalSafeArea_WidgetFlag : 0),
+                    iTrue);
+    if (!isPortraitPhone) {
+        setFrameColor_Widget(menu, uiSeparator_ColorId);
+    }
     iBool haveIcons = iFalse;
     for (size_t i = 0; i < n; ++i) {
         const iMenuItem *item = &items[i];
@@ -478,7 +481,8 @@ iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
             iLabelWidget *label = addChildFlags_Widget(
                 menu,
                 iClob(newKeyMods_LabelWidget(item->label, item->key, item->kmods, item->command)),
-                noBackground_WidgetFlag | frameless_WidgetFlag | alignLeft_WidgetFlag | drawKey_WidgetFlag | itemFlags);
+                noBackground_WidgetFlag | frameless_WidgetFlag | alignLeft_WidgetFlag |
+                                                       drawKey_WidgetFlag | itemFlags);
             haveIcons |= checkIcon_LabelWidget(label);
             updateSize_LabelWidget(label); /* drawKey was set */
         }
@@ -487,7 +491,8 @@ iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
         addChild_Widget(menu, iClob(makeMenuSeparator_()));
         addChildFlags_Widget(menu,
                              iClob(new_LabelWidget("Cancel", "cancel")),
-                             itemFlags | frameless_WidgetFlag | alignLeft_WidgetFlag);
+                             itemFlags | noBackground_WidgetFlag | frameless_WidgetFlag |
+                             alignLeft_WidgetFlag);
     }
     if (haveIcons) {
         /* All items must have icons if at least one of them has. */
@@ -953,7 +958,8 @@ void finalizeSheet_Widget(iWidget *sheet) {
                 /* Toggles have the button on the right. */
                 if (valueLabel && cmp_String(command_LabelWidget(valueLabel), "toggle") == 0) {
                     iWidget *div = new_Widget();
-                    setFrameColor_Widget(div, uiSeparator_ColorId);
+                    setBackgroundColor_Widget(div, uiBackgroundSidebar_ColorId);
+//                    setFrameColor_Widget(div, uiSeparator_ColorId);
                     setPadding_Widget(div, gap_UI, gap_UI, 4 * gap_UI, gap_UI);
                     addChildFlags_Widget(div, iClob(heading), 0);
                     setFont_LabelWidget((iLabelWidget *) heading, defaultBig_FontId);
@@ -961,7 +967,7 @@ void finalizeSheet_Widget(iWidget *sheet) {
                     addChild_Widget(div, iClob(value));
                     addChildFlags_Widget(sheet,
                                          iClob(div),
-                                         arrangeHeight_WidgetFlag |
+                                         borderBottom_WidgetFlag | arrangeHeight_WidgetFlag |
                                             resizeWidthOfChildren_WidgetFlag |
                                             arrangeHorizontal_WidgetFlag);
                 }
@@ -969,27 +975,48 @@ void finalizeSheet_Widget(iWidget *sheet) {
                     if (valueLabel && isEmpty_String(text_LabelWidget(valueLabel))) {
                         /* Subheading padding goes above. */
                         addChild_Widget(sheet, iClob(value));
-                        addChild_Widget(sheet, iClob(heading));
+                        addChildFlags_Widget(sheet, iClob(heading), 0);
                         setFont_LabelWidget(headingLabel, uiLabelBold_FontId);
                     }
                     else {
-                        addChild_Widget(sheet, iClob(heading));
+                        addChildFlags_Widget(sheet, iClob(heading), borderBottom_WidgetFlag);
                         if (headingLabel) {
                             setTextColor_LabelWidget(headingLabel, uiSubheading_ColorId);
                             setText_LabelWidget(headingLabel,
                                                 collect_String(upper_String(text_LabelWidget(headingLabel))));
                         }
-                        addChild_Widget(sheet, iClob(value));
+                        const iBool isMenuButton = findChild_Widget(value, "menu") != NULL;
+                        if (isMenuButton) {
+                            setFlags_Widget(value, noBackground_WidgetFlag | frameless_WidgetFlag, iTrue);
+                        }
+                        if (valueInput || isMenuButton) {
+                            setFlags_Widget(value, borderBottom_WidgetFlag, iFalse);
+                            iWidget *pad = new_Widget();
+                            setBackgroundColor_Widget(pad, uiBackgroundSidebar_ColorId);
+                            setPadding_Widget(pad, 0, 1 * gap_UI, 0, 1 * gap_UI);
+                            addChild_Widget(pad, iClob(value));
+                            addChildFlags_Widget(sheet, iClob(pad), borderBottom_WidgetFlag |
+                                                 arrangeVertical_WidgetFlag |
+                                                 resizeToParentWidth_WidgetFlag |
+                                                 resizeWidthOfChildren_WidgetFlag |
+                                                 arrangeHeight_WidgetFlag);
+                        }
+                        else {
+                            addChild_Widget(sheet, iClob(value));
+                        }
                         /* Align radio buttons to the right. */
-                        if (childCount_Widget(value)) {
+                        if (childCount_Widget(value) >= 2) {
+                            setBackgroundColor_Widget(value, uiBackgroundSidebar_ColorId);
+                            setPadding_Widget(value, 4 * gap_UI, 2 * gap_UI, 4 * gap_UI, 2 * gap_UI);
                             setFlags_Widget(value,
+                                            borderBottom_WidgetFlag |
                                             resizeToParentWidth_WidgetFlag |
                                             resizeWidthOfChildren_WidgetFlag,
                                             iTrue);
                             iForEach(ObjectList, sub, children_Widget(value)) {
                                 if (isInstance_Object(sub.object, &Class_LabelWidget)) {
                                     iLabelWidget *opt = sub.object;
-                                    setFont_LabelWidget(opt, defaultBig_FontId);
+                                    setFont_LabelWidget(opt, defaultMedium_FontId);
                                 }
                             }
                         }

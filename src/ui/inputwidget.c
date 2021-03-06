@@ -117,8 +117,8 @@ static void invalidateBuffered_InputWidget_(iInputWidget *d) {
 static void updateMetrics_InputWidget_(iInputWidget *d) {
     iWidget *w = as_Widget(d);
     /* Caller must arrange the width, but the height is fixed. */
-    w->rect.size.y = lineHeight_Text(default_FontId) + 2 * gap_UI;
-#if defined (iPlatformAppleMobile)
+    w->rect.size.y = lineHeight_Text(d->font) * 1.3f;
+#if defined (iPlatformMobile)
     w->rect.size.y += 2 * gap_UI;
 #endif
     invalidateBuffered_InputWidget_(d);

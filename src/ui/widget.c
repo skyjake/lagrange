@@ -680,12 +680,6 @@ void drawBackground_Widget(const iWidget *d) {
     if (d->flags & (hidden_WidgetFlag | noBackground_WidgetFlag)) {
         return;
     }
-    if (d->flags & borderTop_WidgetFlag) {
-        const iRect rect = bounds_Widget(d);
-        iPaint p;
-        init_Paint(&p);
-        drawHLine_Paint(&p, topLeft_Rect(rect), width_Rect(rect), uiBackgroundFramelessHover_ColorId);
-    }
     /* Popup menus have a shadowed border. */
     const iBool shadowBorder =
         (d->flags & keepOnTop_WidgetFlag && ~d->flags & mouseModal_WidgetFlag) != 0;
@@ -755,6 +749,19 @@ void drawBackground_Widget(const iWidget *d) {
         }
         if (d->frameColor >= 0 && ~d->flags & frameless_WidgetFlag) {
             drawRectThickness_Paint(&p, rect, gap_UI / 4, d->frameColor);
+        }
+    }
+    if (d->flags & (borderTop_WidgetFlag | borderBottom_WidgetFlag)) {
+        const iRect rect = bounds_Widget(d);
+        iPaint p;
+        init_Paint(&p);
+        if (d->flags & borderTop_WidgetFlag) {
+            drawHLine_Paint(&p, topLeft_Rect(rect), width_Rect(rect),
+                            uiBackgroundFramelessHover_ColorId);
+        }
+        if (d->flags & borderBottom_WidgetFlag) {
+            drawHLine_Paint(&p, addY_I2(bottomLeft_Rect(rect), -1), width_Rect(rect),
+                            uiBackgroundFramelessHover_ColorId);
         }
     }
 }
