@@ -1136,6 +1136,7 @@ static void updateRootSize_Window_(iWindow *d, iBool notifyAlways) {
     iInt2 *size = &d->root->rect.size;
     const iInt2 oldSize = *size;
     SDL_GetRendererOutputSize(d->render, &size->x, &size->y);
+    size->y -= d->keyboardHeight;
     if (notifyAlways || !isEqual_I2(oldSize, *size)) {
         const iBool isHoriz = (d->place.lastNotifiedSize.x != size->x);
         const iBool isVert  = (d->place.lastNotifiedSize.y != size->y);
@@ -1287,6 +1288,8 @@ void init_Window(iWindow *d, iRect rect) {
     d->isMouseInside = iTrue;
     d->ignoreClick = iFalse;
     d->focusGainedAt = 0;
+    d->keyboardHeight = 0;
+    init_Anim(&d->rootOffset, 0.0f);
     uint32_t flags = 0;
 #if defined (iPlatformAppleDesktop)
     SDL_SetHint(SDL_HINT_RENDER_DRIVER, shouldDefaultToMetalRenderer_MacOS() ? "metal" : "opengl");
@@ -1704,6 +1707,7 @@ void draw_Window(iWindow *d) {
     if (d->isDrawFrozen) {
         return;
     }
+//    printf("num pending: %d\n", numPendingGlyphs_Text());
     const int   winFlags = SDL_GetWindowFlags(d->win);
     const iBool gotFocus = (winFlags & SDL_WINDOW_INPUT_FOCUS) != 0;
     /* Clear the window. The clear color is visible as a border around the window
@@ -1797,6 +1801,10 @@ iInt2 rootSize_Window(const iWindow *d) {
     return d ? d->root->rect.size : zero_I2();
 }
 
+iInt2 visibleRootSize_Window(const iWindow *d) {
+    return addY_I2(rootSize_Window(d), -d->keyboardHeight);
+}
+
 iInt2 coord_Window(const iWindow *d, int x, int y) {
 #if defined (iPlatformMsys) || defined (iPlatformLinux)
     /* On Windows, surface coordinates are in pixels. */
@@ -1826,6 +1834,18 @@ uint32_t frameTime_Window(const iWindow *d) {
 
 iWindow *get_Window(void) {
     return theWindow_;
+}
+
+void setKeyboardHeight_Window(iWindow *d, int height) {
+    if (d->keyboardHeight != height) {
+        d->keyboardHeight = height;
+        if (height == 0) {
+            setFlags_Anim(&d->rootOffset, easeBoth_AnimFlag, iTrue);
+            setValue_Anim(&d->rootOffset, 0, 250);
+        }
+        postCommandf_App("keyboard.changed arg:%d", height);
+        postRefresh_App();
+    }
 }
 
 void setSnap_Window(iWindow *d, int snapMode) {

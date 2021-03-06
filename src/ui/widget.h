@@ -232,6 +232,7 @@ iWidget *hover_Widget       (void);
 void    unhover_Widget      (void);
 void    setMouseGrab_Widget (iWidget *);
 iWidget *mouseGrab_Widget   (void);
+iBool   hasVisibleChildOnTop_Widget(const iWidget *parent);
 void    printTree_Widget    (const iWidget *);
 
 iBool   equalWidget_Command (const char *cmd, const iWidget *widget, const char *checkCommand);

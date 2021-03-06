@@ -21,6 +21,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "inputwidget.h"
+#include "command.h"
 #include "paint.h"
 #include "util.h"
 #include "keys.h"
@@ -612,6 +613,17 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
     else if (isCommand_UserEvent(ev, "theme.changed")) {
         if (d->buffered) {
             updateBuffered_InputWidget_(d);
+        }
+        return iFalse;
+    }
+    else if (isCommand_UserEvent(ev, "keyboard.changed")) {
+        if (isFocused_Widget(d) && arg_Command(command_UserEvent(ev))) {
+            iRect rect = bounds_Widget(w);
+            rect.pos.y -= value_Anim(&get_Window()->rootOffset);
+            const iInt2 visRoot = visibleRootSize_Window(get_Window());
+            if (bottom_Rect(rect) > visRoot.y) {
+                setValue_Anim(&get_Window()->rootOffset, -(bottom_Rect(rect) - visRoot.y), 250);
+            }
         }
         return iFalse;
     }

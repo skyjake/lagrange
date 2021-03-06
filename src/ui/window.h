@@ -75,6 +75,8 @@ struct Impl_Window {
     SDL_Cursor *  cursors[SDL_NUM_SYSTEM_CURSORS];
     SDL_Cursor *  pendingCursor;
     int           loadAnimTimer;
+    iAnim         rootOffset;
+    int           keyboardHeight; /* mobile software keyboards */
 };
 
 iBool       processEvent_Window     (iWindow *, const SDL_Event *);
@@ -86,9 +88,11 @@ void        setUiScale_Window       (iWindow *, float uiScale);
 void        setFreezeDraw_Window    (iWindow *, iBool freezeDraw);
 void        setCursor_Window        (iWindow *, int cursor);
 void        setSnap_Window          (iWindow *, int snapMode);
+void        setKeyboardHeight_Window(iWindow *, int height);
 
 uint32_t    id_Window               (const iWindow *);
 iInt2       rootSize_Window         (const iWindow *);
+iInt2       visibleRootSize_Window  (const iWindow *); /* may be obstructed by software keyboard */
 float       uiScale_Window          (const iWindow *);
 iInt2       coord_Window            (const iWindow *, int x, int y);
 iInt2       mouseCoord_Window       (const iWindow *);

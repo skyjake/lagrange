@@ -507,6 +507,9 @@ iRect bounds_Widget(const iWidget *d) {
         }
         addv_I2(&bounds.pos, pos);
     }
+#if defined (iPlatformMobile)
+    bounds.pos.y += value_Anim(&get_Window()->rootOffset);
+#endif
     return bounds;
 }
 
@@ -1129,6 +1132,19 @@ static void printTree_Widget_(const iWidget *d, int indent) {
     iConstForEach(ObjectList, i, d->children) {
         printTree_Widget_(i.object, indent + 1);
     }
+}
+
+iBool hasVisibleChildOnTop_Widget(const iWidget *parent) {
+    iConstForEach(ObjectList, i, parent->children) {
+        const iWidget *child = i.object;
+        if (~child->flags & hidden_WidgetFlag && child->flags & keepOnTop_WidgetFlag) {
+            return iTrue;
+        }
+        if (hasVisibleChildOnTop_Widget(child)) {
+            return iTrue;
+        }
+    }
+    return iFalse;
 }
 
 void printTree_Widget(const iWidget *d) {

@@ -53,6 +53,7 @@ int enableHalfPixelGlyphs_Text = iTrue; /* debug setting */
 int enableKerning_Text         = iTrue; /* looking up kern pairs is slow */
 
 static iBool enableRaster_Text_ = iTrue;
+static int   numPendingRasterization_Text_ = 0;
 
 enum iGlyphFlag {
     rasterized0_GlyphFlag = iBit(1),    /* zero offset */
@@ -423,6 +424,7 @@ static void initCache_Text_(iText *d) {
                                  d->cacheSize.x,
                                  d->cacheSize.y);    
     SDL_SetTextureBlendMode(d->cache, SDL_BLENDMODE_BLEND);
+    numPendingRasterization_Text_ = 0;
 }
 
 static void deinitCache_Text_(iText *d) {
@@ -501,6 +503,10 @@ void resetFonts_Text(void) {
     initFonts_Text_(d);
 }
 
+int numPendingGlyphs_Text(void) {
+    return numPendingRasterization_Text_;
+}
+
 iLocalDef iFont *font_Text_(enum iFontId id) {
     return &text_.fonts[id & mask_FontId];
 }
@@ -569,7 +575,7 @@ static void allocate_Font_(iFont *d, iGlyph *glyph, int hoff) {
     }
 }
 
-static void cache_Font_(iFont *d, iGlyph *glyph, int hoff) {
+static iBool cache_Font_(iFont *d, iGlyph *glyph, int hoff) {
     iText *       txt     = &text_;
     SDL_Renderer *render  = txt->render;
     SDL_Texture * tex     = NULL;
@@ -590,6 +596,7 @@ static void cache_Font_(iFont *d, iGlyph *glyph, int hoff) {
     if (surface) {
         SDL_FreeSurface(surface);
     }
+    return isRasterized_Glyph_(glyph, hoff);
 }
 
 iLocalDef iFont *characterFont_Font_(iFont *d, iChar ch, uint32_t *glyphIndex) {
@@ -659,15 +666,22 @@ static const iGlyph *glyph_Font_(iFont *d, iChar ch) {
         allocate_Font_(font, glyph, 0);
         allocate_Font_(font, glyph, 1);
         insert_Hash(&font->glyphs, &glyph->node);
+        numPendingRasterization_Text_ += 2;
     }
     if (enableRaster_Text_ && !isFullyRasterized_Glyph_(glyph)) {
         SDL_Texture *oldTarget = SDL_GetRenderTarget(text_.render);
         SDL_SetRenderTarget(text_.render, text_.cache);
         if (!isRasterized_Glyph_(glyph, 0)) {
-            cache_Font_(font, glyph, 0);
+            if (cache_Font_(font, glyph, 0)) {
+                numPendingRasterization_Text_--;
+                iAssert(numPendingRasterization_Text_ >= 0);
+            }
         }
         if (!isRasterized_Glyph_(glyph, 1)) {
-            cache_Font_(font, glyph, 1); /* half-pixel offset */
+            if (cache_Font_(font, glyph, 1)) { /* half-pixel offset */
+                numPendingRasterization_Text_--;
+                iAssert(numPendingRasterization_Text_ >= 0);
+            }
         }
         SDL_SetRenderTarget(text_.render, oldTarget);
     }

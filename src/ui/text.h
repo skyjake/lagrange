@@ -161,6 +161,7 @@ void    setContentFont_Text     (enum iTextFont font);
 void    setHeadingFont_Text     (enum iTextFont font);
 void    setContentFontSize_Text (float fontSizeFactor); /* affects all except `default*` fonts */
 void    resetFonts_Text         (void);
+int     numPendingGlyphs_Text   (void);
 
 int     lineHeight_Text         (int fontId);
 iInt2   measure_Text            (int fontId, const char *text);

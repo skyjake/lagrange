@@ -190,6 +190,10 @@ static void update_TouchState_(void *ptr) {
         iForEach(Array, m, d->moms) {
             if (numSteps == 0) break;
             iMomentum *mom = m.value;
+            if (!mom->affinity) {
+                remove_ArrayIterator(&m);
+                continue;
+            }
             for (int step = 0; step < numSteps; step++) {
                 mulvf_F3(&mom->velocity, momFriction);
                 addv_F3(&mom->accum, mulf_F3(mom->velocity, stepDurationMs / 1000.0f));
@@ -248,8 +252,11 @@ static void dispatchButtonUp_Touch_(iFloat3 pos) {
 static iWidget *findOverflowScrollable_Widget_(iWidget *d) {
     const iInt2 rootSize = rootSize_Window(get_Window());
     for (iWidget *w = d; w; w = parent_Widget(w)) {
-        if (flags_Widget(w) & overflowScrollable_WidgetFlag && height_Widget(w) > rootSize.y) {
-            return w;
+        if (flags_Widget(w) & overflowScrollable_WidgetFlag) {
+            if (height_Widget(w) > rootSize.y && !hasVisibleChildOnTop_Widget(w)) {
+                return w;
+            }
+            return NULL;
         }
     }
     return NULL;
@@ -262,9 +269,13 @@ iBool processEvent_Touch(const SDL_Event *ev) {
     }
     iTouchState *d = touchState_();
     iWindow *window = get_Window();
+    if (!isFinished_Anim(&window->rootOffset)) {
+        return iFalse;
+    }
     const iInt2 rootSize = rootSize_Window(window);
     const SDL_TouchFingerEvent *fing = &ev->tfinger;
-    const iFloat3 pos = init_F3(fing->x * rootSize.x, fing->y * rootSize.y, 0); /* pixels */
+    const iFloat3 pos = add_F3(init_F3(fing->x * rootSize.x, fing->y * rootSize.y, 0), /* pixels */
+                               init_F3(0, -value_Anim(&window->rootOffset), 0));
     const uint32_t nowTime = SDL_GetTicks();
     if (ev->type == SDL_FINGERDOWN) {
         /* Register the new touch. */

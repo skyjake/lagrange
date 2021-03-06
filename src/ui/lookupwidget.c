@@ -36,6 +36,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "util.h"
 #include "visited.h"
 
+#if defined (iPlatformAppleMobile)
+#   include "../ios.h"
+#endif
+
 #include <the_Foundation/mutex.h>
 #include <the_Foundation/thread.h>
 #include <the_Foundation/regexp.h>
@@ -641,8 +645,9 @@ static iBool processEvent_LookupWidget_(iLookupWidget *d, const SDL_Event *ev) {
     if (isMetricsChange_UserEvent(ev)) {
         updateMetrics_LookupWidget_(d);
     }
-    else if (isResize_UserEvent(ev) || (equal_Command(cmd, "layout.changed") &&
-                                        equal_Rangecc(range_Command(cmd, "id"), "navbar"))) {
+    else if (isResize_UserEvent(ev) || equal_Command(cmd, "keyboard.changed") ||
+             (equal_Command(cmd, "layout.changed") &&
+              equal_Rangecc(range_Command(cmd, "id"), "navbar"))) {
         /* Position the lookup popup under the URL bar. */ {
             const iWindow *window = get_Window();
             const iInt2 rootSize = rootSize_Window(window);
@@ -651,13 +656,13 @@ static iBool processEvent_LookupWidget_(iLookupWidget *d, const SDL_Event *ev) {
                                       (rootSize.y - bottom_Rect(navBarBounds)) / 2));
             setPos_Widget(w, bottomLeft_Rect(bounds_Widget(findWidget_App("url"))));
 #if defined (iPlatformAppleMobile)
-            /* TODO: Ask the system how tall the keyboard is. */ {
-                if (isLandscape_App()) {
-                    w->rect.size.y = rootSize.y * 4 / 10;
-                }
-                else if (deviceType_App() == phone_AppDeviceType) {
-                    w->rect.size.x = rootSize.x;
-                    w->rect.pos.x  = 0;
+            /* Adjust height based on keyboard size. */ {
+                w->rect.size.y = visibleRootSize_Window(window).y - top_Rect(bounds_Widget(w));
+                if (deviceType_App() == phone_AppDeviceType) {
+                    float l, r;
+                    safeAreaInsets_iOS(&l, NULL, &r, NULL);
+                    w->rect.size.x = rootSize.x - l - r;
+                    w->rect.pos.x  = l;
                 }
             }
 #endif
