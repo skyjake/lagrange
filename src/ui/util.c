@@ -166,7 +166,7 @@ iRangei union_Rangei(iRangei a, iRangei b) {
 /*----------------------------------------------------------------------------------------------*/
 
 iBool isFinished_Anim(const iAnim *d) {
-    return frameTime_Window(get_Window()) >= d->due;
+    return d->from == d->to || frameTime_Window(get_Window()) >= d->due;
 }
 
 void init_Anim(iAnim *d, float value) {
@@ -520,7 +520,7 @@ void openMenu_Widget(iWidget *d, iInt2 coord) {
     /* Menu closes when commands are emitted, so handle any pending ones beforehand. */
     postCommand_App("cancel"); /* dismiss any other menus */
     processEvents_App(postedEventsOnly_AppEventMode);
-    setFlags_Widget(d, hidden_WidgetFlag, iFalse);
+    setFlags_Widget(d, hidden_WidgetFlag | disabled_WidgetFlag, iFalse);
     setFlags_Widget(d, commandOnMouseMiss_WidgetFlag, iTrue);
     setFlags_Widget(findChild_Widget(d, "menu.cancel"), disabled_WidgetFlag, iFalse);
     if (isPortraitPhone) {
@@ -589,10 +589,13 @@ void openMenu_Widget(iWidget *d, iInt2 coord) {
 }
 
 void closeMenu_Widget(iWidget *d) {
-    setFlags_Widget(d, hidden_WidgetFlag, iTrue);
+    setFlags_Widget(d, hidden_WidgetFlag | disabled_WidgetFlag, iTrue);
     setFlags_Widget(findChild_Widget(d, "menu.cancel"), disabled_WidgetFlag, iTrue);
     postRefresh_App();
     postCommand_Widget(d, "menu.closed");
+    if (isPortrait_App() && deviceType_App() == phone_AppDeviceType) {
+        setVisualOffset_Widget(d, height_Widget(d), 200, easeIn_AnimFlag | softer_AnimFlag);
+    }
 }
 
 iLabelWidget *findMenuItem_Widget(iWidget *menu, const char *command) {
@@ -988,6 +991,7 @@ void finalizeSheet_Widget(iWidget *sheet) {
                         const iBool isMenuButton = findChild_Widget(value, "menu") != NULL;
                         if (isMenuButton) {
                             setFlags_Widget(value, noBackground_WidgetFlag | frameless_WidgetFlag, iTrue);
+                            setFlags_Widget(value, alignLeft_WidgetFlag, iFalse);
                         }
                         if (valueInput || isMenuButton) {
                             setFlags_Widget(value, borderBottom_WidgetFlag, iFalse);

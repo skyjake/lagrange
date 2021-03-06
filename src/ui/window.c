@@ -1093,10 +1093,10 @@ static void setupUserInterface_Window(iWindow *d) {
 //            setBackgroundColor_Widget(i.object, tmBannerSideTitle_ColorId);
         }
         const iMenuItem items[] = {
-            { "\U0001f588 Bookmarks", 0, 0, "toolbar.showview arg:0" },
-            { "\U00002605 Feeds", 0, 0, "toolbar.showview arg:1" },
+            { pin_Icon " Bookmarks", 0, 0, "toolbar.showview arg:0" },
+            { star_Icon " Feeds", 0, 0, "toolbar.showview arg:1" },
             { clock_Icon " History", 0, 0, "toolbar.showview arg:2" },
-            { "\U0001f5b9 Page Outline", 0, 0, "toolbar.showview arg:4" },
+            { page_Icon " Page Outline", 0, 0, "toolbar.showview arg:4" },
         };
         iWidget *menu = makeMenu_Widget(findChild_Widget(toolBar, "toolbar.view"),
                                         items, iElemCount(items));
@@ -1707,7 +1707,6 @@ void draw_Window(iWindow *d) {
     if (d->isDrawFrozen) {
         return;
     }
-//    printf("num pending: %d\n", numPendingGlyphs_Text());
     const int   winFlags = SDL_GetWindowFlags(d->win);
     const iBool gotFocus = (winFlags & SDL_WINDOW_INPUT_FOCUS) != 0;
     /* Clear the window. The clear color is visible as a border around the window
@@ -1754,6 +1753,7 @@ void draw_Window(iWindow *d) {
     }
 #endif
     SDL_RenderPresent(d->render);
+    rasterizeSomePendingGlyphs_Text();
 }
 
 void resize_Window(iWindow *d, int w, int h) {

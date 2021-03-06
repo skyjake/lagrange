@@ -56,6 +56,9 @@ iPtrArray *onTop_RootData_(void) {
 void destroyPending_Widget(void) {
     iForEach(PtrSet, i, rootData_.pendingDestruction) {
         iWidget *widget = *i.value;
+        if (!isFinished_Anim(&widget->visualOffset)) {
+            continue;
+        }
         if (widget->parent) {
             removeChild_Widget(widget->parent, widget);
         }
@@ -680,12 +683,22 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
 }
 
 void drawBackground_Widget(const iWidget *d) {
-    if (d->flags & (hidden_WidgetFlag | noBackground_WidgetFlag)) {
+    if (d->flags & noBackground_WidgetFlag) {
+        return;
+    }
+    if (d->flags & hidden_WidgetFlag && ~d->flags & visualOffset_WidgetFlag) {
         return;
     }
     /* Popup menus have a shadowed border. */
-    const iBool shadowBorder =
-        (d->flags & keepOnTop_WidgetFlag && ~d->flags & mouseModal_WidgetFlag) != 0;
+    iBool shadowBorder   = (d->flags & keepOnTop_WidgetFlag && ~d->flags & mouseModal_WidgetFlag) != 0;
+    iBool fadeBackground = (d->bgColor >= 0 || d->frameColor >= 0) &&
+                                 d->flags & mouseModal_WidgetFlag;
+    if (deviceType_App() == phone_AppDeviceType) {
+        if (shadowBorder) {
+            fadeBackground = iTrue;
+            shadowBorder = iFalse;
+        }
+    }
     if (shadowBorder) {
         iPaint p;
         init_Paint(&p);
@@ -696,31 +709,32 @@ void drawBackground_Widget(const iWidget *d) {
         fillRect_Paint(&p, shadowRect, isLight ? white_ColorId : black_ColorId);
         SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_NONE);
     }
+    if (fadeBackground) {
+        iPaint p;
+        init_Paint(&p);
+        p.alpha = 0x50;
+        SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_BLEND);
+        int fadeColor;
+        switch (colorTheme_App()) {
+            default:
+                fadeColor = black_ColorId;
+                break;
+            case light_ColorTheme:
+                fadeColor = gray25_ColorId;
+                break;
+            case pureWhite_ColorTheme:
+                fadeColor = gray50_ColorId;
+                break;
+        }
+        fillRect_Paint(&p,
+                       initCorners_Rect(zero_I2(), rootSize_Window(get_Window())),
+                       fadeColor);
+        SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_NONE);
+    }
     if (d->bgColor >= 0 || d->frameColor >= 0) {
         iRect rect = bounds_Widget(d);
         iPaint p;
         init_Paint(&p);
-        /* Dialogs fade out the entire background. */
-        if (d->flags & mouseModal_WidgetFlag) {
-            p.alpha = 0x50;
-            SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_BLEND);
-            int fadeColor;
-            switch (colorTheme_App()) {
-                default:
-                    fadeColor = black_ColorId;
-                    break;
-                case light_ColorTheme:
-                    fadeColor = gray25_ColorId;
-                    break;
-                case pureWhite_ColorTheme:
-                    fadeColor = gray50_ColorId;
-                    break;
-            }
-            fillRect_Paint(&p,
-                           initCorners_Rect(zero_I2(), rootSize_Window(get_Window())),
-                           fadeColor);
-            SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_NONE);
-        }
         if (d->bgColor >= 0) {
 #if defined (iPlatformAppleMobile)
             if (d->flags & (drawBackgroundToHorizontalSafeArea_WidgetFlag |
