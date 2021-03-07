@@ -396,7 +396,7 @@ iBool checkTrust_GmCerts(iGmCerts *d, iRangecc domain, const iTlsCertificate *ce
     if (trust) {
         /* We already have it, check if it matches the one we trust for this domain (if it's
            still valid. */
-        if (!isAuth && elapsedSeconds_Time(&trust->validUntil) > 0) {
+        if (!isAuth && elapsedSeconds_Time(&trust->validUntil) < 0) {
             /* Trusted cert is still valid. */
             const iBool isTrusted = cmp_Block(fingerprint, &trust->fingerprint) == 0;
             unlock_Mutex(d->mtx);
