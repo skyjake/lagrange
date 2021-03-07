@@ -929,6 +929,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     }
                     else {
                         /* Disregard wheel acceleration applied by the OS. */
+                        ev.wheel.x = -ev.wheel.x;
                         ev.wheel.y = iSign(ev.wheel.y);
                     }
 #endif
