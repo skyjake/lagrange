@@ -939,7 +939,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     }
 #endif
 #if defined (iPlatformMsys)
-//                    ev.wheel.x = -ev.wheel.x;
+                    ev.wheel.x = -ev.wheel.x;
 #endif
                 }
                 iBool wasUsed = processEvent_Window(d->window, &ev);
