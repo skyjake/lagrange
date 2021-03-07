@@ -68,3 +68,4 @@ enum iFileVersion {
 #define page_Icon           "\U00010117" // "\U0001d363" // "\U0001f5b9"
 #define circle_Icon         "\u25cf"
 #define circleWhite_Icon    "\u25cb"
+#define gear_Icon           "\u2699"
