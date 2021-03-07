@@ -2324,37 +2324,33 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         /* TODO: Maybe clean this up a bit? Wheel events are used for scrolling
            but they are calculated differently based on device/mouse/trackpad. */
         const iInt2 mouseCoord = mouseCoord_Window(get_Window());
-#if defined (iPlatformApple)
-        /* On macOS, we handle both trackpad and mouse events. We expect SDL to identify
-           which device is sending the event. */
-        if (ev->wheel.which == 0) { /* Trackpad with precise scrolling w/inertia. */
+        if (isPerPixel_MouseWheelEvent(&ev->wheel)) {
             stop_Anim(&d->scrollY);
             iInt2 wheel = init_I2(ev->wheel.x, ev->wheel.y);
-#   if defined (iPlatformAppleMobile)
-            wheel.x = -wheel.x;
-#   else
-            /* Wheel mounts are in points. */
-            mulfv_I2(&wheel, get_Window()->pixelRatio);
-            /* Only scroll on one axis at a time. */
-            if (iAbs(wheel.x) > iAbs(wheel.y)) {
-                wheel.y = 0;
-            }
-            else {
-                wheel.x = 0;
-            }
-#   endif
+//#   if defined (iPlatformAppleMobile)
+//            wheel.x = -wheel.x;
+//#   else
+//            /* Wheel mounts are in points. */
+//            mulfv_I2(&wheel, get_Window()->pixelRatio);
+//            /* Only scroll on one axis at a time. */
+//            if (iAbs(wheel.x) > iAbs(wheel.y)) {
+//                wheel.y = 0;
+//            }
+//            else {
+//                wheel.x = 0;
+//            }
+//#   endif
             scroll_DocumentWidget_(d, -wheel.y);
-            scrollWideBlock_DocumentWidget_(d, mouseCoord, wheel.x, 0);
+            scrollWideBlock_DocumentWidget_(d, mouseCoord, -wheel.x, 0);
         }
-        else
-#endif
-        /* Traditional mouse wheel. */ {
-#if defined (iPlatformApple)
-            /* Disregard wheel acceleration applied by the OS. */
-            const int amount = iSign(ev->wheel.y);
-#else
+        else {
+            /* Traditional mouse wheel. */
+//#if defined (iPlatformApple)
+//            /* Disregard wheel acceleration applied by the OS. */
+//            const int amount = iSign(ev->wheel.y);
+//#else
             const int amount = ev->wheel.y;
-#endif
+//#endif
             if (keyMods_Sym(modState_Keys()) == KMOD_PRIMARY) {
                 postCommandf_App("zoom.delta arg:%d", amount > 0 ? 10 : -10);
                 return iTrue;
@@ -2365,13 +2361,8 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 smoothDuration_DocumentWidget_ *
                     /* accelerated speed for repeated wheelings */
                     (!isFinished_Anim(&d->scrollY) && pos_Anim(&d->scrollY) < 0.25f ? 0.5f : 1.0f));
-#if defined (iPlatformMsys)
-            const int horizStep = ev->wheel.x * 3;
-#else
-            const int horizStep = ev->wheel.x * -3;
-#endif
             scrollWideBlock_DocumentWidget_(
-                d, mouseCoord, horizStep * lineHeight_Text(paragraph_FontId), 167);
+                d, mouseCoord, -3 * ev->wheel.x * lineHeight_Text(paragraph_FontId), 167);
         }
         iChangeFlags(d->flags, noHoverWhileScrolling_DocumentWidgetFlag, iTrue);
         return iTrue;

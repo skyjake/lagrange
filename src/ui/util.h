@@ -43,6 +43,18 @@ iLocalDef iBool isMetricsChange_UserEvent(const SDL_Event *d) {
     return isCommand_UserEvent(d, "metrics.changed");
 }
 
+enum iMouseWheelFlag {
+    perPixel_MouseWheelFlag = iBit(9), /* e.g., trackpad or finger scroll; applied to `direction` */
+};
+
+/* Note: A future version of SDL may support per-pixel scrolling, but 2.0.x doesn't. */
+iLocalDef void setPerPixel_MouseWheelEvent(SDL_MouseWheelEvent *ev, iBool set) {
+    iChangeFlags(ev->direction, perPixel_MouseWheelFlag, set);
+}
+iLocalDef iBool isPerPixel_MouseWheelEvent(const SDL_MouseWheelEvent *ev) {
+    return (ev->direction & perPixel_MouseWheelFlag) != 0;
+}
+
 #if defined (iPlatformApple)
 #   define KMOD_PRIMARY     KMOD_GUI
 #   define KMOD_SECONDARY   KMOD_CTRL

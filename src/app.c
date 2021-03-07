@@ -901,14 +901,40 @@ void processEvents_App(enum iAppEventMode eventMode) {
                 d->isIdling = iFalse;
 #endif
                 gotEvents = iTrue;
-                /* Keyboard modifier mapping. */ {
-                    if (ev.type == SDL_KEYDOWN || ev.type == SDL_KEYUP) {
-                        /* Track Caps Lock state as a modifier. */
-                        if (ev.key.keysym.sym == SDLK_CAPSLOCK) {
-                            setCapsLockDown_Keys(ev.key.state == SDL_PRESSED);
-                        }
-                        ev.key.keysym.mod = mapMods_Keys(ev.key.keysym.mod & ~KMOD_CAPS);
+                /* Keyboard modifier mapping. */
+                if (ev.type == SDL_KEYDOWN || ev.type == SDL_KEYUP) {
+                    /* Track Caps Lock state as a modifier. */
+                    if (ev.key.keysym.sym == SDLK_CAPSLOCK) {
+                        setCapsLockDown_Keys(ev.key.state == SDL_PRESSED);
                     }
+                    ev.key.keysym.mod = mapMods_Keys(ev.key.keysym.mod & ~KMOD_CAPS);
+                }
+                /* Scroll events may be per-pixel or mouse wheel steps. */
+                if (ev.type == SDL_MOUSEWHEEL) {
+#if defined (iPlatformAppleDesktop)
+                    /* On macOS, we handle both trackpad and mouse events. We expect SDL to identify
+                       which device is sending the event. */
+                    if (ev.wheel.which == 0) {
+                        /* Trackpad with precise scrolling w/inertia (points). */
+                        setPerPixel_MouseWheelEvent(&ev.wheel, iTrue);
+                        ev.wheel.x *= -d->window->pixelRatio;
+                        ev.wheel.y *= d->window->pixelRatio;
+                        /* Only scroll on one axis at a time. */
+                        if (iAbs(ev.wheel.x) > iAbs(ev.wheel.y)) {
+                            ev.wheel.y = 0;
+                        }
+                        else {
+                            ev.wheel.x = 0;
+                        }
+                    }
+                    else {
+                        /* Disregard wheel acceleration applied by the OS. */
+                        ev.wheel.y = iSign(ev.wheel.y);
+                    }
+#endif
+#if defined (iPlatformMsys)
+//                    ev.wheel.x = -ev.wheel.x;
+#endif
                 }
                 iBool wasUsed = processEvent_Window(d->window, &ev);
                 if (!wasUsed) {

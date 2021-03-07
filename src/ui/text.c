@@ -708,12 +708,13 @@ void rasterizeSomePendingGlyphs_Text(void) {
 }
 
 enum iRunMode {
-    measure_RunMode    = 0,
-    draw_RunMode       = 1,
-    modeMask_RunMode   = 0x00ff,
-    flagsMask_RunMode  = 0xff00,
-    noWrapFlag_RunMode = iBit(9),
-    visualFlag_RunMode = iBit(10), /* actual visible bounding box of the glyph, e.g., for icons */
+    measure_RunMode                 = 0,
+    draw_RunMode                    = 1,
+    modeMask_RunMode                = 0x00ff,
+    flagsMask_RunMode               = 0xff00,
+    noWrapFlag_RunMode              = iBit(9),
+    visualFlag_RunMode              = iBit(10), /* actual visible bounding box of the glyph,
+                                                   e.g., for icons */
     permanentColorFlag_RunMode      = iBit(11),
     alwaysVariableWidthFlag_RunMode = iBit(12),
 };

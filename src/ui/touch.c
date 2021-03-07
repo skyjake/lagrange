@@ -205,15 +205,15 @@ static void update_TouchState_(void *ptr) {
                 mulvf_F3(&mom->velocity, momFriction);
                 addv_F3(&mom->accum, mulf_F3(mom->velocity, stepDurationMs / 1000.0f));
             }
-            const iInt2 points = initF3_I2(mom->accum);
-            if (points.x || points.y) {
-                subv_F3(&mom->accum, initI2_F3(points));
+            const iInt2 pixels = initF3_I2(mom->accum);
+            if (pixels.x || pixels.y) {
+                subv_F3(&mom->accum, initI2_F3(pixels));
                 dispatchEvent_Widget(mom->affinity, (SDL_Event *) &(SDL_MouseWheelEvent){
                     .type = SDL_MOUSEWHEEL,
                     .timestamp = nowTime,
-                    .which = 0, /* means "precise scrolling" in DocumentWidget */
-                    .x = points.x,
-                    .y = points.y
+                    .x = pixels.x,
+                    .y = pixels.y,
+                    .direction = perPixel_MouseWheelFlag
                 });
             }
             if (length_F3(mom->velocity) < minSpeed) {
@@ -405,9 +405,9 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                 dispatchEvent_Widget(touch->affinity, (SDL_Event *) &(SDL_MouseWheelEvent){
                     .type = SDL_MOUSEWHEEL,
                     .timestamp = SDL_GetTicks(),
-                    .which = 0, /* means "precise scrolling" in DocumentWidget */
                     .x = pixels.x,
                     .y = pixels.y,
+                    .direction = perPixel_MouseWheelFlag
                 });
                 dispatchMotion_Touch_(zero_F3(), 0);
                 /* TODO: Keep increasing movement if the direction is the same. */
