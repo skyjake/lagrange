@@ -499,14 +499,16 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     iZap(d->modeScroll);
     d->side = side;
     d->mode = -1;
-#if defined (iPlatformAppleMobile)
-    d->width = 73 * gap_UI;
-    d->itemFonts[0] = defaultBig_FontId;
-    d->itemFonts[1] = defaultBigBold_FontId;
-#else
-    d->width = 60 * gap_UI;
     d->itemFonts[0] = uiContent_FontId;
     d->itemFonts[1] = uiContentBold_FontId;
+#if defined (iPlatformAppleMobile)
+    d->width = 73 * gap_UI;
+    if (deviceType_App() == phone_AppDeviceType) {
+        d->itemFonts[0] = defaultBig_FontId;
+        d->itemFonts[1] = defaultBigBold_FontId;
+    }
+#else
+    d->width = 60 * gap_UI;
 #endif
     setFlags_Widget(w, fixedWidth_WidgetFlag, iTrue);
     iWidget *vdiv = makeVDiv_Widget();
@@ -658,6 +660,18 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, const iSidebarItem *it
 
 static void checkModeButtonLayout_SidebarWidget_(iSidebarWidget *d) {
     if (!d->modeButtons[0]) return;
+    if (deviceType_App() == phone_AppDeviceType) {
+        /* Change font size depending on orientation. */
+        const int fonts[2] = {
+            isPortrait_App() ? defaultBig_FontId : uiContent_FontId,
+            isPortrait_App() ? defaultBigBold_FontId : uiContentBold_FontId
+        };
+        if (d->itemFonts[0] != fonts[0]) {
+            d->itemFonts[0] = fonts[0];
+            d->itemFonts[1] = fonts[1];
+            updateMetrics_SidebarWidget_(d);
+        }
+    }
     const iBool isTight =
         (width_Rect(bounds_Widget(as_Widget(d->modeButtons[0]))) < d->maxButtonLabelWidth);
     for (int i = 0; i < max_SidebarMode; i++) {
