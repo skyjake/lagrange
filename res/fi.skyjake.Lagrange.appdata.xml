@@ -45,6 +45,16 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.2.2" date="2021-03-07">
+            <description>
+                <ul>
+                    <li>Stability improvements.</li>
+                    <li>Whitespace is no longer normalized when using the monospace body setting.</li>
+                    <li>Fixed issues with percent-encoded Gopher paths.</li>
+                </ul>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.2.2</url>
+        </release>
         <release version="1.2.1" date="2021-02-27">
             <description>
                 <p> This is a major feature update that also has a number of user 

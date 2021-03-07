@@ -7,7 +7,9 @@
 # Release notes
 
 ## 1.2.2
-* Whitespace is not normalized when using the monospace body setting.
+* Stability improvements.
+* Whitespace is no longer normalized when using the monospace body setting.
+* Fixed issues with percent-encoded Gopher paths.
 * macOS: Try to prevent forced use of high-performance GPU.
 
 ## 1.2.1
