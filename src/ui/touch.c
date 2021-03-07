@@ -28,6 +28,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/math.h>
 #include <SDL_timer.h>
 
+#if defined (iPlatformAppleMobile)
+#   include "../ios.h"
+#endif
+
 iDeclareType(Touch)
 iDeclareType(TouchState)
 iDeclareType(Momentum)
@@ -174,6 +178,9 @@ static void update_TouchState_(void *ptr) {
                 touch->isTapAndHold = iTrue;
                 touch->hasMoved = iFalse;
                 touch->startPos = touch->pos[0];
+#if defined (iPlatformAppleMobile)
+                playHapticEffect_iOS(tap_HapticEffect);
+#endif
             }
         }
     }

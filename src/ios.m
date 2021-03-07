@@ -22,14 +22,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "ios.h"
 #include "app.h"
+#include "ui/command.h"
 #include "ui/window.h"
 #include <SDL_events.h>
 #include <SDL_syswm.h>
 
 #import <UIKit/UIKit.h>
+#import <CoreHaptics/CoreHaptics.h>
 
 static iBool isSystemDarkMode_ = iFalse;
-static iBool isPhone_ = iFalse;
+static iBool isPhone_          = iFalse;
 
 static UIViewController *viewController_(iWindow *window) {
     SDL_SysWMinfo wm;
@@ -41,11 +43,104 @@ static UIViewController *viewController_(iWindow *window) {
     return NULL;
 }
 
-@interface KeyboardObserver : NSObject
--(void)keyboardOnScreen:(NSNotification *)notification;
+/*----------------------------------------------------------------------------------------------*/
+
+API_AVAILABLE(ios(13.0))
+@interface HapticState : NSObject
+@property (nonatomic, strong) CHHapticEngine *engine;
+@property (nonatomic, strong) NSDictionary   *tapDef;
 @end
 
-@implementation KeyboardObserver
+@implementation HapticState
+
+-(void)setup {
+    NSError *error;
+    self.engine = [[CHHapticEngine alloc] initAndReturnError:&error];
+    __weak HapticState *hs = self;
+    [self.engine setResetHandler:^{
+        NSLog(@"Haptic engine reset");
+        NSError *startupError;
+        [hs.engine startAndReturnError:&startupError];
+        if (startupError) {
+            NSLog(@"Engine couldn't restart");
+        }
+        else {
+            // TODO: Create pattern players.
+        }
+    }];
+    [self.engine setStoppedHandler:^(CHHapticEngineStoppedReason reason){
+        NSLog(@"Haptic engine stopped");
+        switch (reason) {
+            case CHHapticEngineStoppedReasonAudioSessionInterrupt:
+                break;
+            case CHHapticEngineStoppedReasonApplicationSuspended:
+                break;
+            case CHHapticEngineStoppedReasonIdleTimeout:
+                break;
+            case CHHapticEngineStoppedReasonSystemError:
+                break;
+            default:
+                break;
+        }
+    }];
+    self.tapDef = @{
+        CHHapticPatternKeyPattern:
+            @[
+                @{
+                    CHHapticPatternKeyEvent: @{
+                        CHHapticPatternKeyEventType:    CHHapticEventTypeHapticTransient,
+                        CHHapticPatternKeyTime:         @0.0,
+                        CHHapticPatternKeyEventDuration:@0.1
+                    },
+                },
+            ],
+    };
+}
+
+-(void)playTapEffect {
+    NSError *error = nil;
+    CHHapticPattern *pattern = [[CHHapticPattern alloc] initWithDictionary:self.tapDef
+                                                                     error:&error];
+    // TODO: Check the error.
+    id<CHHapticPatternPlayer> player = [self.engine createPlayerWithPattern:pattern error:&error];
+    // TODO: Check the error.
+    [self.engine startWithCompletionHandler:^(NSError *err){
+        if (err == nil) {
+            [self.engine notifyWhenPlayersFinished:^(NSError * _Nullable error) {
+                return CHHapticEngineFinishedActionStopEngine;
+            }];
+            NSError *startError = nil;
+            [player startAtTime:0.0 error:&startError];
+        }
+    }];
+}
+
+@end
+
+/*----------------------------------------------------------------------------------------------*/
+
+@interface AppState : NSObject
+@property (nonatomic, assign) BOOL isHapticsAvailable;
+@property (nonatomic, strong) NSObject *haptic;
+@end
+
+static AppState *appState_;
+
+@implementation AppState
+
+-(void)setupHaptics {
+    if (@available(iOS 13.0, *)) {
+        self.isHapticsAvailable = CHHapticEngine.capabilitiesForHardware.supportsHaptics;
+        if (self.isHapticsAvailable) {
+            HapticState *hs = [[HapticState alloc] init];
+            [hs setup];
+            self.haptic = hs;
+        }
+    } else {
+        self.isHapticsAvailable = NO;
+    }
+}
+
 -(void)keyboardOnScreen:(NSNotification *)notification {
     NSDictionary *info   = notification.userInfo;
     NSValue      *value  = info[UIKeyboardFrameEndUserInfoKey];
@@ -70,21 +165,20 @@ static void enableMouse_(iBool yes) {
     SDL_EventState(SDL_MOUSEBUTTONUP, yes);
 }
 
-KeyboardObserver *keyObs_;
-
 void setupApplication_iOS(void) {
     enableMouse_(iFalse);
     NSString *deviceModel = [[UIDevice currentDevice] model];
     if ([deviceModel isEqualToString:@"iPhone"]) {
         isPhone_ = iTrue;
     }
-    keyObs_ = [[KeyboardObserver alloc] init];
+    appState_ = [[AppState alloc] init];
+    [appState_ setupHaptics];
     NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
-    [center addObserver:keyObs_
+    [center addObserver:appState_
                selector:@selector(keyboardOnScreen:)
                    name:UIKeyboardWillShowNotification
                  object:nil];
-    [center addObserver:keyObs_
+    [center addObserver:appState_
                selector:@selector(keyboardOffScreen:)
                    name:UIKeyboardWillHideNotification
                  object:nil];
@@ -126,6 +220,17 @@ void setupWindow_iOS(iWindow *window) {
     UIViewController *ctl = viewController_(window);
     isSystemDarkMode_ = isDarkMode_(window);
     postCommandf_App("~os.theme.changed dark:%d contrast:1", isSystemDarkMode_ ? 1 : 0);
+}
+
+void playHapticEffect_iOS(enum iHapticEffect effect) {
+    if (@available(iOS 13.0, *)) {
+        HapticState *hs = (HapticState *) appState_.haptic;
+        switch(effect) {
+            case tap_HapticEffect:
+                [hs playTapEffect];
+                break;
+        }
+    }
 }
 
 iBool processEvent_iOS(const SDL_Event *ev) {

@@ -26,8 +26,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 iDeclareType(Window)
 
+enum iHapticEffect {
+    tap_HapticEffect,
+};
+
 void    setupApplication_iOS    (void);
 void    setupWindow_iOS         (iWindow *window);
 iBool   isPhone_iOS             (void);
 void    safeAreaInsets_iOS      (float *left, float *top, float *right, float *bottom);
 iBool   processEvent_iOS        (const SDL_Event *);
+void    playHapticEffect_iOS    (enum iHapticEffect effect);
