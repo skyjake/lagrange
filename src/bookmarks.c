@@ -167,7 +167,6 @@ void load_Bookmarks(iBookmarks *d, const char *dirPath) {
         }
     }
     iRelease(f);
-    fetchRemote_Bookmarks(d);
 }
 
 void save_Bookmarks(const iBookmarks *d, const char *dirPath) {

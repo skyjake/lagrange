@@ -291,6 +291,11 @@ static void loadPrefs_App_(iApp *d) {
             if (equal_Command(cmd, "uiscale")) {
                 setUiScale_Window(get_Window(), argf_Command(cmd));
             }
+            else if (equal_Command(cmd, "ca.file") || equal_Command(cmd, "ca.path")) {
+                /* Background requests may be started before these commands would get
+                   handled via the event loop. */
+                handleCommand_App(cmd);
+            }
             else if (equal_Command(cmd, "customframe")) {
                 d->prefs.customFrame = arg_Command(cmd);
             }
@@ -604,11 +609,6 @@ static void init_App_(iApp *d, int argc, char **argv) {
     d->bookmarks         = new_Bookmarks();
     d->tabEnum           = 0; /* generates unique IDs for tab pages */
     setThemePalette_Color(d->prefs.theme);
-#if defined (LAGRANGE_IDLE_SLEEP)
-    d->isIdling      = iFalse;
-    d->lastEventTime = 0;
-    d->sleepTimer    = SDL_AddTimer(1000, checkAsleep_App_, d);
-#endif
 #if defined (iPlatformAppleDesktop)
     setupApplication_MacOS();
 #endif
@@ -618,6 +618,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     init_Keys();
     loadPrefs_App_(d);
     load_Keys(dataDir_App_());
+    d->window = new_Window(d->initialWindowRect);
     load_Visited(d->visited, dataDir_App_());
     load_Bookmarks(d->bookmarks, dataDir_App_());
     load_MimeHooks(d->mimehooks, dataDir_App_());
@@ -633,9 +634,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
                       collectNewCStr_String("Getting Started"),
                       collectNewCStr_String("remotesource"),
                       0x1f306);
-        fetchRemote_Bookmarks(d->bookmarks);
     }
-    d->window = new_Window(d->initialWindowRect);
     init_Feeds(dataDir_App_());
     /* Widget state init. */
     processEvents_App(postedEventsOnly_AppEventMode);
@@ -645,6 +644,11 @@ static void init_App_(iApp *d, int argc, char **argv) {
     postCommand_App("window.unfreeze");
     d->autoReloadTimer = SDL_AddTimer(60 * 1000, postAutoReloadCommand_App_, NULL);
     postCommand_App("document.autoreload");
+#if defined (LAGRANGE_IDLE_SLEEP)
+    d->isIdling      = iFalse;
+    d->lastEventTime = 0;
+    d->sleepTimer    = SDL_AddTimer(1000, checkAsleep_App_, d);
+#endif
     d->isFinishedLaunching = iTrue;
     /* Run any commands that were pending completion of launch. */ {
         iForEach(StringList, i, d->launchCommands) {
@@ -657,6 +661,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
         }
         iRelease(openCmds);
     }
+    fetchRemote_Bookmarks(d->bookmarks);
 }
 
 static void deinit_App(iApp *d) {
@@ -1004,7 +1009,7 @@ static int resizeWatcher_(void *user, SDL_Event *event) {
             SDL_Event u = { .type = SDL_USEREVENT };
             u.user.code = command_UserEventCode;
             u.user.data1 = strdup("theme.changed");
-            u.user.windowID = id_Window(d->window);
+            /*u.user.windowID = id_Window(d->window);*/
             dispatchEvent_Widget(d->window->root, &u);
         }
 #endif
@@ -1095,12 +1100,9 @@ void postRefresh_App(void) {
 #endif
     const iBool wasPending = exchange_Atomic(&d->pendingRefresh, iTrue);
     if (!wasPending) {
-        SDL_Event ev;
-        ev.user.type     = SDL_USEREVENT;
-        ev.user.code     = refresh_UserEventCode;
-        ev.user.windowID = id_Window(get_Window());
-        ev.user.data1    = NULL;
-        ev.user.data2    = NULL;
+        SDL_Event ev = { .type = SDL_USEREVENT };
+        ev.user.code = refresh_UserEventCode;
+        //ev.user.windowID = id_Window(get_Window());
         SDL_PushEvent(&ev);
     }
 }
@@ -1111,7 +1113,6 @@ void postCommand_App(const char *command) {
     if (strlen(command) == 0) {
         return;
     }
-    SDL_Event ev;
     if (*command == '!') {
         /* Global command; this is global context so just ignore. */
         command++;
@@ -1124,11 +1125,10 @@ void postCommand_App(const char *command) {
             return;
         }
     }
-    ev.user.type     = SDL_USEREVENT;
-    ev.user.code     = command_UserEventCode;
-    ev.user.windowID = id_Window(get_Window());
-    ev.user.data1    = strdup(command);
-    ev.user.data2    = NULL;
+    SDL_Event ev = { .type = SDL_USEREVENT };
+    ev.user.code = command_UserEventCode;
+    /*ev.user.windowID = id_Window(get_Window());*/
+    ev.user.data1 = strdup(command);
     SDL_PushEvent(&ev);
     if (app_.commandEcho) {
         printf("[command] %s\n", command); fflush(stdout);

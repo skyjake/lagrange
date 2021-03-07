@@ -1833,6 +1833,7 @@ uint32_t frameTime_Window(const iWindow *d) {
 }
 
 iWindow *get_Window(void) {
+    /* TODO: This should be thread-specific. */
     return theWindow_;
 }
 

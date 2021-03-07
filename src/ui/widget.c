@@ -1142,7 +1142,8 @@ static void printTree_Widget_(const iWidget *d, int indent) {
                cstr_String(text_LabelWidget((const iLabelWidget *) d)),
                cstr_String(command_LabelWidget((const iLabelWidget *) d)));
     }
-    printf("size:%dx%d flags:%08llx\n", d->rect.size.x, d->rect.size.y, d->flags);
+    printf("size:%dx%d flags:%08llx\n", d->rect.size.x, d->rect.size.y,
+           (long long unsigned int) d->flags);
     iConstForEach(ObjectList, i, d->children) {
         printTree_Widget_(i.object, indent + 1);
     }
