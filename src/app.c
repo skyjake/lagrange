@@ -634,7 +634,6 @@ static void init_App_(iApp *d, int argc, char **argv) {
                       collectNewCStr_String("Getting Started"),
                       collectNewCStr_String("remotesource"),
                       0x1f306);
-        fetchRemote_Bookmarks(d->bookmarks);
     }
     init_Feeds(dataDir_App_());
     /* Widget state init. */
@@ -662,6 +661,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
         }
         iRelease(openCmds);
     }
+    fetchRemote_Bookmarks(d->bookmarks);
 }
 
 static void deinit_App(iApp *d) {
