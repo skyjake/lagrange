@@ -453,9 +453,12 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         if (!isPreformat || (prevType != preformatted_GmLineType)) {
             int required =
                 iMax(topMargin[type], bottomMargin[prevType]) * lineHeight_Text(paragraph_FontId);
-            if ((type == link_GmLineType && prevType == link_GmLineType) ||
-                (type == quote_GmLineType && prevType == quote_GmLineType)) {
-                /* No margin between consecutive links/quote lines. */
+            if (type == link_GmLineType && prevType == link_GmLineType) {
+                /* Reduced margin between consecutive links. */
+                required *= 0.75f;
+            }
+            if (type == quote_GmLineType && prevType == quote_GmLineType) {
+                /* No margin between consecutive quote lines. */
                 required = 0;
             }
             if (isEmpty_Array(&d->layout)) {
