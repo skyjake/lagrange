@@ -122,10 +122,12 @@ static enum iGmLineType lineType_GmDocument_(const iGmDocument *d, const iRangec
     return text_GmLineType;
 }
 
-static void trimLine_Rangecc_(iRangecc *line, enum iGmLineType type) {
+static void trimLine_Rangecc_(iRangecc *line, enum iGmLineType type, iBool normalize) {
     static const unsigned int skip[max_GmLineType] = { 0, 2, 3, 1, 1, 2, 3, 0 };
     line->start += skip[type];
-    trim_Rangecc(line);
+    if (normalize || (type >= heading1_GmLineType && type <= heading3_GmLineType)) {
+        trim_Rangecc(line);
+    }
 }
 
 static int lastVisibleRunBottom_GmDocument_(const iGmDocument *d) {
@@ -364,7 +366,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                     d->size.x - indents[preformatted_GmLineType] * gap_Text) {
                     preFont = preformattedSmall_FontId;
                 }
-                trimLine_Rangecc_(&line, type);
+                trimLine_Rangecc_(&line, type, isNormalized);
                 preAltText = line;
                 /* TODO: store and link the alt text to this run */
                 continue;
@@ -376,9 +378,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                     type = text_GmLineType;
                 }
             }
-            if (isNormalized) {
-                trimLine_Rangecc_(&line, type);
-            }
+            trimLine_Rangecc_(&line, type, isNormalized);
             run.font = fonts[type];
             /* Remember headings for the document outline. */
             if (type == heading1_GmLineType || type == heading2_GmLineType || type == heading3_GmLineType) {
