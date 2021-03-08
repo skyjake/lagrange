@@ -40,6 +40,7 @@ iDeclareType(GmLink)
 struct Impl_GmLink {
     iString url;
     iRangecc urlRange; /* URL in the source */
+    iRangecc labelIcon; /* special icon defined in the label text */
     iTime when;
     int flags;
 };
@@ -227,9 +228,24 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
         *linkId = size_PtrArray(&d->links); /* index + 1 */
         iRangecc desc = capturedRange_RegExpMatch(&m, 2);
         trim_Rangecc(&desc);
+        link->labelIcon = iNullRange;
         if (!isEmpty_Range(&desc)) {
             line = desc; /* Just show the description. */
             link->flags |= humanReadable_GmLinkFlag;
+            /* Check for a custom icon. */
+            if (link->flags & gemini_GmLinkFlag && ~link->flags & remote_GmLinkFlag) {
+                iChar icon = 0;
+                int len = 0;
+                if ((len = decodeBytes_MultibyteChar(desc.start, size_Range(&desc), &icon)) > 0) {
+                    if (desc.start + len < desc.end && (isSymbol_Char(icon) || isEmoji_Char(icon)) &&
+                        !isFitzpatrickType_Char(icon)) {
+                        link->flags |= iconFromLabel_GmLinkFlag;
+                        link->labelIcon = (iRangecc){ desc.start, desc.start + len };
+                        line.start += len;
+                        line.start = skipSpace_CStr(line.start);
+                    }
+                }
+            }
         }
         else {
             line = capturedRange_RegExpMatch(&m, 1); /* Show the URL. */
@@ -520,6 +536,10 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                                              : link->flags & mailto_GmLinkFlag ? envelope
                                              : link->flags & remote_GmLinkFlag ? globe
                                                                                : arrow);
+            /* Custom link icon is shown on local Gemini links only. */
+            if (!isEmpty_Range(&link->labelIcon)) {
+                icon.text = link->labelIcon;
+            }
             icon.font = regular_FontId;
             if (link->flags & remote_GmLinkFlag) {
                 icon.visBounds.pos.x -= gap_Text / 2;
@@ -1449,6 +1469,10 @@ enum iColorId linkColor_GmDocument(const iGmDocument *d, iGmLinkId linkId, enum 
         if (part == icon_GmLinkPart) {
             if (isUnsupported) {
                 return tmBadLink_ColorId;
+            }
+            if (link->flags & iconFromLabel_GmLinkFlag) {
+                return link->flags & visited_GmLinkFlag ? tmLinkTextHover_ColorId
+                                                        : tmLinkText_ColorId;
             }
             if (link->flags & visited_GmLinkFlag) {
                 return link->flags & www_GmLinkFlag ? tmHypertextLinkIconVisited_ColorId
