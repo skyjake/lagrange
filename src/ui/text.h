@@ -39,7 +39,7 @@ enum iFontId {
     defaultLarge_FontId,
     defaultLargeBold_FontId,
     defaultMonospace_FontId,
-    defaultContentSized_FontId,    
+    defaultContentSized_FontId,
     /* content fonts */
     regular_FontId,
     monospace_FontId,
@@ -138,14 +138,16 @@ iLocalDef iBool isDefaultIgnorable_Char(iChar c) {
 }
 iLocalDef iBool isEmoji_Char(iChar c) {
     return (c >= 0x1f300 && c < 0x1f700) || (c >= 0x1f7e0 && c <= 0x1f7eb) ||
-           (c >= 0x1f900 && c <= 0x1f9ff);
+           (c >= 0x1f900 && c <= 0x1f9ff) || (c >= 0x1fa70 && c <= 0x1faff);
 }
 iLocalDef iBool isDingbats_Char(iChar c) {
     return c >= 0x2702 && c <= 0x27b0;
 }
 iLocalDef iBool isSymbol_Char(iChar c) {
-    return (c == 0x2218 || c == 0x2219) || (c >= 0x1f680 && c <= 0x1f6c0) ||
-           (c >= 0x2300 && c <= 0x26ff);
+    return (c == 0x21a9) ||
+           (c == 0x2218 || c == 0x2219) ||
+           (c >= 0x2300 && c <= 0x26ff) ||
+           (c >= 0x1f680 && c <= 0x1f6c0);
 }
 
 #define emojiVariationSelector_Char     ((iChar) 0xfe0f)

@@ -469,10 +469,6 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         if (!isPreformat || (prevType != preformatted_GmLineType)) {
             int required =
                 iMax(topMargin[type], bottomMargin[prevType]) * lineHeight_Text(paragraph_FontId);
-            if (type == link_GmLineType && prevType == link_GmLineType) {
-                /* Reduced margin between consecutive links. */
-                required *= 0.75f;
-            }
             if (type == quote_GmLineType && prevType == quote_GmLineType) {
                 /* No margin between consecutive quote lines. */
                 required = 0;
@@ -541,8 +537,19 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 icon.text = link->labelIcon;
             }
             icon.font = regular_FontId;
-            if (link->flags & remote_GmLinkFlag) {
-                icon.visBounds.pos.x -= gap_Text / 2;
+            /* Center the icon within the indentation. */ {
+                const iRect visBounds = visualBounds_Text(icon.font, icon.text);
+                const int   visWidth  = width_Rect(visBounds);
+                /* Keep the icon aligned to the left edge. */
+                icon.visBounds.pos.x -= left_Rect(visBounds);
+                if (visWidth > width_Rect(icon.visBounds)) {
+                    /* ...unless it's a wide icon, in which case move it to the left. */
+                    icon.visBounds.pos.x -= visWidth - width_Rect(icon.visBounds);
+                }
+                else if (visWidth < width_Rect(icon.visBounds) * 3 / 4) {
+                    /* ...or a narrow icon, which needs to be centered but leave a gap. */
+                    icon.visBounds.pos.x += (width_Rect(icon.visBounds) * 3 / 4 - visWidth) / 2;
+                }
             }
             icon.color = linkColor_GmDocument(d, run.linkId, icon_GmLinkPart);
             icon.flags |= decoration_GmRunFlag;
@@ -750,6 +757,8 @@ static void setDerivedThemeColors_(enum iGmDocumentTheme theme) {
                          addSatLum_HSLColor(get_HSLColor(tmParagraph_ColorId), 0.3f, -0.025f));
         }
     }
+    set_Color(tmLinkCustomIconVisited_ColorId,
+              mix_Color(get_Color(tmLinkIconVisited_ColorId), get_Color(tmLinkIcon_ColorId), 0.5f));
 #if 0
     set_Color(tmOutlineHeadingAbove_ColorId, get_Color(white_ColorId));
     set_Color(tmOutlineHeadingBelow_ColorId, get_Color(black_ColorId));
@@ -1471,8 +1480,8 @@ enum iColorId linkColor_GmDocument(const iGmDocument *d, iGmLinkId linkId, enum 
                 return tmBadLink_ColorId;
             }
             if (link->flags & iconFromLabel_GmLinkFlag) {
-                return link->flags & visited_GmLinkFlag ? tmLinkTextHover_ColorId
-                                                        : tmLinkText_ColorId;
+                return link->flags & visited_GmLinkFlag ? tmLinkCustomIconVisited_ColorId
+                                                        : tmLinkIcon_ColorId;
             }
             if (link->flags & visited_GmLinkFlag) {
                 return link->flags & www_GmLinkFlag ? tmHypertextLinkIconVisited_ColorId
