@@ -1397,11 +1397,18 @@ SDL_Renderer *renderer_Window(const iWindow *d) {
     return d->render;
 }
 
+iInt2 maxTextureSize_Window(const iWindow *d) {
+    SDL_RendererInfo info;
+    SDL_GetRendererInfo(d->render, &info);
+    return init_I2(info.max_texture_width, info.max_texture_height);
+}
+
 iBool isFullscreen_Window(const iWindow *d) {
     return snap_Window(d) == fullscreen_WindowSnap;
 }
 
 static void invalidate_Window_(iWindow *d) {
+    iUnused(d);
     resetFonts_Text();
     postCommand_App("theme.changed"); /* forces UI invalidation */
 }
