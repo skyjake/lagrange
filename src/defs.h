@@ -69,3 +69,4 @@ enum iFileVersion {
 #define circle_Icon         "\u25cf"
 #define circleWhite_Icon    "\u25cb"
 #define gear_Icon           "\u2699"
+#define explosion_Icon      "\U0001f4a5"

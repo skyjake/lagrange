@@ -2844,11 +2844,19 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
     const iInt2   origin = d->viewPos;
     if (run->mediaType == image_GmRunMediaType) {
         SDL_Texture *tex = imageTexture_Media(media_GmDocument(d->widget->doc), run->mediaId);
+        const iRect dst = moved_Rect(run->visBounds, origin);
         if (tex) {
-            const iRect dst = moved_Rect(run->visBounds, origin);
             fillRect_Paint(&d->paint, dst, tmBackground_ColorId); /* in case the image has alpha */
             SDL_RenderCopy(d->paint.dst->render, tex, NULL,
                            &(SDL_Rect){ dst.pos.x, dst.pos.y, dst.size.x, dst.size.y });
+        }
+        else {
+            drawRect_Paint(&d->paint, dst, tmQuoteIcon_ColorId);
+            drawCentered_Text(uiLabel_FontId,
+                              dst,
+                              iFalse,
+                              tmQuote_ColorId,
+                              explosion_Icon "  Error Loading Image");
         }
         return;
     }
