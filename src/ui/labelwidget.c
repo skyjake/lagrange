@@ -245,17 +245,19 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
     if (d->icon && d->icon != 0x20) { /* no need to draw an empty icon */
         iString str;
         initUnicodeN_String(&str, &d->icon, 1);
-        drawCentered_Text(d->font,
-                          (iRect){ addX_I2(add_I2(bounds.pos, padding_(flags)),
-                                           (flags & extraPadding_WidgetFlag ? -2 : -1) * gap_UI),
-                                   init_I2(iconPad, lineHeight_Text(d->font)) },
-                          iTrue,
-                          isCaution ? uiTextCaution_ColorId
-                          : flags & (disabled_WidgetFlag | pressed_WidgetFlag) ? fg
-                          : isHover                                            ? uiIconHover_ColorId
-                                                                               : uiIcon_ColorId,
-                          "%s",
-                          cstr_String(&str));
+        drawCentered_Text(
+            d->font,
+            (iRect){
+                add_I2(add_I2(bounds.pos, padding_(flags)),
+                       init_I2((flags & extraPadding_WidgetFlag ? -2 : -1) * gap_UI, -gap_UI / 8)),
+                init_I2(iconPad, lineHeight_Text(d->font)) },
+            iTrue,
+            isCaution                                            ? uiTextCaution_ColorId
+            : flags & (disabled_WidgetFlag | pressed_WidgetFlag) ? fg
+            : isHover                                            ? uiIconHover_ColorId
+                                                                 : uiIcon_ColorId,
+            "%s",
+            cstr_String(&str));
         deinit_String(&str);
     }
     if (flags & wrapText_WidgetFlag) {
