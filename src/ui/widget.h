@@ -195,18 +195,18 @@ iLocalDef iWidget *parent_Widget(const iAnyObject *d) {
     return NULL;
 }
 
-iBool   isVisible_Widget    (const iAnyObject *);
-iBool   isDisabled_Widget   (const iAnyObject *);
-iBool   isFocused_Widget    (const iAnyObject *);
-iBool   isHover_Widget      (const iAnyObject *);
-iBool   isSelected_Widget   (const iAnyObject *);
-iBool   isCommand_Widget    (const iWidget *d, const SDL_Event *ev, const char *cmd);
-iBool   hasParent_Widget    (const iWidget *d, const iWidget *someParent);
-void    setId_Widget        (iWidget *, const char *id);
-void    setFlags_Widget     (iWidget *, int64_t flags, iBool set);
-void    setPos_Widget       (iWidget *, iInt2 pos);
-void    setSize_Widget      (iWidget *, iInt2 size);
-void    setPadding_Widget   (iWidget *, int left, int top, int right, int bottom);
+iBool   isVisible_Widget            (const iAnyObject *);
+iBool   isDisabled_Widget           (const iAnyObject *);
+iBool   isFocused_Widget            (const iAnyObject *);
+iBool   isHover_Widget              (const iAnyObject *);
+iBool   isSelected_Widget           (const iAnyObject *);
+iBool   isCommand_Widget            (const iWidget *d, const SDL_Event *ev, const char *cmd);
+iBool   hasParent_Widget            (const iWidget *d, const iWidget *someParent);
+void    setId_Widget                (iWidget *, const char *id);
+void    setFlags_Widget             (iWidget *, int64_t flags, iBool set);
+void    setPos_Widget               (iWidget *, iInt2 pos);
+void    setSize_Widget              (iWidget *, iInt2 size);
+void    setPadding_Widget           (iWidget *, int left, int top, int right, int bottom);
 iLocalDef void setPadding1_Widget   (iWidget *d, int padding) { setPadding_Widget(d, padding, padding, padding, padding); }
 void    setVisualOffset_Widget      (iWidget *d, int value, uint32_t span, int animFlags);
 void    setBackgroundColor_Widget   (iWidget *, int bgColor);
@@ -217,22 +217,24 @@ iAny *  addChildPos_Widget          (iWidget *, iAnyObject *child, enum iWidgetA
 iAny *  addChildFlags_Widget        (iWidget *, iAnyObject *child, int64_t childFlags); /* holds a ref */
 iAny *  insertChildAfter_Widget     (iWidget *, iAnyObject *child, size_t afterIndex);
 iAny *  insertChildAfterFlags_Widget(iWidget *, iAnyObject *child, size_t afterIndex, int64_t childFlags);
-iAny *  removeChild_Widget  (iWidget *, iAnyObject *child); /* returns a ref */
-iAny *  child_Widget        (iWidget *, size_t index); /* O(n) */
-size_t  childIndex_Widget   (const iWidget *, const iAnyObject *child); /* O(n) */
-void    arrange_Widget      (iWidget *);
-iBool   dispatchEvent_Widget(iWidget *, const SDL_Event *);
-iBool   processEvent_Widget (iWidget *, const SDL_Event *);
-void    postCommand_Widget  (const iAnyObject *, const char *cmd, ...);
-void    refresh_Widget      (const iAnyObject *);
-
-void    setFocus_Widget     (iWidget *);
-iWidget *focus_Widget       (void);
-iWidget *hover_Widget       (void);
-void    unhover_Widget      (void);
-void    setMouseGrab_Widget (iWidget *);
-iWidget *mouseGrab_Widget   (void);
-iBool   hasVisibleChildOnTop_Widget(const iWidget *parent);
-void    printTree_Widget    (const iWidget *);
+iAny *  removeChild_Widget          (iWidget *, iAnyObject *child); /* returns a ref */
+iAny *  child_Widget                (iWidget *, size_t index); /* O(n) */
+size_t  childIndex_Widget           (const iWidget *, const iAnyObject *child); /* O(n) */
+void    arrange_Widget              (iWidget *);
+iBool   dispatchEvent_Widget        (iWidget *, const SDL_Event *);
+iBool   processEvent_Widget         (iWidget *, const SDL_Event *);
+void    postCommand_Widget          (const iAnyObject *, const char *cmd, ...);
+void    refresh_Widget              (const iAnyObject *);
 
 iBool   equalWidget_Command (const char *cmd, const iWidget *widget, const char *checkCommand);
+
+void        setFocus_Widget         (iWidget *);
+iWidget *   focus_Widget            (void);
+void        setHover_Widget         (iWidget *);
+iWidget *   hover_Widget            (void);
+void        unhover_Widget          (void);
+void        setMouseGrab_Widget     (iWidget *);
+iWidget *   mouseGrab_Widget        (void);
+iBool       hasVisibleChildOnTop_Widget
+                                    (const iWidget *parent);
+void        printTree_Widget        (const iWidget *);

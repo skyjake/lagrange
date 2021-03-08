@@ -557,7 +557,7 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
     if (!d->parent) {
         if (ev->type == SDL_MOUSEMOTION) {
             /* Hover widget may change. */
-            rootData_.hover = NULL;
+            setHover_Widget(NULL);
         }
         if (rootData_.focus && isKeyboardEvent_(ev)) {
             /* Root dispatches keyboard events directly to the focused widget. */
@@ -577,7 +577,7 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
              flags_Widget(d) & hover_WidgetFlag && ~flags_Widget(d) & hidden_WidgetFlag &&
              ~flags_Widget(d) & disabled_WidgetFlag) {
         if (contains_Widget(d, init_I2(ev->motion.x, ev->motion.y))) {
-            rootData_.hover = d;
+            setHover_Widget(d);
         }
     }
     if (filterEvent_Widget_(d, ev)) {
@@ -1032,6 +1032,10 @@ void setFocus_Widget(iWidget *d) {
 
 iWidget *focus_Widget(void) {
     return rootData_.focus;
+}
+
+void setHover_Widget(iWidget *d) {
+    rootData_.hover = d;
 }
 
 iWidget *hover_Widget(void) {

@@ -148,7 +148,8 @@ static void dispatchClick_Touch_(const iTouch *d, int button) {
     btn.state = SDL_RELEASED;
     btn.timestamp = SDL_GetTicks();
     dispatchEvent_Widget(get_Window()->root, (SDL_Event *) &btn);
-    dispatchMotion_Touch_(zero_F3(), 0);
+    //dispatchMotion_Touch_(zero_F3(), 0);
+    setHover_Widget(NULL); /* FIXME: this doesn't seem to do anything? */
 }
 
 static void clearWidgetMomentum_TouchState_(iTouchState *d, iWidget *widget) {
@@ -169,8 +170,13 @@ static void update_TouchState_(void *ptr) {
         iTouch *touch = i.value;
         /* Holding a touch will reset previous momentum for this widget. */
         if (isStationary_Touch_(touch)) {
-            if (nowTime - touch->startTime > 25) {
+            const int elapsed = nowTime - touch->startTime;
+            if (elapsed > 25) {
                 clearWidgetMomentum_TouchState_(d, touch->affinity);
+            }
+            if (elapsed > 50) {
+                /* Looks like a possible tap. */
+                dispatchMotion_Touch_(touch->pos[0], 0);
             }
             if (!touch->isTapAndHold && nowTime - touch->startTime >= longPressSpanMs_ &&
                 touch->affinity) {
@@ -217,6 +223,7 @@ static void update_TouchState_(void *ptr) {
                 });
             }
             if (length_F3(mom->velocity) < minSpeed) {
+                setHover_Widget(NULL);
                 remove_ArrayIterator(&m);
             }
         }
@@ -322,8 +329,10 @@ iBool processEvent_Touch(const SDL_Event *ev) {
         };
         pushPos_Touch_(&newTouch, pos, fing->timestamp);
         pushBack_Array(d->touches, &newTouch);
-        /* Some widgets rely on hover state. */
-        dispatchMotion_Touch_(pos, 0);
+        /* Some widgets rely on hover state for scrolling. */
+        if (flags_Widget(aff) & hover_WidgetFlag) {
+            setHover_Widget(aff);
+        }
         addTicker_App(update_TouchState_, d);
     }
     else if (ev->type == SDL_FINGERMOTION) {
@@ -401,7 +410,6 @@ iBool processEvent_Touch(const SDL_Event *ev) {
 //                   pixels.y, y_F3(amount), y_F3(touch->accum));
             if (pixels.x || pixels.y) {
                 setFocus_Widget(NULL);
-                dispatchMotion_Touch_(pos, 0);
                 dispatchEvent_Widget(touch->affinity, (SDL_Event *) &(SDL_MouseWheelEvent){
                     .type = SDL_MOUSEWHEEL,
                     .timestamp = SDL_GetTicks(),
@@ -409,7 +417,6 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                     .y = pixels.y,
                     .direction = perPixel_MouseWheelFlag
                 });
-                dispatchMotion_Touch_(zero_F3(), 0);
                 /* TODO: Keep increasing movement if the direction is the same. */
                 clearWidgetMomentum_TouchState_(d, touch->affinity);
             }
@@ -426,11 +433,13 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                 if (!isStationary_Touch_(touch)) {
                     dispatchClick_Touch_(touch, SDL_BUTTON_LEFT);
                 }
+                setHover_Widget(NULL);
                 remove_ArrayIterator(&i);
                 continue;
             }
             if (flags_Widget(touch->affinity) & touchDrag_WidgetFlag) {
                 dispatchButtonUp_Touch_(pos);
+                setHover_Widget(NULL);
                 remove_ArrayIterator(&i);
                 continue;
             }
@@ -442,6 +451,7 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                 !isStationary_Touch_(touch)) {
                 dispatchClick_Touch_(touch, touch->edge == left_TouchEdge ? SDL_BUTTON_X1
                                                                           : SDL_BUTTON_X2);
+                setHover_Widget(NULL);
             }
             else {
                 const size_t lastIndex = iMin(touch->posCount - 1, lastIndex_Touch_);
@@ -476,10 +486,11 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                         d->lastMomTime = nowTime;
                     }
                     pushBack_Array(d->moms, &mom);
-                    dispatchMotion_Touch_(touch->startPos, 0);
+                    //dispatchMotion_Touch_(touch->startPos, 0);
                 }
                 else {
                     dispatchButtonUp_Touch_(pos);
+                    setHover_Widget(NULL);
                 }
             }
             remove_ArrayIterator(&i);
