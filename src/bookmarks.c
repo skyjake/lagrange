@@ -197,13 +197,15 @@ void save_Bookmarks(const iBookmarks *d, const char *dirPath) {
     unlock_Mutex(d->mtx);
 }
 
-uint32_t add_Bookmarks(iBookmarks *d, const iString *url, const iString *title,
-                               const iString *tags, iChar icon) {
+uint32_t add_Bookmarks(iBookmarks *d, const iString *url, const iString *title, const iString *tags,
+                       iChar icon) {
     lock_Mutex(d->mtx);
     iBookmark *bm = new_Bookmark();
     set_String(&bm->url, url);
     set_String(&bm->title, title);
-    if (tags) set_String(&bm->tags, tags);
+    if (tags) {
+        set_String(&bm->tags, tags);
+    }
     bm->icon = icon;
     initCurrent_Time(&bm->when);
     insert_Bookmarks_(d, bm);
@@ -441,7 +443,7 @@ void requestFinished_Bookmarks(iBookmarks *d, iGmRequest *req) {
             iRangecc line = srcLine;
             trimEnd_Rangecc(&line);
             iRegExpMatch m;
-            init_RegExpMatch(&m);            
+            init_RegExpMatch(&m);
             if (matchRange_RegExp(linkPattern, line, &m)) {
                 const iRangecc url    = capturedRange_RegExpMatch(&m, 1);
                 const iRangecc title  = capturedRange_RegExpMatch(&m, 3);
