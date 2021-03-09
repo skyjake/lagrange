@@ -321,12 +321,12 @@ static iThreadResult worker_LookupWidget_(iThread *thread) {
             iString *pattern = new_String();
             iRangecc word = iNullRange;
             iBool isFirst = iTrue;
+            iString wordStr;
+            init_String(&wordStr);
             while (nextSplit_Rangecc(range_String(&d->pendingTerm), " ", &word)) {
                 if (isEmpty_Range(&word)) continue;
                 if (!isFirst) appendCStr_String(pattern, ".*");
-                const iString wordStr = { iBlockLiteral(word.start,
-                                                        word.end - word.start,
-                                                        word.end - word.start) };
+                setRange_String(&wordStr, word);
                 iConstForEach(String, ch, &wordStr) {
                     /* Escape regular expression characters. */
                     if (isSyntaxChar_RegExp(ch.value)) {
@@ -336,6 +336,7 @@ static iThreadResult worker_LookupWidget_(iThread *thread) {
                 }
                 isFirst = iFalse;
             }
+            deinit_String(&wordStr);
             iAssert(!isEmpty_String(pattern));
             job->term = new_RegExp(cstr_String(pattern), caseInsensitive_RegExpOption);
             delete_String(pattern);
