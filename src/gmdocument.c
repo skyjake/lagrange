@@ -244,7 +244,8 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
                 iChar icon = 0;
                 int len = 0;
                 if ((len = decodeBytes_MultibyteChar(desc.start, size_Range(&desc), &icon)) > 0) {
-                    if (desc.start + len < desc.end && (isSymbol_Char(icon) || isEmoji_Char(icon)) &&
+                    if (desc.start + len < desc.end &&
+                        (isPictograph_Char(icon) || isEmoji_Char(icon)) &&
                         !isFitzpatrickType_Char(icon)) {
                         link->flags |= iconFromLabel_GmLinkFlag;
                         link->labelIcon = (iRangecc){ desc.start, desc.start + len };
