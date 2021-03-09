@@ -1808,6 +1808,16 @@ iInt2 rootSize_Window(const iWindow *d) {
     return d ? d->root->rect.size : zero_I2();
 }
 
+iRect safeRootRect_Window(const iWindow *d) {
+    iRect rect = { zero_I2(), d->root->rect.size };
+#if defined (iPlatformAppleMobile)
+    float left, top, right, bottom;
+    safeAreaInsets_iOS(&left, &top, &right, &bottom);
+    adjustEdges_Rect(&rect, top, right, bottom, left);
+#endif
+    return rect;
+}
+
 iInt2 visibleRootSize_Window(const iWindow *d) {
     return addY_I2(rootSize_Window(d), -d->keyboardHeight);
 }

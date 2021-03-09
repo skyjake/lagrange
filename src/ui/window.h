@@ -92,6 +92,7 @@ void        setKeyboardHeight_Window(iWindow *, int height);
 
 uint32_t    id_Window               (const iWindow *);
 iInt2       rootSize_Window         (const iWindow *);
+iRect       safeRootRect_Window     (const iWindow *);
 iInt2       visibleRootSize_Window  (const iWindow *); /* may be obstructed by software keyboard */
 iInt2       maxTextureSize_Window   (const iWindow *);
 float       uiScale_Window          (const iWindow *);

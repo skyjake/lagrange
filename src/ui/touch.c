@@ -130,7 +130,7 @@ static void dispatchMotion_Touch_(iFloat3 pos, int buttonState) {
     });
 }
 
-static void dispatchClick_Touch_(const iTouch *d, int button) {
+static iBool dispatchClick_Touch_(const iTouch *d, int button) {
     const iFloat3 tapPos = d->pos[0];
     SDL_MouseButtonEvent btn = {
         .type = SDL_MOUSEBUTTONDOWN,
@@ -142,7 +142,7 @@ static void dispatchClick_Touch_(const iTouch *d, int button) {
         .x = x_F3(tapPos),
         .y = y_F3(tapPos)
     };
-    dispatchEvent_Widget(get_Window()->root, (SDL_Event *) &btn);
+    iBool wasUsed = dispatchEvent_Widget(get_Window()->root, (SDL_Event *) &btn);
     /* Immediately released, too. */
     btn.type = SDL_MOUSEBUTTONUP;
     btn.state = SDL_RELEASED;
@@ -150,6 +150,7 @@ static void dispatchClick_Touch_(const iTouch *d, int button) {
     dispatchEvent_Widget(get_Window()->root, (SDL_Event *) &btn);
     //dispatchMotion_Touch_(zero_F3(), 0);
     setHover_Widget(NULL); /* FIXME: this doesn't seem to do anything? */
+    return wasUsed;
 }
 
 static void clearWidgetMomentum_TouchState_(iTouchState *d, iWidget *widget) {
@@ -305,7 +306,7 @@ iBool processEvent_Touch(const SDL_Event *ev) {
         iWidget *aff = hitChild_Widget(window->root, init_I2(iRound(x), iRound(y_F3(pos))));
         /* TODO: We must retain a reference to the affinity widget, or otherwise it might
            be destroyed during the gesture. */
-//        printf("aff:%p (%s)\n", aff, aff ? class_Widget(aff)->name : "-");
+        printf("aff:%p (%s)\n", aff, aff ? class_Widget(aff)->name : "-");
         if (flags_Widget(aff) & touchDrag_WidgetFlag) {
             dispatchEvent_Widget(window->root, (SDL_Event *) &(SDL_MouseButtonEvent){
                 .type = SDL_MOUSEBUTTONDOWN,

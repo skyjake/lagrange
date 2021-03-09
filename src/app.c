@@ -1218,12 +1218,14 @@ static void updateDropdownSelection_(iLabelWidget *dropButton, const char *selec
 }
 
 static void updateColorThemeButton_(iLabelWidget *button, int theme) {
+    if (!button) return;
 //    const char *mode = strstr(cstr_String(id_Widget(as_Widget(button))), ".dark")
 //                           ? "dark" : "light";
     updateDropdownSelection_(button, format_CStr(".set arg:%d", theme));
 }
 
 static void updateFontButton_(iLabelWidget *button, int font) {
+    if (!button) return;
     updateDropdownSelection_(button, format_CStr(".set arg:%d", font));
 }
 

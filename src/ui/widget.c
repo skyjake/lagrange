@@ -153,11 +153,13 @@ void setFlags_Widget(iWidget *d, int64_t flags, iBool set) {
         }
         iChangeFlags(d->flags, flags, set);
         if (flags & keepOnTop_WidgetFlag) {
+            iPtrArray *onTop = onTop_RootData_();
             if (set) {
-                pushBack_PtrArray(onTop_RootData_(), d);
+                iAssert(indexOf_PtrArray(onTop, d) == iInvalidPos);
+                pushBack_PtrArray(onTop, d);
             }
             else {
-                removeOne_PtrArray(onTop_RootData_(), d);
+                removeOne_PtrArray(onTop, d);
             }
         }
     }
@@ -169,10 +171,17 @@ void setPos_Widget(iWidget *d, iInt2 pos) {
 }
 
 void setSize_Widget(iWidget *d, iInt2 size) {
-    if (size.x < 0) size.x = d->rect.size.x;
-    if (size.y < 0) size.y = d->rect.size.y;
+    int flags = fixedSize_WidgetFlag;
+    if (size.x < 0) {
+        size.x = d->rect.size.x;
+        flags &= ~fixedWidth_WidgetFlag;
+    }
+    if (size.y < 0) {
+        size.y = d->rect.size.y;
+        flags &= ~fixedHeight_WidgetFlag;
+    }
     d->rect.size = size;
-    setFlags_Widget(d, fixedSize_WidgetFlag, iTrue);
+    setFlags_Widget(d, flags, iTrue);
 }
 
 void setPadding_Widget(iWidget *d, int left, int top, int right, int bottom) {
@@ -498,16 +507,24 @@ void arrange_Widget(iWidget *d) {
     }
 }
 
+static void applyVisualOffset_Widget_(const iWidget *d, iInt2 *pos) {
+    if (d->flags & visualOffset_WidgetFlag) {
+        const int off = iRound(value_Anim(&d->visualOffset));
+        if (d->flags & horizontalOffset_WidgetFlag) {
+            pos->x += off;
+        }
+        else {
+            pos->y += off;
+        }
+    }
+}
+
 iRect bounds_Widget(const iWidget *d) {
     iRect bounds = d->rect;
-    if (d->flags & visualOffset_WidgetFlag) {
-        bounds.pos.y += iRound(value_Anim(&d->visualOffset));
-    }
+    applyVisualOffset_Widget_(d, &bounds.pos);
     for (const iWidget *w = d->parent; w; w = w->parent) {
         iInt2 pos = w->rect.pos;
-        if (w->flags & visualOffset_WidgetFlag) {
-            pos.y += iRound(value_Anim(&w->visualOffset));
-        }
+        applyVisualOffset_Widget_(w, &pos);
         addv_I2(&bounds.pos, pos);
     }
 #if defined (iPlatformMobile)
@@ -595,6 +612,14 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
             if (dispatchEvent_Widget(child, ev)) {
 #if 0
                 if (ev->type == SDL_MOUSEBUTTONDOWN) {
+                    printf("[%p] %s:'%s' ate the button %d\n",
+                           child, class_Widget(child)->name,
+                           cstr_String(id_Widget(child)), ev->button.button);
+                    fflush(stdout);
+                }
+#endif
+#if 0
+                if (ev->type == SDL_MOUSEBUTTONDOWN) {
                     printf("widget %p ('%s' class:%s) ate the mouse down\n",
                            child, cstr_String(id_Widget(child)),
                            class_Widget(child)->name);
@@ -637,20 +662,25 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
         postCommand_Widget(d, "mouse.moved coord:%d %d", ev->motion.x, ev->motion.y);
         return iTrue;
     }
-    else if (d->flags & overflowScrollable_WidgetFlag && ev->type == SDL_MOUSEWHEEL) {
+    else if (d->flags & overflowScrollable_WidgetFlag && ev->type == SDL_MOUSEWHEEL &&
+             ~d->flags & visualOffset_WidgetFlag) {
         iRect bounds = bounds_Widget(d);
-        const iInt2 winSize = rootSize_Window(get_Window());
-        if (height_Rect(bounds) > winSize.y) {
+        const iInt2 rootSize = rootSize_Window(get_Window());
+        const iRect winRect = safeRootRect_Window(get_Window());
+        const int yTop = top_Rect(winRect);
+        const int yBottom = bottom_Rect(winRect);
+        const int safeBottom = rootSize.y - yBottom;
+        if (height_Rect(bounds) > height_Rect(winRect)) {
             int step = ev->wheel.y;
-#if !defined (iPlatformApple)
-            step *= lineHeight_Text(uiLabel_FontId);
-#endif
+            if (!isPerPixel_MouseWheelEvent(&ev->wheel)) {
+                step *= lineHeight_Text(uiLabel_FontId);
+            }
             bounds.pos.y += step;
             if (step > 0) {
-                bounds.pos.y = iMin(bounds.pos.y, 0);
+                bounds.pos.y = iMin(bounds.pos.y, yTop);
             }
             else {
-                bounds.pos.y = iMax(bounds.pos.y, winSize.y - height_Rect(bounds));
+                bounds.pos.y = iMax(bounds.pos.y, rootSize.y + safeBottom - height_Rect(bounds));
             }
             d->rect.pos = localCoord_Widget(d->parent, bounds.pos);
             refresh_Widget(d);
@@ -676,6 +706,15 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
                            ev->button.y);
     }
     if (d->flags & mouseModal_WidgetFlag && isMouseEvent_(ev)) {
+        if ((ev->type == SDL_MOUSEBUTTONDOWN || ev->type == SDL_MOUSEBUTTONUP) &&
+            d->flags & commandOnClick_WidgetFlag) {
+            postCommand_Widget(d,
+                               "mouse.clicked arg:%d button:%d coord:%d %d",
+                               ev->type == SDL_MOUSEBUTTONDOWN ? 1 : 0,
+                               ev->button.button,
+                               ev->button.x,
+                               ev->button.y);
+        }
         setCursor_Window(get_Window(), SDL_SYSTEM_CURSOR_ARROW);
         return iTrue;
     }
@@ -801,14 +840,15 @@ void drawChildren_Widget(const iWidget *d) {
     /* Root draws the on-top widgets on top of everything else. */
     if (!d->parent) {
         iConstForEach(PtrArray, i, onTop_RootData_()) {
-            draw_Widget(*i.value);
+            const iWidget *top = *i.value;
+            draw_Widget(top);
         }
     }
 }
 
 void draw_Widget(const iWidget *d) {
     drawBackground_Widget(d);
-    drawChildren_Widget(d);
+    drawChildren_Widget(d);    
 }
 
 iAny *addChild_Widget(iWidget *d, iAnyObject *child) {
@@ -903,7 +943,7 @@ iAny *hitChild_Widget(const iWidget *d, iInt2 coord) {
     }
     /* Check for on-top widgets first. */
     if (!d->parent) {
-        iForEach(PtrArray, i, onTop_RootData_()) {
+        iReverseForEach(PtrArray, i, onTop_RootData_()) {
             iWidget *child = i.ptr;
 //            printf("ontop: %s (%s) hidden:%d hittable:%d\n", cstr_String(id_Widget(child)),
 //                   class_Widget(child)->name,
@@ -920,8 +960,8 @@ iAny *hitChild_Widget(const iWidget *d, iInt2 coord) {
             if (found) return found;
         }
     }
-    if ((d->flags & overflowScrollable_WidgetFlag || class_Widget(d) != &Class_Widget) &&
-        ~d->flags & unhittable_WidgetFlag &&
+    if ((d->flags & overflowScrollable_WidgetFlag || class_Widget(d) != &Class_Widget ||
+         d->flags & mouseModal_WidgetFlag) && ~d->flags & unhittable_WidgetFlag &&
         contains_Widget(d, coord)) {
         return iConstCast(iWidget *, d);
     }
@@ -1168,6 +1208,10 @@ iBool hasVisibleChildOnTop_Widget(const iWidget *parent) {
 }
 
 void printTree_Widget(const iWidget *d) {
+    if (!d) {
+        printf("[NULL]\n");
+        return;
+    }
     printTree_Widget_(d, 0);
 }
 

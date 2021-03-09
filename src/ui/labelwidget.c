@@ -22,6 +22,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "labelwidget.h"
 #include "text.h"
+#include "defs.h"
 #include "color.h"
 #include "paint.h"
 #include "app.h"
@@ -147,7 +148,9 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
     const iBool    isFrameless = (flags & frameless_WidgetFlag) != 0;
     const iBool    isButton    = d->click.button != 0;
     /* Default color state. */
-    *bg     = isButton && ~flags & noBackground_WidgetFlag ? uiBackground_ColorId : none_ColorId;
+    *bg     = isButton && ~flags & noBackground_WidgetFlag ? (d->widget.bgColor != none_ColorId ?
+                                                              d->widget.bgColor : uiBackground_ColorId)
+                                                           : none_ColorId;
     *fg     = uiText_ColorId;
     *frame1 = isButton ? uiEmboss1_ColorId : d->widget.frameColor;
     *frame2 = isButton ? uiEmboss2_ColorId : *frame1;
@@ -248,6 +251,7 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
         drawCentered_Text(
             d->font,
             (iRect){
+                /* The icon position is fine-tuned; c.f. high baseline of Source Sans Pro. */
                 add_I2(add_I2(bounds.pos, padding_(flags)),
                        init_I2((flags & extraPadding_WidgetFlag ? -2 : -1.20f) * gap_UI, -gap_UI / 8)),
                 init_I2(iconPad, lineHeight_Text(d->font)) },
@@ -293,6 +297,14 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
                           d->alignVisual,
                           fg,
                           cstr_String(&d->label));
+    }
+    if (flags & chevron_WidgetFlag) {
+        const iRect chRect = rect;
+        const int chSize = lineHeight_Text(d->font);
+        drawCentered_Text(d->font,
+                          (iRect){ addX_I2(topRight_Rect(chRect), -iconPad),
+                                   init_I2(chSize, height_Rect(chRect)) },
+                          iTrue, fg, rightAngle_Icon);
     }
     unsetClip_Paint(&p);
 }
@@ -436,6 +448,7 @@ iChar icon_LabelWidget(const iLabelWidget *d) {
 }
 
 const iString *text_LabelWidget(const iLabelWidget *d) {
+    if (!d) return collectNew_String();
     return &d->label;
 }
 
