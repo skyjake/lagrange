@@ -498,7 +498,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
         add_Bookmarks(d->bookmarks,
                       collectNewCStr_String("gemini://skyjake.fi/lagrange/getting_started.gmi"),
                       collectNewCStr_String("Getting Started"),
-                      collectNewCStr_String("remotesource"),
+                      NULL,
                       0x1f306);
         fetchRemote_Bookmarks(d->bookmarks);
     }
