@@ -326,10 +326,10 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         tmLinkText_ColorId,
     };
     const float indents[max_GmLineType] = {
-        5, 10, 5, isNarrow ? 5 : 10, 0, 0, 2.5f, 5
+        5, 10, 5, isNarrow ? 5 : 10, 0, 0, 0, 5
     };
     static const float topMargin[max_GmLineType] = {
-        0.0f, 0.333f, 1.0f, 0.5f, 2.0f, 1.5f, 1.0f, 0.25f
+        0.0f, 0.333f, 1.0f, 0.5f, 2.0f, 1.5f, 1.25f, 0.25f
     };
     static const float bottomMargin[max_GmLineType] = {
         0.0f, 0.333f, 1.0f, 0.5f, 0.5f, 0.5f, 0.5f, 0.25f
@@ -364,6 +364,8 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     iBool            addSiteBanner = d->bannerType != none_GmDocumentBanner;
     const iBool      isNormalized  = isNormalized_GmDocument_(d);
     enum iGmLineType prevType      = text_GmLineType;
+    enum iGmLineType prevNonBlankType = text_GmLineType;
+    iBool            followsBlank  = iFalse;
     if (d->format == plainText_GmDocumentFormat) {
         isPreformat = iTrue;
         isFirstText = iFalse;
@@ -463,7 +465,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             if (type != quote_GmLineType) {
                 addQuoteIcon = prefs->quoteIcon;
             }
-            /* TODO: Extra skip needed here? */
+            followsBlank = iTrue;
             continue;
         }
         /* Begin indenting after the first preformatted block. */
@@ -477,6 +479,9 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         if (!isPreformat || (prevType != preformatted_GmLineType)) {
             int required =
                 iMax(topMargin[type], bottomMargin[prevType]) * lineHeight_Text(paragraph_FontId);
+            if (type == link_GmLineType && prevNonBlankType == link_GmLineType && followsBlank) {
+                required = 1.25f * lineHeight_Text(paragraph_FontId);
+            }
             if (type == quote_GmLineType && prevType == quote_GmLineType) {
                 /* No margin between consecutive quote lines. */
                 required = 0;
@@ -497,6 +502,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         /* List bullet. */
         run.color = colors[type];
         if (type == bullet_GmLineType) {
+            /* TODO: Literata bullet is broken? */
             iGmRun bulRun = run;
             bulRun.color = tmQuote_ColorId;
             bulRun.visBounds.pos  = addX_I2(pos, indent * gap_Text);
@@ -686,6 +692,8 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             }
         }
         prevType = type;
+        prevNonBlankType = type;
+        followsBlank = iFalse;
     }
     d->size.y = pos.y;
     /* Go over the preformatted blocks and mark them wide if at least one run is wide. */ {
