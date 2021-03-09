@@ -249,7 +249,7 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
             d->font,
             (iRect){
                 add_I2(add_I2(bounds.pos, padding_(flags)),
-                       init_I2((flags & extraPadding_WidgetFlag ? -2 : -1) * gap_UI, -gap_UI / 8)),
+                       init_I2((flags & extraPadding_WidgetFlag ? -2 : -1.20f) * gap_UI, -gap_UI / 8)),
                 init_I2(iconPad, lineHeight_Text(d->font)) },
             iTrue,
             isCaution                                            ? uiTextCaution_ColorId
