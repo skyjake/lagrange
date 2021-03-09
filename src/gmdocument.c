@@ -35,6 +35,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <ctype.h>
 
+iBool isDark_GmDocumentTheme(enum iGmDocumentTheme d) {
+    if (d == gray_GmDocumentTheme) {
+        return isDark_ColorTheme(colorTheme_App());
+    }
+    return d == colorfulDark_GmDocumentTheme || d == black_GmDocumentTheme;
+}
+
 iDeclareType(GmLink)
 
 struct Impl_GmLink {
@@ -379,7 +386,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 preFont = preformatted_FontId;
                 /* Use a smaller font if the block contents are wide. */
                 if (measurePreformattedBlock_GmDocument_(d, line.start, preFont).x >
-                    d->size.x - indents[preformatted_GmLineType] * gap_Text) {
+                    d->size.x /*- indents[preformatted_GmLineType] * gap_Text*/) {
                     preFont = preformattedSmall_FontId;
                 }
                 trimLine_Rangecc_(&line, type, isNormalized);
@@ -906,17 +913,36 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
             set_Color(tmBannerIcon_ColorId, get_Color(teal_ColorId));
         }
         else if (theme == gray_GmDocumentTheme) {
-            set_Color(tmBackground_ColorId, mix_Color(get_Color(gray25_ColorId), get_Color(black_ColorId), 0.25f));
-            set_Color(tmParagraph_ColorId, mix_Color(get_Color(gray75_ColorId), get_Color(white_ColorId), 0.25f));
-            set_Color(tmFirstParagraph_ColorId, mix_Color(get_Color(gray75_ColorId), get_Color(white_ColorId), 0.5f));
-            set_Color(tmQuote_ColorId, get_Color(orange_ColorId));
-            set_Color(tmPreformatted_ColorId, get_Color(orange_ColorId));
-            set_Color(tmHeading1_ColorId, get_Color(cyan_ColorId));
-            set_Color(tmHeading2_ColorId, mix_Color(get_Color(cyan_ColorId), get_Color(white_ColorId), 0.66f));
-            set_Color(tmHeading3_ColorId, get_Color(white_ColorId));
-            set_Color(tmBannerBackground_ColorId, mix_Color(get_Color(gray25_ColorId), get_Color(black_ColorId), 0.5f));
-            set_Color(tmBannerTitle_ColorId, get_Color(teal_ColorId));
-            set_Color(tmBannerIcon_ColorId, get_Color(teal_ColorId));
+            if (isDark_ColorTheme(colorTheme_App())) {
+                set_Color(tmBackground_ColorId, mix_Color(get_Color(gray25_ColorId), get_Color(black_ColorId), 0.25f));
+                set_Color(tmParagraph_ColorId, mix_Color(get_Color(gray75_ColorId), get_Color(white_ColorId), 0.25f));
+                set_Color(tmFirstParagraph_ColorId, mix_Color(get_Color(gray75_ColorId), get_Color(white_ColorId), 0.5f));
+                set_Color(tmQuote_ColorId, get_Color(orange_ColorId));
+                set_Color(tmPreformatted_ColorId, get_Color(orange_ColorId));
+                set_Color(tmHeading1_ColorId, get_Color(cyan_ColorId));
+                set_Color(tmHeading2_ColorId, mix_Color(get_Color(cyan_ColorId), get_Color(white_ColorId), 0.66f));
+                set_Color(tmHeading3_ColorId, get_Color(white_ColorId));
+                set_Color(tmBannerBackground_ColorId, mix_Color(get_Color(gray25_ColorId), get_Color(black_ColorId), 0.5f));
+                set_Color(tmBannerTitle_ColorId, get_Color(teal_ColorId));
+                set_Color(tmBannerIcon_ColorId, get_Color(teal_ColorId));
+            }
+            else {
+                set_Color(tmBackground_ColorId, mix_Color(get_Color(gray75_ColorId), get_Color(gray50_ColorId), 0.33f));
+                set_Color(tmFirstParagraph_ColorId, mix_Color(get_Color(gray25_ColorId), get_Color(black_ColorId), 0.5f));
+                set_Color(tmParagraph_ColorId, get_Color(black_ColorId));
+                set_Color(tmQuote_ColorId, get_Color(teal_ColorId));
+                set_Color(tmPreformatted_ColorId, get_Color(brown_ColorId));
+                set_Color(tmHeading1_ColorId, get_Color(brown_ColorId));
+                set_Color(tmHeading2_ColorId, mix_Color(get_Color(brown_ColorId), get_Color(black_ColorId), 0.5f));
+                set_Color(tmHeading3_ColorId, get_Color(black_ColorId));
+                set_Color(tmBannerBackground_ColorId, mix_Color(get_Color(gray75_ColorId), get_Color(gray50_ColorId), 0.12f));
+                set_Color(tmBannerTitle_ColorId, get_Color(orange_ColorId));
+                set_Color(tmBannerIcon_ColorId, get_Color(orange_ColorId));
+                set_Color(tmLinkIconVisited_ColorId, mix_Color(get_Color(cyan_ColorId), get_Color(black_ColorId), 0.20f));
+                set_Color(tmLinkDomain_ColorId, mix_Color(get_Color(cyan_ColorId), get_Color(black_ColorId), 0.33f));
+                set_Color(tmHypertextLinkIconVisited_ColorId, mix_Color(get_Color(orange_ColorId), get_Color(black_ColorId), 0.33f));
+                set_Color(tmHypertextLinkDomain_ColorId, mix_Color(get_Color(orange_ColorId), get_Color(black_ColorId), 0.33f));
+            }
         }
         else if (theme == sepia_GmDocumentTheme) {
             const iHSLColor base = { 40, 0.6f, 0.9f, 1.0f };
@@ -1110,7 +1136,8 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
             set_Color(tmQuote_ColorId, get_Color(tmPreformatted_ColorId));
             set_Color(tmInlineContentMetadata_ColorId, get_Color(tmHeading3_ColorId));
         }
-        else if (theme == black_GmDocumentTheme || theme == gray_GmDocumentTheme) {
+        else if (theme == black_GmDocumentTheme ||
+                 (theme == gray_GmDocumentTheme && isDark_ColorTheme(colorTheme_App()))) {
             const float primHue        = hues[primIndex];
             const iHSLColor primBright = { primHue, 1, 0.6f, 1 };
             const iHSLColor primDim    = { primHue, 1, normLum[primIndex] + (theme == gray_GmDocumentTheme ? 0.0f : -0.3f), 1};
@@ -1119,6 +1146,18 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
             setHsl_Color(tmPreformatted_ColorId, altBright);
             setHsl_Color(tmHeading1_ColorId, primBright);
             set_Color(tmHeading2_ColorId, mix_Color(get_Color(tmHeading1_ColorId), get_Color(white_ColorId), 0.66f));
+            setHsl_Color(tmBannerTitle_ColorId, primDim);
+            setHsl_Color(tmBannerIcon_ColorId, primDim);
+        }
+        else if (theme == gray_GmDocumentTheme) { /* Light gray. */
+            const float primHue        = hues[primIndex];
+            const iHSLColor primBright = { primHue, 1, 0.3f, 1 };
+            const iHSLColor primDim    = { primHue, 1, normLum[primIndex] * 0.33f, 1 };
+            const iHSLColor altBright  = { altHue, 1, normLum[altIndex[0]] * 0.27f, 1 };
+            setHsl_Color(tmQuote_ColorId, altBright);
+            setHsl_Color(tmPreformatted_ColorId, altBright);
+            setHsl_Color(tmHeading1_ColorId, primBright);
+            set_Color(tmHeading2_ColorId, mix_Color(get_Color(tmHeading1_ColorId), get_Color(black_ColorId), 0.4f));
             setHsl_Color(tmBannerTitle_ColorId, primDim);
             setHsl_Color(tmBannerIcon_ColorId, primDim);
         }

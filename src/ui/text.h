@@ -143,7 +143,7 @@ iLocalDef iBool isEmoji_Char(iChar c) {
 iLocalDef iBool isDingbats_Char(iChar c) {
     return c >= 0x2702 && c <= 0x27b0;
 }
-iLocalDef iBool isSymbol_Char(iChar c) {
+iLocalDef iBool isPictograph_Char(iChar c) {
     return (c == 0x21a9) ||
            (c == 0x2218 || c == 0x2219) ||
            (c >= 0x2300 && c <= 0x26ff) ||

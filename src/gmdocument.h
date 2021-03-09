@@ -44,10 +44,7 @@ enum iGmDocumentTheme {
     highContrast_GmDocumentTheme,
 };
 
-iLocalDef iBool isDark_GmDocumentTheme(enum iGmDocumentTheme d) {
-    return d == colorfulDark_GmDocumentTheme || d == black_GmDocumentTheme ||
-           d == gray_GmDocumentTheme;
-}
+iBool isDark_GmDocumentTheme(enum iGmDocumentTheme);
 
 typedef uint16_t iGmLinkId;
 
