@@ -354,13 +354,14 @@ iInt2 delta_Click(const iClick *d) {
 
 iWidget *makePadding_Widget(int size) {
     iWidget *pad = new_Widget();
+    setId_Widget(pad, "padding");
     setSize_Widget(pad, init1_I2(size));
     return pad;
 }
 
 iLabelWidget *makeHeading_Widget(const char *text) {
     iLabelWidget *heading = new_LabelWidget(text, NULL);
-    setFlags_Widget(as_Widget(heading), frameless_WidgetFlag | alignLeft_WidgetFlag /*| fixedSize_WidgetFlag*/, iTrue);
+    setFlags_Widget(as_Widget(heading), frameless_WidgetFlag | alignLeft_WidgetFlag, iTrue);
     setBackgroundColor_Widget(as_Widget(heading), none_ColorId);
     return heading;
 }
@@ -942,6 +943,72 @@ static iBool isTwoColumnPage_(iWidget *d) {
     return iFalse;
 }
 
+static iBool isOmittedPref_(const iString *id) {
+    static const char *omittedPrefs[] = {
+        "prefs.downloads",
+        "prefs.smoothscroll",
+        "prefs.imageloadscroll",
+        "prefs.retainwindow",
+        "prefs.ca.file",
+        "prefs.ca.path",
+    };
+    iForIndices(i, omittedPrefs) {
+        if (cmp_String(id, omittedPrefs[i]) == 0) {
+            return iTrue;
+        }
+    }
+    return iFalse;
+}
+
+enum iPrefsElement {
+    panelTitle_PrefsElement,
+    heading_PrefsElement,
+    toggle_PrefsElement,
+    dropdown_PrefsElement,
+    radioButton_PrefsElement,
+    textInput_PrefsElement,
+};
+
+static iAnyObject *addPanelChild_(iWidget *panel, iAnyObject *child, int64_t flags,
+                                  enum iPrefsElement elementType,
+                                  enum iPrefsElement precedingElementType) {
+    /* Erase redundant/unused headings. */
+    if (precedingElementType == heading_PrefsElement &&
+        (!child || elementType == heading_PrefsElement)) {
+        iRelease(removeChild_Widget(panel, back_ObjectList(children_Widget(panel))));
+        if (!cmp_String(id_Widget(constAs_Widget(back_ObjectList(children_Widget(panel)))), "padding")) {
+            iRelease(removeChild_Widget(panel, back_ObjectList(children_Widget(panel))));
+        }
+    }
+    if (child) {
+        /* Insert padding between different element types. */
+        if (precedingElementType != panelTitle_PrefsElement) {
+            if (elementType == heading_PrefsElement ||
+                (elementType == toggle_PrefsElement &&
+                 precedingElementType != toggle_PrefsElement &&
+                 precedingElementType != heading_PrefsElement)) {
+                addChild_Widget(panel, iClob(makePadding_Widget(lineHeight_Text(defaultBig_FontId))));
+            }
+        }
+        if (elementType == toggle_PrefsElement &&
+            precedingElementType != toggle_PrefsElement) {
+            flags |= borderTop_WidgetFlag;
+        }
+        return addChildFlags_Widget(panel, child, flags);
+    }
+    return NULL;
+}
+
+static void stripTrailingColon_(iLabelWidget *label) {
+    const iString *text = text_LabelWidget(label);
+    if (endsWith_String(text, ":")) {
+        iString *mod = copy_String(text);
+        removeEnd_String(mod, 1);
+        updateText_LabelWidget(label, mod);
+        delete_String(mod);
+    }
+}
+
 void finalizeSheet_Widget(iWidget *sheet) {
     if (deviceType_App() == phone_AppDeviceType) {
         /* The sheet contents are completely rearranged on a phone. We'll set up a linear
@@ -982,7 +1049,6 @@ void finalizeSheet_Widget(iWidget *sheet) {
         iWidget *tabs = findChild_Widget(sheet, "prefs.tabs");
         iWidget *topPanel = new_Widget();
         setId_Widget(topPanel, "panel.top");
-        //setBackgroundColor_Widget(topPanel, red_ColorId);
         if (tabs) {
             iRelease(removeChild_Widget(sheet, child_Widget(sheet, 0))); /* heading */
             iRelease(removeChild_Widget(sheet, findChild_Widget(sheet, "dialogbuttons")));
@@ -1042,6 +1108,7 @@ void finalizeSheet_Widget(iWidget *sheet) {
         iForEach(PtrArray, j, contents) {
             iWidget *owner = topPanel;
             if (!isEmpty_PtrArray(panelButtons)) {
+                /* Create a new child panel. */
                 iLabelWidget *button = at_PtrArray(panelButtons, index_PtrArrayIterator(&j));
                 owner = new_Widget();
                 setId_Widget(owner, "panel");
@@ -1053,9 +1120,8 @@ void finalizeSheet_Widget(iWidget *sheet) {
                 setFont_LabelWidget(title, uiLabelLargeBold_FontId);
                 setTextColor_LabelWidget(title, uiHeading_ColorId);
                 addChildFlags_Widget(sheet,
-                                     iClob(owner),                                      
+                                     iClob(owner),
                                      focusRoot_WidgetFlag |
-                                     //mouseModal_WidgetFlag |
                                      hidden_WidgetFlag |
                                      disabled_WidgetFlag |
                                      arrangeVertical_WidgetFlag |
@@ -1068,57 +1134,57 @@ void finalizeSheet_Widget(iWidget *sheet) {
             iWidget *pageContent = j.ptr;
             iWidget *headings = child_Widget(pageContent, 0);
             iWidget *values   = child_Widget(pageContent, 1);
-            iBool isFirst = iTrue;
+            enum iPrefsElement prevElement = panelTitle_PrefsElement;
             while (!isEmpty_ObjectList(children_Widget(headings))) {
                 iWidget *heading = child_Widget(headings, 0);
                 iWidget *value   = child_Widget(values, 0);
                 removeChild_Widget(headings, heading);
                 removeChild_Widget(values, value);
+                if (isOmittedPref_(id_Widget(value))) {
+                    iRelease(heading);
+                    iRelease(value);
+                    continue;
+                }
+                enum iPrefsElement element = toggle_PrefsElement;
                 iLabelWidget *headingLabel = NULL;
                 iLabelWidget *valueLabel = NULL;
                 iInputWidget *valueInput = NULL;
                 if (isInstance_Object(heading, &Class_LabelWidget)) {
                     headingLabel = (iLabelWidget *) heading;
+                    stripTrailingColon_(headingLabel);
                 }
                 if (isInstance_Object(value, &Class_LabelWidget)) {
                     valueLabel = (iLabelWidget *) value;
                 }
                 if (isInstance_Object(value, &Class_InputWidget)) {
                     valueInput = (iInputWidget *) value;
+                    element = textInput_PrefsElement;
                 }
                 if (valueLabel) {
                     setFont_LabelWidget(valueLabel, defaultBig_FontId);
                 }
-                if (valueInput) {
-                    setFont_InputWidget(valueInput, defaultBig_FontId);
-                    setContentPadding_InputWidget(valueInput, 3 * gap_UI, 3 * gap_UI);
-                }
                 /* Toggles have the button on the right. */
                 if (valueLabel && cmp_String(command_LabelWidget(valueLabel), "toggle") == 0) {
+                    element = toggle_PrefsElement;
                     iWidget *div = new_Widget();
                     setBackgroundColor_Widget(div, uiBackgroundSidebar_ColorId);
-//                    setFrameColor_Widget(div, uiSeparator_ColorId);
                     setPadding_Widget(div, gap_UI, gap_UI, 4 * gap_UI, gap_UI);
                     addChildFlags_Widget(div, iClob(heading), 0);
                     setFont_LabelWidget((iLabelWidget *) heading, defaultBig_FontId);
                     addChildFlags_Widget(div, iClob(new_Widget()), expand_WidgetFlag);
                     addChild_Widget(div, iClob(value));
-                    addChildFlags_Widget(owner,
-                                         iClob(div),
-                                         borderBottom_WidgetFlag | arrangeHeight_WidgetFlag |
-                                            resizeWidthOfChildren_WidgetFlag |
-                                            arrangeHorizontal_WidgetFlag);
+                    addPanelChild_(owner,
+                                   iClob(div),
+                                   borderBottom_WidgetFlag | arrangeHeight_WidgetFlag |
+                                       resizeWidthOfChildren_WidgetFlag |
+                                       arrangeHorizontal_WidgetFlag,
+                                   element, prevElement);
                 }
                 else {
                     if (valueLabel && isEmpty_String(text_LabelWidget(valueLabel))) {
-                        /* Subheading padding goes above. */
-//                        if (!isFirst) {
-//                            addChild_Widget(owner, iClob(value));
-//                        }
-//                        else {
+                        element = heading_PrefsElement;
                         iRelease(value);
-//                        }
-                        addChildFlags_Widget(owner, iClob(heading), 0);
+                        addPanelChild_(owner, iClob(heading), 0, element, prevElement);
                         setFont_LabelWidget(headingLabel, uiLabelBold_FontId);
                     }
                     else {
@@ -1130,26 +1196,48 @@ void finalizeSheet_Widget(iWidget *sheet) {
                         }
                         const iBool isMenuButton = findChild_Widget(value, "menu") != NULL;
                         if (isMenuButton) {
+                            element = dropdown_PrefsElement;
                             setFlags_Widget(value, noBackground_WidgetFlag | frameless_WidgetFlag, iTrue);
                             setFlags_Widget(value, alignLeft_WidgetFlag, iFalse);
                         }
-                        if (valueInput || isMenuButton) {
+                        if (childCount_Widget(value) >= 2) {
+                            if (isInstance_Object(child_Widget(value, 0), &Class_InputWidget)) {
+                                element = textInput_PrefsElement;
+                                setPadding_Widget(value, 0, 0, gap_UI, 0);
+                                valueInput = child_Widget(value, 0);
+                                setFlags_Widget(as_Widget(valueInput), fixedWidth_WidgetFlag, iFalse);
+                                setFlags_Widget(as_Widget(valueInput), expand_WidgetFlag, iTrue);
+                                setFlags_Widget(value, resizeWidthOfChildren_WidgetFlag |
+                                                resizeToParentWidth_WidgetFlag, iTrue);
+                                setFont_LabelWidget(child_Widget(value, 1), defaultBig_FontId);
+                                setTextColor_LabelWidget(child_Widget(value, 1), uiAnnotation_ColorId);
+                            }
+                            else {
+                                element = radioButton_PrefsElement;
+                            }
+                        }
+                        if (valueInput) {
+                            setFont_InputWidget(valueInput, defaultBig_FontId);
+                            setContentPadding_InputWidget(valueInput, 3 * gap_UI, 3 * gap_UI);
+                        }
+                        if (element == textInput_PrefsElement || isMenuButton) {
                             setFlags_Widget(value, borderBottom_WidgetFlag, iFalse);
                             iWidget *pad = new_Widget();
                             setBackgroundColor_Widget(pad, uiBackgroundSidebar_ColorId);
                             setPadding_Widget(pad, 0, 1 * gap_UI, 0, 1 * gap_UI);
                             addChild_Widget(pad, iClob(value));
-                            addChildFlags_Widget(owner, iClob(pad), borderBottom_WidgetFlag |
-                                                 arrangeVertical_WidgetFlag |
-                                                 resizeToParentWidth_WidgetFlag |
-                                                 resizeWidthOfChildren_WidgetFlag |
-                                                 arrangeHeight_WidgetFlag);
+                            addPanelChild_(owner, iClob(pad), borderBottom_WidgetFlag |
+                                           arrangeVertical_WidgetFlag |
+                                           resizeToParentWidth_WidgetFlag |
+                                           resizeWidthOfChildren_WidgetFlag |
+                                           arrangeHeight_WidgetFlag,
+                                           element, prevElement);
                         }
                         else {
-                            addChild_Widget(owner, iClob(value));
+                            addPanelChild_(owner, iClob(value), 0, element, prevElement);
                         }
-                        /* Align radio buttons to the right. */
-                        if (childCount_Widget(value) >= 2) {
+                        /* Radio buttons expand to fill the space. */
+                        if (element == radioButton_PrefsElement) {
                             setBackgroundColor_Widget(value, uiBackgroundSidebar_ColorId);
                             setPadding_Widget(value, 4 * gap_UI, 2 * gap_UI, 4 * gap_UI, 2 * gap_UI);
                             setFlags_Widget(value,
@@ -1167,8 +1255,9 @@ void finalizeSheet_Widget(iWidget *sheet) {
                         }
                     }
                 }
-                isFirst = iFalse;
+                prevElement = element;
             }
+            addPanelChild_(owner, NULL, 0, 0, prevElement);
             destroy_Widget(pageContent);
             addChildFlags_Widget(owner, iClob(new_Widget()), expand_WidgetFlag);
         }
@@ -1539,7 +1628,7 @@ iWidget *makePreferences_Widget(void) {
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.imageloadscroll")));
     }
     /* Window. */ {
-        appendTwoColumnPage_(tabs, "Window", '2', &headings, &values);
+        appendTwoColumnPage_(tabs, "Interface", '2', &headings, &values);
 #if defined (iPlatformApple) || defined (iPlatformMSys)
         addChild_Widget(headings, iClob(makeHeading_Widget("Use system theme:")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.ostheme")));
