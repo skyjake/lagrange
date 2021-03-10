@@ -1126,7 +1126,9 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
             set_Color(tmHeading1_ColorId, get_Color(white_ColorId));
             set_Color(tmHeading2_ColorId, mix_Color(get_Color(tmBackground_ColorId), get_Color(darkHeadings ? black_ColorId : white_ColorId), 0.7f));
             set_Color(tmHeading3_ColorId, mix_Color(get_Color(tmBackground_ColorId), get_Color(darkHeadings ? black_ColorId : white_ColorId), 0.6f));
-            setHsl_Color(tmBannerBackground_ColorId, addSatLum_HSLColor(base, 0, -0.04f));
+            setHsl_Color(
+                tmBannerBackground_ColorId,
+                addSatLum_HSLColor(base, 0, isDark_ColorTheme(colorTheme_App()) ? -0.04f : 0.06f));
             setHsl_Color(tmBannerIcon_ColorId, addSatLum_HSLColor(base, 0, -0.3f));
             setHsl_Color(tmBannerTitle_ColorId, addSatLum_HSLColor(base, 0, -0.25f));
             set_Color(tmLinkIconVisited_ColorId, mix_Color(get_Color(tmBackground_ColorId), get_Color(teal_ColorId), 0.3f));
