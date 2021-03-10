@@ -91,6 +91,17 @@ void init_Widget(iWidget *d) {
     iZap(d->padding);
 }
 
+static void visualOffsetAnimation_Widget_(void *ptr) {
+    iWidget *d = ptr;
+    postRefresh_App();
+    if (!isFinished_Anim(&d->visualOffset)) {
+        addTicker_App(visualOffsetAnimation_Widget_, ptr);
+    }
+    else {
+        setFlags_Widget(d, visualOffset_WidgetFlag, iFalse);
+    }
+}
+
 void deinit_Widget(iWidget *d) {
     releaseChildren_Widget(d);
 #if !defined (NDEBUG)
@@ -100,6 +111,9 @@ void deinit_Widget(iWidget *d) {
     deinit_String(&d->id);
     if (d->flags & keepOnTop_WidgetFlag) {
         removeAll_PtrArray(onTop_RootData_(), d);
+    }
+    if (d->flags & visualOffset_WidgetFlag) {
+        removeTicker_App(visualOffsetAnimation_Widget_, d);
     }
     widgetDestroyed_Touch(d);
 }
@@ -189,17 +203,6 @@ void setPadding_Widget(iWidget *d, int left, int top, int right, int bottom) {
     d->padding[1] = top;
     d->padding[2] = right;
     d->padding[3] = bottom;
-}
-
-static void visualOffsetAnimation_Widget_(void *ptr) {
-    iWidget *d = ptr;
-    postRefresh_App();
-    if (!isFinished_Anim(&d->visualOffset)) {
-        addTicker_App(visualOffsetAnimation_Widget_, ptr);
-    }
-    else {
-        setFlags_Widget(d, visualOffset_WidgetFlag, iFalse);
-    }
 }
 
 void setVisualOffset_Widget(iWidget *d, int value, uint32_t span, int animFlags) {
