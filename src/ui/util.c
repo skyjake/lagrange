@@ -1062,7 +1062,7 @@ static iWidget *makeValuePadding_(iWidget *value) {
 }
 
 void finalizeSheet_Widget(iWidget *sheet) {
-    if (deviceType_App() == phone_AppDeviceType) {
+    if (deviceType_App() == phone_AppDeviceType && parent_Widget(sheet) == get_Window()->root) {
         if (~flags_Widget(sheet) & keepOnTop_WidgetFlag) {
             /* Already finalized. */
             arrange_Widget(sheet);
@@ -1176,7 +1176,7 @@ void finalizeSheet_Widget(iWidget *sheet) {
                 setBackgroundColor_Widget(owner, uiBackground_ColorId);
                 addChild_Widget(owner, iClob(makePadding_Widget(navBarHeight - topSafe)));
                 iLabelWidget *title = addChildFlags_Widget(owner,
-                                                           iClob(new_LabelWidget(cstr_String(text_LabelWidget(button)), NULL)), alignLeft_WidgetFlag | frameless_WidgetFlag);
+                                                           iClob(new_LabelWidget(cstrCollect_String(upper_String(text_LabelWidget(button))), NULL)), alignLeft_WidgetFlag | frameless_WidgetFlag);
                 setFont_LabelWidget(title, uiLabelLargeBold_FontId);
                 setTextColor_LabelWidget(title, uiHeading_ColorId);
                 addChildFlags_Widget(sheet,
@@ -1377,7 +1377,19 @@ void finalizeSheet_Widget(iWidget *sheet) {
                     addChildFlags_Widget(as_Widget(back), iClob(def), moveToParentRightEdge_WidgetFlag);
                     updateSize_LabelWidget(def);
                 }
+                /* TODO: Action buttons should be added in the bottom as extra buttons. */
                 iRelease(removeChild_Widget(parent_Widget(buttons), buttons));
+                /* Styling for remaining elements. */
+                iForEach(ObjectList, i, children_Widget(topPanel)) {
+                    if (isInstance_Object(i.object, &Class_LabelWidget) &&
+                        isEmpty_String(command_LabelWidget(i.object)) &&
+                        isEmpty_String(id_Widget(i.object))) {
+                        setFlags_Widget(i.object, alignLeft_WidgetFlag, iTrue);
+                        if (font_LabelWidget(i.object) == uiLabel_FontId) {
+                            setFont_LabelWidget(i.object, uiContent_FontId);
+                        }
+                    }
+                }
             }
             addChildFlags_Widget(sheet, iClob(navi),
                                  arrangeHeight_WidgetFlag | resizeWidthOfChildren_WidgetFlag |
@@ -1431,10 +1443,16 @@ static void acceptValueInput_(iWidget *dlg) {
 }
 
 static void updateValueInputWidth_(iWidget *dlg) {
-    const iInt2 rootSize = rootSize_Window(get_Window());
+    const iRect safeRoot = safeRootRect_Window(get_Window());
+    const iInt2 rootSize = safeRoot.size;
     iWidget *   title    = findChild_Widget(dlg, "valueinput.title");
     iWidget *   prompt   = findChild_Widget(dlg, "valueinput.prompt");
-    dlg->rect.size.x     = iMaxi(iMaxi(rootSize.x / 2, title->rect.size.x), prompt->rect.size.x);
+    if (deviceType_App() == phone_AppDeviceType) {
+        dlg->rect.size.x = rootSize.x;
+    }
+    else {
+        dlg->rect.size.x = iMaxi(iMaxi(rootSize.x / 2, title->rect.size.x), prompt->rect.size.x);
+    }
     as_Widget(findChild_Widget(dlg, "input"))->rect.size.x = dlg->rect.size.x;
 }
 
@@ -1493,6 +1511,11 @@ iWidget *makeDialogButtons_Widget(const iMenuItem *actions, size_t numActions) {
     if (!haveSep) {
         addChildFlags_Widget(div, iClob(new_Widget()), expand_WidgetFlag);
     }
+    int fonts[2] = { uiLabel_FontId, uiLabelBold_FontId };
+    if (deviceType_App() == phone_AppDeviceType) {
+        fonts[0] = defaultMedium_FontId;
+        fonts[1] = defaultMediumBold_FontId;
+    }
     for (size_t i = 0; i < numActions; i++) {
         const char *label     = actions[i].label;
         const char *cmd       = actions[i].command;
@@ -1520,9 +1543,7 @@ iWidget *makeDialogButtons_Widget(const iMenuItem *actions, size_t numActions) {
         }
         iLabelWidget *button =
             addChild_Widget(div, iClob(newKeyMods_LabelWidget(actions[i].label, key, kmods, cmd)));
-        if (isDefault) {
-            setFont_LabelWidget(button, uiLabelBold_FontId);
-        }
+        setFont_LabelWidget(button, isDefault ? fonts[1] : fonts[0]);
     }
     return div;
 }
@@ -1533,6 +1554,7 @@ iWidget *makeValueInput_Widget(iWidget *parent, const iString *initialValue, con
         setFocus_Widget(NULL);
     }
     iWidget *dlg = makeSheet_Widget(command);
+//    setFlags_Widget(dlg, horizontalSafeAreaPadding_Widget, iTrue);
     setCommandHandler_Widget(dlg, valueInputHandler_);
     if (parent) {
         addChild_Widget(parent, iClob(dlg));
@@ -1543,7 +1565,13 @@ iWidget *makeValueInput_Widget(iWidget *parent, const iString *initialValue, con
     setId_Widget(
         addChildFlags_Widget(dlg, iClob(new_LabelWidget(prompt, NULL)), frameless_WidgetFlag),
         "valueinput.prompt");
-    iInputWidget *input = addChild_Widget(dlg, iClob(new_InputWidget(0)));
+    iInputWidget *input = addChildFlags_Widget(dlg, iClob(new_InputWidget(0)), 0);
+    setContentPadding_InputWidget(input, 0.5f * gap_UI, 0.5f * gap_UI);
+    if (deviceType_App() == phone_AppDeviceType) {
+        setFont_InputWidget(input, defaultBig_FontId);
+        setBackgroundColor_Widget(dlg, uiBackgroundSidebar_ColorId);
+        setContentPadding_InputWidget(input, gap_UI, gap_UI);
+    }
     if (initialValue) {
         setText_InputWidget(input, initialValue);
     }

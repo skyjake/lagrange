@@ -34,6 +34,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <SDL_mouse.h>
 #include <stdarg.h>
 
+#if defined (iPlatformAppleMobile)
+#   include "../ios.h"
+#endif
+
 iDeclareType(RootData)
 
 struct Impl_RootData {

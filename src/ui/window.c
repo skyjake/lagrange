@@ -1811,7 +1811,7 @@ iRect safeRootRect_Window(const iWindow *d) {
 #if defined (iPlatformAppleMobile)
     float left, top, right, bottom;
     safeAreaInsets_iOS(&left, &top, &right, &bottom);
-    adjustEdges_Rect(&rect, top, right, bottom, left);
+    adjustEdges_Rect(&rect, top, -right, -bottom, left);
 #endif
     return rect;
 }
