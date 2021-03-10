@@ -51,6 +51,13 @@ iChar           icon_LabelWidget        (const iLabelWidget *);
 iLabelWidget *newKeyMods_LabelWidget(const char *label, int key, int kmods, const char *command);
 iLabelWidget *newColor_LabelWidget  (const char *text, int color);
 
+iLocalDef iLabelWidget *newFont_LabelWidget(const char *label, const char *command, int fontId) {
+    iLabelWidget *d = new_LabelWidget(label, command);
+    checkIcon_LabelWidget(d);
+    setFont_LabelWidget(d, fontId);
+    return d;
+}
+
 iLocalDef iLabelWidget *newEmpty_LabelWidget(void) {
     return new_LabelWidget("", NULL);
 }

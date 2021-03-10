@@ -225,8 +225,6 @@ static const iMenuItem phoneNavMenuItems_[] = {
     { "List Feed Entries", 0, 0, "!open url:about:feeds" },
     { "---", 0, 0, NULL },
     { gear_Icon " Settings...", SDLK_COMMA, KMOD_PRIMARY, "preferences" },
-    { "Help", SDLK_F1, 0, "!open url:about:help" },
-    { "Release Notes", 0, 0, "!open url:about:version" },
 };
 #endif /* AppleMobile */
 #endif
@@ -466,7 +464,7 @@ static void updatePadding_Window_(iWindow *d) {
 #endif
 }
 
-static void dismissPortraitPhoneSidebars_(void) {
+void dismissPortraitPhoneSidebars_Window(iWindow *d) {
     if (deviceType_App() == phone_AppDeviceType && isPortrait_App()) {
         iWidget *sidebar = findWidget_App("sidebar");
         iWidget *sidebar2 = findWidget_App("sidebar2");
@@ -621,7 +619,7 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
                 postCommand_App("visited.changed"); /* sidebar will update */
                 setText_InputWidget(url, urlStr);
                 checkLoadAnimation_Window_(get_Window());
-                dismissPortraitPhoneSidebars_();
+                dismissPortraitPhoneSidebars_Window(get_Window());
                 updateNavBarIdentity_(navBar);
                 /* Icon updates should be limited to automatically chosen icons if the user
                    is allowed to pick their own in the future. */
@@ -639,7 +637,7 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
                 iInputWidget *url = findChild_Widget(navBar, "url");
                 setTextCStr_InputWidget(url, suffixPtr_Command(cmd, "url"));
                 checkLoadAnimation_Window_(get_Window());
-                dismissPortraitPhoneSidebars_();
+                dismissPortraitPhoneSidebars_Window(get_Window());
                 return iFalse;
             }
         }

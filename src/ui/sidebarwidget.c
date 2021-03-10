@@ -547,7 +547,7 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
         iLabelWidget *heading = new_LabelWidget("Identities", NULL);
         setBackgroundColor_Widget(as_Widget(heading), uiBackgroundUnfocusedSelection_ColorId);
         setTextColor_LabelWidget(heading, uiIcon_ColorId);
-        setFont_LabelWidget(addChild_Widget(vdiv, iClob(heading)),
+        setFont_LabelWidget(addChildFlags_Widget(vdiv, iClob(heading), frameless_WidgetFlag),
                             uiLabelLarge_FontId);
     }
     iWidget *content = new_Widget();
@@ -622,6 +622,7 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, const iSidebarItem *it
             const iGmDocument *doc = document_DocumentWidget(document_App());
             const iGmHeading *head = constAt_Array(headings_GmDocument(doc), item->id);
             postCommandf_App("document.goto loc:%p", head->text.start);
+            dismissPortraitPhoneSidebars_Window(get_Window());
             break;
         }
         case feeds_SidebarMode: {

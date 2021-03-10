@@ -776,6 +776,9 @@ void drawBackground_Widget(const iWidget *d) {
     }
     if (d->bgColor >= 0 || d->frameColor >= 0) {
         iRect rect = bounds_Widget(d);
+        if (d->flags & drawBackgroundToBottom_WidgetFlag) {
+            rect.size.y = rootSize_Window(get_Window()).y - top_Rect(rect);
+        }
         iPaint p;
         init_Paint(&p);
         if (d->bgColor >= 0) {

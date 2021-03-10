@@ -105,6 +105,7 @@ enum iWidgetFlag {
 #define borderBottom_WidgetFlag             iBit64(50)
 #define horizontalOffset_WidgetFlag         iBit64(51) /* default is vertical offset */
 #define chevron_WidgetFlag                  iBit64(52)
+#define drawBackgroundToBottom_WidgetFlag   iBit64(53)
 
 enum iWidgetAddPos {
     back_WidgetAddPos,
@@ -195,6 +196,9 @@ iLocalDef iWidget *parent_Widget(const iAnyObject *d) {
         return ((iWidget *) d)->parent;
     }
     return NULL;
+}
+iLocalDef iWidget *lastChild_Widget(iAnyObject *d) {
+    return (iWidget *) back_ObjectList(children_Widget(d));
 }
 
 iBool   isVisible_Widget            (const iAnyObject *);
