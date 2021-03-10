@@ -131,9 +131,12 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
         iSidebarWidget *sidebar = findChild_Widget(root, "sidebar");
         removeChild_Widget(parent_Widget(sidebar), sidebar);
         setButtonFont_SidebarWidget(sidebar, isLandscape_App() ? uiLabel_FontId : uiLabelLarge_FontId);
-        setBackgroundColor_Widget(findChild_Widget(as_Widget(sidebar), "buttons"),
-                                  isPortrait_App() ? uiBackgroundUnfocusedSelection_ColorId
-                                                   : uiBackground_ColorId);
+//        setBackgroundColor_Widget(findChild_Widget(as_Widget(sidebar), "buttons"),
+//                                  isPortrait_App() ? uiBackgroundUnfocusedSelection_ColorId
+//                                                   : uiBackgroundSidebar_ColorId);
+        setFlags_Widget(findChild_Widget(as_Widget(sidebar), "buttons"),
+                        borderTop_WidgetFlag,
+                        isPortrait_App());
         if (isLandscape_App()) {
             addChildPos_Widget(findChild_Widget(root, "tabs.content"), iClob(sidebar), front_WidgetAddPos);
             setWidth_SidebarWidget(sidebar, 73 * gap_UI);

@@ -544,11 +544,13 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
   //      }
     }
     else {
-        iLabelWidget *heading = new_LabelWidget("Identities", NULL);
-        setBackgroundColor_Widget(as_Widget(heading), uiBackgroundUnfocusedSelection_ColorId);
-        setTextColor_LabelWidget(heading, uiIcon_ColorId);
-        setFont_LabelWidget(addChildFlags_Widget(vdiv, iClob(heading), frameless_WidgetFlag),
-                            uiLabelLarge_FontId);
+        iLabelWidget *heading = new_LabelWidget(person_Icon " Identities", NULL);
+        checkIcon_LabelWidget(heading);
+        setBackgroundColor_Widget(as_Widget(heading), uiBackgroundSidebar_ColorId);
+        setTextColor_LabelWidget(heading, uiTextSelected_ColorId);
+        setFont_LabelWidget(addChildFlags_Widget(vdiv, iClob(heading), borderTop_WidgetFlag |
+                                                 alignLeft_WidgetFlag | frameless_WidgetFlag),
+                            uiLabelLargeBold_FontId);
     }
     iWidget *content = new_Widget();
     setFlags_Widget(content, resizeChildren_WidgetFlag, iTrue);
