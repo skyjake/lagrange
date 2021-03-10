@@ -482,6 +482,11 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             if (type == link_GmLineType && prevNonBlankType == link_GmLineType && followsBlank) {
                 required = 1.25f * lineHeight_Text(paragraph_FontId);
             }
+            else if (type == link_GmLineType && prevType == link_GmLineType) {
+                /* Balance space between the link icons and the labels, both vertically
+                   between icons and between the icon and the label. */
+                required *= 0.75f;
+            }
             if (type == quote_GmLineType && prevType == quote_GmLineType) {
                 /* No margin between consecutive quote lines. */
                 required = 0;
