@@ -210,41 +210,48 @@ static void initFonts_Text_(iText *d) {
     const float monoSize = textSize * 0.71f;
     const float smallMonoSize = monoSize * 0.8f;
     const iBlock *regularFont  = &fontNunitoRegular_Embedded;
+    const iBlock *boldFont     = &fontNunitoExtraBold_Embedded;
     const iBlock *italicFont   = &fontNunitoLightItalic_Embedded;
     const iBlock *h12Font      = &fontNunitoExtraBold_Embedded;
     const iBlock *h3Font       = &fontNunitoRegular_Embedded;
     const iBlock *lightFont    = &fontNunitoExtraLight_Embedded;
     float         scaling      = 1.0f; /* glyph scaling (<=1.0), for increasing line spacing */
+    float         italicScaling= 1.0f;
     float         lightScaling = 1.0f;
     float         h123Scaling  = 1.0f; /* glyph scaling (<=1.0), for increasing line spacing */
     if (d->contentFont == firaSans_TextFont) {
         regularFont = &fontFiraSansRegular_Embedded;
+        boldFont    = &fontFiraSansBold_Embedded;
         lightFont   = &fontFiraSansLight_Embedded;
         italicFont  = &fontFiraSansItalic_Embedded;
-        scaling     = lightScaling = 0.85f;
+        scaling     = italicScaling = lightScaling = 0.85f;
     }
     else if (d->contentFont == tinos_TextFont) {
         regularFont = &fontTinosRegular_Embedded;
+        boldFont    = &fontTinosBold_Embedded;
         lightFont   = &fontLiterataExtraLightopsz18_Embedded;
         italicFont  = &fontTinosItalic_Embedded;
-        scaling      = 0.85f;
+        scaling      = italicScaling = 0.85f;
     }
     else if (d->contentFont == literata_TextFont) {
         regularFont = &fontLiterataRegularopsz14_Embedded;
+        boldFont    = &fontLiterataBoldopsz36_Embedded;
         italicFont  = &fontLiterataLightItalicopsz10_Embedded;
         lightFont   = &fontLiterataExtraLightopsz18_Embedded;
     }
     else if (d->contentFont == sourceSansPro_TextFont) {
         regularFont = &fontSourceSansProRegular_Embedded;
+        boldFont    = &fontSourceSansProBold_Embedded;
         italicFont  = &fontFiraSansItalic_Embedded;
         lightFont   = &fontFiraSansLight_Embedded;
-        lightScaling = 0.85f;
+        lightScaling = italicScaling = 0.85f;
     }
     else if (d->contentFont == iosevka_TextFont) {
         regularFont = &fontIosevkaTermExtended_Embedded;
+        boldFont    = &fontIosevkaTermExtended_Embedded;
         italicFont  = &fontIosevkaTermExtended_Embedded;
         lightFont   = &fontIosevkaTermExtended_Embedded;
-        scaling     = lightScaling = 0.866f;
+        scaling     = italicScaling = lightScaling = 0.866f;
     }
     if (d->headingFont == firaSans_TextFont) {
         h12Font     = &fontFiraSansBold_Embedded;
@@ -291,11 +298,12 @@ static void initFonts_Text_(iText *d) {
         { &fontSourceSansProRegular_Embedded, textSize,             scaling, symbols_FontId },
         /* content fonts */
         { regularFont,                        textSize,             scaling,      symbols_FontId },
+        { boldFont,                           textSize,             scaling,      symbols_FontId },
         { &fontIosevkaTermExtended_Embedded,  monoSize,             1.0f,         monospaceSymbols_FontId },
         { &fontIosevkaTermExtended_Embedded,  smallMonoSize,        1.0f,         monospaceSmallSymbols_FontId },
         { regularFont,                        textSize * 1.200f,    scaling,      mediumSymbols_FontId },
         { h3Font,                             textSize * 1.333f,    h123Scaling,  bigSymbols_FontId },
-        { italicFont,                         textSize,             scaling,      symbols_FontId },
+        { italicFont,                         textSize,             italicScaling,symbols_FontId },
         { h12Font,                            textSize * 1.666f,    h123Scaling,  largeSymbols_FontId },
         { h12Font,                            textSize * 2.000f,    h123Scaling,  hugeSymbols_FontId },
         { lightFont,                          textSize * 1.666f,    lightScaling, largeSymbols_FontId },

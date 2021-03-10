@@ -301,6 +301,11 @@ static iBool isNormalized_GmDocument_(const iGmDocument *d) {
     return iTrue;
 }
 
+static enum iGmDocumentTheme currentTheme_(void) {
+    return (isDark_ColorTheme(colorTheme_App()) ? prefs_App()->docThemeDark
+                                                : prefs_App()->docThemeLight);
+}
+
 static void doLayout_GmDocument_(iGmDocument *d) {
     const iBool isMono = isForcedMonospace_GmDocument_(d);
     const iBool isNarrow = d->size.x < 90 * gap_Text;
@@ -313,7 +318,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         heading1_FontId,
         heading2_FontId,
         heading3_FontId,
-        isMono ? regularMonospace_FontId : regular_FontId,
+        isMono ? regularMonospace_FontId : bold_FontId,
     };
     static const int colors[max_GmLineType] = {
         tmParagraph_ColorId,
@@ -820,8 +825,7 @@ static void updateIconBasedOnUrl_GmDocument_(iGmDocument *d) {
 
 void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
     const iPrefs *        prefs = prefs_App();
-    enum iGmDocumentTheme theme =
-        (isDark_ColorTheme(colorTheme_App()) ? prefs->docThemeDark : prefs->docThemeLight);
+    enum iGmDocumentTheme theme = currentTheme_();
     static const iChar siteIcons[] = {
         0x203b,  0x2042,  0x205c,  0x2182,  0x25ed,  0x2600,  0x2601,  0x2604,  0x2605,  0x2606,
         0x265c,  0x265e,  0x2690,  0x2691,  0x2693,  0x2698,  0x2699,  0x26f0,  0x270e,  0x2728,
@@ -971,6 +975,9 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
             set_Color(tmBannerBackground_ColorId, mix_Color(get_Color(tmBackground_ColorId), get_Color(brown_ColorId), 0.15f));
             set_Color(tmBannerTitle_ColorId, get_Color(brown_ColorId));
             set_Color(tmBannerIcon_ColorId, get_Color(brown_ColorId));
+            set_Color(tmLinkText_ColorId, get_Color(tmHeading2_ColorId));
+            set_Color(tmHypertextLinkText_ColorId, get_Color(tmHeading2_ColorId));
+            set_Color(tmGopherLinkText_ColorId, get_Color(tmHeading2_ColorId));
         }
         else if (theme == white_GmDocumentTheme) {
             const iHSLColor base = { 40, 0, 1.0f, 1.0f };
@@ -1177,7 +1184,14 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
             setHsl_Color(tmBannerTitle_ColorId, primDim);
             setHsl_Color(tmBannerIcon_ColorId, primDim);
         }
-
+        /* Tone down the link colors a bit because bold white is quite strong to look at. */
+        if (isDark_GmDocumentTheme(theme) || theme == white_GmDocumentTheme) {
+            iHSLColor base = { hues[primIndex], 1.0f, normLum[primIndex], 1.0f };
+            set_Color(tmLinkText_ColorId, mix_Color(get_Color(tmLinkText_ColorId),
+                                                    rgb_HSLColor(base), 0.25f));
+            set_Color(tmHypertextLinkText_ColorId, get_Color(tmLinkText_ColorId));
+            set_Color(tmGopherLinkText_ColorId, get_Color(tmLinkText_ColorId));
+        }
         /* Adjust colors based on light/dark mode. */
         for (int i = tmFirst_ColorId; i < max_ColorId; i++) {
             iHSLColor color = hsl_Color(get_Color(i));
