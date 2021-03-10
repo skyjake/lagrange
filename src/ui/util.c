@@ -1040,8 +1040,35 @@ static iLabelWidget *makePanelButton_(const char *text, const char *command) {
     return btn;
 }
 
+static iWidget *makeValuePadding_(iWidget *value) {
+    iInputWidget *input = isInstance_Object(value, &Class_InputWidget) ? (iInputWidget *) value : NULL;
+    if (input) {
+        setFont_InputWidget(input, defaultBig_FontId);
+        setContentPadding_InputWidget(input, 3 * gap_UI, 3 * gap_UI);
+    }
+    iWidget *pad = new_Widget();
+    setBackgroundColor_Widget(pad, uiBackgroundSidebar_ColorId);
+    setPadding_Widget(pad, 0, 1 * gap_UI, 0, 1 * gap_UI);
+    addChild_Widget(pad, iClob(value));
+    setFlags_Widget(pad,
+                    borderTop_WidgetFlag |
+                    borderBottom_WidgetFlag |
+                    arrangeVertical_WidgetFlag |
+                    resizeToParentWidth_WidgetFlag |
+                    resizeWidthOfChildren_WidgetFlag |
+                    arrangeHeight_WidgetFlag,
+                    iTrue);
+    return pad;
+}
+
 void finalizeSheet_Widget(iWidget *sheet) {
     if (deviceType_App() == phone_AppDeviceType) {
+        if (~flags_Widget(sheet) & keepOnTop_WidgetFlag) {
+            /* Already finalized. */
+            arrange_Widget(sheet);
+            postRefresh_App();
+            return;
+        }
         /* The sheet contents are completely rearranged on a phone. We'll set up a linear
            fullscreen arrangement of the widgets. Sheets are already scrollable so they
            can be taller than the display. In hindsight, it may have been easier to
@@ -1078,6 +1105,7 @@ void finalizeSheet_Widget(iWidget *sheet) {
         iPtrArray *contents = collect_PtrArray(new_PtrArray()); /* two-column pages */
         iPtrArray *panelButtons = collect_PtrArray(new_PtrArray());
         iWidget *tabs = findChild_Widget(sheet, "prefs.tabs");
+        iWidget *dialogHeading = (tabs ? NULL : child_Widget(sheet, 0));
         const iBool isPrefs = (tabs != NULL);
         const int64_t panelButtonFlags = borderBottom_WidgetFlag | alignLeft_WidgetFlag |
                                          frameless_WidgetFlag | extraPadding_WidgetFlag;
@@ -1121,8 +1149,6 @@ void finalizeSheet_Widget(iWidget *sheet) {
         iForEach(ObjectList, i, children_Widget(sheet)) {
             iWidget *child = i.object;
             if (isTwoColumnPage_(child)) {
-                printf("Non-tabbed two-column page:\n");
-                printTree_Widget(child);
                 pushBack_PtrArray(contents, removeChild_Widget(sheet, child));
             }
             else {
@@ -1131,7 +1157,7 @@ void finalizeSheet_Widget(iWidget *sheet) {
                 iRelease(child);
             }
         }
-        iAssert(size_PtrArray(contents) == size_PtrArray(panelButtons));
+        const iBool useSlidePanels = (size_PtrArray(contents) == size_PtrArray(panelButtons));
         topPanel->rect.pos = init_I2(0, navBarHeight);
         addChildFlags_Widget(sheet, iClob(topPanel),
                              arrangeVertical_WidgetFlag |
@@ -1141,7 +1167,7 @@ void finalizeSheet_Widget(iWidget *sheet) {
         setCommandHandler_Widget(topPanel, slidePanelHandler_);
         iForEach(PtrArray, j, contents) {
             iWidget *owner = topPanel;
-            if (!isEmpty_PtrArray(panelButtons)) {
+            if (useSlidePanels) {
                 /* Create a new child panel. */
                 iLabelWidget *button = at_PtrArray(panelButtons, index_PtrArrayIterator(&j));
                 owner = new_Widget();
@@ -1256,15 +1282,11 @@ void finalizeSheet_Widget(iWidget *sheet) {
                         }
                         if (element == textInput_PrefsElement || isMenuButton) {
                             setFlags_Widget(value, borderBottom_WidgetFlag, iFalse);
-                            iWidget *pad = new_Widget();
-                            setBackgroundColor_Widget(pad, uiBackgroundSidebar_ColorId);
-                            setPadding_Widget(pad, 0, 1 * gap_UI, 0, 1 * gap_UI);
-                            addChild_Widget(pad, iClob(value));
-                            addPanelChild_(owner, iClob(pad), borderBottom_WidgetFlag |
-                                           arrangeVertical_WidgetFlag |
-                                           resizeToParentWidth_WidgetFlag |
-                                           resizeWidthOfChildren_WidgetFlag |
-                                           arrangeHeight_WidgetFlag,
+                            //iWidget *pad = new_Widget();
+                            //setBackgroundColor_Widget(pad, uiBackgroundSidebar_ColorId);
+                            //setPadding_Widget(pad, 0, 1 * gap_UI, 0, 1 * gap_UI);
+                            //addChild_Widget(pad, iClob(value));
+                            addPanelChild_(owner, iClob(makeValuePadding_(value)), 0,
                                            element, prevElement);
                         }
                         else {
@@ -1306,6 +1328,18 @@ void finalizeSheet_Widget(iWidget *sheet) {
                                  iClob(makePanelButton_(planet_Icon " About", "panel.about")),
                                  chevron_WidgetFlag);
         }
+        else {
+            /* Update heading style. */
+            setFont_LabelWidget((iLabelWidget *) dialogHeading, uiLabelLargeBold_FontId);
+            setFlags_Widget(dialogHeading, alignLeft_WidgetFlag, iTrue);
+        }
+        if (findChild_Widget(sheet, "valueinput.prompt")) {
+            iWidget *prompt = findChild_Widget(sheet, "valueinput.prompt");
+            setFlags_Widget(prompt, alignLeft_WidgetFlag, iTrue);
+            iInputWidget *input = findChild_Widget(sheet, "input");
+            removeChild_Widget(parent_Widget(input), input);
+            addChild_Widget(topPanel, iClob(makeValuePadding_(as_Widget(input))));
+        }
         /* Navbar. */ {
             iWidget *navi = new_Widget();
             setSize_Widget(navi, init_I2(-1, navBarHeight));
@@ -1315,15 +1349,41 @@ void finalizeSheet_Widget(iWidget *sheet) {
                                                       iClob(new_LabelWidget(leftAngle_Icon " Back", "panel.close")),
                                                       noBackground_WidgetFlag | frameless_WidgetFlag |
                                                       alignLeft_WidgetFlag | extraPadding_WidgetFlag);
-            setId_Widget(as_Widget(back), "panel.back");
             checkIcon_LabelWidget(back);
+            setId_Widget(as_Widget(back), "panel.back");
             setFont_LabelWidget(back, defaultBig_FontId);
+            if (!isPrefs) {
+                iWidget *buttons = findChild_Widget(sheet, "dialogbuttons");
+                iLabelWidget *cancel = findMenuItem_Widget(buttons, "cancel");
+                if (cancel) {
+                    updateText_LabelWidget(back, text_LabelWidget(cancel));
+                    setCommand_LabelWidget(back, command_LabelWidget(cancel));
+                }
+                iLabelWidget *def = (iLabelWidget *) lastChild_Widget(buttons);
+                if (def && !cancel) {
+                    updateText_LabelWidget(back, text_LabelWidget(def));
+                    setCommand_LabelWidget(back, command_LabelWidget(def));
+                    setFlags_Widget(as_Widget(back), alignLeft_WidgetFlag, iFalse);
+                    setFlags_Widget(as_Widget(back), alignRight_WidgetFlag, iTrue);
+                    setIcon_LabelWidget(back, 0);
+                    setFont_LabelWidget(back, defaultBigBold_FontId);
+                }
+                else if (def != cancel) {
+                    removeChild_Widget(buttons, def);
+                    setFont_LabelWidget(def, defaultBigBold_FontId);
+                    setFlags_Widget(as_Widget(def),
+                                    frameless_WidgetFlag | extraPadding_WidgetFlag |
+                                    noBackground_WidgetFlag, iTrue);
+                    addChildFlags_Widget(as_Widget(back), iClob(def), moveToParentRightEdge_WidgetFlag);
+                    updateSize_LabelWidget(def);
+                }
+                iRelease(removeChild_Widget(parent_Widget(buttons), buttons));
+            }
             addChildFlags_Widget(sheet, iClob(navi),
                                  arrangeHeight_WidgetFlag | resizeWidthOfChildren_WidgetFlag |
                                  resizeToParentWidth_WidgetFlag | arrangeVertical_WidgetFlag);
         }
         arrange_Widget(sheet->parent);
-        printTree_Widget(sheet);
     }
     else {
         arrange_Widget(sheet);
@@ -1376,7 +1436,6 @@ static void updateValueInputWidth_(iWidget *dlg) {
     iWidget *   prompt   = findChild_Widget(dlg, "valueinput.prompt");
     dlg->rect.size.x     = iMaxi(iMaxi(rootSize.x / 2, title->rect.size.x), prompt->rect.size.x);
     as_Widget(findChild_Widget(dlg, "input"))->rect.size.x = dlg->rect.size.x;
-    finalizeSheet_Widget(dlg);
 }
 
 iBool valueInputHandler_(iWidget *dlg, const char *cmd) {

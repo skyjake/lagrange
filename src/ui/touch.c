@@ -323,10 +323,10 @@ iBool processEvent_Touch(const SDL_Event *ev) {
         }
         /* TODO: We must retain a reference to the affinity widget, or otherwise it might
            be destroyed during the gesture. */
-        printf("aff:[%p] %s:'%s'\n", aff, aff ? class_Widget(aff)->name : "-",
-               cstr_String(id_Widget(aff)));
-        printf("drg:[%p] %s:'%s'\n", dragging, dragging ? class_Widget(dragging)->name : "-",
-               cstr_String(id_Widget(dragging)));
+//        printf("aff:[%p] %s:'%s'\n", aff, aff ? class_Widget(aff)->name : "-",
+//               cstr_String(id_Widget(aff)));
+//        printf("drg:[%p] %s:'%s'\n", dragging, dragging ? class_Widget(dragging)->name : "-",
+//               cstr_String(id_Widget(dragging)));
         if (flags_Widget(aff) & touchDrag_WidgetFlag) {
             dispatchEvent_Widget(window->root, (SDL_Event *) &(SDL_MouseButtonEvent){
                 .type = SDL_MOUSEBUTTONDOWN,

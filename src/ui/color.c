@@ -302,6 +302,8 @@ void setThemePalette_Color(enum iColorTheme theme) {
     if (deviceType_App() == phone_AppDeviceType) {
         copy_(uiInputBackground_ColorId, uiBackgroundSidebar_ColorId);
         copy_(uiInputFrame_ColorId, uiBackgroundSidebar_ColorId);
+        copy_(uiInputFrameFocused_ColorId, uiBackgroundSidebar_ColorId);
+        copy_(uiInputBackgroundFocused_ColorId, uiBackgroundSidebar_ColorId);
     }
 }
 
