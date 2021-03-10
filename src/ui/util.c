@@ -607,11 +607,12 @@ void closeMenu_Widget(iWidget *d) {
     postRefresh_App();
     postCommand_Widget(d, "menu.closed");
     if (isPortrait_App() && deviceType_App() == phone_AppDeviceType) {
+        const iBool wasDragged = iAbs(value_Anim(&d->visualOffset) - 0) > 1;
         setVisualOffset_Widget(d,
                                flags_Widget(d) & horizontalOffset_WidgetFlag ?
                                  width_Widget(d) : height_Widget(d),
-                               200,
-                               easeIn_AnimFlag | softer_AnimFlag);
+                               wasDragged ? 100 : 200,
+                               wasDragged ? 0 : easeIn_AnimFlag | softer_AnimFlag);
     }
 }
 
@@ -904,31 +905,12 @@ static iBool slidePanelHandler_(iWidget *d, const char *cmd) {
         iWidget *button = pointer_Command(cmd);
         iWidget *panel = userData_Object(button);
         openMenu_Widget(panel, zero_I2());
-        updateTextCStr_LabelWidget(findWidget_App("panel.back"), "Settings");
+//        updateTextCStr_LabelWidget(findWidget_App("panel.back"), "");
         return iTrue;
     }
     if (equal_Command(cmd, "mouse.clicked") && arg_Command(cmd) &&
         argLabel_Command(cmd, "button") == SDL_BUTTON_X1) {
         postCommand_App("panel.close");
-        return iTrue;
-    }
-    if (equal_Command(cmd, "window.resized")) {
-        iWidget *sheet = parent_Widget(d);
-#if defined (iPlatformAppleMobile)
-        float left, top, right, bottom;
-        safeAreaInsets_iOS(&left, &top, &right, &bottom);
-        /* TODO: incorrect */
-        if (isLandscape_App()) {
-            setPadding_Widget(sheet, left, 0, right, 0);
-        }
-        else {
-            setPadding1_Widget(sheet, 0);
-        }
-#endif
-    }
-    if (equal_Command(cmd, "panel.showhelp")) {
-        postCommand_App("prefs.dismiss");
-        postCommand_App("open url:about:help");
         return iTrue;
     }
     if (equal_Command(cmd, "panel.close")) {
@@ -947,7 +929,25 @@ static iBool slidePanelHandler_(iWidget *d, const char *cmd) {
         }
         return iTrue;
     }
-    return iFalse;
+    if (equal_Command(cmd, "panel.showhelp")) {
+        postCommand_App("prefs.dismiss");
+        postCommand_App("open url:about:help");
+        return iTrue;
+    }
+    if (equal_Command(cmd, "window.resized")) {
+        iWidget *sheet = parent_Widget(d);
+#if defined (iPlatformAppleMobile)
+        float left, top, right, bottom;
+        safeAreaInsets_iOS(&left, &top, &right, &bottom);
+        /* TODO: incorrect */
+        if (isLandscape_App()) {
+            setPadding_Widget(sheet, left, 0, right, 0);
+        }
+        else {
+            setPadding1_Widget(sheet, 0);
+        }
+#endif
+    }    return iFalse;
 }
 
 static iBool isTwoColumnPage_(iWidget *d) {

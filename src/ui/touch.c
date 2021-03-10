@@ -54,6 +54,7 @@ enum iTouchAxis {
 struct Impl_Touch {
     SDL_FingerID id;
     iWidget *affinity; /* widget on which the touch started */
+    iWidget *edgeDragging;
     iBool hasMoved;
     iBool isTapAndHold;
     enum iTouchEdge edge;
@@ -277,6 +278,15 @@ static iWidget *findOverflowScrollable_Widget_(iWidget *d) {
     return NULL;
 }
 
+static iWidget *findSlidePanel_Widget_(iWidget *d) {
+    for (iWidget *w = d; w; w = parent_Widget(w)) {
+        if (isVisible_Widget(w) && flags_Widget(w) & horizontalOffset_WidgetFlag) {
+            return w;
+        }
+    }
+    return NULL;
+}
+
 iBool processEvent_Touch(const SDL_Event *ev) {
     /* We only handle finger events here. */
     if (ev->type != SDL_FINGERDOWN && ev->type != SDL_FINGERMOTION && ev->type != SDL_FINGERUP) {
@@ -297,6 +307,7 @@ iBool processEvent_Touch(const SDL_Event *ev) {
         const float x = x_F3(pos);
         enum iTouchEdge edge = none_TouchEdge;
         const int edgeWidth = 30 * window->pixelRatio;
+        iWidget *dragging = NULL;
         if (x < edgeWidth) {
             edge = left_TouchEdge;
         }
@@ -304,9 +315,18 @@ iBool processEvent_Touch(const SDL_Event *ev) {
             edge = right_TouchEdge;
         }
         iWidget *aff = hitChild_Widget(window->root, init_I2(iRound(x), iRound(y_F3(pos))));
+        if (edge == left_TouchEdge) {
+            dragging = findSlidePanel_Widget_(aff);
+            if (dragging) {
+                setFlags_Widget(dragging, dragged_WidgetFlag, iTrue);
+            }
+        }
         /* TODO: We must retain a reference to the affinity widget, or otherwise it might
            be destroyed during the gesture. */
-        printf("aff:%p (%s)\n", aff, aff ? class_Widget(aff)->name : "-");
+        printf("aff:[%p] %s:'%s'\n", aff, aff ? class_Widget(aff)->name : "-",
+               cstr_String(id_Widget(aff)));
+        printf("drg:[%p] %s:'%s'\n", dragging, dragging ? class_Widget(dragging)->name : "-",
+               cstr_String(id_Widget(dragging)));
         if (flags_Widget(aff) & touchDrag_WidgetFlag) {
             dispatchEvent_Widget(window->root, (SDL_Event *) &(SDL_MouseButtonEvent){
                 .type = SDL_MOUSEBUTTONDOWN,
@@ -323,6 +343,7 @@ iBool processEvent_Touch(const SDL_Event *ev) {
         iTouch newTouch = {
             .id = fing->fingerId,
             .affinity = aff,
+            .edgeDragging = dragging,
             .hasMoved = (flags_Widget(aff) & touchDrag_WidgetFlag) != 0,
             .edge = edge,
             .startTime = nowTime,
@@ -390,8 +411,18 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                 }
             }
             /* Edge swipe aborted? */
-            if (touch->edge == left_TouchEdge && fing->dx < 0) {
-                touch->edge = none_TouchEdge;
+            if (touch->edge == left_TouchEdge) {
+                if (fing->dx < 0) {
+                    touch->edge = none_TouchEdge;
+                    if (touch->edgeDragging) {
+                        setFlags_Widget(touch->edgeDragging, dragged_WidgetFlag, iFalse);
+                        setVisualOffset_Widget(touch->edgeDragging, 0, 200, easeOut_AnimFlag);
+                        touch->edgeDragging = NULL;
+                    }
+                }
+                else if (touch->edgeDragging) {
+                    setVisualOffset_Widget(touch->edgeDragging, x_F3(pos) - x_F3(touch->startPos), 10, 0);
+                }
             }
             if (touch->edge == right_TouchEdge && fing->dx > 0) {
                 touch->edge = none_TouchEdge;
@@ -429,6 +460,9 @@ iBool processEvent_Touch(const SDL_Event *ev) {
             iTouch *touch = i.value;
             if (touch->id != fing->fingerId) {
                 continue;
+            }
+            if (touch->edgeDragging) {
+                setFlags_Widget(touch->edgeDragging, dragged_WidgetFlag, iFalse);
             }
             if (touch->isTapAndHold) {
                 if (!isStationary_Touch_(touch)) {

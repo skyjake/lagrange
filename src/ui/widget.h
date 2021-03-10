@@ -106,6 +106,7 @@ enum iWidgetFlag {
 #define horizontalOffset_WidgetFlag         iBit64(51) /* default is vertical offset */
 #define chevron_WidgetFlag                  iBit64(52)
 #define drawBackgroundToBottom_WidgetFlag   iBit64(53)
+#define dragged_WidgetFlag                  iBit64(54)
 
 enum iWidgetAddPos {
     back_WidgetAddPos,

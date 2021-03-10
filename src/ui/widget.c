@@ -152,7 +152,7 @@ void setId_Widget(iWidget *d, const char *id) {
 }
 
 const iString *id_Widget(const iWidget *d) {
-    return &d->id;
+    return d ? &d->id : collectNew_String();
 }
 
 int64_t flags_Widget(const iWidget *d) {
@@ -511,7 +511,7 @@ void arrange_Widget(iWidget *d) {
 }
 
 static void applyVisualOffset_Widget_(const iWidget *d, iInt2 *pos) {
-    if (d->flags & visualOffset_WidgetFlag) {
+    if (d->flags & (visualOffset_WidgetFlag | dragged_WidgetFlag)) {
         const int off = iRound(value_Anim(&d->visualOffset));
         if (d->flags & horizontalOffset_WidgetFlag) {
             pos->x += off;
@@ -544,7 +544,9 @@ iInt2 localCoord_Widget(const iWidget *d, iInt2 coord) {
 }
 
 iBool contains_Widget(const iWidget *d, iInt2 coord) {
-    const iRect bounds = { zero_I2(), d->rect.size };
+    const iRect bounds = { zero_I2(), addY_I2(d->rect.size,
+                                              d->flags & drawBackgroundToBottom_WidgetFlag ?
+                                                rootSize_Window(get_Window()).y : 0) };
     return contains_Rect(bounds, localCoord_Widget(d, coord));
 }
 
