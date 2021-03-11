@@ -49,6 +49,8 @@
         </array>
         <key>UILaunchStoryboardName</key>
         <string>LaunchScreen</string>
+		<key>ITSAppUsesNonExemptEncryption</key>
+		<false/>
         <key>LSSupportsOpeningDocumentsInPlace</key>
         <false/>
         <key>CFBundleDocumentTypes</key>
