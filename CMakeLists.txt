@@ -63,6 +63,7 @@ set (EMBED_RESOURCES
     res/fonts/NanumGothic-Regular.ttf
     res/fonts/NotoEmoji-Regular.ttf
     res/fonts/NotoSansJP-Regular.ttf
+    res/fonts/Nunito-Bold.ttf
     res/fonts/Nunito-ExtraBold.ttf
     res/fonts/Nunito-ExtraLight.ttf
     res/fonts/Nunito-LightItalic.ttf

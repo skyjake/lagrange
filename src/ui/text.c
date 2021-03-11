@@ -210,7 +210,7 @@ static void initFonts_Text_(iText *d) {
     const float monoSize = textSize * 0.71f;
     const float smallMonoSize = monoSize * 0.8f;
     const iBlock *regularFont  = &fontNunitoRegular_Embedded;
-    const iBlock *boldFont     = &fontNunitoExtraBold_Embedded;
+    const iBlock *boldFont     = &fontNunitoBold_Embedded;
     const iBlock *italicFont   = &fontNunitoLightItalic_Embedded;
     const iBlock *h12Font      = &fontNunitoExtraBold_Embedded;
     const iBlock *h3Font       = &fontNunitoRegular_Embedded;
@@ -418,7 +418,7 @@ static void initCache_Text_(iText *d) {
     if (renderInfo.max_texture_height > 0 && d->cacheSize.y > renderInfo.max_texture_height) {
         d->cacheSize.y = renderInfo.max_texture_height;
         d->cacheSize.x = renderInfo.max_texture_width;
-    }    
+    }
     d->cacheRowAllocStep = iMax(2, textSize / 6);
     /* Allocate initial (empty) rows. These will be assigned actual locations in the cache
        once at least one glyph is stored. */
@@ -431,7 +431,7 @@ static void initCache_Text_(iText *d) {
                                  SDL_PIXELFORMAT_RGBA4444,
                                  SDL_TEXTUREACCESS_STATIC | SDL_TEXTUREACCESS_TARGET,
                                  d->cacheSize.x,
-                                 d->cacheSize.y);    
+                                 d->cacheSize.y);
     SDL_SetTextureBlendMode(d->cache, SDL_BLENDMODE_BLEND);
 }
 
