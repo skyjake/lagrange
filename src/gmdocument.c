@@ -602,11 +602,13 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         }
         rightMargin = (type == text_GmLineType || type == bullet_GmLineType ||
                        type == quote_GmLineType ? 4 : 0);
+        const iBool isWordWrapped =
+            (d->format == plainText_GmDocumentFormat ? prefs->plainTextWrap : !isPreformat);
         iAssert(!isEmpty_Range(&runLine)); /* must have something at this point */
         while (!isEmpty_Range(&runLine)) {
             run.bounds.pos = addX_I2(pos, indent * gap_Text);
+            const int avail = isWordWrapped ? d->size.x - run.bounds.pos.x - rightMargin * gap_Text : 0;
             const char *contPos;
-            const int   avail = isPreformat ? 0 : (d->size.x - run.bounds.pos.x - rightMargin * gap_Text);
             const iInt2 dims  = tryAdvance_Text(run.font, runLine, avail, &contPos);
             iChangeFlags(run.flags, wide_GmRunFlag, (isPreformat && dims.x > d->size.x));
             run.bounds.size.x = iMax(avail, dims.x); /* Extends to the right edge for selection. */

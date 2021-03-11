@@ -1864,6 +1864,8 @@ iWidget *makePreferences_Widget(void) {
         addChildFlags_Widget(values, iClob(quote), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
         addChild_Widget(headings, iClob(makeHeading_Widget("Big 1st paragaph:")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.biglede")));
+        addChild_Widget(headings, iClob(makeHeading_Widget("Wrap plain text:")));
+        addChild_Widget(values, iClob(makeToggle_Widget("prefs.plaintext.wrap")));
     }
     /* Network. */ {
         appendTwoColumnPage_(tabs, "Network", '5', &headings, &values);

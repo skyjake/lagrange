@@ -214,6 +214,7 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "decodeurls arg:%d\n", d->prefs.decodeUserVisibleURLs);
     appendFormat_String(str, "linewidth.set arg:%d\n", d->prefs.lineWidth);
     appendFormat_String(str, "prefs.biglede.changed arg:%d\n", d->prefs.bigFirstParagraph);
+    appendFormat_String(str, "prefs.plaintext.wrap.changed arg:%d\n", d->prefs.plainTextWrap);
     appendFormat_String(str, "prefs.sideicon.changed arg:%d\n", d->prefs.sideIcon);
     appendFormat_String(str, "prefs.centershort.changed arg:%d\n", d->prefs.centerShortDocs);
     appendFormat_String(str, "quoteicon.set arg:%d\n", d->prefs.quoteIcon ? 1 : 0);
@@ -1581,6 +1582,11 @@ iBool handleCommand_App(const char *cmd) {
         postCommand_App("document.layout.changed");
         return iTrue;
     }
+    else if (equal_Command(cmd, "prefs.plaintext.wrap.changed")) {
+        d->prefs.plainTextWrap = arg_Command(cmd) != 0;
+        postCommand_App("document.layout.changed");
+        return iTrue;
+    }
     else if (equal_Command(cmd, "prefs.sideicon.changed")) {
         d->prefs.sideIcon = arg_Command(cmd) != 0;
         postRefresh_App();
@@ -1815,6 +1821,7 @@ iBool handleCommand_App(const char *cmd) {
             selected_WidgetFlag,
             iTrue);
         setToggle_Widget(findChild_Widget(dlg, "prefs.biglede"), d->prefs.bigFirstParagraph);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.plaintext.wrap"), d->prefs.plainTextWrap);
         setToggle_Widget(findChild_Widget(dlg, "prefs.sideicon"), d->prefs.sideIcon);
         setToggle_Widget(findChild_Widget(dlg, "prefs.centershort"), d->prefs.centerShortDocs);
         updateColorThemeButton_(findChild_Widget(dlg, "prefs.doctheme.dark"), d->prefs.docThemeDark);
