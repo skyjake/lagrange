@@ -22,6 +22,7 @@ project (Lagrange
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
+set (IOS_BUNDLE_VERSION 1)
 set (COPYRIGHT_YEAR 2021)
 
 # Build configuration.
@@ -190,7 +191,10 @@ if (IOS)
         app/Images.xcassets
         res/LaunchScreen.storyboard
     )
-    set_source_files_properties(app/Images.xcassets PROPERTIES
+    set_source_files_properties(
+        app/Images.xcassets
+        res/LaunchScreen.storyboard
+    PROPERTIES
         MACOSX_PACKAGE_LOCATION Resources
     )
 elseif (APPLE)
@@ -275,14 +279,16 @@ if (APPLE)
         MACOSX_BUNDLE_INFO_STRING "${PROJECT_VERSION}"
         MACOSX_BUNDLE_ICON_FILE "Lagrange.icns"
         MACOSX_BUNDLE_BUNDLE_VERSION "${PROJECT_VERSION}"
-        MACOSX_BUNDLE_LONG_VERSION_STRING "${PROJECT_VERSION}"
-        MACOSX_BUNDLE_SHORT_VERSION_STRING "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}"
-        MACOSX_BUNDLE_GUI_IDENTIFIER "fi.skyjake.Lagrange"
+        MACOSX_BUNDLE_SHORT_VERSION_STRING "${PROJECT_VERSION}"
+        MACOSX_BUNDLE_GUI_IDENTIFIER "fi.skyjake.lagrange"
         MACOSX_BUNDLE_COPYRIGHT "© ${COPYRIGHT_YEAR} Jaakko Keränen"
-        XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "fi.skyjake.Lagrange"
+        XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "fi.skyjake.lagrange"
+        XCODE_ATTRIBUTE_SKIP_INSTALL "NO"
+        XCODE_ATTRIBUTE_INSTALL_PATH "$(LOCAL_APPS_DIR)"
     )
     if (IOS)
         set_target_properties (app PROPERTIES
+            MACOSX_BUNDLE_BUNDLE_VERSION "${IOS_BUNDLE_VERSION}"
             XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2"
             XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME "AppIcon"
             MACOSX_BUNDLE_ICON_FILE "AppIcon"

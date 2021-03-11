@@ -492,7 +492,7 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                 const size_t lastIndex = iMin(touch->posCount - 1, lastIndex_Touch_);
                 const uint32_t elapsed = fing->timestamp - touch->posTime[lastIndex];
                 const float minVelocity = 400.0f;
-                if (elapsed < 85) {
+                if (elapsed < 150) {
                     velocity = divf_F3(sub_F3(pos, touch->pos[lastIndex]),
                                        (float) elapsed / 1000.0f);
                     if (touch->axis == y_TouchAxis || fabsf(x_F3(velocity)) < minVelocity) {
@@ -502,7 +502,7 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                         setY_F3(&velocity, 0.0f);
                     }
                 }
-//                printf("elap:%ums vel:%f\n", elapsed, length_F3(velocity));
+                //printf("elap:%ums vel:%f\n", elapsed, length_F3(velocity));
                 pushPos_Touch_(touch, pos, nowTime);
                 /* If short and didn't move far, do a tap (left click). */
                 if (duration < longPressSpanMs_ && isStationary_Touch_(touch)) {
