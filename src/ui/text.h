@@ -147,7 +147,7 @@ iLocalDef iBool isDingbats_Char(iChar c) {
 iLocalDef iBool isPictograph_Char(iChar c) {
     return (c == 0x21a9) ||
            (c == 0x2218 || c == 0x2219) ||
-           (c >= 0x2300 && c <= 0x26ff) ||
+           (c >= 0x2300 && c <= 0x27bf) ||
            (c >= 0x1f680 && c <= 0x1f6c0);
 }
 
