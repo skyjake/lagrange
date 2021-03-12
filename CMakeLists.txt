@@ -44,6 +44,7 @@ include (Depends.cmake)
 message (STATUS "Preparing embedded resources...")
 # Fonts are too large to comfortably embed as a C source.
 set (EMBED_RESOURCES
+    res/about/about.gmi
     res/about/help.gmi
     res/about/lagrange.gmi
     res/about/license.gmi

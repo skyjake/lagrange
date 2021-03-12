@@ -290,6 +290,9 @@ static void requestFinished_GmRequest_(iGmRequest *d, iTlsRequest *req) {
 
 static const iBlock *aboutPageSource_(iRangecc path, iRangecc query) {
     const iBlock *src = NULL;
+    if (equalCase_Rangecc(path, "about")) {
+        return &blobAbout_Embedded;
+    }
     if (equalCase_Rangecc(path, "lagrange")) {
         return &blobLagrange_Embedded;
     }
