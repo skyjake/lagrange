@@ -40,6 +40,7 @@ iDeclareType(GmLink)
 struct Impl_GmLink {
     iString url;
     iRangecc urlRange; /* URL in the source */
+    iRangecc labelRange; /* label in the source */
     iTime when;
     int flags;
 };
@@ -47,6 +48,7 @@ struct Impl_GmLink {
 void init_GmLink(iGmLink *d) {
     init_String(&d->url);
     d->urlRange = iNullRange;
+    d->labelRange = iNullRange;
     iZap(d->when);
     d->flags = 0;
 }
@@ -227,6 +229,7 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
         *linkId = size_PtrArray(&d->links); /* index + 1 */
         iRangecc desc = capturedRange_RegExpMatch(&m, 2);
         trim_Rangecc(&desc);
+        link->labelRange = desc;
         if (!isEmpty_Range(&desc)) {
             line = desc; /* Just show the description. */
             link->flags |= humanReadable_GmLinkFlag;
@@ -1397,6 +1400,14 @@ const iString *linkUrl_GmDocument(const iGmDocument *d, iGmLinkId linkId) {
 iRangecc linkUrlRange_GmDocument(const iGmDocument *d, iGmLinkId linkId) {
     const iGmLink *link = link_GmDocument_(d, linkId);
     return link->urlRange;
+}
+
+iRangecc linkLabel_GmDocument(const iGmDocument *d, iGmLinkId linkId) {
+    const iGmLink *link = link_GmDocument_(d, linkId);
+    if (isEmpty_Range(&link->labelRange)) {
+        return link->urlRange;
+    }
+    return link->labelRange;
 }
 
 int linkFlags_GmDocument(const iGmDocument *d, iGmLinkId linkId) {

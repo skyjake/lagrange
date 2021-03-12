@@ -2447,7 +2447,8 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                   format_CStr("!open noproxy:1 url:%s", cstr_String(linkUrl)) } },
                             2);
                     }
-                    iString *linkLabel = collect_String(newRange_String(d->contextLink->text));
+                    iString *linkLabel = collectNewRange_String(
+                        linkLabel_GmDocument(d->doc, d->contextLink->linkId));
                     urlEncodeSpaces_String(linkLabel);
                     pushBackN_Array(&items,
                                     (iMenuItem[]){ { "---", 0, 0, NULL },
