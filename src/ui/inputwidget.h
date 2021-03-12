@@ -32,6 +32,13 @@ enum iInputMode {
     overwrite_InputMode,
 };
 
+iDeclareType(InputWidgetContentPadding)
+
+struct Impl_InputWidgetContentPadding {
+    int left;
+    int right;
+};
+
 void    setHint_InputWidget     (iInputWidget *, const char *hintText);
 void    setMode_InputWidget     (iInputWidget *, enum iInputMode mode);
 void    setMaxLen_InputWidget   (iInputWidget *, size_t maxLen);
@@ -50,7 +57,9 @@ void    setUrlContent_InputWidget       (iInputWidget *, iBool isUrl);
 void    setNotifyEdits_InputWidget      (iInputWidget *, iBool notifyEdits);
 void    setEatEscape_InputWidget        (iInputWidget *, iBool eatEscape);
 
-const iString * text_InputWidget    (const iInputWidget *);
+const iString * text_InputWidget            (const iInputWidget *);
+iInputWidgetContentPadding
+                contentPadding_InputWidget  (const iInputWidget *);
 
 iLocalDef iInputWidget *newHint_InputWidget(size_t maxLen, const char *hint) {
     iInputWidget *d = new_InputWidget(maxLen);
