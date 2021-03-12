@@ -56,6 +56,7 @@ struct Impl_Touch {
     iWidget *affinity; /* widget on which the touch started */
     iWidget *edgeDragging;
     iBool hasMoved;
+    iBool isTouchDrag;
     iBool isTapAndHold;
     enum iTouchEdge edge;
     uint32_t startTime;
@@ -252,6 +253,19 @@ void widgetDestroyed_Touch(iWidget *widget) {
     }
 }
 
+static void dispatchButtonDown_Touch_(iFloat3 pos) {
+    dispatchEvent_Widget(get_Window()->root, (SDL_Event *) &(SDL_MouseButtonEvent){
+        .type = SDL_MOUSEBUTTONDOWN,
+        .timestamp = SDL_GetTicks(),
+        .clicks = 1,
+        .state = SDL_PRESSED,
+        .which = SDL_TOUCH_MOUSEID,
+        .button = SDL_BUTTON_LEFT,
+        .x = x_F3(pos),
+        .y = y_F3(pos)
+    });
+}
+
 static void dispatchButtonUp_Touch_(iFloat3 pos) {
     dispatchEvent_Widget(get_Window()->root, (SDL_Event *) &(SDL_MouseButtonEvent){
         .type = SDL_MOUSEBUTTONUP,
@@ -327,24 +341,11 @@ iBool processEvent_Touch(const SDL_Event *ev) {
 //               cstr_String(id_Widget(aff)));
 //        printf("drg:[%p] %s:'%s'\n", dragging, dragging ? class_Widget(dragging)->name : "-",
 //               cstr_String(id_Widget(dragging)));
-        if (flags_Widget(aff) & touchDrag_WidgetFlag) {
-            dispatchEvent_Widget(window->root, (SDL_Event *) &(SDL_MouseButtonEvent){
-                .type = SDL_MOUSEBUTTONDOWN,
-                .timestamp = fing->timestamp,
-                .clicks = 1,
-                .state = SDL_PRESSED,
-                .which = SDL_TOUCH_MOUSEID,
-                .button = SDL_BUTTON_LEFT,
-                .x = x_F3(pos),
-                .y = y_F3(pos)
-            });
-            edge = none_TouchEdge;
-        }
         iTouch newTouch = {
             .id = fing->fingerId,
             .affinity = aff,
             .edgeDragging = dragging,
-            .hasMoved = (flags_Widget(aff) & touchDrag_WidgetFlag) != 0,
+//            .hasMoved = (flags_Widget(aff) & touchDrag_WidgetFlag) != 0,
             .edge = edge,
             .startTime = nowTime,
             .startPos = pos,
@@ -352,7 +353,7 @@ iBool processEvent_Touch(const SDL_Event *ev) {
         pushPos_Touch_(&newTouch, pos, fing->timestamp);
         pushBack_Array(d->touches, &newTouch);
         /* Some widgets rely on hover state for scrolling. */
-        if (flags_Widget(aff) & hover_WidgetFlag) {
+        if (flags_Widget(aff) & hover_WidgetFlag && ~flags_Widget(aff) & touchDrag_WidgetFlag) {
             setHover_Widget(aff);
         }
         addTicker_App(update_TouchState_, d);
@@ -360,6 +361,10 @@ iBool processEvent_Touch(const SDL_Event *ev) {
     else if (ev->type == SDL_FINGERMOTION) {
         iTouch *touch = find_TouchState_(d, fing->fingerId);
         if (touch && touch->affinity) {
+            if (touch->isTouchDrag) {
+                dispatchMotion_Touch_(pos, SDL_BUTTON_LMASK);
+                return iTrue;
+            }
             if (touch->isTapAndHold) {
                 pushPos_Touch_(touch, pos, fing->timestamp);
                 if (!touch->hasMoved && !isStationary_Touch_(touch)) {
@@ -368,12 +373,27 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                 dispatchMotion_Touch_(pos, 0);
                 return iTrue;
             }
-            if (flags_Widget(touch->affinity) & touchDrag_WidgetFlag) {
+            /* Update touch position. */
+            pushPos_Touch_(touch, pos, nowTime);
+            if (!touch->isTouchDrag && !isStationary_Touch_(touch) &&
+                flags_Widget(touch->affinity) & touchDrag_WidgetFlag) {
+                touch->hasMoved = iTrue;
+                touch->isTouchDrag = iTrue;
+                touch->edge = none_TouchEdge;
+                pushPos_Touch_(touch, pos, fing->timestamp);
+                dispatchEvent_Widget(window->root, (SDL_Event *) &(SDL_MouseButtonEvent){
+                    .type = SDL_MOUSEBUTTONDOWN,
+                    .timestamp = fing->timestamp,
+                    .clicks = 1,
+                    .state = SDL_PRESSED,
+                    .which = SDL_TOUCH_MOUSEID,
+                    .button = SDL_BUTTON_LEFT,
+                    .x = x_F3(touch->startPos),
+                    .y = y_F3(touch->startPos)
+                });
                 dispatchMotion_Touch_(pos, SDL_BUTTON_LMASK);
                 return iTrue;
             }
-            /* Update touch position. */
-            pushPos_Touch_(touch, pos, nowTime);
             const iFloat3 amount = mul_F3(init_F3(fing->dx, fing->dy, 0),
                                           init_F3(rootSize.x, rootSize.y, 0));
             addv_F3(&touch->accum, amount);
@@ -473,8 +493,11 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                 continue;
             }
             if (flags_Widget(touch->affinity) & touchDrag_WidgetFlag) {
+                if (!touch->isTouchDrag) {
+                    dispatchButtonDown_Touch_(touch->startPos);
+                }
                 dispatchButtonUp_Touch_(pos);
-                setHover_Widget(NULL);
+//                setHover_Widget(NULL);
                 remove_ArrayIterator(&i);
                 continue;
             }
