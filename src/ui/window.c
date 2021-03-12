@@ -86,6 +86,26 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
         }
         return iTrue;
     }
+    else if (equal_Command(cmd, "contextclick")) {
+        iBool showBarMenu = iFalse;
+        if (equal_Rangecc(range_Command(cmd, "id"), "buttons")) {
+            const iWidget *sidebar = findWidget_App("sidebar");
+            const iWidget *sidebar2 = findWidget_App("sidebar2");
+            const iWidget *buttons = pointer_Command(cmd);
+            if (hasParent_Widget(buttons, sidebar) ||
+                hasParent_Widget(buttons, sidebar2)) {
+                showBarMenu = iTrue;
+            }
+        }
+        if (equal_Rangecc(range_Command(cmd, "id"), "navbar")) {
+            showBarMenu = iTrue;
+        }
+        if (showBarMenu) {
+            openMenu_Widget(findWidget_App("barmenu"), coord_Command(cmd));
+            return iTrue;
+        }
+        return iFalse;
+    }
     else if (equal_Command(cmd, "focus.set")) {
         setFocus_Widget(findWidget_App(cstr_Rangecc(range_Command(cmd, "id"))));
         return iTrue;
@@ -495,8 +515,9 @@ static iBool willPerformSearchQuery_(const iString *userInput) {
 static void showSearchQueryIndicator_(iBool show) {
     iWidget *indicator = findWidget_App("input.indicator.search");
     setFlags_Widget(indicator, hidden_WidgetFlag, !show);
-    setContentPadding_InputWidget(
-        (iInputWidget *) parent_Widget(indicator), -1, show ? width_Widget(indicator) : 0);
+    iInputWidget *url = (iInputWidget *) parent_Widget(indicator);
+    setContentPadding_InputWidget(url, -1, contentPadding_InputWidget(url).left +
+                                  (show ? width_Widget(indicator) : 0));
 }
 
 static int navBarAvailableSpace_(iWidget *navBar) {
@@ -527,17 +548,18 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
             setFlags_Widget(navBar, tight_WidgetFlag, isNarrow);
             iForEach(ObjectList, i, navBar->children) {
                 iWidget *child = as_Widget(i.object);
-                setFlags_Widget(
-                    child, tight_WidgetFlag, isNarrow);
+                setFlags_Widget(child, tight_WidgetFlag, isNarrow);
                 if (isInstance_Object(i.object, &Class_LabelWidget)) {
                     iLabelWidget *label = i.object;
                     updateSize_LabelWidget(label);
                 }
             }
             /* Note that InputWidget uses the `tight` flag to adjust its inner padding. */
+            /* TODO: Is this redundant? See `updateMetrics_Window_()`. */
+            const int embedButtonWidth = width_Widget(findChild_Widget(navBar, "navbar.lock"));
             setContentPadding_InputWidget(findChild_Widget(navBar, "url"),
-                                          width_Widget(findChild_Widget(navBar, "navbar.lock")) * 0.75,
-                                          -1);
+                                          embedButtonWidth * 0.75f,
+                                          embedButtonWidth * 0.75f);
         }
         if (isPhone) {
             static const char *buttons[] = {
@@ -559,6 +581,7 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
             iWidget *urlBar = findChild_Widget(navBar, "url");
             urlBar->rect.size.x = iMini(navBarAvailableSpace_(navBar), 167 * gap_UI);
             arrange_Widget(navBar);
+            printTree_Widget(urlBar);
         }
         refresh_Widget(navBar);
         postCommand_Widget(navBar, "layout.changed id:navbar");
@@ -833,10 +856,11 @@ static void updateMetrics_Window_(iWindow *d) {
     iWidget *fprog     = findChild_Widget(navBar, "feeds.progress");
     iWidget *docProg   = findChild_Widget(navBar, "document.progress");
     iWidget *indSearch = findChild_Widget(navBar, "input.indicator.search");
-    setPadding_Widget(as_Widget(url), 0, gap_UI, gap_UI, gap_UI);
+    setPadding_Widget(as_Widget(url), 0, gap_UI, 0, gap_UI);
     navBar->rect.size.y = 0; /* recalculate height based on children (FIXME: shouldn't be needed) */
     updateSize_LabelWidget((iLabelWidget *) lock);
-    setContentPadding_InputWidget((iInputWidget *) url, width_Widget(lock) * 0.75, -1);
+    setContentPadding_InputWidget((iInputWidget *) url, width_Widget(lock) * 0.75,
+                                  width_Widget(lock) * 0.75);
     fprog->rect.pos.y = gap_UI;
     docProg->rect.pos.y = gap_UI;
     indSearch->rect.pos.y = gap_UI;
@@ -909,6 +933,7 @@ static void setupUserInterface_Window(iWindow *d) {
         iWidget *navBar = new_Widget();
         setId_Widget(navBar, "navbar");
         setFlags_Widget(navBar,
+                        hittable_WidgetFlag | /* context menu */
                         arrangeHeight_WidgetFlag |
                         resizeChildren_WidgetFlag |
                         arrangeHorizontal_WidgetFlag |
@@ -925,8 +950,9 @@ static void setupUserInterface_Window(iWindow *d) {
             "\U0001f464", identityButtonMenuItems_, iElemCount(identityButtonMenuItems_));
         setAlignVisually_LabelWidget(idMenu, iTrue);
         setId_Widget(addChildFlags_Widget(navBar, iClob(idMenu), collapse_WidgetFlag), "navbar.ident");
+        iInputWidget *url;
         /* URL input field. */ {
-            iInputWidget *url = new_InputWidget(0);
+            url = new_InputWidget(0);
             setFlags_Widget(as_Widget(url), resizeHeightOfChildren_WidgetFlag, iTrue);
             setSelectAllOnFocus_InputWidget(url, iTrue);
             setId_Widget(as_Widget(url), "url");
@@ -934,13 +960,14 @@ static void setupUserInterface_Window(iWindow *d) {
             setNotifyEdits_InputWidget(url, iTrue);
             setTextCStr_InputWidget(url, "gemini://");
             addChildFlags_Widget(navBar, iClob(url), 0);
+            const int64_t embedFlags =
+                noBackground_WidgetFlag | frameless_WidgetFlag | unpadded_WidgetFlag |
+                (deviceType_App() == desktop_AppDeviceType ? tight_WidgetFlag : 0);
             /* Page information/certificate warning. */ {
                 iLabelWidget *lock =
                     addChildFlags_Widget(as_Widget(url),
                                          iClob(newIcon_LabelWidget("\U0001f513", SDLK_i, KMOD_PRIMARY, "document.info")),
-                                         noBackground_WidgetFlag | frameless_WidgetFlag |  moveToParentLeftEdge_WidgetFlag |
-                                         unpadded_WidgetFlag |
-                                             (deviceType_App() == desktop_AppDeviceType ? tight_WidgetFlag : 0));
+                                         embedFlags | moveToParentLeftEdge_WidgetFlag);
                 setId_Widget(as_Widget(lock), "navbar.lock");
                 setFont_LabelWidget(lock, defaultSymbols_FontId);
                 updateTextCStr_LabelWidget(lock, "\U0001f512");
@@ -979,10 +1006,12 @@ static void setupUserInterface_Window(iWindow *d) {
                                      iClob(queryInd),
                                      moveToParentRightEdge_WidgetFlag | hidden_WidgetFlag);
             }
+            /* Reload button. */
+            iLabelWidget *reload = newIcon_LabelWidget(reloadCStr_, 0, 0, "navigate.reload");
+            setId_Widget(as_Widget(reload), "reload");
+            addChildFlags_Widget(as_Widget(url), iClob(reload), embedFlags | moveToParentRightEdge_WidgetFlag);
+            updateSize_LabelWidget(reload);
         }
-        setId_Widget(addChild_Widget(
-                         navBar, iClob(newIcon_LabelWidget(reloadCStr_, 0, 0, "navigate.reload"))),
-                     "reload");
         addChildFlags_Widget(navBar, iClob(new_Widget()), expand_WidgetFlag);
         setId_Widget(addChildFlags_Widget(navBar,
                         iClob(newIcon_LabelWidget(
@@ -1028,7 +1057,7 @@ static void setupUserInterface_Window(iWindow *d) {
             addChild_Widget(buttons, iClob(newIcon_LabelWidget(add_Icon, 0, 0, "tabs.new"))),
             "newtab");
     }
-    /* Side bars. */ {
+    /* Sidebars. */ {
         iWidget *content = findChild_Widget(d->root, "tabs.content");
         iSidebarWidget *sidebar1 = new_SidebarWidget(left_SideBarSide);
         addChildPos_Widget(content, iClob(sidebar1), front_WidgetAddPos);
@@ -1105,17 +1134,25 @@ static void setupUserInterface_Window(iWindow *d) {
     }
 #endif
     updatePadding_Window_(d);
-    iWidget *tabsMenu = makeMenu_Widget(d->root,
-                                        (iMenuItem[]){
-                                            { close_Icon " Close Tab", 0, 0, "tabs.close" },
-                                            { copy_Icon " Duplicate Tab", 0, 0, "tabs.new duplicate:1" },
-                                            { "---", 0, 0, NULL },
-                                            { "Close Other Tabs", 0, 0, "tabs.close toleft:1 toright:1" },
-                                            { barLeftArrow_Icon " Close Tabs To Left", 0, 0, "tabs.close toleft:1" },
-                                            { barRightArrow_Icon " Close Tabs To Right", 0, 0, "tabs.close toright:1" },
-                                        },
-                                        6);
-    setId_Widget(tabsMenu, "doctabs.menu");
+    /* Context menus. */ {
+        iWidget *tabsMenu = makeMenu_Widget(d->root,
+                                            (iMenuItem[]){
+                                                { close_Icon " Close Tab", 0, 0, "tabs.close" },
+                                                { copy_Icon " Duplicate Tab", 0, 0, "tabs.new duplicate:1" },
+                                                { "---", 0, 0, NULL },
+                                                { "Close Other Tabs", 0, 0, "tabs.close toleft:1 toright:1" },
+                                                { barLeftArrow_Icon " Close Tabs To Left", 0, 0, "tabs.close toleft:1" },
+                                                { barRightArrow_Icon " Close Tabs To Right", 0, 0, "tabs.close toright:1" },
+                                            },
+                                            6);
+        setId_Widget(tabsMenu, "doctabs.menu");
+        iWidget *barMenu = makeMenu_Widget(d->root,
+                                           (iMenuItem[]) {
+            { "Toggle Left Sidebar", 0, 0, "sidebar.toggle" },
+            { "Toggle Right Sidebar", 0, 0, "sidebar2.toggle" },
+        }, 2);
+        setId_Widget(barMenu, "barmenu");
+    }
     /* Global keyboard shortcuts. */ {
         addAction_Widget(d->root, 'l', KMOD_PRIMARY, "navigate.focus");
         addAction_Widget(d->root, 'f', KMOD_PRIMARY, "focus.set id:find.input");
@@ -1694,6 +1731,18 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
                     paste.key.state      = SDL_PRESSED;
                     paste.key.timestamp  = SDL_GetTicks();
                     wasUsed = dispatchEvent_Widget(widget, &paste);
+                }
+                if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_RIGHT) {
+                    /* A context menu may still get triggered here. */
+                    const iWidget *hit = hitChild_Widget(d->root, init_I2(event.button.x, event.button.y));
+                    while (hit && isEmpty_String(id_Widget(hit))) {
+                        hit = parent_Widget(hit);
+                    }
+                    if (hit) {
+                        postCommandf_App("contextclick id:%s ptr:%p coord:%d %d",
+                                         cstr_String(id_Widget(hit)), hit,
+                                         event.button.x, event.button.y);
+                    }
                 }
             }
             if (isMetricsChange_UserEvent(&event)) {

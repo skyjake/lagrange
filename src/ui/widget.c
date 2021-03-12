@@ -972,9 +972,9 @@ iAny *hitChild_Widget(const iWidget *d, iInt2 coord) {
             if (found) return found;
         }
     }
-    if ((d->flags & overflowScrollable_WidgetFlag || class_Widget(d) != &Class_Widget ||
-         d->flags & mouseModal_WidgetFlag) && ~d->flags & unhittable_WidgetFlag &&
-        contains_Widget(d, coord)) {
+    if ((d->flags & (overflowScrollable_WidgetFlag | hittable_WidgetFlag) ||
+         class_Widget(d) != &Class_Widget || d->flags & mouseModal_WidgetFlag) &&
+        ~d->flags & unhittable_WidgetFlag && contains_Widget(d, coord)) {
         return iConstCast(iWidget *, d);
     }
     return NULL;
@@ -1199,8 +1199,9 @@ static void printTree_Widget_(const iWidget *d, int indent) {
                cstr_String(text_LabelWidget((const iLabelWidget *) d)),
                cstr_String(command_LabelWidget((const iLabelWidget *) d)));
     }
-    printf("size:%dx%d flags:%08llx\n", d->rect.size.x, d->rect.size.y,
-           (long long unsigned int) d->flags);
+    printf("size:%dx%d [%d..%d %d:%d] flags:%08llx%s\n", d->rect.size.x, d->rect.size.y,
+           d->padding[0], d->padding[2], d->padding[1], d->padding[3],
+           (long long unsigned int) d->flags, d->flags & tight_WidgetFlag ? " tight" : "");
     iConstForEach(ObjectList, i, d->children) {
         printTree_Widget_(i.object, indent + 1);
     }
