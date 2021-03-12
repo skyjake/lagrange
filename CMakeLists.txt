@@ -286,6 +286,7 @@ if (APPLE)
     )
     if (IOS)
         set_target_properties (app PROPERTIES
+            MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_LIST_DIR}/res/iOSBundleInfo.plist.in"
             MACOSX_BUNDLE_BUNDLE_VERSION "${IOS_BUNDLE_VERSION}"
 	        XCODE_ATTRIBUTE_SKIP_INSTALL "NO"
 	        XCODE_ATTRIBUTE_INSTALL_PATH "$(LOCAL_APPS_DIR)"
