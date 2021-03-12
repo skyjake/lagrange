@@ -262,7 +262,10 @@ static const iMenuItem fileMenuItems_[] = {
 };
 
 static const iMenuItem editMenuItems_[] = {
+    { "Cut", SDLK_x, KMOD_PRIMARY, "input.copy cut:1" },
     { "Copy", SDLK_c, KMOD_PRIMARY, "copy" },
+    { "Paste", SDLK_v, KMOD_PRIMARY, "input.paste" },
+    { "---", 0, 0, NULL },
     { "Copy Link to Page", SDLK_c, KMOD_PRIMARY | KMOD_SHIFT, "document.copylink" },
     { "---", 0, 0, NULL },
     { "Find", SDLK_f, KMOD_PRIMARY, "focus.set id:find.input" },
@@ -581,7 +584,6 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
             iWidget *urlBar = findChild_Widget(navBar, "url");
             urlBar->rect.size.x = iMini(navBarAvailableSpace_(navBar), 167 * gap_UI);
             arrange_Widget(navBar);
-            printTree_Widget(urlBar);
         }
         refresh_Widget(navBar);
         postCommand_Widget(navBar, "layout.changed id:navbar");
@@ -1134,7 +1136,7 @@ static void setupUserInterface_Window(iWindow *d) {
     }
 #endif
     updatePadding_Window_(d);
-    /* Context menus. */ {
+    /* Global context menus. */ {
         iWidget *tabsMenu = makeMenu_Widget(d->root,
                                             (iMenuItem[]){
                                                 { close_Icon " Close Tab", 0, 0, "tabs.close" },
@@ -1145,13 +1147,22 @@ static void setupUserInterface_Window(iWindow *d) {
                                                 { barRightArrow_Icon " Close Tabs To Right", 0, 0, "tabs.close toright:1" },
                                             },
                                             6);
-        setId_Widget(tabsMenu, "doctabs.menu");
         iWidget *barMenu = makeMenu_Widget(d->root,
                                            (iMenuItem[]) {
-            { "Toggle Left Sidebar", 0, 0, "sidebar.toggle" },
-            { "Toggle Right Sidebar", 0, 0, "sidebar2.toggle" },
+            { leftHalf_Icon " Toggle Left Sidebar", 0, 0, "sidebar.toggle" },
+            { rightHalf_Icon " Toggle Right Sidebar", 0, 0, "sidebar2.toggle" },
         }, 2);
+        iWidget *clipMenu = makeMenu_Widget(d->root,
+                                            (iMenuItem[]){
+                                                { scissor_Icon " Cut", 0, 0, "input.copy cut:1" },
+                                                { clipCopy_Icon " Copy", 0, 0, "input.copy" },
+                                                { "---", 0, 0, NULL },
+                                                { clipboard_Icon " Paste", 0, 0, "input.paste" },
+                                            },
+                                            4);
+        setId_Widget(tabsMenu, "doctabs.menu");
         setId_Widget(barMenu, "barmenu");
+        setId_Widget(clipMenu, "clipmenu");
     }
     /* Global keyboard shortcuts. */ {
         addAction_Widget(d->root, 'l', KMOD_PRIMARY, "navigate.focus");

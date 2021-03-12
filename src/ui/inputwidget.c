@@ -314,9 +314,13 @@ void selectAll_InputWidget(iInputWidget *d) {
     refresh_Widget(as_Widget(d));
 }
 
+iLocalDef iBool isEditing_InputWidget_(const iInputWidget *d) {
+    return (flags_Widget(constAs_Widget(d)) & selected_WidgetFlag) != 0;
+}
+
 void begin_InputWidget(iInputWidget *d) {
     iWidget *w = as_Widget(d);
-    if (flags_Widget(w) & selected_WidgetFlag) {
+    if (isEditing_InputWidget_(d)) {
         /* Already active. */
         return;
     }
@@ -346,7 +350,7 @@ void begin_InputWidget(iInputWidget *d) {
 
 void end_InputWidget(iInputWidget *d, iBool accept) {
     iWidget *w = as_Widget(d);
-    if (~flags_Widget(w) & selected_WidgetFlag) {
+    if (!isEditing_InputWidget_(d)) {
         /* Was not active. */
         return;
     }
@@ -614,6 +618,15 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
         end_InputWidget(d, iTrue);
         return iFalse;
     }
+    else if ((isCommand_UserEvent(ev, "copy") || isCommand_UserEvent(ev, "input.copy")) &&
+             isEditing_InputWidget_(d)) {
+        copy_InputWidget_(d, argLabel_Command(command_UserEvent(ev), "cut"));
+        return iTrue;
+    }
+    else if (isCommand_UserEvent(ev, "input.paste") && isEditing_InputWidget_(d)) {
+        paste_InputWidget_(d);
+        return iTrue;
+    }
     else if (isCommand_UserEvent(ev, "theme.changed")) {
         if (d->buffered) {
             updateBuffered_InputWidget_(d);
@@ -674,6 +687,17 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
             return iTrue;
         case finished_ClickResult:
             return iTrue;
+    }
+    if (ev->type == SDL_MOUSEBUTTONDOWN && ev->button.button == SDL_BUTTON_RIGHT &&
+        contains_Widget(w, init_I2(ev->button.x, ev->button.y))) {
+        iWidget *clipMenu = findWidget_App("clipmenu");
+        if (isVisible_Widget(clipMenu)) {
+            closeMenu_Widget(clipMenu);
+        }
+        else {
+            openMenuFlags_Widget(clipMenu, mouseCoord_Window(get_Window()), iFalse);
+        }
+        return iTrue;
     }
     if (ev->type == SDL_KEYUP && isFocused_Widget(w)) {
         return iTrue;

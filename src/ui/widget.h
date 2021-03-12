@@ -243,6 +243,7 @@ iWidget *   hover_Widget            (void);
 void        unhover_Widget          (void);
 void        setMouseGrab_Widget     (iWidget *);
 iWidget *   mouseGrab_Widget        (void);
+void        raise_Widget            (iWidget *);
 iBool       hasVisibleChildOnTop_Widget
                                     (const iWidget *parent);
 void        printTree_Widget        (const iWidget *);

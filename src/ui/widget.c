@@ -1207,6 +1207,15 @@ static void printTree_Widget_(const iWidget *d, int indent) {
     }
 }
 
+void raise_Widget(iWidget *d) {
+    iPtrArray *onTop = onTop_RootData_();
+    if (d->flags & keepOnTop_WidgetFlag) {
+        iAssert(indexOf_PtrArray(onTop, d) != iInvalidPos);
+        removeOne_PtrArray(onTop, d);
+        pushBack_PtrArray(onTop, d);
+    }
+}
+
 iBool hasVisibleChildOnTop_Widget(const iWidget *parent) {
     iConstForEach(ObjectList, i, parent->children) {
         const iWidget *child = i.object;

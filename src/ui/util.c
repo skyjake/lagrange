@@ -517,14 +517,21 @@ iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
 }
 
 void openMenu_Widget(iWidget *d, iInt2 coord) {
+    openMenuFlags_Widget(d, coord, iTrue);
+}
+
+void openMenuFlags_Widget(iWidget *d, iInt2 coord, iBool postCommands) {
     const iInt2 rootSize        = rootSize_Window(get_Window());
     const iBool isPortraitPhone = (deviceType_App() == phone_AppDeviceType && isPortrait_App());
     const iBool isSlidePanel    = (flags_Widget(d) & horizontalOffset_WidgetFlag) != 0;
+    if (postCommands) {
+        postCommand_App("cancel"); /* dismiss any other menus */
+    }
     /* Menu closes when commands are emitted, so handle any pending ones beforehand. */
-    postCommand_App("cancel"); /* dismiss any other menus */
     processEvents_App(postedEventsOnly_AppEventMode);
     setFlags_Widget(d, hidden_WidgetFlag | disabled_WidgetFlag, iFalse);
     setFlags_Widget(d, commandOnMouseMiss_WidgetFlag, iTrue);
+    raise_Widget(d);
     setFlags_Widget(findChild_Widget(d, "menu.cancel"), disabled_WidgetFlag, iFalse);
     if (isPortraitPhone) {
         setFlags_Widget(d, arrangeWidth_WidgetFlag | resizeChildrenToWidestChild_WidgetFlag, iFalse);
@@ -576,7 +583,7 @@ void openMenu_Widget(iWidget *d, iInt2 coord) {
         float l, t, r, b;
         safeAreaInsets_iOS(&l, &t, &r, &b);
         topExcess    += t;
-        bottomExcess += b;
+        bottomExcess += iMax(b, get_Window()->keyboardHeight);
         leftExcess   += l;
         rightExcess  += r;
     }
@@ -594,7 +601,9 @@ void openMenu_Widget(iWidget *d, iInt2 coord) {
         d->rect.pos.x += leftExcess;
     }
     postRefresh_App();
-    postCommand_Widget(d, "menu.opened");
+    if (postCommands) {
+        postCommand_Widget(d, "menu.opened");
+    }
     if (isPortraitPhone) {
         setVisualOffset_Widget(d, isSlidePanel ? width_Widget(d) : height_Widget(d), 0, 0);
         setVisualOffset_Widget(d, 0, 330, easeOut_AnimFlag | softer_AnimFlag);
