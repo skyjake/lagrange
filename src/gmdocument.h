@@ -169,6 +169,7 @@ const char *    findLoc_GmDocument      (const iGmDocument *, iInt2 pos);
 const iGmRun *  findRunAtLoc_GmDocument (const iGmDocument *, const char *loc);
 const iString * linkUrl_GmDocument      (const iGmDocument *, iGmLinkId linkId);
 iRangecc        linkUrlRange_GmDocument (const iGmDocument *, iGmLinkId linkId);
+iRangecc        linkLabel_GmDocument    (const iGmDocument *, iGmLinkId linkId);
 iMediaId        linkImage_GmDocument    (const iGmDocument *, iGmLinkId linkId);
 iMediaId        linkAudio_GmDocument    (const iGmDocument *, iGmLinkId linkId);
 int             linkFlags_GmDocument    (const iGmDocument *, iGmLinkId linkId);
