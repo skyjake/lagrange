@@ -2396,7 +2396,8 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                              cstr_String(linkUrl_GmDocument(d->doc, d->hoverLink->linkId)));
             return iTrue;
         }
-        if (ev->button.button == SDL_BUTTON_RIGHT) {
+        if (ev->button.button == SDL_BUTTON_RIGHT &&
+            contains_Widget(w, init_I2(ev->button.x, ev->button.y))) {
             if (!d->menu || !isVisible_Widget(d->menu)) {
                 d->contextLink = d->hoverLink;
                 if (d->menu) {
