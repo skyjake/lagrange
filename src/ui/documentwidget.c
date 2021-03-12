@@ -492,7 +492,8 @@ static void updateHover_DocumentWidget_(iDocumentWidget *d, iInt2 mouse) {
         (d->state == ready_RequestState || d->state == receivedPartialResponse_RequestState)) {
         iConstForEach(PtrArray, i, &d->visibleLinks) {
             const iGmRun *run = i.ptr;
-            if (contains_Rect(run->bounds, hoverPos)) {
+            /* Click targets are slightly expanded so there are no gaps between links. */
+            if (contains_Rect(expanded_Rect(run->bounds, init1_I2(gap_Text / 2)), hoverPos)) {
                 d->hoverLink = run;
                 break;
             }
