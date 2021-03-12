@@ -108,10 +108,10 @@ static void visualOffsetAnimation_Widget_(void *ptr) {
 
 void deinit_Widget(iWidget *d) {
     releaseChildren_Widget(d);
-#if !defined (NDEBUG)
-    printf("widget %p (%s) deleted (on top:%d)\n", d, cstr_String(&d->id),
-           d->flags & keepOnTop_WidgetFlag ? 1 : 0);
-#endif
+//#if !defined (NDEBUG)
+//    printf("widget %p (%s) deleted (on top:%d)\n", d, cstr_String(&d->id),
+//           d->flags & keepOnTop_WidgetFlag ? 1 : 0);
+//#endif
     deinit_String(&d->id);
     if (d->flags & keepOnTop_WidgetFlag) {
         removeAll_PtrArray(onTop_RootData_(), d);
@@ -860,7 +860,7 @@ void drawChildren_Widget(const iWidget *d) {
 
 void draw_Widget(const iWidget *d) {
     drawBackground_Widget(d);
-    drawChildren_Widget(d);    
+    drawChildren_Widget(d);
 }
 
 iAny *addChild_Widget(iWidget *d, iAnyObject *child) {
