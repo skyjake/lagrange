@@ -1462,7 +1462,6 @@ static void updateValueInputWidth_(iWidget *dlg) {
     else {
         dlg->rect.size.x = iMaxi(iMaxi(rootSize.x / 2, title->rect.size.x), prompt->rect.size.x);
     }
-    as_Widget(findChild_Widget(dlg, "input"))->rect.size.x = dlg->rect.size.x;
 }
 
 iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
@@ -1470,6 +1469,7 @@ iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
     if (equal_Command(cmd, "window.resized")) {
         if (isVisible_Widget(dlg)) {
             updateValueInputWidth_(dlg);
+            arrange_Widget(dlg);
         }
         return iFalse;
     }
@@ -1574,7 +1574,8 @@ iWidget *makeValueInput_Widget(iWidget *parent, const iString *initialValue, con
     setId_Widget(
         addChildFlags_Widget(dlg, iClob(new_LabelWidget(prompt, NULL)), frameless_WidgetFlag),
         "valueinput.prompt");
-    iInputWidget *input = addChildFlags_Widget(dlg, iClob(new_InputWidget(0)), 0);
+    iInputWidget *input = addChildFlags_Widget(dlg, iClob(new_InputWidget(0)),
+                                               resizeToParentWidth_WidgetFlag);
     setContentPadding_InputWidget(input, 0.5f * gap_UI, 0.5f * gap_UI);
     if (deviceType_App() == phone_AppDeviceType) {
         setFont_InputWidget(input, defaultBig_FontId);

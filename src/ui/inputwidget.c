@@ -123,7 +123,9 @@ static void updateMetrics_InputWidget_(iInputWidget *d) {
     w->rect.size.y += 2 * gap_UI;
 #endif
     invalidateBuffered_InputWidget_(d);
-    arrange_Widget(w);
+    if (parent_Widget(w)) {
+        arrange_Widget(w);
+    }
 }
 
 void init_InputWidget(iInputWidget *d, size_t maxLen) {
