@@ -184,8 +184,7 @@ static void update_TouchState_(void *ptr) {
                 /* Looks like a possible tap. */
                 dispatchMotion_Touch_(touch->pos[0], 0);
             }
-            if (~flags_Widget(touch->affinity) & touchDrag_WidgetFlag &&
-                !touch->isTapAndHold && nowTime - touch->startTime >= longPressSpanMs_ &&
+            if (!touch->isTapAndHold && nowTime - touch->startTime >= longPressSpanMs_ &&
                 touch->affinity) {
                 dispatchClick_Touch_(touch, SDL_BUTTON_RIGHT);
                 touch->isTapAndHold = iTrue;
