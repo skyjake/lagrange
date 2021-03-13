@@ -304,10 +304,14 @@ iRect innerBounds_Widget(const iWidget *d) {
     return ib;
 }
 
+iLocalDef iBool isArranged_Widget_(const iWidget *d) {
+    return !isCollapsed_Widget_(d) && ~d->flags & fixedPosition_WidgetFlag;
+}
+
 static size_t numArrangedChildren_Widget_(const iWidget *d) {
     size_t count = 0;
     iConstForEach(ObjectList, i, d->children) {
-        if (~flags_Widget(i.object) & fixedPosition_WidgetFlag) {
+        if (isArranged_Widget_(d)) {
             count++;
         }
     }
@@ -375,7 +379,7 @@ void arrange_Widget(iWidget *d) {
             }
         }
         if (uncollapsed) {
-            arrange_Widget(d); /* Redo with the next child sizes. */
+            arrange_Widget(d); /* Redo with the new child sizes. */
             return;
         }
         const int expCount = numExpandingChildren_Widget_(d);
@@ -384,7 +388,7 @@ void arrange_Widget(iWidget *d) {
             iInt2 avail = innerRect_Widget_(d).size;
             iConstForEach(ObjectList, i, d->children) {
                 const iWidget *child = constAs_Widget(i.object);
-                if (child->flags & fixedPosition_WidgetFlag) {
+                if (!isArranged_Widget_(child)) {
                     continue;
                 }
                 if (~child->flags & expand_WidgetFlag) {
@@ -394,8 +398,7 @@ void arrange_Widget(iWidget *d) {
             avail = divi_I2(max_I2(zero_I2(), avail), expCount);
             iForEach(ObjectList, j, d->children) {
                 iWidget *child = as_Widget(j.object);
-                if (isCollapsed_Widget_(child) ||
-                    child->flags & (parentCannotResize_WidgetFlag | fixedPosition_WidgetFlag)) {
+                if (!isArranged_Widget_(child)) {
                     continue;
                 }
                 if (child->flags & expand_WidgetFlag) {
@@ -433,7 +436,7 @@ void arrange_Widget(iWidget *d) {
             }
             iForEach(ObjectList, i, d->children) {
                 iWidget *child = as_Widget(i.object);
-                if (!isCollapsed_Widget_(child) && ~child->flags & parentCannotResize_WidgetFlag) {
+                if (isArranged_Widget_(child)) {
                     if (dirs.x) setWidth_Widget_(child, child->flags & unpadded_WidgetFlag ? unpaddedChildSize.x : childSize.x);
                     if (dirs.y) setHeight_Widget_(child, child->flags & unpadded_WidgetFlag ? unpaddedChildSize.y : childSize.y);
                 }
@@ -443,14 +446,16 @@ void arrange_Widget(iWidget *d) {
     if (d->flags & resizeChildrenToWidestChild_WidgetFlag) {
         const int widest = widestChild_Widget_(d);
         iForEach(ObjectList, i, d->children) {
-            setWidth_Widget_(as_Widget(i.object), widest);
+            if (isArranged_Widget_(i.object)) {
+                setWidth_Widget_(as_Widget(i.object), widest);
+            }
         }
     }
     iInt2 pos = initv_I2(d->padding);
     iForEach(ObjectList, i, d->children) {
         iWidget *child = as_Widget(i.object);
         arrange_Widget(child);
-        if (child->flags & fixedPosition_WidgetFlag) {
+        if (!isArranged_Widget_(child)) {
             continue;
         }
         if (child->flags & centerHorizontal_WidgetFlag) {
@@ -478,6 +483,9 @@ void arrange_Widget(iWidget *d) {
         iRect bounds = zero_Rect();
         iConstForEach(ObjectList, i, d->children) {
             const iWidget *child = constAs_Widget(i.object);
+            if (isCollapsed_Widget_(child)) {
+                continue;
+            }
             if (isEmpty_Rect(bounds)) {
                 bounds = child->rect;
             }
