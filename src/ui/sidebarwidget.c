@@ -816,6 +816,10 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         else if (equal_Command(cmd, "idents.changed") && d->mode == identities_SidebarMode) {
             updateItems_SidebarWidget_(d);
         }
+        else if (deviceType_App() == tablet_AppDeviceType && equal_Command(cmd, "toolbar.showident")) {
+            postCommandf_App("sidebar.mode arg:%d toggle:1", identities_SidebarMode);
+            return iTrue;
+        }
         else if (startsWith_CStr(cmd, cstr_String(&d->cmdPrefix))) {
             if (handleSidebarCommand_SidebarWidget_(d, cmd + size_String(&d->cmdPrefix))) {
                 return iTrue;
