@@ -1145,21 +1145,24 @@ static void setupUserInterface_Window(iWindow *d) {
 #endif
     updatePadding_Window_(d);
     /* Global context menus. */ {
-        iWidget *tabsMenu = makeMenu_Widget(d->root,
-                                            (iMenuItem[]){
-                                                { close_Icon " Close Tab", 0, 0, "tabs.close" },
-                                                { copy_Icon " Duplicate Tab", 0, 0, "tabs.new duplicate:1" },
-                                                { "---", 0, 0, NULL },
-                                                { "Close Other Tabs", 0, 0, "tabs.close toleft:1 toright:1" },
-                                                { barLeftArrow_Icon " Close Tabs To Left", 0, 0, "tabs.close toleft:1" },
-                                                { barRightArrow_Icon " Close Tabs To Right", 0, 0, "tabs.close toright:1" },
-                                            },
-                                            6);
-        iWidget *barMenu = makeMenu_Widget(d->root,
-                                           (iMenuItem[]) {
-            { leftHalf_Icon " Toggle Left Sidebar", 0, 0, "sidebar.toggle" },
-            { rightHalf_Icon " Toggle Right Sidebar", 0, 0, "sidebar2.toggle" },
-        }, deviceType_App() == phone_AppDeviceType ? 1 : 2);
+        iWidget *tabsMenu = makeMenu_Widget(
+            d->root,
+            (iMenuItem[]){
+                { close_Icon " Close Tab", 0, 0, "tabs.close" },
+                { copy_Icon " Duplicate Tab", 0, 0, "tabs.new duplicate:1" },
+                { "---", 0, 0, NULL },
+                { "Close Other Tabs", 0, 0, "tabs.close toleft:1 toright:1" },
+                { barLeftArrow_Icon " Close Tabs To Left", 0, 0, "tabs.close toleft:1" },
+                { barRightArrow_Icon " Close Tabs To Right", 0, 0, "tabs.close toright:1" },
+            },
+            6);
+        iWidget *barMenu =
+            makeMenu_Widget(d->root,
+                            (iMenuItem[]){
+                                { leftHalf_Icon " Toggle Left Sidebar", 0, 0, "sidebar.toggle" },
+                                { rightHalf_Icon " Toggle Right Sidebar", 0, 0, "sidebar2.toggle" },
+                            },
+                            deviceType_App() == phone_AppDeviceType ? 1 : 2);
         iWidget *clipMenu = makeMenu_Widget(d->root,
                                             (iMenuItem[]){
                                                 { scissor_Icon " Cut", 0, 0, "input.copy cut:1" },
