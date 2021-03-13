@@ -111,7 +111,9 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "window.focus.lost")) {
+#if !defined (iPlatformMobile) /* apps don't share input focus on mobile */
         setFocus_Widget(NULL);
+#endif
         setTextColor_LabelWidget(findWidget_App("winbar.app"), uiAnnotation_ColorId);
         setTextColor_LabelWidget(findWidget_App("winbar.title"), uiAnnotation_ColorId);
         return iFalse;
@@ -1544,6 +1546,7 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
             }
 #endif
             return iFalse;
+#if defined (iPlatformDesktop)
         case SDL_WINDOWEVENT_MOVED: {
             if (d->isMinimized) {
                 return iFalse;
@@ -1585,7 +1588,7 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
                     return iTrue;
                 }
             }
-#endif
+#endif /* defined LAGRANGE_CUSTOM_FRAME */
             //printf("MOVED: %d, %d\n", ev->data1, ev->data2); fflush(stdout);
             if (unsnap_Window_(d, &newPos)) {
                 return iTrue;
@@ -1627,6 +1630,7 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
         case SDL_WINDOWEVENT_MINIMIZED:
             d->isMinimized = iTrue;
             return iTrue;
+#endif
         case SDL_WINDOWEVENT_LEAVE:
             unhover_Widget();
             d->isMouseInside = iFalse;
@@ -1636,18 +1640,29 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
             d->isMouseInside = iTrue;
             postCommand_App("window.mouse.entered");
             return iTrue;
-        case SDL_WINDOWEVENT_TAKE_FOCUS:
-            SDL_SetWindowInputFocus(d->win);
+#if defined (iPlatformMobile)
+        case SDL_WINDOWEVENT_RESIZED:
+            /* On mobile, this occurs when the display is rotated. */
+            invalidate_Window_(d);
             postRefresh_App();
             return iTrue;
+#endif
         case SDL_WINDOWEVENT_FOCUS_GAINED:
             d->focusGainedAt = SDL_GetTicks();
             setCapsLockDown_Keys(iFalse);
             postCommand_App("window.focus.gained");
+#if defined (iPlatformMobile)
+            /* Returned to foreground, may have lost buffered content. */
+            invalidate_Window_(d);
+#endif
             return iFalse;
         case SDL_WINDOWEVENT_FOCUS_LOST:
             postCommand_App("window.focus.lost");
             return iFalse;
+        case SDL_WINDOWEVENT_TAKE_FOCUS:
+            SDL_SetWindowInputFocus(d->win);
+            postRefresh_App();
+            return iTrue;
         default:
             break;
     }
@@ -1775,7 +1790,18 @@ void draw_Window(iWindow *d) {
     if (d->isDrawFrozen) {
         return;
     }
-    const int   winFlags = SDL_GetWindowFlags(d->win);
+#if defined (iPlatformMobile)
+    /* Check if root needs resizing. */ {
+        iInt2 renderSize;
+        SDL_GetRendererOutputSize(d->render, &renderSize.x, &renderSize.y);
+        if (!isEqual_I2(renderSize, d->root->rect.size)) {
+            updatePadding_Window_(d);
+            updateRootSize_Window_(d, iTrue);
+            processEvents_App(postedEventsOnly_AppEventMode);
+        }
+    }
+#endif
+    const int winFlags = SDL_GetWindowFlags(d->win);
     const iBool gotFocus = (winFlags & SDL_WINDOW_INPUT_FOCUS) != 0;
     /* Clear the window. The clear color is visible as a border around the window
        when the custom frame is being used. */ {

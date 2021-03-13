@@ -859,11 +859,11 @@ void processEvents_App(enum iAppEventMode eventMode) {
             case SDL_APP_LOWMEMORY:
                 clearCache_App_();
                 break;
-            case SDL_APP_WILLENTERFOREGROUND:
+            case SDL_APP_DIDENTERFOREGROUND:
                 postRefresh_App();
                 break;
-            case SDL_APP_TERMINATING:
             case SDL_APP_WILLENTERBACKGROUND:
+            case SDL_APP_TERMINATING:
                 savePrefs_App_(d);
                 saveState_App_(d);
                 break;
@@ -1023,7 +1023,9 @@ static int run_App_(iApp *d) {
     arrange_Widget(findWidget_App("root"));
     d->isRunning = iTrue;
     SDL_EventState(SDL_DROPFILE, SDL_ENABLE); /* open files via drag'n'drop */
+#if defined (iPlatformDesktop)
     SDL_AddEventWatch(resizeWatcher_, d);
+#endif
     while (d->isRunning) {
         processEvents_App(waitForNewEvents_AppEventMode);
         runTickers_App_(d);
