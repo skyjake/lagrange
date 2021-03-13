@@ -253,7 +253,9 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
             (iRect){
                 /* The icon position is fine-tuned; c.f. high baseline of Source Sans Pro. */
                 add_I2(add_I2(bounds.pos, padding_(flags)),
-                       init_I2((flags & extraPadding_WidgetFlag ? -2 : -1.20f) * gap_UI, -gap_UI / 8)),
+                       init_I2((flags & extraPadding_WidgetFlag ? -2 : -1.20f) * gap_UI +
+                               (deviceType_App() == tablet_AppDeviceType ? -gap_UI : 0),
+                               -gap_UI / 8)),
                 init_I2(iconPad, lineHeight_Text(d->font)) },
             iTrue,
             isCaution                                            ? uiTextCaution_ColorId
@@ -276,7 +278,9 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
             init_String(&str);
             keyStr_LabelWidget_(d, &str);
             drawAlign_Text(uiShortcuts_FontId,
-                           add_I2(topRight_Rect(bounds), negX_I2(padding_(flags))),
+                           add_I2(topRight_Rect(bounds),
+                                  addX_I2(negX_I2(padding_(flags)),
+                                          deviceType_App() == tablet_AppDeviceType ? gap_UI : 0)),
                            flags & pressed_WidgetFlag ? fg : uiTextShortcut_ColorId,
                            right_Alignment,
                            cstr_String(&str));
