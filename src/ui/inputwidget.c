@@ -256,10 +256,12 @@ static iString *visText_InputWidget_(const iInputWidget *d) {
 }
 
 static void updateBuffered_InputWidget_(iInputWidget *d) {
-    invalidateBuffered_InputWidget_(d);
-    iString *visText = visText_InputWidget_(d);
-    d->buffered = new_TextBuf(d->font, cstr_String(visText));
-    delete_String(visText);
+    if (isFinishedLaunching_App()) {
+        invalidateBuffered_InputWidget_(d);
+        iString *visText = visText_InputWidget_(d);
+        d->buffered = new_TextBuf(d->font, cstr_String(visText));
+        delete_String(visText);
+    }
 }
 
 void setText_InputWidget(iInputWidget *d, const iString *text) {

@@ -1004,6 +1004,17 @@ static void parseUser_DocumentWidget_(iDocumentWidget *d) {
     setRange_String(d->titleUser, urlUser_String(d->mod.url));
 }
 
+static void cacheRunGlyphs_(void *data, const iGmRun *run) {
+    iUnused(data);
+    if (!isEmpty_Range(&run->text)) {
+        cache_Text(run->font, run->text);
+    }
+}
+
+static void cacheDocumentGlyphs_DocumentWidget_(const iDocumentWidget *d) {
+    render_GmDocument(d->doc, (iRangei){ 0, size_GmDocument(d->doc).y }, cacheRunGlyphs_, NULL);
+}
+
 static iBool updateFromHistory_DocumentWidget_(iDocumentWidget *d) {
     const iRecentUrl *recent = findUrl_History(d->mod.history, d->mod.url);
     if (recent && recent->cachedResponse) {
@@ -1026,6 +1037,7 @@ static iBool updateFromHistory_DocumentWidget_(iDocumentWidget *d) {
         updateSideOpacity_DocumentWidget_(d, iFalse);
         updateSideIconBuf_DocumentWidget_(d);
         updateVisible_DocumentWidget_(d);
+        cacheDocumentGlyphs_DocumentWidget_(d);
         postCommandf_App("document.changed doc:%p url:%s", d, cstr_String(d->mod.url));
         return iTrue;
     }
@@ -1762,6 +1774,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             scrollToHeading_DocumentWidget_(d, cstr_String(&d->pendingGotoHeading));
             clear_String(&d->pendingGotoHeading);
         }
+        cacheDocumentGlyphs_DocumentWidget_(d);
         return iFalse;
     }
     else if (equal_Command(cmd, "media.updated") || equal_Command(cmd, "media.finished")) {

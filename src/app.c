@@ -1050,6 +1050,10 @@ iBool isRefreshPending_App(void) {
     return value_Atomic(&app_.pendingRefresh);
 }
 
+iBool isFinishedLaunching_App(void) {
+    return app_.isFinishedLaunching;
+}
+
 uint32_t elapsedSinceLastTicker_App(void) {
     return app_.elapsedSinceLastTicker;
 }

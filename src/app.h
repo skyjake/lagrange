@@ -68,6 +68,7 @@ void        processEvents_App           (enum iAppEventMode mode);
 iBool       handleCommand_App           (const char *cmd);
 void        refresh_App                 (void);
 iBool       isRefreshPending_App        (void);
+iBool       isFinishedLaunching_App     (void);
 uint32_t    elapsedSinceLastTicker_App  (void); /* milliseconds */
 
 iBool               isLandscape_App     (void);

@@ -192,6 +192,8 @@ enum iAlignment {
 
 void    setOpacity_Text     (float opacity);
 
+void    cache_Text          (int fontId, iRangecc text); /* pre-render glyphs */
+
 void    draw_Text           (int fontId, iInt2 pos, int color, const char *text, ...);
 void    drawAlign_Text      (int fontId, iInt2 pos, int color, enum iAlignment align, const char *text, ...);
 void    drawCentered_Text   (int fontId, iRect rect, iBool alignVisual, int color, const char *text, ...);
