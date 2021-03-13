@@ -134,6 +134,7 @@ static void dispatchMotion_Touch_(iFloat3 pos, int buttonState) {
 
 static iBool dispatchClick_Touch_(const iTouch *d, int button) {
     const iFloat3 tapPos = d->pos[0];
+    iWindow *window = get_Window();
     SDL_MouseButtonEvent btn = {
         .type = SDL_MOUSEBUTTONDOWN,
         .button = button,
@@ -144,14 +145,16 @@ static iBool dispatchClick_Touch_(const iTouch *d, int button) {
         .x = x_F3(tapPos),
         .y = y_F3(tapPos)
     };
-    iBool wasUsed = dispatchEvent_Widget(get_Window()->root, (SDL_Event *) &btn);
+    iBool wasUsed = dispatchEvent_Widget(window->root, (SDL_Event *) &btn);
     /* Immediately released, too. */
     btn.type = SDL_MOUSEBUTTONUP;
     btn.state = SDL_RELEASED;
     btn.timestamp = SDL_GetTicks();
-    dispatchEvent_Widget(get_Window()->root, (SDL_Event *) &btn);
-    //dispatchMotion_Touch_(zero_F3(), 0);
+    dispatchEvent_Widget(window->root, (SDL_Event *) &btn);
     setHover_Widget(NULL); /* FIXME: this doesn't seem to do anything? */
+    if (!wasUsed && button == SDL_BUTTON_RIGHT) {
+        postContextClick_Window(window, &btn);
+    }
     return wasUsed;
 }
 
@@ -181,7 +184,8 @@ static void update_TouchState_(void *ptr) {
                 /* Looks like a possible tap. */
                 dispatchMotion_Touch_(touch->pos[0], 0);
             }
-            if (!touch->isTapAndHold && nowTime - touch->startTime >= longPressSpanMs_ &&
+            if (~flags_Widget(touch->affinity) & touchDrag_WidgetFlag &&
+                !touch->isTapAndHold && nowTime - touch->startTime >= longPressSpanMs_ &&
                 touch->affinity) {
                 dispatchClick_Touch_(touch, SDL_BUTTON_RIGHT);
                 touch->isTapAndHold = iTrue;
@@ -381,6 +385,7 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                 touch->isTouchDrag = iTrue;
                 touch->edge = none_TouchEdge;
                 pushPos_Touch_(touch, pos, fing->timestamp);
+                dispatchMotion_Touch_(touch->startPos, 0);
                 dispatchEvent_Widget(window->root, (SDL_Event *) &(SDL_MouseButtonEvent){
                     .type = SDL_MOUSEBUTTONDOWN,
                     .timestamp = fing->timestamp,

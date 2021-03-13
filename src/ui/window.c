@@ -1159,7 +1159,7 @@ static void setupUserInterface_Window(iWindow *d) {
                                            (iMenuItem[]) {
             { leftHalf_Icon " Toggle Left Sidebar", 0, 0, "sidebar.toggle" },
             { rightHalf_Icon " Toggle Right Sidebar", 0, 0, "sidebar2.toggle" },
-        }, 2);
+        }, deviceType_App() == phone_AppDeviceType ? 1 : 2);
         iWidget *clipMenu = makeMenu_Widget(d->root,
                                             (iMenuItem[]){
                                                 { scissor_Icon " Cut", 0, 0, "input.copy cut:1" },
@@ -1765,16 +1765,7 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
                     wasUsed = dispatchEvent_Widget(widget, &paste);
                 }
                 if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_RIGHT) {
-                    /* A context menu may still get triggered here. */
-                    const iWidget *hit = hitChild_Widget(d->root, init_I2(event.button.x, event.button.y));
-                    while (hit && isEmpty_String(id_Widget(hit))) {
-                        hit = parent_Widget(hit);
-                    }
-                    if (hit) {
-                        postCommandf_App("contextclick id:%s ptr:%p coord:%d %d",
-                                         cstr_String(id_Widget(hit)), hit,
-                                         event.button.x, event.button.y);
-                    }
+                    postContextClick_Window(d, &event.button);
                 }
             }
             if (isMetricsChange_UserEvent(&event)) {
@@ -1788,6 +1779,21 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
             }
             return wasUsed;
         }
+    }
+    return iFalse;
+}
+
+iBool postContextClick_Window(iWindow *d, const SDL_MouseButtonEvent *ev) {
+    /* A context menu may still get triggered here. */
+    const iWidget *hit = hitChild_Widget(d->root, init_I2(ev->x, ev->y));
+    while (hit && isEmpty_String(id_Widget(hit))) {
+        hit = parent_Widget(hit);
+    }
+    if (hit) {
+        postCommandf_App("contextclick id:%s ptr:%p coord:%d %d",
+                         cstr_String(id_Widget(hit)), hit,
+                         ev->x, ev->y);
+        return iTrue;
     }
     return iFalse;
 }

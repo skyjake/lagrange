@@ -90,6 +90,7 @@ void        setCursor_Window        (iWindow *, int cursor);
 void        setSnap_Window          (iWindow *, int snapMode);
 void        setKeyboardHeight_Window(iWindow *, int height);
 void        dismissPortraitPhoneSidebars_Window (iWindow *);
+iBool       postContextClick_Window (iWindow *, const SDL_MouseButtonEvent *);
 
 uint32_t    id_Window               (const iWindow *);
 iInt2       rootSize_Window         (const iWindow *);
