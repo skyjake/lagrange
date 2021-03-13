@@ -242,6 +242,7 @@ static const iMenuItem phoneNavMenuItems_[] = {
     { "---", 0, 0, NULL },
     { download_Icon " Save to Downloads", SDLK_s, KMOD_PRIMARY, "document.save" },
     { "---", 0, 0, NULL },
+    { "Toggle Sidebar", SDLK_l, KMOD_PRIMARY | KMOD_SHIFT, "sidebar.toggle" },
     { "Zoom In", SDLK_EQUALS, KMOD_PRIMARY, "zoom.delta arg:10" },
     { "Zoom Out", SDLK_MINUS, KMOD_PRIMARY, "zoom.delta arg:-10" },
     { "Reset Zoom", SDLK_0, KMOD_PRIMARY, "zoom.set arg:100" },
