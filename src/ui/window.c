@@ -1862,7 +1862,6 @@ void draw_Window(iWindow *d) {
     }
 #endif
     SDL_RenderPresent(d->render);
-    rasterizeSomePendingGlyphs_Text();
 }
 
 void resize_Window(iWindow *d, int w, int h) {

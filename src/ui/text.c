@@ -200,7 +200,6 @@ struct Impl_Text {
     iArray         cacheRows;
     SDL_Palette *  grayscale;
     iRegExp *      ansiEscape;
-    iPtrSet *      pendingRaster; /* glyphs */
 };
 
 static iText text_;
@@ -438,7 +437,6 @@ static void initCache_Text_(iText *d) {
 static void deinitCache_Text_(iText *d) {
     deinit_Array(&d->cacheRows);
     SDL_DestroyTexture(d->cache);
-    clear_PtrSet(text_.pendingRaster);
 }
 
 void init_Text(SDL_Renderer *render) {
@@ -456,7 +454,6 @@ void init_Text(SDL_Renderer *render) {
         d->grayscale = SDL_AllocPalette(256);
         SDL_SetPaletteColors(d->grayscale, colors, 0, 256);
     }
-    d->pendingRaster = new_PtrSet();
     initCache_Text_(d);
     initFonts_Text_(d);
 }
@@ -468,7 +465,6 @@ void deinit_Text(void) {
     deinitCache_Text_(d);
     d->render = NULL;
     iRelease(d->ansiEscape);
-    delete_PtrSet(d->pendingRaster);
 }
 
 void setOpacity_Text(float opacity) {
@@ -512,10 +508,6 @@ void resetFonts_Text(void) {
     deinitCache_Text_(d);
     initCache_Text_(d);
     initFonts_Text_(d);
-}
-
-size_t numPendingGlyphs_Text(void) {
-    return size_PtrSet(text_.pendingRaster);
 }
 
 iLocalDef iFont *font_Text_(enum iFontId id) {
@@ -656,18 +648,10 @@ static void doRaster_Font_(const iFont *font, iGlyph *glyph) {
     SDL_Texture *oldTarget = SDL_GetRenderTarget(text_.render);
     SDL_SetRenderTarget(text_.render, text_.cache);
     if (!isRasterized_Glyph_(glyph, 0)) {
-        if (cache_Font_(font, glyph, 0)) {
-            if (isFullyRasterized_Glyph_(glyph)) {
-                remove_PtrSet(text_.pendingRaster, glyph);
-            }
-        }
+        cache_Font_(font, glyph, 0);
     }
     if (!isRasterized_Glyph_(glyph, 1)) {
-        if (cache_Font_(font, glyph, 1)) { /* half-pixel offset */
-            if (isFullyRasterized_Glyph_(glyph)) {
-                remove_PtrSet(text_.pendingRaster, glyph);
-            }
-        }
+        cache_Font_(font, glyph, 1); /* half-pixel offset */
     }
     SDL_SetRenderTarget(text_.render, oldTarget);
 }
@@ -697,35 +681,12 @@ static const iGlyph *glyph_Font_(iFont *d, iChar ch) {
         allocate_Font_(font, glyph, 0);
         allocate_Font_(font, glyph, 1);
         insert_Hash(&font->glyphs, &glyph->node);
-        insert_PtrSet(text_.pendingRaster, glyph);
     }
     if (enableRaster_Text_ && !isFullyRasterized_Glyph_(glyph)) {
         doRaster_Font_(font, glyph);
     }
     return glyph;
 }
-
-void rasterizeSomePendingGlyphs_Text(void) {
-    size_t count = 5;
-    iForEach(PtrSet, i, text_.pendingRaster) {
-        iGlyph *glyph = *i.value;
-        remove_PtrSet(text_.pendingRaster, glyph);
-        doRaster_Font_(glyph->font, glyph);
-        if (!count--) break;
-    }
-}
-
-enum iRunMode {
-    measure_RunMode                 = 0,
-    draw_RunMode                    = 1,
-    modeMask_RunMode                = 0x00ff,
-    flagsMask_RunMode               = 0xff00,
-    noWrapFlag_RunMode              = iBit(9),
-    visualFlag_RunMode              = iBit(10), /* actual visible bounding box of the glyph,
-                                                   e.g., for icons */
-    permanentColorFlag_RunMode      = iBit(11),
-    alwaysVariableWidthFlag_RunMode = iBit(12),
-};
 
 static iChar nextChar_(const char **chPos, const char *end) {
     if (*chPos == end) {
@@ -740,6 +701,18 @@ static iChar nextChar_(const char **chPos, const char *end) {
     (*chPos) += len;
     return ch;
 }
+
+enum iRunMode {
+    measure_RunMode                 = 0,
+    draw_RunMode                    = 1,
+    modeMask_RunMode                = 0x00ff,
+    flagsMask_RunMode               = 0xff00,
+    noWrapFlag_RunMode              = iBit(9),
+    visualFlag_RunMode              = iBit(10), /* actual visible bounding box of the glyph,
+                                                   e.g., for icons */
+    permanentColorFlag_RunMode      = iBit(11),
+    alwaysVariableWidthFlag_RunMode = iBit(12),
+};
 
 static enum iFontId fontId_Text_(const iFont *font) {
     return (enum iFontId) (font - text_.fonts);
@@ -949,7 +922,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
         const iBool useMonoAdvance =
             monoAdvance > 0 && !isJapanese_FontId(fontId_Text_(glyph->font));
         const float advance = (useMonoAdvance ? monoAdvance : glyph->advance);
-        if (!isMeasuring_(mode)) {
+        if (!isMeasuring_(mode) && ch != 0x20 /* don't bother rendering spaces */) {
             if (useMonoAdvance && dst.w > advance && glyph->font != d && !isEmoji) {
                 /* Glyphs from a different font may need recentering to look better. */
                 dst.x -= (dst.w - advance) / 2;
