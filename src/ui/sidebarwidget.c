@@ -401,13 +401,16 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
             addChildFlags_Widget(div, iClob(msg), frameless_WidgetFlag);
             addChild_Widget(div, iClob(makePadding_Widget(3 * gap_UI)));
             addChild_Widget(div, iClob(new_LabelWidget("New Identity...", "ident.new")));
+            addChild_Widget(div, iClob(makePadding_Widget(gap_UI)));
+            addChild_Widget(div, iClob(new_LabelWidget("Import...", "ident.import")));
             addChildFlags_Widget(div, iClob(new_Widget()), expand_WidgetFlag); /* pad */
-            addChildFlags_Widget(
+            setBackgroundColor_Widget(addChildFlags_Widget(
                 div,
-                iClob(new_LabelWidget("See " uiTextStrong_ColorEscape "Help" uiText_ColorEscape
+                iClob(new_LabelWidget("See " uiTextStrong_ColorEscape "Help" restore_ColorEscape
                                       " for more information about TLS client certificates.",
                                       "!open newtab:1 gotoheading:1.6 url:about:help")),
-                frameless_WidgetFlag | fixedHeight_WidgetFlag | wrapText_WidgetFlag);
+                frameless_WidgetFlag | fixedHeight_WidgetFlag | wrapText_WidgetFlag), 
+                uiBackgroundSidebar_ColorId);
             addChild_Widget(d->blank, iClob(div));
         }
         arrange_Widget(d->blank);
