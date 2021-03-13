@@ -385,11 +385,13 @@ void init_LookupWidget(iLookupWidget *d) {
     iWidget *w = as_Widget(d);
     init_Widget(w);
     setId_Widget(w, "lookup");
-    setFlags_Widget(w, focusable_WidgetFlag | resizeChildren_WidgetFlag, iTrue);
+    setFlags_Widget(w, focusable_WidgetFlag, iTrue);
 #if defined (iPlatformAppleMobile)
     setFlags_Widget(w, unhittable_WidgetFlag, iTrue);
 #endif
-    d->list = addChild_Widget(w, iClob(new_ListWidget()));
+    d->list = addChildFlags_Widget(w, iClob(new_ListWidget()),
+                                   resizeToParentWidth_WidgetFlag |
+                                   resizeToParentHeight_WidgetFlag);
     d->cursor = iInvalidPos;
     d->work = new_Thread(worker_LookupWidget_);
     setUserData_Thread(d->work, d);
@@ -428,7 +430,7 @@ void submit_LookupWidget(iLookupWidget *d, const iString *term) {
             signal_Condition(&d->jobAvailable);
         }
         else {
-            setFlags_Widget(as_Widget(d), hidden_WidgetFlag, iTrue);
+            showCollapsed_Widget(as_Widget(d), iFalse);
         }
     });
 }
@@ -597,7 +599,7 @@ static void presentResults_LookupWidget_(iLookupWidget *d) {
     scrollOffset_ListWidget(d->list, 0);
     updateVisible_ListWidget(d->list);
     invalidate_ListWidget(d->list);
-    setFlags_Widget(as_Widget(d), hidden_WidgetFlag, numItems_ListWidget(d->list) == 0);
+    showCollapsed_Widget(as_Widget(d), numItems_ListWidget(d->list) != 0);
 }
 
 static iLookupItem *item_LookupWidget_(iLookupWidget *d, size_t index) {
@@ -674,7 +676,7 @@ static iBool processEvent_LookupWidget_(iLookupWidget *d, const SDL_Event *ev) {
     }
     if (equal_Command(cmd, "input.ended") && equal_Rangecc(range_Command(cmd, "id"), "url") &&
         !isFocused_Widget(w)) {
-        setFlags_Widget(w, hidden_WidgetFlag, iTrue);
+        showCollapsed_Widget(w, iFalse);
     }
     if (isCommand_Widget(w, ev, "focus.lost")) {
         setCursor_LookupWidget_(d, iInvalidPos);
@@ -689,7 +691,7 @@ static iBool processEvent_LookupWidget_(iLookupWidget *d, const SDL_Event *ev) {
         const iLookupItem *item = constItem_ListWidget(d->list, arg_Command(cmd));
         if (item && !isEmpty_String(&item->command)) {
             setText_InputWidget(url, url_DocumentWidget(document_App()));
-            setFlags_Widget(w, hidden_WidgetFlag, iTrue);
+            showCollapsed_Widget(w, iFalse);
             setCursor_LookupWidget_(d, iInvalidPos);
             postCommandString_App(&item->command);
             postCommand_App("focus.set id:"); /* unfocus */
@@ -703,7 +705,7 @@ static iBool processEvent_LookupWidget_(iLookupWidget *d, const SDL_Event *ev) {
             iWidget *url = findWidget_App("url");
             switch (key) {
                 case SDLK_ESCAPE:
-                    setFlags_Widget(w, hidden_WidgetFlag, iTrue);
+                    showCollapsed_Widget(w, iFalse);
                     setCursor_LookupWidget_(d, iInvalidPos);
                     setFocus_Widget(url);
                     return iTrue;

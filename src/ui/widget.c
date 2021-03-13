@@ -209,6 +209,16 @@ void setPadding_Widget(iWidget *d, int left, int top, int right, int bottom) {
     d->padding[3] = bottom;
 }
 
+void showCollapsed_Widget(iWidget *d, iBool show) {
+    const iBool isVisible = !(d->flags & hidden_WidgetFlag);
+    if ((isVisible && !show) || (!isVisible && show)) {
+        setFlags_Widget(d, hidden_WidgetFlag, !show);
+        /* The entire UI may be affected, if parents are resized due to the (un)collapsing. */
+        arrange_Widget(get_Window()->root);
+        postRefresh_App();
+    }
+}
+
 void setVisualOffset_Widget(iWidget *d, int value, uint32_t span, int animFlags) {
     setFlags_Widget(d, visualOffset_WidgetFlag, iTrue);
     if (span == 0) {
@@ -349,36 +359,37 @@ void arrange_Widget(iWidget *d) {
     if (!d->children) {
         return;
     }
-    /* Resize children to fill the parent widget. */
     const size_t childCount = numArrangedChildren_Widget_(d);
+    /* There may still be unarranged children that need arranging internally. */
     if (childCount == 0) {
+        iForEach(ObjectList, i, d->children) {
+            iWidget *child = as_Widget(i.object);
+            if (isArranged_Widget_(child)) {
+                arrange_Widget(child);
+            }
+        }
         return;
     }
+    /* Resize children to fill the parent widget. */
     if (d->flags & resizeChildren_WidgetFlag) {
         const iInt2 dirs = init_I2((d->flags & resizeWidthOfChildren_WidgetFlag) != 0,
                                    (d->flags & resizeHeightOfChildren_WidgetFlag) != 0);
         /* Collapse hidden children. */
-        iBool uncollapsed = iFalse;
+        iBool collapseChanged = iFalse;
         iForEach(ObjectList, c, d->children) {
             iWidget *child = as_Widget(c.object);
-            if (isCollapsed_Widget_(child)) {
-                if (d->flags & arrangeHorizontal_WidgetFlag) {
-                    setWidth_Widget_(child, 0);
-                }
-                if (d->flags & arrangeVertical_WidgetFlag) {
-                    setHeight_Widget_(child, 0);
-                }
-            }
-            else if (child->flags & wasCollapsed_WidgetFlag) {
+            if (!isCollapsed_Widget_(child) && child->flags & wasCollapsed_WidgetFlag) {
                 setFlags_Widget(child, wasCollapsed_WidgetFlag, iFalse);
                 /* Undo collapse and determine the normal size again. */
-                if (child->flags & arrangeSize_WidgetFlag) {
-                    arrange_Widget(d);
-                    uncollapsed = iTrue;
-                }
+                arrange_Widget(d);
+                collapseChanged = iTrue;
+            }
+            else if (isCollapsed_Widget_(child) && ~child->flags & wasCollapsed_WidgetFlag) {
+                setFlags_Widget(child, wasCollapsed_WidgetFlag, iTrue);
+                collapseChanged = iTrue;
             }
         }
-        if (uncollapsed) {
+        if (collapseChanged) {
             arrange_Widget(d); /* Redo with the new child sizes. */
             return;
         }
@@ -436,7 +447,7 @@ void arrange_Widget(iWidget *d) {
             }
             iForEach(ObjectList, i, d->children) {
                 iWidget *child = as_Widget(i.object);
-                if (isArranged_Widget_(child)) {
+                if (isArranged_Widget_(child) && ~child->flags & parentCannotResize_WidgetFlag) {
                     if (dirs.x) setWidth_Widget_(child, child->flags & unpadded_WidgetFlag ? unpaddedChildSize.x : childSize.x);
                     if (dirs.y) setHeight_Widget_(child, child->flags & unpadded_WidgetFlag ? unpaddedChildSize.y : childSize.y);
                 }
@@ -446,8 +457,9 @@ void arrange_Widget(iWidget *d) {
     if (d->flags & resizeChildrenToWidestChild_WidgetFlag) {
         const int widest = widestChild_Widget_(d);
         iForEach(ObjectList, i, d->children) {
-            if (isArranged_Widget_(i.object)) {
-                setWidth_Widget_(as_Widget(i.object), widest);
+            iWidget *child = as_Widget(i.object);
+            if (isArranged_Widget_(child) && ~child->flags & parentCannotResize_WidgetFlag) {
+                setWidth_Widget_(child, widest);
             }
         }
     }
@@ -504,6 +516,10 @@ void arrange_Widget(iWidget *d) {
                      moveToParentRightEdge_WidgetFlag)) {
                     arrange_Widget(child);
                 }
+            }
+            if (d->flags & moveToParentRightEdge_WidgetFlag) {
+                /* TODO: Fix this: not DRY. See beginning of method. */
+                d->rect.pos.x = width_Rect(innerRect_Widget_(d->parent)) - width_Rect(d->rect);
             }
         }
         if (d->flags & arrangeHeight_WidgetFlag) {

@@ -1692,7 +1692,7 @@ iBool handleCommand_App(const char *cmd) {
         }
         setInitialScroll_DocumentWidget(doc, argfLabel_Command(cmd, "scroll"));
         setRedirectCount_DocumentWidget(doc, redirectCount);
-        setFlags_Widget(findWidget_App("document.progress"), hidden_WidgetFlag, iTrue);
+        showCollapsed_Widget(findWidget_App("document.progress"), iFalse);
         if (prefs_App()->decodeUserVisibleURLs) {
             urlDecodePath_String(url);
         }
@@ -1920,12 +1920,11 @@ iBool handleCommand_App(const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "feeds.update.started")) {
-        setFlags_Widget(findWidget_App("feeds.progress"), hidden_WidgetFlag, iFalse);
-        postRefresh_App();
+        showCollapsed_Widget(findWidget_App("feeds.progress"), iTrue);
         return iFalse;
     }
     else if (equal_Command(cmd, "feeds.update.finished")) {
-        setFlags_Widget(findWidget_App("feeds.progress"), hidden_WidgetFlag, iTrue);
+        showCollapsed_Widget(findWidget_App("feeds.progress"), iFalse);
         refreshFinished_Feeds();
         postRefresh_App();
         return iFalse;

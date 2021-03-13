@@ -836,7 +836,7 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
 static void updateFetchProgress_DocumentWidget_(iDocumentWidget *d) {
     iLabelWidget *prog   = findWidget_App("document.progress");
     const size_t  dlSize = d->request ? bodySize_GmRequest(d->request) : 0;
-    setFlags_Widget(as_Widget(prog), hidden_WidgetFlag, dlSize < 250000);
+    showCollapsed_Widget(as_Widget(prog), dlSize >= 250000);
     if (isVisible_Widget(prog)) {
         updateText_LabelWidget(prog,
                                collectNewFormat_String("%s%.3f MB",

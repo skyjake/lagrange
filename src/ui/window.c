@@ -519,8 +519,9 @@ static iBool willPerformSearchQuery_(const iString *userInput) {
 
 static void showSearchQueryIndicator_(iBool show) {
     iWidget *indicator = findWidget_App("input.indicator.search");
-    setFlags_Widget(indicator, hidden_WidgetFlag, !show);
-    iInputWidget *url = (iInputWidget *) parent_Widget(indicator);
+    showCollapsed_Widget(indicator, show);
+    iAssert(isInstance_Object(parent_Widget(parent_Widget(indicator)), &Class_InputWidget));
+    iInputWidget *url = (iInputWidget *) parent_Widget(parent_Widget(indicator));
     setContentPadding_InputWidget(url, -1, contentPadding_InputWidget(url).left +
                                   (show ? width_Widget(indicator) : 0));
 }
@@ -857,17 +858,19 @@ static void updateMetrics_Window_(iWindow *d) {
     iWidget *navBar    = findChild_Widget(d->root, "navbar");
     iWidget *lock      = findChild_Widget(navBar, "navbar.lock");
     iWidget *url       = findChild_Widget(d->root, "url");
-    iWidget *fprog     = findChild_Widget(navBar, "feeds.progress");
-    iWidget *docProg   = findChild_Widget(navBar, "document.progress");
-    iWidget *indSearch = findChild_Widget(navBar, "input.indicator.search");
+//    iWidget *fprog     = findChild_Widget(navBar, "feeds.progress");
+//    iWidget *docProg   = findChild_Widget(navBar, "document.progress");
+//    iWidget *indSearch = findChild_Widget(navBar, "input.indicator.search");
+    iWidget *rightEmbed = findChild_Widget(navBar, "url.rightembed");
     setPadding_Widget(as_Widget(url), 0, gap_UI, 0, gap_UI);
     navBar->rect.size.y = 0; /* recalculate height based on children (FIXME: shouldn't be needed) */
     updateSize_LabelWidget((iLabelWidget *) lock);
     setContentPadding_InputWidget((iInputWidget *) url, width_Widget(lock) * 0.75,
                                   width_Widget(lock) * 0.75);
-    fprog->rect.pos.y = gap_UI;
-    docProg->rect.pos.y = gap_UI;
-    indSearch->rect.pos.y = gap_UI;
+    rightEmbed->rect.pos.y = gap_UI;
+//    fprog->rect.pos.y = gap_UI;
+//    docProg->rect.pos.y = gap_UI;
+//    indSearch->rect.pos.y = gap_UI;
     updatePadding_Window_(d);
     arrange_Widget(d->root);
     postRefresh_App();
@@ -968,36 +971,21 @@ static void setupUserInterface_Window(iWindow *d) {
                 noBackground_WidgetFlag | frameless_WidgetFlag | unpadded_WidgetFlag |
                 (deviceType_App() == desktop_AppDeviceType ? tight_WidgetFlag : 0);
             /* Page information/certificate warning. */ {
-                iLabelWidget *lock =
-                    addChildFlags_Widget(as_Widget(url),
-                                         iClob(newIcon_LabelWidget("\U0001f513", SDLK_i, KMOD_PRIMARY, "document.info")),
-                                         embedFlags | moveToParentLeftEdge_WidgetFlag);
+                iLabelWidget *lock = addChildFlags_Widget(
+                    as_Widget(url),
+                    iClob(newIcon_LabelWidget("\U0001f513", SDLK_i, KMOD_PRIMARY, "document.info")),
+                    embedFlags | moveToParentLeftEdge_WidgetFlag);
                 setId_Widget(as_Widget(lock), "navbar.lock");
                 setFont_LabelWidget(lock, defaultSymbols_FontId);
                 updateTextCStr_LabelWidget(lock, "\U0001f512");
             }
-            /* Feeds refresh indicator is inside the input field. */ {
-                iLabelWidget *fprog = new_LabelWidget(uiTextCaution_ColorEscape
-                                                      "\u2605 Refreshing Feeds...", NULL);
-                setId_Widget(as_Widget(fprog), "feeds.progress");
-                setBackgroundColor_Widget(as_Widget(fprog), uiBackground_ColorId);
-                setAlignVisually_LabelWidget(fprog, iTrue);
-//                shrink_Rect(&as_Widget(fprog)->rect, init_I2(0, gap_UI));
-                addChildFlags_Widget(as_Widget(url),
-                                     iClob(fprog),
-                                     moveToParentRightEdge_WidgetFlag | hidden_WidgetFlag);
-            }
-            /* Download progress indicator is also inside the input field, but hidden normally.
-               TODO: It shouldn't overlap the feeds indicator... */ {
-                iLabelWidget *progress = new_LabelWidget(uiTextCaution_ColorEscape "00.000 MB", NULL);
-                setId_Widget(as_Widget(progress), "document.progress");
-                setBackgroundColor_Widget(as_Widget(progress), uiBackground_ColorId);
-                setAlignVisually_LabelWidget(progress, iTrue);
-//                shrink_Rect(&as_Widget(progress)->rect, init_I2(0, gap_UI));
-                addChildFlags_Widget(as_Widget(url),
-                                     iClob(progress),
+            iWidget *rightEmbed = new_Widget();
+            setId_Widget(rightEmbed, "url.rightembed");
+            addChildFlags_Widget(as_Widget(url),
+                                 iClob(rightEmbed),
+                                 arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag |
+                                     resizeHeightOfChildren_WidgetFlag |
                                      moveToParentRightEdge_WidgetFlag);
-            }
             /* Feeds refresh indicator is inside the input field. */ {
                 iLabelWidget *queryInd =
                     new_LabelWidget(uiTextAction_ColorEscape "\u21d2 Search Query", NULL);
@@ -1005,15 +993,32 @@ static void setupUserInterface_Window(iWindow *d) {
                 setBackgroundColor_Widget(as_Widget(queryInd), uiBackground_ColorId);
                 setFrameColor_Widget(as_Widget(queryInd), uiTextAction_ColorId);
                 setAlignVisually_LabelWidget(queryInd, iTrue);
-//                shrink_Rect(&as_Widget(queryInd)->rect, init_I2(0, gap_UI));
-                addChildFlags_Widget(as_Widget(url),
+                addChildFlags_Widget(rightEmbed,
                                      iClob(queryInd),
-                                     moveToParentRightEdge_WidgetFlag | hidden_WidgetFlag);
+                                     collapse_WidgetFlag | hidden_WidgetFlag);
+            }
+            /* Feeds refresh indicator is inside the input field. */ {
+                iLabelWidget *fprog = new_LabelWidget(uiTextCaution_ColorEscape
+                                                      "\u2605 Updating Feeds", NULL);
+                setId_Widget(as_Widget(fprog), "feeds.progress");
+                setBackgroundColor_Widget(as_Widget(fprog), uiBackground_ColorId);
+                setAlignVisually_LabelWidget(fprog, iTrue);
+                addChildFlags_Widget(rightEmbed,
+                                     iClob(fprog),
+                                     collapse_WidgetFlag | hidden_WidgetFlag);
+            }
+            /* Download progress indicator is also inside the input field, but hidden normally. */ {
+                iLabelWidget *progress = new_LabelWidget(uiTextCaution_ColorEscape "00.000 MB", NULL);
+                setId_Widget(as_Widget(progress), "document.progress");
+                setBackgroundColor_Widget(as_Widget(progress), uiBackground_ColorId);
+                setAlignVisually_LabelWidget(progress, iTrue);
+                addChildFlags_Widget(
+                    rightEmbed, iClob(progress), collapse_WidgetFlag);
             }
             /* Reload button. */
             iLabelWidget *reload = newIcon_LabelWidget(reloadCStr_, 0, 0, "navigate.reload");
             setId_Widget(as_Widget(reload), "reload");
-            addChildFlags_Widget(as_Widget(url), iClob(reload), embedFlags | moveToParentRightEdge_WidgetFlag);
+            addChildFlags_Widget(rightEmbed, iClob(reload), embedFlags);
             updateSize_LabelWidget(reload);
         }
         addChildFlags_Widget(navBar, iClob(new_Widget()), expand_WidgetFlag);

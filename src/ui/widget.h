@@ -216,7 +216,8 @@ void    setPos_Widget               (iWidget *, iInt2 pos);
 void    setSize_Widget              (iWidget *, iInt2 size);
 void    setPadding_Widget           (iWidget *, int left, int top, int right, int bottom);
 iLocalDef void setPadding1_Widget   (iWidget *d, int padding) { setPadding_Widget(d, padding, padding, padding, padding); }
-void    setVisualOffset_Widget      (iWidget *d, int value, uint32_t span, int animFlags);
+void    setVisualOffset_Widget      (iWidget *, int value, uint32_t span, int animFlags);
+void    showCollapsed_Widget        (iWidget *, iBool show); /* takes care of rearranging, refresh */
 void    setBackgroundColor_Widget   (iWidget *, int bgColor);
 void    setFrameColor_Widget        (iWidget *, int frameColor);
 void    setCommandHandler_Widget    (iWidget *, iBool (*handler)(iWidget *, const char *));
