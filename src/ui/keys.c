@@ -198,6 +198,8 @@ static const struct { int id; iMenuItem bind; int flags; } defaultBindings_[] = 
     { 11, { "Scroll down",               SDLK_DOWN, 0,                  "scroll.step arg:1"                 }, argRepeat_BindFlag },
     { 20, { "Scroll up half a page",     SDLK_PAGEUP, 0,                "scroll.page arg:-1"                }, argRepeat_BindFlag },
     { 21, { "Scroll down half a page",   SDLK_PAGEDOWN, 0,              "scroll.page arg:1"                 }, argRepeat_BindFlag },
+    { 22, { "Scroll up a page",          SDLK_PAGEUP, KMOD_PRIMARY,     "scroll.fullpage arg:-1"            }, argRepeat_BindFlag },
+    { 23, { "Scroll down a page",        SDLK_PAGEDOWN, KMOD_PRIMARY,   "scroll.fullpage arg:1"             }, argRepeat_BindFlag },
     { 30, { "Go back",                   navigateBack_KeyShortcut,      "navigate.back"                     }, 0 },
     { 31, { "Go forward",                navigateForward_KeyShortcut,   "navigate.forward"                  }, 0 },
     { 32, { "Go to parent directory",    navigateParent_KeyShortcut,    "navigate.parent"                   }, 0 },

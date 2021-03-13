@@ -1507,6 +1507,20 @@ static void updateDocumentWidthRetainingScrollPosition_DocumentWidget_(iDocument
     }
 }
 
+static iBool scroll_page(iDocumentWidget *d, const char *cmd, float amt) {
+    const int dir = arg_Command(cmd);
+    if (dir > 0 && !argLabel_Command(cmd, "repeat") &&
+        prefs_App()->loadImageInsteadOfScrolling &&
+        fetchNextUnfetchedImage_DocumentWidget_(d)) {
+        return iTrue;
+    }
+    smoothScroll_DocumentWidget_(d,
+                                 dir * (amt * height_Rect(documentBounds_DocumentWidget_(d)) -
+                                        0 * lineHeight_Text(paragraph_FontId)),
+                                 smoothDuration_DocumentWidget_);
+    return iTrue;
+}
+
 static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
     iWidget *w = as_Widget(d);
     if (equal_Command(cmd, "window.resized") || equal_Command(cmd, "font.changed")) {
@@ -1899,17 +1913,10 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equal_Command(cmd, "scroll.page") && document_App() == d) {
-        const int dir = arg_Command(cmd);
-        if (dir > 0 && !argLabel_Command(cmd, "repeat") &&
-            prefs_App()->loadImageInsteadOfScrolling &&
-            fetchNextUnfetchedImage_DocumentWidget_(d)) {
-            return iTrue;
-        }
-        smoothScroll_DocumentWidget_(d,
-                                     dir * (0.5f * height_Rect(documentBounds_DocumentWidget_(d)) -
-                                            0 * lineHeight_Text(paragraph_FontId)),
-                                     smoothDuration_DocumentWidget_);
-        return iTrue;
+        return scroll_page(d, cmd, 0.5f);
+    }
+    else if (equal_Command(cmd, "scroll.fullpage") && document_App() == d) {
+        return scroll_page(d, cmd, 1.0f);
     }
     else if (equal_Command(cmd, "scroll.top") && document_App() == d) {
         init_Anim(&d->scrollY, 0);
