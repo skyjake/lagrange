@@ -196,8 +196,10 @@ static const struct { int id; iMenuItem bind; int flags; } defaultBindings_[] = 
     { 2,  { "Jump to bottom",            SDLK_END, 0,                   "scroll.bottom"                     }, 0 },
     { 10, { "Scroll up",                 SDLK_UP, 0,                    "scroll.step arg:-1"                }, argRepeat_BindFlag },
     { 11, { "Scroll down",               SDLK_DOWN, 0,                  "scroll.step arg:1"                 }, argRepeat_BindFlag },
-    { 20, { "Scroll up half a page",     SDLK_PAGEUP, 0,                "scroll.page arg:-1"                }, argRepeat_BindFlag },
-    { 21, { "Scroll down half a page",   SDLK_PAGEDOWN, 0,              "scroll.page arg:1"                 }, argRepeat_BindFlag },
+    { 22, { "Scroll up half a page",     SDLK_SPACE, KMOD_SHIFT,        "scroll.page arg:-1"                }, argRepeat_BindFlag },
+    { 23, { "Scroll down half a page",   SDLK_SPACE, 0,                 "scroll.page arg:1"                 }, argRepeat_BindFlag },
+    { 24, { "Scroll up a page",          SDLK_PAGEUP, 0,                "scroll.page arg:-1 full:1"         }, argRepeat_BindFlag },
+    { 25, { "Scroll down a page",        SDLK_PAGEDOWN, 0,              "scroll.page arg:1 full:1"          }, argRepeat_BindFlag },
     { 30, { "Go back",                   navigateBack_KeyShortcut,      "navigate.back"                     }, 0 },
     { 31, { "Go forward",                navigateForward_KeyShortcut,   "navigate.forward"                  }, 0 },
     { 32, { "Go to parent directory",    navigateParent_KeyShortcut,    "navigate.parent"                   }, 0 },
@@ -222,8 +224,6 @@ static const struct { int id; iMenuItem bind; int flags; } defaultBindings_[] = 
     { 81, { "Next tab",                  nextTab_KeyShortcut,           "tabs.next"                         }, 0 },
     { 100,{ "Toggle show URL on hover",  '/', KMOD_PRIMARY,             "prefs.hoverlink.toggle"            }, 0 },
     /* The following cannot currently be changed (built-in duplicates). */
-    { 1000, { NULL, SDLK_SPACE, KMOD_SHIFT, "scroll.page arg:-1" }, argRepeat_BindFlag },
-    { 1001, { NULL, SDLK_SPACE, 0, "scroll.page arg:1" }, argRepeat_BindFlag },
 #if defined (iPlatformApple)
     { 1002, { NULL, SDLK_LEFTBRACKET, KMOD_PRIMARY, "navigate.back" }, 0 },
     { 1003, { NULL, SDLK_RIGHTBRACKET, KMOD_PRIMARY, "navigate.forward" }, 0 },
