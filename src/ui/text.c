@@ -1041,7 +1041,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
            is monospaced. Except with Japanese script, that's larger than the normal monospace. */
         const iBool useMonoAdvance =
             monoAdvance > 0 && !isJapanese_FontId(fontId_Text_(glyph->font));
-        const float advance = (useMonoAdvance ? monoAdvance : glyph->advance);
+        const float advance = (useMonoAdvance && glyph->advance > 0 ? monoAdvance : glyph->advance);
         if (!isMeasuring_(mode) && ch != 0x20 /* don't bother rendering spaces */) {
             if (useMonoAdvance && dst.w > advance && glyph->font != d && !isEmoji) {
                 /* Glyphs from a different font may need recentering to look better. */
