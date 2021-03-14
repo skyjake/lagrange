@@ -18,6 +18,21 @@
 * Keyboard modifiers can be customized using the `modmap.txt` configuration file.
 * Caps Lock can be used as a modifier key.
 
+## 1.2.3
+* Fixed XML parser hanging on numeric character entities.
+* Fixed "Monospace Body" option causing Gemtext line markup to be visible.
+* Fixed bookmarking a wrapped link. Now the entire label text gets used instead of just the clicked segment.
+* Fixed handling of non-advancing monospace glyphs.
+* CMake: Automatically check if `lib/the_Foundation` is up-to-date.
+* CMake: Build configuration fails if an SSL library is not found.
+* Reverted default bookmarks having "Getting Started" as a remote bookmark source. Now it's just a regular bookmark.
+
+## 1.2.2
+* Stability improvements.
+* Whitespace is no longer normalized when using the monospace body setting.
+* Fixed issues with percent-encoded Gopher paths.
+* macOS: Try to prevent forced use of high-performance GPU.
+
 ## 1.2.1
 * Fixed crash when creating a bookmark.
 
