@@ -45,6 +45,20 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.2.3" date="2021-03-14">
+            <description>
+                <p>Bug fixes:</p>
+                <ul>
+                    <li>Fixed XML parser hanging on numeric character entities.</li>
+                    <li>Fixed "Monospace Body" option causing Gemtext line 
+                        markup to be visible.</li>
+                    <li>Fixed bookmarking a wrapped link. Now the entire label 
+                        text gets used instead of just the clicked segment.</li>
+                    <li>Fixed handling of non-advancing monospace glyphs.</li>
+                </ul>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.2.3</url>
+        </release>
         <release version="1.2.2" date="2021-03-07">
             <description>
                 <ul>
