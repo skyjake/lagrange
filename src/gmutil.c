@@ -331,36 +331,38 @@ static iBool equalPuny_(const iString *d, iRangecc orig) {
     return iCmpStrN(cstr_String(d), orig.start, size_Range(&orig)) == 0;
 }
 
-void punyEncodeUrlHost_String(iString *d) {
-    /* `d` should be an absolute URL. */
+void punyEncodeDomain_Rangecc(iRangecc domain, iString *encoded_out) {
+    /* The domain name needs to be split into labels. */
+    iRangecc label   = iNullRange;
+    iBool    isFirst = iTrue;
+    while (nextSplit_Rangecc(domain, ".", &label)) {
+        if (!isFirst) {
+            appendChar_String(encoded_out, '.');
+        }
+        isFirst       = iFalse;
+        iString *puny = punyEncode_Rangecc(label);
+        if (!isEmpty_String(puny) && !equalPuny_(puny, label)) {
+            appendCStr_String(encoded_out, "xn--");
+            append_String(encoded_out, puny);
+        }
+        else {
+            appendRange_String(encoded_out, label);
+        }
+        delete_String(puny);
+    }
+}
+
+void punyEncodeUrlHost_String(iString *absoluteUrl) {
     iUrl url;
-    init_Url(&url, d);
+    init_Url(&url, absoluteUrl);
     if (isEmpty_Range(&url.host)) {
         return;
     }
     iString *encoded = new_String();
     setRange_String(encoded, (iRangecc){ url.scheme.start, url.host.start });
-    /* The domain name needs to be split into labels. */ {
-        iRangecc label   = iNullRange;
-        iBool    isFirst = iTrue;
-        while (nextSplit_Rangecc(url.host, ".", &label)) {
-            if (!isFirst) {
-                appendChar_String(encoded, '.');
-            }
-            isFirst = iFalse;
-            iString *puny = punyEncode_Rangecc(label);
-            if (!isEmpty_String(puny) && !equalPuny_(puny, label)) {
-                appendCStr_String(encoded, "xn--");
-                append_String(encoded, puny);
-            }
-            else {
-                appendRange_String(encoded, label);
-            }
-            delete_String(puny);
-        }
-    }
-    appendRange_String(encoded, (iRangecc){ url.host.end, constEnd_String(d) });
-    set_String(d, encoded);
+    punyEncodeDomain_Rangecc(url.host, encoded);
+    appendRange_String(encoded, (iRangecc){ url.host.end, constEnd_String(absoluteUrl) });
+    set_String(absoluteUrl, encoded);
     delete_String(encoded);
 }
 

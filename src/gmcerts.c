@@ -21,6 +21,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "gmcerts.h"
+#include "gmutil.h"
 #include "defs.h"
 
 #include <the_Foundation/file.h>
@@ -420,7 +421,8 @@ iBool checkTrust_GmCerts(iGmCerts *d, iRangecc domain, const iTlsCertificate *ce
 
 void setTrusted_GmCerts(iGmCerts *d, iRangecc domain, const iBlock *fingerprint,
                         const iDate *validUntil) {
-    iString *key = collect_String(newRange_String(domain));
+    iString *key = collectNew_String();
+    punyEncodeDomain_Rangecc(domain, key);
     lock_Mutex(d->mtx);
     iTrustEntry *trust = value_StringHash(d->trusted, key);
     if (trust) {
