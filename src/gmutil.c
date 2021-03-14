@@ -312,7 +312,7 @@ iBool isLikelyUrl_String(const iString *d) {
        hostname */
     iRegExp *pattern = new_RegExp("^([a-z]+:)?//.*|"
                                   "^(//)?([^/?#: ]+)([/?#:].*)$|"
-                                  "^(\\w+(\\.\\w+)+|localhost)$",
+                                  "^([-\\w]+(\\.[-\\w]+)+|localhost)$",
                                   caseInsensitive_RegExpOption);
     iRegExpMatch m;
     init_RegExpMatch(&m);
