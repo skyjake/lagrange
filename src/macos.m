@@ -330,7 +330,10 @@ void enableMomentumScroll_MacOS(void) {
 - (void)handleURLEvent:(NSAppleEventDescriptor*)event
         withReplyEvent:(NSAppleEventDescriptor*)replyEvent {
     NSString *url = [[event paramDescriptorForKeyword:keyDirectObject] stringValue];
-    postCommandf_App("~open url:%s", [url cStringUsingEncoding:NSUTF8StringEncoding]);
+    iString *str = newCStr_String([url cStringUsingEncoding:NSUTF8StringEncoding]);
+    str = urlDecodeExclude_String(collect_String(str), "/#?:");
+    postCommandf_App("~open url:%s", cstr_String(str));
+    delete_String(str);
 }
 @end
 
@@ -512,7 +515,7 @@ void handleCommand_MacOS(const char *cmd) {
             NSMenu *menu = mainMenuItem.submenu;
             if (menu) {
                 int itemIndex = 0;
-                for (NSMenuItem *menuItem in menu.itemArray) {                    
+                for (NSMenuItem *menuItem in menu.itemArray) {
                     NSString *command = [myDel commandForItem:menuItem];
                     if (!command && mainIndex == 6 && itemIndex == 0) {
                         /* Window > Close */
