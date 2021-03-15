@@ -619,15 +619,30 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
         iReverseForEach(PtrArray, i, rootData_.onTop) {
             iWidget *widget = *i.value;
             if (isVisible_Widget(widget) && dispatchEvent_Widget(widget, ev)) {
+#if 0
+                if (ev->type == SDL_MOUSEMOTION) {
+                    printf("[%p] %s:'%s' (on top) ate the motion\n",
+                           widget, class_Widget(widget)->name,
+                           cstr_String(id_Widget(widget)));
+                    fflush(stdout);
+                }
+#endif
                 return iTrue;
             }
         }
     }
-    else if (ev->type == SDL_MOUSEMOTION && !rootData_.hover &&
+    else if (ev->type == SDL_MOUSEMOTION &&
+             (!rootData_.hover || hasParent_Widget(d, rootData_.hover)) &&
              flags_Widget(d) & hover_WidgetFlag && ~flags_Widget(d) & hidden_WidgetFlag &&
              ~flags_Widget(d) & disabled_WidgetFlag) {
         if (contains_Widget(d, init_I2(ev->motion.x, ev->motion.y))) {
             setHover_Widget(d);
+#if 0
+            printf("set hover to [%p] %s:'%s'\n",
+                   d, class_Widget(d)->name,
+                   cstr_String(id_Widget(d)));
+            fflush(stdout);
+#endif
         }
     }
     if (filterEvent_Widget_(d, ev)) {
@@ -643,6 +658,14 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
                 continue;
             }
             if (dispatchEvent_Widget(child, ev)) {
+#if 0
+                if (ev->type == SDL_MOUSEMOTION) {
+                    printf("[%p] %s:'%s' (on top) ate the motion\n",
+                           child, class_Widget(child)->name,
+                           cstr_String(id_Widget(child)));
+                    fflush(stdout);
+                }
+#endif
 #if 0
                 if (ev->type == SDL_MOUSEBUTTONDOWN) {
                     printf("[%p] %s:'%s' ate the button %d\n",

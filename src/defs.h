@@ -79,3 +79,4 @@ enum iFileVersion {
 #define scissor_Icon        "\u2700"
 #define clipCopy_Icon       "\u2398"
 #define clipboard_Icon      "\U0001f4cb"
+#define unhappy_Icon        "\U0001f641"

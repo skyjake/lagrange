@@ -23,6 +23,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "translation.h"
 
 #include "app.h"
+#include "defs.h"
 #include "gmdocument.h"
 #include "ui/command.h"
 #include "ui/documentwidget.h"
@@ -54,6 +55,7 @@ struct Impl_TranslationProgressWidget {
     uint32_t startTime;
     int font;
     iArray sprites;
+    iString message;
 };
 
 void init_TranslationProgressWidget(iTranslationProgressWidget *d) {
@@ -62,6 +64,7 @@ void init_TranslationProgressWidget(iTranslationProgressWidget *d) {
     setId_Widget(w, "xlt.progress");
     init_Array(&d->sprites, sizeof(iSprite));
     d->startTime = SDL_GetTicks();
+    init_String(&d->message);
     /* Set up some letters to animate. */
     const char *chars = "ARGOS";
     const size_t n = strlen(chars);
@@ -84,6 +87,7 @@ void init_TranslationProgressWidget(iTranslationProgressWidget *d) {
 }
 
 void deinit_TranslationProgressWidget(iTranslationProgressWidget *d) {
+    deinit_String(&d->message);
     iForEach(Array, i, &d->sprites) {
         iSprite *spr = i.value;
         deinit_String(&spr->text);
@@ -97,6 +101,11 @@ static void draw_TranslationProgressWidget_(const iTranslationProgressWidget *d)
     const iWidget *w = &d->widget;
     const float t = (float) (SDL_GetTicks() - d->startTime) / 1000.0f;
     const iRect bounds = bounds_Widget(w);
+    if (!isEmpty_String(&d->message)) {
+        drawCentered_Text(
+            uiLabel_FontId, bounds, iFalse, uiText_ColorId, "%s", cstr_String(&d->message));
+        return;
+    }
     iPaint p;
     init_Paint(&p);
     const iInt2 mid = mid_Rect(bounds);
@@ -109,7 +118,8 @@ static void draw_TranslationProgressWidget_(const iTranslationProgressWidget *d)
         int bg = uiBackgroundSelected_ColorId;
         int fg = uiTextSelected_ColorId;
         iInt2 pos = add_I2(mid, spr->pos);
-        pos.y += sin(angle + t) * spr->size.y * iClamp(t * 0.25f - 0.3f, 0.0f, 1.0f);
+        float t2 = sin(0.2f * t);
+        pos.y += sin(angle + t) * spr->size.y * t2 * t2 * iClamp(t * 0.25f - 0.3f, 0.0f, 1.0f);
         if (bg >= 0) {
             p.alpha = opacity * 255;
             fillRect_Paint(&p, (iRect){ pos, spr->size }, bg);
@@ -146,6 +156,7 @@ static const char *tripleBacktickSymbol = "\u20e3";
 static const char *h1Symbol             = "\u20e4";
 static const char *h2Symbol             = "\u20e5";
 static const char *h3Symbol             = "\u20e6";
+static const char *bulletSymbol         = "\n\u20e7";
 
 static iString *quote_String_(const iString *d) {
     iString *quot = new_String();
@@ -265,6 +276,7 @@ void submit_Translation(iTranslation *d) {
     replace_String(docSrc, "###", h3Symbol);
     replace_String(docSrc, "##", h2Symbol);
     replace_String(docSrc, "#", h1Symbol);
+    replace_String(docSrc, "\n*", bulletSymbol);
     printf_Block(json,
                  "{\"q\":\"%s\",\"source\":\"%s\",\"target\":\"%s\"}",
                  cstrCollect_String(quote_String_(docSrc)),
@@ -283,11 +295,19 @@ void submit_Translation(iTranslation *d) {
     d->timer = SDL_AddTimer(1000 / 30, animate_Translation_, d);
 }
 
-static void processResult_Translation_(iTranslation *d) {
+static void setFailed_Translation_(iTranslation *d, const char *msg) {
+    iTranslationProgressWidget *prog = findChild_Widget(d->dlg, "xlt.progress");
+    if (prog && isEmpty_String(&prog->message)) {
+        setCStr_String(&prog->message, msg);
+    }
+}
+
+static iBool processResult_Translation_(iTranslation *d) {
     SDL_RemoveTimer(d->timer);
     d->timer = 0;
     if (status_TlsRequest(d->request) == error_TlsRequestStatus) {
-        return;
+        setFailed_Translation_(d, explosion_Icon "  Request Failed");
+        return iFalse;
     }
     iBlock *resultData = collect_Block(readAll_TlsRequest(d->request));
 //    printf("result(%zu):\n%s\n", size_Block(resultData), cstr_Block(resultData));
@@ -299,16 +319,19 @@ static void processResult_Translation_(iTranslation *d) {
         iString *translation = unquote_String_(collect_String(captured_RegExpMatch(&m, 1)));
         replace_String(translation, tripleBacktickSymbol, "```");
         replace_String(translation, doubleArrowSymbol, "=>");
-        replace_String(translation, h3Symbol, "###");
-        replace_String(translation, h2Symbol, "##");
-        replace_String(translation, h1Symbol, "#");
+        replace_String(translation, h3Symbol, "### ");
+        replace_String(translation, h2Symbol, "## ");
+        replace_String(translation, h1Symbol, "# ");
+        replace_String(translation, bulletSymbol, "\n* ");
         setSource_DocumentWidget(d->doc, translation);
         postCommand_App("sidebar.update");
         delete_String(translation);
     }
     else {
-        /* TODO: Report failure! */
+        setFailed_Translation_(d, unhappy_Icon "  Service Unavailable");
+        return iFalse;
     }
+    return iTrue;
 }
 
 static iLabelWidget *acceptButton_Translation_(const iTranslation *d) {
@@ -342,14 +365,26 @@ iBool handleCommand_Translation(iTranslation *d, const char *cmd) {
     }
     if (equalWidget_Command(cmd, w, "translation.finished")) {
         if (!isFinished_Translation(d)) {
-            processResult_Translation_(d);
-            destroy_Widget(d->dlg);
-            d->dlg = NULL;
+            if (processResult_Translation_(d)) {
+                destroy_Widget(d->dlg);
+                d->dlg = NULL;
+            }
         }
         return iTrue;
     }
     if (equalWidget_Command(cmd, d->dlg, "translation.cancel")) {
-        cancel_TlsRequest(d->request);
+        if (status_TlsRequest(d->request) == submitted_TlsRequestStatus) {
+            setFailed_Translation_(d, "Cancelled");
+            updateTextCStr_LabelWidget(
+                findMenuItem_Widget(findChild_Widget(d->dlg, "dialogbuttons"),
+                                    "translation.cancel"),
+                "Dismiss");
+            cancel_TlsRequest(d->request);
+        }
+        else {
+            destroy_Widget(d->dlg);
+            d->dlg = NULL;
+        }
         return iTrue;
     }
     return iFalse;

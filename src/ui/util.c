@@ -2222,6 +2222,7 @@ const char *languageId_String(const iString *menuItemLabel) {
 
 iWidget *makeTranslation_Widget(iWidget *parent) {
     iWidget *dlg = makeSheet_Widget("xlt");
+    setFlags_Widget(dlg, keepOnTop_WidgetFlag, iFalse);
     setCommandHandler_Widget(dlg, translationHandler_);
     addChildFlags_Widget(dlg,
                          iClob(new_LabelWidget(uiHeading_ColorEscape "TRANSLATE PAGE", NULL)),
