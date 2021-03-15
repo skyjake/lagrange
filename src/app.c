@@ -540,14 +540,13 @@ static void init_App_(iApp *d, int argc, char **argv) {
                     startsWithCase_Rangecc(arg, "finger:") || startsWithCase_Rangecc(arg, "file:")   ||
                     startsWithCase_Rangecc(arg, "data:")   || startsWithCase_Rangecc(arg, "about:");
                 if (isKnownScheme || fileExistsCStr_FileInfo(cstr_Rangecc(arg))) {
-                    pushBack_StringList(
-                        openCmds,
-                        collectNewFormat_String("open newtab:%d url:%s",
-                                                newTab,
-                                                isKnownScheme
-                                                    ? cstr_Rangecc(arg)
-                                                    : cstrCollect_String(makeFileUrl_String(
-                                                          collectNewRange_String(arg)))));
+                    iString *decUrl =
+                        isKnownScheme ? urlDecodeExclude_String(collectNewRange_String(arg), "/?#:")
+                                      : makeFileUrl_String(collectNewRange_String(arg));
+                    pushBack_StringList(openCmds,
+                                        collectNewFormat_String(
+                                            "open newtab:%d url:%s", newTab, cstr_String(decUrl)));
+                    delete_String(decUrl);
                     newTab = iTrue;
                 }
                 else {
