@@ -43,6 +43,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "paint.h"
 #include "mediaui.h"
 #include "scrollwidget.h"
+#include "translation.h"
 #include "util.h"
 #include "visbuf.h"
 #include "visited.h"
@@ -218,6 +219,7 @@ struct Impl_DocumentWidget {
     iPtrSet *      invalidRuns;
     SDL_Texture *  sideIconBuf;
     iTextBuf *     timestampBuf;
+    iTranslation * translation;
 };
 
 iDefineObjectConstruction(DocumentWidget)
@@ -273,6 +275,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     d->playerMenu   = NULL;
     d->sideIconBuf  = NULL;
     d->timestampBuf = NULL;
+    d->translation  = NULL;
     addChildFlags_Widget(w,
                          iClob(new_IndicatorWidget()),
                          resizeToParentWidth_WidgetFlag | resizeToParentHeight_WidgetFlag);
@@ -289,6 +292,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
 }
 
 void deinit_DocumentWidget(iDocumentWidget *d) {
+    delete_Translation(d->translation);
     if (d->sideIconBuf) {
         SDL_DestroyTexture(d->sideIconBuf);
     }
@@ -751,7 +755,7 @@ static void documentRunsInvalidated_DocumentWidget_(iDocumentWidget *d) {
     d->lastVisibleRun  = NULL;
 }
 
-static void setSource_DocumentWidget_(iDocumentWidget *d, const iString *source) {
+void setSource_DocumentWidget(iDocumentWidget *d, const iString *source) {
     setUrl_GmDocument(d->doc, d->mod.url);
     setSource_GmDocument(d->doc, source, documentWidth_DocumentWidget_(d));
     documentRunsInvalidated_DocumentWidget_(d);
@@ -825,7 +829,7 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
     }
     setBanner_GmDocument(d->doc, useBanner ? bannerType_DocumentWidget_(d) : none_GmDocumentBanner);
     setFormat_GmDocument(d->doc, gemini_GmDocumentFormat);
-    setSource_DocumentWidget_(d, src);
+    setSource_DocumentWidget(d, src);
     updateTheme_DocumentWidget_(d);
     init_Anim(&d->scrollY, 0);
     init_Anim(&d->sideOpacity, 0);
@@ -947,7 +951,7 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse
             }
         }
         if (setSource) {
-            setSource_DocumentWidget_(d, &str);
+            setSource_DocumentWidget(d, &str);
         }
         deinit_String(&str);
     }
@@ -1777,6 +1781,20 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         cacheDocumentGlyphs_DocumentWidget_(d);
         return iFalse;
     }
+    else if (equalWidget_Command(cmd, w, "document.translate")) {
+        if (!d->translation) {
+            d->translation = new_Translation(d);
+        }
+        return iTrue;
+    }
+    else if (startsWith_CStr(cmd, "translation.") && d->translation) {
+        const iBool wasHandled = handleCommand_Translation(d->translation, cmd);
+        if (isFinished_Translation(d->translation)) {
+            delete_Translation(d->translation);
+            d->translation = NULL;
+        }
+        return wasHandled;
+    }
     else if (equal_Command(cmd, "media.updated") || equal_Command(cmd, "media.finished")) {
         return handleMediaCommand_DocumentWidget_(d, cmd);
     }
@@ -2524,9 +2542,10 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                             { star_Icon " Subscribe to Page...", subscribeToPage_KeyModifier, "feeds.subscribe" },
                             { "---", 0, 0, NULL },
                             { book_Icon " Import Links as Bookmarks...", 0, 0, "bookmark.links confirm:1" },
+                            { "Translate...", 0, 0, "document.translate" },
                             { "---", 0, 0, NULL },
                             { "Copy Page URL", 0, 0, "document.copylink" } },
-                        11);
+                        12);
                     if (isEmpty_Range(&d->selectMark)) {
                         pushBackN_Array(
                             &items,

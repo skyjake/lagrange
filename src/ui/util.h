@@ -223,3 +223,6 @@ iWidget *   makeBookmarkEditor_Widget   (void);
 iWidget *   makeBookmarkCreation_Widget (const iString *url, const iString *title, iChar icon);
 iWidget *   makeIdentityCreation_Widget (void);
 iWidget *   makeFeedSettings_Widget     (uint32_t bookmarkId);
+iWidget *   makeTranslation_Widget      (iWidget *parent);
+
+const char *    languageId_String   (const iString *menuItemLabel);

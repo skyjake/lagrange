@@ -158,6 +158,8 @@ set (SOURCES
     src/ui/text.h
     src/ui/touch.c
     src/ui/touch.h
+    src/ui/translation.c
+    src/ui/translation.h
     src/ui/util.c
     src/ui/util.h
     src/ui/visbuf.c

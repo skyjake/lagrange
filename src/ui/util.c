@@ -1688,8 +1688,19 @@ static void appendFramelessTabPage_(iWidget *tabs, iWidget *page, const char *ti
         iTrue);
 }
 
+static iWidget *makeTwoColumnWidget_(iWidget **headings, iWidget **values) {
+    iWidget *page = new_Widget();
+    setFlags_Widget(page, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
+    *headings = addChildFlags_Widget(
+        page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
+    *values = addChildFlags_Widget(
+        page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
+    return page;
+}
+
 static iWidget *appendTwoColumnPage_(iWidget *tabs, const char *title, int shortcut, iWidget **headings,
                                      iWidget **values) {
+    /* TODO: Use `makeTwoColumnWidget_()`, see above. */
     iWidget *page = new_Widget();
     setFlags_Widget(page, arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag |
                     resizeHeightOfChildren_WidgetFlag | borderTop_WidgetFlag, iTrue);
@@ -1935,13 +1946,8 @@ iWidget *makeBookmarkEditor_Widget(void) {
                      iClob(new_LabelWidget(uiHeading_ColorEscape "EDIT BOOKMARK", NULL)),
                      frameless_WidgetFlag),
                  "bmed.heading");
-    iWidget *page = new_Widget();
-    addChild_Widget(dlg, iClob(page));
-    setFlags_Widget(page, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
-    iWidget *headings = addChildFlags_Widget(
-        page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
-    iWidget *values = addChildFlags_Widget(
-        page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
+    iWidget *headings, *values;
+    addChild_Widget(dlg, iClob(makeTwoColumnWidget_(&headings, &values)));
     iInputWidget *inputs[4];
     addChild_Widget(headings, iClob(makeHeading_Widget("Title:")));
     setId_Widget(addChild_Widget(values, iClob(inputs[0] = new_InputWidget(0))), "bmed.title");
@@ -2074,13 +2080,8 @@ iWidget *makeFeedSettings_Widget(uint32_t bookmarkId) {
                                            NULL)),
                      frameless_WidgetFlag),
                  "feedcfg.heading");
-    iWidget *page = new_Widget();
-    addChild_Widget(dlg, iClob(page));
-    setFlags_Widget(page, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
-    iWidget *headings = addChildFlags_Widget(
-        page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
-    iWidget *values = addChildFlags_Widget(
-        page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
+    iWidget *headings, *values;
+    addChild_Widget(dlg, iClob(makeTwoColumnWidget_(&headings, &values)));
     addChild_Widget(headings, iClob(makeHeading_Widget("Title:")));
     iInputWidget *input = new_InputWidget(0);
     setId_Widget(addChild_Widget(values, iClob(input)), "feedcfg.title");
@@ -2181,6 +2182,84 @@ iWidget *makeIdentityCreation_Widget(void) {
                                                   "ident.accept" } },
                                  2)));
     addChild_Widget(get_Window()->root, iClob(dlg));
+    finalizeSheet_Widget(dlg);
+    return dlg;
+}
+
+static const iMenuItem languages[] = {
+    { "Arabic", 0, 0, "xlt.lang id:ar" },
+    { "Chinese", 0, 0, "xlt.lang id:zh" },
+    { "English", 0, 0, "xlt.lang id:en" },
+    { "French", 0, 0, "xlt.lang id:fr" },
+    { "German", 0, 0, "xlt.lang id:de" },
+    { "Hindi", 0, 0, "xlt.lang id:hi" },
+    { "Italian", 0, 0, "xlt.lang id:it" },
+    { "Japanese", 0, 0, "xlt.lang id:ja" },
+    { "Portuguese", 0, 0, "xlt.lang id:pt" },
+    { "Russian", 0, 0, "xlt.lang id:ru" },
+    { "Spanish", 0, 0, "xlt.lang id:es" },
+};
+
+static iBool translationHandler_(iWidget *dlg, const char *cmd) {
+    if (equal_Command(cmd, "xlt.lang")) {
+        iLabelWidget *menuItem = pointer_Command(cmd);
+        iWidget *button = parent_Widget(parent_Widget(menuItem));
+        iAssert(isInstance_Object(button, &Class_LabelWidget));
+        updateText_LabelWidget((iLabelWidget *) button, text_LabelWidget(menuItem));
+        return iTrue;
+    }
+    return iFalse;
+}
+
+const char *languageId_String(const iString *menuItemLabel) {
+    iForIndices(i, languages) {
+        if (!cmp_String(menuItemLabel, languages[i].label)) {
+            return cstr_Rangecc(range_Command(languages[i].command, "id"));
+        }
+    }
+    return "";
+}
+
+iWidget *makeTranslation_Widget(iWidget *parent) {
+    iWidget *dlg = makeSheet_Widget("xlt");
+    setCommandHandler_Widget(dlg, translationHandler_);
+    addChildFlags_Widget(dlg,
+                         iClob(new_LabelWidget(uiHeading_ColorEscape "TRANSLATE PAGE", NULL)),
+                         frameless_WidgetFlag);
+    addChild_Widget(dlg, iClob(makePadding_Widget(lineHeight_Text(uiLabel_FontId))));
+    iWidget *headings, *values;
+    iWidget *page;
+    addChild_Widget(dlg, iClob(page = makeTwoColumnWidget_(&headings, &values)));
+    setId_Widget(page, "xlt.langs");
+    addChild_Widget(headings, iClob(makeHeading_Widget("From:")));
+    iLabelWidget *fromLang, *toLang;
+    setId_Widget(addChildFlags_Widget(values,
+                                      iClob(fromLang = makeMenuButton_LabelWidget(
+                                                "Portuguese", languages, iElemCount(languages))),
+                                      alignLeft_WidgetFlag),
+                 "xlt.from");
+    updateTextCStr_LabelWidget(fromLang, "French"); /* TODO: Check source media type; remember last use. */
+    setBackgroundColor_Widget(findChild_Widget(as_Widget(fromLang), "menu"),
+                              uiBackgroundMenu_ColorId);
+    addChild_Widget(headings, iClob(makeHeading_Widget("To:")));
+    setId_Widget(addChildFlags_Widget(values,
+                                      iClob(toLang = makeMenuButton_LabelWidget(
+                                                "Portuguese", languages, iElemCount(languages))),
+                                      alignLeft_WidgetFlag),
+                 "xlt.to");
+    setBackgroundColor_Widget(findChild_Widget(as_Widget(toLang), "menu"),
+                              uiBackgroundMenu_ColorId);
+    updateTextCStr_LabelWidget(toLang, "English"); /* TODO: User preference. */
+    addChild_Widget(dlg, iClob(makePadding_Widget(lineHeight_Text(uiLabel_FontId))));
+    addChild_Widget(
+        dlg,
+        iClob(makeDialogButtons_Widget(
+            (iMenuItem[]){
+                { "Cancel", SDLK_ESCAPE, 0, "translation.cancel" },
+                { uiTextAction_ColorEscape "Translate", SDLK_RETURN, 0, "translation.submit" } },
+            2)));
+    addChild_Widget(parent, iClob(dlg));
+    arrange_Widget(dlg);
     finalizeSheet_Widget(dlg);
     return dlg;
 }
