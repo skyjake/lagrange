@@ -409,7 +409,7 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 iClob(new_LabelWidget("See " uiTextStrong_ColorEscape "Help" restore_ColorEscape
                                       " for more information about TLS client certificates.",
                                       "!open newtab:1 gotoheading:1.6 url:about:help")),
-                frameless_WidgetFlag | fixedHeight_WidgetFlag | wrapText_WidgetFlag), 
+                frameless_WidgetFlag | fixedHeight_WidgetFlag | wrapText_WidgetFlag),
                 uiBackgroundSidebar_ColorId);
             addChild_Widget(d->blank, iClob(div));
         }
@@ -808,8 +808,9 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             updateItems_SidebarWidget_(d);
             scrollOffset_ListWidget(d->list, 0);
         }
-        else if (equal_Command(cmd, "visited.changed") &&
-                 (d->mode == history_SidebarMode || d->mode == feeds_SidebarMode)) {
+        else if (equal_Command(cmd, "sidebar.update") ||
+                 (equal_Command(cmd, "visited.changed") &&
+                  (d->mode == history_SidebarMode || d->mode == feeds_SidebarMode))) {
             updateItems_SidebarWidget_(d);
         }
         else if (equal_Command(cmd, "bookmarks.changed") && (d->mode == bookmarks_SidebarMode ||
