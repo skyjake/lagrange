@@ -290,8 +290,8 @@ static void processResult_Translation_(iTranslation *d) {
         return;
     }
     iBlock *resultData = collect_Block(readAll_TlsRequest(d->request));
-    printf("result(%zu):\n%s\n", size_Block(resultData), cstr_Block(resultData));
-    fflush(stdout);
+//    printf("result(%zu):\n%s\n", size_Block(resultData), cstr_Block(resultData));
+//    fflush(stdout);
     iRegExp *pattern = iClob(new_RegExp(".*translatedText\":\"(.*)\"\\}", caseSensitive_RegExpOption));
     iRegExpMatch m;
     init_RegExpMatch(&m);
