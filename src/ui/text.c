@@ -999,6 +999,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
         if (!isRasterized_Glyph_(glyph, hoff)) {
             /* Need to pause here and make sure all glyphs have been cached in the text. */
             cacheTextGlyphs_Font_(d, args->text);
+            glyph = glyph_Font_(d, ch); /* cache may have been reset */
         }
         int x2 = x1 + glyph->rect[hoff].size.x;
         /* Out of the allotted space? */
