@@ -241,7 +241,8 @@ void setThemePalette_Color(enum iColorTheme theme) {
             set_Color(uiText_ColorId,
                       mix_Color(get_Color(black_ColorId), get_Color(gray25_ColorId), 0.5f));
             copy_(uiTextPressed_ColorId, black_ColorId);
-            copy_(uiTextDisabled_ColorId, gray75_ColorId);
+            set_Color(uiTextDisabled_ColorId,
+                      mix_Color(get_Color(gray75_ColorId), get_Color(gray50_ColorId), 0.5f));
             copy_(uiTextStrong_ColorId, black_ColorId);
             copy_(uiTextDim_ColorId, gray25_ColorId);
             copy_(uiTextSelected_ColorId, black_ColorId);
