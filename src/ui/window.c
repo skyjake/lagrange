@@ -218,8 +218,6 @@ static const iMenuItem tabletNavMenuItems_[] = {
     { add_Icon " New Tab", 't', KMOD_PRIMARY, "tabs.new" },
     { close_Icon " Close Tab", 'w', KMOD_PRIMARY, "tabs.close" },
     { "---", 0, 0, NULL },
-    { download_Icon " Save to Downloads", SDLK_s, KMOD_PRIMARY, "document.save" },
-    { "---", 0, 0, NULL },
     { "Toggle Left Sidebar", SDLK_l, KMOD_PRIMARY | KMOD_SHIFT, "sidebar.toggle" },
     { "Toggle Right Sidebar", SDLK_p, KMOD_PRIMARY | KMOD_SHIFT, "sidebar2.toggle" },
     { "Zoom In", SDLK_EQUALS, KMOD_PRIMARY, "zoom.delta arg:10" },
@@ -239,8 +237,6 @@ static const iMenuItem tabletNavMenuItems_[] = {
 static const iMenuItem phoneNavMenuItems_[] = {
     { add_Icon " New Tab", 't', KMOD_PRIMARY, "tabs.new" },
     { close_Icon " Close Tab", 'w', KMOD_PRIMARY, "tabs.close" },
-    { "---", 0, 0, NULL },
-    { download_Icon " Save to Downloads", SDLK_s, KMOD_PRIMARY, "document.save" },
     { "---", 0, 0, NULL },
     { "Toggle Sidebar", SDLK_l, KMOD_PRIMARY | KMOD_SHIFT, "sidebar.toggle" },
     { "Zoom In", SDLK_EQUALS, KMOD_PRIMARY, "zoom.delta arg:10" },
@@ -1093,11 +1089,19 @@ static void setupUserInterface_Window(iWindow *d) {
                             arrangeHeight_WidgetFlag | resizeChildren_WidgetFlag |
                             arrangeHorizontal_WidgetFlag,
                         iTrue);
-        addChild_Widget(div, iClob(searchBar));
+        if (deviceType_App() == desktop_AppDeviceType) {
+            addChild_Widget(div, iClob(searchBar));
+        }
+        else {
+            /* The search bar appears at the top on mobile, because there is a virtual keyboard
+               covering the bottom. */
+            insertChildAfter_Widget(div, iClob(searchBar),
+                                    childIndex_Widget(div, findChild_Widget(div, "navbar")));
+        }
         setBackgroundColor_Widget(searchBar, uiBackground_ColorId);
         setCommandHandler_Widget(searchBar, handleSearchBarCommands_);
         addChildFlags_Widget(
-            searchBar, iClob(new_LabelWidget("\U0001f50d Text", NULL)), frameless_WidgetFlag);
+            searchBar, iClob(new_LabelWidget(magnifyingGlass_Icon " Text", NULL)), frameless_WidgetFlag);
         iInputWidget *input = new_InputWidget(0);
         setSelectAllOnFocus_InputWidget(input, iTrue);
         setEatEscape_InputWidget(input, iFalse); /* unfocus and close with one keypress */

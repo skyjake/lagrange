@@ -871,12 +871,15 @@ void drawBackground_Widget(const iWidget *d) {
         const iRect rect = bounds_Widget(d);
         iPaint p;
         init_Paint(&p);
+        const int hgt = gap_UI / 4;
         if (d->flags & borderTop_WidgetFlag) {
-            drawHLine_Paint(&p, topLeft_Rect(rect), width_Rect(rect),
+            fillRect_Paint(&p, (iRect){ topLeft_Rect(rect),
+                                        init_I2(width_Rect(rect), hgt) },
                             uiBackgroundFramelessHover_ColorId);
         }
         if (d->flags & borderBottom_WidgetFlag) {
-            drawHLine_Paint(&p, addY_I2(bottomLeft_Rect(rect), -1), width_Rect(rect),
+            fillRect_Paint(&p, (iRect) { addY_I2(bottomLeft_Rect(rect), -hgt),
+                                         init_I2(width_Rect(rect), hgt) },
                             uiBackgroundFramelessHover_ColorId);
         }
     }

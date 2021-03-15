@@ -106,9 +106,10 @@ API_AVAILABLE(ios(13.0))
     // TODO: Check the error.
     [self.engine startWithCompletionHandler:^(NSError *err){
         if (err == nil) {
-            [self.engine notifyWhenPlayersFinished:^(NSError * _Nullable error) {
-                return CHHapticEngineFinishedActionStopEngine;
-            }];
+            /* Just keep it running. */
+//            [self.engine notifyWhenPlayersFinished:^(NSError * _Nullable error) {
+//                return CHHapticEngineFinishedActionStopEngine;
+//            }];
             NSError *startError = nil;
             [player startAtTime:0.0 error:&startError];
         }
@@ -135,6 +136,9 @@ static AppState *appState_;
             HapticState *hs = [[HapticState alloc] init];
             [hs setup];
             self.haptic = hs;
+            /* We start the engine and keep it running. */
+            NSError *err;
+            [hs.engine startAndReturnError:&err];
         }
     } else {
         self.isHapticsAvailable = NO;

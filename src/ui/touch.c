@@ -56,6 +56,7 @@ struct Impl_Touch {
     iWidget *affinity; /* widget on which the touch started */
     iWidget *edgeDragging;
     iBool hasMoved;
+    iBool isTapBegun;
     iBool isTouchDrag;
     iBool isTapAndHold;
     enum iTouchEdge edge;
@@ -151,7 +152,6 @@ static iBool dispatchClick_Touch_(const iTouch *d, int button) {
     btn.state = SDL_RELEASED;
     btn.timestamp = SDL_GetTicks();
     dispatchEvent_Widget(window->root, (SDL_Event *) &btn);
-    setHover_Widget(NULL); /* FIXME: this doesn't seem to do anything? */
     if (!wasUsed && button == SDL_BUTTON_RIGHT) {
         postContextClick_Window(window, &btn);
     }
@@ -180,9 +180,10 @@ static void update_TouchState_(void *ptr) {
             if (elapsed > 25) {
                 clearWidgetMomentum_TouchState_(d, touch->affinity);
             }
-            if (elapsed > 50) {
+            if (elapsed > 50 && !touch->isTapBegun) {
                 /* Looks like a possible tap. */
                 dispatchMotion_Touch_(touch->pos[0], 0);
+                touch->isTapBegun = iTrue;
             }
             if (!touch->isTapAndHold && nowTime - touch->startTime >= longPressSpanMs_ &&
                 touch->affinity) {
@@ -193,6 +194,7 @@ static void update_TouchState_(void *ptr) {
 #if defined (iPlatformAppleMobile)
                 playHapticEffect_iOS(tap_HapticEffect);
 #endif
+                dispatchMotion_Touch_(init_F3(-100, -100, 0), 0);
             }
         }
     }
@@ -535,6 +537,7 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                 if (duration < longPressSpanMs_ && isStationary_Touch_(touch)) {
                     dispatchMotion_Touch_(pos, SDL_BUTTON_LMASK);
                     dispatchClick_Touch_(touch, SDL_BUTTON_LEFT);
+                    dispatchMotion_Touch_(init_F3(-100, -100, 0), 0); /* out of screen */
                 }
                 else if (length_F3(velocity) > 0.0f) {
     //                printf("vel:%f\n", length_F3(velocity));

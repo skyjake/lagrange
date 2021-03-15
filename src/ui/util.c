@@ -1060,7 +1060,6 @@ static iWidget *makeValuePadding_(iWidget *value) {
     setPadding_Widget(pad, 0, 1 * gap_UI, 0, 1 * gap_UI);
     addChild_Widget(pad, iClob(value));
     setFlags_Widget(pad,
-                    borderTop_WidgetFlag |
                     borderBottom_WidgetFlag |
                     arrangeVertical_WidgetFlag |
                     resizeToParentWidth_WidgetFlag |

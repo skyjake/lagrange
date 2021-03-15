@@ -2526,8 +2526,8 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                             &items,
                             (iMenuItem[]){
                                 { "Go Back", navigateBack_KeyShortcut, "navigate.back" },
-                            { "Go Forward", navigateForward_KeyShortcut, "navigate.forward" } },
-                        2);
+                                { "Go Forward", navigateForward_KeyShortcut, "navigate.forward" } },
+                            2);
                     }
                     pushBackN_Array(
                         &items,
@@ -2542,10 +2542,15 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                             { star_Icon " Subscribe to Page...", subscribeToPage_KeyModifier, "feeds.subscribe" },
                             { "---", 0, 0, NULL },
                             { book_Icon " Import Links as Bookmarks...", 0, 0, "bookmark.links confirm:1" },
-                            { "Translate...", 0, 0, "document.translate" },
+                            { globe_Icon " Translate...", 0, 0, "document.translate" },
                             { "---", 0, 0, NULL },
                             { "Copy Page URL", 0, 0, "document.copylink" } },
                         12);
+                    if (deviceType_App() != desktop_AppDeviceType) {
+                        /* TODO: Perhaps not the best place for this? */
+                        insert_Array(&items, size_Array(&items) - 3,
+                                     &(iMenuItem){ magnifyingGlass_Icon " Find on page", 0, 0, "focus.set id:find.input" });
+                    }
                     if (isEmpty_Range(&d->selectMark)) {
                         pushBackN_Array(
                             &items,
