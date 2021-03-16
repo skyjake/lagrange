@@ -89,22 +89,14 @@ struct Impl_GmDocument {
 
 iDefineObjectConstruction(GmDocument)
 
-enum iGmLineType {
-    text_GmLineType,
-    bullet_GmLineType,
-    preformatted_GmLineType,
-    quote_GmLineType,
-    heading1_GmLineType,
-    heading2_GmLineType,
-    heading3_GmLineType,
-    link_GmLineType,
-    max_GmLineType,
-};
-
 static enum iGmLineType lineType_GmDocument_(const iGmDocument *d, const iRangecc line) {
     if (d->format == plainText_GmDocumentFormat) {
         return text_GmLineType;
     }
+    return lineType_Rangecc(line);
+}
+
+enum iGmLineType lineType_Rangecc(const iRangecc line) {
     if (isEmpty_Range(&line)) {
         return text_GmLineType;
     }
@@ -132,7 +124,7 @@ static enum iGmLineType lineType_GmDocument_(const iGmDocument *d, const iRangec
     return text_GmLineType;
 }
 
-static void trimLine_Rangecc_(iRangecc *line, enum iGmLineType type, iBool normalize) {
+void trimLine_Rangecc(iRangecc *line, enum iGmLineType type, iBool normalize) {
     static const unsigned int skip[max_GmLineType] = { 0, 2, 3, 1, 1, 2, 3, 0 };
     line->start += skip[type];
     if (normalize || (type >= heading1_GmLineType && type <= heading3_GmLineType)) {
@@ -400,7 +392,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                     d->size.x /*- indents[preformatted_GmLineType] * gap_Text*/) {
                     preFont = preformattedSmall_FontId;
                 }
-                trimLine_Rangecc_(&line, type, isNormalized);
+                trimLine_Rangecc(&line, type, isNormalized);
                 preAltText = line;
                 /* TODO: store and link the alt text to this run */
                 continue;
@@ -412,7 +404,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                     type = text_GmLineType;
                 }
             }
-            trimLine_Rangecc_(&line, type, isNormalized);
+            trimLine_Rangecc(&line, type, isNormalized);
             run.font = fonts[type];
             /* Remember headings for the document outline. */
             if (type == heading1_GmLineType || type == heading2_GmLineType || type == heading3_GmLineType) {

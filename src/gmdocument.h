@@ -34,6 +34,21 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 iDeclareType(GmHeading)
 iDeclareType(GmRun)
 
+enum iGmLineType {
+    text_GmLineType,
+    bullet_GmLineType,
+    preformatted_GmLineType,
+    quote_GmLineType,
+    heading1_GmLineType,
+    heading2_GmLineType,
+    heading3_GmLineType,
+    link_GmLineType,
+    max_GmLineType,
+};
+
+enum iGmLineType    lineType_Rangecc   (const iRangecc line);
+void                trimLine_Rangecc   (iRangecc *line, enum iGmLineType type, iBool normalize);
+
 enum iGmDocumentTheme {
     colorfulDark_GmDocumentTheme,
     colorfulLight_GmDocumentTheme,

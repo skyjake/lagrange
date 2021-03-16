@@ -111,7 +111,7 @@ static void draw_TranslationProgressWidget_(const iTranslationProgressWidget *d)
     const iInt2 mid = mid_Rect(bounds);
     SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_BLEND);
     iConstForEach(Array, i, &d->sprites) {
-        const int index = index_ArrayConstIterator(&i);
+        const int index = (int) index_ArrayConstIterator(&i);
         const float angle = (float) index;
         const iSprite *spr = i.value;
         const float opacity = iClamp(t - index * 0.5f, 0.0, 1.0f);
@@ -151,12 +151,12 @@ iDefineTypeConstructionArgs(Translation, (iDocumentWidget *doc), doc)
 static const char *   translationServiceHost = "xlt.skyjake.fi";
 static const uint16_t translationServicePort = 443;
 
-static const char *doubleArrowSymbol    = "\u20e2"; /* prevent getting mangled */
-static const char *tripleBacktickSymbol = "\u20e3";
-static const char *h1Symbol             = "\u20e4";
-static const char *h2Symbol             = "\u20e5";
-static const char *h3Symbol             = "\u20e6";
-static const char *bulletSymbol         = "\n\u20e7";
+//static const char *doubleArrowSymbol    = "\U0001f192"; //"\u20e2"; /* prevent getting mangled */
+//static const char *tripleBacktickSymbol = "\U0001f1a9"; //\u20e3";
+//static const char *h1Symbol             = "\U0001f19d";
+//static const char *h2Symbol             = "\U0001f19e";
+//static const char *h3Symbol             = "\U0001f19f";
+//static const char *bulletSymbol         = "\n\U0001f196";
 
 static iString *quote_String_(const iString *d) {
     iString *quot = new_String();
@@ -177,8 +177,19 @@ static iString *quote_String_(const iString *d) {
         else if (ch == '\t') {
             appendCStr_String(quot, "\\t");
         }
-        else if (ch >= 0x100) {
-            appendFormat_String(quot, "\\u%04x", ch);
+        else if (ch >= 0x80) {
+            if ((ch >= 0xD800 && ch < 0xE000) || ch >= 0x10000) {
+                /* TODO: Add a helper function? */
+                /* UTF-16 surrogate pair */
+                iString *chs = newUnicodeN_String(&ch, 1);
+                iBlock *u16 = toUtf16_String(chs);
+                delete_String(chs);
+                const uint16_t *ch16 = constData_Block(u16);
+                appendFormat_String(quot, "\\u%04x\\u%04x", ch16[0], ch16[1]);
+            }
+            else {
+                appendFormat_String(quot, "\\u%04x", ch);
+            }
         }
         else {
             appendChar_String(quot, ch);
@@ -212,13 +223,27 @@ static iString *unquote_String_(const iString *d) {
             else if (esc == 'u') {
                 char digits[5];
                 iZap(digits);
-                iForIndices(j, digits) {
+                for (size_t j = 0; j < 4; j++) {
                     next_StringConstIterator(&i);
                     digits[j] = *i.pos;
                 }
-                iChar codepoint = strtoul(digits, NULL, 16);
-                if (codepoint) {
-                    appendChar_String(unquot, codepoint);
+                uint16_t ch16[2] = { strtoul(digits, NULL, 16), 0 };
+                if (ch16[0] < 0xD800 || ch16[0] >= 0xE000) {
+                    appendChar_String(unquot, ch16[0]);
+                }
+                else {
+                    /* UTF-16 surrogate pair */
+                    next_StringConstIterator(&i);
+                    next_StringConstIterator(&i);
+                    iZap(digits);
+                    for (size_t j = 0; j < 4; j++) {
+                        next_StringConstIterator(&i);
+                        digits[j] = *i.pos;
+                    }
+                    ch16[1] = strtoul(digits, NULL, 16);
+                    iString *u16 = newUtf16N_String(ch16, 2);
+                    append_String(unquot, u16);
+                    delete_String(u16);
                 }
             }
             else {
@@ -243,6 +268,7 @@ void init_Translation(iTranslation *d, iDocumentWidget *doc) {
     d->doc       = doc; /* owner */
     d->request   = new_TlsRequest();
     d->timer     = 0;
+    init_Array(&d->lineTypes, sizeof(int));
     setUserData_Object(d->request, d->doc);
     setHost_TlsRequest(d->request,
                        collectNewCStr_String(translationServiceHost),
@@ -257,6 +283,7 @@ void deinit_Translation(iTranslation *d) {
     cancel_TlsRequest(d->request);
     iRelease(d->request);
     destroy_Widget(d->dlg);
+    deinit_Array(&d->lineTypes);
 }
 
 static uint32_t animate_Translation_(uint32_t interval, iAny *ptr) {
@@ -270,13 +297,32 @@ void submit_Translation(iTranslation *d) {
     const char *idTo   = languageId_String(text_LabelWidget(findChild_Widget(d->dlg, "xlt.to")));
     iAssert(status_TlsRequest(d->request) != submitted_TlsRequestStatus);
     iBlock *json = collect_Block(new_Block(0));
-    iString *docSrc = collect_String(copy_String(source_GmDocument(document_DocumentWidget(d->doc))));
-    replace_String(docSrc, "=>", doubleArrowSymbol);
-    replace_String(docSrc, "```", tripleBacktickSymbol);
-    replace_String(docSrc, "###", h3Symbol);
-    replace_String(docSrc, "##", h2Symbol);
-    replace_String(docSrc, "#", h1Symbol);
-    replace_String(docSrc, "\n*", bulletSymbol);
+    iString *docSrc = collectNew_String();
+    /* TODO: Strip all markup and remember it. These are reapplied when reading response. */ {
+        iRangecc line = iNullRange;
+        while (nextSplit_Rangecc(
+            range_String(source_GmDocument(document_DocumentWidget(d->doc))), "\n", &line)) {
+            iRangecc cleanLine = trimmed_Rangecc(line);
+            const int lineType = lineType_Rangecc(cleanLine);
+            pushBack_Array(&d->lineTypes, &lineType);
+            if (lineType == link_GmLineType) {
+                cleanLine.start += 2; /* skip over the => */
+            }
+            else {
+                trimLine_Rangecc(&cleanLine, lineType, iTrue); /* removes the prefix */
+            }
+            if (!isEmpty_String(docSrc)) {
+                appendCStr_String(docSrc, "\n");
+            }
+            appendRange_String(docSrc, cleanLine);
+        }
+    }
+//    replace_String(docSrc, "=>", doubleArrowSymbol);
+//    replace_String(docSrc, "```", tripleBacktickSymbol);
+//    replace_String(docSrc, "###", h3Symbol);
+//    replace_String(docSrc, "##", h2Symbol);
+//    replace_String(docSrc, "#", h1Symbol);
+//    replace_String(docSrc, "\n*", bulletSymbol);
     printf_Block(json,
                  "{\"q\":\"%s\",\"source\":\"%s\",\"target\":\"%s\"}",
                  cstrCollect_String(quote_String_(docSrc)),
@@ -286,7 +332,7 @@ void submit_Translation(iTranslation *d) {
     printf_Block(msg, "POST /translate HTTP/1.1\r\n"
                       "Host: xlt.skyjake.fi\r\n"
                       "Connection: close\r\n"
-                      "Content-Type: application/json\r\n"
+                      "Content-Type: application/json; charset=utf-8\r\n"
                       "Content-Length: %zu\r\n\r\n", size_Block(json));
     append_Block(msg, json);
     setContent_TlsRequest(d->request, msg);
@@ -310,20 +356,58 @@ static iBool processResult_Translation_(iTranslation *d) {
         return iFalse;
     }
     iBlock *resultData = collect_Block(readAll_TlsRequest(d->request));
-//    printf("result(%zu):\n%s\n", size_Block(resultData), cstr_Block(resultData));
-//    fflush(stdout);
+    printf("result(%zu):\n%s\n", size_Block(resultData), cstr_Block(resultData));
+    fflush(stdout);
     iRegExp *pattern = iClob(new_RegExp(".*translatedText\":\"(.*)\"\\}", caseSensitive_RegExpOption));
     iRegExpMatch m;
     init_RegExpMatch(&m);
     if (matchRange_RegExp(pattern, range_Block(resultData), &m)) {
         iString *translation = unquote_String_(collect_String(captured_RegExpMatch(&m, 1)));
-        replace_String(translation, tripleBacktickSymbol, "```");
-        replace_String(translation, doubleArrowSymbol, "=>");
-        replace_String(translation, h3Symbol, "### ");
-        replace_String(translation, h2Symbol, "## ");
-        replace_String(translation, h1Symbol, "# ");
-        replace_String(translation, bulletSymbol, "\n* ");
-        setSource_DocumentWidget(d->doc, translation);
+        iString *marked = collectNew_String();
+        iRangecc line;
+        size_t lineIndex = 0;
+        while (nextSplit_Rangecc(range_String(translation), "\n", &line)) {
+            iRangecc cleanLine = trimmed_Rangecc(line);
+            if (!isEmpty_String(marked)) {
+                appendCStr_String(marked, "\n");
+            }
+            if (lineIndex < size_Array(&d->lineTypes)) {
+                switch (value_Array(&d->lineTypes, lineIndex, int)) {
+                    case bullet_GmLineType:
+                        appendCStr_String(marked, "* ");
+                        break;
+                    case link_GmLineType:
+                        appendCStr_String(marked, "=> ");
+                        break;
+                    case quote_GmLineType:
+                        appendCStr_String(marked, "> ");
+                        break;
+                    case preformatted_GmLineType:
+                        appendCStr_String(marked, "```");
+                        break;
+                    case heading1_GmLineType:
+                        appendCStr_String(marked, "# ");
+                        break;
+                    case heading2_GmLineType:
+                        appendCStr_String(marked, "## ");
+                        break;
+                    case heading3_GmLineType:
+                        appendCStr_String(marked, "### ");
+                        break;
+                    default:
+                        break;
+                }
+            }
+            appendRange_String(marked, cleanLine);
+            lineIndex++;
+        }
+//        replace_String(translation, tripleBacktickSymbol, "```");
+//        replace_String(translation, doubleArrowSymbol, "=>");
+//        replace_String(translation, h3Symbol, "### ");
+//        replace_String(translation, h2Symbol, "## ");
+//        replace_String(translation, h1Symbol, "# ");
+//        replace_String(translation, bulletSymbol, "\n* ");
+        setSource_DocumentWidget(d->doc, marked);
         postCommand_App("sidebar.update");
         delete_String(translation);
     }
