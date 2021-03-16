@@ -795,6 +795,7 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
     switch (ev->type) {
         case SDL_USEREVENT: {
             if (d->flags & overflowScrollable_WidgetFlag &&
+                ~d->flags & visualOffset_WidgetFlag &&
                 isCommand_UserEvent(ev, "widget.overflow")) {
                 scrollOverflow_Widget_(d, 0); /* check bounds */
             }
