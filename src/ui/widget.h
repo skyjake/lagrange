@@ -29,6 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <the_Foundation/object.h>
 #include <the_Foundation/objectlist.h>
+#include <the_Foundation/ptrarray.h>
 #include <the_Foundation/rect.h>
 #include <the_Foundation/string.h>
 #include <SDL_events.h>
@@ -108,6 +109,7 @@ enum iWidgetFlag {
 #define drawBackgroundToBottom_WidgetFlag   iBit64(53)
 #define dragged_WidgetFlag                  iBit64(54)
 #define hittable_WidgetFlag                 iBit64(55)
+#define safePadding_WidgetFlag              iBit64(56) /* padded using safe area insets */
 
 enum iWidgetAddPos {
     back_WidgetAddPos,
@@ -167,6 +169,7 @@ iInt2   localCoord_Widget   (const iWidget *, iInt2 coord);
 iBool   contains_Widget     (const iWidget *, iInt2 coord);
 iAny *  hitChild_Widget     (const iWidget *, iInt2 coord);
 iAny *  findChild_Widget    (const iWidget *, const char *id);
+const iPtrArray *findChildren_Widget  (const iWidget *, const char *id);
 iAny *  findParentClass_Widget(const iWidget *, const iAnyClass *class);
 iAny *  findFocusable_Widget(const iWidget *startFrom, enum iWidgetFocusDir focusDir);
 size_t  childCount_Widget   (const iWidget *);

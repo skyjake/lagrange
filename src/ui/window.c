@@ -1210,6 +1210,7 @@ static void updateRootSize_Window_(iWindow *d, iBool notifyAlways) {
                          size->y,
                          isHoriz,
                          isVert);
+        postCommand_App("widget.overflow"); /* check bounds with updated sizes */
         postRefresh_App();
         d->place.lastNotifiedSize = *size;
     }

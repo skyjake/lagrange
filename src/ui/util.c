@@ -403,6 +403,7 @@ static iBool isCommandIgnoredByMenus_(const char *cmd) {
            equal_Command(cmd, "document.changed") ||
            equal_Command(cmd, "visited.changed") ||
            (deviceType_App() == desktop_AppDeviceType && equal_Command(cmd, "window.resized")) ||
+           equal_Command(cmd, "widget.overflow") ||
            equal_Command(cmd, "window.reload.update") ||
            equal_Command(cmd, "window.mouse.exited") ||
            equal_Command(cmd, "window.mouse.entered") ||
@@ -909,6 +910,23 @@ iWidget *makeSheet_Widget(const char *id) {
     return sheet;
 }
 
+static void updateSheetPanelMetrics_(iWidget *sheet) {
+    iWidget *navi       = findChild_Widget(sheet, "panel.navi");
+    iWidget *naviPad    = child_Widget(navi, 0);
+    int      naviHeight = lineHeight_Text(defaultBig_FontId) + 4 * gap_UI;
+#if defined (iPlatformAppleMobile)
+    float left, right, top, bottom;
+    safeAreaInsets_iOS(&left, &top, &right, &bottom);
+    setPadding_Widget(sheet, left, 0, right, 0);
+    navi->rect.pos = init_I2(left, top);
+    iConstForEach(PtrArray, i, findChildren_Widget(sheet, "panel.toppad")) {
+        iWidget *pad = *i.value;
+        setSize_Widget(pad, init1_I2(naviHeight));
+    }
+#endif
+    setSize_Widget(navi, init_I2(-1, naviHeight));
+}
+
 static iBool slidePanelHandler_(iWidget *d, const char *cmd) {
     if (equal_Command(cmd, "panel.open")) {
         iWidget *button = pointer_Command(cmd);
@@ -944,19 +962,9 @@ static iBool slidePanelHandler_(iWidget *d, const char *cmd) {
         return iTrue;
     }
     if (equal_Command(cmd, "window.resized")) {
-        iWidget *sheet = parent_Widget(d);
-#if defined (iPlatformAppleMobile)
-        float left, top, right, bottom;
-        safeAreaInsets_iOS(&left, &top, &right, &bottom);
-        /* TODO: incorrect */
-        if (isLandscape_App()) {
-            setPadding_Widget(sheet, left, 0, right, 0);
-        }
-        else {
-            setPadding1_Widget(sheet, 0);
-        }
-#endif
-    }    return iFalse;
+        updateSheetPanelMetrics_(parent_Widget(d));
+    }
+    return iFalse;
 }
 
 static iBool isTwoColumnPage_(iWidget *d) {
@@ -1082,19 +1090,6 @@ void finalizeSheet_Widget(iWidget *sheet) {
            can be taller than the display. In hindsight, it may have been easier to
            create phone versions of each dialog, but at least this works with any future
            changes to the UI (..."works"). */
-        int topSafe = 0;
-        int navBarHeight = lineHeight_Text(defaultBig_FontId) + 4 * gap_UI;
-#if defined (iPlatformAppleMobile)
-        /* Safe area insets. */ {
-            /* TODO: Must be updated when orientation changes; use a widget flag? */
-            float l, t, r, b;
-            safeAreaInsets_iOS(&l, &t, &r, &b);
-//            setPadding_Widget(sheet, l, t, r, b);
-            setPadding1_Widget(sheet, 0);
-            topSafe = t;
-            navBarHeight += t;
-        }
-#endif
         setFlags_Widget(sheet,
                         keepOnTop_WidgetFlag |
                         parentCannotResize_WidgetFlag |
@@ -1110,6 +1105,7 @@ void finalizeSheet_Widget(iWidget *sheet) {
                         resizeWidthOfChildren_WidgetFlag,
                         iTrue);
         setBackgroundColor_Widget(sheet, uiBackground_ColorId);
+        setPadding1_Widget(sheet, 0);
         iPtrArray *contents = collect_PtrArray(new_PtrArray()); /* two-column pages */
         iPtrArray *panelButtons = collect_PtrArray(new_PtrArray());
         iWidget *tabs = findChild_Widget(sheet, "prefs.tabs");
@@ -1166,7 +1162,6 @@ void finalizeSheet_Widget(iWidget *sheet) {
             }
         }
         const iBool useSlidePanels = (size_PtrArray(contents) == size_PtrArray(panelButtons));
-        topPanel->rect.pos = init_I2(0, navBarHeight);
         addChildFlags_Widget(sheet, iClob(topPanel),
                              arrangeVertical_WidgetFlag |
                              resizeWidthOfChildren_WidgetFlag | arrangeHeight_WidgetFlag |
@@ -1182,7 +1177,7 @@ void finalizeSheet_Widget(iWidget *sheet) {
                 setId_Widget(owner, "panel");
                 setUserData_Object(button, owner);
                 setBackgroundColor_Widget(owner, uiBackground_ColorId);
-                addChild_Widget(owner, iClob(makePadding_Widget(navBarHeight - topSafe)));
+                setId_Widget(addChild_Widget(owner, iClob(makePadding_Widget(0))), "panel.toppad");
                 iLabelWidget *title = addChildFlags_Widget(owner,
                                                            iClob(new_LabelWidget(cstrCollect_String(upper_String(text_LabelWidget(button))), NULL)), alignLeft_WidgetFlag | frameless_WidgetFlag);
                 setFont_LabelWidget(title, uiLabelLargeBold_FontId);
@@ -1192,6 +1187,7 @@ void finalizeSheet_Widget(iWidget *sheet) {
                                      focusRoot_WidgetFlag |
                                      hidden_WidgetFlag |
                                      disabled_WidgetFlag |
+                                     //safePadding_WidgetFlag |
                                      arrangeVertical_WidgetFlag |
                                      resizeWidthOfChildren_WidgetFlag |
                                      arrangeHeight_WidgetFlag |
@@ -1337,6 +1333,7 @@ void finalizeSheet_Widget(iWidget *sheet) {
                                  chevron_WidgetFlag);
         }
         else {
+            setFlags_Widget(topPanel, overflowScrollable_WidgetFlag, iTrue);
             /* Update heading style. */
             setFont_LabelWidget((iLabelWidget *) dialogHeading, uiLabelLargeBold_FontId);
             setFlags_Widget(dialogHeading, alignLeft_WidgetFlag, iTrue);
@@ -1348,11 +1345,16 @@ void finalizeSheet_Widget(iWidget *sheet) {
             removeChild_Widget(parent_Widget(input), input);
             addChild_Widget(topPanel, iClob(makeValuePadding_(as_Widget(input))));
         }
+        /* Top padding for each panel, to account for the overlaid navbar. */ {
+            setId_Widget(addChildPos_Widget(topPanel,
+                                            iClob(makePadding_Widget(0)), front_WidgetAddPos),
+                         "panel.toppad");
+        }
         /* Navbar. */ {
             iWidget *navi = new_Widget();
-            setSize_Widget(navi, init_I2(-1, navBarHeight));
+            setId_Widget(navi, "panel.navi");
             setBackgroundColor_Widget(navi, uiBackground_ColorId);
-            addChild_Widget(navi, iClob(makePadding_Widget(topSafe)));
+            addChild_Widget(navi, iClob(makePadding_Widget(0)));
             iLabelWidget *back = addChildFlags_Widget(navi,
                                                       iClob(new_LabelWidget(leftAngle_Icon " Back", "panel.close")),
                                                       noBackground_WidgetFlag | frameless_WidgetFlag |
@@ -1361,6 +1363,7 @@ void finalizeSheet_Widget(iWidget *sheet) {
             setId_Widget(as_Widget(back), "panel.back");
             setFont_LabelWidget(back, defaultBig_FontId);
             if (!isPrefs) {
+                /* Pick up the dialog buttons for the navbar. */
                 iWidget *buttons = findChild_Widget(sheet, "dialogbuttons");
                 iLabelWidget *cancel = findMenuItem_Widget(buttons, "cancel");
                 if (cancel) {
@@ -1385,7 +1388,22 @@ void finalizeSheet_Widget(iWidget *sheet) {
                     addChildFlags_Widget(as_Widget(back), iClob(def), moveToParentRightEdge_WidgetFlag);
                     updateSize_LabelWidget(def);
                 }
-                /* TODO: Action buttons should be added in the bottom as extra buttons. */
+                /* Action buttons are added in the bottom as extra buttons. */ {
+                    iBool isFirstAction = iTrue;
+                    iForEach(ObjectList, i, children_Widget(buttons)) {
+                        if (isInstance_Object(i.object, &Class_LabelWidget) &&
+                            i.object != cancel && i.object != def) {
+                            iLabelWidget *item = i.object;
+                            setBackgroundColor_Widget(i.object, uiBackgroundSidebar_ColorId);
+                            setFont_LabelWidget(item, defaultBig_FontId);
+                            removeChild_Widget(buttons, item);
+                            addChildFlags_Widget(topPanel, iClob(item), panelButtonFlags |
+                                                 (isFirstAction ? borderTop_WidgetFlag : 0));
+                            updateSize_LabelWidget(item);
+                            isFirstAction = iFalse;
+                        }
+                    }
+                }
                 iRelease(removeChild_Widget(parent_Widget(buttons), buttons));
                 /* Styling for remaining elements. */
                 iForEach(ObjectList, i, children_Widget(topPanel)) {
@@ -1400,10 +1418,14 @@ void finalizeSheet_Widget(iWidget *sheet) {
                 }
             }
             addChildFlags_Widget(sheet, iClob(navi),
+                                 drawBackgroundToVerticalSafeArea_WidgetFlag |
                                  arrangeHeight_WidgetFlag | resizeWidthOfChildren_WidgetFlag |
                                  resizeToParentWidth_WidgetFlag | arrangeVertical_WidgetFlag);
         }
+        updateSheetPanelMetrics_(sheet);
         arrange_Widget(sheet->parent);
+        postCommand_App("widget.overflow"); /* with the correct dimensions */
+//        printTree_Widget(sheet);
     }
     else {
         arrange_Widget(sheet);
@@ -1613,6 +1635,7 @@ static iBool messageHandler_(iWidget *msg, const char *cmd) {
           equal_Command(cmd, "document.autoreload") ||
           equal_Command(cmd, "document.reload") ||
           equal_Command(cmd, "document.request.updated") ||
+          equal_Command(cmd, "widget.overflow") ||
           startsWith_CStr(cmd, "window."))) {
         destroy_Widget(msg);
     }
