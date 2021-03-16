@@ -232,6 +232,7 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "proxy.http address:%s\n", cstr_String(&d->prefs.httpProxy));
     appendFormat_String(str, "downloads path:%s\n", cstr_String(&d->prefs.downloadDir));
     appendFormat_String(str, "searchurl address:%s\n", cstr_String(&d->prefs.searchUrl));
+    appendFormat_String(str, "translation.languages from:%d to:%d\n", d->prefs.langFrom, d->prefs.langTo);
     return str;
 }
 
@@ -1453,6 +1454,11 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "prefs.dialogtab")) {
         d->prefs.dialogTab = arg_Command(cmd);
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "translation.languages")) {
+        d->prefs.langFrom = argLabel_Command(cmd, "from");
+        d->prefs.langTo   = argLabel_Command(cmd, "to");
         return iTrue;
     }
     else if (equal_Command(cmd, "window.retain")) {

@@ -151,13 +151,6 @@ iDefineTypeConstructionArgs(Translation, (iDocumentWidget *doc), doc)
 static const char *   translationServiceHost = "xlt.skyjake.fi";
 static const uint16_t translationServicePort = 443;
 
-//static const char *doubleArrowSymbol    = "\U0001f192"; //"\u20e2"; /* prevent getting mangled */
-//static const char *tripleBacktickSymbol = "\U0001f1a9"; //\u20e3";
-//static const char *h1Symbol             = "\U0001f19d";
-//static const char *h2Symbol             = "\U0001f19e";
-//static const char *h3Symbol             = "\U0001f19f";
-//static const char *bulletSymbol         = "\n\U0001f196";
-
 static iString *quote_String_(const iString *d) {
     iString *quot = new_String();
     iConstForEach(String, i, d) {
@@ -292,13 +285,19 @@ static uint32_t animate_Translation_(uint32_t interval, iAny *ptr) {
 }
 
 void submit_Translation(iTranslation *d) {
+    iAssert(status_TlsRequest(d->request) != submitted_TlsRequestStatus);
     /* Check the selected languages from the dialog. */
     const char *idFrom = languageId_String(text_LabelWidget(findChild_Widget(d->dlg, "xlt.from")));
     const char *idTo   = languageId_String(text_LabelWidget(findChild_Widget(d->dlg, "xlt.to")));
-    iAssert(status_TlsRequest(d->request) != submitted_TlsRequestStatus);
-    iBlock *json = collect_Block(new_Block(0));
+    /* Remember these in Preferences. */
+    postCommandf_App("translation.languages from:%d to:%d",
+                     languageIndex_CStr(idFrom),
+                     languageIndex_CStr(idTo));
+    iBlock * json   = collect_Block(new_Block(0));
     iString *docSrc = collectNew_String();
-    /* TODO: Strip all markup and remember it. These are reapplied when reading response. */ {
+    /* The translation engine doesn't preserve Gemtext markup so we'll strip all of it and
+       remember each line's type. These are reapplied when reading the response. Newlines seem
+       to be preserved pretty well. */ {
         iRangecc line = iNullRange;
         while (nextSplit_Rangecc(
             range_String(source_GmDocument(document_DocumentWidget(d->doc))), "\n", &line)) {
@@ -317,28 +316,25 @@ void submit_Translation(iTranslation *d) {
             appendRange_String(docSrc, cleanLine);
         }
     }
-//    replace_String(docSrc, "=>", doubleArrowSymbol);
-//    replace_String(docSrc, "```", tripleBacktickSymbol);
-//    replace_String(docSrc, "###", h3Symbol);
-//    replace_String(docSrc, "##", h2Symbol);
-//    replace_String(docSrc, "#", h1Symbol);
-//    replace_String(docSrc, "\n*", bulletSymbol);
     printf_Block(json,
                  "{\"q\":\"%s\",\"source\":\"%s\",\"target\":\"%s\"}",
                  cstrCollect_String(quote_String_(docSrc)),
                  idFrom,
                  idTo);
     iBlock *msg = collect_Block(new_Block(0));
-    printf_Block(msg, "POST /translate HTTP/1.1\r\n"
-                      "Host: xlt.skyjake.fi\r\n"
-                      "Connection: close\r\n"
-                      "Content-Type: application/json; charset=utf-8\r\n"
-                      "Content-Length: %zu\r\n\r\n", size_Block(json));
+    printf_Block(msg,
+                 "POST /translate HTTP/1.1\r\n"
+                 "Host: %s\r\n"
+                 "Connection: close\r\n"
+                 "Content-Type: application/json; charset=utf-8\r\n"
+                 "Content-Length: %zu\r\n\r\n",
+                 translationServiceHost,
+                 size_Block(json));
     append_Block(msg, json);
     setContent_TlsRequest(d->request, msg);
     submit_TlsRequest(d->request);
     d->startTime = SDL_GetTicks();
-    d->timer = SDL_AddTimer(1000 / 30, animate_Translation_, d);
+    d->timer     = SDL_AddTimer(1000 / 30, animate_Translation_, d);
 }
 
 static void setFailed_Translation_(iTranslation *d, const char *msg) {
@@ -356,8 +352,8 @@ static iBool processResult_Translation_(iTranslation *d) {
         return iFalse;
     }
     iBlock *resultData = collect_Block(readAll_TlsRequest(d->request));
-    printf("result(%zu):\n%s\n", size_Block(resultData), cstr_Block(resultData));
-    fflush(stdout);
+//    printf("result(%zu):\n%s\n", size_Block(resultData), cstr_Block(resultData));
+//    fflush(stdout);
     iRegExp *pattern = iClob(new_RegExp(".*translatedText\":\"(.*)\"\\}", caseSensitive_RegExpOption));
     iRegExpMatch m;
     init_RegExpMatch(&m);
@@ -401,12 +397,6 @@ static iBool processResult_Translation_(iTranslation *d) {
             appendRange_String(marked, cleanLine);
             lineIndex++;
         }
-//        replace_String(translation, tripleBacktickSymbol, "```");
-//        replace_String(translation, doubleArrowSymbol, "=>");
-//        replace_String(translation, h3Symbol, "### ");
-//        replace_String(translation, h2Symbol, "## ");
-//        replace_String(translation, h1Symbol, "# ");
-//        replace_String(translation, bulletSymbol, "\n* ");
         setSource_DocumentWidget(d->doc, marked);
         postCommand_App("sidebar.update");
         delete_String(translation);
@@ -419,7 +409,11 @@ static iBool processResult_Translation_(iTranslation *d) {
 }
 
 static iLabelWidget *acceptButton_Translation_(const iTranslation *d) {
-    return (iLabelWidget *) lastChild_Widget(findChild_Widget(d->dlg, "dialogbuttons"));
+    iWidget *buttonParent = findChild_Widget(d->dlg, "dialogbuttons");
+//    if (!buttonParent) {
+//        buttonParent = findChild_Widget(d->dlg, "panel.back");
+//    }
+    return (iLabelWidget *) lastChild_Widget(buttonParent);
 }
 
 iBool handleCommand_Translation(iTranslation *d, const char *cmd) {

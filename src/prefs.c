@@ -26,6 +26,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 void init_Prefs(iPrefs *d) {
     d->dialogTab         = 0;
+    d->langFrom          = 3; /* fr */
+    d->langTo            = 2; /* en */
     d->useSystemTheme    = iTrue;
     d->theme             = dark_ColorTheme;
     d->accent            = cyan_ColorAccent;

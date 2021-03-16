@@ -1078,6 +1078,12 @@ static iWidget *makeValuePadding_(iWidget *value) {
 }
 
 void finalizeSheet_Widget(iWidget *sheet) {
+    /* The sheet contents are completely rearranged and restyled on a phone.
+       We'll set up a linear fullscreen arrangement of the widgets. Sheets are already
+       scrollable so they can be taller than the display. In hindsight, it may have been
+       easier to create phone versions of each dialog, but at least this works with any
+       future changes to the UI (..."works"). At least this way it is possible to enforce
+       a consistent styling. */
     if (deviceType_App() == phone_AppDeviceType && parent_Widget(sheet) == get_Window()->root) {
         if (~flags_Widget(sheet) & keepOnTop_WidgetFlag) {
             /* Already finalized. */
@@ -1085,11 +1091,6 @@ void finalizeSheet_Widget(iWidget *sheet) {
             postRefresh_App();
             return;
         }
-        /* The sheet contents are completely rearranged on a phone. We'll set up a linear
-           fullscreen arrangement of the widgets. Sheets are already scrollable so they
-           can be taller than the display. In hindsight, it may have been easier to
-           create phone versions of each dialog, but at least this works with any future
-           changes to the UI (..."works"). */
         setFlags_Widget(sheet,
                         keepOnTop_WidgetFlag |
                         parentCannotResize_WidgetFlag |
@@ -1366,6 +1367,9 @@ void finalizeSheet_Widget(iWidget *sheet) {
                 /* Pick up the dialog buttons for the navbar. */
                 iWidget *buttons = findChild_Widget(sheet, "dialogbuttons");
                 iLabelWidget *cancel = findMenuItem_Widget(buttons, "cancel");
+//                if (!cancel) {
+//                    cancel = findMenuItem_Widget(buttons, "translation.cancel");
+//                }
                 if (cancel) {
                     updateText_LabelWidget(back, text_LabelWidget(cancel));
                     setCommand_LabelWidget(back, command_LabelWidget(cancel));
@@ -2223,6 +2227,7 @@ static const iMenuItem languages[] = {
 };
 
 static iBool translationHandler_(iWidget *dlg, const char *cmd) {
+    iUnused(dlg);
     if (equal_Command(cmd, "xlt.lang")) {
         iLabelWidget *menuItem = pointer_Command(cmd);
         iWidget *button = parent_Widget(parent_Widget(menuItem));
@@ -2242,6 +2247,15 @@ const char *languageId_String(const iString *menuItemLabel) {
     return "";
 }
 
+int languageIndex_CStr(const char *langId) {
+    iForIndices(i, languages) {
+        if (equal_Rangecc(range_Command(languages[i].command, "id"), langId)) {
+            return i;
+        }
+    }
+    return -1;
+}
+
 iWidget *makeTranslation_Widget(iWidget *parent) {
     iWidget *dlg = makeSheet_Widget("xlt");
     setFlags_Widget(dlg, keepOnTop_WidgetFlag, iFalse);
@@ -2254,25 +2268,32 @@ iWidget *makeTranslation_Widget(iWidget *parent) {
     iWidget *page;
     addChild_Widget(dlg, iClob(page = makeTwoColumnWidget_(&headings, &values)));
     setId_Widget(page, "xlt.langs");
-    addChild_Widget(headings, iClob(makeHeading_Widget("From:")));
     iLabelWidget *fromLang, *toLang;
-    setId_Widget(addChildFlags_Widget(values,
-                                      iClob(fromLang = makeMenuButton_LabelWidget(
-                                                "Portuguese", languages, iElemCount(languages))),
-                                      alignLeft_WidgetFlag),
-                 "xlt.from");
-    updateTextCStr_LabelWidget(fromLang, "French"); /* TODO: Check source media type; remember last use. */
-    setBackgroundColor_Widget(findChild_Widget(as_Widget(fromLang), "menu"),
-                              uiBackgroundMenu_ColorId);
-    addChild_Widget(headings, iClob(makeHeading_Widget("To:")));
-    setId_Widget(addChildFlags_Widget(values,
-                                      iClob(toLang = makeMenuButton_LabelWidget(
-                                                "Portuguese", languages, iElemCount(languages))),
-                                      alignLeft_WidgetFlag),
-                 "xlt.to");
-    setBackgroundColor_Widget(findChild_Widget(as_Widget(toLang), "menu"),
-                              uiBackgroundMenu_ColorId);
-    updateTextCStr_LabelWidget(toLang, "English"); /* TODO: User preference. */
+    /* Source language. */ {
+        addChild_Widget(headings, iClob(makeHeading_Widget("From:")));
+        setId_Widget(
+            addChildFlags_Widget(values,
+                                 iClob(fromLang = makeMenuButton_LabelWidget(
+                                           "Portuguese", languages, iElemCount(languages))),
+                                 alignLeft_WidgetFlag),
+            "xlt.from");
+        iWidget *langMenu = findChild_Widget(as_Widget(fromLang), "menu");
+        updateText_LabelWidget(fromLang,
+                               text_LabelWidget(child_Widget(langMenu, prefs_App()->langFrom)));
+        setBackgroundColor_Widget(langMenu, uiBackgroundMenu_ColorId);
+    }
+    /* Target language. */ {
+        addChild_Widget(headings, iClob(makeHeading_Widget("To:")));
+        setId_Widget(addChildFlags_Widget(values,
+                                          iClob(toLang = makeMenuButton_LabelWidget(
+                                                    "Portuguese", languages, iElemCount(languages))),
+                                          alignLeft_WidgetFlag),
+                     "xlt.to");
+        iWidget *langMenu = findChild_Widget(as_Widget(toLang), "menu");
+        setBackgroundColor_Widget(langMenu, uiBackgroundMenu_ColorId);
+        updateText_LabelWidget(toLang,
+                               text_LabelWidget(child_Widget(langMenu, prefs_App()->langTo)));
+    }
     addChild_Widget(dlg, iClob(makePadding_Widget(lineHeight_Text(uiLabel_FontId))));
     addChild_Widget(
         dlg,

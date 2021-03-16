@@ -226,3 +226,4 @@ iWidget *   makeFeedSettings_Widget     (uint32_t bookmarkId);
 iWidget *   makeTranslation_Widget      (iWidget *parent);
 
 const char *    languageId_String   (const iString *menuItemLabel);
+int             languageIndex_CStr  (const char *langId);

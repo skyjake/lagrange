@@ -35,6 +35,8 @@ iDeclareType(Prefs)
 struct Impl_Prefs {
     /* UI state */
     int              dialogTab;
+    int              langFrom;
+    int              langTo;
     /* Window */
     iBool            useSystemTheme;
     enum iColorTheme theme;
