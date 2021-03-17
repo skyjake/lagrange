@@ -247,5 +247,13 @@ iBool processEvent_iOS(const SDL_Event *ev) {
             }
         }
     }
+    else if (ev->type == SDL_USEREVENT && ev->user.code == command_UserEventCode) {
+        const char *cmd = command_UserEvent(ev);
+        if (equal_Command(cmd, "ostheme")) {
+            if (arg_Command(cmd)) {
+                postCommandf_App("os.theme.changed dark:%d contrast:1", isSystemDarkMode_ ? 1 : 0);
+            }
+        }
+    }
     return iFalse; /* allow normal processing */
 }
