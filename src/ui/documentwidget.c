@@ -732,6 +732,7 @@ static void updateTimestampBuf_DocumentWidget_(iDocumentWidget *d) {
     if (isValid_Time(&d->sourceTime)) {
         d->timestampBuf = new_TextBuf(
             uiLabel_FontId,
+            white_ColorId,
             cstrCollect_String(format_Time(&d->sourceTime, "Received at %I:%M %p\non %b %d, %Y")));
     }
 }
@@ -3141,7 +3142,8 @@ static void updateSideIconBuf_DocumentWidget_(iDocumentWidget *d) {
     iPaint p;
     init_Paint(&p);
     beginTarget_Paint(&p, d->sideIconBuf);
-    SDL_SetRenderDrawColor(render, 0, 0, 0, 0);
+    const iColor back = get_Color(tmBannerSideTitle_ColorId);
+    SDL_SetRenderDrawColor(render, back.r, back.g, back.b, 0); /* better blending of the edge */
     SDL_RenderClear(render);
     const iRect iconRect = { zero_I2(), init1_I2(minBannerSize) };
     int fg = drawSideRect_(&p, iconRect);
