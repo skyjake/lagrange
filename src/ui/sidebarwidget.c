@@ -1105,7 +1105,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                     2);
                 return iTrue;
             }
-            deleteIdentity_GmCerts(certs_App(), hoverIdentity_SidebarWidget_(d));
+            deleteIdentity_GmCerts(certs_App(), menuIdentity_SidebarWidget_(d));
             postCommand_App("idents.changed");
             return iTrue;
         }
