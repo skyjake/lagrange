@@ -994,7 +994,6 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                     const iColor clr = get_Color(colorNum);
                     SDL_SetTextureColorMod(text_.cache, clr.r, clr.g, clr.b);
                     if (args->mode & fillBackground_RunMode) {
-                        printf("draw color: [%d] %d,%d,%d\n", colorNum, clr.r, clr.g, clr.b);
                         SDL_SetRenderDrawColor(text_.render, clr.r, clr.g, clr.b, 0);
                     }
                 }

@@ -2549,11 +2549,6 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                             { "---", 0, 0, NULL },
                             { "Copy Page URL", 0, 0, "document.copylink" } },
                         12);
-                    if (deviceType_App() != desktop_AppDeviceType) {
-                        /* TODO: Perhaps not the best place for this? */
-                        insert_Array(&items, size_Array(&items) - 3,
-                                     &(iMenuItem){ magnifyingGlass_Icon " Find on page", 0, 0, "focus.set id:find.input" });
-                    }
                     if (isEmpty_Range(&d->selectMark)) {
                         pushBackN_Array(
                             &items,
