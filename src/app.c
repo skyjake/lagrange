@@ -504,8 +504,10 @@ static void init_App_(iApp *d, int argc, char **argv) {
     /* Load the resources from a file. */ {
         if (!load_Embed(concatPath_CStr(cstr_String(execPath_App()), EMB_BIN))) {
             if (!load_Embed(concatPath_CStr(cstr_String(execPath_App()), EMB_BIN2))) {
-                fprintf(stderr, "failed to load resources: %s\n", strerror(errno));
-                exit(-1);
+                if (!load_Embed("resources.lgr")) {
+                    fprintf(stderr, "failed to load resources: %s\n", strerror(errno));
+                    exit(-1);
+                }
             }
         }
     }
