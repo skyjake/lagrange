@@ -432,6 +432,10 @@ void setIcon_LabelWidget(iLabelWidget *d, iChar icon) {
 }
 
 iBool checkIcon_LabelWidget(iLabelWidget *d) {
+    if (isEmpty_String(&d->label)) {
+        d->icon = 0;
+        return iFalse;
+    }
     iStringConstIterator iter;
     init_StringConstIterator(&iter, &d->label);
     const iChar icon = iter.value;
