@@ -926,15 +926,16 @@ void drawBackground_Widget(const iWidget *d) {
         iPaint p;
         init_Paint(&p);
         const int hgt = gap_UI / 4;
+        const int borderColor = uiSeparator_ColorId; /* TODO: Add a property to customize? */
         if (d->flags & borderTop_WidgetFlag) {
             fillRect_Paint(&p, (iRect){ topLeft_Rect(rect),
                                         init_I2(width_Rect(rect), hgt) },
-                            uiBackgroundFramelessHover_ColorId);
+                            borderColor);
         }
         if (d->flags & borderBottom_WidgetFlag) {
             fillRect_Paint(&p, (iRect) { addY_I2(bottomLeft_Rect(rect), -hgt),
                                          init_I2(width_Rect(rect), hgt) },
-                            uiBackgroundFramelessHover_ColorId);
+                            borderColor);
         }
     }
 }
