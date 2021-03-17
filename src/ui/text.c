@@ -829,6 +829,7 @@ enum iRunMode {
                                                    e.g., for icons */
     permanentColorFlag_RunMode      = iBit(11),
     alwaysVariableWidthFlag_RunMode = iBit(12),
+    fillBackground_RunMode          = iBit(13),
 };
 
 static enum iFontId fontId_Text_(const iFont *font) {
@@ -894,6 +895,10 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
     if (isMonospaced) {
         monoAdvance = glyph_Font_(d, 'M')->advance;
     }
+    if (args->mode & fillBackground_RunMode) {
+        const iColor initial = get_Color(args->color);
+        SDL_SetRenderDrawColor(text_.render, initial.r, initial.g, initial.b, 0);
+    }
     /* Text rendering is not very straightforward! Let's dive in... */
     for (const char *chPos = args->text.start; chPos != args->text.end; ) {
         iAssert(chPos < args->text.end);
@@ -908,6 +913,9 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                     const iColor clr =
                         ansiForeground_Color(capturedRange_RegExpMatch(&m, 1), tmParagraph_ColorId);
                     SDL_SetTextureColorMod(text_.cache, clr.r, clr.g, clr.b);
+                    if (args->mode & fillBackground_RunMode) {
+                        SDL_SetRenderDrawColor(text_.render, clr.r, clr.g, clr.b, 0);
+                    }
                 }
                 chPos = end_RegExpMatch(&m);
                 continue;
@@ -972,7 +980,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                 prevCh = 0;
                 continue;
             }
-            if (ch == '\r') {
+            if (ch == '\r') { /* color change */
                 iChar esc = nextChar_(&chPos, args->text.end);
                 int colorNum = args->color;
                 if (esc != 0x24) { /* ASCII Cancel */
@@ -985,6 +993,10 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                 if (mode & draw_RunMode && ~mode & permanentColorFlag_RunMode) {
                     const iColor clr = get_Color(colorNum);
                     SDL_SetTextureColorMod(text_.cache, clr.r, clr.g, clr.b);
+                    if (args->mode & fillBackground_RunMode) {
+                        printf("draw color: [%d] %d,%d,%d\n", colorNum, clr.r, clr.g, clr.b);
+                        SDL_SetRenderDrawColor(text_.render, clr.r, clr.g, clr.b, 0);
+                    }
                 }
                 prevCh = 0;
                 continue;
@@ -995,6 +1007,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
         }
         const iGlyph *glyph = glyph_Font_(d, ch);
         int x1 = iMax(xpos, xposExtend);
+        /* Which half of the pixel the glyph falls on? */
         const int hoff = enableHalfPixelGlyphs_Text ? (xpos - x1 > 0.5f ? 1 : 0) : 0;
         if (!isRasterized_Glyph_(glyph, hoff)) {
             /* Need to pause here and make sure all glyphs have been cached in the text. */
@@ -1002,7 +1015,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
             glyph = glyph_Font_(d, ch); /* cache may have been reset */
         }
         int x2 = x1 + glyph->rect[hoff].size.x;
-        /* Out of the allotted space? */
+        /* Out of the allotted space on the line? */
         if (args->xposLimit > 0 && x2 > args->xposLimit) {
             if (args->continueFrom_out) {
                 if (lastWordEnd != args->text.start) {
@@ -1063,6 +1076,11 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                 dst.h -= over;
                 src.y += over;
                 src.h -= over;
+            }
+            if (args->mode & fillBackground_RunMode) {
+                /* Alpha blending looks much better if the RGB components don't change in
+                   the partially transparent pixels. */
+                SDL_RenderFillRect(text_.render, &dst);
             }
             SDL_RenderCopy(text_.render, text_.cache, &src, &dst);
         }
@@ -1192,11 +1210,12 @@ static void drawBounded_Text_(int fontId, iInt2 pos, int xposBound, int color, i
     run_Font_(font,
               &(iRunArgs){ .mode = draw_RunMode |
                                    (color & permanent_ColorId ? permanentColorFlag_RunMode : 0) |
+                                   (color & fillBackground_ColorId ? fillBackground_RunMode : 0) |
                                    runFlagsFromId_(fontId),
                            .text            = text,
                            .pos             = pos,
                            .xposLayoutBound = xposBound,
-                           .color           = color });
+                           .color           = color & mask_ColorId });
 }
 
 static void draw_Text_(int fontId, iInt2 pos, int color, iRangecc text) {
@@ -1398,9 +1417,9 @@ iString *renderBlockChars_Text(const iBlock *fontData, int height, enum iTextBlo
 
 /*-----------------------------------------------------------------------------------------------*/
 
-iDefineTypeConstructionArgs(TextBuf, (int font, const char *text), font, text)
+iDefineTypeConstructionArgs(TextBuf, (int font, int color, const char *text), font, color, text)
 
-void init_TextBuf(iTextBuf *d, int font, const char *text) {
+void init_TextBuf(iTextBuf *d, int font, int color, const char *text) {
     SDL_Renderer *render = text_.render;
     d->size    = advance_Text(font, text);
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
@@ -1412,9 +1431,9 @@ void init_TextBuf(iTextBuf *d, int font, const char *text) {
     SDL_Texture *oldTarget = SDL_GetRenderTarget(render);
     SDL_SetRenderTarget(render, d->texture);
     SDL_SetTextureBlendMode(text_.cache, SDL_BLENDMODE_NONE); /* blended when TextBuf is drawn */
-    SDL_SetRenderDrawColor(text_.render, 255, 255, 255, 0);
+    SDL_SetRenderDrawColor(text_.render, 0, 0, 0, 0);
     SDL_RenderClear(text_.render);
-    draw_Text_(font, zero_I2(), white_ColorId, range_CStr(text));
+    draw_Text_(font, zero_I2(), color | fillBackground_ColorId, range_CStr(text));
     SDL_SetTextureBlendMode(text_.cache, SDL_BLENDMODE_BLEND);
     SDL_SetRenderTarget(render, oldTarget);
     SDL_SetTextureBlendMode(d->texture, SDL_BLENDMODE_BLEND);

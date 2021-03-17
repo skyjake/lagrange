@@ -212,7 +212,7 @@ iString *   renderBlockChars_Text   (const iBlock *fontData, int height, enum iT
 /*-----------------------------------------------------------------------------------------------*/
 
 iDeclareType(TextBuf)
-iDeclareTypeConstructionArgs(TextBuf, int font, const char *text)
+iDeclareTypeConstructionArgs(TextBuf, int font, int color, const char *text)
 
 struct Impl_TextBuf {
     SDL_Texture *texture;
