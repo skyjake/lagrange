@@ -1091,6 +1091,9 @@ void finalizeSheet_Widget(iWidget *sheet) {
             postRefresh_App();
             return;
         }
+        /* Modify the top sheet to act as a fullscreen background. */
+        setPadding1_Widget(sheet, 0);
+        setBackgroundColor_Widget(sheet, uiBackground_ColorId);
         setFlags_Widget(sheet,
                         keepOnTop_WidgetFlag |
                         parentCannotResize_WidgetFlag |
@@ -1105,27 +1108,25 @@ void finalizeSheet_Widget(iWidget *sheet) {
                         frameless_WidgetFlag |
                         resizeWidthOfChildren_WidgetFlag,
                         iTrue);
-        setBackgroundColor_Widget(sheet, uiBackground_ColorId);
-        setPadding1_Widget(sheet, 0);
-        iPtrArray *contents = collect_PtrArray(new_PtrArray()); /* two-column pages */
-        iPtrArray *panelButtons = collect_PtrArray(new_PtrArray());
-        iWidget *tabs = findChild_Widget(sheet, "prefs.tabs");
-        iWidget *dialogHeading = (tabs ? NULL : child_Widget(sheet, 0));
-        const iBool isPrefs = (tabs != NULL);
+        iPtrArray *   contents         = collect_PtrArray(new_PtrArray()); /* two-column pages */
+        iPtrArray *   panelButtons     = collect_PtrArray(new_PtrArray());
+        iWidget *     prefsTabs        = findChild_Widget(sheet, "prefs.tabs");
+        iWidget *     dialogHeading    = (prefsTabs ? NULL : child_Widget(sheet, 0));
+        const iBool   isPrefs          = (prefsTabs != NULL);
         const int64_t panelButtonFlags = borderBottom_WidgetFlag | alignLeft_WidgetFlag |
                                          frameless_WidgetFlag | extraPadding_WidgetFlag;
         iWidget *topPanel = new_Widget();
         setId_Widget(topPanel, "panel.top");
         addChild_Widget(topPanel, iClob(makePadding_Widget(lineHeight_Text(defaultBig_FontId))));
-        if (tabs) {
+        if (prefsTabs) {
             iRelease(removeChild_Widget(sheet, child_Widget(sheet, 0))); /* heading */
             iRelease(removeChild_Widget(sheet, findChild_Widget(sheet, "dialogbuttons")));
             /* Pull out the pages and make them panels. */
-            iWidget *pages = findChild_Widget(tabs, "tabs.pages");
-            size_t pageCount = tabCount_Widget(tabs);
+            iWidget *pages = findChild_Widget(prefsTabs, "tabs.pages");
+            size_t pageCount = tabCount_Widget(prefsTabs);
             for (size_t i = 0; i < pageCount; i++) {
-                iString *text = copy_String(text_LabelWidget(tabPageButton_Widget(tabs, tabPage_Widget(tabs, 0))));
-                iWidget *page = removeTabPage_Widget(tabs, 0);
+                iString *text = copy_String(text_LabelWidget(tabPageButton_Widget(prefsTabs, tabPage_Widget(prefsTabs, 0))));
+                iWidget *page = removeTabPage_Widget(prefsTabs, 0);
                 iWidget *pageContent = child_Widget(page, 1); /* surrounded by padding widgets */
                 pushBack_PtrArray(contents, ref_Object(pageContent));
                 iLabelWidget *panelButton;
@@ -1149,7 +1150,7 @@ void finalizeSheet_Widget(iWidget *sheet) {
                 iRelease(page);
                 delete_String(text);
             }
-            destroy_Widget(tabs);
+            destroy_Widget(prefsTabs);
         }
         iForEach(ObjectList, i, children_Widget(sheet)) {
             iWidget *child = i.object;
@@ -1710,7 +1711,7 @@ static void appendFramelessTabPage_(iWidget *tabs, iWidget *page, const char *ti
     appendTabPage_Widget(tabs, page, title, shortcut, kmods);
     setFlags_Widget(
         (iWidget *) back_ObjectList(children_Widget(findChild_Widget(tabs, "tabs.buttons"))),
-        frameless_WidgetFlag,
+        frameless_WidgetFlag | noBackground_WidgetFlag,
         iTrue);
 }
 
@@ -1729,7 +1730,7 @@ static iWidget *appendTwoColumnPage_(iWidget *tabs, const char *title, int short
     /* TODO: Use `makeTwoColumnWidget_()`, see above. */
     iWidget *page = new_Widget();
     setFlags_Widget(page, arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag |
-                    resizeHeightOfChildren_WidgetFlag | borderTop_WidgetFlag, iTrue);
+                    resizeHeightOfChildren_WidgetFlag, iTrue);
     addChildFlags_Widget(page, iClob(new_Widget()), expand_WidgetFlag);
     setPadding_Widget(page, 0, gap_UI, 0, gap_UI);
     iWidget *columns = new_Widget();
@@ -1784,6 +1785,7 @@ iWidget *makePreferences_Widget(void) {
                          iClob(new_LabelWidget(uiHeading_ColorEscape "PREFERENCES", NULL)),
                          frameless_WidgetFlag);
     iWidget *tabs = makeTabs_Widget(dlg);
+    setBackgroundColor_Widget(findChild_Widget(tabs, "tabs.buttons"), uiBackgroundSidebar_ColorId);
     setId_Widget(tabs, "prefs.tabs");
     iWidget *headings, *values;
     /* General preferences. */ {
@@ -1942,7 +1944,6 @@ iWidget *makePreferences_Widget(void) {
     /* Keybindings. */
     if (deviceType_App() == desktop_AppDeviceType) {
         iBindingsWidget *bind = new_BindingsWidget();
-        setFlags_Widget(as_Widget(bind), borderTop_WidgetFlag, iTrue);
         appendFramelessTabPage_(tabs, iClob(bind), "Keys", '6', KMOD_PRIMARY);
     }
     addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
