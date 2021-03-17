@@ -258,9 +258,26 @@ static iString *visText_InputWidget_(const iInputWidget *d) {
 static void updateBuffered_InputWidget_(iInputWidget *d) {
     if (isFinishedLaunching_App()) {
         invalidateBuffered_InputWidget_(d);
-        iString *visText = visText_InputWidget_(d);
-        d->buffered = new_TextBuf(d->font, cstr_String(visText));
-        delete_String(visText);
+        iString *bufText = NULL;
+        if (d->inFlags & isUrl_InputWidgetFlag) {
+            /* Highlight the host name. */
+            iUrl parts;
+            const iString *text = text_InputWidget(d);
+            init_Url(&parts, text);
+            if (!isEmpty_Range(&parts.host)) {
+                bufText = new_String();
+                appendRange_String(bufText, (iRangecc){ constBegin_String(text), parts.host.start });
+                appendCStr_String(bufText, uiTextStrong_ColorEscape);
+                appendRange_String(bufText, parts.host);
+                appendCStr_String(bufText, restore_ColorEscape);
+                appendRange_String(bufText, (iRangecc){ parts.host.end, constEnd_String(text) });
+            }
+        }
+        if (!bufText) {
+            bufText = visText_InputWidget_(d);
+        }
+        d->buffered = new_TextBuf(d->font, uiInputText_ColorId, cstr_String(bufText));
+        delete_String(bufText);
     }
 }
 
@@ -274,6 +291,12 @@ void setText_InputWidget(iInputWidget *d, const iString *text) {
                https://github.com/skyjake/lagrange/issues/73) */
             punyEncodeUrlHost_String(enc);
             text = enc;
+        }
+        /* Omit the default (Gemini) scheme if the window is narrow. */
+        if (isNarrow_Window(get_Window()) && startsWithCase_String(text, "gemini:")) {
+            iString *shortened = collect_String(copy_String(text));
+            remove_Block(&shortened->chars, 0, 7);
+            text = shortened;
         }
     }
     clearUndo_InputWidget_(d);
@@ -919,7 +942,7 @@ static void draw_InputWidget_(const iInputWidget *d) {
     }
     if (d->buffered && !isFocused && !isHint) {
         /* Most input widgets will use this, since only one is focused at a time. */
-        draw_TextBuf(d->buffered, textOrigin, uiInputText_ColorId);
+        draw_TextBuf(d->buffered, textOrigin, white_ColorId);
     }
     else {
         draw_Text(d->font,

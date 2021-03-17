@@ -536,10 +536,14 @@ static int navBarAvailableSpace_(iWidget *navBar) {
     return avail;
 }
 
+iBool isNarrow_Window(const iWindow *d) {
+    return width_Rect(safeRootRect_Window(d)) / gap_UI < 140;
+}
+
 static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
     if (equal_Command(cmd, "window.resized") || equal_Command(cmd, "metrics.changed")) {
         const iBool isPhone = deviceType_App() == phone_AppDeviceType;
-        const iBool isNarrow = !isPhone && width_Rect(bounds_Widget(navBar)) / gap_UI < 140;
+        const iBool isNarrow = !isPhone && isNarrow_Window(get_Window());
         /* Adjust navbar padding. */ {
             int hPad = isPhone || isNarrow ? gap_UI / 2 : gap_UI * 3 / 2;
             int vPad = gap_UI * 3 / 2;

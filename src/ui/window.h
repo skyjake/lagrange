@@ -104,6 +104,7 @@ uint32_t    frameTime_Window        (const iWindow *);
 SDL_Renderer *renderer_Window       (const iWindow *);
 int         snap_Window             (const iWindow *);
 iBool       isFullscreen_Window     (const iWindow *);
+iBool       isNarrow_Window         (const iWindow *);
 
 iWindow *   get_Window              (void);
 
