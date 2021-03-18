@@ -395,6 +395,7 @@ static iBool isCommandIgnoredByMenus_(const char *cmd) {
            startsWith_CStr(cmd, "feeds.update.") ||
            equal_Command(cmd, "bookmarks.request.started") ||
            equal_Command(cmd, "bookmarks.request.finished") ||
+           equal_Command(cmd, "bookmarks.changed") ||
            equal_Command(cmd, "document.autoreload") ||
            equal_Command(cmd, "document.reload") ||
            equal_Command(cmd, "document.request.started") ||
@@ -459,9 +460,12 @@ static iWidget *makeMenuSeparator_(void) {
 
 iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
     iWidget *menu = new_Widget();
-    setBackgroundColor_Widget(menu, uiBackground_ColorId);
+    setBackgroundColor_Widget(menu, uiBackgroundMenu_ColorId);
     if (deviceType_App() != desktop_AppDeviceType) {
         setPadding1_Widget(menu, 2 * gap_UI);
+    }
+    else {
+        setPadding1_Widget(menu, gap_UI / 2);
     }
     const iBool isPortraitPhone = (deviceType_App() == phone_AppDeviceType && isPortrait_App());
     int64_t itemFlags = (deviceType_App() != desktop_AppDeviceType ? 0 : 0) |

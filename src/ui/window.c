@@ -1328,13 +1328,12 @@ iBool create_Window_(iWindow *d, iRect rect, uint32_t flags) {
 }
 
 #if defined (iPlatformLinux) || defined (LAGRANGE_CUSTOM_FRAME)
-static SDL_Surface *loadAppIconSurface_(int resized) {
-    const iBlock *icon = &imageLagrange64_Embedded;
-    int           w, h, num;
-    stbi_uc *     pixels = stbi_load_from_memory(
-        constData_Block(icon), size_Block(icon), &w, &h, &num, STBI_rgb_alpha);
+static SDL_Surface *loadImage_(const iBlock *data, int resized) {
+    int      w = 0, h = 0, num = 4;
+    stbi_uc *pixels = stbi_load_from_memory(
+        constData_Block(data), size_Block(data), &w, &h, &num, STBI_rgb_alpha);
     if (resized) {
-        stbi_uc * rsPixels = malloc(num * resized * resized);
+        stbi_uc *rsPixels = malloc(num * resized * resized);
         stbir_resize_uint8(pixels, w, h, 0, rsPixels, resized, resized, 0, num);
         free(pixels);
         pixels = rsPixels;
@@ -1414,7 +1413,7 @@ void init_Window(iWindow *d, iRect rect) {
 #if defined (iPlatformLinux)
     SDL_SetWindowMinimumSize(d->win, minSize.x * d->pixelRatio, minSize.y * d->pixelRatio);
     /* Load the window icon. */ {
-        SDL_Surface *surf = loadAppIconSurface_(0);
+        SDL_Surface *surf = loadImage_(&imageLagrange64_Embedded, 0);
         SDL_SetWindowIcon(d->win, surf);
         free(surf->pixels);
         SDL_FreeSurface(surf);
@@ -1433,11 +1432,18 @@ void init_Window(iWindow *d, iRect rect) {
     setupUserInterface_Window(d);
     postCommand_App("bindings.changed"); /* update from bindings */
     updateRootSize_Window_(d, iFalse);
+    /* Load the border shadow texture. */ {
+        SDL_Surface *surf = loadImage_(&imageShadow_Embedded, 0);
+        d->borderShadow = SDL_CreateTextureFromSurface(d->render, surf);
+        SDL_SetTextureBlendMode(d->borderShadow, SDL_BLENDMODE_BLEND);
+        free(surf->pixels);
+        SDL_FreeSurface(surf);
+    }
     d->appIcon = NULL;
 #if defined (LAGRANGE_CUSTOM_FRAME)
     /* Load the app icon for drawing in the title bar. */
     if (prefs_App()->customFrame) {
-        SDL_Surface *surf = loadAppIconSurface_(appIconSize_());
+        SDL_Surface *surf = loadImage_(&imageLagrange64_Embedded, appIconSize_());
         SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
         d->appIcon = SDL_CreateTextureFromSurface(d->render, surf);
         free(surf->pixels);

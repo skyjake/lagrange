@@ -858,13 +858,7 @@ void drawBackground_Widget(const iWidget *d) {
     if (shadowBorder) {
         iPaint p;
         init_Paint(&p);
-        const iBool isLight = isLight_ColorTheme(colorTheme_App());
-        p.alpha = isLight ? 0xc : 0x20;
-        SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_BLEND);
-        iRect shadowRect = expanded_Rect(bounds_Widget(d), mulf_I2(gap2_UI, 8));
-//        shadowRect.pos.y += gap_UI * 4;
-        fillRect_Paint(&p, shadowRect, /*isLight ? white_ColorId :*/ black_ColorId);
-        SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_NONE);
+        drawSoftShadow_Paint(&p, bounds_Widget(d), 12 * gap_UI, black_ColorId, 30);
     }
     if (fadeBackground) {
         iPaint p;

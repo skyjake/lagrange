@@ -72,6 +72,7 @@ struct Impl_Window {
     uint32_t      frameTime;
     double        presentTime;
     SDL_Texture * appIcon;
+    SDL_Texture * borderShadow;
     SDL_Cursor *  cursors[SDL_NUM_SYSTEM_CURSORS];
     SDL_Cursor *  pendingCursor;
     int           loadAnimTimer;

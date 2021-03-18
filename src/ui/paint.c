@@ -108,6 +108,33 @@ void fillRect_Paint(const iPaint *d, iRect rect, int color) {
     SDL_RenderFillRect(renderer_Paint_(d), (SDL_Rect *) &rect);
 }
 
+void drawSoftShadow_Paint(const iPaint *d, iRect inner, int thickness, int color, int alpha) {
+    SDL_Renderer *render = renderer_Paint_(d);
+    SDL_Texture *shadow = get_Window()->borderShadow;
+    const iInt2 size = size_SDLTexture(shadow);
+    const iRect outer = expanded_Rect(inner, init1_I2(thickness));
+    const iColor clr = get_Color(color);
+    SDL_SetTextureColorMod(shadow, clr.r, clr.g, clr.b);
+    SDL_SetTextureAlphaMod(shadow, alpha);
+    /* Classic stretched segmented border. */
+    SDL_RenderCopy(render, shadow, &(SDL_Rect){ 0, 0, size.x / 2, size.y / 2},
+                   &(SDL_Rect){ outer.pos.x, outer.pos.y, thickness, thickness });
+    SDL_RenderCopy(render, shadow, &(SDL_Rect){ size.x / 2, 0, 1, size.y / 2},
+                   &(SDL_Rect){ inner.pos.x, outer.pos.y, inner.size.x, thickness });
+    SDL_RenderCopy(render, shadow, &(SDL_Rect){ size.x / 2, 0, size.x / 2, size.y / 2},
+                   &(SDL_Rect){ right_Rect(outer) - thickness, outer.pos.y, thickness, thickness });
+    SDL_RenderCopy(render, shadow, &(SDL_Rect){ size.x / 2, size.y / 2, size.x / 2, 1 },
+                   &(SDL_Rect){ right_Rect(inner), inner.pos.y, thickness, inner.size.y });
+    SDL_RenderCopy(render, shadow, &(SDL_Rect){ size.x / 2, size.y / 2, size.x / 2, size.y / 2},
+                   &(SDL_Rect){ right_Rect(inner), bottom_Rect(inner), thickness, thickness });
+    SDL_RenderCopy(render, shadow, &(SDL_Rect){ size.x / 2, size.y / 2, 1, size.y / 2},
+                   &(SDL_Rect){ inner.pos.x, bottom_Rect(inner), inner.size.x, thickness });
+    SDL_RenderCopy(render, shadow, &(SDL_Rect){ 0, size.y / 2, size.x / 2, size.y / 2},
+                   &(SDL_Rect){ outer.pos.x, bottom_Rect(inner), thickness, thickness });
+    SDL_RenderCopy(render, shadow, &(SDL_Rect){ 0, size.y / 2, size.x / 2, 1 },
+                   &(SDL_Rect){ outer.pos.x, inner.pos.y, thickness, inner.size.y });
+}
+
 void drawLines_Paint(const iPaint *d, const iInt2 *points, size_t count, int color) {
     setColor_Paint_(d, color);
     SDL_RenderDrawLines(renderer_Paint_(d), (const SDL_Point *) points, count);

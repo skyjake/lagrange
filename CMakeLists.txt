@@ -73,6 +73,7 @@ set (EMBED_RESOURCES
     res/fonts/SourceSansPro-Regular.ttf
     res/fonts/SourceSansPro-Bold.ttf
     res/fonts/Symbola.ttf
+    res/shadow.png
 )
 if ((UNIX AND NOT APPLE) OR MSYS)
     list (APPEND EMBED_RESOURCES res/lagrange-64.png)
