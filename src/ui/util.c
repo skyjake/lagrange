@@ -401,6 +401,7 @@ static iBool isCommandIgnoredByMenus_(const char *cmd) {
            equal_Command(cmd, "document.request.updated") ||
            equal_Command(cmd, "document.request.finished") ||
            equal_Command(cmd, "document.changed") ||
+           equal_Command(cmd, "scrollbar.fade") ||
            equal_Command(cmd, "visited.changed") ||
            (deviceType_App() == desktop_AppDeviceType && equal_Command(cmd, "window.resized")) ||
            equal_Command(cmd, "widget.overflow") ||
@@ -1634,12 +1635,14 @@ void updateValueInput_Widget(iWidget *d, const char *title, const char *prompt) 
 
 static iBool messageHandler_(iWidget *msg, const char *cmd) {
     /* Almost any command dismisses the sheet. */
+    /* TODO: Use a "notification" prefix (like `) to ignore all types of commands line this? */
     if (!(equal_Command(cmd, "media.updated") ||
           equal_Command(cmd, "media.player.update") ||
           equal_Command(cmd, "bookmarks.request.finished") ||
           equal_Command(cmd, "document.autoreload") ||
           equal_Command(cmd, "document.reload") ||
           equal_Command(cmd, "document.request.updated") ||
+          equal_Command(cmd, "scrollbar.fade") ||
           equal_Command(cmd, "widget.overflow") ||
           startsWith_CStr(cmd, "window."))) {
         destroy_Widget(msg);

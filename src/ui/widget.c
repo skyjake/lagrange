@@ -582,10 +582,17 @@ iInt2 localCoord_Widget(const iWidget *d, iInt2 coord) {
 }
 
 iBool contains_Widget(const iWidget *d, iInt2 coord) {
-    const iRect bounds = { zero_I2(), addY_I2(d->rect.size,
-                                              d->flags & drawBackgroundToBottom_WidgetFlag ?
-                                                rootSize_Window(get_Window()).y : 0) };
-    return contains_Rect(bounds, localCoord_Widget(d, coord));
+    return containsExpanded_Widget(d, coord, 0);
+}
+
+iBool containsExpanded_Widget(const iWidget *d, iInt2 coord, int expand) {
+    const iRect bounds = {
+        zero_I2(),
+        addY_I2(d->rect.size,
+                d->flags & drawBackgroundToBottom_WidgetFlag ? rootSize_Window(get_Window()).y : 0)
+    };
+    return contains_Rect(expand ? expanded_Rect(bounds, init1_I2(expand)) : bounds,
+                         localCoord_Widget(d, coord));
 }
 
 iLocalDef iBool isKeyboardEvent_(const SDL_Event *ev) {
@@ -854,8 +861,8 @@ void drawBackground_Widget(const iWidget *d) {
         const iBool isLight = isLight_ColorTheme(colorTheme_App());
         p.alpha = isLight ? 0xc : 0x20;
         SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_BLEND);
-        iRect shadowRect = expanded_Rect(bounds_Widget(d), mulf_I2(gap2_UI, 1));
-        shadowRect.pos.y += gap_UI / 4;
+        iRect shadowRect = expanded_Rect(bounds_Widget(d), mulf_I2(gap2_UI, 8));
+//        shadowRect.pos.y += gap_UI * 4;
         fillRect_Paint(&p, shadowRect, /*isLight ? white_ColorId :*/ black_ColorId);
         SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_NONE);
     }

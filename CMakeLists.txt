@@ -112,6 +112,8 @@ set (SOURCES
     src/media.h
     src/mimehooks.c
     src/mimehooks.h
+    src/periodic.c
+    src/periodic.h
     src/prefs.c
     src/prefs.h
     src/stb_image.h

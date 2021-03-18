@@ -1827,7 +1827,7 @@ void draw_Window(iWindow *d) {
         }
     }
 #endif
-    const int winFlags = SDL_GetWindowFlags(d->win);
+    const int   winFlags = SDL_GetWindowFlags(d->win);
     const iBool gotFocus = (winFlags & SDL_WINDOW_INPUT_FOCUS) != 0;
     /* Clear the window. The clear color is visible as a border around the window
        when the custom frame is being used. */ {

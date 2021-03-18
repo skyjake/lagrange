@@ -31,6 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "gmutil.h"
 #include "history.h"
 #include "ipc.h"
+#include "periodic.h"
 #include "ui/certimportwidget.h"
 #include "ui/color.h"
 #include "ui/command.h"
@@ -108,7 +109,7 @@ struct Impl_App {
     iVisited *   visited;
     iBookmarks * bookmarks;
     iWindow *    window;
-    iSortedArray tickers;
+    iSortedArray tickers; /* per-frame callbacks, used for animations */
     uint32_t     lastTickerTime;
     uint32_t     elapsedSinceLastTicker;
     iBool        isRunning;
@@ -123,6 +124,7 @@ struct Impl_App {
     iBool        isFinishedLaunching;
     iTime        lastDropTime; /* for detecting drops of multiple items */
     int          autoReloadTimer;
+    iPeriodic    periodic;
     /* Preferences: */
     iBool        commandEcho;         /* --echo */
     iBool        forceSoftwareRender; /* --sw */
@@ -131,6 +133,8 @@ struct Impl_App {
 };
 
 static iApp app_;
+
+/*----------------------------------------------------------------------------------------------*/
 
 iDeclareType(Ticker)
 
@@ -143,6 +147,8 @@ static int cmp_Ticker_(const void *a, const void *b) {
     const iTicker *elems[2] = { a, b };
     return iCmp(elems[0]->context, elems[1]->context);
 }
+
+/*----------------------------------------------------------------------------------------------*/
 
 const iString *dateStr_(const iDate *date) {
     return collectNewFormat_String("%d-%02d-%02d %02d:%02d:%02d",
@@ -611,6 +617,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     d->visited           = new_Visited();
     d->bookmarks         = new_Bookmarks();
     d->tabEnum           = 0; /* generates unique IDs for tab pages */
+    init_Periodic(&d->periodic);
     setThemePalette_Color(d->prefs.theme);
 #if defined (iPlatformAppleDesktop)
     setupApplication_MacOS();
@@ -668,6 +675,10 @@ static void init_App_(iApp *d, int argc, char **argv) {
 }
 
 static void deinit_App(iApp *d) {
+#if defined (LAGRANGE_IDLE_SLEEP)
+    SDL_RemoveTimer(d->sleepTimer);
+#endif
+    SDL_RemoveTimer(d->autoReloadTimer);
     saveState_App_(d);
     deinit_Feeds();
     save_Keys(dataDir_App_());
@@ -681,13 +692,14 @@ static void deinit_App(iApp *d) {
     delete_GmCerts(d->certs);
     save_MimeHooks(d->mimehooks);
     delete_MimeHooks(d->mimehooks);
-    deinit_SortedArray(&d->tickers);
     delete_Window(d->window);
     d->window = NULL;
     deinit_CommandLine(&d->args);
     iRelease(d->launchCommands);
     delete_String(d->execPath);
     deinit_Ipc();
+    deinit_SortedArray(&d->tickers);
+    deinit_Periodic(&d->periodic);
     iRecycle();
 }
 
@@ -892,10 +904,11 @@ void processEvents_App(enum iAppEventMode eventMode) {
             default: {
 #if defined (LAGRANGE_IDLE_SLEEP)
                 if (ev.type == SDL_USEREVENT && ev.user.code == asleep_UserEventCode) {
-                    if (SDL_GetTicks() - d->lastEventTime > idleThreshold_App_) {
+                    if (SDL_GetTicks() - d->lastEventTime > idleThreshold_App_ &&
+                        isEmpty_SortedArray(&d->tickers)) {
                         if (!d->isIdling) {
 //                            printf("[App] idling...\n");
-                            fflush(stdout);
+//                            fflush(stdout);
                         }
                         d->isIdling = iTrue;
                     }
@@ -904,7 +917,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
                 d->lastEventTime = SDL_GetTicks();
                 if (d->isIdling) {
 //                    printf("[App] ...woke up\n");
-                    fflush(stdout);
+//                    fflush(stdout);
                 }
                 d->isIdling = iFalse;
 #endif
@@ -1043,9 +1056,9 @@ void refresh_App(void) {
 #if defined (LAGRANGE_IDLE_SLEEP)
     if (d->isIdling) return;
 #endif
+    set_Atomic(&d->pendingRefresh, iFalse);
     destroyPending_Widget();
     draw_Window(d->window);
-    set_Atomic(&d->pendingRefresh, iFalse);
 }
 
 iBool isRefreshPending_App(void) {
@@ -1173,6 +1186,10 @@ void removeTicker_App(iTickerFunc ticker, iAny *context) {
 
 iMimeHooks *mimeHooks_App(void) {
     return app_.mimehooks;
+}
+
+iPeriodic *periodic_App(void) {
+    return &app_.periodic;
 }
 
 iBool isLandscape_App(void) {

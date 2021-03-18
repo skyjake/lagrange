@@ -379,9 +379,13 @@ static void draw_ListWidget_(const iListWidget *d) {
                 beginTarget_Paint(&p, buf->texture);
                 fillRect_Paint(&p, (iRect){ zero_I2(), d->visBuf->texSize }, bg[i]);
             }
-            const iRect sbBlankRect =
-                { init_I2(d->visBuf->texSize.x - scrollBarWidth_ListWidget(d), 0),
-                         init_I2(scrollBarWidth_ListWidget(d), d->itemHeight) };
+#if defined (iPlatformApple)
+            const int blankWidth = 0; /* scrollbars fade away */
+#else
+            const int blankWidth = scrollBarWidth_ListWidget(d);
+#endif
+            const iRect sbBlankRect = { init_I2(d->visBuf->texSize.x - blankWidth, 0),
+                                        init_I2(blankWidth, d->itemHeight) };
             iConstForEach(IntSet, v, &d->invalidItems) {
                 const size_t index = *v.value;
                 if (contains_Range(&drawItems, index)) {

@@ -161,21 +161,22 @@ void    destroy_Widget          (iWidget *); /* widget removed and deleted later
 void    destroyPending_Widget   (void);
 void    releaseChildren_Widget  (iWidget *);
 
-const iString *id_Widget    (const iWidget *);
-int64_t flags_Widget        (const iWidget *);
-iRect   bounds_Widget       (const iWidget *); /* outer bounds */
-iRect   innerBounds_Widget  (const iWidget *);
-iInt2   localCoord_Widget   (const iWidget *, iInt2 coord);
-iBool   contains_Widget     (const iWidget *, iInt2 coord);
-iAny *  hitChild_Widget     (const iWidget *, iInt2 coord);
-iAny *  findChild_Widget    (const iWidget *, const char *id);
-const iPtrArray *findChildren_Widget  (const iWidget *, const char *id);
-iAny *  findParentClass_Widget(const iWidget *, const iAnyClass *class);
-iAny *  findFocusable_Widget(const iWidget *startFrom, enum iWidgetFocusDir focusDir);
-size_t  childCount_Widget   (const iWidget *);
-void    draw_Widget         (const iWidget *);
-void    drawBackground_Widget(const iWidget *);
-void    drawChildren_Widget (const iWidget *);
+const iString *id_Widget                (const iWidget *);
+int64_t flags_Widget                    (const iWidget *);
+iRect   bounds_Widget                   (const iWidget *); /* outer bounds */
+iRect   innerBounds_Widget              (const iWidget *);
+iInt2   localCoord_Widget               (const iWidget *, iInt2 coord);
+iBool   contains_Widget                 (const iWidget *, iInt2 coord);
+iBool   containsExpanded_Widget         (const iWidget *, iInt2 coord, int expand);
+iAny *  hitChild_Widget                 (const iWidget *, iInt2 coord);
+iAny *  findChild_Widget                (const iWidget *, const char *id);
+const iPtrArray *findChildren_Widget    (const iWidget *, const char *id);
+iAny *  findParentClass_Widget          (const iWidget *, const iAnyClass *class);
+iAny *  findFocusable_Widget            (const iWidget *startFrom, enum iWidgetFocusDir focusDir);
+size_t  childCount_Widget               (const iWidget *);
+void    draw_Widget                     (const iWidget *);
+void    drawBackground_Widget           (const iWidget *);
+void    drawChildren_Widget             (const iWidget *);
 
 iLocalDef int width_Widget(const iAnyObject *d) {
     if (d) {

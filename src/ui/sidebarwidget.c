@@ -143,7 +143,7 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
             iDate on;
             initCurrent_Time(&now);
             init_Date(&on, &now);
-            const int thisYear = on.year;
+            const iDate today = on;
             iZap(on);
             size_t numItems = 0;
             iConstForEach(PtrArray, i, listEntries_Feeds()) {
@@ -1306,6 +1306,11 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
     const iBool isHover      = isHover_Widget(constAs_Widget(list)) &&
                                constHoverItem_ListWidget(list) == d;
     const int scrollBarWidth = scrollBarWidth_ListWidget(list);
+#if defined (iPlatformApple)
+    const int blankWidth     = 0;
+#else
+    const int blankWidth     = scrollBarWidth;
+#endif
     const int itemHeight     = height_Rect(itemRect);
     const int iconColor      = isHover ? (isPressing ? uiTextPressed_ColorId : uiIconHover_ColorId)
                                        : uiIcon_ColorId;
@@ -1345,7 +1350,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
             if (d != constItem_ListWidget(list, 0)) {
                 drawHLine_Paint(p,
                                 addY_I2(pos, 2 * gap_UI),
-                                width_Rect(itemRect) - scrollBarWidth,
+                                width_Rect(itemRect) - blankWidth,
                                 uiSeparator_ColorId);
             }
             drawRange_Text(
@@ -1463,7 +1468,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                 iInt2 drawPos = addY_I2(topLeft_Rect(itemRect), d->id);
                 drawHLine_Paint(p,
                                 addY_I2(drawPos, -gap_UI),
-                                width_Rect(itemRect) - scrollBarWidth,
+                                width_Rect(itemRect) - blankWidth,
                                 uiSeparator_ColorId);
                 drawRange_Text(
                     uiLabelLargeBold_FontId,
