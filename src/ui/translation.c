@@ -457,14 +457,12 @@ iBool handleCommand_Translation(iTranslation *d, const char *cmd) {
         return iTrue;
     }
     if (equalWidget_Command(cmd, w, "translation.finished")) {
-#if 0
         if (!isFinished_Translation(d)) {
             if (processResult_Translation_(d)) {
                 destroy_Widget(d->dlg);
                 d->dlg = NULL;
             }
         }
-#endif
         return iTrue;
     }
     if (equalWidget_Command(cmd, d->dlg, "translation.cancel")) {
