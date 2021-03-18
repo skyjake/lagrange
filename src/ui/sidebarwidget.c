@@ -167,7 +167,12 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                         on = entryDate;
                         iSidebarItem *sep = new_SidebarItem();
                         sep->listItem.isSeparator = iTrue;
-                        iString *text = format_Date(&on, on.year == thisYear ? "%b. %d" : "%b. %d, %Y");
+                        iString *text = format_Date(&on, on.year == today.year ? "%b. %d" : "%b. %d, %Y");
+                        if (today.year == on.year &&
+                            today.month == on.month &&
+                            today.day == on.day) {
+                            appendCStr_String(text, " \u2014 Today");
+                        }
                         set_String(&sep->meta, text);
                         delete_String(text);
                         addItem_ListWidget(d->list, sep);
