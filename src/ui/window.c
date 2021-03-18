@@ -858,22 +858,18 @@ static void updateMetrics_Window_(iWindow *d) {
         setSize_Widget(appClose, appMin->rect.size);
         setSize_Widget(appIcon, init_I2(appIconSize_(), appMin->rect.size.y));
     }
-    iWidget *navBar    = findChild_Widget(d->root, "navbar");
-    iWidget *lock      = findChild_Widget(navBar, "navbar.lock");
-    iWidget *url       = findChild_Widget(d->root, "url");
-//    iWidget *fprog     = findChild_Widget(navBar, "feeds.progress");
-//    iWidget *docProg   = findChild_Widget(navBar, "document.progress");
-//    iWidget *indSearch = findChild_Widget(navBar, "input.indicator.search");
+    iWidget *navBar     = findChild_Widget(d->root, "navbar");
+    iWidget *lock       = findChild_Widget(navBar, "navbar.lock");
+    iWidget *url        = findChild_Widget(d->root, "url");
     iWidget *rightEmbed = findChild_Widget(navBar, "url.rightembed");
+    iWidget *embedPad   = findChild_Widget(navBar, "url.embedpad");
     setPadding_Widget(as_Widget(url), 0, gap_UI, 0, gap_UI);
     navBar->rect.size.y = 0; /* recalculate height based on children (FIXME: shouldn't be needed) */
     updateSize_LabelWidget((iLabelWidget *) lock);
+    setSize_Widget(embedPad, init_I2(width_Widget(lock) + gap_UI / 2, 1));
     setContentPadding_InputWidget((iInputWidget *) url, width_Widget(lock) * 0.75,
                                   width_Widget(lock) * 0.75);
     rightEmbed->rect.pos.y = gap_UI;
-//    fprog->rect.pos.y = gap_UI;
-//    docProg->rect.pos.y = gap_UI;
-//    indSearch->rect.pos.y = gap_UI;
     updatePadding_Window_(d);
     arrange_Widget(d->root);
     postRefresh_App();
@@ -1021,8 +1017,9 @@ static void setupUserInterface_Window(iWindow *d) {
             /* Reload button. */
             iLabelWidget *reload = newIcon_LabelWidget(reloadCStr_, 0, 0, "navigate.reload");
             setId_Widget(as_Widget(reload), "reload");
-            addChildFlags_Widget(rightEmbed, iClob(reload), embedFlags);
+            addChildFlags_Widget(as_Widget(url), iClob(reload), embedFlags | moveToParentRightEdge_WidgetFlag);
             updateSize_LabelWidget(reload);
+            setId_Widget(addChild_Widget(rightEmbed, iClob(makePadding_Widget(0))), "url.embedpad");
         }
         addChildFlags_Widget(navBar, iClob(new_Widget()), expand_WidgetFlag);
         setId_Widget(addChildFlags_Widget(navBar,
