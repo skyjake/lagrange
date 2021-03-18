@@ -2911,6 +2911,13 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
     const iInt2 visPos = addX_I2(add_I2(run->visBounds.pos, origin),
                                  /* Preformatted runs can be scrolled. */
                                  runOffset_DocumentWidget_(d->widget, run));
+    if (run->flags & footer_GmRunFlag) {
+        iRect footerBack =
+            (iRect){ visPos, init_I2(width_Rect(d->widgetBounds), run->visBounds.size.y) };
+        footerBack.pos.x = left_Rect(d->widgetBounds);
+        fillRect_Paint(&d->paint, footerBack, tmBackground_ColorId);
+        return;
+    }
     fillRect_Paint(&d->paint, (iRect){ visPos, run->visBounds.size }, tmBackground_ColorId);
     if (run->linkId && ~run->flags & decoration_GmRunFlag) {
         fg = linkColor_GmDocument(doc, run->linkId, isHover ? textHover_GmLinkPart : text_GmLinkPart);

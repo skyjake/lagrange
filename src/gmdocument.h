@@ -96,6 +96,7 @@ enum iGmRunFlags {
     siteBanner_GmRunFlag  = iBit(4), /* area reserved for the site banner */
     quoteBorder_GmRunFlag = iBit(5),
     wide_GmRunFlag        = iBit(6), /* horizontally scrollable */
+    footer_GmRunFlag      = iBit(7),
 };
 
 enum iGmRunMediaType {
