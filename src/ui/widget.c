@@ -321,7 +321,7 @@ iLocalDef iBool isArranged_Widget_(const iWidget *d) {
 static size_t numArrangedChildren_Widget_(const iWidget *d) {
     size_t count = 0;
     iConstForEach(ObjectList, i, d->children) {
-        if (isArranged_Widget_(d)) {
+        if (isArranged_Widget_(i.object)) {
             count++;
         }
     }
