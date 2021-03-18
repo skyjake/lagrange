@@ -110,20 +110,33 @@ static void draw_TranslationProgressWidget_(const iTranslationProgressWidget *d)
     init_Paint(&p);
     const iInt2 mid = mid_Rect(bounds);
     SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_BLEND);
+    const int palette[] = {
+        uiBackgroundSelected_ColorId,
+        red_ColorId,
+        blue_ColorId,
+        green_ColorId,
+    };
     iConstForEach(Array, i, &d->sprites) {
-        const int index = (int) index_ArrayConstIterator(&i);
-        const float angle = (float) index;
-        const iSprite *spr = i.value;
-        const float opacity = iClamp(t - index * 0.5f, 0.0, 1.0f);
-        int bg = uiBackgroundSelected_ColorId;
-        int fg = uiTextSelected_ColorId;
+        const int      index   = (int) index_ArrayConstIterator(&i);
+        const float    angle   = (float) index;
+        const iSprite *spr     = i.value;
+        const float    opacity = iClamp(t - index * 0.5f, 0.0, 1.0f);
+        const float    palPos  = index * 0.025f + t / 10;
+        const int      palCur  = (size_t)(palPos) % iElemCount(palette);
+        const int      palNext = (palCur + 1) % iElemCount(palette);
+
+        int fg = palCur == 0                            ? uiTextSelected_ColorId
+                 : isLight_ColorTheme(colorTheme_App()) ? white_ColorId
+                                                        : black_ColorId;
         iInt2 pos = add_I2(mid, spr->pos);
         float t2 = sin(0.2f * t);
         pos.y += sin(angle + t) * spr->size.y * t2 * t2 * iClamp(t * 0.25f - 0.3f, 0.0f, 1.0f);
-        if (bg >= 0) {
-            p.alpha = opacity * 255;
-            fillRect_Paint(&p, (iRect){ pos, spr->size }, bg);
-        }
+        p.alpha = opacity * 255;
+        const iColor back = mix_Color(
+            get_Color(palette[palCur]), get_Color(palette[palNext]), palPos - (int) palPos);
+        SDL_SetRenderDrawColor(renderer_Window(get_Window()), back.r, back.g, back.b, p.alpha);
+        SDL_RenderFillRect(renderer_Window(get_Window()),
+                           &(SDL_Rect){ pos.x, pos.y, spr->size.x, spr->size.y });
         if (fg >= 0) {
             setOpacity_Text(opacity * 2);
             drawRange_Text(d->font, addX_I2(pos, spr->xoff), fg, range_String(&spr->text));
@@ -150,6 +163,8 @@ iDefineTypeConstructionArgs(Translation, (iDocumentWidget *doc), doc)
 
 static const char *   translationServiceHost = "xlt.skyjake.fi";
 static const uint16_t translationServicePort = 443;
+
+/* TODO: Move these quote/unquote methods to the_Foundation. */
 
 static iString *quote_String_(const iString *d) {
     iString *quot = new_String();
@@ -442,12 +457,14 @@ iBool handleCommand_Translation(iTranslation *d, const char *cmd) {
         return iTrue;
     }
     if (equalWidget_Command(cmd, w, "translation.finished")) {
+#if 0
         if (!isFinished_Translation(d)) {
             if (processResult_Translation_(d)) {
                 destroy_Widget(d->dlg);
                 d->dlg = NULL;
             }
         }
+#endif
         return iTrue;
     }
     if (equalWidget_Command(cmd, d->dlg, "translation.cancel")) {
