@@ -360,7 +360,7 @@ static iBool processResult_Translation_(iTranslation *d) {
     if (matchRange_RegExp(pattern, range_Block(resultData), &m)) {
         iString *translation = unquote_String_(collect_String(captured_RegExpMatch(&m, 1)));
         iString *marked = collectNew_String();
-        iRangecc line;
+        iRangecc line = iNullRange;
         size_t lineIndex = 0;
         while (nextSplit_Rangecc(range_String(translation), "\n", &line)) {
             iRangecc cleanLine = trimmed_Rangecc(line);
