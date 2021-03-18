@@ -1655,7 +1655,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         delete_Array(items);
         /* Enforce a minimum size. */
         iWidget *sizer = new_Widget();
-        setSize_Widget(sizer, init_I2(gap_UI * 90, 1));
+        setSize_Widget(sizer, init_I2(gap_UI * 65, 1));
         addChildFlags_Widget(dlg, iClob(sizer), frameless_WidgetFlag);
         setFlags_Widget(dlg, centerHorizontal_WidgetFlag, iFalse);
         if (deviceType_App() != phone_AppDeviceType) {
