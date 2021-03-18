@@ -1327,7 +1327,6 @@ iBool create_Window_(iWindow *d, iRect rect, uint32_t flags) {
     return iTrue;
 }
 
-#if defined (iPlatformLinux) || defined (LAGRANGE_CUSTOM_FRAME)
 static SDL_Surface *loadImage_(const iBlock *data, int resized) {
     int      w = 0, h = 0, num = 4;
     stbi_uc *pixels = stbi_load_from_memory(
@@ -1342,7 +1341,6 @@ static SDL_Surface *loadImage_(const iBlock *data, int resized) {
     return SDL_CreateRGBSurfaceWithFormatFrom(
         pixels, w, h, 8 * num, w * num, SDL_PIXELFORMAT_RGBA32);
 }
-#endif
 
 void init_Window(iWindow *d, iRect rect) {
     theWindow_ = d;
