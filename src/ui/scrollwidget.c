@@ -116,7 +116,7 @@ static void unfade_ScrollWidget_(iScrollWidget *d, float opacity) {
 }
 
 static void checkVisible_ScrollWidget_(iScrollWidget *d) {
-    const iBool wasHidden = isVisible_Widget(d);
+    const iBool wasHidden = !isVisible_Widget(d);
     const iBool isHidden = d->thumbSize != 0 ? height_Rect(thumbRect_ScrollWidget_(d)) == 0 : iTrue;
     setFlags_Widget(as_Widget(d), hidden_WidgetFlag, isHidden);
     if (wasHidden && !isHidden) {

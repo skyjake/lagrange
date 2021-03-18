@@ -125,6 +125,7 @@ struct Impl_App {
     iTime        lastDropTime; /* for detecting drops of multiple items */
     int          autoReloadTimer;
     iPeriodic    periodic;
+    int          warmupFrames; /* forced refresh just after resuming from background */
     /* Preferences: */
     iBool        commandEcho;         /* --echo */
     iBool        forceSoftwareRender; /* --sw */
@@ -587,6 +588,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     const iBool isFirstRun =
         !fileExistsCStr_FileInfo(cleanedPath_CStr(concatPath_CStr(dataDir_App_(), "prefs.cfg")));
     d->isFinishedLaunching = iFalse;
+    d->warmupFrames        = 0;
     d->launchCommands      = new_StringList();
     iZap(d->lastDropTime);
     init_SortedArray(&d->tickers, sizeof(iTicker), cmp_Ticker_);
@@ -835,6 +837,9 @@ void trimCache_App(void) {
 }
 
 iLocalDef iBool isWaitingAllowed_App_(iApp *d) {
+    if (d->warmupFrames > 0) {
+        return iFalse;
+    }
 #if defined (LAGRANGE_IDLE_SLEEP)
     if (d->isIdling) {
         return iFalse;
@@ -874,6 +879,12 @@ void processEvents_App(enum iAppEventMode eventMode) {
                 clearCache_App_();
                 break;
             case SDL_APP_DIDENTERFOREGROUND:
+                gotEvents = iTrue;
+                d->warmupFrames = 5;
+#if defined (LAGRANGE_IDLE_SLEEP)
+                d->isIdling = iFalse;
+                d->lastEventTime = SDL_GetTicks();
+#endif
                 postRefresh_App();
                 break;
             case SDL_APP_WILLENTERBACKGROUND:
@@ -1039,7 +1050,7 @@ static int run_App_(iApp *d) {
     d->isRunning = iTrue;
     SDL_EventState(SDL_DROPFILE, SDL_ENABLE); /* open files via drag'n'drop */
 #if defined (iPlatformDesktop)
-    SDL_AddEventWatch(resizeWatcher_, d);
+    SDL_AddEventWatch(resizeWatcher_, d); /* redraw window during resizing */
 #endif
     while (d->isRunning) {
         processEvents_App(waitForNewEvents_AppEventMode);
@@ -1054,11 +1065,17 @@ static int run_App_(iApp *d) {
 void refresh_App(void) {
     iApp *d = &app_;
 #if defined (LAGRANGE_IDLE_SLEEP)
-    if (d->isIdling) return;
+    if (d->warmupFrames == 0 && d->isIdling) {
+        return;
+    }
 #endif
     set_Atomic(&d->pendingRefresh, iFalse);
     destroyPending_Widget();
     draw_Window(d->window);
+    if (d->warmupFrames > 0) {
+        printf("warmup frame: %d\n", d->warmupFrames);
+        d->warmupFrames--;
+    }
 }
 
 iBool isRefreshPending_App(void) {

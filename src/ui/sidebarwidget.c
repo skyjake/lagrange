@@ -699,8 +699,9 @@ static void checkModeButtonLayout_SidebarWidget_(iSidebarWidget *d) {
 }
 
 void setWidth_SidebarWidget(iSidebarWidget *d, int width) {
+    const iBool isFixedWidth = deviceType_App() == phone_AppDeviceType;
     iWidget *w = as_Widget(d);
-    if (deviceType_App() != phone_AppDeviceType) { /* phone doesn't allow resizing */
+    if (!isFixedWidth) {
         /* Even less space if the other sidebar is visible, too. */
         const int otherWidth =
             width_Widget(findWidget_App(d->side == left_SideBarSide ? "sidebar2" : "sidebar"));
@@ -713,7 +714,7 @@ void setWidth_SidebarWidget(iSidebarWidget *d, int width) {
     arrange_Widget(findWidget_App("stack"));
     checkModeButtonLayout_SidebarWidget_(d);
     updateItemHeight_SidebarWidget_(d);
-    if (!isRefreshPending_App()) {
+    if (!isFixedWidth && !isRefreshPending_App()) {
         updateSize_DocumentWidget(document_App());
         invalidate_ListWidget(d->list);
     }

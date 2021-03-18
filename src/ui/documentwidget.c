@@ -1493,8 +1493,12 @@ static const int homeRowKeys_[] = {
     't', 'y',
 };
 
-static void updateDocumentWidthRetainingScrollPosition_DocumentWidget_(iDocumentWidget *d,
-                                                                       iBool keepCenter) {
+static iBool updateDocumentWidthRetainingScrollPosition_DocumentWidget_(iDocumentWidget *d,
+                                                                        iBool keepCenter) {
+    const int newWidth = documentWidth_DocumentWidget_(d);
+    if (newWidth == size_GmDocument(d->doc).x) {
+        return iFalse; /* hasn't changed */
+    }
     /* Font changes (i.e., zooming) will keep the view centered, otherwise keep the top
        of the visible area fixed. */
     const iGmRun *run     = keepCenter ? middleRun_DocumentWidget_(d) : d->firstVisibleRun;
@@ -1505,7 +1509,7 @@ static void updateDocumentWidthRetainingScrollPosition_DocumentWidget_(iDocument
         /* TODO: First *fully* visible run? */
         voffset = visibleRange_DocumentWidget_(d).start - top_Rect(run->visBounds);
     }
-    setWidth_GmDocument(d->doc, documentWidth_DocumentWidget_(d));
+    setWidth_GmDocument(d->doc, newWidth);
     documentRunsInvalidated_DocumentWidget_(d);
     if (runLoc && !keepCenter) {
         run = findRunAtLoc_GmDocument(d->doc, runLoc);
