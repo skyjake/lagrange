@@ -431,7 +431,12 @@ static void stopWorker_Feeds_(iFeeds *d) {
 
 static int cmp_FeedEntryPtr_(const void *a, const void *b) {
     const iFeedEntry * const *elem[2] = { a, b };
-    return cmpString_String(&(*elem[0])->url, &(*elem[1])->url);
+    const int cmp = cmpString_String(&(*elem[0])->url, &(*elem[1])->url);
+    if (cmp == 0) {
+        /* The same URL can be coming from different feeds. */
+        return iCmp((*elem[0])->bookmarkId, (*elem[1])->bookmarkId);
+    }
+    return cmp;
 }
 
 iDeclareType(FeedHashNode)
