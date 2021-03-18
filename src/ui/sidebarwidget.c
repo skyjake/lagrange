@@ -1357,24 +1357,29 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
             const int h1 = lineHeight_Text(uiLabel_FontId);
             const int h2 = lineHeight_Text(titleFont);
             iRect iconArea = { addY_I2(pos, 0), init_I2(iconPad, itemHeight) };
+            /*
             if (isUnread) {
                 fillRect_Paint(
                     p,
                     (iRect){ topLeft_Rect(iconArea), init_I2(gap_UI / 2, height_Rect(iconArea)) },
                     iconColor);
-            }
+            }*/
             /* Icon. */ {
                 /* TODO: Use the primary hue from the theme of this site. */
                 iString str;
                 initUnicodeN_String(&str, &d->icon, 1);
+                /* TODO: Add to palette. */
+                const int unreadIconColor = uiTextCaution_ColorId;
+                const int readIconColor =
+                    isDark_ColorTheme(colorTheme_App()) ? uiText_ColorId : uiAnnotation_ColorId;
                 drawCentered_Text(uiLabelLarge_FontId,
                                   adjusted_Rect(iconArea, init_I2(gap_UI, 0), zero_I2()),
                                   iTrue,
                                   isHover && isPressing
                                       ? iconColor
-                                      : isUnread ? uiTextCaution_ColorId
+                                      : isUnread ? unreadIconColor
                                       : d->listItem.isSelected ? iconColor
-                                      : uiText_ColorId,
+                                      : readIconColor,
                                   "%s",
                                   cstr_String(&str));
                 deinit_String(&str);
