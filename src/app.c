@@ -1073,7 +1073,7 @@ void refresh_App(void) {
     destroyPending_Widget();
     draw_Window(d->window);
     if (d->warmupFrames > 0) {
-        printf("warmup frame: %d\n", d->warmupFrames);
+//        printf("warmup frame: %d\n", d->warmupFrames);
         d->warmupFrames--;
     }
 }

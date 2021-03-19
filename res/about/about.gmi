@@ -1,4 +1,4 @@
-# About Pages
+# About pages
 
 These are all the About pages that Lagrange uses to display built-in or dynamically generated content.
 

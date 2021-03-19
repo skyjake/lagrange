@@ -177,6 +177,7 @@ set (SOURCES
     src/ui/labelwidget.c
     src/ui/labelwidget.h
     # Resources:
+    res/about/about.gmi
     res/about/help.gmi
     res/about/lagrange.gmi
     res/about/version.gmi
