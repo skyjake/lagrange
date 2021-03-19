@@ -200,9 +200,33 @@ void setMode_InputWidget(iInputWidget *d, enum iInputMode mode) {
     d->mode = mode;
 }
 
+static void restoreDefaultScheme_(iString *url) {
+    iUrl parts;
+    init_Url(&parts, url);
+    if (isEmpty_Range(&parts.scheme) && startsWith_String(url, "//")) {
+        prependCStr_String(url, "gemini:");
+    }
+}
+
+static const iString *omitDefaultScheme_(iString *url) {
+    if (startsWithCase_String(url, "gemini://")) {
+        remove_Block(&url->chars, 0, 7);
+    }
+    return url;
+}
+
+static iString *utf32toUtf8_InputWidget_(const iInputWidget *d) {
+    return newUnicodeN_String(constData_Array(&d->text), size_Array(&d->text));
+}
+
 const iString *text_InputWidget(const iInputWidget *d) {
     if (d) {
-        return collect_String(newUnicodeN_String(constData_Array(&d->text), size_Array(&d->text)));
+        iString *text = collect_String(utf32toUtf8_InputWidget_(d));
+        if (d->inFlags & isUrl_InputWidgetFlag) {
+            /* Add the "gemini" scheme back if one is omitted. */
+            restoreDefaultScheme_(text);
+        }
+        return text;
     }
     return collectNew_String();
 }
@@ -262,7 +286,7 @@ static void updateBuffered_InputWidget_(iInputWidget *d) {
         if (d->inFlags & isUrl_InputWidgetFlag) {
             /* Highlight the host name. */
             iUrl parts;
-            const iString *text = text_InputWidget(d);
+            const iString *text = collect_String(utf32toUtf8_InputWidget_(d));
             init_Url(&parts, text);
             if (!isEmpty_Range(&parts.host)) {
                 bufText = new_String();
@@ -292,11 +316,9 @@ void setText_InputWidget(iInputWidget *d, const iString *text) {
             punyEncodeUrlHost_String(enc);
             text = enc;
         }
-        /* Omit the default (Gemini) scheme if the window is narrow. */
-        if (isNarrow_Window(get_Window()) && startsWithCase_String(text, "gemini:")) {
-            iString *shortened = collect_String(copy_String(text));
-            remove_Block(&shortened->chars, 0, 7);
-            text = shortened;
+        /* Omit the default (Gemini) scheme if there isn't much space. */
+        if (isNarrow_Window(get_Window())) { // flags_Widget(as_Widget(d)) & tight_WidgetFlag) {
+            text = omitDefaultScheme_(collect_String(copy_String(text)));
         }
     }
     clearUndo_InputWidget_(d);
@@ -673,6 +695,12 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
     }
     else if (isMetricsChange_UserEvent(ev)) {
         updateMetrics_InputWidget_(d);
+    }
+    else if (isResize_UserEvent(ev)) {
+        if (d->inFlags & isUrl_InputWidgetFlag) {
+            /* Restore/omit the default scheme if necessary. */
+            setText_InputWidget(d, text_InputWidget(d));
+        }
     }
     else if (isFocused_Widget(d) && isCommand_UserEvent(ev, "copy")) {
         copy_InputWidget_(d, iFalse);
