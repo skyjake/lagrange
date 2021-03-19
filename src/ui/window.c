@@ -488,6 +488,7 @@ static void updatePadding_Window_(iWindow *d) {
             setPadding_Widget(toolBar, left, 0, right, bottom);
         }
     }
+    /* Note that `handleNavBarCommands_` also adjusts padding and spacing. */
 #endif
 }
 
@@ -547,7 +548,8 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
         const iBool isPhone = deviceType_App() == phone_AppDeviceType;
         const iBool isNarrow = !isPhone && isNarrow_Window(get_Window());
         /* Adjust navbar padding. */ {
-            int hPad = isPhone || isNarrow ? gap_UI / 2 : gap_UI * 3 / 2;
+            int hPad = isPhone && isPortrait_App() ? 0 : (isPhone || isNarrow) ? gap_UI / 2
+                                                                               : gap_UI * 3 / 2;
             int vPad = gap_UI * 3 / 2;
             int topPad = !findWidget_App("winbar") ? gap_UI / 2 : 0;
             setPadding_Widget(navBar, hPad, vPad / 3 + topPad, hPad, vPad / 2);
