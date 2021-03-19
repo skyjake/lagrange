@@ -240,12 +240,14 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
                 int len = 0;
                 if ((len = decodeBytes_MultibyteChar(desc.start, size_Range(&desc), &icon)) > 0) {
                     if (desc.start + len < desc.end &&
-                        (isPictograph_Char(icon) || isEmoji_Char(icon)) &&
+                        (isPictograph_Char(icon) || isEmoji_Char(icon) || icon == 0x2022 /* bullet */) &&
                         !isFitzpatrickType_Char(icon)) {
                         link->flags |= iconFromLabel_GmLinkFlag;
                         link->labelIcon = (iRangecc){ desc.start, desc.start + len };
                         line.start += len;
                         line.start = skipSpace_CStr(line.start);
+//                        printf("custom icon: %x (%s)\n", icon, cstr_Rangecc(link->labelIcon));
+//                        fflush(stdout);
                     }
                 }
             }
@@ -299,6 +301,27 @@ static iBool isNormalized_GmDocument_(const iGmDocument *d) {
 static enum iGmDocumentTheme currentTheme_(void) {
     return (isDark_ColorTheme(colorTheme_App()) ? prefs_App()->docThemeDark
                                                 : prefs_App()->docThemeLight);
+}
+
+static void alignDecoration_GmRun_(iGmRun *run, iBool isCentered) {
+    const iRect visBounds = visualBounds_Text(run->font, run->text);
+    const int   visWidth  = width_Rect(visBounds);
+    if (!isCentered) {
+        /* Keep the icon aligned to the left edge. */
+        run->visBounds.pos.x -= left_Rect(visBounds);
+        if (visWidth > width_Rect(run->visBounds)) {
+            /* ...unless it's a wide icon, in which case move it to the left. */
+            run->visBounds.pos.x -= visWidth - width_Rect(run->visBounds);
+        }
+        else if (visWidth < width_Rect(run->visBounds) * 3 / 4) {
+            /* ...or a narrow icon, which needs to be centered but leave a gap. */
+            run->visBounds.pos.x += (width_Rect(run->visBounds) * 3 / 4 - visWidth) / 2;
+        }
+    }
+    else {
+        /* Centered. */
+        run->visBounds.pos.x += (width_Rect(run->visBounds) - visWidth) / 2;
+    }
 }
 
 static void doLayout_GmDocument_(iGmDocument *d) {
@@ -510,12 +533,15 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             /* TODO: Literata bullet is broken? */
             iGmRun bulRun = run;
             bulRun.color = tmQuote_ColorId;
-            bulRun.visBounds.pos  = addX_I2(pos, indent * gap_Text);
-            bulRun.visBounds.size = advance_Text(run.font, bullet);
-            bulRun.visBounds.pos.x -= 4 * gap_Text - width_Rect(bulRun.visBounds) / 2;
+            bulRun.visBounds.pos = addX_I2(pos, (indents[text_GmLineType] - 0.55f) * gap_Text);
+            bulRun.visBounds.size =
+                init_I2((indents[bullet_GmLineType] - indents[text_GmLineType]) * gap_Text,
+                        lineHeight_Text(bulRun.font));
+            //            bulRun.visBounds.pos.x -= 4 * gap_Text - width_Rect(bulRun.visBounds) / 2;
             bulRun.bounds = zero_Rect(); /* just visual */
             bulRun.text   = range_CStr(bullet);
             bulRun.flags |= decoration_GmRunFlag;
+            alignDecoration_GmRun_(&bulRun, iTrue);
             pushBack_Array(&d->layout, &bulRun);
         }
         /* Quote icon. */
@@ -555,8 +581,13 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             if (!isEmpty_Range(&link->labelIcon)) {
                 icon.text = link->labelIcon;
             }
-            icon.font = regular_FontId;
-            /* Center the icon within the indentation. */ {
+            /* TODO: List bullets needs the same centering logic. */
+            /* Special exception for the tiny bullet operator. */
+            icon.font = equal_Rangecc(link->labelIcon, "\u2219") ? regularMonospace_FontId
+                                                                 : regular_FontId;
+            alignDecoration_GmRun_(&icon, iFalse);
+#if 0
+            {
                 const iRect visBounds = visualBounds_Text(icon.font, icon.text);
                 const int   visWidth  = width_Rect(visBounds);
                 /* Keep the icon aligned to the left edge. */
@@ -570,6 +601,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                     icon.visBounds.pos.x += (width_Rect(icon.visBounds) * 3 / 4 - visWidth) / 2;
                 }
             }
+#endif
             icon.color = linkColor_GmDocument(d, run.linkId, icon_GmLinkPart);
             icon.flags |= decoration_GmRunFlag;
             pushBack_Array(&d->layout, &icon);
