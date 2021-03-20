@@ -184,7 +184,7 @@ void save_Bookmarks(const iBookmarks *d, const char *dirPath) {
                 continue;
             }
             format_String(str,
-                          "%08x %lf %s\n%s\n%s\n",
+                          "%08x %.0lf %s\n%s\n%s\n",
                           bm->icon,
                           seconds_Time(&bm->when),
                           cstr_String(&bm->url),
