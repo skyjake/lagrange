@@ -24,12 +24,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/sortedarray.h>
 
 iDeclareType(Periodic)
+iDeclareType(Thread)
 
 /* Animation utility. Not per frame but several times per second. */
 struct Impl_Periodic {
-    int          timer;
     iMutex *     mutex;
     iSortedArray commands;
+    iCondition   haveCommands;
+    iThread *    thread;
+    iAtomicInt   isStopping;
 };
 
 void    init_Periodic   (iPeriodic *);

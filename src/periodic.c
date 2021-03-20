@@ -24,6 +24,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "app.h"
 
 #include <the_Foundation/string.h>
+#include <the_Foundation/thread.h>
 #include <SDL_timer.h>
 
 iDeclareType(PeriodicCommand)
@@ -51,30 +52,50 @@ iDefineTypeConstructionArgs(PeriodicCommand, (iAny *ctx, const char *cmd), ctx, 
 
 /*----------------------------------------------------------------------------------------------*/
 
-static uint32_t postCommands_Periodic_(uint32_t interval, void *param) {
-    iPeriodic *d = param;
+//static uint32_t postCommands_Periodic_(uint32_t interval, void *param) {
+static iThreadResult poster_Periodic_(iThread *thread) {
+    iPeriodic *d = userData_Thread(thread);
     lock_Mutex(d->mutex);
-    iConstForEach(Array, i, &d->commands.values) {
-        postCommandString_App(&((const iPeriodicCommand *) i.value)->command);
+    while (!value_Atomic(&d->isStopping)) {
+        if (isEmpty_SortedArray(&d->commands)) {
+            /* Sleep until we have something to post. */
+            wait_Condition(&d->haveCommands, d->mutex);
+            continue;
+        }
+        iConstForEach(Array, i, &d->commands.values) {
+            postCommandString_App(&((const iPeriodicCommand *) i.value)->command);
+        }
+        /* Sleep for a while. */
+        iTime until;
+        initTimeout_Time(&until, 0.5f);
+        waitTimeout_Condition(&d->haveCommands, d->mutex, &until);
     }
     unlock_Mutex(d->mutex);
-    return interval;
+    return 0;
 }
 
 void init_Periodic(iPeriodic *d) {
     d->mutex = new_Mutex();
     init_SortedArray(&d->commands, sizeof(iPeriodicCommand), cmp_PeriodicCommand_);
-    d->timer = SDL_AddTimer(500, postCommands_Periodic_, d);
+//    d->timer = SDL_AddTimer(500, postCommands_Periodic_, d);
+    set_Atomic(&d->isStopping, iFalse);
+    init_Condition(&d->haveCommands);
+    d->thread = new_Thread(poster_Periodic_);
+    setUserData_Thread(d->thread, d);
+    start_Thread(d->thread);
 }
 
 void deinit_Periodic(iPeriodic *d) {
-    SDL_RemoveTimer(d->timer);
-    iGuardMutex(d->mutex, {
-        iForEach(Array, i, &d->commands.values) {
-            deinit_PeriodicCommand(i.value);
-        }
-        deinit_SortedArray(&d->commands);
-    });
+//    SDL_RemoveTimer(d->timer);
+    set_Atomic(&d->isStopping, iTrue);
+    signal_Condition(&d->haveCommands);
+    join_Thread(d->thread);
+    iRelease(d->thread);
+    iForEach(Array, i, &d->commands.values) {
+        deinit_PeriodicCommand(i.value);
+    }
+    deinit_SortedArray(&d->commands);
+    deinit_Condition(&d->haveCommands);
     delete_Mutex(d->mutex);
 }
 
@@ -91,6 +112,7 @@ void add_Periodic(iPeriodic *d, iAny *context, const char *command) {
         init_PeriodicCommand(&pc, context, command);
         insert_SortedArray(&d->commands, &pc);
     }
+    signal_Condition(&d->haveCommands);
     unlock_Mutex(d->mutex);
 }
 
