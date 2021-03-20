@@ -574,9 +574,8 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
                                           embedButtonWidth * 0.75f);
         }
         if (isPhone) {
-            static const char *buttons[] = {
-                "navbar.back", "navbar.forward", "navbar.ident", "navbar.home", "navbar.menu"
-            };
+            static const char *buttons[] = { "navbar.back",  "navbar.forward", "navbar.sidebar",
+                                             "navbar.ident", "navbar.home",    "navbar.menu" };
             setFlags_Widget(findWidget_App("toolbar"), hidden_WidgetFlag, isLandscape_App());
             iForIndices(i, buttons) {
                 iLabelWidget *btn = findChild_Widget(navBar, buttons[i]);
@@ -954,6 +953,14 @@ static void setupUserInterface_Window(iWindow *d) {
         setCommandHandler_Widget(navBar, handleNavBarCommands_);
         setId_Widget(addChildFlags_Widget(navBar, iClob(newIcon_LabelWidget(backArrow_Icon, 0, 0, "navigate.back")), collapse_WidgetFlag), "navbar.back");
         setId_Widget(addChildFlags_Widget(navBar, iClob(newIcon_LabelWidget(forwardArrow_Icon, 0, 0, "navigate.forward")), collapse_WidgetFlag), "navbar.forward");
+        /* Mobile devices have a button for easier access to the left sidebar. */
+        if (deviceType_App() != desktop_AppDeviceType) {
+            setId_Widget(addChildFlags_Widget(
+                             navBar,
+                             iClob(newIcon_LabelWidget(leftHalf_Icon, 0, 0, "sidebar.toggle")),
+                             collapse_WidgetFlag),
+                         "navbar.sidebar");
+        }
         addChildFlags_Widget(navBar, iClob(new_Widget()), expand_WidgetFlag);
         iLabelWidget *idMenu = makeMenuButton_LabelWidget(
             "\U0001f464", identityButtonMenuItems_, iElemCount(identityButtonMenuItems_));
