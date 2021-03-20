@@ -1031,6 +1031,11 @@ static void setupUserInterface_Window(iWindow *d) {
             updateSize_LabelWidget(reload);
             setId_Widget(addChild_Widget(rightEmbed, iClob(makePadding_Widget(0))), "url.embedpad");
         }
+        if (deviceType_App() != desktop_AppDeviceType) {
+            /* On mobile, the Identities button is on the right side of the URL bar. */
+            iWidget *ident = removeChild_Widget(navBar, findChild_Widget(navBar, "navbar.ident"));
+            addChild_Widget(navBar, iClob(ident));
+        }
         addChildFlags_Widget(navBar, iClob(new_Widget()), expand_WidgetFlag);
         setId_Widget(addChildFlags_Widget(navBar,
                         iClob(newIcon_LabelWidget(
