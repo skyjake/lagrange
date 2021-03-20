@@ -23,6 +23,7 @@
 * Fixed percent-decoding of URLs on the command line and coming in via system URL handlers.
 
 User interface:
+* Added unread feed entry count to the sidebar.
 * Default page scroll keybindings changed: PageUp/Down scroll a whole page, and Space/Shift+Space scrolls half a page. If you're changed these bindings, you'll need to rebind them.
 * UI scaling factor is applied immediately when closing Preferences. Restarting is no longer necessary.
 * Window scaling changes automatically when moving window to a different display.

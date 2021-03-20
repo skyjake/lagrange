@@ -99,6 +99,7 @@ struct Impl_SidebarWidget {
     int               maxButtonLabelWidth;
     int               width;
     int               itemFonts[2];
+    size_t            numUnreadEntries;
     iWidget *         resizer;
     iWidget *         menu;
     iSidebarItem *    contextItem; /* list item accessed in the context menu */
@@ -507,6 +508,7 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     iZap(d->modeScroll);
     d->side = side;
     d->mode = -1;
+    d->numUnreadEntries = 0;
     d->itemFonts[0] = uiContent_FontId;
     d->itemFonts[1] = uiContentBold_FontId;
 #if defined (iPlatformAppleMobile)
@@ -587,6 +589,9 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     d->menu = NULL;
     addAction_Widget(w, SDLK_r, KMOD_PRIMARY | KMOD_SHIFT, "feeds.refresh");
     updateMetrics_SidebarWidget_(d);
+    if (side == left_SideBarSide) {
+        postCommand_App("~sidebar.update"); /* unread count */
+    }
 }
 
 void deinit_SidebarWidget(iSidebarWidget *d) {
@@ -686,14 +691,19 @@ static void checkModeButtonLayout_SidebarWidget_(iSidebarWidget *d) {
     const iBool isTight =
         (width_Rect(bounds_Widget(as_Widget(d->modeButtons[0]))) < d->maxButtonLabelWidth);
     for (int i = 0; i < max_SidebarMode; i++) {
-        if (!d->modeButtons[i]) continue;
-        if (isTight && ~flags_Widget(as_Widget(d->modeButtons[i])) & tight_WidgetFlag) {
-            setFlags_Widget(as_Widget(d->modeButtons[i]), tight_WidgetFlag, iTrue);
-            updateTextCStr_LabelWidget(d->modeButtons[i], tightModeLabels_[i]);
+        iLabelWidget *button = d->modeButtons[i];
+        if (!button) continue;
+        setFlags_Widget(as_Widget(button), tight_WidgetFlag, isTight);
+        if (i == feeds_SidebarMode && d->numUnreadEntries) {
+            updateText_LabelWidget(button,
+                                   collectNewFormat_String("%s " uiTextAction_ColorEscape "%zu%s",
+                                                           tightModeLabels_[i],
+                                                           d->numUnreadEntries,
+                                                           !isTight ? " Unread" : ""));
         }
-        else if (!isTight && flags_Widget(as_Widget(d->modeButtons[i])) & tight_WidgetFlag) {
-            setFlags_Widget(as_Widget(d->modeButtons[i]), tight_WidgetFlag, iFalse);
-            updateTextCStr_LabelWidget(d->modeButtons[i], normalModeLabels_[i]);
+        else {
+            updateTextCStr_LabelWidget(button,
+                                       isTight ? tightModeLabels_[i] : normalModeLabels_[i]);
         }
     }
 }
@@ -814,10 +824,17 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             updateItems_SidebarWidget_(d);
             scrollOffset_ListWidget(d->list, 0);
         }
-        else if (equal_Command(cmd, "sidebar.update") ||
-                 (equal_Command(cmd, "visited.changed") &&
-                  (d->mode == history_SidebarMode || d->mode == feeds_SidebarMode))) {
+        else if (equal_Command(cmd, "sidebar.update")) {
+            d->numUnreadEntries = numUnread_Feeds();
+            checkModeButtonLayout_SidebarWidget_(d);
             updateItems_SidebarWidget_(d);
+        }
+        else if (equal_Command(cmd, "visited.changed")) {
+            d->numUnreadEntries = numUnread_Feeds();
+            checkModeButtonLayout_SidebarWidget_(d);
+            if (d->mode == history_SidebarMode || d->mode == feeds_SidebarMode) {
+                updateItems_SidebarWidget_(d);
+            }
         }
         else if (equal_Command(cmd, "bookmarks.changed") && (d->mode == bookmarks_SidebarMode ||
                                                              d->mode == feeds_SidebarMode)) {
@@ -954,8 +971,12 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             }
             return iTrue;
         }
-        else if (equal_Command(cmd, "feeds.update.finished") && d->mode == feeds_SidebarMode) {
-            updateItems_SidebarWidget_(d);
+        else if (equal_Command(cmd, "feeds.update.finished")) {
+            d->numUnreadEntries = argLabel_Command(cmd, "unread");
+            checkModeButtonLayout_SidebarWidget_(d);
+            if (d->mode == feeds_SidebarMode) {
+                updateItems_SidebarWidget_(d);
+            }
         }
         else if (equal_Command(cmd, "feeds.markallread") && d->mode == feeds_SidebarMode) {
             iConstForEach(PtrArray, i, listEntries_Feeds()) {

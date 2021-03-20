@@ -381,7 +381,8 @@ static iThreadResult fetch_Feeds_(iThread *thread) {
     }
     initCurrent_Time(&d->lastRefreshedAt);
     save_Feeds_(d);
-    postCommandf_App("feeds.update.finished arg:%d", gotNew ? 1 : 0);
+    postCommandf_App("feeds.update.finished arg:%d unread:%zu", gotNew ? 1 : 0,
+                     numUnread_Feeds());
     return 0;
 }
 
@@ -622,6 +623,18 @@ const iPtrArray *listEntries_Feeds(void) {
 
 size_t numSubscribed_Feeds(void) {
     return size_PtrArray(listSubscriptions_());
+}
+
+size_t numUnread_Feeds(void) {
+    size_t count = 0;
+    size_t max = 100; /* match the number of items shown in the sidebar */
+    iConstForEach(PtrArray, i, listEntries_Feeds()) {
+        if (!max--) break;
+        if (isUnread_FeedEntry(i.ptr)) {
+            count++;
+        }
+    }
+    return count;
 }
 
 #define iPluralS(c) ((c) != 1 ? "s" : "")
