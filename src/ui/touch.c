@@ -118,8 +118,12 @@ iLocalDef float distance_Touch_(const iTouch *d) {
     return length_F3(sub_F3(d->pos[0], d->startPos));
 }
 
+static iBool isStationaryDistance_Touch_(const iTouch *d, int distance) {
+    return !d->hasMoved && distance_Touch_(d) < distance * get_Window()->pixelRatio;
+}
+
 static iBool isStationary_Touch_(const iTouch *d) {
-    return !d->hasMoved && distance_Touch_(d) < tapRadiusPt_ * get_Window()->pixelRatio;
+    return isStationaryDistance_Touch_(d, tapRadiusPt_);
 }
 
 static void dispatchMotion_Touch_(iFloat3 pos, int buttonState) {
@@ -372,10 +376,12 @@ iBool processEvent_Touch(const SDL_Event *ev) {
             }
             if (touch->isTapAndHold) {
                 pushPos_Touch_(touch, pos, fing->timestamp);
-                if (!touch->hasMoved && !isStationary_Touch_(touch)) {
+                if (!touch->hasMoved && !isStationaryDistance_Touch_(touch, tapRadiusPt_ * 3)) {
                     touch->hasMoved = iTrue;
                 }
-                dispatchMotion_Touch_(pos, 0);
+                if (touch->hasMoved) {
+                    dispatchMotion_Touch_(pos, 0);
+                }
                 return iTrue;
             }
             /* Update touch position. */
