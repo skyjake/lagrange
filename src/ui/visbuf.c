@@ -132,16 +132,24 @@ void validate_VisBuf(iVisBuf *d) {
     }
 }
 
+//#define DEBUG_SCALE 0.5f
+
 void draw_VisBuf(const iVisBuf *d, iInt2 topLeft) {
     SDL_Renderer *render = renderer_Window(get_Window());
     iForIndices(i, d->buffers) {
         const iVisBufTexture *buf = d->buffers + i;
-        SDL_RenderCopy(render,
-                       buf->texture,
-                       NULL,
-                       &(SDL_Rect){ topLeft.x,
-                                    topLeft.y + buf->origin,
-                                    d->texSize.x,
-                                    d->texSize.y });
+        SDL_Rect dst = { topLeft.x,
+                         topLeft.y + buf->origin,
+                         d->texSize.x,
+                         d->texSize.y };
+#if defined (DEBUG_SCALE)
+        dst.w *= DEBUG_SCALE;
+        dst.h *= DEBUG_SCALE;
+        dst.x *= DEBUG_SCALE;
+        dst.y *= DEBUG_SCALE;
+        dst.x += get_Window()->root->rect.size.x / 4;
+        dst.y += get_Window()->root->rect.size.y / 4;
+#endif
+        SDL_RenderCopy(render, buf->texture, NULL, &dst);
     }
 }
