@@ -1071,9 +1071,12 @@ void refresh_App(void) {
 #endif
     set_Atomic(&d->pendingRefresh, iFalse);
     destroyPending_Widget();
+//    iTime draw;
+//    initCurrent_Time(&draw);
     draw_Window(d->window);
+//    printf("draw: %lld \u03bcs\n", (long long) (elapsedSeconds_Time(&draw) * 1000000));
+//    fflush(stdout);
     if (d->warmupFrames > 0) {
-//        printf("warmup frame: %d\n", d->warmupFrames);
         d->warmupFrames--;
     }
 }
