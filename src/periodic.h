@@ -26,17 +26,21 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 iDeclareType(Periodic)
 iDeclareType(Thread)
 
-/* Animation utility. Not per frame but several times per second. */
+/* Animation utility. Not per frame but several times per second. Thread safe. */
 struct Impl_Periodic {
     iMutex *     mutex;
     iSortedArray commands;
-    iCondition   haveCommands;
-    iThread *    thread;
-    iAtomicInt   isStopping;
+    uint32_t     lastPostTime;
 };
 
 void    init_Periodic   (iPeriodic *);
 void    deinit_Periodic (iPeriodic *);
 
-void    add_Periodic    (iPeriodic *, iAny *context, const char *command);
-void    remove_Periodic (iPeriodic *, iAny *context);
+iLocalDef iBool isEmpty_Periodic(const iPeriodic *d) {
+    return isEmpty_SortedArray(&d->commands);
+}
+
+void    add_Periodic            (iPeriodic *, iAny *context, const char *command);
+void    remove_Periodic         (iPeriodic *, iAny *context);
+
+iBool   postCommands_Periodic   (iPeriodic *);

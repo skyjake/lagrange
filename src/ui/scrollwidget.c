@@ -112,7 +112,7 @@ static void unfade_ScrollWidget_(iScrollWidget *d, float opacity) {
         d->willCheckFade = iTrue;
         /* TODO: This causes an inexplicable refresh issue on macOS: the drawing of one frame
            takes 100ms for some reason (not the current frame but some time after). */
-//        add_Periodic(periodic_App(), d, "scrollbar.fade");
+        add_Periodic(periodic_App(), d, "scrollbar.fade");
     }
     refresh_Widget(d);
 }

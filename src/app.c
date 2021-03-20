@@ -837,6 +837,9 @@ void trimCache_App(void) {
 }
 
 iLocalDef iBool isWaitingAllowed_App_(iApp *d) {
+    if (!isEmpty_Periodic(&d->periodic)) {
+        return iFalse;
+    }
     if (d->warmupFrames > 0) {
         return iFalse;
     }
@@ -853,14 +856,26 @@ iLocalDef iBool isWaitingAllowed_App_(iApp *d) {
     return !value_Atomic(&d->pendingRefresh) && isEmpty_SortedArray(&d->tickers);
 }
 
+static iBool nextEvent_App_(iApp *d, enum iAppEventMode eventMode, SDL_Event *event) {
+    if (eventMode == waitForNewEvents_AppEventMode && isWaitingAllowed_App_(d)) {
+        /* If there are periodic commands pending, wait only for a short while. */
+        if (!isEmpty_Periodic(&d->periodic)) {
+            return SDL_WaitEventTimeout(event, 500);
+        }
+        /* We may be allowed to block here until an event comes in. */
+        if (isWaitingAllowed_App_(d)) {
+            return SDL_WaitEvent(event);
+        }
+    }
+    return SDL_PollEvent(event);
+}
+
 void processEvents_App(enum iAppEventMode eventMode) {
     iApp *d = &app_;
     SDL_Event ev;
     iBool gotEvents = iFalse;
-    while ((isWaitingAllowed_App_(d) && eventMode == waitForNewEvents_AppEventMode &&
-            SDL_WaitEvent(&ev)) ||
-           ((!isWaitingAllowed_App_(d) || eventMode == postedEventsOnly_AppEventMode) &&
-            SDL_PollEvent(&ev))) {
+    postCommands_Periodic(&d->periodic);
+    while (nextEvent_App_(d, eventMode, &ev)) {
 #if defined (iPlatformAppleMobile)
         if (processEvent_iOS(&ev)) {
             continue;
@@ -1064,13 +1079,18 @@ static int run_App_(iApp *d) {
 
 void refresh_App(void) {
     iApp *d = &app_;
+    destroyPending_Widget();
 #if defined (LAGRANGE_IDLE_SLEEP)
     if (d->warmupFrames == 0 && d->isIdling) {
         return;
     }
 #endif
-    set_Atomic(&d->pendingRefresh, iFalse);
-    destroyPending_Widget();
+    if (!exchange_Atomic(&d->pendingRefresh, iFalse)) {
+        /* Refreshing wasn't pending. */
+        if (isFinished_Anim(&d->window->rootOffset)) {
+            return;
+        }
+    }
 //    iTime draw;
 //    initCurrent_Time(&draw);
     draw_Window(d->window);

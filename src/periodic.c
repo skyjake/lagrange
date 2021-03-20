@@ -52,50 +52,35 @@ iDefineTypeConstructionArgs(PeriodicCommand, (iAny *ctx, const char *cmd), ctx, 
 
 /*----------------------------------------------------------------------------------------------*/
 
-//static uint32_t postCommands_Periodic_(uint32_t interval, void *param) {
-static iThreadResult poster_Periodic_(iThread *thread) {
-    iPeriodic *d = userData_Thread(thread);
+static const uint32_t postingInterval_Periodic_ = 500;
+
+iBool postCommands_Periodic(iPeriodic *d) {
+    const uint32_t now = SDL_GetTicks();
+    if (now - d->lastPostTime < postingInterval_Periodic_) {
+        return iFalse;
+    }
+    d->lastPostTime = now;
+    iBool wasPosted = iFalse;
     lock_Mutex(d->mutex);
-    while (!value_Atomic(&d->isStopping)) {
-        if (isEmpty_SortedArray(&d->commands)) {
-            /* Sleep until we have something to post. */
-            wait_Condition(&d->haveCommands, d->mutex);
-            continue;
-        }
-        iConstForEach(Array, i, &d->commands.values) {
-            postCommandString_App(&((const iPeriodicCommand *) i.value)->command);
-        }
-        /* Sleep for a while. */
-        iTime until;
-        initTimeout_Time(&until, 0.5f);
-        waitTimeout_Condition(&d->haveCommands, d->mutex, &until);
+    iConstForEach(Array, i, &d->commands.values) {
+        postCommandString_App(&((const iPeriodicCommand *) i.value)->command);
+        wasPosted = iTrue;
     }
     unlock_Mutex(d->mutex);
-    return 0;
+    return wasPosted;
 }
 
 void init_Periodic(iPeriodic *d) {
     d->mutex = new_Mutex();
     init_SortedArray(&d->commands, sizeof(iPeriodicCommand), cmp_PeriodicCommand_);
-//    d->timer = SDL_AddTimer(500, postCommands_Periodic_, d);
-    set_Atomic(&d->isStopping, iFalse);
-    init_Condition(&d->haveCommands);
-    d->thread = new_Thread(poster_Periodic_);
-    setUserData_Thread(d->thread, d);
-    start_Thread(d->thread);
+    d->lastPostTime = 0;
 }
 
 void deinit_Periodic(iPeriodic *d) {
-//    SDL_RemoveTimer(d->timer);
-    set_Atomic(&d->isStopping, iTrue);
-    signal_Condition(&d->haveCommands);
-    join_Thread(d->thread);
-    iRelease(d->thread);
     iForEach(Array, i, &d->commands.values) {
         deinit_PeriodicCommand(i.value);
     }
     deinit_SortedArray(&d->commands);
-    deinit_Condition(&d->haveCommands);
     delete_Mutex(d->mutex);
 }
 
@@ -112,7 +97,6 @@ void add_Periodic(iPeriodic *d, iAny *context, const char *command) {
         init_PeriodicCommand(&pc, context, command);
         insert_SortedArray(&d->commands, &pc);
     }
-    signal_Condition(&d->haveCommands);
     unlock_Mutex(d->mutex);
 }
 
