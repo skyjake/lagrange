@@ -1201,7 +1201,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
                  (theme == gray_GmDocumentTheme && isDark_ColorTheme(colorTheme_App()))) {
             const float primHue        = hues[primIndex];
             const iHSLColor primBright = { primHue, 1, 0.6f, 1 };
-            const iHSLColor primDim    = { primHue, 1, normLum[primIndex] + (theme == gray_GmDocumentTheme ? 0.0f : -0.3f), 1};
+            const iHSLColor primDim    = { primHue, 1, normLum[primIndex] + (theme == gray_GmDocumentTheme ? 0.0f : -0.25f), 1};
             const iHSLColor altBright  = { altHue, 1, normLum[altIndex[0]] + (theme == gray_GmDocumentTheme ? 0.1f : 0.0f), 1 };
             setHsl_Color(tmQuote_ColorId, altBright);
             setHsl_Color(tmPreformatted_ColorId, altBright);
@@ -1225,8 +1225,15 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
         /* Tone down the link colors a bit because bold white is quite strong to look at. */
         if (isDark_GmDocumentTheme(theme) || theme == white_GmDocumentTheme) {
             iHSLColor base = { hues[primIndex], 1.0f, normLum[primIndex], 1.0f };
-            set_Color(tmLinkText_ColorId, mix_Color(get_Color(tmLinkText_ColorId),
-                                                    rgb_HSLColor(base), 0.25f));
+            if (theme == black_GmDocumentTheme || theme == gray_GmDocumentTheme) {
+                setHsl_Color(tmLinkText_ColorId,
+                             addSatLum_HSLColor(get_HSLColor(tmLinkText_ColorId), 0.0f, -0.15f));
+            }
+            else {
+                /* Tinted with base color. */
+                set_Color(tmLinkText_ColorId, mix_Color(get_Color(tmLinkText_ColorId),
+                                                        rgb_HSLColor(base), 0.25f));
+            }
             set_Color(tmHypertextLinkText_ColorId, get_Color(tmLinkText_ColorId));
             set_Color(tmGopherLinkText_ColorId, get_Color(tmLinkText_ColorId));
         }
