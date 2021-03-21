@@ -992,8 +992,8 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
                 set_Color(tmHeading2_ColorId, mix_Color(get_Color(brown_ColorId), get_Color(black_ColorId), 0.5f));
                 set_Color(tmHeading3_ColorId, get_Color(black_ColorId));
                 set_Color(tmBannerBackground_ColorId, mix_Color(get_Color(gray75_ColorId), get_Color(gray50_ColorId), 0.12f));
-                set_Color(tmBannerTitle_ColorId, get_Color(orange_ColorId));
-                set_Color(tmBannerIcon_ColorId, get_Color(orange_ColorId));
+                set_Color(tmBannerTitle_ColorId, get_Color(teal_ColorId));
+                set_Color(tmBannerIcon_ColorId, get_Color(teal_ColorId));
                 set_Color(tmLinkIconVisited_ColorId, mix_Color(get_Color(cyan_ColorId), get_Color(black_ColorId), 0.20f));
                 set_Color(tmLinkDomain_ColorId, mix_Color(get_Color(cyan_ColorId), get_Color(black_ColorId), 0.33f));
                 set_Color(tmHypertextLinkIconVisited_ColorId, mix_Color(get_Color(orange_ColorId), get_Color(black_ColorId), 0.33f));
