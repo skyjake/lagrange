@@ -191,7 +191,7 @@ static const iMenuItem navMenuItems_[] = {
     { add_Icon " New Tab", 't', KMOD_PRIMARY, "tabs.new" },
     { "Open Location...", SDLK_l, KMOD_PRIMARY, "navigate.focus" },
     { "---", 0, 0, NULL },
-    { download_Icon " Save to Downloads", SDLK_s, KMOD_PRIMARY, "document.save" },
+    { download_Icon " " saveToDownloads_Label, SDLK_s, KMOD_PRIMARY, "document.save" },
     { "Copy Source Text", SDLK_c, KMOD_PRIMARY, "copy" },
     { "---", 0, 0, NULL },
     { leftHalf_Icon " Toggle Left Sidebar", SDLK_l, KMOD_PRIMARY | KMOD_SHIFT, "sidebar.toggle" },
@@ -259,7 +259,7 @@ static const iMenuItem fileMenuItems_[] = {
     { "New Tab", SDLK_t, KMOD_PRIMARY, "tabs.new" },
     { "Open Location...", SDLK_l, KMOD_PRIMARY, "navigate.focus" },
     { "---", 0, 0, NULL },
-    { "Save to Downloads", SDLK_s, KMOD_PRIMARY, "document.save" },
+    { saveToDownloads_Label, SDLK_s, KMOD_PRIMARY, "document.save" },
 };
 
 static const iMenuItem editMenuItems_[] = {
@@ -576,7 +576,9 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
         if (isPhone) {
             static const char *buttons[] = { "navbar.back",  "navbar.forward", "navbar.sidebar",
                                              "navbar.ident", "navbar.home",    "navbar.menu" };
-            setFlags_Widget(findWidget_App("toolbar"), hidden_WidgetFlag, isLandscape_App());
+            iWidget *toolBar = findWidget_App("toolbar");
+            setVisualOffset_Widget(toolBar, 0, 0, 0);
+            setFlags_Widget(toolBar, hidden_WidgetFlag, isLandscape_App());
             iForIndices(i, buttons) {
                 iLabelWidget *btn = findChild_Widget(navBar, buttons[i]);
                 setFlags_Widget(as_Widget(btn), hidden_WidgetFlag, isPortrait_App());
@@ -936,7 +938,6 @@ static void setupUserInterface_Window(iWindow *d) {
         setBackgroundColor_Widget(winBar, uiBackground_ColorId);
     }
 #endif
-
     /* Navigation bar. */ {
         iWidget *navBar = new_Widget();
         setId_Widget(navBar, "navbar");
@@ -1119,8 +1120,9 @@ static void setupUserInterface_Window(iWindow *d) {
         setBackgroundColor_Widget(searchBar, uiBackground_ColorId);
         setCommandHandler_Widget(searchBar, handleSearchBarCommands_);
         addChildFlags_Widget(
-            searchBar, iClob(new_LabelWidget(magnifyingGlass_Icon " Text", NULL)), frameless_WidgetFlag);
+            searchBar, iClob(new_LabelWidget(magnifyingGlass_Icon, NULL)), frameless_WidgetFlag);
         iInputWidget *input = new_InputWidget(0);
+        setHint_InputWidget(input, "Find text on page");
         setSelectAllOnFocus_InputWidget(input, iTrue);
         setEatEscape_InputWidget(input, iFalse); /* unfocus and close with one keypress */
         setId_Widget(addChildFlags_Widget(searchBar, iClob(input), expand_WidgetFlag),
@@ -1133,10 +1135,12 @@ static void setupUserInterface_Window(iWindow *d) {
     /* Bottom toolbar. */
     if (isPhone_iOS()) {
         iWidget *toolBar = new_Widget();
-        addChild_Widget(div, iClob(toolBar));
+        addChild_Widget(d->root, iClob(toolBar));
         setId_Widget(toolBar, "toolbar");
         setCommandHandler_Widget(toolBar, handleToolBarCommands_);
-        setFlags_Widget(toolBar, collapse_WidgetFlag | resizeWidthOfChildren_WidgetFlag |
+        setFlags_Widget(toolBar, moveToParentBottomEdge_WidgetFlag |
+                        parentCannotResizeHeight_WidgetFlag |
+                        resizeWidthOfChildren_WidgetFlag |
                         arrangeHeight_WidgetFlag | arrangeHorizontal_WidgetFlag, iTrue);
         setBackgroundColor_Widget(toolBar, tmBannerBackground_ColorId);
         addChildFlags_Widget(toolBar, iClob(newLargeIcon_LabelWidget("\U0001f870", "navigate.back")), frameless_WidgetFlag);
@@ -1212,6 +1216,21 @@ static void setupUserInterface_Window(iWindow *d) {
         addAction_Widget(d->root, '5', rightSidebar_KeyModifier, "sidebar2.mode arg:4 toggle:1");
     }
     updateMetrics_Window_(d);
+}
+
+void showToolbars_Window(iWindow *d, iBool show) {
+    if (isLandscape_App()) return;
+    iWidget *toolBar = findChild_Widget(d->root, "toolbar");
+    if (!toolBar) return;
+    const int height = rootSize_Window(d).y - top_Rect(boundsWithoutVisualOffset_Widget(toolBar));
+    if (show && !isVisible_Widget(toolBar)) {
+        setFlags_Widget(toolBar, hidden_WidgetFlag, iFalse);
+        setVisualOffset_Widget(toolBar, 0, 200, easeOut_AnimFlag);
+    }
+    else if (!show && isVisible_Widget(toolBar)) {
+        setFlags_Widget(toolBar, hidden_WidgetFlag, iTrue);
+        setVisualOffset_Widget(toolBar, height, 200, easeOut_AnimFlag);
+    }
 }
 
 static void updateRootSize_Window_(iWindow *d, iBool notifyAlways) {

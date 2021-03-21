@@ -223,6 +223,9 @@ void setVisualOffset_Widget(iWidget *d, int value, uint32_t span, int animFlags)
     setFlags_Widget(d, visualOffset_WidgetFlag, iTrue);
     if (span == 0) {
         init_Anim(&d->visualOffset, value);
+        if (value == 0) {
+            setFlags_Widget(d, visualOffset_WidgetFlag, iFalse); /* offset is being reset */
+        }
     }
     else {
         setValue_Anim(&d->visualOffset, value, span);
@@ -346,6 +349,9 @@ void arrange_Widget(iWidget *d) {
     else if (d->flags & moveToParentRightEdge_WidgetFlag) {
         d->rect.pos.x = width_Rect(innerRect_Widget_(d->parent)) - width_Rect(d->rect);
     }
+    else if (d->flags & moveToParentBottomEdge_WidgetFlag) {
+        d->rect.pos.y = height_Rect(innerRect_Widget_(d->parent)) - height_Rect(d->rect);
+    }
     else if (d->flags & centerHorizontal_WidgetFlag) {
         centerHorizontal_Widget_(d);
     }
@@ -455,8 +461,12 @@ void arrange_Widget(iWidget *d) {
             iForEach(ObjectList, i, d->children) {
                 iWidget *child = as_Widget(i.object);
                 if (isArranged_Widget_(child) && ~child->flags & parentCannotResize_WidgetFlag) {
-                    if (dirs.x) setWidth_Widget_(child, child->flags & unpadded_WidgetFlag ? unpaddedChildSize.x : childSize.x);
-                    if (dirs.y) setHeight_Widget_(child, child->flags & unpadded_WidgetFlag ? unpaddedChildSize.y : childSize.y);
+                    if (dirs.x) {
+                        setWidth_Widget_(child, child->flags & unpadded_WidgetFlag ? unpaddedChildSize.x : childSize.x);
+                    }
+                    if (dirs.y && ~child->flags & parentCannotResizeHeight_WidgetFlag) {
+                        setHeight_Widget_(child, child->flags & unpadded_WidgetFlag ? unpaddedChildSize.y : childSize.y);
+                    }
                 }
             }
         }
@@ -493,7 +503,8 @@ void arrange_Widget(iWidget *d) {
                 pos.y += child->rect.size.y;
             }
         }
-        else if ((d->flags & resizeChildren_WidgetFlag) == resizeChildren_WidgetFlag) {
+        else if ((d->flags & resizeChildren_WidgetFlag) == resizeChildren_WidgetFlag &&
+                 ~child->flags & moveToParentBottomEdge_WidgetFlag) {
             child->rect.pos = pos;
         }
         else if (d->flags & resizeWidthOfChildren_WidgetFlag) {
@@ -522,7 +533,9 @@ void arrange_Widget(iWidget *d) {
             iForEach(ObjectList, j, d->children) {
                 iWidget *child = as_Widget(j.object);
                 if (child->flags &
-                    (resizeToParentWidth_WidgetFlag | moveToParentLeftEdge_WidgetFlag |
+                    (resizeToParentWidth_WidgetFlag |
+                     moveToParentLeftEdge_WidgetFlag |
+                     moveToParentBottomEdge_WidgetFlag |
                      moveToParentRightEdge_WidgetFlag)) {
                     arrange_Widget(child);
                 }
@@ -542,6 +555,10 @@ void arrange_Widget(iWidget *d) {
                 }
             }
         }
+//        if (d->flags & moveToParentBottomEdge_WidgetFlag) {
+//            /* TODO: Fix this: not DRY. See beginning of method. */
+//            d->rect.pos.y = height_Rect(innerRect_Widget_(d->parent)) - height_Rect(d->rect);
+//        }
         if (d->flags & centerHorizontal_WidgetFlag) {
             centerHorizontal_Widget_(d);
         }
@@ -571,6 +588,14 @@ iRect bounds_Widget(const iWidget *d) {
 #if defined (iPlatformMobile)
     bounds.pos.y += value_Anim(&get_Window()->rootOffset);
 #endif
+    return bounds;
+}
+
+iRect boundsWithoutVisualOffset_Widget(const iWidget *d) {
+    iRect bounds = d->rect;
+    for (const iWidget *w = d->parent; w; w = w->parent) {
+        addv_I2(&bounds.pos, w->rect.pos);
+    }
     return bounds;
 }
 

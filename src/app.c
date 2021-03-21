@@ -276,6 +276,14 @@ static const char *downloadDir_App_(void) {
         }
     }
 #endif
+#if defined (iPlatformAppleMobile)
+    /* Save to a local cache directory from where the user can export to the cloud. */
+    const iString *dlDir = cleanedCStr_Path("~/Library/Caches/Downloads");
+    if (!fileExists_FileInfo(dlDir)) {
+        makeDirs_Path(dlDir);
+    }
+    return cstr_String(dlDir);
+#endif
     return defaultDownloadDir_App_;
 }
 
@@ -313,6 +321,11 @@ static void loadPrefs_App_(iApp *d) {
                 d->initialWindowRect = init_Rect(
                     pos.x, pos.y, argLabel_Command(cmd, "width"), argLabel_Command(cmd, "height"));
             }
+#if !defined (LAGRANGE_DOWNLOAD_EDIT)
+            else if (equal_Command(cmd, "downloads")) {
+                continue; /* can't change downloads directory */
+            }
+#endif
             else {
                 postCommandString_App(&cmdStr);
             }
@@ -1311,6 +1324,8 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
                          isSelected_Widget(findChild_Widget(d, "prefs.smoothscroll")));
         postCommandf_App("imageloadscroll arg:%d",
                          isSelected_Widget(findChild_Widget(d, "prefs.imageloadscroll")));
+        postCommandf_App("hidetoolbarscroll arg:%d",
+                         isSelected_Widget(findChild_Widget(d, "prefs.hidetoolbarscroll")));
         postCommandf_App("ostheme arg:%d",
                          isSelected_Widget(findChild_Widget(d, "prefs.ostheme")));
         postCommandf_App("decodeurls arg:%d",
@@ -1592,6 +1607,13 @@ iBool handleCommand_App(const char *cmd) {
         d->prefs.loadImageInsteadOfScrolling = arg_Command(cmd);
         return iTrue;
     }
+    else if (equal_Command(cmd, "hidetoolbarscroll")) {
+        d->prefs.hideToolbarOnScroll = arg_Command(cmd);
+        if (!d->prefs.hideToolbarOnScroll) {
+            showToolbars_Window(d->window, iTrue);
+        }
+        return iTrue;
+    }
     else if (equal_Command(cmd, "theme.set")) {
         const int isAuto = argLabel_Command(cmd, "auto");
         d->prefs.theme = arg_Command(cmd);
@@ -1864,6 +1886,7 @@ iBool handleCommand_App(const char *cmd) {
         setToggle_Widget(findChild_Widget(dlg, "prefs.hoverlink"), d->prefs.hoverLink);
         setToggle_Widget(findChild_Widget(dlg, "prefs.smoothscroll"), d->prefs.smoothScrolling);
         setToggle_Widget(findChild_Widget(dlg, "prefs.imageloadscroll"), d->prefs.loadImageInsteadOfScrolling);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.hidetoolbarscroll"), d->prefs.hideToolbarOnScroll);
         setToggle_Widget(findChild_Widget(dlg, "prefs.ostheme"), d->prefs.useSystemTheme);
         setToggle_Widget(findChild_Widget(dlg, "prefs.customframe"), d->prefs.customFrame);
         setToggle_Widget(findChild_Widget(dlg, "prefs.retainwindow"), d->prefs.retainWindowSize);

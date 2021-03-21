@@ -120,7 +120,9 @@ API_AVAILABLE(ios(13.0))
 
 /*----------------------------------------------------------------------------------------------*/
 
-@interface AppState : NSObject
+@interface AppState : NSObject<UIDocumentPickerDelegate> {
+    iString *fileBeingSaved;
+}
 @property (nonatomic, assign) BOOL isHapticsAvailable;
 @property (nonatomic, strong) NSObject *haptic;
 @end
@@ -128,6 +130,23 @@ API_AVAILABLE(ios(13.0))
 static AppState *appState_;
 
 @implementation AppState
+
+-(instancetype)init {
+    self = [super init];
+    fileBeingSaved = NULL;
+    return self;
+}
+
+-(void)setFileBeingSaved:(const iString *)path {
+    fileBeingSaved = copy_String(path);
+}
+
+-(void)removeSavedFile {
+    /* The file was copied to an external location, so the cached copy is not needed. */
+    remove(cstr_String(fileBeingSaved));
+    delete_String(fileBeingSaved);
+    fileBeingSaved = NULL;
+}
 
 -(void)setupHaptics {
     if (@available(iOS 13.0, *)) {
@@ -143,6 +162,15 @@ static AppState *appState_;
     } else {
         self.isHapticsAvailable = NO;
     }
+}
+
+- (void)documentPicker:(UIDocumentPickerViewController *)controller
+didPickDocumentsAtURLs:(NSArray<NSURL *> *)urls {
+    [self removeSavedFile];
+}
+
+- (void)documentPickerWasCancelled:(UIDocumentPickerViewController *)controller {
+    [self removeSavedFile];
 }
 
 -(void)keyboardOnScreen:(NSNotification *)notification {
@@ -256,4 +284,15 @@ iBool processEvent_iOS(const SDL_Event *ev) {
         }
     }
     return iFalse; /* allow normal processing */
+}
+
+void exportDownloadedFile_iOS(const iString *path) {
+    NSURL *url = [NSURL fileURLWithPath:[[NSString alloc] initWithCString:cstr_String(path)
+                                                                 encoding:NSUTF8StringEncoding]];
+    UIDocumentPickerViewController *picker = [[UIDocumentPickerViewController alloc]
+                                              initWithURL:url
+                                              inMode:UIDocumentPickerModeExportToService];
+    picker.delegate = appState_;
+    [appState_ setFileBeingSaved:path];
+    [viewController_(get_Window()) presentViewController:picker animated:YES completion:nil];
 }

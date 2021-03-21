@@ -46,6 +46,7 @@ struct Impl_Prefs {
     float            uiScale;
     int              zoomPercent;
     iBool            sideIcon;
+    iBool            hideToolbarOnScroll;
     /* Behavior */
     iString          downloadDir;
     iBool            hoverLink;

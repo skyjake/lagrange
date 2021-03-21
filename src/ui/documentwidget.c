@@ -48,6 +48,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "visbuf.h"
 #include "visited.h"
 
+#if defined (iPlatformAppleMobile)
+#   include "ios.h"
+#endif
+
 #include <the_Foundation/file.h>
 #include <the_Foundation/fileinfo.h>
 #include <the_Foundation/objectlist.h>
@@ -220,6 +224,7 @@ struct Impl_DocumentWidget {
     SDL_Texture *  sideIconBuf;
     iTextBuf *     timestampBuf;
     iTranslation * translation;
+    iWidget *      phoneToolbar;
 };
 
 iDefineObjectConstruction(DocumentWidget)
@@ -231,6 +236,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     setFlags_Widget(w, hover_WidgetFlag, iTrue);
     init_PersistentDocumentState(&d->mod);
     d->flags = 0;
+    d->phoneToolbar = NULL;
     iZap(d->certExpiry);
     d->certFingerprint  = new_Block(0);
     d->certFlags        = 0;
@@ -440,8 +446,13 @@ static float normScrollPos_DocumentWidget_(const iDocumentWidget *d) {
 }
 
 static int scrollMax_DocumentWidget_(const iDocumentWidget *d) {
-    return size_GmDocument(d->doc).y - height_Rect(bounds_Widget(constAs_Widget(d))) +
-           (hasSiteBanner_GmDocument(d->doc) ? 1 : 2) * d->pageMargin * gap_UI;
+    int sm = size_GmDocument(d->doc).y - height_Rect(bounds_Widget(constAs_Widget(d))) +
+             (hasSiteBanner_GmDocument(d->doc) ? 1 : 2) * d->pageMargin * gap_UI;
+    if (d->phoneToolbar) {
+        sm += rootSize_Window(get_Window()).y -
+              top_Rect(boundsWithoutVisualOffset_Widget(d->phoneToolbar));
+    }
+    return sm;
 }
 
 static void invalidateLink_DocumentWidget_(iDocumentWidget *d, iGmLinkId id) {
@@ -815,9 +826,10 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
                 appendFormat_String(src,
                                     "\n```\n%s\n```\n"
                                     "You can save it as a file to your Downloads folder, though. "
-                                    "Press %s or select \"Save to Downloads\" from the menu.",
+                                    "Press %s or select \"%s\" from the menu.",
                                     cstr_String(meta),
-                                    cstr_String(key));
+                                    cstr_String(key),
+                                    saveToDownloads_Label);
                 break;
             }
             case slowDown_GmStatusCode:
@@ -1085,6 +1097,14 @@ static void smoothScroll_DocumentWidget_(iDocumentWidget *d, int offset, int dur
     const int scrollMax = scrollMax_DocumentWidget_(d);
     if (scrollMax > 0) {
         destY = iMin(destY, scrollMax);
+        if (deviceType_App() == phone_AppDeviceType) {
+            if (destY == scrollMax) {
+                showToolbars_Window(get_Window(), iTrue);
+            }
+            else if (prefs_App()->hideToolbarOnScroll && iAbs(offset) > 5) {
+                showToolbars_Window(get_Window(), offset < 0);
+            }
+        }
     }
     else {
         destY = 0;
@@ -1443,12 +1463,17 @@ static void saveToDownloads_(const iString *url, const iString *mime, const iBlo
         iFile *f = new_File(savePath);
         if (open_File(f, writeOnly_FileMode)) {
             write_File(f, content);
+            close_File(f);
             const size_t size   = size_Block(content);
             const iBool  isMega = size >= 1000000;
+#if defined (iPlatformAppleMobile)
+            exportDownloadedFile_iOS(savePath);
+#else
             makeMessage_Widget(uiHeading_ColorEscape "FILE SAVED",
                                format_CStr("%s\nSize: %.3f %s", cstr_String(path_File(f)),
                                            isMega ? size / 1.0e6f : (size / 1.0e3f),
                                            isMega ? "MB" : "KB"));
+#endif
         }
         else {
             makeMessage_Widget(uiTextCaution_ColorEscape "ERROR SAVING FILE",
@@ -1496,8 +1521,8 @@ static const int homeRowKeys_[] = {
 static iBool updateDocumentWidthRetainingScrollPosition_DocumentWidget_(iDocumentWidget *d,
                                                                         iBool keepCenter) {
     const int newWidth = documentWidth_DocumentWidget_(d);
-    if (newWidth == size_GmDocument(d->doc).x) {
-        return iFalse; /* hasn't changed */
+    if (newWidth == size_GmDocument(d->doc).x && !keepCenter /* not a font change */) {
+        return iFalse;
     }
     /* Font changes (i.e., zooming) will keep the view centered, otherwise keep the top
        of the visible area fixed. */
@@ -1526,6 +1551,7 @@ static iBool updateDocumentWidthRetainingScrollPosition_DocumentWidget_(iDocumen
             scrollTo_DocumentWidget_(d, mid_Rect(run->bounds).y, iTrue);
         }
     }
+    return iTrue;
 }
 
 static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
@@ -1533,6 +1559,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     if (equal_Command(cmd, "window.resized") || equal_Command(cmd, "font.changed")) {
         /* Alt/Option key may be involved in window size changes. */
         iChangeFlags(d->flags, showLinkNumbers_DocumentWidgetFlag, iFalse);
+        d->phoneToolbar = findWidget_App("toolbar");
         const iBool keepCenter = equal_Command(cmd, "font.changed");
         updateDocumentWidthRetainingScrollPosition_DocumentWidget_(d, keepCenter);
         updateSideIconBuf_DocumentWidget_(d);
@@ -2361,36 +2388,16 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         }
     }
     else if (ev->type == SDL_MOUSEWHEEL && isHover_Widget(w)) {
-        /* TODO: Maybe clean this up a bit? Wheel events are used for scrolling
-           but they are calculated differently based on device/mouse/trackpad. */
         const iInt2 mouseCoord = mouseCoord_Window(get_Window());
         if (isPerPixel_MouseWheelEvent(&ev->wheel)) {
             stop_Anim(&d->scrollY);
             iInt2 wheel = init_I2(ev->wheel.x, ev->wheel.y);
-//#   if defined (iPlatformAppleMobile)
-//            wheel.x = -wheel.x;
-//#   else
-//            /* Wheel mounts are in points. */
-//            mulfv_I2(&wheel, get_Window()->pixelRatio);
-//            /* Only scroll on one axis at a time. */
-//            if (iAbs(wheel.x) > iAbs(wheel.y)) {
-//                wheel.y = 0;
-//            }
-//            else {
-//                wheel.x = 0;
-//            }
-//#   endif
             scroll_DocumentWidget_(d, -wheel.y);
             scrollWideBlock_DocumentWidget_(d, mouseCoord, -wheel.x, 0);
         }
         else {
             /* Traditional mouse wheel. */
-//#if defined (iPlatformApple)
-//            /* Disregard wheel acceleration applied by the OS. */
-//            const int amount = iSign(ev->wheel.y);
-//#else
             const int amount = ev->wheel.y;
-//#endif
             if (keyMods_Sym(modState_Keys()) == KMOD_PRIMARY) {
                 postCommandf_App("zoom.delta arg:%d", amount > 0 ? 10 : -10);
                 return iTrue;
@@ -2513,7 +2520,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                         d->contextLink->mediaType != download_GmRunMediaType) {
                         if (isFinished_GmRequest(mediaReq->req)) {
                             pushBack_Array(&items,
-                                           &(iMenuItem){ download_Icon " Save to Downloads",
+                                           &(iMenuItem){ download_Icon " " saveToDownloads_Label,
                                                          0,
                                                          0,
                                                          format_CStr("document.media.save link:%u",
@@ -2558,7 +2565,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                             &items,
                             (iMenuItem[]){
                                 { "Copy Page Source", 'c', KMOD_PRIMARY, "copy" },
-                                { download_Icon " Save to Downloads", SDLK_s, KMOD_PRIMARY, "document.save" } },
+                                { download_Icon " " saveToDownloads_Label, SDLK_s, KMOD_PRIMARY, "document.save" } },
                             2);
                     }
                 }

@@ -82,3 +82,11 @@ enum iFileVersion {
 #define unhappy_Icon        "\U0001f641"
 #define globe_Icon          "\U0001f310"
 #define magnifyingGlass_Icon    "\U0001f50d"
+
+/* UI labels that depend on the platform */
+
+#if defined (iPlatformMobile)
+#   define saveToDownloads_Label    "Save to Files"
+#else
+#   define saveToDownloads_Label    "Save to Downloads"
+#endif

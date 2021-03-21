@@ -110,6 +110,8 @@ enum iWidgetFlag {
 #define dragged_WidgetFlag                  iBit64(54)
 #define hittable_WidgetFlag                 iBit64(55)
 #define safePadding_WidgetFlag              iBit64(56) /* padded using safe area insets */
+#define moveToParentBottomEdge_WidgetFlag   iBit64(57)
+#define parentCannotResizeHeight_WidgetFlag iBit64(58)
 
 enum iWidgetAddPos {
     back_WidgetAddPos,
@@ -165,6 +167,7 @@ const iString *id_Widget                (const iWidget *);
 int64_t flags_Widget                    (const iWidget *);
 iRect   bounds_Widget                   (const iWidget *); /* outer bounds */
 iRect   innerBounds_Widget              (const iWidget *);
+iRect   boundsWithoutVisualOffset_Widget(const iWidget *);
 iInt2   localCoord_Widget               (const iWidget *, iInt2 coord);
 iBool   contains_Widget                 (const iWidget *, iInt2 coord);
 iBool   containsExpanded_Widget         (const iWidget *, iInt2 coord, int expand);

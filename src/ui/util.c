@@ -986,7 +986,6 @@ static iBool isTwoColumnPage_(iWidget *d) {
 
 static iBool isOmittedPref_(const iString *id) {
     static const char *omittedPrefs[] = {
-        "prefs.downloads",
         "prefs.smoothscroll",
         "prefs.imageloadscroll",
         "prefs.retainwindow",
@@ -1812,6 +1811,10 @@ iWidget *makePreferences_Widget(void) {
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.smoothscroll")));
         addChild_Widget(headings, iClob(makeHeading_Widget("Load image on scroll:")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.imageloadscroll")));
+        if (deviceType_App() == phone_AppDeviceType) {
+            addChild_Widget(headings, iClob(makeHeading_Widget("Hide toolbar on scroll:")));
+            addChild_Widget(values, iClob(makeToggle_Widget("prefs.hidetoolbarscroll")));
+        }
     }
     /* Window. */ {
         appendTwoColumnPage_(tabs, "Interface", '2', &headings, &values);
