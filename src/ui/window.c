@@ -188,8 +188,8 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
 #if !defined (iPlatformAppleMobile)
 /* TODO: Submenus wouldn't hurt here. */
 static const iMenuItem navMenuItems_[] = {
-    { add_Icon " ${menu.nav.newtab}", 't', KMOD_PRIMARY, "tabs.new" },
-    { "${menu.nav.openlocation}", SDLK_l, KMOD_PRIMARY, "navigate.focus" },
+    { add_Icon " ${menu.newtab}", 't', KMOD_PRIMARY, "tabs.new" },
+    { "${menu.openlocation}", SDLK_l, KMOD_PRIMARY, "navigate.focus" },
     { "---", 0, 0, NULL },
     { download_Icon " " saveToDownloads_Label, SDLK_s, KMOD_PRIMARY, "document.save" },
     { "${menu.copy.source}", SDLK_c, KMOD_PRIMARY, "copy" },

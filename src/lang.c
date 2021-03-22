@@ -31,15 +31,16 @@ static void clear_Lang_(iLang *d) {
 
 static void load_Lang_(iLang *d, const char *id) {
     /* Load compiled language strings from an embedded blob. */
-    const iBlock *data = NULL; // &blobLangEn_Embedded;
+    iUnused(id);
+    const iBlock *data = &blobEn_Embedded;
     iMsgStr msg;
     for (const char *ptr = constBegin_Block(data); ptr != constEnd_Block(data); ptr++) {
         msg.id = ptr;
         while (*++ptr) {}
         msg.str = ++ptr;
         while (*++ptr) {}
-        /* Allocate the string. */
-        insert_SortedArray(d->messages, &msg);
+        /* Allocate the string. The data has already been sorted. */
+        pushBack_Array(&d->messages->values, &msg);
     }
 }
 
@@ -68,8 +69,8 @@ const char *cstr_Lang(const char *msgId) {
     if (locate_SortedArray(d->messages, &key, &pos)) {
         return ((const iMsgStr *) at_SortedArray(d->messages, pos))->str;
     }
-    //iAssert(iFalse);
-    fprintf(stderr, "[Lang] missing: %s\n", msgId);
+    fprintf(stderr, "[Lang] missing: %s\n", msgId); fflush(stderr);
+    iAssert(iFalse);
     return msgId;
 }
 

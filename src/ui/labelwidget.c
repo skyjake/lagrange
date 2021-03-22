@@ -40,6 +40,7 @@ iLocalDef iInt2 padding_(int64_t flags) {
 
 struct Impl_LabelWidget {
     iWidget widget;
+    iString srcLabel;
     iString label;
     int     font;
     int     key;
@@ -357,12 +358,40 @@ void updateSize_LabelWidget(iLabelWidget *d) {
     }
 }
 
+static void replaceVariables_LabelWidget_(iLabelWidget *d) {
+    for (const char *label = cstr_String(&d->label); *label; ) {
+        iRangecc id;
+        id.start = strstr(label, "${");
+        if (!id.start) {
+            break;
+        }
+        id.start += 2;
+        id.end = strchr(id.start, '}');
+        iAssert(id.end != NULL);
+        /* TODO: Add a lookup that doesn't allocate anything; Lang can handle it. */
+        const size_t len = size_Range(&id);
+        char *key = malloc(len + 1);
+        memcpy(key, id.start, len);
+        key[len] = 0;
+        const char *text = cstr_Lang(key);
+        const size_t textLen = strlen(text);
+        free(key);
+        /* Replace it. */
+        size_t startPos = id.start - cstr_String(&d->label) - 2;
+        remove_Block(&d->label.chars, startPos, len + 3);
+        insertData_Block(&d->label.chars, startPos, text, textLen);
+        label = cstr_String(&d->label) + startPos + textLen;
+    }
+}
+
 void init_LabelWidget(iLabelWidget *d, const char *label, const char *cmd) {
     init_Widget(&d->widget);
     d->font = uiLabel_FontId;
     d->forceFg = none_ColorId;
     d->icon = 0;
-    initCStr_String(&d->label, label);
+    initCStr_String(&d->srcLabel, label);
+    initCopy_String(&d->label, &d->srcLabel);
+    replaceVariables_LabelWidget_(d);
     if (cmd) {
         initCStr_String(&d->command, cmd);
     }
@@ -381,6 +410,7 @@ void init_LabelWidget(iLabelWidget *d, const char *label, const char *cmd) {
 
 void deinit_LabelWidget(iLabelWidget *d) {
     deinit_String(&d->label);
+    deinit_String(&d->srcLabel);
     deinit_String(&d->command);
 }
 
@@ -407,11 +437,15 @@ void setAlignVisually_LabelWidget(iLabelWidget *d, iBool alignVisual) {
 
 void updateText_LabelWidget(iLabelWidget *d, const iString *text) {
     set_String(&d->label, text);
+    set_String(&d->srcLabel, text);
+    replaceVariables_LabelWidget_(d);
     refresh_Widget(&d->widget);
 }
 
 void updateTextCStr_LabelWidget(iLabelWidget *d, const char *text) {
     setCStr_String(&d->label, text);
+    set_String(&d->srcLabel, &d->label);
+    replaceVariables_LabelWidget_(d);
     refresh_Widget(&d->widget);
 }
 

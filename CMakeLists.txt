@@ -73,6 +73,7 @@ set (EMBED_RESOURCES
     res/fonts/SourceSansPro-Regular.ttf
     res/fonts/SourceSansPro-Bold.ttf
     res/fonts/Symbola.ttf
+    res/lang/en.bin
     res/shadow.png
 )
 if ((UNIX AND NOT APPLE) OR MSYS)

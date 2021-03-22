@@ -507,7 +507,6 @@ static void communicateWithRunningInstance_App_(iApp *d, iProcessId instance,
 
 static void init_App_(iApp *d, int argc, char **argv) {
     init_CommandLine(&d->args, argc, argv);
-    init_Lang();
     /* Where was the app started from? We ask SDL first because the command line alone is
        not a reliable source of this information, particularly when it comes to different
        operating systems. */ {
@@ -533,6 +532,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
         }
     }
 #endif
+    init_Lang();
     /* Configure the valid command line options. */ {
         defineValues_CommandLine(&d->args, "close-tab", 0);
         defineValues_CommandLine(&d->args, "echo;E", 0);
