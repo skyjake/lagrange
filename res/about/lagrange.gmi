@@ -1,4 +1,4 @@
-``` ASCII art: the word "Lagrange" using a large font
+``` ${about.logo}
 ooooo
 `888'
  888          .oooo.    .oooooooo oooo d8b  .oooo.   ooo. .oo.    .oooooooo  .ooooo.
@@ -9,7 +9,7 @@ o888ooooood8 `Y888""8o `8oooooo.  d888b    `Y888""8o o888o o888o `8oooooo.  `Y8b
                        d"     YD                                 d"     YD
                        "Y88888P'                                 "Y88888P'
 ```
-# A Beautiful Gemini Client
-## Version ${APP_VERSION}
+# ${about.tagline}
+## ${version} ${APP_VERSION}
 => https://skyjake.fi/@jk by @jk@skyjake.fi
-Powered by SDL 2, OpenSSL, and ☕️
+${about.powered}

@@ -1,0 +1,203 @@
+msgid "about.logo"
+msgstr "ASCII art: the word \"Lagrange\" using a large font"
+
+msgid "about.tagline"
+msgstr "A Beautiful Gemini Client"
+
+msgid "about.version"
+msgstr "Version"
+
+msgid "about.powered"
+msgstr "Powered by SDL 2, OpenSSL, and ☕️"
+
+msgid "menu.newtab"
+msgstr "New Tab"
+
+msgid "menu.closetab"
+msgstr "Close Tab"
+
+msgid "menu.closetab.other"
+msgstr "Close Other Tabs"
+
+msgid "menu.closetab.left"
+msgstr "Close Tabs To Left"
+
+msgid "menu.closetab.right"
+msgstr "Close Tabs To Right"
+
+msgid "menu.duptab"
+msgstr "Duplicate Tab"
+
+msgid "menu.openlocation"
+msgstr "Open Location..."
+
+msgid "menu.find"
+msgstr "Find on Page"
+
+msgid "macos.menu.find"
+msgstr "Find"
+
+msgid "menu.save.files"
+msgstr "Save to Files"
+
+msgid "menu.save.downloads"
+msgstr "Save to Downloads"
+
+msgid "menu.copy.source"
+msgstr "Copy Source Text"
+
+msgid "menu.sidebar"
+msgstr "Toggle Sidebar"
+
+msgid "menu.sidebar.left"
+msgstr "Toggle Left Sidebar"
+
+msgid "menu.sidebar.right"
+msgstr "Toggle Right Sidebar"
+
+msgid "menu.zoom.in"
+msgstr "Zoom In"
+
+msgid "menu.zoom.out"
+msgstr "Zoom Out"
+
+msgid "menu.zoom.reset"
+msgstr "Reset Zoom"
+
+msgid "menu.bookmarks.list"
+msgstr "List All Bookmarks"
+
+msgid "macos.menu.bookmarks.list"
+msgstr "List All"
+
+msgid "menu.bookmarks.bytag"
+msgstr "List Bookmarks by Tag"
+
+msgid "macos.menu.bookmarks.bytag"
+msgstr "List by Tag"
+
+msgid "menu.bookmarks.bytime"
+msgstr "List Bookmarks by Creation Time"
+
+msgid "macos.menu.bookmarks.bytime"
+msgstr "List by Creation Time"
+
+msgid "menu.feeds.entrylist"
+msgstr "Show Feed Entries"
+
+msgid "menu.preferences"
+msgstr "Preferences..."
+
+msgid "menu.help"
+msgstr "Help"
+
+msgid "menu.releasenotes"
+msgstr "Release Notes"
+
+msgid "menu.quit"
+msgstr "Quit Lagrange"
+
+msgid "menu.cut"
+msgstr "Cut"
+
+msgid "menu.copy"
+msgstr "Copy"
+
+msgid "menu.paste"
+msgstr "Paste"
+
+msgid "menu.copy.pagelink"
+msgstr "Copy Link to Page"
+
+msgid "menu.show.bookmarks"
+msgstr "Show Bookmarks"
+
+msgid "menu.show.feeds"
+msgstr "Show Feeds"
+
+msgid "menu.show.history"
+msgstr "Show History"
+
+msgid "menu.show.identities"
+msgstr "Show Identities"
+
+msgid "menu.show.outline"
+msgstr "Show Page Outline"
+
+msgid "menu.back"
+msgstr "Go Back"
+
+msgid "menu.forward"
+msgstr "Go Forward"
+
+msgid "menu.parent"
+msgstr "Go to Parent"
+
+msgid "menu.root"
+msgstr "Go to Root"
+
+msgid "menu.reload"
+msgstr "Reload Page"
+
+msgid "menu.aboutpages"
+msgstr "About Pages"
+
+msgid "menu.debug"
+msgstr "Debug Information"
+
+msgid "menu.bookmark.page"
+msgstr "Bookmark This Page..."
+
+msgid "menu.subscribe.page"
+msgstr "Subscribe to This Page..."
+
+msgid "menu.import.links"
+msgstr "Import All Links on Page..."
+
+msgid "menu.bookmarks.refresh"
+msgstr "Refresh Remote Bookmarks"
+
+msgid "menu.feeds.refresh"
+msgstr "Refresh Feeds"
+
+msgid "menu.identity.new"
+msgstr "New Identity..."
+
+msgid "menu.identity.import"
+msgstr "Import..."
+
+msgid "menu.identity.notactive"
+msgstr "No Active Identity"
+
+msgid "sidebar.bookmarks"
+msgstr "Bookmarks"
+
+msgid "sidebar.feeds"
+msgstr "Feeds"
+
+msgid "sidebar.history"
+msgstr "History"
+
+msgid "sidebar.identities"
+msgstr "Identities"
+
+msgid "sidebar.outline"
+msgstr "Page Outline"
+
+msgid "hint.findtext"
+msgstr "Find text on page"
+
+msgid "status.query"
+msgstr "Search Query"
+
+msgid "status.feeds"
+msgstr "Updating Feeds"
+
+msgid "mb"
+msgstr "MB"
+
+#  strftime() formatted, split on two lines
+#, c-format
+msgid "page.timestamp"
+msgstr "Received at %I:%M %p\non %b %d, %Y"
+

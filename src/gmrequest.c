@@ -395,6 +395,10 @@ static const iBlock *replaceVariables_(const iBlock *block) {
                 repl = range_CStr("Shift+");
 #endif
             }
+            else {
+                /* Translated string. */
+                repl = range_String(string_Lang(cstr_Rangecc(name)));
+            }
             remove_Block(replaced, span.start, size_Range(&span));
             insertData_Block(replaced, span.start, repl.start, size_Range(&repl));
             iZap(m);

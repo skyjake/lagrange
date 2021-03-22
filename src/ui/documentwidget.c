@@ -744,7 +744,7 @@ static void updateTimestampBuf_DocumentWidget_(iDocumentWidget *d) {
         d->timestampBuf = new_TextBuf(
             uiLabel_FontId,
             white_ColorId,
-            cstrCollect_String(format_Time(&d->sourceTime, "Received at %I:%M %p\non %b %d, %Y")));
+            cstrCollect_String(format_Time(&d->sourceTime, cstr_Lang("page.timestamp"))));
     }
 }
 
@@ -856,7 +856,7 @@ static void updateFetchProgress_DocumentWidget_(iDocumentWidget *d) {
     showCollapsed_Widget(as_Widget(prog), dlSize >= 250000);
     if (isVisible_Widget(prog)) {
         updateText_LabelWidget(prog,
-                               collectNewFormat_String("%s%.3f MB",
+                               collectNewFormat_String("%s%.3f ${mb}",
                                                        isFinished_GmRequest(d->request)
                                                            ? uiHeading_ColorEscape
                                                            : uiTextCaution_ColorEscape,

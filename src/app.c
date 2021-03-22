@@ -507,6 +507,7 @@ static void communicateWithRunningInstance_App_(iApp *d, iProcessId instance,
 
 static void init_App_(iApp *d, int argc, char **argv) {
     init_CommandLine(&d->args, argc, argv);
+    init_Lang();
     /* Where was the app started from? We ask SDL first because the command line alone is
        not a reliable source of this information, particularly when it comes to different
        operating systems. */ {
@@ -715,6 +716,7 @@ static void deinit_App(iApp *d) {
     deinit_Ipc();
     deinit_SortedArray(&d->tickers);
     deinit_Periodic(&d->periodic);
+    deinit_Lang();
     iRecycle();
 }
 

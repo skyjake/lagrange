@@ -22,6 +22,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
+#include "lang.h"
+
 enum iFileVersion {
     initial_FileVersion                 = 0,
     addedResponseTimestamps_FileVersion = 1,
@@ -86,7 +88,7 @@ enum iFileVersion {
 /* UI labels that depend on the platform */
 
 #if defined (iPlatformMobile)
-#   define saveToDownloads_Label    "Save to Files"
+#   define saveToDownloads_Label    "${menu.save.files}"
 #else
-#   define saveToDownloads_Label    "Save to Downloads"
+#   define saveToDownloads_Label    "${menu.save.downloads}"
 #endif

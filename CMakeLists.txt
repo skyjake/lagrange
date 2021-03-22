@@ -107,6 +107,8 @@ set (SOURCES
     src/history.h
     src/ipc.c
     src/ipc.h
+    src/lang.c
+    src/lang.h
     src/lookup.c
     src/lookup.h
     src/media.c

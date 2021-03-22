@@ -188,65 +188,65 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
 #if !defined (iPlatformAppleMobile)
 /* TODO: Submenus wouldn't hurt here. */
 static const iMenuItem navMenuItems_[] = {
-    { add_Icon " New Tab", 't', KMOD_PRIMARY, "tabs.new" },
-    { "Open Location...", SDLK_l, KMOD_PRIMARY, "navigate.focus" },
+    { add_Icon " ${menu.nav.newtab}", 't', KMOD_PRIMARY, "tabs.new" },
+    { "${menu.nav.openlocation}", SDLK_l, KMOD_PRIMARY, "navigate.focus" },
     { "---", 0, 0, NULL },
     { download_Icon " " saveToDownloads_Label, SDLK_s, KMOD_PRIMARY, "document.save" },
-    { "Copy Source Text", SDLK_c, KMOD_PRIMARY, "copy" },
+    { "${menu.copy.source}", SDLK_c, KMOD_PRIMARY, "copy" },
     { "---", 0, 0, NULL },
-    { leftHalf_Icon " Toggle Left Sidebar", SDLK_l, KMOD_PRIMARY | KMOD_SHIFT, "sidebar.toggle" },
-    { rightHalf_Icon " Toggle Right Sidebar", SDLK_p, KMOD_PRIMARY | KMOD_SHIFT, "sidebar2.toggle" },
-    { "Zoom In", SDLK_EQUALS, KMOD_PRIMARY, "zoom.delta arg:10" },
-    { "Zoom Out", SDLK_MINUS, KMOD_PRIMARY, "zoom.delta arg:-10" },
-    { "Reset Zoom", SDLK_0, KMOD_PRIMARY, "zoom.set arg:100" },
+    { leftHalf_Icon " ${menu.sidebar.left}", SDLK_l, KMOD_PRIMARY | KMOD_SHIFT, "sidebar.toggle" },
+    { rightHalf_Icon " ${menu.sidebar.right}", SDLK_p, KMOD_PRIMARY | KMOD_SHIFT, "sidebar2.toggle" },
+    { "${menu.zoom.in}", SDLK_EQUALS, KMOD_PRIMARY, "zoom.delta arg:10" },
+    { "${menu.zoom.out}", SDLK_MINUS, KMOD_PRIMARY, "zoom.delta arg:-10" },
+    { "${menu.zoom.reset}", SDLK_0, KMOD_PRIMARY, "zoom.set arg:100" },
     { "---", 0, 0, NULL },
-    { book_Icon " List All Bookmarks", 0, 0, "!open url:about:bookmarks" },
-    { "List Bookmarks by Tag", 0, 0, "!open url:about:bookmarks?tags" },
-    { "List Bookmarks by Creation Time", 0, 0, "!open url:about:bookmarks?created" },
+    { book_Icon " ${menu.bookmarks.list}", 0, 0, "!open url:about:bookmarks" },
+    { "${menu.bookmarks.bytag}", 0, 0, "!open url:about:bookmarks?tags" },
+    { "${menu.bookmarks.bytime}", 0, 0, "!open url:about:bookmarks?created" },
     { "---", 0, 0, NULL },
-    { "Show Feed Entries", 0, 0, "!open url:about:feeds" },
+    { "${menu.feeds.entrylist}", 0, 0, "!open url:about:feeds" },
     { "---", 0, 0, NULL },
-    { gear_Icon " Preferences...", SDLK_COMMA, KMOD_PRIMARY, "preferences" },
-    { "Help", SDLK_F1, 0, "!open url:about:help" },
-    { "Release Notes", 0, 0, "!open url:about:version" },
+    { gear_Icon " ${menu.preferences}", SDLK_COMMA, KMOD_PRIMARY, "preferences" },
+    { "${menu.help}", SDLK_F1, 0, "!open url:about:help" },
+    { "${menu.releasenotes}", 0, 0, "!open url:about:version" },
     { "---", 0, 0, NULL },
-    { "Quit Lagrange", 'q', KMOD_PRIMARY, "quit" }
+    { "${menu.quit}", 'q', KMOD_PRIMARY, "quit" }
 };
 #else
 /* Tablet menu. */
 static const iMenuItem tabletNavMenuItems_[] = {
-    { add_Icon " New Tab", 't', KMOD_PRIMARY, "tabs.new" },
-    { close_Icon " Close Tab", 'w', KMOD_PRIMARY, "tabs.close" },
+    { add_Icon " ${menu.opentab}", 't', KMOD_PRIMARY, "tabs.new" },
+    { close_Icon " ${menu.closetab}", 'w', KMOD_PRIMARY, "tabs.close" },
     { "---", 0, 0, NULL },
-    { magnifyingGlass_Icon " Find on page", 0, 0, "focus.set id:find.input" },
-    { leftHalf_Icon " Toggle Left Sidebar", SDLK_l, KMOD_PRIMARY | KMOD_SHIFT, "sidebar.toggle" },
-    { rightHalf_Icon " Toggle Right Sidebar", SDLK_p, KMOD_PRIMARY | KMOD_SHIFT, "sidebar2.toggle" },
-    { "Zoom In", SDLK_EQUALS, KMOD_PRIMARY, "zoom.delta arg:10" },
-    { "Zoom Out", SDLK_MINUS, KMOD_PRIMARY, "zoom.delta arg:-10" },
-    { "Reset Zoom", SDLK_0, KMOD_PRIMARY, "zoom.set arg:100" },
+    { magnifyingGlass_Icon " ${menu.find}", 0, 0, "focus.set id:find.input" },
+    { leftHalf_Icon " ${menu.sidebar.left}", SDLK_l, KMOD_PRIMARY | KMOD_SHIFT, "sidebar.toggle" },
+    { rightHalf_Icon " ${menu.sidebar.right}", SDLK_p, KMOD_PRIMARY | KMOD_SHIFT, "sidebar2.toggle" },
+    { "${menu.zoom.in}", SDLK_EQUALS, KMOD_PRIMARY, "zoom.delta arg:10" },
+    { "${menu.zoom.out}", SDLK_MINUS, KMOD_PRIMARY, "zoom.delta arg:-10" },
+    { "${menu.zoom.reset}", SDLK_0, KMOD_PRIMARY, "zoom.set arg:100" },
     { "---", 0, 0, NULL },
-    { book_Icon " List All Bookmarks", 0, 0, "!open url:about:bookmarks" },
-    { "List Bookmarks by Tag", 0, 0, "!open url:about:bookmarks?tags" },
-    { "List Feed Entries", 0, 0, "!open url:about:feeds" },
+    { book_Icon " ${menu.bookmarks.list}", 0, 0, "!open url:about:bookmarks" },
+    { "${menu.bookmarks.bytag}", 0, 0, "!open url:about:bookmarks?tags" },
+    { "${menu.bookmarks.bydate}", 0, 0, "!open url:about:feeds" },
     { "---", 0, 0, NULL },
-    { gear_Icon " Settings...", SDLK_COMMA, KMOD_PRIMARY, "preferences" },
-    { "Help", SDLK_F1, 0, "!open url:about:help" },
-    { "Release Notes", 0, 0, "!open url:about:version" },
+    { gear_Icon " ${menu.preferences}", SDLK_COMMA, KMOD_PRIMARY, "preferences" },
+    { "${menu.help}", SDLK_F1, 0, "!open url:about:help" },
+    { "${menu.releasenotes}", 0, 0, "!open url:about:version" },
 };
 
 /* Phone menu. */
 static const iMenuItem phoneNavMenuItems_[] = {
-    { add_Icon " New Tab", 't', KMOD_PRIMARY, "tabs.new" },
-    { close_Icon " Close Tab", 'w', KMOD_PRIMARY, "tabs.close" },
+    { add_Icon " ${menu.opentab}", 't', KMOD_PRIMARY, "tabs.new" },
+    { close_Icon " ${menu.closetab}", 'w', KMOD_PRIMARY, "tabs.close" },
     { "---", 0, 0, NULL },
-    { magnifyingGlass_Icon " Find on page", 0, 0, "focus.set id:find.input" },
-    { leftHalf_Icon " Toggle Sidebar", SDLK_l, KMOD_PRIMARY | KMOD_SHIFT, "sidebar.toggle" },
-    { "Zoom In", SDLK_EQUALS, KMOD_PRIMARY, "zoom.delta arg:10" },
-    { "Zoom Out", SDLK_MINUS, KMOD_PRIMARY, "zoom.delta arg:-10" },
-    { "Reset Zoom", SDLK_0, KMOD_PRIMARY, "zoom.set arg:100" },
+    { magnifyingGlass_Icon " ${menu.find}", 0, 0, "focus.set id:find.input" },
+    { leftHalf_Icon " ${menu.sidebar}", SDLK_l, KMOD_PRIMARY | KMOD_SHIFT, "sidebar.toggle" },
+    { "${menu.zoom.in}", SDLK_EQUALS, KMOD_PRIMARY, "zoom.delta arg:10" },
+    { "${menu.zoom.out}", SDLK_MINUS, KMOD_PRIMARY, "zoom.delta arg:-10" },
+    { "${menu.zoom.reset}", SDLK_0, KMOD_PRIMARY, "zoom.set arg:100" },
     { "---", 0, 0, NULL },
-    { book_Icon " List All Bookmarks", 0, 0, "!open url:about:bookmarks" },
-    { "List Feed Entries", 0, 0, "!open url:about:feeds" },
+    { book_Icon " ${menu.bookmarks.list}", 0, 0, "!open url:about:bookmarks" },
+    { "${menu.feeds.entrylist}", 0, 0, "!open url:about:feeds" },
     { "---", 0, 0, NULL },
     { gear_Icon " Settings...", SDLK_COMMA, KMOD_PRIMARY, "preferences" },
 };
@@ -256,69 +256,69 @@ static const iMenuItem phoneNavMenuItems_[] = {
 #if defined (iHaveNativeMenus)
 /* Using native menus. */
 static const iMenuItem fileMenuItems_[] = {
-    { "New Tab", SDLK_t, KMOD_PRIMARY, "tabs.new" },
-    { "Open Location...", SDLK_l, KMOD_PRIMARY, "navigate.focus" },
+    { "${menu.newtab}", SDLK_t, KMOD_PRIMARY, "tabs.new" },
+    { "${menu.openlocation}", SDLK_l, KMOD_PRIMARY, "navigate.focus" },
     { "---", 0, 0, NULL },
     { saveToDownloads_Label, SDLK_s, KMOD_PRIMARY, "document.save" },
 };
 
 static const iMenuItem editMenuItems_[] = {
-    { "Cut", SDLK_x, KMOD_PRIMARY, "input.copy cut:1" },
-    { "Copy", SDLK_c, KMOD_PRIMARY, "copy" },
-    { "Paste", SDLK_v, KMOD_PRIMARY, "input.paste" },
+    { "${menu.cut}", SDLK_x, KMOD_PRIMARY, "input.copy cut:1" },
+    { "${menu.copy}", SDLK_c, KMOD_PRIMARY, "copy" },
+    { "${menu.paste}", SDLK_v, KMOD_PRIMARY, "input.paste" },
     { "---", 0, 0, NULL },
-    { "Copy Link to Page", SDLK_c, KMOD_PRIMARY | KMOD_SHIFT, "document.copylink" },
+    { "${menu.copy.pagelink}", SDLK_c, KMOD_PRIMARY | KMOD_SHIFT, "document.copylink" },
     { "---", 0, 0, NULL },
-    { "Find", SDLK_f, KMOD_PRIMARY, "focus.set id:find.input" },
+    { "${macos.menu.find}", SDLK_f, KMOD_PRIMARY, "focus.set id:find.input" },
 };
 
 static const iMenuItem viewMenuItems_[] = {
-    { "Show Bookmarks", '1', KMOD_PRIMARY, "sidebar.mode arg:0 toggle:1" },
-    { "Show Feeds", '2', KMOD_PRIMARY, "sidebar.mode arg:1 toggle:1" },
-    { "Show History", '3', KMOD_PRIMARY, "sidebar.mode arg:2 toggle:1" },
-    { "Show Identities", '4', KMOD_PRIMARY, "sidebar.mode arg:3 toggle:1" },
-    { "Show Page Outline", '5', KMOD_PRIMARY, "sidebar.mode arg:4 toggle:1" },
-    { "Toggle Left Sidebar", SDLK_l, KMOD_PRIMARY | KMOD_SHIFT, "sidebar.toggle" },
-    { "Toggle Right Sidebar", SDLK_p, KMOD_PRIMARY | KMOD_SHIFT, "sidebar2.toggle" },
+    { "${menu.show.bookmarks}", '1', KMOD_PRIMARY, "sidebar.mode arg:0 toggle:1" },
+    { "${menu.show.feeds}", '2', KMOD_PRIMARY, "sidebar.mode arg:1 toggle:1" },
+    { "${menu.show.history}", '3', KMOD_PRIMARY, "sidebar.mode arg:2 toggle:1" },
+    { "${menu.show.identities}", '4', KMOD_PRIMARY, "sidebar.mode arg:3 toggle:1" },
+    { "${menu.show.outline}", '5', KMOD_PRIMARY, "sidebar.mode arg:4 toggle:1" },
+    { "${menu.sidebar.left}", SDLK_l, KMOD_PRIMARY | KMOD_SHIFT, "sidebar.toggle" },
+    { "${menu.sidebar.right}", SDLK_p, KMOD_PRIMARY | KMOD_SHIFT, "sidebar2.toggle" },
     { "---", 0, 0, NULL },
-    { "Go Back", SDLK_LEFTBRACKET, KMOD_PRIMARY, "navigate.back" },
-    { "Go Forward", SDLK_RIGHTBRACKET, KMOD_PRIMARY, "navigate.forward" },
-    { "Go to Parent", navigateParent_KeyShortcut, "navigate.parent" },
-    { "Go to Root", navigateRoot_KeyShortcut, "navigate.root" },
-    { "Reload Page", reload_KeyShortcut, "navigate.reload" },
+    { "${menu.back}", SDLK_LEFTBRACKET, KMOD_PRIMARY, "navigate.back" },
+    { "${menu.forward}", SDLK_RIGHTBRACKET, KMOD_PRIMARY, "navigate.forward" },
+    { "${menu.parent}", navigateParent_KeyShortcut, "navigate.parent" },
+    { "${menu.root}", navigateRoot_KeyShortcut, "navigate.root" },
+    { "${menu.reload}", reload_KeyShortcut, "navigate.reload" },
     { "---", 0, 0, NULL },
-    { "Zoom In", SDLK_EQUALS, KMOD_PRIMARY, "zoom.delta arg:10" },
-    { "Zoom Out", SDLK_MINUS, KMOD_PRIMARY, "zoom.delta arg:-10" },
-    { "Reset Zoom", SDLK_0, KMOD_PRIMARY, "zoom.set arg:100" },
+    { "${menu.zoom.in}", SDLK_EQUALS, KMOD_PRIMARY, "zoom.delta arg:10" },
+    { "${menu.zoom.out}", SDLK_MINUS, KMOD_PRIMARY, "zoom.delta arg:-10" },
+    { "${menu.zoom.reset}", SDLK_0, KMOD_PRIMARY, "zoom.set arg:100" },
 };
 
 static iMenuItem bookmarksMenuItems_[] = {
-    { "Bookmark This Page...", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
-    { "Subscribe to This Page...", subscribeToPage_KeyModifier, "feeds.subscribe" },
+    { "${menu.bookmark.page}", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
+    { "${menu.subscribe.page}", subscribeToPage_KeyModifier, "feeds.subscribe" },
     { "---", 0, 0, NULL },
-    { "Import All Links on Page...", 0, 0, "bookmark.links confirm:1" },
+    { "${menu.import.links}", 0, 0, "bookmark.links confirm:1" },
     { "---", 0, 0, NULL },
-    { "List All", 0, 0, "open url:about:bookmarks" },
-    { "List by Tag", 0, 0, "open url:about:bookmarks?tags" },
-    { "List by Creation Time", 0, 0, "open url:about:bookmarks?created" },
-    { "Show Feed Entries", 0, 0, "open url:about:feeds" },
+    { "${macos.menu.bookmarks.list}", 0, 0, "open url:about:bookmarks" },
+    { "${macos.menu.bookmarks.bytag}", 0, 0, "open url:about:bookmarks?tags" },
+    { "${macos.menu.bookmarks.bytime}", 0, 0, "open url:about:bookmarks?created" },
+    { "${menu.feeds.entrylist}", 0, 0, "open url:about:feeds" },
     { "---", 0, 0, NULL },
-    { "Refresh Remote Bookmarks", 0, 0, "bookmarks.reload.remote" },
-    { "Refresh Feeds", SDLK_r, KMOD_PRIMARY | KMOD_SHIFT, "feeds.refresh" },
+    { "${menu.bookmarks.refresh}", 0, 0, "bookmarks.reload.remote" },
+    { "${menu.feeds.refresh}", SDLK_r, KMOD_PRIMARY | KMOD_SHIFT, "feeds.refresh" },
 };
 
 static const iMenuItem identityMenuItems_[] = {
-    { "New Identity...", SDLK_n, KMOD_PRIMARY | KMOD_SHIFT, "ident.new" },
+    { "${menu.identity.new}", SDLK_n, KMOD_PRIMARY | KMOD_SHIFT, "ident.new" },
     { "---", 0, 0, NULL },
-    { "Import...", SDLK_i, KMOD_PRIMARY | KMOD_SHIFT, "ident.import" },
+    { "${menu.identity.import}", SDLK_i, KMOD_PRIMARY | KMOD_SHIFT, "ident.import" },
 };
 
 static const iMenuItem helpMenuItems_[] = {
-    { "Help", 0, 0, "!open url:about:help" },
-    { "Release Notes", 0, 0, "!open url:about:version" },
+    { "${menu.help}", 0, 0, "!open url:about:help" },
+    { "${menu.releasenotes}", 0, 0, "!open url:about:version" },
     { "---", 0, 0, NULL },
-    { "About Pages", 0, 0, "!open url:about:about" },
-    { "Debug Information", 0, 0, "!open url:about:debug" },
+    { "${menu.aboutpages}", 0, 0, "!open url:about:about" },
+    { "${menu.debug}", 0, 0, "!open url:about:debug" },
 };
 #endif
 
@@ -333,17 +333,17 @@ static const iMenuItem identityButtonMenuItems_[] = {
 };
 #else /* desktop */
 static const iMenuItem identityButtonMenuItems_[] = {
-    { "No Active Identity", 0, 0, "ident.showactive" },
+    { "${menu.identity.notactive}", 0, 0, "ident.showactive" },
     { "---", 0, 0, NULL },
 #   if !defined (iHaveNativeMenus)
-    { add_Icon " New Identity...", SDLK_n, KMOD_PRIMARY | KMOD_SHIFT, "ident.new" },
-    { "Import...", SDLK_i, KMOD_PRIMARY | KMOD_SHIFT, "ident.import" },
+    { add_Icon " ${menu.identity.new}", SDLK_n, KMOD_PRIMARY | KMOD_SHIFT, "ident.new" },
+    { "${menu.identity.import}", SDLK_i, KMOD_PRIMARY | KMOD_SHIFT, "ident.import" },
     { "---", 0, 0, NULL },
-    { person_Icon " Show Identities", '4', KMOD_PRIMARY, "sidebar.mode arg:3 show:1" },
+    { person_Icon " ${menu.show.identities}", '4', KMOD_PRIMARY, "sidebar.mode arg:3 show:1" },
 #   else
-    { add_Icon " New Identity...", 0, 0, "ident.new" },
+    { add_Icon " ${menu.identity.new}", 0, 0, "ident.new" },
     { "---", 0, 0, NULL },
-    { person_Icon " Show Identities", 0, 0, "sidebar.mode arg:3 show:1" },
+    { person_Icon " ${menu.show.identities}", 0, 0, "sidebar.mode arg:3 show:1" },
 #endif
 };
 #endif
@@ -443,7 +443,7 @@ static void updateNavBarIdentity_(iWidget *navBar) {
         idItem,
         ident ? format_CStr(uiTextAction_ColorEscape "%s",
                             cstrCollect_String(subject_TlsCertificate(ident->cert)))
-              : "No Active Identity");
+              : "${menu.identity.notactive}");
     setFlags_Widget(as_Widget(idItem), disabled_WidgetFlag, !ident);
 }
 
@@ -998,7 +998,7 @@ static void setupUserInterface_Window(iWindow *d) {
                                      moveToParentRightEdge_WidgetFlag);
             /* Feeds refresh indicator is inside the input field. */ {
                 iLabelWidget *queryInd =
-                    new_LabelWidget(uiTextAction_ColorEscape "\u21d2 Search Query", NULL);
+                    new_LabelWidget(uiTextAction_ColorEscape "\u21d2 ${status.query}", NULL);
                 setId_Widget(as_Widget(queryInd), "input.indicator.search");
                 setBackgroundColor_Widget(as_Widget(queryInd), uiBackground_ColorId);
                 setFrameColor_Widget(as_Widget(queryInd), uiTextAction_ColorId);
@@ -1009,7 +1009,7 @@ static void setupUserInterface_Window(iWindow *d) {
             }
             /* Feeds refresh indicator is inside the input field. */ {
                 iLabelWidget *fprog = new_LabelWidget(uiTextCaution_ColorEscape
-                                                      "\u2605 Updating Feeds", NULL);
+                                                      "\u2605 ${status.feeds}", NULL);
                 setId_Widget(as_Widget(fprog), "feeds.progress");
                 setBackgroundColor_Widget(as_Widget(fprog), uiBackground_ColorId);
                 setAlignVisually_LabelWidget(fprog, iTrue);
@@ -1018,7 +1018,7 @@ static void setupUserInterface_Window(iWindow *d) {
                                      collapse_WidgetFlag | hidden_WidgetFlag);
             }
             /* Download progress indicator is also inside the input field, but hidden normally. */ {
-                iLabelWidget *progress = new_LabelWidget(uiTextCaution_ColorEscape "00.000 MB", NULL);
+                iLabelWidget *progress = new_LabelWidget(uiTextCaution_ColorEscape "00.000 ${mb}", NULL);
                 setId_Widget(as_Widget(progress), "document.progress");
                 setBackgroundColor_Widget(as_Widget(progress), uiBackground_ColorId);
                 setAlignVisually_LabelWidget(progress, iTrue);
@@ -1122,7 +1122,7 @@ static void setupUserInterface_Window(iWindow *d) {
         addChildFlags_Widget(
             searchBar, iClob(new_LabelWidget(magnifyingGlass_Icon, NULL)), frameless_WidgetFlag);
         iInputWidget *input = new_InputWidget(0);
-        setHint_InputWidget(input, "Find text on page");
+        setHint_InputWidget(input, "${hint.findtext}");
         setSelectAllOnFocus_InputWidget(input, iTrue);
         setEatEscape_InputWidget(input, iFalse); /* unfocus and close with one keypress */
         setId_Widget(addChildFlags_Widget(searchBar, iClob(input), expand_WidgetFlag),
@@ -1159,10 +1159,10 @@ static void setupUserInterface_Window(iWindow *d) {
 //            setBackgroundColor_Widget(i.object, tmBannerSideTitle_ColorId);
         }
         const iMenuItem items[] = {
-            { pin_Icon " Bookmarks", 0, 0, "toolbar.showview arg:0" },
-            { star_Icon " Feeds", 0, 0, "toolbar.showview arg:1" },
-            { clock_Icon " History", 0, 0, "toolbar.showview arg:2" },
-            { page_Icon " Page Outline", 0, 0, "toolbar.showview arg:4" },
+            { pin_Icon " ${sidebar.bookmarks}", 0, 0, "toolbar.showview arg:0" },
+            { star_Icon " ${sidebar.feeds}", 0, 0, "toolbar.showview arg:1" },
+            { clock_Icon " ${sidebar.history}", 0, 0, "toolbar.showview arg:2" },
+            { page_Icon " ${sidebar.outline}", 0, 0, "toolbar.showview arg:4" },
         };
         iWidget *menu = makeMenu_Widget(findChild_Widget(toolBar, "toolbar.view"),
                                         items, iElemCount(items));
@@ -1174,27 +1174,27 @@ static void setupUserInterface_Window(iWindow *d) {
         iWidget *tabsMenu = makeMenu_Widget(
             d->root,
             (iMenuItem[]){
-                { close_Icon " Close Tab", 0, 0, "tabs.close" },
-                { copy_Icon " Duplicate Tab", 0, 0, "tabs.new duplicate:1" },
+                { close_Icon " ${menu.closetab}", 0, 0, "tabs.close" },
+                { copy_Icon " ${menu.duptab}", 0, 0, "tabs.new duplicate:1" },
                 { "---", 0, 0, NULL },
-                { "Close Other Tabs", 0, 0, "tabs.close toleft:1 toright:1" },
-                { barLeftArrow_Icon " Close Tabs To Left", 0, 0, "tabs.close toleft:1" },
-                { barRightArrow_Icon " Close Tabs To Right", 0, 0, "tabs.close toright:1" },
+                { "${menu.closetab.other}", 0, 0, "tabs.close toleft:1 toright:1" },
+                { barLeftArrow_Icon " ${menu.closetab.left}", 0, 0, "tabs.close toleft:1" },
+                { barRightArrow_Icon " ${menu.closetab.right}", 0, 0, "tabs.close toright:1" },
             },
             6);
         iWidget *barMenu =
             makeMenu_Widget(d->root,
                             (iMenuItem[]){
-                                { leftHalf_Icon " Toggle Left Sidebar", 0, 0, "sidebar.toggle" },
-                                { rightHalf_Icon " Toggle Right Sidebar", 0, 0, "sidebar2.toggle" },
+                                { leftHalf_Icon " ${menu.sidebar.left}", 0, 0, "sidebar.toggle" },
+                                { rightHalf_Icon " ${menu.sidebar.right}", 0, 0, "sidebar2.toggle" },
                             },
                             deviceType_App() == phone_AppDeviceType ? 1 : 2);
         iWidget *clipMenu = makeMenu_Widget(d->root,
                                             (iMenuItem[]){
-                                                { scissor_Icon " Cut", 0, 0, "input.copy cut:1" },
-                                                { clipCopy_Icon " Copy", 0, 0, "input.copy" },
+                                                { scissor_Icon " ${menu.cut}", 0, 0, "input.copy cut:1" },
+                                                { clipCopy_Icon " ${menu.copy}", 0, 0, "input.copy" },
                                                 { "---", 0, 0, NULL },
-                                                { clipboard_Icon " Paste", 0, 0, "input.paste" },
+                                                { clipboard_Icon " ${menu.paste}", 0, 0, "input.paste" },
                                             },
                                             4);
         setId_Widget(tabsMenu, "doctabs.menu");
