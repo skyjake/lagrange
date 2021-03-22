@@ -21,6 +21,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "metrics.h"
+#include "app.h"
 
 #include <the_Foundation/math.h>
 
@@ -32,6 +33,12 @@ iInt2 gap2_UI     = { defaultGap_Metrics, defaultGap_Metrics };
 int   fontSize_UI = defaultFontSize_Metrics;
 
 void setPixelRatio_Metrics(float pixelRatio) {
+#if defined (iPlatformAppleMobile)
+    /* iPad needs a bit larger UI elements as the viewing distance is generally longer.*/
+    if (deviceType_App() == tablet_AppDeviceType) {
+        pixelRatio *= 1.1f;
+    }
+#endif
     gap_UI      = iRound(defaultGap_Metrics * pixelRatio);
     gap2_UI     = init1_I2(gap_UI);
     fontSize_UI = iRound(defaultFontSize_Metrics * pixelRatio);
