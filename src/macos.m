@@ -22,6 +22,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "macos.h"
 #include "app.h"
+#include "lang.h"
 #include "ui/color.h"
 #include "ui/command.h"
 #include "ui/keys.h"
@@ -462,6 +463,7 @@ void insertMenuItems_MacOS(const char *menuLabel, int atIndex, const iMenuItem *
     NSApplication *app = [NSApplication sharedApplication];
     MyDelegate *myDel = (MyDelegate *) app.delegate;
     NSMenu *appMenu = [app mainMenu];
+    menuLabel = translateCStr_Lang(menuLabel);
     NSMenuItem *mainItem = [appMenu insertItemWithTitle:[NSString stringWithUTF8String:menuLabel]
                                                  action:nil
                                           keyEquivalent:@""
@@ -469,7 +471,7 @@ void insertMenuItems_MacOS(const char *menuLabel, int atIndex, const iMenuItem *
     NSMenu *menu = [[NSMenu alloc] initWithTitle:[NSString stringWithUTF8String:menuLabel]];
     [menu setAutoenablesItems:NO];
     for (size_t i = 0; i < count; ++i) {
-        const char *label = items[i].label;
+        const char *label = translateCStr_Lang(items[i].label);
         if (label[0] == '\r') {
             /* Skip the formatting escape. */
             label += 2;

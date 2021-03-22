@@ -10,6 +10,24 @@ msgstr "Version"
 msgid "about.powered"
 msgstr "Powered by SDL 2, OpenSSL, and ☕️"
 
+msgid "menu.title.file"
+msgstr "File"
+
+msgid "menu.title.edit"
+msgstr "Edit"
+
+msgid "menu.title.view"
+msgstr "View"
+
+msgid "menu.title.bookmarks"
+msgstr "Bookmarks"
+
+msgid "menu.title.identity"
+msgstr "Identity"
+
+msgid "menu.title.help"
+msgstr "Help"
+
 msgid "menu.newtab"
 msgstr "New Tab"
 
@@ -29,7 +47,7 @@ msgid "menu.duptab"
 msgstr "Duplicate Tab"
 
 msgid "menu.openlocation"
-msgstr "Open Location..."
+msgstr "Open Location…"
 
 msgid "menu.find"
 msgstr "Find on Page"
@@ -86,7 +104,7 @@ msgid "menu.feeds.entrylist"
 msgstr "Show Feed Entries"
 
 msgid "menu.preferences"
-msgstr "Preferences..."
+msgstr "Preferences…"
 
 msgid "menu.help"
 msgstr "Help"
@@ -146,13 +164,13 @@ msgid "menu.debug"
 msgstr "Debug Information"
 
 msgid "menu.bookmark.page"
-msgstr "Bookmark This Page..."
+msgstr "Bookmark This Page…"
 
 msgid "menu.subscribe.page"
-msgstr "Subscribe to This Page..."
+msgstr "Subscribe to This Page…"
 
 msgid "menu.import.links"
-msgstr "Import All Links on Page..."
+msgstr "Import All Links on Page…"
 
 msgid "menu.bookmarks.refresh"
 msgstr "Refresh Remote Bookmarks"
@@ -161,10 +179,10 @@ msgid "menu.feeds.refresh"
 msgstr "Refresh Feeds"
 
 msgid "menu.identity.new"
-msgstr "New Identity..."
+msgstr "New Identity…"
 
 msgid "menu.identity.import"
-msgstr "Import..."
+msgstr "Import…"
 
 msgid "menu.identity.notactive"
 msgstr "No Active Identity"
@@ -193,10 +211,11 @@ msgstr "Search Query"
 msgid "status.feeds"
 msgstr "Updating Feeds"
 
+# megabytes, used as the unit after a number
 msgid "mb"
 msgstr "MB"
 
-#  strftime() formatted, split on two lines
+# strftime() formatted, split on two lines
 #, c-format
 msgid "page.timestamp"
 msgstr "Received at %I:%M %p\non %b %d, %Y"

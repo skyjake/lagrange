@@ -1055,12 +1055,12 @@ static void setupUserInterface_Window(iWindow *d) {
         setAlignVisually_LabelWidget(navMenu, iTrue);
         setId_Widget(addChildFlags_Widget(navBar, iClob(navMenu), collapse_WidgetFlag), "navbar.menu");
 #else
-        insertMenuItems_MacOS("File", 1, fileMenuItems_, iElemCount(fileMenuItems_));
-        insertMenuItems_MacOS("Edit", 2, editMenuItems_, iElemCount(editMenuItems_));
-        insertMenuItems_MacOS("View", 3, viewMenuItems_, iElemCount(viewMenuItems_));
-        insertMenuItems_MacOS("Bookmarks", 4, bookmarksMenuItems_, iElemCount(bookmarksMenuItems_));
-        insertMenuItems_MacOS("Identity", 5, identityMenuItems_, iElemCount(identityMenuItems_));
-        insertMenuItems_MacOS("Help", 7, helpMenuItems_, iElemCount(helpMenuItems_));
+        insertMenuItems_MacOS("${menu.title.file}", 1, fileMenuItems_, iElemCount(fileMenuItems_));
+        insertMenuItems_MacOS("${menu.title.edit}", 2, editMenuItems_, iElemCount(editMenuItems_));
+        insertMenuItems_MacOS("${menu.title.view}", 3, viewMenuItems_, iElemCount(viewMenuItems_));
+        insertMenuItems_MacOS("${menu.title.bookmarks}", 4, bookmarksMenuItems_, iElemCount(bookmarksMenuItems_));
+        insertMenuItems_MacOS("${menu.title.identity}", 5, identityMenuItems_, iElemCount(identityMenuItems_));
+        insertMenuItems_MacOS("${menu.title.help}", 7, helpMenuItems_, iElemCount(helpMenuItems_));
 #endif
     }
     /* Tab bar. */ {

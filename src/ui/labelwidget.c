@@ -359,29 +359,7 @@ void updateSize_LabelWidget(iLabelWidget *d) {
 }
 
 static void replaceVariables_LabelWidget_(iLabelWidget *d) {
-    for (const char *label = cstr_String(&d->label); *label; ) {
-        iRangecc id;
-        id.start = strstr(label, "${");
-        if (!id.start) {
-            break;
-        }
-        id.start += 2;
-        id.end = strchr(id.start, '}');
-        iAssert(id.end != NULL);
-        /* TODO: Add a lookup that doesn't allocate anything; Lang can handle it. */
-        const size_t len = size_Range(&id);
-        char *key = malloc(len + 1);
-        memcpy(key, id.start, len);
-        key[len] = 0;
-        const char *text = cstr_Lang(key);
-        const size_t textLen = strlen(text);
-        free(key);
-        /* Replace it. */
-        size_t startPos = id.start - cstr_String(&d->label) - 2;
-        remove_Block(&d->label.chars, startPos, len + 3);
-        insertData_Block(&d->label.chars, startPos, text, textLen);
-        label = cstr_String(&d->label) + startPos + textLen;
-    }
+    translate_Lang(&d->label);
 }
 
 void init_LabelWidget(iLabelWidget *d, const char *label, const char *cmd) {
