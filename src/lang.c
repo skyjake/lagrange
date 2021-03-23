@@ -72,7 +72,7 @@ iRangecc range_Lang(iRangecc msgId) {
         return ((const iMsgStr *) at_SortedArray(d->messages, pos))->str;
     }
     fprintf(stderr, "[Lang] missing: %s\n", cstr_Rangecc(msgId)); fflush(stderr);
-    iAssert(iFalse);
+//    iAssert(iFalse);
     return msgId;
 }
 

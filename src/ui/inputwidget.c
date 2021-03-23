@@ -83,6 +83,7 @@ struct Impl_InputWidget {
     iArray          text;    /* iChar[] */
     iArray          oldText; /* iChar[] */
     iString         hint;
+    iString         srcHint;
     int             leftPadding;
     int             rightPadding;
     size_t          cursor;
@@ -136,6 +137,7 @@ void init_InputWidget(iInputWidget *d, size_t maxLen) {
     init_Array(&d->text, sizeof(iChar));
     init_Array(&d->oldText, sizeof(iChar));
     init_String(&d->hint);
+    init_String(&d->srcHint);
     init_Array(&d->undoStack, sizeof(iInputUndo));
     d->font         = uiInput_FontId | alwaysVariableFlag_FontId;
     d->leftPadding  = 0;
@@ -164,6 +166,7 @@ void deinit_InputWidget(iInputWidget *d) {
     if (d->timer) {
         SDL_RemoveTimer(d->timer);
     }
+    deinit_String(&d->srcHint);
     deinit_String(&d->hint);
     deinit_Array(&d->oldText);
     deinit_Array(&d->text);
@@ -251,8 +254,10 @@ void setMaxLen_InputWidget(iInputWidget *d, size_t maxLen) {
 }
 
 void setHint_InputWidget(iInputWidget *d, const char *hintText) {
-    setCStr_String(&d->hint, hintText);
-    translate_Lang(&d->hint); /* TODO: Keep original for retranslations. */
+    /* Keep original for retranslations. */
+    setCStr_String(&d->srcHint, hintText);
+    set_String(&d->hint, &d->srcHint);
+    translate_Lang(&d->hint);
 }
 
 void setContentPadding_InputWidget(iInputWidget *d, int left, int right) {
@@ -663,6 +668,11 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
     if (isCommand_Widget(w, ev, "focus.gained")) {
         begin_InputWidget(d);
+        return iFalse;
+    }
+    else if (isCommand_UserEvent(ev, "lang.changed")) {
+        set_String(&d->hint, &d->srcHint);
+        translate_Lang(&d->hint);
         return iFalse;
     }
     else if (isCommand_Widget(w, ev, "focus.lost")) {

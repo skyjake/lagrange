@@ -208,6 +208,7 @@ static iString *serializePrefs_App_(const iApp *d) {
         }
         appendFormat_String(str, "sidebar2.mode arg:%d\n", mode_SidebarWidget(sidebar2));
     }
+    appendFormat_String(str, "uilang id:%s\n", cstr_String(&d->prefs.uiLanguage));
     appendFormat_String(str, "uiscale arg:%f\n", uiScale_Window(d->window));
     appendFormat_String(str, "prefs.dialogtab arg:%d\n", d->prefs.dialogTab);
     appendFormat_String(str, "font.set arg:%d\n", d->prefs.font);
@@ -307,6 +308,11 @@ static void loadPrefs_App_(iApp *d) {
             /* Window init commands must be handled before the window is created. */
             if (equal_Command(cmd, "uiscale")) {
                 setUiScale_Window(get_Window(), argf_Command(cmd));
+            }
+            else if (equal_Command(cmd, "uilang")) {
+                const char *id = cstr_Rangecc(range_Command(cmd, "id"));
+                setCStr_String(&d->prefs.uiLanguage, id);
+                setCurrent_Lang(id);
             }
             else if (equal_Command(cmd, "ca.file") || equal_Command(cmd, "ca.path")) {
                 /* Background requests may be started before these commands would get
@@ -1286,13 +1292,14 @@ static void updatePrefsThemeButtons_(iWidget *d) {
 }
 
 static void updateDropdownSelection_(iLabelWidget *dropButton, const char *selectedCommand) {
-    iForEach(ObjectList, i, children_Widget(findChild_Widget(as_Widget(dropButton), "menu"))) {
+    iWidget *menu = findChild_Widget(as_Widget(dropButton), "menu");
+    iForEach(ObjectList, i, children_Widget(menu)) {
         if (isInstance_Object(i.object, &Class_LabelWidget)) {
             iLabelWidget *item = i.object;
             const iBool isSelected = endsWith_String(command_LabelWidget(item), selectedCommand);
             setFlags_Widget(as_Widget(item), selected_WidgetFlag, isSelected);
             if (isSelected) {
-                updateText_LabelWidget(dropButton, text_LabelWidget(item));
+                updateText_LabelWidget(dropButton, sourceText_LabelWidget(item));
             }
         }
     }
@@ -1300,8 +1307,6 @@ static void updateDropdownSelection_(iLabelWidget *dropButton, const char *selec
 
 static void updateColorThemeButton_(iLabelWidget *button, int theme) {
     if (!button) return;
-//    const char *mode = strstr(cstr_String(id_Widget(as_Widget(button))), ".dark")
-//                           ? "dark" : "light";
     updateDropdownSelection_(button, format_CStr(".set arg:%d", theme));
 }
 
@@ -1354,6 +1359,11 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
         destroy_Widget(d);
         postCommand_App("prefs.changed");
         return iTrue;
+    }
+    else if (equal_Command(cmd, "uilang")) {
+        updateDropdownSelection_(findChild_Widget(d, "prefs.uilang"),
+                                 cstr_String(string_Command(cmd, "id")));
+        return iFalse;
     }
     else if (equal_Command(cmd, "quoteicon.set")) {
         const int arg = arg_Command(cmd);
@@ -1530,6 +1540,15 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "prefs.dialogtab")) {
         d->prefs.dialogTab = arg_Command(cmd);
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "uilang")) {
+        const iString *lang = string_Command(cmd, "id");
+        if (!equal_String(lang, &d->prefs.uiLanguage)) {
+            set_String(&d->prefs.uiLanguage, lang);
+            setCurrent_Lang(cstr_String(&d->prefs.uiLanguage));
+            postCommand_App("lang.changed");
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "translation.languages")) {
@@ -1891,6 +1910,7 @@ iBool handleCommand_App(const char *cmd) {
         setToggle_Widget(findChild_Widget(dlg, "prefs.hidetoolbarscroll"), d->prefs.hideToolbarOnScroll);
         setToggle_Widget(findChild_Widget(dlg, "prefs.ostheme"), d->prefs.useSystemTheme);
         setToggle_Widget(findChild_Widget(dlg, "prefs.customframe"), d->prefs.customFrame);
+        updateDropdownSelection_(findChild_Widget(dlg, "prefs.uilang"), cstr_String(&d->prefs.uiLanguage));
         setToggle_Widget(findChild_Widget(dlg, "prefs.retainwindow"), d->prefs.retainWindowSize);
         setText_InputWidget(findChild_Widget(dlg, "prefs.uiscale"),
                             collectNewFormat_String("%g", uiScale_Window(d->window)));

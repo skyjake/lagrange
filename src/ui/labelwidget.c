@@ -85,6 +85,10 @@ static iBool processEvent_LabelWidget_(iLabelWidget *d, const SDL_Event *ev) {
     if (isMetricsChange_UserEvent(ev)) {
         updateSize_LabelWidget(d);
     }
+    else if (isCommand_UserEvent(ev, "lang.changed")) {
+        setText_LabelWidget(d, &d->srcLabel);
+        return iFalse;
+    }
     else if (isCommand_UserEvent(ev, "bindings.changed")) {
         /* Update the key used to trigger this label. */
         updateKey_LabelWidget_(d);
@@ -472,6 +476,11 @@ iChar icon_LabelWidget(const iLabelWidget *d) {
 const iString *text_LabelWidget(const iLabelWidget *d) {
     if (!d) return collectNew_String();
     return &d->label;
+}
+
+const iString *sourceText_LabelWidget(const iLabelWidget *d) {
+    if (!d) return collectNew_String();
+    return &d->srcLabel;
 }
 
 const iString *command_LabelWidget(const iLabelWidget *d) {

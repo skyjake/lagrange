@@ -54,6 +54,7 @@ void init_Prefs(iPrefs *d) {
     d->docThemeDark      = colorfulDark_GmDocumentTheme;
     d->docThemeLight     = white_GmDocumentTheme;
     d->saturation        = 1.0f;
+    initCStr_String(&d->uiLanguage, "en");
     init_String(&d->caFile);
     init_String(&d->caPath);
     init_String(&d->geminiProxy);
@@ -81,4 +82,5 @@ void deinit_Prefs(iPrefs *d) {
     deinit_String(&d->downloadDir);
     deinit_String(&d->caPath);
     deinit_String(&d->caFile);
+    deinit_String(&d->uiLanguage);
 }

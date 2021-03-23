@@ -1820,6 +1820,10 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
             if (isMetricsChange_UserEvent(&event)) {
                 updateMetrics_Window_(d);
             }
+            if (isCommand_UserEvent(&event, "lang.changed")) {
+                invalidate_Window_(d);
+                arrange_Widget(d->root);
+            }
             if (oldHover != hover_Widget()) {
                 postRefresh_App();
             }

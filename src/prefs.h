@@ -38,6 +38,7 @@ struct Impl_Prefs {
     int              langFrom;
     int              langTo;
     /* Window */
+    iString          uiLanguage;
     iBool            useSystemTheme;
     enum iColorTheme theme;
     enum iColorAccent accent;

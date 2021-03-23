@@ -1679,14 +1679,13 @@ iWidget *makeQuestion_Widget(const char *title, const char *msg,
 
 void setToggle_Widget(iWidget *d, iBool active) {
     if (d) {
-        const char *YES = cstr_Lang("toggle.yes");
-        const char *NO  = cstr_Lang("toggle.no");
         setFlags_Widget(d, selected_WidgetFlag, active);
         iLabelWidget *label = (iLabelWidget *) d;
-        if (!cmp_String(text_LabelWidget(label), YES) ||
-            !cmp_String(text_LabelWidget(label), NO)) {
-            updateText_LabelWidget((iLabelWidget *) d,
-                                   collectNewCStr_String(isSelected_Widget(d) ? YES : NO));
+        if (!cmp_String(text_LabelWidget(label), cstr_Lang("toggle.yes")) ||
+            !cmp_String(text_LabelWidget(label), cstr_Lang("toggle.no"))) {
+            updateText_LabelWidget(
+                (iLabelWidget *) d,
+                collectNewCStr_String(isSelected_Widget(d) ? "${toggle.yes}" : "${toggle.no}"));
         }
         else {
             refresh_Widget(d);
@@ -1707,9 +1706,10 @@ static iBool toggleHandler_(iWidget *d, const char *cmd) {
 }
 
 iWidget *makeToggle_Widget(const char *id) {
-    iWidget *toggle = as_Widget(new_LabelWidget("YES", "toggle")); /* "YES" for sizing */
+    iWidget *toggle = as_Widget(new_LabelWidget("${toggle.yes}", "toggle")); /* "YES" for sizing */
     setId_Widget(toggle, id);
-    updateTextCStr_LabelWidget((iLabelWidget *) toggle, "NO"); /* actual initial value */
+    updateTextCStr_LabelWidget((iLabelWidget *) toggle, "${toggle.no}"); /* actual initial value */
+    setFlags_Widget(toggle, fixedWidth_WidgetFlag, iTrue);
     setCommandHandler_Widget(toggle, toggleHandler_);
     return toggle;
 }
@@ -1787,6 +1787,11 @@ static void addFontButtons_(iWidget *parent, const char *id) {
     delete_Array(items);
 }
 
+static int cmp_MenuItem_(const void *e1, const void *e2) {
+    const iMenuItem *a = e1, *b = e2;
+    return iCmpStr(a->label, b->label);
+}
+
 iWidget *makePreferences_Widget(void) {
     iWidget *dlg = makeSheet_Widget("prefs");
     addChildFlags_Widget(dlg,
@@ -1820,6 +1825,36 @@ iWidget *makePreferences_Widget(void) {
     }
     /* Window. */ {
         appendTwoColumnPage_(tabs, "${heading.prefs.interface}", '2', &headings, &values);
+        /* UI languages. */ {
+            iArray *uiLangs = collectNew_Array(sizeof(iMenuItem));
+            const iMenuItem langItems[] = {
+                { "${lang.en}", 0, 0, "uilang id:en" },
+                { "${lang.fi}", 0, 0, "uilang id:fi" },
+            };
+            pushBackN_Array(uiLangs, langItems, iElemCount(langItems));
+            sort_Array(uiLangs, cmp_MenuItem_);
+            /* TODO: Add an arrange flag for resizing parent to widest child. */
+            int widest = 0;
+            size_t widestPos = iInvalidPos;
+            iConstForEach(Array, i, uiLangs) {
+                const int width =
+                    advance_Text(uiLabel_FontId,
+                                 translateCStr_Lang(((const iMenuItem *) i.value)->label))
+                        .x;
+                if (widestPos == iInvalidPos || width > widest) {
+                    widest = width;
+                    widestPos = index_ArrayConstIterator(&i);
+                }
+            }
+            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.uilang}")));
+            setId_Widget(addChildFlags_Widget(values,
+                                              iClob(makeMenuButton_LabelWidget(
+                                                  value_Array(uiLangs, widestPos, iMenuItem).label,
+                                                  data_Array(uiLangs),
+                                                  size_Array(uiLangs))),
+                                              0),
+                         "prefs.uilang");
+        }
 #if defined (iPlatformApple) || defined (iPlatformMSys)
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.ostheme}")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.ostheme")));
@@ -1898,11 +1933,15 @@ iWidget *makePreferences_Widget(void) {
             addFontButtons_(values, "font");
             addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.mono}")));
             iWidget *mono = new_Widget();
-            /* TODO: Needs labels! */
+            iWidget *tog;
             setTextCStr_LabelWidget(
-                addChild_Widget(mono, iClob(makeToggle_Widget("prefs.mono.gemini"))), "${prefs.mono.gemini}");
+                addChild_Widget(mono, tog = iClob(makeToggle_Widget("prefs.mono.gemini"))), "${prefs.mono.gemini}");
+            setFlags_Widget(tog, fixedWidth_WidgetFlag, iFalse);
+            updateSize_LabelWidget((iLabelWidget *) tog);
             setTextCStr_LabelWidget(
-                addChild_Widget(mono, iClob(makeToggle_Widget("prefs.mono.gopher"))), "${prefs.mono.gopher}");
+                addChild_Widget(mono, tog = iClob(makeToggle_Widget("prefs.mono.gopher"))), "${prefs.mono.gopher}");
+            setFlags_Widget(tog, fixedWidth_WidgetFlag, iFalse);
+            updateSize_LabelWidget((iLabelWidget *) tog);
             addChildFlags_Widget(values, iClob(mono), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
         }
         makeTwoColumnHeading_("${heading.prefs.paragraph}", headings, values);

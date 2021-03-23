@@ -45,6 +45,7 @@ void    updateTextCStr_LabelWidget  (iLabelWidget *, const char *text); /* not r
 iInt2           defaultSize_LabelWidget (const iLabelWidget *);
 int             font_LabelWidget        (const iLabelWidget *);
 const iString * text_LabelWidget        (const iLabelWidget *);
+const iString * sourceText_LabelWidget  (const iLabelWidget *); /* untranslated */
 const iString * command_LabelWidget     (const iLabelWidget *);
 iChar           icon_LabelWidget        (const iLabelWidget *);
 
