@@ -1,1340 +1,1024 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
+"POT-Creation-Date: 2021-03-23 19:02+0000\n"
+"PO-Revision-Date: 2021-03-23 19:02+0000\n"
+"Last-Translator: Nikolay <sikmir@gmail.com>\n"
+"Language-Team: Russian <http://weblate.skyjake.fi/projects/lagrange/ui/ru/>\n"
+"Language: ru\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
+"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
+"X-Generator: Weblate 4.5.1\n"
 
 msgid "about.logo"
 msgstr ""
 
-
 msgid "about.tagline"
 msgstr ""
 
-
 msgid "about.version"
-msgstr ""
-
+msgstr "Версия"
 
 msgid "about.powered"
-msgstr ""
-
+msgstr "На базе SDL 2, OpenSSL, и ☕️"
 
 msgid "cancel"
-msgstr ""
-
+msgstr "Отмена"
 
 msgid "dismiss"
-msgstr ""
-
+msgstr "Отклонить"
 
 msgid "dlg.message.ok"
-msgstr ""
-
+msgstr "Продолжить"
 
 msgid "dlg.default"
-msgstr ""
-
+msgstr " OK "
 
 msgid "toggle.yes"
-msgstr ""
-
+msgstr "Да"
 
 msgid "toggle.no"
-msgstr ""
-
+msgstr "Нет"
 
 msgid "menu.title.file"
-msgstr ""
-
+msgstr "Файл"
 
 msgid "menu.title.edit"
-msgstr ""
-
+msgstr "Редактировать"
 
 msgid "menu.title.view"
-msgstr ""
-
+msgstr "Вид"
 
 msgid "menu.title.bookmarks"
-msgstr ""
-
+msgstr "Закладки"
 
 msgid "menu.title.identity"
-msgstr ""
-
+msgstr "Идентичность"
 
 msgid "menu.title.help"
-msgstr ""
-
+msgstr "Справка"
 
 msgid "menu.newtab"
-msgstr ""
-
+msgstr "Новая вкладка"
 
 msgid "menu.closetab"
-msgstr ""
-
+msgstr "Закрыть вкладку"
 
 msgid "menu.closetab.other"
-msgstr ""
-
+msgstr "Закрыть другие вкладки"
 
 msgid "menu.closetab.left"
-msgstr ""
-
+msgstr "Закрыть вкладки слева"
 
 msgid "menu.closetab.right"
-msgstr ""
-
+msgstr "Закрыть вкладки справа"
 
 msgid "menu.duptab"
-msgstr ""
-
+msgstr "Дублировать вкладку"
 
 msgid "menu.openlocation"
 msgstr ""
 
-
 msgid "menu.find"
-msgstr ""
-
+msgstr "Найти на странице"
 
 msgid "macos.menu.find"
-msgstr ""
-
+msgstr "Найти"
 
 msgid "menu.save.files"
 msgstr ""
 
-
 msgid "menu.save.downloads"
-msgstr ""
-
+msgstr "Сохранить в папку загрузки"
 
 msgid "menu.copy.source"
-msgstr ""
-
+msgstr "Скопировать исходный текст"
 
 msgid "menu.sidebar"
-msgstr ""
-
+msgstr "Показать/скрыть боковую панель"
 
 msgid "menu.sidebar.left"
-msgstr ""
-
+msgstr "Показать/скрыть левую боковую панель"
 
 msgid "menu.sidebar.right"
-msgstr ""
-
+msgstr "Показать/скрыть правую боковую панель"
 
 msgid "menu.zoom.in"
-msgstr ""
-
+msgstr "Увеличить"
 
 msgid "menu.zoom.out"
-msgstr ""
-
+msgstr "Уменьшить"
 
 msgid "menu.zoom.reset"
-msgstr ""
-
+msgstr "Размер по умолчанию"
 
 msgid "menu.bookmarks.list"
 msgstr ""
 
-
 msgid "macos.menu.bookmarks.list"
 msgstr ""
-
 
 msgid "menu.bookmarks.bytag"
 msgstr ""
 
-
 msgid "macos.menu.bookmarks.bytag"
 msgstr ""
-
 
 msgid "menu.bookmarks.bytime"
 msgstr ""
 
-
 msgid "macos.menu.bookmarks.bytime"
 msgstr ""
-
 
 msgid "menu.feeds.entrylist"
 msgstr ""
 
-
 msgid "menu.preferences"
-msgstr ""
-
+msgstr "Настройки…"
 
 msgid "menu.help"
-msgstr ""
-
+msgstr "Справка"
 
 msgid "menu.releasenotes"
 msgstr ""
 
-
 msgid "menu.quit"
-msgstr ""
-
+msgstr "Выйти из Lagrange"
 
 msgid "menu.cut"
-msgstr ""
-
+msgstr "Вырезать"
 
 msgid "menu.copy"
-msgstr ""
-
+msgstr "Копировать"
 
 msgid "menu.paste"
-msgstr ""
-
+msgstr "Вставить"
 
 msgid "menu.copy.pagelink"
-msgstr ""
-
+msgstr "Копировать ссылку на страницу"
 
 msgid "menu.show.bookmarks"
-msgstr ""
-
+msgstr "Показать закладки"
 
 msgid "menu.show.feeds"
 msgstr ""
 
-
 msgid "menu.show.history"
-msgstr ""
-
+msgstr "Показать историю"
 
 msgid "menu.show.identities"
 msgstr ""
 
-
 msgid "menu.show.outline"
-msgstr ""
-
+msgstr "Показать структуру страницы"
 
 msgid "menu.back"
-msgstr ""
-
+msgstr "Назад"
 
 msgid "menu.forward"
-msgstr ""
-
+msgstr "Вперед"
 
 msgid "menu.parent"
-msgstr ""
-
+msgstr "Перейти в родительский каталог"
 
 msgid "menu.root"
-msgstr ""
-
+msgstr "Перейти к корню"
 
 msgid "menu.reload"
-msgstr ""
-
+msgstr "Перезагрузить страницу"
 
 msgid "menu.autoreload"
 msgstr ""
 
-
 msgid "menu.page.bookmark"
 msgstr ""
 
-
 msgid "menu.page.subscribe"
-msgstr ""
-
+msgstr "Подписаться на страницу…"
 
 msgid "menu.aboutpages"
 msgstr ""
 
-
 msgid "menu.about"
-msgstr ""
-
+msgstr "О программе"
 
 msgid "panel.back"
-msgstr ""
-
+msgstr "Назад"
 
 msgid "menu.debug"
-msgstr ""
-
+msgstr "Отладочная информация"
 
 msgid "menu.import.links"
 msgstr ""
 
-
 msgid "menu.page.import"
-msgstr ""
-
+msgstr "Импортировать ссылки как закладки…"
 
 msgid "menu.page.translate"
-msgstr ""
-
+msgstr "Перевести…"
 
 msgid "menu.page.copyurl"
-msgstr ""
-
+msgstr "Копировать URL страницы"
 
 msgid "menu.page.copysource"
-msgstr ""
-
+msgstr "Копировать исходный код страницы"
 
 msgid "menu.bookmarks.refresh"
 msgstr ""
 
-
 msgid "menu.feeds.refresh"
 msgstr ""
 
-
 msgid "menu.identity.new"
-msgstr ""
-
+msgstr "Новая идентичность…"
 
 msgid "menu.identity.import"
-msgstr ""
-
+msgstr "Импорт…"
 
 msgid "menu.identity.notactive"
 msgstr ""
 
-
 msgid "sidebar.bookmarks"
-msgstr ""
-
+msgstr "Закладки"
 
 msgid "sidebar.feeds"
 msgstr ""
 
-
 msgid "sidebar.history"
-msgstr ""
-
+msgstr "История"
 
 msgid "sidebar.identities"
 msgstr ""
 
-
 msgid "sidebar.outline"
-msgstr ""
-
+msgstr "Структура"
 
 msgid "sidebar.unread"
 msgstr ""
 
-
 msgid "toolbar.outline"
-msgstr ""
-
+msgstr "Структура страницы"
 
 msgid "hint.findtext"
-msgstr ""
-
+msgstr "Найти текст на странице"
 
 msgid "status.query"
-msgstr ""
-
+msgstr "Поисковый запрос"
 
 msgid "status.feeds"
 msgstr ""
 
-
 msgid "mb"
-msgstr ""
-
+msgstr "МБ"
 
 msgid "kb"
-msgstr ""
-
+msgstr "КБ"
 
 msgid "bytes"
-msgstr ""
-
+msgstr "байт"
 
 msgid "page.timestamp"
 msgstr ""
 
-
 msgid "sidebar.date.thisyear"
 msgstr ""
-
 
 msgid "sidebar.date.otheryear"
 msgstr ""
 
-
 msgid "feeds.today"
-msgstr ""
-
+msgstr "Сегодня"
 
 msgid "feeds.entry.newtab"
-msgstr ""
-
+msgstr "Открыть статью в новой вкладке"
 
 msgid "feeds.entry.markread"
-msgstr ""
-
+msgstr "Отметить как прочитанное"
 
 msgid "feeds.entry.markunread"
-msgstr ""
-
+msgstr "Отметить как непрочитанное"
 
 msgid "sidebar.entry.bookmark"
-msgstr ""
-
+msgstr "Добавить закладку…"
 
 msgid "feeds.entry.bookmark"
-msgstr ""
-
+msgstr "Добавить закладку…"
 
 msgid "feeds.entry.openfeed"
 msgstr ""
 
-
 msgid "feeds.edit"
 msgstr ""
 
-
 msgid "feeds.unsubscribe"
-msgstr ""
-
+msgstr "Отписаться…"
 
 msgid "feeds.markallread"
-msgstr ""
-
+msgstr "Отметить все как прочитанное"
 
 msgid "feeds.refresh"
 msgstr ""
 
-
 msgid "menu.opentab"
-msgstr ""
-
+msgstr "Открыть в новой вкладке"
 
 msgid "menu.opentab.background"
 msgstr ""
 
-
 msgid "menu.edit"
-msgstr ""
-
+msgstr "Редактировать…"
 
 msgid "menu.dup"
-msgstr ""
-
+msgstr "Дублировать…"
 
 msgid "menu.copyurl"
-msgstr ""
-
+msgstr "Скопировать URL"
 
 msgid "menu.forgeturl"
-msgstr ""
-
+msgstr "Забыть URL"
 
 msgid "history.clear"
-msgstr ""
-
+msgstr "Очистить историю…"
 
 msgid "heading.history.clear"
-msgstr ""
-
+msgstr "ОЧИСТКА ИСТОРИИ"
 
 msgid "dlg.confirm.history.clear"
-msgstr ""
-
+msgstr "Вы действительно хотите стереть историю о всех посещённых страницах?"
 
 msgid "dlg.history.clear"
-msgstr ""
-
+msgstr "Очистить историю"
 
 msgid "bookmark.tag.home"
-msgstr ""
-
+msgstr "Использовать как домашнюю страницу"
 
 msgid "bookmark.tag.sub"
 msgstr ""
 
-
 msgid "bookmark.tag.remote"
-msgstr ""
-
+msgstr "Использовать как источник закладок"
 
 msgid "bookmark.untag.home"
-msgstr ""
-
+msgstr "Удалить домашнюю страницу"
 
 msgid "bookmark.untag.sub"
 msgstr ""
 
-
 msgid "bookmark.untag.remote"
 msgstr ""
 
-
 msgid "bookmark.delete"
-msgstr ""
-
+msgstr "Удалить закладку"
 
 msgid "bookmarks.reload"
 msgstr ""
 
-
 msgid "ident.using"
-msgstr ""
-
+msgstr "Используется на этой странице"
 
 msgid "ident.notused"
-msgstr ""
-
+msgstr "Не используется"
 
 msgid "ident.usedonurls"
 msgstr ""
 
-
 msgid "ident.temporary"
-msgstr ""
-
+msgstr "Временный"
 
 msgid "ident.expiry"
 msgstr ""
 
-
 msgid "ident.use"
-msgstr ""
-
+msgstr "Использовать на этой странице"
 
 msgid "ident.stopuse"
-msgstr ""
-
+msgstr "Прекратить использование на этой странице"
 
 msgid "ident.stopuse.all"
-msgstr ""
-
+msgstr "Прекратить использование везде"
 
 msgid "ident.showuse"
-msgstr ""
-
+msgstr "Показать использование"
 
 msgid "heading.ident.use"
 msgstr ""
 
-
 msgid "menu.edit.notes"
-msgstr ""
-
+msgstr "Редактировать заметки…"
 
 msgid "heading.ident.notes"
 msgstr ""
 
-
 msgid "dlg.ident.notes"
-msgstr ""
-
+msgstr "Заметки о %s:"
 
 msgid "ident.fingerprint"
 msgstr ""
 
-
 msgid "ident.delete"
-msgstr ""
-
+msgstr "Удалить идентичность…"
 
 msgid "heading.ident.delete"
-msgstr ""
-
+msgstr "УДАЛЕНИЕ ИДЕНТИЧНОСТИ"
 
 msgid "dlg.confirm.ident.delete"
 msgstr ""
 
-
 msgid "dlg.ident.delete"
-msgstr ""
-
+msgstr "Удалить идентичность и файлы"
 
 msgid "sidebar.empty.idents"
 msgstr ""
 
-
 msgid "ident.gotohelp"
 msgstr ""
-
+"См. %sСправка%s для получения дополнительной информации о клиентских TLS "
+"сертификатах."
 
 msgid "heading.unsub"
-msgstr ""
-
+msgstr "ОТПИСКА"
 
 msgid "dlg.confirm.unsub"
 msgstr ""
 
-
 msgid "dlg.unsub"
-msgstr ""
-
+msgstr "Отписаться"
 
 msgid "error.unsupported.suggestsave"
 msgstr ""
 
-
 msgid "heading.pageinfo"
-msgstr ""
-
+msgstr "ИНФОРМАЦИЯ О СТРАНИЦЕ"
 
 msgid "pageinfo.header.cached"
 msgstr ""
 
-
 msgid "pageinfo.cert.status"
-msgstr ""
-
+msgstr "Статус сертификата:"
 
 msgid "pageinfo.cert.ca.verified"
 msgstr ""
 
-
 msgid "pageinfo.cert.ca.unverified"
 msgstr ""
-
 
 msgid "pageinfo.cert.notexpired"
 msgstr ""
 
-
 msgid "pageinfo.cert.expired"
 msgstr ""
-
 
 msgid "pageinfo.cert.trusted"
 msgstr ""
 
-
 msgid "pageinfo.cert.untrusted"
 msgstr ""
 
-
 msgid "pageinfo.domain.match"
-msgstr ""
-
+msgstr "Доменное имя совпадает"
 
 msgid "pageinfo.domain.mismatch"
-msgstr ""
-
+msgstr "Несоответствие доменного имени"
 
 msgid "dlg.cert.trust"
 msgstr ""
 
-
 msgid "dlg.cert.fingerprint"
 msgstr ""
 
-
 msgid "dlg.input.prompt"
-msgstr ""
-
+msgstr "Введите данные для %s:"
 
 msgid "dlg.input.send"
-msgstr ""
-
+msgstr "Отправить"
 
 msgid "heading.save"
-msgstr ""
-
+msgstr "ФАЙЛ СОХРАНЁН"
 
 msgid "heading.save.incomplete"
 msgstr ""
 
-
 msgid "dlg.save.incomplete"
-msgstr ""
-
+msgstr "Содержимое страницы всё еще загружается."
 
 msgid "dlg.save.size"
-msgstr ""
-
+msgstr "Размер:"
 
 msgid "heading.save.error"
-msgstr ""
-
+msgstr "ОШИБКА СОХРАНЕНИЯ ФАЙЛА"
 
 msgid "heading.import.bookmarks"
 msgstr ""
 
-
 msgid "dlg.import.found"
-msgstr ""
-
+msgstr "Найдена одна новая ссылка на этой странице."
 
 msgid "dlg.import.found.many"
-msgstr ""
-
+msgstr "На странице найдено %d новых ссылок."
 
 msgid "dlg.import.add"
-msgstr ""
-
+msgstr "%sДобавить закладку"
 
 msgid "dlg.import.add.many"
 msgstr ""
 
-
 msgid "dlg.import.notnew"
-msgstr ""
-
+msgstr "Все ссылки на этой странице уже добавлены в закладки."
 
 msgid "heading.autoreload"
 msgstr ""
 
-
 msgid "dlg.autoreload"
 msgstr ""
 
-
 msgid "link.newtab"
-msgstr ""
-
+msgstr "Открыть ссылку в новой вкладке"
 
 msgid "link.newtab.background"
 msgstr ""
 
-
 msgid "link.browser"
-msgstr ""
-
+msgstr "Открыть ссылку в браузере по умолчанию"
 
 msgid "link.noproxy"
-msgstr ""
-
+msgstr "Открыть без прокси"
 
 msgid "link.copy"
-msgstr ""
-
+msgstr "Скопировать ссылку"
 
 msgid "link.bookmark"
 msgstr ""
 
-
 msgid "link.download"
-msgstr ""
-
+msgstr "Скачать файл"
 
 msgid "heading.openlink"
-msgstr ""
-
+msgstr "ОТКРЫТЬ ССЫЛКУ"
 
 msgid "dlg.openlink.confirm"
 msgstr ""
-
+"Открыть эту ссылку в браузере по умолчанию?\n"
+"%s%s"
 
 msgid "dlg.openlink"
-msgstr ""
-
+msgstr "Открыть ссылку"
 
 msgid "heading.certwarn"
 msgstr ""
 
-
 msgid "dlg.certwarn.mayberenewed"
 msgstr ""
-
 
 msgid "dlg.certwarn.different"
 msgstr ""
 
-
 msgid "dlg.certwarn.expired"
 msgstr ""
-
 
 msgid "dlg.certwarn.domain"
 msgstr ""
 
-
 msgid "dlg.certwarn.domain.expired"
 msgstr ""
 
-
 msgid "link.hint.audio"
-msgstr ""
-
+msgstr "Воспроизвести аудио"
 
 msgid "link.hint.image"
-msgstr ""
-
+msgstr "Показать изображение"
 
 msgid "bookmark.title.blank"
-msgstr ""
-
+msgstr "Пустая страница"
 
 msgid "heading.translate"
-msgstr ""
-
+msgstr "ПЕРЕВЕСТИ СТРАНИЦУ"
 
 msgid "dlg.translate.unavail"
-msgstr ""
-
+msgstr "Сервис недоступен"
 
 msgid "dlg.translate.fail"
 msgstr ""
 
-
 msgid "dlg.translate"
-msgstr ""
-
+msgstr "Перевести"
 
 msgid "dlg.translate.from"
 msgstr ""
 
-
 msgid "dlg.translate.to"
 msgstr ""
 
-
 msgid "lang.ar"
-msgstr ""
-
+msgstr "Арабский"
 
 msgid "lang.zh"
-msgstr ""
-
+msgstr "Китайский"
 
 msgid "lang.en"
-msgstr ""
-
+msgstr "Английский"
 
 msgid "lang.fr"
-msgstr ""
-
+msgstr "Французский"
 
 msgid "lang.de"
-msgstr ""
-
+msgstr "Немецкий"
 
 msgid "lang.hi"
-msgstr ""
-
+msgstr "Хинди"
 
 msgid "lang.it"
-msgstr ""
-
+msgstr "Итальянский"
 
 msgid "lang.ja"
-msgstr ""
-
+msgstr "Японский"
 
 msgid "lang.pt"
-msgstr ""
-
+msgstr "Португальский"
 
 msgid "lang.ru"
-msgstr ""
-
+msgstr "Русский"
 
 msgid "lang.es"
-msgstr ""
-
+msgstr "Испанский"
 
 msgid "heading.newident"
-msgstr ""
-
+msgstr "НОВАЯ ИДЕНТИЧНОСТЬ"
 
 msgid "dlg.newident.rsa.selfsign"
 msgstr ""
 
-
 msgid "dlg.newident.until"
-msgstr ""
-
+msgstr "Действителен до:"
 
 msgid "hint.newident.date"
-msgstr ""
-
+msgstr "ГГГГ-ММ-ДД ЧЧ:ММ:СС"
 
 msgid "hint.newident.optional"
 msgstr ""
 
-
 msgid "dlg.newident.commonname"
-msgstr ""
-
+msgstr "Общее имя:"
 
 msgid "dlg.newident.temp"
-msgstr ""
-
+msgstr "Временный:"
 
 msgid "dlg.newident.notsaved"
 msgstr ""
 
-
 msgid "dlg.newident.email"
-msgstr ""
-
+msgstr "Эл. почта:"
 
 msgid "dlg.newident.userid"
-msgstr ""
-
+msgstr "ID пользователя:"
 
 msgid "dlg.newident.domain"
-msgstr ""
-
+msgstr "Домен:"
 
 msgid "dlg.newident.org"
-msgstr ""
-
+msgstr "Организация:"
 
 msgid "dlg.newident.country"
-msgstr ""
-
+msgstr "Страна:"
 
 msgid "dlg.newident.create"
-msgstr ""
-
+msgstr "Создать идентичность"
 
 msgid "heading.feedcfg"
 msgstr ""
 
-
 msgid "heading.subscribe"
-msgstr ""
-
+msgstr "ПОДПИСКА НА СТРАНИЦУ"
 
 msgid "dlg.feed.title"
-msgstr ""
-
+msgstr "Заголовок:"
 
 msgid "dlg.feed.entrytype"
-msgstr ""
-
+msgstr "Тип статьи:"
 
 msgid "dlg.feed.type.gemini"
-msgstr ""
-
+msgstr "YYYY-MM-DD ссылки"
 
 msgid "dlg.feed.type.headings"
-msgstr ""
-
+msgstr "Новые заголовки"
 
 msgid "dlg.feed.save"
-msgstr ""
-
+msgstr "Сохранить настройки"
 
 msgid "dlg.feed.sub"
-msgstr ""
-
+msgstr "Подписаться"
 
 msgid "heading.bookmark.add"
-msgstr ""
-
+msgstr "ДОБАВИТЬ ЗАКЛАДКУ"
 
 msgid "heading.bookmark.edit"
 msgstr ""
 
-
 msgid "dlg.bookmark.save"
-msgstr ""
-
+msgstr "Сохранить закладку"
 
 msgid "dlg.bookmark.title"
-msgstr ""
-
+msgstr "Заголовок:"
 
 msgid "dlg.bookmark.url"
-msgstr ""
-
+msgstr "URL:"
 
 msgid "dlg.bookmark.tags"
-msgstr ""
-
+msgstr "Теги:"
 
 msgid "dlg.bookmark.icon"
-msgstr ""
-
+msgstr "Иконка:"
 
 msgid "heading.prefs"
-msgstr ""
-
+msgstr "НАСТРОЙКИ"
 
 msgid "heading.prefs.certs"
-msgstr ""
-
+msgstr "СЕРТИФИКАТЫ"
 
 msgid "heading.prefs.colors"
-msgstr ""
-
+msgstr "Цвета"
 
 msgid "heading.prefs.fonts"
-msgstr ""
-
+msgstr "ШРИФТЫ"
 
 msgid "heading.prefs.general"
-msgstr ""
-
+msgstr "Общие"
 
 msgid "heading.prefs.interface"
-msgstr ""
-
+msgstr "Интерфейс"
 
 msgid "heading.prefs.keys"
 msgstr ""
 
-
 msgid "heading.prefs.network"
-msgstr ""
-
+msgstr "Сеть"
 
 msgid "heading.prefs.paragraph"
-msgstr ""
-
+msgstr "ПАРАГРАФ"
 
 msgid "heading.prefs.pagecontent"
-msgstr ""
-
+msgstr "СОДЕРЖАНИЕ СТРАНИЦЫ"
 
 msgid "heading.prefs.proxies"
-msgstr ""
-
+msgstr "ПРОКСИ"
 
 msgid "heading.prefs.scrolling"
-msgstr ""
-
+msgstr "ПРОКРУТКА"
 
 msgid "heading.prefs.sizing"
-msgstr ""
-
+msgstr "РАЗМЕР"
 
 msgid "heading.prefs.widelayout"
 msgstr ""
 
-
 msgid "heading.prefs.style"
-msgstr ""
-
+msgstr "Стиль"
 
 msgid "heading.prefs.userinterface"
 msgstr ""
 
-
 msgid "prefs.downloads"
-msgstr ""
-
+msgstr "Папка загрузок:"
 
 msgid "prefs.searchurl"
 msgstr ""
 
-
 msgid "prefs.hoverlink"
-msgstr ""
-
+msgstr "Показывать URL при наведении:"
 
 msgid "prefs.centershort"
-msgstr ""
-
+msgstr "Вертикальное центрирование:"
 
 msgid "prefs.smoothscroll"
-msgstr ""
-
+msgstr "Плавная прокрутка:"
 
 msgid "prefs.imageloadscroll"
-msgstr ""
-
+msgstr "Загрузка изображений при прокрутке:"
 
 msgid "prefs.hidetoolbarscroll"
-msgstr ""
-
+msgstr "Скрыть панель инструментов при прокрутке:"
 
 msgid "prefs.ostheme"
-msgstr ""
-
+msgstr "Использовать системную тему:"
 
 msgid "prefs.theme"
-msgstr ""
-
+msgstr "Тема:"
 
 msgid "prefs.theme.black"
-msgstr ""
-
+msgstr "Чёрная"
 
 msgid "prefs.theme.dark"
-msgstr ""
-
+msgstr "Тёмная"
 
 msgid "prefs.theme.light"
-msgstr ""
-
+msgstr "Светлая"
 
 msgid "prefs.theme.white"
-msgstr ""
-
+msgstr "Белая"
 
 msgid "prefs.accent"
 msgstr ""
 
-
 msgid "prefs.accent.teal"
-msgstr ""
-
+msgstr "Бирюзовый"
 
 msgid "prefs.accent.orange"
-msgstr ""
-
+msgstr "Оранжевый"
 
 msgid "prefs.uiscale"
 msgstr ""
 
-
 msgid "prefs.customframe"
 msgstr ""
-
 
 msgid "prefs.retainwindow"
 msgstr ""
 
-
 msgid "prefs.sideicon"
 msgstr ""
 
-
 msgid "prefs.doctheme.dark"
-msgstr ""
-
+msgstr "Тёмная тема:"
 
 msgid "prefs.doctheme.light"
-msgstr ""
-
+msgstr "Светлая тема:"
 
 msgid "prefs.doctheme.name.colorfuldark"
 msgstr ""
 
-
 msgid "prefs.doctheme.name.colorfullight"
 msgstr ""
-
 
 msgid "prefs.doctheme.name.black"
 msgstr ""
 
-
 msgid "prefs.doctheme.name.gray"
 msgstr ""
-
 
 msgid "prefs.doctheme.name.white"
 msgstr ""
 
-
 msgid "prefs.doctheme.name.sepia"
 msgstr ""
-
 
 msgid "prefs.doctheme.name.highcontrast"
 msgstr ""
 
-
 msgid "prefs.saturation"
 msgstr ""
 
-
 msgid "prefs.headingfont"
-msgstr ""
-
+msgstr "Шрифт заголовков:"
 
 msgid "prefs.font"
-msgstr ""
-
+msgstr "Шрифт основного текста:"
 
 msgid "prefs.mono"
 msgstr ""
 
-
 msgid "prefs.mono.gemini"
-msgstr ""
-
+msgstr "Gemini"
 
 msgid "prefs.mono.gopher"
-msgstr ""
-
+msgstr "Gopher"
 
 msgid "prefs.linewidth"
-msgstr ""
-
+msgstr "Ширина линии:"
 
 msgid "prefs.linewidth.normal"
 msgstr ""
 
-
 msgid "prefs.linewidth.fill"
 msgstr ""
-
 
 msgid "prefs.quoteicon"
 msgstr ""
 
-
 msgid "prefs.quoteicon.icon"
 msgstr ""
-
 
 msgid "prefs.quoteicon.line"
 msgstr ""
 
-
 msgid "prefs.biglede"
 msgstr ""
-
 
 msgid "prefs.plaintext.wrap"
 msgstr ""
 
-
 msgid "prefs.decodeurls"
 msgstr ""
 
-
 msgid "prefs.cachesize"
-msgstr ""
-
+msgstr "Размер кэша:"
 
 msgid "prefs.ca.file"
 msgstr ""
 
-
 msgid "prefs.ca.path"
 msgstr ""
 
-
 msgid "prefs.proxy.gemini"
-msgstr ""
-
+msgstr "Gemini прокси:"
 
 msgid "prefs.proxy.gopher"
-msgstr ""
-
+msgstr "Gopher прокси:"
 
 msgid "prefs.proxy.http"
-msgstr ""
-
+msgstr "HTTP прокси:"
 
 msgid "menu.binding.reset"
 msgstr ""
 
-
 msgid "menu.binding.clear"
-msgstr ""
-
+msgstr "Удалить"
 
 msgid "keys.top"
 msgstr ""
 
-
 msgid "keys.bottom"
 msgstr ""
 
-
 msgid "keys.scroll.up"
-msgstr ""
-
+msgstr "Прокрутить вверх"
 
 msgid "keys.scroll.down"
-msgstr ""
-
+msgstr "Прокрутить вниз"
 
 msgid "keys.scroll.halfpage.up"
-msgstr ""
-
+msgstr "Прокрутить вверх на полстраницы"
 
 msgid "keys.scroll.halfpage.down"
-msgstr ""
-
+msgstr "Прокрутить вниз на полстраницы"
 
 msgid "keys.scroll.page.up"
 msgstr ""
 
-
 msgid "keys.scroll.page.down"
 msgstr ""
 
-
 msgid "keys.back"
-msgstr ""
-
+msgstr "Назад"
 
 msgid "keys.forward"
-msgstr ""
-
+msgstr "Вперед"
 
 msgid "keys.parent"
 msgstr ""
 
-
 msgid "keys.root"
 msgstr ""
 
-
 msgid "keys.reload"
-msgstr ""
-
+msgstr "Перезагрузить страницу"
 
 msgid "keys.link.modkey"
 msgstr ""
 
-
 msgid "keys.link.homerow"
 msgstr ""
-
 
 msgid "keys.link.homerow.newtab"
 msgstr ""
 
-
 msgid "keys.link.homerow.hover"
 msgstr ""
-
 
 msgid "keys.link.homerow.next"
 msgstr ""
 
-
 msgid "keys.bookmark.add"
-msgstr ""
-
+msgstr "Добавить закладку"
 
 msgid "keys.findtext"
-msgstr ""
-
+msgstr "Найти текст на странице"
 
 msgid "keys.zoom.in"
-msgstr ""
-
+msgstr "Увеличить"
 
 msgid "keys.zoom.out"
-msgstr ""
-
+msgstr "Уменьшить"
 
 msgid "keys.zoom.reset"
-msgstr ""
-
+msgstr "Размер по умолчанию"
 
 msgid "keys.fullscreen"
 msgstr ""
 
-
 msgid "keys.tab.new"
-msgstr ""
-
+msgstr "Новая вкладка"
 
 msgid "keys.tab.close"
-msgstr ""
-
+msgstr "Закрыть вкладку"
 
 msgid "keys.tab.prev"
-msgstr ""
-
+msgstr "Предыдущая вкладка"
 
 msgid "keys.tab.next"
-msgstr ""
-
+msgstr "Следующая вкладка"
 
 msgid "keys.hoverurl"
 msgstr ""
-
