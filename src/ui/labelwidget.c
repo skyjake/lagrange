@@ -429,6 +429,8 @@ void updateTextCStr_LabelWidget(iLabelWidget *d, const char *text) {
 
 void setTextCStr_LabelWidget(iLabelWidget *d, const char *text) {
     setCStr_String(&d->label, text);
+    set_String(&d->srcLabel, &d->label);
+    replaceVariables_LabelWidget_(d);
     updateSize_LabelWidget(d);
 }
 

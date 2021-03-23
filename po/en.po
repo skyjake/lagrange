@@ -10,6 +10,12 @@ msgstr "Version"
 msgid "about.powered"
 msgstr "Powered by SDL 2, OpenSSL, and ☕️"
 
+msgid "cancel"
+msgstr "Cancel"
+
+msgid "dismiss"
+msgstr "Dismiss"
+
 msgid "menu.title.file"
 msgstr "File"
 
@@ -157,20 +163,35 @@ msgstr "Go to Root"
 msgid "menu.reload"
 msgstr "Reload Page"
 
+msgid "menu.autoreload"
+msgstr "Set Auto-Reload…"
+
+msgid "menu.page.bookmark"
+msgstr "Bookmark Page…"
+
+msgid "menu.page.subscribe"
+msgstr "Subscribe to Page…"
+
 msgid "menu.aboutpages"
 msgstr "About Pages"
 
 msgid "menu.debug"
 msgstr "Debug Information"
 
-msgid "menu.bookmark.page"
-msgstr "Bookmark This Page…"
-
-msgid "menu.subscribe.page"
-msgstr "Subscribe to This Page…"
-
 msgid "menu.import.links"
 msgstr "Import All Links on Page…"
+
+msgid "menu.page.import"
+msgstr "Import Links as Bookmarks…"
+
+msgid "menu.page.translate"
+msgstr "Translate…"
+
+msgid "menu.page.copyurl"
+msgstr "Copy Page URL"
+
+msgid "menu.page.copysource"
+msgstr "Copy Page Source"
 
 msgid "menu.bookmarks.refresh"
 msgstr "Refresh Remote Bookmarks"
@@ -200,6 +221,12 @@ msgid "sidebar.identities"
 msgstr "Identities"
 
 msgid "sidebar.outline"
+msgstr "Outline"
+
+msgid "sidebar.unread"
+msgstr "Unread"
+
+msgid "toolbar.outline"
 msgstr "Page Outline"
 
 msgid "hint.findtext"
@@ -215,8 +242,342 @@ msgstr "Updating Feeds"
 msgid "mb"
 msgstr "MB"
 
+# kilobytes, used as the unit after a number
+msgid "kb"
+msgstr "KB"
+
+msgid "bytes"
+msgstr "bytes"
+
 # strftime() formatted, split on two lines
 #, c-format
 msgid "page.timestamp"
 msgstr "Received at %I:%M %p\non %b %d, %Y"
+
+# strftime() formatted
+#, c-format
+msgid "sidebar.date.thisyear"
+msgstr "%b. %d"
+
+# strftime() formatted
+#, c-format
+msgid "sidebar.date.otheryear"
+msgstr "%b. %d, %Y"
+
+msgid "feeds.today"
+msgstr "Today"
+
+msgid "feeds.entry.newtab"
+msgstr "Open Entry in New Tab"
+
+msgid "feeds.entry.markread"
+msgstr "Mark as Read"
+
+msgid "feeds.entry.markunread"
+msgstr "Mark as Unread"
+
+msgid "sidebar.entry.bookmark"
+msgstr "Add Bookmark…"
+
+msgid "feeds.entry.bookmark"
+msgstr "Add Bookmark…"
+
+msgid "feeds.entry.openfeed"
+msgstr "Open Feed Page"
+
+msgid "feeds.edit"
+msgstr "Edit Feed…"
+
+msgid "feeds.unsubscribe"
+msgstr "Unsubscribe…"
+
+msgid "feeds.markallread"
+msgstr "Mark All as Read"
+
+msgid "feeds.refresh"
+msgstr "Refresh Feeds"
+
+msgid "menu.opentab"
+msgstr "Open in New Tab"
+
+msgid "menu.opentab.background"
+msgstr "Open in Background Tab"
+
+msgid "menu.edit"
+msgstr "Edit…"
+
+msgid "menu.dup"
+msgstr "Duplicate…"
+
+msgid "menu.copyurl"
+msgstr "Copy URL"
+
+msgid "menu.forgeturl"
+msgstr "Forget URL"
+
+msgid "history.clear"
+msgstr "Clear History…"
+
+msgid "heading.history.clear"
+msgstr "CLEAR HISTORY"
+
+msgid "dlg.confirm.history.clear"
+msgstr "Do you really want to erase the history of all visited pages?"
+
+msgid "dlg.history.clear"
+msgstr "Clear History"
+
+msgid "bookmark.tag.home"
+msgstr "Use as Homepage"
+
+msgid "bookmark.tag.sub"
+msgstr "Subscribe to Feed"
+
+msgid "bookmark.tag.remote"
+msgstr "Use as Bookmark Source"
+
+msgid "bookmark.untag.home"
+msgstr "Remove Homepage"
+
+msgid "bookmark.untag.sub"
+msgstr "Unsubscribe from Feed"
+
+msgid "bookmark.untag.remote"
+msgstr "Remove Bookmark Source"
+
+msgid "bookmark.delete"
+msgstr "Delete Bookmark"
+
+msgid "bookmarks.reload"
+msgstr "Refresh Remote Sources"
+
+msgid "ident.using"
+msgstr "Using on this page"
+
+msgid "ident.notused"
+msgstr "Not used"
+
+#, c-format
+msgid "ident.usedonurls"
+msgstr "Used on %zu URLs"
+
+msgid "ident.temporary"
+msgstr "Temporary"
+
+# strftime() formatted
+#, c-format
+msgid "ident.expiry"
+msgstr "Expires %b %d, %Y"
+
+msgid "ident.use"
+msgstr "Use on This Page"
+
+msgid "ident.stopuse"
+msgstr "Stop Using on This Page"
+
+msgid "ident.stopuse.all"
+msgstr "Stop Using Everywhere"
+
+msgid "ident.showuse"
+msgstr "Show Usage"
+
+msgid "heading.ident.use"
+msgstr "IDENTITY USAGE"
+
+msgid "menu.edit.notes"
+msgstr "Edit Notes…"
+
+msgid "heading.ident.notes"
+msgstr "IDENTITY NOTES"
+
+# %s refers to name of an identity.
+#, c-format
+msgid "dlg.ident.notes"
+msgstr "Notes about %s:"
+
+msgid "ident.fingerprint"
+msgstr "Copy Fingerprint"
+
+msgid "ident.delete"
+msgstr "Delete Identity…"
+
+msgid "heading.ident.delete"
+msgstr "DELETE IDENTITY"
+
+#, c-format
+msgid "dlg.confirm.ident.delete"
+msgstr "Do you really want to delete the identity\n%s%s%s\nincluding its certificate and private key files?"
+
+msgid "dlg.ident.delete"
+msgstr "Delete Identity and Files"
+
+msgid "sidebar.empty.idents"
+msgstr "No Identities"
+
+# The %s format characters are used to highlight the word "Help" and must be used in the translation in same way as here.
+#, c-format
+msgid "ident.gotohelp"
+msgstr "See %sHelp%s for more information about TLS client certificates."
+
+msgid "heading.unsub"
+msgstr "UNSUBSCRIBE"
+
+#, c-format
+msgid "dlg.confirm.unsub"
+msgstr "Really unsubscribe from feed\n\"%s\"?"
+
+msgid "dlg.unsub"
+msgstr "Unsubscribe"
+
+#, c-format
+msgid "error.unsupported.suggestsave"
+msgstr "\n```\n%s\n```\nYou can save it as a file to your Downloads folder, though. Press %s or select \"%s\" from the menu."
+
+msgid "heading.pageinfo"
+msgstr "PAGE INFORMATION"
+
+msgid "pageinfo.header.cached"
+msgstr "(cached content)"
+
+msgid "pageinfo.cert.status"
+msgstr "Certificate Status:"
+
+msgid "pageinfo.cert.ca.verified"
+msgstr "Verified by CA"
+
+msgid "pageinfo.cert.ca.unverified"
+msgstr "Not verified by CA"
+
+msgid "pageinfo.cert.notexpired"
+msgstr "Not expired"
+
+msgid "pageinfo.cert.expired"
+msgstr "Expired"
+
+msgid "pageinfo.cert.trusted"
+msgstr "Trusted"
+
+msgid "pageinfo.cert.untrusted"
+msgstr "Not trusted"
+
+msgid "pageinfo.domain.match"
+msgstr "Domain name matches"
+
+msgid "pageinfo.domain.mismatch"
+msgstr "Domain name mismatch"
+
+msgid "dlg.cert.trust"
+msgstr "Trust"
+
+msgid "dlg.cert.fingerprint"
+msgstr "Copy Fingerprint"
+
+#, c-format
+msgid "dlg.input.prompt"
+msgstr "Please enter input for %s:"
+
+msgid "dlg.input.send"
+msgstr "Send"
+
+msgid "heading.save"
+msgstr "FILE SAVED"
+
+msgid "heading.save.incomplete"
+msgstr "PAGE INCOMPLETE"
+
+msgid "dlg.save.incomplete"
+msgstr "The page contents are still being downloaded."
+
+msgid "dlg.save.size"
+msgstr "Size:"
+
+msgid "heading.save.error"
+msgstr "ERROR SAVING FILE"
+
+msgid "heading.import.bookmarks"
+msgstr "IMPORT BOOKMARKS"
+
+msgid "dlg.import.found"
+msgstr "Found one new link on the page."
+
+#, c-format
+msgid "dlg.import.found.many"
+msgstr "Found %d new links on the page."
+
+#, c-format
+msgid "dlg.import.add"
+msgstr "%sAdd Bookmark"
+
+#, c-format
+msgid "dlg.import.add.many"
+msgstr "%sAdd %d Bookmarks"
+
+msgid "dlg.import.notnew"
+msgstr "All links on this page are already bookmarked."
+
+msgid "heading.autoreload"
+msgstr "AUTO-RELOAD"
+
+msgid "dlg.autoreload"
+msgstr "Select the auto-reload interval for this tab."
+
+msgid "link.newtab"
+msgstr "Open Link in New Tab"
+
+msgid "link.newtab.background"
+msgstr "Open Link in Background Tab"
+
+msgid "link.browser"
+msgstr "Open Link in Default Browser"
+
+msgid "link.noproxy"
+msgstr "Open without Proxy"
+
+msgid "link.copy"
+msgstr "Copy Link"
+
+msgid "link.bookmark"
+msgstr "Bookmark Link…"
+
+msgid "link.download"
+msgstr "Download Linked File"
+
+msgid "heading.openlink"
+msgstr "OPEN LINK"
+
+#, c-format
+msgid "dlg.openlink.confirm"
+msgstr "Open this link in the default browser?\n%s%s"
+
+msgid "dlg.openlink"
+msgstr "Open Link"
+
+msgid "heading.certwarn"
+msgstr "UNTRUSTED CERTIFICATE"
+
+#, c-format
+msgid "dlg.certwarn.mayberenewed"
+msgstr "The received certificate may have been recently renewed — it is for the correct domain and has not expired. The currently trusted certificate will expire on %s, in %d days."
+
+msgid "dlg.certwarn.different"
+msgstr "The received certificate is valid but different than the one we trust."
+
+#, c-format
+msgid "dlg.certwarn.expired"
+msgstr "The received certificate has expired on %s."
+
+msgid "dlg.certwarn.domain"
+msgstr "The received certificate is for the wrong domain (%s). This may be a server configuration problem."
+
+msgid "dlg.certwarn.domain.expired"
+msgstr "The received certificate is expired AND for the wrong domain."
+
+msgid "link.hint.audio"
+msgstr "Play Audio"
+
+msgid "link.hint.image"
+msgstr "View Image"
+
+msgid "bookmark.title.blank"
+msgstr "Blank Page"
 

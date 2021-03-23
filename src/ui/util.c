@@ -498,7 +498,7 @@ iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
     if (deviceType_App() == phone_AppDeviceType) {
         addChild_Widget(menu, iClob(makeMenuSeparator_()));
         addChildFlags_Widget(menu,
-                             iClob(new_LabelWidget("Cancel", "cancel")),
+                             iClob(new_LabelWidget("${cancel}", "cancel")),
                              itemFlags | noBackground_WidgetFlag | frameless_WidgetFlag |
                              alignLeft_WidgetFlag);
     }
@@ -937,7 +937,7 @@ static iBool slidePanelHandler_(iWidget *d, const char *cmd) {
         iWidget *button = pointer_Command(cmd);
         iWidget *panel = userData_Object(button);
         openMenu_Widget(panel, zero_I2());
-//        updateTextCStr_LabelWidget(findWidget_App("panel.back"), "");
+//        updateTextCStr_LabelWidget(findWidget_App("panel.back"), );
         return iTrue;
     }
     if (equal_Command(cmd, "mouse.clicked") && arg_Command(cmd) &&
@@ -1462,7 +1462,7 @@ void makeFilePath_Widget(iWidget *      parent,
     addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
     iWidget *div = new_Widget(); {
         setFlags_Widget(div, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
-        addChild_Widget(div, iClob(newKeyMods_LabelWidget("Cancel", SDLK_ESCAPE, 0, "filepath.cancel")));
+        addChild_Widget(div, iClob(newKeyMods_LabelWidget("${cancel}", SDLK_ESCAPE, 0, "filepath.cancel")));
         addChild_Widget(div, iClob(newKeyMods_LabelWidget(acceptLabel, SDLK_RETURN, 0, "filepath.accept")));
     }
     addChild_Widget(dlg, iClob(div));
@@ -1566,7 +1566,7 @@ iWidget *makeDialogButtons_Widget(const iMenuItem *actions, size_t numActions) {
             addChildFlags_Widget(div, iClob(new_Widget()), expand_WidgetFlag);
             continue;
         }
-        if (!iCmpStr(label, "Cancel") && !cmd) {
+        if (!iCmpStr(label, "${cancel}") && !cmd) {
             cmd = "cancel";
             key = SDLK_ESCAPE;
             kmods = 0;
@@ -1621,7 +1621,7 @@ iWidget *makeValueInput_Widget(iWidget *parent, const iString *initialValue, con
     addChild_Widget(
         dlg,
         iClob(makeDialogButtons_Widget(
-            (iMenuItem[]){ { "Cancel", 0, 0, NULL }, { acceptLabel, 0, 0, "valueinput.accept" } },
+            (iMenuItem[]){ { "${cancel}", 0, 0, NULL }, { acceptLabel, 0, 0, "valueinput.accept" } },
             2)));
     finalizeSheet_Widget(dlg);
     if (parent) {
@@ -1970,7 +1970,7 @@ iWidget *makePreferences_Widget(void) {
     }
     addChild_Widget(dlg,
                     iClob(makeDialogButtons_Widget(
-                        (iMenuItem[]){ { "Dismiss", SDLK_ESCAPE, 0, "prefs.dismiss" } }, 1)));
+                        (iMenuItem[]){ { "${dismiss}", SDLK_ESCAPE, 0, "prefs.dismiss" } }, 1)));
     addChild_Widget(get_Window()->root, iClob(dlg));
     finalizeSheet_Widget(dlg);
     return dlg;
@@ -2001,7 +2001,7 @@ iWidget *makeBookmarkEditor_Widget(void) {
     }
     addChild_Widget(
         dlg,
-        iClob(makeDialogButtons_Widget((iMenuItem[]){ { "Cancel", 0, 0, NULL },
+        iClob(makeDialogButtons_Widget((iMenuItem[]){ { "${cancel}", 0, 0, NULL },
                                                 { uiTextCaution_ColorEscape "Save Bookmark",
                                                   SDLK_RETURN,
                                                   KMOD_PRIMARY,
@@ -2131,7 +2131,7 @@ iWidget *makeFeedSettings_Widget(uint32_t bookmarkId) {
     iWidget *buttons =
         addChild_Widget(dlg,
                         iClob(makeDialogButtons_Widget(
-                            (iMenuItem[]){ { "Cancel", 0, 0, NULL },
+                            (iMenuItem[]){ { "${cancel}", 0, 0, NULL },
                                            { bookmarkId ? uiTextCaution_ColorEscape "Save Settings"
                                                         : uiTextCaution_ColorEscape "Subscribe",
                                              SDLK_RETURN,
@@ -2212,7 +2212,7 @@ iWidget *makeIdentityCreation_Widget(void) {
     }
     addChild_Widget(
         dlg,
-        iClob(makeDialogButtons_Widget((iMenuItem[]){ { "Cancel", 0, 0, NULL },
+        iClob(makeDialogButtons_Widget((iMenuItem[]){ { "${cancel}", 0, 0, NULL },
                                                 { uiTextAction_ColorEscape "Create Identity",
                                                   SDLK_RETURN,
                                                   KMOD_PRIMARY,
@@ -2310,7 +2310,7 @@ iWidget *makeTranslation_Widget(iWidget *parent) {
         dlg,
         iClob(makeDialogButtons_Widget(
             (iMenuItem[]){
-                { "Cancel", SDLK_ESCAPE, 0, "translation.cancel" },
+                { "${cancel}", SDLK_ESCAPE, 0, "translation.cancel" },
                 { uiTextAction_ColorEscape "Translate", SDLK_RETURN, 0, "translation.submit" } },
             2)));
     addChild_Widget(parent, iClob(dlg));

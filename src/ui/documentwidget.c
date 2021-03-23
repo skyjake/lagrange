@@ -824,9 +824,7 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
                 iString *key = collectNew_String();
                 toString_Sym(SDLK_s, KMOD_PRIMARY, key);
                 appendFormat_String(src,
-                                    "\n```\n%s\n```\n"
-                                    "You can save it as a file to your Downloads folder, though. "
-                                    "Press %s or select \"%s\" from the menu.",
+                                    cstr_Lang("error.unsupported.suggestsave"),
                                     cstr_String(meta),
                                     cstr_String(key),
                                     saveToDownloads_Label);
@@ -1045,7 +1043,7 @@ static iBool updateFromHistory_DocumentWidget_(iDocumentWidget *d) {
         updateTrust_DocumentWidget_(d, resp);
         d->sourceTime = resp->when;
         d->sourceStatus = success_GmStatusCode;
-        format_String(&d->sourceHeader, "(cached content)");
+        format_String(&d->sourceHeader, cstr_Lang("pageinfo.header.cached"));
         updateTimestampBuf_DocumentWidget_(d);
         set_Block(&d->sourceContent, &resp->body);
         updateDocument_DocumentWidget_(d, resp, iTrue);
@@ -1220,9 +1218,9 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                     NULL,
                     format_CStr(uiHeading_ColorEscape "%s", cstr_Rangecc(parts.host)),
                     isEmpty_String(&resp->meta)
-                        ? format_CStr("Please enter input for %s:", cstr_Rangecc(parts.path))
+                        ? format_CStr(cstr_Lang("dlg.input.prompt"), cstr_Rangecc(parts.path))
                         : cstr_String(&resp->meta),
-                    uiTextCaution_ColorEscape "Send \u21d2",
+                    uiTextCaution_ColorEscape "${dlg.input.send} \u21d2",
                     format_CStr("!document.input.submit doc:%p", d));
                 setSensitiveContent_InputWidget(findChild_Widget(dlg, "input"),
                                                 statusCode == sensitiveInput_GmStatusCode);
@@ -1469,14 +1467,14 @@ static void saveToDownloads_(const iString *url, const iString *mime, const iBlo
 #if defined (iPlatformAppleMobile)
             exportDownloadedFile_iOS(savePath);
 #else
-            makeMessage_Widget(uiHeading_ColorEscape "FILE SAVED",
-                               format_CStr("%s\nSize: %.3f %s", cstr_String(path_File(f)),
+            makeMessage_Widget(uiHeading_ColorEscape "${heading.save}",
+                               format_CStr("%s\n${dlg.save.size} %.3f %s", cstr_String(path_File(f)),
                                            isMega ? size / 1.0e6f : (size / 1.0e3f),
-                                           isMega ? "MB" : "KB"));
+                                           isMega ? "${mb}" : "${kb}"));
 #endif
         }
         else {
-            makeMessage_Widget(uiTextCaution_ColorEscape "ERROR SAVING FILE",
+            makeMessage_Widget(uiTextCaution_ColorEscape "${heading.save.error}",
                                strerror(errno));
         }
         iRelease(f);
@@ -1625,57 +1623,62 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         }
         iString *msg = collectNew_String();
         if (isEmpty_String(&d->sourceHeader)) {
-            appendFormat_String(msg, "%s\n%zu bytes\n", cstr_String(meta), size_Block(&d->sourceContent));
+            appendFormat_String(msg, "%s\n%zu ${bytes}\n", cstr_String(meta), size_Block(&d->sourceContent));
         }
         else {
             appendFormat_String(msg, "%s\n", cstr_String(&d->sourceHeader));
             if (size_Block(&d->sourceContent)) {
-                appendFormat_String(msg, "%zu bytes\n", size_Block(&d->sourceContent));
+                appendFormat_String(msg, "%zu ${bytes}\n", size_Block(&d->sourceContent));
             }
         }
-        appendFormat_String(msg,
-                      "\n%sCertificate Status:\n"
-                      "%s%s  %s by CA\n"
-                      "%s%s  Domain name %s%s\n"
-                      "%s%s  %s (%04d-%02d-%02d %02d:%02d:%02d)\n"
-                      "%s%s  %s",
-                      uiHeading_ColorEscape,
-                      d->certFlags & authorityVerified_GmCertFlag ?
-                            checked : uiTextAction_ColorEscape "\u2610",
-                      uiText_ColorEscape,
-                      d->certFlags & authorityVerified_GmCertFlag ? "Verified" : "Not verified",
-                      d->certFlags & domainVerified_GmCertFlag ? checked : unchecked,
-                      uiText_ColorEscape,
-                      d->certFlags & domainVerified_GmCertFlag ? "matches" : "mismatch",
-                      ~d->certFlags & domainVerified_GmCertFlag
-                          ? format_CStr(" (%s)", cstr_String(d->certSubject))
-                          : "",
-                      d->certFlags & timeVerified_GmCertFlag ? checked : unchecked,
-                      uiText_ColorEscape,
-                      d->certFlags & timeVerified_GmCertFlag ? "Not expired" : "Expired",
-                      d->certExpiry.year,
-                      d->certExpiry.month,
-                      d->certExpiry.day,
-                      d->certExpiry.hour,
-                      d->certExpiry.minute,
-                      d->certExpiry.second,
-                      d->certFlags & trusted_GmCertFlag ? checked : unchecked,
-                      uiText_ColorEscape,
-                      d->certFlags & trusted_GmCertFlag ? "Trusted" : "Not trusted");
+        appendFormat_String(
+            msg,
+            "\n%s${pageinfo.cert.status}\n"
+            "%s%s  %s\n"
+            "%s%s  %s%s\n"
+            "%s%s  %s (%04d-%02d-%02d %02d:%02d:%02d)\n"
+            "%s%s  %s",
+            uiHeading_ColorEscape,
+            d->certFlags & authorityVerified_GmCertFlag ? checked
+                                                        : uiTextAction_ColorEscape "\u2610",
+            uiText_ColorEscape,
+            d->certFlags & authorityVerified_GmCertFlag ? "${pageinfo.cert.ca.verified}"
+                                                        : "${pageinfo.cert.ca.unverified}",
+            d->certFlags & domainVerified_GmCertFlag ? checked : unchecked,
+            uiText_ColorEscape,
+            d->certFlags & domainVerified_GmCertFlag ? "${pageinfo.domain.match}"
+                                                     : "${pageinfo.domain.mismatch}",
+            ~d->certFlags & domainVerified_GmCertFlag
+                ? format_CStr(" (%s)", cstr_String(d->certSubject))
+                : "",
+            d->certFlags & timeVerified_GmCertFlag ? checked : unchecked,
+            uiText_ColorEscape,
+            d->certFlags & timeVerified_GmCertFlag ? "${pageinfo.cert.notexpired}"
+                                                   : "${pageinfo.cert.expired}",
+            d->certExpiry.year,
+            d->certExpiry.month,
+            d->certExpiry.day,
+            d->certExpiry.hour,
+            d->certExpiry.minute,
+            d->certExpiry.second,
+            d->certFlags & trusted_GmCertFlag ? checked : unchecked,
+            uiText_ColorEscape,
+            d->certFlags & trusted_GmCertFlag ? "${pageinfo.cert.trusted}"
+                                              : "${pageinfo.cert.untrusted}");
         setFocus_Widget(NULL);
         iArray *items = new_Array(sizeof(iMenuItem));
         if (canTrust) {
             pushBack_Array(
-                items, &(iMenuItem){ uiTextCaution_ColorEscape "Trust", 0, 0, "server.trustcert" });
+                items, &(iMenuItem){ uiTextCaution_ColorEscape "${dlg.cert.trust}", 0, 0, "server.trustcert" });
         }
         if (haveFingerprint) {
-            pushBack_Array(items, &(iMenuItem){ "Copy Fingerprint", 0, 0, "server.copycert" });
+            pushBack_Array(items, &(iMenuItem){ "${dlg.cert.fingerprint}", 0, 0, "server.copycert" });
         }
         if (!isEmpty_Array(items)) {
             pushBack_Array(items, &(iMenuItem){ "---", 0, 0, 0 });
         }
-        pushBack_Array(items, &(iMenuItem){ "Dismiss", 0, 0, "message.ok" });
-        iWidget *dlg = makeQuestion_Widget(uiHeading_ColorEscape "PAGE INFORMATION",
+        pushBack_Array(items, &(iMenuItem){ "${dismiss}", 0, 0, "message.ok" });
+        iWidget *dlg = makeQuestion_Widget(uiHeading_ColorEscape "${heading.pageinfo}",
                                            cstr_String(msg),
                                            data_Array(items),
                                            size_Array(items));
@@ -1871,8 +1874,8 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     else if (equal_Command(cmd, "document.save") && document_App() == d) {
         if (d->request) {
-            makeMessage_Widget(uiTextCaution_ColorEscape "PAGE INCOMPLETE",
-                               "The page contents are still being downloaded.");
+            makeMessage_Widget(uiTextCaution_ColorEscape "${heading.save.incomplete}",
+                               "${dlg.save.incomplete}");
         }
         else if (!isEmpty_Block(&d->sourceContent)) {
             saveToDownloads_(d->mod.url, &d->sourceMime, &d->sourceContent);
@@ -2077,14 +2080,20 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         }
         if (!isEmpty_PtrArray(links)) {
             if (argLabel_Command(cmd, "confirm")) {
-                const char *plural = size_PtrArray(links) != 1 ? "s" : "";
+                //const char *plural = size_PtrArray(links) != 1 ? "s" : "";
+                const iBool isPlural = size_PtrArray(links) != 1;
                 makeQuestion_Widget(
-                    uiHeading_ColorEscape "IMPORT BOOKMARKS",
-                    format_CStr("Found %d new link%s on the page.", size_PtrArray(links), plural),
-                    (iMenuItem[]){ { "Cancel", 0, 0, NULL },
-                                   { format_CStr(uiTextAction_ColorEscape "Add %d Bookmark%s",
-                                                 size_PtrArray(links),
-                                                 plural), 0, 0, "bookmark.links" } },
+                    uiHeading_ColorEscape "${heading.import.bookmarks}",
+                    format_CStr(cstr_Lang(isPlural ? "dlg.import.found.many" : "dlg.import.found"),
+                                size_PtrArray(links)),
+                    (iMenuItem[]){
+                        { "${cancel}", 0, 0, NULL },
+                        { format_CStr(isPlural ? "dlg.import.add.many" : "dlg.import.add",
+                                      uiTextAction_ColorEscape,
+                                      size_PtrArray(links)),
+                          0,
+                          0,
+                          "bookmark.links" } },
                     2);
             }
             else {
@@ -2100,8 +2109,8 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             }
         }
         else {
-            makeMessage_Widget(uiHeading_ColorEscape "IMPORT BOOKMARKS",
-                               "All links on this page are already bookmarked.");
+            makeMessage_Widget(uiHeading_ColorEscape "${heading.import.bookmarks}",
+                               "${dlg.import.notnew}");
         }
         return iTrue;
     }
@@ -2117,9 +2126,9 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         }
     }
     else if (equal_Command(cmd, "document.autoreload.menu") && document_App() == d) {
-        iWidget *dlg = makeQuestion_Widget(uiTextAction_ColorEscape "AUTO-RELOAD",
-                                           "Select the auto-reload interval for this tab.",
-                                           (iMenuItem[]){ { "Cancel", 0, 0, NULL } },
+        iWidget *dlg = makeQuestion_Widget(uiTextAction_ColorEscape "${heading.autoreload}",
+                                           "${dlg.autoreload}",
+                                           (iMenuItem[]){ { "${cancel}", 0, 0, NULL } },
                                            1);
         for (int i = 0; i < max_ReloadInterval; ++i) {
             insertChildAfterFlags_Widget(
@@ -2454,7 +2463,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 init_Array(&items, sizeof(iMenuItem));
                 if (d->contextLink) {
                     const iString *linkUrl  = linkUrl_GmDocument(d->doc, d->contextLink->linkId);
-                    const int      linkFlags = linkFlags_GmDocument(d->doc, d->contextLink->linkId);
+//                    const int      linkFlags = linkFlags_GmDocument(d->doc, d->contextLink->linkId);
                     const iRangecc scheme   = urlScheme_String(linkUrl);
                     const iBool    isGemini = equalCase_Rangecc(scheme, "gemini");
                     iBool          isNative = iFalse;
@@ -2466,11 +2475,11 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                         pushBackN_Array(
                             &items,
                             (iMenuItem[]){
-                                { openTab_Icon " Open Link in New Tab",
+                                { openTab_Icon " ${link.newtab}",
                                   0,
                                   0,
                                   format_CStr("!open newtab:1 url:%s", cstr_String(linkUrl)) },
-                                { openTabBg_Icon " Open Link in Background Tab",
+                                { openTabBg_Icon " ${link.newtab.background}",
                                   0,
                                   0,
                                   format_CStr("!open newtab:2 url:%s", cstr_String(linkUrl)) } },
@@ -2479,7 +2488,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                     else if (!willUseProxy_App(scheme)) {
                         pushBack_Array(
                             &items,
-                            &(iMenuItem){ openExt_Icon " Open Link in Default Browser",
+                            &(iMenuItem){ openExt_Icon " ${link.browser}",
                                           0,
                                           0,
                                           format_CStr("!open default:1 url:%s", cstr_String(linkUrl)) });
@@ -2489,7 +2498,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                             &items,
                             (iMenuItem[]){
                                 { "---", 0, 0, NULL },
-                                { isGemini ? "Open without Proxy" : openExt_Icon " Open Link in Default Browser",
+                                { isGemini ? "${link.noproxy}" : openExt_Icon " ${link.browser}",
                                   0,
                                   0,
                                   format_CStr("!open noproxy:1 url:%s", cstr_String(linkUrl)) } },
@@ -2500,8 +2509,8 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                     urlEncodeSpaces_String(linkLabel);
                     pushBackN_Array(&items,
                                     (iMenuItem[]){ { "---", 0, 0, NULL },
-                                                   { "Copy Link", 0, 0, "document.copylink" },
-                                                   { pin_Icon " Bookmark Link...",
+                                                   { "${link.copy}", 0, 0, "document.copylink" },
+                                                   { pin_Icon " ${link.bookmark}",
                                                      0,
                                                      0,
                                                      format_CStr("!bookmark.add title:%s url:%s",
@@ -2512,7 +2521,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                     if (isNative && d->contextLink->mediaType != download_GmRunMediaType) {
                         pushBackN_Array(&items, (iMenuItem[]){
                             { "---", 0, 0, NULL },
-                            { download_Icon " Download Linked File", 0, 0, "document.downloadlink" },
+                            { download_Icon " ${link.download}", 0, 0, "document.downloadlink" },
                         }, 2);
                     }
                     iMediaRequest *mediaReq;
@@ -2532,39 +2541,39 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                     if (!isEmpty_Range(&d->selectMark)) {
                         pushBackN_Array(
                             &items,
-                            (iMenuItem[]){ { "Copy", 0, 0, "copy" }, { "---", 0, 0, NULL } },
+                            (iMenuItem[]){ { "${menu.copy}", 0, 0, "copy" }, { "---", 0, 0, NULL } },
                             2);
                     }
                     if (deviceType_App() == desktop_AppDeviceType) {
                         pushBackN_Array(
                             &items,
                             (iMenuItem[]){
-                                { "Go Back", navigateBack_KeyShortcut, "navigate.back" },
-                                { "Go Forward", navigateForward_KeyShortcut, "navigate.forward" } },
+                                { "${menu.back}", navigateBack_KeyShortcut, "navigate.back" },
+                                { "${menu.forward}", navigateForward_KeyShortcut, "navigate.forward" } },
                             2);
                     }
                     pushBackN_Array(
                         &items,
                         (iMenuItem[]){
-                            { upArrow_Icon " Go to Parent", navigateParent_KeyShortcut, "navigate.parent" },
-                            { upArrowBar_Icon " Go to Root", navigateRoot_KeyShortcut, "navigate.root" },
+                            { upArrow_Icon " ${menu.parent}", navigateParent_KeyShortcut, "navigate.parent" },
+                            { upArrowBar_Icon " ${menu.root}", navigateRoot_KeyShortcut, "navigate.root" },
                             { "---", 0, 0, NULL },
-                            { reload_Icon " Reload Page", reload_KeyShortcut, "navigate.reload" },
-                            { timer_Icon " Set Auto-Reload...", 0, 0, "document.autoreload.menu" },
+                            { reload_Icon " ${menu.reload}", reload_KeyShortcut, "navigate.reload" },
+                            { timer_Icon " ${menu.autoreload}", 0, 0, "document.autoreload.menu" },
                             { "---", 0, 0, NULL },
-                            { pin_Icon " Bookmark Page...", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
-                            { star_Icon " Subscribe to Page...", subscribeToPage_KeyModifier, "feeds.subscribe" },
+                            { pin_Icon " ${menu.page.bookmark}", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
+                            { star_Icon " ${menu.page.subscribe}", subscribeToPage_KeyModifier, "feeds.subscribe" },
                             { "---", 0, 0, NULL },
-                            { book_Icon " Import Links as Bookmarks...", 0, 0, "bookmark.links confirm:1" },
-                            { globe_Icon " Translate...", 0, 0, "document.translate" },
+                            { book_Icon " ${menu.page.import}", 0, 0, "bookmark.links confirm:1" },
+                            { globe_Icon " ${menu.page.translate}", 0, 0, "document.translate" },
                             { "---", 0, 0, NULL },
-                            { "Copy Page URL", 0, 0, "document.copylink" } },
+                            { "${menu.page.copyurl}", 0, 0, "document.copylink" } },
                         12);
                     if (isEmpty_Range(&d->selectMark)) {
                         pushBackN_Array(
                             &items,
                             (iMenuItem[]){
-                                { "Copy Page Source", 'c', KMOD_PRIMARY, "copy" },
+                                { "${menu.page.copysource}", 'c', KMOD_PRIMARY, "copy" },
                                 { download_Icon " " saveToDownloads_Label, SDLK_s, KMOD_PRIMARY, "document.save" } },
                             2);
                     }
@@ -2692,14 +2701,14 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                         const iString *url = absoluteUrl_String(
                             d->mod.url, linkUrl_GmDocument(d->doc, linkId));
                         makeQuestion_Widget(
-                            uiTextCaution_ColorEscape "OPEN LINK",
+                            uiTextCaution_ColorEscape "${heading.openlink}",
                             format_CStr(
-                                "Open this link in the default browser?\n" uiTextAction_ColorEscape
-                                "%s",
+                                cstr_Lang("dlg.openlink.confirm"),
+                                uiTextAction_ColorEscape,
                                 cstr_String(url)),
                             (iMenuItem[]){
-                                { "Cancel", 0, 0, NULL },
-                                { uiTextCaution_ColorEscape "Open Link",
+                                { "${cancel}", 0, 0, NULL },
+                                { uiTextCaution_ColorEscape "${dlg.openlink}",
                                   0, 0, format_CStr("!open default:1 url:%s", cstr_String(url)) } },
                             2);
                     }
@@ -2823,7 +2832,7 @@ static void drawBannerRun_DrawContext_(iDrawContext *d, const iGmRun *run, iInt2
         const int domainHeight = lineHeight_Text(banner_FontId) * 2;
         iRect rect = { add_I2(visPos, init_I2(0, domainHeight)),
                        addY_I2(run->visBounds.size, -domainHeight - lineHeight_Text(uiContent_FontId)) };
-        format_String(&str, "UNTRUSTED CERTIFICATE");
+        format_String(&str, "${heading.certwarn}");
         const int certFlags = d->widget->certFlags;
         if (certFlags & timeVerified_GmCertFlag && certFlags & domainVerified_GmCertFlag) {
             iUrl parts;
@@ -2834,32 +2843,30 @@ static void drawBannerRun_DrawContext_(iDrawContext *d, const iGmRun *run, iInt2
             iTime now;
             initCurrent_Time(&now);
             const int days = secondsSince_Time(&oldUntil, &now) / 3600 / 24;
+            appendCStr_String(&str, "\n");
             if (days <= 30) {
                 appendFormat_String(&str,
-                                    "\nThe received certificate may have been recently renewed "
-                                    "\u2014 it is for the correct domain and has not expired. "
-                                    "The currently trusted certificate will expire on %s, "
-                                    "in %d days.",
+                                    cstr_Lang("dlg.certwarn.mayberenewed"),
                                     cstrCollect_String(format_Date(&exp, "%Y-%m-%d")),
                                     days);
             }
             else {
-                appendFormat_String(&str, "\nThe received certificate is valid but different than "
-                                          "the one we trust.");
+                appendCStr_String(&str, cstr_Lang("dlg.certwarn.different"));
             }
         }
         else if (certFlags & domainVerified_GmCertFlag) {
-            appendFormat_String(&str, "\nThe received certificate has expired on %s.",
+            appendCStr_String(&str, "\n");
+            appendFormat_String(&str, cstr_Lang("dlg.certwarn.expired"),
                                 cstrCollect_String(format_Date(&d->widget->certExpiry, "%Y-%m-%d")));
         }
         else if (certFlags & timeVerified_GmCertFlag) {
-            appendFormat_String(&str, "\nThe received certificate is for the wrong domain (%s). "
-                                "This may be a server configuration problem.",
+            appendCStr_String(&str, "\n");
+            appendFormat_String(&str, cstr_Lang("dlg.certwarn.domain"),
                                 cstr_String(d->widget->certSubject));
         }
         else {
-            appendFormat_String(&str, "\nThe received certificate is expired AND for the "
-                                      "wrong domain.");
+            appendCStr_String(&str, "\n");
+            appendCStr_String(&str, cstr_Lang("dlg.certwarn.domain.expired"));
         }
         const iInt2 dims = advanceWrapRange_Text(
             uiContent_FontId, width_Rect(rect) - 16 * gap_UI, range_String(&str));
@@ -2880,6 +2887,7 @@ static void drawBannerRun_DrawContext_(iDrawContext *d, const iGmRun *run, iInt2
         bpos = topLeft_Rect(rect);
         draw_Text(uiLabelLarge_FontId, bpos, fg, "\u26a0");
         adjustEdges_Rect(&rect, 0, -8 * gap_UI, 0, 8 * gap_UI);
+        translate_Lang(&str);
         drawWrapRange_Text(uiContent_FontId,
                            addY_I2(topLeft_Rect(rect), yOff),
                            width_Rect(rect),
@@ -2990,8 +2998,9 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                 iGmMediaInfo info;
                 imageInfo_Media(constMedia_GmDocument(doc), imageId, &info);
                 const iInt2 imgSize = imageSize_Media(constMedia_GmDocument(doc), imageId);
-                format_String(&text, "%s \u2014 %d x %d \u2014 %.1fMB",
-                              info.type, imgSize.x, imgSize.y, info.numBytes / 1.0e6f);
+                format_String(&text, "%s \u2014 %d x %d \u2014 %.1f%s",
+                              info.type, imgSize.x, imgSize.y, info.numBytes / 1.0e6f,
+                              cstr_Lang("mb"));
             }
             else if (audioId) {
                 iGmMediaInfo info;
@@ -3047,24 +3056,26 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
             if (run->flags & endOfLine_GmRunFlag &&
                 (flags & (imageFileExtension_GmLinkFlag | audioFileExtension_GmLinkFlag) ||
                  showHost)) {
-                format_String(&str,
-                              " \u2014%s%s%s\r%c%s",
-                              showHost ? " " : "",
-                              showHost ? (flags & mailto_GmLinkFlag
-                                              ? cstr_String(url)
-                                              : ~flags & gemini_GmLinkFlag
-                                                    ? format_CStr("%s://%s",
-                                                                  cstr_Rangecc(parts.scheme),
-                                                                  cstr_Rangecc(parts.host))
-                                                    : cstr_Rangecc(parts.host))
-                                       : "",
-                              showHost && (showImage || showAudio) ? " \u2014" : "",
-                              showImage || showAudio
-                                  ? asciiBase_ColorEscape + fg
-                                  : (asciiBase_ColorEscape +
-                                     linkColor_GmDocument(doc, run->linkId, domain_GmLinkPart)),
-                              showImage ? " View Image \U0001f5bb"
-                                        : showAudio ? " Play Audio \U0001f3b5" : "");
+                format_String(
+                    &str,
+                    " \u2014%s%s%s\r%c%s",
+                    showHost ? " " : "",
+                    showHost
+                        ? (flags & mailto_GmLinkFlag    ? cstr_String(url)
+                           : ~flags & gemini_GmLinkFlag ? format_CStr("%s://%s",
+                                                                      cstr_Rangecc(parts.scheme),
+                                                                      cstr_Rangecc(parts.host))
+                                                        : cstr_Rangecc(parts.host))
+                        : "",
+                    showHost && (showImage || showAudio) ? " \u2014" : "",
+                    showImage || showAudio
+                        ? asciiBase_ColorEscape + fg
+                        : (asciiBase_ColorEscape +
+                           linkColor_GmDocument(doc, run->linkId, domain_GmLinkPart)),
+                    showImage || showAudio
+                        ? format_CStr(showImage ? " %s \U0001f5bb" : " %s \U0001f3b5",
+                                      cstr_Lang(showImage ? "link.hint.image" : "link.hint.audio"))
+                        : "");
             }
             if (run->flags & endOfLine_GmRunFlag && flags & visited_GmLinkFlag) {
                 iDate date;
@@ -3398,7 +3409,7 @@ const iString *bookmarkTitle_DocumentWidget(const iDocumentWidget *d) {
         }
     }
     if (isEmpty_StringArray(title)) {
-        pushBackCStr_StringArray(title, "Blank Page");
+        pushBackCStr_StringArray(title, cstr_Lang("bookmark.title.blank"));
     }
     return collect_String(joinCStr_StringArray(title, " \u2014 "));
 }

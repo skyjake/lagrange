@@ -293,8 +293,8 @@ static const iMenuItem viewMenuItems_[] = {
 };
 
 static iMenuItem bookmarksMenuItems_[] = {
-    { "${menu.bookmark.page}", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
-    { "${menu.subscribe.page}", subscribeToPage_KeyModifier, "feeds.subscribe" },
+    { "${menu.page.bookmark}", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
+    { "${menu.page.subscribe}", subscribeToPage_KeyModifier, "feeds.subscribe" },
     { "---", 0, 0, NULL },
     { "${menu.import.links}", 0, 0, "bookmark.links confirm:1" },
     { "---", 0, 0, NULL },
@@ -1162,7 +1162,7 @@ static void setupUserInterface_Window(iWindow *d) {
             { pin_Icon " ${sidebar.bookmarks}", 0, 0, "toolbar.showview arg:0" },
             { star_Icon " ${sidebar.feeds}", 0, 0, "toolbar.showview arg:1" },
             { clock_Icon " ${sidebar.history}", 0, 0, "toolbar.showview arg:2" },
-            { page_Icon " ${sidebar.outline}", 0, 0, "toolbar.showview arg:4" },
+            { page_Icon " ${toolbar.outline}", 0, 0, "toolbar.showview arg:4" },
         };
         iWidget *menu = makeMenu_Widget(findChild_Widget(toolBar, "toolbar.view"),
                                         items, iElemCount(items));
