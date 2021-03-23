@@ -32,7 +32,9 @@ static void clear_Lang_(iLang *d) {
 static void load_Lang_(iLang *d, const char *id) {
     /* Load compiled language strings from an embedded blob. */
     iUnused(id);
-    const iBlock *data = equal_CStr(id, "fi") ? &blobFi_Embedded : &blobEn_Embedded;
+    const iBlock *data = equal_CStr(id, "fi") ? &blobFi_Embedded
+                       : equal_CStr(id, "ru") ? &blobRu_Embedded
+                                              : &blobEn_Embedded;
     iMsgStr msg;
     for (const char *ptr = constBegin_Block(data); ptr != constEnd_Block(data); ptr++) {
         msg.id.start = ptr;

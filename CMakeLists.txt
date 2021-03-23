@@ -75,6 +75,7 @@ set (EMBED_RESOURCES
     res/fonts/Symbola.ttf
     res/lang/en.bin
     res/lang/fi.bin
+    res/lang/ru.bin
     res/shadow.png
 )
 if ((UNIX AND NOT APPLE) OR MSYS)
