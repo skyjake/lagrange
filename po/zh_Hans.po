@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-03-23 11:40+0000\n"
+"PO-Revision-Date: 2021-03-23 19:02+0000\n"
 "Last-Translator: Shibo Lyu <github@of.sb>\n"
 "Language-Team: Chinese (Simplified) <http://weblate.skyjake.fi/projects/"
 "lagrange/ui/zh_Hans/>\n"
@@ -257,3 +257,30 @@ msgstr "新标签页"
 
 msgid "menu.closetab.right"
 msgstr "关闭右侧所有标签页"
+
+msgid "sidebar.unread.many"
+msgstr "未读"
+
+msgid "toolbar.outline"
+msgstr "页面大纲"
+
+msgid "hint.findtext"
+msgstr "在页面上查找文本"
+
+msgid "status.query"
+msgstr "搜索查询"
+
+msgid "status.feeds"
+msgstr "正在刷新订阅"
+
+# megabytes, used as the unit after a number
+#, fuzzy
+msgid "mb"
+msgstr "MB"
+
+# kilobytes, used as the unit after a number
+msgid "kb"
+msgstr "KB"
+
+msgid "bytes"
+msgstr "字节"

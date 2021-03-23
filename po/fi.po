@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2021-03-23 09:09+0000\n"
-"PO-Revision-Date: 2021-03-23 11:14+0000\n"
+"PO-Revision-Date: 2021-03-23 19:15+0000\n"
 "Last-Translator: Jaakko Keränen <jaakko.keranen@iki.fi>\n"
 "Language-Team: Finnish <http://weblate.skyjake.fi/projects/lagrange/ui/fi/>\n"
 "Language: fi\n"
@@ -26,7 +26,7 @@ msgid "about.powered"
 msgstr "SDL 2:n, OpenSSL:n ja ☕️:n voimalla"
 
 msgid "cancel"
-msgstr "Kumoa"
+msgstr "Peruuta"
 
 msgid "dismiss"
 msgstr "Takaisin"
@@ -325,7 +325,7 @@ msgid "feeds.refresh"
 msgstr "Päivitä syötteet"
 
 msgid "menu.opentab"
-msgstr "Avaa uudessa välilehdessä"
+msgstr "Avaa uuteen välilehteen"
 
 msgid "menu.opentab.background"
 msgstr "Avaa taustalle välilehteen"
@@ -760,7 +760,7 @@ msgid "heading.prefs.colors"
 msgstr "Värit"
 
 msgid "heading.prefs.fonts"
-msgstr "Fontit"
+msgstr "KIRJASINLAJIT"
 
 msgid "heading.prefs.general"
 msgstr "Yleiset"
@@ -775,7 +775,7 @@ msgid "heading.prefs.network"
 msgstr "Verkko"
 
 msgid "heading.prefs.paragraph"
-msgstr "Kappale"
+msgstr "KAPPALE"
 
 msgid "heading.prefs.pagecontent"
 msgstr "SIVUN SISÄLTÖ"
@@ -889,10 +889,10 @@ msgid "prefs.saturation"
 msgstr "Saturaatio:"
 
 msgid "prefs.headingfont"
-msgstr "Otsakkeiden fontti:"
+msgstr "Otsakkeet:"
 
 msgid "prefs.font"
-msgstr "Leipätekstin fontti:"
+msgstr "Leipäteksti:"
 
 msgid "prefs.mono"
 msgstr "Tasalevyinen leipäteksti:"
