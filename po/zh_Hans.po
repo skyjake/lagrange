@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-03-23 11:14+0000\n"
+"PO-Revision-Date: 2021-03-23 11:40+0000\n"
 "Last-Translator: Shibo Lyu <github@of.sb>\n"
 "Language-Team: Chinese (Simplified) <http://weblate.skyjake.fi/projects/"
 "lagrange/ui/zh_Hans/>\n"
@@ -32,3 +32,228 @@ msgstr "偏好设置…"
 
 msgid "sidebar.bookmarks"
 msgstr "书签"
+
+msgid "about.tagline"
+msgstr "一个漂亮的 Gemini 客户端"
+
+msgid "about.version"
+msgstr "版本"
+
+msgid "about.powered"
+msgstr "由 SDL 2、OpenSSL 和☕️驱动"
+
+msgid "cancel"
+msgstr "取消"
+
+msgid "dismiss"
+msgstr "关闭"
+
+msgid "dlg.message.ok"
+msgstr "继续"
+
+msgid "dlg.default"
+msgstr " 好 "
+
+msgid "toggle.yes"
+msgstr "启用"
+
+msgid "toggle.no"
+msgstr "关闭"
+
+msgid "menu.title.file"
+msgstr "文件"
+
+msgid "menu.title.edit"
+msgstr "编辑"
+
+msgid "menu.title.view"
+msgstr "查看"
+
+msgid "menu.title.bookmarks"
+msgstr "书签"
+
+msgid "menu.title.identity"
+msgstr "身份"
+
+msgid "menu.title.help"
+msgstr "帮助"
+
+msgid "menu.closetab"
+msgstr "关闭标签页"
+
+msgid "menu.closetab.other"
+msgstr "关闭其它标签页"
+
+msgid "menu.closetab.left"
+msgstr "关闭左侧所有标签页"
+
+msgid "menu.duptab"
+msgstr "克隆标签页"
+
+msgid "menu.openlocation"
+msgstr "打开位置…"
+
+msgid "menu.find"
+msgstr "在页面上查找"
+
+msgid "macos.menu.find"
+msgstr "查找"
+
+msgid "menu.save.files"
+msgstr "保存至文档"
+
+msgid "menu.save.downloads"
+msgstr "保存至下载"
+
+msgid "menu.copy.source"
+msgstr "拷贝原始文本"
+
+msgid "menu.sidebar"
+msgstr "开关边栏"
+
+msgid "menu.sidebar.left"
+msgstr "开关左边栏"
+
+msgid "menu.sidebar.right"
+msgstr "开关右边栏"
+
+msgid "menu.zoom.out"
+msgstr "缩小"
+
+msgid "menu.zoom.reset"
+msgstr "重置缩放级"
+
+msgid "menu.bookmarks.list"
+msgstr "列出全部书签"
+
+msgid "macos.menu.bookmarks.list"
+msgstr "列出全部"
+
+msgid "macos.menu.bookmarks.bytag"
+msgstr "按标签列出"
+
+msgid "menu.bookmarks.bytime"
+msgstr "按创建时间列出书签"
+
+msgid "macos.menu.bookmarks.bytime"
+msgstr "按创建时间列出"
+
+msgid "menu.feeds.entrylist"
+msgstr "显示订阅项"
+
+msgid "menu.help"
+msgstr "帮助"
+
+msgid "menu.releasenotes"
+msgstr "发行说明"
+
+msgid "menu.quit"
+msgstr "退出 Lagrange"
+
+msgid "menu.zoom.in"
+msgstr "放大"
+
+msgid "menu.cut"
+msgstr "剪切"
+
+msgid "menu.copy"
+msgstr "复制"
+
+msgid "menu.copy.pagelink"
+msgstr "拷贝到页面的链接"
+
+msgid "menu.show.bookmarks"
+msgstr "显示书签"
+
+msgid "menu.show.feeds"
+msgstr "显示订阅项"
+
+msgid "menu.show.history"
+msgstr "显示浏览记录"
+
+msgid "menu.show.identities"
+msgstr "显示身份"
+
+msgid "menu.back"
+msgstr "后退"
+
+msgid "menu.forward"
+msgstr "前进"
+
+msgid "menu.parent"
+msgstr "回上一级"
+
+msgid "menu.root"
+msgstr "回到根一级"
+
+msgid "menu.reload"
+msgstr "刷新"
+
+msgid "menu.autoreload"
+msgstr "设置自动刷新…"
+
+msgid "menu.page.bookmark"
+msgstr "添加到书签…"
+
+msgid "menu.page.subscribe"
+msgstr "订阅页面…"
+
+msgid "menu.aboutpages"
+msgstr "about 页面"
+
+msgid "menu.about"
+msgstr "关于"
+
+msgid "panel.back"
+msgstr "返回"
+
+msgid "menu.debug"
+msgstr "调试信息"
+
+msgid "menu.page.import"
+msgstr "将链接以书签形式导入…"
+
+msgid "menu.page.translate"
+msgstr "翻译…"
+
+msgid "menu.page.copyurl"
+msgstr "拷贝页面地址"
+
+msgid "menu.page.copysource"
+msgstr "拷贝页面源码"
+
+msgid "menu.bookmarks.refresh"
+msgstr "刷新远端书签"
+
+msgid "menu.feeds.refresh"
+msgstr "刷新订阅项"
+
+msgid "menu.identity.new"
+msgstr "创建新身份…"
+
+msgid "menu.identity.import"
+msgstr "导入…"
+
+msgid "menu.identity.notactive"
+msgstr "没有已启用的身份"
+
+msgid "menu.bookmarks.bytag"
+msgstr "按标签列出书签"
+
+msgid "menu.paste"
+msgstr "粘贴"
+
+msgid "menu.show.outline"
+msgstr "显示页面大纲"
+
+msgid "menu.import.links"
+msgstr "导入页面上的所有链接…"
+
+msgid "about.logo"
+msgstr "ASCII 艺术：大字体的单词「Lagrange」"
+
+msgid "menu.newtab"
+msgstr "新标签页"
+
+msgid "menu.closetab.right"
+msgstr "关闭右侧所有标签页"
