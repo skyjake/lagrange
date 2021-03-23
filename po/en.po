@@ -796,7 +796,7 @@ msgid "heading.prefs.userinterface"
 msgstr "User Interface"
 
 msgid "prefs.downloads"
-msgstr "Donwloads folder:"
+msgstr "Downloads folder:"
 
 msgid "prefs.searchurl"
 msgstr "Search URL:"
