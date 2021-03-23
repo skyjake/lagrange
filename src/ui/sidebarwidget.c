@@ -175,7 +175,8 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                         if (today.year == on.year &&
                             today.month == on.month &&
                             today.day == on.day) {
-                            appendCStr_String(text, " \u2014 ${feeds.today}");
+                            appendCStr_String(text, " \u2014 ");
+                            appendCStr_String(text, cstr_Lang("feeds.today"));
                         }
                         set_String(&sep->meta, text);
                         delete_String(text);

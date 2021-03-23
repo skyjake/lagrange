@@ -1137,7 +1137,7 @@ void finalizeSheet_Widget(iWidget *sheet) {
                 pushBack_PtrArray(panelButtons,
                                   addChildFlags_Widget(topPanel,
                                                        iClob(panelButton = makePanelButton_(
-                                                             i == 1 ? "User Interface" : cstr_String(text),
+                                                             i == 1 ? "${heading.prefs.userinterface}" : cstr_String(text),
                                                              "panel.open")),
                                                        (i == 0 ? borderTop_WidgetFlag : 0) |
                                                        chevron_WidgetFlag));
@@ -1332,10 +1332,10 @@ void finalizeSheet_Widget(iWidget *sheet) {
         if (isPrefs) {
             addChild_Widget(topPanel, iClob(makePadding_Widget(lineHeight_Text(defaultBig_FontId))));
             addChildFlags_Widget(topPanel,
-                                 iClob(makePanelButton_(info_Icon " Help", "panel.showhelp")),
+                                 iClob(makePanelButton_(info_Icon " ${menu.help}", "panel.showhelp")),
                                  borderTop_WidgetFlag);
             addChildFlags_Widget(topPanel,
-                                 iClob(makePanelButton_(planet_Icon " About", "panel.about")),
+                                 iClob(makePanelButton_(planet_Icon " ${menu.about}", "panel.about")),
                                  chevron_WidgetFlag);
         }
         else {
@@ -1362,7 +1362,7 @@ void finalizeSheet_Widget(iWidget *sheet) {
             setBackgroundColor_Widget(navi, uiBackground_ColorId);
             addChild_Widget(navi, iClob(makePadding_Widget(0)));
             iLabelWidget *back = addChildFlags_Widget(navi,
-                                                      iClob(new_LabelWidget(leftAngle_Icon " Back", "panel.close")),
+                                                      iClob(new_LabelWidget(leftAngle_Icon " ${panel.back}", "panel.close")),
                                                       noBackground_WidgetFlag | frameless_WidgetFlag |
                                                       alignLeft_WidgetFlag | extraPadding_WidgetFlag);
             checkIcon_LabelWidget(back);
@@ -1577,11 +1577,11 @@ iWidget *makeDialogButtons_Widget(const iMenuItem *actions, size_t numActions) {
                 kmods = 0;
             }
             if (label == NULL) {
-                label = uiTextAction_ColorEscape " OK ";
+                label = format_CStr(uiTextAction_ColorEscape "%s", cstr_Lang("dlg.default"));
             }
         }
         iLabelWidget *button =
-            addChild_Widget(div, iClob(newKeyMods_LabelWidget(actions[i].label, key, kmods, cmd)));
+            addChild_Widget(div, iClob(newKeyMods_LabelWidget(label, key, kmods, cmd)));
         setFont_LabelWidget(button, isDefault ? fonts[1] : fonts[0]);
     }
     return div;
@@ -1655,7 +1655,7 @@ static iBool messageHandler_(iWidget *msg, const char *cmd) {
 
 iWidget *makeMessage_Widget(const char *title, const char *msg) {
     iWidget *dlg =
-        makeQuestion_Widget(title, msg, (iMenuItem[]){ { "Continue", 0, 0, "message.ok" } }, 1);
+        makeQuestion_Widget(title, msg, (iMenuItem[]){ { "${dlg.message.ok}", 0, 0, "message.ok" } }, 1);
     addAction_Widget(dlg, SDLK_ESCAPE, 0, "message.ok");
     addAction_Widget(dlg, SDLK_SPACE, 0, "message.ok");
     return dlg;
@@ -1679,12 +1679,14 @@ iWidget *makeQuestion_Widget(const char *title, const char *msg,
 
 void setToggle_Widget(iWidget *d, iBool active) {
     if (d) {
+        const char *YES = cstr_Lang("toggle.yes");
+        const char *NO  = cstr_Lang("toggle.no");
         setFlags_Widget(d, selected_WidgetFlag, active);
         iLabelWidget *label = (iLabelWidget *) d;
-        if (!cmp_String(text_LabelWidget(label), "YES") ||
-            !cmp_String(text_LabelWidget(label), "NO")) {
+        if (!cmp_String(text_LabelWidget(label), YES) ||
+            !cmp_String(text_LabelWidget(label), NO)) {
             updateText_LabelWidget((iLabelWidget *) d,
-                                   collectNewFormat_String("%s", isSelected_Widget(d) ? "YES" : "NO"));
+                                   collectNewCStr_String(isSelected_Widget(d) ? YES : NO));
         }
         else {
             refresh_Widget(d);
@@ -1788,85 +1790,85 @@ static void addFontButtons_(iWidget *parent, const char *id) {
 iWidget *makePreferences_Widget(void) {
     iWidget *dlg = makeSheet_Widget("prefs");
     addChildFlags_Widget(dlg,
-                         iClob(new_LabelWidget(uiHeading_ColorEscape "PREFERENCES", NULL)),
+                         iClob(new_LabelWidget(uiHeading_ColorEscape "${heading.prefs}", NULL)),
                          frameless_WidgetFlag);
     iWidget *tabs = makeTabs_Widget(dlg);
     setBackgroundColor_Widget(findChild_Widget(tabs, "tabs.buttons"), uiBackgroundSidebar_ColorId);
     setId_Widget(tabs, "prefs.tabs");
     iWidget *headings, *values;
     /* General preferences. */ {
-        appendTwoColumnPage_(tabs, "General", '1', &headings, &values);
+        appendTwoColumnPage_(tabs, "${heading.prefs.general}", '1', &headings, &values);
 #if defined (LAGRANGE_DOWNLOAD_EDIT)
-        addChild_Widget(headings, iClob(makeHeading_Widget("Downloads folder:")));
+        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.downloads}")));
         setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.downloads");
 #endif
-        addChild_Widget(headings, iClob(makeHeading_Widget("Search URL:")));
+        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.searchurl}")));
         setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.searchurl");
-        addChild_Widget(headings, iClob(makeHeading_Widget("Show URL on hover:")));
+        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.hoverlink}")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.hoverlink")));
-        addChild_Widget(headings, iClob(makeHeading_Widget("Vertical centering:")));
+        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.centershort}")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.centershort")));
-        makeTwoColumnHeading_("SCROLLING", headings, values);
-        addChild_Widget(headings, iClob(makeHeading_Widget("Smooth scrolling:")));
+        makeTwoColumnHeading_("${heading.prefs.scrolling}", headings, values);
+        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.smoothscroll}")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.smoothscroll")));
-        addChild_Widget(headings, iClob(makeHeading_Widget("Load image on scroll:")));
+        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.imageloadscroll}")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.imageloadscroll")));
         if (deviceType_App() == phone_AppDeviceType) {
-            addChild_Widget(headings, iClob(makeHeading_Widget("Hide toolbar on scroll:")));
+            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.hidetoolbarscroll}")));
             addChild_Widget(values, iClob(makeToggle_Widget("prefs.hidetoolbarscroll")));
         }
     }
     /* Window. */ {
-        appendTwoColumnPage_(tabs, "Interface", '2', &headings, &values);
+        appendTwoColumnPage_(tabs, "${heading.prefs.interface}", '2', &headings, &values);
 #if defined (iPlatformApple) || defined (iPlatformMSys)
-        addChild_Widget(headings, iClob(makeHeading_Widget("Use system theme:")));
+        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.ostheme}")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.ostheme")));
 #endif
-        addChild_Widget(headings, iClob(makeHeading_Widget("Theme:")));
+        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.theme}")));
         iWidget *themes = new_Widget();
         /* Themes. */ {
-            setId_Widget(addChild_Widget(themes, iClob(new_LabelWidget("Pure Black", "theme.set arg:0"))), "prefs.theme.0");
-            setId_Widget(addChild_Widget(themes, iClob(new_LabelWidget("Dark", "theme.set arg:1"))), "prefs.theme.1");
-            setId_Widget(addChild_Widget(themes, iClob(new_LabelWidget("Light", "theme.set arg:2"))), "prefs.theme.2");
-            setId_Widget(addChild_Widget(themes, iClob(new_LabelWidget("Pure White", "theme.set arg:3"))), "prefs.theme.3");
+            setId_Widget(addChild_Widget(themes, iClob(new_LabelWidget("${prefs.theme.black}", "theme.set arg:0"))), "prefs.theme.0");
+            setId_Widget(addChild_Widget(themes, iClob(new_LabelWidget("${prefs.theme.dark}", "theme.set arg:1"))), "prefs.theme.1");
+            setId_Widget(addChild_Widget(themes, iClob(new_LabelWidget("${prefs.theme.light}", "theme.set arg:2"))), "prefs.theme.2");
+            setId_Widget(addChild_Widget(themes, iClob(new_LabelWidget("${prefs.theme.white}", "theme.set arg:3"))), "prefs.theme.3");
         }
         addChildFlags_Widget(values, iClob(themes), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
         /* Accents. */
         iWidget *accent = new_Widget(); {
-            setId_Widget(addChild_Widget(accent, iClob(new_LabelWidget("Teal", "accent.set arg:0"))), "prefs.accent.0");
-            setId_Widget(addChild_Widget(accent, iClob(new_LabelWidget("Orange", "accent.set arg:1"))), "prefs.accent.1");
+            setId_Widget(addChild_Widget(accent, iClob(new_LabelWidget("${prefs.accent.teal}", "accent.set arg:0"))), "prefs.accent.0");
+            setId_Widget(addChild_Widget(accent, iClob(new_LabelWidget("${prefs.accent.orange}", "accent.set arg:1"))), "prefs.accent.1");
         }
-        addChild_Widget(headings, iClob(makeHeading_Widget("Accent color:")));
+        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.accent}")));
         addChildFlags_Widget(values, iClob(accent), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
 #if defined (LAGRANGE_CUSTOM_FRAME)
-        addChild_Widget(headings, iClob(makeHeading_Widget("Custom window frame:")));
+        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.customframe}")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.customframe")));
 #endif
-        makeTwoColumnHeading_("SIZING", headings, values);
-        addChild_Widget(headings, iClob(makeHeading_Widget("UI scale factor:")));
+        makeTwoColumnHeading_("${heading.prefs.sizing}", headings, values);
+        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.uiscale}")));
         setId_Widget(addChild_Widget(values, iClob(new_InputWidget(8))), "prefs.uiscale");
-        addChild_Widget(headings, iClob(makeHeading_Widget("Retain placement:")));
+        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.retainwindow}")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.retainwindow")));
-        makeTwoColumnHeading_("WIDE LAYOUT", headings, values);
-        addChild_Widget(headings, iClob(makeHeading_Widget("Site icon:")));
+        makeTwoColumnHeading_("${heading.prefs.widelayout}", headings, values);
+        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.sideicon}")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.sideicon")));
     }
     /* Colors. */ {
-        appendTwoColumnPage_(tabs, "Colors", '3', &headings, &values);
-        makeTwoColumnHeading_("PAGE CONTENT", headings, values);
+        appendTwoColumnPage_(tabs, "${heading.prefs.colors}", '3', &headings, &values);
+        makeTwoColumnHeading_("${heading.prefs.pagecontent}", headings, values);
         for (int i = 0; i < 2; ++i) {
             const iBool isDark = (i == 0);
             const char *mode = isDark ? "dark" : "light";
             const iMenuItem themes[] = {
-                { "Colorful Dark", 0, 0, format_CStr("doctheme.%s.set arg:%d", mode, colorfulDark_GmDocumentTheme) },
-                { "Colorful Light", 0, 0, format_CStr("doctheme.%s.set arg:%d", mode, colorfulLight_GmDocumentTheme) },
-                { "Black", 0, 0, format_CStr("doctheme.%s.set arg:%d", mode, black_GmDocumentTheme) },
-                { "Gray", 0, 0, format_CStr("doctheme.%s.set arg:%d", mode, gray_GmDocumentTheme) },
-                { "White", 0, 0, format_CStr("doctheme.%s.set arg:%d", mode, white_GmDocumentTheme) },
-                { "Sepia", 0, 0, format_CStr("doctheme.%s.set arg:%d", mode, sepia_GmDocumentTheme) },
-                { "High Contrast", 0, 0, format_CStr("doctheme.%s.set arg:%d", mode, highContrast_GmDocumentTheme) },
+                { "${prefs.doctheme.name.colorfuldark}", 0, 0, format_CStr("doctheme.%s.set arg:%d", mode, colorfulDark_GmDocumentTheme) },
+                { "${prefs.doctheme.name.colorfullight}", 0, 0, format_CStr("doctheme.%s.set arg:%d", mode, colorfulLight_GmDocumentTheme) },
+                { "${prefs.doctheme.name.black}", 0, 0, format_CStr("doctheme.%s.set arg:%d", mode, black_GmDocumentTheme) },
+                { "${prefs.doctheme.name.gray}", 0, 0, format_CStr("doctheme.%s.set arg:%d", mode, gray_GmDocumentTheme) },
+                { "${prefs.doctheme.name.white}", 0, 0, format_CStr("doctheme.%s.set arg:%d", mode, white_GmDocumentTheme) },
+                { "${prefs.doctheme.name.sepia}", 0, 0, format_CStr("doctheme.%s.set arg:%d", mode, sepia_GmDocumentTheme) },
+                { "${prefs.doctheme.name.highcontrast}", 0, 0, format_CStr("doctheme.%s.set arg:%d", mode, highContrast_GmDocumentTheme) },
             };
-            addChild_Widget(headings, iClob(makeHeading_Widget(isDark ? "Dark theme:" : "Light theme:")));
+            addChild_Widget(headings, iClob(makeHeading_Widget(isDark ? "${prefs.doctheme.dark}" : "${prefs.doctheme.light}")));
             iLabelWidget *button =
                 makeMenuButton_LabelWidget(themes[1].label, themes, iElemCount(themes));
 //            setFrameColor_Widget(findChild_Widget(as_Widget(button), "menu"),
@@ -1875,7 +1877,7 @@ iWidget *makePreferences_Widget(void) {
             setId_Widget(addChildFlags_Widget(values, iClob(button), alignLeft_WidgetFlag),
                          format_CStr("prefs.doctheme.%s", mode));
         }
-        addChild_Widget(headings, iClob(makeHeading_Widget("Saturation:")));
+        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.saturation}")));
         iWidget *sats = new_Widget();
         /* Saturation levels. */ {
             addRadioButton_(sats, "prefs.saturation.3", "100 %%", "saturation.set arg:100");
@@ -1886,75 +1888,75 @@ iWidget *makePreferences_Widget(void) {
         addChildFlags_Widget(values, iClob(sats), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
     }
     /* Layout. */ {
-        appendTwoColumnPage_(tabs, "Style", '4', &headings, &values);
-        makeTwoColumnHeading_("FONTS", headings, values);
+        appendTwoColumnPage_(tabs, "${heading.prefs.style}", '4', &headings, &values);
+        makeTwoColumnHeading_("${heading.prefs.fonts}", headings, values);
         /* Fonts. */ {
             iWidget *fonts;
-            addChild_Widget(headings, iClob(makeHeading_Widget("Heading font:")));
+            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.headingfont}")));
             addFontButtons_(values, "headingfont");
-            addChild_Widget(headings, iClob(makeHeading_Widget("Body font:")));
+            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.font}")));
             addFontButtons_(values, "font");
-            addChild_Widget(headings, iClob(makeHeading_Widget("Monospace body:")));
+            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.mono}")));
             iWidget *mono = new_Widget();
             /* TODO: Needs labels! */
             setTextCStr_LabelWidget(
-                addChild_Widget(mono, iClob(makeToggle_Widget("prefs.mono.gemini"))), "Gemini");
+                addChild_Widget(mono, iClob(makeToggle_Widget("prefs.mono.gemini"))), "${prefs.mono.gemini}");
             setTextCStr_LabelWidget(
-                addChild_Widget(mono, iClob(makeToggle_Widget("prefs.mono.gopher"))), "Gopher");
+                addChild_Widget(mono, iClob(makeToggle_Widget("prefs.mono.gopher"))), "${prefs.mono.gopher}");
             addChildFlags_Widget(values, iClob(mono), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
         }
-        makeTwoColumnHeading_("PARAGRAPH", headings, values);
-        addChild_Widget(headings, iClob(makeHeading_Widget("Line width:")));
+        makeTwoColumnHeading_("${heading.prefs.paragraph}", headings, values);
+        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.linewidth}")));
         iWidget *widths = new_Widget();
         /* Line widths. */ {
             addRadioButton_(widths, "prefs.linewidth.30", "\u20132", "linewidth.set arg:30");
             addRadioButton_(widths, "prefs.linewidth.34", "\u20131", "linewidth.set arg:34");
-            addRadioButton_(widths, "prefs.linewidth.38", "Normal", "linewidth.set arg:38");
+            addRadioButton_(widths, "prefs.linewidth.38", "${prefs.linewidth.normal}", "linewidth.set arg:38");
             addRadioButton_(widths, "prefs.linewidth.43", "+1", "linewidth.set arg:43");
             addRadioButton_(widths, "prefs.linewidth.48", "+2", "linewidth.set arg:48");
-            addRadioButton_(widths, "prefs.linewidth.1000", "Window", "linewidth.set arg:1000");
+            addRadioButton_(widths, "prefs.linewidth.1000", "${prefs.linewidth.fill}", "linewidth.set arg:1000");
         }
         addChildFlags_Widget(values, iClob(widths), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
-        addChild_Widget(headings, iClob(makeHeading_Widget("Quote indicator:")));
+        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.quoteicon}")));
         iWidget *quote = new_Widget(); {
-            addRadioButton_(quote, "prefs.quoteicon.1", "Icon", "quoteicon.set arg:1");
-            addRadioButton_(quote, "prefs.quoteicon.0", "Line", "quoteicon.set arg:0");
+            addRadioButton_(quote, "prefs.quoteicon.1", "${prefs.quoteicon.icon}", "quoteicon.set arg:1");
+            addRadioButton_(quote, "prefs.quoteicon.0", "${prefs.quoteicon.line}", "quoteicon.set arg:0");
         }
         addChildFlags_Widget(values, iClob(quote), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
-        addChild_Widget(headings, iClob(makeHeading_Widget("Big 1st paragaph:")));
+        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.biglede}")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.biglede")));
-        addChild_Widget(headings, iClob(makeHeading_Widget("Wrap plain text:")));
+        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.plaintext.wrap}")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.plaintext.wrap")));
     }
     /* Network. */ {
-        appendTwoColumnPage_(tabs, "Network", '5', &headings, &values);
-        addChild_Widget(headings, iClob(makeHeading_Widget("Decode URLs:")));
+        appendTwoColumnPage_(tabs, "${heading.prefs.network}", '5', &headings, &values);
+        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.decodeurls}")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.decodeurls")));
-        addChild_Widget(headings, iClob(makeHeading_Widget("Cache size:")));
+        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.cachesize}")));
         iWidget *cacheGroup = new_Widget(); {
             iInputWidget *cache = new_InputWidget(4);
             setSelectAllOnFocus_InputWidget(cache, iTrue);
             setId_Widget(addChild_Widget(cacheGroup, iClob(cache)), "prefs.cachesize");
-            addChildFlags_Widget(cacheGroup, iClob(new_LabelWidget("MB", NULL)), frameless_WidgetFlag);
+            addChildFlags_Widget(cacheGroup, iClob(new_LabelWidget("${mb}", NULL)), frameless_WidgetFlag);
         }
         addChildFlags_Widget(values, iClob(cacheGroup), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
-        makeTwoColumnHeading_("CERTIFICATES", headings, values);
-        addChild_Widget(headings, iClob(makeHeading_Widget("CA file:")));
+        makeTwoColumnHeading_("${heading.prefs.certs}", headings, values);
+        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.ca.file}")));
         setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.ca.file");
-        addChild_Widget(headings, iClob(makeHeading_Widget("CA path:")));
+        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.ca.path}")));
         setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.ca.path");
-        makeTwoColumnHeading_("PROXIES", headings, values);
-        addChild_Widget(headings, iClob(makeHeading_Widget("Gemini proxy:")));
+        makeTwoColumnHeading_("${heading.prefs.proxies}", headings, values);
+        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.proxy.gemini}")));
         setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.proxy.gemini");
-        addChild_Widget(headings, iClob(makeHeading_Widget("Gopher proxy:")));
+        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.proxy.gopher}")));
         setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.proxy.gopher");
-        addChild_Widget(headings, iClob(makeHeading_Widget("HTTP proxy:")));
+        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.proxy.http}")));
         setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.proxy.http");
     }
     /* Keybindings. */
     if (deviceType_App() == desktop_AppDeviceType) {
         iBindingsWidget *bind = new_BindingsWidget();
-        appendFramelessTabPage_(tabs, iClob(bind), "Keys", '6', KMOD_PRIMARY);
+        appendFramelessTabPage_(tabs, iClob(bind), "${heading.prefs.keys}", '6', KMOD_PRIMARY);
     }
     addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
     resizeToLargestPage_Widget(tabs);
@@ -1980,20 +1982,20 @@ iWidget *makeBookmarkEditor_Widget(void) {
     iWidget *dlg = makeSheet_Widget("bmed");
     setId_Widget(addChildFlags_Widget(
                      dlg,
-                     iClob(new_LabelWidget(uiHeading_ColorEscape "EDIT BOOKMARK", NULL)),
+                     iClob(new_LabelWidget(uiHeading_ColorEscape "${heading.bookmark.edit}", NULL)),
                      frameless_WidgetFlag),
                  "bmed.heading");
     iWidget *headings, *values;
     addChild_Widget(dlg, iClob(makeTwoColumnWidget_(&headings, &values)));
     iInputWidget *inputs[4];
-    addChild_Widget(headings, iClob(makeHeading_Widget("Title:")));
+    addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.bookmark.title}")));
     setId_Widget(addChild_Widget(values, iClob(inputs[0] = new_InputWidget(0))), "bmed.title");
-    addChild_Widget(headings, iClob(makeHeading_Widget("URL:")));
+    addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.bookmark.url}")));
     setId_Widget(addChild_Widget(values, iClob(inputs[1] = new_InputWidget(0))), "bmed.url");
     setUrlContent_InputWidget(inputs[1], iTrue);
-    addChild_Widget(headings, iClob(makeHeading_Widget("Tags:")));
+    addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.bookmark.tags}")));
     setId_Widget(addChild_Widget(values, iClob(inputs[2] = new_InputWidget(0))), "bmed.tags");
-    addChild_Widget(headings, iClob(makeHeading_Widget("Icon:")));
+    addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.bookmark.icon}")));
     setId_Widget(addChild_Widget(values, iClob(inputs[3] = new_InputWidget(1))), "bmed.icon");
     arrange_Widget(dlg);
     for (int i = 0; i < 3; ++i) {
@@ -2002,7 +2004,7 @@ iWidget *makeBookmarkEditor_Widget(void) {
     addChild_Widget(
         dlg,
         iClob(makeDialogButtons_Widget((iMenuItem[]){ { "${cancel}", 0, 0, NULL },
-                                                { uiTextCaution_ColorEscape "Save Bookmark",
+                                                { uiTextCaution_ColorEscape "${dlg.bookmark.save}",
                                                   SDLK_RETURN,
                                                   KMOD_PRIMARY,
                                                   "bmed.accept" } },
@@ -2045,7 +2047,7 @@ iWidget *makeBookmarkCreation_Widget(const iString *url, const iString *title, i
     iWidget *dlg = makeBookmarkEditor_Widget();
     setId_Widget(dlg, "bmed.create");
     setTextCStr_LabelWidget(findChild_Widget(dlg, "bmed.heading"),
-                            uiHeading_ColorEscape "ADD BOOKMARK");
+                            uiHeading_ColorEscape "${heading.bookmark.add}");
     iUrl parts;
     init_Url(&parts, url);
     setTextCStr_InputWidget(findChild_Widget(dlg, "bmed.title"),
@@ -2112,28 +2114,28 @@ iWidget *makeFeedSettings_Widget(uint32_t bookmarkId) {
     iWidget *dlg = makeSheet_Widget("feedcfg");
     setId_Widget(addChildFlags_Widget(
                      dlg,
-                     iClob(new_LabelWidget(bookmarkId ? uiHeading_ColorEscape "FEED SETTINGS"
-                                                      : uiHeading_ColorEscape "SUBSCRIBE TO PAGE",
+                     iClob(new_LabelWidget(bookmarkId ? uiHeading_ColorEscape "${heading.feedcfg}"
+                                                      : uiHeading_ColorEscape "${heading.subscribe}",
                                            NULL)),
                      frameless_WidgetFlag),
                  "feedcfg.heading");
     iWidget *headings, *values;
     addChild_Widget(dlg, iClob(makeTwoColumnWidget_(&headings, &values)));
-    addChild_Widget(headings, iClob(makeHeading_Widget("Title:")));
+    addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.feed.title}")));
     iInputWidget *input = new_InputWidget(0);
     setId_Widget(addChild_Widget(values, iClob(input)), "feedcfg.title");
-    addChild_Widget(headings, iClob(makeHeading_Widget("Entry type:")));
+    addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.feed.entrytype}")));
     iWidget *types = new_Widget(); {
-        addRadioButton_(types, "feedcfg.type.gemini", "YYYY-MM-DD Links", "feedcfg.type arg:0");
-        addRadioButton_(types, "feedcfg.type.headings", "New Headings", "feedcfg.type arg:1");
+        addRadioButton_(types, "feedcfg.type.gemini", "${dlg.feed.type.gemini}", "feedcfg.type arg:0");
+        addRadioButton_(types, "feedcfg.type.headings", "${dlg.feed.type.headings}", "feedcfg.type arg:1");
     }
     addChildFlags_Widget(values, iClob(types), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
     iWidget *buttons =
         addChild_Widget(dlg,
                         iClob(makeDialogButtons_Widget(
                             (iMenuItem[]){ { "${cancel}", 0, 0, NULL },
-                                           { bookmarkId ? uiTextCaution_ColorEscape "Save Settings"
-                                                        : uiTextCaution_ColorEscape "Subscribe",
+                                           { bookmarkId ? uiTextCaution_ColorEscape "${dlg.feed.save}"
+                                                        : uiTextCaution_ColorEscape "${dlg.feed.sub}",
                                              SDLK_RETURN,
                                              KMOD_PRIMARY,
                                              format_CStr("feedcfg.accept bmid:%d", bookmarkId) } },
@@ -2161,14 +2163,14 @@ iWidget *makeIdentityCreation_Widget(void) {
     iWidget *dlg = makeSheet_Widget("ident");
     setId_Widget(addChildFlags_Widget(
                      dlg,
-                     iClob(new_LabelWidget(uiHeading_ColorEscape "NEW IDENTITY", NULL)),
+                     iClob(new_LabelWidget(uiHeading_ColorEscape "${heading.newident}", NULL)),
                      frameless_WidgetFlag),
                  "ident.heading");
     iWidget *page = new_Widget();
     addChildFlags_Widget(
         dlg,
         iClob(
-            new_LabelWidget("Creating a self-signed 2048-bit RSA certificate.", NULL)),
+            new_LabelWidget("${dlg.newident.rsa.selfsign}", NULL)),
         frameless_WidgetFlag);
     addChild_Widget(dlg, iClob(page));
     setFlags_Widget(page, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
@@ -2177,35 +2179,35 @@ iWidget *makeIdentityCreation_Widget(void) {
     iWidget *values = addChildFlags_Widget(
         page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
     iInputWidget *inputs[6];
-    addChild_Widget(headings, iClob(makeHeading_Widget("Valid until:")));
-    setId_Widget(addChild_Widget(values, iClob(newHint_InputWidget(19, "YYYY-MM-DD HH:MM:SS"))), "ident.until");
-    addChild_Widget(headings, iClob(makeHeading_Widget("Common name:")));
+    addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.newident.until}")));
+    setId_Widget(addChild_Widget(values, iClob(newHint_InputWidget(19, "${hint.newident.date}"))), "ident.until");
+    addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.newident.commonname}")));
     setId_Widget(addChild_Widget(values, iClob(inputs[0] = new_InputWidget(0))), "ident.common");
     /* Temporary? */ {
-        addChild_Widget(headings, iClob(makeHeading_Widget("Temporary:")));
+        addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.newident.temp}")));
         iWidget *tmpGroup = new_Widget();
         setFlags_Widget(tmpGroup, arrangeSize_WidgetFlag | arrangeHorizontal_WidgetFlag, iTrue);
         addChild_Widget(tmpGroup, iClob(makeToggle_Widget("ident.temp")));
         setId_Widget(
             addChildFlags_Widget(
                 tmpGroup,
-                iClob(new_LabelWidget(uiTextCaution_ColorEscape "\u26a0  not saved to disk", NULL)),
+                iClob(new_LabelWidget(uiTextCaution_ColorEscape "\u26a0  ${dlg.newident.notsaved}", NULL)),
                 hidden_WidgetFlag | frameless_WidgetFlag),
             "ident.temp.note");
         addChild_Widget(values, iClob(tmpGroup));
     }
     addChild_Widget(headings, iClob(makePadding_Widget(gap_UI)));
     addChild_Widget(values, iClob(makePadding_Widget(gap_UI)));
-    addChild_Widget(headings, iClob(makeHeading_Widget("Email:")));
-    setId_Widget(addChild_Widget(values, iClob(inputs[1] = newHint_InputWidget(0, "optional"))), "ident.email");
-    addChild_Widget(headings, iClob(makeHeading_Widget("User ID:")));
-    setId_Widget(addChild_Widget(values, iClob(inputs[2] = newHint_InputWidget(0, "optional"))), "ident.userid");
-    addChild_Widget(headings, iClob(makeHeading_Widget("Domain:")));
-    setId_Widget(addChild_Widget(values, iClob(inputs[3] = newHint_InputWidget(0, "optional"))), "ident.domain");
-    addChild_Widget(headings, iClob(makeHeading_Widget("Organization:")));
-    setId_Widget(addChild_Widget(values, iClob(inputs[4] = newHint_InputWidget(0, "optional"))), "ident.org");
-    addChild_Widget(headings, iClob(makeHeading_Widget("Country:")));
-    setId_Widget(addChild_Widget(values, iClob(inputs[5] = newHint_InputWidget(0, "optional"))), "ident.country");
+    addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.newident.email}")));
+    setId_Widget(addChild_Widget(values, iClob(inputs[1] = newHint_InputWidget(0, "${hint.newident.optional}"))), "ident.email");
+    addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.newident.userid}")));
+    setId_Widget(addChild_Widget(values, iClob(inputs[2] = newHint_InputWidget(0, "${hint.newident.optional}"))), "ident.userid");
+    addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.newident.domain}")));
+    setId_Widget(addChild_Widget(values, iClob(inputs[3] = newHint_InputWidget(0, "${hint.newident.optional}"))), "ident.domain");
+    addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.newident.org}")));
+    setId_Widget(addChild_Widget(values, iClob(inputs[4] = newHint_InputWidget(0, "${hint.newident.optional}"))), "ident.org");
+    addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.newident.country}")));
+    setId_Widget(addChild_Widget(values, iClob(inputs[5] = newHint_InputWidget(0, "${hint.newident.optional}"))), "ident.country");
     arrange_Widget(dlg);
     for (size_t i = 0; i < iElemCount(inputs); ++i) {
         as_Widget(inputs[i])->rect.size.x = 100 * gap_UI - headings->rect.size.x;
@@ -2213,7 +2215,7 @@ iWidget *makeIdentityCreation_Widget(void) {
     addChild_Widget(
         dlg,
         iClob(makeDialogButtons_Widget((iMenuItem[]){ { "${cancel}", 0, 0, NULL },
-                                                { uiTextAction_ColorEscape "Create Identity",
+                                                { uiTextAction_ColorEscape "${dlg.newident.create}",
                                                   SDLK_RETURN,
                                                   KMOD_PRIMARY,
                                                   "ident.accept" } },
@@ -2224,17 +2226,17 @@ iWidget *makeIdentityCreation_Widget(void) {
 }
 
 static const iMenuItem languages[] = {
-    { "Arabic", 0, 0, "xlt.lang id:ar" },
-    { "Chinese", 0, 0, "xlt.lang id:zh" },
-    { "English", 0, 0, "xlt.lang id:en" },
-    { "French", 0, 0, "xlt.lang id:fr" },
-    { "German", 0, 0, "xlt.lang id:de" },
-    { "Hindi", 0, 0, "xlt.lang id:hi" },
-    { "Italian", 0, 0, "xlt.lang id:it" },
-    { "Japanese", 0, 0, "xlt.lang id:ja" },
-    { "Portuguese", 0, 0, "xlt.lang id:pt" },
-    { "Russian", 0, 0, "xlt.lang id:ru" },
-    { "Spanish", 0, 0, "xlt.lang id:es" },
+    { "${lang.ar}", 0, 0, "xlt.lang id:ar" },
+    { "${lang.zh}", 0, 0, "xlt.lang id:zh" },
+    { "${lang.en}", 0, 0, "xlt.lang id:en" },
+    { "${lang.fr}", 0, 0, "xlt.lang id:fr" },
+    { "${lang.de}", 0, 0, "xlt.lang id:de" },
+    { "${lang.hi}", 0, 0, "xlt.lang id:hi" },
+    { "${lang.it}", 0, 0, "xlt.lang id:it" },
+    { "${lang.ja}", 0, 0, "xlt.lang id:ja" },
+    { "${lang.pt}", 0, 0, "xlt.lang id:pt" },
+    { "${lang.ru}", 0, 0, "xlt.lang id:ru" },
+    { "${lang.es}", 0, 0, "xlt.lang id:es" },
 };
 
 static iBool translationHandler_(iWidget *dlg, const char *cmd) {
@@ -2251,7 +2253,7 @@ static iBool translationHandler_(iWidget *dlg, const char *cmd) {
 
 const char *languageId_String(const iString *menuItemLabel) {
     iForIndices(i, languages) {
-        if (!cmp_String(menuItemLabel, languages[i].label)) {
+        if (!cmp_String(menuItemLabel, translateCStr_Lang(languages[i].label))) {
             return cstr_Rangecc(range_Command(languages[i].command, "id"));
         }
     }
@@ -2272,7 +2274,7 @@ iWidget *makeTranslation_Widget(iWidget *parent) {
     setFlags_Widget(dlg, keepOnTop_WidgetFlag, iFalse);
     setCommandHandler_Widget(dlg, translationHandler_);
     addChildFlags_Widget(dlg,
-                         iClob(new_LabelWidget(uiHeading_ColorEscape "TRANSLATE PAGE", NULL)),
+                         iClob(new_LabelWidget(uiHeading_ColorEscape "${heading.translate}", NULL)),
                          frameless_WidgetFlag);
     addChild_Widget(dlg, iClob(makePadding_Widget(lineHeight_Text(uiLabel_FontId))));
     iWidget *headings, *values;
@@ -2281,11 +2283,11 @@ iWidget *makeTranslation_Widget(iWidget *parent) {
     setId_Widget(page, "xlt.langs");
     iLabelWidget *fromLang, *toLang;
     /* Source language. */ {
-        addChild_Widget(headings, iClob(makeHeading_Widget("From:")));
+        addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.translate.from}")));
         setId_Widget(
             addChildFlags_Widget(values,
                                  iClob(fromLang = makeMenuButton_LabelWidget(
-                                           "Portuguese", languages, iElemCount(languages))),
+                                           "${lang.pt}", languages, iElemCount(languages))),
                                  alignLeft_WidgetFlag),
             "xlt.from");
         iWidget *langMenu = findChild_Widget(as_Widget(fromLang), "menu");
@@ -2294,10 +2296,10 @@ iWidget *makeTranslation_Widget(iWidget *parent) {
         setBackgroundColor_Widget(langMenu, uiBackgroundMenu_ColorId);
     }
     /* Target language. */ {
-        addChild_Widget(headings, iClob(makeHeading_Widget("To:")));
+        addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.translate.to}")));
         setId_Widget(addChildFlags_Widget(values,
                                           iClob(toLang = makeMenuButton_LabelWidget(
-                                                    "Portuguese", languages, iElemCount(languages))),
+                                                    "${lang.pt}", languages, iElemCount(languages))),
                                           alignLeft_WidgetFlag),
                      "xlt.to");
         iWidget *langMenu = findChild_Widget(as_Widget(toLang), "menu");
@@ -2311,7 +2313,7 @@ iWidget *makeTranslation_Widget(iWidget *parent) {
         iClob(makeDialogButtons_Widget(
             (iMenuItem[]){
                 { "${cancel}", SDLK_ESCAPE, 0, "translation.cancel" },
-                { uiTextAction_ColorEscape "Translate", SDLK_RETURN, 0, "translation.submit" } },
+                { uiTextAction_ColorEscape "${dlg.translate}", SDLK_RETURN, 0, "translation.submit" } },
             2)));
     addChild_Widget(parent, iClob(dlg));
     arrange_Widget(dlg);

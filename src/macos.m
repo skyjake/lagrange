@@ -369,6 +369,7 @@ void setupApplication_MacOS(void) {
 }
 
 void enableMenu_MacOS(const char *menuLabel, iBool enable) {
+    menuLabel = translateCStr_Lang(menuLabel);
     NSApplication *app = [NSApplication sharedApplication];
     NSMenu *appMenu = [app mainMenu];
     NSString *label = [NSString stringWithUTF8String:menuLabel];

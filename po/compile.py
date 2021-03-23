@@ -2,8 +2,9 @@
 # Parses all the .po files and generates binary language strings to be loaded 
 # at runtime via embedded data.
 
-import os
+import os, sys
 
+MODE = 'compile'
 ESCAPES = {
     '\\': '\\',
     '"': '"',
@@ -11,6 +12,9 @@ ESCAPES = {
     'r': '\r',
     't': '\t'
 }
+
+if '--new' in sys.argv:
+    MODE = 'new'
 
 
 def unquote(string):
@@ -30,12 +34,10 @@ def unquote(string):
         else:
             out += c
     return out        
-        
-        
-messages = []
-for src in os.listdir('.'):
-    if not src.endswith('.po'):
-        continue
+    
+    
+def parse_po(src):
+    messages = []
     msg_id, msg_str = None, None
     for line in open(src, 'rt', encoding='utf-8').readlines():
         line = line.strip()
@@ -44,12 +46,23 @@ for src in os.listdir('.'):
         elif line.startswith('msgstr'):
             msg_str = unquote(line[7:])        
             messages.append((msg_id, msg_str))
-    # Make a binary blob with strings sorted by ID.
-    compiled = bytes()
-    for msg in sorted(messages):
-        compiled += msg[0].encode('utf-8') + bytes([0])
-        compiled += msg[1].encode('utf-8') + bytes([0])
-    #print(compiled)
-    open(f'../res/lang/{src[:-3]}.bin', 'wb').write(compiled)
+    return messages
     
+
+if MODE == 'compile':
+    for src in os.listdir('.'):
+        if src.endswith('.po'):
+            # Make a binary blob with strings sorted by ID.
+            compiled = bytes()
+            for msg in sorted(parse_po(src)):
+                compiled += msg[0].encode('utf-8') + bytes([0])
+                compiled += msg[1].encode('utf-8') + bytes([0])
+            open(f'../res/lang/{src[:-3]}.bin', 'wb').write(compiled)
+
+elif MODE == 'new':
+    messages = parse_po('en.po')
+    f = open('new.po', 'wt', encoding='utf-8')
+    for msg_id, _ in messages:
+        print(f'\nmsgid "{msg_id}"\nmsgstr ""\n', file=f)
+
     

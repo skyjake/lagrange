@@ -16,6 +16,18 @@ msgstr "Cancel"
 msgid "dismiss"
 msgstr "Dismiss"
 
+msgid "dlg.message.ok"
+msgstr "Continue"
+
+msgid "dlg.default"
+msgstr " OK "
+
+msgid "toggle.yes"
+msgstr "YES"
+
+msgid "toggle.no"
+msgstr "NO"
+
 msgid "menu.title.file"
 msgstr "File"
 
@@ -174,6 +186,12 @@ msgstr "Subscribe to Page…"
 
 msgid "menu.aboutpages"
 msgstr "About Pages"
+
+msgid "menu.about"
+msgstr "About"
+
+msgid "panel.back"
+msgstr "Back"
 
 msgid "menu.debug"
 msgstr "Debug Information"
@@ -581,3 +599,438 @@ msgstr "View Image"
 msgid "bookmark.title.blank"
 msgstr "Blank Page"
 
+msgid "heading.translate"
+msgstr "TRANSLATE PAGE"
+
+msgid "dlg.translate.unavail"
+msgstr "Service Unavailable"
+
+msgid "dlg.translate.fail"
+msgstr "Request Failed"
+
+msgid "dlg.translate"
+msgstr "Translate"
+
+msgid "dlg.translate.from"
+msgstr "From:"
+
+msgid "dlg.translate.to"
+msgstr "To:"
+
+msgid "lang.ar"
+msgstr "Arabic"
+
+msgid "lang.zh"
+msgstr "Chinese"
+
+msgid "lang.en"
+msgstr "English"
+
+msgid "lang.fr"
+msgstr "French"
+
+msgid "lang.de"
+msgstr "German"
+
+msgid "lang.hi"
+msgstr "Hindi"
+
+msgid "lang.it"
+msgstr "Italian"
+
+msgid "lang.ja"
+msgstr "Japanese"
+
+msgid "lang.pt"
+msgstr "Portuguese"
+
+msgid "lang.ru"
+msgstr "Russian"
+
+msgid "lang.es"
+msgstr "Spanish"
+
+msgid "heading.newident"
+msgstr "NEW IDENTITY"
+
+msgid "dlg.newident.rsa.selfsign"
+msgstr "Creating a self-signed 2048-bit RSA certificate."
+
+msgid "dlg.newident.until"
+msgstr "Valid until:"
+
+msgid "hint.newident.date"
+msgstr "YYYY-MM-DD HH:MM:SS"
+
+msgid "hint.newident.optional"
+msgstr "optional"
+
+msgid "dlg.newident.commonname"
+msgstr "Common name:"
+
+msgid "dlg.newident.temp"
+msgstr "Temporary:"
+
+msgid "dlg.newident.notsaved"
+msgstr "not saved to disk"
+
+msgid "dlg.newident.email"
+msgstr "Email:"
+
+msgid "dlg.newident.userid"
+msgstr "User ID:"
+
+msgid "dlg.newident.domain"
+msgstr "Domain:"
+
+msgid "dlg.newident.org"
+msgstr "Organization:"
+
+msgid "dlg.newident.country"
+msgstr "Country:"
+
+msgid "dlg.newident.create"
+msgstr "Create Identity"
+
+msgid "heading.feedcfg"
+msgstr "FEED SETTINGS"
+
+msgid "heading.subscribe"
+msgstr "SUBSCRIBE TO PAGE"
+
+msgid "dlg.feed.title"
+msgstr "Title:"
+
+msgid "dlg.feed.entrytype"
+msgstr "Entry type:"
+
+msgid "dlg.feed.type.gemini"
+msgstr "YYYY-MM-DD Links"
+
+msgid "dlg.feed.type.headings"
+msgstr "New Headings"
+
+msgid "dlg.feed.save"
+msgstr "Save Settings"
+
+msgid "dlg.feed.sub"
+msgstr "Subscribe"
+
+msgid "heading.bookmark.add"
+msgstr "ADD BOOKMARK"
+
+msgid "heading.bookmark.edit"
+msgstr "EDIT BOOKMARK"
+
+msgid "dlg.bookmark.save"
+msgstr "Save Bookmark"
+
+msgid "dlg.bookmark.title"
+msgstr "Title:"
+
+msgid "dlg.bookmark.url"
+msgstr "URL:"
+
+msgid "dlg.bookmark.tags"
+msgstr "Tags:"
+
+msgid "dlg.bookmark.icon"
+msgstr "Icon:"
+
+msgid "heading.prefs"
+msgstr "PREFERENCES"
+
+msgid "heading.prefs.certs"
+msgstr "CERTIFICATES"
+
+# tab button
+msgid "heading.prefs.colors"
+msgstr "Colors"
+
+msgid "heading.prefs.fonts"
+msgstr "FONTS"
+
+# tab button
+msgid "heading.prefs.general"
+msgstr "General"
+
+# tab button
+msgid "heading.prefs.interface"
+msgstr "Interface"
+
+# tab button
+msgid "heading.prefs.keys"
+msgstr "Keys"
+
+# tab button
+msgid "heading.prefs.network"
+msgstr "Network"
+
+msgid "heading.prefs.paragraph"
+msgstr "PARAGRAPH"
+
+msgid "heading.prefs.pagecontent"
+msgstr "PAGE CONTENT"
+
+msgid "heading.prefs.proxies"
+msgstr "PROXIES"
+
+msgid "heading.prefs.scrolling"
+msgstr "SCROLLING"
+
+msgid "heading.prefs.sizing"
+msgstr "SIZING"
+
+msgid "heading.prefs.widelayout"
+msgstr "WIDE LAYOUT"
+
+# tab button
+msgid "heading.prefs.style"
+msgstr "Style"
+
+# tab button
+msgid "heading.prefs.userinterface"
+msgstr "User Interface"
+
+msgid "prefs.downloads"
+msgstr "Donwloads folder:"
+
+msgid "prefs.searchurl"
+msgstr "Search URL:"
+
+msgid "prefs.hoverlink"
+msgstr "Show URL on hover:"
+
+msgid "prefs.centershort"
+msgstr "Vertical centering:"
+
+msgid "prefs.smoothscroll"
+msgstr "Smooth scrolling:"
+
+msgid "prefs.imageloadscroll"
+msgstr "Load image on scroll:"
+
+msgid "prefs.hidetoolbarscroll"
+msgstr "Hide toolbar on scroll:"
+
+msgid "prefs.ostheme"
+msgstr "Use system theme:"
+
+msgid "prefs.theme"
+msgstr "Theme:"
+
+msgid "prefs.theme.black"
+msgstr "Pure Black"
+
+msgid "prefs.theme.dark"
+msgstr "Dark"
+
+msgid "prefs.theme.light"
+msgstr "Light"
+
+msgid "prefs.theme.white"
+msgstr "Pure White"
+
+msgid "prefs.accent"
+msgstr "Accent color:"
+
+msgid "prefs.accent.teal"
+msgstr "Teal"
+
+msgid "prefs.accent.orange"
+msgstr "Orange"
+
+msgid "prefs.uiscale"
+msgstr "UI scale factor:"
+
+msgid "prefs.customframe"
+msgstr "Custom window frame:"
+
+msgid "prefs.retainwindow"
+msgstr "Retain placement:"
+
+msgid "prefs.sideicon"
+msgstr "Capsule icon:"
+
+msgid "prefs.doctheme.dark"
+msgstr "Dark theme:"
+
+msgid "prefs.doctheme.light"
+msgstr "Light theme:"
+
+msgid "prefs.doctheme.name.colorfuldark"
+msgstr "Colorful Dark"
+
+msgid "prefs.doctheme.name.colorfullight"
+msgstr "Colorful Light"
+
+msgid "prefs.doctheme.name.black"
+msgstr "Black"
+
+msgid "prefs.doctheme.name.gray"
+msgstr "Gray"
+
+msgid "prefs.doctheme.name.white"
+msgstr "White"
+
+msgid "prefs.doctheme.name.sepia"
+msgstr "Sepia"
+
+msgid "prefs.doctheme.name.highcontrast"
+msgstr "High Contrast"
+
+msgid "prefs.saturation"
+msgstr "Saturation:"
+
+msgid "prefs.headingfont"
+msgstr "Heading font:"
+
+msgid "prefs.font"
+msgstr "Body font:"
+
+msgid "prefs.mono"
+msgstr "Monospace body:"
+
+msgid "prefs.mono.gemini"
+msgstr "Gemini"
+
+msgid "prefs.mono.gopher"
+msgstr "Gopher"
+
+msgid "prefs.linewidth"
+msgstr "Line width:"
+
+msgid "prefs.linewidth.normal"
+msgstr "Normal"
+
+msgid "prefs.linewidth.fill"
+msgstr "Fill"
+
+msgid "prefs.quoteicon"
+msgstr "Quote indicator:"
+
+msgid "prefs.quoteicon.icon"
+msgstr "\" Icon"
+
+msgid "prefs.quoteicon.line"
+msgstr "Line"
+
+msgid "prefs.biglede"
+msgstr "Big 1st paragaph:"
+
+msgid "prefs.plaintext.wrap"
+msgstr "Wrap plain text:"
+
+msgid "prefs.decodeurls"
+msgstr "Decode URLs:"
+
+msgid "prefs.cachesize"
+msgstr "Cache size:"
+
+msgid "prefs.ca.file"
+msgstr "CA file:"
+
+msgid "prefs.ca.path"
+msgstr "CA path:"
+
+msgid "prefs.proxy.gemini"
+msgstr "Gemini proxy:"
+
+msgid "prefs.proxy.gopher"
+msgstr "Gopher proxy:"
+
+msgid "prefs.proxy.http"
+msgstr "HTTP proxy:"
+
+msgid "menu.binding.reset"
+msgstr "Reset to Default"
+
+msgid "menu.binding.clear"
+msgstr "Remove"
+
+msgid "keys.top"
+msgstr "Jump to top"
+
+msgid "keys.bottom"
+msgstr "Jump to bottom"
+
+msgid "keys.scroll.up"
+msgstr "Scroll up"
+
+msgid "keys.scroll.down"
+msgstr "Scroll down"
+
+msgid "keys.scroll.halfpage.up"
+msgstr "Scroll up half a page"
+
+msgid "keys.scroll.halfpage.down"
+msgstr "Scroll down half a page"
+
+msgid "keys.scroll.page.up"
+msgstr "Scroll up a page"
+
+msgid "keys.scroll.page.down"
+msgstr "Scroll down a page"
+
+msgid "keys.back"
+msgstr "Go back"
+
+msgid "keys.forward"
+msgstr "Go forward"
+
+msgid "keys.parent"
+msgstr "Go to parent directory"
+
+msgid "keys.root"
+msgstr "Go to capsule root"
+
+msgid "keys.reload"
+msgstr "Reload page"
+
+msgid "keys.link.modkey"
+msgstr "Open link via modifier key"
+
+msgid "keys.link.homerow"
+msgstr "Open link via home row keys"
+
+msgid "keys.link.homerow.newtab"
+msgstr "Open link in new tab via home row keys"
+
+msgid "keys.link.homerow.hover"
+msgstr "Hover on link via home row keys"
+
+msgid "keys.link.homerow.next"
+msgstr "Next set of home row key links"
+
+msgid "keys.bookmark.add"
+msgstr "Add bookmark"
+
+msgid "keys.findtext"
+msgstr "Find text on page"
+
+msgid "keys.zoom.in"
+msgstr "Zoom in"
+
+msgid "keys.zoom.out"
+msgstr "Zoom out"
+
+msgid "keys.zoom.reset"
+msgstr "Reset zoom"
+
+msgid "keys.fullscreen"
+msgstr "Toggle fullscreen mode"
+
+msgid "keys.tab.new"
+msgstr "New tab"
+
+msgid "keys.tab.close"
+msgstr "Close tab"
+
+msgid "keys.tab.prev"
+msgstr "Previous tab"
+
+msgid "keys.tab.next"
+msgstr "Next tab"
+
+msgid "keys.hoverurl"
+msgstr "Toggle show URL on hover"

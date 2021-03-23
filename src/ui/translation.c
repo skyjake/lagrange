@@ -363,7 +363,7 @@ static iBool processResult_Translation_(iTranslation *d) {
     SDL_RemoveTimer(d->timer);
     d->timer = 0;
     if (status_TlsRequest(d->request) == error_TlsRequestStatus) {
-        setFailed_Translation_(d, explosion_Icon "  Request Failed");
+        setFailed_Translation_(d, explosion_Icon "  ${dlg.translate.fail}");
         return iFalse;
     }
     iBlock *resultData = collect_Block(readAll_TlsRequest(d->request));
@@ -417,7 +417,7 @@ static iBool processResult_Translation_(iTranslation *d) {
         delete_String(translation);
     }
     else {
-        setFailed_Translation_(d, unhappy_Icon "  Service Unavailable");
+        setFailed_Translation_(d, unhappy_Icon "  ${dlg.translate.unavail}");
         return iFalse;
     }
     return iTrue;

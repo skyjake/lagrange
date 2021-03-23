@@ -26,6 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "util.h"
 #include "keys.h"
 #include "prefs.h"
+#include "lang.h"
 #include "app.h"
 
 #include <the_Foundation/array.h>
@@ -251,6 +252,7 @@ void setMaxLen_InputWidget(iInputWidget *d, size_t maxLen) {
 
 void setHint_InputWidget(iInputWidget *d, const char *hintText) {
     setCStr_String(&d->hint, hintText);
+    translate_Lang(&d->hint); /* TODO: Keep original for retranslations. */
 }
 
 void setContentPadding_InputWidget(iInputWidget *d, int left, int right) {
