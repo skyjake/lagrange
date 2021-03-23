@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2021-03-23 09:09+0000\n"
-"PO-Revision-Date: 2021-03-23 09:09+0000\n"
+"PO-Revision-Date: 2021-03-23 09:35+0000\n"
 "Last-Translator: Jaakko Keränen <jaakko.keranen@iki.fi>\n"
 "Language-Team: Finnish <http://weblate.skyjake.fi/projects/lagrange/ui/fi/>\n"
 "Language: fi\n"
@@ -14,7 +14,7 @@ msgstr ""
 "X-Generator: Weblate 4.5.1\n"
 
 msgid "about.logo"
-msgstr ""
+msgstr "ASCII-kuva: sana \"Lagrange\" kirjoitettuna isolla fontilla"
 
 msgid "about.tagline"
 msgstr "Kaunis Gemini-selain"
@@ -263,187 +263,197 @@ msgid "toolbar.outline"
 msgstr "Sivun rakenne"
 
 msgid "hint.findtext"
-msgstr ""
+msgstr "Etsi teksti sivulta"
 
 msgid "status.query"
-msgstr ""
+msgstr "Kysely"
 
 msgid "status.feeds"
-msgstr ""
+msgstr "Syötteiden päivitys"
 
 msgid "mb"
-msgstr ""
+msgstr "mt"
 
 msgid "kb"
-msgstr ""
+msgstr "kt"
 
 msgid "bytes"
-msgstr ""
+msgstr "tavua"
 
 msgid "page.timestamp"
 msgstr ""
+"Vastaanotettu %H:%M\n"
+"%b %d, %Y"
 
 msgid "sidebar.date.thisyear"
-msgstr ""
+msgstr "%b %d"
 
 msgid "sidebar.date.otheryear"
-msgstr ""
+msgstr "%b %d, %Y"
 
 msgid "feeds.today"
-msgstr ""
+msgstr "Tänään"
 
 msgid "feeds.entry.newtab"
-msgstr ""
+msgstr "Avaa artikkeli uudessa välilehdessä"
 
 msgid "feeds.entry.markread"
-msgstr ""
+msgstr "Merkitse luetuksi"
 
 msgid "feeds.entry.markunread"
-msgstr ""
+msgstr "Merkitse lukemattomaksi"
 
 msgid "sidebar.entry.bookmark"
-msgstr ""
+msgstr "Lisää kirjanmerkki…"
 
 msgid "feeds.entry.bookmark"
-msgstr ""
+msgstr "Lisää kirjanmerkki…"
 
 msgid "feeds.entry.openfeed"
-msgstr ""
+msgstr "Avaa syötesivu"
 
 msgid "feeds.edit"
-msgstr ""
+msgstr "Muokkaa syötettä…"
 
 msgid "feeds.unsubscribe"
-msgstr ""
+msgstr "Lopeta tilaus…"
 
 msgid "feeds.markallread"
-msgstr ""
+msgstr "Merkitse kaikki luetuksi"
 
 msgid "feeds.refresh"
-msgstr ""
+msgstr "Päivitä syötteet"
 
 msgid "menu.opentab"
-msgstr ""
+msgstr "Avaa uudessa välilehdessä"
 
 msgid "menu.opentab.background"
-msgstr ""
+msgstr "Avaa taustavälilehdessä"
 
 msgid "menu.edit"
-msgstr ""
+msgstr "Muokkaa…"
 
 msgid "menu.dup"
-msgstr ""
+msgstr "Monista…"
 
 msgid "menu.copyurl"
-msgstr ""
+msgstr "Kopioi URL"
 
 msgid "menu.forgeturl"
-msgstr ""
+msgstr "Unohda URL"
 
 msgid "history.clear"
-msgstr ""
+msgstr "Tyhjennä historia…"
 
 msgid "heading.history.clear"
-msgstr ""
+msgstr "TYHJENNÄ HISTORIA"
 
 msgid "dlg.confirm.history.clear"
-msgstr ""
+msgstr "Haluatko varmasti tyhjentää selaushistorian?"
 
 msgid "dlg.history.clear"
-msgstr ""
+msgstr "Tyhjennä historia"
 
 msgid "bookmark.tag.home"
-msgstr ""
+msgstr "Käytä kotisivuna"
 
 msgid "bookmark.tag.sub"
-msgstr ""
+msgstr "Tilaa syötteenä"
 
 msgid "bookmark.tag.remote"
-msgstr ""
+msgstr "Käytä etäkirjanmerkkien lähteenä"
 
 msgid "bookmark.untag.home"
-msgstr ""
+msgstr "Älä käytä kotisivuna"
 
 msgid "bookmark.untag.sub"
-msgstr ""
+msgstr "Lopeta tilaus"
 
 msgid "bookmark.untag.remote"
-msgstr ""
+msgstr "Älä käytä etäkirjanmerkkien lähteenä"
 
 msgid "bookmark.delete"
-msgstr ""
+msgstr "Poista kirjanmerkki"
 
 msgid "bookmarks.reload"
-msgstr ""
+msgstr "Päivitä etäkirjanmerkit"
 
 msgid "ident.using"
-msgstr ""
+msgstr "Käytössä tällä sivulla"
 
 msgid "ident.notused"
-msgstr ""
+msgstr "Ei käytössä"
 
 msgid "ident.usedonurls"
-msgstr ""
+msgstr "Käytössä %zu URL:ssa"
 
 msgid "ident.temporary"
-msgstr ""
+msgstr "Tilapäinen"
 
 msgid "ident.expiry"
-msgstr ""
+msgstr "Päättyy %b %d, %Y"
 
 msgid "ident.use"
-msgstr ""
+msgstr "Käytä tällä sivulla"
 
 msgid "ident.stopuse"
-msgstr ""
+msgstr "Lopeta käyttö tällä sivulla"
 
 msgid "ident.stopuse.all"
-msgstr ""
+msgstr "Lopeta käyttö kaikkialla"
 
 msgid "ident.showuse"
-msgstr ""
+msgstr "Näytä käyttö"
 
 msgid "heading.ident.use"
-msgstr ""
+msgstr "IDENTITEETIN KÄYTTÖ"
 
 msgid "menu.edit.notes"
-msgstr ""
+msgstr "Muokkaa muistiinpanoja…"
 
 msgid "heading.ident.notes"
-msgstr ""
+msgstr "IDENTITEETIN MUISTIINPANOT"
 
 msgid "dlg.ident.notes"
 msgstr ""
+"Muistiinpanot liittyen identiteettiin\n"
+"%s:"
 
 msgid "ident.fingerprint"
-msgstr ""
+msgstr "Kopioi sormenjälki"
 
 msgid "ident.delete"
-msgstr ""
+msgstr "Poista identiteetti…"
 
 msgid "heading.ident.delete"
-msgstr ""
+msgstr "POISTA IDENTITEETTI"
 
 msgid "dlg.confirm.ident.delete"
 msgstr ""
+"Oletko varma, että haluat poistaa identiteetin\n"
+"%s%s%s\n"
+"mukaanlukien sen sertifikaatin ja salaisen avaimen?"
 
 msgid "dlg.ident.delete"
-msgstr ""
+msgstr "Poista identiteetti ja tiedostot"
 
 msgid "sidebar.empty.idents"
-msgstr ""
+msgstr "Ei identiteettejä"
 
 msgid "ident.gotohelp"
-msgstr ""
+msgstr "Katso %sOhjeesta%s lisätietoja TLS-asiakassertifikaateista."
 
 msgid "heading.unsub"
-msgstr ""
+msgstr "POISTA TILAUS"
 
 msgid "dlg.confirm.unsub"
 msgstr ""
+"Haluatko varmasti poistaa syötteen\n"
+"\"%s\"\n"
+"tilauksen?"
 
 msgid "dlg.unsub"
-msgstr ""
+msgstr "Poista tilaus"
 
 msgid "error.unsupported.suggestsave"
 msgstr ""
@@ -1017,3 +1027,6 @@ msgstr ""
 
 msgid "keys.hoverurl"
 msgstr ""
+
+msgid "sidebar.unread.many"
+msgstr "Lukematonta"
