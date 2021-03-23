@@ -1,1340 +1,1045 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
+"POT-Creation-Date: 2021-03-23 09:09+0000\n"
+"PO-Revision-Date: 2021-03-23 11:14+0000\n"
+"Last-Translator: Jaakko Keränen <jaakko.keranen@iki.fi>\n"
+"Language-Team: Finnish <http://weblate.skyjake.fi/projects/lagrange/ui/fi/>\n"
+"Language: fi\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Weblate 4.5.1\n"
 
 msgid "about.logo"
-msgstr ""
-
+msgstr "ASCII-kuva: sana \"Lagrange\" kirjoitettuna isolla fontilla"
 
 msgid "about.tagline"
-msgstr ""
-
+msgstr "Kaunis Gemini-selain"
 
 msgid "about.version"
-msgstr ""
-
+msgstr "Versio"
 
 msgid "about.powered"
-msgstr ""
-
+msgstr "SDL 2:n, OpenSSL:n ja ☕️:n voimalla"
 
 msgid "cancel"
-msgstr ""
-
+msgstr "Kumoa"
 
 msgid "dismiss"
-msgstr ""
-
+msgstr "Takaisin"
 
 msgid "dlg.message.ok"
-msgstr ""
-
+msgstr "Jatketaan"
 
 msgid "dlg.default"
-msgstr ""
-
+msgstr " OK "
 
 msgid "toggle.yes"
-msgstr ""
-
+msgstr "Kyllä"
 
 msgid "toggle.no"
-msgstr ""
-
+msgstr "Ei"
 
 msgid "menu.title.file"
-msgstr ""
-
+msgstr "Tiedosto"
 
 msgid "menu.title.edit"
-msgstr ""
-
+msgstr "Muokkaa"
 
 msgid "menu.title.view"
-msgstr ""
-
+msgstr "Näkymä"
 
 msgid "menu.title.bookmarks"
-msgstr ""
-
+msgstr "Kirjanmerkit"
 
 msgid "menu.title.identity"
-msgstr ""
-
+msgstr "Identiteetti"
 
 msgid "menu.title.help"
-msgstr ""
-
+msgstr "Ohje"
 
 msgid "menu.newtab"
-msgstr ""
-
+msgstr "Uusi välilehti"
 
 msgid "menu.closetab"
-msgstr ""
-
+msgstr "Sulje välilehti"
 
 msgid "menu.closetab.other"
-msgstr ""
-
+msgstr "Sulje toiset välilehdet"
 
 msgid "menu.closetab.left"
-msgstr ""
-
+msgstr "Sulje välilehdet vasemmalla"
 
 msgid "menu.closetab.right"
-msgstr ""
-
+msgstr "Sulje välilehdet oikealla"
 
 msgid "menu.duptab"
-msgstr ""
-
+msgstr "Monista välilehti"
 
 msgid "menu.openlocation"
-msgstr ""
-
+msgstr "Avaa sijainti…"
 
 msgid "menu.find"
-msgstr ""
-
+msgstr "Etsi sivulta"
 
 msgid "macos.menu.find"
-msgstr ""
-
+msgstr "Etsi"
 
 msgid "menu.save.files"
-msgstr ""
-
+msgstr "Tallenna tiedostoon"
 
 msgid "menu.save.downloads"
-msgstr ""
-
+msgstr "Tallenna latauskansioon"
 
 msgid "menu.copy.source"
-msgstr ""
-
+msgstr "Kopioi lähdeteksti"
 
 msgid "menu.sidebar"
-msgstr ""
-
+msgstr "Näytä/piilota sivupaneeli"
 
 msgid "menu.sidebar.left"
-msgstr ""
-
+msgstr "Näytä/piilota vasen sivupaneeli"
 
 msgid "menu.sidebar.right"
-msgstr ""
-
+msgstr "Näytä/piilota oikea sivupaneeli"
 
 msgid "menu.zoom.in"
-msgstr ""
-
+msgstr "Suurenna"
 
 msgid "menu.zoom.out"
-msgstr ""
-
+msgstr "Pienennä"
 
 msgid "menu.zoom.reset"
-msgstr ""
-
+msgstr "Oletuskoko"
 
 msgid "menu.bookmarks.list"
-msgstr ""
-
+msgstr "Luettele kaikki kirjanmerkit"
 
 msgid "macos.menu.bookmarks.list"
-msgstr ""
-
+msgstr "Luettele kaikki"
 
 msgid "menu.bookmarks.bytag"
-msgstr ""
-
+msgstr "Luettele kirjanmerkit avainsanoilla"
 
 msgid "macos.menu.bookmarks.bytag"
-msgstr ""
-
+msgstr "Luettele avainsanoilla"
 
 msgid "menu.bookmarks.bytime"
-msgstr ""
-
+msgstr "Luettele kirjanmerkit luontijärjestyksessä"
 
 msgid "macos.menu.bookmarks.bytime"
-msgstr ""
-
+msgstr "Luettele luontijärjestyksessä"
 
 msgid "menu.feeds.entrylist"
-msgstr ""
-
+msgstr "Näytä syötteiden artikkelit"
 
 msgid "menu.preferences"
-msgstr ""
-
+msgstr "Asetukset…"
 
 msgid "menu.help"
-msgstr ""
-
+msgstr "Ohje"
 
 msgid "menu.releasenotes"
-msgstr ""
-
+msgstr "Versiohistoria"
 
 msgid "menu.quit"
-msgstr ""
-
+msgstr "Sulje Lagrange"
 
 msgid "menu.cut"
-msgstr ""
-
+msgstr "Leikkaa"
 
 msgid "menu.copy"
-msgstr ""
-
+msgstr "Kopioi"
 
 msgid "menu.paste"
-msgstr ""
-
+msgstr "Liimaa"
 
 msgid "menu.copy.pagelink"
-msgstr ""
-
+msgstr "Kopioi sivun linkki"
 
 msgid "menu.show.bookmarks"
-msgstr ""
-
+msgstr "Näytä kirjanmerkit"
 
 msgid "menu.show.feeds"
-msgstr ""
-
+msgstr "Näytä syötteet"
 
 msgid "menu.show.history"
-msgstr ""
-
+msgstr "Näytä historia"
 
 msgid "menu.show.identities"
-msgstr ""
-
+msgstr "Näytä identiteetit"
 
 msgid "menu.show.outline"
-msgstr ""
-
+msgstr "Näytä sivun rakenne"
 
 msgid "menu.back"
-msgstr ""
-
+msgstr "Mene takaisin"
 
 msgid "menu.forward"
-msgstr ""
-
+msgstr "Mene eteenpäin"
 
 msgid "menu.parent"
-msgstr ""
-
+msgstr "Mene ylähakemistoon"
 
 msgid "menu.root"
-msgstr ""
-
+msgstr "Mene juureen"
 
 msgid "menu.reload"
-msgstr ""
-
+msgstr "Lataa sivu uudestaan"
 
 msgid "menu.autoreload"
-msgstr ""
-
+msgstr "Aseta automaattinen lataus…"
 
 msgid "menu.page.bookmark"
-msgstr ""
-
+msgstr "Lisää kirjanmerkki…"
 
 msgid "menu.page.subscribe"
-msgstr ""
-
+msgstr "Tilaa sivu syötteenä…"
 
 msgid "menu.aboutpages"
-msgstr ""
-
+msgstr "About-sivut"
 
 msgid "menu.about"
-msgstr ""
-
+msgstr "Tietoja: Lagrange"
 
 msgid "panel.back"
-msgstr ""
-
+msgstr "Takaisin"
 
 msgid "menu.debug"
-msgstr ""
-
+msgstr "Virheenetsintätietoja"
 
 msgid "menu.import.links"
-msgstr ""
-
+msgstr "Tuo kaikki linkit sivulla…"
 
 msgid "menu.page.import"
-msgstr ""
-
+msgstr "Tuo linkit kirjanmerkkeinä…"
 
 msgid "menu.page.translate"
-msgstr ""
-
+msgstr "Käännä…"
 
 msgid "menu.page.copyurl"
-msgstr ""
-
+msgstr "Kopioi sivun URL"
 
 msgid "menu.page.copysource"
-msgstr ""
-
+msgstr "Kopioi sivun lähde"
 
 msgid "menu.bookmarks.refresh"
-msgstr ""
-
+msgstr "Päivitä etäkirjanmerkit"
 
 msgid "menu.feeds.refresh"
-msgstr ""
-
+msgstr "Päivitä syötteet"
 
 msgid "menu.identity.new"
-msgstr ""
-
+msgstr "Uusi identiteetti…"
 
 msgid "menu.identity.import"
-msgstr ""
-
+msgstr "Tuo…"
 
 msgid "menu.identity.notactive"
-msgstr ""
-
+msgstr "Ei aktiivista identiteettiä"
 
 msgid "sidebar.bookmarks"
-msgstr ""
-
+msgstr "Kirjanmerkit"
 
 msgid "sidebar.feeds"
-msgstr ""
-
+msgstr "Syötteet"
 
 msgid "sidebar.history"
-msgstr ""
-
+msgstr "Historia"
 
 msgid "sidebar.identities"
-msgstr ""
-
+msgstr "Identiteetit"
 
 msgid "sidebar.outline"
-msgstr ""
-
+msgstr "Rakenne"
 
 msgid "sidebar.unread"
-msgstr ""
-
+msgstr "Lukematonta"
 
 msgid "toolbar.outline"
-msgstr ""
-
+msgstr "Sivun rakenne"
 
 msgid "hint.findtext"
-msgstr ""
-
+msgstr "Etsi teksti sivulta"
 
 msgid "status.query"
-msgstr ""
-
+msgstr "Kysely"
 
 msgid "status.feeds"
-msgstr ""
-
+msgstr "Syötteiden päivitys"
 
 msgid "mb"
-msgstr ""
-
+msgstr "mt"
 
 msgid "kb"
-msgstr ""
-
+msgstr "kt"
 
 msgid "bytes"
-msgstr ""
-
+msgstr "tavua"
 
 msgid "page.timestamp"
 msgstr ""
-
+"Vastaanotettu %H:%M\n"
+"%b %d, %Y"
 
 msgid "sidebar.date.thisyear"
-msgstr ""
-
+msgstr "%b %d"
 
 msgid "sidebar.date.otheryear"
-msgstr ""
-
+msgstr "%b %d, %Y"
 
 msgid "feeds.today"
-msgstr ""
-
+msgstr "Tänään"
 
 msgid "feeds.entry.newtab"
-msgstr ""
-
+msgstr "Avaa artikkeli uuteen välilehteen"
 
 msgid "feeds.entry.markread"
-msgstr ""
-
+msgstr "Merkitse luetuksi"
 
 msgid "feeds.entry.markunread"
-msgstr ""
-
+msgstr "Merkitse lukemattomaksi"
 
 msgid "sidebar.entry.bookmark"
-msgstr ""
-
+msgstr "Lisää kirjanmerkki…"
 
 msgid "feeds.entry.bookmark"
-msgstr ""
-
+msgstr "Lisää kirjanmerkki…"
 
 msgid "feeds.entry.openfeed"
-msgstr ""
-
+msgstr "Avaa syötesivu"
 
 msgid "feeds.edit"
-msgstr ""
-
+msgstr "Muokkaa syötettä…"
 
 msgid "feeds.unsubscribe"
-msgstr ""
-
+msgstr "Lopeta tilaus…"
 
 msgid "feeds.markallread"
-msgstr ""
-
+msgstr "Merkitse kaikki luetuksi"
 
 msgid "feeds.refresh"
-msgstr ""
-
+msgstr "Päivitä syötteet"
 
 msgid "menu.opentab"
-msgstr ""
-
+msgstr "Avaa uudessa välilehdessä"
 
 msgid "menu.opentab.background"
-msgstr ""
-
+msgstr "Avaa taustalle välilehteen"
 
 msgid "menu.edit"
-msgstr ""
-
+msgstr "Muokkaa…"
 
 msgid "menu.dup"
-msgstr ""
-
+msgstr "Monista…"
 
 msgid "menu.copyurl"
-msgstr ""
-
+msgstr "Kopioi URL"
 
 msgid "menu.forgeturl"
-msgstr ""
-
+msgstr "Unohda URL"
 
 msgid "history.clear"
-msgstr ""
-
+msgstr "Tyhjennä historia…"
 
 msgid "heading.history.clear"
-msgstr ""
-
+msgstr "TYHJENNÄ HISTORIA"
 
 msgid "dlg.confirm.history.clear"
-msgstr ""
-
+msgstr "Haluatko varmasti tyhjentää selaushistorian?"
 
 msgid "dlg.history.clear"
-msgstr ""
-
+msgstr "Tyhjennä historia"
 
 msgid "bookmark.tag.home"
-msgstr ""
-
+msgstr "Käytä kotisivuna"
 
 msgid "bookmark.tag.sub"
-msgstr ""
-
+msgstr "Tilaa syötteenä"
 
 msgid "bookmark.tag.remote"
-msgstr ""
-
+msgstr "Käytä etäkirjanmerkkien lähteenä"
 
 msgid "bookmark.untag.home"
-msgstr ""
-
+msgstr "Älä käytä kotisivuna"
 
 msgid "bookmark.untag.sub"
-msgstr ""
-
+msgstr "Lopeta tilaus"
 
 msgid "bookmark.untag.remote"
-msgstr ""
-
+msgstr "Älä käytä etäkirjanmerkkien lähteenä"
 
 msgid "bookmark.delete"
-msgstr ""
-
+msgstr "Poista kirjanmerkki"
 
 msgid "bookmarks.reload"
-msgstr ""
-
+msgstr "Päivitä etäkirjanmerkit"
 
 msgid "ident.using"
-msgstr ""
-
+msgstr "Käytössä tällä sivulla"
 
 msgid "ident.notused"
-msgstr ""
-
+msgstr "Ei käytössä"
 
 msgid "ident.usedonurls"
-msgstr ""
-
+msgstr "Käytössä %zu URL:ssa"
 
 msgid "ident.temporary"
-msgstr ""
-
+msgstr "Tilapäinen"
 
 msgid "ident.expiry"
-msgstr ""
-
+msgstr "Päättyy %b %d, %Y"
 
 msgid "ident.use"
-msgstr ""
-
+msgstr "Käytä tällä sivulla"
 
 msgid "ident.stopuse"
-msgstr ""
-
+msgstr "Lopeta käyttö tällä sivulla"
 
 msgid "ident.stopuse.all"
-msgstr ""
-
+msgstr "Lopeta käyttö kaikkialla"
 
 msgid "ident.showuse"
-msgstr ""
-
+msgstr "Näytä käyttö"
 
 msgid "heading.ident.use"
-msgstr ""
-
+msgstr "IDENTITEETIN KÄYTTÖ"
 
 msgid "menu.edit.notes"
-msgstr ""
-
+msgstr "Muokkaa muistiinpanoja…"
 
 msgid "heading.ident.notes"
-msgstr ""
-
+msgstr "IDENTITEETIN MUISTIINPANOT"
 
 msgid "dlg.ident.notes"
 msgstr ""
-
+"Muistiinpanot liittyen identiteettiin\n"
+"%s:"
 
 msgid "ident.fingerprint"
-msgstr ""
-
+msgstr "Kopioi sormenjälki"
 
 msgid "ident.delete"
-msgstr ""
-
+msgstr "Poista identiteetti…"
 
 msgid "heading.ident.delete"
-msgstr ""
-
+msgstr "POISTA IDENTITEETTI"
 
 msgid "dlg.confirm.ident.delete"
 msgstr ""
-
+"Oletko varma, että haluat poistaa identiteetin\n"
+"%s%s%s\n"
+"mukaanlukien sen sertifikaatin ja salaisen avaimen?"
 
 msgid "dlg.ident.delete"
-msgstr ""
-
+msgstr "Poista identiteetti ja tiedostot"
 
 msgid "sidebar.empty.idents"
-msgstr ""
-
+msgstr "Ei identiteettejä"
 
 msgid "ident.gotohelp"
-msgstr ""
-
+msgstr "Katso %sOhjeesta%s lisätietoja TLS-asiakassertifikaateista."
 
 msgid "heading.unsub"
-msgstr ""
-
+msgstr "POISTA TILAUS"
 
 msgid "dlg.confirm.unsub"
 msgstr ""
-
+"Haluatko varmasti poistaa syötteen\n"
+"\"%s\"\n"
+"tilauksen?"
 
 msgid "dlg.unsub"
-msgstr ""
-
+msgstr "Poista tilaus"
 
 msgid "error.unsupported.suggestsave"
 msgstr ""
-
+"Voit silti tallentaa sen latauskansioon. Paina %s tai valitse \"%s\" "
+"valikosta."
 
 msgid "heading.pageinfo"
-msgstr ""
-
+msgstr "SIVUN TIEDOT"
 
 msgid "pageinfo.header.cached"
-msgstr ""
-
+msgstr "(sisältö välimuistista)"
 
 msgid "pageinfo.cert.status"
-msgstr ""
-
+msgstr "Sertifikaatin tila:"
 
 msgid "pageinfo.cert.ca.verified"
-msgstr ""
-
+msgstr "CA:n varmentama"
 
 msgid "pageinfo.cert.ca.unverified"
-msgstr ""
-
+msgstr "Ei CA:n varmentama"
 
 msgid "pageinfo.cert.notexpired"
-msgstr ""
-
+msgstr "Voimassa"
 
 msgid "pageinfo.cert.expired"
-msgstr ""
-
+msgstr "Vanhentunut"
 
 msgid "pageinfo.cert.trusted"
-msgstr ""
-
+msgstr "Luotettu"
 
 msgid "pageinfo.cert.untrusted"
-msgstr ""
-
+msgstr "Ei luotettu"
 
 msgid "pageinfo.domain.match"
-msgstr ""
-
+msgstr "Verkkotunnus täsmää"
 
 msgid "pageinfo.domain.mismatch"
-msgstr ""
-
+msgstr "Verkkotunnus ei täsmää"
 
 msgid "dlg.cert.trust"
-msgstr ""
-
+msgstr "Luota"
 
 msgid "dlg.cert.fingerprint"
-msgstr ""
-
+msgstr "Kopioi sormenjälki"
 
 msgid "dlg.input.prompt"
-msgstr ""
-
+msgstr "Anna syöte sivulle \"%s\":"
 
 msgid "dlg.input.send"
-msgstr ""
-
+msgstr "Lähetä"
 
 msgid "heading.save"
-msgstr ""
-
+msgstr "TIEDOSTO TALLENNETTU"
 
 msgid "heading.save.incomplete"
-msgstr ""
-
+msgstr "SIVUN LATAUS KESKEN"
 
 msgid "dlg.save.incomplete"
-msgstr ""
-
+msgstr "Sivun sisällön lataus ei ole vielä päättynyt."
 
 msgid "dlg.save.size"
-msgstr ""
-
+msgstr "Koko:"
 
 msgid "heading.save.error"
-msgstr ""
-
+msgstr "VIRHE TALLENTAESSA"
 
 msgid "heading.import.bookmarks"
-msgstr ""
-
+msgstr "TUO KIRJANMERKKEJÄ"
 
 msgid "dlg.import.found"
-msgstr ""
-
+msgstr "Sivulta löytyy yksi uusi linkki."
 
 msgid "dlg.import.found.many"
-msgstr ""
-
+msgstr "Sivulta löydettiin %d uutta linkkiä."
 
 msgid "dlg.import.add"
-msgstr ""
-
+msgstr "%sLisää kirjanmerkki"
 
 msgid "dlg.import.add.many"
-msgstr ""
-
+msgstr "%sLisää %d kirjanmerkkiä"
 
 msgid "dlg.import.notnew"
-msgstr ""
-
+msgstr "Kaikki sivun linkit on jo kirjanmerkkeinä."
 
 msgid "heading.autoreload"
-msgstr ""
-
+msgstr "AUTOMAATTINEN LATAUS"
 
 msgid "dlg.autoreload"
-msgstr ""
-
+msgstr "Valitse välilehden uudelleenlataustiheys."
 
 msgid "link.newtab"
-msgstr ""
-
+msgstr "Avaa linkki uuteen välilehteen"
 
 msgid "link.newtab.background"
-msgstr ""
-
+msgstr "Avaa linkki taustalle välilehteen"
 
 msgid "link.browser"
-msgstr ""
-
+msgstr "Avaa linkki oletusselaimessa"
 
 msgid "link.noproxy"
-msgstr ""
-
+msgstr "Avaa ilman välipalvelinta"
 
 msgid "link.copy"
-msgstr ""
-
+msgstr "Kopioi linkki"
 
 msgid "link.bookmark"
-msgstr ""
-
+msgstr "Tee kohteesta kirjanmerkki…"
 
 msgid "link.download"
-msgstr ""
-
+msgstr "Lataa kohde tiedostoon"
 
 msgid "heading.openlink"
-msgstr ""
-
+msgstr "AVAA LINKKI"
 
 msgid "dlg.openlink.confirm"
 msgstr ""
-
+"Avaa tämä linkki oletusselaimessa?\n"
+"%s%s"
 
 msgid "dlg.openlink"
-msgstr ""
-
+msgstr "Avaa linkki"
 
 msgid "heading.certwarn"
-msgstr ""
-
+msgstr "SERTIFIKAATTIVAROITUS"
 
 msgid "dlg.certwarn.mayberenewed"
 msgstr ""
-
+"Vastaanotettu sertifikaatti voi olla hiljattain uusittu — se on merkitty "
+"oikealle verkkotunnukselle ja on voimassa. Tällä hetkellä luottamamme "
+"sertifikaatin voimassaolo päätty %s, %d päivän kuluttua."
 
 msgid "dlg.certwarn.different"
 msgstr ""
-
+"Vastaanotettu sertifikaatti on voimassa, mutta eri kuin luottamamme "
+"sertifikaatti."
 
 msgid "dlg.certwarn.expired"
-msgstr ""
-
+msgstr "Vastaanotettu sertifikaatti on vanhentunut %s."
 
 msgid "dlg.certwarn.domain"
 msgstr ""
-
+"Vastaanotettu sertifikaatti on väärälle verkkotunnukselle (%s). Tämä voi "
+"johtua virheestä palvelimen asetuksissa."
 
 msgid "dlg.certwarn.domain.expired"
 msgstr ""
-
+"Vastaanotettu sertifikaatti on vanhentunut JA merkitty väärälle "
+"verkkotunnukselle."
 
 msgid "link.hint.audio"
-msgstr ""
-
+msgstr "Toista äänitiedosto"
 
 msgid "link.hint.image"
-msgstr ""
-
+msgstr "Katso kuva"
 
 msgid "bookmark.title.blank"
-msgstr ""
-
+msgstr "Tyhjä sivu"
 
 msgid "heading.translate"
-msgstr ""
-
+msgstr "KÄÄNNÄ SIVU"
 
 msgid "dlg.translate.unavail"
-msgstr ""
-
+msgstr "Palvelu ei ole toiminnassa"
 
 msgid "dlg.translate.fail"
-msgstr ""
-
+msgstr "Pyyntö epäonnistui"
 
 msgid "dlg.translate"
-msgstr ""
-
+msgstr "Käännä"
 
 msgid "dlg.translate.from"
-msgstr ""
-
+msgstr "Kielestä:"
 
 msgid "dlg.translate.to"
-msgstr ""
-
+msgstr "Kielelle:"
 
 msgid "lang.ar"
-msgstr ""
-
+msgstr "Arabia"
 
 msgid "lang.zh"
-msgstr ""
-
+msgstr "Kiina"
 
 msgid "lang.en"
-msgstr ""
-
+msgstr "Englanti"
 
 msgid "lang.fr"
-msgstr ""
-
+msgstr "Ranska"
 
 msgid "lang.de"
-msgstr ""
-
+msgstr "Saksa"
 
 msgid "lang.hi"
-msgstr ""
-
+msgstr "Hindi"
 
 msgid "lang.it"
-msgstr ""
-
+msgstr "Italia"
 
 msgid "lang.ja"
-msgstr ""
-
+msgstr "Japani"
 
 msgid "lang.pt"
-msgstr ""
-
+msgstr "Portugali"
 
 msgid "lang.ru"
-msgstr ""
-
+msgstr "Venäjä"
 
 msgid "lang.es"
-msgstr ""
-
+msgstr "Espanja"
 
 msgid "heading.newident"
-msgstr ""
-
+msgstr "UUSI IDENTITEETTI"
 
 msgid "dlg.newident.rsa.selfsign"
-msgstr ""
-
+msgstr "Luodaan itse allekirjoitettu 2048-bittinen RSA-sertifikaatti."
 
 msgid "dlg.newident.until"
-msgstr ""
-
+msgstr "Voimassa:"
 
 msgid "hint.newident.date"
-msgstr ""
-
+msgstr "VVVV-KK-PP TT:MM:SS"
 
 msgid "hint.newident.optional"
-msgstr ""
-
+msgstr "vapaaehtoinen"
 
 msgid "dlg.newident.commonname"
-msgstr ""
-
+msgstr "Yleisnimi:"
 
 msgid "dlg.newident.temp"
-msgstr ""
-
+msgstr "Väliaikainen:"
 
 msgid "dlg.newident.notsaved"
-msgstr ""
-
+msgstr "ei talletata tiedostoon"
 
 msgid "dlg.newident.email"
-msgstr ""
-
+msgstr "Sähköposti:"
 
 msgid "dlg.newident.userid"
-msgstr ""
-
+msgstr "Käyttäjätunnus:"
 
 msgid "dlg.newident.domain"
-msgstr ""
-
+msgstr "Verkkotunnus:"
 
 msgid "dlg.newident.org"
-msgstr ""
-
+msgstr "Järjestö:"
 
 msgid "dlg.newident.country"
-msgstr ""
-
+msgstr "Maa:"
 
 msgid "dlg.newident.create"
-msgstr ""
-
+msgstr "Luo identiteetti"
 
 msgid "heading.feedcfg"
-msgstr ""
-
+msgstr "SYÖTTEEN ASETUKSET"
 
 msgid "heading.subscribe"
-msgstr ""
-
+msgstr "TILAA SIVU SYÖTTEENÄ"
 
 msgid "dlg.feed.title"
-msgstr ""
-
+msgstr "Otsikko:"
 
 msgid "dlg.feed.entrytype"
-msgstr ""
-
+msgstr "Artikkelin tyyppi:"
 
 msgid "dlg.feed.type.gemini"
-msgstr ""
-
+msgstr "VVVV-KK-PP linkit"
 
 msgid "dlg.feed.type.headings"
-msgstr ""
-
+msgstr "Uudet otsakkeet"
 
 msgid "dlg.feed.save"
-msgstr ""
-
+msgstr "Talleta asetukset"
 
 msgid "dlg.feed.sub"
-msgstr ""
-
+msgstr "Tilaa"
 
 msgid "heading.bookmark.add"
-msgstr ""
-
+msgstr "LISÄÄ KIRJANMERKKI"
 
 msgid "heading.bookmark.edit"
-msgstr ""
-
+msgstr "MUOKKAA KIRJANMERKKIÄ"
 
 msgid "dlg.bookmark.save"
-msgstr ""
-
+msgstr "Talleta kirjanmerkki"
 
 msgid "dlg.bookmark.title"
-msgstr ""
-
+msgstr "Otsikko:"
 
 msgid "dlg.bookmark.url"
-msgstr ""
-
+msgstr "URL:"
 
 msgid "dlg.bookmark.tags"
-msgstr ""
-
+msgstr "Avainsanat:"
 
 msgid "dlg.bookmark.icon"
-msgstr ""
-
+msgstr "Kuvake:"
 
 msgid "heading.prefs"
-msgstr ""
-
+msgstr "ASETUKSET"
 
 msgid "heading.prefs.certs"
-msgstr ""
-
+msgstr "SERTIFIKAATIT"
 
 msgid "heading.prefs.colors"
-msgstr ""
-
+msgstr "Värit"
 
 msgid "heading.prefs.fonts"
-msgstr ""
-
+msgstr "Fontit"
 
 msgid "heading.prefs.general"
-msgstr ""
-
+msgstr "Yleiset"
 
 msgid "heading.prefs.interface"
-msgstr ""
-
+msgstr "UI"
 
 msgid "heading.prefs.keys"
-msgstr ""
-
+msgstr "Näppäimet"
 
 msgid "heading.prefs.network"
-msgstr ""
-
+msgstr "Verkko"
 
 msgid "heading.prefs.paragraph"
-msgstr ""
-
+msgstr "Kappale"
 
 msgid "heading.prefs.pagecontent"
-msgstr ""
-
+msgstr "SIVUN SISÄLTÖ"
 
 msgid "heading.prefs.proxies"
-msgstr ""
-
+msgstr "VÄLIPALVELIMET"
 
 msgid "heading.prefs.scrolling"
-msgstr ""
-
+msgstr "VIERITYS"
 
 msgid "heading.prefs.sizing"
-msgstr ""
-
+msgstr "KOKO"
 
 msgid "heading.prefs.widelayout"
-msgstr ""
-
+msgstr "LEVEÄ ULKOASU"
 
 msgid "heading.prefs.style"
-msgstr ""
-
+msgstr "Tyyli"
 
 msgid "heading.prefs.userinterface"
-msgstr ""
-
+msgstr "Käyttöliittymä"
 
 msgid "prefs.downloads"
-msgstr ""
-
+msgstr "Latauskansio:"
 
 msgid "prefs.searchurl"
-msgstr ""
-
+msgstr "Kysely-URL:"
 
 msgid "prefs.hoverlink"
-msgstr ""
-
+msgstr "Käytä URL kursorin alla:"
 
 msgid "prefs.centershort"
-msgstr ""
-
+msgstr "Pystykeskitys:"
 
 msgid "prefs.smoothscroll"
-msgstr ""
-
+msgstr "Pehmeä vieritys:"
 
 msgid "prefs.imageloadscroll"
-msgstr ""
-
+msgstr "Lataa kuva vieritettäessä:"
 
 msgid "prefs.hidetoolbarscroll"
-msgstr ""
-
+msgstr "Piilota alapalkki vieritettäessä:"
 
 msgid "prefs.ostheme"
-msgstr ""
-
+msgstr "Käytä järjestelmän teemaa:"
 
 msgid "prefs.theme"
-msgstr ""
-
+msgstr "Teema:"
 
 msgid "prefs.theme.black"
-msgstr ""
-
+msgstr "Musta"
 
 msgid "prefs.theme.dark"
-msgstr ""
-
+msgstr "Tumma"
 
 msgid "prefs.theme.light"
-msgstr ""
-
+msgstr "Vaalea"
 
 msgid "prefs.theme.white"
-msgstr ""
-
+msgstr "Valkoinen"
 
 msgid "prefs.accent"
-msgstr ""
-
+msgstr "Aksenttiväri:"
 
 msgid "prefs.accent.teal"
-msgstr ""
-
+msgstr "Sinivihreä"
 
 msgid "prefs.accent.orange"
-msgstr ""
-
+msgstr "Oranssi"
 
 msgid "prefs.uiscale"
-msgstr ""
-
+msgstr "Skaalauskerroin:"
 
 msgid "prefs.customframe"
-msgstr ""
-
+msgstr "Mukautetut reunukset:"
 
 msgid "prefs.retainwindow"
-msgstr ""
-
+msgstr "Säilytä sijainti:"
 
 msgid "prefs.sideicon"
-msgstr ""
-
+msgstr "Kapselin ikoni:"
 
 msgid "prefs.doctheme.dark"
-msgstr ""
-
+msgstr "Tumma teema:"
 
 msgid "prefs.doctheme.light"
-msgstr ""
-
+msgstr "Vaalea teema:"
 
 msgid "prefs.doctheme.name.colorfuldark"
-msgstr ""
-
+msgstr "Värikäs tumma"
 
 msgid "prefs.doctheme.name.colorfullight"
-msgstr ""
-
+msgstr "Värikäs vaalea"
 
 msgid "prefs.doctheme.name.black"
-msgstr ""
-
+msgstr "Musta"
 
 msgid "prefs.doctheme.name.gray"
-msgstr ""
-
+msgstr "Harmaa"
 
 msgid "prefs.doctheme.name.white"
-msgstr ""
-
+msgstr "Valkoinen"
 
 msgid "prefs.doctheme.name.sepia"
-msgstr ""
-
+msgstr "Seepia"
 
 msgid "prefs.doctheme.name.highcontrast"
-msgstr ""
-
+msgstr "Korkea kontrasti"
 
 msgid "prefs.saturation"
-msgstr ""
-
+msgstr "Saturaatio:"
 
 msgid "prefs.headingfont"
-msgstr ""
-
+msgstr "Otsakkeiden fontti:"
 
 msgid "prefs.font"
-msgstr ""
-
+msgstr "Leipätekstin fontti:"
 
 msgid "prefs.mono"
-msgstr ""
-
+msgstr "Tasalevyinen leipäteksti:"
 
 msgid "prefs.mono.gemini"
-msgstr ""
-
+msgstr "Gemini"
 
 msgid "prefs.mono.gopher"
-msgstr ""
-
+msgstr "Gopher"
 
 msgid "prefs.linewidth"
-msgstr ""
-
+msgstr "Rivin leveys:"
 
 msgid "prefs.linewidth.normal"
-msgstr ""
-
+msgstr "Normaali"
 
 msgid "prefs.linewidth.fill"
-msgstr ""
-
+msgstr "Täytä"
 
 msgid "prefs.quoteicon"
-msgstr ""
-
+msgstr "Lainaustyyli:"
 
 msgid "prefs.quoteicon.icon"
-msgstr ""
-
+msgstr "\" ikoni"
 
 msgid "prefs.quoteicon.line"
-msgstr ""
-
+msgstr "Viiva"
 
 msgid "prefs.biglede"
-msgstr ""
-
+msgstr "Suuri 1. kappale:"
 
 msgid "prefs.plaintext.wrap"
-msgstr ""
-
+msgstr "Rivitä selväteksti:"
 
 msgid "prefs.decodeurls"
-msgstr ""
-
+msgstr "Pura URL-koodaus:"
 
 msgid "prefs.cachesize"
-msgstr ""
-
+msgstr "Välimuistin koko:"
 
 msgid "prefs.ca.file"
-msgstr ""
-
+msgstr "CA-tiedosto:"
 
 msgid "prefs.ca.path"
-msgstr ""
-
+msgstr "CA-polku:"
 
 msgid "prefs.proxy.gemini"
-msgstr ""
-
+msgstr "Gemini-välipalvelin:"
 
 msgid "prefs.proxy.gopher"
-msgstr ""
-
+msgstr "Gopher-välipalvelin:"
 
 msgid "prefs.proxy.http"
-msgstr ""
-
+msgstr "HTTP-välipalvelin:"
 
 msgid "menu.binding.reset"
-msgstr ""
-
+msgstr "Palauta oletus"
 
 msgid "menu.binding.clear"
-msgstr ""
-
+msgstr "Poista"
 
 msgid "keys.top"
-msgstr ""
-
+msgstr "Siirry alkuun"
 
 msgid "keys.bottom"
-msgstr ""
-
+msgstr "Siirry loppuun"
 
 msgid "keys.scroll.up"
-msgstr ""
-
+msgstr "Vieritä ylöspäin"
 
 msgid "keys.scroll.down"
-msgstr ""
-
+msgstr "Vieritä alaspäin"
 
 msgid "keys.scroll.halfpage.up"
-msgstr ""
-
+msgstr "Vieritä ylöspäin puoli sivua"
 
 msgid "keys.scroll.halfpage.down"
-msgstr ""
-
+msgstr "Vieritä alaspäin puoli sivua"
 
 msgid "keys.scroll.page.up"
-msgstr ""
-
+msgstr "Vieritä sivu ylöspäin"
 
 msgid "keys.scroll.page.down"
-msgstr ""
-
+msgstr "Vieritä sivu alaspäin"
 
 msgid "keys.back"
-msgstr ""
-
+msgstr "Mene takaisin"
 
 msgid "keys.forward"
-msgstr ""
-
+msgstr "Mene eteenpäin"
 
 msgid "keys.parent"
-msgstr ""
-
+msgstr "Mene yläkansioon"
 
 msgid "keys.root"
-msgstr ""
-
+msgstr "Mene kapselin juureen"
 
 msgid "keys.reload"
-msgstr ""
-
+msgstr "Lataa sivu uudelleen"
 
 msgid "keys.link.modkey"
-msgstr ""
-
+msgstr "Avaa linkki muokkausnäppäimen avulla"
 
 msgid "keys.link.homerow"
-msgstr ""
-
+msgstr "Avaa linkki kotirivinäppäimillä"
 
 msgid "keys.link.homerow.newtab"
-msgstr ""
-
+msgstr "Avaa linkki uuteen välilehteen kotirivinäppäimillä"
 
 msgid "keys.link.homerow.hover"
-msgstr ""
-
+msgstr "Aktivoi linkki kotirivinäppäimillä"
 
 msgid "keys.link.homerow.next"
-msgstr ""
-
+msgstr "Seuraava joukko kotirivilinkkejä"
 
 msgid "keys.bookmark.add"
-msgstr ""
-
+msgstr "Lisää kirjanmerkki"
 
 msgid "keys.findtext"
-msgstr ""
-
+msgstr "Etsi teksti sivulta"
 
 msgid "keys.zoom.in"
-msgstr ""
-
+msgstr "Suurenna"
 
 msgid "keys.zoom.out"
-msgstr ""
-
+msgstr "Pienennä"
 
 msgid "keys.zoom.reset"
-msgstr ""
-
+msgstr "Oletuskoko"
 
 msgid "keys.fullscreen"
-msgstr ""
-
+msgstr "Koko ruudun tila"
 
 msgid "keys.tab.new"
-msgstr ""
-
+msgstr "Uusi välilehti"
 
 msgid "keys.tab.close"
-msgstr ""
-
+msgstr "Sulje välilehti"
 
 msgid "keys.tab.prev"
-msgstr ""
-
+msgstr "Edellinen välilehti"
 
 msgid "keys.tab.next"
-msgstr ""
-
+msgstr "Seuraava välilehti"
 
 msgid "keys.hoverurl"
-msgstr ""
+msgstr "Näytä URL kursorin alla"
 
+msgid "sidebar.unread.many"
+msgstr "Lukematonta"

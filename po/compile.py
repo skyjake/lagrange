@@ -38,14 +38,28 @@ def unquote(string):
     
 def parse_po(src):
     messages = []
+    is_multi = False
     msg_id, msg_str = None, None
     for line in open(src, 'rt', encoding='utf-8').readlines():
         line = line.strip()
+        if is_multi:
+            if len(line) == 0:
+                if msg_id:
+                    messages.append((msg_id, msg_str))
+                is_multi = False
+                continue
+            else:
+                msg_str += unquote(line)
         if line.startswith('msgid'):
             msg_id = unquote(line[6:])
+        elif line == 'msgstr ""':
+            # Multiline string.
+            is_multi = True
+            msg_str = ''
         elif line.startswith('msgstr'):
-            msg_str = unquote(line[7:])        
-            messages.append((msg_id, msg_str))
+            msg_str = unquote(line[7:])
+            if msg_id:
+                messages.append((msg_id, msg_str))
     return messages
     
 
