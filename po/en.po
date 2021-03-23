@@ -593,6 +593,39 @@ msgstr "The received certificate is for the wrong domain (%s). This may be a ser
 msgid "dlg.certwarn.domain.expired"
 msgstr "The received certificate is expired AND for the wrong domain."
 
+msgid "heading.certimport"
+msgstr "IMPORT IDENTITY"
+
+msgid "dlg.certimport.help"
+msgstr "Paste a PEM-encoded certificate and/or private key,\nor drop a .crt/.key file on the window."
+
+msgid "dlg.certimport.notfound"
+msgstr "No certificate or private key was found."
+
+msgid "dlg.certimport.notfound.page"
+msgstr "No certificate/key found on the current page."
+
+msgid "heading.certimport.pasted"
+msgstr "PASTED FROM CLIPBOARD"
+
+msgid "heading.certimport.dropped"
+msgstr "DROPPED FILE"
+
+msgid "dlg.certimport.import"
+msgstr "Import"
+
+msgid "dlg.certimport.notes"
+msgstr "Notes:"
+
+msgid "hint.certimport.description"
+msgstr "description"
+
+msgid "dlg.certimport.nocert"
+msgstr "No Certificate"
+
+msgid "dlg.certimport.nokey"
+msgstr "No Private Key"
+
 msgid "link.hint.audio"
 msgstr "Play Audio"
 
@@ -628,6 +661,9 @@ msgstr "Chinese"
 
 msgid "lang.en"
 msgstr "English"
+
+msgid "lang.fi"
+msgstr "Finnish"
 
 msgid "lang.fr"
 msgstr "French"
@@ -842,6 +878,9 @@ msgstr "Teal"
 
 msgid "prefs.accent.orange"
 msgstr "Orange"
+
+msgid "prefs.uilang"
+msgstr "Language:"
 
 msgid "prefs.uiscale"
 msgstr "UI scale factor:"

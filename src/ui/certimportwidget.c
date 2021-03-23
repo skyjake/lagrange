@@ -47,8 +47,7 @@ struct Impl_CertImportWidget {
     iTlsCertificate *cert;
 };
 
-static const char *infoText_ = "Paste a PEM-encoded certificate and/or private key,\n"
-                               "or drop a .crt/.key file on the window.";
+static const char *infoText_ = "${dlg.certimport.help}";
 
 static iBool tryImport_CertImportWidget_(iCertImportWidget *d, const iBlock *data) {
     iBool ok = iFalse;
@@ -84,7 +83,7 @@ static iBool tryImport_CertImportWidget_(iCertImportWidget *d, const iBlock *dat
             setFrameColor_Widget(as_Widget(d->crtLabel), uiTextAction_ColorId);
         }
         else {
-            setTextCStr_LabelWidget(d->crtLabel, uiTextCaution_ColorEscape "No Certificate");
+            setTextCStr_LabelWidget(d->crtLabel, uiTextCaution_ColorEscape "${dlg.certimport.nocert}");
             setFrameColor_Widget(as_Widget(d->crtLabel), uiTextCaution_ColorId);
         }
         if (d->cert && hasPrivateKey_TlsCertificate(d->cert)) {
@@ -96,7 +95,7 @@ static iBool tryImport_CertImportWidget_(iCertImportWidget *d, const iBlock *dat
             setFrameColor_Widget(as_Widget(d->keyLabel), uiTextAction_ColorId);
         }
         else {
-            setTextCStr_LabelWidget(d->keyLabel, uiTextCaution_ColorEscape "No Private Key");
+            setTextCStr_LabelWidget(d->keyLabel, uiTextCaution_ColorEscape "${dlg.certimport.nokey}");
             setFrameColor_Widget(as_Widget(d->keyLabel), uiTextCaution_ColorId);
         }
     }
@@ -118,9 +117,10 @@ void init_CertImportWidget(iCertImportWidget *d) {
                             overflowScrollable_WidgetFlag,
                         iTrue);
     }
-    addChildFlags_Widget(w,
-                         iClob(new_LabelWidget(uiHeading_ColorEscape "IMPORT IDENTITY", NULL)),
-                         frameless_WidgetFlag);
+    addChildFlags_Widget(
+        w,
+        iClob(new_LabelWidget(uiHeading_ColorEscape "${heading.certimport}", NULL)),
+        frameless_WidgetFlag);
     d->info = addChildFlags_Widget(w, iClob(new_LabelWidget(infoText_, NULL)), frameless_WidgetFlag);
     addChild_Widget(w, iClob(makePadding_Widget(gap_UI)));
     d->crtLabel = new_LabelWidget("", NULL); {
@@ -141,9 +141,9 @@ void init_CertImportWidget(iCertImportWidget *d) {
             page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
         iWidget *values = addChildFlags_Widget(
             page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
-        addChild_Widget(headings, iClob(makeHeading_Widget("Notes:")));
+        addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.certimport.notes}")));
         addChild_Widget(values, iClob(d->notes = new_InputWidget(0)));
-        setHint_InputWidget(d->notes, "description");
+        setHint_InputWidget(d->notes, "${hint.certimport.description}");
         as_Widget(d->notes)->rect.size.x = gap_UI * 70;
     }
     addChild_Widget(w, iClob(page));
@@ -153,9 +153,11 @@ void init_CertImportWidget(iCertImportWidget *d) {
     /* Buttons. */
     addChild_Widget(w, iClob(makePadding_Widget(gap_UI)));
     iWidget *buttons = makeDialogButtons_Widget(
-        (iMenuItem[]){
-            { "${cancel}", 0, 0, NULL },
-            { uiTextAction_ColorEscape "Import", SDLK_RETURN, KMOD_PRIMARY, "certimport.accept" } },
+        (iMenuItem[]){ { "${cancel}", 0, 0, NULL },
+                       { uiTextAction_ColorEscape "${dlg.certimport.import}",
+                         SDLK_RETURN,
+                         KMOD_PRIMARY,
+                         "certimport.accept" } },
         2);
     addChild_Widget(w, iClob(buttons));
     arrange_Widget(w);
@@ -182,7 +184,7 @@ void setPageContent_CertImportWidget(iCertImportWidget *d, const iBlock *content
     }
     else {
         setTextCStr_LabelWidget(
-            d->info, format_CStr("No certificate/key found on the current page.\n%s", infoText_));
+            d->info, format_CStr("${dlg.certimport.notfound.page}\n%s", infoText_));
     }
     arrange_Widget(as_Widget(d));
 }
@@ -198,8 +200,8 @@ static iBool processEvent_CertImportWidget_(iCertImportWidget *d, const SDL_Even
         const int mods = keyMods_Sym(ev->key.keysym.mod);
         if (key == SDLK_v && mods == KMOD_PRIMARY) {
             if (!tryImportFromClipboard_CertImportWidget_(d)) {
-                makeMessage_Widget(uiTextCaution_ColorEscape "PASTED FROM CLIPBOARD",
-                                   "No certificate or private key was found.");
+                makeMessage_Widget(uiTextCaution_ColorEscape "${heading.certimport.pasted}",
+                                   "${dlg.certimport.notfound}");
             }
             postRefresh_App();
             return iTrue;
@@ -232,8 +234,8 @@ static iBool processEvent_CertImportWidget_(iCertImportWidget *d, const SDL_Even
                 }
             }
             else {
-                makeMessage_Widget(uiTextCaution_ColorEscape "DROPPED FILE",
-                                   "No certificate or private key was found.");
+                makeMessage_Widget(uiTextCaution_ColorEscape "${heading.certimport.dropped}",
+                                   "${dlg.certimport.notfound}");
             }
         }
         iRelease(f);
