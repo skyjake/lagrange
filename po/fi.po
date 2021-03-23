@@ -1,1340 +1,1019 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
+"POT-Creation-Date: 2021-03-23 09:09+0000\n"
+"PO-Revision-Date: 2021-03-23 09:09+0000\n"
+"Last-Translator: Jaakko Keränen <jaakko.keranen@iki.fi>\n"
+"Language-Team: Finnish <http://weblate.skyjake.fi/projects/lagrange/ui/fi/>\n"
+"Language: fi\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Weblate 4.5.1\n"
 
 msgid "about.logo"
 msgstr ""
 
-
 msgid "about.tagline"
-msgstr ""
-
+msgstr "Kaunis Gemini-selain"
 
 msgid "about.version"
-msgstr ""
-
+msgstr "Versio"
 
 msgid "about.powered"
-msgstr ""
-
+msgstr "SDL 2:n, OpenSSL:n ja ☕️:n voimalla"
 
 msgid "cancel"
-msgstr ""
-
+msgstr "Kumoa"
 
 msgid "dismiss"
-msgstr ""
-
+msgstr "Takaisin"
 
 msgid "dlg.message.ok"
-msgstr ""
-
+msgstr "Jatketaan"
 
 msgid "dlg.default"
-msgstr ""
-
+msgstr " OK "
 
 msgid "toggle.yes"
-msgstr ""
-
+msgstr "Kyllä"
 
 msgid "toggle.no"
-msgstr ""
-
+msgstr "Ei"
 
 msgid "menu.title.file"
-msgstr ""
-
+msgstr "Tiedosto"
 
 msgid "menu.title.edit"
-msgstr ""
-
+msgstr "Muokkaa"
 
 msgid "menu.title.view"
-msgstr ""
-
+msgstr "Näkymä"
 
 msgid "menu.title.bookmarks"
-msgstr ""
-
+msgstr "Kirjanmerkit"
 
 msgid "menu.title.identity"
-msgstr ""
-
+msgstr "Identiteetti"
 
 msgid "menu.title.help"
-msgstr ""
-
+msgstr "Ohje"
 
 msgid "menu.newtab"
-msgstr ""
-
+msgstr "Uusi välilehti"
 
 msgid "menu.closetab"
-msgstr ""
-
+msgstr "Sulje välilehti"
 
 msgid "menu.closetab.other"
-msgstr ""
-
+msgstr "Sulje toiset välilehdet"
 
 msgid "menu.closetab.left"
-msgstr ""
-
+msgstr "Sulje välilehdet vasemmalla"
 
 msgid "menu.closetab.right"
-msgstr ""
-
+msgstr "Sulje välilehdet oikealla"
 
 msgid "menu.duptab"
-msgstr ""
-
+msgstr "Monista välilehti"
 
 msgid "menu.openlocation"
-msgstr ""
-
+msgstr "Avaa sijainti…"
 
 msgid "menu.find"
-msgstr ""
-
+msgstr "Etsi sivulta"
 
 msgid "macos.menu.find"
-msgstr ""
-
+msgstr "Etsi"
 
 msgid "menu.save.files"
-msgstr ""
-
+msgstr "Tallenna tiedostoon"
 
 msgid "menu.save.downloads"
-msgstr ""
-
+msgstr "Tallenna latauskansioon"
 
 msgid "menu.copy.source"
-msgstr ""
-
+msgstr "Kopioi lähdeteksti"
 
 msgid "menu.sidebar"
-msgstr ""
-
+msgstr "Näytä/piilota sivupaneeli"
 
 msgid "menu.sidebar.left"
-msgstr ""
-
+msgstr "Näytä/piilota vasen sivupaneeli"
 
 msgid "menu.sidebar.right"
-msgstr ""
-
+msgstr "Näytä/piilota oikea sivupaneeli"
 
 msgid "menu.zoom.in"
-msgstr ""
-
+msgstr "Suurenna"
 
 msgid "menu.zoom.out"
-msgstr ""
-
+msgstr "Pienennä"
 
 msgid "menu.zoom.reset"
-msgstr ""
-
+msgstr "Oletuskoko"
 
 msgid "menu.bookmarks.list"
-msgstr ""
-
+msgstr "Luettele kaikki kirjanmerkit"
 
 msgid "macos.menu.bookmarks.list"
-msgstr ""
-
+msgstr "Luettele kaikki"
 
 msgid "menu.bookmarks.bytag"
-msgstr ""
-
+msgstr "Luettele kirjanmerkit avainsanoilla"
 
 msgid "macos.menu.bookmarks.bytag"
-msgstr ""
-
+msgstr "Luettele avainsanoilla"
 
 msgid "menu.bookmarks.bytime"
-msgstr ""
-
+msgstr "Luettele kirjanmerkit luontijärjestyksessä"
 
 msgid "macos.menu.bookmarks.bytime"
-msgstr ""
-
+msgstr "Luettele luontijärjestyksessä"
 
 msgid "menu.feeds.entrylist"
-msgstr ""
-
+msgstr "Näytä syötteiden artikkelit"
 
 msgid "menu.preferences"
-msgstr ""
-
+msgstr "Asetukset…"
 
 msgid "menu.help"
-msgstr ""
-
+msgstr "Ohje"
 
 msgid "menu.releasenotes"
-msgstr ""
-
+msgstr "Versiohistoria"
 
 msgid "menu.quit"
-msgstr ""
-
+msgstr "Sulje Lagrange"
 
 msgid "menu.cut"
-msgstr ""
-
+msgstr "Leikkaa"
 
 msgid "menu.copy"
-msgstr ""
-
+msgstr "Kopioi"
 
 msgid "menu.paste"
-msgstr ""
-
+msgstr "Liimaa"
 
 msgid "menu.copy.pagelink"
-msgstr ""
-
+msgstr "Kopioi sivun linkki"
 
 msgid "menu.show.bookmarks"
-msgstr ""
-
+msgstr "Näytä kirjanmerkit"
 
 msgid "menu.show.feeds"
-msgstr ""
-
+msgstr "Näytä syötteet"
 
 msgid "menu.show.history"
-msgstr ""
-
+msgstr "Näytä historia"
 
 msgid "menu.show.identities"
-msgstr ""
-
+msgstr "Näytä identiteetit"
 
 msgid "menu.show.outline"
-msgstr ""
-
+msgstr "Näytä sivun rakenne"
 
 msgid "menu.back"
-msgstr ""
-
+msgstr "Mene takaisin"
 
 msgid "menu.forward"
-msgstr ""
-
+msgstr "Mene eteenpäin"
 
 msgid "menu.parent"
-msgstr ""
-
+msgstr "Mene ylähakemistoon"
 
 msgid "menu.root"
-msgstr ""
-
+msgstr "Mene juureen"
 
 msgid "menu.reload"
-msgstr ""
-
+msgstr "Lataa sivu uudestaan"
 
 msgid "menu.autoreload"
-msgstr ""
-
+msgstr "Aseta automaattinen lataus…"
 
 msgid "menu.page.bookmark"
-msgstr ""
-
+msgstr "Lisää kirjanmerkki…"
 
 msgid "menu.page.subscribe"
-msgstr ""
-
+msgstr "Tilaa sivu syötteenä…"
 
 msgid "menu.aboutpages"
-msgstr ""
-
+msgstr "About-sivut"
 
 msgid "menu.about"
-msgstr ""
-
+msgstr "Tietoja: Lagrange"
 
 msgid "panel.back"
-msgstr ""
-
+msgstr "Takaisin"
 
 msgid "menu.debug"
-msgstr ""
-
+msgstr "Virheenetsintätietoja"
 
 msgid "menu.import.links"
-msgstr ""
-
+msgstr "Tuo kaikki linkit sivulla…"
 
 msgid "menu.page.import"
-msgstr ""
-
+msgstr "Tuo linkit kirjanmerkkeinä…"
 
 msgid "menu.page.translate"
-msgstr ""
-
+msgstr "Käännä…"
 
 msgid "menu.page.copyurl"
-msgstr ""
-
+msgstr "Kopioi sivun URL"
 
 msgid "menu.page.copysource"
-msgstr ""
-
+msgstr "Kopioi sivun lähde"
 
 msgid "menu.bookmarks.refresh"
-msgstr ""
-
+msgstr "Päivitä etäkirjanmerkit"
 
 msgid "menu.feeds.refresh"
-msgstr ""
-
+msgstr "Päivitä syötteet"
 
 msgid "menu.identity.new"
-msgstr ""
-
+msgstr "Uusi identiteetti…"
 
 msgid "menu.identity.import"
-msgstr ""
-
+msgstr "Tuo…"
 
 msgid "menu.identity.notactive"
-msgstr ""
-
+msgstr "Ei aktiivista identiteettiä"
 
 msgid "sidebar.bookmarks"
-msgstr ""
-
+msgstr "Kirjanmerkit"
 
 msgid "sidebar.feeds"
-msgstr ""
-
+msgstr "Syötteet"
 
 msgid "sidebar.history"
-msgstr ""
-
+msgstr "Historia"
 
 msgid "sidebar.identities"
-msgstr ""
-
+msgstr "Identiteetit"
 
 msgid "sidebar.outline"
-msgstr ""
-
+msgstr "Rakenne"
 
 msgid "sidebar.unread"
-msgstr ""
-
+msgstr "Lukematonta"
 
 msgid "toolbar.outline"
-msgstr ""
-
+msgstr "Sivun rakenne"
 
 msgid "hint.findtext"
 msgstr ""
 
-
 msgid "status.query"
 msgstr ""
-
 
 msgid "status.feeds"
 msgstr ""
 
-
 msgid "mb"
 msgstr ""
-
 
 msgid "kb"
 msgstr ""
 
-
 msgid "bytes"
 msgstr ""
-
 
 msgid "page.timestamp"
 msgstr ""
 
-
 msgid "sidebar.date.thisyear"
 msgstr ""
-
 
 msgid "sidebar.date.otheryear"
 msgstr ""
 
-
 msgid "feeds.today"
 msgstr ""
-
 
 msgid "feeds.entry.newtab"
 msgstr ""
 
-
 msgid "feeds.entry.markread"
 msgstr ""
-
 
 msgid "feeds.entry.markunread"
 msgstr ""
 
-
 msgid "sidebar.entry.bookmark"
 msgstr ""
-
 
 msgid "feeds.entry.bookmark"
 msgstr ""
 
-
 msgid "feeds.entry.openfeed"
 msgstr ""
-
 
 msgid "feeds.edit"
 msgstr ""
 
-
 msgid "feeds.unsubscribe"
 msgstr ""
-
 
 msgid "feeds.markallread"
 msgstr ""
 
-
 msgid "feeds.refresh"
 msgstr ""
-
 
 msgid "menu.opentab"
 msgstr ""
 
-
 msgid "menu.opentab.background"
 msgstr ""
-
 
 msgid "menu.edit"
 msgstr ""
 
-
 msgid "menu.dup"
 msgstr ""
-
 
 msgid "menu.copyurl"
 msgstr ""
 
-
 msgid "menu.forgeturl"
 msgstr ""
-
 
 msgid "history.clear"
 msgstr ""
 
-
 msgid "heading.history.clear"
 msgstr ""
-
 
 msgid "dlg.confirm.history.clear"
 msgstr ""
 
-
 msgid "dlg.history.clear"
 msgstr ""
-
 
 msgid "bookmark.tag.home"
 msgstr ""
 
-
 msgid "bookmark.tag.sub"
 msgstr ""
-
 
 msgid "bookmark.tag.remote"
 msgstr ""
 
-
 msgid "bookmark.untag.home"
 msgstr ""
-
 
 msgid "bookmark.untag.sub"
 msgstr ""
 
-
 msgid "bookmark.untag.remote"
 msgstr ""
-
 
 msgid "bookmark.delete"
 msgstr ""
 
-
 msgid "bookmarks.reload"
 msgstr ""
-
 
 msgid "ident.using"
 msgstr ""
 
-
 msgid "ident.notused"
 msgstr ""
-
 
 msgid "ident.usedonurls"
 msgstr ""
 
-
 msgid "ident.temporary"
 msgstr ""
-
 
 msgid "ident.expiry"
 msgstr ""
 
-
 msgid "ident.use"
 msgstr ""
-
 
 msgid "ident.stopuse"
 msgstr ""
 
-
 msgid "ident.stopuse.all"
 msgstr ""
-
 
 msgid "ident.showuse"
 msgstr ""
 
-
 msgid "heading.ident.use"
 msgstr ""
-
 
 msgid "menu.edit.notes"
 msgstr ""
 
-
 msgid "heading.ident.notes"
 msgstr ""
-
 
 msgid "dlg.ident.notes"
 msgstr ""
 
-
 msgid "ident.fingerprint"
 msgstr ""
-
 
 msgid "ident.delete"
 msgstr ""
 
-
 msgid "heading.ident.delete"
 msgstr ""
-
 
 msgid "dlg.confirm.ident.delete"
 msgstr ""
 
-
 msgid "dlg.ident.delete"
 msgstr ""
-
 
 msgid "sidebar.empty.idents"
 msgstr ""
 
-
 msgid "ident.gotohelp"
 msgstr ""
-
 
 msgid "heading.unsub"
 msgstr ""
 
-
 msgid "dlg.confirm.unsub"
 msgstr ""
-
 
 msgid "dlg.unsub"
 msgstr ""
 
-
 msgid "error.unsupported.suggestsave"
 msgstr ""
-
 
 msgid "heading.pageinfo"
 msgstr ""
 
-
 msgid "pageinfo.header.cached"
 msgstr ""
-
 
 msgid "pageinfo.cert.status"
 msgstr ""
 
-
 msgid "pageinfo.cert.ca.verified"
 msgstr ""
-
 
 msgid "pageinfo.cert.ca.unverified"
 msgstr ""
 
-
 msgid "pageinfo.cert.notexpired"
 msgstr ""
-
 
 msgid "pageinfo.cert.expired"
 msgstr ""
 
-
 msgid "pageinfo.cert.trusted"
 msgstr ""
-
 
 msgid "pageinfo.cert.untrusted"
 msgstr ""
 
-
 msgid "pageinfo.domain.match"
 msgstr ""
-
 
 msgid "pageinfo.domain.mismatch"
 msgstr ""
 
-
 msgid "dlg.cert.trust"
 msgstr ""
-
 
 msgid "dlg.cert.fingerprint"
 msgstr ""
 
-
 msgid "dlg.input.prompt"
 msgstr ""
-
 
 msgid "dlg.input.send"
 msgstr ""
 
-
 msgid "heading.save"
 msgstr ""
-
 
 msgid "heading.save.incomplete"
 msgstr ""
 
-
 msgid "dlg.save.incomplete"
 msgstr ""
-
 
 msgid "dlg.save.size"
 msgstr ""
 
-
 msgid "heading.save.error"
 msgstr ""
-
 
 msgid "heading.import.bookmarks"
 msgstr ""
 
-
 msgid "dlg.import.found"
 msgstr ""
-
 
 msgid "dlg.import.found.many"
 msgstr ""
 
-
 msgid "dlg.import.add"
 msgstr ""
-
 
 msgid "dlg.import.add.many"
 msgstr ""
 
-
 msgid "dlg.import.notnew"
 msgstr ""
-
 
 msgid "heading.autoreload"
 msgstr ""
 
-
 msgid "dlg.autoreload"
 msgstr ""
-
 
 msgid "link.newtab"
 msgstr ""
 
-
 msgid "link.newtab.background"
 msgstr ""
-
 
 msgid "link.browser"
 msgstr ""
 
-
 msgid "link.noproxy"
 msgstr ""
-
 
 msgid "link.copy"
 msgstr ""
 
-
 msgid "link.bookmark"
 msgstr ""
-
 
 msgid "link.download"
 msgstr ""
 
-
 msgid "heading.openlink"
 msgstr ""
-
 
 msgid "dlg.openlink.confirm"
 msgstr ""
 
-
 msgid "dlg.openlink"
 msgstr ""
-
 
 msgid "heading.certwarn"
 msgstr ""
 
-
 msgid "dlg.certwarn.mayberenewed"
 msgstr ""
-
 
 msgid "dlg.certwarn.different"
 msgstr ""
 
-
 msgid "dlg.certwarn.expired"
 msgstr ""
-
 
 msgid "dlg.certwarn.domain"
 msgstr ""
 
-
 msgid "dlg.certwarn.domain.expired"
 msgstr ""
-
 
 msgid "link.hint.audio"
 msgstr ""
 
-
 msgid "link.hint.image"
 msgstr ""
-
 
 msgid "bookmark.title.blank"
 msgstr ""
 
-
 msgid "heading.translate"
 msgstr ""
-
 
 msgid "dlg.translate.unavail"
 msgstr ""
 
-
 msgid "dlg.translate.fail"
 msgstr ""
-
 
 msgid "dlg.translate"
 msgstr ""
 
-
 msgid "dlg.translate.from"
 msgstr ""
-
 
 msgid "dlg.translate.to"
 msgstr ""
 
-
 msgid "lang.ar"
 msgstr ""
-
 
 msgid "lang.zh"
 msgstr ""
 
-
 msgid "lang.en"
 msgstr ""
-
 
 msgid "lang.fr"
 msgstr ""
 
-
 msgid "lang.de"
 msgstr ""
-
 
 msgid "lang.hi"
 msgstr ""
 
-
 msgid "lang.it"
 msgstr ""
-
 
 msgid "lang.ja"
 msgstr ""
 
-
 msgid "lang.pt"
 msgstr ""
-
 
 msgid "lang.ru"
 msgstr ""
 
-
 msgid "lang.es"
 msgstr ""
-
 
 msgid "heading.newident"
 msgstr ""
 
-
 msgid "dlg.newident.rsa.selfsign"
 msgstr ""
-
 
 msgid "dlg.newident.until"
 msgstr ""
 
-
 msgid "hint.newident.date"
 msgstr ""
-
 
 msgid "hint.newident.optional"
 msgstr ""
 
-
 msgid "dlg.newident.commonname"
 msgstr ""
-
 
 msgid "dlg.newident.temp"
 msgstr ""
 
-
 msgid "dlg.newident.notsaved"
 msgstr ""
-
 
 msgid "dlg.newident.email"
 msgstr ""
 
-
 msgid "dlg.newident.userid"
 msgstr ""
-
 
 msgid "dlg.newident.domain"
 msgstr ""
 
-
 msgid "dlg.newident.org"
 msgstr ""
-
 
 msgid "dlg.newident.country"
 msgstr ""
 
-
 msgid "dlg.newident.create"
 msgstr ""
-
 
 msgid "heading.feedcfg"
 msgstr ""
 
-
 msgid "heading.subscribe"
 msgstr ""
-
 
 msgid "dlg.feed.title"
 msgstr ""
 
-
 msgid "dlg.feed.entrytype"
 msgstr ""
-
 
 msgid "dlg.feed.type.gemini"
 msgstr ""
 
-
 msgid "dlg.feed.type.headings"
 msgstr ""
-
 
 msgid "dlg.feed.save"
 msgstr ""
 
-
 msgid "dlg.feed.sub"
 msgstr ""
-
 
 msgid "heading.bookmark.add"
 msgstr ""
 
-
 msgid "heading.bookmark.edit"
 msgstr ""
-
 
 msgid "dlg.bookmark.save"
 msgstr ""
 
-
 msgid "dlg.bookmark.title"
 msgstr ""
-
 
 msgid "dlg.bookmark.url"
 msgstr ""
 
-
 msgid "dlg.bookmark.tags"
 msgstr ""
-
 
 msgid "dlg.bookmark.icon"
 msgstr ""
 
-
 msgid "heading.prefs"
 msgstr ""
-
 
 msgid "heading.prefs.certs"
 msgstr ""
 
-
 msgid "heading.prefs.colors"
 msgstr ""
-
 
 msgid "heading.prefs.fonts"
 msgstr ""
 
-
 msgid "heading.prefs.general"
 msgstr ""
-
 
 msgid "heading.prefs.interface"
 msgstr ""
 
-
 msgid "heading.prefs.keys"
 msgstr ""
-
 
 msgid "heading.prefs.network"
 msgstr ""
 
-
 msgid "heading.prefs.paragraph"
 msgstr ""
-
 
 msgid "heading.prefs.pagecontent"
 msgstr ""
 
-
 msgid "heading.prefs.proxies"
 msgstr ""
-
 
 msgid "heading.prefs.scrolling"
 msgstr ""
 
-
 msgid "heading.prefs.sizing"
 msgstr ""
-
 
 msgid "heading.prefs.widelayout"
 msgstr ""
 
-
 msgid "heading.prefs.style"
 msgstr ""
-
 
 msgid "heading.prefs.userinterface"
 msgstr ""
 
-
 msgid "prefs.downloads"
 msgstr ""
-
 
 msgid "prefs.searchurl"
 msgstr ""
 
-
 msgid "prefs.hoverlink"
 msgstr ""
-
 
 msgid "prefs.centershort"
 msgstr ""
 
-
 msgid "prefs.smoothscroll"
 msgstr ""
-
 
 msgid "prefs.imageloadscroll"
 msgstr ""
 
-
 msgid "prefs.hidetoolbarscroll"
 msgstr ""
-
 
 msgid "prefs.ostheme"
 msgstr ""
 
-
 msgid "prefs.theme"
 msgstr ""
-
 
 msgid "prefs.theme.black"
 msgstr ""
 
-
 msgid "prefs.theme.dark"
 msgstr ""
-
 
 msgid "prefs.theme.light"
 msgstr ""
 
-
 msgid "prefs.theme.white"
 msgstr ""
-
 
 msgid "prefs.accent"
 msgstr ""
 
-
 msgid "prefs.accent.teal"
 msgstr ""
-
 
 msgid "prefs.accent.orange"
 msgstr ""
 
-
 msgid "prefs.uiscale"
 msgstr ""
-
 
 msgid "prefs.customframe"
 msgstr ""
 
-
 msgid "prefs.retainwindow"
 msgstr ""
-
 
 msgid "prefs.sideicon"
 msgstr ""
 
-
 msgid "prefs.doctheme.dark"
 msgstr ""
-
 
 msgid "prefs.doctheme.light"
 msgstr ""
 
-
 msgid "prefs.doctheme.name.colorfuldark"
 msgstr ""
-
 
 msgid "prefs.doctheme.name.colorfullight"
 msgstr ""
 
-
 msgid "prefs.doctheme.name.black"
 msgstr ""
-
 
 msgid "prefs.doctheme.name.gray"
 msgstr ""
 
-
 msgid "prefs.doctheme.name.white"
 msgstr ""
-
 
 msgid "prefs.doctheme.name.sepia"
 msgstr ""
 
-
 msgid "prefs.doctheme.name.highcontrast"
 msgstr ""
-
 
 msgid "prefs.saturation"
 msgstr ""
 
-
 msgid "prefs.headingfont"
 msgstr ""
-
 
 msgid "prefs.font"
 msgstr ""
 
-
 msgid "prefs.mono"
 msgstr ""
-
 
 msgid "prefs.mono.gemini"
 msgstr ""
 
-
 msgid "prefs.mono.gopher"
 msgstr ""
-
 
 msgid "prefs.linewidth"
 msgstr ""
 
-
 msgid "prefs.linewidth.normal"
 msgstr ""
-
 
 msgid "prefs.linewidth.fill"
 msgstr ""
 
-
 msgid "prefs.quoteicon"
 msgstr ""
-
 
 msgid "prefs.quoteicon.icon"
 msgstr ""
 
-
 msgid "prefs.quoteicon.line"
 msgstr ""
-
 
 msgid "prefs.biglede"
 msgstr ""
 
-
 msgid "prefs.plaintext.wrap"
 msgstr ""
-
 
 msgid "prefs.decodeurls"
 msgstr ""
 
-
 msgid "prefs.cachesize"
 msgstr ""
-
 
 msgid "prefs.ca.file"
 msgstr ""
 
-
 msgid "prefs.ca.path"
 msgstr ""
-
 
 msgid "prefs.proxy.gemini"
 msgstr ""
 
-
 msgid "prefs.proxy.gopher"
 msgstr ""
-
 
 msgid "prefs.proxy.http"
 msgstr ""
 
-
 msgid "menu.binding.reset"
 msgstr ""
-
 
 msgid "menu.binding.clear"
 msgstr ""
 
-
 msgid "keys.top"
 msgstr ""
-
 
 msgid "keys.bottom"
 msgstr ""
 
-
 msgid "keys.scroll.up"
 msgstr ""
-
 
 msgid "keys.scroll.down"
 msgstr ""
 
-
 msgid "keys.scroll.halfpage.up"
 msgstr ""
-
 
 msgid "keys.scroll.halfpage.down"
 msgstr ""
 
-
 msgid "keys.scroll.page.up"
 msgstr ""
-
 
 msgid "keys.scroll.page.down"
 msgstr ""
 
-
 msgid "keys.back"
 msgstr ""
-
 
 msgid "keys.forward"
 msgstr ""
 
-
 msgid "keys.parent"
 msgstr ""
-
 
 msgid "keys.root"
 msgstr ""
 
-
 msgid "keys.reload"
 msgstr ""
-
 
 msgid "keys.link.modkey"
 msgstr ""
 
-
 msgid "keys.link.homerow"
 msgstr ""
-
 
 msgid "keys.link.homerow.newtab"
 msgstr ""
 
-
 msgid "keys.link.homerow.hover"
 msgstr ""
-
 
 msgid "keys.link.homerow.next"
 msgstr ""
 
-
 msgid "keys.bookmark.add"
 msgstr ""
-
 
 msgid "keys.findtext"
 msgstr ""
 
-
 msgid "keys.zoom.in"
 msgstr ""
-
 
 msgid "keys.zoom.out"
 msgstr ""
 
-
 msgid "keys.zoom.reset"
 msgstr ""
-
 
 msgid "keys.fullscreen"
 msgstr ""
 
-
 msgid "keys.tab.new"
 msgstr ""
-
 
 msgid "keys.tab.close"
 msgstr ""
 
-
 msgid "keys.tab.prev"
 msgstr ""
-
 
 msgid "keys.tab.next"
 msgstr ""
 
-
 msgid "keys.hoverurl"
 msgstr ""
-
