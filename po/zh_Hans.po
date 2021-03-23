@@ -1,2 +1,34 @@
 msgid ""
-msgstr "X-Generator: Weblate\nMIME-Version: 1.0\nContent-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit"
+msgstr ""
+"Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
+"PO-Revision-Date: 2021-03-23 11:14+0000\n"
+"Last-Translator: Shibo Lyu <github@of.sb>\n"
+"Language-Team: Chinese (Simplified) <http://weblate.skyjake.fi/projects/"
+"lagrange/ui/zh_Hans/>\n"
+"Language: zh_Hans\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Weblate 4.5.1\n"
+
+msgid "sidebar.feeds"
+msgstr "订阅项"
+
+msgid "sidebar.history"
+msgstr "浏览记录"
+
+msgid "sidebar.identities"
+msgstr "身份"
+
+msgid "sidebar.outline"
+msgstr "大纲"
+
+msgid "sidebar.unread"
+msgstr "未读"
+
+msgid "menu.preferences"
+msgstr "偏好设置…"
+
+msgid "sidebar.bookmarks"
+msgstr "书签"
