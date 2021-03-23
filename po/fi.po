@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2021-03-23 09:09+0000\n"
-"PO-Revision-Date: 2021-03-23 10:45+0000\n"
+"PO-Revision-Date: 2021-03-23 11:14+0000\n"
 "Last-Translator: Jaakko Keränen <jaakko.keranen@iki.fi>\n"
 "Language-Team: Finnish <http://weblate.skyjake.fi/projects/lagrange/ui/fi/>\n"
 "Language: fi\n"
@@ -847,199 +847,199 @@ msgid "prefs.accent.orange"
 msgstr "Oranssi"
 
 msgid "prefs.uiscale"
-msgstr ""
+msgstr "Skaalauskerroin:"
 
 msgid "prefs.customframe"
-msgstr ""
+msgstr "Mukautetut reunukset:"
 
 msgid "prefs.retainwindow"
-msgstr ""
+msgstr "Säilytä sijainti:"
 
 msgid "prefs.sideicon"
-msgstr ""
+msgstr "Kapselin ikoni:"
 
 msgid "prefs.doctheme.dark"
-msgstr ""
+msgstr "Tumma teema:"
 
 msgid "prefs.doctheme.light"
-msgstr ""
+msgstr "Vaalea teema:"
 
 msgid "prefs.doctheme.name.colorfuldark"
-msgstr ""
+msgstr "Värikäs tumma"
 
 msgid "prefs.doctheme.name.colorfullight"
-msgstr ""
+msgstr "Värikäs vaalea"
 
 msgid "prefs.doctheme.name.black"
-msgstr ""
+msgstr "Musta"
 
 msgid "prefs.doctheme.name.gray"
-msgstr ""
+msgstr "Harmaa"
 
 msgid "prefs.doctheme.name.white"
-msgstr ""
+msgstr "Valkoinen"
 
 msgid "prefs.doctheme.name.sepia"
-msgstr ""
+msgstr "Seepia"
 
 msgid "prefs.doctheme.name.highcontrast"
-msgstr ""
+msgstr "Korkea kontrasti"
 
 msgid "prefs.saturation"
-msgstr ""
+msgstr "Saturaatio:"
 
 msgid "prefs.headingfont"
-msgstr ""
+msgstr "Otsakkeiden fontti:"
 
 msgid "prefs.font"
-msgstr ""
+msgstr "Leipätekstin fontti:"
 
 msgid "prefs.mono"
-msgstr ""
+msgstr "Tasalevyinen leipäteksti:"
 
 msgid "prefs.mono.gemini"
-msgstr ""
+msgstr "Gemini"
 
 msgid "prefs.mono.gopher"
-msgstr ""
+msgstr "Gopher"
 
 msgid "prefs.linewidth"
-msgstr ""
+msgstr "Rivin leveys:"
 
 msgid "prefs.linewidth.normal"
-msgstr ""
+msgstr "Normaali"
 
 msgid "prefs.linewidth.fill"
-msgstr ""
+msgstr "Täytä"
 
 msgid "prefs.quoteicon"
-msgstr ""
+msgstr "Lainaustyyli:"
 
 msgid "prefs.quoteicon.icon"
-msgstr ""
+msgstr "\" ikoni"
 
 msgid "prefs.quoteicon.line"
-msgstr ""
+msgstr "Viiva"
 
 msgid "prefs.biglede"
-msgstr ""
+msgstr "Suuri 1. kappale:"
 
 msgid "prefs.plaintext.wrap"
-msgstr ""
+msgstr "Rivitä selväteksti:"
 
 msgid "prefs.decodeurls"
-msgstr ""
+msgstr "Pura URL-koodaus:"
 
 msgid "prefs.cachesize"
-msgstr ""
+msgstr "Välimuistin koko:"
 
 msgid "prefs.ca.file"
-msgstr ""
+msgstr "CA-tiedosto:"
 
 msgid "prefs.ca.path"
-msgstr ""
+msgstr "CA-polku:"
 
 msgid "prefs.proxy.gemini"
-msgstr ""
+msgstr "Gemini-välipalvelin:"
 
 msgid "prefs.proxy.gopher"
-msgstr ""
+msgstr "Gopher-välipalvelin:"
 
 msgid "prefs.proxy.http"
-msgstr ""
+msgstr "HTTP-välipalvelin:"
 
 msgid "menu.binding.reset"
-msgstr ""
+msgstr "Palauta oletus"
 
 msgid "menu.binding.clear"
-msgstr ""
+msgstr "Poista"
 
 msgid "keys.top"
-msgstr ""
+msgstr "Siirry alkuun"
 
 msgid "keys.bottom"
-msgstr ""
+msgstr "Siirry loppuun"
 
 msgid "keys.scroll.up"
-msgstr ""
+msgstr "Vieritä ylöspäin"
 
 msgid "keys.scroll.down"
-msgstr ""
+msgstr "Vieritä alaspäin"
 
 msgid "keys.scroll.halfpage.up"
-msgstr ""
+msgstr "Vieritä ylöspäin puoli sivua"
 
 msgid "keys.scroll.halfpage.down"
-msgstr ""
+msgstr "Vieritä alaspäin puoli sivua"
 
 msgid "keys.scroll.page.up"
-msgstr ""
+msgstr "Vieritä sivu ylöspäin"
 
 msgid "keys.scroll.page.down"
-msgstr ""
+msgstr "Vieritä sivu alaspäin"
 
 msgid "keys.back"
-msgstr ""
+msgstr "Mene takaisin"
 
 msgid "keys.forward"
-msgstr ""
+msgstr "Mene eteenpäin"
 
 msgid "keys.parent"
-msgstr ""
+msgstr "Mene yläkansioon"
 
 msgid "keys.root"
-msgstr ""
+msgstr "Mene kapselin juureen"
 
 msgid "keys.reload"
-msgstr ""
+msgstr "Lataa sivu uudelleen"
 
 msgid "keys.link.modkey"
-msgstr ""
+msgstr "Avaa linkki muokkausnäppäimen avulla"
 
 msgid "keys.link.homerow"
-msgstr ""
+msgstr "Avaa linkki kotirivinäppäimillä"
 
 msgid "keys.link.homerow.newtab"
-msgstr ""
+msgstr "Avaa linkki uuteen välilehteen kotirivinäppäimillä"
 
 msgid "keys.link.homerow.hover"
-msgstr ""
+msgstr "Aktivoi linkki kotirivinäppäimillä"
 
 msgid "keys.link.homerow.next"
-msgstr ""
+msgstr "Seuraava joukko kotirivilinkkejä"
 
 msgid "keys.bookmark.add"
-msgstr ""
+msgstr "Lisää kirjanmerkki"
 
 msgid "keys.findtext"
-msgstr ""
+msgstr "Etsi teksti sivulta"
 
 msgid "keys.zoom.in"
-msgstr ""
+msgstr "Suurenna"
 
 msgid "keys.zoom.out"
-msgstr ""
+msgstr "Pienennä"
 
 msgid "keys.zoom.reset"
-msgstr ""
+msgstr "Oletuskoko"
 
 msgid "keys.fullscreen"
-msgstr ""
+msgstr "Koko ruudun tila"
 
 msgid "keys.tab.new"
-msgstr ""
+msgstr "Uusi välilehti"
 
 msgid "keys.tab.close"
-msgstr ""
+msgstr "Sulje välilehti"
 
 msgid "keys.tab.prev"
-msgstr ""
+msgstr "Edellinen välilehti"
 
 msgid "keys.tab.next"
-msgstr ""
+msgstr "Seuraava välilehti"
 
 msgid "keys.hoverurl"
-msgstr ""
+msgstr "Näytä URL kursorin alla"
 
 msgid "sidebar.unread.many"
 msgstr "Lukematonta"
