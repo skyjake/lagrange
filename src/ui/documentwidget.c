@@ -823,9 +823,9 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
             case unsupportedMimeType_GmStatusCode: {
                 iString *key = collectNew_String();
                 toString_Sym(SDLK_s, KMOD_PRIMARY, key);
+                appendFormat_String(src, "\n```\n%s\n```\n", cstr_String(meta));
                 appendFormat_String(src,
                                     cstr_Lang("error.unsupported.suggestsave"),
-                                    cstr_String(meta),
                                     cstr_String(key),
                                     saveToDownloads_Label);
                 break;
@@ -840,6 +840,7 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
     }
     setBanner_GmDocument(d->doc, useBanner ? bannerType_DocumentWidget_(d) : none_GmDocumentBanner);
     setFormat_GmDocument(d->doc, gemini_GmDocumentFormat);
+    translate_Lang(src);
     setSource_DocumentWidget(d, src);
     updateTheme_DocumentWidget_(d);
     init_Anim(&d->scrollY, 0);
