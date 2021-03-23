@@ -492,10 +492,11 @@ static void updateMetrics_SidebarWidget_(iSidebarWidget *d) {
     d->maxButtonLabelWidth = 0;
     for (int i = 0; i < max_SidebarMode; i++) {
         if (d->modeButtons[i]) {
-            d->maxButtonLabelWidth = iMaxi(
-                d->maxButtonLabelWidth,
-                3 * gap_UI +
-                    measure_Text(font_LabelWidget(d->modeButtons[i]), normalModeLabels_[i]).x);
+            d->maxButtonLabelWidth =
+                iMaxi(d->maxButtonLabelWidth,
+                      3 * gap_UI + measure_Text(font_LabelWidget(d->modeButtons[i]),
+                                                translateCStr_Lang(normalModeLabels_[i]))
+                                       .x);
         }
     }
     updateItemHeight_SidebarWidget_(d);
@@ -702,11 +703,15 @@ static void checkModeButtonLayout_SidebarWidget_(iSidebarWidget *d) {
         if (!button) continue;
         setFlags_Widget(as_Widget(button), tight_WidgetFlag, isTight);
         if (i == feeds_SidebarMode && d->numUnreadEntries) {
-            updateText_LabelWidget(button,
-                                   collectNewFormat_String("%s " uiTextAction_ColorEscape "%zu%s",
-                                                           tightModeLabels_[i],
-                                                           d->numUnreadEntries,
-                                                           !isTight ? " ${sidebar.unread}" : ""));
+            updateText_LabelWidget(
+                button,
+                collectNewFormat_String("%s " uiTextAction_ColorEscape "%zu%s",
+                                        tightModeLabels_[i],
+                                        d->numUnreadEntries,
+                                        !isTight
+                                            ? (d->numUnreadEntries == 1 ? " ${sidebar.unread}"
+                                                                        : " ${sidebar.unread.many}")
+                                            : ""));
         }
         else {
             updateTextCStr_LabelWidget(button,

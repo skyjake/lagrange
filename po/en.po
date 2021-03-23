@@ -244,6 +244,9 @@ msgstr "Outline"
 msgid "sidebar.unread"
 msgstr "Unread"
 
+msgid "sidebar.unread.many"
+msgstr "Unread"
+
 msgid "toolbar.outline"
 msgstr "Page Outline"
 
