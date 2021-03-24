@@ -305,6 +305,7 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
                           adjusted_Rect(bounds, init_I2(iconPad, 0), zero_I2()),
                           d->alignVisual,
                           fg,
+                          "%s",
                           cstr_String(&d->label));
     }
     if (flags & chevron_WidgetFlag) {

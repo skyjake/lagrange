@@ -95,7 +95,14 @@ void stripDefaultUrlPort_String(iString *d) {
     }
 }
 
+iBool isDataUrl_String(const iString *d) {
+    return startsWithCase_String(d, "data:");
+}
+
 const iString *urlFragmentStripped_String(const iString *d) {
+    if (isDataUrl_String(d)) {
+        return d;
+    }
     /* Note: Could use `iUrl` here and leave out the fragment. */
     const size_t fragPos = indexOf_String(d, '#');
     if (fragPos != iInvalidPos) {
@@ -227,6 +234,9 @@ void urlDecodePath_String(iString *d) {
 void urlEncodePath_String(iString *d) {
     iUrl url;
     init_Url(&url, d);
+    if (equalCase_Rangecc(url.scheme, "data")) {
+        return;
+    }
     if (isEmpty_Range(&url.path)) {
         return;
     }
@@ -355,6 +365,9 @@ void punyEncodeDomain_Rangecc(iRangecc domain, iString *encoded_out) {
 void punyEncodeUrlHost_String(iString *absoluteUrl) {
     iUrl url;
     init_Url(&url, absoluteUrl);
+    if (equalCase_Rangecc(url.scheme, "data")) {
+        return;
+    }
     if (isEmpty_Range(&url.host)) {
         return;
     }
@@ -391,6 +404,9 @@ void urlEncodeSpaces_String(iString *d) {
 }
 
 const iString *withSpacesEncoded_String(const iString *d) {
+    if (isDataUrl_String(d)) {
+        return d;
+    }
     iString *enc = copy_String(d);
     urlEncodeSpaces_String(enc);
     return collect_String(enc);

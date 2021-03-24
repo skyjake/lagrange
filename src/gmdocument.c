@@ -195,6 +195,7 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
                 link->flags |= file_GmLinkFlag;
             }
             else if (equalCase_Rangecc(parts.scheme, "data")) {
+                link->flags |= data_GmLinkFlag;
             }
             else if (equalCase_Rangecc(parts.scheme, "about")) {
                 link->flags |= about_GmLinkFlag;
