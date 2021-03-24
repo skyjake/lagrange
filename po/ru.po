@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2021-03-23 19:02+0000\n"
-"PO-Revision-Date: 2021-03-23 19:02+0000\n"
+"PO-Revision-Date: 2021-03-24 09:48+0000\n"
 "Last-Translator: Nikolay <sikmir@gmail.com>\n"
 "Language-Team: Russian <http://weblate.skyjake.fi/projects/lagrange/ui/ru/>\n"
 "Language: ru\n"
@@ -15,10 +15,10 @@ msgstr ""
 "X-Generator: Weblate 4.5.1\n"
 
 msgid "about.logo"
-msgstr ""
+msgstr "ASCII-графика: слово «Lagrange» крупным шрифтом"
 
 msgid "about.tagline"
-msgstr ""
+msgstr "Красивый Gemini-браузер"
 
 msgid "about.version"
 msgstr "Версия"
@@ -57,7 +57,7 @@ msgid "menu.title.bookmarks"
 msgstr "Закладки"
 
 msgid "menu.title.identity"
-msgstr "Идентичность"
+msgstr "Идентификатор"
 
 msgid "menu.title.help"
 msgstr "Справка"
@@ -81,7 +81,7 @@ msgid "menu.duptab"
 msgstr "Дублировать вкладку"
 
 msgid "menu.openlocation"
-msgstr ""
+msgstr "Открыть местоположение…"
 
 msgid "menu.find"
 msgstr "Найти на странице"
@@ -90,7 +90,7 @@ msgid "macos.menu.find"
 msgstr "Найти"
 
 msgid "menu.save.files"
-msgstr ""
+msgstr "Сохранить в файл"
 
 msgid "menu.save.downloads"
 msgstr "Сохранить в папку загрузки"
@@ -117,25 +117,25 @@ msgid "menu.zoom.reset"
 msgstr "Размер по умолчанию"
 
 msgid "menu.bookmarks.list"
-msgstr ""
+msgstr "Список всех закладок"
 
 msgid "macos.menu.bookmarks.list"
-msgstr ""
+msgstr "Список всех"
 
 msgid "menu.bookmarks.bytag"
-msgstr ""
+msgstr "Список закладок по тэгу"
 
 msgid "macos.menu.bookmarks.bytag"
-msgstr ""
+msgstr "Список по тэгу"
 
 msgid "menu.bookmarks.bytime"
-msgstr ""
+msgstr "Список закладок по времени создания"
 
 msgid "macos.menu.bookmarks.bytime"
-msgstr ""
+msgstr "Список по времени создания"
 
 msgid "menu.feeds.entrylist"
-msgstr ""
+msgstr "Показать записи в ленте"
 
 msgid "menu.preferences"
 msgstr "Настройки…"
@@ -144,7 +144,7 @@ msgid "menu.help"
 msgstr "Справка"
 
 msgid "menu.releasenotes"
-msgstr ""
+msgstr "Примечания к выпуску"
 
 msgid "menu.quit"
 msgstr "Выйти из Lagrange"
@@ -165,13 +165,13 @@ msgid "menu.show.bookmarks"
 msgstr "Показать закладки"
 
 msgid "menu.show.feeds"
-msgstr ""
+msgstr "Показать ленты"
 
 msgid "menu.show.history"
 msgstr "Показать историю"
 
 msgid "menu.show.identities"
-msgstr ""
+msgstr "Показать идентификаторы"
 
 msgid "menu.show.outline"
 msgstr "Показать структуру страницы"
@@ -192,10 +192,10 @@ msgid "menu.reload"
 msgstr "Перезагрузить страницу"
 
 msgid "menu.autoreload"
-msgstr ""
+msgstr "Включить автоматическую перезагрузку…"
 
 msgid "menu.page.bookmark"
-msgstr ""
+msgstr "Добавить страницу в закладки…"
 
 msgid "menu.page.subscribe"
 msgstr "Подписаться на страницу…"
@@ -213,7 +213,7 @@ msgid "menu.debug"
 msgstr "Отладочная информация"
 
 msgid "menu.import.links"
-msgstr ""
+msgstr "Импортировать все ссылки на странице…"
 
 msgid "menu.page.import"
 msgstr "Импортировать ссылки как закладки…"
@@ -228,31 +228,31 @@ msgid "menu.page.copysource"
 msgstr "Копировать исходный код страницы"
 
 msgid "menu.bookmarks.refresh"
-msgstr ""
+msgstr "Обновить внешние закладки"
 
 msgid "menu.feeds.refresh"
-msgstr ""
+msgstr "Обновить ленты"
 
 msgid "menu.identity.new"
-msgstr "Новая идентичность…"
+msgstr "Новый идентификатор…"
 
 msgid "menu.identity.import"
 msgstr "Импорт…"
 
 msgid "menu.identity.notactive"
-msgstr ""
+msgstr "Нет активного идентификатора"
 
 msgid "sidebar.bookmarks"
 msgstr "Закладки"
 
 msgid "sidebar.feeds"
-msgstr ""
+msgstr "Ленты"
 
 msgid "sidebar.history"
 msgstr "История"
 
 msgid "sidebar.identities"
-msgstr ""
+msgstr "Идентификаторы"
 
 msgid "sidebar.outline"
 msgstr "Структура"
@@ -270,7 +270,7 @@ msgid "status.query"
 msgstr "Поисковый запрос"
 
 msgid "status.feeds"
-msgstr ""
+msgstr "Обновление лент"
 
 msgid "mb"
 msgstr "МБ"
@@ -309,10 +309,10 @@ msgid "feeds.entry.bookmark"
 msgstr "Добавить закладку…"
 
 msgid "feeds.entry.openfeed"
-msgstr ""
+msgstr "Открыть страницу ленты"
 
 msgid "feeds.edit"
-msgstr ""
+msgstr "Редактировать ленту…"
 
 msgid "feeds.unsubscribe"
 msgstr "Отписаться…"
@@ -321,7 +321,7 @@ msgid "feeds.markallread"
 msgstr "Отметить все как прочитанное"
 
 msgid "feeds.refresh"
-msgstr ""
+msgstr "Обновить ленты"
 
 msgid "menu.opentab"
 msgstr "Открыть в новой вкладке"
@@ -357,7 +357,7 @@ msgid "bookmark.tag.home"
 msgstr "Использовать как домашнюю страницу"
 
 msgid "bookmark.tag.sub"
-msgstr ""
+msgstr "Подписаться на ленту"
 
 msgid "bookmark.tag.remote"
 msgstr "Использовать как источник закладок"
@@ -366,7 +366,7 @@ msgid "bookmark.untag.home"
 msgstr "Удалить домашнюю страницу"
 
 msgid "bookmark.untag.sub"
-msgstr ""
+msgstr "Отписаться от ленты"
 
 msgid "bookmark.untag.remote"
 msgstr ""
@@ -405,34 +405,37 @@ msgid "ident.showuse"
 msgstr "Показать использование"
 
 msgid "heading.ident.use"
-msgstr ""
+msgstr "ИСПОЛЬЗОВАНИЕ ИДЕНТИФИКАТОРА"
 
 msgid "menu.edit.notes"
 msgstr "Редактировать заметки…"
 
 msgid "heading.ident.notes"
-msgstr ""
+msgstr "ЗАМЕТКИ ИДЕНТИФИКАТОРА"
 
 msgid "dlg.ident.notes"
 msgstr "Заметки о %s:"
 
 msgid "ident.fingerprint"
-msgstr ""
+msgstr "Скопировать отпечаток"
 
 msgid "ident.delete"
-msgstr "Удалить идентичность…"
+msgstr "Удалить идентификатор…"
 
 msgid "heading.ident.delete"
-msgstr "УДАЛЕНИЕ ИДЕНТИЧНОСТИ"
+msgstr "УДАЛЕНИЕ ИДЕНТИФИКАТОРА"
 
 msgid "dlg.confirm.ident.delete"
 msgstr ""
+"Вы действительно хотите удалить идентификатор\n"
+"%s%s%s\n"
+"включая файлы сертификата и закрытого ключа?"
 
 msgid "dlg.ident.delete"
-msgstr "Удалить идентичность и файлы"
+msgstr "Удалить идентификатор и файлы"
 
 msgid "sidebar.empty.idents"
-msgstr ""
+msgstr "Нет идентификаторов"
 
 msgid "ident.gotohelp"
 msgstr ""
@@ -444,6 +447,8 @@ msgstr "ОТПИСКА"
 
 msgid "dlg.confirm.unsub"
 msgstr ""
+"Действительно отписаться от ленты\n"
+"«%s»?"
 
 msgid "dlg.unsub"
 msgstr "Отписаться"
@@ -467,16 +472,16 @@ msgid "pageinfo.cert.ca.unverified"
 msgstr ""
 
 msgid "pageinfo.cert.notexpired"
-msgstr ""
+msgstr "Срок действия не истёк"
 
 msgid "pageinfo.cert.expired"
-msgstr ""
+msgstr "Срок действия истёк"
 
 msgid "pageinfo.cert.trusted"
-msgstr ""
+msgstr "Доверенный"
 
 msgid "pageinfo.cert.untrusted"
-msgstr ""
+msgstr "Не доверенный"
 
 msgid "pageinfo.domain.match"
 msgstr "Доменное имя совпадает"
@@ -485,10 +490,10 @@ msgid "pageinfo.domain.mismatch"
 msgstr "Несоответствие доменного имени"
 
 msgid "dlg.cert.trust"
-msgstr ""
+msgstr "Доверять"
 
 msgid "dlg.cert.fingerprint"
-msgstr ""
+msgstr "Скопировать отпечаток"
 
 msgid "dlg.input.prompt"
 msgstr "Введите данные для %s:"
@@ -512,7 +517,7 @@ msgid "heading.save.error"
 msgstr "ОШИБКА СОХРАНЕНИЯ ФАЙЛА"
 
 msgid "heading.import.bookmarks"
-msgstr ""
+msgstr "ИМПОРТ ЗАКЛАДОК"
 
 msgid "dlg.import.found"
 msgstr "Найдена одна новая ссылка на этой странице."
@@ -551,7 +556,7 @@ msgid "link.copy"
 msgstr "Скопировать ссылку"
 
 msgid "link.bookmark"
-msgstr ""
+msgstr "Добавить ссылку в закладки…"
 
 msgid "link.download"
 msgstr "Скачать файл"
@@ -568,22 +573,28 @@ msgid "dlg.openlink"
 msgstr "Открыть ссылку"
 
 msgid "heading.certwarn"
-msgstr ""
+msgstr "НЕДОВЕРЕННЫЙ СЕРТИФИКАТ"
 
 msgid "dlg.certwarn.mayberenewed"
 msgstr ""
 
 msgid "dlg.certwarn.different"
 msgstr ""
+"Полученный сертификат действителен, но отличается от сертификата, которому "
+"мы доверяем."
 
 msgid "dlg.certwarn.expired"
-msgstr ""
+msgstr "Срок действия полученного сертификата истек %s."
 
 msgid "dlg.certwarn.domain"
 msgstr ""
+"Полученный сертификат относится к неправильному домену (%s). Это может быть "
+"проблема конфигурации сервера."
 
 msgid "dlg.certwarn.domain.expired"
 msgstr ""
+"Срок действия полученного сертификата истек И он относится к неправильному "
+"домену."
 
 msgid "link.hint.audio"
 msgstr "Воспроизвести аудио"
@@ -646,10 +657,10 @@ msgid "lang.es"
 msgstr "Испанский"
 
 msgid "heading.newident"
-msgstr "НОВАЯ ИДЕНТИЧНОСТЬ"
+msgstr "НОВЫЙ ИДЕНТИФИКАТОР"
 
 msgid "dlg.newident.rsa.selfsign"
-msgstr ""
+msgstr "Создание самоподписанного 2048-битного RSA-сертификата."
 
 msgid "dlg.newident.until"
 msgstr "Действителен до:"
@@ -658,7 +669,7 @@ msgid "hint.newident.date"
 msgstr "ГГГГ-ММ-ДД ЧЧ:ММ:СС"
 
 msgid "hint.newident.optional"
-msgstr ""
+msgstr "необязательно"
 
 msgid "dlg.newident.commonname"
 msgstr "Общее имя:"
@@ -667,7 +678,7 @@ msgid "dlg.newident.temp"
 msgstr "Временный:"
 
 msgid "dlg.newident.notsaved"
-msgstr ""
+msgstr "не сохраняется на диск"
 
 msgid "dlg.newident.email"
 msgstr "Эл. почта:"
@@ -685,10 +696,10 @@ msgid "dlg.newident.country"
 msgstr "Страна:"
 
 msgid "dlg.newident.create"
-msgstr "Создать идентичность"
+msgstr "Создать идентификатор"
 
 msgid "heading.feedcfg"
-msgstr ""
+msgstr "НАСТРОЙКИ ЛЕНТЫ"
 
 msgid "heading.subscribe"
 msgstr "ПОДПИСКА НА СТРАНИЦУ"
@@ -715,7 +726,7 @@ msgid "heading.bookmark.add"
 msgstr "ДОБАВИТЬ ЗАКЛАДКУ"
 
 msgid "heading.bookmark.edit"
-msgstr ""
+msgstr "РЕДАКТИРОВАНИЕ ЗАКЛАДКИ"
 
 msgid "dlg.bookmark.save"
 msgstr "Сохранить закладку"
@@ -778,7 +789,7 @@ msgid "heading.prefs.style"
 msgstr "Стиль"
 
 msgid "heading.prefs.userinterface"
-msgstr ""
+msgstr "Пользовательский интерфейс"
 
 msgid "prefs.downloads"
 msgstr "Папка загрузок:"
@@ -820,7 +831,7 @@ msgid "prefs.theme.white"
 msgstr "Белая"
 
 msgid "prefs.accent"
-msgstr ""
+msgstr "Акцентный цвет:"
 
 msgid "prefs.accent.teal"
 msgstr "Бирюзовый"
@@ -829,7 +840,7 @@ msgid "prefs.accent.orange"
 msgstr "Оранжевый"
 
 msgid "prefs.uiscale"
-msgstr ""
+msgstr "Коэффициент масштабирования:"
 
 msgid "prefs.customframe"
 msgstr ""
@@ -838,7 +849,7 @@ msgid "prefs.retainwindow"
 msgstr ""
 
 msgid "prefs.sideicon"
-msgstr ""
+msgstr "Иконка капсулы:"
 
 msgid "prefs.doctheme.dark"
 msgstr "Тёмная тема:"
@@ -853,22 +864,22 @@ msgid "prefs.doctheme.name.colorfullight"
 msgstr ""
 
 msgid "prefs.doctheme.name.black"
-msgstr ""
+msgstr "Чёрный"
 
 msgid "prefs.doctheme.name.gray"
-msgstr ""
+msgstr "Серый"
 
 msgid "prefs.doctheme.name.white"
-msgstr ""
+msgstr "Белый"
 
 msgid "prefs.doctheme.name.sepia"
-msgstr ""
+msgstr "Сепия"
 
 msgid "prefs.doctheme.name.highcontrast"
-msgstr ""
+msgstr "Высокий контраст"
 
 msgid "prefs.saturation"
-msgstr ""
+msgstr "Насыщенность:"
 
 msgid "prefs.headingfont"
 msgstr "Шрифт заголовков:"
@@ -889,22 +900,22 @@ msgid "prefs.linewidth"
 msgstr "Ширина линии:"
 
 msgid "prefs.linewidth.normal"
-msgstr ""
+msgstr "Нормальная"
 
 msgid "prefs.linewidth.fill"
-msgstr ""
+msgstr "Заливка"
 
 msgid "prefs.quoteicon"
-msgstr ""
+msgstr "Индикатор цитаты:"
 
 msgid "prefs.quoteicon.icon"
 msgstr ""
 
 msgid "prefs.quoteicon.line"
-msgstr ""
+msgstr "Линия"
 
 msgid "prefs.biglede"
-msgstr ""
+msgstr "Большой 1-й абзац:"
 
 msgid "prefs.plaintext.wrap"
 msgstr ""
@@ -937,10 +948,10 @@ msgid "menu.binding.clear"
 msgstr "Удалить"
 
 msgid "keys.top"
-msgstr ""
+msgstr "Перейти к началу"
 
 msgid "keys.bottom"
-msgstr ""
+msgstr "Перейти в конец"
 
 msgid "keys.scroll.up"
 msgstr "Прокрутить вверх"
@@ -970,7 +981,7 @@ msgid "keys.parent"
 msgstr ""
 
 msgid "keys.root"
-msgstr ""
+msgstr "Перейти к корню капсулы"
 
 msgid "keys.reload"
 msgstr "Перезагрузить страницу"
@@ -1022,3 +1033,36 @@ msgstr "Следующая вкладка"
 
 msgid "keys.hoverurl"
 msgstr ""
+
+msgid "dlg.certimport.notes"
+msgstr "Заметки:"
+
+msgid "prefs.uilang"
+msgstr "Язык:"
+
+msgid "heading.certimport"
+msgstr "ИМПОРТ ИДЕНТИФИКАТОРА"
+
+msgid "dlg.certimport.notfound"
+msgstr "Сертификат или закрытый ключ не найдены."
+
+msgid "hint.certimport.description"
+msgstr "описание"
+
+msgid "dlg.certimport.nocert"
+msgstr "Нет сертификата"
+
+msgid "lang.fi"
+msgstr "Финский"
+
+msgid "heading.certimport.pasted"
+msgstr "ВСТАВЛЕНО ИЗ БУФЕРА ОБМЕНА"
+
+msgid "dlg.certimport.import"
+msgstr "Импортировать"
+
+msgid "dlg.certimport.nokey"
+msgstr "Нет закрытого ключа"
+
+msgid "dlg.certimport.notfound.page"
+msgstr "На текущей странице не найден сертификат или ключ."
