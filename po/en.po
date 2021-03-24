@@ -242,10 +242,9 @@ msgid "sidebar.outline"
 msgstr "Outline"
 
 msgid "sidebar.unread"
-msgstr "Unread"
-
-msgid "sidebar.unread.many"
-msgstr "Unread"
+msgid_plural "sidebar.unread"
+msgstr[0] "Unread"
+msgstr[1] "Unread"
 
 msgid "toolbar.outline"
 msgstr "Page Outline"
@@ -380,7 +379,9 @@ msgstr "Not used"
 
 #, c-format
 msgid "ident.usedonurls"
-msgstr "Used on %zu URLs"
+msgid_plural "ident.usedonurls"
+msgstr[0] "Used on %zu URL"
+msgstr[1] "Used on %zu URLs"
 
 msgid "ident.temporary"
 msgstr "Temporary"
@@ -518,20 +519,17 @@ msgstr "ERROR SAVING FILE"
 msgid "heading.import.bookmarks"
 msgstr "IMPORT BOOKMARKS"
 
-msgid "dlg.import.found"
-msgstr "Found one new link on the page."
-
 #, c-format
-msgid "dlg.import.found.many"
-msgstr "Found %d new links on the page."
+msgid "dlg.import.found"
+msgid_plural "dlg.import.found"
+msgstr[0] "Found one new link on the page."
+msgstr[1] "Found %d new links on the page."
 
 #, c-format
 msgid "dlg.import.add"
-msgstr "%sAdd Bookmark"
-
-#, c-format
-msgid "dlg.import.add.many"
-msgstr "%sAdd %d Bookmarks"
+msgid_plural "dlg.import.add"
+msgstr[0] "%sAdd Bookmark"
+msgstr[1] "%sAdd %d Bookmarks"
 
 msgid "dlg.import.notnew"
 msgstr "All links on this page are already bookmarked."
@@ -578,7 +576,9 @@ msgstr "UNTRUSTED CERTIFICATE"
 
 #, c-format
 msgid "dlg.certwarn.mayberenewed"
-msgstr "The received certificate may have been recently renewed — it is for the correct domain and has not expired. The currently trusted certificate will expire on %s, in %d days."
+msgid_plural "dlg.certwarn.mayberenewed"
+msgstr[0] "The received certificate may have been recently renewed — it is for the correct domain and has not expired. The currently trusted certificate will expire on %s, in one day."
+msgstr[1] "The received certificate may have been recently renewed — it is for the correct domain and has not expired. The currently trusted certificate will expire on %s, in %d days."
 
 msgid "dlg.certwarn.different"
 msgstr "The received certificate is valid but different than the one we trust."
