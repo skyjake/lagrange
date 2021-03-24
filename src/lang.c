@@ -34,6 +34,7 @@ static void load_Lang_(iLang *d, const char *id) {
     iUnused(id);
     const iBlock *data = equal_CStr(id, "fi") ? &blobFi_Embedded
                        : equal_CStr(id, "ru") ? &blobRu_Embedded
+                       : equal_CStr(id, "de") ? &blobDe_Embedded
                                               : &blobEn_Embedded;
     iMsgStr msg;
     for (const char *ptr = constBegin_Block(data); ptr != constEnd_Block(data); ptr++) {
