@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-03-23 19:02+0000\n"
+"PO-Revision-Date: 2021-03-24 09:48+0000\n"
 "Last-Translator: Shibo Lyu <github@of.sb>\n"
 "Language-Team: Chinese (Simplified) <http://weblate.skyjake.fi/projects/"
 "lagrange/ui/zh_Hans/>\n"
@@ -274,7 +274,6 @@ msgid "status.feeds"
 msgstr "正在刷新订阅"
 
 # megabytes, used as the unit after a number
-#, fuzzy
 msgid "mb"
 msgstr "MB"
 
@@ -284,3 +283,343 @@ msgstr "KB"
 
 msgid "bytes"
 msgstr "字节"
+
+# strftime() formatted
+#, c-format
+msgid "sidebar.date.thisyear"
+msgstr "%b %d日"
+
+# strftime() formatted
+#, c-format
+msgid "sidebar.date.otheryear"
+msgstr "%Y年%b%d日"
+
+msgid "feeds.today"
+msgstr "今天"
+
+msgid "feeds.entry.newtab"
+msgstr "在新标签页中打开"
+
+msgid "feeds.entry.markread"
+msgstr "标记为已读"
+
+msgid "feeds.entry.markunread"
+msgstr "标记为未读"
+
+msgid "sidebar.entry.bookmark"
+msgstr "添加书签…"
+
+msgid "feeds.entry.bookmark"
+msgstr "添加书签…"
+
+msgid "feeds.edit"
+msgstr "编辑订阅…"
+
+msgid "feeds.unsubscribe"
+msgstr "退订…"
+
+msgid "feeds.markallread"
+msgstr "全部标记为已读"
+
+msgid "feeds.refresh"
+msgstr "刷新"
+
+msgid "menu.opentab"
+msgstr "在新标签页中打开"
+
+msgid "menu.opentab.background"
+msgstr "在新标签页中打开但不切换"
+
+msgid "menu.edit"
+msgstr "编辑…"
+
+msgid "menu.dup"
+msgstr "克隆…"
+
+msgid "menu.copyurl"
+msgstr "拷贝地址"
+
+msgid "history.clear"
+msgstr "清除浏览记录…"
+
+msgid "heading.history.clear"
+msgstr "清除浏览记录"
+
+msgid "dlg.history.clear"
+msgstr "清除记录"
+
+msgid "bookmark.tag.home"
+msgstr "用作主页"
+
+msgid "bookmark.tag.sub"
+msgstr "订阅"
+
+msgid "bookmark.tag.remote"
+msgstr "作为书签源"
+
+msgid "bookmark.untag.home"
+msgstr "移除主页"
+
+msgid "bookmark.untag.sub"
+msgstr "退订"
+
+msgid "bookmark.untag.remote"
+msgstr "移除书签源"
+
+msgid "bookmark.delete"
+msgstr "删除书签"
+
+msgid "bookmarks.reload"
+msgstr "刷新远端书签源"
+
+msgid "ident.using"
+msgstr "正用于本页"
+
+msgid "ident.notused"
+msgstr "未使用"
+
+#, c-format
+msgid "ident.usedonurls"
+msgstr "在 %zu 个地址上使用"
+
+msgid "ident.temporary"
+msgstr "临时"
+
+# strftime() formatted
+#, c-format
+msgid "ident.expiry"
+msgstr "将于 %Y 年%b%d日过期"
+
+msgid "ident.use"
+msgstr "在本页使用"
+
+msgid "ident.stopuse"
+msgstr "停止在本页使用"
+
+msgid "ident.stopuse.all"
+msgstr "停止在所有页面上使用"
+
+msgid "ident.showuse"
+msgstr "显示使用情况"
+
+msgid "heading.ident.use"
+msgstr "身份使用情况"
+
+msgid "menu.edit.notes"
+msgstr "编辑注解…"
+
+msgid "heading.ident.notes"
+msgstr "身份注解"
+
+# %s refers to name of an identity.
+#, c-format
+msgid "dlg.ident.notes"
+msgstr "%s 上的注解："
+
+msgid "ident.fingerprint"
+msgstr "拷贝指纹"
+
+msgid "ident.delete"
+msgstr "删除身份…"
+
+msgid "heading.ident.delete"
+msgstr "删除身份"
+
+#, c-format
+msgid "dlg.confirm.ident.delete"
+msgstr ""
+"确定要删除这个身份吗？\n"
+"%s%s%s\n"
+"此操作亦将删除它对应的证书和私钥文件。"
+
+msgid "dlg.ident.delete"
+msgstr "删除身份和相关文件"
+
+msgid "sidebar.empty.idents"
+msgstr "无身份"
+
+# The %s format characters are used to highlight the word "Help" and must be used in the translation in same way as here.
+#, c-format
+msgid "ident.gotohelp"
+msgstr "查看%s帮助%s來了解更多关于 TLS 客户端证书的信息。"
+
+msgid "heading.unsub"
+msgstr "退订"
+
+#, c-format
+msgid "dlg.confirm.unsub"
+msgstr ""
+"确定要退订\n"
+"「%s」吗？"
+
+msgid "dlg.unsub"
+msgstr "退订"
+
+#, c-format
+msgid "error.unsupported.suggestsave"
+msgstr "不过，您可以通过按 %s 或在菜单里选择「 %s」来将它存到您的「下载」文件夹。"
+
+msgid "heading.pageinfo"
+msgstr "页面信息"
+
+msgid "pageinfo.header.cached"
+msgstr "（来自本地缓存）"
+
+msgid "pageinfo.cert.status"
+msgstr "证书状态："
+
+msgid "pageinfo.cert.ca.verified"
+msgstr "由权威证书机构验证"
+
+msgid "pageinfo.cert.ca.unverified"
+msgstr "未经权威证书机构验证"
+
+msgid "pageinfo.cert.notexpired"
+msgstr "未过期"
+
+msgid "pageinfo.cert.expired"
+msgstr "过期"
+
+msgid "pageinfo.cert.trusted"
+msgstr "受信任的"
+
+msgid "pageinfo.cert.untrusted"
+msgstr "不受信任的"
+
+msgid "pageinfo.domain.match"
+msgstr "与域名对应"
+
+msgid "pageinfo.domain.mismatch"
+msgstr "与域名不对应"
+
+msgid "dlg.cert.trust"
+msgstr "信任"
+
+msgid "dlg.cert.fingerprint"
+msgstr "拷贝指纹"
+
+#, c-format
+msgid "dlg.input.prompt"
+msgstr "请为 %s 输入："
+
+msgid "dlg.input.send"
+msgstr "发送"
+
+msgid "heading.save"
+msgstr "文件已保存"
+
+msgid "heading.save.incomplete"
+msgstr "页面不完整"
+
+msgid "dlg.save.incomplete"
+msgstr "页面内容依然在下载。"
+
+msgid "dlg.save.size"
+msgstr "大小："
+
+msgid "heading.save.error"
+msgstr "保存文件时出错"
+
+msgid "heading.import.bookmarks"
+msgstr "导入书签"
+
+msgid "dlg.import.found"
+msgstr "在页面上找到了一条新的链接。"
+
+#, c-format
+msgid "dlg.import.found.many"
+msgstr "在页面上找到了 %d 条新的链接。"
+
+#, c-format
+msgid "dlg.import.add"
+msgstr "%s添加书签"
+
+#, c-format
+msgid "dlg.import.add.many"
+msgstr "%s添加 %d 个书签"
+
+msgid "dlg.import.notnew"
+msgstr "本页上所有链接均已被添加到书签。"
+
+msgid "heading.autoreload"
+msgstr "自动刷新"
+
+msgid "dlg.autoreload"
+msgstr "请为本页选择一个自动刷新频率。"
+
+msgid "link.newtab"
+msgstr "在新标签页中打开链接"
+
+msgid "link.newtab.background"
+msgstr "在新标签页中打开链接但不切换"
+
+msgid "link.browser"
+msgstr "在默认浏览器中打开链接"
+
+msgid "link.noproxy"
+msgstr "在不使用代理的情况下打开"
+
+msgid "link.copy"
+msgstr "拷贝链接"
+
+msgid "link.bookmark"
+msgstr "将链接添加为书签…"
+
+msgid "link.download"
+msgstr "下载链接目标文件"
+
+msgid "heading.openlink"
+msgstr "打开链接"
+
+#, c-format
+msgid "dlg.openlink.confirm"
+msgstr ""
+"要在默认浏览器里打开这个链接吗？\n"
+"%s%s"
+
+msgid "dlg.openlink"
+msgstr "打开链接"
+
+msgid "heading.certwarn"
+msgstr "不受信任的证书"
+
+#, c-format
+msgid "dlg.certwarn.mayberenewed"
+msgstr "收到的证书或许是最近更新了——它对应这个域名且没有过期。目前信任的证书会在%s，即 %d 天后过期。"
+
+msgid "dlg.certwarn.different"
+msgstr "收到的证书是有效的，但与目前信任的证书不一致。"
+
+#, c-format
+msgid "dlg.certwarn.expired"
+msgstr "收到的证书已经于%s过期。"
+
+msgid "dlg.certwarn.domain"
+msgstr "收到的证书与域名不对应（%s）。可能是服务器配置有误。"
+
+msgid "dlg.certwarn.domain.expired"
+msgstr "收到的证书已经过期，且域名不对应。"
+
+# strftime() formatted, split on two lines
+#, c-format
+msgid "page.timestamp"
+msgstr ""
+"于 %Y 年%b %d 日\n"
+"%H:%M 接收"
+
+msgid "feeds.entry.openfeed"
+msgstr "打开页面"
+
+msgid "dlg.certimport.help"
+msgstr ""
+"在此粘贴一个PEM格式的证书及/或私钥，\n"
+"或拖拽一個 .crt 或 .key 文件到此窗口。"
+
+msgid "menu.forgeturl"
+msgstr "忘记该地址"
+
+msgid "dlg.confirm.history.clear"
+msgstr "确定要清除所有的浏览记录吗？"
+
+msgid "heading.certimport"
+msgstr "导入身份"
