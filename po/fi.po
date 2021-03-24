@@ -257,7 +257,9 @@ msgid "sidebar.outline"
 msgstr "Rakenne"
 
 msgid "sidebar.unread"
-msgstr "lukematon"
+msgid_plural "sidebar.unread.n"
+msgstr[0] "lukematon"
+msgstr[1] "lukematonta"
 
 msgid "toolbar.outline"
 msgstr "Sivun rakenne"
@@ -385,7 +387,9 @@ msgid "ident.notused"
 msgstr "Ei käytössä"
 
 msgid "ident.usedonurls"
-msgstr "Käytössä %zu URL:ssa"
+msgid_plural "ident.usedonurls.n"
+msgstr[0] "Käytössä %zu URL:ssa"
+msgstr[1] "Käytössä %zu URL:ssa"
 
 msgid "ident.temporary"
 msgstr "Tilapäinen"
@@ -1040,9 +1044,6 @@ msgstr "Seuraava välilehti"
 
 msgid "keys.hoverurl"
 msgstr "Näytä URL kursorin alla"
-
-msgid "sidebar.unread.many"
-msgstr "Lukematonta"
 
 msgid "heading.certimport"
 msgstr "TUO IDENTITEETTI"
