@@ -1165,7 +1165,7 @@ msgid "error.slowdown"
 msgstr "Slow Down"
 
 msgid "error.slowdown.msg"
-msgstr "The server is rate limiting requests. Please wait..."
+msgstr "The server is rate limiting requests. Please wait…"
 
 msgid "error.permanent"
 msgstr "Permanent Failure"
