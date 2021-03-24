@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2021-03-23 09:09+0000\n"
-"PO-Revision-Date: 2021-03-23 19:53+0000\n"
+"PO-Revision-Date: 2021-03-24 10:31+0000\n"
 "Last-Translator: Jaakko Keränen <jaakko.keranen@iki.fi>\n"
 "Language-Team: Finnish <http://weblate.skyjake.fi/projects/lagrange/ui/fi/>\n"
 "Language: fi\n"
@@ -1084,3 +1084,170 @@ msgstr "Ei salaista avainta"
 
 msgid "lang.fi"
 msgstr "Suomi"
+
+msgid "error.openfile"
+msgstr "Tiedoston avaus epäonnistui"
+
+msgid "error.openfile.msg"
+msgstr ""
+"Pyydettyä tiedostoa ei ole olemassa tai sen avaamiseksi ei ole riittäviä "
+"oikeuksia. Tarkista tiedoston polku."
+
+msgid "error.badresource"
+msgstr "Virheellinen resurssi"
+
+msgid "error.badresource.msg"
+msgstr "Pyydettyä resurssia ei ole olemassa."
+
+msgid "error.unsupported.media"
+msgstr "Sisältötyyppi ei tuettu"
+
+msgid "error.unsupported.protocol"
+msgstr "Protokolla ei tuettu"
+
+msgid "error.unsupported.protocol.msg"
+msgstr "Pyydetty protokolla ei ole tuettu tässä sovelluksessa."
+
+msgid "error.badheader"
+msgstr "Virheellinen otsaketieto"
+
+msgid "error.badredirect"
+msgstr "Virheellinen uudelleenohjaus"
+
+msgid "error.schemeredirect"
+msgstr "Skeeman vaihtava uudelleenohjaus"
+
+msgid "error.schemeredirect.msg"
+msgstr ""
+"Palvelin yritti uudelleenohjata meidät kohteeseen, jonka skeema on eri kuin "
+"lähdeosoitteen skeema. Tässä on kohdelinkki, jotta voit avata sen "
+"manuaalisesti."
+
+msgid "error.manyredirects"
+msgstr "Liian monta uudelleenohjausta"
+
+msgid "error.tls"
+msgstr "Verkko/TLS-virhe"
+
+msgid "error.tls.msg"
+msgstr ""
+"Viestintä palvelimen kanssa epäonnistui. Tässä on järjestelmän antama "
+"virheilmoitus:"
+
+msgid "error.temporary.msg"
+msgstr "Pyyntö epäonnistui, mutta voi onnistua myöhemmin, jos yrität uudelleen."
+
+msgid "error.unavail"
+msgstr "Palvelin ei käytettävissä"
+
+msgid "error.cgi"
+msgstr "CGI-virhe"
+
+msgid "error.cgi.msg"
+msgstr ""
+"Palvelimella tapahtui virhe dynaamisen sisällöntuotannon aikana. Palvelimen "
+"ohjelmisto voi tarvita korjausta."
+
+msgid "error.proxy"
+msgstr "Välipalvelinvirhe"
+
+msgid "error.slowdown"
+msgstr "Hitaammin"
+
+msgid "error.slowdown.msg"
+msgstr "Palvelin on rajoittanut pyyntötiheyttä. Ole hyvä ja odota..."
+
+msgid "error.temporary"
+msgstr "Väliaikainen virhe"
+
+msgid "error.permanent"
+msgstr "Pysyvä virhe"
+
+msgid "error.permanent.msg"
+msgstr ""
+"Pyyntösi epäonnistui ja tulee epäonnistumaan myös jatkossa, jos yrität "
+"uudelleen."
+
+msgid "error.notfound"
+msgstr "Ei löydy"
+
+msgid "error.notfound.msg"
+msgstr "Pyydettyä resurssia ei löydy tällä hetkellä."
+
+msgid "error.gone"
+msgstr "Poistettu"
+
+msgid "error.gone.msg"
+msgstr "Pyydetty resurssi ei ole enää tarjolla."
+
+msgid "error.proxyrefusal"
+msgstr "Välityspyyntö evätty"
+
+msgid "error.badrequest"
+msgstr "Virheellinen pyyntö"
+
+msgid "error.badrequest.msg"
+msgstr "Palvelin ei ymmärtänyt pyyntöäsi."
+
+msgid "error.cert.needed"
+msgstr "Sertifikaatti puuttuu"
+
+msgid "error.cert.needed.msg"
+msgstr "Pyydetty resurssi vaatii tunnistautumisen TLS-asiakassertifikaatilla."
+
+msgid "error.cert.auth"
+msgstr "Sertifikaattia ei sallittu"
+
+msgid "error.cert.invalid"
+msgstr "Virheellinen sertifikaatti"
+
+msgid "error.cert.invalid.msg"
+msgstr "Käytössä oleva asiakassertifikaatti on vanhentunut tai virheellinen."
+
+msgid "error.badstatus"
+msgstr "Tuntematon tilakoodi"
+
+msgid "error.badstatus.msg"
+msgstr ""
+"Palvelin vastasi tilakoodilla, jota ei ole määritelty Gemini-protokollan "
+"spesifikaatiossa. Ehkä palvelin on tulevaisuudesta? Tai vain epäkunnossa."
+
+msgid "error.unsupported.media.msg"
+msgstr "Vastaanotettua sisältöä ei voi toistaa tällä sovelluksella."
+
+msgid "error.badheader.msg"
+msgstr ""
+"Vastaanotettu otsaketieto ei ole Gemini-protokollan spesifikaation mukainen. "
+"Ehkä palvelin on epäkunnossa, tai yritit ottaa yhteyttä palvelimeen, joka ei "
+"tue Gemini-protokollaa."
+
+msgid "error.badredirect.msg"
+msgstr ""
+"Palvelin vastasi uudelleenohjauksella, jossa ei ole kelvollista kohdetta. "
+"Palvelin voi olla epäkunnossa."
+
+msgid "error.manyredirects.msg"
+msgstr ""
+"Olet mahdollisesti juuttunut uudelleenohjaussilmukkaan. Seuraava "
+"uudelleenohjattu kohde on alla, niin voit jatkaa manuaalisesti."
+
+msgid "error.unavail.msg"
+msgstr ""
+"Palvelin ei ole juuri nyt käytettävissä, koska siihen kohdistuu liikaa "
+"liikennettä tai sitä huolletaan. Yritä myöhemmin uudestaan."
+
+msgid "error.proxy.msg"
+msgstr ""
+"Välityspyyntö epäonnistui, koska välipalvelin ei pystynyt suorittamaan "
+"loppuun tapahtumaa kohdepalvelimen kanssa. Ongelma voi liittyä "
+"verkkoyhteyksiin."
+
+msgid "error.proxyrefusal.msg"
+msgstr ""
+"Pyydetty resurssi ei ole palvelimen tarjoamalla verkkotunnuksella eikä "
+"palvelin ota vastaan välityspyyntöjä."
+
+msgid "error.cert.auth.msg"
+msgstr ""
+"Käytössä oleva asiakassertifikaatti on kelvollinen, mutta sille ei ole "
+"myönnetty lupaa pyydettyyn resurssiin."
