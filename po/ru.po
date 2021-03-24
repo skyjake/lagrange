@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2021-03-23 19:02+0000\n"
-"PO-Revision-Date: 2021-03-24 09:48+0000\n"
+"PO-Revision-Date: 2021-03-24 10:31+0000\n"
 "Last-Translator: Nikolay <sikmir@gmail.com>\n"
 "Language-Team: Russian <http://weblate.skyjake.fi/projects/lagrange/ui/ru/>\n"
 "Language: ru\n"
@@ -258,7 +258,7 @@ msgid "sidebar.outline"
 msgstr "Структура"
 
 msgid "sidebar.unread"
-msgstr ""
+msgstr "Не прочитано"
 
 msgid "toolbar.outline"
 msgstr "Структура страницы"
@@ -455,6 +455,8 @@ msgstr "Отписаться"
 
 msgid "error.unsupported.suggestsave"
 msgstr ""
+"Однако вы можете сохранить его в папку загрузок. Нажмите %s или выберите в "
+"меню «%s»."
 
 msgid "heading.pageinfo"
 msgstr "ИНФОРМАЦИЯ О СТРАНИЦЕ"
@@ -466,10 +468,10 @@ msgid "pageinfo.cert.status"
 msgstr "Статус сертификата:"
 
 msgid "pageinfo.cert.ca.verified"
-msgstr ""
+msgstr "Подтверждено УЦ"
 
 msgid "pageinfo.cert.ca.unverified"
-msgstr ""
+msgstr "Не подтверждено УЦ"
 
 msgid "pageinfo.cert.notexpired"
 msgstr "Срок действия не истёк"
@@ -535,10 +537,10 @@ msgid "dlg.import.notnew"
 msgstr "Все ссылки на этой странице уже добавлены в закладки."
 
 msgid "heading.autoreload"
-msgstr ""
+msgstr "АВТОЗАГРУЗКА"
 
 msgid "dlg.autoreload"
-msgstr ""
+msgstr "Выберите интервал автоматической перезагрузки для этой вкладки."
 
 msgid "link.newtab"
 msgstr "Открыть ссылку в новой вкладке"
@@ -577,6 +579,9 @@ msgstr "НЕДОВЕРЕННЫЙ СЕРТИФИКАТ"
 
 msgid "dlg.certwarn.mayberenewed"
 msgstr ""
+"Полученный сертификат мог быть недавно продлён — он предназначен для "
+"правильного домена и срок действия ещё не истек. Срок действия текущего "
+"доверенного сертификата истечёт %s, через %d дней."
 
 msgid "dlg.certwarn.different"
 msgstr ""
@@ -612,16 +617,16 @@ msgid "dlg.translate.unavail"
 msgstr "Сервис недоступен"
 
 msgid "dlg.translate.fail"
-msgstr ""
+msgstr "Запрос не выполнен"
 
 msgid "dlg.translate"
 msgstr "Перевести"
 
 msgid "dlg.translate.from"
-msgstr ""
+msgstr "С:"
 
 msgid "dlg.translate.to"
-msgstr ""
+msgstr "На:"
 
 msgid "lang.ar"
 msgstr "Арабский"
@@ -843,10 +848,10 @@ msgid "prefs.uiscale"
 msgstr "Коэффициент масштабирования:"
 
 msgid "prefs.customframe"
-msgstr ""
+msgstr "Пользовательские рамки окна:"
 
 msgid "prefs.retainwindow"
-msgstr ""
+msgstr "Сохранять местоположение:"
 
 msgid "prefs.sideicon"
 msgstr "Иконка капсулы:"
@@ -858,10 +863,10 @@ msgid "prefs.doctheme.light"
 msgstr "Светлая тема:"
 
 msgid "prefs.doctheme.name.colorfuldark"
-msgstr ""
+msgstr "Красочный тёмный"
 
 msgid "prefs.doctheme.name.colorfullight"
-msgstr ""
+msgstr "Красочный светлый"
 
 msgid "prefs.doctheme.name.black"
 msgstr "Чёрный"
@@ -888,7 +893,7 @@ msgid "prefs.font"
 msgstr "Шрифт основного текста:"
 
 msgid "prefs.mono"
-msgstr ""
+msgstr "Моноширинный текст:"
 
 msgid "prefs.mono.gemini"
 msgstr "Gemini"
@@ -909,7 +914,7 @@ msgid "prefs.quoteicon"
 msgstr "Индикатор цитаты:"
 
 msgid "prefs.quoteicon.icon"
-msgstr ""
+msgstr "\" Иконка"
 
 msgid "prefs.quoteicon.line"
 msgstr "Линия"
@@ -942,7 +947,7 @@ msgid "prefs.proxy.http"
 msgstr "HTTP прокси:"
 
 msgid "menu.binding.reset"
-msgstr ""
+msgstr "Восстановить значения по умолчанию"
 
 msgid "menu.binding.clear"
 msgstr "Удалить"
@@ -966,10 +971,10 @@ msgid "keys.scroll.halfpage.down"
 msgstr "Прокрутить вниз на полстраницы"
 
 msgid "keys.scroll.page.up"
-msgstr ""
+msgstr "Прокрутка страницы вверх"
 
 msgid "keys.scroll.page.down"
-msgstr ""
+msgstr "Прокрутка страницы вниз"
 
 msgid "keys.back"
 msgstr "Назад"
@@ -978,7 +983,7 @@ msgid "keys.forward"
 msgstr "Вперед"
 
 msgid "keys.parent"
-msgstr ""
+msgstr "Перейти в родительский каталог"
 
 msgid "keys.root"
 msgstr "Перейти к корню капсулы"
@@ -987,7 +992,7 @@ msgid "keys.reload"
 msgstr "Перезагрузить страницу"
 
 msgid "keys.link.modkey"
-msgstr ""
+msgstr "Открыть ссылку с помощью клавиши-модификатора"
 
 msgid "keys.link.homerow"
 msgstr ""
@@ -1017,7 +1022,7 @@ msgid "keys.zoom.reset"
 msgstr "Размер по умолчанию"
 
 msgid "keys.fullscreen"
-msgstr ""
+msgstr "Полноэкранный режим"
 
 msgid "keys.tab.new"
 msgstr "Новая вкладка"
@@ -1066,3 +1071,74 @@ msgstr "Нет закрытого ключа"
 
 msgid "dlg.certimport.notfound.page"
 msgstr "На текущей странице не найден сертификат или ключ."
+
+msgid "sidebar.unread.many"
+msgstr "Не прочитано"
+
+msgid "dlg.certimport.help"
+msgstr ""
+"Вставьте PEM-закодированный сертификат и/или закрытый ключ,\n"
+"или перетащите в окно файл .crt/.key."
+
+msgid "error.openfile"
+msgstr "Не удалось открыть файл"
+
+msgid "error.openfile.msg"
+msgstr ""
+"Запрошенный файл не существует или недоступен. Пожалуйста, проверьте путь к "
+"файлу."
+
+msgid "error.badresource"
+msgstr "Недействительный ресурс"
+
+msgid "error.unsupported.media"
+msgstr "Неподдерживаемый тип контента"
+
+msgid "error.unsupported.protocol"
+msgstr "Неподдерживаемый протокол"
+
+msgid "error.unsupported.protocol.msg"
+msgstr "Запрошенный протокол не поддерживается этим приложением."
+
+msgid "error.badheader"
+msgstr "Неверный заголовок"
+
+msgid "error.badredirect"
+msgstr "Недействительное перенаправление"
+
+msgid "error.schemeredirect"
+msgstr "Перенаправление с изменением схемы"
+
+msgid "error.manyredirects"
+msgstr "Слишком много перенаправлений"
+
+msgid "error.badstatus.msg"
+msgstr ""
+"Сервер ответил кодом состояния, которого нет в спецификации протокола "
+"Gemini. Может сервер из будущего? Или просто неисправен."
+
+msgid "error.badstatus"
+msgstr "Неизвестный код состояния"
+
+msgid "error.badresource.msg"
+msgstr "Запрошенный ресурс не существует."
+
+msgid "error.unsupported.media.msg"
+msgstr "Полученный контент нельзя просмотреть в этом приложении."
+
+msgid "error.badheader.msg"
+msgstr ""
+"Полученный заголовок не соответствует спецификации протокола Gemini. "
+"Возможно, сервер неисправен, или вы пытались связаться с сервером, отличным "
+"от Gemini."
+
+msgid "error.badredirect.msg"
+msgstr ""
+"Сервер ответил перенаправлением, но не предоставил действительный целевой "
+"URL. Возможно, сервер неисправен."
+
+msgid "error.schemeredirect.msg"
+msgstr ""
+"Сервер попытался перенаправить нас на URL, схема которого отличается от "
+"схемы исходного URL. Вот ссылка, по которой вы можете открыть ее вручную, "
+"если это необходимо."
