@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-03-24 19:03+0000\n"
+"PO-Revision-Date: 2021-03-24 19:35+0000\n"
 "Last-Translator: Aaron Fischer <mail@aaron-fischer.net>\n"
 "Language-Team: German <http://weblate.skyjake.fi/projects/lagrange/ui/de/>\n"
 "Language: de\n"
@@ -214,3 +214,73 @@ msgstr "Seite in Lesezeichen speichern …"
 
 msgid "menu.page.subscribe"
 msgstr "Seite abonnieren …"
+
+msgid "sidebar.unread"
+msgid_plural "sidebar.unread.n"
+msgstr[0] "Ungelesen"
+msgstr[1] "Ungelesen"
+
+msgid "bytes"
+msgstr "Bytes"
+
+msgid "panel.back"
+msgstr "Zurück"
+
+msgid "menu.debug"
+msgstr "Debug-Informationen"
+
+msgid "menu.page.translate"
+msgstr "Übersetzen …"
+
+msgid "menu.page.copyurl"
+msgstr "Seiten-URL kopieren"
+
+msgid "menu.page.copysource"
+msgstr "Seiten-Quellcode kopieren"
+
+msgid "menu.feeds.refresh"
+msgstr "Feeds aktualisieren"
+
+msgid "menu.identity.new"
+msgstr "Neue Identität …"
+
+msgid "menu.identity.import"
+msgstr "Importieren …"
+
+msgid "menu.identity.notactive"
+msgstr "Keine aktive Identität"
+
+msgid "sidebar.bookmarks"
+msgstr "Lesezeichen"
+
+msgid "sidebar.feeds"
+msgstr "Feeds"
+
+msgid "sidebar.history"
+msgstr "Verlauf"
+
+msgid "sidebar.identities"
+msgstr "Identitäten"
+
+msgid "sidebar.outline"
+msgstr "Inhaltsverzeichnis"
+
+msgid "toolbar.outline"
+msgstr "Inhaltsverzeichnis der Seite"
+
+msgid "hint.findtext"
+msgstr "Text auf der Seite finden"
+
+msgid "status.query"
+msgstr "Suchanfrage"
+
+msgid "status.feeds"
+msgstr "Aktualisiere Feeds"
+
+# megabytes, used as the unit after a number
+msgid "mb"
+msgstr "MB"
+
+# kilobytes, used as the unit after a number
+msgid "kb"
+msgstr "KB"
