@@ -1830,7 +1830,8 @@ iWidget *makePreferences_Widget(void) {
             const iMenuItem langItems[] = {
                 { "${lang.en}", 0, 0, "uilang id:en" },
                 { "${lang.fi}", 0, 0, "uilang id:fi" },
-                //{ "${lang.ru}", 0, 0, "uilang id:ru" },
+                { "${lang.ru}", 0, 0, "uilang id:ru" },
+                { "${lang.de}", 0, 0, "uilang id:de" },
             };
             pushBackN_Array(uiLangs, langItems, iElemCount(langItems));
             sort_Array(uiLangs, cmp_MenuItem_);
