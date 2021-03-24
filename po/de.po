@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-03-24 09:48+0000\n"
-"Last-Translator: Jaakko Keränen <jaakko.keranen@iki.fi>\n"
+"PO-Revision-Date: 2021-03-24 18:46+0000\n"
+"Last-Translator: Aaron Fischer <mail@aaron-fischer.net>\n"
 "Language-Team: German <http://weblate.skyjake.fi/projects/lagrange/ui/de/>\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
@@ -91,3 +91,111 @@ msgstr "Ein schöner Gemini-Client"
 
 msgid "about.version"
 msgstr "Version"
+
+msgid "macos.menu.bookmarks.list"
+msgstr "Alle auflisten"
+
+msgid "macos.menu.bookmarks.bytime"
+msgstr "Nach Ersellungszeit auflisten"
+
+msgid "menu.show.history"
+msgstr "Verlauf anzeigen"
+
+msgid "about.powered"
+msgstr "Entwickelt mit SDL 2, OpenSSL und ☕️"
+
+msgid "menu.openlocation"
+msgstr "Adresse öffnen …"
+
+msgid "menu.find"
+msgstr "Auf der Seite suchen"
+
+msgid "macos.menu.find"
+msgstr "Suchen"
+
+msgid "menu.save.files"
+msgstr "In Dateien speichern"
+
+msgid "menu.save.downloads"
+msgstr "Unter Downloads speichern"
+
+msgid "menu.copy.source"
+msgstr "Quelltext kopieren"
+
+msgid "menu.sidebar"
+msgstr "Seitenleiste ein-/ausblenden"
+
+msgid "menu.zoom.out"
+msgstr "Verkleinern"
+
+msgid "menu.zoom.reset"
+msgstr "Originalgröße"
+
+msgid "menu.bookmarks.list"
+msgstr "Alle Lesezeichen auflisten"
+
+msgid "menu.bookmarks.bytag"
+msgstr "Lesezeichen nach Tags auflisten"
+
+msgid "menu.sidebar.right"
+msgstr "Rechte Seitenleiste ein-/ausblenden"
+
+msgid "menu.zoom.in"
+msgstr "Vergrößern"
+
+msgid "macos.menu.bookmarks.bytag"
+msgstr "Nach Tags auflisten"
+
+msgid "menu.bookmarks.bytime"
+msgstr "Lesezeichen nach Erstellungszeitpunkt auflisten"
+
+msgid "menu.preferences"
+msgstr "Einstellungen …"
+
+msgid "menu.help"
+msgstr "Hilfe"
+
+msgid "menu.releasenotes"
+msgstr "Versionshinweise"
+
+msgid "menu.quit"
+msgstr "Lagrange beenden"
+
+msgid "menu.cut"
+msgstr "Ausschneiden"
+
+msgid "menu.copy"
+msgstr "Kopieren"
+
+msgid "menu.paste"
+msgstr "Einfügen"
+
+msgid "menu.copy.pagelink"
+msgstr "Link zur Seite kopieren"
+
+msgid "menu.show.bookmarks"
+msgstr "Lesezeichen anzeigen"
+
+msgid "menu.show.feeds"
+msgstr "Feeds anzeigen"
+
+msgid "menu.show.identities"
+msgstr "Identitäten anzeigen"
+
+msgid "menu.show.outline"
+msgstr "Inhaltsverzeichnis anzeigen"
+
+msgid "menu.back"
+msgstr "Zurück"
+
+msgid "menu.forward"
+msgstr "Vor"
+
+msgid "menu.parent"
+msgstr "Nach oben"
+
+msgid "keys.tab.next"
+msgstr "Nächster Tab"
+
+msgid "menu.sidebar.left"
+msgstr "Linke Seitenleiste ein-/ausblenden"
