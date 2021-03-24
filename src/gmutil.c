@@ -441,111 +441,96 @@ static const struct {
 } errors_[] = {
     { unknownStatusCode_GmStatusCode, /* keep this as the first one (fallback return value) */
       { 0x1f4ab, /* dizzy */
-        "Unknown Status Code",
-        "The server responded with a status code that is not in the Gemini specification. "
-        "Maybe the server is from the future? Or just malfunctioning." } },
+        "${error.badstatus}",
+        "${error.badstatus.msg}" } },
     { failedToOpenFile_GmStatusCode,
       { 0x1f4c1, /* file folder */
-        "Failed to Open File",
-        "The requested file does not exist or is inaccessible. "
-        "Please check the file path." } },
+        "${error.openfile}",
+        "${error.openfile.msg}" } },
     { invalidLocalResource_GmStatusCode,
       { 0,
-        "Invalid Resource",
-        "The requested resource does not exist." } },
+        "${error.badresource}",
+        "${error.badresource.msg}" } },
     { unsupportedMimeType_GmStatusCode,
       { 0x1f47d, /* alien */
-        "Unsupported Content Type",
-        "The received content cannot be viewed with this application." } },
+        "${error.unsupported.media}",
+        "${error.unsupported.media.msg}" } },
     { unsupportedProtocol_GmStatusCode,
       { 0x1f61e, /* disappointed */
-        "Unsupported Protocol",
-        "The requested protocol is not supported by this application." },
-    },
+        "${error.unsupported.protocol}",
+        "${error.unsupported.protocol.msg}" } },
     { invalidHeader_GmStatusCode,
       { 0x1f4a9, /* pile of poo */
-        "Invalid Header",
-        "The received header did not conform to the Gemini specification. "
-        "Perhaps the server is malfunctioning or you tried to contact a "
-        "non-Gemini server." } },
+        "${error.badheader}",
+        "${error.badheader.msg}" } },
     { invalidRedirect_GmStatusCode,
       { 0x27a0, /* dashed arrow */
-        "Invalid Redirect",
-        "The server responded with a redirect but did not provide a valid destination URL. "
-        "Perhaps the server is malfunctioning." } },
+        "${error.badredirect}",
+        "${error.badredirect.msg}" } },
     { schemeChangeRedirect_GmStatusCode,
       { 0x27a0, /* dashed arrow */
-        "Scheme-Changing Redirect",
-        "The server attempted to redirect us to a URL whose scheme is different than the "
-        "originating URL's scheme. Here is the link so you can open it manually if appropriate."} },
+        "${error.schemeredirect}",
+        "${error.schemeredirect.msg}"} },
     { tooManyRedirects_GmStatusCode,
       { 0x27a0, /* dashed arrow */
-        "Too Many Redirects",
-        "You may be stuck in a redirection loop. The next redirected URL is below if you "
-        "want to continue manually."} },
+        "${error.manyredirects}",
+        "${error.manyredirects.msg}"} },
     { tlsFailure_GmStatusCode,
       { 0x1f5a7, /* networked computers */
-        "Network/TLS Failure",
-        "Failed to communicate with the host. Here is the error message:" } },
+        "${error.tls}",
+        "${error.tls.msg}" } },
     { temporaryFailure_GmStatusCode,
       { 0x1f50c, /* electric plug */
-        "Temporary Failure",
-        "The request has failed, but may succeed if you try again in the future." } },
+        "${error.temporary}",
+        "${error.temporary.msg}" } },
     { serverUnavailable_GmStatusCode,
       { 0x1f525, /* fire */
-        "Server Unavailable",
-        "The server is unavailable due to overload or maintenance. Check back later." } },
+        "${error.unavail}",
+        "${error.unavail.msg}" } },
     { cgiError_GmStatusCode,
       { 0x1f4a5, /* collision */
-        "CGI Error",
-        "Failure during dynamic content generation on the server. This may be due "
-        "to buggy serverside software." } },
+        "${error.cgi}",
+        "${error.cgi.msg}" } },
     { proxyError_GmStatusCode,
       { 0x1f310, /* globe */
-        "Proxy Error",
-        "A proxy request failed because the server was unable to successfully "
-        "complete a transaction with the remote host. Perhaps there are difficulties "
-        "with network connectivity." } },
+        "${error.proxy}",
+        "${error.proxy.msg}" } },
     { slowDown_GmStatusCode,
       { 0x1f40c, /* snail */
-        "Slow Down",
-        "The server is rate limiting requests. Please wait..." } },
+        "${error.slowdown}",
+        "${error.slowdown.msg}" } },
     { permanentFailure_GmStatusCode,
       { 0x1f6ab, /* no entry */
-        "Permanent Failure",
-        "Your request has failed and will fail in the future as well if repeated." } },
+        "${error.permanent}",
+        "${error.permanent.msg}" } },
     { notFound_GmStatusCode,
       { 0x1f50d, /* magnifying glass */
-        "Not Found",
-        "The requested resource could not be found at this time." } },
+        "${error.notfound}",
+        "${error.notfound.msg}" } },
     { gone_GmStatusCode,
       { 0x1f47b, /* ghost */
-        "Gone",
-        "The resource requested is no longer available and will not be available again." } },
+        "${error.gone}",
+        "${error.gone.msg}" } },
     { proxyRequestRefused_GmStatusCode,
       { 0x1f6c2, /* passport control */
-        "Proxy Request Refused",
-        "The request was for a resource at a domain not served by the server and the "
-        "server does not accept proxy requests." } },
+        "${error.proxyrefusal}",
+        "${error.proxyrefusal.msg}" } },
     { badRequest_GmStatusCode,
       { 0x1f44e, /* thumbs down */
-        "Bad Request",
-        "The server was unable to parse your request, presumably due to the "
-        "request being malformed." } },
+        "${error.badrequest}",
+        "${error.badrequest.msg}" } },
     { clientCertificateRequired_GmStatusCode,
       { 0x1f511, /* key */
-        "Certificate Required",
-        "Access to the requested resource requires identification via "
-        "a client certificate." } },
+        "${error.cert.needed}",
+        "${error.cert.needed.msg}" } },
     { certificateNotAuthorized_GmStatusCode,
       { 0x1f512, /* lock */
-        "Certificate Not Authorized",
-        "The provided client certificate is valid but is not authorized for accessing "
-        "the requested resource. " } },
+        "${error.cert.auth}",
+        "${error.cert.auth.msg}" } },
     { certificateNotValid_GmStatusCode,
       { 0x1f6a8, /* revolving light */
-        "Invalid Certificate",
-        "The provided client certificate is expired or invalid." } },
+        "${error.cert.invalid}",
+        "${error.cert.invalid.msg}" } },
 };
 
 iBool isDefined_GmError(enum iGmStatusCode code) {

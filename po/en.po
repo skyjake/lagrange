@@ -1076,3 +1076,142 @@ msgstr "Next tab"
 
 msgid "keys.hoverurl"
 msgstr "Toggle show URL on hover"
+
+msgid "error.badstatus"
+msgstr "Unknown Status Code"
+
+msgid "error.badstatus.msg"
+msgstr "The server responded with a status code that is not in the Gemini protocol specification. Maybe the server is from the future? Or just malfunctioning."
+
+msgid "error.openfile"
+msgstr "Failed to Open File"
+
+msgid "error.openfile.msg"
+msgstr "The requested file does not exist or is inaccessible. Please check the file path."
+
+msgid "error.badresource"
+msgstr "Invalid Resource"
+
+msgid "error.badresource.msg"
+msgstr "The requested resource does not exist."
+
+msgid "error.unsupported.media"
+msgstr "Unsupported Content Type"
+
+msgid "error.unsupported.media.msg"
+msgstr "The received content cannot be viewed with this application."
+
+msgid "error.unsupported.protocol"
+msgstr "Unsupported Protocol"
+
+msgid "error.unsupported.protocol.msg"
+msgstr "The requested protocol is not supported by this application."
+
+msgid "error.badheader"
+msgstr "Invalid Header"
+
+msgid "error.badheader.msg"
+msgstr "The received header does not conform to the Gemini protocol specification. Perhaps the server is malfunctioning, or you tried to contact a non-Gemini server."
+
+msgid "error.badredirect"
+msgstr "Invalid Redirect"
+
+msgid "error.badredirect.msg"
+msgstr "The server responded with a redirect but did not provide a valid destination URL. Perhaps the server is malfunctioning."
+
+msgid "error.schemeredirect"
+msgstr "Scheme-Changing Redirect"
+
+msgid "error.schemeredirect.msg"
+msgstr "The server attempted to redirect us to a URL whose scheme is different than the originating URL's scheme. Here is the link so you can open it manually if appropriate."
+
+msgid "error.manyredirects"
+msgstr "Too Many Redirects"
+
+msgid "error.manyredirects.msg"
+msgstr "You may be stuck in a redirection loop. The next redirected URL is below if you want to continue manually."
+
+msgid "error.tls"
+msgstr "Network/TLS Failure"
+
+msgid "error.tls.msg"
+msgstr "Failed to communicate with the server. Here is the error message:"
+
+msgid "error.temporary"
+msgstr "Temporary Failure"
+
+msgid "error.temporary.msg"
+msgstr "The request has failed, but may succeed if you try again in the future."
+
+msgid "error.unavail"
+msgstr "Server Unavailable"
+
+msgid "error.unavail.msg"
+msgstr "The server is unavailable due to overload or maintenance. Check back later."
+
+msgid "error.cgi"
+msgstr "CGI Error"
+
+msgid "error.cgi.msg"
+msgstr "Failure during dynamic content generation on the server. This may be due to malfunctioning serverside software."
+
+msgid "error.proxy"
+msgstr "Proxy Error"
+
+msgid "error.proxy.msg"
+msgstr "A proxy request failed because the server was unable to successfully complete a transaction with the remote host. Perhaps there are difficulties with network connectivity."
+
+msgid "error.slowdown"
+msgstr "Slow Down"
+
+msgid "error.slowdown.msg"
+msgstr "The server is rate limiting requests. Please wait..."
+
+msgid "error.permanent"
+msgstr "Permanent Failure"
+
+msgid "error.permanent.msg"
+msgstr "Your request has failed and will fail in the future as well if repeated."
+
+msgid "error.notfound"
+msgstr "Not Found"
+
+msgid "error.notfound.msg"
+msgstr "The requested resource could not be found at this time."
+
+msgid "error.gone"
+msgstr "Gone"
+
+msgid "error.gone.msg"
+msgstr "The requested resource is no longer available."
+
+msgid "error.proxyrefusal"
+msgstr "Proxy Request Refused"
+
+msgid "error.proxyrefusal.msg"
+msgstr "The request was for a resource at a domain not served by the server and the server does not accept proxy requests."
+
+msgid "error.badrequest"
+msgstr "Bad Request"
+
+msgid "error.badrequest.msg"
+msgstr "The server did not understand your request."
+
+msgid "error.cert.needed"
+msgstr "Certificate Required"
+
+msgid "error.cert.needed.msg"
+msgstr "Access to the requested resource requires identification via a client certificate."
+
+msgid "error.cert.auth"
+msgstr "Certificate Not Authorized"
+
+msgid "error.cert.auth.msg"
+msgstr "The provided client certificate is valid but is not authorized for accessing the requested resource."
+
+msgid "error.cert.invalid"
+msgstr "Invalid Certificate"
+
+msgid "error.cert.invalid.msg"
+msgstr "The provided client certificate is expired or invalid."
+
