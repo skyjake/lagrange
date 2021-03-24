@@ -1,2 +1,84 @@
 msgid ""
-msgstr "X-Generator: Weblate\nMIME-Version: 1.0\nContent-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit"
+msgstr ""
+"Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
+"PO-Revision-Date: 2021-03-24 09:48+0000\n"
+"Last-Translator: Aaron Fischer <mail@aaron-fischer.net>\n"
+"Language-Team: German <http://weblate.skyjake.fi/projects/lagrange/ui/de/>\n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Weblate 4.5.1\n"
+
+msgid "menu.opentab"
+msgstr "In neuem Tab öffnen"
+
+msgid "menu.feeds.entrylist"
+msgstr "Feed-Einträge anzeigen"
+
+msgid "feeds.entry.newtab"
+msgstr "Eintrag in neuem Tab öffnen"
+
+msgid "cancel"
+msgstr "Abbrechen"
+
+msgid "dismiss"
+msgstr "Verwerfen"
+
+msgid "dlg.message.ok"
+msgstr "Fortsetzen"
+
+msgid "dlg.default"
+msgstr " Ok "
+
+msgid "toggle.yes"
+msgstr "JA"
+
+msgid "toggle.no"
+msgstr "NEIN"
+
+msgid "menu.title.file"
+msgstr "Datei"
+
+msgid "menu.title.edit"
+msgstr "Bearbeiten"
+
+msgid "menu.title.view"
+msgstr "Ansicht"
+
+msgid "menu.title.bookmarks"
+msgstr "Lesezeichen"
+
+msgid "menu.title.identity"
+msgstr "Identität"
+
+msgid "menu.title.help"
+msgstr "Hilfe"
+
+msgid "menu.newtab"
+msgstr "Neuer Tab"
+
+msgid "menu.closetab"
+msgstr "Tab schließen"
+
+msgid "menu.closetab.other"
+msgstr "Andere Tabs schließen"
+
+msgid "menu.closetab.left"
+msgstr "Tabs links schließen"
+
+msgid "menu.closetab.right"
+msgstr "Tabs rechts schließen"
+
+msgid "menu.duptab"
+msgstr "Tab duplizieren"
+
+msgid "feeds.entry.markread"
+msgstr "Als gelesen markieren"
+
+msgid "feeds.entry.markunread"
+msgstr "Als ungelesen markieren"
+
+msgid "menu.opentab.background"
+msgstr "Tab im Hintergrund öffnen"
