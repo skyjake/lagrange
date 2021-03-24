@@ -242,7 +242,7 @@ msgid "sidebar.outline"
 msgstr "Outline"
 
 msgid "sidebar.unread"
-msgid_plural "sidebar.unread"
+msgid_plural "sidebar.unread.n"
 msgstr[0] "Unread"
 msgstr[1] "Unread"
 
@@ -379,7 +379,7 @@ msgstr "Not used"
 
 #, c-format
 msgid "ident.usedonurls"
-msgid_plural "ident.usedonurls"
+msgid_plural "ident.usedonurls.n"
 msgstr[0] "Used on %zu URL"
 msgstr[1] "Used on %zu URLs"
 
@@ -521,13 +521,13 @@ msgstr "IMPORT BOOKMARKS"
 
 #, c-format
 msgid "dlg.import.found"
-msgid_plural "dlg.import.found"
+msgid_plural "dlg.import.found.n"
 msgstr[0] "Found one new link on the page."
 msgstr[1] "Found %d new links on the page."
 
 #, c-format
 msgid "dlg.import.add"
-msgid_plural "dlg.import.add"
+msgid_plural "dlg.import.add.n"
 msgstr[0] "%sAdd Bookmark"
 msgstr[1] "%sAdd %d Bookmarks"
 
@@ -576,7 +576,7 @@ msgstr "UNTRUSTED CERTIFICATE"
 
 #, c-format
 msgid "dlg.certwarn.mayberenewed"
-msgid_plural "dlg.certwarn.mayberenewed"
+msgid_plural "dlg.certwarn.mayberenewed.n"
 msgstr[0] "The received certificate may have been recently renewed — it is for the correct domain and has not expired. The currently trusted certificate will expire on %s, in one day."
 msgstr[1] "The received certificate may have been recently renewed — it is for the correct domain and has not expired. The currently trusted certificate will expire on %s, in %d days."
 
