@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-03-24 18:46+0000\n"
-"Last-Translator: Jaakko Keränen <jaakko.keranen@iki.fi>\n"
+"PO-Revision-Date: 2021-03-24 19:03+0000\n"
+"Last-Translator: Aaron Fischer <mail@aaron-fischer.net>\n"
 "Language-Team: German <http://weblate.skyjake.fi/projects/lagrange/ui/de/>\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
@@ -199,3 +199,18 @@ msgstr "Nächster Tab"
 
 msgid "menu.sidebar.left"
 msgstr "Linke Seitenleiste ein-/ausblenden"
+
+msgid "menu.root"
+msgstr "Zum Hauptknoten"
+
+msgid "menu.reload"
+msgstr "Seite neu laden"
+
+msgid "menu.autoreload"
+msgstr "Automatisches neu laden …"
+
+msgid "menu.page.bookmark"
+msgstr "Seite in Lesezeichen speichern …"
+
+msgid "menu.page.subscribe"
+msgstr "Seite abonnieren …"
