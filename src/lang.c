@@ -66,16 +66,24 @@ void setCurrent_Lang(const char *language) {
     load_Lang_(d, language);
 }
 
-iRangecc range_Lang(iRangecc msgId) {
+static iBool find_Lang_(iRangecc msgId, iRangecc *str_out) {
     const iLang *d = &lang_;
     size_t pos;
     const iMsgStr key = { .id = msgId };
     if (locate_SortedArray(d->messages, &key, &pos)) {
-        return ((const iMsgStr *) at_SortedArray(d->messages, pos))->str;
+        *str_out = ((const iMsgStr *) at_SortedArray(d->messages, pos))->str;
+        return iTrue;
     }
     fprintf(stderr, "[Lang] missing: %s\n", cstr_Rangecc(msgId)); fflush(stderr);
-//    iAssert(iFalse);
-    return msgId;
+    //    iAssert(iFalse);
+    *str_out = msgId;
+    return iFalse;
+}
+
+iRangecc range_Lang(iRangecc msgId) {
+    iRangecc str;
+    find_Lang_(msgId, &str);
+    return str;
 }
 
 const char *cstr_Lang(const char *msgId) {
@@ -96,13 +104,19 @@ void translate_Lang(iString *textWithIds) {
         id.start += 2;
         id.end = strchr(id.start, '}');
         iAssert(id.end != NULL);
-        const size_t   idLen       = size_Range(&id);
-        const iRangecc replacement = range_Lang(id);
-        const size_t   startPos    = id.start - cstr_String(textWithIds) - 2;
-        /* Replace it. */
-        remove_Block(&textWithIds->chars, startPos, idLen + 3);
-        insertData_Block(&textWithIds->chars, startPos, replacement.start, size_Range(&replacement));
-        pos = cstr_String(textWithIds) + startPos + size_Range(&replacement);
+        const size_t idLen = size_Range(&id);
+        iRangecc replacement;
+        const size_t startPos = id.start - cstr_String(textWithIds) - 2;
+        if (find_Lang_(id, &replacement)) {
+            /* Replace it. */
+            remove_Block(&textWithIds->chars, startPos, idLen + 3);
+            insertData_Block(&textWithIds->chars, startPos, replacement.start, size_Range(&replacement));
+            pos = cstr_String(textWithIds) + startPos + size_Range(&replacement);
+        }
+        else {
+            remove_Block(&textWithIds->chars, startPos, 1); /* skip on subsequent attempts */
+            pos = cstr_String(textWithIds) + startPos + idLen;
+        }
     }
 }
 

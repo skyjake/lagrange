@@ -2089,7 +2089,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                                 size_PtrArray(links)),
                     (iMenuItem[]){
                         { "${cancel}", 0, 0, NULL },
-                        { format_CStr(isPlural ? "dlg.import.add.many" : "dlg.import.add",
+                        { format_CStr(cstr_Lang(isPlural ? "dlg.import.add.many" : "dlg.import.add"),
                                       uiTextAction_ColorEscape,
                                       size_PtrArray(links)),
                           0,

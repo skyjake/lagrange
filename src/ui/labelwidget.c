@@ -86,7 +86,10 @@ static iBool processEvent_LabelWidget_(iLabelWidget *d, const SDL_Event *ev) {
         updateSize_LabelWidget(d);
     }
     else if (isCommand_UserEvent(ev, "lang.changed")) {
+        const iChar oldIcon = d->icon; /* icon will be retained */
         setText_LabelWidget(d, &d->srcLabel);
+        checkIcon_LabelWidget(d); /* strip it */
+        d->icon = oldIcon;
         return iFalse;
     }
     else if (isCommand_UserEvent(ev, "bindings.changed")) {
