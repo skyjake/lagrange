@@ -48,7 +48,6 @@ def parse_po(src):
                 if msg_id:
                     messages.append((msg_id, msg_str, msg_index))
                 is_multi = False
-                if len(line) == 0: continue
             else:
                 msg_str += unquote(line)
         if line.startswith('msgid_plural'):
@@ -63,7 +62,7 @@ def parse_po(src):
                 line = line[9:]
             else:
                 msg_index = None
-                line = line[7:]
+                line = line[6:]
             if line.endswith(' ""'):
                 is_multi = True
                 msg_str = ''
@@ -77,6 +76,7 @@ def parse_po(src):
         if not msg_index is None:
             msg_id = f'{msg_id[:-1]}{msg_index}'
         pluralized.append((msg_id, msg_str))
+        #print(msg_id, '=>', msg_str)
     return pluralized
     
 

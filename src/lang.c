@@ -71,8 +71,13 @@ static void load_Lang_(iLang *d, const char *id) {
         while (*++ptr) {}
         msg.id.end = ptr;
         msg.str.start = ++ptr;
-        while (*++ptr) {}
-        msg.str.end = ptr;
+        if (*ptr) { /* not empty */
+            while (*++ptr) {}
+            msg.str.end = ptr;
+        }
+        else {
+            msg.str = msg.id; /* not translated */
+        }
         /* Allocate the string. The data has already been sorted. */
         printf("ID:%s\n", msg.id.start);
         pushBack_Array(&d->messages->values, &msg);
