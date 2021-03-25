@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2021-03-23 19:02+0000\n"
-"PO-Revision-Date: 2021-03-25 07:10+0000\n"
+"PO-Revision-Date: 2021-03-25 12:07+0000\n"
 "Last-Translator: Nikolay Korotkiy <sikmir@gmail.com>\n"
 "Language-Team: Russian <http://weblate.skyjake.fi/projects/lagrange/ui/ru/>\n"
 "Language: ru\n"
@@ -30,7 +30,7 @@ msgid "cancel"
 msgstr "Отмена"
 
 msgid "dismiss"
-msgstr "Отклонить"
+msgstr "Закрыть"
 
 msgid "dlg.message.ok"
 msgstr "Продолжить"
@@ -231,7 +231,7 @@ msgid "menu.bookmarks.refresh"
 msgstr "Обновить внешние закладки"
 
 msgid "menu.feeds.refresh"
-msgstr "Обновить ленты"
+msgstr "Обновить ленту"
 
 msgid "menu.identity.new"
 msgstr "Новый идентификатор…"
@@ -323,7 +323,7 @@ msgid "feeds.markallread"
 msgstr "Отметить все как прочитанное"
 
 msgid "feeds.refresh"
-msgstr "Обновить ленты"
+msgstr "Обновить ленту"
 
 msgid "menu.opentab"
 msgstr "Открыть в новой вкладке"
@@ -350,7 +350,7 @@ msgid "heading.history.clear"
 msgstr "ОЧИСТКА ИСТОРИИ"
 
 msgid "dlg.confirm.history.clear"
-msgstr "Вы действительно хотите стереть историю о всех посещённых страницах?"
+msgstr "Вы действительно хотите стереть историю посещений страниц?"
 
 msgid "dlg.history.clear"
 msgstr "Очистить историю"
@@ -377,7 +377,7 @@ msgid "bookmark.delete"
 msgstr "Удалить закладку"
 
 msgid "bookmarks.reload"
-msgstr ""
+msgstr "Синхронизироваться с источником закладок"
 
 msgid "ident.using"
 msgstr "Используется на этой странице"
@@ -470,10 +470,10 @@ msgid "pageinfo.cert.status"
 msgstr "Статус сертификата:"
 
 msgid "pageinfo.cert.ca.verified"
-msgstr "Подтверждено УЦ"
+msgstr "Подтверждён УЦ"
 
 msgid "pageinfo.cert.ca.unverified"
-msgstr "Не подтверждено УЦ"
+msgstr "Не подтверждён УЦ"
 
 msgid "pageinfo.cert.notexpired"
 msgstr "Срок действия не истёк"
@@ -530,7 +530,7 @@ msgid "dlg.import.found.many"
 msgstr "На странице найдено %d новых ссылок."
 
 msgid "dlg.import.add"
-msgstr "%sДобавить закладку"
+msgstr "%sДобавить %d закладку"
 
 msgid "dlg.import.add.many"
 msgstr "%sДобавить %d закладок"
@@ -613,7 +613,7 @@ msgid "bookmark.title.blank"
 msgstr "Пустая страница"
 
 msgid "heading.translate"
-msgstr "ПЕРЕВЕСТИ СТРАНИЦУ"
+msgstr "ПЕРЕВОД СТРАНИЦЫ"
 
 msgid "dlg.translate.unavail"
 msgstr "Сервис недоступен"
@@ -790,7 +790,7 @@ msgid "heading.prefs.sizing"
 msgstr "РАЗМЕР"
 
 msgid "heading.prefs.widelayout"
-msgstr ""
+msgstr "ШИРОКИЙ МАКЕТ"
 
 msgid "heading.prefs.style"
 msgstr "Стиль"
@@ -802,7 +802,7 @@ msgid "prefs.downloads"
 msgstr "Папка загрузок:"
 
 msgid "prefs.searchurl"
-msgstr ""
+msgstr "URL поиска:"
 
 msgid "prefs.hoverlink"
 msgstr "Показывать URL при наведении:"
@@ -925,7 +925,7 @@ msgid "prefs.biglede"
 msgstr "Большой 1-й абзац:"
 
 msgid "prefs.plaintext.wrap"
-msgstr ""
+msgstr "Переносить обычный текст:"
 
 msgid "prefs.decodeurls"
 msgstr ""
@@ -1230,3 +1230,11 @@ msgstr ""
 msgid "error.temporary.msg"
 msgstr ""
 "Запрос не выполнен, но может быть выполнен позже, если вы попытаетесь снова."
+
+msgid "error.proxyrefusal"
+msgstr "Запрос отклонён прокси-сервером"
+
+msgid "error.proxy.msg"
+msgstr ""
+"Запрос к прокси не выполнен, потому что серверу не удалось успешно завершить "
+"транзакцию с удалённым хостом. Возможно, есть проблемы с подключением к сети."
