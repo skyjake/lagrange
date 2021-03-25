@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-03-25 15:11+0000\n"
+"PO-Revision-Date: 2021-03-26 10:26+0000\n"
 "Last-Translator: Olga Smirnova <mistresssilvara@hotmail.com>\n"
 "Language-Team: Interlingua <http://weblate.skyjake.fi/projects/lagrange/ui/"
 "ia/>\n"
@@ -864,3 +864,150 @@ msgstr "Protocollo non supportate"
 
 msgid "error.badheader"
 msgstr "Testa incorrecte"
+
+msgid "ident.using"
+msgstr "Usate por iste pagina"
+
+msgid "menu.edit.notes"
+msgstr "Rediger le notas…"
+
+# strftime() formatted, split on two lines
+#, c-format
+msgid "page.timestamp"
+msgstr ""
+"Recipite a %H:%M\n"
+"le %d.%m.%Y"
+
+#, c-format
+msgid "dlg.import.found"
+msgid_plural "dlg.import.found.n"
+msgstr[0] "Ha trovate un nov ligamine in le pagina."
+msgstr[1] "Ha trovate %d nov ligamines in le pagina."
+
+msgid "menu.feeds.entrylist"
+msgstr "Monstrar le elementos del syndication"
+
+msgid "menu.copy.pagelink"
+msgstr "Copiar le ligamine del pagina"
+
+msgid "menu.page.bookmark"
+msgstr "Adder un marcapaginas…"
+
+msgid "menu.page.import"
+msgstr "Importar le ligamines como marcapaginas…"
+
+msgid "bookmark.untag.home"
+msgstr "Remover le pagina initial"
+
+msgid "bookmark.untag.sub"
+msgstr "Disabonar le syndication"
+
+msgid "bookmark.delete"
+msgstr "Deler marcapaginas"
+
+msgid "heading.ident.notes"
+msgstr "NOTAS RE LE IDENTITATE"
+
+# %s refers to name of an identity.
+#, c-format
+msgid "dlg.ident.notes"
+msgstr "Notas re %s:"
+
+msgid "heading.ident.delete"
+msgstr "DELER LE IDENTITATE"
+
+msgid "sidebar.empty.idents"
+msgstr "Nulle identitates"
+
+# The %s format characters are used to highlight the word "Help" and must be used in the translation in same way as here.
+#, c-format
+msgid "ident.gotohelp"
+msgstr "Vide %sAdjuta%s por plus de information re certificatos de cliente TLS."
+
+#, c-format
+msgid "dlg.confirm.unsub"
+msgstr ""
+"Disabonar le syndication\n"
+"«%s»?"
+
+msgid "heading.pageinfo"
+msgstr "INFORMATION RE LE PAGINA"
+
+msgid "pageinfo.header.cached"
+msgstr "(contento in cache)"
+
+msgid "heading.save"
+msgstr "FILE ES SALVATE"
+
+msgid "heading.save.error"
+msgstr "ERROR AL SALVAMENTO DEL FILE"
+
+msgid "dlg.import.notnew"
+msgstr "Tote le ligamines sur le pagina es addite al marcapaginas."
+
+msgid "heading.autoreload"
+msgstr "RECARGAR AUTOMATICAMENTE"
+
+#, c-format
+msgid "dlg.certwarn.expired"
+msgstr "Le receptate certificate ha perimite le %s."
+
+msgid "dlg.certwarn.domain.expired"
+msgstr "Le receptate certificate ha perimite ET es por un incorrecte dominio."
+
+msgid "ident.stopuse"
+msgstr "Stoppar le uso por iste pagina"
+
+msgid "ident.stopuse.all"
+msgstr "Stoppar le uso ubique"
+
+msgid "menu.binding.reset"
+msgstr "Restaurar al predefinites"
+
+msgid "keys.findtext"
+msgstr "Trovar texto in le pagina"
+
+msgid "error.openfile"
+msgstr "Falta al aperir un file"
+
+msgid "lang.zh.hans"
+msgstr "Chinese (simplificate)"
+
+msgid "dlg.feed.type.headings"
+msgstr "Nov capites"
+
+msgid "prefs.downloads"
+msgstr "Dossier de discargamentos:"
+
+msgid "prefs.searchurl"
+msgstr "URL de recerca:"
+
+msgid "prefs.headingfont"
+msgstr "Typo de titulo:"
+
+msgid "keys.scroll.page.up"
+msgstr "Rolar le pagina a alto"
+
+msgid "keys.scroll.page.down"
+msgstr "Rolar le pagina in basso"
+
+msgid "error.schemeredirect"
+msgstr "Redirection que cambia le schema"
+
+msgid "error.manyredirects"
+msgstr "Tro de redirectiones"
+
+msgid "error.tls"
+msgstr "Fallimento del rete o TLS"
+
+msgid "error.tls.msg"
+msgstr "Fallite a communicar con le servitor. Ecce le message de error:"
+
+msgid "error.slowdown"
+msgstr "Relentamento"
+
+msgid "error.gone"
+msgstr "Disaparite"
+
+msgid "error.gone.msg"
+msgstr "Le demandate ressource non es plus disponibile."
