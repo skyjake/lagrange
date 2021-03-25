@@ -845,9 +845,9 @@ iLocalDef iBool isClosingBracket_(iChar c) {
     return (c == ')' || c == ']' || c == '}' || c == '>');
 }
 
-iLocalDef iBool isBracket_(iChar c) {
-    return (c == '(' || c == '[' || c == '{' || c == '<' || isClosingBracket_(c));
-}
+//iLocalDef iBool isBracket_(iChar c) {
+//    return (c == '(' || c == '[' || c == '{' || c == '<' || isClosingBracket_(c));
+//}
 
 iLocalDef iBool isWrapBoundary_(iChar prevC, iChar c) {
     /* Line wrapping boundaries are determined by looking at a character and the
@@ -857,13 +857,13 @@ iLocalDef iBool isWrapBoundary_(iChar prevC, iChar c) {
        can wrap text like foo/bar/baz-abc-def.xyz at any puncation boundaries,
        without wrapping on other punctuation used for expressive purposes like
        emoticons :-) */
-    if (isClosingBracket_(c)) {
+    if (isClosingBracket_(prevC) && !isWrapPunct_(c)) {
         return iTrue;
     }
     if (isSpace_Char(prevC)) {
         return iFalse;
     }
-    if ((c == '/' || c == '-' || c == '_' || c == '+') && !isWrapPunct_(prevC)) {
+    if ((prevC == '/' || prevC == '-' || prevC == '_' || prevC == '+') && !isWrapPunct_(c)) {
         return iTrue;
     }
     return isSpace_Char(c);
@@ -1102,7 +1102,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
         xposExtend = iMax(xposExtend, xpos);
         xposMax    = iMax(xposMax, xposExtend);
         if (args->continueFrom_out && ((mode & noWrapFlag_RunMode) || isWrapBoundary_(prevCh, ch))) {
-            lastWordEnd = chPos;
+            lastWordEnd = currentPos;
         }
 #if defined (LAGRANGE_ENABLE_KERNING)
         /* Check the next character. */
