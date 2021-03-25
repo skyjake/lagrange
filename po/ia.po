@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-03-25 09:04+0000\n"
+"PO-Revision-Date: 2021-03-25 15:11+0000\n"
 "Last-Translator: Olga Smirnova <mistresssilvara@hotmail.com>\n"
 "Language-Team: Interlingua <http://weblate.skyjake.fi/projects/lagrange/ui/"
 "ia/>\n"
@@ -23,3 +23,844 @@ msgstr "NO"
 
 msgid "menu.title.file"
 msgstr "Dossier"
+
+msgid "menu.title.bookmarks"
+msgstr "Marcapaginas"
+
+msgid "menu.title.identity"
+msgstr "Identitate"
+
+msgid "menu.title.help"
+msgstr "Adjuta"
+
+msgid "menu.newtab"
+msgstr "Nove scheda"
+
+msgid "menu.closetab"
+msgstr "Clauder scheda"
+
+msgid "menu.closetab.other"
+msgstr "Clauder le altere schedas"
+
+msgid "menu.closetab.left"
+msgstr "Clauder le schedas a leve"
+
+msgid "menu.closetab.right"
+msgstr "Clauder le schedas a dextera"
+
+msgid "menu.duptab"
+msgstr "Duplicar le scheda"
+
+msgid "menu.openlocation"
+msgstr "Aperir adresse…"
+
+msgid "menu.find"
+msgstr "Trovar in le pagina"
+
+msgid "macos.menu.find"
+msgstr "Trovar"
+
+msgid "menu.copy.source"
+msgstr "Copiar le texto fonte"
+
+msgid "menu.sidebar"
+msgstr "Monstrar/celar le barra lateral"
+
+msgid "menu.sidebar.left"
+msgstr "Monstrar/celar le barra lateral a sinistra"
+
+msgid "menu.sidebar.right"
+msgstr "Monstrar/celar le barra lateral a dextera"
+
+msgid "menu.preferences"
+msgstr "Preferentias…"
+
+msgid "menu.help"
+msgstr "Adjuta"
+
+msgid "menu.releasenotes"
+msgstr "Notas del version"
+
+msgid "menu.quit"
+msgstr "Quitar Lagrange"
+
+msgid "menu.cut"
+msgstr "Taliar"
+
+msgid "menu.copy"
+msgstr "Copiar"
+
+msgid "menu.paste"
+msgstr "Collar"
+
+msgid "menu.show.bookmarks"
+msgstr "Monstrar le signa-libros"
+
+msgid "menu.show.feeds"
+msgstr "Monstrar le syndicationes"
+
+msgid "menu.show.history"
+msgstr "Monstrar le chronologia"
+
+msgid "menu.show.identities"
+msgstr "Monstrar le identitates"
+
+msgid "menu.show.outline"
+msgstr "Monstrar le structura del pagina"
+
+msgid "menu.back"
+msgstr "Ir a detra"
+
+msgid "menu.forward"
+msgstr "Ir avante"
+
+msgid "menu.parent"
+msgstr "Ir al parente"
+
+msgid "menu.root"
+msgstr "Ir al radice"
+
+msgid "menu.reload"
+msgstr "Recargar le pagina"
+
+msgid "sidebar.identities"
+msgstr "Identitates"
+
+msgid "sidebar.outline"
+msgstr "Structura"
+
+msgid "toolbar.outline"
+msgstr "Structura del pagina"
+
+msgid "hint.findtext"
+msgstr "Trovar texto in le pagina"
+
+msgid "status.feeds"
+msgstr "Actualisation del syndicationes"
+
+# megabytes, used as the unit after a number
+msgid "mb"
+msgstr "MB"
+
+# kilobytes, used as the unit after a number
+msgid "kb"
+msgstr "KB"
+
+msgid "bytes"
+msgstr "bytes"
+
+msgid "feeds.entry.markread"
+msgstr "Marcar como legite"
+
+msgid "feeds.entry.openfeed"
+msgstr "Aperir le pagina del syndication"
+
+msgid "feeds.edit"
+msgstr "Modificar le syndication…"
+
+msgid "feeds.unsubscribe"
+msgstr "Disabonar…"
+
+msgid "bookmark.tag.sub"
+msgstr "Subscriber se a iste syndication"
+
+msgid "ident.notused"
+msgstr "Non usate"
+
+msgid "ident.temporary"
+msgstr "Temporari"
+
+msgid "dlg.ident.delete"
+msgstr "Deler le identitate e files"
+
+msgid "heading.unsub"
+msgstr "DISABONAR"
+
+# Usage: "(count) Unread" in the sidebar tab title, referring to feed entries.
+msgid "sidebar.unread"
+msgid_plural "sidebar.unread.n"
+msgstr[0] "non legite"
+msgstr[1] "non legite"
+
+# strftime() formatted
+#, c-format
+msgid "sidebar.date.thisyear"
+msgstr "%d %b."
+
+# strftime() formatted
+#, c-format
+msgid "sidebar.date.otheryear"
+msgstr "%d %b. %Y"
+
+msgid "dlg.unsub"
+msgstr "Disabonar"
+
+msgid "pageinfo.cert.status"
+msgstr "Stato del certificato:"
+
+msgid "pageinfo.cert.ca.verified"
+msgstr "Verificate de AdC"
+
+msgid "pageinfo.cert.ca.unverified"
+msgstr "Non verificate de AdC"
+
+msgid "feeds.today"
+msgstr "Hodie"
+
+msgid "pageinfo.cert.notexpired"
+msgstr "Non expirate"
+
+msgid "pageinfo.cert.expired"
+msgstr "Expirate"
+
+msgid "pageinfo.cert.trusted"
+msgstr "Digne de fide"
+
+msgid "pageinfo.cert.untrusted"
+msgstr "Non digne de fide"
+
+msgid "dlg.cert.trust"
+msgstr "Fide"
+
+msgid "dlg.cert.fingerprint"
+msgstr "Copiar le impression digital"
+
+msgid "dlg.input.send"
+msgstr "Inviar"
+
+msgid "heading.save.incomplete"
+msgstr "PAGINA INCOMPLETE"
+
+msgid "dlg.save.size"
+msgstr "Dimension:"
+
+msgid "feeds.entry.newtab"
+msgstr "Aperir le elemento in un nove scheda"
+
+msgid "heading.import.bookmarks"
+msgstr "IMPORTAR MARCAPAGINAS"
+
+msgid "link.newtab"
+msgstr "Aperir le ligamine in un nove scheda"
+
+msgid "link.newtab.background"
+msgstr "Aperir le ligamine in un scheda de fundo"
+
+msgid "link.browser"
+msgstr "Aperir le ligamine in le explorator predefinite"
+
+msgid "link.noproxy"
+msgstr "Aperir sin le proxy"
+
+msgid "link.copy"
+msgstr "Copiar le ligamine"
+
+msgid "link.bookmark"
+msgstr "Adder ligamine al marcapaginas…"
+
+msgid "heading.openlink"
+msgstr "APERIR LE LIGAMINE"
+
+#, c-format
+msgid "dlg.openlink.confirm"
+msgstr ""
+"Aperir le ligamine in le explorator predefinite?\n"
+"%s%s"
+
+msgid "dlg.openlink"
+msgstr "Aperir le ligamine"
+
+msgid "heading.certwarn"
+msgstr "CERTIFICATO NON DIGNE DE FIDE"
+
+msgid "dlg.translate.from"
+msgstr "De:"
+
+msgid "dlg.translate.to"
+msgstr "A:"
+
+# Alt-text of the preformatted logo.
+msgid "about.logo"
+msgstr "Arte ASCII: le parola «Lagrange» in characteres grande"
+
+msgid "about.tagline"
+msgstr "Un cliente belle de Gemini"
+
+msgid "cancel"
+msgstr "Annullar"
+
+msgid "dismiss"
+msgstr "Dimitter"
+
+msgid "dlg.message.ok"
+msgstr "Continuar"
+
+msgid "dlg.default"
+msgstr " OK "
+
+msgid "menu.title.edit"
+msgstr "Rediger"
+
+msgid "menu.title.view"
+msgstr "Vista"
+
+msgid "menu.zoom.in"
+msgstr "Aggrandir"
+
+msgid "menu.zoom.out"
+msgstr "Reducer"
+
+msgid "menu.zoom.reset"
+msgstr "Restabilir le zoom"
+
+msgid "menu.page.subscribe"
+msgstr "Abonar se le pagina…"
+
+msgid "menu.about"
+msgstr "A proposito"
+
+msgid "panel.back"
+msgstr "Retro"
+
+msgid "menu.debug"
+msgstr "Information de debug"
+
+msgid "menu.page.translate"
+msgstr "Traducer…"
+
+msgid "menu.page.copyurl"
+msgstr "Copiar le URL del pagina"
+
+msgid "menu.page.copysource"
+msgstr "Copiar le texto fonte del pagina"
+
+msgid "menu.feeds.refresh"
+msgstr "Actualisar le syndicationes"
+
+msgid "menu.identity.new"
+msgstr "Nove identitate…"
+
+msgid "menu.identity.import"
+msgstr "Importar…"
+
+msgid "menu.identity.notactive"
+msgstr "Nulle identitate active"
+
+msgid "sidebar.bookmarks"
+msgstr "Signa-libros"
+
+msgid "lang.ar"
+msgstr "Arabic"
+
+msgid "lang.zh"
+msgstr "Chinese"
+
+msgid "lang.en"
+msgstr "Anglese"
+
+msgid "menu.import.links"
+msgstr "Importar tote le ligamines sur le pagina…"
+
+msgid "sidebar.feeds"
+msgstr "Syndicationes"
+
+msgid "sidebar.history"
+msgstr "Chronologia"
+
+msgid "lang.fi"
+msgstr "Finnese"
+
+msgid "lang.fr"
+msgstr "Francese"
+
+msgid "feeds.entry.markunread"
+msgstr "Marcar como non legite"
+
+msgid "sidebar.entry.bookmark"
+msgstr "Adder marcapagina…"
+
+msgid "feeds.entry.bookmark"
+msgstr "Adder marcapagina…"
+
+msgid "lang.de"
+msgstr "Germano"
+
+msgid "feeds.markallread"
+msgstr "Marcar toto como legite"
+
+msgid "feeds.refresh"
+msgstr "Actualisar le syndicationes"
+
+msgid "menu.opentab"
+msgstr "Aperir in un nove scheda"
+
+msgid "menu.opentab.background"
+msgstr "Aperir in un scheda de fundo"
+
+msgid "menu.edit"
+msgstr "Rediger…"
+
+msgid "menu.dup"
+msgstr "Duplicar…"
+
+msgid "lang.hi"
+msgstr "Hindi"
+
+msgid "lang.it"
+msgstr "Italiano"
+
+msgid "lang.ja"
+msgstr "Japonese"
+
+msgid "lang.pt"
+msgstr "Portugese"
+
+msgid "lang.ru"
+msgstr "Russo"
+
+msgid "lang.es"
+msgstr "Espaniol"
+
+msgid "heading.newident"
+msgstr "NOV IDENTITATE"
+
+msgid "dlg.newident.until"
+msgstr "Valide usque:"
+
+msgid "hint.newident.date"
+msgstr "AAAA-MM-DD HH:MM:SS"
+
+msgid "hint.newident.optional"
+msgstr "optional"
+
+msgid "dlg.newident.commonname"
+msgstr "Nomine commun:"
+
+msgid "dlg.newident.temp"
+msgstr "Temporari:"
+
+msgid "dlg.newident.notsaved"
+msgstr "non salvate sur disco"
+
+msgid "dlg.newident.email"
+msgstr "E-posta:"
+
+msgid "dlg.newident.userid"
+msgstr "ID de usator:"
+
+msgid "dlg.newident.domain"
+msgstr "Dominio:"
+
+msgid "heading.subscribe"
+msgstr "ABONAR SE LE PAGINA"
+
+msgid "dlg.feed.title"
+msgstr "Titulo:"
+
+msgid "dlg.feed.entrytype"
+msgstr "Typo de elemento:"
+
+msgid "dlg.feed.type.gemini"
+msgstr "Ligamines como AAAA-MM-DD"
+
+msgid "dlg.feed.save"
+msgstr "Salvar parametros"
+
+msgid "dlg.feed.sub"
+msgstr "Abonar"
+
+msgid "dlg.bookmark.save"
+msgstr "Salvar marcapaginas"
+
+msgid "dlg.bookmark.title"
+msgstr "Titulo:"
+
+msgid "dlg.bookmark.url"
+msgstr "URL:"
+
+msgid "heading.prefs"
+msgstr "PREFERENTIAS"
+
+# tab button
+msgid "heading.prefs.interface"
+msgstr "Interfacie"
+
+# tab button
+msgid "heading.prefs.network"
+msgstr "Rete"
+
+msgid "menu.copyurl"
+msgstr "Copiar le URL"
+
+msgid "menu.forgeturl"
+msgstr "Oblidar le URL"
+
+msgid "history.clear"
+msgstr "Vacuar le chronologia…"
+
+msgid "heading.history.clear"
+msgstr "VACUAR LE CHRONOLOGIA"
+
+msgid "heading.prefs.paragraph"
+msgstr "PARAGRAPHO"
+
+msgid "heading.prefs.pagecontent"
+msgstr "CONTENTO DEL PAGINE"
+
+# tab button
+msgid "heading.prefs.style"
+msgstr "Stilo"
+
+# tab button
+msgid "heading.prefs.userinterface"
+msgstr "Interfacie de usator"
+
+msgid "prefs.centershort"
+msgstr "Centrament vertical:"
+
+msgid "prefs.smoothscroll"
+msgstr "Rolamento suave:"
+
+msgid "prefs.ostheme"
+msgstr "Usar thema del systema:"
+
+msgid "prefs.theme"
+msgstr "Thema:"
+
+msgid "prefs.theme.black"
+msgstr "Pur nigre"
+
+msgid "prefs.theme.dark"
+msgstr "Obscur"
+
+msgid "prefs.theme.light"
+msgstr "Clar"
+
+msgid "prefs.theme.white"
+msgstr "Pur blanc"
+
+msgid "prefs.accent"
+msgstr "Color de accento:"
+
+msgid "prefs.accent.teal"
+msgstr "Blau petroleo"
+
+msgid "prefs.accent.orange"
+msgstr "Orange"
+
+msgid "prefs.sideicon"
+msgstr "Icone del capsula:"
+
+msgid "prefs.doctheme.dark"
+msgstr "Thema obscur:"
+
+msgid "prefs.doctheme.light"
+msgstr "Thema clar:"
+
+msgid "prefs.doctheme.name.black"
+msgstr "Nigre"
+
+msgid "prefs.doctheme.name.gray"
+msgstr "Gris"
+
+msgid "prefs.doctheme.name.white"
+msgstr "Blanc"
+
+msgid "prefs.doctheme.name.sepia"
+msgstr "Sepia"
+
+msgid "prefs.doctheme.name.highcontrast"
+msgstr "Contrasto elevate"
+
+msgid "prefs.saturation"
+msgstr "Saturation:"
+
+msgid "prefs.font"
+msgstr "Typo de characteres del corpore:"
+
+msgid "prefs.mono"
+msgstr "Corpore mono-spatial:"
+
+msgid "prefs.mono.gemini"
+msgstr "Gemini"
+
+msgid "prefs.linewidth"
+msgstr "Largessa de linea:"
+
+msgid "prefs.linewidth.normal"
+msgstr "Normal"
+
+msgid "prefs.linewidth.fill"
+msgstr "Justificar"
+
+msgid "prefs.quoteicon"
+msgstr "Indicator de citation:"
+
+msgid "prefs.quoteicon.line"
+msgstr "Linea"
+
+msgid "prefs.biglede"
+msgstr "Augmentar le prime paragrapho:"
+
+msgid "prefs.uiscale"
+msgstr "Factor de scala del IdU:"
+
+msgid "prefs.retainwindow"
+msgstr "Retener le placiamento:"
+
+msgid "dlg.history.clear"
+msgstr "Vacuar le chronologia"
+
+msgid "prefs.plaintext.wrap"
+msgstr "Rumper lineas de texto simple:"
+
+msgid "prefs.cachesize"
+msgstr "Memoria tampon:"
+
+msgid "prefs.ca.file"
+msgstr "File de AdC:"
+
+msgid "prefs.ca.path"
+msgstr "Percurso de AdC:"
+
+msgid "prefs.proxy.gemini"
+msgstr "Proxy por Gemini:"
+
+msgid "prefs.proxy.gopher"
+msgstr "Proxy por Gopher:"
+
+msgid "keys.scroll.down"
+msgstr "Rolar a basso"
+
+msgid "keys.back"
+msgstr "Retroceder"
+
+msgid "bookmark.tag.home"
+msgstr "Usar como le pagina initial"
+
+msgid "ident.fingerprint"
+msgstr "Copiar le impression digital"
+
+msgid "ident.delete"
+msgstr "Deler le identitate…"
+
+# strftime() formatted
+#, c-format
+msgid "ident.expiry"
+msgstr "Perime %d %b. %Y"
+
+msgid "ident.use"
+msgstr "Usar por iste pagina"
+
+msgid "heading.certimport"
+msgstr "IMPORTAR UN IDENTITATE"
+
+msgid "dlg.certimport.notfound"
+msgstr "Le certificato o le clave private non esseva trovate."
+
+msgid "heading.certimport.pasted"
+msgstr "COLLATE"
+
+msgid "heading.certimport.dropped"
+msgstr "FILE CADITE"
+
+msgid "dlg.certimport.import"
+msgstr "Importar"
+
+msgid "dlg.certimport.notes"
+msgstr "Notas:"
+
+msgid "hint.certimport.description"
+msgstr "description"
+
+msgid "dlg.certimport.nocert"
+msgstr "Nulle certificato"
+
+msgid "dlg.certimport.nokey"
+msgstr "Nulle clave private"
+
+msgid "link.hint.audio"
+msgstr "Reproducer le audio"
+
+msgid "link.hint.image"
+msgstr "Vider le imagine"
+
+msgid "bookmark.title.blank"
+msgstr "Pagina blanc"
+
+msgid "heading.translate"
+msgstr "TRADUCER LE PAGINE"
+
+msgid "dlg.translate.unavail"
+msgstr "Servicio non disponibile"
+
+msgid "dlg.translate.fail"
+msgstr "Le demanda es fallite"
+
+msgid "dlg.translate"
+msgstr "Traducer"
+
+msgid "ident.showuse"
+msgstr "Monstrar le uso"
+
+msgid "heading.ident.use"
+msgstr "USO DEL IDENTITATE"
+
+msgid "keys.forward"
+msgstr "Ir avante"
+
+msgid "keys.parent"
+msgstr "Ir al plica parente"
+
+msgid "keys.root"
+msgstr "Ir al radice del capsula"
+
+msgid "keys.reload"
+msgstr "Recargar le pagina"
+
+msgid "keys.bookmark.add"
+msgstr "Adder marcapagina"
+
+msgid "keys.tab.next"
+msgstr "Scheda sequente"
+
+msgid "error.badredirect"
+msgstr "Redirection incorrecte"
+
+msgid "error.temporary"
+msgstr "Falta temporanee"
+
+msgid "error.unavail"
+msgstr "Servitor indisponibile"
+
+msgid "error.cgi"
+msgstr "Error de CGI"
+
+msgid "error.proxy"
+msgstr "Error de proxy"
+
+msgid "error.permanent"
+msgstr "Falta permanente"
+
+msgid "error.notfound"
+msgstr "Non trovate"
+
+msgid "error.badrequest"
+msgstr "Mal requesta"
+
+msgid "error.cert.needed"
+msgstr "Certificato es requirite"
+
+msgid "error.cert.auth"
+msgstr "Certificato non autorisate"
+
+msgid "error.cert.invalid"
+msgstr "Certificato non valide"
+
+#, c-format
+msgid "ident.usedonurls"
+msgid_plural "ident.usedonurls.n"
+msgstr[0] "Usate por %zu URL"
+msgstr[1] "Usate por %zu URLs"
+
+#, c-format
+msgid "dlg.import.add"
+msgid_plural "dlg.import.add.n"
+msgstr[0] "%sAdder un signa-libros"
+msgstr[1] "%sAdder %d signa-libros"
+
+msgid "link.download"
+msgstr "Discargar le file ligate"
+
+msgid "dlg.newident.org"
+msgstr "Organisation:"
+
+msgid "dlg.newident.country"
+msgstr "Pais:"
+
+msgid "dlg.newident.create"
+msgstr "Crear un identitate"
+
+msgid "dlg.bookmark.tags"
+msgstr "Etiquettas:"
+
+msgid "dlg.bookmark.icon"
+msgstr "Icone:"
+
+msgid "heading.prefs.certs"
+msgstr "CERTIFICATOS"
+
+msgid "prefs.uilang"
+msgstr "Lingua:"
+
+msgid "prefs.proxy.http"
+msgstr "Proxy HTTP:"
+
+msgid "menu.binding.clear"
+msgstr "Remover"
+
+msgid "keys.scroll.up"
+msgstr "Rolar a alto"
+
+# tab button
+msgid "heading.prefs.colors"
+msgstr "Colores"
+
+msgid "heading.prefs.fonts"
+msgstr "TYPOS DE CHARACTER"
+
+# tab button
+msgid "heading.prefs.general"
+msgstr "General"
+
+# tab button
+msgid "heading.prefs.keys"
+msgstr "Claves"
+
+msgid "heading.prefs.proxies"
+msgstr "PROXIES"
+
+msgid "heading.prefs.scrolling"
+msgstr "ROLAMENTO"
+
+msgid "heading.prefs.sizing"
+msgstr "DIMENSIONAMENTO"
+
+msgid "prefs.mono.gopher"
+msgstr "Gopher"
+
+msgid "keys.zoom.in"
+msgstr "Ampliar"
+
+msgid "keys.zoom.out"
+msgstr "Reducer"
+
+msgid "keys.zoom.reset"
+msgstr "Restabilir le zoom"
+
+msgid "keys.fullscreen"
+msgstr "Alternar le stato de schermo plen"
+
+msgid "keys.tab.new"
+msgstr "Nove scheda"
+
+msgid "keys.tab.close"
+msgstr "Clauder le scheda"
+
+msgid "keys.tab.prev"
+msgstr "Scheda precedente"
+
+msgid "error.badstatus"
+msgstr "Codice de stato incognite"
+
+msgid "error.badresource"
+msgstr "Ressource incorrecte"
+
+msgid "error.unsupported.media"
+msgstr "Typo de contento non supportate"
+
+msgid "error.unsupported.protocol"
+msgstr "Protocollo non supportate"
+
+msgid "error.badheader"
+msgstr "Testa incorrecte"
