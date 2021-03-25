@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-03-24 09:48+0000\n"
+"PO-Revision-Date: 2021-03-25 07:10+0000\n"
 "Last-Translator: Shibo Lyu <github@of.sb>\n"
 "Language-Team: Chinese (Simplified) <http://weblate.skyjake.fi/projects/"
 "lagrange/ui/zh_Hans/>\n"
@@ -524,7 +524,7 @@ msgid "heading.import.bookmarks"
 msgstr "导入书签"
 
 msgid "dlg.import.found"
-msgstr "在页面上找到了一条新的链接。"
+msgstr "在页面上找到了 %d 条新的链接。"
 
 #, c-format
 msgid "dlg.import.found.many"
@@ -532,7 +532,7 @@ msgstr "在页面上找到了 %d 条新的链接。"
 
 #, c-format
 msgid "dlg.import.add"
-msgstr "%s添加书签"
+msgstr "%s添加 %d 个书签"
 
 #, c-format
 msgid "dlg.import.add.many"
@@ -623,3 +623,604 @@ msgstr "确定要清除所有的浏览记录吗？"
 
 msgid "heading.certimport"
 msgstr "导入身份"
+
+msgid "error.proxyrefusal.msg"
+msgstr "请求的资源不在该服务器服务的域名上，且该服务器不接受代理请求。"
+
+msgid "dlg.certimport.notes"
+msgstr "注解："
+
+msgid "hint.certimport.description"
+msgstr "描述"
+
+msgid "dlg.feed.sub"
+msgstr "订阅"
+
+msgid "keys.scroll.down"
+msgstr "向下滚动"
+
+msgid "keys.scroll.halfpage.up"
+msgstr "向上滚动半页"
+
+msgid "keys.scroll.halfpage.down"
+msgstr "向下滚动半页"
+
+msgid "keys.scroll.page.up"
+msgstr "向上滚动一页"
+
+msgid "keys.scroll.page.down"
+msgstr "向下滚动一页"
+
+msgid "keys.back"
+msgstr "后退"
+
+msgid "keys.forward"
+msgstr "前进"
+
+msgid "keys.parent"
+msgstr "前往上一级目录"
+
+msgid "keys.root"
+msgstr "前往站点根目录"
+
+msgid "keys.reload"
+msgstr "刷新"
+
+msgid "keys.link.modkey"
+msgstr "通过修饰键打开链接"
+
+msgid "keys.link.homerow"
+msgstr "通过主排键打开链接"
+
+msgid "keys.link.homerow.hover"
+msgstr "通过主排键在链接上悬停"
+
+msgid "keys.link.homerow.next"
+msgstr "下一组主排键链接"
+
+msgid "keys.bookmark.add"
+msgstr "添加书签"
+
+msgid "keys.findtext"
+msgstr "在页面上查找文本"
+
+msgid "keys.zoom.in"
+msgstr "放大"
+
+msgid "keys.zoom.out"
+msgstr "缩小"
+
+msgid "keys.fullscreen"
+msgstr "切换全屏模式"
+
+msgid "keys.tab.new"
+msgstr "新标签页"
+
+msgid "keys.tab.close"
+msgstr "关闭标签页"
+
+msgid "keys.tab.prev"
+msgstr "上一个标签页"
+
+msgid "keys.tab.next"
+msgstr "下一个标签页"
+
+msgid "error.unsupported.protocol"
+msgstr "不支持的协议"
+
+msgid "error.unsupported.protocol.msg"
+msgstr "请求的协议不被此程序支持。"
+
+msgid "error.badheader"
+msgstr "无效标头"
+
+msgid "error.badredirect"
+msgstr "无效重定向"
+
+msgid "link.hint.audio"
+msgstr "播放音频"
+
+msgid "link.hint.image"
+msgstr "显示图片"
+
+msgid "bookmark.title.blank"
+msgstr "空页面"
+
+msgid "heading.translate"
+msgstr "翻译页面"
+
+msgid "dlg.translate.unavail"
+msgstr "服务不可用"
+
+msgid "dlg.translate.fail"
+msgstr "请求失败"
+
+msgid "dlg.translate"
+msgstr "翻译"
+
+msgid "dlg.translate.from"
+msgstr "自："
+
+msgid "dlg.translate.to"
+msgstr "翻译至："
+
+msgid "dlg.newident.until"
+msgstr "有效期至："
+
+msgid "hint.newident.optional"
+msgstr "选填"
+
+msgid "dlg.newident.commonname"
+msgstr "通用名称（CN）："
+
+msgid "dlg.newident.temp"
+msgstr "临时："
+
+msgid "dlg.newident.notsaved"
+msgstr "不在磁盘上保存"
+
+msgid "dlg.newident.email"
+msgstr "电邮："
+
+msgid "dlg.newident.userid"
+msgstr "用户 ID："
+
+msgid "dlg.newident.domain"
+msgstr "域名："
+
+msgid "dlg.newident.org"
+msgstr "组织："
+
+msgid "dlg.newident.country"
+msgstr "国家："
+
+msgid "dlg.newident.create"
+msgstr "创建身份"
+
+msgid "heading.feedcfg"
+msgstr "订阅设置"
+
+msgid "heading.subscribe"
+msgstr "订阅页面"
+
+msgid "dlg.feed.title"
+msgstr "标题："
+
+msgid "hint.newident.date"
+msgstr "YYYY-MM-DD HH:MM:SS"
+
+msgid "heading.prefs"
+msgstr "偏好设置"
+
+msgid "heading.prefs.certs"
+msgstr "证书"
+
+# tab button
+msgid "heading.prefs.colors"
+msgstr "颜色"
+
+msgid "heading.prefs.fonts"
+msgstr "字体"
+
+msgid "prefs.accent.teal"
+msgstr "青色"
+
+msgid "prefs.accent.orange"
+msgstr "橙色"
+
+msgid "prefs.uiscale"
+msgstr "界面缩放比例："
+
+msgid "prefs.ca.file"
+msgstr "权威证书机构（CA）文件："
+
+msgid "prefs.ca.path"
+msgstr "权威证书机构（CA）路径："
+
+msgid "prefs.proxy.gemini"
+msgstr "Gemini 代理："
+
+msgid "prefs.proxy.gopher"
+msgstr "Gopher 代理："
+
+msgid "prefs.proxy.http"
+msgstr "HTTP 代理："
+
+msgid "dlg.certimport.nocert"
+msgstr "无证书"
+
+msgid "dlg.certimport.nokey"
+msgstr "无私钥"
+
+msgid "heading.bookmark.add"
+msgstr "添加为书签"
+
+msgid "heading.bookmark.edit"
+msgstr "编辑书签"
+
+msgid "lang.ar"
+msgstr "阿拉伯语"
+
+msgid "lang.zh"
+msgstr "中文"
+
+msgid "lang.en"
+msgstr "英语"
+
+msgid "lang.fi"
+msgstr "芬兰语"
+
+msgid "lang.fr"
+msgstr "法语"
+
+msgid "lang.de"
+msgstr "德语"
+
+msgid "lang.hi"
+msgstr "印地语"
+
+msgid "lang.it"
+msgstr "意大利语"
+
+msgid "lang.ja"
+msgstr "日语"
+
+msgid "lang.pt"
+msgstr "葡萄牙语"
+
+msgid "lang.ru"
+msgstr "俄语"
+
+# tab button
+msgid "heading.prefs.general"
+msgstr "通用"
+
+msgid "error.cgi"
+msgstr "CGI 错误"
+
+msgid "lang.es"
+msgstr "西班牙语"
+
+msgid "heading.newident"
+msgstr "创建身份"
+
+# tab button
+msgid "heading.prefs.userinterface"
+msgstr "用户界面"
+
+msgid "prefs.theme.black"
+msgstr "纯黑"
+
+msgid "prefs.sideicon"
+msgstr "站点图标："
+
+msgid "prefs.doctheme.name.highcontrast"
+msgstr "高对比度"
+
+msgid "prefs.biglede"
+msgstr "首段加大："
+
+msgid "prefs.decodeurls"
+msgstr "解码地址："
+
+msgid "prefs.cachesize"
+msgstr "缓存大小："
+
+msgid "keys.top"
+msgstr "回到顶部"
+
+msgid "keys.bottom"
+msgstr "前往底部"
+
+msgid "keys.scroll.up"
+msgstr "向上滚动"
+
+msgid "keys.link.homerow.newtab"
+msgstr "通过主排键在新标签页打开链接"
+
+msgid "keys.zoom.reset"
+msgstr "重置缩放"
+
+msgid "keys.hoverurl"
+msgstr "开关光标悬停时显示地址"
+
+msgid "prefs.downloads"
+msgstr "下载文件夹："
+
+msgid "menu.binding.clear"
+msgstr "移除"
+
+msgid "dlg.certimport.notfound"
+msgstr "未找到任何证书或私钥。"
+
+msgid "dlg.certimport.notfound.page"
+msgstr "在本页上未找到任何证书或私钥。"
+
+msgid "heading.certimport.pasted"
+msgstr "从剪贴板粘贴"
+
+msgid "heading.certimport.dropped"
+msgstr "拖拽来的文件"
+
+msgid "dlg.certimport.import"
+msgstr "导入"
+
+msgid "dlg.newident.rsa.selfsign"
+msgstr "正在创建一个自签名的 2048 位 RSA 证书。"
+
+msgid "dlg.feed.entrytype"
+msgstr "项目类型："
+
+msgid "error.badstatus"
+msgstr "未知状态码"
+
+msgid "error.badstatus.msg"
+msgstr "服务器返回了一个在 Gemini 协议标准中没有定义的状态码。也许这是来自未来的服务器，或者只是它工作不正常。"
+
+msgid "error.openfile"
+msgstr "打开文件失败"
+
+msgid "error.openfile.msg"
+msgstr "请求的文件不存在或不可访问。请检查文件路径。"
+
+msgid "error.badresource"
+msgstr "无效的资源"
+
+msgid "error.badresource.msg"
+msgstr "请求的资源不存在。"
+
+msgid "error.unsupported.media"
+msgstr "不受支持的内容类型"
+
+msgid "error.unsupported.media.msg"
+msgstr "接受到的内容无法被此程序查看。"
+
+msgid "error.badheader.msg"
+msgstr "收到的标头不符合 Gemini 协议标准所规定的格式。也许服务器工作不正常，或者可能是您在尝试连接非 Gemini 服务器。"
+
+msgid "error.badredirect.msg"
+msgstr "服务器返回了重定向请求，但没有提供有效的目标地址。也许服务器工作不正常。"
+
+msgid "error.schemeredirect.msg"
+msgstr "服务器尝试将您重定向到一个不同协议的地址。若您认为合适，以下是链接地址，供您手动打开。"
+
+msgid "dlg.feed.type.gemini"
+msgstr "YYYY-MM-DD 链接"
+
+msgid "dlg.feed.type.headings"
+msgstr "新的标题"
+
+msgid "dlg.feed.save"
+msgstr "保存设置"
+
+msgid "error.cgi.msg"
+msgstr "服务器生成动态内容时出错。也许是服务器端软件出现异常。"
+
+msgid "dlg.bookmark.save"
+msgstr "保存书签"
+
+msgid "dlg.bookmark.title"
+msgstr "标题："
+
+msgid "dlg.bookmark.url"
+msgstr "地址："
+
+msgid "dlg.bookmark.tags"
+msgstr "标签："
+
+msgid "dlg.bookmark.icon"
+msgstr "图标："
+
+# tab button
+msgid "heading.prefs.interface"
+msgstr "界面"
+
+# tab button
+msgid "heading.prefs.keys"
+msgstr "密钥"
+
+# tab button
+msgid "heading.prefs.network"
+msgstr "网络"
+
+msgid "heading.prefs.paragraph"
+msgstr "段落"
+
+msgid "heading.prefs.pagecontent"
+msgstr "页面内容"
+
+msgid "heading.prefs.proxies"
+msgstr "代理"
+
+msgid "heading.prefs.scrolling"
+msgstr "滚动"
+
+msgid "heading.prefs.sizing"
+msgstr "尺寸"
+
+msgid "heading.prefs.widelayout"
+msgstr "宽布局"
+
+# tab button
+msgid "heading.prefs.style"
+msgstr "样式"
+
+msgid "prefs.searchurl"
+msgstr "搜索地址："
+
+msgid "prefs.hoverlink"
+msgstr "光标悬停时显示地址："
+
+msgid "prefs.centershort"
+msgstr "纵向居中："
+
+msgid "prefs.smoothscroll"
+msgstr "平滑滚动："
+
+msgid "prefs.imageloadscroll"
+msgstr "滚动时加载图片："
+
+msgid "prefs.hidetoolbarscroll"
+msgstr "滚动时隐藏工具栏："
+
+msgid "prefs.ostheme"
+msgstr "使用系统主题："
+
+msgid "prefs.theme"
+msgstr "主题："
+
+msgid "prefs.theme.dark"
+msgstr "深色"
+
+msgid "prefs.theme.light"
+msgstr "浅色"
+
+msgid "prefs.theme.white"
+msgstr "纯白"
+
+msgid "prefs.accent"
+msgstr "主色："
+
+msgid "prefs.uilang"
+msgstr "语言："
+
+msgid "prefs.customframe"
+msgstr "自定义窗口边框："
+
+msgid "prefs.retainwindow"
+msgstr "记住窗口位置："
+
+msgid "prefs.doctheme.dark"
+msgstr "深色主题："
+
+msgid "prefs.doctheme.light"
+msgstr "浅色主题："
+
+msgid "prefs.doctheme.name.colorfuldark"
+msgstr "五彩斑斓的黑"
+
+msgid "prefs.doctheme.name.colorfullight"
+msgstr "五彩斑斓的白"
+
+msgid "prefs.doctheme.name.black"
+msgstr "黑色"
+
+msgid "prefs.doctheme.name.gray"
+msgstr "灰色"
+
+msgid "prefs.doctheme.name.white"
+msgstr "白色"
+
+msgid "prefs.doctheme.name.sepia"
+msgstr "棕色"
+
+msgid "prefs.saturation"
+msgstr "色彩饱和度："
+
+msgid "prefs.headingfont"
+msgstr "标题字体："
+
+msgid "prefs.font"
+msgstr "正文字体："
+
+msgid "prefs.mono"
+msgstr "等宽字体："
+
+msgid "prefs.mono.gopher"
+msgstr "Gopher"
+
+msgid "prefs.linewidth"
+msgstr "线宽："
+
+msgid "prefs.linewidth.normal"
+msgstr "正常"
+
+msgid "prefs.linewidth.fill"
+msgstr "填充"
+
+msgid "prefs.quoteicon"
+msgstr "引言指示图标："
+
+msgid "prefs.quoteicon.icon"
+msgstr "“ 图标"
+
+msgid "prefs.quoteicon.line"
+msgstr "线条"
+
+msgid "prefs.plaintext.wrap"
+msgstr "纯文本折行："
+
+msgid "menu.binding.reset"
+msgstr "重置为默认值"
+
+msgid "prefs.mono.gemini"
+msgstr "Gemini"
+
+msgid "error.schemeredirect"
+msgstr "跨协议重定向"
+
+msgid "error.manyredirects"
+msgstr "重定向过多"
+
+msgid "error.manyredirects.msg"
+msgstr "您可能陷入了一个重定向循环。若您希望自行前往，如下是下一个重定向目标地址。"
+
+msgid "error.tls"
+msgstr "网络或 TLS 错误"
+
+msgid "error.tls.msg"
+msgstr "与服务器通信失败。以下是错误信息："
+
+msgid "error.temporary"
+msgstr "暂时性错误"
+
+msgid "error.temporary.msg"
+msgstr "请求失败，但未来重试时可能会成功。"
+
+msgid "error.unavail"
+msgstr "服务器不可用"
+
+msgid "error.unavail.msg"
+msgstr "服务器因超负荷或维护而不可用。请稍后再试。"
+
+msgid "error.proxy"
+msgstr "代理错误"
+
+msgid "error.proxy.msg"
+msgstr "因服务器与远端主机通信未能成功完成，代理请求失败。也许网络连接有一些问题。"
+
+msgid "error.slowdown"
+msgstr "慢一点"
+
+msgid "error.slowdown.msg"
+msgstr "服务器限制了请求速率。请等待…"
+
+msgid "error.permanent"
+msgstr "永久性错误"
+
+msgid "error.permanent.msg"
+msgstr "您的请求失败。即使您继续重复请求亦不会改变结果。"
+
+msgid "error.notfound"
+msgstr "未找到"
+
+msgid "error.gone"
+msgstr "已移除"
+
+msgid "error.gone.msg"
+msgstr "所请求的资源已经不再可用。"
+
+msgid "error.proxyrefusal"
+msgstr "代理请求被拒绝"
+
+msgid "error.badrequest"
+msgstr "无效请求"
+
+msgid "error.badrequest.msg"
+msgstr "服务器无法理解您的请求。"
+
+msgid "error.cert.needed"
+msgstr "需要证书"
+
+msgid "error.notfound.msg"
+msgstr "所请求的资源目前无法找到。"
