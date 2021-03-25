@@ -77,6 +77,7 @@ set (EMBED_RESOURCES
     res/lang/en.bin
     res/lang/fi.bin
     res/lang/ru.bin
+    res/lang/zh_Hans.bin
     res/shadow.png
 )
 if ((UNIX AND NOT APPLE) OR MSYS)

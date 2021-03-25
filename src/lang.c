@@ -52,16 +52,17 @@ static void clear_Lang_(iLang *d) {
 static void load_Lang_(iLang *d, const char *id) {
     /* Load compiled language strings from an embedded blob. */
     iUnused(id);
-    const iBlock *data = equal_CStr(id, "fi") ? &blobFi_Embedded
-                       : equal_CStr(id, "ru") ? &blobRu_Embedded
-                       : equal_CStr(id, "de") ? &blobDe_Embedded
-                                              : &blobEn_Embedded;
+    const iBlock *data = equal_CStr(id, "fi")      ? &blobFi_Embedded
+                       : equal_CStr(id, "ru")      ? &blobRu_Embedded
+                       : equal_CStr(id, "de")      ? &blobDe_Embedded
+                       : equal_CStr(id, "zh_Hans") ? &blobZh_Hans_Embedded
+                                                   : &blobEn_Embedded;
     if (data == &blobRu_Embedded) {
         d->pluralType = slavic_PluralType;
     }
-//    else if (data == &blobZhHans_Embedded) {
-//        d->pluralType = none_PluralType;
-//    }
+    else if (data == &blobZh_Hans_Embedded) {
+        d->pluralType = none_PluralType;
+    }
     else {
         d->pluralType = notEqualToOne_PluralType;
     }
