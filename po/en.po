@@ -1,3 +1,4 @@
+# Alt-text of the preformatted logo.
 msgid "about.logo"
 msgstr "ASCII art: the word \"Lagrange\" using a large font"
 
@@ -73,9 +74,11 @@ msgstr "Find on Page"
 msgid "macos.menu.find"
 msgstr "Find"
 
+# Used on iOS. "Files" refers to Apple's iOS app where you can pick an iCloud folder.
 msgid "menu.save.files"
 msgstr "Save to Files"
 
+# Used on desktop operating systems. "Downloads" refers to the user's configured downloads directory.
 msgid "menu.save.downloads"
 msgstr "Save to Downloads"
 

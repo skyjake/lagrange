@@ -38,29 +38,46 @@ def unquote(string):
     
 def parse_po(src):
     messages = []
-    is_multi = False
-    msg_id, msg_str = None, None
+    is_multi = False  # string is multiple lines
+    is_plural = False
+    msg_id, msg_str, msg_index = None, None, None
     for line in open(src, 'rt', encoding='utf-8').readlines():
         line = line.strip()
         if is_multi:
-            if len(line) == 0:
+            if len(line) == 0 or line[0] != '"':
                 if msg_id:
-                    messages.append((msg_id, msg_str))
+                    messages.append((msg_id, msg_str, msg_index))
                 is_multi = False
-                continue
+                if len(line) == 0: continue
             else:
                 msg_str += unquote(line)
-        if line.startswith('msgid'):
+        if line.startswith('msgid_plural'):
+            msg_id = unquote(line[12:])
+            is_plural = True
+        elif line.startswith('msgid'):
             msg_id = unquote(line[6:])
-        elif line == 'msgstr ""':
-            # Multiline string.
-            is_multi = True
-            msg_str = ''
-        elif line.startswith('msgstr'):
-            msg_str = unquote(line[7:])
-            if msg_id:
-                messages.append((msg_id, msg_str))
-    return messages
+            is_plural = False
+        elif line.startswith('msgstr'):            
+            if line[6] == '[':
+                msg_index = int(line[7])
+                line = line[9:]
+            else:
+                msg_index = None
+                line = line[7:]
+            if line.endswith(' ""'):
+                is_multi = True
+                msg_str = ''
+            else:
+                msg_str = unquote(line)
+                if msg_id:
+                    messages.append((msg_id, msg_str, msg_index))
+    # Apply plural indices to ids.
+    pluralized = []
+    for msg_id, msg_str, msg_index in messages:
+        if not msg_index is None:
+            msg_id = f'{msg_id[:-1]}{msg_index}'
+        pluralized.append((msg_id, msg_str))
+    return pluralized
     
 
 if MODE == 'compile':
@@ -76,6 +93,7 @@ if MODE == 'compile':
 elif MODE == 'new':
     messages = parse_po('en.po')
     f = open('new.po', 'wt', encoding='utf-8')
+    # TODO: plurals
     for msg_id, _ in messages:
         print(f'\nmsgid "{msg_id}"\nmsgstr ""\n', file=f)
 

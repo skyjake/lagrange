@@ -352,7 +352,7 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                               "%s",
                               isActive ? cstr_Lang("ident.using")
                               : isUsed_GmIdentity(ident)
-                                  ? format_CStr(cstr_Lang("ident.usedonurls"), size_StringSet(ident->useUrls))
+                                  ? formatCStrs_Lang("ident.usedonurls.n", size_StringSet(ident->useUrls))
                                   : cstr_Lang("ident.notused"));
                 const char *expiry =
                     ident->flags & temporary_GmIdentityFlag
@@ -705,12 +705,12 @@ static void checkModeButtonLayout_SidebarWidget_(iSidebarWidget *d) {
         if (i == feeds_SidebarMode && d->numUnreadEntries) {
             updateText_LabelWidget(
                 button,
-                collectNewFormat_String("%s " uiTextAction_ColorEscape "%zu%s",
+                collectNewFormat_String("%s " uiTextAction_ColorEscape "%zu%s%s",
                                         tightModeLabels_[i],
                                         d->numUnreadEntries,
+                                        !isTight ? " " : "",
                                         !isTight
-                                            ? (d->numUnreadEntries == 1 ? " ${sidebar.unread}"
-                                                                        : " ${sidebar.unread.many}")
+                                            ? formatCStrs_Lang("sidebar.unread.n", d->numUnreadEntries)
                                             : ""));
         }
         else {

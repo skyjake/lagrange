@@ -2081,20 +2081,17 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         }
         if (!isEmpty_PtrArray(links)) {
             if (argLabel_Command(cmd, "confirm")) {
-                //const char *plural = size_PtrArray(links) != 1 ? "s" : "";
-                const iBool isPlural = size_PtrArray(links) != 1;
+                const size_t count = size_PtrArray(links);
                 makeQuestion_Widget(
                     uiHeading_ColorEscape "${heading.import.bookmarks}",
-                    format_CStr(cstr_Lang(isPlural ? "dlg.import.found.many" : "dlg.import.found"),
-                                size_PtrArray(links)),
-                    (iMenuItem[]){
-                        { "${cancel}", 0, 0, NULL },
-                        { format_CStr(cstr_Lang(isPlural ? "dlg.import.add.many" : "dlg.import.add"),
-                                      uiTextAction_ColorEscape,
-                                      size_PtrArray(links)),
-                          0,
-                          0,
-                          "bookmark.links" } },
+                    formatCStrs_Lang("dlg.import.found.n", count),
+                    (iMenuItem[]){ { "${cancel}", 0, 0, NULL },
+                                   { format_CStr(cstrCount_Lang("dlg.import.add.n", count),
+                                                 uiTextAction_ColorEscape,
+                                                 count),
+                                     0,
+                                     0,
+                                     "bookmark.links" } },
                     2);
             }
             else {
@@ -2846,10 +2843,10 @@ static void drawBannerRun_DrawContext_(iDrawContext *d, const iGmRun *run, iInt2
             const int days = secondsSince_Time(&oldUntil, &now) / 3600 / 24;
             appendCStr_String(&str, "\n");
             if (days <= 30) {
-                appendFormat_String(&str,
-                                    cstr_Lang("dlg.certwarn.mayberenewed"),
-                                    cstrCollect_String(format_Date(&exp, "%Y-%m-%d")),
-                                    days);
+                appendCStr_String(&str,
+                                  format_CStr(cstrCount_Lang("dlg.certwarn.mayberenewed.n", days),
+                                              cstrCollect_String(format_Date(&exp, "%Y-%m-%d")),
+                                              days));
             }
             else {
                 appendCStr_String(&str, cstr_Lang("dlg.certwarn.different"));

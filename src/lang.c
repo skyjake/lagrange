@@ -19,11 +19,31 @@ int cmp_MsgStr_(const void *e1, const void *e2) {
 
 /*----------------------------------------------------------------------------------------------*/
 
+enum iPluralType {
+    none_PluralType,
+    notEqualToOne_PluralType,
+    slavic_PluralType,
+};
+
 struct Impl_Lang {
     iSortedArray *messages;
+    enum iPluralType pluralType;
 };
 
 static iLang lang_;
+
+static size_t pluralIndex_Lang_(const iLang *d, int n) {
+    switch (d->pluralType) {
+        case notEqualToOne_PluralType:
+            return n != 1;
+        case slavic_PluralType:
+            return n % 10 == 1 && n % 100 != 11                                    ? 0
+                   : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? 1
+                                                                                   : 2;
+        default:
+            return 0;
+    }
+}
 
 static void clear_Lang_(iLang *d) {
     clear_SortedArray(d->messages);
@@ -36,6 +56,15 @@ static void load_Lang_(iLang *d, const char *id) {
                        : equal_CStr(id, "ru") ? &blobRu_Embedded
                        : equal_CStr(id, "de") ? &blobDe_Embedded
                                               : &blobEn_Embedded;
+    if (data == &blobRu_Embedded) {
+        d->pluralType = slavic_PluralType;
+    }
+//    else if (data == &blobZhHans_Embedded) {
+//        d->pluralType = none_PluralType;
+//    }
+    else {
+        d->pluralType = notEqualToOne_PluralType;
+    }
     iMsgStr msg;
     for (const char *ptr = constBegin_Block(data); ptr != constEnd_Block(data); ptr++) {
         msg.id.start = ptr;
@@ -45,6 +74,7 @@ static void load_Lang_(iLang *d, const char *id) {
         while (*++ptr) {}
         msg.str.end = ptr;
         /* Allocate the string. The data has already been sorted. */
+        printf("ID:%s\n", msg.id.start);
         pushBack_Array(&d->messages->values, &msg);
     }
 }
@@ -87,12 +117,30 @@ iRangecc range_Lang(iRangecc msgId) {
     return str;
 }
 
+const iString *string_Lang(const char *msgId) {
+    return collectNewRange_String(range_Lang(range_CStr(msgId)));
+}
+
 const char *cstr_Lang(const char *msgId) {
     return range_Lang(range_CStr(msgId)).start; /* guaranteed to be NULL-terminated */
 }
 
-const iString *string_Lang(const char *msgId) {
-    return collectNewRange_String(range_Lang(range_CStr(msgId)));
+static char *pluralId_Lang_(const iLang *d, const char *msgId, int count) {
+    const size_t len = strlen(msgId);
+    char *pluralId = strdup(msgId);
+    pluralId[len - 1] = '0' + pluralIndex_Lang_(d, count);
+    return pluralId;
+}
+
+const char *cstrCount_Lang(const char *msgId, int count) {
+    iAssert(endsWith_Rangecc(range_CStr(msgId), ".n")); /* by convention */
+    char *pluralId = pluralId_Lang_(&lang_, msgId, count);
+    const char *str = cstr_Lang(pluralId);
+    if (str == pluralId) {
+        str = msgId; /* not found */
+    }
+    free(pluralId);
+    return str;
 }
 
 void translate_Lang(iString *textWithIds) {
@@ -128,4 +176,12 @@ const char *translateCStr_Lang(const char *textWithIds) {
     iString *text = collectNewCStr_String(textWithIds);
     translate_Lang(text);
     return cstr_String(text);
+}
+
+const char *formatCStr_Lang(const char *formatMsgId, int count) {
+    return format_CStr(cstrCount_Lang(formatMsgId, count), count);
+}
+
+const char *formatCStrs_Lang(const char *formatMsgId, size_t count) {
+    return format_CStr(cstrCount_Lang(formatMsgId, (int) count), count);
 }
