@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2021-03-23 19:02+0000\n"
-"PO-Revision-Date: 2021-03-25 19:42+0000\n"
+"PO-Revision-Date: 2021-03-26 10:26+0000\n"
 "Last-Translator: Nikolay Korotkiy <sikmir@gmail.com>\n"
 "Language-Team: Russian <http://weblate.skyjake.fi/projects/lagrange/ui/ru/>\n"
 "Language: ru\n"
@@ -928,7 +928,7 @@ msgid "prefs.plaintext.wrap"
 msgstr "Переносить обычный текст:"
 
 msgid "prefs.decodeurls"
-msgstr ""
+msgstr "Декодировать URL:"
 
 msgid "prefs.cachesize"
 msgstr "Размер кэша:"
@@ -1003,10 +1003,10 @@ msgid "keys.link.homerow.newtab"
 msgstr "Открыть ссылку в новой вкладке с помощью клавиш домашнеге ряда"
 
 msgid "keys.link.homerow.hover"
-msgstr ""
+msgstr "Активировать ссылку с помощью клавиш домашнего ряда"
 
 msgid "keys.link.homerow.next"
-msgstr ""
+msgstr "Следующий набор ссылок домашнего ряда"
 
 msgid "keys.bookmark.add"
 msgstr "Добавить закладку"
@@ -1238,3 +1238,22 @@ msgid "error.proxy.msg"
 msgstr ""
 "Запрос к прокси не выполнен, потому что серверу не удалось успешно завершить "
 "транзакцию с удалённым хостом. Возможно, есть проблемы с подключением к сети."
+
+msgid "keys.subscribe"
+msgstr "Подписаться на страницу"
+
+msgid "heading.certimport.dropped"
+msgstr "ПЕРЕТАЩЕН ФАЙЛ"
+
+msgid "error.permanent.msg"
+msgstr ""
+"Не удалось выполнить запрос и при повторной попытке запрос также не будет "
+"выполнен."
+
+msgid "error.proxyrefusal.msg"
+msgstr ""
+"Запрос к ресурсу в домене, не обслуживаемом сервером, и сервер не принимает "
+"запросы прокси."
+
+msgid "lang.zh.hans"
+msgstr "Китайский (упрощённый)"
