@@ -756,7 +756,8 @@ const iString *downloadPathForUrl_App(const iString *url, const iString *mime) {
         }
     }
     else {
-        iRangecc fn = { parts.path.start + lastIndexOfCStr_Rangecc(parts.path, "/") + 1,
+        const size_t slashPos = lastIndexOfCStr_Rangecc(parts.path, "/");
+        iRangecc fn = { parts.path.start + (slashPos != iInvalidPos ? slashPos + 1 : 0),
                         parts.path.end };
         if (!isEmpty_Range(&fn)) {
             setRange_String(name, fn);
