@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-03-25 07:10+0000\n"
+"PO-Revision-Date: 2021-03-25 09:04+0000\n"
 "Last-Translator: Shibo Lyu <github@of.sb>\n"
 "Language-Team: Chinese (Simplified) <http://weblate.skyjake.fi/projects/"
 "lagrange/ui/zh_Hans/>\n"
@@ -292,7 +292,7 @@ msgstr "%b %d日"
 # strftime() formatted
 #, c-format
 msgid "sidebar.date.otheryear"
-msgstr "%Y年%b%d日"
+msgstr "%Y年%b %d日"
 
 msgid "feeds.today"
 msgstr "今天"
@@ -388,7 +388,7 @@ msgstr "临时"
 # strftime() formatted
 #, c-format
 msgid "ident.expiry"
-msgstr "将于 %Y 年%b%d日过期"
+msgstr "将于 %Y 年%b %d日过期"
 
 msgid "ident.use"
 msgstr "在本页使用"
@@ -1224,3 +1224,18 @@ msgstr "需要证书"
 
 msgid "error.notfound.msg"
 msgstr "所请求的资源目前无法找到。"
+
+msgid "error.cert.needed.msg"
+msgstr "请求的资源需要通过客户端证书来辨别身份。"
+
+msgid "error.cert.auth"
+msgstr "证书不被认可"
+
+msgid "error.cert.auth.msg"
+msgstr "提供的证书有效，但无权访问请求的资源。"
+
+msgid "error.cert.invalid"
+msgstr "证书无效"
+
+msgid "error.cert.invalid.msg"
+msgstr "提供的证书过期或无效。"
