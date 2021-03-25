@@ -1828,14 +1828,14 @@ iWidget *makePreferences_Widget(void) {
         /* UI languages. */ {
             iArray *uiLangs = collectNew_Array(sizeof(iMenuItem));
             const iMenuItem langItems[] = {
-                { "${lang.en} (en)", 0, 0, "uilang id:en" },
-                { "${lang.fi} (fi)", 0, 0, "uilang id:fi" },
-                { "${lang.ru} (ru)", 0, 0, "uilang id:ru" },
-                { "${lang.de} (de)", 0, 0, "uilang id:de" },
-                { "${lang.zh_Hans} (zh_Hans)", 0, 0, "uilang id:zh_Hans" },
+                { "${lang.de} - " uiTextAction_ColorEscape "de", 0, 0, "uilang id:de" },
+                { "${lang.en} - " uiTextAction_ColorEscape "en", 0, 0, "uilang id:en" },
+                { "${lang.fi} - " uiTextAction_ColorEscape "fi", 0, 0, "uilang id:fi" },
+                { "${lang.ru} - " uiTextAction_ColorEscape "ru", 0, 0, "uilang id:ru" },
+                { "${lang.zh.hans} - " uiTextAction_ColorEscape "zh_Hans", 0, 0, "uilang id:zh_Hans" },
             };
             pushBackN_Array(uiLangs, langItems, iElemCount(langItems));
-            sort_Array(uiLangs, cmp_MenuItem_);
+            //sort_Array(uiLangs, cmp_MenuItem_);
             /* TODO: Add an arrange flag for resizing parent to widest child. */
             int widest = 0;
             size_t widestPos = iInvalidPos;
@@ -1855,7 +1855,7 @@ iWidget *makePreferences_Widget(void) {
                                                   value_Array(uiLangs, widestPos, iMenuItem).label,
                                                   data_Array(uiLangs),
                                                   size_Array(uiLangs))),
-                                              0),
+                                              alignLeft_WidgetFlag),
                          "prefs.uilang");
         }
 #if defined (iPlatformApple) || defined (iPlatformMSys)

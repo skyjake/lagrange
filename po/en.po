@@ -663,6 +663,9 @@ msgstr "Arabic"
 msgid "lang.zh"
 msgstr "Chinese"
 
+msgid "lang.zh.hans"
+msgstr "Chinese (Simplified)"
+
 msgid "lang.en"
 msgstr "English"
 
