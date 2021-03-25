@@ -244,6 +244,7 @@ msgstr "Identities"
 msgid "sidebar.outline"
 msgstr "Outline"
 
+# Usage: "(count) Unread" in the sidebar tab title, referring to feed entries.
 msgid "sidebar.unread"
 msgid_plural "sidebar.unread.n"
 msgstr[0] "Unread"
