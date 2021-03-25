@@ -1054,6 +1054,9 @@ msgstr "Next set of home row key links"
 msgid "keys.bookmark.add"
 msgstr "Add bookmark"
 
+msgid "keys.subscribe"
+msgstr "Subscribe to page"
+
 msgid "keys.findtext"
 msgstr "Find text on page"
 
