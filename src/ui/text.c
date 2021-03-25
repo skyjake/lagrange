@@ -836,6 +836,19 @@ static enum iFontId fontId_Text_(const iFont *font) {
     return (enum iFontId) (font - text_.fonts);
 }
 
+iLocalDef iBool isWrapPunct_(iChar c) {
+    /* Punctuation that participates in word-wrapping. */
+    return (c == '/' || c == '=' || c == '-' || c == ',' || c == ';' || c == '.' || c == ':' || c == 0xad);
+}
+
+iLocalDef iBool isClosingBracket_(iChar c) {
+    return (c == ')' || c == ']' || c == '}' || c == '>');
+}
+
+iLocalDef iBool isBracket_(iChar c) {
+    return (c == '(' || c == '[' || c == '{' || c == '<' || isClosingBracket_(c));
+}
+
 iLocalDef iBool isWrapBoundary_(iChar prevC, iChar c) {
     /* Line wrapping boundaries are determined by looking at a character and the
        last character processed. We want to wrap at natural word boundaries where
@@ -844,14 +857,13 @@ iLocalDef iBool isWrapBoundary_(iChar prevC, iChar c) {
        can wrap text like foo/bar/baz-abc-def.xyz at any puncation boundaries,
        without wrapping on other punctuation used for expressive purposes like
        emoticons :-) */
-    if (c == '.' && (prevC == '(' || prevC == '[' || prevC == '.')) {
-        /* Start of a [...], perhaps? */
-        return iFalse;
+    if (isClosingBracket_(c)) {
+        return iTrue;
     }
     if (isSpace_Char(prevC)) {
         return iFalse;
     }
-    if (c == '/' || c == '-' || c == ',' || c == ';' || c == ':' || c == '.' || c == 0xad) {
+    if ((c == '/' || c == '-' || c == '_' || c == '+') && !isWrapPunct_(prevC)) {
         return iTrue;
     }
     return isSpace_Char(c);
