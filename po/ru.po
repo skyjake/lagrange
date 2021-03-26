@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2021-03-23 19:02+0000\n"
-"PO-Revision-Date: 2021-03-26 10:26+0000\n"
+"PO-Revision-Date: 2021-03-26 11:55+0000\n"
 "Last-Translator: Nikolay Korotkiy <sikmir@gmail.com>\n"
 "Language-Team: Russian <http://weblate.skyjake.fi/projects/lagrange/ui/ru/>\n"
 "Language: ru\n"
@@ -1257,3 +1257,27 @@ msgstr ""
 
 msgid "lang.zh.hans"
 msgstr "Китайский (упрощённый)"
+
+# Interpret as "Results from bookmarks..."
+msgid "heading.lookup.bookmarks"
+msgstr "ЗАКЛАДКИ"
+
+# Interpret as "Results from page content..."
+msgid "heading.lookup.pagecontent"
+msgstr "СОДЕРЖАНИЕ СТРАНИЦЫ"
+
+# Interpret as "Results from feeds..."
+msgid "heading.lookup.feeds"
+msgstr "ЛЕНТЫ"
+
+# Interpret as "Results from history..."
+msgid "heading.lookup.history"
+msgstr "ИСТОРИЯ"
+
+# Interpret as "Results from identitites..."
+msgid "heading.lookup.identities"
+msgstr "ИДЕНТИФИКАТОРЫ"
+
+# Interpret as "Other results..."
+msgid "heading.lookup.other"
+msgstr "ДРУГИЕ"
