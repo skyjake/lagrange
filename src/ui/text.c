@@ -1,4 +1,4 @@
-/* Copyright 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
+﻿/* Copyright 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -113,16 +113,18 @@ struct Impl_Font {
     iHash          glyphs;
     iBool          isMonospaced;
     iBool          manualKernOnly;
-    enum iFontId   symbolsFont;  /* font to use for symbols */
-    enum iFontId   japaneseFont; /* font to use for Japanese glyphs */
-    enum iFontId   koreanFont;   /* font to use for Korean glyphs */
-    uint32_t       indexTable[128 - 32];
+    enum iFontSize sizeId;  /* used to look up different fonts of matching size */
+//    enum iFontId
+//    enum iFontId   japaneseFont; /* font to use for Japanese glyphs */
+//    enum iFontId   chineseFont;  /* font to use for Simplified Chinese glyphs */
+//    enum iFontId   koreanFont;   /* font to use for Korean glyphs */
+    uint32_t       indexTable[128 - 32]; /* quick ASCII lookup */
 };
 
 static iFont *font_Text_(enum iFontId id);
 
 static void init_Font(iFont *d, const iBlock *data, int height, float scale,
-                      enum iFontId symbolsFont, iBool isMonospaced) {
+                      enum iFontSize sizeId, iBool isMonospaced) {
     init_Hash(&d->glyphs);
     d->data = NULL;
     d->isMonospaced = isMonospaced;
@@ -145,9 +147,11 @@ static void init_Font(iFont *d, const iBlock *data, int height, float scale,
     }
     d->vertOffset   = height * (1.0f - scale) / 2;
     d->baseline     = ascent * d->yScale;
-    d->symbolsFont  = symbolsFont;
-    d->japaneseFont = regularJapanese_FontId;
-    d->koreanFont   = regularKorean_FontId;
+    d->sizeId       = sizeId;
+//    d->symbolsFont  = symbolsFont;
+//    d->japaneseFont = regularJapanese_FontId;
+//    d->chineseFont  = regularChinese_FontId;
+//    d->koreanFont   = regularKorean_FontId;
     memset(d->indexTable, 0xff, sizeof(d->indexTable));
 }
 
@@ -281,73 +285,52 @@ static void initFonts_Text_(iText *d) {
         const iBlock *ttf;
         int size;
         float scaling;
-        int symbolsFont;
+        enum iFontSize sizeId;
+        /* UI sizes: 1.0, 1.125, 1.333, 1.666 */
+        /* Content sizes: smallmono, mono, 1.0, 1.2, 1.333, 1.666, 2.0 */
     } fontData[max_FontId] = {
-        { &fontSourceSansProRegular_Embedded, uiSize,               1.0f, defaultSymbols_FontId },
-        { &fontSourceSansProBold_Embedded,    uiSize,               1.0f, defaultSymbols_FontId },
-        { &fontSourceSansProRegular_Embedded, uiSize * 1.125f,      1.0f, defaultMediumSymbols_FontId },
-        { &fontSourceSansProBold_Embedded,    uiSize * 1.125f,      1.0f, defaultMediumSymbols_FontId },
-        { &fontSourceSansProRegular_Embedded, uiSize * 1.333f,      1.0f, defaultBigSymbols_FontId },
-        { &fontSourceSansProBold_Embedded,    uiSize * 1.333f,      1.0f, defaultBigSymbols_FontId },
-        { &fontSourceSansProRegular_Embedded, uiSize * 1.666f,      1.0f, defaultLargeSymbols_FontId },
-        { &fontSourceSansProBold_Embedded,    uiSize * 1.666f,      1.0f, defaultLargeSymbols_FontId },
-        { &fontIosevkaTermExtended_Embedded,  uiSize * 0.866f,      1.0f, defaultSymbols_FontId },
-        { &fontSourceSansProRegular_Embedded, textSize,             scaling, symbols_FontId },
+        /* UI fonts: normal weight */
+        { &fontSourceSansProRegular_Embedded, uiSize,               1.0f, uiNormal_FontSize },
+        { &fontSourceSansProRegular_Embedded, uiSize * 1.125f,      1.0f, uiMedium_FontSize },
+        { &fontSourceSansProRegular_Embedded, uiSize * 1.333f,      1.0f, uiBig_FontSize },
+        { &fontSourceSansProRegular_Embedded, uiSize * 1.666f,      1.0f, uiLarge_FontSize },
+        /* UI fonts: bold weight */
+        { &fontSourceSansProBold_Embedded,    uiSize,               1.0f, uiNormal_FontSize },
+        { &fontSourceSansProBold_Embedded,    uiSize * 1.125f,      1.0f, uiMedium_FontSize },
+        { &fontSourceSansProBold_Embedded,    uiSize * 1.333f,      1.0f, uiBig_FontSize },
+        { &fontSourceSansProBold_Embedded,    uiSize * 1.666f,      1.0f, uiLarge_FontSize },
         /* content fonts */
-        { regularFont,                        textSize,             scaling,      symbols_FontId },
-        { boldFont,                           textSize,             scaling,      symbols_FontId },
-        { &fontIosevkaTermExtended_Embedded,  monoSize,             1.0f,         monospaceSymbols_FontId },
-        { &fontIosevkaTermExtended_Embedded,  smallMonoSize,        1.0f,         monospaceSmallSymbols_FontId },
-        { regularFont,                        textSize * 1.200f,    scaling,      mediumSymbols_FontId },
-        { h3Font,                             textSize * 1.333f,    h123Scaling,  bigSymbols_FontId },
-        { italicFont,                         textSize,             italicScaling,symbols_FontId },
-        { h12Font,                            textSize * 1.666f,    h123Scaling,  largeSymbols_FontId },
-        { h12Font,                            textSize * 2.000f,    h123Scaling,  hugeSymbols_FontId },
-        { lightFont,                          textSize * 1.666f,    lightScaling, largeSymbols_FontId },
-        /* monospace content fonts */
-        { &fontIosevkaTermExtended_Embedded,  textSize,             0.866f, symbols_FontId },
-        /* symbol fonts */
-        { &fontSymbola_Embedded,              uiSize,               1.0f, defaultSymbols_FontId },
-        { &fontSymbola_Embedded,              uiSize * 1.125f,      1.0f, defaultMediumSymbols_FontId },
-        { &fontSymbola_Embedded,              uiSize * 1.333f,      1.0f, defaultBigSymbols_FontId },
-        { &fontSymbola_Embedded,              uiSize * 1.666f,      1.0f, defaultLargeSymbols_FontId },
-        { &fontSymbola_Embedded,              textSize,             1.0f, symbols_FontId },
-        { &fontSymbola_Embedded,              textSize * 1.200f,    1.0f, mediumSymbols_FontId },
-        { &fontSymbola_Embedded,              textSize * 1.333f,    1.0f, bigSymbols_FontId },
-        { &fontSymbola_Embedded,              textSize * 1.666f,    1.0f, largeSymbols_FontId },
-        { &fontSymbola_Embedded,              textSize * 2.000f,    1.0f, hugeSymbols_FontId },
-        { &fontSymbola_Embedded,              monoSize,             1.0f, monospaceSymbols_FontId },
-        { &fontSymbola_Embedded,              smallMonoSize,        1.0f, monospaceSmallSymbols_FontId },
-        /* emoji fonts */
-        { &fontNotoEmojiRegular_Embedded,     uiSize,               1.0f, defaultSymbols_FontId },
-        { &fontNotoEmojiRegular_Embedded,     uiSize * 1.125f,      1.0f, defaultMediumSymbols_FontId },
-        { &fontNotoEmojiRegular_Embedded,     uiSize * 1.333f,      1.0f, defaultBigSymbols_FontId },
-        { &fontNotoEmojiRegular_Embedded,     uiSize * 1.666f,      1.0f, defaultLargeSymbols_FontId },
-        { &fontNotoEmojiRegular_Embedded,     textSize,             1.0f, symbols_FontId },
-        { &fontNotoEmojiRegular_Embedded,     textSize * 1.200f,    1.0f, mediumSymbols_FontId },
-        { &fontNotoEmojiRegular_Embedded,     textSize * 1.333f,    1.0f, bigSymbols_FontId },
-        { &fontNotoEmojiRegular_Embedded,     textSize * 1.666f,    1.0f, largeSymbols_FontId },
-        { &fontNotoEmojiRegular_Embedded,     textSize * 2.000f,    1.0f, hugeSymbols_FontId },
-        { &fontNotoEmojiRegular_Embedded,     monoSize,             1.0f, monospaceSymbols_FontId },
-        { &fontNotoEmojiRegular_Embedded,     smallMonoSize,        1.0f, monospaceSmallSymbols_FontId },
-        /* japanese fonts */
-        { &fontNotoSansJPRegular_Embedded,    uiSize,               1.0f, defaultSymbols_FontId },
-        { &fontNotoSansJPRegular_Embedded,    smallMonoSize,        1.0f, monospaceSmallSymbols_FontId },
-        { &fontNotoSansJPRegular_Embedded,    monoSize,             1.0f, monospaceSymbols_FontId },
-        { &fontNotoSansJPRegular_Embedded,    textSize,             1.0f, symbols_FontId },
-        { &fontNotoSansJPRegular_Embedded,    textSize * 1.200f,    1.0f, mediumSymbols_FontId },
-        { &fontNotoSansJPRegular_Embedded,    textSize * 1.333f,    1.0f, bigSymbols_FontId },
-        { &fontNotoSansJPRegular_Embedded,    textSize * 1.666f,    1.0f, largeSymbols_FontId },
-        { &fontNotoSansJPRegular_Embedded,    textSize * 2.000f,    1.0f, hugeSymbols_FontId },
-        /* korean fonts */
-        { &fontNanumGothicRegular_Embedded,   uiSize,               1.0f, defaultSymbols_FontId },
-        { &fontNanumGothicRegular_Embedded,   smallMonoSize,        1.0f, monospaceSmallSymbols_FontId },
-        { &fontNanumGothicRegular_Embedded,   monoSize,             1.0f, monospaceSymbols_FontId },
-        { &fontNanumGothicRegular_Embedded,   textSize,             1.0f, symbols_FontId },
-        { &fontNanumGothicRegular_Embedded,   textSize * 1.200f,    1.0f, mediumSymbols_FontId },
-        { &fontNanumGothicRegular_Embedded,   textSize * 1.333f,    1.0f, bigSymbols_FontId },
-        { &fontNanumGothicRegular_Embedded,   textSize * 1.666f,    1.0f, largeSymbols_FontId },
-        { &fontNanumGothicRegular_Embedded,   textSize * 2.000f,    1.0f, hugeSymbols_FontId },
+        { regularFont,                        textSize,             scaling,      contentRegular_FontSize },
+        { boldFont,                           textSize,             scaling,      contentRegular_FontSize },
+        { italicFont,                         textSize,             italicScaling,contentRegular_FontSize },
+        { regularFont,                        textSize * 1.200f,    scaling,      contentMedium_FontSize },
+        { h3Font,                             textSize * 1.333f,    h123Scaling,  contentBig_FontSize },
+        { h12Font,                            textSize * 1.666f,    h123Scaling,  contentLarge_FontSize },
+        { lightFont,                          textSize * 1.666f,    lightScaling, contentLarge_FontSize },
+        { h12Font,                            textSize * 2.000f,    h123Scaling,  contentHuge_FontSize },
+        { &fontIosevkaTermExtended_Embedded,  smallMonoSize,        1.0f,         contentMonoSmall_FontSize },
+        { &fontIosevkaTermExtended_Embedded,  monoSize,             1.0f,         contentMono_FontSize },
+        /* extra content fonts */
+        { &fontSourceSansProRegular_Embedded, textSize,             scaling, contentRegular_FontSize },
+        { &fontIosevkaTermExtended_Embedded,  textSize,             0.866f,  contentRegular_FontSize },
+        /* symbols and scripts */
+#define DEFINE_FONT_SET(data) \
+        { &data, uiSize,            1.0f, uiNormal_FontSize }, \
+        { &data, uiSize * 1.125f,   1.0f, uiMedium_FontSize }, \
+        { &data, uiSize * 1.333f,   1.0f, uiBig_FontSize }, \
+        { &data, uiSize * 1.666f,   1.0f, uiLarge_FontSize }, \
+        { &data, textSize,          1.0f, contentRegular_FontSize }, \
+        { &data, textSize * 1.200f, 1.0f, contentMedium_FontSize }, \
+        { &data, textSize * 1.333f, 1.0f, contentBig_FontSize }, \
+        { &data, textSize * 1.666f, 1.0f, contentLarge_FontSize }, \
+        { &data, textSize * 2.000f, 1.0f, contentHuge_FontSize }, \
+        { &data, smallMonoSize,     1.0f, contentMonoSmall_FontSize }, \
+        { &data, monoSize,          1.0f, contentMono_FontSize }
+        DEFINE_FONT_SET(fontSymbola_Embedded),
+        DEFINE_FONT_SET(fontNotoEmojiRegular_Embedded),
+        DEFINE_FONT_SET(fontNotoSansJPRegular_Embedded),
+        DEFINE_FONT_SET(fontNotoSansSCRegular_Embedded),
+        DEFINE_FONT_SET(fontNanumGothicRegular_Embedded), /* TODO: should use Noto Sans here, too */
     };
     iForIndices(i, fontData) {
         iFont *font = &d->fonts[i];
@@ -355,41 +338,11 @@ static void initFonts_Text_(iText *d) {
                   fontData[i].ttf,
                   fontData[i].size,
                   fontData[i].scaling,
-                  fontData[i].symbolsFont,
+                  fontData[i].sizeId,
                   fontData[i].ttf == &fontIosevkaTermExtended_Embedded);
         if (i == default_FontId || i == defaultMedium_FontId) {
             font->manualKernOnly = iTrue;
         }
-    }
-    /* Japanese script. */ {
-        /* Everything defaults to the regular sized japanese font, so these are just
-           the other sizes. */
-        font_Text_(default_FontId)->japaneseFont          = defaultJapanese_FontId;
-        font_Text_(defaultMedium_FontId)->japaneseFont    = defaultJapanese_FontId;
-        font_Text_(defaultBig_FontId)->japaneseFont       = defaultJapanese_FontId;
-        font_Text_(defaultLarge_FontId)->japaneseFont     = defaultJapanese_FontId;
-        font_Text_(defaultMonospace_FontId)->japaneseFont = defaultJapanese_FontId;
-        font_Text_(monospaceSmall_FontId)->japaneseFont   = monospaceSmallJapanese_FontId;
-        font_Text_(monospace_FontId)->japaneseFont        = monospaceJapanese_FontId;
-        font_Text_(medium_FontId)->japaneseFont           = mediumJapanese_FontId;
-        font_Text_(big_FontId)->japaneseFont              = bigJapanese_FontId;
-        font_Text_(largeBold_FontId)->japaneseFont        = largeJapanese_FontId;
-        font_Text_(largeLight_FontId)->japaneseFont       = largeJapanese_FontId;
-        font_Text_(hugeBold_FontId)->japaneseFont         = hugeJapanese_FontId;
-    }
-    /* Korean script. */ {
-        font_Text_(default_FontId)->koreanFont          = defaultKorean_FontId;
-        font_Text_(defaultMedium_FontId)->koreanFont    = defaultKorean_FontId;
-        font_Text_(defaultBig_FontId)->koreanFont       = defaultKorean_FontId;
-        font_Text_(defaultLarge_FontId)->koreanFont     = defaultKorean_FontId;
-        font_Text_(defaultMonospace_FontId)->koreanFont = defaultKorean_FontId;
-        font_Text_(monospaceSmall_FontId)->koreanFont   = monospaceSmallKorean_FontId;
-        font_Text_(monospace_FontId)->koreanFont        = monospaceKorean_FontId;
-        font_Text_(medium_FontId)->koreanFont           = mediumKorean_FontId;
-        font_Text_(big_FontId)->koreanFont              = bigKorean_FontId;
-        font_Text_(largeBold_FontId)->koreanFont        = largeKorean_FontId;
-        font_Text_(largeLight_FontId)->koreanFont       = largeKorean_FontId;
-        font_Text_(hugeBold_FontId)->koreanFont         = hugeKorean_FontId;
     }
     gap_Text = iRound(gap_UI * d->contentFontSize);
 }
@@ -522,9 +475,11 @@ static SDL_Surface *rasterizeGlyph_Font_(const iFont *d, uint32_t glyphIndex, fl
     return surface8;
 }
 
+#if 0
 iLocalDef SDL_Rect sdlRect_(const iRect rect) {
     return (SDL_Rect){ rect.pos.x, rect.pos.y, rect.size.x, rect.size.y };
 }
+#endif
 
 iLocalDef iCacheRow *cacheRow_Text_(iText *d, int height) {
     return at_Array(&d->cacheRows, (height - 1) / d->cacheRowAllocStep);
@@ -603,21 +558,28 @@ iLocalDef iFont *characterFont_Font_(iFont *d, iChar ch, uint32_t *glyphIndex) {
     }
     /* Not defined in current font, try Noto Emoji (for selected characters). */
     if ((ch >= 0x1f300 && ch < 0x1f600) || (ch >= 0x1f680 && ch <= 0x1f6c5)) {
-        iFont *emoji = font_Text_(d->symbolsFont + fromSymbolsToEmojiOffset_FontId);
+        iFont *emoji = font_Text_(emoji_FontId + d->sizeId);
         if (emoji != d && (*glyphIndex = glyphIndex_Font_(emoji, ch)) != 0) {
             return emoji;
         }
     }
+    /* Try Simplified Chinese. */
+    if (ch >= 0x2e80) {
+        iFont *sc = font_Text_(chineseSimplified_FontId + d->sizeId);
+        if (sc != d && (*glyphIndex = glyphIndex_Font_(sc, ch)) != 0) {
+            return sc;
+        }
+    }
     /* Could be Korean. */
     if (ch >= 0x3000) {
-        iFont *korean = font_Text_(d->koreanFont);
+        iFont *korean = font_Text_(korean_FontId + d->sizeId);
         if (korean != d && (*glyphIndex = glyphIndex_Font_(korean, ch)) != 0) {
             return korean;
         }
     }
     /* Japanese perhaps? */
     if (ch > 0x3040) {
-        iFont *japanese = font_Text_(d->japaneseFont);
+        iFont *japanese = font_Text_(japanese_FontId + d->sizeId);
         if (japanese != d && (*glyphIndex = glyphIndex_Font_(japanese, ch)) != 0) {
             return japanese;
         }
@@ -631,7 +593,7 @@ iLocalDef iFont *characterFont_Font_(iFont *d, iChar ch, uint32_t *glyphIndex) {
     }
 #endif
     /* Fall back to Symbola for anything else. */
-    iFont *font = font_Text_(d->symbolsFont);
+    iFont *font = font_Text_(symbols_FontId + d->sizeId);
     *glyphIndex = glyphIndex_Font_(font, ch);
 //    if (!*glyphIndex) {
 //        fprintf(stderr, "failed to find %08x (%lc)\n", ch, ch); fflush(stderr);

@@ -986,7 +986,7 @@ static void setupUserInterface_Window(iWindow *d) {
                     iClob(newIcon_LabelWidget("\U0001f513", SDLK_i, KMOD_PRIMARY, "document.info")),
                     embedFlags | moveToParentLeftEdge_WidgetFlag);
                 setId_Widget(as_Widget(lock), "navbar.lock");
-                setFont_LabelWidget(lock, defaultSymbols_FontId);
+                setFont_LabelWidget(lock, symbols_FontId + uiNormal_FontSize);
                 updateTextCStr_LabelWidget(lock, "\U0001f512");
             }
             iWidget *rightEmbed = new_Widget();
