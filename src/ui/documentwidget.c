@@ -1624,12 +1624,16 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         }
         iString *msg = collectNew_String();
         if (isEmpty_String(&d->sourceHeader)) {
-            appendFormat_String(msg, "%s\n%zu ${bytes}\n", cstr_String(meta), size_Block(&d->sourceContent));
+            appendFormat_String(msg,
+                                "%s\n%s\n",
+                                cstr_String(meta),
+                                formatCStrs_Lang("num.bytes.n", size_Block(&d->sourceContent)));
         }
         else {
             appendFormat_String(msg, "%s\n", cstr_String(&d->sourceHeader));
             if (size_Block(&d->sourceContent)) {
-                appendFormat_String(msg, "%zu ${bytes}\n", size_Block(&d->sourceContent));
+                appendFormat_String(
+                    msg, "%s\n", formatCStrs_Lang("num.bytes.n", size_Block(&d->sourceContent)));
             }
         }
         appendFormat_String(

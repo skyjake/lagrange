@@ -270,8 +270,10 @@ msgstr "MB"
 msgid "kb"
 msgstr "KB"
 
-msgid "bytes"
-msgstr "bytes"
+msgid "num.bytes"
+msgid_plural "num.bytes.n"
+msgstr[0] "%zu byte"
+msgstr[1] "%zu bytes"
 
 # strftime() formatted, split on two lines
 #, c-format
