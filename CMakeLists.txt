@@ -74,7 +74,6 @@ set (EMBED_RESOURCES
     res/fonts/SourceSansPro-Regular.ttf
     res/fonts/SourceSansPro-Bold.ttf
     res/fonts/Symbola.ttf
-    res/lang/de.bin
     res/lang/en.bin
     res/lang/fi.bin
     res/lang/ru.bin

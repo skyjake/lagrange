@@ -1787,10 +1787,12 @@ static void addFontButtons_(iWidget *parent, const char *id) {
     delete_Array(items);
 }
 
+#if 0
 static int cmp_MenuItem_(const void *e1, const void *e2) {
     const iMenuItem *a = e1, *b = e2;
     return iCmpStr(a->label, b->label);
 }
+#endif
 
 iWidget *makePreferences_Widget(void) {
     iWidget *dlg = makeSheet_Widget("prefs");
@@ -1828,7 +1830,7 @@ iWidget *makePreferences_Widget(void) {
         /* UI languages. */ {
             iArray *uiLangs = collectNew_Array(sizeof(iMenuItem));
             const iMenuItem langItems[] = {
-                { "${lang.de} - de", 0, 0, "uilang id:de" },
+//                { "${lang.de} - de", 0, 0, "uilang id:de" },
                 { "${lang.en} - en", 0, 0, "uilang id:en" },
                 { "${lang.fi} - fi", 0, 0, "uilang id:fi" },
                 { "${lang.ru} - ru", 0, 0, "uilang id:ru" },
@@ -1857,6 +1859,8 @@ iWidget *makePreferences_Widget(void) {
                                                   size_Array(uiLangs))),
                                               alignLeft_WidgetFlag),
                          "prefs.uilang");
+            addChild_Widget(headings, iClob(makePadding_Widget(gap_UI)));
+            addChild_Widget(values, iClob(makePadding_Widget(gap_UI)));
         }
 #if defined (iPlatformApple) || defined (iPlatformMSys)
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.ostheme}")));

@@ -4,6 +4,7 @@
 
 import os, sys
 
+BUILD_LANGS = ['en', 'fi', 'ru', 'zh_Hans']
 MODE = 'compile'
 ESCAPES = {
     '\\': '\\',
@@ -82,7 +83,7 @@ def parse_po(src):
 
 if MODE == 'compile':
     for src in os.listdir('.'):
-        if src.endswith('.po'):
+        if src.endswith('.po') and src.split('.')[0] in BUILD_LANGS:
             # Make a binary blob with strings sorted by ID.
             compiled = bytes()
             for msg in sorted(parse_po(src)):
