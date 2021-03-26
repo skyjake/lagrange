@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-03-26 12:53+0000\n"
-"Last-Translator: Aaron Fischer <mail@aaron-fischer.net>\n"
+"PO-Revision-Date: 2021-03-27 04:56+0000\n"
+"Last-Translator: Jaakko Keränen <jaakko.keranen@iki.fi>\n"
 "Language-Team: German <http://weblate.skyjake.fi/projects/lagrange/ui/de/>\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
@@ -519,7 +519,7 @@ msgstr ""
 # strftime() formatted
 #, c-format
 msgid "sidebar.date.otheryear"
-msgstr "%b. %d, %Y"
+msgstr "%d. %b. %Y"
 
 msgid "menu.about"
 msgstr "Über"
@@ -531,3 +531,101 @@ msgstr "%b. %d"
 
 msgid "feeds.entry.openfeed"
 msgstr "Feed-Seite öffnen"
+
+msgid "prefs.mono.gopher"
+msgstr "Gopher"
+
+msgid "prefs.linewidth.normal"
+msgstr "Normal"
+
+msgid "prefs.mono.gemini"
+msgstr "Gemini"
+
+msgid "menu.binding.clear"
+msgstr "Entfernen"
+
+# tab button
+msgid "heading.prefs.network"
+msgstr "Netzwerk"
+
+msgid "heading.prefs.paragraph"
+msgstr "ABSATZ"
+
+msgid "prefs.theme.dark"
+msgstr "Dunkel"
+
+msgid "prefs.theme.light"
+msgstr "Hell"
+
+msgid "dlg.import.notnew"
+msgstr "Für alle Links auf dieser Seite sind bereits Lesezeichen gesetzt."
+
+msgid "link.download"
+msgstr "Verknüpfte Datei speichern"
+
+# tab button
+msgid "heading.prefs.style"
+msgstr "Stil"
+
+msgid "prefs.theme"
+msgstr "Thema:"
+
+msgid "prefs.cachesize"
+msgstr "Cache-Größe:"
+
+msgid "prefs.ca.path"
+msgstr "CA Pfad:"
+
+msgid "prefs.ca.file"
+msgstr "CA Datei:"
+
+msgid "prefs.proxy.gemini"
+msgstr "Gemini Proxy:"
+
+msgid "keys.reload"
+msgstr "Seite neu laden"
+
+msgid "keys.bookmark.add"
+msgstr "Lesezeichen hinzufügen"
+
+msgid "keys.tab.new"
+msgstr "Neuer Tab"
+
+msgid "keys.tab.close"
+msgstr "Tab schließen"
+
+msgid "error.cert.invalid"
+msgstr "Ungültiges Zertifikat"
+
+msgid "prefs.accent.orange"
+msgstr "Orange"
+
+msgid "prefs.uilang"
+msgstr "Sprache:"
+
+msgid "prefs.doctheme.name.black"
+msgstr "Schwarz"
+
+msgid "prefs.doctheme.name.gray"
+msgstr "Grau"
+
+msgid "prefs.saturation"
+msgstr "Sättigung:"
+
+msgid "prefs.quoteicon.line"
+msgstr "Linie"
+
+msgid "prefs.proxy.gopher"
+msgstr "Gopher Proxy:"
+
+msgid "prefs.proxy.http"
+msgstr "HTTP Proxy:"
+
+msgid "menu.binding.reset"
+msgstr "Zurücksetzen"
+
+msgid "keys.forward"
+msgstr "Eine Seite vor"
+
+msgid "keys.back"
+msgstr "Eine Seite zurück"
