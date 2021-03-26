@@ -226,10 +226,18 @@ static const struct { int id; iMenuItem bind; int flags; } defaultBindings_[] = 
     { 100,{ "${keys.hoverurl}",             '/', KMOD_PRIMARY,              "prefs.hoverlink.toggle"            }, 0 },
     /* The following cannot currently be changed (built-in duplicates). */
 #if defined (iPlatformApple)
-    { 1002, { NULL, SDLK_LEFTBRACKET, KMOD_PRIMARY, "navigate.back" }, 0 },
-    { 1003, { NULL, SDLK_RIGHTBRACKET, KMOD_PRIMARY, "navigate.forward" }, 0 },
+    { 1002, { NULL, SDLK_LEFTBRACKET, KMOD_PRIMARY,     "navigate.back"                 }, 0 },
+    { 1003, { NULL, SDLK_RIGHTBRACKET, KMOD_PRIMARY,    "navigate.forward"              }, 0 },
 #endif
-    { 1004, { NULL, SDLK_F5, 0, "document.reload" }, 0 },
+    { 1004, { NULL, SDLK_F5, 0,                         "document.reload"               }, 0 },
+    /* Media keys. */
+    { 1005, { NULL, SDLK_AC_SEARCH, 0,                  "focus.set id:find.input"       }, 0 },
+    { 1006, { NULL, SDLK_AC_HOME, 0,                    "navigate.home"                 }, 0 },
+    { 1007, { NULL, SDLK_AC_BACK, 0,                    "navigate.back"                 }, 0 },
+    { 1008, { NULL, SDLK_AC_FORWARD, 0,                 "navigate.forward"              }, 0 },
+    { 1009, { NULL, SDLK_AC_STOP, 0,                    "document.stop"                 }, 0 },
+    { 1010, { NULL, SDLK_AC_REFRESH, 0,                 "navigate.reload"               }, 0 },
+    { 1011, { NULL, SDLK_AC_BOOKMARKS, 0,               "sidebar.mode arg:0 toggle:1"   }, 0 },
 };
 
 static iBinding *findId_Keys_(iKeys *d, int id) {
