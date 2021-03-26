@@ -1,2 +1,38 @@
 msgid ""
-msgstr "X-Generator: Weblate\nMIME-Version: 1.0\nContent-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit"
+msgstr ""
+"Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
+"PO-Revision-Date: 2021-03-26 10:26+0000\n"
+"Last-Translator: Shibo Lyu <github@of.sb>\n"
+"Language-Team: Chinese (Traditional) <http://weblate.skyjake.fi/projects/"
+"lagrange/ui/zh_Hant/>\n"
+"Language: zh_Hant\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Weblate 4.5.1\n"
+
+# Alt-text of the preformatted logo.
+msgid "about.logo"
+msgstr "ASCII 藝術：大字體的單字「Lagrange」"
+
+msgid "about.tagline"
+msgstr "一個漂亮的 Gemini 客戶端"
+
+msgid "about.version"
+msgstr "版本"
+
+msgid "about.powered"
+msgstr "由 SDL 2、OpenSSL 和☕️驅動"
+
+msgid "cancel"
+msgstr "取消"
+
+msgid "dismiss"
+msgstr "關閉"
+
+msgid "dlg.message.ok"
+msgstr "繼續"
+
+msgid "dlg.default"
+msgstr " 好 "
