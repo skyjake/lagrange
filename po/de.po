@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "PO-Revision-Date: 2021-03-26 12:53+0000\n"
-"Last-Translator: Jaakko Keränen <jaakko.keranen@iki.fi>\n"
+"Last-Translator: Aaron Fischer <mail@aaron-fischer.net>\n"
 "Language-Team: German <http://weblate.skyjake.fi/projects/lagrange/ui/de/>\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
@@ -515,3 +515,19 @@ msgid "dlg.certwarn.domain.expired"
 msgstr ""
 "Das empfangene Zertifikat ist abgelaufen UND für eine andere Domain "
 "ausgestellt."
+
+# strftime() formatted
+#, c-format
+msgid "sidebar.date.otheryear"
+msgstr "%b. %d, %Y"
+
+msgid "menu.about"
+msgstr "Über"
+
+# strftime() formatted
+#, c-format
+msgid "sidebar.date.thisyear"
+msgstr "%b. %d"
+
+msgid "feeds.entry.openfeed"
+msgstr "Feed-Seite öffnen"
