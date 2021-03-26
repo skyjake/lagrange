@@ -32,6 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "history.h"
 #include "inputwidget.h"
 #include "listwidget.h"
+#include "lang.h"
 #include "lookup.h"
 #include "util.h"
 #include "visited.h"
@@ -132,7 +133,7 @@ static void draw_LookupItem_(iLookupItem *d, iPaint *p, iRect rect, const iListW
                        addX_I2(pos, width_Rect(iconRect) / 2 - iconSize.x / 2),
                        fg,
                        range_String(&d->icon));
-        pos.x += width_Rect(iconRect) + gap_UI;
+        pos.x += width_Rect(iconRect) + gap_UI * 3 / 2;
     }
     drawRange_Text(d->font, pos, fg, range_String(&d->text));
 }
@@ -378,7 +379,7 @@ static iThreadResult worker_LookupWidget_(iThread *thread) {
 iDefineObjectConstruction(LookupWidget)
 
 static void updateMetrics_LookupWidget_(iLookupWidget *d) {
-    setItemHeight_ListWidget(d->list, lineHeight_Text(uiContent_FontId) * 1.25f);
+    setItemHeight_ListWidget(d->list, lineHeight_Text(uiContent_FontId) * 1.333f);
 }
 
 void init_LookupWidget(iLookupWidget *d) {
@@ -462,17 +463,17 @@ static int cmpPtr_LookupResult_(const void *p1, const void *p2) {
 static const char *cstr_LookupResultType(enum iLookupResultType d) {
     switch (d) {
         case bookmark_LookupResultType:
-            return "BOOKMARKS";
+            return "heading.lookup.bookmarks";
         case feedEntry_LookupResultType:
-            return "FEEDS";
+            return "heading.lookup.feeds";
         case history_LookupResultType:
-            return "HISTORY";
+            return "heading.lookup.history";
         case content_LookupResultType:
-            return "PAGE CONTENTS";
+            return "heading.lookup.pagecontent";
         case identity_LookupResultType:
-            return "IDENTITIES";
+            return "heading.lookup.identities";
         default:
-            return "OTHER";
+            return "heading.lookup.other";
     }
 }
 
@@ -496,7 +497,7 @@ static void presentResults_LookupWidget_(iLookupWidget *d) {
             item->listItem.isSeparator = iTrue;
             item->fg = uiHeading_ColorId;
             item->font = uiLabel_FontId;
-            format_String(&item->text, "%s", cstr_LookupResultType(res->type));
+            format_String(&item->text, "%s", cstr_Lang(cstr_LookupResultType(res->type)));
             addItem_ListWidget(d->list, item);
             iRelease(item);
             lastType = res->type;
@@ -515,9 +516,9 @@ static void presentResults_LookupWidget_(iLookupWidget *d) {
                 item->fg           = uiText_ColorId;
                 item->font         = uiContent_FontId;
                 format_String(&item->text,
-                              "%s \u2014 " uiTextStrong_ColorEscape "%s on this page",
+                              "%s \u2014 " uiTextStrong_ColorEscape "%s",
                               cstr_String(&res->label),
-                              isUsed ? "Stop using" : "Use");
+                              cstr_Lang(isUsed ? "ident.stopuse" : "ident.use"));
                 format_String(&item->command, "ident.sign%s ident:%s url:%s",
                               isUsed ? "out arg:0" : "in", cstr_String(&res->meta), cstr_String(docUrl));
                 addItem_ListWidget(d->list, item);
@@ -528,8 +529,9 @@ static void presentResults_LookupWidget_(iLookupWidget *d) {
                 item->fg           = uiText_ColorId;
                 item->font         = uiContent_FontId;
                 format_String(&item->text,
-                              "%s \u2014 " uiTextStrong_ColorEscape "Stop using everywhere",
-                              cstr_String(&res->label));
+                              "%s \u2014 " uiTextStrong_ColorEscape "%s",
+                              cstr_String(&res->label),
+                              cstr_Lang("ident.stopuse.all"));
                 format_String(&item->command, "ident.signout arg:1 ident:%s", cstr_String(&res->meta));
                 addItem_ListWidget(d->list, item);
                 iRelease(item);
@@ -545,7 +547,7 @@ static void presentResults_LookupWidget_(iLookupWidget *d) {
         switch (res->type) {
             case bookmark_LookupResultType: {
                 item->fg = uiTextStrong_ColorId;
-                item->font = uiLabel_FontId;
+                item->font = uiContent_FontId;
                 format_String(&item->text,
                               "%s %s\u2014 %s",
                               cstr_String(&res->label),
@@ -556,7 +558,7 @@ static void presentResults_LookupWidget_(iLookupWidget *d) {
             }
             case feedEntry_LookupResultType: {
                 item->fg = uiTextStrong_ColorId;
-                item->font = uiLabel_FontId;
+                item->font = uiContent_FontId;
                 format_String(&item->text,
                               "%s %s\u2014 %s",
                               cstr_String(&res->label),

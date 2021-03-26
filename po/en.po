@@ -639,6 +639,30 @@ msgstr "View Image"
 msgid "bookmark.title.blank"
 msgstr "Blank Page"
 
+# Interpret as "Results from bookmarks..."
+msgid "heading.lookup.bookmarks"
+msgstr "BOOKMARKS"
+
+# Interpret as "Results from feeds..."
+msgid "heading.lookup.feeds"
+msgstr "FEEDS"
+
+# Interpret as "Results from history..."
+msgid "heading.lookup.history"
+msgstr "HISTORY"
+
+# Interpret as "Results from page content..."
+msgid "heading.lookup.pagecontent"
+msgstr "PAGE CONTENT"
+
+# Interpret as "Results from identitites..."
+msgid "heading.lookup.identities"
+msgstr "IDENTITIES"
+
+# Interpret as "Other results..."
+msgid "heading.lookup.other"
+msgstr "OTHER"
+
 msgid "heading.translate"
 msgstr "TRANSLATE PAGE"
 
