@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-03-25 09:04+0000\n"
+"PO-Revision-Date: 2021-03-26 10:26+0000\n"
 "Last-Translator: Shibo Lyu <github@of.sb>\n"
 "Language-Team: Chinese (Simplified) <http://weblate.skyjake.fi/projects/"
 "lagrange/ui/zh_Hans/>\n"
@@ -1239,3 +1239,9 @@ msgstr "证书无效"
 
 msgid "error.cert.invalid.msg"
 msgstr "提供的证书过期或无效。"
+
+msgid "keys.subscribe"
+msgstr "订阅页面更新"
+
+msgid "lang.zh.hans"
+msgstr "简体中文"
