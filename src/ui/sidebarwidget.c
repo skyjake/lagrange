@@ -1093,7 +1093,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                                       &ident->notes,
                                       uiHeading_ColorEscape "${heading.ident.notes}",
                                       format_CStr(cstr_Lang("dlg.ident.notes"), cstr_String(name_GmIdentity(ident))),
-                                      uiTextAction_ColorEscape "OK",
+                                      uiTextAction_ColorEscape "${dlg.default}",
                                       format_CStr("!ident.setnotes ident:%p ptr:%p", ident, d));
             }
             return iTrue;
