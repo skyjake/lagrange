@@ -374,6 +374,35 @@ void deinit_GmCerts(iGmCerts *d) {
     delete_Mutex(d->mtx);
 }
 
+static iRangecc stripFirstDomainLabel_(iRangecc domain) {
+    iRangecc label = iNullRange;
+    if (nextSplit_Rangecc(domain, ".", &label) && nextSplit_Rangecc(domain, ".", &label)) {
+        return (iRangecc){ label.start, domain.end };
+    }
+    return iNullRange;
+}
+
+iBool verifyDomain_GmCerts(const iTlsCertificate *cert, iRangecc domain) {
+    if (verifyDomain_TlsCertificate(cert, domain)) {
+        return iTrue;
+    }
+    /* Allow for an implicit wildcard in the domain name. Self-signed TOFU is really only
+       about the public/private key pair; any other details should be considered
+       complementary. */
+    for (iRangecc higherDomain = stripFirstDomainLabel_(domain);
+         !isEmpty_Range(&higherDomain);
+         higherDomain = stripFirstDomainLabel_(higherDomain)) {
+        if (!iStrStrN(higherDomain.start, ".", size_Range(&higherDomain))) {
+            /* Must have two labels at least. */
+            break;
+        }
+        if (verifyDomain_TlsCertificate(cert, higherDomain)) {
+            return iTrue;
+        }
+    }
+    return iFalse;
+}
+
 iBool checkTrust_GmCerts(iGmCerts *d, iRangecc domain, const iTlsCertificate *cert) {
     if (!cert) {
         return iFalse;
@@ -383,7 +412,7 @@ iBool checkTrust_GmCerts(iGmCerts *d, iRangecc domain, const iTlsCertificate *ce
     }
     /* We trust CA verification implicitly. */
     const iBool isAuth = verify_TlsCertificate(cert) == authority_TlsCertificateVerifyStatus;
-    if (!isAuth && !verifyDomain_TlsCertificate(cert, domain)) {
+    if (!isAuth && !verifyDomain_GmCerts(cert, domain)) {
         return iFalse;
     }
     /* TODO: Could call setTrusted_GmCerts() instead of duplicating the trust-setting. */

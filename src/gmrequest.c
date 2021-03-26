@@ -157,7 +157,7 @@ static void checkServerCertificate_GmRequest_(iGmRequest *d) {
         if (!isExpired_TlsCertificate(cert)) {
             resp->certFlags |= timeVerified_GmCertFlag;
         }
-        if (verifyDomain_TlsCertificate(cert, domain)) {
+        if (verifyDomain_GmCerts(cert, domain)) {
             resp->certFlags |= domainVerified_GmCertFlag;
         }
         if (checkTrust_GmCerts(d->certs, domain, cert)) {

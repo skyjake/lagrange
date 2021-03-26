@@ -95,3 +95,5 @@ const iPtrArray *   listIdentities_GmCerts  (const iGmCerts *, iGmCertsIdentityF
 
 void                signIn_GmCerts          (iGmCerts *, iGmIdentity *identity, const iString *url);
 void                signOut_GmCerts         (iGmCerts *, const iString *url);
+
+iBool               verifyDomain_GmCerts    (const iTlsCertificate *cert, iRangecc domain);
