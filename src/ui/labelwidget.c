@@ -120,12 +120,11 @@ static iBool processEvent_LabelWidget_(iLabelWidget *d, const SDL_Event *ev) {
                 setFlags_Widget(w, pressed_WidgetFlag, iFalse);
                 refresh_Widget(w);
                 return iTrue;
+//            case double_ClickResult:
             case finished_ClickResult:
                 setFlags_Widget(w, pressed_WidgetFlag, iFalse);
                 trigger_LabelWidget_(d);
                 refresh_Widget(w);
-                return iTrue;
-            case double_ClickResult:
                 return iTrue;
             default:
                 break;

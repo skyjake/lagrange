@@ -280,7 +280,7 @@ static void sizeChanged_ListWidget_(iListWidget *d) {
 static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
     if (isMetricsChange_UserEvent(ev)) {
-        invalidate_ListWidget(d);        
+        invalidate_ListWidget(d);
     }
     else if (isCommand_SDLEvent(ev)) {
         const char *cmd = command_UserEvent(ev);
@@ -317,7 +317,7 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
             redrawHoverItem_ListWidget_(d);
             break;
         case finished_ClickResult:
-        case double_ClickResult:
+//        case double_ClickResult:
             redrawHoverItem_ListWidget_(d);
             if (contains_Rect(innerBounds_Widget(w), pos_Click(&d->click)) &&
                 d->hoverItem != iInvalidSize) {

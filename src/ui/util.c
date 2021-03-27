@@ -295,19 +295,14 @@ enum iClickResult processEvent_Click(iClick *d, const SDL_Event *event) {
         return none_ClickResult;
     }
     const iInt2 pos = init_I2(mb->x, mb->y);
-    if (event->type == SDL_MOUSEBUTTONDOWN && mb->clicks == 2) {
-        if (contains_Widget(d->bounds, pos)) {
-            d->pos = pos;
-            setMouseGrab_Widget(NULL);
-            return double_ClickResult;
-        }
+    if (event->type == SDL_MOUSEBUTTONDOWN) {
+        d->count = mb->clicks;
     }
     if (!d->isActive) {
         if (mb->state == SDL_PRESSED) {
             if (contains_Widget(d->bounds, pos)) {
                 d->isActive = iTrue;
                 d->startPos = d->pos = pos;
-                //setFlags_Widget(d->bounds, hover_WidgetFlag, iFalse);
                 setMouseGrab_Widget(d->bounds);
                 return started_ClickResult;
             }

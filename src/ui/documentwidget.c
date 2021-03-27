@@ -2746,9 +2746,6 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 }
             }
             return iTrue;
-        case double_ClickResult:
-            printf("double_ClickResult\n"); fflush(stdout);
-            return iTrue;
         case aborted_ClickResult:
             if (d->grabbedPlayer) {
                 setGrabbedPlayer_DocumentWidget_(d, NULL);

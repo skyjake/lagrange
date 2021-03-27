@@ -125,12 +125,12 @@ enum iClickResult {
     drag_ClickResult,
     finished_ClickResult,
     aborted_ClickResult,
-    double_ClickResult,
 };
 
 struct Impl_Click {
     iBool    isActive;
     int      button;
+    int      count;
     iWidget *bounds;
     iInt2    startPos;
     iInt2    pos;

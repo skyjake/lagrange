@@ -735,10 +735,6 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
             iZap(d->mark);
             d->inFlags &= ~isMarking_InputWidgetFlag;
             return iTrue;
-        case double_ClickResult:
-            selectAll_InputWidget(d);
-            d->inFlags &= ~isMarking_InputWidgetFlag;
-            return iTrue;
         case aborted_ClickResult:
             d->inFlags &= ~isMarking_InputWidgetFlag;
             return iTrue;
@@ -753,6 +749,10 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
             refresh_Widget(w);
             return iTrue;
         case finished_ClickResult:
+            if (d->click.count == 2) {
+                selectAll_InputWidget(d);
+                d->inFlags &= ~isMarking_InputWidgetFlag;
+            }
             return iTrue;
     }
     if (ev->type == SDL_MOUSEBUTTONDOWN && ev->button.button == SDL_BUTTON_RIGHT &&
