@@ -546,6 +546,24 @@ msgstr "AUTO-RELOAD"
 msgid "dlg.autoreload"
 msgstr "Select the auto-reload interval for this tab."
 
+msgid "reload.never"
+msgstr "Never"
+
+msgid "reload.onceperday"
+msgstr "Once per day"
+
+#, c-format
+msgid "num.minutes"
+msgid_plural "num.minutes.n"
+msgstr[0] "%d minute"
+msgstr[1] "%d minutes"
+
+#, c-format
+msgid "num.hours"
+msgid_plural "num.hours.n"
+msgstr[0] "%d hour"
+msgstr[1] "%d hours"
+
 msgid "link.newtab"
 msgstr "Open Link in New Tab"
 

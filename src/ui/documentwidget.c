@@ -85,24 +85,25 @@ enum iReloadInterval {
 };
 
 static int seconds_ReloadInterval_(enum iReloadInterval d) {
-    static const int times[] = { 0, 1, 5, 15, 60, 4 * 60, 12 * 60, 24 * 60 };
+    static const int mins[] = { 0, 1, 5, 15, 60, 4 * 60, 12 * 60, 24 * 60 };
     if (d < 0 || d >= max_ReloadInterval) return 0;
-    return times[d];
+    return mins[d] * 60;
 }
 
 static const char *label_ReloadInterval_(enum iReloadInterval d) {
-    static const char *labels[] = {
-        "Never",
-        "1 minute",
-        "5 minutes",
-        "15 minutes",
-        "1 hour",
-        "4 hours",
-        "12 hours",
-        "Once per day"
-    };
-    if (d < 0 || d >= max_ReloadInterval) return 0;
-    return labels[d];
+    switch (d) {
+        case never_RelodPeriod:
+            return cstr_Lang("reload.never");
+        case day_ReloadInterval:
+            return cstr_Lang("reload.onceperday");
+        case minute_ReloadInterval:
+        case fiveMinutes_ReloadInterval:
+        case fifteenMinutes_ReloadInterval:
+            return formatCStr_Lang("num.minutes.n", seconds_ReloadInterval_(d) / 60);
+        default:
+            return formatCStr_Lang("num.hours.n", seconds_ReloadInterval_(d) / 3600);
+    }
+    return "";
 }
 
 struct Impl_PersistentDocumentState {
