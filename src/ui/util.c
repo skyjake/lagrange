@@ -164,7 +164,7 @@ iRangei union_Rangei(iRangei a, iRangei b) {
     return (iRangei){ iMin(a.start, b.start), iMax(a.end, b.end) };
 }
 
-static iBool isSelectionBreakingChar_(iChar c) {
+iBool isSelectionBreaking_Char(iChar c) {
     return isSpace_Char(c) || (c == '@' || c == '-' || c == '/' || c == '\\' || c == ',');
 }
 
@@ -173,7 +173,7 @@ static const char *moveBackward_(const char *pos, iRangecc bounds, int mode) {
     while (pos > bounds.start) {
         int len = decodePrecedingBytes_MultibyteChar(pos, bounds.start, &ch);
         if (len > 0) {
-            if (mode & word_RangeExtension && isSelectionBreakingChar_(ch)) break;
+            if (mode & word_RangeExtension && isSelectionBreaking_Char(ch)) break;
             if (mode & line_RangeExtension && ch == '\n') break;
             pos -= len;
         }
@@ -187,7 +187,7 @@ static const char *moveForward_(const char *pos, iRangecc bounds, int mode) {
     while (pos < bounds.end) {
         int len = decodeBytes_MultibyteChar(pos, bounds.end, &ch);
         if (len > 0) {
-            if (mode & word_RangeExtension && isSelectionBreakingChar_(ch)) break;
+            if (mode & word_RangeExtension && isSelectionBreaking_Char(ch)) break;
             if (mode & line_RangeExtension && ch == '\n') break;
             pos += len;
         }

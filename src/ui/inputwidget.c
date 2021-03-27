@@ -73,6 +73,7 @@ enum iInputWidgetFlag {
     notifyEdits_InputWidgetFlag      = iBit(5),
     eatEscape_InputWidgetFlag        = iBit(6),
     isMarking_InputWidgetFlag        = iBit(7),
+    markWords_InputWidgetFlag        = iBit(8),
 };
 
 struct Impl_InputWidget {
@@ -89,6 +90,7 @@ struct Impl_InputWidget {
     size_t          cursor;
     size_t          lastCursor;
     iRanges         mark;
+    iRanges         initialMark;
     iArray          undoStack;
     int             font;
     iClick          click;
@@ -664,6 +666,27 @@ static void paste_InputWidget_(iInputWidget *d) {
     }
 }
 
+static iChar at_InputWidget_(const iInputWidget *d, size_t pos) {
+    return *(const iChar *) constAt_Array(&d->text, pos);
+}
+
+static void extendRange_InputWidget_(iInputWidget *d, size_t *pos, int dir) {
+    const size_t textLen = size_Array(&d->text);
+    if (dir < 0 && *pos > 0) {
+        for ((*pos)--; *pos > 0; (*pos)--) {
+            if (isSelectionBreaking_Char(at_InputWidget_(d, *pos))) {
+                (*pos)++;
+                break;
+            }
+        }
+    }
+    if (dir > 0) {
+        for (; *pos < textLen && !isSelectionBreaking_Char(at_InputWidget_(d, *pos)); (*pos)++) {
+            /* continue */
+        }
+    }
+}
+
 static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
     if (isCommand_Widget(w, ev, "focus.gained")) {
@@ -733,7 +756,19 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
             setFocus_Widget(w);
             setCursor_InputWidget(d, coordIndex_InputWidget_(d, pos_Click(&d->click)));
             iZap(d->mark);
-            d->inFlags &= ~isMarking_InputWidgetFlag;
+            iZap(d->initialMark);
+            d->inFlags &= ~(isMarking_InputWidgetFlag | markWords_InputWidgetFlag);
+            if (d->click.count == 2) {
+                d->inFlags |= isMarking_InputWidgetFlag | markWords_InputWidgetFlag;
+                d->mark.start = d->mark.end = d->cursor;
+                extendRange_InputWidget_(d, &d->mark.start, -1);
+                extendRange_InputWidget_(d, &d->mark.end, +1);
+                d->initialMark = d->mark;
+                refresh_Widget(w);
+            }
+            if (d->click.count == 3) {
+                selectAll_InputWidget(d);
+            }
             return iTrue;
         case aborted_ClickResult:
             d->inFlags &= ~isMarking_InputWidgetFlag;
@@ -746,13 +781,15 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                 d->mark.start = d->cursor;
             }
             d->mark.end = d->cursor;
+            if (d->inFlags & markWords_InputWidgetFlag) {
+                const iBool isFwd = d->mark.end >= d->mark.start;
+                extendRange_InputWidget_(d, &d->mark.end, isFwd ? +1 : -1);
+                d->mark.start = isFwd ? d->initialMark.start : d->initialMark.end;
+            }
             refresh_Widget(w);
             return iTrue;
         case finished_ClickResult:
-            if (d->click.count == 2) {
-                selectAll_InputWidget(d);
-                d->inFlags &= ~isMarking_InputWidgetFlag;
-            }
+            d->inFlags &= ~isMarking_InputWidgetFlag;
             return iTrue;
     }
     if (ev->type == SDL_MOUSEBUTTONDOWN && ev->button.button == SDL_BUTTON_RIGHT &&

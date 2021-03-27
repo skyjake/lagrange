@@ -88,7 +88,9 @@ enum iRangeExtension {
     bothStartAndEnd_RangeExtension = iBit(3),
 };
 
-void        extendRange_Rangecc (iRangecc *, iRangecc bounds, int mode);
+void        extendRange_Rangecc     (iRangecc *, iRangecc bounds, int mode);
+
+iBool       isSelectionBreaking_Char(iChar);
 
 /*-----------------------------------------------------------------------------------------------*/
 
