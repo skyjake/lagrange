@@ -800,7 +800,7 @@ static enum iFontId fontId_Text_(const iFont *font) {
 
 iLocalDef iBool isWrapPunct_(iChar c) {
     /* Punctuation that participates in word-wrapping. */
-    return (c == '/' || c == '=' || c == '-' || c == ',' || c == ';' || c == '.' || c == ':' || c == 0xad);
+    return (c == '/' || c == '\\' || c == '=' || c == '-' || c == ',' || c == ';' || c == '.' || c == ':' || c == 0xad);
 }
 
 iLocalDef iBool isClosingBracket_(iChar c) {
@@ -825,7 +825,8 @@ iLocalDef iBool isWrapBoundary_(iChar prevC, iChar c) {
     if (isSpace_Char(prevC)) {
         return iFalse;
     }
-    if ((prevC == '/' || prevC == '-' || prevC == '_' || prevC == '+') && !isWrapPunct_(c)) {
+    if ((prevC == '/' || prevC == '\\' || prevC == '-' || prevC == '_' || prevC == '+') &&
+        !isWrapPunct_(c)) {
         return iTrue;
     }
     return isSpace_Char(c);
@@ -991,7 +992,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
         /* Out of the allotted space on the line? */
         if (args->xposLimit > 0 && x2 > args->xposLimit) {
             if (args->continueFrom_out) {
-                if (lastWordEnd != args->text.start) {
+                if (lastWordEnd != args->text.start && ~mode & noWrapFlag_RunMode) {
                     *args->continueFrom_out = lastWordEnd;
                 }
                 else {
@@ -1064,7 +1065,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
         xposExtend = iMax(xposExtend, xpos);
         xposMax    = iMax(xposMax, xposExtend);
         if (args->continueFrom_out && ((mode & noWrapFlag_RunMode) || isWrapBoundary_(prevCh, ch))) {
-            lastWordEnd = currentPos;
+            lastWordEnd = currentPos; /* mark word wrap position */
         }
 #if defined (LAGRANGE_ENABLE_KERNING)
         /* Check the next character. */
