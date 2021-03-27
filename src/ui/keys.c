@@ -236,7 +236,7 @@ static const struct { int id; iMenuItem bind; int flags; } defaultBindings_[] = 
     { 1007, { NULL, SDLK_AC_BACK, 0,                    "navigate.back"                 }, 0 },
     { 1008, { NULL, SDLK_AC_FORWARD, 0,                 "navigate.forward"              }, 0 },
     { 1009, { NULL, SDLK_AC_STOP, 0,                    "document.stop"                 }, 0 },
-    { 1010, { NULL, SDLK_AC_REFRESH, 0,                 "navigate.reload"               }, 0 },
+    { 1010, { NULL, SDLK_AC_REFRESH, 0,                 "document.reload"               }, 0 },
     { 1011, { NULL, SDLK_AC_BOOKMARKS, 0,               "sidebar.mode arg:0 toggle:1"   }, 0 },
 };
 
