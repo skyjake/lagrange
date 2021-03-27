@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-03-27 04:56+0000\n"
+"PO-Revision-Date: 2021-03-28 06:32+0000\n"
 "Last-Translator: El Mau <public@correolibre.net>\n"
 "Language-Team: Spanish (Mexico) <http://weblate.skyjake.fi/projects/lagrange/"
 "ui/es_MX/>\n"
@@ -149,3 +149,123 @@ msgstr "Listar Todos los Favoritos"
 
 msgid "macos.menu.bookmarks.bytime"
 msgstr "Listar por Fecha de Creación"
+
+# Usage: "(count) Unread" in the sidebar tab title, referring to feed entries.
+msgid "sidebar.unread"
+msgid_plural "sidebar.unread.n"
+msgstr[0] "No Leído"
+msgstr[1] "No Leídos"
+
+msgid "menu.cut"
+msgstr "Cortar"
+
+msgid "menu.copy"
+msgstr "Copiar"
+
+msgid "menu.paste"
+msgstr "Pegar"
+
+msgid "menu.copy.pagelink"
+msgstr "Copiar Enlace a Página"
+
+msgid "menu.show.bookmarks"
+msgstr "Mostrar favoritos"
+
+msgid "menu.show.feeds"
+msgstr "Mostrar Suscripciones"
+
+msgid "menu.show.history"
+msgstr "Mostrar Historial"
+
+msgid "menu.show.identities"
+msgstr "Mostrar Identidades"
+
+msgid "menu.show.outline"
+msgstr "Mostrar Esquema de la Página"
+
+msgid "menu.back"
+msgstr "Regresar"
+
+msgid "menu.forward"
+msgstr "Avanzar"
+
+msgid "menu.parent"
+msgstr "Ir al nivel superior"
+
+msgid "menu.root"
+msgstr "Ir a la raíz"
+
+msgid "menu.reload"
+msgstr "Recargar Página"
+
+msgid "menu.autoreload"
+msgstr "Establecer Auto-Recarga…"
+
+msgid "menu.page.bookmark"
+msgstr "Agregar Página a Marcadores…"
+
+msgid "menu.page.subscribe"
+msgstr "Suscribir a Página…"
+
+msgid "menu.aboutpages"
+msgstr "Acerca de Páginas"
+
+msgid "menu.about"
+msgstr "Acerca de"
+
+msgid "panel.back"
+msgstr "Regresar"
+
+msgid "menu.debug"
+msgstr "Información de Depuración"
+
+msgid "menu.import.links"
+msgstr "Importar Todos los Enlaces de la Página…"
+
+msgid "menu.page.import"
+msgstr "Importar enlaces como favoritos…"
+
+msgid "menu.page.translate"
+msgstr "Traducir…"
+
+msgid "menu.page.copyurl"
+msgstr "Copiar URL de la Página"
+
+msgid "menu.page.copysource"
+msgstr "Copiar Código Fuente de la Página"
+
+msgid "menu.bookmarks.refresh"
+msgstr "Refrescar Favoritos Remotos"
+
+msgid "menu.feeds.refresh"
+msgstr "Refrescar Suscripciones"
+
+msgid "menu.identity.new"
+msgstr "Nueva Identidad…"
+
+msgid "menu.identity.import"
+msgstr "Importar…"
+
+msgid "menu.identity.notactive"
+msgstr "Ninguna Identidad Activa"
+
+msgid "sidebar.bookmarks"
+msgstr "Favoritos"
+
+msgid "sidebar.feeds"
+msgstr "Suscripciones"
+
+msgid "sidebar.history"
+msgstr "Historial"
+
+msgid "sidebar.identities"
+msgstr "Identidades"
+
+msgid "sidebar.outline"
+msgstr "Esquema"
+
+msgid "toolbar.outline"
+msgstr "Esquema de la Página"
+
+msgid "hint.findtext"
+msgstr "Buscar Texto en la Página"
