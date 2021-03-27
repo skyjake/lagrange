@@ -1832,6 +1832,7 @@ iWidget *makePreferences_Widget(void) {
             const iMenuItem langItems[] = {
 //                { "${lang.de} - de", 0, 0, "uilang id:de" },
                 { "${lang.en} - en", 0, 0, "uilang id:en" },
+                { "${lang.es} - es", 0, 0, "uilang id:es" },
                 { "${lang.fi} - fi", 0, 0, "uilang id:fi" },
                 { "${lang.ru} - ru", 0, 0, "uilang id:ru" },
                 { "${lang.zh.hans} - zh", 0, 0, "uilang id:zh_Hans" },

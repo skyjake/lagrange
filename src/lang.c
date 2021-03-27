@@ -54,6 +54,7 @@ static void load_Lang_(iLang *d, const char *id) {
     iUnused(id);
     const iBlock *data = equal_CStr(id, "fi")      ? &blobFi_Embedded
                        : equal_CStr(id, "ru")      ? &blobRu_Embedded
+                       : equal_CStr(id, "es")      ? &blobEs_Embedded
 //                       : equal_CStr(id, "de")      ? &blobDe_Embedded
                        : equal_CStr(id, "zh_Hans") ? &blobZh_Hans_Embedded
                                                    : &blobEn_Embedded;
