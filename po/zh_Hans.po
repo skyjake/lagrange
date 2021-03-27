@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-03-26 10:26+0000\n"
-"Last-Translator: Shibo Lyu <github@of.sb>\n"
+"PO-Revision-Date: 2021-03-27 04:56+0000\n"
+"Last-Translator: Jaakko Keränen <jaakko.keranen@iki.fi>\n"
 "Language-Team: Chinese (Simplified) <http://weblate.skyjake.fi/projects/"
 "lagrange/ui/zh_Hans/>\n"
 "Language: zh_Hans\n"
@@ -1245,3 +1245,23 @@ msgstr "订阅页面更新"
 
 msgid "lang.zh.hans"
 msgstr "简体中文"
+
+# Interpret as "Results from bookmarks..."
+msgid "heading.lookup.bookmarks"
+msgstr "书签"
+
+msgid "num.bytes"
+msgid_plural "num.bytes.n"
+msgstr[0] "%zu 字节"
+
+# Interpret as "Results from feeds..."
+msgid "heading.lookup.feeds"
+msgstr "订阅项"
+
+# Interpret as "Results from history..."
+msgid "heading.lookup.history"
+msgstr "浏览记录"
+
+# Interpret as "Results from identitites..."
+msgid "heading.lookup.identities"
+msgstr "身份"
