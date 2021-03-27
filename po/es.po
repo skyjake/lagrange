@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-03-27 04:56+0000\n"
-"Last-Translator: Wally Hackenslacker <mastor89@protonmail.com>\n"
+"PO-Revision-Date: 2021-03-28 06:32+0000\n"
+"Last-Translator: El Mau <public@correolibre.net>\n"
 "Language-Team: Spanish <http://weblate.skyjake.fi/projects/lagrange/ui/es/>\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
@@ -1317,3 +1317,21 @@ msgstr "Alto Contraste"
 
 msgid "link.hint.audio"
 msgstr "Reproducir Audio"
+
+#, c-format
+msgid "num.minutes"
+msgid_plural "num.minutes.n"
+msgstr[0] "%d minuto"
+msgstr[1] "%d minutos"
+
+msgid "reload.never"
+msgstr "Nunca"
+
+msgid "reload.onceperday"
+msgstr "Una vez al día"
+
+#, c-format
+msgid "num.hours"
+msgid_plural "num.hours.n"
+msgstr[0] "%d hora"
+msgstr[1] "%d horas"
