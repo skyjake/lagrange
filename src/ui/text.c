@@ -649,7 +649,7 @@ static iChar nextChar_(const char **chPos, const char *end) {
         return 0;
     }
     iChar ch;
-    int len = decodeBytes_MultibyteChar(*chPos, end - *chPos, &ch);
+    int len = decodeBytes_MultibyteChar(*chPos, end, &ch);
     if (len <= 0) {
         (*chPos)++; /* skip it */
         return 0;
@@ -862,6 +862,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
     const enum iRunMode mode        = args->mode;
     const char *        lastWordEnd = args->text.start;
     iAssert(args->xposLimit == 0 || isMeasuring_(mode));
+    iAssert(args->text.end >= args->text.start);
     if (args->continueFrom_out) {
         *args->continueFrom_out = args->text.end;
     }

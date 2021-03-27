@@ -239,7 +239,7 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
             if (link->flags & gemini_GmLinkFlag && ~link->flags & remote_GmLinkFlag) {
                 iChar icon = 0;
                 int len = 0;
-                if ((len = decodeBytes_MultibyteChar(desc.start, size_Range(&desc), &icon)) > 0) {
+                if ((len = decodeBytes_MultibyteChar(desc.start, desc.end, &icon)) > 0) {
                     if (desc.start + len < desc.end &&
                         (isPictograph_Char(icon) || isEmoji_Char(icon) || icon == 0x2022 /* bullet */) &&
                         !isFitzpatrickType_Char(icon)) {
@@ -1675,7 +1675,7 @@ iRangecc findLoc_GmRun(const iGmRun *d, iInt2 pos) {
     loc.end = loc.start;
     iChar ch;
     if (d->text.end != loc.start) {
-        int chLen = decodeBytes_MultibyteChar(loc.start, d->text.end - loc.start, &ch);
+        int chLen = decodeBytes_MultibyteChar(loc.start, d->text.end, &ch);
         if (chLen > 0) {
             /* End after the character. */
             loc.end += chLen;

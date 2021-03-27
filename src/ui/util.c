@@ -164,6 +164,60 @@ iRangei union_Rangei(iRangei a, iRangei b) {
     return (iRangei){ iMin(a.start, b.start), iMax(a.end, b.end) };
 }
 
+static iBool isSelectionBreakingChar_(iChar c) {
+    return isSpace_Char(c) || (c == '@' || c == '-' || c == '/' || c == '\\' || c == ',');
+}
+
+static const char *moveBackward_(const char *pos, iRangecc bounds, int mode) {
+    iChar ch;
+    while (pos > bounds.start) {
+        int len = decodePrecedingBytes_MultibyteChar(pos, bounds.start, &ch);
+        if (len > 0) {
+            if (mode & word_RangeExtension && isSelectionBreakingChar_(ch)) break;
+            if (mode & line_RangeExtension && ch == '\n') break;
+            pos -= len;
+        }
+        else break;
+    }
+    return pos;
+}
+
+static const char *moveForward_(const char *pos, iRangecc bounds, int mode) {
+    iChar ch;
+    while (pos < bounds.end) {
+        int len = decodeBytes_MultibyteChar(pos, bounds.end, &ch);
+        if (len > 0) {
+            if (mode & word_RangeExtension && isSelectionBreakingChar_(ch)) break;
+            if (mode & line_RangeExtension && ch == '\n') break;
+            pos += len;
+        }
+        else break;
+    }
+    return pos;
+}
+
+void extendRange_Rangecc(iRangecc *d, iRangecc bounds, int mode) {
+    if (!d->start) return;
+    if (d->end >= d->start) {
+        if (mode & bothStartAndEnd_RangeExtension) {
+            d->start = moveBackward_(d->start, bounds, mode);
+            d->end   = moveForward_(d->end, bounds, mode);
+        }
+        else {
+            d->end = moveForward_(d->end, bounds, mode);
+        }
+    }
+    else {
+        if (mode & bothStartAndEnd_RangeExtension) {
+            d->start = moveForward_(d->start, bounds, mode);
+            d->end   = moveBackward_(d->end, bounds, mode);
+        }
+        else {
+            d->end = moveBackward_(d->end, bounds, mode);
+        }
+    }
+}
+
 /*----------------------------------------------------------------------------------------------*/
 
 iBool isFinished_Anim(const iAnim *d) {

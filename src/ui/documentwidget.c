@@ -198,6 +198,7 @@ struct Impl_DocumentWidget {
     iString *      certSubject;
     int            redirectCount;
     iRangecc       selectMark;
+    iRangecc       initialSelectMark; /* for word/line selection */
     iRangecc       foundMark;
     int            pageMargin;
     iPtrArray      visibleLinks;
@@ -2325,6 +2326,15 @@ static iChar linkOrdinalChar_DocumentWidget_(const iDocumentWidget *d, size_t or
     return 0;
 }
 
+static void beginMarkingSelection_DocumentWidget_(iDocumentWidget *d, iInt2 pos) {
+    setFocus_Widget(NULL); /* TODO: Focus this document? */
+    invalidateWideRunsWithNonzeroOffset_DocumentWidget_(d);
+    resetWideRuns_DocumentWidget_(d); /* Selections don't support horizontal scrolling. */
+    iChangeFlags(d->flags, selecting_DocumentWidgetFlag, iTrue);
+    d->selectMark = sourceLoc_DocumentWidget_(d, pos);
+    refresh_Widget(as_Widget(d));
+}
+
 static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
     if (isMetricsChange_UserEvent(ev)) {
@@ -2593,19 +2603,28 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         return iTrue;
     }
     /* The left mouse button. */
-    if (/*d->flags & selecting_DocumentWidgetFlag &&*/ ev->type == SDL_MOUSEBUTTONDOWN &&
-        ev->button.button == SDL_BUTTON_LEFT) {
-        if (ev->button.clicks == 2) {
-            printf("double click\n");
-        }
-        else if (ev->button.clicks == 3) {
-            printf("triple click\n");
-        }
-        fflush(stdout);
-    }
     switch (processEvent_Click(&d->click, ev)) {
         case started_ClickResult:
+            if (d->grabbedPlayer) {
+                return iTrue;
+            }
             iChangeFlags(d->flags, selecting_DocumentWidgetFlag, iFalse);
+            iChangeFlags(d->flags, selectWords_DocumentWidgetFlag, d->click.count == 2);
+            iChangeFlags(d->flags, selectLines_DocumentWidgetFlag, d->click.count >= 3);
+            /* Double/triple clicks marks the selection immediately. */
+            if (d->click.count >= 2) {
+                beginMarkingSelection_DocumentWidget_(d, d->click.startPos);
+                extendRange_Rangecc(
+                    &d->selectMark,
+                    range_String(source_GmDocument(d->doc)),
+                    bothStartAndEnd_RangeExtension |
+                        (d->click.count == 2 ? word_RangeExtension : line_RangeExtension));
+                d->initialSelectMark = d->selectMark;
+                refresh_Widget(w);
+            }
+            else {
+                d->initialSelectMark = iNullRange;
+            }
             return iTrue;
         case drag_ClickResult: {
             if (d->grabbedPlayer) {
@@ -2620,12 +2639,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             }
             /* Begin selecting a range of text. */
             if (~d->flags & selecting_DocumentWidgetFlag) {
-                setFocus_Widget(NULL); /* TODO: Focus this document? */
-                invalidateWideRunsWithNonzeroOffset_DocumentWidget_(d);
-                resetWideRuns_DocumentWidget_(d); /* Selections don't support horizontal scrolling. */
-                iChangeFlags(d->flags, selecting_DocumentWidgetFlag, iTrue);
-                d->selectMark = sourceLoc_DocumentWidget_(d, d->click.startPos);
-                refresh_Widget(w);
+                beginMarkingSelection_DocumentWidget_(d, d->click.startPos);
             }
             iRangecc loc = sourceLoc_DocumentWidget_(d, pos_Click(&d->click));
             if (!d->selectMark.start) {
@@ -2633,6 +2647,23 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             }
             else if (loc.end) {
                 d->selectMark.end = (d->selectMark.end > d->selectMark.start ? loc.end : loc.start);
+            }
+            iAssert((!d->selectMark.start && !d->selectMark.end) ||
+                    ( d->selectMark.start &&  d->selectMark.end));
+            /* Extend the selection when double/triple clicking. */
+            if (d->flags & (selectWords_DocumentWidgetFlag | selectLines_DocumentWidgetFlag)) {
+                extendRange_Rangecc(
+                    &d->selectMark,
+                    range_String(source_GmDocument(d->doc)),
+                    d->click.count == 2 ? word_RangeExtension : line_RangeExtension);
+                if (!isEmpty_Range(&d->initialSelectMark)) {
+                    if (d->selectMark.end > d->selectMark.start) {
+                        d->selectMark.start = d->initialSelectMark.start;
+                    }
+                    else if (d->selectMark.end < d->selectMark.start) {
+                        d->selectMark.start = d->initialSelectMark.end;
+                    }
+                }
             }
 //            printf("mark %zu ... %zu\n", d->selectMark.start - cstr_String(source_GmDocument(d->doc)),
 //                   d->selectMark.end - cstr_String(source_GmDocument(d->doc)));
@@ -2727,7 +2758,8 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                             2);
                     }
                 }
-                if (d->selectMark.start) {
+                if (d->selectMark.start && !(d->flags & (selectLines_DocumentWidgetFlag |
+                                                         selectWords_DocumentWidgetFlag))) {
                     d->selectMark = iNullRange;
                     refresh_Widget(w);
                 }
@@ -2776,16 +2808,21 @@ static void fillRange_DrawContext_(iDrawContext *d, const iGmRun *run, enum iCol
         /* Selection may be done in either direction. */
         iSwap(const char *, mark.start, mark.end);
     }
-    if ((!*isInside && (contains_Range(&run->text, mark.start) || mark.start == run->text.end)) ||
-        *isInside) {
+    if (*isInside || (contains_Range(&run->text, mark.start) ||
+                      contains_Range(&mark, run->text.start))) {
         int x = 0;
         if (!*isInside) {
-            x = advanceRange_Text(run->font, (iRangecc){ run->text.start, mark.start }).x;
+            x = advanceRange_Text(run->font,
+                                  (iRangecc){ run->text.start, iMax(run->text.start, mark.start) })
+                    .x;
         }
         int w = width_Rect(run->visBounds) - x;
-        if (contains_Range(&run->text, mark.end) || run->text.end == mark.end) {
-            w = advanceRange_Text(run->font,
-                                  !*isInside ? mark : (iRangecc){ run->text.start, mark.end }).x;
+        if (contains_Range(&run->text, mark.end) || mark.end < run->text.start) {
+            w = advanceRange_Text(
+                    run->font,
+                    !*isInside ? mark
+                               : (iRangecc){ run->text.start, iMax(run->text.start, mark.end) })
+                    .x;
             *isInside = iFalse;
         }
         else {

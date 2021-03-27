@@ -82,6 +82,14 @@ iLocalDef iBool isOverlapping_Rangei(iRangei a, iRangei b) {
     return !isEmpty_Rangei(intersect_Rangei(a, b));
 }
 
+enum iRangeExtension {
+    word_RangeExtension            = iBit(1),
+    line_RangeExtension            = iBit(2),
+    bothStartAndEnd_RangeExtension = iBit(3),
+};
+
+void        extendRange_Rangecc (iRangecc *, iRangecc bounds, int mode);
+
 /*-----------------------------------------------------------------------------------------------*/
 
 iDeclareType(Anim)
