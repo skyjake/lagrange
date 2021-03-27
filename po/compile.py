@@ -13,6 +13,7 @@ ESCAPES = {
     'r': '\r',
     't': '\t'
 }
+BASE_STRINGS = {}
 
 if '--new' in sys.argv:
     MODE = 'new'
@@ -80,21 +81,35 @@ def parse_po(src):
         #print(msg_id, '=>', msg_str)
     return pluralized
     
-
+    
+def compile_string(msg_id, msg_str):
+    return msg_id.encode('utf-8') + bytes([0]) + \
+           msg_str.encode('utf-8') + bytes([0])
+    
+    
 if MODE == 'compile':
+    for msg_id, msg_str in parse_po('en.po'):
+        BASE_STRINGS[msg_id] = msg_str
     for src in os.listdir('.'):
         if src.endswith('.po') and src.split('.')[0] in BUILD_LANGS:
             # Make a binary blob with strings sorted by ID.
+            have_ids = set()
             compiled = bytes()
-            for msg in sorted(parse_po(src)):
-                compiled += msg[0].encode('utf-8') + bytes([0])
-                compiled += msg[1].encode('utf-8') + bytes([0])
+            lang = parse_po(src)
+            for msg_id, _ in lang:
+                have_ids.add(msg_id)
+            # Take missing strings from the base language.
+            for msg_id in BASE_STRINGS:
+                if msg_id not in have_ids:
+                    print(src, 'missing:', msg_id)
+                    lang.append((msg_id, BASE_STRINGS[msg_id]))
+            for msg_id, msg_str in sorted(lang):
+                compiled += compile_string(msg_id, msg_str)
             open(f'../res/lang/{src[:-3]}.bin', 'wb').write(compiled)
 
 elif MODE == 'new':
     messages = parse_po('en.po')
     f = open('new.po', 'wt', encoding='utf-8')
-    # TODO: plurals
     for msg_id, _ in messages:
         print(f'\nmsgid "{msg_id}"\nmsgstr ""\n', file=f)
 
