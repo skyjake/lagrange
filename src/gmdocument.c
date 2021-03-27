@@ -1528,12 +1528,12 @@ const iGmRun *findRun_GmDocument(const iGmDocument *d, iInt2 pos) {
     return last;
 }
 
-const char *findLoc_GmDocument(const iGmDocument *d, iInt2 pos) {
+iRangecc findLoc_GmDocument(const iGmDocument *d, iInt2 pos) {
     const iGmRun *run = findRun_GmDocument(d, pos);
     if (run) {
         return findLoc_GmRun(run, pos);
     }
-    return NULL;
+    return iNullRange;
 }
 
 const iGmRun *findRunAtLoc_GmDocument(const iGmDocument *d, const char *textCStr) {
@@ -1662,16 +1662,25 @@ iChar siteIcon_GmDocument(const iGmDocument *d) {
     return d->siteIcon;
 }
 
-const char *findLoc_GmRun(const iGmRun *d, iInt2 pos) {
+iRangecc findLoc_GmRun(const iGmRun *d, iInt2 pos) {
     if (pos.y < top_Rect(d->bounds)) {
-        return d->text.start;
+        return (iRangecc){ d->text.start, d->text.start };
     }
     const int x = pos.x - left_Rect(d->bounds);
     if (x <= 0) {
-        return d->text.start;
+        return (iRangecc){ d->text.start, d->text.start };
     }
-    const char *loc;
-    tryAdvanceNoWrap_Text(d->font, d->text, x, &loc);
+    iRangecc loc;
+    tryAdvanceNoWrap_Text(d->font, d->text, x, &loc.start);
+    loc.end = loc.start;
+    iChar ch;
+    if (d->text.end != loc.start) {
+        int chLen = decodeBytes_MultibyteChar(loc.start, d->text.end - loc.start, &ch);
+        if (chLen > 0) {
+            /* End after the character. */
+            loc.end += chLen;
+        }
+    }
     return loc;
 }
 

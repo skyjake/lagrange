@@ -166,6 +166,8 @@ enum iDocumentWidgetFlag {
     setHoverViaKeys_DocumentWidgetFlag       = iBit(4),
     newTabViaHomeKeys_DocumentWidgetFlag     = iBit(5),
     centerVertically_DocumentWidgetFlag      = iBit(6),
+    selectWords_DocumentWidgetFlag           = iBit(7),
+    selectLines_DocumentWidgetFlag           = iBit(8),
 };
 
 enum iDocumentLinkOrdinalMode {
@@ -1295,7 +1297,7 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
     unlockResponse_GmRequest(d->request);
 }
 
-static const char *sourceLoc_DocumentWidget_(const iDocumentWidget *d, iInt2 pos) {
+static iRangecc sourceLoc_DocumentWidget_(const iDocumentWidget *d, iInt2 pos) {
     return findLoc_GmDocument(d->doc, documentPos_DocumentWidget_(d, pos));
 }
 
@@ -2591,6 +2593,16 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         return iTrue;
     }
     /* The left mouse button. */
+    if (/*d->flags & selecting_DocumentWidgetFlag &&*/ ev->type == SDL_MOUSEBUTTONDOWN &&
+        ev->button.button == SDL_BUTTON_LEFT) {
+        if (ev->button.clicks == 2) {
+            printf("double click\n");
+        }
+        else if (ev->button.clicks == 3) {
+            printf("triple click\n");
+        }
+        fflush(stdout);
+    }
     switch (processEvent_Click(&d->click, ev)) {
         case started_ClickResult:
             iChangeFlags(d->flags, selecting_DocumentWidgetFlag, iFalse);
@@ -2612,16 +2624,15 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 invalidateWideRunsWithNonzeroOffset_DocumentWidget_(d);
                 resetWideRuns_DocumentWidget_(d); /* Selections don't support horizontal scrolling. */
                 iChangeFlags(d->flags, selecting_DocumentWidgetFlag, iTrue);
-                d->selectMark.start = d->selectMark.end =
-                    sourceLoc_DocumentWidget_(d, d->click.startPos);
+                d->selectMark = sourceLoc_DocumentWidget_(d, d->click.startPos);
                 refresh_Widget(w);
             }
-            const char *loc = sourceLoc_DocumentWidget_(d, pos_Click(&d->click));
+            iRangecc loc = sourceLoc_DocumentWidget_(d, pos_Click(&d->click));
             if (!d->selectMark.start) {
-                d->selectMark.start = d->selectMark.end = loc;
+                d->selectMark = loc;
             }
-            else if (loc) {
-                d->selectMark.end = loc;
+            else if (loc.end) {
+                d->selectMark.end = (d->selectMark.end > d->selectMark.start ? loc.end : loc.start);
             }
 //            printf("mark %zu ... %zu\n", d->selectMark.start - cstr_String(source_GmDocument(d->doc)),
 //                   d->selectMark.end - cstr_String(source_GmDocument(d->doc)));
@@ -2736,6 +2747,8 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             }
             return iTrue;
         case double_ClickResult:
+            printf("double_ClickResult\n"); fflush(stdout);
+            return iTrue;
         case aborted_ClickResult:
             if (d->grabbedPlayer) {
                 setGrabbedPlayer_DocumentWidget_(d, NULL);

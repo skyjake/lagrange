@@ -126,7 +126,7 @@ struct Impl_GmRunRange {
     const iGmRun *end;
 };
 
-const char *    findLoc_GmRun   (const iGmRun *, iInt2 pos);
+iRangecc    findLoc_GmRun   (const iGmRun *, iInt2 pos);
 
 iDeclareClass(GmDocument)
 iDeclareObjectConstruction(GmDocument)
@@ -181,7 +181,7 @@ enum iGmLinkPart {
 };
 
 const iGmRun *  findRun_GmDocument      (const iGmDocument *, iInt2 pos);
-const char *    findLoc_GmDocument      (const iGmDocument *, iInt2 pos);
+iRangecc        findLoc_GmDocument      (const iGmDocument *, iInt2 pos);
 const iGmRun *  findRunAtLoc_GmDocument (const iGmDocument *, const char *loc);
 const iString * linkUrl_GmDocument      (const iGmDocument *, iGmLinkId linkId);
 iRangecc        linkUrlRange_GmDocument (const iGmDocument *, iGmLinkId linkId);
