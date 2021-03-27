@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2021-03-23 09:09+0000\n"
-"PO-Revision-Date: 2021-03-27 04:56+0000\n"
+"PO-Revision-Date: 2021-03-28 06:32+0000\n"
 "Last-Translator: Jaakko Keränen <jaakko.keranen@iki.fi>\n"
 "Language-Team: Finnish <http://weblate.skyjake.fi/projects/lagrange/ui/fi/>\n"
 "Language: fi\n"
@@ -1290,3 +1290,21 @@ msgid "num.bytes"
 msgid_plural "num.bytes.n"
 msgstr[0] "%zu tavu"
 msgstr[1] "%zu tavua"
+
+msgid "reload.never"
+msgstr "Ei koskaan"
+
+msgid "reload.onceperday"
+msgstr "Kerran päivässä"
+
+#, c-format
+msgid "num.minutes"
+msgid_plural "num.minutes.n"
+msgstr[0] "%d minuutti"
+msgstr[1] "%d minuuttia"
+
+#, c-format
+msgid "num.hours"
+msgid_plural "num.hours.n"
+msgstr[0] "%d tunti"
+msgstr[1] "%d tuntia"
