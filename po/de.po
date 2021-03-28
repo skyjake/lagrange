@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-03-27 04:56+0000\n"
-"Last-Translator: Jaakko Keränen <jaakko.keranen@iki.fi>\n"
+"PO-Revision-Date: 2021-03-29 05:43+0000\n"
+"Last-Translator: Aaron Fischer <mail@aaron-fischer.net>\n"
 "Language-Team: German <http://weblate.skyjake.fi/projects/lagrange/ui/de/>\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
@@ -629,3 +629,24 @@ msgstr "Eine Seite vor"
 
 msgid "keys.back"
 msgstr "Eine Seite zurück"
+
+msgid "num.bytes"
+msgid_plural "num.bytes.n"
+msgstr[0] "%zu Byte"
+msgstr[1] "%zu Bytes"
+
+# strftime() formatted, split on two lines
+#, c-format
+msgid "page.timestamp"
+msgstr ""
+"Empfangen am %I:%M %p\n"
+"um %b %d, %Y"
+
+msgid "doc.pre.nocaption"
+msgstr "Formatierter Text ohne Überschrift"
+
+msgid "menu.aboutpages"
+msgstr "About-Seiten"
+
+msgid "menu.bookmarks.refresh"
+msgstr "Remote-Lesezeichen aktualisieren"
