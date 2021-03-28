@@ -460,6 +460,12 @@ static void setShortcut_NSMenuItem_(NSMenuItem *item, int key, int kmods) {
     delete_String(str);
 }
 
+void removeMenu_MacOS(int atIndex) {
+    NSApplication *app = [NSApplication sharedApplication];
+    NSMenu *appMenu = [app mainMenu];
+    [appMenu removeItemAtIndex:atIndex];
+}
+
 void insertMenuItems_MacOS(const char *menuLabel, int atIndex, const iMenuItem *items, size_t count) {
     NSApplication *app = [NSApplication sharedApplication];
     MyDelegate *myDel = (MyDelegate *) app.delegate;

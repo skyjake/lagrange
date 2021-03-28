@@ -320,6 +320,24 @@ static const iMenuItem helpMenuItems_[] = {
     { "${menu.aboutpages}", 0, 0, "!open url:about:about" },
     { "${menu.debug}", 0, 0, "!open url:about:debug" },
 };
+
+static void insertMacMenus_(void) {
+    insertMenuItems_MacOS("${menu.title.file}", 1, fileMenuItems_, iElemCount(fileMenuItems_));
+    insertMenuItems_MacOS("${menu.title.edit}", 2, editMenuItems_, iElemCount(editMenuItems_));
+    insertMenuItems_MacOS("${menu.title.view}", 3, viewMenuItems_, iElemCount(viewMenuItems_));
+    insertMenuItems_MacOS("${menu.title.bookmarks}", 4, bookmarksMenuItems_, iElemCount(bookmarksMenuItems_));
+    insertMenuItems_MacOS("${menu.title.identity}", 5, identityMenuItems_, iElemCount(identityMenuItems_));
+    insertMenuItems_MacOS("${menu.title.help}", 7, helpMenuItems_, iElemCount(helpMenuItems_));
+}
+
+static void removeMacMenus_(void) {
+    removeMenu_MacOS(7);
+    removeMenu_MacOS(5);
+    removeMenu_MacOS(4);
+    removeMenu_MacOS(3);
+    removeMenu_MacOS(2);
+    removeMenu_MacOS(1);
+}
 #endif
 
 #if defined (iPlatformAppleMobile)
@@ -1055,12 +1073,7 @@ static void setupUserInterface_Window(iWindow *d) {
         setAlignVisually_LabelWidget(navMenu, iTrue);
         setId_Widget(addChildFlags_Widget(navBar, iClob(navMenu), collapse_WidgetFlag), "navbar.menu");
 #else
-        insertMenuItems_MacOS("${menu.title.file}", 1, fileMenuItems_, iElemCount(fileMenuItems_));
-        insertMenuItems_MacOS("${menu.title.edit}", 2, editMenuItems_, iElemCount(editMenuItems_));
-        insertMenuItems_MacOS("${menu.title.view}", 3, viewMenuItems_, iElemCount(viewMenuItems_));
-        insertMenuItems_MacOS("${menu.title.bookmarks}", 4, bookmarksMenuItems_, iElemCount(bookmarksMenuItems_));
-        insertMenuItems_MacOS("${menu.title.identity}", 5, identityMenuItems_, iElemCount(identityMenuItems_));
-        insertMenuItems_MacOS("${menu.title.help}", 7, helpMenuItems_, iElemCount(helpMenuItems_));
+        insertMacMenus_();
 #endif
     }
     /* Tab bar. */ {
@@ -1821,6 +1834,11 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
                 updateMetrics_Window_(d);
             }
             if (isCommand_UserEvent(&event, "lang.changed")) {
+#if defined (iPlatformAppleDesktop)
+                /* Retranslate the menus. */
+                removeMacMenus_();
+                insertMacMenus_();
+#endif
                 invalidate_Window_(d);
                 arrange_Widget(d->root);
             }
