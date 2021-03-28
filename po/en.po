@@ -1,3 +1,6 @@
+msgid "doc.pre.nocaption"
+msgstr "Preformatted text without a caption"
+
 # Alt-text of the preformatted logo.
 msgid "about.logo"
 msgstr "ASCII art: the word \"Lagrange\" using a large font"
@@ -1268,4 +1271,3 @@ msgstr "Invalid Certificate"
 
 msgid "error.cert.invalid.msg"
 msgstr "The provided client certificate is expired or invalid."
-
