@@ -252,14 +252,24 @@ void urlEncodePath_String(iString *d) {
     delete_String(encoded);
 }
 
+static iBool isSupportedUrlScheme_Rangecc_(iRangecc scheme) {
+    static const char *schemes[] = { "gemini", "gopher", "finger", "http", "https", "file" };
+    iForIndices(i, schemes) {
+        if (equalCase_Rangecc(scheme, schemes[i])) {
+            return iTrue;
+        }
+    }
+    return iFalse;
+}
+
 const iString *absoluteUrl_String(const iString *d, const iString *urlMaybeRelative) {
     iUrl orig;
     iUrl rel;
     init_Url(&orig, d);
     init_Url(&rel, urlMaybeRelative);
-    if (equalCase_Rangecc(rel.scheme, "data") || equalCase_Rangecc(rel.scheme, "about") ||
-        equalCase_Rangecc(rel.scheme, "bitcoin") || equalCase_Rangecc(rel.scheme, "mailto")) {
-        /* Special case, the contents should be left unparsed. */
+    if (!isEmpty_Range(&rel.scheme) && !isSupportedUrlScheme_Rangecc_(rel.scheme) &&
+        isEmpty_Range(&rel.host)) {
+        /* Probably not an URL, so we can't make this absolute. */
         return urlMaybeRelative;
     }
     const iBool isRelative = !isDef_(rel.host);
