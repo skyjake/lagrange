@@ -13,7 +13,6 @@ ESCAPES = {
     'r': '\r',
     't': '\t'
 }
-BASE_STRINGS = {}
 
 if '--new' in sys.argv:
     MODE = 'new'
@@ -85,11 +84,15 @@ def parse_po(src):
 def compile_string(msg_id, msg_str):
     return msg_id.encode('utf-8') + bytes([0]) + \
            msg_str.encode('utf-8') + bytes([0])
-    
+                          
     
 if MODE == 'compile':
+    BASE_STRINGS = {}
+    PLURALS = set()
     for msg_id, msg_str in parse_po('en.po'):
         BASE_STRINGS[msg_id] = msg_str
+        if msg_id.endswith('.0'):
+            PLURALS.add(msg_id[:-2])
     for src in os.listdir('.'):
         if src.endswith('.po') and src.split('.')[0] in BUILD_LANGS:
             # Make a binary blob with strings sorted by ID.
@@ -100,7 +103,7 @@ if MODE == 'compile':
                 have_ids.add(msg_id)
             # Take missing strings from the base language.
             for msg_id in BASE_STRINGS:
-                if msg_id not in have_ids:
+                if msg_id not in have_ids and not msg_id[:-2] in PLURALS:
                     print(src, 'missing:', msg_id)
                     lang.append((msg_id, BASE_STRINGS[msg_id]))
             for msg_id, msg_str in sorted(lang):
