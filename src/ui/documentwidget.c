@@ -202,7 +202,8 @@ struct Impl_DocumentWidget {
     iRangecc       foundMark;
     int            pageMargin;
     iPtrArray      visibleLinks;
-    iPtrArray      visibleWideRuns; /* scrollable blocks */
+    iPtrArray      visiblePre;
+    iPtrArray      visibleWideRuns; /* scrollable blocks; TODO: merge into `visiblePre` */
     iArray         wideRunOffsets;
     iAnim          animWideRunOffset;
     uint16_t       animWideRunId;
@@ -211,6 +212,8 @@ struct Impl_DocumentWidget {
     const iGmRun * grabbedPlayer; /* currently adjusting volume in a player */
     float          grabbedStartVolume;
     int            mediaTimer;
+    const iGmRun * hoverPre;    /* for clicking */
+    const iGmRun * hoverAltPre; /* for drawing alt text */
     const iGmRun * hoverLink;
     const iGmRun * contextLink;
     const iGmRun * firstVisibleRun;
@@ -220,6 +223,7 @@ struct Impl_DocumentWidget {
     float          initNormScrollY;
     iAnim          scrollY;
     iAnim          sideOpacity;
+    iAnim          altTextOpacity;
     iScrollWidget *scroll;
     iWidget *      menu;
     iWidget *      playerMenu;
@@ -260,6 +264,8 @@ void init_DocumentWidget(iDocumentWidget *d) {
     d->selectMark       = iNullRange;
     d->foundMark        = iNullRange;
     d->pageMargin       = 5;
+    d->hoverPre         = NULL;
+    d->hoverAltPre      = NULL;
     d->hoverLink        = NULL;
     d->contextLink      = NULL;
     d->firstVisibleRun  = NULL;
@@ -267,12 +273,14 @@ void init_DocumentWidget(iDocumentWidget *d) {
     d->visBuf           = new_VisBuf();
     d->invalidRuns      = new_PtrSet();
     init_Anim(&d->sideOpacity, 0);
+    init_Anim(&d->altTextOpacity, 0);
     d->sourceStatus = none_GmStatusCode;
     init_String(&d->sourceHeader);
     init_String(&d->sourceMime);
     init_Block(&d->sourceContent, 0);
     iZap(d->sourceTime);
     init_PtrArray(&d->visibleLinks);
+    init_PtrArray(&d->visiblePre);
     init_PtrArray(&d->visibleWideRuns);
     init_Array(&d->wideRunOffsets, sizeof(int));
     init_PtrArray(&d->visibleMedia);
@@ -322,6 +330,7 @@ void deinit_DocumentWidget(iDocumentWidget *d) {
     deinit_Array(&d->wideRunOffsets);
     deinit_PtrArray(&d->visibleMedia);
     deinit_PtrArray(&d->visibleWideRuns);
+    deinit_PtrArray(&d->visiblePre);
     deinit_PtrArray(&d->visibleLinks);
     delete_Block(d->certFingerprint);
     delete_String(d->certSubject);
@@ -419,8 +428,11 @@ static void addVisible_DocumentWidget_(void *context, const iGmRun *run) {
         }
         d->lastVisibleRun = run;
     }
-    if (run->preId && run->flags & wide_GmRunFlag) {
-        pushBack_PtrArray(&d->visibleWideRuns, run);
+    if (run->preId) {
+        pushBack_PtrArray(&d->visiblePre, run);
+        if (run->flags & wide_GmRunFlag) {
+            pushBack_PtrArray(&d->visibleWideRuns, run);
+        }
     }
     if (run->mediaType == audio_GmRunMediaType || run->mediaType == download_GmRunMediaType) {
         iAssert(run->mediaId);
@@ -501,10 +513,18 @@ static void invalidateWideRunsWithNonzeroOffset_DocumentWidget_(iDocumentWidget 
     }
 }
 
+static void animate_DocumentWidget_(void *ticker) {
+    iDocumentWidget *d = ticker;
+    if (!isFinished_Anim(&d->sideOpacity) || !isFinished_Anim(&d->altTextOpacity)) {
+        addTicker_App(animate_DocumentWidget_, d);
+    }
+}
+
 static void updateHover_DocumentWidget_(iDocumentWidget *d, iInt2 mouse) {
     const iWidget *w            = constAs_Widget(d);
     const iRect    docBounds    = documentBounds_DocumentWidget_(d);
     const iGmRun * oldHoverLink = d->hoverLink;
+    d->hoverPre                 = NULL;
     d->hoverLink                = NULL;
     const iInt2 hoverPos = addY_I2(sub_I2(mouse, topLeft_Rect(docBounds)), value_Anim(&d->scrollY));
     if (isHover_Widget(w) && (~d->flags & noHoverWhileScrolling_DocumentWidgetFlag) &&
@@ -525,22 +545,35 @@ static void updateHover_DocumentWidget_(iDocumentWidget *d, iInt2 mouse) {
         if (d->hoverLink) {
             invalidateLink_DocumentWidget_(d, d->hoverLink->linkId);
         }
-        refresh_Widget(as_Widget(d));
+        refresh_Widget(w);
+    }
+    if (isHover_Widget(w)) {
+        iConstForEach(PtrArray, j, &d->visiblePre) {
+            const iGmRun *run = j.ptr;
+            if (contains_Rect(run->bounds, hoverPos)) {
+                d->hoverPre    = run;
+                d->hoverAltPre = run;
+                break;
+            }
+        }
+    }
+    if (!d->hoverPre && targetValue_Anim(&d->altTextOpacity) > 0.5f) {
+        setValue_Anim(&d->altTextOpacity, 0.0f, 300);
+        animate_DocumentWidget_(d);
+        refresh_Widget(w);
+    }
+    else if (d->hoverPre && targetValue_Anim(&d->altTextOpacity) < 0.5f) {
+        setValue_Anim(&d->altTextOpacity, 1.0f, 0);
+        refresh_Widget(w);
     }
     if (isHover_Widget(w) && !contains_Widget(constAs_Widget(d->scroll), mouse)) {
         setCursor_Window(get_Window(),
-                         d->hoverLink ? SDL_SYSTEM_CURSOR_HAND : SDL_SYSTEM_CURSOR_IBEAM);
+                         d->hoverLink || d->hoverPre ? SDL_SYSTEM_CURSOR_HAND
+                                                     : SDL_SYSTEM_CURSOR_IBEAM);
         if (d->hoverLink &&
             linkFlags_GmDocument(d->doc, d->hoverLink->linkId) & permanent_GmLinkFlag) {
             setCursor_Window(get_Window(), SDL_SYSTEM_CURSOR_ARROW); /* not dismissable */
         }
-    }
-}
-
-static void animate_DocumentWidget_(void *ticker) {
-    iDocumentWidget *d = ticker;
-    if (!isFinished_Anim(&d->sideOpacity)) {
-        addTicker_App(animate_DocumentWidget_, d);
     }
 }
 
@@ -649,6 +682,7 @@ static void updateVisible_DocumentWidget_(iDocumentWidget *d) {
                           docSize > 0 ? height_Rect(bounds) * size_Range(&visRange) / docSize : 0);
     clear_PtrArray(&d->visibleLinks);
     clear_PtrArray(&d->visibleWideRuns);
+    clear_PtrArray(&d->visiblePre);
     clear_PtrArray(&d->visibleMedia);
     const iRangecc oldHeading = currentHeading_DocumentWidget_(d);
     /* Scan for visible runs. */ {
@@ -765,6 +799,8 @@ static iRangecc bannerText_DocumentWidget_(const iDocumentWidget *d) {
 static void documentRunsInvalidated_DocumentWidget_(iDocumentWidget *d) {
     d->foundMark       = iNullRange;
     d->selectMark      = iNullRange;
+    d->hoverPre        = NULL;
+    d->hoverAltPre     = NULL;
     d->hoverLink       = NULL;
     d->contextLink     = NULL;
     d->firstVisibleRun = NULL;
@@ -1197,6 +1233,18 @@ static void scrollWideBlock_DocumentWidget_(iDocumentWidget *d, iInt2 mousePos, 
             break;
         }
     }
+}
+
+static void togglePreFold_DocumentWidget_(iDocumentWidget *d, uint16_t preId) {
+    d->hoverPre    = NULL;
+    d->hoverAltPre = NULL;
+    d->selectMark  = iNullRange;
+    foldPre_GmDocument(d->doc, preId);
+    redoLayout_GmDocument(d->doc);
+    scroll_DocumentWidget_(d, 0);
+    updateHover_DocumentWidget_(d, mouseCoord_Window(get_Window()));
+    invalidate_DocumentWidget_(d);
+    refresh_Widget(as_Widget(d));
 }
 
 static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
@@ -2681,6 +2729,10 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             }
             if (!isMoved_Click(&d->click)) {
                 setFocus_Widget(NULL);
+                if (d->hoverPre) {
+                    togglePreFold_DocumentWidget_(d, d->hoverPre->preId);
+                    return iTrue;
+                }
                 if (d->hoverLink) {
                     const iGmLinkId linkId = d->hoverLink->linkId;
                     const int linkFlags = linkFlags_GmDocument(d->doc, linkId);
@@ -2994,7 +3046,14 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
             fg = linkColor_GmDocument(doc, run->linkId, textHover_GmLinkPart); /* link is inactive */
         }
     }
-    if (run->flags & siteBanner_GmRunFlag) {
+    if (run->flags & altText_GmRunFlag) {
+        const iInt2 margin = preRunMargin_GmDocument(doc, run->preId);
+        fillRect_Paint(&d->paint, (iRect){ visPos, run->visBounds.size }, tmAltTextBackground_ColorId);
+        drawRect_Paint(&d->paint, (iRect){ visPos, run->visBounds.size }, tmQuoteIcon_ColorId);
+        drawWrapRange_Text(run->font, add_I2(visPos, margin),
+                           run->visBounds.size.x - 2 * margin.x, run->color, run->text);
+    }
+    else if (run->flags & siteBanner_GmRunFlag) {
         /* Banner background. */
         iRect bannerBack = initCorners_Rect(topLeft_Rect(d->widgetBounds),
                                             init_I2(right_Rect(bounds_Widget(constAs_Widget(d->widget))),
@@ -3157,8 +3216,8 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
             }
         }
     }
-//    drawRect_Paint(&d->paint, (iRect){ visPos, run->bounds.size }, green_ColorId);
-//    drawRect_Paint(&d->paint, (iRect){ visPos, run->visBounds.size }, red_ColorId);
+    drawRect_Paint(&d->paint, (iRect){ visPos, run->bounds.size }, green_ColorId);
+    drawRect_Paint(&d->paint, (iRect){ visPos, run->visBounds.size }, red_ColorId);
 }
 
 static int drawSideRect_(iPaint *p, iRect rect) {
@@ -3392,7 +3451,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
                        hasSiteBanner_GmDocument(d->doc) ? tmBannerBackground_ColorId
                                                         : tmBackground_ColorId);
     }
-    const int yBottom = yTop + size_GmDocument(d->doc).y;
+    const int yBottom = yTop + size_GmDocument(d->doc).y + 1;
     if (yBottom < bottom_Rect(bounds)) {
         fillRect_Paint(&ctx.paint,
                        init_Rect(bounds.pos.x, yBottom, bounds.size.x, bottom_Rect(bounds) - yBottom),
@@ -3412,6 +3471,34 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
         drawHLine_Paint(&ctx.paint, topLeft_Rect(bounds), width_Rect(bounds), uiSeparator_ColorId);
     }
     draw_Widget(w);
+    /* Alt text. */
+    const float altTextOpacity = value_Anim(&d->altTextOpacity);
+    if (d->hoverAltPre && altTextOpacity > 0) {
+        const iGmPreMeta *meta = preMeta_GmDocument(d->doc, d->hoverAltPre->preId);
+        if (meta->flags & topLeft_GmPreMetaFlag && ~meta->flags & decoration_GmRunFlag &&
+            !isEmpty_Range(&meta->altText)) {
+            const int   margin   = 2 * gap_UI;
+            const int   altFont  = uiLabel_FontId;
+            const int   wrap     = docBounds.size.x - 2 * margin;
+            iInt2 pos            = addY_I2(add_I2(docBounds.pos, meta->pixelRect.pos),
+                                           -value_Anim(&d->scrollY));
+            const iInt2 textSize = advanceWrapRange_Text(altFont, wrap, meta->altText);
+            pos.y -= textSize.y + gap_UI;
+            pos.y               = iMax(pos.y, top_Rect(bounds));
+            const iRect altRect = { pos, init_I2(docBounds.size.x, textSize.y) };
+            ctx.paint.alpha     = altTextOpacity * 255;
+            if (altTextOpacity < 1) {
+                SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_BLEND);
+            }
+            fillRect_Paint(&ctx.paint, altRect, tmAltTextBackground_ColorId);
+            drawRect_Paint(&ctx.paint, altRect, tmQuoteIcon_ColorId);
+            setOpacity_Text(altTextOpacity);
+            drawWrapRange_Text(altFont, addX_I2(pos, margin), wrap,
+                               tmQuote_ColorId, meta->altText);
+            SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_NONE);
+            setOpacity_Text(1.0f);
+        }
+    }
 }
 
 /*----------------------------------------------------------------------------------------------*/

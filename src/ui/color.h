@@ -115,7 +115,8 @@ enum iColorId {
     uiTextAppTitle_ColorId,
     uiBackgroundSidebar_ColorId,
     uiBackgroundMenu_ColorId,
-    tmLinkCustomIconVisited_ColorId,
+    tmLinkCustomIconVisited_ColorId, /* derived from other theme colors */
+    tmAltTextBackground_ColorId,     /* derived from other theme colors */
 
     /* content theme colors */
     tmFirst_ColorId,

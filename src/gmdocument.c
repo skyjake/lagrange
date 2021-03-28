@@ -22,6 +22,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "gmdocument.h"
 #include "gmutil.h"
+#include "lang.h"
 #include "ui/color.h"
 #include "ui/text.h"
 #include "ui/metrics.h"
@@ -82,6 +83,7 @@ struct Impl_GmDocument {
     iString   bannerText;
     iString   title; /* the first top-level title */
     iArray    headings;
+    iArray    preMeta; /* metadata about preformatted blocks */
     uint32_t  themeSeed;
     iChar     siteIcon;
     iMedia *  media;
@@ -143,19 +145,21 @@ static int lastVisibleRunBottom_GmDocument_(const iGmDocument *d) {
     return 0;
 }
 
-static iInt2 measurePreformattedBlock_GmDocument_(const iGmDocument *d, const char *start, int font) {
+static iInt2 measurePreformattedBlock_GmDocument_(const iGmDocument *d, const char *start, int font,
+                                                  iRangecc *contents, const char **endPos) {
     const iRangecc content = { start, constEnd_String(&d->source) };
     iRangecc line = iNullRange;
     nextSplit_Rangecc(content, "\n", &line);
     iAssert(startsWith_Rangecc(line, "```"));
-    iRangecc preBlock = { line.end + 1, line.end + 1 };
+    *contents = (iRangecc){ line.end + 1, line.end + 1 };
     while (nextSplit_Rangecc(content, "\n", &line)) {
         if (startsWith_Rangecc(line, "```")) {
+            if (endPos) *endPos = line.end;
             break;
         }
-        preBlock.end = line.end;
+        contents->end = line.end;
     }
-    return measureRange_Text(font, preBlock);
+    return measureRange_Text(font, *contents);
 }
 
 static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *linkId) {
@@ -279,8 +283,8 @@ static iBool isForcedMonospace_GmDocument_(const iGmDocument *d) {
     return iFalse;
 }
 
-static void linkContentLaidOut_GmDocument_(iGmDocument *d, const iGmMediaInfo *mediaInfo,
-                                           uint16_t linkId) {
+static void linkContentWasLaidOut_GmDocument_(iGmDocument *d, const iGmMediaInfo *mediaInfo,
+                                              uint16_t linkId) {
     iGmLink *link = at_PtrArray(&d->links, linkId - 1);
     link->flags |= content_GmLinkFlag;
     if (mediaInfo && mediaInfo->isPermanent) {
@@ -370,6 +374,8 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     clear_Array(&d->layout);
     clearLinks_GmDocument_(d);
     clear_Array(&d->headings);
+    const iArray *oldPreMeta = collect_Array(copy_Array(&d->preMeta)); /* remember fold states */
+    clear_Array(&d->preMeta);
     clear_String(&d->title);
     clear_String(&d->bannerText);
     if (d->size.x <= 0 || isEmpty_String(&d->source)) {
@@ -381,7 +387,6 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     iBool            isFirstText   = prefs->bigFirstParagraph;
     iBool            addQuoteIcon  = prefs->quoteIcon;
     iBool            isPreformat   = iFalse;
-    iRangecc         preAltText    = iNullRange; /* TODO: alt text is being ignored */
     int              preFont       = preformatted_FontId;
     uint16_t         preId         = 0;
     iBool            enableIndents = iFalse;
@@ -408,17 +413,26 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             }
             indent = indents[type];
             if (type == preformatted_GmLineType) {
+                /* Begin a new preformatted block. */
                 isPreformat = iTrue;
-                preId++;
+                const size_t preIndex = preId++;
                 preFont = preformatted_FontId;
                 /* Use a smaller font if the block contents are wide. */
-                if (measurePreformattedBlock_GmDocument_(d, line.start, preFont).x >
+                iGmPreMeta meta = { .bounds = line };
+                meta.pixelRect.size = measurePreformattedBlock_GmDocument_(
+                    d, line.start, preFont, &meta.contents, &meta.bounds.end);
+                if (meta.pixelRect.size.x >
                     d->size.x /*- indents[preformatted_GmLineType] * gap_Text*/) {
                     preFont = preformattedSmall_FontId;
                 }
                 trimLine_Rangecc(&line, type, isNormalized);
-                preAltText = line;
-                /* TODO: store and link the alt text to this run */
+                meta.altText = line; /* without the ``` */
+                /* Reuse previous state. */
+                if (preIndex < size_Array(oldPreMeta)) {
+                    meta.flags = constValue_Array(oldPreMeta, preIndex, iGmPreMeta).flags &
+                                 folded_GmPreMetaFlag;
+                }
+                pushBack_Array(&d->preMeta, &meta);
                 continue;
             }
             else if (type == link_GmLineType) {
@@ -446,7 +460,6 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             if (d->format == gemini_GmDocumentFormat &&
                 startsWithSc_Rangecc(line, "```", &iCaseSensitive)) {
                 isPreformat = iFalse;
-                preAltText = iNullRange;
                 addSiteBanner = iFalse; /* overrides the banner */
                 continue;
             }
@@ -521,6 +534,30 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             int delta = pos.y - lastVisibleRunBottom_GmDocument_(d);
             if (delta < required) {
                 pos.y += required - delta;
+            }
+        }
+        /* Folded blocks are represented by a single run with the alt text. */
+        if (isPreformat) {
+            const iGmPreMeta *meta = constAt_Array(&d->preMeta, preId - 1);
+            if (meta->flags & folded_GmPreMetaFlag) {
+                const iBool isBlank = isEmpty_Range(&meta->altText);
+                iGmRun altText = { .font  = paragraph_FontId,
+                                   .flags = (isBlank ? decoration_GmRunFlag : 0) | altText_GmRunFlag };
+                const iInt2 margin = preRunMargin_GmDocument(d, 0);
+                altText.color      = tmQuote_ColorId;
+                altText.text       = isBlank ? range_Lang(range_CStr("doc.pre.nocaption"))
+                                             : meta->altText;
+                iInt2 size = advanceWrapRange_Text(altText.font, d->size.x - 2 * margin.x,
+                                                   altText.text);
+                altText.bounds = altText.visBounds = init_Rect(pos.x, pos.y, d->size.x,
+                                                               size.y + 2 * margin.y);
+                altText.preId = preId;
+                pushBack_Array(&d->layout, &altText);
+                pos.y += height_Rect(altText.bounds);
+                contentLine = meta->bounds; /* Skip the whole thing. */
+                isPreformat = iFalse;
+                prevType = preformatted_GmLineType;
+                continue;
             }
         }
         /* Save the document title (first high-level heading). */
@@ -632,14 +669,27 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                        type == quote_GmLineType ? 4 : 0);
         const iBool isWordWrapped =
             (d->format == plainText_GmDocumentFormat ? prefs->plainTextWrap : !isPreformat);
+        if (isPreformat) {
+            /* Remember the top left coordinates of the block (first line of block). */
+            iGmPreMeta *meta = at_Array(&d->preMeta, preId - 1);
+            if (~meta->flags & topLeft_GmPreMetaFlag) {
+                meta->pixelRect.pos = pos; //, indent * gap_Text);
+                meta->flags |= topLeft_GmPreMetaFlag;
+            }
+            /* Collapse indentation if too wide. */
+            if (width_Rect(meta->pixelRect) > d->size.x - (indent + rightMargin) * gap_Text) {
+                indent = 0;
+            }
+        }
         iAssert(!isEmpty_Range(&runLine)); /* must have something at this point */
         while (!isEmpty_Range(&runLine)) {
             run.bounds.pos = addX_I2(pos, indent * gap_Text);
-            const int avail = isWordWrapped ? d->size.x - run.bounds.pos.x - rightMargin * gap_Text : 0;
+            const int wrapAvail = d->size.x - run.bounds.pos.x - rightMargin * gap_Text;
+            const int avail = isWordWrapped ? wrapAvail : 0;
             const char *contPos;
             const iInt2 dims  = tryAdvance_Text(run.font, runLine, avail, &contPos);
             iChangeFlags(run.flags, wide_GmRunFlag, (isPreformat && dims.x > d->size.x));
-            run.bounds.size.x = iMax(avail, dims.x); /* Extends to the right edge for selection. */
+            run.bounds.size.x = iMax(wrapAvail, dims.x); /* Extends to the right edge for selection. */
             run.bounds.size.y = dims.y;
             run.visBounds     = run.bounds;
             run.visBounds.size.x = dims.x;
@@ -671,7 +721,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 iGmMediaInfo img;
                 imageInfo_Media(d->media, imageId, &img);
                 const iInt2 imgSize = imageSize_Media(d->media, imageId);
-                linkContentLaidOut_GmDocument_(d, &img, run.linkId);
+                linkContentWasLaidOut_GmDocument_(d, &img, run.linkId);
                 const int margin = lineHeight_Text(paragraph_FontId) / 2;
                 pos.y += margin;
                 run.bounds.pos = pos;
@@ -699,7 +749,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             else if (audioId) {
                 iGmMediaInfo info;
                 audioInfo_Media(d->media, audioId, &info);
-                linkContentLaidOut_GmDocument_(d, &info, run.linkId);
+                linkContentWasLaidOut_GmDocument_(d, &info, run.linkId);
                 const int margin = lineHeight_Text(paragraph_FontId) / 2;
                 pos.y += margin;
                 run.bounds.pos    = pos;
@@ -716,7 +766,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             else if (downloadId) {
                 iGmMediaInfo info;
                 downloadInfo_Media(d->media, downloadId, &info);
-                linkContentLaidOut_GmDocument_(d, &info, run.linkId);
+                linkContentWasLaidOut_GmDocument_(d, &info, run.linkId);
                 const int margin = lineHeight_Text(paragraph_FontId) / 2;
                 pos.y += margin;
                 run.bounds.pos    = pos;
@@ -773,6 +823,7 @@ void init_GmDocument(iGmDocument *d) {
     init_String(&d->bannerText);
     init_String(&d->title);
     init_Array(&d->headings, sizeof(iGmHeading));
+    init_Array(&d->preMeta, sizeof(iGmPreMeta));
     d->themeSeed = 0;
     d->siteIcon = 0;
     d->media = new_Media();
@@ -784,6 +835,7 @@ void deinit_GmDocument(iGmDocument *d) {
     deinit_String(&d->title);
     clearLinks_GmDocument_(d);
     deinit_PtrArray(&d->links);
+    deinit_Array(&d->preMeta);
     deinit_Array(&d->headings);
     deinit_Array(&d->layout);
     deinit_String(&d->localHost);
@@ -804,6 +856,7 @@ void reset_GmDocument(iGmDocument *d) {
     clearLinks_GmDocument_(d);
     clear_Array(&d->layout);
     clear_Array(&d->headings);
+    clear_Array(&d->preMeta);
     clear_String(&d->url);
     clear_String(&d->localHost);
     d->themeSeed = 0;
@@ -815,6 +868,8 @@ static void setDerivedThemeColors_(enum iGmDocumentTheme theme) {
     set_Color(tmBannerSideTitle_ColorId,
               mix_Color(get_Color(tmBannerTitle_ColorId), get_Color(tmBackground_ColorId),
                         theme == colorfulDark_GmDocumentTheme ? 0.55f : 0));
+    set_Color(tmAltTextBackground_ColorId, mix_Color(get_Color(tmQuoteIcon_ColorId),
+                                                     get_Color(tmBackground_ColorId), 0.85f));
     if (theme == colorfulDark_GmDocumentTheme) {
         /* Ensure paragraph text and link text aren't too similarly colored. */
         if (delta_Color(get_Color(tmLinkText_ColorId), get_Color(tmParagraph_ColorId)) < 100) {
@@ -824,35 +879,6 @@ static void setDerivedThemeColors_(enum iGmDocumentTheme theme) {
     }
     set_Color(tmLinkCustomIconVisited_ColorId,
               mix_Color(get_Color(tmLinkIconVisited_ColorId), get_Color(tmLinkIcon_ColorId), 0.5f));
-#if 0
-    set_Color(tmOutlineHeadingAbove_ColorId, get_Color(white_ColorId));
-    set_Color(tmOutlineHeadingBelow_ColorId, get_Color(black_ColorId));
-    switch (theme) {
-        case colorfulDark_GmDocumentTheme:
-            set_Color(tmOutlineHeadingBelow_ColorId, get_Color(tmBannerTitle_ColorId));
-            if (equal_Color(get_Color(tmOutlineHeadingAbove_ColorId),
-                            get_Color(tmOutlineHeadingBelow_ColorId))) {
-                set_Color(tmOutlineHeadingBelow_ColorId, get_Color(tmHeading3_ColorId));
-            }
-            break;
-        case colorfulLight_GmDocumentTheme:
-        case sepia_GmDocumentTheme:
-            set_Color(tmOutlineHeadingAbove_ColorId, get_Color(black_ColorId));
-            set_Color(tmOutlineHeadingBelow_ColorId, mix_Color(get_Color(tmBackground_ColorId), get_Color(black_ColorId), 0.6f));
-            break;
-        case gray_GmDocumentTheme:
-            set_Color(tmOutlineHeadingBelow_ColorId, get_Color(gray75_ColorId));
-            break;
-        case white_GmDocumentTheme:
-            set_Color(tmOutlineHeadingBelow_ColorId, mix_Color(get_Color(tmBannerIcon_ColorId), get_Color(white_ColorId), 0.6f));
-            break;
-        case highContrast_GmDocumentTheme:
-            set_Color(tmOutlineHeadingAbove_ColorId, get_Color(black_ColorId));
-            break;
-        default:
-            break;
-    }
-#endif
 }
 
 static void updateIconBasedOnUrl_GmDocument_(iGmDocument *d) {
@@ -1406,6 +1432,20 @@ void setSource_GmDocument(iGmDocument *d, const iString *source, int width) {
     setWidth_GmDocument(d, width); /* re-do layout */
 }
 
+void foldPre_GmDocument(iGmDocument *d, uint16_t preId) {
+    if (preId > 0 && preId <= size_Array(&d->preMeta)) {
+        iGmPreMeta *meta = at_Array(&d->preMeta, preId - 1);
+        meta->flags ^= folded_GmPreMetaFlag;
+    }
+}
+
+const iGmPreMeta *preMeta_GmDocument(const iGmDocument *d, uint16_t preId) {
+    if (preId > 0 && preId <= size_Array(&d->preMeta)) {
+        return constAt_Array(&d->preMeta, preId - 1);
+    }
+    return NULL;
+}
+
 void render_GmDocument(const iGmDocument *d, iRangei visRangeY, iGmDocumentRenderFunc render,
                        void *context) {
     iBool isInside = iFalse;
@@ -1682,6 +1722,11 @@ iRangecc findLoc_GmRun(const iGmRun *d, iInt2 pos) {
         }
     }
     return loc;
+}
+
+iInt2 preRunMargin_GmDocument(const iGmDocument *d, uint16_t preId) {
+    iUnused(d, preId);
+    return init_I2(3 * gap_Text, 2 * gap_Text);
 }
 
 iDefineClass(GmDocument)

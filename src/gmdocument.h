@@ -32,6 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/time.h>
 
 iDeclareType(GmHeading)
+iDeclareType(GmPreMeta)
 iDeclareType(GmRun)
 
 enum iGmLineType {
@@ -89,6 +90,20 @@ struct Impl_GmHeading {
     int level; /* 0, 1, 2 */
 };
 
+enum iGmPreMetaFlag {
+    folded_GmPreMetaFlag = 0x1,
+    topLeft_GmPreMetaFlag = 0x2,
+};
+
+struct Impl_GmPreMeta {
+    iRangecc bounds;   /* including ``` markers */
+    iRangecc altText;  /* range in source */
+    iRangecc contents; /* just the content lines */
+    int      flags;
+    /* TODO: refactor old code to incorporate wide scroll handling here */
+    iRect    pixelRect;
+};
+
 enum iGmRunFlags {
     decoration_GmRunFlag  = iBit(1), /* not part of the source */
     startOfLine_GmRunFlag = iBit(2),
@@ -97,6 +112,7 @@ enum iGmRunFlags {
     quoteBorder_GmRunFlag = iBit(5),
     wide_GmRunFlag        = iBit(6), /* horizontally scrollable */
     footer_GmRunFlag      = iBit(7),
+    altText_GmRunFlag     = iBit(8),
 };
 
 enum iGmRunMediaType {
@@ -150,6 +166,7 @@ void    setWidth_GmDocument     (iGmDocument *, int width);
 void    redoLayout_GmDocument   (iGmDocument *);
 void    setUrl_GmDocument       (iGmDocument *, const iString *url);
 void    setSource_GmDocument    (iGmDocument *, const iString *source, int width);
+void    foldPre_GmDocument      (iGmDocument *, uint16_t preId);
 
 void    reset_GmDocument        (iGmDocument *); /* free images */
 
@@ -194,4 +211,5 @@ const iTime *   linkTime_GmDocument     (const iGmDocument *, iGmLinkId linkId);
 iBool           isMediaLink_GmDocument  (const iGmDocument *, iGmLinkId linkId);
 const iString * title_GmDocument        (const iGmDocument *);
 iChar           siteIcon_GmDocument     (const iGmDocument *);
-
+const iGmPreMeta *preMeta_GmDocument    (const iGmDocument *, uint16_t preId);
+iInt2           preRunMargin_GmDocument (const iGmDocument *, uint16_t preId);
