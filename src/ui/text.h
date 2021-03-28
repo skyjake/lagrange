@@ -75,7 +75,8 @@ enum iFontId {
     japanese_FontId          = emoji_FontId + max_FontSize,
     chineseSimplified_FontId = japanese_FontId + max_FontSize,
     korean_FontId            = chineseSimplified_FontId + max_FontSize,
-    max_FontId               = korean_FontId + max_FontSize,
+    arabic_FontId            = korean_FontId + max_FontSize,
+    max_FontId               = arabic_FontId + max_FontSize,
 
     /* Meta: */
     mask_FontId               = 0xffff,

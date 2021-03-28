@@ -331,6 +331,7 @@ static void initFonts_Text_(iText *d) {
         DEFINE_FONT_SET(fontNotoSansJPRegular_Embedded),
         DEFINE_FONT_SET(fontNotoSansSCRegular_Embedded),
         DEFINE_FONT_SET(fontNanumGothicRegular_Embedded), /* TODO: should use Noto Sans here, too */
+        DEFINE_FONT_SET(fontNotoSansArabicUIRegular_Embedded),
     };
     iForIndices(i, fontData) {
         iFont *font = &d->fonts[i];
@@ -582,6 +583,13 @@ iLocalDef iFont *characterFont_Font_(iFont *d, iChar ch, uint32_t *glyphIndex) {
         iFont *japanese = font_Text_(japanese_FontId + d->sizeId);
         if (japanese != d && (*glyphIndex = glyphIndex_Font_(japanese, ch)) != 0) {
             return japanese;
+        }
+    }
+    /* Maybe Arabic. */
+    if (ch >= 0x600) {
+        iFont *arabic = font_Text_(arabic_FontId + d->sizeId);
+        if (arabic != d && (*glyphIndex = glyphIndex_Font_(arabic, ch)) != 0) {
+            return arabic;
         }
     }
 #if defined (iPlatformApple)

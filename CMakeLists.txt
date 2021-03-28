@@ -64,6 +64,7 @@ set (EMBED_RESOURCES
     res/fonts/Literata-LightItalic-opsz=10.ttf
     res/fonts/NanumGothic-Regular.ttf
     res/fonts/NotoEmoji-Regular.ttf
+    res/fonts/NotoSansArabicUI-Regular.ttf
     res/fonts/NotoSansJP-Regular.ttf
     res/fonts/NotoSansSC-Regular.ttf
     res/fonts/Nunito-Bold.ttf
@@ -188,6 +189,7 @@ set (SOURCES
     res/about/about.gmi
     res/about/help.gmi
     res/about/lagrange.gmi
+    res/about/license.gmi
     res/about/version.gmi
     ${CMAKE_CURRENT_BINARY_DIR}/resources.lgr
     ${CMAKE_CURRENT_BINARY_DIR}/embedded.c
