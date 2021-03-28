@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-03-27 04:56+0000\n"
-"Last-Translator: Jaakko Keränen <jaakko.keranen@iki.fi>\n"
+"PO-Revision-Date: 2021-03-28 04:52+0000\n"
+"Last-Translator: Shibo Lyu <github@of.sb>\n"
 "Language-Team: Chinese (Simplified) <http://weblate.skyjake.fi/projects/"
 "lagrange/ui/zh_Hans/>\n"
 "Language: zh_Hans\n"
@@ -55,10 +55,10 @@ msgid "dlg.default"
 msgstr " 好 "
 
 msgid "toggle.yes"
-msgstr "启用"
+msgstr "已启用"
 
 msgid "toggle.no"
-msgstr "关闭"
+msgstr "已关闭"
 
 msgid "menu.title.file"
 msgstr "文件"
@@ -287,12 +287,12 @@ msgstr "字节"
 # strftime() formatted
 #, c-format
 msgid "sidebar.date.thisyear"
-msgstr "%b %d日"
+msgstr "%m 月 %d日"
 
 # strftime() formatted
 #, c-format
 msgid "sidebar.date.otheryear"
-msgstr "%Y年%b %d日"
+msgstr "%Y年 %m 月 %d日"
 
 msgid "feeds.today"
 msgstr "今天"
@@ -388,7 +388,7 @@ msgstr "临时"
 # strftime() formatted
 #, c-format
 msgid "ident.expiry"
-msgstr "将于 %Y 年%b %d日过期"
+msgstr "将于 %Y 年 %m 月 %d日过期"
 
 msgid "ident.use"
 msgstr "在本页使用"
@@ -472,7 +472,7 @@ msgid "pageinfo.cert.ca.verified"
 msgstr "由权威证书机构验证"
 
 msgid "pageinfo.cert.ca.unverified"
-msgstr "未经权威证书机构验证"
+msgstr "未经权威证书机构（CA）验证"
 
 msgid "pageinfo.cert.notexpired"
 msgstr "未过期"
@@ -604,7 +604,7 @@ msgstr "收到的证书已经过期，且域名不对应。"
 #, c-format
 msgid "page.timestamp"
 msgstr ""
-"于 %Y 年%b %d 日\n"
+"于 %Y 年 %m 月 %d 日\n"
 "%H:%M 接收"
 
 msgid "feeds.entry.openfeed"
@@ -1265,3 +1265,27 @@ msgstr "浏览记录"
 # Interpret as "Results from identitites..."
 msgid "heading.lookup.identities"
 msgstr "身份"
+
+# Interpret as "Results from page content..."
+msgid "heading.lookup.pagecontent"
+msgstr "页面内容"
+
+# Interpret as "Other results..."
+msgid "heading.lookup.other"
+msgstr "其它结果"
+
+msgid "reload.never"
+msgstr "永不"
+
+msgid "reload.onceperday"
+msgstr "每天一次"
+
+#, c-format
+msgid "num.minutes"
+msgid_plural "num.minutes.n"
+msgstr[0] "%d 分钟"
+
+#, c-format
+msgid "num.hours"
+msgid_plural "num.hours.n"
+msgstr[0] "%d 小时"
