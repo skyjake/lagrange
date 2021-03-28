@@ -25,7 +25,8 @@ msgid "sidebar.outline"
 msgstr "大纲"
 
 msgid "sidebar.unread"
-msgstr "未读"
+msgid_plural "sidebar.unread.n"
+msgstr[0] "未读"
 
 msgid "menu.preferences"
 msgstr "偏好设置…"
@@ -258,9 +259,6 @@ msgstr "新标签页"
 msgid "menu.closetab.right"
 msgstr "关闭右侧所有标签页"
 
-msgid "sidebar.unread.many"
-msgstr "未读"
-
 msgid "toolbar.outline"
 msgstr "页面大纲"
 
@@ -380,7 +378,8 @@ msgstr "未使用"
 
 #, c-format
 msgid "ident.usedonurls"
-msgstr "在 %zu 个地址上使用"
+msgid_plural "ident.usedonurls.n"
+msgstr[0] "在 %zu 个地址上使用"
 
 msgid "ident.temporary"
 msgstr "临时"
@@ -523,20 +522,15 @@ msgstr "保存文件时出错"
 msgid "heading.import.bookmarks"
 msgstr "导入书签"
 
-msgid "dlg.import.found"
-msgstr "在页面上找到了 %d 条新的链接。"
-
 #, c-format
-msgid "dlg.import.found.many"
-msgstr "在页面上找到了 %d 条新的链接。"
+msgid "dlg.import.found"
+msgid_plural "dlg.import.found.n"
+msgstr[0] "在页面上找到了 %d 条新的链接。"
 
 #, c-format
 msgid "dlg.import.add"
-msgstr "%s添加 %d 个书签"
-
-#, c-format
-msgid "dlg.import.add.many"
-msgstr "%s添加 %d 个书签"
+msgid_plural "dlg.import.add.n"
+msgstr[0] "%s添加 %d 个书签"
 
 msgid "dlg.import.notnew"
 msgstr "本页上所有链接均已被添加到书签。"
@@ -585,7 +579,8 @@ msgstr "不受信任的证书"
 
 #, c-format
 msgid "dlg.certwarn.mayberenewed"
-msgstr "收到的证书或许是最近更新了——它对应这个域名且没有过期。目前信任的证书会在%s，即 %d 天后过期。"
+msgid_plural "dlg.certwarn.mayberenewed.n"
+msgstr[0] "收到的证书或许是最近更新了——它对应这个域名且没有过期。目前信任的证书会在%s，即 %d 天后过期。"
 
 msgid "dlg.certwarn.different"
 msgstr "收到的证书是有效的，但与目前信任的证书不一致。"
