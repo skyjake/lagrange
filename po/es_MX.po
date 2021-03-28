@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-03-28 19:06+0000\n"
+"PO-Revision-Date: 2021-03-29 05:43+0000\n"
 "Last-Translator: El Mau <public@correolibre.net>\n"
 "Language-Team: Spanish (Mexico) <http://weblate.skyjake.fi/projects/lagrange/"
 "ui/es_MX/>\n"
@@ -362,3 +362,36 @@ msgstr "Marcar Todo como Leído"
 
 msgid "menu.forgeturl"
 msgstr "Olvidar URL"
+
+msgid "dlg.confirm.history.clear"
+msgstr "¿De verdad quiere borrar el historial de todas las páginas visitadas?"
+
+msgid "dlg.history.clear"
+msgstr "Limpiar Historial"
+
+msgid "bookmark.tag.home"
+msgstr "Usar como Página de Inicio"
+
+msgid "bookmark.tag.sub"
+msgstr "Suscribirse"
+
+msgid "bookmark.tag.remote"
+msgstr "Usar como Fuente de Marcador"
+
+msgid "bookmark.untag.home"
+msgstr "Remover Página de Inicio"
+
+msgid "bookmark.untag.sub"
+msgstr "Eliminar Suscripción"
+
+msgid "bookmark.untag.remote"
+msgstr "Remover Fuente de Marcador"
+
+msgid "bookmark.delete"
+msgstr "Borrar favorita"
+
+msgid "bookmarks.reload"
+msgstr "Refrescar Fuentes Remotas"
+
+msgid "doc.pre.nocaption"
+msgstr "Texto preformateado sin título"
