@@ -1,4 +1,4 @@
-﻿/* Copyright 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
+/* Copyright 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -1003,7 +1003,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
         if (args->xposLimit > 0 && x2 > args->xposLimit) {
             if (args->continueFrom_out) {
                 if (lastWordEnd != args->text.start && ~mode & noWrapFlag_RunMode) {
-                    *args->continueFrom_out = lastWordEnd;
+                    *args->continueFrom_out = skipSpace_CStr(lastWordEnd);
                 }
                 else {
                     *args->continueFrom_out = currentPos; /* forced break */
