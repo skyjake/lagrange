@@ -940,6 +940,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                     }
                 }
             }
+            /* TODO: Check out if `uc_wordbreak_property()` from libunistring can be used here. */
             if (ch == '\n') {
                 xpos = xposExtend = orig.x;
                 ypos += d->height;
