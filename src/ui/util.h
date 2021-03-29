@@ -112,6 +112,7 @@ struct Impl_Anim {
 
 void    init_Anim           (iAnim *, float value);
 void    setValue_Anim       (iAnim *, float to, uint32_t span);
+void    setValueSpeed_Anim  (iAnim *, float to, float unitsPerSecond);
 void    setValueEased_Anim  (iAnim *, float to, uint32_t span);
 void    setFlags_Anim       (iAnim *, int flags, iBool set);
 void    stop_Anim           (iAnim *);

@@ -421,9 +421,9 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 iGmPreMeta meta = { .bounds = line };
                 meta.pixelRect.size = measurePreformattedBlock_GmDocument_(
                     d, line.start, preFont, &meta.contents, &meta.bounds.end);
-                if (meta.pixelRect.size.x >
-                    d->size.x /*- indents[preformatted_GmLineType] * gap_Text*/) {
+                if (meta.pixelRect.size.x > d->size.x - indents[preformatted_GmLineType] * gap_Text) {
                     preFont = preformattedSmall_FontId;
+                    meta.pixelRect.size = measureRange_Text(preFont, meta.contents);
                 }
                 trimLine_Rangecc(&line, type, isNormalized);
                 meta.altText = line; /* without the ``` */
@@ -1727,6 +1727,16 @@ iRangecc findLoc_GmRun(const iGmRun *d, iInt2 pos) {
 iInt2 preRunMargin_GmDocument(const iGmDocument *d, uint16_t preId) {
     iUnused(d, preId);
     return init_I2(3 * gap_Text, 2 * gap_Text);
+}
+
+iBool preIsFolded_GmDocument(const iGmDocument *d, uint16_t preId) {
+    const iGmPreMeta *meta = preMeta_GmDocument(d, preId);
+    return meta && (meta->flags & folded_GmPreMetaFlag) != 0;
+}
+
+iBool preHasAltText_GmDocument(const iGmDocument *d, uint16_t preId) {
+    const iGmPreMeta *meta = preMeta_GmDocument(d, preId);
+    return meta && !isEmpty_Range(&meta->altText);
 }
 
 iDefineClass(GmDocument)

@@ -515,6 +515,7 @@ static void invalidateWideRunsWithNonzeroOffset_DocumentWidget_(iDocumentWidget 
 
 static void animate_DocumentWidget_(void *ticker) {
     iDocumentWidget *d = ticker;
+    refresh_Widget(d);
     if (!isFinished_Anim(&d->sideOpacity) || !isFinished_Anim(&d->altTextOpacity)) {
         addTicker_App(animate_DocumentWidget_, d);
     }
@@ -557,15 +558,19 @@ static void updateHover_DocumentWidget_(iDocumentWidget *d, iInt2 mouse) {
             }
         }
     }
-    if (!d->hoverPre && targetValue_Anim(&d->altTextOpacity) > 0.5f) {
-        setValue_Anim(&d->altTextOpacity, 0.0f, 300);
-        animate_DocumentWidget_(d);
-        refresh_Widget(w);
+    if (!d->hoverPre) {
+        setValueSpeed_Anim(&d->altTextOpacity, 0.0f, 2);
+        if (!isFinished_Anim(&d->altTextOpacity)) {
+            animate_DocumentWidget_(d);
+        }
     }
-    else if (d->hoverPre && targetValue_Anim(&d->altTextOpacity) < 0.5f &&
+    else if (d->hoverPre &&
+             preHasAltText_GmDocument(d->doc, d->hoverPre->preId) &&
              ~d->flags & noHoverWhileScrolling_DocumentWidgetFlag) {
-        setValue_Anim(&d->altTextOpacity, 1.0f, 0);
-        refresh_Widget(w);
+        setValueSpeed_Anim(&d->altTextOpacity, 1.0f, 2);
+        if (!isFinished_Anim(&d->altTextOpacity)) {
+            animate_DocumentWidget_(d);
+        }
     }
     if (isHover_Widget(w) && !contains_Widget(constAs_Widget(d->scroll), mouse)) {
         setCursor_Window(get_Window(),
@@ -886,6 +891,7 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
     updateTheme_DocumentWidget_(d);
     init_Anim(&d->scrollY, 0);
     init_Anim(&d->sideOpacity, 0);
+    init_Anim(&d->altTextOpacity, 0);
     resetWideRuns_DocumentWidget_(d);
     d->state = ready_RequestState;
 }
@@ -1090,6 +1096,7 @@ static iBool updateFromHistory_DocumentWidget_(iDocumentWidget *d) {
         set_Block(&d->sourceContent, &resp->body);
         updateDocument_DocumentWidget_(d, resp, iTrue);
         init_Anim(&d->scrollY, d->initNormScrollY * size_GmDocument(d->doc).y);
+        init_Anim(&d->altTextOpacity, 0);
         d->state = ready_RequestState;
         updateSideOpacity_DocumentWidget_(d, iFalse);
         updateSideIconBuf_DocumentWidget_(d);
@@ -1261,6 +1268,7 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
         d->state = receivedPartialResponse_RequestState;
         updateTrust_DocumentWidget_(d, resp);
         init_Anim(&d->sideOpacity, 0);
+        init_Anim(&d->altTextOpacity, 0);
         format_String(&d->sourceHeader, "%d %s", statusCode, get_GmError(statusCode)->title);
         d->sourceStatus = statusCode;
         switch (category_GmStatusCode(statusCode)) {
@@ -1652,6 +1660,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             updateFetchProgress_DocumentWidget_(d);
         }
         init_Anim(&d->sideOpacity, 0);
+        init_Anim(&d->altTextOpacity, 0);
         updateSideOpacity_DocumentWidget_(d, iFalse);
         updateWindowTitle_DocumentWidget_(d);
         allocVisBuffer_DocumentWidget_(d);
@@ -2687,6 +2696,10 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 return iTrue;
             }
             /* Begin selecting a range of text. */
+            if (~d->flags & selecting_DocumentWidgetFlag && d->hoverPre &&
+                preIsFolded_GmDocument(d->doc, d->hoverPre->preId)) {
+                return iTrue;
+            }
             if (~d->flags & selecting_DocumentWidgetFlag) {
                 beginMarkingSelection_DocumentWidget_(d, d->click.startPos);
             }
@@ -2884,10 +2897,12 @@ static void fillRange_DrawContext_(iDrawContext *d, const iGmRun *run, enum iCol
         if (w > width_Rect(run->visBounds) - x) {
             w = width_Rect(run->visBounds) - x;
         }
-        const iInt2 visPos =
-            add_I2(run->bounds.pos, addY_I2(d->viewPos, -value_Anim(&d->widget->scrollY)));
-        fillRect_Paint(&d->paint, (iRect){ addX_I2(visPos, x),
-                                           init_I2(w, height_Rect(run->bounds)) }, color);
+        if (~run->flags & decoration_GmRunFlag) {
+            const iInt2 visPos =
+                add_I2(run->bounds.pos, addY_I2(d->viewPos, -value_Anim(&d->widget->scrollY)));
+            fillRect_Paint(&d->paint, (iRect){ addX_I2(visPos, x),
+                                               init_I2(w, height_Rect(run->bounds)) }, color);
+        }
     }
     /* Link URLs are not part of the visible document, so they are ignored above. Handle
        these ranges as a special case. */
@@ -3473,7 +3488,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
     }
     draw_Widget(w);
     /* Alt text. */
-    const float altTextOpacity = value_Anim(&d->altTextOpacity);
+    const float altTextOpacity = value_Anim(&d->altTextOpacity) * 3 - 2;
     if (d->hoverAltPre && altTextOpacity > 0) {
         const iGmPreMeta *meta = preMeta_GmDocument(d->doc, d->hoverAltPre->preId);
         if (meta->flags & topLeft_GmPreMetaFlag && ~meta->flags & decoration_GmRunFlag &&

@@ -62,6 +62,13 @@ const char *command_UserEvent(const SDL_Event *d) {
     return "";
 }
 
+static void removePlus_(iString *str) {
+    if (endsWith_String(str, "+")) {
+        removeEnd_String(str, 1);
+        appendCStr_String(str, " ");
+    }
+}
+
 void toString_Sym(int key, int kmods, iString *str) {
 #if defined (iPlatformApple)
     if (kmods & KMOD_CTRL) {
@@ -100,27 +107,35 @@ void toString_Sym(int key, int kmods, iString *str) {
         appendCStr_String(str, "Esc");
     }
     else if (key == SDLK_LEFT) {
+        removePlus_(str);
         appendChar_String(str, 0x2190);
     }
     else if (key == SDLK_RIGHT) {
+        removePlus_(str);
         appendChar_String(str, 0x2192);
     }
     else if (key == SDLK_UP) {
+        removePlus_(str);
         appendChar_String(str, 0x2191);
     }
     else if (key == SDLK_DOWN) {
+        removePlus_(str);
         appendChar_String(str, 0x2193);
     }
     else if (key < 128 && (isalnum(key) || ispunct(key))) {
+        if (ispunct(key)) removePlus_(str);
         appendChar_String(str, upper_Char(key));
     }
     else if (key == SDLK_BACKSPACE) {
+        removePlus_(str);
         appendChar_String(str, 0x232b); /* Erase to the Left */
     }
     else if (key == SDLK_DELETE) {
+        removePlus_(str);
         appendChar_String(str, 0x2326); /* Erase to the Right */
     }
     else if (key == SDLK_RETURN) {
+        removePlus_(str);
         appendChar_String(str, 0x21a9); /* Leftwards arrow with a hook */
     }
     else {
@@ -290,6 +305,19 @@ void setValue_Anim(iAnim *d, float to, uint32_t span) {
         d->to   = to;
         d->when = now;
         d->due  = now + span;
+    }
+}
+
+void setValueSpeed_Anim(iAnim *d, float to, float unitsPerSecond) {
+    if (iAbs(d->to - to) > 0.0001f) {
+        const uint32_t now   = SDL_GetTicks();
+        const float    from  = valueAt_Anim_(d, now);
+        const float    delta = to - from;
+        const uint32_t span  = (fabsf(delta) / unitsPerSecond) * 1000;
+        d->from              = from;
+        d->to                = to;
+        d->when              = now;
+        d->due               = d->when + span;
     }
 }
 

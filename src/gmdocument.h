@@ -213,3 +213,5 @@ const iString * title_GmDocument        (const iGmDocument *);
 iChar           siteIcon_GmDocument     (const iGmDocument *);
 const iGmPreMeta *preMeta_GmDocument    (const iGmDocument *, uint16_t preId);
 iInt2           preRunMargin_GmDocument (const iGmDocument *, uint16_t preId);
+iBool           preIsFolded_GmDocument  (const iGmDocument *, uint16_t preId);
+iBool           preHasAltText_GmDocument(const iGmDocument *, uint16_t preId);
