@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-03-29 11:28+0000\n"
+"PO-Revision-Date: 2021-03-30 12:05+0000\n"
 "Last-Translator: Shibo Lyu <github@of.sb>\n"
 "Language-Team: Chinese (Simplified) <http://weblate.skyjake.fi/projects/"
 "lagrange/ui/zh_Hans/>\n"
@@ -1290,3 +1290,6 @@ msgstr "无说明的预格式化文本"
 
 msgid "prefs.collapsepreonload"
 msgstr "收起预格式化文本："
+
+msgid "lang.zh.hant"
+msgstr "繁體/正體中文"
