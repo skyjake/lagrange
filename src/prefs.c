@@ -40,6 +40,7 @@ void init_Prefs(iPrefs *d) {
     d->hoverLink         = iTrue;
     d->smoothScrolling   = iTrue;
     d->loadImageInsteadOfScrolling = iFalse;
+    d->collapsePreOnLoad = iFalse;
     d->decodeUserVisibleURLs = iTrue;
     d->maxCacheSize      = 10;
     d->font              = nunito_TextFont;

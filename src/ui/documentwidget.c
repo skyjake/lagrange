@@ -2506,6 +2506,9 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             setCursor_Window(get_Window(), SDL_SYSTEM_CURSOR_HAND);
         }
         else {
+            if (value_Anim(&d->altTextOpacity) < 0.667f) {
+                setValue_Anim(&d->altTextOpacity, 0, 0); /* keep it hidden while moving */
+            }
             updateHover_DocumentWidget_(d, mpos);
         }
     }

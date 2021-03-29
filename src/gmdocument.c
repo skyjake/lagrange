@@ -432,6 +432,9 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                     meta.flags = constValue_Array(oldPreMeta, preIndex, iGmPreMeta).flags &
                                  folded_GmPreMetaFlag;
                 }
+                else if (prefs->collapsePreOnLoad) {
+                    meta.flags |= folded_GmPreMetaFlag;
+                }
                 pushBack_Array(&d->preMeta, &meta);
                 continue;
             }

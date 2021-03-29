@@ -1899,6 +1899,8 @@ iWidget *makePreferences_Widget(void) {
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.hoverlink")));
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.centershort}")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.centershort")));
+        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.collapsepreonload}")));
+        addChild_Widget(values, iClob(makeToggle_Widget("prefs.collapsepreonload")));
         makeTwoColumnHeading_("${heading.prefs.scrolling}", headings, values);
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.smoothscroll}")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.smoothscroll")));
@@ -2018,7 +2020,6 @@ iWidget *makePreferences_Widget(void) {
         appendTwoColumnPage_(tabs, "${heading.prefs.style}", '4', &headings, &values);
         makeTwoColumnHeading_("${heading.prefs.fonts}", headings, values);
         /* Fonts. */ {
-            iWidget *fonts;
             addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.headingfont}")));
             addFontButtons_(values, "headingfont");
             addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.font}")));

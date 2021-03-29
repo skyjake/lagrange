@@ -199,6 +199,7 @@ int visCount_ListWidget(const iListWidget *d) {
                 (int) size_PtrArray(&d->items));
 }
 
+#if 0
 static iRanges visRange_ListWidget_(const iListWidget *d) {
     if (d->itemHeight == 0) {
         return (iRanges){ 0, 0 };
@@ -207,6 +208,7 @@ static iRanges visRange_ListWidget_(const iListWidget *d) {
     vis.end = iMin(size_PtrArray(&d->items), vis.start + visCount_ListWidget(d) + 1);
     return vis;
 }
+#endif
 
 size_t itemIndex_ListWidget(const iListWidget *d, iInt2 pos) {
     const iRect bounds = innerBounds_Widget(constAs_Widget(d));
@@ -339,11 +341,11 @@ static void drawItem_ListWidget_(const iListWidget *d, iPaint *p, size_t index, 
     const iRect      itemRect  = { pos, init_I2(width_Rect(bounds), d->itemHeight) };
     class_ListItem(item)->draw(item, p, itemRect, d);
 }
-#endif
 
 static const iListItem *item_ListWidget_(const iListWidget *d, size_t pos) {
     return constAt_PtrArray(&d->items, pos);
 }
+#endif
 
 static void draw_ListWidget_(const iListWidget *d) {
     const iWidget *w      = constAs_Widget(d);

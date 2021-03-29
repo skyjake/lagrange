@@ -32,6 +32,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 iDeclareType(Prefs)
 
+/* TODO: Refactor at least the boolean values into an array for easier manipulation.
+   Then they can be (de)serialized as a group. Need to use a systematic command naming
+   convention for notifications.  */
 struct Impl_Prefs {
     /* UI state */
     int              dialogTab;
@@ -53,6 +56,7 @@ struct Impl_Prefs {
     iBool            hoverLink;
     iBool            smoothScrolling;
     iBool            loadImageInsteadOfScrolling;
+    iBool            collapsePreOnLoad;
     iString          searchUrl;
     /* Network */
     iString          caFile;
