@@ -537,7 +537,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             }
         }
         /* Folded blocks are represented by a single run with the alt text. */
-        if (isPreformat) {
+        if (isPreformat && d->format != plainText_GmDocumentFormat) {
             const iGmPreMeta *meta = constAt_Array(&d->preMeta, preId - 1);
             if (meta->flags & folded_GmPreMetaFlag) {
                 const iBool isBlank = isEmpty_Range(&meta->altText);
@@ -669,7 +669,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                        type == quote_GmLineType ? 4 : 0);
         const iBool isWordWrapped =
             (d->format == plainText_GmDocumentFormat ? prefs->plainTextWrap : !isPreformat);
-        if (isPreformat) {
+        if (isPreformat && d->format != plainText_GmDocumentFormat) {
             /* Remember the top left coordinates of the block (first line of block). */
             iGmPreMeta *meta = at_Array(&d->preMeta, preId - 1);
             if (~meta->flags & topLeft_GmPreMetaFlag) {
