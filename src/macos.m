@@ -497,7 +497,7 @@ void insertMenuItems_MacOS(const char *menuLabel, int atIndex, const iMenuItem *
                 [myDel setCommand:[NSString stringWithUTF8String:items[i].command] forMenuItem:item];
                 /* Bindings may have a different key. */
                 const iBinding *bind = findCommand_Keys(items[i].command);
-                if (bind) {
+                if (bind && bind->id < builtIn_BindingId) {
                     key   = bind->key;
                     kmods = bind->mods;
                 }
@@ -533,7 +533,7 @@ void handleCommand_MacOS(const char *cmd) {
                     if (command) {
                         const iBinding *bind = findCommand_Keys(
                             [command cStringUsingEncoding:NSUTF8StringEncoding]);
-                        if (bind) {
+                        if (bind && bind->id < builtIn_BindingId) {
                             setShortcut_NSMenuItem_(menuItem, bind->key, bind->mods);
                         }
                     }

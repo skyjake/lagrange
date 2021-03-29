@@ -56,6 +56,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #   define subscribeToPage_KeyModifier  SDLK_d,             KMOD_SHIFT | KMOD_PRIMARY
 #endif
 
+#define builtIn_BindingId   1000    /* not user-configurable */
+
 iDeclareType(Binding)
 
 struct Impl_Binding {
