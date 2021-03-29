@@ -73,7 +73,7 @@ static void trigger_LabelWidget_(const iLabelWidget *d) {
 static void updateKey_LabelWidget_(iLabelWidget *d) {
     if (!isEmpty_String(&d->command)) {
         const iBinding *bind = findCommand_Keys(cstr_String(&d->command));
-        if (bind) {
+        if (bind && bind->id < builtIn_BindingId) {
             d->key   = bind->key;
             d->kmods = bind->mods;
         }
