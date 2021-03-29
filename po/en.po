@@ -713,6 +713,9 @@ msgstr "Chinese"
 msgid "lang.zh.hans"
 msgstr "Chinese (Simplified)"
 
+msgid "lang.zh.hant"
+msgstr "Chinese (Traditional)"
+
 msgid "lang.en"
 msgstr "English"
 
