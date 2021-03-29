@@ -562,7 +562,8 @@ static void updateHover_DocumentWidget_(iDocumentWidget *d, iInt2 mouse) {
         animate_DocumentWidget_(d);
         refresh_Widget(w);
     }
-    else if (d->hoverPre && targetValue_Anim(&d->altTextOpacity) < 0.5f) {
+    else if (d->hoverPre && targetValue_Anim(&d->altTextOpacity) < 0.5f &&
+             ~d->flags & noHoverWhileScrolling_DocumentWidgetFlag) {
         setValue_Anim(&d->altTextOpacity, 1.0f, 0);
         refresh_Widget(w);
     }
@@ -3477,7 +3478,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
         const iGmPreMeta *meta = preMeta_GmDocument(d->doc, d->hoverAltPre->preId);
         if (meta->flags & topLeft_GmPreMetaFlag && ~meta->flags & decoration_GmRunFlag &&
             !isEmpty_Range(&meta->altText)) {
-            const int   margin   = 2 * gap_UI;
+            const int   margin   = 3 * gap_UI / 2;
             const int   altFont  = uiLabel_FontId;
             const int   wrap     = docBounds.size.x - 2 * margin;
             iInt2 pos            = addY_I2(add_I2(docBounds.pos, meta->pixelRect.pos),
