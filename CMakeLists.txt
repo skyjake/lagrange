@@ -324,6 +324,9 @@ endif ()
 if (UNIX)
     target_link_libraries (app PUBLIC m)
 endif ()
+if (HAIKU)
+    target_link_libraries (app PUBLIC m network bsd)
+endif ()
 
 # Deployment.
 if (MSYS)
@@ -341,6 +344,13 @@ if (MSYS)
     )
     if (INSTALL_THE_FOUNDATION)
         install (PROGRAMS $<TARGET_FILE:the_Foundation::the_Foundation> DESTINATION .)
+    endif ()
+elseif (HAIKU)
+    install (TARGETS app DESTINATION .)
+    if (NOT ENABLE_RESOURCE_EMBED)
+        target_compile_definitions (app PUBLIC
+            LAGRANGE_EMB_BIN="${CMAKE_INSTALL_PREFIX}/resources.lgr")
+        install (FILES ${EMB_BIN} DESTINATION .)
     endif ()
 elseif (UNIX AND NOT APPLE)
     set_target_properties (app PROPERTIES

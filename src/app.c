@@ -89,6 +89,10 @@ static const char *defaultDataDir_App_ = "~/AppData/Roaming/fi.skyjake.Lagrange"
 #define EMB_BIN  "../../share/lagrange/resources.lgr"
 static const char *defaultDataDir_App_ = "~/.config/lagrange";
 #endif
+#if defined (iPlatformHaiku)
+#define EMB_BIN "./resources.lgr"
+static const char *defaultDataDir_App_ = "~/config/settings";
+#endif
 #if defined (LAGRANGE_EMB_BIN) /* specified in build config */
 #  undef EMB_BIN
 #  define EMB_BIN LAGRANGE_EMB_BIN
@@ -2128,7 +2132,7 @@ void openInDefaultBrowser_App(const iString *url) {
     setArguments_Process(proc,
 #if defined (iPlatformAppleDesktop)
                          iClob(newStringsCStr_StringList("/usr/bin/env", "open", cstr_String(url), NULL))
-#elif defined (iPlatformLinux) || defined (iPlatformOther)
+#elif defined (iPlatformLinux) || defined (iPlatformOther) || defined (iPlatformHaiku)
                          iClob(newStringsCStr_StringList("/usr/bin/env", "xdg-open", cstr_String(url), NULL))
 #elif defined (iPlatformMsys)
         iClob(newStringsCStr_StringList(
@@ -2165,7 +2169,7 @@ void revealPath_App(const iString *path) {
         iRelease(proc);
     }
     iRelease(f);
-#elif defined (iPlatformLinux)
+#elif defined (iPlatformLinux) || defined (iPlatformHaiku)
     iFileInfo *inf = iClob(new_FileInfo(path));
     iRangecc target;
     if (isDirectory_FileInfo(inf)) {
