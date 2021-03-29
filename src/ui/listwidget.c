@@ -361,17 +361,18 @@ static void draw_ListWidget_(const iListWidget *d) {
         /* TODO: This seems to draw two items per each shift of the visible region, even though
            one should be enough. Probably an off-by-one error in the calculation of the
            invalid range. */
-        iAssert(d->visBuf->buffers[0].texture);
-        iAssert(d->visBuf->buffers[1].texture);
-        iAssert(d->visBuf->buffers[2].texture);
-        const int bg[3] = { w->bgColor, w->bgColor, w->bgColor };
-//        const int bg[3] = { red_ColorId, magenta_ColorId, blue_ColorId };
+        iForIndices(i, d->visBuf->buffers) {
+            iAssert(d->visBuf->buffers[i].texture);
+        }
+        const int bg[iElemCount(d->visBuf->buffers)] = {
+            w->bgColor, w->bgColor, w->bgColor, w->bgColor
+        };
         const int bottom = numItems_ListWidget(d) * d->itemHeight;
         const iRangei vis = { d->scrollY / d->itemHeight * d->itemHeight,
                              ((d->scrollY + bounds.size.y) / d->itemHeight + 1) * d->itemHeight };
         reposition_VisBuf(d->visBuf, vis);
         /* Check which parts are invalid. */
-        iRangei invalidRange[3];
+        iRangei invalidRange[iElemCount(d->visBuf->buffers)];
         invalidRanges_VisBuf(d->visBuf, (iRangei){ 0, bottom }, invalidRange);
         iForIndices(i, d->visBuf->buffers) {
             iVisBufTexture *buf = &d->visBuf->buffers[i];

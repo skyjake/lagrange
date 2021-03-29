@@ -2040,10 +2040,9 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             fetchNextUnfetchedImage_DocumentWidget_(d)) {
             return iTrue;
         }
-        const float amount = argLabel_Command(cmd, "full") ? 1.0f : 0.5f;
+        const float amount = argLabel_Command(cmd, "full") != 0 ? 1.0f : 0.5f;
         smoothScroll_DocumentWidget_(d,
-                                     dir * (amount * height_Rect(documentBounds_DocumentWidget_(d)) -
-                                            0 * lineHeight_Text(paragraph_FontId)),
+                                     dir * amount * height_Rect(documentBounds_DocumentWidget_(d)),
                                      smoothDuration_DocumentWidget_);
         return iTrue;
     }
@@ -3391,7 +3390,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
     const iRangei vis  = visibleRange_DocumentWidget_(d);
     const iRangei full = { 0, size_GmDocument(d->doc).y };
     reposition_VisBuf(visBuf, vis);
-    iRangei invalidRange[3];
+    iRangei invalidRange[iElemCount(d->visBuf->buffers)];
     invalidRanges_VisBuf(visBuf, full, invalidRange);
     /* Redraw the invalid ranges. */ {
         iPaint *p = &ctx.paint;
