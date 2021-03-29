@@ -112,6 +112,7 @@ enum iWidgetFlag {
 #define safePadding_WidgetFlag              iBit64(56) /* padded using safe area insets */
 #define moveToParentBottomEdge_WidgetFlag   iBit64(57)
 #define parentCannotResizeHeight_WidgetFlag iBit64(58)
+#define ignoreForParentWidth_WidgetFlag     iBit64(59)
 
 enum iWidgetAddPos {
     back_WidgetAddPos,

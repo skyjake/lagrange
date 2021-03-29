@@ -1837,8 +1837,9 @@ static iWidget *appendTwoColumnPage_(iWidget *tabs, const char *title, int short
 }
 
 static void makeTwoColumnHeading_(const char *title, iWidget *headings, iWidget *values) {
-    addChild_Widget(headings,
-                    iClob(makeHeading_Widget(format_CStr(uiHeading_ColorEscape "%s", title))));
+    addChildFlags_Widget(headings,
+                         iClob(makeHeading_Widget(format_CStr(uiHeading_ColorEscape "%s", title))),
+                         ignoreForParentWidth_WidgetFlag);
     addChild_Widget(values, iClob(makeHeading_Widget("")));
 }
 
@@ -1984,9 +1985,6 @@ iWidget *makePreferences_Widget(void) {
         setId_Widget(addChild_Widget(values, iClob(new_InputWidget(8))), "prefs.uiscale");
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.retainwindow}")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.retainwindow")));
-        makeTwoColumnHeading_("${heading.prefs.widelayout}", headings, values);
-        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.sideicon}")));
-        addChild_Widget(values, iClob(makeToggle_Widget("prefs.sideicon")));
     }
     /* Colors. */ {
         appendTwoColumnPage_(tabs, "${heading.prefs.colors}", '3', &headings, &values);
@@ -2063,6 +2061,9 @@ iWidget *makePreferences_Widget(void) {
         addChildFlags_Widget(values, iClob(quote), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.biglede}")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.biglede")));
+        makeTwoColumnHeading_("${heading.prefs.widelayout}", headings, values);
+        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.sideicon}")));
+        addChild_Widget(values, iClob(makeToggle_Widget("prefs.sideicon")));
     }
     /* Network. */ {
         appendTwoColumnPage_(tabs, "${heading.prefs.network}", '5', &headings, &values);

@@ -519,11 +519,15 @@ void arrange_Widget(iWidget *d) {
             if (isCollapsed_Widget_(child)) {
                 continue;
             }
+            iRect childRect = child->rect;
+            if (child->flags & ignoreForParentWidth_WidgetFlag) {
+                childRect.size.x = 0;
+            }
             if (isEmpty_Rect(bounds)) {
-                bounds = child->rect;
+                bounds = childRect;
             }
             else {
-                bounds = union_Rect(bounds, child->rect);
+                bounds = union_Rect(bounds, childRect);
             }
         }
         adjustEdges_Rect(&bounds, -d->padding[1], d->padding[2], d->padding[3], -d->padding[0]);
