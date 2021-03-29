@@ -1887,6 +1887,7 @@ iWidget *makePreferences_Widget(void) {
     setBackgroundColor_Widget(findChild_Widget(tabs, "tabs.buttons"), uiBackgroundSidebar_ColorId);
     setId_Widget(tabs, "prefs.tabs");
     iWidget *headings, *values;
+    const int lineGap = lineHeight_Text(uiLabel_FontId);
     /* General preferences. */ {
         appendTwoColumnPage_(tabs, "${heading.prefs.general}", '1', &headings, &values);
 #if defined (LAGRANGE_DOWNLOAD_EDIT)
@@ -1895,34 +1896,28 @@ iWidget *makePreferences_Widget(void) {
 #endif
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.searchurl}")));
         setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.searchurl");
-        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.hoverlink}")));
-        addChild_Widget(values, iClob(makeToggle_Widget("prefs.hoverlink")));
-        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.centershort}")));
-        addChild_Widget(values, iClob(makeToggle_Widget("prefs.centershort")));
+        addChild_Widget(headings, iClob(makePadding_Widget(lineGap)));
+        addChild_Widget(values, iClob(makePadding_Widget(lineGap)));
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.collapsepreonload}")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.collapsepreonload")));
-        makeTwoColumnHeading_("${heading.prefs.scrolling}", headings, values);
-        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.smoothscroll}")));
-        addChild_Widget(values, iClob(makeToggle_Widget("prefs.smoothscroll")));
-        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.imageloadscroll}")));
-        addChild_Widget(values, iClob(makeToggle_Widget("prefs.imageloadscroll")));
-        if (deviceType_App() == phone_AppDeviceType) {
-            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.hidetoolbarscroll}")));
-            addChild_Widget(values, iClob(makeToggle_Widget("prefs.hidetoolbarscroll")));
-        }
-    }
-    /* Window. */ {
-        appendTwoColumnPage_(tabs, "${heading.prefs.interface}", '2', &headings, &values);
+        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.plaintext.wrap}")));
+        addChild_Widget(values, iClob(makeToggle_Widget("prefs.plaintext.wrap")));
+        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.centershort}")));
+        addChild_Widget(values, iClob(makeToggle_Widget("prefs.centershort")));
+        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.hoverlink}")));
+        addChild_Widget(values, iClob(makeToggle_Widget("prefs.hoverlink")));
+        addChild_Widget(headings, iClob(makePadding_Widget(lineGap)));
+        addChild_Widget(values, iClob(makePadding_Widget(lineGap)));
         /* UI languages. */ {
             iArray *uiLangs = collectNew_Array(sizeof(iMenuItem));
             const iMenuItem langItems[] = {
-//                { "${lang.de} - de", 0, 0, "uilang id:de" },
+                //                { "${lang.de} - de", 0, 0, "uilang id:de" },
                 { "${lang.en} - en", 0, 0, "uilang id:en" },
                 { "${lang.es} - es", 0, 0, "uilang id:es" },
                 { "${lang.fi} - fi", 0, 0, "uilang id:fi" },
                 { "${lang.ru} - ru", 0, 0, "uilang id:ru" },
                 { "${lang.zh.hans} - zh", 0, 0, "uilang id:zh_Hans" },
-            };
+                };
             pushBackN_Array(uiLangs, langItems, iElemCount(langItems));
             //sort_Array(uiLangs, cmp_MenuItem_);
             /* TODO: Add an arrange flag for resizing parent to widest child. */
@@ -1946,9 +1941,10 @@ iWidget *makePreferences_Widget(void) {
                                                   size_Array(uiLangs))),
                                               alignLeft_WidgetFlag),
                          "prefs.uilang");
-            addChild_Widget(headings, iClob(makePadding_Widget(gap_UI)));
-            addChild_Widget(values, iClob(makePadding_Widget(gap_UI)));
         }
+    }
+    /* User Interface. */ {
+        appendTwoColumnPage_(tabs, "${heading.prefs.interface}", '2', &headings, &values);
 #if defined (iPlatformApple) || defined (iPlatformMSys)
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.ostheme}")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.ostheme")));
@@ -1973,6 +1969,15 @@ iWidget *makePreferences_Widget(void) {
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.customframe}")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.customframe")));
 #endif
+        makeTwoColumnHeading_("${heading.prefs.scrolling}", headings, values);
+        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.smoothscroll}")));
+        addChild_Widget(values, iClob(makeToggle_Widget("prefs.smoothscroll")));
+        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.imageloadscroll}")));
+        addChild_Widget(values, iClob(makeToggle_Widget("prefs.imageloadscroll")));
+        if (deviceType_App() == phone_AppDeviceType) {
+            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.hidetoolbarscroll}")));
+            addChild_Widget(values, iClob(makeToggle_Widget("prefs.hidetoolbarscroll")));
+        }
         makeTwoColumnHeading_("${heading.prefs.sizing}", headings, values);
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.uiscale}")));
         setId_Widget(addChild_Widget(values, iClob(new_InputWidget(8))), "prefs.uiscale");
@@ -2057,8 +2062,6 @@ iWidget *makePreferences_Widget(void) {
         addChildFlags_Widget(values, iClob(quote), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.biglede}")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.biglede")));
-        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.plaintext.wrap}")));
-        addChild_Widget(values, iClob(makeToggle_Widget("prefs.plaintext.wrap")));
     }
     /* Network. */ {
         appendTwoColumnPage_(tabs, "${heading.prefs.network}", '5', &headings, &values);
