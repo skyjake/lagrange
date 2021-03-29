@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-03-28 06:32+0000\n"
+"PO-Revision-Date: 2021-03-29 05:43+0000\n"
 "Last-Translator: Shibo Lyu <github@of.sb>\n"
 "Language-Team: Chinese (Traditional) <http://weblate.skyjake.fi/projects/"
 "lagrange/ui/zh_Hant/>\n"
@@ -1285,3 +1285,6 @@ msgstr "日語"
 
 msgid "lang.pt"
 msgstr "葡萄牙語"
+
+msgid "doc.pre.nocaption"
+msgstr "無說明的預格式文字"

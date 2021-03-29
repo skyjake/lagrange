@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-03-28 06:32+0000\n"
+"PO-Revision-Date: 2021-03-29 05:43+0000\n"
 "Last-Translator: El Mau <public@correolibre.net>\n"
 "Language-Team: Spanish (Mexico) <http://weblate.skyjake.fi/projects/lagrange/"
 "ui/es_MX/>\n"
@@ -269,3 +269,129 @@ msgstr "Esquema de la Página"
 
 msgid "hint.findtext"
 msgstr "Buscar Texto en la Página"
+
+msgid "num.bytes"
+msgid_plural "num.bytes.n"
+msgstr[0] "%zu byte"
+msgstr[1] "%zu bytes"
+
+msgid "status.query"
+msgstr "Consulta de Búsqueda"
+
+msgid "status.feeds"
+msgstr "Actualizando Suscripciones"
+
+# megabytes, used as the unit after a number
+msgid "mb"
+msgstr "MB"
+
+# kilobytes, used as the unit after a number
+msgid "kb"
+msgstr "KB"
+
+# strftime() formatted, split on two lines
+#, c-format
+msgid "page.timestamp"
+msgstr ""
+"Recibido a las %I:%M %p\n"
+"el %d, %b, %Y"
+
+# strftime() formatted
+#, c-format
+msgid "sidebar.date.thisyear"
+msgstr "%d. %b"
+
+# strftime() formatted
+#, c-format
+msgid "sidebar.date.otheryear"
+msgstr "%d.%b, %Y"
+
+msgid "feeds.today"
+msgstr "Hoy"
+
+msgid "feeds.entry.newtab"
+msgstr "Abrir Entrada en Nueva Pestaña"
+
+msgid "feeds.entry.markread"
+msgstr "Marcar como leído"
+
+msgid "sidebar.entry.bookmark"
+msgstr "Añadir favorito…"
+
+msgid "feeds.entry.bookmark"
+msgstr "Agregar favorito…"
+
+msgid "feeds.entry.openfeed"
+msgstr "Abrir Página de Suscripciones"
+
+msgid "feeds.edit"
+msgstr "Editar Suscripción…"
+
+msgid "feeds.unsubscribe"
+msgstr "Eliminar Suscripción…"
+
+msgid "feeds.refresh"
+msgstr "Refrescar Suscripciones"
+
+msgid "menu.opentab"
+msgstr "Abrir en Nueva Pestaña"
+
+msgid "menu.opentab.background"
+msgstr "Abrir en Pestaña de Fondo"
+
+msgid "menu.edit"
+msgstr "Editar…"
+
+msgid "menu.dup"
+msgstr "Duplicar…"
+
+msgid "menu.copyurl"
+msgstr "Copiar URL"
+
+msgid "history.clear"
+msgstr "Limpiar Historial…"
+
+msgid "heading.history.clear"
+msgstr "LIMPIAR HISTORIAL"
+
+msgid "feeds.entry.markunread"
+msgstr "Marcar como no leído"
+
+msgid "feeds.markallread"
+msgstr "Marcar Todo como Leído"
+
+msgid "menu.forgeturl"
+msgstr "Olvidar URL"
+
+msgid "dlg.confirm.history.clear"
+msgstr "¿De verdad quiere borrar el historial de todas las páginas visitadas?"
+
+msgid "dlg.history.clear"
+msgstr "Limpiar Historial"
+
+msgid "bookmark.tag.home"
+msgstr "Usar como Página de Inicio"
+
+msgid "bookmark.tag.sub"
+msgstr "Suscribirse"
+
+msgid "bookmark.tag.remote"
+msgstr "Usar como Fuente de Marcador"
+
+msgid "bookmark.untag.home"
+msgstr "Remover Página de Inicio"
+
+msgid "bookmark.untag.sub"
+msgstr "Eliminar Suscripción"
+
+msgid "bookmark.untag.remote"
+msgstr "Remover Fuente de Marcador"
+
+msgid "bookmark.delete"
+msgstr "Borrar favorita"
+
+msgid "bookmarks.reload"
+msgstr "Refrescar Fuentes Remotas"
+
+msgid "doc.pre.nocaption"
+msgstr "Texto preformateado sin título"
