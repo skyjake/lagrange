@@ -96,6 +96,9 @@ void toString_Sym(int key, int kmods, iString *str) {
     if (key == 0x20) {
         appendCStr_String(str, "Space");
     }
+    else if (key == SDLK_ESCAPE) {
+        appendCStr_String(str, "Esc");
+    }
     else if (key == SDLK_LEFT) {
         appendChar_String(str, 0x2190);
     }
@@ -116,6 +119,9 @@ void toString_Sym(int key, int kmods, iString *str) {
     }
     else if (key == SDLK_DELETE) {
         appendChar_String(str, 0x2326); /* Erase to the Right */
+    }
+    else if (key == SDLK_RETURN) {
+        appendChar_String(str, 0x21a9); /* Leftwards arrow with a hook */
     }
     else {
         appendCStr_String(str, SDL_GetKeyName(key));
@@ -1631,6 +1637,7 @@ iWidget *makeDialogButtons_Widget(const iMenuItem *actions, size_t numActions) {
         }
         iLabelWidget *button =
             addChild_Widget(div, iClob(newKeyMods_LabelWidget(label, key, kmods, cmd)));
+        setFlags_Widget(as_Widget(button), alignLeft_WidgetFlag | drawKey_WidgetFlag, isDefault);
         setFont_LabelWidget(button, isDefault ? fonts[1] : fonts[0]);
     }
     return div;
