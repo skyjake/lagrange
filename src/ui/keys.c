@@ -426,6 +426,7 @@ iBool processEvent_Keys(const SDL_Event *ev) {
     iKeys *d = &keys_;
     if (ev->type == SDL_KEYDOWN || ev->type == SDL_KEYUP) {
         const iBinding *bind = find_Keys_(d, ev->key.keysym.sym, keyMods_Sym(ev->key.keysym.mod));
+        printf("[Keys] bind: %p\n", bind); fflush(stdout);
         if (bind) {
             if (ev->type == SDL_KEYUP) {
                 if (bind->flags & argRelease_BindFlag) {

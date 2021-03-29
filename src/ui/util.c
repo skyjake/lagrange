@@ -618,7 +618,7 @@ void openMenuFlags_Widget(iWidget *d, iInt2 coord, iBool postCommands) {
     }
     /* Menu closes when commands are emitted, so handle any pending ones beforehand. */
     processEvents_App(postedEventsOnly_AppEventMode);
-    setFlags_Widget(d, hidden_WidgetFlag | disabled_WidgetFlag, iFalse);
+    setFlags_Widget(d, hidden_WidgetFlag, iFalse);
     setFlags_Widget(d, commandOnMouseMiss_WidgetFlag, iTrue);
     raise_Widget(d);
     setFlags_Widget(findChild_Widget(d, "menu.cancel"), disabled_WidgetFlag, iFalse);
@@ -700,7 +700,7 @@ void openMenuFlags_Widget(iWidget *d, iInt2 coord, iBool postCommands) {
 }
 
 void closeMenu_Widget(iWidget *d) {
-    setFlags_Widget(d, hidden_WidgetFlag | disabled_WidgetFlag, iTrue);
+    setFlags_Widget(d, hidden_WidgetFlag, iTrue);
     setFlags_Widget(findChild_Widget(d, "menu.cancel"), disabled_WidgetFlag, iTrue);
     postRefresh_App();
     postCommand_Widget(d, "menu.closed");
