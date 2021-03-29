@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-03-29 05:43+0000\n"
+"PO-Revision-Date: 2021-03-29 11:28+0000\n"
 "Last-Translator: Shibo Lyu <github@of.sb>\n"
 "Language-Team: Chinese (Traditional) <http://weblate.skyjake.fi/projects/"
 "lagrange/ui/zh_Hant/>\n"
@@ -130,7 +130,7 @@ msgid "prefs.theme"
 msgstr "主題："
 
 msgid "prefs.theme.black"
-msgstr "純黑"
+msgstr "黑"
 
 msgid "prefs.theme.dark"
 msgstr "深色"
@@ -139,7 +139,7 @@ msgid "prefs.theme.light"
 msgstr "淺色"
 
 msgid "prefs.theme.white"
-msgstr "純白"
+msgstr "白"
 
 msgid "prefs.accent"
 msgstr "主色："
@@ -1288,3 +1288,6 @@ msgstr "葡萄牙語"
 
 msgid "doc.pre.nocaption"
 msgstr "無說明的預格式文字"
+
+msgid "prefs.collapsepreonload"
+msgstr "收起預格式文字："
