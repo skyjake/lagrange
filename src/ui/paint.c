@@ -67,6 +67,11 @@ void setClip_Paint(iPaint *d, iRect rect) {
         rect.pos.y -= off;
         rect.size.y = iMax(0, rect.size.y + off);
     }
+    if (rect.pos.x < 0) {
+        const int off = rect.pos.x;
+        rect.pos.x -= off;
+        rect.size.x = iMax(0, rect.size.x + off);
+    }
     SDL_RenderSetClipRect(renderer_Paint_(d), (const SDL_Rect *) &rect);
 }
 
