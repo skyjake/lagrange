@@ -897,6 +897,9 @@ msgstr "Show URL on hover:"
 msgid "prefs.centershort"
 msgstr "Vertical centering:"
 
+msgid "prefs.collapsepreonload"
+msgstr "Collapse preformatted:"
+
 msgid "prefs.smoothscroll"
 msgstr "Smooth scrolling:"
 
@@ -913,7 +916,7 @@ msgid "prefs.theme"
 msgstr "Theme:"
 
 msgid "prefs.theme.black"
-msgstr "Pure Black"
+msgstr "Black"
 
 msgid "prefs.theme.dark"
 msgstr "Dark"
@@ -922,7 +925,7 @@ msgid "prefs.theme.light"
 msgstr "Light"
 
 msgid "prefs.theme.white"
-msgstr "Pure White"
+msgstr "White"
 
 msgid "prefs.accent"
 msgstr "Accent color:"

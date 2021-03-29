@@ -104,7 +104,7 @@ if MODE == 'compile':
             # Take missing strings from the base language.
             for msg_id in BASE_STRINGS:
                 if msg_id not in have_ids and not msg_id[:-2] in PLURALS:
-                    print(src, 'missing:', msg_id)
+                    print('%10s' % src, 'missing:', msg_id)
                     lang.append((msg_id, BASE_STRINGS[msg_id]))
             for msg_id, msg_str in sorted(lang):
                 compiled += compile_string(msg_id, msg_str)
