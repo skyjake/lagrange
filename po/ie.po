@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-03-28 19:06+0000\n"
+"PO-Revision-Date: 2021-03-30 12:05+0000\n"
 "Last-Translator: Olga Smirnova <mistresssilvara@hotmail.com>\n"
 "Language-Team: Occidental <http://weblate.skyjake.fi/projects/lagrange/ui/ie/"
 ">\n"
@@ -118,7 +118,7 @@ msgid "prefs.theme"
 msgstr "Tema:"
 
 msgid "prefs.theme.black"
-msgstr "Pur nigri"
+msgstr "Nigri"
 
 msgid "prefs.theme.dark"
 msgstr "Obscur"
@@ -127,7 +127,7 @@ msgid "prefs.theme.light"
 msgstr "Lucid"
 
 msgid "prefs.theme.white"
-msgstr "Pur blanc"
+msgstr "Blanc"
 
 msgid "prefs.accent"
 msgstr "Color de accentu:"
@@ -1298,3 +1298,40 @@ msgid "num.hours"
 msgid_plural "num.hours.n"
 msgstr[0] "%d hor"
 msgstr[1] "%d hores"
+
+msgid "menu.bookmarks.refresh"
+msgstr "Refriscar lontan marca-págines"
+
+msgid "bookmarks.reload"
+msgstr "Refriscar lontan fontes"
+
+msgid "lang.zh.hant"
+msgstr "Chinesi (traditional)"
+
+msgid "error.proxyrefusal.msg"
+msgstr ""
+"Li demanda esset por un ressurse quel ne existe sur li servitor e li "
+"servitor ne accepte demandes de proxy."
+
+msgid "prefs.collapsepreonload"
+msgstr "Contraher formatat textu:"
+
+msgid "keys.link.homerow.next"
+msgstr "Li sequent portion de ligamentes por li claves"
+
+msgid "keys.link.homerow.hover"
+msgstr "Ear a un ligament per tastes in li hem-range"
+
+msgid "error.proxy.msg"
+msgstr ""
+"Un demande al proxy ne successat pro que it ne successat transacter con li "
+"lontan computator. Fórsan hay problemas con connectivitá in li rete."
+
+msgid "keys.link.homerow.newtab"
+msgstr "Aperter in un nov carte per tastes in li hem-range"
+
+msgid "keys.link.homerow"
+msgstr "Aperter un ligament per tastes in li hem-range"
+
+msgid "doc.pre.nocaption"
+msgstr "Un formatat textu sin un rubrica"
