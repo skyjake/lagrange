@@ -1911,13 +1911,14 @@ iWidget *makePreferences_Widget(void) {
         /* UI languages. */ {
             iArray *uiLangs = collectNew_Array(sizeof(iMenuItem));
             const iMenuItem langItems[] = {
-                //                { "${lang.de} - de", 0, 0, "uilang id:de" },
+//                { "${lang.de} - de", 0, 0, "uilang id:de" },
                 { "${lang.en} - en", 0, 0, "uilang id:en" },
                 { "${lang.es} - es", 0, 0, "uilang id:es" },
                 { "${lang.fi} - fi", 0, 0, "uilang id:fi" },
                 { "${lang.ru} - ru", 0, 0, "uilang id:ru" },
                 { "${lang.zh.hans} - zh", 0, 0, "uilang id:zh_Hans" },
-                };
+                { "${lang.zh.hant} - zh", 0, 0, "uilang id:zh_Hant" },
+            };
             pushBackN_Array(uiLangs, langItems, iElemCount(langItems));
             //sort_Array(uiLangs, cmp_MenuItem_);
             /* TODO: Add an arrange flag for resizing parent to widest child. */

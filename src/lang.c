@@ -57,11 +57,12 @@ static void load_Lang_(iLang *d, const char *id) {
                        : equal_CStr(id, "es")      ? &blobEs_Embedded
 //                       : equal_CStr(id, "de")      ? &blobDe_Embedded
                        : equal_CStr(id, "zh_Hans") ? &blobZh_Hans_Embedded
+                       : equal_CStr(id, "zh_Hant") ? &blobZh_Hant_Embedded
                                                    : &blobEn_Embedded;
     if (data == &blobRu_Embedded) {
         d->pluralType = slavic_PluralType;
     }
-    else if (data == &blobZh_Hans_Embedded) {
+    else if (data == &blobZh_Hans_Embedded || data == &blobZh_Hant_Embedded) {
         d->pluralType = none_PluralType;
     }
     else {
