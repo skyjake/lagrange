@@ -421,7 +421,8 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 iGmPreMeta meta = { .bounds = line };
                 meta.pixelRect.size = measurePreformattedBlock_GmDocument_(
                     d, line.start, preFont, &meta.contents, &meta.bounds.end);
-                if (meta.pixelRect.size.x > d->size.x - indents[preformatted_GmLineType] * gap_Text) {
+                if (meta.pixelRect.size.x >
+                    d->size.x - (enableIndents ? indents[preformatted_GmLineType] : 0) * gap_Text) {
                     preFont = preformattedSmall_FontId;
                     meta.pixelRect.size = measureRange_Text(preFont, meta.contents);
                 }
