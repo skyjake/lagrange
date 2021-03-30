@@ -1,0 +1,652 @@
+msgid ""
+msgstr ""
+"Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
+"PO-Revision-Date: 2021-03-29 05:43+0000\n"
+"Last-Translator: Aaron Fischer <mail@aaron-fischer.net>\n"
+"Language-Team: German <http://weblate.skyjake.fi/projects/lagrange/ui/de/>\n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Weblate 4.5.1\n"
+
+msgid "menu.opentab"
+msgstr "In neuem Tab öffnen"
+
+msgid "menu.feeds.entrylist"
+msgstr "Feed-Einträge anzeigen"
+
+msgid "feeds.entry.newtab"
+msgstr "Eintrag in neuem Tab öffnen"
+
+msgid "cancel"
+msgstr "Abbrechen"
+
+msgid "dismiss"
+msgstr "Verwerfen"
+
+msgid "dlg.message.ok"
+msgstr "Fortsetzen"
+
+msgid "dlg.default"
+msgstr " Ok "
+
+msgid "toggle.yes"
+msgstr "JA"
+
+msgid "toggle.no"
+msgstr "NEIN"
+
+msgid "menu.title.file"
+msgstr "Datei"
+
+msgid "menu.title.edit"
+msgstr "Bearbeiten"
+
+msgid "menu.title.view"
+msgstr "Ansicht"
+
+msgid "menu.title.bookmarks"
+msgstr "Lesezeichen"
+
+msgid "menu.title.identity"
+msgstr "Identität"
+
+msgid "menu.title.help"
+msgstr "Hilfe"
+
+msgid "menu.newtab"
+msgstr "Neuer Tab"
+
+msgid "menu.closetab"
+msgstr "Tab schließen"
+
+msgid "menu.closetab.other"
+msgstr "Andere Tabs schließen"
+
+msgid "menu.closetab.left"
+msgstr "Tabs links schließen"
+
+msgid "menu.closetab.right"
+msgstr "Tabs rechts schließen"
+
+msgid "menu.duptab"
+msgstr "Tab duplizieren"
+
+msgid "feeds.entry.markread"
+msgstr "Als gelesen markieren"
+
+msgid "feeds.entry.markunread"
+msgstr "Als ungelesen markieren"
+
+msgid "menu.opentab.background"
+msgstr "Tab im Hintergrund öffnen"
+
+msgid "about.logo"
+msgstr "ASCII-Kunst: Das Wort \"Lagrange\" in großer Schrift"
+
+msgid "about.tagline"
+msgstr "Ein schöner Gemini-Client"
+
+msgid "about.version"
+msgstr "Version"
+
+msgid "macos.menu.bookmarks.list"
+msgstr "Alle auflisten"
+
+msgid "macos.menu.bookmarks.bytime"
+msgstr "Nach Ersellungszeit auflisten"
+
+msgid "menu.show.history"
+msgstr "Verlauf anzeigen"
+
+msgid "about.powered"
+msgstr "Entwickelt mit SDL 2, OpenSSL und ☕️"
+
+msgid "menu.openlocation"
+msgstr "Adresse öffnen…"
+
+msgid "menu.find"
+msgstr "Auf der Seite suchen"
+
+msgid "macos.menu.find"
+msgstr "Suchen"
+
+msgid "menu.save.files"
+msgstr "In Dateien speichern"
+
+msgid "menu.save.downloads"
+msgstr "Unter Downloads speichern"
+
+msgid "menu.copy.source"
+msgstr "Quelltext kopieren"
+
+msgid "menu.sidebar"
+msgstr "Seitenleiste ein-/ausblenden"
+
+msgid "menu.zoom.out"
+msgstr "Verkleinern"
+
+msgid "menu.zoom.reset"
+msgstr "Originalgröße"
+
+msgid "menu.bookmarks.list"
+msgstr "Alle Lesezeichen auflisten"
+
+msgid "menu.bookmarks.bytag"
+msgstr "Lesezeichen nach Tags auflisten"
+
+msgid "menu.sidebar.right"
+msgstr "Rechte Seitenleiste ein-/ausblenden"
+
+msgid "menu.zoom.in"
+msgstr "Vergrößern"
+
+msgid "macos.menu.bookmarks.bytag"
+msgstr "Nach Tags auflisten"
+
+msgid "menu.bookmarks.bytime"
+msgstr "Lesezeichen nach Erstellungszeitpunkt auflisten"
+
+msgid "menu.preferences"
+msgstr "Einstellungen…"
+
+msgid "menu.help"
+msgstr "Hilfe"
+
+msgid "menu.releasenotes"
+msgstr "Versionshinweise"
+
+msgid "menu.quit"
+msgstr "Lagrange beenden"
+
+msgid "menu.cut"
+msgstr "Ausschneiden"
+
+msgid "menu.copy"
+msgstr "Kopieren"
+
+msgid "menu.paste"
+msgstr "Einfügen"
+
+msgid "menu.copy.pagelink"
+msgstr "Link zur Seite kopieren"
+
+msgid "menu.show.bookmarks"
+msgstr "Lesezeichen anzeigen"
+
+msgid "menu.show.feeds"
+msgstr "Feeds anzeigen"
+
+msgid "menu.show.identities"
+msgstr "Identitäten anzeigen"
+
+msgid "menu.show.outline"
+msgstr "Inhaltsverzeichnis anzeigen"
+
+msgid "menu.back"
+msgstr "Zurück"
+
+msgid "menu.forward"
+msgstr "Vor"
+
+msgid "menu.parent"
+msgstr "Nach oben"
+
+msgid "keys.tab.next"
+msgstr "Nächster Tab"
+
+msgid "menu.sidebar.left"
+msgstr "Linke Seitenleiste ein-/ausblenden"
+
+msgid "menu.root"
+msgstr "Zum Hauptknoten"
+
+msgid "menu.reload"
+msgstr "Seite neu laden"
+
+msgid "menu.autoreload"
+msgstr "Automatisches neu laden…"
+
+msgid "menu.page.bookmark"
+msgstr "Seite in Lesezeichen speichern…"
+
+msgid "menu.page.subscribe"
+msgstr "Seite abonnieren…"
+
+msgid "sidebar.unread"
+msgid_plural "sidebar.unread.n"
+msgstr[0] "Ungelesener"
+msgstr[1] "Ungelesen"
+
+msgid "bytes"
+msgstr "Bytes"
+
+msgid "panel.back"
+msgstr "Zurück"
+
+msgid "menu.debug"
+msgstr "Debug-Informationen"
+
+msgid "menu.page.translate"
+msgstr "Übersetzen…"
+
+msgid "menu.page.copyurl"
+msgstr "Seiten-URL kopieren"
+
+msgid "menu.page.copysource"
+msgstr "Seiten-Quellcode kopieren"
+
+msgid "menu.feeds.refresh"
+msgstr "Feeds aktualisieren"
+
+msgid "menu.identity.new"
+msgstr "Neue Identität…"
+
+msgid "menu.identity.import"
+msgstr "Importieren…"
+
+msgid "menu.identity.notactive"
+msgstr "Keine aktive Identität"
+
+msgid "sidebar.bookmarks"
+msgstr "Lesezeichen"
+
+msgid "sidebar.feeds"
+msgstr "Feeds"
+
+msgid "sidebar.history"
+msgstr "Verlauf"
+
+msgid "sidebar.identities"
+msgstr "Identitäten"
+
+msgid "sidebar.outline"
+msgstr "Inhaltsverzeichnis"
+
+msgid "toolbar.outline"
+msgstr "Inhaltsverzeichnis der Seite"
+
+msgid "hint.findtext"
+msgstr "Text auf der Seite finden"
+
+msgid "status.query"
+msgstr "Suchanfrage"
+
+msgid "status.feeds"
+msgstr "Aktualisiere Feeds"
+
+# megabytes, used as the unit after a number
+msgid "mb"
+msgstr "MB"
+
+# kilobytes, used as the unit after a number
+msgid "kb"
+msgstr "KB"
+
+msgid "dlg.bookmark.title"
+msgstr "Titel:"
+
+msgid "dlg.bookmark.save"
+msgstr "Lesezeichen speichern"
+
+msgid "feeds.today"
+msgstr "Heute"
+
+msgid "feeds.entry.bookmark"
+msgstr "Lesezeichen hinzufügen…"
+
+msgid "dlg.confirm.history.clear"
+msgstr "Wollen Sie wirklich die Chronik aller besuchten Seiten löschen?"
+
+msgid "heading.bookmark.edit"
+msgstr "LESEZEICHEN BEARBEITEN"
+
+msgid "dlg.openlink"
+msgstr "Link öffnen"
+
+msgid "menu.import.links"
+msgstr "Alle Links auf der Seite importieren…"
+
+msgid "menu.page.import"
+msgstr "Link als Lesezeichen importieren…"
+
+msgid "dlg.save.size"
+msgstr "Größe:"
+
+msgid "dlg.save.incomplete"
+msgstr "Die Seiteninhalte werden noch heruntergeladen."
+
+msgid "heading.save.incomplete"
+msgstr "SEITE UNVOLLSTÄNDIG"
+
+msgid "heading.save"
+msgstr "DATEI GESPEICHERT"
+
+msgid "dlg.input.send"
+msgstr "Senden"
+
+msgid "dlg.cert.fingerprint"
+msgstr "Fingerabdruck kopieren"
+
+msgid "dlg.cert.trust"
+msgstr "Vertrauen"
+
+msgid "pageinfo.cert.expired"
+msgstr "Abgelaufen"
+
+msgid "pageinfo.cert.notexpired"
+msgstr "Nicht abgelaufen"
+
+msgid "dlg.certimport.notfound"
+msgstr "Kein Zertifikat oder privater Schlüssel gefunden."
+
+msgid "dlg.certimport.help"
+msgstr ""
+"Ein PEM-kodiertes Zertifikat und/oder einen privaten Schlüssel\n"
+"einfügen oder eine .crt/.key-Datei in das Fenster ziehen."
+
+msgid "lang.es"
+msgstr "Spanisch"
+
+msgid "lang.ru"
+msgstr "Russisch"
+
+msgid "lang.ja"
+msgstr "Japanisch"
+
+#, c-format
+msgid "dlg.import.found"
+msgid_plural "dlg.import.found.n"
+msgstr[0] "Einen neuen Link auf der Seite gefunden."
+msgstr[1] ""
+
+# tab button
+msgid "heading.prefs.interface"
+msgstr "Oberfläche"
+
+# tab button
+msgid "heading.prefs.general"
+msgstr "Allgemein"
+
+# tab button
+msgid "heading.prefs.colors"
+msgstr "Farben"
+
+msgid "dlg.bookmark.tags"
+msgstr "Stichwörter:"
+
+msgid "dlg.bookmark.url"
+msgstr "URL:"
+
+msgid "dlg.feed.title"
+msgstr "Titel:"
+
+msgid "heading.feedcfg"
+msgstr "FEED EINSTELLUNGEN"
+
+msgid "dlg.newident.country"
+msgstr "Land:"
+
+msgid "dlg.newident.org"
+msgstr "Organisation:"
+
+msgid "dlg.newident.email"
+msgstr "Email:"
+
+msgid "heading.bookmark.add"
+msgstr "LESEZEICHEN HINZUFÜGEN"
+
+msgid "dlg.feed.sub"
+msgstr "Abonnieren"
+
+msgid "dlg.feed.save"
+msgstr "Einstellungen speichern"
+
+msgid "link.bookmark"
+msgstr "Lesezeichen für Link setzen…"
+
+msgid "link.copy"
+msgstr "Link kopieren"
+
+msgid "link.noproxy"
+msgstr "Ohne Proxy öffnen"
+
+msgid "link.newtab"
+msgstr "Link in neuem Tab öffnen"
+
+#, c-format
+msgid "dlg.import.add"
+msgid_plural "dlg.import.add.n"
+msgstr[0] "%sLesezeichen hinzufügen"
+msgstr[1] ""
+
+msgid "heading.import.bookmarks"
+msgstr "LESEZEICHEN IMPORTIEREN"
+
+msgid "sidebar.entry.bookmark"
+msgstr "Lesezeichen hinzufügen…"
+
+msgid "feeds.edit"
+msgstr "Feed bearbeiten…"
+
+msgid "feeds.markallread"
+msgstr "Alles als gelesen markieren"
+
+msgid "feeds.refresh"
+msgstr "Feeds aktualisieren"
+
+msgid "menu.edit"
+msgstr "Bearbeiten…"
+
+msgid "menu.copyurl"
+msgstr "URL kopieren"
+
+msgid "menu.forgeturl"
+msgstr "URL vergessen"
+
+msgid "dlg.history.clear"
+msgstr "Chronik löschen"
+
+msgid "history.clear"
+msgstr "Chronik löschen…"
+
+msgid "bookmark.tag.home"
+msgstr "Als Startseite verwenden"
+
+msgid "bookmark.tag.sub"
+msgstr "Feed abonnieren"
+
+msgid "bookmark.untag.home"
+msgstr "Startseite entfernen"
+
+msgid "bookmark.delete"
+msgstr "Lesezeichen löschen"
+
+msgid "ident.temporary"
+msgstr "Temporär"
+
+# strftime() formatted
+#, c-format
+msgid "ident.expiry"
+msgstr "Läuft ab am %d. %b. %Y"
+
+msgid "lang.de"
+msgstr "Deutsch"
+
+msgid "lang.fr"
+msgstr "Französisch"
+
+msgid "lang.en"
+msgstr "Englisch"
+
+msgid "lang.zh"
+msgstr "Chinesisch"
+
+msgid "lang.ar"
+msgstr "Arabisch"
+
+msgid "dlg.translate"
+msgstr "Übersetzen"
+
+msgid "dlg.translate.fail"
+msgstr "Anfrage fehlgeschlagen"
+
+msgid "heading.translate"
+msgstr "SEITE ÜBERSETZEN"
+
+msgid "bookmark.title.blank"
+msgstr "Leere Seite"
+
+msgid "link.hint.image"
+msgstr "Bild anzeigen"
+
+msgid "dlg.certimport.notes"
+msgstr "Notizen:"
+
+msgid "dlg.certimport.import"
+msgstr "Importieren"
+
+msgid "dlg.certimport.notfound.page"
+msgstr "Kein Zertifikat/Schlüssel auf der aktuellen Seite gefunden."
+
+msgid "dlg.certwarn.domain.expired"
+msgstr ""
+"Das empfangene Zertifikat ist abgelaufen UND für eine andere Domain "
+"ausgestellt."
+
+# strftime() formatted
+#, c-format
+msgid "sidebar.date.otheryear"
+msgstr "%d. %b. %Y"
+
+msgid "menu.about"
+msgstr "Über"
+
+# strftime() formatted
+#, c-format
+msgid "sidebar.date.thisyear"
+msgstr "%b. %d"
+
+msgid "feeds.entry.openfeed"
+msgstr "Feed-Seite öffnen"
+
+msgid "prefs.mono.gopher"
+msgstr "Gopher"
+
+msgid "prefs.linewidth.normal"
+msgstr "Normal"
+
+msgid "prefs.mono.gemini"
+msgstr "Gemini"
+
+msgid "menu.binding.clear"
+msgstr "Entfernen"
+
+# tab button
+msgid "heading.prefs.network"
+msgstr "Netzwerk"
+
+msgid "heading.prefs.paragraph"
+msgstr "ABSATZ"
+
+msgid "prefs.theme.dark"
+msgstr "Dunkel"
+
+msgid "prefs.theme.light"
+msgstr "Hell"
+
+msgid "dlg.import.notnew"
+msgstr "Für alle Links auf dieser Seite sind bereits Lesezeichen gesetzt."
+
+msgid "link.download"
+msgstr "Verknüpfte Datei speichern"
+
+# tab button
+msgid "heading.prefs.style"
+msgstr "Stil"
+
+msgid "prefs.theme"
+msgstr "Thema:"
+
+msgid "prefs.cachesize"
+msgstr "Cache-Größe:"
+
+msgid "prefs.ca.path"
+msgstr "CA Pfad:"
+
+msgid "prefs.ca.file"
+msgstr "CA Datei:"
+
+msgid "prefs.proxy.gemini"
+msgstr "Gemini Proxy:"
+
+msgid "keys.reload"
+msgstr "Seite neu laden"
+
+msgid "keys.bookmark.add"
+msgstr "Lesezeichen hinzufügen"
+
+msgid "keys.tab.new"
+msgstr "Neuer Tab"
+
+msgid "keys.tab.close"
+msgstr "Tab schließen"
+
+msgid "error.cert.invalid"
+msgstr "Ungültiges Zertifikat"
+
+msgid "prefs.accent.orange"
+msgstr "Orange"
+
+msgid "prefs.uilang"
+msgstr "Sprache:"
+
+msgid "prefs.doctheme.name.black"
+msgstr "Schwarz"
+
+msgid "prefs.doctheme.name.gray"
+msgstr "Grau"
+
+msgid "prefs.saturation"
+msgstr "Sättigung:"
+
+msgid "prefs.quoteicon.line"
+msgstr "Linie"
+
+msgid "prefs.proxy.gopher"
+msgstr "Gopher Proxy:"
+
+msgid "prefs.proxy.http"
+msgstr "HTTP Proxy:"
+
+msgid "menu.binding.reset"
+msgstr "Zurücksetzen"
+
+msgid "keys.forward"
+msgstr "Eine Seite vor"
+
+msgid "keys.back"
+msgstr "Eine Seite zurück"
+
+msgid "num.bytes"
+msgid_plural "num.bytes.n"
+msgstr[0] "%zu Byte"
+msgstr[1] "%zu Bytes"
+
+# strftime() formatted, split on two lines
+#, c-format
+msgid "page.timestamp"
+msgstr ""
+"Empfangen am %I:%M %p\n"
+"um %b %d, %Y"
+
+msgid "doc.pre.nocaption"
+msgstr "Formatierter Text ohne Überschrift"
+
+msgid "menu.aboutpages"
+msgstr "About-Seiten"
+
+msgid "menu.bookmarks.refresh"
+msgstr "Remote-Lesezeichen aktualisieren"

@@ -56,6 +56,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #   define subscribeToPage_KeyModifier  SDLK_d,             KMOD_SHIFT | KMOD_PRIMARY
 #endif
 
+#define builtIn_BindingId   1000    /* not user-configurable */
+
 iDeclareType(Binding)
 
 struct Impl_Binding {
@@ -90,3 +92,7 @@ const iBinding *findCommand_Keys    (const char *command);
 
 iBool           processEvent_Keys   (const SDL_Event *);
 const iPtrArray *list_Keys          (void);
+
+int             mapMods_Keys        (int modFlags);
+int             modState_Keys       (void); /* current modifier key state */
+void            setCapsLockDown_Keys(iBool isDown);

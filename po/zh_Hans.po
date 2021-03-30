@@ -1,0 +1,1295 @@
+msgid ""
+msgstr ""
+"Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
+"PO-Revision-Date: 2021-03-30 12:05+0000\n"
+"Last-Translator: Shibo Lyu <github@of.sb>\n"
+"Language-Team: Chinese (Simplified) <http://weblate.skyjake.fi/projects/"
+"lagrange/ui/zh_Hans/>\n"
+"Language: zh_Hans\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Weblate 4.5.1\n"
+
+msgid "sidebar.feeds"
+msgstr "订阅项"
+
+msgid "sidebar.history"
+msgstr "浏览记录"
+
+msgid "sidebar.identities"
+msgstr "身份"
+
+msgid "sidebar.outline"
+msgstr "大纲"
+
+msgid "sidebar.unread"
+msgid_plural "sidebar.unread.n"
+msgstr[0] "未读"
+
+msgid "menu.preferences"
+msgstr "偏好设置…"
+
+msgid "sidebar.bookmarks"
+msgstr "书签"
+
+msgid "about.tagline"
+msgstr "一个漂亮的 Gemini 客户端"
+
+msgid "about.version"
+msgstr "版本"
+
+msgid "about.powered"
+msgstr "由 SDL 2、OpenSSL 和☕️驱动"
+
+msgid "cancel"
+msgstr "取消"
+
+msgid "dismiss"
+msgstr "关闭"
+
+msgid "dlg.message.ok"
+msgstr "继续"
+
+msgid "dlg.default"
+msgstr " 好 "
+
+msgid "toggle.yes"
+msgstr "已启用"
+
+msgid "toggle.no"
+msgstr "已关闭"
+
+msgid "menu.title.file"
+msgstr "文件"
+
+msgid "menu.title.edit"
+msgstr "编辑"
+
+msgid "menu.title.view"
+msgstr "查看"
+
+msgid "menu.title.bookmarks"
+msgstr "书签"
+
+msgid "menu.title.identity"
+msgstr "身份"
+
+msgid "menu.title.help"
+msgstr "帮助"
+
+msgid "menu.closetab"
+msgstr "关闭标签页"
+
+msgid "menu.closetab.other"
+msgstr "关闭其它标签页"
+
+msgid "menu.closetab.left"
+msgstr "关闭左侧所有标签页"
+
+msgid "menu.duptab"
+msgstr "克隆标签页"
+
+msgid "menu.openlocation"
+msgstr "打开位置…"
+
+msgid "menu.find"
+msgstr "在页面上查找"
+
+msgid "macos.menu.find"
+msgstr "查找"
+
+msgid "menu.save.files"
+msgstr "保存至文档"
+
+msgid "menu.save.downloads"
+msgstr "保存至下载"
+
+msgid "menu.copy.source"
+msgstr "拷贝原始文本"
+
+msgid "menu.sidebar"
+msgstr "开关边栏"
+
+msgid "menu.sidebar.left"
+msgstr "开关左边栏"
+
+msgid "menu.sidebar.right"
+msgstr "开关右边栏"
+
+msgid "menu.zoom.out"
+msgstr "缩小"
+
+msgid "menu.zoom.reset"
+msgstr "重置缩放级"
+
+msgid "menu.bookmarks.list"
+msgstr "列出全部书签"
+
+msgid "macos.menu.bookmarks.list"
+msgstr "列出全部"
+
+msgid "macos.menu.bookmarks.bytag"
+msgstr "按标签列出"
+
+msgid "menu.bookmarks.bytime"
+msgstr "按创建时间列出书签"
+
+msgid "macos.menu.bookmarks.bytime"
+msgstr "按创建时间列出"
+
+msgid "menu.feeds.entrylist"
+msgstr "显示订阅项"
+
+msgid "menu.help"
+msgstr "帮助"
+
+msgid "menu.releasenotes"
+msgstr "发行说明"
+
+msgid "menu.quit"
+msgstr "退出 Lagrange"
+
+msgid "menu.zoom.in"
+msgstr "放大"
+
+msgid "menu.cut"
+msgstr "剪切"
+
+msgid "menu.copy"
+msgstr "复制"
+
+msgid "menu.copy.pagelink"
+msgstr "拷贝到页面的链接"
+
+msgid "menu.show.bookmarks"
+msgstr "显示书签"
+
+msgid "menu.show.feeds"
+msgstr "显示订阅项"
+
+msgid "menu.show.history"
+msgstr "显示浏览记录"
+
+msgid "menu.show.identities"
+msgstr "显示身份"
+
+msgid "menu.back"
+msgstr "后退"
+
+msgid "menu.forward"
+msgstr "前进"
+
+msgid "menu.parent"
+msgstr "回上一级"
+
+msgid "menu.root"
+msgstr "回到根一级"
+
+msgid "menu.reload"
+msgstr "刷新"
+
+msgid "menu.autoreload"
+msgstr "设置自动刷新…"
+
+msgid "menu.page.bookmark"
+msgstr "添加到书签…"
+
+msgid "menu.page.subscribe"
+msgstr "订阅页面…"
+
+msgid "menu.aboutpages"
+msgstr "about 页面"
+
+msgid "menu.about"
+msgstr "关于"
+
+msgid "panel.back"
+msgstr "返回"
+
+msgid "menu.debug"
+msgstr "调试信息"
+
+msgid "menu.page.import"
+msgstr "将链接以书签形式导入…"
+
+msgid "menu.page.translate"
+msgstr "翻译…"
+
+msgid "menu.page.copyurl"
+msgstr "拷贝页面地址"
+
+msgid "menu.page.copysource"
+msgstr "拷贝页面源码"
+
+msgid "menu.bookmarks.refresh"
+msgstr "刷新远端书签"
+
+msgid "menu.feeds.refresh"
+msgstr "刷新订阅项"
+
+msgid "menu.identity.new"
+msgstr "创建新身份…"
+
+msgid "menu.identity.import"
+msgstr "导入…"
+
+msgid "menu.identity.notactive"
+msgstr "没有已启用的身份"
+
+msgid "menu.bookmarks.bytag"
+msgstr "按标签列出书签"
+
+msgid "menu.paste"
+msgstr "粘贴"
+
+msgid "menu.show.outline"
+msgstr "显示页面大纲"
+
+msgid "menu.import.links"
+msgstr "导入页面上的所有链接…"
+
+msgid "about.logo"
+msgstr "ASCII 艺术：大字体的单词「Lagrange」"
+
+msgid "menu.newtab"
+msgstr "新标签页"
+
+msgid "menu.closetab.right"
+msgstr "关闭右侧所有标签页"
+
+msgid "toolbar.outline"
+msgstr "页面大纲"
+
+msgid "hint.findtext"
+msgstr "在页面上查找文本"
+
+msgid "status.query"
+msgstr "搜索查询"
+
+msgid "status.feeds"
+msgstr "正在刷新订阅"
+
+# megabytes, used as the unit after a number
+msgid "mb"
+msgstr "MB"
+
+# kilobytes, used as the unit after a number
+msgid "kb"
+msgstr "KB"
+
+msgid "bytes"
+msgstr "字节"
+
+# strftime() formatted
+#, c-format
+msgid "sidebar.date.thisyear"
+msgstr "%m 月 %d日"
+
+# strftime() formatted
+#, c-format
+msgid "sidebar.date.otheryear"
+msgstr "%Y年 %m 月 %d日"
+
+msgid "feeds.today"
+msgstr "今天"
+
+msgid "feeds.entry.newtab"
+msgstr "在新标签页中打开"
+
+msgid "feeds.entry.markread"
+msgstr "标记为已读"
+
+msgid "feeds.entry.markunread"
+msgstr "标记为未读"
+
+msgid "sidebar.entry.bookmark"
+msgstr "添加书签…"
+
+msgid "feeds.entry.bookmark"
+msgstr "添加书签…"
+
+msgid "feeds.edit"
+msgstr "编辑订阅…"
+
+msgid "feeds.unsubscribe"
+msgstr "退订…"
+
+msgid "feeds.markallread"
+msgstr "全部标记为已读"
+
+msgid "feeds.refresh"
+msgstr "刷新"
+
+msgid "menu.opentab"
+msgstr "在新标签页中打开"
+
+msgid "menu.opentab.background"
+msgstr "在新标签页中打开但不切换"
+
+msgid "menu.edit"
+msgstr "编辑…"
+
+msgid "menu.dup"
+msgstr "克隆…"
+
+msgid "menu.copyurl"
+msgstr "拷贝地址"
+
+msgid "history.clear"
+msgstr "清除浏览记录…"
+
+msgid "heading.history.clear"
+msgstr "清除浏览记录"
+
+msgid "dlg.history.clear"
+msgstr "清除记录"
+
+msgid "bookmark.tag.home"
+msgstr "用作主页"
+
+msgid "bookmark.tag.sub"
+msgstr "订阅"
+
+msgid "bookmark.tag.remote"
+msgstr "作为书签源"
+
+msgid "bookmark.untag.home"
+msgstr "移除主页"
+
+msgid "bookmark.untag.sub"
+msgstr "退订"
+
+msgid "bookmark.untag.remote"
+msgstr "移除书签源"
+
+msgid "bookmark.delete"
+msgstr "删除书签"
+
+msgid "bookmarks.reload"
+msgstr "刷新远端书签源"
+
+msgid "ident.using"
+msgstr "正用于本页"
+
+msgid "ident.notused"
+msgstr "未使用"
+
+#, c-format
+msgid "ident.usedonurls"
+msgid_plural "ident.usedonurls.n"
+msgstr[0] "在 %zu 个地址上使用"
+
+msgid "ident.temporary"
+msgstr "临时"
+
+# strftime() formatted
+#, c-format
+msgid "ident.expiry"
+msgstr "将于 %Y 年 %m 月 %d日过期"
+
+msgid "ident.use"
+msgstr "在本页使用"
+
+msgid "ident.stopuse"
+msgstr "停止在本页使用"
+
+msgid "ident.stopuse.all"
+msgstr "停止在所有页面上使用"
+
+msgid "ident.showuse"
+msgstr "显示使用情况"
+
+msgid "heading.ident.use"
+msgstr "身份使用情况"
+
+msgid "menu.edit.notes"
+msgstr "编辑注解…"
+
+msgid "heading.ident.notes"
+msgstr "身份注解"
+
+# %s refers to name of an identity.
+#, c-format
+msgid "dlg.ident.notes"
+msgstr "%s 上的注解："
+
+msgid "ident.fingerprint"
+msgstr "拷贝指纹"
+
+msgid "ident.delete"
+msgstr "删除身份…"
+
+msgid "heading.ident.delete"
+msgstr "删除身份"
+
+#, c-format
+msgid "dlg.confirm.ident.delete"
+msgstr ""
+"确定要删除这个身份吗？\n"
+"%s%s%s\n"
+"此操作亦将删除它对应的证书和私钥文件。"
+
+msgid "dlg.ident.delete"
+msgstr "删除身份和相关文件"
+
+msgid "sidebar.empty.idents"
+msgstr "无身份"
+
+# The %s format characters are used to highlight the word "Help" and must be used in the translation in same way as here.
+#, c-format
+msgid "ident.gotohelp"
+msgstr "查看%s帮助%s來了解更多关于 TLS 客户端证书的信息。"
+
+msgid "heading.unsub"
+msgstr "退订"
+
+#, c-format
+msgid "dlg.confirm.unsub"
+msgstr ""
+"确定要退订\n"
+"「%s」吗？"
+
+msgid "dlg.unsub"
+msgstr "退订"
+
+#, c-format
+msgid "error.unsupported.suggestsave"
+msgstr "不过，您可以通过按 %s 或在菜单里选择「 %s」来将它存到您的「下载」文件夹。"
+
+msgid "heading.pageinfo"
+msgstr "页面信息"
+
+msgid "pageinfo.header.cached"
+msgstr "（来自本地缓存）"
+
+msgid "pageinfo.cert.status"
+msgstr "证书状态："
+
+msgid "pageinfo.cert.ca.verified"
+msgstr "由权威证书机构验证"
+
+msgid "pageinfo.cert.ca.unverified"
+msgstr "未经权威证书机构（CA）验证"
+
+msgid "pageinfo.cert.notexpired"
+msgstr "未过期"
+
+msgid "pageinfo.cert.expired"
+msgstr "过期"
+
+msgid "pageinfo.cert.trusted"
+msgstr "受信任的"
+
+msgid "pageinfo.cert.untrusted"
+msgstr "不受信任的"
+
+msgid "pageinfo.domain.match"
+msgstr "与域名对应"
+
+msgid "pageinfo.domain.mismatch"
+msgstr "与域名不对应"
+
+msgid "dlg.cert.trust"
+msgstr "信任"
+
+msgid "dlg.cert.fingerprint"
+msgstr "拷贝指纹"
+
+#, c-format
+msgid "dlg.input.prompt"
+msgstr "请为 %s 输入："
+
+msgid "dlg.input.send"
+msgstr "发送"
+
+msgid "heading.save"
+msgstr "文件已保存"
+
+msgid "heading.save.incomplete"
+msgstr "页面不完整"
+
+msgid "dlg.save.incomplete"
+msgstr "页面内容依然在下载。"
+
+msgid "dlg.save.size"
+msgstr "大小："
+
+msgid "heading.save.error"
+msgstr "保存文件时出错"
+
+msgid "heading.import.bookmarks"
+msgstr "导入书签"
+
+#, c-format
+msgid "dlg.import.found"
+msgid_plural "dlg.import.found.n"
+msgstr[0] "在页面上找到了 %d 条新的链接。"
+
+#, c-format
+msgid "dlg.import.add"
+msgid_plural "dlg.import.add.n"
+msgstr[0] "%s添加 %d 个书签"
+
+msgid "dlg.import.notnew"
+msgstr "本页上所有链接均已被添加到书签。"
+
+msgid "heading.autoreload"
+msgstr "自动刷新"
+
+msgid "dlg.autoreload"
+msgstr "请为本页选择一个自动刷新频率。"
+
+msgid "link.newtab"
+msgstr "在新标签页中打开链接"
+
+msgid "link.newtab.background"
+msgstr "在新标签页中打开链接但不切换"
+
+msgid "link.browser"
+msgstr "在默认浏览器中打开链接"
+
+msgid "link.noproxy"
+msgstr "在不使用代理的情况下打开"
+
+msgid "link.copy"
+msgstr "拷贝链接"
+
+msgid "link.bookmark"
+msgstr "将链接添加为书签…"
+
+msgid "link.download"
+msgstr "下载链接目标文件"
+
+msgid "heading.openlink"
+msgstr "打开链接"
+
+#, c-format
+msgid "dlg.openlink.confirm"
+msgstr ""
+"要在默认浏览器里打开这个链接吗？\n"
+"%s%s"
+
+msgid "dlg.openlink"
+msgstr "打开链接"
+
+msgid "heading.certwarn"
+msgstr "不受信任的证书"
+
+#, c-format
+msgid "dlg.certwarn.mayberenewed"
+msgid_plural "dlg.certwarn.mayberenewed.n"
+msgstr[0] "收到的证书或许是最近更新了——它对应这个域名且没有过期。目前信任的证书会在%s，即 %d 天后过期。"
+
+msgid "dlg.certwarn.different"
+msgstr "收到的证书是有效的，但与目前信任的证书不一致。"
+
+#, c-format
+msgid "dlg.certwarn.expired"
+msgstr "收到的证书已经于%s过期。"
+
+msgid "dlg.certwarn.domain"
+msgstr "收到的证书与域名不对应（%s）。可能是服务器配置有误。"
+
+msgid "dlg.certwarn.domain.expired"
+msgstr "收到的证书已经过期，且域名不对应。"
+
+# strftime() formatted, split on two lines
+#, c-format
+msgid "page.timestamp"
+msgstr ""
+"于 %Y 年 %m 月 %d 日\n"
+"%H:%M 接收"
+
+msgid "feeds.entry.openfeed"
+msgstr "打开页面"
+
+msgid "dlg.certimport.help"
+msgstr ""
+"在此粘贴一个PEM格式的证书及/或私钥，\n"
+"或拖拽一個 .crt 或 .key 文件到此窗口。"
+
+msgid "menu.forgeturl"
+msgstr "忘记该地址"
+
+msgid "dlg.confirm.history.clear"
+msgstr "确定要清除所有的浏览记录吗？"
+
+msgid "heading.certimport"
+msgstr "导入身份"
+
+msgid "error.proxyrefusal.msg"
+msgstr "请求的资源不在该服务器服务的域名上，且该服务器不接受代理请求。"
+
+msgid "dlg.certimport.notes"
+msgstr "注解："
+
+msgid "hint.certimport.description"
+msgstr "描述"
+
+msgid "dlg.feed.sub"
+msgstr "订阅"
+
+msgid "keys.scroll.down"
+msgstr "向下滚动"
+
+msgid "keys.scroll.halfpage.up"
+msgstr "向上滚动半页"
+
+msgid "keys.scroll.halfpage.down"
+msgstr "向下滚动半页"
+
+msgid "keys.scroll.page.up"
+msgstr "向上滚动一页"
+
+msgid "keys.scroll.page.down"
+msgstr "向下滚动一页"
+
+msgid "keys.back"
+msgstr "后退"
+
+msgid "keys.forward"
+msgstr "前进"
+
+msgid "keys.parent"
+msgstr "前往上一级目录"
+
+msgid "keys.root"
+msgstr "前往站点根目录"
+
+msgid "keys.reload"
+msgstr "刷新"
+
+msgid "keys.link.modkey"
+msgstr "通过修饰键打开链接"
+
+msgid "keys.link.homerow"
+msgstr "通过主排键打开链接"
+
+msgid "keys.link.homerow.hover"
+msgstr "通过主排键在链接上悬停"
+
+msgid "keys.link.homerow.next"
+msgstr "下一组主排键链接"
+
+msgid "keys.bookmark.add"
+msgstr "添加书签"
+
+msgid "keys.findtext"
+msgstr "在页面上查找文本"
+
+msgid "keys.zoom.in"
+msgstr "放大"
+
+msgid "keys.zoom.out"
+msgstr "缩小"
+
+msgid "keys.fullscreen"
+msgstr "切换全屏模式"
+
+msgid "keys.tab.new"
+msgstr "新标签页"
+
+msgid "keys.tab.close"
+msgstr "关闭标签页"
+
+msgid "keys.tab.prev"
+msgstr "上一个标签页"
+
+msgid "keys.tab.next"
+msgstr "下一个标签页"
+
+msgid "error.unsupported.protocol"
+msgstr "不支持的协议"
+
+msgid "error.unsupported.protocol.msg"
+msgstr "请求的协议不被此程序支持。"
+
+msgid "error.badheader"
+msgstr "无效标头"
+
+msgid "error.badredirect"
+msgstr "无效重定向"
+
+msgid "link.hint.audio"
+msgstr "播放音频"
+
+msgid "link.hint.image"
+msgstr "显示图片"
+
+msgid "bookmark.title.blank"
+msgstr "空页面"
+
+msgid "heading.translate"
+msgstr "翻译页面"
+
+msgid "dlg.translate.unavail"
+msgstr "服务不可用"
+
+msgid "dlg.translate.fail"
+msgstr "请求失败"
+
+msgid "dlg.translate"
+msgstr "翻译"
+
+msgid "dlg.translate.from"
+msgstr "自："
+
+msgid "dlg.translate.to"
+msgstr "翻译至："
+
+msgid "dlg.newident.until"
+msgstr "有效期至："
+
+msgid "hint.newident.optional"
+msgstr "选填"
+
+msgid "dlg.newident.commonname"
+msgstr "通用名称（CN）："
+
+msgid "dlg.newident.temp"
+msgstr "临时："
+
+msgid "dlg.newident.notsaved"
+msgstr "不在磁盘上保存"
+
+msgid "dlg.newident.email"
+msgstr "电邮："
+
+msgid "dlg.newident.userid"
+msgstr "用户 ID："
+
+msgid "dlg.newident.domain"
+msgstr "域名："
+
+msgid "dlg.newident.org"
+msgstr "组织："
+
+msgid "dlg.newident.country"
+msgstr "国家："
+
+msgid "dlg.newident.create"
+msgstr "创建身份"
+
+msgid "heading.feedcfg"
+msgstr "订阅设置"
+
+msgid "heading.subscribe"
+msgstr "订阅页面"
+
+msgid "dlg.feed.title"
+msgstr "标题："
+
+msgid "hint.newident.date"
+msgstr "YYYY-MM-DD HH:MM:SS"
+
+msgid "heading.prefs"
+msgstr "偏好设置"
+
+msgid "heading.prefs.certs"
+msgstr "证书"
+
+# tab button
+msgid "heading.prefs.colors"
+msgstr "颜色"
+
+msgid "heading.prefs.fonts"
+msgstr "字体"
+
+msgid "prefs.accent.teal"
+msgstr "青色"
+
+msgid "prefs.accent.orange"
+msgstr "橙色"
+
+msgid "prefs.uiscale"
+msgstr "界面缩放比例："
+
+msgid "prefs.ca.file"
+msgstr "权威证书机构（CA）文件："
+
+msgid "prefs.ca.path"
+msgstr "权威证书机构（CA）路径："
+
+msgid "prefs.proxy.gemini"
+msgstr "Gemini 代理："
+
+msgid "prefs.proxy.gopher"
+msgstr "Gopher 代理："
+
+msgid "prefs.proxy.http"
+msgstr "HTTP 代理："
+
+msgid "dlg.certimport.nocert"
+msgstr "无证书"
+
+msgid "dlg.certimport.nokey"
+msgstr "无私钥"
+
+msgid "heading.bookmark.add"
+msgstr "添加为书签"
+
+msgid "heading.bookmark.edit"
+msgstr "编辑书签"
+
+msgid "lang.ar"
+msgstr "阿拉伯语"
+
+msgid "lang.zh"
+msgstr "中文"
+
+msgid "lang.en"
+msgstr "英语"
+
+msgid "lang.fi"
+msgstr "芬兰语"
+
+msgid "lang.fr"
+msgstr "法语"
+
+msgid "lang.de"
+msgstr "德语"
+
+msgid "lang.hi"
+msgstr "印地语"
+
+msgid "lang.it"
+msgstr "意大利语"
+
+msgid "lang.ja"
+msgstr "日语"
+
+msgid "lang.pt"
+msgstr "葡萄牙语"
+
+msgid "lang.ru"
+msgstr "俄语"
+
+# tab button
+msgid "heading.prefs.general"
+msgstr "通用"
+
+msgid "error.cgi"
+msgstr "CGI 错误"
+
+msgid "lang.es"
+msgstr "西班牙语"
+
+msgid "heading.newident"
+msgstr "创建身份"
+
+# tab button
+msgid "heading.prefs.userinterface"
+msgstr "用户界面"
+
+msgid "prefs.theme.black"
+msgstr "黑"
+
+msgid "prefs.sideicon"
+msgstr "站点图标："
+
+msgid "prefs.doctheme.name.highcontrast"
+msgstr "高对比度"
+
+msgid "prefs.biglede"
+msgstr "首段加大："
+
+msgid "prefs.decodeurls"
+msgstr "解码地址："
+
+msgid "prefs.cachesize"
+msgstr "缓存大小："
+
+msgid "keys.top"
+msgstr "回到顶部"
+
+msgid "keys.bottom"
+msgstr "前往底部"
+
+msgid "keys.scroll.up"
+msgstr "向上滚动"
+
+msgid "keys.link.homerow.newtab"
+msgstr "通过主排键在新标签页打开链接"
+
+msgid "keys.zoom.reset"
+msgstr "重置缩放"
+
+msgid "keys.hoverurl"
+msgstr "开关光标悬停时显示地址"
+
+msgid "prefs.downloads"
+msgstr "下载文件夹："
+
+msgid "menu.binding.clear"
+msgstr "移除"
+
+msgid "dlg.certimport.notfound"
+msgstr "未找到任何证书或私钥。"
+
+msgid "dlg.certimport.notfound.page"
+msgstr "在本页上未找到任何证书或私钥。"
+
+msgid "heading.certimport.pasted"
+msgstr "从剪贴板粘贴"
+
+msgid "heading.certimport.dropped"
+msgstr "拖拽来的文件"
+
+msgid "dlg.certimport.import"
+msgstr "导入"
+
+msgid "dlg.newident.rsa.selfsign"
+msgstr "正在创建一个自签名的 2048 位 RSA 证书。"
+
+msgid "dlg.feed.entrytype"
+msgstr "项目类型："
+
+msgid "error.badstatus"
+msgstr "未知状态码"
+
+msgid "error.badstatus.msg"
+msgstr "服务器返回了一个在 Gemini 协议标准中没有定义的状态码。也许这是来自未来的服务器，或者只是它工作不正常。"
+
+msgid "error.openfile"
+msgstr "打开文件失败"
+
+msgid "error.openfile.msg"
+msgstr "请求的文件不存在或不可访问。请检查文件路径。"
+
+msgid "error.badresource"
+msgstr "无效的资源"
+
+msgid "error.badresource.msg"
+msgstr "请求的资源不存在。"
+
+msgid "error.unsupported.media"
+msgstr "不受支持的内容类型"
+
+msgid "error.unsupported.media.msg"
+msgstr "接受到的内容无法被此程序查看。"
+
+msgid "error.badheader.msg"
+msgstr "收到的标头不符合 Gemini 协议标准所规定的格式。也许服务器工作不正常，或者可能是您在尝试连接非 Gemini 服务器。"
+
+msgid "error.badredirect.msg"
+msgstr "服务器返回了重定向请求，但没有提供有效的目标地址。也许服务器工作不正常。"
+
+msgid "error.schemeredirect.msg"
+msgstr "服务器尝试将您重定向到一个不同协议的地址。若您认为合适，以下是链接地址，供您手动打开。"
+
+msgid "dlg.feed.type.gemini"
+msgstr "YYYY-MM-DD 链接"
+
+msgid "dlg.feed.type.headings"
+msgstr "新的标题"
+
+msgid "dlg.feed.save"
+msgstr "保存设置"
+
+msgid "error.cgi.msg"
+msgstr "服务器生成动态内容时出错。也许是服务器端软件出现异常。"
+
+msgid "dlg.bookmark.save"
+msgstr "保存书签"
+
+msgid "dlg.bookmark.title"
+msgstr "标题："
+
+msgid "dlg.bookmark.url"
+msgstr "地址："
+
+msgid "dlg.bookmark.tags"
+msgstr "标签："
+
+msgid "dlg.bookmark.icon"
+msgstr "图标："
+
+# tab button
+msgid "heading.prefs.interface"
+msgstr "界面"
+
+# tab button
+msgid "heading.prefs.keys"
+msgstr "密钥"
+
+# tab button
+msgid "heading.prefs.network"
+msgstr "网络"
+
+msgid "heading.prefs.paragraph"
+msgstr "段落"
+
+msgid "heading.prefs.pagecontent"
+msgstr "页面内容"
+
+msgid "heading.prefs.proxies"
+msgstr "代理"
+
+msgid "heading.prefs.scrolling"
+msgstr "滚动"
+
+msgid "heading.prefs.sizing"
+msgstr "尺寸"
+
+msgid "heading.prefs.widelayout"
+msgstr "宽布局"
+
+# tab button
+msgid "heading.prefs.style"
+msgstr "样式"
+
+msgid "prefs.searchurl"
+msgstr "搜索地址："
+
+msgid "prefs.hoverlink"
+msgstr "光标悬停时显示地址："
+
+msgid "prefs.centershort"
+msgstr "纵向居中："
+
+msgid "prefs.smoothscroll"
+msgstr "平滑滚动："
+
+msgid "prefs.imageloadscroll"
+msgstr "滚动时加载图片："
+
+msgid "prefs.hidetoolbarscroll"
+msgstr "滚动时隐藏工具栏："
+
+msgid "prefs.ostheme"
+msgstr "使用系统主题："
+
+msgid "prefs.theme"
+msgstr "主题："
+
+msgid "prefs.theme.dark"
+msgstr "深色"
+
+msgid "prefs.theme.light"
+msgstr "浅色"
+
+msgid "prefs.theme.white"
+msgstr "白"
+
+msgid "prefs.accent"
+msgstr "主色："
+
+msgid "prefs.uilang"
+msgstr "语言："
+
+msgid "prefs.customframe"
+msgstr "自定义窗口边框："
+
+msgid "prefs.retainwindow"
+msgstr "记住窗口位置："
+
+msgid "prefs.doctheme.dark"
+msgstr "深色主题："
+
+msgid "prefs.doctheme.light"
+msgstr "浅色主题："
+
+msgid "prefs.doctheme.name.colorfuldark"
+msgstr "五彩斑斓的黑"
+
+msgid "prefs.doctheme.name.colorfullight"
+msgstr "五彩斑斓的白"
+
+msgid "prefs.doctheme.name.black"
+msgstr "黑色"
+
+msgid "prefs.doctheme.name.gray"
+msgstr "灰色"
+
+msgid "prefs.doctheme.name.white"
+msgstr "白色"
+
+msgid "prefs.doctheme.name.sepia"
+msgstr "棕色"
+
+msgid "prefs.saturation"
+msgstr "色彩饱和度："
+
+msgid "prefs.headingfont"
+msgstr "标题字体："
+
+msgid "prefs.font"
+msgstr "正文字体："
+
+msgid "prefs.mono"
+msgstr "等宽字体："
+
+msgid "prefs.mono.gopher"
+msgstr "Gopher"
+
+msgid "prefs.linewidth"
+msgstr "线宽："
+
+msgid "prefs.linewidth.normal"
+msgstr "正常"
+
+msgid "prefs.linewidth.fill"
+msgstr "填充"
+
+msgid "prefs.quoteicon"
+msgstr "引言指示图标："
+
+msgid "prefs.quoteicon.icon"
+msgstr "“ 图标"
+
+msgid "prefs.quoteicon.line"
+msgstr "线条"
+
+msgid "prefs.plaintext.wrap"
+msgstr "纯文本折行："
+
+msgid "menu.binding.reset"
+msgstr "重置为默认值"
+
+msgid "prefs.mono.gemini"
+msgstr "Gemini"
+
+msgid "error.schemeredirect"
+msgstr "跨协议重定向"
+
+msgid "error.manyredirects"
+msgstr "重定向过多"
+
+msgid "error.manyredirects.msg"
+msgstr "您可能陷入了一个重定向循环。若您希望自行前往，如下是下一个重定向目标地址。"
+
+msgid "error.tls"
+msgstr "网络或 TLS 错误"
+
+msgid "error.tls.msg"
+msgstr "与服务器通信失败。以下是错误信息："
+
+msgid "error.temporary"
+msgstr "暂时性错误"
+
+msgid "error.temporary.msg"
+msgstr "请求失败，但未来重试时可能会成功。"
+
+msgid "error.unavail"
+msgstr "服务器不可用"
+
+msgid "error.unavail.msg"
+msgstr "服务器因超负荷或维护而不可用。请稍后再试。"
+
+msgid "error.proxy"
+msgstr "代理错误"
+
+msgid "error.proxy.msg"
+msgstr "因服务器与远端主机通信未能成功完成，代理请求失败。也许网络连接有一些问题。"
+
+msgid "error.slowdown"
+msgstr "慢一点"
+
+msgid "error.slowdown.msg"
+msgstr "服务器限制了请求速率。请等待…"
+
+msgid "error.permanent"
+msgstr "永久性错误"
+
+msgid "error.permanent.msg"
+msgstr "您的请求失败。即使您继续重复请求亦不会改变结果。"
+
+msgid "error.notfound"
+msgstr "未找到"
+
+msgid "error.gone"
+msgstr "已移除"
+
+msgid "error.gone.msg"
+msgstr "所请求的资源已经不再可用。"
+
+msgid "error.proxyrefusal"
+msgstr "代理请求被拒绝"
+
+msgid "error.badrequest"
+msgstr "无效请求"
+
+msgid "error.badrequest.msg"
+msgstr "服务器无法理解您的请求。"
+
+msgid "error.cert.needed"
+msgstr "需要证书"
+
+msgid "error.notfound.msg"
+msgstr "所请求的资源目前无法找到。"
+
+msgid "error.cert.needed.msg"
+msgstr "请求的资源需要通过客户端证书来辨别身份。"
+
+msgid "error.cert.auth"
+msgstr "证书不被认可"
+
+msgid "error.cert.auth.msg"
+msgstr "提供的证书有效，但无权访问请求的资源。"
+
+msgid "error.cert.invalid"
+msgstr "证书无效"
+
+msgid "error.cert.invalid.msg"
+msgstr "提供的证书过期或无效。"
+
+msgid "keys.subscribe"
+msgstr "订阅页面更新"
+
+msgid "lang.zh.hans"
+msgstr "简体中文"
+
+# Interpret as "Results from bookmarks..."
+msgid "heading.lookup.bookmarks"
+msgstr "书签"
+
+msgid "num.bytes"
+msgid_plural "num.bytes.n"
+msgstr[0] "%zu 字节"
+
+# Interpret as "Results from feeds..."
+msgid "heading.lookup.feeds"
+msgstr "订阅项"
+
+# Interpret as "Results from history..."
+msgid "heading.lookup.history"
+msgstr "浏览记录"
+
+# Interpret as "Results from identitites..."
+msgid "heading.lookup.identities"
+msgstr "身份"
+
+# Interpret as "Results from page content..."
+msgid "heading.lookup.pagecontent"
+msgstr "页面内容"
+
+# Interpret as "Other results..."
+msgid "heading.lookup.other"
+msgstr "其它结果"
+
+msgid "reload.never"
+msgstr "永不"
+
+msgid "reload.onceperday"
+msgstr "每天一次"
+
+#, c-format
+msgid "num.minutes"
+msgid_plural "num.minutes.n"
+msgstr[0] "%d 分钟"
+
+#, c-format
+msgid "num.hours"
+msgid_plural "num.hours.n"
+msgstr[0] "%d 小时"
+
+msgid "doc.pre.nocaption"
+msgstr "无说明的预格式化文本"
+
+msgid "prefs.collapsepreonload"
+msgstr "收起预格式化文本："
+
+msgid "lang.zh.hant"
+msgstr "繁體/正體中文"

@@ -121,6 +121,19 @@ static iBool convertSource_Gopher_(iGopher *d) {
                     iEndCollect();
                     break;
                 }
+                case 'h': {
+                    iBeginCollect();
+                    setPre_Gopher_(d, iFalse);
+                    if (startsWith_Rangecc(path, "URL:")) {
+                        format_String(buf,
+                                      "=> %s %s\n",
+                                      cstr_Rangecc((iRangecc){ path.start + 4, path.end }),
+                                      cstr_Rangecc(text));
+                    }
+                    appendData_Block(d->output, constBegin_String(buf), size_String(buf));
+                    iEndCollect();
+                    break;
+                }
                 default:
                     break; /* Ignore unknown types. */
             }

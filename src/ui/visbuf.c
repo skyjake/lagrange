@@ -75,12 +75,13 @@ void dealloc_VisBuf(iVisBuf *d) {
 void reposition_VisBuf(iVisBuf *d, const iRangei vis) {
     d->vis = vis;
     iRangei good = { 0, 0 };
-    size_t avail[3], numAvail = 0;
+    size_t avail[iElemCount(d->buffers)], numAvail = 0;
     /* Check which buffers are available for reuse. */ {
         iForIndices(i, d->buffers) {
-            iVisBufTexture *buf = d->buffers + i;
-            const iRangei region = { buf->origin, buf->origin + d->texSize.y };
-            if (region.start >= vis.end || region.end <= vis.start) {
+            iVisBufTexture *buf    = d->buffers + i;
+            const iRangei   region = { buf->origin, buf->origin + d->texSize.y };
+            if (isEmpty_Rangei(buf->validRange) ||
+                buf->validRange.start >= vis.end || buf->validRange.end <= vis.start) {
                 avail[numAvail++] = i;
                 iZap(buf->validRange);
             }
@@ -89,25 +90,50 @@ void reposition_VisBuf(iVisBuf *d, const iRangei vis) {
             }
         }
     }
-    if (numAvail == iElemCount(d->buffers)) {
-        /* All buffers are outside the visible range, do a reset. */
-        d->buffers[0].origin = vis.start;
-        d->buffers[1].origin = vis.start + d->texSize.y;
-        d->buffers[2].origin = vis.start + 2 * d->texSize.y;
-    }
-    else {
-        /* Extend to cover the visible range. */
-        while (vis.start < good.start) {
-            iAssert(numAvail > 0);
-            d->buffers[avail[--numAvail]].origin = good.start - d->texSize.y;
-            good.start -= d->texSize.y;
+    iBool wasChanged = iFalse;
+    iBool doReset    = (numAvail == iElemCount(d->buffers));
+    /* Try to extend to cover the visible range. */
+    while (!doReset && vis.start < good.start) {
+        if (numAvail == 0) {
+            doReset = iTrue;
+            break;
         }
-        while (vis.end > good.end) {
-            iAssert(numAvail > 0);
-            d->buffers[avail[--numAvail]].origin = good.end;
-            good.end += d->texSize.y;
+        good.start -= d->texSize.y;
+        d->buffers[avail[--numAvail]].origin = good.start;
+        wasChanged = iTrue;
+    }
+    while (!doReset && vis.end > good.end) {
+        if (numAvail == 0) {
+            doReset = iTrue;
+            break;
+        }
+        d->buffers[avail[--numAvail]].origin = good.end;
+        good.end += d->texSize.y;
+        wasChanged = iTrue;
+    }
+    if (doReset) {
+//        puts("VisBuf reset!");
+//        fflush(stdout);
+        wasChanged = iTrue;
+        int pos = -1;
+        iForIndices(i, d->buffers) {
+            iZap(d->buffers[i].validRange);
+            d->buffers[i].origin = vis.start + pos++ * d->texSize.y;
         }
     }
+#if 0
+    if (wasChanged) {
+        printf("\nVISIBLE RANGE: %d ... %d\n", vis.start, vis.end);
+        iForIndices(i, d->buffers) {
+            const iVisBufTexture *bt = &d->buffers[i];
+            printf(" %zu: buf %5d ... %5d  valid %5d ... %5d\n", i, bt->origin,
+                   bt->origin + d->texSize.y,
+                   bt->validRange.start,
+                   bt->validRange.end);
+        }
+        fflush(stdout);
+    }
+#endif
 }
 
 void invalidRanges_VisBuf(const iVisBuf *d, const iRangei full, iRangei *out_invalidRanges) {
@@ -132,16 +158,24 @@ void validate_VisBuf(iVisBuf *d) {
     }
 }
 
+//#define DEBUG_SCALE 0.5f
+
 void draw_VisBuf(const iVisBuf *d, iInt2 topLeft) {
     SDL_Renderer *render = renderer_Window(get_Window());
     iForIndices(i, d->buffers) {
         const iVisBufTexture *buf = d->buffers + i;
-        SDL_RenderCopy(render,
-                       buf->texture,
-                       NULL,
-                       &(SDL_Rect){ topLeft.x,
-                                    topLeft.y + buf->origin,
-                                    d->texSize.x,
-                                    d->texSize.y });
+        SDL_Rect dst = { topLeft.x,
+                         topLeft.y + buf->origin,
+                         d->texSize.x,
+                         d->texSize.y };
+#if defined (DEBUG_SCALE)
+        dst.w *= DEBUG_SCALE;
+        dst.h *= DEBUG_SCALE;
+        dst.x *= DEBUG_SCALE;
+        dst.y *= DEBUG_SCALE;
+        dst.x += get_Window()->root->rect.size.x / 4;
+        dst.y += get_Window()->root->rect.size.y / 4;
+#endif
+        SDL_RenderCopy(render, buf->texture, NULL, &dst);
     }
 }

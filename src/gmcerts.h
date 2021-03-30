@@ -82,6 +82,7 @@ iGmIdentity *       newIdentity_GmCerts     (iGmCerts *, int flags, iDate validU
 
 void                importIdentity_GmCerts  (iGmCerts *, iTlsCertificate *cert, const iString *notes); /* takes ownership */
 void                deleteIdentity_GmCerts  (iGmCerts *, iGmIdentity *identity);
+void                saveIdentities_GmCerts  (const iGmCerts *);
 
 const iString *     certificatePath_GmCerts (const iGmCerts *, const iGmIdentity *identity);
 
@@ -94,3 +95,5 @@ const iPtrArray *   listIdentities_GmCerts  (const iGmCerts *, iGmCertsIdentityF
 
 void                signIn_GmCerts          (iGmCerts *, iGmIdentity *identity, const iString *url);
 void                signOut_GmCerts         (iGmCerts *, const iString *url);
+
+iBool               verifyDomain_GmCerts    (const iTlsCertificate *cert, iRangecc domain);

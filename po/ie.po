@@ -1,0 +1,1337 @@
+msgid ""
+msgstr ""
+"Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
+"PO-Revision-Date: 2021-03-30 12:05+0000\n"
+"Last-Translator: Olga Smirnova <mistresssilvara@hotmail.com>\n"
+"Language-Team: Occidental <http://weblate.skyjake.fi/projects/lagrange/ui/ie/"
+">\n"
+"Language: ie\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Weblate 4.5.1\n"
+
+msgid "about.version"
+msgstr "Version"
+
+msgid "about.tagline"
+msgstr "Un bel cliente por Gemini"
+
+msgid "cancel"
+msgstr "Anullar"
+
+msgid "dismiss"
+msgstr "Demisser"
+
+msgid "dlg.message.ok"
+msgstr "Continuar"
+
+msgid "dlg.default"
+msgstr " OK "
+
+msgid "toggle.yes"
+msgstr "YES"
+
+msgid "toggle.no"
+msgstr "NO"
+
+msgid "menu.page.subscribe"
+msgstr "Abonnar li págine…"
+
+msgid "panel.back"
+msgstr "Retro"
+
+msgid "menu.page.translate"
+msgstr "Traducter…"
+
+msgid "menu.feeds.refresh"
+msgstr "Refriscar feedes"
+
+msgid "sidebar.feeds"
+msgstr "Feedes"
+
+msgid "sidebar.history"
+msgstr "Diarium"
+
+msgid "sidebar.identities"
+msgstr "Identitás"
+
+msgid "feeds.entry.markread"
+msgstr "Marcar quam leet"
+
+msgid "bookmark.delete"
+msgstr "Remover li marca-págine"
+
+msgid "ident.fingerprint"
+msgstr "Copiar li fingre-print"
+
+msgid "pageinfo.cert.notexpired"
+msgstr "Ne expirat"
+
+msgid "heading.certimport"
+msgstr "IMPORTAR LI IDENTITA"
+
+msgid "dlg.newident.email"
+msgstr "E-post:"
+
+msgid "dlg.feed.title"
+msgstr "Titul:"
+
+msgid "dlg.feed.entrytype"
+msgstr "Tip de element:"
+
+msgid "dlg.feed.save"
+msgstr "Gardar li parametres"
+
+msgid "dlg.feed.sub"
+msgstr "Abonnar"
+
+msgid "dlg.bookmark.title"
+msgstr "Titul:"
+
+msgid "dlg.bookmark.url"
+msgstr "URL:"
+
+msgid "dlg.bookmark.tags"
+msgstr "Tags:"
+
+msgid "heading.prefs.fonts"
+msgstr "FONDES"
+
+# tab button
+msgid "heading.prefs.general"
+msgstr "General"
+
+# tab button
+msgid "heading.prefs.interface"
+msgstr "Interfacie"
+
+# tab button
+msgid "heading.prefs.keys"
+msgstr "Tastes"
+
+msgid "prefs.ostheme"
+msgstr "Usar li tema del sistema:"
+
+msgid "prefs.theme"
+msgstr "Tema:"
+
+msgid "prefs.theme.black"
+msgstr "Nigri"
+
+msgid "prefs.theme.dark"
+msgstr "Obscur"
+
+msgid "prefs.theme.light"
+msgstr "Lucid"
+
+msgid "prefs.theme.white"
+msgstr "Blanc"
+
+msgid "prefs.accent"
+msgstr "Color de accentu:"
+
+msgid "prefs.accent.teal"
+msgstr "Azur-verdi"
+
+msgid "prefs.accent.orange"
+msgstr "Orangi"
+
+msgid "prefs.uilang"
+msgstr "Lingue:"
+
+msgid "prefs.retainwindow"
+msgstr "Retener li plazzament:"
+
+msgid "prefs.sideicon"
+msgstr "Icone de capsul:"
+
+msgid "prefs.doctheme.dark"
+msgstr "Tema obscur:"
+
+msgid "prefs.doctheme.light"
+msgstr "Tema lucid:"
+
+msgid "prefs.doctheme.name.colorfuldark"
+msgstr "Obscur colorat"
+
+msgid "prefs.doctheme.name.colorfullight"
+msgstr "Lucid colorat"
+
+msgid "prefs.doctheme.name.black"
+msgstr "Nigri"
+
+msgid "prefs.doctheme.name.gray"
+msgstr "Gris"
+
+msgid "prefs.doctheme.name.white"
+msgstr "Blanc"
+
+msgid "prefs.doctheme.name.sepia"
+msgstr "Sepia"
+
+msgid "prefs.doctheme.name.highcontrast"
+msgstr "Alt contraste"
+
+msgid "prefs.mono.gopher"
+msgstr "Gopher"
+
+msgid "prefs.linewidth"
+msgstr "Largore de linea:"
+
+msgid "prefs.linewidth.normal"
+msgstr "Normal"
+
+msgid "prefs.biglede"
+msgstr "Augmentar li prim paragraf:"
+
+msgid "prefs.cachesize"
+msgstr "Grandore de cache:"
+
+msgid "prefs.ca.file"
+msgstr "File CA:"
+
+msgid "prefs.ca.path"
+msgstr "Rute de CA:"
+
+msgid "prefs.proxy.gemini"
+msgstr "Proxy Gemini:"
+
+msgid "prefs.proxy.gopher"
+msgstr "Proxy Gopher:"
+
+msgid "prefs.proxy.http"
+msgstr "Proxy HTTP:"
+
+msgid "menu.binding.reset"
+msgstr "Reverter"
+
+msgid "keys.back"
+msgstr "Ear retro"
+
+msgid "keys.forward"
+msgstr "Ear avan"
+
+msgid "keys.parent"
+msgstr "Ear al superiori fólder"
+
+msgid "keys.root"
+msgstr "Ear al radice del capsul"
+
+msgid "keys.reload"
+msgstr "Recargar li págine"
+
+msgid "keys.bookmark.add"
+msgstr "Adjuncter un marca-págine"
+
+msgid "keys.subscribe"
+msgstr "Abonnar li págine"
+
+msgid "keys.findtext"
+msgstr "Trovar textu sur li págine"
+
+msgid "keys.zoom.in"
+msgstr "Agrandar"
+
+msgid "keys.zoom.out"
+msgstr "Diminuer"
+
+msgid "keys.zoom.reset"
+msgstr "Reverter li scale"
+
+msgid "keys.fullscreen"
+msgstr "Mode plen-ecran"
+
+msgid "keys.tab.new"
+msgstr "Nov carte"
+
+msgid "keys.tab.next"
+msgstr "Sequent carte"
+
+msgid "error.openfile"
+msgstr "Ne successat aperter un file"
+
+msgid "error.manyredirects.msg"
+msgstr ""
+"Vu apare esser in un cicle de redirectiones. Li sequent adresse redirectet "
+"es ad infra si vu desira continuar manualmen."
+
+msgid "num.bytes"
+msgid_plural "num.bytes.n"
+msgstr[0] "%zu octete"
+msgstr[1] "%zu octetes"
+
+#, c-format
+msgid "ident.usedonurls"
+msgid_plural "ident.usedonurls.n"
+msgstr[0] "Usat por %zu URL"
+msgstr[1] "Usat por %zu URLs"
+
+msgid "error.cert.invalid.msg"
+msgstr "Li providet certificate de cliente es expirat o ínvalid."
+
+msgid "menu.title.file"
+msgstr "File"
+
+msgid "menu.title.edit"
+msgstr "Redacter"
+
+msgid "menu.about"
+msgstr "Pri"
+
+msgid "menu.import.links"
+msgstr "Importar omni ligamentes sur li págine…"
+
+msgid "menu.page.import"
+msgstr "Importar ligamentes quam marca-págines…"
+
+msgid "menu.title.view"
+msgstr "Vise"
+
+msgid "menu.title.bookmarks"
+msgstr "Marca-págines"
+
+msgid "menu.title.identity"
+msgstr "Identitá"
+
+msgid "menu.title.help"
+msgstr "Auxilie"
+
+msgid "menu.newtab"
+msgstr "Nov carte"
+
+msgid "menu.closetab"
+msgstr "Cluder li carte"
+
+msgid "menu.closetab.other"
+msgstr "Cluder altri cartes"
+
+msgid "menu.closetab.left"
+msgstr "Cluder cartes a levul"
+
+msgid "menu.closetab.right"
+msgstr "Cluder cartes a dextri"
+
+msgid "menu.duptab"
+msgstr "Duplicar li carte"
+
+msgid "menu.openlocation"
+msgstr "Aperter un localisation…"
+
+msgid "menu.find"
+msgstr "Trovar sur li págine"
+
+msgid "macos.menu.find"
+msgstr "Trovar"
+
+# Used on iOS. "Files" refers to Apple's iOS app where you can pick an iCloud folder.
+msgid "menu.save.files"
+msgstr "Gardar al Files"
+
+# Used on desktop operating systems. "Downloads" refers to the user's configured downloads directory.
+msgid "menu.save.downloads"
+msgstr "Gardar al Descargates"
+
+msgid "menu.sidebar"
+msgstr "Panel láteral"
+
+msgid "menu.sidebar.left"
+msgstr "Panel láteral sinistri"
+
+msgid "menu.sidebar.right"
+msgstr "Panel láteral dextri"
+
+msgid "menu.zoom.in"
+msgstr "Agrandar"
+
+msgid "menu.zoom.out"
+msgstr "Diminuer"
+
+msgid "menu.zoom.reset"
+msgstr "Reverter li scale"
+
+msgid "menu.preferences"
+msgstr "Preferenties…"
+
+msgid "menu.help"
+msgstr "Auxilie"
+
+msgid "menu.quit"
+msgstr "Surtir Lagrange"
+
+msgid "menu.cut"
+msgstr "Exciser"
+
+msgid "menu.copy"
+msgstr "Copiar"
+
+msgid "menu.paste"
+msgstr "Collar"
+
+msgid "menu.copy.pagelink"
+msgstr "Copiar li ligament al págine"
+
+msgid "menu.show.bookmarks"
+msgstr "Monstrar marca-págines"
+
+msgid "menu.show.feeds"
+msgstr "Monstrar feedes"
+
+msgid "menu.show.history"
+msgstr "Monstra li Diarium"
+
+msgid "menu.show.identities"
+msgstr "Monstrar identitás"
+
+msgid "menu.show.outline"
+msgstr "Monstrar li structura del págine"
+
+msgid "menu.back"
+msgstr "Ear retro"
+
+msgid "menu.forward"
+msgstr "Ear avan"
+
+msgid "menu.parent"
+msgstr "Ear al fólder superior"
+
+msgid "menu.root"
+msgstr "Ear al radice"
+
+msgid "menu.reload"
+msgstr "Recargar li págine"
+
+msgid "menu.identity.new"
+msgstr "Nov identitá…"
+
+msgid "menu.identity.import"
+msgstr "Importar…"
+
+msgid "menu.identity.notactive"
+msgstr "Null activ identitá"
+
+msgid "sidebar.bookmarks"
+msgstr "Marca-págines"
+
+msgid "sidebar.outline"
+msgstr "Structura"
+
+msgid "toolbar.outline"
+msgstr "Structura del págine"
+
+# megabytes, used as the unit after a number
+msgid "mb"
+msgstr "Mo"
+
+# kilobytes, used as the unit after a number
+msgid "kb"
+msgstr "Ko"
+
+# strftime() formatted
+#, c-format
+msgid "sidebar.date.thisyear"
+msgstr "%e %b"
+
+# strftime() formatted
+#, c-format
+msgid "sidebar.date.otheryear"
+msgstr "%d %B %Y"
+
+msgid "feeds.today"
+msgstr "Hodie"
+
+msgid "feeds.entry.newtab"
+msgstr "Aperter in un nov carte"
+
+msgid "feeds.entry.markunread"
+msgstr "Marcar quam ínleet"
+
+msgid "sidebar.entry.bookmark"
+msgstr "Adjuncter un marca-págine…"
+
+msgid "feeds.entry.bookmark"
+msgstr "Adjuncter un marca-págine…"
+
+msgid "feeds.unsubscribe"
+msgstr "Desabonnar…"
+
+msgid "feeds.markallread"
+msgstr "Marcar omni quam leet"
+
+msgid "feeds.refresh"
+msgstr "Refriscar feedes"
+
+msgid "menu.opentab"
+msgstr "Aperter in un nov carte"
+
+msgid "menu.opentab.background"
+msgstr "Aperter in un carte in funde"
+
+msgid "menu.edit"
+msgstr "Modificar…"
+
+msgid "menu.dup"
+msgstr "Duplicar…"
+
+msgid "menu.copyurl"
+msgstr "Copiar li URL"
+
+msgid "history.clear"
+msgstr "Vacuar li diarium…"
+
+msgid "dlg.history.clear"
+msgstr "Vacuar li diarium"
+
+msgid "ident.using"
+msgstr "Usat por ti págine"
+
+msgid "ident.notused"
+msgstr "Ne usat"
+
+msgid "ident.temporary"
+msgstr "Temporari"
+
+msgid "ident.delete"
+msgstr "Remover li identitá…"
+
+msgid "sidebar.empty.idents"
+msgstr "Null identitás"
+
+msgid "heading.unsub"
+msgstr "DESABONNAR"
+
+#, c-format
+msgid "dlg.confirm.unsub"
+msgstr ""
+"Esque desabonnar li feed\n"
+"«%s»?"
+
+msgid "dlg.unsub"
+msgstr "Desabonnar"
+
+msgid "heading.pageinfo"
+msgstr "INFORMATION PRI PÁGINE"
+
+msgid "pageinfo.header.cached"
+msgstr "(cachat contenete)"
+
+msgid "pageinfo.cert.status"
+msgstr "Statu del certificat:"
+
+msgid "pageinfo.cert.expired"
+msgstr "Expirat"
+
+msgid "pageinfo.cert.trusted"
+msgstr "Fidet"
+
+msgid "pageinfo.cert.untrusted"
+msgstr "Ne fidet"
+
+msgid "pageinfo.domain.match"
+msgstr "Nómines de dominia es egal"
+
+msgid "pageinfo.domain.mismatch"
+msgstr "Nómines de dominia differe"
+
+msgid "dlg.cert.trust"
+msgstr "Fide"
+
+msgid "dlg.cert.fingerprint"
+msgstr "Copiar li fingre-print"
+
+msgid "dlg.input.send"
+msgstr "Inviar"
+
+msgid "heading.save.incomplete"
+msgstr "PÁGINE ES ÍNCOMPLET"
+
+msgid "dlg.save.size"
+msgstr "Grandore:"
+
+msgid "heading.import.bookmarks"
+msgstr "IMPORTAR MARCA-PÁGINES"
+
+msgid "link.newtab"
+msgstr "Aperter ligament in un nov carte"
+
+msgid "link.newtab.background"
+msgstr "Aperter li ligament in un carte in funde"
+
+msgid "link.browser"
+msgstr "Aperter per li navigator predefinit"
+
+msgid "link.noproxy"
+msgstr "Aperter sin proxy"
+
+msgid "link.copy"
+msgstr "Copiar li ligament"
+
+msgid "link.download"
+msgstr "Descargar li ligat file"
+
+#, c-format
+msgid "dlg.openlink.confirm"
+msgstr ""
+"Esque aperter ti-ci ligament per li navigator predefinit?\n"
+"%s%s"
+
+msgid "dlg.openlink"
+msgstr "Aperter li ligament"
+
+#, c-format
+msgid "dlg.certwarn.expired"
+msgstr "Li recivet certificat ha expirat ye %s."
+
+msgid "dlg.certwarn.domain.expired"
+msgstr "Li recivet certificat es expirat E por un íncorrect dominia."
+
+msgid "dlg.certimport.help"
+msgstr ""
+"Colla un PEM-codificat certificat e/o un clave privat,\n"
+"o fa cader un file .crt o .key al fenestre."
+
+msgid "dlg.certimport.notfound"
+msgstr "Null certificat o clave privat esset trovat."
+
+msgid "dlg.certimport.notfound.page"
+msgstr "Null certificat o clave esset trovat in li actual págine."
+
+msgid "heading.certimport.dropped"
+msgstr "CADET FILE"
+
+msgid "dlg.certimport.import"
+msgstr "Importar"
+
+msgid "dlg.certimport.notes"
+msgstr "Notas:"
+
+msgid "hint.certimport.description"
+msgstr "descrition"
+
+msgid "dlg.certimport.nocert"
+msgstr "Null certificate"
+
+msgid "dlg.certimport.nokey"
+msgstr "Null clave privat"
+
+msgid "link.hint.audio"
+msgstr "Reproducter li audio"
+
+msgid "link.hint.image"
+msgstr "Vider li image"
+
+msgid "bookmark.title.blank"
+msgstr "Págine blanc"
+
+msgid "dlg.newident.userid"
+msgstr "ID de usator:"
+
+msgid "dlg.newident.domain"
+msgstr "Dominia:"
+
+msgid "dlg.newident.org"
+msgstr "Organisation:"
+
+msgid "dlg.feed.type.gemini"
+msgstr "Ligamentes AAAA-MM-DD"
+
+msgid "dlg.bookmark.icon"
+msgstr "Icone:"
+
+msgid "heading.prefs"
+msgstr "PREFERENTIES"
+
+msgid "heading.prefs.certs"
+msgstr "CERTIFICATES"
+
+# tab button
+msgid "heading.prefs.colors"
+msgstr "Colores"
+
+msgid "heading.prefs.proxies"
+msgstr "PROXYS"
+
+msgid "heading.prefs.scrolling"
+msgstr "RULAMENT"
+
+# tab button
+msgid "heading.prefs.style"
+msgstr "Stil"
+
+# tab button
+msgid "heading.prefs.userinterface"
+msgstr "Interfacie de usator"
+
+msgid "prefs.downloads"
+msgstr "Fólder por descargas:"
+
+msgid "prefs.searchurl"
+msgstr "URL de sercha:"
+
+msgid "prefs.centershort"
+msgstr "Centrar verticalmen:"
+
+msgid "keys.tab.close"
+msgstr "Cluder li carte"
+
+msgid "error.badstatus"
+msgstr "Ínconosset code de statu"
+
+msgid "error.unavail"
+msgstr "Servitor es índisponibil"
+
+# Usage: "(count) Unread" in the sidebar tab title, referring to feed entries.
+msgid "sidebar.unread"
+msgid_plural "sidebar.unread.n"
+msgstr[0] "ínleet"
+msgstr[1] "ínleet"
+
+#, c-format
+msgid "dlg.import.found"
+msgid_plural "dlg.import.found.n"
+msgstr[0] "Ha trovat ún nov ligament sur li págine."
+msgstr[1] "Ha trovat %d nov ligamentes sur li págine."
+
+#, c-format
+msgid "dlg.import.add"
+msgid_plural "dlg.import.add.n"
+msgstr[0] "%sAdjunter un marca-págine"
+msgstr[1] "%sAdjunter %d marca-págines"
+
+# Interpret as "Results from bookmarks..."
+msgid "heading.lookup.bookmarks"
+msgstr "MARCA-PÁGINES"
+
+# Interpret as "Results from feeds..."
+msgid "heading.lookup.feeds"
+msgstr "FEEDES"
+
+# Interpret as "Results from history..."
+msgid "heading.lookup.history"
+msgstr "DIARIUM"
+
+# Interpret as "Results from identitites..."
+msgid "heading.lookup.identities"
+msgstr "IDENTITÁS"
+
+# Interpret as "Other results..."
+msgid "heading.lookup.other"
+msgstr "ALTRI"
+
+msgid "dlg.translate.unavail"
+msgstr "Servicie es índisponibil"
+
+msgid "dlg.translate.fail"
+msgstr "Li demande ne successat"
+
+msgid "dlg.translate"
+msgstr "Traducter"
+
+msgid "dlg.translate.from"
+msgstr "De:"
+
+msgid "dlg.translate.to"
+msgstr "A:"
+
+msgid "lang.ar"
+msgstr "Arabic"
+
+msgid "lang.zh"
+msgstr "Chinesi"
+
+msgid "lang.zh.hans"
+msgstr "Chinesi (simplificat)"
+
+msgid "lang.en"
+msgstr "Anglesi"
+
+msgid "lang.fi"
+msgstr "Finlandesi"
+
+msgid "lang.fr"
+msgstr "Francesi"
+
+msgid "lang.de"
+msgstr "German"
+
+msgid "lang.hi"
+msgstr "Hindi"
+
+msgid "lang.it"
+msgstr "Italian"
+
+msgid "lang.ja"
+msgstr "Japanesi"
+
+msgid "lang.pt"
+msgstr "Portugues"
+
+msgid "lang.ru"
+msgstr "Russ"
+
+msgid "lang.es"
+msgstr "Hispan"
+
+msgid "heading.newident"
+msgstr "NOV IDENTITÁ"
+
+msgid "dlg.newident.rsa.selfsign"
+msgstr "Creante un self-signat certificat RSA de 2048 bits."
+
+msgid "dlg.newident.until"
+msgstr "Valid til:"
+
+msgid "hint.newident.date"
+msgstr "AAAA-MM-DD HH:MM:SS"
+
+msgid "hint.newident.optional"
+msgstr "facultativ"
+
+msgid "dlg.newident.commonname"
+msgstr "Comun nómine:"
+
+msgid "dlg.newident.temp"
+msgstr "Temporari:"
+
+msgid "dlg.newident.country"
+msgstr "Land:"
+
+msgid "dlg.newident.create"
+msgstr "Crear un identitá"
+
+msgid "dlg.feed.type.headings"
+msgstr "Nov rubricas"
+
+# tab button
+msgid "heading.prefs.network"
+msgstr "Rete"
+
+msgid "heading.prefs.paragraph"
+msgstr "PARAGRAF"
+
+msgid "prefs.saturation"
+msgstr "Saturation:"
+
+msgid "prefs.headingfont"
+msgstr "Fonde de rubricas:"
+
+msgid "prefs.font"
+msgstr "Fonde de textu:"
+
+msgid "prefs.mono.gemini"
+msgstr "Gemini"
+
+msgid "prefs.linewidth.fill"
+msgstr "Plenar"
+
+msgid "prefs.quoteicon"
+msgstr "Indicator de citation:"
+
+msgid "prefs.quoteicon.icon"
+msgstr "Icone ”"
+
+msgid "prefs.quoteicon.line"
+msgstr "Linea"
+
+msgid "menu.binding.clear"
+msgstr "Remover"
+
+msgid "keys.tab.prev"
+msgstr "Precedent carte"
+
+msgid "error.temporary.msg"
+msgstr "Li demande ne successat, ma posse successar si on repena plu tard."
+
+msgid "error.gone"
+msgstr "Foreat"
+
+# Alt-text of the preformatted logo.
+msgid "about.logo"
+msgstr "Dessine ASCII: li parol «Lagrange» in un grand fonde"
+
+msgid "about.powered"
+msgstr "Functiona med SDL 2, OpenSSL e ☕️"
+
+msgid "menu.copy.source"
+msgstr "Copiar li textu del fonte"
+
+msgid "menu.bookmarks.list"
+msgstr "Monstrar omni marca-págines"
+
+msgid "macos.menu.bookmarks.list"
+msgstr "Monstrar omni"
+
+msgid "menu.bookmarks.bytag"
+msgstr "Monstrar marca-págines secun li tags"
+
+msgid "macos.menu.bookmarks.bytag"
+msgstr "Secun tags"
+
+msgid "menu.page.bookmark"
+msgstr "Adjuncter un marca-págine…"
+
+msgid "menu.aboutpages"
+msgstr "Págine pri li application"
+
+msgid "menu.debug"
+msgstr "Information de debug"
+
+msgid "menu.page.copyurl"
+msgstr "Copiar li URL del págine"
+
+msgid "menu.page.copysource"
+msgstr "Copiar li fonte del págine"
+
+msgid "hint.findtext"
+msgstr "Trovar textu sur li págine"
+
+msgid "status.query"
+msgstr "Sercha"
+
+msgid "status.feeds"
+msgstr "Actualisante feeds"
+
+# strftime() formatted, split on two lines
+#, c-format
+msgid "page.timestamp"
+msgstr ""
+"Recivet a %H:%M\n"
+"ye %d.%m.%Y"
+
+msgid "feeds.entry.openfeed"
+msgstr "Aperter li págine del feed"
+
+msgid "feeds.edit"
+msgstr "Modificar li feed…"
+
+msgid "menu.forgeturl"
+msgstr "Obliviar li URL"
+
+msgid "bookmark.tag.remote"
+msgstr "Usar quam fonte de marca-págines"
+
+msgid "bookmark.untag.home"
+msgstr "Remover li hem-págine"
+
+# %s refers to name of an identity.
+#, c-format
+msgid "dlg.ident.notes"
+msgstr "Notas pri %s:"
+
+msgid "pageinfo.cert.ca.verified"
+msgstr "Verificat de CA"
+
+#, c-format
+msgid "dlg.input.prompt"
+msgstr "Ples provider li intrada por %s:"
+
+msgid "heading.save"
+msgstr "FILE STA GARDAT"
+
+msgid "dlg.save.incomplete"
+msgstr "Li contenete del págine es ancor descargat."
+
+msgid "heading.save.error"
+msgstr "ERRORE GARDANTE LI FILE"
+
+msgid "dlg.import.notnew"
+msgstr "Omni ligamentes sur li págine ja es adjuntet."
+
+msgid "heading.autoreload"
+msgstr "AUTO-RECARGAR"
+
+msgid "dlg.autoreload"
+msgstr "Selecter li intervalle de auto-recarga por ti carte."
+
+msgid "link.bookmark"
+msgstr "Adjunter al marca-págines…"
+
+msgid "heading.openlink"
+msgstr "APERTER LI LIGAMENT"
+
+msgid "heading.certimport.pasted"
+msgstr "COLLAT EX LI PAPERIERE"
+
+msgid "heading.translate"
+msgstr "TRADUCTER LI PÁGINE"
+
+msgid "error.unsupported.media"
+msgstr "Ínsuportat tip de contenete"
+
+msgid "error.cgi"
+msgstr "Errore de CGI"
+
+msgid "menu.bookmarks.bytime"
+msgstr "Monstrar marca-págines secun li creation"
+
+msgid "macos.menu.bookmarks.bytime"
+msgstr "Secun date de creation"
+
+msgid "menu.feeds.entrylist"
+msgstr "Monstrar li elementes del feed"
+
+msgid "menu.releasenotes"
+msgstr "Notas del publication"
+
+msgid "menu.autoreload"
+msgstr "Auto-recarga…"
+
+msgid "heading.history.clear"
+msgstr "VACUAR LI DIARIUM"
+
+msgid "dlg.confirm.history.clear"
+msgstr "Esque vu vole efaciar li diarium de omni visitat págines?"
+
+msgid "bookmark.tag.home"
+msgstr "Usar quam Hem-págine"
+
+msgid "bookmark.tag.sub"
+msgstr "Abonnar li feed"
+
+msgid "bookmark.untag.sub"
+msgstr "Desabonnar li feed"
+
+msgid "bookmark.untag.remote"
+msgstr "Remover li fonte de marca-págines"
+
+# strftime() formatted
+#, c-format
+msgid "ident.expiry"
+msgstr "Expira %d %B %Y"
+
+msgid "ident.use"
+msgstr "Usar por ti págine"
+
+msgid "ident.stopuse"
+msgstr "Cessar usar por ti págine"
+
+msgid "ident.stopuse.all"
+msgstr "Cessar usar partú"
+
+msgid "ident.showuse"
+msgstr "Monstrar li usage"
+
+msgid "heading.ident.use"
+msgstr "USAGE DEL IDENTITÁ"
+
+msgid "menu.edit.notes"
+msgstr "Redacter notas…"
+
+msgid "heading.ident.notes"
+msgstr "NOTAS DEL IDENTITÁ"
+
+msgid "heading.ident.delete"
+msgstr "REMOVER LI IDENTITÁ"
+
+#, c-format
+msgid "dlg.confirm.ident.delete"
+msgstr ""
+"Esque vu vole remover li identitá\n"
+"%s%s%s\n"
+"con su certificate e clave privat?"
+
+msgid "dlg.ident.delete"
+msgstr "Remover li identitá e files"
+
+# The %s format characters are used to highlight the word "Help" and must be used in the translation in same way as here.
+#, c-format
+msgid "ident.gotohelp"
+msgstr "Vi %sAuxilie%s por plu information pri certificates TLS de cliente."
+
+#, c-format
+msgid "error.unsupported.suggestsave"
+msgstr ""
+"Benque vu posse gardar it a vor fólder Descargates. Tippa %s o selecte «%s» "
+"in li menú."
+
+msgid "pageinfo.cert.ca.unverified"
+msgstr "Ne verificat de CA"
+
+msgid "heading.certwarn"
+msgstr "ÍNFIDET CERTIFICATE"
+
+msgid "dlg.certwarn.different"
+msgstr "Li recivet certificate es valid ma ne es li quel es fidet."
+
+msgid "dlg.certwarn.domain"
+msgstr ""
+"Li recivet certificate es por un altri dominia (%s). To posse esser un "
+"problema con li configuration del servitor."
+
+msgid "dlg.newident.notsaved"
+msgstr "ne gardat sur li disco"
+
+msgid "heading.feedcfg"
+msgstr "PARAMETRES DEL FEED"
+
+msgid "heading.subscribe"
+msgstr "ABONNAR LI PÁGINE"
+
+msgid "heading.bookmark.add"
+msgstr "ADJUNTER UN MARCA-PÁGINE"
+
+msgid "heading.bookmark.edit"
+msgstr "REDACTER LI MARCA-PÁGINE"
+
+msgid "dlg.bookmark.save"
+msgstr "Gardar li marca-págines"
+
+msgid "heading.prefs.pagecontent"
+msgstr "CONTENETE DE PÁGINE"
+
+msgid "heading.prefs.sizing"
+msgstr "DIMENSION"
+
+msgid "heading.prefs.widelayout"
+msgstr "LARG ARANGEMENT"
+
+msgid "prefs.hoverlink"
+msgstr "Monstrar li URL sub li apuntator:"
+
+msgid "prefs.hidetoolbarscroll"
+msgstr "Celar li instrumentarium:"
+
+msgid "prefs.uiscale"
+msgstr "Scale del UI:"
+
+msgid "prefs.customframe"
+msgstr "Special borde de fenestre:"
+
+msgid "prefs.plaintext.wrap"
+msgstr "Rupter lineas de simplic textu:"
+
+msgid "prefs.decodeurls"
+msgstr "Decodificar URLs:"
+
+msgid "keys.bottom"
+msgstr "Ear al fin"
+
+msgid "keys.scroll.up"
+msgstr "Rular ad-alt"
+
+msgid "keys.scroll.down"
+msgstr "Rular a-bass"
+
+msgid "keys.scroll.halfpage.up"
+msgstr "Rular un mi-págine ad-alt"
+
+msgid "keys.scroll.halfpage.down"
+msgstr "Rular un mi-págine a-bass"
+
+msgid "keys.scroll.page.up"
+msgstr "Rular un págine ad-alt"
+
+msgid "keys.scroll.page.down"
+msgstr "Rular un págine a-bass"
+
+msgid "keys.link.modkey"
+msgstr "Aperter li ligament med clave-modificator"
+
+msgid "keys.hoverurl"
+msgstr "Monstrar li URL sub li apuntator"
+
+msgid "error.badstatus.msg"
+msgstr ""
+"Li servitor respondet de un code de statu quel manca del specification del "
+"protocol Gemini. Fórsan li servitor es tro nov o simplicmen malfunctiona."
+
+msgid "error.openfile.msg"
+msgstr ""
+"Li demandat file ne existe o es ínaccessibil. Ples controlar li rute de file."
+
+msgid "error.badresource"
+msgstr "Ressurse es ínvalid"
+
+msgid "error.badresource.msg"
+msgstr "Li demandat ressurse ne existe."
+
+msgid "error.unsupported.media.msg"
+msgstr "Li recivet contenete ne posse esser monstrat med ti-ci application."
+
+msgid "error.unsupported.protocol"
+msgstr "Ínsuportat protocol"
+
+msgid "error.unsupported.protocol.msg"
+msgstr "Li demandat protocol ne es supportat de ti application."
+
+msgid "error.badheader"
+msgstr "Cap-linea ínvalid"
+
+msgid "error.badheader.msg"
+msgstr ""
+"Li recivet cap-linea ne conforma al specification del protocol Gemini. "
+"Fórsan li servitor malfunctiona o vu contacte un servitor non-Gemini."
+
+msgid "error.badredirect"
+msgstr "Redirection ínvalid"
+
+msgid "error.badredirect.msg"
+msgstr ""
+"Li servitor respondet con un redirection ma ne providet un valid URL de "
+"destination. Fórsan li servitor malfunctiona."
+
+msgid "error.schemeredirect"
+msgstr "Redirection a un altri schema"
+
+msgid "error.schemeredirect.msg"
+msgstr ""
+"Li servitor provat redirecter nos a un URL con un schema quel es different "
+"de ti del original URL. Vi li ligament se vu vole aperter it manualmen."
+
+msgid "error.manyredirects"
+msgstr "Tro mult redirectiones"
+
+msgid "error.tls"
+msgstr "Dessuccesse del rete o TLS"
+
+msgid "error.tls.msg"
+msgstr "Ne successat communicar con li servitor. Vi li textu de errore:"
+
+msgid "error.temporary"
+msgstr "Temporari dessuccesse"
+
+msgid "error.unavail.msg"
+msgstr ""
+"Li servitor es índisponibil pro supercarga o mantenentie. Ples repenar plu "
+"tard."
+
+msgid "error.cgi.msg"
+msgstr ""
+"Generation de contenete dinamic del servitor ne successat. Fórsan programmas "
+"del servitor malfunctiona."
+
+msgid "error.proxy"
+msgstr "Errore de proxy"
+
+msgid "error.slowdown"
+msgstr "Alentation"
+
+msgid "error.slowdown.msg"
+msgstr "Li servitor limita li frequentie de demandas. Ples atender…"
+
+msgid "error.permanent"
+msgstr "Permanent dessuccesse"
+
+msgid "error.permanent.msg"
+msgstr "Vor demanda ne successat e va ne successar in li futur."
+
+msgid "error.notfound"
+msgstr "Ne trovat"
+
+msgid "error.notfound.msg"
+msgstr "Li demandat ressurse ne posse esset trovat in ho-témpor."
+
+msgid "error.gone.msg"
+msgstr "Li demandat ressurse ne es plu disponibil."
+
+msgid "error.proxyrefusal"
+msgstr "Demanda de proxy refusat"
+
+msgid "error.badrequest"
+msgstr "Ínvalid demande"
+
+msgid "error.badrequest.msg"
+msgstr "Li servitor ne comprendet vor demande."
+
+msgid "error.cert.needed"
+msgstr "Un certificate es besonat"
+
+msgid "error.cert.needed.msg"
+msgstr ""
+"Li accesse al demandat ressurse besona li identification med un certificate "
+"de cliente."
+
+msgid "error.cert.auth"
+msgstr "Certificate ne es autorisat"
+
+msgid "error.cert.auth.msg"
+msgstr ""
+"Li providet certificate de cliente es valid, ma ne es autorisat por accesse "
+"al demandat ressurse."
+
+msgid "error.cert.invalid"
+msgstr "Certificate es ínvalid"
+
+msgid "prefs.smoothscroll"
+msgstr "Glissid rulament:"
+
+#, c-format
+msgid "dlg.certwarn.mayberenewed"
+msgid_plural "dlg.certwarn.mayberenewed.n"
+msgstr[0] ""
+"Fórsan li recivet certificate esset renovat recentmen — it es por li corect "
+"domina e ne expirat. Li certificate fidet actualmen va expirar ye %s, pos ún "
+"die."
+msgstr[1] ""
+"Fórsan li recivet certificate esset renovat recentmen — it es por li corect "
+"domina e ne expirat. Li certificate fidet actualmen va expirar ye %s, pos %d "
+"dies."
+
+# Interpret as "Results from page content..."
+msgid "heading.lookup.pagecontent"
+msgstr "CONTENETE DE PÁGINE"
+
+msgid "prefs.imageloadscroll"
+msgstr "Cargar images:"
+
+msgid "prefs.mono"
+msgstr "Textu monospacial:"
+
+msgid "keys.top"
+msgstr "Ear al inicie"
+
+msgid "reload.never"
+msgstr "Nequande"
+
+msgid "reload.onceperday"
+msgstr "Un vez per die"
+
+#, c-format
+msgid "num.minutes"
+msgid_plural "num.minutes.n"
+msgstr[0] "%d minute"
+msgstr[1] "%d minutes"
+
+#, c-format
+msgid "num.hours"
+msgid_plural "num.hours.n"
+msgstr[0] "%d hor"
+msgstr[1] "%d hores"
+
+msgid "menu.bookmarks.refresh"
+msgstr "Refriscar lontan marca-págines"
+
+msgid "bookmarks.reload"
+msgstr "Refriscar lontan fontes"
+
+msgid "lang.zh.hant"
+msgstr "Chinesi (traditional)"
+
+msgid "error.proxyrefusal.msg"
+msgstr ""
+"Li demanda esset por un ressurse quel ne existe sur li servitor e li "
+"servitor ne accepte demandes de proxy."
+
+msgid "prefs.collapsepreonload"
+msgstr "Contraher formatat textu:"
+
+msgid "keys.link.homerow.next"
+msgstr "Li sequent portion de ligamentes por li claves"
+
+msgid "keys.link.homerow.hover"
+msgstr "Ear a un ligament per tastes in li hem-range"
+
+msgid "error.proxy.msg"
+msgstr ""
+"Un demande al proxy ne successat pro que it ne successat transacter con li "
+"lontan computator. Fórsan hay problemas con connectivitá in li rete."
+
+msgid "keys.link.homerow.newtab"
+msgstr "Aperter in un nov carte per tastes in li hem-range"
+
+msgid "keys.link.homerow"
+msgstr "Aperter un ligament per tastes in li hem-range"
+
+msgid "doc.pre.nocaption"
+msgstr "Un formatat textu sin un rubrica"

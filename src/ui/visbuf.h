@@ -38,7 +38,7 @@ struct Impl_VisBufTexture {
 struct Impl_VisBuf {
     iInt2 texSize;
     iRangei vis;
-    iVisBufTexture buffers[3];
+    iVisBufTexture buffers[4];
 };
 
 iDeclareTypeConstruction(VisBuf)

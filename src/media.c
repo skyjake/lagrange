@@ -26,10 +26,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "ui/window.h"
 #include "audio/player.h"
 #include "app.h"
+#include "stb_image.h"
+#include "stb_image_resize.h"
 
 #include <the_Foundation/file.h>
 #include <the_Foundation/ptrarray.h>
-#include <stb_image.h>
 #include <SDL_hints.h>
 #include <SDL_render.h>
 #include <SDL_timer.h>
@@ -92,15 +93,41 @@ void makeTexture_GmImage(iGmImage *d) {
     }
     else {
         /* TODO: Save some memory by checking if the alpha channel is actually in use. */
-        /* TODO: Resize down to min(maximum texture size, window size). */
+        iWindow *window  = get_Window();
+        iInt2    texSize = d->size;
+        /* Resize down to min(maximum texture size, window size). */ {
+            SDL_Rect dispRect;
+            SDL_GetDisplayBounds(SDL_GetWindowDisplayIndex(window->win), &dispRect);
+            const iInt2 maxSize = min_I2(maxTextureSize_Window(window),
+                                         coord_Window(window, dispRect.w, dispRect.h));
+            iInt2 scaled = d->size;
+            if (scaled.x > maxSize.x) {
+                scaled.y = scaled.y * maxSize.x / scaled.x;
+                scaled.x = maxSize.x;
+            }
+            if (scaled.y > maxSize.y) {
+                scaled.x = scaled.x * maxSize.y / scaled.y;
+                scaled.y = maxSize.y;
+            }
+            if (!isEqual_I2(scaled, d->size)) {
+                uint8_t *scaledImgData = malloc(scaled.x * scaled.y * 4);
+                stbir_resize_uint8(imgData, d->size.x, d->size.y, 4 * d->size.x,
+                                   scaledImgData, scaled.x, scaled.y, scaled.x * 4, 4);
+                free(imgData);
+                imgData = scaledImgData;
+                texSize = scaled;
+                /* We keep d->size for the UI. */
+            }
+        }
+        /* Create the texture. */
         SDL_Surface *surface = SDL_CreateRGBSurfaceWithFormatFrom(
-            imgData, d->size.x, d->size.y, 32, d->size.x * 4, SDL_PIXELFORMAT_ABGR8888);
+            imgData, texSize.x, texSize.y, 32, texSize.x * 4, SDL_PIXELFORMAT_ABGR8888);
         /* TODO: In multiwindow case, all windows must have the same shared renderer?
            Or at least a shared context. */
         SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1"); /* linear scaling */
-        d->texture = SDL_CreateTextureFromSurface(renderer_Window(get_Window()), surface);
+        d->texture = SDL_CreateTextureFromSurface(renderer_Window(window), surface);
         SDL_FreeSurface(surface);
-        stbi_image_free(imgData);
+        free(imgData);
     }
     clear_Block(data);
 }

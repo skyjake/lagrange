@@ -157,11 +157,14 @@ static void checkServerCertificate_GmRequest_(iGmRequest *d) {
         if (!isExpired_TlsCertificate(cert)) {
             resp->certFlags |= timeVerified_GmCertFlag;
         }
-        if (verifyDomain_TlsCertificate(cert, domain)) {
+        if (verifyDomain_GmCerts(cert, domain)) {
             resp->certFlags |= domainVerified_GmCertFlag;
         }
         if (checkTrust_GmCerts(d->certs, domain, cert)) {
             resp->certFlags |= trusted_GmCertFlag;
+        }
+        if (verify_TlsCertificate(cert) == authority_TlsCertificateVerifyStatus) {
+            resp->certFlags |= authorityVerified_GmCertFlag;
         }
         validUntil_TlsCertificate(cert, &resp->certValidUntil);
         set_String(&resp->certSubject, collect_String(subject_TlsCertificate(cert)));
@@ -287,6 +290,9 @@ static void requestFinished_GmRequest_(iGmRequest *d, iTlsRequest *req) {
 
 static const iBlock *aboutPageSource_(iRangecc path, iRangecc query) {
     const iBlock *src = NULL;
+    if (equalCase_Rangecc(path, "about")) {
+        return &blobAbout_Embedded;
+    }
     if (equalCase_Rangecc(path, "lagrange")) {
         return &blobLagrange_Embedded;
     }
@@ -388,6 +394,10 @@ static const iBlock *replaceVariables_(const iBlock *block) {
 #else
                 repl = range_CStr("Shift+");
 #endif
+            }
+            else {
+                /* Translated string. */
+                repl = range_String(string_Lang(cstr_Rangecc(name)));
             }
             remove_Block(replaced, span.start, size_Range(&span));
             insertData_Block(replaced, span.start, repl.start, size_Range(&repl));

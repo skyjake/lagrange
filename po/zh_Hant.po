@@ -1,0 +1,1296 @@
+msgid ""
+msgstr ""
+"Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
+"PO-Revision-Date: 2021-03-30 12:05+0000\n"
+"Last-Translator: Shibo Lyu <github@of.sb>\n"
+"Language-Team: Chinese (Traditional) <http://weblate.skyjake.fi/projects/"
+"lagrange/ui/zh_Hant/>\n"
+"Language: zh_Hant\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Weblate 4.5.1\n"
+
+# Alt-text of the preformatted logo.
+msgid "about.logo"
+msgstr "ASCII 藝術：大字體的單字「Lagrange」"
+
+msgid "about.tagline"
+msgstr "一個漂亮的 Gemini 客戶端"
+
+msgid "about.version"
+msgstr "版本"
+
+msgid "about.powered"
+msgstr "由 SDL 2、OpenSSL 和☕️驅動"
+
+msgid "cancel"
+msgstr "取消"
+
+msgid "dismiss"
+msgstr "關閉"
+
+msgid "dlg.message.ok"
+msgstr "繼續"
+
+msgid "dlg.default"
+msgstr " 好 "
+
+msgid "bookmark.untag.remote"
+msgstr "移除書籤源"
+
+msgid "lang.ru"
+msgstr "俄語"
+
+msgid "lang.es"
+msgstr "西班牙語"
+
+msgid "heading.newident"
+msgstr "建立身分"
+
+msgid "dlg.newident.rsa.selfsign"
+msgstr "正在建立一個自簽名的 2048 位 RSA 憑證。"
+
+msgid "dlg.newident.until"
+msgstr "有效期至："
+
+msgid "hint.newident.date"
+msgstr "YYYY-MM-DD HH:MM:SS"
+
+msgid "hint.newident.optional"
+msgstr "選填"
+
+msgid "dlg.newident.commonname"
+msgstr "通用名稱（CN）："
+
+#, c-format
+msgid "dlg.confirm.ident.delete"
+msgstr ""
+"確定要刪除這個身分嗎？\n"
+"%s%s%s\n"
+"此操作亦將刪除它對應的憑證和私鑰檔案。"
+
+# The %s format characters are used to highlight the word "Help" and must be used in the translation in same way as here.
+#, c-format
+msgid "ident.gotohelp"
+msgstr "檢視%s幫助%s來瞭解更多關於 TLS 客戶端憑證的資訊。"
+
+msgid "dlg.newident.notsaved"
+msgstr "不在磁碟上儲存"
+
+msgid "dlg.newident.email"
+msgstr "電郵："
+
+msgid "dlg.newident.userid"
+msgstr "使用者 ID："
+
+msgid "dlg.newident.domain"
+msgstr "域名："
+
+msgid "pageinfo.cert.status"
+msgstr "憑證狀態："
+
+msgid "dlg.newident.org"
+msgstr "組織："
+
+msgid "link.browser"
+msgstr "在預設瀏覽器中開啟連結"
+
+# tab button
+msgid "heading.prefs.general"
+msgstr "一般"
+
+# tab button
+msgid "heading.prefs.keys"
+msgstr "金鑰"
+
+# tab button
+msgid "heading.prefs.interface"
+msgstr "介面"
+
+msgid "link.copy"
+msgstr "拷貝連結"
+
+#, c-format
+msgid "dlg.certwarn.mayberenewed"
+msgid_plural "dlg.certwarn.mayberenewed.n"
+msgstr[0] "收到的憑證或許是最近更新了——它對應這個域名且沒有過期。目前信任的憑證會在%s，即 %d 天后過期。"
+
+msgid "dlg.certwarn.different"
+msgstr "收到的憑證是有效的，但與目前信任的證書不一致。"
+
+msgid "prefs.hidetoolbarscroll"
+msgstr "捲動時隱藏工具欄："
+
+msgid "prefs.ostheme"
+msgstr "使用系統主題："
+
+msgid "prefs.theme"
+msgstr "主題："
+
+msgid "prefs.theme.black"
+msgstr "黑"
+
+msgid "prefs.theme.dark"
+msgstr "深色"
+
+msgid "prefs.theme.light"
+msgstr "淺色"
+
+msgid "prefs.theme.white"
+msgstr "白"
+
+msgid "prefs.accent"
+msgstr "主色："
+
+msgid "prefs.accent.teal"
+msgstr "青色"
+
+msgid "prefs.accent.orange"
+msgstr "橙色"
+
+msgid "prefs.uilang"
+msgstr "語言："
+
+msgid "prefs.uiscale"
+msgstr "介面縮放比例："
+
+msgid "prefs.customframe"
+msgstr "客製化視窗邊框："
+
+msgid "prefs.doctheme.dark"
+msgstr "深色主題："
+
+msgid "prefs.sideicon"
+msgstr "站點圖示："
+
+msgid "prefs.retainwindow"
+msgstr "記住視窗位置："
+
+msgid "dlg.feed.entrytype"
+msgstr "項目類型："
+
+msgid "prefs.doctheme.name.colorfullight"
+msgstr "五彩斑斕的白"
+
+msgid "prefs.hoverlink"
+msgstr "游標懸停時顯示地址："
+
+msgid "prefs.mono"
+msgstr "等寬字型："
+
+msgid "prefs.mono.gemini"
+msgstr "Gemini"
+
+msgid "prefs.mono.gopher"
+msgstr "Gopher"
+
+msgid "prefs.linewidth.fill"
+msgstr "填充"
+
+msgid "prefs.biglede"
+msgstr "首段加大："
+
+msgid "prefs.decodeurls"
+msgstr "解碼地址："
+
+msgid "prefs.cachesize"
+msgstr "快取大小："
+
+msgid "prefs.ca.file"
+msgstr "權威憑證機構（CA）檔案："
+
+msgid "prefs.ca.path"
+msgstr "權威憑證機構（CA）路徑："
+
+msgid "prefs.proxy.gemini"
+msgstr "Gemini 代理："
+
+msgid "prefs.proxy.gopher"
+msgstr "Gopher 代理："
+
+msgid "prefs.proxy.http"
+msgstr "HTTP 代理："
+
+msgid "error.badstatus.msg"
+msgstr "伺服器返回了一個在 Gemini 協議標準中沒有定義的狀態碼。也許這是來自未來的伺服器，或者只是它工作不正常。"
+
+msgid "keys.top"
+msgstr "回到頂部"
+
+msgid "keys.bottom"
+msgstr "前往底部"
+
+msgid "keys.scroll.up"
+msgstr "向上捲動"
+
+msgid "keys.scroll.down"
+msgstr "向下捲動"
+
+msgid "keys.scroll.halfpage.up"
+msgstr "向上捲動半頁"
+
+msgid "error.openfile"
+msgstr "開啟檔案失敗"
+
+msgid "error.openfile.msg"
+msgstr "請求的檔案不存在或不可訪問。請檢查檔案路徑。"
+
+msgid "error.proxy.msg"
+msgstr "因伺服器與遠端主機通訊未能成功完成，代理請求失敗。也許網路連線有一些問題。"
+
+msgid "error.notfound.msg"
+msgstr "所請求的資源目前無法找到。"
+
+msgid "toggle.yes"
+msgstr "已啟用"
+
+msgid "reload.never"
+msgstr "永不"
+
+msgid "heading.certimport.pasted"
+msgstr "從剪貼簿貼上"
+
+msgid "prefs.linewidth"
+msgstr "線寬："
+
+msgid "prefs.downloads"
+msgstr "下載資料夾："
+
+msgid "error.permanent.msg"
+msgstr "您的請求失敗。即使您繼續重複請求亦不會改變結果。"
+
+msgid "error.notfound"
+msgstr "未找到"
+
+msgid "error.gone"
+msgstr "已移除"
+
+msgid "error.proxyrefusal"
+msgstr "代理請求被拒絕"
+
+msgid "error.proxyrefusal.msg"
+msgstr "請求的資源不在該伺服器服務的域名上，且該伺服器不接受代理請求。"
+
+msgid "menu.find"
+msgstr "在頁面上尋找"
+
+msgid "menu.releasenotes"
+msgstr "發行說明"
+
+msgid "menu.title.file"
+msgstr "檔案"
+
+msgid "menu.title.edit"
+msgstr "編輯"
+
+msgid "menu.title.bookmarks"
+msgstr "書籤"
+
+msgid "menu.title.identity"
+msgstr "身分"
+
+msgid "menu.title.help"
+msgstr "輔助說明"
+
+msgid "menu.openlocation"
+msgstr "打開網址…"
+
+msgid "menu.duptab"
+msgstr "克隆標籤頁"
+
+msgid "menu.closetab.right"
+msgstr "關閉右側所有標籤頁"
+
+msgid "menu.closetab.left"
+msgstr "關閉左側所有標籤頁"
+
+msgid "menu.closetab.other"
+msgstr "關閉其它標籤頁"
+
+msgid "menu.closetab"
+msgstr "關閉標籤頁"
+
+msgid "menu.newtab"
+msgstr "新標籤頁"
+
+msgid "macos.menu.find"
+msgstr "尋找"
+
+# Used on iOS. "Files" refers to Apple's iOS app where you can pick an iCloud folder.
+msgid "menu.save.files"
+msgstr "儲存至文件"
+
+msgid "menu.copy.source"
+msgstr "拷貝原始文字"
+
+msgid "menu.sidebar"
+msgstr "開關邊欄"
+
+msgid "menu.sidebar.left"
+msgstr "開關左邊欄"
+
+msgid "menu.sidebar.right"
+msgstr "開關右邊欄"
+
+msgid "menu.zoom.in"
+msgstr "放大"
+
+msgid "menu.zoom.out"
+msgstr "縮小"
+
+msgid "menu.zoom.reset"
+msgstr "實際大小"
+
+msgid "menu.bookmarks.list"
+msgstr "列出全部書籤"
+
+msgid "macos.menu.bookmarks.list"
+msgstr "列出全部"
+
+msgid "menu.bookmarks.bytag"
+msgstr "按標籤列出書籤"
+
+msgid "macos.menu.bookmarks.bytag"
+msgstr "按標籤列出"
+
+msgid "menu.bookmarks.bytime"
+msgstr "按建立時間列出書籤"
+
+msgid "macos.menu.bookmarks.bytime"
+msgstr "按建立時間列出"
+
+msgid "menu.feeds.entrylist"
+msgstr "顯示訂閱項"
+
+msgid "menu.preferences"
+msgstr "偏好設定…"
+
+msgid "menu.help"
+msgstr "輔助說明"
+
+msgid "menu.quit"
+msgstr "結束 Lagrange"
+
+msgid "menu.copy"
+msgstr "拷貝"
+
+msgid "menu.cut"
+msgstr "剪下"
+
+msgid "menu.paste"
+msgstr "貼上"
+
+msgid "menu.copy.pagelink"
+msgstr "拷貝至頁面的連結"
+
+msgid "menu.show.bookmarks"
+msgstr "顯示書籤"
+
+msgid "menu.show.feeds"
+msgstr "顯示訂閱項"
+
+msgid "menu.show.history"
+msgstr "顯示瀏覽記錄"
+
+msgid "menu.show.identities"
+msgstr "顯示身分"
+
+msgid "menu.show.outline"
+msgstr "顯示頁面大綱"
+
+msgid "menu.back"
+msgstr "上一頁"
+
+msgid "menu.forward"
+msgstr "下一頁"
+
+msgid "menu.parent"
+msgstr "回上一級"
+
+msgid "menu.root"
+msgstr "回到根一級"
+
+msgid "menu.reload"
+msgstr "重新整理"
+
+msgid "menu.page.bookmark"
+msgstr "新增到書籤…"
+
+msgid "menu.page.subscribe"
+msgstr "訂閱頁面…"
+
+msgid "menu.aboutpages"
+msgstr "about 頁面"
+
+msgid "menu.about"
+msgstr "關於"
+
+msgid "panel.back"
+msgstr "返回"
+
+msgid "menu.debug"
+msgstr "偵錯資訊"
+
+msgid "menu.import.links"
+msgstr "匯入頁面上的所有連結…"
+
+msgid "menu.page.import"
+msgstr "將連結以書籤形式匯入…"
+
+msgid "menu.page.translate"
+msgstr "翻譯…"
+
+msgid "menu.page.copyurl"
+msgstr "拷貝頁面地址"
+
+msgid "menu.page.copysource"
+msgstr "拷貝頁面原始碼"
+
+msgid "menu.bookmarks.refresh"
+msgstr "重新整理遠端書籤"
+
+msgid "menu.feeds.refresh"
+msgstr "重新整理訂閱項"
+
+msgid "menu.identity.new"
+msgstr "建立新身分…"
+
+msgid "menu.identity.import"
+msgstr "匯入…"
+
+msgid "menu.identity.notactive"
+msgstr "沒有已啟用的身分"
+
+msgid "sidebar.bookmarks"
+msgstr "書籤"
+
+msgid "sidebar.feeds"
+msgstr "訂閱項"
+
+msgid "sidebar.history"
+msgstr "瀏覽記錄"
+
+msgid "sidebar.identities"
+msgstr "身分"
+
+msgid "sidebar.outline"
+msgstr "大綱"
+
+# Usage: "(count) Unread" in the sidebar tab title, referring to feed entries.
+msgid "sidebar.unread"
+msgid_plural "sidebar.unread.n"
+msgstr[0] "未讀"
+
+msgid "feeds.entry.openfeed"
+msgstr "開啟頁面"
+
+msgid "feeds.edit"
+msgstr "編輯訂閱…"
+
+msgid "feeds.unsubscribe"
+msgstr "退訂…"
+
+msgid "feeds.markallread"
+msgstr "全部標記為已讀"
+
+msgid "bookmark.tag.home"
+msgstr "用作主頁"
+
+msgid "bookmark.tag.sub"
+msgstr "訂閱"
+
+msgid "bookmark.tag.remote"
+msgstr "作為書籤源"
+
+msgid "bookmark.untag.home"
+msgstr "移除主頁"
+
+msgid "bookmark.untag.sub"
+msgstr "退訂"
+
+msgid "menu.opentab"
+msgstr "在新標籤頁中開啟"
+
+msgid "menu.opentab.background"
+msgstr "在新標籤頁中開啟但不切換"
+
+msgid "menu.edit"
+msgstr "編輯…"
+
+msgid "menu.dup"
+msgstr "克隆…"
+
+msgid "menu.copyurl"
+msgstr "拷貝地址"
+
+msgid "menu.forgeturl"
+msgstr "忘記該地址"
+
+msgid "history.clear"
+msgstr "清除瀏覽記錄…"
+
+msgid "heading.history.clear"
+msgstr "清除瀏覽記錄"
+
+msgid "dlg.confirm.history.clear"
+msgstr "確定要清除所有的瀏覽記錄嗎？"
+
+msgid "dlg.history.clear"
+msgstr "清除記錄"
+
+msgid "bookmark.delete"
+msgstr "刪除書籤"
+
+msgid "bookmarks.reload"
+msgstr "重新整理遠端書籤源"
+
+msgid "ident.using"
+msgstr "正用於本頁"
+
+msgid "ident.notused"
+msgstr "未使用"
+
+#, c-format
+msgid "ident.usedonurls"
+msgid_plural "ident.usedonurls.n"
+msgstr[0] "在 %zu 個地址上使用"
+
+# strftime() formatted
+#, c-format
+msgid "ident.expiry"
+msgstr "將於 %Y 年 %m 月 %d日過期"
+
+msgid "ident.use"
+msgstr "在本頁使用"
+
+msgid "ident.stopuse"
+msgstr "停止在本頁使用"
+
+msgid "ident.stopuse.all"
+msgstr "停止在所有頁面上使用"
+
+msgid "ident.showuse"
+msgstr "顯示使用情況"
+
+msgid "heading.ident.use"
+msgstr "身分使用情況"
+
+msgid "menu.edit.notes"
+msgstr "編輯註解…"
+
+msgid "heading.ident.notes"
+msgstr "身分註解"
+
+# %s refers to name of an identity.
+#, c-format
+msgid "dlg.ident.notes"
+msgstr "%s 上的註解："
+
+msgid "ident.fingerprint"
+msgstr "拷貝指紋"
+
+msgid "ident.delete"
+msgstr "刪除身分…"
+
+msgid "heading.ident.delete"
+msgstr "刪除身分"
+
+msgid "dlg.ident.delete"
+msgstr "刪除身分和相關檔案"
+
+msgid "sidebar.empty.idents"
+msgstr "無身分"
+
+msgid "ident.temporary"
+msgstr "臨時"
+
+msgid "heading.unsub"
+msgstr "退訂"
+
+#, c-format
+msgid "dlg.confirm.unsub"
+msgstr ""
+"確定要退訂\n"
+"「%s」嗎？"
+
+msgid "num.bytes"
+msgid_plural "num.bytes.n"
+msgstr[0] "%zu 位元組"
+
+msgid "dlg.unsub"
+msgstr "退訂"
+
+#, c-format
+msgid "error.unsupported.suggestsave"
+msgstr "不過，您可以通過按 %s 或在選單裡選擇「 %s」來將它存到您的「下載」資料夾。"
+
+msgid "heading.pageinfo"
+msgstr "頁面資訊"
+
+msgid "pageinfo.header.cached"
+msgstr "（來自快取）"
+
+msgid "pageinfo.cert.ca.verified"
+msgstr "由權威憑證機構（CA）驗證"
+
+msgid "pageinfo.cert.ca.unverified"
+msgstr "未經權威憑證機構（CA）驗證"
+
+msgid "pageinfo.cert.notexpired"
+msgstr "未過期"
+
+msgid "pageinfo.cert.expired"
+msgstr "過期"
+
+msgid "pageinfo.cert.trusted"
+msgstr "受信任的"
+
+msgid "pageinfo.cert.untrusted"
+msgstr "不受信任的"
+
+msgid "reload.onceperday"
+msgstr "每天一次"
+
+#, c-format
+msgid "num.minutes"
+msgid_plural "num.minutes.n"
+msgstr[0] "%d 分鐘"
+
+#, c-format
+msgid "num.hours"
+msgid_plural "num.hours.n"
+msgstr[0] "%d 小時"
+
+msgid "link.newtab"
+msgstr "在新標籤頁中開啟連結"
+
+msgid "link.newtab.background"
+msgstr "在新標籤頁中開啟連結但不切換"
+
+msgid "link.noproxy"
+msgstr "在不使用代理的情況下開啟"
+
+msgid "link.bookmark"
+msgstr "將連結新增為書籤…"
+
+msgid "link.download"
+msgstr "下載連結目標檔案"
+
+msgid "heading.openlink"
+msgstr "開啟連結"
+
+#, c-format
+msgid "dlg.openlink.confirm"
+msgstr ""
+"要在預設瀏覽器裡開啟這個連結嗎？\n"
+"%s%s"
+
+msgid "dlg.openlink"
+msgstr "開啟連結"
+
+msgid "heading.certwarn"
+msgstr "不受信任的憑證"
+
+#, c-format
+msgid "dlg.certwarn.expired"
+msgstr "收到的憑證已經於%s過期。"
+
+msgid "dlg.certwarn.domain"
+msgstr "收到的憑證與域名不對應（%s）。可能是伺服器配置有誤。"
+
+msgid "dlg.certwarn.domain.expired"
+msgstr "收到的憑證已經過期，且域名不對應。"
+
+msgid "dlg.certimport.help"
+msgstr ""
+"在此貼上一個PEM格式的憑證及/或私鑰，\n"
+"或拖拽一個 .crt 或 .key 檔案到此視窗。"
+
+msgid "dlg.certimport.notfound.page"
+msgstr "在本頁上未找到任何憑證或私鑰。"
+
+msgid "heading.certimport.dropped"
+msgstr "拖拽來的檔案"
+
+msgid "dlg.certimport.import"
+msgstr "匯入"
+
+msgid "dlg.certimport.notes"
+msgstr "註解："
+
+msgid "hint.certimport.description"
+msgstr "描述"
+
+msgid "dlg.certimport.nocert"
+msgstr "無憑證"
+
+msgid "link.hint.audio"
+msgstr "播放音訊"
+
+msgid "dlg.certimport.nokey"
+msgstr "無私鑰"
+
+msgid "link.hint.image"
+msgstr "顯示圖片"
+
+msgid "bookmark.title.blank"
+msgstr "空頁面"
+
+msgid "dlg.translate.to"
+msgstr "翻譯至："
+
+msgid "dlg.newident.temp"
+msgstr "臨時："
+
+msgid "dlg.newident.country"
+msgstr "國家："
+
+msgid "dlg.newident.create"
+msgstr "建立身份"
+
+msgid "heading.feedcfg"
+msgstr "訂閱設定"
+
+msgid "heading.subscribe"
+msgstr "訂閱頁面"
+
+msgid "dlg.feed.title"
+msgstr "標題："
+
+msgid "dlg.feed.type.gemini"
+msgstr "YYYY-MM-DD 連結"
+
+msgid "dlg.feed.type.headings"
+msgstr "新的標題"
+
+msgid "heading.bookmark.add"
+msgstr "新增為書籤"
+
+msgid "heading.bookmark.edit"
+msgstr "編輯書籤"
+
+msgid "dlg.bookmark.save"
+msgstr "儲存書籤"
+
+msgid "dlg.bookmark.title"
+msgstr "標題："
+
+msgid "dlg.bookmark.url"
+msgstr "地址："
+
+msgid "dlg.bookmark.tags"
+msgstr "標籤："
+
+msgid "dlg.bookmark.icon"
+msgstr "圖示："
+
+msgid "heading.prefs"
+msgstr "偏好設定"
+
+msgid "heading.prefs.certs"
+msgstr "憑證"
+
+# tab button
+msgid "heading.prefs.colors"
+msgstr "顏色"
+
+msgid "heading.prefs.fonts"
+msgstr "字型"
+
+# tab button
+msgid "heading.prefs.network"
+msgstr "網路"
+
+msgid "heading.prefs.paragraph"
+msgstr "段落"
+
+msgid "heading.prefs.pagecontent"
+msgstr "頁面內容"
+
+msgid "heading.prefs.proxies"
+msgstr "代理"
+
+msgid "heading.prefs.scrolling"
+msgstr "捲動"
+
+msgid "heading.prefs.widelayout"
+msgstr "寬佈局"
+
+msgid "heading.prefs.sizing"
+msgstr "尺寸"
+
+# tab button
+msgid "heading.prefs.style"
+msgstr "樣式"
+
+# tab button
+msgid "heading.prefs.userinterface"
+msgstr "使用者介面"
+
+msgid "prefs.searchurl"
+msgstr "搜尋地址："
+
+msgid "prefs.centershort"
+msgstr "縱向居中："
+
+msgid "prefs.smoothscroll"
+msgstr "平滑捲動："
+
+msgid "prefs.imageloadscroll"
+msgstr "捲動時載入圖片："
+
+msgid "prefs.doctheme.light"
+msgstr "淺色主題："
+
+msgid "prefs.doctheme.name.colorfuldark"
+msgstr "五彩斑斕的黑"
+
+msgid "prefs.doctheme.name.black"
+msgstr "黑色"
+
+msgid "prefs.doctheme.name.gray"
+msgstr "灰色"
+
+msgid "prefs.doctheme.name.white"
+msgstr "白色"
+
+msgid "prefs.doctheme.name.sepia"
+msgstr "棕色"
+
+msgid "prefs.doctheme.name.highcontrast"
+msgstr "高對比度"
+
+msgid "prefs.saturation"
+msgstr "色彩飽和度："
+
+msgid "prefs.headingfont"
+msgstr "標題字型："
+
+msgid "prefs.font"
+msgstr "正文字型："
+
+msgid "prefs.linewidth.normal"
+msgstr "正常"
+
+msgid "prefs.quoteicon"
+msgstr "引言指示圖示："
+
+msgid "prefs.quoteicon.icon"
+msgstr "“ 圖示"
+
+msgid "prefs.quoteicon.line"
+msgstr "線條"
+
+msgid "prefs.plaintext.wrap"
+msgstr "純文字折行："
+
+msgid "menu.binding.reset"
+msgstr "重置為預設值"
+
+msgid "menu.binding.clear"
+msgstr "移除"
+
+msgid "keys.root"
+msgstr "前往站點根目錄"
+
+msgid "keys.link.homerow.hover"
+msgstr "通過主排鍵在連結上懸停"
+
+msgid "keys.link.homerow.next"
+msgstr "下一組主排鍵連結"
+
+msgid "keys.bookmark.add"
+msgstr "新增書籤"
+
+msgid "keys.findtext"
+msgstr "在頁面上查詢文字"
+
+msgid "keys.zoom.in"
+msgstr "放大"
+
+msgid "keys.zoom.out"
+msgstr "縮小"
+
+msgid "keys.zoom.reset"
+msgstr "重置縮放"
+
+msgid "keys.fullscreen"
+msgstr "切換全屏模式"
+
+msgid "keys.tab.new"
+msgstr "新標籤頁"
+
+msgid "keys.tab.close"
+msgstr "關閉標籤頁"
+
+msgid "error.badresource"
+msgstr "無效的資源"
+
+msgid "error.badresource.msg"
+msgstr "請求的資源不存在。"
+
+msgid "error.unsupported.media"
+msgstr "不受支援的內容類型"
+
+msgid "error.unsupported.media.msg"
+msgstr "接受到的內容無法被此程式檢視。"
+
+msgid "error.unsupported.protocol"
+msgstr "不支援的協議"
+
+msgid "error.badheader"
+msgstr "無效標頭"
+
+msgid "error.tls"
+msgstr "網路或 TLS 錯誤"
+
+msgid "error.tls.msg"
+msgstr "與伺服器通訊失敗。以下是錯誤資訊："
+
+msgid "error.temporary"
+msgstr "暫時性錯誤"
+
+msgid "error.temporary.msg"
+msgstr "請求失敗，但未來重試時可能會成功。"
+
+msgid "error.unavail"
+msgstr "伺服器不可用"
+
+msgid "error.unavail.msg"
+msgstr "伺服器因超負荷或維護而不可用。請稍後再試。"
+
+msgid "error.cgi"
+msgstr "CGI 錯誤"
+
+msgid "error.proxy"
+msgstr "代理錯誤"
+
+msgid "error.slowdown"
+msgstr "慢一點"
+
+msgid "error.slowdown.msg"
+msgstr "伺服器限制了請求速率。請等待…"
+
+msgid "error.permanent"
+msgstr "永久性錯誤"
+
+msgid "error.badrequest"
+msgstr "無效請求"
+
+msgid "error.badrequest.msg"
+msgstr "伺服器無法理解您的請求。"
+
+msgid "error.cert.needed"
+msgstr "需要憑證"
+
+msgid "error.cert.needed.msg"
+msgstr "請求的資源需要通過客戶端憑證來辨別身份。"
+
+msgid "error.cert.auth"
+msgstr "憑證不被認可"
+
+msgid "error.cert.auth.msg"
+msgstr "提供的憑證有效，但無權訪問請求的資源。"
+
+msgid "error.cert.invalid"
+msgstr "憑證無效"
+
+msgid "error.cert.invalid.msg"
+msgstr "提供的憑證過期或無效。"
+
+msgid "keys.subscribe"
+msgstr "訂閱頁面更新"
+
+msgid "keys.tab.prev"
+msgstr "上一個標籤頁"
+
+msgid "keys.tab.next"
+msgstr "下一個標籤頁"
+
+msgid "keys.hoverurl"
+msgstr "開關游標懸停時顯示地址"
+
+msgid "error.unsupported.protocol.msg"
+msgstr "請求的協議不被此程式支援。"
+
+msgid "error.badheader.msg"
+msgstr "收到的標頭不符合 Gemini 協議標準所規定的格式。也許伺服器工作不正常，或者可能是您在嘗試連線非 Gemini 伺服器。"
+
+msgid "error.badredirect"
+msgstr "無效重定向"
+
+msgid "error.badredirect.msg"
+msgstr "伺服器返回了重定向請求，但沒有提供有效的目標地址。也許伺服器工作不正常。"
+
+msgid "error.schemeredirect"
+msgstr "跨協議重定向"
+
+msgid "error.schemeredirect.msg"
+msgstr "伺服器嘗試將您重定向到一個不同協議的地址。若您認為合適，以下是連結地址，供您手動開啟。"
+
+msgid "error.manyredirects"
+msgstr "重定向過多"
+
+msgid "toggle.no"
+msgstr "已關閉"
+
+msgid "error.manyredirects.msg"
+msgstr "您可能陷入了一個重定向迴圈。若您希望自行前往，如下是下一個重定向目標地址。"
+
+msgid "menu.title.view"
+msgstr "顯示方式"
+
+msgid "heading.certimport"
+msgstr "匯入身分"
+
+msgid "dlg.certimport.notfound"
+msgstr "未找到任何憑證或私鑰。"
+
+# Used on desktop operating systems. "Downloads" refers to the user's configured downloads directory.
+msgid "menu.save.downloads"
+msgstr "儲存至下載"
+
+msgid "menu.autoreload"
+msgstr "設定自動重新整理…"
+
+msgid "feeds.refresh"
+msgstr "重新整理"
+
+msgid "keys.scroll.halfpage.down"
+msgstr "向下捲動半頁"
+
+msgid "keys.scroll.page.up"
+msgstr "向上捲動一頁"
+
+msgid "keys.scroll.page.down"
+msgstr "向下捲動一頁"
+
+msgid "keys.back"
+msgstr "上一頁"
+
+msgid "keys.forward"
+msgstr "下一頁"
+
+msgid "keys.parent"
+msgstr "前往上一級目錄"
+
+msgid "keys.reload"
+msgstr "重新整理"
+
+msgid "keys.link.modkey"
+msgstr "通過修飾鍵開啟連結"
+
+msgid "keys.link.homerow"
+msgstr "通過主排鍵開啟連結"
+
+msgid "keys.link.homerow.newtab"
+msgstr "通過主排鍵在新標籤頁開啟連結"
+
+msgid "error.badstatus"
+msgstr "未知狀態碼"
+
+msgid "error.cgi.msg"
+msgstr "伺服器生成動態內容時出錯。也許是伺服器端軟體出現異常。"
+
+# strftime() formatted
+#, c-format
+msgid "sidebar.date.otheryear"
+msgstr "%Y 年 %m 月 %d日"
+
+msgid "toolbar.outline"
+msgstr "頁面大綱"
+
+msgid "hint.findtext"
+msgstr "在頁面上尋找文字"
+
+msgid "status.query"
+msgstr "搜尋查詢"
+
+msgid "status.feeds"
+msgstr "正在重新整理訂閱"
+
+# megabytes, used as the unit after a number
+msgid "mb"
+msgstr "MB"
+
+# kilobytes, used as the unit after a number
+msgid "kb"
+msgstr "KB"
+
+# strftime() formatted, split on two lines
+#, c-format
+msgid "page.timestamp"
+msgstr ""
+"於 %Y 年 %m 月 %d 日\n"
+"%H:%M 接收"
+
+# strftime() formatted
+#, c-format
+msgid "sidebar.date.thisyear"
+msgstr "%m 月 %d日"
+
+msgid "feeds.today"
+msgstr "今日"
+
+msgid "feeds.entry.newtab"
+msgstr "在新標籤頁中開啟"
+
+msgid "feeds.entry.markread"
+msgstr "標記為已讀"
+
+msgid "feeds.entry.markunread"
+msgstr "標記為未讀"
+
+msgid "sidebar.entry.bookmark"
+msgstr "新增書籤…"
+
+msgid "feeds.entry.bookmark"
+msgstr "新增書籤…"
+
+msgid "pageinfo.domain.mismatch"
+msgstr "與域名不對應"
+
+msgid "pageinfo.domain.match"
+msgstr "與域名對應"
+
+msgid "dlg.cert.trust"
+msgstr "信任"
+
+msgid "dlg.cert.fingerprint"
+msgstr "拷貝指紋"
+
+#, c-format
+msgid "dlg.input.prompt"
+msgstr "請為 %s 輸入："
+
+msgid "dlg.input.send"
+msgstr "傳送"
+
+msgid "heading.save"
+msgstr "檔案已儲存"
+
+msgid "heading.save.incomplete"
+msgstr "頁面不完整"
+
+msgid "dlg.save.incomplete"
+msgstr "頁面內容依然在下載。"
+
+msgid "dlg.save.size"
+msgstr "大小："
+
+msgid "heading.save.error"
+msgstr "儲存檔案時出錯"
+
+msgid "heading.import.bookmarks"
+msgstr "匯入書籤"
+
+#, c-format
+msgid "dlg.import.found"
+msgid_plural "dlg.import.found.n"
+msgstr[0] "在頁面上找到了 %d 條新的連結。"
+
+#, c-format
+msgid "dlg.import.add"
+msgid_plural "dlg.import.add.n"
+msgstr[0] "%s新增 %d 個書籤"
+
+msgid "dlg.import.notnew"
+msgstr "本頁上所有連結均已被新增到書籤。"
+
+msgid "heading.autoreload"
+msgstr "自動重新整理"
+
+msgid "dlg.autoreload"
+msgstr "請為本頁選擇一個自動重新整理頻率。"
+
+msgid "error.gone.msg"
+msgstr "所請求的資源已經不再可用。"
+
+msgid "dlg.feed.save"
+msgstr "儲存設定"
+
+msgid "dlg.feed.sub"
+msgstr "訂閱"
+
+# Interpret as "Results from bookmarks..."
+msgid "heading.lookup.bookmarks"
+msgstr "書籤"
+
+# Interpret as "Results from feeds..."
+msgid "heading.lookup.feeds"
+msgstr "訂閱項"
+
+# Interpret as "Results from history..."
+msgid "heading.lookup.history"
+msgstr "瀏覽記錄"
+
+# Interpret as "Results from page content..."
+msgid "heading.lookup.pagecontent"
+msgstr "頁面內容"
+
+# Interpret as "Results from identitites..."
+msgid "heading.lookup.identities"
+msgstr "身分"
+
+# Interpret as "Other results..."
+msgid "heading.lookup.other"
+msgstr "其它結果"
+
+msgid "heading.translate"
+msgstr "翻譯頁面"
+
+msgid "dlg.translate.unavail"
+msgstr "服務不可用"
+
+msgid "dlg.translate.fail"
+msgstr "請求失敗"
+
+msgid "dlg.translate"
+msgstr "翻譯"
+
+msgid "dlg.translate.from"
+msgstr "自："
+
+msgid "lang.ar"
+msgstr "阿拉伯語"
+
+msgid "lang.zh"
+msgstr "中文"
+
+msgid "lang.zh.hans"
+msgstr "簡體中文"
+
+msgid "lang.en"
+msgstr "英語"
+
+msgid "lang.fi"
+msgstr "芬蘭語"
+
+msgid "lang.fr"
+msgstr "法語"
+
+msgid "lang.de"
+msgstr "德語"
+
+msgid "lang.hi"
+msgstr "印地語"
+
+msgid "lang.it"
+msgstr "義大利語"
+
+msgid "lang.ja"
+msgstr "日語"
+
+msgid "lang.pt"
+msgstr "葡萄牙語"
+
+msgid "doc.pre.nocaption"
+msgstr "無說明的預格式文字"
+
+msgid "prefs.collapsepreonload"
+msgstr "收起預格式文字："
+
+msgid "lang.zh.hant"
+msgstr "繁體/正體中文"

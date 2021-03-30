@@ -22,8 +22,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "prefs.h"
 
+#include <the_Foundation/fileinfo.h>
+
 void init_Prefs(iPrefs *d) {
     d->dialogTab         = 0;
+    d->langFrom          = 3; /* fr */
+    d->langTo            = 2; /* en */
     d->useSystemTheme    = iTrue;
     d->theme             = dark_ColorTheme;
     d->accent            = cyan_ColorAccent;
@@ -32,9 +36,11 @@ void init_Prefs(iPrefs *d) {
     d->uiScale           = 1.0f; /* default set elsewhere */
     d->zoomPercent       = 100;
     d->sideIcon          = iTrue;
+    d->hideToolbarOnScroll = iTrue;
     d->hoverLink         = iTrue;
     d->smoothScrolling   = iTrue;
     d->loadImageInsteadOfScrolling = iFalse;
+    d->collapsePreOnLoad = iFalse;
     d->decodeUserVisibleURLs = iTrue;
     d->maxCacheSize      = 10;
     d->font              = nunito_TextFont;
@@ -45,9 +51,13 @@ void init_Prefs(iPrefs *d) {
     d->bigFirstParagraph = iTrue;
     d->quoteIcon         = iTrue;
     d->centerShortDocs   = iTrue;
+    d->plainTextWrap     = iTrue;
     d->docThemeDark      = colorfulDark_GmDocumentTheme;
     d->docThemeLight     = white_GmDocumentTheme;
     d->saturation        = 1.0f;
+    initCStr_String(&d->uiLanguage, "en");
+    init_String(&d->caFile);
+    init_String(&d->caPath);
     init_String(&d->geminiProxy);
     init_String(&d->gopherProxy);
     init_String(&d->httpProxy);
@@ -56,6 +66,13 @@ void init_Prefs(iPrefs *d) {
 #if defined (iPlatformAppleMobile)
     d->hoverLink = iFalse;
 #endif
+    /* TODO: Add some platform-specific common locations? */
+    if (fileExistsCStr_FileInfo("/etc/ssl/cert.pem")) { /* macOS */
+        setCStr_String(&d->caFile, "/etc/ssl/cert.pem");
+    }
+    if (fileExistsCStr_FileInfo("/etc/ssl/certs")) {
+        setCStr_String(&d->caPath, "/etc/ssl/certs");
+    }
 }
 
 void deinit_Prefs(iPrefs *d) {
@@ -64,4 +81,7 @@ void deinit_Prefs(iPrefs *d) {
     deinit_String(&d->gopherProxy);
     deinit_String(&d->httpProxy);
     deinit_String(&d->downloadDir);
+    deinit_String(&d->caPath);
+    deinit_String(&d->caFile);
+    deinit_String(&d->uiLanguage);
 }

@@ -36,6 +36,7 @@ enum iGmCertFlags {
     timeVerified_GmCertFlag    = iBit(3), /* has not expired */
     domainVerified_GmCertFlag  = iBit(4), /* cert matches server domain */
     haveFingerprint_GmCertFlag = iBit(5),
+    authorityVerified_GmCertFlag = iBit(6),
 };
 
 struct Impl_GmResponse {

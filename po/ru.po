@@ -1,0 +1,1330 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
+"POT-Creation-Date: 2021-03-23 19:02+0000\n"
+"PO-Revision-Date: 2021-03-30 12:05+0000\n"
+"Last-Translator: Nikolay Korotkiy <sikmir@gmail.com>\n"
+"Language-Team: Russian <http://weblate.skyjake.fi/projects/lagrange/ui/ru/>\n"
+"Language: ru\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
+"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
+"X-Generator: Weblate 4.5.1\n"
+
+msgid "about.logo"
+msgstr "ASCII-графика: слово «Lagrange» крупным шрифтом"
+
+msgid "about.tagline"
+msgstr "Красивый Gemini-браузер"
+
+msgid "about.version"
+msgstr "Версия"
+
+msgid "about.powered"
+msgstr "На базе SDL 2, OpenSSL, и ☕️"
+
+msgid "cancel"
+msgstr "Отмена"
+
+msgid "dismiss"
+msgstr "Закрыть"
+
+msgid "dlg.message.ok"
+msgstr "Продолжить"
+
+msgid "dlg.default"
+msgstr " OK "
+
+msgid "toggle.yes"
+msgstr "Да"
+
+msgid "toggle.no"
+msgstr "Нет"
+
+msgid "menu.title.file"
+msgstr "Файл"
+
+msgid "menu.title.edit"
+msgstr "Редактировать"
+
+msgid "menu.title.view"
+msgstr "Вид"
+
+msgid "menu.title.bookmarks"
+msgstr "Закладки"
+
+msgid "menu.title.identity"
+msgstr "Идентификатор"
+
+msgid "menu.title.help"
+msgstr "Справка"
+
+msgid "menu.newtab"
+msgstr "Новая вкладка"
+
+msgid "menu.closetab"
+msgstr "Закрыть вкладку"
+
+msgid "menu.closetab.other"
+msgstr "Закрыть другие вкладки"
+
+msgid "menu.closetab.left"
+msgstr "Закрыть вкладки слева"
+
+msgid "menu.closetab.right"
+msgstr "Закрыть вкладки справа"
+
+msgid "menu.duptab"
+msgstr "Дублировать вкладку"
+
+msgid "menu.openlocation"
+msgstr "Открыть местоположение…"
+
+msgid "menu.find"
+msgstr "Найти на странице"
+
+msgid "macos.menu.find"
+msgstr "Найти"
+
+msgid "menu.save.files"
+msgstr "Сохранить в файл"
+
+msgid "menu.save.downloads"
+msgstr "Сохранить в папку загрузки"
+
+msgid "menu.copy.source"
+msgstr "Скопировать исходный текст"
+
+msgid "menu.sidebar"
+msgstr "Показать/скрыть боковую панель"
+
+msgid "menu.sidebar.left"
+msgstr "Показать/скрыть левую боковую панель"
+
+msgid "menu.sidebar.right"
+msgstr "Показать/скрыть правую боковую панель"
+
+msgid "menu.zoom.in"
+msgstr "Увеличить"
+
+msgid "menu.zoom.out"
+msgstr "Уменьшить"
+
+msgid "menu.zoom.reset"
+msgstr "Размер по умолчанию"
+
+msgid "menu.bookmarks.list"
+msgstr "Список всех закладок"
+
+msgid "macos.menu.bookmarks.list"
+msgstr "Список всех"
+
+msgid "menu.bookmarks.bytag"
+msgstr "Список закладок по тэгу"
+
+msgid "macos.menu.bookmarks.bytag"
+msgstr "Список по тэгу"
+
+msgid "menu.bookmarks.bytime"
+msgstr "Список закладок по времени создания"
+
+msgid "macos.menu.bookmarks.bytime"
+msgstr "Список по времени создания"
+
+msgid "menu.feeds.entrylist"
+msgstr "Показать записи в ленте"
+
+msgid "menu.preferences"
+msgstr "Настройки…"
+
+msgid "menu.help"
+msgstr "Справка"
+
+msgid "menu.releasenotes"
+msgstr "Примечания к выпуску"
+
+msgid "menu.quit"
+msgstr "Выйти из Lagrange"
+
+msgid "menu.cut"
+msgstr "Вырезать"
+
+msgid "menu.copy"
+msgstr "Копировать"
+
+msgid "menu.paste"
+msgstr "Вставить"
+
+msgid "menu.copy.pagelink"
+msgstr "Копировать ссылку на страницу"
+
+msgid "menu.show.bookmarks"
+msgstr "Показать закладки"
+
+msgid "menu.show.feeds"
+msgstr "Показать ленты"
+
+msgid "menu.show.history"
+msgstr "Показать историю"
+
+msgid "menu.show.identities"
+msgstr "Показать идентификаторы"
+
+msgid "menu.show.outline"
+msgstr "Показать структуру страницы"
+
+msgid "menu.back"
+msgstr "Назад"
+
+msgid "menu.forward"
+msgstr "Вперед"
+
+msgid "menu.parent"
+msgstr "Перейти в родительский каталог"
+
+msgid "menu.root"
+msgstr "Перейти к корню"
+
+msgid "menu.reload"
+msgstr "Перезагрузить страницу"
+
+msgid "menu.autoreload"
+msgstr "Включить автоматическую перезагрузку…"
+
+msgid "menu.page.bookmark"
+msgstr "Добавить страницу в закладки…"
+
+msgid "menu.page.subscribe"
+msgstr "Подписаться на страницу…"
+
+msgid "menu.aboutpages"
+msgstr "About-страницы"
+
+msgid "menu.about"
+msgstr "О программе"
+
+msgid "panel.back"
+msgstr "Назад"
+
+msgid "menu.debug"
+msgstr "Отладочная информация"
+
+msgid "menu.import.links"
+msgstr "Импортировать все ссылки на странице…"
+
+msgid "menu.page.import"
+msgstr "Импортировать ссылки как закладки…"
+
+msgid "menu.page.translate"
+msgstr "Перевести…"
+
+msgid "menu.page.copyurl"
+msgstr "Копировать URL страницы"
+
+msgid "menu.page.copysource"
+msgstr "Копировать исходный код страницы"
+
+msgid "menu.bookmarks.refresh"
+msgstr "Обновить внешние закладки"
+
+msgid "menu.feeds.refresh"
+msgstr "Обновить ленту"
+
+msgid "menu.identity.new"
+msgstr "Новый идентификатор…"
+
+msgid "menu.identity.import"
+msgstr "Импорт…"
+
+msgid "menu.identity.notactive"
+msgstr "Нет активного идентификатора"
+
+msgid "sidebar.bookmarks"
+msgstr "Закладки"
+
+msgid "sidebar.feeds"
+msgstr "Ленты"
+
+msgid "sidebar.history"
+msgstr "История"
+
+msgid "sidebar.identities"
+msgstr "Идентификаторы"
+
+msgid "sidebar.outline"
+msgstr "Структура"
+
+msgid "sidebar.unread"
+msgid_plural "sidebar.unread.n"
+msgstr[0] "Не прочитано"
+msgstr[1] "Не прочитано"
+msgstr[2] "Не прочитано"
+
+msgid "toolbar.outline"
+msgstr "Структура страницы"
+
+msgid "hint.findtext"
+msgstr "Найти текст на странице"
+
+msgid "status.query"
+msgstr "Поисковый запрос"
+
+msgid "status.feeds"
+msgstr "Обновление лент"
+
+msgid "mb"
+msgstr "МБ"
+
+msgid "kb"
+msgstr "КБ"
+
+msgid "bytes"
+msgstr "байт"
+
+msgid "page.timestamp"
+msgstr ""
+"Получено в %H:%M\n"
+"%b %d, %Y"
+
+msgid "sidebar.date.thisyear"
+msgstr "%b %d"
+
+msgid "sidebar.date.otheryear"
+msgstr "%b %d, %Y"
+
+msgid "feeds.today"
+msgstr "Сегодня"
+
+msgid "feeds.entry.newtab"
+msgstr "Открыть статью в новой вкладке"
+
+msgid "feeds.entry.markread"
+msgstr "Отметить как прочитанное"
+
+msgid "feeds.entry.markunread"
+msgstr "Отметить как непрочитанное"
+
+msgid "sidebar.entry.bookmark"
+msgstr "Добавить закладку…"
+
+msgid "feeds.entry.bookmark"
+msgstr "Добавить закладку…"
+
+msgid "feeds.entry.openfeed"
+msgstr "Открыть страницу ленты"
+
+msgid "feeds.edit"
+msgstr "Редактировать ленту…"
+
+msgid "feeds.unsubscribe"
+msgstr "Отписаться…"
+
+msgid "feeds.markallread"
+msgstr "Отметить все как прочитанное"
+
+msgid "feeds.refresh"
+msgstr "Обновить ленту"
+
+msgid "menu.opentab"
+msgstr "Открыть в новой вкладке"
+
+msgid "menu.opentab.background"
+msgstr "Открыть в фоновой вкладке"
+
+msgid "menu.edit"
+msgstr "Редактировать…"
+
+msgid "menu.dup"
+msgstr "Дублировать…"
+
+msgid "menu.copyurl"
+msgstr "Скопировать URL"
+
+msgid "menu.forgeturl"
+msgstr "Забыть URL"
+
+msgid "history.clear"
+msgstr "Очистить историю…"
+
+msgid "heading.history.clear"
+msgstr "ОЧИСТКА ИСТОРИИ"
+
+msgid "dlg.confirm.history.clear"
+msgstr "Вы действительно хотите стереть историю посещений страниц?"
+
+msgid "dlg.history.clear"
+msgstr "Очистить историю"
+
+msgid "bookmark.tag.home"
+msgstr "Использовать как домашнюю страницу"
+
+msgid "bookmark.tag.sub"
+msgstr "Подписаться на ленту"
+
+msgid "bookmark.tag.remote"
+msgstr "Использовать как источник закладок"
+
+msgid "bookmark.untag.home"
+msgstr "Удалить домашнюю страницу"
+
+msgid "bookmark.untag.sub"
+msgstr "Отписаться от ленты"
+
+msgid "bookmark.untag.remote"
+msgstr "Удалить источник закладок"
+
+msgid "bookmark.delete"
+msgstr "Удалить закладку"
+
+msgid "bookmarks.reload"
+msgstr "Синхронизироваться с источником закладок"
+
+msgid "ident.using"
+msgstr "Используется на этой странице"
+
+msgid "ident.notused"
+msgstr "Не используется"
+
+msgid "ident.usedonurls"
+msgid_plural "ident.usedonurls.n"
+msgstr[0] "Используется на %zu URL"
+msgstr[1] "Используется на %zu URL"
+msgstr[2] "Используется на %zu URL"
+
+msgid "ident.temporary"
+msgstr "Временный"
+
+msgid "ident.expiry"
+msgstr "Истекает %b %d, %Y"
+
+msgid "ident.use"
+msgstr "Использовать на этой странице"
+
+msgid "ident.stopuse"
+msgstr "Прекратить использование на этой странице"
+
+msgid "ident.stopuse.all"
+msgstr "Прекратить использование везде"
+
+msgid "ident.showuse"
+msgstr "Показать использование"
+
+msgid "heading.ident.use"
+msgstr "ИСПОЛЬЗОВАНИЕ ИДЕНТИФИКАТОРА"
+
+msgid "menu.edit.notes"
+msgstr "Редактировать заметки…"
+
+msgid "heading.ident.notes"
+msgstr "ЗАМЕТКИ ИДЕНТИФИКАТОРА"
+
+msgid "dlg.ident.notes"
+msgstr "Заметки о %s:"
+
+msgid "ident.fingerprint"
+msgstr "Скопировать отпечаток"
+
+msgid "ident.delete"
+msgstr "Удалить идентификатор…"
+
+msgid "heading.ident.delete"
+msgstr "УДАЛЕНИЕ ИДЕНТИФИКАТОРА"
+
+msgid "dlg.confirm.ident.delete"
+msgstr ""
+"Вы действительно хотите удалить идентификатор\n"
+"%s%s%s\n"
+"включая файлы сертификата и закрытого ключа?"
+
+msgid "dlg.ident.delete"
+msgstr "Удалить идентификатор и файлы"
+
+msgid "sidebar.empty.idents"
+msgstr "Нет идентификаторов"
+
+msgid "ident.gotohelp"
+msgstr ""
+"См. %sСправка%s для получения дополнительной информации о клиентских TLS "
+"сертификатах."
+
+msgid "heading.unsub"
+msgstr "ОТПИСКА"
+
+msgid "dlg.confirm.unsub"
+msgstr ""
+"Действительно отписаться от ленты\n"
+"«%s»?"
+
+msgid "dlg.unsub"
+msgstr "Отписаться"
+
+msgid "error.unsupported.suggestsave"
+msgstr ""
+"Однако вы можете сохранить его в папку загрузок. Нажмите %s или выберите в "
+"меню «%s»."
+
+msgid "heading.pageinfo"
+msgstr "ИНФОРМАЦИЯ О СТРАНИЦЕ"
+
+msgid "pageinfo.header.cached"
+msgstr "(кешированный контент)"
+
+msgid "pageinfo.cert.status"
+msgstr "Статус сертификата:"
+
+msgid "pageinfo.cert.ca.verified"
+msgstr "Подтверждён УЦ"
+
+msgid "pageinfo.cert.ca.unverified"
+msgstr "Не подтверждён УЦ"
+
+msgid "pageinfo.cert.notexpired"
+msgstr "Срок действия не истёк"
+
+msgid "pageinfo.cert.expired"
+msgstr "Срок действия истёк"
+
+msgid "pageinfo.cert.trusted"
+msgstr "Доверенный"
+
+msgid "pageinfo.cert.untrusted"
+msgstr "Не доверенный"
+
+msgid "pageinfo.domain.match"
+msgstr "Доменное имя совпадает"
+
+msgid "pageinfo.domain.mismatch"
+msgstr "Несоответствие доменного имени"
+
+msgid "dlg.cert.trust"
+msgstr "Доверять"
+
+msgid "dlg.cert.fingerprint"
+msgstr "Скопировать отпечаток"
+
+msgid "dlg.input.prompt"
+msgstr "Введите данные для %s:"
+
+msgid "dlg.input.send"
+msgstr "Отправить"
+
+msgid "heading.save"
+msgstr "ФАЙЛ СОХРАНЁН"
+
+msgid "heading.save.incomplete"
+msgstr "СТРАНИЦА В ПРОЦЕССЕ ЗАГРУЗКИ"
+
+msgid "dlg.save.incomplete"
+msgstr "Содержимое страницы всё еще загружается."
+
+msgid "dlg.save.size"
+msgstr "Размер:"
+
+msgid "heading.save.error"
+msgstr "ОШИБКА СОХРАНЕНИЯ ФАЙЛА"
+
+msgid "heading.import.bookmarks"
+msgstr "ИМПОРТ ЗАКЛАДОК"
+
+msgid "dlg.import.found"
+msgid_plural "dlg.import.found.n"
+msgstr[0] "Найдена %d новая ссылка на этой странице."
+msgstr[1] "На странице найдено %d новых ссылок."
+msgstr[2] "На странице найдено %d новых ссылок."
+
+msgid "dlg.import.add"
+msgid_plural "dlg.import.add.n"
+msgstr[0] "%sДобавить %d закладку"
+msgstr[1] "%sДобавить %d закладок"
+msgstr[2] "%sДобавить %d закладок"
+
+msgid "dlg.import.notnew"
+msgstr "Все ссылки на этой странице уже добавлены в закладки."
+
+msgid "heading.autoreload"
+msgstr "АВТОЗАГРУЗКА"
+
+msgid "dlg.autoreload"
+msgstr "Выберите интервал автоматической перезагрузки для этой вкладки."
+
+msgid "link.newtab"
+msgstr "Открыть ссылку в новой вкладке"
+
+msgid "link.newtab.background"
+msgstr "Открыть ссылку в фоновой вкладке"
+
+msgid "link.browser"
+msgstr "Открыть ссылку в браузере по умолчанию"
+
+msgid "link.noproxy"
+msgstr "Открыть без прокси"
+
+msgid "link.copy"
+msgstr "Скопировать ссылку"
+
+msgid "link.bookmark"
+msgstr "Добавить ссылку в закладки…"
+
+msgid "link.download"
+msgstr "Скачать файл"
+
+msgid "heading.openlink"
+msgstr "ОТКРЫТЬ ССЫЛКУ"
+
+msgid "dlg.openlink.confirm"
+msgstr ""
+"Открыть эту ссылку в браузере по умолчанию?\n"
+"%s%s"
+
+msgid "dlg.openlink"
+msgstr "Открыть ссылку"
+
+msgid "heading.certwarn"
+msgstr "НЕДОВЕРЕННЫЙ СЕРТИФИКАТ"
+
+msgid "dlg.certwarn.mayberenewed"
+msgid_plural "dlg.certwarn.mayberenewed.n"
+msgstr[0] ""
+"Полученный сертификат мог быть недавно продлён — он предназначен для "
+"правильного домена и срок действия ещё не истек. Срок действия текущего "
+"доверенного сертификата истечёт %s, через %d день."
+msgstr[1] ""
+"Полученный сертификат мог быть недавно продлён — он предназначен для "
+"правильного домена и срок действия ещё не истек. Срок действия текущего "
+"доверенного сертификата истечёт %s, через %d дня."
+msgstr[2] ""
+"Полученный сертификат мог быть недавно продлён — он предназначен для "
+"правильного домена и срок действия ещё не истек. Срок действия текущего "
+"доверенного сертификата истечёт %s, через %d дней."
+
+msgid "dlg.certwarn.different"
+msgstr ""
+"Полученный сертификат действителен, но отличается от сертификата, которому "
+"мы доверяем."
+
+msgid "dlg.certwarn.expired"
+msgstr "Срок действия полученного сертификата истек %s."
+
+msgid "dlg.certwarn.domain"
+msgstr ""
+"Полученный сертификат относится к неправильному домену (%s). Это может быть "
+"проблема конфигурации сервера."
+
+msgid "dlg.certwarn.domain.expired"
+msgstr ""
+"Срок действия полученного сертификата истек И он относится к неправильному "
+"домену."
+
+msgid "link.hint.audio"
+msgstr "Воспроизвести аудио"
+
+msgid "link.hint.image"
+msgstr "Показать изображение"
+
+msgid "bookmark.title.blank"
+msgstr "Пустая страница"
+
+msgid "heading.translate"
+msgstr "ПЕРЕВОД СТРАНИЦЫ"
+
+msgid "dlg.translate.unavail"
+msgstr "Сервис недоступен"
+
+msgid "dlg.translate.fail"
+msgstr "Запрос не выполнен"
+
+msgid "dlg.translate"
+msgstr "Перевести"
+
+msgid "dlg.translate.from"
+msgstr "С:"
+
+msgid "dlg.translate.to"
+msgstr "На:"
+
+msgid "lang.ar"
+msgstr "Арабский"
+
+msgid "lang.zh"
+msgstr "Китайский"
+
+msgid "lang.en"
+msgstr "Английский"
+
+msgid "lang.fr"
+msgstr "Французский"
+
+msgid "lang.de"
+msgstr "Немецкий"
+
+msgid "lang.hi"
+msgstr "Хинди"
+
+msgid "lang.it"
+msgstr "Итальянский"
+
+msgid "lang.ja"
+msgstr "Японский"
+
+msgid "lang.pt"
+msgstr "Португальский"
+
+msgid "lang.ru"
+msgstr "Русский"
+
+msgid "lang.es"
+msgstr "Испанский"
+
+msgid "heading.newident"
+msgstr "НОВЫЙ ИДЕНТИФИКАТОР"
+
+msgid "dlg.newident.rsa.selfsign"
+msgstr "Создание самоподписанного 2048-битного RSA-сертификата."
+
+msgid "dlg.newident.until"
+msgstr "Действителен до:"
+
+msgid "hint.newident.date"
+msgstr "ГГГГ-ММ-ДД ЧЧ:ММ:СС"
+
+msgid "hint.newident.optional"
+msgstr "необязательно"
+
+msgid "dlg.newident.commonname"
+msgstr "Общее имя:"
+
+msgid "dlg.newident.temp"
+msgstr "Временный:"
+
+msgid "dlg.newident.notsaved"
+msgstr "не сохраняется на диск"
+
+msgid "dlg.newident.email"
+msgstr "Эл. почта:"
+
+msgid "dlg.newident.userid"
+msgstr "ID пользователя:"
+
+msgid "dlg.newident.domain"
+msgstr "Домен:"
+
+msgid "dlg.newident.org"
+msgstr "Организация:"
+
+msgid "dlg.newident.country"
+msgstr "Страна:"
+
+msgid "dlg.newident.create"
+msgstr "Создать идентификатор"
+
+msgid "heading.feedcfg"
+msgstr "НАСТРОЙКИ ЛЕНТЫ"
+
+msgid "heading.subscribe"
+msgstr "ПОДПИСКА НА СТРАНИЦУ"
+
+msgid "dlg.feed.title"
+msgstr "Заголовок:"
+
+msgid "dlg.feed.entrytype"
+msgstr "Тип статьи:"
+
+msgid "dlg.feed.type.gemini"
+msgstr "YYYY-MM-DD ссылки"
+
+msgid "dlg.feed.type.headings"
+msgstr "Новые заголовки"
+
+msgid "dlg.feed.save"
+msgstr "Сохранить настройки"
+
+msgid "dlg.feed.sub"
+msgstr "Подписаться"
+
+msgid "heading.bookmark.add"
+msgstr "ДОБАВИТЬ ЗАКЛАДКУ"
+
+msgid "heading.bookmark.edit"
+msgstr "РЕДАКТИРОВАНИЕ ЗАКЛАДКИ"
+
+msgid "dlg.bookmark.save"
+msgstr "Сохранить закладку"
+
+msgid "dlg.bookmark.title"
+msgstr "Заголовок:"
+
+msgid "dlg.bookmark.url"
+msgstr "URL:"
+
+msgid "dlg.bookmark.tags"
+msgstr "Теги:"
+
+msgid "dlg.bookmark.icon"
+msgstr "Иконка:"
+
+msgid "heading.prefs"
+msgstr "НАСТРОЙКИ"
+
+msgid "heading.prefs.certs"
+msgstr "СЕРТИФИКАТЫ"
+
+msgid "heading.prefs.colors"
+msgstr "Цвета"
+
+msgid "heading.prefs.fonts"
+msgstr "ШРИФТЫ"
+
+msgid "heading.prefs.general"
+msgstr "Общие"
+
+msgid "heading.prefs.interface"
+msgstr "Интерфейс"
+
+msgid "heading.prefs.keys"
+msgstr "Клавиатура"
+
+msgid "heading.prefs.network"
+msgstr "Сеть"
+
+msgid "heading.prefs.paragraph"
+msgstr "ПАРАГРАФ"
+
+msgid "heading.prefs.pagecontent"
+msgstr "СОДЕРЖАНИЕ СТРАНИЦЫ"
+
+msgid "heading.prefs.proxies"
+msgstr "ПРОКСИ"
+
+msgid "heading.prefs.scrolling"
+msgstr "ПРОКРУТКА"
+
+msgid "heading.prefs.sizing"
+msgstr "РАЗМЕР"
+
+msgid "heading.prefs.widelayout"
+msgstr "ШИРОКИЙ МАКЕТ"
+
+msgid "heading.prefs.style"
+msgstr "Стиль"
+
+msgid "heading.prefs.userinterface"
+msgstr "Пользовательский интерфейс"
+
+msgid "prefs.downloads"
+msgstr "Папка загрузок:"
+
+msgid "prefs.searchurl"
+msgstr "URL поиска:"
+
+msgid "prefs.hoverlink"
+msgstr "Показывать URL при наведении:"
+
+msgid "prefs.centershort"
+msgstr "Вертикальное центрирование:"
+
+msgid "prefs.smoothscroll"
+msgstr "Плавная прокрутка:"
+
+msgid "prefs.imageloadscroll"
+msgstr "Загрузка изображений при прокрутке:"
+
+msgid "prefs.hidetoolbarscroll"
+msgstr "Скрыть панель инструментов при прокрутке:"
+
+msgid "prefs.ostheme"
+msgstr "Использовать системную тему:"
+
+msgid "prefs.theme"
+msgstr "Тема:"
+
+msgid "prefs.theme.black"
+msgstr "Чёрная"
+
+msgid "prefs.theme.dark"
+msgstr "Тёмная"
+
+msgid "prefs.theme.light"
+msgstr "Светлая"
+
+msgid "prefs.theme.white"
+msgstr "Белая"
+
+msgid "prefs.accent"
+msgstr "Акцентный цвет:"
+
+msgid "prefs.accent.teal"
+msgstr "Бирюзовый"
+
+msgid "prefs.accent.orange"
+msgstr "Оранжевый"
+
+msgid "prefs.uiscale"
+msgstr "Коэффициент масштабирования:"
+
+msgid "prefs.customframe"
+msgstr "Пользовательские рамки окна:"
+
+msgid "prefs.retainwindow"
+msgstr "Сохранять местоположение:"
+
+msgid "prefs.sideicon"
+msgstr "Иконка капсулы:"
+
+msgid "prefs.doctheme.dark"
+msgstr "Тёмная тема:"
+
+msgid "prefs.doctheme.light"
+msgstr "Светлая тема:"
+
+msgid "prefs.doctheme.name.colorfuldark"
+msgstr "Красочный тёмный"
+
+msgid "prefs.doctheme.name.colorfullight"
+msgstr "Красочный светлый"
+
+msgid "prefs.doctheme.name.black"
+msgstr "Чёрный"
+
+msgid "prefs.doctheme.name.gray"
+msgstr "Серый"
+
+msgid "prefs.doctheme.name.white"
+msgstr "Белый"
+
+msgid "prefs.doctheme.name.sepia"
+msgstr "Сепия"
+
+msgid "prefs.doctheme.name.highcontrast"
+msgstr "Высокий контраст"
+
+msgid "prefs.saturation"
+msgstr "Насыщенность:"
+
+msgid "prefs.headingfont"
+msgstr "Шрифт заголовков:"
+
+msgid "prefs.font"
+msgstr "Шрифт основного текста:"
+
+msgid "prefs.mono"
+msgstr "Моноширинный текст:"
+
+msgid "prefs.mono.gemini"
+msgstr "Gemini"
+
+msgid "prefs.mono.gopher"
+msgstr "Gopher"
+
+msgid "prefs.linewidth"
+msgstr "Ширина линии:"
+
+msgid "prefs.linewidth.normal"
+msgstr "Нормальная"
+
+msgid "prefs.linewidth.fill"
+msgstr "Заливка"
+
+msgid "prefs.quoteicon"
+msgstr "Индикатор цитаты:"
+
+msgid "prefs.quoteicon.icon"
+msgstr "\" Иконка"
+
+msgid "prefs.quoteicon.line"
+msgstr "Линия"
+
+msgid "prefs.biglede"
+msgstr "Большой 1-й абзац:"
+
+msgid "prefs.plaintext.wrap"
+msgstr "Переносить обычный текст:"
+
+msgid "prefs.decodeurls"
+msgstr "Декодировать URL:"
+
+msgid "prefs.cachesize"
+msgstr "Размер кэша:"
+
+msgid "prefs.ca.file"
+msgstr "CA файл:"
+
+msgid "prefs.ca.path"
+msgstr "CA путь:"
+
+msgid "prefs.proxy.gemini"
+msgstr "Gemini прокси:"
+
+msgid "prefs.proxy.gopher"
+msgstr "Gopher прокси:"
+
+msgid "prefs.proxy.http"
+msgstr "HTTP прокси:"
+
+msgid "menu.binding.reset"
+msgstr "Восстановить значения по умолчанию"
+
+msgid "menu.binding.clear"
+msgstr "Удалить"
+
+msgid "keys.top"
+msgstr "Перейти к началу"
+
+msgid "keys.bottom"
+msgstr "Перейти в конец"
+
+msgid "keys.scroll.up"
+msgstr "Прокрутить вверх"
+
+msgid "keys.scroll.down"
+msgstr "Прокрутить вниз"
+
+msgid "keys.scroll.halfpage.up"
+msgstr "Прокрутить вверх на полстраницы"
+
+msgid "keys.scroll.halfpage.down"
+msgstr "Прокрутить вниз на полстраницы"
+
+msgid "keys.scroll.page.up"
+msgstr "Прокрутка страницы вверх"
+
+msgid "keys.scroll.page.down"
+msgstr "Прокрутка страницы вниз"
+
+msgid "keys.back"
+msgstr "Назад"
+
+msgid "keys.forward"
+msgstr "Вперед"
+
+msgid "keys.parent"
+msgstr "Перейти в родительский каталог"
+
+msgid "keys.root"
+msgstr "Перейти к корню капсулы"
+
+msgid "keys.reload"
+msgstr "Перезагрузить страницу"
+
+msgid "keys.link.modkey"
+msgstr "Открыть ссылку с помощью клавиши-модификатора"
+
+msgid "keys.link.homerow"
+msgstr "Открыть ссылку с помощью клавиш домашнего ряда"
+
+msgid "keys.link.homerow.newtab"
+msgstr "Открыть ссылку в новой вкладке с помощью клавиш домашнеге ряда"
+
+msgid "keys.link.homerow.hover"
+msgstr "Активировать ссылку с помощью клавиш домашнего ряда"
+
+msgid "keys.link.homerow.next"
+msgstr "Следующий набор ссылок домашнего ряда"
+
+msgid "keys.bookmark.add"
+msgstr "Добавить закладку"
+
+msgid "keys.findtext"
+msgstr "Найти текст на странице"
+
+msgid "keys.zoom.in"
+msgstr "Увеличить"
+
+msgid "keys.zoom.out"
+msgstr "Уменьшить"
+
+msgid "keys.zoom.reset"
+msgstr "Размер по умолчанию"
+
+msgid "keys.fullscreen"
+msgstr "Полноэкранный режим"
+
+msgid "keys.tab.new"
+msgstr "Новая вкладка"
+
+msgid "keys.tab.close"
+msgstr "Закрыть вкладку"
+
+msgid "keys.tab.prev"
+msgstr "Предыдущая вкладка"
+
+msgid "keys.tab.next"
+msgstr "Следующая вкладка"
+
+msgid "keys.hoverurl"
+msgstr "Показывать URL-адрес под курсором"
+
+msgid "dlg.certimport.notes"
+msgstr "Заметки:"
+
+msgid "prefs.uilang"
+msgstr "Язык:"
+
+msgid "heading.certimport"
+msgstr "ИМПОРТ ИДЕНТИФИКАТОРА"
+
+msgid "dlg.certimport.notfound"
+msgstr "Сертификат или закрытый ключ не найдены."
+
+msgid "hint.certimport.description"
+msgstr "описание"
+
+msgid "dlg.certimport.nocert"
+msgstr "Нет сертификата"
+
+msgid "lang.fi"
+msgstr "Финский"
+
+msgid "heading.certimport.pasted"
+msgstr "ВСТАВЛЕНО ИЗ БУФЕРА ОБМЕНА"
+
+msgid "dlg.certimport.import"
+msgstr "Импортировать"
+
+msgid "dlg.certimport.nokey"
+msgstr "Нет закрытого ключа"
+
+msgid "dlg.certimport.notfound.page"
+msgstr "На текущей странице не найден сертификат или ключ."
+
+msgid "dlg.certimport.help"
+msgstr ""
+"Вставьте PEM-закодированный сертификат и/или закрытый ключ,\n"
+"или перетащите в окно файл .crt/.key."
+
+msgid "error.openfile"
+msgstr "Не удалось открыть файл"
+
+msgid "error.openfile.msg"
+msgstr ""
+"Запрошенный файл не существует или недоступен. Пожалуйста, проверьте путь к "
+"файлу."
+
+msgid "error.badresource"
+msgstr "Недействительный ресурс"
+
+msgid "error.unsupported.media"
+msgstr "Неподдерживаемый тип контента"
+
+msgid "error.unsupported.protocol"
+msgstr "Неподдерживаемый протокол"
+
+msgid "error.unsupported.protocol.msg"
+msgstr "Запрошенный протокол не поддерживается этим приложением."
+
+msgid "error.badheader"
+msgstr "Неверный заголовок"
+
+msgid "error.badredirect"
+msgstr "Недействительное перенаправление"
+
+msgid "error.schemeredirect"
+msgstr "Перенаправление с изменением схемы"
+
+msgid "error.manyredirects"
+msgstr "Слишком много перенаправлений"
+
+msgid "error.badstatus.msg"
+msgstr ""
+"Сервер ответил кодом состояния, которого нет в спецификации протокола "
+"Gemini. Может сервер из будущего? Или просто неисправен."
+
+msgid "error.badstatus"
+msgstr "Неизвестный код состояния"
+
+msgid "error.badresource.msg"
+msgstr "Запрошенный ресурс не существует."
+
+msgid "error.unsupported.media.msg"
+msgstr "Полученный контент нельзя просмотреть в этом приложении."
+
+msgid "error.badheader.msg"
+msgstr ""
+"Полученный заголовок не соответствует спецификации протокола Gemini. "
+"Возможно, сервер неисправен, или вы пытались связаться с сервером, отличным "
+"от Gemini."
+
+msgid "error.badredirect.msg"
+msgstr ""
+"Сервер ответил перенаправлением, но не предоставил действительный целевой "
+"URL. Возможно, сервер неисправен."
+
+msgid "error.schemeredirect.msg"
+msgstr ""
+"Сервер попытался перенаправить нас на URL, схема которого отличается от "
+"схемы исходного URL. Вот ссылка, по которой вы можете открыть ее вручную, "
+"если это необходимо."
+
+msgid "error.manyredirects.msg"
+msgstr ""
+"Вы можете застрять в цикле перенаправлений. Следующий перенаправленный URL "
+"находится ниже, если вы хотите продолжить вручную."
+
+msgid "error.cert.invalid.msg"
+msgstr "Предоставленный клиентский сертификат просрочен или недействителен."
+
+msgid "error.slowdown"
+msgstr "Помедленнее"
+
+msgid "error.tls"
+msgstr "Ошибка сети/TLS"
+
+msgid "error.tls.msg"
+msgstr "Не удалось связаться с сервером. Вот сообщение об ошибке:"
+
+msgid "error.temporary"
+msgstr "Временный сбой"
+
+msgid "error.unavail"
+msgstr "Сервер недоступен"
+
+msgid "error.cgi"
+msgstr "Ошибка CGI"
+
+msgid "error.proxy"
+msgstr "Ошибка прокси-сервера"
+
+msgid "error.permanent"
+msgstr "Постоянный отказ"
+
+msgid "error.notfound"
+msgstr "Не найдено"
+
+msgid "error.notfound.msg"
+msgstr "Запрошенный ресурс не может быть найден в настоящее время."
+
+msgid "error.gone.msg"
+msgstr "Запрошенный ресурс больше недоступен."
+
+msgid "error.cert.needed"
+msgstr "Требуется сертификат"
+
+msgid "error.cert.auth"
+msgstr "Сертификат не авторизован"
+
+msgid "error.cert.invalid"
+msgstr "Недействительный сертификат"
+
+msgid "error.unavail.msg"
+msgstr ""
+"Сервер недоступен из-за перегрузки или технического обслуживания. Проверьте "
+"позднее."
+
+msgid "error.slowdown.msg"
+msgstr "Сервер ограничивает частоту запросов. Подождите пожалуйста…"
+
+msgid "error.gone"
+msgstr "Удалено"
+
+msgid "error.badrequest"
+msgstr "Некорректный запрос"
+
+msgid "error.badrequest.msg"
+msgstr "Сервер не понял ваш запрос."
+
+msgid "error.cert.needed.msg"
+msgstr ""
+"Для доступа к запрошенному ресурсу требуется идентификация с помощью "
+"клиентского сертификата."
+
+msgid "error.cert.auth.msg"
+msgstr ""
+"Предоставленный клиентский сертификат действителен, но не авторизован для "
+"доступа к запрошенному ресурсу."
+
+msgid "error.cgi.msg"
+msgstr ""
+"Сбой при генерации динамического контента на сервере. Это может быть связано "
+"с неисправностью серверного программного обеспечения."
+
+msgid "error.temporary.msg"
+msgstr ""
+"Запрос не выполнен, но может быть выполнен позже, если вы попытаетесь снова."
+
+msgid "error.proxyrefusal"
+msgstr "Запрос отклонён прокси-сервером"
+
+msgid "error.proxy.msg"
+msgstr ""
+"Запрос к прокси не выполнен, потому что серверу не удалось успешно завершить "
+"транзакцию с удалённым хостом. Возможно, есть проблемы с подключением к сети."
+
+msgid "keys.subscribe"
+msgstr "Подписаться на страницу"
+
+msgid "heading.certimport.dropped"
+msgstr "ПЕРЕТАЩЕН ФАЙЛ"
+
+msgid "error.permanent.msg"
+msgstr ""
+"Не удалось выполнить запрос и при повторной попытке запрос также не будет "
+"выполнен."
+
+msgid "error.proxyrefusal.msg"
+msgstr ""
+"Запрос к ресурсу в домене, не обслуживаемом сервером, и сервер не принимает "
+"запросы прокси."
+
+msgid "lang.zh.hans"
+msgstr "Китайский (упрощённый)"
+
+# Interpret as "Results from bookmarks..."
+msgid "heading.lookup.bookmarks"
+msgstr "ЗАКЛАДКИ"
+
+# Interpret as "Results from page content..."
+msgid "heading.lookup.pagecontent"
+msgstr "СОДЕРЖАНИЕ СТРАНИЦЫ"
+
+# Interpret as "Results from feeds..."
+msgid "heading.lookup.feeds"
+msgstr "ЛЕНТЫ"
+
+# Interpret as "Results from history..."
+msgid "heading.lookup.history"
+msgstr "ИСТОРИЯ"
+
+# Interpret as "Results from identitites..."
+msgid "heading.lookup.identities"
+msgstr "ИДЕНТИФИКАТОРЫ"
+
+# Interpret as "Other results..."
+msgid "heading.lookup.other"
+msgstr "ДРУГИЕ"
+
+msgid "num.bytes"
+msgid_plural "num.bytes.n"
+msgstr[0] "%zu байт"
+msgstr[1] "%zu байта"
+msgstr[2] "%zu байтов"
+
+msgid "reload.never"
+msgstr "Никогда"
+
+msgid "reload.onceperday"
+msgstr "Один раз в день"
+
+#, c-format
+msgid "num.minutes"
+msgid_plural "num.minutes.n"
+msgstr[0] "%d минута"
+msgstr[1] "%d минуты"
+msgstr[2] "%d минут"
+
+#, c-format
+msgid "num.hours"
+msgid_plural "num.hours.n"
+msgstr[0] "%d час"
+msgstr[1] "%d часа"
+msgstr[2] "%d часов"
+
+msgid "doc.pre.nocaption"
+msgstr "Преформатированый текст без описания"
+
+msgid "prefs.collapsepreonload"
+msgstr "Сворачивать преформатированый текст:"
+
+msgid "lang.zh.hant"
+msgstr "Китайский (традиционный)"

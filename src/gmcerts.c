@@ -21,6 +21,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "gmcerts.h"
+#include "gmutil.h"
 #include "defs.h"
 
 #include <the_Foundation/file.h>
@@ -200,7 +201,7 @@ static const char *magicIdentity_GmCerts_ = "iden";
 
 iDefineTypeConstructionArgs(GmCerts, (const char *saveDir), saveDir)
 
-static void saveIdentities_GmCerts_(const iGmCerts *d) {
+void saveIdentities_GmCerts(const iGmCerts *d) {
     iFile *f = new_File(collect_String(concatCStr_Path(&d->saveDir, identsFilename_GmCerts_)));
     if (open_File(f, writeOnly_FileMode)) {
         writeData_File(f, magicIdMeta_GmCerts_, 4);
@@ -362,7 +363,7 @@ void init_GmCerts(iGmCerts *d, const char *saveDir) {
 
 void deinit_GmCerts(iGmCerts *d) {
     iGuardMutex(d->mtx, {
-        saveIdentities_GmCerts_(d);
+        saveIdentities_GmCerts(d);
         iForEach(PtrArray, i, &d->idents) {
             delete_GmIdentity(i.ptr);
         }
@@ -373,6 +374,35 @@ void deinit_GmCerts(iGmCerts *d) {
     delete_Mutex(d->mtx);
 }
 
+static iRangecc stripFirstDomainLabel_(iRangecc domain) {
+    iRangecc label = iNullRange;
+    if (nextSplit_Rangecc(domain, ".", &label) && nextSplit_Rangecc(domain, ".", &label)) {
+        return (iRangecc){ label.start, domain.end };
+    }
+    return iNullRange;
+}
+
+iBool verifyDomain_GmCerts(const iTlsCertificate *cert, iRangecc domain) {
+    if (verifyDomain_TlsCertificate(cert, domain)) {
+        return iTrue;
+    }
+    /* Allow for an implicit wildcard in the domain name. Self-signed TOFU is really only
+       about the public/private key pair; any other details should be considered
+       complementary. */
+    for (iRangecc higherDomain = stripFirstDomainLabel_(domain);
+         !isEmpty_Range(&higherDomain);
+         higherDomain = stripFirstDomainLabel_(higherDomain)) {
+        if (!iStrStrN(higherDomain.start, ".", size_Range(&higherDomain))) {
+            /* Must have two labels at least. */
+            break;
+        }
+        if (verifyDomain_TlsCertificate(cert, higherDomain)) {
+            return iTrue;
+        }
+    }
+    return iFalse;
+}
+
 iBool checkTrust_GmCerts(iGmCerts *d, iRangecc domain, const iTlsCertificate *cert) {
     if (!cert) {
         return iFalse;
@@ -380,7 +410,9 @@ iBool checkTrust_GmCerts(iGmCerts *d, iRangecc domain, const iTlsCertificate *ce
     if (isExpired_TlsCertificate(cert)) {
         return iFalse;
     }
-    if (!verifyDomain_TlsCertificate(cert, domain)) {
+    /* We trust CA verification implicitly. */
+    const iBool isAuth = verify_TlsCertificate(cert) == authority_TlsCertificateVerifyStatus;
+    if (!isAuth && !verifyDomain_GmCerts(cert, domain)) {
         return iFalse;
     }
     /* TODO: Could call setTrusted_GmCerts() instead of duplicating the trust-setting. */
@@ -394,9 +426,7 @@ iBool checkTrust_GmCerts(iGmCerts *d, iRangecc domain, const iTlsCertificate *ce
     if (trust) {
         /* We already have it, check if it matches the one we trust for this domain (if it's
            still valid. */
-        iTime now;
-        initCurrent_Time(&now);
-        if (secondsSince_Time(&trust->validUntil, &now) > 0) {
+        if (!isAuth && elapsedSeconds_Time(&trust->validUntil) < 0) {
             /* Trusted cert is still valid. */
             const iBool isTrusted = cmp_Block(fingerprint, &trust->fingerprint) == 0;
             unlock_Mutex(d->mtx);
@@ -420,7 +450,8 @@ iBool checkTrust_GmCerts(iGmCerts *d, iRangecc domain, const iTlsCertificate *ce
 
 void setTrusted_GmCerts(iGmCerts *d, iRangecc domain, const iBlock *fingerprint,
                         const iDate *validUntil) {
-    iString *key = collect_String(newRange_String(domain));
+    iString *key = collectNew_String();
+    punyEncodeDomain_Rangecc(domain, key);
     lock_Mutex(d->mtx);
     iTrustEntry *trust = value_StringHash(d->trusted, key);
     if (trust) {

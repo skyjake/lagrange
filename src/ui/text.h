@@ -27,79 +27,60 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <SDL_render.h>
 
-/* Size names: regular (1x) -> medium (1.2x) -> big (1.33x) -> large (1.67x) -> huge (2x) */
+/* Content sizes: regular (1x) -> medium (1.2x) -> big (1.33x) -> large (1.67x) -> huge (2x) */
+
+enum iFontSize {
+    uiNormal_FontSize, /* 1.000 */
+    uiMedium_FontSize, /* 1.125 */
+    uiBig_FontSize,    /* 1.333 */
+    uiLarge_FontSize,  /* 1.666 */
+    contentRegular_FontSize,
+    contentMedium_FontSize,
+    contentBig_FontSize,
+    contentLarge_FontSize,
+    contentHuge_FontSize,
+    contentMonoSmall_FontSize,
+    contentMono_FontSize,
+    max_FontSize,
+};
 
 enum iFontId {
-    default_FontId,
-    defaultBold_FontId,
+    /* UI fonts: normal weight (1x, 1.125x, 1.33x, 1.67x) */
+    default_FontId = 0,
     defaultMedium_FontId,
-    defaultMediumBold_FontId,
     defaultBig_FontId,
-    defaultBigBold_FontId,
     defaultLarge_FontId,
+    /* UI fonts: bold weight */
+    defaultBold_FontId,
+    defaultMediumBold_FontId,
+    defaultBigBold_FontId,
     defaultLargeBold_FontId,
-    defaultMonospace_FontId,
-    defaultContentSized_FontId,    
     /* content fonts */
     regular_FontId,
-    monospace_FontId,
-    monospaceSmall_FontId,
+    bold_FontId,
+    italic_FontId,
     medium_FontId,
     big_FontId,
-    italic_FontId,
     largeBold_FontId,
-    hugeBold_FontId,
     largeLight_FontId,
-    /* monospace content fonts */
+    hugeBold_FontId,
+    monospaceSmall_FontId,
+    monospace_FontId,
+    /* extra content fonts */
+    defaultContentSized_FontId, /* UI font but sized to regular_FontId */
     regularMonospace_FontId,
-    /* symbol fonts */
-    defaultSymbols_FontId,
-    defaultMediumSymbols_FontId,
-    defaultBigSymbols_FontId,
-    defaultLargeSymbols_FontId,
+    /* symbols and scripts */
     symbols_FontId,
-    mediumSymbols_FontId,
-    bigSymbols_FontId,
-    largeSymbols_FontId,
-    hugeSymbols_FontId,
-    monospaceSymbols_FontId,
-    monospaceSmallSymbols_FontId,
-    /* emoji fonts */
-    defaultEmoji_FontId,
-    defaultMediumEmoji_FontId,
-    defaultBigEmoji_FontId,
-    defaultLargeEmoji_FontId,
-    emoji_FontId,
-    mediumEmoji_FontId,
-    bigEmoji_FontId,
-    largeEmoji_FontId,
-    hugeEmoji_FontId,
-    monospaceEmoji_FontId,
-    monospaceSmallEmoji_FontId,
-    /* japanese script */
-    defaultJapanese_FontId,
-    monospaceSmallJapanese_FontId,
-    monospaceJapanese_FontId,
-    regularJapanese_FontId,
-    mediumJapanese_FontId,
-    bigJapanese_FontId,
-    largeJapanese_FontId,
-    hugeJapanese_FontId,
-    /* korean script */
-    defaultKorean_FontId,
-    monospaceSmallKorean_FontId,
-    monospaceKorean_FontId,
-    regularKorean_FontId,
-    mediumKorean_FontId,
-    bigKorean_FontId,
-    largeKorean_FontId,
-    hugeKorean_FontId,
-    max_FontId,
+    emoji_FontId             = symbols_FontId + max_FontSize,
+    japanese_FontId          = emoji_FontId + max_FontSize,
+    chineseSimplified_FontId = japanese_FontId + max_FontSize,
+    korean_FontId            = chineseSimplified_FontId + max_FontSize,
+    arabic_FontId            = korean_FontId + max_FontSize,
+    max_FontId               = arabic_FontId + max_FontSize,
 
     /* Meta: */
-    fromSymbolsToEmojiOffset_FontId = 11,
-    mask_FontId                     = 0xffff,
-    alwaysVariableFlag_FontId       = 0x10000,
+    mask_FontId               = 0xffff,
+    alwaysVariableFlag_FontId = 0x10000,
 
     /* UI fonts: */
     uiLabel_FontId          = default_FontId,
@@ -110,7 +91,7 @@ enum iFontId {
     uiInput_FontId          = defaultMedium_FontId,
     uiContent_FontId        = defaultMedium_FontId,
     uiContentBold_FontId    = defaultMediumBold_FontId,
-    uiContentSymbols_FontId = defaultMediumSymbols_FontId,
+    uiContentSymbols_FontId = symbols_FontId + uiMedium_FontSize,
     /* Document fonts: */
     paragraph_FontId         = regular_FontId,
     firstParagraph_FontId    = medium_FontId,
@@ -124,7 +105,7 @@ enum iFontId {
 };
 
 iLocalDef iBool isJapanese_FontId(enum iFontId id) {
-    return id >= defaultJapanese_FontId && id <= hugeJapanese_FontId;
+    return id >= japanese_FontId && id < japanese_FontId + max_FontSize;
 }
 iLocalDef iBool isVariationSelector_Char(iChar c) {
     return (c >= 0xfe00 && c <= 0xfe0f) || (c >= 0xe0100 && c <= 0xe0121);
@@ -138,7 +119,16 @@ iLocalDef iBool isDefaultIgnorable_Char(iChar c) {
 }
 iLocalDef iBool isEmoji_Char(iChar c) {
     return (c >= 0x1f300 && c < 0x1f700) || (c >= 0x1f7e0 && c <= 0x1f7eb) ||
-           (c >= 0x1f900 && c <= 0x1f9ff);
+           (c >= 0x1f900 && c <= 0x1f9ff) || (c >= 0x1fa70 && c <= 0x1faff);
+}
+iLocalDef iBool isDingbats_Char(iChar c) {
+    return c >= 0x2702 && c <= 0x27b0;
+}
+iLocalDef iBool isPictograph_Char(iChar c) {
+    return (c == 0x21a9) ||
+           (c == 0x2218 || c == 0x2219) ||
+           (c >= 0x2300 && c <= 0x27bf) ||
+           (c >= 0x1f680 && c <= 0x1f6c0);
 }
 
 #define emojiVariationSelector_Char     ((iChar) 0xfe0f)
@@ -182,6 +172,8 @@ enum iAlignment {
 
 void    setOpacity_Text     (float opacity);
 
+void    cache_Text          (int fontId, iRangecc text); /* pre-render glyphs */
+
 void    draw_Text           (int fontId, iInt2 pos, int color, const char *text, ...);
 void    drawAlign_Text      (int fontId, iInt2 pos, int color, enum iAlignment align, const char *text, ...);
 void    drawCentered_Text   (int fontId, iRect rect, iBool alignVisual, int color, const char *text, ...);
@@ -200,7 +192,7 @@ iString *   renderBlockChars_Text   (const iBlock *fontData, int height, enum iT
 /*-----------------------------------------------------------------------------------------------*/
 
 iDeclareType(TextBuf)
-iDeclareTypeConstructionArgs(TextBuf, int font, const char *text)
+iDeclareTypeConstructionArgs(TextBuf, int font, int color, const char *text)
 
 struct Impl_TextBuf {
     SDL_Texture *texture;

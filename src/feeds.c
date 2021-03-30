@@ -381,7 +381,8 @@ static iThreadResult fetch_Feeds_(iThread *thread) {
     }
     initCurrent_Time(&d->lastRefreshedAt);
     save_Feeds_(d);
-    postCommandf_App("feeds.update.finished arg:%d", gotNew ? 1 : 0);
+    postCommandf_App("feeds.update.finished arg:%d unread:%zu", gotNew ? 1 : 0,
+                     numUnread_Feeds());
     return 0;
 }
 
@@ -395,7 +396,7 @@ static iBool startWorker_Feeds_(iFeeds *d) {
         iFeedJob *job = new_FeedJob(bm);
         if (!contains_IntSet(&d->previouslyCheckedFeeds, id_Bookmark(bm))) {
             job->isFirstUpdate = iTrue;
-            printf("first check of %x: %s\n", id_Bookmark(bm), cstr_String(&bm->title));
+//            printf("first check of %x: %s\n", id_Bookmark(bm), cstr_String(&bm->title));
             fflush(stdout);
             insert_IntSet(&d->previouslyCheckedFeeds, id_Bookmark(bm));
         }
@@ -430,8 +431,13 @@ static void stopWorker_Feeds_(iFeeds *d) {
 }
 
 static int cmp_FeedEntryPtr_(const void *a, const void *b) {
-    const iFeedEntry * const *elem[2] = { a, b };    
-    return cmpString_String(&(*elem[0])->url, &(*elem[1])->url);
+    const iFeedEntry * const *elem[2] = { a, b };
+    const int cmp = cmpString_String(&(*elem[0])->url, &(*elem[1])->url);
+    if (cmp == 0) {
+        /* The same URL can be coming from different feeds. */
+        return iCmp((*elem[0])->bookmarkId, (*elem[1])->bookmarkId);
+    }
+    return cmp;
 }
 
 iDeclareType(FeedHashNode)
@@ -617,6 +623,18 @@ const iPtrArray *listEntries_Feeds(void) {
 
 size_t numSubscribed_Feeds(void) {
     return size_PtrArray(listSubscriptions_());
+}
+
+size_t numUnread_Feeds(void) {
+    size_t count = 0;
+    size_t max = 100; /* match the number of items shown in the sidebar */
+    iConstForEach(PtrArray, i, listEntries_Feeds()) {
+        if (!max--) break;
+        if (isUnread_FeedEntry(i.ptr)) {
+            count++;
+        }
+    }
+    return count;
 }
 
 #define iPluralS(c) ((c) != 1 ? "s" : "")

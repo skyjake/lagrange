@@ -21,10 +21,12 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "inputwidget.h"
+#include "command.h"
 #include "paint.h"
 #include "util.h"
 #include "keys.h"
 #include "prefs.h"
+#include "lang.h"
 #include "app.h"
 
 #include <the_Foundation/array.h>
@@ -71,6 +73,7 @@ enum iInputWidgetFlag {
     notifyEdits_InputWidgetFlag      = iBit(5),
     eatEscape_InputWidgetFlag        = iBit(6),
     isMarking_InputWidgetFlag        = iBit(7),
+    markWords_InputWidgetFlag        = iBit(8),
 };
 
 struct Impl_InputWidget {
@@ -81,11 +84,13 @@ struct Impl_InputWidget {
     iArray          text;    /* iChar[] */
     iArray          oldText; /* iChar[] */
     iString         hint;
+    iString         srcHint;
     int             leftPadding;
     int             rightPadding;
     size_t          cursor;
     size_t          lastCursor;
     iRanges         mark;
+    iRanges         initialMark;
     iArray          undoStack;
     int             font;
     iClick          click;
@@ -107,6 +112,26 @@ static void showCursor_InputWidget_(iInputWidget *d) {
     d->cursorVis = 2;
 }
 
+static void invalidateBuffered_InputWidget_(iInputWidget *d) {
+    if (d->buffered) {
+        delete_TextBuf(d->buffered);
+        d->buffered = NULL;
+    }
+}
+
+static void updateMetrics_InputWidget_(iInputWidget *d) {
+    iWidget *w = as_Widget(d);
+    /* Caller must arrange the width, but the height is fixed. */
+    w->rect.size.y = lineHeight_Text(d->font) * 1.3f;
+#if defined (iPlatformMobile)
+    w->rect.size.y += 2 * gap_UI;
+#endif
+    invalidateBuffered_InputWidget_(d);
+    if (parent_Widget(w)) {
+        arrange_Widget(w);
+    }
+}
+
 void init_InputWidget(iInputWidget *d, size_t maxLen) {
     iWidget *w = &d->widget;
     init_Widget(w);
@@ -114,25 +139,22 @@ void init_InputWidget(iInputWidget *d, size_t maxLen) {
     init_Array(&d->text, sizeof(iChar));
     init_Array(&d->oldText, sizeof(iChar));
     init_String(&d->hint);
+    init_String(&d->srcHint);
     init_Array(&d->undoStack, sizeof(iInputUndo));
-    d->font             = uiInput_FontId | alwaysVariableFlag_FontId;
-    d->leftPadding      = 0;
-    d->rightPadding     = 0;
-    d->cursor           = 0;
-    d->lastCursor       = 0;
-    d->inFlags          = eatEscape_InputWidgetFlag;
+    d->font         = uiInput_FontId | alwaysVariableFlag_FontId;
+    d->leftPadding  = 0;
+    d->rightPadding = 0;
+    d->cursor       = 0;
+    d->lastCursor   = 0;
+    d->inFlags      = eatEscape_InputWidgetFlag;
     iZap(d->mark);
     setMaxLen_InputWidget(d, maxLen);
-    /* Caller must arrange the width, but the height is fixed. */
-    w->rect.size.y = lineHeight_Text(default_FontId) + 2 * gap_UI;
-#if defined (iPlatformAppleMobile)
-    w->rect.size.y += 2 * gap_UI;
-#endif
     setFlags_Widget(w, fixedHeight_WidgetFlag, iTrue);
     init_Click(&d->click, d, SDL_BUTTON_LEFT);
     d->timer = 0;
     d->cursorVis = 0;
     d->buffered = NULL;
+    updateMetrics_InputWidget_(d);
 }
 
 void deinit_InputWidget(iInputWidget *d) {
@@ -146,9 +168,15 @@ void deinit_InputWidget(iInputWidget *d) {
     if (d->timer) {
         SDL_RemoveTimer(d->timer);
     }
+    deinit_String(&d->srcHint);
     deinit_String(&d->hint);
     deinit_Array(&d->oldText);
     deinit_Array(&d->text);
+}
+
+void setFont_InputWidget(iInputWidget *d, int fontId) {
+    d->font = fontId;
+    updateMetrics_InputWidget_(d);
 }
 
 static void pushUndo_InputWidget_(iInputWidget *d) {
@@ -178,8 +206,39 @@ void setMode_InputWidget(iInputWidget *d, enum iInputMode mode) {
     d->mode = mode;
 }
 
+static void restoreDefaultScheme_(iString *url) {
+    iUrl parts;
+    init_Url(&parts, url);
+    if (isEmpty_Range(&parts.scheme) && startsWith_String(url, "//")) {
+        prependCStr_String(url, "gemini:");
+    }
+}
+
+static const iString *omitDefaultScheme_(iString *url) {
+    if (startsWithCase_String(url, "gemini://")) {
+        remove_Block(&url->chars, 0, 7);
+    }
+    return url;
+}
+
+static iString *utf32toUtf8_InputWidget_(const iInputWidget *d) {
+    return newUnicodeN_String(constData_Array(&d->text), size_Array(&d->text));
+}
+
 const iString *text_InputWidget(const iInputWidget *d) {
-    return collect_String(newUnicodeN_String(constData_Array(&d->text), size_Array(&d->text)));
+    if (d) {
+        iString *text = collect_String(utf32toUtf8_InputWidget_(d));
+        if (d->inFlags & isUrl_InputWidgetFlag) {
+            /* Add the "gemini" scheme back if one is omitted. */
+            restoreDefaultScheme_(text);
+        }
+        return text;
+    }
+    return collectNew_String();
+}
+
+iInputWidgetContentPadding contentPadding_InputWidget(const iInputWidget *d) {
+    return (iInputWidgetContentPadding){ d->leftPadding, d->rightPadding };
 }
 
 void setMaxLen_InputWidget(iInputWidget *d, size_t maxLen) {
@@ -189,7 +248,7 @@ void setMaxLen_InputWidget(iInputWidget *d, size_t maxLen) {
         /* Set a fixed size. */
         iBlock *content = new_Block(maxLen);
         fill_Block(content, 'M');
-        setSize_Widget(
+        setFixedSize_Widget(
             as_Widget(d),
             add_I2(measure_Text(d->font, cstr_Block(content)), init_I2(6 * gap_UI, 2 * gap_UI)));
         delete_Block(content);
@@ -197,7 +256,10 @@ void setMaxLen_InputWidget(iInputWidget *d, size_t maxLen) {
 }
 
 void setHint_InputWidget(iInputWidget *d, const char *hintText) {
-    setCStr_String(&d->hint, hintText);
+    /* Keep original for retranslations. */
+    setCStr_String(&d->srcHint, hintText);
+    set_String(&d->hint, &d->srcHint);
+    translate_Lang(&d->hint);
 }
 
 void setContentPadding_InputWidget(iInputWidget *d, int left, int right) {
@@ -226,18 +288,30 @@ static iString *visText_InputWidget_(const iInputWidget *d) {
     return text;
 }
 
-static void invalidateBuffered_InputWidget_(iInputWidget *d) {
-    if (d->buffered) {
-        delete_TextBuf(d->buffered);
-        d->buffered = NULL;
-    }
-}
-
 static void updateBuffered_InputWidget_(iInputWidget *d) {
-    invalidateBuffered_InputWidget_(d);
-    iString *visText = visText_InputWidget_(d);
-    d->buffered = new_TextBuf(d->font, cstr_String(visText));
-    delete_String(visText);
+    if (isFinishedLaunching_App()) {
+        invalidateBuffered_InputWidget_(d);
+        iString *bufText = NULL;
+        if (d->inFlags & isUrl_InputWidgetFlag) {
+            /* Highlight the host name. */
+            iUrl parts;
+            const iString *text = collect_String(utf32toUtf8_InputWidget_(d));
+            init_Url(&parts, text);
+            if (!isEmpty_Range(&parts.host)) {
+                bufText = new_String();
+                appendRange_String(bufText, (iRangecc){ constBegin_String(text), parts.host.start });
+                appendCStr_String(bufText, uiTextStrong_ColorEscape);
+                appendRange_String(bufText, parts.host);
+                appendCStr_String(bufText, restore_ColorEscape);
+                appendRange_String(bufText, (iRangecc){ parts.host.end, constEnd_String(text) });
+            }
+        }
+        if (!bufText) {
+            bufText = visText_InputWidget_(d);
+        }
+        d->buffered = new_TextBuf(d->font, uiInputText_ColorId, cstr_String(bufText));
+        delete_String(bufText);
+    }
 }
 
 void setText_InputWidget(iInputWidget *d, const iString *text) {
@@ -250,6 +324,10 @@ void setText_InputWidget(iInputWidget *d, const iString *text) {
                https://github.com/skyjake/lagrange/issues/73) */
             punyEncodeUrlHost_String(enc);
             text = enc;
+        }
+        /* Omit the default (Gemini) scheme if there isn't much space. */
+        if (isNarrow_Window(get_Window())) { // flags_Widget(as_Widget(d)) & tight_WidgetFlag) {
+            text = omitDefaultScheme_(collect_String(copy_String(text)));
         }
     }
     clearUndo_InputWidget_(d);
@@ -294,9 +372,13 @@ void selectAll_InputWidget(iInputWidget *d) {
     refresh_Widget(as_Widget(d));
 }
 
+iLocalDef iBool isEditing_InputWidget_(const iInputWidget *d) {
+    return (flags_Widget(constAs_Widget(d)) & selected_WidgetFlag) != 0;
+}
+
 void begin_InputWidget(iInputWidget *d) {
     iWidget *w = as_Widget(d);
-    if (flags_Widget(w) & selected_WidgetFlag) {
+    if (isEditing_InputWidget_(d)) {
         /* Already active. */
         return;
     }
@@ -326,7 +408,7 @@ void begin_InputWidget(iInputWidget *d) {
 
 void end_InputWidget(iInputWidget *d, iBool accept) {
     iWidget *w = as_Widget(d);
-    if (~flags_Widget(w) & selected_WidgetFlag) {
+    if (!isEditing_InputWidget_(d)) {
         /* Was not active. */
         return;
     }
@@ -377,7 +459,7 @@ iLocalDef size_t cursorMax_InputWidget_(const iInputWidget *d) {
 }
 
 iLocalDef iBool isMarking_(void) {
-    return (SDL_GetModState() & KMOD_SHIFT) != 0;
+    return (modState_Keys() & KMOD_SHIFT) != 0;
 }
 
 void setCursor_InputWidget(iInputWidget *d, size_t pos) {
@@ -584,21 +666,76 @@ static void paste_InputWidget_(iInputWidget *d) {
     }
 }
 
+static iChar at_InputWidget_(const iInputWidget *d, size_t pos) {
+    return *(const iChar *) constAt_Array(&d->text, pos);
+}
+
+static void extendRange_InputWidget_(iInputWidget *d, size_t *pos, int dir) {
+    const size_t textLen = size_Array(&d->text);
+    if (dir < 0 && *pos > 0) {
+        for ((*pos)--; *pos > 0; (*pos)--) {
+            if (isSelectionBreaking_Char(at_InputWidget_(d, *pos))) {
+                (*pos)++;
+                break;
+            }
+        }
+    }
+    if (dir > 0) {
+        for (; *pos < textLen && !isSelectionBreaking_Char(at_InputWidget_(d, *pos)); (*pos)++) {
+            /* continue */
+        }
+    }
+}
+
 static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
     if (isCommand_Widget(w, ev, "focus.gained")) {
         begin_InputWidget(d);
         return iFalse;
     }
+    else if (isCommand_UserEvent(ev, "lang.changed")) {
+        set_String(&d->hint, &d->srcHint);
+        translate_Lang(&d->hint);
+        return iFalse;
+    }
     else if (isCommand_Widget(w, ev, "focus.lost")) {
         end_InputWidget(d, iTrue);
         return iFalse;
+    }
+    else if ((isCommand_UserEvent(ev, "copy") || isCommand_UserEvent(ev, "input.copy")) &&
+             isEditing_InputWidget_(d)) {
+        copy_InputWidget_(d, argLabel_Command(command_UserEvent(ev), "cut"));
+        return iTrue;
+    }
+    else if (isCommand_UserEvent(ev, "input.paste") && isEditing_InputWidget_(d)) {
+        paste_InputWidget_(d);
+        return iTrue;
     }
     else if (isCommand_UserEvent(ev, "theme.changed")) {
         if (d->buffered) {
             updateBuffered_InputWidget_(d);
         }
         return iFalse;
+    }
+    else if (isCommand_UserEvent(ev, "keyboard.changed")) {
+        if (isFocused_Widget(d) && arg_Command(command_UserEvent(ev))) {
+            iRect rect = bounds_Widget(w);
+            rect.pos.y -= value_Anim(&get_Window()->rootOffset);
+            const iInt2 visRoot = visibleRootSize_Window(get_Window());
+            if (bottom_Rect(rect) > visRoot.y) {
+                setValue_Anim(&get_Window()->rootOffset, -(bottom_Rect(rect) - visRoot.y), 250);
+            }
+        }
+        return iFalse;
+    }
+    else if (isMetricsChange_UserEvent(ev)) {
+        updateMetrics_InputWidget_(d);
+    }
+    else if (isResize_UserEvent(ev)) {
+        if (d->inFlags & isUrl_InputWidgetFlag) {
+            /* Restore/omit the default scheme if necessary. */
+            setText_InputWidget(d, text_InputWidget(d));
+        }
     }
     else if (isFocused_Widget(d) && isCommand_UserEvent(ev, "copy")) {
         copy_InputWidget_(d, iFalse);
@@ -607,7 +744,8 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
     if (ev->type == SDL_MOUSEMOTION && isHover_Widget(d)) {
         const iInt2 local = localCoord_Widget(w, init_I2(ev->motion.x, ev->motion.y));
         setCursor_Window(get_Window(),
-                         local.x >= 2 * gap_UI + d->leftPadding && local.x < width_Widget(w) - d->rightPadding
+                         local.x >= 2 * gap_UI + d->leftPadding &&
+                                 local.x < width_Widget(w) - d->rightPadding
                              ? SDL_SYSTEM_CURSOR_IBEAM
                              : SDL_SYSTEM_CURSOR_ARROW);
     }
@@ -618,11 +756,19 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
             setFocus_Widget(w);
             setCursor_InputWidget(d, coordIndex_InputWidget_(d, pos_Click(&d->click)));
             iZap(d->mark);
-            d->inFlags &= ~isMarking_InputWidgetFlag;
-            return iTrue;
-        case double_ClickResult:
-            selectAll_InputWidget(d);
-            d->inFlags &= ~isMarking_InputWidgetFlag;
+            iZap(d->initialMark);
+            d->inFlags &= ~(isMarking_InputWidgetFlag | markWords_InputWidgetFlag);
+            if (d->click.count == 2) {
+                d->inFlags |= isMarking_InputWidgetFlag | markWords_InputWidgetFlag;
+                d->mark.start = d->mark.end = d->cursor;
+                extendRange_InputWidget_(d, &d->mark.start, -1);
+                extendRange_InputWidget_(d, &d->mark.end, +1);
+                d->initialMark = d->mark;
+                refresh_Widget(w);
+            }
+            if (d->click.count == 3) {
+                selectAll_InputWidget(d);
+            }
             return iTrue;
         case aborted_ClickResult:
             d->inFlags &= ~isMarking_InputWidgetFlag;
@@ -635,10 +781,27 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                 d->mark.start = d->cursor;
             }
             d->mark.end = d->cursor;
+            if (d->inFlags & markWords_InputWidgetFlag) {
+                const iBool isFwd = d->mark.end >= d->mark.start;
+                extendRange_InputWidget_(d, &d->mark.end, isFwd ? +1 : -1);
+                d->mark.start = isFwd ? d->initialMark.start : d->initialMark.end;
+            }
             refresh_Widget(w);
             return iTrue;
         case finished_ClickResult:
+            d->inFlags &= ~isMarking_InputWidgetFlag;
             return iTrue;
+    }
+    if (ev->type == SDL_MOUSEBUTTONDOWN && ev->button.button == SDL_BUTTON_RIGHT &&
+        contains_Widget(w, init_I2(ev->button.x, ev->button.y))) {
+        iWidget *clipMenu = findWidget_App("clipmenu");
+        if (isVisible_Widget(clipMenu)) {
+            closeMenu_Widget(clipMenu);
+        }
+        else {
+            openMenuFlags_Widget(clipMenu, mouseCoord_Window(get_Window()), iFalse);
+        }
+        return iTrue;
     }
     if (ev->type == SDL_KEYUP && isFocused_Widget(w)) {
         return iTrue;
@@ -856,7 +1019,7 @@ static void draw_InputWidget_(const iInputWidget *d) {
     }
     if (d->buffered && !isFocused && !isHint) {
         /* Most input widgets will use this, since only one is focused at a time. */
-        draw_TextBuf(d->buffered, textOrigin, uiInputText_ColorId);
+        draw_TextBuf(d->buffered, textOrigin, white_ColorId);
     }
     else {
         draw_Text(d->font,

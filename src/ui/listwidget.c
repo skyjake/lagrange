@@ -67,6 +67,7 @@ void init_ListWidget(iListWidget *d) {
     addChild_Widget(w, iClob(d->scroll = new_ScrollWidget()));
     setThumb_ScrollWidget(d->scroll, 0, 0);
     d->scrollY = 0;
+    d->itemHeight = 0;
     init_PtrArray(&d->items);
     d->hoverItem = iInvalidPos;
     init_Click(&d->click, d, SDL_BUTTON_LEFT);
@@ -198,6 +199,7 @@ int visCount_ListWidget(const iListWidget *d) {
                 (int) size_PtrArray(&d->items));
 }
 
+#if 0
 static iRanges visRange_ListWidget_(const iListWidget *d) {
     if (d->itemHeight == 0) {
         return (iRanges){ 0, 0 };
@@ -206,6 +208,7 @@ static iRanges visRange_ListWidget_(const iListWidget *d) {
     vis.end = iMin(size_PtrArray(&d->items), vis.start + visCount_ListWidget(d) + 1);
     return vis;
 }
+#endif
 
 size_t itemIndex_ListWidget(const iListWidget *d, iInt2 pos) {
     const iRect bounds = innerBounds_Widget(constAs_Widget(d));
@@ -278,7 +281,10 @@ static void sizeChanged_ListWidget_(iListWidget *d) {
 
 static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
-    if (isCommand_SDLEvent(ev)) {
+    if (isMetricsChange_UserEvent(ev)) {
+        invalidate_ListWidget(d);
+    }
+    else if (isCommand_SDLEvent(ev)) {
         const char *cmd = command_UserEvent(ev);
         if (equal_Command(cmd, "theme.changed")) {
             invalidate_ListWidget(d);
@@ -299,14 +305,9 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
     }
     if (ev->type == SDL_MOUSEWHEEL && isHover_Widget(w)) {
         int amount = -ev->wheel.y;
-#if defined (iPlatformApple)
-#   if defined (iPlatformAppleDesktop)
-        /* Momentum scrolling (in points). */
-        amount *= get_Window()->pixelRatio;
-#   endif
-#else
-        amount *= 3 * d->itemHeight;
-#endif
+        if (!isPerPixel_MouseWheelEvent(&ev->wheel)) {
+            amount *= 3 * d->itemHeight;
+        }
         scrollOffset_ListWidget(d, amount);
         return iTrue;
     }
@@ -318,7 +319,7 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
             redrawHoverItem_ListWidget_(d);
             break;
         case finished_ClickResult:
-        case double_ClickResult:
+//        case double_ClickResult:
             redrawHoverItem_ListWidget_(d);
             if (contains_Rect(innerBounds_Widget(w), pos_Click(&d->click)) &&
                 d->hoverItem != iInvalidSize) {
@@ -340,11 +341,11 @@ static void drawItem_ListWidget_(const iListWidget *d, iPaint *p, size_t index, 
     const iRect      itemRect  = { pos, init_I2(width_Rect(bounds), d->itemHeight) };
     class_ListItem(item)->draw(item, p, itemRect, d);
 }
-#endif
 
 static const iListItem *item_ListWidget_(const iListWidget *d, size_t pos) {
     return constAt_PtrArray(&d->items, pos);
 }
+#endif
 
 static void draw_ListWidget_(const iListWidget *d) {
     const iWidget *w      = constAs_Widget(d);
@@ -360,17 +361,18 @@ static void draw_ListWidget_(const iListWidget *d) {
         /* TODO: This seems to draw two items per each shift of the visible region, even though
            one should be enough. Probably an off-by-one error in the calculation of the
            invalid range. */
-        iAssert(d->visBuf->buffers[0].texture);
-        iAssert(d->visBuf->buffers[1].texture);
-        iAssert(d->visBuf->buffers[2].texture);
-        const int bg[3] = { w->bgColor, w->bgColor, w->bgColor };
-//        const int bg[3] = { red_ColorId, magenta_ColorId, blue_ColorId };
+        iForIndices(i, d->visBuf->buffers) {
+            iAssert(d->visBuf->buffers[i].texture);
+        }
+        const int bg[iElemCount(d->visBuf->buffers)] = {
+            w->bgColor, w->bgColor, w->bgColor, w->bgColor
+        };
         const int bottom = numItems_ListWidget(d) * d->itemHeight;
         const iRangei vis = { d->scrollY / d->itemHeight * d->itemHeight,
                              ((d->scrollY + bounds.size.y) / d->itemHeight + 1) * d->itemHeight };
         reposition_VisBuf(d->visBuf, vis);
         /* Check which parts are invalid. */
-        iRangei invalidRange[3];
+        iRangei invalidRange[iElemCount(d->visBuf->buffers)];
         invalidRanges_VisBuf(d->visBuf, (iRangei){ 0, bottom }, invalidRange);
         iForIndices(i, d->visBuf->buffers) {
             iVisBufTexture *buf = &d->visBuf->buffers[i];
@@ -380,9 +382,13 @@ static void draw_ListWidget_(const iListWidget *d) {
                 beginTarget_Paint(&p, buf->texture);
                 fillRect_Paint(&p, (iRect){ zero_I2(), d->visBuf->texSize }, bg[i]);
             }
-            const iRect sbBlankRect =
-                { init_I2(d->visBuf->texSize.x - scrollBarWidth_ListWidget(d), 0),
-                         init_I2(scrollBarWidth_ListWidget(d), d->itemHeight) };
+#if defined (iPlatformApple)
+            const int blankWidth = 0; /* scrollbars fade away */
+#else
+            const int blankWidth = scrollBarWidth_ListWidget(d);
+#endif
+            const iRect sbBlankRect = { init_I2(d->visBuf->texSize.x - blankWidth, 0),
+                                        init_I2(blankWidth, d->itemHeight) };
             iConstForEach(IntSet, v, &d->invalidItems) {
                 const size_t index = *v.value;
                 if (contains_Range(&drawItems, index)) {

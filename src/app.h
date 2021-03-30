@@ -35,8 +35,12 @@ iDeclareType(Bookmarks)
 iDeclareType(DocumentWidget)
 iDeclareType(GmCerts)
 iDeclareType(MimeHooks)
+iDeclareType(Periodic)
 iDeclareType(Visited)
 iDeclareType(Window)
+
+/* Command line options strings. */
+#define listTabUrls_CommandLineOption   "list-tab-urls;L"
 
 enum iAppDeviceType {
     desktop_AppDeviceType,
@@ -65,6 +69,7 @@ void        processEvents_App           (enum iAppEventMode mode);
 iBool       handleCommand_App           (const char *cmd);
 void        refresh_App                 (void);
 iBool       isRefreshPending_App        (void);
+iBool       isFinishedLaunching_App     (void);
 uint32_t    elapsedSinceLastTicker_App  (void); /* milliseconds */
 
 iBool               isLandscape_App     (void);
@@ -74,6 +79,7 @@ iGmCerts *          certs_App           (void);
 iVisited *          visited_App         (void);
 iBookmarks *        bookmarks_App       (void);
 iMimeHooks *        mimeHooks_App       (void);
+iPeriodic *         periodic_App        (void);
 iDocumentWidget *   document_App        (void);
 iObjectList *       listDocuments_App   (void);
 iDocumentWidget *   newTab_App          (const iDocumentWidget *duplicateOf, iBool switchToNew);

@@ -36,6 +36,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/stringlist.h>
 #include <the_Foundation/regexp.h>
 #include <the_Foundation/path.h>
+#include <the_Foundation/ptrset.h>
 #include <the_Foundation/vec2.h>
 
 #include <SDL_surface.h>
@@ -51,8 +52,6 @@ static const float contentScale_Text_ = 1.3f;
 int gap_Text;                           /* cf. gap_UI in metrics.h */
 int enableHalfPixelGlyphs_Text = iTrue; /* debug setting */
 int enableKerning_Text         = iTrue; /* looking up kern pairs is slow */
-
-static iBool enableRaster_Text_ = iTrue;
 
 enum iGlyphFlag {
     rasterized0_GlyphFlag = iBit(1),    /* zero offset */
@@ -116,16 +115,18 @@ struct Impl_Font {
     iHash          glyphs;
     iBool          isMonospaced;
     iBool          manualKernOnly;
-    enum iFontId   symbolsFont;  /* font to use for symbols */
-    enum iFontId   japaneseFont; /* font to use for Japanese glyphs */
-    enum iFontId   koreanFont;   /* font to use for Korean glyphs */
-    uint32_t       indexTable[128 - 32];
+    enum iFontSize sizeId;  /* used to look up different fonts of matching size */
+//    enum iFontId
+//    enum iFontId   japaneseFont; /* font to use for Japanese glyphs */
+//    enum iFontId   chineseFont;  /* font to use for Simplified Chinese glyphs */
+//    enum iFontId   koreanFont;   /* font to use for Korean glyphs */
+    uint32_t       indexTable[128 - 32]; /* quick ASCII lookup */
 };
 
 static iFont *font_Text_(enum iFontId id);
 
 static void init_Font(iFont *d, const iBlock *data, int height, float scale,
-                      enum iFontId symbolsFont, iBool isMonospaced) {
+                      enum iFontSize sizeId, iBool isMonospaced) {
     init_Hash(&d->glyphs);
     d->data = NULL;
     d->isMonospaced = isMonospaced;
@@ -148,9 +149,11 @@ static void init_Font(iFont *d, const iBlock *data, int height, float scale,
     }
     d->vertOffset   = height * (1.0f - scale) / 2;
     d->baseline     = ascent * d->yScale;
-    d->symbolsFont  = symbolsFont;
-    d->japaneseFont = regularJapanese_FontId;
-    d->koreanFont   = regularKorean_FontId;
+    d->sizeId       = sizeId;
+//    d->symbolsFont  = symbolsFont;
+//    d->japaneseFont = regularJapanese_FontId;
+//    d->chineseFont  = regularChinese_FontId;
+//    d->koreanFont   = regularKorean_FontId;
     memset(d->indexTable, 0xff, sizeof(d->indexTable));
 }
 
@@ -210,41 +213,48 @@ static void initFonts_Text_(iText *d) {
     const float monoSize = textSize * 0.71f;
     const float smallMonoSize = monoSize * 0.8f;
     const iBlock *regularFont  = &fontNunitoRegular_Embedded;
+    const iBlock *boldFont     = &fontNunitoBold_Embedded;
     const iBlock *italicFont   = &fontNunitoLightItalic_Embedded;
     const iBlock *h12Font      = &fontNunitoExtraBold_Embedded;
     const iBlock *h3Font       = &fontNunitoRegular_Embedded;
     const iBlock *lightFont    = &fontNunitoExtraLight_Embedded;
     float         scaling      = 1.0f; /* glyph scaling (<=1.0), for increasing line spacing */
+    float         italicScaling= 1.0f;
     float         lightScaling = 1.0f;
     float         h123Scaling  = 1.0f; /* glyph scaling (<=1.0), for increasing line spacing */
     if (d->contentFont == firaSans_TextFont) {
         regularFont = &fontFiraSansRegular_Embedded;
+        boldFont    = &fontFiraSansBold_Embedded;
         lightFont   = &fontFiraSansLight_Embedded;
         italicFont  = &fontFiraSansItalic_Embedded;
-        scaling     = lightScaling = 0.85f;
+        scaling     = italicScaling = lightScaling = 0.85f;
     }
     else if (d->contentFont == tinos_TextFont) {
         regularFont = &fontTinosRegular_Embedded;
+        boldFont    = &fontTinosBold_Embedded;
         lightFont   = &fontLiterataExtraLightopsz18_Embedded;
         italicFont  = &fontTinosItalic_Embedded;
-        scaling      = 0.85f;
+        scaling      = italicScaling = 0.85f;
     }
     else if (d->contentFont == literata_TextFont) {
         regularFont = &fontLiterataRegularopsz14_Embedded;
+        boldFont    = &fontLiterataBoldopsz36_Embedded;
         italicFont  = &fontLiterataLightItalicopsz10_Embedded;
         lightFont   = &fontLiterataExtraLightopsz18_Embedded;
     }
     else if (d->contentFont == sourceSansPro_TextFont) {
         regularFont = &fontSourceSansProRegular_Embedded;
+        boldFont    = &fontSourceSansProBold_Embedded;
         italicFont  = &fontFiraSansItalic_Embedded;
         lightFont   = &fontFiraSansLight_Embedded;
-        lightScaling = 0.85f;
+        lightScaling = italicScaling = 0.85f;
     }
     else if (d->contentFont == iosevka_TextFont) {
         regularFont = &fontIosevkaTermExtended_Embedded;
+        boldFont    = &fontIosevkaTermExtended_Embedded;
         italicFont  = &fontIosevkaTermExtended_Embedded;
         lightFont   = &fontIosevkaTermExtended_Embedded;
-        scaling     = lightScaling = 0.866f;
+        scaling     = italicScaling = lightScaling = 0.866f;
     }
     if (d->headingFont == firaSans_TextFont) {
         h12Font     = &fontFiraSansBold_Embedded;
@@ -277,72 +287,53 @@ static void initFonts_Text_(iText *d) {
         const iBlock *ttf;
         int size;
         float scaling;
-        int symbolsFont;
+        enum iFontSize sizeId;
+        /* UI sizes: 1.0, 1.125, 1.333, 1.666 */
+        /* Content sizes: smallmono, mono, 1.0, 1.2, 1.333, 1.666, 2.0 */
     } fontData[max_FontId] = {
-        { &fontSourceSansProRegular_Embedded, uiSize,               1.0f, defaultSymbols_FontId },
-        { &fontSourceSansProBold_Embedded,    uiSize,               1.0f, defaultSymbols_FontId },
-        { &fontSourceSansProRegular_Embedded, uiSize * 1.125f,      1.0f, defaultMediumSymbols_FontId },
-        { &fontSourceSansProBold_Embedded,    uiSize * 1.125f,      1.0f, defaultMediumSymbols_FontId },
-        { &fontSourceSansProRegular_Embedded, uiSize * 1.333f,      1.0f, defaultBigSymbols_FontId },
-        { &fontSourceSansProBold_Embedded,    uiSize * 1.333f,      1.0f, defaultBigSymbols_FontId },
-        { &fontSourceSansProRegular_Embedded, uiSize * 1.666f,      1.0f, defaultLargeSymbols_FontId },
-        { &fontSourceSansProBold_Embedded,    uiSize * 1.666f,      1.0f, defaultLargeSymbols_FontId },
-        { &fontIosevkaTermExtended_Embedded,  uiSize * 0.866f,      1.0f, defaultSymbols_FontId },
-        { &fontSourceSansProRegular_Embedded, textSize,             scaling, symbols_FontId },
+        /* UI fonts: normal weight */
+        { &fontSourceSansProRegular_Embedded, uiSize,               1.0f, uiNormal_FontSize },
+        { &fontSourceSansProRegular_Embedded, uiSize * 1.125f,      1.0f, uiMedium_FontSize },
+        { &fontSourceSansProRegular_Embedded, uiSize * 1.333f,      1.0f, uiBig_FontSize },
+        { &fontSourceSansProRegular_Embedded, uiSize * 1.666f,      1.0f, uiLarge_FontSize },
+        /* UI fonts: bold weight */
+        { &fontSourceSansProBold_Embedded,    uiSize,               1.0f, uiNormal_FontSize },
+        { &fontSourceSansProBold_Embedded,    uiSize * 1.125f,      1.0f, uiMedium_FontSize },
+        { &fontSourceSansProBold_Embedded,    uiSize * 1.333f,      1.0f, uiBig_FontSize },
+        { &fontSourceSansProBold_Embedded,    uiSize * 1.666f,      1.0f, uiLarge_FontSize },
         /* content fonts */
-        { regularFont,                        textSize,             scaling,      symbols_FontId },
-        { &fontIosevkaTermExtended_Embedded,  monoSize,             1.0f,         monospaceSymbols_FontId },
-        { &fontIosevkaTermExtended_Embedded,  smallMonoSize,        1.0f,         monospaceSmallSymbols_FontId },
-        { regularFont,                        textSize * 1.200f,    scaling,      mediumSymbols_FontId },
-        { h3Font,                             textSize * 1.333f,    h123Scaling,  bigSymbols_FontId },
-        { italicFont,                         textSize,             scaling,      symbols_FontId },
-        { h12Font,                            textSize * 1.666f,    h123Scaling,  largeSymbols_FontId },
-        { h12Font,                            textSize * 2.000f,    h123Scaling,  hugeSymbols_FontId },
-        { lightFont,                          textSize * 1.666f,    lightScaling, largeSymbols_FontId },
-        /* monospace content fonts */
-        { &fontIosevkaTermExtended_Embedded,  textSize,             0.866f, symbols_FontId },
-        /* symbol fonts */
-        { &fontSymbola_Embedded,              uiSize,               1.0f, defaultSymbols_FontId },
-        { &fontSymbola_Embedded,              uiSize * 1.125f,      1.0f, defaultMediumSymbols_FontId },
-        { &fontSymbola_Embedded,              uiSize * 1.333f,      1.0f, defaultBigSymbols_FontId },
-        { &fontSymbola_Embedded,              uiSize * 1.666f,      1.0f, defaultLargeSymbols_FontId },
-        { &fontSymbola_Embedded,              textSize,             1.0f, symbols_FontId },
-        { &fontSymbola_Embedded,              textSize * 1.200f,    1.0f, mediumSymbols_FontId },
-        { &fontSymbola_Embedded,              textSize * 1.333f,    1.0f, bigSymbols_FontId },
-        { &fontSymbola_Embedded,              textSize * 1.666f,    1.0f, largeSymbols_FontId },
-        { &fontSymbola_Embedded,              textSize * 2.000f,    1.0f, hugeSymbols_FontId },
-        { &fontSymbola_Embedded,              monoSize,             1.0f, monospaceSymbols_FontId },
-        { &fontSymbola_Embedded,              smallMonoSize,        1.0f, monospaceSmallSymbols_FontId },
-        /* emoji fonts */
-        { &fontNotoEmojiRegular_Embedded,     uiSize,               1.0f, defaultSymbols_FontId },
-        { &fontNotoEmojiRegular_Embedded,     uiSize * 1.125f,      1.0f, defaultMediumSymbols_FontId },
-        { &fontNotoEmojiRegular_Embedded,     uiSize * 1.333f,      1.0f, defaultBigSymbols_FontId },
-        { &fontNotoEmojiRegular_Embedded,     uiSize * 1.666f,      1.0f, defaultLargeSymbols_FontId },
-        { &fontNotoEmojiRegular_Embedded,     textSize,             1.0f, symbols_FontId },
-        { &fontNotoEmojiRegular_Embedded,     textSize * 1.200f,    1.0f, mediumSymbols_FontId },
-        { &fontNotoEmojiRegular_Embedded,     textSize * 1.333f,    1.0f, bigSymbols_FontId },
-        { &fontNotoEmojiRegular_Embedded,     textSize * 1.666f,    1.0f, largeSymbols_FontId },
-        { &fontNotoEmojiRegular_Embedded,     textSize * 2.000f,    1.0f, hugeSymbols_FontId },
-        { &fontNotoEmojiRegular_Embedded,     monoSize,             1.0f, monospaceSymbols_FontId },
-        { &fontNotoEmojiRegular_Embedded,     smallMonoSize,        1.0f, monospaceSmallSymbols_FontId },
-        /* japanese fonts */
-        { &fontNotoSansJPRegular_Embedded,    uiSize,               1.0f, defaultSymbols_FontId },
-        { &fontNotoSansJPRegular_Embedded,    smallMonoSize,        1.0f, monospaceSmallSymbols_FontId },
-        { &fontNotoSansJPRegular_Embedded,    monoSize,             1.0f, monospaceSymbols_FontId },
-        { &fontNotoSansJPRegular_Embedded,    textSize,             1.0f, symbols_FontId },
-        { &fontNotoSansJPRegular_Embedded,    textSize * 1.200f,    1.0f, mediumSymbols_FontId },
-        { &fontNotoSansJPRegular_Embedded,    textSize * 1.333f,    1.0f, bigSymbols_FontId },
-        { &fontNotoSansJPRegular_Embedded,    textSize * 1.666f,    1.0f, largeSymbols_FontId },
-        { &fontNotoSansJPRegular_Embedded,    textSize * 2.000f,    1.0f, hugeSymbols_FontId },
-        /* korean fonts */
-        { &fontNanumGothicRegular_Embedded,   uiSize,               1.0f, defaultSymbols_FontId },
-        { &fontNanumGothicRegular_Embedded,   smallMonoSize,        1.0f, monospaceSmallSymbols_FontId },
-        { &fontNanumGothicRegular_Embedded,   monoSize,             1.0f, monospaceSymbols_FontId },
-        { &fontNanumGothicRegular_Embedded,   textSize,             1.0f, symbols_FontId },
-        { &fontNanumGothicRegular_Embedded,   textSize * 1.200f,    1.0f, mediumSymbols_FontId },
-        { &fontNanumGothicRegular_Embedded,   textSize * 1.333f,    1.0f, bigSymbols_FontId },
-        { &fontNanumGothicRegular_Embedded,   textSize * 1.666f,    1.0f, largeSymbols_FontId },
-        { &fontNanumGothicRegular_Embedded,   textSize * 2.000f,    1.0f, hugeSymbols_FontId },
+        { regularFont,                        textSize,             scaling,      contentRegular_FontSize },
+        { boldFont,                           textSize,             scaling,      contentRegular_FontSize },
+        { italicFont,                         textSize,             italicScaling,contentRegular_FontSize },
+        { regularFont,                        textSize * 1.200f,    scaling,      contentMedium_FontSize },
+        { h3Font,                             textSize * 1.333f,    h123Scaling,  contentBig_FontSize },
+        { h12Font,                            textSize * 1.666f,    h123Scaling,  contentLarge_FontSize },
+        { lightFont,                          textSize * 1.666f,    lightScaling, contentLarge_FontSize },
+        { h12Font,                            textSize * 2.000f,    h123Scaling,  contentHuge_FontSize },
+        { &fontIosevkaTermExtended_Embedded,  smallMonoSize,        1.0f,         contentMonoSmall_FontSize },
+        { &fontIosevkaTermExtended_Embedded,  monoSize,             1.0f,         contentMono_FontSize },
+        /* extra content fonts */
+        { &fontSourceSansProRegular_Embedded, textSize,             scaling, contentRegular_FontSize },
+        { &fontIosevkaTermExtended_Embedded,  textSize,             0.866f,  contentRegular_FontSize },
+        /* symbols and scripts */
+#define DEFINE_FONT_SET(data) \
+        { &data, uiSize,            1.0f, uiNormal_FontSize }, \
+        { &data, uiSize * 1.125f,   1.0f, uiMedium_FontSize }, \
+        { &data, uiSize * 1.333f,   1.0f, uiBig_FontSize }, \
+        { &data, uiSize * 1.666f,   1.0f, uiLarge_FontSize }, \
+        { &data, textSize,          1.0f, contentRegular_FontSize }, \
+        { &data, textSize * 1.200f, 1.0f, contentMedium_FontSize }, \
+        { &data, textSize * 1.333f, 1.0f, contentBig_FontSize }, \
+        { &data, textSize * 1.666f, 1.0f, contentLarge_FontSize }, \
+        { &data, textSize * 2.000f, 1.0f, contentHuge_FontSize }, \
+        { &data, smallMonoSize,     1.0f, contentMonoSmall_FontSize }, \
+        { &data, monoSize,          1.0f, contentMono_FontSize }
+        DEFINE_FONT_SET(fontSymbola_Embedded),
+        DEFINE_FONT_SET(fontNotoEmojiRegular_Embedded),
+        DEFINE_FONT_SET(fontNotoSansJPRegular_Embedded),
+        DEFINE_FONT_SET(fontNotoSansSCRegular_Embedded),
+        DEFINE_FONT_SET(fontNanumGothicRegular_Embedded), /* TODO: should use Noto Sans here, too */
+        DEFINE_FONT_SET(fontNotoSansArabicUIRegular_Embedded),
     };
     iForIndices(i, fontData) {
         iFont *font = &d->fonts[i];
@@ -350,41 +341,11 @@ static void initFonts_Text_(iText *d) {
                   fontData[i].ttf,
                   fontData[i].size,
                   fontData[i].scaling,
-                  fontData[i].symbolsFont,
+                  fontData[i].sizeId,
                   fontData[i].ttf == &fontIosevkaTermExtended_Embedded);
         if (i == default_FontId || i == defaultMedium_FontId) {
             font->manualKernOnly = iTrue;
         }
-    }
-    /* Japanese script. */ {
-        /* Everything defaults to the regular sized japanese font, so these are just
-           the other sizes. */
-        font_Text_(default_FontId)->japaneseFont          = defaultJapanese_FontId;
-        font_Text_(defaultMedium_FontId)->japaneseFont    = defaultJapanese_FontId;
-        font_Text_(defaultBig_FontId)->japaneseFont       = defaultJapanese_FontId;
-        font_Text_(defaultLarge_FontId)->japaneseFont     = defaultJapanese_FontId;
-        font_Text_(defaultMonospace_FontId)->japaneseFont = defaultJapanese_FontId;
-        font_Text_(monospaceSmall_FontId)->japaneseFont   = monospaceSmallJapanese_FontId;
-        font_Text_(monospace_FontId)->japaneseFont        = monospaceJapanese_FontId;
-        font_Text_(medium_FontId)->japaneseFont           = mediumJapanese_FontId;
-        font_Text_(big_FontId)->japaneseFont              = bigJapanese_FontId;
-        font_Text_(largeBold_FontId)->japaneseFont        = largeJapanese_FontId;
-        font_Text_(largeLight_FontId)->japaneseFont       = largeJapanese_FontId;
-        font_Text_(hugeBold_FontId)->japaneseFont         = hugeJapanese_FontId;
-    }
-    /* Korean script. */ {
-        font_Text_(default_FontId)->koreanFont          = defaultKorean_FontId;
-        font_Text_(defaultMedium_FontId)->koreanFont    = defaultKorean_FontId;
-        font_Text_(defaultBig_FontId)->koreanFont       = defaultKorean_FontId;
-        font_Text_(defaultLarge_FontId)->koreanFont     = defaultKorean_FontId;
-        font_Text_(defaultMonospace_FontId)->koreanFont = defaultKorean_FontId;
-        font_Text_(monospaceSmall_FontId)->koreanFont   = monospaceSmallKorean_FontId;
-        font_Text_(monospace_FontId)->koreanFont        = monospaceKorean_FontId;
-        font_Text_(medium_FontId)->koreanFont           = mediumKorean_FontId;
-        font_Text_(big_FontId)->koreanFont              = bigKorean_FontId;
-        font_Text_(largeBold_FontId)->koreanFont        = largeKorean_FontId;
-        font_Text_(largeLight_FontId)->koreanFont       = largeKorean_FontId;
-        font_Text_(hugeBold_FontId)->koreanFont         = hugeKorean_FontId;
     }
     gap_Text = iRound(gap_UI * d->contentFontSize);
 }
@@ -410,7 +371,7 @@ static void initCache_Text_(iText *d) {
     if (renderInfo.max_texture_height > 0 && d->cacheSize.y > renderInfo.max_texture_height) {
         d->cacheSize.y = renderInfo.max_texture_height;
         d->cacheSize.x = renderInfo.max_texture_width;
-    }    
+    }
     d->cacheRowAllocStep = iMax(2, textSize / 6);
     /* Allocate initial (empty) rows. These will be assigned actual locations in the cache
        once at least one glyph is stored. */
@@ -423,7 +384,7 @@ static void initCache_Text_(iText *d) {
                                  SDL_PIXELFORMAT_RGBA4444,
                                  SDL_TEXTUREACCESS_STATIC | SDL_TEXTUREACCESS_TARGET,
                                  d->cacheSize.x,
-                                 d->cacheSize.y);    
+                                 d->cacheSize.y);
     SDL_SetTextureBlendMode(d->cache, SDL_BLENDMODE_BLEND);
 }
 
@@ -514,17 +475,14 @@ static SDL_Surface *rasterizeGlyph_Font_(const iFont *d, uint32_t glyphIndex, fl
     SDL_Surface *surface8 =
         SDL_CreateRGBSurfaceWithFormatFrom(bmp, w, h, 8, w, SDL_PIXELFORMAT_INDEX8);
     SDL_SetSurfacePalette(surface8, text_.grayscale);
-    SDL_PixelFormat *fmt = SDL_AllocFormat(SDL_PIXELFORMAT_RGBA8888);
-    SDL_Surface *surface = SDL_ConvertSurface(surface8, fmt, 0);
-    SDL_FreeFormat(fmt);
-    SDL_FreeSurface(surface8);
-    stbtt_FreeBitmap(bmp, NULL);
-    return surface;
+    return surface8;
 }
 
+#if 0
 iLocalDef SDL_Rect sdlRect_(const iRect rect) {
     return (SDL_Rect){ rect.pos.x, rect.pos.y, rect.size.x, rect.size.y };
 }
+#endif
 
 iLocalDef iCacheRow *cacheRow_Text_(iText *d, int height) {
     return at_Array(&d->cacheRows, (height - 1) / d->cacheRowAllocStep);
@@ -571,7 +529,8 @@ static void allocate_Font_(iFont *d, iGlyph *glyph, int hoff) {
     }
 }
 
-static void cache_Font_(iFont *d, iGlyph *glyph, int hoff) {
+#if 0
+static iBool cache_Font_(const iFont *d, iGlyph *glyph, int hoff) {
     iText *       txt     = &text_;
     SDL_Renderer *render  = txt->render;
     SDL_Texture * tex     = NULL;
@@ -592,7 +551,9 @@ static void cache_Font_(iFont *d, iGlyph *glyph, int hoff) {
     if (surface) {
         SDL_FreeSurface(surface);
     }
+    return isRasterized_Glyph_(glyph, hoff);
 }
+#endif
 
 iLocalDef iFont *characterFont_Font_(iFont *d, iChar ch, uint32_t *glyphIndex) {
     if ((*glyphIndex = glyphIndex_Font_(d, ch)) != 0) {
@@ -600,23 +561,37 @@ iLocalDef iFont *characterFont_Font_(iFont *d, iChar ch, uint32_t *glyphIndex) {
     }
     /* Not defined in current font, try Noto Emoji (for selected characters). */
     if ((ch >= 0x1f300 && ch < 0x1f600) || (ch >= 0x1f680 && ch <= 0x1f6c5)) {
-        iFont *emoji = font_Text_(d->symbolsFont + fromSymbolsToEmojiOffset_FontId);
+        iFont *emoji = font_Text_(emoji_FontId + d->sizeId);
         if (emoji != d && (*glyphIndex = glyphIndex_Font_(emoji, ch)) != 0) {
             return emoji;
         }
     }
+    /* Try Simplified Chinese. */
+    if (ch >= 0x2e80) {
+        iFont *sc = font_Text_(chineseSimplified_FontId + d->sizeId);
+        if (sc != d && (*glyphIndex = glyphIndex_Font_(sc, ch)) != 0) {
+            return sc;
+        }
+    }
     /* Could be Korean. */
     if (ch >= 0x3000) {
-        iFont *korean = font_Text_(d->koreanFont);
+        iFont *korean = font_Text_(korean_FontId + d->sizeId);
         if (korean != d && (*glyphIndex = glyphIndex_Font_(korean, ch)) != 0) {
             return korean;
         }
     }
     /* Japanese perhaps? */
     if (ch > 0x3040) {
-        iFont *japanese = font_Text_(d->japaneseFont);
+        iFont *japanese = font_Text_(japanese_FontId + d->sizeId);
         if (japanese != d && (*glyphIndex = glyphIndex_Font_(japanese, ch)) != 0) {
             return japanese;
+        }
+    }
+    /* Maybe Arabic. */
+    if (ch >= 0x600) {
+        iFont *arabic = font_Text_(arabic_FontId + d->sizeId);
+        if (arabic != d && (*glyphIndex = glyphIndex_Font_(arabic, ch)) != 0) {
+            return arabic;
         }
     }
 #if defined (iPlatformApple)
@@ -628,7 +603,7 @@ iLocalDef iFont *characterFont_Font_(iFont *d, iChar ch, uint32_t *glyphIndex) {
     }
 #endif
     /* Fall back to Symbola for anything else. */
-    iFont *font = font_Text_(d->symbolsFont);
+    iFont *font = font_Text_(symbols_FontId + d->sizeId);
     *glyphIndex = glyphIndex_Font_(font, ch);
 //    if (!*glyphIndex) {
 //        fprintf(stderr, "failed to find %08x (%lc)\n", ch, ch); fflush(stderr);
@@ -636,7 +611,21 @@ iLocalDef iFont *characterFont_Font_(iFont *d, iChar ch, uint32_t *glyphIndex) {
     return font;
 }
 
-static const iGlyph *glyph_Font_(iFont *d, iChar ch) {
+#if 0
+static void doRaster_Font_(const iFont *font, iGlyph *glyph) {
+    SDL_Texture *oldTarget = SDL_GetRenderTarget(text_.render);
+    SDL_SetRenderTarget(text_.render, text_.cache);
+    if (!isRasterized_Glyph_(glyph, 0)) {
+        cache_Font_(font, glyph, 0);
+    }
+    if (!isRasterized_Glyph_(glyph, 1)) {
+        cache_Font_(font, glyph, 1); /* half-pixel offset */
+    }
+    SDL_SetRenderTarget(text_.render, oldTarget);
+}
+#endif
+
+static iGlyph *glyph_Font_(iFont *d, iChar ch) {
     iGlyph * glyph;
     uint32_t glyphIndex = 0;
     /* The glyph may actually come from a different font; look up the right font. */
@@ -662,37 +651,15 @@ static const iGlyph *glyph_Font_(iFont *d, iChar ch) {
         allocate_Font_(font, glyph, 1);
         insert_Hash(&font->glyphs, &glyph->node);
     }
-    if (enableRaster_Text_ && !isFullyRasterized_Glyph_(glyph)) {
-        SDL_Texture *oldTarget = SDL_GetRenderTarget(text_.render);
-        SDL_SetRenderTarget(text_.render, text_.cache);
-        if (!isRasterized_Glyph_(glyph, 0)) {
-            cache_Font_(font, glyph, 0);
-        }
-        if (!isRasterized_Glyph_(glyph, 1)) {
-            cache_Font_(font, glyph, 1); /* half-pixel offset */
-        }
-        SDL_SetRenderTarget(text_.render, oldTarget);
-    }
     return glyph;
 }
-
-enum iRunMode {
-    measure_RunMode    = 0,
-    draw_RunMode       = 1,
-    modeMask_RunMode   = 0x00ff,
-    flagsMask_RunMode  = 0xff00,
-    noWrapFlag_RunMode = iBit(9),
-    visualFlag_RunMode = iBit(10), /* actual visible bounding box of the glyph, e.g., for icons */
-    permanentColorFlag_RunMode      = iBit(11),
-    alwaysVariableWidthFlag_RunMode = iBit(12),
-};
 
 static iChar nextChar_(const char **chPos, const char *end) {
     if (*chPos == end) {
         return 0;
     }
     iChar ch;
-    int len = decodeBytes_MultibyteChar(*chPos, end - *chPos, &ch);
+    int len = decodeBytes_MultibyteChar(*chPos, end, &ch);
     if (len <= 0) {
         (*chPos)++; /* skip it */
         return 0;
@@ -701,9 +668,158 @@ static iChar nextChar_(const char **chPos, const char *end) {
     return ch;
 }
 
+iDeclareType(RasterGlyph)
+
+struct Impl_RasterGlyph {
+    iGlyph *glyph;
+    int     hoff;
+    iRect   rect;
+};
+
+void cacheTextGlyphs_Font_(iFont *d, const iRangecc text) {
+    const char * chPos   = text.start;
+    SDL_Surface *buf     = NULL;
+    const iInt2  bufSize = init_I2(iMin(512, d->height * iMin(2 * size_Range(&text), 20)),
+                                   d->height * 4 / 3);
+    int          bufX    = 0;
+    iArray *     rasters = NULL;
+    SDL_Texture *oldTarget = NULL;
+    iBool        isTargetChanged = iFalse;
+    /* We'll flush the buffered rasters periodically until everything is cached. */
+    while (chPos < text.end) {
+        while (chPos < text.end) {
+            const char *lastPos = chPos;
+            const iChar ch = nextChar_(&chPos, text.end);
+            if (ch == 0 || isSpace_Char(ch) || isDefaultIgnorable_Char(ch) ||
+                isFitzpatrickType_Char(ch)) {
+                continue;
+            }
+            const int lastCacheBottom = text_.cacheBottom;
+            iGlyph *glyph = glyph_Font_(d, ch);
+            if (text_.cacheBottom < lastCacheBottom) {
+                /* The cache was reset due to running out of space. We need to restart from
+                   the beginning! */
+                chPos = text.start;
+                bufX = 0;
+                if (rasters) {
+                    clear_Array(rasters);
+                }
+            }
+            if (!isFullyRasterized_Glyph_(glyph)) {
+                /* Need to cache this. */
+                if (buf == NULL) {
+                    rasters = new_Array(sizeof(iRasterGlyph));
+                    buf     = SDL_CreateRGBSurfaceWithFormat(
+                                0, bufSize.x, bufSize.y, 8, SDL_PIXELFORMAT_INDEX8);
+                    SDL_SetSurfacePalette(buf, text_.grayscale);
+                }
+                SDL_Surface *surfaces[2] = {
+                    !isRasterized_Glyph_(glyph, 0) ?
+                            rasterizeGlyph_Font_(glyph->font, glyph->glyphIndex, 0) : NULL,
+                    !isRasterized_Glyph_(glyph, 1) ?
+                            rasterizeGlyph_Font_(glyph->font, glyph->glyphIndex, 0.5f) : NULL
+                };
+                iBool outOfSpace = iFalse;
+                iForIndices(i, surfaces) {
+                    if (surfaces[i]) {
+                        const int w = surfaces[i]->w;
+                        const int h = surfaces[i]->h;
+                        if (bufX + w <= bufSize.x) {
+                            SDL_BlitSurface(surfaces[i],
+                                            NULL,
+                                            buf,
+                                            &(SDL_Rect){ bufX, 0, w, h });
+                            pushBack_Array(rasters,
+                                           &(iRasterGlyph){ glyph, i, init_Rect(bufX, 0, w, h) });
+                            bufX += w;
+                        }
+                        else {
+                            outOfSpace = iTrue;
+                            break;
+                        }
+                    }
+                }
+                iForIndices(i, surfaces) {
+                    if (surfaces[i]) {
+                        free(surfaces[i]->pixels);
+                        SDL_FreeSurface(surfaces[i]);
+                    }
+                }
+                if (outOfSpace) {
+                    chPos = lastPos;
+                    break;
+                }
+            }
+        }
+        /* Finished or the buffer is full, copy the glyphs to the cache texture. */
+        if (!isEmpty_Array(rasters)) {
+            SDL_Texture *bufTex = SDL_CreateTextureFromSurface(text_.render, buf);
+            SDL_SetTextureBlendMode(bufTex, SDL_BLENDMODE_NONE);
+            if (!isTargetChanged) {
+                isTargetChanged = iTrue;
+                oldTarget = SDL_GetRenderTarget(text_.render);
+                SDL_SetRenderTarget(text_.render, text_.cache);
+            }
+            //printf("copying %d rasters\n", size_Array(rasters)); fflush(stdout);
+            iConstForEach(Array, i, rasters) {
+                const iRasterGlyph *rg = i.value;
+//                iAssert(isEqual_I2(rg->rect.size, rg->glyph->rect[rg->hoff].size));
+                const iRect *glRect = &rg->glyph->rect[rg->hoff];
+                SDL_RenderCopy(text_.render,
+                               bufTex,
+                               (const SDL_Rect *) &rg->rect,
+                               (const SDL_Rect *) glRect);
+                setRasterized_Glyph_(rg->glyph, rg->hoff);
+            }
+            SDL_DestroyTexture(bufTex);
+            /* Resume with an empty buffer. */
+            clear_Array(rasters);
+            bufX = 0;
+        }
+        else {
+            iAssert(chPos >= text.end);
+        }
+    }
+    if (rasters) {
+        delete_Array(rasters);
+    }
+    if (buf) {
+        SDL_FreeSurface(buf);
+    }
+    if (isTargetChanged) {
+        SDL_SetRenderTarget(text_.render, oldTarget);
+    }
+}
+
+enum iRunMode {
+    measure_RunMode                 = 0,
+    draw_RunMode                    = 1,
+    modeMask_RunMode                = 0x00ff,
+    flagsMask_RunMode               = 0xff00,
+    noWrapFlag_RunMode              = iBit(9),
+    visualFlag_RunMode              = iBit(10), /* actual visible bounding box of the glyph,
+                                                   e.g., for icons */
+    permanentColorFlag_RunMode      = iBit(11),
+    alwaysVariableWidthFlag_RunMode = iBit(12),
+    fillBackground_RunMode          = iBit(13),
+};
+
 static enum iFontId fontId_Text_(const iFont *font) {
     return (enum iFontId) (font - text_.fonts);
 }
+
+iLocalDef iBool isWrapPunct_(iChar c) {
+    /* Punctuation that participates in word-wrapping. */
+    return (c == '/' || c == '\\' || c == '=' || c == '-' || c == ',' || c == ';' || c == '.' || c == ':' || c == 0xad);
+}
+
+iLocalDef iBool isClosingBracket_(iChar c) {
+    return (c == ')' || c == ']' || c == '}' || c == '>');
+}
+
+//iLocalDef iBool isBracket_(iChar c) {
+//    return (c == '(' || c == '[' || c == '{' || c == '<' || isClosingBracket_(c));
+//}
 
 iLocalDef iBool isWrapBoundary_(iChar prevC, iChar c) {
     /* Line wrapping boundaries are determined by looking at a character and the
@@ -713,14 +829,14 @@ iLocalDef iBool isWrapBoundary_(iChar prevC, iChar c) {
        can wrap text like foo/bar/baz-abc-def.xyz at any puncation boundaries,
        without wrapping on other punctuation used for expressive purposes like
        emoticons :-) */
-    if (c == '.' && (prevC == '(' || prevC == '[' || prevC == '.')) {
-        /* Start of a [...], perhaps? */
-        return iFalse;
+    if (isClosingBracket_(prevC) && !isWrapPunct_(c)) {
+        return iTrue;
     }
     if (isSpace_Char(prevC)) {
         return iFalse;
     }
-    if (c == '/' || c == '-' || c == ',' || c == ';' || c == ':' || c == '.' || c == 0xad) {
+    if ((prevC == '/' || prevC == '\\' || prevC == '-' || prevC == '_' || prevC == '+') &&
+        !isWrapPunct_(c)) {
         return iTrue;
     }
     return isSpace_Char(c);
@@ -756,6 +872,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
     const enum iRunMode mode        = args->mode;
     const char *        lastWordEnd = args->text.start;
     iAssert(args->xposLimit == 0 || isMeasuring_(mode));
+    iAssert(args->text.end >= args->text.start);
     if (args->continueFrom_out) {
         *args->continueFrom_out = args->text.end;
     }
@@ -764,8 +881,11 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
     if (isMonospaced) {
         monoAdvance = glyph_Font_(d, 'M')->advance;
     }
-    /* Global flag that allows glyph rasterization. */
-    enableRaster_Text_ = !isMeasuring_(mode);
+    if (args->mode & fillBackground_RunMode) {
+        const iColor initial = get_Color(args->color);
+        SDL_SetRenderDrawColor(text_.render, initial.r, initial.g, initial.b, 0);
+    }
+    /* Text rendering is not very straightforward! Let's dive in... */
     for (const char *chPos = args->text.start; chPos != args->text.end; ) {
         iAssert(chPos < args->text.end);
         const char *currentPos = chPos;
@@ -779,6 +899,9 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                     const iColor clr =
                         ansiForeground_Color(capturedRange_RegExpMatch(&m, 1), tmParagraph_ColorId);
                     SDL_SetTextureColorMod(text_.cache, clr.r, clr.g, clr.b);
+                    if (args->mode & fillBackground_RunMode) {
+                        SDL_SetRenderDrawColor(text_.render, clr.r, clr.g, clr.b, 0);
+                    }
                 }
                 chPos = end_RegExpMatch(&m);
                 continue;
@@ -819,6 +942,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                     }
                 }
             }
+            /* TODO: Check out if `uc_wordbreak_property()` from libunistring can be used here. */
             if (ch == '\n') {
                 xpos = xposExtend = orig.x;
                 ypos += d->height;
@@ -843,7 +967,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                 prevCh = 0;
                 continue;
             }
-            if (ch == '\r') {
+            if (ch == '\r') { /* color change */
                 iChar esc = nextChar_(&chPos, args->text.end);
                 int colorNum = args->color;
                 if (esc != 0x24) { /* ASCII Cancel */
@@ -856,6 +980,9 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                 if (mode & draw_RunMode && ~mode & permanentColorFlag_RunMode) {
                     const iColor clr = get_Color(colorNum);
                     SDL_SetTextureColorMod(text_.cache, clr.r, clr.g, clr.b);
+                    if (args->mode & fillBackground_RunMode) {
+                        SDL_SetRenderDrawColor(text_.render, clr.r, clr.g, clr.b, 0);
+                    }
                 }
                 prevCh = 0;
                 continue;
@@ -866,13 +993,19 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
         }
         const iGlyph *glyph = glyph_Font_(d, ch);
         int x1 = iMax(xpos, xposExtend);
+        /* Which half of the pixel the glyph falls on? */
         const int hoff = enableHalfPixelGlyphs_Text ? (xpos - x1 > 0.5f ? 1 : 0) : 0;
+        if (!isRasterized_Glyph_(glyph, hoff)) {
+            /* Need to pause here and make sure all glyphs have been cached in the text. */
+            cacheTextGlyphs_Font_(d, args->text);
+            glyph = glyph_Font_(d, ch); /* cache may have been reset */
+        }
         int x2 = x1 + glyph->rect[hoff].size.x;
-        /* Out of the allotted space? */
+        /* Out of the allotted space on the line? */
         if (args->xposLimit > 0 && x2 > args->xposLimit) {
             if (args->continueFrom_out) {
-                if (lastWordEnd != args->text.start) {
-                    *args->continueFrom_out = lastWordEnd;
+                if (lastWordEnd != args->text.start && ~mode & noWrapFlag_RunMode) {
+                    *args->continueFrom_out = skipSpace_CStr(lastWordEnd);
                 }
                 else {
                     *args->continueFrom_out = currentPos; /* forced break */
@@ -930,6 +1063,11 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                 src.y += over;
                 src.h -= over;
             }
+            if (args->mode & fillBackground_RunMode) {
+                /* Alpha blending looks much better if the RGB components don't change in
+                   the partially transparent pixels. */
+                SDL_RenderFillRect(text_.render, &dst);
+            }
             SDL_RenderCopy(text_.render, text_.cache, &src, &dst);
         }
         xpos += advance;
@@ -939,7 +1077,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
         xposExtend = iMax(xposExtend, xpos);
         xposMax    = iMax(xposMax, xposExtend);
         if (args->continueFrom_out && ((mode & noWrapFlag_RunMode) || isWrapBoundary_(prevCh, ch))) {
-            lastWordEnd = chPos;
+            lastWordEnd = currentPos; /* mark word wrap position */
         }
 #if defined (LAGRANGE_ENABLE_KERNING)
         /* Check the next character. */
@@ -984,6 +1122,10 @@ iRect visualBounds_Text(int fontId, iRangecc text) {
 
 iInt2 measure_Text(int fontId, const char *text) {
     return measureRange_Text(fontId, range_CStr(text));
+}
+
+void cache_Text(int fontId, iRangecc text) {
+    cacheTextGlyphs_Font_(font_Text_(fontId), text);
 }
 
 static int runFlagsFromId_(enum iFontId fontId) {
@@ -1047,17 +1189,19 @@ iInt2 advanceN_Text(int fontId, const char *text, size_t n) {
 }
 
 static void drawBounded_Text_(int fontId, iInt2 pos, int xposBound, int color, iRangecc text) {
-    iText *d = &text_;
+    iText *d    = &text_;
+    iFont *font = font_Text_(fontId);
     const iColor clr = get_Color(color & mask_ColorId);
     SDL_SetTextureColorMod(d->cache, clr.r, clr.g, clr.b);
-    run_Font_(font_Text_(fontId),
+    run_Font_(font,
               &(iRunArgs){ .mode = draw_RunMode |
                                    (color & permanent_ColorId ? permanentColorFlag_RunMode : 0) |
+                                   (color & fillBackground_ColorId ? fillBackground_RunMode : 0) |
                                    runFlagsFromId_(fontId),
                            .text            = text,
                            .pos             = pos,
                            .xposLayoutBound = xposBound,
-                           .color           = color });
+                           .color           = color & mask_ColorId });
 }
 
 static void draw_Text_(int fontId, iInt2 pos, int color, iRangecc text) {
@@ -1259,9 +1403,9 @@ iString *renderBlockChars_Text(const iBlock *fontData, int height, enum iTextBlo
 
 /*-----------------------------------------------------------------------------------------------*/
 
-iDefineTypeConstructionArgs(TextBuf, (int font, const char *text), font, text)
+iDefineTypeConstructionArgs(TextBuf, (int font, int color, const char *text), font, color, text)
 
-void init_TextBuf(iTextBuf *d, int font, const char *text) {
+void init_TextBuf(iTextBuf *d, int font, int color, const char *text) {
     SDL_Renderer *render = text_.render;
     d->size    = advance_Text(font, text);
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
@@ -1273,9 +1417,9 @@ void init_TextBuf(iTextBuf *d, int font, const char *text) {
     SDL_Texture *oldTarget = SDL_GetRenderTarget(render);
     SDL_SetRenderTarget(render, d->texture);
     SDL_SetTextureBlendMode(text_.cache, SDL_BLENDMODE_NONE); /* blended when TextBuf is drawn */
-    SDL_SetRenderDrawColor(text_.render, 255, 255, 255, 0);
+    SDL_SetRenderDrawColor(text_.render, 0, 0, 0, 0);
     SDL_RenderClear(text_.render);
-    draw_Text_(font, zero_I2(), white_ColorId, range_CStr(text));
+    draw_Text_(font, zero_I2(), color | fillBackground_ColorId, range_CStr(text));
     SDL_SetTextureBlendMode(text_.cache, SDL_BLENDMODE_BLEND);
     SDL_SetRenderTarget(render, oldTarget);
     SDL_SetTextureBlendMode(d->texture, SDL_BLENDMODE_BLEND);

@@ -18,10 +18,11 @@
 cmake_minimum_required (VERSION 3.9)
 
 project (Lagrange
-    VERSION 1.2.3
+    VERSION 1.3.0
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
+set (IOS_BUNDLE_VERSION 7)
 set (COPYRIGHT_YEAR 2021)
 
 # Build configuration.
@@ -43,10 +44,12 @@ include (Depends.cmake)
 message (STATUS "Preparing embedded resources...")
 # Fonts are too large to comfortably embed as a C source.
 set (EMBED_RESOURCES
+    res/about/about.gmi
     res/about/help.gmi
     res/about/lagrange.gmi
     res/about/license.gmi
     res/about/version.gmi
+    res/arg-help.txt
     res/fonts/Tinos-Regular.ttf
     res/fonts/Tinos-Italic.ttf
     res/fonts/Tinos-Bold.ttf
@@ -61,7 +64,10 @@ set (EMBED_RESOURCES
     res/fonts/Literata-LightItalic-opsz=10.ttf
     res/fonts/NanumGothic-Regular.ttf
     res/fonts/NotoEmoji-Regular.ttf
+    res/fonts/NotoSansArabicUI-Regular.ttf
     res/fonts/NotoSansJP-Regular.ttf
+    res/fonts/NotoSansSC-Regular.ttf
+    res/fonts/Nunito-Bold.ttf
     res/fonts/Nunito-ExtraBold.ttf
     res/fonts/Nunito-ExtraLight.ttf
     res/fonts/Nunito-LightItalic.ttf
@@ -69,6 +75,13 @@ set (EMBED_RESOURCES
     res/fonts/SourceSansPro-Regular.ttf
     res/fonts/SourceSansPro-Bold.ttf
     res/fonts/Symbola.ttf
+    res/lang/en.bin
+    res/lang/es.bin
+    res/lang/fi.bin
+    res/lang/ru.bin
+    res/lang/zh_Hans.bin
+    res/lang/zh_Hant.bin
+    res/shadow.png
 )
 if ((UNIX AND NOT APPLE) OR MSYS)
     list (APPEND EMBED_RESOURCES res/lagrange-64.png)
@@ -100,12 +113,18 @@ set (SOURCES
     src/gopher.h
     src/history.c
     src/history.h
+    src/ipc.c
+    src/ipc.h
+    src/lang.c
+    src/lang.h
     src/lookup.c
     src/lookup.h
     src/media.c
     src/media.h
     src/mimehooks.c
     src/mimehooks.h
+    src/periodic.c
+    src/periodic.h
     src/prefs.c
     src/prefs.h
     src/stb_image.h
@@ -152,6 +171,8 @@ set (SOURCES
     src/ui/text.h
     src/ui/touch.c
     src/ui/touch.h
+    src/ui/translation.c
+    src/ui/translation.h
     src/ui/util.c
     src/ui/util.h
     src/ui/visbuf.c
@@ -166,14 +187,21 @@ set (SOURCES
     src/ui/labelwidget.c
     src/ui/labelwidget.h
     # Resources:
+    res/about/about.gmi
     res/about/help.gmi
     res/about/lagrange.gmi
+    res/about/license.gmi
     res/about/version.gmi
     ${CMAKE_CURRENT_BINARY_DIR}/resources.lgr
     ${CMAKE_CURRENT_BINARY_DIR}/embedded.c
     ${CMAKE_CURRENT_BINARY_DIR}/embedded.h
 )
+if (ANDROID)
+    set (MOBILE 1)
+    add_definitions (-DiPlatformAndroidMobile=1)
+endif ()
 if (IOS)
+    set (MOBILE 1)
     add_definitions (-DiPlatformAppleMobile=1)
     list (APPEND SOURCES
         src/ios.m
@@ -181,7 +209,10 @@ if (IOS)
         app/Images.xcassets
         res/LaunchScreen.storyboard
     )
-    set_source_files_properties(app/Images.xcassets PROPERTIES
+    set_source_files_properties(
+        app/Images.xcassets
+        res/LaunchScreen.storyboard
+    PROPERTIES
         MACOSX_PACKAGE_LOCATION Resources
     )
 elseif (APPLE)
@@ -196,6 +227,14 @@ if (MSYS)
     list (APPEND SOURCES src/win32.c src/win32.h ${CMAKE_CURRENT_BINARY_DIR}/lagrange.rc)
 endif ()
 set_source_files_properties (${RESOURCES} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
+if (MSYS OR (APPLE AND NOT MOBILE) OR (UNIX AND NOT MOBILE))
+    add_definitions (-DiPlatformPcDesktop=1)
+endif ()
+if (MOBILE)
+    add_definitions (-DiPlatformMobile=1)
+else ()
+    add_definitions (-DiPlatformDesktop=1)
+endif ()
 
 # Target.
 add_executable (app ${SOURCES} ${RESOURCES})
@@ -258,14 +297,17 @@ if (APPLE)
         MACOSX_BUNDLE_INFO_STRING "${PROJECT_VERSION}"
         MACOSX_BUNDLE_ICON_FILE "Lagrange.icns"
         MACOSX_BUNDLE_BUNDLE_VERSION "${PROJECT_VERSION}"
-        MACOSX_BUNDLE_LONG_VERSION_STRING "${PROJECT_VERSION}"
-        MACOSX_BUNDLE_SHORT_VERSION_STRING "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}"
-        MACOSX_BUNDLE_GUI_IDENTIFIER "fi.skyjake.Lagrange"
+        MACOSX_BUNDLE_SHORT_VERSION_STRING "${PROJECT_VERSION}"
+        MACOSX_BUNDLE_GUI_IDENTIFIER "fi.skyjake.lagrange"
         MACOSX_BUNDLE_COPYRIGHT "© ${COPYRIGHT_YEAR} Jaakko Keränen"
-        XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "fi.skyjake.Lagrange"
+        XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "fi.skyjake.lagrange"
     )
     if (IOS)
         set_target_properties (app PROPERTIES
+            MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_LIST_DIR}/res/iOSBundleInfo.plist.in"
+            MACOSX_BUNDLE_BUNDLE_VERSION "${IOS_BUNDLE_VERSION}"
+            XCODE_ATTRIBUTE_SKIP_INSTALL "NO"
+            XCODE_ATTRIBUTE_INSTALL_PATH "$(LOCAL_APPS_DIR)"
             XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2"
             XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME "AppIcon"
             MACOSX_BUNDLE_ICON_FILE "AppIcon"
@@ -282,6 +324,9 @@ if (MSYS)
 endif ()
 if (UNIX)
     target_link_libraries (app PUBLIC m)
+endif ()
+if (HAIKU)
+    target_link_libraries (app PUBLIC m network bsd)
 endif ()
 
 # Deployment.
@@ -300,6 +345,13 @@ if (MSYS)
     )
     if (INSTALL_THE_FOUNDATION)
         install (PROGRAMS $<TARGET_FILE:the_Foundation::the_Foundation> DESTINATION .)
+    endif ()
+elseif (HAIKU)
+    install (TARGETS app DESTINATION .)
+    if (NOT ENABLE_RESOURCE_EMBED)
+        target_compile_definitions (app PUBLIC
+            LAGRANGE_EMB_BIN="${CMAKE_INSTALL_PREFIX}/resources.lgr")
+        install (FILES ${EMB_BIN} DESTINATION .)
     endif ()
 elseif (UNIX AND NOT APPLE)
     set_target_properties (app PROPERTIES

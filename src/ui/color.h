@@ -114,6 +114,9 @@ enum iColorId {
     uiSubheading_ColorId,
     uiTextAppTitle_ColorId,
     uiBackgroundSidebar_ColorId,
+    uiBackgroundMenu_ColorId,
+    tmLinkCustomIconVisited_ColorId, /* derived from other theme colors */
+    tmAltTextBackground_ColorId,     /* derived from other theme colors */
 
     /* content theme colors */
     tmFirst_ColorId,
@@ -177,7 +180,8 @@ iLocalDef iBool isRegularText_ColorId(enum iColorId d) {
 }
 
 #define mask_ColorId                0x7f
-#define permanent_ColorId           0x80 /* cannot be changed via escapes */
+#define permanent_ColorId           0x80  /* cannot be changed via escapes */
+#define fillBackground_ColorId      0x100 /* fill background with same color, but alpha 0 */
 
 #define asciiBase_ColorEscape       33
 #define asciiExtended_ColorEscape   (128 - asciiBase_ColorEscape)

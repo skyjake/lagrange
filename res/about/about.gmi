@@ -1,0 +1,33 @@
+# About pages
+
+These are all the About pages that Lagrange uses to display built-in or dynamically generated content.
+
+=> about:blank
+A blank page.
+
+=> about:bookmarks
+List of bookmarks.
+
+=> about:bookmarks?created
+List of bookmarks with creation dates.
+
+=> about:bookmarks?tags
+List of bookmarks that have at least one tag.
+
+=> about:debug
+Runtime debug information: contents of currently open tabs, navigation history, environment variables, command line arguments, and configured MIME hooks.
+
+=> about:feeds
+List of all entries from subscribed feeds.
+
+=> about:help
+User manual.
+
+=> about:lagrange
+Default home page with a large "Lagrange" ASCII art logo.
+
+=> about:license
+Open source licenses.
+
+=> about:version
+Release notes for each version.

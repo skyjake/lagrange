@@ -39,6 +39,21 @@ const char *    command_UserEvent   (const SDL_Event *);
 iLocalDef iBool isResize_UserEvent(const SDL_Event *d) {
     return isCommand_UserEvent(d, "window.resized");
 }
+iLocalDef iBool isMetricsChange_UserEvent(const SDL_Event *d) {
+    return isCommand_UserEvent(d, "metrics.changed");
+}
+
+enum iMouseWheelFlag {
+    perPixel_MouseWheelFlag = iBit(9), /* e.g., trackpad or finger scroll; applied to `direction` */
+};
+
+/* Note: A future version of SDL may support per-pixel scrolling, but 2.0.x doesn't. */
+iLocalDef void setPerPixel_MouseWheelEvent(SDL_MouseWheelEvent *ev, iBool set) {
+    iChangeFlags(ev->direction, perPixel_MouseWheelFlag, set);
+}
+iLocalDef iBool isPerPixel_MouseWheelEvent(const SDL_MouseWheelEvent *ev) {
+    return (ev->direction & perPixel_MouseWheelFlag) != 0;
+}
 
 #if defined (iPlatformApple)
 #   define KMOD_PRIMARY     KMOD_GUI
@@ -67,6 +82,16 @@ iLocalDef iBool isOverlapping_Rangei(iRangei a, iRangei b) {
     return !isEmpty_Rangei(intersect_Rangei(a, b));
 }
 
+enum iRangeExtension {
+    word_RangeExtension            = iBit(1),
+    line_RangeExtension            = iBit(2),
+    bothStartAndEnd_RangeExtension = iBit(3),
+};
+
+void        extendRange_Rangecc     (iRangecc *, iRangecc bounds, int mode);
+
+iBool       isSelectionBreaking_Char(iChar);
+
 /*-----------------------------------------------------------------------------------------------*/
 
 iDeclareType(Anim)
@@ -87,7 +112,7 @@ struct Impl_Anim {
 
 void    init_Anim           (iAnim *, float value);
 void    setValue_Anim       (iAnim *, float to, uint32_t span);
-void    setValueLinear_Anim (iAnim *, float to, uint32_t span);
+void    setValueSpeed_Anim  (iAnim *, float to, float unitsPerSecond);
 void    setValueEased_Anim  (iAnim *, float to, uint32_t span);
 void    setFlags_Anim       (iAnim *, int flags, iBool set);
 void    stop_Anim           (iAnim *);
@@ -111,12 +136,12 @@ enum iClickResult {
     drag_ClickResult,
     finished_ClickResult,
     aborted_ClickResult,
-    double_ClickResult,
 };
 
 struct Impl_Click {
     iBool    isActive;
     int      button;
+    int      count;
     iWidget *bounds;
     iInt2    startPos;
     iInt2    pos;
@@ -157,6 +182,7 @@ struct Impl_MenuItem {
 
 iWidget *   makeMenu_Widget     (iWidget *parent, const iMenuItem *items, size_t n); /* returns no ref */
 void        openMenu_Widget     (iWidget *, iInt2 coord);
+void        openMenuFlags_Widget(iWidget *d, iInt2 coord, iBool postCommands);
 void        closeMenu_Widget    (iWidget *);
 
 iLabelWidget *  findMenuItem_Widget (iWidget *menu, const char *command);
@@ -190,7 +216,8 @@ size_t          tabCount_Widget         (const iWidget *tabs);
 /*-----------------------------------------------------------------------------------------------*/
 
 iWidget *   makeSheet_Widget        (const char *id);
-void        centerSheet_Widget      (iWidget *sheet);
+void        finalizeSheet_Widget    (iWidget *sheet);
+iWidget *   makeDialogButtons_Widget(const iMenuItem *actions, size_t numActions);
 
 void        makeFilePath_Widget     (iWidget *parent, const iString *initialPath, const char *title,
                                      const char *acceptLabel, const char *command);
@@ -201,8 +228,14 @@ iWidget *   makeMessage_Widget      (const char *title, const char *msg);
 iWidget *   makeQuestion_Widget     (const char *title, const char *msg,
                                      const iMenuItem *items, size_t numItems);
 
-iWidget *   makePreferences_Widget      (void);
+iWidget *   makePreferences_Widget          (void);
+void        updatePreferencesLayout_Widget  (iWidget *prefs);
+
 iWidget *   makeBookmarkEditor_Widget   (void);
 iWidget *   makeBookmarkCreation_Widget (const iString *url, const iString *title, iChar icon);
 iWidget *   makeIdentityCreation_Widget (void);
 iWidget *   makeFeedSettings_Widget     (uint32_t bookmarkId);
+iWidget *   makeTranslation_Widget      (iWidget *parent);
+
+const char *    languageId_String   (const iString *menuItemLabel);
+int             languageIndex_CStr  (const char *langId);

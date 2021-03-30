@@ -1,0 +1,1279 @@
+msgid "doc.pre.nocaption"
+msgstr "Preformatted text without a caption"
+
+# Alt-text of the preformatted logo.
+msgid "about.logo"
+msgstr "ASCII art: the word \"Lagrange\" using a large font"
+
+msgid "about.tagline"
+msgstr "A Beautiful Gemini Client"
+
+msgid "about.version"
+msgstr "Version"
+
+msgid "about.powered"
+msgstr "Powered by SDL 2, OpenSSL, and ☕️"
+
+msgid "cancel"
+msgstr "Cancel"
+
+msgid "dismiss"
+msgstr "Dismiss"
+
+msgid "dlg.message.ok"
+msgstr "Continue"
+
+msgid "dlg.default"
+msgstr " OK "
+
+msgid "toggle.yes"
+msgstr "YES"
+
+msgid "toggle.no"
+msgstr "NO"
+
+msgid "menu.title.file"
+msgstr "File"
+
+msgid "menu.title.edit"
+msgstr "Edit"
+
+msgid "menu.title.view"
+msgstr "View"
+
+msgid "menu.title.bookmarks"
+msgstr "Bookmarks"
+
+msgid "menu.title.identity"
+msgstr "Identity"
+
+msgid "menu.title.help"
+msgstr "Help"
+
+msgid "menu.newtab"
+msgstr "New Tab"
+
+msgid "menu.closetab"
+msgstr "Close Tab"
+
+msgid "menu.closetab.other"
+msgstr "Close Other Tabs"
+
+msgid "menu.closetab.left"
+msgstr "Close Tabs To Left"
+
+msgid "menu.closetab.right"
+msgstr "Close Tabs To Right"
+
+msgid "menu.duptab"
+msgstr "Duplicate Tab"
+
+msgid "menu.openlocation"
+msgstr "Open Location…"
+
+msgid "menu.find"
+msgstr "Find on Page"
+
+msgid "macos.menu.find"
+msgstr "Find"
+
+# Used on iOS. "Files" refers to Apple's iOS app where you can pick an iCloud folder.
+msgid "menu.save.files"
+msgstr "Save to Files"
+
+# Used on desktop operating systems. "Downloads" refers to the user's configured downloads directory.
+msgid "menu.save.downloads"
+msgstr "Save to Downloads"
+
+msgid "menu.copy.source"
+msgstr "Copy Source Text"
+
+msgid "menu.sidebar"
+msgstr "Toggle Sidebar"
+
+msgid "menu.sidebar.left"
+msgstr "Toggle Left Sidebar"
+
+msgid "menu.sidebar.right"
+msgstr "Toggle Right Sidebar"
+
+msgid "menu.zoom.in"
+msgstr "Zoom In"
+
+msgid "menu.zoom.out"
+msgstr "Zoom Out"
+
+msgid "menu.zoom.reset"
+msgstr "Reset Zoom"
+
+msgid "menu.bookmarks.list"
+msgstr "List All Bookmarks"
+
+msgid "macos.menu.bookmarks.list"
+msgstr "List All"
+
+msgid "menu.bookmarks.bytag"
+msgstr "List Bookmarks by Tag"
+
+msgid "macos.menu.bookmarks.bytag"
+msgstr "List by Tag"
+
+msgid "menu.bookmarks.bytime"
+msgstr "List Bookmarks by Creation Time"
+
+msgid "macos.menu.bookmarks.bytime"
+msgstr "List by Creation Time"
+
+msgid "menu.feeds.entrylist"
+msgstr "Show Feed Entries"
+
+msgid "menu.preferences"
+msgstr "Preferences…"
+
+msgid "menu.help"
+msgstr "Help"
+
+msgid "menu.releasenotes"
+msgstr "Release Notes"
+
+msgid "menu.quit"
+msgstr "Quit Lagrange"
+
+msgid "menu.cut"
+msgstr "Cut"
+
+msgid "menu.copy"
+msgstr "Copy"
+
+msgid "menu.paste"
+msgstr "Paste"
+
+msgid "menu.copy.pagelink"
+msgstr "Copy Link to Page"
+
+msgid "menu.show.bookmarks"
+msgstr "Show Bookmarks"
+
+msgid "menu.show.feeds"
+msgstr "Show Feeds"
+
+msgid "menu.show.history"
+msgstr "Show History"
+
+msgid "menu.show.identities"
+msgstr "Show Identities"
+
+msgid "menu.show.outline"
+msgstr "Show Page Outline"
+
+msgid "menu.back"
+msgstr "Go Back"
+
+msgid "menu.forward"
+msgstr "Go Forward"
+
+msgid "menu.parent"
+msgstr "Go to Parent"
+
+msgid "menu.root"
+msgstr "Go to Root"
+
+msgid "menu.reload"
+msgstr "Reload Page"
+
+msgid "menu.autoreload"
+msgstr "Set Auto-Reload…"
+
+msgid "menu.page.bookmark"
+msgstr "Bookmark Page…"
+
+msgid "menu.page.subscribe"
+msgstr "Subscribe to Page…"
+
+msgid "menu.aboutpages"
+msgstr "About Pages"
+
+msgid "menu.about"
+msgstr "About"
+
+msgid "panel.back"
+msgstr "Back"
+
+msgid "menu.debug"
+msgstr "Debug Information"
+
+msgid "menu.import.links"
+msgstr "Import All Links on Page…"
+
+msgid "menu.page.import"
+msgstr "Import Links as Bookmarks…"
+
+msgid "menu.page.translate"
+msgstr "Translate…"
+
+msgid "menu.page.copyurl"
+msgstr "Copy Page URL"
+
+msgid "menu.page.copysource"
+msgstr "Copy Page Source"
+
+msgid "menu.bookmarks.refresh"
+msgstr "Refresh Remote Bookmarks"
+
+msgid "menu.feeds.refresh"
+msgstr "Refresh Feeds"
+
+msgid "menu.identity.new"
+msgstr "New Identity…"
+
+msgid "menu.identity.import"
+msgstr "Import…"
+
+msgid "menu.identity.notactive"
+msgstr "No Active Identity"
+
+msgid "sidebar.bookmarks"
+msgstr "Bookmarks"
+
+msgid "sidebar.feeds"
+msgstr "Feeds"
+
+msgid "sidebar.history"
+msgstr "History"
+
+msgid "sidebar.identities"
+msgstr "Identities"
+
+msgid "sidebar.outline"
+msgstr "Outline"
+
+# Usage: "(count) Unread" in the sidebar tab title, referring to feed entries.
+msgid "sidebar.unread"
+msgid_plural "sidebar.unread.n"
+msgstr[0] "Unread"
+msgstr[1] "Unread"
+
+msgid "toolbar.outline"
+msgstr "Page Outline"
+
+msgid "hint.findtext"
+msgstr "Find text on page"
+
+msgid "status.query"
+msgstr "Search Query"
+
+msgid "status.feeds"
+msgstr "Updating Feeds"
+
+# megabytes, used as the unit after a number
+msgid "mb"
+msgstr "MB"
+
+# kilobytes, used as the unit after a number
+msgid "kb"
+msgstr "KB"
+
+msgid "num.bytes"
+msgid_plural "num.bytes.n"
+msgstr[0] "%zu byte"
+msgstr[1] "%zu bytes"
+
+# strftime() formatted, split on two lines
+#, c-format
+msgid "page.timestamp"
+msgstr "Received at %I:%M %p\non %b %d, %Y"
+
+# strftime() formatted
+#, c-format
+msgid "sidebar.date.thisyear"
+msgstr "%b. %d"
+
+# strftime() formatted
+#, c-format
+msgid "sidebar.date.otheryear"
+msgstr "%b. %d, %Y"
+
+msgid "feeds.today"
+msgstr "Today"
+
+msgid "feeds.entry.newtab"
+msgstr "Open Entry in New Tab"
+
+msgid "feeds.entry.markread"
+msgstr "Mark as Read"
+
+msgid "feeds.entry.markunread"
+msgstr "Mark as Unread"
+
+msgid "sidebar.entry.bookmark"
+msgstr "Add Bookmark…"
+
+msgid "feeds.entry.bookmark"
+msgstr "Add Bookmark…"
+
+msgid "feeds.entry.openfeed"
+msgstr "Open Feed Page"
+
+msgid "feeds.edit"
+msgstr "Edit Feed…"
+
+msgid "feeds.unsubscribe"
+msgstr "Unsubscribe…"
+
+msgid "feeds.markallread"
+msgstr "Mark All as Read"
+
+msgid "feeds.refresh"
+msgstr "Refresh Feeds"
+
+msgid "menu.opentab"
+msgstr "Open in New Tab"
+
+msgid "menu.opentab.background"
+msgstr "Open in Background Tab"
+
+msgid "menu.edit"
+msgstr "Edit…"
+
+msgid "menu.dup"
+msgstr "Duplicate…"
+
+msgid "menu.copyurl"
+msgstr "Copy URL"
+
+msgid "menu.forgeturl"
+msgstr "Forget URL"
+
+msgid "history.clear"
+msgstr "Clear History…"
+
+msgid "heading.history.clear"
+msgstr "CLEAR HISTORY"
+
+msgid "dlg.confirm.history.clear"
+msgstr "Do you really want to erase the history of all visited pages?"
+
+msgid "dlg.history.clear"
+msgstr "Clear History"
+
+msgid "bookmark.tag.home"
+msgstr "Use as Homepage"
+
+msgid "bookmark.tag.sub"
+msgstr "Subscribe to Feed"
+
+msgid "bookmark.tag.remote"
+msgstr "Use as Bookmark Source"
+
+msgid "bookmark.untag.home"
+msgstr "Remove Homepage"
+
+msgid "bookmark.untag.sub"
+msgstr "Unsubscribe from Feed"
+
+msgid "bookmark.untag.remote"
+msgstr "Remove Bookmark Source"
+
+msgid "bookmark.delete"
+msgstr "Delete Bookmark"
+
+msgid "bookmarks.reload"
+msgstr "Refresh Remote Sources"
+
+msgid "ident.using"
+msgstr "Using on this page"
+
+msgid "ident.notused"
+msgstr "Not used"
+
+#, c-format
+msgid "ident.usedonurls"
+msgid_plural "ident.usedonurls.n"
+msgstr[0] "Used on %zu URL"
+msgstr[1] "Used on %zu URLs"
+
+msgid "ident.temporary"
+msgstr "Temporary"
+
+# strftime() formatted
+#, c-format
+msgid "ident.expiry"
+msgstr "Expires %b %d, %Y"
+
+msgid "ident.use"
+msgstr "Use on This Page"
+
+msgid "ident.stopuse"
+msgstr "Stop Using on This Page"
+
+msgid "ident.stopuse.all"
+msgstr "Stop Using Everywhere"
+
+msgid "ident.showuse"
+msgstr "Show Usage"
+
+msgid "heading.ident.use"
+msgstr "IDENTITY USAGE"
+
+msgid "menu.edit.notes"
+msgstr "Edit Notes…"
+
+msgid "heading.ident.notes"
+msgstr "IDENTITY NOTES"
+
+# %s refers to name of an identity.
+#, c-format
+msgid "dlg.ident.notes"
+msgstr "Notes about %s:"
+
+msgid "ident.fingerprint"
+msgstr "Copy Fingerprint"
+
+msgid "ident.delete"
+msgstr "Delete Identity…"
+
+msgid "heading.ident.delete"
+msgstr "DELETE IDENTITY"
+
+#, c-format
+msgid "dlg.confirm.ident.delete"
+msgstr "Do you really want to delete the identity\n%s%s%s\nincluding its certificate and private key files?"
+
+msgid "dlg.ident.delete"
+msgstr "Delete Identity and Files"
+
+msgid "sidebar.empty.idents"
+msgstr "No Identities"
+
+# The %s format characters are used to highlight the word "Help" and must be used in the translation in same way as here.
+#, c-format
+msgid "ident.gotohelp"
+msgstr "See %sHelp%s for more information about TLS client certificates."
+
+msgid "heading.unsub"
+msgstr "UNSUBSCRIBE"
+
+#, c-format
+msgid "dlg.confirm.unsub"
+msgstr "Really unsubscribe from feed\n\"%s\"?"
+
+msgid "dlg.unsub"
+msgstr "Unsubscribe"
+
+#, c-format
+msgid "error.unsupported.suggestsave"
+msgstr "You can save it as a file to your Downloads folder, though. Press %s or select \"%s\" from the menu."
+
+msgid "heading.pageinfo"
+msgstr "PAGE INFORMATION"
+
+msgid "pageinfo.header.cached"
+msgstr "(cached content)"
+
+msgid "pageinfo.cert.status"
+msgstr "Certificate Status:"
+
+msgid "pageinfo.cert.ca.verified"
+msgstr "Verified by CA"
+
+msgid "pageinfo.cert.ca.unverified"
+msgstr "Not verified by CA"
+
+msgid "pageinfo.cert.notexpired"
+msgstr "Not expired"
+
+msgid "pageinfo.cert.expired"
+msgstr "Expired"
+
+msgid "pageinfo.cert.trusted"
+msgstr "Trusted"
+
+msgid "pageinfo.cert.untrusted"
+msgstr "Not trusted"
+
+msgid "pageinfo.domain.match"
+msgstr "Domain name matches"
+
+msgid "pageinfo.domain.mismatch"
+msgstr "Domain name mismatch"
+
+msgid "dlg.cert.trust"
+msgstr "Trust"
+
+msgid "dlg.cert.fingerprint"
+msgstr "Copy Fingerprint"
+
+#, c-format
+msgid "dlg.input.prompt"
+msgstr "Please enter input for %s:"
+
+msgid "dlg.input.send"
+msgstr "Send"
+
+msgid "heading.save"
+msgstr "FILE SAVED"
+
+msgid "heading.save.incomplete"
+msgstr "PAGE INCOMPLETE"
+
+msgid "dlg.save.incomplete"
+msgstr "The page contents are still being downloaded."
+
+msgid "dlg.save.size"
+msgstr "Size:"
+
+msgid "heading.save.error"
+msgstr "ERROR SAVING FILE"
+
+msgid "heading.import.bookmarks"
+msgstr "IMPORT BOOKMARKS"
+
+#, c-format
+msgid "dlg.import.found"
+msgid_plural "dlg.import.found.n"
+msgstr[0] "Found one new link on the page."
+msgstr[1] "Found %d new links on the page."
+
+#, c-format
+msgid "dlg.import.add"
+msgid_plural "dlg.import.add.n"
+msgstr[0] "%sAdd Bookmark"
+msgstr[1] "%sAdd %d Bookmarks"
+
+msgid "dlg.import.notnew"
+msgstr "All links on this page are already bookmarked."
+
+msgid "heading.autoreload"
+msgstr "AUTO-RELOAD"
+
+msgid "dlg.autoreload"
+msgstr "Select the auto-reload interval for this tab."
+
+msgid "reload.never"
+msgstr "Never"
+
+msgid "reload.onceperday"
+msgstr "Once per day"
+
+#, c-format
+msgid "num.minutes"
+msgid_plural "num.minutes.n"
+msgstr[0] "%d minute"
+msgstr[1] "%d minutes"
+
+#, c-format
+msgid "num.hours"
+msgid_plural "num.hours.n"
+msgstr[0] "%d hour"
+msgstr[1] "%d hours"
+
+msgid "link.newtab"
+msgstr "Open Link in New Tab"
+
+msgid "link.newtab.background"
+msgstr "Open Link in Background Tab"
+
+msgid "link.browser"
+msgstr "Open Link in Default Browser"
+
+msgid "link.noproxy"
+msgstr "Open without Proxy"
+
+msgid "link.copy"
+msgstr "Copy Link"
+
+msgid "link.bookmark"
+msgstr "Bookmark Link…"
+
+msgid "link.download"
+msgstr "Download Linked File"
+
+msgid "heading.openlink"
+msgstr "OPEN LINK"
+
+#, c-format
+msgid "dlg.openlink.confirm"
+msgstr "Open this link in the default browser?\n%s%s"
+
+msgid "dlg.openlink"
+msgstr "Open Link"
+
+msgid "heading.certwarn"
+msgstr "UNTRUSTED CERTIFICATE"
+
+#, c-format
+msgid "dlg.certwarn.mayberenewed"
+msgid_plural "dlg.certwarn.mayberenewed.n"
+msgstr[0] "The received certificate may have been recently renewed — it is for the correct domain and has not expired. The currently trusted certificate will expire on %s, in one day."
+msgstr[1] "The received certificate may have been recently renewed — it is for the correct domain and has not expired. The currently trusted certificate will expire on %s, in %d days."
+
+msgid "dlg.certwarn.different"
+msgstr "The received certificate is valid but different than the one we trust."
+
+#, c-format
+msgid "dlg.certwarn.expired"
+msgstr "The received certificate has expired on %s."
+
+msgid "dlg.certwarn.domain"
+msgstr "The received certificate is for the wrong domain (%s). This may be a server configuration problem."
+
+msgid "dlg.certwarn.domain.expired"
+msgstr "The received certificate is expired AND for the wrong domain."
+
+msgid "heading.certimport"
+msgstr "IMPORT IDENTITY"
+
+msgid "dlg.certimport.help"
+msgstr "Paste a PEM-encoded certificate and/or private key,\nor drop a .crt/.key file on the window."
+
+msgid "dlg.certimport.notfound"
+msgstr "No certificate or private key was found."
+
+msgid "dlg.certimport.notfound.page"
+msgstr "No certificate/key found on the current page."
+
+msgid "heading.certimport.pasted"
+msgstr "PASTED FROM CLIPBOARD"
+
+msgid "heading.certimport.dropped"
+msgstr "DROPPED FILE"
+
+msgid "dlg.certimport.import"
+msgstr "Import"
+
+msgid "dlg.certimport.notes"
+msgstr "Notes:"
+
+msgid "hint.certimport.description"
+msgstr "description"
+
+msgid "dlg.certimport.nocert"
+msgstr "No Certificate"
+
+msgid "dlg.certimport.nokey"
+msgstr "No Private Key"
+
+msgid "link.hint.audio"
+msgstr "Play Audio"
+
+msgid "link.hint.image"
+msgstr "View Image"
+
+msgid "bookmark.title.blank"
+msgstr "Blank Page"
+
+# Interpret as "Results from bookmarks..."
+msgid "heading.lookup.bookmarks"
+msgstr "BOOKMARKS"
+
+# Interpret as "Results from feeds..."
+msgid "heading.lookup.feeds"
+msgstr "FEEDS"
+
+# Interpret as "Results from history..."
+msgid "heading.lookup.history"
+msgstr "HISTORY"
+
+# Interpret as "Results from page content..."
+msgid "heading.lookup.pagecontent"
+msgstr "PAGE CONTENT"
+
+# Interpret as "Results from identitites..."
+msgid "heading.lookup.identities"
+msgstr "IDENTITIES"
+
+# Interpret as "Other results..."
+msgid "heading.lookup.other"
+msgstr "OTHER"
+
+msgid "heading.translate"
+msgstr "TRANSLATE PAGE"
+
+msgid "dlg.translate.unavail"
+msgstr "Service Unavailable"
+
+msgid "dlg.translate.fail"
+msgstr "Request Failed"
+
+msgid "dlg.translate"
+msgstr "Translate"
+
+msgid "dlg.translate.from"
+msgstr "From:"
+
+msgid "dlg.translate.to"
+msgstr "To:"
+
+msgid "lang.ar"
+msgstr "Arabic"
+
+msgid "lang.zh"
+msgstr "Chinese"
+
+msgid "lang.zh.hans"
+msgstr "Chinese (Simplified)"
+
+msgid "lang.zh.hant"
+msgstr "Chinese (Traditional)"
+
+msgid "lang.en"
+msgstr "English"
+
+msgid "lang.fi"
+msgstr "Finnish"
+
+msgid "lang.fr"
+msgstr "French"
+
+msgid "lang.de"
+msgstr "German"
+
+msgid "lang.hi"
+msgstr "Hindi"
+
+msgid "lang.it"
+msgstr "Italian"
+
+msgid "lang.ja"
+msgstr "Japanese"
+
+msgid "lang.pt"
+msgstr "Portuguese"
+
+msgid "lang.ru"
+msgstr "Russian"
+
+msgid "lang.es"
+msgstr "Spanish"
+
+msgid "heading.newident"
+msgstr "NEW IDENTITY"
+
+msgid "dlg.newident.rsa.selfsign"
+msgstr "Creating a self-signed 2048-bit RSA certificate."
+
+msgid "dlg.newident.until"
+msgstr "Valid until:"
+
+msgid "hint.newident.date"
+msgstr "YYYY-MM-DD HH:MM:SS"
+
+msgid "hint.newident.optional"
+msgstr "optional"
+
+msgid "dlg.newident.commonname"
+msgstr "Common name:"
+
+msgid "dlg.newident.temp"
+msgstr "Temporary:"
+
+msgid "dlg.newident.notsaved"
+msgstr "not saved to disk"
+
+msgid "dlg.newident.email"
+msgstr "Email:"
+
+msgid "dlg.newident.userid"
+msgstr "User ID:"
+
+msgid "dlg.newident.domain"
+msgstr "Domain:"
+
+msgid "dlg.newident.org"
+msgstr "Organization:"
+
+msgid "dlg.newident.country"
+msgstr "Country:"
+
+msgid "dlg.newident.create"
+msgstr "Create Identity"
+
+msgid "heading.feedcfg"
+msgstr "FEED SETTINGS"
+
+msgid "heading.subscribe"
+msgstr "SUBSCRIBE TO PAGE"
+
+msgid "dlg.feed.title"
+msgstr "Title:"
+
+msgid "dlg.feed.entrytype"
+msgstr "Entry type:"
+
+msgid "dlg.feed.type.gemini"
+msgstr "YYYY-MM-DD Links"
+
+msgid "dlg.feed.type.headings"
+msgstr "New Headings"
+
+msgid "dlg.feed.save"
+msgstr "Save Settings"
+
+msgid "dlg.feed.sub"
+msgstr "Subscribe"
+
+msgid "heading.bookmark.add"
+msgstr "ADD BOOKMARK"
+
+msgid "heading.bookmark.edit"
+msgstr "EDIT BOOKMARK"
+
+msgid "dlg.bookmark.save"
+msgstr "Save Bookmark"
+
+msgid "dlg.bookmark.title"
+msgstr "Title:"
+
+msgid "dlg.bookmark.url"
+msgstr "URL:"
+
+msgid "dlg.bookmark.tags"
+msgstr "Tags:"
+
+msgid "dlg.bookmark.icon"
+msgstr "Icon:"
+
+msgid "heading.prefs"
+msgstr "PREFERENCES"
+
+msgid "heading.prefs.certs"
+msgstr "CERTIFICATES"
+
+# tab button
+msgid "heading.prefs.colors"
+msgstr "Colors"
+
+msgid "heading.prefs.fonts"
+msgstr "FONTS"
+
+# tab button
+msgid "heading.prefs.general"
+msgstr "General"
+
+# tab button
+msgid "heading.prefs.interface"
+msgstr "Interface"
+
+# tab button
+msgid "heading.prefs.keys"
+msgstr "Keys"
+
+# tab button
+msgid "heading.prefs.network"
+msgstr "Network"
+
+msgid "heading.prefs.paragraph"
+msgstr "PARAGRAPH"
+
+msgid "heading.prefs.pagecontent"
+msgstr "PAGE CONTENT"
+
+msgid "heading.prefs.proxies"
+msgstr "PROXIES"
+
+msgid "heading.prefs.scrolling"
+msgstr "SCROLLING"
+
+msgid "heading.prefs.sizing"
+msgstr "SIZING"
+
+msgid "heading.prefs.widelayout"
+msgstr "WIDE LAYOUT"
+
+# tab button
+msgid "heading.prefs.style"
+msgstr "Style"
+
+# tab button
+msgid "heading.prefs.userinterface"
+msgstr "User Interface"
+
+msgid "prefs.downloads"
+msgstr "Downloads folder:"
+
+msgid "prefs.searchurl"
+msgstr "Search URL:"
+
+msgid "prefs.hoverlink"
+msgstr "Show URL on hover:"
+
+msgid "prefs.centershort"
+msgstr "Vertical centering:"
+
+msgid "prefs.collapsepreonload"
+msgstr "Collapse preformatted:"
+
+msgid "prefs.smoothscroll"
+msgstr "Smooth scrolling:"
+
+msgid "prefs.imageloadscroll"
+msgstr "Load image on scroll:"
+
+msgid "prefs.hidetoolbarscroll"
+msgstr "Hide toolbar on scroll:"
+
+msgid "prefs.ostheme"
+msgstr "Use system theme:"
+
+msgid "prefs.theme"
+msgstr "Theme:"
+
+msgid "prefs.theme.black"
+msgstr "Black"
+
+msgid "prefs.theme.dark"
+msgstr "Dark"
+
+msgid "prefs.theme.light"
+msgstr "Light"
+
+msgid "prefs.theme.white"
+msgstr "White"
+
+msgid "prefs.accent"
+msgstr "Accent color:"
+
+msgid "prefs.accent.teal"
+msgstr "Teal"
+
+msgid "prefs.accent.orange"
+msgstr "Orange"
+
+msgid "prefs.uilang"
+msgstr "Language:"
+
+msgid "prefs.uiscale"
+msgstr "UI scale factor:"
+
+msgid "prefs.customframe"
+msgstr "Custom window frame:"
+
+msgid "prefs.retainwindow"
+msgstr "Retain placement:"
+
+msgid "prefs.sideicon"
+msgstr "Capsule icon:"
+
+msgid "prefs.doctheme.dark"
+msgstr "Dark theme:"
+
+msgid "prefs.doctheme.light"
+msgstr "Light theme:"
+
+msgid "prefs.doctheme.name.colorfuldark"
+msgstr "Colorful Dark"
+
+msgid "prefs.doctheme.name.colorfullight"
+msgstr "Colorful Light"
+
+msgid "prefs.doctheme.name.black"
+msgstr "Black"
+
+msgid "prefs.doctheme.name.gray"
+msgstr "Gray"
+
+msgid "prefs.doctheme.name.white"
+msgstr "White"
+
+msgid "prefs.doctheme.name.sepia"
+msgstr "Sepia"
+
+msgid "prefs.doctheme.name.highcontrast"
+msgstr "High Contrast"
+
+msgid "prefs.saturation"
+msgstr "Saturation:"
+
+msgid "prefs.headingfont"
+msgstr "Heading font:"
+
+msgid "prefs.font"
+msgstr "Body font:"
+
+msgid "prefs.mono"
+msgstr "Monospace body:"
+
+msgid "prefs.mono.gemini"
+msgstr "Gemini"
+
+msgid "prefs.mono.gopher"
+msgstr "Gopher"
+
+msgid "prefs.linewidth"
+msgstr "Line width:"
+
+msgid "prefs.linewidth.normal"
+msgstr "Normal"
+
+msgid "prefs.linewidth.fill"
+msgstr "Fill"
+
+msgid "prefs.quoteicon"
+msgstr "Quote indicator:"
+
+msgid "prefs.quoteicon.icon"
+msgstr "\" Icon"
+
+msgid "prefs.quoteicon.line"
+msgstr "Line"
+
+msgid "prefs.biglede"
+msgstr "Big 1st paragaph:"
+
+msgid "prefs.plaintext.wrap"
+msgstr "Wrap plain text:"
+
+msgid "prefs.decodeurls"
+msgstr "Decode URLs:"
+
+msgid "prefs.cachesize"
+msgstr "Cache size:"
+
+msgid "prefs.ca.file"
+msgstr "CA file:"
+
+msgid "prefs.ca.path"
+msgstr "CA path:"
+
+msgid "prefs.proxy.gemini"
+msgstr "Gemini proxy:"
+
+msgid "prefs.proxy.gopher"
+msgstr "Gopher proxy:"
+
+msgid "prefs.proxy.http"
+msgstr "HTTP proxy:"
+
+msgid "menu.binding.reset"
+msgstr "Reset to Default"
+
+msgid "menu.binding.clear"
+msgstr "Remove"
+
+msgid "keys.top"
+msgstr "Jump to top"
+
+msgid "keys.bottom"
+msgstr "Jump to bottom"
+
+msgid "keys.scroll.up"
+msgstr "Scroll up"
+
+msgid "keys.scroll.down"
+msgstr "Scroll down"
+
+msgid "keys.scroll.halfpage.up"
+msgstr "Scroll up half a page"
+
+msgid "keys.scroll.halfpage.down"
+msgstr "Scroll down half a page"
+
+msgid "keys.scroll.page.up"
+msgstr "Scroll up a page"
+
+msgid "keys.scroll.page.down"
+msgstr "Scroll down a page"
+
+msgid "keys.back"
+msgstr "Go back"
+
+msgid "keys.forward"
+msgstr "Go forward"
+
+msgid "keys.parent"
+msgstr "Go to parent directory"
+
+msgid "keys.root"
+msgstr "Go to capsule root"
+
+msgid "keys.reload"
+msgstr "Reload page"
+
+msgid "keys.link.modkey"
+msgstr "Open link via modifier key"
+
+msgid "keys.link.homerow"
+msgstr "Open link via home row keys"
+
+msgid "keys.link.homerow.newtab"
+msgstr "Open link in new tab via home row keys"
+
+msgid "keys.link.homerow.hover"
+msgstr "Hover on link via home row keys"
+
+msgid "keys.link.homerow.next"
+msgstr "Next set of home row key links"
+
+msgid "keys.bookmark.add"
+msgstr "Add bookmark"
+
+msgid "keys.subscribe"
+msgstr "Subscribe to page"
+
+msgid "keys.findtext"
+msgstr "Find text on page"
+
+msgid "keys.zoom.in"
+msgstr "Zoom in"
+
+msgid "keys.zoom.out"
+msgstr "Zoom out"
+
+msgid "keys.zoom.reset"
+msgstr "Reset zoom"
+
+msgid "keys.fullscreen"
+msgstr "Toggle fullscreen mode"
+
+msgid "keys.tab.new"
+msgstr "New tab"
+
+msgid "keys.tab.close"
+msgstr "Close tab"
+
+msgid "keys.tab.prev"
+msgstr "Previous tab"
+
+msgid "keys.tab.next"
+msgstr "Next tab"
+
+msgid "keys.hoverurl"
+msgstr "Toggle show URL on hover"
+
+msgid "error.badstatus"
+msgstr "Unknown Status Code"
+
+msgid "error.badstatus.msg"
+msgstr "The server responded with a status code that is not in the Gemini protocol specification. Maybe the server is from the future? Or just malfunctioning."
+
+msgid "error.openfile"
+msgstr "Failed to Open File"
+
+msgid "error.openfile.msg"
+msgstr "The requested file does not exist or is inaccessible. Please check the file path."
+
+msgid "error.badresource"
+msgstr "Invalid Resource"
+
+msgid "error.badresource.msg"
+msgstr "The requested resource does not exist."
+
+msgid "error.unsupported.media"
+msgstr "Unsupported Content Type"
+
+msgid "error.unsupported.media.msg"
+msgstr "The received content cannot be viewed with this application."
+
+msgid "error.unsupported.protocol"
+msgstr "Unsupported Protocol"
+
+msgid "error.unsupported.protocol.msg"
+msgstr "The requested protocol is not supported by this application."
+
+msgid "error.badheader"
+msgstr "Invalid Header"
+
+msgid "error.badheader.msg"
+msgstr "The received header does not conform to the Gemini protocol specification. Perhaps the server is malfunctioning, or you tried to contact a non-Gemini server."
+
+msgid "error.badredirect"
+msgstr "Invalid Redirect"
+
+msgid "error.badredirect.msg"
+msgstr "The server responded with a redirect but did not provide a valid destination URL. Perhaps the server is malfunctioning."
+
+msgid "error.schemeredirect"
+msgstr "Scheme-Changing Redirect"
+
+msgid "error.schemeredirect.msg"
+msgstr "The server attempted to redirect us to a URL whose scheme is different than the originating URL's scheme. Here is the link so you can open it manually if appropriate."
+
+msgid "error.manyredirects"
+msgstr "Too Many Redirects"
+
+msgid "error.manyredirects.msg"
+msgstr "You may be stuck in a redirection loop. The next redirected URL is below if you want to continue manually."
+
+msgid "error.tls"
+msgstr "Network/TLS Failure"
+
+msgid "error.tls.msg"
+msgstr "Failed to communicate with the server. Here is the error message:"
+
+msgid "error.temporary"
+msgstr "Temporary Failure"
+
+msgid "error.temporary.msg"
+msgstr "The request has failed, but may succeed if you try again in the future."
+
+msgid "error.unavail"
+msgstr "Server Unavailable"
+
+msgid "error.unavail.msg"
+msgstr "The server is unavailable due to overload or maintenance. Check back later."
+
+msgid "error.cgi"
+msgstr "CGI Error"
+
+msgid "error.cgi.msg"
+msgstr "Failure during dynamic content generation on the server. This may be due to malfunctioning serverside software."
+
+msgid "error.proxy"
+msgstr "Proxy Error"
+
+msgid "error.proxy.msg"
+msgstr "A proxy request failed because the server was unable to successfully complete a transaction with the remote host. Perhaps there are difficulties with network connectivity."
+
+msgid "error.slowdown"
+msgstr "Slow Down"
+
+msgid "error.slowdown.msg"
+msgstr "The server is rate limiting requests. Please wait…"
+
+msgid "error.permanent"
+msgstr "Permanent Failure"
+
+msgid "error.permanent.msg"
+msgstr "Your request has failed and will fail in the future as well if repeated."
+
+msgid "error.notfound"
+msgstr "Not Found"
+
+msgid "error.notfound.msg"
+msgstr "The requested resource could not be found at this time."
+
+msgid "error.gone"
+msgstr "Gone"
+
+msgid "error.gone.msg"
+msgstr "The requested resource is no longer available."
+
+msgid "error.proxyrefusal"
+msgstr "Proxy Request Refused"
+
+msgid "error.proxyrefusal.msg"
+msgstr "The request was for a resource at a domain not served by the server and the server does not accept proxy requests."
+
+msgid "error.badrequest"
+msgstr "Bad Request"
+
+msgid "error.badrequest.msg"
+msgstr "The server did not understand your request."
+
+msgid "error.cert.needed"
+msgstr "Certificate Required"
+
+msgid "error.cert.needed.msg"
+msgstr "Access to the requested resource requires identification via a client certificate."
+
+msgid "error.cert.auth"
+msgstr "Certificate Not Authorized"
+
+msgid "error.cert.auth.msg"
+msgstr "The provided client certificate is valid but is not authorized for accessing the requested resource."
+
+msgid "error.cert.invalid"
+msgstr "Invalid Certificate"
+
+msgid "error.cert.invalid.msg"
+msgstr "The provided client certificate is expired or invalid."

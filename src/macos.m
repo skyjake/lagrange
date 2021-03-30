@@ -22,6 +22,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "macos.h"
 #include "app.h"
+#include "lang.h"
 #include "ui/color.h"
 #include "ui/command.h"
 #include "ui/keys.h"
@@ -330,7 +331,10 @@ void enableMomentumScroll_MacOS(void) {
 - (void)handleURLEvent:(NSAppleEventDescriptor*)event
         withReplyEvent:(NSAppleEventDescriptor*)replyEvent {
     NSString *url = [[event paramDescriptorForKeyword:keyDirectObject] stringValue];
-    postCommandf_App("~open url:%s", [url cStringUsingEncoding:NSUTF8StringEncoding]);
+    iString *str = newCStr_String([url cStringUsingEncoding:NSUTF8StringEncoding]);
+    str = urlDecodeExclude_String(collect_String(str), "/#?:");
+    postCommandf_App("~open url:%s", cstr_String(str));
+    delete_String(str);
 }
 @end
 
@@ -365,6 +369,7 @@ void setupApplication_MacOS(void) {
 }
 
 void enableMenu_MacOS(const char *menuLabel, iBool enable) {
+    menuLabel = translateCStr_Lang(menuLabel);
     NSApplication *app = [NSApplication sharedApplication];
     NSMenu *appMenu = [app mainMenu];
     NSString *label = [NSString stringWithUTF8String:menuLabel];
@@ -455,10 +460,17 @@ static void setShortcut_NSMenuItem_(NSMenuItem *item, int key, int kmods) {
     delete_String(str);
 }
 
+void removeMenu_MacOS(int atIndex) {
+    NSApplication *app = [NSApplication sharedApplication];
+    NSMenu *appMenu = [app mainMenu];
+    [appMenu removeItemAtIndex:atIndex];
+}
+
 void insertMenuItems_MacOS(const char *menuLabel, int atIndex, const iMenuItem *items, size_t count) {
     NSApplication *app = [NSApplication sharedApplication];
     MyDelegate *myDel = (MyDelegate *) app.delegate;
     NSMenu *appMenu = [app mainMenu];
+    menuLabel = translateCStr_Lang(menuLabel);
     NSMenuItem *mainItem = [appMenu insertItemWithTitle:[NSString stringWithUTF8String:menuLabel]
                                                  action:nil
                                           keyEquivalent:@""
@@ -466,7 +478,7 @@ void insertMenuItems_MacOS(const char *menuLabel, int atIndex, const iMenuItem *
     NSMenu *menu = [[NSMenu alloc] initWithTitle:[NSString stringWithUTF8String:menuLabel]];
     [menu setAutoenablesItems:NO];
     for (size_t i = 0; i < count; ++i) {
-        const char *label = items[i].label;
+        const char *label = translateCStr_Lang(items[i].label);
         if (label[0] == '\r') {
             /* Skip the formatting escape. */
             label += 2;
@@ -485,7 +497,7 @@ void insertMenuItems_MacOS(const char *menuLabel, int atIndex, const iMenuItem *
                 [myDel setCommand:[NSString stringWithUTF8String:items[i].command] forMenuItem:item];
                 /* Bindings may have a different key. */
                 const iBinding *bind = findCommand_Keys(items[i].command);
-                if (bind) {
+                if (bind && bind->id < builtIn_BindingId) {
                     key   = bind->key;
                     kmods = bind->mods;
                 }
@@ -512,7 +524,7 @@ void handleCommand_MacOS(const char *cmd) {
             NSMenu *menu = mainMenuItem.submenu;
             if (menu) {
                 int itemIndex = 0;
-                for (NSMenuItem *menuItem in menu.itemArray) {                    
+                for (NSMenuItem *menuItem in menu.itemArray) {
                     NSString *command = [myDel commandForItem:menuItem];
                     if (!command && mainIndex == 6 && itemIndex == 0) {
                         /* Window > Close */
@@ -521,7 +533,7 @@ void handleCommand_MacOS(const char *cmd) {
                     if (command) {
                         const iBinding *bind = findCommand_Keys(
                             [command cStringUsingEncoding:NSUTF8StringEncoding]);
-                        if (bind) {
+                        if (bind && bind->id < builtIn_BindingId) {
                             setShortcut_NSMenuItem_(menuItem, bind->key, bind->mods);
                         }
                     }

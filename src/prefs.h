@@ -32,10 +32,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 iDeclareType(Prefs)
 
+/* TODO: Refactor at least the boolean values into an array for easier manipulation.
+   Then they can be (de)serialized as a group. Need to use a systematic command naming
+   convention for notifications.  */
 struct Impl_Prefs {
     /* UI state */
     int              dialogTab;
+    int              langFrom;
+    int              langTo;
     /* Window */
+    iString          uiLanguage;
     iBool            useSystemTheme;
     enum iColorTheme theme;
     enum iColorAccent accent;
@@ -44,13 +50,17 @@ struct Impl_Prefs {
     float            uiScale;
     int              zoomPercent;
     iBool            sideIcon;
+    iBool            hideToolbarOnScroll;
     /* Behavior */
     iString          downloadDir;
     iBool            hoverLink;
     iBool            smoothScrolling;
     iBool            loadImageInsteadOfScrolling;
+    iBool            collapsePreOnLoad;
     iString          searchUrl;
     /* Network */
+    iString          caFile;
+    iString          caPath;
     iBool            decodeUserVisibleURLs;
     int              maxCacheSize; /* MB */
     iString          geminiProxy;
@@ -65,6 +75,7 @@ struct Impl_Prefs {
     iBool            bigFirstParagraph;
     iBool            quoteIcon;
     iBool            centerShortDocs;
+    iBool            plainTextWrap;
     /* Colors */
     enum iGmDocumentTheme docThemeDark;
     enum iGmDocumentTheme docThemeLight;

@@ -43,7 +43,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <signal.h>
 
 int main(int argc, char **argv) {
-    printf("Lagrange: A Beautiful Gemini Client\n");
     signal(SIGPIPE, SIG_IGN);
 #if defined (iPlatformAppleDesktop)
     enableMomentumScroll_MacOS();

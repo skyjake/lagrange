@@ -26,6 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "command.h"
 #include "util.h"
 #include "app.h"
+#include "lang.h"
 #if defined (iPlatformAppleDesktop)
 #   include "macos.h"
 #endif
@@ -97,6 +98,7 @@ static void updateItems_BindingsWidget_(iBindingsWidget *d) {
         iBindingItem *item = new_BindingItem();
         item->id = bind->id;
         set_String(&item->label, &bind->label);
+        translate_Lang(&item->label);
         toString_Sym(bind->key, bind->mods, &item->key);
         addItem_ListWidget(d->list, item);
     }
@@ -108,6 +110,7 @@ static void updateItems_BindingsWidget_(iBindingsWidget *d) {
 void init_BindingsWidget(iBindingsWidget *d) {
     iWidget *w = as_Widget(d);
     init_Widget(w);
+    setId_Widget(w, "bindings");
     setFlags_Widget(w, resizeChildren_WidgetFlag, iTrue);
     d->activePos = iInvalidPos;
     d->contextPos = iInvalidPos;
@@ -118,8 +121,8 @@ void init_BindingsWidget(iBindingsWidget *d) {
     updateItems_BindingsWidget_(d);
     d->menu = makeMenu_Widget(
         w,
-        (iMenuItem[]){ { "Reset to Default", 0, 0, "binding.reset" },
-                       { uiTextCaution_ColorEscape "Clear", 0, 0, "binding.clear" } },
+        (iMenuItem[]){ { "${menu.binding.reset}", 0, 0, "binding.reset" },
+                       { uiTextCaution_ColorEscape "${menu.binding.clear}", 0, 0, "binding.clear" } },
         2);
 }
 
@@ -143,9 +146,9 @@ static void setActiveItem_BindingsWidget_(iBindingsWidget *d, size_t pos) {
 #if defined (iPlatformAppleDesktop)
     /* Native menus must be disabled while grabbing keys so the shortcuts don't trigger. */
     const iBool enableNativeMenus = (d->activePos == iInvalidPos);
-    enableMenu_MacOS("Edit", enableNativeMenus);
-    enableMenu_MacOS("View", enableNativeMenus);
-    enableMenu_MacOS("Identity", enableNativeMenus);
+    enableMenu_MacOS("${menu.title.edit}", enableNativeMenus);
+    enableMenu_MacOS("${menu.title.view}", enableNativeMenus);
+    enableMenu_MacOS("${menu.title.identity}", enableNativeMenus);
 #endif
 }
 

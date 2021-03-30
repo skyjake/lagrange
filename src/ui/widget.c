@@ -34,6 +34,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <SDL_mouse.h>
 #include <stdarg.h>
 
+#if defined (iPlatformAppleMobile)
+#   include "../ios.h"
+#endif
+
 iDeclareType(RootData)
 
 struct Impl_RootData {
@@ -56,17 +60,23 @@ iPtrArray *onTop_RootData_(void) {
 void destroyPending_Widget(void) {
     iForEach(PtrSet, i, rootData_.pendingDestruction) {
         iWidget *widget = *i.value;
+        if (!isFinished_Anim(&widget->visualOffset)) {
+            continue;
+        }
         if (widget->parent) {
-            iRelease(removeChild_Widget(widget->parent, widget));
+            removeChild_Widget(widget->parent, widget);
         }
-        else {
-            iRelease(widget);
-        }
+        iAssert(widget->parent == NULL);
+//        iAssert(widget->object.refCount == 1); /* ref could be held in garbage still */
+        iRelease(widget);
         remove_PtrSetIterator(&i);
     }
 }
 
 void releaseChildren_Widget(iWidget *d) {
+    iForEach(ObjectList, i, d->children) {
+        ((iWidget *) i.object)->parent = NULL; /* the actual reference being held */
+    }
     iReleasePtr(&d->children);
 }
 
@@ -76,6 +86,7 @@ void init_Widget(iWidget *d) {
     init_String(&d->id);
     d->flags          = 0;
     d->rect           = zero_Rect();
+    d->minSize        = zero_I2();
     d->bgColor        = none_ColorId;
     d->frameColor     = none_ColorId;
     init_Anim(&d->visualOffset, 0.0f);
@@ -85,12 +96,29 @@ void init_Widget(iWidget *d) {
     iZap(d->padding);
 }
 
+static void visualOffsetAnimation_Widget_(void *ptr) {
+    iWidget *d = ptr;
+    postRefresh_App();
+    if (!isFinished_Anim(&d->visualOffset)) {
+        addTicker_App(visualOffsetAnimation_Widget_, ptr);
+    }
+    else {
+        d->flags &= ~visualOffset_WidgetFlag;
+    }
+}
+
 void deinit_Widget(iWidget *d) {
     releaseChildren_Widget(d);
+//#if !defined (NDEBUG)
+//    printf("widget %p (%s) deleted (on top:%d)\n", d, cstr_String(&d->id),
+//           d->flags & keepOnTop_WidgetFlag ? 1 : 0);
+//#endif
     deinit_String(&d->id);
-//    printf("widget %p deleted (on top:%d)\n", d, d->flags & keepOnTop_WidgetFlag ? 1 : 0);
     if (d->flags & keepOnTop_WidgetFlag) {
         removeAll_PtrArray(onTop_RootData_(), d);
+    }
+    if (d->flags & visualOffset_WidgetFlag) {
+        removeTicker_App(visualOffsetAnimation_Widget_, d);
     }
     widgetDestroyed_Touch(d);
 }
@@ -129,7 +157,7 @@ void setId_Widget(iWidget *d, const char *id) {
 }
 
 const iString *id_Widget(const iWidget *d) {
-    return &d->id;
+    return d ? &d->id : collectNew_String();
 }
 
 int64_t flags_Widget(const iWidget *d) {
@@ -144,11 +172,13 @@ void setFlags_Widget(iWidget *d, int64_t flags, iBool set) {
         }
         iChangeFlags(d->flags, flags, set);
         if (flags & keepOnTop_WidgetFlag) {
+            iPtrArray *onTop = onTop_RootData_();
             if (set) {
-                pushBack_PtrArray(onTop_RootData_(), d);
+                iAssert(indexOf_PtrArray(onTop, d) == iInvalidPos);
+                pushBack_PtrArray(onTop, d);
             }
             else {
-                removeOne_PtrArray(onTop_RootData_(), d);
+                removeOne_PtrArray(onTop, d);
             }
         }
     }
@@ -159,11 +189,23 @@ void setPos_Widget(iWidget *d, iInt2 pos) {
     setFlags_Widget(d, fixedPosition_WidgetFlag, iTrue);
 }
 
-void setSize_Widget(iWidget *d, iInt2 size) {
-    if (size.x < 0) size.x = d->rect.size.x;
-    if (size.y < 0) size.y = d->rect.size.y;
-    d->rect.size = size;
-    setFlags_Widget(d, fixedSize_WidgetFlag, iTrue);
+void setFixedSize_Widget(iWidget *d, iInt2 fixedSize) {
+    int flags = fixedSize_WidgetFlag;
+    if (fixedSize.x < 0) {
+        fixedSize.x = d->rect.size.x;
+        flags &= ~fixedWidth_WidgetFlag;
+    }
+    if (fixedSize.y < 0) {
+        fixedSize.y = d->rect.size.y;
+        flags &= ~fixedHeight_WidgetFlag;
+    }
+    d->rect.size = fixedSize;
+    setFlags_Widget(d, flags, iTrue);
+}
+
+void setMinSize_Widget(iWidget *d, iInt2 minSize) {
+    d->minSize = minSize;
+    /* rearranging needed to apply this */
 }
 
 void setPadding_Widget(iWidget *d, int left, int top, int right, int bottom) {
@@ -173,14 +215,13 @@ void setPadding_Widget(iWidget *d, int left, int top, int right, int bottom) {
     d->padding[3] = bottom;
 }
 
-static void visualOffsetAnimation_Widget_(void *ptr) {
-    iWidget *d = ptr;
-    postRefresh_App();
-    if (!isFinished_Anim(&d->visualOffset)) {
-        addTicker_App(visualOffsetAnimation_Widget_, ptr);
-    }
-    else {
-        setFlags_Widget(d, visualOffset_WidgetFlag, iFalse);
+void showCollapsed_Widget(iWidget *d, iBool show) {
+    const iBool isVisible = !(d->flags & hidden_WidgetFlag);
+    if ((isVisible && !show) || (!isVisible && show)) {
+        setFlags_Widget(d, hidden_WidgetFlag, !show);
+        /* The entire UI may be affected, if parents are resized due to the (un)collapsing. */
+        arrange_Widget(get_Window()->root);
+        postRefresh_App();
     }
 }
 
@@ -188,6 +229,9 @@ void setVisualOffset_Widget(iWidget *d, int value, uint32_t span, int animFlags)
     setFlags_Widget(d, visualOffset_WidgetFlag, iTrue);
     if (span == 0) {
         init_Anim(&d->visualOffset, value);
+        if (value == 0) {
+            setFlags_Widget(d, visualOffset_WidgetFlag, iFalse); /* offset is being reset */
+        }
     }
     else {
         setValue_Anim(&d->visualOffset, value, span);
@@ -230,32 +274,78 @@ static int widestChild_Widget_(const iWidget *d) {
     return width;
 }
 
+static void arrange_Widget_(iWidget *);
+static const iBool tracing_ = iFalse;
+
+#define TRACE(d, ...)   if (tracing_) { printf_Widget_(d, __VA_ARGS__); }
+
+static int depth_Widget_(const iWidget *d) {
+    int depth = 0;
+    for (const iWidget *w = d->parent; w; w = w->parent) {
+        depth++;
+    }
+    return depth;
+}
+
+static void printf_Widget_(const iWidget *d, const char *format, ...) {
+    va_list args;
+    va_start(args, format);
+    iString *msg = new_String();
+    for (size_t i = 0; i < depth_Widget_(d); ++i) {
+        appendCStr_String(msg, "|   ");
+    }
+    appendFormat_String(msg, "[%p] %s(%s) ", d, class_Widget(d)->name, cstr_String(id_Widget(d)));
+    while (size_String(msg) < 44 + depth_Widget_(d) * 4) {
+        appendCStr_String(msg, " ");
+    }
+    iBlock *msg2 = new_Block(0);
+    vprintf_Block(msg2, format, args);
+    va_end(args);
+    printf("%s%s\n", cstr_String(msg), cstr_Block(msg2));
+    delete_Block(msg2);
+    delete_String(msg);
+}
+
 static void setWidth_Widget_(iWidget *d, int width) {
     iAssert(width >= 0);
+    TRACE(d, "attempt to set width to %d (current: %d, min width: %d)", width, d->rect.size.x, d->minSize.x);
+    width = iMax(width, d->minSize.x);
     if (~d->flags & fixedWidth_WidgetFlag || d->flags & collapse_WidgetFlag) {
         if (d->rect.size.x != width) {
             d->rect.size.x = width;
+            TRACE(d, "width has changed to %d", width);
             if (class_Widget(d)->sizeChanged) {
                 const int oldHeight = d->rect.size.y;
                 class_Widget(d)->sizeChanged(d);
                 if (d->rect.size.y != oldHeight) {
+                    TRACE(d, "sizeChanged() cuased height change to %d; redoing parent", d->rect.size.y);
                     /* Widget updated its height. */
-                    arrange_Widget(d->parent);
+                    arrange_Widget_(d->parent);
+                    TRACE(d, "parent layout redone");
                 }
             }
         }
+    }
+    else {
+        TRACE(d, "changing width not allowed; flags: %x", d->flags);
     }
 }
 
 static void setHeight_Widget_(iWidget *d, int height) {
     iAssert(height >= 0);
+    TRACE(d, "attempt to set height to %d (current: %d, min height: %d)", height, d->rect.size.y, d->minSize.y);
+    height = iMax(height, d->minSize.y);
     if (~d->flags & fixedHeight_WidgetFlag || d->flags & collapse_WidgetFlag) {
         if (d->rect.size.y != height) {
             d->rect.size.y = height;
+            TRACE(d, "height has changed to %d", height);
             if (class_Widget(d)->sizeChanged) {
                 class_Widget(d)->sizeChanged(d);
             }
         }
+    }
+    else {
+        TRACE(d, "changing height not allowed; flags: %x", d->flags);
     }
 }
 
@@ -279,10 +369,14 @@ iRect innerBounds_Widget(const iWidget *d) {
     return ib;
 }
 
+iLocalDef iBool isArranged_Widget_(const iWidget *d) {
+    return !isCollapsed_Widget_(d) && ~d->flags & fixedPosition_WidgetFlag;
+}
+
 static size_t numArrangedChildren_Widget_(const iWidget *d) {
     size_t count = 0;
     iConstForEach(ObjectList, i, d->children) {
-        if (~flags_Widget(i.object) & fixedPosition_WidgetFlag) {
+        if (isArranged_Widget_(i.object)) {
             count++;
         }
     }
@@ -294,72 +388,115 @@ static void centerHorizontal_Widget_(iWidget *d) {
                                 : rootSize_Window(get_Window()).x) -
                      width_Rect(d->rect)) /
                     2;
+    TRACE(d, "center horizontally: %d", d->rect.pos.x);
 }
 
-void arrange_Widget(iWidget *d) {
+static void boundsOfChildren_Widget_(const iWidget *d, iRect *bounds_out) {
+    *bounds_out = zero_Rect();
+    iConstForEach(ObjectList, i, d->children) {
+        const iWidget *child = constAs_Widget(i.object);
+        if (isCollapsed_Widget_(child)) {
+            continue;
+        }
+        iRect childRect = child->rect;
+        if (child->flags & ignoreForParentWidth_WidgetFlag) {
+            childRect.size.x = 0;
+        }
+        if (isEmpty_Rect(*bounds_out)) {
+            *bounds_out = childRect;
+        }
+        else {
+            *bounds_out = union_Rect(*bounds_out, childRect);
+        }
+    }
+}
+
+static void arrange_Widget_(iWidget *d) {
+    TRACE(d, "arranging...");
     if (isCollapsed_Widget_(d)) {
+        TRACE(d, "collapsed => END");
         setFlags_Widget(d, wasCollapsed_WidgetFlag, iTrue);
         return;
     }
     if (d->flags & moveToParentLeftEdge_WidgetFlag) {
-        d->rect.pos.x = d->padding[0];
+        d->rect.pos.x = d->padding[0]; /* FIXME: Shouldn't this be d->parent->padding[0]? */
+        TRACE(d, "move to parent left edge: %d", d->rect.pos.x);
     }
     else if (d->flags & moveToParentRightEdge_WidgetFlag) {
         d->rect.pos.x = width_Rect(innerRect_Widget_(d->parent)) - width_Rect(d->rect);
+        TRACE(d, "move to parent right edge: %d", d->rect.pos.x);
+    }
+    else if (d->flags & moveToParentBottomEdge_WidgetFlag) {
+        d->rect.pos.y = height_Rect(innerRect_Widget_(d->parent)) - height_Rect(d->rect);
+        TRACE(d, "move to parent bottom edge: %d", d->rect.pos.y);
     }
     else if (d->flags & centerHorizontal_WidgetFlag) {
         centerHorizontal_Widget_(d);
     }
     if (d->flags & resizeToParentWidth_WidgetFlag) {
-        setWidth_Widget_(d, width_Rect(innerRect_Widget_(d->parent)));
+        iRect childBounds = zero_Rect();
+        if (flags_Widget(d->parent) & arrangeWidth_WidgetFlag) {
+            /* Can't go narrower than what the children require, though. */
+            boundsOfChildren_Widget_(d, &childBounds);
+        }
+        TRACE(d, "resize to parent width; child bounds width %d", childBounds.size.x, childBounds.size.y);
+        setWidth_Widget_(d, iMaxi(width_Rect(innerRect_Widget_(d->parent)),
+                                  width_Rect(childBounds)));
     }
     if (d->flags & resizeToParentHeight_WidgetFlag) {
+        TRACE(d, "resize to parent height");
         setHeight_Widget_(d, height_Rect(innerRect_Widget_(d->parent)));
+    }
+    if (d->flags & safePadding_WidgetFlag) {
+#if defined (iPlatformAppleMobile)
+        float left, top, right, bottom;
+        safeAreaInsets_iOS(&left, &top, &right, &bottom);
+        setPadding_Widget(d, left, top, right, bottom);
+#endif
     }
     /* The rest of the arrangement depends on child widgets. */
     if (!d->children) {
+        TRACE(d, "no children => END");
         return;
     }
-    /* Resize children to fill the parent widget. */
     const size_t childCount = numArrangedChildren_Widget_(d);
-    if (childCount == 0) {
-        return;
-    }
+    TRACE(d, "%d arranged children", childCount);
+    /* Resize children to fill the parent widget. */
     if (d->flags & resizeChildren_WidgetFlag) {
         const iInt2 dirs = init_I2((d->flags & resizeWidthOfChildren_WidgetFlag) != 0,
                                    (d->flags & resizeHeightOfChildren_WidgetFlag) != 0);
+        TRACE(d, "resize children, x:%d y:%d", dirs.x, dirs.y);
         /* Collapse hidden children. */
-        iBool uncollapsed = iFalse;
+        iBool collapseChanged = iFalse;
         iForEach(ObjectList, c, d->children) {
             iWidget *child = as_Widget(c.object);
-            if (isCollapsed_Widget_(child)) {
-                if (d->flags & arrangeHorizontal_WidgetFlag) {
-                    setWidth_Widget_(child, 0);
-                }
-                if (d->flags & arrangeVertical_WidgetFlag) {
-                    setHeight_Widget_(child, 0);
-                }
-            }
-            else if (child->flags & wasCollapsed_WidgetFlag) {
+            if (!isCollapsed_Widget_(child) && child->flags & wasCollapsed_WidgetFlag) {
                 setFlags_Widget(child, wasCollapsed_WidgetFlag, iFalse);
+                TRACE(d, "child %p is uncollapsed", child);
                 /* Undo collapse and determine the normal size again. */
-                if (child->flags & arrangeSize_WidgetFlag) {
-                    arrange_Widget(d);
-                    uncollapsed = iTrue;
-                }
+                arrange_Widget_(d);
+                collapseChanged = iTrue;
+            }
+            else if (isCollapsed_Widget_(child) && ~child->flags & wasCollapsed_WidgetFlag) {
+                setFlags_Widget(child, wasCollapsed_WidgetFlag, iTrue);
+                collapseChanged = iTrue;
+                TRACE(d, "child %p flagged as collapsed", child);
             }
         }
-        if (uncollapsed) {
-            arrange_Widget(d); /* Redo with the next child sizes. */
+        if (collapseChanged) {
+            TRACE(d, "redoing arrangement due to changes in child collapse state");
+            arrange_Widget_(d); /* Redo with the new child sizes. */
             return;
         }
         const int expCount = numExpandingChildren_Widget_(d);
+        TRACE(d, "%d expanding children", expCount);
         /* Only resize the expanding children, not touching the others. */
         if (expCount > 0) {
             iInt2 avail = innerRect_Widget_(d).size;
+            TRACE(d, "inner size: %dx%d", avail.x, avail.y);
             iConstForEach(ObjectList, i, d->children) {
                 const iWidget *child = constAs_Widget(i.object);
-                if (child->flags & fixedPosition_WidgetFlag) {
+                if (!isArranged_Widget_(child)) {
                     continue;
                 }
                 if (~child->flags & expand_WidgetFlag) {
@@ -367,10 +504,11 @@ void arrange_Widget(iWidget *d) {
                 }
             }
             avail = divi_I2(max_I2(zero_I2(), avail), expCount);
+            TRACE(d, "changing child sizes (expand mode)...");
             iForEach(ObjectList, j, d->children) {
                 iWidget *child = as_Widget(j.object);
-                if (isCollapsed_Widget_(child) ||
-                    child->flags & (parentCannotResize_WidgetFlag | fixedPosition_WidgetFlag)) {
+                if (!isArranged_Widget_(child)) {
+                    TRACE(d, "child %p is not arranged", child);
                     continue;
                 }
                 if (child->flags & expand_WidgetFlag) {
@@ -393,47 +531,77 @@ void arrange_Widget(iWidget *d) {
                     }
                 }
             }
+            TRACE(d, "...done changing child sizes (expand mode)");
         }
         else {
             /* Evenly size all children. */
             iInt2 childSize = innerRect_Widget_(d).size;
+            iInt2 unpaddedChildSize = d->rect.size;
             if (d->flags & arrangeHorizontal_WidgetFlag) {
                 childSize.x /= childCount;
+                unpaddedChildSize.x /= childCount;
             }
             else if (d->flags & arrangeVertical_WidgetFlag) {
                 childSize.y /= childCount;
+                unpaddedChildSize.y /= childCount;
             }
+            TRACE(d, "begin changing child sizes (EVEN mode)...");
             iForEach(ObjectList, i, d->children) {
                 iWidget *child = as_Widget(i.object);
-                if (!isCollapsed_Widget_(child) && ~child->flags & parentCannotResize_WidgetFlag) {
-                    if (dirs.x) setWidth_Widget_(child, childSize.x);
-                    if (dirs.y) setHeight_Widget_(child, childSize.y);
+                if (isArranged_Widget_(child) && ~child->flags & parentCannotResize_WidgetFlag) {
+                    if (dirs.x) {
+                        setWidth_Widget_(child, child->flags & unpadded_WidgetFlag ? unpaddedChildSize.x : childSize.x);
+                    }
+                    if (dirs.y && ~child->flags & parentCannotResizeHeight_WidgetFlag) {
+                        setHeight_Widget_(child, child->flags & unpadded_WidgetFlag ? unpaddedChildSize.y : childSize.y);
+                    }
+                }
+                else {
+                    TRACE(d, "child %p cannot be resized (parentCannotResize: %d)", child,
+                          (child->flags & parentCannotResize_WidgetFlag) != 0);
                 }
             }
+            TRACE(d, "...done changing child sizes (EVEN mode)");
         }
     }
     if (d->flags & resizeChildrenToWidestChild_WidgetFlag) {
         const int widest = widestChild_Widget_(d);
+        TRACE(d, "resizing children to widest child (%d)...", widest);
         iForEach(ObjectList, i, d->children) {
-            setWidth_Widget_(as_Widget(i.object), widest);
+            iWidget *child = as_Widget(i.object);
+            if (isArranged_Widget_(child) && ~child->flags & parentCannotResize_WidgetFlag) {
+                setWidth_Widget_(child, widest);
+            }
+            else {
+                TRACE(d, "child %p cannot be resized (parentCannotResize: %d)", child,
+                      (child->flags & parentCannotResize_WidgetFlag) != 0);
+            }
         }
+        TRACE(d, "...done resizing children to widest child");
     }
     iInt2 pos = initv_I2(d->padding);
+    TRACE(d, "begin positioning children from %d,%d (flags:%s%s)...", pos.x, pos.y,
+          d->flags & arrangeHorizontal_WidgetFlag ? " horiz" : "",
+          d->flags & arrangeVertical_WidgetFlag ? " vert" : "");
     iForEach(ObjectList, i, d->children) {
         iWidget *child = as_Widget(i.object);
-        arrange_Widget(child);
-        if (child->flags & fixedPosition_WidgetFlag) {
+        arrange_Widget_(child);
+        if (!isArranged_Widget_(child)) {
+            TRACE(d, "child %p arranging prohibited", child);
             continue;
         }
         if (child->flags & centerHorizontal_WidgetFlag) {
+            TRACE(d, "child %p is centered, skipping", child);
             continue;
         }
         if (d->flags & (arrangeHorizontal_WidgetFlag | arrangeVertical_WidgetFlag)) {
             if (child->flags &
                 (moveToParentLeftEdge_WidgetFlag | moveToParentRightEdge_WidgetFlag)) {
+                TRACE(d, "child %p is attached an edge, skipping", child);
                 continue; /* Not part of the sequential arrangement .*/
             }
             child->rect.pos = pos;
+            TRACE(d, "child %p set position to %d,%d", child, pos.x, pos.y);
             if (d->flags & arrangeHorizontal_WidgetFlag) {
                 pos.x += child->rect.size.x;
             }
@@ -441,22 +609,23 @@ void arrange_Widget(iWidget *d) {
                 pos.y += child->rect.size.y;
             }
         }
-        else if (d->flags & resizeChildren_WidgetFlag) {
+        else if ((d->flags & resizeChildren_WidgetFlag) == resizeChildren_WidgetFlag &&
+                 ~child->flags & moveToParentBottomEdge_WidgetFlag) {
             child->rect.pos = pos;
+            TRACE(d, "child %p set position to %d,%d (not sequential, children being resized)", child, pos.x, pos.y);
+        }
+        else if (d->flags & resizeWidthOfChildren_WidgetFlag) {
+            child->rect.pos.x = pos.x;
+            TRACE(d, "child %p set X to %d (not sequential, children being resized)", child, pos.x);
         }
     }
+    TRACE(d, "...done positioning children");
     /* Update the size of the widget according to the arrangement. */
     if (d->flags & arrangeSize_WidgetFlag) {
-        iRect bounds = zero_Rect();
-        iConstForEach(ObjectList, i, d->children) {
-            const iWidget *child = constAs_Widget(i.object);
-            if (isEmpty_Rect(bounds)) {
-                bounds = child->rect;
-            }
-            else {
-                bounds = union_Rect(bounds, child->rect);
-            }
-        }
+        iRect bounds;
+        boundsOfChildren_Widget_(d, &bounds);
+        TRACE(d, "begin arranging own size; bounds of children: %d,%d %dx%d",
+              bounds.pos.x, bounds.pos.y, bounds.size.x, bounds.size.y);
         adjustEdges_Rect(&bounds, -d->padding[1], d->padding[2], d->padding[3], -d->padding[0]);
         if (d->flags & arrangeWidth_WidgetFlag) {
             setWidth_Widget_(d, bounds.size.x);
@@ -464,10 +633,17 @@ void arrange_Widget(iWidget *d) {
             iForEach(ObjectList, j, d->children) {
                 iWidget *child = as_Widget(j.object);
                 if (child->flags &
-                    (resizeToParentWidth_WidgetFlag | moveToParentLeftEdge_WidgetFlag |
+                    (resizeToParentWidth_WidgetFlag |
+                     moveToParentLeftEdge_WidgetFlag |
                      moveToParentRightEdge_WidgetFlag)) {
-                    arrange_Widget(child);
+                    TRACE(d, "rearranging child %p because its size or position depends on parent width", child);
+                    arrange_Widget_(child);
                 }
+            }
+            if (d->flags & moveToParentRightEdge_WidgetFlag) {
+                /* TODO: Fix this: not DRY. See beginning of method. */
+                d->rect.pos.x = width_Rect(innerRect_Widget_(d->parent)) - width_Rect(d->rect);
+                TRACE(d, "after width change moving to right edge of parent, set X to %d", d, d->rect.pos.x);
             }
         }
         if (d->flags & arrangeHeight_WidgetFlag) {
@@ -475,28 +651,75 @@ void arrange_Widget(iWidget *d) {
             /* Parent size changed, must update the children.*/
             iForEach(ObjectList, j, d->children) {
                 iWidget *child = as_Widget(j.object);
-                if (child->flags & resizeToParentHeight_WidgetFlag) {
-                    arrange_Widget(child);
+                if (child->flags & (resizeToParentHeight_WidgetFlag |
+                                    moveToParentBottomEdge_WidgetFlag)) {
+                    TRACE(d, "rearranging child %p because its size or position depends on parent height", child);
+                    arrange_Widget_(child);
                 }
             }
         }
+//        if (d->flags & moveToParentBottomEdge_WidgetFlag) {
+//            /* TODO: Fix this: not DRY. See beginning of method. */
+//            d->rect.pos.y = height_Rect(innerRect_Widget_(d->parent)) - height_Rect(d->rect);
+//        }
         if (d->flags & centerHorizontal_WidgetFlag) {
             centerHorizontal_Widget_(d);
+        }
+        TRACE(d, "...done arranging own size");
+    }
+    TRACE(d, "END");
+}
+
+void resetSize_Widget(iWidget *d) {
+    if (~d->flags & fixedWidth_WidgetFlag) {
+        d->rect.size.x = d->minSize.x;
+    }
+    if (~d->flags & fixedHeight_WidgetFlag) {
+        d->rect.size.y = d->minSize.y;
+    }
+    iForEach(ObjectList, i, children_Widget(d)) {
+        iWidget *child = as_Widget(i.object);
+        if (isArranged_Widget_(child)) {
+            resetSize_Widget(child);
+        }
+    }
+}
+
+void arrange_Widget(iWidget *d) {
+    //resetSize_Widget_(d); /* back to initial default sizes */
+    arrange_Widget_(d);
+}
+
+static void applyVisualOffset_Widget_(const iWidget *d, iInt2 *pos) {
+    if (d->flags & (visualOffset_WidgetFlag | dragged_WidgetFlag)) {
+        const int off = iRound(value_Anim(&d->visualOffset));
+        if (d->flags & horizontalOffset_WidgetFlag) {
+            pos->x += off;
+        }
+        else {
+            pos->y += off;
         }
     }
 }
 
 iRect bounds_Widget(const iWidget *d) {
     iRect bounds = d->rect;
-    if (d->flags & visualOffset_WidgetFlag) {
-        bounds.pos.y += iRound(value_Anim(&d->visualOffset));
-    }
+    applyVisualOffset_Widget_(d, &bounds.pos);
     for (const iWidget *w = d->parent; w; w = w->parent) {
         iInt2 pos = w->rect.pos;
-        if (w->flags & visualOffset_WidgetFlag) {
-            pos.y += iRound(value_Anim(&w->visualOffset));
-        }
+        applyVisualOffset_Widget_(w, &pos);
         addv_I2(&bounds.pos, pos);
+    }
+#if defined (iPlatformMobile)
+    bounds.pos.y += value_Anim(&get_Window()->rootOffset);
+#endif
+    return bounds;
+}
+
+iRect boundsWithoutVisualOffset_Widget(const iWidget *d) {
+    iRect bounds = d->rect;
+    for (const iWidget *w = d->parent; w; w = w->parent) {
+        addv_I2(&bounds.pos, w->rect.pos);
     }
     return bounds;
 }
@@ -509,8 +732,17 @@ iInt2 localCoord_Widget(const iWidget *d, iInt2 coord) {
 }
 
 iBool contains_Widget(const iWidget *d, iInt2 coord) {
-    const iRect bounds = { zero_I2(), d->rect.size };
-    return contains_Rect(bounds, localCoord_Widget(d, coord));
+    return containsExpanded_Widget(d, coord, 0);
+}
+
+iBool containsExpanded_Widget(const iWidget *d, iInt2 coord, int expand) {
+    const iRect bounds = {
+        zero_I2(),
+        addY_I2(d->rect.size,
+                d->flags & drawBackgroundToBottom_WidgetFlag ? rootSize_Window(get_Window()).y : 0)
+    };
+    return contains_Rect(expand ? expanded_Rect(bounds, init1_I2(expand)) : bounds,
+                         localCoord_Widget(d, coord));
 }
 
 iLocalDef iBool isKeyboardEvent_(const SDL_Event *ev) {
@@ -542,7 +774,7 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
     if (!d->parent) {
         if (ev->type == SDL_MOUSEMOTION) {
             /* Hover widget may change. */
-            rootData_.hover = NULL;
+            setHover_Widget(NULL);
         }
         if (rootData_.focus && isKeyboardEvent_(ev)) {
             /* Root dispatches keyboard events directly to the focused widget. */
@@ -554,15 +786,38 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
         iReverseForEach(PtrArray, i, rootData_.onTop) {
             iWidget *widget = *i.value;
             if (isVisible_Widget(widget) && dispatchEvent_Widget(widget, ev)) {
+#if 0
+                if (ev->type == SDL_KEYDOWN) {
+                    printf("[%p] %s:'%s' (on top) ate the key\n",
+                           widget, class_Widget(widget)->name,
+                           cstr_String(id_Widget(widget)));
+                    fflush(stdout);
+                }
+#endif
+#if 0
+                if (ev->type == SDL_MOUSEMOTION) {
+                    printf("[%p] %s:'%s' (on top) ate the motion\n",
+                           widget, class_Widget(widget)->name,
+                           cstr_String(id_Widget(widget)));
+                    fflush(stdout);
+                }
+#endif
                 return iTrue;
             }
         }
     }
-    else if (ev->type == SDL_MOUSEMOTION && !rootData_.hover &&
+    else if (ev->type == SDL_MOUSEMOTION &&
+             (!rootData_.hover || hasParent_Widget(d, rootData_.hover)) &&
              flags_Widget(d) & hover_WidgetFlag && ~flags_Widget(d) & hidden_WidgetFlag &&
              ~flags_Widget(d) & disabled_WidgetFlag) {
         if (contains_Widget(d, init_I2(ev->motion.x, ev->motion.y))) {
-            rootData_.hover = d;
+            setHover_Widget(d);
+#if 0
+            printf("set hover to [%p] %s:'%s'\n",
+                   d, class_Widget(d)->name,
+                   cstr_String(id_Widget(d)));
+            fflush(stdout);
+#endif
         }
     }
     if (filterEvent_Widget_(d, ev)) {
@@ -579,6 +834,30 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
             }
             if (dispatchEvent_Widget(child, ev)) {
 #if 0
+                if (ev->type == SDL_KEYDOWN) {
+                    printf("[%p] %s:'%s' ate the key\n",
+                           child, class_Widget(child)->name,
+                           cstr_String(id_Widget(child)));
+                    fflush(stdout);
+                }
+#endif
+#if 0
+                if (ev->type == SDL_MOUSEMOTION) {
+                    printf("[%p] %s:'%s' (on top) ate the motion\n",
+                           child, class_Widget(child)->name,
+                           cstr_String(id_Widget(child)));
+                    fflush(stdout);
+                }
+#endif
+#if 0
+                if (ev->type == SDL_MOUSEWHEEL) {
+                    printf("[%p] %s:'%s' ate the wheel\n",
+                           child, class_Widget(child)->name,
+                           cstr_String(id_Widget(child)));
+                    fflush(stdout);
+                }
+#endif
+#if 0
                 if (ev->type == SDL_MOUSEBUTTONDOWN) {
                     printf("widget %p ('%s' class:%s) ate the mouse down\n",
                            child, cstr_String(id_Widget(child)),
@@ -594,6 +873,36 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
         }
     }
     return iFalse;
+}
+
+static iBool scrollOverflow_Widget_(iWidget *d, int delta) {
+    iRect bounds = bounds_Widget(d);
+    const iInt2 rootSize = rootSize_Window(get_Window());
+    const iRect winRect = safeRootRect_Window(get_Window());
+    const int yTop = top_Rect(winRect);
+    const int yBottom = bottom_Rect(winRect);
+    //const int safeBottom = rootSize.y - yBottom;
+    bounds.pos.y += delta;
+    const iRangei range = { bottom_Rect(winRect) - height_Rect(bounds), yTop };
+//    printf("range: %d ... %d\n", range.start, range.end);
+    if (range.start >= range.end) {
+        bounds.pos.y = range.end;
+    }
+    else {
+        bounds.pos.y = iClamp(bounds.pos.y, range.start, range.end);
+    }
+//    if (delta >= 0) {
+//        bounds.pos.y = iMin(bounds.pos.y, yTop);
+//    }
+//    else {
+//        bounds.pos.y = iMax(bounds.pos.y, );
+//    }
+    const iInt2 newPos = localCoord_Widget(d->parent, bounds.pos);
+    if (!isEqual_I2(newPos, d->rect.pos)) {
+        d->rect.pos = newPos;
+        refresh_Widget(d);
+    }
+    return height_Rect(bounds) > height_Rect(winRect);
 }
 
 iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
@@ -622,28 +931,47 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
         postCommand_Widget(d, "mouse.moved coord:%d %d", ev->motion.x, ev->motion.y);
         return iTrue;
     }
-    else if (d->flags & overflowScrollable_WidgetFlag && ev->type == SDL_MOUSEWHEEL) {
-        iRect bounds = bounds_Widget(d);
-        const iInt2 winSize = rootSize_Window(get_Window());
-        if (height_Rect(bounds) > winSize.y) {
-            int step = ev->wheel.y;
-#if !defined (iPlatformApple)
+    else if (d->flags & overflowScrollable_WidgetFlag && ev->type == SDL_MOUSEWHEEL &&
+             ~d->flags & visualOffset_WidgetFlag) {
+        int step = ev->wheel.y;
+        if (!isPerPixel_MouseWheelEvent(&ev->wheel)) {
             step *= lineHeight_Text(uiLabel_FontId);
-#endif
+        }
+        if (scrollOverflow_Widget_(d, step)) {
+            return iTrue;
+        }
+#if 0
+        iRect bounds = bounds_Widget(d);
+        const iInt2 rootSize = rootSize_Window(get_Window());
+        const iRect winRect = safeRootRect_Window(get_Window());
+        const int yTop = top_Rect(winRect);
+        const int yBottom = bottom_Rect(winRect);
+        const int safeBottom = rootSize.y - yBottom;
+        if (height_Rect(bounds) > height_Rect(winRect)) {
+            int step = ev->wheel.y;
+            if (!isPerPixel_MouseWheelEvent(&ev->wheel)) {
+                step *= lineHeight_Text(uiLabel_FontId);
+            }
             bounds.pos.y += step;
             if (step > 0) {
-                bounds.pos.y = iMin(bounds.pos.y, 0);
+                bounds.pos.y = iMin(bounds.pos.y, yTop);
             }
             else {
-                bounds.pos.y = iMax(bounds.pos.y, winSize.y - height_Rect(bounds));
+                bounds.pos.y = iMax(bounds.pos.y, rootSize.y /*+ safeBottom*/ - height_Rect(bounds));
             }
             d->rect.pos = localCoord_Widget(d->parent, bounds.pos);
             refresh_Widget(d);
             return iTrue;
         }
+#endif
     }
     switch (ev->type) {
         case SDL_USEREVENT: {
+            if (d->flags & overflowScrollable_WidgetFlag &&
+                ~d->flags & visualOffset_WidgetFlag &&
+                isCommand_UserEvent(ev, "widget.overflow")) {
+                scrollOverflow_Widget_(d, 0); /* check bounds */
+            }
             if (ev->user.code == command_UserEventCode && d->commandHandler &&
                 d->commandHandler(d, ev->user.data1)) {
                 return iTrue;
@@ -661,6 +989,15 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
                            ev->button.y);
     }
     if (d->flags & mouseModal_WidgetFlag && isMouseEvent_(ev)) {
+        if ((ev->type == SDL_MOUSEBUTTONDOWN || ev->type == SDL_MOUSEBUTTONUP) &&
+            d->flags & commandOnClick_WidgetFlag) {
+            postCommand_Widget(d,
+                               "mouse.clicked arg:%d button:%d coord:%d %d",
+                               ev->type == SDL_MOUSEBUTTONDOWN ? 1 : 0,
+                               ev->button.button,
+                               ev->button.x,
+                               ev->button.y);
+        }
         setCursor_Window(get_Window(), SDL_SYSTEM_CURSOR_ARROW);
         return iTrue;
     }
@@ -668,39 +1005,56 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
 }
 
 void drawBackground_Widget(const iWidget *d) {
-    if (d->flags & (hidden_WidgetFlag | noBackground_WidgetFlag)) {
+    if (d->flags & noBackground_WidgetFlag) {
         return;
     }
-    if (flags_Widget(d) & borderTop_WidgetFlag) {
-        const iRect rect = bounds_Widget(d);
+    if (d->flags & hidden_WidgetFlag && ~d->flags & visualOffset_WidgetFlag) {
+        return;
+    }
+    /* Popup menus have a shadowed border. */
+    iBool shadowBorder   = (d->flags & keepOnTop_WidgetFlag && ~d->flags & mouseModal_WidgetFlag) != 0;
+    iBool fadeBackground = (d->bgColor >= 0 || d->frameColor >= 0) &&
+                                 d->flags & mouseModal_WidgetFlag;
+    if (deviceType_App() == phone_AppDeviceType) {
+        if (shadowBorder) {
+            fadeBackground = iTrue;
+            shadowBorder = iFalse;
+        }
+    }
+    if (shadowBorder) {
         iPaint p;
         init_Paint(&p);
-        drawHLine_Paint(&p, topLeft_Rect(rect), width_Rect(rect), uiBackgroundFramelessHover_ColorId);
+        drawSoftShadow_Paint(&p, bounds_Widget(d), 12 * gap_UI, black_ColorId, 30);
+    }
+    if (fadeBackground) {
+        iPaint p;
+        init_Paint(&p);
+        p.alpha = 0x50;
+        SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_BLEND);
+        int fadeColor;
+        switch (colorTheme_App()) {
+            default:
+                fadeColor = black_ColorId;
+                break;
+            case light_ColorTheme:
+                fadeColor = gray25_ColorId;
+                break;
+            case pureWhite_ColorTheme:
+                fadeColor = gray50_ColorId;
+                break;
+        }
+        fillRect_Paint(&p,
+                       initCorners_Rect(zero_I2(), rootSize_Window(get_Window())),
+                       fadeColor);
+        SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_NONE);
     }
     if (d->bgColor >= 0 || d->frameColor >= 0) {
         iRect rect = bounds_Widget(d);
+        if (d->flags & drawBackgroundToBottom_WidgetFlag) {
+            rect.size.y = rootSize_Window(get_Window()).y - top_Rect(rect);
+        }
         iPaint p;
         init_Paint(&p);
-        if (d->flags & mouseModal_WidgetFlag) {
-            p.alpha = 0x60;
-            SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_BLEND);
-            int fadeColor;
-            switch (colorTheme_App()) {
-                default:
-                    fadeColor = black_ColorId;
-                    break;
-                case light_ColorTheme:
-                    fadeColor = gray25_ColorId;
-                    break;
-                case pureWhite_ColorTheme:
-                    fadeColor = gray50_ColorId;
-                    break;
-            }
-            fillRect_Paint(&p,
-                           initCorners_Rect(zero_I2(), rootSize_Window(get_Window())),
-                           fadeColor);
-            SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_NONE);
-        }
         if (d->bgColor >= 0) {
 #if defined (iPlatformAppleMobile)
             if (d->flags & (drawBackgroundToHorizontalSafeArea_WidgetFlag |
@@ -734,6 +1088,23 @@ void drawBackground_Widget(const iWidget *d) {
             drawRectThickness_Paint(&p, rect, gap_UI / 4, d->frameColor);
         }
     }
+    if (d->flags & (borderTop_WidgetFlag | borderBottom_WidgetFlag)) {
+        const iRect rect = bounds_Widget(d);
+        iPaint p;
+        init_Paint(&p);
+        const int hgt = gap_UI / 4;
+        const int borderColor = uiSeparator_ColorId; /* TODO: Add a property to customize? */
+        if (d->flags & borderTop_WidgetFlag) {
+            fillRect_Paint(&p, (iRect){ topLeft_Rect(rect),
+                                        init_I2(width_Rect(rect), hgt) },
+                            borderColor);
+        }
+        if (d->flags & borderBottom_WidgetFlag) {
+            fillRect_Paint(&p, (iRect) { addY_I2(bottomLeft_Rect(rect), -hgt),
+                                         init_I2(width_Rect(rect), hgt) },
+                            borderColor);
+        }
+    }
 }
 
 iLocalDef iBool isDrawn_Widget_(const iWidget *d) {
@@ -753,7 +1124,8 @@ void drawChildren_Widget(const iWidget *d) {
     /* Root draws the on-top widgets on top of everything else. */
     if (!d->parent) {
         iConstForEach(PtrArray, i, onTop_RootData_()) {
-            draw_Widget(*i.value);
+            const iWidget *top = *i.value;
+            draw_Widget(top);
         }
     }
 }
@@ -814,7 +1186,7 @@ iAny *addChildFlags_Widget(iWidget *d, iAnyObject *child, int64_t childFlags) {
 
 iAny *removeChild_Widget(iWidget *d, iAnyObject *child) {
     iAssert(child);
-    ref_Object(child);
+    ref_Object(child); /* we take a reference, parent releases its */
     iBool found = iFalse;
     iForEach(ObjectList, i, d->children) {
         if (i.object == child) {
@@ -855,8 +1227,13 @@ iAny *hitChild_Widget(const iWidget *d, iInt2 coord) {
     }
     /* Check for on-top widgets first. */
     if (!d->parent) {
-        iForEach(PtrArray, i, onTop_RootData_()) {
-            iAny *found = hitChild_Widget(constAs_Widget(i.ptr), coord);
+        iReverseForEach(PtrArray, i, onTop_RootData_()) {
+            iWidget *child = i.ptr;
+//            printf("ontop: %s (%s) hidden:%d hittable:%d\n", cstr_String(id_Widget(child)),
+//                   class_Widget(child)->name,
+//                   child->flags & hidden_WidgetFlag ? 1 : 0,
+//                   child->flags & unhittable_WidgetFlag ? 0 : 1);
+            iAny *found = hitChild_Widget(constAs_Widget(child), coord);
             if (found) return found;
         }
     }
@@ -867,10 +1244,9 @@ iAny *hitChild_Widget(const iWidget *d, iInt2 coord) {
             if (found) return found;
         }
     }
-    if (class_Widget(d) == &Class_Widget) {
-        return NULL; /* Plain widgets are not hittable. */
-    }
-    if (~d->flags & unhittable_WidgetFlag && contains_Widget(d, coord)) {
+    if ((d->flags & (overflowScrollable_WidgetFlag | hittable_WidgetFlag) ||
+         class_Widget(d) != &Class_Widget || d->flags & mouseModal_WidgetFlag) &&
+        ~d->flags & unhittable_WidgetFlag && contains_Widget(d, coord)) {
         return iConstCast(iWidget *, d);
     }
     return NULL;
@@ -885,6 +1261,21 @@ iAny *findChild_Widget(const iWidget *d, const char *id) {
         if (found) return found;
     }
     return NULL;
+}
+
+static void addMatchingToArray_Widget_(const iWidget *d, const char *id, iPtrArray *found) {
+    if (cmp_String(id_Widget(d), id) == 0) {
+        pushBack_PtrArray(found, d);
+    }
+    iForEach(ObjectList, i, d->children) {
+        addMatchingToArray_Widget_(i.object, id, found);
+    }
+}
+
+const iPtrArray *findChildren_Widget(const iWidget *d, const char *id) {
+    iPtrArray *found = new_PtrArray();
+    addMatchingToArray_Widget_(d, id, found);
+    return collect_PtrArray(found);
 }
 
 iAny *findParentClass_Widget(const iWidget *d, const iAnyClass *class) {
@@ -981,6 +1372,10 @@ void setFocus_Widget(iWidget *d) {
 
 iWidget *focus_Widget(void) {
     return rootData_.focus;
+}
+
+void setHover_Widget(iWidget *d) {
+    rootData_.hover = d;
 }
 
 iWidget *hover_Widget(void) {
@@ -1080,7 +1475,66 @@ void refresh_Widget(const iAnyObject *d) {
     postRefresh_App();
 }
 
+/* Debug utility for inspecting widget trees. */
+#include "labelwidget.h"
+static void printTree_Widget_(const iWidget *d, int indent) {
+    for (int i = 0; i < indent; ++i) {
+        fwrite("    ", 4, 1, stdout);
+    }
+    printf("[%p] %s:\"%s\" ", d, class_Widget(d)->name, cstr_String(&d->id));
+    if (isInstance_Object(d, &Class_LabelWidget)) {
+        printf("(%s|%s) ",
+               cstr_String(text_LabelWidget((const iLabelWidget *) d)),
+               cstr_String(command_LabelWidget((const iLabelWidget *) d)));
+    }
+    printf("size:%dx%d {min:%dx%d} [%d..%d %d:%d] flags:%08llx%s%s%s%s%s\n",
+           d->rect.size.x, d->rect.size.y,
+           d->minSize.x, d->minSize.y,
+           d->padding[0], d->padding[2],
+           d->padding[1], d->padding[3],
+           (long long unsigned int) d->flags,
+           d->flags & expand_WidgetFlag ? " exp" : "",
+           d->flags & tight_WidgetFlag ? " tight" : "",
+           d->flags & fixedWidth_WidgetFlag ? " fixW" : "",
+           d->flags & fixedHeight_WidgetFlag ? " fixH" : "",
+           d->flags & resizeToParentWidth_WidgetFlag ? " rsPrnW" : "");
+    iConstForEach(ObjectList, i, d->children) {
+        printTree_Widget_(i.object, indent + 1);
+    }
+}
+
+void raise_Widget(iWidget *d) {
+    iPtrArray *onTop = onTop_RootData_();
+    if (d->flags & keepOnTop_WidgetFlag) {
+        iAssert(indexOf_PtrArray(onTop, d) != iInvalidPos);
+        removeOne_PtrArray(onTop, d);
+        pushBack_PtrArray(onTop, d);
+    }
+}
+
+iBool hasVisibleChildOnTop_Widget(const iWidget *parent) {
+    iConstForEach(ObjectList, i, parent->children) {
+        const iWidget *child = i.object;
+        if (~child->flags & hidden_WidgetFlag && child->flags & keepOnTop_WidgetFlag) {
+            return iTrue;
+        }
+        if (hasVisibleChildOnTop_Widget(child)) {
+            return iTrue;
+        }
+    }
+    return iFalse;
+}
+
+void printTree_Widget(const iWidget *d) {
+    if (!d) {
+        printf("[NULL]\n");
+        return;
+    }
+    printTree_Widget_(d, 0);
+}
+
 iBeginDefineClass(Widget)
     .processEvent = processEvent_Widget,
     .draw         = draw_Widget,
 iEndDefineClass(Widget)
+

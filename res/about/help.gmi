@@ -1,4 +1,4 @@
-```
+``` "Lagrange" written in all caps
            __   __             __   ___
 |     /\  / _` |__)  /\  |\ | / _` |__
 |___ /~~\ \__> |  \ /~~\ | \| \__> |___
@@ -355,7 +355,7 @@ You can drag and drop .gmi files on the Lagrange window to open them in the curr
 
 Lagrange stores user-specific persistent files in one of the following locations (depending on the operating system):
 
-```
+```User file directories on different operating systems
    Windows : C:\Users\Name\AppData\Roaming\fi.skyjake.Lagrange
      macOS : ~/Library/Application Support/fi.skyjake.Lagrange/
 Other Unix : ~/.config/lagrange/
@@ -404,7 +404,7 @@ Any output that does not follow this format is considered to mean that the hook 
 ## 4.2 mimehooks.txt syntax
 
 Like other Lagrange configuration lines, mimehooks.txt has a simple line-oriented syntax. Lagrange must be restarted for changes to the configuration file to take effect.
-≈
+
 Each hook is specified as three lines:
 * A human-readable label (for reporting to the user)
 * MIME type/parameter regular expression

@@ -32,7 +32,23 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/time.h>
 
 iDeclareType(GmHeading)
+iDeclareType(GmPreMeta)
 iDeclareType(GmRun)
+
+enum iGmLineType {
+    text_GmLineType,
+    bullet_GmLineType,
+    preformatted_GmLineType,
+    quote_GmLineType,
+    heading1_GmLineType,
+    heading2_GmLineType,
+    heading3_GmLineType,
+    link_GmLineType,
+    max_GmLineType,
+};
+
+enum iGmLineType    lineType_Rangecc   (const iRangecc line);
+void                trimLine_Rangecc   (iRangecc *line, enum iGmLineType type, iBool normalize);
 
 enum iGmDocumentTheme {
     colorfulDark_GmDocumentTheme,
@@ -44,10 +60,7 @@ enum iGmDocumentTheme {
     highContrast_GmDocumentTheme,
 };
 
-iLocalDef iBool isDark_GmDocumentTheme(enum iGmDocumentTheme d) {
-    return d == colorfulDark_GmDocumentTheme || d == black_GmDocumentTheme ||
-           d == gray_GmDocumentTheme;
-}
+iBool isDark_GmDocumentTheme(enum iGmDocumentTheme);
 
 typedef uint16_t iGmLinkId;
 
@@ -69,11 +82,26 @@ enum iGmLinkFlags {
     visited_GmLinkFlag            = iBit(14), /* in the history */
     permanent_GmLinkFlag          = iBit(15), /* content cannot be dismissed; media link */
     query_GmLinkFlag              = iBit(16), /* Gopher query link */
+    iconFromLabel_GmLinkFlag      = iBit(17), /* use an Emoji/special character from label */
 };
 
 struct Impl_GmHeading {
     iRangecc text;
     int level; /* 0, 1, 2 */
+};
+
+enum iGmPreMetaFlag {
+    folded_GmPreMetaFlag = 0x1,
+    topLeft_GmPreMetaFlag = 0x2,
+};
+
+struct Impl_GmPreMeta {
+    iRangecc bounds;   /* including ``` markers */
+    iRangecc altText;  /* range in source */
+    iRangecc contents; /* just the content lines */
+    int      flags;
+    /* TODO: refactor old code to incorporate wide scroll handling here */
+    iRect    pixelRect;
 };
 
 enum iGmRunFlags {
@@ -83,6 +111,8 @@ enum iGmRunFlags {
     siteBanner_GmRunFlag  = iBit(4), /* area reserved for the site banner */
     quoteBorder_GmRunFlag = iBit(5),
     wide_GmRunFlag        = iBit(6), /* horizontally scrollable */
+    footer_GmRunFlag      = iBit(7),
+    altText_GmRunFlag     = iBit(8),
 };
 
 enum iGmRunMediaType {
@@ -112,7 +142,7 @@ struct Impl_GmRunRange {
     const iGmRun *end;
 };
 
-const char *    findLoc_GmRun   (const iGmRun *, iInt2 pos);
+iRangecc    findLoc_GmRun   (const iGmRun *, iInt2 pos);
 
 iDeclareClass(GmDocument)
 iDeclareObjectConstruction(GmDocument)
@@ -136,6 +166,7 @@ void    setWidth_GmDocument     (iGmDocument *, int width);
 void    redoLayout_GmDocument   (iGmDocument *);
 void    setUrl_GmDocument       (iGmDocument *, const iString *url);
 void    setSource_GmDocument    (iGmDocument *, const iString *source, int width);
+void    foldPre_GmDocument      (iGmDocument *, uint16_t preId);
 
 void    reset_GmDocument        (iGmDocument *); /* free images */
 
@@ -167,7 +198,7 @@ enum iGmLinkPart {
 };
 
 const iGmRun *  findRun_GmDocument      (const iGmDocument *, iInt2 pos);
-const char *    findLoc_GmDocument      (const iGmDocument *, iInt2 pos);
+iRangecc        findLoc_GmDocument      (const iGmDocument *, iInt2 pos);
 const iGmRun *  findRunAtLoc_GmDocument (const iGmDocument *, const char *loc);
 const iString * linkUrl_GmDocument      (const iGmDocument *, iGmLinkId linkId);
 iRangecc        linkUrlRange_GmDocument (const iGmDocument *, iGmLinkId linkId);
@@ -180,4 +211,7 @@ const iTime *   linkTime_GmDocument     (const iGmDocument *, iGmLinkId linkId);
 iBool           isMediaLink_GmDocument  (const iGmDocument *, iGmLinkId linkId);
 const iString * title_GmDocument        (const iGmDocument *);
 iChar           siteIcon_GmDocument     (const iGmDocument *);
-
+const iGmPreMeta *preMeta_GmDocument    (const iGmDocument *, uint16_t preId);
+iInt2           preRunMargin_GmDocument (const iGmDocument *, uint16_t preId);
+iBool           preIsFolded_GmDocument  (const iGmDocument *, uint16_t preId);
+iBool           preHasAltText_GmDocument(const iGmDocument *, uint16_t preId);

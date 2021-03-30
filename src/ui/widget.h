@@ -29,6 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <the_Foundation/object.h>
 #include <the_Foundation/objectlist.h>
+#include <the_Foundation/ptrarray.h>
 #include <the_Foundation/rect.h>
 #include <the_Foundation/string.h>
 #include <SDL_events.h>
@@ -100,6 +101,18 @@ enum iWidgetFlag {
 #define visualOffset_WidgetFlag             iBit64(45)
 #define parentCannotResize_WidgetFlag       iBit64(46)
 #define noTopFrame_WidgetFlag               iBit64(47)
+#define unpadded_WidgetFlag                 iBit64(48) /* ignore parent's padding */
+#define extraPadding_WidgetFlag             iBit64(49)
+#define borderBottom_WidgetFlag             iBit64(50)
+#define horizontalOffset_WidgetFlag         iBit64(51) /* default is vertical offset */
+#define chevron_WidgetFlag                  iBit64(52)
+#define drawBackgroundToBottom_WidgetFlag   iBit64(53)
+#define dragged_WidgetFlag                  iBit64(54)
+#define hittable_WidgetFlag                 iBit64(55)
+#define safePadding_WidgetFlag              iBit64(56) /* padded using safe area insets */
+#define moveToParentBottomEdge_WidgetFlag   iBit64(57)
+#define parentCannotResizeHeight_WidgetFlag iBit64(58)
+#define ignoreForParentWidth_WidgetFlag     iBit64(59)
 
 enum iWidgetAddPos {
     back_WidgetAddPos,
@@ -116,6 +129,7 @@ struct Impl_Widget {
     iString      id;
     int64_t      flags;
     iRect        rect;
+    iInt2        minSize;
     int          padding[4]; /* left, top, right, bottom */
     iAnim        visualOffset;
     int          bgColor;
@@ -151,20 +165,23 @@ void    destroy_Widget          (iWidget *); /* widget removed and deleted later
 void    destroyPending_Widget   (void);
 void    releaseChildren_Widget  (iWidget *);
 
-const iString *id_Widget    (const iWidget *);
-int64_t flags_Widget        (const iWidget *);
-iRect   bounds_Widget       (const iWidget *); /* outer bounds */
-iRect   innerBounds_Widget  (const iWidget *);
-iInt2   localCoord_Widget   (const iWidget *, iInt2 coord);
-iBool   contains_Widget     (const iWidget *, iInt2 coord);
-iAny *  hitChild_Widget     (const iWidget *, iInt2 coord);
-iAny *  findChild_Widget    (const iWidget *, const char *id);
-iAny *  findParentClass_Widget(const iWidget *, const iAnyClass *class);
-iAny *  findFocusable_Widget(const iWidget *startFrom, enum iWidgetFocusDir focusDir);
-size_t  childCount_Widget   (const iWidget *);
-void    draw_Widget         (const iWidget *);
-void    drawBackground_Widget(const iWidget *);
-void    drawChildren_Widget (const iWidget *);
+const iString *id_Widget                (const iWidget *);
+int64_t flags_Widget                    (const iWidget *);
+iRect   bounds_Widget                   (const iWidget *); /* outer bounds */
+iRect   innerBounds_Widget              (const iWidget *);
+iRect   boundsWithoutVisualOffset_Widget(const iWidget *);
+iInt2   localCoord_Widget               (const iWidget *, iInt2 coord);
+iBool   contains_Widget                 (const iWidget *, iInt2 coord);
+iBool   containsExpanded_Widget         (const iWidget *, iInt2 coord, int expand);
+iAny *  hitChild_Widget                 (const iWidget *, iInt2 coord);
+iAny *  findChild_Widget                (const iWidget *, const char *id);
+const iPtrArray *findChildren_Widget    (const iWidget *, const char *id);
+iAny *  findParentClass_Widget          (const iWidget *, const iAnyClass *class);
+iAny *  findFocusable_Widget            (const iWidget *startFrom, enum iWidgetFocusDir focusDir);
+size_t  childCount_Widget               (const iWidget *);
+void    draw_Widget                     (const iWidget *);
+void    drawBackground_Widget           (const iWidget *);
+void    drawChildren_Widget             (const iWidget *);
 
 iLocalDef int width_Widget(const iAnyObject *d) {
     if (d) {
@@ -191,21 +208,26 @@ iLocalDef iWidget *parent_Widget(const iAnyObject *d) {
     }
     return NULL;
 }
+iLocalDef iWidget *lastChild_Widget(iAnyObject *d) {
+    return (iWidget *) back_ObjectList(children_Widget(d));
+}
 
-iBool   isVisible_Widget    (const iAnyObject *);
-iBool   isDisabled_Widget   (const iAnyObject *);
-iBool   isFocused_Widget    (const iAnyObject *);
-iBool   isHover_Widget      (const iAnyObject *);
-iBool   isSelected_Widget   (const iAnyObject *);
-iBool   isCommand_Widget    (const iWidget *d, const SDL_Event *ev, const char *cmd);
-iBool   hasParent_Widget    (const iWidget *d, const iWidget *someParent);
-void    setId_Widget        (iWidget *, const char *id);
-void    setFlags_Widget     (iWidget *, int64_t flags, iBool set);
-void    setPos_Widget       (iWidget *, iInt2 pos);
-void    setSize_Widget      (iWidget *, iInt2 size);
-void    setPadding_Widget   (iWidget *, int left, int top, int right, int bottom);
+iBool   isVisible_Widget            (const iAnyObject *);
+iBool   isDisabled_Widget           (const iAnyObject *);
+iBool   isFocused_Widget            (const iAnyObject *);
+iBool   isHover_Widget              (const iAnyObject *);
+iBool   isSelected_Widget           (const iAnyObject *);
+iBool   isCommand_Widget            (const iWidget *d, const SDL_Event *ev, const char *cmd);
+iBool   hasParent_Widget            (const iWidget *d, const iWidget *someParent);
+void    setId_Widget                (iWidget *, const char *id);
+void    setFlags_Widget             (iWidget *, int64_t flags, iBool set);
+void    setPos_Widget               (iWidget *, iInt2 pos);
+void    setFixedSize_Widget         (iWidget *, iInt2 fixedSize);
+void    setMinSize_Widget           (iWidget *, iInt2 minSize);
+void    setPadding_Widget           (iWidget *, int left, int top, int right, int bottom);
 iLocalDef void setPadding1_Widget   (iWidget *d, int padding) { setPadding_Widget(d, padding, padding, padding, padding); }
-void    setVisualOffset_Widget      (iWidget *d, int value, uint32_t span, int animFlags);
+void    setVisualOffset_Widget      (iWidget *, int value, uint32_t span, int animFlags);
+void    showCollapsed_Widget        (iWidget *, iBool show); /* takes care of rearranging, refresh */
 void    setBackgroundColor_Widget   (iWidget *, int bgColor);
 void    setFrameColor_Widget        (iWidget *, int frameColor);
 void    setCommandHandler_Widget    (iWidget *, iBool (*handler)(iWidget *, const char *));
@@ -214,20 +236,26 @@ iAny *  addChildPos_Widget          (iWidget *, iAnyObject *child, enum iWidgetA
 iAny *  addChildFlags_Widget        (iWidget *, iAnyObject *child, int64_t childFlags); /* holds a ref */
 iAny *  insertChildAfter_Widget     (iWidget *, iAnyObject *child, size_t afterIndex);
 iAny *  insertChildAfterFlags_Widget(iWidget *, iAnyObject *child, size_t afterIndex, int64_t childFlags);
-iAny *  removeChild_Widget  (iWidget *, iAnyObject *child); /* returns a ref */
-iAny *  child_Widget        (iWidget *, size_t index); /* O(n) */
-size_t  childIndex_Widget   (const iWidget *, const iAnyObject *child); /* O(n) */
-void    arrange_Widget      (iWidget *);
-iBool   dispatchEvent_Widget(iWidget *, const SDL_Event *);
-iBool   processEvent_Widget (iWidget *, const SDL_Event *);
-void    postCommand_Widget  (const iAnyObject *, const char *cmd, ...);
-void    refresh_Widget      (const iAnyObject *);
-
-void    setFocus_Widget     (iWidget *);
-iWidget *focus_Widget       (void);
-iWidget *hover_Widget       (void);
-void    unhover_Widget      (void);
-void    setMouseGrab_Widget (iWidget *);
-iWidget *mouseGrab_Widget   (void);
+iAny *  removeChild_Widget          (iWidget *, iAnyObject *child); /* returns a ref */
+iAny *  child_Widget                (iWidget *, size_t index); /* O(n) */
+size_t  childIndex_Widget           (const iWidget *, const iAnyObject *child); /* O(n) */
+void    arrange_Widget              (iWidget *);
+void    resetSize_Widget            (iWidget *);
+iBool   dispatchEvent_Widget        (iWidget *, const SDL_Event *);
+iBool   processEvent_Widget         (iWidget *, const SDL_Event *);
+void    postCommand_Widget          (const iAnyObject *, const char *cmd, ...);
+void    refresh_Widget              (const iAnyObject *);
 
 iBool   equalWidget_Command (const char *cmd, const iWidget *widget, const char *checkCommand);
+
+void        setFocus_Widget         (iWidget *);
+iWidget *   focus_Widget            (void);
+void        setHover_Widget         (iWidget *);
+iWidget *   hover_Widget            (void);
+void        unhover_Widget          (void);
+void        setMouseGrab_Widget     (iWidget *);
+iWidget *   mouseGrab_Widget        (void);
+void        raise_Widget            (iWidget *);
+iBool       hasVisibleChildOnTop_Widget
+                                    (const iWidget *parent);
+void        printTree_Widget        (const iWidget *);

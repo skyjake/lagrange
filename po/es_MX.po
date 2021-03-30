@@ -1,0 +1,397 @@
+msgid ""
+msgstr ""
+"Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
+"PO-Revision-Date: 2021-03-29 05:43+0000\n"
+"Last-Translator: El Mau <public@correolibre.net>\n"
+"Language-Team: Spanish (Mexico) <http://weblate.skyjake.fi/projects/lagrange/"
+"ui/es_MX/>\n"
+"Language: es_MX\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Weblate 4.5.1\n"
+
+# Alt-text of the preformatted logo.
+msgid "about.logo"
+msgstr "Arte ASCII: la palabra \"Lagrange\" usando una fuente grande"
+
+msgid "about.tagline"
+msgstr "Un hermoso cliente Gemini"
+
+msgid "about.version"
+msgstr "Versión"
+
+msgid "about.powered"
+msgstr "Hecho con SDL 2, OpenSSL y ☕️"
+
+msgid "cancel"
+msgstr "Cancelar"
+
+msgid "dismiss"
+msgstr "Descartar"
+
+msgid "dlg.message.ok"
+msgstr "Continuar"
+
+msgid "dlg.default"
+msgstr " Aceptar "
+
+msgid "toggle.yes"
+msgstr "Si"
+
+msgid "toggle.no"
+msgstr "No"
+
+msgid "menu.title.file"
+msgstr "Archivo"
+
+msgid "menu.title.edit"
+msgstr "Editar"
+
+msgid "menu.title.view"
+msgstr "Ver"
+
+msgid "menu.title.bookmarks"
+msgstr "Favoritos"
+
+msgid "menu.title.identity"
+msgstr "Identidad"
+
+msgid "menu.title.help"
+msgstr "Ayuda"
+
+msgid "menu.newtab"
+msgstr "Nueva Pestaña"
+
+msgid "menu.closetab"
+msgstr "Cerrar Pestaña"
+
+msgid "menu.closetab.left"
+msgstr "Cerrar Pestañas a la Izquierda"
+
+msgid "menu.closetab.right"
+msgstr "Cerrar Pestañas a la Derecha"
+
+msgid "menu.duptab"
+msgstr "Duplicar Pestaña"
+
+msgid "menu.openlocation"
+msgstr "Abrir Ubicación…"
+
+msgid "menu.find"
+msgstr "Buscar en la Página"
+
+msgid "macos.menu.find"
+msgstr "Buscar"
+
+# Used on desktop operating systems. "Downloads" refers to the user's configured downloads directory.
+msgid "menu.save.downloads"
+msgstr "Guardar en Descargas"
+
+msgid "menu.copy.source"
+msgstr "Copiar Texto Fuente"
+
+msgid "menu.sidebar"
+msgstr "Alternar Barra Lateral"
+
+msgid "menu.sidebar.left"
+msgstr "Alternar Barra Lateral Izquierda"
+
+msgid "menu.sidebar.right"
+msgstr "Alternar Barra Lateral Derecha"
+
+msgid "menu.zoom.in"
+msgstr "Acercar"
+
+msgid "menu.zoom.out"
+msgstr "Alejar"
+
+msgid "menu.zoom.reset"
+msgstr "Restablecer Acercamiento"
+
+msgid "macos.menu.bookmarks.list"
+msgstr "Listar Todo"
+
+msgid "menu.bookmarks.bytag"
+msgstr "Listar Favoritos por Etiqueta"
+
+msgid "macos.menu.bookmarks.bytag"
+msgstr "Listar por Etiqueta"
+
+msgid "menu.bookmarks.bytime"
+msgstr "Listar Favoritos por Fecha de Creación"
+
+msgid "menu.feeds.entrylist"
+msgstr "Mostrar Entradas de Suscripciones"
+
+msgid "menu.preferences"
+msgstr "Preferencias…"
+
+msgid "menu.help"
+msgstr "Ayuda"
+
+msgid "menu.releasenotes"
+msgstr "Notas de la Versión"
+
+msgid "menu.quit"
+msgstr "Salir de Lagrange"
+
+msgid "menu.closetab.other"
+msgstr "Cerrar Otras Pestañas"
+
+# Used on iOS. "Files" refers to Apple's iOS app where you can pick an iCloud folder.
+msgid "menu.save.files"
+msgstr "Guardar a Archivos"
+
+msgid "menu.bookmarks.list"
+msgstr "Listar Todos los Favoritos"
+
+msgid "macos.menu.bookmarks.bytime"
+msgstr "Listar por Fecha de Creación"
+
+# Usage: "(count) Unread" in the sidebar tab title, referring to feed entries.
+msgid "sidebar.unread"
+msgid_plural "sidebar.unread.n"
+msgstr[0] "No Leído"
+msgstr[1] "No Leídos"
+
+msgid "menu.cut"
+msgstr "Cortar"
+
+msgid "menu.copy"
+msgstr "Copiar"
+
+msgid "menu.paste"
+msgstr "Pegar"
+
+msgid "menu.copy.pagelink"
+msgstr "Copiar Enlace a Página"
+
+msgid "menu.show.bookmarks"
+msgstr "Mostrar favoritos"
+
+msgid "menu.show.feeds"
+msgstr "Mostrar Suscripciones"
+
+msgid "menu.show.history"
+msgstr "Mostrar Historial"
+
+msgid "menu.show.identities"
+msgstr "Mostrar Identidades"
+
+msgid "menu.show.outline"
+msgstr "Mostrar Esquema de la Página"
+
+msgid "menu.back"
+msgstr "Regresar"
+
+msgid "menu.forward"
+msgstr "Avanzar"
+
+msgid "menu.parent"
+msgstr "Ir al nivel superior"
+
+msgid "menu.root"
+msgstr "Ir a la raíz"
+
+msgid "menu.reload"
+msgstr "Recargar Página"
+
+msgid "menu.autoreload"
+msgstr "Establecer Auto-Recarga…"
+
+msgid "menu.page.bookmark"
+msgstr "Agregar Página a Marcadores…"
+
+msgid "menu.page.subscribe"
+msgstr "Suscribir a Página…"
+
+msgid "menu.aboutpages"
+msgstr "Acerca de Páginas"
+
+msgid "menu.about"
+msgstr "Acerca de"
+
+msgid "panel.back"
+msgstr "Regresar"
+
+msgid "menu.debug"
+msgstr "Información de Depuración"
+
+msgid "menu.import.links"
+msgstr "Importar Todos los Enlaces de la Página…"
+
+msgid "menu.page.import"
+msgstr "Importar enlaces como favoritos…"
+
+msgid "menu.page.translate"
+msgstr "Traducir…"
+
+msgid "menu.page.copyurl"
+msgstr "Copiar URL de la Página"
+
+msgid "menu.page.copysource"
+msgstr "Copiar Código Fuente de la Página"
+
+msgid "menu.bookmarks.refresh"
+msgstr "Refrescar Favoritos Remotos"
+
+msgid "menu.feeds.refresh"
+msgstr "Refrescar Suscripciones"
+
+msgid "menu.identity.new"
+msgstr "Nueva Identidad…"
+
+msgid "menu.identity.import"
+msgstr "Importar…"
+
+msgid "menu.identity.notactive"
+msgstr "Ninguna Identidad Activa"
+
+msgid "sidebar.bookmarks"
+msgstr "Favoritos"
+
+msgid "sidebar.feeds"
+msgstr "Suscripciones"
+
+msgid "sidebar.history"
+msgstr "Historial"
+
+msgid "sidebar.identities"
+msgstr "Identidades"
+
+msgid "sidebar.outline"
+msgstr "Esquema"
+
+msgid "toolbar.outline"
+msgstr "Esquema de la Página"
+
+msgid "hint.findtext"
+msgstr "Buscar Texto en la Página"
+
+msgid "num.bytes"
+msgid_plural "num.bytes.n"
+msgstr[0] "%zu byte"
+msgstr[1] "%zu bytes"
+
+msgid "status.query"
+msgstr "Consulta de Búsqueda"
+
+msgid "status.feeds"
+msgstr "Actualizando Suscripciones"
+
+# megabytes, used as the unit after a number
+msgid "mb"
+msgstr "MB"
+
+# kilobytes, used as the unit after a number
+msgid "kb"
+msgstr "KB"
+
+# strftime() formatted, split on two lines
+#, c-format
+msgid "page.timestamp"
+msgstr ""
+"Recibido a las %I:%M %p\n"
+"el %d, %b, %Y"
+
+# strftime() formatted
+#, c-format
+msgid "sidebar.date.thisyear"
+msgstr "%d. %b"
+
+# strftime() formatted
+#, c-format
+msgid "sidebar.date.otheryear"
+msgstr "%d.%b, %Y"
+
+msgid "feeds.today"
+msgstr "Hoy"
+
+msgid "feeds.entry.newtab"
+msgstr "Abrir Entrada en Nueva Pestaña"
+
+msgid "feeds.entry.markread"
+msgstr "Marcar como leído"
+
+msgid "sidebar.entry.bookmark"
+msgstr "Añadir favorito…"
+
+msgid "feeds.entry.bookmark"
+msgstr "Agregar favorito…"
+
+msgid "feeds.entry.openfeed"
+msgstr "Abrir Página de Suscripciones"
+
+msgid "feeds.edit"
+msgstr "Editar Suscripción…"
+
+msgid "feeds.unsubscribe"
+msgstr "Eliminar Suscripción…"
+
+msgid "feeds.refresh"
+msgstr "Refrescar Suscripciones"
+
+msgid "menu.opentab"
+msgstr "Abrir en Nueva Pestaña"
+
+msgid "menu.opentab.background"
+msgstr "Abrir en Pestaña de Fondo"
+
+msgid "menu.edit"
+msgstr "Editar…"
+
+msgid "menu.dup"
+msgstr "Duplicar…"
+
+msgid "menu.copyurl"
+msgstr "Copiar URL"
+
+msgid "history.clear"
+msgstr "Limpiar Historial…"
+
+msgid "heading.history.clear"
+msgstr "LIMPIAR HISTORIAL"
+
+msgid "feeds.entry.markunread"
+msgstr "Marcar como no leído"
+
+msgid "feeds.markallread"
+msgstr "Marcar Todo como Leído"
+
+msgid "menu.forgeturl"
+msgstr "Olvidar URL"
+
+msgid "dlg.confirm.history.clear"
+msgstr "¿De verdad quiere borrar el historial de todas las páginas visitadas?"
+
+msgid "dlg.history.clear"
+msgstr "Limpiar Historial"
+
+msgid "bookmark.tag.home"
+msgstr "Usar como Página de Inicio"
+
+msgid "bookmark.tag.sub"
+msgstr "Suscribirse"
+
+msgid "bookmark.tag.remote"
+msgstr "Usar como Fuente de Marcador"
+
+msgid "bookmark.untag.home"
+msgstr "Remover Página de Inicio"
+
+msgid "bookmark.untag.sub"
+msgstr "Eliminar Suscripción"
+
+msgid "bookmark.untag.remote"
+msgstr "Remover Fuente de Marcador"
+
+msgid "bookmark.delete"
+msgstr "Borrar favorita"
+
+msgid "bookmarks.reload"
+msgstr "Refrescar Fuentes Remotas"
+
+msgid "doc.pre.nocaption"
+msgstr "Texto preformateado sin título"
