@@ -45,6 +45,76 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.3" date="2021-03-31">
+            <description>
+                <p> This is a major feature update with improvements for
+                    localization, browsing behavior, page content and
+                    rendering, UI design, and command line use. Here are some of
+                    the highlights:
+                </p>
+                <ul>
+                    <li>New UI language setting: English, Chinese, Finnish,
+                        Russian, and Spanish available in this release.</li> 
+                    <li>LibreTranslate integration for translating page 
+                        content.</li>
+                    <li>Viewing alt text of preformatted blocks.</li>
+                    <li>Improvements to color themes and page appearance.</li>
+                    <li>Rescaling the UI manually or when moving the window
+                        to a different display.</li>
+                    <li>Word/paragraph selection modes (double/triple click).</li>
+                    <li>Controlling a running instance via command line.</li>
+                </ul>
+                <p> The full release notes can be viewed inside the app by opening
+                    the "about:version" page.
+                </p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.3.0</url>
+        </release>
+        <release version="1.2.3" date="2021-03-14">
+            <description>
+                <p>Bug fixes:</p>
+                <ul>
+                    <li>Fixed XML parser hanging on numeric character entities.</li>
+                    <li>Fixed "Monospace Body" option causing Gemtext line 
+                        markup to be visible.</li>
+                    <li>Fixed bookmarking a wrapped link. Now the entire label 
+                        text gets used instead of just the clicked segment.</li>
+                    <li>Fixed handling of non-advancing monospace glyphs.</li>
+                </ul>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.2.3</url>
+        </release>
+        <release version="1.2.2" date="2021-03-07">
+            <description>
+                <ul>
+                    <li>Stability improvements.</li>
+                    <li>Whitespace is no longer normalized when using the monospace body setting.</li>
+                    <li>Fixed issues with percent-encoded Gopher paths.</li>
+                </ul>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.2.2</url>
+        </release>
+        <release version="1.2.1" date="2021-02-27">
+            <description>
+                <p> This is a major feature update that also has a number of user 
+                    interface design changes.
+                </p>
+                <p> New features include viewing and subscribing to Atom feeds,
+                    downloading any link as a file, editable bookmark icons,
+                    search engine integration, tab auto-reloading, fullscreen mode,
+                    and new font options for page content.
+                </p>
+                <p> UI enhancements include improved navbar and sidebar appearance,
+                    setting for UI accent color, and placement of dialog
+                    buttons.
+                </p>
+                <p> The full release notes can be viewed inside the app by opening
+                    the "about:version" page.
+                </p>
+                <p>v1.2.1 fixes a crash when creating a bookmark.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.2.1</url>
+        </release>
         <release version="1.2" date="2021-02-27">
             <description>
                 <p> This is a major feature update that also has a number of user 
@@ -63,7 +133,7 @@
                     the "about:version" page.
                 </p>
             </description>
-            <url>https://github.com/skyjake/lagrange/releases/tag/v1.2.0</url>                        
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.2.0</url>          
         </release>
         <release version="1.1.4" date="2021-02-22">
             <description>
