@@ -248,7 +248,7 @@ void setMaxLen_InputWidget(iInputWidget *d, size_t maxLen) {
         /* Set a fixed size. */
         iBlock *content = new_Block(maxLen);
         fill_Block(content, 'M');
-        setSize_Widget(
+        setFixedSize_Widget(
             as_Widget(d),
             add_I2(measure_Text(d->font, cstr_Block(content)), init_I2(6 * gap_UI, 2 * gap_UI)));
         delete_Block(content);

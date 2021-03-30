@@ -129,6 +129,7 @@ struct Impl_Widget {
     iString      id;
     int64_t      flags;
     iRect        rect;
+    iInt2        minSize;
     int          padding[4]; /* left, top, right, bottom */
     iAnim        visualOffset;
     int          bgColor;
@@ -221,7 +222,8 @@ iBool   hasParent_Widget            (const iWidget *d, const iWidget *someParent
 void    setId_Widget                (iWidget *, const char *id);
 void    setFlags_Widget             (iWidget *, int64_t flags, iBool set);
 void    setPos_Widget               (iWidget *, iInt2 pos);
-void    setSize_Widget              (iWidget *, iInt2 size);
+void    setFixedSize_Widget         (iWidget *, iInt2 fixedSize);
+void    setMinSize_Widget           (iWidget *, iInt2 minSize);
 void    setPadding_Widget           (iWidget *, int left, int top, int right, int bottom);
 iLocalDef void setPadding1_Widget   (iWidget *d, int padding) { setPadding_Widget(d, padding, padding, padding, padding); }
 void    setVisualOffset_Widget      (iWidget *, int value, uint32_t span, int animFlags);
@@ -238,6 +240,7 @@ iAny *  removeChild_Widget          (iWidget *, iAnyObject *child); /* returns a
 iAny *  child_Widget                (iWidget *, size_t index); /* O(n) */
 size_t  childIndex_Widget           (const iWidget *, const iAnyObject *child); /* O(n) */
 void    arrange_Widget              (iWidget *);
+void    resetSize_Widget            (iWidget *);
 iBool   dispatchEvent_Widget        (iWidget *, const SDL_Event *);
 iBool   processEvent_Widget         (iWidget *, const SDL_Event *);
 void    postCommand_Widget          (const iAnyObject *, const char *cmd, ...);

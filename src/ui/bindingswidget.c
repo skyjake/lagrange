@@ -110,6 +110,7 @@ static void updateItems_BindingsWidget_(iBindingsWidget *d) {
 void init_BindingsWidget(iBindingsWidget *d) {
     iWidget *w = as_Widget(d);
     init_Widget(w);
+    setId_Widget(w, "bindings");
     setFlags_Widget(w, resizeChildren_WidgetFlag, iTrue);
     d->activePos = iInvalidPos;
     d->contextPos = iInvalidPos;

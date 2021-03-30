@@ -148,8 +148,8 @@ void init_CertImportWidget(iCertImportWidget *d) {
     }
     addChild_Widget(w, iClob(page));
     arrange_Widget(w);
-    setSize_Widget(as_Widget(d->crtLabel), init_I2(width_Widget(w) - 6.5 * gap_UI, gap_UI * 12));
-    setSize_Widget(as_Widget(d->keyLabel), init_I2(width_Widget(w) - 6.5 * gap_UI, gap_UI * 12));
+    setFixedSize_Widget(as_Widget(d->crtLabel), init_I2(width_Widget(w) - 6.5 * gap_UI, gap_UI * 12));
+    setFixedSize_Widget(as_Widget(d->keyLabel), init_I2(width_Widget(w) - 6.5 * gap_UI, gap_UI * 12));
     /* Buttons. */
     addChild_Widget(w, iClob(makePadding_Widget(gap_UI)));
     iWidget *buttons = makeDialogButtons_Widget(

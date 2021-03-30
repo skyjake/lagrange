@@ -438,7 +438,7 @@ iInt2 delta_Click(const iClick *d) {
 iWidget *makePadding_Widget(int size) {
     iWidget *pad = new_Widget();
     setId_Widget(pad, "padding");
-    setSize_Widget(pad, init1_I2(size));
+    setFixedSize_Widget(pad, init1_I2(size));
     return pad;
 }
 
@@ -463,7 +463,7 @@ iWidget *makeHDiv_Widget(void) {
 
 iWidget *addAction_Widget(iWidget *parent, int key, int kmods, const char *command) {
     iLabelWidget *action = newKeyMods_LabelWidget("", key, kmods, command);
-    setSize_Widget(as_Widget(action), zero_I2());
+    setFixedSize_Widget(as_Widget(action), zero_I2());
     addChildFlags_Widget(parent, iClob(action), hidden_WidgetFlag);
     return as_Widget(action);
 }
@@ -856,16 +856,23 @@ iWidget *removeTabPage_Widget(iWidget *tabs, size_t index) {
 }
 
 void resizeToLargestPage_Widget(iWidget *tabs) {
+//    puts("RESIZE TO LARGEST PAGE ...");
+    iWidget *pages = findChild_Widget(tabs, "tabs.pages");
+    iForEach(ObjectList, i, children_Widget(pages)) {
+        setMinSize_Widget(i.object, zero_I2());
+//        resetSize_Widget(i.object);
+    }
     arrange_Widget(tabs);
     iInt2 largest = zero_I2();
-    iWidget *pages = findChild_Widget(tabs, "tabs.pages");
-    iConstForEach(ObjectList, i, children_Widget(pages)) {
-        largest = max_I2(largest, ((const iWidget *) i.object)->rect.size);
+    iConstForEach(ObjectList, j, children_Widget(pages)) {
+        const iWidget *page = constAs_Widget(j.object);
+        largest = max_I2(largest, page->rect.size);
     }
-    iForEach(ObjectList, j, children_Widget(pages)) {
-        setSize_Widget(j.object, largest);
+    iForEach(ObjectList, k, children_Widget(pages)) {
+        setMinSize_Widget(k.object, largest);
     }
-    setSize_Widget(tabs, addY_I2(largest, height_Widget(findChild_Widget(tabs, "tabs.buttons"))));
+    setFixedSize_Widget(tabs, addY_I2(largest, height_Widget(findChild_Widget(tabs, "tabs.buttons"))));
+//    puts("... DONE WITH RESIZE TO LARGEST PAGE");
 }
 
 iLabelWidget *tabButtonForPage_Widget_(iWidget *tabs, const iWidget *page) {
@@ -1012,7 +1019,7 @@ static void updateSheetPanelMetrics_(iWidget *sheet) {
         setSize_Widget(pad, init1_I2(naviHeight));
     }
 #endif
-    setSize_Widget(navi, init_I2(-1, naviHeight));
+    setFixedSize_Widget(navi, init_I2(-1, naviHeight));
 }
 
 static iBool slidePanelHandler_(iWidget *d, const char *cmd) {
@@ -1786,12 +1793,16 @@ static iBool toggleHandler_(iWidget *d, const char *cmd) {
                                        isSelected_Widget(d) ? 1 : 0));
         return iTrue;
     }
+    else if (equal_Command(cmd, "lang.changed")) {
+        /* TODO: Measure labels again. */
+    }
     return iFalse;
 }
 
 iWidget *makeToggle_Widget(const char *id) {
     iWidget *toggle = as_Widget(new_LabelWidget("${toggle.yes}", "toggle")); /* "YES" for sizing */
     setId_Widget(toggle, id);
+    /* TODO: Measure both labels and use the larger of the two. */
     updateTextCStr_LabelWidget((iLabelWidget *) toggle, "${toggle.no}"); /* actual initial value */
     setFlags_Widget(toggle, fixedWidth_WidgetFlag, iTrue);
     setCommandHandler_Widget(toggle, toggleHandler_);
@@ -1878,6 +1889,36 @@ static int cmp_MenuItem_(const void *e1, const void *e2) {
     return iCmpStr(a->label, b->label);
 }
 #endif
+
+void updatePreferencesLayout_Widget(iWidget *prefs) {
+    if (!prefs) return;
+    /* Doing manual layout here because the widget arranging logic isn't sophisticated enough. */
+    /* TODO: Make the arranging more sophisticated to automate this. */
+    static const char *inputIds[] = {
+        "prefs.searchurl",
+        "prefs.downloads",
+        "prefs.ca.file",
+        "prefs.ca.path",
+        "prefs.proxy.gemini",
+        "prefs.proxy.gopher",
+        "prefs.proxy.http"
+    };
+    iWidget *tabs = findChild_Widget(prefs, "prefs.tabs");
+    /* Input fields expand to the right edge. */
+    /* TODO: Add an arrangement flag for this. */
+    iForIndices(i, inputIds) {
+        iInputWidget *input = findChild_Widget(tabs, inputIds[i]);
+        if (input) {
+            as_Widget(input)->rect.size.x = 0;
+        }
+    }
+    as_Widget(findChild_Widget(prefs, "bindings"))->rect.size.x = 0;
+    resizeToLargestPage_Widget(tabs);
+    arrange_Widget(prefs);
+    iForIndices(i, inputIds) {
+        expandInputFieldWidth_(findChild_Widget(tabs, inputIds[i]));
+    }
+}
 
 iWidget *makePreferences_Widget(void) {
     iWidget *dlg = makeSheet_Widget("prefs");
@@ -2021,7 +2062,7 @@ iWidget *makePreferences_Widget(void) {
         addChildFlags_Widget(values, iClob(sats), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
     }
     /* Layout. */ {
-        appendTwoColumnPage_(tabs, "${heading.prefs.style}", '4', &headings, &values);
+        setId_Widget(appendTwoColumnPage_(tabs, "${heading.prefs.style}", '4', &headings, &values), "prefs.page.style");
         makeTwoColumnHeading_("${heading.prefs.fonts}", headings, values);
         /* Fonts. */ {
             addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.headingfont}")));
@@ -2096,22 +2137,13 @@ iWidget *makePreferences_Widget(void) {
         appendFramelessTabPage_(tabs, iClob(bind), "${heading.prefs.keys}", '6', KMOD_PRIMARY);
     }
     addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
-    resizeToLargestPage_Widget(tabs);
-    arrange_Widget(dlg);
-    /* Set input field sizes. */ {
-        expandInputFieldWidth_(findChild_Widget(tabs, "prefs.searchurl"));
-        expandInputFieldWidth_(findChild_Widget(tabs, "prefs.downloads"));
-        expandInputFieldWidth_(findChild_Widget(tabs, "prefs.ca.file"));
-        expandInputFieldWidth_(findChild_Widget(tabs, "prefs.ca.path"));
-        expandInputFieldWidth_(findChild_Widget(tabs, "prefs.proxy.gemini"));
-        expandInputFieldWidth_(findChild_Widget(tabs, "prefs.proxy.gopher"));
-        expandInputFieldWidth_(findChild_Widget(tabs, "prefs.proxy.http"));
-    }
+    updatePreferencesLayout_Widget(dlg);
     addChild_Widget(dlg,
                     iClob(makeDialogButtons_Widget(
                         (iMenuItem[]){ { "${dismiss}", SDLK_ESCAPE, 0, "prefs.dismiss" } }, 1)));
     addChild_Widget(get_Window()->root, iClob(dlg));
     finalizeSheet_Widget(dlg);
+    //printTree_Widget(dlg);
     return dlg;
 }
 

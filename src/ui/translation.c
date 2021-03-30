@@ -442,8 +442,9 @@ iBool handleCommand_Translation(iTranslation *d, const char *cmd) {
             setFlags_Widget(as_Widget(acceptButton), disabled_WidgetFlag, iTrue);
             iTranslationProgressWidget *prog = new_TranslationProgressWidget();
             setPos_Widget(as_Widget(prog), langs->rect.pos);
-            setSize_Widget(as_Widget(prog), langs->rect.size);
-            addChild_Widget(d->dlg, iClob(prog));
+            setFixedSize_Widget(as_Widget(prog), init_I2(width_Rect(innerBounds_Widget(d->dlg)),
+                                                         langs->rect.size.y));
+            addChildFlags_Widget(d->dlg, iClob(prog), 0);
             submit_Translation(d);
         }
         return iTrue;

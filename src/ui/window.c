@@ -875,10 +875,10 @@ static void updateMetrics_Window_(iWindow *d) {
         iWidget *appMax   = findChild_Widget(winBar, "winbar.max");
         iWidget *appClose = findChild_Widget(winBar, "winbar.close");
         setPadding_Widget(winBar, 0, gap_UI / 3, 0, 0);
-        setSize_Widget(appMin, init_I2(gap_UI * 11.5f, height_Widget(appTitle)));
-        setSize_Widget(appMax, appMin->rect.size);
-        setSize_Widget(appClose, appMin->rect.size);
-        setSize_Widget(appIcon, init_I2(appIconSize_(), appMin->rect.size.y));
+        setFixedSize_Widget(appMin, init_I2(gap_UI * 11.5f, height_Widget(appTitle)));
+        setFixedSize_Widget(appMax, appMin->rect.size);
+        setFixedSize_Widget(appClose, appMin->rect.size);
+        setFixedSize_Widget(appIcon, init_I2(appIconSize_(), appMin->rect.size.y));
     }
     iWidget *navBar     = findChild_Widget(d->root, "navbar");
     iWidget *lock       = findChild_Widget(navBar, "navbar.lock");
@@ -888,7 +888,7 @@ static void updateMetrics_Window_(iWindow *d) {
     setPadding_Widget(as_Widget(url), 0, gap_UI, 0, gap_UI);
     navBar->rect.size.y = 0; /* recalculate height based on children (FIXME: shouldn't be needed) */
     updateSize_LabelWidget((iLabelWidget *) lock);
-    setSize_Widget(embedPad, init_I2(width_Widget(lock) + gap_UI / 2, 1));
+    setFixedSize_Widget(embedPad, init_I2(width_Widget(lock) + gap_UI / 2, 1));
     setContentPadding_InputWidget((iInputWidget *) url, width_Widget(lock) * 0.75,
                                   width_Widget(lock) * 0.75);
     rightEmbed->rect.pos.y = gap_UI;
@@ -1251,6 +1251,7 @@ static void updateRootSize_Window_(iWindow *d, iBool notifyAlways) {
     const iInt2 oldSize = *size;
     SDL_GetRendererOutputSize(d->render, &size->x, &size->y);
     size->y -= d->keyboardHeight;
+    d->root->minSize = *size;
     if (notifyAlways || !isEqual_I2(oldSize, *size)) {
         const iBool isHoriz = (d->place.lastNotifiedSize.x != size->x);
         const iBool isVert  = (d->place.lastNotifiedSize.y != size->y);
@@ -1465,7 +1466,7 @@ void init_Window(iWindow *d, iRect rect) {
     setupWindow_iOS(d);
 #endif
     d->root = new_Widget();
-    setFlags_Widget(d->root, focusRoot_WidgetFlag, iTrue);
+    setFlags_Widget(d->root, fixedSize_WidgetFlag | focusRoot_WidgetFlag, iTrue);
     d->presentTime = 0.0;
     d->frameTime = SDL_GetTicks();
     d->loadAnimTimer = 0;
@@ -1840,7 +1841,9 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
                 insertMacMenus_();
 #endif
                 invalidate_Window_(d);
+                updatePreferencesLayout_Widget(findChild_Widget(d->root, "prefs"));
                 arrange_Widget(d->root);
+                printTree_Widget(findChild_Widget(d->root, "prefs"));
             }
             if (oldHover != hover_Widget()) {
                 postRefresh_App();
