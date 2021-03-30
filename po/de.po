@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-03-29 05:43+0000\n"
+"PO-Revision-Date: 2021-04-02 19:18+0000\n"
 "Last-Translator: Aaron Fischer <mail@aaron-fischer.net>\n"
 "Language-Team: German <http://weblate.skyjake.fi/projects/lagrange/ui/de/>\n"
 "Language: de\n"
@@ -108,7 +108,7 @@ msgid "menu.openlocation"
 msgstr "Adresse öffnen…"
 
 msgid "menu.find"
-msgstr "Auf der Seite suchen"
+msgstr "Seite durchsuchen"
 
 msgid "macos.menu.find"
 msgstr "Suchen"
