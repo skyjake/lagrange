@@ -8,51 +8,84 @@
 
 ## 1.3
 
-* Added a language translation feature. It uses a self-hosted LibreTranslate instance running on `xlt.skyjake.fi`.
-* Only one instance of Lagrange is allowed to run per user directory. This prevents instances from overwriting each other's data.
-* A server certificate can also be verified by Certificate Authorities. When "CA file" and/or "CA path" are set in Preferences, CA verification will mark a certificate as trusted.
-* Added "about:about" that lists all the available "about:" pages.
-* Added option to word wrap plain text files. This is on by default because there is no horizontal scrolling for plain text.
-* Gopher: Handling the 'h' line type.
-* Large images are downscaled to an appropriate size for presentation.
-* Improved font glyph caching to avoid stuttering during scrolling. All required glyphs are cached after a page load finishes. This allows more efficient copying of glyphs as the operations can be batched.
-* Improved event handling to support touchscreens on any platform.
-* Fixed use of multiple search terms for quick lookup.
-* Fixed handling of IDNs when the user sets a server certificate as trusted via the UI.
-* Fixed handling of multiple feeds having an entry with the same URL.
-* Fixed percent-decoding of URLs on the command line and coming in via system URL handlers.
+Localization:
+* Added the first set of UI translations: Chinese (Simplified, Traditional), Finnish, Russian, and Spanish. Many thanks to the translators!
+=> https://weblate.skyjake.fi/projects/lagrange/ui  Lagrange UI translations (Weblate project)
+* Added page content translation using a LibreTranslate instance running on `xlt.skyjake.fi`. This is somewhat experimental and may occasionally mess up Gemtext markup.
+=> https://libretranslate.com                More information about LibreTranslate
+=> gemini://skyjake.fi/lagrange/privacy.gmi  Lagrange privacy policy
 
-User interface:
-* Added unread feed entry count to the sidebar.
-* Default page scroll keybindings changed: PageUp/Down scroll a whole page, and Space/Shift+Space scrolls half a page. If you're changed these bindings, you'll need to rebind them.
-* UI scaling factor is applied immediately when closing Preferences. Restarting is no longer necessary.
-* Window scaling changes automatically when moving window to a different display.
-* Added a context menu for toggling sidebars. The menu appears when right-clicking on the navbar or the sidebar tab buttons.
-* Added a cut/copy/paste context menu to input fields.
-* Reload button moved into the URL field.
-* Added an "Import..." button to the empty Identities sidebar.
-* Narrow URL input fields will not display the default "gemini" scheme.
-* Keyboard modifiers can be customized using the `modmap.txt` configuration file.
-* Caps Lock can be used as a modifier key.
-* Fixed background activity indicators overlapping each other.
+Resources:
+* Added Noto Sans CJK (Simplified Chinese) font.
+* Added Noto Sans Arabic font. Note that right-to-left/bidirectional text rendering is *not* implemented yet.
+* Added "about:about" that lists all the available "about:" pages.
+
+Browsing:
+* Alt text is shown when hovering over a preformatted block.
+* Clicking on a preformatted block collapses it, leaving only the alt text.
+* Added option to collapse all preformatted blocks on page load.
+* A server certificate can also be verified by Certificate Authorities. When "CA file" and/or "CA path" are set in Preferences, CA verification will mark a certificate as trusted.
+* Relaxed TOFU certificate checking when it comes to domain names: `domain.tld` in a certificate is implicitly considered to also mean `*.domain.tld`.
+* Fixed handling of IDNs when the user sets a server certificate as trusted via the UI.
+* Fixed handling of unknown URI schemes. Previously they were forcefully converted to absolute URIs, breaking them.
+
+Page content and rendering:
+* Added option to wrap lines in plain text files. This is on by default because there is no horizontal scrolling for plain text.
+* Large images are downscaled to an appropriate size for presentation.
+* Improved font glyph caching to reduce stuttering during scrolling. All required glyphs are cached after a page load finishes. This allows more efficient copying of glyphs as the operations can be batched.
+* Larger content buffers for scrolling, reducing need to redraw content.
+* Gopher: Handling the 'h' line type.
+* Fixed minor issues with word wrapping.
 * Fixed minor blending artifacts with the current heading shown on the right side of the page.
 
-Visual design:
-* The icon of Gemini links to the same domain can be overridden with the Emoji or other pictograph at the start of the link label. For an example, see Astrobotany.
-* Links are shown as bold text and tinted with the page theme color.
-* The spacing of bullet lists vs. link lists is more consistent.
-* Adjustments to the "Colorful Dark", "Colorful Light", and "Gray" themes. "Gray" looks different in dark and light UI modes.
+Themes:
+* Color adjustments to the "Colorful Dark", "Colorful Light", and "Gray" themes. "Gray" looks different in dark and light UI modes.
+* Spacing of bullet lists vs. link lists is more consistent.
+* Links are shown in bold, and tinted with the page theme color for more coherent appearance.
+* Custom link icons: Gemini links whose destination is on the same domain use as icon the Emoji or other pictograph at the start of the link label. (For example, see Astrobotany menus.)
+
+User interface:
+* Improved event handling to support touch screens on any platform (if supported by SDL).
+* UI scaling factor is applied immediately when closing Preferences. Restarting is no longer necessary.
+* Window rescaled automatically when moving it to a display with a different DPI.
+* Double/triple click selection modes. Double click and drag will select by word, triple click by paragraph.
 * Popup menus have icons for items to make it faster to find the item you're looking for.
 * Soft shadows for popup menus.
+* Reload button moved into the URL field.
+* Narrow URL input fields will not display the default "gemini" scheme.
+* Domain name is highlighted in URL fields.
+* Added a cut/copy/paste context menu to input fields.
 * Scrollbars fade away on macOS/iOS and dim on other platforms.
+* Preferences dialog was partially reorganized for clarity.
 * Tabs in Preferences look the same as tabs in the sidebar.
-* Cleaner unread feed item appearance. 
-* URL fields highlight the domain name.
+* Dialog buttons show the corresponding shortcut key.
+* Fixed background activity indicators overlapping each other.
+* Fixed glitches when widgets extend beyond the left edge of the window.
+* Fixed use of plurals in UI strings, enabling support for three or more plural forms.
 
-Command line usage:
-* Added `--help`, `--version` options.
+Sidebars:
+* Added unread feed entry count to the sidebar.
+* Added a context menu for toggling sidebars. The menu appears when right-clicking on the navbar or on the sidebar tab buttons.
+* Added an "Import..." button to the empty Identities sidebar.
+* Cleaner appearance for unread feed items in the sidebar.
+
+Keybindings:
+* Default page scroll keybindings changed: PageUp/Down scroll a whole page, and Space/Shift+Space scrolls half a page. If you're changed these bindings, note that they will be reset to defaults.
+* Added keybinding for subscribing to a page.
+* Keyboard modifiers can be remapped using the `modmap.txt` configuration file.
+* Caps Lock can be used as a modifier key.
+* Internet hot keys (if present on a keyboard) can be used to navigate back/forward and reload the page.
+
+Command line use:
+* Added conventional `--help`, `--version` options.
 * A previously started instance can be controlled with command line options.
-* `--list-tab-urls` prints a list of the currently open URLs.
+* `--list-tab-urls` prints a list of the currently open URLs in the running instance.
+
+Bug fixes:
+* Only one instance of Lagrange is allowed to run per user directory. This prevents instances from overwriting each other's data.
+* Fixed use of multiple search terms for quick lookup.
+* Fixed handling of multiple feeds having an entry with the same URL.
+* Fixed percent-decoding of URLs on the command line and coming in via system URL handlers.
 
 ## 1.2.3
 * Fixed XML parser hanging on numeric character entities.
