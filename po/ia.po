@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-03-26 10:26+0000\n"
+"PO-Revision-Date: 2021-03-30 12:05+0000\n"
 "Last-Translator: Olga Smirnova <mistresssilvara@hotmail.com>\n"
 "Language-Team: Interlingua <http://weblate.skyjake.fi/projects/lagrange/ui/"
 "ia/>\n"
@@ -528,7 +528,7 @@ msgid "prefs.theme"
 msgstr "Thema:"
 
 msgid "prefs.theme.black"
-msgstr "Pur nigre"
+msgstr "Nigre"
 
 msgid "prefs.theme.dark"
 msgstr "Obscur"
@@ -537,7 +537,7 @@ msgid "prefs.theme.light"
 msgstr "Clar"
 
 msgid "prefs.theme.white"
-msgstr "Pur blanc"
+msgstr "Blanc"
 
 msgid "prefs.accent"
 msgstr "Color de accento:"
@@ -1011,3 +1011,140 @@ msgstr "Disaparite"
 
 msgid "error.gone.msg"
 msgstr "Le demandate ressource non es plus disponibile."
+
+msgid "menu.bookmarks.list"
+msgstr "Monstrar tote le marcapaginas"
+
+msgid "macos.menu.bookmarks.list"
+msgstr "Monstrar tote"
+
+msgid "num.bytes"
+msgid_plural "num.bytes.n"
+msgstr[0] "%zu byte"
+msgstr[1] "%zu bytes"
+
+msgid "prefs.doctheme.name.colorfuldark"
+msgstr "Colorate obscur"
+
+msgid "prefs.doctheme.name.colorfullight"
+msgstr "Colorate clar"
+
+msgid "prefs.quoteicon.icon"
+msgstr "Icone “"
+
+msgid "prefs.decodeurls"
+msgstr "Decodificar URLs:"
+
+msgid "keys.hoverurl"
+msgstr "Monstrar le URL al passar supra"
+
+msgid "keys.subscribe"
+msgstr "Abonar se le pagina"
+
+msgid "about.powered"
+msgstr "Providite de SDL 2, OpenSSL e ☕️"
+
+msgid "menu.autoreload"
+msgstr "Recargar automaticamente…"
+
+msgid "status.query"
+msgstr "Requesta de cerca"
+
+msgid "menu.aboutpages"
+msgstr "Paginas “A proposito”"
+
+msgid "lang.zh.hant"
+msgstr "Chinese (traditional)"
+
+msgid "heading.bookmark.add"
+msgstr "ADDER MARCAPAGINA"
+
+msgid "heading.bookmark.edit"
+msgstr "MODIFICAR MARCAPAGINA"
+
+msgid "heading.prefs.widelayout"
+msgstr "Disposition large"
+
+msgid "prefs.hoverlink"
+msgstr "Monstrar le URL al passar supra:"
+
+msgid "prefs.imageloadscroll"
+msgstr "Cargar le imagine secun rolamento:"
+
+msgid "prefs.hidetoolbarscroll"
+msgstr "Celar le barra de instrumentos secun rolamento:"
+
+msgid "error.badresource.msg"
+msgstr "Li ressource requirite non existe."
+
+msgid "error.unsupported.protocol.msg"
+msgstr "Le protocollo requirite non es supportate de iste application."
+
+msgid "error.notfound.msg"
+msgstr "Le ressource requirite es introvabile actualmente."
+
+msgid "error.proxyrefusal"
+msgstr "Le requesta al proxy refusate"
+
+msgid "error.cert.auth.msg"
+msgstr ""
+"Li providite certificato de cliente es valide, ma non es autorisate por "
+"accesse al requirite ressource."
+
+# Interpret as "Results from bookmarks..."
+msgid "heading.lookup.bookmarks"
+msgstr "MARCAPAGINAS"
+
+# Interpret as "Results from feeds..."
+msgid "heading.lookup.feeds"
+msgstr "SYNDICATIONES"
+
+# Interpret as "Results from history..."
+msgid "heading.lookup.history"
+msgstr "CHRONOLOGIA"
+
+# Interpret as "Results from page content..."
+msgid "heading.lookup.pagecontent"
+msgstr "CONTENTO DEL PAGINE"
+
+# Interpret as "Results from identitites..."
+msgid "heading.lookup.identities"
+msgstr "IDENTITATES"
+
+# Interpret as "Other results..."
+msgid "heading.lookup.other"
+msgstr "ALTERE"
+
+msgid "heading.feedcfg"
+msgstr "PARAMETROS DEL SYNDICATION"
+
+msgid "reload.never"
+msgstr "Jammais"
+
+msgid "reload.onceperday"
+msgstr "Un vice per die"
+
+#, c-format
+msgid "num.minutes"
+msgid_plural "num.minutes.n"
+msgstr[0] "%d minuta"
+msgstr[1] "%d minutas"
+
+#, c-format
+msgid "num.hours"
+msgid_plural "num.hours.n"
+msgstr[0] "%d hora"
+msgstr[1] "%d horas"
+
+msgid "dlg.certimport.notfound.page"
+msgstr "Nulle certificato o clave private esseva trovate sur le pagina actual."
+
+msgid "pageinfo.domain.match"
+msgstr "Nomine de dominio es equal"
+
+msgid "pageinfo.domain.mismatch"
+msgstr "Nomine de dominio in conflicto"
+
+#, c-format
+msgid "dlg.input.prompt"
+msgstr "Provide ingresso por %s:"

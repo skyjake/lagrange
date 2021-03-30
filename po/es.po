@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-03-28 06:32+0000\n"
-"Last-Translator: El Mau <public@correolibre.net>\n"
+"PO-Revision-Date: 2021-03-30 12:05+0000\n"
+"Last-Translator: Wally Hackenslacker <mastor89@protonmail.com>\n"
 "Language-Team: Spanish <http://weblate.skyjake.fi/projects/lagrange/ui/es/>\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
@@ -114,7 +114,7 @@ msgid "prefs.theme"
 msgstr "Tema:"
 
 msgid "prefs.theme.black"
-msgstr "Negro Puro"
+msgstr "Negro"
 
 msgid "prefs.theme.dark"
 msgstr "Oscuro"
@@ -836,7 +836,7 @@ msgid "sidebar.feeds"
 msgstr "Suscripciones"
 
 msgid "prefs.theme.white"
-msgstr "Blanco Puro"
+msgstr "Blanco"
 
 msgid "status.feeds"
 msgstr "Actualizando Suscripciones"
@@ -1335,3 +1335,12 @@ msgid "num.hours"
 msgid_plural "num.hours.n"
 msgstr[0] "%d hora"
 msgstr[1] "%d horas"
+
+msgid "lang.zh.hant"
+msgstr "Chino (Tradicional)"
+
+msgid "prefs.collapsepreonload"
+msgstr "Colapsar pre-formateado:"
+
+msgid "doc.pre.nocaption"
+msgstr "Texto pre-formateado sin leyenda"
