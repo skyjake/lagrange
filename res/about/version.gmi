@@ -10,10 +10,10 @@
 
 Localization:
 * Added the first set of UI translations: Chinese (Simplified, Traditional), Finnish, Russian, and Spanish. Many thanks to the translators!
+* Added page content translation using a LibreTranslate instance running on `xlt.skyjake.fi`. This is somewhat experimental and may occasionally mess up Gemtext markup. Expect long pages to be quite slow to translate (more than a minute).
 => https://weblate.skyjake.fi/projects/lagrange/ui  Lagrange UI translations (Weblate project)
-* Added page content translation using a LibreTranslate instance running on `xlt.skyjake.fi`. This is somewhat experimental and may occasionally mess up Gemtext markup.
-=> https://libretranslate.com                More information about LibreTranslate
-=> gemini://skyjake.fi/lagrange/privacy.gmi  Lagrange privacy policy
+=> https://libretranslate.com                       More information about LibreTranslate
+=> gemini://skyjake.fi/lagrange/privacy.gmi         Lagrange privacy policy
 
 Resources:
 * Added Noto Sans CJK (Simplified Chinese) font.
@@ -30,6 +30,10 @@ Browsing:
 * Fixed handling of unknown URI schemes. Previously they were forcefully converted to absolute URIs, breaking them.
 
 Page content and rendering:
+* Color adjustments to the "Colorful Dark", "Colorful Light", and "Gray" themes. "Gray" looks different in dark and light UI modes.
+* Spacing of bullet lists vs. link lists is more consistent.
+* Links are shown in bold, and tinted with the page theme color for more coherent appearance.
+* Custom link icons: Gemini links whose destination is on the same domain use as icon the Emoji or other pictograph at the start of the link label. (For example, see Astrobotany menus.)
 * Added option to wrap lines in plain text files. This is on by default because there is no horizontal scrolling for plain text.
 * Large images are downscaled to an appropriate size for presentation.
 * Improved font glyph caching to reduce stuttering during scrolling. All required glyphs are cached after a page load finishes. This allows more efficient copying of glyphs as the operations can be batched.
@@ -38,36 +42,28 @@ Page content and rendering:
 * Fixed minor issues with word wrapping.
 * Fixed minor blending artifacts with the current heading shown on the right side of the page.
 
-Themes:
-* Color adjustments to the "Colorful Dark", "Colorful Light", and "Gray" themes. "Gray" looks different in dark and light UI modes.
-* Spacing of bullet lists vs. link lists is more consistent.
-* Links are shown in bold, and tinted with the page theme color for more coherent appearance.
-* Custom link icons: Gemini links whose destination is on the same domain use as icon the Emoji or other pictograph at the start of the link label. (For example, see Astrobotany menus.)
-
 User interface:
 * Improved event handling to support touch screens on any platform (if supported by SDL).
 * UI scaling factor is applied immediately when closing Preferences. Restarting is no longer necessary.
 * Window rescaled automatically when moving it to a display with a different DPI.
+* Added unread feed entry count to the sidebar.
+* Added a context menu for toggling sidebars. The menu appears when right-clicking on the navbar or on the sidebar tab buttons.
 * Double/triple click selection modes. Double click and drag will select by word, triple click by paragraph.
 * Popup menus have icons for items to make it faster to find the item you're looking for.
 * Soft shadows for popup menus.
+* Scrollbars fade away on macOS/iOS and dim on other platforms.
 * Reload button moved into the URL field.
 * Narrow URL input fields will not display the default "gemini" scheme.
 * Domain name is highlighted in URL fields.
 * Added a cut/copy/paste context menu to input fields.
-* Scrollbars fade away on macOS/iOS and dim on other platforms.
+* Added an "Import..." button to the empty Identities sidebar.
 * Preferences dialog was partially reorganized for clarity.
 * Tabs in Preferences look the same as tabs in the sidebar.
+* Cleaner appearance for unread feed items in the sidebar.
 * Dialog buttons show the corresponding shortcut key.
 * Fixed background activity indicators overlapping each other.
 * Fixed glitches when widgets extend beyond the left edge of the window.
 * Fixed use of plurals in UI strings, enabling support for three or more plural forms.
-
-Sidebars:
-* Added unread feed entry count to the sidebar.
-* Added a context menu for toggling sidebars. The menu appears when right-clicking on the navbar or on the sidebar tab buttons.
-* Added an "Import..." button to the empty Identities sidebar.
-* Cleaner appearance for unread feed items in the sidebar.
 
 Keybindings:
 * Default page scroll keybindings changed: PageUp/Down scroll a whole page, and Space/Shift+Space scrolls half a page. If you're changed these bindings, note that they will be reset to defaults.
