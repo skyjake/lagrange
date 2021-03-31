@@ -41,7 +41,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <SDL_surface.h>
 #include <SDL_hints.h>
+#include <SDL_version.h>
 #include <stdarg.h>
+
+#if SDL_VERSION_ATLEAST(2, 0, 10)
+#   define LAGRANGE_RASTER_DEPTH    8
+#   define LAGRANGE_RASTER_FORMAT   SDL_PIXELFORMAT_INDEX8
+#else
+#   define LAGRANGE_RASTER_DEPTH    32
+#   define LAGRANGE_RASTER_FORMAT   SDL_PIXELFORMAT_RGBA8888
+#endif
 
 iDeclareType(Font)
 iDeclareType(Glyph)
@@ -473,7 +482,15 @@ static SDL_Surface *rasterizeGlyph_Font_(const iFont *d, uint32_t glyphIndex, fl
     SDL_Surface *surface8 =
         SDL_CreateRGBSurfaceWithFormatFrom(bmp, w, h, 8, w, SDL_PIXELFORMAT_INDEX8);
     SDL_SetSurfacePalette(surface8, text_.grayscale);
+#if LAGRANGE_RASTER_DEPTH != 8
+    /* Convert to the cache format. */
+    SDL_Surface *surf = SDL_ConvertSurfaceFormat(surface8, LAGRANGE_RASTER_FORMAT, 0);
+    free(bmp);
+    SDL_FreeSurface(surface8);
+    return surf;
+#else
     return surface8;
+#endif
 }
 
 #if 0
@@ -708,7 +725,9 @@ void cacheTextGlyphs_Font_(iFont *d, const iRangecc text) {
                 if (buf == NULL) {
                     rasters = new_Array(sizeof(iRasterGlyph));
                     buf     = SDL_CreateRGBSurfaceWithFormat(
-                                0, bufSize.x, bufSize.y, 8, SDL_PIXELFORMAT_INDEX8);
+                                0, bufSize.x, bufSize.y,
+                                LAGRANGE_RASTER_DEPTH,
+                                LAGRANGE_RASTER_FORMAT);
                     SDL_SetSurfacePalette(buf, text_.grayscale);
                 }
                 SDL_Surface *surfaces[2] = {
@@ -739,7 +758,9 @@ void cacheTextGlyphs_Font_(iFont *d, const iRangecc text) {
                 }
                 iForIndices(i, surfaces) {
                     if (surfaces[i]) {
-                        free(surfaces[i]->pixels);
+                        if (surfaces[i]->flags & SDL_PREALLOC) {
+                            free(surfaces[i]->pixels);
+                        }
                         SDL_FreeSurface(surfaces[i]);
                     }
                 }
