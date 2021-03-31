@@ -98,7 +98,8 @@ void makeTexture_GmImage(iGmImage *d) {
         /* Resize down to min(maximum texture size, window size). */ {
             SDL_Rect dispRect;
             SDL_GetDisplayBounds(SDL_GetWindowDisplayIndex(window->win), &dispRect);
-            const iInt2 maxSize = min_I2(maxTextureSize_Window(window),
+            const iInt2 maxSize = min_I2(isEqual_I2(maxTextureSize_Window(window), zero_I2()) ?
+                                         texSize : maxTextureSize_Window(window),
                                          coord_Window(window, dispRect.w, dispRect.h));
             iInt2 scaled = d->size;
             if (scaled.x > maxSize.x) {
