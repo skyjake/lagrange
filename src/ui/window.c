@@ -1843,7 +1843,7 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
                 invalidate_Window_(d);
                 updatePreferencesLayout_Widget(findChild_Widget(d->root, "prefs"));
                 arrange_Widget(d->root);
-                printTree_Widget(findChild_Widget(d->root, "prefs"));
+                //printTree_Widget(findChild_Widget(d->root, "prefs"));
             }
             if (oldHover != hover_Widget()) {
                 postRefresh_App();
