@@ -483,10 +483,12 @@ static SDL_Surface *rasterizeGlyph_Font_(const iFont *d, uint32_t glyphIndex, fl
         &d->font, d->xScale, d->yScale, xShift, 0.0f, glyphIndex, &w, &h, 0, 0);
     SDL_Surface *surface8 =
         SDL_CreateRGBSurfaceWithFormatFrom(bmp, w, h, 8, w, SDL_PIXELFORMAT_INDEX8);
+    SDL_SetSurfaceBlendMode(surface8, SDL_BLENDMODE_NONE);
     SDL_SetSurfacePalette(surface8, text_.grayscale);
 #if LAGRANGE_RASTER_DEPTH != 8
     /* Convert to the cache format. */
     SDL_Surface *surf = SDL_ConvertSurfaceFormat(surface8, LAGRANGE_RASTER_FORMAT, 0);
+    SDL_SetSurfaceBlendMode(surf, SDL_BLENDMODE_NONE);
     free(bmp);
     SDL_FreeSurface(surface8);
     return surf;
@@ -730,6 +732,7 @@ void cacheTextGlyphs_Font_(iFont *d, const iRangecc text) {
                                 0, bufSize.x, bufSize.y,
                                 LAGRANGE_RASTER_DEPTH,
                                 LAGRANGE_RASTER_FORMAT);
+                    SDL_SetSurfaceBlendMode(buf, SDL_BLENDMODE_NONE);
                     SDL_SetSurfacePalette(buf, text_.grayscale);
                 }
                 SDL_Surface *surfaces[2] = {
