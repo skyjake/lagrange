@@ -1,2 +1,94 @@
 msgid ""
-msgstr "X-Generator: Weblate\nMIME-Version: 1.0\nContent-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit"
+msgstr ""
+"Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
+"PO-Revision-Date: 2021-04-02 19:18+0000\n"
+"Last-Translator: MCMic <come@chilliet.eu>\n"
+"Language-Team: French <http://weblate.skyjake.fi/projects/lagrange/ui/fr/>\n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n > 1;\n"
+"X-Generator: Weblate 4.5.1\n"
+
+msgid "menu.quit"
+msgstr "Quitter Lagrange"
+
+msgid "menu.cut"
+msgstr "Couper"
+
+msgid "menu.copy"
+msgstr "Copier"
+
+msgid "menu.about"
+msgstr "À propos"
+
+msgid "panel.back"
+msgstr "Retour"
+
+msgid "menu.identity.import"
+msgstr "Importer…"
+
+msgid "sidebar.history"
+msgstr "Historique"
+
+msgid "sidebar.identities"
+msgstr "Identités"
+
+# megabytes, used as the unit after a number
+msgid "mb"
+msgstr "MO"
+
+# kilobytes, used as the unit after a number
+msgid "kb"
+msgstr "KO"
+
+msgid "feeds.today"
+msgstr "Aujourd’hui"
+
+msgid "feeds.entry.markread"
+msgstr "Marquer comme lu"
+
+msgid "about.version"
+msgstr "Version"
+
+msgid "cancel"
+msgstr "Annuler"
+
+msgid "toggle.yes"
+msgstr "OUI"
+
+msgid "toggle.no"
+msgstr "NON"
+
+msgid "menu.title.file"
+msgstr "Fichier"
+
+msgid "menu.title.edit"
+msgstr "Édition"
+
+msgid "menu.duptab"
+msgstr "Dupliquer l’onglet"
+
+msgid "menu.paste"
+msgstr "Coller"
+
+msgid "num.bytes"
+msgid_plural "num.bytes.n"
+msgstr[0] "%zu octet"
+msgstr[1] "%zu octets"
+
+msgid "menu.title.view"
+msgstr "Affichage"
+
+msgid "menu.title.help"
+msgstr "Aide"
+
+msgid "feeds.entry.markunread"
+msgstr "Marquer comme non lu"
+
+msgid "menu.newtab"
+msgstr "Nouvel onglet"
+
+msgid "menu.closetab"
+msgstr "Fermer l’onglet"
