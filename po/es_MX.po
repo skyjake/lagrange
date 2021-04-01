@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-03-29 05:43+0000\n"
+"PO-Revision-Date: 2021-04-02 19:18+0000\n"
 "Last-Translator: El Mau <public@correolibre.net>\n"
 "Language-Team: Spanish (Mexico) <http://weblate.skyjake.fi/projects/lagrange/"
 "ui/es_MX/>\n"
@@ -395,3 +395,305 @@ msgstr "Refrescar Fuentes Remotas"
 
 msgid "doc.pre.nocaption"
 msgstr "Texto preformateado sin título"
+
+msgid "ident.notused"
+msgstr "No se usa"
+
+msgid "ident.temporary"
+msgstr "Temporal"
+
+# strftime() formatted
+#, c-format
+msgid "ident.expiry"
+msgstr "Expira el %d, %b, %Y"
+
+msgid "ident.use"
+msgstr "Usado en Esta Página"
+
+msgid "ident.stopuse"
+msgstr "Dejar de Usar en Esta Página"
+
+msgid "ident.showuse"
+msgstr "Mostrar Uso"
+
+msgid "dlg.certimport.notes"
+msgstr "Notas:"
+
+msgid "hint.certimport.description"
+msgstr "descripción"
+
+msgid "dlg.certimport.nocert"
+msgstr "Sin Certificado"
+
+msgid "dlg.certimport.nokey"
+msgstr "Sin Clave Privada"
+
+msgid "link.hint.audio"
+msgstr "Reproducir Audio"
+
+msgid "link.hint.image"
+msgstr "Ver Imagen"
+
+msgid "ident.using"
+msgstr "Usando en esta página"
+
+msgid "ident.stopuse.all"
+msgstr "Dejar de Usar en Todas Partes"
+
+#, c-format
+msgid "dlg.input.prompt"
+msgstr "Por favor escribir entrada para %s:"
+
+#, c-format
+msgid "dlg.import.found"
+msgid_plural "dlg.import.found.n"
+msgstr[0] "Encontrado un nuevo enlace en la página."
+msgstr[1] "Encontrados %d nuevos enlaces en la página."
+
+#, c-format
+msgid "dlg.import.add"
+msgid_plural "dlg.import.add.n"
+msgstr[0] "%s Agregar favorito"
+msgstr[1] "%s Agregar %d favoritos"
+
+#, c-format
+msgid "dlg.certwarn.mayberenewed"
+msgid_plural "dlg.certwarn.mayberenewed.n"
+msgstr[0] ""
+"El certificado recibido puede haber sido renovado recientemente — es para el "
+"dominio correcto y no ha expirado. El certificado confiable actual expirará "
+"el %s, en un día."
+msgstr[1] ""
+"El certificado recibido puede haber sido renovado recientemente — es para el "
+"dominio correcto y no ha expirado. El certificado confiable actual expirará "
+"el %s, en %d días."
+
+msgid "heading.ident.use"
+msgstr "USO DE IDENTIDADES"
+
+msgid "menu.edit.notes"
+msgstr "Editar Notas…"
+
+msgid "heading.ident.notes"
+msgstr "NOTAS DE IDENTIDAD"
+
+# %s refers to name of an identity.
+#, c-format
+msgid "dlg.ident.notes"
+msgstr "Notas acerca de %s:"
+
+msgid "ident.fingerprint"
+msgstr "Copiar Huella Digital"
+
+msgid "ident.delete"
+msgstr "Borrar Identidad…"
+
+msgid "heading.ident.delete"
+msgstr "BORRAR IDENTIDAD"
+
+#, c-format
+msgid "dlg.confirm.ident.delete"
+msgstr ""
+"¿De verdad quiere borrar la identidad\n"
+"%s%s%s\n"
+"incluyendo su certificado y archivos de clave privada?"
+
+msgid "dlg.ident.delete"
+msgstr "Borrar Identidad y Archivos"
+
+msgid "sidebar.empty.idents"
+msgstr "Sin Identidades"
+
+# The %s format characters are used to highlight the word "Help" and must be used in the translation in same way as here.
+#, c-format
+msgid "ident.gotohelp"
+msgstr ""
+"Vea la %sAyuda%s para más información sobre los certificados cliente TLS."
+
+msgid "heading.unsub"
+msgstr "ELIMINAR SUSCRIPCIÓN"
+
+#, c-format
+msgid "dlg.confirm.unsub"
+msgstr ""
+"¿De verdad quiere eliminar la suscripción\n"
+"\"%s\"?"
+
+msgid "dlg.unsub"
+msgstr "Eliminar suscripción"
+
+#, c-format
+msgid "error.unsupported.suggestsave"
+msgstr ""
+"Puede guardarlo como archivo a su carpeta de Descargas, sin embargo. "
+"Presione %s o seleccione \"%s\" del menú."
+
+msgid "heading.pageinfo"
+msgstr "INFORMACIÓN DE PÁGINA"
+
+msgid "pageinfo.header.cached"
+msgstr "(contenido en caché)"
+
+msgid "pageinfo.cert.status"
+msgstr "Estado del Certificado:"
+
+msgid "pageinfo.cert.ca.verified"
+msgstr "Verificado por AC"
+
+msgid "pageinfo.cert.ca.unverified"
+msgstr "No verificado por AC"
+
+msgid "pageinfo.cert.notexpired"
+msgstr "No expirado"
+
+msgid "pageinfo.cert.expired"
+msgstr "Expirado"
+
+msgid "pageinfo.cert.trusted"
+msgstr "Confiable"
+
+msgid "pageinfo.cert.untrusted"
+msgstr "No confiable"
+
+msgid "pageinfo.domain.match"
+msgstr "El nombre de dominio coincide"
+
+msgid "pageinfo.domain.mismatch"
+msgstr "El nombre de dominio no coincide"
+
+msgid "dlg.cert.trust"
+msgstr "Confianza"
+
+msgid "dlg.cert.fingerprint"
+msgstr "Copiar Huella Digital"
+
+msgid "dlg.input.send"
+msgstr "Enviar"
+
+msgid "heading.save"
+msgstr "ARCHIVO GUARDADO"
+
+msgid "heading.save.incomplete"
+msgstr "PÁGINA INCOMPLETA"
+
+msgid "dlg.save.incomplete"
+msgstr "El contenido de la página todavía se está descargando."
+
+msgid "dlg.save.size"
+msgstr "Tamaño:"
+
+msgid "heading.save.error"
+msgstr "ERROR GUARDANDO ARCHIVO"
+
+msgid "heading.import.bookmarks"
+msgstr "IMPORTAR FAVORITOS"
+
+msgid "dlg.import.notnew"
+msgstr ""
+"Todos los enlaces de esta página ya se encuentran guardados en favoritos."
+
+msgid "heading.autoreload"
+msgstr "AUTO-RECARGAR"
+
+msgid "dlg.autoreload"
+msgstr "Seleccione el intervalo de auto-recarga para esta pestaña."
+
+msgid "link.newtab"
+msgstr "Abrir Enlace en Nueva Pestaña"
+
+msgid "link.newtab.background"
+msgstr "Abrir Enlace en Pestaña de Fondo"
+
+msgid "link.browser"
+msgstr "Abrir Enlace en el Navegador por Defecto"
+
+msgid "link.noproxy"
+msgstr "Abrir sin Proxy"
+
+msgid "link.copy"
+msgstr "Copiar Enlace"
+
+msgid "link.bookmark"
+msgstr "Enlace a favoritos…"
+
+msgid "dlg.certimport.notfound"
+msgstr "No se encontró un certificado o clave privada."
+
+msgid "dlg.certimport.notfound.page"
+msgstr "No se encontró un certificado/clave en la página actual."
+
+msgid "heading.certimport.pasted"
+msgstr "PEGADO DESDE EL PORTAPAPELES"
+
+msgid "heading.certimport.dropped"
+msgstr "ARCHIVO ARRASTRADO Y SOLTADO"
+
+msgid "dlg.certimport.import"
+msgstr "Importar"
+
+#, c-format
+msgid "ident.usedonurls"
+msgid_plural "ident.usedonurls.n"
+msgstr[0] "Usado en %zu URL"
+msgstr[1] "Usado en %zu URLs"
+
+msgid "reload.never"
+msgstr "Nunca"
+
+msgid "reload.onceperday"
+msgstr "Una vez al día"
+
+#, c-format
+msgid "num.minutes"
+msgid_plural "num.minutes.n"
+msgstr[0] "%d minuto"
+msgstr[1] "%d minutos"
+
+#, c-format
+msgid "num.hours"
+msgid_plural "num.hours.n"
+msgstr[0] "%d hora"
+msgstr[1] "%d horas"
+
+msgid "link.download"
+msgstr "Descargar Archivo Enlazado"
+
+msgid "heading.openlink"
+msgstr "ABRIR ENLACE"
+
+msgid "dlg.certwarn.domain"
+msgstr ""
+"El certificado recibido es para el dominio incorrecto (%s). Esto se puede "
+"deber a problemas con la configuración del servidor."
+
+#, c-format
+msgid "dlg.openlink.confirm"
+msgstr ""
+"¿Abrir este enlace en el navegador por defecto?\n"
+"%s%s"
+
+msgid "dlg.openlink"
+msgstr "Abrir Enlace"
+
+msgid "heading.certwarn"
+msgstr "CERTIFICADO NO CONFIABLE"
+
+msgid "dlg.certwarn.different"
+msgstr ""
+"El certificado recibido es válido pero diferente del certificado en el que "
+"se confía."
+
+#, c-format
+msgid "dlg.certwarn.expired"
+msgstr "El certificado recibido expiró el %s."
+
+msgid "dlg.certwarn.domain.expired"
+msgstr "El certificado recibido ha expirado y es para el dominio incorrecto."
+
+msgid "heading.certimport"
+msgstr "IMPORTAR IDENTIDAD"
+
+msgid "dlg.certimport.help"
+msgstr ""
+"Pegue un certificado en codificación PEM y/o una clave privada,\n"
+"o arrastre un archivo .crt/.key a la ventana."
