@@ -470,12 +470,19 @@ static void communicateWithRunningInstance_App_(iApp *d, iProcessId instance,
                                                 const iStringList *openCmds) {
     iString *cmds = new_String();
     const iProcessId pid = currentId_Process();
+
+    /* After opening new content in the GUI, we should raise the window so the
+     * user can do something with it. But we only need to raise once, at the
+     * end, instead of repeatedly in the presence of multiple URLs to open */
+    bool should_raise = false;
+
     iConstForEach(CommandLine, i, &d->args) {
         if (i.argType == value_CommandLineArgType) {
             continue;
         }
         if (equal_CommandLineConstIterator(&i, "go-home")) {
             appendCStr_String(cmds, "navigate.home\n");
+            should_raise = true;
         }
         else if (equal_CommandLineConstIterator(&i, "new-tab")) {
             iCommandLineArg *arg = argument_CommandLineConstIterator(&i);
@@ -486,6 +493,7 @@ static void communicateWithRunningInstance_App_(iApp *d, iProcessId instance,
             else {
                 appendCStr_String(cmds, "tabs.new\n");
             }
+            should_raise = true;
             iRelease(arg);
         }
         else if (equal_CommandLineConstIterator(&i, "close-tab")) {
@@ -497,10 +505,17 @@ static void communicateWithRunningInstance_App_(iApp *d, iProcessId instance,
     }
     if (!isEmpty_StringList(openCmds)) {
         append_String(cmds, collect_String(joinCStr_StringList(openCmds, "\n")));
+        appendChar_String(cmds, '\n');
+        should_raise = true;
     }
     if (isEmpty_String(cmds)) {
         /* By default open a new tab. */
         appendCStr_String(cmds, "tabs.new\n");
+        should_raise = true;
+    }
+
+    if (should_raise) {
+        appendCStr_String(cmds, "raise\n");
     }
     if (!isEmpty_String(cmds)) {
         iString *result = communicate_Ipc(cmds);
@@ -1215,11 +1230,35 @@ void postCommand_App(const char *command) {
             return;
         }
     }
-    SDL_Event ev = { .type = SDL_USEREVENT };
-    ev.user.code = command_UserEventCode;
-    /*ev.user.windowID = id_Window(get_Window());*/
-    ev.user.data1 = strdup(command);
-    SDL_PushEvent(&ev);
+
+    /* Raise needs some special handling. On some desktop environments
+     * (including GNOME), SDL_RaiseWindow appears broken due to
+     * _focus-stealing prevention_. Actually, this is a feature. Applications
+     * are only allowed to raise themselves _when they are already the active
+     * window_. The key is that applications are not defined by process ID. If
+     * the active application is an instance of Lagrange posting the raise
+     * command, another instance of Lagrange may handle it. However, if the
+     * posting instance exits before the command is handled, the active window
+     * will be the terminal that sent the command, and focus-stealing
+     * prevention will prevent the handling instance from raising itself (on
+     * GNOME, this is expressed as a pop-up notification "Lagrange is ready").
+     * When posting commands, IPC already blocks on the response, so as long as
+     * we issue the raise command in this call stack, everything works out.
+     * However, if we handle raise in the normal SDL event loop, we'll lose the
+     * race and fail to raise the window.
+     */
+
+    if (equal_Command(command, "raise")) {
+        SDL_RaiseWindow(d->window->win);
+        return;
+    } else {
+        SDL_Event ev = { .type = SDL_USEREVENT };
+        ev.user.code = command_UserEventCode;
+        /*ev.user.windowID = id_Window(get_Window());*/
+        ev.user.data1 = strdup(command);
+        SDL_PushEvent(&ev);
+    }
+
     if (app_.commandEcho) {
         printf("[command] %s\n", command); fflush(stdout);
     }
