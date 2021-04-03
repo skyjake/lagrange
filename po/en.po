@@ -716,17 +716,20 @@ msgstr "Chinese (Simplified)"
 msgid "lang.zh.hant"
 msgstr "Chinese (Traditional)"
 
+msgid "lang.de"
+msgstr "German"
+
 msgid "lang.en"
 msgstr "English"
+
+msgid "lang.ie"
+msgstr "Occidental"
 
 msgid "lang.fi"
 msgstr "Finnish"
 
 msgid "lang.fr"
 msgstr "French"
-
-msgid "lang.de"
-msgstr "German"
 
 msgid "lang.hi"
 msgstr "Hindi"
@@ -745,6 +748,9 @@ msgstr "Russian"
 
 msgid "lang.es"
 msgstr "Spanish"
+
+msgid "lang.sr"
+msgstr "Serbian"
 
 msgid "heading.newident"
 msgstr "NEW IDENTITY"
