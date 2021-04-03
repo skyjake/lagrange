@@ -129,7 +129,7 @@ struct Impl_App {
     iTime        lastDropTime; /* for detecting drops of multiple items */
     int          autoReloadTimer;
     iPeriodic    periodic;
-    int          warmupFrames; /* forced refresh just after resuming from background */
+    int          warmupFrames; /* forced refresh just after resuming from background; FIXME: shouldn't be needed */
     /* Preferences: */
     iBool        commandEcho;         /* --echo */
     iBool        forceSoftwareRender; /* --sw */

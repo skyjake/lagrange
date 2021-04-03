@@ -24,6 +24,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "color.h"
 #include "metrics.h"
 #include "embedded.h"
+#include "window.h"
 #include "app.h"
 
 #define STB_TRUETYPE_IMPLEMENTATION
@@ -702,6 +703,7 @@ void cacheTextGlyphs_Font_(iFont *d, const iRangecc text) {
     iArray *     rasters = NULL;
     SDL_Texture *oldTarget = NULL;
     iBool        isTargetChanged = iFalse;
+    iAssert(isExposed_Window(get_Window()));
     /* We'll flush the buffered rasters periodically until everything is cached. */
     while (chPos < text.end) {
         while (chPos < text.end) {
@@ -1017,7 +1019,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
         int x1 = iMax(xpos, xposExtend);
         /* Which half of the pixel the glyph falls on? */
         const int hoff = enableHalfPixelGlyphs_Text ? (xpos - x1 > 0.5f ? 1 : 0) : 0;
-        if (!isRasterized_Glyph_(glyph, hoff)) {
+        if (mode & draw_RunMode && !isRasterized_Glyph_(glyph, hoff)) {
             /* Need to pause here and make sure all glyphs have been cached in the text. */
             cacheTextGlyphs_Font_(d, args->text);
             glyph = glyph_Font_(d, ch); /* cache may have been reset */

@@ -1769,12 +1769,8 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
             SDL_Event event = *ev;
             if (event.type == SDL_USEREVENT && isCommand_UserEvent(ev, "window.unfreeze")) {
                 d->isDrawFrozen = iFalse;
-                /* When the window is shown for the first time, ensure glyphs get
-                   re-cached correctly. */
                 if (SDL_GetWindowFlags(d->win) & SDL_WINDOW_HIDDEN) {
                     SDL_ShowWindow(d->win);
-                    resetFonts_Text();
-                    postCommand_App("theme.changed");
                 }
                 postRefresh_App();
                 return iTrue;
