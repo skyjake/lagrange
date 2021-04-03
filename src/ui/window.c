@@ -1473,7 +1473,7 @@ void init_Window(iWindow *d, iRect rect) {
     setId_Widget(d->root, "root");
     init_Text(d->render);
     setupUserInterface_Window(d);
-    postCommand_App("bindings.changed"); /* update from bindings */
+    postCommand_App("~bindings.changed"); /* update from bindings */
     updateRootSize_Window_(d, iFalse);
     /* Load the border shadow texture. */ {
         SDL_Surface *surf = loadImage_(&imageShadow_Embedded, 0);
