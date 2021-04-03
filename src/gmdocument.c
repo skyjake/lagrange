@@ -294,6 +294,9 @@ static void linkContentWasLaidOut_GmDocument_(iGmDocument *d, const iGmMediaInfo
 
 static iBool isNormalized_GmDocument_(const iGmDocument *d) {
     const iPrefs *prefs = prefs_App();
+    if (d->format == plainText_GmDocumentFormat) {
+        return iTrue; /* tabs are always normalized in plain text */
+    }
     if (startsWithCase_String(&d->url, "gemini:") && prefs->monospaceGemini) {
         return iFalse;
     }
@@ -1380,7 +1383,8 @@ static void normalize_GmDocument(iGmDocument *d) {
                 }
             }
             appendCStr_String(normalized, "\n");
-            if (lineType_GmDocument_(d, line) == preformatted_GmLineType) {
+            if (d->format == gemini_GmDocumentFormat &&
+                lineType_GmDocument_(d, line) == preformatted_GmLineType) {
                 isPreformat = iFalse;
             }
             continue;
