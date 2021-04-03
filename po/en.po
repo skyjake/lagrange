@@ -723,7 +723,7 @@ msgid "lang.en"
 msgstr "English"
 
 msgid "lang.ie"
-msgstr "Occidental"
+msgstr "Interlingue"
 
 msgid "lang.fi"
 msgstr "Finnish"
