@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-04-03 15:42+0000\n"
+"PO-Revision-Date: 2021-04-05 09:23+0000\n"
 "Last-Translator: Страхиња Радић <contact@strahinja.org>\n"
 "Language-Team: Serbian <http://weblate.skyjake.fi/projects/lagrange/ui/sr/>\n"
 "Language: sr\n"
@@ -259,7 +259,7 @@ msgid "ident.expiry"
 msgstr "Истиче %d. %b %Y."
 
 msgid "ident.use"
-msgstr "Користи се на овој страници"
+msgstr "Користи на овој страници"
 
 msgid "ident.stopuse"
 msgstr "Престани са употребом на овој страници"
@@ -1349,3 +1349,9 @@ msgstr[2] ""
 
 msgid "error.schemeredirect"
 msgstr "Преусмеравање уз промену шеме"
+
+msgid "lang.sr"
+msgstr "Српски"
+
+msgid "lang.ie"
+msgstr "Интерлингве"
