@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-03-30 12:05+0000\n"
+"PO-Revision-Date: 2021-04-05 09:23+0000\n"
 "Last-Translator: Olga Smirnova <mistresssilvara@hotmail.com>\n"
 "Language-Team: Interlingua <http://weblate.skyjake.fi/projects/lagrange/ui/"
 "ia/>\n"
@@ -1075,7 +1075,7 @@ msgid "prefs.hidetoolbarscroll"
 msgstr "Celar le barra de instrumentos secun rolamento:"
 
 msgid "error.badresource.msg"
-msgstr "Li ressource requirite non existe."
+msgstr "Le ressource requirite non existe."
 
 msgid "error.unsupported.protocol.msg"
 msgstr "Le protocollo requirite non es supportate de iste application."
@@ -1088,7 +1088,7 @@ msgstr "Le requesta al proxy refusate"
 
 msgid "error.cert.auth.msg"
 msgstr ""
-"Li providite certificato de cliente es valide, ma non es autorisate por "
+"Le providite certificato de cliente es valide, ma non es autorisate por "
 "accesse al requirite ressource."
 
 # Interpret as "Results from bookmarks..."
@@ -1148,3 +1148,92 @@ msgstr "Nomine de dominio in conflicto"
 #, c-format
 msgid "dlg.input.prompt"
 msgstr "Provide ingresso por %s:"
+
+msgid "menu.bookmarks.bytag"
+msgstr "Listar marcapaginas per etiquettas"
+
+msgid "macos.menu.bookmarks.bytag"
+msgstr "Listar per etiquettas"
+
+msgid "menu.bookmarks.bytime"
+msgstr "Listar marcapaginas per le tempore de creation"
+
+msgid "macos.menu.bookmarks.bytime"
+msgstr "Listar per creation"
+
+msgid "dlg.confirm.history.clear"
+msgstr "Vole tu vermente eliminar le chronologia de omne paginas visitate?"
+
+msgid "bookmark.tag.remote"
+msgstr "Usar como un fonte de marcapaginas"
+
+msgid "bookmark.untag.remote"
+msgstr "Actualisar le fonte de marcapaginas"
+
+msgid "bookmarks.reload"
+msgstr "Actualisar fontes remote"
+
+msgid "dlg.certwarn.different"
+msgstr "Le recipite certificato es valide ma non es le qual es digne de fide."
+
+msgid "prefs.customframe"
+msgstr "Proprie quadro del fenestra:"
+
+msgid "keys.top"
+msgstr "Saltar al inicio"
+
+msgid "keys.bottom"
+msgstr "Saltar al fin"
+
+msgid "keys.scroll.halfpage.up"
+msgstr "Rolar un medie pagina a alto"
+
+msgid "keys.scroll.halfpage.down"
+msgstr "Rolar un medie pagina in basso"
+
+msgid "error.badrequest.msg"
+msgstr "Le servitor non comprehendeva vostre requesta."
+
+msgid "doc.pre.nocaption"
+msgstr "Texto preformattate sin un legenda"
+
+# Used on iOS. "Files" refers to Apple's iOS app where you can pick an iCloud folder.
+msgid "menu.save.files"
+msgstr "Salvar a files"
+
+# Used on desktop operating systems. "Downloads" refers to the user's configured downloads directory.
+msgid "menu.save.downloads"
+msgstr "Salvar a Discargas"
+
+msgid "menu.bookmarks.refresh"
+msgstr "Actualisar marcapaginas remote"
+
+#, c-format
+msgid "dlg.confirm.ident.delete"
+msgstr ""
+"Vole tu vermente deler le identitate\n"
+"%s%s%s\n"
+"con su certificato e clave private?"
+
+msgid "lang.ie"
+msgstr "Interlingue"
+
+msgid "lang.sr"
+msgstr "Serbian"
+
+msgid "prefs.collapsepreonload"
+msgstr "Contraher le preformattate:"
+
+msgid "error.cert.invalid.msg"
+msgstr "Le certificato providite es expirate o non valide."
+
+msgid "error.slowdown.msg"
+msgstr "Le servitor limita requestas. Per favor attende…"
+
+msgid "dlg.certwarn.domain"
+msgstr ""
+"Le recipite certificato es pro le dominio incorrecte (%s). Isto pote indicar "
+"mal configuration del servitor."
+
+msgid "dlg.save.incomplete"
+msgstr "Le contento del pagina se carga ancora."
