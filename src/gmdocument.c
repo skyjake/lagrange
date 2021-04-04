@@ -580,6 +580,10 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         if (type == bullet_GmLineType) {
             /* TODO: Literata bullet is broken? */
             iGmRun bulRun = run;
+            if (prefs->font == literata_TextFont) {
+                /* Something wrong this the glyph in Literata, looks cropped. */
+                bulRun.font = defaultContentSized_FontId;
+            }
             bulRun.color = tmQuote_ColorId;
             bulRun.visBounds.pos = addX_I2(pos, (indents[text_GmLineType] - 0.55f) * gap_Text);
             bulRun.visBounds.size =
