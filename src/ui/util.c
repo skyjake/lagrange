@@ -468,6 +468,10 @@ iWidget *addAction_Widget(iWidget *parent, int key, int kmods, const char *comma
     return as_Widget(action);
 }
 
+iBool isAction_Widget(const iWidget *d) {
+    return isInstance_Object(d, &Class_LabelWidget) && isEqual_I2(d->rect.size, zero_I2());
+}
+
 /*-----------------------------------------------------------------------------------------------*/
 
 static iBool isCommandIgnoredByMenus_(const char *cmd) {

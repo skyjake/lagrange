@@ -363,6 +363,24 @@ void deinit_DocumentWidget(iDocumentWidget *d) {
     deinit_PersistentDocumentState(&d->mod);
 }
 
+static void enableActions_DocumentWidget_(iDocumentWidget *d, iBool enable) {
+    /* Actions are invisible child widgets of the DocumentWidget. */
+    iForEach(ObjectList, i, children_Widget(d)) {
+        if (isAction_Widget(i.object)) {
+            setFlags_Widget(i.object, disabled_WidgetFlag, !enable);
+        }
+    }
+}
+
+static void setLinkNumberMode_DocumentWidget_(iDocumentWidget *d, iBool set) {
+    iChangeFlags(d->flags, showLinkNumbers_DocumentWidgetFlag, set);
+    /* Children have priority when handling events. */
+    enableActions_DocumentWidget_(d, !set);
+    if (d->menu) {
+        setFlags_Widget(d->menu, disabled_WidgetFlag, set);
+    }
+}
+
 static void resetWideRuns_DocumentWidget_(iDocumentWidget *d) {
     clear_Array(&d->wideRunOffsets);
     d->animWideRunId = 0;
@@ -1054,7 +1072,7 @@ static void fetch_DocumentWidget_(iDocumentWidget *d) {
     postCommandf_App("document.request.started doc:%p url:%s", d, cstr_String(d->mod.url));
     clear_ObjectList(d->media);
     d->certFlags = 0;
-    d->flags &= ~showLinkNumbers_DocumentWidgetFlag;
+    setLinkNumberMode_DocumentWidget_(d, iFalse);
     d->state = fetching_RequestState;
     set_Atomic(&d->isRequestUpdated, iFalse);
     d->request = new_GmRequest(certs_App());
@@ -1162,7 +1180,7 @@ static void refreshWhileScrolling_DocumentWidget_(iAny *ptr) {
 static void smoothScroll_DocumentWidget_(iDocumentWidget *d, int offset, int duration) {
     /* Get rid of link numbers when scrolling. */
     if (offset && d->flags & showLinkNumbers_DocumentWidgetFlag) {
-        d->flags &= ~showLinkNumbers_DocumentWidgetFlag;
+        setLinkNumberMode_DocumentWidget_(d, iFalse);
         invalidateVisibleLinks_DocumentWidget_(d);
     }
     if (!prefs_App()->smoothScrolling) {
@@ -1649,7 +1667,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     iWidget *w = as_Widget(d);
     if (equal_Command(cmd, "window.resized") || equal_Command(cmd, "font.changed")) {
         /* Alt/Option key may be involved in window size changes. */
-        iChangeFlags(d->flags, showLinkNumbers_DocumentWidgetFlag, iFalse);
+        setLinkNumberMode_DocumentWidget_(d, iFalse);
         d->phoneToolbar = findWidget_App("toolbar");
         const iBool keepCenter = equal_Command(cmd, "font.changed");
         updateDocumentWidthRetainingScrollPosition_DocumentWidget_(d, keepCenter);
@@ -1661,7 +1679,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     else if (equal_Command(cmd, "window.focus.lost")) {
         if (d->flags & showLinkNumbers_DocumentWidgetFlag) {
-            d->flags &= ~showLinkNumbers_DocumentWidgetFlag;
+            setLinkNumberMode_DocumentWidget_(d, iFalse);
             invalidateVisibleLinks_DocumentWidget_(d);
             refresh_Widget(w);
         }
@@ -1682,7 +1700,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         updateSize_DocumentWidget(d);
     }
     else if (equal_Command(cmd, "tabs.changed")) {
-        iChangeFlags(d->flags, showLinkNumbers_DocumentWidgetFlag, iFalse);
+        setLinkNumberMode_DocumentWidget_(d, iFalse);
         if (cmp_String(id_Widget(w), suffixPtr_Command(cmd, "id")) == 0) {
             /* Set palette for our document. */
             updateTheme_DocumentWidget_(d);
@@ -1987,7 +2005,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     else if (equal_Command(cmd, "document.linkkeys") && document_App() == d) {
         if (argLabel_Command(cmd, "release")) {
-            iChangeFlags(d->flags, showLinkNumbers_DocumentWidgetFlag, iFalse);
+            setLinkNumberMode_DocumentWidget_(d, iFalse);
         }
         else if (argLabel_Command(cmd, "more")) {
             if (d->flags & showLinkNumbers_DocumentWidgetFlag &&
@@ -2007,13 +2025,13 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             else if (~d->flags & showLinkNumbers_DocumentWidgetFlag) {
                 d->ordinalMode = homeRow_DocumentLinkOrdinalMode;
                 d->ordinalBase = 0;
-                iChangeFlags(d->flags, showLinkNumbers_DocumentWidgetFlag, iTrue);
+                setLinkNumberMode_DocumentWidget_(d, iTrue);
             }
         }
         else {
             d->ordinalMode = arg_Command(cmd);
             d->ordinalBase = 0;
-            iChangeFlags(d->flags, showLinkNumbers_DocumentWidgetFlag, iTrue);
+            setLinkNumberMode_DocumentWidget_(d, iTrue);
             iChangeFlags(d->flags, setHoverViaKeys_DocumentWidgetFlag,
                          argLabel_Command(cmd, "hover") != 0);
             iChangeFlags(d->flags, newTabViaHomeKeys_DocumentWidgetFlag,
@@ -2457,7 +2475,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                          cstr_String(absoluteUrl_String(
                                              d->mod.url, linkUrl_GmDocument(d->doc, run->linkId))));
                     }
-                    iChangeFlags(d->flags, showLinkNumbers_DocumentWidgetFlag, iFalse);
+                    setLinkNumberMode_DocumentWidget_(d, iFalse);
                     invalidateVisibleLinks_DocumentWidget_(d);
                     refresh_Widget(d);
                     return iTrue;
@@ -2467,7 +2485,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         switch (key) {
             case SDLK_ESCAPE:
                 if (d->flags & showLinkNumbers_DocumentWidgetFlag && document_App() == d) {
-                    iChangeFlags(d->flags, showLinkNumbers_DocumentWidgetFlag, iFalse);
+                    setLinkNumberMode_DocumentWidget_(d, iFalse);
                     invalidateVisibleLinks_DocumentWidget_(d);
                     refresh_Widget(d);
                     return iTrue;
@@ -3634,7 +3652,7 @@ void deserializeState_DocumentWidget(iDocumentWidget *d, iStream *ins) {
 }
 
 void setUrlFromCache_DocumentWidget(iDocumentWidget *d, const iString *url, iBool isFromCache) {
-    d->flags &= ~showLinkNumbers_DocumentWidgetFlag;
+    setLinkNumberMode_DocumentWidget_(d, iFalse);
     set_String(d->mod.url, urlFragmentStripped_String(url));
     /* See if there a username in the URL. */
     parseUser_DocumentWidget_(d);

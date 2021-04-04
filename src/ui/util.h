@@ -163,6 +163,7 @@ iLabelWidget *  makeHeading_Widget  (const char *text);
 iWidget *       makeHDiv_Widget     (void);
 iWidget *       makeVDiv_Widget     (void);
 iWidget *       addAction_Widget    (iWidget *parent, int key, int kmods, const char *command);
+iBool           isAction_Widget     (const iWidget *);
 
 /*-----------------------------------------------------------------------------------------------*/
 
