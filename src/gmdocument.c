@@ -314,22 +314,25 @@ static enum iGmDocumentTheme currentTheme_(void) {
 static void alignDecoration_GmRun_(iGmRun *run, iBool isCentered) {
     const iRect visBounds = visualBounds_Text(run->font, run->text);
     const int   visWidth  = width_Rect(visBounds);
+    int         xAdjust   = 0;
     if (!isCentered) {
         /* Keep the icon aligned to the left edge. */
-        run->visBounds.pos.x -= left_Rect(visBounds);
+        xAdjust -= left_Rect(visBounds);
         if (visWidth > width_Rect(run->visBounds)) {
             /* ...unless it's a wide icon, in which case move it to the left. */
-            run->visBounds.pos.x -= visWidth - width_Rect(run->visBounds);
+            xAdjust -= visWidth - width_Rect(run->visBounds);
         }
         else if (visWidth < width_Rect(run->visBounds) * 3 / 4) {
             /* ...or a narrow icon, which needs to be centered but leave a gap. */
-            run->visBounds.pos.x += (width_Rect(run->visBounds) * 3 / 4 - visWidth) / 2;
+            xAdjust += (width_Rect(run->visBounds) * 3 / 4 - visWidth) / 2;
         }
     }
     else {
         /* Centered. */
-        run->visBounds.pos.x += (width_Rect(run->visBounds) - visWidth) / 2;
+        xAdjust += (width_Rect(run->visBounds) - visWidth) / 2;
     }
+    run->visBounds.pos.x  += xAdjust;
+    run->visBounds.size.x -= xAdjust;
 }
 
 static void doLayout_GmDocument_(iGmDocument *d) {
