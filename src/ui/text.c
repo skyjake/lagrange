@@ -72,7 +72,7 @@ struct Impl_Glyph {
     iHashNode node;
     int flags;
     uint32_t glyphIndex;
-    const iFont *font; /* may come from symbols/emoji */
+    iFont *font; /* may come from symbols/emoji */
     iRect rect[2]; /* zero and half pixel offset */
     iInt2 d[2];
     float advance; /* scaled */
@@ -179,6 +179,7 @@ static void deinit_Font(iFont *d) {
 }
 
 static uint32_t glyphIndex_Font_(iFont *d, iChar ch) {
+    /* TODO: Add a small cache of ~5 most recently found indices. */
     const size_t entry = ch - 32;
     if (entry < iElemCount(d->indexTable)) {
         if (d->indexTable[entry] == ~0u) {
@@ -1098,11 +1099,6 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
         if (!isSpace_Char(ch)) {
             xposExtend += isEmoji ? glyph->advance : advance;
         }
-        xposExtend = iMax(xposExtend, xpos);
-        xposMax    = iMax(xposMax, xposExtend);
-        if (args->continueFrom_out && ((mode & noWrapFlag_RunMode) || isWrapBoundary_(prevCh, ch))) {
-            lastWordEnd = currentPos; /* mark word wrap position */
-        }
 #if defined (LAGRANGE_ENABLE_KERNING)
         /* Check the next character. */
         if (!isMonospaced && glyph->font == d) {
@@ -1110,10 +1106,24 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
             const char *peek = chPos;
             const iChar next = nextChar_(&peek, args->text.end);
             if (enableKerning_Text && !d->manualKernOnly && next) {
-                xpos += d->xScale * stbtt_GetGlyphKernAdvance(&d->font, glyph->glyphIndex, next);
+                const uint32_t nextGlyphIndex = glyphIndex_Font_(glyph->font, next);
+                const int kern = stbtt_GetGlyphKernAdvance(
+                    &glyph->font->font, glyph->glyphIndex, nextGlyphIndex);
+                if (kern) {
+//                    printf("%lc(%u) -> %lc(%u): kern %d (%f)\n", ch, glyph->glyphIndex, next,
+//                           nextGlyphIndex,
+//                           kern, d->xScale * kern);
+                    xpos       += d->xScale * kern;
+                    xposExtend += d->xScale * kern;
+                }
             }
         }
 #endif
+        xposExtend = iMax(xposExtend, xpos);
+        xposMax    = iMax(xposMax, xposExtend);
+        if (args->continueFrom_out && ((mode & noWrapFlag_RunMode) || isWrapBoundary_(prevCh, ch))) {
+            lastWordEnd = currentPos; /* mark word wrap position */
+        }
         prevCh = ch;
         if (--maxLen == 0) {
             break;
@@ -1122,6 +1132,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
     if (args->runAdvance_out) {
         *args->runAdvance_out = xposMax - orig.x;
     }
+    fflush(stdout);
     return bounds;
 }
 

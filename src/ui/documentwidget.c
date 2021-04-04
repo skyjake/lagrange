@@ -2497,6 +2497,17 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 break;
             }
 #endif
+#if 0
+            case '0': {
+                extern int enableKerning_Text;
+                enableKerning_Text = !enableKerning_Text;
+                invalidate_DocumentWidget_(d);
+                refresh_Widget(w);
+                printf("kerning: %d\n", enableKerning_Text);
+                fflush(stdout);
+                break;
+            }
+#endif
         }
     }
     else if (ev->type == SDL_MOUSEWHEEL && isHover_Widget(w)) {
