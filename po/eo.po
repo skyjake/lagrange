@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-04-02 19:18+0000\n"
+"PO-Revision-Date: 2021-04-05 09:23+0000\n"
 "Last-Translator: Nikolay Korotkiy <sikmir@gmail.com>\n"
 "Language-Team: Esperanto <http://weblate.skyjake.fi/projects/lagrange/ui/eo/>"
 "\n"
@@ -581,3 +581,9 @@ msgstr "Baskuligi plenekranan reĝimon"
 
 msgid "heading.import.bookmarks"
 msgstr "IMPORTI LEGOSIGNOJN"
+
+msgid "lang.sr"
+msgstr "Serba"
+
+msgid "lang.ie"
+msgstr "Okcidentalo"
