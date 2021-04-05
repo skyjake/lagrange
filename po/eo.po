@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-04-05 09:23+0000\n"
+"PO-Revision-Date: 2021-04-09 13:18+0000\n"
 "Last-Translator: Nikolay Korotkiy <sikmir@gmail.com>\n"
 "Language-Team: Esperanto <http://weblate.skyjake.fi/projects/lagrange/ui/eo/>"
 "\n"
@@ -587,3 +587,34 @@ msgstr "Serba"
 
 msgid "lang.ie"
 msgstr "Okcidentalo"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.title"
+msgstr "Titolo"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.artist"
+msgstr "Artisto"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.genre"
+msgstr "Ĝenro"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.date"
+msgstr "Dato"
+
+msgid "numbertype.integer"
+msgstr "entjero"
+
+# used as adjective, n is 8, 16, 24, 32, or 64
+#, c-format
+msgid "n.bit"
+msgstr "%d-bita"
+
+# Hertz, unit for frequency values
+msgid "hz"
+msgstr "Hz"
+
+msgid "mb.per.sec"
+msgstr "MB/s"
