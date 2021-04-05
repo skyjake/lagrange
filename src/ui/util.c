@@ -1020,7 +1020,7 @@ static void updateSheetPanelMetrics_(iWidget *sheet) {
     navi->rect.pos = init_I2(left, top);
     iConstForEach(PtrArray, i, findChildren_Widget(sheet, "panel.toppad")) {
         iWidget *pad = *i.value;
-        setSize_Widget(pad, init1_I2(naviHeight));
+        setFixedSize_Widget(pad, init1_I2(naviHeight));
     }
 #endif
     setFixedSize_Widget(navi, init_I2(-1, naviHeight));
@@ -1916,7 +1916,10 @@ void updatePreferencesLayout_Widget(iWidget *prefs) {
             as_Widget(input)->rect.size.x = 0;
         }
     }
-    as_Widget(findChild_Widget(prefs, "bindings"))->rect.size.x = 0;
+    iWidget *bindings = findChild_Widget(prefs, "bindings");
+    if (bindings) {
+        bindings->rect.size.x = 0;
+    }
     resizeToLargestPage_Widget(tabs);
     arrange_Widget(prefs);
     iForIndices(i, inputIds) {

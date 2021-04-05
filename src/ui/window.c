@@ -1596,6 +1596,7 @@ static void checkPixelRatioChange_Window_(iWindow *d) {
 
 static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
     switch (ev->event) {
+#if defined (iPlatformDesktop)
         case SDL_WINDOWEVENT_EXPOSED:
             if (!d->isExposed) {
                 drawBlank_Window_(d); /* avoid showing system-provided contents */
@@ -1615,7 +1616,6 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
             }
 #endif
             return iFalse;
-#if defined (iPlatformDesktop)
         case SDL_WINDOWEVENT_MOVED: {
             if (d->isMinimized) {
                 return iFalse;
@@ -1721,8 +1721,10 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
             setCapsLockDown_Keys(iFalse);
             postCommand_App("window.focus.gained");
 #if defined (iPlatformMobile)
+            d->isExposed = iTrue; /* no expose event is sent, so now we know it's visible */
             /* Returned to foreground, may have lost buffered content. */
             invalidate_Window_(d);
+            postRefresh_App();
 #endif
             return iFalse;
         case SDL_WINDOWEVENT_FOCUS_LOST:

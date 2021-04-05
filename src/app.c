@@ -639,14 +639,14 @@ static void init_App_(iApp *d, int argc, char **argv) {
 #endif
     init_Prefs(&d->prefs);
     setCStr_String(&d->prefs.downloadDir, downloadDir_App_());
-    d->isRunning         = iFalse;
-    d->window            = NULL;
     set_Atomic(&d->pendingRefresh, iFalse);
-    d->mimehooks         = new_MimeHooks();
-    d->certs             = new_GmCerts(dataDir_App_());
-    d->visited           = new_Visited();
-    d->bookmarks         = new_Bookmarks();
-    d->tabEnum           = 0; /* generates unique IDs for tab pages */
+    d->isRunning = iFalse;
+    d->window    = NULL;
+    d->mimehooks = new_MimeHooks();
+    d->certs     = new_GmCerts(dataDir_App_());
+    d->visited   = new_Visited();
+    d->bookmarks = new_Bookmarks();
+    d->tabEnum   = 0; /* generates unique IDs for tab pages */
     init_Periodic(&d->periodic);
     setThemePalette_Color(d->prefs.theme);
 #if defined (iPlatformAppleDesktop)
