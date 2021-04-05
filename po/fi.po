@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2021-03-23 09:09+0000\n"
-"PO-Revision-Date: 2021-04-05 11:27+0000\n"
+"PO-Revision-Date: 2021-04-05 11:29+0000\n"
 "Last-Translator: Jaakko Keränen <jaakko.keranen@iki.fi>\n"
 "Language-Team: Finnish <http://weblate.skyjake.fi/projects/lagrange/ui/fi/>\n"
 "Language: fi\n"
@@ -1410,3 +1410,14 @@ msgstr[1] "%d päivää sitten"
 
 msgid "mb.per.sec"
 msgstr "MT/s"
+
+msgid "prefs.boldlink"
+msgstr "Lihavoidut linkit:"
+
+# Interpretation: (Bold links) on light (background).
+msgid "prefs.boldlink.light"
+msgstr "Vaalea tausta"
+
+# Interpretation: (Bold links) on dark (background).
+msgid "prefs.boldlink.dark"
+msgstr "Tumma tausta"
