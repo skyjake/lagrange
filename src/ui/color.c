@@ -462,6 +462,7 @@ const char *escape_Color(int color) {
     if (color >= 0 && color < (int) iElemCount(esc)) {
         return esc[color];
     }
+    /* TODO: Conflict with format strings! "%" (37) may be used as the color value. */
     /* Double-\r is used for range extension. */
     if (color + asciiBase_ColorEscape > 127) {
         iAssert(color - asciiExtended_ColorEscape + asciiBase_ColorEscape <= 127);

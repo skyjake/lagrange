@@ -3245,7 +3245,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                  showHost)) {
                 format_String(
                     &str,
-                    " \u2014%s%s%s\r%c%s",
+                    " \u2014%s%s%s%s%s",
                     showHost ? " " : "",
                     showHost
                         ? (flags & mailto_GmLinkFlag    ? cstr_String(url)
@@ -3256,9 +3256,8 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                         : "",
                     showHost && (showImage || showAudio) ? " \u2014" : "",
                     showImage || showAudio
-                        ? asciiBase_ColorEscape + fg
-                        : (asciiBase_ColorEscape +
-                           linkColor_GmDocument(doc, run->linkId, domain_GmLinkPart)),
+                        ? escape_Color(fg)
+                        : escape_Color(linkColor_GmDocument(doc, run->linkId, domain_GmLinkPart)),
                     showImage || showAudio
                         ? format_CStr(showImage ? " %s \U0001f5bb" : " %s \U0001f3b5",
                                       cstr_Lang(showImage ? "link.hint.image" : "link.hint.audio"))
@@ -3267,11 +3266,10 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
             if (run->flags & endOfLine_GmRunFlag && flags & visited_GmLinkFlag) {
                 iDate date;
                 init_Date(&date, linkTime_GmDocument(doc, run->linkId));
-                appendFormat_String(&str,
-                                    " \u2014 %s%s",
-                                    escape_Color(linkColor_GmDocument(doc, run->linkId,
-                                                                      visited_GmLinkPart)),
-                                    cstr_String(collect_String(format_Date(&date, "%b %d"))));
+                appendCStr_String(&str, " \u2014 ");
+                appendCStr_String(
+                    &str, escape_Color(linkColor_GmDocument(doc, run->linkId, visited_GmLinkPart)));
+                append_String(&str, collect_String(format_Date(&date, "%b %d")));
             }
             if (!isEmpty_String(&str)) {
                 const iInt2 textSize = measure_Text(metaFont, cstr_String(&str));

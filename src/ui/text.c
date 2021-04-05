@@ -995,11 +995,11 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
             if (ch == '\r') { /* color change */
                 iChar esc = nextChar_(&chPos, args->text.end);
                 int colorNum = args->color;
-                if (esc != 0x24) { /* ASCII Cancel */
+                if (esc == '\r') { /* Extended range. */
+                    esc = nextChar_(&chPos, args->text.end) + asciiExtended_ColorEscape;
                     colorNum = esc - asciiBase_ColorEscape;
                 }
-                else if (esc == '\r') { /* Extended range. */
-                    esc = nextChar_(&chPos, args->text.end) + asciiExtended_ColorEscape;
+                else if (esc != 0x24) { /* ASCII Cancel */
                     colorNum = esc - asciiBase_ColorEscape;
                 }
                 if (mode & draw_RunMode && ~mode & permanentColorFlag_RunMode) {
