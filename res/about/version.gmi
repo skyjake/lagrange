@@ -8,6 +8,8 @@
 
 ## 1.3.1
 * Added UI languages: Serbian, Interlingue.
+* Added translations for inline downloads and audio player, "about:feeds".
+* Fixed crash during word wrapping.
 * Fixed keybindings overriding the home row key navigation mode.
 * Fixed kerning in the text renderer.
 * Fixed issue with overlapped drawing of list bullets vs. list items.
