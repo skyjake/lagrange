@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2021-03-23 09:09+0000\n"
-"PO-Revision-Date: 2021-03-30 12:05+0000\n"
+"PO-Revision-Date: 2021-04-05 11:29+0000\n"
 "Last-Translator: Jaakko Keränen <jaakko.keranen@iki.fi>\n"
 "Language-Team: Finnish <http://weblate.skyjake.fi/projects/lagrange/ui/fi/>\n"
 "Language: fi\n"
@@ -1317,3 +1317,107 @@ msgstr "Piilota esimuotoillut:"
 
 msgid "lang.zh.hant"
 msgstr "Kiina (perinteisin merkein)"
+
+msgid "lang.ie"
+msgstr "Interlingue"
+
+msgid "lang.sr"
+msgstr "Serbia"
+
+# Used in about:feeds.
+msgid "feeds.list.title"
+msgstr "Syötteiden artikkelit"
+
+#, c-format
+msgid "feeds.list.counts"
+msgid_plural "feeds.list.counts.n"
+msgstr[0] "Olet tilannut %zu syötteen, joka sisältää %%s.\n"
+msgstr[1] "Olet tilannut %zu syötettä, jotka sisältävät %%s.\n"
+
+# Link download progress message.
+msgid "doc.fetching"
+msgstr "Ladataan"
+
+# Inline download status message.
+msgid "media.download.warnclose"
+msgstr "Lataus keskeytyy, jos tämä välilehti suljetaan."
+
+# Inline download status message.
+msgid "media.download.complete"
+msgstr "Lataus on päättynyt."
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.title"
+msgstr "Nimi"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.artist"
+msgstr "Artisti"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.genre"
+msgstr "Genre"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.date"
+msgstr "Päiväys"
+
+# used as adjective, n is 8, 16, 24, 32, or 64
+#, c-format
+msgid "n.bit"
+msgstr "%d-bittinen"
+
+msgid "numbertype.integer"
+msgstr "kokonaisluku"
+
+msgid "numbertype.float"
+msgstr "liukuluku"
+
+# Hertz, unit for frequency values
+msgid "hz"
+msgstr "Hz"
+
+#, c-format
+msgid "feeds.list.entrycount"
+msgid_plural "feeds.list.entrycount.n"
+msgstr[0] "yhteensä %zu artikkelin"
+msgstr[1] "yhteensä %zu artikkelia"
+
+msgid "feeds.list.refreshtime.now"
+msgstr "Viimeinen päivitys tehtiin hetki sitten."
+
+#, c-format
+msgid "feeds.list.refreshtime"
+msgstr "Viimeinen päivitys tehtiin %s."
+
+#, c-format
+msgid "minutes.ago"
+msgid_plural "minutes.ago.n"
+msgstr[0] "%d minuutti sitten"
+msgstr[1] "%d minuuttia sitten"
+
+#, c-format
+msgid "hours.ago"
+msgid_plural "hours.ago.n"
+msgstr[0] "%d tunti sitten"
+msgstr[1] "%d tuntia sitten"
+
+#, c-format
+msgid "days.ago"
+msgid_plural "days.ago.n"
+msgstr[0] "%d päivä sitten"
+msgstr[1] "%d päivää sitten"
+
+msgid "mb.per.sec"
+msgstr "MT/s"
+
+msgid "prefs.boldlink"
+msgstr "Lihavoidut linkit:"
+
+# Interpretation: (Bold links) on light (background).
+msgid "prefs.boldlink.light"
+msgstr "Vaalea tausta"
+
+# Interpretation: (Bold links) on dark (background).
+msgid "prefs.boldlink.dark"
+msgstr "Tumma tausta"

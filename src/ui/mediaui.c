@@ -27,6 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "audio/player.h"
 #include "paint.h"
 #include "util.h"
+#include "lang.h"
 
 #include <the_Foundation/path.h>
 
@@ -258,16 +259,17 @@ void draw_DownloadUI(const iDownloadUI *d, iPaint *p) {
     draw_Text(uiLabel_FontId,
               init_I2(x, y2),
               isFinished ? uiTextAction_ColorId : uiTextDim_ColorId,
-              isFinished ? "Download completed."
-                         : "Download will be cancelled if this tab is closed.");
+              cstr_Lang(isFinished ? "media.download.complete" : "media.download.warnclose"));
     const int x2 = right_Rect(rect);
     drawSevenSegmentBytes_(init_I2(x2, y1), uiTextDim_ColorId, info.numBytes);
     const iInt2 pos = init_I2(x2, y2);
     if (bytesPerSecond > 0) {
-        drawAlign_Text(uiLabel_FontId, pos, uiTextDim_ColorId, right_Alignment, "%.3f MB/s",
+        drawAlign_Text(uiLabel_FontId, pos, uiTextDim_ColorId, right_Alignment,
+                       translateCStr_Lang("%.3f ${mb.per.sec}"),
                        bytesPerSecond / 1.0e6);
     }
     else {
-        drawAlign_Text(uiLabel_FontId, pos, uiTextDim_ColorId, right_Alignment, "\u2014 MB/s");
+        drawAlign_Text(uiLabel_FontId, pos, uiTextDim_ColorId, right_Alignment,
+                       translateCStr_Lang("\u2014 ${mb.per.sec}"));
     }
 }

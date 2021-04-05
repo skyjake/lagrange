@@ -1475,34 +1475,6 @@ void refresh_Widget(const iAnyObject *d) {
     postRefresh_App();
 }
 
-/* Debug utility for inspecting widget trees. */
-#include "labelwidget.h"
-static void printTree_Widget_(const iWidget *d, int indent) {
-    for (int i = 0; i < indent; ++i) {
-        fwrite("    ", 4, 1, stdout);
-    }
-    printf("[%p] %s:\"%s\" ", d, class_Widget(d)->name, cstr_String(&d->id));
-    if (isInstance_Object(d, &Class_LabelWidget)) {
-        printf("(%s|%s) ",
-               cstr_String(text_LabelWidget((const iLabelWidget *) d)),
-               cstr_String(command_LabelWidget((const iLabelWidget *) d)));
-    }
-    printf("size:%dx%d {min:%dx%d} [%d..%d %d:%d] flags:%08llx%s%s%s%s%s\n",
-           d->rect.size.x, d->rect.size.y,
-           d->minSize.x, d->minSize.y,
-           d->padding[0], d->padding[2],
-           d->padding[1], d->padding[3],
-           (long long unsigned int) d->flags,
-           d->flags & expand_WidgetFlag ? " exp" : "",
-           d->flags & tight_WidgetFlag ? " tight" : "",
-           d->flags & fixedWidth_WidgetFlag ? " fixW" : "",
-           d->flags & fixedHeight_WidgetFlag ? " fixH" : "",
-           d->flags & resizeToParentWidth_WidgetFlag ? " rsPrnW" : "");
-    iConstForEach(ObjectList, i, d->children) {
-        printTree_Widget_(i.object, indent + 1);
-    }
-}
-
 void raise_Widget(iWidget *d) {
     iPtrArray *onTop = onTop_RootData_();
     if (d->flags & keepOnTop_WidgetFlag) {
@@ -1525,16 +1497,67 @@ iBool hasVisibleChildOnTop_Widget(const iWidget *parent) {
     return iFalse;
 }
 
-void printTree_Widget(const iWidget *d) {
-    if (!d) {
-        printf("[NULL]\n");
-        return;
-    }
-    printTree_Widget_(d, 0);
-}
-
 iBeginDefineClass(Widget)
     .processEvent = processEvent_Widget,
     .draw         = draw_Widget,
 iEndDefineClass(Widget)
 
+/*----------------------------------------------------------------------------------------------
+   Debug utilities for inspecting widget trees.
+*/
+
+#include "labelwidget.h"
+static void printInfo_Widget_(const iWidget *d) {
+    printf("[%p] %s:\"%s\" ", d, class_Widget(d)->name, cstr_String(&d->id));
+    if (isInstance_Object(d, &Class_LabelWidget)) {
+        printf("(%s|%s) ",
+               cstr_String(text_LabelWidget((const iLabelWidget *) d)),
+               cstr_String(command_LabelWidget((const iLabelWidget *) d)));
+    }
+    printf("size:%dx%d {min:%dx%d} [%d..%d %d:%d] flags:%08llx%s%s%s%s%s\n",
+           d->rect.size.x, d->rect.size.y,
+           d->minSize.x, d->minSize.y,
+           d->padding[0], d->padding[2],
+           d->padding[1], d->padding[3],
+           (long long unsigned int) d->flags,
+           d->flags & expand_WidgetFlag ? " exp" : "",
+           d->flags & tight_WidgetFlag ? " tight" : "",
+           d->flags & fixedWidth_WidgetFlag ? " fixW" : "",
+           d->flags & fixedHeight_WidgetFlag ? " fixH" : "",
+           d->flags & resizeToParentWidth_WidgetFlag ? " rsPrnW" : "");
+}
+
+static void printTree_Widget_(const iWidget *d, int indent) {
+    for (int i = 0; i < indent; ++i) {
+        fwrite("    ", 4, 1, stdout);
+    }
+    printInfo_Widget_(d);
+    iConstForEach(ObjectList, i, d->children) {
+        printTree_Widget_(i.object, indent + 1);
+    }
+}
+
+void printTree_Widget(const iWidget *d) {
+    if (!d) {
+        puts("[NULL]");
+        return;
+    }
+    printTree_Widget_(d, 0);
+}
+
+void identify_Widget(const iWidget *d) {
+    if (!d) {
+        puts("[NULL}");
+        return;
+    }
+    int indent = 0;
+    for (const iWidget *w = d; w; w = w->parent, indent++) {
+        if (indent > 0) {
+            for (int i = 0; i < indent; ++i) {
+                fwrite("  ", 2, 1, stdout);
+            }
+        }
+        printInfo_Widget_(w);
+    }
+    fflush(stdout);
+}

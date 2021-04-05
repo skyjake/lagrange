@@ -129,7 +129,7 @@ struct Impl_App {
     iTime        lastDropTime; /* for detecting drops of multiple items */
     int          autoReloadTimer;
     iPeriodic    periodic;
-    int          warmupFrames; /* forced refresh just after resuming from background */
+    int          warmupFrames; /* forced refresh just after resuming from background; FIXME: shouldn't be needed */
     /* Preferences: */
     iBool        commandEcho;         /* --echo */
     iBool        forceSoftwareRender; /* --sw */
@@ -226,6 +226,8 @@ static iString *serializePrefs_App_(const iApp *d) {
     /* TODO: Set up an array of booleans in Prefs and do these in a loop. */
     appendFormat_String(str, "prefs.mono.gemini.changed arg:%d\n", d->prefs.monospaceGemini);
     appendFormat_String(str, "prefs.mono.gopher.changed arg:%d\n", d->prefs.monospaceGopher);
+    appendFormat_String(str, "prefs.boldlink.dark.changed arg:%d\n", d->prefs.boldLinkDark);
+    appendFormat_String(str, "prefs.boldlink.light.changed arg:%d\n", d->prefs.boldLinkLight);
     appendFormat_String(str, "prefs.biglede.changed arg:%d\n", d->prefs.bigFirstParagraph);
     appendFormat_String(str, "prefs.plaintext.wrap.changed arg:%d\n", d->prefs.plainTextWrap);
     appendFormat_String(str, "prefs.sideicon.changed arg:%d\n", d->prefs.sideIcon);
@@ -1697,6 +1699,19 @@ iBool handleCommand_App(const char *cmd) {
         postCommand_App("window.unfreeze");
         return iTrue;
     }
+    else if (equal_Command(cmd, "prefs.boldlink.dark.changed") ||
+             equal_Command(cmd, "prefs.boldlink.light.changed")) {
+        const iBool isSet = (arg_Command(cmd) != 0);
+        if (startsWith_CStr(cmd, "prefs.boldlink.dark")) {
+            d->prefs.boldLinkDark = isSet;
+        }
+        else {
+            d->prefs.boldLinkLight = isSet;
+        }
+        resetFonts_Text(); /* clear the glyph cache */
+        postCommand_App("font.changed");
+        return iTrue;
+    }
     else if (equal_Command(cmd, "prefs.biglede.changed")) {
         d->prefs.bigFirstParagraph = arg_Command(cmd) != 0;
         postCommand_App("document.layout.changed");
@@ -1938,6 +1953,12 @@ iBool handleCommand_App(const char *cmd) {
         setFlags_Widget(findChild_Widget(dlg, "prefs.mono.gopher"),
                         selected_WidgetFlag,
                         d->prefs.monospaceGopher);
+        setFlags_Widget(findChild_Widget(dlg, "prefs.boldlink.dark"),
+                        selected_WidgetFlag,
+                        d->prefs.boldLinkDark);
+        setFlags_Widget(findChild_Widget(dlg, "prefs.boldlink.light"),
+                        selected_WidgetFlag,
+                        d->prefs.boldLinkLight);
         setFlags_Widget(
             findChild_Widget(dlg, format_CStr("prefs.linewidth.%d", d->prefs.lineWidth)),
             selected_WidgetFlag,

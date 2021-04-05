@@ -1,6 +1,90 @@
 msgid "doc.pre.nocaption"
 msgstr "Preformatted text without a caption"
 
+# Link download progress message.
+msgid "doc.fetching"
+msgstr "Fetching"
+
+# Inline download status message.
+msgid "media.download.warnclose"
+msgstr "Download will be cancelled if this tab is closed."
+
+# Inline download status message.
+msgid "media.download.complete"
+msgstr "Download completed."
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.title"
+msgstr "Title"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.artist"
+msgstr "Artist"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.genre"
+msgstr "Genre"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.date"
+msgstr "Date"
+
+# used as adjective, n is 8, 16, 24, 32, or 64
+#, c-format
+msgid "n.bit"
+msgstr "%d-bit"
+
+msgid "numbertype.integer"
+msgstr "integer"
+
+msgid "numbertype.float"
+msgstr "float"
+
+# Hertz, unit for frequency values
+msgid "hz"
+msgstr "Hz"
+
+# Used in about:feeds.
+msgid "feeds.list.title"
+msgstr "Feed entries"
+
+#, c-format
+msgid "feeds.list.counts"
+msgid_plural "feeds.list.counts.n"
+msgstr[0] "You are subscribed to %zu feed that contains %%s.\n"
+msgstr[1] "You are subscribed to %zu feeds that contain %%s.\n"
+
+#, c-format
+msgid "feeds.list.entrycount"
+msgid_plural "feeds.list.entrycount.n"
+msgstr[0] "a total of %zu entry"
+msgstr[1] "a total of %zu entries"
+
+msgid "feeds.list.refreshtime.now"
+msgstr "The latest refresh occurred just a moment ago."
+
+#, c-format
+msgid "feeds.list.refreshtime"
+msgstr "The latest refresh occurred %s."
+
+#, c-format
+msgid "minutes.ago"
+msgid_plural "minutes.ago.n"
+msgstr[0] "%d minute ago"
+msgstr[1] "%d minutes ago"
+
+#, c-format
+msgid "hours.ago"
+msgid_plural "hours.ago.n"
+msgstr[0] "%d hour ago"
+msgstr[1] "%d hours ago"
+
+#, c-format
+msgid "days.ago"
+msgid_plural "days.ago.n"
+msgstr[0] "%d day ago"
+msgstr[1] "%d days ago"
+
 # Alt-text of the preformatted logo.
 msgid "about.logo"
 msgstr "ASCII art: the word \"Lagrange\" using a large font"
@@ -268,6 +352,9 @@ msgstr "Updating Feeds"
 # megabytes, used as the unit after a number
 msgid "mb"
 msgstr "MB"
+
+msgid "mb.per.sec"
+msgstr "MB/s"
 
 # kilobytes, used as the unit after a number
 msgid "kb"
@@ -716,17 +803,20 @@ msgstr "Chinese (Simplified)"
 msgid "lang.zh.hant"
 msgstr "Chinese (Traditional)"
 
+msgid "lang.de"
+msgstr "German"
+
 msgid "lang.en"
 msgstr "English"
+
+msgid "lang.ie"
+msgstr "Interlingue"
 
 msgid "lang.fi"
 msgstr "Finnish"
 
 msgid "lang.fr"
 msgstr "French"
-
-msgid "lang.de"
-msgstr "German"
 
 msgid "lang.hi"
 msgstr "Hindi"
@@ -745,6 +835,9 @@ msgstr "Russian"
 
 msgid "lang.es"
 msgstr "Spanish"
+
+msgid "lang.sr"
+msgstr "Serbian"
 
 msgid "heading.newident"
 msgstr "NEW IDENTITY"
@@ -998,6 +1091,17 @@ msgstr "Gemini"
 
 msgid "prefs.mono.gopher"
 msgstr "Gopher"
+
+msgid "prefs.boldlink"
+msgstr "Bold links:"
+
+# Interpretation: (Bold links) on dark (background).
+msgid "prefs.boldlink.dark"
+msgstr "On Dark"
+
+# Interpretation: (Bold links) on light (background).
+msgid "prefs.boldlink.light"
+msgstr "On Light"
 
 msgid "prefs.linewidth"
 msgstr "Line width:"

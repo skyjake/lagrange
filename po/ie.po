@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-03-30 12:05+0000\n"
+"PO-Revision-Date: 2021-04-05 09:23+0000\n"
 "Last-Translator: Olga Smirnova <mistresssilvara@hotmail.com>\n"
 "Language-Team: Occidental <http://weblate.skyjake.fi/projects/lagrange/ui/ie/"
 ">\n"
@@ -1335,3 +1335,9 @@ msgstr "Aperter un ligament per tastes in li hem-range"
 
 msgid "doc.pre.nocaption"
 msgstr "Un formatat textu sin un rubrica"
+
+msgid "lang.ie"
+msgstr "Interlingue"
+
+msgid "lang.sr"
+msgstr "Serbian"

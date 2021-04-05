@@ -294,6 +294,9 @@ static void linkContentWasLaidOut_GmDocument_(iGmDocument *d, const iGmMediaInfo
 
 static iBool isNormalized_GmDocument_(const iGmDocument *d) {
     const iPrefs *prefs = prefs_App();
+    if (d->format == plainText_GmDocumentFormat) {
+        return iTrue; /* tabs are always normalized in plain text */
+    }
     if (startsWithCase_String(&d->url, "gemini:") && prefs->monospaceGemini) {
         return iFalse;
     }
@@ -311,27 +314,33 @@ static enum iGmDocumentTheme currentTheme_(void) {
 static void alignDecoration_GmRun_(iGmRun *run, iBool isCentered) {
     const iRect visBounds = visualBounds_Text(run->font, run->text);
     const int   visWidth  = width_Rect(visBounds);
+    int         xAdjust   = 0;
     if (!isCentered) {
         /* Keep the icon aligned to the left edge. */
-        run->visBounds.pos.x -= left_Rect(visBounds);
+        xAdjust -= left_Rect(visBounds);
         if (visWidth > width_Rect(run->visBounds)) {
             /* ...unless it's a wide icon, in which case move it to the left. */
-            run->visBounds.pos.x -= visWidth - width_Rect(run->visBounds);
+            xAdjust -= visWidth - width_Rect(run->visBounds);
         }
         else if (visWidth < width_Rect(run->visBounds) * 3 / 4) {
             /* ...or a narrow icon, which needs to be centered but leave a gap. */
-            run->visBounds.pos.x += (width_Rect(run->visBounds) * 3 / 4 - visWidth) / 2;
+            xAdjust += (width_Rect(run->visBounds) * 3 / 4 - visWidth) / 2;
         }
     }
     else {
         /* Centered. */
-        run->visBounds.pos.x += (width_Rect(run->visBounds) - visWidth) / 2;
+        xAdjust += (width_Rect(run->visBounds) - visWidth) / 2;
     }
+    run->visBounds.pos.x  += xAdjust;
+    run->visBounds.size.x -= xAdjust;
 }
 
 static void doLayout_GmDocument_(iGmDocument *d) {
-    const iBool isMono = isForcedMonospace_GmDocument_(d);
-    const iBool isNarrow = d->size.x < 90 * gap_Text;
+    const iPrefs *prefs    = prefs_App();
+    const iBool   isMono   = isForcedMonospace_GmDocument_(d);
+    const iBool   isNarrow = d->size.x < 90 * gap_Text;
+    const iBool   isDarkBg = isDark_GmDocumentTheme(
+        isDark_ColorTheme(colorTheme_App()) ? prefs->docThemeDark : prefs->docThemeLight);
     /* TODO: Collect these parameters into a GmTheme. */
     const int fonts[max_GmLineType] = {
         isMono ? regularMonospace_FontId : paragraph_FontId,
@@ -341,7 +350,10 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         heading1_FontId,
         heading2_FontId,
         heading3_FontId,
-        isMono ? regularMonospace_FontId : bold_FontId,
+        isMono ? regularMonospace_FontId
+        : ((isDarkBg && prefs->boldLinkDark) || (!isDarkBg && prefs->boldLinkLight))
+            ? bold_FontId
+            : paragraph_FontId,
     };
     static const int colors[max_GmLineType] = {
         tmParagraph_ColorId,
@@ -370,7 +382,6 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     static const char *quote           = "\u201c";
     static const char *magnifyingGlass = "\U0001f50d";
     static const char *pointingFinger  = "\U0001f449";
-    const iPrefs *prefs = prefs_App();
     clear_Array(&d->layout);
     clearLinks_GmDocument_(d);
     clear_Array(&d->headings);
@@ -574,6 +585,10 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         if (type == bullet_GmLineType) {
             /* TODO: Literata bullet is broken? */
             iGmRun bulRun = run;
+            if (prefs->font == literata_TextFont) {
+                /* Something wrong this the glyph in Literata, looks cropped. */
+                bulRun.font = defaultContentSized_FontId;
+            }
             bulRun.color = tmQuote_ColorId;
             bulRun.visBounds.pos = addX_I2(pos, (indents[text_GmLineType] - 0.55f) * gap_Text);
             bulRun.visBounds.size =
@@ -1380,7 +1395,8 @@ static void normalize_GmDocument(iGmDocument *d) {
                 }
             }
             appendCStr_String(normalized, "\n");
-            if (lineType_GmDocument_(d, line) == preformatted_GmLineType) {
+            if (d->format == gemini_GmDocumentFormat &&
+                lineType_GmDocument_(d, line) == preformatted_GmLineType) {
                 isPreformat = iFalse;
             }
             continue;

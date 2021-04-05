@@ -1473,7 +1473,7 @@ void init_Window(iWindow *d, iRect rect) {
     setId_Widget(d->root, "root");
     init_Text(d->render);
     setupUserInterface_Window(d);
-    postCommand_App("bindings.changed"); /* update from bindings */
+    postCommand_App("~bindings.changed"); /* update from bindings */
     updateRootSize_Window_(d, iFalse);
     /* Load the border shadow texture. */ {
         SDL_Surface *surf = loadImage_(&imageShadow_Embedded, 0);
@@ -1769,12 +1769,8 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
             SDL_Event event = *ev;
             if (event.type == SDL_USEREVENT && isCommand_UserEvent(ev, "window.unfreeze")) {
                 d->isDrawFrozen = iFalse;
-                /* When the window is shown for the first time, ensure glyphs get
-                   re-cached correctly. */
                 if (SDL_GetWindowFlags(d->win) & SDL_WINDOW_HIDDEN) {
                     SDL_ShowWindow(d->win);
-                    resetFonts_Text();
-                    postCommand_App("theme.changed");
                 }
                 postRefresh_App();
                 return iTrue;

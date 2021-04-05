@@ -45,6 +45,47 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.3.1" date="2021-04-05">
+            <description>
+                <p>Version 1.3 is a major feature update with improvements for
+                    localization, browsing behavior, page content and
+                    rendering, UI design, and command line use. Here are some of
+                    the highlights:
+                </p>
+                <ul>
+                    <li>New UI language setting: English, Chinese, Finnish, 
+                        Interlingue, Russian, Serbian, and Spanish available in this
+                        release.</li> 
+                    <li>LibreTranslate integration for translating page 
+                        content.</li>
+                    <li>Viewing alt text of preformatted blocks.</li>
+                    <li>Improvements to color themes and page appearance.</li>
+                    <li>Rescaling the UI manually or when moving the window
+                        to a different display.</li>
+                    <li>Word/paragraph selection modes (double/triple click).</li>
+                    <li>Controlling a running instance via command line.</li>
+                </ul>
+                <p>1.3.1 contains minor updates and bug fixes:</p>
+                <ul>
+                    <li>Added option to disable bold links for light/dark backgrounds.</li>
+                    <li>Updated the Nunito font to the latest version.</li>
+                    <li>Fixed keybindings overriding the home row key navigation mode.</li>
+                    <li>Fixed crash during word wrapping.</li>
+                    <li>Fixed kerning in the text renderer.</li>
+                    <li>Fixed issue with overlapped drawing of list bullets vs. list
+                        items.</li>
+                    <li>Fixed cropped list bullets when using Literata.</li>
+                    <li>Fixed whitespace normalization in plain text files (tab
+                        characters).</li>
+                    <li>Fixed issues buffering window contents, possibly causing missing
+                        font glyphs.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.
+                </p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.3.1</url>
+        </release>
         <release version="1.3" date="2021-03-31">
             <description>
                 <p> This is a major feature update with improvements for

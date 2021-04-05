@@ -144,8 +144,38 @@ iDefineTypeConstruction(PersistentDocumentState)
 
 /*----------------------------------------------------------------------------------------------*/
 
-static void animateMedia_DocumentWidget_      (iDocumentWidget *d);
-static void updateSideIconBuf_DocumentWidget_   (iDocumentWidget *d);
+iDeclareType(DrawBufs)
+
+enum iDrawBufsFlag {
+    updateSideBuf_DrawBufsFlag      = iBit(1),
+    updateTimestampBuf_DrawBufsFlag = iBit(2),
+};
+
+struct Impl_DrawBufs {
+    int            flags;
+    SDL_Texture *  sideIconBuf;
+    iTextBuf *     timestampBuf;
+};
+
+static void init_DrawBufs(iDrawBufs *d) {
+    d->flags = 0;
+    d->sideIconBuf = NULL;
+    d->timestampBuf = NULL;
+}
+
+static void deinit_DrawBufs(iDrawBufs *d) {
+    delete_TextBuf(d->timestampBuf);
+    if (d->sideIconBuf) {
+        SDL_DestroyTexture(d->sideIconBuf);
+    }
+}
+
+iDefineTypeConstruction(DrawBufs)
+
+/*----------------------------------------------------------------------------------------------*/
+
+static void animateMedia_DocumentWidget_        (iDocumentWidget *d);
+static void updateSideIconBuf_DocumentWidget_   (const iDocumentWidget *d);
 
 static const int smoothDuration_DocumentWidget_  = 600; /* milliseconds */
 static const int outlineMinWidth_DocumentWdiget_ = 45;  /* times gap_UI */
@@ -229,8 +259,7 @@ struct Impl_DocumentWidget {
     iWidget *      playerMenu;
     iVisBuf *      visBuf;
     iPtrSet *      invalidRuns;
-    SDL_Texture *  sideIconBuf;
-    iTextBuf *     timestampBuf;
+    iDrawBufs *    drawBufs; /* dynamic state for drawing */
     iTranslation * translation;
     iWidget *      phoneToolbar;
 };
@@ -291,8 +320,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     addChild_Widget(w, iClob(d->scroll = new_ScrollWidget()));
     d->menu         = NULL; /* created when clicking */
     d->playerMenu   = NULL;
-    d->sideIconBuf  = NULL;
-    d->timestampBuf = NULL;
+    d->drawBufs     = new_DrawBufs();
     d->translation  = NULL;
     addChildFlags_Widget(w,
                          iClob(new_IndicatorWidget()),
@@ -311,10 +339,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
 
 void deinit_DocumentWidget(iDocumentWidget *d) {
     delete_Translation(d->translation);
-    if (d->sideIconBuf) {
-        SDL_DestroyTexture(d->sideIconBuf);
-    }
-    delete_TextBuf(d->timestampBuf);
+    delete_DrawBufs(d->drawBufs);
     delete_VisBuf(d->visBuf);
     delete_PtrSet(d->invalidRuns);
     iRelease(d->media);
@@ -336,6 +361,24 @@ void deinit_DocumentWidget(iDocumentWidget *d) {
     delete_String(d->certSubject);
     delete_String(d->titleUser);
     deinit_PersistentDocumentState(&d->mod);
+}
+
+static void enableActions_DocumentWidget_(iDocumentWidget *d, iBool enable) {
+    /* Actions are invisible child widgets of the DocumentWidget. */
+    iForEach(ObjectList, i, children_Widget(d)) {
+        if (isAction_Widget(i.object)) {
+            setFlags_Widget(i.object, disabled_WidgetFlag, !enable);
+        }
+    }
+}
+
+static void setLinkNumberMode_DocumentWidget_(iDocumentWidget *d, iBool set) {
+    iChangeFlags(d->flags, showLinkNumbers_DocumentWidgetFlag, set);
+    /* Children have priority when handling events. */
+    enableActions_DocumentWidget_(d, !set);
+    if (d->menu) {
+        setFlags_Widget(d->menu, disabled_WidgetFlag, set);
+    }
 }
 
 static void resetWideRuns_DocumentWidget_(iDocumentWidget *d) {
@@ -697,7 +740,7 @@ static void updateVisible_DocumentWidget_(iDocumentWidget *d) {
     }
     const iRangecc newHeading = currentHeading_DocumentWidget_(d);
     if (memcmp(&oldHeading, &newHeading, sizeof(oldHeading))) {
-        updateSideIconBuf_DocumentWidget_(d);
+        d->drawBufs->flags |= updateSideBuf_DrawBufsFlag;
     }
     updateHover_DocumentWidget_(d, mouseCoord_Window(get_Window()));
     updateSideOpacity_DocumentWidget_(d, iTrue);
@@ -779,17 +822,21 @@ static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
     }
 }
 
-static void updateTimestampBuf_DocumentWidget_(iDocumentWidget *d) {
-    if (d->timestampBuf) {
-        delete_TextBuf(d->timestampBuf);
-        d->timestampBuf = NULL;
+static void updateTimestampBuf_DocumentWidget_(const iDocumentWidget *d) {
+    if (!isExposed_Window(get_Window())) {
+        return;
+    }
+    if (d->drawBufs->timestampBuf) {
+        delete_TextBuf(d->drawBufs->timestampBuf);
+        d->drawBufs->timestampBuf = NULL;
     }
     if (isValid_Time(&d->sourceTime)) {
-        d->timestampBuf = new_TextBuf(
+        d->drawBufs->timestampBuf = new_TextBuf(
             uiLabel_FontId,
             white_ColorId,
             cstrCollect_String(format_Time(&d->sourceTime, cstr_Lang("page.timestamp"))));
     }
+    d->drawBufs->flags &= ~updateTimestampBuf_DrawBufsFlag;
 }
 
 static void invalidate_DocumentWidget_(iDocumentWidget *d) {
@@ -819,7 +866,7 @@ void setSource_DocumentWidget(iDocumentWidget *d, const iString *source) {
     documentRunsInvalidated_DocumentWidget_(d);
     updateWindowTitle_DocumentWidget_(d);
     updateVisible_DocumentWidget_(d);
-    updateSideIconBuf_DocumentWidget_(d);
+    d->drawBufs->flags |= updateSideBuf_DrawBufsFlag;
     invalidate_DocumentWidget_(d);
     refresh_Widget(as_Widget(d));
 }
@@ -832,7 +879,7 @@ static void updateTheme_DocumentWidget_(iDocumentWidget *d) {
     else {
         setThemeSeed_GmDocument(d->doc, &d->titleUser->chars);
     }
-    updateTimestampBuf_DocumentWidget_(d);
+    d->drawBufs->flags |= updateTimestampBuf_DrawBufsFlag;
 }
 
 static enum iGmDocumentBanner bannerType_DocumentWidget_(const iDocumentWidget *d) {
@@ -928,7 +975,7 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse
         }
         clear_String(&d->sourceMime);
         d->sourceTime = response->when;
-        updateTimestampBuf_DocumentWidget_(d);
+        d->drawBufs->flags |= updateTimestampBuf_DrawBufsFlag;
         initBlock_String(&str, &response->body);
         if (isSuccess_GmStatusCode(statusCode)) {
             /* Check the MIME type. */
@@ -1025,7 +1072,7 @@ static void fetch_DocumentWidget_(iDocumentWidget *d) {
     postCommandf_App("document.request.started doc:%p url:%s", d, cstr_String(d->mod.url));
     clear_ObjectList(d->media);
     d->certFlags = 0;
-    d->flags &= ~showLinkNumbers_DocumentWidgetFlag;
+    setLinkNumberMode_DocumentWidget_(d, iFalse);
     d->state = fetching_RequestState;
     set_Atomic(&d->isRequestUpdated, iFalse);
     d->request = new_GmRequest(certs_App());
@@ -1075,7 +1122,9 @@ static void cacheRunGlyphs_(void *data, const iGmRun *run) {
 }
 
 static void cacheDocumentGlyphs_DocumentWidget_(const iDocumentWidget *d) {
-    render_GmDocument(d->doc, (iRangei){ 0, size_GmDocument(d->doc).y }, cacheRunGlyphs_, NULL);
+    if (isExposed_Window(get_Window())) {
+        render_GmDocument(d->doc, (iRangei){ 0, size_GmDocument(d->doc).y }, cacheRunGlyphs_, NULL);
+    }
 }
 
 static iBool updateFromHistory_DocumentWidget_(iDocumentWidget *d) {
@@ -1092,14 +1141,14 @@ static iBool updateFromHistory_DocumentWidget_(iDocumentWidget *d) {
         d->sourceTime = resp->when;
         d->sourceStatus = success_GmStatusCode;
         format_String(&d->sourceHeader, cstr_Lang("pageinfo.header.cached"));
-        updateTimestampBuf_DocumentWidget_(d);
+        d->drawBufs->flags |= updateTimestampBuf_DrawBufsFlag;
         set_Block(&d->sourceContent, &resp->body);
         updateDocument_DocumentWidget_(d, resp, iTrue);
         init_Anim(&d->scrollY, d->initNormScrollY * size_GmDocument(d->doc).y);
         init_Anim(&d->altTextOpacity, 0);
         d->state = ready_RequestState;
         updateSideOpacity_DocumentWidget_(d, iFalse);
-        updateSideIconBuf_DocumentWidget_(d);
+        d->drawBufs->flags |= updateSideBuf_DrawBufsFlag;
         updateVisible_DocumentWidget_(d);
         cacheDocumentGlyphs_DocumentWidget_(d);
         postCommandf_App("document.changed doc:%p url:%s", d, cstr_String(d->mod.url));
@@ -1131,7 +1180,7 @@ static void refreshWhileScrolling_DocumentWidget_(iAny *ptr) {
 static void smoothScroll_DocumentWidget_(iDocumentWidget *d, int offset, int duration) {
     /* Get rid of link numbers when scrolling. */
     if (offset && d->flags & showLinkNumbers_DocumentWidgetFlag) {
-        d->flags &= ~showLinkNumbers_DocumentWidgetFlag;
+        setLinkNumberMode_DocumentWidget_(d, iFalse);
         invalidateVisibleLinks_DocumentWidget_(d);
     }
     if (!prefs_App()->smoothScrolling) {
@@ -1618,11 +1667,11 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     iWidget *w = as_Widget(d);
     if (equal_Command(cmd, "window.resized") || equal_Command(cmd, "font.changed")) {
         /* Alt/Option key may be involved in window size changes. */
-        iChangeFlags(d->flags, showLinkNumbers_DocumentWidgetFlag, iFalse);
+        setLinkNumberMode_DocumentWidget_(d, iFalse);
         d->phoneToolbar = findWidget_App("toolbar");
         const iBool keepCenter = equal_Command(cmd, "font.changed");
         updateDocumentWidthRetainingScrollPosition_DocumentWidget_(d, keepCenter);
-        updateSideIconBuf_DocumentWidget_(d);
+        d->drawBufs->flags |= updateSideBuf_DrawBufsFlag;
         invalidate_DocumentWidget_(d);
         dealloc_VisBuf(d->visBuf);
         updateWindowTitle_DocumentWidget_(d);
@@ -1630,7 +1679,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     else if (equal_Command(cmd, "window.focus.lost")) {
         if (d->flags & showLinkNumbers_DocumentWidgetFlag) {
-            d->flags &= ~showLinkNumbers_DocumentWidgetFlag;
+            setLinkNumberMode_DocumentWidget_(d, iFalse);
             invalidateVisibleLinks_DocumentWidget_(d);
             refresh_Widget(w);
         }
@@ -1643,7 +1692,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         updateTheme_DocumentWidget_(d);
         updateVisible_DocumentWidget_(d);
         updateTrust_DocumentWidget_(d, NULL);
-        updateSideIconBuf_DocumentWidget_(d);
+        d->drawBufs->flags |= updateSideBuf_DrawBufsFlag;
         invalidate_DocumentWidget_(d);
         refresh_Widget(w);
     }
@@ -1651,7 +1700,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         updateSize_DocumentWidget(d);
     }
     else if (equal_Command(cmd, "tabs.changed")) {
-        iChangeFlags(d->flags, showLinkNumbers_DocumentWidgetFlag, iFalse);
+        setLinkNumberMode_DocumentWidget_(d, iFalse);
         if (cmp_String(id_Widget(w), suffixPtr_Command(cmd, "id")) == 0) {
             /* Set palette for our document. */
             updateTheme_DocumentWidget_(d);
@@ -1875,7 +1924,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         }
         iReleasePtr(&d->request);
         updateVisible_DocumentWidget_(d);
-        updateSideIconBuf_DocumentWidget_(d);
+        d->drawBufs->flags |= updateSideBuf_DrawBufsFlag;
         postCommandf_App("document.changed doc:%p url:%s", d, cstr_String(d->mod.url));
         /* Check for a pending goto. */
         if (!isEmpty_String(&d->pendingGotoHeading)) {
@@ -1956,7 +2005,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     else if (equal_Command(cmd, "document.linkkeys") && document_App() == d) {
         if (argLabel_Command(cmd, "release")) {
-            iChangeFlags(d->flags, showLinkNumbers_DocumentWidgetFlag, iFalse);
+            setLinkNumberMode_DocumentWidget_(d, iFalse);
         }
         else if (argLabel_Command(cmd, "more")) {
             if (d->flags & showLinkNumbers_DocumentWidgetFlag &&
@@ -1976,13 +2025,13 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             else if (~d->flags & showLinkNumbers_DocumentWidgetFlag) {
                 d->ordinalMode = homeRow_DocumentLinkOrdinalMode;
                 d->ordinalBase = 0;
-                iChangeFlags(d->flags, showLinkNumbers_DocumentWidgetFlag, iTrue);
+                setLinkNumberMode_DocumentWidget_(d, iTrue);
             }
         }
         else {
             d->ordinalMode = arg_Command(cmd);
             d->ordinalBase = 0;
-            iChangeFlags(d->flags, showLinkNumbers_DocumentWidgetFlag, iTrue);
+            setLinkNumberMode_DocumentWidget_(d, iTrue);
             iChangeFlags(d->flags, setHoverViaKeys_DocumentWidgetFlag,
                          argLabel_Command(cmd, "hover") != 0);
             iChangeFlags(d->flags, newTabViaHomeKeys_DocumentWidgetFlag,
@@ -2426,7 +2475,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                          cstr_String(absoluteUrl_String(
                                              d->mod.url, linkUrl_GmDocument(d->doc, run->linkId))));
                     }
-                    iChangeFlags(d->flags, showLinkNumbers_DocumentWidgetFlag, iFalse);
+                    setLinkNumberMode_DocumentWidget_(d, iFalse);
                     invalidateVisibleLinks_DocumentWidget_(d);
                     refresh_Widget(d);
                     return iTrue;
@@ -2436,7 +2485,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         switch (key) {
             case SDLK_ESCAPE:
                 if (d->flags & showLinkNumbers_DocumentWidgetFlag && document_App() == d) {
-                    iChangeFlags(d->flags, showLinkNumbers_DocumentWidgetFlag, iFalse);
+                    setLinkNumberMode_DocumentWidget_(d, iFalse);
                     invalidateVisibleLinks_DocumentWidget_(d);
                     refresh_Widget(d);
                     return iTrue;
@@ -2462,6 +2511,17 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 enableHalfPixelGlyphs_Text = !enableHalfPixelGlyphs_Text;
                 refresh_Widget(w);
                 printf("halfpixel: %d\n", enableHalfPixelGlyphs_Text);
+                fflush(stdout);
+                break;
+            }
+#endif
+#if 0
+            case '0': {
+                extern int enableKerning_Text;
+                enableKerning_Text = !enableKerning_Text;
+                invalidate_DocumentWidget_(d);
+                refresh_Widget(w);
+                printf("kerning: %d\n", enableKerning_Text);
                 fflush(stdout);
                 break;
             }
@@ -3162,7 +3222,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                 draw_Text(metaFont,
                           topRight_Rect(linkRect),
                           tmInlineContentMetadata_ColorId,
-                          " \u2014 Fetching\u2026 (%.1f MB)",
+                          translateCStr_Lang(" \u2014 ${doc.fetching}\u2026 (%.1f ${mb})"),
                           (float) bodySize_GmRequest(mr->req) / 1.0e6f);
             }
         }
@@ -3185,7 +3245,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                  showHost)) {
                 format_String(
                     &str,
-                    " \u2014%s%s%s\r%c%s",
+                    " \u2014%s%s%s%s%s",
                     showHost ? " " : "",
                     showHost
                         ? (flags & mailto_GmLinkFlag    ? cstr_String(url)
@@ -3196,9 +3256,8 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                         : "",
                     showHost && (showImage || showAudio) ? " \u2014" : "",
                     showImage || showAudio
-                        ? asciiBase_ColorEscape + fg
-                        : (asciiBase_ColorEscape +
-                           linkColor_GmDocument(doc, run->linkId, domain_GmLinkPart)),
+                        ? escape_Color(fg)
+                        : escape_Color(linkColor_GmDocument(doc, run->linkId, domain_GmLinkPart)),
                     showImage || showAudio
                         ? format_CStr(showImage ? " %s \U0001f5bb" : " %s \U0001f3b5",
                                       cstr_Lang(showImage ? "link.hint.image" : "link.hint.audio"))
@@ -3207,11 +3266,10 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
             if (run->flags & endOfLine_GmRunFlag && flags & visited_GmLinkFlag) {
                 iDate date;
                 init_Date(&date, linkTime_GmDocument(doc, run->linkId));
-                appendFormat_String(&str,
-                                    " \u2014 %s%s",
-                                    escape_Color(linkColor_GmDocument(doc, run->linkId,
-                                                                      visited_GmLinkPart)),
-                                    cstr_String(collect_String(format_Date(&date, "%b %d"))));
+                appendCStr_String(&str, " \u2014 ");
+                appendCStr_String(
+                    &str, escape_Color(linkColor_GmDocument(doc, run->linkId, visited_GmLinkPart)));
+                append_String(&str, collect_String(format_Date(&date, "%b %d")));
             }
             if (!isEmpty_String(&str)) {
                 const iInt2 textSize = measure_Text(metaFont, cstr_String(&str));
@@ -3258,10 +3316,15 @@ static iBool isSideHeadingVisible_DocumentWidget_(const iDocumentWidget *d) {
     return sideElementAvailWidth_DocumentWidget_(d) >= lineHeight_Text(banner_FontId) * 4.5f;
 }
 
-static void updateSideIconBuf_DocumentWidget_(iDocumentWidget *d) {
-    if (d->sideIconBuf) {
-        SDL_DestroyTexture(d->sideIconBuf);
-        d->sideIconBuf = NULL;
+static void updateSideIconBuf_DocumentWidget_(const iDocumentWidget *d) {
+    if (!isExposed_Window(get_Window())) {
+        return;
+    }
+    iDrawBufs *dbuf = d->drawBufs;
+    dbuf->flags &= ~updateSideBuf_DrawBufsFlag;
+    if (dbuf->sideIconBuf) {
+        SDL_DestroyTexture(dbuf->sideIconBuf);
+        dbuf->sideIconBuf = NULL;
     }
     const iGmRun *banner = siteBanner_GmDocument(d->doc);
     if (!banner) {
@@ -3286,13 +3349,13 @@ static void updateSideIconBuf_DocumentWidget_(iDocumentWidget *d) {
         }
     }
     SDL_Renderer *render = renderer_Window(get_Window());
-    d->sideIconBuf = SDL_CreateTexture(render,
-                                       SDL_PIXELFORMAT_RGBA4444,
-                                       SDL_TEXTUREACCESS_STATIC | SDL_TEXTUREACCESS_TARGET,
-                                       bufSize.x, bufSize.y);
+    dbuf->sideIconBuf = SDL_CreateTexture(render,
+                                          SDL_PIXELFORMAT_RGBA4444,
+                                          SDL_TEXTUREACCESS_STATIC | SDL_TEXTUREACCESS_TARGET,
+                                          bufSize.x, bufSize.y);
     iPaint p;
     init_Paint(&p);
-    beginTarget_Paint(&p, d->sideIconBuf);
+    beginTarget_Paint(&p, dbuf->sideIconBuf);
     const iColor back = get_Color(tmBannerSideTitle_ColorId);
     SDL_SetRenderDrawColor(render, back.r, back.g, back.b, 0); /* better blending of the edge */
     SDL_RenderClear(render);
@@ -3309,7 +3372,7 @@ static void updateSideIconBuf_DocumentWidget_(iDocumentWidget *d) {
         drawWrapRange_Text(font, pos, avail, tmBannerSideTitle_ColorId, text);
     }
     endTarget_Paint(&p);
-    SDL_SetTextureBlendMode(d->sideIconBuf, SDL_BLENDMODE_BLEND);
+    SDL_SetTextureBlendMode(dbuf->sideIconBuf, SDL_BLENDMODE_BLEND);
 }
 
 static void drawSideElements_DocumentWidget_(const iDocumentWidget *d) {
@@ -3319,12 +3382,13 @@ static void drawSideElements_DocumentWidget_(const iDocumentWidget *d) {
     const int      margin    = gap_UI * d->pageMargin;
     float          opacity   = value_Anim(&d->sideOpacity);
     const int      avail     = left_Rect(docBounds) - left_Rect(bounds) - 2 * margin;
-    iPaint      p;
+    iDrawBufs *    dbuf      = d->drawBufs;
+    iPaint         p;
     init_Paint(&p);
     setClip_Paint(&p, bounds);
     /* Side icon and current heading. */
-    if (prefs_App()->sideIcon && opacity > 0 && d->sideIconBuf) {
-        const iInt2 texSize = size_SDLTexture(d->sideIconBuf);
+    if (prefs_App()->sideIcon && opacity > 0 && dbuf->sideIconBuf) {
+        const iInt2 texSize = size_SDLTexture(dbuf->sideIconBuf);
         if (avail > texSize.x) {
             const int minBannerSize = lineHeight_Text(banner_FontId) * 2;
             iInt2 pos = addY_I2(add_I2(topLeft_Rect(bounds), init_I2(margin, 0)),
@@ -3332,20 +3396,20 @@ static void drawSideElements_DocumentWidget_(const iDocumentWidget *d) {
                                     (texSize.y > minBannerSize
                                          ? (gap_Text + lineHeight_Text(heading3_FontId)) / 2
                                          : 0));
-            SDL_SetTextureAlphaMod(d->sideIconBuf, 255 * opacity);
+            SDL_SetTextureAlphaMod(dbuf->sideIconBuf, 255 * opacity);
             SDL_RenderCopy(renderer_Window(get_Window()),
-                           d->sideIconBuf, NULL,
+                           dbuf->sideIconBuf, NULL,
                            &(SDL_Rect){ pos.x, pos.y, texSize.x, texSize.y });
         }
     }
     /* Reception timestamp. */
-    if (d->timestampBuf && d->timestampBuf->size.x <= avail) {
+    if (dbuf->timestampBuf && dbuf->timestampBuf->size.x <= avail) {
         draw_TextBuf(
-            d->timestampBuf,
+            dbuf->timestampBuf,
             add_I2(
                 bottomLeft_Rect(bounds),
                 init_I2(margin,
-                        -margin + -d->timestampBuf->size.y +
+                        -margin + -dbuf->timestampBuf->size.y +
                             iMax(0, scrollMax_DocumentWidget_(d) - value_Anim(&d->scrollY)))),
             tmQuoteIcon_ColorId);
     }
@@ -3378,6 +3442,12 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
         return;
     }
     draw_Widget(w);
+    if (d->drawBufs->flags & updateTimestampBuf_DrawBufsFlag) {
+        updateTimestampBuf_DocumentWidget_(d);
+    }
+    if (d->drawBufs->flags & updateSideBuf_DrawBufsFlag) {
+        updateSideIconBuf_DocumentWidget_(d);
+    }
     allocVisBuffer_DocumentWidget_(d);
     const iRect ctxWidgetBounds = init_Rect(
         0, 0, width_Rect(bounds) - constAs_Widget(d->scroll)->rect.size.x, height_Rect(bounds));
@@ -3580,7 +3650,7 @@ void deserializeState_DocumentWidget(iDocumentWidget *d, iStream *ins) {
 }
 
 void setUrlFromCache_DocumentWidget(iDocumentWidget *d, const iString *url, iBool isFromCache) {
-    d->flags &= ~showLinkNumbers_DocumentWidgetFlag;
+    setLinkNumberMode_DocumentWidget_(d, iFalse);
     set_String(d->mod.url, urlFragmentStripped_String(url));
     /* See if there a username in the URL. */
     parseUser_DocumentWidget_(d);
@@ -3617,7 +3687,7 @@ iBool isRequestOngoing_DocumentWidget(const iDocumentWidget *d) {
 void updateSize_DocumentWidget(iDocumentWidget *d) {
     updateDocumentWidthRetainingScrollPosition_DocumentWidget_(d, iFalse);
     resetWideRuns_DocumentWidget_(d);
-    updateSideIconBuf_DocumentWidget_(d);
+    d->drawBufs->flags |= updateSideBuf_DrawBufsFlag;
     updateVisible_DocumentWidget_(d);
     invalidate_DocumentWidget_(d);
 }

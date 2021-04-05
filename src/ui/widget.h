@@ -259,3 +259,4 @@ void        raise_Widget            (iWidget *);
 iBool       hasVisibleChildOnTop_Widget
                                     (const iWidget *parent);
 void        printTree_Widget        (const iWidget *);
+void        identify_Widget         (const iWidget *); /* prints to stdout */

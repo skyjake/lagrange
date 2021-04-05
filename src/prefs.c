@@ -37,7 +37,7 @@ void init_Prefs(iPrefs *d) {
     d->zoomPercent       = 100;
     d->sideIcon          = iTrue;
     d->hideToolbarOnScroll = iTrue;
-    d->hoverLink         = iTrue;
+    d->hoverLink         = iFalse;
     d->smoothScrolling   = iTrue;
     d->loadImageInsteadOfScrolling = iFalse;
     d->collapsePreOnLoad = iFalse;
@@ -47,6 +47,8 @@ void init_Prefs(iPrefs *d) {
     d->headingFont       = nunito_TextFont;
     d->monospaceGemini   = iFalse;
     d->monospaceGopher   = iFalse;
+    d->boldLinkDark      = iTrue;
+    d->boldLinkLight     = iTrue;
     d->lineWidth         = 38;
     d->bigFirstParagraph = iTrue;
     d->quoteIcon         = iTrue;
@@ -63,9 +65,6 @@ void init_Prefs(iPrefs *d) {
     init_String(&d->httpProxy);
     init_String(&d->downloadDir);
     init_String(&d->searchUrl);
-#if defined (iPlatformAppleMobile)
-    d->hoverLink = iFalse;
-#endif
     /* TODO: Add some platform-specific common locations? */
     if (fileExistsCStr_FileInfo("/etc/ssl/cert.pem")) { /* macOS */
         setCStr_String(&d->caFile, "/etc/ssl/cert.pem");

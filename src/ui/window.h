@@ -113,3 +113,8 @@ iWindow *   get_Window              (void);
 #if defined (LAGRANGE_CUSTOM_FRAME)
 SDL_HitTestResult hitTest_Window(const iWindow *d, iInt2 pos);
 #endif
+
+iLocalDef iBool isExposed_Window(const iWindow *d) {
+    iAssert(d);
+    return d->isExposed;
+}

@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-03-29 05:43+0000\n"
+"PO-Revision-Date: 2021-04-05 09:23+0000\n"
 "Last-Translator: Aaron Fischer <mail@aaron-fischer.net>\n"
 "Language-Team: German <http://weblate.skyjake.fi/projects/lagrange/ui/de/>\n"
 "Language: de\n"
@@ -108,7 +108,7 @@ msgid "menu.openlocation"
 msgstr "Adresse öffnen…"
 
 msgid "menu.find"
-msgstr "Auf der Seite suchen"
+msgstr "Seite durchsuchen"
 
 msgid "macos.menu.find"
 msgstr "Suchen"
@@ -650,3 +650,24 @@ msgstr "About-Seiten"
 
 msgid "menu.bookmarks.refresh"
 msgstr "Remote-Lesezeichen aktualisieren"
+
+msgid "feeds.unsubscribe"
+msgstr "Abonnement kündigen …"
+
+msgid "menu.dup"
+msgstr "Duplizieren …"
+
+msgid "heading.history.clear"
+msgstr "VERLAUF LÖSCHEN"
+
+msgid "bookmark.tag.remote"
+msgstr "Als Lesezeichen-Quelle verwenden"
+
+msgid "bookmark.untag.sub"
+msgstr "Feed-Abonnement kündigen"
+
+msgid "bookmark.untag.remote"
+msgstr "Lesezeichen-Quelle entfernen"
+
+msgid "bookmarks.reload"
+msgstr "Entfernte Quellen aktualisieren"

@@ -468,6 +468,10 @@ iWidget *addAction_Widget(iWidget *parent, int key, int kmods, const char *comma
     return as_Widget(action);
 }
 
+iBool isAction_Widget(const iWidget *d) {
+    return isInstance_Object(d, &Class_LabelWidget) && isEqual_I2(d->rect.size, zero_I2());
+}
+
 /*-----------------------------------------------------------------------------------------------*/
 
 static iBool isCommandIgnoredByMenus_(const char *cmd) {
@@ -1929,7 +1933,7 @@ iWidget *makePreferences_Widget(void) {
     setBackgroundColor_Widget(findChild_Widget(tabs, "tabs.buttons"), uiBackgroundSidebar_ColorId);
     setId_Widget(tabs, "prefs.tabs");
     iWidget *headings, *values;
-    const int lineGap = lineHeight_Text(uiLabel_FontId);
+    const int bigGap = lineHeight_Text(uiLabel_FontId) * 3 / 4;
     /* General preferences. */ {
         appendTwoColumnPage_(tabs, "${heading.prefs.general}", '1', &headings, &values);
 #if defined (LAGRANGE_DOWNLOAD_EDIT)
@@ -1938,8 +1942,8 @@ iWidget *makePreferences_Widget(void) {
 #endif
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.searchurl}")));
         setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.searchurl");
-        addChild_Widget(headings, iClob(makePadding_Widget(lineGap)));
-        addChild_Widget(values, iClob(makePadding_Widget(lineGap)));
+        addChild_Widget(headings, iClob(makePadding_Widget(bigGap)));
+        addChild_Widget(values, iClob(makePadding_Widget(bigGap)));
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.collapsepreonload}")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.collapsepreonload")));
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.plaintext.wrap}")));
@@ -1948,8 +1952,8 @@ iWidget *makePreferences_Widget(void) {
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.centershort")));
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.hoverlink}")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.hoverlink")));
-        addChild_Widget(headings, iClob(makePadding_Widget(lineGap)));
-        addChild_Widget(values, iClob(makePadding_Widget(lineGap)));
+        addChild_Widget(headings, iClob(makePadding_Widget(bigGap)));
+        addChild_Widget(values, iClob(makePadding_Widget(bigGap)));
         /* UI languages. */ {
             iArray *uiLangs = collectNew_Array(sizeof(iMenuItem));
             const iMenuItem langItems[] = {
@@ -1957,7 +1961,9 @@ iWidget *makePreferences_Widget(void) {
                 { "${lang.en} - en", 0, 0, "uilang id:en" },
                 { "${lang.es} - es", 0, 0, "uilang id:es" },
                 { "${lang.fi} - fi", 0, 0, "uilang id:fi" },
+                { "${lang.ie} - ie", 0, 0, "uilang id:ie" },
                 { "${lang.ru} - ru", 0, 0, "uilang id:ru" },
+                { "${lang.sr} - sr", 0, 0, "uilang id:sr" },
                 { "${lang.zh.hans} - zh", 0, 0, "uilang id:zh_Hans" },
                 { "${lang.zh.hant} - zh", 0, 0, "uilang id:zh_Hant" },
             };
@@ -2070,17 +2076,36 @@ iWidget *makePreferences_Widget(void) {
             addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.font}")));
             addFontButtons_(values, "font");
             addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.mono}")));
-            iWidget *mono = new_Widget();
-            iWidget *tog;
-            setTextCStr_LabelWidget(
-                addChild_Widget(mono, tog = iClob(makeToggle_Widget("prefs.mono.gemini"))), "${prefs.mono.gemini}");
-            setFlags_Widget(tog, fixedWidth_WidgetFlag, iFalse);
-            updateSize_LabelWidget((iLabelWidget *) tog);
-            setTextCStr_LabelWidget(
-                addChild_Widget(mono, tog = iClob(makeToggle_Widget("prefs.mono.gopher"))), "${prefs.mono.gopher}");
-            setFlags_Widget(tog, fixedWidth_WidgetFlag, iFalse);
-            updateSize_LabelWidget((iLabelWidget *) tog);
+            iWidget *mono = new_Widget(); {
+                iWidget *tog;
+                setTextCStr_LabelWidget(
+                    addChild_Widget(mono, tog = iClob(makeToggle_Widget("prefs.mono.gemini"))),
+                    "${prefs.mono.gemini}");
+                setFlags_Widget(tog, fixedWidth_WidgetFlag, iFalse);
+                updateSize_LabelWidget((iLabelWidget *) tog);
+                setTextCStr_LabelWidget(
+                    addChild_Widget(mono, tog = iClob(makeToggle_Widget("prefs.mono.gopher"))),
+                    "${prefs.mono.gopher}");
+                setFlags_Widget(tog, fixedWidth_WidgetFlag, iFalse);
+                updateSize_LabelWidget((iLabelWidget *) tog);
+            }
             addChildFlags_Widget(values, iClob(mono), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.boldlink}")));
+            iWidget *boldLink = new_Widget(); {
+                /* TODO: Add a utility function for this type of toggles? (also for above) */
+                iWidget *tog;
+                setTextCStr_LabelWidget(
+                    addChild_Widget(boldLink, tog = iClob(makeToggle_Widget("prefs.boldlink.dark"))),
+                    "${prefs.boldlink.dark}");
+                setFlags_Widget(tog, fixedWidth_WidgetFlag, iFalse);
+                updateSize_LabelWidget((iLabelWidget *) tog);
+                setTextCStr_LabelWidget(
+                    addChild_Widget(boldLink, tog = iClob(makeToggle_Widget("prefs.boldlink.light"))),
+                    "${prefs.boldlink.light}");
+                setFlags_Widget(tog, fixedWidth_WidgetFlag, iFalse);
+                updateSize_LabelWidget((iLabelWidget *) tog);
+            }
+            addChildFlags_Widget(values, iClob(boldLink), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
         }
         makeTwoColumnHeading_("${heading.prefs.paragraph}", headings, values);
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.linewidth}")));
@@ -2102,7 +2127,9 @@ iWidget *makePreferences_Widget(void) {
         addChildFlags_Widget(values, iClob(quote), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.biglede}")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.biglede")));
-        makeTwoColumnHeading_("${heading.prefs.widelayout}", headings, values);
+//        makeTwoColumnHeading_("${heading.prefs.widelayout}", headings, values);
+        addChild_Widget(headings, iClob(makePadding_Widget(bigGap)));
+        addChild_Widget(values, iClob(makePadding_Widget(bigGap)));
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.sideicon}")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.sideicon")));
     }

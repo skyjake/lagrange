@@ -289,7 +289,7 @@ static iString *visText_InputWidget_(const iInputWidget *d) {
 }
 
 static void updateBuffered_InputWidget_(iInputWidget *d) {
-    if (isFinishedLaunching_App()) {
+    if (isExposed_Window(get_Window())) {
         invalidateBuffered_InputWidget_(d);
         iString *bufText = NULL;
         if (d->inFlags & isUrl_InputWidgetFlag) {

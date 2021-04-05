@@ -18,7 +18,7 @@
 cmake_minimum_required (VERSION 3.9)
 
 project (Lagrange
-    VERSION 1.3.0
+    VERSION 1.3.1
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
@@ -78,7 +78,9 @@ set (EMBED_RESOURCES
     res/lang/en.bin
     res/lang/es.bin
     res/lang/fi.bin
+    res/lang/ie.bin
     res/lang/ru.bin
+    res/lang/sr.bin
     res/lang/zh_Hans.bin
     res/lang/zh_Hant.bin
     res/shadow.png

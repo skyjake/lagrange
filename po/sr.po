@@ -1,0 +1,1449 @@
+msgid ""
+msgstr ""
+"Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
+"PO-Revision-Date: 2021-04-05 11:27+0000\n"
+"Last-Translator: Страхиња Радић <contact@strahinja.org>\n"
+"Language-Team: Serbian <http://weblate.skyjake.fi/projects/lagrange/ui/sr/>\n"
+"Language: sr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
+"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
+"X-Generator: Weblate 4.5.1\n"
+
+msgid "about.version"
+msgstr "Верзија"
+
+msgid "cancel"
+msgstr "Поништи"
+
+msgid "dismiss"
+msgstr "Затвори"
+
+msgid "dlg.default"
+msgstr " ОК "
+
+msgid "toggle.yes"
+msgstr "ДА"
+
+msgid "toggle.no"
+msgstr "НЕ"
+
+msgid "menu.title.edit"
+msgstr "Уређивање"
+
+msgid "menu.title.view"
+msgstr "Приказ"
+
+msgid "menu.newtab"
+msgstr "Нова картица"
+
+msgid "menu.closetab.left"
+msgstr "Затвори картице слева"
+
+msgid "menu.duptab"
+msgstr "Дуплирај картицу"
+
+msgid "menu.openlocation"
+msgstr "Отвори локацију…"
+
+msgid "menu.find"
+msgstr "Тражи на страници"
+
+msgid "macos.menu.find"
+msgstr "Тражи"
+
+msgid "menu.sidebar.left"
+msgstr "Смени леви панел"
+
+msgid "menu.sidebar.right"
+msgstr "Смени десни панел"
+
+msgid "menu.zoom.in"
+msgstr "Увећај"
+
+msgid "menu.zoom.out"
+msgstr "Смањи"
+
+msgid "menu.zoom.reset"
+msgstr "Поништи увећање"
+
+msgid "menu.bookmarks.list"
+msgstr "Прикажи све обележиваче"
+
+msgid "macos.menu.bookmarks.list"
+msgstr "Прикажи све"
+
+msgid "macos.menu.bookmarks.bytag"
+msgstr "Прикажи по ознаци"
+
+msgid "macos.menu.bookmarks.bytime"
+msgstr "Прикажи по времену настанка"
+
+msgid "menu.feeds.entrylist"
+msgstr "Прикажи ставке фида"
+
+msgid "menu.preferences"
+msgstr "Подешавања…"
+
+msgid "menu.help"
+msgstr "Помоћ"
+
+msgid "menu.releasenotes"
+msgstr "Забелешке о издању"
+
+msgid "menu.quit"
+msgstr "Изађи из Lagrange-а"
+
+msgid "menu.copy"
+msgstr "Копирај"
+
+msgid "menu.paste"
+msgstr "Налепи"
+
+msgid "menu.show.bookmarks"
+msgstr "Прикажи обележиваче"
+
+msgid "menu.show.feeds"
+msgstr "Прикажи фидове"
+
+msgid "menu.show.history"
+msgstr "Прикажи историју"
+
+msgid "menu.show.identities"
+msgstr "Прикажи идентитете"
+
+msgid "menu.back"
+msgstr "Назад"
+
+msgid "menu.forward"
+msgstr "Напред"
+
+msgid "menu.parent"
+msgstr "Иди на надређену страницу"
+
+msgid "menu.root"
+msgstr "Иди на корену страницу"
+
+msgid "menu.reload"
+msgstr "Поново учитај страницу"
+
+msgid "menu.page.bookmark"
+msgstr "Додај страницу у обележиваче…"
+
+msgid "menu.aboutpages"
+msgstr "Странице „About“"
+
+msgid "menu.about"
+msgstr "О програму"
+
+msgid "panel.back"
+msgstr "Назад"
+
+msgid "menu.debug"
+msgstr "Информације за дебаговање"
+
+msgid "menu.page.import"
+msgstr "Увези везе као обележиваче…"
+
+msgid "menu.page.translate"
+msgstr "Преведи…"
+
+msgid "menu.page.copyurl"
+msgstr "Копирај УРЛ странице"
+
+msgid "menu.page.copysource"
+msgstr "Копирај изворни код странице"
+
+msgid "menu.feeds.refresh"
+msgstr "Освежи фидове"
+
+msgid "menu.identity.new"
+msgstr "Нов идентитет…"
+
+msgid "menu.identity.import"
+msgstr "Увези…"
+
+msgid "menu.identity.notactive"
+msgstr "Нема активног идентитета"
+
+msgid "sidebar.bookmarks"
+msgstr "Обележивачи"
+
+msgid "sidebar.outline"
+msgstr "Структура"
+
+msgid "toolbar.outline"
+msgstr "Структура странице"
+
+msgid "hint.findtext"
+msgstr "Тражи текст на страници"
+
+msgid "status.feeds"
+msgstr "Ажурирање фидова"
+
+# megabytes, used as the unit after a number
+msgid "mb"
+msgstr "МБ"
+
+# kilobytes, used as the unit after a number
+msgid "kb"
+msgstr "КБ"
+
+msgid "num.bytes"
+msgid_plural "num.bytes.n"
+msgstr[0] "%zu бајт"
+msgstr[1] "%zu бајта"
+msgstr[2] "%zu бајтова"
+
+# strftime() formatted
+#, c-format
+msgid "sidebar.date.thisyear"
+msgstr "%d. %b"
+
+msgid "feeds.today"
+msgstr "Данас"
+
+msgid "feeds.entry.markread"
+msgstr "Означи као прочитано"
+
+msgid "feeds.entry.bookmark"
+msgstr "Додај обележивач…"
+
+msgid "feeds.entry.openfeed"
+msgstr "Отвори страницу са фидовима"
+
+msgid "feeds.edit"
+msgstr "Уреди фид…"
+
+msgid "feeds.markallread"
+msgstr "Означи све као прочитано"
+
+msgid "menu.edit"
+msgstr "Уреди…"
+
+msgid "menu.copyurl"
+msgstr "Копирај УРЛ"
+
+msgid "history.clear"
+msgstr "Очисти историју…"
+
+msgid "bookmark.tag.home"
+msgstr "Користи као почетну страницу"
+
+msgid "bookmark.tag.remote"
+msgstr "Користи као извор обележивача"
+
+msgid "bookmark.untag.home"
+msgstr "Уклони почетну страницу"
+
+msgid "bookmark.untag.remote"
+msgstr "Уклони извор обележивача"
+
+msgid "bookmark.delete"
+msgstr "Обриши обележивач"
+
+msgid "bookmarks.reload"
+msgstr "Освежи удаљене изворе"
+
+msgid "ident.notused"
+msgstr "Не користи се"
+
+msgid "ident.temporary"
+msgstr "Привремени"
+
+# strftime() formatted
+#, c-format
+msgid "ident.expiry"
+msgstr "Истиче %d. %b %Y."
+
+msgid "ident.use"
+msgstr "Користи на овој страници"
+
+msgid "ident.stopuse"
+msgstr "Престани са употребом на овој страници"
+
+msgid "ident.showuse"
+msgstr "Прикажи употребу"
+
+# %s refers to name of an identity.
+#, c-format
+msgid "dlg.ident.notes"
+msgstr "Забелешке о %s:"
+
+msgid "ident.fingerprint"
+msgstr "Копирај отисак"
+
+msgid "ident.delete"
+msgstr "Обриши идентитет…"
+
+msgid "sidebar.empty.idents"
+msgstr "Нема идентитета"
+
+#, c-format
+msgid "dlg.confirm.unsub"
+msgstr ""
+"Заиста уклонити претплату на фид\n"
+"„%s“?"
+
+msgid "dlg.unsub"
+msgstr "Уклонити претплату"
+
+msgid "heading.pageinfo"
+msgstr "ИНФОРМАЦИЈЕ О СТРАНИЦИ"
+
+msgid "pageinfo.header.cached"
+msgstr "(кеширани садржај)"
+
+msgid "pageinfo.cert.status"
+msgstr "Статус сертификата:"
+
+msgid "pageinfo.cert.ca.verified"
+msgstr "Верификован од стране ИС"
+
+msgid "pageinfo.cert.ca.unverified"
+msgstr "Није верификован од стране ИС"
+
+msgid "pageinfo.cert.notexpired"
+msgstr "Није истекао"
+
+msgid "pageinfo.cert.expired"
+msgstr "Истекао"
+
+msgid "pageinfo.cert.trusted"
+msgstr "Са поверењем"
+
+msgid "pageinfo.cert.untrusted"
+msgstr "Без поверења"
+
+msgid "heading.unsub"
+msgstr "УКЛАЊАЊЕ ПРЕТПЛАТЕ"
+
+msgid "pageinfo.domain.mismatch"
+msgstr "Назив домена не одговара"
+
+msgid "dlg.cert.trust"
+msgstr "Поверење"
+
+msgid "dlg.cert.fingerprint"
+msgstr "Копирај отисак"
+
+msgid "dlg.input.send"
+msgstr "Пошаљи"
+
+msgid "heading.save"
+msgstr "ДАТОТЕКА САЧУВАНА"
+
+msgid "heading.save.incomplete"
+msgstr "НЕПОТПУНА СТРАНИЦА"
+
+msgid "dlg.save.incomplete"
+msgstr "Садржај странице се и даље преузима."
+
+msgid "dlg.save.size"
+msgstr "Величина:"
+
+msgid "heading.import.bookmarks"
+msgstr "УВОЗ ОБЕЛЕЖИВАЧА"
+
+#, c-format
+msgid "dlg.import.add"
+msgid_plural "dlg.import.add.n"
+msgstr[0] "%sДодај обележивач"
+msgstr[1] "%sДодај %d обележивача"
+msgstr[2] "%sДодај %d обележивача"
+
+msgid "dlg.import.notnew"
+msgstr "Све везе на овој страници су већ додате у обележиваче."
+
+msgid "heading.autoreload"
+msgstr "АУТОМАТСКО УЧИТАВАЊЕ"
+
+msgid "reload.never"
+msgstr "Никад"
+
+msgid "reload.onceperday"
+msgstr "Једном дневно"
+
+#, c-format
+msgid "num.minutes"
+msgid_plural "num.minutes.n"
+msgstr[0] "%d минут"
+msgstr[1] "%d минута"
+msgstr[2] "%d минута"
+
+#, c-format
+msgid "num.hours"
+msgid_plural "num.hours.n"
+msgstr[0] "%d сат"
+msgstr[1] "%d сата"
+msgstr[2] "%d сати"
+
+msgid "link.newtab"
+msgstr "Отвори везу у новој картици"
+
+msgid "link.browser"
+msgstr "Отвори везу у подразумеваном читачу"
+
+msgid "link.noproxy"
+msgstr "Отвори без проксија"
+
+msgid "link.copy"
+msgstr "Копирај везу"
+
+msgid "link.bookmark"
+msgstr "Додај везу у обележиваче…"
+
+msgid "heading.openlink"
+msgstr "ОТВАРАЊЕ ВЕЗЕ"
+
+msgid "dlg.openlink"
+msgstr "Отвори везу"
+
+msgid "dlg.certimport.notfound.page"
+msgstr "Ниједан сертификат нити кључ није пронађен на текућој страници."
+
+msgid "heading.certimport.pasted"
+msgstr "НАЛЕПЉЕНО ИЗ КЛИПБОРДА"
+
+msgid "heading.certimport.dropped"
+msgstr "ПРЕВУЧЕНА ДАТОТЕКА"
+
+msgid "dlg.certimport.import"
+msgstr "Увези"
+
+msgid "dlg.certimport.notes"
+msgstr "Забелешке:"
+
+msgid "hint.certimport.description"
+msgstr "опис"
+
+msgid "dlg.certimport.nocert"
+msgstr "Без сертификата"
+
+msgid "link.hint.audio"
+msgstr "Пусти аудио"
+
+msgid "bookmark.title.blank"
+msgstr "Празна страница"
+
+# Interpret as "Results from bookmarks..."
+msgid "heading.lookup.bookmarks"
+msgstr "ОБЕЛЕЖИВАЧИ"
+
+# Interpret as "Results from feeds..."
+msgid "heading.lookup.feeds"
+msgstr "ФИДОВИ"
+
+# Interpret as "Results from page content..."
+msgid "heading.lookup.pagecontent"
+msgstr "САДРЖАЈ СТРАНИЦЕ"
+
+# Interpret as "Results from identitites..."
+msgid "heading.lookup.identities"
+msgstr "ИДЕНТИТЕТИ"
+
+# Interpret as "Other results..."
+msgid "heading.lookup.other"
+msgstr "ОСТАЛО"
+
+msgid "heading.translate"
+msgstr "ПРЕВОД СТРАНИЦЕ"
+
+msgid "dlg.translate.unavail"
+msgstr "Сервис недоступан"
+
+msgid "dlg.translate.fail"
+msgstr "Неуспешан захтев"
+
+msgid "dlg.translate"
+msgstr "Преведи"
+
+msgid "dlg.translate.from"
+msgstr "Са:"
+
+msgid "dlg.translate.to"
+msgstr "На:"
+
+msgid "lang.ar"
+msgstr "Арапски"
+
+msgid "lang.zh"
+msgstr "Кинески"
+
+msgid "lang.en"
+msgstr "Енглески"
+
+msgid "lang.fr"
+msgstr "Француски"
+
+msgid "lang.de"
+msgstr "Немачки"
+
+msgid "lang.hi"
+msgstr "Хинди"
+
+msgid "lang.ja"
+msgstr "Јапански"
+
+msgid "lang.pt"
+msgstr "Португалски"
+
+msgid "lang.ru"
+msgstr "Руски"
+
+msgid "lang.es"
+msgstr "Шпански"
+
+msgid "heading.newident"
+msgstr "НОВ ИДЕНТИТЕТ"
+
+msgid "dlg.newident.until"
+msgstr "Важи до:"
+
+msgid "hint.newident.date"
+msgstr "ГГГГ-ММ-ДД ЧЧ:ММ:СС"
+
+msgid "hint.newident.optional"
+msgstr "необавезно"
+
+msgid "dlg.newident.notsaved"
+msgstr "не чува се на диск"
+
+msgid "dlg.newident.email"
+msgstr "Епошта:"
+
+msgid "dlg.newident.userid"
+msgstr "Кориснички ID:"
+
+msgid "dlg.newident.country"
+msgstr "Земља:"
+
+msgid "dlg.newident.create"
+msgstr "Креирај идентитет"
+
+msgid "dlg.feed.title"
+msgstr "Наслов:"
+
+msgid "dlg.feed.type.gemini"
+msgstr "Везе облика ГГГГ-ММ-ДД"
+
+msgid "dlg.feed.save"
+msgstr "Сачувај подешавања"
+
+msgid "dlg.feed.sub"
+msgstr "Претплати се"
+
+msgid "heading.bookmark.add"
+msgstr "ДОДАВАЊЕ ОБЕЛЕЖИВАЧА"
+
+msgid "dlg.bookmark.save"
+msgstr "Сачувај обележивач"
+
+msgid "dlg.bookmark.title"
+msgstr "Наслов:"
+
+msgid "dlg.bookmark.url"
+msgstr "УРЛ:"
+
+msgid "dlg.bookmark.tags"
+msgstr "Ознаке:"
+
+msgid "dlg.bookmark.icon"
+msgstr "Икона:"
+
+msgid "heading.prefs"
+msgstr "ПОДЕШАВАЊА"
+
+msgid "heading.prefs.certs"
+msgstr "СЕРТИФИКАТИ"
+
+msgid "heading.prefs.fonts"
+msgstr "ФОНТОВИ"
+
+# tab button
+msgid "heading.prefs.general"
+msgstr "Опште"
+
+# tab button
+msgid "heading.prefs.interface"
+msgstr "Интерфејс"
+
+# tab button
+msgid "heading.prefs.network"
+msgstr "Мрежа"
+
+msgid "heading.prefs.paragraph"
+msgstr "ПАСУС"
+
+msgid "heading.prefs.pagecontent"
+msgstr "САДРЖАЈ СТРАНИЦЕ"
+
+msgid "heading.prefs.sizing"
+msgstr "ВЕЛИЧИНА"
+
+msgid "heading.prefs.widelayout"
+msgstr "ШИРОКИ ИЗГЛЕД"
+
+# tab button
+msgid "heading.prefs.style"
+msgstr "Стил"
+
+# tab button
+msgid "heading.prefs.userinterface"
+msgstr "Кориснички интерфејс"
+
+msgid "prefs.searchurl"
+msgstr "УРЛ за претрагу:"
+
+msgid "prefs.hoverlink"
+msgstr "Прикажи УРЛ при надношењу показивача:"
+
+msgid "prefs.centershort"
+msgstr "Вертикално центрирање:"
+
+msgid "prefs.hidetoolbarscroll"
+msgstr "Сакриј траку са алаткама при скроловању:"
+
+msgid "prefs.ostheme"
+msgstr "Користи системску тему:"
+
+msgid "prefs.theme"
+msgstr "Тема:"
+
+msgid "prefs.theme.black"
+msgstr "Црна"
+
+msgid "prefs.theme.dark"
+msgstr "Тамна"
+
+msgid "prefs.theme.light"
+msgstr "Светла"
+
+msgid "prefs.accent.teal"
+msgstr "Тиркизна"
+
+msgid "prefs.uilang"
+msgstr "Језик:"
+
+msgid "prefs.uiscale"
+msgstr "Фактор размере интерфејса:"
+
+msgid "prefs.retainwindow"
+msgstr "Задржи положај:"
+
+msgid "prefs.doctheme.dark"
+msgstr "Тамна тема:"
+
+msgid "prefs.doctheme.light"
+msgstr "Светла тема:"
+
+msgid "prefs.doctheme.name.colorfullight"
+msgstr "Живахна светла"
+
+msgid "prefs.doctheme.name.black"
+msgstr "Црна"
+
+msgid "prefs.doctheme.name.white"
+msgstr "Бела"
+
+msgid "prefs.saturation"
+msgstr "Засићење:"
+
+msgid "prefs.font"
+msgstr "Фонт тела странице:"
+
+msgid "prefs.mono.gemini"
+msgstr "Џемини"
+
+msgid "prefs.linewidth"
+msgstr "Ширина реда:"
+
+msgid "prefs.linewidth.normal"
+msgstr "Обична"
+
+msgid "prefs.linewidth.fill"
+msgstr "Попуна"
+
+msgid "prefs.quoteicon.line"
+msgstr "Линија"
+
+msgid "prefs.biglede"
+msgstr "Велики први пасус:"
+
+msgid "prefs.decodeurls"
+msgstr "Декодирај УРЛ-ове:"
+
+msgid "prefs.cachesize"
+msgstr "Величина кеша:"
+
+msgid "prefs.ca.file"
+msgstr "Датотека ИС-а:"
+
+msgid "prefs.ca.path"
+msgstr "Путања ИС-а:"
+
+msgid "prefs.proxy.gemini"
+msgstr "Прокси за Џемини:"
+
+msgid "prefs.proxy.http"
+msgstr "Прокси за HTTP:"
+
+msgid "menu.binding.reset"
+msgstr "Врати на подразумевано"
+
+msgid "menu.binding.clear"
+msgstr "Уклони"
+
+msgid "keys.top"
+msgstr "Иди на врх"
+
+msgid "keys.bottom"
+msgstr "Иди на дно"
+
+msgid "keys.scroll.up"
+msgstr "Скролуј горе"
+
+msgid "keys.scroll.down"
+msgstr "Скролуј доле"
+
+msgid "keys.scroll.halfpage.down"
+msgstr "Скролуј доле за пола странице"
+
+msgid "keys.scroll.page.up"
+msgstr "Скролуј горе за једну страницу"
+
+msgid "keys.forward"
+msgstr "Иди унапред"
+
+msgid "keys.back"
+msgstr "Иди уназад"
+
+msgid "keys.parent"
+msgstr "Иди на надређени каталог"
+
+msgid "keys.root"
+msgstr "Иди на корен капсуле"
+
+msgid "keys.reload"
+msgstr "Поново учитај страницу"
+
+msgid "keys.link.homerow.next"
+msgstr "Следећи низ тастера основног реда"
+
+msgid "keys.bookmark.add"
+msgstr "Додај обележивач"
+
+msgid "keys.findtext"
+msgstr "Тражи текст на страници"
+
+msgid "keys.zoom.in"
+msgstr "Увећај"
+
+msgid "keys.zoom.out"
+msgstr "Умањи"
+
+msgid "keys.zoom.reset"
+msgstr "Поништи увећање"
+
+msgid "keys.tab.new"
+msgstr "Нова картица"
+
+msgid "keys.tab.close"
+msgstr "Затвори картицу"
+
+msgid "keys.tab.prev"
+msgstr "Претходна картица"
+
+msgid "keys.tab.next"
+msgstr "Следећа картица"
+
+msgid "error.badstatus"
+msgstr "Непознат статусни код"
+
+msgid "error.openfile"
+msgstr "Неуспешно отварање датотеке"
+
+msgid "error.openfile.msg"
+msgstr ""
+"Тражена датотека не постоји или је недоступна. Проверите путању датотеке."
+
+msgid "error.unsupported.media"
+msgstr "Неподржана врста садржаја"
+
+msgid "error.unsupported.media.msg"
+msgstr "Примљени садржај се не може прегледати у овој апликацији."
+
+msgid "error.unsupported.protocol"
+msgstr "Неподржани протокол"
+
+msgid "error.badheader"
+msgstr "Неисправно заглавље"
+
+msgid "error.badredirect"
+msgstr "Неисправно преусмеравање"
+
+msgid "error.manyredirects.msg"
+msgstr ""
+"Вероватно сте у петљи преусмеравања. Следећи преусмерени УРЛ је дат доле, "
+"уколико желите да наставите ручно."
+
+msgid "error.tls"
+msgstr "Грешка мреже/TLS-а"
+
+msgid "error.temporary"
+msgstr "Привремена грешка"
+
+msgid "error.temporary.msg"
+msgstr "Захтев је неуспешан, али може успети ако покушате поново."
+
+msgid "error.unavail"
+msgstr "Сервер је недоступан"
+
+msgid "error.cgi"
+msgstr "Грешка CGI-ја"
+
+msgid "error.manyredirects"
+msgstr "Превише преусмеравања"
+
+msgid "error.slowdown"
+msgstr "Успори"
+
+msgid "error.slowdown.msg"
+msgstr "Сервер ограничава број захтева. Сачекајте…"
+
+msgid "error.permanent"
+msgstr "Трајни неуспех"
+
+msgid "error.permanent.msg"
+msgstr "Ваш захтев није успео, и неће успети ни ако се понови."
+
+msgid "error.notfound"
+msgstr "Није пронађено"
+
+msgid "error.notfound.msg"
+msgstr "Тражени ресурс се тренутно не може пронаћи."
+
+msgid "error.gone"
+msgstr "Уклоњено"
+
+msgid "error.proxyrefusal"
+msgstr "Захтев проксију је одбијен"
+
+msgid "dlg.certwarn.different"
+msgstr ""
+"Примљени сертификат је исправан али се разликује од онога коме је указано "
+"поверење."
+
+msgid "error.schemeredirect.msg"
+msgstr ""
+"Сервер је покушао да нас преусмери на УРЛ чија шема се разликује од шеме "
+"полазног УРЛ-а. Ево те везе, коју можете отворити ручно уколико то желите."
+
+msgid "error.proxyrefusal.msg"
+msgstr ""
+"Захтеван је ресурс са домена који не опслужује сервер, а овај сервер не "
+"прихвата прокси захтеве."
+
+msgid "error.badrequest"
+msgstr "Лош захтев"
+
+msgid "error.badrequest.msg"
+msgstr "Сервер не разуме ваш захтев."
+
+msgid "error.cert.needed"
+msgstr "Захтева се сертификат"
+
+msgid "error.cert.needed.msg"
+msgstr ""
+"Приступ траженом ресурсу захтева идентификацију преко клијентског "
+"сертификата."
+
+msgid "error.cert.auth"
+msgstr "Сертификат није одобрен"
+
+msgid "error.cert.auth.msg"
+msgstr ""
+"Прослеђени клијентски сертификат је исправан, али му није дозвољено да "
+"приступа траженом ресурсу."
+
+msgid "error.cert.invalid"
+msgstr "Неисправан сертификат"
+
+msgid "error.cert.invalid.msg"
+msgstr "Прослеђени клијентски сертификат је истекао или је неисправан."
+
+msgid "doc.pre.nocaption"
+msgstr "Преформатирани текст без натписа"
+
+#, c-format
+msgid "dlg.certwarn.expired"
+msgstr "Примљени сертификат је истекао %s."
+
+msgid "error.tls.msg"
+msgstr "Неуспешна комуникација са сервером. Ево поруке о грешци:"
+
+# Alt-text of the preformatted logo.
+msgid "about.logo"
+msgstr "ASCII art: реч „Lagrange“ великим словима"
+
+msgid "about.tagline"
+msgstr "Прелепи Џемини клијент"
+
+msgid "heading.history.clear"
+msgstr "ЧИШЋЕЊЕ ИСТОРИЈЕ"
+
+msgid "error.unavail.msg"
+msgstr ""
+"Сервер је недоступан због преоптерећења или одржавања. Покушајте поново "
+"касније."
+
+msgid "about.powered"
+msgstr "Заснован на SDL 2, OpenSSL и ☕️"
+
+msgid "dlg.certwarn.domain.expired"
+msgstr "Примљени сертификат је истекао И за погрешан је домен."
+
+msgid "error.cgi.msg"
+msgstr ""
+"Грешка приликом генерисања динамичког садржаја на серверу. Ово може бити "
+"због неисправног серверског софтвера."
+
+msgid "dlg.message.ok"
+msgstr "Настави"
+
+msgid "menu.title.file"
+msgstr "Датотека"
+
+msgid "heading.certimport"
+msgstr "УВОЗ ИДЕНТИТЕТА"
+
+msgid "error.proxy"
+msgstr "Грешка проксија"
+
+msgid "menu.title.bookmarks"
+msgstr "Обележивачи"
+
+msgid "dlg.certimport.help"
+msgstr ""
+"Налепите PEM-кодирани сертификат и/или приватни кључ\n"
+"или превуците .crt/.key датотеку у овај прозор."
+
+msgid "error.proxy.msg"
+msgstr ""
+"Захтев проксију није успео зато што сервер није успео да заврши трансакцију "
+"са удаљеним хостом. Можда постоје проблеми са приступом мрежи."
+
+msgid "menu.title.identity"
+msgstr "Идентитет"
+
+msgid "dlg.certimport.notfound"
+msgstr "Ниједан сертификат или приватни кључ није пронађен."
+
+msgid "error.gone.msg"
+msgstr "Тражени ресурс није више доступан."
+
+msgid "menu.title.help"
+msgstr "Помоћ"
+
+msgid "dlg.certimport.nokey"
+msgstr "Без приватног кључа"
+
+msgid "link.hint.image"
+msgstr "Приказ слике"
+
+msgid "menu.closetab.other"
+msgstr "Затвори остале картице"
+
+# Interpret as "Results from history..."
+msgid "heading.lookup.history"
+msgstr "ИСТОРИЈА"
+
+msgid "menu.closetab.right"
+msgstr "Затвори картице здесна"
+
+msgid "lang.zh.hans"
+msgstr "Кинески (поједностављени)"
+
+msgid "menu.closetab"
+msgstr "Затвори картицу"
+
+msgid "lang.zh.hant"
+msgstr "Кинески (традиционални)"
+
+# Used on iOS. "Files" refers to Apple's iOS app where you can pick an iCloud folder.
+msgid "menu.save.files"
+msgstr "Сачувај у Files"
+
+msgid "lang.fi"
+msgstr "Фински"
+
+# Used on desktop operating systems. "Downloads" refers to the user's configured downloads directory.
+msgid "menu.save.downloads"
+msgstr "Сачувај у фолдеру за преузимања"
+
+msgid "lang.it"
+msgstr "Италијански"
+
+msgid "menu.copy.source"
+msgstr "Копирај изворни текст"
+
+msgid "menu.sidebar"
+msgstr "Смени панел"
+
+msgid "dlg.newident.rsa.selfsign"
+msgstr "Креирање самопотписаног 2048-битног RSA сертификата."
+
+msgid "menu.bookmarks.bytag"
+msgstr "Прикажи обележиваче по ознаци"
+
+msgid "dlg.newident.commonname"
+msgstr "Просто име:"
+
+msgid "menu.bookmarks.bytime"
+msgstr "Прикажи обележиваче по времену настанка"
+
+msgid "dlg.newident.temp"
+msgstr "Привремен:"
+
+msgid "menu.cut"
+msgstr "Исеци"
+
+msgid "dlg.newident.domain"
+msgstr "Домен:"
+
+msgid "menu.copy.pagelink"
+msgstr "Копирај везу ка страници"
+
+msgid "dlg.newident.org"
+msgstr "Организација:"
+
+msgid "menu.show.outline"
+msgstr "Прикажи структуру странице"
+
+msgid "heading.feedcfg"
+msgstr "ПОДЕШАВАЊА ФИДА"
+
+msgid "menu.autoreload"
+msgstr "Постави аутоматско учитавање…"
+
+msgid "heading.subscribe"
+msgstr "ПРЕТПЛАТА НА СТРАНИЦУ"
+
+msgid "menu.page.subscribe"
+msgstr "Претплати се на страницу…"
+
+msgid "dlg.feed.entrytype"
+msgstr "Врста ставке:"
+
+msgid "menu.import.links"
+msgstr "Увези све везе са странице…"
+
+msgid "dlg.feed.type.headings"
+msgstr "Нови наслови"
+
+msgid "menu.bookmarks.refresh"
+msgstr "Освежи удаљене обележиваче"
+
+msgid "heading.bookmark.edit"
+msgstr "УРЕЂИВАЊЕ ОБЕЛЕЖИВАЧА"
+
+msgid "sidebar.feeds"
+msgstr "Фидови"
+
+# tab button
+msgid "heading.prefs.colors"
+msgstr "Боје"
+
+msgid "sidebar.history"
+msgstr "Историја"
+
+# tab button
+msgid "heading.prefs.keys"
+msgstr "Комбинације тастера"
+
+msgid "sidebar.identities"
+msgstr "Идентитети"
+
+msgid "heading.prefs.proxies"
+msgstr "ПРОКСИЈИ"
+
+# Usage: "(count) Unread" in the sidebar tab title, referring to feed entries.
+msgid "sidebar.unread"
+msgid_plural "sidebar.unread.n"
+msgstr[0] "непрочитан"
+msgstr[1] "непрочитана"
+msgstr[2] "непрочитаних"
+
+msgid "heading.prefs.scrolling"
+msgstr "СКРОЛОВАЊЕ"
+
+msgid "status.query"
+msgstr "Упит за претрагу"
+
+msgid "prefs.downloads"
+msgstr "Фолдер за преузете датотеке:"
+
+msgid "prefs.collapsepreonload"
+msgstr "Скупи преформатирани текст:"
+
+# strftime() formatted, split on two lines
+#, c-format
+msgid "page.timestamp"
+msgstr ""
+"Примљено у %H:%M\n"
+"дана %d. %b %Y."
+
+# strftime() formatted
+#, c-format
+msgid "sidebar.date.otheryear"
+msgstr "%d. %b %Y."
+
+msgid "prefs.smoothscroll"
+msgstr "Глатко скроловање:"
+
+msgid "feeds.entry.newtab"
+msgstr "Отвори ставку у новој картици"
+
+msgid "prefs.imageloadscroll"
+msgstr "Учитај слике при скроловању:"
+
+msgid "feeds.entry.markunread"
+msgstr "Означи као непрочитано"
+
+msgid "prefs.theme.white"
+msgstr "Бела"
+
+msgid "sidebar.entry.bookmark"
+msgstr "Додај обележивач…"
+
+msgid "prefs.accent"
+msgstr "Боја акцента:"
+
+msgid "feeds.unsubscribe"
+msgstr "Уклони претплату…"
+
+msgid "prefs.accent.orange"
+msgstr "Наранџаста"
+
+msgid "feeds.refresh"
+msgstr "Освежи фидове"
+
+msgid "prefs.customframe"
+msgstr "Прилагођени оквир прозора:"
+
+msgid "menu.opentab"
+msgstr "Отвори у новој картици"
+
+msgid "prefs.sideicon"
+msgstr "Икона капсуле:"
+
+msgid "menu.opentab.background"
+msgstr "Отвори у позадинској картици"
+
+msgid "prefs.doctheme.name.colorfuldark"
+msgstr "Живахна тамна"
+
+msgid "menu.dup"
+msgstr "Направи дупликат…"
+
+msgid "prefs.doctheme.name.gray"
+msgstr "Сива"
+
+msgid "menu.forgeturl"
+msgstr "Заборави УРЛ"
+
+msgid "prefs.doctheme.name.sepia"
+msgstr "Сепија"
+
+msgid "prefs.doctheme.name.highcontrast"
+msgstr "Високи контраст"
+
+msgid "dlg.confirm.history.clear"
+msgstr "Заиста желите да очистите историју свих посећених страница?"
+
+msgid "prefs.headingfont"
+msgstr "Фонт наслова:"
+
+msgid "dlg.history.clear"
+msgstr "Очисти историју"
+
+msgid "prefs.mono"
+msgstr "Тело странице фонтом једнаке ширине:"
+
+msgid "bookmark.tag.sub"
+msgstr "Претплати се на фид"
+
+msgid "prefs.mono.gopher"
+msgstr "Gopher"
+
+msgid "bookmark.untag.sub"
+msgstr "Уклони претплату на фид"
+
+msgid "prefs.quoteicon"
+msgstr "Индикатор цитирања:"
+
+msgid "ident.using"
+msgstr "Користи се на овој страници"
+
+msgid "prefs.quoteicon.icon"
+msgstr "Икона \""
+
+#, c-format
+msgid "ident.usedonurls"
+msgid_plural "ident.usedonurls.n"
+msgstr[0] "Користи се на %zu УРЛ-у"
+msgstr[1] "Користи се на %zu УРЛ-а"
+msgstr[2] "Користи се на %zu УРЛ-ова"
+
+msgid "prefs.plaintext.wrap"
+msgstr "Преломи чисти текст:"
+
+msgid "ident.stopuse.all"
+msgstr "Престани са употребом свуда"
+
+msgid "prefs.proxy.gopher"
+msgstr "Прокси за Gopher:"
+
+msgid "heading.ident.use"
+msgstr "УПОТРЕБА ИДЕНТИТЕТА"
+
+msgid "keys.scroll.halfpage.up"
+msgstr "Скролуј горе за пола странице"
+
+msgid "menu.edit.notes"
+msgstr "Уреди забелешке…"
+
+msgid "keys.scroll.page.down"
+msgstr "Скролуј доле за једну страницу"
+
+msgid "heading.ident.notes"
+msgstr "ЗАБЕЛЕШКЕ О ИДЕНТИТЕТУ"
+
+msgid "keys.link.modkey"
+msgstr "Отвори везу преко тастера модификатора"
+
+msgid "heading.ident.delete"
+msgstr "БРИСАЊЕ ИДЕНТИТЕТА"
+
+msgid "keys.link.homerow.newtab"
+msgstr "Отвори везу у новој картици преко тастера основног реда"
+
+#, c-format
+msgid "dlg.confirm.ident.delete"
+msgstr ""
+"Заиста желите да обришете идентитет\n"
+"%s%s%s,\n"
+"укључујући његов сертификат и приватне кључеве?"
+
+msgid "keys.link.homerow.hover"
+msgstr "Наднеси над везу преко тастера основног реда"
+
+msgid "dlg.ident.delete"
+msgstr "Обриши идентитет и датотеке"
+
+msgid "keys.link.homerow"
+msgstr "Отвори везу преко тастера из основног реда"
+
+# The %s format characters are used to highlight the word "Help" and must be used in the translation in same way as here.
+#, c-format
+msgid "ident.gotohelp"
+msgstr ""
+"Видети %sПомоћ%s за више информација у вези са TLS клијентским сертификатима."
+
+msgid "keys.subscribe"
+msgstr "Претплати се на страницу"
+
+#, c-format
+msgid "error.unsupported.suggestsave"
+msgstr ""
+"Ипак, можете је сачувати као датотеку у вашем фолдеру са преузетим "
+"датотекама. Притисните %s или изаберите „%s“ из менија."
+
+msgid "dlg.certwarn.domain"
+msgstr ""
+"Примљени сертификат је за погрешан домен (%s). Ово може бити проблем при "
+"подешавању сервера."
+
+msgid "pageinfo.domain.match"
+msgstr "Назив домена одговара"
+
+msgid "keys.fullscreen"
+msgstr "Смени режим пуног екрана"
+
+#, c-format
+msgid "dlg.input.prompt"
+msgstr "Унесите податке за %s:"
+
+msgid "keys.hoverurl"
+msgstr "Смени приказ УРЛ-ова при надношењу показивача"
+
+msgid "heading.save.error"
+msgstr "ГРЕШКА ПРИ ЧУВАЊУ ДАТОТЕКЕ"
+
+msgid "error.badstatus.msg"
+msgstr ""
+"Сервер је одговорио статусним кодом који није у спецификацији протокола "
+"Џемини. Можда је сервер из будућности? Или је само неисправан."
+
+#, c-format
+msgid "dlg.import.found"
+msgid_plural "dlg.import.found.n"
+msgstr[0] "Пронађена %d нова веза на страници."
+msgstr[1] "Пронађене %d нове везе на страници."
+msgstr[2] "Пронађено %d нових веза на страници."
+
+msgid "error.badresource"
+msgstr "Неисправан ресурс"
+
+msgid "dlg.autoreload"
+msgstr "Изаберите интервал за аутоматско учитавање за ову картицу."
+
+msgid "error.badresource.msg"
+msgstr "Тражени ресурс не постоји."
+
+msgid "link.newtab.background"
+msgstr "Отвори везу у позадинској картици"
+
+msgid "link.download"
+msgstr "Преузми повезану датотеку"
+
+msgid "error.unsupported.protocol.msg"
+msgstr "Ова апликација не подржава тражени протокол."
+
+#, c-format
+msgid "dlg.openlink.confirm"
+msgstr ""
+"Отворити ову везу у подразумеваном читачу?\n"
+"%s%s"
+
+msgid "error.badheader.msg"
+msgstr ""
+"Примљено заглавље не поштује спецификацију протокола Џемини. Можда је сервер "
+"неисправан, или сте покушали да приступите не-Џемини серверу."
+
+msgid "heading.certwarn"
+msgstr "СЕРТИФИКАТ БЕЗ ПОВЕРЕЊА"
+
+msgid "error.badredirect.msg"
+msgstr ""
+"Сервер је одговорио преусмеравањем, али није послао исправан УРЛ одредишта. "
+"Сервер је можда неисправан."
+
+#, c-format
+msgid "dlg.certwarn.mayberenewed"
+msgid_plural "dlg.certwarn.mayberenewed.n"
+msgstr[0] ""
+"Примљени сертификат је можда недавно обновљен — он је за исправан домен и "
+"није истекао. Сертификат коме је тренутно указано поверење ће истећи %s, за "
+"један дан."
+msgstr[1] ""
+"Примљени сертификат је можда недавно обновљен — он је за исправан домен и "
+"није истекао. Сертификат коме је тренутно указано поверење ће истећи %s, за "
+"%d дана."
+msgstr[2] ""
+"Примљени сертификат је можда недавно обновљен — он је за исправан домен и "
+"није истекао. Сертификат коме је тренутно указано поверење ће истећи %s, за "
+"%d дана."
+
+msgid "error.schemeredirect"
+msgstr "Преусмеравање уз промену шеме"
+
+msgid "lang.sr"
+msgstr "Српски"
+
+msgid "lang.ie"
+msgstr "Интерлингве"
+
+#, c-format
+msgid "feeds.list.counts"
+msgid_plural "feeds.list.counts.n"
+msgstr[0] "Претплаћени сте на %zu фид који садржи %%s.\n"
+msgstr[1] "Претплаћени сте на %zu фида који садрже %%s.\n"
+msgstr[2] "Претплаћени сте на %zu фидова који садрже %%s.\n"
+
+#, c-format
+msgid "feeds.list.entrycount"
+msgid_plural "feeds.list.entrycount.n"
+msgstr[0] "укупно %zu ставку"
+msgstr[1] "укупно %zu ставке"
+msgstr[2] "укупно %zu ставки"
+
+#, c-format
+msgid "minutes.ago"
+msgid_plural "minutes.ago.n"
+msgstr[0] "пре %d минут"
+msgstr[1] "пре %d минута"
+msgstr[2] "пре %d минута"
+
+#, c-format
+msgid "hours.ago"
+msgid_plural "hours.ago.n"
+msgstr[0] "пре %d сат"
+msgstr[1] "пре %d сата"
+msgstr[2] "пре %d сати"
+
+#, c-format
+msgid "days.ago"
+msgid_plural "days.ago.n"
+msgstr[0] "пре %d дан"
+msgstr[1] "пре %d дана"
+msgstr[2] "пре %d дана"
+
+# Link download progress message.
+msgid "doc.fetching"
+msgstr "Допремање"
+
+# Inline download status message.
+msgid "media.download.warnclose"
+msgstr "Преузимање ће бити отказано ако се ова картица затвори."
+
+# Inline download status message.
+msgid "media.download.complete"
+msgstr "Преузимање је завршено."
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.title"
+msgstr "Наслов"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.artist"
+msgstr "Извођач"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.genre"
+msgstr "Жанр"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.date"
+msgstr "Датум"
+
+# used as adjective, n is 8, 16, 24, 32, or 64
+#, c-format
+msgid "n.bit"
+msgstr "%d-битно"
+
+msgid "numbertype.integer"
+msgstr "цео број"
+
+msgid "numbertype.float"
+msgstr "број са покретним зарезом"
+
+# Hertz, unit for frequency values
+msgid "hz"
+msgstr "Hz"
+
+# Used in about:feeds.
+msgid "feeds.list.title"
+msgstr "Ставке фида"
+
+msgid "feeds.list.refreshtime.now"
+msgstr "Последње освежавање је било малопре."
+
+#, c-format
+msgid "feeds.list.refreshtime"
+msgstr "Последње освежавање је било %s."
+
+msgid "mb.per.sec"
+msgstr "МБ/с"

@@ -71,6 +71,8 @@ struct Impl_Prefs {
     enum iTextFont   headingFont;
     iBool            monospaceGemini;
     iBool            monospaceGopher;
+    iBool            boldLinkDark;
+    iBool            boldLinkLight;
     int              lineWidth;
     iBool            bigFirstParagraph;
     iBool            quoteIcon;
