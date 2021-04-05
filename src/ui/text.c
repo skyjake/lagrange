@@ -1031,6 +1031,8 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
             if (args->continueFrom_out) {
                 if (lastWordEnd != args->text.start && ~mode & noWrapFlag_RunMode) {
                     *args->continueFrom_out = skipSpace_CStr(lastWordEnd);
+                    *args->continueFrom_out = iMin(*args->continueFrom_out,
+                                                   args->text.end);
                 }
                 else {
                     *args->continueFrom_out = currentPos; /* forced break */
