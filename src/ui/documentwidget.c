@@ -3222,7 +3222,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                 draw_Text(metaFont,
                           topRight_Rect(linkRect),
                           tmInlineContentMetadata_ColorId,
-                          " \u2014 Fetching\u2026 (%.1f MB)",
+                          translateCStr_Lang(" \u2014 ${doc.fetching}\u2026 (%.1f ${mb})"),
                           (float) bodySize_GmRequest(mr->req) / 1.0e6f);
             }
         }

@@ -22,6 +22,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "player.h"
 #include "buf.h"
+#include "lang.h"
 
 #define STB_VORBIS_HEADER_ONLY
 #include "stb_vorbis.c"
@@ -579,7 +580,7 @@ static iContentSpec contentSpec_Player_(const iPlayer *d) {
         content.output.freq     = info.sample_rate;
         content.output.channels = numChannels;
         content.output.format   = AUDIO_F32;
-        content.inputFormat     = AUDIO_F32; /* actually stb_vorbis provides floats */        
+        content.inputFormat     = AUDIO_F32; /* actually stb_vorbis provides floats */
         stb_vorbis_close(vrb);
     }
     else if (content.type == mpeg_DecoderType) {
@@ -783,23 +784,27 @@ iString *metadataLabel_Player(const iPlayer *d) {
         lock_Mutex(&d->decoder->tagMutex);
         const iString *tags = d->decoder->tags;
         if (!isEmpty_String(&tags[title_PlayerTag])) {
-            appendFormat_String(meta, "Title: %s\n", cstr_String(&tags[title_PlayerTag]));
+            appendFormat_String(meta, "${audio.meta.title}: %s\n", cstr_String(&tags[title_PlayerTag]));
         }
         if (!isEmpty_String(&tags[artist_PlayerTag])) {
-            appendFormat_String(meta, "Artist: %s\n", cstr_String(&tags[artist_PlayerTag]));
+            appendFormat_String(meta, "${audio.meta.artist}: %s\n", cstr_String(&tags[artist_PlayerTag]));
         }
         if (!isEmpty_String(&tags[genre_PlayerTag])) {
-            appendFormat_String(meta, "Genre: %s\n", cstr_String(&tags[genre_PlayerTag]));
+            appendFormat_String(meta, "${audio.meta.genre}: %s\n", cstr_String(&tags[genre_PlayerTag]));
         }
         if (!isEmpty_String(&tags[date_PlayerTag])) {
-            appendFormat_String(meta, "Date: %s\n", cstr_String(&tags[date_PlayerTag]));
+            appendFormat_String(meta, "${audio.meta.date}: %s\n", cstr_String(&tags[date_PlayerTag]));
         }
         unlock_Mutex(&d->decoder->tagMutex);
     }
     if (d->decoder) {
-        appendFormat_String(meta, "%d-bit %s %d Hz", SDL_AUDIO_BITSIZE(d->decoder->inputFormat),
-                                SDL_AUDIO_ISFLOAT(d->decoder->inputFormat) ? "float" : "integer",
-                                d->spec.freq);
+        appendFormat_String(meta,
+                            translateCStr_Lang("${n.bit} %s %d ${hz}"), /* translation adds %d */
+                            SDL_AUDIO_BITSIZE(d->decoder->inputFormat),
+                            cstr_Lang(SDL_AUDIO_ISFLOAT(d->decoder->inputFormat)
+                                          ? "numbertype.float"
+                                          : "numbertype.integer"),
+                            d->spec.freq);
     }
     return meta;
 }

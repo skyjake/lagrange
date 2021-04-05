@@ -24,6 +24,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "bookmarks.h"
 #include "gmrequest.h"
 #include "visited.h"
+#include "lang.h"
 #include "app.h"
 
 #include <the_Foundation/file.h>
@@ -637,30 +638,28 @@ size_t numUnread_Feeds(void) {
     return count;
 }
 
-#define iPluralS(c) ((c) != 1 ? "s" : "")
-
 const iString *entryListPage_Feeds(void) {
     iFeeds *d = &feeds_;
     iString *src = collectNew_String();
-    format_String(src, "# Feed entries\n\n");
+    setCStr_String(src, translateCStr_Lang("# ${feeds.list.title}\n\n"));
     lock_Mutex(d->mtx);
     const iPtrArray *subs = listSubscriptions_();
-    int elapsed = elapsedSeconds_Time(&d->lastRefreshedAt) / 60;
+    const int elapsed = elapsedSeconds_Time(&d->lastRefreshedAt) / 60;
     appendFormat_String(
         src,
-        "You are subscribed to %zu feed%s that contain%s a total of %zu entries.\n",
-        size_PtrArray(subs),
-        iPluralS(size_PtrArray(subs)),
-        size_PtrArray(subs) == 1 ? "s" : "",
-        size_SortedArray(&d->entries));
+        formatCStrs_Lang("feeds.list.counts.n", size_PtrArray(subs)),
+        formatCStrs_Lang("feeds.list.entrycount.n", size_SortedArray(&d->entries)));
     if (isValid_Time(&d->lastRefreshedAt)) {
-        appendFormat_String(src,
-            "\nThe latest refresh occurred %s.\n",
-            elapsed == 0     ? "just a moment ago"
-            : elapsed < 60   ? format_CStr("%d minute%s ago", elapsed, iPluralS(elapsed))
-            : elapsed < 1440 ? format_CStr("%d hour%s ago", elapsed / 60, iPluralS(elapsed / 60))
-                             : format_CStr("%d day%s ago", elapsed / 1440,
-                                           iPluralS(elapsed / 1440)));
+        if (elapsed == 0) {
+            appendCStr_String(src, translateCStr_Lang("\n${feeds.list.refreshtime.now}\n"));
+        }
+        else {
+            appendFormat_String(src,
+                                translateCStr_Lang("\n${feeds.list.refreshtime}\n"),
+                                elapsed < 60     ? formatCStr_Lang("minutes.ago.n", elapsed)
+                                : elapsed < 1440 ? formatCStr_Lang("hours.ago.n", elapsed / 60)
+                                                 : formatCStr_Lang("days.ago.n", elapsed / 1440));
+        }
     }
     iDate on;
     iZap(on);
