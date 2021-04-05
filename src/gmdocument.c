@@ -336,8 +336,11 @@ static void alignDecoration_GmRun_(iGmRun *run, iBool isCentered) {
 }
 
 static void doLayout_GmDocument_(iGmDocument *d) {
-    const iBool isMono = isForcedMonospace_GmDocument_(d);
-    const iBool isNarrow = d->size.x < 90 * gap_Text;
+    const iPrefs *prefs    = prefs_App();
+    const iBool   isMono   = isForcedMonospace_GmDocument_(d);
+    const iBool   isNarrow = d->size.x < 90 * gap_Text;
+    const iBool   isDarkBg = isDark_GmDocumentTheme(
+        isDark_ColorTheme(colorTheme_App()) ? prefs->docThemeDark : prefs->docThemeLight);
     /* TODO: Collect these parameters into a GmTheme. */
     const int fonts[max_GmLineType] = {
         isMono ? regularMonospace_FontId : paragraph_FontId,
@@ -347,7 +350,10 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         heading1_FontId,
         heading2_FontId,
         heading3_FontId,
-        isMono ? regularMonospace_FontId : bold_FontId,
+        isMono ? regularMonospace_FontId
+        : ((isDarkBg && prefs->boldLinkDark) || (!isDarkBg && prefs->boldLinkLight))
+            ? bold_FontId
+            : paragraph_FontId,
     };
     static const int colors[max_GmLineType] = {
         tmParagraph_ColorId,
@@ -376,7 +382,6 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     static const char *quote           = "\u201c";
     static const char *magnifyingGlass = "\U0001f50d";
     static const char *pointingFinger  = "\U0001f449";
-    const iPrefs *prefs = prefs_App();
     clear_Array(&d->layout);
     clearLinks_GmDocument_(d);
     clear_Array(&d->headings);

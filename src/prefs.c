@@ -47,6 +47,8 @@ void init_Prefs(iPrefs *d) {
     d->headingFont       = nunito_TextFont;
     d->monospaceGemini   = iFalse;
     d->monospaceGopher   = iFalse;
+    d->boldLinkDark      = iTrue;
+    d->boldLinkLight     = iTrue;
     d->lineWidth         = 38;
     d->bigFirstParagraph = iTrue;
     d->quoteIcon         = iTrue;

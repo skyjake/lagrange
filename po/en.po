@@ -1092,6 +1092,17 @@ msgstr "Gemini"
 msgid "prefs.mono.gopher"
 msgstr "Gopher"
 
+msgid "prefs.boldlink"
+msgstr "Bold links:"
+
+# Interpretation: (Bold links) on dark (background).
+msgid "prefs.boldlink.dark"
+msgstr "On Dark"
+
+# Interpretation: (Bold links) on light (background).
+msgid "prefs.boldlink.light"
+msgstr "On Light"
+
 msgid "prefs.linewidth"
 msgstr "Line width:"
 
