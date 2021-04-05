@@ -8,7 +8,6 @@
 
 ## 1.3.1
 * Added UI languages: Serbian, Interlingue.
-* Added translations for inline downloads and audio player, "about:feeds".
 * Added option to disable bold links for light/dark backgrounds.
 * Fixed crash during word wrapping.
 * Fixed keybindings overriding the home row key navigation mode.
