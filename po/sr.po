@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-04-05 09:23+0000\n"
+"PO-Revision-Date: 2021-04-05 11:27+0000\n"
 "Last-Translator: Страхиња Радић <contact@strahinja.org>\n"
 "Language-Team: Serbian <http://weblate.skyjake.fi/projects/lagrange/ui/sr/>\n"
 "Language: sr\n"
@@ -1355,3 +1355,95 @@ msgstr "Српски"
 
 msgid "lang.ie"
 msgstr "Интерлингве"
+
+#, c-format
+msgid "feeds.list.counts"
+msgid_plural "feeds.list.counts.n"
+msgstr[0] "Претплаћени сте на %zu фид који садржи %%s.\n"
+msgstr[1] "Претплаћени сте на %zu фида који садрже %%s.\n"
+msgstr[2] "Претплаћени сте на %zu фидова који садрже %%s.\n"
+
+#, c-format
+msgid "feeds.list.entrycount"
+msgid_plural "feeds.list.entrycount.n"
+msgstr[0] "укупно %zu ставку"
+msgstr[1] "укупно %zu ставке"
+msgstr[2] "укупно %zu ставки"
+
+#, c-format
+msgid "minutes.ago"
+msgid_plural "minutes.ago.n"
+msgstr[0] "пре %d минут"
+msgstr[1] "пре %d минута"
+msgstr[2] "пре %d минута"
+
+#, c-format
+msgid "hours.ago"
+msgid_plural "hours.ago.n"
+msgstr[0] "пре %d сат"
+msgstr[1] "пре %d сата"
+msgstr[2] "пре %d сати"
+
+#, c-format
+msgid "days.ago"
+msgid_plural "days.ago.n"
+msgstr[0] "пре %d дан"
+msgstr[1] "пре %d дана"
+msgstr[2] "пре %d дана"
+
+# Link download progress message.
+msgid "doc.fetching"
+msgstr "Допремање"
+
+# Inline download status message.
+msgid "media.download.warnclose"
+msgstr "Преузимање ће бити отказано ако се ова картица затвори."
+
+# Inline download status message.
+msgid "media.download.complete"
+msgstr "Преузимање је завршено."
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.title"
+msgstr "Наслов"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.artist"
+msgstr "Извођач"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.genre"
+msgstr "Жанр"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.date"
+msgstr "Датум"
+
+# used as adjective, n is 8, 16, 24, 32, or 64
+#, c-format
+msgid "n.bit"
+msgstr "%d-битно"
+
+msgid "numbertype.integer"
+msgstr "цео број"
+
+msgid "numbertype.float"
+msgstr "број са покретним зарезом"
+
+# Hertz, unit for frequency values
+msgid "hz"
+msgstr "Hz"
+
+# Used in about:feeds.
+msgid "feeds.list.title"
+msgstr "Ставке фида"
+
+msgid "feeds.list.refreshtime.now"
+msgstr "Последње освежавање је било малопре."
+
+#, c-format
+msgid "feeds.list.refreshtime"
+msgstr "Последње освежавање је било %s."
+
+msgid "mb.per.sec"
+msgstr "МБ/с"
