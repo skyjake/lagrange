@@ -57,8 +57,8 @@ msgstr[1] "You are subscribed to %zu feeds that contain %%s.\n"
 #, c-format
 msgid "feeds.list.entrycount"
 msgid_plural "feeds.list.entrycount.n"
-msgstr[0] " a total of %zu entry"
-msgstr[1] " a total of %zu entries"
+msgstr[0] "a total of %zu entry"
+msgstr[1] "a total of %zu entries"
 
 msgid "feeds.list.refreshtime.now"
 msgstr "The latest refresh occurred just a moment ago."
