@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-04-02 19:18+0000\n"
+"PO-Revision-Date: 2021-04-09 13:18+0000\n"
 "Last-Translator: Wally Hackenslacker <mastor89@protonmail.com>\n"
 "Language-Team: Spanish <http://weblate.skyjake.fi/projects/lagrange/ui/es/>\n"
 "Language: es\n"
@@ -1344,3 +1344,107 @@ msgstr "Colapsar pre-formateado:"
 
 msgid "doc.pre.nocaption"
 msgstr "Texto pre-formateado sin leyenda"
+
+msgid "mb.per.sec"
+msgstr "MB/s"
+
+msgid "prefs.boldlink"
+msgstr "Enlaces en negritas:"
+
+# Interpretation: (Bold links) on dark (background).
+msgid "prefs.boldlink.dark"
+msgstr "En Tema Oscuro"
+
+# Interpretation: (Bold links) on light (background).
+msgid "prefs.boldlink.light"
+msgstr "En Tema Claro"
+
+# Link download progress message.
+msgid "doc.fetching"
+msgstr "Recibiendo"
+
+# Inline download status message.
+msgid "media.download.warnclose"
+msgstr "La descarga será cancelada si se cierra esta pestaña."
+
+# Inline download status message.
+msgid "media.download.complete"
+msgstr "Descarga completa."
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.title"
+msgstr "Título"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.artist"
+msgstr "Artista"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.genre"
+msgstr "Género"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.date"
+msgstr "Fecha"
+
+# used as adjective, n is 8, 16, 24, 32, or 64
+#, c-format
+msgid "n.bit"
+msgstr "%d-bits"
+
+msgid "numbertype.integer"
+msgstr "entero"
+
+msgid "numbertype.float"
+msgstr "flotante"
+
+# Hertz, unit for frequency values
+msgid "hz"
+msgstr "Hz"
+
+# Used in about:feeds.
+msgid "feeds.list.title"
+msgstr "Entradas de las suscripciones"
+
+#, c-format
+msgid "feeds.list.counts"
+msgid_plural "feeds.list.counts.n"
+msgstr[0] "Está suscrito a %zu suscripción que contiene %%s.\n"
+msgstr[1] "Está suscrito a %zu suscripciones que contienen %%s.\n"
+
+#, c-format
+msgid "feeds.list.entrycount"
+msgid_plural "feeds.list.entrycount.n"
+msgstr[0] "un total de %zu entrada"
+msgstr[1] "un total de %zu entradas"
+
+msgid "feeds.list.refreshtime.now"
+msgstr "La última actualización ocurrió hace un momento."
+
+#, c-format
+msgid "feeds.list.refreshtime"
+msgstr "La última actualización ocurrió%s."
+
+#, c-format
+msgid "minutes.ago"
+msgid_plural "minutes.ago.n"
+msgstr[0] "%d minuto"
+msgstr[1] "%d minutos"
+
+#, c-format
+msgid "hours.ago"
+msgid_plural "hours.ago.n"
+msgstr[0] "%d hora"
+msgstr[1] "%d horas"
+
+#, c-format
+msgid "days.ago"
+msgid_plural "days.ago.n"
+msgstr[0] "%d día"
+msgstr[1] "%d días"
+
+msgid "lang.ie"
+msgstr "Interlingue"
+
+msgid "lang.sr"
+msgstr "Serbio"
