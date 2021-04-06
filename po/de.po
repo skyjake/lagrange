@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-04-05 09:23+0000\n"
+"PO-Revision-Date: 2021-04-09 13:18+0000\n"
 "Last-Translator: Aaron Fischer <mail@aaron-fischer.net>\n"
 "Language-Team: German <http://weblate.skyjake.fi/projects/lagrange/ui/de/>\n"
 "Language: de\n"
@@ -671,3 +671,119 @@ msgstr "Lesezeichen-Quelle entfernen"
 
 msgid "bookmarks.reload"
 msgstr "Entfernte Quellen aktualisieren"
+
+msgid "feeds.list.refreshtime.now"
+msgstr "Die letzte Aktualisierung erfolgte gerade eben."
+
+msgid "mb.per.sec"
+msgstr "MB/s"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.title"
+msgstr "Titel"
+
+# Link download progress message.
+msgid "doc.fetching"
+msgstr "Abrufen"
+
+# Inline download status message.
+msgid "media.download.warnclose"
+msgstr "Der Downloas wird abgebrochen wenn der Tab geschlossen wird."
+
+# Inline download status message.
+msgid "media.download.complete"
+msgstr "Download abgeschlossen."
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.artist"
+msgstr "Künstler"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.genre"
+msgstr "Genere"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.date"
+msgstr "Datum"
+
+# used as adjective, n is 8, 16, 24, 32, or 64
+#, c-format
+msgid "n.bit"
+msgstr "%d-bit"
+
+msgid "numbertype.integer"
+msgstr "Integer"
+
+msgid "numbertype.float"
+msgstr "Float"
+
+# Hertz, unit for frequency values
+msgid "hz"
+msgstr "Hz"
+
+# Used in about:feeds.
+msgid "feeds.list.title"
+msgstr "Feed-Einträge"
+
+#, c-format
+msgid "feeds.list.entrycount"
+msgid_plural "feeds.list.entrycount.n"
+msgstr[0] "insgesamt %zu Eintrag"
+msgstr[1] "insgesamt %zu Einträge"
+
+#, c-format
+msgid "feeds.list.refreshtime"
+msgstr "Die letzte Aktualisierung erfolgte um %s."
+
+#, c-format
+msgid "hours.ago"
+msgid_plural "hours.ago.n"
+msgstr[0] "vor %d Stunde"
+msgstr[1] "vor %d Stunden"
+
+#, c-format
+msgid "minutes.ago"
+msgid_plural "minutes.ago.n"
+msgstr[0] "vor %d Minute"
+msgstr[1] "vor %d Minuten"
+
+#, c-format
+msgid "days.ago"
+msgid_plural "days.ago.n"
+msgstr[0] "vor %d Stunde"
+msgstr[1] "vor %d Stunden"
+
+msgid "ident.notused"
+msgstr "Nicht benutzt"
+
+msgid "ident.use"
+msgstr "Auf dieser Seite verwendet"
+
+msgid "ident.stopuse"
+msgstr "Auf dieser Seite nicht mehr verwenden"
+
+msgid "ident.stopuse.all"
+msgstr "Nicht mehr verwenden"
+
+msgid "menu.edit.notes"
+msgstr "Notiz bearbeiten …"
+
+# %s refers to name of an identity.
+#, c-format
+msgid "dlg.ident.notes"
+msgstr "Notiz zu %s:"
+
+msgid "ident.fingerprint"
+msgstr "Fingerabdruck kopieren"
+
+msgid "ident.delete"
+msgstr "Identität löschen …"
+
+msgid "heading.ident.delete"
+msgstr "IDENTITÄT LÖSCHEN"
+
+#, c-format
+msgid "ident.usedonurls"
+msgid_plural "ident.usedonurls.n"
+msgstr[0] "Verwendet bei %zu URL"
+msgstr[1] "Verwendet bei %zu URLs"
