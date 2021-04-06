@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-04-05 09:23+0000\n"
+"PO-Revision-Date: 2021-04-09 13:18+0000\n"
 "Last-Translator: Olga Smirnova <mistresssilvara@hotmail.com>\n"
 "Language-Team: Occidental <http://weblate.skyjake.fi/projects/lagrange/ui/ie/"
 ">\n"
@@ -1341,3 +1341,101 @@ msgstr "Interlingue"
 
 msgid "lang.sr"
 msgstr "Serbian"
+
+#, c-format
+msgid "feeds.list.counts"
+msgid_plural "feeds.list.counts.n"
+msgstr[0] "Vu abonat %zu feed quel contene %%s.\n"
+msgstr[1] "Vu abonat %zu feedes quel contene %%s.\n"
+
+#, c-format
+msgid "feeds.list.entrycount"
+msgid_plural "feeds.list.entrycount.n"
+msgstr[0] "%zu element in tot"
+msgstr[1] "%zu elementes in tot"
+
+#, c-format
+msgid "minutes.ago"
+msgid_plural "minutes.ago.n"
+msgstr[0] "ante %d minute"
+msgstr[1] "ante %d minutes"
+
+msgid "mb.per.sec"
+msgstr "Mo/s"
+
+# Interpretation: (Bold links) on dark (background).
+msgid "prefs.boldlink.dark"
+msgstr "sur obscur"
+
+#, c-format
+msgid "hours.ago"
+msgid_plural "hours.ago.n"
+msgstr[0] "ante %d hor"
+msgstr[1] "ante %d hores"
+
+#, c-format
+msgid "days.ago"
+msgid_plural "days.ago.n"
+msgstr[0] "ante %d die"
+msgstr[1] "ante %d dies"
+
+msgid "prefs.boldlink"
+msgstr "Grass ligamentes:"
+
+# Interpretation: (Bold links) on light (background).
+msgid "prefs.boldlink.light"
+msgstr "sur clar"
+
+# Link download progress message.
+msgid "doc.fetching"
+msgstr "Obtenente"
+
+# Inline download status message.
+msgid "media.download.complete"
+msgstr "Descarga sta completet."
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.title"
+msgstr "Titul"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.artist"
+msgstr "Artist"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.genre"
+msgstr "Genre"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.date"
+msgstr "Date"
+
+# used as adjective, n is 8, 16, 24, 32, or 64
+#, c-format
+msgid "n.bit"
+msgstr "de %d-bit"
+
+msgid "numbertype.integer"
+msgstr "integrale"
+
+# Hertz, unit for frequency values
+msgid "hz"
+msgstr "Hz"
+
+# Used in about:feeds.
+msgid "feeds.list.title"
+msgstr "Elementes de feedes"
+
+msgid "feeds.list.refreshtime.now"
+msgstr "Li ultim actualisation esset just nu."
+
+#, c-format
+msgid "feeds.list.refreshtime"
+msgstr "Li ultim actualisation esset %s."
+
+# Inline download status message.
+msgid "media.download.warnclose"
+msgstr "Descarga va esser interruptet si on clude ti carte."
+
+msgid "numbertype.float"
+msgstr "comma glissant"
