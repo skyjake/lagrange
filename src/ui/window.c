@@ -1289,7 +1289,12 @@ static float pixelRatio_Window_(const iWindow *d) {
 #endif
 
 static float displayScale_Window_(const iWindow *d) {
-#if defined (iPlatformMsys)
+#if defined (iPlatformApple)
+    iUnused(d);
+    /* Apple UI sizes are fixed and only scaled by pixel ratio. */
+    /* TODO: iOS text size setting? */
+    return 1.0f;
+#elif defined (iPlatformMsys)
     iUnused(d);
     return desktopDPI_Win32();
 #else
