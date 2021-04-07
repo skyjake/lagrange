@@ -97,7 +97,7 @@ struct Impl_SidebarWidget {
     int               modeScroll[max_SidebarMode];
     iLabelWidget *    modeButtons[max_SidebarMode];
     int               maxButtonLabelWidth;
-    int               width;
+    int               widthAsGaps;
     int               itemFonts[2];
     size_t            numUnreadEntries;
     iWidget *         resizer;
@@ -461,8 +461,8 @@ enum iSidebarMode mode_SidebarWidget(const iSidebarWidget *d) {
     return d ? d->mode : 0;
 }
 
-int width_SidebarWidget(const iSidebarWidget *d) {
-    return d ? d->width : 0;
+float width_SidebarWidget(const iSidebarWidget *d) {
+    return d ? d->widthAsGaps : 0;
 }
 
 static const char *normalModeLabels_[max_SidebarMode] = {
@@ -520,13 +520,13 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     d->itemFonts[0] = uiContent_FontId;
     d->itemFonts[1] = uiContentBold_FontId;
 #if defined (iPlatformAppleMobile)
-    d->width = 73 * gap_UI;
+    d->widthAsGaps = 73;
     if (deviceType_App() == phone_AppDeviceType) {
         d->itemFonts[0] = defaultBig_FontId;
         d->itemFonts[1] = defaultBigBold_FontId;
     }
 #else
-    d->width = 60 * gap_UI;
+    d->widthAsGaps = 60;
 #endif
     setFlags_Widget(w, fixedWidth_WidgetFlag, iTrue);
     iWidget *vdiv = makeVDiv_Widget();
@@ -720,16 +720,17 @@ static void checkModeButtonLayout_SidebarWidget_(iSidebarWidget *d) {
     }
 }
 
-void setWidth_SidebarWidget(iSidebarWidget *d, int width) {
-    const iBool isFixedWidth = deviceType_App() == phone_AppDeviceType;
+void setWidth_SidebarWidget(iSidebarWidget *d, float widthAsGaps) {
     iWidget *w = as_Widget(d);
+    const iBool isFixedWidth = deviceType_App() == phone_AppDeviceType;
+    int width = widthAsGaps * gap_UI;
     if (!isFixedWidth) {
         /* Even less space if the other sidebar is visible, too. */
         const int otherWidth =
             width_Widget(findWidget_App(d->side == left_SideBarSide ? "sidebar2" : "sidebar"));
         width = iClamp(width, 30 * gap_UI, rootSize_Window(get_Window()).x - 50 * gap_UI - otherWidth);
     }
-    d->width = width;
+    d->widthAsGaps = (float) width / (float) gap_UI;
     if (isVisible_Widget(w)) {
         w->rect.size.x = width;
     }
@@ -780,7 +781,8 @@ iBool handleBookmarkEditorCommands_SidebarWidget_(iWidget *editor, const char *c
 static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *cmd) {
     iWidget *w = as_Widget(d);
     if (equal_Command(cmd, "width")) {
-        setWidth_SidebarWidget(d, arg_Command(cmd));
+        setWidth_SidebarWidget(d, arg_Command(cmd) *
+                               (argLabel_Command(cmd, "gaps") ? 1.0f : (1.0f / gap_UI)));
         return iTrue;
     }
     else if (equal_Command(cmd, "mode")) {
@@ -802,7 +804,7 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
         }
         setFlags_Widget(w, hidden_WidgetFlag, isVisible_Widget(w));
         if (isVisible_Widget(w)) {
-            w->rect.size.x = d->width;
+            w->rect.size.x = d->widthAsGaps * gap_UI;
             invalidate_ListWidget(d->list);
         }
         arrange_Widget(w->parent);
@@ -826,6 +828,9 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         checkModeButtonLayout_SidebarWidget_(d);
     }
     else if (isMetricsChange_UserEvent(ev)) {
+        if (isVisible_Widget(w)) {
+            w->rect.size.x = d->widthAsGaps * gap_UI;
+        }
         updateMetrics_SidebarWidget_(d);
         arrange_Widget(w);
         checkModeButtonLayout_SidebarWidget_(d);
@@ -889,10 +894,10 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                 const int resMid = d->resizer->rect.size.x / 2;
                 setWidth_SidebarWidget(
                     d,
-                    (d->side == left_SideBarSide
+                    ((d->side == left_SideBarSide
                          ? local.x
                          : (rootSize_Window(get_Window()).x - coord_Command(cmd).x)) +
-                        resMid);
+                     resMid) / (float) gap_UI);
             }
             return iTrue;
         }

@@ -161,14 +161,14 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
                         isPortrait_App());
         if (isLandscape_App()) {
             addChildPos_Widget(findChild_Widget(root, "tabs.content"), iClob(sidebar), front_WidgetAddPos);
-            setWidth_SidebarWidget(sidebar, 73 * gap_UI);
+            setWidth_SidebarWidget(sidebar, 73.0f);
             if (isVisible_Widget(findWidget_App("sidebar2"))) {
                 postCommand_App("sidebar2.toggle");
             }
         }
         else {
             addChildPos_Widget(findChild_Widget(root, "stack"), iClob(sidebar), back_WidgetAddPos);
-            setWidth_SidebarWidget(sidebar, width_Widget(root));
+            setWidth_SidebarWidget(sidebar, (float) width_Widget(root) / (float) gap_UI);
         }
         return iFalse;
     }

@@ -180,8 +180,8 @@ static iString *serializePrefs_App_(const iApp *d) {
         w = d->window->place.normalRect.size.x;
         h = d->window->place.normalRect.size.y;
         appendFormat_String(str, "window.setrect width:%d height:%d coord:%d %d\n", w, h, x, y);
-        appendFormat_String(str, "sidebar.width arg:%d\n", width_SidebarWidget(sidebar));
-        appendFormat_String(str, "sidebar2.width arg:%d\n", width_SidebarWidget(sidebar2));
+        appendFormat_String(str, "sidebar.width arg:%f gaps:1\n", width_SidebarWidget(sidebar));
+        appendFormat_String(str, "sidebar2.width arg:%f gaps:1\n", width_SidebarWidget(sidebar2));
         /* On macOS, maximization should be applied at creation time or the window will take
            a moment to animate to its maximized size. */
 #if defined (LAGRANGE_CUSTOM_FRAME)
