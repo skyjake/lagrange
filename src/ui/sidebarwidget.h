@@ -47,5 +47,5 @@ iBool               setMode_SidebarWidget       (iSidebarWidget *, enum iSidebar
 void                setButtonFont_SidebarWidget (iSidebarWidget *, int font);
 
 enum iSidebarMode   mode_SidebarWidget          (const iSidebarWidget *);
-int                 width_SidebarWidget         (const iSidebarWidget *);
-void                setWidth_SidebarWidget      (iSidebarWidget *, int width);
+float               width_SidebarWidget         (const iSidebarWidget *);
+void                setWidth_SidebarWidget      (iSidebarWidget *, float widthAsGaps);
