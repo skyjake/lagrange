@@ -1295,8 +1295,9 @@ static float displayScale_Window_(const iWindow *d) {
 #else
     float vdpi = 0.0f;
     SDL_GetDisplayDPI(SDL_GetWindowDisplayIndex(d->win), NULL, NULL, &vdpi);
+//    printf("DPI: %f\n", vdpi);
     const float factor = vdpi / baseDPI_Window / pixelRatio_Window_(d);
-    if (factor < 0.75f) {
+    if (factor < 0.5f) {
         return 1.0f; /* seems invalid */
     }
     return iMax(0.75f, factor);
