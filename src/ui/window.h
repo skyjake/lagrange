@@ -67,7 +67,8 @@ struct Impl_Window {
     uint32_t      focusGainedAt;
     SDL_Renderer *render;
     iWidget *     root;
-    float         pixelRatio;
+    float         pixelRatio; /* conversion between points and pixels, e.g., coords, window size */
+    float         displayScale; /* DPI-based scaling factor of current display, affects uiScale only */
     float         uiScale;
     uint32_t      frameTime;
     double        presentTime;

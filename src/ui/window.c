@@ -1276,19 +1276,30 @@ void drawWhileResizing_Window(iWindow *d, int w, int h) {
 }
 
 static float pixelRatio_Window_(const iWindow *d) {
-#if defined (iPlatformMsys)
-    iUnused(d);
-    return desktopDPI_Win32();
-#elif defined (iPlatformLinux)
-    float vdpi = 0.0f;
-    SDL_GetDisplayDPI(SDL_GetWindowDisplayIndex(d->win), NULL, NULL, &vdpi);
-    const float factor = vdpi / 96.0f;
-    return iMax(1.0f, factor);
-#else
     int dx, x;
     SDL_GetRendererOutputSize(d->render, &dx, NULL);
     SDL_GetWindowSize(d->win, &x, NULL);
     return (float) dx / (float) x;
+}
+
+#if defined (iPlatformApple)
+#   define baseDPI_Window   113.5f
+#else
+#   define baseDPI_Window   96.0f
+#endif
+
+static float displayScale_Window_(const iWindow *d) {
+#if defined (iPlatformMsys)
+    iUnused(d);
+    return desktopDPI_Win32();
+#else
+    float vdpi = 0.0f;
+    SDL_GetDisplayDPI(SDL_GetWindowDisplayIndex(d->win), NULL, NULL, &vdpi);
+    const float factor = vdpi / baseDPI_Window / pixelRatio_Window_(d);
+    if (factor < 0.75f) {
+        return 1.0f; /* seems invalid */
+    }
+    return iMax(0.75f, factor);
 #endif
 }
 
@@ -1443,14 +1454,15 @@ void init_Window(iWindow *d, iRect rect) {
 #endif
     }
     drawBlank_Window_(d);
-    d->uiScale = initialUiScale_;
-    d->pixelRatio = pixelRatio_Window_(d);
-    setPixelRatio_Metrics(d->pixelRatio * d->uiScale);
+    d->pixelRatio   = pixelRatio_Window_(d); /* point/pixel conversion */
+    d->displayScale = displayScale_Window_(d);
+    d->uiScale      = initialUiScale_;
+    setScale_Metrics(d->pixelRatio * d->displayScale * d->uiScale);
 #if defined (iPlatformMsys)
     SDL_Rect usable;
     SDL_GetDisplayUsableBounds(0, &usable);
     SDL_SetWindowMaximumSize(d->win, usable.w, usable.h);
-    SDL_SetWindowMinimumSize(d->win, minSize.x * d->pixelRatio, minSize.y * d->pixelRatio);
+    SDL_SetWindowMinimumSize(d->win, minSize.x * d->displayScale, minSize.y * d->displayScale);
     useExecutableIconResource_SDLWindow(d->win);
 #endif
 #if defined (iPlatformLinux)
@@ -1581,15 +1593,24 @@ static iBool unsnap_Window_(iWindow *d, const iInt2 *newPos) {
 
 static void notifyMetricsChange_Window_(const iWindow *d) {
     /* Dynamic UI metrics change. Widgets need to update themselves. */
-    setPixelRatio_Metrics(d->pixelRatio * d->uiScale);
+    setScale_Metrics(d->pixelRatio * d->displayScale * d->uiScale);
     resetFonts_Text();
     postCommand_App("metrics.changed");
 }
 
 static void checkPixelRatioChange_Window_(iWindow *d) {
+    iBool wasChanged = iFalse;
     const float ratio = pixelRatio_Window_(d);
     if (iAbs(ratio - d->pixelRatio) > 0.001f) {
         d->pixelRatio = ratio;
+        wasChanged = iTrue;
+    }
+    const float scale = displayScale_Window_(d);
+    if (iAbs(scale - d->displayScale) > 0.001f) {
+        d->displayScale = scale;
+        wasChanged = iTrue;
+    }
+    if (wasChanged) {
         notifyMetricsChange_Window_(d);
     }
 }
@@ -1993,13 +2014,7 @@ iInt2 visibleRootSize_Window(const iWindow *d) {
 }
 
 iInt2 coord_Window(const iWindow *d, int x, int y) {
-#if defined (iPlatformMsys) || defined (iPlatformLinux)
-    /* On Windows, surface coordinates are in pixels. */
-    return init_I2(x, y);
-#else
-    /* Coordinates are in points. */
     return mulf_I2(init_I2(x, y), d->pixelRatio);
-#endif
 }
 
 iInt2 mouseCoord_Window(const iWindow *d) {
