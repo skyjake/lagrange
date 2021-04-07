@@ -32,14 +32,14 @@ int   gap_UI      = defaultGap_Metrics;
 iInt2 gap2_UI     = { defaultGap_Metrics, defaultGap_Metrics };
 int   fontSize_UI = defaultFontSize_Metrics;
 
-void setPixelRatio_Metrics(float pixelRatio) {
+void setScale_Metrics(float scale) {
 #if defined (iPlatformAppleMobile)
     /* iPad needs a bit larger UI elements as the viewing distance is generally longer.*/
     if (deviceType_App() == tablet_AppDeviceType) {
-        pixelRatio *= 1.1f;
+        scale *= 1.1f;
     }
 #endif
-    gap_UI      = iRound(defaultGap_Metrics * pixelRatio);
+    gap_UI      = iRound(defaultGap_Metrics * scale);
     gap2_UI     = init1_I2(gap_UI);
-    fontSize_UI = iRound(defaultFontSize_Metrics * pixelRatio);
+    fontSize_UI = iRound(defaultFontSize_Metrics * scale);
 }

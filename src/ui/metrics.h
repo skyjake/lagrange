@@ -28,4 +28,4 @@ extern int   gap_UI;
 extern int   fontSize_UI;
 extern iInt2 gap2_UI;
 
-void    setPixelRatio_Metrics       (float pixelRatio);
+void    setScale_Metrics       (float scale);
