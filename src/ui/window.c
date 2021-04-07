@@ -1926,25 +1926,27 @@ void draw_Window(iWindow *d) {
     }
     /* Draw widgets. */
     d->frameTime = SDL_GetTicks();
-    draw_Widget(d->root);
+    if (isExposed_Window(d)) {
+        draw_Widget(d->root);
 #if defined (LAGRANGE_CUSTOM_FRAME)
-    /* App icon. */
-    const iWidget *appIcon = findChild_Widget(d->root, "winbar.icon");
-    if (isVisible_Widget(appIcon)) {
-        const int   size    = appIconSize_();
-        const iRect rect    = bounds_Widget(appIcon);
-        const iInt2 mid     = mid_Rect(rect);
-        const iBool isLight = isLight_ColorTheme(colorTheme_App());
-        iColor iconColor    = get_Color(gotFocus || isLight ? white_ColorId : uiAnnotation_ColorId);
-        SDL_SetTextureColorMod(d->appIcon, iconColor.r, iconColor.g, iconColor.b);
-        SDL_SetTextureAlphaMod(d->appIcon, gotFocus || !isLight ? 255 : 92);
-        SDL_RenderCopy(
-            d->render,
-            d->appIcon,
-            NULL,
-            &(SDL_Rect){ left_Rect(rect) + gap_UI * 1.25f, mid.y - size / 2, size, size });
-    }
+        /* App icon. */
+        const iWidget *appIcon = findChild_Widget(d->root, "winbar.icon");
+        if (isVisible_Widget(appIcon)) {
+            const int   size    = appIconSize_();
+            const iRect rect    = bounds_Widget(appIcon);
+            const iInt2 mid     = mid_Rect(rect);
+            const iBool isLight = isLight_ColorTheme(colorTheme_App());
+            iColor iconColor    = get_Color(gotFocus || isLight ? white_ColorId : uiAnnotation_ColorId);
+            SDL_SetTextureColorMod(d->appIcon, iconColor.r, iconColor.g, iconColor.b);
+            SDL_SetTextureAlphaMod(d->appIcon, gotFocus || !isLight ? 255 : 92);
+            SDL_RenderCopy(
+                d->render,
+                d->appIcon,
+                NULL,
+                &(SDL_Rect){ left_Rect(rect) + gap_UI * 1.25f, mid.y - size / 2, size, size });
+        }
 #endif
+    }
 #if 0
     /* Text cache debugging. */ {
         SDL_Texture *cache = glyphCache_Text();
