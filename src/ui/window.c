@@ -1465,9 +1465,6 @@ void init_Window(iWindow *d, iRect rect) {
     d->uiScale      = initialUiScale_;
     setScale_Metrics(d->pixelRatio * d->displayScale * d->uiScale);
 #if defined (iPlatformMsys)
-    SDL_Rect usable;
-    SDL_GetDisplayUsableBounds(0, &usable);
-    SDL_SetWindowMaximumSize(d->win, usable.w, usable.h);
     SDL_SetWindowMinimumSize(d->win, minSize.x * d->displayScale, minSize.y * d->displayScale);
     useExecutableIconResource_SDLWindow(d->win);
 #endif
