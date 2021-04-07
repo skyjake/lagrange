@@ -163,6 +163,7 @@ static iInt2 measurePreformattedBlock_GmDocument_(const iGmDocument *d, const ch
 }
 
 static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *linkId) {
+    /* Returns the human-readable label of the link. */
     static iRegExp *pattern_;
     if (!pattern_) {
         pattern_ = new_RegExp("=>\\s*([^\\s]+)(\\s.*)?", caseInsensitive_RegExpOption);
@@ -250,7 +251,7 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
                         link->flags |= iconFromLabel_GmLinkFlag;
                         link->labelIcon = (iRangecc){ desc.start, desc.start + len };
                         line.start += len;
-                        line.start = skipSpace_CStr(line.start);
+                        trimStart_Rangecc(&line);
 //                        printf("custom icon: %x (%s)\n", icon, cstr_Rangecc(link->labelIcon));
 //                        fflush(stdout);
                     }
