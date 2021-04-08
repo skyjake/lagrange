@@ -1031,6 +1031,7 @@ static iBool slidePanelHandler_(iWidget *d, const char *cmd) {
         iWidget *button = pointer_Command(cmd);
         iWidget *panel = userData_Object(button);
         openMenu_Widget(panel, zero_I2());
+        setFlags_Widget(panel, disabled_WidgetFlag, iFalse);
 //        updateTextCStr_LabelWidget(findWidget_App("panel.back"), );
         return iTrue;
     }
@@ -1045,6 +1046,7 @@ static iBool slidePanelHandler_(iWidget *d, const char *cmd) {
             iWidget *child = i.object;
             if (!cmp_String(id_Widget(child), "panel") && isVisible_Widget(child)) {
                 closeMenu_Widget(child);
+                setFlags_Widget(child, disabled_WidgetFlag, iTrue);
                 setFocus_Widget(NULL);
                 updateTextCStr_LabelWidget(findWidget_App("panel.back"), "Back");
                 wasClosed = iTrue;
@@ -1528,7 +1530,7 @@ void finalizeSheet_Widget(iWidget *sheet) {
         updateSheetPanelMetrics_(sheet);
         arrange_Widget(sheet->parent);
         postCommand_App("widget.overflow"); /* with the correct dimensions */
-//        printTree_Widget(sheet);
+        printTree_Widget(sheet);
     }
     else {
         arrange_Widget(sheet);
