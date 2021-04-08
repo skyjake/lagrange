@@ -7,6 +7,7 @@
 # Release notes
 
 ## 1.3.2
+* Fixed crash after updating from v1.2 due to undefined CA file/path configuration.
 * Fixed keybindings list not being updated immediately when UI language changes.
 
 ## 1.3.1
