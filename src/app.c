@@ -302,6 +302,7 @@ static const iString *prefsFileName_(void) {
 
 static void loadPrefs_App_(iApp *d) {
     iUnused(d);
+    iBool haveCA = iFalse;
     /* Create the data dir if it doesn't exist yet. */
     makeDirs_Path(collectNewCStr_String(dataDir_App_()));
     iFile *f = new_File(prefsFileName_());
@@ -326,6 +327,7 @@ static void loadPrefs_App_(iApp *d) {
                 /* Background requests may be started before these commands would get
                    handled via the event loop. */
                 handleCommand_App(cmd);
+                haveCA = iTrue;
             }
             else if (equal_Command(cmd, "customframe")) {
                 d->prefs.customFrame = arg_Command(cmd);
@@ -347,8 +349,8 @@ static void loadPrefs_App_(iApp *d) {
         }
         delete_String(str);
     }
-    else {
-        /* default preference values */
+    if (!haveCA) {
+        /* Default CA setup. */
         setCACertificates_TlsRequest(&d->prefs.caFile, &d->prefs.caPath);
     }
 #if !defined (LAGRANGE_CUSTOM_FRAME)
