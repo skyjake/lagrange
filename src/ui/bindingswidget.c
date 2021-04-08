@@ -179,6 +179,10 @@ static iBool processEvent_BindingsWidget_(iBindingsWidget *d, const SDL_Event *e
         postCommand_App("bindings.changed");
         return iTrue;
     }
+    else if (equal_Command(cmd, "lang.changed")) {
+        updateItems_BindingsWidget_(d);
+        return iFalse;
+    }
     if (ev->type == SDL_MOUSEBUTTONDOWN && ev->button.button == SDL_BUTTON_RIGHT) {
         if (!isVisible_Widget(d->menu)) {
             d->contextPos = hoverItemIndex_ListWidget(d->list);
