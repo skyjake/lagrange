@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-04-05 11:27+0000\n"
+"PO-Revision-Date: 2021-04-09 07:51+0000\n"
 "Last-Translator: Страхиња Радић <contact@strahinja.org>\n"
 "Language-Team: Serbian <http://weblate.skyjake.fi/projects/lagrange/ui/sr/>\n"
 "Language: sr\n"
@@ -1061,7 +1061,7 @@ msgstr "Историја"
 
 # tab button
 msgid "heading.prefs.keys"
-msgstr "Комбинације тастера"
+msgstr "Тастери"
 
 msgid "sidebar.identities"
 msgstr "Идентитети"
@@ -1235,7 +1235,7 @@ msgid "dlg.confirm.ident.delete"
 msgstr ""
 "Заиста желите да обришете идентитет\n"
 "%s%s%s,\n"
-"укључујући његов сертификат и приватне кључеве?"
+"укључујући и његов сертификат и приватне кључеве?"
 
 msgid "keys.link.homerow.hover"
 msgstr "Наднеси над везу преко тастера основног реда"
@@ -1373,21 +1373,21 @@ msgstr[2] "укупно %zu ставки"
 #, c-format
 msgid "minutes.ago"
 msgid_plural "minutes.ago.n"
-msgstr[0] "пре %d минут"
+msgstr[0] "пре %d минутa"
 msgstr[1] "пре %d минута"
 msgstr[2] "пре %d минута"
 
 #, c-format
 msgid "hours.ago"
 msgid_plural "hours.ago.n"
-msgstr[0] "пре %d сат"
+msgstr[0] "пре %d сата"
 msgstr[1] "пре %d сата"
 msgstr[2] "пре %d сати"
 
 #, c-format
 msgid "days.ago"
 msgid_plural "days.ago.n"
-msgstr[0] "пре %d дан"
+msgstr[0] "пре %d дана"
 msgstr[1] "пре %d дана"
 msgstr[2] "пре %d дана"
 
@@ -1447,3 +1447,14 @@ msgstr "Последње освежавање је било %s."
 
 msgid "mb.per.sec"
 msgstr "МБ/с"
+
+# Interpretation: (Bold links) on dark (background).
+msgid "prefs.boldlink.dark"
+msgstr "у тамној теми"
+
+msgid "prefs.boldlink"
+msgstr "Подебљај везе:"
+
+# Interpretation: (Bold links) on light (background).
+msgid "prefs.boldlink.light"
+msgstr "у светлој теми"
