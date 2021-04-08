@@ -498,14 +498,20 @@ static void checkLoadAnimation_Window_(iWindow *d) {
 
 static void updatePadding_Window_(iWindow *d) {
 #if defined (iPlatformAppleMobile)
+    iWidget *toolBar = findChild_Widget(d->root, "toolbar");
+    float left, top, right, bottom;
+    safeAreaInsets_iOS(&left, &top, &right, &bottom);
     /* Respect the safe area insets. */ {
-        float left, top, right, bottom;
-        safeAreaInsets_iOS(&left, &top, &right, &bottom);
         setPadding_Widget(findChild_Widget(d->root, "navdiv"), left, top, right, 0);
-        iWidget *toolBar = findChild_Widget(d->root, "toolbar");
         if (toolBar) {
             setPadding_Widget(toolBar, left, 0, right, bottom);
         }
+    }
+    if (toolBar) {
+        iWidget *sidebar = findChild_Widget(d->root, "sidebar");
+        setPadding_Widget(sidebar, 0, 0, 0, isPortrait_App() ? 11 * gap_UI + bottom : 0);
+        /* TODO: There seems to be unrelated layout glitch in the sidebar where its children
+           are not arranged correctly until it's hidden and reshown. */
     }
     /* Note that `handleNavBarCommands_` also adjusts padding and spacing. */
 #endif
@@ -1253,6 +1259,7 @@ static void updateRootSize_Window_(iWindow *d, iBool notifyAlways) {
     size->y -= d->keyboardHeight;
     d->root->minSize = *size;
     if (notifyAlways || !isEqual_I2(oldSize, *size)) {
+        updatePadding_Window_(d);
         const iBool isHoriz = (d->place.lastNotifiedSize.x != size->x);
         const iBool isVert  = (d->place.lastNotifiedSize.y != size->y);
         arrange_Widget(d->root);
@@ -1903,7 +1910,6 @@ void draw_Window(iWindow *d) {
         iInt2 renderSize;
         SDL_GetRendererOutputSize(d->render, &renderSize.x, &renderSize.y);
         if (!isEqual_I2(renderSize, d->root->rect.size)) {
-            updatePadding_Window_(d);
             updateRootSize_Window_(d, iTrue);
             processEvents_App(postedEventsOnly_AppEventMode);
         }

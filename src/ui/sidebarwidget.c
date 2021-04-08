@@ -826,6 +826,13 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
     /* Handle commands. */
     if (isResize_UserEvent(ev)) {
         checkModeButtonLayout_SidebarWidget_(d);
+        if (deviceType_App() == phone_AppDeviceType && d->side == left_SideBarSide) {
+            /* In landscape, visibility of the toolbar is controlled separately. */
+            if (isVisible_Widget(w)) {
+                postCommand_Widget(w, "sidebar.toggle");
+            }
+            return iFalse;
+        }
     }
     else if (isMetricsChange_UserEvent(ev)) {
         if (isVisible_Widget(w)) {
