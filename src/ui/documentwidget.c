@@ -1183,6 +1183,12 @@ static void smoothScroll_DocumentWidget_(iDocumentWidget *d, int offset, int dur
         setLinkNumberMode_DocumentWidget_(d, iFalse);
         invalidateVisibleLinks_DocumentWidget_(d);
     }
+    /* Show and hide toolbar on scroll. */
+    if (deviceType_App() == phone_AppDeviceType) {
+        if (prefs_App()->hideToolbarOnScroll && iAbs(offset) > 5) {
+            showToolbars_Window(get_Window(), offset < 0);
+        }
+    }
     if (!prefs_App()->smoothScrolling) {
         duration = 0; /* always instant */
     }
@@ -1193,14 +1199,6 @@ static void smoothScroll_DocumentWidget_(iDocumentWidget *d, int offset, int dur
     const int scrollMax = scrollMax_DocumentWidget_(d);
     if (scrollMax > 0) {
         destY = iMin(destY, scrollMax);
-        if (deviceType_App() == phone_AppDeviceType) {
-            if (destY == scrollMax) {
-                showToolbars_Window(get_Window(), iTrue);
-            }
-            else if (prefs_App()->hideToolbarOnScroll && iAbs(offset) > 5) {
-                showToolbars_Window(get_Window(), offset < 0);
-            }
-        }
     }
     else {
         destY = 0;
