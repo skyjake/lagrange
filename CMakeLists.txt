@@ -22,7 +22,7 @@ project (Lagrange
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
-set (IOS_BUNDLE_VERSION 7)
+set (IOS_BUNDLE_VERSION 8)
 set (COPYRIGHT_YEAR 2021)
 
 # Build configuration.
