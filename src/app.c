@@ -949,6 +949,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     }
                     d->lastDropTime = now_Time();
                     if (startsWithCase_CStr(ev.drop.file, "gemini:") ||
+                        startsWithCase_CStr(ev.drop.file, "gopher:") ||
                         startsWithCase_CStr(ev.drop.file, "file:")) {
                         postCommandf_App("~open newtab:%d url:%s", newTab, ev.drop.file);
                     }
