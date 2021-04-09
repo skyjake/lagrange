@@ -94,6 +94,7 @@ struct Impl_SidebarWidget {
     iString           cmdPrefix;
     iWidget *         blank;
     iListWidget *     list;
+    iWidget *         actions; /* below the list, area for buttons */
     int               modeScroll[max_SidebarMode];
     iLabelWidget *    modeButtons[max_SidebarMode];
     int               maxButtonLabelWidth;
@@ -134,6 +135,8 @@ static int cmpTitle_Bookmark_(const iBookmark **a, const iBookmark **b) {
 static void updateItems_SidebarWidget_(iSidebarWidget *d) {
     clear_ListWidget(d->list);
     releaseChildren_Widget(d->blank);
+    releaseChildren_Widget(d->actions);
+    d->actions->rect.size.y = 0;
     destroy_Widget(d->menu);
     d->menu = NULL;
     switch (d->mode) {
@@ -338,6 +341,12 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
             break;
         }
         case identities_SidebarMode: {
+            /* Actions. */ {
+                checkIcon_LabelWidget(addChild_Widget(
+                    d->actions, iClob(new_LabelWidget(add_Icon " New...", "ident.new"))));
+                checkIcon_LabelWidget(addChild_Widget(
+                    d->actions, iClob(new_LabelWidget("Import...", "ident.import"))));
+            }
             const iString *tabUrl = url_DocumentWidget(document_App());
             iConstForEach(PtrArray, i, identities_GmCerts(certs_App())) {
                 const iGmIdentity *ident = i.ptr;
@@ -426,8 +435,19 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 uiBackgroundSidebar_ColorId);
             addChild_Widget(d->blank, iClob(div));
         }
-        arrange_Widget(d->blank);
+//        arrange_Widget(d->blank);
     }
+    if (deviceType_App() != desktop_AppDeviceType) {
+        /* Touch-friendly action buttons. */
+        iForEach(ObjectList, i, children_Widget(d->actions)) {
+            if (isInstance_Object(i.object, &Class_LabelWidget)) {
+                setPadding_Widget(i.object, 0, gap_UI, 0, gap_UI);
+                setFont_LabelWidget(i.object, defaultBig_FontId);
+            }
+        }
+    }
+    arrange_Widget(d->actions);
+    arrange_Widget(as_Widget(d));
 }
 
 static void updateItemHeight_SidebarWidget_(iSidebarWidget *d) {
@@ -557,9 +577,7 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
                                  resizeWidthOfChildren_WidgetFlag |
                              arrangeHeight_WidgetFlag | resizeToParentWidth_WidgetFlag |
                              drawBackgroundToHorizontalSafeArea_WidgetFlag);
-//        if (deviceType_App() == phone_AppDeviceType) {
         setBackgroundColor_Widget(buttons, uiBackgroundSidebar_ColorId);
-  //      }
     }
     else {
         iLabelWidget *heading = new_LabelWidget(person_Icon " ${sidebar.identities}", NULL);
@@ -567,14 +585,25 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
         setBackgroundColor_Widget(as_Widget(heading), uiBackgroundSidebar_ColorId);
         setTextColor_LabelWidget(heading, uiTextSelected_ColorId);
         setFont_LabelWidget(addChildFlags_Widget(vdiv, iClob(heading), borderTop_WidgetFlag |
-                                                 alignLeft_WidgetFlag | frameless_WidgetFlag),
+                                                 alignLeft_WidgetFlag | frameless_WidgetFlag |
+                                                 drawBackgroundToHorizontalSafeArea_WidgetFlag),
                             uiLabelLargeBold_FontId);
     }
     iWidget *content = new_Widget();
     setFlags_Widget(content, resizeChildren_WidgetFlag, iTrue);
+    iWidget *listAndActions = makeVDiv_Widget();
+    addChild_Widget(content, iClob(listAndActions));
     d->list = new_ListWidget();
     setPadding_Widget(as_Widget(d->list), 0, gap_UI, 0, gap_UI);
-    addChildFlags_Widget(content, iClob(d->list), drawBackgroundToHorizontalSafeArea_WidgetFlag);
+    addChildFlags_Widget(listAndActions,
+                         iClob(d->list),
+                         expand_WidgetFlag | drawBackgroundToHorizontalSafeArea_WidgetFlag);
+    addChildFlags_Widget(listAndActions, iClob(d->actions = new_Widget()),
+                         arrangeHorizontal_WidgetFlag |
+                         arrangeHeight_WidgetFlag |
+                         resizeWidthOfChildren_WidgetFlag |
+                         drawBackgroundToHorizontalSafeArea_WidgetFlag);
+    setBackgroundColor_Widget(d->actions, uiBackground_ColorId);
     d->contextItem = NULL;
     d->blank = new_Widget();
     addChildFlags_Widget(content, iClob(d->blank), resizeChildren_WidgetFlag);

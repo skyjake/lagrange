@@ -502,8 +502,10 @@ static void updatePadding_Window_(iWindow *d) {
         }
     }
     if (toolBar) {
-        iWidget *sidebar = findChild_Widget(d->root, "sidebar");
-        setPadding_Widget(sidebar, 0, 0, 0, isPortrait_App() ? 11 * gap_UI + bottom : 0);
+        /* TODO: get this from toolBar height, but it's buggy for some reason */
+        const int sidebarBottomPad = isPortrait_App() ? 11 * gap_UI + bottom : 0;
+        setPadding_Widget(findChild_Widget(d->root, "sidebar"), 0, 0, 0, sidebarBottomPad);
+        setPadding_Widget(findChild_Widget(d->root, "sidebar2"), 0, 0, 0, sidebarBottomPad);
         /* TODO: There seems to be unrelated layout glitch in the sidebar where its children
            are not arranged correctly until it's hidden and reshown. */
     }
