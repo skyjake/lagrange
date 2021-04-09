@@ -1110,7 +1110,7 @@ static iAnyObject *addPanelChild_(iWidget *panel, iAnyObject *child, int64_t fla
                                   enum iPrefsElement precedingElementType) {
     /* Erase redundant/unused headings. */
     if (precedingElementType == heading_PrefsElement &&
-        (!child || elementType == heading_PrefsElement)) {
+        (!child || (elementType == heading_PrefsElement || elementType == radioButton_PrefsElement))) {
         iRelease(removeChild_Widget(panel, lastChild_Widget(panel)));
         if (!cmp_String(id_Widget(constAs_Widget(lastChild_Widget(panel))), "padding")) {
             iRelease(removeChild_Widget(panel, lastChild_Widget(panel)));
@@ -1122,12 +1122,15 @@ static iAnyObject *addPanelChild_(iWidget *panel, iAnyObject *child, int64_t fla
             if (elementType == heading_PrefsElement ||
                 (elementType == toggle_PrefsElement &&
                  precedingElementType != toggle_PrefsElement &&
+                 precedingElementType != heading_PrefsElement) ||
+                (elementType == dropdown_PrefsElement &&
+                 precedingElementType != dropdown_PrefsElement &&
                  precedingElementType != heading_PrefsElement)) {
                 addChild_Widget(panel, iClob(makePadding_Widget(lineHeight_Text(defaultBig_FontId))));
             }
         }
-        if (elementType == toggle_PrefsElement &&
-            precedingElementType != toggle_PrefsElement) {
+        if ((elementType == toggle_PrefsElement && precedingElementType != toggle_PrefsElement) ||
+            (elementType == textInput_PrefsElement && precedingElementType != textInput_PrefsElement)) {
             flags |= borderTop_WidgetFlag;
         }
         return addChildFlags_Widget(panel, child, flags);
@@ -1378,7 +1381,7 @@ void finalizeSheet_Widget(iWidget *sheet) {
                     element = heading_PrefsElement;
                     iRelease(value);
                     addPanelChild_(owner, iClob(heading), 0, element, prevElement);
-                    setFont_LabelWidget(headingLabel, uiLabelBold_FontId);
+                    setFont_LabelWidget(headingLabel, uiLabel_FontId);
                 }
                 else if (isMenuButton) {
                     element = dropdown_PrefsElement;
@@ -1386,35 +1389,25 @@ void finalizeSheet_Widget(iWidget *sheet) {
                                     alignRight_WidgetFlag | noBackground_WidgetFlag |
                                     frameless_WidgetFlag, iTrue);
                     setFlags_Widget(value, alignLeft_WidgetFlag, iFalse);
-                    addPanelChild_(owner, iClob(makeValuePaddingWithHeading_(headingLabel, value)), 0,
-                                   element, prevElement);
+                    iWidget *pad = addPanelChild_(owner, iClob(makeValuePaddingWithHeading_(headingLabel, value)), 0,
+                                                  element, prevElement);
+                    pad->padding[2] = gap_UI;
                 }
                 else if (valueInput) {
                     addPanelChild_(owner, iClob(makeValuePaddingWithHeading_(headingLabel, value)), 0,
                                        element, prevElement);
                 }
                 else {
+                    if (childCount_Widget(value) >= 2) {
+                        element = radioButton_PrefsElement;
+                        /* Always padding before radio buttons. */
+                        addChild_Widget(owner, iClob(makePadding_Widget(lineHeight_Text(defaultBig_FontId))));
+                    }
                     addChildFlags_Widget(owner, iClob(heading), borderBottom_WidgetFlag);
                     if (headingLabel) {
                         setTextColor_LabelWidget(headingLabel, uiSubheading_ColorId);
                         setText_LabelWidget(headingLabel,
                                             collect_String(upper_String(text_LabelWidget(headingLabel))));
-                    }
-                    if (childCount_Widget(value) >= 2) {
-//                        if (isInstance_Object(child_Widget(value, 0), &Class_InputWidget)) {
-//                            element = textInput_PrefsElement;
-//                            setPadding_Widget(value, 0, 0, gap_UI, 0);
-//                            valueInput = child_Widget(value, 0);
-//                            setFlags_Widget(as_Widget(valueInput), fixedWidth_WidgetFlag, iFalse);
-//                            setFlags_Widget(as_Widget(valueInput), expand_WidgetFlag, iTrue);
-//                            setFlags_Widget(value, resizeWidthOfChildren_WidgetFlag |
-//                                            resizeToParentWidth_WidgetFlag, iTrue);
-//                            setFont_LabelWidget(child_Widget(value, 1), defaultBig_FontId);
-//                            setTextColor_LabelWidget(child_Widget(value, 1), uiAnnotation_ColorId);
-//                        }
-//                        else {
-                            element = radioButton_PrefsElement;
-//                        }
                     }
                     addPanelChild_(owner, iClob(value), 0, element, prevElement);
                     /* Radio buttons expand to fill the space. */
