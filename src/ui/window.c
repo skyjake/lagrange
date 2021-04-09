@@ -227,7 +227,7 @@ static const iMenuItem tabletNavMenuItems_[] = {
     { "---", 0, 0, NULL },
     { book_Icon " ${menu.bookmarks.list}", 0, 0, "!open url:about:bookmarks" },
     { "${menu.bookmarks.bytag}", 0, 0, "!open url:about:bookmarks?tags" },
-    { "${menu.bookmarks.bydate}", 0, 0, "!open url:about:feeds" },
+    { "${menu.bookmarks.bytime}", 0, 0, "!open url:about:feeds" },
     { "---", 0, 0, NULL },
     { gear_Icon " ${menu.preferences}", SDLK_COMMA, KMOD_PRIMARY, "preferences" },
     { "${menu.help}", SDLK_F1, 0, "!open url:about:help" },
