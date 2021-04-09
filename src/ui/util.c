@@ -2068,8 +2068,10 @@ iWidget *makePreferences_Widget(void) {
         }
         makeTwoColumnHeading_("${heading.prefs.sizing}", headings, values);
         addPrefsInputWithHeading_(headings, values, "prefs.uiscale", iClob(new_InputWidget(8)));
-        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.retainwindow}")));
-        addChild_Widget(values, iClob(makeToggle_Widget("prefs.retainwindow")));
+        if (deviceType_App() == desktop_AppDeviceType) {
+            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.retainwindow}")));
+            addChild_Widget(values, iClob(makeToggle_Widget("prefs.retainwindow")));
+        }
     }
     /* Colors. */ {
         appendTwoColumnPage_(tabs, "${heading.prefs.colors}", '3', &headings, &values);
