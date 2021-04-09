@@ -166,8 +166,8 @@ int64_t flags_Widget(const iWidget *d) {
 
 void setFlags_Widget(iWidget *d, int64_t flags, iBool set) {
     if (d) {
-        if (deviceType_App() == phone_AppDeviceType) {
-            /* Phones rarely have keyboards attached so don't bother with the shortcuts. */
+        if (deviceType_App() != desktop_AppDeviceType) {
+            /* TODO: Tablets should detect if a hardware keyboard is available. */
             flags &= ~drawKey_WidgetFlag;
         }
         iChangeFlags(d->flags, flags, set);

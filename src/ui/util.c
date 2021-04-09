@@ -577,7 +577,7 @@ iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
                 menu,
                 iClob(newKeyMods_LabelWidget(item->label, item->key, item->kmods, item->command)),
                 noBackground_WidgetFlag | frameless_WidgetFlag | alignLeft_WidgetFlag |
-                                                       drawKey_WidgetFlag | itemFlags);
+                    drawKey_WidgetFlag | itemFlags);
             haveIcons |= checkIcon_LabelWidget(label);
             updateSize_LabelWidget(label); /* drawKey was set */
         }
