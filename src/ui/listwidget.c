@@ -25,6 +25,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "paint.h"
 #include "util.h"
 #include "command.h"
+#include "touch.h"
 #include "visbuf.h"
 #include "app.h"
 
@@ -253,8 +254,10 @@ static void setHoverItem_ListWidget_(iListWidget *d, size_t index) {
         }
     }
     if (d->hoverItem != index) {
-        insert_IntSet(&d->invalidItems, d->hoverItem);
-        insert_IntSet(&d->invalidItems, index);
+        if (deviceType_App() == desktop_AppDeviceType || numFingers_Touch()) {
+            insert_IntSet(&d->invalidItems, d->hoverItem);
+            insert_IntSet(&d->invalidItems, index);
+        }
         d->hoverItem = index;
         refresh_Widget(as_Widget(d));
     }
@@ -332,20 +335,6 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
     }
     return processEvent_Widget(w, ev);
 }
-
-#if 0
-static void drawItem_ListWidget_(const iListWidget *d, iPaint *p, size_t index, iInt2 pos) {
-    const iWidget *  w         = constAs_Widget(d);
-    const iRect      bounds    = innerBounds_Widget(w);
-    const iListItem *item      = constAt_PtrArray(&d->items, index);
-    const iRect      itemRect  = { pos, init_I2(width_Rect(bounds), d->itemHeight) };
-    class_ListItem(item)->draw(item, p, itemRect, d);
-}
-
-static const iListItem *item_ListWidget_(const iListWidget *d, size_t pos) {
-    return constAt_PtrArray(&d->items, pos);
-}
-#endif
 
 static void draw_ListWidget_(const iListWidget *d) {
     const iWidget *w      = constAs_Widget(d);

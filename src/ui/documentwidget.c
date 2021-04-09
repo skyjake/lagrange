@@ -43,6 +43,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "paint.h"
 #include "mediaui.h"
 #include "scrollwidget.h"
+#include "touch.h"
 #include "translation.h"
 #include "util.h"
 #include "visbuf.h"
@@ -3103,9 +3104,15 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
     }
     enum iColorId      fg  = run->color;
     const iGmDocument *doc = d->widget->doc;
-    const iBool        isHover =
+    iBool              isHover =
         (run->linkId && d->widget->hoverLink && run->linkId == d->widget->hoverLink->linkId &&
          ~run->flags & decoration_GmRunFlag);
+    /* On mobile, links are not hovered unless a finger is touching. */ 
+    if (deviceType_App() != desktop_AppDeviceType) {
+        if (numFingers_Touch() == 0) {
+            isHover = iFalse;
+        }
+    }
     const iInt2 visPos = addX_I2(add_I2(run->visBounds.pos, origin),
                                  /* Preformatted runs can be scrolled. */
                                  runOffset_DocumentWidget_(d->widget, run));
