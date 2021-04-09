@@ -580,7 +580,8 @@ static void updateHover_DocumentWidget_(iDocumentWidget *d, iInt2 mouse) {
         iConstForEach(PtrArray, i, &d->visibleLinks) {
             const iGmRun *run = i.ptr;
             /* Click targets are slightly expanded so there are no gaps between links. */
-            if (contains_Rect(expanded_Rect(run->bounds, init1_I2(gap_Text / 2)), hoverPos)) {
+            if (~d->flags & pinchZoom_DocumentWidgetFlag &&
+                contains_Rect(expanded_Rect(run->bounds, init1_I2(gap_Text / 2)), hoverPos)) {
                 d->hoverLink = run;
                 break;
             }
@@ -596,7 +597,7 @@ static void updateHover_DocumentWidget_(iDocumentWidget *d, iInt2 mouse) {
         refresh_Widget(w);
     }
     /* Hovering over preformatted blocks. */
-    if (isHover_Widget(w)) {
+    if (isHover_Widget(w) && ~d->flags & pinchZoom_DocumentWidgetFlag) {
         iConstForEach(PtrArray, j, &d->visiblePre) {
             const iGmRun *run = j.ptr;
             if (contains_Rect(run->bounds, hoverPos)) {
@@ -1674,7 +1675,7 @@ static iBool handlePinch_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
     }
     else if (equal_Command(cmd, "pinch.moved")) {
         const float rel = argf_Command(cmd);
-        int zoom = iClamp(iRound(d->pinchZoomInitial * rel / 5.0f) * 5, 50, 200);
+        int zoom = iRound(d->pinchZoomInitial * rel / 5.0f) * 5;
         /* Snap to 100%. */
         if (zoom > 90 && zoom < 110) {
             zoom = 100;
@@ -1685,6 +1686,7 @@ static iBool handlePinch_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
         else {
             zoom = iMin(100, zoom + 10);
         }
+        zoom = iClamp(zoom, 50, 200);
         if (d->pinchZoomPosted != zoom) {
             d->pinchZoomPosted = zoom;
             postCommandf_App("zoom.set arg:%d", zoom);
