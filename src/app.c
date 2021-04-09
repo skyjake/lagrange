@@ -91,7 +91,7 @@ static const char *defaultDataDir_App_ = "~/.config/lagrange";
 #endif
 #if defined (iPlatformHaiku)
 #define EMB_BIN "./resources.lgr"
-static const char *defaultDataDir_App_ = "~/config/settings";
+static const char *defaultDataDir_App_ = "~/config/settings/lagrange";
 #endif
 #if defined (LAGRANGE_EMB_BIN) /* specified in build config */
 #  undef EMB_BIN
