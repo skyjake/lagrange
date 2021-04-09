@@ -199,6 +199,7 @@ enum iDocumentWidgetFlag {
     centerVertically_DocumentWidgetFlag      = iBit(6),
     selectWords_DocumentWidgetFlag           = iBit(7),
     selectLines_DocumentWidgetFlag           = iBit(8),
+    pinchZoom_DocumentWidgetFlag             = iBit(9),
 };
 
 enum iDocumentLinkOrdinalMode {
@@ -263,6 +264,8 @@ struct Impl_DocumentWidget {
     iDrawBufs *    drawBufs; /* dynamic state for drawing */
     iTranslation * translation;
     iWidget *      phoneToolbar;
+    int            pinchZoomInitial;
+    int            pinchZoomPosted;
 };
 
 iDefineObjectConstruction(DocumentWidget)
@@ -1663,6 +1666,37 @@ static iBool updateDocumentWidthRetainingScrollPosition_DocumentWidget_(iDocumen
     return iTrue;
 }
 
+static iBool handlePinch_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
+    if (equal_Command(cmd, "pinch.began")) {
+        d->pinchZoomInitial = d->pinchZoomPosted = prefs_App()->zoomPercent;
+        d->flags |= pinchZoom_DocumentWidgetFlag;
+        refresh_Widget(d);
+    }
+    else if (equal_Command(cmd, "pinch.moved")) {
+        const float rel = argf_Command(cmd);
+        int zoom = iClamp(iRound(d->pinchZoomInitial * rel / 5.0f) * 5, 50, 200);
+        /* Snap to 100%. */
+        if (zoom > 90 && zoom < 110) {
+            zoom = 100;
+        }
+        else if (zoom > 100) {
+            zoom = iMax(100, zoom - 10);
+        }
+        else {
+            zoom = iMin(100, zoom + 10);
+        }
+        if (d->pinchZoomPosted != zoom) {
+            d->pinchZoomPosted = zoom;
+            postCommandf_App("zoom.set arg:%d", zoom);
+        }
+    }
+    else if (equal_Command(cmd, "pinch.ended")) {
+        d->flags &= ~pinchZoom_DocumentWidgetFlag;
+        refresh_Widget(d);
+    }
+    return iTrue;
+}
+
 static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
     iWidget *w = as_Widget(d);
     if (equal_Command(cmd, "window.resized") || equal_Command(cmd, "font.changed")) {
@@ -2256,6 +2290,9 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     else if (equal_Command(cmd, "document.autoreload.set") && document_App() == d) {
         d->mod.reloadInterval = arg_Command(cmd);
+    }
+    else if (startsWith_CStr(cmd, "pinch.") && document_Command(cmd) == d) {
+        return handlePinch_DocumentWidget_(d, cmd);
     }
     return iFalse;
 }
@@ -3592,6 +3629,16 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
             SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_NONE);
             setOpacity_Text(1.0f);
         }
+    }
+    /* Pinch zoom indicator. */
+    if (d->flags & pinchZoom_DocumentWidgetFlag) {
+        const int   font   = defaultLargeBold_FontId;
+        const int   height = lineHeight_Text(font) * 2;
+        const iInt2 size   = init_I2(height * 2, height);
+        const iRect rect   = { sub_I2(mid_Rect(bounds), divi_I2(size, 2)), size };
+        fillRect_Paint(&ctx.paint, rect, uiTextAction_ColorId);
+        drawCentered_Text(font, bounds, iFalse, uiBackground_ColorId, "%d %%",
+                          d->pinchZoomPosted);
     }
 }
 
