@@ -2585,7 +2585,9 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         return iTrue;
     }
     else if (ev->type == SDL_MOUSEMOTION) {
-        iChangeFlags(d->flags, noHoverWhileScrolling_DocumentWidgetFlag, iFalse);
+        if (deviceType_App() == desktop_AppDeviceType) {
+            iChangeFlags(d->flags, noHoverWhileScrolling_DocumentWidgetFlag, iFalse);
+        }
         const iInt2 mpos = init_I2(ev->motion.x, ev->motion.y);
         if (isVisible_Widget(d->menu)) {
             setCursor_Window(get_Window(), SDL_SYSTEM_CURSOR_ARROW);
@@ -2601,6 +2603,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         }
     }
     if (ev->type == SDL_MOUSEBUTTONDOWN) {
+        iChangeFlags(d->flags, noHoverWhileScrolling_DocumentWidgetFlag, iFalse);
         if (ev->button.button == SDL_BUTTON_X1) {
             postCommand_App("navigate.back");
             return iTrue;
@@ -3136,12 +3139,6 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
     iBool              isHover =
         (run->linkId && d->widget->hoverLink && run->linkId == d->widget->hoverLink->linkId &&
          ~run->flags & decoration_GmRunFlag);
-    /* On mobile, links are not hovered unless a finger is touching. */ 
-    if (deviceType_App() != desktop_AppDeviceType) {
-        if (numFingers_Touch() == 0) {
-            isHover = iFalse;
-        }
-    }
     const iInt2 visPos = addX_I2(add_I2(run->visBounds.pos, origin),
                                  /* Preformatted runs can be scrolled. */
                                  runOffset_DocumentWidget_(d->widget, run));
