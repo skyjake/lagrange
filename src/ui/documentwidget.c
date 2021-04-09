@@ -591,6 +591,7 @@ static void updateHover_DocumentWidget_(iDocumentWidget *d, iInt2 mouse) {
         }
         refresh_Widget(w);
     }
+    /* Hovering over preformatted blocks. */
     if (isHover_Widget(w)) {
         iConstForEach(PtrArray, j, &d->visiblePre) {
             const iGmRun *run = j.ptr;
@@ -602,7 +603,7 @@ static void updateHover_DocumentWidget_(iDocumentWidget *d, iInt2 mouse) {
         }
     }
     if (!d->hoverPre) {
-        setValueSpeed_Anim(&d->altTextOpacity, 0.0f, 2);
+        setValueSpeed_Anim(&d->altTextOpacity, 0.0f, 1.5f);
         if (!isFinished_Anim(&d->altTextOpacity)) {
             animate_DocumentWidget_(d);
         }
@@ -610,7 +611,7 @@ static void updateHover_DocumentWidget_(iDocumentWidget *d, iInt2 mouse) {
     else if (d->hoverPre &&
              preHasAltText_GmDocument(d->doc, d->hoverPre->preId) &&
              ~d->flags & noHoverWhileScrolling_DocumentWidgetFlag) {
-        setValueSpeed_Anim(&d->altTextOpacity, 1.0f, 2);
+        setValueSpeed_Anim(&d->altTextOpacity, 1.0f, 1.5f);
         if (!isFinished_Anim(&d->altTextOpacity)) {
             animate_DocumentWidget_(d);
         }
@@ -2563,7 +2564,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             setCursor_Window(get_Window(), SDL_SYSTEM_CURSOR_HAND);
         }
         else {
-            if (value_Anim(&d->altTextOpacity) < 0.667f) {
+            if (value_Anim(&d->altTextOpacity) < 0.833f) {
                 setValue_Anim(&d->altTextOpacity, 0, 0); /* keep it hidden while moving */
             }
             updateHover_DocumentWidget_(d, mpos);
@@ -3558,7 +3559,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
     }
     draw_Widget(w);
     /* Alt text. */
-    const float altTextOpacity = value_Anim(&d->altTextOpacity) * 3 - 2;
+    const float altTextOpacity = value_Anim(&d->altTextOpacity) * 6 - 5;
     if (d->hoverAltPre && altTextOpacity > 0) {
         const iGmPreMeta *meta = preMeta_GmDocument(d->doc, d->hoverAltPre->preId);
         if (meta->flags & topLeft_GmPreMetaFlag && ~meta->flags & decoration_GmRunFlag &&
