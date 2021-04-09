@@ -80,6 +80,7 @@ iLocalDef void pushPos_Touch_(iTouch *d, const iFloat3 pos, uint32_t time) {
 struct Impl_Momentum {
     iWidget *affinity;
     uint32_t releaseTime;
+    iFloat3 pos;
     iFloat3 velocity;
     iFloat3 accum;
 };
@@ -226,6 +227,7 @@ static void update_TouchState_(void *ptr) {
             const iInt2 pixels = initF3_I2(mom->accum);
             if (pixels.x || pixels.y) {
                 subv_F3(&mom->accum, initI2_F3(pixels));
+                dispatchMotion_Touch_(mom->pos, 0);
                 dispatchEvent_Widget(mom->affinity, (SDL_Event *) &(SDL_MouseWheelEvent){
                     .type = SDL_MOUSEWHEEL,
                     .timestamp = nowTime,
@@ -474,6 +476,7 @@ iBool processEvent_Touch(const SDL_Event *ev) {
 //                   pixels.y, y_F3(amount), y_F3(touch->accum));
             if (pixels.x || pixels.y) {
                 setFocus_Widget(NULL);
+                dispatchMotion_Touch_(touch->pos[0], 0);
                 dispatchEvent_Widget(touch->affinity, (SDL_Event *) &(SDL_MouseWheelEvent){
                     .type = SDL_MOUSEWHEEL,
                     .timestamp = SDL_GetTicks(),
@@ -551,6 +554,7 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                     iMomentum mom = {
                         .affinity = touch->affinity,
                         .releaseTime = nowTime,
+                        .pos = touch->pos[0],
                         .velocity = velocity
                     };
                     if (isEmpty_Array(d->moms)) {
@@ -568,4 +572,8 @@ iBool processEvent_Touch(const SDL_Event *ev) {
         }
     }
     return iTrue;
+}
+
+size_t numFingers_Touch(void) {
+    return size_Array(touchState_()->touches);
 }

@@ -30,3 +30,5 @@ iDeclareType(Widget)
 iBool   processEvent_Touch      (const SDL_Event *);
 void    update_Touch            (void);
 void    widgetDestroyed_Touch   (iWidget *widget);
+
+size_t  numFingers_Touch        (void);
