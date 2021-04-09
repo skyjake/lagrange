@@ -32,9 +32,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #   include "../ios.h"
 #endif
 
+iDeclareType(Momentum)
+iDeclareType(Pinch)
 iDeclareType(Touch)
 iDeclareType(TouchState)
-iDeclareType(Momentum)
 
 #define numHistory_Touch_   5
 #define lastIndex_Touch_    (numHistory_Touch_ - 1)
@@ -59,6 +60,7 @@ struct Impl_Touch {
     iBool isTapBegun;
     iBool isTouchDrag;
     iBool isTapAndHold;
+    int pinchId;
     enum iTouchEdge edge;
     uint32_t startTime;
     iFloat3 startPos;
@@ -85,8 +87,15 @@ struct Impl_Momentum {
     iFloat3 accum;
 };
 
+struct Impl_Pinch {
+    int id;
+    SDL_FingerID touchIds[2];
+    iWidget *affinity;
+};
+
 struct Impl_TouchState {
     iArray *touches;
+    iArray *pinches;
     iArray *moms;
     double lastMomTime;
 };
@@ -95,8 +104,9 @@ static iTouchState *touchState_(void) {
     static iTouchState state_;
     iTouchState *d = &state_;
     if (!d->touches) {
-        d->touches = new_Array(sizeof(iTouch));
-        d->moms = new_Array(sizeof(iMomentum));
+        d->touches     = new_Array(sizeof(iTouch));
+        d->pinches     = new_Array(sizeof(iPinch));
+        d->moms        = new_Array(sizeof(iMomentum));
         d->lastMomTime = SDL_GetTicks();
     }
     return d;
@@ -125,6 +135,16 @@ static iBool isStationaryDistance_Touch_(const iTouch *d, int distance) {
 
 static iBool isStationary_Touch_(const iTouch *d) {
     return isStationaryDistance_Touch_(d, tapRadiusPt_);
+}
+
+static void clearWidgetMomentum_TouchState_(iTouchState *d, iWidget *widget) {
+    if (!widget) return;
+    iForEach(Array, m, d->moms) {
+        iMomentum *mom = m.value;
+        if (mom->affinity == widget) {
+            remove_ArrayIterator(&m);
+        }
+    }
 }
 
 static void dispatchMotion_Touch_(iFloat3 pos, int buttonState) {
@@ -163,14 +183,30 @@ static iBool dispatchClick_Touch_(const iTouch *d, int button) {
     return wasUsed;
 }
 
-static void clearWidgetMomentum_TouchState_(iTouchState *d, iWidget *widget) {
-    if (!widget) return;
-    iForEach(Array, m, d->moms) {
-        iMomentum *mom = m.value;
-        if (mom->affinity == widget) {
-            remove_ArrayIterator(&m);
-        }
-    }
+static void dispatchButtonDown_Touch_(iFloat3 pos) {
+    dispatchEvent_Widget(get_Window()->root, (SDL_Event *) &(SDL_MouseButtonEvent){
+        .type = SDL_MOUSEBUTTONDOWN,
+        .timestamp = SDL_GetTicks(),
+        .clicks = 1,
+        .state = SDL_PRESSED,
+        .which = SDL_TOUCH_MOUSEID,
+        .button = SDL_BUTTON_LEFT,
+        .x = x_F3(pos),
+        .y = y_F3(pos)
+    });
+}
+
+static void dispatchButtonUp_Touch_(iFloat3 pos) {
+    dispatchEvent_Widget(get_Window()->root, (SDL_Event *) &(SDL_MouseButtonEvent){
+        .type = SDL_MOUSEBUTTONUP,
+        .timestamp = SDL_GetTicks(),
+        .clicks = 1,
+        .state = SDL_RELEASED,
+        .which = SDL_TOUCH_MOUSEID,
+        .button = SDL_BUTTON_LEFT,
+        .x = x_F3(pos),
+        .y = y_F3(pos)
+    });
 }
 
 static void update_TouchState_(void *ptr) {
@@ -179,6 +215,9 @@ static void update_TouchState_(void *ptr) {
     /* Check for long presses to simulate right clicks. */
     iForEach(Array, i, d->touches) {
         iTouch *touch = i.value;
+        if (touch->pinchId) {
+            continue;
+        }
         /* Holding a touch will reset previous momentum for this widget. */
         if (isStationary_Touch_(touch)) {
             const int elapsed = nowTime - touch->startTime;
@@ -211,8 +250,8 @@ static void update_TouchState_(void *ptr) {
         int numSteps = (int) (momAvailMs / stepDurationMs);
         d->lastMomTime += numSteps * stepDurationMs;
         numSteps = iMin(numSteps, 10); /* don't spend too much time here */
-//        printf("mom steps:%d\n", numSteps);
-        iWindow *window = get_Window();
+        //        printf("mom steps:%d\n", numSteps);
+//        iWindow *window = get_Window();
         iForEach(Array, m, d->moms) {
             if (numSteps == 0) break;
             iMomentum *mom = m.value;
@@ -229,12 +268,12 @@ static void update_TouchState_(void *ptr) {
                 subv_F3(&mom->accum, initI2_F3(pixels));
                 dispatchMotion_Touch_(mom->pos, 0);
                 dispatchEvent_Widget(mom->affinity, (SDL_Event *) &(SDL_MouseWheelEvent){
-                    .type = SDL_MOUSEWHEEL,
-                    .timestamp = nowTime,
-                    .x = pixels.x,
-                    .y = pixels.y,
-                    .direction = perPixel_MouseWheelFlag
-                });
+                                                        .type = SDL_MOUSEWHEEL,
+                                                        .timestamp = nowTime,
+                                                        .x = pixels.x,
+                                                        .y = pixels.y,
+                                                        .direction = perPixel_MouseWheelFlag
+                                                    });
             }
             if (length_F3(mom->velocity) < minSpeed) {
                 setHover_Widget(NULL);
@@ -246,48 +285,6 @@ static void update_TouchState_(void *ptr) {
     if (!isEmpty_Array(d->touches) || !isEmpty_Array(d->moms)) {
         addTicker_App(update_TouchState_, ptr);
     }
-}
-
-void widgetDestroyed_Touch(iWidget *widget) {
-    iTouchState *d = touchState_();
-    iForEach(Array, i, d->touches) {
-        iTouch *touch = i.value;
-        if (touch->affinity == widget) {
-            remove_ArrayIterator(&i);
-        }
-    }
-    iForEach(Array, m, d->moms) {
-        iMomentum *mom = m.value;
-        if (mom->affinity == widget) {
-            remove_ArrayIterator(&m);
-        }
-    }
-}
-
-static void dispatchButtonDown_Touch_(iFloat3 pos) {
-    dispatchEvent_Widget(get_Window()->root, (SDL_Event *) &(SDL_MouseButtonEvent){
-        .type = SDL_MOUSEBUTTONDOWN,
-        .timestamp = SDL_GetTicks(),
-        .clicks = 1,
-        .state = SDL_PRESSED,
-        .which = SDL_TOUCH_MOUSEID,
-        .button = SDL_BUTTON_LEFT,
-        .x = x_F3(pos),
-        .y = y_F3(pos)
-    });
-}
-
-static void dispatchButtonUp_Touch_(iFloat3 pos) {
-    dispatchEvent_Widget(get_Window()->root, (SDL_Event *) &(SDL_MouseButtonEvent){
-        .type = SDL_MOUSEBUTTONUP,
-        .timestamp = SDL_GetTicks(),
-        .clicks = 1,
-        .state = SDL_RELEASED,
-        .which = SDL_TOUCH_MOUSEID,
-        .button = SDL_BUTTON_LEFT,
-        .x = x_F3(pos),
-        .y = y_F3(pos)
-    });
 }
 
 static iWidget *findOverflowScrollable_Widget_(iWidget *d) {
@@ -310,6 +307,81 @@ static iWidget *findSlidePanel_Widget_(iWidget *d) {
         }
     }
     return NULL;
+}
+
+static void checkNewPinch_TouchState_(iTouchState *d, iTouch *newTouch) {
+    iWidget *affinity = newTouch->affinity;
+    if (!affinity) {
+        return;
+    }
+    iForEach(Array, i, d->touches) {
+        iTouch *other = i.value;
+        if (other->id == newTouch->id || other->pinchId || other->affinity != affinity) {
+            continue;
+        }
+        /* A second finger on the same widget. */
+        iPinch pinch = { .affinity = affinity, .id = SDL_GetTicks() };
+        pinch.touchIds[0] = newTouch->id;
+        pinch.touchIds[1] = other->id;
+        newTouch->pinchId = other->pinchId = pinch.id;
+        clearWidgetMomentum_TouchState_(d, affinity);
+        /* Remember current positions to determine pinch amount. */
+        newTouch->startPos = newTouch->pos[0];
+        other->startPos    = other->pos[0];
+        pushBack_Array(d->pinches, &pinch);
+        /*printf("[Touch] pinch %d starts with fingers %lld and %lld\n", pinch.id,
+               newTouch->id, other->id);*/
+        postCommandf_App("pinch.began ptr:%p", affinity);
+        break;
+    }
+}
+
+static iPinch *findPinch_TouchState_(iTouchState *d, int pinchId) {
+    iForEach(Array, i, d->pinches) {
+        iPinch *pinch = i.value;
+        if (pinch->id == pinchId) {
+            return pinch;
+        }
+    }
+    return NULL;
+}
+
+static void pinchMotion_TouchState_(iTouchState *d, int pinchId) {
+    const iPinch *pinch = findPinch_TouchState_(d, pinchId);
+    iAssert(pinch != NULL);
+    if (!pinch) return;
+    const iTouch *touch[2] = {
+        find_TouchState_(d, pinch->touchIds[0]),
+        find_TouchState_(d, pinch->touchIds[1])
+    };
+    iAssert(pinch->affinity == touch[0]->affinity);
+    iAssert(pinch->affinity == touch[1]->affinity);
+    const float startDist = length_F3(sub_F3(touch[1]->startPos, touch[0]->startPos));
+    if (startDist < gap_UI) {
+        return;
+    }
+    const float dist = length_F3(sub_F3(touch[1]->pos[0], touch[0]->pos[0]));
+//    printf("[Touch] pinch %d motion: relative %f\n", pinchId, dist / startDist);
+    postCommandf_App("pinch.moved arg:%f ptr:%p", dist / startDist, pinch->affinity);
+}
+
+static void endPinch_TouchState_(iTouchState *d, int pinchId) {
+    //printf("[Touch] pinch %d ends\n", pinchId);
+    iForEach(Array, i, d->pinches) {
+        iPinch *pinch = i.value;
+        if (pinch->id == pinchId) {
+            postCommandf_App("pinch.ended ptr:%p", pinch->affinity);
+            /* Cancel both touches. */
+            iForEach(Array, j, d->touches) {
+                iTouch *touch = j.value;
+                if (touch->id == pinch->touchIds[0] || touch->id == pinch->touchIds[1]) {
+                    remove_ArrayIterator(&j);
+                }
+            }
+            remove_ArrayIterator(&i);
+            break;
+        }
+    }
 }
 
 iBool processEvent_Touch(const SDL_Event *ev) {
@@ -367,6 +439,8 @@ iBool processEvent_Touch(const SDL_Event *ev) {
         if (flags_Widget(aff) & hover_WidgetFlag && ~flags_Widget(aff) & touchDrag_WidgetFlag) {
             setHover_Widget(aff);
         }
+        /* This may begin a pinch. */
+        checkNewPinch_TouchState_(d, back_Array(d->touches));
         addTicker_App(update_TouchState_, d);
     }
     else if (ev->type == SDL_FINGERMOTION) {
@@ -388,6 +462,10 @@ iBool processEvent_Touch(const SDL_Event *ev) {
             }
             /* Update touch position. */
             pushPos_Touch_(touch, pos, nowTime);
+            if (touch->pinchId) {
+                pinchMotion_TouchState_(d, touch->pinchId);
+                return iTrue;
+            }
             if (!touch->isTouchDrag && !isStationary_Touch_(touch) &&
                 flags_Widget(touch->affinity) & touchDrag_WidgetFlag) {
                 touch->hasMoved = iTrue;
@@ -496,6 +574,10 @@ iBool processEvent_Touch(const SDL_Event *ev) {
             if (touch->id != fing->fingerId) {
                 continue;
             }
+            if (touch->pinchId) {
+                endPinch_TouchState_(d, touch->pinchId);
+                break;
+            }
             if (touch->edgeDragging) {
                 setFlags_Widget(touch->edgeDragging, dragged_WidgetFlag, iFalse);
             }
@@ -572,6 +654,28 @@ iBool processEvent_Touch(const SDL_Event *ev) {
         }
     }
     return iTrue;
+}
+
+void widgetDestroyed_Touch(iWidget *widget) {
+    iTouchState *d = touchState_();
+    iForEach(Array, i, d->touches) {
+        iTouch *touch = i.value;
+        if (touch->affinity == widget) {
+            remove_ArrayIterator(&i);
+        }
+    }
+    iForEach(Array, p, d->pinches) {
+        iPinch *pinch = i.value;
+        if (pinch->affinity == widget) {
+            remove_ArrayIterator(&p);
+        }
+    }
+    iForEach(Array, m, d->moms) {
+        iMomentum *mom = m.value;
+        if (mom->affinity == widget) {
+            remove_ArrayIterator(&m);
+        }
+    }
 }
 
 size_t numFingers_Touch(void) {
