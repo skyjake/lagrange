@@ -209,6 +209,17 @@ static void dispatchButtonUp_Touch_(iFloat3 pos) {
     });
 }
 
+static void dispatchNotification_Touch_(const iTouch *d, int code) {
+    if (d->affinity) {
+        dispatchEvent_Widget(d->affinity, (SDL_Event *) &(SDL_UserEvent){
+            .type = SDL_USEREVENT,
+            .timestamp = SDL_GetTicks(),
+            .code = code,
+            .data1 = d->affinity
+        });
+    }
+}
+
 static void update_TouchState_(void *ptr) {
     iTouchState *d = ptr;
     const uint32_t nowTime = SDL_GetTicks();
@@ -226,6 +237,7 @@ static void update_TouchState_(void *ptr) {
             }
             if (elapsed > 50 && !touch->isTapBegun) {
                 /* Looks like a possible tap. */
+                dispatchNotification_Touch_(touch, widgetTapBegins_UserEventCode);
                 dispatchMotion_Touch_(touch->pos[0], 0);
                 touch->isTapBegun = iTrue;
             }

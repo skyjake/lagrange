@@ -2602,8 +2602,11 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             updateHover_DocumentWidget_(d, mpos);
         }
     }
-    if (ev->type == SDL_MOUSEBUTTONDOWN) {
+    if (ev->type == SDL_USEREVENT && ev->user.code == widgetTapBegins_UserEventCode) {
         iChangeFlags(d->flags, noHoverWhileScrolling_DocumentWidgetFlag, iFalse);
+        return iTrue;
+    }
+    if (ev->type == SDL_MOUSEBUTTONDOWN) {
         if (ev->button.button == SDL_BUTTON_X1) {
             postCommand_App("navigate.back");
             return iTrue;

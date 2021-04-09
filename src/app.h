@@ -57,6 +57,10 @@ enum iUserEventCode {
     command_UserEventCode = 1,
     refresh_UserEventCode = 2,
     asleep_UserEventCode = 3,
+    /* The start of a potential touch tap event is notified via a custom event because
+       sending SDL_MOUSEBUTTONDOWN would be premature: we don't know how long the tap will
+       take, it could turn into a tap-and-hold for example. */
+    widgetTapBegins_UserEventCode = 4,
 };
 
 const iString *execPath_App     (void);
