@@ -936,6 +936,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
                 break;
             case SDL_APP_WILLENTERBACKGROUND:
             case SDL_APP_TERMINATING:
+                setFreezeDraw_Window(d->window, iTrue);
                 savePrefs_App_(d);
                 saveState_App_(d);
                 break;

@@ -1755,11 +1755,14 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
             d->isExposed = iTrue; /* no expose event is sent, so now we know it's visible */
             /* Returned to foreground, may have lost buffered content. */
             invalidate_Window_(d);
-            postRefresh_App();
+            postCommand_App("window.unfreeze");
 #endif
             return iFalse;
         case SDL_WINDOWEVENT_FOCUS_LOST:
             postCommand_App("window.focus.lost");
+#if defined (iPlatformMobile)
+            setFreezeDraw_Window(d, iTrue);
+#endif
             return iFalse;
         case SDL_WINDOWEVENT_TAKE_FOCUS:
             SDL_SetWindowInputFocus(d->win);
