@@ -1164,6 +1164,7 @@ static void setupUserInterface_Window(iWindow *d) {
         iLabelWidget *menuButton = makeMenuButton_LabelWidget("\U0001d362", phoneNavMenuItems_,
                                                               iElemCount(phoneNavMenuItems_));
         setFont_LabelWidget(menuButton, uiLabelLarge_FontId);
+        setId_Widget(as_Widget(menuButton), "toolbar.navmenu");
         addChildFlags_Widget(toolBar, iClob(menuButton), frameless_WidgetFlag);
         iForEach(ObjectList, i, children_Widget(toolBar)) {
             iLabelWidget *btn = i.object;
@@ -1179,7 +1180,7 @@ static void setupUserInterface_Window(iWindow *d) {
         };
         iWidget *menu = makeMenu_Widget(findChild_Widget(toolBar, "toolbar.view"),
                                         items, iElemCount(items));
-        setId_Widget(menu, "toolbar.menu");
+        setId_Widget(menu, "toolbar.menu"); /* view menu */
     }
 #endif
     updatePadding_Window_(d);
@@ -1232,6 +1233,7 @@ static void setupUserInterface_Window(iWindow *d) {
 }
 
 void showToolbars_Window(iWindow *d, iBool show) {
+    /* The toolbar is only used on phone portrait layout. */
     if (isLandscape_App()) return;
     iWidget *toolBar = findChild_Widget(d->root, "toolbar");
     if (!toolBar) return;
@@ -1241,6 +1243,9 @@ void showToolbars_Window(iWindow *d, iBool show) {
         setVisualOffset_Widget(toolBar, 0, 200, easeOut_AnimFlag);
     }
     else if (!show && isVisible_Widget(toolBar)) {
+        /* Close any menus that open via the toolbar. */
+        closeMenu_Widget(findChild_Widget(findWidget_App("toolbar.navmenu"), "menu"));
+        closeMenu_Widget(findChild_Widget(toolBar, "toolbar.menu"));
         setFlags_Widget(toolBar, hidden_WidgetFlag, iTrue);
         setVisualOffset_Widget(toolBar, height, 200, easeOut_AnimFlag);
     }

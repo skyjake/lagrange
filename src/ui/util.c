@@ -704,6 +704,9 @@ void openMenuFlags_Widget(iWidget *d, iInt2 coord, iBool postCommands) {
 }
 
 void closeMenu_Widget(iWidget *d) {
+    if (d == NULL || flags_Widget(d) & hidden_WidgetFlag) {
+        return; /* Already closed. */
+    }
     setFlags_Widget(d, hidden_WidgetFlag, iTrue);
     setFlags_Widget(findChild_Widget(d, "menu.cancel"), disabled_WidgetFlag, iTrue);
     postRefresh_App();
