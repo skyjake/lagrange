@@ -340,6 +340,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     const iPrefs *prefs    = prefs_App();
     const iBool   isMono   = isForcedMonospace_GmDocument_(d);
     const iBool   isNarrow = d->size.x < 90 * gap_Text;
+    const iBool   isVeryNarrow = d->size.x <= 65 * gap_Text;
     const iBool   isDarkBg = isDark_GmDocumentTheme(
         isDark_ColorTheme(colorTheme_App()) ? prefs->docThemeDark : prefs->docThemeLight);
     /* TODO: Collect these parameters into a GmTheme. */
@@ -685,8 +686,15 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         if (!prefs->quoteIcon && type == quote_GmLineType) {
             run.flags |= quoteBorder_GmRunFlag;
         }
-        rightMargin = (type == text_GmLineType || type == bullet_GmLineType ||
-                       type == quote_GmLineType ? 4 : 0);
+        /* The right margin is used for balancing lines horizontally. */
+        if (isVeryNarrow) {
+            rightMargin = 0;
+        }
+        else {
+            rightMargin = (type == text_GmLineType || type == bullet_GmLineType ||
+                           type == quote_GmLineType ? 4 : 0);
+        }
+        
         const iBool isWordWrapped =
             (d->format == plainText_GmDocumentFormat ? prefs->plainTextWrap : !isPreformat);
         if (isPreformat && d->format != plainText_GmDocumentFormat) {
