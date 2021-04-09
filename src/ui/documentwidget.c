@@ -1676,16 +1676,6 @@ static iBool handlePinch_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
     else if (equal_Command(cmd, "pinch.moved")) {
         const float rel = argf_Command(cmd);
         int zoom = iRound(d->pinchZoomInitial * rel / 5.0f) * 5;
-        /* Snap to 100%. */
-        if (zoom > 90 && zoom < 110) {
-            zoom = 100;
-        }
-        else if (zoom > 100) {
-            zoom = iMax(100, zoom - 10);
-        }
-        else {
-            zoom = iMin(100, zoom + 10);
-        }
         zoom = iClamp(zoom, 50, 200);
         if (d->pinchZoomPosted != zoom) {
             d->pinchZoomPosted = zoom;
@@ -3638,7 +3628,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
         const int   height = lineHeight_Text(font) * 2;
         const iInt2 size   = init_I2(height * 2, height);
         const iRect rect   = { sub_I2(mid_Rect(bounds), divi_I2(size, 2)), size };
-        fillRect_Paint(&ctx.paint, rect, uiTextAction_ColorId);
+        fillRect_Paint(&ctx.paint, rect, d->pinchZoomPosted == 100 ? uiTextCaution_ColorId : uiTextAction_ColorId);
         drawCentered_Text(font, bounds, iFalse, uiBackground_ColorId, "%d %%",
                           d->pinchZoomPosted);
     }
