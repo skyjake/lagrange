@@ -1032,7 +1032,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                     postCommand_App("visited.changed");
                     return iTrue;
                 }
-                if (isCommand_Widget(w, ev, "sidebar.entry.bookmark")) {
+                if (isCommand_Widget(w, ev, "feed.entry.bookmark")) {
                     makeBookmarkCreation_Widget(&item->url, &item->label, item->icon);
                     postCommand_App("focus.set id:bmed.title");
                     return iTrue;
