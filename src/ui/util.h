@@ -31,6 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 iDeclareType(Click)
 iDeclareType(Widget)
 iDeclareType(LabelWidget)
+iDeclareType(InputWidget)
 
 iBool           isCommand_SDLEvent  (const SDL_Event *d);
 iBool           isCommand_UserEvent (const SDL_Event *, const char *cmd);
@@ -219,6 +220,10 @@ size_t          tabCount_Widget         (const iWidget *tabs);
 iWidget *   makeSheet_Widget        (const char *id);
 void        finalizeSheet_Widget    (iWidget *sheet);
 iWidget *   makeDialogButtons_Widget(const iMenuItem *actions, size_t numActions);
+
+iInputWidget *addTwoColumnDialogInputField_Widget(iWidget *headings, iWidget *values,
+                                                  const char *labelText, const char *inputId,
+                                                  iInputWidget *input);
 
 void        makeFilePath_Widget     (iWidget *parent, const iString *initialPath, const char *title,
                                      const char *acceptLabel, const char *command);

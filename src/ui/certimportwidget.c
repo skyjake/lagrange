@@ -135,15 +135,22 @@ void init_CertImportWidget(iCertImportWidget *d) {
         setFrameColor_Widget(as_Widget(d->keyLabel), uiTextCaution_ColorId);
     }
     addChild_Widget(w, iClob(makePadding_Widget(gap_UI)));
+    /* TODO: Use makeTwoColumnWidget_() */
     iWidget *page = new_Widget(); {
         setFlags_Widget(page, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
         iWidget *headings = addChildFlags_Widget(
             page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
         iWidget *values = addChildFlags_Widget(
             page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
-        addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.certimport.notes}")));
-        addChild_Widget(values, iClob(d->notes = new_InputWidget(0)));
-        setHint_InputWidget(d->notes, "${hint.certimport.description}");
+//        addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.certimport.notes}")));
+//        addChild_Widget(values, iClob(d->notes = new_InputWidget(0)));
+//        setHint_InputWidget(d->notes, "${hint.certimport.description}");
+        addTwoColumnDialogInputField_Widget(
+            headings,
+            values,
+            "${dlg.certimport.notes}",
+            "",
+            iClob(d->notes = newHint_InputWidget(0, "${hint.certimport.description}")));
         as_Widget(d->notes)->rect.size.x = gap_UI * 70;
     }
     addChild_Widget(w, iClob(page));

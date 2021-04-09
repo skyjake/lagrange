@@ -119,13 +119,29 @@ static void invalidateBuffered_InputWidget_(iInputWidget *d) {
     }
 }
 
+static void updateSizeForFixedLength_InputWidget_(iInputWidget *d) {
+    if (d->maxLen) {
+        /* Set a fixed size based on maximum possible width of the text. */
+        iBlock *content = new_Block(d->maxLen);
+        fill_Block(content, 'M');
+        int extraHeight = (flags_Widget(as_Widget(d)) & extraPadding_WidgetFlag ? 2 * gap_UI : 0);
+        setFixedSize_Widget(
+            as_Widget(d),
+            add_I2(measure_Text(d->font, cstr_Block(content)),
+                   init_I2(6 * gap_UI + d->leftPadding + d->rightPadding,
+                           2 * gap_UI + extraHeight)));
+        delete_Block(content);
+    }
+}
+
 static void updateMetrics_InputWidget_(iInputWidget *d) {
     iWidget *w = as_Widget(d);
+    updateSizeForFixedLength_InputWidget_(d);
     /* Caller must arrange the width, but the height is fixed. */
     w->rect.size.y = lineHeight_Text(d->font) * 1.3f;
-#if defined (iPlatformMobile)
-    w->rect.size.y += 2 * gap_UI;
-#endif
+    if (flags_Widget(w) & extraPadding_WidgetFlag) {
+        w->rect.size.y += 2 * gap_UI;
+    }
     invalidateBuffered_InputWidget_(d);
     if (parent_Widget(w)) {
         arrange_Widget(w);
@@ -136,6 +152,9 @@ void init_InputWidget(iInputWidget *d, size_t maxLen) {
     iWidget *w = &d->widget;
     init_Widget(w);
     setFlags_Widget(w, focusable_WidgetFlag | hover_WidgetFlag | touchDrag_WidgetFlag, iTrue);
+#if defined (iPlatformMobile)
+    setFlags_Widget(w, extraPadding_WidgetFlag, iTrue);
+#endif
     init_Array(&d->text, sizeof(iChar));
     init_Array(&d->oldText, sizeof(iChar));
     init_String(&d->hint);
@@ -244,15 +263,7 @@ iInputWidgetContentPadding contentPadding_InputWidget(const iInputWidget *d) {
 void setMaxLen_InputWidget(iInputWidget *d, size_t maxLen) {
     d->maxLen = maxLen;
     d->mode   = (maxLen == 0 ? insert_InputMode : overwrite_InputMode);
-    if (maxLen) {
-        /* Set a fixed size. */
-        iBlock *content = new_Block(maxLen);
-        fill_Block(content, 'M');
-        setFixedSize_Widget(
-            as_Widget(d),
-            add_I2(measure_Text(d->font, cstr_Block(content)), init_I2(6 * gap_UI, 2 * gap_UI)));
-        delete_Block(content);
-    }
+    updateSizeForFixedLength_InputWidget_(d);
 }
 
 void setHint_InputWidget(iInputWidget *d, const char *hintText) {
@@ -269,6 +280,7 @@ void setContentPadding_InputWidget(iInputWidget *d, int left, int right) {
     if (right >= 0) {
         d->rightPadding = right;
     }
+    updateSizeForFixedLength_InputWidget_(d);
     refresh_Widget(d);
 }
 

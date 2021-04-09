@@ -29,15 +29,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "util.h"
 #include "keys.h"
 
-iLocalDef iInt2 padding_(int64_t flags) {
-#if defined (iPlatformAppleMobile)
-    return init_I2(flags & tight_WidgetFlag ? 2 * gap_UI : (4 * gap_UI),
-                   (flags & extraPadding_WidgetFlag ? 1.5f : 1) * 3 * gap_UI / 2);
-#else
-    return init_I2(flags & tight_WidgetFlag ? 3 * gap_UI / 2 : (3 * gap_UI), gap_UI);
-#endif
-}
-
 struct Impl_LabelWidget {
     iWidget widget;
     iString srcLabel;
@@ -51,6 +42,24 @@ struct Impl_LabelWidget {
     iBool   alignVisual; /* align according to visible bounds, not typography */
     iClick  click;
 };
+
+static iInt2 padding_LabelWidget_(const iLabelWidget *d, int corner) {
+    const iWidget *w = constAs_Widget(d);
+    const int64_t flags = flags_Widget(w);
+    const iInt2 widgetPad = (corner   == 0 ? init_I2(w->padding[0], w->padding[1])
+                             : corner == 1 ? init_I2(w->padding[2], w->padding[1])
+                             : corner == 2 ? init_I2(w->padding[2], w->padding[3])
+                             : init_I2(w->padding[0], w->padding[3]));
+#if defined (iPlatformAppleMobile)
+    return add_I2(widgetPad,
+                  init_I2(flags & tight_WidgetFlag ? 2 * gap_UI : (4 * gap_UI),
+                          (flags & extraPadding_WidgetFlag ? 1.5f : 1) * 3 * gap_UI / 2));
+#else
+    return add_I2(widgetPad,
+                  init_I2(flags & tight_WidgetFlag ? 3 * gap_UI / 2 : (3 * gap_UI),
+                          gap_UI));
+#endif
+}
 
 iDefineObjectConstructionArgs(LabelWidget,
                               (const char *label, const char *cmd),
@@ -268,7 +277,7 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
             d->font,
             (iRect){
                 /* The icon position is fine-tuned; c.f. high baseline of Source Sans Pro. */
-                add_I2(add_I2(bounds.pos, padding_(flags)),
+                add_I2(add_I2(bounds.pos, padding_LabelWidget_(d, 0)),
                        init_I2((flags & extraPadding_WidgetFlag ? -2 : -1.20f) * gap_UI +
                                (deviceType_App() == tablet_AppDeviceType ? -gap_UI : 0),
                                -gap_UI / 8)),
@@ -288,14 +297,15 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
         drawWrapRange_Text(d->font, topLeft_Rect(inner), wrap, fg, range_String(&d->label));
     }
     else if (flags & alignLeft_WidgetFlag) {
-        draw_Text(d->font, add_I2(bounds.pos, addX_I2(padding_(flags), iconPad)), fg, cstr_String(&d->label));
+        draw_Text(d->font, add_I2(bounds.pos, addX_I2(padding_LabelWidget_(d, 0), iconPad)),
+                  fg, cstr_String(&d->label));
         if ((flags & drawKey_WidgetFlag) && d->key) {
             iString str;
             init_String(&str);
             keyStr_LabelWidget_(d, &str);
             drawAlign_Text(uiShortcuts_FontId,
                            add_I2(topRight_Rect(bounds),
-                                  addX_I2(negX_I2(padding_(flags)),
+                                  addX_I2(negX_I2(padding_LabelWidget_(d, 1)),
                                           deviceType_App() == tablet_AppDeviceType ? gap_UI : 0)),
                            flags & pressed_WidgetFlag ? fg
                            : isCaution                ? uiTextCaution_ColorId
@@ -308,14 +318,16 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
     else if (flags & alignRight_WidgetFlag) {
         drawAlign_Text(
             d->font,
-            add_I2(topRight_Rect(bounds), negX_I2(padding_(flags))),
+            add_I2(topRight_Rect(bounds), negX_I2(padding_LabelWidget_(d, 1))),
             fg,
             right_Alignment,
             cstr_String(&d->label));
     }
     else {
         drawCentered_Text(d->font,
-                          adjusted_Rect(bounds, init_I2(iconPad, 0), zero_I2()),
+                          adjusted_Rect(bounds,
+                                        add_I2(zero_I2(), init_I2(iconPad, 0)),
+                                        neg_I2(zero_I2())),
                           d->alignVisual,
                           fg,
                           "%s",
@@ -327,7 +339,7 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
         drawCentered_Text(d->font,
                           (iRect){ addX_I2(topRight_Rect(chRect), -iconPad),
                                    init_I2(chSize, height_Rect(chRect)) },
-                          iTrue, fg, rightAngle_Icon);
+                          iTrue, uiSeparator_ColorId, rightAngle_Icon);
     }
     unsetClip_Paint(&p);
 }
@@ -347,7 +359,8 @@ static void sizeChanged_LabelWidget_(iLabelWidget *d) {
 iInt2 defaultSize_LabelWidget(const iLabelWidget *d) {
     const iWidget *w = constAs_Widget(d);
     const int64_t flags = flags_Widget(w);
-    iInt2 size = add_I2(measure_Text(d->font, cstr_String(&d->label)), muli_I2(padding_(flags), 2));
+    iInt2 size = add_I2(measure_Text(d->font, cstr_String(&d->label)),
+                        add_I2(padding_LabelWidget_(d, 0), padding_LabelWidget_(d, 2)));
     if ((flags & drawKey_WidgetFlag) && d->key) {
         iString str;
         init_String(&str);
