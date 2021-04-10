@@ -100,6 +100,7 @@ struct Impl_SidebarWidget {
     iLabelWidget *    modeButtons[max_SidebarMode];
     int               maxButtonLabelWidth;
     int               widthAsGaps;
+    int               buttonFont;
     int               itemFonts[2];
     size_t            numUnreadEntries;
     iWidget *         resizer;
@@ -131,6 +132,17 @@ static int cmpTitle_Bookmark_(const iBookmark **a, const iBookmark **b) {
         bm2 = get_Bookmarks(bookmarks_App(), bm2->sourceId);
     }
     return cmpStringCase_String(&bm1->title, &bm2->title);
+}
+
+static iLabelWidget *addActionButton_SidebarWidget_(iSidebarWidget *d, const char *label,
+                                                    const char *command, int64_t flags) {
+    iLabelWidget *btn = addChildFlags_Widget(d->actions,
+                                             iClob(new_LabelWidget(label, command)),
+                                             (deviceType_App() != desktop_AppDeviceType ?
+                                              extraPadding_WidgetFlag : 0) | flags);
+    setFont_LabelWidget(btn, d->buttonFont == uiLabelLarge_FontId ? defaultBig_FontId : d->buttonFont);
+    checkIcon_LabelWidget(btn);
+    return btn;
 }
 
 static void updateItems_SidebarWidget_(iSidebarWidget *d) {
@@ -216,14 +228,10 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 }
             }
             /* Actions. */ {
-                addChildFlags_Widget(
-                    d->actions,
-                    iClob(new_LabelWidget("${sidebar.action.feeds.showall}", "feeds.mode arg:0")),
-                    d->feedsMode == all_FeedsMode ? selected_WidgetFlag : 0);
-                addChildFlags_Widget(d->actions,
-                                     iClob(new_LabelWidget("${sidebar.action.feeds.showunread}",
-                                                           "feeds.mode arg:1")),
-                                     d->feedsMode == unread_FeedsMode ? selected_WidgetFlag : 0);
+                addActionButton_SidebarWidget_(d, "${sidebar.action.feeds.showall}", "feeds.mode arg:0",
+                                               d->feedsMode == all_FeedsMode ? selected_WidgetFlag : 0);
+                addActionButton_SidebarWidget_(d, "${sidebar.action.feeds.showunread}", "feeds.mode arg:1",
+                                               d->feedsMode == unread_FeedsMode ? selected_WidgetFlag : 0);
             }
             d->menu = makeMenu_Widget(
                 as_Widget(d),
@@ -293,9 +301,9 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                                { copy_Icon " ${menu.dup}", 0, 0, "bookmark.dup" },
                                { "${menu.copyurl}", 0, 0, "bookmark.copy" },
                                { "---", 0, 0, NULL },
-                               { "?", 0, 0, "bookmark.tag tag:subscribed" },
-                               { "?", 0, 0, "bookmark.tag tag:homepage" },
-                               { "?", 0, 0, "bookmark.tag tag:remotesource" },
+                               { "", 0, 0, "bookmark.tag tag:subscribed" },
+                               { "", 0, 0, "bookmark.tag tag:homepage" },
+                               { "", 0, 0, "bookmark.tag tag:remotesource" },
                                { "---", 0, 0, NULL },
                                { delete_Icon " " uiTextCaution_ColorEscape "${bookmark.delete}", 0, 0, "bookmark.delete" },
                                { "---", 0, 0, NULL },
@@ -359,12 +367,8 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
         }
         case identities_SidebarMode: {
             /* Actions. */ {
-                checkIcon_LabelWidget(addChild_Widget(
-                    d->actions,
-                    iClob(new_LabelWidget(add_Icon " ${sidebar.action.ident.new}", "ident.new"))));
-                checkIcon_LabelWidget(addChild_Widget(
-                    d->actions,
-                    iClob(new_LabelWidget("${sidebar.action.ident.import}", "ident.import"))));
+                addActionButton_SidebarWidget_(d, add_Icon " ${sidebar.action.ident.new}", "ident.new", 0);
+                addActionButton_SidebarWidget_(d, "${sidebar.action.ident.import}", "ident.import", 0);
             }
             const iString *tabUrl = url_DocumentWidget(document_App());
             isEmpty = iTrue;
@@ -460,15 +464,16 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
         }
 //        arrange_Widget(d->blank);
     }
+#if 0
     if (deviceType_App() != desktop_AppDeviceType) {
         /* Touch-friendly action buttons. */
         iForEach(ObjectList, i, children_Widget(d->actions)) {
             if (isInstance_Object(i.object, &Class_LabelWidget)) {
                 setPadding_Widget(i.object, 0, gap_UI, 0, gap_UI);
-                setFont_LabelWidget(i.object, defaultBig_FontId);
             }
         }
     }
+#endif
     arrange_Widget(d->actions);
     arrange_Widget(as_Widget(d));
 }
@@ -561,6 +566,7 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     d->mode = -1;
     d->feedsMode = all_FeedsMode;
     d->numUnreadEntries = 0;
+    d->buttonFont = uiLabel_FontId;
     d->itemFonts[0] = uiContent_FontId;
     d->itemFonts[1] = uiContentBold_FontId;
 #if defined (iPlatformAppleMobile)
@@ -578,6 +584,7 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     iZap(d->modeButtons);
     d->resizer = NULL;
     d->list = NULL;
+    d->actions = NULL;
     /* On a phone, the right sidebar is used exclusively for Identities. */
     const iBool isPhone = deviceType_App() == phone_AppDeviceType;
     if (!isPhone || d->side == left_SideBarSide) {
@@ -660,6 +667,7 @@ void deinit_SidebarWidget(iSidebarWidget *d) {
 }
 
 void setButtonFont_SidebarWidget(iSidebarWidget *d, int font) {
+    d->buttonFont = font;
     for (int i = 0; i < max_SidebarMode; i++) {
         if (d->modeButtons[i]) {
             setFont_LabelWidget(d->modeButtons[i], font);

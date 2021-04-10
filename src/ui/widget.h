@@ -198,6 +198,7 @@ iLocalDef int height_Widget(const iAnyObject *d) {
     return 0;
 }
 iLocalDef iObjectList *children_Widget(iAnyObject *d) {
+    if (d == NULL) return NULL;
     iAssert(isInstance_Object(d, &Class_Widget));
     return ((iWidget *) d)->children;
 }
