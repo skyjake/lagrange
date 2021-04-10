@@ -1022,6 +1022,16 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     /* There may be a key bindings for this. */
                     wasUsed = processEvent_Keys(&ev);
                 }
+                if (!wasUsed) {
+                    /* Focus cycling. */
+                    if (ev.type == SDL_KEYDOWN && ev.key.keysym.sym == SDLK_TAB) {
+                        setFocus_Widget(findFocusable_Widget(focus_Widget(),
+                                                             ev.key.keysym.mod & KMOD_SHIFT
+                                                                 ? backward_WidgetFocusDir
+                                                                 : forward_WidgetFocusDir));
+                        wasUsed = iTrue;
+                    }
+                }
                 if (ev.type == SDL_USEREVENT && ev.user.code == command_UserEventCode) {
 #if defined (iPlatformAppleDesktop)
                     handleCommand_MacOS(command_UserEvent(&ev));
