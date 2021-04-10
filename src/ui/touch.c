@@ -234,6 +234,7 @@ static void update_TouchState_(void *ptr) {
             const int elapsed = nowTime - touch->startTime;
             if (elapsed > 25) {
                 clearWidgetMomentum_TouchState_(d, touch->affinity);
+                clear_Array(d->moms); /* stop all ongoing momentum */
             }
             if (elapsed > 50 && !touch->isTapBegun) {
                 /* Looks like a possible tap. */

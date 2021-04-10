@@ -2585,7 +2585,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         return iTrue;
     }
     else if (ev->type == SDL_MOUSEMOTION) {
-        if (deviceType_App() == desktop_AppDeviceType) {
+        if (ev->motion.which != SDL_TOUCH_MOUSEID) {
             iChangeFlags(d->flags, noHoverWhileScrolling_DocumentWidgetFlag, iFalse);
         }
         const iInt2 mpos = init_I2(ev->motion.x, ev->motion.y);
@@ -2762,6 +2762,10 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         case started_ClickResult:
             if (d->grabbedPlayer) {
                 return iTrue;
+            }
+            if (d->flags & noHoverWhileScrolling_DocumentWidgetFlag) {
+                d->flags &= ~noHoverWhileScrolling_DocumentWidgetFlag;
+                updateHover_DocumentWidget_(d, mouseCoord_Window(get_Window()));
             }
             iChangeFlags(d->flags, selecting_DocumentWidgetFlag, iFalse);
             iChangeFlags(d->flags, selectWords_DocumentWidgetFlag, d->click.count == 2);

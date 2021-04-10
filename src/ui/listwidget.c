@@ -57,6 +57,7 @@ struct Impl_ListWidget {
     iClick click;
     iIntSet invalidItems;
     iVisBuf *visBuf;
+    iBool noHoverWhileScrolling;
 };
 
 void init_ListWidget(iListWidget *d) {
@@ -69,6 +70,7 @@ void init_ListWidget(iListWidget *d) {
     setThumb_ScrollWidget(d->scroll, 0, 0);
     d->scrollY = 0;
     d->itemHeight = 0;
+    d->noHoverWhileScrolling = iFalse;
     init_PtrArray(&d->items);
     d->hoverItem = iInvalidPos;
     init_Click(&d->click, d, SDL_BUTTON_LEFT);
@@ -173,6 +175,7 @@ iBool scrollOffset_ListWidget(iListWidget *d, int offset) {
     }
     const int scrollMax = scrollMax_ListWidget_(d);
     d->scrollY = iMin(d->scrollY, scrollMax);
+    d->noHoverWhileScrolling = iTrue;
     if (oldScroll != d->scrollY) {
         if (d->hoverItem != iInvalidPos) {
             invalidateItem_ListWidget(d, d->hoverItem);
@@ -256,10 +259,8 @@ static void setHoverItem_ListWidget_(iListWidget *d, size_t index) {
         }
     }
     if (d->hoverItem != index) {
-        if (deviceType_App() == desktop_AppDeviceType || numFingers_Touch()) {
-            insert_IntSet(&d->invalidItems, d->hoverItem);
-            insert_IntSet(&d->invalidItems, index);
-        }
+        insert_IntSet(&d->invalidItems, d->hoverItem);
+        insert_IntSet(&d->invalidItems, index);
         d->hoverItem = index;
         refresh_Widget(as_Widget(d));
     }
@@ -284,6 +285,16 @@ static void sizeChanged_ListWidget_(iListWidget *d) {
     invalidate_ListWidget(d);
 }
 
+static void updateHover_ListWidget_(iListWidget *d, const iInt2 mouse) {
+    size_t hover = iInvalidPos;
+    if (!d->noHoverWhileScrolling &&
+        !contains_Widget(constAs_Widget(d->scroll), mouse) &&
+        contains_Widget(constAs_Widget(d), mouse)) {
+        hover = itemIndex_ListWidget(d, mouse);
+    }
+    setHoverItem_ListWidget_(d, hover);
+}
+
 static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
     if (isMetricsChange_UserEvent(ev)) {
@@ -299,14 +310,14 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
             return iTrue;
         }
     }
+    else if (ev->type == SDL_USEREVENT && ev->user.code == widgetTapBegins_UserEventCode) {    
+        d->noHoverWhileScrolling = iFalse;
+    }
     if (ev->type == SDL_MOUSEMOTION) {
-        const iInt2 mouse = init_I2(ev->motion.x, ev->motion.y);
-        size_t hover = iInvalidPos;
-        if (!contains_Widget(constAs_Widget(d->scroll), mouse) &&
-            contains_Widget(w, mouse)) {
-            hover = itemIndex_ListWidget(d, mouse);
+        if (ev->motion.which != SDL_TOUCH_MOUSEID) {
+            d->noHoverWhileScrolling = iFalse;
         }
-        setHoverItem_ListWidget_(d, hover);
+        updateHover_ListWidget_(d, init_I2(ev->motion.x, ev->motion.y));
     }
     if (ev->type == SDL_MOUSEWHEEL && isHover_Widget(w)) {
         int amount = -ev->wheel.y;
@@ -318,13 +329,14 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
     }
     switch (processEvent_Click(&d->click, ev)) {
         case started_ClickResult:
+            d->noHoverWhileScrolling = iFalse;
+            updateHover_ListWidget_(d, mouseCoord_Window(get_Window()));
             redrawHoverItem_ListWidget_(d);
             return iTrue;
         case aborted_ClickResult:
             redrawHoverItem_ListWidget_(d);
             break;
         case finished_ClickResult:
-//        case double_ClickResult:
             redrawHoverItem_ListWidget_(d);
             if (contains_Rect(innerBounds_Widget(w), pos_Click(&d->click)) &&
                 d->hoverItem != iInvalidSize) {
