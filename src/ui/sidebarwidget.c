@@ -91,6 +91,7 @@ struct Impl_SidebarWidget {
     iWidget           widget;
     enum iSidebarSide side;
     enum iSidebarMode mode;
+    enum iFeedsMode   feedsMode;
     iString           cmdPrefix;
     iWidget *         blank;
     iListWidget *     list;
@@ -139,6 +140,7 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
     d->actions->rect.size.y = 0;
     destroy_Widget(d->menu);
     d->menu = NULL;
+    iBool isEmpty = iFalse; /* show blank? */
     switch (d->mode) {
         case feeds_SidebarMode: {
             const iString *docUrl = withSpacesEncoded_String(url_DocumentWidget(document_App()));
@@ -150,6 +152,7 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
             const iDate today = on;
             iZap(on);
             size_t numItems = 0;
+            isEmpty = iTrue;
             iConstForEach(PtrArray, i, listEntries_Feeds()) {
                 const iFeedEntry *entry = i.ptr;
                 if (isHidden_FeedEntry(entry)) {
@@ -162,6 +165,12 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 /* Exclude entries that are too old for Visited to keep track of. */
                 if (secondsSince_Time(&now, &entry->discovered) > maxAge_Visited) {
                     break; /* the rest are even older */
+                }
+                isEmpty = iFalse;
+                const iBool isOpen = equal_String(docUrl, &entry->url);
+                const iBool isUnread = isUnread_FeedEntry(entry);
+                if (d->feedsMode == unread_FeedsMode && !isUnread && !isOpen) {
+                    continue;
                 }
                 /* Insert date separators. */ {
                     iDate entryDate;
@@ -188,10 +197,8 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                     }
                 }
                 iSidebarItem *item = new_SidebarItem();
-                if (equal_String(docUrl, &entry->url)) {
-                    item->listItem.isSelected = iTrue; /* currently being viewed */
-                }
-                item->indent = isUnread_FeedEntry(entry);
+                item->listItem.isSelected = isOpen; /* currently being viewed */
+                item->indent = isUnread;
                 set_String(&item->url, &entry->url);
                 set_String(&item->label, &entry->title);
                 const iBookmark *bm = get_Bookmarks(bookmarks_App(), entry->bookmarkId);
@@ -207,6 +214,16 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                        is a bit difficult to navigate in the sidebar. */
                     break;
                 }
+            }
+            /* Actions. */ {
+                addChildFlags_Widget(
+                    d->actions,
+                    iClob(new_LabelWidget("${sidebar.action.feeds.showall}", "feeds.mode arg:0")),
+                    d->feedsMode == all_FeedsMode ? selected_WidgetFlag : 0);
+                addChildFlags_Widget(d->actions,
+                                     iClob(new_LabelWidget("${sidebar.action.feeds.showunread}",
+                                                           "feeds.mode arg:1")),
+                                     d->feedsMode == unread_FeedsMode ? selected_WidgetFlag : 0);
             }
             d->menu = makeMenu_Widget(
                 as_Widget(d),
@@ -343,11 +360,14 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
         case identities_SidebarMode: {
             /* Actions. */ {
                 checkIcon_LabelWidget(addChild_Widget(
-                    d->actions, iClob(new_LabelWidget(add_Icon " New...", "ident.new"))));
+                    d->actions,
+                    iClob(new_LabelWidget(add_Icon " ${sidebar.action.ident.new}", "ident.new"))));
                 checkIcon_LabelWidget(addChild_Widget(
-                    d->actions, iClob(new_LabelWidget("Import...", "ident.import"))));
+                    d->actions,
+                    iClob(new_LabelWidget("${sidebar.action.ident.import}", "ident.import"))));
             }
             const iString *tabUrl = url_DocumentWidget(document_App());
+            isEmpty = iTrue;
             iConstForEach(PtrArray, i, identities_GmCerts(certs_App())) {
                 const iGmIdentity *ident = i.ptr;
                 iSidebarItem *item = new_SidebarItem();
@@ -380,6 +400,7 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 item->listItem.isSelected = isActive;
                 addItem_ListWidget(d->list, item);
                 iRelease(item);
+                isEmpty = iFalse;
             }
             const iMenuItem menuItems[] = {
                 { person_Icon " ${ident.use}", 0, 0, "ident.use arg:1" },
@@ -400,10 +421,12 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
         default:
             break;
     }
-    updateVisible_ListWidget(d->list);
+    if (!scrollOffset_ListWidget(d->list, 0)) {
+        updateVisible_ListWidget(d->list);
+    }
     invalidate_ListWidget(d->list);
     /* Content for a blank tab. */
-    if (isEmpty_ListWidget(d->list)) {
+    if (isEmpty) {
         if (d->mode == feeds_SidebarMode) {
             iWidget *div = makeVDiv_Widget();
             setPadding_Widget(div, 3 * gap_UI, 0, 3 * gap_UI, 2 * gap_UI);
@@ -536,6 +559,7 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     iZap(d->modeScroll);
     d->side = side;
     d->mode = -1;
+    d->feedsMode = all_FeedsMode;
     d->numUnreadEntries = 0;
     d->itemFonts[0] = uiContent_FontId;
     d->itemFonts[1] = uiContentBold_FontId;
@@ -1030,6 +1054,11 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             if (d->mode == feeds_SidebarMode) {
                 updateItems_SidebarWidget_(d);
             }
+        }
+        else if (equalWidget_Command(cmd, w, "feeds.mode")) {
+            d->feedsMode = arg_Command(cmd);
+            updateItems_SidebarWidget_(d);
+            return iTrue;
         }
         else if (equal_Command(cmd, "feeds.markallread") && d->mode == feeds_SidebarMode) {
             iConstForEach(PtrArray, i, listEntries_Feeds()) {

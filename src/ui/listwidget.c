@@ -165,7 +165,7 @@ void setScrollPos_ListWidget(iListWidget *d, int pos) {
     refresh_Widget(as_Widget(d));
 }
 
-void scrollOffset_ListWidget(iListWidget *d, int offset) {
+iBool scrollOffset_ListWidget(iListWidget *d, int offset) {
     const int oldScroll = d->scrollY;
     d->scrollY += offset;
     if (d->scrollY < 0) {
@@ -180,7 +180,9 @@ void scrollOffset_ListWidget(iListWidget *d, int offset) {
         }
         updateVisible_ListWidget(d);
         refresh_Widget(as_Widget(d));
+        return iTrue;
     }
+    return iFalse;
 }
 
 void scrollToItem_ListWidget(iListWidget *d, size_t index) {

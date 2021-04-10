@@ -40,6 +40,11 @@ enum iSidebarSide {
     right_SideBarSide,
 };
 
+enum iFeedsMode {
+    all_FeedsMode,
+    unread_FeedsMode
+};
+
 iDeclareWidgetClass(SidebarWidget)
 iDeclareObjectConstructionArgs(SidebarWidget, enum iSidebarSide side)
 
