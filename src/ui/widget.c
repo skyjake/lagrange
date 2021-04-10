@@ -906,16 +906,7 @@ static iBool scrollOverflow_Widget_(iWidget *d, int delta) {
 }
 
 iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
-    if (ev->type == SDL_KEYDOWN) {
-        if (ev->key.keysym.sym == SDLK_TAB) {
-            setFocus_Widget(findFocusable_Widget(focus_Widget(),
-                                                 ev->key.keysym.mod & KMOD_SHIFT
-                                                     ? backward_WidgetFocusDir
-                                                     : forward_WidgetFocusDir));
-            return iTrue;
-        }
-    }
-    else if (d->flags & commandOnClick_WidgetFlag &&
+    if (d->flags & commandOnClick_WidgetFlag &&
              (ev->type == SDL_MOUSEBUTTONDOWN || ev->type == SDL_MOUSEBUTTONUP) &&
              (mouseGrab_Widget() == d || contains_Widget(d, init_I2(ev->button.x, ev->button.y)))) {
         postCommand_Widget(d,
