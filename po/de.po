@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-04-09 13:18+0000\n"
-"Last-Translator: Aaron Fischer <mail@aaron-fischer.net>\n"
+"PO-Revision-Date: 2021-04-11 05:41+0000\n"
+"Last-Translator: Jaakko Keränen <jaakko.keranen@iki.fi>\n"
 "Language-Team: German <http://weblate.skyjake.fi/projects/lagrange/ui/de/>\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
@@ -207,7 +207,7 @@ msgid "menu.reload"
 msgstr "Seite neu laden"
 
 msgid "menu.autoreload"
-msgstr "Automatisches neu laden…"
+msgstr "Automatische Aktualisierung…"
 
 msgid "menu.page.bookmark"
 msgstr "Seite in Lesezeichen speichern…"
@@ -236,7 +236,7 @@ msgid "menu.page.copyurl"
 msgstr "Seiten-URL kopieren"
 
 msgid "menu.page.copysource"
-msgstr "Seiten-Quellcode kopieren"
+msgstr "Seitenquelltext kopieren"
 
 msgid "menu.feeds.refresh"
 msgstr "Feeds aktualisieren"
@@ -652,7 +652,7 @@ msgid "menu.bookmarks.refresh"
 msgstr "Remote-Lesezeichen aktualisieren"
 
 msgid "feeds.unsubscribe"
-msgstr "Abonnement kündigen …"
+msgstr "Deabonnieren…"
 
 msgid "menu.dup"
 msgstr "Duplizieren …"
@@ -684,15 +684,15 @@ msgstr "Titel"
 
 # Link download progress message.
 msgid "doc.fetching"
-msgstr "Abrufen"
+msgstr "Laden"
 
 # Inline download status message.
 msgid "media.download.warnclose"
-msgstr "Der Downloas wird abgebrochen wenn der Tab geschlossen wird."
+msgstr "Der Download wird abgebrochen, wenn Sie diesen Tab schließen."
 
 # Inline download status message.
 msgid "media.download.complete"
-msgstr "Download abgeschlossen."
+msgstr "Download fertig."
 
 # Used in inline audio player metadata popup.
 msgid "audio.meta.artist"
@@ -700,7 +700,7 @@ msgstr "Künstler"
 
 # Used in inline audio player metadata popup.
 msgid "audio.meta.genre"
-msgstr "Genere"
+msgstr "Genre"
 
 # Used in inline audio player metadata popup.
 msgid "audio.meta.date"
@@ -787,3 +787,43 @@ msgid "ident.usedonurls"
 msgid_plural "ident.usedonurls.n"
 msgstr[0] "Verwendet bei %zu URL"
 msgstr[1] "Verwendet bei %zu URLs"
+
+msgid "ident.using"
+msgstr "Verwenden für diese Seite"
+
+msgid "heading.ident.use"
+msgstr "IDENTITÄTSVERWENDUNG"
+
+msgid "heading.ident.notes"
+msgstr "IDENTITÄTSANMERKUNGEN"
+
+msgid "ident.showuse"
+msgstr "Verwendung anzeigen"
+
+msgid "dlg.ident.delete"
+msgstr "Identität und Dateien löschen"
+
+msgid "sidebar.empty.idents"
+msgstr "keine Identitäten"
+
+msgid "heading.unsub"
+msgstr "ABONNEMENT KÜNDIGEN"
+
+#, c-format
+msgid "dlg.confirm.unsub"
+msgstr ""
+"Feed wirklich abbestellen:\n"
+"\"%s\"?"
+
+#, c-format
+msgid "dlg.confirm.ident.delete"
+msgstr ""
+"Wollen Sie wirklich die Identität\n"
+" %s%s%s\n"
+"einschließlich ihrer Zertifikats- und privaten Schlüsseldateien löschen?"
+
+# The %s format characters are used to highlight the word "Help" and must be used in the translation in same way as here.
+#, c-format
+msgid "ident.gotohelp"
+msgstr ""
+"Weitere Informationen zu TLS-Client-Zertifikaten finden Sie unter %sHelp%s."
