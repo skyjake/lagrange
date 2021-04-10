@@ -215,7 +215,7 @@ static const iMenuItem navMenuItems_[] = {
 #else
 /* Tablet menu. */
 static const iMenuItem tabletNavMenuItems_[] = {
-    { add_Icon " ${menu.opentab}", 't', KMOD_PRIMARY, "tabs.new" },
+    { add_Icon " ${menu.newtab}", 't', KMOD_PRIMARY, "tabs.new" },
     { close_Icon " ${menu.closetab}", 'w', KMOD_PRIMARY, "tabs.close" },
     { "---", 0, 0, NULL },
     { magnifyingGlass_Icon " ${menu.find}", 0, 0, "focus.set id:find.input" },
@@ -233,7 +233,7 @@ static const iMenuItem tabletNavMenuItems_[] = {
 
 /* Phone menu. */
 static const iMenuItem phoneNavMenuItems_[] = {
-    { add_Icon " ${menu.opentab}", 't', KMOD_PRIMARY, "tabs.new" },
+    { add_Icon " ${menu.newtab}", 't', KMOD_PRIMARY, "tabs.new" },
     { close_Icon " ${menu.closetab}", 'w', KMOD_PRIMARY, "tabs.close" },
     { "---", 0, 0, NULL },
     { magnifyingGlass_Icon " ${menu.find}", 0, 0, "focus.set id:find.input" },
