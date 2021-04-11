@@ -235,21 +235,27 @@ msgstr "Paste"
 msgid "menu.select.clear"
 msgstr "Clear Selection"
 
+# Used in the Edit menu on macOS. Note: could be replaced with menu.page.copyurl.
 msgid "menu.copy.pagelink"
 msgstr "Copy Link to Page"
 
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
 msgid "menu.show.bookmarks"
 msgstr "Show Bookmarks"
 
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
 msgid "menu.show.feeds"
 msgstr "Show Feeds"
 
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
 msgid "menu.show.history"
 msgstr "Show History"
 
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
 msgid "menu.show.identities"
 msgstr "Show Identities"
 
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
 msgid "menu.show.outline"
 msgstr "Show Page Outline"
 
