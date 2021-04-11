@@ -1078,6 +1078,7 @@ static void setupUserInterface_Window(iWindow *d) {
                             { "${menu.page.copysource}", 'c', KMOD_PRIMARY, "copy" },
                             { download_Icon " " saveToDownloads_Label, SDLK_s, KMOD_PRIMARY, "document.save" } },
                         14);
+                    setAlignVisually_LabelWidget((iLabelWidget *) reload, iTrue);
                 }
                 setId_Widget(as_Widget(reload), "reload");
                 addChildFlags_Widget(as_Widget(url), iClob(reload), embedFlags | moveToParentRightEdge_WidgetFlag);

@@ -232,6 +232,9 @@ msgstr "Copy"
 msgid "menu.paste"
 msgstr "Paste"
 
+msgid "menu.select.clear"
+msgstr "Clear Selection"
+
 msgid "menu.copy.pagelink"
 msgstr "Copy Link to Page"
 

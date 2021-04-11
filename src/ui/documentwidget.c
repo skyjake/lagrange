@@ -2947,7 +2947,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                         d->copyMenu = makeMenu_Widget(w, (iMenuItem[]){
                             { clipCopy_Icon " ${menu.copy}", 0, 0, "copy" },
                             { "---", 0, 0, NULL },
-                            { close_Icon " Clear Selection", 0, 0, "document.select arg:0" },
+                            { close_Icon " ${menu.select.clear}", 0, 0, "document.select arg:0" },
                         }, 3);
                         setFlags_Widget(d->copyMenu, noFadeBackground_WidgetFlag, iTrue);
                         openMenu_Widget(d->copyMenu, pos_Click(&d->click));
@@ -3756,7 +3756,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
     if (flags_Widget(w) & touchDrag_WidgetFlag) {
         iString msg;
         init_String(&msg);
-        format_String(&msg, "Selecting: drag and tap");
+        format_String(&msg, "Selecting: drag and tap"); /* TODO: Needed? (N bytes selected?) */
         fillRect_Paint(&ctx.paint, (iRect){ topLeft_Rect(bounds),
             init_I2(width_Rect(bounds), lineHeight_Text(uiLabelBold_FontId))},
                        uiTextAction_ColorId);
