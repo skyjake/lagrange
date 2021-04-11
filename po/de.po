@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-04-11 05:41+0000\n"
+"PO-Revision-Date: 2021-04-11 06:05+0000\n"
 "Last-Translator: Jaakko Keränen <jaakko.keranen@iki.fi>\n"
 "Language-Team: German <http://weblate.skyjake.fi/projects/lagrange/ui/de/>\n"
 "Language: de\n"
@@ -827,3 +827,384 @@ msgstr ""
 msgid "ident.gotohelp"
 msgstr ""
 "Weitere Informationen zu TLS-Client-Zertifikaten finden Sie unter %sHelp%s."
+
+msgid "heading.openlink"
+msgstr "LINK ÖFFNEN"
+
+msgid "prefs.boldlink"
+msgstr "Fettgedruckte Links:"
+
+# Interpretation: (Bold links) on dark (background).
+msgid "prefs.boldlink.dark"
+msgstr "Bei Dunkelheit"
+
+# Interpretation: (Bold links) on light (background).
+msgid "prefs.boldlink.light"
+msgstr "Bei Tag"
+
+msgid "lang.zh.hant"
+msgstr "Chinesisch (traditionell)"
+
+msgid "heading.newident"
+msgstr "NEUE IDENTITÄT"
+
+msgid "dlg.newident.rsa.selfsign"
+msgstr "Erstellen eines selbstsignierten 2048-Bit-RSA-Zertifikats."
+
+msgid "dlg.newident.domain"
+msgstr "Bereich:"
+
+#, c-format
+msgid "error.unsupported.suggestsave"
+msgstr ""
+"Sie können es aber auch als Datei in Ihrem Downloads-Ordner speichern. "
+"Drücken Sie %s oder wählen Sie \"%s\" aus dem Menü."
+
+msgid "pageinfo.cert.ca.unverified"
+msgstr "Nicht verifiziert durch CA"
+
+msgid "pageinfo.domain.mismatch"
+msgstr "Domänenname stimmt nicht überein"
+
+#, c-format
+msgid "dlg.input.prompt"
+msgstr "Bitte Eingabe für %s eingeben:"
+
+msgid "prefs.doctheme.name.white"
+msgstr "Weiß"
+
+msgid "prefs.doctheme.name.highcontrast"
+msgstr "Hoher Kontrast"
+
+#, c-format
+msgid "dlg.certwarn.mayberenewed"
+msgid_plural "dlg.certwarn.mayberenewed.n"
+msgstr[0] ""
+"Das empfangene Zertifikat wurde möglicherweise kürzlich erneuert — es ist "
+"für die richtige Domain und nicht abgelaufen. Das aktuell vertrauenswürdige "
+"Zertifikat läuft am %s, in einem Tag, ab."
+msgstr[1] ""
+"Das empfangene Zertifikat wurde möglicherweise kürzlich erneuert — es ist "
+"für die richtige Domain und nicht abgelaufen. Das aktuell vertrauenswürdige "
+"Zertifikat läuft am %s, in %d Tagen, ab."
+
+# Interpret as "Results from bookmarks..."
+msgid "heading.lookup.bookmarks"
+msgstr "LESEZEICHEN"
+
+# Interpret as "Results from feeds..."
+msgid "heading.lookup.feeds"
+msgstr "FEEDS"
+
+msgid "dlg.newident.until"
+msgstr "Gültig bis:"
+
+msgid "hint.newident.date"
+msgstr "YYYY-MM-DD HH:MM:SS"
+
+msgid "hint.newident.optional"
+msgstr "optional"
+
+msgid "dlg.newident.commonname"
+msgstr "Gebräuchlicher Name:"
+
+msgid "dlg.newident.temp"
+msgstr "Vorübergehend:"
+
+msgid "dlg.newident.notsaved"
+msgstr "nicht auf Festplatte gespeichert"
+
+msgid "dlg.feed.type.headings"
+msgstr "Neue Überschriften"
+
+msgid "dlg.certwarn.different"
+msgstr ""
+"Das empfangene Zertifikat ist gültig, aber anders als das, dem wir vertrauen."
+
+msgid "dlg.translate.from"
+msgstr "Von:"
+
+msgid "dlg.translate.to"
+msgstr "Nach:"
+
+msgid "dlg.unsub"
+msgstr "Abbestellen"
+
+msgid "heading.pageinfo"
+msgstr "SEITENINFORMATION"
+
+msgid "pageinfo.header.cached"
+msgstr "(zwischengespeicherter Inhalt)"
+
+msgid "pageinfo.cert.status"
+msgstr "Zertifikatsstatus:"
+
+msgid "pageinfo.cert.ca.verified"
+msgstr "Verifiziert durch CA"
+
+msgid "pageinfo.cert.trusted"
+msgstr "Vertrauenswürdig"
+
+msgid "pageinfo.cert.untrusted"
+msgstr "Nicht vertrauenswürdig"
+
+msgid "pageinfo.domain.match"
+msgstr "Domänenname stimmt überein"
+
+msgid "heading.save.error"
+msgstr "FEHLER BEIM SPEICHERN DER DATEI"
+
+msgid "dlg.autoreload"
+msgstr "Wählen Sie das Intervall für das automatische Neuladen für diese Tab."
+
+msgid "link.newtab.background"
+msgstr "Link im Hintergrund-Tab öffnen"
+
+msgid "link.browser"
+msgstr "Link im Standardbrowser öffnen"
+
+#, c-format
+msgid "dlg.certwarn.expired"
+msgstr "Das empfangene Zertifikat ist am %s abgelaufen."
+
+msgid "dlg.certwarn.domain"
+msgstr ""
+"Das empfangene Zertifikat ist für die falsche Domain (%s). Dies kann ein "
+"Problem der Serverkonfiguration sein."
+
+msgid "heading.certimport"
+msgstr "IDENTITÄT IMPORTIEREN"
+
+# Interpret as "Results from history..."
+msgid "heading.lookup.history"
+msgstr "Chronik"
+
+# Interpret as "Results from page content..."
+msgid "heading.lookup.pagecontent"
+msgstr "SEITENINHALT"
+
+# Interpret as "Results from identitites..."
+msgid "heading.lookup.identities"
+msgstr "IDENTITÄTEN"
+
+# Interpret as "Other results..."
+msgid "heading.lookup.other"
+msgstr "ANDERE"
+
+msgid "dlg.translate.unavail"
+msgstr "Dienst nicht verfügbar"
+
+msgid "lang.zh.hans"
+msgstr "Chinesisch (vereinfacht)"
+
+msgid "lang.fi"
+msgstr "Finnisch"
+
+msgid "lang.hi"
+msgstr "Hindi"
+
+msgid "lang.it"
+msgstr "Italienisch"
+
+msgid "dlg.newident.userid"
+msgstr "Benutzer-ID:"
+
+msgid "heading.subscribe"
+msgstr "SEITE ABONNIEREN"
+
+msgid "dlg.feed.entrytype"
+msgstr "Eintragstyp:"
+
+msgid "dlg.feed.type.gemini"
+msgstr "JJJJ-MM-TT Verknüpfungen"
+
+msgid "dlg.bookmark.icon"
+msgstr "Symbol:"
+
+msgid "heading.prefs.scrolling"
+msgstr "BLÄTTERN"
+
+msgid "heading.prefs.sizing"
+msgstr "GRÖßENEINTEILUNG"
+
+msgid "heading.prefs.widelayout"
+msgstr "BREITES LAYOUT"
+
+msgid "prefs.hoverlink"
+msgstr "URL bei Mauszeiger anzeigen:"
+
+msgid "prefs.centershort"
+msgstr "Vertikale Zentrierung:"
+
+msgid "prefs.collapsepreonload"
+msgstr "Vorformatiert einklappen:"
+
+msgid "prefs.smoothscroll"
+msgstr "Sanfter Bildlauf:"
+
+msgid "prefs.imageloadscroll"
+msgstr "Bild beim Blättern laden:"
+
+msgid "prefs.hidetoolbarscroll"
+msgstr "Symbolleiste beim Blättern ausblenden:"
+
+msgid "prefs.ostheme"
+msgstr "Systemthema verwenden:"
+
+msgid "prefs.theme.black"
+msgstr "Schwarz"
+
+msgid "prefs.theme.white"
+msgstr "Weiß"
+
+msgid "prefs.accent"
+msgstr "Akzentfarbe:"
+
+msgid "prefs.accent.teal"
+msgstr "Türkisblau"
+
+msgid "prefs.uiscale"
+msgstr "UI-Skalierungsfaktor:"
+
+msgid "prefs.customframe"
+msgstr "Individueller Fensterrahmen:"
+
+msgid "prefs.retainwindow"
+msgstr "Platzierung beibehalten:"
+
+msgid "prefs.sideicon"
+msgstr "Kapselsymbol:"
+
+msgid "prefs.doctheme.dark"
+msgstr "Dunkles Thema:"
+
+msgid "prefs.doctheme.light"
+msgstr "Helles Thema:"
+
+msgid "prefs.doctheme.name.colorfuldark"
+msgstr "Farbenfroh Dunkel"
+
+msgid "prefs.doctheme.name.colorfullight"
+msgstr "Farbenfroh Hell"
+
+msgid "prefs.doctheme.name.sepia"
+msgstr "Sepia"
+
+msgid "prefs.headingfont"
+msgstr "Schriftart der Überschrift:"
+
+msgid "prefs.font"
+msgstr "Schriftart des Körpers:"
+
+msgid "prefs.mono"
+msgstr "Körper in Monospace:"
+
+msgid "prefs.linewidth"
+msgstr "Zeilenbreite"
+
+msgid "prefs.linewidth.fill"
+msgstr "Füllung"
+
+msgid "prefs.quoteicon"
+msgstr "Zitieranzeige:"
+
+msgid "prefs.quoteicon.icon"
+msgstr "\" Symbol"
+
+msgid "prefs.biglede"
+msgstr "Großer 1. Paragraf:"
+
+msgid "prefs.plaintext.wrap"
+msgstr "Klartext umbrechen:"
+
+msgid "prefs.decodeurls"
+msgstr "URLs dekodieren:"
+
+msgid "keys.top"
+msgstr "Nach oben springen"
+
+msgid "keys.bottom"
+msgstr "Nach unten springen"
+
+msgid "reload.never"
+msgstr "Niemals"
+
+msgid "reload.onceperday"
+msgstr "Einmal pro Tag"
+
+#, c-format
+msgid "num.minutes"
+msgid_plural "num.minutes.n"
+msgstr[0] "%d Minute"
+msgstr[1] "%d Minuten"
+
+#, c-format
+msgid "num.hours"
+msgid_plural "num.hours.n"
+msgstr[0] "%d Stunde"
+msgstr[1] "%d Stunden"
+
+#, c-format
+msgid "dlg.openlink.confirm"
+msgstr ""
+"Diesen Link im Standardbrowser öffnen?\n"
+"%s%s"
+
+msgid "heading.certwarn"
+msgstr "NICHT VERTRAUENSWÜRDIGES ZERTIFIKAT"
+
+msgid "heading.certimport.pasted"
+msgstr "AUS DER ZWISCHENABLAGE EINGEFÜGT"
+
+msgid "heading.certimport.dropped"
+msgstr "VERLORENE DATEI"
+
+msgid "hint.certimport.description"
+msgstr "Beschreibung"
+
+msgid "dlg.certimport.nocert"
+msgstr "Kein Zertifikat"
+
+msgid "dlg.certimport.nokey"
+msgstr "Kein privater Schlüssel"
+
+msgid "link.hint.audio"
+msgstr "Audio abspielen"
+
+# tab button
+msgid "heading.prefs.userinterface"
+msgstr "Benutzeroberfläche"
+
+msgid "prefs.downloads"
+msgstr "Download-Ordner:"
+
+msgid "prefs.searchurl"
+msgstr "Suche URL:"
+
+msgid "lang.pt"
+msgstr "Portugiesisch"
+
+msgid "lang.sr"
+msgstr "Serbisch"
+
+msgid "dlg.newident.create"
+msgstr "Identität erstellen"
+
+msgid "heading.prefs"
+msgstr "PREFERENZEN"
+
+msgid "heading.prefs.certs"
+msgstr "ZERTIFIKATE"
+
+msgid "heading.prefs.fonts"
+msgstr "SCHRIFTARTEN"
+
+# tab button
+msgid "heading.prefs.keys"
+msgstr "TASTEN"
+
+msgid "heading.prefs.pagecontent"
+msgstr "SEITENINHALT"
+
+msgid "heading.prefs.proxies"
+msgstr "PROXIES"
