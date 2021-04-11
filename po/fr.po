@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "PO-Revision-Date: 2021-04-11 16:05+0000\n"
-"Last-Translator: MCMic <come@chilliet.eu>\n"
+"Last-Translator: roy niang <roy@royniang.com>\n"
 "Language-Team: French <http://weblate.skyjake.fi/projects/lagrange/ui/fr/>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -492,3 +492,9 @@ msgstr "Flux"
 # Used in about:feeds.
 msgid "feeds.list.title"
 msgstr "Entrées de flux"
+
+#, c-format
+msgid "feeds.list.counts"
+msgid_plural "feeds.list.counts.n"
+msgstr[0] "Vous êtes abonné au %zu fil contenant %%s.\n"
+msgstr[1] "Vous êtes abonné aux %zu fils contenant %%s.\n"
