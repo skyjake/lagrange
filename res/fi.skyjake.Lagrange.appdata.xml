@@ -45,6 +45,28 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.3.2" date="2021-04-11">
+            <description>
+                <p>Bug fixes:</p>
+                <ul>
+                    <li>Crash after updating from v1.2 due to undefined CA file/path
+                        configuration.</li>
+                    <li>Conflation of pixel ratio and display DPI. Pixel ratio is now
+                        always separately detected so mouse events can be correctly
+                        positioned. You may find that adjusting the UI scale factor
+                        (Preferences &gt; Interface) is necessary after upgrading.</li>
+                    <li>Sidebar width changing when moving the window to a different
+                        display.</li>
+                    <li>Inability to use Tab in keybindings.</li>
+                    <li>Opening Gopher URLs via drag-and-drop.</li>
+                    <li>"Add bookmark..." does nothing on a feed entry.</li>
+                    <li>Keybindings list not being updated immediately when UI language
+                        changes.</li>
+                    <li>Trimming of link label text when a custom Emoji is used.</li>
+                </ul>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.3.2</url>
+        </release>
         <release version="1.3.1" date="2021-04-05">
             <description>
                 <p>Version 1.3 is a major feature update with improvements for
