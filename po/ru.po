@@ -3,8 +3,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2021-03-23 19:02+0000\n"
-"PO-Revision-Date: 2021-04-05 09:23+0000\n"
-"Last-Translator: Olga Smirnova <mistresssilvara@hotmail.com>\n"
+"PO-Revision-Date: 2021-04-09 13:18+0000\n"
+"Last-Translator: Nikolay Korotkiy <sikmir@gmail.com>\n"
 "Language-Team: Russian <http://weblate.skyjake.fi/projects/lagrange/ui/ru/>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
@@ -1334,3 +1334,106 @@ msgstr "Интерлингве"
 
 msgid "lang.sr"
 msgstr "Сербский (кир.)"
+
+#, c-format
+msgid "minutes.ago"
+msgid_plural "minutes.ago.n"
+msgstr[0] "%d минуту назад"
+msgstr[1] "%d минуты назад"
+msgstr[2] "%d минут назад"
+
+#, c-format
+msgid "hours.ago"
+msgid_plural "hours.ago.n"
+msgstr[0] "%d час назад"
+msgstr[1] "%d часа назад"
+msgstr[2] "%d часов назад"
+
+#, c-format
+msgid "days.ago"
+msgid_plural "days.ago.n"
+msgstr[0] "%d день назад"
+msgstr[1] "%d дня назад"
+msgstr[2] "%d дней назад"
+
+msgid "mb.per.sec"
+msgstr "МБ/с"
+
+#, c-format
+msgid "feeds.list.entrycount"
+msgid_plural "feeds.list.entrycount.n"
+msgstr[0] "всего %zu статья"
+msgstr[1] "всего %zu статьи"
+msgstr[2] "всего %zu статей"
+
+#, c-format
+msgid "feeds.list.counts"
+msgid_plural "feeds.list.counts.n"
+msgstr[0] "Вы подписаны на %zu ленту, содержащую %%s.\n"
+msgstr[1] "Вы подписаны на %zu ленты, содержащие %%s.\n"
+msgstr[2] "Вы подписаны на %zu лент, содержащих %%s.\n"
+
+# Interpretation: (Bold links) on dark (background).
+msgid "prefs.boldlink.dark"
+msgstr "На тёмном"
+
+# Interpretation: (Bold links) on light (background).
+msgid "prefs.boldlink.light"
+msgstr "На светлом"
+
+msgid "prefs.boldlink"
+msgstr "Жирные ссылки:"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.title"
+msgstr "Название"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.genre"
+msgstr "Жанр"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.date"
+msgstr "Дата"
+
+# Hertz, unit for frequency values
+msgid "hz"
+msgstr "Гц"
+
+# Link download progress message.
+msgid "doc.fetching"
+msgstr "Загрузка"
+
+# Inline download status message.
+msgid "media.download.complete"
+msgstr "Загрузка завершена."
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.artist"
+msgstr "Артист"
+
+# used as adjective, n is 8, 16, 24, 32, or 64
+#, c-format
+msgid "n.bit"
+msgstr "%d-битный"
+
+# Inline download status message.
+msgid "media.download.warnclose"
+msgstr "Загрузка будет прервана при закрытии этой вкладки."
+
+msgid "numbertype.integer"
+msgstr "целое"
+
+# Used in about:feeds.
+msgid "feeds.list.title"
+msgstr "Записи в ленте"
+
+#, c-format
+msgid "feeds.list.refreshtime"
+msgstr "Последнее обновление в %s."
+
+msgid "feeds.list.refreshtime.now"
+msgstr "Обновление было только что сделано."
+
+msgid "numbertype.float"
+msgstr "с плавающей запятой"

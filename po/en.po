@@ -232,6 +232,9 @@ msgstr "Copy"
 msgid "menu.paste"
 msgstr "Paste"
 
+msgid "menu.select.clear"
+msgstr "Clear Selection"
+
 msgid "menu.copy.pagelink"
 msgstr "Copy Link to Page"
 
@@ -330,6 +333,18 @@ msgstr "Identities"
 
 msgid "sidebar.outline"
 msgstr "Outline"
+
+msgid "sidebar.action.feeds.showall"
+msgstr "All"
+
+msgid "sidebar.action.feeds.showunread"
+msgstr "Unread"
+
+msgid "sidebar.action.ident.new"
+msgstr "New…"
+
+msgid "sidebar.action.ident.import"
+msgstr "Import…"
 
 # Usage: "(count) Unread" in the sidebar tab title, referring to feed entries.
 msgid "sidebar.unread"
