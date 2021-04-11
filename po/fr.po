@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-04-11 16:14+0000\n"
-"Last-Translator: MCMic <come@chilliet.eu>\n"
+"PO-Revision-Date: 2021-04-11 16:15+0000\n"
+"Last-Translator: roy niang <roy@royniang.com>\n"
 "Language-Team: French <http://weblate.skyjake.fi/projects/lagrange/ui/fr/>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -509,3 +509,9 @@ msgstr "Enregistrer dans le dossier des téléchargements"
 
 msgid "menu.feeds.entrylist"
 msgstr "Montrer les entrées de flux"
+
+msgid "menu.copy.pagelink"
+msgstr "Copier le Lien vers la Page"
+
+msgid "numbertype.integer"
+msgstr "entier"
