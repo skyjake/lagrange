@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-04-02 19:18+0000\n"
+"PO-Revision-Date: 2021-04-11 05:41+0000\n"
 "Last-Translator: MCMic <come@chilliet.eu>\n"
 "Language-Team: French <http://weblate.skyjake.fi/projects/lagrange/ui/fr/>\n"
 "Language: fr\n"
@@ -92,3 +92,396 @@ msgstr "Nouvel onglet"
 
 msgid "menu.closetab"
 msgstr "Fermer l’onglet"
+
+msgid "menu.releasenotes"
+msgstr "Notes de version"
+
+msgid "menu.show.identities"
+msgstr "Afficher les identités"
+
+msgid "menu.forward"
+msgstr "Suivant"
+
+msgid "menu.back"
+msgstr "Précédent"
+
+msgid "menu.parent"
+msgstr "Parent"
+
+msgid "menu.root"
+msgstr "Racine"
+
+msgid "menu.page.subscribe"
+msgstr "S’abonner à la page…"
+
+msgid "menu.debug"
+msgstr "Informations de débogage"
+
+#, c-format
+msgid "days.ago"
+msgid_plural "days.ago.n"
+msgstr[0] "il y a %d jour"
+msgstr[1] "il y a %d jours"
+
+#, c-format
+msgid "num.minutes"
+msgid_plural "num.minutes.n"
+msgstr[0] "%d minute"
+msgstr[1] "%d minutes"
+
+msgid "bookmark.untag.sub"
+msgstr "Se désabonner du flux"
+
+msgid "menu.page.translate"
+msgstr "Traduire…"
+
+msgid "menu.page.copyurl"
+msgstr "Copier l’URL de la page"
+
+msgid "menu.identity.new"
+msgstr "Nouvelle identité…"
+
+msgid "menu.import.links"
+msgstr "Importer tous les liens de la page…"
+
+msgid "pageinfo.cert.expired"
+msgstr "Expiré"
+
+msgid "pageinfo.domain.match"
+msgstr "Le nom de domaine correspond"
+
+msgid "pageinfo.domain.mismatch"
+msgstr "Le nom de domaine ne correspond pas"
+
+msgid "dlg.cert.fingerprint"
+msgstr "Copier l’empreinte"
+
+# Inline download status message.
+msgid "media.download.warnclose"
+msgstr "Le téléchargement sera annulé si l'onglet est fermé."
+
+# Inline download status message.
+msgid "media.download.complete"
+msgstr "Téléchargement terminé."
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.title"
+msgstr "Titre"
+
+msgid "dlg.translate.from"
+msgstr "De :"
+
+msgid "lang.fr"
+msgstr "Français"
+
+msgid "lang.de"
+msgstr "Allemand"
+
+msgid "lang.it"
+msgstr "Italien"
+
+msgid "lang.ja"
+msgstr "Japonais"
+
+msgid "dlg.newident.email"
+msgstr "Courriel :"
+
+msgid "dlg.newident.domain"
+msgstr "Domaine :"
+
+msgid "about.powered"
+msgstr "Propulsé par SDL 2, OpenSSL et ☕️"
+
+msgid "dlg.default"
+msgstr " OK "
+
+msgid "dismiss"
+msgstr "Fermer"
+
+msgid "dlg.message.ok"
+msgstr "Continuer"
+
+msgid "dlg.feed.sub"
+msgstr "S’abonner"
+
+msgid "menu.openlocation"
+msgstr "Ouvrir l'adresse…"
+
+msgid "menu.find"
+msgstr "Rechercher dans la page"
+
+msgid "macos.menu.find"
+msgstr "Rechercher"
+
+#, c-format
+msgid "num.hours"
+msgid_plural "num.hours.n"
+msgstr[0] "%d heure"
+msgstr[1] "%d heures"
+
+msgid "heading.prefs"
+msgstr "PRÉFÉRENCES"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.artist"
+msgstr "Artiste"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.genre"
+msgstr "Genre"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.date"
+msgstr "Date"
+
+msgid "dlg.bookmark.icon"
+msgstr "Icône :"
+
+msgid "dlg.certimport.import"
+msgstr "Importer"
+
+msgid "dlg.certimport.notes"
+msgstr "Notes :"
+
+# used as adjective, n is 8, 16, 24, 32, or 64
+#, c-format
+msgid "n.bit"
+msgstr "%d bits"
+
+# Hertz, unit for frequency values
+msgid "hz"
+msgstr "Hz"
+
+msgid "menu.closetab.right"
+msgstr "Fermer les onglets à droite"
+
+msgid "feeds.unsubscribe"
+msgstr "Se désabonner…"
+
+msgid "dlg.feed.title"
+msgstr "Titre :"
+
+msgid "menu.edit"
+msgstr "Modifier…"
+
+msgid "dlg.ident.delete"
+msgstr "Supprimer l’identité et les fichiers"
+
+# The %s format characters are used to highlight the word "Help" and must be used in the translation in same way as here.
+#, c-format
+msgid "ident.gotohelp"
+msgstr ""
+"Voir l'%sAide%s pour plus d'informations sur les certificats TLS clients."
+
+msgid "link.newtab"
+msgstr "Ouvrir le lien dans un nouvel onglet"
+
+msgid "menu.dup"
+msgstr "Dupliquer…"
+
+msgid "ident.temporary"
+msgstr "Temporaire"
+
+msgid "dlg.confirm.history.clear"
+msgstr ""
+"Voulez-vous vraiment effacer l’historique de toutes les pages visitées ?"
+
+msgid "dlg.history.clear"
+msgstr "Effacer l’historique"
+
+msgid "bookmark.tag.home"
+msgstr "Utiliser comme page d’accueil"
+
+msgid "menu.copyurl"
+msgstr "Copier l’URL"
+
+msgid "menu.forgeturl"
+msgstr "Oublier l’URL"
+
+msgid "history.clear"
+msgstr "Effacer l’historique…"
+
+# strftime() formatted
+#, c-format
+msgid "ident.expiry"
+msgstr "Expire le %d %b %Y"
+
+msgid "ident.fingerprint"
+msgstr "Copier l’empreinte"
+
+#, c-format
+msgid "feeds.list.entrycount"
+msgid_plural "feeds.list.entrycount.n"
+msgstr[0] "un total de %zu entrée"
+msgstr[1] "un total de %zu entrées"
+
+#, c-format
+msgid "minutes.ago"
+msgid_plural "minutes.ago.n"
+msgstr[0] "il y a %d minute"
+msgstr[1] "il y a %d minutes"
+
+#, c-format
+msgid "hours.ago"
+msgid_plural "hours.ago.n"
+msgstr[0] "il y a %d heure"
+msgstr[1] "il y a %d heures"
+
+msgid "menu.zoom.reset"
+msgstr "Réinitialiser le zoom"
+
+#, c-format
+msgid "feeds.list.refreshtime"
+msgstr "La dernière actualisation a eu lieu %s."
+
+msgid "menu.zoom.in"
+msgstr "Zoomer"
+
+msgid "menu.zoom.out"
+msgstr "Dézoomer"
+
+msgid "doc.pre.nocaption"
+msgstr "Texte préformaté sans légende"
+
+msgid "menu.title.identity"
+msgstr "Identité"
+
+msgid "reload.never"
+msgstr "Jamais"
+
+msgid "menu.show.history"
+msgstr "Afficher l'historique"
+
+msgid "menu.reload"
+msgstr "Recharger la page"
+
+msgid "menu.closetab.other"
+msgstr "Fermer les autres onglets"
+
+msgid "menu.closetab.left"
+msgstr "Fermer les onglets à gauche"
+
+msgid "menu.preferences"
+msgstr "Préférences…"
+
+msgid "menu.help"
+msgstr "Aide"
+
+msgid "hint.newident.optional"
+msgstr "facultatif"
+
+msgid "dlg.newident.temp"
+msgstr "Temporaire :"
+
+msgid "dlg.newident.org"
+msgstr "Organisation :"
+
+msgid "dlg.newident.country"
+msgstr "Pays :"
+
+msgid "menu.autoreload"
+msgstr "Rechargement auto…"
+
+msgid "dlg.unsub"
+msgstr "Se désabonner"
+
+msgid "dlg.input.send"
+msgstr "Envoyer"
+
+msgid "dlg.save.size"
+msgstr "Taille :"
+
+msgid "heading.autoreload"
+msgstr "RECHARGEMENT AUTO"
+
+msgid "heading.pageinfo"
+msgstr "INFORMATIONS SUR LA PAGE"
+
+msgid "pageinfo.header.cached"
+msgstr "(contenu en cache)"
+
+msgid "ident.delete"
+msgstr "Supprimer l’identité…"
+
+msgid "heading.ident.delete"
+msgstr "SUPPRESSION D’IDENTITÉ"
+
+msgid "sidebar.empty.idents"
+msgstr "Aucune identité"
+
+msgid "dlg.save.incomplete"
+msgstr "Le contenu de la page est toujours en cours de téléchargement."
+
+msgid "reload.onceperday"
+msgstr "Une fois par jour"
+
+msgid "link.newtab.background"
+msgstr "Ouvrir le lien dans un onglet en arrière-plan"
+
+msgid "link.browser"
+msgstr "Ouvrir le lien dans le navigateur par défaut"
+
+msgid "link.noproxy"
+msgstr "Ouvrir sans proxy"
+
+msgid "link.copy"
+msgstr "Copier le lien"
+
+#, c-format
+msgid "dlg.openlink.confirm"
+msgstr ""
+"Ouvrir ce lien dans le navigateur par défaut ?\n"
+"%s%s"
+
+msgid "dlg.openlink"
+msgstr "Ouvrir le lien"
+
+#, c-format
+msgid "dlg.certwarn.expired"
+msgstr "Le certificat reçu a expiré le %s."
+
+msgid "hint.certimport.description"
+msgstr "description"
+
+msgid "dlg.certimport.nocert"
+msgstr "Aucun certificat"
+
+msgid "dlg.certimport.nokey"
+msgstr "Aucune clé privée"
+
+# Interpret as "Results from history..."
+msgid "heading.lookup.history"
+msgstr "HISTORIQUE"
+
+msgid "dlg.translate"
+msgstr "Traduire"
+
+msgid "dlg.translate.to"
+msgstr "Vers :"
+
+msgid "lang.ar"
+msgstr "Arabe"
+
+msgid "lang.en"
+msgstr "Anglais"
+
+msgid "lang.pt"
+msgstr "Portugais"
+
+msgid "lang.ru"
+msgstr "Russe"
+
+msgid "lang.es"
+msgstr "Espagnol"
+
+msgid "dlg.bookmark.title"
+msgstr "Titre :"
+
+msgid "dlg.bookmark.url"
+msgstr "URL :"
+
+msgid "dlg.translate.unavail"
+msgstr "Service non disponible"
+
+msgid "dlg.translate.fail"
+msgstr "La requête a échoué"

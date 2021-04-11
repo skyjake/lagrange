@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-04-05 09:23+0000\n"
+"PO-Revision-Date: 2021-04-09 13:18+0000\n"
 "Last-Translator: Shibo Lyu <github@of.sb>\n"
 "Language-Team: Chinese (Simplified) <http://weblate.skyjake.fi/projects/"
 "lagrange/ui/zh_Hans/>\n"
@@ -1299,3 +1299,96 @@ msgstr "西方国际语"
 
 msgid "lang.sr"
 msgstr "塞尔维亚语"
+
+msgid "prefs.boldlink"
+msgstr "加粗显示链接："
+
+#, c-format
+msgid "feeds.list.entrycount"
+msgid_plural "feeds.list.entrycount.n"
+msgstr[0] "共包含 %zu 项"
+
+# Interpretation: (Bold links) on dark (background).
+msgid "prefs.boldlink.dark"
+msgstr "在深色下"
+
+# Interpretation: (Bold links) on light (background).
+msgid "prefs.boldlink.light"
+msgstr "在浅色下"
+
+# Link download progress message.
+msgid "doc.fetching"
+msgstr "获取中"
+
+# Inline download status message.
+msgid "media.download.warnclose"
+msgstr "如果本标签页被关闭，下载将被取消。"
+
+# Inline download status message.
+msgid "media.download.complete"
+msgstr "下载完毕。"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.title"
+msgstr "标题"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.artist"
+msgstr "艺术家"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.genre"
+msgstr "流派"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.date"
+msgstr "日期"
+
+# used as adjective, n is 8, 16, 24, 32, or 64
+#, c-format
+msgid "n.bit"
+msgstr "%d 位"
+
+msgid "numbertype.integer"
+msgstr "整数"
+
+msgid "numbertype.float"
+msgstr "浮点数"
+
+# Hertz, unit for frequency values
+msgid "hz"
+msgstr "Hz"
+
+# Used in about:feeds.
+msgid "feeds.list.title"
+msgstr "订阅项"
+
+#, c-format
+msgid "feeds.list.counts"
+msgid_plural "feeds.list.counts.n"
+msgstr[0] "您订阅了 %zu 个源，%%s。\n"
+
+msgid "feeds.list.refreshtime.now"
+msgstr "刚刚更新。"
+
+#, c-format
+msgid "feeds.list.refreshtime"
+msgstr "最近更新于 %s。"
+
+#, c-format
+msgid "minutes.ago"
+msgid_plural "minutes.ago.n"
+msgstr[0] "%d 分钟前"
+
+#, c-format
+msgid "hours.ago"
+msgid_plural "hours.ago.n"
+msgstr[0] "%d 小时前"
+
+#, c-format
+msgid "days.ago"
+msgid_plural "days.ago.n"
+msgstr[0] "%d 天前"
+
+msgid "mb.per.sec"
+msgstr "MB/s"

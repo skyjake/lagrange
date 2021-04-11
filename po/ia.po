@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-04-05 09:23+0000\n"
+"PO-Revision-Date: 2021-04-09 13:18+0000\n"
 "Last-Translator: Olga Smirnova <mistresssilvara@hotmail.com>\n"
 "Language-Team: Interlingua <http://weblate.skyjake.fi/projects/lagrange/ui/"
 "ia/>\n"
@@ -1237,3 +1237,98 @@ msgstr ""
 
 msgid "dlg.save.incomplete"
 msgstr "Le contento del pagina se carga ancora."
+
+#, c-format
+msgid "feeds.list.counts"
+msgid_plural "feeds.list.counts.n"
+msgstr[0] "%zu abonate syndication que contine %%s.\n"
+msgstr[1] "%zu abonate syndicationes que contine %%s.\n"
+
+#, c-format
+msgid "feeds.list.entrycount"
+msgid_plural "feeds.list.entrycount.n"
+msgstr[0] "%zu elemento in toto"
+msgstr[1] "%zu elementos in toto"
+
+msgid "dlg.autoreload"
+msgstr "Interstitio de recarga automatic por iste scheda."
+
+# Interpretation: (Bold links) on dark (background).
+msgid "prefs.boldlink.dark"
+msgstr "sur obscur"
+
+#, c-format
+msgid "minutes.ago"
+msgid_plural "minutes.ago.n"
+msgstr[0] "%d minuta antea"
+msgstr[1] "%d minutas antea"
+
+#, c-format
+msgid "hours.ago"
+msgid_plural "hours.ago.n"
+msgstr[0] "%d hora antea"
+msgstr[1] "%d horas antea"
+
+#, c-format
+msgid "days.ago"
+msgid_plural "days.ago.n"
+msgstr[0] "%d die antea"
+msgstr[1] "%d dies antea"
+
+msgid "prefs.boldlink"
+msgstr "Ligamines grasse:"
+
+# Interpretation: (Bold links) on light (background).
+msgid "prefs.boldlink.light"
+msgstr "sur clar"
+
+# Link download progress message.
+msgid "doc.fetching"
+msgstr "Recuperante"
+
+# Inline download status message.
+msgid "media.download.warnclose"
+msgstr "Le discarga essera annullate si on claude iste scheda."
+
+# Inline download status message.
+msgid "media.download.complete"
+msgstr "Discarga es completate."
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.title"
+msgstr "Titulo"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.artist"
+msgstr "Artista"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.genre"
+msgstr "Genere"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.date"
+msgstr "Data"
+
+# used as adjective, n is 8, 16, 24, 32, or 64
+#, c-format
+msgid "n.bit"
+msgstr "%d-bit"
+
+msgid "numbertype.integer"
+msgstr "numero integre"
+
+# Hertz, unit for frequency values
+msgid "hz"
+msgstr "Hz"
+
+# Used in about:feeds.
+msgid "feeds.list.title"
+msgstr "Elementos del syndication"
+
+#, c-format
+msgid "feeds.list.refreshtime"
+msgstr "Le ultime actualisation esseva %s."
+
+msgid "mb.per.sec"
+msgstr "Mb/s"
