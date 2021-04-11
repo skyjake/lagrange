@@ -2009,7 +2009,7 @@ iWidget *makePreferences_Widget(void) {
         /* UI languages. */ {
             iArray *uiLangs = collectNew_Array(sizeof(iMenuItem));
             const iMenuItem langItems[] = {
-//                { "${lang.de} - de", 0, 0, "uilang id:de" },
+                { "${lang.de} - de", 0, 0, "uilang id:de" },
                 { "${lang.en} - en", 0, 0, "uilang id:en" },
                 { "${lang.es} - es", 0, 0, "uilang id:es" },
                 { "${lang.fi} - fi", 0, 0, "uilang id:fi" },
