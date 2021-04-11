@@ -362,7 +362,8 @@ static const iMenuItem identityButtonMenuItems_[] = {
 };
 #endif
 
-static const char *reloadCStr_ = reload_Icon;
+static const char *reloadCStr_   = reload_Icon;
+static const char *pageMenuCStr_ = midEllipsis_Icon;
 
 /* TODO: A preference for these, maybe? */
 static const char *stopSeqCStr_[] = {
@@ -476,8 +477,14 @@ static uint32_t updateReloadAnimation_Window_(uint32_t interval, void *window) {
 }
 
 static void setReloadLabel_Window_(iWindow *d, iBool animating) {
+    const iBool isMobile = deviceType_App() != desktop_AppDeviceType;
     iLabelWidget *label = findChild_Widget(d->root, "reload");
-    updateTextCStr_LabelWidget(label, animating ? loadAnimationCStr_() : reloadCStr_);
+    updateTextCStr_LabelWidget(label, animating ? loadAnimationCStr_() :
+                               (isMobile ? pageMenuCStr_ : reloadCStr_));
+    if (isMobile) {
+        setCommand_LabelWidget(label,
+                               collectNewCStr_String(animating ? "navigate.reload" : "menu.open"));
+    }
 }
 
 static void checkLoadAnimation_Window_(iWindow *d) {
@@ -1047,11 +1054,35 @@ static void setupUserInterface_Window(iWindow *d) {
                 addChildFlags_Widget(
                     rightEmbed, iClob(progress), collapse_WidgetFlag);
             }
-            /* Reload button. */
-            iLabelWidget *reload = newIcon_LabelWidget(reloadCStr_, 0, 0, "navigate.reload");
-            setId_Widget(as_Widget(reload), "reload");
-            addChildFlags_Widget(as_Widget(url), iClob(reload), embedFlags | moveToParentRightEdge_WidgetFlag);
-            updateSize_LabelWidget(reload);
+            /* Reload button. */ {
+                iLabelWidget *reload;
+                if (deviceType_App() == desktop_AppDeviceType) {
+                    reload = newIcon_LabelWidget(reloadCStr_, 0, 0, "navigate.reload");
+                }
+                else {
+                    /* In a mobile layout, the reload button is replaced with the Page/Ellipsis menu. */
+                    reload = makeMenuButton_LabelWidget(pageMenuCStr_,
+                        (iMenuItem[]){
+                            { reload_Icon " ${menu.reload}", reload_KeyShortcut, "navigate.reload" },
+                            { timer_Icon " ${menu.autoreload}", 0, 0, "document.autoreload.menu" },
+                            { "---", 0, 0, NULL },
+                            { upArrow_Icon " ${menu.parent}", navigateParent_KeyShortcut, "navigate.parent" },
+                            { upArrowBar_Icon " ${menu.root}", navigateRoot_KeyShortcut, "navigate.root" },
+                            { "---", 0, 0, NULL },
+                            { pin_Icon " ${menu.page.bookmark}", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
+                            { star_Icon " ${menu.page.subscribe}", subscribeToPage_KeyModifier, "feeds.subscribe" },
+                            { book_Icon " ${menu.page.import}", 0, 0, "bookmark.links confirm:1" },
+                            { globe_Icon " ${menu.page.translate}", 0, 0, "document.translate" },
+                            { "---", 0, 0, NULL },
+                            { "${menu.page.copyurl}", 0, 0, "document.copylink" },
+                            { "${menu.page.copysource}", 'c', KMOD_PRIMARY, "copy" },
+                            { download_Icon " " saveToDownloads_Label, SDLK_s, KMOD_PRIMARY, "document.save" } },
+                        14);
+                }
+                setId_Widget(as_Widget(reload), "reload");
+                addChildFlags_Widget(as_Widget(url), iClob(reload), embedFlags | moveToParentRightEdge_WidgetFlag);
+                updateSize_LabelWidget(reload);
+            }
             setId_Widget(addChild_Widget(rightEmbed, iClob(makePadding_Widget(0))), "url.embedpad");
         }
         if (deviceType_App() != desktop_AppDeviceType) {

@@ -86,7 +86,9 @@ iLocalDef iBool isOverlapping_Rangei(iRangei a, iRangei b) {
 enum iRangeExtension {
     word_RangeExtension            = iBit(1),
     line_RangeExtension            = iBit(2),
-    bothStartAndEnd_RangeExtension = iBit(3),
+    moveStart_RangeExtension       = iBit(3),
+    moveEnd_RangeExtension         = iBit(4),
+    bothStartAndEnd_RangeExtension = moveStart_RangeExtension | moveEnd_RangeExtension,
 };
 
 void        extendRange_Rangecc     (iRangecc *, iRangecc bounds, int mode);

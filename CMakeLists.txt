@@ -18,11 +18,11 @@
 cmake_minimum_required (VERSION 3.9)
 
 project (Lagrange
-    VERSION 1.3.2
+    VERSION 1.4.0
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
-set (IOS_BUNDLE_VERSION 9)
+set (IOS_BUNDLE_VERSION 1)
 set (COPYRIGHT_YEAR 2021)
 
 # Build configuration.

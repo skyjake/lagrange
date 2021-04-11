@@ -220,20 +220,18 @@ static const char *moveForward_(const char *pos, iRangecc bounds, int mode) {
 void extendRange_Rangecc(iRangecc *d, iRangecc bounds, int mode) {
     if (!d->start) return;
     if (d->end >= d->start) {
-        if (mode & bothStartAndEnd_RangeExtension) {
+        if (mode & moveStart_RangeExtension) {
             d->start = moveBackward_(d->start, bounds, mode);
-            d->end   = moveForward_(d->end, bounds, mode);
         }
-        else {
+        if (mode & moveEnd_RangeExtension) {
             d->end = moveForward_(d->end, bounds, mode);
         }
     }
     else {
-        if (mode & bothStartAndEnd_RangeExtension) {
+        if (mode & moveStart_RangeExtension) {
             d->start = moveForward_(d->start, bounds, mode);
-            d->end   = moveBackward_(d->end, bounds, mode);
         }
-        else {
+        if (mode & moveEnd_RangeExtension) {
             d->end = moveBackward_(d->end, bounds, mode);
         }
     }
@@ -573,13 +571,22 @@ iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
             addChild_Widget(menu, iClob(makeMenuSeparator_()));
         }
         else {
+            iBool isInfo = iFalse;
+            const char *labelText = item->label;
+            if (startsWith_CStr(labelText, "```")) {
+                labelText += 3;
+                isInfo = iTrue;
+            }
             iLabelWidget *label = addChildFlags_Widget(
                 menu,
-                iClob(newKeyMods_LabelWidget(item->label, item->key, item->kmods, item->command)),
+                iClob(newKeyMods_LabelWidget(labelText, item->key, item->kmods, item->command)),
                 noBackground_WidgetFlag | frameless_WidgetFlag | alignLeft_WidgetFlag |
-                    drawKey_WidgetFlag | itemFlags);
+                drawKey_WidgetFlag | (isInfo ? wrapText_WidgetFlag : 0) | itemFlags);
             haveIcons |= checkIcon_LabelWidget(label);
             updateSize_LabelWidget(label); /* drawKey was set */
+            if (isInfo) {
+                setTextColor_LabelWidget(label, uiTextAction_ColorId);
+            }
         }
     }
     if (deviceType_App() == phone_AppDeviceType) {
@@ -639,6 +646,9 @@ void openMenuFlags_Widget(iWidget *d, iInt2 coord, iBool postCommands) {
             if (isInstance_Object(i.object, &Class_LabelWidget)) {
                 iLabelWidget *label = i.object;
                 const iBool isCaution = startsWith_String(text_LabelWidget(label), uiTextCaution_ColorEscape);
+                if (flags_Widget(as_Widget(label)) & wrapText_WidgetFlag) {
+                    continue;
+                }
                 if (deviceType_App() == desktop_AppDeviceType) {
                     setFont_LabelWidget(label, isCaution ? uiLabelBold_FontId : uiLabel_FontId);
                 }

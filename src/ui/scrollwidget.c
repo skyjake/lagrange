@@ -48,6 +48,7 @@ struct Impl_ScrollWidget {
     iClick click;
     int startThumb;
     iAnim opacity;
+    iBool fadeEnabled;
     uint32_t fadeStart;
     iBool willCheckFade;
 };
@@ -76,6 +77,7 @@ void init_ScrollWidget(iScrollWidget *d) {
     init_Click(&d->click, d, SDL_BUTTON_LEFT);
     init_Anim(&d->opacity, minOpacity_());
     d->willCheckFade = iFalse;
+    d->fadeEnabled = iTrue;
 }
 
 void deinit_ScrollWidget(iScrollWidget *d) {
@@ -108,7 +110,7 @@ static void unfade_ScrollWidget_(iScrollWidget *d, float opacity) {
         setValue_Anim(&d->opacity, opacity, 66);
         addTicker_App(animateOpacity_ScrollWidget_, d);
     }
-    if (!d->willCheckFade) {
+    if (!d->willCheckFade && d->fadeEnabled) {
         d->willCheckFade = iTrue;
         /* TODO: This causes an inexplicable refresh issue on macOS: the drawing of one frame
            takes 100ms for some reason (not the current frame but some time after). */
@@ -142,6 +144,11 @@ void setThumb_ScrollWidget(iScrollWidget *d, int thumb, int thumbSize) {
     }
 }
 
+void setFadeEnabled_ScrollWidget(iScrollWidget *d, iBool fadeEnabled) {
+    d->fadeEnabled = fadeEnabled;
+    unfade_ScrollWidget_(d, 1.0f);
+}
+
 static iBool processEvent_ScrollWidget_(iScrollWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
     if (isMetricsChange_UserEvent(ev)) {
@@ -156,7 +163,7 @@ static iBool processEvent_ScrollWidget_(iScrollWidget *d, const SDL_Event *ev) {
         }
     }
     if (isCommand_UserEvent(ev, "scrollbar.fade")) {
-        if (d->willCheckFade && SDL_GetTicks() > d->fadeStart) {
+        if (d->fadeEnabled && d->willCheckFade && SDL_GetTicks() > d->fadeStart) {
             setValue_Anim(&d->opacity, minOpacity_(), 200);
             remove_Periodic(periodic_App(), d);
             d->willCheckFade = iFalse;

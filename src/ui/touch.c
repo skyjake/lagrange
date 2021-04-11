@@ -59,6 +59,7 @@ struct Impl_Touch {
     iBool hasMoved;
     iBool isTapBegun;
     iBool isTouchDrag;
+    iBool didConvertToTouchDrag;
     iBool isTapAndHold;
     int pinchId;
     enum iTouchEdge edge;
@@ -226,7 +227,7 @@ static void update_TouchState_(void *ptr) {
     /* Check for long presses to simulate right clicks. */
     iForEach(Array, i, d->touches) {
         iTouch *touch = i.value;
-        if (touch->pinchId) {
+        if (touch->pinchId || touch->isTouchDrag) {
             continue;
         }
         /* Holding a touch will reset previous momentum for this widget. */
@@ -252,6 +253,14 @@ static void update_TouchState_(void *ptr) {
                 playHapticEffect_iOS(tap_HapticEffect);
 #endif
                 dispatchMotion_Touch_(init_F3(-100, -100, 0), 0);
+            }
+            if (touch->isTapAndHold && touch->affinity &&
+                flags_Widget(touch->affinity) & touchDrag_WidgetFlag) {
+                /* Convert to touch drag. */
+                touch->isTapAndHold = iFalse;
+                touch->isTouchDrag = iTrue;
+                touch->didConvertToTouchDrag = iTrue;
+                dispatchButtonDown_Touch_(touch->pos[0]);
             }
         }
     }
@@ -486,16 +495,7 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                 touch->edge = none_TouchEdge;
                 pushPos_Touch_(touch, pos, fing->timestamp);
                 dispatchMotion_Touch_(touch->startPos, 0);
-                dispatchEvent_Widget(window->root, (SDL_Event *) &(SDL_MouseButtonEvent){
-                    .type = SDL_MOUSEBUTTONDOWN,
-                    .timestamp = fing->timestamp,
-                    .clicks = 1,
-                    .state = SDL_PRESSED,
-                    .which = SDL_TOUCH_MOUSEID,
-                    .button = SDL_BUTTON_LEFT,
-                    .x = x_F3(touch->startPos),
-                    .y = y_F3(touch->startPos)
-                });
+                dispatchButtonDown_Touch_(touch->startPos);
                 dispatchMotion_Touch_(pos, SDL_BUTTON_LMASK);
                 return iTrue;
             }
@@ -603,11 +603,10 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                 continue;
             }
             if (flags_Widget(touch->affinity) & touchDrag_WidgetFlag) {
-                if (!touch->isTouchDrag) {
+                if (!touch->isTouchDrag && !touch->didConvertToTouchDrag) {
                     dispatchButtonDown_Touch_(touch->startPos);
                 }
                 dispatchButtonUp_Touch_(pos);
-//                setHover_Widget(NULL);
                 remove_ArrayIterator(&i);
                 continue;
             }
@@ -678,7 +677,7 @@ void widgetDestroyed_Touch(iWidget *widget) {
         }
     }
     iForEach(Array, p, d->pinches) {
-        iPinch *pinch = i.value;
+        iPinch *pinch = p.value;
         if (pinch->affinity == widget) {
             remove_ArrayIterator(&p);
         }

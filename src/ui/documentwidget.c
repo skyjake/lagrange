@@ -200,6 +200,8 @@ enum iDocumentWidgetFlag {
     selectWords_DocumentWidgetFlag           = iBit(7),
     selectLines_DocumentWidgetFlag           = iBit(8),
     pinchZoom_DocumentWidgetFlag             = iBit(9),
+    movingSelectMarkStart_DocumentWidgetFlag = iBit(10),
+    movingSelectMarkEnd_DocumentWidgetFlag   = iBit(11),
 };
 
 enum iDocumentLinkOrdinalMode {
@@ -251,6 +253,7 @@ struct Impl_DocumentWidget {
     const iGmRun * firstVisibleRun;
     const iGmRun * lastVisibleRun;
     iClick         click;
+    iInt2          contextPos; /* coordinates of latest right click */
     iString        pendingGotoHeading;
     float          initNormScrollY;
     iAnim          scrollY;
@@ -259,6 +262,7 @@ struct Impl_DocumentWidget {
     iScrollWidget *scroll;
     iWidget *      menu;
     iWidget *      playerMenu;
+    iWidget *      copyMenu;
     iVisBuf *      visBuf;
     iPtrSet *      invalidRuns;
     iDrawBufs *    drawBufs; /* dynamic state for drawing */
@@ -324,6 +328,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     addChild_Widget(w, iClob(d->scroll = new_ScrollWidget()));
     d->menu         = NULL; /* created when clicking */
     d->playerMenu   = NULL;
+    d->copyMenu     = NULL;
     d->drawBufs     = new_DrawBufs();
     d->translation  = NULL;
     addChildFlags_Widget(w,
@@ -365,6 +370,15 @@ void deinit_DocumentWidget(iDocumentWidget *d) {
     delete_String(d->certSubject);
     delete_String(d->titleUser);
     deinit_PersistentDocumentState(&d->mod);
+}
+
+static iRangecc selectMark_DocumentWidget_(const iDocumentWidget *d) {
+    /* Normalize so start < end. */
+    iRangecc norm = d->selectMark;
+    if (norm.start > norm.end) {
+        iSwap(const char *, norm.start, norm.end);
+    }
+    return norm;
 }
 
 static void enableActions_DocumentWidget_(iDocumentWidget *d, iBool enable) {
@@ -1747,6 +1761,26 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         updateWindowTitle_DocumentWidget_(d);
         return iFalse;
     }
+    else if (equal_Command(cmd, "document.select") && d == document_App()) {
+        /* Touch selection mode. */
+        if (!arg_Command(cmd)) {
+            d->selectMark = iNullRange;
+            setFlags_Widget(w, touchDrag_WidgetFlag, iFalse);
+            setFadeEnabled_ScrollWidget(d->scroll, iTrue);
+        }
+        else {
+            setFlags_Widget(w, touchDrag_WidgetFlag, iTrue);
+            d->flags |= movingSelectMarkEnd_DocumentWidgetFlag |
+                        selectWords_DocumentWidgetFlag; /* finger-based selection is imprecise */
+            d->flags &= ~selectLines_DocumentWidgetFlag;
+            setFadeEnabled_ScrollWidget(d->scroll, iFalse);
+            d->selectMark = sourceLoc_DocumentWidget_(d, d->contextPos);
+            extendRange_Rangecc(&d->selectMark, range_String(source_GmDocument(d->doc)),
+                                word_RangeExtension | bothStartAndEnd_RangeExtension);
+            d->initialSelectMark = d->selectMark;
+        }
+        return iTrue;
+    }
     else if (equal_Command(cmd, "document.info") && d == document_App()) {
         const char *unchecked       = red_ColorEscape "\u2610";
         const char *checked         = green_ColorEscape "\u2611";
@@ -1870,6 +1904,9 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         }
         SDL_SetClipboardText(cstr_String(copied));
         delete_String(copied);
+        if (flags_Widget(w) & touchDrag_WidgetFlag) {
+            postCommand_App("document.select arg:0");
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "document.copylink") && document_App() == d) {
@@ -1960,7 +1997,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         cacheDocumentGlyphs_DocumentWidget_(d);
         return iFalse;
     }
-    else if (equalWidget_Command(cmd, w, "document.translate")) {
+    else if (equal_Command(cmd, "document.translate") && d == document_App()) {
         if (!d->translation) {
             d->translation = new_Translation(d);
         }
@@ -2623,10 +2660,12 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         }
         if (ev->button.button == SDL_BUTTON_RIGHT &&
             contains_Widget(w, init_I2(ev->button.x, ev->button.y))) {
-            if (!d->menu || !isVisible_Widget(d->menu)) {
+            if (!isVisible_Widget(d->menu)) {
                 d->contextLink = d->hoverLink;
+                d->contextPos = init_I2(ev->button.x, ev->button.y);
                 if (d->menu) {
                     destroy_Widget(d->menu);
+                    d->menu = NULL;
                 }
                 setFocus_Widget(NULL);
                 iArray items;
@@ -2637,6 +2676,12 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                     const iRangecc scheme   = urlScheme_String(linkUrl);
                     const iBool    isGemini = equalCase_Rangecc(scheme, "gemini");
                     iBool          isNative = iFalse;
+                    if (deviceType_App() != desktop_AppDeviceType) {
+                        /* Show the link as the first, non-interactive item. */
+                        pushBack_Array(&items, &(iMenuItem){
+                            format_CStr("```%s", cstr_String(linkUrl)),
+                            0, 0, NULL });
+                    }
                     if (willUseProxy_App(scheme) || isGemini ||
                         equalCase_Rangecc(scheme, "finger") ||
                         equalCase_Rangecc(scheme, "gopher")) {
@@ -2707,24 +2752,18 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                         }
                     }
                 }
-                else {
+                else if (deviceType_App() == desktop_AppDeviceType) {
                     if (!isEmpty_Range(&d->selectMark)) {
-                        pushBackN_Array(
-                            &items,
-                            (iMenuItem[]){ { "${menu.copy}", 0, 0, "copy" }, { "---", 0, 0, NULL } },
-                            2);
-                    }
-                    if (deviceType_App() == desktop_AppDeviceType) {
-                        pushBackN_Array(
-                            &items,
-                            (iMenuItem[]){
-                                { "${menu.back}", navigateBack_KeyShortcut, "navigate.back" },
-                                { "${menu.forward}", navigateForward_KeyShortcut, "navigate.forward" } },
-                            2);
+                        pushBackN_Array(&items,
+                                        (iMenuItem[]){ { "${menu.copy}", 0, 0, "copy" },
+                                                       { "---", 0, 0, NULL } },
+                                        2);
                     }
                     pushBackN_Array(
                         &items,
                         (iMenuItem[]){
+                            { "${menu.back}", navigateBack_KeyShortcut, "navigate.back" },
+                            { "${menu.forward}", navigateForward_KeyShortcut, "navigate.forward" },
                             { upArrow_Icon " ${menu.parent}", navigateParent_KeyShortcut, "navigate.parent" },
                             { upArrowBar_Icon " ${menu.root}", navigateRoot_KeyShortcut, "navigate.root" },
                             { "---", 0, 0, NULL },
@@ -2738,7 +2777,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                             { globe_Icon " ${menu.page.translate}", 0, 0, "document.translate" },
                             { "---", 0, 0, NULL },
                             { "${menu.page.copyurl}", 0, 0, "document.copylink" } },
-                        12);
+                        15);
                     if (isEmpty_Range(&d->selectMark)) {
                         pushBackN_Array(
                             &items,
@@ -2747,6 +2786,21 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                 { download_Icon " " saveToDownloads_Label, SDLK_s, KMOD_PRIMARY, "document.save" } },
                             2);
                     }
+                }
+                else {
+                    /* Mobile text selection menu. */
+#if 0
+                    pushBackN_Array(
+                        &items,
+                        (iMenuItem[]){
+                            { "${menu.select}", 0, 0, "document.select arg:1" },
+                            { "${menu.select.word}", 0, 0, "document.select arg:2" },
+                            { "${menu.select.par}", 0, 0, "document.select arg:3" },
+                        },
+                        3);
+#endif
+                    postCommand_App("document.select arg:1");
+                    return iTrue;
                 }
                 d->menu = makeMenu_Widget(w, data_Array(&items), size_Array(&items));
                 deinit_Array(&items);
@@ -2763,26 +2817,29 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             if (d->grabbedPlayer) {
                 return iTrue;
             }
+            /* Enable hover state now that scrolling has surely finished. */
             if (d->flags & noHoverWhileScrolling_DocumentWidgetFlag) {
                 d->flags &= ~noHoverWhileScrolling_DocumentWidgetFlag;
                 updateHover_DocumentWidget_(d, mouseCoord_Window(get_Window()));
             }
-            iChangeFlags(d->flags, selecting_DocumentWidgetFlag, iFalse);
-            iChangeFlags(d->flags, selectWords_DocumentWidgetFlag, d->click.count == 2);
-            iChangeFlags(d->flags, selectLines_DocumentWidgetFlag, d->click.count >= 3);
-            /* Double/triple clicks marks the selection immediately. */
-            if (d->click.count >= 2) {
-                beginMarkingSelection_DocumentWidget_(d, d->click.startPos);
-                extendRange_Rangecc(
-                    &d->selectMark,
-                    range_String(source_GmDocument(d->doc)),
-                    bothStartAndEnd_RangeExtension |
-                        (d->click.count == 2 ? word_RangeExtension : line_RangeExtension));
-                d->initialSelectMark = d->selectMark;
-                refresh_Widget(w);
-            }
-            else {
-                d->initialSelectMark = iNullRange;
+            if (~flags_Widget(w) & touchDrag_WidgetFlag) {
+                iChangeFlags(d->flags, selecting_DocumentWidgetFlag, iFalse);
+                iChangeFlags(d->flags, selectWords_DocumentWidgetFlag, d->click.count == 2);
+                iChangeFlags(d->flags, selectLines_DocumentWidgetFlag, d->click.count >= 3);
+                /* Double/triple clicks marks the selection immediately. */
+                if (d->click.count >= 2) {
+                    beginMarkingSelection_DocumentWidget_(d, d->click.startPos);
+                    extendRange_Rangecc(
+                        &d->selectMark,
+                        range_String(source_GmDocument(d->doc)),
+                        bothStartAndEnd_RangeExtension |
+                            (d->click.count == 2 ? word_RangeExtension : line_RangeExtension));
+                    d->initialSelectMark = d->selectMark;
+                    refresh_Widget(w);
+                }
+                else {
+                    d->initialSelectMark = iNullRange;
+                }
             }
             return iTrue;
         case drag_ClickResult: {
@@ -2796,29 +2853,59 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 refresh_Widget(w);
                 return iTrue;
             }
-            /* Begin selecting a range of text. */
+            /* Fold/unfold a preformatted block. */
             if (~d->flags & selecting_DocumentWidgetFlag && d->hoverPre &&
                 preIsFolded_GmDocument(d->doc, d->hoverPre->preId)) {
                 return iTrue;
             }
+            /* Begin selecting a range of text. */
             if (~d->flags & selecting_DocumentWidgetFlag) {
                 beginMarkingSelection_DocumentWidget_(d, d->click.startPos);
             }
             iRangecc loc = sourceLoc_DocumentWidget_(d, pos_Click(&d->click));
-            if (!d->selectMark.start) {
+            if (d->selectMark.start == NULL) {
                 d->selectMark = loc;
             }
             else if (loc.end) {
-                d->selectMark.end = (d->selectMark.end > d->selectMark.start ? loc.end : loc.start);
+                if (flags_Widget(w) & touchDrag_WidgetFlag) {
+                    /* Choose which end to move. */
+                    if (!(d->flags & (movingSelectMarkStart_DocumentWidgetFlag |
+                                      movingSelectMarkEnd_DocumentWidgetFlag))) {
+                        const iRangecc mark    = selectMark_DocumentWidget_(d);
+                        const char *   midMark = mark.start + size_Range(&mark) / 2;
+                        const iRangecc loc     = sourceLoc_DocumentWidget_(d, pos_Click(&d->click));
+                        const iBool    isCloserToStart = d->selectMark.start > d->selectMark.end ?
+                            (loc.start > midMark) : (loc.start < midMark);
+                        iChangeFlags(d->flags, movingSelectMarkStart_DocumentWidgetFlag, isCloserToStart);
+                        iChangeFlags(d->flags, movingSelectMarkEnd_DocumentWidgetFlag, !isCloserToStart);
+                    }
+                    /* Move the start or the end depending on which is nearer. */
+                    if (d->flags & movingSelectMarkStart_DocumentWidgetFlag) {
+                        d->selectMark.start = loc.start;
+                    }
+                    else {
+                        d->selectMark.end = (d->selectMark.end > d->selectMark.start ? loc.end : loc.start);
+                    }
+                }
+                else {
+                    d->selectMark.end = (d->selectMark.end > d->selectMark.start ? loc.end : loc.start);
+                }
             }
             iAssert((!d->selectMark.start && !d->selectMark.end) ||
                     ( d->selectMark.start &&  d->selectMark.end));
-            /* Extend the selection when double/triple clicking. */
+            /* Extend to full words/paragraphs. */
             if (d->flags & (selectWords_DocumentWidgetFlag | selectLines_DocumentWidgetFlag)) {
                 extendRange_Rangecc(
                     &d->selectMark,
                     range_String(source_GmDocument(d->doc)),
-                    d->click.count == 2 ? word_RangeExtension : line_RangeExtension);
+                    (d->flags & movingSelectMarkStart_DocumentWidgetFlag ? moveStart_RangeExtension
+                                                                         : moveEnd_RangeExtension) |
+                        (d->flags & selectWords_DocumentWidgetFlag ? word_RangeExtension
+                                                                   : line_RangeExtension));
+                if (d->flags & movingSelectMarkStart_DocumentWidgetFlag) {
+                    d->initialSelectMark.start =
+                        d->initialSelectMark.end = d->selectMark.start;
+                }
                 if (!isEmpty_Range(&d->initialSelectMark)) {
                     if (d->selectMark.end > d->selectMark.start) {
                         d->selectMark.start = d->initialSelectMark.start;
@@ -2842,13 +2929,42 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             if (isVisible_Widget(d->menu)) {
                 closeMenu_Widget(d->menu);
             }
+            d->flags &= ~(movingSelectMarkStart_DocumentWidgetFlag |
+                          movingSelectMarkEnd_DocumentWidgetFlag);
             if (!isMoved_Click(&d->click)) {
                 setFocus_Widget(NULL);
+                /* Tap in tap selection mode. */
+                if (flags_Widget(w) & touchDrag_WidgetFlag) {
+                    const iRangecc tapLoc = sourceLoc_DocumentWidget_(d, pos_Click(&d->click));
+                    /* Tapping on the selection will show a menu. */
+                    const iRangecc mark = selectMark_DocumentWidget_(d);
+                    if (tapLoc.start >= mark.start && tapLoc.end <= mark.end) {
+                        if (d->copyMenu) {
+                            closeMenu_Widget(d->copyMenu);
+                            destroy_Widget(d->copyMenu);
+                            d->copyMenu = NULL;
+                        }
+                        d->copyMenu = makeMenu_Widget(w, (iMenuItem[]){
+                            { clipCopy_Icon " ${menu.copy}", 0, 0, "copy" },
+                            { "---", 0, 0, NULL },
+                            { close_Icon " Clear Selection", 0, 0, "document.select arg:0" },
+                        }, 3);
+                        setFlags_Widget(d->copyMenu, noFadeBackground_WidgetFlag, iTrue);
+                        openMenu_Widget(d->copyMenu, pos_Click(&d->click));
+                        return iTrue;
+                    }
+                    else {
+                        /* Tapping elsewhere exits selection mode. */
+                        postCommand_Widget(d, "document.select arg:0");
+                        return iTrue;
+                    }
+                }
                 if (d->hoverPre) {
                     togglePreFold_DocumentWidget_(d, d->hoverPre->preId);
                     return iTrue;
                 }
                 if (d->hoverLink) {
+                    /* TODO: Move this to a method. */
                     const iGmLinkId linkId = d->hoverLink->linkId;
                     const int linkFlags = linkFlags_GmDocument(d->doc, linkId);
                     iAssert(linkId);
@@ -3635,6 +3751,18 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
         fillRect_Paint(&ctx.paint, rect, d->pinchZoomPosted == 100 ? uiTextCaution_ColorId : uiTextAction_ColorId);
         drawCentered_Text(font, bounds, iFalse, uiBackground_ColorId, "%d %%",
                           d->pinchZoomPosted);
+    }
+    /* Touch selection indicator. */
+    if (flags_Widget(w) & touchDrag_WidgetFlag) {
+        iString msg;
+        init_String(&msg);
+        format_String(&msg, "Selecting: drag and tap");
+        fillRect_Paint(&ctx.paint, (iRect){ topLeft_Rect(bounds),
+            init_I2(width_Rect(bounds), lineHeight_Text(uiLabelBold_FontId))},
+                       uiTextAction_ColorId);
+        drawRange_Text(uiLabelBold_FontId, addX_I2(topLeft_Rect(bounds), 3 * gap_UI),
+                       uiBackground_ColorId, range_String(&msg));
+        deinit_String(&msg);
     }
 }
 

@@ -1004,8 +1004,7 @@ void drawBackground_Widget(const iWidget *d) {
     }
     /* Popup menus have a shadowed border. */
     iBool shadowBorder   = (d->flags & keepOnTop_WidgetFlag && ~d->flags & mouseModal_WidgetFlag) != 0;
-    iBool fadeBackground = (d->bgColor >= 0 || d->frameColor >= 0) &&
-                                 d->flags & mouseModal_WidgetFlag;
+    iBool fadeBackground = (d->bgColor >= 0 || d->frameColor >= 0) && d->flags & mouseModal_WidgetFlag;
     if (deviceType_App() == phone_AppDeviceType) {
         if (shadowBorder) {
             fadeBackground = iTrue;
@@ -1017,7 +1016,7 @@ void drawBackground_Widget(const iWidget *d) {
         init_Paint(&p);
         drawSoftShadow_Paint(&p, bounds_Widget(d), 12 * gap_UI, black_ColorId, 30);
     }
-    if (fadeBackground) {
+    if (fadeBackground && ~d->flags & noFadeBackground_WidgetFlag) {
         iPaint p;
         init_Paint(&p);
         p.alpha = 0x50;
