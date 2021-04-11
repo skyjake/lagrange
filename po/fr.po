@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-04-11 16:07+0000\n"
+"PO-Revision-Date: 2021-04-11 16:14+0000\n"
 "Last-Translator: MCMic <come@chilliet.eu>\n"
 "Language-Team: French <http://weblate.skyjake.fi/projects/lagrange/ui/fr/>\n"
 "Language: fr\n"
@@ -501,4 +501,11 @@ msgstr[1] "Vous êtes abonné à %zu flux contenant %%s.\n"
 
 # Alt-text of the preformatted logo.
 msgid "about.logo"
-msgstr "ASCII art: le mot « Lagrange » en utilisant une grande police"
+msgstr "ASCII art : le mot « Lagrange » en utilisant une grande police"
+
+# Used on desktop operating systems. "Downloads" refers to the user's configured downloads directory.
+msgid "menu.save.downloads"
+msgstr "Enregistrer dans le dossier des téléchargements"
+
+msgid "menu.feeds.entrylist"
+msgstr "Montrer les entrées de flux"
