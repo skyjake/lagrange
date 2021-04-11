@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-04-11 18:47+0000\n"
-"Last-Translator: roy niang <roy@royniang.com>\n"
+"PO-Revision-Date: 2021-04-12 06:41+0000\n"
+"Last-Translator: MCMic <come@chilliet.eu>\n"
 "Language-Team: French <http://weblate.skyjake.fi/projects/lagrange/ui/fr/>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -37,11 +37,11 @@ msgstr "Identités"
 
 # megabytes, used as the unit after a number
 msgid "mb"
-msgstr "MO"
+msgstr "Mo"
 
 # kilobytes, used as the unit after a number
 msgid "kb"
-msgstr "KO"
+msgstr "Ko"
 
 msgid "feeds.today"
 msgstr "Aujourd’hui"
@@ -537,4 +537,106 @@ msgid "sidebar.action.feeds.showunread"
 msgstr "Non-lus"
 
 msgid "feeds.list.refreshtime.now"
-msgstr "Le dernier rafraichissement s'est déroulé il y a peu."
+msgstr "La dernière actualisation a eu lieu il y a quelques instants."
+
+msgid "status.feeds"
+msgstr "Mise à jour des flux"
+
+# strftime() formatted, split on two lines
+#, c-format
+msgid "page.timestamp"
+msgstr ""
+"Reçu à %I:%M %p\n"
+"le %d %b %Y"
+
+msgid "menu.feeds.refresh"
+msgstr "Actualiser les flux"
+
+msgid "dlg.feed.type.gemini"
+msgstr "Liens AAAA-MM-JJ"
+
+msgid "dlg.feed.type.headings"
+msgstr "Nouveaux titres"
+
+msgid "dlg.feed.save"
+msgstr "Enregistrer les paramètres"
+
+msgid "error.badresource"
+msgstr "Ressource invalide"
+
+msgid "status.query"
+msgstr "Recherche"
+
+msgid "dlg.feed.entrytype"
+msgstr "Type d’entrée :"
+
+msgid "feeds.entry.newtab"
+msgstr "Ouvrir l'entrée dans un nouvel onglet"
+
+msgid "feeds.entry.openfeed"
+msgstr "Ouvrir la page du flux"
+
+msgid "feeds.markallread"
+msgstr "Tout marquer comme lu"
+
+msgid "feeds.refresh"
+msgstr "Actualiser les flux"
+
+msgid "hint.findtext"
+msgstr "Chercher dans le texte de la page"
+
+msgid "mb.per.sec"
+msgstr "Mo/s"
+
+# strftime() formatted
+#, c-format
+msgid "sidebar.date.thisyear"
+msgstr "%d %b"
+
+# strftime() formatted
+#, c-format
+msgid "sidebar.date.otheryear"
+msgstr "%d %b %Y"
+
+# Usage: "(count) Unread" in the sidebar tab title, referring to feed entries.
+msgid "sidebar.unread"
+msgid_plural "sidebar.unread.n"
+msgstr[0] "Non lue"
+msgstr[1] "Non lues"
+
+msgid "menu.opentab"
+msgstr "Ouvrir dans un nouvel onglet"
+
+msgid "menu.opentab.background"
+msgstr "Ouvrir dans un onglet en arrière-plan"
+
+msgid "bookmark.tag.sub"
+msgstr "S'abonner au flux"
+
+# Interpret as "Results from feeds..."
+msgid "heading.lookup.feeds"
+msgstr "FLUX"
+
+msgid "sidebar.outline"
+msgstr "Sommaire"
+
+msgid "sidebar.action.feeds.showall"
+msgstr "Tous"
+
+msgid "sidebar.action.ident.new"
+msgstr "Nouvelle…"
+
+msgid "sidebar.action.ident.import"
+msgstr "Importer…"
+
+msgid "toolbar.outline"
+msgstr "Sommaire"
+
+msgid "heading.feedcfg"
+msgstr "PARAMÈTRES DE FLUX"
+
+#, c-format
+msgid "dlg.confirm.unsub"
+msgstr ""
+"Vraiment se désabonner du flux\n"
+"« %s » ?"
