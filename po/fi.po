@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2021-03-23 09:09+0000\n"
-"PO-Revision-Date: 2021-04-05 11:29+0000\n"
+"PO-Revision-Date: 2021-04-11 06:05+0000\n"
 "Last-Translator: Jaakko Keränen <jaakko.keranen@iki.fi>\n"
 "Language-Team: Finnish <http://weblate.skyjake.fi/projects/lagrange/ui/fi/>\n"
 "Language: fi\n"
@@ -1421,3 +1421,18 @@ msgstr "Vaalea tausta"
 # Interpretation: (Bold links) on dark (background).
 msgid "prefs.boldlink.dark"
 msgstr "Tumma tausta"
+
+msgid "menu.select.clear"
+msgstr "Poista valinta"
+
+msgid "sidebar.action.feeds.showall"
+msgstr "Kaikki"
+
+msgid "sidebar.action.feeds.showunread"
+msgstr "Lukemattomat"
+
+msgid "sidebar.action.ident.new"
+msgstr "Uusi…"
+
+msgid "sidebar.action.ident.import"
+msgstr "Tuo…"
