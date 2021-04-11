@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-04-11 05:41+0000\n"
+"PO-Revision-Date: 2021-04-11 16:05+0000\n"
 "Last-Translator: MCMic <come@chilliet.eu>\n"
 "Language-Team: French <http://weblate.skyjake.fi/projects/lagrange/ui/fr/>\n"
 "Language: fr\n"
@@ -485,3 +485,10 @@ msgstr "Service non disponible"
 
 msgid "dlg.translate.fail"
 msgstr "La requête a échoué"
+
+msgid "sidebar.feeds"
+msgstr "Flux"
+
+# Used in about:feeds.
+msgid "feeds.list.title"
+msgstr "Entrées de flux"
