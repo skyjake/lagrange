@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-04-11 17:58+0000\n"
+"PO-Revision-Date: 2021-04-11 18:47+0000\n"
 "Last-Translator: MCMic <come@chilliet.eu>\n"
 "Language-Team: French <http://weblate.skyjake.fi/projects/lagrange/ui/fr/>\n"
 "Language: fr\n"
@@ -350,7 +350,7 @@ msgid "reload.never"
 msgstr "Jamais"
 
 msgid "menu.show.history"
-msgstr "Afficher l'historique"
+msgstr "Afficher l’historique"
 
 msgid "menu.reload"
 msgstr "Recharger la page"
@@ -508,10 +508,30 @@ msgid "menu.save.downloads"
 msgstr "Enregistrer dans le dossier des téléchargements"
 
 msgid "menu.feeds.entrylist"
-msgstr "Montrer les entrées de flux"
+msgstr "Afficher les entrées de flux"
 
 msgid "menu.copy.pagelink"
 msgstr "Copier le lien vers la page"
 
 msgid "numbertype.integer"
 msgstr "entier"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.outline"
+msgstr "Afficher le sommaire"
+
+msgid "feeds.edit"
+msgstr "Modifier le flux…"
+
+msgid "menu.edit.notes"
+msgstr "Modifier les notes…"
+
+msgid "prefs.hoverlink"
+msgstr "Afficher l’URL au survol :"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.feeds"
+msgstr "Afficher les flux"
+
+msgid "sidebar.action.feeds.showunread"
+msgstr "Non-lus"
