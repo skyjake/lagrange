@@ -169,9 +169,6 @@ msgstr "Save to Files"
 msgid "menu.save.downloads"
 msgstr "Save to Downloads"
 
-msgid "menu.copy.source"
-msgstr "Copy Source Text"
-
 msgid "menu.sidebar"
 msgstr "Toggle Sidebar"
 

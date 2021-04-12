@@ -192,7 +192,7 @@ static const iMenuItem navMenuItems_[] = {
     { "${menu.openlocation}", SDLK_l, KMOD_PRIMARY, "navigate.focus" },
     { "---", 0, 0, NULL },
     { download_Icon " " saveToDownloads_Label, SDLK_s, KMOD_PRIMARY, "document.save" },
-    { "${menu.copy.source}", SDLK_c, KMOD_PRIMARY, "copy" },
+    { "${menu.page.copysource}", SDLK_c, KMOD_PRIMARY, "copy" },
     { "---", 0, 0, NULL },
     { leftHalf_Icon " ${menu.sidebar.left}", SDLK_l, KMOD_PRIMARY | KMOD_SHIFT, "sidebar.toggle" },
     { rightHalf_Icon " ${menu.sidebar.right}", SDLK_p, KMOD_PRIMARY | KMOD_SHIFT, "sidebar2.toggle" },
