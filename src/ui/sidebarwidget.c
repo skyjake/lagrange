@@ -138,9 +138,10 @@ static iLabelWidget *addActionButton_SidebarWidget_(iSidebarWidget *d, const cha
                                                     const char *command, int64_t flags) {
     iLabelWidget *btn = addChildFlags_Widget(d->actions,
                                              iClob(new_LabelWidget(label, command)),
-                                             (deviceType_App() != desktop_AppDeviceType ?
-                                              extraPadding_WidgetFlag : 0) | flags);
-    setFont_LabelWidget(btn, d->buttonFont == uiLabelLarge_FontId ? defaultBig_FontId : d->buttonFont);
+                                             //(deviceType_App() != desktop_AppDeviceType ?
+                                             // extraPadding_WidgetFlag : 0) |
+                                             flags);
+    setFont_LabelWidget(btn, d->buttonFont);
     checkIcon_LabelWidget(btn);
     return btn;
 }
@@ -601,7 +602,7 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
                     format_CStr("%s.mode arg:%d", cstr_String(id_Widget(w)), i))),
                     frameless_WidgetFlag | noBackground_WidgetFlag);
         }
-        setButtonFont_SidebarWidget(d, isPhone ? uiLabelLarge_FontId : uiLabel_FontId);
+        setButtonFont_SidebarWidget(d, isPhone ? defaultBig_FontId : uiLabel_FontId);
         addChildFlags_Widget(vdiv,
                              iClob(buttons),
                              arrangeHorizontal_WidgetFlag |
@@ -626,15 +627,23 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     addChild_Widget(content, iClob(listAndActions));
     d->list = new_ListWidget();
     setPadding_Widget(as_Widget(d->list), 0, gap_UI, 0, gap_UI);
-    addChildFlags_Widget(listAndActions,
-                         iClob(d->list),
-                         expand_WidgetFlag | drawBackgroundToHorizontalSafeArea_WidgetFlag);
-    addChildFlags_Widget(listAndActions, iClob(d->actions = new_Widget()),
-                         arrangeHorizontal_WidgetFlag |
-                         arrangeHeight_WidgetFlag |
-                         resizeWidthOfChildren_WidgetFlag |
-                         drawBackgroundToHorizontalSafeArea_WidgetFlag);
-    setBackgroundColor_Widget(d->actions, uiBackground_ColorId);
+    if (!isPhone) {
+        addChildFlags_Widget(listAndActions,
+                             iClob(d->list),
+                             expand_WidgetFlag | drawBackgroundToHorizontalSafeArea_WidgetFlag);
+    }
+    setId_Widget(addChildFlags_Widget(listAndActions,
+                                      iClob(d->actions = new_Widget()),
+                                      arrangeHorizontal_WidgetFlag | arrangeHeight_WidgetFlag |
+                                          resizeWidthOfChildren_WidgetFlag |
+                                          drawBackgroundToHorizontalSafeArea_WidgetFlag),
+                 "actions");
+    setBackgroundColor_Widget(d->actions, uiBackgroundSidebar_ColorId);
+    if (isPhone) {
+        addChildFlags_Widget(listAndActions,
+                             iClob(d->list),
+                             expand_WidgetFlag | drawBackgroundToHorizontalSafeArea_WidgetFlag);
+    }
     d->contextItem = NULL;
     d->blank = new_Widget();
     addChildFlags_Widget(content, iClob(d->blank), resizeChildren_WidgetFlag);
@@ -660,6 +669,7 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     if (side == left_SideBarSide) {
         postCommand_App("~sidebar.update"); /* unread count */
     }
+    printTree_Widget(as_Widget(d));
 }
 
 void deinit_SidebarWidget(iSidebarWidget *d) {
