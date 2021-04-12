@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-04-09 07:51+0000\n"
+"PO-Revision-Date: 2021-04-14 09:18+0000\n"
 "Last-Translator: Страхиња Радић <contact@strahinja.org>\n"
 "Language-Team: Serbian <http://weblate.skyjake.fi/projects/lagrange/ui/sr/>\n"
 "Language: sr\n"
@@ -1458,3 +1458,18 @@ msgstr "Подебљај везе:"
 # Interpretation: (Bold links) on light (background).
 msgid "prefs.boldlink.light"
 msgstr "у светлој теми"
+
+msgid "menu.select.clear"
+msgstr "Очисти избор"
+
+msgid "sidebar.action.feeds.showall"
+msgstr "Сви"
+
+msgid "sidebar.action.feeds.showunread"
+msgstr "Непрочитани"
+
+msgid "sidebar.action.ident.new"
+msgstr "Нов…"
+
+msgid "sidebar.action.ident.import"
+msgstr "Увези…"
