@@ -768,7 +768,7 @@ iLabelWidget *makeMenuButton_LabelWidget(const char *label, const iMenuItem *ite
 /*-----------------------------------------------------------------------------------------------*/
 
 static iBool isTabPage_Widget_(const iWidget *tabs, const iWidget *page) {
-    return page->parent == findChild_Widget(tabs, "tabs.pages");
+    return page && page->parent == findChild_Widget(tabs, "tabs.pages");
 }
 
 static iBool tabSwitcher_(iWidget *tabs, const char *cmd) {
@@ -787,7 +787,7 @@ static iBool tabSwitcher_(iWidget *tabs, const char *cmd) {
         }
         else if (hasParent_Widget(target, tabs)) {
             /* Some widget on a page. */
-            while (!isTabPage_Widget_(tabs, target)) {
+            while (target && !isTabPage_Widget_(tabs, target)) {
                 target = target->parent;
             }
             showTabPage_Widget(tabs, target);

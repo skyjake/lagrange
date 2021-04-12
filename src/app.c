@@ -397,7 +397,7 @@ static iBool loadState_App_(iApp *d) {
             readData_File(f, 4, magic);
             if (!memcmp(magic, magicTabDocument_App_, 4)) {
                 if (!doc) {
-                    doc = newTab_App(NULL, iTrue);
+                    doc = newTab_App(NULL, iFalse /* no switching */);
                 }
                 if (read8_File(f)) {
                     current = doc;
