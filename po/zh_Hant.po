@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-04-09 13:18+0000\n"
+"PO-Revision-Date: 2021-04-14 09:18+0000\n"
 "Last-Translator: Shibo Lyu <github@of.sb>\n"
 "Language-Team: Chinese (Traditional) <http://weblate.skyjake.fi/projects/"
 "lagrange/ui/zh_Hant/>\n"
@@ -1393,3 +1393,18 @@ msgstr[0] "%d 日前"
 
 msgid "mb.per.sec"
 msgstr "MB/s"
+
+msgid "menu.select.clear"
+msgstr "取消選取"
+
+msgid "sidebar.action.feeds.showall"
+msgstr "全部"
+
+msgid "sidebar.action.feeds.showunread"
+msgstr "未讀"
+
+msgid "sidebar.action.ident.new"
+msgstr "建立…"
+
+msgid "sidebar.action.ident.import"
+msgstr "匯入…"
