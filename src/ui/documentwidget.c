@@ -174,6 +174,7 @@ iDefineTypeConstruction(DrawBufs)
 
 /*----------------------------------------------------------------------------------------------*/
 
+static void animate_DocumentWidget_             (void *ticker);
 static void animateMedia_DocumentWidget_        (iDocumentWidget *d);
 static void updateSideIconBuf_DocumentWidget_   (const iDocumentWidget *d);
 
@@ -338,6 +339,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
 }
 
 void deinit_DocumentWidget(iDocumentWidget *d) {
+    removeTicker_App(animate_DocumentWidget_, d);
     delete_Translation(d->translation);
     delete_DrawBufs(d->drawBufs);
     delete_VisBuf(d->visBuf);
