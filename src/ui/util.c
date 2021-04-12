@@ -1138,6 +1138,9 @@ static iAnyObject *addPanelChild_(iWidget *panel, iAnyObject *child, int64_t fla
                  precedingElementType != heading_PrefsElement) ||
                 (elementType == dropdown_PrefsElement &&
                  precedingElementType != dropdown_PrefsElement &&
+                 precedingElementType != heading_PrefsElement) ||
+                (elementType == textInput_PrefsElement &&
+                 precedingElementType != textInput_PrefsElement &&
                  precedingElementType != heading_PrefsElement)) {
                 addChild_Widget(panel, iClob(makePadding_Widget(lineHeight_Text(defaultBig_FontId))));
             }
@@ -1552,6 +1555,7 @@ void finalizeSheet_Widget(iWidget *sheet) {
                                  resizeToParentWidth_WidgetFlag | arrangeVertical_WidgetFlag);
         }
         updateSheetPanelMetrics_(sheet);
+        iAssert(sheet->parent);
         arrange_Widget(sheet->parent);
         postCommand_App("widget.overflow"); /* with the correct dimensions */
 //        printTree_Widget(sheet);

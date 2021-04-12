@@ -2103,6 +2103,7 @@ iBool handleCommand_App(const char *cmd) {
         iCertImportWidget *imp = new_CertImportWidget();
         setPageContent_CertImportWidget(imp, sourceContent_DocumentWidget(document_App()));
         addChild_Widget(d->window->root, iClob(imp));
+        finalizeSheet_Widget(as_Widget(imp));
         postRefresh_App();
         return iTrue;
     }

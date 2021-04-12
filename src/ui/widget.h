@@ -235,6 +235,7 @@ void    setFrameColor_Widget        (iWidget *, int frameColor);
 void    setCommandHandler_Widget    (iWidget *, iBool (*handler)(iWidget *, const char *));
 iAny *  addChild_Widget             (iWidget *, iAnyObject *child); /* holds a ref */
 iAny *  addChildPos_Widget          (iWidget *, iAnyObject *child, enum iWidgetAddPos addPos);
+iAny *  addChildPosFlags_Widget     (iWidget *, iAnyObject *child, enum iWidgetAddPos addPos, int64_t childFlags);
 iAny *  addChildFlags_Widget        (iWidget *, iAnyObject *child, int64_t childFlags); /* holds a ref */
 iAny *  insertChildAfter_Widget     (iWidget *, iAnyObject *child, size_t afterIndex);
 iAny *  insertChildAfterFlags_Widget(iWidget *, iAnyObject *child, size_t afterIndex, int64_t childFlags);

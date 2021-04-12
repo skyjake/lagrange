@@ -1130,6 +1130,10 @@ iAny *addChild_Widget(iWidget *d, iAnyObject *child) {
 }
 
 iAny *addChildPos_Widget(iWidget *d, iAnyObject *child, enum iWidgetAddPos addPos) {
+    return addChildPosFlags_Widget(d, child, addPos, 0);
+}
+
+iAny *addChildPosFlags_Widget(iWidget *d, iAnyObject *child, enum iWidgetAddPos addPos, int64_t flags) {
     iAssert(child);
     iAssert(d != child);
     iWidget *widget = as_Widget(child);
@@ -1144,6 +1148,9 @@ iAny *addChildPos_Widget(iWidget *d, iAnyObject *child, enum iWidgetAddPos addPo
         pushFront_ObjectList(d->children, widget); /* ref */
     }
     widget->parent = d;
+    if (flags) {
+        setFlags_Widget(child, flags, iTrue);
+    }
     return child;
 }
 

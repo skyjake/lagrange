@@ -167,7 +167,7 @@ void init_CertImportWidget(iCertImportWidget *d) {
                          "certimport.accept" } },
         2);
     addChild_Widget(w, iClob(buttons));
-    arrange_Widget(w);
+//    arrange_Widget(w);
     if (deviceType_App() != desktop_AppDeviceType) {
         /* Try auto-pasting. */
         postCommand_App("certimport.paste");

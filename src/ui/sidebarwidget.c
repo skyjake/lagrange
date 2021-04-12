@@ -627,23 +627,17 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     addChild_Widget(content, iClob(listAndActions));
     d->list = new_ListWidget();
     setPadding_Widget(as_Widget(d->list), 0, gap_UI, 0, gap_UI);
-    if (!isPhone) {
-        addChildFlags_Widget(listAndActions,
-                             iClob(d->list),
-                             expand_WidgetFlag | drawBackgroundToHorizontalSafeArea_WidgetFlag);
-    }
-    setId_Widget(addChildFlags_Widget(listAndActions,
-                                      iClob(d->actions = new_Widget()),
-                                      arrangeHorizontal_WidgetFlag | arrangeHeight_WidgetFlag |
-                                          resizeWidthOfChildren_WidgetFlag |
-                                          drawBackgroundToHorizontalSafeArea_WidgetFlag),
+    addChildFlags_Widget(listAndActions,
+                         iClob(d->list),
+                         expand_WidgetFlag | drawBackgroundToHorizontalSafeArea_WidgetFlag);
+    setId_Widget(addChildPosFlags_Widget(listAndActions,
+                                         iClob(d->actions = new_Widget()),
+                                         isPhone ? front_WidgetAddPos : back_WidgetAddPos,
+                                         arrangeHorizontal_WidgetFlag | arrangeHeight_WidgetFlag |
+                                             resizeWidthOfChildren_WidgetFlag |
+                                             drawBackgroundToHorizontalSafeArea_WidgetFlag),
                  "actions");
     setBackgroundColor_Widget(d->actions, uiBackgroundSidebar_ColorId);
-    if (isPhone) {
-        addChildFlags_Widget(listAndActions,
-                             iClob(d->list),
-                             expand_WidgetFlag | drawBackgroundToHorizontalSafeArea_WidgetFlag);
-    }
     d->contextItem = NULL;
     d->blank = new_Widget();
     addChildFlags_Widget(content, iClob(d->blank), resizeChildren_WidgetFlag);
@@ -669,7 +663,6 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     if (side == left_SideBarSide) {
         postCommand_App("~sidebar.update"); /* unread count */
     }
-    printTree_Widget(as_Widget(d));
 }
 
 void deinit_SidebarWidget(iSidebarWidget *d) {
