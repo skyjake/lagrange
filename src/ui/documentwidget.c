@@ -584,6 +584,28 @@ static void animate_DocumentWidget_(void *ticker) {
     }
 }
 
+static iBool isHoverAllowed_DocumentWidget_(const iDocumentWidget *d) {
+    if (!isHover_Widget(d)) {
+        return iFalse;
+    }
+    if (!(d->state == ready_RequestState || d->state == receivedPartialResponse_RequestState)) {
+        return iFalse;
+    }
+    if (d->flags & noHoverWhileScrolling_DocumentWidgetFlag) {
+        return iFalse;
+    }
+    if (d->flags & pinchZoom_DocumentWidgetFlag) {
+        return iFalse;
+    }
+    if (flags_Widget(constAs_Widget(d)) & touchDrag_WidgetFlag) {
+        return iFalse;
+    }
+    if (flags_Widget(constAs_Widget(d->scroll)) & pressed_WidgetFlag) {
+        return iFalse;
+    }
+    return iTrue;
+}
+
 static void updateHover_DocumentWidget_(iDocumentWidget *d, iInt2 mouse) {
     const iWidget *w            = constAs_Widget(d);
     const iRect    docBounds    = documentBounds_DocumentWidget_(d);
@@ -591,13 +613,11 @@ static void updateHover_DocumentWidget_(iDocumentWidget *d, iInt2 mouse) {
     d->hoverPre                 = NULL;
     d->hoverLink                = NULL;
     const iInt2 hoverPos = addY_I2(sub_I2(mouse, topLeft_Rect(docBounds)), value_Anim(&d->scrollY));
-    if (isHover_Widget(w) && (~d->flags & noHoverWhileScrolling_DocumentWidgetFlag) &&
-        (d->state == ready_RequestState || d->state == receivedPartialResponse_RequestState)) {
+    if (isHoverAllowed_DocumentWidget_(d)) {
         iConstForEach(PtrArray, i, &d->visibleLinks) {
             const iGmRun *run = i.ptr;
             /* Click targets are slightly expanded so there are no gaps between links. */
-            if (~d->flags & pinchZoom_DocumentWidgetFlag &&
-                contains_Rect(expanded_Rect(run->bounds, init1_I2(gap_Text / 2)), hoverPos)) {
+            if (contains_Rect(expanded_Rect(run->bounds, init1_I2(gap_Text / 2)), hoverPos)) {
                 d->hoverLink = run;
                 break;
             }
@@ -613,7 +633,7 @@ static void updateHover_DocumentWidget_(iDocumentWidget *d, iInt2 mouse) {
         refresh_Widget(w);
     }
     /* Hovering over preformatted blocks. */
-    if (isHover_Widget(w) && ~d->flags & pinchZoom_DocumentWidgetFlag) {
+    if (isHoverAllowed_DocumentWidget_(d)) {
         iConstForEach(PtrArray, j, &d->visiblePre) {
             const iGmRun *run = j.ptr;
             if (contains_Rect(run->bounds, hoverPos)) {
@@ -2230,6 +2250,9 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                 }
             }
         }
+        if (flags_Widget(w) & touchDrag_WidgetFlag) {
+            postCommand_App("document.select arg:0"); /* we can't handle both at the same time */
+        }
         invalidateWideRunsWithNonzeroOffset_DocumentWidget_(d); /* markers don't support offsets */
         resetWideRuns_DocumentWidget_(d);
         refresh_Widget(w);
@@ -3085,6 +3108,8 @@ struct Impl_DrawContext {
     iBool inSelectMark;
     iBool inFoundMark;
     iBool showLinkNumbers;
+    iRect firstMarkRect;
+    iRect lastMarkRect;
 };
 
 static void fillRange_DrawContext_(iDrawContext *d, const iGmRun *run, enum iColorId color,
@@ -3119,8 +3144,15 @@ static void fillRange_DrawContext_(iDrawContext *d, const iGmRun *run, enum iCol
         if (~run->flags & decoration_GmRunFlag) {
             const iInt2 visPos =
                 add_I2(run->bounds.pos, addY_I2(d->viewPos, -value_Anim(&d->widget->scrollY)));
-            fillRect_Paint(&d->paint, (iRect){ addX_I2(visPos, x),
-                                               init_I2(w, height_Rect(run->bounds)) }, color);
+            const iRect rangeRect = { addX_I2(visPos, x), init_I2(w, height_Rect(run->bounds)) };
+            if (rangeRect.size.x) {
+                fillRect_Paint(&d->paint, rangeRect, color);
+                /* Keep track of the first and last marked rects. */
+                if (d->firstMarkRect.size.x == 0) {
+                    d->firstMarkRect = rangeRect;
+                }
+                d->lastMarkRect = rangeRect;
+            }
         }
     }
     /* Link URLs are not part of the visible document, so they are ignored above. Handle
@@ -3591,6 +3623,27 @@ static void drawMedia_DocumentWidget_(const iDocumentWidget *d, iPaint *p) {
     }
 }
 
+static void drawPin_(iPaint *p, iRect rangeRect, int dir) {
+    const int pinColor = tmQuote_ColorId;
+    const int height = height_Rect(rangeRect);
+    iRect pin;
+    if (dir == 0) {
+        pin = (iRect){
+            add_I2(topLeft_Rect(rangeRect), init_I2(-gap_UI / 4, -gap_UI)),
+            init_I2(gap_UI / 2, height_Rect(rangeRect) + gap_UI)
+        };
+    }
+    else {
+        pin = (iRect){
+            addX_I2(topRight_Rect(rangeRect), -gap_UI / 4),
+            init_I2(gap_UI / 2, height_Rect(rangeRect) + gap_UI)
+        };
+    }
+    fillRect_Paint(p, pin, pinColor);
+    fillRect_Paint(p, initCentered_Rect(dir == 0 ? topMid_Rect(pin) : bottomMid_Rect(pin),
+                                        init1_I2(gap_UI * 2)), pinColor);
+}
+
 static void draw_DocumentWidget_(const iDocumentWidget *d) {
     const iWidget *w        = constAs_Widget(d);
     const iRect    bounds   = bounds_Widget(w);
@@ -3613,6 +3666,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
         .widget          = d,
         .showLinkNumbers = (d->flags & showLinkNumbers_DocumentWidgetFlag) != 0,
     };
+    const iBool isTouchSelecting = (flags_Widget(w) & touchDrag_WidgetFlag) != 0;
     /* Currently visible region. */
     const iRangei vis  = visibleRange_DocumentWidget_(d);
     const iRangei full = { 0, size_GmDocument(d->doc).y };
@@ -3667,7 +3721,10 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
     draw_VisBuf(visBuf, init_I2(bounds.pos.x, yTop));
     /* Text markers. */
     if (!isEmpty_Range(&d->foundMark) || !isEmpty_Range(&d->selectMark)) {
-        SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()),
+        SDL_Renderer *render = renderer_Window(get_Window());
+        ctx.firstMarkRect = zero_Rect();
+        ctx.lastMarkRect = zero_Rect();
+        SDL_SetRenderDrawBlendMode(render,
                                    isDark_ColorTheme(colorTheme_App()) ? SDL_BLENDMODE_ADD
                                                                        : SDL_BLENDMODE_BLEND);
         ctx.viewPos = topLeft_Rect(docBounds);
@@ -3685,7 +3742,12 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
             }
         }
         render_GmDocument(d->doc, vis, drawMark_DrawContext_, &ctx);
-        SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_NONE);
+        SDL_SetRenderDrawBlendMode(render, SDL_BLENDMODE_NONE);
+        /* Selection range pins. */
+        if (isTouchSelecting) {
+            drawPin_(&ctx.paint, ctx.firstMarkRect, 0);
+            drawPin_(&ctx.paint, ctx.lastMarkRect, 1);
+        }
     }
     drawMedia_DocumentWidget_(d, &ctx.paint);
     unsetClip_Paint(&ctx.paint);
@@ -3755,16 +3817,13 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
                           d->pinchZoomPosted);
     }
     /* Touch selection indicator. */
-    if (flags_Widget(w) & touchDrag_WidgetFlag) {
-        iString msg;
-        init_String(&msg);
-        format_String(&msg, "Selecting: drag and tap"); /* TODO: Needed? (N bytes selected?) */
-        fillRect_Paint(&ctx.paint, (iRect){ topLeft_Rect(bounds),
-            init_I2(width_Rect(bounds), lineHeight_Text(uiLabelBold_FontId))},
-                       uiTextAction_ColorId);
-        drawRange_Text(uiLabelBold_FontId, addX_I2(topLeft_Rect(bounds), 3 * gap_UI),
-                       uiBackground_ColorId, range_String(&msg));
-        deinit_String(&msg);
+    if (isTouchSelecting) {
+        iRect rect = { topLeft_Rect(bounds),
+                       init_I2(width_Rect(bounds), lineHeight_Text(uiLabelBold_FontId)) };
+        fillRect_Paint(&ctx.paint, rect, uiTextAction_ColorId);
+        const iRangecc mark = selectMark_DocumentWidget_(d);
+        drawCentered_Text(uiLabelBold_FontId, rect, iFalse, uiBackground_ColorId, "%zu bytes selected",
+                          size_Range(&mark));
     }
 }
 
