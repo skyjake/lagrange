@@ -58,9 +58,10 @@ struct Impl_Touch {
     iWidget *edgeDragging;
     iBool hasMoved;
     iBool isTapBegun;
+    iBool isLeftDown;
     iBool isTouchDrag;
-    iBool didConvertToTouchDrag;
     iBool isTapAndHold;
+    iBool didBeginOnTouchDrag;
     int pinchId;
     enum iTouchEdge edge;
     uint32_t startTime;
@@ -233,7 +234,7 @@ static void update_TouchState_(void *ptr) {
         /* Holding a touch will reset previous momentum for this widget. */
         if (isStationary_Touch_(touch)) {
             const int elapsed = nowTime - touch->startTime;
-            if (elapsed > 25) {
+            if (elapsed > 25) { /* TODO: Shouldn't this be done only once? */
                 clearWidgetMomentum_TouchState_(d, touch->affinity);
                 clear_Array(d->moms); /* stop all ongoing momentum */
             }
@@ -254,13 +255,12 @@ static void update_TouchState_(void *ptr) {
 #endif
                 dispatchMotion_Touch_(init_F3(-100, -100, 0), 0);
             }
-            if (touch->isTapAndHold && touch->affinity &&
-                flags_Widget(touch->affinity) & touchDrag_WidgetFlag) {
+            else if (!touch->didBeginOnTouchDrag && touch->isTapAndHold &&
+                     touch->affinity && flags_Widget(touch->affinity) & touchDrag_WidgetFlag) {
                 /* Convert to touch drag. */
-                touch->isTapAndHold = iFalse;
                 touch->isTouchDrag = iTrue;
-                touch->didConvertToTouchDrag = iTrue;
                 dispatchButtonDown_Touch_(touch->pos[0]);
+                touch->isLeftDown = iTrue;
             }
         }
     }
@@ -451,6 +451,7 @@ iBool processEvent_Touch(const SDL_Event *ev) {
             .affinity = aff,
             .edgeDragging = dragging,
 //            .hasMoved = (flags_Widget(aff) & touchDrag_WidgetFlag) != 0,
+            .didBeginOnTouchDrag = (flags_Widget(aff) & touchDrag_WidgetFlag) != 0,
             .edge = edge,
             .startTime = nowTime,
             .startPos = pos,
@@ -497,6 +498,7 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                 dispatchMotion_Touch_(touch->startPos, 0);
                 dispatchButtonDown_Touch_(touch->startPos);
                 dispatchMotion_Touch_(pos, SDL_BUTTON_LMASK);
+                touch->isLeftDown = iTrue;
                 return iTrue;
             }
             const iFloat3 amount = mul_F3(init_F3(fing->dx, fing->dy, 0),
@@ -594,19 +596,21 @@ iBool processEvent_Touch(const SDL_Event *ev) {
             if (touch->edgeDragging) {
                 setFlags_Widget(touch->edgeDragging, dragged_WidgetFlag, iFalse);
             }
-            if (touch->isTapAndHold) {
-                if (!isStationary_Touch_(touch)) {
-                    dispatchClick_Touch_(touch, SDL_BUTTON_LEFT);
-                }
-                setHover_Widget(NULL);
-                remove_ArrayIterator(&i);
-                continue;
-            }
             if (flags_Widget(touch->affinity) & touchDrag_WidgetFlag) {
-                if (!touch->isTouchDrag && !touch->didConvertToTouchDrag) {
+                if (!touch->isLeftDown && !touch->isTapAndHold) {
+                    /* This will be a click on a touchDrag widget. */
                     dispatchButtonDown_Touch_(touch->startPos);
                 }
                 dispatchButtonUp_Touch_(pos);
+                remove_ArrayIterator(&i);
+                continue;
+            }
+            if (touch->isTapAndHold) {
+                if (!isStationary_Touch_(touch)) {
+                    /* Finger moved while holding, so click at the end position. */
+                    dispatchClick_Touch_(touch, SDL_BUTTON_LEFT);
+                }
+                setHover_Widget(NULL);
                 remove_ArrayIterator(&i);
                 continue;
             }
