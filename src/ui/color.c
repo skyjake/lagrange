@@ -186,7 +186,7 @@ void setThemePalette_Color(enum iColorTheme theme) {
             copy_(uiBackgroundPressed_ColorId, altAccentHi);
             copy_(uiBackgroundFramelessHover_ColorId, accentHi);
             set_Color(uiBackgroundSidebar_ColorId,
-                      mix_Color(get_Color(white_ColorId), get_Color(gray75_ColorId), 0.67f));
+                      mix_Color(get_Color(white_ColorId), get_Color(gray75_ColorId), 0.5f));
             copy_(uiBackgroundMenu_ColorId, white_ColorId);
             copy_(uiText_ColorId, black_ColorId);
             copy_(uiTextStrong_ColorId, black_ColorId);
