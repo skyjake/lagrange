@@ -338,12 +338,12 @@ static void removeMacMenus_(void) {
 
 #if defined (iPlatformAppleMobile)
 static const iMenuItem identityButtonMenuItems_[] = {
-    { "No Active Identity", 0, 0, "ident.showactive" },
+    { "${menu.identity.notactive}", 0, 0, "ident.showactive" },
     { "---", 0, 0, NULL },
-    { add_Icon " New Identity...", SDLK_n, KMOD_PRIMARY | KMOD_SHIFT, "ident.new" },
-    { "Import...", SDLK_i, KMOD_PRIMARY | KMOD_SHIFT, "ident.import" },
+    { add_Icon " ${menu.identity.new}", SDLK_n, KMOD_PRIMARY | KMOD_SHIFT, "ident.new" },
+    { "${menu.identity.import}", SDLK_i, KMOD_PRIMARY | KMOD_SHIFT, "ident.import" },
     { "---", 0, 0, NULL },
-    { person_Icon " Show Identities", 0, 0, "toolbar.showident" },
+    { person_Icon " ${menu.show.identities}", 0, 0, "toolbar.showident" },
 };
 #else /* desktop */
 static const iMenuItem identityButtonMenuItems_[] = {
