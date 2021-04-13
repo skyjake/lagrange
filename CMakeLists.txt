@@ -58,6 +58,7 @@ set (EMBED_RESOURCES
     res/fonts/FiraSans-Italic.ttf
     res/fonts/FiraSans-Light.ttf
     res/fonts/FiraSans-Regular.ttf
+    res/fonts/FiraSans-SemiBold.ttf
     res/fonts/Literata-Regular-opsz=14.ttf
     res/fonts/Literata-Bold-opsz=36.ttf
     res/fonts/Literata-ExtraLight-opsz=18.ttf

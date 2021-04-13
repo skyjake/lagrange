@@ -233,7 +233,7 @@ static void initFonts_Text_(iText *d) {
     float         h123Scaling  = 1.0f; /* glyph scaling (<=1.0), for increasing line spacing */
     if (d->contentFont == firaSans_TextFont) {
         regularFont = &fontFiraSansRegular_Embedded;
-        boldFont    = &fontFiraSansBold_Embedded;
+        boldFont    = &fontFiraSansSemiBold_Embedded;
         lightFont   = &fontFiraSansLight_Embedded;
         italicFont  = &fontFiraSansItalic_Embedded;
         scaling     = italicScaling = lightScaling = 0.85f;
@@ -251,7 +251,7 @@ static void initFonts_Text_(iText *d) {
         italicFont  = &fontLiterataLightItalicopsz10_Embedded;
         lightFont   = &fontLiterataExtraLightopsz18_Embedded;
     }
-    else if (d->contentFont == sourceSansPro_TextFont) {
+    else if (d->contentFont == sourceSans3_TextFont) {
         regularFont = &fontSourceSans3Regular_Embedded;
         boldFont    = &fontSourceSans3Semibold_Embedded;
         italicFont  = &fontSourceSans3It_Embedded;
@@ -278,7 +278,7 @@ static void initFonts_Text_(iText *d) {
         h12Font = &fontLiterataBoldopsz36_Embedded;
         h3Font  = &fontLiterataRegularopsz14_Embedded;
     }
-    else if (d->headingFont == sourceSansPro_TextFont) {
+    else if (d->headingFont == sourceSans3_TextFont) {
         h12Font = &fontSourceSans3Bold_Embedded;
         h3Font = &fontSourceSans3Regular_Embedded;
     }
