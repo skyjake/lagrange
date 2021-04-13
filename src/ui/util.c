@@ -1902,14 +1902,14 @@ static void addRadioButton_(iWidget *parent, const char *id, const char *label, 
 
 static void addFontButtons_(iWidget *parent, const char *id) {
     const char *fontNames[] = {
-        "Nunito", "Fira Sans", "Literata", "Tinos", "Source Sans Pro", "Iosevka"
+        "Nunito", "Fira Sans", "Literata", "Tinos", "Source Sans 3", "Iosevka"
     };
     iArray *items = new_Array(sizeof(iMenuItem));
     iForIndices(i, fontNames) {
         pushBack_Array(items,
                        &(iMenuItem){ fontNames[i], 0, 0, format_CStr("!%s.set arg:%d", id, i) });
     }
-    iLabelWidget *button = makeMenuButton_LabelWidget("Source Sans Pro", data_Array(items), size_Array(items));
+    iLabelWidget *button = makeMenuButton_LabelWidget("Source Sans 3", data_Array(items), size_Array(items));
     setBackgroundColor_Widget(findChild_Widget(as_Widget(button), "menu"), uiBackgroundMenu_ColorId);
     setId_Widget(as_Widget(button), format_CStr("prefs.%s", id));
     addChildFlags_Widget(parent, iClob(button), alignLeft_WidgetFlag);

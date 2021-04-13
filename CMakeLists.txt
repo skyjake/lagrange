@@ -72,8 +72,11 @@ set (EMBED_RESOURCES
     res/fonts/Nunito-ExtraLight.ttf
     res/fonts/Nunito-LightItalic.ttf
     res/fonts/Nunito-Regular.ttf
-    res/fonts/SourceSansPro-Regular.ttf
-    res/fonts/SourceSansPro-Bold.ttf
+    res/fonts/SourceSans3-Bold.ttf
+    res/fonts/SourceSans3-ExtraLight.ttf
+    res/fonts/SourceSans3-It.ttf
+    res/fonts/SourceSans3-Regular.ttf
+    res/fonts/SourceSans3-Semibold.ttf
     res/fonts/Symbola.ttf
     res/lang/de.bin
     res/lang/en.bin

@@ -252,11 +252,10 @@ static void initFonts_Text_(iText *d) {
         lightFont   = &fontLiterataExtraLightopsz18_Embedded;
     }
     else if (d->contentFont == sourceSansPro_TextFont) {
-        regularFont = &fontSourceSansProRegular_Embedded;
-        boldFont    = &fontSourceSansProBold_Embedded;
-        italicFont  = &fontFiraSansItalic_Embedded;
-        lightFont   = &fontFiraSansLight_Embedded;
-        lightScaling = italicScaling = 0.85f;
+        regularFont = &fontSourceSans3Regular_Embedded;
+        boldFont    = &fontSourceSans3Semibold_Embedded;
+        italicFont  = &fontSourceSans3It_Embedded;
+        lightFont   = &fontSourceSans3ExtraLight_Embedded;
     }
     else if (d->contentFont == iosevka_TextFont) {
         regularFont = &fontIosevkaTermExtended_Embedded;
@@ -280,8 +279,8 @@ static void initFonts_Text_(iText *d) {
         h3Font  = &fontLiterataRegularopsz14_Embedded;
     }
     else if (d->headingFont == sourceSansPro_TextFont) {
-        h12Font = &fontSourceSansProBold_Embedded;
-        h3Font = &fontSourceSansProRegular_Embedded;
+        h12Font = &fontSourceSans3Bold_Embedded;
+        h3Font = &fontSourceSans3Regular_Embedded;
     }
     else if (d->headingFont == iosevka_TextFont) {
         h12Font = &fontIosevkaTermExtended_Embedded;
@@ -301,15 +300,15 @@ static void initFonts_Text_(iText *d) {
         /* Content sizes: smallmono, mono, 1.0, 1.2, 1.333, 1.666, 2.0 */
     } fontData[max_FontId] = {
         /* UI fonts: normal weight */
-        { &fontSourceSansProRegular_Embedded, uiSize,               1.0f, uiNormal_FontSize },
-        { &fontSourceSansProRegular_Embedded, uiSize * 1.125f,      1.0f, uiMedium_FontSize },
-        { &fontSourceSansProRegular_Embedded, uiSize * 1.333f,      1.0f, uiBig_FontSize },
-        { &fontSourceSansProRegular_Embedded, uiSize * 1.666f,      1.0f, uiLarge_FontSize },
+        { &fontSourceSans3Regular_Embedded, uiSize,               1.0f, uiNormal_FontSize },
+        { &fontSourceSans3Regular_Embedded, uiSize * 1.125f,      1.0f, uiMedium_FontSize },
+        { &fontSourceSans3Regular_Embedded, uiSize * 1.333f,      1.0f, uiBig_FontSize },
+        { &fontSourceSans3Regular_Embedded, uiSize * 1.666f,      1.0f, uiLarge_FontSize },
         /* UI fonts: bold weight */
-        { &fontSourceSansProBold_Embedded,    uiSize,               1.0f, uiNormal_FontSize },
-        { &fontSourceSansProBold_Embedded,    uiSize * 1.125f,      1.0f, uiMedium_FontSize },
-        { &fontSourceSansProBold_Embedded,    uiSize * 1.333f,      1.0f, uiBig_FontSize },
-        { &fontSourceSansProBold_Embedded,    uiSize * 1.666f,      1.0f, uiLarge_FontSize },
+        { &fontSourceSans3Bold_Embedded,    uiSize,               1.0f, uiNormal_FontSize },
+        { &fontSourceSans3Bold_Embedded,    uiSize * 1.125f,      1.0f, uiMedium_FontSize },
+        { &fontSourceSans3Bold_Embedded,    uiSize * 1.333f,      1.0f, uiBig_FontSize },
+        { &fontSourceSans3Bold_Embedded,    uiSize * 1.666f,      1.0f, uiLarge_FontSize },
         /* content fonts */
         { regularFont,                        textSize,             scaling,      contentRegular_FontSize },
         { boldFont,                           textSize,             scaling,      contentRegular_FontSize },
@@ -322,7 +321,7 @@ static void initFonts_Text_(iText *d) {
         { &fontIosevkaTermExtended_Embedded,  smallMonoSize,        1.0f,         contentMonoSmall_FontSize },
         { &fontIosevkaTermExtended_Embedded,  monoSize,             1.0f,         contentMono_FontSize },
         /* extra content fonts */
-        { &fontSourceSansProRegular_Embedded, textSize,             scaling, contentRegular_FontSize },
+        { &fontSourceSans3Regular_Embedded, textSize,             scaling, contentRegular_FontSize },
         { &fontIosevkaTermExtended_Embedded,  textSize,             0.866f,  contentRegular_FontSize },
         /* symbols and scripts */
 #define DEFINE_FONT_SET(data) \
