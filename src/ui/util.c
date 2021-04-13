@@ -1901,13 +1901,26 @@ static void addRadioButton_(iWidget *parent, const char *id, const char *label, 
 }
 
 static void addFontButtons_(iWidget *parent, const char *id) {
-    const char *fontNames[] = {
-        "Nunito", "Fira Sans", "Literata", "Tinos", "Source Sans 3", "Iosevka"
-    };
+    const struct {
+        const char *   name;
+        enum iTextFont cfgId;
+    } fonts[] = { { "Nunito", nunito_TextFont },
+                  { "Source Sans 3", sourceSans3_TextFont },
+                  { "Fira Sans", firaSans_TextFont },
+                  { "---", -1 },
+                  { "Literata", literata_TextFont },
+                  { "Tinos", tinos_TextFont },
+                  { "---", -1 },
+                  { "Iosevka", iosevka_TextFont } };
     iArray *items = new_Array(sizeof(iMenuItem));
-    iForIndices(i, fontNames) {
+    iForIndices(i, fonts) {
         pushBack_Array(items,
-                       &(iMenuItem){ fontNames[i], 0, 0, format_CStr("!%s.set arg:%d", id, i) });
+                       &(iMenuItem){ fonts[i].name,
+                                     0,
+                                     0,
+                                     fonts[i].cfgId >= 0
+                                         ? format_CStr("!%s.set arg:%d", id, fonts[i].cfgId)
+                                         : NULL });
     }
     iLabelWidget *button = makeMenuButton_LabelWidget("Source Sans 3", data_Array(items), size_Array(items));
     setBackgroundColor_Widget(findChild_Widget(as_Widget(button), "menu"), uiBackgroundMenu_ColorId);
