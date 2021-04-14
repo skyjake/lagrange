@@ -33,12 +33,16 @@ struct Impl_VisBufTexture {
     SDL_Texture *texture;
     int origin;
     iRangei validRange;
+    void *user;
 };
+
+#define numBuffers_VisBuf   ((size_t) 4)
 
 struct Impl_VisBuf {
     iInt2 texSize;
     iRangei vis;
-    iVisBufTexture buffers[4];
+    iVisBufTexture buffers[numBuffers_VisBuf];
+    void (*bufferInvalidated)(iVisBuf *, size_t index);
 };
 
 iDeclareTypeConstruction(VisBuf)
@@ -46,8 +50,10 @@ iDeclareTypeConstruction(VisBuf)
 void    invalidate_VisBuf       (iVisBuf *);
 void    alloc_VisBuf            (iVisBuf *, const iInt2 size, int granularity);
 void    dealloc_VisBuf          (iVisBuf *);
-void    reposition_VisBuf       (iVisBuf *, const iRangei vis);
+iBool   reposition_VisBuf       (iVisBuf *, const iRangei vis); /* returns true if `vis` changes */
 void    validate_VisBuf         (iVisBuf *);
 
+iRangei allocRange_VisBuf       (const iVisBuf *);
+iRangei bufferRange_VisBuf      (const iVisBuf *, size_t index);
 void    invalidRanges_VisBuf    (const iVisBuf *, const iRangei full, iRangei *out_invalidRanges);
 void    draw_VisBuf             (const iVisBuf *, iInt2 topLeft);

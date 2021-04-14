@@ -21,10 +21,12 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "periodic.h"
+#include "ui/widget.h"
 #include "app.h"
 
 #include <the_Foundation/string.h>
 #include <the_Foundation/thread.h>
+#include <SDL_events.h>
 #include <SDL_timer.h>
 
 iDeclareType(PeriodicCommand)
@@ -54,7 +56,7 @@ iDefineTypeConstructionArgs(PeriodicCommand, (iAny *ctx, const char *cmd), ctx, 
 
 static const uint32_t postingInterval_Periodic_ = 500;
 
-iBool postCommands_Periodic(iPeriodic *d) {
+iBool dispatchCommands_Periodic(iPeriodic *d) {
     const uint32_t now = SDL_GetTicks();
     if (now - d->lastPostTime < postingInterval_Periodic_) {
         return iFalse;
@@ -63,7 +65,14 @@ iBool postCommands_Periodic(iPeriodic *d) {
     iBool wasPosted = iFalse;
     lock_Mutex(d->mutex);
     iConstForEach(Array, i, &d->commands.values) {
-        postCommandString_App(&((const iPeriodicCommand *) i.value)->command);
+        const iPeriodicCommand *pc = i.value;
+        const SDL_UserEvent ev = {
+            .type  = SDL_USEREVENT,
+            .code  = command_UserEventCode,
+            .data1 = (void *) cstr_String(&pc->command)
+        };
+        iAssert(isInstance_Object(pc->context, &Class_Widget));
+        dispatchEvent_Widget(pc->context, (const SDL_Event *) &ev);
         wasPosted = iTrue;
     }
     unlock_Mutex(d->mutex);

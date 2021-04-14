@@ -176,7 +176,11 @@ iMedia *        media_GmDocument            (iGmDocument *);
 const iMedia *  constMedia_GmDocument       (const iGmDocument *);
 
 void            render_GmDocument           (const iGmDocument *, iRangei visRangeY,
-                                             iGmDocumentRenderFunc render, void *);
+                                             iGmDocumentRenderFunc render, void *); /* includes partial overlaps */
+const iGmRun *  renderProgressive_GmDocument(const iGmDocument *d, const iGmRun *first, int dir,
+                                             size_t maxCount,
+                                             iRangei visRangeY, iGmDocumentRenderFunc render,
+                                             void *context);
 iInt2           size_GmDocument             (const iGmDocument *);
 const iGmRun *  siteBanner_GmDocument       (const iGmDocument *);
 iBool           hasSiteBanner_GmDocument    (const iGmDocument *);

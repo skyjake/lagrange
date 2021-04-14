@@ -20,7 +20,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-/* TODO: This file is a little too large. DocumentWidget could be split into
+/* TODO: This file is a little (!) too large. DocumentWidget could be split into
    a couple of smaller objects. One for rendering the document, for instance. */
 
 #include "documentwidget.h"
@@ -41,6 +41,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "labelwidget.h"
 #include "media.h"
 #include "paint.h"
+#include "periodic.h"
 #include "mediaui.h"
 #include "scrollwidget.h"
 #include "touch.h"
@@ -156,12 +157,14 @@ struct Impl_DrawBufs {
     int            flags;
     SDL_Texture *  sideIconBuf;
     iTextBuf *     timestampBuf;
+    iRangei        lastVis;
 };
 
 static void init_DrawBufs(iDrawBufs *d) {
     d->flags = 0;
     d->sideIconBuf = NULL;
     d->timestampBuf = NULL;
+    iZap(d->lastVis);
 }
 
 static void deinit_DrawBufs(iDrawBufs *d) {
@@ -175,9 +178,23 @@ iDefineTypeConstruction(DrawBufs)
 
 /*----------------------------------------------------------------------------------------------*/
 
+iDeclareType(VisBufMeta)
+
+struct Impl_VisBufMeta {
+    iGmRunRange runsDrawn;
+};
+
+static void visBufInvalidated_(iVisBuf *d, size_t index) {
+    iVisBufMeta *meta = d->buffers[index].user;
+    iZap(meta->runsDrawn);
+}
+
+/*----------------------------------------------------------------------------------------------*/
+
 static void animate_DocumentWidget_             (void *ticker);
 static void animateMedia_DocumentWidget_        (iDocumentWidget *d);
 static void updateSideIconBuf_DocumentWidget_   (const iDocumentWidget *d);
+static void prerender_DocumentWidget_           (iAny *);
 
 static const int smoothDuration_DocumentWidget_  = 600; /* milliseconds */
 static const int outlineMinWidth_DocumentWdiget_ = 45;  /* times gap_UI */
@@ -251,8 +268,8 @@ struct Impl_DocumentWidget {
     const iGmRun * hoverAltPre; /* for drawing alt text */
     const iGmRun * hoverLink;
     const iGmRun * contextLink;
-    const iGmRun * firstVisibleRun;
-    const iGmRun * lastVisibleRun;
+    iGmRunRange    visibleRuns;
+    iGmRunRange    renderRuns;
     iClick         click;
     iInt2          contextPos; /* coordinates of latest right click */
     iString        pendingGotoHeading;
@@ -265,6 +282,7 @@ struct Impl_DocumentWidget {
     iWidget *      playerMenu;
     iWidget *      copyMenu;
     iVisBuf *      visBuf;
+    iGmRunRange *  visBufMeta;
     iPtrSet *      invalidRuns;
     iDrawBufs *    drawBufs; /* dynamic state for drawing */
     iTranslation * translation;
@@ -306,10 +324,17 @@ void init_DocumentWidget(iDocumentWidget *d) {
     d->hoverAltPre      = NULL;
     d->hoverLink        = NULL;
     d->contextLink      = NULL;
-    d->firstVisibleRun  = NULL;
-    d->lastVisibleRun   = NULL;
-    d->visBuf           = new_VisBuf();
-    d->invalidRuns      = new_PtrSet();
+    iZap(d->renderRuns);
+    iZap(d->visibleRuns);
+    d->visBuf = new_VisBuf(); {
+        d->visBufMeta = malloc(sizeof(iVisBufMeta) * numBuffers_VisBuf);
+        /* Additional metadata for each buffer. */
+        d->visBuf->bufferInvalidated = visBufInvalidated_;
+        for (size_t i = 0; i < numBuffers_VisBuf; i++) {
+            d->visBuf->buffers[i].user = d->visBufMeta + i;
+        }
+    }
+    d->invalidRuns = new_PtrSet();
     init_Anim(&d->sideOpacity, 0);
     init_Anim(&d->altTextOpacity, 0);
     d->sourceStatus = none_GmStatusCode;
@@ -349,9 +374,12 @@ void init_DocumentWidget(iDocumentWidget *d) {
 
 void deinit_DocumentWidget(iDocumentWidget *d) {
     removeTicker_App(animate_DocumentWidget_, d);
+    removeTicker_App(prerender_DocumentWidget_, d);
+    remove_Periodic(periodic_App(), d);
     delete_Translation(d->translation);
-    delete_DrawBufs(d->drawBufs);
+    delete_DrawBufs(d->drawBufs);    
     delete_VisBuf(d->visBuf);
+    free(d->visBufMeta);
     delete_PtrSet(d->invalidRuns);
     iRelease(d->media);
     iRelease(d->request);
@@ -486,10 +514,10 @@ static iRangei visibleRange_DocumentWidget_(const iDocumentWidget *d) {
 static void addVisible_DocumentWidget_(void *context, const iGmRun *run) {
     iDocumentWidget *d = context;
     if (~run->flags & decoration_GmRunFlag && !run->mediaId) {
-        if (!d->firstVisibleRun) {
-            d->firstVisibleRun = run;
+        if (!d->visibleRuns.start) {
+            d->visibleRuns.start = run;
         }
-        d->lastVisibleRun = run;
+        d->visibleRuns.end = run;
     }
     if (run->preId) {
         pushBack_PtrArray(&d->visiblePre, run);
@@ -743,14 +771,14 @@ static void animateMedia_DocumentWidget_(iDocumentWidget *d) {
 
 static iRangecc currentHeading_DocumentWidget_(const iDocumentWidget *d) {
     iRangecc heading = iNullRange;
-    if (d->firstVisibleRun) {
+    if (d->visibleRuns.start) {
         iConstForEach(Array, i, headings_GmDocument(d->doc)) {
             const iGmHeading *head = i.value;
             if (head->level == 0) {
-                if (head->text.start <= d->firstVisibleRun->text.start) {
+                if (head->text.start <= d->visibleRuns.start->text.start) {
                     heading = head->text;
                 }
-                if (d->lastVisibleRun && head->text.start > d->lastVisibleRun->text.start) {
+                if (d->visibleRuns.end && head->text.start > d->visibleRuns.end->text.start) {
                     break;
                 }
             }
@@ -766,6 +794,14 @@ static void updateVisible_DocumentWidget_(iDocumentWidget *d) {
                      !isSuccess_GmStatusCode(d->sourceStatus));
     const iRangei visRange = visibleRange_DocumentWidget_(d);
     const iRect   bounds   = bounds_Widget(as_Widget(d));
+    if (!equal_Rangei(visRange, d->drawBufs->lastVis)) {
+        /* After scrolling/resizing stops, begin prendering the visbuf contents.
+           `Periodic` is used for detecting when the visible range has been modified. */
+        removeTicker_App(prerender_DocumentWidget_, d);
+        remove_Periodic(periodic_App(), d);
+        add_Periodic(periodic_App(), d,
+                     format_CStr("document.render from:%d to:%d", visRange.start, visRange.end));
+    }
     setRange_ScrollWidget(d->scroll, (iRangei){ 0, scrollMax_DocumentWidget_(d) });
     const int docSize = size_GmDocument(d->doc).y;
     setThumb_ScrollWidget(d->scroll,
@@ -777,7 +813,7 @@ static void updateVisible_DocumentWidget_(iDocumentWidget *d) {
     clear_PtrArray(&d->visibleMedia);
     const iRangecc oldHeading = currentHeading_DocumentWidget_(d);
     /* Scan for visible runs. */ {
-        d->firstVisibleRun = NULL;
+        iZap(d->visibleRuns);
         render_GmDocument(d->doc, visRange, addVisible_DocumentWidget_, d);
     }
     const iRangecc newHeading = currentHeading_DocumentWidget_(d);
@@ -898,8 +934,8 @@ static void documentRunsInvalidated_DocumentWidget_(iDocumentWidget *d) {
     d->hoverAltPre     = NULL;
     d->hoverLink       = NULL;
     d->contextLink     = NULL;
-    d->firstVisibleRun = NULL;
-    d->lastVisibleRun  = NULL;
+    iZap(d->visibleRuns);
+    iZap(d->renderRuns);
 }
 
 void setSource_DocumentWidget(iDocumentWidget *d, const iString *source) {
@@ -1675,7 +1711,7 @@ static iBool updateDocumentWidthRetainingScrollPosition_DocumentWidget_(iDocumen
     }
     /* Font changes (i.e., zooming) will keep the view centered, otherwise keep the top
        of the visible area fixed. */
-    const iGmRun *run     = keepCenter ? middleRun_DocumentWidget_(d) : d->firstVisibleRun;
+    const iGmRun *run     = keepCenter ? middleRun_DocumentWidget_(d) : d->visibleRuns.start;
     const char *  runLoc  = (run ? run->text.start : NULL);
     int           voffset = 0;
     if (!keepCenter && run) {
@@ -1727,7 +1763,17 @@ static iBool handlePinch_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
 
 static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
     iWidget *w = as_Widget(d);
-    if (equal_Command(cmd, "window.resized") || equal_Command(cmd, "font.changed")) {
+    if (equal_Command(cmd, "document.render")) {
+        const iRangei vis = { argLabel_Command(cmd, "from"), argLabel_Command(cmd, "to") };
+        const iRangei current = visibleRange_DocumentWidget_(d);
+        if (equal_Rangei(vis, current)) {
+            remove_Periodic(periodic_App(), d);
+            /* Scrolling has stopped, begin filling up the buffer. */
+            addTicker_App(prerender_DocumentWidget_, d);
+        }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "window.resized") || equal_Command(cmd, "font.changed")) {
         /* Alt/Option key may be involved in window size changes. */
         setLinkNumberMode_DocumentWidget_(d, iFalse);
         d->phoneToolbar = findWidget_App("toolbar");
@@ -3103,6 +3149,8 @@ iDeclareType(DrawContext)
 struct Impl_DrawContext {
     const iDocumentWidget *widget;
     iRect widgetBounds;
+    iRect docBounds;
+    iRangei vis;
     iInt2 viewPos; /* document area origin */
     iPaint paint;
     iBool inSelectMark;
@@ -3110,6 +3158,7 @@ struct Impl_DrawContext {
     iBool showLinkNumbers;
     iRect firstMarkRect;
     iRect lastMarkRect;
+    iGmRunRange runsDrawn;
 };
 
 static void fillRange_DrawContext_(iDrawContext *d, const iGmRun *run, enum iColorId color,
@@ -3269,6 +3318,14 @@ static void drawBannerRun_DrawContext_(iDrawContext *d, const iGmRun *run, iInt2
 static void drawRun_DrawContext_(void *context, const iGmRun *run) {
     iDrawContext *d      = context;
     const iInt2   origin = d->viewPos;
+    /* Keep track of the drawn visible runs. */ {
+        if (!d->runsDrawn.start || run < d->runsDrawn.start) {
+            d->runsDrawn.start = run;
+        }
+        if (!d->runsDrawn.end || run > d->runsDrawn.end) {
+            d->runsDrawn.end = run;
+        }
+    }
     if (run->mediaType == image_GmRunMediaType) {
         SDL_Texture *tex = imageTexture_Media(media_GmDocument(d->widget->doc), run->mediaId);
         const iRect dst = moved_Rect(run->visBounds, origin);
@@ -3291,6 +3348,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
         /* Media UIs are drawn afterwards as a dynamic overlay. */
         return;
     }
+//    printf("  drawRun: {%s}\n", cstr_Rangecc(run->text));
     enum iColorId      fg  = run->color;
     const iGmDocument *doc = d->widget->doc;
     iBool              isHover =
@@ -3644,48 +3702,100 @@ static void drawPin_(iPaint *p, iRect rangeRect, int dir) {
                                         init1_I2(gap_UI * 2)), pinColor);
 }
 
-static void draw_DocumentWidget_(const iDocumentWidget *d) {
-    const iWidget *w        = constAs_Widget(d);
-    const iRect    bounds   = bounds_Widget(w);
-    iVisBuf *      visBuf   = d->visBuf; /* will be updated now */
-    if (width_Rect(bounds) <= 0) {
-        return;
-    }
-    draw_Widget(w);
-    if (d->drawBufs->flags & updateTimestampBuf_DrawBufsFlag) {
-        updateTimestampBuf_DocumentWidget_(d);
-    }
-    if (d->drawBufs->flags & updateSideBuf_DrawBufsFlag) {
-        updateSideIconBuf_DocumentWidget_(d);
-    }
-    allocVisBuffer_DocumentWidget_(d);
+static iBool render_DocumentWidget_(const iDocumentWidget *d, iDrawContext *ctx, iBool prerenderExtra) {
+    iBool didDraw = iFalse;
+    const iRect bounds = bounds_Widget(constAs_Widget(d));
     const iRect ctxWidgetBounds = init_Rect(
         0, 0, width_Rect(bounds) - constAs_Widget(d->scroll)->rect.size.x, height_Rect(bounds));
-    const iRect  docBounds = documentBounds_DocumentWidget_(d);
-    iDrawContext ctx       = {
-        .widget          = d,
-        .showLinkNumbers = (d->flags & showLinkNumbers_DocumentWidgetFlag) != 0,
-    };
-    const iBool isTouchSelecting = (flags_Widget(w) & touchDrag_WidgetFlag) != 0;
-    /* Currently visible region. */
-    const iRangei vis  = visibleRange_DocumentWidget_(d);
     const iRangei full = { 0, size_GmDocument(d->doc).y };
+    const iRangei vis = ctx->vis;
+    iVisBuf *visBuf = d->visBuf; /* will be updated now */
+    /* Swap buffers around to have room available both before and after the visible region. */
+    allocVisBuffer_DocumentWidget_(d);
     reposition_VisBuf(visBuf, vis);
-    iRangei invalidRange[iElemCount(d->visBuf->buffers)];
-    invalidRanges_VisBuf(visBuf, full, invalidRange);
     /* Redraw the invalid ranges. */ {
-        iPaint *p = &ctx.paint;
+        iPaint *p = &ctx->paint;
         init_Paint(p);
         iForIndices(i, visBuf->buffers) {
-            iVisBufTexture *buf = &visBuf->buffers[i];
-            ctx.widgetBounds = moved_Rect(ctxWidgetBounds, init_I2(0, -buf->origin));
-            ctx.viewPos      = init_I2(left_Rect(docBounds) - left_Rect(bounds), -buf->origin);
-            if (!isEmpty_Rangei(invalidRange[i])) {
-                beginTarget_Paint(p, buf->texture);
+            iVisBufTexture *buf  = &visBuf->buffers[i];
+            iVisBufMeta *   meta = buf->user;
+            const iRangei   bufRange    = bufferRange_VisBuf(visBuf, i);
+            const iRangei   bufVisRange = intersect_Rangei(bufRange, vis);
+            ctx->widgetBounds = moved_Rect(ctxWidgetBounds, init_I2(0, -buf->origin));
+            ctx->viewPos      = init_I2(left_Rect(ctx->docBounds) - left_Rect(bounds), -buf->origin);
+            //printf("  buffer %zu: invalid range %d...%d\n", i, invalidRange[i].start, invalidRange[i].end);
+            if (!prerenderExtra && !isEmpty_Range(&bufVisRange)) {
+                didDraw = iTrue;
                 if (isEmpty_Rangei(buf->validRange)) {
-                    fillRect_Paint(p, (iRect){ zero_I2(), visBuf->texSize }, tmBackground_ColorId);
+                    /* Fill the required currently visible range (vis). */
+                    const iRangei bufVisRange = intersect_Rangei(bufRange, vis);
+                    if (!isEmpty_Range(&bufVisRange)) {
+                        beginTarget_Paint(p, buf->texture);
+                        fillRect_Paint(p, (iRect){ zero_I2(), visBuf->texSize }, tmBackground_ColorId);
+                        iZap(ctx->runsDrawn);
+                        render_GmDocument(d->doc, bufVisRange, drawRun_DrawContext_, ctx);
+                        meta->runsDrawn = ctx->runsDrawn;
+                        meta->runsDrawn.start--;
+                        meta->runsDrawn.end++;
+                        buf->validRange = bufVisRange;
+    //                printf("  buffer %zu valid %d...%d\n", i, bufRange.start, bufRange.end);
+                    }
                 }
-                render_GmDocument(d->doc, invalidRange[i], drawRun_DrawContext_, &ctx);
+                else {
+                    /* Progressively fill the required runs. */
+                    if (meta->runsDrawn.start) {
+                        beginTarget_Paint(p, buf->texture);
+                        meta->runsDrawn.start = renderProgressive_GmDocument(d->doc, meta->runsDrawn.start,
+                                                                          -1, iInvalidSize,
+                                                                          bufVisRange,
+                                                                          drawRun_DrawContext_,
+                                                                          ctx);
+                        buf->validRange.start = bufVisRange.start;
+                    }
+                    if (meta->runsDrawn.end) {
+                        beginTarget_Paint(p, buf->texture);
+                        meta->runsDrawn.end = renderProgressive_GmDocument(d->doc, meta->runsDrawn.end,
+                                                                          +1, iInvalidSize,
+                                                                          bufVisRange,
+                                                                          drawRun_DrawContext_,
+                                                                          ctx);
+                        buf->validRange.end = bufVisRange.end;
+                    }
+                }
+            }
+            /* Progressively draw the rest of the buffer if it isn't fully valid. */
+            if (prerenderExtra && !equal_Rangei(bufRange, buf->validRange)) {
+                const iGmRun *next;
+                if (meta->runsDrawn.start) {
+                    const iRangei upper = intersect_Rangei(bufRange, (iRangei){ full.start, buf->validRange.start });
+                    if (upper.end > upper.start) {
+                        beginTarget_Paint(p, buf->texture);
+                        next = renderProgressive_GmDocument(d->doc, meta->runsDrawn.start,
+                                                            -1, 1, upper,
+                                                            drawRun_DrawContext_,
+                                                            ctx);
+                        if (meta->runsDrawn.start != next) {
+                            meta->runsDrawn.start = next;
+                            didDraw = iTrue;
+                        }
+                        buf->validRange.start = bufRange.start;
+                    }
+                }
+                if (meta->runsDrawn.end) {
+                    const iRangei lower = intersect_Rangei(bufRange, (iRangei){ buf->validRange.end, full.end });
+                    if (lower.end > lower.start) {
+                        beginTarget_Paint(p, buf->texture);
+                        next = renderProgressive_GmDocument(d->doc, meta->runsDrawn.end,
+                                                            +1, 1, lower,
+                                                            drawRun_DrawContext_,
+                                                            ctx);
+                        if (meta->runsDrawn.end != next) {
+                            meta->runsDrawn.end = next;
+                            didDraw = iTrue;
+                        }
+                        buf->validRange.end = bufRange.end;
+                    }
+                }
             }
             /* Draw any invalidated runs that fall within this buffer. */ {
                 const iRangei bufRange = { buf->origin, buf->origin + visBuf->texSize.y };
@@ -3694,7 +3804,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
                         const iGmRun *run = *r.value;
                         if (isOverlapping_Rangei(bufRange, ySpan_Rect(run->visBounds))) {
                             beginTarget_Paint(p, buf->texture);
-                            fillRect_Paint(&ctx.paint,
+                            fillRect_Paint(p,
                                            init_Rect(0,
                                                      run->visBounds.pos.y - buf->origin,
                                                      visBuf->texSize.x,
@@ -3707,21 +3817,61 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
                     const iGmRun *run = *r.value;
                     if (isOverlapping_Rangei(bufRange, ySpan_Rect(run->visBounds))) {
                         beginTarget_Paint(p, buf->texture);
-                        drawRun_DrawContext_(&ctx, run);
+                        drawRun_DrawContext_(ctx, run);
                     }
                 }
             }
-            endTarget_Paint(&ctx.paint);
+            endTarget_Paint(p);
         }
-        validate_VisBuf(visBuf);
         clear_PtrSet(d->invalidRuns);
     }
+    return didDraw;
+}
+
+static void prerender_DocumentWidget_(iAny *context) {
+    const iDocumentWidget *d = context;
+    iDrawContext ctx = {
+        .widget          = d,
+        .docBounds       = documentBounds_DocumentWidget_(d),
+        .vis             = visibleRange_DocumentWidget_(d),
+        .showLinkNumbers = (d->flags & showLinkNumbers_DocumentWidgetFlag) != 0
+    };
+//    printf("%u prerendering\n", SDL_GetTicks());
+    if (render_DocumentWidget_(d, &ctx, iTrue /* just fill up progressively */)) {
+        /* Something was drawn, should check if there is still more to do. */
+        addTicker_App(prerender_DocumentWidget_, context);
+    }
+}
+
+static void draw_DocumentWidget_(const iDocumentWidget *d) {
+    const iWidget *w      = constAs_Widget(d);
+    const iRect    bounds = bounds_Widget(w);
+    if (width_Rect(bounds) <= 0) {
+        return;
+    }
+    draw_Widget(w);
+    if (d->drawBufs->flags & updateTimestampBuf_DrawBufsFlag) {
+        updateTimestampBuf_DocumentWidget_(d);
+    }
+    if (d->drawBufs->flags & updateSideBuf_DrawBufsFlag) {
+        updateSideIconBuf_DocumentWidget_(d);
+    }
+    const iRect   docBounds = documentBounds_DocumentWidget_(d);
+    const iRangei vis       = visibleRange_DocumentWidget_(d);
+    iDrawContext  ctx = {
+        .widget          = d,
+        .docBounds       = docBounds,
+        .vis             = vis,
+        .showLinkNumbers = (d->flags & showLinkNumbers_DocumentWidgetFlag) != 0,
+    };
+    render_DocumentWidget_(d, &ctx, iFalse /* just the mandatory parts */);
     setClip_Paint(&ctx.paint, bounds);
     const int yTop = docBounds.pos.y - value_Anim(&d->scrollY);
-    draw_VisBuf(visBuf, init_I2(bounds.pos.x, yTop));
+    draw_VisBuf(d->visBuf, init_I2(bounds.pos.x, yTop));
     /* Text markers. */
+    const iBool isTouchSelecting = (flags_Widget(w) & touchDrag_WidgetFlag) != 0;
     if (!isEmpty_Range(&d->foundMark) || !isEmpty_Range(&d->selectMark)) {
-        SDL_Renderer *render = renderer_Window(get_Window());
+        SDL_Renderer *render           = renderer_Window(get_Window());
         ctx.firstMarkRect = zero_Rect();
         ctx.lastMarkRect = zero_Rect();
         SDL_SetRenderDrawBlendMode(render,
@@ -3729,15 +3879,15 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
                                                                        : SDL_BLENDMODE_BLEND);
         ctx.viewPos = topLeft_Rect(docBounds);
         /* Marker starting outside the visible range? */
-        if (d->firstVisibleRun) {
+        if (d->visibleRuns.start) {
             if (!isEmpty_Range(&d->selectMark) &&
-                d->selectMark.start < d->firstVisibleRun->text.start &&
-                d->selectMark.end > d->firstVisibleRun->text.start) {
+                d->selectMark.start < d->visibleRuns.start->text.start &&
+                d->selectMark.end > d->visibleRuns.start->text.start) {
                 ctx.inSelectMark = iTrue;
             }
             if (isEmpty_Range(&d->foundMark) &&
-                d->foundMark.start < d->firstVisibleRun->text.start &&
-                d->foundMark.end > d->firstVisibleRun->text.start) {
+                d->foundMark.start < d->visibleRuns.start->text.start &&
+                d->foundMark.end > d->visibleRuns.start->text.start) {
                 ctx.inFoundMark = iTrue;
             }
         }

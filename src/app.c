@@ -906,7 +906,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
     iApp *d = &app_;
     SDL_Event ev;
     iBool gotEvents = iFalse;
-    postCommands_Periodic(&d->periodic);
+    dispatchCommands_Periodic(&d->periodic);
     while (nextEvent_App_(d, eventMode, &ev)) {
 #if defined (iPlatformAppleMobile)
         if (processEvent_iOS(&ev)) {

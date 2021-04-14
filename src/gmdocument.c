@@ -1494,6 +1494,30 @@ void render_GmDocument(const iGmDocument *d, iRangei visRangeY, iGmDocumentRende
     }
 }
 
+static iBool isValidRun_GmDocument_(const iGmDocument *d, const iGmRun *run) {
+    return run >= (const iGmRun *) constAt_Array(&d->layout, 0) &&
+           run < (const iGmRun *) constEnd_Array(&d->layout);
+}
+
+const iGmRun *renderProgressive_GmDocument(const iGmDocument *d, const iGmRun *first, int dir,
+                                           size_t maxCount,
+                                           iRangei visRangeY, iGmDocumentRenderFunc render,
+                                           void *context) {
+    const iGmRun *run = first;
+    while (isValidRun_GmDocument_(d, run)) {
+        if ((dir < 0 && bottom_Rect(run->visBounds) < visRangeY.start) ||
+            (dir > 0 && top_Rect(run->visBounds) >= visRangeY.end)) {
+            break;
+        }
+        if (maxCount-- == 0) {
+            break;
+        }
+        render(context, run);
+        run += dir;
+    }
+    return isValidRun_GmDocument_(d, run) ? run : NULL;
+}
+
 iInt2 size_GmDocument(const iGmDocument *d) {
     return d->size;
 }

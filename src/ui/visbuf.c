@@ -29,6 +29,8 @@ iDefineTypeConstruction(VisBuf)
 void init_VisBuf(iVisBuf *d) {
     d->texSize = zero_I2();
     iZap(d->buffers);
+    iZap(d->vis);
+    d->bufferInvalidated = NULL;
 }
 
 void deinit_VisBuf(iVisBuf *d) {
@@ -36,9 +38,14 @@ void deinit_VisBuf(iVisBuf *d) {
 }
 
 void invalidate_VisBuf(iVisBuf *d) {
+    int origin = d->vis.start - d->texSize.y;
     iForIndices(i, d->buffers) {
-        d->buffers[i].origin = i * d->texSize.y;
+        d->buffers[i].origin = origin;
+        origin += d->texSize.y;
         iZap(d->buffers[i].validRange);
+        if (d->bufferInvalidated) {
+            d->bufferInvalidated(d, i);
+        }
     }
 }
 
@@ -58,9 +65,13 @@ void alloc_VisBuf(iVisBuf *d, const iInt2 size, int granularity) {
                                   texSize.x,
                                   texSize.y);
             SDL_SetTextureBlendMode(tex->texture, SDL_BLENDMODE_NONE);
-            tex->origin = i * texSize.y;
-            iZap(tex->validRange);
+//            tex->origin = i * texSize.y;
+//            iZap(tex->validRange);
+//          if (d->invalidUserData) {
+//                d->invalidUserData(i, d->buffers[i].user);
+//            }
         }
+        invalidate_VisBuf(d);
     }
 }
 
@@ -72,53 +83,74 @@ void dealloc_VisBuf(iVisBuf *d) {
     }
 }
 
-void reposition_VisBuf(iVisBuf *d, const iRangei vis) {
+#if 0
+static size_t findMostDistant_VisBuf_(const iVisBuf *d, const size_t *avail, size_t numAvail,
+                                      const iRangei vis) {
+    size_t chosen = 0;
+    int distChosen = iAbsi(d->buffers[0].origin - vis.start);
+    printf("  avail (got %zu): %zu", numAvail, avail[0]);
+    for (size_t i = 1; i < numAvail; i++) {
+        printf(" %zu", avail[i]);
+        const int dist = iAbsi(d->buffers[i].origin - vis.start);
+        if (dist > distChosen) {
+            chosen = i;
+            distChosen = dist;
+        }
+    }
+    printf("\n  chose index %zu (%d)\n", chosen, distChosen);
+    return chosen;
+}
+
+static size_t take_(size_t *avail, size_t *numAvail, size_t index) {
+    const size_t value = avail[index];
+    memmove(avail + index, avail + index + 1, sizeof(size_t) * (*numAvail - index - 1));
+    (*numAvail)--;
+    return value;    
+}
+#endif
+
+iBool reposition_VisBuf(iVisBuf *d, const iRangei vis) {
+    if (equal_Rangei(vis, d->vis)) {
+        return iFalse;
+    }
     d->vis = vis;
-    iRangei good = { 0, 0 };
-    size_t avail[iElemCount(d->buffers)], numAvail = 0;
-    /* Check which buffers are available for reuse. */ {
-        iForIndices(i, d->buffers) {
-            iVisBufTexture *buf    = d->buffers + i;
-            const iRangei   region = { buf->origin, buf->origin + d->texSize.y };
-            if (isEmpty_Rangei(buf->validRange) ||
-                buf->validRange.start >= vis.end || buf->validRange.end <= vis.start) {
-                avail[numAvail++] = i;
-                iZap(buf->validRange);
-            }
-            else {
-                good = union_Rangei(good, region);
-            }
-        }
-    }
     iBool wasChanged = iFalse;
-    iBool doReset    = (numAvail == iElemCount(d->buffers));
-    /* Try to extend to cover the visible range. */
-    while (!doReset && vis.start < good.start) {
-        if (numAvail == 0) {
-            doReset = iTrue;
-            break;
-        }
-        good.start -= d->texSize.y;
-        d->buffers[avail[--numAvail]].origin = good.start;
+    const size_t lastPos = iElemCount(d->buffers) - 1;
+    if (d->buffers[0].origin > vis.end || d->buffers[lastPos].origin + d->texSize.y <= vis.start) {
+        /* All buffers outside the visible region. */
+        invalidate_VisBuf(d);
         wasChanged = iTrue;
     }
-    while (!doReset && vis.end > good.end) {
-        if (numAvail == 0) {
-            doReset = iTrue;
-            break;
+    else {
+        /* Roll up. */
+        while (d->buffers[0].origin > vis.start) {
+            SDL_Texture *last = d->buffers[lastPos].texture;
+            void *       user = d->buffers[lastPos].user;
+            memmove(d->buffers + 1, d->buffers, sizeof(iVisBufTexture) * lastPos);
+            d->buffers[0].texture = last;
+            d->buffers[0].user    = user;
+            d->buffers[0].origin  = d->buffers[1].origin - d->texSize.y;
+            iZap(d->buffers[0].validRange);
+            if (d->bufferInvalidated) {
+                d->bufferInvalidated(d, 0);
+            }
+            wasChanged = iTrue;
         }
-        d->buffers[avail[--numAvail]].origin = good.end;
-        good.end += d->texSize.y;
-        wasChanged = iTrue;
-    }
-    if (doReset) {
-//        puts("VisBuf reset!");
-//        fflush(stdout);
-        wasChanged = iTrue;
-        int pos = -1;
-        iForIndices(i, d->buffers) {
-            iZap(d->buffers[i].validRange);
-            d->buffers[i].origin = vis.start + pos++ * d->texSize.y;
+        if (!wasChanged) {
+            /* Roll down. */
+            while (d->buffers[lastPos].origin + d->texSize.y < vis.end) {
+                SDL_Texture *first = d->buffers[0].texture;
+                void *       user  = d->buffers[0].user;
+                memmove(d->buffers, d->buffers + 1, sizeof(iVisBufTexture) * lastPos);
+                d->buffers[lastPos].texture = first;
+                d->buffers[lastPos].user    = user;
+                d->buffers[lastPos].origin  = d->buffers[lastPos - 1].origin + d->texSize.y;
+                iZap(d->buffers[lastPos].validRange);
+                if (d->bufferInvalidated) {
+                    d->bufferInvalidated(d, lastPos);
+                }
+                wasChanged = iTrue;
+            }
         }
     }
 #if 0
@@ -134,6 +166,33 @@ void reposition_VisBuf(iVisBuf *d, const iRangei vis) {
         fflush(stdout);
     }
 #endif
+#if !defined (NDEBUG)
+    /* Buffers must not overlap. */
+    iForIndices(m, d->buffers) {
+        const iRangei M = { d->buffers[m].origin, d->buffers[m].origin + d->texSize.y };
+        iForIndices(n, d->buffers) {
+            if (m == n) continue;
+            const iRangei N = { d->buffers[n].origin, d->buffers[n].origin + d->texSize.y };
+            const iRangei is = intersect_Rangei(M, N);
+            if (size_Range(&is) != 0) {
+                printf("buffers %zu (%i) and %zu (%i) overlap\n",
+                       m, M.start, n, N.start);
+                fflush(stdout);
+            }
+            iAssert(size_Range(&is) == 0);
+        }
+    }
+#endif
+    return iTrue; /* at least the visible range changed */
+}
+
+iRangei allocRange_VisBuf(const iVisBuf *d) {
+    return (iRangei){ d->buffers[0].origin,
+                      d->buffers[iElemCount(d->buffers) - 1].origin + d->texSize.y };
+}
+
+iRangei bufferRange_VisBuf(const iVisBuf *d, size_t index) {
+    return (iRangei){ d->buffers[index].origin, d->buffers[index].origin + d->texSize.y };
 }
 
 void invalidRanges_VisBuf(const iVisBuf *d, const iRangei full, iRangei *out_invalidRanges) {
@@ -177,5 +236,5 @@ void draw_VisBuf(const iVisBuf *d, iInt2 topLeft) {
         dst.y += get_Window()->root->rect.size.y / 4;
 #endif
         SDL_RenderCopy(render, buf->texture, NULL, &dst);
-    }
+    }    
 }
