@@ -57,7 +57,7 @@ enum iFileVersion {
 #define timer_Icon          "\u23f2"
 #define home_Icon           "\U0001f3e0"
 #define edit_Icon           "\u270e"
-#define delete_Icon         "\u232b" //"\u2bbf"
+#define delete_Icon         "\u232b"
 #define copy_Icon           "\u2bba"
 #define check_Icon          "\u2714"
 #define ballotCheck_Icon    "\U0001f5f9"
@@ -67,7 +67,7 @@ enum iFileVersion {
 #define openTabBg_Icon      "\u2b1a"
 #define openExt_Icon        "\u27a0"
 #define add_Icon            "\u2795"
-#define page_Icon           "\U00010117" // "\U0001d363" // "\U0001f5b9"
+#define page_Icon           "\U00010117"
 #define circle_Icon         "\u25cf"
 #define circleWhite_Icon    "\u25cb"
 #define gear_Icon           "\u2699"
@@ -83,8 +83,8 @@ enum iFileVersion {
 #define clipboard_Icon      "\U0001f4cb"
 #define unhappy_Icon        "\U0001f641"
 #define globe_Icon          "\U0001f310"
-#define magnifyingGlass_Icon    "\U0001f50d"
-#define midEllipsis_Icon    "\u22ef"
+#define magnifyingGlass_Icon "\U0001f50d"
+#define midEllipsis_Icon    "\u00b7\u00b7\u00b7"
 
 /* UI labels that depend on the platform */
 
