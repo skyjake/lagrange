@@ -63,6 +63,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "stb_image.h"
 #include "stb_image_resize.h"
 
+#include <stdlib.h>
+#include <string.h>
+
 static iWindow *theWindow_ = NULL;
 
 #if defined (iPlatformApple) || defined (iPlatformLinux)
@@ -1357,6 +1360,24 @@ static float pixelRatio_Window_(const iWindow *d) {
 #endif
 
 static float displayScale_Window_(const iWindow *d) {
+    char* LAGRANGE_OVERRIDE_DPI = getenv("LAGRANGE_OVERRIDE_DPI");
+
+    /* If LAGRANGE_OVERRIDE_DPI is not set, or is an empty string, ignore it. */
+    if ((LAGRANGE_OVERRIDE_DPI != NULL) && (strnlen(LAGRANGE_OVERRIDE_DPI, 1) > 0)) {
+        /* This if the user has set the env var, but it is not an int, atoi */
+        /* will return 0, in which case we just guess and return 96 DPI.  */
+        int env_dpi = atoi(LAGRANGE_OVERRIDE_DPI);
+
+        if (env_dpi == 0) {
+            fprintf(stderr, "WARNING: failed to parse LAGRANGE_OVERRIDE_DPI='%s', ignoring it\n", LAGRANGE_OVERRIDE_DPI);
+            /* To avoid showing the window multiple times, overwrite
+             * LAGRANGE_OVERRIDE_DPI with the empty string. */
+            setenv("LAGRANGE_OVERRIDE_DPI", "", 1);
+        } else {
+            return ((float) env_dpi) / baseDPI_Window;
+        }
+    }
+
 #if defined (iPlatformApple)
     iUnused(d);
     /* Apple UI sizes are fixed and only scaled by pixel ratio. */
