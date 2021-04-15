@@ -1033,7 +1033,7 @@ static void setupUserInterface_Window(iWindow *d) {
                 setAlignVisually_LabelWidget(fprog, iTrue);
                 addChildFlags_Widget(rightEmbed,
                                      iClob(fprog),
-                                     collapse_WidgetFlag | hidden_WidgetFlag);
+                                     collapse_WidgetFlag | frameless_WidgetFlag | hidden_WidgetFlag);
             }
             /* Download progress indicator is also inside the input field, but hidden normally. */ {
                 iLabelWidget *progress = new_LabelWidget(uiTextCaution_ColorEscape "00.000 ${mb}", NULL);
