@@ -1495,6 +1495,9 @@ void render_GmDocument(const iGmDocument *d, iRangei visRangeY, iGmDocumentRende
 }
 
 static iBool isValidRun_GmDocument_(const iGmDocument *d, const iGmRun *run) {
+    if (isEmpty_Array(&d->layout)) {
+        return iFalse;
+    }
     return run >= (const iGmRun *) constAt_Array(&d->layout, 0) &&
            run < (const iGmRun *) constEnd_Array(&d->layout);
 }

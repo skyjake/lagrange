@@ -1769,7 +1769,9 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         if (equal_Rangei(vis, current)) {
             remove_Periodic(periodic_App(), d);
             /* Scrolling has stopped, begin filling up the buffer. */
-            addTicker_App(prerender_DocumentWidget_, d);
+            if (d->visBuf->buffers[0].texture) {
+                addTicker_App(prerender_DocumentWidget_, d);
+            }
         }
         return iTrue;
     }
@@ -3837,9 +3839,11 @@ static void prerender_DocumentWidget_(iAny *context) {
         .showLinkNumbers = (d->flags & showLinkNumbers_DocumentWidgetFlag) != 0
     };
 //    printf("%u prerendering\n", SDL_GetTicks());
-    if (render_DocumentWidget_(d, &ctx, iTrue /* just fill up progressively */)) {
-        /* Something was drawn, should check if there is still more to do. */
-        addTicker_App(prerender_DocumentWidget_, context);
+    if (d->visBuf->buffers[0].texture) {
+        if (render_DocumentWidget_(d, &ctx, iTrue /* just fill up progressively */)) {
+            /* Something was drawn, should check if there is still more to do. */
+            addTicker_App(prerender_DocumentWidget_, context);
+        }
     }
 }
 
