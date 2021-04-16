@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-04-14 09:18+0000\n"
+"PO-Revision-Date: 2021-04-17 19:18+0000\n"
 "Last-Translator: MCMic <come@chilliet.eu>\n"
 "Language-Team: French <http://weblate.skyjake.fi/projects/lagrange/ui/fr/>\n"
 "Language: fr\n"
@@ -940,3 +940,124 @@ msgstr "Échec de l’ouverture du fichier"
 
 msgid "error.badheader"
 msgstr "Entête invalide"
+
+msgid "menu.aboutpages"
+msgstr "Pages \"about\""
+
+msgid "pageinfo.cert.notexpired"
+msgstr "Non expiré"
+
+msgid "dlg.certimport.help"
+msgstr ""
+"Collez un certificat PEM et/ou une clé privée,\n"
+"ou déposez un fichier .crt/.key sur la fenêtre."
+
+msgid "dlg.certimport.notfound"
+msgstr "Aucun certificat ni clé privée n'a été trouvé."
+
+msgid "dlg.certimport.notfound.page"
+msgstr "Certificat/clé introuvable sur la page actuelle."
+
+msgid "ident.showuse"
+msgstr "Afficher les utilisations"
+
+msgid "heading.ident.use"
+msgstr "UTILISATIONS DE L’IDENTITÉ"
+
+msgid "error.cert.auth"
+msgstr "Certificat non autorisé"
+
+msgid "error.cert.invalid.msg"
+msgstr "Le certificat client fourni a expiré ou est invalide."
+
+#, c-format
+msgid "ident.usedonurls"
+msgid_plural "ident.usedonurls.n"
+msgstr[0] "Utilisée sur %zu URL"
+msgstr[1] "Utilisée sur %zu URLs"
+
+msgid "heading.ident.notes"
+msgstr "NOTES SUR L'IDENTITÉ"
+
+# %s refers to name of an identity.
+#, c-format
+msgid "dlg.ident.notes"
+msgstr "Notes à propos de %s :"
+
+msgid "menu.page.copysource"
+msgstr "Copier le code source de la page"
+
+msgid "ident.notused"
+msgstr "Non utilisée"
+
+msgid "ident.use"
+msgstr "Utiliser pour cette page"
+
+msgid "ident.stopuse"
+msgstr "Arrêter d’utiliser pour cette page"
+
+msgid "ident.stopuse.all"
+msgstr "Arrêter d’utiliser partout"
+
+msgid "heading.certimport"
+msgstr "IMPORTATION D’IDENTITÉ"
+
+msgid "error.cert.auth.msg"
+msgstr ""
+"Le certificat client fourni est valide mais n’est pas autorisé à accéder à "
+"la ressource demandée."
+
+msgid "error.cert.invalid"
+msgstr "Certificat invalide"
+
+msgid "menu.sidebar.left"
+msgstr "Barre latérale gauche"
+
+msgid "menu.sidebar.right"
+msgstr "Barre latérale droite"
+
+msgid "menu.sidebar"
+msgstr "Barre latérale"
+
+msgid "menu.identity.notactive"
+msgstr "Aucune identité active"
+
+msgid "ident.using"
+msgstr "Utilisée pour cette page"
+
+#, c-format
+msgid "dlg.confirm.ident.delete"
+msgstr ""
+"Voulez-vous vraiment supprimer l'identité\n"
+"%s%s%s\n"
+"y compris ses fichiers de certificat et clé privée ?"
+
+msgid "heading.unsub"
+msgstr "DÉSABONNEMENT"
+
+#, c-format
+msgid "error.unsupported.suggestsave"
+msgstr ""
+"Vous pouvez quand même l'enregistrer comme fichier dans votre dossier de "
+"téléchargements. Tapez %s ou sélectionnez « %s » dans le menu."
+
+msgid "pageinfo.cert.status"
+msgstr "État du certificat :"
+
+msgid "heading.save.incomplete"
+msgstr "PAGE INCOMPLÈTE"
+
+msgid "dlg.autoreload"
+msgstr "Sélectionnez l’intervalle de rechargement auto pour cet onglet."
+
+msgid "heading.certimport.pasted"
+msgstr "COLLÉ DEPUIS LE PRESSE-PAPIERS"
+
+msgid "heading.certimport.dropped"
+msgstr "FICHIER DÉPOSÉ"
+
+msgid "link.hint.image"
+msgstr "Afficher l’image"
+
+msgid "bookmark.title.blank"
+msgstr "Page vide"
