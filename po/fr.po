@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "PO-Revision-Date: 2021-04-17 19:18+0000\n"
-"Last-Translator: MCMic <come@chilliet.eu>\n"
+"Last-Translator: methbkts <methbkts@gmail.com>\n"
 "Language-Team: French <http://weblate.skyjake.fi/projects/lagrange/ui/fr/>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -1061,3 +1061,10 @@ msgstr "Afficher l’image"
 
 msgid "bookmark.title.blank"
 msgstr "Page vide"
+
+msgid "about.tagline"
+msgstr "Un client Gemini de toute beauté"
+
+# Used on iOS. "Files" refers to Apple's iOS app where you can pick an iCloud folder.
+msgid "menu.save.files"
+msgstr "Enregistrer dans Fichiers"
