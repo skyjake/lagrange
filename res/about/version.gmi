@@ -7,7 +7,7 @@
 # Release notes
 
 ## 1.4
-* Optimized page rendering. Now each line of text is rendered into the view buffer only once, and while the view is stationary, content is prefilled in the available space outside the viewport. Previously, at least one line of text was being rendered whenever the viewport was moved, which was mostly redundant.
+* Optimized page rendering. Now each line of text is rendered into the view buffer only once, and whenever the view is stationary, content is prefilled in the available space outside the viewport. Previously, at least one line of text was being rendered whenever the viewport was moved, which was mostly redundant.
 * Preferences: Reorganized the fonts dropdown menu.
 * Updated the UI font to Source Sans 3. It now has all the styles and weights needed for page rendering, too.
 * Added a semibold Fira Sans weight (used for links).
