@@ -424,7 +424,7 @@ static void draw_ListWidget_(const iListWidget *d) {
         clear_IntSet(&iConstCast(iListWidget *, d)->invalidItems);
     }
     setClip_Paint(&p, bounds_Widget(w));
-    draw_VisBuf(d->visBuf, addY_I2(topLeft_Rect(bounds), -d->scrollY));
+    draw_VisBuf(d->visBuf, addY_I2(topLeft_Rect(bounds), -d->scrollY), ySpan_Rect(bounds));
     unsetClip_Paint(&p);
     drawChildren_Widget(w);
 }

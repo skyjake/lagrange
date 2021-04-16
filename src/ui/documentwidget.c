@@ -3871,7 +3871,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
     render_DocumentWidget_(d, &ctx, iFalse /* just the mandatory parts */);
     setClip_Paint(&ctx.paint, bounds);
     const int yTop = docBounds.pos.y - value_Anim(&d->scrollY);
-    draw_VisBuf(d->visBuf, init_I2(bounds.pos.x, yTop));
+    draw_VisBuf(d->visBuf, init_I2(bounds.pos.x, yTop), ySpan_Rect(bounds));
     /* Text markers. */
     const iBool isTouchSelecting = (flags_Widget(w) & touchDrag_WidgetFlag) != 0;
     if (!isEmpty_Range(&d->foundMark) || !isEmpty_Range(&d->selectMark)) {

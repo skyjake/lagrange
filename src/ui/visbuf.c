@@ -219,7 +219,7 @@ void validate_VisBuf(iVisBuf *d) {
 
 //#define DEBUG_SCALE 0.5f
 
-void draw_VisBuf(const iVisBuf *d, iInt2 topLeft) {
+void draw_VisBuf(const iVisBuf *d, const iInt2 topLeft, const iRangei yClipBounds) {
     SDL_Renderer *render = renderer_Window(get_Window());
     iForIndices(i, d->buffers) {
         const iVisBufTexture *buf = d->buffers + i;
@@ -227,6 +227,9 @@ void draw_VisBuf(const iVisBuf *d, iInt2 topLeft) {
                          topLeft.y + buf->origin,
                          d->texSize.x,
                          d->texSize.y };
+        if (dst.y >= yClipBounds.end || dst.y + dst.h < yClipBounds.start) {
+            continue; /* Outside the clipping area. */
+        }
 #if defined (DEBUG_SCALE)
         dst.w *= DEBUG_SCALE;
         dst.h *= DEBUG_SCALE;

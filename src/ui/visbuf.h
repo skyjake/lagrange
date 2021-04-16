@@ -56,4 +56,4 @@ void    validate_VisBuf         (iVisBuf *);
 iRangei allocRange_VisBuf       (const iVisBuf *);
 iRangei bufferRange_VisBuf      (const iVisBuf *, size_t index);
 void    invalidRanges_VisBuf    (const iVisBuf *, const iRangei full, iRangei *out_invalidRanges);
-void    draw_VisBuf             (const iVisBuf *, iInt2 topLeft);
+void    draw_VisBuf             (const iVisBuf *, iInt2 topLeft, iRangei yClipBounds);
