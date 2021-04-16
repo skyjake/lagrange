@@ -59,6 +59,9 @@ iRecentUrl *findUrl_History             (iHistory *, const iString *url);
 void        clearCache_History          (iHistory *);
 size_t      pruneLeastImportant_History (iHistory *);
 
+iBool       atLatest_History            (const iHistory *);
+iBool       atOldest_History            (const iHistory *);
+
 const iStringArray *   searchContents_History   (const iHistory *, const iRegExp *pattern); /* chronologically ascending */
 
 const iString *

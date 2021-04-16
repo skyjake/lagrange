@@ -37,6 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "touch.h"
 #include "../app.h"
 #include "../visited.h"
+#include "../history.h"
 #include "../gmcerts.h"
 #include "../gmutil.h"
 #include "../visited.h"
@@ -465,6 +466,18 @@ static void updateNavBarIdentity_(iWidget *navBar) {
     setFlags_Widget(as_Widget(idItem), disabled_WidgetFlag, !ident);
 }
 
+static void updateNavDirButtons_(iWidget *navBar) {
+    const iHistory *history = history_DocumentWidget(document_App());
+    setFlags_Widget(findChild_Widget(navBar, "navbar.back"), disabled_WidgetFlag,
+                    atOldest_History(history));
+    setFlags_Widget(findChild_Widget(navBar, "navbar.forward"), disabled_WidgetFlag,
+                    atLatest_History(history));
+    setFlags_Widget(findWidget_App("toolbar.back"), disabled_WidgetFlag,
+                    atOldest_History(history));
+    setFlags_Widget(findWidget_App("toolbar.forward"), disabled_WidgetFlag,
+                    atLatest_History(history));
+}
+
 static const int loadAnimIntervalMs_ = 133;
 static int       loadAnimIndex_      = 0;
 
@@ -677,6 +690,7 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
                 checkLoadAnimation_Window_(get_Window());
                 dismissPortraitPhoneSidebars_Window(get_Window());
                 updateNavBarIdentity_(navBar);
+                updateNavDirButtons_(navBar);
                 /* Icon updates should be limited to automatically chosen icons if the user
                    is allowed to pick their own in the future. */
                 if (updateBookmarkIcon_Bookmarks(bookmarks_App(), urlStr,
@@ -1156,11 +1170,22 @@ static void setupUserInterface_Window(iWindow *d) {
                         resizeWidthOfChildren_WidgetFlag |
                         arrangeHeight_WidgetFlag | arrangeHorizontal_WidgetFlag, iTrue);
         setBackgroundColor_Widget(toolBar, tmBannerBackground_ColorId);
-        addChildFlags_Widget(toolBar, iClob(newLargeIcon_LabelWidget("\U0001f870", "navigate.back")), frameless_WidgetFlag);
-        addChildFlags_Widget(toolBar, iClob(newLargeIcon_LabelWidget("\U0001f872", "navigate.forward")), frameless_WidgetFlag);
-        setId_Widget(addChildFlags_Widget(toolBar, iClob(newLargeIcon_LabelWidget("\U0001f464", "toolbar.showident")), frameless_WidgetFlag), "toolbar.ident");
-        setId_Widget(addChildFlags_Widget(toolBar, iClob(newLargeIcon_LabelWidget("\U0001f588", "toolbar.showview arg:-1")),
-                             frameless_WidgetFlag | commandOnClick_WidgetFlag), "toolbar.view");
+        setId_Widget(addChildFlags_Widget(toolBar,
+                                          iClob(newLargeIcon_LabelWidget("\U0001f870", "navigate.back")),
+                                          frameless_WidgetFlag),
+                     "toolbar.back");
+        setId_Widget(addChildFlags_Widget(toolBar,
+                                          iClob(newLargeIcon_LabelWidget("\U0001f872", "navigate.forward")),
+                                          frameless_WidgetFlag),
+                     "toolbar.forward");
+        setId_Widget(addChildFlags_Widget(toolBar,
+                                          iClob(newLargeIcon_LabelWidget("\U0001f464", "toolbar.showident")),
+                                          frameless_WidgetFlag),
+                     "toolbar.ident");
+        setId_Widget(addChildFlags_Widget(toolBar,
+                                          iClob(newLargeIcon_LabelWidget("\U0001f588", "toolbar.showview arg:-1")),
+                                          frameless_WidgetFlag | commandOnClick_WidgetFlag),
+                     "toolbar.view");
         iLabelWidget *menuButton = makeMenuButton_LabelWidget("\U0001d362", phoneNavMenuItems_,
                                                               iElemCount(phoneNavMenuItems_));
         setFont_LabelWidget(menuButton, uiLabelLarge_FontId);
