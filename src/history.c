@@ -268,6 +268,18 @@ iBool goForward_History(iHistory *d) {
     return iFalse;
 }
 
+iBool atLatest_History(const iHistory *d) {
+    iBool isLatest;
+    iGuardMutex(d->mtx, isLatest = (d->recentPos == 0));
+    return isLatest;
+}
+
+iBool atOldest_History(const iHistory *d) {
+    iBool isOldest;
+    iGuardMutex(d->mtx, isOldest = (d->recentPos == size_Array(&d->recent) - 1));
+    return isOldest;
+}
+
 const iGmResponse *cachedResponse_History(const iHistory *d) {
     const iRecentUrl *item = constMostRecentUrl_History(d);
     return item ? item->cachedResponse : NULL;
