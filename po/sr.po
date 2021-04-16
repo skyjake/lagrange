@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-04-14 09:18+0000\n"
+"PO-Revision-Date: 2021-04-17 19:18+0000\n"
 "Last-Translator: Страхиња Радић <contact@strahinja.org>\n"
 "Language-Team: Serbian <http://weblate.skyjake.fi/projects/lagrange/ui/sr/>\n"
 "Language: sr\n"
@@ -324,7 +324,7 @@ msgid "pageinfo.domain.mismatch"
 msgstr "Назив домена не одговара"
 
 msgid "dlg.cert.trust"
-msgstr "Поверење"
+msgstr "Укажи поверење"
 
 msgid "dlg.cert.fingerprint"
 msgstr "Копирај отисак"
