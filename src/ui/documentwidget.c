@@ -3737,8 +3737,10 @@ static iBool render_DocumentWidget_(const iDocumentWidget *d, iDrawContext *ctx,
                         iZap(ctx->runsDrawn);
                         render_GmDocument(d->doc, bufVisRange, drawRun_DrawContext_, ctx);
                         meta->runsDrawn = ctx->runsDrawn;
-                        meta->runsDrawn.start--;
-                        meta->runsDrawn.end++;
+                        if (meta->runsDrawn.start) {
+                            meta->runsDrawn.start--;
+                            meta->runsDrawn.end++;
+                        }
                         buf->validRange = bufVisRange;
     //                printf("  buffer %zu valid %d...%d\n", i, bufRange.start, bufRange.end);
                     }
