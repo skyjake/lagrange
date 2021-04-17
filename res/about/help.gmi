@@ -335,11 +335,17 @@ URLs on the command line are opened after Lagrange has launched. If more than on
 $ lagrange gemini://gus.guru/
 ```
 
-### --echo
+### -E, --echo
 Debugging utility: internal events are printed to stdout.
+
+### --help
+Print a list of all the available options.
 
 ### --sw
 Disable hardware accelerated graphics. Note that software rendering is anyway used as a fallback, so usually this option should not be necessary.
+
+### -V, --version
+Print the application version.
 
 ## 3.2 Opening Gemini links
 
@@ -361,15 +367,95 @@ Lagrange stores user-specific persistent files in one of the following locations
 Other Unix : ~/.config/lagrange/
 ```
 
-* bindings.txt
-* bookmarks.txt
-* feeds.txt
-* idents.lgr and idents/
-* mimehooks.txt
-* prefs.cfg
-* state.lgr
-* trusted.txt
-* visited.2.txt
+### bindings.txt
+Each line specifies one keybinding:
+> {binding-id} {keycode} {flags}
+* Binding IDs are defined in src/ui/keys.c.
+* Keycode is one of the SDLK constants from SDL (hexadecimal).
+* Flags specifies the modifier keys:
+```Table of modifier key flags
+s : Shift
+a : Alt
+c : Ctrl
+g : Gui (Windows/Command/Meta key)
+k : Caps Lock
+```
+
+### bookmarks.txt
+Each bookmark is stored as three consecutive lines:
+> {icon} {creation-timestamp} {url}
+> {title}
+> {tags}
+* The icon is one UTF-32 codepoint as a hexadecimal number, prefixed with zeroes to be always eight bytes long.
+* Creation time is stored as a UNIX timestamp.
+* URL, title, and tags are UTF-8 text strings terminated at the newline.
+
+### feeds.txt
+Cached state of feed subscriptions. The file may be deleted while the application is not running to force a reset of feed contents. Subscriptions themselves are tracked via bookmark tags so deleting the file does not affect which pages are subscribed.
+
+The file has three sections. The first one is simply a UNIX timestamp indicating when feeds were last refreshed. The second section begins after the comment:
+```
+# Feeds
+```
+In this section, each line identifies a subscription so it can be referenced in the feed entries:
+> {feed-id} {feed-url}
+* The feed ID a hexadecimal number and always eight characters long.
+
+The third section contains all the discovered feed entries. It begins after the comment:
+```
+# Entries
+```
+Each feed entry consists of five consecutive lines:
+> {feed-id}
+> {posted-time}
+> {discovery-time}
+> {url}
+> {title}
+* The feed ID is one of the identifiers from the Feeds section (without zeroes for padding).
+* The posted time is a UNIX timestamp that specifies when the entry was posted. This is determined from the "YYYY-MM-DD" date found on the link line. If this is a "new headings" subscription, the posted time and the discovery time are the same.
+* The discovery time is a UNIX timestamp that marks when the entry was added to the cache.
+
+### idents.lgr and idents/
+idents.lgr is a binary file that contains metadata about the client certificates known to the application, for example on which URLs a particular certificate should be active.
+
+The "idents" subdirectory is where the actual client certificates are stored. Each certificate comprises a .crt and a .key file in PEM format. Certificates generated inside the application use the certificate fingerprint as the file name.
+
+### modmap.txt
+Translation table for keyboard modifiers. For example, one could swap the Alt and Ctrl keys by changing their mappings. See the comment in the file that explains the format and usage.
+
+### mimehooks.txt
+See section 4.
+
+### prefs.cfg
+Persistent configuration variables. The file is rewritten when the application is closed. Each line is interpreted as an internal UI event like those printed with the --echo command line option.
+
+### state.lgr
+A binary file that contains the current state of the application: open tabs and their scroll positions, and navigation history with cached page content (up to the configured cache limit). You may delete this file when the application is not running to close all tabs and clear the page content cache.
+
+### trusted.txt
+Trusted server certificates. Each line specifies the certificate fingerprint of one domain:
+> {domain} {valid-until} {fingerprint}
+* Domain names are stored in punycode format if they contain non-ASCII characters.
+* The "valid until" expiration date is a UNIX timestamp.
+
+### visited.2.txt
+The combined navigation history of all tabs. Each line specifies one URL:
+> {last-visited} {flags} {url}
+* The last visited time is stored as a UNIX timestamp.
+* Flags is always four bytes long:
+```
+0000 : No flags set
+0001 : Transient
+```
+The Transient flag is used to indicate redirections and for marking feed entries as read without actually visiting the URL. URLs with the Transient flag do not appear in the History sidebar tab.
+
+## 3.5 Environment variables
+
+### LAGRANGE_OVERRIDE_DPI
+Override display DPI detection with a user-provided value. The same value is applied to all displays. This is useful if your display's DPI value is not being detected correctly. Example:
+```96 is the default DPI value
+LAGRANGE_OVERRIDE_DPI=96
+```
 
 # 4 MIME hooks
 
