@@ -290,8 +290,15 @@ const iString *absoluteUrl_String(const iString *d, const iString *urlMaybeRelat
     appendCStr_String(absolute, "://");
     /* Authority. */ {
         const iUrl *selHost = isDef_(rel.host) ? &rel : &orig;
+        const iBool isIPv6 = iStrStrN(selHost->host.start, ":", size_Range(&selHost->host)) != NULL;
         iString *decHost = punyDecodeHost_(selHost->host);
+        if (isIPv6) {
+            appendCStr_String(absolute, "[");
+        }
         append_String(absolute, decHost);
+        if (isIPv6) {
+            appendCStr_String(absolute, "]");
+        }
         delete_String(decHost);
         /* Default Gemini port is removed as redundant; normalization. */
         if (!isEmpty_Range(&selHost->port) && (!equalCase_Rangecc(scheme, "gemini")
