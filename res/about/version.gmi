@@ -11,6 +11,7 @@
 * Preferences: Reorganized the fonts dropdown menu.
 * Updated the UI font to Source Sans 3. It now has all the styles and weights needed for page rendering, too.
 * Added a semibold Fira Sans weight (used for links).
+* Navigation arrow buttons are disabled at end/beginning of history.
 * Fixed allocation of page rendering buffers. Previously, some buffers may have gone unused or were allocated erroneously to the same position, causing unnecessary work for the page renderer.
 * Fixed a possible crash when closing a tab.
 
