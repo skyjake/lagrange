@@ -61,6 +61,11 @@ void init_Url(iUrl *d, const iString *text) {
             d->host = capturedRange_RegExpMatch(&m, 3);
             d->port = capturedRange_RegExpMatch(&m, 7);
         }
+        /* Remove brackets from an IPv6 literal. */
+        if (size_Range(&d->host) > 2 && d->host.start[0] == '[' && d->host.end[-1] == ']') {
+            d->host.start++;
+            d->host.end--;
+        }
     }
 }
 
