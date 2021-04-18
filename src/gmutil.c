@@ -290,7 +290,8 @@ const iString *absoluteUrl_String(const iString *d, const iString *urlMaybeRelat
     appendCStr_String(absolute, "://");
     /* Authority. */ {
         const iUrl *selHost = isDef_(rel.host) ? &rel : &orig;
-        const iBool isIPv6 = iStrStrN(selHost->host.start, ":", size_Range(&selHost->host)) != NULL;
+        const iBool isIPv6 = size_Range(&selHost->host) > 0 &&
+                             iStrStrN(selHost->host.start, ":", size_Range(&selHost->host)) != NULL;
         iString *decHost = punyDecodeHost_(selHost->host);
         if (isIPv6) {
             appendCStr_String(absolute, "[");
