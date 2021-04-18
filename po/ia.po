@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-04-09 13:18+0000\n"
+"PO-Revision-Date: 2021-04-14 09:18+0000\n"
 "Last-Translator: Olga Smirnova <mistresssilvara@hotmail.com>\n"
 "Language-Team: Interlingua <http://weblate.skyjake.fi/projects/lagrange/ui/"
 "ia/>\n"
@@ -1332,3 +1332,61 @@ msgstr "Le ultime actualisation esseva %s."
 
 msgid "mb.per.sec"
 msgstr "Mb/s"
+
+msgid "sidebar.action.ident.import"
+msgstr "Importar…"
+
+msgid "error.openfile.msg"
+msgstr ""
+"Le file requirite non esseva trovate o es indisponibile. Controla le "
+"percurso de file."
+
+msgid "error.unsupported.media.msg"
+msgstr "Le recipite contento non pote esser vidite per iste application."
+
+msgid "error.permanent.msg"
+msgstr "Vostre requesta ha fallite e fallera repetitemente."
+
+msgid "keys.link.modkey"
+msgstr "Aperter un ligamine per un clave de modification"
+
+msgid "keys.link.homerow"
+msgstr "Aperir un ligamine per claves del rango de base"
+
+msgid "keys.link.homerow.newtab"
+msgstr "Aperir in un nove scheda per claves del rango de base"
+
+msgid "keys.link.homerow.hover"
+msgstr "Passar supra un ligamine per claves del rango de base"
+
+msgid "error.unavail.msg"
+msgstr ""
+"Le servitor es indisponibile a causa de supercarga o mantenimento. Retorna "
+"plus tarde."
+
+msgid "sidebar.action.feeds.showall"
+msgstr "Omne"
+
+msgid "sidebar.action.feeds.showunread"
+msgstr "Non legite"
+
+msgid "sidebar.action.ident.new"
+msgstr "Nove…"
+
+#, c-format
+msgid "error.unsupported.suggestsave"
+msgstr ""
+"Vos pote tamen salvar lo como un file a vostre dossier Discargas. Preme %s o "
+"selige «%s» in li menu."
+
+msgid "dlg.newident.rsa.selfsign"
+msgstr "Creation de un certificato RSA auto-signate de 2048 bits."
+
+msgid "menu.select.clear"
+msgstr "Deseliger"
+
+msgid "numbertype.float"
+msgstr "puncto flottante"
+
+msgid "feeds.list.refreshtime.now"
+msgstr "Le ultime actualisation esseva justo nunc."
