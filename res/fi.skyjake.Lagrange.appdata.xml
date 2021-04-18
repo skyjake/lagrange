@@ -45,6 +45,25 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.3.3" date="2021-04-18">
+            <description>
+                <p>New features/changes:</p>
+                <ul>
+                    <li>Added UI languages: French, German. (Note that neither is 100% finished yet.)</li>
+                    <li>Added environment variable LAGRANGE_OVERRIDE_DPI.</li>
+                    <li>Back/forward navigation buttons are disabled if they have no more pages to switch to.</li>
+                    <li>Minor UI color tuning.</li>
+                </ul>
+                <p>Bug fixes:</p>
+                <ul>
+                    <li>Disabled IPC in Flatpak builds for compatibility reasons. Beware of multiple instances overwriting each other's data.</li>
+                    <li>Possible crash when closing a tab.</li>
+                    <li>Possible crash when restoring application state at launch.</li>
+                    <li>Parsing and making requests with literal IPv6 addresses.</li>
+                </ul>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.3.3</url>
+        </release>
         <release version="1.3.2" date="2021-04-11">
             <description>
                 <p>Bug fixes:</p>
