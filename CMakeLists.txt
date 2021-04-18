@@ -79,6 +79,7 @@ set (EMBED_RESOURCES
     res/lang/en.bin
     res/lang/es.bin
     res/lang/fi.bin
+    res/lang/fr.bin
     res/lang/ie.bin
     res/lang/ru.bin
     res/lang/sr.bin
