@@ -21,6 +21,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
+#if defined (LAGRANGE_ENABLE_IPC)
 
 #include <the_Foundation/string.h>
 #include <the_Foundation/process.h>
@@ -39,3 +40,5 @@ enum iIpcWrite {
 };
 
 iBool       write_Ipc           (iProcessId pid, const iString *input, enum iIpcWrite type);
+
+#endif /* defined (LAGRANGE_ENABLE_IPC) */

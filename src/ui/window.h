@@ -52,7 +52,7 @@ struct Impl_WindowPlacement {
     iInt2 initialPos;
     iRect normalRect;       /* updated when window is moved/resized */
     iInt2 lastNotifiedSize; /* keep track of horizontal/vertical notifications */
-    int   snap;             /* LAGRANGE_CUSTOM_FRAME */
+    int   snap;             /* LAGRANGE_ENABLE_CUSTOM_FRAME */
     int   lastHit;
 };
 
@@ -111,7 +111,7 @@ iBool       isNarrow_Window         (const iWindow *);
 
 iWindow *   get_Window              (void);
 
-#if defined (LAGRANGE_CUSTOM_FRAME)
+#if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
 SDL_HitTestResult hitTest_Window(const iWindow *d, iInt2 pos);
 #endif
 

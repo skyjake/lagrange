@@ -2006,7 +2006,7 @@ iWidget *makePreferences_Widget(void) {
     const int bigGap = lineHeight_Text(uiLabel_FontId) * 3 / 4;
     /* General preferences. */ {
         appendTwoColumnPage_(tabs, "${heading.prefs.general}", '1', &headings, &values);
-#if defined (LAGRANGE_DOWNLOAD_EDIT)
+#if defined (LAGRANGE_ENABLE_DOWNLOAD_EDIT)
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.downloads}")));
         setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.downloads");
 #endif
@@ -2083,7 +2083,7 @@ iWidget *makePreferences_Widget(void) {
         }
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.accent}")));
         addChildFlags_Widget(values, iClob(accent), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
-#if defined (LAGRANGE_CUSTOM_FRAME)
+#if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.customframe}")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.customframe")));
 #endif
