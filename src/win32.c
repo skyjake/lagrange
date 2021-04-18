@@ -64,7 +64,7 @@ void useExecutableIconResource_SDLWindow(SDL_Window *win) {
     }
 }
 
-#if defined (LAGRANGE_CUSTOM_FRAME)
+#if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
 iInt2 cursor_Win32(void) {
     POINT p;
     GetPhysicalCursorPos(&p);
@@ -191,4 +191,4 @@ void processNativeEvent_Win32(const struct SDL_SysWMmsg *msg, iWindow *window) {
 #endif
     }
 }
-#endif /* defined (LAGRANGE_CUSTOM_FRAME) */
+#endif /* defined (LAGRANGE_ENABLE_CUSTOM_FRAME) */

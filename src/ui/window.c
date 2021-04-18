@@ -923,7 +923,7 @@ static void setupUserInterface_Window(iWindow *d) {
     setId_Widget(div, "navdiv");
     addChild_Widget(d->root, iClob(div));
 
-#if defined (LAGRANGE_CUSTOM_FRAME)
+#if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
     /* Window title bar. */
     if (prefs_App()->customFrame) {
         setPadding1_Widget(div, 1);
@@ -1358,7 +1358,7 @@ static void drawBlank_Window_(iWindow *d) {
     SDL_RenderPresent(d->render);
 }
 
-#if defined (LAGRANGE_CUSTOM_FRAME)
+#if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
 static SDL_HitTestResult hitTest_Window_(SDL_Window *win, const SDL_Point *pos, void *data) {
     iWindow *d = data;
     iAssert(d->win == win);
@@ -1411,7 +1411,7 @@ SDL_HitTestResult hitTest_Window(const iWindow *d, iInt2 pos) {
 
 iBool create_Window_(iWindow *d, iRect rect, uint32_t flags) {
     flags |= SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_HIDDEN;
-#if defined (LAGRANGE_CUSTOM_FRAME)
+#if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
     if (prefs_App()->customFrame) {
         /* We are drawing a custom frame so hide the default one. */
         flags |= SDL_WINDOW_BORDERLESS;
@@ -1421,7 +1421,7 @@ iBool create_Window_(iWindow *d, iRect rect, uint32_t flags) {
             width_Rect(rect), height_Rect(rect), flags, &d->win, &d->render)) {
         return iFalse;
     }
-#if defined (LAGRANGE_CUSTOM_FRAME)
+#if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
     if (prefs_App()->customFrame) {
         /* Register a handler for window hit testing (drag, resize). */
         SDL_SetWindowHitTest(d->win, hitTest_Window_, d);
@@ -1540,7 +1540,7 @@ void init_Window(iWindow *d, iRect rect) {
         SDL_FreeSurface(surf);
     }
     d->appIcon = NULL;
-#if defined (LAGRANGE_CUSTOM_FRAME)
+#if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
     /* Load the app icon for drawing in the title bar. */
     if (prefs_App()->customFrame) {
         SDL_Surface *surf = loadImage_(&imageLagrange64_Embedded, appIconSize_());
@@ -1603,7 +1603,7 @@ static iBool isNormalPlacement_Window_(const iWindow *d) {
 }
 
 static iBool unsnap_Window_(iWindow *d, const iInt2 *newPos) {
-#if defined (LAGRANGE_CUSTOM_FRAME)
+#if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
     if (!prefs_App()->customFrame) {
         return iFalse;
     }
@@ -1693,7 +1693,7 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
                 d->isMinimized = iTrue;
                 return iFalse;
             }
-#if defined (LAGRANGE_CUSTOM_FRAME)
+#if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
             /* Set the snap position depending on where the mouse cursor is. */
             if (prefs_App()->customFrame) {
                 SDL_Rect usable;
@@ -1723,7 +1723,7 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
                     return iTrue;
                 }
             }
-#endif /* defined LAGRANGE_CUSTOM_FRAME */
+#endif /* defined LAGRANGE_ENABLE_CUSTOM_FRAME */
             //printf("MOVED: %d, %d\n", ev->data1, ev->data2); fflush(stdout);
             if (unsnap_Window_(d, &newPos)) {
                 return iTrue;
@@ -1813,7 +1813,7 @@ static void applyCursor_Window_(iWindow *d) {
 
 iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
     switch (ev->type) {
-#if defined (LAGRANGE_CUSTOM_FRAME)
+#if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
         case SDL_SYSWMEVENT: {
             /* We observe native Win32 messages for better user interaction with the
                window frame. Mouse clicks especially will not generate normal SDL
@@ -1966,25 +1966,27 @@ void draw_Window(iWindow *d) {
     }
     /* Draw widgets. */
     d->frameTime = SDL_GetTicks();
-    draw_Widget(d->root);
-#if defined (LAGRANGE_CUSTOM_FRAME)
-    /* App icon. */
-    const iWidget *appIcon = findChild_Widget(d->root, "winbar.icon");
-    if (isVisible_Widget(appIcon)) {
-        const int   size    = appIconSize_();
-        const iRect rect    = bounds_Widget(appIcon);
-        const iInt2 mid     = mid_Rect(rect);
-        const iBool isLight = isLight_ColorTheme(colorTheme_App());
-        iColor iconColor    = get_Color(gotFocus || isLight ? white_ColorId : uiAnnotation_ColorId);
-        SDL_SetTextureColorMod(d->appIcon, iconColor.r, iconColor.g, iconColor.b);
-        SDL_SetTextureAlphaMod(d->appIcon, gotFocus || !isLight ? 255 : 92);
-        SDL_RenderCopy(
-            d->render,
-            d->appIcon,
-            NULL,
-            &(SDL_Rect){ left_Rect(rect) + gap_UI * 1.25f, mid.y - size / 2, size, size });
-    }
+    if (isExposed_Window(d)) {
+        draw_Widget(d->root);
+#if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
+        /* App icon. */
+        const iWidget *appIcon = findChild_Widget(d->root, "winbar.icon");
+        if (isVisible_Widget(appIcon)) {
+            const int   size    = appIconSize_();
+            const iRect rect    = bounds_Widget(appIcon);
+            const iInt2 mid     = mid_Rect(rect);
+            const iBool isLight = isLight_ColorTheme(colorTheme_App());
+            iColor iconColor    = get_Color(gotFocus || isLight ? white_ColorId : uiAnnotation_ColorId);
+            SDL_SetTextureColorMod(d->appIcon, iconColor.r, iconColor.g, iconColor.b);
+            SDL_SetTextureAlphaMod(d->appIcon, gotFocus || !isLight ? 255 : 92);
+            SDL_RenderCopy(
+                d->render,
+                d->appIcon,
+                NULL,
+                &(SDL_Rect){ left_Rect(rect) + gap_UI * 1.25f, mid.y - size / 2, size, size });
+        }
 #endif
+    }
 #if 0
     /* Text cache debugging. */ {
         SDL_Texture *cache = glyphCache_Text();
@@ -2112,7 +2114,7 @@ void setSnap_Window(iWindow *d, int snapMode) {
         }
         return;
     }
-#if defined (LAGRANGE_CUSTOM_FRAME)
+#if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
     if (d->place.snap == snapMode) {
         return;
     }
@@ -2178,7 +2180,7 @@ void setSnap_Window(iWindow *d, int snapMode) {
         arrange_Widget(d->root);
         postRefresh_App();
     }
-#endif /* defined (LAGRANGE_CUSTOM_FRAME) */
+#endif /* defined (LAGRANGE_ENABLE_CUSTOM_FRAME) */
 }
 
 int snap_Window(const iWindow *d) {

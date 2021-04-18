@@ -117,7 +117,7 @@ struct Impl_App {
     uint32_t     lastTickerTime;
     uint32_t     elapsedSinceLastTicker;
     iBool        isRunning;
-#if defined (LAGRANGE_IDLE_SLEEP)
+#if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
     iBool        isIdling;
     uint32_t     lastEventTime;
     int          sleepTimer;
@@ -169,7 +169,7 @@ static iString *serializePrefs_App_(const iApp *d) {
     iString *str = new_String();
     const iSidebarWidget *sidebar  = findWidget_App("sidebar");
     const iSidebarWidget *sidebar2 = findWidget_App("sidebar2");
-#if defined (LAGRANGE_CUSTOM_FRAME)
+#if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
     appendFormat_String(str, "customframe arg:%d\n", d->prefs.customFrame);
 #endif
     appendFormat_String(str, "window.retain arg:%d\n", d->prefs.retainWindowSize);
@@ -184,7 +184,7 @@ static iString *serializePrefs_App_(const iApp *d) {
         appendFormat_String(str, "sidebar2.width arg:%f gaps:1\n", width_SidebarWidget(sidebar2));
         /* On macOS, maximization should be applied at creation time or the window will take
            a moment to animate to its maximized size. */
-#if defined (LAGRANGE_CUSTOM_FRAME)
+#if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
         if (snap_Window(d->window)) {
             if (~SDL_GetWindowFlags(d->window->win) & SDL_WINDOW_MINIMIZED) {
                 /* Save the actual visible window position, too, because snapped windows may
@@ -337,7 +337,7 @@ static void loadPrefs_App_(iApp *d) {
                 d->initialWindowRect = init_Rect(
                     pos.x, pos.y, argLabel_Command(cmd, "width"), argLabel_Command(cmd, "height"));
             }
-#if !defined (LAGRANGE_DOWNLOAD_EDIT)
+#if !defined (LAGRANGE_ENABLE_DOWNLOAD_EDIT)
             else if (equal_Command(cmd, "downloads")) {
                 continue; /* can't change downloads directory */
             }
@@ -353,7 +353,7 @@ static void loadPrefs_App_(iApp *d) {
         /* Default CA setup. */
         setCACertificates_TlsRequest(&d->prefs.caFile, &d->prefs.caPath);
     }
-#if !defined (LAGRANGE_CUSTOM_FRAME)
+#if !defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
     d->prefs.customFrame = iFalse;
 #endif
     iRelease(f);
@@ -447,7 +447,7 @@ static void saveState_App_(const iApp *d) {
     iRelease(f);
 }
 
-#if defined (LAGRANGE_IDLE_SLEEP)
+#if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
 static uint32_t checkAsleep_App_(uint32_t interval, void *param) {
     iApp *d = param;
     iUnused(d);
@@ -470,6 +470,7 @@ static void terminate_App_(int rc) {
     exit(rc);
 }
 
+#if defined (LAGRANGE_ENABLE_IPC)
 static void communicateWithRunningInstance_App_(iApp *d, iProcessId instance,
                                                 const iStringList *openCmds) {
     iString *cmds = new_String();
@@ -520,6 +521,7 @@ static void communicateWithRunningInstance_App_(iApp *d, iProcessId instance,
 //    }
     terminate_App_(0);
 }
+#endif /* defined (LAGRANGE_ENABLE_IPC) */
 
 static void init_App_(iApp *d, int argc, char **argv) {
     init_CommandLine(&d->args, argc, argv);
@@ -600,6 +602,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
             }
         }
     }
+#if defined (LAGRANGE_ENABLE_IPC)
     /* Only one instance is allowed to run at a time; the runtime files (bookmarks, etc.)
        are not shareable. */ {
         init_Ipc(dataDir_App_());
@@ -614,6 +617,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
         }
         listen_Ipc(); /* We'll respond to commands from other instances. */
     }
+#endif
     printf("Lagrange: A Beautiful Gemini Client\n");
     const iBool isFirstRun =
         !fileExistsCStr_FileInfo(cleanedPath_CStr(concatPath_CStr(dataDir_App_(), "prefs.cfg")));
@@ -686,7 +690,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     postCommand_App("window.unfreeze");
     d->autoReloadTimer = SDL_AddTimer(60 * 1000, postAutoReloadCommand_App_, NULL);
     postCommand_App("document.autoreload");
-#if defined (LAGRANGE_IDLE_SLEEP)
+#if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
     d->isIdling      = iFalse;
     d->lastEventTime = 0;
     d->sleepTimer    = SDL_AddTimer(1000, checkAsleep_App_, d);
@@ -707,7 +711,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
 }
 
 static void deinit_App(iApp *d) {
-#if defined (LAGRANGE_IDLE_SLEEP)
+#if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
     SDL_RemoveTimer(d->sleepTimer);
 #endif
     SDL_RemoveTimer(d->autoReloadTimer);
@@ -729,7 +733,9 @@ static void deinit_App(iApp *d) {
     deinit_CommandLine(&d->args);
     iRelease(d->launchCommands);
     delete_String(d->execPath);
+#if defined (LAGRANGE_ENABLE_IPC)
     deinit_Ipc();
+#endif
     deinit_SortedArray(&d->tickers);
     deinit_Periodic(&d->periodic);
     deinit_Lang();
@@ -875,7 +881,7 @@ iLocalDef iBool isWaitingAllowed_App_(iApp *d) {
     if (d->warmupFrames > 0) {
         return iFalse;
     }
-#if defined (LAGRANGE_IDLE_SLEEP)
+#if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
     if (d->isIdling) {
         return iFalse;
     }
@@ -928,7 +934,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
             case SDL_APP_DIDENTERFOREGROUND:
                 gotEvents = iTrue;
                 d->warmupFrames = 5;
-#if defined (LAGRANGE_IDLE_SLEEP)
+#if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
                 d->isIdling = iFalse;
                 d->lastEventTime = SDL_GetTicks();
 #endif
@@ -961,7 +967,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
                 break;
             }
             default: {
-#if defined (LAGRANGE_IDLE_SLEEP)
+#if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
                 if (ev.type == SDL_USEREVENT && ev.user.code == asleep_UserEventCode) {
                     if (SDL_GetTicks() - d->lastEventTime > idleThreshold_App_ &&
                         isEmpty_SortedArray(&d->tickers)) {
@@ -1050,7 +1056,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
             }
         }
     }
-#if defined (LAGRANGE_IDLE_SLEEP)
+#if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
     if (d->isIdling && !gotEvents && isFinished_Anim(&d->window->rootOffset)) {
         /* This is where we spend most of our time when idle. 60 Hz still quite a lot but we
            can't wait too long after the user tries to interact again with the app. In any
@@ -1123,7 +1129,7 @@ static int run_App_(iApp *d) {
 void refresh_App(void) {
     iApp *d = &app_;
     destroyPending_Widget();
-#if defined (LAGRANGE_IDLE_SLEEP)
+#if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
     if (d->warmupFrames == 0 && d->isIdling) {
         return;
     }
@@ -1200,7 +1206,7 @@ int run_App(int argc, char **argv) {
 
 void postRefresh_App(void) {
     iApp *d = &app_;
-#if defined (LAGRANGE_IDLE_SLEEP)
+#if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
     d->isIdling = iFalse;
 #endif
     const iBool wasPending = exchange_Atomic(&d->pendingRefresh, iTrue);
@@ -1341,7 +1347,7 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
     if (equal_Command(cmd, "prefs.dismiss") || equal_Command(cmd, "preferences")) {
         setUiScale_Window(get_Window(),
                           toFloat_String(text_InputWidget(findChild_Widget(d, "prefs.uiscale"))));
-#if defined (LAGRANGE_DOWNLOAD_EDIT)
+#if defined (LAGRANGE_ENABLE_DOWNLOAD_EDIT)
         postCommandf_App("downloads path:%s",
                          cstr_String(text_InputWidget(findChild_Widget(d, "prefs.downloads"))));
 #endif
@@ -2140,6 +2146,7 @@ iBool handleCommand_App(const char *cmd) {
         }
         return iFalse;
     }
+#if defined (LAGRANGE_ENABLE_IPC)
     else if (equal_Command(cmd, "ipc.list.urls")) {
         iProcessId pid = argLabel_Command(cmd, "pid");
         if (pid) {
@@ -2156,6 +2163,7 @@ iBool handleCommand_App(const char *cmd) {
         signal_Ipc(arg_Command(cmd));
         return iTrue;
     }
+#endif /* defined (LAGRANGE_ENABLE_IPC) */
     else {
         return iFalse;
     }

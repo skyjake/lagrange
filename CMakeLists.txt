@@ -26,6 +26,7 @@ set (IOS_BUNDLE_VERSION 7)
 set (COPYRIGHT_YEAR 2021)
 
 # Build configuration.
+option (ENABLE_IPC              "Use IPC to communicate between running instances" ON)
 option (ENABLE_MPG123           "Use mpg123 for decoding MPEG audio" ON)
 option (ENABLE_X11_SWRENDER     "Use software rendering under X11" OFF)
 option (ENABLE_KERNING          "Enable kerning in font renderer (slower)" ON)
@@ -115,8 +116,6 @@ set (SOURCES
     src/gopher.h
     src/history.c
     src/history.h
-    src/ipc.c
-    src/ipc.h
     src/lang.c
     src/lang.h
     src/lookup.c
@@ -198,6 +197,12 @@ set (SOURCES
     ${CMAKE_CURRENT_BINARY_DIR}/embedded.c
     ${CMAKE_CURRENT_BINARY_DIR}/embedded.h
 )
+if (ENABLE_IPC)
+    list (APPEND SOURCES
+        src/ipc.c
+        src/ipc.h
+    )
+endif ()
 if (ANDROID)
     set (MOBILE 1)
     add_definitions (-DiPlatformAndroidMobile=1)
@@ -254,6 +259,9 @@ target_compile_options (app PUBLIC
     -DSTB_VORBIS_NO_INTEGER_CONVERSION=1
 )
 target_compile_definitions (app PUBLIC LAGRANGE_APP_VERSION="${PROJECT_VERSION}")
+if (ENABLE_IPC)
+    target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_IPC=1)
+endif ()
 if (ENABLE_X11_SWRENDER)
     target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_X11_SWRENDER=1)
 endif ()
@@ -268,13 +276,13 @@ if (ENABLE_MPG123 AND MPG123_FOUND)
     target_link_libraries (app PUBLIC PkgConfig::MPG123)
 endif ()
 if (ENABLE_IDLE_SLEEP)
-    target_compile_definitions (app PUBLIC LAGRANGE_IDLE_SLEEP=1)
+    target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_IDLE_SLEEP=1)
 endif ()
 if (ENABLE_DOWNLOAD_EDIT)
-    target_compile_definitions (app PUBLIC LAGRANGE_DOWNLOAD_EDIT=1)
+    target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_DOWNLOAD_EDIT=1)
 endif ()
 if (ENABLE_CUSTOM_FRAME AND MSYS)
-    target_compile_definitions (app PUBLIC LAGRANGE_CUSTOM_FRAME=1)
+    target_compile_definitions (app PUBLIC LAGRANGE_ENABLE_CUSTOM_FRAME=1)
 endif ()
 target_link_libraries (app PUBLIC the_Foundation::the_Foundation)
 target_link_libraries (app PUBLIC ${SDL2_LDFLAGS})
