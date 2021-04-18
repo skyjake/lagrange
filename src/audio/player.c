@@ -459,22 +459,29 @@ static int silence_Player_(const iPlayer *d) {
     return d->spec.silence;
 }
 
+static iRangecc mediaType_(const iString *str) {
+    iRangecc part = iNullRange;
+    nextSplit_Rangecc(range_String(str), ";", &part);
+    return part;
+}
+
 static iContentSpec contentSpec_Player_(const iPlayer *d) {
     iContentSpec content;
     iZap(content);
     const size_t dataSize = size_InputBuf(d->data);
     iBuffer *buf = iClob(new_Buffer());
     open_Buffer(buf, &d->data->data);
-    if (!cmp_String(&d->mime, "audio/wave") || !cmp_String(&d->mime, "audio/wav") ||
-        !cmp_String(&d->mime, "audio/x-wav") || !cmp_String(&d->mime, "audio/x-pn-wav")) {
+    const iRangecc mediaType = mediaType_(&d->mime);
+    if (equal_Rangecc(mediaType, "audio/wave") || equal_Rangecc(mediaType, "audio/wav") ||
+        equal_Rangecc(mediaType, "audio/x-wav") || equal_Rangecc(mediaType, "audio/x-pn-wav")) {
         content.type = wav_DecoderType;
     }
-    else if (!cmp_String(&d->mime, "audio/vorbis") || !cmp_String(&d->mime, "audio/ogg") ||
-             !cmp_String(&d->mime, "audio/x-vorbis+ogg")) {
+    else if (equal_Rangecc(mediaType, "audio/vorbis") || equal_Rangecc(mediaType, "audio/ogg") ||
+             equal_Rangecc(mediaType, "audio/x-vorbis+ogg")) {
         content.type = vorbis_DecoderType;
     }
 #if defined (LAGRANGE_ENABLE_MPG123)
-    else if (!cmp_String(&d->mime, "audio/mpeg") || !cmp_String(&d->mime, "audio/mp3")) {
+    else if (equal_Rangecc(mediaType, "audio/mpeg") || equal_Rangecc(mediaType, "audio/mp3")) {
         content.type = mpeg_DecoderType;
     }
 #endif
