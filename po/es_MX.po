@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-04-02 19:18+0000\n"
+"PO-Revision-Date: 2021-04-09 13:18+0000\n"
 "Last-Translator: El Mau <public@correolibre.net>\n"
 "Language-Team: Spanish (Mexico) <http://weblate.skyjake.fi/projects/lagrange/"
 "ui/es_MX/>\n"
@@ -697,3 +697,207 @@ msgid "dlg.certimport.help"
 msgstr ""
 "Pegue un certificado en codificación PEM y/o una clave privada,\n"
 "o arrastre un archivo .crt/.key a la ventana."
+
+msgid "lang.zh.hant"
+msgstr "Chino (Tradicional)"
+
+msgid "lang.en"
+msgstr "Inglés"
+
+msgid "lang.fi"
+msgstr "Finlandés"
+
+msgid "lang.fr"
+msgstr "Francés"
+
+msgid "bookmark.title.blank"
+msgstr "Página en blanco"
+
+msgid "heading.translate"
+msgstr "TRADUCIR PÁGINA"
+
+# Link download progress message.
+msgid "doc.fetching"
+msgstr "Buscando"
+
+# Inline download status message.
+msgid "media.download.warnclose"
+msgstr "La descarga se cancelará si se cierra esta pestaña."
+
+# Inline download status message.
+msgid "media.download.complete"
+msgstr "Descarga completa."
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.title"
+msgstr "Título"
+
+#, c-format
+msgid "feeds.list.entrycount"
+msgid_plural "feeds.list.entrycount.n"
+msgstr[0] "un total de %z entrada"
+msgstr[1] "un total de %z entradas"
+
+#, c-format
+msgid "minutes.ago"
+msgid_plural "minutes.ago.n"
+msgstr[0] "hace un minuto"
+msgstr[1] "hace %d minutos"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.artist"
+msgstr "Artista"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.genre"
+msgstr "Genero"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.date"
+msgstr "Fecha"
+
+# used as adjective, n is 8, 16, 24, 32, or 64
+#, c-format
+msgid "n.bit"
+msgstr "%d-bit"
+
+msgid "numbertype.integer"
+msgstr "entero"
+
+msgid "numbertype.float"
+msgstr "flotante"
+
+# Hertz, unit for frequency values
+msgid "hz"
+msgstr "Hz"
+
+# Used in about:feeds.
+msgid "feeds.list.title"
+msgstr "Entrada de suscripción"
+
+#, c-format
+msgid "feeds.list.counts"
+msgid_plural "feeds.list.counts.n"
+msgstr[0] "Estás suscrito a %z un canal que contiene %%s.\n"
+msgstr[1] "Estás suscrito a %zu canales que contienen %%s.\n"
+
+msgid "feeds.list.refreshtime.now"
+msgstr "La última actualización se ha producido hace un momento."
+
+#, c-format
+msgid "feeds.list.refreshtime"
+msgstr "La última actualización se produjo %s."
+
+#, c-format
+msgid "hours.ago"
+msgid_plural "hours.ago.n"
+msgstr[0] "hace una hora"
+msgstr[1] "hace %d horas"
+
+#, c-format
+msgid "days.ago"
+msgid_plural "days.ago.n"
+msgstr[0] "hace un día"
+msgstr[1] "hace %d días"
+
+msgid "mb.per.sec"
+msgstr "MB/s"
+
+msgid "lang.zh.hans"
+msgstr "Chino (Simplificado)"
+
+# Interpret as "Results from history..."
+msgid "heading.lookup.history"
+msgstr "HISTORIAL"
+
+# Interpret as "Results from page content..."
+msgid "heading.lookup.pagecontent"
+msgstr "CONTENIDO DE PÁGINA"
+
+# Interpret as "Results from identitites..."
+msgid "heading.lookup.identities"
+msgstr "IDENTIDADES"
+
+# Interpret as "Other results..."
+msgid "heading.lookup.other"
+msgstr "OTROS"
+
+msgid "dlg.translate.unavail"
+msgstr "Servicio no disponible"
+
+msgid "dlg.translate.fail"
+msgstr "Solicitud fallida"
+
+msgid "dlg.translate"
+msgstr "Traducir"
+
+msgid "dlg.translate.from"
+msgstr "De:"
+
+# Interpret as "Results from bookmarks..."
+msgid "heading.lookup.bookmarks"
+msgstr "FAVORITOS"
+
+# Interpret as "Results from feeds..."
+msgid "heading.lookup.feeds"
+msgstr "SUSCRIPCIONES"
+
+msgid "dlg.translate.to"
+msgstr "Para:"
+
+msgid "lang.ar"
+msgstr "Árabe"
+
+msgid "dlg.newident.rsa.selfsign"
+msgstr "Creando un certificado RSA autofirmado de 2048 bits."
+
+msgid "hint.newident.date"
+msgstr "YYYY-MM-DD HH:MM:SS"
+
+msgid "hint.newident.optional"
+msgstr "opcional"
+
+msgid "dlg.newident.commonname"
+msgstr "Nombre común:"
+
+msgid "dlg.newident.temp"
+msgstr "Temporal:"
+
+msgid "dlg.newident.notsaved"
+msgstr "no guardado a disco"
+
+msgid "lang.zh"
+msgstr "Chino"
+
+msgid "lang.de"
+msgstr "Alemán"
+
+msgid "lang.hi"
+msgstr "Hindi"
+
+msgid "lang.it"
+msgstr "Italiano"
+
+msgid "lang.ja"
+msgstr "Japonés"
+
+msgid "lang.ie"
+msgstr "Interlingue"
+
+msgid "lang.pt"
+msgstr "Portugués"
+
+msgid "lang.ru"
+msgstr "Ruso"
+
+msgid "lang.es"
+msgstr "Español"
+
+msgid "lang.sr"
+msgstr "Serbio"
+
+msgid "heading.newident"
+msgstr "NUEVA IDENTIDAD"
+
+msgid "dlg.newident.until"
+msgstr "Válido hasta:"

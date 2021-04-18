@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-04-02 19:18+0000\n"
-"Last-Translator: MCMic <come@chilliet.eu>\n"
+"PO-Revision-Date: 2021-04-17 19:18+0000\n"
+"Last-Translator: methbkts <methbkts@gmail.com>\n"
 "Language-Team: French <http://weblate.skyjake.fi/projects/lagrange/ui/fr/>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -37,11 +37,11 @@ msgstr "Identités"
 
 # megabytes, used as the unit after a number
 msgid "mb"
-msgstr "MO"
+msgstr "Mo"
 
 # kilobytes, used as the unit after a number
 msgid "kb"
-msgstr "KO"
+msgstr "Ko"
 
 msgid "feeds.today"
 msgstr "Aujourd’hui"
@@ -92,3 +92,979 @@ msgstr "Nouvel onglet"
 
 msgid "menu.closetab"
 msgstr "Fermer l’onglet"
+
+msgid "menu.releasenotes"
+msgstr "Notes de version"
+
+msgid "menu.show.identities"
+msgstr "Afficher les identités"
+
+msgid "menu.forward"
+msgstr "Suivant"
+
+msgid "menu.back"
+msgstr "Précédent"
+
+msgid "menu.parent"
+msgstr "Parent"
+
+msgid "menu.root"
+msgstr "Racine"
+
+msgid "menu.page.subscribe"
+msgstr "S’abonner à la page…"
+
+msgid "menu.debug"
+msgstr "Informations de débogage"
+
+#, c-format
+msgid "days.ago"
+msgid_plural "days.ago.n"
+msgstr[0] "il y a %d jour"
+msgstr[1] "il y a %d jours"
+
+#, c-format
+msgid "num.minutes"
+msgid_plural "num.minutes.n"
+msgstr[0] "%d minute"
+msgstr[1] "%d minutes"
+
+msgid "bookmark.untag.sub"
+msgstr "Se désabonner du flux"
+
+msgid "menu.page.translate"
+msgstr "Traduire…"
+
+msgid "menu.page.copyurl"
+msgstr "Copier l’URL de la page"
+
+msgid "menu.identity.new"
+msgstr "Nouvelle identité…"
+
+msgid "menu.import.links"
+msgstr "Importer tous les liens de la page…"
+
+msgid "pageinfo.cert.expired"
+msgstr "Expiré"
+
+msgid "pageinfo.domain.match"
+msgstr "Le nom de domaine correspond"
+
+msgid "pageinfo.domain.mismatch"
+msgstr "Le nom de domaine ne correspond pas"
+
+msgid "dlg.cert.fingerprint"
+msgstr "Copier l’empreinte"
+
+# Inline download status message.
+msgid "media.download.warnclose"
+msgstr "Le téléchargement sera annulé si l'onglet est fermé."
+
+# Inline download status message.
+msgid "media.download.complete"
+msgstr "Téléchargement terminé."
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.title"
+msgstr "Titre"
+
+msgid "dlg.translate.from"
+msgstr "De :"
+
+msgid "lang.fr"
+msgstr "Français"
+
+msgid "lang.de"
+msgstr "Allemand"
+
+msgid "lang.it"
+msgstr "Italien"
+
+msgid "lang.ja"
+msgstr "Japonais"
+
+msgid "dlg.newident.email"
+msgstr "Courriel :"
+
+msgid "dlg.newident.domain"
+msgstr "Domaine :"
+
+msgid "about.powered"
+msgstr "Propulsé par SDL 2, OpenSSL et ☕️"
+
+msgid "dlg.default"
+msgstr " OK "
+
+msgid "dismiss"
+msgstr "Fermer"
+
+msgid "dlg.message.ok"
+msgstr "Continuer"
+
+msgid "dlg.feed.sub"
+msgstr "S’abonner"
+
+msgid "menu.openlocation"
+msgstr "Ouvrir l'adresse…"
+
+msgid "menu.find"
+msgstr "Rechercher dans la page"
+
+msgid "macos.menu.find"
+msgstr "Rechercher"
+
+#, c-format
+msgid "num.hours"
+msgid_plural "num.hours.n"
+msgstr[0] "%d heure"
+msgstr[1] "%d heures"
+
+msgid "heading.prefs"
+msgstr "PRÉFÉRENCES"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.artist"
+msgstr "Artiste"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.genre"
+msgstr "Genre"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.date"
+msgstr "Date"
+
+msgid "dlg.bookmark.icon"
+msgstr "Icône :"
+
+msgid "dlg.certimport.import"
+msgstr "Importer"
+
+msgid "dlg.certimport.notes"
+msgstr "Notes :"
+
+# used as adjective, n is 8, 16, 24, 32, or 64
+#, c-format
+msgid "n.bit"
+msgstr "%d bits"
+
+# Hertz, unit for frequency values
+msgid "hz"
+msgstr "Hz"
+
+msgid "menu.closetab.right"
+msgstr "Fermer les onglets à droite"
+
+msgid "feeds.unsubscribe"
+msgstr "Se désabonner…"
+
+msgid "dlg.feed.title"
+msgstr "Titre :"
+
+msgid "menu.edit"
+msgstr "Modifier…"
+
+msgid "dlg.ident.delete"
+msgstr "Supprimer l’identité et les fichiers"
+
+# The %s format characters are used to highlight the word "Help" and must be used in the translation in same way as here.
+#, c-format
+msgid "ident.gotohelp"
+msgstr ""
+"Voir l'%sAide%s pour plus d'informations sur les certificats TLS clients."
+
+msgid "link.newtab"
+msgstr "Ouvrir le lien dans un nouvel onglet"
+
+msgid "menu.dup"
+msgstr "Dupliquer…"
+
+msgid "ident.temporary"
+msgstr "Temporaire"
+
+msgid "dlg.confirm.history.clear"
+msgstr ""
+"Voulez-vous vraiment effacer l’historique de toutes les pages visitées ?"
+
+msgid "dlg.history.clear"
+msgstr "Effacer l’historique"
+
+msgid "bookmark.tag.home"
+msgstr "Utiliser comme page d’accueil"
+
+msgid "menu.copyurl"
+msgstr "Copier l’URL"
+
+msgid "menu.forgeturl"
+msgstr "Oublier l’URL"
+
+msgid "history.clear"
+msgstr "Effacer l’historique…"
+
+# strftime() formatted
+#, c-format
+msgid "ident.expiry"
+msgstr "Expire le %d %b %Y"
+
+msgid "ident.fingerprint"
+msgstr "Copier l’empreinte"
+
+#, c-format
+msgid "feeds.list.entrycount"
+msgid_plural "feeds.list.entrycount.n"
+msgstr[0] "un total de %zu entrée"
+msgstr[1] "un total de %zu entrées"
+
+#, c-format
+msgid "minutes.ago"
+msgid_plural "minutes.ago.n"
+msgstr[0] "il y a %d minute"
+msgstr[1] "il y a %d minutes"
+
+#, c-format
+msgid "hours.ago"
+msgid_plural "hours.ago.n"
+msgstr[0] "il y a %d heure"
+msgstr[1] "il y a %d heures"
+
+msgid "menu.zoom.reset"
+msgstr "Réinitialiser le zoom"
+
+#, c-format
+msgid "feeds.list.refreshtime"
+msgstr "La dernière actualisation a eu lieu %s."
+
+msgid "menu.zoom.in"
+msgstr "Zoomer"
+
+msgid "menu.zoom.out"
+msgstr "Dézoomer"
+
+msgid "doc.pre.nocaption"
+msgstr "Texte préformaté sans légende"
+
+msgid "menu.title.identity"
+msgstr "Identité"
+
+msgid "reload.never"
+msgstr "Jamais"
+
+msgid "menu.show.history"
+msgstr "Afficher l’historique"
+
+msgid "menu.reload"
+msgstr "Recharger la page"
+
+msgid "menu.closetab.other"
+msgstr "Fermer les autres onglets"
+
+msgid "menu.closetab.left"
+msgstr "Fermer les onglets à gauche"
+
+msgid "menu.preferences"
+msgstr "Préférences…"
+
+msgid "menu.help"
+msgstr "Aide"
+
+msgid "hint.newident.optional"
+msgstr "facultatif"
+
+msgid "dlg.newident.temp"
+msgstr "Temporaire :"
+
+msgid "dlg.newident.org"
+msgstr "Organisation :"
+
+msgid "dlg.newident.country"
+msgstr "Pays :"
+
+msgid "menu.autoreload"
+msgstr "Rechargement auto…"
+
+msgid "dlg.unsub"
+msgstr "Se désabonner"
+
+msgid "dlg.input.send"
+msgstr "Envoyer"
+
+msgid "dlg.save.size"
+msgstr "Taille :"
+
+msgid "heading.autoreload"
+msgstr "RECHARGEMENT AUTO"
+
+msgid "heading.pageinfo"
+msgstr "INFORMATIONS SUR LA PAGE"
+
+msgid "pageinfo.header.cached"
+msgstr "(contenu en cache)"
+
+msgid "ident.delete"
+msgstr "Supprimer l’identité…"
+
+msgid "heading.ident.delete"
+msgstr "SUPPRESSION D’IDENTITÉ"
+
+msgid "sidebar.empty.idents"
+msgstr "Aucune identité"
+
+msgid "dlg.save.incomplete"
+msgstr "Le contenu de la page est toujours en cours de téléchargement."
+
+msgid "reload.onceperday"
+msgstr "Une fois par jour"
+
+msgid "link.newtab.background"
+msgstr "Ouvrir le lien dans un onglet en arrière-plan"
+
+msgid "link.browser"
+msgstr "Ouvrir le lien dans le navigateur par défaut"
+
+msgid "link.noproxy"
+msgstr "Ouvrir sans proxy"
+
+msgid "link.copy"
+msgstr "Copier le lien"
+
+#, c-format
+msgid "dlg.openlink.confirm"
+msgstr ""
+"Ouvrir ce lien dans le navigateur par défaut ?\n"
+"%s%s"
+
+msgid "dlg.openlink"
+msgstr "Ouvrir le lien"
+
+#, c-format
+msgid "dlg.certwarn.expired"
+msgstr "Le certificat reçu a expiré le %s."
+
+msgid "hint.certimport.description"
+msgstr "description"
+
+msgid "dlg.certimport.nocert"
+msgstr "Aucun certificat"
+
+msgid "dlg.certimport.nokey"
+msgstr "Aucune clé privée"
+
+# Interpret as "Results from history..."
+msgid "heading.lookup.history"
+msgstr "HISTORIQUE"
+
+msgid "dlg.translate"
+msgstr "Traduire"
+
+msgid "dlg.translate.to"
+msgstr "Vers :"
+
+msgid "lang.ar"
+msgstr "Arabe"
+
+msgid "lang.en"
+msgstr "Anglais"
+
+msgid "lang.pt"
+msgstr "Portugais"
+
+msgid "lang.ru"
+msgstr "Russe"
+
+msgid "lang.es"
+msgstr "Espagnol"
+
+msgid "dlg.bookmark.title"
+msgstr "Titre :"
+
+msgid "dlg.bookmark.url"
+msgstr "URL :"
+
+msgid "dlg.translate.unavail"
+msgstr "Service non disponible"
+
+msgid "dlg.translate.fail"
+msgstr "La requête a échoué"
+
+msgid "sidebar.feeds"
+msgstr "Flux"
+
+# Used in about:feeds.
+msgid "feeds.list.title"
+msgstr "Entrées de flux"
+
+#, c-format
+msgid "feeds.list.counts"
+msgid_plural "feeds.list.counts.n"
+msgstr[0] "Vous êtes abonné à %zu flux contenant %%s.\n"
+msgstr[1] "Vous êtes abonné à %zu flux contenant %%s.\n"
+
+# Alt-text of the preformatted logo.
+msgid "about.logo"
+msgstr "ASCII art : le mot « Lagrange » en utilisant une grande police"
+
+# Used on desktop operating systems. "Downloads" refers to the user's configured downloads directory.
+msgid "menu.save.downloads"
+msgstr "Enregistrer dans le dossier des téléchargements"
+
+msgid "menu.feeds.entrylist"
+msgstr "Afficher les entrées de flux"
+
+msgid "menu.copy.pagelink"
+msgstr "Copier le lien vers la page"
+
+msgid "numbertype.integer"
+msgstr "entier"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.outline"
+msgstr "Afficher le sommaire"
+
+msgid "feeds.edit"
+msgstr "Modifier le flux…"
+
+msgid "menu.edit.notes"
+msgstr "Modifier les notes…"
+
+msgid "prefs.hoverlink"
+msgstr "Afficher l’URL au survol :"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.feeds"
+msgstr "Afficher les flux"
+
+msgid "sidebar.action.feeds.showunread"
+msgstr "Non-lus"
+
+msgid "feeds.list.refreshtime.now"
+msgstr "La dernière actualisation a eu lieu il y a quelques instants."
+
+msgid "status.feeds"
+msgstr "Mise à jour des flux"
+
+# strftime() formatted, split on two lines
+#, c-format
+msgid "page.timestamp"
+msgstr ""
+"Reçu à %I:%M %p\n"
+"le %d %b %Y"
+
+msgid "menu.feeds.refresh"
+msgstr "Actualiser les flux"
+
+msgid "dlg.feed.type.gemini"
+msgstr "Liens AAAA-MM-JJ"
+
+msgid "dlg.feed.type.headings"
+msgstr "Nouveaux titres"
+
+msgid "dlg.feed.save"
+msgstr "Enregistrer les paramètres"
+
+msgid "error.badresource"
+msgstr "Ressource invalide"
+
+msgid "status.query"
+msgstr "Recherche"
+
+msgid "dlg.feed.entrytype"
+msgstr "Type d’entrée :"
+
+msgid "feeds.entry.newtab"
+msgstr "Ouvrir l'entrée dans un nouvel onglet"
+
+msgid "feeds.entry.openfeed"
+msgstr "Ouvrir la page du flux"
+
+msgid "feeds.markallread"
+msgstr "Tout marquer comme lu"
+
+msgid "feeds.refresh"
+msgstr "Actualiser les flux"
+
+msgid "hint.findtext"
+msgstr "Chercher dans le texte de la page"
+
+msgid "mb.per.sec"
+msgstr "Mo/s"
+
+# strftime() formatted
+#, c-format
+msgid "sidebar.date.thisyear"
+msgstr "%d %b"
+
+# strftime() formatted
+#, c-format
+msgid "sidebar.date.otheryear"
+msgstr "%d %b %Y"
+
+# Usage: "(count) Unread" in the sidebar tab title, referring to feed entries.
+msgid "sidebar.unread"
+msgid_plural "sidebar.unread.n"
+msgstr[0] "Non lue"
+msgstr[1] "Non lues"
+
+msgid "menu.opentab"
+msgstr "Ouvrir dans un nouvel onglet"
+
+msgid "menu.opentab.background"
+msgstr "Ouvrir dans un onglet en arrière-plan"
+
+msgid "bookmark.tag.sub"
+msgstr "S'abonner au flux"
+
+# Interpret as "Results from feeds..."
+msgid "heading.lookup.feeds"
+msgstr "FLUX"
+
+msgid "sidebar.outline"
+msgstr "Sommaire"
+
+msgid "sidebar.action.feeds.showall"
+msgstr "Tous"
+
+msgid "sidebar.action.ident.new"
+msgstr "Nouvelle…"
+
+msgid "sidebar.action.ident.import"
+msgstr "Importer…"
+
+msgid "toolbar.outline"
+msgstr "Sommaire"
+
+msgid "heading.feedcfg"
+msgstr "PARAMÈTRES DE FLUX"
+
+#, c-format
+msgid "dlg.confirm.unsub"
+msgstr ""
+"Vraiment se désabonner du flux\n"
+"« %s » ?"
+
+msgid "keys.zoom.reset"
+msgstr "Réinitialiser le zoom"
+
+msgid "keys.tab.new"
+msgstr "Nouvel onglet"
+
+msgid "keys.tab.close"
+msgstr "Fermer l’onglet"
+
+# tab button
+msgid "heading.prefs.style"
+msgstr "Style"
+
+# tab button
+msgid "heading.prefs.userinterface"
+msgstr "Interface utilisateur"
+
+msgid "prefs.boldlink"
+msgstr "Liens en gras :"
+
+msgid "prefs.doctheme.name.black"
+msgstr "Noir"
+
+msgid "keys.subscribe"
+msgstr "S’abonner à la page"
+
+msgid "keys.tab.next"
+msgstr "Onglet suivant"
+
+msgid "error.openfile.msg"
+msgstr ""
+"Le fichier demandé n’existe pas ou est inaccessible. Veuillez vérifier le "
+"chemin du fichier."
+
+msgid "error.badresource.msg"
+msgstr "La ressource demandée n'existe pas."
+
+msgid "error.unsupported.protocol.msg"
+msgstr "Le protocole demandé n'est pas pris en charge par cette application."
+
+msgid "error.badheader.msg"
+msgstr ""
+"L’entête reçue n’est pas conforme à la spécification du protocole Gemini. Le "
+"serveur a peut-être rencontré un dysfonctionnement, ou vous avez essayé de "
+"contacter un serveur non-Gemini."
+
+msgid "error.temporary.msg"
+msgstr ""
+"La requête a échoué, mais elle pourrait réussir si vous réessayez plus tard."
+
+msgid "error.unavail.msg"
+msgstr ""
+"Le serveur est indisponible car surchargé ou en maintenance. Revenez "
+"vérifier plus tard."
+
+msgid "error.unavail"
+msgstr "Serveur indisponible"
+
+msgid "error.cgi"
+msgstr "Erreur CGI"
+
+msgid "error.cgi.msg"
+msgstr ""
+"Échec durant la génération de contenu dynamique sur le serveur. Cela peut "
+"être dû au dysfonctionnement d'un logiciel côté serveur."
+
+msgid "prefs.mono.gopher"
+msgstr "Gopher"
+
+msgid "prefs.cachesize"
+msgstr "Taille du cache :"
+
+# tab button
+msgid "heading.prefs.general"
+msgstr "Général"
+
+# tab button
+msgid "heading.prefs.interface"
+msgstr "Interface"
+
+# tab button
+msgid "heading.prefs.keys"
+msgstr "Raccourcis"
+
+# tab button
+msgid "heading.prefs.colors"
+msgstr "Couleurs"
+
+msgid "heading.prefs.fonts"
+msgstr "POLICES"
+
+msgid "prefs.doctheme.name.white"
+msgstr "Blanc"
+
+msgid "prefs.doctheme.name.sepia"
+msgstr "Sépia"
+
+msgid "prefs.doctheme.name.highcontrast"
+msgstr "Contraste élevé"
+
+msgid "prefs.saturation"
+msgstr "Saturation :"
+
+msgid "keys.back"
+msgstr "Précédent"
+
+msgid "keys.forward"
+msgstr "Suivant"
+
+msgid "keys.reload"
+msgstr "Recharger la page"
+
+msgid "error.unsupported.protocol"
+msgstr "Protocole non pris en charge"
+
+msgid "error.badredirect"
+msgstr "Redirection invalide"
+
+msgid "error.badredirect.msg"
+msgstr ""
+"Le serveur a répondu par une redirection mais n’a pas fourni d’URL de "
+"destination valide. Il s’agit peut-être d’un dysfonctionnement du serveur."
+
+msgid "error.proxy.msg"
+msgstr ""
+"Une requête proxy a échoué car le serveur n’a pas pu terminer avec succès "
+"une transaction avec l’hôte distant. Il y a peut-être des difficultés de "
+"connectivité réseau."
+
+msgid "error.cert.needed"
+msgstr "Certificat requis"
+
+msgid "error.slowdown"
+msgstr "Ralentissement"
+
+msgid "error.permanent"
+msgstr "Échec permanent"
+
+msgid "error.permanent.msg"
+msgstr ""
+"Votre requête a échoué, et échouera encore à l’avenir si elle est répétée."
+
+msgid "error.notfound"
+msgstr "Introuvable"
+
+msgid "keys.zoom.out"
+msgstr "Dézoomer"
+
+msgid "error.manyredirects"
+msgstr "Trop de redirections"
+
+msgid "error.slowdown.msg"
+msgstr "Le serveur restreint la fréquence des requêtes. Veuillez patienter…"
+
+msgid "prefs.searchurl"
+msgstr "URL de recherche :"
+
+# tab button
+msgid "heading.prefs.network"
+msgstr "Réseau"
+
+msgid "heading.prefs.paragraph"
+msgstr "PARAGRAPHE"
+
+msgid "prefs.quoteicon"
+msgstr "Indicateur de citation :"
+
+msgid "heading.prefs.proxies"
+msgstr "PROXYS"
+
+msgid "heading.prefs.scrolling"
+msgstr "DÉFILEMENT"
+
+msgid "prefs.centershort"
+msgstr "Centrage vertical :"
+
+msgid "prefs.smoothscroll"
+msgstr "Défilement doux :"
+
+msgid "prefs.imageloadscroll"
+msgstr "Charger les images lors du défilement :"
+
+msgid "prefs.hidetoolbarscroll"
+msgstr "Masquer la barre d'outils lors du défilement :"
+
+msgid "prefs.ostheme"
+msgstr "Utiliser le thème système :"
+
+msgid "prefs.theme"
+msgstr "Thème :"
+
+msgid "prefs.theme.black"
+msgstr "Noir"
+
+msgid "prefs.accent.orange"
+msgstr "Orange"
+
+msgid "prefs.uilang"
+msgstr "Langue :"
+
+msgid "prefs.linewidth.normal"
+msgstr "Normal"
+
+msgid "prefs.quoteicon.line"
+msgstr "Ligne"
+
+msgid "prefs.proxy.gemini"
+msgstr "Proxy Gemini :"
+
+msgid "prefs.proxy.gopher"
+msgstr "Proxy Gopher :"
+
+msgid "prefs.proxy.http"
+msgstr "Proxy HTTP :"
+
+msgid "keys.tab.prev"
+msgstr "Onglet précédent"
+
+msgid "error.manyredirects.msg"
+msgstr ""
+"Vous semblez bloqué dans une boucle de redirections. L’URL de redirection "
+"suivante figure ci-dessous au cas où vous souhaiteriez poursuivre "
+"manuellement."
+
+msgid "error.tls"
+msgstr "Échec réseau/TLS"
+
+msgid "error.tls.msg"
+msgstr "La communication avec le serveur a échoué. Voici le message d’erreur :"
+
+msgid "error.temporary"
+msgstr "Échec temporaire"
+
+msgid "error.proxy"
+msgstr "Erreur de proxy"
+
+msgid "error.notfound.msg"
+msgstr "La ressource demandée n’a pas été trouvée."
+
+msgid "error.gone"
+msgstr "Disparue"
+
+msgid "error.gone.msg"
+msgstr "La ressource demandée n’est plus disponible."
+
+msgid "error.proxyrefusal"
+msgstr "Requête proxy refusée"
+
+msgid "error.proxyrefusal.msg"
+msgstr ""
+"La requête concernait une ressource d’un domaine non desservi par le serveur "
+"et ce dernier n’accepte pas les requêtes proxy."
+
+msgid "error.badrequest"
+msgstr "Requête incorrecte"
+
+msgid "error.badrequest.msg"
+msgstr "Le serveur n’a pas compris votre requête."
+
+msgid "error.cert.needed.msg"
+msgstr ""
+"L'accès à la ressource demandée nécessite une identification via un "
+"certificat client."
+
+msgid "prefs.doctheme.dark"
+msgstr "Thème sombre :"
+
+msgid "prefs.doctheme.light"
+msgstr "Thème clair :"
+
+msgid "prefs.doctheme.name.gray"
+msgstr "Gris"
+
+msgid "prefs.headingfont"
+msgstr "Police des titres :"
+
+msgid "prefs.mono.gemini"
+msgstr "Gemini"
+
+msgid "keys.zoom.in"
+msgstr "Zoomer"
+
+msgid "prefs.downloads"
+msgstr "Dossier des téléchargements :"
+
+msgid "prefs.theme.dark"
+msgstr "Sombre"
+
+msgid "prefs.theme.light"
+msgstr "Clair"
+
+msgid "prefs.theme.white"
+msgstr "Blanc"
+
+msgid "error.openfile"
+msgstr "Échec de l’ouverture du fichier"
+
+msgid "error.badheader"
+msgstr "Entête invalide"
+
+msgid "menu.aboutpages"
+msgstr "Pages \"about\""
+
+msgid "pageinfo.cert.notexpired"
+msgstr "Non expiré"
+
+msgid "dlg.certimport.help"
+msgstr ""
+"Collez un certificat PEM et/ou une clé privée,\n"
+"ou déposez un fichier .crt/.key sur la fenêtre."
+
+msgid "dlg.certimport.notfound"
+msgstr "Aucun certificat ni clé privée n'a été trouvé."
+
+msgid "dlg.certimport.notfound.page"
+msgstr "Certificat/clé introuvable sur la page actuelle."
+
+msgid "ident.showuse"
+msgstr "Afficher les utilisations"
+
+msgid "heading.ident.use"
+msgstr "UTILISATIONS DE L’IDENTITÉ"
+
+msgid "error.cert.auth"
+msgstr "Certificat non autorisé"
+
+msgid "error.cert.invalid.msg"
+msgstr "Le certificat client fourni a expiré ou est invalide."
+
+#, c-format
+msgid "ident.usedonurls"
+msgid_plural "ident.usedonurls.n"
+msgstr[0] "Utilisée sur %zu URL"
+msgstr[1] "Utilisée sur %zu URLs"
+
+msgid "heading.ident.notes"
+msgstr "NOTES SUR L'IDENTITÉ"
+
+# %s refers to name of an identity.
+#, c-format
+msgid "dlg.ident.notes"
+msgstr "Notes à propos de %s :"
+
+msgid "menu.page.copysource"
+msgstr "Copier le code source de la page"
+
+msgid "ident.notused"
+msgstr "Non utilisée"
+
+msgid "ident.use"
+msgstr "Utiliser pour cette page"
+
+msgid "ident.stopuse"
+msgstr "Arrêter d’utiliser pour cette page"
+
+msgid "ident.stopuse.all"
+msgstr "Arrêter d’utiliser partout"
+
+msgid "heading.certimport"
+msgstr "IMPORTATION D’IDENTITÉ"
+
+msgid "error.cert.auth.msg"
+msgstr ""
+"Le certificat client fourni est valide mais n’est pas autorisé à accéder à "
+"la ressource demandée."
+
+msgid "error.cert.invalid"
+msgstr "Certificat invalide"
+
+msgid "menu.sidebar.left"
+msgstr "Barre latérale gauche"
+
+msgid "menu.sidebar.right"
+msgstr "Barre latérale droite"
+
+msgid "menu.sidebar"
+msgstr "Barre latérale"
+
+msgid "menu.identity.notactive"
+msgstr "Aucune identité active"
+
+msgid "ident.using"
+msgstr "Utilisée pour cette page"
+
+#, c-format
+msgid "dlg.confirm.ident.delete"
+msgstr ""
+"Voulez-vous vraiment supprimer l'identité\n"
+"%s%s%s\n"
+"y compris ses fichiers de certificat et clé privée ?"
+
+msgid "heading.unsub"
+msgstr "DÉSABONNEMENT"
+
+#, c-format
+msgid "error.unsupported.suggestsave"
+msgstr ""
+"Vous pouvez quand même l'enregistrer comme fichier dans votre dossier de "
+"téléchargements. Tapez %s ou sélectionnez « %s » dans le menu."
+
+msgid "pageinfo.cert.status"
+msgstr "État du certificat :"
+
+msgid "heading.save.incomplete"
+msgstr "PAGE INCOMPLÈTE"
+
+msgid "dlg.autoreload"
+msgstr "Sélectionnez l’intervalle de rechargement auto pour cet onglet."
+
+msgid "heading.certimport.pasted"
+msgstr "COLLÉ DEPUIS LE PRESSE-PAPIERS"
+
+msgid "heading.certimport.dropped"
+msgstr "FICHIER DÉPOSÉ"
+
+msgid "link.hint.image"
+msgstr "Afficher l’image"
+
+msgid "bookmark.title.blank"
+msgstr "Page vide"
+
+msgid "about.tagline"
+msgstr "Un client Gemini de toute beauté"
+
+# Used on iOS. "Files" refers to Apple's iOS app where you can pick an iCloud folder.
+msgid "menu.save.files"
+msgstr "Enregistrer dans Fichiers"
