@@ -15,7 +15,7 @@ Like Gemini, Lagrange has been designed with minimalism in mind. It depends on a
 * Multiple tabs
 * Identity management — create and use TLS client certificates
 * Audio playback: MP3, Ogg Vorbis, WAV
-* And more! Open `about:help` in the app, or see [help.gmi](https://git.skyjake.fi/skyjake/lagrange/raw/branch/release/res/about/help.gmi)
+* And more! Open `about:help` in the app, or see [help.gmi](https://git.skyjake.fi/gemini/lagrange/raw/branch/release/res/about/help.gmi)
 
 ## Downloads
 
@@ -38,7 +38,7 @@ sudo zypper install lagrange
 
 This is how to build Lagrange in a POSIX-compatible environment. The required tools are a C11 compiler (e.g., Clang or GCC), CMake and `pkg-config`.
 
-1. Download and extract a source tarball from [Releases][rel]. Please note that the GitHub/Gitea-generated tarballs do not contain the ["the_Foundation" submodule](https://git.skyjake.fi/skyjake/the_Foundation); check which tarball you are getting. Alternatively, you may also clone the repository and its submodules: `git clone --recursive --branch release https://git.skyjake.fi/skyjake/lagrange`
+1. Download and extract a source tarball from [Releases][rel]. Please note that the GitHub/Gitea-generated tarballs do not contain the ["the_Foundation" submodule](https://git.skyjake.fi/skyjake/the_Foundation); check which tarball you are getting. Alternatively, you may also clone the repository and its submodules: `git clone --recursive --branch release https://git.skyjake.fi/gemini/lagrange`
 2. Check that you have the required dependencies installed: CMake, SDL 2, OpenSSL 1.1.1, libpcre, zlib, libunistring. For example, on macOS this would do the trick (using Homebrew): ```brew install cmake sdl2 openssl@1.1 pcre libunistring``` Or on Ubuntu: ```sudo apt install cmake libsdl2-dev libssl-dev libpcre3-dev zlib1g-dev libunistring-dev```
 3. Optionally, install the mpg123 decoder library for MPEG audio support. For example, the macOS Homebrew package is `mpg123` and on Ubuntu it is `libmpg123-dev`.
 4. Create a build directory.
@@ -73,7 +73,7 @@ When using OpenSSL 1.1.1 from Homebrew, you must add its pkgconfig path to your 
 
     export PKG_CONFIG_PATH=/opt/homebrew/Cellar/openssl@1.1/1.1.1i/lib/pkgconfig
 
-Also, SDL's trackpad scrolling behavior on macOS is not optimal for regular GUI apps because it emulates a physical mouse wheel. This may change in a future release of SDL, but at least in 2.0.14 (and earlier) a [small patch](https://git.skyjake.fi/skyjake/lagrange/raw/branch/dev/sdl2-macos-mouse-scrolling.diff) is required to allow momentum scrolling to come through as single-pixel mouse wheel events. Note that SDL comes with an Xcode project; use the "Shared Library" target and check that you are doing a Release build.
+Also, SDL's trackpad scrolling behavior on macOS is not optimal for regular GUI apps because it emulates a physical mouse wheel. This may change in a future release of SDL, but at least in 2.0.14 (and earlier) a [small patch](https://git.skyjake.fi/gemini/lagrange/raw/branch/dev/sdl2-macos-mouse-scrolling.diff) is required to allow momentum scrolling to come through as single-pixel mouse wheel events. Note that SDL comes with an Xcode project; use the "Shared Library" target and check that you are doing a Release build.
 
 ### Compiling on Windows
 
@@ -113,7 +113,7 @@ The following build options are recommended on Raspberry Pi 2/3:
 * `ENABLE_WINDOWPOS_FIX=YES`: workaround for window position restore issues (SDL bug)
 * `ENABLE_X11_SWRENDER=YES`: use software rendering under X11
 
-[rel]: https://git.skyjake.fi/skyjake/lagrange/releases
+[rel]: https://git.skyjake.fi/gemini/lagrange/releases
 [tf]:  https://git.skyjake.fi/skyjake/the_Foundation
 
 ## User files
