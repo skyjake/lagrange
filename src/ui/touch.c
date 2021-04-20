@@ -141,7 +141,7 @@ static iBool isStationary_Touch_(const iTouch *d) {
 }
 
 static iBool clearWidgetMomentum_TouchState_(iTouchState *d, iWidget *widget) {
-    if (!widget) return;
+    if (!widget) return iFalse;
     iForEach(Array, m, d->moms) {
         iMomentum *mom = m.value;
         if (mom->affinity == widget) {
