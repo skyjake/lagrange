@@ -33,11 +33,20 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 static iBool isSystemDarkMode_ = iFalse;
 static iBool isPhone_          = iFalse;
 
-static UIViewController *viewController_(iWindow *window) {
+static UIWindow *uiWindow_(iWindow *window) {
     SDL_SysWMinfo wm;
     SDL_VERSION(&wm.version);
     if (SDL_GetWindowWMInfo(window->win, &wm)) {
-        return wm.info.uikit.window.rootViewController;
+        return wm.info.uikit.window;
+    }
+    iAssert(false);
+    return NULL;
+}
+
+static UIViewController *viewController_(iWindow *window) {
+    UIWindow *uiWin = uiWindow_(window);
+    if (uiWin) {
+        return uiWin.rootViewController;
     }
     iAssert(false);
     return NULL;
@@ -246,6 +255,10 @@ void safeAreaInsets_iOS(float *left, float *top, float *right, float *bottom) {
 
 iBool isPhone_iOS(void) {
     return isPhone_;
+}
+
+int displayRefreshRate_iOS(void) {
+    return uiWindow_(get_Window()).screen.maximumFramesPerSecond;
 }
 
 void setupWindow_iOS(iWindow *window) {

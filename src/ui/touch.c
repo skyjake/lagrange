@@ -99,6 +99,8 @@ struct Impl_TouchState {
     iArray *touches;
     iArray *pinches;
     iArray *moms;
+    double stepDurationMs;
+    double momFrictionPerStep;
     double lastMomTime;
     iInt2 currentTouchPos; /* for emulating SDL_GetMouseState() */
 };
@@ -107,10 +109,15 @@ static iTouchState *touchState_(void) {
     static iTouchState state_;
     iTouchState *d = &state_;
     if (!d->touches) {
-        d->touches     = new_Array(sizeof(iTouch));
-        d->pinches     = new_Array(sizeof(iPinch));
-        d->moms        = new_Array(sizeof(iMomentum));
-        d->lastMomTime = SDL_GetTicks();
+        d->touches        = new_Array(sizeof(iTouch));
+        d->pinches        = new_Array(sizeof(iPinch));
+        d->moms           = new_Array(sizeof(iMomentum));
+        d->lastMomTime    = 0.0;
+        d->stepDurationMs = 1000.0 / 60.0; /* TODO: Ask SDL about the display refresh rate. */
+#if defined (iPlatformAppleMobile)
+        d->stepDurationMs = 1000.0 / (double) displayRefreshRate_iOS();
+#endif
+        d->momFrictionPerStep = pow(0.985, 120.0 / (1000.0 / d->stepDurationMs));
     }
     return d;
 }
@@ -229,10 +236,16 @@ static void dispatchNotification_Touch_(const iTouch *d, int code) {
     }
 }
 
+iLocalDef double accurateTicks_(void) {
+    const uint64_t freq  = SDL_GetPerformanceFrequency();
+    const uint64_t count = SDL_GetPerformanceCounter();
+    return 1000.0 * (double) count / (double) freq;
+}
+
 static void update_TouchState_(void *ptr) {
     iTouchState *d = ptr;
-    const uint32_t nowTime = SDL_GetTicks();
     /* Check for long presses to simulate right clicks. */
+    const uint32_t nowTime = SDL_GetTicks();
     iForEach(Array, i, d->touches) {
         iTouch *touch = i.value;
         if (touch->pinchId || touch->isTouchDrag) {
@@ -275,14 +288,17 @@ static void update_TouchState_(void *ptr) {
     }
     /* Update/cancel momentum scrolling. */ {
         const float minSpeed = 15.0f;
-        const float momFriction = 0.985f; /* per step */
-        const float stepDurationMs = 1000.0f / 120.0f;
-        double momAvailMs = nowTime - d->lastMomTime;
-        int numSteps = (int) (momAvailMs / stepDurationMs);
-        d->lastMomTime += numSteps * stepDurationMs;
+        if (d->lastMomTime < 0.001) {
+            d->lastMomTime = accurateTicks_();
+        }
+        const double momAvailMs = accurateTicks_() - d->lastMomTime;
+        /* Display refresh is vsynced and we'll be here at most once per frame.
+           However, we may come here TOO early, which would cause a hiccup in the scrolling,
+           so always do at least one step. */
+        int numSteps = iMax(1, momAvailMs / d->stepDurationMs);
+        d->lastMomTime += numSteps * d->stepDurationMs;
         numSteps = iMin(numSteps, 10); /* don't spend too much time here */
-        //        printf("mom steps:%d\n", numSteps);
-//        iWindow *window = get_Window();
+//        printf("mom steps:%d\n", numSteps);
         iForEach(Array, m, d->moms) {
             if (numSteps == 0) break;
             iMomentum *mom = m.value;
@@ -291,8 +307,8 @@ static void update_TouchState_(void *ptr) {
                 continue;
             }
             for (int step = 0; step < numSteps; step++) {
-                mulvf_F3(&mom->velocity, momFriction);
-                addv_F3(&mom->accum, mulf_F3(mom->velocity, stepDurationMs / 1000.0f));
+                mulvf_F3(&mom->velocity, d->momFrictionPerStep);
+                addv_F3(&mom->accum, mulf_F3(mom->velocity, d->stepDurationMs / 1000.0f));
             }
             const iInt2 pixels = initF3_I2(mom->accum);
             if (pixels.x || pixels.y) {
@@ -664,7 +680,7 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                         .velocity = velocity
                     };
                     if (isEmpty_Array(d->moms)) {
-                        d->lastMomTime = nowTime;
+                        d->lastMomTime = accurateTicks_();
                     }
                     pushBack_Array(d->moms, &mom);
                     //dispatchMotion_Touch_(touch->startPos, 0);
