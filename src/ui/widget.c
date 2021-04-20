@@ -1353,6 +1353,15 @@ iBool hasParent_Widget(const iWidget *d, const iWidget *someParent) {
     return iFalse;
 }
 
+iBool isAffectedByVisualOffset_Widget(const iWidget *d) {
+    for (const iWidget *w = d; w; w = w->parent) {
+        if (w->flags & visualOffset_WidgetFlag) {
+            return iTrue;
+        }
+    }
+    return iFalse;
+}
+
 void setFocus_Widget(iWidget *d) {
     if (rootData_.focus != d) {
         if (rootData_.focus) {

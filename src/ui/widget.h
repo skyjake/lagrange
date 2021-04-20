@@ -221,6 +221,8 @@ iBool   isHover_Widget              (const iAnyObject *);
 iBool   isSelected_Widget           (const iAnyObject *);
 iBool   isCommand_Widget            (const iWidget *d, const SDL_Event *ev, const char *cmd);
 iBool   hasParent_Widget            (const iWidget *d, const iWidget *someParent);
+iBool   isAffectedByVisualOffset_Widget
+                                    (const iWidget *);
 void    setId_Widget                (iWidget *, const char *id);
 void    setFlags_Widget             (iWidget *, int64_t flags, iBool set);
 void    setPos_Widget               (iWidget *, iInt2 pos);
