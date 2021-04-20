@@ -38,7 +38,7 @@ void deinit_VisBuf(iVisBuf *d) {
 }
 
 void invalidate_VisBuf(iVisBuf *d) {
-    int origin = d->vis.start - d->texSize.y;
+    int origin = iMax(0, d->vis.start - d->texSize.y);
     iForIndices(i, d->buffers) {
         d->buffers[i].origin = origin;
         origin += d->texSize.y;
@@ -109,10 +109,41 @@ static size_t take_(size_t *avail, size_t *numAvail, size_t index) {
 }
 #endif
 
+static void roll_VisBuf_(iVisBuf *d, int dir) {
+    const size_t lastPos = iElemCount(d->buffers) - 1;
+    if (dir < 0) {
+        /* Last buffer is moved to the beginning. */
+        SDL_Texture *last = d->buffers[lastPos].texture;
+        void *       user = d->buffers[lastPos].user;
+        memmove(d->buffers + 1, d->buffers, sizeof(iVisBufTexture) * lastPos);
+        d->buffers[0].texture = last;
+        d->buffers[0].user    = user;
+        d->buffers[0].origin  = d->buffers[1].origin - d->texSize.y;
+        iZap(d->buffers[0].validRange);
+        if (d->bufferInvalidated) {
+            d->bufferInvalidated(d, 0);
+        }
+    }
+    else {
+        /* First buffer is moved to the end. */
+        SDL_Texture *first = d->buffers[0].texture;
+        void *       user  = d->buffers[0].user;
+        memmove(d->buffers, d->buffers + 1, sizeof(iVisBufTexture) * lastPos);
+        d->buffers[lastPos].texture = first;
+        d->buffers[lastPos].user    = user;
+        d->buffers[lastPos].origin  = d->buffers[lastPos - 1].origin + d->texSize.y;
+        iZap(d->buffers[lastPos].validRange);
+        if (d->bufferInvalidated) {
+            d->bufferInvalidated(d, lastPos);
+        }
+    }
+}
+
 iBool reposition_VisBuf(iVisBuf *d, const iRangei vis) {
     if (equal_Rangei(vis, d->vis)) {
         return iFalse;
     }
+    const int moveDir = vis.end > d->vis.end ? +1 : -1;
     d->vis = vis;
     iBool wasChanged = iFalse;
     const size_t lastPos = iElemCount(d->buffers) - 1;
@@ -122,35 +153,25 @@ iBool reposition_VisBuf(iVisBuf *d, const iRangei vis) {
         wasChanged = iTrue;
     }
     else {
-        /* Roll up. */
+        /* Check for mandatory rolls. */
         while (d->buffers[0].origin > vis.start) {
-            SDL_Texture *last = d->buffers[lastPos].texture;
-            void *       user = d->buffers[lastPos].user;
-            memmove(d->buffers + 1, d->buffers, sizeof(iVisBufTexture) * lastPos);
-            d->buffers[0].texture = last;
-            d->buffers[0].user    = user;
-            d->buffers[0].origin  = d->buffers[1].origin - d->texSize.y;
-            iZap(d->buffers[0].validRange);
-            if (d->bufferInvalidated) {
-                d->bufferInvalidated(d, 0);
-            }
+            roll_VisBuf_(d, -1);
             wasChanged = iTrue;
         }
         if (!wasChanged) {
-            /* Roll down. */
             while (d->buffers[lastPos].origin + d->texSize.y < vis.end) {
-                SDL_Texture *first = d->buffers[0].texture;
-                void *       user  = d->buffers[0].user;
-                memmove(d->buffers, d->buffers + 1, sizeof(iVisBufTexture) * lastPos);
-                d->buffers[lastPos].texture = first;
-                d->buffers[lastPos].user    = user;
-                d->buffers[lastPos].origin  = d->buffers[lastPos - 1].origin + d->texSize.y;
-                iZap(d->buffers[lastPos].validRange);
-                if (d->bufferInvalidated) {
-                    d->bufferInvalidated(d, lastPos);
-                }
+                roll_VisBuf_(d, +1);
                 wasChanged = iTrue;
             }
+        }
+        /* Scroll-direction dependent optional rolls, with a bit of overscroll allowed. */
+        if (moveDir > 0 && d->buffers[0].origin + d->texSize.y + d->texSize.y / 4 < vis.start) {
+            roll_VisBuf_(d, +1);
+            wasChanged = iTrue;
+        }
+        else if (moveDir < 0 && d->buffers[lastPos].origin - d->texSize.y / 4 > vis.end) {
+            roll_VisBuf_(d, -1);
+            wasChanged = iTrue;
         }
     }
 #if 0
@@ -228,7 +249,9 @@ void draw_VisBuf(const iVisBuf *d, const iInt2 topLeft, const iRangei yClipBound
                          d->texSize.x,
                          d->texSize.y };
         if (dst.y >= yClipBounds.end || dst.y + dst.h < yClipBounds.start) {
+#if !defined (DEBUG_SCALE)
             continue; /* Outside the clipping area. */
+#endif
         }
 #if defined (DEBUG_SCALE)
         dst.w *= DEBUG_SCALE;
@@ -239,5 +262,20 @@ void draw_VisBuf(const iVisBuf *d, const iInt2 topLeft, const iRangei yClipBound
         dst.y += get_Window()->root->rect.size.y / 4;
 #endif
         SDL_RenderCopy(render, buf->texture, NULL, &dst);
-    }    
+#if defined (DEBUG_SCALE)
+        SDL_SetRenderDrawColor(render, 0, 0, 255, 255);
+        SDL_RenderDrawRect(render, &dst);
+#endif
+    }
+#if defined (DEBUG_SCALE)
+    SDL_Rect dst = { topLeft.x, yClipBounds.start, d->texSize.x, 2 * d->texSize.y };
+    dst.w *= DEBUG_SCALE;
+    dst.h *= DEBUG_SCALE;
+    dst.x *= DEBUG_SCALE;
+    dst.y *= DEBUG_SCALE;
+    dst.x += get_Window()->root->rect.size.x / 4;
+    dst.y += get_Window()->root->rect.size.y / 4;
+    SDL_SetRenderDrawColor(render, 255, 255, 255, 255);
+    SDL_RenderDrawRect(render, &dst);
+#endif
 }

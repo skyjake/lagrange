@@ -157,14 +157,14 @@ struct Impl_DrawBufs {
     int            flags;
     SDL_Texture *  sideIconBuf;
     iTextBuf *     timestampBuf;
-    iRangei        lastVis;
+    uint32_t       lastRenderTime;
 };
 
 static void init_DrawBufs(iDrawBufs *d) {
     d->flags = 0;
     d->sideIconBuf = NULL;
     d->timestampBuf = NULL;
-    iZap(d->lastVis);
+    d->lastRenderTime = 0;
 }
 
 static void deinit_DrawBufs(iDrawBufs *d) {
@@ -794,14 +794,6 @@ static void updateVisible_DocumentWidget_(iDocumentWidget *d) {
                      !isSuccess_GmStatusCode(d->sourceStatus));
     const iRangei visRange = visibleRange_DocumentWidget_(d);
     const iRect   bounds   = bounds_Widget(as_Widget(d));
-    if (!equal_Rangei(visRange, d->drawBufs->lastVis)) {
-        /* After scrolling/resizing stops, begin prendering the visbuf contents.
-           `Periodic` is used for detecting when the visible range has been modified. */
-        removeTicker_App(prerender_DocumentWidget_, d);
-        remove_Periodic(periodic_App(), d);
-        add_Periodic(periodic_App(), d,
-                     format_CStr("document.render from:%d to:%d", visRange.start, visRange.end));
-    }
     setRange_ScrollWidget(d->scroll, (iRangei){ 0, scrollMax_DocumentWidget_(d) });
     const int docSize = size_GmDocument(d->doc).y;
     setThumb_ScrollWidget(d->scroll,
@@ -828,6 +820,11 @@ static void updateVisible_DocumentWidget_(iDocumentWidget *d) {
         if (recent && docSize && d->state == ready_RequestState) {
             recent->normScrollY = normScrollPos_DocumentWidget_(d);
         }
+    }
+    /* After scrolling/resizing stops, begin pre-rendering the visbuf contents. */ {
+        removeTicker_App(prerender_DocumentWidget_, d);
+        remove_Periodic(periodic_App(), d);
+        add_Periodic(periodic_App(), d, "document.render");
     }
 }
 
@@ -1763,10 +1760,9 @@ static iBool handlePinch_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
 
 static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
     iWidget *w = as_Widget(d);
-    if (equal_Command(cmd, "document.render")) {
-        const iRangei vis = { argLabel_Command(cmd, "from"), argLabel_Command(cmd, "to") };
-        const iRangei current = visibleRange_DocumentWidget_(d);
-        if (equal_Rangei(vis, current)) {
+    if (equal_Command(cmd, "document.render")) /* Periodic makes direct dispatch to here */ {
+//        printf("%u: document.render\n", SDL_GetTicks());
+        if (SDL_GetTicks() - d->drawBufs->lastRenderTime > 150) {
             remove_Periodic(periodic_App(), d);
             /* Scrolling has stopped, begin filling up the buffer. */
             if (d->visBuf->buffers[0].texture) {
@@ -1824,6 +1820,8 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         updateWindowTitle_DocumentWidget_(d);
         allocVisBuffer_DocumentWidget_(d);
         animateMedia_DocumentWidget_(d);
+        remove_Periodic(periodic_App(), d);
+        removeTicker_App(prerender_DocumentWidget_, d);
         return iFalse;
     }
     else if (equal_Command(cmd, "tab.created")) {
@@ -3704,6 +3702,13 @@ static void drawPin_(iPaint *p, iRect rangeRect, int dir) {
                                         init1_I2(gap_UI * 2)), pinColor);
 }
 
+static void extend_GmRunRange_(iGmRunRange *runs) {
+    if (runs->start) {
+        runs->start--;
+        runs->end++;
+    }
+}
+
 static iBool render_DocumentWidget_(const iDocumentWidget *d, iDrawContext *ctx, iBool prerenderExtra) {
     iBool didDraw = iFalse;
     const iRect bounds = bounds_Widget(constAs_Widget(d));
@@ -3712,6 +3717,7 @@ static iBool render_DocumentWidget_(const iDocumentWidget *d, iDrawContext *ctx,
     const iRangei full = { 0, size_GmDocument(d->doc).y };
     const iRangei vis = ctx->vis;
     iVisBuf *visBuf = d->visBuf; /* will be updated now */
+    d->drawBufs->lastRenderTime = SDL_GetTicks();
     /* Swap buffers around to have room available both before and after the visible region. */
     allocVisBuffer_DocumentWidget_(d);
     reposition_VisBuf(visBuf, vis);
@@ -3721,11 +3727,11 @@ static iBool render_DocumentWidget_(const iDocumentWidget *d, iDrawContext *ctx,
         iForIndices(i, visBuf->buffers) {
             iVisBufTexture *buf  = &visBuf->buffers[i];
             iVisBufMeta *   meta = buf->user;
-            const iRangei   bufRange    = bufferRange_VisBuf(visBuf, i);
+            const iRangei   bufRange    = intersect_Rangei(bufferRange_VisBuf(visBuf, i), full);
             const iRangei   bufVisRange = intersect_Rangei(bufRange, vis);
             ctx->widgetBounds = moved_Rect(ctxWidgetBounds, init_I2(0, -buf->origin));
             ctx->viewPos      = init_I2(left_Rect(ctx->docBounds) - left_Rect(bounds), -buf->origin);
-            //printf("  buffer %zu: invalid range %d...%d\n", i, invalidRange[i].start, invalidRange[i].end);
+//            printf("  buffer %zu: buf vis range %d...%d\n", i, bufVisRange.start, bufVisRange.end);
             if (!prerenderExtra && !isEmpty_Range(&bufVisRange)) {
                 didDraw = iTrue;
                 if (isEmpty_Rangei(buf->validRange)) {
@@ -3737,10 +3743,7 @@ static iBool render_DocumentWidget_(const iDocumentWidget *d, iDrawContext *ctx,
                         iZap(ctx->runsDrawn);
                         render_GmDocument(d->doc, bufVisRange, drawRun_DrawContext_, ctx);
                         meta->runsDrawn = ctx->runsDrawn;
-                        if (meta->runsDrawn.start) {
-                            meta->runsDrawn.start--;
-                            meta->runsDrawn.end++;
-                        }
+                        extend_GmRunRange_(&meta->runsDrawn);
                         buf->validRange = bufVisRange;
     //                printf("  buffer %zu valid %d...%d\n", i, bufRange.start, bufRange.end);
                     }
@@ -3750,19 +3753,19 @@ static iBool render_DocumentWidget_(const iDocumentWidget *d, iDrawContext *ctx,
                     if (meta->runsDrawn.start) {
                         beginTarget_Paint(p, buf->texture);
                         meta->runsDrawn.start = renderProgressive_GmDocument(d->doc, meta->runsDrawn.start,
-                                                                          -1, iInvalidSize,
-                                                                          bufVisRange,
-                                                                          drawRun_DrawContext_,
-                                                                          ctx);
+                                                                             -1, iInvalidSize,
+                                                                             bufVisRange,
+                                                                             drawRun_DrawContext_,
+                                                                             ctx);
                         buf->validRange.start = bufVisRange.start;
                     }
                     if (meta->runsDrawn.end) {
                         beginTarget_Paint(p, buf->texture);
                         meta->runsDrawn.end = renderProgressive_GmDocument(d->doc, meta->runsDrawn.end,
-                                                                          +1, iInvalidSize,
-                                                                          bufVisRange,
-                                                                          drawRun_DrawContext_,
-                                                                          ctx);
+                                                                           +1, iInvalidSize,
+                                                                           bufVisRange,
+                                                                           drawRun_DrawContext_,
+                                                                           ctx);
                         buf->validRange.end = bufVisRange.end;
                     }
                 }
@@ -3770,38 +3773,62 @@ static iBool render_DocumentWidget_(const iDocumentWidget *d, iDrawContext *ctx,
             /* Progressively draw the rest of the buffer if it isn't fully valid. */
             if (prerenderExtra && !equal_Rangei(bufRange, buf->validRange)) {
                 const iGmRun *next;
-                if (meta->runsDrawn.start) {
-                    const iRangei upper = intersect_Rangei(bufRange, (iRangei){ full.start, buf->validRange.start });
-                    if (upper.end > upper.start) {
-                        beginTarget_Paint(p, buf->texture);
-                        next = renderProgressive_GmDocument(d->doc, meta->runsDrawn.start,
-                                                            -1, 1, upper,
-                                                            drawRun_DrawContext_,
-                                                            ctx);
-                        if (meta->runsDrawn.start != next) {
-                            meta->runsDrawn.start = next;
-                            didDraw = iTrue;
-                        }
-                        buf->validRange.start = bufRange.start;
-                    }
+//                printf("%zu: prerenderExtra (start:%p end:%p)\n", i, meta->runsDrawn.start, meta->runsDrawn.end);
+                if (meta->runsDrawn.start == NULL) {
+                    /* Haven't drawn anything yet in this buffer, so let's try seeding it. */
+                    const int rh = lineHeight_Text(paragraph_FontId);
+                    const int y = i >= iElemCount(visBuf->buffers) / 2 ? bufRange.start : (bufRange.end - rh);
+                    beginTarget_Paint(p, buf->texture);
+                    fillRect_Paint(p, (iRect){ zero_I2(), visBuf->texSize }, tmBackground_ColorId);
+                    buf->validRange = (iRangei){ y, y + rh };
+                    iZap(ctx->runsDrawn);
+                    render_GmDocument(d->doc, buf->validRange, drawRun_DrawContext_, ctx);
+                    meta->runsDrawn = ctx->runsDrawn;
+                    extend_GmRunRange_(&meta->runsDrawn);
+//                    printf("%zu: seeded, next %p:%p\n", i, meta->runsDrawn.start, meta->runsDrawn.end);
+                    didDraw = iTrue;
                 }
-                if (meta->runsDrawn.end) {
-                    const iRangei lower = intersect_Rangei(bufRange, (iRangei){ buf->validRange.end, full.end });
-                    if (lower.end > lower.start) {
-                        beginTarget_Paint(p, buf->texture);
-                        next = renderProgressive_GmDocument(d->doc, meta->runsDrawn.end,
-                                                            +1, 1, lower,
-                                                            drawRun_DrawContext_,
-                                                            ctx);
-                        if (meta->runsDrawn.end != next) {
-                            meta->runsDrawn.end = next;
-                            didDraw = iTrue;
+                else {
+                    if (meta->runsDrawn.start) {
+                        const iRangei upper = intersect_Rangei(bufRange, (iRangei){ full.start, buf->validRange.start });
+                        if (upper.end > upper.start) {
+                            beginTarget_Paint(p, buf->texture);
+                            next = renderProgressive_GmDocument(d->doc, meta->runsDrawn.start,
+                                                                -1, 1, upper,
+                                                                drawRun_DrawContext_,
+                                                                ctx);
+                            if (next && meta->runsDrawn.start != next) {
+                                meta->runsDrawn.start = next;
+                                buf->validRange.start = bottom_Rect(next->visBounds);
+                                didDraw = iTrue;
+                            }
+                            else {
+                                buf->validRange.start = bufRange.start;
+                            }
                         }
-                        buf->validRange.end = bufRange.end;
+                    }
+                    if (!didDraw && meta->runsDrawn.end) {
+                        const iRangei lower = intersect_Rangei(bufRange, (iRangei){ buf->validRange.end, full.end });
+                        if (lower.end > lower.start) {
+                            beginTarget_Paint(p, buf->texture);
+                            next = renderProgressive_GmDocument(d->doc, meta->runsDrawn.end,
+                                                                +1, 1, lower,
+                                                                drawRun_DrawContext_,
+                                                                ctx);
+                            if (next && meta->runsDrawn.end != next) {
+                                meta->runsDrawn.end = next;
+                                buf->validRange.end = top_Rect(next->visBounds);
+                                didDraw = iTrue;
+                            }
+                            else {
+                                buf->validRange.end = bufRange.end;
+                            }
+                        }
                     }
                 }
             }
-            /* Draw any invalidated runs that fall within this buffer. */ {
+            /* Draw any invalidated runs that fall within this buffer. */
+            if (!prerenderExtra) {
                 const iRangei bufRange = { buf->origin, buf->origin + visBuf->texSize.y };
                 /* Clear full-width backgrounds first in case there are any dynamic elements. */ {
                     iConstForEach(PtrSet, r, d->invalidRuns) {
@@ -3826,6 +3853,9 @@ static iBool render_DocumentWidget_(const iDocumentWidget *d, iDrawContext *ctx,
                 }
             }
             endTarget_Paint(p);
+            if (prerenderExtra && didDraw) {
+                return iTrue;
+            }
         }
         clear_PtrSet(d->invalidRuns);
     }
