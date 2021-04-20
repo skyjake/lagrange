@@ -140,14 +140,16 @@ static iBool isStationary_Touch_(const iTouch *d) {
     return isStationaryDistance_Touch_(d, tapRadiusPt_);
 }
 
-static void clearWidgetMomentum_TouchState_(iTouchState *d, iWidget *widget) {
+static iBool clearWidgetMomentum_TouchState_(iTouchState *d, iWidget *widget) {
     if (!widget) return;
     iForEach(Array, m, d->moms) {
         iMomentum *mom = m.value;
         if (mom->affinity == widget) {
             remove_ArrayIterator(&m);
+            return iTrue;
         }
     }
+    return iFalse;
 }
 
 static void dispatchMotion_Touch_(iFloat3 pos, int buttonState) {
@@ -240,7 +242,9 @@ static void update_TouchState_(void *ptr) {
         if (isStationary_Touch_(touch)) {
             const int elapsed = nowTime - touch->startTime;
             if (elapsed > 25) { /* TODO: Shouldn't this be done only once? */
-                clearWidgetMomentum_TouchState_(d, touch->affinity);
+                if (clearWidgetMomentum_TouchState_(d, touch->affinity)) {
+                    touch->hasMoved = iTrue; /* resume scrolling */
+                }
                 clear_Array(d->moms); /* stop all ongoing momentum */
             }
             if (elapsed > 50 && !touch->isTapBegun) {
@@ -455,7 +459,6 @@ iBool processEvent_Touch(const SDL_Event *ev) {
             .id = fing->fingerId,
             .affinity = aff,
             .edgeDragging = dragging,
-//            .hasMoved = (flags_Widget(aff) & touchDrag_WidgetFlag) != 0,
             .didBeginOnTouchDrag = (flags_Widget(aff) & touchDrag_WidgetFlag) != 0,
             .edge = edge,
             .startTime = nowTime,
