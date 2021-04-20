@@ -340,7 +340,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     const iPrefs *prefs    = prefs_App();
     const iBool   isMono   = isForcedMonospace_GmDocument_(d);
     const iBool   isNarrow = d->size.x < 90 * gap_Text;
-    const iBool   isVeryNarrow = d->size.x <= 65 * gap_Text;
+    const iBool   isVeryNarrow = d->size.x <= 75 * gap_Text;
     const iBool   isDarkBg = isDark_GmDocumentTheme(
         isDark_ColorTheme(colorTheme_App()) ? prefs->docThemeDark : prefs->docThemeLight);
     /* TODO: Collect these parameters into a GmTheme. */
@@ -367,9 +367,15 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         tmHeading3_ColorId,
         tmLinkText_ColorId,
     };
-    const float indents[max_GmLineType] = {
+    float indents[max_GmLineType] = {
         5, 10, 5, isNarrow ? 5 : 10, 0, 0, 0, 5
     };
+    if (isVeryNarrow) {
+        /* Further reduce the margins. */
+        indents[text_GmLineType] -= 5;
+        indents[bullet_GmLineType] -= 5;
+        indents[preformatted_GmLineType] -= 5;
+    }
     static const float topMargin[max_GmLineType] = {
         0.0f, 0.333f, 1.0f, 0.5f, 2.0f, 1.5f, 1.25f, 0.25f
     };
@@ -694,19 +700,14 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             rightMargin = (type == text_GmLineType || type == bullet_GmLineType ||
                            type == quote_GmLineType ? 4 : 0);
         }
-        
         const iBool isWordWrapped =
             (d->format == plainText_GmDocumentFormat ? prefs->plainTextWrap : !isPreformat);
         if (isPreformat && d->format != plainText_GmDocumentFormat) {
             /* Remember the top left coordinates of the block (first line of block). */
             iGmPreMeta *meta = at_Array(&d->preMeta, preId - 1);
             if (~meta->flags & topLeft_GmPreMetaFlag) {
-                meta->pixelRect.pos = pos; //, indent * gap_Text);
+                meta->pixelRect.pos = pos;
                 meta->flags |= topLeft_GmPreMetaFlag;
-            }
-            /* Collapse indentation if too wide. */
-            if (width_Rect(meta->pixelRect) > d->size.x - (indent + rightMargin) * gap_Text) {
-                indent = 0;
             }
         }
         iAssert(!isEmpty_Range(&runLine)); /* must have something at this point */
