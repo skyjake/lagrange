@@ -2110,12 +2110,19 @@ iInt2 coord_Window(const iWindow *d, int x, int y) {
 }
 
 iInt2 mouseCoord_Window(const iWindow *d) {
+#if defined (iPlatformMobile)
+    /* At least on iOS the coordinates returned by SDL_GetMouseState() do no match up with
+       our touch coordinates on the Y axis (?). Maybe a pixel ratio thing? */
+    iUnused(d);
+    return latestPosition_Touch();
+#else
     if (!d->isMouseInside) {
         return init_I2(-1000000, -1000000);
     }
     int x, y;
     SDL_GetMouseState(&x, &y);
     return coord_Window(d, x, y);
+#endif
 }
 
 float uiScale_Window(const iWindow *d) {

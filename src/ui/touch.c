@@ -100,6 +100,7 @@ struct Impl_TouchState {
     iArray *pinches;
     iArray *moms;
     double lastMomTime;
+    iInt2 currentTouchPos; /* for emulating SDL_GetMouseState() */
 };
 
 static iTouchState *touchState_(void) {
@@ -150,6 +151,7 @@ static void clearWidgetMomentum_TouchState_(iTouchState *d, iWidget *widget) {
 }
 
 static void dispatchMotion_Touch_(iFloat3 pos, int buttonState) {
+    touchState_()->currentTouchPos = initF3_I2(pos);
     dispatchEvent_Widget(get_Window()->root, (SDL_Event *) &(SDL_MouseMotionEvent){
         .type = SDL_MOUSEMOTION,
         .timestamp = SDL_GetTicks(),
@@ -162,6 +164,7 @@ static void dispatchMotion_Touch_(iFloat3 pos, int buttonState) {
 
 static iBool dispatchClick_Touch_(const iTouch *d, int button) {
     const iFloat3 tapPos = d->pos[0];
+    touchState_()->currentTouchPos = initF3_I2(tapPos);
     iWindow *window = get_Window();
     SDL_MouseButtonEvent btn = {
         .type = SDL_MOUSEBUTTONDOWN,
@@ -186,6 +189,7 @@ static iBool dispatchClick_Touch_(const iTouch *d, int button) {
 }
 
 static void dispatchButtonDown_Touch_(iFloat3 pos) {
+    touchState_()->currentTouchPos = initF3_I2(pos);
     dispatchEvent_Widget(get_Window()->root, (SDL_Event *) &(SDL_MouseButtonEvent){
         .type = SDL_MOUSEBUTTONDOWN,
         .timestamp = SDL_GetTicks(),
@@ -199,6 +203,7 @@ static void dispatchButtonDown_Touch_(iFloat3 pos) {
 }
 
 static void dispatchButtonUp_Touch_(iFloat3 pos) {
+    touchState_()->currentTouchPos = initF3_I2(pos);
     dispatchEvent_Widget(get_Window()->root, (SDL_Event *) &(SDL_MouseButtonEvent){
         .type = SDL_MOUSEBUTTONUP,
         .timestamp = SDL_GetTicks(),
@@ -692,6 +697,10 @@ void widgetDestroyed_Touch(iWidget *widget) {
             remove_ArrayIterator(&m);
         }
     }
+}
+
+iInt2 latestPosition_Touch(void) {
+    return touchState_()->currentTouchPos;
 }
 
 size_t numFingers_Touch(void) {
