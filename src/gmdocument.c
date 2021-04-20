@@ -337,11 +337,12 @@ static void alignDecoration_GmRun_(iGmRun *run, iBool isCentered) {
 }
 
 static void doLayout_GmDocument_(iGmDocument *d) {
-    const iPrefs *prefs    = prefs_App();
-    const iBool   isMono   = isForcedMonospace_GmDocument_(d);
-    const iBool   isNarrow = d->size.x < 90 * gap_Text;
-    const iBool   isVeryNarrow = d->size.x <= 75 * gap_Text;
-    const iBool   isDarkBg = isDark_GmDocumentTheme(
+    const iPrefs *prefs             = prefs_App();
+    const iBool   isMono            = isForcedMonospace_GmDocument_(d);
+    const iBool   isNarrow          = d->size.x < 90 * gap_Text;
+    const iBool   isVeryNarrow      = d->size.x <= 70 * gap_Text;
+    const iBool   isExtremelyNarrow = d->size.x <= 60 * gap_Text;
+    const iBool   isDarkBg          = isDark_GmDocumentTheme(
         isDark_ColorTheme(colorTheme_App()) ? prefs->docThemeDark : prefs->docThemeLight);
     /* TODO: Collect these parameters into a GmTheme. */
     const int fonts[max_GmLineType] = {
@@ -370,7 +371,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     float indents[max_GmLineType] = {
         5, 10, 5, isNarrow ? 5 : 10, 0, 0, 0, 5
     };
-    if (isVeryNarrow) {
+    if (isExtremelyNarrow) {
         /* Further reduce the margins. */
         indents[text_GmLineType] -= 5;
         indents[bullet_GmLineType] -= 5;
