@@ -1747,6 +1747,11 @@ static iBool handlePinch_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
         int zoom = iRound(d->pinchZoomInitial * rel / 5.0f) * 5;
         zoom = iClamp(zoom, 50, 200);
         if (d->pinchZoomPosted != zoom) {
+#if defined (iPlatformAppleMobile)
+            if (zoom == 100) {
+                playHapticEffect_iOS(tap_HapticEffect);
+            }
+#endif
             d->pinchZoomPosted = zoom;
             postCommandf_App("zoom.set arg:%d", zoom);
         }
