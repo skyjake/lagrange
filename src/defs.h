@@ -76,6 +76,7 @@ enum iFileVersion {
 #define rightAngle_Icon     "\U0001fba5"
 #define planet_Icon         "\U0001fa90"
 #define info_Icon           "\u2139"
+#define bug_Icon            "\U0001f41e"
 #define leftHalf_Icon       "\u25e7"
 #define rightHalf_Icon      "\u25e8"
 #define scissor_Icon        "\u2700"

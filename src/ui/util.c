@@ -1070,10 +1070,9 @@ static iBool slidePanelHandler_(iWidget *d, const char *cmd) {
         }
         return iTrue;
     }
-    if (equal_Command(cmd, "panel.showhelp")) {
+    if (equal_Command(cmd, "document.changed")) {
         postCommand_App("prefs.dismiss");
-        postCommand_App("open url:about:help");
-        return iTrue;
+        return iFalse;
     }
     if (equal_Command(cmd, "window.resized")) {
         updateSheetPanelMetrics_(parent_Widget(d));
@@ -1219,6 +1218,30 @@ static iWidget *makeValuePaddingWithHeading_(iLabelWidget *heading, iWidget *val
     return div;
 }
 
+static iWidget *addChildPanel_(iWidget *sheet, iLabelWidget *panelButton,
+                               const iString *titleText) {
+    iWidget *owner = new_Widget();
+    setId_Widget(owner, "panel");
+    setUserData_Object(panelButton, owner);
+    setBackgroundColor_Widget(owner, uiBackground_ColorId);
+    setId_Widget(addChild_Widget(owner, iClob(makePadding_Widget(0))), "panel.toppad");
+    if (titleText) {
+        iLabelWidget *title =
+            addChildFlags_Widget(owner,
+                                 iClob(new_LabelWidget(cstr_String(titleText), NULL)),
+                                 alignLeft_WidgetFlag | frameless_WidgetFlag);
+        setFont_LabelWidget(title, uiLabelLargeBold_FontId);
+        setTextColor_LabelWidget(title, uiHeading_ColorId);
+    }
+    addChildFlags_Widget(sheet,
+                         iClob(owner),
+                         focusRoot_WidgetFlag | hidden_WidgetFlag | disabled_WidgetFlag |
+                             arrangeVertical_WidgetFlag | resizeWidthOfChildren_WidgetFlag |
+                             arrangeHeight_WidgetFlag | overflowScrollable_WidgetFlag |
+                             horizontalOffset_WidgetFlag | commandOnClick_WidgetFlag);
+    return owner;
+}
+
 void finalizeSheet_Widget(iWidget *sheet) {
     /* The sheet contents are completely rearranged and restyled on a phone.
        We'll set up a linear fullscreen arrangement of the widgets. Sheets are already
@@ -1317,31 +1340,14 @@ void finalizeSheet_Widget(iWidget *sheet) {
             if (useSlidePanels) {
                 /* Create a new child panel. */
                 iLabelWidget *button = at_PtrArray(panelButtons, index_PtrArrayIterator(&j));
-                owner = new_Widget();
-                setId_Widget(owner, "panel");
-                setUserData_Object(button, owner);
-                setBackgroundColor_Widget(owner, uiBackground_ColorId);
-                setId_Widget(addChild_Widget(owner, iClob(makePadding_Widget(0))), "panel.toppad");
-                iLabelWidget *title = addChildFlags_Widget(owner,
-                                                           iClob(new_LabelWidget(cstrCollect_String(upper_String(text_LabelWidget(button))), NULL)), alignLeft_WidgetFlag | frameless_WidgetFlag);
-                setFont_LabelWidget(title, uiLabelLargeBold_FontId);
-                setTextColor_LabelWidget(title, uiHeading_ColorId);
-                addChildFlags_Widget(sheet,
-                                     iClob(owner),
-                                     focusRoot_WidgetFlag |
-                                     hidden_WidgetFlag |
-                                     disabled_WidgetFlag |
-                                     arrangeVertical_WidgetFlag |
-                                     resizeWidthOfChildren_WidgetFlag |
-                                     arrangeHeight_WidgetFlag |
-                                     overflowScrollable_WidgetFlag |
-                                     horizontalOffset_WidgetFlag |
-                                     commandOnClick_WidgetFlag);
+                owner = addChildPanel_(sheet, button,
+                                       collect_String(upper_String(text_LabelWidget(button))));
             }
             iWidget *pageContent = j.ptr;
             iWidget *headings = child_Widget(pageContent, 0);
             iWidget *values   = child_Widget(pageContent, 1);
             enum iPrefsElement prevElement = panelTitle_PrefsElement;
+            /* Identify the types of controls in the dialog and restyle/organize them. */
             while (!isEmpty_ObjectList(children_Widget(headings))) {
                 iWidget *heading = child_Widget(headings, 0);
                 iWidget *value   = child_Widget(values, 0);
@@ -1455,11 +1461,36 @@ void finalizeSheet_Widget(iWidget *sheet) {
         if (isPrefs) {
             addChild_Widget(topPanel, iClob(makePadding_Widget(lineHeight_Text(defaultBig_FontId))));
             addChildFlags_Widget(topPanel,
-                                 iClob(makePanelButton_(info_Icon " ${menu.help}", "panel.showhelp")),
+                                 iClob(makePanelButton_(info_Icon " ${menu.help}", "!open url:about:help")),
                                  borderTop_WidgetFlag);
-            addChildFlags_Widget(topPanel,
-                                 iClob(makePanelButton_(planet_Icon " ${menu.about}", "panel.about")),
+            iLabelWidget *aboutButton = addChildFlags_Widget(topPanel,
+                                 iClob(makePanelButton_(planet_Icon " ${menu.about}", "panel.open")),
                                  chevron_WidgetFlag);
+            /* The About panel. */ {
+                iWidget *panel = addChildPanel_(sheet, aboutButton, NULL);
+                iString *msg = collectNew_String();
+                setCStr_String(msg, "Lagrange " LAGRANGE_APP_VERSION);
+#if defined (iPlatformAppleMobile)
+                appendCStr_String(msg, " (" LAGRANGE_IOS_VERSION ")");
+#endif
+                addChild_Widget(panel, iClob(new_LabelWidget(cstr_String(msg), NULL)));
+                addChildFlags_Widget(panel,
+                                     iClob(makePanelButton_(globe_Icon " By @jk@skyjake.fi",
+                                                            "!open url:https://skyjake.fi/@jk")),
+                                     borderTop_WidgetFlag);
+                addChildFlags_Widget(panel,
+                                     iClob(makePanelButton_(clock_Icon " ${menu.releasenotes}",
+                                                            "!open url:about:version")),
+                                     0);
+                addChildFlags_Widget(panel,
+                                     iClob(makePanelButton_(info_Icon " ${menu.aboutpages}",
+                                                            "!open url:about:about")),
+                                     0);
+                addChildFlags_Widget(panel,
+                                     iClob(makePanelButton_(bug_Icon " ${menu.debug}",
+                                                            "!open url:about:debug")),
+                                     0);
+            }
         }
         else {
             setFlags_Widget(topPanel, overflowScrollable_WidgetFlag, iTrue);

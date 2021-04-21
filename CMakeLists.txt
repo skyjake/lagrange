@@ -319,6 +319,7 @@ if (APPLE)
         XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "fi.skyjake.lagrange"
     )
     if (IOS)
+        target_compile_definitions (app PUBLIC LAGRANGE_IOS_VERSION="${IOS_BUNDLE_VERSION}")
         set_target_properties (app PROPERTIES
             MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_LIST_DIR}/res/iOSBundleInfo.plist.in"
             MACOSX_BUNDLE_BUNDLE_VERSION "${IOS_BUNDLE_VERSION}"
