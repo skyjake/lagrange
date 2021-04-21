@@ -377,7 +377,7 @@ void deinit_DocumentWidget(iDocumentWidget *d) {
     removeTicker_App(prerender_DocumentWidget_, d);
     remove_Periodic(periodic_App(), d);
     delete_Translation(d->translation);
-    delete_DrawBufs(d->drawBufs);    
+    delete_DrawBufs(d->drawBufs);
     delete_VisBuf(d->visBuf);
     free(d->visBufMeta);
     delete_PtrSet(d->invalidRuns);
@@ -1273,10 +1273,14 @@ static void smoothScroll_DocumentWidget_(iDocumentWidget *d, int offset, int dur
     int destY = targetValue_Anim(&d->scrollY) + offset;
     if (destY < 0) {
         destY = 0;
+        stopWidgetMomentum_Touch(as_Widget(d));
     }
     const int scrollMax = scrollMax_DocumentWidget_(d);
     if (scrollMax > 0) {
-        destY = iMin(destY, scrollMax);
+        if (destY >= scrollMax) {
+            stopWidgetMomentum_Touch(as_Widget(d));
+            destY = scrollMax;
+        }
     }
     else {
         destY = 0;

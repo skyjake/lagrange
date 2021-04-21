@@ -696,6 +696,16 @@ iBool processEvent_Touch(const SDL_Event *ev) {
     return iTrue;
 }
 
+void stopWidgetMomentum_Touch(iWidget *widget) {
+    iTouchState *d = touchState_();
+    iForEach(Array, i, d->moms) {
+        iMomentum *mom = i.value;
+        if (mom->affinity == widget) {
+            remove_ArrayIterator(&i);
+        }
+    }
+}
+
 void widgetDestroyed_Touch(iWidget *widget) {
     iTouchState *d = touchState_();
     iForEach(Array, i, d->touches) {

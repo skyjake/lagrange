@@ -172,9 +172,13 @@ iBool scrollOffset_ListWidget(iListWidget *d, int offset) {
     d->scrollY += offset;
     if (d->scrollY < 0) {
         d->scrollY = 0;
+        stopWidgetMomentum_Touch(as_Widget(d));
     }
     const int scrollMax = scrollMax_ListWidget_(d);
-    d->scrollY = iMin(d->scrollY, scrollMax);
+    if (d->scrollY >= scrollMax) {
+        d->scrollY = scrollMax;
+        stopWidgetMomentum_Touch(as_Widget(d));
+    }
     d->noHoverWhileScrolling = iTrue;
     if (oldScroll != d->scrollY) {
         if (d->hoverItem != iInvalidPos) {
@@ -310,7 +314,7 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
             return iTrue;
         }
     }
-    else if (ev->type == SDL_USEREVENT && ev->user.code == widgetTapBegins_UserEventCode) {    
+    else if (ev->type == SDL_USEREVENT && ev->user.code == widgetTapBegins_UserEventCode) {
         d->noHoverWhileScrolling = iFalse;
     }
     if (ev->type == SDL_MOUSEMOTION) {
