@@ -39,7 +39,7 @@ struct Impl_LabelWidget {
     iChar   icon;
     int     forceFg;
     iString command;
-    iBool   alignVisual; /* align according to visible bounds, not typography */
+    iBool   alignVisual; /* align according to visible bounds, not font metrics */
     iClick  click;
 };
 

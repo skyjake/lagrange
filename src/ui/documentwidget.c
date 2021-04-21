@@ -2380,20 +2380,19 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         }
     }
     else if (equal_Command(cmd, "document.autoreload.menu") && document_App() == d) {
-        iWidget *dlg = makeQuestion_Widget(uiTextAction_ColorEscape "${heading.autoreload}",
-                                           "${dlg.autoreload}",
-                                           (iMenuItem[]){ { "${cancel}", 0, 0, NULL } },
-                                           1);
+        iArray *items = collectNew_Array(sizeof(iMenuItem));
         for (int i = 0; i < max_ReloadInterval; ++i) {
-            insertChildAfterFlags_Widget(
-                dlg,
-                iClob(new_LabelWidget(label_ReloadInterval_(i),
-                                      format_CStr("document.autoreload.set arg:%d", i))),
-                i + 1,
-                resizeToParentWidth_WidgetFlag |
-                    ((int) d->mod.reloadInterval == i ? selected_WidgetFlag : 0));
+            pushBack_Array(items, &(iMenuItem){
+                format_CStr("%s%s", ((int) d->mod.reloadInterval == i ? "=" : "-"),
+                                     label_ReloadInterval_(i)),
+                0,
+                0,
+                format_CStr("document.autoreload.set arg:%d", i) });
         }
-        arrange_Widget(dlg);
+        pushBack_Array(items, &(iMenuItem){ "${cancel}", 0, 0, NULL });
+        makeQuestion_Widget(uiTextAction_ColorEscape "${heading.autoreload}",
+                            "${dlg.autoreload}",
+                            constData_Array(items), size_Array(items));
         return iTrue;
     }
     else if (equal_Command(cmd, "document.autoreload.set") && document_App() == d) {

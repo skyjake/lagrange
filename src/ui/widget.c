@@ -1161,11 +1161,17 @@ iAny *insertChildAfter_Widget(iWidget *d, iAnyObject *child, size_t afterIndex) 
     iAssert(!widget->parent);
     iAssert(d->children);
     iAssert(afterIndex < size_ObjectList(d->children));
+    iBool wasInserted = iFalse;
     iForEach(ObjectList, i, d->children) {
         if (afterIndex-- == 0) {
             insertAfter_ObjectList(d->children, i.value, child);
+            wasInserted = iTrue;
             break;
         }
+    }
+    if (!wasInserted) {
+        /* Someone is confused about the number of children? We still have to add this. */
+        pushBack_ObjectList(d->children, child);
     }
     widget->parent = d;
     return child;
