@@ -1630,7 +1630,7 @@ iBool isFullscreen_Window(const iWindow *d) {
 static void invalidate_Window_(iWindow *d) {
     iUnused(d);
     resetFonts_Text();
-    postCommand_App("theme.changed"); /* forces UI invalidation */
+    postCommand_App("theme.changed auto:1"); /* forces UI invalidation */
 }
 
 static iBool isNormalPlacement_Window_(const iWindow *d) {
