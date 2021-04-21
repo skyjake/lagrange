@@ -686,6 +686,9 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                     //dispatchMotion_Touch_(touch->startPos, 0);
                 }
                 else {
+                    if (touch->affinity) {
+                        dispatchNotification_Touch_(touch, widgetTouchEnds_UserEventCode);
+                    }
                     dispatchButtonUp_Touch_(pos);
                     setHover_Widget(NULL);
                 }
@@ -696,14 +699,34 @@ iBool processEvent_Touch(const SDL_Event *ev) {
     return iTrue;
 }
 
-void stopWidgetMomentum_Touch(iWidget *widget) {
+float stopWidgetMomentum_Touch(const iWidget *widget) {
     iTouchState *d = touchState_();
+    float remaining = 0.0f;
     iForEach(Array, i, d->moms) {
         iMomentum *mom = i.value;
         if (mom->affinity == widget) {
+            remaining = length_F3(mom->velocity);
             remove_ArrayIterator(&i);
         }
     }
+    return remaining;
+}
+
+enum iWidgetTouchMode widgetMode_Touch(const iWidget *widget) {
+    iTouchState *d = touchState_();
+    iConstForEach(Array, i, d->touches) {
+        const iTouch *touch = i.value;
+        if (touch->affinity == widget) {
+            return touch_WidgetTouchMode;
+        }
+    }
+    iConstForEach(Array, j, d->moms) {
+        const iMomentum *mom = j.value;
+        if (mom->affinity == widget) {
+            return momentum_WidgetTouchMode;
+        }
+    }
+    return none_WidgetTouchMode;
 }
 
 void widgetDestroyed_Touch(iWidget *widget) {

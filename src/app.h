@@ -61,6 +61,7 @@ enum iUserEventCode {
        sending SDL_MOUSEBUTTONDOWN would be premature: we don't know how long the tap will
        take, it could turn into a tap-and-hold for example. */
     widgetTapBegins_UserEventCode = 4,
+    widgetTouchEnds_UserEventCode = 5, /* finger lifted, but momentum may continue */
 };
 
 const iString *execPath_App     (void);

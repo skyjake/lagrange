@@ -287,6 +287,7 @@ struct Impl_DocumentWidget {
     iDrawBufs *    drawBufs; /* dynamic state for drawing */
     iTranslation * translation;
     iWidget *      phoneToolbar;
+    int            overscroll;
     int            pinchZoomInitial;
     int            pinchZoomPosted;
 };
@@ -299,8 +300,9 @@ void init_DocumentWidget(iDocumentWidget *d) {
     setId_Widget(w, "document000");
     setFlags_Widget(w, hover_WidgetFlag, iTrue);
     init_PersistentDocumentState(&d->mod);
-    d->flags = 0;
-    d->phoneToolbar = NULL;
+    d->flags           = 0;
+    d->phoneToolbar    = NULL;
+    d->overscroll      = deviceType_App() != desktop_AppDeviceType ? 50 * gap_UI : 0;
     iZap(d->certExpiry);
     d->certFingerprint  = new_Block(0);
     d->certFlags        = 0;
@@ -1255,6 +1257,20 @@ static void refreshWhileScrolling_DocumentWidget_(iAny *ptr) {
     }
 }
 
+static int overscroll_DocumentWidget_(const iDocumentWidget *d) {
+    if (d->overscroll) {
+        const int y = value_Anim(&d->scrollY);
+        if (y <= 0) {
+            return y;
+        }
+        const int scrollMax = scrollMax_DocumentWidget_(d);
+        if (y >= scrollMax) {
+            return y - scrollMax;
+        }
+    }
+    return 0;
+}
+
 static void smoothScroll_DocumentWidget_(iDocumentWidget *d, int offset, int duration) {
     /* Get rid of link numbers when scrolling. */
     if (offset && d->flags & showLinkNumbers_DocumentWidgetFlag) {
@@ -1267,19 +1283,19 @@ static void smoothScroll_DocumentWidget_(iDocumentWidget *d, int offset, int dur
             showToolbars_Window(get_Window(), offset < 0);
         }
     }
+#if !defined (iPlatformMobile)
     if (!prefs_App()->smoothScrolling) {
         duration = 0; /* always instant */
     }
+#endif
     int destY = targetValue_Anim(&d->scrollY) + offset;
-    if (destY < 0) {
-        destY = 0;
-        stopWidgetMomentum_Touch(as_Widget(d));
+    if (destY < -2 * d->overscroll) {
+        destY = -2 * d->overscroll;
     }
     const int scrollMax = scrollMax_DocumentWidget_(d);
     if (scrollMax > 0) {
-        if (destY >= scrollMax) {
-            stopWidgetMomentum_Touch(as_Widget(d));
-            destY = scrollMax;
+        if (destY >= scrollMax + 2 * d->overscroll) {
+            destY = scrollMax + 2 * d->overscroll;
         }
     }
     else {
@@ -1290,6 +1306,18 @@ static void smoothScroll_DocumentWidget_(iDocumentWidget *d, int offset, int dur
     }
     else {
         setValue_Anim(&d->scrollY, destY, 0);
+    }
+    if (d->overscroll && widgetMode_Touch(as_Widget(d)) == momentum_WidgetTouchMode) {
+        const int osDelta = overscroll_DocumentWidget_(d);
+        if (osDelta) {
+            const float remaining = stopWidgetMomentum_Touch(as_Widget(d));
+            duration = iMini(1000, 50 * sqrt(remaining / gap_UI));
+            setValue_Anim(&d->scrollY, osDelta < 0 ? 0 : scrollMax, duration);
+            d->scrollY.flags = bounce_AnimFlag | easeOut_AnimFlag | softer_AnimFlag;
+            printf("remaining: %f  dur: %d\n", remaining, duration);
+            d->scrollY.bounce = (osDelta < 0 ? -1 : 1) *
+                iMini(10 * d->overscroll, remaining * remaining * 0.00005f);
+        }
     }
     updateVisible_DocumentWidget_(d);
     refresh_Widget(as_Widget(d));
@@ -2593,6 +2621,14 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
     iWidget *w = as_Widget(d);
     if (isMetricsChange_UserEvent(ev)) {
         updateSize_DocumentWidget(d);
+    }
+    else if (ev->type == SDL_USEREVENT && ev->user.code == widgetTouchEnds_UserEventCode) {
+        const int osDelta = overscroll_DocumentWidget_(d);
+        if (osDelta) {
+            smoothScroll_DocumentWidget_(d, -osDelta, 100 * sqrt(iAbs(osDelta) / gap_UI));
+            d->scrollY.flags = easeOut_AnimFlag | muchSofter_AnimFlag;
+        }
+        return iTrue;
     }
     else if (ev->type == SDL_USEREVENT && ev->user.code == command_UserEventCode) {
         if (!handleCommand_DocumentWidget_(d, command_UserEvent(ev))) {
@@ -3913,7 +3949,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
     };
     render_DocumentWidget_(d, &ctx, iFalse /* just the mandatory parts */);
     setClip_Paint(&ctx.paint, bounds);
-    const int yTop = docBounds.pos.y - value_Anim(&d->scrollY);
+    int yTop = docBounds.pos.y - value_Anim(&d->scrollY) + overscroll_DocumentWidget_(d) * 0.667f;
     draw_VisBuf(d->visBuf, init_I2(bounds.pos.x, yTop), ySpan_Rect(bounds));
     /* Text markers. */
     const iBool isTouchSelecting = (flags_Widget(w) & touchDrag_WidgetFlag) != 0;

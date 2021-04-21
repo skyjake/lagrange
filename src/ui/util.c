@@ -246,6 +246,7 @@ iBool isFinished_Anim(const iAnim *d) {
 void init_Anim(iAnim *d, float value) {
     d->due = d->when = SDL_GetTicks();
     d->from = d->to = value;
+    d->bounce = 0.0f;
     d->flags = 0;
 }
 
@@ -276,20 +277,29 @@ static float valueAt_Anim_(const iAnim *d, const uint32_t now) {
         return d->from;
     }
     float t = pos_Anim_(d, now);
-    const iBool isSoft = (d->flags & softer_AnimFlag) != 0;
+    const iBool isSoft     = (d->flags & softer_AnimFlag) != 0;
+    const iBool isVerySoft = (d->flags & muchSofter_AnimFlag) != 0;
     if ((d->flags & easeBoth_AnimFlag) == easeBoth_AnimFlag) {
         t = easeBoth_(t);
         if (isSoft) t = easeBoth_(t);
+        if (isVerySoft) t = easeBoth_(easeBoth_(t));
     }
     else if (d->flags & easeIn_AnimFlag) {
         t = easeIn_(t);
         if (isSoft) t = easeIn_(t);
+        if (isVerySoft) t = easeIn_(easeIn_(t));
     }
     else if (d->flags & easeOut_AnimFlag) {
         t = easeOut_(t);
         if (isSoft) t = easeOut_(t);
+        if (isVerySoft) t = easeOut_(easeOut_(t));
     }
-    return d->from * (1.0f - t) + d->to * t;
+    float value = d->from * (1.0f - t) + d->to * t;
+    if (d->flags & bounce_AnimFlag) {
+        t = (1.0f - easeOut_(easeOut_(t))) * easeOut_(t);
+        value += d->bounce * t;
+    }
+    return value;
 }
 
 void setValue_Anim(iAnim *d, float to, uint32_t span) {
@@ -304,6 +314,7 @@ void setValue_Anim(iAnim *d, float to, uint32_t span) {
         d->when = now;
         d->due  = now + span;
     }
+    d->bounce = 0;
 }
 
 void setValueSpeed_Anim(iAnim *d, float to, float unitsPerSecond) {
@@ -316,6 +327,7 @@ void setValueSpeed_Anim(iAnim *d, float to, float unitsPerSecond) {
         d->to                = to;
         d->when              = now;
         d->due               = d->when + span;
+        d->bounce            = 0;
     }
 }
 
@@ -333,9 +345,10 @@ void setValueEased_Anim(iAnim *d, float to, uint32_t span) {
         d->from  = valueAt_Anim_(d, now);
         d->flags = easeOut_AnimFlag;
     }
-    d->to   = to;
-    d->when = now;
-    d->due  = now + span;
+    d->to     = to;
+    d->when   = now;
+    d->due    = now + span;
+    d->bounce = 0;
 }
 
 void setFlags_Anim(iAnim *d, int flags, iBool set) {

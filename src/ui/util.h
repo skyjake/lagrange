@@ -105,10 +105,12 @@ enum iAnimFlag {
     easeOut_AnimFlag    = iBit(3),
     easeBoth_AnimFlag   = easeIn_AnimFlag | easeOut_AnimFlag,
     softer_AnimFlag     = iBit(4),
+    muchSofter_AnimFlag = iBit(5),
+    bounce_AnimFlag     = iBit(6),
 };
 
 struct Impl_Anim {
-    float    from, to;
+    float    from, to, bounce;
     uint32_t when, due;
     int      flags;
 };
