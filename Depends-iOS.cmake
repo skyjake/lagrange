@@ -7,6 +7,7 @@ set (SDL2_LDFLAGS
     ${IOS_DIR}/lib/libSDL2.a
     "-framework AudioToolbox"
     "-framework AVFoundation"
+    "-framework AVFAudio"
     "-framework CoreAudio"
     "-framework CoreGraphics"
     "-framework CoreHaptics"

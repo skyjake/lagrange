@@ -24,11 +24,17 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "app.h"
 #include "ui/command.h"
 #include "ui/window.h"
+
+#include <the_Foundation/file.h>
+#include <the_Foundation/fileinfo.h>
+#include <the_Foundation/path.h>
 #include <SDL_events.h>
 #include <SDL_syswm.h>
+#include <SDL_timer.h>
 
 #import <UIKit/UIKit.h>
 #import <CoreHaptics/CoreHaptics.h>
+#import <AVFAudio/AVFAudio.h>
 
 static iBool isSystemDarkMode_ = iFalse;
 static iBool isPhone_          = iFalse;
@@ -223,6 +229,7 @@ void setupApplication_iOS(void) {
                selector:@selector(keyboardOffScreen:)
                    name:UIKeyboardWillHideNotification
                  object:nil];
+    [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayback error:nil];
 }
 
 static iBool isDarkMode_(iWindow *window) {
@@ -308,4 +315,124 @@ void exportDownloadedFile_iOS(const iString *path) {
     picker.delegate = appState_;
     [appState_ setFileBeingSaved:path];
     [viewController_(get_Window()) presentViewController:picker animated:YES completion:nil];
+}
+
+/*----------------------------------------------------------------------------------------------*/
+
+enum iAVFAudioPlayerState {
+    initialized_AVFAudioPlayerState,
+    playing_AVFAudioPlayerState,
+    paused_AVFAudioPlayerState
+};
+
+struct Impl_AVFAudioPlayer {
+    iString cacheFilePath;
+    AVAudioPlayer *player;
+    float volume;
+    enum iAVFAudioPlayerState state;
+};
+
+iDefineTypeConstruction(AVFAudioPlayer)
+
+void init_AVFAudioPlayer(iAVFAudioPlayer *d) {
+    init_String(&d->cacheFilePath);
+    d->player = NULL;
+    d->volume = 1.0f;
+    d->state = initialized_AVFAudioPlayerState;
+}
+
+void deinit_AVFAudioPlayer(iAVFAudioPlayer *d) {
+    setInput_AVFAudioPlayer(d, NULL, NULL);
+}
+
+static const char *cacheDir_ = "~/Library/Caches/Audio";
+
+static const char *fileExt_(const iString *mimeType) {
+    /* Media types that AVFAudioPlayer will try to play. */
+    if (startsWithCase_String(mimeType, "audio/aiff") ||
+        startsWithCase_String(mimeType, "audio/x-aiff")) {
+        return ".aiff";
+    }
+    if (startsWithCase_String(mimeType, "audio/3gpp"))  return ".3gpp";
+    if (startsWithCase_String(mimeType, "audio/mpeg"))  return ".mp3";
+    if (startsWithCase_String(mimeType, "audio/mp3"))   return ".mp3";
+    if (startsWithCase_String(mimeType, "audio/mp4"))   return ".mp4";
+    if (startsWithCase_String(mimeType, "audio/mpeg4")) return ".mp4";
+    if (startsWithCase_String(mimeType, "audio/aac"))   return ".aac";
+    return "";
+}
+
+iBool setInput_AVFAudioPlayer(iAVFAudioPlayer *d, const iString *mimeType, const iBlock *audioFileData) {
+    if (!isEmpty_String(&d->cacheFilePath)) {
+        remove(cstr_String(&d->cacheFilePath));
+        clear_String(&d->cacheFilePath);
+    }
+    if (d->player) {
+        d->player = nil;
+    }
+    if (mimeType && audioFileData && iCmpStr(fileExt_(mimeType), "")) {
+        makeDirs_Path(collectNewCStr_String(cacheDir_));
+        iFile *f = new_File(collectNewFormat_String("%s/%u%s", cacheDir_, SDL_GetTicks(), fileExt_(mimeType)));
+        if (open_File(f, writeOnly_FileMode)) {
+            write_File(f, audioFileData);
+            set_String(&d->cacheFilePath, path_File(f));
+            NSError *error = nil;
+            d->player = [[AVAudioPlayer alloc]
+                         initWithContentsOfURL:[NSURL fileURLWithPath:
+                                                [NSString stringWithUTF8String:cstr_String(&d->cacheFilePath)]]
+                         error:&error];
+            if (error) {
+                d->player = nil;
+            }
+            [d->player setVolume:d->volume];
+        }
+        iRelease(f);
+    }
+    return d->player != nil;
+}
+
+void play_AVFAudioPlayer(iAVFAudioPlayer *d) {
+    if (d->state != playing_AVFAudioPlayerState) {
+        [d->player play];
+        d->state = playing_AVFAudioPlayerState;
+    }
+}
+
+void stop_AVFAudioPlayer(iAVFAudioPlayer *d) {
+    [d->player stop];
+    d->state = initialized_AVFAudioPlayerState;
+}
+
+void setPaused_AVFAudioPlayer(iAVFAudioPlayer *d, iBool paused) {
+    if (paused && d->state != paused_AVFAudioPlayerState) {
+        [d->player pause];
+        d->state = paused_AVFAudioPlayerState;
+    }
+    else if (!paused && d->state != playing_AVFAudioPlayerState) {
+        [d->player play];
+        d->state = playing_AVFAudioPlayerState;
+    }
+}
+
+void setVolume_AVFAudioPlayer(iAVFAudioPlayer *d, float volume) {
+    d->volume = volume;
+    if (d->player) {
+        [d->player setVolume:volume];
+    }
+}
+
+double currentTime_AVFAudioPlayer(const iAVFAudioPlayer *d) {
+    return [d->player currentTime];
+}
+
+double duration_AVFAudioPlayer(const iAVFAudioPlayer *d) {
+    return [d->player duration];
+}
+
+iBool isStarted_AVFAudioPlayer(const iAVFAudioPlayer *d) {
+    return d->state != initialized_AVFAudioPlayerState;
+}
+
+iBool isPaused_AVFAudioPlayer(const iAVFAudioPlayer *d) {
+    return d->state == paused_AVFAudioPlayerState;
 }

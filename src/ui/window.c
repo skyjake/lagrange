@@ -1887,6 +1887,7 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
                     SDL_ShowWindow(d->win);
                 }
                 postRefresh_App();
+                postCommand_App("media.player.update"); /* in case a player needs updating */
                 return iTrue;
             }
             if (processEvent_Touch(&event)) {

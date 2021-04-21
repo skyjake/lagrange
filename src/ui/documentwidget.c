@@ -710,6 +710,9 @@ static uint32_t mediaUpdateInterval_DocumentWidget_(const iDocumentWidget *d) {
     if (document_App() != d) {
         return 0;
     }
+    if (get_Window()->isDrawFrozen) {
+        return 0;
+    }
     static const uint32_t invalidInterval_ = ~0u;
     uint32_t interval = invalidInterval_;
     iConstForEach(PtrArray, i, &d->visibleMedia) {
