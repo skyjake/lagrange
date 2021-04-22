@@ -978,6 +978,7 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
                            ev->button.button,
                            ev->button.x,
                            ev->button.y);
+        return iTrue;
     }
     if (d->flags & mouseModal_WidgetFlag && isMouseEvent_(ev)) {
         if ((ev->type == SDL_MOUSEBUTTONDOWN || ev->type == SDL_MOUSEBUTTONUP) &&
