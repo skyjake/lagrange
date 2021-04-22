@@ -426,9 +426,8 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
         default:
             break;
     }
-    if (!scrollOffset_ListWidget(d->list, 0)) {
-        updateVisible_ListWidget(d->list);
-    }
+    scrollOffset_ListWidget(d->list, 0);
+    updateVisible_ListWidget(d->list);
     invalidate_ListWidget(d->list);
     /* Content for a blank tab. */
     if (isEmpty) {

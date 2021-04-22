@@ -61,7 +61,7 @@ int     scrollPos_ListWidget        (const iListWidget *);
 
 void    setScrollPos_ListWidget     (iListWidget *, int pos);
 void    scrollToItem_ListWidget     (iListWidget *, size_t index);
-iBool   scrollOffset_ListWidget     (iListWidget *, int offset); /* returns true if position changed */
+void    scrollOffset_ListWidget     (iListWidget *, int offset);
 void    updateVisible_ListWidget    (iListWidget *);
 void    updateMouseHover_ListWidget (iListWidget *);
 

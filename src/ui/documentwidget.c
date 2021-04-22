@@ -3687,19 +3687,15 @@ static void drawMedia_DocumentWidget_(const iDocumentWidget *d, iPaint *p) {
 
 static void drawPin_(iPaint *p, iRect rangeRect, int dir) {
     const int pinColor = tmQuote_ColorId;
-    const int height = height_Rect(rangeRect);
+    const int height   = height_Rect(rangeRect);
     iRect pin;
     if (dir == 0) {
-        pin = (iRect){
-            add_I2(topLeft_Rect(rangeRect), init_I2(-gap_UI / 4, -gap_UI)),
-            init_I2(gap_UI / 2, height_Rect(rangeRect) + gap_UI)
-        };
+        pin = (iRect){ add_I2(topLeft_Rect(rangeRect), init_I2(-gap_UI / 4, -gap_UI)),
+                       init_I2(gap_UI / 2, height + gap_UI) };
     }
     else {
-        pin = (iRect){
-            addX_I2(topRight_Rect(rangeRect), -gap_UI / 4),
-            init_I2(gap_UI / 2, height_Rect(rangeRect) + gap_UI)
-        };
+        pin = (iRect){ addX_I2(topRight_Rect(rangeRect), -gap_UI / 4),
+                       init_I2(gap_UI / 2, height + gap_UI) };
     }
     fillRect_Paint(p, pin, pinColor);
     fillRect_Paint(p, initCentered_Rect(dir == 0 ? topMid_Rect(pin) : bottomMid_Rect(pin),
