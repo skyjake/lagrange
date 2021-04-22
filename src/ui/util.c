@@ -36,6 +36,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "keys.h"
 #include "widget.h"
 #include "text.h"
+#include "touch.h"
 #include "window.h"
 
 #if defined (iPlatformAppleMobile)
@@ -442,6 +443,108 @@ iRect rect_Click(const iClick *d) {
 
 iInt2 delta_Click(const iClick *d) {
     return sub_I2(d->pos, d->startPos);
+}
+
+/*----------------------------------------------------------------------------------------------*/
+
+void init_SmoothScroll(iSmoothScroll *d, iWidget *owner, iSmoothScrollNotifyFunc notify) {
+    reset_SmoothScroll(d);
+    d->widget = owner;
+    d->notify = notify;
+}
+
+void reset_SmoothScroll(iSmoothScroll *d) {
+    init_Anim(&d->pos, 0);
+    d->max = 0;
+    d->overscroll = (deviceType_App() != desktop_AppDeviceType ? 100 * gap_UI : 0);
+}
+
+void setMax_SmoothScroll(iSmoothScroll *d, int max) {
+    max = iMax(0, max);
+    if (max != d->max) {
+        d->max = max;
+        if (targetValue_Anim(&d->pos) > d->max) {
+            d->pos.to = d->max;
+        }
+    }
+}
+
+static int overscroll_SmoothScroll_(const iSmoothScroll *d) {
+    if (d->overscroll) {
+        const int y = value_Anim(&d->pos);
+        if (y <= 0) {
+            return y;
+        }
+        if (y >= d->max) {
+            return y - d->max;
+        }
+    }
+    return 0;
+}
+
+float pos_SmoothScroll(const iSmoothScroll *d) {
+    return value_Anim(&d->pos) - overscroll_SmoothScroll_(d) * 0.667f;
+}
+
+iBool isFinished_SmoothScroll(const iSmoothScroll *d) {
+    return isFinished_Anim(&d->pos);
+}
+
+void moveSpan_SmoothScroll(iSmoothScroll *d, int offset, uint32_t span) {
+#if !defined (iPlatformMobile)
+    if (!prefs_App()->smoothScrolling) {
+        span = 0; /* always instant */
+    }
+#endif
+    int destY = targetValue_Anim(&d->pos) + offset;
+    if (destY < -d->overscroll) {
+        destY = -d->overscroll;
+    }
+    if (d->max > 0) {
+        if (destY >= d->max + d->overscroll) {
+            destY = d->max + d->overscroll;
+        }
+    }
+    else {
+        destY = 0;
+    }
+    if (span) {
+        setValueEased_Anim(&d->pos, destY, span);
+    }
+    else {
+        setValue_Anim(&d->pos, destY, 0);
+    }
+    if (d->overscroll && widgetMode_Touch(d->widget) == momentum_WidgetTouchMode) {
+        const int osDelta = overscroll_SmoothScroll_(d);
+        if (osDelta) {
+            const float remaining = stopWidgetMomentum_Touch(d->widget);
+            span = iMini(1000, 50 * sqrt(remaining / gap_UI));
+            setValue_Anim(&d->pos, osDelta < 0 ? 0 : d->max, span);
+            d->pos.flags = bounce_AnimFlag | easeOut_AnimFlag | softer_AnimFlag;
+            //            printf("remaining: %f  dur: %d\n", remaining, duration);
+            d->pos.bounce = (osDelta < 0 ? -1 : 1) *
+                            iMini(5 * d->overscroll, remaining * remaining * 0.00005f);
+        }
+    }
+    if (d->notify) {
+        d->notify(d->widget, offset, span);
+    }
+}
+
+void move_SmoothScroll(iSmoothScroll *d, int offset) {
+    moveSpan_SmoothScroll(d, offset, 0 /* instantly */);
+}
+
+iBool processEvent_SmoothScroll(iSmoothScroll *d, const SDL_Event *ev) {
+    if (ev->type == SDL_USEREVENT && ev->user.code == widgetTouchEnds_UserEventCode) {
+        const int osDelta = overscroll_SmoothScroll_(d);
+        if (osDelta) {
+            moveSpan_SmoothScroll(d, -osDelta, 100 * sqrt(iAbs(osDelta) / gap_UI));
+            d->pos.flags = easeOut_AnimFlag | muchSofter_AnimFlag;
+        }
+        return iTrue;
+    }
+    return iFalse;
 }
 
 /*-----------------------------------------------------------------------------------------------*/

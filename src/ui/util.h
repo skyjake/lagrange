@@ -163,6 +163,31 @@ iInt2               delta_Click         (const iClick *);
 
 /*-----------------------------------------------------------------------------------------------*/
 
+iDeclareType(SmoothScroll)
+
+typedef void (*iSmoothScrollNotifyFunc)(iAnyObject *, int offset, uint32_t span);
+
+struct Impl_SmoothScroll {
+    iAnim    pos;
+    int      max;
+    int      overscroll;
+    iWidget *widget;
+    iSmoothScrollNotifyFunc notify;
+};
+
+void    init_SmoothScroll           (iSmoothScroll *, iWidget *owner, iSmoothScrollNotifyFunc notify);
+
+void    reset_SmoothScroll          (iSmoothScroll *);
+void    setMax_SmoothScroll         (iSmoothScroll *, int max);
+void    move_SmoothScroll           (iSmoothScroll *, int offset);
+void    moveSpan_SmoothScroll       (iSmoothScroll *, int offset, uint32_t span);
+iBool   processEvent_SmoothScroll   (iSmoothScroll *, const SDL_Event *ev);
+
+float   pos_SmoothScroll            (const iSmoothScroll *);
+iBool   isFinished_SmoothScroll     (const iSmoothScroll *);
+
+/*-----------------------------------------------------------------------------------------------*/
+
 iWidget *       makePadding_Widget  (int size);
 iLabelWidget *  makeHeading_Widget  (const char *text);
 iWidget *       makeHDiv_Widget     (void);
