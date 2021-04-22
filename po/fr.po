@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-04-22 14:12+0000\n"
-"Last-Translator: methbkts <methbkts@gmail.com>\n"
+"PO-Revision-Date: 2021-04-24 00:18+0000\n"
+"Last-Translator: MCMic <come@chilliet.eu>\n"
 "Language-Team: French <http://weblate.skyjake.fi/projects/lagrange/ui/fr/>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -505,7 +505,7 @@ msgstr "ASCII art : le mot « Lagrange » en utilisant une grande police"
 
 # Used on desktop operating systems. "Downloads" refers to the user's configured downloads directory.
 msgid "menu.save.downloads"
-msgstr "Enregistrer dans le dossier des téléchargements"
+msgstr "Enregistrer dans les téléchargements"
 
 msgid "menu.feeds.entrylist"
 msgstr "Afficher les entrées de flux"
@@ -1324,4 +1324,141 @@ msgid "numbertype.float"
 msgstr "flottant"
 
 msgid "prefs.decodeurls"
-msgstr "Décoder URL"
+msgstr "Décoder les URLs :"
+
+# Link download progress message.
+msgid "doc.fetching"
+msgstr "Téléchargement en cours"
+
+msgid "keys.fullscreen"
+msgstr "Mode plein écran"
+
+msgid "menu.binding.reset"
+msgstr "Réinitialiser"
+
+msgid "menu.binding.clear"
+msgstr "Retirer"
+
+msgid "keys.scroll.up"
+msgstr "Défiler vers le haut"
+
+msgid "keys.scroll.down"
+msgstr "Défiler vers le bas"
+
+msgid "keys.bottom"
+msgstr "Défiler jusqu’en bas"
+
+msgid "keys.scroll.page.up"
+msgstr "Défiler vers le haut d’une page"
+
+msgid "keys.bookmark.add"
+msgstr "Ajouter un signet"
+
+msgid "keys.findtext"
+msgstr "Chercher dans le texte de la page"
+
+msgid "keys.link.homerow.newtab"
+msgstr "Ouvrir un lien dans un nouvel onglet via une touche de repos"
+
+msgid "keys.link.homerow.hover"
+msgstr "Survoler un lien via une touche de repos"
+
+msgid "keys.link.homerow.next"
+msgstr "Prochain ensemble de liens via touche de repos"
+
+msgid "error.unsupported.media"
+msgstr "Type de contenu non pris en charge"
+
+msgid "error.unsupported.media.msg"
+msgstr "Le contenu reçu ne peut pas être affiché par cette application."
+
+msgid "keys.scroll.page.down"
+msgstr "Défiler vers le bas d’une page"
+
+msgid "keys.parent"
+msgstr "Aller au répertoire parent"
+
+msgid "keys.root"
+msgstr "Aller à la racine de la capsule"
+
+msgid "prefs.collapsepreonload"
+msgstr "Cacher le préformaté :"
+
+msgid "prefs.accent.teal"
+msgstr "Bleu"
+
+# Interpret as "Results from page content..."
+msgid "heading.lookup.pagecontent"
+msgstr "PAGE"
+
+msgid "heading.prefs.pagecontent"
+msgstr "PAGE"
+
+msgid "prefs.ca.file"
+msgstr "Fichier de l’AC :"
+
+msgid "prefs.ca.path"
+msgstr "Chemin de l’AC :"
+
+msgid "keys.scroll.halfpage.up"
+msgstr "Défiler vers le haut d’une demi-page"
+
+msgid "keys.scroll.halfpage.down"
+msgstr "Défiler vers le bas d’une demi-page"
+
+msgid "prefs.customframe"
+msgstr "Bordure de fenêtre personnalisée :"
+
+msgid "prefs.retainwindow"
+msgstr "Retenir la position :"
+
+msgid "prefs.sideicon"
+msgstr "Icône de capsule :"
+
+msgid "keys.link.modkey"
+msgstr "Ouvrir un lien par numérotation"
+
+msgid "keys.top"
+msgstr "Défiler jusqu’en haut"
+
+msgid "error.schemeredirect"
+msgstr "Redirection avec changement de protocole"
+
+msgid "error.schemeredirect.msg"
+msgstr ""
+"Le serveur a essayé de faire une redirection vers une URL dont le schéma est "
+"différent de celui de l’URL d’origine. Voici le lien afin que vous puissiez "
+"l’ouvrir manuellement."
+
+msgid "keys.link.homerow"
+msgstr "Ouvrir un lien via une touche de repos"
+
+msgid "prefs.mono"
+msgstr "Chasse fixe :"
+
+msgid "hint.newident.date"
+msgstr "AAAA-MM-JJ HH:MM:SS"
+
+msgid "link.hint.audio"
+msgstr "Lire l’audio"
+
+msgid "heading.prefs.sizing"
+msgstr "DIMENSION"
+
+msgid "prefs.accent"
+msgstr "Couleur de mise en valeur :"
+
+msgid "heading.prefs.widelayout"
+msgstr "AFFICHAGE LARGE"
+
+msgid "keys.hoverurl"
+msgstr "Activer/désactiver l’affichage d’URL au survol"
+
+msgid "error.badstatus"
+msgstr "Code de retour inconnu"
+
+msgid "error.badstatus.msg"
+msgstr ""
+"Le serveur a répondu avec un code de retour absent de la spécification du "
+"protocole Gemini. Le serveur vient peut-être du futur ? Ou est simplement "
+"déféctueux."
