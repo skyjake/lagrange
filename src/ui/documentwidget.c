@@ -195,11 +195,122 @@ static void animate_DocumentWidget_             (void *ticker);
 static void animateMedia_DocumentWidget_        (iDocumentWidget *d);
 static void updateSideIconBuf_DocumentWidget_   (const iDocumentWidget *d);
 static void prerender_DocumentWidget_           (iAny *);
+static void scrollBegan_DocumentWidget_         (iAnyObject *, int, uint32_t);
 
 static const int smoothDuration_DocumentWidget_  = 600; /* milliseconds */
 static const int outlineMinWidth_DocumentWdiget_ = 45;  /* times gap_UI */
 static const int outlineMaxWidth_DocumentWidget_ = 65;  /* times gap_UI */
 static const int outlinePadding_DocumentWidget_  = 3;   /* times gap_UI */
+
+
+iDeclareType(SmoothScroll)
+
+typedef void (*iSmoothScrollNotifyFunc)(iAnyObject *, int offset, uint32_t span);
+
+struct Impl_SmoothScroll {
+    iWidget *widget;
+    iSmoothScrollNotifyFunc notify;
+    iAnim    pos;
+    int      max;
+    int      overscroll;
+};
+
+void reset_SmoothScroll(iSmoothScroll *d) {
+    init_Anim(&d->pos, 0);
+    d->max = 0;
+    d->overscroll = (deviceType_App() != desktop_AppDeviceType ? 100 * gap_UI : 0);
+}
+
+void init_SmoothScroll(iSmoothScroll *d, iWidget *owner, iSmoothScrollNotifyFunc notify) {
+    d->widget = owner;
+    d->notify = notify;
+    reset_SmoothScroll(d);
+}
+
+void setMax_SmoothScroll(iSmoothScroll *d, int max) {
+    max = iMax(0, max);
+    if (max != d->max) {
+        d->max = max;
+        if (targetValue_Anim(&d->pos) > d->max) {
+            d->pos.to = d->max;
+        }
+    }
+}
+
+static int overscroll_SmoothScroll_(const iSmoothScroll *d) {
+    if (d->overscroll) {
+        const int y = value_Anim(&d->pos);
+        if (y <= 0) {
+            return y;
+        }
+        if (y >= d->max) {
+            return y - d->max;
+        }
+    }
+    return 0;
+}
+
+float pos_SmoothScroll(const iSmoothScroll *d) {
+    return value_Anim(&d->pos) - overscroll_SmoothScroll_(d) * 0.667f;
+}
+
+iBool isFinished_SmoothScroll(const iSmoothScroll *d) {
+    return isFinished_Anim(&d->pos);
+}
+
+void move_SmoothScroll(iSmoothScroll *d, int offset, uint32_t duration) {
+#if !defined (iPlatformMobile)
+    if (!prefs_App()->smoothScrolling) {
+        duration = 0; /* always instant */
+    }
+#endif
+    int destY = targetValue_Anim(&d->pos) + offset;
+    if (destY < -d->overscroll) {
+        destY = -d->overscroll;
+    }
+    if (d->max > 0) {
+        if (destY >= d->max + d->overscroll) {
+            destY = d->max + d->overscroll;
+        }
+    }
+    else {
+        destY = 0;
+    }
+    if (duration) {
+        setValueEased_Anim(&d->pos, destY, duration);
+    }
+    else {
+        setValue_Anim(&d->pos, destY, 0);
+    }
+    if (d->overscroll && widgetMode_Touch(d->widget) == momentum_WidgetTouchMode) {
+        const int osDelta = overscroll_SmoothScroll_(d);
+        if (osDelta) {
+            const float remaining = stopWidgetMomentum_Touch(d->widget);
+            duration = iMini(1000, 50 * sqrt(remaining / gap_UI));
+            setValue_Anim(&d->pos, osDelta < 0 ? 0 : d->max, duration);
+            d->pos.flags = bounce_AnimFlag | easeOut_AnimFlag | softer_AnimFlag;
+//            printf("remaining: %f  dur: %d\n", remaining, duration);
+            d->pos.bounce = (osDelta < 0 ? -1 : 1) *
+                iMini(5 * d->overscroll, remaining * remaining * 0.00005f);
+        }
+    }
+    if (d->notify) {
+        d->notify(d->widget, offset, duration);
+    }
+}
+
+iBool processEvent_SmoothScroll(iSmoothScroll *d, const SDL_Event *ev) {
+    if (ev->type == SDL_USEREVENT && ev->user.code == widgetTouchEnds_UserEventCode) {
+        const int osDelta = overscroll_SmoothScroll_(d);
+        if (osDelta) {
+            move_SmoothScroll(d, -osDelta, 100 * sqrt(iAbs(osDelta) / gap_UI));
+            d->pos.flags = easeOut_AnimFlag | muchSofter_AnimFlag;
+        }
+        return iTrue;
+    }
+    return iFalse;
+}
+
 
 enum iRequestState {
     blank_RequestState,
@@ -274,7 +385,9 @@ struct Impl_DocumentWidget {
     iInt2          contextPos; /* coordinates of latest right click */
     iString        pendingGotoHeading;
     float          initNormScrollY;
-    iAnim          scrollY;
+//    iAnim          scrollY;
+//    int            overscroll;
+    iSmoothScroll  scrollY;
     iAnim          sideOpacity;
     iAnim          altTextOpacity;
     iScrollWidget *scroll;
@@ -287,7 +400,6 @@ struct Impl_DocumentWidget {
     iDrawBufs *    drawBufs; /* dynamic state for drawing */
     iTranslation * translation;
     iWidget *      phoneToolbar;
-    int            overscroll;
     int            pinchZoomInitial;
     int            pinchZoomPosted;
 };
@@ -302,7 +414,6 @@ void init_DocumentWidget(iDocumentWidget *d) {
     init_PersistentDocumentState(&d->mod);
     d->flags           = 0;
     d->phoneToolbar    = NULL;
-    d->overscroll      = deviceType_App() != desktop_AppDeviceType ? 50 * gap_UI : 0;
     iZap(d->certExpiry);
     d->certFingerprint  = new_Block(0);
     d->certFlags        = 0;
@@ -316,7 +427,8 @@ void init_DocumentWidget(iDocumentWidget *d) {
     d->redirectCount    = 0;
     d->ordinalBase      = 0;
     d->initNormScrollY  = 0;
-    init_Anim(&d->scrollY, 0);
+    //init_Anim(&d->scrollY, 0);
+    init_SmoothScroll(&d->scrollY, w, scrollBegan_DocumentWidget_);
     d->animWideRunId = 0;
     init_Anim(&d->animWideRunOffset, 0);
     d->selectMark       = iNullRange;
@@ -497,19 +609,19 @@ static iRect siteBannerRect_DocumentWidget_(const iDocumentWidget *d) {
         return zero_Rect();
     }
     const iRect docBounds = documentBounds_DocumentWidget_(d);
-    const iInt2 origin = addY_I2(topLeft_Rect(docBounds), -value_Anim(&d->scrollY));
+    const iInt2 origin = addY_I2(topLeft_Rect(docBounds), -pos_SmoothScroll(&d->scrollY));
     return moved_Rect(banner->visBounds, origin);
 }
 
 static iInt2 documentPos_DocumentWidget_(const iDocumentWidget *d, iInt2 pos) {
     return addY_I2(sub_I2(pos, topLeft_Rect(documentBounds_DocumentWidget_(d))),
-                   value_Anim(&d->scrollY));
+                   pos_SmoothScroll(&d->scrollY));
 }
 
 static iRangei visibleRange_DocumentWidget_(const iDocumentWidget *d) {
     const int margin = !hasSiteBanner_GmDocument(d->doc) ? gap_UI * d->pageMargin : 0;
-    return (iRangei){ value_Anim(&d->scrollY) - margin,
-                      value_Anim(&d->scrollY) + height_Rect(bounds_Widget(constAs_Widget(d))) -
+    return (iRangei){ pos_SmoothScroll(&d->scrollY) - margin,
+                      pos_SmoothScroll(&d->scrollY) + height_Rect(bounds_Widget(constAs_Widget(d))) -
                           margin };
 }
 
@@ -549,7 +661,7 @@ static const iGmRun *lastVisibleLink_DocumentWidget_(const iDocumentWidget *d) {
 static float normScrollPos_DocumentWidget_(const iDocumentWidget *d) {
     const int docSize = size_GmDocument(d->doc).y;
     if (docSize) {
-        return value_Anim(&d->scrollY) / (float) docSize;
+        return pos_SmoothScroll(&d->scrollY) / (float) docSize;
     }
     return 0;
 }
@@ -642,7 +754,7 @@ static void updateHover_DocumentWidget_(iDocumentWidget *d, iInt2 mouse) {
     const iGmRun * oldHoverLink = d->hoverLink;
     d->hoverPre                 = NULL;
     d->hoverLink                = NULL;
-    const iInt2 hoverPos = addY_I2(sub_I2(mouse, topLeft_Rect(docBounds)), value_Anim(&d->scrollY));
+    const iInt2 hoverPos = addY_I2(sub_I2(mouse, topLeft_Rect(docBounds)), pos_SmoothScroll(&d->scrollY));
     if (isHoverAllowed_DocumentWidget_(d)) {
         iConstForEach(PtrArray, i, &d->visibleLinks) {
             const iGmRun *run = i.ptr;
@@ -701,7 +813,7 @@ static void updateHover_DocumentWidget_(iDocumentWidget *d, iInt2 mouse) {
 static void updateSideOpacity_DocumentWidget_(iDocumentWidget *d, iBool isAnimated) {
     float opacity = 0.0f;
     const iGmRun *banner = siteBanner_GmDocument(d->doc);
-    if (banner && bottom_Rect(banner->visBounds) < value_Anim(&d->scrollY)) {
+    if (banner && bottom_Rect(banner->visBounds) < pos_SmoothScroll(&d->scrollY)) {
         opacity = 1.0f;
     }
     setValue_Anim(&d->sideOpacity, opacity, isAnimated ? (opacity < 0.5f ? 100 : 200) : 0);
@@ -797,12 +909,14 @@ static void updateVisible_DocumentWidget_(iDocumentWidget *d) {
                  centerVertically_DocumentWidgetFlag,
                  prefs_App()->centerShortDocs || startsWithCase_String(d->mod.url, "about:") ||
                      !isSuccess_GmStatusCode(d->sourceStatus));
-    const iRangei visRange = visibleRange_DocumentWidget_(d);
-    const iRect   bounds   = bounds_Widget(as_Widget(d));
-    setRange_ScrollWidget(d->scroll, (iRangei){ 0, scrollMax_DocumentWidget_(d) });
+    const iRangei visRange  = visibleRange_DocumentWidget_(d);
+    const iRect   bounds    = bounds_Widget(as_Widget(d));
+    const int     scrollMax = scrollMax_DocumentWidget_(d);
+    setMax_SmoothScroll(&d->scrollY, scrollMax);
+    setRange_ScrollWidget(d->scroll, (iRangei){ 0, scrollMax });
     const int docSize = size_GmDocument(d->doc).y;
     setThumb_ScrollWidget(d->scroll,
-                          value_Anim(&d->scrollY),
+                          pos_SmoothScroll(&d->scrollY),
                           docSize > 0 ? height_Rect(bounds) * size_Range(&visRange) / docSize : 0);
     clear_PtrArray(&d->visibleLinks);
     clear_PtrArray(&d->visibleWideRuns);
@@ -1016,7 +1130,7 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
     translate_Lang(src);
     setSource_DocumentWidget(d, src);
     updateTheme_DocumentWidget_(d);
-    init_Anim(&d->scrollY, 0);
+    reset_SmoothScroll(&d->scrollY);
     init_Anim(&d->sideOpacity, 0);
     init_Anim(&d->altTextOpacity, 0);
     resetWideRuns_DocumentWidget_(d);
@@ -1224,12 +1338,14 @@ static iBool updateFromHistory_DocumentWidget_(iDocumentWidget *d) {
         d->drawBufs->flags |= updateTimestampBuf_DrawBufsFlag;
         set_Block(&d->sourceContent, &resp->body);
         updateDocument_DocumentWidget_(d, resp, iTrue);
-        init_Anim(&d->scrollY, d->initNormScrollY * size_GmDocument(d->doc).y);
         init_Anim(&d->altTextOpacity, 0);
         d->state = ready_RequestState;
+        reset_SmoothScroll(&d->scrollY);
+        init_Anim(&d->scrollY.pos, d->initNormScrollY * size_GmDocument(d->doc).y);
         updateSideOpacity_DocumentWidget_(d, iFalse);
         d->drawBufs->flags |= updateSideBuf_DrawBufsFlag;
         updateVisible_DocumentWidget_(d);
+        move_SmoothScroll(&d->scrollY, 0, 0); /* clamp position to new max */
         cacheDocumentGlyphs_DocumentWidget_(d);
         postCommandf_App("document.changed doc:%p url:%s", d, cstr_String(d->mod.url));
         return iTrue;
@@ -1252,26 +1368,13 @@ static void refreshWhileScrolling_DocumentWidget_(iAny *ptr) {
     if (isFinished_Anim(&d->animWideRunOffset)) {
         d->animWideRunId = 0;
     }
-    if (!isFinished_Anim(&d->scrollY) || !isFinished_Anim(&d->animWideRunOffset)) {
+    if (!isFinished_SmoothScroll(&d->scrollY) || !isFinished_Anim(&d->animWideRunOffset)) {
         addTicker_App(refreshWhileScrolling_DocumentWidget_, d);
     }
 }
 
-static int overscroll_DocumentWidget_(const iDocumentWidget *d) {
-    if (d->overscroll) {
-        const int y = value_Anim(&d->scrollY);
-        if (y <= 0) {
-            return y;
-        }
-        const int scrollMax = scrollMax_DocumentWidget_(d);
-        if (y >= scrollMax) {
-            return y - scrollMax;
-        }
-    }
-    return 0;
-}
-
-static void smoothScroll_DocumentWidget_(iDocumentWidget *d, int offset, int duration) {
+static void scrollBegan_DocumentWidget_(iAnyObject *any, int offset, uint32_t duration) {
+    iDocumentWidget *d = any;
     /* Get rid of link numbers when scrolling. */
     if (offset && d->flags & showLinkNumbers_DocumentWidgetFlag) {
         setLinkNumberMode_DocumentWidget_(d, iFalse);
@@ -1283,48 +1386,33 @@ static void smoothScroll_DocumentWidget_(iDocumentWidget *d, int offset, int dur
             showToolbars_Window(get_Window(), offset < 0);
         }
     }
-#if !defined (iPlatformMobile)
-    if (!prefs_App()->smoothScrolling) {
-        duration = 0; /* always instant */
-    }
-#endif
-    int destY = targetValue_Anim(&d->scrollY) + offset;
-    if (destY < -2 * d->overscroll) {
-        destY = -2 * d->overscroll;
-    }
-    const int scrollMax = scrollMax_DocumentWidget_(d);
-    if (scrollMax > 0) {
-        if (destY >= scrollMax + 2 * d->overscroll) {
-            destY = scrollMax + 2 * d->overscroll;
-        }
-    }
-    else {
-        destY = 0;
-    }
-    if (duration) {
-        setValueEased_Anim(&d->scrollY, destY, duration);
-    }
-    else {
-        setValue_Anim(&d->scrollY, destY, 0);
-    }
-    if (d->overscroll && widgetMode_Touch(as_Widget(d)) == momentum_WidgetTouchMode) {
-        const int osDelta = overscroll_DocumentWidget_(d);
-        if (osDelta) {
-            const float remaining = stopWidgetMomentum_Touch(as_Widget(d));
-            duration = iMini(1000, 50 * sqrt(remaining / gap_UI));
-            setValue_Anim(&d->scrollY, osDelta < 0 ? 0 : scrollMax, duration);
-            d->scrollY.flags = bounce_AnimFlag | easeOut_AnimFlag | softer_AnimFlag;
-            printf("remaining: %f  dur: %d\n", remaining, duration);
-            d->scrollY.bounce = (osDelta < 0 ? -1 : 1) *
-                iMini(10 * d->overscroll, remaining * remaining * 0.00005f);
-        }
-    }
     updateVisible_DocumentWidget_(d);
     refresh_Widget(as_Widget(d));
     if (duration > 0) {
         iChangeFlags(d->flags, noHoverWhileScrolling_DocumentWidgetFlag, iTrue);
         addTicker_App(refreshWhileScrolling_DocumentWidget_, d);
     }
+}
+
+static void smoothScroll_DocumentWidget_(iDocumentWidget *d, int offset, int duration) {
+//    /* Get rid of link numbers when scrolling. */
+//    if (offset && d->flags & showLinkNumbers_DocumentWidgetFlag) {
+//        setLinkNumberMode_DocumentWidget_(d, iFalse);
+//        invalidateVisibleLinks_DocumentWidget_(d);
+//    }
+//    /* Show and hide toolbar on scroll. */
+//    if (deviceType_App() == phone_AppDeviceType) {
+//        if (prefs_App()->hideToolbarOnScroll && iAbs(offset) > 5) {
+//            showToolbars_Window(get_Window(), offset < 0);
+//        }
+//    }
+    move_SmoothScroll(&d->scrollY, offset, duration);
+//    updateVisible_DocumentWidget_(d);
+//    refresh_Widget(as_Widget(d));
+//    if (duration > 0) {
+//        iChangeFlags(d->flags, noHoverWhileScrolling_DocumentWidgetFlag, iTrue);
+//        addTicker_App(refreshWhileScrolling_DocumentWidget_, d);
+//    }
 }
 
 static void scroll_DocumentWidget_(iDocumentWidget *d, int offset) {
@@ -1335,7 +1423,7 @@ static void scrollTo_DocumentWidget_(iDocumentWidget *d, int documentY, iBool ce
     if (!hasSiteBanner_GmDocument(d->doc)) {
         documentY += d->pageMargin * gap_UI;
     }
-    init_Anim(&d->scrollY,
+    init_Anim(&d->scrollY.pos,
               documentY - (centered ? documentBounds_DocumentWidget_(d).size.y / 2
                                     : lineHeight_Text(paragraph_FontId)));
     scroll_DocumentWidget_(d, 0); /* clamp it */
@@ -1449,7 +1537,7 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                 break;
             }
             case categorySuccess_GmStatusCode:
-                init_Anim(&d->scrollY, 0);
+                reset_SmoothScroll(&d->scrollY);
                 reset_GmDocument(d->doc); /* new content incoming */
                 resetWideRuns_DocumentWidget_(d);
                 updateDocument_DocumentWidget_(d, resp, iTrue);
@@ -2084,7 +2172,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         }
         updateFetchProgress_DocumentWidget_(d);
         checkResponse_DocumentWidget_(d);
-        init_Anim(&d->scrollY, d->initNormScrollY * size_GmDocument(d->doc).y);
+        init_Anim(&d->scrollY.pos, d->initNormScrollY * size_GmDocument(d->doc).y); /* TODO: unless user already scrolled! */
         d->state = ready_RequestState;
         /* The response may be cached. */ {
             if (!equal_Rangecc(urlScheme_String(d->mod.url), "about") &&
@@ -2249,7 +2337,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equalWidget_Command(cmd, w, "scroll.moved")) {
-        init_Anim(&d->scrollY, arg_Command(cmd));
+        init_Anim(&d->scrollY.pos, arg_Command(cmd));
         updateVisible_DocumentWidget_(d);
         return iTrue;
     }
@@ -2267,7 +2355,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equal_Command(cmd, "scroll.top") && document_App() == d) {
-        init_Anim(&d->scrollY, 0);
+        init_Anim(&d->scrollY.pos, 0);
         invalidate_VisBuf(d->visBuf);
         scroll_DocumentWidget_(d, 0);
         updateVisible_DocumentWidget_(d);
@@ -2275,7 +2363,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equal_Command(cmd, "scroll.bottom") && document_App() == d) {
-        init_Anim(&d->scrollY, scrollMax_DocumentWidget_(d));
+        init_Anim(&d->scrollY.pos, d->scrollY.max);
         invalidate_VisBuf(d->visBuf);
         scroll_DocumentWidget_(d, 0);
         updateVisible_DocumentWidget_(d);
@@ -2438,7 +2526,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
 
 static iRect runRect_DocumentWidget_(const iDocumentWidget *d, const iGmRun *run) {
     const iRect docBounds = documentBounds_DocumentWidget_(d);
-    return moved_Rect(run->bounds, addY_I2(topLeft_Rect(docBounds), -value_Anim(&d->scrollY)));
+    return moved_Rect(run->bounds, addY_I2(topLeft_Rect(docBounds), -pos_SmoothScroll(&d->scrollY)));
 }
 
 static void setGrabbedPlayer_DocumentWidget_(iDocumentWidget *d, const iGmRun *run) {
@@ -2622,12 +2710,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
     if (isMetricsChange_UserEvent(ev)) {
         updateSize_DocumentWidget(d);
     }
-    else if (ev->type == SDL_USEREVENT && ev->user.code == widgetTouchEnds_UserEventCode) {
-        const int osDelta = overscroll_DocumentWidget_(d);
-        if (osDelta) {
-            smoothScroll_DocumentWidget_(d, -osDelta, 100 * sqrt(iAbs(osDelta) / gap_UI));
-            d->scrollY.flags = easeOut_AnimFlag | muchSofter_AnimFlag;
-        }
+    else if (processEvent_SmoothScroll(&d->scrollY, ev)) {
         return iTrue;
     }
     else if (ev->type == SDL_USEREVENT && ev->user.code == command_UserEventCode) {
@@ -2715,8 +2798,8 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
     else if (ev->type == SDL_MOUSEWHEEL && isHover_Widget(w)) {
         const iInt2 mouseCoord = mouseCoord_Window(get_Window());
         if (isPerPixel_MouseWheelEvent(&ev->wheel)) {
-            stop_Anim(&d->scrollY);
-            iInt2 wheel = init_I2(ev->wheel.x, ev->wheel.y);
+            const iInt2 wheel = init_I2(ev->wheel.x, ev->wheel.y);
+            stop_Anim(&d->scrollY.pos);
             scroll_DocumentWidget_(d, -wheel.y);
             scrollWideBlock_DocumentWidget_(d, mouseCoord, -wheel.x, 0);
         }
@@ -2732,7 +2815,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 -3 * amount * lineHeight_Text(paragraph_FontId),
                 smoothDuration_DocumentWidget_ *
                     /* accelerated speed for repeated wheelings */
-                    (!isFinished_Anim(&d->scrollY) && pos_Anim(&d->scrollY) < 0.25f ? 0.5f : 1.0f));
+                    (!isFinished_SmoothScroll(&d->scrollY) && pos_Anim(&d->scrollY.pos) < 0.25f ? 0.5f : 1.0f));
             scrollWideBlock_DocumentWidget_(
                 d, mouseCoord, -3 * ev->wheel.x * lineHeight_Text(paragraph_FontId), 167);
         }
@@ -3239,7 +3322,7 @@ static void fillRange_DrawContext_(iDrawContext *d, const iGmRun *run, enum iCol
         }
         if (~run->flags & decoration_GmRunFlag) {
             const iInt2 visPos =
-                add_I2(run->bounds.pos, addY_I2(d->viewPos, -value_Anim(&d->widget->scrollY)));
+                add_I2(run->bounds.pos, addY_I2(d->viewPos, -pos_SmoothScroll(&d->widget->scrollY)));
             const iRect rangeRect = { addX_I2(visPos, x), init_I2(w, height_Rect(run->bounds)) };
             if (rangeRect.size.x) {
                 fillRect_Paint(&d->paint, rangeRect, color);
@@ -3259,7 +3342,7 @@ static void fillRange_DrawContext_(iDrawContext *d, const iGmRun *run, enum iCol
             (contains_Range(&url, mark.end) || url.end == mark.end)) {
             fillRect_Paint(
                 &d->paint,
-                moved_Rect(run->visBounds, addY_I2(d->viewPos, -value_Anim(&d->widget->scrollY))),
+                moved_Rect(run->visBounds, addY_I2(d->viewPos, -pos_SmoothScroll(&d->widget->scrollY))),
                 color);
         }
     }
@@ -3704,7 +3787,7 @@ static void drawSideElements_DocumentWidget_(const iDocumentWidget *d) {
                 bottomLeft_Rect(bounds),
                 init_I2(margin,
                         -margin + -dbuf->timestampBuf->size.y +
-                            iMax(0, scrollMax_DocumentWidget_(d) - value_Anim(&d->scrollY)))),
+                            iMax(0, d->scrollY.max - pos_SmoothScroll(&d->scrollY)))),
             tmQuoteIcon_ColorId);
     }
     unsetClip_Paint(&p);
@@ -3949,7 +4032,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
     };
     render_DocumentWidget_(d, &ctx, iFalse /* just the mandatory parts */);
     setClip_Paint(&ctx.paint, bounds);
-    int yTop = docBounds.pos.y - value_Anim(&d->scrollY) + overscroll_DocumentWidget_(d) * 0.667f;
+    int yTop = docBounds.pos.y - pos_SmoothScroll(&d->scrollY);
     draw_VisBuf(d->visBuf, init_I2(bounds.pos.x, yTop), ySpan_Rect(bounds));
     /* Text markers. */
     const iBool isTouchSelecting = (flags_Widget(w) & touchDrag_WidgetFlag) != 0;
@@ -4021,7 +4104,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
             const int   altFont  = uiLabel_FontId;
             const int   wrap     = docBounds.size.x - 2 * margin;
             iInt2 pos            = addY_I2(add_I2(docBounds.pos, meta->pixelRect.pos),
-                                           -value_Anim(&d->scrollY));
+                                           -pos_SmoothScroll(&d->scrollY));
             const iInt2 textSize = advanceWrapRange_Text(altFont, wrap, meta->altText);
             pos.y -= textSize.y + gap_UI;
             pos.y               = iMax(pos.y, top_Rect(bounds));
