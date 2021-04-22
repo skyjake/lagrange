@@ -1832,7 +1832,7 @@ iWidget *makeDialogButtons_Widget(const iMenuItem *actions, size_t numActions) {
         int         key       = actions[i].key;
         int         kmods     = actions[i].kmods;
         const iBool isDefault = (i == numActions - 1);
-        if (*label == '=' || *label == '-') {
+        if (*label == '*' || *label == '&') {
             continue; /* Special value selection items for a Question dialog. */
         }
         if (!iCmpStr(label, "---")) {
@@ -1946,14 +1946,14 @@ iWidget *makeQuestion_Widget(const char *title, const char *msg,
     for (size_t i = 0; i < numItems; i++) {
         const iMenuItem *item = &items[i];
         const char first = item->label[0];
-        if (first == '-' || first == '=') {
+        if (first == '*' || first == '&') {
             addChildFlags_Widget(dlg,
                                  iClob(newKeyMods_LabelWidget(item->label + 1,
                                                               item->key,
                                                               item->kmods,
                                                               item->command)),
                                  resizeToParentWidth_WidgetFlag |
-                                 (first == '=' ? selected_WidgetFlag : 0));
+                                 (first == '&' ? selected_WidgetFlag : 0));
         }
     }
     addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));

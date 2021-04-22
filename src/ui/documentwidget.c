@@ -2377,7 +2377,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         iArray *items = collectNew_Array(sizeof(iMenuItem));
         for (int i = 0; i < max_ReloadInterval; ++i) {
             pushBack_Array(items, &(iMenuItem){
-                format_CStr("%s%s", ((int) d->mod.reloadInterval == i ? "=" : "-"),
+                format_CStr("%s%s", ((int) d->mod.reloadInterval == i ? "&" : "*"),
                                      label_ReloadInterval_(i)),
                 0,
                 0,
