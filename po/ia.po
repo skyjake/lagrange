@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-04-14 09:18+0000\n"
+"PO-Revision-Date: 2021-04-24 00:18+0000\n"
 "Last-Translator: Olga Smirnova <mistresssilvara@hotmail.com>\n"
 "Language-Team: Interlingua <http://weblate.skyjake.fi/projects/lagrange/ui/"
 "ia/>\n"
@@ -1390,3 +1390,29 @@ msgstr "puncto flottante"
 
 msgid "feeds.list.refreshtime.now"
 msgstr "Le ultime actualisation esseva justo nunc."
+
+msgid "error.badstatus.msg"
+msgstr ""
+"Le servitor respondeva con un codice de stato que non es in le specification "
+"del protocollo Gemini. Forsan le servitor es del futuro o solmente "
+"malfunctiona?"
+
+#, c-format
+msgid "dlg.certwarn.mayberenewed"
+msgid_plural "dlg.certwarn.mayberenewed.n"
+msgstr[0] ""
+"Forsan le recipite certificato esseva renovate recentemente — illo es "
+"publicate por le correcte dominio e non es perimite. Le actual certificato "
+"que es digne de fide va perimir le %s, post un jorno."
+msgstr[1] ""
+"Forsan le recipite certificato esseva renovate recentemente — illo es "
+"publicate por le correcte dominio e non es perimite. Le actual certificato "
+"que es digne de fide va perimir le %s, post %d jornos."
+
+msgid "dlg.certimport.help"
+msgstr ""
+"Colla un certificato in codification PEM e/o un clave private,\n"
+"o face cadite un file .crt/.key in le fenestra."
+
+msgid "keys.link.homerow.next"
+msgstr "Parte sequente de claves del rango de base"
