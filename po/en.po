@@ -567,7 +567,7 @@ msgstr "Unsubscribe"
 
 #, c-format
 msgid "error.unsupported.suggestsave"
-msgstr "You can save it as a file to your Downloads folder, though. Press %s or select \"%s\" from the menu."
+msgstr "You can save it as a file to your Downloads folder. Press %s or select \"%s\" from the menu."
 
 msgid "heading.pageinfo"
 msgstr "PAGE INFORMATION"
