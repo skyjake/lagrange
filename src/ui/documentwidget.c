@@ -1903,7 +1903,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iFalse;
     }
     else if (equalWidget_Command(cmd, w, "document.request.finished") &&
-             pointerLabel_Command(cmd, "request") == d->request) {
+             d->request && pointerLabel_Command(cmd, "request") == d->request) {
         set_Block(&d->sourceContent, body_GmRequest(d->request));
         if (!isSuccess_GmStatusCode(status_GmRequest(d->request))) {
             format_String(&d->sourceHeader,
@@ -1918,7 +1918,8 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         checkResponse_DocumentWidget_(d);
         init_Anim(&d->scrollY, d->initNormScrollY * size_GmDocument(d->doc).y);
         d->state = ready_RequestState;
-        /* The response may be cached. */ {
+        /* The response may be cached. */
+        if (d->request) {
             if (!equal_Rangecc(urlScheme_String(d->mod.url), "about") &&
                 startsWithCase_String(meta_GmRequest(d->request), "text/")) {
                 setCachedResponse_History(d->mod.history, lockResponse_GmRequest(d->request));
