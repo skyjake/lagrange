@@ -2690,7 +2690,9 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 -3 * amount * lineHeight_Text(paragraph_FontId),
                 smoothDuration_DocumentWidget_ *
                     /* accelerated speed for repeated wheelings */
-                    (!isFinished_SmoothScroll(&d->scrollY) && pos_Anim(&d->scrollY.pos) < 0.25f ? 0.5f : 1.0f));
+                    (!isFinished_SmoothScroll(&d->scrollY) && pos_Anim(&d->scrollY.pos) < 0.25f
+                         ? 0.5f
+                         : 1.0f));
             scrollWideBlock_DocumentWidget_(
                 d, mouseCoord, -3 * ev->wheel.x * lineHeight_Text(paragraph_FontId), 167);
         }

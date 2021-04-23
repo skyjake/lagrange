@@ -50,7 +50,6 @@ iDefineObjectConstruction(ListWidget)
 struct Impl_ListWidget {
     iWidget widget;
     iScrollWidget *scroll;
-//    int scrollY;
     iSmoothScroll scrollY;
     int itemHeight;
     iPtrArray items;
@@ -187,7 +186,6 @@ int scrollPos_ListWidget(const iListWidget *d) {
 }
 
 void setScrollPos_ListWidget(iListWidget *d, int pos) {
-//    d->scrollY = pos;
     setValue_Anim(&d->scrollY.pos, pos, 0);
     d->hoverItem = iInvalidPos;
     refresh_Widget(as_Widget(d));
@@ -195,31 +193,12 @@ void setScrollPos_ListWidget(iListWidget *d, int pos) {
 
 void scrollOffset_ListWidget(iListWidget *d, int offset) {
     moveSpan_SmoothScroll(&d->scrollY, offset, 0);
-    /*
-    d->scrollY += offset;
-    if (d->scrollY < 0) {
-        d->scrollY = 0;
-        stopWidgetMomentum_Touch(as_Widget(d));
-    }
-    const int scrollMax = scrollMax_ListWidget_(d);
-    if (d->scrollY >= scrollMax) {
-        d->scrollY = scrollMax;
-        stopWidgetMomentum_Touch(as_Widget(d));
-    }
-    d->noHoverWhileScrolling = iTrue;
-    if (oldScroll != d->scrollY) {
-        if (d->hoverItem != iInvalidPos) {
-            invalidateItem_ListWidget(d, d->hoverItem);
-            d->hoverItem = iInvalidPos;
-        }
-        updateVisible_ListWidget(d);
-        refresh_Widget(as_Widget(d));
-        return iTrue;
-    }*/
-//    return iFalse;
 }
 
 void scrollToItem_ListWidget(iListWidget *d, size_t index) {
+    if (index >= size_PtrArray(&d->items)) {
+        return;
+    }
     stop_Anim(&d->scrollY.pos);
     const iRect rect    = innerBounds_Widget(as_Widget(d));
     int         yTop    = d->itemHeight * index - pos_SmoothScroll(&d->scrollY);
@@ -363,7 +342,6 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
         else {
             /* Traditional mouse wheel. */
             amount *= 3 * d->itemHeight;
-            //if (!isFinished_SmoothScroll(&d->scrollY) && pos_Anim(&d->scrollY.pos) < 0.25f ? 0.5f : 1.0f)
             moveSpan_SmoothScroll(&d->scrollY, amount, 200);            
         }
         return iTrue;
