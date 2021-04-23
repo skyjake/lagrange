@@ -234,6 +234,7 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "prefs.centershort.changed arg:%d\n", d->prefs.centerShortDocs);
     appendFormat_String(str, "prefs.collapsepreonload.changed arg:%d\n", d->prefs.collapsePreOnLoad);
     appendFormat_String(str, "prefs.hoverlink.changed arg:%d\n", d->prefs.hoverLink);
+    appendFormat_String(str, "prefs.archive.openindex.changed arg:%d\n", d->prefs.openArchiveIndexPages);
     appendFormat_String(str, "quoteicon.set arg:%d\n", d->prefs.quoteIcon ? 1 : 0);
     appendFormat_String(str, "theme.set arg:%d auto:1\n", d->prefs.theme);
     appendFormat_String(str, "accent.set arg:%d\n", d->prefs.accent);
@@ -1766,6 +1767,10 @@ iBool handleCommand_App(const char *cmd) {
         postRefresh_App();
         return iTrue;
     }
+    else if (equal_Command(cmd, "prefs.archive.openindex.changed")) {
+        d->prefs.openArchiveIndexPages = arg_Command(cmd) != 0;
+        return iTrue;
+    }
     else if (equal_Command(cmd, "saturation.set")) {
         d->prefs.saturation = (float) arg_Command(cmd) / 100.0f;
         postCommandf_App("theme.changed auto:1");
@@ -1954,6 +1959,7 @@ iBool handleCommand_App(const char *cmd) {
         setToggle_Widget(findChild_Widget(dlg, "prefs.smoothscroll"), d->prefs.smoothScrolling);
         setToggle_Widget(findChild_Widget(dlg, "prefs.imageloadscroll"), d->prefs.loadImageInsteadOfScrolling);
         setToggle_Widget(findChild_Widget(dlg, "prefs.hidetoolbarscroll"), d->prefs.hideToolbarOnScroll);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.archive.openindex"), d->prefs.openArchiveIndexPages);
         setToggle_Widget(findChild_Widget(dlg, "prefs.ostheme"), d->prefs.useSystemTheme);
         setToggle_Widget(findChild_Widget(dlg, "prefs.customframe"), d->prefs.customFrame);
         updateDropdownSelection_(findChild_Widget(dlg, "prefs.uilang"), cstr_String(&d->prefs.uiLanguage));

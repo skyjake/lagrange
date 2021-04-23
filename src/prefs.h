@@ -58,6 +58,7 @@ struct Impl_Prefs {
     iBool            loadImageInsteadOfScrolling;
     iBool            collapsePreOnLoad;
     iString          searchUrl;
+    iBool            openArchiveIndexPages;
     /* Network */
     iString          caFile;
     iString          caPath;

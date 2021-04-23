@@ -1078,6 +1078,23 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse
                     docFormat = plainText_GmDocumentFormat;
                     setRange_String(&d->sourceMime, param);
                 }
+                else if (equal_Rangecc(param, "application/zip")) {
+                    docFormat = gemini_GmDocumentFormat;
+                    setRange_String(&d->sourceMime, param);
+                    iString *key = collectNew_String();
+                    toString_Sym(SDLK_s, KMOD_PRIMARY, key);
+                    format_String(&str, "# " folder_Icon " ZIP Archive\n"
+                                  "%s is a ZIP archive.\n\n%s\n\n",
+                                  cstr_Rangecc(baseName_Path(d->mod.url)),
+                                  format_CStr(cstr_Lang("error.unsupported.suggestsave"),
+                                              cstr_String(key),
+                                              saveToDownloads_Label));
+                    if (equalCase_Rangecc(urlScheme_String(d->mod.url), "file")) {
+                        appendFormat_String(&str, "=> %s/ View archive contents\n",
+                                            cstr_String(withSpacesEncoded_String(d->mod.url)));
+                    }
+                    translate_Lang(&str);
+                }
                 else if (startsWith_Rangecc(param, "image/") ||
                          startsWith_Rangecc(param, "audio/")) {
                     const iBool isAudio = startsWith_Rangecc(param, "audio/");

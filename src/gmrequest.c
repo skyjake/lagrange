@@ -32,7 +32,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "embedded.h"
 #include "defs.h"
 
+#include <the_Foundation/archive.h>
 #include <the_Foundation/file.h>
+#include <the_Foundation/fileinfo.h>
 #include <the_Foundation/mutex.h>
 #include <the_Foundation/path.h>
 #include <the_Foundation/regexp.h>
@@ -525,6 +527,88 @@ void setUrl_GmRequest(iGmRequest *d, const iString *url) {
     urlEncodeSpaces_String(&d->url);
 }
 
+static const iString *findContainerArchive_(const iString *path) {
+    iBeginCollect();
+    while (!isEmpty_String(path) && cmp_String(path, ".")) {
+        iString *dir = newRange_String(dirName_Path(path));
+        if (endsWithCase_String(dir, ".zip")) {
+            iEndCollect();
+            return collect_String(dir);
+        }
+        path = collect_String(dir);
+    }
+    iEndCollect();
+    return NULL;
+}
+
+static const char *mediaTypeFromPath_(const iString *path) {
+    if (endsWithCase_String(path, ".gmi") || endsWithCase_String(path, ".gemini")) {
+        return "text/gemini; charset=utf-8";
+    }
+    /* TODO: It would be better to default to text/plain, but switch to
+       application/octet-stream if the contents fail to parse as UTF-8. */
+    else if (endsWithCase_String(path, ".txt") ||
+             endsWithCase_String(path, ".md") ||
+             endsWithCase_String(path, ".c") ||
+             endsWithCase_String(path, ".h") ||
+             endsWithCase_String(path, ".cc") ||
+             endsWithCase_String(path, ".hh") ||
+             endsWithCase_String(path, ".cpp") ||
+             endsWithCase_String(path, ".hpp")) {
+        return "text/plain";
+    }
+    else if (endsWithCase_String(path, ".zip")) {
+        return "application/zip";
+    }
+    else if (endsWithCase_String(path, ".png")) {
+        return "image/png";
+    }
+    else if (endsWithCase_String(path, ".jpg") || endsWithCase_String(path, ".jpeg")) {
+        return "image/jpeg";
+    }
+    else if (endsWithCase_String(path, ".gif")) {
+        return "image/gif";
+    }
+    else if (endsWithCase_String(path, ".wav")) {
+        return "audio/wave";
+    }
+    else if (endsWithCase_String(path, ".ogg")) {
+        return "audio/ogg";
+    }
+    else if (endsWithCase_String(path, ".mp3")) {
+        return "audio/mpeg";
+    }
+    else if (endsWithCase_String(path, ".mid")) {
+        return "audio/midi";
+    }
+    return "application/octet-stream";
+}
+
+static iBool isDirectory_(const iString *path) {
+    /* TODO: move this to the_Foundation */
+    iFileInfo *info = new_FileInfo(path);
+    const iBool isDir = isDirectory_FileInfo(info);
+    iRelease(info);
+    return isDir;
+}
+
+static int cmp_FileInfoPtr_(const iFileInfo **a, const iFileInfo **b) {
+    return cmpStringCase_String(path_FileInfo(*a), path_FileInfo(*b));
+}
+
+static const iString *directoryIndexPage_Archive_(const iArchive *d, const iString *entryPath) {
+    static const char *names[] = { "index.gmi", "index.gemini" };
+    iForIndices(i, names) {
+        iString *path = !isEmpty_String(entryPath) ?
+            concatCStr_Path(entryPath, names[i]) : newCStr_String(names[i]);
+        if (entry_Archive(d, path)) {
+            return collect_String(path);
+        }
+        delete_String(path);
+    }
+    return NULL;
+}
+
 void submit_GmRequest(iGmRequest *d) {
     iAssert(d->state == initialized_GmRequestState);
     if (d->state != initialized_GmRequestState) {
@@ -560,6 +644,7 @@ void submit_GmRequest(iGmRequest *d) {
         return;
     }
     else if (equalCase_Rangecc(url.scheme, "file")) {
+        /* TODO: Move this elsewhere. */
         iString *path = collect_String(urlDecode_String(collect_String(newRange_String(url.path))));
 #if defined (iPlatformMsys)
         /* Remove the extra slash from the beginning. */
@@ -568,48 +653,148 @@ void submit_GmRequest(iGmRequest *d) {
         }
 #endif
         iFile *f = new_File(path);
-        if (open_File(f, readOnly_FileMode)) {
-            /* TODO: Check supported file types: images, audio */
-            /* TODO: Detect text files based on contents? E.g., is the content valid UTF-8. */
+        if (isDirectory_(path)) {
+            if (endsWith_String(path, "/")) {
+                removeEnd_String(path, 1);
+            }
             resp->statusCode = success_GmStatusCode;
-            if (endsWithCase_String(path, ".gmi") || endsWithCase_String(path, ".gemini")) {
-                setCStr_String(&resp->meta, "text/gemini; charset=utf-8");
+            setCStr_String(&resp->meta, "text/gemini");
+            iString *page = collectNew_String();
+            iString *parentDir = collectNewRange_String(dirName_Path(path));
+            appendFormat_String(page, "=> %s " upArrow_Icon " %s/\n\n",
+                                cstrCollect_String(makeFileUrl_String(parentDir)),
+                                cstr_String(parentDir));
+            appendFormat_String(page, "# %s\n", cstr_Rangecc(baseName_Path(path)));
+            /* Make a directory index page. */
+            iPtrArray *sortedInfo = collectNew_PtrArray();
+            iForEach(DirFileInfo, entry,
+                     iClob(directoryContents_FileInfo(iClob(new_FileInfo(path))))) {
+                pushBack_PtrArray(sortedInfo, ref_Object(entry.value));
             }
-            else if (endsWithCase_String(path, ".txt")) {
-                setCStr_String(&resp->meta, "text/plain");
+            sort_Array(sortedInfo, (int (*)(const void *, const void *)) cmp_FileInfoPtr_);
+            iForEach(PtrArray, s, sortedInfo) {
+                const iFileInfo *entry = s.ptr;
+                appendFormat_String(page, "=> %s %s%s\n",
+                                    cstrCollect_String(makeFileUrl_String(path_FileInfo(entry))),
+                                    cstr_Rangecc(baseName_Path(path_FileInfo(entry))),
+                                    isDirectory_FileInfo(entry) ? "/" : "");
+                iRelease(entry);
             }
-            else if (endsWithCase_String(path, ".png")) {
-                setCStr_String(&resp->meta, "image/png");
-            }
-            else if (endsWithCase_String(path, ".jpg") || endsWithCase_String(path, ".jpeg")) {
-                setCStr_String(&resp->meta, "image/jpeg");
-            }
-            else if (endsWithCase_String(path, ".gif")) {
-                setCStr_String(&resp->meta, "image/gif");
-            }
-            else if (endsWithCase_String(path, ".wav")) {
-                setCStr_String(&resp->meta, "audio/wave");
-            }
-            else if (endsWithCase_String(path, ".ogg")) {
-                setCStr_String(&resp->meta, "audio/ogg");
-            }
-            else if (endsWithCase_String(path, ".mp3")) {
-                setCStr_String(&resp->meta, "audio/mpeg");
-            }
-            else if (endsWithCase_String(path, ".mid")) {
-                setCStr_String(&resp->meta, "audio/midi");
-            }
-            else {
-                setCStr_String(&resp->meta, "application/octet-stream");
-            }
+            set_Block(&resp->body, utf8_String(page));
+        }
+        else if (open_File(f, readOnly_FileMode)) {
+            resp->statusCode = success_GmStatusCode;
+            setCStr_String(&resp->meta, mediaTypeFromPath_(path));
+            /* TODO: Detect text files based on contents? E.g., is the content valid UTF-8. */
             set_Block(&resp->body, collect_Block(readAll_File(f)));
             d->state = receivingBody_GmRequestState;
             iNotifyAudience(d, updated, GmRequestUpdated);
         }
         else {
-            resp->statusCode = failedToOpenFile_GmStatusCode;
-            setCStr_String(&resp->meta, cstr_String(path));
+            /* It could be a path inside an archive. */
+            const iString *container = findContainerArchive_(path);
+            if (container) {
+                iArchive *arch = iClob(new_Archive());
+                if (openFile_Archive(arch, container)) {
+                    iString *entryPath = collect_String(copy_String(path));
+                    remove_Block(&entryPath->chars, 0, size_String(container) + 1); /* last slash, too */
+                    iBool isDir = isDirectory_Archive(arch, entryPath);
+                    if (isDir && !isEmpty_String(entryPath) && !endsWith_String(entryPath, "/")) {
+                        /* Must have a slash for directories, otherwise relative navigation
+                           will not work. */
+                        resp->statusCode = redirectPermanent_GmStatusCode;
+                        set_String(&resp->meta, withSpacesEncoded_String(collect_String(makeFileUrl_String(container))));
+                        appendCStr_String(&resp->meta, "/");
+                        append_String(&resp->meta, entryPath);
+                        appendCStr_String(&resp->meta, "/");
+                        goto fileRequestFinished;
+                    }
+                    /* Check for a Gemini index page. */
+                    if (isDir && prefs_App()->openArchiveIndexPages) {
+                        const iString *indexPath = directoryIndexPage_Archive_(arch, entryPath);
+                        if (indexPath) {
+                            set_String(entryPath, indexPath);
+                            isDir = iFalse;
+                        }
+                    }
+                    /* Show an archive index page if this is a directory. */
+                    if (isDir) {
+                        iString *page = new_String();
+                        const iRangecc containerName = baseName_Path(container);
+                        const iString *containerUrl =
+                            withSpacesEncoded_String(collect_String(makeFileUrl_String(container)));
+                        const iBool isRoot = isEmpty_String(entryPath);
+                        if (!isRoot) {
+                            const iRangecc curDir = dirName_Path(entryPath);
+                            const iRangecc parentDir = dirName_Path(collectNewRange_String(curDir));
+                            if (!equal_Rangecc(parentDir, ".")) {
+                                /* A subdirectory. */
+                                appendFormat_String(page, "=> ../ " upArrow_Icon " %s/\n",
+                                                    cstr_Rangecc(parentDir));
+                            }
+                            else {
+                                /* Top-level directory. */
+                                appendFormat_String(page,
+                                                    "=> %s/ " upArrow_Icon " Root\n",
+                                                    cstr_String(containerUrl));
+                            }
+                            appendFormat_String(page, "# %s\n\n", cstr_Rangecc(baseName_Path(collectNewRange_String(curDir))));
+                        }
+                        else {
+                            /* The root directory. */
+                            appendFormat_String(page, "=> %s " close_Icon " Exit the archive\n",
+                                                cstr_String(containerUrl));
+                            appendFormat_String(page, "# %s\n\n"
+                                                "This archive contains %zu items and its compressed "
+                                                "size is %.1f MB.\n\n",
+                                                cstr_Rangecc(containerName),
+                                                numEntries_Archive(arch),
+                                                (double) sourceSize_Archive(arch) / 1.0e6);
+                        }
+                        iStringSet *contents = iClob(listDirectory_Archive(arch, entryPath));
+                        if (!isRoot) {
+                            if (isEmpty_StringSet(contents)) {
+                                appendCStr_String(page, "This directory is empty.\n");
+                            }
+                            else if (size_StringSet(contents) > 1) {
+                                appendFormat_String(page, "This directory contains %zu items.\n\n",
+                                                    size_StringSet(contents));
+                            }
+                        }
+                        iConstForEach(StringSet, e, contents) {
+                            const iString *subPath = e.value;
+                            iRangecc relSub = range_String(subPath);
+                            relSub.start += size_String(entryPath);
+                            appendFormat_String(page, "=> %s/%s %s\n",
+                                                cstr_String(&d->url),
+                                                cstr_String(withSpacesEncoded_String(collectNewRange_String(relSub))),
+                                                cstr_Rangecc(relSub));
+                        }
+                        resp->statusCode = success_GmStatusCode;
+                        setCStr_String(&resp->meta, "text/gemini; charset=utf-8");
+                        set_Block(&resp->body, utf8_String(page));
+                        delete_String(page);
+                    }
+                    else {
+                        const iBlock *data = data_Archive(arch, entryPath);
+                        if (data) {
+                            resp->statusCode = success_GmStatusCode;
+                            setCStr_String(&resp->meta, mediaTypeFromPath_(entryPath));
+                            set_Block(&resp->body, data);
+                        }
+                        else {
+                            resp->statusCode = failedToOpenFile_GmStatusCode;
+                            setCStr_String(&resp->meta, cstr_String(path));
+                        }
+                    }
+                }
+            }
+            else {
+                resp->statusCode = failedToOpenFile_GmStatusCode;
+                setCStr_String(&resp->meta, cstr_String(path));
+            }
         }
+fileRequestFinished:
         iRelease(f);
         d->state = finished_GmRequestState;
         iNotifyAudience(d, finished, GmRequestFinished);

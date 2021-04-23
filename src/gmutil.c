@@ -327,6 +327,11 @@ const iString *absoluteUrl_String(const iString *d, const iString *urlMaybeRelat
             appendCStr_String(absolute, "/");
         }
         appendRange_String(absolute, rel.path);
+        /* If this is known to be a directory reference, append a slash. */
+        if (!endsWith_String(absolute, "/") &&
+            (equal_Rangecc(rel.path, "..") || endsWith_Rangecc(rel.path, "/.."))) {
+            appendCStr_String(absolute, "/");
+        }
     }
     else if (isDef_(rel.query)) {
         /* Just a new query. */

@@ -63,6 +63,7 @@ enum iFileVersion {
 #define ballotCheck_Icon    "\U0001f5f9"
 #define inbox_Icon          "\U0001f4e5"
 #define book_Icon           "\U0001f56e"
+#define folder_Icon         "\U0001f4c1"
 #define openTab_Icon        "\u2750"
 #define openTabBg_Icon      "\u2b1a"
 #define openExt_Icon        "\u27a0"

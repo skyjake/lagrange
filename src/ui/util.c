@@ -2185,6 +2185,8 @@ iWidget *makePreferences_Widget(void) {
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.centershort")));
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.hoverlink}")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.hoverlink")));
+        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.archive.openindex}")));
+        addChild_Widget(values, iClob(makeToggle_Widget("prefs.archive.openindex")));
         addChild_Widget(headings, iClob(makePadding_Widget(bigGap)));
         addChild_Widget(values, iClob(makePadding_Widget(bigGap)));
         /* UI languages. */ {

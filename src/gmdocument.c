@@ -241,12 +241,16 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
             line = desc; /* Just show the description. */
             link->flags |= humanReadable_GmLinkFlag;
             /* Check for a custom icon. */
-            if (link->flags & gemini_GmLinkFlag && ~link->flags & remote_GmLinkFlag) {
+            if ((link->flags & gemini_GmLinkFlag && ~link->flags & remote_GmLinkFlag) ||
+                link->flags & file_GmLinkFlag) {
                 iChar icon = 0;
                 int len = 0;
                 if ((len = decodeBytes_MultibyteChar(desc.start, desc.end, &icon)) > 0) {
                     if (desc.start + len < desc.end &&
-                        (isPictograph_Char(icon) || isEmoji_Char(icon) || icon == 0x2022 /* bullet */) &&
+                        (isPictograph_Char(icon) || isEmoji_Char(icon) ||
+                         icon == 0x2191 /* up arrow */ ||
+                         icon == 0x2a2f /* close X */ ||
+                         icon == 0x2022 /* bullet */) &&
                         !isFitzpatrickType_Char(icon)) {
                         link->flags |= iconFromLabel_GmLinkFlag;
                         link->labelIcon = (iRangecc){ desc.start, desc.start + len };
