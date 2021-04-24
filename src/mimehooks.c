@@ -1,6 +1,9 @@
 #include "mimehooks.h"
+#include "defs.h"
+#include "gmutil.h"
 #include "app.h"
 
+#include <the_Foundation/archive.h>
 #include <the_Foundation/file.h>
 #include <the_Foundation/fileinfo.h>
 #include <the_Foundation/path.h>
@@ -109,7 +112,8 @@ static iBlock *translateAtomXmlToGeminiFeed_(const iString *mime, const iBlock *
     init_String(&out);
     format_String(&out,
                   "20 text/gemini\r\n"
-                  "# %s\n\n", cstr_String(title));
+                  "# %s\n\n",
+                  cstr_String(title));
     if (!isEmpty_String(subtitle)) {
         appendFormat_String(&out, "## %s\n\n", cstr_String(subtitle));
     }
@@ -177,7 +181,96 @@ finished:
     return output;
 }
 
+static void appendGemPubProperty_(iString *out, const char *key, const iString *value) {
+    if (!isEmpty_String(value)) {
+        appendFormat_String(out, "%s: %s\n", key, cstr_String(value));
+    }
+}
+
+iBlock *translateGemPubCoverPage_(const iString *mime, const iBlock *source,
+                                  const iString *requestUrl) {
+    iBlock *output = NULL;
+    iArchive *arch = new_Archive();
+    if (openData_Archive(arch, source)) {
+        /* Parse the metadata and check if the required contents are present. */
+        const iBlock *metadata = dataCStr_Archive(arch, "metadata");
+        if (!metadata) {
+            goto cleanup;
+        }
+        enum iGemPubProperty {
+            title_GemPubProperty,
+            author_GemPubProperty,
+            lang_GemPubProperty,
+            description_GemPubProperty,
+            pubDate_GemPubProperty,
+            revDate_GemPubProperty,
+            version_GemPubProperty,
+            cover_GemPubProperty,
+            max_GemPubProperty
+        };
+        static const char *labels[max_GemPubProperty] = {
+            "title:",
+            "author:",
+            "language:",
+            "description:",
+            "publishDate:",
+            "revisionDate:",
+            "version:",
+            "cover:"
+        };
+        iString *props[max_GemPubProperty];
+        iForIndices(i, props) {
+            props[i] = collectNew_String();
+        }
+        /* Default values. */
+        setCStr_String(props[title_GemPubProperty], "Untitled Book");
+        setCStr_String(props[cover_GemPubProperty],
+                       entryCStr_Archive(arch, "cover.jpg") ? "cover.jpg" :
+                       entryCStr_Archive(arch, "cover.png") ? "cover.png" : "");
+        iRangecc line = iNullRange;
+        while (nextSplit_Rangecc(range_Block(metadata), "\n", &line)) {
+            iRangecc clean = line;
+            trim_Rangecc(&clean);
+            iForIndices(i, props) {
+                if (startsWithCase_Rangecc(clean, labels[i])) {
+                    setRange_String(props[i], (iRangecc){ clean.start + strlen(labels[i]), clean.end });
+                    trim_String(props[i]);
+                }
+            }
+        }
+        const iString *baseUrl = withSpacesEncoded_String(requestUrl);
+        iString *out = new_String();
+        format_String(out, "20 text/gemini; charset=utf-8\r\n"
+                      "# %s\n",
+                      cstr_String(props[title_GemPubProperty]));
+        if (!isEmpty_String(props[description_GemPubProperty])) {
+            appendFormat_String(out, "%s\n", cstr_String(props[description_GemPubProperty]));
+        }
+        appendCStr_String(out, "\n");
+        appendGemPubProperty_(out, "Author", props[author_GemPubProperty]);
+        appendGemPubProperty_(out, "Version", props[version_GemPubProperty]);
+        appendFormat_String(out, "\n=> %s/capsule/  " book_Icon " Book index page\n", cstr_String(baseUrl));
+        if (!isEmpty_String(props[cover_GemPubProperty])) {
+            appendFormat_String(out, "\n=> %s/%s  Cover image\n",
+                                cstr_String(baseUrl),
+                                cstr_String(props[cover_GemPubProperty]));
+        }
+        appendCStr_String(out, "\n## About this book\n");
+        appendGemPubProperty_(out, "Revision date", props[revDate_GemPubProperty]);
+        appendGemPubProperty_(out, "Publish date", props[pubDate_GemPubProperty]);
+        appendGemPubProperty_(out, "Language", props[lang_GemPubProperty]);
+        output = copy_Block(utf8_String(out));
+        delete_String(out);
+    }
+cleanup:
+    iRelease(arch);
+    return output;
+}
+
 /*----------------------------------------------------------------------------------------------*/
+
+static const char *gpubMimeType_MimeHooks_      = "application/gpub+zip";
+static const char *mimeHooksFilename_MimeHooks_ = "mimehooks.txt";
 
 struct Impl_MimeHooks {
     iPtrArray filters;
@@ -194,6 +287,12 @@ void deinit_MimeHooks(iMimeHooks *d) {
         delete_FilterHook(i.ptr);
     }
     deinit_PtrArray(&d->filters);
+}
+
+static iBool checkGemPub_(const iString *mime, const iString *requestUrl) {
+    /* Only process GemPub in local files. */
+    return (equalCase_Rangecc(urlScheme_String(requestUrl), "file") &&
+            startsWithCase_String(mime, gpubMimeType_MimeHooks_));
 }
 
 iBool willTryFilter_MimeHooks(const iMimeHooks *d, const iString *mime) {
@@ -228,6 +327,12 @@ iBlock *tryFilter_MimeHooks(const iMimeHooks *d, const iString *mime, const iBlo
         }
     }
     /* Built-in filters. */
+    if (checkGemPub_(mime, requestUrl)) {
+        iBlock *result = translateGemPubCoverPage_(mime, body, requestUrl);
+        if (result) {
+            return result;
+        }
+    }
     init_RegExpMatch(&m);
     if (matchString_RegExp(xmlMimePattern_(), mime, &m)) {
         iBlock *result = translateAtomXmlToGeminiFeed_(mime, body, requestUrl);
@@ -237,8 +342,6 @@ iBlock *tryFilter_MimeHooks(const iMimeHooks *d, const iString *mime, const iBlo
     }
     return NULL;
 }
-
-static const char *mimeHooksFilename_MimeHooks_ = "mimehooks.txt";
 
 void load_MimeHooks(iMimeHooks *d, const char *saveDir) {
     iBool reportError = iFalse;

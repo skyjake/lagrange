@@ -422,6 +422,71 @@ const char *makeFileUrl_CStr(const char *localFilePath) {
     return cstrCollect_String(makeFileUrl_String(collectNewCStr_String(localFilePath)));
 }
 
+iString *localFilePathFromUrl_String(const iString *d) {
+    iUrl url;
+    init_Url(&url, d);
+    if (!equalCase_Rangecc(url.scheme, "file")) {
+        return NULL;
+    }
+    iString *path = urlDecode_String(collect_String(newRange_String(url.path)));
+#if defined (iPlatformMsys)
+    /* Remove the extra slash from the beginning. */
+    if (startsWith_String(path, "/")) {
+        remove_Block(&path->chars, 0, 1);
+    }
+#endif
+    return path;
+}
+
+const char *mediaTypeFromPath_String(const iString *path) {
+    if (endsWithCase_String(path, ".gmi") || endsWithCase_String(path, ".gemini")) {
+        return "text/gemini; charset=utf-8";
+    }
+    /* TODO: It would be better to default to text/plain, but switch to
+       application/octet-stream if the contents fail to parse as UTF-8. */
+    else if (endsWithCase_String(path, ".txt") ||
+             endsWithCase_String(path, ".md") ||
+             endsWithCase_String(path, ".c") ||
+             endsWithCase_String(path, ".h") ||
+             endsWithCase_String(path, ".cc") ||
+             endsWithCase_String(path, ".hh") ||
+             endsWithCase_String(path, ".cpp") ||
+             endsWithCase_String(path, ".hpp")) {
+        return "text/plain";
+    }
+    else if (endsWithCase_String(path, ".zip")) {
+        return "application/zip";
+    }
+    else if (endsWithCase_String(path, ".gpub")) {
+        return "application/gpub+zip";
+    }
+    else if (endsWithCase_String(path, ".xml")) {
+        return "text/xml";
+    }
+    else if (endsWithCase_String(path, ".png")) {
+        return "image/png";
+    }
+    else if (endsWithCase_String(path, ".jpg") || endsWithCase_String(path, ".jpeg")) {
+        return "image/jpeg";
+    }
+    else if (endsWithCase_String(path, ".gif")) {
+        return "image/gif";
+    }
+    else if (endsWithCase_String(path, ".wav")) {
+        return "audio/wave";
+    }
+    else if (endsWithCase_String(path, ".ogg")) {
+        return "audio/ogg";
+    }
+    else if (endsWithCase_String(path, ".mp3")) {
+        return "audio/mpeg";
+    }
+    else if (endsWithCase_String(path, ".mid")) {
+        return "audio/midi";
+    }
+    return "application/octet-stream";
+}
+
 void urlEncodeSpaces_String(iString *d) {
     for (;;) {
         const size_t pos = indexOfCStr_String(d, " ");
@@ -438,6 +503,12 @@ const iString *withSpacesEncoded_String(const iString *d) {
     iString *enc = copy_String(d);
     urlEncodeSpaces_String(enc);
     return collect_String(enc);
+}
+
+iRangecc mediaTypeWithoutParameters_Rangecc(iRangecc mime) {
+    iRangecc part = iNullRange;
+    nextSplit_Rangecc(mime, ";", &part);
+    return part;
 }
 
 const iString *feedEntryOpenCommand_String(const iString *url, int newTab) {

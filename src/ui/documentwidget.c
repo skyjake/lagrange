@@ -54,6 +54,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #   include "ios.h"
 #endif
 
+#include <the_Foundation/archive.h>
 #include <the_Foundation/file.h>
 #include <the_Foundation/fileinfo.h>
 #include <the_Foundation/objectlist.h>
@@ -1038,6 +1039,22 @@ static void updateFetchProgress_DocumentWidget_(iDocumentWidget *d) {
     }
 }
 
+static const char *zipPageHeading_(const iRangecc mime) {
+    if (equalCase_Rangecc(mime, "application/gpub+zip")) {
+        return book_Icon " Gempub Book";
+    }
+    iRangecc type = iNullRange;
+    nextSplit_Rangecc(mime, "/", &type); /* skip the part before the slash */
+    nextSplit_Rangecc(mime, "/", &type);
+    if (startsWithCase_Rangecc(type, "x-")) {
+        type.start += 2;
+    }
+    iString *heading = upper_String(collectNewRange_String(type));
+    appendCStr_String(heading, " Archive");
+    prependCStr_String(heading, folder_Icon " ");
+    return cstrCollect_String(heading);
+}
+
 static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse *response,
                                            const iBool isInitialUpdate) {
     if (d->state == ready_RequestState) {
@@ -1078,13 +1095,16 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse
                     docFormat = plainText_GmDocumentFormat;
                     setRange_String(&d->sourceMime, param);
                 }
-                else if (equal_Rangecc(param, "application/zip")) {
+                else if (equal_Rangecc(param, "application/zip") ||
+                         (startsWith_Rangecc(param, "application/") &&
+                          endsWithCase_Rangecc(param, "+zip"))) {
                     docFormat = gemini_GmDocumentFormat;
                     setRange_String(&d->sourceMime, param);
                     iString *key = collectNew_String();
                     toString_Sym(SDLK_s, KMOD_PRIMARY, key);
-                    format_String(&str, "# " folder_Icon " ZIP Archive\n"
-                                  "%s is a ZIP archive.\n\n%s\n\n",
+                    format_String(&str, "# %s\n"
+                                  "%s is a compressed archive.\n\n%s\n\n",
+                                  zipPageHeading_(param),
                                   cstr_Rangecc(baseName_Path(d->mod.url)),
                                   format_CStr(cstr_Lang("error.unsupported.suggestsave"),
                                               cstr_String(key),
@@ -1101,6 +1121,7 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse
                     /* Make a simple document with an image or audio player. */
                     docFormat = gemini_GmDocumentFormat;
                     setRange_String(&d->sourceMime, param);
+                    const iGmLinkId imgLinkId = 1; /* there's only the one link */
                     if ((isAudio && isInitialUpdate) || (!isAudio && isRequestFinished)) {
                         const char *linkTitle =
                             startsWith_String(mimeStr, "image/") ? "Image" : "Audio";
@@ -1112,7 +1133,7 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse
                         }
                         format_String(&str, "=> %s %s\n", cstr_String(d->mod.url), linkTitle);
                         setData_Media(media_GmDocument(d->doc),
-                                      1,
+                                      imgLinkId,
                                       mimeStr,
                                       &response->body,
                                       !isRequestFinished ? partialData_MediaFlag : 0);
@@ -1121,7 +1142,7 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse
                     else if (isAudio && !isInitialUpdate) {
                         /* Update the audio content. */
                         setData_Media(media_GmDocument(d->doc),
-                                      1,
+                                      imgLinkId,
                                       mimeStr,
                                       &response->body,
                                       !isRequestFinished ? partialData_MediaFlag : 0);
@@ -1156,6 +1177,43 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse
         }
         if (setSource) {
             setSource_DocumentWidget(d, &str);
+        }
+        if (isRequestFinished) {
+            /* Gempub: Preload cover image. */ {
+                /* TODO: move to a gempub.c along with other related code */
+                iString *localPath = localFilePathFromUrl_String(d->mod.url);
+                if (localPath) {
+                    if (!iCmpStr(mediaTypeFromPath_String(localPath), "application/gpub+zip")) {
+                        iArchive *arch = iClob(new_Archive());
+                        if (openFile_Archive(arch, localPath)) {
+                            iBool haveImage = iFalse;
+                            for (size_t linkId = 1; ; linkId++) {
+                                const iString *linkUrl = linkUrl_GmDocument(d->doc, linkId);
+                                if (!linkUrl) break;
+                                if (findLinkImage_Media(media_GmDocument(d->doc), linkId)) {
+                                    continue; /* got this already */
+                                }
+                                if (linkFlags_GmDocument(d->doc, linkId) & imageFileExtension_GmLinkFlag) {
+                                    iString *imgEntryPath = collect_String(localFilePathFromUrl_String(linkUrl));
+                                    remove_Block(&imgEntryPath->chars, 0, size_String(localPath) + 1 /* slash, too */);
+                                    setData_Media(media_GmDocument(d->doc),
+                                                  linkId,
+                                                  collectNewCStr_String(mediaTypeFromPath_String(linkUrl)),
+                                                  data_Archive(arch, imgEntryPath),
+                                                  0);
+                                    haveImage = iTrue;
+                                }
+                            }
+                            if (haveImage) {
+                                redoLayout_GmDocument(d->doc);
+                                updateVisible_DocumentWidget_(d);
+                                invalidate_DocumentWidget_(d);
+                            }
+                        }
+                    }
+                    delete_String(localPath);
+                }
+            }
         }
         deinit_String(&str);
     }

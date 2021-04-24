@@ -148,7 +148,7 @@ iDefineAudienceGetter(GmRequest, updated)
 iDefineAudienceGetter(GmRequest, finished)
 
 static void checkServerCertificate_GmRequest_(iGmRequest *d) {
-    const iTlsCertificate *cert = serverCertificate_TlsRequest(d->req);
+    const iTlsCertificate *cert = d->req ? serverCertificate_TlsRequest(d->req) : NULL;
     iGmResponse *resp = d->resp;
     resp->certFlags = 0;
     if (cert) {
@@ -256,6 +256,20 @@ static void readIncoming_GmRequest_(iGmRequest *d, iTlsRequest *req) {
     }
 }
 
+static void applyFilter_GmRequest_(iGmRequest *d) {
+    iAssert(d->state == finished_GmRequestState);
+    iBlock *xbody = tryFilter_MimeHooks(mimeHooks_App(), &d->resp->meta, &d->resp->body, &d->url);
+    if (xbody) {
+        lock_Mutex(d->mtx);
+        clear_String(&d->resp->meta);
+        clear_Block(&d->resp->body);
+        d->state = receivingHeader_GmRequestState;
+        processIncomingData_GmRequest_(d, xbody);
+        d->state = finished_GmRequestState;
+        unlock_Mutex(d->mtx);
+    }
+}
+
 static void requestFinished_GmRequest_(iGmRequest *d, iTlsRequest *req) {
     iAssert(req == d->req);
     lock_Mutex(d->mtx);
@@ -275,17 +289,7 @@ static void requestFinished_GmRequest_(iGmRequest *d, iTlsRequest *req) {
     unlock_Mutex(d->mtx);
     /* Check for mimehooks. */
     if (d->isRespFiltered && d->state == finished_GmRequestState) {
-        iBlock *xbody =
-            tryFilter_MimeHooks(mimeHooks_App(), &d->resp->meta, &d->resp->body, &d->url);
-        if (xbody) {
-            lock_Mutex(d->mtx);
-            clear_String(&d->resp->meta);
-            clear_Block(&d->resp->body);
-            d->state = receivingHeader_GmRequestState;
-            processIncomingData_GmRequest_(d, xbody);
-            d->state = finished_GmRequestState;
-            unlock_Mutex(d->mtx);
-        }
+        applyFilter_GmRequest_(d);
     }
     iNotifyAudience(d, finished, GmRequestFinished);
 }
@@ -531,7 +535,8 @@ static const iString *findContainerArchive_(const iString *path) {
     iBeginCollect();
     while (!isEmpty_String(path) && cmp_String(path, ".")) {
         iString *dir = newRange_String(dirName_Path(path));
-        if (endsWithCase_String(dir, ".zip")) {
+        if (endsWithCase_String(dir, ".zip") ||
+            endsWithCase_String(dir, ".gpub")) {
             iEndCollect();
             return collect_String(dir);
         }
@@ -539,49 +544,6 @@ static const iString *findContainerArchive_(const iString *path) {
     }
     iEndCollect();
     return NULL;
-}
-
-static const char *mediaTypeFromPath_(const iString *path) {
-    if (endsWithCase_String(path, ".gmi") || endsWithCase_String(path, ".gemini")) {
-        return "text/gemini; charset=utf-8";
-    }
-    /* TODO: It would be better to default to text/plain, but switch to
-       application/octet-stream if the contents fail to parse as UTF-8. */
-    else if (endsWithCase_String(path, ".txt") ||
-             endsWithCase_String(path, ".md") ||
-             endsWithCase_String(path, ".c") ||
-             endsWithCase_String(path, ".h") ||
-             endsWithCase_String(path, ".cc") ||
-             endsWithCase_String(path, ".hh") ||
-             endsWithCase_String(path, ".cpp") ||
-             endsWithCase_String(path, ".hpp")) {
-        return "text/plain";
-    }
-    else if (endsWithCase_String(path, ".zip")) {
-        return "application/zip";
-    }
-    else if (endsWithCase_String(path, ".png")) {
-        return "image/png";
-    }
-    else if (endsWithCase_String(path, ".jpg") || endsWithCase_String(path, ".jpeg")) {
-        return "image/jpeg";
-    }
-    else if (endsWithCase_String(path, ".gif")) {
-        return "image/gif";
-    }
-    else if (endsWithCase_String(path, ".wav")) {
-        return "audio/wave";
-    }
-    else if (endsWithCase_String(path, ".ogg")) {
-        return "audio/ogg";
-    }
-    else if (endsWithCase_String(path, ".mp3")) {
-        return "audio/mpeg";
-    }
-    else if (endsWithCase_String(path, ".mid")) {
-        return "audio/midi";
-    }
-    return "application/octet-stream";
 }
 
 static iBool isDirectory_(const iString *path) {
@@ -644,14 +606,8 @@ void submit_GmRequest(iGmRequest *d) {
         return;
     }
     else if (equalCase_Rangecc(url.scheme, "file")) {
-        /* TODO: Move this elsewhere. */
-        iString *path = collect_String(urlDecode_String(collect_String(newRange_String(url.path))));
-#if defined (iPlatformMsys)
-        /* Remove the extra slash from the beginning. */
-        if (startsWith_String(path, "/")) {
-            remove_Block(&path->chars, 0, 1);
-        }
-#endif
+        /* TODO: Move handling of "file://" URLs elsewhere, it's getting complex. */
+        iString *path = collect_String(localFilePathFromUrl_String(&d->url));
         iFile *f = new_File(path);
         if (isDirectory_(path)) {
             if (endsWith_String(path, "/")) {
@@ -669,6 +625,14 @@ void submit_GmRequest(iGmRequest *d) {
             iPtrArray *sortedInfo = collectNew_PtrArray();
             iForEach(DirFileInfo, entry,
                      iClob(directoryContents_FileInfo(iClob(new_FileInfo(path))))) {
+                /* Ignore some files. */
+#if defined (iPlatformApple)
+                const iRangecc name = baseName_Path(path_FileInfo(entry.value));
+                if (equal_Rangecc(name, ".DS_Store") ||
+                    equal_Rangecc(name, ".localized")) {
+                    continue;
+                }
+#endif
                 pushBack_PtrArray(sortedInfo, ref_Object(entry.value));
             }
             sort_Array(sortedInfo, (int (*)(const void *, const void *)) cmp_FileInfoPtr_);
@@ -684,7 +648,7 @@ void submit_GmRequest(iGmRequest *d) {
         }
         else if (open_File(f, readOnly_FileMode)) {
             resp->statusCode = success_GmStatusCode;
-            setCStr_String(&resp->meta, mediaTypeFromPath_(path));
+            setCStr_String(&resp->meta, mediaTypeFromPath_String(path));
             /* TODO: Detect text files based on contents? E.g., is the content valid UTF-8. */
             set_Block(&resp->body, collect_Block(readAll_File(f)));
             d->state = receivingBody_GmRequestState;
@@ -718,6 +682,7 @@ void submit_GmRequest(iGmRequest *d) {
                         }
                     }
                     /* Show an archive index page if this is a directory. */
+                    /* TODO: Use a built-in MIME hook for this? */
                     if (isDir) {
                         iString *page = new_String();
                         const iRangecc containerName = baseName_Path(container);
@@ -779,7 +744,7 @@ void submit_GmRequest(iGmRequest *d) {
                         const iBlock *data = data_Archive(arch, entryPath);
                         if (data) {
                             resp->statusCode = success_GmStatusCode;
-                            setCStr_String(&resp->meta, mediaTypeFromPath_(entryPath));
+                            setCStr_String(&resp->meta, mediaTypeFromPath_String(entryPath));
                             set_Block(&resp->body, data);
                         }
                         else {
@@ -787,6 +752,7 @@ void submit_GmRequest(iGmRequest *d) {
                             setCStr_String(&resp->meta, cstr_String(path));
                         }
                     }
+                fileRequestFinished:;
                 }
             }
             else {
@@ -794,9 +760,13 @@ void submit_GmRequest(iGmRequest *d) {
                 setCStr_String(&resp->meta, cstr_String(path));
             }
         }
-fileRequestFinished:
         iRelease(f);
         d->state = finished_GmRequestState;
+        /* MIME hooks may to this content. */
+        if (d->isFilterEnabled && resp->statusCode == success_GmStatusCode) {
+            /* TODO: Use a background thread, the hook may take some time to run. */
+            applyFilter_GmRequest_(d);
+        }
         iNotifyAudience(d, finished, GmRequestFinished);
         return;
     }

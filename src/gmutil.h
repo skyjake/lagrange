@@ -115,7 +115,11 @@ void            urlDecodePath_String    (iString *);
 void            urlEncodePath_String    (iString *);
 iString *       makeFileUrl_String      (const iString *localFilePath);
 const char *    makeFileUrl_CStr        (const char *localFilePath);
+iString *       localFilePathFromUrl_String(const iString *);
 void            urlEncodeSpaces_String  (iString *);
 const iString * withSpacesEncoded_String(const iString *);
+
+const char *    mediaTypeFromPath_String            (const iString *path);
+iRangecc        mediaTypeWithoutParameters_Rangecc  (iRangecc mime);
 
 const iString * feedEntryOpenCommand_String (const iString *url, int newTab); /* checks fragment */
