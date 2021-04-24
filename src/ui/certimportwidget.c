@@ -207,8 +207,8 @@ static iBool processEvent_CertImportWidget_(iCertImportWidget *d, const SDL_Even
         const int mods = keyMods_Sym(ev->key.keysym.mod);
         if (key == SDLK_v && mods == KMOD_PRIMARY) {
             if (!tryImportFromClipboard_CertImportWidget_(d)) {
-                makeMessage_Widget(uiTextCaution_ColorEscape "${heading.certimport.pasted}",
-                                   "${dlg.certimport.notfound}");
+                makeSimpleMessage_Widget(uiTextCaution_ColorEscape "${heading.certimport.pasted}",
+                                         "${dlg.certimport.notfound}");
             }
             postRefresh_App();
             return iTrue;
@@ -241,8 +241,8 @@ static iBool processEvent_CertImportWidget_(iCertImportWidget *d, const SDL_Even
                 }
             }
             else {
-                makeMessage_Widget(uiTextCaution_ColorEscape "${heading.certimport.dropped}",
-                                   "${dlg.certimport.notfound}");
+                makeSimpleMessage_Widget(uiTextCaution_ColorEscape "${heading.certimport.dropped}",
+                                         "${dlg.certimport.notfound}");
             }
         }
         iRelease(f);

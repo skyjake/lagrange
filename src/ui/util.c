@@ -1927,9 +1927,16 @@ static iBool messageHandler_(iWidget *msg, const char *cmd) {
     return iFalse;
 }
 
-iWidget *makeMessage_Widget(const char *title, const char *msg) {
-    iWidget *dlg =
-        makeQuestion_Widget(title, msg, (iMenuItem[]){ { "${dlg.message.ok}", 0, 0, "message.ok" } }, 1);
+iWidget *makeSimpleMessage_Widget(const char *title, const char *msg) {
+    return makeMessage_Widget(title,
+                              msg,
+                              (iMenuItem[]){ { "${dlg.message.ok}", 0, 0, "message.ok" } },
+                              1);
+}
+
+iWidget *makeMessage_Widget(const char *title, const char *msg, const iMenuItem *items,
+                            size_t numItems) {
+    iWidget *dlg = makeQuestion_Widget(title, msg, items, numItems);
     addAction_Widget(dlg, SDLK_ESCAPE, 0, "message.ok");
     addAction_Widget(dlg, SDLK_SPACE, 0, "message.ok");
     return dlg;

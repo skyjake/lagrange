@@ -1491,8 +1491,8 @@ static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
             const iString *country      = text_InputWidget (findChild_Widget(dlg, "ident.country"));
             const iBool    isTemp       = isSelected_Widget(findChild_Widget(dlg, "ident.temp"));
             if (isEmpty_String(commonName)) {
-                makeMessage_Widget(orange_ColorEscape "MISSING INFO",
-                                   "A \"Common name\" must be specified.");
+                makeSimpleMessage_Widget(orange_ColorEscape "MISSING INFO",
+                                         "A \"Common name\" must be specified.");
                 return iTrue;
             }
             iDate until;
@@ -1506,11 +1506,11 @@ static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
                            "%04u-%u-%u %u:%u:%u",
                            &val[0], &val[1], &val[2], &val[3], &val[4], &val[5]);
                 if (n <= 0) {
-                    makeMessage_Widget(orange_ColorEscape "INVALID DATE",
-                                       "Please check the \"Valid until\" date. Examples:\n"
-                                       "\u2022 2030\n"
-                                       "\u2022 2025-06-30\n"
-                                       "\u2022 2021-12-31 23:59:59");
+                    makeSimpleMessage_Widget(orange_ColorEscape "INVALID DATE",
+                                             "Please check the \"Valid until\" date. Examples:\n"
+                                             "\u2022 2030\n"
+                                             "\u2022 2025-06-30\n"
+                                             "\u2022 2021-12-31 23:59:59");
                     return iTrue;
                 }
                 until.year   = val[0];
@@ -1525,8 +1525,8 @@ static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
                     initCurrent_Time(&now);
                     init_Time(&t, &until);
                     if (cmp_Time(&t, &now) <= 0) {
-                        makeMessage_Widget(orange_ColorEscape "INVALID DATE",
-                                           "Expiration date must be in the future.");
+                        makeSimpleMessage_Widget(orange_ColorEscape "INVALID DATE",
+                                                 "Expiration date must be in the future.");
                         return iTrue;
                     }
                 }
@@ -1559,9 +1559,10 @@ const iString *searchQueryUrl_App(const iString *queryStringUnescaped) {
 iBool handleCommand_App(const char *cmd) {
     iApp *d = &app_;
     if (equal_Command(cmd, "config.error")) {
-        makeMessage_Widget(uiTextCaution_ColorEscape "CONFIG ERROR",
-                           format_CStr("Error in config file: %s\nSee \"about:debug\" for details.",
-                                       suffixPtr_Command(cmd, "where")));
+        makeSimpleMessage_Widget(uiTextCaution_ColorEscape "CONFIG ERROR",
+                                 format_CStr("Error in config file: %s\n"
+                                             "See \"about:debug\" for details.",
+                                             suffixPtr_Command(cmd, "where")));
         return iTrue;
     }
     else if (equal_Command(cmd, "prefs.changed")) {
@@ -1808,6 +1809,10 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "downloads")) {
         setCStr_String(&d->prefs.downloadDir, suffixPtr_Command(cmd, "path"));
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "downloads.open")) {
+        postCommandf_App("open url:%s", cstrCollect_String(makeFileUrl_String(downloadDir_App())));
         return iTrue;
     }
     else if (equal_Command(cmd, "ca.file")) {

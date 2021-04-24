@@ -1161,8 +1161,8 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         else if (isCommand_Widget(w, ev, "ident.showuse")) {
             const iGmIdentity *ident = menuIdentity_SidebarWidget_(d);
             if (ident) {
-                makeMessage_Widget(uiHeading_ColorEscape "${heading.ident.use}",
-                                   cstrCollect_String(joinCStr_StringSet(ident->useUrls, "\n")));
+                makeSimpleMessage_Widget(uiHeading_ColorEscape "${heading.ident.use}",
+                                         cstrCollect_String(joinCStr_StringSet(ident->useUrls, "\n")));
             }
             return iTrue;
         }

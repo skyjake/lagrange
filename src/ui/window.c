@@ -195,6 +195,7 @@ static const iMenuItem navMenuItems_[] = {
     { "${menu.openlocation}", SDLK_l, KMOD_PRIMARY, "navigate.focus" },
     { "---", 0, 0, NULL },
     { download_Icon " " saveToDownloads_Label, SDLK_s, KMOD_PRIMARY, "document.save" },
+    { "${menu.downloads}", 0, 0, "downloads.open" },
     { "${menu.page.copysource}", SDLK_c, KMOD_PRIMARY, "copy" },
     { "---", 0, 0, NULL },
     { leftHalf_Icon " ${menu.sidebar.left}", SDLK_l, KMOD_PRIMARY | KMOD_SHIFT, "sidebar.toggle" },
@@ -227,7 +228,8 @@ static const iMenuItem tabletNavMenuItems_[] = {
     { "---", 0, 0, NULL },
     { book_Icon " ${menu.bookmarks.list}", 0, 0, "!open url:about:bookmarks" },
     { "${menu.bookmarks.bytag}", 0, 0, "!open url:about:bookmarks?tags" },
-    { "${menu.bookmarks.bytime}", 0, 0, "!open url:about:feeds" },
+    { "${menu.feeds.entrylist}", 0, 0, "!open url:about:feeds" },
+    { "${menu.downloads}", 0, 0, "downloads.open" },
     { "---", 0, 0, NULL },
     { gear_Icon " ${menu.preferences}", SDLK_COMMA, KMOD_PRIMARY, "preferences" },
     { "${menu.help}", SDLK_F1, 0, "!open url:about:help" },
@@ -244,6 +246,7 @@ static const iMenuItem phoneNavMenuItems_[] = {
     { "---", 0, 0, NULL },
     { book_Icon " ${menu.bookmarks.list}", 0, 0, "!open url:about:bookmarks" },
     { "${menu.feeds.entrylist}", 0, 0, "!open url:about:feeds" },
+    { "${menu.downloads}", 0, 0, "downloads.open" },
     { "---", 0, 0, NULL },
     { gear_Icon " Settings...", SDLK_COMMA, KMOD_PRIMARY, "preferences" },
 };
@@ -257,6 +260,8 @@ static const iMenuItem fileMenuItems_[] = {
     { "${menu.openlocation}", SDLK_l, KMOD_PRIMARY, "navigate.focus" },
     { "---", 0, 0, NULL },
     { saveToDownloads_Label, SDLK_s, KMOD_PRIMARY, "document.save" },
+    { "---", 0, 0, NULL },
+    { "${menu.downloads}", 0, 0, "downloads.open" },
 };
 
 static const iMenuItem editMenuItems_[] = {

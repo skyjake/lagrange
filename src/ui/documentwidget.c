@@ -1615,7 +1615,7 @@ static iBool handleMediaCommand_DocumentWidget_(iDocumentWidget *d, const char *
         }
         else {
             const iGmError *err = get_GmError(code);
-            makeMessage_Widget(format_CStr(uiTextCaution_ColorEscape "%s", err->title), err->info);
+            makeSimpleMessage_Widget(format_CStr(uiTextCaution_ColorEscape "%s", err->title), err->info);
             removeMediaRequest_DocumentWidget_(d, req->linkId);
         }
         return iTrue;
@@ -1665,15 +1665,21 @@ static void saveToDownloads_(const iString *url, const iString *mime, const iBlo
 #if defined (iPlatformAppleMobile)
             exportDownloadedFile_iOS(savePath);
 #else
+            const iMenuItem items[2] = {
+                { "Open Downloaded File", 0, 0,
+                    format_CStr("!open url:%s", cstrCollect_String(makeFileUrl_String(savePath))) },
+                { "${dlg.message.ok}", 0, 0, "message.ok" },
+            };
             makeMessage_Widget(uiHeading_ColorEscape "${heading.save}",
                                format_CStr("%s\n${dlg.save.size} %.3f %s", cstr_String(path_File(f)),
                                            isMega ? size / 1.0e6f : (size / 1.0e3f),
-                                           isMega ? "${mb}" : "${kb}"));
+                                           isMega ? "${mb}" : "${kb}"),
+                               items, iElemCount(items));
 #endif
         }
         else {
-            makeMessage_Widget(uiTextCaution_ColorEscape "${heading.save.error}",
-                               strerror(errno));
+            makeSimpleMessage_Widget(uiTextCaution_ColorEscape "${heading.save.error}",
+                                     strerror(errno));
         }
         iRelease(f);
     }
@@ -2141,8 +2147,8 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     else if (equal_Command(cmd, "document.save") && document_App() == d) {
         if (d->request) {
-            makeMessage_Widget(uiTextCaution_ColorEscape "${heading.save.incomplete}",
-                               "${dlg.save.incomplete}");
+            makeSimpleMessage_Widget(uiTextCaution_ColorEscape "${heading.save.incomplete}",
+                                     "${dlg.save.incomplete}");
         }
         else if (!isEmpty_Block(&d->sourceContent)) {
             saveToDownloads_(d->mod.url, &d->sourceMime, &d->sourceContent);
@@ -2375,8 +2381,8 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             }
         }
         else {
-            makeMessage_Widget(uiHeading_ColorEscape "${heading.import.bookmarks}",
-                               "${dlg.import.notnew}");
+            makeSimpleMessage_Widget(uiHeading_ColorEscape "${heading.import.bookmarks}",
+                                     "${dlg.import.notnew}");
         }
         return iTrue;
     }
