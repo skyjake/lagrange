@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-04-11 17:58+0000\n"
+"PO-Revision-Date: 2021-04-27 14:18+0000\n"
 "Last-Translator: Olga Smirnova <mistresssilvara@hotmail.com>\n"
 "Language-Team: Occidental <http://weblate.skyjake.fi/projects/lagrange/ui/ie/"
 ">\n"
@@ -1042,8 +1042,8 @@ msgstr "Vi %sAuxilie%s por plu information pri certificates TLS de cliente."
 #, c-format
 msgid "error.unsupported.suggestsave"
 msgstr ""
-"Benque vu posse gardar it a vor fólder Descargates. Tippa %s o selecte «%s» "
-"in li menú."
+"Vu posse gardar it a vor fólder Descargates. Tippa %s o selecte «%s» in li "
+"menú."
 
 msgid "pageinfo.cert.ca.unverified"
 msgstr "Ne verificat de CA"
@@ -1454,3 +1454,6 @@ msgstr "Importar…"
 
 msgid "menu.select.clear"
 msgstr "Deselecter"
+
+msgid "menu.downloads"
+msgstr "Monstrar Descargates"
