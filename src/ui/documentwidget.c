@@ -394,13 +394,21 @@ static void requestUpdated_DocumentWidget_(iAnyObject *obj) {
     iDocumentWidget *d = obj;
     const int wasUpdated = exchange_Atomic(&d->isRequestUpdated, iTrue);
     if (!wasUpdated) {
-        postCommand_Widget(obj, "document.request.updated doc:%p request:%p", d, d->request);
+        postCommand_Widget(obj,
+                           "document.request.updated doc:%p reqid:%u request:%p",
+                           d,
+                           id_GmRequest(d->request),
+                           d->request);
     }
 }
 
 static void requestFinished_DocumentWidget_(iAnyObject *obj) {
     iDocumentWidget *d = obj;
-    postCommand_Widget(obj, "document.request.finished doc:%p request:%p", d, d->request);
+    postCommand_Widget(obj,
+                       "document.request.finished doc:%p reqid:%u request:%p",
+                       d,
+                       id_GmRequest(d->request),
+                       d->request);
 }
 
 static int documentWidth_DocumentWidget_(const iDocumentWidget *d) {
@@ -965,7 +973,7 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse
     if (d->state == ready_RequestState) {
         return;
     }
-    const iBool isRequestFinished = !d->request || isFinished_GmRequest(d->request);
+    const iBool isRequestFinished = isFinished_GmRequest(d->request);
     /* TODO: Do document update in the background. However, that requires a text metrics calculator
        that does not try to cache the glyph bitmaps. */
     const enum iGmStatusCode statusCode = response->statusCode;
@@ -1892,7 +1900,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equalWidget_Command(cmd, w, "document.request.updated") &&
-             d->request && pointerLabel_Command(cmd, "request") == d->request) {
+             id_GmRequest(d->request) == argU32Label_Command(cmd, "reqid")) {
         set_Block(&d->sourceContent, &lockResponse_GmRequest(d->request)->body);
         unlockResponse_GmRequest(d->request);
         if (document_App() == d) {
@@ -1903,7 +1911,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iFalse;
     }
     else if (equalWidget_Command(cmd, w, "document.request.finished") &&
-             d->request && pointerLabel_Command(cmd, "request") == d->request) {
+             id_GmRequest(d->request) == argU32Label_Command(cmd, "reqid")) {
         set_Block(&d->sourceContent, body_GmRequest(d->request));
         if (!isSuccess_GmStatusCode(status_GmRequest(d->request))) {
             format_String(&d->sourceHeader,
