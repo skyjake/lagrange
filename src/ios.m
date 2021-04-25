@@ -327,7 +327,7 @@ enum iAVFAudioPlayerState {
 
 struct Impl_AVFAudioPlayer {
     iString cacheFilePath;
-    AVAudioPlayer *player;
+    void *player; /* AVAudioPlayer *, no ARC */
     float volume;
     enum iAVFAudioPlayerState state;
 };
@@ -362,12 +362,15 @@ static const char *fileExt_(const iString *mimeType) {
     return "";
 }
 
+#define REF_d_player    (__bridge AVAudioPlayer *)d->player
+
 iBool setInput_AVFAudioPlayer(iAVFAudioPlayer *d, const iString *mimeType, const iBlock *audioFileData) {
     if (!isEmpty_String(&d->cacheFilePath)) {
         remove(cstr_String(&d->cacheFilePath));
         clear_String(&d->cacheFilePath);
     }
     if (d->player) {
+        CFBridgingRelease(d->player);
         d->player = nil;
     }
     if (mimeType && audioFileData && iCmpStr(fileExt_(mimeType), "")) {
@@ -377,14 +380,14 @@ iBool setInput_AVFAudioPlayer(iAVFAudioPlayer *d, const iString *mimeType, const
             write_File(f, audioFileData);
             set_String(&d->cacheFilePath, path_File(f));
             NSError *error = nil;
-            d->player = [[AVAudioPlayer alloc]
+            d->player = (void *) CFBridgingRetain([[AVAudioPlayer alloc]
                          initWithContentsOfURL:[NSURL fileURLWithPath:
                                                 [NSString stringWithUTF8String:cstr_String(&d->cacheFilePath)]]
-                         error:&error];
+                         error:&error]);
             if (error) {
                 d->player = nil;
             }
-            [d->player setVolume:d->volume];
+            [REF_d_player setVolume:d->volume];
         }
         iRelease(f);
     }
@@ -393,23 +396,23 @@ iBool setInput_AVFAudioPlayer(iAVFAudioPlayer *d, const iString *mimeType, const
 
 void play_AVFAudioPlayer(iAVFAudioPlayer *d) {
     if (d->state != playing_AVFAudioPlayerState) {
-        [d->player play];
+        [REF_d_player play];
         d->state = playing_AVFAudioPlayerState;
     }
 }
 
 void stop_AVFAudioPlayer(iAVFAudioPlayer *d) {
-    [d->player stop];
+    [REF_d_player stop];
     d->state = initialized_AVFAudioPlayerState;
 }
 
 void setPaused_AVFAudioPlayer(iAVFAudioPlayer *d, iBool paused) {
     if (paused && d->state != paused_AVFAudioPlayerState) {
-        [d->player pause];
+        [REF_d_player pause];
         d->state = paused_AVFAudioPlayerState;
     }
     else if (!paused && d->state != playing_AVFAudioPlayerState) {
-        [d->player play];
+        [REF_d_player play];
         d->state = playing_AVFAudioPlayerState;
     }
 }
@@ -417,16 +420,16 @@ void setPaused_AVFAudioPlayer(iAVFAudioPlayer *d, iBool paused) {
 void setVolume_AVFAudioPlayer(iAVFAudioPlayer *d, float volume) {
     d->volume = volume;
     if (d->player) {
-        [d->player setVolume:volume];
+        [REF_d_player setVolume:volume];
     }
 }
 
 double currentTime_AVFAudioPlayer(const iAVFAudioPlayer *d) {
-    return [d->player currentTime];
+    return [REF_d_player currentTime];
 }
 
 double duration_AVFAudioPlayer(const iAVFAudioPlayer *d) {
-    return [d->player duration];
+    return [REF_d_player duration];
 }
 
 iBool isStarted_AVFAudioPlayer(const iAVFAudioPlayer *d) {
