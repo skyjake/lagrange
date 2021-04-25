@@ -25,16 +25,17 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/range.h>
 #include <the_Foundation/vec2.h>
 
-iBool   equal_Command           (const char *commandWithArgs, const char *command);
+iBool       equal_Command           (const char *commandWithArgs, const char *command);
 
-int     arg_Command             (const char *); /* arg: */
-float   argf_Command            (const char *); /* arg: */
-int     argLabel_Command        (const char *, const char *label);
-float   argfLabel_Command       (const char *, const char *label);
-void *  pointer_Command         (const char *); /* ptr: */
-void *  pointerLabel_Command    (const char *, const char *label);
-iInt2   coord_Command           (const char *);
-iInt2   dir_Command             (const char *);
+int         arg_Command             (const char *); /* arg: */
+float       argf_Command            (const char *); /* arg: */
+int         argLabel_Command        (const char *, const char *label);
+uint32_t    argU32Label_Command     (const char *, const char *label);
+float       argfLabel_Command       (const char *, const char *label);
+void *      pointer_Command         (const char *); /* ptr: */
+void *      pointerLabel_Command    (const char *, const char *label);
+iInt2       coord_Command           (const char *);
+iInt2       dir_Command             (const char *);
 
 const iString * string_Command      (const char *, const char *label); /* space-delimited */
 iRangecc        range_Command       (const char *, const char *label); /* space-delimited */

@@ -118,6 +118,8 @@ void deserialize_GmResponse(iGmResponse *d, iStream *ins) {
 
 /*----------------------------------------------------------------------------------------------*/
 
+static iAtomicInt idGen_;
+
 enum iGmRequestState {
     initialized_GmRequestState,
     receivingHeader_GmRequestState,
@@ -128,6 +130,7 @@ enum iGmRequestState {
 
 struct Impl_GmRequest {
     iObject              object;
+    uint32_t             id;
     iMutex *             mtx;
     iGmCerts *           certs; /* not owned */
     enum iGmRequestState state;
@@ -477,7 +480,8 @@ static void beginGopherConnection_GmRequest_(iGmRequest *d, const iString *host,
 /*----------------------------------------------------------------------------------------------*/
 
 void init_GmRequest(iGmRequest *d, iGmCerts *certs) {
-    d->mtx = new_Mutex();
+    d->mtx  = new_Mutex();
+    d->id   = add_Atomic(&idGen_, 1) + 1;
     d->resp = new_GmResponse();
     d->isFilterEnabled = iTrue;
     d->isRespLocked    = iFalse;
@@ -868,11 +872,18 @@ void unlockResponse_GmRequest(iGmRequest *d) {
     }
 }
 
+uint32_t id_GmRequest(const iGmRequest *d) {
+    return d ? d->id : 0;
+}
+
 iBool isFinished_GmRequest(const iGmRequest *d) {
-    iBool done;
-    iGuardMutex(d->mtx,
-                done = (d->state == finished_GmRequestState || d->state == failure_GmRequestState));
-    return done;
+    if (d) {
+        iBool done;
+        iGuardMutex(d->mtx,
+                    done = (d->state == finished_GmRequestState || d->state == failure_GmRequestState));
+        return done;
+    }
+    return iTrue;
 }
 
 enum iGmStatusCode status_GmRequest(const iGmRequest *d) {

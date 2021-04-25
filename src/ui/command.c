@@ -50,6 +50,15 @@ int arg_Command(const char *cmd) {
     return argLabel_Command(cmd, "arg");
 }
 
+uint32_t argU32Label_Command(const char *cmd, const char *label) {
+    const iString *tok = tokenString_(label);
+    const char *ptr = strstr(cmd, cstr_String(tok));
+    if (ptr) {
+        return strtoul(ptr + size_String(tok), NULL, 10);
+    }
+    return 0;
+}
+
 float argfLabel_Command(const char *cmd, const char *label) {
     const iString *tok = tokenString_(label);
     const char *ptr = strstr(cmd, cstr_String(tok));
