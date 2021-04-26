@@ -830,6 +830,9 @@ msgstr "German"
 msgid "lang.en"
 msgstr "English"
 
+msgid "lang.ia"
+msgstr "Interlingua"
+
 msgid "lang.ie"
 msgstr "Interlingue"
 
@@ -1016,6 +1019,10 @@ msgstr "Vertical centering:"
 
 msgid "prefs.collapsepreonload"
 msgstr "Collapse preformatted:"
+
+# User preference that controls whether index.gmi pages get automatically opened when browsing the contents of a directory inside a compressed archive.
+msgid "prefs.archive.openindex"
+msgstr "Open archive indices:"
 
 msgid "prefs.smoothscroll"
 msgstr "Smooth scrolling:"

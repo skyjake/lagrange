@@ -4,7 +4,10 @@
 
 import os, sys
 
-BUILD_LANGS = ['en', 'de', 'es', 'fi', 'fr', 'ie', 'ru', 'sr', 'zh_Hans', 'zh_Hant']
+BUILD_LANGS = [
+    'en', # base strings
+    'de', 'es', 'fi', 'fr', 'ia', 'ie', 'ru', 'sr', 'zh_Hans', 'zh_Hant'
+]
 MODE = 'compile'
 ESCAPES = {
     '\\': '\\',
