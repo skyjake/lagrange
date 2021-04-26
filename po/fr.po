@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-04-17 19:18+0000\n"
-"Last-Translator: methbkts <methbkts@gmail.com>\n"
+"PO-Revision-Date: 2021-04-24 00:18+0000\n"
+"Last-Translator: MCMic <come@chilliet.eu>\n"
 "Language-Team: French <http://weblate.skyjake.fi/projects/lagrange/ui/fr/>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -505,7 +505,7 @@ msgstr "ASCII art : le mot « Lagrange » en utilisant une grande police"
 
 # Used on desktop operating systems. "Downloads" refers to the user's configured downloads directory.
 msgid "menu.save.downloads"
-msgstr "Enregistrer dans le dossier des téléchargements"
+msgstr "Enregistrer dans les téléchargements"
 
 msgid "menu.feeds.entrylist"
 msgstr "Afficher les entrées de flux"
@@ -1068,3 +1068,397 @@ msgstr "Un client Gemini de toute beauté"
 # Used on iOS. "Files" refers to Apple's iOS app where you can pick an iCloud folder.
 msgid "menu.save.files"
 msgstr "Enregistrer dans Fichiers"
+
+msgid "bookmark.untag.home"
+msgstr "Retirer la page d’accueil"
+
+msgid "menu.page.bookmark"
+msgstr "Ajouter la page aux signets…"
+
+msgid "menu.page.import"
+msgstr "Importer les liens comme signets…"
+
+msgid "pageinfo.cert.ca.unverified"
+msgstr "Non vérifié par une AC"
+
+msgid "heading.import.bookmarks"
+msgstr "IMPORTER DES SIGNETS"
+
+msgid "dlg.certwarn.domain"
+msgstr ""
+"Le certificat reçu est pour le mauvais domaine (%s). Il peut s’agir d’un "
+"problème de configuration du serveur."
+
+msgid "bookmark.tag.remote"
+msgstr "Utiliser comme source de signets"
+
+msgid "lang.hi"
+msgstr "Hindi"
+
+msgid "bookmark.untag.remote"
+msgstr "Retirer la source de signets"
+
+msgid "heading.newident"
+msgstr "NOUVELLE IDENTITÉ"
+
+msgid "dlg.newident.rsa.selfsign"
+msgstr "Création d'un certificat RSA 2048 bits auto-signé."
+
+#, c-format
+msgid "dlg.certwarn.mayberenewed"
+msgid_plural "dlg.certwarn.mayberenewed.n"
+msgstr[0] ""
+"Le certificat reçu a peut-être été renouvelé récemment — il correspond au "
+"bon domaine et n’a pas expiré. Le certificat actuellement connu va expirer "
+"le %s, dans une journée."
+msgstr[1] ""
+"Le certificat reçu a peut-être été renouvelé récemment — il correspond au "
+"bon domaine et n’a pas expiré. Le certificat actuellement connu va expirer "
+"le %s, dans %d jours."
+
+msgid "dlg.newident.userid"
+msgstr "ID utilisateur :"
+
+# Interpretation: (Bold links) on dark (background).
+msgid "prefs.boldlink.dark"
+msgstr "Sur fond sombre"
+
+msgid "prefs.doctheme.name.colorfuldark"
+msgstr "Couleurs sombres"
+
+msgid "prefs.doctheme.name.colorfullight"
+msgstr "Couleurs claires"
+
+msgid "heading.subscribe"
+msgstr "S’ABONNER À LA PAGE"
+
+msgid "dlg.bookmark.tags"
+msgstr "Étiquettes :"
+
+msgid "heading.prefs.certs"
+msgstr "CERTIFICATS"
+
+msgid "dlg.certwarn.domain.expired"
+msgstr "Le certificat reçu est pour le mauvais domaine ET a expiré."
+
+#, c-format
+msgid "dlg.import.found"
+msgid_plural "dlg.import.found.n"
+msgstr[0] "Un nouveau lien trouvé sur la page."
+msgstr[1] "%d nouveaux liens trouvés sur la page."
+
+#, c-format
+msgid "dlg.import.add"
+msgid_plural "dlg.import.add.n"
+msgstr[0] "%sAjouter un signet"
+msgstr[1] "%sAjouter %d signets"
+
+msgid "heading.history.clear"
+msgstr "EFFACER L’HISTORIQUE"
+
+msgid "menu.bookmarks.refresh"
+msgstr "Actualiser les signets distants"
+
+msgid "sidebar.bookmarks"
+msgstr "Signets"
+
+msgid "sidebar.entry.bookmark"
+msgstr "Ajouter un signet…"
+
+msgid "feeds.entry.bookmark"
+msgstr "Ajouter un signet…"
+
+msgid "bookmark.delete"
+msgstr "Supprimer le signet"
+
+msgid "bookmarks.reload"
+msgstr "Actualiser les sources distantes"
+
+msgid "pageinfo.cert.trusted"
+msgstr "De confiance"
+
+msgid "pageinfo.cert.untrusted"
+msgstr "Pas de confiance"
+
+msgid "dlg.cert.trust"
+msgstr "Faire confiance"
+
+# Interpret as "Results from bookmarks..."
+msgid "heading.lookup.bookmarks"
+msgstr "SIGNETS"
+
+# Interpret as "Results from identitites..."
+msgid "heading.lookup.identities"
+msgstr "IDENTITÉS"
+
+msgid "prefs.quoteicon.icon"
+msgstr "Icône \""
+
+msgid "prefs.uiscale"
+msgstr "Échelle de l’UI :"
+
+msgid "prefs.linewidth"
+msgstr "Largeur de ligne :"
+
+msgid "prefs.linewidth.fill"
+msgstr "Remplir"
+
+msgid "menu.bookmarks.list"
+msgstr "Lister tous les signets"
+
+msgid "menu.bookmarks.bytag"
+msgstr "Lister les signets par étiquette"
+
+msgid "macos.menu.bookmarks.bytag"
+msgstr "Lister par étiquette"
+
+msgid "macos.menu.bookmarks.list"
+msgstr "Lister tous"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.bookmarks"
+msgstr "Afficher les signets"
+
+msgid "menu.title.bookmarks"
+msgstr "Signets"
+
+msgid "menu.bookmarks.bytime"
+msgstr "Lister les signets par date de création"
+
+msgid "macos.menu.bookmarks.bytime"
+msgstr "Lister par date de création"
+
+msgid "menu.select.clear"
+msgstr "Annuler la sélection"
+
+msgid "prefs.font"
+msgstr "Police de corps :"
+
+# Interpretation: (Bold links) on light (background).
+msgid "prefs.boldlink.light"
+msgstr "Sur fond clair"
+
+msgid "prefs.biglede"
+msgstr "Grand 1er paragraphe :"
+
+msgid "dlg.newident.until"
+msgstr "Valide jusqu’au :"
+
+msgid "lang.ie"
+msgstr "Occidental"
+
+msgid "lang.fi"
+msgstr "Finnois"
+
+msgid "lang.sr"
+msgstr "Serbe"
+
+msgid "dlg.newident.commonname"
+msgstr "Nom commun :"
+
+msgid "dlg.newident.notsaved"
+msgstr "non enregistré sur le disque"
+
+msgid "dlg.newident.create"
+msgstr "Créer l’identité"
+
+msgid "heading.save"
+msgstr "FICHIER ENREGISTRÉ"
+
+msgid "heading.save.error"
+msgstr "ERREUR LORS DE L’ENREGISTREMENT DU FICHIER"
+
+msgid "dlg.import.notnew"
+msgstr "Tous les liens sur cette page sont déjà dans les signets."
+
+msgid "link.bookmark"
+msgstr "Ajouter le lien aux signets…"
+
+msgid "link.download"
+msgstr "Télécharger la cible du lien"
+
+msgid "heading.openlink"
+msgstr "OUVRIR LE LIEN"
+
+msgid "pageinfo.cert.ca.verified"
+msgstr "Vérifié par une AC"
+
+#, c-format
+msgid "dlg.input.prompt"
+msgstr "Veuillez saisir une entrée pour %s :"
+
+msgid "heading.certwarn"
+msgstr "CERTIFICAT INCONNU"
+
+msgid "dlg.certwarn.different"
+msgstr ""
+"Le certificat reçu est valide mais différent de celui dans lequel nous avons "
+"confiance."
+
+# Interpret as "Other results..."
+msgid "heading.lookup.other"
+msgstr "AUTRE"
+
+msgid "heading.translate"
+msgstr "TRADUIRE LA PAGE"
+
+msgid "lang.zh"
+msgstr "Chinois"
+
+msgid "lang.zh.hans"
+msgstr "Chinois (simplifié)"
+
+msgid "lang.zh.hant"
+msgstr "Chinois (traditionnel)"
+
+msgid "heading.bookmark.add"
+msgstr "AJOUTER UN SIGNET"
+
+msgid "heading.bookmark.edit"
+msgstr "MODIFIER UN SIGNET"
+
+msgid "dlg.bookmark.save"
+msgstr "Enregistrer le signet"
+
+msgid "numbertype.float"
+msgstr "flottant"
+
+msgid "prefs.decodeurls"
+msgstr "Décoder les URLs :"
+
+# Link download progress message.
+msgid "doc.fetching"
+msgstr "Téléchargement en cours"
+
+msgid "keys.fullscreen"
+msgstr "Mode plein écran"
+
+msgid "menu.binding.reset"
+msgstr "Réinitialiser"
+
+msgid "menu.binding.clear"
+msgstr "Retirer"
+
+msgid "keys.scroll.up"
+msgstr "Défiler vers le haut"
+
+msgid "keys.scroll.down"
+msgstr "Défiler vers le bas"
+
+msgid "keys.bottom"
+msgstr "Défiler jusqu’en bas"
+
+msgid "keys.scroll.page.up"
+msgstr "Défiler vers le haut d’une page"
+
+msgid "keys.bookmark.add"
+msgstr "Ajouter un signet"
+
+msgid "keys.findtext"
+msgstr "Chercher dans le texte de la page"
+
+msgid "keys.link.homerow.newtab"
+msgstr "Ouvrir un lien dans un nouvel onglet via une touche de repos"
+
+msgid "keys.link.homerow.hover"
+msgstr "Survoler un lien via une touche de repos"
+
+msgid "keys.link.homerow.next"
+msgstr "Prochain ensemble de liens via touche de repos"
+
+msgid "error.unsupported.media"
+msgstr "Type de contenu non pris en charge"
+
+msgid "error.unsupported.media.msg"
+msgstr "Le contenu reçu ne peut pas être affiché par cette application."
+
+msgid "keys.scroll.page.down"
+msgstr "Défiler vers le bas d’une page"
+
+msgid "keys.parent"
+msgstr "Aller au répertoire parent"
+
+msgid "keys.root"
+msgstr "Aller à la racine de la capsule"
+
+msgid "prefs.collapsepreonload"
+msgstr "Cacher le préformaté :"
+
+msgid "prefs.accent.teal"
+msgstr "Bleu"
+
+# Interpret as "Results from page content..."
+msgid "heading.lookup.pagecontent"
+msgstr "PAGE"
+
+msgid "heading.prefs.pagecontent"
+msgstr "PAGE"
+
+msgid "prefs.ca.file"
+msgstr "Fichier de l’AC :"
+
+msgid "prefs.ca.path"
+msgstr "Chemin de l’AC :"
+
+msgid "keys.scroll.halfpage.up"
+msgstr "Défiler vers le haut d’une demi-page"
+
+msgid "keys.scroll.halfpage.down"
+msgstr "Défiler vers le bas d’une demi-page"
+
+msgid "prefs.customframe"
+msgstr "Bordure de fenêtre personnalisée :"
+
+msgid "prefs.retainwindow"
+msgstr "Retenir la position :"
+
+msgid "prefs.sideicon"
+msgstr "Icône de capsule :"
+
+msgid "keys.link.modkey"
+msgstr "Ouvrir un lien par numérotation"
+
+msgid "keys.top"
+msgstr "Défiler jusqu’en haut"
+
+msgid "error.schemeredirect"
+msgstr "Redirection avec changement de protocole"
+
+msgid "error.schemeredirect.msg"
+msgstr ""
+"Le serveur a essayé de faire une redirection vers une URL dont le schéma est "
+"différent de celui de l’URL d’origine. Voici le lien afin que vous puissiez "
+"l’ouvrir manuellement."
+
+msgid "keys.link.homerow"
+msgstr "Ouvrir un lien via une touche de repos"
+
+msgid "prefs.mono"
+msgstr "Chasse fixe :"
+
+msgid "hint.newident.date"
+msgstr "AAAA-MM-JJ HH:MM:SS"
+
+msgid "link.hint.audio"
+msgstr "Lire l’audio"
+
+msgid "heading.prefs.sizing"
+msgstr "DIMENSION"
+
+msgid "prefs.accent"
+msgstr "Couleur de mise en valeur :"
+
+msgid "heading.prefs.widelayout"
+msgstr "AFFICHAGE LARGE"
+
+msgid "keys.hoverurl"
+msgstr "Activer/désactiver l’affichage d’URL au survol"
+
+msgid "error.badstatus"
+msgstr "Code de retour inconnu"
+
+msgid "error.badstatus.msg"
+msgstr ""
+"Le serveur a répondu avec un code de retour absent de la spécification du "
+"protocole Gemini. Le serveur vient peut-être du futur ? Ou est simplement "
+"déféctueux."
