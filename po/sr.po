@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-04-17 19:18+0000\n"
+"PO-Revision-Date: 2021-04-27 14:18+0000\n"
 "Last-Translator: Страхиња Радић <contact@strahinja.org>\n"
 "Language-Team: Serbian <http://weblate.skyjake.fi/projects/lagrange/ui/sr/>\n"
 "Language: sr\n"
@@ -1258,8 +1258,8 @@ msgstr "Претплати се на страницу"
 #, c-format
 msgid "error.unsupported.suggestsave"
 msgstr ""
-"Ипак, можете је сачувати као датотеку у вашем фолдеру са преузетим "
-"датотекама. Притисните %s или изаберите „%s“ из менија."
+"Можете је сачувати као датотеку у вашем фолдеру „Преузимања“. Притисните %s "
+"или изаберите „%s“ из менија."
 
 msgid "dlg.certwarn.domain"
 msgstr ""
@@ -1473,3 +1473,6 @@ msgstr "Нов…"
 
 msgid "sidebar.action.ident.import"
 msgstr "Увези…"
+
+msgid "menu.downloads"
+msgstr "Прикажи Преузимања"
