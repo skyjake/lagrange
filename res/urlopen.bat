@@ -1,2 +1,2 @@
 @echo off
-start %1
+start /b %1
