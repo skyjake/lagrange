@@ -248,7 +248,7 @@ void urlEncodePath_String(iString *d) {
     iString *encoded = new_String();
     appendRange_String(encoded, (iRangecc){ constBegin_String(d), url.path.start });
     iString *path    = newRange_String(url.path);
-    iString *encPath = urlEncodeExclude_String(path, "%/ ");
+    iString *encPath = urlEncodeExclude_String(path, "%/= ");
     append_String(encoded, encPath);
     delete_String(encPath);
     delete_String(path);
