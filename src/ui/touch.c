@@ -161,7 +161,7 @@ static iBool clearWidgetMomentum_TouchState_(iTouchState *d, iWidget *widget) {
 
 static void dispatchMotion_Touch_(iFloat3 pos, int buttonState) {
     touchState_()->currentTouchPos = initF3_I2(pos);
-    dispatchEvent_Widget(get_Window()->root, (SDL_Event *) &(SDL_MouseMotionEvent){
+    dispatchEvent_Widget(get_Window()->root.widget, (SDL_Event *) &(SDL_MouseMotionEvent){
         .type = SDL_MOUSEMOTION,
         .timestamp = SDL_GetTicks(),
         .which = SDL_TOUCH_MOUSEID,
@@ -185,12 +185,12 @@ static iBool dispatchClick_Touch_(const iTouch *d, int button) {
         .x = x_F3(tapPos),
         .y = y_F3(tapPos)
     };
-    iBool wasUsed = dispatchEvent_Widget(window->root, (SDL_Event *) &btn);
+    iBool wasUsed = dispatchEvent_Widget(window->root.widget, (SDL_Event *) &btn);
     /* Immediately released, too. */
     btn.type = SDL_MOUSEBUTTONUP;
     btn.state = SDL_RELEASED;
     btn.timestamp = SDL_GetTicks();
-    dispatchEvent_Widget(window->root, (SDL_Event *) &btn);
+    dispatchEvent_Widget(window->root.widget, (SDL_Event *) &btn);
     if (!wasUsed && button == SDL_BUTTON_RIGHT) {
         postContextClick_Window(window, &btn);
     }
@@ -199,7 +199,7 @@ static iBool dispatchClick_Touch_(const iTouch *d, int button) {
 
 static void dispatchButtonDown_Touch_(iFloat3 pos) {
     touchState_()->currentTouchPos = initF3_I2(pos);
-    dispatchEvent_Widget(get_Window()->root, (SDL_Event *) &(SDL_MouseButtonEvent){
+    dispatchEvent_Widget(get_Window()->root.widget, (SDL_Event *) &(SDL_MouseButtonEvent){
         .type = SDL_MOUSEBUTTONDOWN,
         .timestamp = SDL_GetTicks(),
         .clicks = 1,
@@ -213,7 +213,7 @@ static void dispatchButtonDown_Touch_(iFloat3 pos) {
 
 static void dispatchButtonUp_Touch_(iFloat3 pos) {
     touchState_()->currentTouchPos = initF3_I2(pos);
-    dispatchEvent_Widget(get_Window()->root, (SDL_Event *) &(SDL_MouseButtonEvent){
+    dispatchEvent_Widget(get_Window()->root.widget, (SDL_Event *) &(SDL_MouseButtonEvent){
         .type = SDL_MOUSEBUTTONUP,
         .timestamp = SDL_GetTicks(),
         .clicks = 1,
@@ -458,7 +458,7 @@ iBool processEvent_Touch(const SDL_Event *ev) {
         else if (x > rootSize.x - edgeWidth) {
             edge = right_TouchEdge;
         }
-        iWidget *aff = hitChild_Widget(window->root, init_I2(iRound(x), iRound(y_F3(pos))));
+        iWidget *aff = hitChild_Widget(window->root.widget, init_I2(iRound(x), iRound(y_F3(pos))));
         if (edge == left_TouchEdge) {
             dragging = findSlidePanel_Widget_(aff);
             if (dragging) {

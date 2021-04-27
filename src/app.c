@@ -1046,7 +1046,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     handleCommand_MacOS(command_UserEvent(&ev));
 #endif
                     if (isMetricsChange_UserEvent(&ev)) {
-                        arrange_Widget(d->window->root);
+                        arrange_Widget(d->window->root.widget);
                     }
                     if (!wasUsed) {
                         /* No widget handled the command, so we'll do it. */
@@ -1131,7 +1131,7 @@ static int run_App_(iApp *d) {
 
 void refresh_App(void) {
     iApp *d = &app_;
-    destroyPending_RootData(data_Root());
+    destroyPending_Root(&d->window->root);
 #if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
     if (d->warmupFrames == 0 && d->isIdling) {
         return;
@@ -1262,7 +1262,7 @@ void postCommandf_App(const char *command, ...) {
 
 iAny *findWidget_App(const char *id) {
     if (!*id) return NULL;
-    return findChild_Widget(app_.window->root, id);
+    return findChild_Widget(app_.window->root.widget, id);
 }
 
 void addTicker_App(iTickerFunc ticker, iAny *context) {
@@ -2120,7 +2120,7 @@ iBool handleCommand_App(const char *cmd) {
     else if (equal_Command(cmd, "ident.import")) {
         iCertImportWidget *imp = new_CertImportWidget();
         setPageContent_CertImportWidget(imp, sourceContent_DocumentWidget(document_App()));
-        addChild_Widget(d->window->root, iClob(imp));
+        addChild_Widget(d->window->root.widget, iClob(imp));
         finalizeSheet_Widget(as_Widget(imp));
         postRefresh_App();
         return iTrue;

@@ -81,7 +81,7 @@ void deinit_Widget(iWidget *d) {
 //#endif
     deinit_String(&d->id);
     if (d->flags & keepOnTop_WidgetFlag) {
-        removeAll_PtrArray(onTop_RootData(), d);
+        removeAll_PtrArray(onTop_Root(get_Root()), d);
     }
     if (d->flags & visualOffset_WidgetFlag) {
         removeTicker_App(visualOffsetAnimation_Widget_, d);
@@ -95,10 +95,10 @@ static void aboutToBeDestroyed_Widget_(iWidget *d) {
         return;
     }
     if (flags_Widget(d) & keepOnTop_WidgetFlag) {
-        removeOne_PtrArray(onTop_RootData(), d);
+        removeOne_PtrArray(onTop_Root(get_Root()), d);
     }
     if (isHover_Widget(d)) {
-        data_Root()->hover = NULL;
+        get_Root()->hover = NULL;
     }
     iForEach(ObjectList, i, d->children) {
         aboutToBeDestroyed_Widget_(as_Widget(i.object));
@@ -111,10 +111,11 @@ void destroy_Widget(iWidget *d) {
             postRefresh_App();
         }
         aboutToBeDestroyed_Widget_(d);
-        if (!data_Root()->pendingDestruction) {
-            data_Root()->pendingDestruction = new_PtrSet();
+        iRoot *root = get_Root();
+        if (!root->pendingDestruction) {
+            root->pendingDestruction = new_PtrSet();
         }
-        insert_PtrSet(data_Root()->pendingDestruction, d);
+        insert_PtrSet(root->pendingDestruction, d);
     }
 }
 
@@ -138,7 +139,7 @@ void setFlags_Widget(iWidget *d, int64_t flags, iBool set) {
         }
         iChangeFlags(d->flags, flags, set);
         if (flags & keepOnTop_WidgetFlag) {
-            iPtrArray *onTop = onTop_RootData();
+            iPtrArray *onTop = onTop_Root(get_Root());
             if (set) {
                 iAssert(indexOf_PtrArray(onTop, d) == iInvalidPos);
                 pushBack_PtrArray(onTop, d);
@@ -186,7 +187,7 @@ void showCollapsed_Widget(iWidget *d, iBool show) {
     if ((isVisible && !show) || (!isVisible && show)) {
         setFlags_Widget(d, hidden_WidgetFlag, !show);
         /* The entire UI may be affected, if parents are resized due to the (un)collapsing. */
-        arrange_Widget(get_Window()->root);
+        arrange_Widget(get_Window()->root.widget);
         postRefresh_App();
     }
 }
@@ -733,7 +734,7 @@ static iBool filterEvent_Widget_(const iWidget *d, const SDL_Event *ev) {
 }
 
 void unhover_Widget(void) {
-    data_Root()->hover = NULL;
+    get_Root()->hover = NULL;
 }
 
 iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
@@ -743,14 +744,14 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
             /* Hover widget may change. */
             setHover_Widget(NULL);
         }
-        if (data_Root()->focus && isKeyboardEvent_(ev)) {
+        if (get_Root()->focus && isKeyboardEvent_(ev)) {
             /* Root dispatches keyboard events directly to the focused widget. */
-            if (dispatchEvent_Widget(data_Root()->focus, ev)) {
+            if (dispatchEvent_Widget(get_Root()->focus, ev)) {
                 return iTrue;
             }
         }
         /* Root offers events first to widgets on top. */
-        iReverseForEach(PtrArray, i, data_Root()->onTop) {
+        iReverseForEach(PtrArray, i, get_Root()->onTop) {
             iWidget *widget = *i.value;
             if (isVisible_Widget(widget) && dispatchEvent_Widget(widget, ev)) {
 #if 0
@@ -774,7 +775,7 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
         }
     }
     else if (ev->type == SDL_MOUSEMOTION &&
-             (!data_Root()->hover || hasParent_Widget(d, data_Root()->hover)) &&
+             (!get_Root()->hover || hasParent_Widget(d, get_Root()->hover)) &&
              flags_Widget(d) & hover_WidgetFlag && ~flags_Widget(d) & hidden_WidgetFlag &&
              ~flags_Widget(d) & disabled_WidgetFlag) {
         if (contains_Widget(d, init_I2(ev->motion.x, ev->motion.y))) {
@@ -792,7 +793,7 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
            handle the events first. */
         iReverseForEach(ObjectList, i, d->children) {
             iWidget *child = as_Widget(i.object);
-            if (child == data_Root()->focus && isKeyboardEvent_(ev)) {
+            if (child == get_Root()->focus && isKeyboardEvent_(ev)) {
                 continue; /* Already dispatched. */
             }
             if (isVisible_Widget(child) && child->flags & keepOnTop_WidgetFlag) {
@@ -1081,7 +1082,7 @@ void drawChildren_Widget(const iWidget *d) {
     }
     /* Root draws the on-top widgets on top of everything else. */
     if (!d->parent) {
-        iConstForEach(PtrArray, i, onTop_RootData()) {
+        iConstForEach(PtrArray, i, onTop_Root(get_Root())) {
             const iWidget *top = *i.value;
             draw_Widget(top);
         }
@@ -1198,7 +1199,7 @@ iAny *hitChild_Widget(const iWidget *d, iInt2 coord) {
     }
     /* Check for on-top widgets first. */
     if (!d->parent) {
-        iReverseForEach(PtrArray, i, onTop_RootData()) {
+        iReverseForEach(PtrArray, i, onTop_Root(get_Root())) {
             iWidget *child = i.ptr;
 //            printf("ontop: %s (%s) hidden:%d hittable:%d\n", cstr_String(id_Widget(child)),
 //                   class_Widget(child)->name,
@@ -1286,12 +1287,12 @@ iBool isDisabled_Widget(const iAnyObject *d) {
 
 iBool isFocused_Widget(const iAnyObject *d) {
     iAssert(isInstance_Object(d, &Class_Widget));
-    return data_Root()->focus == d;
+    return get_Root()->focus == d;
 }
 
 iBool isHover_Widget(const iAnyObject *d) {
     iAssert(isInstance_Object(d, &Class_Widget));
-    return data_Root()->hover == d;
+    return get_Root()->hover == d;
 }
 
 iBool isSelected_Widget(const iAnyObject *d) {
@@ -1337,12 +1338,12 @@ iBool isAffectedByVisualOffset_Widget(const iWidget *d) {
 }
 
 void setFocus_Widget(iWidget *d) {
-    if (data_Root()->focus != d) {
-        if (data_Root()->focus) {
-            iAssert(!contains_PtrSet(data_Root()->pendingDestruction, data_Root()->focus));
-            postCommand_Widget(data_Root()->focus, "focus.lost");
+    if (get_Root()->focus != d) {
+        if (get_Root()->focus) {
+            iAssert(!contains_PtrSet(get_Root()->pendingDestruction, get_Root()->focus));
+            postCommand_Widget(get_Root()->focus, "focus.lost");
         }
-        data_Root()->focus = d;
+        get_Root()->focus = d;
         if (d) {
             iAssert(flags_Widget(d) & focusable_WidgetFlag);
             postCommand_Widget(d, "focus.gained");
@@ -1351,15 +1352,15 @@ void setFocus_Widget(iWidget *d) {
 }
 
 iWidget *focus_Widget(void) {
-    return data_Root()->focus;
+    return get_Root()->focus;
 }
 
 void setHover_Widget(iWidget *d) {
-    data_Root()->hover = d;
+    get_Root()->hover = d;
 }
 
 iWidget *hover_Widget(void) {
-    return data_Root()->hover;
+    return get_Root()->hover;
 }
 
 static const iWidget *findFocusable_Widget_(const iWidget *d, const iWidget *startFrom,
@@ -1403,7 +1404,7 @@ static const iWidget *findFocusRoot_Widget_(const iWidget *d) {
 }
 
 iAny *findFocusable_Widget(const iWidget *startFrom, enum iWidgetFocusDir focusDir) {
-    const iWidget *root = findFocusRoot_Widget_(get_Window()->root);
+    const iWidget *root = findFocusRoot_Widget_(get_Window()->root.widget);
     iAssert(root != NULL);
     iBool getNext = (startFrom ? iFalse : iTrue);
     const iWidget *found = findFocusable_Widget_(root, startFrom, &getNext, focusDir);
@@ -1415,14 +1416,14 @@ iAny *findFocusable_Widget(const iWidget *startFrom, enum iWidgetFocusDir focusD
 }
 
 void setMouseGrab_Widget(iWidget *d) {
-    if (data_Root()->mouseGrab != d) {
-        data_Root()->mouseGrab = d;
+    if (get_Root()->mouseGrab != d) {
+        get_Root()->mouseGrab = d;
         SDL_CaptureMouse(d != NULL);
     }
 }
 
 iWidget *mouseGrab_Widget(void) {
-    return data_Root()->mouseGrab;
+    return get_Root()->mouseGrab;
 }
 
 void postCommand_Widget(const iAnyObject *d, const char *cmd, ...) {
@@ -1456,7 +1457,7 @@ void refresh_Widget(const iAnyObject *d) {
 }
 
 void raise_Widget(iWidget *d) {
-    iPtrArray *onTop = onTop_RootData();
+    iPtrArray *onTop = onTop_Root(get_Root());
     if (d->flags & keepOnTop_WidgetFlag) {
         iAssert(indexOf_PtrArray(onTop, d) != iInvalidPos);
         removeOne_PtrArray(onTop, d);

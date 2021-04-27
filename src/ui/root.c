@@ -234,23 +234,27 @@ static const char *stopSeqCStr_[] = {
 static const int loadAnimIntervalMs_ = 133;
 static int       loadAnimIndex_      = 0;
 
-static iWidget *    activeRoot_     = NULL;
-static iRootData *  activeRootData_ = NULL;
+static iRoot *   activeRoot_     = NULL;
 
-void setCurrent_Root(iWidget *root, iRootData *rootData) {
-    activeRoot_ = root;
-    activeRootData_ = rootData;
+iDefineTypeConstruction(Root)
+    
+void init_Root(iRoot *d) {
+    iZap(*d);    
 }
 
-iWidget *get_Root(void) {
+void deinit_Root(iRoot *d) {
+    iReleasePtr(&d->widget);    
+}
+
+void setCurrent_Root(iRoot *root) {
+    activeRoot_ = root;
+}
+
+iRoot *get_Root(void) {
     return activeRoot_;
 }
 
-iRootData *data_Root(void) {
-    return activeRootData_;
-}
-
-void destroyPending_RootData(iRootData *d) {
+void destroyPending_Root(iRoot *d) {
     iForEach(PtrSet, i, d->pendingDestruction) {
         iWidget *widget = *i.value;
         if (!isFinished_Anim(&widget->visualOffset)) {
@@ -265,12 +269,11 @@ void destroyPending_RootData(iRootData *d) {
     }
 }
 
-iPtrArray *onTop_RootData(void) {
-    iAssert(activeRootData_);
-    if (!activeRootData_->onTop) {
-        activeRootData_->onTop = new_PtrArray();
+iPtrArray *onTop_Root(iRoot *d) {
+    if (!d->onTop) {
+        d->onTop = new_PtrArray();
     }
-    return activeRootData_->onTop;
+    return d->onTop;
 }
 
 static iBool handleRootCommands_(iWidget *root, const char *cmd) {
@@ -423,7 +426,7 @@ static uint32_t updateReloadAnimation_Window_(uint32_t interval, void *window) {
 
 static void setReloadLabel_Window_(iWindow *d, iBool animating) {
     const iBool isMobile = deviceType_App() != desktop_AppDeviceType;
-    iLabelWidget *label = findChild_Widget(d->root, "reload");
+    iLabelWidget *label = findChild_Widget(d->root.widget, "reload");
     updateTextCStr_LabelWidget(label, animating ? loadAnimationCStr_() :
                                                 (isMobile ? pageMenuCStr_ : reloadCStr_));
     if (isMobile) {
@@ -444,13 +447,13 @@ static void checkLoadAnimation_Window_(iWindow *d) {
     setReloadLabel_Window_(d, isOngoing);
 }
 
-void updatePadding_Root(iWidget *d) {
+void updatePadding_Root(iRoot *d) {
 #if defined (iPlatformAppleMobile)
-    iWidget *toolBar = findChild_Widget(d, "toolbar");
+    iWidget *toolBar = findChild_Widget(d->widget, "toolbar");
     float left, top, right, bottom;
     safeAreaInsets_iOS(&left, &top, &right, &bottom);
     /* Respect the safe area insets. */ {
-        setPadding_Widget(findChild_Widget(d, "navdiv"), left, top, right, 0);
+        setPadding_Widget(findChild_Widget(d->widget, "navdiv"), left, top, right, 0);
         if (toolBar) {
             setPadding_Widget(toolBar, left, 0, right, bottom);
         }
@@ -458,8 +461,8 @@ void updatePadding_Root(iWidget *d) {
     if (toolBar) {
         /* TODO: get this from toolBar height, but it's buggy for some reason */
         const int sidebarBottomPad = isPortrait_App() ? 11 * gap_UI + bottom : 0;
-        setPadding_Widget(findChild_Widget(d, "sidebar"), 0, 0, 0, sidebarBottomPad);
-        setPadding_Widget(findChild_Widget(d, "sidebar2"), 0, 0, 0, sidebarBottomPad);
+        setPadding_Widget(findChild_Widget(d->widget, "sidebar"), 0, 0, 0, sidebarBottomPad);
+        setPadding_Widget(findChild_Widget(d->widget, "sidebar2"), 0, 0, 0, sidebarBottomPad);
         /* TODO: There seems to be unrelated layout glitch in the sidebar where its children
            are not arranged correctly until it's hidden and reshown. */
     }
@@ -469,10 +472,10 @@ void updatePadding_Root(iWidget *d) {
 #endif
 }
 
-void dismissPortraitPhoneSidebars_Root(iWidget *root) {
+void dismissPortraitPhoneSidebars_Root(iRoot *d) {
     if (deviceType_App() == phone_AppDeviceType && isPortrait_App()) {
-        iWidget *sidebar = findChild_Widget(root, "sidebar");
-        iWidget *sidebar2 = findChild_Widget(root, "sidebar2");
+        iWidget *sidebar = findChild_Widget(d->widget, "sidebar");
+        iWidget *sidebar2 = findChild_Widget(d->widget, "sidebar2");
         if (isVisible_Widget(sidebar)) {
             postCommand_App("sidebar.toggle");
             setVisualOffset_Widget(sidebar, height_Widget(sidebar), 250, easeIn_AnimFlag);
@@ -564,7 +567,7 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
                     updateSize_LabelWidget(btn);
                 }
             }
-            arrange_Widget(get_Window()->root);
+            arrange_Widget(get_Window()->root.widget);
         }
         /* Resize the URL input field. */ {
             iWidget *urlBar = findChild_Widget(navBar, "url");
@@ -716,7 +719,7 @@ static iBool handleSearchBarCommands_(iWidget *searchBar, const char *cmd) {
         if (pointer_Command(cmd) == findChild_Widget(searchBar, "find.input")) {
             if (!isVisible_Widget(searchBar)) {
                 setFlags_Widget(searchBar, hidden_WidgetFlag | disabled_WidgetFlag, iFalse);
-                arrange_Widget(get_Window()->root);
+                arrange_Widget(get_Window()->root.widget);
                 postRefresh_App();
             }
         }
@@ -824,9 +827,9 @@ static int appIconSize_(void) {
     return lineHeight_Text(uiContent_FontId);
 }
 
-void updateMetrics_Root(iWidget *d) {
+void updateMetrics_Root(iRoot *d) {
     /* Custom frame. */
-    iWidget *winBar = findChild_Widget(d, "winbar");
+    iWidget *winBar = findChild_Widget(d->widget, "winbar");
     if (winBar) {
         iWidget *appIcon  = findChild_Widget(winBar, "winbar.icon");
         iWidget *appTitle = findChild_Widget(winBar, "winbar.title");
@@ -839,9 +842,9 @@ void updateMetrics_Root(iWidget *d) {
         setFixedSize_Widget(appClose, appMin->rect.size);
         setFixedSize_Widget(appIcon, init_I2(appIconSize_(), appMin->rect.size.y));
     }
-    iWidget *navBar     = findChild_Widget(d, "navbar");
+    iWidget *navBar     = findChild_Widget(d->widget, "navbar");
     iWidget *lock       = findChild_Widget(navBar, "navbar.lock");
-    iWidget *url        = findChild_Widget(d, "url");
+    iWidget *url        = findChild_Widget(d->widget, "url");
     iWidget *rightEmbed = findChild_Widget(navBar, "url.rightembed");
     iWidget *embedPad   = findChild_Widget(navBar, "url.embedpad");
     setPadding_Widget(as_Widget(url), 0, gap_UI, 0, gap_UI);
@@ -852,12 +855,12 @@ void updateMetrics_Root(iWidget *d) {
                                   width_Widget(lock) * 0.75);
     rightEmbed->rect.pos.y = gap_UI;
     updatePadding_Root(d);
-    arrange_Widget(d);
+    arrange_Widget(d->widget);
     postRefresh_App();
 }
 
-iWidget *createUserInterface_Root(void) {
-    iWidget *root = new_Widget();
+void createUserInterface_Root(iRoot *d) {
+    iWidget *root = d->widget = new_Widget();
     setId_Widget(root, "root");
     /* Children of root cover the entire window. */
     setFlags_Widget(
@@ -1180,7 +1183,7 @@ iWidget *createUserInterface_Root(void) {
         setId_Widget(menu, "toolbar.menu"); /* view menu */
         }
 #endif
-    updatePadding_Root(root);
+    updatePadding_Root(d);
     /* Global context menus. */ {
         iWidget *tabsMenu = makeMenu_Widget(
             root,
@@ -1226,14 +1229,13 @@ iWidget *createUserInterface_Root(void) {
         addAction_Widget(root, '4', rightSidebar_KeyModifier, "sidebar2.mode arg:3 toggle:1");
         addAction_Widget(root, '5', rightSidebar_KeyModifier, "sidebar2.mode arg:4 toggle:1");
     }
-    updateMetrics_Root(root);
-    return root;
+    updateMetrics_Root(d);
 }
 
-void showToolbars_Root(iWidget *root, iBool show) {
+void showToolbars_Root(iRoot *d, iBool show) {
     /* The toolbar is only used on phone portrait layout. */
     if (isLandscape_App()) return;
-    iWidget *toolBar = findChild_Widget(root, "toolbar");
+    iWidget *toolBar = findChild_Widget(d->widget, "toolbar");
     if (!toolBar) return;
     const int height = rootSize_Window(get_Window()).y - top_Rect(boundsWithoutVisualOffset_Widget(toolBar));
     if (show && !isVisible_Widget(toolBar)) {

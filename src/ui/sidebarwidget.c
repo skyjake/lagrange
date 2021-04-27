@@ -1170,7 +1170,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         else if (isCommand_Widget(w, ev, "ident.edit")) {
             const iGmIdentity *ident = menuIdentity_SidebarWidget_(d);
             if (ident) {
-                makeValueInput_Widget(get_Window()->root,
+                makeValueInput_Widget(get_Window()->root.widget,
                                       &ident->notes,
                                       uiHeading_ColorEscape "${heading.ident.notes}",
                                       format_CStr(cstr_Lang("dlg.ident.notes"), cstr_String(name_GmIdentity(ident))),

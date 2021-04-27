@@ -22,7 +22,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
-#include "widget.h"
+#include "root.h"
 
 #include <the_Foundation/rect.h>
 #include <SDL_events.h>
@@ -66,8 +66,8 @@ struct Impl_Window {
     iBool         ignoreClick;
     uint32_t      focusGainedAt;
     SDL_Renderer *render;
-    iWidget *     root;
-    float         pixelRatio; /* conversion between points and pixels, e.g., coords, window size */
+    iRoot         root;         /* root widget and UI state */
+    float         pixelRatio;   /* conversion between points and pixels, e.g., coords, window size */
     float         displayScale; /* DPI-based scaling factor of current display, affects uiScale only */
     float         uiScale;
     uint32_t      frameTime;

@@ -3,10 +3,10 @@
 #include "widget.h"
 #include <the_Foundation/ptrset.h>
 
-iDeclareType(RootData)
+iDeclareType(Root)
     
-/* TODO: Rename to Root, include `iWidget *root` as well. */
-struct Impl_RootData {
+struct Impl_Root {
+    iWidget *  widget;
     iWidget *  hover;
     iWidget *  mouseGrab;
     iWidget *  focus;
@@ -14,18 +14,19 @@ struct Impl_RootData {
     iPtrSet *  pendingDestruction;
 };
 
+iDeclareTypeConstruction(Root)
+
 /*----------------------------------------------------------------------------------------------*/
 
-iWidget *   createUserInterface_Root            (void);
+void        createUserInterface_Root            (iRoot *);
 
-void        setCurrent_Root                     (iWidget *root, iRootData *rootData);
-iWidget *   get_Root                            (void);
-iRootData * data_Root                           (void);
+void        setCurrent_Root                     (iRoot *);
+iRoot *     get_Root                            (void);
 
-iPtrArray * onTop_RootData                      (void);
-void        destroyPending_RootData             (iRootData *);
+iPtrArray * onTop_Root                          (iRoot *);
+void        destroyPending_Root                 (iRoot *);
     
-void        updateMetrics_Root                  (iWidget *);
-void        updatePadding_Root                  (iWidget *); /* TODO: is part of metrics? */
-void        dismissPortraitPhoneSidebars_Root   (iWidget *);
-void        showToolbars_Root                   (iWidget *, iBool show);
+void        updateMetrics_Root                  (iRoot *);
+void        updatePadding_Root                  (iRoot *); /* TODO: is part of metrics? */
+void        dismissPortraitPhoneSidebars_Root   (iRoot *);
+void        showToolbars_Root                   (iRoot *, iBool show);

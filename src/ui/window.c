@@ -165,23 +165,21 @@ static void setupUserInterface_Window(iWindow *d) {
 #if defined (iPlatformAppleDesktop)
     insertMacMenus_();
 #endif
-    static iRootData rootData_;
-    setCurrent_Root(NULL, &rootData_);
-    d->root = createUserInterface_Root();
-    setCurrent_Root(d->root, &rootData_);
+    setCurrent_Root(&d->root);
+    createUserInterface_Root(&d->root);
 }
 
 static void updateRootSize_Window_(iWindow *d, iBool notifyAlways) {
-    iInt2 *size = &d->root->rect.size;
+    iInt2 *size = &d->root.widget->rect.size;
     const iInt2 oldSize = *size;
     SDL_GetRendererOutputSize(d->render, &size->x, &size->y);
     size->y -= d->keyboardHeight;
-    d->root->minSize = *size;
+    d->root.widget->minSize = *size;
     if (notifyAlways || !isEqual_I2(oldSize, *size)) {
-        updatePadding_Root(d->root);
+        updatePadding_Root(&d->root);
         const iBool isHoriz = (d->place.lastNotifiedSize.x != size->x);
         const iBool isVert  = (d->place.lastNotifiedSize.y != size->y);
-        arrange_Widget(d->root);
+        arrange_Widget(d->root.widget);
         postCommandf_App("window.resized width:%d height:%d horiz:%d vert:%d",
                          size->x,
                          size->y,
@@ -196,8 +194,8 @@ static void updateRootSize_Window_(iWindow *d, iBool notifyAlways) {
 void drawWhileResizing_Window(iWindow *d, int w, int h) {
     /* This is called while a window resize is in progress, so we can be pretty confident
        the size has actually changed. */
-    d->root->rect.size = coord_Window(d, w, h);
-    arrange_Widget(d->root);
+    d->root.widget->rect.size = coord_Window(d, w, h);
+    arrange_Widget(d->root.widget);
     draw_Window(d);
 }
 
@@ -347,7 +345,7 @@ static SDL_Surface *loadImage_(const iBlock *data, int resized) {
 void init_Window(iWindow *d, iRect rect) {
     theWindow_ = d;
     d->win = NULL;
-    d->root = NULL;
+    init_Root(&d->root);
     iZap(d->cursors);
     d->place.initialPos = rect.pos;
     d->place.normalRect = rect;
@@ -460,7 +458,7 @@ void deinit_Window(iWindow *d) {
             SDL_FreeCursor(d->cursors[i]);
         }
     }
-    iReleasePtr(&d->root);
+    deinit_Root(&d->root);
     deinit_Text();
     SDL_DestroyRenderer(d->render);
     SDL_DestroyWindow(d->win);
@@ -636,7 +634,7 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
             return iTrue;
         }
         case SDL_WINDOWEVENT_RESIZED:
-            updatePadding_Root(d->root);
+            updatePadding_Root(&d->root);
             if (d->isMinimized) {
                 updateRootSize_Window_(d, iTrue);
                 return iTrue;
@@ -768,7 +766,7 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
                 event.button.x = pos.x;
                 event.button.y = pos.y;
             }
-            iWidget *widget = d->root;
+            iWidget *widget = d->root.widget;
             if (event.type == SDL_MOUSEMOTION || event.type == SDL_MOUSEWHEEL ||
                 event.type == SDL_MOUSEBUTTONUP || event.type == SDL_MOUSEBUTTONDOWN) {
                 if (mouseGrab_Widget()) {
@@ -796,7 +794,7 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
                 }
             }
             if (isMetricsChange_UserEvent(&event)) {
-                updateMetrics_Root(d->root);
+                updateMetrics_Root(&d->root);
             }
             if (isCommand_UserEvent(&event, "lang.changed")) {
 #if defined (iPlatformAppleDesktop)
@@ -805,8 +803,8 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
                 insertMacMenus_();
 #endif
                 invalidate_Window_(d);
-                updatePreferencesLayout_Widget(findChild_Widget(d->root, "prefs"));
-                arrange_Widget(d->root);
+                updatePreferencesLayout_Widget(findChild_Widget(d->root.widget, "prefs"));
+                arrange_Widget(d->root.widget);
                 //printTree_Widget(findChild_Widget(d->root, "prefs"));
             }
             if (oldHover != hover_Widget()) {
@@ -823,7 +821,7 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
 
 iBool postContextClick_Window(iWindow *d, const SDL_MouseButtonEvent *ev) {
     /* A context menu may still get triggered here. */
-    const iWidget *hit = hitChild_Widget(d->root, init_I2(ev->x, ev->y));
+    const iWidget *hit = hitChild_Widget(d->root.widget, init_I2(ev->x, ev->y));
     while (hit && isEmpty_String(id_Widget(hit))) {
         hit = parent_Widget(hit);
     }
@@ -868,7 +866,7 @@ void draw_Window(iWindow *d) {
     /* Draw widgets. */
     d->frameTime = SDL_GetTicks();
     if (isExposed_Window(d)) {
-        draw_Widget(d->root);
+        draw_Widget(d->root.widget);
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
         /* App icon. */
         const iWidget *appIcon = findChild_Widget(d->root, "winbar.icon");
@@ -907,7 +905,7 @@ void resize_Window(iWindow *d, int w, int h) {
 
 void setTitle_Window(iWindow *d, const iString *title) {
     SDL_SetWindowTitle(d->win, cstr_String(title));
-    iLabelWidget *bar = findChild_Widget(d->root, "winbar.title");
+    iLabelWidget *bar = findChild_Widget(d->root.widget, "winbar.title");
     if (bar) {
         updateText_LabelWidget(bar, title);
     }
@@ -942,7 +940,7 @@ uint32_t id_Window(const iWindow *d) {
 }
 
 iInt2 rootSize_Window(const iWindow *d) {
-    return d && d->root ? d->root->rect.size : zero_I2();
+    return d && d->root.widget ? d->root.widget->rect.size : zero_I2();
 }
 
 iRect safeRootRect_Window(const iWindow *d) {
