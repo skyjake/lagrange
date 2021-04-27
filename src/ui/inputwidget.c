@@ -338,7 +338,7 @@ void setText_InputWidget(iInputWidget *d, const iString *text) {
             text = enc;
         }
         /* Omit the default (Gemini) scheme if there isn't much space. */
-        if (isNarrow_Root(get_Root())) { // flags_Widget(as_Widget(d)) & tight_WidgetFlag) {
+        if (isNarrow_Root(as_Widget(d)->root)) {
             text = omitDefaultScheme_(collect_String(copy_String(text)));
         }
     }
@@ -733,7 +733,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
         if (isFocused_Widget(d) && arg_Command(command_UserEvent(ev))) {
             iRect rect = bounds_Widget(w);
             rect.pos.y -= value_Anim(&get_Window()->rootOffset);
-            const iInt2 visRoot = visibleSize_Root(get_Root());
+            const iInt2 visRoot = visibleSize_Root(w->root);
             if (bottom_Rect(rect) > visRoot.y) {
                 setValue_Anim(&get_Window()->rootOffset, -(bottom_Rect(rect) - visRoot.y), 250);
             }

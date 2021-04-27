@@ -168,6 +168,7 @@ const iString *dateStr_(const iDate *date) {
 
 static iString *serializePrefs_App_(const iApp *d) {
     iString *str = new_String();
+    setCurrent_Root(d->window->roots[0]); /* TODO: How about the other? */
     const iSidebarWidget *sidebar  = findWidget_App("sidebar");
     const iSidebarWidget *sidebar2 = findWidget_App("sidebar2");
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
@@ -374,6 +375,11 @@ static void savePrefs_App_(const iApp *d) {
 static const char *magicState_App_       = "lgL1";
 static const char *magicTabDocument_App_ = "tabd";
 
+enum iDocumentStateFlag {    
+    current_DocumentStateFlag     = iBit(1),
+    rootIndex1_DocumentStateFlag = iBit(2)
+};
+
 static iBool loadState_App_(iApp *d) {
     iUnused(d);
     const char *oldPath = concatPath_CStr(dataDir_App_(), oldStateFileName_App_);
@@ -392,17 +398,18 @@ static iBool loadState_App_(iApp *d) {
             printf("%s: unsupported version\n", cstr_String(path_File(f)));
             return iFalse;
         }
-        setCurrent_Root(&d->window->root);
         setVersion_Stream(stream_File(f), version);
-        iDocumentWidget *doc = document_App();
+        iDocumentWidget *doc = document_App(); /* first one is always from root 0 */
         iDocumentWidget *current = NULL;
         while (!atEnd_File(f)) {
             readData_File(f, 4, magic);
             if (!memcmp(magic, magicTabDocument_App_, 4)) {
+                const int8_t flags = read8_File(f);
                 if (!doc) {
+                    setCurrent_Root(d->window->roots[flags & rootIndex1_DocumentStateFlag ? 1 : 0]);
                     doc = newTab_App(NULL, iFalse /* no switching */);
                 }
-                if (read8_File(f)) {
+                if (flags & current_DocumentStateFlag) {
                     current = doc;
                 }
                 deserializeState_DocumentWidget(doc, stream_File(f));
@@ -421,17 +428,6 @@ static iBool loadState_App_(iApp *d) {
     return iFalse;
 }
 
-iObjectList *listDocuments_App(void) {
-    iObjectList *docs = new_ObjectList();
-    const iWidget *tabs = findWidget_App("doctabs");
-    iForEach(ObjectList, i, children_Widget(findChild_Widget(tabs, "tabs.pages"))) {
-        if (isInstance_Object(i.object, &Class_DocumentWidget)) {
-            pushBack_ObjectList(docs, i.object);
-        }
-    }
-    return docs;
-}
-
 static void saveState_App_(const iApp *d) {
     iUnused(d);
     trimCache_App();
@@ -439,14 +435,17 @@ static void saveState_App_(const iApp *d) {
     if (open_File(f, writeOnly_FileMode)) {
         writeData_File(f, magicState_App_, 4);
         writeU32_File(f, latest_FileVersion); /* version */
-        setCurrent_Root(&d->window->root);
-        iConstForEach(ObjectList, i, iClob(listDocuments_App())) {
+        iConstForEach(ObjectList, i, iClob(listDocuments_App(NULL))) {
             iAssert(isInstance_Object(i.object, &Class_DocumentWidget));
+            const iWidget *widget = constAs_Widget(i.object);
             writeData_File(f, magicTabDocument_App_, 4);
-            write8_File(f, document_App() == i.object ? 1 : 0);
+            int8_t flags = (document_Root(widget->root) == i.object ? current_DocumentStateFlag : 0);
+            if (widget->root == d->window->roots[1]) {
+                flags |= rootIndex1_DocumentStateFlag;
+            }
+            write8_File(f, flags);
             serializeState_DocumentWidget(i.object, stream_File(f));
         }
-        setCurrent_Root(NULL);
     }
     else {
         fprintf(stderr, "[App] failed to save state: %s\n", strerror(errno));
@@ -823,7 +822,7 @@ const iString *debugInfo_App(void) {
     iString *msg = collectNew_String();
     format_String(msg, "# Debug information\n");
     appendFormat_String(msg, "## Documents\n");
-    iForEach(ObjectList, k, iClob(listDocuments_App())) {
+    iForEach(ObjectList, k, iClob(listDocuments_App(NULL))) {
         iDocumentWidget *doc = k.object;
         appendFormat_String(msg, "### Tab %zu: %s\n",
                             childIndex_Widget(constAs_Widget(doc)->parent, k.object),
@@ -849,7 +848,7 @@ const iString *debugInfo_App(void) {
 }
 
 static void clearCache_App_(void) {
-    iForEach(ObjectList, i, iClob(listDocuments_App())) {
+    iForEach(ObjectList, i, iClob(listDocuments_App(NULL))) {
         clearCache_History(history_DocumentWidget(i.object));
     }
 }
@@ -858,7 +857,7 @@ void trimCache_App(void) {
     iApp *d = &app_;
     size_t cacheSize = 0;
     const size_t limit = d->prefs.maxCacheSize * 1000000;
-    iObjectList *docs = listDocuments_App();
+    iObjectList *docs = listDocuments_App(NULL);
     iForEach(ObjectList, i, docs) {
         cacheSize += cacheSize_History(history_DocumentWidget(i.object));
     }
@@ -1051,7 +1050,12 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     handleCommand_MacOS(command_UserEvent(&ev));
 #endif
                     if (isMetricsChange_UserEvent(&ev)) {
-                        arrange_Widget(d->window->root.widget);
+                        iForIndices(i, d->window->roots) {
+                            iRoot *root = d->window->roots[i];
+                            if (root) {
+                                arrange_Widget(root->widget);
+                            }
+                        }
                     }
                     if (!wasUsed) {
                         /* No widget handled the command, so we'll do it. */
@@ -1087,10 +1091,10 @@ static void runTickers_App_(iApp *d) {
     iSortedArray *pending = copy_SortedArray(&d->tickers);
     clear_SortedArray(&d->tickers);
     postRefresh_App();
-    setCurrent_Root(&d->window->root); /* TODO: Each ticker has its own root. */
     iConstForEach(Array, i, &pending->values) {
         const iTicker *ticker = i.value;
         if (ticker->callback) {
+            setCurrent_Root(findRoot_Window(d->window, ticker->context));
             ticker->callback(ticker->context);
         }
     }
@@ -1120,7 +1124,11 @@ static int resizeWatcher_(void *user, SDL_Event *event) {
 }
 
 static int run_App_(iApp *d) {
-    arrange_Widget(findWidget_App("root"));
+    iForIndices(i, d->window->roots) {
+        if (d->window->roots[i]) {
+            arrange_Widget(d->window->roots[i]->widget);
+        }
+    }
     d->isRunning = iTrue;
     SDL_EventState(SDL_DROPFILE, SDL_ENABLE); /* open files via drag'n'drop */
 #if defined (iPlatformDesktop)
@@ -1139,7 +1147,12 @@ static int run_App_(iApp *d) {
 
 void refresh_App(void) {
     iApp *d = &app_;
-    destroyPending_Root(&d->window->root);
+    iForIndices(i, d->window->roots) {
+        iRoot *root = d->window->roots[i];
+        if (root) {
+            destroyPending_Root(root);
+        }
+    }
 #if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
     if (d->warmupFrames == 0 && d->isIdling) {
         return;
@@ -1270,7 +1283,16 @@ void postCommandf_App(const char *command, ...) {
 
 iAny *findWidget_App(const char *id) {
     if (!*id) return NULL;
-    return findChild_Widget(app_.window->root.widget, id);
+    iForIndices(i, app_.window->roots) {
+        iRoot *root = app_.window->roots[i];
+        if (root) {
+            iAny *found = findChild_Widget(root->widget, id);
+            if (found) {
+                return found;
+            }
+        }        
+    }
+    return NULL;
 }
 
 void addTicker_App(iTickerFunc ticker, iAny *context) {
@@ -1438,8 +1460,12 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
     return iFalse;
 }
 
+iDocumentWidget *document_Root(iRoot *d) {
+    return iConstCast(iDocumentWidget *, currentTabPage_Widget(findChild_Widget(d->widget, "doctabs")));
+}
+
 iDocumentWidget *document_App(void) {
-    return iConstCast(iDocumentWidget *, currentTabPage_Widget(findWidget_App("doctabs")));
+    return document_Root(get_Root());
 }
 
 iDocumentWidget *document_Command(const char *cmd) {
@@ -2128,7 +2154,7 @@ iBool handleCommand_App(const char *cmd) {
     else if (equal_Command(cmd, "ident.import")) {
         iCertImportWidget *imp = new_CertImportWidget();
         setPageContent_CertImportWidget(imp, sourceContent_DocumentWidget(document_App()));
-        addChild_Widget(d->window->root.widget, iClob(imp));
+        addChild_Widget(get_Root()->widget, iClob(imp));
         finalizeSheet_Widget(as_Widget(imp));
         postRefresh_App();
         return iTrue;
@@ -2173,7 +2199,7 @@ iBool handleCommand_App(const char *cmd) {
         iProcessId pid = argLabel_Command(cmd, "pid");
         if (pid) {
             iString *urls = collectNew_String();
-            iConstForEach(ObjectList, i, iClob(listDocuments_App())) {
+            iConstForEach(ObjectList, i, iClob(listDocuments_App(NULL))) {
                 append_String(urls, url_DocumentWidget(i.object));
                 appendCStr_String(urls, "\n");
             }
@@ -2257,4 +2283,21 @@ void revealPath_App(const iString *path) {
 #else
     iAssert(0 /* File revealing not implemented on this platform */);
 #endif
+}
+
+iObjectList *listDocuments_App(const iRoot *rootOrNull) {
+    iWindow *win = get_Window();
+    iObjectList *docs = new_ObjectList();
+    iForIndices(i, win->roots) {
+        iRoot *root = win->roots[i];
+        if (!rootOrNull || root == rootOrNull) {
+            const iWidget *tabs = findChild_Widget(root->widget, "doctabs");
+            iForEach(ObjectList, i, children_Widget(findChild_Widget(tabs, "tabs.pages"))) {
+                if (isInstance_Object(i.object, &Class_DocumentWidget)) {
+                    pushBack_ObjectList(docs, i.object);
+                }
+            }            
+        }
+    }
+    return docs;
 }

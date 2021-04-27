@@ -36,6 +36,7 @@ iDeclareType(DocumentWidget)
 iDeclareType(GmCerts)
 iDeclareType(MimeHooks)
 iDeclareType(Periodic)
+iDeclareType(Root)
 iDeclareType(Visited)
 iDeclareType(Window)
 
@@ -86,9 +87,11 @@ iBookmarks *        bookmarks_App       (void);
 iMimeHooks *        mimeHooks_App       (void);
 iPeriodic *         periodic_App        (void);
 iDocumentWidget *   document_App        (void);
-iObjectList *       listDocuments_App   (void);
+iObjectList *       listDocuments_App   (const iRoot *rootOrNull); /* NULL for all roots */
 iDocumentWidget *   newTab_App          (const iDocumentWidget *duplicateOf, iBool switchToNew);
 void                trimCache_App       (void);
+
+iDocumentWidget *   document_Root       (iRoot *);
 
 const iPrefs *      prefs_App           (void);
 iBool               forceSoftwareRender_App(void);

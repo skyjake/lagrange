@@ -427,7 +427,7 @@ void submit_LookupWidget(iLookupWidget *d, const iString *term) {
         trim_String(&d->pendingTerm);
         iReleasePtr(&d->pendingDocs);
         if (!isEmpty_String(&d->pendingTerm)) {
-            d->pendingDocs = listDocuments_App(); /* holds reference to all open tabs */
+            d->pendingDocs = listDocuments_App(get_Root()); /* holds reference to all open tabs */
             signal_Condition(&d->jobAvailable);
         }
         else {
@@ -654,7 +654,7 @@ static iBool processEvent_LookupWidget_(iLookupWidget *d, const SDL_Event *ev) {
              (equal_Command(cmd, "layout.changed") &&
               equal_Rangecc(range_Command(cmd, "id"), "navbar"))) {
         /* Position the lookup popup under the URL bar. */ {
-            const iInt2 rootSize = size_Root(get_Root());
+            const iInt2 rootSize = size_Root(w->root);
             const iRect navBarBounds = bounds_Widget(findWidget_App("navbar"));
             setFixedSize_Widget(w, init_I2(width_Widget(findWidget_App("url")),
                                            (rootSize.y - bottom_Rect(navBarBounds)) / 2));

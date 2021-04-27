@@ -709,7 +709,7 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, const iSidebarItem *it
             const iGmDocument *doc = document_DocumentWidget(document_App());
             const iGmHeading *head = constAt_Array(headings_GmDocument(doc), item->id);
             postCommandf_App("document.goto loc:%p", head->text.start);
-            dismissPortraitPhoneSidebars_Root(get_Root());
+            dismissPortraitPhoneSidebars_Root(as_Widget(d)->root);
             break;
         }
         case feeds_SidebarMode: {
@@ -792,7 +792,7 @@ void setWidth_SidebarWidget(iSidebarWidget *d, float widthAsGaps) {
         /* Even less space if the other sidebar is visible, too. */
         const int otherWidth =
             width_Widget(findWidget_App(d->side == left_SideBarSide ? "sidebar2" : "sidebar"));
-        width = iClamp(width, 30 * gap_UI, size_Root(get_Root()).x - 50 * gap_UI - otherWidth);
+        width = iClamp(width, 30 * gap_UI, size_Root(w->root).x - 50 * gap_UI - otherWidth);
     }
     d->widthAsGaps = (float) width / (float) gap_UI;
     if (isVisible_Widget(w)) {
@@ -967,7 +967,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                     d,
                     ((d->side == left_SideBarSide
                          ? local.x
-                         : (size_Root(get_Root()).x - coord_Command(cmd).x)) +
+                          : (size_Root(w->root).x - coord_Command(cmd).x)) +
                      resMid) / (float) gap_UI);
             }
             return iTrue;
@@ -1170,7 +1170,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         else if (isCommand_Widget(w, ev, "ident.edit")) {
             const iGmIdentity *ident = menuIdentity_SidebarWidget_(d);
             if (ident) {
-                makeValueInput_Widget(get_Window()->root.widget,
+                makeValueInput_Widget(get_Root()->widget,
                                       &ident->notes,
                                       uiHeading_ColorEscape "${heading.ident.notes}",
                                       format_CStr(cstr_Lang("dlg.ident.notes"), cstr_String(name_GmIdentity(ident))),

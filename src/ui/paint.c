@@ -87,8 +87,8 @@ void unsetClip_Paint(iPaint *d) {
 void drawRect_Paint(const iPaint *d, iRect rect, int color) {
     iInt2 br = bottomRight_Rect(rect);
     /* Keep the right/bottom edge visible in the window. */
-    if (br.x == d->dst->root.widget->rect.size.x) br.x--;
-    if (br.y == d->dst->root.widget->rect.size.y) br.y--;
+    if (br.x == d->dst->size.x) br.x--;
+    if (br.y == d->dst->size.y) br.y--;
     const SDL_Point edges[] = {
         { left_Rect(rect),  top_Rect(rect) },
         { br.x, top_Rect(rect) },

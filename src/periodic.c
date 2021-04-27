@@ -65,7 +65,6 @@ iBool dispatchCommands_Periodic(iPeriodic *d) {
     d->lastPostTime = now;
     iBool wasPosted = iFalse;
     lock_Mutex(d->mutex);
-    setCurrent_Root(&get_Window()->root);
     iConstForEach(Array, i, &d->commands.values) {
         const iPeriodicCommand *pc = i.value;
         const SDL_UserEvent ev = {
@@ -74,6 +73,7 @@ iBool dispatchCommands_Periodic(iPeriodic *d) {
             .data1 = (void *) cstr_String(&pc->command)
         };
         iAssert(isInstance_Object(pc->context, &Class_Widget));
+        setCurrent_Root(findRoot_Window(get_Window(), pc->context));
         dispatchEvent_Widget(pc->context, (const SDL_Event *) &ev);
         wasPosted = iTrue;
     }

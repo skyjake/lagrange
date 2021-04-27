@@ -13,6 +13,7 @@ struct Impl_Root {
     iWidget *  focus;
     iPtrArray *onTop; /* order is important; last one is topmost */
     iPtrSet *  pendingDestruction;
+    int        loadAnimTimer;
 };
 
 iDeclareTypeConstruction(Root)

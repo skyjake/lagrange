@@ -567,7 +567,7 @@ static int scrollMax_DocumentWidget_(const iDocumentWidget *d) {
     int sm = size_GmDocument(d->doc).y - height_Rect(bounds_Widget(constAs_Widget(d))) +
              (hasSiteBanner_GmDocument(d->doc) ? 1 : 2) * d->pageMargin * gap_UI;
     if (d->phoneToolbar) {
-        sm += size_Root(get_Root()).y -
+        sm += size_Root(constAs_Widget(d)->root).y -
               top_Rect(boundsWithoutVisualOffset_Widget(d->phoneToolbar));
     }
     return sm;
@@ -1354,7 +1354,7 @@ static void scrollBegan_DocumentWidget_(iAnyObject *any, int offset, uint32_t du
     /* Show and hide toolbar on scroll. */
     if (deviceType_App() == phone_AppDeviceType) {
         if (prefs_App()->hideToolbarOnScroll && iAbs(offset) > 5) {
-            showToolbars_Root(get_Root(), offset < 0);
+            showToolbars_Root(as_Widget(d)->root, offset < 0);
         }
     }
     updateVisible_DocumentWidget_(d);

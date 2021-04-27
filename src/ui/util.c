@@ -635,7 +635,7 @@ static iBool menuHandler_(iWidget *menu, const char *cmd) {
         }
         if ((equal_Command(cmd, "mouse.clicked") || equal_Command(cmd, "mouse.missed")) &&
             arg_Command(cmd)) {
-            if (hitChild_Widget(get_Window()->root.widget, coord_Command(cmd)) == parentMenuButton_(menu)) {
+            if (hitChild_Window(get_Window(), coord_Command(cmd)) == parentMenuButton_(menu)) {
                 return iFalse;
             }
             /* Dismiss open menus when clicking outside them. */
@@ -1366,7 +1366,7 @@ void finalizeSheet_Widget(iWidget *sheet) {
        easier to create phone versions of each dialog, but at least this works with any
        future changes to the UI (..."works"). At least this way it is possible to enforce
        a consistent styling. */
-    if (deviceType_App() == phone_AppDeviceType && parent_Widget(sheet) == get_Window()->root.widget) {
+    if (deviceType_App() == phone_AppDeviceType && parent_Widget(sheet) == root_Widget(sheet)) {
         if (~flags_Widget(sheet) & keepOnTop_WidgetFlag) {
             /* Already finalized. */
             arrange_Widget(sheet);
@@ -1573,7 +1573,7 @@ void finalizeSheet_Widget(iWidget *sheet) {
             destroy_Widget(pageContent);
             setFlags_Widget(owner, drawBackgroundToBottom_WidgetFlag, iTrue);
         }
-        destroyPending_Root(get_Root());
+        destroyPending_Root(sheet->root);
         /* Additional elements for preferences. */
         if (isPrefs) {
             addChild_Widget(topPanel, iClob(makePadding_Widget(lineHeight_Text(defaultBig_FontId))));
@@ -1754,7 +1754,7 @@ static void acceptValueInput_(iWidget *dlg) {
 }
 
 static void updateValueInputWidth_(iWidget *dlg) {
-    const iRect safeRoot = safeRect_Root(get_Root());
+    const iRect safeRoot = safeRect_Root(dlg->root);
     const iInt2 rootSize = safeRoot.size;
     iWidget *   title    = findChild_Widget(dlg, "valueinput.title");
     iWidget *   prompt   = findChild_Widget(dlg, "valueinput.prompt");
@@ -1966,7 +1966,7 @@ iWidget *makeQuestion_Widget(const char *title, const char *msg,
     }
     addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
     addChild_Widget(dlg, iClob(makeDialogButtons_Widget(items, numItems)));
-    addChild_Widget(get_Window()->root.widget, iClob(dlg));
+    addChild_Widget(dlg->root->widget, iClob(dlg));
     arrange_Widget(dlg); /* BUG: This extra arrange shouldn't be needed but the dialog won't
                             be arranged correctly unless it's here. */
     finalizeSheet_Widget(dlg);
@@ -2412,7 +2412,7 @@ iWidget *makePreferences_Widget(void) {
     addChild_Widget(dlg,
                     iClob(makeDialogButtons_Widget(
                         (iMenuItem[]){ { "${dismiss}", SDLK_ESCAPE, 0, "prefs.dismiss" } }, 1)));
-    addChild_Widget(get_Window()->root.widget, iClob(dlg));
+    addChild_Widget(dlg->root->widget, iClob(dlg));
     finalizeSheet_Widget(dlg);
     //printTree_Widget(dlg);
     return dlg;
@@ -2445,7 +2445,7 @@ iWidget *makeBookmarkEditor_Widget(void) {
                                                   KMOD_PRIMARY,
                                                   "bmed.accept" } },
                                  2)));
-    addChild_Widget(get_Window()->root.widget, iClob(dlg));
+    addChild_Widget(get_Root()->widget, iClob(dlg));
     finalizeSheet_Widget(dlg);
     return dlg;
 }
@@ -2578,7 +2578,7 @@ iWidget *makeFeedSettings_Widget(uint32_t bookmarkId) {
     setId_Widget(child_Widget(buttons, childCount_Widget(buttons) - 1), "feedcfg.save");
     arrange_Widget(dlg);
     as_Widget(input)->rect.size.x = 100 * gap_UI - headings->rect.size.x;
-    addChild_Widget(get_Window()->root.widget, iClob(dlg));
+    addChild_Widget(get_Root()->widget, iClob(dlg));
     finalizeSheet_Widget(dlg);
     /* Initialize. */ {
         const iBookmark *bm  = bookmarkId ? get_Bookmarks(bookmarks_App(), bookmarkId) : NULL;
@@ -2654,7 +2654,7 @@ iWidget *makeIdentityCreation_Widget(void) {
                                          KMOD_PRIMARY,
                                          "ident.accept" } },
                         2)));
-    addChild_Widget(get_Window()->root.widget, iClob(dlg));
+    addChild_Widget(get_Root()->widget, iClob(dlg));
     finalizeSheet_Widget(dlg);
     return dlg;
 }

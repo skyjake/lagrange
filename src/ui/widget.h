@@ -34,6 +34,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/string.h>
 #include <SDL_events.h>
 
+iDeclareType(Root) /* each widget is associated with a Root */
+
 #define iDeclareWidgetClass(className) \
     iDeclareType(className); \
     typedef iWidgetClass i##className##Class; \
@@ -138,6 +140,7 @@ struct Impl_Widget {
     iObjectList *children;
     iWidget *    parent;
     iBool (*commandHandler)(iWidget *, const char *);
+    iRoot *      root;
 };
 
 iDeclareObjectConstruction(Widget)
@@ -166,7 +169,8 @@ void    destroy_Widget          (iWidget *); /* widget removed and deleted later
 void    destroyPending_Widget   (void);
 void    releaseChildren_Widget  (iWidget *);
 
-const iString *id_Widget                (const iWidget *);
+iWidget *       root_Widget             (const iWidget *);
+const iString * id_Widget               (const iWidget *);
 int64_t flags_Widget                    (const iWidget *);
 iRect   bounds_Widget                   (const iWidget *); /* outer bounds */
 iRect   innerBounds_Widget              (const iWidget *);

@@ -420,37 +420,37 @@ static const char *loadAnimationCStr_(void) {
     return stopSeqCStr_[loadAnimIndex_ % iElemCount(stopSeqCStr_)];
 }
 
-static uint32_t updateReloadAnimation_Window_(uint32_t interval, void *window) {
-    iUnused(window);
+static uint32_t updateReloadAnimation_Root_(uint32_t interval, void *root) {
     loadAnimIndex_++;
-    postCommand_App("window.reload.update");
+    postCommandf_App("window.reload.update root:%p", root);
     return interval;
 }
 
-static void setReloadLabel_Window_(iWindow *d, iBool animating) {
+static void setReloadLabel_Root_(iRoot *d, iBool animating) {
     const iBool isMobile = deviceType_App() != desktop_AppDeviceType;
-    iLabelWidget *label = findChild_Widget(d->root.widget, "reload");
-    updateTextCStr_LabelWidget(label, animating ? loadAnimationCStr_() :
-                                                (isMobile ? pageMenuCStr_ : reloadCStr_));
+    iLabelWidget *label = findChild_Widget(d->widget, "reload");
+    updateTextCStr_LabelWidget(
+        label, animating ? loadAnimationCStr_() : (isMobile ? pageMenuCStr_ : reloadCStr_));
     if (isMobile) {
         setCommand_LabelWidget(label,
                                collectNewCStr_String(animating ? "navigate.reload" : "menu.open"));
     }
 }
 
-static void checkLoadAnimation_Window_(iWindow *d) {
-    const iBool isOngoing = isRequestOngoing_DocumentWidget(document_App());
+static void checkLoadAnimation_Root_(iRoot *d) {
+    const iBool isOngoing = isRequestOngoing_DocumentWidget(document_Root(d));
     if (isOngoing && !d->loadAnimTimer) {
-        d->loadAnimTimer = SDL_AddTimer(loadAnimIntervalMs_, updateReloadAnimation_Window_, d);
+        d->loadAnimTimer = SDL_AddTimer(loadAnimIntervalMs_, updateReloadAnimation_Root_, d);
     }
     else if (!isOngoing && d->loadAnimTimer) {
         SDL_RemoveTimer(d->loadAnimTimer);
         d->loadAnimTimer = 0;
     }
-    setReloadLabel_Window_(d, isOngoing);
+    setReloadLabel_Root_(d, isOngoing);
 }
 
 void updatePadding_Root(iRoot *d) {
+    if (d == NULL) return;
 #if defined (iPlatformAppleMobile)
     iWidget *toolBar = findChild_Widget(d->widget, "toolbar");
     float left, top, right, bottom;
@@ -470,8 +470,6 @@ void updatePadding_Root(iRoot *d) {
            are not arranged correctly until it's hidden and reshown. */
     }
     /* Note that `handleNavBarCommands_` also adjusts padding and spacing. */
-#else
-    iUnused(d);    
 #endif
 }
 
@@ -529,7 +527,7 @@ iBool isNarrow_Root(const iRoot *d) {
 static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
     if (equal_Command(cmd, "window.resized") || equal_Command(cmd, "metrics.changed")) {
         const iBool isPhone = deviceType_App() == phone_AppDeviceType;
-        const iBool isNarrow = !isPhone && isNarrow_Root(get_Root());
+        const iBool isNarrow = !isPhone && isNarrow_Root(navBar->root);
         /* Adjust navbar padding. */ {
             int hPad = isPhone && isPortrait_App() ? 0 : (isPhone || isNarrow) ? gap_UI / 2
                                                                                  : gap_UI * 3 / 2;
@@ -570,7 +568,7 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
                     updateSize_LabelWidget(btn);
                 }
             }
-            arrange_Widget(get_Window()->root.widget);
+            arrange_Widget(navBar->root->widget);
         }
         /* Resize the URL input field. */ {
             iWidget *urlBar = findChild_Widget(navBar, "url");
@@ -582,8 +580,11 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
         return iFalse;
     }
     else if (equal_Command(cmd, "window.reload.update")) {
-        checkLoadAnimation_Window_(get_Window());
-        return iTrue;
+        if (pointerLabel_Command(cmd, "root") == get_Root()) {
+            checkLoadAnimation_Root_(get_Root());
+            return iTrue;
+        }
+        return iFalse;
     }
     else if (equal_Command(cmd, "navigate.focus")) {
         iWidget *url = findChild_Widget(navBar, "url");
@@ -638,7 +639,7 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
                 visitUrl_Visited(visited_App(), withSpacesEncoded_String(urlStr), 0); /* TODO: internal URI normalization */
                 postCommand_App("visited.changed"); /* sidebar will update */
                 setText_InputWidget(url, urlStr);
-                checkLoadAnimation_Window_(get_Window());
+                checkLoadAnimation_Root_(get_Root());
                 dismissPortraitPhoneSidebars_Root(get_Root());
                 updateNavBarIdentity_(navBar);
                 updateNavDirButtons_(navBar);
@@ -651,13 +652,13 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
                 return iFalse;
             }
             else if (equal_Command(cmd, "document.request.cancelled")) {
-                checkLoadAnimation_Window_(get_Window());
+                checkLoadAnimation_Root_(get_Root());
                 return iFalse;
             }
             else if (equal_Command(cmd, "document.request.started")) {
                 iInputWidget *url = findChild_Widget(navBar, "url");
                 setTextCStr_InputWidget(url, suffixPtr_Command(cmd, "url"));
-                checkLoadAnimation_Window_(get_Window());
+                checkLoadAnimation_Root_(get_Root());
                 dismissPortraitPhoneSidebars_Root(get_Root());
                 return iFalse;
             }
@@ -668,7 +669,7 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
         iDocumentWidget *doc = document_App();
         if (doc) {
             setText_InputWidget(findChild_Widget(navBar, "url"), url_DocumentWidget(doc));
-            checkLoadAnimation_Window_(get_Window());
+            checkLoadAnimation_Root_(get_Root());
             updateNavBarIdentity_(navBar);
         }
         setFocus_Widget(NULL);
@@ -722,7 +723,7 @@ static iBool handleSearchBarCommands_(iWidget *searchBar, const char *cmd) {
         if (pointer_Command(cmd) == findChild_Widget(searchBar, "find.input")) {
             if (!isVisible_Widget(searchBar)) {
                 setFlags_Widget(searchBar, hidden_WidgetFlag | disabled_WidgetFlag, iFalse);
-                arrange_Widget(get_Window()->root.widget);
+                arrange_Widget(root_Widget(searchBar));
                 postRefresh_App();
             }
         }
@@ -831,6 +832,9 @@ static int appIconSize_(void) {
 }
 
 void updateMetrics_Root(iRoot *d) {
+    if (d == NULL) {
+        return;
+    }
     /* Custom frame. */
     iWidget *winBar = findChild_Widget(d->widget, "winbar");
     if (winBar) {

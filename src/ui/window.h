@@ -67,7 +67,7 @@ struct Impl_Window {
     uint32_t      focusGainedAt;
     SDL_Renderer *render;
     iInt2         size;
-    iRoot         root;         /* root widget and UI state */
+    iRoot *       roots[2];     /* root widget and UI state; second one is for split mode */
     float         pixelRatio;   /* conversion between points and pixels, e.g., coords, window size */
     float         displayScale; /* DPI-based scaling factor of current display, affects uiScale only */
     float         uiScale;
@@ -83,6 +83,7 @@ struct Impl_Window {
 };
 
 iBool       processEvent_Window     (iWindow *, const SDL_Event *);
+iBool       dispatchEvent_Window    (iWindow *, const SDL_Event *);
 void        draw_Window             (iWindow *);
 void        drawWhileResizing_Window(iWindow *d, int w, int h); /* workaround for SDL bug */
 void        resize_Window           (iWindow *, int w, int h);
@@ -101,10 +102,12 @@ iInt2       maxTextureSize_Window   (const iWindow *);
 float       uiScale_Window          (const iWindow *);
 iInt2       coord_Window            (const iWindow *, int x, int y);
 iInt2       mouseCoord_Window       (const iWindow *);
+iAnyObject *hitChild_Window         (const iWindow *, iInt2 coord);
 uint32_t    frameTime_Window        (const iWindow *);
 SDL_Renderer *renderer_Window       (const iWindow *);
 int         snap_Window             (const iWindow *);
 iBool       isFullscreen_Window     (const iWindow *);
+iRoot *     findRoot_Window         (const iWindow *, const iWidget *widget);
 
 iWindow *   get_Window              (void);
 
