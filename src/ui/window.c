@@ -162,8 +162,13 @@ static void removeMacMenus_(void) {
 #endif
 
 static void setupUserInterface_Window(iWindow *d) {
+#if defined (iPlatformAppleDesktop)
+    insertMacMenus_();
+#endif
+    static iRootData rootData_;
+    setCurrent_Root(NULL, &rootData_);
     d->root = createUserInterface_Root();
-    setCurrent_Root(d->root);    
+    setCurrent_Root(d->root, &rootData_);
 }
 
 static void updateRootSize_Window_(iWindow *d, iBool notifyAlways) {

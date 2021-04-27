@@ -23,20 +23,21 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "util.h"
 
 #include "app.h"
+#include "bindingswidget.h"
 #include "bookmarks.h"
 #include "color.h"
 #include "command.h"
 #include "defs.h"
 #include "documentwidget.h"
-#include "gmutil.h"
 #include "feeds.h"
-#include "labelwidget.h"
+#include "gmutil.h"
 #include "inputwidget.h"
-#include "bindingswidget.h"
 #include "keys.h"
-#include "widget.h"
+#include "labelwidget.h"
+#include "root.h"
 #include "text.h"
 #include "touch.h"
+#include "widget.h"
 #include "window.h"
 
 #if defined (iPlatformAppleMobile)
@@ -1572,7 +1573,7 @@ void finalizeSheet_Widget(iWidget *sheet) {
             destroy_Widget(pageContent);
             setFlags_Widget(owner, drawBackgroundToBottom_WidgetFlag, iTrue);
         }
-        destroyPending_Widget();
+        destroyPending_RootData(data_Root());
         /* Additional elements for preferences. */
         if (isPrefs) {
             addChild_Widget(topPanel, iClob(makePadding_Widget(lineHeight_Text(defaultBig_FontId))));

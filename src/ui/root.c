@@ -234,14 +234,43 @@ static const char *stopSeqCStr_[] = {
 static const int loadAnimIntervalMs_ = 133;
 static int       loadAnimIndex_      = 0;
 
-static iWidget * activeRoot_ = NULL;
+static iWidget *    activeRoot_     = NULL;
+static iRootData *  activeRootData_ = NULL;
 
-void setCurrent_Root(iWidget *root) {
+void setCurrent_Root(iWidget *root, iRootData *rootData) {
     activeRoot_ = root;
+    activeRootData_ = rootData;
 }
 
 iWidget *get_Root(void) {
     return activeRoot_;
+}
+
+iRootData *data_Root(void) {
+    return activeRootData_;
+}
+
+void destroyPending_RootData(iRootData *d) {
+    iForEach(PtrSet, i, d->pendingDestruction) {
+        iWidget *widget = *i.value;
+        if (!isFinished_Anim(&widget->visualOffset)) {
+            continue;
+        }
+        if (widget->parent) {
+            removeChild_Widget(widget->parent, widget);
+        }
+        iAssert(widget->parent == NULL);
+        iRelease(widget);
+        remove_PtrSetIterator(&i);
+    }
+}
+
+iPtrArray *onTop_RootData(void) {
+    iAssert(activeRootData_);
+    if (!activeRootData_->onTop) {
+        activeRootData_->onTop = new_PtrArray();
+    }
+    return activeRootData_->onTop;
 }
 
 static iBool handleRootCommands_(iWidget *root, const char *cmd) {
@@ -1031,8 +1060,6 @@ iWidget *createUserInterface_Root(void) {
 #   endif
         setAlignVisually_LabelWidget(navMenu, iTrue);
         setId_Widget(addChildFlags_Widget(navBar, iClob(navMenu), collapse_WidgetFlag), "navbar.menu");
-#else
-        insertMacMenus_();
 #endif
     }
     /* Tab bar. */ {
