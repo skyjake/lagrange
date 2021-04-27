@@ -167,6 +167,7 @@ static void setupUserInterface_Window(iWindow *d) {
 #endif
     setCurrent_Root(&d->root);
     createUserInterface_Root(&d->root);
+    setCurrent_Root(NULL);
 }
 
 static void updateRootSize_Window_(iWindow *d, iBool notifyAlways) {
@@ -449,19 +450,21 @@ void init_Window(iWindow *d, iRect rect) {
 }
 
 void deinit_Window(iWindow *d) {
+    setCurrent_Root(&d->root);
     iRecycle();
     if (theWindow_ == d) {
         theWindow_ = NULL;
     }
+    deinit_Root(&d->root);
+    setCurrent_Root(NULL);
+    deinit_Text();
+    SDL_DestroyRenderer(d->render);
+    SDL_DestroyWindow(d->win);
     iForIndices(i, d->cursors) {
         if (d->cursors[i]) {
             SDL_FreeCursor(d->cursors[i]);
         }
     }
-    deinit_Root(&d->root);
-    deinit_Text();
-    SDL_DestroyRenderer(d->render);
-    SDL_DestroyWindow(d->win);
 }
 
 SDL_Renderer *renderer_Window(const iWindow *d) {
@@ -766,6 +769,7 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
                 event.button.x = pos.x;
                 event.button.y = pos.y;
             }
+            setCurrent_Root(&d->root);
             iWidget *widget = d->root.widget;
             if (event.type == SDL_MOUSEMOTION || event.type == SDL_MOUSEWHEEL ||
                 event.type == SDL_MOUSEBUTTONUP || event.type == SDL_MOUSEBUTTONDOWN) {
@@ -866,10 +870,11 @@ void draw_Window(iWindow *d) {
     /* Draw widgets. */
     d->frameTime = SDL_GetTicks();
     if (isExposed_Window(d)) {
+        setCurrent_Root(&d->root);
         draw_Widget(d->root.widget);
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
         /* App icon. */
-        const iWidget *appIcon = findChild_Widget(d->root, "winbar.icon");
+        const iWidget *appIcon = findChild_Widget(d->root.widget, "winbar.icon");
         if (isVisible_Widget(appIcon)) {
             const int   size    = appIconSize_();
             const iRect rect    = bounds_Widget(appIcon);
@@ -885,11 +890,11 @@ void draw_Window(iWindow *d) {
                 &(SDL_Rect){ left_Rect(rect) + gap_UI * 1.25f, mid.y - size / 2, size, size });
         }
 #endif
+        setCurrent_Root(NULL);
     }
 #if 0
     /* Text cache debugging. */ {
-        SDL_Texture *cache = glyphCache_Text();
-        SDL_Rect rect = { d->root->rect.size.x - 640, 0, 640, 2.5 * 640 };
+        SDL_Rect rect = { d->root.widget->rect.size.x - 640, 0, 640, 2.5 * 640 };
         SDL_SetRenderDrawColor(d->render, 0, 0, 0, 255);
         SDL_RenderFillRect(d->render, &rect);
         SDL_RenderCopy(d->render, glyphCache_Text(), NULL, &rect);

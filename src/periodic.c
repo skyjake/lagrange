@@ -22,6 +22,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "periodic.h"
 #include "ui/widget.h"
+#include "ui/window.h"
 #include "app.h"
 
 #include <the_Foundation/string.h>
@@ -64,6 +65,7 @@ iBool dispatchCommands_Periodic(iPeriodic *d) {
     d->lastPostTime = now;
     iBool wasPosted = iFalse;
     lock_Mutex(d->mutex);
+    setCurrent_Root(&get_Window()->root);
     iConstForEach(Array, i, &d->commands.values) {
         const iPeriodicCommand *pc = i.value;
         const SDL_UserEvent ev = {
@@ -75,6 +77,7 @@ iBool dispatchCommands_Periodic(iPeriodic *d) {
         dispatchEvent_Widget(pc->context, (const SDL_Event *) &ev);
         wasPosted = iTrue;
     }
+    setCurrent_Root(NULL);
     unlock_Mutex(d->mutex);
     return wasPosted;
 }

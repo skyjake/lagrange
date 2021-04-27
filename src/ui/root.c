@@ -251,10 +251,12 @@ void setCurrent_Root(iRoot *root) {
 }
 
 iRoot *get_Root(void) {
+    iAssert(activeRoot_);
     return activeRoot_;
 }
 
 void destroyPending_Root(iRoot *d) {
+    setCurrent_Root(d);    
     iForEach(PtrSet, i, d->pendingDestruction) {
         iWidget *widget = *i.value;
         if (!isFinished_Anim(&widget->visualOffset)) {
@@ -267,6 +269,7 @@ void destroyPending_Root(iRoot *d) {
         iRelease(widget);
         remove_PtrSetIterator(&i);
     }
+    setCurrent_Root(NULL);
 }
 
 iPtrArray *onTop_Root(iRoot *d) {
