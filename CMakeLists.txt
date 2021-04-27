@@ -169,6 +169,8 @@ set (SOURCES
     src/ui/metrics.h
     src/ui/paint.c
     src/ui/paint.h
+    src/ui/root.c
+    src/ui/root.h
     src/ui/mediaui.c
     src/ui/mediaui.h
     src/ui/scrollwidget.c

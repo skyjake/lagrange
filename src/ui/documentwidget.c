@@ -42,6 +42,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "media.h"
 #include "paint.h"
 #include "periodic.h"
+#include "root.h"
 #include "mediaui.h"
 #include "scrollwidget.h"
 #include "touch.h"
@@ -1353,7 +1354,7 @@ static void scrollBegan_DocumentWidget_(iAnyObject *any, int offset, uint32_t du
     /* Show and hide toolbar on scroll. */
     if (deviceType_App() == phone_AppDeviceType) {
         if (prefs_App()->hideToolbarOnScroll && iAbs(offset) > 5) {
-            showToolbars_Window(get_Window(), offset < 0);
+            showToolbars_Root(get_Root(), offset < 0);
         }
     }
     updateVisible_DocumentWidget_(d);

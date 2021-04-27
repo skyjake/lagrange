@@ -36,6 +36,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "listwidget.h"
 #include "keys.h"
 #include "paint.h"
+#include "root.h"
 #include "scrollwidget.h"
 #include "util.h"
 #include "visited.h"
@@ -708,7 +709,7 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, const iSidebarItem *it
             const iGmDocument *doc = document_DocumentWidget(document_App());
             const iGmHeading *head = constAt_Array(headings_GmDocument(doc), item->id);
             postCommandf_App("document.goto loc:%p", head->text.start);
-            dismissPortraitPhoneSidebars_Window(get_Window());
+            dismissPortraitPhoneSidebars_Root(get_Root());
             break;
         }
         case feeds_SidebarMode: {

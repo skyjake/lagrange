@@ -26,6 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "touch.h"
 #include "command.h"
 #include "paint.h"
+#include "root.h"
 #include "util.h"
 #include "window.h"
 
@@ -39,7 +40,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #endif
 
 iDeclareType(RootData)
-
+    
+/* TODO: Move to root.c, one instance per root widget. */
 struct Impl_RootData {
     iWidget *hover;
     iWidget *mouseGrab;
@@ -772,6 +774,7 @@ void unhover_Widget(void) {
 
 iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
     if (!d->parent) {
+        setCurrent_Root(d);
         if (ev->type == SDL_MOUSEMOTION) {
             /* Hover widget may change. */
             setHover_Widget(NULL);

@@ -39,6 +39,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "ui/inputwidget.h"
 #include "ui/keys.h"
 #include "ui/labelwidget.h"
+#include "ui/root.h"
 #include "ui/sidebarwidget.h"
 #include "ui/text.h"
 #include "ui/util.h"
@@ -1662,7 +1663,7 @@ iBool handleCommand_App(const char *cmd) {
     else if (equal_Command(cmd, "hidetoolbarscroll")) {
         d->prefs.hideToolbarOnScroll = arg_Command(cmd);
         if (!d->prefs.hideToolbarOnScroll) {
-            showToolbars_Window(d->window, iTrue);
+            showToolbars_Root(get_Root(), iTrue);
         }
         return iTrue;
     }
