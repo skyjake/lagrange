@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-04-24 00:18+0000\n"
+"PO-Revision-Date: 2021-04-29 16:18+0000\n"
 "Last-Translator: Olga Smirnova <mistresssilvara@hotmail.com>\n"
 "Language-Team: Interlingua <http://weblate.skyjake.fi/projects/lagrange/ui/"
 "ia/>\n"
@@ -1376,7 +1376,7 @@ msgstr "Nove…"
 #, c-format
 msgid "error.unsupported.suggestsave"
 msgstr ""
-"Vos pote tamen salvar lo como un file a vostre dossier Discargas. Preme %s o "
+"Vos pote salvar lo como un file a vostre dossier Discargas. Preme %s o "
 "selige «%s» in li menu."
 
 msgid "dlg.newident.rsa.selfsign"
@@ -1416,3 +1416,6 @@ msgstr ""
 
 msgid "keys.link.homerow.next"
 msgstr "Parte sequente de claves del rango de base"
+
+msgid "menu.downloads"
+msgstr "Monstrar le Discargas"
