@@ -522,14 +522,14 @@ static int navBarAvailableSpace_(iWidget *navBar) {
     return avail;
 }
 
-iBool isNarrow_Window(const iWindow *d) {
-    return width_Rect(safeRootRect_Window(d)) / gap_UI < 140;
+iBool isNarrow_Root(const iRoot *d) {
+    return width_Rect(safeRect_Root(d)) / gap_UI < 140;
 }
 
 static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
     if (equal_Command(cmd, "window.resized") || equal_Command(cmd, "metrics.changed")) {
         const iBool isPhone = deviceType_App() == phone_AppDeviceType;
-        const iBool isNarrow = !isPhone && isNarrow_Window(get_Window());
+        const iBool isNarrow = !isPhone && isNarrow_Root(get_Root());
         /* Adjust navbar padding. */ {
             int hPad = isPhone && isPortrait_App() ? 0 : (isPhone || isNarrow) ? gap_UI / 2
                                                                                  : gap_UI * 3 / 2;
@@ -769,7 +769,7 @@ static iBool handleToolBarCommands_(iWidget *toolBar, const char *cmd) {
         //        setFlags_Widget(findChild_Widget(toolBar, "toolbar.view"), noBackground_WidgetFlag,
         //                        isVisible);
         /* If a sidebar hasn't been shown yet, it's height is zero. */
-        const int viewHeight = rootSize_Window(get_Window()).y;
+        const int viewHeight = size_Root(get_Root()).y;
         if (arg_Command(cmd) >= 0) {
             postCommandf_App("sidebar.mode arg:%d show:1", arg_Command(cmd));
             if (!isVisible) {
@@ -798,14 +798,14 @@ static iBool handleToolBarCommands_(iWidget *toolBar, const char *cmd) {
         //        setFlags_Widget(findChild_Widget(toolBar, "toolbar.ident"), noBackground_WidgetFlag,
         //                        isVisible);
         /* If a sidebar hasn't been shown yet, it's height is zero. */
-        const int viewHeight = rootSize_Window(get_Window()).y;
+        const int viewHeight = size_Root(get_Root()).y;
         if (isVisible) {
             dismissSidebar_(sidebar2, NULL);
         }
         else {
             postCommand_App("sidebar2.mode arg:3 show:1");
             int offset = height_Widget(sidebar2);
-            if (offset == 0) offset = rootSize_Window(get_Window()).y;
+            if (offset == 0) offset = size_Root(get_Root()).y;
             setVisualOffset_Widget(sidebar2, offset, 0, 0);
             setVisualOffset_Widget(sidebar2, 0, 400, easeOut_AnimFlag | softer_AnimFlag);
         }
@@ -1240,7 +1240,7 @@ void showToolbars_Root(iRoot *d, iBool show) {
     if (isLandscape_App()) return;
     iWidget *toolBar = findChild_Widget(d->widget, "toolbar");
     if (!toolBar) return;
-    const int height = rootSize_Window(get_Window()).y - top_Rect(boundsWithoutVisualOffset_Widget(toolBar));
+    const int height = size_Root(d).y - top_Rect(boundsWithoutVisualOffset_Widget(toolBar));
     if (show && !isVisible_Widget(toolBar)) {
         setFlags_Widget(toolBar, hidden_WidgetFlag, iFalse);
         setVisualOffset_Widget(toolBar, 0, 200, easeOut_AnimFlag);
@@ -1254,3 +1254,27 @@ void showToolbars_Root(iRoot *d, iBool show) {
     }
 }
 
+iInt2 size_Root(const iRoot *d) {
+    return d && d->widget ? d->widget->rect.size : zero_I2();
+}
+
+iRect rect_Root(const iRoot *d) {
+    if (d && d->widget) {
+        return d->widget->rect;
+    }
+    return zero_Rect();    
+}
+
+iRect safeRect_Root(const iRoot *d) {
+    iRect rect = { zero_I2(), size_Root(d) };
+#if defined (iPlatformAppleMobile)
+    float left, top, right, bottom;
+    safeAreaInsets_iOS(&left, &top, &right, &bottom);
+    adjustEdges_Rect(&rect, top, -right, -bottom, left);
+#endif
+    return rect;
+}
+
+iInt2 visibleSize_Root(const iRoot *d) {
+    return addY_I2(size_Root(d), -get_Window()->keyboardHeight);
+}

@@ -1293,7 +1293,7 @@ iPeriodic *periodic_App(void) {
 }
 
 iBool isLandscape_App(void) {
-    const iInt2 size = rootSize_Window(get_Window());
+    const iInt2 size = size_Window(get_Window());
     return size.x > size.y;
 }
 

@@ -335,7 +335,7 @@ static void update_TouchState_(void *ptr) {
 }
 
 static iWidget *findOverflowScrollable_Widget_(iWidget *d) {
-    const iInt2 rootSize = rootSize_Window(get_Window());
+    const iInt2 rootSize = size_Root(get_Root());
     for (iWidget *w = d; w; w = parent_Widget(w)) {
         if (flags_Widget(w) & overflowScrollable_WidgetFlag) {
             if (height_Widget(w) > rootSize.y && !hasVisibleChildOnTop_Widget(w)) {
@@ -437,11 +437,11 @@ iBool processEvent_Touch(const SDL_Event *ev) {
         return iFalse;
     }
     iTouchState *d = touchState_();
-    iWindow *window = get_Window();
+    iWindow *window = get_Window();    
     if (!isFinished_Anim(&window->rootOffset)) {
         return iFalse;
     }
-    const iInt2 rootSize = rootSize_Window(window);
+    const iInt2 rootSize = size_Root(get_Root());
     const SDL_TouchFingerEvent *fing = &ev->tfinger;
     const iFloat3 pos = add_F3(init_F3(fing->x * rootSize.x, fing->y * rootSize.y, 0), /* pixels */
                                init_F3(0, -value_Anim(&window->rootOffset), 0));

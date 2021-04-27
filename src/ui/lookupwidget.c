@@ -654,8 +654,7 @@ static iBool processEvent_LookupWidget_(iLookupWidget *d, const SDL_Event *ev) {
              (equal_Command(cmd, "layout.changed") &&
               equal_Rangecc(range_Command(cmd, "id"), "navbar"))) {
         /* Position the lookup popup under the URL bar. */ {
-            const iWindow *window = get_Window();
-            const iInt2 rootSize = rootSize_Window(window);
+            const iInt2 rootSize = size_Root(get_Root());
             const iRect navBarBounds = bounds_Widget(findWidget_App("navbar"));
             setFixedSize_Widget(w, init_I2(width_Widget(findWidget_App("url")),
                                            (rootSize.y - bottom_Rect(navBarBounds)) / 2));

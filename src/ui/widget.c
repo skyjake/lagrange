@@ -352,7 +352,7 @@ static size_t numArrangedChildren_Widget_(const iWidget *d) {
 
 static void centerHorizontal_Widget_(iWidget *d) {
     d->rect.pos.x = ((d->parent ? width_Rect(innerRect_Widget_(d->parent))
-                                : rootSize_Window(get_Window()).x) -
+                                : size_Root(get_Root()).x) -
                      width_Rect(d->rect)) /
                     2;
     TRACE(d, "center horizontally: %d", d->rect.pos.x);
@@ -706,7 +706,7 @@ iBool containsExpanded_Widget(const iWidget *d, iInt2 coord, int expand) {
     const iRect bounds = {
         zero_I2(),
         addY_I2(d->rect.size,
-                d->flags & drawBackgroundToBottom_WidgetFlag ? rootSize_Window(get_Window()).y : 0)
+                d->flags & drawBackgroundToBottom_WidgetFlag ? size_Root(get_Root()).y : 0)
     };
     return contains_Rect(expand ? expanded_Rect(bounds, init1_I2(expand)) : bounds,
                          localCoord_Widget(d, coord));
@@ -845,8 +845,8 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
 
 static iBool scrollOverflow_Widget_(iWidget *d, int delta) {
     iRect bounds = bounds_Widget(d);
-    const iInt2 rootSize = rootSize_Window(get_Window());
-    const iRect winRect = safeRootRect_Window(get_Window());
+    const iInt2 rootSize = size_Root(get_Root());
+    const iRect winRect = safeRect_Root(get_Root());
     const int yTop = top_Rect(winRect);
     const int yBottom = bottom_Rect(winRect);
     //const int safeBottom = rootSize.y - yBottom;
@@ -899,30 +899,6 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
         if (scrollOverflow_Widget_(d, step)) {
             return iTrue;
         }
-#if 0
-        iRect bounds = bounds_Widget(d);
-        const iInt2 rootSize = rootSize_Window(get_Window());
-        const iRect winRect = safeRootRect_Window(get_Window());
-        const int yTop = top_Rect(winRect);
-        const int yBottom = bottom_Rect(winRect);
-        const int safeBottom = rootSize.y - yBottom;
-        if (height_Rect(bounds) > height_Rect(winRect)) {
-            int step = ev->wheel.y;
-            if (!isPerPixel_MouseWheelEvent(&ev->wheel)) {
-                step *= lineHeight_Text(uiLabel_FontId);
-            }
-            bounds.pos.y += step;
-            if (step > 0) {
-                bounds.pos.y = iMin(bounds.pos.y, yTop);
-            }
-            else {
-                bounds.pos.y = iMax(bounds.pos.y, rootSize.y /*+ safeBottom*/ - height_Rect(bounds));
-            }
-            d->rect.pos = localCoord_Widget(d->parent, bounds.pos);
-            refresh_Widget(d);
-            return iTrue;
-        }
-#endif
     }
     switch (ev->type) {
         case SDL_USEREVENT: {
@@ -1003,14 +979,14 @@ void drawBackground_Widget(const iWidget *d) {
                 break;
         }
         fillRect_Paint(&p,
-                       initCorners_Rect(zero_I2(), rootSize_Window(get_Window())),
+                       rect_Root(get_Root()),
                        fadeColor);
         SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_NONE);
     }
     if (d->bgColor >= 0 || d->frameColor >= 0) {
         iRect rect = bounds_Widget(d);
         if (d->flags & drawBackgroundToBottom_WidgetFlag) {
-            rect.size.y = rootSize_Window(get_Window()).y - top_Rect(rect);
+            rect.size.y = size_Root(get_Root()).y - top_Rect(rect);
         }
         iPaint p;
         init_Paint(&p);
@@ -1018,7 +994,7 @@ void drawBackground_Widget(const iWidget *d) {
 #if defined (iPlatformAppleMobile)
             if (d->flags & (drawBackgroundToHorizontalSafeArea_WidgetFlag |
                             drawBackgroundToVerticalSafeArea_WidgetFlag)) {
-                const iInt2 rootSize = rootSize_Window(get_Window());
+                const iInt2 rootSize = size_Root(get_Root());
                 const iInt2 center = divi_I2(rootSize, 2);
                 int top = 0, right = 0, bottom = 0, left = 0;
                 if (d->flags & drawBackgroundToHorizontalSafeArea_WidgetFlag) {

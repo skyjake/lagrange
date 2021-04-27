@@ -792,7 +792,7 @@ void setWidth_SidebarWidget(iSidebarWidget *d, float widthAsGaps) {
         /* Even less space if the other sidebar is visible, too. */
         const int otherWidth =
             width_Widget(findWidget_App(d->side == left_SideBarSide ? "sidebar2" : "sidebar"));
-        width = iClamp(width, 30 * gap_UI, rootSize_Window(get_Window()).x - 50 * gap_UI - otherWidth);
+        width = iClamp(width, 30 * gap_UI, size_Root(get_Root()).x - 50 * gap_UI - otherWidth);
     }
     d->widthAsGaps = (float) width / (float) gap_UI;
     if (isVisible_Widget(w)) {
@@ -967,7 +967,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                     d,
                     ((d->side == left_SideBarSide
                          ? local.x
-                         : (rootSize_Window(get_Window()).x - coord_Command(cmd).x)) +
+                         : (size_Root(get_Root()).x - coord_Command(cmd).x)) +
                      resMid) / (float) gap_UI);
             }
             return iTrue;

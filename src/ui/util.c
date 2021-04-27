@@ -738,7 +738,7 @@ void openMenu_Widget(iWidget *d, iInt2 coord) {
 }
 
 void openMenuFlags_Widget(iWidget *d, iInt2 coord, iBool postCommands) {
-    const iInt2 rootSize        = rootSize_Window(get_Window());
+    const iInt2 rootSize        = size_Window(get_Window());
     const iBool isPortraitPhone = (deviceType_App() == phone_AppDeviceType && isPortrait_App());
     const iBool isSlidePanel    = (flags_Widget(d) & horizontalOffset_WidgetFlag) != 0;
     if (postCommands) {
@@ -756,7 +756,7 @@ void openMenuFlags_Widget(iWidget *d, iInt2 coord, iBool postCommands) {
         if (!isSlidePanel) {
             setFlags_Widget(d, borderTop_WidgetFlag, iTrue);
         }
-        d->rect.size.x = rootSize_Window(get_Window()).x;
+        d->rect.size.x = size_Window(get_Window()).x;
     }
     /* Update item fonts. */ {
         iForEach(ObjectList, i, children_Widget(d)) {
@@ -1754,7 +1754,7 @@ static void acceptValueInput_(iWidget *dlg) {
 }
 
 static void updateValueInputWidth_(iWidget *dlg) {
-    const iRect safeRoot = safeRootRect_Window(get_Window());
+    const iRect safeRoot = safeRect_Root(get_Root());
     const iInt2 rootSize = safeRoot.size;
     iWidget *   title    = findChild_Widget(dlg, "valueinput.title");
     iWidget *   prompt   = findChild_Widget(dlg, "valueinput.prompt");

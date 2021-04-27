@@ -170,12 +170,13 @@ static void setupUserInterface_Window(iWindow *d) {
     setCurrent_Root(NULL);
 }
 
-static void updateRootSize_Window_(iWindow *d, iBool notifyAlways) {
-    iInt2 *size = &d->root.widget->rect.size;
+static void updateSize_Window_(iWindow *d, iBool notifyAlways) {
+    iInt2 *size = &d->size;
     const iInt2 oldSize = *size;
     SDL_GetRendererOutputSize(d->render, &size->x, &size->y);
     size->y -= d->keyboardHeight;
-    d->root.widget->minSize = *size;
+    d->root.widget->rect.size = *size; /* Reposition roots. */
+    d->root.widget->minSize   = *size;
     if (notifyAlways || !isEqual_I2(oldSize, *size)) {
         updatePadding_Root(&d->root);
         const iBool isHoriz = (d->place.lastNotifiedSize.x != size->x);
@@ -346,6 +347,7 @@ static SDL_Surface *loadImage_(const iBlock *data, int resized) {
 void init_Window(iWindow *d, iRect rect) {
     theWindow_ = d;
     d->win = NULL;
+    d->size = zero_I2(); /* will be updated below */
     init_Root(&d->root);
     iZap(d->cursors);
     d->place.initialPos = rect.pos;
@@ -426,7 +428,7 @@ void init_Window(iWindow *d, iRect rect) {
     init_Text(d->render);
     setupUserInterface_Window(d);
     postCommand_App("~bindings.changed"); /* update from bindings */
-    updateRootSize_Window_(d, iFalse);
+    updateSize_Window_(d, iFalse);
     /* Load the border shadow texture. */ {
         SDL_Surface *surf = loadImage_(&imageShadow_Embedded, 0);
         d->borderShadow = SDL_CreateTextureFromSurface(d->render, surf);
@@ -639,7 +641,7 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
         case SDL_WINDOWEVENT_RESIZED:
             updatePadding_Root(&d->root);
             if (d->isMinimized) {
-                updateRootSize_Window_(d, iTrue);
+                updateSize_Window_(d, iTrue);
                 return iTrue;
             }
             if (unsnap_Window_(d, NULL)) {
@@ -650,11 +652,11 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
                 //printf("normal rect set (resize)\n"); fflush(stdout);
             }
             checkPixelRatioChange_Window_(d);
-            updateRootSize_Window_(d, iTrue /* we were already redrawing during the resize */);
+            updateSize_Window_(d, iTrue /* we were already redrawing during the resize */);
             postRefresh_App();
             return iTrue;
         case SDL_WINDOWEVENT_RESTORED:
-            updateRootSize_Window_(d, iTrue);
+            updateSize_Window_(d, iTrue);
             invalidate_Window_(d);
             d->isMinimized = iFalse;
             postRefresh_App();
@@ -847,7 +849,7 @@ void draw_Window(iWindow *d) {
         iInt2 renderSize;
         SDL_GetRendererOutputSize(d->render, &renderSize.x, &renderSize.y);
         if (!isEqual_I2(renderSize, d->root->rect.size)) {
-            updateRootSize_Window_(d, iTrue);
+            updateSize_Window_(d, iTrue);
             processEvents_App(postedEventsOnly_AppEventMode);
         }
     }
@@ -905,7 +907,7 @@ void draw_Window(iWindow *d) {
 
 void resize_Window(iWindow *d, int w, int h) {
     SDL_SetWindowSize(d->win, w, h);
-    updateRootSize_Window_(d, iFalse);
+    updateSize_Window_(d, iFalse);
 }
 
 void setTitle_Window(iWindow *d, const iString *title) {
@@ -944,22 +946,8 @@ uint32_t id_Window(const iWindow *d) {
     return d && d->win ? SDL_GetWindowID(d->win) : 0;
 }
 
-iInt2 rootSize_Window(const iWindow *d) {
-    return d && d->root.widget ? d->root.widget->rect.size : zero_I2();
-}
-
-iRect safeRootRect_Window(const iWindow *d) {
-    iRect rect = { zero_I2(), rootSize_Window(d) };
-#if defined (iPlatformAppleMobile)
-    float left, top, right, bottom;
-    safeAreaInsets_iOS(&left, &top, &right, &bottom);
-    adjustEdges_Rect(&rect, top, -right, -bottom, left);
-#endif
-    return rect;
-}
-
-iInt2 visibleRootSize_Window(const iWindow *d) {
-    return addY_I2(rootSize_Window(d), -d->keyboardHeight);
+iInt2 size_Window(const iWindow *d) {
+    return d ? d->size : zero_I2();
 }
 
 iInt2 coord_Window(const iWindow *d, int x, int y) {

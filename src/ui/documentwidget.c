@@ -567,7 +567,7 @@ static int scrollMax_DocumentWidget_(const iDocumentWidget *d) {
     int sm = size_GmDocument(d->doc).y - height_Rect(bounds_Widget(constAs_Widget(d))) +
              (hasSiteBanner_GmDocument(d->doc) ? 1 : 2) * d->pageMargin * gap_UI;
     if (d->phoneToolbar) {
-        sm += rootSize_Window(get_Window()).y -
+        sm += size_Root(get_Root()).y -
               top_Rect(boundsWithoutVisualOffset_Widget(d->phoneToolbar));
     }
     return sm;

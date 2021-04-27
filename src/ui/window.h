@@ -66,6 +66,7 @@ struct Impl_Window {
     iBool         ignoreClick;
     uint32_t      focusGainedAt;
     SDL_Renderer *render;
+    iInt2         size;
     iRoot         root;         /* root widget and UI state */
     float         pixelRatio;   /* conversion between points and pixels, e.g., coords, window size */
     float         displayScale; /* DPI-based scaling factor of current display, affects uiScale only */
@@ -95,9 +96,7 @@ void        showToolbars_Window     (iWindow *, iBool show);
 iBool       postContextClick_Window (iWindow *, const SDL_MouseButtonEvent *);
 
 uint32_t    id_Window               (const iWindow *);
-iInt2       rootSize_Window         (const iWindow *);
-iRect       safeRootRect_Window     (const iWindow *);
-iInt2       visibleRootSize_Window  (const iWindow *); /* may be obstructed by software keyboard */
+iInt2       size_Window             (const iWindow *);
 iInt2       maxTextureSize_Window   (const iWindow *);
 float       uiScale_Window          (const iWindow *);
 iInt2       coord_Window            (const iWindow *, int x, int y);
@@ -106,7 +105,6 @@ uint32_t    frameTime_Window        (const iWindow *);
 SDL_Renderer *renderer_Window       (const iWindow *);
 int         snap_Window             (const iWindow *);
 iBool       isFullscreen_Window     (const iWindow *);
-iBool       isNarrow_Window         (const iWindow *);
 
 iWindow *   get_Window              (void);
 
