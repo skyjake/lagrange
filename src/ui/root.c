@@ -716,14 +716,14 @@ static iBool handleSearchBarCommands_(iWidget *searchBar, const char *cmd) {
         equal_Rangecc(range_Command(cmd, "id"), "find.input")) {
         iInputWidget *input = findChild_Widget(searchBar, "find.input");
         if (arg_Command(cmd) && argLabel_Command(cmd, "enter") && isVisible_Widget(input)) {
-            postCommand_App("find.next");
+            postCommand_Root(searchBar->root, "find.next");
             /* Keep focus when pressing Enter. */
             if (!isEmpty_String(text_InputWidget(input))) {
-                postCommand_App("focus.set id:find.input");
+                postCommand_Root(searchBar->root, "focus.set id:find.input");
             }
         }
         else {
-            postCommand_App("find.clearmark");
+            postCommand_Root(searchBar->root, "find.clearmark");
         }
         return iTrue;
     }

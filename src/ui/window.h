@@ -68,6 +68,7 @@ struct Impl_Window {
     SDL_Renderer *render;
     iInt2         size;
     iRoot *       roots[2];     /* root widget and UI state; second one is for split mode */
+    iRoot *       keyRoot;      /* root that has the current keyboard input focus */
     iWidget *     hover;
     iWidget *     mouseGrab;
     iWidget *     focus;
@@ -93,6 +94,7 @@ void        resize_Window           (iWindow *, int w, int h);
 void        setTitle_Window         (iWindow *, const iString *title);
 void        setUiScale_Window       (iWindow *, float uiScale);
 void        setFreezeDraw_Window    (iWindow *, iBool freezeDraw);
+iBool       setKeyRoot_Window       (iWindow *, iRoot *root);
 void        setCursor_Window        (iWindow *, int cursor);
 void        setSnap_Window          (iWindow *, int snapMode);
 void        setKeyboardHeight_Window(iWindow *, int height);
@@ -111,6 +113,7 @@ SDL_Renderer *renderer_Window       (const iWindow *);
 int         snap_Window             (const iWindow *);
 iBool       isFullscreen_Window     (const iWindow *);
 iRoot *     findRoot_Window         (const iWindow *, const iWidget *widget);
+iRoot *     otherRoot_Window        (const iWindow *, iRoot *root);
 
 iWindow *   get_Window              (void);
 

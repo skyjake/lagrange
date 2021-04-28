@@ -1306,7 +1306,7 @@ void postCommandf_App(const char *command, ...) {
 
 void rootOrder_App(iRoot *roots[2]) {
     const iWindow *win = app_.window;
-    roots[0] = get_Root();
+    roots[0] = win->keyRoot;
     roots[1] = (roots[0] == win->roots[0] ? win->roots[1] : win->roots[0]);
 }
 
@@ -1535,7 +1535,7 @@ iDocumentWidget *newTab_App(const iDocumentWidget *duplicateOf, iBool switchToNe
     }
     arrange_Widget(tabs);
     refresh_Widget(tabs);
-    postCommandf_App("tab.created id:%s", cstr_String(id_Widget(as_Widget(doc))));
+    postCommandf_Root(get_Root(), "tab.created id:%s", cstr_String(id_Widget(as_Widget(doc))));
     return doc;
 }
 
@@ -1906,10 +1906,16 @@ iBool handleCommand_App(const char *cmd) {
             openInDefaultBrowser_App(url);
             return iTrue;
         }
-        iDocumentWidget *doc = document_Command(cmd);
         const int newTab = argLabel_Command(cmd, "newtab");
-        if (newTab) {
-            doc = newTab_App(NULL, (newTab & 1) != 0); /* `newtab:2` to open in background */
+        iRoot *root = get_Root();
+        iRoot *oldRoot = root;
+        if (newTab & otherRoot_OpenTabFlag) {
+            root = otherRoot_Window(d->window, root);
+            setCurrent_Root(root); /* need to change for widget creation */
+        }
+        iDocumentWidget *doc = document_Command(cmd);
+        if (newTab & (new_OpenTabFlag | newBackground_OpenTabFlag)) {
+            doc = newTab_App(NULL, (newTab & new_OpenTabFlag) != 0); /* `newtab:2` to open in background */
         }
         iHistory *history = history_DocumentWidget(doc);
         const iBool isHistory = argLabel_Command(cmd, "history") != 0;
@@ -1936,14 +1942,15 @@ iBool handleCommand_App(const char *cmd) {
            is already available, e.g., it's from "about:" or restored from cache. */
         const iRangecc gotoHeading = range_Command(cmd, "gotoheading");
         if (gotoHeading.start) {
-            postCommandf_App("document.goto heading:%s", cstr_Rangecc(gotoHeading));
+            postCommandf_Root(root, "document.goto heading:%s", cstr_Rangecc(gotoHeading));
         }
         const iRangecc gotoUrlHeading = range_Command(cmd, "gotourlheading");
         if (gotoUrlHeading.start) {
-            postCommandf_App("document.goto heading:%s",
+            postCommandf_Root(root, "document.goto heading:%s",
                              cstrCollect_String(urlDecode_String(
                                  collect_String(newRange_String(gotoUrlHeading)))));
         }
+        setCurrent_Root(oldRoot);
     }
     else if (equal_Command(cmd, "document.request.cancelled")) {
         /* TODO: How should cancelled requests be treated in the history? */
@@ -2013,6 +2020,12 @@ iBool handleCommand_App(const char *cmd) {
         }
         else {
             postCommand_App("quit");
+        }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "keyroot.next")) {
+        if (setKeyRoot_Window(d->window, otherRoot_Window(d->window, d->window->keyRoot))) {
+            setFocus_Widget(NULL);
         }
         return iTrue;
     }

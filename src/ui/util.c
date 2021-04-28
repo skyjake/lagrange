@@ -171,7 +171,9 @@ int keyMods_Sym(int kmods) {
 
 int openTabMode_Sym(int kmods) {
     const int km = keyMods_Sym(kmods);
-    return ((km & KMOD_PRIMARY) && (km & KMOD_SHIFT)) ? 1 : (km & KMOD_PRIMARY) ? 2 : 0;
+    return (km & KMOD_ALT ? otherRoot_OpenTabFlag : 0) | /* open to the side */
+           (((km & KMOD_PRIMARY) && (km & KMOD_SHIFT)) ? new_OpenTabFlag :
+            (km & KMOD_PRIMARY) ? newBackground_OpenTabFlag : 0);
 }
 
 iRangei intersect_Rangei(iRangei a, iRangei b) {

@@ -742,7 +742,8 @@ static iBool processEvent_LookupWidget_(iLookupWidget *d, const SDL_Event *ev) {
                     return iTrue;
             }
         }
-        if (key == SDLK_DOWN && !mods && focus_Widget() == findWidget_App("url") &&
+        if (isVisible_Widget(w) &&
+            key == SDLK_DOWN && !mods && focus_Widget() == findWidget_App("url") &&
             numItems_ListWidget(d->list)) {
             setCursor_LookupWidget_(d, 1); /* item 0 is always the first heading */
             setFocus_Widget(w);

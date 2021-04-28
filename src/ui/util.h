@@ -64,11 +64,17 @@ iLocalDef iBool isPerPixel_MouseWheelEvent(const SDL_MouseWheelEvent *ev) {
 #   define KMOD_SECONDARY   KMOD_GUI
 #endif
 
+enum iOpenTabFlag {
+    new_OpenTabFlag           = iBit(1),
+    newBackground_OpenTabFlag = iBit(2),
+    otherRoot_OpenTabFlag     = iBit(3),
+};
+
 iBool       isMod_Sym           (int key);
 int         normalizedMod_Sym   (int key);
 int         keyMods_Sym         (int kmods); /* shift, alt, control, or gui */
 void        toString_Sym        (int key, int kmods, iString *str);
-int         openTabMode_Sym     (int kmods);
+int         openTabMode_Sym     (int kmods); /* returns OpenTabFlags */
 
 iRangei     intersect_Rangei    (iRangei a, iRangei b);
 iRangei     union_Rangei        (iRangei a, iRangei b);

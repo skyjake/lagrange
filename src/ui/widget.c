@@ -1346,6 +1346,7 @@ void setFocus_Widget(iWidget *d) {
         win->focus = d;
         if (d) {
             iAssert(flags_Widget(d) & focusable_WidgetFlag);
+            setKeyRoot_Window(get_Window(), d->root);
             postCommand_Widget(d, "focus.gained");
         }
     }
@@ -1404,13 +1405,17 @@ static const iWidget *findFocusRoot_Widget_(const iWidget *d) {
 }
 
 iAny *findFocusable_Widget(const iWidget *startFrom, enum iWidgetFocusDir focusDir) {
-    const iWidget *root = findFocusRoot_Widget_(get_Root()->widget);
-    iAssert(root != NULL);
+    iRoot *uiRoot = (startFrom ? startFrom->root : get_Window()->keyRoot);
+    const iWidget *focusRoot = findFocusRoot_Widget_(uiRoot->widget);
+    iAssert(focusRoot != NULL);
     iBool getNext = (startFrom ? iFalse : iTrue);
-    const iWidget *found = findFocusable_Widget_(root, startFrom, &getNext, focusDir);
+    const iWidget *found = findFocusable_Widget_(focusRoot, startFrom, &getNext, focusDir);
     if (!found && startFrom) {
         getNext = iTrue;
-        found = findFocusable_Widget_(root, NULL, &getNext, focusDir);
+        /* Switch to the next root, if available. */
+        found = findFocusable_Widget_(findFocusRoot_Widget_(otherRoot_Window(get_Window(),
+                                                                             uiRoot)->widget),
+                                      NULL, &getNext, focusDir);
     }
     return iConstCast(iWidget *, found);
 }

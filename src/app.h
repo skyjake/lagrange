@@ -71,6 +71,7 @@ const iString *downloadDir_App  (void);
 const iString *debugInfo_App    (void);
 
 int         run_App                     (int argc, char **argv);
+void        rootOrder_App               (iRoot *roots[2]); /* TODO: max roots? */
 void        processEvents_App           (enum iAppEventMode mode);
 iBool       handleCommand_App           (const char *cmd);
 void        refresh_App                 (void);

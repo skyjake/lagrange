@@ -179,21 +179,22 @@ static void setupUserInterface_Window(iWindow *d) {
         createUserInterface_Root(d->roots[i]);
         setCurrent_Root(NULL);
     }
+    /* One of the roots always has keyboard input focus. */
+    d->keyRoot = d->roots[0];
 }
 
 static void windowSizeChanged_Window_(iWindow *d) {
     const int numRoots = numRoots_Window(d);
     /* Horizontal split frame. */
-    const iInt2 rootSize = div_I2(d->size, init_I2(numRoots, 1));
+    const iInt2 rootSize = d->size;
     iForIndices(i, d->roots) {
         iRoot *root = d->roots[i];
         if (root) {
-            root->widget->rect.pos  = init_I2(rootSize.x * i, 0);
-            root->widget->rect.size = addX_I2(rootSize, -gap_UI / 4);
-            if (i == 1) {
-                root->widget->rect.pos.x += gap_UI / 8;
-            }
-            root->widget->minSize   = root->widget->rect.size;
+            iRect *rect = &root->widget->rect;
+            /* Horizontal split frame. */
+            rect->pos  = init_I2(rootSize.x * i / numRoots, 0);
+            rect->size = init_I2(rootSize.x * (i + 1) / numRoots - rect->pos.x, rootSize.y);
+            root->widget->minSize = rect->size;
             updatePadding_Root(root);
             arrange_Widget(root->widget);
         }
@@ -528,6 +529,10 @@ iRoot *findRoot_Window(const iWindow *d, const iWidget *widget) {
         }
     }
     return NULL;
+}
+
+iRoot *otherRoot_Window(const iWindow *d, iRoot *root) {
+    return root == d->roots[0] && d->roots[1] ? d->roots[1] : d->roots[0];
 }
 
 static void invalidate_Window_(iWindow *d) {
@@ -881,19 +886,35 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
     return iFalse;
 }
 
+iBool setKeyRoot_Window(iWindow *d, iRoot *root) {
+    if (d->keyRoot != root) {
+        d->keyRoot = root;
+        postRefresh_App();
+        return iTrue;
+    }
+    return iFalse;
+}
+
 iBool dispatchEvent_Window(iWindow *d, const SDL_Event *ev) {
     if (ev->type == SDL_MOUSEMOTION) {
         /* Hover widget may change. */
         setHover_Widget(NULL);
     }
-    iForIndices(i, d->roots) {
-        if (d->roots[i]) {
-            if (isCommand_SDLEvent(ev) && ev->user.data2 && ev->user.data2 != d->roots[i]) {
+    iRoot *order[2];
+    rootOrder_App(order);
+    iForIndices(i, order) {
+        iRoot *root = order[i];
+        if (root) {
+            if (isCommand_SDLEvent(ev) && ev->user.data2 && ev->user.data2 != root) {
                 continue; /* Not meant for this root. */
             }
-            setCurrent_Root(d->roots[i]);
-            const iBool wasUsed = dispatchEvent_Widget(d->roots[i]->widget, ev);
+            setCurrent_Root(root);
+            const iBool wasUsed = dispatchEvent_Widget(root->widget, ev);
             if (wasUsed) {
+                if (ev->type == SDL_MOUSEBUTTONDOWN ||
+                    ev->type == SDL_MOUSEWHEEL) {
+                    setKeyRoot_Window(d, root);
+                }
                 return iTrue;
             }
         }
@@ -982,7 +1003,24 @@ void draw_Window(iWindow *d) {
                         NULL,
                         &(SDL_Rect){ left_Rect(rect) + gap_UI * 1.25f, mid.y - size / 2, size, size });
                 }
-#endif                
+#endif
+                /* Root separator and keyboard focus indicator. */ {
+                    iPaint p;
+                    init_Paint(&p);
+                    const iRect bounds = bounds_Widget(root->widget);
+                    if (i == 1) {
+                        fillRect_Paint(&p, (iRect){
+                            addX_I2(topLeft_Rect(bounds), -gap_UI / 8),
+                            init_I2(gap_UI / 4, height_Rect(bounds))
+                        }, uiSeparator_ColorId);
+                    }
+                    if (root == d->keyRoot) {
+                        fillRect_Paint(&p, (iRect){
+                            topLeft_Rect(bounds),
+                            init_I2(width_Rect(bounds), gap_UI / 2)                            
+                        }, uiBackgroundSelected_ColorId);
+                    }
+                }
             }
         }
         setCurrent_Root(NULL);

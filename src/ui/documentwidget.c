@@ -845,7 +845,8 @@ static void updateVisible_DocumentWidget_(iDocumentWidget *d) {
 }
 
 static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
-    iLabelWidget *tabButton = tabPageButton_Widget(findWidget_App("doctabs"), d);
+    iLabelWidget *tabButton = tabPageButton_Widget(findChild_Widget(root_Widget(constAs_Widget(d)),
+                                                                    "doctabs"), d);
     if (!tabButton) {
         /* Not part of the UI at the moment. */
         return;
@@ -2868,8 +2869,16 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                 { openTabBg_Icon " ${link.newtab.background}",
                                   0,
                                   0,
-                                  format_CStr("!open newtab:2 url:%s", cstr_String(linkUrl)) } },
-                            2);
+                                  format_CStr("!open newtab:2 url:%s", cstr_String(linkUrl)) },
+                                { "${link.side}",
+                                  0,
+                                  0,
+                                  format_CStr("!open newtab:4 url:%s", cstr_String(linkUrl)) },
+                                { "${link.side.newtab}",
+                                  0,
+                                  0,
+                                  format_CStr("!open newtab:5 url:%s", cstr_String(linkUrl)) } },
+                            4);
                     }
                     else if (!willUseProxy_App(scheme)) {
                         pushBack_Array(
