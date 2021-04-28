@@ -346,7 +346,7 @@ static void loadPrefs_App_(iApp *d) {
             }
 #endif
             else {
-                postCommandString_App(&cmdStr);
+                postCommandString_Root(NULL, &cmdStr);
             }
             deinit_String(&cmdStr);
         }
@@ -399,18 +399,25 @@ static iBool loadState_App_(iApp *d) {
             return iFalse;
         }
         setVersion_Stream(stream_File(f), version);
-        iDocumentWidget *doc = document_App(); /* first one is always from root 0 */
-        iDocumentWidget *current = NULL;
+        iDocumentWidget *doc = NULL; // document_App(); /* first one is always from root 0 */
+        iBool isFirstTab[2] = { iTrue, iTrue };
+        iDocumentWidget *current[2] = { NULL, NULL };
         while (!atEnd_File(f)) {
             readData_File(f, 4, magic);
             if (!memcmp(magic, magicTabDocument_App_, 4)) {
                 const int8_t flags = read8_File(f);
-                if (!doc) {
-                    setCurrent_Root(d->window->roots[flags & rootIndex1_DocumentStateFlag ? 1 : 0]);
+                const int rootIndex = flags & rootIndex1_DocumentStateFlag ? 1 : 0;
+                setCurrent_Root(d->window->roots[rootIndex]);
+                if (isFirstTab[rootIndex]) {
+                    isFirstTab[rootIndex] = iFalse;
+                    /* There is one pre-created tab in each root. */
+                    doc = document_Root(get_Root());
+                }
+                else {
                     doc = newTab_App(NULL, iFalse /* no switching */);
                 }
                 if (flags & current_DocumentStateFlag) {
-                    current = doc;
+                    current[rootIndex] = doc;
                 }
                 deserializeState_DocumentWidget(doc, stream_File(f));
                 doc = NULL;
@@ -421,7 +428,9 @@ static iBool loadState_App_(iApp *d) {
                 return iFalse;
             }
         }
-        postCommandf_App("tabs.switch page:%p", current);
+        iForIndices(i, current) {
+            postCommandf_Root(NULL, "tabs.switch page:%p", current[i]);
+        }
         setCurrent_Root(NULL);
         return iTrue;
     }
@@ -466,7 +475,7 @@ static uint32_t checkAsleep_App_(uint32_t interval, void *param) {
 
 static uint32_t postAutoReloadCommand_App_(uint32_t interval, void *param) {
     iUnused(param);
-    postCommand_App("document.autoreload");
+    postCommand_Root(NULL, "document.autoreload");
     return interval;
 }
 
@@ -660,7 +669,6 @@ static void init_App_(iApp *d, int argc, char **argv) {
     d->bookmarks = new_Bookmarks();
     d->tabEnum   = 0; /* generates unique IDs for tab pages */
     init_Periodic(&d->periodic);
-    setThemePalette_Color(d->prefs.theme);
 #if defined (iPlatformAppleDesktop)
     setupApplication_MacOS();
 #endif
@@ -691,11 +699,12 @@ static void init_App_(iApp *d, int argc, char **argv) {
     /* Widget state init. */
     processEvents_App(postedEventsOnly_AppEventMode);
     if (!loadState_App_(d)) {
-        postCommand_App("open url:about:help");
+        postCommand_Root(NULL, "open url:about:help");
     }
-    postCommand_App("window.unfreeze");
+    //setThemePalette_Color(d->prefs.theme);
+    postCommand_Root(NULL, "window.unfreeze");
     d->autoReloadTimer = SDL_AddTimer(60 * 1000, postAutoReloadCommand_App_, NULL);
-    postCommand_App("document.autoreload");
+    postCommand_Root(NULL, "document.autoreload");
 #if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
     d->isIdling      = iFalse;
     d->lastEventTime = 0;
@@ -704,12 +713,12 @@ static void init_App_(iApp *d, int argc, char **argv) {
     d->isFinishedLaunching = iTrue;
     /* Run any commands that were pending completion of launch. */ {
         iForEach(StringList, i, d->launchCommands) {
-            postCommandString_App(i.value);
+            postCommandString_Root(NULL, i.value);
         }
     }
     /* URLs from the command line. */ {
         iConstForEach(StringList, i, openCmds) {
-            postCommandString_App(i.value);
+            postCommandString_Root(NULL, i.value);
         }
         iRelease(openCmds);
     }
@@ -824,7 +833,8 @@ const iString *debugInfo_App(void) {
     appendFormat_String(msg, "## Documents\n");
     iForEach(ObjectList, k, iClob(listDocuments_App(NULL))) {
         iDocumentWidget *doc = k.object;
-        appendFormat_String(msg, "### Tab %zu: %s\n",
+        appendFormat_String(msg, "### Tab %d.%zu: %s\n",
+                            constAs_Widget(doc)->root == get_Window()->roots[0] ? 0 : 1,
                             childIndex_Widget(constAs_Widget(doc)->parent, k.object),
                             cstr_String(bookmarkTitle_DocumentWidget(doc)));
         append_String(msg, collect_String(debugInfo_History(history_DocumentWidget(doc))));
@@ -918,7 +928,6 @@ void processEvents_App(enum iAppEventMode eventMode) {
     iApp *d = &app_;
     SDL_Event ev;
     iBool gotEvents = iFalse;
-    dispatchCommands_Periodic(&d->periodic);
     while (nextEvent_App_(d, eventMode, &ev)) {
 #if defined (iPlatformAppleMobile)
         if (processEvent_iOS(&ev)) {
@@ -930,7 +939,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
                 d->isRunning = iFalse;
                 if (findWidget_App("prefs")) {
                     /* Make sure changed preferences get saved. */
-                    postCommand_App("prefs.dismiss");
+                    postCommand_Root(NULL, "prefs.dismiss");
                     processEvents_App(postedEventsOnly_AppEventMode);
                 }
                 goto backToMainLoop;
@@ -964,10 +973,10 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     if (startsWithCase_CStr(ev.drop.file, "gemini:") ||
                         startsWithCase_CStr(ev.drop.file, "gopher:") ||
                         startsWithCase_CStr(ev.drop.file, "file:")) {
-                        postCommandf_App("~open newtab:%d url:%s", newTab, ev.drop.file);
+                        postCommandf_Root(NULL, "~open newtab:%d url:%s", newTab, ev.drop.file);
                     }
                     else {
-                        postCommandf_App(
+                        postCommandf_Root(NULL,
                             "~open newtab:%d url:%s", newTab, makeFileUrl_CStr(ev.drop.file));
                     }
                 }
@@ -1094,7 +1103,7 @@ static void runTickers_App_(iApp *d) {
     iConstForEach(Array, i, &pending->values) {
         const iTicker *ticker = i.value;
         if (ticker->callback) {
-            setCurrent_Root(findRoot_Window(d->window, ticker->context));
+            setCurrent_Root(findRoot_Window(d->window, ticker->context)); /* root might be NULL */
             ticker->callback(ticker->context);
         }
     }
@@ -1135,6 +1144,7 @@ static int run_App_(iApp *d) {
     SDL_AddEventWatch(resizeWatcher_, d); /* redraw window during resizing */
 #endif
     while (d->isRunning) {
+        dispatchCommands_Periodic(&d->periodic);
         processEvents_App(waitForNewEvents_AppEventMode);
         setCurrent_Root(NULL);
         runTickers_App_(d);
@@ -1242,8 +1252,7 @@ void postRefresh_App(void) {
     }
 }
 
-void postCommand_App(const char *command) {
-    iApp *d = &app_;
+void postCommand_Root(iRoot *d, const char *command) {
     iAssert(command);
     if (strlen(command) == 0) {
         return;
@@ -1255,8 +1264,8 @@ void postCommand_App(const char *command) {
     if (*command == '~') {
         /* Requires launch to be finished; defer it if needed. */
         command++;
-        if (!d->isFinishedLaunching) {
-            pushBackCStr_StringList(d->launchCommands, command);
+        if (!app_.isFinishedLaunching) {
+            pushBackCStr_StringList(app_.launchCommands, command);
             return;
         }
     }
@@ -1264,10 +1273,24 @@ void postCommand_App(const char *command) {
     ev.user.code = command_UserEventCode;
     /*ev.user.windowID = id_Window(get_Window());*/
     ev.user.data1 = strdup(command);
+    ev.user.data2 = d; /* all events are root-specific */
     SDL_PushEvent(&ev);
     if (app_.commandEcho) {
-        printf("[command] %s\n", command); fflush(stdout);
+        printf("[command] {%d} %s\n",
+               (d == NULL ? 0 : d == get_Window()->roots[0] ? 1 : 2),
+               command); fflush(stdout);
     }
+}
+
+void postCommandf_Root(iRoot *d, const char *command, ...) {
+    iBlock chars;
+    init_Block(&chars, 0);
+    va_list args;
+    va_start(args, command);
+    vprintf_Block(&chars, command, args);
+    va_end(args);
+    postCommand_Root(d, cstr_Block(&chars));
+    deinit_Block(&chars);
 }
 
 void postCommandf_App(const char *command, ...) {
@@ -1277,16 +1300,23 @@ void postCommandf_App(const char *command, ...) {
     va_start(args, command);
     vprintf_Block(&chars, command, args);
     va_end(args);
-    postCommand_App(cstr_Block(&chars));
+    postCommand_Root(NULL, cstr_Block(&chars));
     deinit_Block(&chars);
+}
+
+void rootOrder_App(iRoot *roots[2]) {
+    const iWindow *win = app_.window;
+    roots[0] = get_Root();
+    roots[1] = (roots[0] == win->roots[0] ? win->roots[1] : win->roots[0]);
 }
 
 iAny *findWidget_App(const char *id) {
     if (!*id) return NULL;
-    iForIndices(i, app_.window->roots) {
-        iRoot *root = app_.window->roots[i];
-        if (root) {
-            iAny *found = findChild_Widget(root->widget, id);
+    iRoot *order[2];
+    rootOrder_App(order);
+    iForIndices(i, order) {
+        if (order[i]) {
+            iAny *found = findChild_Widget(order[i]->widget, id);
             if (found) {
                 return found;
             }
@@ -1485,7 +1515,7 @@ iDocumentWidget *document_Command(const char *cmd) {
 
 iDocumentWidget *newTab_App(const iDocumentWidget *duplicateOf, iBool switchToNew) {
     iApp *d = &app_;
-    iWidget *tabs = findWidget_App("doctabs");
+    iWidget *tabs = findWidget_Root("doctabs");
     setFlags_Widget(tabs, hidden_WidgetFlag, iFalse);
     iWidget *newTabButton = findChild_Widget(tabs, "newtab");
     removeChild_Widget(newTabButton->parent, newTabButton);

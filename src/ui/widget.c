@@ -99,7 +99,7 @@ static void aboutToBeDestroyed_Widget_(iWidget *d) {
         removeOne_PtrArray(onTop_Root(d->root), d);
     }
     if (isHover_Widget(d)) {
-        d->root->hover = NULL;
+        get_Window()->hover = NULL;
     }
     iForEach(ObjectList, i, d->children) {
         aboutToBeDestroyed_Widget_(as_Widget(i.object));
@@ -675,16 +675,30 @@ static void applyVisualOffset_Widget_(const iWidget *d, iInt2 *pos) {
 
 iRect bounds_Widget(const iWidget *d) {
     iRect bounds = d->rect;
-    applyVisualOffset_Widget_(d, &bounds.pos);
+    bounds.pos = localToWindow_Widget(d, bounds.pos);
+    return bounds;
+}
+
+iInt2 localToWindow_Widget(const iWidget *d, iInt2 localCoord) {
+    iInt2 window = localCoord;
+    applyVisualOffset_Widget_(d, &window);
     for (const iWidget *w = d->parent; w; w = w->parent) {
         iInt2 pos = w->rect.pos;
         applyVisualOffset_Widget_(w, &pos);
-        addv_I2(&bounds.pos, pos);
+        addv_I2(&window, pos);
     }
 #if defined (iPlatformMobile)
-    bounds.pos.y += value_Anim(&get_Window()->rootOffset);
+    window.y += value_Anim(&get_Window()->rootOffset);
 #endif
-    return bounds;
+    return window;
+}
+
+iInt2 windowToLocal_Widget(const iWidget *d, iInt2 windowCoord) {
+    iInt2 local = windowCoord;
+    for (const iWidget *w = d->parent; w; w = w->parent) {
+        subv_I2(&local, w->rect.pos);
+    }
+    return local;
 }
 
 iRect boundsWithoutVisualOffset_Widget(const iWidget *d) {
@@ -695,25 +709,32 @@ iRect boundsWithoutVisualOffset_Widget(const iWidget *d) {
     return bounds;
 }
 
-iInt2 localCoord_Widget(const iWidget *d, iInt2 coord) {
+iInt2 innerToWindow_Widget(const iWidget *d, iInt2 innerCoord) {
     for (const iWidget *w = d; w; w = w->parent) {
-        subv_I2(&coord, w->rect.pos);
+        addv_I2(&innerCoord, w->rect.pos);
     }
-    return coord;
+    return innerCoord;
 }
 
-iBool contains_Widget(const iWidget *d, iInt2 coord) {
-    return containsExpanded_Widget(d, coord, 0);
+iInt2 windowToInner_Widget(const iWidget *d, iInt2 windowCoord) {
+    for (const iWidget *w = d; w; w = w->parent) {
+        subv_I2(&windowCoord, w->rect.pos);
+    }
+    return windowCoord;
 }
 
-iBool containsExpanded_Widget(const iWidget *d, iInt2 coord, int expand) {
+iBool contains_Widget(const iWidget *d, iInt2 windowCoord) {
+    return containsExpanded_Widget(d, windowCoord, 0);
+}
+
+iBool containsExpanded_Widget(const iWidget *d, iInt2 windowCoord, int expand) {
     const iRect bounds = {
         zero_I2(),
         addY_I2(d->rect.size,
                 d->flags & drawBackgroundToBottom_WidgetFlag ? size_Root(d->root).y : 0)
     };
     return contains_Rect(expand ? expanded_Rect(bounds, init1_I2(expand)) : bounds,
-                         localCoord_Widget(d, coord));
+                         windowToInner_Widget(d, windowCoord));
 }
 
 iLocalDef iBool isKeyboardEvent_(const SDL_Event *ev) {
@@ -738,20 +759,15 @@ static iBool filterEvent_Widget_(const iWidget *d, const SDL_Event *ev) {
 }
 
 void unhover_Widget(void) {
-    /* TODO: Which root? */
-    get_Root()->hover = NULL;
+    get_Window()->hover = NULL;
 }
 
 iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
     iAssert(d->root == get_Root());
     if (!d->parent) {
-        if (ev->type == SDL_MOUSEMOTION) {
-            /* Hover widget may change. */
-            setHover_Widget(NULL);
-        }
-        if (d->root->focus && isKeyboardEvent_(ev)) {
+        if (get_Window()->focus && get_Window()->focus->root == d->root && isKeyboardEvent_(ev)) {
             /* Root dispatches keyboard events directly to the focused widget. */
-            if (dispatchEvent_Widget(d->root->focus, ev)) {
+            if (dispatchEvent_Widget(get_Window()->focus, ev)) {
                 return iTrue;
             }
         }
@@ -780,7 +796,7 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
         }
     }
     else if (ev->type == SDL_MOUSEMOTION &&
-             (!d->root->hover || hasParent_Widget(d, d->root->hover)) &&
+             (!get_Window()->hover || hasParent_Widget(d, get_Window()->hover)) &&
              flags_Widget(d) & hover_WidgetFlag && ~flags_Widget(d) & hidden_WidgetFlag &&
              ~flags_Widget(d) & disabled_WidgetFlag) {
         if (contains_Widget(d, init_I2(ev->motion.x, ev->motion.y))) {
@@ -798,7 +814,8 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
            handle the events first. */
         iReverseForEach(ObjectList, i, d->children) {
             iWidget *child = as_Widget(i.object);
-            if (child == d->root->focus && isKeyboardEvent_(ev)) {
+            iAssert(child->root == d->root);
+            if (child == get_Window()->focus && isKeyboardEvent_(ev)) {
                 continue; /* Already dispatched. */
             }
             if (isVisible_Widget(child) && child->flags & keepOnTop_WidgetFlag) {
@@ -870,7 +887,7 @@ static iBool scrollOverflow_Widget_(iWidget *d, int delta) {
 //    else {
 //        bounds.pos.y = iMax(bounds.pos.y, );
 //    }
-    const iInt2 newPos = localCoord_Widget(d->parent, bounds.pos);
+    const iInt2 newPos = windowToInner_Widget(d->parent, bounds.pos);
     if (!isEqual_I2(newPos, d->rect.pos)) {
         d->rect.pos = newPos;
         refresh_Widget(d);
@@ -1087,6 +1104,7 @@ iAny *addChildPosFlags_Widget(iWidget *d, iAnyObject *child, enum iWidgetAddPos 
     iAssert(child);
     iAssert(d != child);
     iWidget *widget = as_Widget(child);
+    iAssert(widget->root == d->root);
     iAssert(!widget->parent);
     if (!d->children) {
         d->children = new_ObjectList();
@@ -1268,12 +1286,12 @@ iBool isDisabled_Widget(const iAnyObject *d) {
 
 iBool isFocused_Widget(const iAnyObject *d) {
     iAssert(isInstance_Object(d, &Class_Widget));
-    return ((const iWidget *) d)->root->focus == d;
+    return get_Window()->focus == d;
 }
 
 iBool isHover_Widget(const iAnyObject *d) {
     iAssert(isInstance_Object(d, &Class_Widget));
-    return ((const iWidget *) d)->root->hover == d;
+    return get_Window()->hover == d;
 }
 
 iBool isSelected_Widget(const iAnyObject *d) {
@@ -1319,15 +1337,14 @@ iBool isAffectedByVisualOffset_Widget(const iWidget *d) {
 }
 
 void setFocus_Widget(iWidget *d) {
-    iRoot *root = d ? d->root : get_Root();
-    if (root->focus != d) {
-        if (root->focus) {
-            iAssert(!contains_PtrSet(root->pendingDestruction, root->focus));
-            postCommand_Widget(root->focus, "focus.lost");
+    iWindow *win = get_Window();
+    if (win->focus != d) {
+        if (win->focus) {
+            iAssert(!contains_PtrSet(win->focus->root->pendingDestruction, win->focus));
+            postCommand_Widget(win->focus, "focus.lost");
         }
-        root->focus = d;
+        win->focus = d;
         if (d) {
-            iAssert(root == d->root);
             iAssert(flags_Widget(d) & focusable_WidgetFlag);
             postCommand_Widget(d, "focus.gained");
         }
@@ -1335,20 +1352,15 @@ void setFocus_Widget(iWidget *d) {
 }
 
 iWidget *focus_Widget(void) {
-    return get_Root()->focus;
+    return get_Window()->focus;
 }
 
 void setHover_Widget(iWidget *d) {
-    if (d) {
-        d->root->hover = d;
-    }
-    else {
-        get_Root()->hover = NULL;
-    }
+    get_Window()->hover = d;
 }
 
 iWidget *hover_Widget(void) {
-    return get_Root()->hover;
+    return get_Window()->hover;
 }
 
 static const iWidget *findFocusable_Widget_(const iWidget *d, const iWidget *startFrom,
@@ -1404,21 +1416,14 @@ iAny *findFocusable_Widget(const iWidget *startFrom, enum iWidgetFocusDir focusD
 }
 
 void setMouseGrab_Widget(iWidget *d) {
-    iRoot *root = d ? d->root : get_Root();
-    if (root->mouseGrab != d) {
-        root->mouseGrab = d;
+    if (get_Window()->mouseGrab != d) {
+        get_Window()->mouseGrab = d;
         SDL_CaptureMouse(d != NULL);
     }
 }
 
 iWidget *mouseGrab_Widget(void) {
-    iWindow *win = get_Window();    
-    iForIndices(i, win->roots) {
-        if (win->roots[i] && win->roots[i]->mouseGrab) {
-            return win->roots[i]->mouseGrab;            
-        }
-    }
-    return NULL;
+    return get_Window()->mouseGrab;
 }
 
 void postCommand_Widget(const iAnyObject *d, const char *cmd, ...) {
@@ -1438,7 +1443,7 @@ void postCommand_Widget(const iAnyObject *d, const char *cmd, ...) {
         iAssert(isInstance_Object(d, &Class_Widget));
         appendFormat_String(&str, " ptr:%p", d);
     }
-    postCommandString_App(&str);
+    postCommandString_Root(((const iWidget *) d)->root, &str);
     deinit_String(&str);
 }
 

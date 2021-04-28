@@ -107,13 +107,17 @@ iAny *      findWidget_App      (const char *id);
 void        addTicker_App       (iTickerFunc ticker, iAny *context);
 void        removeTicker_App    (iTickerFunc ticker, iAny *context);
 void        postRefresh_App     (void);
-void        postCommand_App     (const char *command);
+void        postCommand_Root    (iRoot *, const char *command);
+void        postCommandf_Root   (iRoot *, const char *command, ...);
 void        postCommandf_App    (const char *command, ...);
 
-iLocalDef void postCommandString_App(const iString *command) {
+iLocalDef void postCommandString_Root(iRoot *d, const iString *command) {
     if (command) {
-        postCommand_App(cstr_String(command));
+        postCommand_Root(d, cstr_String(command));
     }
+}
+iLocalDef void postCommand_App(const char *command) {
+    postCommandf_App(command);
 }
 
 iDocumentWidget *   document_Command    (const char *cmd);

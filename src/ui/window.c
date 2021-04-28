@@ -189,8 +189,11 @@ static void windowSizeChanged_Window_(iWindow *d) {
         iRoot *root = d->roots[i];
         if (root) {
             root->widget->rect.pos  = init_I2(rootSize.x * i, 0);
-            root->widget->rect.size = rootSize; /* Reposition roots. */
-            root->widget->minSize   = rootSize;
+            root->widget->rect.size = addX_I2(rootSize, -gap_UI / 4);
+            if (i == 1) {
+                root->widget->rect.pos.x += gap_UI / 8;
+            }
+            root->widget->minSize   = root->widget->rect.size;
             updatePadding_Root(root);
             arrange_Widget(root->widget);
         }
@@ -220,7 +223,7 @@ static void updateSize_Window_(iWindow *d, iBool notifyAlways) {
 void drawWhileResizing_Window(iWindow *d, int w, int h) {
     /* This is called while a window resize is in progress, so we can be pretty confident
        the size has actually changed. */
-    d->size = init_I2(w, h);
+    d->size = coord_Window(d, w, h);
     windowSizeChanged_Window_(d);
     draw_Window(d);
 }
@@ -274,7 +277,8 @@ static float displayScale_Window_(const iWindow *d) {
 }
 
 static void drawBlank_Window_(iWindow *d) {
-    const iColor bg = get_Color(uiBackground_ColorId);
+//    const iColor bg = get_Color(uiBackground_ColorId);
+    const iColor bg = { 128, 128, 128, 255 }; /* TODO: Have no root yet. */
     SDL_SetRenderDrawColor(d->render, bg.r, bg.g, bg.b, 255);
     SDL_RenderClear(d->render);
     SDL_RenderPresent(d->render);
@@ -373,6 +377,9 @@ void init_Window(iWindow *d, iRect rect) {
     d->win = NULL;
     d->size = zero_I2(); /* will be updated below */
     iZap(d->roots);
+    d->hover = NULL;
+    d->mouseGrab = NULL;
+    d->focus = NULL;
     iZap(d->cursors);
     d->place.initialPos = rect.pos;
     d->place.normalRect = rect;
@@ -520,7 +527,6 @@ iRoot *findRoot_Window(const iWindow *d, const iWidget *widget) {
             return d->roots[i];
         }
     }
-    iAssert(iFalse); /* it must be under some Root */
     return NULL;
 }
 
@@ -811,10 +817,7 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
                 event.button.x = pos.x;
                 event.button.y = pos.y;
             }
-            const iWidget *oldHovers[2] = {
-                d->roots[0]->hover,
-                d->roots[1]->hover,
-            };
+            const iWidget *oldHover = d->hover;
             iBool wasUsed = iFalse;
             /* Dispatch first to the mouse-grabbed widget. */
 //            iWidget *widget = d->root.widget;
@@ -866,7 +869,7 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
                     }
                 }
             }
-            if (oldHovers[0] != d->roots[0]->hover || oldHovers[1] != d->roots[1]->hover) {
+            if (oldHover != d->hover) {
                 postRefresh_App();
             }
             if (event.type == SDL_MOUSEMOTION) {
@@ -879,9 +882,15 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
 }
 
 iBool dispatchEvent_Window(iWindow *d, const SDL_Event *ev) {
-    /* TODO: Dispatch to input-focused root first. */
+    if (ev->type == SDL_MOUSEMOTION) {
+        /* Hover widget may change. */
+        setHover_Widget(NULL);
+    }
     iForIndices(i, d->roots) {
         if (d->roots[i]) {
+            if (isCommand_SDLEvent(ev) && ev->user.data2 && ev->user.data2 != d->roots[i]) {
+                continue; /* Not meant for this root. */
+            }
             setCurrent_Root(d->roots[i]);
             const iBool wasUsed = dispatchEvent_Widget(d->roots[i]->widget, ev);
             if (wasUsed) {

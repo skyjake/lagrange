@@ -733,12 +733,13 @@ iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
     return menu;
 }
 
-void openMenu_Widget(iWidget *d, iInt2 coord) {
-    openMenuFlags_Widget(d, coord, iTrue);
+void openMenu_Widget(iWidget *d, iInt2 windowCoord) {
+    openMenuFlags_Widget(d, windowCoord, iTrue);
 }
 
-void openMenuFlags_Widget(iWidget *d, iInt2 coord, iBool postCommands) {
-    const iInt2 rootSize        = size_Window(get_Window());
+void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, iBool postCommands) {
+    const iRect rootRect        = rect_Root(d->root);
+    const iInt2 rootSize        = rootRect.size;
     const iBool isPortraitPhone = (deviceType_App() == phone_AppDeviceType && isPortrait_App());
     const iBool isSlidePanel    = (flags_Widget(d) & horizontalOffset_WidgetFlag) != 0;
     if (postCommands) {
@@ -756,7 +757,7 @@ void openMenuFlags_Widget(iWidget *d, iInt2 coord, iBool postCommands) {
         if (!isSlidePanel) {
             setFlags_Widget(d, borderTop_WidgetFlag, iTrue);
         }
-        d->rect.size.x = size_Window(get_Window()).x;
+        d->rect.size.x = rootSize.x;
     }
     /* Update item fonts. */ {
         iForEach(ObjectList, i, children_Widget(d)) {
@@ -790,14 +791,14 @@ void openMenuFlags_Widget(iWidget *d, iInt2 coord, iBool postCommands) {
         }
     }
     else {
-        d->rect.pos = coord;
+        d->rect.pos = windowToLocal_Widget(d, windowCoord);
     }
     /* Ensure the full menu is visible. */
     const iRect bounds       = bounds_Widget(d);
-    int         leftExcess   = -left_Rect(bounds);
-    int         rightExcess  = right_Rect(bounds) - rootSize.x;
-    int         topExcess    = -top_Rect(bounds);
-    int         bottomExcess = bottom_Rect(bounds) - rootSize.y;
+    int         leftExcess   = left_Rect(rootRect) - left_Rect(bounds);
+    int         rightExcess  = right_Rect(bounds) - right_Rect(rootRect);
+    int         topExcess    = top_Rect(rootRect) - top_Rect(bounds);
+    int         bottomExcess = bottom_Rect(bounds) - bottom_Rect(rootRect);
 #if defined (iPlatformAppleMobile)
     /* Reserve space for the system status bar. */ {
         float l, t, r, b;
@@ -868,7 +869,7 @@ int checkContextMenu_Widget(iWidget *menu, const SDL_Event *ev) {
         }
         const iInt2 mousePos = init_I2(ev->button.x, ev->button.y);
         if (contains_Widget(menu->parent, mousePos)) {
-            openMenu_Widget(menu, localCoord_Widget(menu->parent, mousePos));
+            openMenu_Widget(menu, mousePos);
             return 0x2;
         }
     }
@@ -1044,7 +1045,7 @@ void showTabPage_Widget(iWidget *tabs, const iWidget *page) {
     }
     /* Notify. */
     if (!isEmpty_String(id_Widget(page))) {
-        postCommandf_App("tabs.changed id:%s", cstr_String(id_Widget(page)));
+        postCommandf_Root(page->root, "tabs.changed id:%s", cstr_String(id_Widget(page)));
     }
 }
 
@@ -1160,7 +1161,7 @@ static iBool slidePanelHandler_(iWidget *d, const char *cmd) {
     if (equal_Command(cmd, "panel.open")) {
         iWidget *button = pointer_Command(cmd);
         iWidget *panel = userData_Object(button);
-        openMenu_Widget(panel, zero_I2());
+        openMenu_Widget(panel, innerToWindow_Widget(panel, zero_I2()));
         setFlags_Widget(panel, disabled_WidgetFlag, iFalse);
 //        updateTextCStr_LabelWidget(findWidget_App("panel.back"), );
         return iTrue;

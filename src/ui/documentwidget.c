@@ -1234,7 +1234,10 @@ static void fetch_DocumentWidget_(iDocumentWidget *d) {
         iRelease(d->request);
         d->request = NULL;
     }
-    postCommandf_App("document.request.started doc:%p url:%s", d, cstr_String(d->mod.url));
+    postCommandf_Root(as_Widget(d)->root,
+                      "document.request.started doc:%p url:%s",
+                      d,
+                      cstr_String(d->mod.url));
     clear_ObjectList(d->media);
     d->certFlags = 0;
     setLinkNumberMode_DocumentWidget_(d, iFalse);
@@ -1318,7 +1321,7 @@ static iBool updateFromHistory_DocumentWidget_(iDocumentWidget *d) {
         updateVisible_DocumentWidget_(d);
         moveSpan_SmoothScroll(&d->scrollY, 0, 0); /* clamp position to new max */
         cacheDocumentGlyphs_DocumentWidget_(d);
-        postCommandf_App("document.changed doc:%p url:%s", d, cstr_String(d->mod.url));
+        postCommandf_Root(as_Widget(d)->root, "document.changed doc:%p url:%s", d, cstr_String(d->mod.url));
         return iTrue;
     }
     else if (!isEmpty_String(d->mod.url)) {
@@ -1391,7 +1394,7 @@ static void scrollToHeading_DocumentWidget_(iDocumentWidget *d, const char *head
     iConstForEach(Array, h, headings_GmDocument(d->doc)) {
         const iGmHeading *head = h.value;
         if (startsWithCase_Rangecc(head->text, heading)) {
-            postCommandf_App("document.goto loc:%p", head->text.start);
+            postCommandf_Root(as_Widget(d)->root, "document.goto loc:%p", head->text.start);
             break;
         }
     }
@@ -1514,7 +1517,7 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                                                cstr_Rangecc(urlScheme_String(d->mod.url)))) {
                         /* Redirects with the same scheme are automatic. */
                         visitUrl_Visited(visited_App(), d->mod.url, transient_VisitedUrlFlag);
-                        postCommandf_App(
+                        postCommandf_Root(as_Widget(d)->root,
                             "open doc:%p redirect:%d url:%s", d, d->redirectCount + 1, cstr_String(dstUrl));
                     }
                     else {
@@ -2037,7 +2040,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         if (!isEmpty_Block(d->certFingerprint) && !isEmpty_Range(&host)) {
             setTrusted_GmCerts(certs_App(), host, d->certFingerprint, &d->certExpiry);
             d->certFlags |= trusted_GmCertFlag;
-            postCommand_App("document.info");
+            postCommand_Widget(w, "document.info");
             updateTrust_DocumentWidget_(d, NULL);
             redoLayout_GmDocument(d->doc);
             invalidate_DocumentWidget_(d);
@@ -2065,7 +2068,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         SDL_SetClipboardText(cstr_String(copied));
         delete_String(copied);
         if (flags_Widget(w) & touchDrag_WidgetFlag) {
-            postCommand_App("document.select arg:0");
+            postCommand_Widget(w, "document.select arg:0");
         }
         return iTrue;
     }
@@ -2102,13 +2105,13 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         }
         appendCStr_String(url, "?");
         append_String(url, value);
-        postCommandf_App("open url:%s", cstr_String(url));
+        postCommandf_Root(w->root, "open url:%s", cstr_String(url));
         delete_String(value);
         return iTrue;
     }
     else if (equal_Command(cmd, "valueinput.cancelled") &&
              equal_Rangecc(range_Command(cmd, "id"), "document.input.submit") && document_App() == d) {
-        postCommand_App("navigate.back");
+        postCommand_Root(get_Root(), "navigate.back");
         return iTrue;
     }
     else if (equalWidget_Command(cmd, w, "document.request.updated") &&
@@ -2149,7 +2152,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         iReleasePtr(&d->request);
         updateVisible_DocumentWidget_(d);
         d->drawBufs->flags |= updateSideBuf_DrawBufsFlag;
-        postCommandf_App("document.changed doc:%p url:%s", d, cstr_String(d->mod.url));
+        postCommandf_Root(w->root, "document.changed doc:%p url:%s", d, cstr_String(d->mod.url));
         /* Check for a pending goto. */
         if (!isEmpty_String(&d->pendingGotoHeading)) {
             scrollToHeading_DocumentWidget_(d, cstr_String(&d->pendingGotoHeading));
@@ -2193,12 +2196,12 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     else if (equal_Command(cmd, "document.stop") && document_App() == d) {
         if (d->request) {
-            postCommandf_App(
+            postCommandf_Root(w->root,
                 "document.request.cancelled doc:%p url:%s", d, cstr_String(d->mod.url));
             iReleasePtr(&d->request);
             if (d->state != ready_RequestState) {
                 d->state = ready_RequestState;
-                postCommand_App("navigate.back");
+                postCommand_Root(w->root, "navigate.back");
             }
             updateFetchProgress_DocumentWidget_(d);
             return iTrue;
@@ -2267,7 +2270,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     else if (equal_Command(cmd, "navigate.back") && document_App() == d) {
         if (d->request) {
-            postCommandf_App(
+            postCommandf_Root(w->root,
                 "document.request.cancelled doc:%p url:%s", d, cstr_String(d->mod.url));
             iReleasePtr(&d->request);
             updateFetchProgress_DocumentWidget_(d);
@@ -2291,14 +2294,14 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                 if (parts.path.end[-1] == '/') break;
                 parts.path.end--;
             }
-            postCommandf_App(
+            postCommandf_Root(w->root,
                 "open url:%s",
                 cstr_Rangecc((iRangecc){ constBegin_String(d->mod.url), parts.path.end }));
         }
         return iTrue;
     }
     else if (equal_Command(cmd, "navigate.root") && document_App() == d) {
-        postCommandf_App("open url:%s/", cstr_Rangecc(urlRoot_String(d->mod.url)));
+        postCommandf_Root(w->root, "open url:%s/", cstr_Rangecc(urlRoot_String(d->mod.url)));
         return iTrue;
     }
     else if (equalWidget_Command(cmd, w, "scroll.moved")) {
@@ -2390,7 +2393,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             }
         }
         if (flags_Widget(w) & touchDrag_WidgetFlag) {
-            postCommand_App("document.select arg:0"); /* we can't handle both at the same time */
+            postCommand_Root(w->root, "document.select arg:0"); /* we can't handle both at the same time */
         }
         invalidateWideRunsWithNonzeroOffset_DocumentWidget_(d); /* markers don't support offsets */
         resetWideRuns_DocumentWidget_(d);
@@ -2593,8 +2596,7 @@ static iBool processMediaEvents_DocumentWidget_(iDocumentWidget *d, const SDL_Ev
                         { cstrCollect_String(metadataLabel_Player(plr)), 0, 0, NULL },
                     },
                     1);
-                openMenu_Widget(d->playerMenu,
-                                localCoord_Widget(constAs_Widget(d), bottomLeft_Rect(ui.menuRect)));
+                openMenu_Widget(d->playerMenu, bottomLeft_Rect(ui.menuRect));
                 return iTrue;
             }
         }
@@ -2699,7 +2701,8 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                         d->hoverLink = run;
                     }
                     else {
-                        postCommandf_App("open newtab:%d url:%s",
+                        postCommandf_Root(w->root,
+                                          "open newtab:%d url:%s",
                                          d->ordinalMode ==
                                                  numbersAndAlphabet_DocumentLinkOrdinalMode
                                              ? openTabMode_Sym(modState_Keys())
@@ -2813,15 +2816,15 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
     }
     if (ev->type == SDL_MOUSEBUTTONDOWN) {
         if (ev->button.button == SDL_BUTTON_X1) {
-            postCommand_App("navigate.back");
+            postCommand_Root(w->root, "navigate.back");
             return iTrue;
         }
         if (ev->button.button == SDL_BUTTON_X2) {
-            postCommand_App("navigate.forward");
+            postCommand_Root(w->root, "navigate.forward");
             return iTrue;
         }
         if (ev->button.button == SDL_BUTTON_MIDDLE && d->hoverLink) {
-            postCommandf_App("open newtab:%d url:%s",
+            postCommandf_Root(w->root, "open newtab:%d url:%s",
                              modState_Keys() & KMOD_SHIFT ? 1 : 2,
                              cstr_String(linkUrl_GmDocument(d->doc, d->hoverLink->linkId)));
             return iTrue;
@@ -2967,7 +2970,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                         },
                         3);
 #endif
-                    postCommand_App("document.select arg:1");
+                    postCommand_Root(w->root, "document.select arg:1");
                     return iTrue;
                 }
                 d->menu = makeMenu_Widget(w, data_Array(&items), size_Array(&items));
@@ -3188,7 +3191,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                         refresh_Widget(w);
                     }
                     else if (linkFlags & supportedProtocol_GmLinkFlag) {
-                        postCommandf_App("open newtab:%d url:%s",
+                        postCommandf_Root(w->root, "open newtab:%d url:%s",
                                          openTabMode_Sym(modState_Keys()),
                                          cstr_String(absoluteUrl_String(
                                              d->mod.url, linkUrl_GmDocument(d->doc, linkId))));
@@ -3221,7 +3224,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                     if (bannerType_DocumentWidget_(d) == certificateWarning_GmDocumentBanner &&
                         pos_Click(&d->click).y - top_Rect(banRect) >
                             lineHeight_Text(banner_FontId) * 2) {
-                        postCommand_App("document.info");
+                        postCommand_Widget(d, "document.info");
                     }
                     else {
                         postCommand_Widget(d, "navigate.root");

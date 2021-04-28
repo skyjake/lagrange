@@ -654,11 +654,14 @@ static iBool processEvent_LookupWidget_(iLookupWidget *d, const SDL_Event *ev) {
              (equal_Command(cmd, "layout.changed") &&
               equal_Rangecc(range_Command(cmd, "id"), "navbar"))) {
         /* Position the lookup popup under the URL bar. */ {
-            const iInt2 rootSize = size_Root(w->root);
-            const iRect navBarBounds = bounds_Widget(findWidget_App("navbar"));
-            setFixedSize_Widget(w, init_I2(width_Widget(findWidget_App("url")),
+            iRoot *root = w->root;
+            const iInt2 rootSize = size_Root(root);
+            const iRect navBarBounds = bounds_Widget(findChild_Widget(root->widget, "navbar"));
+            printf("navbar x:%d w:%d\n", navBarBounds.pos.x, navBarBounds.size.x);
+            iWidget *url = findChild_Widget(root->widget, "url");
+            setFixedSize_Widget(w, init_I2(width_Widget(url),
                                            (rootSize.y - bottom_Rect(navBarBounds)) / 2));
-            setPos_Widget(w, bottomLeft_Rect(bounds_Widget(findWidget_App("url"))));
+            setPos_Widget(w, windowToLocal_Widget(w, bottomLeft_Rect(bounds_Widget(url))));
 #if defined (iPlatformAppleMobile)
             /* Adjust height based on keyboard size. */ {
                 w->rect.size.y = visibleRootSize_Window(window).y - top_Rect(bounds_Widget(w));
@@ -667,6 +670,7 @@ static iBool processEvent_LookupWidget_(iLookupWidget *d, const SDL_Event *ev) {
                     safeAreaInsets_iOS(&l, NULL, &r, NULL);
                     w->rect.size.x = rootSize.x - l - r;
                     w->rect.pos.x  = l;
+                    /* TODO: Need to use windowToLocal_Widget? */
                 }
             }
 #endif
@@ -694,7 +698,7 @@ static iBool processEvent_LookupWidget_(iLookupWidget *d, const SDL_Event *ev) {
             setText_InputWidget(url, url_DocumentWidget(document_App()));
             showCollapsed_Widget(w, iFalse);
             setCursor_LookupWidget_(d, iInvalidPos);
-            postCommandString_App(&item->command);
+            postCommandString_Root(get_Root(), &item->command);
             postCommand_App("focus.set id:"); /* unfocus */
         }
         return iTrue;

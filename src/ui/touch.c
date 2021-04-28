@@ -233,7 +233,8 @@ static void dispatchNotification_Touch_(const iTouch *d, int code) {
             .type = SDL_USEREVENT,
             .timestamp = SDL_GetTicks(),
             .code = code,
-            .data1 = d->affinity
+            .data1 = d->affinity,
+            .data2 = d->affinity->root
         });
         setCurrent_Root(oldRoot);
     }

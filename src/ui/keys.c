@@ -438,7 +438,7 @@ iBool processEvent_Keys(const SDL_Event *ev) {
                 postCommandf_App("%s repeat:1", cstr_String(&bind->command));
             }
             else {
-                postCommandString_App(&bind->command);
+                postCommandString_Root(NULL, &bind->command);
             }
             return iTrue;
         }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "widget.h"
+#include "color.h"
 #include <the_Foundation/ptrset.h>
 #include <the_Foundation/vec2.h>
 
@@ -8,12 +9,10 @@ iDeclareType(Root)
     
 struct Impl_Root {
     iWidget *  widget;
-    iWidget *  hover;
-    iWidget *  mouseGrab;
-    iWidget *  focus;
     iPtrArray *onTop; /* order is important; last one is topmost */
     iPtrSet *  pendingDestruction;
     int        loadAnimTimer;
+    iColor     tmPalette[tmMax_ColorId]; /* theme-specific palette */
 };
 
 iDeclareTypeConstruction(Root)
@@ -24,6 +23,7 @@ void        createUserInterface_Root            (iRoot *);
 
 void        setCurrent_Root                     (iRoot *);
 iRoot *     get_Root                            (void);
+iAnyObject *findWidget_Root                     (const char *id); /* under current Root */
 
 iPtrArray * onTop_Root                          (iRoot *);
 void        destroyPending_Root                 (iRoot *);

@@ -754,10 +754,10 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
         return iTrue;
     }
     if (ev->type == SDL_MOUSEMOTION && isHover_Widget(d)) {
-        const iInt2 local = localCoord_Widget(w, init_I2(ev->motion.x, ev->motion.y));
+        const iInt2 inner = windowToInner_Widget(w, init_I2(ev->motion.x, ev->motion.y));
         setCursor_Window(get_Window(),
-                         local.x >= 2 * gap_UI + d->leftPadding &&
-                                 local.x < width_Widget(w) - d->rightPadding
+                         inner.x >= 2 * gap_UI + d->leftPadding &&
+                         inner.x < width_Widget(w) - d->rightPadding
                              ? SDL_SYSTEM_CURSOR_IBEAM
                              : SDL_SYSTEM_CURSOR_ARROW);
     }

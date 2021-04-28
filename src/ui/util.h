@@ -212,8 +212,8 @@ struct Impl_MenuItem {
 };
 
 iWidget *   makeMenu_Widget     (iWidget *parent, const iMenuItem *items, size_t n); /* returns no ref */
-void        openMenu_Widget     (iWidget *, iInt2 coord);
-void        openMenuFlags_Widget(iWidget *d, iInt2 coord, iBool postCommands);
+void        openMenu_Widget     (iWidget *, iInt2 windowCoord);
+void        openMenuFlags_Widget(iWidget *, iInt2 windowCoord, iBool postCommands);
 void        closeMenu_Widget    (iWidget *);
 
 iLabelWidget *  findMenuItem_Widget (iWidget *menu, const char *command);

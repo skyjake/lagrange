@@ -713,14 +713,14 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, const iSidebarItem *it
             break;
         }
         case feeds_SidebarMode: {
-            postCommandString_App(
+            postCommandString_Root(get_Root(),
                 feedEntryOpenCommand_String(&item->url, openTabMode_Sym(modState_Keys())));
             break;
         }
         case bookmarks_SidebarMode:
         case history_SidebarMode: {
             if (!isEmpty_String(&item->url)) {
-                postCommandf_App("open newtab:%d url:%s",
+                postCommandf_Root(get_Root(), "open newtab:%d url:%s",
                                  openTabMode_Sym(modState_Keys()),
                                  cstr_String(&item->url));
             }
@@ -961,13 +961,13 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         }
         else if (isCommand_Widget(w, ev, "mouse.moved")) {
             if (isResizing_SidebarWidget_(d)) {
-                const iInt2 local = localCoord_Widget(w, coord_Command(cmd));
+                const iInt2 inner = windowToInner_Widget(w, coord_Command(cmd));
                 const int resMid = d->resizer->rect.size.x / 2;
                 setWidth_SidebarWidget(
                     d,
                     ((d->side == left_SideBarSide
-                         ? local.x
-                          : (size_Root(w->root).x - coord_Command(cmd).x)) +
+                         ? inner.x
+                          : (right_Rect(rect_Root(w->root)) - coord_Command(cmd).x)) +
                      resMid) / (float) gap_UI);
             }
             return iTrue;
@@ -1086,7 +1086,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             const iSidebarItem *item = d->contextItem;
             if (item) {
                 if (isCommand_Widget(w, ev, "feed.entry.opentab")) {
-                    postCommandString_App(feedEntryOpenCommand_String(&item->url, 1));
+                    postCommandString_Root(get_Root(), feedEntryOpenCommand_String(&item->url, 1));
                     return iTrue;
                 }
                 if (isCommand_Widget(w, ev, "feed.entry.toggleread")) {

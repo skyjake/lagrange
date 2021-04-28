@@ -169,16 +169,24 @@ void    destroy_Widget          (iWidget *); /* widget removed and deleted later
 void    destroyPending_Widget   (void);
 void    releaseChildren_Widget  (iWidget *);
 
+/* Coordinate spaces:
+    - window: 0,0 is at the top left corner of the window
+    - local:  0,0 is at the top left corner of the parent widget
+    - inner:  0,0 is at the top left corner of the widget */
+
 iWidget *       root_Widget             (const iWidget *);
 const iString * id_Widget               (const iWidget *);
 int64_t flags_Widget                    (const iWidget *);
 iRect   bounds_Widget                   (const iWidget *); /* outer bounds */
 iRect   innerBounds_Widget              (const iWidget *);
 iRect   boundsWithoutVisualOffset_Widget(const iWidget *);
-iInt2   localCoord_Widget               (const iWidget *, iInt2 coord);
-iBool   contains_Widget                 (const iWidget *, iInt2 coord);
-iBool   containsExpanded_Widget         (const iWidget *, iInt2 coord, int expand);
-iAny *  hitChild_Widget                 (const iWidget *, iInt2 coord);
+iInt2   localToWindow_Widget            (const iWidget *, iInt2 localCoord);
+iInt2   windowToLocal_Widget            (const iWidget *, iInt2 windowCoord);
+iInt2   innerToWindow_Widget            (const iWidget *, iInt2 innerCoord);
+iInt2   windowToInner_Widget            (const iWidget *, iInt2 windowCoord);
+iBool   contains_Widget                 (const iWidget *, iInt2 windowCoord);
+iBool   containsExpanded_Widget         (const iWidget *, iInt2 windowCoord, int expand);
+iAny *  hitChild_Widget                 (const iWidget *, iInt2 windowCoord);
 iAny *  findChild_Widget                (const iWidget *, const char *id);
 const iPtrArray *findChildren_Widget    (const iWidget *, const char *id);
 iAny *  findParentClass_Widget          (const iWidget *, const iAnyClass *class);

@@ -68,6 +68,9 @@ struct Impl_Window {
     SDL_Renderer *render;
     iInt2         size;
     iRoot *       roots[2];     /* root widget and UI state; second one is for split mode */
+    iWidget *     hover;
+    iWidget *     mouseGrab;
+    iWidget *     focus;
     float         pixelRatio;   /* conversion between points and pixels, e.g., coords, window size */
     float         displayScale; /* DPI-based scaling factor of current display, affects uiScale only */
     float         uiScale;

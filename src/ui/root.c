@@ -255,6 +255,13 @@ iRoot *get_Root(void) {
     return activeRoot_;
 }
 
+iAnyObject *findWidget_Root(const char *id) {
+    if (activeRoot_) {
+        return findChild_Widget(activeRoot_->widget, id);
+    }
+    return NULL;
+}
+
 void destroyPending_Root(iRoot *d) {
     setCurrent_Root(d);    
     iForEach(PtrSet, i, d->pendingDestruction) {
@@ -286,7 +293,7 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
         iWidget *menu = findChild_Widget(button, "menu");
         iAssert(menu);
         if (!isVisible_Widget(menu)) {
-            openMenu_Widget(menu, init_I2(0, button->rect.size.y));
+            openMenu_Widget(menu, bottomLeft_Rect(bounds_Widget(button)));
         }
         else {
             closeMenu_Widget(menu);
@@ -619,10 +626,10 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
             iString *newUrl = copy_String(text_InputWidget(url));
             trim_String(newUrl);
             if (willPerformSearchQuery_(newUrl)) {
-                postCommandf_App("open url:%s", cstr_String(searchQueryUrl_App(newUrl)));
+                postCommandf_Root(navBar->root, "open url:%s", cstr_String(searchQueryUrl_App(newUrl)));
             }
             else {
-                postCommandf_App(
+                postCommandf_Root(navBar->root,
                     "open url:%s",
                     cstr_String(absoluteUrl_String(&iStringLiteral(""), collect_String(newUrl))));
             }
@@ -677,6 +684,7 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
     else if (equal_Command(cmd, "mouse.clicked") && arg_Command(cmd)) {
         iWidget *widget = pointer_Command(cmd);
         iWidget *menu = findWidget_App("doctabs.menu");
+        iAssert(menu->root == navBar->root);
         if (isTabButton_Widget(widget)) {
             if (!isVisible_Widget(menu)) {
                 iWidget *tabs = findWidget_App("doctabs");
@@ -758,7 +766,7 @@ static iBool handleToolBarCommands_(iWidget *toolBar, const char *cmd) {
         argLabel_Command(cmd, "button") == SDL_BUTTON_RIGHT) {
         iWidget *menu = findChild_Widget(toolBar, "toolbar.menu");
         arrange_Widget(menu);
-        openMenu_Widget(menu, init_I2(0, -height_Widget(menu)));
+        openMenu_Widget(menu, innerToWindow_Widget(menu, init_I2(0, -height_Widget(menu))));
         return iTrue;
     }
     else if (equal_Command(cmd, "toolbar.showview")) {
@@ -868,6 +876,7 @@ void updateMetrics_Root(iRoot *d) {
 
 void createUserInterface_Root(iRoot *d) {
     iWidget *root = d->widget = new_Widget();
+    iAssert(root->root == d);
     setId_Widget(root, "root");
     /* Children of root cover the entire window. */
     setFlags_Widget(
