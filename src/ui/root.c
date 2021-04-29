@@ -304,6 +304,12 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
         }
         return iTrue;
     }
+    else if (equal_Command(cmd, "splitmenu.open")) {
+        iWidget *menu = findWidget_Root("splitmenu");
+        openMenu_Widget(menu, zero_I2());
+        setPos_Widget(menu, sub_I2(divi_I2(size_Root(get_Root()), 2), divi_I2(menu->rect.size, 2)));
+        return iTrue;
+    }
     else if (equal_Command(cmd, "contextclick")) {
         iBool showBarMenu = iFalse;
         if (equal_Rangecc(range_Command(cmd, "id"), "buttons")) {
@@ -879,7 +885,7 @@ void updateMetrics_Root(iRoot *d) {
 }
 
 void createUserInterface_Root(iRoot *d) {
-    iWidget *root = d->widget = new_Widget();
+    iWidget *root = d->widget = new_Widget();    
     iAssert(root->root == d);
     setId_Widget(root, "root");
     /* Children of root cover the entire window. */
@@ -1231,9 +1237,22 @@ void createUserInterface_Root(iRoot *d) {
                                                 { clipboard_Icon " ${menu.paste}", 0, 0, "input.paste" },
                                                 },
                                             4);
+        iWidget *splitMenu = makeMenu_Widget(root, (iMenuItem[]){
+            { "Single Frame", '1', 0, "ui.frames arg:0" },
+            { "---", 0, 0, NULL },
+            { "Horizontal", '2', 0, "ui.frames arg:3 axis:0" },
+            { "Horizontal 1:2", SDLK_d, 0, "ui.frames arg:1 axis:0" },
+            { "Horizontal 2:1", SDLK_e, 0, "ui.frames arg:2 axis:0" },
+            { "---", 0, 0, NULL },
+            { "Vertical", '3', 0, "ui.frames arg:3 axis:1" },
+            { "Vertical 1:2", SDLK_f, 0, "ui.frames arg:1 axis:1" },
+            { "Vertical 2:1", SDLK_r, 0, "ui.frames arg:2 axis:1" },
+        }, 9);
+        setFlags_Widget(splitMenu, disabledWhenHidden_WidgetFlag, iTrue); /* enabled when open */
         setId_Widget(tabsMenu, "doctabs.menu");
         setId_Widget(barMenu, "barmenu");
         setId_Widget(clipMenu, "clipmenu");
+        setId_Widget(splitMenu, "splitmenu");
     }
     /* Global keyboard shortcuts. */ {
         addAction_Widget(root, 'l', KMOD_PRIMARY, "navigate.focus");
@@ -1248,6 +1267,7 @@ void createUserInterface_Root(iRoot *d) {
         addAction_Widget(root, '3', rightSidebar_KeyModifier, "sidebar2.mode arg:2 toggle:1");
         addAction_Widget(root, '4', rightSidebar_KeyModifier, "sidebar2.mode arg:3 toggle:1");
         addAction_Widget(root, '5', rightSidebar_KeyModifier, "sidebar2.mode arg:4 toggle:1");
+        addAction_Widget(root, SDLK_j, KMOD_PRIMARY, "splitmenu.open");
     }
     updateMetrics_Root(d);
 }

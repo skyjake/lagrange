@@ -225,6 +225,13 @@ void setCommandHandler_Widget(iWidget *d, iBool (*handler)(iWidget *, const char
     d->commandHandler = handler;
 }
 
+void setRoot_Widget(iWidget *d, iRoot *root) {
+    d->root = root;
+    iForEach(ObjectList, i, d->children) {
+        setRoot_Widget(i.object, root);
+    }
+}
+
 static int numExpandingChildren_Widget_(const iWidget *d) {
     int count = 0;
     iConstForEach(ObjectList, i, d->children) {
@@ -749,7 +756,8 @@ iLocalDef iBool isMouseEvent_(const SDL_Event *ev) {
 static iBool filterEvent_Widget_(const iWidget *d, const SDL_Event *ev) {
     const iBool isKey   = isKeyboardEvent_(ev);
     const iBool isMouse = isMouseEvent_(ev);
-    if (d->flags & disabled_WidgetFlag) {
+    if ((d->flags & disabled_WidgetFlag) || (d->flags & hidden_WidgetFlag &&
+                                             d->flags & disabledWhenHidden_WidgetFlag)) {
         if (isKey || isMouse) return iFalse;
     }
     if (d->flags & hidden_WidgetFlag) {

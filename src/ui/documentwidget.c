@@ -3969,6 +3969,11 @@ static iBool render_DocumentWidget_(const iDocumentWidget *d, iDrawContext *ctx,
 }
 
 static void prerender_DocumentWidget_(iAny *context) {
+    if (current_Root() == NULL) {
+        /* The widget has probably been removed from the widget tree, pending destruction.
+           Tickers are not cancelled until the widget is actually destroyed. */
+        return;
+    }
     const iDocumentWidget *d = context;
     iDrawContext ctx = {
         .widget          = d,

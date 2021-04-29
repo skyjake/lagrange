@@ -56,6 +56,17 @@ struct Impl_WindowPlacement {
     int   lastHit;
 };
 
+enum iWindowSplit {
+    vertical_WindowSplit = iBit(1),
+    oneToTwo_WindowSplit = iBit(2),
+    twoToOne_WindowSplit = iBit(3),
+    equal_WindowSplit    = oneToTwo_WindowSplit | twoToOne_WindowSplit,
+    /* meta */
+    mode_WindowSplit     = vertical_WindowSplit | equal_WindowSplit,
+    mask_WindowSplit     = equal_WindowSplit,
+    merge_WindowSplit    = iBit(10),
+};
+
 struct Impl_Window {
     SDL_Window *  win;
     iWindowPlacement place;
@@ -67,6 +78,8 @@ struct Impl_Window {
     uint32_t      focusGainedAt;
     SDL_Renderer *render;
     iInt2         size;
+    int           splitMode;
+    int           pendingSplitMode;
     iRoot *       roots[2];     /* root widget and UI state; second one is for split mode */
     iRoot *       keyRoot;      /* root that has the current keyboard input focus */
     iWidget *     hover;
@@ -98,6 +111,7 @@ iBool       setKeyRoot_Window       (iWindow *, iRoot *root);
 void        setCursor_Window        (iWindow *, int cursor);
 void        setSnap_Window          (iWindow *, int snapMode);
 void        setKeyboardHeight_Window(iWindow *, int height);
+void        setSplitMode_Window     (iWindow *, int splitMode);
 void        showToolbars_Window     (iWindow *, iBool show);
 iBool       postContextClick_Window (iWindow *, const SDL_MouseButtonEvent *);
 
@@ -112,6 +126,7 @@ uint32_t    frameTime_Window        (const iWindow *);
 SDL_Renderer *renderer_Window       (const iWindow *);
 int         snap_Window             (const iWindow *);
 iBool       isFullscreen_Window     (const iWindow *);
+int         numRoots_Window         (const iWindow *);
 iRoot *     findRoot_Window         (const iWindow *, const iWidget *widget);
 iRoot *     otherRoot_Window        (const iWindow *, iRoot *root);
 

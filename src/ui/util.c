@@ -984,6 +984,14 @@ void prependTabPage_Widget(iWidget *tabs, iWidget *page, const char *label, int 
     addTabPage_Widget_(tabs, front_WidgetAddPos, page, label, key, kmods);
 }
 
+void moveTabButtonToEnd_Widget(iWidget *tabButton) {
+    iWidget *buttons = tabButton->parent;
+    iWidget *tabs    = buttons->parent;
+    removeChild_Widget(buttons, tabButton);
+    addChild_Widget(buttons, iClob(tabButton));
+    arrange_Widget(tabs);
+}
+
 iWidget *tabPage_Widget(iWidget *tabs, size_t index) {
     iWidget *pages = findChild_Widget(tabs, "tabs.pages");
     return child_Widget(pages, index);

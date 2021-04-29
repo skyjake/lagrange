@@ -406,7 +406,10 @@ static iBool loadState_App_(iApp *d) {
             readData_File(f, 4, magic);
             if (!memcmp(magic, magicTabDocument_App_, 4)) {
                 const int8_t flags = read8_File(f);
-                const int rootIndex = flags & rootIndex1_DocumentStateFlag ? 1 : 0;
+                int rootIndex = flags & rootIndex1_DocumentStateFlag ? 1 : 0;
+                if (rootIndex > numRoots_Window(d->window) - 1) {
+                    rootIndex = 0;
+                }
                 setCurrent_Root(d->window->roots[rootIndex]);
                 if (isFirstTab[rootIndex]) {
                     isFirstTab[rootIndex] = iFalse;
@@ -1148,9 +1151,12 @@ static int run_App_(iApp *d) {
     while (d->isRunning) {
         dispatchCommands_Periodic(&d->periodic);
         processEvents_App(waitForNewEvents_AppEventMode);
-        setCurrent_Root(NULL);
         runTickers_App_(d);
         refresh_App();
+        /* Change the widget tree while we are not iterating through it. */
+        if (d->window->splitMode != d->window->pendingSplitMode) {
+            setSplitMode_Window(d->window, d->window->pendingSplitMode);
+        }
         recycle_Garbage();
     }
     SDL_DelEventWatch(resizeWatcher_, d);
@@ -1654,6 +1660,15 @@ iBool handleCommand_App(const char *cmd) {
         d->prefs.langTo   = argLabel_Command(cmd, "to");
         return iTrue;
     }
+    else if (equal_Command(cmd, "ui.frames")) {
+        d->window->pendingSplitMode =
+            (argLabel_Command(cmd, "axis") ? vertical_WindowSplit : 0) | (arg_Command(cmd) << 1);
+        return iTrue;
+    }
+//    else if (equal_Command(cmd, "window.updatelayout")) {
+//        resize_Window(d->window, -1, -1);
+//        return iTrue;
+//    }
     else if (equal_Command(cmd, "window.retain")) {
         d->prefs.retainWindowSize = arg_Command(cmd);
         return iTrue;
@@ -2009,15 +2024,22 @@ iBool handleCommand_App(const char *cmd) {
             arrange_Widget(tabs);
             return iTrue;
         }
-        if (tabCount_Widget(tabs) > 1) {
+        const iBool isSplit = numRoots_Window(get_Window()) > 1;
+        if (tabCount_Widget(tabs) > 1 || isSplit) {
             iWidget *closed = removeTabPage_Widget(tabs, index);
             destroy_Widget(closed); /* released later */
             if (index == tabCount_Widget(tabs)) {
                 index--;
             }
-            arrange_Widget(tabs);
-            if (wasCurrent) {
-                postCommandf_App("tabs.switch page:%p", tabPage_Widget(tabs, index));
+            if (tabCount_Widget(tabs) == 0) {
+                iAssert(isSplit);
+                postCommand_App("ui.frames arg:0");
+            }
+            else {
+                arrange_Widget(tabs);
+                if (wasCurrent) {
+                    postCommandf_App("tabs.switch page:%p", tabPage_Widget(tabs, index));
+                }
             }
         }
         else {
@@ -2113,7 +2135,7 @@ iBool handleCommand_App(const char *cmd) {
         const iPtrArray *homepages =
             list_Bookmarks(d->bookmarks, NULL, filterTagsRegExp_Bookmarks, pattern);
         if (isEmpty_PtrArray(homepages)) {
-            postCommand_App("open url:about:lagrange");
+            postCommand_Root(get_Root(), "open url:about:lagrange");
         }
         else {
             iStringSet *urls = iClob(new_StringSet());
@@ -2125,13 +2147,13 @@ iBool handleCommand_App(const char *cmd) {
                 }
             }
             if (!isEmpty_StringSet(urls)) {
-                postCommandf_App(
+                postCommandf_Root(get_Root(),
                     "open url:%s",
                     cstr_String(constAt_StringSet(urls, iRandoms(0, size_StringSet(urls)))));
             }
         }
         if (argLabel_Command(cmd, "focus")) {
-            postCommand_App("navigate.focus");
+            postCommand_Root(get_Root(), "navigate.focus");
         }
         return iTrue;
     }
@@ -2335,6 +2357,7 @@ iObjectList *listDocuments_App(const iRoot *rootOrNull) {
     iObjectList *docs = new_ObjectList();
     iForIndices(i, win->roots) {
         iRoot *root = win->roots[i];
+        if (!root) continue;
         if (!rootOrNull || root == rootOrNull) {
             const iWidget *tabs = findChild_Widget(root->widget, "doctabs");
             iForEach(ObjectList, i, children_Widget(findChild_Widget(tabs, "tabs.pages"))) {

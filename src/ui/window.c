@@ -161,7 +161,7 @@ static void removeMacMenus_(void) {
 }
 #endif
 
-static int numRoots_Window(const iWindow *d) {
+int numRoots_Window(const iWindow *d) {
     int num = 0;
     iForIndices(i, d->roots) {
         if (d->roots[i]) num++;
@@ -173,27 +173,38 @@ static void setupUserInterface_Window(iWindow *d) {
 #if defined (iPlatformAppleDesktop)
     insertMacMenus_();
 #endif
-    iForIndices(i, d->roots) {
-        d->roots[i] = new_Root();
-        setCurrent_Root(d->roots[i]);
-        createUserInterface_Root(d->roots[i]);
-        setCurrent_Root(NULL);
-    }
+    /* One root is created by default. */
+    d->roots[0] = new_Root();
+    setCurrent_Root(d->roots[0]);
+    createUserInterface_Root(d->roots[0]);
+    setCurrent_Root(NULL);
     /* One of the roots always has keyboard input focus. */
     d->keyRoot = d->roots[0];
 }
 
 static void windowSizeChanged_Window_(iWindow *d) {
     const int numRoots = numRoots_Window(d);
-    /* Horizontal split frame. */
     const iInt2 rootSize = d->size;
+    const int weights[2] = {
+        d->roots[0] ? (d->splitMode & twoToOne_WindowSplit ? 2 : 1) : 0,
+        d->roots[1] ? (d->splitMode & oneToTwo_WindowSplit ? 2 : 1) : 0,
+    };
+    const int totalWeight = weights[0] + weights[1];
+    int w = 0;
     iForIndices(i, d->roots) {
         iRoot *root = d->roots[i];
         if (root) {
             iRect *rect = &root->widget->rect;
             /* Horizontal split frame. */
-            rect->pos  = init_I2(rootSize.x * i / numRoots, 0);
-            rect->size = init_I2(rootSize.x * (i + 1) / numRoots - rect->pos.x, rootSize.y);
+            if (d->splitMode & vertical_WindowSplit) {
+                rect->pos  = init_I2(0, rootSize.y * w / totalWeight);
+                rect->size = init_I2(rootSize.x, rootSize.y * (w + weights[i]) / totalWeight - rect->pos.y);
+            }
+            else {
+                rect->pos  = init_I2(rootSize.x * w / totalWeight, 0);
+                rect->size = init_I2(rootSize.x * (w + weights[i]) / totalWeight - rect->pos.x, rootSize.y);
+            }
+            w += weights[i];
             root->widget->minSize = rect->size;
             updatePadding_Root(root);
             arrange_Widget(root->widget);
@@ -378,6 +389,7 @@ void init_Window(iWindow *d, iRect rect) {
     d->win = NULL;
     d->size = zero_I2(); /* will be updated below */
     iZap(d->roots);
+    d->splitMode = d->pendingSplitMode = 0;
     d->hover = NULL;
     d->mouseGrab = NULL;
     d->focus = NULL;
@@ -1004,7 +1016,8 @@ void draw_Window(iWindow *d) {
                         &(SDL_Rect){ left_Rect(rect) + gap_UI * 1.25f, mid.y - size / 2, size, size });
                 }
 #endif
-                /* Root separator and keyboard focus indicator. */ {
+                /* Root separator and keyboard focus indicator. */
+                if (numRoots_Window(d) > 1){
                     iPaint p;
                     init_Paint(&p);
                     const iRect bounds = bounds_Widget(root->widget);
@@ -1017,7 +1030,7 @@ void draw_Window(iWindow *d) {
                     if (root == d->keyRoot) {
                         fillRect_Paint(&p, (iRect){
                             topLeft_Rect(bounds),
-                            init_I2(width_Rect(bounds), gap_UI / 2)                            
+                            init_I2(width_Rect(bounds), gap_UI / 2)
                         }, uiBackgroundSelected_ColorId);
                     }
                 }
@@ -1037,8 +1050,13 @@ void draw_Window(iWindow *d) {
 }
 
 void resize_Window(iWindow *d, int w, int h) {
-    SDL_SetWindowSize(d->win, w, h);
-    updateSize_Window_(d, iFalse);
+    if (w > 0 && h > 0) {
+        SDL_SetWindowSize(d->win, w, h);
+        updateSize_Window_(d, iFalse);
+    }
+    else {
+        updateSize_Window_(d, iTrue); /* notify always */
+    }
 }
 
 void setTitle_Window(iWindow *d, const iString *title) {
@@ -1123,6 +1141,51 @@ void setKeyboardHeight_Window(iWindow *d, int height) {
         }
         postCommandf_App("keyboard.changed arg:%d", height);
         postRefresh_App();
+    }
+}
+
+void setSplitMode_Window(iWindow *d, int splitMode) {
+    iAssert(current_Root() == NULL);
+    if (d->splitMode != splitMode) {
+        int oldCount = numRoots_Window(d);
+        setFreezeDraw_Window(d, iTrue);
+        if (oldCount == 2 && splitMode == 0) {
+            /* Keep references to the tabs of the second root. */
+            iObjectList *tabs = listDocuments_App(d->roots[1]);
+            iForEach(ObjectList, i, tabs) {
+                setRoot_Widget(i.object, d->roots[0]);
+            }
+            delete_Root(d->roots[1]);
+            d->roots[1] = NULL;
+            d->keyRoot = d->roots[0];
+            /* Move the deleted root's tabs to the first root. */
+            setCurrent_Root(d->roots[0]);
+            iWidget *docTabs = findWidget_Root("doctabs");
+            iForEach(ObjectList, j, tabs) {
+                appendTabPage_Widget(docTabs, j.object, "", 0, 0);
+            }
+            /* The last child is the [+] button for adding a tab. */
+            moveTabButtonToEnd_Widget(findChild_Widget(docTabs, "newtab"));
+            iRelease(tabs);
+        }
+        else if ((splitMode & mask_WindowSplit) && oldCount == 1) {
+            /* Add a second root. */
+            iAssert(d->roots[1] == NULL);
+            d->roots[1] = new_Root();
+            setCurrent_Root(d->roots[1]);
+            createUserInterface_Root(d->roots[1]);
+            /* If the old root has multiple tabs, move the current one to the new split. */
+            
+            postCommand_Root(d->roots[1], "navigate.home");
+            setCurrent_Root(NULL);
+        }
+        d->splitMode = splitMode;
+//        windowSizeChanged_Window_(d);
+        updateSize_Window_(d, iTrue);
+//        postCommand_App("window.resized");
+  //      postCommand_App("metrics.resized");
+//        postCommand_App("window.updatelayout");
+        postCommand_App("window.unfreeze");
     }
 }
 

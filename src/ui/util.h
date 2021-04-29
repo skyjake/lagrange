@@ -246,6 +246,7 @@ void            setTabPageLabel_Widget  (iWidget *tabs, const iAnyObject *page, 
 iWidget *       tabPage_Widget          (iWidget *tabs, size_t index);
 iLabelWidget *  tabPageButton_Widget    (iWidget *tabs, const iAnyObject *page);
 iBool           isTabButton_Widget      (const iWidget *);
+void            moveTabButtonToEnd_Widget(iWidget *tabButton);
 size_t          tabPageIndex_Widget     (const iWidget *tabs, const iAnyObject *page);
 const iWidget * currentTabPage_Widget   (const iWidget *tabs);
 size_t          tabCount_Widget         (const iWidget *tabs);

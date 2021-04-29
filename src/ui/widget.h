@@ -116,6 +116,7 @@ enum iWidgetFlag {
 #define parentCannotResizeHeight_WidgetFlag iBit64(58)
 #define ignoreForParentWidth_WidgetFlag     iBit64(59)
 #define noFadeBackground_WidgetFlag         iBit64(60)
+#define disabledWhenHidden_WidgetFlag       iBit64(61)
 
 enum iWidgetAddPos {
     back_WidgetAddPos,
@@ -247,6 +248,7 @@ void    showCollapsed_Widget        (iWidget *, iBool show); /* takes care of re
 void    setBackgroundColor_Widget   (iWidget *, int bgColor);
 void    setFrameColor_Widget        (iWidget *, int frameColor);
 void    setCommandHandler_Widget    (iWidget *, iBool (*handler)(iWidget *, const char *));
+void    setRoot_Widget              (iWidget *, iRoot *root); /* updates the entire tree */
 iAny *  addChild_Widget             (iWidget *, iAnyObject *child); /* holds a ref */
 iAny *  addChildPos_Widget          (iWidget *, iAnyObject *child, enum iWidgetAddPos addPos);
 iAny *  addChildPosFlags_Widget     (iWidget *, iAnyObject *child, enum iWidgetAddPos addPos, int64_t childFlags);

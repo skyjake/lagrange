@@ -681,6 +681,12 @@ msgstr "Open Link in New Tab"
 msgid "link.newtab.background"
 msgstr "Open Link in Background Tab"
 
+msgid "link.side"
+msgstr "Open Link to the Side"
+
+msgid "link.side.newtab"
+msgstr "Open Link in New Tab to the Side"
+
 msgid "link.browser"
 msgstr "Open Link in Default Browser"
 
