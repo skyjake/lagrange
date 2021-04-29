@@ -657,7 +657,6 @@ static iBool processEvent_LookupWidget_(iLookupWidget *d, const SDL_Event *ev) {
             iRoot *root = w->root;
             const iInt2 rootSize = size_Root(root);
             const iRect navBarBounds = bounds_Widget(findChild_Widget(root->widget, "navbar"));
-            printf("navbar x:%d w:%d\n", navBarBounds.pos.x, navBarBounds.size.x);
             iWidget *url = findChild_Widget(root->widget, "url");
             setFixedSize_Widget(w, init_I2(width_Widget(url),
                                            (rootSize.y - bottom_Rect(navBarBounds)) / 2));
