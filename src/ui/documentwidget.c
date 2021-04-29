@@ -2029,7 +2029,8 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         addChildFlags_Widget(dlg, iClob(sizer), frameless_WidgetFlag);
         setFlags_Widget(dlg, centerHorizontal_WidgetFlag, iFalse);
         if (deviceType_App() != phone_AppDeviceType) {
-            setPos_Widget(dlg, bottomLeft_Rect(bounds_Widget(findWidget_App("navbar.lock"))));
+            const iWidget *lockButton = findWidget_Root("navbar.lock");
+            setPos_Widget(dlg, windowToLocal_Widget(dlg, bottomLeft_Rect(bounds_Widget(lockButton))));
         }
         arrange_Widget(dlg);
         addAction_Widget(dlg, SDLK_ESCAPE, 0, "message.ok");

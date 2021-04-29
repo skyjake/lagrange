@@ -1531,6 +1531,12 @@ void printTree_Widget(const iWidget *d) {
     printTree_Widget_(d, 0);
 }
 
+static void printIndent_(int indent) {
+    for (int i = 0; i < indent; ++i) {
+        fwrite("  ", 2, 1, stdout);
+    }
+}
+
 void identify_Widget(const iWidget *d) {
     if (!d) {
         puts("[NULL}");
@@ -1538,12 +1544,10 @@ void identify_Widget(const iWidget *d) {
     }
     int indent = 0;
     for (const iWidget *w = d; w; w = w->parent, indent++) {
-        if (indent > 0) {
-            for (int i = 0; i < indent; ++i) {
-                fwrite("  ", 2, 1, stdout);
-            }
-        }
+        printIndent_(indent);
         printInfo_Widget_(w);
     }
+    printIndent_(indent);
+    printf("Root %d: %p\n", 1 + (d->root == get_Window()->roots[1]), d->root);
     fflush(stdout);
 }

@@ -163,6 +163,7 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
     const iBool    isSel       = (flags & selected_WidgetFlag) != 0;
     const iBool    isFrameless = (flags & frameless_WidgetFlag) != 0;
     const iBool    isButton    = d->click.button != 0;
+    const iBool    isKeyRoot   = (w->root == get_Window()->keyRoot);
     /* Default color state. */
     *bg     = isButton && ~flags & noBackground_WidgetFlag ? (d->widget.bgColor != none_ColorId ?
                                                               d->widget.bgColor : uiBackground_ColorId)
@@ -175,10 +176,20 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
     }
     if (isSel) {
         *bg = uiBackgroundSelected_ColorId;
+//        if (!isKeyRoot) {
+//            *bg = uiEmbossSelected1_ColorId; //uiBackgroundUnfocusedSelection_ColorId;
+//        }
+        if (!isKeyRoot) {
+            *bg = isDark_ColorTheme(colorTheme_App()) ? uiBackgroundUnfocusedSelection_ColorId
+                : uiMarked_ColorId ;
+        }
         *fg = uiTextSelected_ColorId;
         if (isButton) {
             *frame1 = uiEmbossSelected1_ColorId;
             *frame2 = uiEmbossSelected2_ColorId;
+            if (!isKeyRoot) {
+                *frame1 = *bg;
+            }
         }
     }
     int colorEscape = none_ColorId;
@@ -199,7 +210,7 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
                 }
                 else {
                     *bg = *frame1 = *frame2 = colorEscape;
-                    *fg = uiText_ColorId | permanent_ColorId;
+                    *fg = white_ColorId | permanent_ColorId;
                 }
             }
             else if (isSel) {

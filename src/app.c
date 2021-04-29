@@ -926,6 +926,7 @@ static iBool nextEvent_App_(iApp *d, enum iAppEventMode eventMode, SDL_Event *ev
 
 void processEvents_App(enum iAppEventMode eventMode) {
     iApp *d = &app_;
+    iRoot *oldCurrentRoot = current_Root(); /* restored afterwards */
     SDL_Event ev;
     iBool gotEvents = iFalse;
     while (nextEvent_App_(d, eventMode, &ev)) {
@@ -1086,6 +1087,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
     }
 #endif
 backToMainLoop:;
+    setCurrent_Root(oldCurrentRoot);
 }
 
 static void runTickers_App_(iApp *d) {

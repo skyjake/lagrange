@@ -250,6 +250,10 @@ void setCurrent_Root(iRoot *root) {
     activeRoot_ = root;
 }
 
+iRoot *current_Root(void) {
+    return activeRoot_;
+}
+
 iRoot *get_Root(void) {
     iAssert(activeRoot_);
     return activeRoot_;

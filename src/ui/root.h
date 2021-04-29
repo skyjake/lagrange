@@ -22,7 +22,8 @@ iDeclareTypeConstruction(Root)
 void        createUserInterface_Root            (iRoot *);
 
 void        setCurrent_Root                     (iRoot *);
-iRoot *     get_Root                            (void);
+iRoot *     current_Root                        (void);
+iRoot *     get_Root                            (void); /* assert != NULL */
 iAnyObject *findWidget_Root                     (const char *id); /* under current Root */
 
 iPtrArray * onTop_Root                          (iRoot *);

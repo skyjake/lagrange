@@ -922,8 +922,19 @@ static iBool tabSwitcher_(iWidget *tabs, const char *cmd) {
             if (isVisible_Widget(child)) break;
             tabIndex++;
         }
-        tabIndex += (equal_Command(cmd, "tabs.next") ? +1 : -1);
-        showTabPage_Widget(tabs, child_Widget(pages, iWrap(tabIndex, 0, childCount_Widget(pages))));
+        const int dir = (equal_Command(cmd, "tabs.next") ? +1 : -1);
+        /* If out of tabs, rotate to the next set of tabs if one is available. */
+        if ((tabIndex == 0 && dir < 0) || (tabIndex == childCount_Widget(pages) - 1 && dir > 0)) {
+            iWidget *nextTabs = findChild_Widget(otherRoot_Window(get_Window(), tabs->root)->widget,
+                                                 "doctabs");
+            iWidget *nextPages = findChild_Widget(nextTabs, "tabs.pages");
+            tabIndex = (dir < 0 ? childCount_Widget(nextPages) - 1 : 0);
+            showTabPage_Widget(nextTabs, child_Widget(nextPages, tabIndex));
+            postCommand_App("keyroot.next");
+        }
+        else {
+            showTabPage_Widget(tabs, child_Widget(pages, tabIndex + dir));
+        }
         refresh_Widget(tabs);
         return iTrue;
     }
