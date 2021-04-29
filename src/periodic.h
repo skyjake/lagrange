@@ -21,6 +21,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <the_Foundation/mutex.h>
+#include <the_Foundation/ptrset.h>
 #include <the_Foundation/sortedarray.h>
 
 iDeclareType(Periodic)
@@ -31,6 +32,7 @@ struct Impl_Periodic {
     iMutex *     mutex;
     iSortedArray commands;
     uint32_t     lastPostTime;
+    iPtrSet      pendingRemoval; /* contexts */
 };
 
 void    init_Periodic   (iPeriodic *);
