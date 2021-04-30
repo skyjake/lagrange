@@ -1660,7 +1660,7 @@ iBool handleCommand_App(const char *cmd) {
         d->prefs.langTo   = argLabel_Command(cmd, "to");
         return iTrue;
     }
-    else if (equal_Command(cmd, "ui.frames")) {
+    else if (equal_Command(cmd, "ui.split")) {
         d->window->pendingSplitMode =
             (argLabel_Command(cmd, "axis") ? vertical_WindowSplit : 0) | (arg_Command(cmd) << 1);
         return iTrue;
@@ -2033,7 +2033,7 @@ iBool handleCommand_App(const char *cmd) {
             }
             if (tabCount_Widget(tabs) == 0) {
                 iAssert(isSplit);
-                postCommand_App("ui.frames arg:0");
+                postCommand_App("ui.split arg:0");
             }
             else {
                 arrange_Widget(tabs);

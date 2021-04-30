@@ -29,6 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "embedded.h"
 #include "keys.h"
 #include "labelwidget.h"
+#include "documentwidget.h"
 #include "paint.h"
 #include "root.h"
 #include "touch.h"
@@ -1170,13 +1171,27 @@ void setSplitMode_Window(iWindow *d, int splitMode) {
         }
         else if ((splitMode & mask_WindowSplit) && oldCount == 1) {
             /* Add a second root. */
+            iDocumentWidget *moved = document_Root(d->roots[0]);
             iAssert(d->roots[1] == NULL);
             d->roots[1] = new_Root();
             setCurrent_Root(d->roots[1]);
             createUserInterface_Root(d->roots[1]);
-            /* If the old root has multiple tabs, move the current one to the new split. */
-            
-            postCommand_Root(d->roots[1], "navigate.home");
+            /* If the old root has multiple tabs, move the current one to the new split. */ {
+                iWidget *docTabs0 = findChild_Widget(d->roots[0]->widget, "doctabs");
+                iWidget *docTabs1 = findChild_Widget(d->roots[1]->widget, "doctabs");
+                if (tabCount_Widget(docTabs0) >= 2) {
+                    int movedIndex = tabPageIndex_Widget(docTabs0, moved);
+                    removeTabPage_Widget(docTabs0, movedIndex);
+                    showTabPage_Widget(docTabs0, tabPage_Widget(docTabs0, iMax(movedIndex - 1, 0)));
+                    iRelease(removeTabPage_Widget(docTabs1, 0)); /* delete the default tab */
+                    setRoot_Widget(as_Widget(moved), d->roots[1]);
+                    prependTabPage_Widget(docTabs1, iClob(moved), "", 0, 0);
+                    showTabPage_Widget(docTabs1, as_Widget(moved));
+                }
+                else {
+                    postCommand_Root(d->roots[1], "navigate.home");
+                }
+            }
             setCurrent_Root(NULL);
         }
         d->splitMode = splitMode;

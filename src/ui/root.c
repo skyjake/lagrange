@@ -885,7 +885,7 @@ void updateMetrics_Root(iRoot *d) {
 }
 
 void createUserInterface_Root(iRoot *d) {
-    iWidget *root = d->widget = new_Widget();    
+    iWidget *root = d->widget = new_Widget();
     iAssert(root->root == d);
     setId_Widget(root, "root");
     /* Children of root cover the entire window. */
@@ -1238,15 +1238,15 @@ void createUserInterface_Root(iRoot *d) {
                                                 },
                                             4);
         iWidget *splitMenu = makeMenu_Widget(root, (iMenuItem[]){
-            { "Single Frame", '1', 0, "ui.frames arg:0" },
+            { "Single Frame", '1', 0, "ui.split arg:0" },
             { "---", 0, 0, NULL },
-            { "Horizontal", '2', 0, "ui.frames arg:3 axis:0" },
-            { "Horizontal 1:2", SDLK_d, 0, "ui.frames arg:1 axis:0" },
-            { "Horizontal 2:1", SDLK_e, 0, "ui.frames arg:2 axis:0" },
+            { "Horizontal", '2', 0, "ui.split arg:3 axis:0" },
+            { "Horizontal 1:2", SDLK_d, 0, "ui.split arg:1 axis:0" },
+            { "Horizontal 2:1", SDLK_e, 0, "ui.split arg:2 axis:0" },
             { "---", 0, 0, NULL },
-            { "Vertical", '3', 0, "ui.frames arg:3 axis:1" },
-            { "Vertical 1:2", SDLK_f, 0, "ui.frames arg:1 axis:1" },
-            { "Vertical 2:1", SDLK_r, 0, "ui.frames arg:2 axis:1" },
+            { "Vertical", '3', 0, "ui.split arg:3 axis:1" },
+            { "Vertical 1:2", SDLK_f, 0, "ui.split arg:1 axis:1" },
+            { "Vertical 2:1", SDLK_r, 0, "ui.split arg:2 axis:1" },
         }, 9);
         setFlags_Widget(splitMenu, disabledWhenHidden_WidgetFlag, iTrue); /* enabled when open */
         setId_Widget(tabsMenu, "doctabs.menu");
