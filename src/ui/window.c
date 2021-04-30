@@ -471,6 +471,7 @@ void init_Window(iWindow *d, iRect rect) {
     d->frameTime = SDL_GetTicks();
     d->loadAnimTimer = 0;
     init_Text(d->render);
+    SDL_GetRendererOutputSize(d->render, &d->size.x, &d->size.y);
     setupUserInterface_Window(d);
     postCommand_App("~bindings.changed"); /* update from bindings */
     updateSize_Window_(d, iFalse);
@@ -1175,6 +1176,7 @@ void setSplitMode_Window(iWindow *d, int splitMode) {
             iAssert(d->roots[1] == NULL);
             d->roots[1] = new_Root();
             setCurrent_Root(d->roots[1]);
+            d->keyRoot = d->roots[1];
             createUserInterface_Root(d->roots[1]);
             /* If the old root has multiple tabs, move the current one to the new split. */ {
                 iWidget *docTabs0 = findChild_Widget(d->roots[0]->widget, "doctabs");
@@ -1186,7 +1188,8 @@ void setSplitMode_Window(iWindow *d, int splitMode) {
                     iRelease(removeTabPage_Widget(docTabs1, 0)); /* delete the default tab */
                     setRoot_Widget(as_Widget(moved), d->roots[1]);
                     prependTabPage_Widget(docTabs1, iClob(moved), "", 0, 0);
-                    showTabPage_Widget(docTabs1, as_Widget(moved));
+                    //showTabPage_Widget(docTabs1, as_Widget(moved));
+                    postCommandf_App("tabs.switch page:%p", moved);
                 }
                 else {
                     postCommand_Root(d->roots[1], "navigate.home");

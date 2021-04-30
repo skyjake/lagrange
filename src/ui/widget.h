@@ -87,7 +87,8 @@ enum iWidgetFlag {
 };
 
 /* 64-bit extended flags */
-#define wasCollapsed_WidgetFlag             iBit64(32)
+//#define wasCollapsed_WidgetFlag             iBit64(32)
+#define disabledWhenHidden_WidgetFlag       iBit64(32)
 #define centerHorizontal_WidgetFlag         iBit64(33)
 #define moveToParentLeftEdge_WidgetFlag     iBit64(34)
 #define moveToParentRightEdge_WidgetFlag    iBit64(35)
@@ -116,7 +117,6 @@ enum iWidgetFlag {
 #define parentCannotResizeHeight_WidgetFlag iBit64(58)
 #define ignoreForParentWidth_WidgetFlag     iBit64(59)
 #define noFadeBackground_WidgetFlag         iBit64(60)
-#define disabledWhenHidden_WidgetFlag       iBit64(61)
 
 enum iWidgetAddPos {
     back_WidgetAddPos,

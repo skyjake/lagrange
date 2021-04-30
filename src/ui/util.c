@@ -2061,8 +2061,8 @@ static iWidget *appendTwoColumnPage_(iWidget *tabs, const char *title, int short
                                      iWidget **values) {
     /* TODO: Use `makeTwoColumnWidget_()`, see above. */
     iWidget *page = new_Widget();
-    setFlags_Widget(page, arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag |
-                    resizeHeightOfChildren_WidgetFlag, iTrue);
+    setBackgroundColor_Widget(page, red_ColorId);
+    setFlags_Widget(page, arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
     addChildFlags_Widget(page, iClob(new_Widget()), expand_WidgetFlag);
     setPadding_Widget(page, 0, gap_UI, 0, gap_UI);
     iWidget *columns = new_Widget();

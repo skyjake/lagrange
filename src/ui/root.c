@@ -541,59 +541,63 @@ iBool isNarrow_Root(const iRoot *d) {
     return width_Rect(safeRect_Root(d)) / gap_UI < 140;
 }
 
+static void updateNavBarSize_(iWidget *navBar) {
+    const iBool isPhone = deviceType_App() == phone_AppDeviceType;
+    const iBool isNarrow = !isPhone && isNarrow_Root(navBar->root);
+    /* Adjust navbar padding. */ {
+        int hPad = isPhone && isPortrait_App() ? 0 : (isPhone || isNarrow) ? gap_UI / 2
+                                                                             : gap_UI * 3 / 2;
+        int vPad = gap_UI * 3 / 2;
+        int topPad = !findWidget_Root("winbar") ? gap_UI / 2 : 0;
+        setPadding_Widget(navBar, hPad, vPad / 3 + topPad, hPad, vPad / 2);
+    }
+    /* Button sizing. */
+    if (isNarrow ^ ((flags_Widget(navBar) & tight_WidgetFlag) != 0)) {
+        setFlags_Widget(navBar, tight_WidgetFlag, isNarrow);
+        iForEach(ObjectList, i, navBar->children) {
+            iWidget *child = as_Widget(i.object);
+            setFlags_Widget(child, tight_WidgetFlag, isNarrow);
+            if (isInstance_Object(i.object, &Class_LabelWidget)) {
+                iLabelWidget *label = i.object;
+                updateSize_LabelWidget(label);
+            }
+        }
+        /* Note that InputWidget uses the `tight` flag to adjust its inner padding. */
+        /* TODO: Is this redundant? See `updateMetrics_Window_()`. */
+        const int embedButtonWidth = width_Widget(findChild_Widget(navBar, "navbar.lock"));
+        setContentPadding_InputWidget(findChild_Widget(navBar, "url"),
+                                      embedButtonWidth * 0.75f,
+                                      embedButtonWidth * 0.75f);
+    }
+    if (isPhone) {
+        static const char *buttons[] = { "navbar.back",  "navbar.forward", "navbar.sidebar",
+                                         "navbar.ident", "navbar.home",    "navbar.menu" };
+        iWidget *toolBar = findWidget_App("toolbar");
+        setVisualOffset_Widget(toolBar, 0, 0, 0);
+        setFlags_Widget(toolBar, hidden_WidgetFlag, isLandscape_App());
+        iForIndices(i, buttons) {
+            iLabelWidget *btn = findChild_Widget(navBar, buttons[i]);
+            setFlags_Widget(as_Widget(btn), hidden_WidgetFlag, isPortrait_App());
+            if (isLandscape_App()) {
+                /* Collapsing sets size to zero and the label doesn't know when to update
+                   its own size automatically. */
+                updateSize_LabelWidget(btn);
+            }
+        }
+        arrange_Widget(navBar->root->widget);
+    }
+    /* Resize the URL input field. */ {
+        iWidget *urlBar = findChild_Widget(navBar, "url");
+        urlBar->rect.size.x = iMini(navBarAvailableSpace_(navBar), 167 * gap_UI);
+        arrange_Widget(navBar);
+    }
+    refresh_Widget(navBar);
+    postCommand_Widget(navBar, "layout.changed id:navbar");
+}
+
 static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
     if (equal_Command(cmd, "window.resized") || equal_Command(cmd, "metrics.changed")) {
-        const iBool isPhone = deviceType_App() == phone_AppDeviceType;
-        const iBool isNarrow = !isPhone && isNarrow_Root(navBar->root);
-        /* Adjust navbar padding. */ {
-            int hPad = isPhone && isPortrait_App() ? 0 : (isPhone || isNarrow) ? gap_UI / 2
-                                                                                 : gap_UI * 3 / 2;
-            int vPad = gap_UI * 3 / 2;
-            int topPad = !findWidget_App("winbar") ? gap_UI / 2 : 0;
-            setPadding_Widget(navBar, hPad, vPad / 3 + topPad, hPad, vPad / 2);
-        }
-        /* Button sizing. */
-        if (isNarrow ^ ((flags_Widget(navBar) & tight_WidgetFlag) != 0)) {
-            setFlags_Widget(navBar, tight_WidgetFlag, isNarrow);
-            iForEach(ObjectList, i, navBar->children) {
-                iWidget *child = as_Widget(i.object);
-                setFlags_Widget(child, tight_WidgetFlag, isNarrow);
-                if (isInstance_Object(i.object, &Class_LabelWidget)) {
-                    iLabelWidget *label = i.object;
-                    updateSize_LabelWidget(label);
-                }
-            }
-            /* Note that InputWidget uses the `tight` flag to adjust its inner padding. */
-            /* TODO: Is this redundant? See `updateMetrics_Window_()`. */
-            const int embedButtonWidth = width_Widget(findChild_Widget(navBar, "navbar.lock"));
-            setContentPadding_InputWidget(findChild_Widget(navBar, "url"),
-                                          embedButtonWidth * 0.75f,
-                                          embedButtonWidth * 0.75f);
-        }
-        if (isPhone) {
-            static const char *buttons[] = { "navbar.back",  "navbar.forward", "navbar.sidebar",
-                                             "navbar.ident", "navbar.home",    "navbar.menu" };
-            iWidget *toolBar = findWidget_App("toolbar");
-            setVisualOffset_Widget(toolBar, 0, 0, 0);
-            setFlags_Widget(toolBar, hidden_WidgetFlag, isLandscape_App());
-            iForIndices(i, buttons) {
-                iLabelWidget *btn = findChild_Widget(navBar, buttons[i]);
-                setFlags_Widget(as_Widget(btn), hidden_WidgetFlag, isPortrait_App());
-                if (isLandscape_App()) {
-                    /* Collapsing sets size to zero and the label doesn't know when to update
-                       its own size automatically. */
-                    updateSize_LabelWidget(btn);
-                }
-            }
-            arrange_Widget(navBar->root->widget);
-        }
-        /* Resize the URL input field. */ {
-            iWidget *urlBar = findChild_Widget(navBar, "url");
-            urlBar->rect.size.x = iMini(navBarAvailableSpace_(navBar), 167 * gap_UI);
-            arrange_Widget(navBar);
-        }
-        refresh_Widget(navBar);
-        postCommand_Widget(navBar, "layout.changed id:navbar");
+        updateNavBarSize_(navBar);
         return iFalse;
     }
     else if (equal_Command(cmd, "window.reload.update")) {
@@ -740,16 +744,18 @@ static iBool handleSearchBarCommands_(iWidget *searchBar, const char *cmd) {
     else if (equal_Command(cmd, "focus.gained")) {
         if (pointer_Command(cmd) == findChild_Widget(searchBar, "find.input")) {
             if (!isVisible_Widget(searchBar)) {
-                setFlags_Widget(searchBar, hidden_WidgetFlag | disabled_WidgetFlag, iFalse);
-                arrange_Widget(root_Widget(searchBar));
-                postRefresh_App();
+//                setFlags_Widget(searchBar, hidden_WidgetFlag | disabled_WidgetFlag, iFalse);
+//                arrange_Widget(root_Widget(searchBar));
+//                postRefresh_App();
+                showCollapsed_Widget(searchBar, iTrue);
             }
         }
     }
     else if (equal_Command(cmd, "find.close")) {
         if (isVisible_Widget(searchBar)) {
-            setFlags_Widget(searchBar, hidden_WidgetFlag | disabled_WidgetFlag, iTrue);
-            arrange_Widget(searchBar->parent);
+            //setFlags_Widget(searchBar, hidden_WidgetFlag | disabled_WidgetFlag, iTrue);
+            //arrange_Widget(searchBar->parent);
+            showCollapsed_Widget(searchBar, iFalse);
             if (isFocused_Widget(findChild_Widget(searchBar, "find.input"))) {
                 setFocus_Widget(NULL);
             }
@@ -886,6 +892,7 @@ void updateMetrics_Root(iRoot *d) {
 
 void createUserInterface_Root(iRoot *d) {
     iWidget *root = d->widget = new_Widget();
+    root->rect.size = get_Window()->size;
     iAssert(root->root == d);
     setId_Widget(root, "root");
     /* Children of root cover the entire window. */
@@ -944,13 +951,14 @@ void createUserInterface_Root(iRoot *d) {
         setBackgroundColor_Widget(winBar, uiBackground_ColorId);
     }
 #endif
+    iWidget *navBar;
     /* Navigation bar. */ {
-        iWidget *navBar = new_Widget();
+        navBar = new_Widget();
         setId_Widget(navBar, "navbar");
         setFlags_Widget(navBar,
                         hittable_WidgetFlag | /* context menu */
                             arrangeHeight_WidgetFlag |
-                            resizeChildren_WidgetFlag |
+                            resizeWidthOfChildren_WidgetFlag |
                             arrangeHorizontal_WidgetFlag |
                             drawBackgroundToHorizontalSafeArea_WidgetFlag |
                             drawBackgroundToVerticalSafeArea_WidgetFlag,
@@ -958,7 +966,8 @@ void createUserInterface_Root(iRoot *d) {
         addChild_Widget(div, iClob(navBar));
         setBackgroundColor_Widget(navBar, uiBackground_ColorId);
         setCommandHandler_Widget(navBar, handleNavBarCommands_);
-        setId_Widget(addChildFlags_Widget(navBar, iClob(newIcon_LabelWidget(backArrow_Icon, 0, 0, "navigate.back")), collapse_WidgetFlag), "navbar.back");
+        iWidget *navBack;
+        setId_Widget(navBack = addChildFlags_Widget(navBar, iClob(newIcon_LabelWidget(backArrow_Icon, 0, 0, "navigate.back")), collapse_WidgetFlag), "navbar.back");
         setId_Widget(addChildFlags_Widget(navBar, iClob(newIcon_LabelWidget(forwardArrow_Icon, 0, 0, "navigate.forward")), collapse_WidgetFlag), "navbar.forward");
         /* Mobile devices have a button for easier access to the left sidebar. */
         if (deviceType_App() != desktop_AppDeviceType) {
@@ -999,7 +1008,7 @@ void createUserInterface_Root(iRoot *d) {
             setId_Widget(rightEmbed, "url.rightembed");
             addChildFlags_Widget(as_Widget(url),
                                  iClob(rightEmbed),
-                                 arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag |
+                                 arrangeHorizontal_WidgetFlag | arrangeWidth_WidgetFlag |
                                      resizeHeightOfChildren_WidgetFlag |
                                      moveToParentRightEdge_WidgetFlag);
             /* Feeds refresh indicator is inside the input field. */ {
@@ -1132,8 +1141,8 @@ void createUserInterface_Root(iRoot *d) {
         iWidget *searchBar = new_Widget();
         setId_Widget(searchBar, "search");
         setFlags_Widget(searchBar,
-                        hidden_WidgetFlag | disabled_WidgetFlag | collapse_WidgetFlag |
-                            arrangeHeight_WidgetFlag | resizeChildren_WidgetFlag |
+                        hidden_WidgetFlag | disabledWhenHidden_WidgetFlag | collapse_WidgetFlag |
+                            arrangeHeight_WidgetFlag | resizeWidthOfChildren_WidgetFlag |
                             arrangeHorizontal_WidgetFlag,
                         iTrue);
         if (deviceType_App() == desktop_AppDeviceType) {
@@ -1270,6 +1279,7 @@ void createUserInterface_Root(iRoot *d) {
         addAction_Widget(root, SDLK_j, KMOD_PRIMARY, "splitmenu.open");
     }
     updateMetrics_Root(d);
+    updateNavBarSize_(navBar);
 }
 
 void showToolbars_Root(iRoot *d, iBool show) {

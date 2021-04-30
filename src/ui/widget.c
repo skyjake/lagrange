@@ -232,11 +232,29 @@ void setRoot_Widget(iWidget *d, iRoot *root) {
     }
 }
 
+iLocalDef iBool isCollapsed_Widget_(const iWidget *d) {
+    return (d->flags & (hidden_WidgetFlag | collapse_WidgetFlag)) ==
+           (hidden_WidgetFlag | collapse_WidgetFlag);
+}
+
+iLocalDef iBool isArrangedPos_Widget_(const iWidget *d) {
+    return (d->flags & fixedPosition_WidgetFlag) == 0;
+}
+
+iLocalDef iBool isArrangedSize_Widget_(const iWidget *d) {
+    return !isCollapsed_Widget_(d) && isArrangedPos_Widget_(d) &&
+           !(d->flags & parentCannotResize_WidgetFlag);
+}
+
+iLocalDef iBool doesAffectSizing_Widget_(const iWidget *d) {
+    return !isCollapsed_Widget_(d) && isArrangedPos_Widget_(d);
+}
+
 static int numExpandingChildren_Widget_(const iWidget *d) {
     int count = 0;
     iConstForEach(ObjectList, i, d->children) {
         const iWidget *child = constAs_Widget(i.object);
-        if (flags_Widget(child) & expand_WidgetFlag) {
+        if (flags_Widget(child) & expand_WidgetFlag && doesAffectSizing_Widget_(child)) {
             count++;
         }
     }
@@ -253,7 +271,7 @@ static int widestChild_Widget_(const iWidget *d) {
 }
 
 static void arrange_Widget_(iWidget *);
-static const iBool tracing_ = iFalse;
+static const iBool tracing_ = 0;
 
 #define TRACE(d, ...)   if (tracing_) { printf_Widget_(d, __VA_ARGS__); }
 
@@ -288,7 +306,7 @@ static void setWidth_Widget_(iWidget *d, int width) {
     iAssert(width >= 0);
     TRACE(d, "attempt to set width to %d (current: %d, min width: %d)", width, d->rect.size.x, d->minSize.x);
     width = iMax(width, d->minSize.x);
-    if (~d->flags & fixedWidth_WidgetFlag || d->flags & collapse_WidgetFlag) {
+    if (~d->flags & fixedWidth_WidgetFlag) { //} || d->flags & collapse_WidgetFlag) {
         if (d->rect.size.x != width) {
             d->rect.size.x = width;
             TRACE(d, "width has changed to %d", width);
@@ -313,7 +331,7 @@ static void setHeight_Widget_(iWidget *d, int height) {
     iAssert(height >= 0);
     TRACE(d, "attempt to set height to %d (current: %d, min height: %d)", height, d->rect.size.y, d->minSize.y);
     height = iMax(height, d->minSize.y);
-    if (~d->flags & fixedHeight_WidgetFlag || d->flags & collapse_WidgetFlag) {
+    if (~d->flags & fixedHeight_WidgetFlag) { //} || d->flags & collapse_WidgetFlag) {
         if (d->rect.size.y != height) {
             d->rect.size.y = height;
             TRACE(d, "height has changed to %d", height);
@@ -325,11 +343,6 @@ static void setHeight_Widget_(iWidget *d, int height) {
     else {
         TRACE(d, "changing height not allowed; flags: %x", d->flags);
     }
-}
-
-iLocalDef iBool isCollapsed_Widget_(const iWidget *d) {
-    return (d->flags & (hidden_WidgetFlag | collapse_WidgetFlag)) ==
-           (hidden_WidgetFlag | collapse_WidgetFlag);
 }
 
 iLocalDef iRect innerRect_Widget_(const iWidget *d) {
@@ -347,14 +360,15 @@ iRect innerBounds_Widget(const iWidget *d) {
     return ib;
 }
 
-iLocalDef iBool isArranged_Widget_(const iWidget *d) {
-    return !isCollapsed_Widget_(d) && ~d->flags & fixedPosition_WidgetFlag;
-}
+//iLocalDef iBool isArranged_Widget_(const iWidget *d) {
+//    return !isCollapsed_Widget_(d) && ~d->flags & fixedPosition_WidgetFlag;
+//}
+
 
 static size_t numArrangedChildren_Widget_(const iWidget *d) {
     size_t count = 0;
     iConstForEach(ObjectList, i, d->children) {
-        if (isArranged_Widget_(i.object)) {
+        if (isArrangedPos_Widget_(i.object)) {
             count++;
         }
     }
@@ -387,15 +401,20 @@ static void boundsOfChildren_Widget_(const iWidget *d, iRect *bounds_out) {
             *bounds_out = union_Rect(*bounds_out, childRect);
         }
     }
+#if !defined (NDEBUG)
+    if (tracing_) {
+        if (bounds_out->size.x && bounds_out->size.y == 0) {
+            printf("SUSPECT CHILD BOUNDS?\n");
+            puts  ("---------------------");
+            printTree_Widget(d);
+            puts  ("---------------------");
+        }
+    }
+#endif
 }
 
 static void arrange_Widget_(iWidget *d) {
     TRACE(d, "arranging...");
-    if (isCollapsed_Widget_(d)) {
-        TRACE(d, "collapsed => END");
-        setFlags_Widget(d, wasCollapsed_WidgetFlag, iTrue);
-        return;
-    }
     if (d->flags & moveToParentLeftEdge_WidgetFlag) {
         d->rect.pos.x = d->padding[0]; /* FIXME: Shouldn't this be d->parent->padding[0]? */
         TRACE(d, "move to parent left edge: %d", d->rect.pos.x);
@@ -439,57 +458,42 @@ static void arrange_Widget_(iWidget *d) {
     }
     const size_t childCount = numArrangedChildren_Widget_(d);
     TRACE(d, "%d arranged children", childCount);
+    const int expCount = numExpandingChildren_Widget_(d);
+    TRACE(d, "%d expanding children", expCount);
     /* Resize children to fill the parent widget. */
     if (d->flags & resizeChildren_WidgetFlag) {
         const iInt2 dirs = init_I2((d->flags & resizeWidthOfChildren_WidgetFlag) != 0,
                                    (d->flags & resizeHeightOfChildren_WidgetFlag) != 0);
-        TRACE(d, "resize children, x:%d y:%d", dirs.x, dirs.y);
-        /* Collapse hidden children. */
-        iBool collapseChanged = iFalse;
-        iForEach(ObjectList, c, d->children) {
-            iWidget *child = as_Widget(c.object);
-            if (!isCollapsed_Widget_(child) && child->flags & wasCollapsed_WidgetFlag) {
-                setFlags_Widget(child, wasCollapsed_WidgetFlag, iFalse);
-                TRACE(d, "child %p is uncollapsed", child);
-                /* Undo collapse and determine the normal size again. */
-                arrange_Widget_(d);
-                collapseChanged = iTrue;
-            }
-            else if (isCollapsed_Widget_(child) && ~child->flags & wasCollapsed_WidgetFlag) {
-                setFlags_Widget(child, wasCollapsed_WidgetFlag, iTrue);
-                collapseChanged = iTrue;
-                TRACE(d, "child %p flagged as collapsed", child);
-            }
-        }
-        if (collapseChanged) {
-            TRACE(d, "redoing arrangement due to changes in child collapse state");
-            arrange_Widget_(d); /* Redo with the new child sizes. */
-            return;
-        }
-        const int expCount = numExpandingChildren_Widget_(d);
-        TRACE(d, "%d expanding children", expCount);
-        /* Only resize the expanding children, not touching the others. */
+#if !defined (NDEBUG)
+        /* Check for conflicting flags. */
+        if (dirs.x) iAssert(~d->flags & arrangeWidth_WidgetFlag);
+        if (dirs.y) iAssert(~d->flags & arrangeHeight_WidgetFlag);
+#endif
+        TRACE(d, "resize children, x:%d y:%d (own size: %dx%d)", dirs.x, dirs.y,
+              d->rect.size.x, d->rect.size.y);
         if (expCount > 0) {
+            /* There are expanding children, so all non-expanding children will retain their
+               current size. */
             iInt2 avail = innerRect_Widget_(d).size;
             TRACE(d, "inner size: %dx%d", avail.x, avail.y);
             iConstForEach(ObjectList, i, d->children) {
                 const iWidget *child = constAs_Widget(i.object);
-                if (!isArranged_Widget_(child)) {
-                    continue;
-                }
-                if (~child->flags & expand_WidgetFlag) {
-                    subv_I2(&avail, child->rect.size);
+                if (doesAffectSizing_Widget_(child)) {
+                    if (~child->flags & expand_WidgetFlag) {
+                        subv_I2(&avail, child->rect.size);
+                    }
                 }
             }
             avail = divi_I2(max_I2(zero_I2(), avail), expCount);
-            TRACE(d, "changing child sizes (expand mode)...");
+            TRACE(d, "changing child sizes...");
             iForEach(ObjectList, j, d->children) {
                 iWidget *child = as_Widget(j.object);
-                if (!isArranged_Widget_(child)) {
-                    TRACE(d, "child %p is not arranged", child);
+                if (!isArrangedSize_Widget_(child)) {
+                    TRACE(d, "child %p size is not arranged", child);
                     continue;
                 }
-                if (child->flags & expand_WidgetFlag) {
+                if (~child->flags & expand_WidgetFlag) {
+#if 0
                     if (d->flags & arrangeHorizontal_WidgetFlag) {
                         if (dirs.x) setWidth_Widget_(child, avail.x);
                         if (dirs.y) setHeight_Widget_(child, height_Rect(innerRect_Widget_(d)));
@@ -500,6 +504,7 @@ static void arrange_Widget_(iWidget *d) {
                     }
                 }
                 else {
+#endif
                     /* Fill the off axis, though. */
                     if (d->flags & arrangeHorizontal_WidgetFlag) {
                         if (dirs.y) setHeight_Widget_(child, height_Rect(innerRect_Widget_(d)));
@@ -509,7 +514,7 @@ static void arrange_Widget_(iWidget *d) {
                     }
                 }
             }
-            TRACE(d, "...done changing child sizes (expand mode)");
+            TRACE(d, "...done changing child sizes");
         }
         else {
             /* Evenly size all children. */
@@ -526,7 +531,7 @@ static void arrange_Widget_(iWidget *d) {
             TRACE(d, "begin changing child sizes (EVEN mode)...");
             iForEach(ObjectList, i, d->children) {
                 iWidget *child = as_Widget(i.object);
-                if (isArranged_Widget_(child) && ~child->flags & parentCannotResize_WidgetFlag) {
+                if (isArrangedSize_Widget_(child)) {
                     if (dirs.x) {
                         setWidth_Widget_(child, child->flags & unpadded_WidgetFlag ? unpaddedChildSize.x : childSize.x);
                     }
@@ -535,11 +540,47 @@ static void arrange_Widget_(iWidget *d) {
                     }
                 }
                 else {
-                    TRACE(d, "child %p cannot be resized (parentCannotResize: %d)", child,
+                    TRACE(d, "child %p cannot be resized (collapsed: %d, arrangedPos: %d, parentCannotResize: %d)", child,
+                          isCollapsed_Widget_(child),
+                          isArrangedPos_Widget_(child),
                           (child->flags & parentCannotResize_WidgetFlag) != 0);
                 }
             }
             TRACE(d, "...done changing child sizes (EVEN mode)");
+        }
+    }
+    /* Resize the expanding children to fill the remaining available space. */
+    if (expCount > 0 && (d->flags & (arrangeHorizontal_WidgetFlag | arrangeVertical_WidgetFlag))) {
+        TRACE(d, "%d expanding children, resizing them %s...", expCount,
+              d->flags & arrangeHorizontal_WidgetFlag ? "horizontally" : "vertically");
+        const iRect innerRect = innerRect_Widget_(d);
+        iInt2 avail = innerRect.size;
+        iConstForEach(ObjectList, i, d->children) {
+            const iWidget *child = constAs_Widget(i.object);
+            if (doesAffectSizing_Widget_(child)) {
+                if (~child->flags & expand_WidgetFlag) {
+                    subv_I2(&avail, child->rect.size);
+                }
+            }
+        }
+        avail = divi_I2(max_I2(zero_I2(), avail), expCount);
+        TRACE(d, "available for expansion (per child): %d\n", d->flags & arrangeHorizontal_WidgetFlag ? avail.x : avail.y);
+        iForEach(ObjectList, j, d->children) {
+            iWidget *child = as_Widget(j.object);
+            if (!isArrangedSize_Widget_(child)) {
+                TRACE(d, "child %p size is not arranged", child);
+                continue;
+            }
+            if (child->flags & expand_WidgetFlag) {
+                if (d->flags & arrangeHorizontal_WidgetFlag) {
+                    setWidth_Widget_(child, avail.x);
+                    setHeight_Widget_(child, height_Rect(innerRect));
+                }
+                else if (d->flags & arrangeVertical_WidgetFlag) {
+                    setWidth_Widget_(child, width_Rect(innerRect));
+                    setHeight_Widget_(child, avail.y);
+                }
+            }
         }
     }
     if (d->flags & resizeChildrenToWidestChild_WidgetFlag) {
@@ -547,7 +588,7 @@ static void arrange_Widget_(iWidget *d) {
         TRACE(d, "resizing children to widest child (%d)...", widest);
         iForEach(ObjectList, i, d->children) {
             iWidget *child = as_Widget(i.object);
-            if (isArranged_Widget_(child) && ~child->flags & parentCannotResize_WidgetFlag) {
+            if (isArrangedSize_Widget_(child)) {
                 setWidth_Widget_(child, widest);
             }
             else {
@@ -564,7 +605,7 @@ static void arrange_Widget_(iWidget *d) {
     iForEach(ObjectList, i, d->children) {
         iWidget *child = as_Widget(i.object);
         arrange_Widget_(child);
-        if (!isArranged_Widget_(child)) {
+        if (isCollapsed_Widget_(child) || !isArrangedPos_Widget_(child)) {
             TRACE(d, "child %p arranging prohibited", child);
             continue;
         }
@@ -648,6 +689,7 @@ static void arrange_Widget_(iWidget *d) {
     TRACE(d, "END");
 }
 
+#if 0
 void resetSize_Widget(iWidget *d) {
     if (~d->flags & fixedWidth_WidgetFlag) {
         d->rect.size.x = d->minSize.x;
@@ -657,11 +699,12 @@ void resetSize_Widget(iWidget *d) {
     }
     iForEach(ObjectList, i, children_Widget(d)) {
         iWidget *child = as_Widget(i.object);
-        if (isArranged_Widget_(child)) {
+        if (isArrangedSize_Widget_(child)) {
             resetSize_Widget(child);
         }
     }
 }
+#endif
 
 void arrange_Widget(iWidget *d) {
     //resetSize_Widget_(d); /* back to initial default sizes */
