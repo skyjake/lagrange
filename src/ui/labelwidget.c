@@ -391,6 +391,7 @@ void updateSize_LabelWidget(iLabelWidget *d) {
     iWidget *w = as_Widget(d);
     const int64_t flags = flags_Widget(w);
     const iInt2 size = defaultSize_LabelWidget(d);
+    w->minSize.y = size.y; /* vertically text must remain visible */
     /* Wrapped text implies that width must be defined by arrangement. */
     if (!(flags & (fixedWidth_WidgetFlag | wrapText_WidgetFlag))) {
         w->rect.size.x = size.x;
@@ -405,7 +406,8 @@ static void replaceVariables_LabelWidget_(iLabelWidget *d) {
 }
 
 void init_LabelWidget(iLabelWidget *d, const char *label, const char *cmd) {
-    init_Widget(&d->widget);
+    iWidget *w = &d->widget;
+    init_Widget(w);
     d->font = uiLabel_FontId;
     d->forceFg = none_ColorId;
     d->icon = 0;
@@ -416,13 +418,13 @@ void init_LabelWidget(iLabelWidget *d, const char *label, const char *cmd) {
         initCStr_String(&d->command, cmd);
     }
     else {
-        setFrameColor_Widget(&d->widget, uiFrame_ColorId);
+        setFrameColor_Widget(w, uiFrame_ColorId);
         init_String(&d->command);
     }
     d->key   = 0;
     d->kmods = 0;
     init_Click(&d->click, d, !isEmpty_String(&d->command) ? SDL_BUTTON_LEFT : 0);
-    setFlags_Widget(&d->widget, hover_WidgetFlag, d->click.button != 0);
+    setFlags_Widget(w, hover_WidgetFlag, d->click.button != 0);
     d->alignVisual = iFalse;
     updateSize_LabelWidget(d);
     updateKey_LabelWidget_(d); /* could be bound to another key */

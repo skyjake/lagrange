@@ -2061,7 +2061,6 @@ static iWidget *appendTwoColumnPage_(iWidget *tabs, const char *title, int short
                                      iWidget **values) {
     /* TODO: Use `makeTwoColumnWidget_()`, see above. */
     iWidget *page = new_Widget();
-    setBackgroundColor_Widget(page, red_ColorId);
     setFlags_Widget(page, arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
     addChildFlags_Widget(page, iClob(new_Widget()), expand_WidgetFlag);
     setPadding_Widget(page, 0, gap_UI, 0, gap_UI);
@@ -2438,7 +2437,7 @@ iWidget *makePreferences_Widget(void) {
                         (iMenuItem[]){ { "${dismiss}", SDLK_ESCAPE, 0, "prefs.dismiss" } }, 1)));
     addChild_Widget(dlg->root->widget, iClob(dlg));
     finalizeSheet_Widget(dlg);
-    //printTree_Widget(dlg);
+//    printTree_Widget(dlg);
     return dlg;
 }
 
