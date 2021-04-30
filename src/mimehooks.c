@@ -183,7 +183,7 @@ finished:
 
 static void appendGemPubProperty_(iString *out, const char *key, const iString *value) {
     if (!isEmpty_String(value)) {
-        appendFormat_String(out, "%s: %s\n", key, cstr_String(value));
+        appendFormat_String(out, "%s %s\n", key, cstr_String(value));
     }
 }
 
@@ -193,30 +193,38 @@ iBlock *translateGemPubCoverPage_(const iString *mime, const iBlock *source,
     iArchive *arch = new_Archive();
     if (openData_Archive(arch, source)) {
         /* Parse the metadata and check if the required contents are present. */
-        const iBlock *metadata = dataCStr_Archive(arch, "metadata");
+        const iBlock *metadata = dataCStr_Archive(arch, "metadata.txt");
         if (!metadata) {
             goto cleanup;
         }
         enum iGemPubProperty {
             title_GemPubProperty,
+            index_GemPubProperty,
             author_GemPubProperty,
-            lang_GemPubProperty,
+            language_GemPubProperty,
             description_GemPubProperty,
-            pubDate_GemPubProperty,
-            revDate_GemPubProperty,
+            published_GemPubProperty,
+            publishDate_GemPubProperty,
+            revisionDate_GemPubProperty,
+            copyright_GemPubProperty,
+            license_GemPubProperty,
             version_GemPubProperty,
-            cover_GemPubProperty,
+            cover_GemPubProperty,            
             max_GemPubProperty
         };
         static const char *labels[max_GemPubProperty] = {
             "title:",
+            "index:",
             "author:",
             "language:",
             "description:",
+            "published:",
             "publishDate:",
             "revisionDate:",
+            "copyright:",
+            "license:",
             "version:",
-            "cover:"
+            "cover:",
         };
         iString *props[max_GemPubProperty];
         iForIndices(i, props) {
@@ -227,6 +235,7 @@ iBlock *translateGemPubCoverPage_(const iString *mime, const iBlock *source,
         setCStr_String(props[cover_GemPubProperty],
                        entryCStr_Archive(arch, "cover.jpg") ? "cover.jpg" :
                        entryCStr_Archive(arch, "cover.png") ? "cover.png" : "");
+        setCStr_String(props[index_GemPubProperty], "index.gmi");
         iRangecc line = iNullRange;
         while (nextSplit_Rangecc(range_Block(metadata), "\n", &line)) {
             iRangecc clean = line;
@@ -247,18 +256,26 @@ iBlock *translateGemPubCoverPage_(const iString *mime, const iBlock *source,
             appendFormat_String(out, "%s\n", cstr_String(props[description_GemPubProperty]));
         }
         appendCStr_String(out, "\n");
-        appendGemPubProperty_(out, "Author", props[author_GemPubProperty]);
-        appendGemPubProperty_(out, "Version", props[version_GemPubProperty]);
-        appendFormat_String(out, "\n=> %s/capsule/  " book_Icon " Book index page\n", cstr_String(baseUrl));
+        appendGemPubProperty_(out, "Author:", props[author_GemPubProperty]);
+        appendFormat_String(out, "\n=> %s " book_Icon " Book index page\n",
+                            cstrCollect_String(concat_Path(baseUrl, props[index_GemPubProperty])));
         if (!isEmpty_String(props[cover_GemPubProperty])) {
             appendFormat_String(out, "\n=> %s/%s  Cover image\n",
                                 cstr_String(baseUrl),
                                 cstr_String(props[cover_GemPubProperty]));
         }
         appendCStr_String(out, "\n## About this book\n");
-        appendGemPubProperty_(out, "Revision date", props[revDate_GemPubProperty]);
-        appendGemPubProperty_(out, "Publish date", props[pubDate_GemPubProperty]);
-        appendGemPubProperty_(out, "Language", props[lang_GemPubProperty]);
+        appendGemPubProperty_(out, "Version:", props[version_GemPubProperty]);
+        appendGemPubProperty_(out, "Revision date:", props[revisionDate_GemPubProperty]);
+        if (!isEmpty_String(props[publishDate_GemPubProperty])) {
+            appendGemPubProperty_(out, "Publish date:", props[publishDate_GemPubProperty]);
+        }
+        else {
+            appendGemPubProperty_(out, "Published:", props[published_GemPubProperty]);
+        }
+        appendGemPubProperty_(out, "Language:", props[language_GemPubProperty]);
+        appendGemPubProperty_(out, "License:", props[license_GemPubProperty]);
+        appendGemPubProperty_(out, "\u00a9", props[copyright_GemPubProperty]);
         output = copy_Block(utf8_String(out));
         delete_String(out);
     }
