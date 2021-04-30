@@ -655,7 +655,7 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
         /* React to the current document only. */
         if (document_Command(cmd) == document_App()) {
             if (equal_Command(cmd, "document.changed")) {
-                iInputWidget *url = findWidget_App("url");
+                iInputWidget *url = findWidget_Root("url");
                 const iString *urlStr = collect_String(suffix_Command(cmd, "url"));
                 trimCache_App();
                 visitUrl_Visited(visited_App(), withSpacesEncoded_String(urlStr), 0); /* TODO: internal URI normalization */

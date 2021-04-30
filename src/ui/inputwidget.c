@@ -74,6 +74,7 @@ enum iInputWidgetFlag {
     eatEscape_InputWidgetFlag        = iBit(6),
     isMarking_InputWidgetFlag        = iBit(7),
     markWords_InputWidgetFlag        = iBit(8),
+    needUpdateBuffer_InputWidgetFlag = iBit(9),
 };
 
 struct Impl_InputWidget {
@@ -301,29 +302,29 @@ static iString *visText_InputWidget_(const iInputWidget *d) {
 }
 
 static void updateBuffered_InputWidget_(iInputWidget *d) {
-    if (isExposed_Window(get_Window())) {
-        invalidateBuffered_InputWidget_(d);
-        iString *bufText = NULL;
-        if (d->inFlags & isUrl_InputWidgetFlag) {
-            /* Highlight the host name. */
-            iUrl parts;
-            const iString *text = collect_String(utf32toUtf8_InputWidget_(d));
-            init_Url(&parts, text);
-            if (!isEmpty_Range(&parts.host)) {
-                bufText = new_String();
-                appendRange_String(bufText, (iRangecc){ constBegin_String(text), parts.host.start });
-                appendCStr_String(bufText, uiTextStrong_ColorEscape);
-                appendRange_String(bufText, parts.host);
-                appendCStr_String(bufText, restore_ColorEscape);
-                appendRange_String(bufText, (iRangecc){ parts.host.end, constEnd_String(text) });
-            }
+    iWindow *win = get_Window();
+    invalidateBuffered_InputWidget_(d);
+    iString *bufText = NULL;
+    if (d->inFlags & isUrl_InputWidgetFlag && as_Widget(d)->root == win->keyRoot) {
+        /* Highlight the host name. */
+        iUrl parts;
+        const iString *text = collect_String(utf32toUtf8_InputWidget_(d));
+        init_Url(&parts, text);
+        if (!isEmpty_Range(&parts.host)) {
+            bufText = new_String();
+            appendRange_String(bufText, (iRangecc){ constBegin_String(text), parts.host.start });
+            appendCStr_String(bufText, uiTextStrong_ColorEscape);
+            appendRange_String(bufText, parts.host);
+            appendCStr_String(bufText, restore_ColorEscape);
+            appendRange_String(bufText, (iRangecc){ parts.host.end, constEnd_String(text) });
         }
-        if (!bufText) {
-            bufText = visText_InputWidget_(d);
-        }
-        d->buffered = new_TextBuf(d->font, uiInputText_ColorId, cstr_String(bufText));
-        delete_String(bufText);
     }
+    if (!bufText) {
+        bufText = visText_InputWidget_(d);
+    }
+    d->buffered = new_TextBuf(d->font, uiInputText_ColorId, cstr_String(bufText));
+    delete_String(bufText);
+    d->inFlags &= ~needUpdateBuffer_InputWidgetFlag;
 }
 
 void setText_InputWidget(iInputWidget *d, const iString *text) {
@@ -356,7 +357,7 @@ void setText_InputWidget(iInputWidget *d, const iString *text) {
         iZap(d->mark);
     }
     if (!isFocused_Widget(d)) {
-        updateBuffered_InputWidget_(d);
+        d->inFlags |= needUpdateBuffer_InputWidgetFlag;
     }
     refresh_Widget(as_Widget(d));
 }
@@ -428,7 +429,7 @@ void end_InputWidget(iInputWidget *d, iBool accept) {
     if (!accept) {
         setCopy_Array(&d->text, &d->oldText);
     }
-    updateBuffered_InputWidget_(d);
+    d->inFlags |= needUpdateBuffer_InputWidgetFlag;
     SDL_RemoveTimer(d->timer);
     d->timer = 0;
     SDL_StopTextInput();
@@ -705,6 +706,9 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
         begin_InputWidget(d);
         return iFalse;
     }
+    else if (isCommand_UserEvent(ev, "keyroot.changed")) {
+        d->inFlags |= needUpdateBuffer_InputWidgetFlag;
+    }
     else if (isCommand_UserEvent(ev, "lang.changed")) {
         set_String(&d->hint, &d->srcHint);
         translate_Lang(&d->hint);
@@ -725,7 +729,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
     }
     else if (isCommand_UserEvent(ev, "theme.changed")) {
         if (d->buffered) {
-            updateBuffered_InputWidget_(d);
+            d->inFlags |= needUpdateBuffer_InputWidgetFlag;
         }
         return iFalse;
     }
@@ -1004,6 +1008,9 @@ static void draw_InputWidget_(const iInputWidget *d) {
     const iBool    isFocused = isFocused_Widget(w);
     const iBool    isHover   = isHover_Widget(w) &&
                                contains_Widget(w, mouseCoord_Window(get_Window()));
+    if (d->inFlags & needUpdateBuffer_InputWidgetFlag) {
+        updateBuffered_InputWidget_(iConstCast(iInputWidget *, d));
+    }
     iPaint p;
     init_Paint(&p);
     iString *text = visText_InputWidget_(d);

@@ -903,6 +903,7 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
 iBool setKeyRoot_Window(iWindow *d, iRoot *root) {
     if (d->keyRoot != root) {
         d->keyRoot = root;
+        postCommand_App("keyroot.changed");
         postRefresh_App();
         return iTrue;
     }

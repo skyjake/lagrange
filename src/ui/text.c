@@ -1445,20 +1445,27 @@ void init_TextBuf(iTextBuf *d, int font, int color, const char *text) {
     SDL_Renderer *render = text_.render;
     d->size    = advance_Text(font, text);
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
-    d->texture = SDL_CreateTexture(render,
-                                   SDL_PIXELFORMAT_RGBA4444,
-                                   SDL_TEXTUREACCESS_STATIC | SDL_TEXTUREACCESS_TARGET,
-                                   d->size.x,
-                                   d->size.y);
-    SDL_Texture *oldTarget = SDL_GetRenderTarget(render);
-    SDL_SetRenderTarget(render, d->texture);
-    SDL_SetTextureBlendMode(text_.cache, SDL_BLENDMODE_NONE); /* blended when TextBuf is drawn */
-    SDL_SetRenderDrawColor(text_.render, 0, 0, 0, 0);
-    SDL_RenderClear(text_.render);
-    draw_Text_(font, zero_I2(), color | fillBackground_ColorId, range_CStr(text));
-    SDL_SetTextureBlendMode(text_.cache, SDL_BLENDMODE_BLEND);
-    SDL_SetRenderTarget(render, oldTarget);
-    SDL_SetTextureBlendMode(d->texture, SDL_BLENDMODE_BLEND);
+    if (d->size.x * d->size.y) {
+        d->texture = SDL_CreateTexture(render,
+                                       SDL_PIXELFORMAT_RGBA4444,
+                                       SDL_TEXTUREACCESS_STATIC | SDL_TEXTUREACCESS_TARGET,
+                                       d->size.x,
+                                       d->size.y);
+    }
+    else {
+        d->texture = NULL;
+    }
+    if (d->texture) {
+        SDL_Texture *oldTarget = SDL_GetRenderTarget(render);
+        SDL_SetRenderTarget(render, d->texture);
+        SDL_SetTextureBlendMode(text_.cache, SDL_BLENDMODE_NONE); /* blended when TextBuf is drawn */
+        SDL_SetRenderDrawColor(text_.render, 0, 0, 0, 0);
+        SDL_RenderClear(text_.render);
+        draw_Text_(font, zero_I2(), color | fillBackground_ColorId, range_CStr(text));
+        SDL_SetTextureBlendMode(text_.cache, SDL_BLENDMODE_BLEND);
+        SDL_SetRenderTarget(render, oldTarget);
+        SDL_SetTextureBlendMode(d->texture, SDL_BLENDMODE_BLEND);
+    }
 }
 
 void deinit_TextBuf(iTextBuf *d) {
