@@ -210,7 +210,7 @@ static void windowSizeChanged_Window_(iWindow *d) {
             updatePadding_Root(root);
             arrange_Widget(root->widget);
         }
-    }   
+    }
 }
 
 static void updateSize_Window_(iWindow *d, iBool notifyAlways) {
@@ -297,6 +297,16 @@ static void drawBlank_Window_(iWindow *d) {
     SDL_RenderPresent(d->render);
 }
 
+static iRoot *rootAt_Window_(const iWindow *d, iInt2 coord) {
+    iForIndices(i, d->roots) {
+        iRoot *root = d->roots[i];
+        if (root && contains_Rect(rect_Root(root), coord)) {
+            return root;
+        }
+    }
+    return d->roots[0];
+}
+
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
 static SDL_HitTestResult hitTest_Window_(SDL_Window *win, const SDL_Point *pos, void *data) {
     iWindow *d = data;
@@ -312,8 +322,10 @@ static SDL_HitTestResult hitTest_Window_(SDL_Window *win, const SDL_Point *pos, 
     const iBool isRight  = pos->x >= w - gap_UI;
     const iBool isTop    = pos->y < gap_UI && snap != yMaximized_WindowSnap;
     const iBool isBottom = pos->y >= h - gap_UI && snap != yMaximized_WindowSnap;
-    const int captionHeight = lineHeight_Text(uiContent_FontId) + gap_UI * 2;
-    const int rightEdge = left_Rect(bounds_Widget(findChild_Widget(d->root, "winbar.min")));
+    const int   captionHeight = lineHeight_Text(uiContent_FontId) + gap_UI * 2;
+    const int   rightEdge     = left_Rect(bounds_Widget(findChild_Widget(
+                                    rootAt_Window_(d, init_I2(pos->x, pos->y))->widget,
+                                    "winbar.min")));
     d->place.lastHit = SDL_HITTEST_NORMAL;
     if (snap != maximized_WindowSnap) {
         if (isLeft) {
@@ -486,7 +498,7 @@ void init_Window(iWindow *d, iRect rect) {
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
     /* Load the app icon for drawing in the title bar. */
     if (prefs_App()->customFrame) {
-        SDL_Surface *surf = loadImage_(&imageLagrange64_Embedded, appIconSize_());
+        SDL_Surface *surf = loadImage_(&imageLagrange64_Embedded, appIconSize_Root());
         SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
         d->appIcon = SDL_CreateTextureFromSurface(d->render, surf);
         free(surf->pixels);
@@ -508,7 +520,7 @@ void deinit_Window(iWindow *d) {
             deinit_Root(d->roots[i]);
         }
     }
-    setCurrent_Root(NULL);        
+    setCurrent_Root(NULL);
     deinit_Text();
     SDL_DestroyRenderer(d->render);
     SDL_DestroyWindow(d->win);
@@ -870,7 +882,7 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
                 }
             }
             if (isMetricsChange_UserEvent(&event)) {
-                iForIndices(i, d->roots) {                    
+                iForIndices(i, d->roots) {
                     updateMetrics_Root(d->roots[i]);
                 }
             }
@@ -1005,7 +1017,7 @@ void draw_Window(iWindow *d) {
                 /* App icon. */
                 const iWidget *appIcon = findChild_Widget(root->widget, "winbar.icon");
                 if (isVisible_Widget(appIcon)) {
-                    const int   size    = appIconSize_();
+                    const int   size    = appIconSize_Root();
                     const iRect rect    = bounds_Widget(appIcon);
                     const iInt2 mid     = mid_Rect(rect);
                     const iBool isLight = isLight_ColorTheme(colorTheme_App());
@@ -1199,6 +1211,27 @@ void setSplitMode_Window(iWindow *d, int splitMode) {
             setCurrent_Root(NULL);
         }
         d->splitMode = splitMode;
+#if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
+        /* Update custom frame controls. */{
+            const iBool hideCtl0 = numRoots_Window(d) != 1;
+            iWidget *winBar = findChild_Widget(d->roots[0]->widget, "winbar");
+            if (winBar) {
+                setFlags_Widget(
+                    findChild_Widget(winBar, "winbar.min"), hidden_WidgetFlag, hideCtl0);
+                setFlags_Widget(
+                    findChild_Widget(winBar, "winbar.max"), hidden_WidgetFlag, hideCtl0);
+                setFlags_Widget(
+                    findChild_Widget(winBar, "winbar.close"), hidden_WidgetFlag, hideCtl0);
+                if (d->roots[1]) {
+                    winBar = findChild_Widget(d->roots[1]->widget, "winbar");
+                    setFlags_Widget(
+                        findChild_Widget(winBar, "winbar.icon"), hidden_WidgetFlag, iTrue);
+                    setFlags_Widget(
+                        findChild_Widget(winBar, "winbar.app"), hidden_WidgetFlag, iTrue);
+                }
+            }
+        }
+#endif
 //        windowSizeChanged_Window_(d);
         updateSize_Window_(d, iTrue);
 //        postCommand_App("window.resized");
@@ -1277,20 +1310,24 @@ void setSnap_Window(iWindow *d, int snapMode) {
         newRect.pos.y += newRect.size.y;
     }
     /* Update window controls. */
-    iWidget *winBar = findWidget_App("winbar");
-    updateTextCStr_LabelWidget(findChild_Widget(winBar, "winbar.max"),
-                               d->place.snap == maximized_WindowSnap ? "\u25a2" : "\u25a1");
-    /* Show and hide the title bar. */
-    const iBool wasVisible = isVisible_Widget(winBar);
-    setFlags_Widget(winBar, hidden_WidgetFlag, d->place.snap == fullscreen_WindowSnap);
-    if (newRect.size.x) {
-        SDL_SetWindowPosition(d->win, newRect.pos.x, newRect.pos.y);
-        SDL_SetWindowSize(d->win, newRect.size.x, newRect.size.y);
-        postCommand_App("window.resized");
-    }
-    if (wasVisible != isVisible_Widget(winBar)) {
-        arrange_Widget(d->root);
-        postRefresh_App();
+    iForIndices(rootIndex, d->roots) {
+        iRoot *root = d->roots[rootIndex];
+        if (!root) continue;
+        iWidget *winBar = findChild_Widget(root->widget, "winbar");
+        updateTextCStr_LabelWidget(findChild_Widget(winBar, "winbar.max"),
+                                   d->place.snap == maximized_WindowSnap ? "\u25a2" : "\u25a1");
+        /* Show and hide the title bar. */
+        const iBool wasVisible = isVisible_Widget(winBar);
+        setFlags_Widget(winBar, hidden_WidgetFlag, d->place.snap == fullscreen_WindowSnap);
+        if (newRect.size.x) {
+            SDL_SetWindowPosition(d->win, newRect.pos.x, newRect.pos.y);
+            SDL_SetWindowSize(d->win, newRect.size.x, newRect.size.y);
+            postCommand_App("window.resized");
+        }
+        if (wasVisible != isVisible_Widget(winBar)) {
+            arrange_Widget(root->widget);
+            postRefresh_App();
+        }
     }
 #endif /* defined (LAGRANGE_ENABLE_CUSTOM_FRAME) */
 }

@@ -237,13 +237,13 @@ static int       loadAnimIndex_      = 0;
 static iRoot *   activeRoot_     = NULL;
 
 iDefineTypeConstruction(Root)
-    
+
 void init_Root(iRoot *d) {
-    iZap(*d);    
+    iZap(*d);
 }
 
 void deinit_Root(iRoot *d) {
-    iReleasePtr(&d->widget);    
+    iReleasePtr(&d->widget);
 }
 
 void setCurrent_Root(iRoot *root) {
@@ -267,7 +267,7 @@ iAnyObject *findWidget_Root(const char *id) {
 }
 
 void destroyPending_Root(iRoot *d) {
-    setCurrent_Root(d);    
+    setCurrent_Root(d);
     iForEach(PtrSet, i, d->pendingDestruction) {
         iWidget *widget = *i.value;
         if (!isFinished_Anim(&widget->visualOffset)) {
@@ -852,7 +852,7 @@ static iLabelWidget *newLargeIcon_LabelWidget(const char *text, const char *cmd)
     return lab;
 }
 
-static int appIconSize_(void) {
+int appIconSize_Root(void) {
     return lineHeight_Text(uiContent_FontId);
 }
 
@@ -872,7 +872,7 @@ void updateMetrics_Root(iRoot *d) {
         setFixedSize_Widget(appMin, init_I2(gap_UI * 11.5f, height_Widget(appTitle)));
         setFixedSize_Widget(appMax, appMin->rect.size);
         setFixedSize_Widget(appClose, appMin->rect.size);
-        setFixedSize_Widget(appIcon, init_I2(appIconSize_(), appMin->rect.size.y));
+        setFixedSize_Widget(appIcon, init_I2(appIconSize_Root(), appMin->rect.size.y));
     }
     iWidget *navBar     = findChild_Widget(d->widget, "navbar");
     iWidget *lock       = findChild_Widget(navBar, "navbar.lock");
@@ -900,11 +900,11 @@ void createUserInterface_Root(iRoot *d) {
     setFlags_Widget(
         root, resizeChildren_WidgetFlag | fixedSize_WidgetFlag | focusRoot_WidgetFlag, iTrue);
     setCommandHandler_Widget(root, handleRootCommands_);
-    
+
     iWidget *div = makeVDiv_Widget();
     setId_Widget(div, "navdiv");
     addChild_Widget(root, iClob(div));
-    
+
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
     /* Window title bar. */
     if (prefs_App()->customFrame) {
@@ -912,16 +912,17 @@ void createUserInterface_Root(iRoot *d) {
         iWidget *winBar = new_Widget();
         setId_Widget(winBar, "winbar");
         setFlags_Widget(winBar,
-                        arrangeHeight_WidgetFlag | resizeChildren_WidgetFlag |
+                        arrangeHeight_WidgetFlag | resizeWidthOfChildren_WidgetFlag |
                             arrangeHorizontal_WidgetFlag | collapse_WidgetFlag,
                         iTrue);
         iWidget *appIcon;
-        setId_Widget(
-            addChild_Widget(winBar, iClob(appIcon = makePadding_Widget(0))), "winbar.icon");
-        iLabelWidget *appButton =
-            addChildFlags_Widget(winBar,
-                                 iClob(new_LabelWidget("Lagrange", NULL)),
-                                 fixedHeight_WidgetFlag | frameless_WidgetFlag);
+        setId_Widget(addChildFlags_Widget(
+                         winBar, iClob(appIcon = makePadding_Widget(0)), collapse_WidgetFlag),
+                     "winbar.icon");
+        iLabelWidget *appButton = addChildFlags_Widget(
+            winBar,
+            iClob(new_LabelWidget("Lagrange", NULL)),
+            fixedHeight_WidgetFlag | frameless_WidgetFlag | collapse_WidgetFlag);
         setTextColor_LabelWidget(appButton, uiTextAppTitle_ColorId);
         setId_Widget(as_Widget(appButton), "winbar.app");
         iLabelWidget *appTitle;
@@ -936,16 +937,16 @@ void createUserInterface_Root(iRoot *d) {
         setId_Widget(addChildFlags_Widget(
                          winBar,
                          iClob(appMin = newLargeIcon_LabelWidget("\u2013", "window.minimize")),
-                         frameless_WidgetFlag),
+                         frameless_WidgetFlag | collapse_WidgetFlag),
                      "winbar.min");
         addChildFlags_Widget(
             winBar,
             iClob(appMax = newLargeIcon_LabelWidget("\u25a1", "window.maximize toggle:1")),
-            frameless_WidgetFlag);
+            frameless_WidgetFlag | collapse_WidgetFlag);
         setId_Widget(as_Widget(appMax), "winbar.max");
         addChildFlags_Widget(winBar,
                              iClob(appClose = newLargeIcon_LabelWidget(close_Icon, "window.close")),
-                             frameless_WidgetFlag);
+                             frameless_WidgetFlag | collapse_WidgetFlag);
         setId_Widget(as_Widget(appClose), "winbar.close");
         setFont_LabelWidget(appClose, uiContent_FontId);
         addChild_Widget(div, iClob(winBar));
@@ -1087,7 +1088,7 @@ void createUserInterface_Root(iRoot *d) {
                      "navbar.home");
 #if defined (iPlatformMobile)
         const iBool isPhone = (deviceType_App() == phone_AppDeviceType);
-#endif    
+#endif
 #if !defined (iHaveNativeMenus)
 #   if defined (iPlatformAppleMobile)
         iLabelWidget *navMenu =
@@ -1310,7 +1311,7 @@ iRect rect_Root(const iRoot *d) {
     if (d && d->widget) {
         return d->widget->rect;
     }
-    return zero_Rect();    
+    return zero_Rect();
 }
 
 iRect safeRect_Root(const iRoot *d) {

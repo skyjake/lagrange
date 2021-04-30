@@ -6,7 +6,7 @@
 #include <the_Foundation/vec2.h>
 
 iDeclareType(Root)
-    
+
 struct Impl_Root {
     iWidget *  widget;
     iPtrArray *onTop; /* order is important; last one is topmost */
@@ -28,7 +28,7 @@ iAnyObject *findWidget_Root                     (const char *id); /* under curre
 
 iPtrArray * onTop_Root                          (iRoot *);
 void        destroyPending_Root                 (iRoot *);
-    
+
 void        updateMetrics_Root                  (iRoot *);
 void        updatePadding_Root                  (iRoot *); /* TODO: is part of metrics? */
 void        dismissPortraitPhoneSidebars_Root   (iRoot *);
@@ -39,3 +39,4 @@ iRect       rect_Root                           (const iRoot *);
 iRect       safeRect_Root                       (const iRoot *);
 iInt2       visibleSize_Root                    (const iRoot *); /* may be obstructed by software keyboard */
 iBool       isNarrow_Root                       (const iRoot *);
+int         appIconSize_Root                    (void);

@@ -375,7 +375,7 @@ static void savePrefs_App_(const iApp *d) {
 static const char *magicState_App_       = "lgL1";
 static const char *magicTabDocument_App_ = "tabd";
 
-enum iDocumentStateFlag {    
+enum iDocumentStateFlag {
     current_DocumentStateFlag     = iBit(1),
     rootIndex1_DocumentStateFlag = iBit(2)
 };
@@ -1127,9 +1127,9 @@ static int resizeWatcher_(void *user, SDL_Event *event) {
         resetFonts_Text(); {
             SDL_Event u = { .type = SDL_USEREVENT };
             u.user.code = command_UserEventCode;
-            u.user.data1 = strdup("theme.changed");
+            u.user.data1 = strdup("theme.changed auto:1");
             /*u.user.windowID = id_Window(d->window);*/
-            dispatchEvent_Widget(d->window->root, &u);
+            dispatchEvent_Window(d->window, &u);
         }
 #endif
         drawWhileResizing_Window(d->window, winev->data1, winev->data2);
@@ -1328,7 +1328,7 @@ iAny *findWidget_App(const char *id) {
             if (found) {
                 return found;
             }
-        }        
+        }
     }
     return NULL;
 }
@@ -2364,7 +2364,7 @@ iObjectList *listDocuments_App(const iRoot *rootOrNull) {
                 if (isInstance_Object(i.object, &Class_DocumentWidget)) {
                     pushBack_ObjectList(docs, i.object);
                 }
-            }            
+            }
         }
     }
     return docs;
