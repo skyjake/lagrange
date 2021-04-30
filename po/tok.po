@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-04-29 16:18+0000\n"
+"PO-Revision-Date: 2021-04-30 20:35+0000\n"
 "Last-Translator: jan Anja <cyber@sysrq.in>\n"
 "Language-Team: Toki Pona <http://weblate.skyjake.fi/projects/lagrange/ui/tok/"
 ">\n"
@@ -400,7 +400,7 @@ msgstr "lipu ala li kepeken e nimi ni"
 #, c-format
 msgid "ident.usedonurls"
 msgid_plural "ident.usedonurls.n"
-msgstr[0] "lipu %zu li kepeken e nimi ni"
+msgstr[0] "lipu %zu li kepeken"
 
 msgid "ident.temporary"
 msgstr "nimi tawa tenpo lili"
@@ -408,7 +408,7 @@ msgstr "nimi tawa tenpo lili"
 # strftime() formatted
 #, c-format
 msgid "ident.expiry"
-msgstr "tenpo %x la nimi li tawa weka"
+msgstr "tenpo %x la nimi li wile tawa weka"
 
 msgid "ident.use"
 msgstr "o kepeken e nimi ni lon lipu ni"
@@ -1108,7 +1108,7 @@ msgid "about.logo"
 msgstr "sitelen namako suli li toki e ni: nimi Lagrange"
 
 msgid "about.powered"
-msgstr "ona li pali kepeken e ilo SDL 2 e ilo OpenSSL e ☕️"
+msgstr "kepeken e ilo SDL 2 e ilo OpenSSL e ☕️"
 
 msgid "menu.title.bookmarks"
 msgstr "lipu awen"
