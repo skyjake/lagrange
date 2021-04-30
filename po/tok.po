@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-04-30 20:35+0000\n"
+"PO-Revision-Date: 2021-05-01 23:18+0000\n"
 "Last-Translator: jan Anja <cyber@sysrq.in>\n"
 "Language-Team: Toki Pona <http://weblate.skyjake.fi/projects/lagrange/ui/tok/"
 ">\n"
@@ -68,7 +68,7 @@ msgstr "nanpa"
 #, c-format
 msgid "hours.ago"
 msgid_plural "hours.ago.n"
-msgstr[0] "tenpo suno anpa %d pini"
+msgstr[0] "suno anpa %d"
 
 #, c-format
 msgid "days.ago"
@@ -77,7 +77,7 @@ msgstr[0] "tenpo suno %d pini"
 
 #, c-format
 msgid "feeds.list.refreshtime"
-msgstr "tenpo %s la mi sin e lipu lukin."
+msgstr "tenpo %s pini la mi sin e lipu lukin."
 
 msgid "cancel"
 msgstr "o pini"
@@ -135,16 +135,16 @@ msgstr "o lukin e poki pi ijo awen"
 
 # Used on desktop operating systems. "Downloads" refers to the user's configured downloads directory.
 msgid "menu.save.downloads"
-msgstr "o awen e lipu tawa poki"
+msgstr "o awen e lipu tawa ilo sona"
 
 msgid "menu.sidebar"
 msgstr "o len ala len e poki poka"
 
 msgid "menu.sidebar.left"
-msgstr "mi len ala len e poki poka wan"
+msgstr "o len ala len e poki poka wan?"
 
 msgid "menu.sidebar.right"
-msgstr "mi len ala len e poki poka tu"
+msgstr "o len ala len e poki poka tu?"
 
 msgid "menu.zoom.in"
 msgstr "o mute"
@@ -159,19 +159,19 @@ msgid "menu.preferences"
 msgstr "ijo ante…"
 
 msgid "menu.bookmarks.list"
-msgstr "lipu awen ale"
+msgstr "lipu awen ali"
 
 msgid "menu.bookmarks.bytag"
 msgstr "lipu awen ale pi nimi lili"
 
 msgid "macos.menu.bookmarks.bytag"
-msgstr "lipu awen ale pi nimi lili"
+msgstr "lipu awen ali pi nimi lili"
 
 msgid "menu.bookmarks.bytime"
-msgstr "lipu awen ale pi tenpo"
+msgstr "lipu awen ali pi tenpo"
 
 msgid "macos.menu.bookmarks.bytime"
-msgstr "lipu awen ale pi tenpo"
+msgstr "lipu awen ali pi tenpo"
 
 msgid "menu.feeds.entrylist"
 msgstr "o lukin e lipu lukin"
@@ -353,16 +353,16 @@ msgid "bookmark.untag.home"
 msgstr "o weka e lipu tomo"
 
 msgid "bookmark.untag.remote"
-msgstr "o pini pali e lipu awen tan lipu ni"
+msgstr "o pini pali e lipu awen tan ona"
 
 msgid "bookmark.delete"
-msgstr "o weka e lipu awen"
+msgstr "o weka e ona"
 
 msgid "bookmark.untag.sub"
 msgstr "o weka e lipu lukin"
 
 msgid "bookmarks.reload"
-msgstr "o sin e lipu pi lipu awen"
+msgstr "o sin e lipu awen tan ona"
 
 msgid "feeds.refresh"
 msgstr "o sin e lipu lukin"
@@ -392,10 +392,10 @@ msgid "heading.history.clear"
 msgstr "SONA PI TENPO PINI LI WILE KAMA SIN"
 
 msgid "ident.using"
-msgstr "lipu ni li kepeken e nimi ni"
+msgstr "lipu ni li kepeken e ona"
 
 msgid "ident.notused"
-msgstr "lipu ala li kepeken e nimi ni"
+msgstr "lipu ala li kepeken e ona"
 
 #, c-format
 msgid "ident.usedonurls"
@@ -411,13 +411,13 @@ msgid "ident.expiry"
 msgstr "tenpo %x la nimi li wile tawa weka"
 
 msgid "ident.use"
-msgstr "o kepeken e nimi ni lon lipu ni"
+msgstr "o kepeken e ona lon lipu ni"
 
 msgid "ident.stopuse.all"
-msgstr "o kepeken ala e nimi ni lon lipu ale"
+msgstr "o kepeken ala e ona lon lipu ale"
 
 msgid "ident.showuse"
-msgstr "lipu li kepeken e nimi ni la o lukin e lipu ni"
+msgstr "lipu li kepeken e ona la o lukin e lipu ni"
 
 msgid "sidebar.empty.idents"
 msgstr "nimi li lon ala"
@@ -428,22 +428,22 @@ msgid "dlg.ident.notes"
 msgstr "toki lili pi nimi %s:"
 
 msgid "heading.ident.use"
-msgstr "LIPU NI LI KEPEKEN E NIMI NI"
+msgstr "LIPU NI LI KEPEKEN E ONA"
 
 msgid "menu.edit.notes"
 msgstr "o ante e toki lili…"
 
 msgid "heading.ident.notes"
-msgstr "TOKI LILI PI NIMI NI"
+msgstr "TOKI LILI NIMI"
 
 msgid "ident.delete"
-msgstr "o weka e nimi ni…"
+msgstr "o weka e ona…"
 
 msgid "heading.ident.delete"
-msgstr "NIMI NI LI WILE TAWA WEKA"
+msgstr "NIMI LI WILE TAWA WEKA"
 
 msgid "ident.fingerprint"
-msgstr "o kama sona e sitelen len lili pi nimi ni"
+msgstr "o kama sona e sitelen len lili"
 
 msgid "heading.unsub"
 msgstr "O PINI LUKIN"
@@ -467,16 +467,16 @@ msgid "pageinfo.cert.status"
 msgstr "sona pi sitelen len:"
 
 msgid "pageinfo.cert.ca.verified"
-msgstr "ni li sitelen lon ilo CA"
+msgstr "ona li sitelen lon ilo CA"
 
 msgid "pageinfo.cert.ca.unverified"
-msgstr "ni li sitelen ala lon ilo CA"
+msgstr "ona li sitelen ala lon ilo CA"
 
 msgid "pageinfo.cert.notexpired"
-msgstr "ni li wile tawa weka lon tenpo kama"
+msgstr "tenpo kama la ona li wile tawa weka"
 
 msgid "pageinfo.cert.expired"
-msgstr "ni li tawa weka lon tenpo pini"
+msgstr "tenpo pini la ona li tawa weka"
 
 msgid "pageinfo.cert.trusted"
 msgstr "pona"
@@ -579,7 +579,7 @@ msgstr "tenpo pini la sitelen len li tawa weka. nimi li sama ala kin."
 msgid "dlg.certimport.help"
 msgstr ""
 "o pana e sitelen len e ijo len kepeken e sitelen PEM.\n"
-"sina kin ken tawa e ijo ni tawa poki ni."
+"sina kin ken tawa e ona tawa poki ni."
 
 msgid "dlg.certimport.notfound"
 msgstr "sitelen len en ijo len li lon ala."
@@ -623,7 +623,7 @@ msgstr "TAN LIPU AWEN"
 
 # Interpret as "Results from page content..."
 msgid "heading.lookup.pagecontent"
-msgstr "TAN SITELEN LON LIPU"
+msgstr "TAN SITELEN INSA LIPU"
 
 # Interpret as "Results from identitites..."
 msgid "heading.lookup.identities"
@@ -691,7 +691,7 @@ msgid "lang.sr"
 msgstr "toki Sopisi Kilili"
 
 msgid "dlg.newident.until"
-msgstr "ni li wile tawa weka lon tenpo seme:"
+msgstr "tenpo ni la ona li wile tawa weka:"
 
 #, fuzzy
 msgid "hint.newident.date"
@@ -704,16 +704,16 @@ msgid "dlg.newident.commonname"
 msgstr "nimi:"
 
 msgid "dlg.newident.temp"
-msgstr "ni li wile lon tenpo lili:"
+msgstr "tenpo lili la ona li wile awen:"
 
 msgid "dlg.newident.notsaved"
-msgstr "ni li wile ala ante lon ilo sona"
+msgstr "ona li wile ala awen lon ilo sona"
 
 msgid "dlg.newident.email"
 msgstr "nimi pi lipu kon:"
 
 msgid "dlg.newident.userid"
-msgstr "nanpa jan pi ilo sona:"
+msgstr "jan pi ilo sona:"
 
 msgid "dlg.newident.org"
 msgstr "kulupu:"
@@ -728,7 +728,7 @@ msgid "dlg.feed.title"
 msgstr "nimi:"
 
 msgid "dlg.feed.entrytype"
-msgstr "kulupu:"
+msgstr "o lukin e:"
 
 msgid "dlg.feed.type.gemini"
 msgstr "nimi tawa YYYY-MM-DD"
@@ -792,7 +792,7 @@ msgid "prefs.hoverlink"
 msgstr "tawa la sina lukin e nimi tawa:"
 
 msgid "prefs.collapsepreonload"
-msgstr "mi len e sitelen namako:"
+msgstr "o len e sitelen namako:"
 
 msgid "prefs.smoothscroll"
 msgstr "tawa suwi:"
@@ -883,11 +883,11 @@ msgid "prefs.font"
 msgstr "nasin lukin pi sitelen:"
 
 msgid "prefs.boldlink"
-msgstr "nimi tawa li suli:"
+msgstr "nimi tawa li suli lon:"
 
 # Interpretation: (Bold links) on dark (background).
 msgid "prefs.boldlink.dark"
-msgstr "lon lipu pimeja"
+msgstr "lipu pimeja"
 
 msgid "prefs.mono.gemini"
 msgstr "mun Kemini"
@@ -911,7 +911,7 @@ msgid "prefs.quoteicon.line"
 msgstr "linja"
 
 msgid "prefs.plaintext.wrap"
-msgstr "mi tawa e linja suli:"
+msgstr "o tawa e linja suli:"
 
 msgid "prefs.cachesize"
 msgstr "sona pi tenpo pini lili:"
@@ -1096,7 +1096,7 @@ msgstr "sitelen len li pakala"
 
 msgid "error.cert.invalid.msg"
 msgstr ""
-"ken la sitelen jan pi ilo TLS li pakala. ken la tenpo pini la ni li tawa "
+"ken la sitelen jan pi ilo TLS li pakala. ken la tenpo pini la ona li tawa "
 "weka."
 
 # Used in inline audio player metadata popup.
@@ -1140,7 +1140,7 @@ msgid "menu.opentab"
 msgstr "o open lon poki sin"
 
 msgid "bookmark.tag.remote"
-msgstr "o pali e lipu awen tan lipu ni"
+msgstr "o pali e lipu awen tan ona"
 
 msgid "reload.never"
 msgstr "tenpo ala"
@@ -1158,13 +1158,13 @@ msgid "prefs.downloads"
 msgstr "poki tawa ijo awen:"
 
 msgid "prefs.centershort"
-msgstr "mi pali e lipu lon insa:"
+msgstr "o pali e lipu lon insa:"
 
 msgid "prefs.ostheme"
-msgstr "mi kepeken e nasin lukin pi ilo sona:"
+msgstr "o kepeken e nasin lukin pi ilo sona:"
 
 msgid "prefs.retainwindow"
-msgstr "mi awen e lon:"
+msgstr "o awen e lon:"
 
 msgid "prefs.doctheme.name.colorfuldark"
 msgstr "pimeja kule"
@@ -1176,11 +1176,11 @@ msgid "prefs.doctheme.name.highcontrast"
 msgstr "sitelen pimeja lon lipu walo"
 
 msgid "prefs.mono"
-msgstr "mi kepeken e sitelen pi suli sama:"
+msgstr "o kepeken e sitelen pi suli sama lon:"
 
 # Interpretation: (Bold links) on light (background).
 msgid "prefs.boldlink.light"
-msgstr "lon lipu walo"
+msgstr "lipu walo"
 
 msgid "prefs.linewidth.normal"
 msgstr "nasa ala"
@@ -1205,7 +1205,7 @@ msgstr "lipu lukin ali"
 #, c-format
 msgid "minutes.ago"
 msgid_plural "minutes.ago.n"
-msgstr[0] "tenpo suno anpa anpa %d pini"
+msgstr[0] "suno anpa anpa %d"
 
 msgid "dlg.message.ok"
 msgstr "o awen pali"
@@ -1237,7 +1237,7 @@ msgid_plural "feeds.list.counts.n"
 msgstr[0] "sina jo e lipu lukin %zu. ona ale li jo e %%s.\n"
 
 msgid "macos.menu.bookmarks.list"
-msgstr "lipu awen ale"
+msgstr "lipu awen ali"
 
 msgid "menu.paste"
 msgstr "o pana tan sona"
@@ -1260,7 +1260,7 @@ msgid "keys.forward"
 msgstr "o tawa sinpin"
 
 msgid "menu.bookmarks.refresh"
-msgstr "o sin e lipu pi lipu awen"
+msgstr "o sin e lipu awen tan ona"
 
 msgid "error.proxy"
 msgstr "lupa li pakala"
@@ -1272,20 +1272,20 @@ msgid "keys.findtext"
 msgstr "o lukin e nimi lon lipu ni"
 
 msgid "menu.forgeturl"
-msgstr "o weka e nimi tawa tan sona pi tenpo pini"
+msgstr "o weka e ona tan sona pi tenpo pini"
 
 msgid "dlg.confirm.history.clear"
 msgstr "sina wile ala wile weka e sona pi tenpo pini ale?"
 
 msgid "ident.stopuse"
-msgstr "o kepeken ala e nimi ni lon lipu ni"
+msgstr "o kepeken ala e ona lon lipu ni"
 
 #, c-format
 msgid "dlg.confirm.ident.delete"
 msgstr ""
 "sina wile ala wile weka e nimi\n"
 "%s%s%s\n"
-"e sitelen len pi nimi ni e ijo len pi nimi ni?"
+"e sitelen len ona e ijo len ona?"
 
 # The %s format characters are used to highlight the word "Help" and must be used in the translation in same way as here.
 #, c-format
@@ -1296,7 +1296,7 @@ msgid "heading.pageinfo"
 msgstr "SONA PI LIPU NI"
 
 msgid "pageinfo.header.cached"
-msgstr "(ijo lon sona lili pi tenpo pini)"
+msgstr "(ijo lon sona pi tenpo pini lili)"
 
 msgid "dlg.cert.fingerprint"
 msgstr "o kama sona e sitelen len lili"
@@ -1310,7 +1310,7 @@ msgstr[0] ""
 "kama %d la sitelen len pona li wile tawa weka."
 
 msgid "dlg.certwarn.different"
-msgstr "sitelen len ni li ike ala. taso ni li sama ala sitelen len pona."
+msgstr "sitelen len ni li pakala ala. taso ona li sama ala sitelen len pona."
 
 msgid "dlg.certwarn.domain"
 msgstr "nimi pi sitelen len li sama ala. ken la jan lawa pi mun ni li pakala."
@@ -1421,7 +1421,7 @@ msgid "error.tls"
 msgstr "kon en ilo TLS li pakala"
 
 msgid "error.tls.msg"
-msgstr "mi pakala toki tawa ilo pana. ilo pana li toki e ni:"
+msgstr "mi pakala toki tawa ilo pana. ona li toki e ni:"
 
 msgid "error.unavail.msg"
 msgstr ""
@@ -1432,7 +1432,7 @@ msgid "error.cgi.msg"
 msgstr "ilo pana li pakala pali e lipu. ken la ilo seme lon ilo pana li pakala."
 
 msgid "error.permanent.msg"
-msgstr "toki li pakala. tenpo ale la ni li wile pakala kin."
+msgstr "toki li pakala. tenpo ale la ona li wile pakala kin."
 
 msgid "error.proxyrefusal.msg"
 msgstr "ilo pana li wile ala toki e lupa."
