@@ -78,6 +78,7 @@ static iBool convertSource_Gopher_(iGopher *d) {
         }
         if (line.end >= body.end - 1 || !isLineTerminator_(line.end)) {
             /* Not a complete line. */
+            printf("[Gopher] unterminated: {%s}\n", cstr_Rangecc(line));
             break;
         }
         body.start = line.end + 2;
@@ -138,6 +139,9 @@ static iBool convertSource_Gopher_(iGopher *d) {
                     break; /* Ignore unknown types. */
             }
             delete_String(buf);
+        }
+        else {
+            printf("[Gopher] unrecognized: {%s}\n", cstr_Rangecc(line));
         }
     }
     iRelease(pattern);
