@@ -63,6 +63,7 @@ enum iUserEventCode {
        take, it could turn into a tap-and-hold for example. */
     widgetTapBegins_UserEventCode = 4,
     widgetTouchEnds_UserEventCode = 5, /* finger lifted, but momentum may continue */
+    immediateRefresh_UserEventCode = 6, /* refresh even though more events are pending */
 };
 
 const iString *execPath_App     (void);
@@ -108,6 +109,7 @@ iAny *      findWidget_App      (const char *id);
 void        addTicker_App       (iTickerFunc ticker, iAny *context);
 void        removeTicker_App    (iTickerFunc ticker, iAny *context);
 void        postRefresh_App     (void);
+void        postImmediateRefresh_App(void);
 void        postCommand_Root    (iRoot *, const char *command);
 void        postCommandf_Root   (iRoot *, const char *command, ...);
 void        postCommandf_App    (const char *command, ...);

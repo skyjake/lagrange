@@ -124,7 +124,8 @@ struct Impl_App {
     int          sleepTimer;
 #endif
     iAtomicInt   pendingRefresh;
-    int          tabEnum;
+    int          tabEnum; /* IDs for new tabs */
+    iBool        isLoadingPrefs;
     iStringList *launchCommands;
     iBool        isFinishedLaunching;
     iTime        lastDropTime; /* for detecting drops of multiple items */
@@ -306,6 +307,7 @@ static const iString *prefsFileName_(void) {
 static void loadPrefs_App_(iApp *d) {
     iUnused(d);
     iBool haveCA = iFalse;
+    d->isLoadingPrefs = iTrue; /* affects which notifications get posted */
     /* Create the data dir if it doesn't exist yet. */
     makeDirs_Path(collectNewCStr_String(dataDir_App_()));
     iFile *f = new_File(prefsFileName_());
@@ -360,6 +362,7 @@ static void loadPrefs_App_(iApp *d) {
     d->prefs.customFrame = iFalse;
 #endif
     iRelease(f);
+    d->isLoadingPrefs = iFalse;
 }
 
 static void savePrefs_App_(const iApp *d) {
@@ -373,6 +376,7 @@ static void savePrefs_App_(const iApp *d) {
 }
 
 static const char *magicState_App_       = "lgL1";
+static const char *magicWindow_App_      = "wind";
 static const char *magicTabDocument_App_ = "tabd";
 
 enum iDocumentStateFlag {
@@ -399,11 +403,20 @@ static iBool loadState_App_(iApp *d) {
             return iFalse;
         }
         setVersion_Stream(stream_File(f), version);
-        iDocumentWidget *doc = NULL; // document_App(); /* first one is always from root 0 */
-        iBool isFirstTab[2] = { iTrue, iTrue };
-        iDocumentWidget *current[2] = { NULL, NULL };
+        /* Window state. */
+        iDocumentWidget *doc           = NULL;
+        iDocumentWidget *current[2]    = { NULL, NULL };
+        iBool            isFirstTab[2] = { iTrue, iTrue };
         while (!atEnd_File(f)) {
             readData_File(f, 4, magic);
+            if (!memcmp(magic, magicWindow_App_, 4)) {
+                const int splitMode = read32_File(f);
+                const int keyRoot   = read32_File(f);
+                d->window->pendingSplitMode = splitMode;
+                setSplitMode_Window(d->window, splitMode | noEvents_WindowSplit);
+                d->window->keyRoot = d->window->roots[keyRoot];
+                continue;
+            }
             if (!memcmp(magic, magicTabDocument_App_, 4)) {
                 const int8_t flags = read8_File(f);
                 int rootIndex = flags & rootIndex1_DocumentStateFlag ? 1 : 0;
@@ -431,6 +444,10 @@ static iBool loadState_App_(iApp *d) {
                 return iFalse;
             }
         }
+        if (d->window->splitMode) {
+            /* Update root placement. */
+            resize_Window(d->window, -1, -1);
+        }
         iForIndices(i, current) {
             postCommandf_Root(NULL, "tabs.switch page:%p", current[i]);
         }
@@ -443,16 +460,22 @@ static iBool loadState_App_(iApp *d) {
 static void saveState_App_(const iApp *d) {
     iUnused(d);
     trimCache_App();
+    iWindow *win = d->window;
     iFile *f = newCStr_File(concatPath_CStr(dataDir_App_(), stateFileName_App_));
     if (open_File(f, writeOnly_FileMode)) {
         writeData_File(f, magicState_App_, 4);
         writeU32_File(f, latest_FileVersion); /* version */
+        /* Begin with window state. */ {
+            writeData_File(f, magicWindow_App_, 4);
+            writeU32_File(f, win->splitMode);
+            writeU32_File(f, win->keyRoot == win->roots[0] ? 0 : 1);
+        }
         iConstForEach(ObjectList, i, iClob(listDocuments_App(NULL))) {
             iAssert(isInstance_Object(i.object, &Class_DocumentWidget));
             const iWidget *widget = constAs_Widget(i.object);
             writeData_File(f, magicTabDocument_App_, 4);
             int8_t flags = (document_Root(widget->root) == i.object ? current_DocumentStateFlag : 0);
-            if (widget->root == d->window->roots[1]) {
+            if (widget->root == win->roots[1]) {
                 flags |= rootIndex1_DocumentStateFlag;
             }
             write8_File(f, flags);
@@ -640,6 +663,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     const iBool isFirstRun =
         !fileExistsCStr_FileInfo(cleanedPath_CStr(concatPath_CStr(dataDir_App_(), "prefs.cfg")));
     d->isFinishedLaunching = iFalse;
+    d->isLoadingPrefs      = iFalse;
     d->warmupFrames        = 0;
     d->launchCommands      = new_StringList();
     iZap(d->lastDropTime);
@@ -704,8 +728,8 @@ static void init_App_(iApp *d, int argc, char **argv) {
     if (!loadState_App_(d)) {
         postCommand_Root(NULL, "open url:about:help");
     }
-    //setThemePalette_Color(d->prefs.theme);
-    postCommand_Root(NULL, "window.unfreeze");
+    postCommand_Root(NULL, "~window.unfreeze");
+    postCommand_Root(NULL, "font.reset");
     d->autoReloadTimer = SDL_AddTimer(60 * 1000, postAutoReloadCommand_App_, NULL);
     postCommand_Root(NULL, "document.autoreload");
 #if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
@@ -1128,7 +1152,6 @@ static int resizeWatcher_(void *user, SDL_Event *event) {
             SDL_Event u = { .type = SDL_USEREVENT };
             u.user.code = command_UserEventCode;
             u.user.data1 = strdup("theme.changed auto:1");
-            /*u.user.windowID = id_Window(d->window);*/
             dispatchEvent_Window(d->window, &u);
         }
 #endif
@@ -1255,9 +1278,14 @@ void postRefresh_App(void) {
     if (!wasPending) {
         SDL_Event ev = { .type = SDL_USEREVENT };
         ev.user.code = refresh_UserEventCode;
-        //ev.user.windowID = id_Window(get_Window());
         SDL_PushEvent(&ev);
     }
+}
+
+void postImmediateRefresh_App(void) {
+    SDL_Event ev = { .type = SDL_USEREVENT };
+    ev.user.code = immediateRefresh_UserEventCode;
+    SDL_PushEvent(&ev);
 }
 
 void postCommand_Root(iRoot *d, const char *command) {
@@ -1284,7 +1312,8 @@ void postCommand_Root(iRoot *d, const char *command) {
     ev.user.data2 = d; /* all events are root-specific */
     SDL_PushEvent(&ev);
     if (app_.commandEcho) {
-        printf("[command] {%d} %s\n",
+        printf("%s[command] {%d} %s\n",
+               app_.isLoadingPrefs ? "[Prefs] " : "",
                (d == NULL ? 0 : d == get_Window()->roots[0] ? 1 : 2),
                command); fflush(stdout);
     }
@@ -1631,6 +1660,7 @@ const iString *searchQueryUrl_App(const iString *queryStringUnescaped) {
 
 iBool handleCommand_App(const char *cmd) {
     iApp *d = &app_;
+    const iBool isFrozen = !d->window || d->window->isDrawFrozen;
     if (equal_Command(cmd, "config.error")) {
         makeSimpleMessage_Widget(uiTextCaution_ColorEscape "CONFIG ERROR",
                                  format_CStr("Error in config file: %s\n"
@@ -1693,40 +1723,60 @@ iBool handleCommand_App(const char *cmd) {
         postCommandf_App("window.fullscreen.changed arg:%d", !wasFull);
         return iTrue;
     }
+    else if (equal_Command(cmd, "font.reset")) {
+        resetFonts_Text();
+        return iTrue;
+    }
     else if (equal_Command(cmd, "font.set")) {
-        setFreezeDraw_Window(get_Window(), iTrue);
+        if (!isFrozen) {
+            setFreezeDraw_Window(get_Window(), iTrue);
+        }
         d->prefs.font = arg_Command(cmd);
         setContentFont_Text(d->prefs.font);
-        postCommand_App("font.changed");
-        postCommand_App("window.unfreeze");
+        if (!isFrozen) {
+            postCommand_App("font.changed");
+            postCommand_App("window.unfreeze");
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "headingfont.set")) {
-        setFreezeDraw_Window(get_Window(), iTrue);
+        if (!isFrozen) {
+            setFreezeDraw_Window(get_Window(), iTrue);
+        }
         d->prefs.headingFont = arg_Command(cmd);
         setHeadingFont_Text(d->prefs.headingFont);
-        postCommand_App("font.changed");
-        postCommand_App("window.unfreeze");
+        if (!isFrozen) {
+            postCommand_App("font.changed");
+            postCommand_App("window.unfreeze");
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "zoom.set")) {
-        setFreezeDraw_Window(get_Window(), iTrue); /* no intermediate draws before docs updated */
+        if (!isFrozen) {
+            setFreezeDraw_Window(get_Window(), iTrue); /* no intermediate draws before docs updated */
+        }
         d->prefs.zoomPercent = arg_Command(cmd);
         setContentFontSize_Text((float) d->prefs.zoomPercent / 100.0f);
-        postCommand_App("font.changed");
-        postCommand_App("window.unfreeze");
+        if (!isFrozen) {
+            postCommand_App("font.changed");
+            postCommand_App("window.unfreeze");
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "zoom.delta")) {
-        setFreezeDraw_Window(get_Window(), iTrue); /* no intermediate draws before docs updated */
+        if (!isFrozen) {
+            setFreezeDraw_Window(get_Window(), iTrue); /* no intermediate draws before docs updated */
+        }
         int delta = arg_Command(cmd);
         if (d->prefs.zoomPercent < 100 || (delta < 0 && d->prefs.zoomPercent == 100)) {
             delta /= 2;
         }
         d->prefs.zoomPercent = iClamp(d->prefs.zoomPercent + delta, 50, 200);
         setContentFontSize_Text((float) d->prefs.zoomPercent / 100.0f);
-        postCommand_App("font.changed");
-        postCommand_App("window.unfreeze");
+        if (!isFrozen) {
+            postCommand_App("font.changed");
+            postCommand_App("window.unfreeze");
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "smoothscroll")) {
@@ -1761,7 +1811,9 @@ iBool handleCommand_App(const char *cmd) {
     else if (equal_Command(cmd, "accent.set")) {
         d->prefs.accent = arg_Command(cmd);
         setThemePalette_Color(d->prefs.theme);
-        postCommandf_App("theme.changed auto:1");
+        if (!isFrozen) {
+            invalidate_Window(d->window);
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "ostheme")) {
@@ -1770,12 +1822,16 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "doctheme.dark.set")) {
         d->prefs.docThemeDark = arg_Command(cmd);
-        postCommand_App("theme.changed auto:1");
+        if (!isFrozen) {
+            invalidate_Window(d->window);
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "doctheme.light.set")) {
         d->prefs.docThemeLight = arg_Command(cmd);
-        postCommand_App("theme.changed auto:1");
+        if (!isFrozen) {
+            invalidate_Window(d->window);
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "linewidth.set")) {
@@ -1791,16 +1847,20 @@ iBool handleCommand_App(const char *cmd) {
     else if (equal_Command(cmd, "prefs.mono.gemini.changed") ||
              equal_Command(cmd, "prefs.mono.gopher.changed")) {
         const iBool isSet = (arg_Command(cmd) != 0);
-        setFreezeDraw_Window(d->window, iTrue);
+        if (!isFrozen) {
+            setFreezeDraw_Window(d->window, iTrue);
+        }
         if (startsWith_CStr(cmd, "prefs.mono.gemini")) {
             d->prefs.monospaceGemini = isSet;
         }
         else {
             d->prefs.monospaceGopher = isSet;
         }
-        resetFonts_Text(); /* clear the glyph cache */
-        postCommand_App("font.changed");
-        postCommand_App("window.unfreeze");
+        if (!isFrozen) {
+            //resetFonts_Text(); /* clear the glyph cache */
+            postCommand_App("font.changed");
+            postCommand_App("window.unfreeze");
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "prefs.boldlink.dark.changed") ||
@@ -1812,18 +1872,23 @@ iBool handleCommand_App(const char *cmd) {
         else {
             d->prefs.boldLinkLight = isSet;
         }
-        resetFonts_Text(); /* clear the glyph cache */
-        postCommand_App("font.changed");
+        if (!d->isLoadingPrefs) {
+            postCommand_App("font.changed");
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "prefs.biglede.changed")) {
         d->prefs.bigFirstParagraph = arg_Command(cmd) != 0;
-        postCommand_App("document.layout.changed");
+        if (!d->isLoadingPrefs) {
+            postCommand_App("document.layout.changed");
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "prefs.plaintext.wrap.changed")) {
         d->prefs.plainTextWrap = arg_Command(cmd) != 0;
-        postCommand_App("document.layout.changed");
+        if (!d->isLoadingPrefs) {
+            postCommand_App("document.layout.changed");
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "prefs.sideicon.changed")) {
@@ -1833,7 +1898,9 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "prefs.centershort.changed")) {
         d->prefs.centerShortDocs = arg_Command(cmd) != 0;
-        postCommand_App("theme.changed");
+        if (!isFrozen) {
+            invalidate_Window(d->window);
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "prefs.collapsepreonload.changed")) {
@@ -1856,7 +1923,9 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "saturation.set")) {
         d->prefs.saturation = (float) arg_Command(cmd) / 100.0f;
-        postCommandf_App("theme.changed auto:1");
+        if (!isFrozen) {
+            invalidate_Window(d->window);
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "cachesize.set")) {

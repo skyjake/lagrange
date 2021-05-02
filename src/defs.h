@@ -27,8 +27,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 enum iFileVersion {
     initial_FileVersion                 = 0,
     addedResponseTimestamps_FileVersion = 1,
+    multipleRoots_FileVersion           = 2,
     /* meta */
-    latest_FileVersion = 1
+    latest_FileVersion = 2
 };
 
 /* Icons */
