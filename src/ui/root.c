@@ -1262,7 +1262,7 @@ void createUserInterface_Root(iRoot *d) {
             { "Vertical", '3', 0, "ui.split arg:3 axis:1" },
             { "Vertical 1:2", SDLK_f, 0, "ui.split arg:1 axis:1" },
             { "Vertical 2:1", SDLK_r, 0, "ui.split arg:2 axis:1" },
-        }, 9);
+        }, 10);
         setFlags_Widget(splitMenu, disabledWhenHidden_WidgetFlag, iTrue); /* enabled when open */
         setId_Widget(tabsMenu, "doctabs.menu");
         setId_Widget(barMenu, "barmenu");

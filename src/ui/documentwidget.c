@@ -1277,7 +1277,7 @@ static void updateTrust_DocumentWidget_(iDocumentWidget *d, const iGmResponse *r
         set_Block(d->certFingerprint, &response->certFingerprint);
         set_String(d->certSubject, &response->certSubject);
     }
-    iLabelWidget *lock = findWidget_App("navbar.lock");
+    iLabelWidget *lock = findChild_Widget(root_Widget(as_Widget(d)), "navbar.lock");
     if (~d->certFlags & available_GmCertFlag) {
         setFlags_Widget(as_Widget(lock), disabled_WidgetFlag, iTrue);
         updateTextCStr_LabelWidget(lock, gray50_ColorEscape openLock_Icon);
