@@ -1177,9 +1177,7 @@ static int run_App_(iApp *d) {
         runTickers_App_(d);
         refresh_App();
         /* Change the widget tree while we are not iterating through it. */
-        if (d->window->splitMode != d->window->pendingSplitMode) {
-            setSplitMode_Window(d->window, d->window->pendingSplitMode);
-        }
+        checkPendingSplit_Window(d->window);
         recycle_Garbage();
     }
     SDL_DelEventWatch(resizeWatcher_, d);
@@ -1691,14 +1689,16 @@ iBool handleCommand_App(const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "ui.split")) {
+        if (argLabel_Command(cmd, "swap")) {
+            swapRoots_Window(d->window);
+            return iTrue;
+        }
         d->window->pendingSplitMode =
             (argLabel_Command(cmd, "axis") ? vertical_WindowSplit : 0) | (arg_Command(cmd) << 1);
+        const char *url = suffixPtr_Command(cmd, "url");
+        setCStr_String(get_Window()->pendingSplitUrl, url ? url : "");
         return iTrue;
     }
-//    else if (equal_Command(cmd, "window.updatelayout")) {
-//        resize_Window(d->window, -1, -1);
-//        return iTrue;
-//    }
     else if (equal_Command(cmd, "window.retain")) {
         d->prefs.retainWindowSize = arg_Command(cmd);
         return iTrue;
@@ -1993,6 +1993,13 @@ iBool handleCommand_App(const char *cmd) {
             return iTrue;
         }
         const int newTab = argLabel_Command(cmd, "newtab");
+        if (newTab & otherRoot_OpenTabFlag && numRoots_Window(get_Window()) == 1) {
+            /* Need to split first. */
+            postCommandf_App("ui.split arg:3 newtab:%d url:%s",
+                             newTab & ~otherRoot_OpenTabFlag,
+                             cstr_String(url));
+            return iTrue;
+        }
         iRoot *root = get_Root();
         iRoot *oldRoot = root;
         if (newTab & otherRoot_OpenTabFlag) {

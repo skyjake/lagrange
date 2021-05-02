@@ -65,6 +65,7 @@ enum iWindowSplit {
     mode_WindowSplit     = vertical_WindowSplit | equal_WindowSplit,
     mask_WindowSplit     = equal_WindowSplit,
     merge_WindowSplit    = iBit(10),
+    noEvents_WindowSplit = iBit(11),
 };
 
 struct Impl_Window {
@@ -74,12 +75,14 @@ struct Impl_Window {
     iBool         isExposed;
     iBool         isMinimized;
     iBool         isMouseInside;
+    iBool         isInvalidated;
     iBool         ignoreClick;
     uint32_t      focusGainedAt;
     SDL_Renderer *render;
     iInt2         size;
     int           splitMode;
     int           pendingSplitMode;
+    iString *     pendingSplitUrl; /* URL to open in a newly opened split */
     iRoot *       roots[2];     /* root widget and UI state; second one is for split mode */
     iRoot *       keyRoot;      /* root that has the current keyboard input focus */
     iWidget *     hover;
@@ -101,6 +104,7 @@ struct Impl_Window {
 
 iBool       processEvent_Window     (iWindow *, const SDL_Event *);
 iBool       dispatchEvent_Window    (iWindow *, const SDL_Event *);
+void        invalidate_Window       (iWindow *); /* discard all cached graphics */
 void        draw_Window             (iWindow *);
 void        drawWhileResizing_Window(iWindow *d, int w, int h); /* workaround for SDL bug */
 void        resize_Window           (iWindow *, int w, int h);
@@ -114,6 +118,8 @@ void        setKeyboardHeight_Window(iWindow *, int height);
 void        setSplitMode_Window     (iWindow *, int splitMode);
 void        showToolbars_Window     (iWindow *, iBool show);
 iBool       postContextClick_Window (iWindow *, const SDL_MouseButtonEvent *);
+void        checkPendingSplit_Window(iWindow *);
+void        swapRoots_Window        (iWindow *);
 
 uint32_t    id_Window               (const iWindow *);
 iInt2       size_Window             (const iWindow *);

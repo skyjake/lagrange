@@ -403,6 +403,7 @@ void init_Window(iWindow *d, iRect rect) {
     d->size = zero_I2(); /* will be updated below */
     iZap(d->roots);
     d->splitMode = d->pendingSplitMode = 0;
+    d->pendingSplitUrl = new_String();
     d->hover = NULL;
     d->mouseGrab = NULL;
     d->focus = NULL;
@@ -414,6 +415,7 @@ void init_Window(iWindow *d, iRect rect) {
     d->isDrawFrozen = iTrue;
     d->isExposed = iFalse;
     d->isMinimized = iFalse;
+    d->isInvalidated = iFalse; /* set when posting event, to avoid repeated events */
     d->isMouseInside = iTrue;
     d->ignoreClick = iFalse;
     d->focusGainedAt = 0;
@@ -521,6 +523,7 @@ void deinit_Window(iWindow *d) {
         }
     }
     setCurrent_Root(NULL);
+    delete_String(d->pendingSplitUrl);
     deinit_Text();
     SDL_DestroyRenderer(d->render);
     SDL_DestroyWindow(d->win);
@@ -561,10 +564,12 @@ iRoot *otherRoot_Window(const iWindow *d, iRoot *root) {
     return root == d->roots[0] && d->roots[1] ? d->roots[1] : d->roots[0];
 }
 
-static void invalidate_Window_(iWindow *d) {
-    iUnused(d);
-    resetFonts_Text();
-    postCommand_App("theme.changed auto:1"); /* forces UI invalidation */
+void invalidate_Window(iWindow *d) {
+    if (d && !d->isInvalidated) {
+        d->isInvalidated = iTrue;
+        resetFonts_Text();
+        postCommand_App("theme.changed auto:1"); /* forces UI invalidation */
+    }
 }
 
 static iBool isNormalPlacement_Window_(const iWindow *d) {
@@ -734,7 +739,7 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
             return iTrue;
         case SDL_WINDOWEVENT_RESTORED:
             updateSize_Window_(d, iTrue);
-            invalidate_Window_(d);
+            invalidate_Window(d);
             d->isMinimized = iFalse;
             postRefresh_App();
             return iTrue;
@@ -809,7 +814,7 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
         }
         case SDL_RENDER_TARGETS_RESET:
         case SDL_RENDER_DEVICE_RESET: {
-            invalidate_Window_(d);
+            invalidate_Window(d);
             break;
         }
         default: {
@@ -892,7 +897,7 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
                 removeMacMenus_();
                 insertMacMenus_();
 #endif
-                invalidate_Window_(d);
+                invalidate_Window(d);
                 iForIndices(i, d->roots) {
                     if (d->roots[i]) {
                         updatePreferencesLayout_Widget(findChild_Widget(d->roots[i]->widget, "prefs"));
@@ -1008,6 +1013,7 @@ void draw_Window(iWindow *d) {
     /* Draw widgets. */
     d->frameTime = SDL_GetTicks();
     if (isExposed_Window(d)) {
+        d->isInvalidated = iFalse;
         iForIndices(i, d->roots) {
             iRoot *root = d->roots[i];
             if (root) {
@@ -1159,7 +1165,25 @@ void setKeyboardHeight_Window(iWindow *d, int height) {
     }
 }
 
-void setSplitMode_Window(iWindow *d, int splitMode) {
+void checkPendingSplit_Window(iWindow *d) {
+    if (d->splitMode != d->pendingSplitMode) {
+        setSplitMode_Window(d, d->pendingSplitMode);
+        if (!isEmpty_String(d->pendingSplitUrl)) {
+            postCommandf_Root(d->keyRoot, "open url:%s", cstr_String(d->pendingSplitUrl));
+            clear_String(d->pendingSplitUrl);
+        }
+    }
+}
+
+void swapRoots_Window(iWindow *d) {
+    if (numRoots_Window(d) == 2) {
+        iSwap(iRoot *, d->roots[0], d->roots[1]);
+        updateSize_Window_(d, iTrue);
+    }
+}
+
+void setSplitMode_Window(iWindow *d, int splitFlags) {
+    const int splitMode = splitFlags & mode_WindowSplit;
     iAssert(current_Root() == NULL);
     if (d->splitMode != splitMode) {
         int oldCount = numRoots_Window(d);
@@ -1183,7 +1207,7 @@ void setSplitMode_Window(iWindow *d, int splitMode) {
             moveTabButtonToEnd_Widget(findChild_Widget(docTabs, "newtab"));
             iRelease(tabs);
         }
-        else if ((splitMode & mask_WindowSplit) && oldCount == 1) {
+        else if (splitMode && oldCount == 1) {
             /* Add a second root. */
             iDocumentWidget *moved = document_Root(d->roots[0]);
             iAssert(d->roots[1] == NULL);
@@ -1201,10 +1225,11 @@ void setSplitMode_Window(iWindow *d, int splitMode) {
                     iRelease(removeTabPage_Widget(docTabs1, 0)); /* delete the default tab */
                     setRoot_Widget(as_Widget(moved), d->roots[1]);
                     prependTabPage_Widget(docTabs1, iClob(moved), "", 0, 0);
-                    //showTabPage_Widget(docTabs1, as_Widget(moved));
-                    postCommandf_App("tabs.switch page:%p", moved);
+                    if (~splitFlags & noEvents_WindowSplit) {
+                        postCommandf_App("tabs.switch page:%p", moved);
+                    }
                 }
-                else {
+                else if (~splitFlags & noEvents_WindowSplit) {
                     postCommand_Root(d->roots[1], "navigate.home");
                 }
             }
@@ -1232,12 +1257,10 @@ void setSplitMode_Window(iWindow *d, int splitMode) {
             }
         }
 #endif
-//        windowSizeChanged_Window_(d);
-        updateSize_Window_(d, iTrue);
-//        postCommand_App("window.resized");
-  //      postCommand_App("metrics.resized");
-//        postCommand_App("window.updatelayout");
-        postCommand_App("window.unfreeze");
+        if (~splitFlags & noEvents_WindowSplit) {
+            updateSize_Window_(d, iTrue);
+            postCommand_App("window.unfreeze");
+        }
     }
 }
 

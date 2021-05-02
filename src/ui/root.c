@@ -1252,7 +1252,8 @@ void createUserInterface_Root(iRoot *d) {
                                                 },
                                             4);
         iWidget *splitMenu = makeMenu_Widget(root, (iMenuItem[]){
-            { "Single Frame", '1', 0, "ui.split arg:0" },
+            { "Merge Tabs", '1', 0, "ui.split arg:0" },
+            { "Swap Sides", SDLK_x, 0, "ui.split swap:1" },
             { "---", 0, 0, NULL },
             { "Horizontal", '2', 0, "ui.split arg:3 axis:0" },
             { "Horizontal 1:2", SDLK_d, 0, "ui.split arg:1 axis:0" },
