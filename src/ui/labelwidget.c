@@ -39,8 +39,11 @@ struct Impl_LabelWidget {
     iChar   icon;
     int     forceFg;
     iString command;
-    iBool   alignVisual; /* align according to visible bounds, not font metrics */
     iClick  click;
+    struct {
+        uint8_t alignVisual     : 1; /* align according to visible bounds, not font metrics */
+        uint8_t noAutoMinHeight : 1; /* minimum height is not set automatically */
+    } flags;
 };
 
 static iInt2 padding_LabelWidget_(const iLabelWidget *d, int corner) {
@@ -339,7 +342,7 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
                           adjusted_Rect(bounds,
                                         add_I2(zero_I2(), init_I2(iconPad, 0)),
                                         neg_I2(zero_I2())),
-                          d->alignVisual,
+                          d->flags.alignVisual,
                           fg,
                           "%s",
                           cstr_String(&d->label));
@@ -425,7 +428,8 @@ void init_LabelWidget(iLabelWidget *d, const char *label, const char *cmd) {
     d->kmods = 0;
     init_Click(&d->click, d, !isEmpty_String(&d->command) ? SDL_BUTTON_LEFT : 0);
     setFlags_Widget(w, hover_WidgetFlag, d->click.button != 0);
-    d->alignVisual = iFalse;
+    d->flags.alignVisual = iFalse;
+    d->flags.noAutoMinHeight = iFalse;
     updateSize_LabelWidget(d);
     updateKey_LabelWidget_(d); /* could be bound to another key */
 }
@@ -454,7 +458,15 @@ void setText_LabelWidget(iLabelWidget *d, const iString *text) {
 }
 
 void setAlignVisually_LabelWidget(iLabelWidget *d, iBool alignVisual) {
-    d->alignVisual = alignVisual;
+    d->flags.alignVisual = alignVisual;
+}
+
+void setNoAutoMinHeight_LabelWidget(iLabelWidget *d, iBool noAutoMinHeight) {
+    /* By default all labels use a minimum height determined by the text dimensions. */
+    d->flags.noAutoMinHeight = noAutoMinHeight;
+    if (noAutoMinHeight) {
+        d->widget.minSize.y = 0;
+    }
 }
 
 void updateText_LabelWidget(iLabelWidget *d, const iString *text) {

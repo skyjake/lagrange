@@ -30,6 +30,7 @@ iDeclareWidgetClass(LabelWidget)
 iDeclareObjectConstructionArgs(LabelWidget, const char *label, const char *command)
 
 void    setAlignVisually_LabelWidget(iLabelWidget *, iBool alignVisual);
+void    setNoAutoMinHeight_LabelWidget(iLabelWidget *, iBool noAutoMinHeight);
 void    setFont_LabelWidget         (iLabelWidget *, int fontId);
 void    setTextColor_LabelWidget    (iLabelWidget *, int color);
 void    setText_LabelWidget         (iLabelWidget *, const iString *text); /* resizes widget */

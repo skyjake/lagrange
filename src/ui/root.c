@@ -1020,6 +1020,7 @@ void createUserInterface_Root(iRoot *d) {
                 setBackgroundColor_Widget(as_Widget(queryInd), uiBackground_ColorId);
                 setFrameColor_Widget(as_Widget(queryInd), uiTextAction_ColorId);
                 setAlignVisually_LabelWidget(queryInd, iTrue);
+                setNoAutoMinHeight_LabelWidget(queryInd, iTrue);
                 addChildFlags_Widget(rightEmbed,
                                      iClob(queryInd),
                                      collapse_WidgetFlag | hidden_WidgetFlag);
@@ -1030,6 +1031,7 @@ void createUserInterface_Root(iRoot *d) {
                 setId_Widget(as_Widget(fprog), "feeds.progress");
                 setBackgroundColor_Widget(as_Widget(fprog), uiBackground_ColorId);
                 setAlignVisually_LabelWidget(fprog, iTrue);
+                setNoAutoMinHeight_LabelWidget(fprog, iTrue);
                 addChildFlags_Widget(rightEmbed,
                                      iClob(fprog),
                                      collapse_WidgetFlag | frameless_WidgetFlag | hidden_WidgetFlag);
@@ -1039,6 +1041,7 @@ void createUserInterface_Root(iRoot *d) {
                 setId_Widget(as_Widget(progress), "document.progress");
                 setBackgroundColor_Widget(as_Widget(progress), uiBackground_ColorId);
                 setAlignVisually_LabelWidget(progress, iTrue);
+                setNoAutoMinHeight_LabelWidget(progress, iTrue);
                 addChildFlags_Widget(
                     rightEmbed, iClob(progress), collapse_WidgetFlag);
             }
