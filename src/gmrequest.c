@@ -535,21 +535,6 @@ void setUrl_GmRequest(iGmRequest *d, const iString *url) {
     urlEncodeSpaces_String(&d->url);
 }
 
-static const iString *findContainerArchive_(const iString *path) {
-    iBeginCollect();
-    while (!isEmpty_String(path) && cmp_String(path, ".")) {
-        iString *dir = newRange_String(dirName_Path(path));
-        if (endsWithCase_String(dir, ".zip") ||
-            endsWithCase_String(dir, ".gpub")) {
-            iEndCollect();
-            return collect_String(dir);
-        }
-        path = collect_String(dir);
-    }
-    iEndCollect();
-    return NULL;
-}
-
 static iBool isDirectory_(const iString *path) {
     /* TODO: move this to the_Foundation */
     iFileInfo *info = new_FileInfo(path);
@@ -652,7 +637,7 @@ void submit_GmRequest(iGmRequest *d) {
         }
         else if (open_File(f, readOnly_FileMode)) {
             resp->statusCode = success_GmStatusCode;
-            setCStr_String(&resp->meta, mediaTypeFromPath_String(path));
+            setCStr_String(&resp->meta, mediaType_Path(path));
             /* TODO: Detect text files based on contents? E.g., is the content valid UTF-8. */
             set_Block(&resp->body, collect_Block(readAll_File(f)));
             d->state = receivingBody_GmRequestState;
@@ -660,7 +645,7 @@ void submit_GmRequest(iGmRequest *d) {
         }
         else {
             /* It could be a path inside an archive. */
-            const iString *container = findContainerArchive_(path);
+            const iString *container = findContainerArchive_Path(path);
             if (container) {
                 iArchive *arch = iClob(new_Archive());
                 if (openFile_Archive(arch, container)) {
@@ -748,7 +733,7 @@ void submit_GmRequest(iGmRequest *d) {
                         const iBlock *data = data_Archive(arch, entryPath);
                         if (data) {
                             resp->statusCode = success_GmStatusCode;
-                            setCStr_String(&resp->meta, mediaTypeFromPath_String(entryPath));
+                            setCStr_String(&resp->meta, mediaType_Path(entryPath));
                             set_Block(&resp->body, data);
                         }
                         else {

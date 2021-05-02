@@ -30,6 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "bookmarks.h"
 #include "command.h"
 #include "defs.h"
+#include "gempub.h"
 #include "gmcerts.h"
 #include "gmdocument.h"
 #include "gmrequest.h"
@@ -1051,7 +1052,7 @@ static void updateFetchProgress_DocumentWidget_(iDocumentWidget *d) {
 
 static const char *zipPageHeading_(const iRangecc mime) {
     if (equalCase_Rangecc(mime, "application/gpub+zip")) {
-        return book_Icon " Gempub Book";
+        return book_Icon " Gempub";
     }
     iRangecc type = iNullRange;
     nextSplit_Rangecc(mime, "/", &type); /* skip the part before the slash */
@@ -1063,6 +1064,56 @@ static const char *zipPageHeading_(const iRangecc mime) {
     appendCStr_String(heading, " Archive");
     prependCStr_String(heading, folder_Icon " ");
     return cstrCollect_String(heading);
+}
+
+static void postProcessRequestContent_DocumentWidget_(iDocumentWidget *d) {
+    if (!cmpCase_String(&d->sourceMime, "application/octet-stream") ||
+        !cmpCase_String(&d->sourceMime, mimeType_Gempub) ||
+        endsWithCase_String(d->mod.url, ".gpub")) {
+        iGempub *gempub = new_Gempub();
+        if (open_Gempub(gempub, &d->sourceContent)) {
+            setBaseUrl_Gempub(gempub, d->mod.url);
+            /* TODO: just return a String from coverPageSource_Gempub... */
+            setSource_DocumentWidget(d, collect_String(newBlock_String(collect_Block(coverPageSource_Gempub(gempub)))));
+            setCStr_String(&d->sourceMime, mimeType_Gempub);
+        }
+        delete_Gempub(gempub);
+    }
+    /* Gempub: Preload cover image. */ {
+        /* TODO: move to gempub.c along with other related code */
+        iString *localPath = localFilePathFromUrl_String(d->mod.url);
+        if (localPath) {
+            if (!iCmpStr(mediaType_Path(localPath), "application/gpub+zip")) {
+                iArchive *arch = iClob(new_Archive());
+                if (openFile_Archive(arch, localPath)) {
+                    iBool haveImage = iFalse;
+                    for (size_t linkId = 1; ; linkId++) {
+                        const iString *linkUrl = linkUrl_GmDocument(d->doc, linkId);
+                        if (!linkUrl) break;
+                        if (findLinkImage_Media(media_GmDocument(d->doc), linkId)) {
+                            continue; /* got this already */
+                        }
+                        if (linkFlags_GmDocument(d->doc, linkId) & imageFileExtension_GmLinkFlag) {
+                            iString *imgEntryPath = collect_String(localFilePathFromUrl_String(linkUrl));
+                            remove_Block(&imgEntryPath->chars, 0, size_String(localPath) + 1 /* slash, too */);
+                            setData_Media(media_GmDocument(d->doc),
+                                          linkId,
+                                          collectNewCStr_String(mediaType_Path(linkUrl)),
+                                          data_Archive(arch, imgEntryPath),
+                                          0);
+                            haveImage = iTrue;
+                        }
+                    }
+                    if (haveImage) {
+                        redoLayout_GmDocument(d->doc);
+                        updateVisible_DocumentWidget_(d);
+                        invalidate_DocumentWidget_(d);
+                    }
+                }
+            }
+            delete_String(localPath);
+        }
+    }
 }
 
 static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse *response,
@@ -1113,12 +1164,17 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse
                     iString *key = collectNew_String();
                     toString_Sym(SDLK_s, KMOD_PRIMARY, key);
                     format_String(&str, "# %s\n"
-                                  "%s is a compressed archive.\n\n%s\n\n",
+                                  "%s is a compressed archive.\n\n",
                                   zipPageHeading_(param),
-                                  cstr_Rangecc(baseName_Path(d->mod.url)),
-                                  format_CStr(cstr_Lang("error.unsupported.suggestsave"),
-                                              cstr_String(key),
-                                              saveToDownloads_Label));
+                                  cstr_Rangecc(baseName_Path(d->mod.url)));
+                    iString *localPath = localFilePathFromUrl_String(d->mod.url);
+                    if (!localPath) {
+                        appendFormat_String(&str, "%s\n\n",
+                                            format_CStr(cstr_Lang("error.unsupported.suggestsave"),
+                                                        cstr_String(key),
+                                                        saveToDownloads_Label));
+                    }
+                    delete_String(localPath);
                     if (equalCase_Rangecc(urlScheme_String(d->mod.url), "file")) {
                         appendFormat_String(&str, "=> %s/ View archive contents\n",
                                             cstr_String(withSpacesEncoded_String(d->mod.url)));
@@ -1188,43 +1244,6 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse
         if (setSource) {
             setSource_DocumentWidget(d, &str);
         }
-        if (isRequestFinished) {
-            /* Gempub: Preload cover image. */ {
-                /* TODO: move to a gempub.c along with other related code */
-                iString *localPath = localFilePathFromUrl_String(d->mod.url);
-                if (localPath) {
-                    if (!iCmpStr(mediaTypeFromPath_String(localPath), "application/gpub+zip")) {
-                        iArchive *arch = iClob(new_Archive());
-                        if (openFile_Archive(arch, localPath)) {
-                            iBool haveImage = iFalse;
-                            for (size_t linkId = 1; ; linkId++) {
-                                const iString *linkUrl = linkUrl_GmDocument(d->doc, linkId);
-                                if (!linkUrl) break;
-                                if (findLinkImage_Media(media_GmDocument(d->doc), linkId)) {
-                                    continue; /* got this already */
-                                }
-                                if (linkFlags_GmDocument(d->doc, linkId) & imageFileExtension_GmLinkFlag) {
-                                    iString *imgEntryPath = collect_String(localFilePathFromUrl_String(linkUrl));
-                                    remove_Block(&imgEntryPath->chars, 0, size_String(localPath) + 1 /* slash, too */);
-                                    setData_Media(media_GmDocument(d->doc),
-                                                  linkId,
-                                                  collectNewCStr_String(mediaTypeFromPath_String(linkUrl)),
-                                                  data_Archive(arch, imgEntryPath),
-                                                  0);
-                                    haveImage = iTrue;
-                                }
-                            }
-                            if (haveImage) {
-                                redoLayout_GmDocument(d->doc);
-                                updateVisible_DocumentWidget_(d);
-                                invalidate_DocumentWidget_(d);
-                            }
-                        }
-                    }
-                    delete_String(localPath);
-                }
-            }
-        }
         deinit_String(&str);
     }
 }
@@ -1291,8 +1310,13 @@ static void cacheRunGlyphs_(void *data, const iGmRun *run) {
 }
 
 static void cacheDocumentGlyphs_DocumentWidget_(const iDocumentWidget *d) {
-    if (isExposed_Window(get_Window())) {
-        render_GmDocument(d->doc, (iRangei){ 0, size_GmDocument(d->doc).y }, cacheRunGlyphs_, NULL);
+    if (isFinishedLaunching_App() && isExposed_Window(get_Window())) {
+        /* Just cache the top of the document, since this is what we usually need. */
+        int maxY = height_Widget(&d->widget) * 2;
+        if (maxY == 0) {
+            maxY = size_GmDocument(d->doc).y;
+        }
+        render_GmDocument(d->doc, (iRangei){ 0, maxY }, cacheRunGlyphs_, NULL);
     }
 }
 
@@ -1302,26 +1326,28 @@ static iBool updateFromHistory_DocumentWidget_(iDocumentWidget *d) {
         const iGmResponse *resp = recent->cachedResponse;
         clear_ObjectList(d->media);
         reset_GmDocument(d->doc);
-        d->state = fetching_RequestState;
-        d->initNormScrollY = recent->normScrollY;
         resetWideRuns_DocumentWidget_(d);
-        /* Use the cached response data. */
-        updateTrust_DocumentWidget_(d, resp);
-        d->sourceTime = resp->when;
-        d->sourceStatus = success_GmStatusCode;
-        format_String(&d->sourceHeader, cstr_Lang("pageinfo.header.cached"));
-        d->drawBufs->flags |= updateTimestampBuf_DrawBufsFlag;
-        set_Block(&d->sourceContent, &resp->body);
-        updateDocument_DocumentWidget_(d, resp, iTrue);
-        init_Anim(&d->altTextOpacity, 0);
+        d->state = fetching_RequestState;
+        /* Do the fetch. */ {
+            d->initNormScrollY = recent->normScrollY;
+            /* Use the cached response data. */
+            updateTrust_DocumentWidget_(d, resp);
+            d->sourceTime   = resp->when;
+            d->sourceStatus = success_GmStatusCode;
+            format_String(&d->sourceHeader, cstr_Lang("pageinfo.header.cached"));
+            set_Block(&d->sourceContent, &resp->body);
+            updateDocument_DocumentWidget_(d, resp, iTrue);
+            postProcessRequestContent_DocumentWidget_(d);
+        }
         d->state = ready_RequestState;
+        init_Anim(&d->altTextOpacity, 0);
         reset_SmoothScroll(&d->scrollY);
         init_Anim(&d->scrollY.pos, d->initNormScrollY * size_GmDocument(d->doc).y);
         updateSideOpacity_DocumentWidget_(d, iFalse);
-        d->drawBufs->flags |= updateSideBuf_DrawBufsFlag;
         updateVisible_DocumentWidget_(d);
         moveSpan_SmoothScroll(&d->scrollY, 0, 0); /* clamp position to new max */
         cacheDocumentGlyphs_DocumentWidget_(d);
+        d->drawBufs->flags |= updateTimestampBuf_DrawBufsFlag | updateSideBuf_DrawBufsFlag;
         postCommandf_Root(as_Widget(d)->root, "document.changed doc:%p url:%s", d, cstr_String(d->mod.url));
         return iTrue;
     }
@@ -2143,10 +2169,12 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         checkResponse_DocumentWidget_(d);
         init_Anim(&d->scrollY.pos, d->initNormScrollY * size_GmDocument(d->doc).y); /* TODO: unless user already scrolled! */
         d->state = ready_RequestState;
+        postProcessRequestContent_DocumentWidget_(d);
         /* The response may be cached. */
         if (d->request) {
             if (!equal_Rangecc(urlScheme_String(d->mod.url), "about") &&
-                startsWithCase_String(meta_GmRequest(d->request), "text/")) {
+                (startsWithCase_String(meta_GmRequest(d->request), "text/") ||
+                 !cmp_String(&d->sourceMime, mimeType_Gempub))) {
                 setCachedResponse_History(d->mod.history, lockResponse_GmRequest(d->request));
                 unlockResponse_GmRequest(d->request);
             }
@@ -2856,6 +2884,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                             0, 0, NULL });
                     }
                     if (willUseProxy_App(scheme) || isGemini ||
+                        equalCase_Rangecc(scheme, "file") ||
                         equalCase_Rangecc(scheme, "finger") ||
                         equalCase_Rangecc(scheme, "gopher")) {
                         isNative = iTrue;

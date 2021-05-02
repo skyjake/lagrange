@@ -119,7 +119,10 @@ iString *       localFilePathFromUrl_String(const iString *);
 void            urlEncodeSpaces_String  (iString *);
 const iString * withSpacesEncoded_String(const iString *);
 
-const char *    mediaTypeFromPath_String            (const iString *path);
+const char *    mediaType_Path                      (const iString *path);
 iRangecc        mediaTypeWithoutParameters_Rangecc  (iRangecc mime);
+
+const iString * findContainerArchive_Path           (const iString *path);
+
 
 const iString * feedEntryOpenCommand_String (const iString *url, int newTab); /* checks fragment */

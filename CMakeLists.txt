@@ -111,6 +111,8 @@ set (SOURCES
     src/defs.h
     src/feeds.c
     src/feeds.h
+    src/gempub.c
+    src/gempub.h
     src/gmcerts.c
     src/gmcerts.h
     src/gmdocument.c

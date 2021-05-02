@@ -438,7 +438,22 @@ iString *localFilePathFromUrl_String(const iString *d) {
     return path;
 }
 
-const char *mediaTypeFromPath_String(const iString *path) {
+const iString *findContainerArchive_Path(const iString *path) {
+    iBeginCollect();
+    while (!isEmpty_String(path) && cmp_String(path, ".")) {
+        iString *dir = newRange_String(dirName_Path(path));
+        if (endsWithCase_String(dir, ".zip") ||
+            endsWithCase_String(dir, ".gpub")) {
+            iEndCollect();
+            return collect_String(dir);
+        }
+        path = collect_String(dir);
+    }
+    iEndCollect();
+    return NULL;
+}
+
+const char *mediaType_Path(const iString *path) {
     if (endsWithCase_String(path, ".gmi") || endsWithCase_String(path, ".gemini")) {
         return "text/gemini; charset=utf-8";
     }
