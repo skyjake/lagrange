@@ -244,6 +244,7 @@ struct Impl_DocumentWidget {
     iString        sourceMime;
     iBlock         sourceContent; /* original content as received, for saving */
     iTime          sourceTime;
+    iGempub *      sourceGempub; /* NULL unless the page is Gempub content */
     iGmDocument *  doc;
     int            certFlags;
     iBlock *       certFingerprint;
@@ -346,6 +347,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     init_String(&d->sourceMime);
     init_Block(&d->sourceContent, 0);
     iZap(d->sourceTime);
+    d->sourceGempub = NULL;
     init_PtrArray(&d->visibleLinks);
     init_PtrArray(&d->visiblePre);
     init_PtrArray(&d->visibleWideRuns);
@@ -387,6 +389,7 @@ void deinit_DocumentWidget(iDocumentWidget *d) {
     delete_PtrSet(d->invalidRuns);
     iRelease(d->media);
     iRelease(d->request);
+    delete_Gempub(d->sourceGempub);
     deinit_String(&d->pendingGotoHeading);
     deinit_Block(&d->sourceContent);
     deinit_String(&d->sourceMime);
@@ -1067,51 +1070,43 @@ static const char *zipPageHeading_(const iRangecc mime) {
 }
 
 static void postProcessRequestContent_DocumentWidget_(iDocumentWidget *d) {
+    delete_Gempub(d->sourceGempub);
+    d->sourceGempub = NULL;
     if (!cmpCase_String(&d->sourceMime, "application/octet-stream") ||
         !cmpCase_String(&d->sourceMime, mimeType_Gempub) ||
         endsWithCase_String(d->mod.url, ".gpub")) {
         iGempub *gempub = new_Gempub();
         if (open_Gempub(gempub, &d->sourceContent)) {
             setBaseUrl_Gempub(gempub, d->mod.url);
-            /* TODO: just return a String from coverPageSource_Gempub... */
-            setSource_DocumentWidget(d, collect_String(newBlock_String(collect_Block(coverPageSource_Gempub(gempub)))));
+            setSource_DocumentWidget(d, collect_String(coverPageSource_Gempub(gempub)));
             setCStr_String(&d->sourceMime, mimeType_Gempub);
+            d->sourceGempub = gempub;
         }
-        delete_Gempub(gempub);
+        else {
+            delete_Gempub(gempub);
+        }
     }
-    /* Gempub: Preload cover image. */ {
-        /* TODO: move to gempub.c along with other related code */
+    if (!d->sourceGempub) {
         iString *localPath = localFilePathFromUrl_String(d->mod.url);
-        if (localPath) {
-            if (!iCmpStr(mediaType_Path(localPath), "application/gpub+zip")) {
-                iArchive *arch = iClob(new_Archive());
-                if (openFile_Archive(arch, localPath)) {
-                    iBool haveImage = iFalse;
-                    for (size_t linkId = 1; ; linkId++) {
-                        const iString *linkUrl = linkUrl_GmDocument(d->doc, linkId);
-                        if (!linkUrl) break;
-                        if (findLinkImage_Media(media_GmDocument(d->doc), linkId)) {
-                            continue; /* got this already */
-                        }
-                        if (linkFlags_GmDocument(d->doc, linkId) & imageFileExtension_GmLinkFlag) {
-                            iString *imgEntryPath = collect_String(localFilePathFromUrl_String(linkUrl));
-                            remove_Block(&imgEntryPath->chars, 0, size_String(localPath) + 1 /* slash, too */);
-                            setData_Media(media_GmDocument(d->doc),
-                                          linkId,
-                                          collectNewCStr_String(mediaType_Path(linkUrl)),
-                                          data_Archive(arch, imgEntryPath),
-                                          0);
-                            haveImage = iTrue;
-                        }
-                    }
-                    if (haveImage) {
-                        redoLayout_GmDocument(d->doc);
-                        updateVisible_DocumentWidget_(d);
-                        invalidate_DocumentWidget_(d);
-                    }
-                }
+        if (localPath && equal_CStr(mediaType_Path(localPath), "application/gpub+zip")) {
+            iGempub *gempub = new_Gempub();
+            if (openFile_Gempub(gempub, localPath)) {
+                setBaseUrl_Gempub(gempub, d->mod.url);
+                setSource_DocumentWidget(d, collect_String(coverPageSource_Gempub(gempub)));
+                setCStr_String(&d->sourceMime, mimeType_Gempub);
+                d->sourceGempub = gempub;
             }
-            delete_String(localPath);
+            else {
+                delete_Gempub(gempub);
+            }
+        }
+        delete_String(localPath);
+    }
+    if (d->sourceGempub) {
+        if (preloadCoverImage_Gempub(d->sourceGempub, d->doc)) {
+            redoLayout_GmDocument(d->doc);
+            updateVisible_DocumentWidget_(d);
+            invalidate_DocumentWidget_(d);
         }
     }
 }
@@ -1325,6 +1320,8 @@ static iBool updateFromHistory_DocumentWidget_(iDocumentWidget *d) {
     if (recent && recent->cachedResponse) {
         const iGmResponse *resp = recent->cachedResponse;
         clear_ObjectList(d->media);
+        delete_Gempub(d->sourceGempub);
+        d->sourceGempub = NULL;
         reset_GmDocument(d->doc);
         resetWideRuns_DocumentWidget_(d);
         d->state = fetching_RequestState;
@@ -1527,6 +1524,8 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
             case categorySuccess_GmStatusCode:
                 reset_SmoothScroll(&d->scrollY);
                 reset_GmDocument(d->doc); /* new content incoming */
+                delete_Gempub(d->sourceGempub);
+                d->sourceGempub = NULL;
                 resetWideRuns_DocumentWidget_(d);
                 updateDocument_DocumentWidget_(d, resp, iTrue);
                 break;

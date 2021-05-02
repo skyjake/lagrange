@@ -24,6 +24,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "gmutil.h"
 #include "lang.h"
 #include "defs.h"
+#include "gmdocument.h"
 #include "ui/util.h"
 
 #include <the_Foundation/archive.h>
@@ -162,7 +163,7 @@ static iBool isRemote_Gempub_(const iGempub *d) {
     return !equalCase_Rangecc(urlScheme_String(&d->baseUrl), "file");
 }
 
-iBlock *coverPageSource_Gempub(const iGempub *d) {
+iString *coverPageSource_Gempub(const iGempub *d) {
     iAssert(!isEmpty_String(&d->baseUrl));
     const iString *baseUrl = withSpacesEncoded_String(&d->baseUrl);
     iString *out = new_String();
@@ -204,7 +205,27 @@ iBlock *coverPageSource_Gempub(const iGempub *d) {
     appendProperty_Gempub_(d, "Language:", language_GempubProperty, out);
     appendProperty_Gempub_(d, "License:", license_GempubProperty, out);
     appendProperty_Gempub_(d, "\u00a9", copyright_GempubProperty, out);
-    iBlock *output = copy_Block(utf8_String(out));
-    delete_String(out);
-    return output;
+    return out;
+}
+
+iBool preloadCoverImage_Gempub(const iGempub *d, iGmDocument *doc) {
+    iBool haveImage = iFalse;
+    for (size_t linkId = 1; ; linkId++) {
+        const iString *linkUrl = linkUrl_GmDocument(doc, linkId);
+        if (!linkUrl) break;
+        if (findLinkImage_Media(media_GmDocument(doc), linkId)) {
+            continue; /* got this already */
+        }
+        if (linkFlags_GmDocument(doc, linkId) & imageFileExtension_GmLinkFlag) {
+            iString *imgEntryPath = collect_String(copy_String(linkUrl));
+            remove_Block(&imgEntryPath->chars, 0, size_String(&d->baseUrl) + 1 /* slash, too */);
+            setData_Media(media_GmDocument(doc),
+                          linkId,
+                          collectNewCStr_String(mediaType_Path(linkUrl)),
+                          data_Archive(d->arch, imgEntryPath),
+                          0);
+            haveImage = iTrue;
+        }
+    }
+    return haveImage;
 }

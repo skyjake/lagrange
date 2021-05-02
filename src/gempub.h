@@ -24,6 +24,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <the_Foundation/string.h>
 
+iDeclareType(GmDocument)
+
 iDeclareType(Gempub)
 iDeclareTypeConstruction(Gempub)
         
@@ -51,7 +53,8 @@ void        close_Gempub            (iGempub *);
 void        setBaseUrl_Gempub       (iGempub *, const iString *baseUrl);
 
 iBool       isOpen_Gempub           (const iGempub *);
-iBlock *    coverPageSource_Gempub  (const iGempub *);
+iString *   coverPageSource_Gempub  (const iGempub *);
+iBool       preloadCoverImage_Gempub(const iGempub *, iGmDocument *doc);
 
 const iString *property_Gempub      (const iGempub *, enum iGempubProperty);
 

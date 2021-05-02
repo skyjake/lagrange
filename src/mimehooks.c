@@ -209,7 +209,9 @@ iBlock *translateGemPubCoverPage_(const iBlock *source, const iString *requestUr
     if (open_Gempub(gempub, source)) {
         setBaseUrl_Gempub(gempub, requestUrl);
         output = newCStr_Block("20 text/gemini; charset=utf-8\r\n");
-        append_Block(output, collect_Block(coverPageSource_Gempub(gempub)));
+        iString *src = coverPageSource_Gempub(gempub);
+        append_Block(output, utf8_String(src));
+        delete_String(src);
     }
     delete_Gempub(gempub);
     return output;
