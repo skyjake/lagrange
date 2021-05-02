@@ -496,12 +496,6 @@ static SDL_Surface *rasterizeGlyph_Font_(const iFont *d, uint32_t glyphIndex, fl
 #endif
 }
 
-#if 0
-iLocalDef SDL_Rect sdlRect_(const iRect rect) {
-    return (SDL_Rect){ rect.pos.x, rect.pos.y, rect.size.x, rect.size.y };
-}
-#endif
-
 iLocalDef iCacheRow *cacheRow_Text_(iText *d, int height) {
     return at_Array(&d->cacheRows, (height - 1) / d->cacheRowAllocStep);
 }
@@ -546,32 +540,6 @@ static void allocate_Font_(iFont *d, iGlyph *glyph, int hoff) {
         glyph->advance = d->xScale * adv;
     }
 }
-
-#if 0
-static iBool cache_Font_(const iFont *d, iGlyph *glyph, int hoff) {
-    iText *       txt     = &text_;
-    SDL_Renderer *render  = txt->render;
-    SDL_Texture * tex     = NULL;
-    SDL_Surface * surface = NULL;
-    iRect *       glRect  = &glyph->rect[hoff];
-    /* Rasterize the glyph using stbtt. */
-    iAssert(!isRasterized_Glyph_(glyph, hoff));
-    surface = rasterizeGlyph_Font_(d, glyph->glyphIndex, hoff * 0.5f);
-    tex = SDL_CreateTextureFromSurface(render, surface);
-    iAssert(isEqual_I2(glRect->size, init_I2(surface->w, surface->h)));
-    if (tex) {
-        SDL_SetTextureBlendMode(tex, SDL_BLENDMODE_NONE);
-        const SDL_Rect dstRect = sdlRect_(*glRect);
-        SDL_RenderCopy(render, tex, &(SDL_Rect){ 0, 0, dstRect.w, dstRect.h }, &dstRect);
-        SDL_DestroyTexture(tex);
-        setRasterized_Glyph_(glyph, hoff);
-    }
-    if (surface) {
-        SDL_FreeSurface(surface);
-    }
-    return isRasterized_Glyph_(glyph, hoff);
-}
-#endif
 
 iLocalDef iFont *characterFont_Font_(iFont *d, iChar ch, uint32_t *glyphIndex) {
     if ((*glyphIndex = glyphIndex_Font_(d, ch)) != 0) {
@@ -628,20 +596,6 @@ iLocalDef iFont *characterFont_Font_(iFont *d, iChar ch, uint32_t *glyphIndex) {
 //    }
     return font;
 }
-
-#if 0
-static void doRaster_Font_(const iFont *font, iGlyph *glyph) {
-    SDL_Texture *oldTarget = SDL_GetRenderTarget(text_.render);
-    SDL_SetRenderTarget(text_.render, text_.cache);
-    if (!isRasterized_Glyph_(glyph, 0)) {
-        cache_Font_(font, glyph, 0);
-    }
-    if (!isRasterized_Glyph_(glyph, 1)) {
-        cache_Font_(font, glyph, 1); /* half-pixel offset */
-    }
-    SDL_SetRenderTarget(text_.render, oldTarget);
-}
-#endif
 
 static iGlyph *glyph_Font_(iFont *d, iChar ch) {
     iGlyph * glyph;
@@ -784,7 +738,7 @@ void cacheTextGlyphs_Font_(iFont *d, const iRangecc text) {
                 oldTarget = SDL_GetRenderTarget(text_.render);
                 SDL_SetRenderTarget(text_.render, text_.cache);
             }
-            //printf("copying %d rasters\n", size_Array(rasters)); fflush(stdout);
+//            printf("copying %zu rasters from %p\n", size_Array(rasters), bufTex); fflush(stdout);
             iConstForEach(Array, i, rasters) {
                 const iRasterGlyph *rg = i.value;
 //                iAssert(isEqual_I2(rg->rect.size, rg->glyph->rect[rg->hoff].size));
@@ -794,6 +748,7 @@ void cacheTextGlyphs_Font_(iFont *d, const iRangecc text) {
                                (const SDL_Rect *) &rg->rect,
                                (const SDL_Rect *) glRect);
                 setRasterized_Glyph_(rg->glyph, rg->hoff);
+//                printf(" - %u\n", rg->glyph->glyphIndex);
             }
             SDL_DestroyTexture(bufTex);
             /* Resume with an empty buffer. */
@@ -1019,8 +974,9 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
         int x1 = iMax(xpos, xposExtend);
         /* Which half of the pixel the glyph falls on? */
         const int hoff = enableHalfPixelGlyphs_Text ? (xpos - x1 > 0.5f ? 1 : 0) : 0;
-        if (mode & draw_RunMode && !isRasterized_Glyph_(glyph, hoff)) {
+        if (mode & draw_RunMode && ch != 0x20 && ch != 0 && !isRasterized_Glyph_(glyph, hoff)) {
             /* Need to pause here and make sure all glyphs have been cached in the text. */
+//            printf("[Text] missing from cache: %lc (%x)\n", (int) ch, ch);
             cacheTextGlyphs_Font_(d, args->text);
             glyph = glyph_Font_(d, ch); /* cache may have been reset */
         }
