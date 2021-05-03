@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-05-01 23:18+0000\n"
+"PO-Revision-Date: 2021-05-03 05:35+0000\n"
 "Last-Translator: jan Anja <cyber@sysrq.in>\n"
 "Language-Team: Toki Pona <http://weblate.skyjake.fi/projects/lagrange/ui/tok/"
 ">\n"
@@ -731,7 +731,7 @@ msgid "dlg.feed.entrytype"
 msgstr "o lukin e:"
 
 msgid "dlg.feed.type.gemini"
-msgstr "nimi tawa YYYY-MM-DD"
+msgstr "nimi tawa AAAA-AA-AA"
 
 msgid "dlg.feed.type.headings"
 msgstr "sitelen suli sin"
