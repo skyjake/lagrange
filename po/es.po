@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-04-09 13:18+0000\n"
+"PO-Revision-Date: 2021-04-27 14:18+0000\n"
 "Last-Translator: Wally Hackenslacker <mastor89@protonmail.com>\n"
 "Language-Team: Spanish <http://weblate.skyjake.fi/projects/lagrange/ui/es/>\n"
 "Language: es\n"
@@ -873,8 +873,8 @@ msgstr "Notas sobre %s:"
 #, c-format
 msgid "error.unsupported.suggestsave"
 msgstr ""
-"Puede guardarlo como archivo a su carpeta de Descargas, sin embargo. "
-"Presione %s o seleccione \"%s\" del menú."
+"Puede guardarlo como archivo a su carpeta de Descargas. Presione %s o "
+"seleccione \"%s\" del menú."
 
 msgid "dlg.save.incomplete"
 msgstr "El contenido de la página todavía se está descargando."
@@ -1448,3 +1448,21 @@ msgstr "Interlingue"
 
 msgid "lang.sr"
 msgstr "Serbio"
+
+msgid "menu.downloads"
+msgstr "Mostrar Descargas"
+
+msgid "menu.select.clear"
+msgstr "Borrar Selección"
+
+msgid "sidebar.action.feeds.showall"
+msgstr "Todo"
+
+msgid "sidebar.action.feeds.showunread"
+msgstr "Sin Leer"
+
+msgid "sidebar.action.ident.new"
+msgstr "Nuevo…"
+
+msgid "sidebar.action.ident.import"
+msgstr "Importar…"

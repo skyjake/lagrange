@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-04-24 00:18+0000\n"
+"PO-Revision-Date: 2021-04-27 14:18+0000\n"
 "Last-Translator: MCMic <come@chilliet.eu>\n"
 "Language-Team: French <http://weblate.skyjake.fi/projects/lagrange/ui/fr/>\n"
 "Language: fr\n"
@@ -1038,7 +1038,7 @@ msgstr "DÉSABONNEMENT"
 #, c-format
 msgid "error.unsupported.suggestsave"
 msgstr ""
-"Vous pouvez quand même l'enregistrer comme fichier dans votre dossier de "
+"Vous pouvez l’enregistrer comme fichier dans votre dossier de "
 "téléchargements. Tapez %s ou sélectionnez « %s » dans le menu."
 
 msgid "pageinfo.cert.status"
@@ -1462,3 +1462,9 @@ msgstr ""
 "Le serveur a répondu avec un code de retour absent de la spécification du "
 "protocole Gemini. Le serveur vient peut-être du futur ? Ou est simplement "
 "déféctueux."
+
+msgid "prefs.plaintext.wrap"
+msgstr "Replier le texte brut :"
+
+msgid "menu.downloads"
+msgstr "Afficher les téléchargements"

@@ -1,0 +1,1438 @@
+msgid ""
+msgstr ""
+"Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
+"PO-Revision-Date: 2021-05-03 05:35+0000\n"
+"Last-Translator: jan Anja <cyber@sysrq.in>\n"
+"Language-Team: Toki Pona <http://weblate.skyjake.fi/projects/lagrange/ui/tok/"
+">\n"
+"Language: tok\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Weblate 4.5.1\n"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.artist"
+msgstr "jan pi kalama musi"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.genre"
+msgstr "kon pi kalama musi"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.date"
+msgstr "tenpo"
+
+msgid "doc.pre.nocaption"
+msgstr "sinpin namako li jo ala e sinpin pona"
+
+# Link download progress message.
+msgid "doc.fetching"
+msgstr "mi kama jo"
+
+# Inline download status message.
+msgid "media.download.complete"
+msgstr "ijo li awen."
+
+# used as adjective, n is 8, 16, 24, 32, or 64
+#, c-format
+msgid "n.bit"
+msgstr "tu %d la"
+
+msgid "numbertype.integer"
+msgstr "nanpa kiwen la"
+
+msgid "numbertype.float"
+msgstr "nanpa telo la"
+
+# Hertz, unit for frequency values
+#, fuzzy
+msgid "hz"
+msgstr "Hz"
+
+#, c-format
+msgid "feeds.list.entrycount"
+msgid_plural "feeds.list.entrycount.n"
+msgstr[0] "lipu %zu"
+
+msgid "feeds.list.refreshtime.now"
+msgstr "tenpo pini lili la mi sin e lipu lukin."
+
+msgid "about.tagline"
+msgstr "ilo Kemini pi pona lukin"
+
+msgid "about.version"
+msgstr "nanpa"
+
+#, c-format
+msgid "hours.ago"
+msgid_plural "hours.ago.n"
+msgstr[0] "suno anpa %d"
+
+#, c-format
+msgid "days.ago"
+msgid_plural "days.ago.n"
+msgstr[0] "tenpo suno %d pini"
+
+#, c-format
+msgid "feeds.list.refreshtime"
+msgstr "tenpo %s pini la mi sin e lipu lukin."
+
+msgid "cancel"
+msgstr "o pini"
+
+msgid "dismiss"
+msgstr "o awen"
+
+msgid "toggle.yes"
+msgstr "LON"
+
+msgid "toggle.no"
+msgstr "ALA"
+
+msgid "menu.title.file"
+msgstr "ijo"
+
+msgid "menu.title.edit"
+msgstr "o ante"
+
+msgid "dlg.default"
+msgstr " pona "
+
+msgid "menu.title.view"
+msgstr "lukin"
+
+msgid "menu.closetab"
+msgstr "o pini e poki"
+
+msgid "menu.title.identity"
+msgstr "nimi"
+
+msgid "menu.title.help"
+msgstr "sona"
+
+msgid "menu.newtab"
+msgstr "o pali e poki sin"
+
+msgid "menu.closetab.other"
+msgstr "o pini e poki ante"
+
+msgid "menu.closetab.right"
+msgstr "o pini e poki sinpin"
+
+msgid "menu.duptab"
+msgstr "o pali e poki sama"
+
+msgid "menu.openlocation"
+msgstr "o open e nimi…"
+
+msgid "menu.find"
+msgstr "o lukin e nimi lon lipu ni"
+
+msgid "menu.downloads"
+msgstr "o lukin e poki pi ijo awen"
+
+# Used on desktop operating systems. "Downloads" refers to the user's configured downloads directory.
+msgid "menu.save.downloads"
+msgstr "o awen e lipu tawa ilo sona"
+
+msgid "menu.sidebar"
+msgstr "o len ala len e poki poka"
+
+msgid "menu.sidebar.left"
+msgstr "o len ala len e poki poka wan?"
+
+msgid "menu.sidebar.right"
+msgstr "o len ala len e poki poka tu?"
+
+msgid "menu.zoom.in"
+msgstr "o mute"
+
+msgid "menu.zoom.out"
+msgstr "o lili"
+
+msgid "menu.zoom.reset"
+msgstr "suli pi nasa ala"
+
+msgid "menu.preferences"
+msgstr "ijo ante…"
+
+msgid "menu.bookmarks.list"
+msgstr "lipu awen ali"
+
+msgid "menu.bookmarks.bytag"
+msgstr "lipu awen ale pi nimi lili"
+
+msgid "macos.menu.bookmarks.bytag"
+msgstr "lipu awen ali pi nimi lili"
+
+msgid "menu.bookmarks.bytime"
+msgstr "lipu awen ali pi tenpo"
+
+msgid "macos.menu.bookmarks.bytime"
+msgstr "lipu awen ali pi tenpo"
+
+msgid "menu.feeds.entrylist"
+msgstr "o lukin e lipu lukin"
+
+msgid "menu.copy"
+msgstr "o kama sona"
+
+msgid "menu.help"
+msgstr "sona"
+
+msgid "menu.releasenotes"
+msgstr "sona pi sin nanpa"
+
+msgid "menu.cut"
+msgstr "o kama sona li weka"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.bookmarks"
+msgstr "o lukin e lipu awen"
+
+msgid "menu.select.clear"
+msgstr "o pini e nimi open"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.history"
+msgstr "o lukin e sona pi tenpo pini"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.identities"
+msgstr "o lukin e nimi mute"
+
+msgid "menu.forward"
+msgstr "o tawa sinpin"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.outline"
+msgstr "o lukin e toki ale lili"
+
+msgid "menu.parent"
+msgstr "o tawa lipu mama"
+
+msgid "menu.reload"
+msgstr "o sin e lipu"
+
+msgid "menu.autoreload"
+msgstr "tenpo mute pi tenpo suno la o sin e lipu ni…"
+
+msgid "menu.aboutpages"
+msgstr "lipu About"
+
+msgid "menu.about"
+msgstr "sona pi ilo ni"
+
+msgid "panel.back"
+msgstr "o tawa monsi"
+
+msgid "menu.debug"
+msgstr "sona pi alasa pipi"
+
+msgid "menu.root"
+msgstr "o tawa lipu noka"
+
+msgid "sidebar.feeds"
+msgstr "lipu lukin"
+
+msgid "sidebar.history"
+msgstr "sona pi tenpo pini"
+
+msgid "sidebar.identities"
+msgstr "nimi mute"
+
+msgid "menu.import.links"
+msgstr "o awen e nimi tawa ale lon lipu ni…"
+
+msgid "menu.page.import"
+msgstr "o awen e nimi tawa ale lon lipu ni…"
+
+msgid "menu.page.translate"
+msgstr "o toki ante…"
+
+msgid "menu.page.copysource"
+msgstr "o kama sona e lipu"
+
+msgid "menu.feeds.refresh"
+msgstr "o sin e lipu lukin"
+
+msgid "menu.identity.new"
+msgstr "o pali e nimi…"
+
+msgid "menu.identity.import"
+msgstr "o kama jo…"
+
+msgid "menu.identity.notactive"
+msgstr "nimi ala li open"
+
+msgid "sidebar.action.feeds.showunread"
+msgstr "lukin ala"
+
+msgid "sidebar.action.ident.new"
+msgstr "o pali…"
+
+msgid "sidebar.action.ident.import"
+msgstr "o kama jo…"
+
+msgid "toolbar.outline"
+msgstr "toki ale lili pi lipu"
+
+msgid "status.query"
+msgstr "o lukin e nimi"
+
+msgid "status.feeds"
+msgstr "mi sin e lipu lukin"
+
+msgid "hint.findtext"
+msgstr "o lukin e nimi lon lipu ni"
+
+#, fuzzy
+msgid "mb.per.sec"
+msgstr "MB/s"
+
+msgid "num.bytes"
+msgid_plural "num.bytes.n"
+msgstr[0] "tu suli %zu"
+
+# megabytes, used as the unit after a number
+msgid "mb"
+msgstr "tu suli Meka"
+
+# kilobytes, used as the unit after a number
+msgid "kb"
+msgstr "tu suli Kilo"
+
+# strftime() formatted
+#, c-format
+msgid "sidebar.date.thisyear"
+msgstr "%x"
+
+# strftime() formatted
+#, c-format
+msgid "sidebar.date.otheryear"
+msgstr "%x"
+
+msgid "feeds.today"
+msgstr "tenpo suno ni"
+
+msgid "sidebar.entry.bookmark"
+msgstr "o awen e lipu…"
+
+# strftime() formatted, split on two lines
+#, c-format
+msgid "page.timestamp"
+msgstr "tenpo %c la mi kama jo e lipu ni"
+
+msgid "feeds.entry.newtab"
+msgstr "open e lipu lon poka sin"
+
+msgid "feeds.entry.markread"
+msgstr "mi wile ala lukin e lipu"
+
+msgid "feeds.entry.markunread"
+msgstr "mi wile lukin e lipu"
+
+msgid "menu.opentab.background"
+msgstr "o open lon poki lape"
+
+msgid "menu.edit"
+msgstr "o ante…"
+
+msgid "menu.copyurl"
+msgstr "o kama sona e nimi tawa"
+
+msgid "bookmark.tag.home"
+msgstr "o pali e lipu tomo"
+
+msgid "bookmark.tag.sub"
+msgstr "o pali e lipu lukin"
+
+msgid "bookmark.untag.home"
+msgstr "o weka e lipu tomo"
+
+msgid "bookmark.untag.remote"
+msgstr "o pini pali e lipu awen tan ona"
+
+msgid "bookmark.delete"
+msgstr "o weka e ona"
+
+msgid "bookmark.untag.sub"
+msgstr "o weka e lipu lukin"
+
+msgid "bookmarks.reload"
+msgstr "o sin e lipu awen tan ona"
+
+msgid "feeds.refresh"
+msgstr "o sin e lipu lukin"
+
+msgid "feeds.entry.bookmark"
+msgstr "o awen e lipu…"
+
+msgid "feeds.entry.openfeed"
+msgstr "o open e lipu mama"
+
+msgid "feeds.edit"
+msgstr "o ante e lipu lukin…"
+
+msgid "feeds.unsubscribe"
+msgstr "o pini lukin e lipu…"
+
+msgid "feeds.markallread"
+msgstr "mi wile ala lukin e lipu ale"
+
+msgid "menu.dup"
+msgstr "o pali e ijo sama…"
+
+msgid "history.clear"
+msgstr "o kama sin e sona pi tenpo pini…"
+
+msgid "heading.history.clear"
+msgstr "SONA PI TENPO PINI LI WILE KAMA SIN"
+
+msgid "ident.using"
+msgstr "lipu ni li kepeken e ona"
+
+msgid "ident.notused"
+msgstr "lipu ala li kepeken e ona"
+
+#, c-format
+msgid "ident.usedonurls"
+msgid_plural "ident.usedonurls.n"
+msgstr[0] "lipu %zu li kepeken"
+
+msgid "ident.temporary"
+msgstr "nimi tawa tenpo lili"
+
+# strftime() formatted
+#, c-format
+msgid "ident.expiry"
+msgstr "tenpo %x la nimi li wile tawa weka"
+
+msgid "ident.use"
+msgstr "o kepeken e ona lon lipu ni"
+
+msgid "ident.stopuse.all"
+msgstr "o kepeken ala e ona lon lipu ale"
+
+msgid "ident.showuse"
+msgstr "lipu li kepeken e ona la o lukin e lipu ni"
+
+msgid "sidebar.empty.idents"
+msgstr "nimi li lon ala"
+
+# %s refers to name of an identity.
+#, c-format
+msgid "dlg.ident.notes"
+msgstr "toki lili pi nimi %s:"
+
+msgid "heading.ident.use"
+msgstr "LIPU NI LI KEPEKEN E ONA"
+
+msgid "menu.edit.notes"
+msgstr "o ante e toki lili…"
+
+msgid "heading.ident.notes"
+msgstr "TOKI LILI NIMI"
+
+msgid "ident.delete"
+msgstr "o weka e ona…"
+
+msgid "heading.ident.delete"
+msgstr "NIMI LI WILE TAWA WEKA"
+
+msgid "ident.fingerprint"
+msgstr "o kama sona e sitelen len lili"
+
+msgid "heading.unsub"
+msgstr "O PINI LUKIN"
+
+#, c-format
+msgid "dlg.confirm.unsub"
+msgstr ""
+"sina wile ala wile pini lukin e lipu\n"
+"\"%s\"?"
+
+msgid "dlg.unsub"
+msgstr "o pini lukin"
+
+#, c-format
+msgid "error.unsupported.suggestsave"
+msgstr ""
+"sina ken awen e ijo lon poki pi ilo sona kepeken e nimi %s. sina kin ken "
+"open e nimi %s tan ijo sewi."
+
+msgid "pageinfo.cert.status"
+msgstr "sona pi sitelen len:"
+
+msgid "pageinfo.cert.ca.verified"
+msgstr "ona li sitelen lon ilo CA"
+
+msgid "pageinfo.cert.ca.unverified"
+msgstr "ona li sitelen ala lon ilo CA"
+
+msgid "pageinfo.cert.notexpired"
+msgstr "tenpo kama la ona li wile tawa weka"
+
+msgid "pageinfo.cert.expired"
+msgstr "tenpo pini la ona li tawa weka"
+
+msgid "pageinfo.cert.trusted"
+msgstr "pona"
+
+#, c-format
+msgid "dlg.input.prompt"
+msgstr "o pana e lipu tawa %s:"
+
+msgid "dlg.input.send"
+msgstr "o pana"
+
+msgid "pageinfo.cert.untrusted"
+msgstr "ike"
+
+msgid "pageinfo.domain.match"
+msgstr "nimi li sama"
+
+msgid "pageinfo.domain.mismatch"
+msgstr "nimi li sama ala"
+
+msgid "dlg.cert.trust"
+msgstr "o pona"
+
+msgid "heading.save"
+msgstr "IJO LI AWEN"
+
+msgid "heading.save.incomplete"
+msgstr "LIPU LI WAN ALA"
+
+msgid "dlg.save.incomplete"
+msgstr "mi kin kama jo e lipu ni."
+
+msgid "dlg.save.size"
+msgstr "suli:"
+
+msgid "heading.save.error"
+msgstr "PAKALA! MI AWEN ALA E IJO"
+
+msgid "heading.import.bookmarks"
+msgstr "O KAMA JO E LIPU AWEN"
+
+msgid "reload.onceperday"
+msgstr "tenpo wan pi tenpo suno"
+
+msgid "link.newtab"
+msgstr "o open e nimi tawa lon poki sin"
+
+msgid "link.newtab.background"
+msgstr "o open e nimi tawa lon poki lape"
+
+msgid "link.copy"
+msgstr "o kama sona e nimi tawa"
+
+msgid "link.bookmark"
+msgstr "o awen e nimi tawa…"
+
+msgid "heading.openlink"
+msgstr "O OPEN E NIMI TAWA"
+
+#, c-format
+msgid "dlg.import.add"
+msgid_plural "dlg.import.add.n"
+msgstr[0] "%so pali e lipu awen %d"
+
+msgid "dlg.import.notnew"
+msgstr "nimi tawa ale pi lipu ni li awen kin."
+
+msgid "link.noproxy"
+msgstr "o open kepeken ala e lupa"
+
+msgid "heading.autoreload"
+msgstr "O SIN E LIPU"
+
+#, c-format
+msgid "num.minutes"
+msgid_plural "num.minutes.n"
+msgstr[0] "tenpo suno anpa anpa %d"
+
+#, c-format
+msgid "num.hours"
+msgid_plural "num.hours.n"
+msgstr[0] "tenpo suno anpa %d"
+
+msgid "link.download"
+msgstr "o awen e jo pi nimi tawa"
+
+msgid "dlg.openlink"
+msgstr "o open e nimi tawa"
+
+msgid "heading.certwarn"
+msgstr "SITELEN LEN LI IKE"
+
+#, c-format
+msgid "dlg.certwarn.expired"
+msgstr "tenpo pini %s la sitelen len li tawa weka."
+
+msgid "dlg.certwarn.domain.expired"
+msgstr "tenpo pini la sitelen len li tawa weka. nimi li sama ala kin."
+
+msgid "dlg.certimport.help"
+msgstr ""
+"o pana e sitelen len e ijo len kepeken e sitelen PEM.\n"
+"sina kin ken tawa e ona tawa poki ni."
+
+msgid "dlg.certimport.notfound"
+msgstr "sitelen len en ijo len li lon ala."
+
+msgid "dlg.certimport.notfound.page"
+msgstr "sitelen len en ijo len li lon ala lon lipu ni."
+
+msgid "heading.certimport"
+msgstr "O KAMA JO E NIMI"
+
+msgid "heading.certimport.pasted"
+msgstr "PANA TAN SONA"
+
+msgid "bookmark.title.blank"
+msgstr "lipu li jo e ala insa"
+
+msgid "heading.certimport.dropped"
+msgstr "TAWA TAN IJO"
+
+msgid "dlg.certimport.import"
+msgstr "o kama jo"
+
+msgid "dlg.certimport.notes"
+msgstr "toki lili:"
+
+msgid "hint.certimport.description"
+msgstr "toki"
+
+msgid "dlg.certimport.nokey"
+msgstr "ijo len li lon ala"
+
+msgid "link.hint.audio"
+msgstr "o kute e kalama musi"
+
+msgid "link.hint.image"
+msgstr "o lukin e sitelen"
+
+# Interpret as "Results from bookmarks..."
+msgid "heading.lookup.bookmarks"
+msgstr "TAN LIPU AWEN"
+
+# Interpret as "Results from page content..."
+msgid "heading.lookup.pagecontent"
+msgstr "TAN SITELEN INSA LIPU"
+
+# Interpret as "Results from identitites..."
+msgid "heading.lookup.identities"
+msgstr "TAN NIMI MUTE"
+
+# Interpret as "Other results..."
+msgid "heading.lookup.other"
+msgstr "TAN IJO ANTE"
+
+msgid "heading.translate"
+msgstr "O TOKI ANTE E LIPU"
+
+msgid "dlg.translate.fail"
+msgstr "toki li pakala"
+
+msgid "dlg.translate"
+msgstr "o toki ante"
+
+msgid "dlg.translate.from"
+msgstr "tan:"
+
+msgid "dlg.translate.to"
+msgstr "tawa:"
+
+msgid "lang.ar"
+msgstr "toki Alapi"
+
+msgid "lang.zh"
+msgstr "toki Sonko"
+
+msgid "lang.zh.hant"
+msgstr "toki Sonko suli"
+
+msgid "lang.de"
+msgstr "toki Tosi"
+
+msgid "lang.en"
+msgstr "toki Inli"
+
+msgid "lang.ie"
+msgstr "toki Intelinwa"
+
+msgid "lang.fi"
+msgstr "toki Sumi"
+
+msgid "lang.fr"
+msgstr "toki Kanse"
+
+msgid "lang.it"
+msgstr "toki Italija"
+
+msgid "lang.ja"
+msgstr "toki Nijon"
+
+msgid "lang.pt"
+msgstr "toki Potuke"
+
+msgid "lang.ru"
+msgstr "toki Losi"
+
+msgid "lang.es"
+msgstr "toki Epanja"
+
+msgid "lang.sr"
+msgstr "toki Sopisi Kilili"
+
+msgid "dlg.newident.until"
+msgstr "tenpo ni la ona li wile tawa weka:"
+
+#, fuzzy
+msgid "hint.newident.date"
+msgstr "YYYY-MM-DD HH:MM:SS"
+
+msgid "hint.newident.optional"
+msgstr "namako"
+
+msgid "dlg.newident.commonname"
+msgstr "nimi:"
+
+msgid "dlg.newident.temp"
+msgstr "tenpo lili la ona li wile awen:"
+
+msgid "dlg.newident.notsaved"
+msgstr "ona li wile ala awen lon ilo sona"
+
+msgid "dlg.newident.email"
+msgstr "nimi pi lipu kon:"
+
+msgid "dlg.newident.userid"
+msgstr "jan pi ilo sona:"
+
+msgid "dlg.newident.org"
+msgstr "kulupu:"
+
+msgid "dlg.newident.create"
+msgstr "o pali e nimi"
+
+msgid "heading.subscribe"
+msgstr "O LUKIN E IJO SIN LON LIPU"
+
+msgid "dlg.feed.title"
+msgstr "nimi:"
+
+msgid "dlg.feed.entrytype"
+msgstr "o lukin e:"
+
+msgid "dlg.feed.type.gemini"
+msgstr "nimi tawa AAAA-AA-AA"
+
+msgid "dlg.feed.type.headings"
+msgstr "sitelen suli sin"
+
+msgid "dlg.feed.save"
+msgstr "o awen"
+
+msgid "dlg.feed.sub"
+msgstr "o lukin"
+
+msgid "heading.bookmark.add"
+msgstr "O AWEN E LIPU"
+
+msgid "heading.bookmark.edit"
+msgstr "O ANTE E LIPU AWEN"
+
+msgid "dlg.bookmark.save"
+msgstr "o awen"
+
+msgid "dlg.bookmark.title"
+msgstr "nimi:"
+
+msgid "dlg.bookmark.url"
+msgstr "nimi tawa:"
+
+msgid "dlg.bookmark.icon"
+msgstr "sitelen:"
+
+msgid "heading.prefs"
+msgstr "IJO ANTE"
+
+# tab button
+msgid "heading.prefs.colors"
+msgstr "kule"
+
+msgid "heading.prefs.fonts"
+msgstr "NASIN LUKIN PI SITELEN"
+
+# tab button
+msgid "heading.prefs.interface"
+msgstr "lukin"
+
+# tab button
+msgid "heading.prefs.keys"
+msgstr "supa nimi"
+
+# tab button
+msgid "heading.prefs.network"
+msgstr "kon"
+
+msgid "heading.prefs.paragraph"
+msgstr "WAN SITELEN"
+
+msgid "prefs.searchurl"
+msgstr "nimi tawa tan lukin e nimi:"
+
+msgid "prefs.hoverlink"
+msgstr "tawa la sina lukin e nimi tawa:"
+
+msgid "prefs.collapsepreonload"
+msgstr "o len e sitelen namako:"
+
+msgid "prefs.smoothscroll"
+msgstr "tawa suwi:"
+
+msgid "prefs.imageloadscroll"
+msgstr "tawa la sina lukin e sitelen:"
+
+msgid "prefs.hidetoolbarscroll"
+msgstr "tawa la mi len e ijo sewi:"
+
+msgid "heading.prefs.pagecontent"
+msgstr "SITELEN INSA LIPU"
+
+msgid "heading.prefs.proxies"
+msgstr "LUPA"
+
+msgid "heading.prefs.scrolling"
+msgstr "TAWA"
+
+msgid "heading.prefs.sizing"
+msgstr "SULI"
+
+msgid "heading.prefs.widelayout"
+msgstr "SULI MUTE"
+
+# tab button
+msgid "heading.prefs.style"
+msgstr "sitelen"
+
+msgid "prefs.theme"
+msgstr "nasin lukin:"
+
+msgid "prefs.theme.black"
+msgstr "pimeja mute"
+
+msgid "prefs.theme.dark"
+msgstr "pimeja"
+
+msgid "prefs.theme.light"
+msgstr "walo"
+
+msgid "prefs.theme.white"
+msgstr "walo mute"
+
+msgid "prefs.uilang"
+msgstr "toki:"
+
+msgid "prefs.uiscale"
+msgstr "nanpa pi suli lukin:"
+
+msgid "prefs.customframe"
+msgstr "nasin lukin ante pi poki:"
+
+msgid "prefs.accent"
+msgstr "kule namako:"
+
+msgid "prefs.accent.teal"
+msgstr "laso"
+
+msgid "prefs.sideicon"
+msgstr "sitelen pi mun:"
+
+msgid "prefs.doctheme.dark"
+msgstr "nasin lukin pi tenpo pimeja:"
+
+msgid "prefs.doctheme.light"
+msgstr "nasin lukin pi tenpo suno:"
+
+msgid "prefs.doctheme.name.colorfullight"
+msgstr "walo kule"
+
+msgid "prefs.doctheme.name.black"
+msgstr "pimeja"
+
+msgid "prefs.doctheme.name.white"
+msgstr "walo"
+
+msgid "prefs.doctheme.name.sepia"
+msgstr "walo yelo"
+
+msgid "prefs.saturation"
+msgstr "kule:"
+
+msgid "prefs.headingfont"
+msgstr "nasin lukin pi sitelen suli:"
+
+msgid "prefs.font"
+msgstr "nasin lukin pi sitelen:"
+
+msgid "prefs.boldlink"
+msgstr "nimi tawa li suli lon:"
+
+# Interpretation: (Bold links) on dark (background).
+msgid "prefs.boldlink.dark"
+msgstr "lipu pimeja"
+
+msgid "prefs.mono.gemini"
+msgstr "mun Kemini"
+
+msgid "prefs.mono.gopher"
+msgstr "lupa Gopher"
+
+msgid "prefs.linewidth"
+msgstr "suli pi linja:"
+
+msgid "prefs.linewidth.fill"
+msgstr "suli mute"
+
+msgid "prefs.quoteicon"
+msgstr "sitelen pi toki:"
+
+msgid "prefs.quoteicon.icon"
+msgstr "sitelen \""
+
+msgid "prefs.quoteicon.line"
+msgstr "linja"
+
+msgid "prefs.plaintext.wrap"
+msgstr "o tawa e linja suli:"
+
+msgid "prefs.cachesize"
+msgstr "sona pi tenpo pini lili:"
+
+msgid "prefs.biglede"
+msgstr "wan sitelen nanpa wan li suli:"
+
+msgid "prefs.ca.path"
+msgstr "nasin tawa ilo CA:"
+
+msgid "prefs.proxy.gopher"
+msgstr "lupa tawa kon Gopher:"
+
+msgid "prefs.proxy.http"
+msgstr "lupa tawa kon HTTP:"
+
+msgid "menu.binding.reset"
+msgstr "o kama sin"
+
+msgid "menu.binding.clear"
+msgstr "o weka"
+
+msgid "keys.top"
+msgstr "o tawa sewi"
+
+msgid "keys.bottom"
+msgstr "o tawa anpa"
+
+msgid "keys.scroll.halfpage.down"
+msgstr "o tawa anpa lili lili"
+
+msgid "keys.scroll.up"
+msgstr "o tawa sewi lili lili lili"
+
+msgid "keys.scroll.down"
+msgstr "o tawa anpa lili lili lili"
+
+msgid "keys.scroll.page.up"
+msgstr "o tawa sewi lili"
+
+msgid "keys.back"
+msgstr "o tawa monsi"
+
+msgid "keys.parent"
+msgstr "o tawa lipu mama"
+
+msgid "keys.root"
+msgstr "o tawa lipu noka"
+
+msgid "keys.reload"
+msgstr "o sin e lipu"
+
+msgid "keys.link.modkey"
+msgstr "o open e nimi tawa kepeken e supa nimi"
+
+msgid "keys.link.homerow.newtab"
+msgstr "o open e nimi tawa lon poki sin kepeken e linja tomo pi supa nimi"
+
+msgid "keys.link.homerow.hover"
+msgstr "o lukin e nimi tawa kepeken e linja tomo pi supa nimi"
+
+msgid "keys.bookmark.add"
+msgstr "o awen e lipu"
+
+msgid "keys.subscribe"
+msgstr "o lukin e ijo sin lon lipu"
+
+msgid "keys.zoom.out"
+msgstr "o lili"
+
+msgid "keys.zoom.reset"
+msgstr "suli pi nasa ala"
+
+msgid "keys.tab.new"
+msgstr "o pali e poki sin"
+
+msgid "keys.tab.prev"
+msgstr "o tawa poki monsi"
+
+msgid "keys.tab.next"
+msgstr "o tawa poki sinpin"
+
+msgid "keys.fullscreen"
+msgstr "o kama suli e poki"
+
+msgid "keys.hoverurl"
+msgstr "tawa la o lukin e nimi tawa"
+
+msgid "error.openfile"
+msgstr "pakala! mi ken ala open e ijo"
+
+msgid "error.openfile.msg"
+msgstr "ken la ijo ni li lon ala. sina o ante e nasin."
+
+msgid "error.badresource"
+msgstr "lipu About li nasa"
+
+msgid "error.badresource.msg"
+msgstr "lipu About ni li lon ala."
+
+msgid "error.unsupported.media"
+msgstr "ijo kulupu li nasa"
+
+msgid "error.unsupported.media.msg"
+msgstr "mi sona ala e ijo kulupu ni."
+
+msgid "error.unsupported.protocol.msg"
+msgstr "mi sona ala e kon ni."
+
+msgid "error.badheader"
+msgstr "toki lili li nasa"
+
+msgid "error.badredirect"
+msgstr "tawa ante li nasa"
+
+msgid "error.schemeredirect"
+msgstr "tawa ante en kon ante"
+
+msgid "error.schemeredirect.msg"
+msgstr ""
+"ilo pana li toki e tawa ante. taso kon li sama ala. sina ken open e nimi "
+"tawa kin."
+
+msgid "error.manyredirects"
+msgstr "tawa ante pi mute ike"
+
+msgid "error.manyredirects.msg"
+msgstr "ken la sina lon sike pi tawa ante. sina ken awen pali kin."
+
+msgid "error.temporary"
+msgstr "pakala pi tenpo lili"
+
+msgid "error.temporary.msg"
+msgstr ""
+"mi pakala toki tawa ilo pana. taso ken la tenpo kama la mi toki pona e ilo "
+"pana."
+
+msgid "error.unavail"
+msgstr "ilo pona li lape"
+
+msgid "error.cgi"
+msgstr "ilo CGI li pakala"
+
+msgid "error.proxy.msg"
+msgstr "lupa li pakala toki e ilo pana. ken la kon li pakala."
+
+msgid "error.slowdown"
+msgstr "toki pi mute ike"
+
+msgid "error.slowdown.msg"
+msgstr "ilo pana li wile ala toki e mute ike. sina o awen e lili…"
+
+msgid "error.permanent"
+msgstr "pakala pi tenpo ale"
+
+msgid "error.gone"
+msgstr "weka"
+
+msgid "error.notfound"
+msgstr "lipu li lon ala"
+
+msgid "error.notfound.msg"
+msgstr "tenpo ni la lipu ni li lon ala."
+
+msgid "error.gone.msg"
+msgstr "tenpo pini la lipu ni li tawa weka."
+
+msgid "error.cert.needed.msg"
+msgstr "sina wile lukin e lipu ni la sina wile pana e sitelen jan pi ilo TLS."
+
+msgid "error.badrequest"
+msgstr "toki li pakala"
+
+msgid "error.badrequest.msg"
+msgstr "ilo pana li sona ala e toki ni."
+
+msgid "error.cert.auth"
+msgstr "sitelen len li pona ala"
+
+msgid "error.cert.invalid"
+msgstr "sitelen len li pakala"
+
+msgid "error.cert.invalid.msg"
+msgstr ""
+"ken la sitelen jan pi ilo TLS li pakala. ken la tenpo pini la ona li tawa "
+"weka."
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.title"
+msgstr "nimi"
+
+# Alt-text of the preformatted logo.
+msgid "about.logo"
+msgstr "sitelen namako suli li toki e ni: nimi Lagrange"
+
+msgid "about.powered"
+msgstr "kepeken e ilo SDL 2 e ilo OpenSSL e ☕️"
+
+msgid "menu.title.bookmarks"
+msgstr "lipu awen"
+
+msgid "menu.quit"
+msgstr "o pini e ilo Lakelan"
+
+msgid "menu.back"
+msgstr "o tawa monsi"
+
+msgid "menu.page.bookmark"
+msgstr "o awen e lipu…"
+
+msgid "sidebar.bookmarks"
+msgstr "lipu awen"
+
+msgid "sidebar.outline"
+msgstr "toki ale lili"
+
+msgid "sidebar.action.feeds.showall"
+msgstr "ale"
+
+# Usage: "(count) Unread" in the sidebar tab title, referring to feed entries.
+msgid "sidebar.unread"
+msgid_plural "sidebar.unread.n"
+msgstr[0] "lukin ala"
+
+msgid "menu.opentab"
+msgstr "o open lon poki sin"
+
+msgid "bookmark.tag.remote"
+msgstr "o pali e lipu awen tan ona"
+
+msgid "reload.never"
+msgstr "tenpo ala"
+
+msgid "link.browser"
+msgstr "o open e nimi tawa kepeken e ilo pi lipu lukin"
+
+#, c-format
+msgid "dlg.openlink.confirm"
+msgstr ""
+"sina wile ala wile open e nimi tawa ni kepeken e ilo pi lipu lukin?\n"
+"%s%s"
+
+msgid "prefs.downloads"
+msgstr "poki tawa ijo awen:"
+
+msgid "prefs.centershort"
+msgstr "o pali e lipu lon insa:"
+
+msgid "prefs.ostheme"
+msgstr "o kepeken e nasin lukin pi ilo sona:"
+
+msgid "prefs.retainwindow"
+msgstr "o awen e lon:"
+
+msgid "prefs.doctheme.name.colorfuldark"
+msgstr "pimeja kule"
+
+msgid "prefs.doctheme.name.gray"
+msgstr "walo pimeja"
+
+msgid "prefs.doctheme.name.highcontrast"
+msgstr "sitelen pimeja lon lipu walo"
+
+msgid "prefs.mono"
+msgstr "o kepeken e sitelen pi suli sama lon:"
+
+# Interpretation: (Bold links) on light (background).
+msgid "prefs.boldlink.light"
+msgstr "lipu walo"
+
+msgid "prefs.linewidth.normal"
+msgstr "nasa ala"
+
+msgid "prefs.decodeurls"
+msgstr "sina lukin pona e nimi tawa:"
+
+msgid "prefs.ca.file"
+msgstr "ijo pi ilo CA:"
+
+msgid "prefs.proxy.gemini"
+msgstr "lupa tawa kon Kemini:"
+
+# Inline download status message.
+msgid "media.download.warnclose"
+msgstr "poki ni li pini la ijo li awen ala."
+
+# Used in about:feeds.
+msgid "feeds.list.title"
+msgstr "lipu lukin ali"
+
+#, c-format
+msgid "minutes.ago"
+msgid_plural "minutes.ago.n"
+msgstr[0] "suno anpa anpa %d"
+
+msgid "dlg.message.ok"
+msgstr "o awen pali"
+
+msgid "menu.closetab.left"
+msgstr "o pini e poki monsi"
+
+msgid "macos.menu.find"
+msgstr "o lukin e nimi"
+
+# Used on iOS. "Files" refers to Apple's iOS app where you can pick an iCloud folder.
+msgid "menu.save.files"
+msgstr "o awen e lipu tawa ilo Files"
+
+msgid "dlg.history.clear"
+msgstr "o weka e sona pi tenpo pini"
+
+msgid "dlg.ident.delete"
+msgstr "o weka e nimi ali e ijo ali"
+
+#, c-format
+msgid "dlg.import.found"
+msgid_plural "dlg.import.found.n"
+msgstr[0] "nimi tawa sin %d li lon e lipu ni."
+
+#, c-format
+msgid "feeds.list.counts"
+msgid_plural "feeds.list.counts.n"
+msgstr[0] "sina jo e lipu lukin %zu. ona ale li jo e %%s.\n"
+
+msgid "macos.menu.bookmarks.list"
+msgstr "lipu awen ali"
+
+msgid "menu.paste"
+msgstr "o pana tan sona"
+
+# Used in the Edit menu on macOS. Note: could be replaced with menu.page.copyurl.
+msgid "menu.copy.pagelink"
+msgstr "o kama sona e nimi tawa pi lipu ni"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.feeds"
+msgstr "o lukin e lipu lukin"
+
+msgid "menu.page.copyurl"
+msgstr "o kama sona e nimi tawa pi lipu ni"
+
+msgid "menu.page.subscribe"
+msgstr "o lukin e ijo sin lon lipu ni…"
+
+msgid "keys.forward"
+msgstr "o tawa sinpin"
+
+msgid "menu.bookmarks.refresh"
+msgstr "o sin e lipu awen tan ona"
+
+msgid "error.proxy"
+msgstr "lupa li pakala"
+
+msgid "error.proxyrefusal"
+msgstr "lupa li weka e toki"
+
+msgid "keys.findtext"
+msgstr "o lukin e nimi lon lipu ni"
+
+msgid "menu.forgeturl"
+msgstr "o weka e ona tan sona pi tenpo pini"
+
+msgid "dlg.confirm.history.clear"
+msgstr "sina wile ala wile weka e sona pi tenpo pini ale?"
+
+msgid "ident.stopuse"
+msgstr "o kepeken ala e ona lon lipu ni"
+
+#, c-format
+msgid "dlg.confirm.ident.delete"
+msgstr ""
+"sina wile ala wile weka e nimi\n"
+"%s%s%s\n"
+"e sitelen len ona e ijo len ona?"
+
+# The %s format characters are used to highlight the word "Help" and must be used in the translation in same way as here.
+#, c-format
+msgid "ident.gotohelp"
+msgstr "sina wile kama sona e sitelen jan pi ilo TLS la o lukin e %ssona%s."
+
+msgid "heading.pageinfo"
+msgstr "SONA PI LIPU NI"
+
+msgid "pageinfo.header.cached"
+msgstr "(ijo lon sona pi tenpo pini lili)"
+
+msgid "dlg.cert.fingerprint"
+msgstr "o kama sona e sitelen len lili"
+
+#, c-format
+msgid "dlg.certwarn.mayberenewed"
+msgid_plural "dlg.certwarn.mayberenewed.n"
+msgstr[0] ""
+"ken la tenpo pini lili la jan lawa pi mun ni li kama sin e sitelen len tan "
+"ni: nimi li sama en sitelen len wile tawa weka lon tenpo kama. tenpo suno "
+"kama %d la sitelen len pona li wile tawa weka."
+
+msgid "dlg.certwarn.different"
+msgstr "sitelen len ni li pakala ala. taso ona li sama ala sitelen len pona."
+
+msgid "dlg.certwarn.domain"
+msgstr "nimi pi sitelen len li sama ala. ken la jan lawa pi mun ni li pakala."
+
+msgid "dlg.certimport.nocert"
+msgstr "sitelen len li lon ala"
+
+msgid "dlg.newident.rsa.selfsign"
+msgstr "sina ken pali e sitelen len kepeken e sitelen RSA pi tu 2048."
+
+msgid "heading.prefs.certs"
+msgstr "SITELEN LEN MUTE"
+
+msgid "error.cert.needed"
+msgstr "sina wile e sitelen len"
+
+msgid "error.cert.auth.msg"
+msgstr ""
+"sitelen jan pi ilo TLS sina li pakala ala. taso sina wile lukin e lipu ni la "
+"sitelen len li pona ala."
+
+msgid "dlg.autoreload"
+msgstr "tenpo seme pi tenpo suno la o sin e poki ni?"
+
+# Interpret as "Results from feeds..."
+msgid "heading.lookup.feeds"
+msgstr "TAN LIPU LUKIN"
+
+# Interpret as "Results from history..."
+msgid "heading.lookup.history"
+msgstr "TAN SONA PI TENPO PINI"
+
+msgid "dlg.translate.unavail"
+msgstr "ilo li lape"
+
+msgid "lang.zh.hans"
+msgstr "toki Sonko pona"
+
+msgid "lang.hi"
+msgstr "toki Insi"
+
+msgid "heading.newident"
+msgstr "NIMI SIN"
+
+msgid "dlg.newident.domain"
+msgstr "nimi pi ilo sona:"
+
+msgid "dlg.newident.country"
+msgstr "ma:"
+
+msgid "heading.feedcfg"
+msgstr "IJO ANTE PI LIPU LUKIN"
+
+msgid "dlg.bookmark.tags"
+msgstr "nimi lili:"
+
+# tab button
+msgid "heading.prefs.general"
+msgstr "ijo ante"
+
+# tab button
+msgid "heading.prefs.userinterface"
+msgstr "lukin ante"
+
+msgid "prefs.accent.orange"
+msgstr "loje yelo"
+
+msgid "keys.scroll.halfpage.up"
+msgstr "o tawa sewi lili lili"
+
+msgid "keys.scroll.page.down"
+msgstr "o tawa anpa lili"
+
+msgid "keys.link.homerow"
+msgstr "o open e nimi tawa kepeken e linja tomo pi supa nimi"
+
+msgid "keys.link.homerow.next"
+msgstr "o lukin e nimi tawa ante kepeken e linja tomo pi supa nimi"
+
+msgid "keys.zoom.in"
+msgstr "o mute"
+
+msgid "keys.tab.close"
+msgstr "o pini e poki"
+
+msgid "error.badstatus"
+msgstr "pakala nasa"
+
+msgid "error.unsupported.protocol"
+msgstr "kon nasa"
+
+msgid "error.badstatus.msg"
+msgstr ""
+"ilo pana li toki e nanpa. nanpa ni li lon ala pu Kemini. ken la ilo pana li "
+"lon tenpo kama. ken la ilo pana li pakala."
+
+msgid "error.badheader.msg"
+msgstr ""
+"toki lili li pu Kemini ala. ken la ilo pana li pakala. ken la sina toki e "
+"ilo pana pi Kemini ala."
+
+msgid "error.badredirect.msg"
+msgstr ""
+"ilo pana li toki e tawa ante. taso ni li toki ala e nimi tawa pona. ken la "
+"ilo pana li pakala."
+
+msgid "error.tls"
+msgstr "kon en ilo TLS li pakala"
+
+msgid "error.tls.msg"
+msgstr "mi pakala toki tawa ilo pana. ona li toki e ni:"
+
+msgid "error.unavail.msg"
+msgstr ""
+"ken la ilo pana li pali e mute ike. ken la jan lawa li pona e ni. tenpo kama "
+"la sina ken kama sin."
+
+msgid "error.cgi.msg"
+msgstr "ilo pana li pakala pali e lipu. ken la ilo seme lon ilo pana li pakala."
+
+msgid "error.permanent.msg"
+msgstr "toki li pakala. tenpo ale la ona li wile pakala kin."
+
+msgid "error.proxyrefusal.msg"
+msgstr "ilo pana li wile ala toki e lupa."
