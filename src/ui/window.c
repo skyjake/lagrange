@@ -112,6 +112,7 @@ static const iMenuItem viewMenuItems_[] = {
     { "${menu.zoom.in}", SDLK_EQUALS, KMOD_PRIMARY, "zoom.delta arg:10" },
     { "${menu.zoom.out}", SDLK_MINUS, KMOD_PRIMARY, "zoom.delta arg:-10" },
     { "${menu.zoom.reset}", SDLK_0, KMOD_PRIMARY, "zoom.set arg:100" },
+    { "${menu.view.split}", SDLK_j, KMOD_PRIMARY, "splitmenu.open" },
 };
 
 static iMenuItem bookmarksMenuItems_[] = {

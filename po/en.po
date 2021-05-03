@@ -202,6 +202,9 @@ msgstr "Zoom Out"
 msgid "menu.zoom.reset"
 msgstr "Reset Zoom"
 
+msgid "menu.view.split"
+msgstr "Split View..."
+
 msgid "menu.bookmarks.list"
 msgstr "List All Bookmarks"
 
@@ -1304,6 +1307,12 @@ msgstr "Previous tab"
 
 msgid "keys.tab.next"
 msgstr "Next tab"
+
+msgid "keys.split.menu"
+msgstr "Set view split mode"
+
+msgid "keys.split.next"
+msgstr "Switch focus to next split"
 
 msgid "keys.hoverurl"
 msgstr "Toggle show URL on hover"
