@@ -7,13 +7,23 @@
 # Release notes
 
 ## 1.4
-* Optimized page rendering. Now each line of text is rendered into the view buffer only once, and whenever the view is stationary, content is prefilled in the available space outside the viewport. Previously, at least one line of text was being rendered whenever the viewport was moved, which was mostly redundant.
+* Split modes: horizontal/vertical, two tabs at once, 1:1/2:1/1:2 weights, merge tabs, swap sides.
+=> https://codeberg.org/oppenlab/gempub Basic Gempub support.
+* View ZIP archive contents.
+* View local file directories.
+* Added "Show Downloads" to File menu.
+* Adde "Open Downloaded File" to the file save dialog.
+* Optimized page rendering. Now each line of text is rendered into the view buffer only once, and whenever the view is stationary, content is prefilled in the available space outside the viewport. Previously, at least one line of text was rendered every frame whenever the viewport was moved, which was mostly redundant.
 * Preferences: Reorganized the fonts dropdown menu.
 * Updated the UI font to Source Sans 3. It now has all the styles and weights needed for page rendering, too.
 * Added a semibold Fira Sans weight (used for links).
+* Added UI language: Interlingua.
 * Navigation arrow buttons are disabled at end/beginning of history.
+* Adjustments to how display DPI affects UI scaling.
+* Don't percent encode equal signs in URL paths.
 * Fixed allocation of page rendering buffers. Previously, some buffers may have gone unused or were allocated erroneously to the same position, causing unnecessary work for the page renderer.
 * Fixed a possible crash when closing a tab.
+* Fixed various issues in the UI layout
 
 ## 1.3.2
 * Fixed crash after updating from v1.2 due to undefined CA file/path configuration.
