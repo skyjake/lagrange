@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-05-03 05:35+0000\n"
+"PO-Revision-Date: 2021-05-05 03:55+0000\n"
 "Last-Translator: jan Anja <cyber@sysrq.in>\n"
 "Language-Team: Toki Pona <http://weblate.skyjake.fi/projects/lagrange/ui/tok/"
 ">\n"
@@ -131,7 +131,7 @@ msgid "menu.find"
 msgstr "o lukin e nimi lon lipu ni"
 
 msgid "menu.downloads"
-msgstr "o lukin e poki pi ijo awen"
+msgstr "o lukin e poki tawa ijo awen"
 
 # Used on desktop operating systems. "Downloads" refers to the user's configured downloads directory.
 msgid "menu.save.downloads"
@@ -162,16 +162,16 @@ msgid "menu.bookmarks.list"
 msgstr "lipu awen ali"
 
 msgid "menu.bookmarks.bytag"
-msgstr "lipu awen ale pi nimi lili"
+msgstr "o lukin e nimi lili pi lipu awen"
 
 msgid "macos.menu.bookmarks.bytag"
-msgstr "lipu awen ali pi nimi lili"
+msgstr "o lukin e nimi lili pi lipu awen"
 
 msgid "menu.bookmarks.bytime"
-msgstr "lipu awen ali pi tenpo"
+msgstr "o lukin e tenpo pi lipu awen"
 
 msgid "macos.menu.bookmarks.bytime"
-msgstr "lipu awen ali pi tenpo"
+msgstr "o lukin e tenpo pi lipu awen"
 
 msgid "menu.feeds.entrylist"
 msgstr "o lukin e lipu lukin"
@@ -277,7 +277,7 @@ msgid "sidebar.action.ident.import"
 msgstr "o kama jo…"
 
 msgid "toolbar.outline"
-msgstr "toki ale lili pi lipu"
+msgstr "toki ale lili"
 
 msgid "status.query"
 msgstr "o lukin e nimi"
@@ -460,8 +460,8 @@ msgstr "o pini lukin"
 #, c-format
 msgid "error.unsupported.suggestsave"
 msgstr ""
-"sina ken awen e ijo lon poki pi ilo sona kepeken e nimi %s. sina kin ken "
-"open e nimi %s tan ijo sewi."
+"sina ken awen e ijo tawa ilo sona kepeken e nimi %s. sina kin ken open e "
+"nimi %s tan ijo sewi."
 
 msgid "pageinfo.cert.status"
 msgstr "sona pi sitelen len:"
@@ -664,7 +664,7 @@ msgid "lang.en"
 msgstr "toki Inli"
 
 msgid "lang.ie"
-msgstr "toki Intelinwa"
+msgstr "toki Intelinwe"
 
 msgid "lang.fi"
 msgstr "toki Sumi"
@@ -768,7 +768,7 @@ msgid "heading.prefs.colors"
 msgstr "kule"
 
 msgid "heading.prefs.fonts"
-msgstr "NASIN LUKIN PI SITELEN"
+msgstr "NASIN LUKIN TAWA SITELEN"
 
 # tab button
 msgid "heading.prefs.interface"
@@ -844,7 +844,7 @@ msgid "prefs.uiscale"
 msgstr "nanpa pi suli lukin:"
 
 msgid "prefs.customframe"
-msgstr "nasin lukin ante pi poki:"
+msgstr "nasin lukin ante tawa poki:"
 
 msgid "prefs.accent"
 msgstr "kule namako:"
@@ -853,7 +853,7 @@ msgid "prefs.accent.teal"
 msgstr "laso"
 
 msgid "prefs.sideicon"
-msgstr "sitelen pi mun:"
+msgstr "sitelen tawa mun:"
 
 msgid "prefs.doctheme.dark"
 msgstr "nasin lukin pi tenpo pimeja:"
@@ -880,7 +880,7 @@ msgid "prefs.headingfont"
 msgstr "nasin lukin pi sitelen suli:"
 
 msgid "prefs.font"
-msgstr "nasin lukin pi sitelen:"
+msgstr "nasin lukin tawa sitelen:"
 
 msgid "prefs.boldlink"
 msgstr "nimi tawa li suli lon:"
@@ -896,13 +896,13 @@ msgid "prefs.mono.gopher"
 msgstr "lupa Gopher"
 
 msgid "prefs.linewidth"
-msgstr "suli pi linja:"
+msgstr "suli tawa linja:"
 
 msgid "prefs.linewidth.fill"
 msgstr "suli mute"
 
 msgid "prefs.quoteicon"
-msgstr "sitelen pi toki:"
+msgstr "sitelen tawa toki:"
 
 msgid "prefs.quoteicon.icon"
 msgstr "sitelen \""
@@ -1059,7 +1059,7 @@ msgid "error.proxy.msg"
 msgstr "lupa li pakala toki e ilo pana. ken la kon li pakala."
 
 msgid "error.slowdown"
-msgstr "toki pi mute ike"
+msgstr "sina toki e mute ike"
 
 msgid "error.slowdown.msg"
 msgstr "ilo pana li wile ala toki e mute ike. sina o awen e lili…"
@@ -1189,7 +1189,7 @@ msgid "prefs.decodeurls"
 msgstr "sina lukin pona e nimi tawa:"
 
 msgid "prefs.ca.file"
-msgstr "ijo pi ilo CA:"
+msgstr "ijo tawa ilo CA:"
 
 msgid "prefs.proxy.gemini"
 msgstr "lupa tawa kon Kemini:"
@@ -1305,15 +1305,15 @@ msgstr "o kama sona e sitelen len lili"
 msgid "dlg.certwarn.mayberenewed"
 msgid_plural "dlg.certwarn.mayberenewed.n"
 msgstr[0] ""
-"ken la tenpo pini lili la jan lawa pi mun ni li kama sin e sitelen len tan "
-"ni: nimi li sama en sitelen len wile tawa weka lon tenpo kama. tenpo suno "
-"kama %d la sitelen len pona li wile tawa weka."
+"ken la tenpo pini lili la jan lawa mun ni li kama sin e sitelen len tan ni: "
+"nimi li sama en sitelen len wile tawa weka lon tenpo kama. tenpo suno kama "
+"%d la sitelen len pona li wile tawa weka."
 
 msgid "dlg.certwarn.different"
 msgstr "sitelen len ni li pakala ala. taso ona li sama ala sitelen len pona."
 
 msgid "dlg.certwarn.domain"
-msgstr "nimi pi sitelen len li sama ala. ken la jan lawa pi mun ni li pakala."
+msgstr "nimi pi sitelen len li ante. ken la jan lawa mun ni li pakala."
 
 msgid "dlg.certimport.nocert"
 msgstr "sitelen len li lon ala"
@@ -1436,3 +1436,95 @@ msgstr "toki li pakala. tenpo ale la ona li wile pakala kin."
 
 msgid "error.proxyrefusal.msg"
 msgstr "ilo pana li wile ala toki e lupa."
+
+msgid "gempub.meta.license"
+msgstr "nasin pana"
+
+msgid "menu.view.split"
+msgstr "o tu e poki..."
+
+msgid "menu.split.vertical"
+msgstr "poka"
+
+msgid "menu.split.merge"
+msgstr "o wan e poki"
+
+msgid "dlg.save.opendownload"
+msgstr "o open e ijo"
+
+msgid "heading.newident.date.bad"
+msgstr "TENPO LI PAKALA"
+
+msgid "gempub.cover.aboutbook"
+msgstr "sona lipu"
+
+msgid "dlg.newident.date.past"
+msgstr "sina wile pana e tenpo kama."
+
+msgid "gempub.cover.viewlocal"
+msgstr "sina awen e lipu tawa ilo sona la sina ken lukin e lipu Kempu."
+
+msgid "menu.split.horizontal"
+msgstr "sewi en anpa"
+
+msgid "dlg.newident.date.example"
+msgstr ""
+"o lukin e nimi \"tenpo ni la ona li wile tawa weka\". tenpo pona:\n"
+"• 2030\n"
+"• 2025-06-30\n"
+"• 2021-12-31 23:59:59"
+
+msgid "menu.split.swap"
+msgstr "o esun e poka"
+
+msgid "lang.ia"
+msgstr "toki Intelinwa"
+
+msgid "heading.newident.missing"
+msgstr "NIMI LI LON ALA"
+
+msgid "link.side"
+msgstr "o open e nimi tawa lon poki poka"
+
+msgid "link.side.newtab"
+msgstr "o open e nimi tawa lon poki poka sin"
+
+msgid "dlg.newindent.missing.commonname"
+msgstr "sina wile pana e nimi."
+
+msgid "keys.split.menu"
+msgstr "o tu/wan e poki"
+
+# User preference that controls whether index.gmi pages get automatically opened when browsing the contents of a directory inside a compressed archive.
+msgid "prefs.archive.openindex"
+msgstr "o open e ijo mute insa ijo wan:"
+
+msgid "gempub.meta.lang"
+msgstr "toki"
+
+msgid "gempub.meta.version"
+msgstr "nanpa"
+
+msgid "gempub.meta.author"
+msgstr "jan pali"
+
+msgid "gempub.cover.image"
+msgstr "sitelen sinpin"
+
+msgid "gempub.cover.untitled"
+msgstr "lipu pi nimi ala"
+
+msgid "keys.split.next"
+msgstr "o tawa poka ante"
+
+msgid "gempub.cover.view"
+msgstr "o lukin e lipu Kempu"
+
+msgid "gempub.meta.revdate"
+msgstr "ante la tenpo"
+
+msgid "gempub.meta.pubdate"
+msgstr "tenpo"
+
+msgid "gempub.meta.pub"
+msgstr "tenpo sike"
