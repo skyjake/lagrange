@@ -941,6 +941,10 @@ iBool dispatchEvent_Window(iWindow *d, const SDL_Event *ev) {
             if (isCommand_SDLEvent(ev) && ev->user.data2 && ev->user.data2 != root) {
                 continue; /* Not meant for this root. */
             }
+            else if ((ev->type == SDL_KEYDOWN || ev->type == SDL_KEYUP || ev->type == SDL_TEXTINPUT)
+                     && d->keyRoot != root) {
+                continue; /* Key events go only to the root with keyboard focus. */
+            }
             setCurrent_Root(root);
             const iBool wasUsed = dispatchEvent_Widget(root->widget, ev);
             if (wasUsed) {

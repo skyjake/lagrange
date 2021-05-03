@@ -879,6 +879,7 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
                     printf("[%p] %s:'%s' ate the key\n",
                            child, class_Widget(child)->name,
                            cstr_String(id_Widget(child)));
+                    identify_Widget(child);
                     fflush(stdout);
                 }
 #endif
