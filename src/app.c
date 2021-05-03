@@ -2381,6 +2381,7 @@ void openInDefaultBrowser_App(const iString *url) {
 #endif
     );
     start_Process(proc);
+    waitForFinished_Process(proc); /* TODO: test on Windows */
     iRelease(proc);
 #endif
 }
