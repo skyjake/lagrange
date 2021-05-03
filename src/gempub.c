@@ -79,7 +79,7 @@ static iBool parseMetadata_Gempub_(iGempub *d) {
         "cover:",
     };
     /* Default values. */
-    setCStr_String(&d->props[title_GempubProperty], "Untitled Book");
+    setCStr_String(&d->props[title_GempubProperty], "${gempub.cover.untitled}");
     setCStr_String(&d->props[cover_GempubProperty],
                    entryCStr_Archive(d->arch, "cover.jpg") ? "cover.jpg" :
                    entryCStr_Archive(d->arch, "cover.png") ? "cover.png" : "");
@@ -173,38 +173,38 @@ iString *coverPageSource_Gempub(const iGempub *d) {
         appendFormat_String(out, "%s\n", cstr_String(&d->props[description_GempubProperty]));
     }
     appendCStr_String(out, "\n");
-    appendProperty_Gempub_(d, "Author:", author_GempubProperty, out);
+    appendProperty_Gempub_(d, "${gempub.meta.author}:", author_GempubProperty, out);
     if (!isRemote_Gempub_(d)) {
-        appendFormat_String(out, "\n=> %s " book_Icon " View Gempub contents\n",
+        appendFormat_String(out, "\n=> %s " book_Icon " ${gempub.cover.view}\n",
                             cstrCollect_String(concat_Path(baseUrl, &d->props[index_GempubProperty])));
         if (hasProperty_Gempub_(d, cover_GempubProperty)) {
-            appendFormat_String(out, "\n=> %s  Cover image\n",
+            appendFormat_String(out, "\n=> %s  ${gempub.cover.image}\n",
                                 cstrCollect_String(concat_Path(baseUrl, &d->props[cover_GempubProperty])));
         }
     }
     else {
         iString *key = collectNew_String(); /* TODO: add a helper for this */
         toString_Sym(SDLK_s, KMOD_PRIMARY, key);
-        appendCStr_String(out, "\nThis Gempub book can be viewed after it has been saved locally. ");
+        appendCStr_String(out, "\n${gempub.cover.viewlocal} ");
         appendFormat_String(out,
                             cstr_Lang("error.unsupported.suggestsave"),
                             cstr_String(key),
                             saveToDownloads_Label);
-        translate_Lang(out);
         appendCStr_String(out, "\n");
     }
-    appendCStr_String(out, "\n## About this book\n");
-    appendProperty_Gempub_(d, "Version:", version_GempubProperty, out);
-    appendProperty_Gempub_(d, "Revision date:", revisionDate_GempubProperty, out);
+    appendCStr_String(out, "\n## ${gempub.cover.aboutbook}\n");
+    appendProperty_Gempub_(d, "${gempub.meta.version}:", version_GempubProperty, out);
+    appendProperty_Gempub_(d, "${gempub.meta.revdate}:", revisionDate_GempubProperty, out);
     if (hasProperty_Gempub_(d, publishDate_GempubProperty)) {
-        appendProperty_Gempub_(d, "Publish date:", publishDate_GempubProperty, out);
+        appendProperty_Gempub_(d, "${gempub.meta.pubdate}:", publishDate_GempubProperty, out);
     }
     else {
-        appendProperty_Gempub_(d, "Published:", published_GempubProperty, out);
+        appendProperty_Gempub_(d, "${gempub.meta.pub}:", published_GempubProperty, out);
     }
-    appendProperty_Gempub_(d, "Language:", language_GempubProperty, out);
-    appendProperty_Gempub_(d, "License:", license_GempubProperty, out);
+    appendProperty_Gempub_(d, "${gempub.meta.lang}:", language_GempubProperty, out);
+    appendProperty_Gempub_(d, "${gempub.meta.license}:", license_GempubProperty, out);
     appendProperty_Gempub_(d, "\u00a9", copyright_GempubProperty, out);
+    translate_Lang(out);
     return out;
 }
 

@@ -1762,7 +1762,7 @@ static void saveToDownloads_(const iString *url, const iString *mime, const iBlo
             exportDownloadedFile_iOS(savePath);
 #else
             const iMenuItem items[2] = {
-                { "Open Downloaded File", 0, 0,
+                { "${dlg.save.opendownload}", 0, 0,
                     format_CStr("!open url:%s", cstrCollect_String(makeFileUrl_String(savePath))) },
                 { "${dlg.message.ok}", 0, 0, "message.ok" },
             };

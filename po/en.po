@@ -152,6 +152,18 @@ msgstr "Close Tabs To Right"
 msgid "menu.duptab"
 msgstr "Duplicate Tab"
 
+msgid "menu.split.merge"
+msgstr "Merge Tabs"
+
+msgid "menu.split.swap"
+msgstr "Swap Sides"
+
+msgid "menu.split.horizontal"
+msgstr "Horizontal"
+
+msgid "menu.split.vertical"
+msgstr "Vertical"
+
 msgid "menu.openlocation"
 msgstr "Open Location…"
 
@@ -630,6 +642,9 @@ msgstr "The page contents are still being downloaded."
 msgid "dlg.save.size"
 msgstr "Size:"
 
+msgid "dlg.save.opendownload"
+msgstr "Open Downloaded File"
+
 msgid "heading.save.error"
 msgstr "ERROR SAVING FILE"
 
@@ -910,6 +925,21 @@ msgstr "Country:"
 
 msgid "dlg.newident.create"
 msgstr "Create Identity"
+
+msgid "heading.newident.missing"
+msgstr "MISSING INFO"
+
+msgid "dlg.newindent.missing.commonname"
+msgstr "A \"Common name\" must be specified."
+
+msgid "heading.newident.date.bad"
+msgstr "INVALID DATE"
+
+msgid "dlg.newident.date.past"
+msgstr "Expiration date must be in the future."
+
+msgid "dlg.newident.date.example"
+msgstr "Please check the \"Valid until\" date. Examples:\n• 2030\n• 2025-06-30\n• 2021-12-31 23:59:59"
 
 msgid "heading.feedcfg"
 msgstr "FEED SETTINGS"
@@ -1415,3 +1445,39 @@ msgstr "Invalid Certificate"
 
 msgid "error.cert.invalid.msg"
 msgstr "The provided client certificate is expired or invalid."
+
+msgid "gempub.cover.viewlocal"
+msgstr "This Gempub book can be viewed after it has been saved locally."
+
+msgid "gempub.cover.untitled"
+msgstr "Untitled Book"
+
+msgid "gempub.cover.aboutbook"
+msgstr "About this book"
+
+msgid "gempub.cover.view"
+msgstr "View Gempub contents"
+
+msgid "gempub.cover.image"
+msgstr "Cover image"
+
+msgid "gempub.meta.author"
+msgstr "Author"
+
+msgid "gempub.meta.version"
+msgstr "Version"
+
+msgid "gempub.meta.revdate"
+msgstr "Revision date"
+
+msgid "gempub.meta.pub"
+msgstr "Published"
+
+msgid "gempub.meta.pubdate"
+msgstr "Publish date"
+
+msgid "gempub.meta.lang"
+msgstr "Language"
+
+msgid "gempub.meta.license"
+msgstr "License"

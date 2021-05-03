@@ -1591,8 +1591,8 @@ static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
             const iString *country      = text_InputWidget (findChild_Widget(dlg, "ident.country"));
             const iBool    isTemp       = isSelected_Widget(findChild_Widget(dlg, "ident.temp"));
             if (isEmpty_String(commonName)) {
-                makeSimpleMessage_Widget(orange_ColorEscape "MISSING INFO",
-                                         "A \"Common name\" must be specified.");
+                makeSimpleMessage_Widget(orange_ColorEscape "${heading.newident.missing}",
+                                         "${dlg.newindent.missing.commonname}");
                 return iTrue;
             }
             iDate until;
@@ -1606,11 +1606,8 @@ static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
                            "%04u-%u-%u %u:%u:%u",
                            &val[0], &val[1], &val[2], &val[3], &val[4], &val[5]);
                 if (n <= 0) {
-                    makeSimpleMessage_Widget(orange_ColorEscape "INVALID DATE",
-                                             "Please check the \"Valid until\" date. Examples:\n"
-                                             "\u2022 2030\n"
-                                             "\u2022 2025-06-30\n"
-                                             "\u2022 2021-12-31 23:59:59");
+                    makeSimpleMessage_Widget(orange_ColorEscape "${heading.newident.date.bad}",
+                                             "${dlg.newident.date.example}");
                     return iTrue;
                 }
                 until.year   = val[0];
@@ -1625,8 +1622,8 @@ static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
                     initCurrent_Time(&now);
                     init_Time(&t, &until);
                     if (cmp_Time(&t, &now) <= 0) {
-                        makeSimpleMessage_Widget(orange_ColorEscape "INVALID DATE",
-                                                 "Expiration date must be in the future.");
+                        makeSimpleMessage_Widget(orange_ColorEscape "${heading.newident.date.bad}",
+                                                 "${dlg.newident.date.past}");
                         return iTrue;
                     }
                 }
