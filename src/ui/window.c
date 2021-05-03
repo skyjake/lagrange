@@ -998,6 +998,8 @@ void draw_Window(iWindow *d) {
 #endif
     const int   winFlags = SDL_GetWindowFlags(d->win);
     const iBool gotFocus = (winFlags & SDL_WINDOW_INPUT_FOCUS) != 0;
+    iPaint p;
+    init_Paint(&p);
     /* Clear the window. The clear color is visible as a border around the window
        when the custom frame is being used. */ {
 #if defined (iPlatformAppleMobile)
@@ -1008,6 +1010,7 @@ void draw_Window(iWindow *d) {
                                           ? uiAnnotation_ColorId
                                           : uiSeparator_ColorId);
 #endif
+        unsetClip_Paint(&p); /* update clip to full window */
         SDL_SetRenderDrawColor(d->render, back.r, back.g, back.b, 255);
         SDL_RenderClear(d->render);
     }
@@ -1019,6 +1022,7 @@ void draw_Window(iWindow *d) {
             iRoot *root = d->roots[i];
             if (root) {
                 setCurrent_Root(root);
+                unsetClip_Paint(&p); /* update clip to current root */
                 draw_Widget(root->widget);
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
                 /* App icon. */
@@ -1040,8 +1044,6 @@ void draw_Window(iWindow *d) {
 #endif
                 /* Root separator and keyboard focus indicator. */
                 if (numRoots_Window(d) > 1){
-                    iPaint p;
-                    init_Paint(&p);
                     const iRect bounds = bounds_Widget(root->widget);
                     if (i == 1) {
                         fillRect_Paint(&p, (iRect){
