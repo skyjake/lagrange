@@ -1310,9 +1310,10 @@ void postCommand_Root(iRoot *d, const char *command) {
     ev.user.data2 = d; /* all events are root-specific */
     SDL_PushEvent(&ev);
     if (app_.commandEcho) {
+        iWindow *win = get_Window();
         printf("%s[command] {%d} %s\n",
                app_.isLoadingPrefs ? "[Prefs] " : "",
-               (d == NULL ? 0 : d == get_Window()->roots[0] ? 1 : 2),
+               (d == NULL || win == NULL ? 0 : d == win->roots[0] ? 1 : 2),
                command); fflush(stdout);
     }
 }
