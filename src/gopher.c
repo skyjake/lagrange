@@ -26,8 +26,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 iDefineTypeConstruction(Gopher)
 
-iLocalDef iBool isLineTerminator_(const char *str) {
+iLocalDef iBool isCRLFLineTerminator_(const char *str) {
     return str[0] == '\r' && str[1] == '\n';
+}
+
+iLocalDef iBool isLineTerminator_(const char *str) {
+    return isCRLFLineTerminator_(str) || str[0] == '\n';
 }
 
 iLocalDef iBool isDiagram_(char ch) {
@@ -68,20 +72,19 @@ static void setPre_Gopher_(iGopher *d, iBool pre) {
 static iBool convertSource_Gopher_(iGopher *d) {
     iBool    converted = iFalse;
     iRangecc body      = range_Block(&d->source);
-    iRegExp *pattern   = new_RegExp("(.)([^\t]*)\t([^\t]*)\t([^\t]*)\t([0-9]+)",
-                                    caseInsensitive_RegExpOption);
+    iRegExp *pattern   = new_RegExp("(.)([^\t]*)\t([^\t]*)\t([^\t]*)\t([0-9]+)", 0);
     for (;;) {
         /* Find the end of the line. */
         iRangecc line = { body.start, body.start };
-        while (line.end < body.end - 1 && !isLineTerminator_(line.end)) {
+        while (line.end < body.end && !isLineTerminator_(line.end)) {
             line.end++;
         }
-        if (line.end >= body.end - 1 || !isLineTerminator_(line.end)) {
-            /* Not a complete line. */
-            printf("[Gopher] unterminated: {%s}\n", cstr_Rangecc(line));
+        if (line.end >= body.end || !isLineTerminator_(line.end)) {
+            /* Not a complete line. More may be coming later. */
             break;
         }
-        body.start = line.end + 2;
+        body.start = line.end + (isCRLFLineTerminator_(line.end) ? 2 : 1);
+        trimEnd_Rangecc(&line);
         iRegExpMatch m;
         init_RegExpMatch(&m);
         if (matchRange_RegExp(pattern, line, &m)) {
@@ -141,10 +144,13 @@ static iBool convertSource_Gopher_(iGopher *d) {
             delete_String(buf);
         }
         else {
+#if !defined (NDEBUG)
             printf("[Gopher] unrecognized: {%s}\n", cstr_Rangecc(line));
+#endif
         }
     }
     iRelease(pattern);
+    /* Remove the part of the source that was successfully converted. */
     remove_Block(&d->source, 0, body.start - constBegin_Block(&d->source));
     return converted;
 }
