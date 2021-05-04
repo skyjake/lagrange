@@ -2218,6 +2218,14 @@ iWidget *makePreferences_Widget(void) {
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.hoverlink")));
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.archive.openindex}")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.archive.openindex")));
+        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.pinsplit}")));
+        iWidget *pinSplit = new_Widget();
+        /* Split mode document pinning. */ {
+            addRadioButton_(pinSplit, "prefs.pinsplit.0", "${prefs.pinsplit.none}", "pinsplit.set arg:0");
+            addRadioButton_(pinSplit, "prefs.pinsplit.1", "${prefs.pinsplit.left}", "pinsplit.set arg:1");
+            addRadioButton_(pinSplit, "prefs.pinsplit.2", "${prefs.pinsplit.right}", "pinsplit.set arg:2");
+        }
+        addChildFlags_Widget(values, iClob(pinSplit), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
         addChild_Widget(headings, iClob(makePadding_Widget(bigGap)));
         addChild_Widget(values, iClob(makePadding_Widget(bigGap)));
         /* UI languages. */ {
@@ -2457,10 +2465,21 @@ iWidget *makeBookmarkEditor_Widget(void) {
     setUrlContent_InputWidget(inputs[1], iTrue);
     addDialogInputWithHeading_(headings, values, "${dlg.bookmark.tags}",  "bmed.tags",  iClob(inputs[2] = new_InputWidget(0)));
     addDialogInputWithHeading_(headings, values, "${dlg.bookmark.icon}",  "bmed.icon",  iClob(inputs[3] = new_InputWidget(1)));
+    /* Buttons for special tags. */
+    addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
+    addChild_Widget(dlg, iClob(makeTwoColumnWidget_(&headings, &values)));
+    makeTwoColumnHeading_("SPECIAL TAGS", headings, values);
+    addChild_Widget(headings, iClob(makeHeading_Widget("${bookmark.tag.home}")));
+    addChild_Widget(values, iClob(makeToggle_Widget("bmed.tag.home")));
+    addChild_Widget(headings, iClob(makeHeading_Widget("${bookmark.tag.remote}")));
+    addChild_Widget(values, iClob(makeToggle_Widget("bmed.tag.remote")));
+    addChild_Widget(headings, iClob(makeHeading_Widget("${bookmark.tag.sub}")));
+    addChild_Widget(values, iClob(makeToggle_Widget("bmed.tag.sub")));
     arrange_Widget(dlg);
     for (int i = 0; i < 3; ++i) {
         as_Widget(inputs[i])->rect.size.x = 100 * gap_UI - headings->rect.size.x;
     }
+    addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
     addChild_Widget(
         dlg,
         iClob(makeDialogButtons_Widget((iMenuItem[]){ { "${cancel}", 0, 0, NULL },
@@ -2489,8 +2508,8 @@ static iBool handleBookmarkCreationCommands_SidebarWidget_(iWidget *editor, cons
             const uint32_t id    = add_Bookmarks(bookmarks_App(), url, title, tags, first_String(icon));
             if (!isEmpty_String(icon)) {
                 iBookmark *bm = get_Bookmarks(bookmarks_App(), id);
-                if (!hasTag_Bookmark(bm, "usericon")) {
-                    addTag_Bookmark(bm, "usericon");
+                if (!hasTag_Bookmark(bm, userIcon_BookmarkTag)) {
+                    addTag_Bookmark(bm, userIcon_BookmarkTag);
                 }
             }
             postCommand_App("bookmarks.changed");
@@ -2609,7 +2628,7 @@ iWidget *makeFeedSettings_Widget(uint32_t bookmarkId) {
         setText_InputWidget(findChild_Widget(dlg, "feedcfg.title"),
                             bm ? &bm->title : feedTitle_DocumentWidget(document_App()));
         setFlags_Widget(findChild_Widget(dlg,
-                                         hasTag_Bookmark(bm, "headings") ? "feedcfg.type.headings"
+                                         hasTag_Bookmark(bm, headings_BookmarkTag) ? "feedcfg.type.headings"
                                                                          : "feedcfg.type.gemini"),
                         selected_WidgetFlag,
                         iTrue);

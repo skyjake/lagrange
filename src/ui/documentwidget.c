@@ -221,6 +221,7 @@ enum iDocumentWidgetFlag {
     pinchZoom_DocumentWidgetFlag             = iBit(9),
     movingSelectMarkStart_DocumentWidgetFlag = iBit(10),
     movingSelectMarkEnd_DocumentWidgetFlag   = iBit(11),
+    otherRootByDefault_DocumentWidgetFlag    = iBit(12), /* links open to other root by default */
 };
 
 enum iDocumentLinkOrdinalMode {
@@ -956,6 +957,20 @@ static void documentRunsInvalidated_DocumentWidget_(iDocumentWidget *d) {
     iZap(d->renderRuns);
 }
 
+iBool isPinned_DocumentWidget_(const iDocumentWidget *d) {
+    if (d->flags & otherRootByDefault_DocumentWidgetFlag) {
+        return iTrue;
+    }
+    const iWidget *w = constAs_Widget(d);
+    const iWindow *win = get_Window();
+    if (numRoots_Window(win) == 1) {
+        return iFalse;
+    }
+    const iPrefs *prefs = prefs_App();
+    return (prefs->pinSplit == 1 && w->root == win->roots[0]) ||
+           (prefs->pinSplit == 2 && w->root == win->roots[1]);
+}
+
 void setSource_DocumentWidget(iDocumentWidget *d, const iString *source) {
     setUrl_GmDocument(d->doc, d->mod.url);
     setSource_GmDocument(d->doc, source, documentWidth_DocumentWidget_(d));
@@ -965,6 +980,15 @@ void setSource_DocumentWidget(iDocumentWidget *d, const iString *source) {
     d->drawBufs->flags |= updateSideBuf_DrawBufsFlag;
     invalidate_DocumentWidget_(d);
     refresh_Widget(as_Widget(d));
+    /* Check for special bookmark tags. */
+    d->flags &= ~otherRootByDefault_DocumentWidgetFlag;
+    const uint16_t bmid = findUrl_Bookmarks(bookmarks_App(), d->mod.url);
+    if (bmid) {
+        const iBookmark *bm = get_Bookmarks(bookmarks_App(), bmid);
+        if (hasTag_Bookmark(bm, linkSplit_BookmarkTag)) {
+            d->flags |= otherRootByDefault_DocumentWidgetFlag;
+        }
+    }
 }
 
 static void updateTheme_DocumentWidget_(iDocumentWidget *d) {
@@ -2455,7 +2479,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                                           linkUrl_GmDocument(d->doc, run->linkId))) != 0) {
                 const iBookmark *bm = get_Bookmarks(bookmarks_App(), bmid);
                 /* We can import local copies of remote bookmarks. */
-                if (!hasTag_Bookmark(bm, "remote")) {
+                if (!hasTag_Bookmark(bm, remote_BookmarkTag)) {
                     remove_PtrArrayIterator(&i);
                 }
             }
@@ -2740,11 +2764,12 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                     else {
                         postCommandf_Root(w->root,
                                           "open newtab:%d url:%s",
-                                         d->ordinalMode ==
+                                          (isPinned_DocumentWidget_(d) ? otherRoot_OpenTabFlag : 0) ^
+                                          (d->ordinalMode ==
                                                  numbersAndAlphabet_DocumentLinkOrdinalMode
                                              ? openTabMode_Sym(modState_Keys())
-                                             : (d->flags & newTabViaHomeKeys_DocumentWidgetFlag ? 1 : 0),
-                                         cstr_String(absoluteUrl_String(
+                                             : (d->flags & newTabViaHomeKeys_DocumentWidgetFlag ? 1 : 0)),
+                                          cstr_String(absoluteUrl_String(
                                              d->mod.url, linkUrl_GmDocument(d->doc, run->linkId))));
                     }
                     setLinkNumberMode_DocumentWidget_(d, iFalse);
@@ -2862,8 +2887,9 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         }
         if (ev->button.button == SDL_BUTTON_MIDDLE && d->hoverLink) {
             postCommandf_Root(w->root, "open newtab:%d url:%s",
-                             modState_Keys() & KMOD_SHIFT ? 1 : 2,
-                             cstr_String(linkUrl_GmDocument(d->doc, d->hoverLink->linkId)));
+                              (isPinned_DocumentWidget_(d) ? otherRoot_OpenTabFlag : 0) |
+                              (modState_Keys() & KMOD_SHIFT ? new_OpenTabFlag : newBackground_OpenTabFlag),
+                              cstr_String(linkUrl_GmDocument(d->doc, d->hoverLink->linkId)));
             return iTrue;
         }
         if (ev->button.button == SDL_BUTTON_RIGHT &&
@@ -3237,8 +3263,12 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                         refresh_Widget(w);
                     }
                     else if (linkFlags & supportedProtocol_GmLinkFlag) {
+                        int tabMode = openTabMode_Sym(modState_Keys());
+                        if (isPinned_DocumentWidget_(d)) {
+                            tabMode ^= otherRoot_OpenTabFlag;
+                        }
                         postCommandf_Root(w->root, "open newtab:%d url:%s",
-                                         openTabMode_Sym(modState_Keys()),
+                                         tabMode,
                                          cstr_String(absoluteUrl_String(
                                              d->mod.url, linkUrl_GmDocument(d->doc, linkId))));
                     }

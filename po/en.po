@@ -1066,6 +1066,18 @@ msgstr "Collapse preformatted:"
 msgid "prefs.archive.openindex"
 msgstr "Open archive indices:"
 
+msgid "prefs.pinsplit"
+msgstr "Split view pinning:"
+
+msgid "prefs.pinsplit.none"
+msgstr "None"
+
+msgid "prefs.pinsplit.left"
+msgstr "Left Tab"
+
+msgid "prefs.pinsplit.right"
+msgstr "Right Tab"
+
 msgid "prefs.smoothscroll"
 msgstr "Smooth scrolling:"
 

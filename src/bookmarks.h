@@ -32,6 +32,14 @@ iDeclareType(GmRequest)
 iDeclareType(Bookmark)
 iDeclareTypeConstruction(Bookmark)
 
+#define headings_BookmarkTag        "headings"
+#define homepage_BookmarkTag        "homepage"
+#define linkSplit_BookmarkTag       "linksplit"
+#define remote_BookmarkTag          "remote"
+#define remoteSource_BookmarkTag    "remotesource"
+#define subscribed_BookmarkTag      "subscribed"
+#define userIcon_BookmarkTag        "usericon"
+
 struct Impl_Bookmark {
     iHashNode node;
     iString url;

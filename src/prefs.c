@@ -37,6 +37,7 @@ void init_Prefs(iPrefs *d) {
     d->zoomPercent       = 100;
     d->sideIcon          = iTrue;
     d->hideToolbarOnScroll = iTrue;
+    d->pinSplit          = 1;
     d->hoverLink         = iFalse;
     d->smoothScrolling   = iTrue;
     d->loadImageInsteadOfScrolling = iFalse;

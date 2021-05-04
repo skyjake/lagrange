@@ -1218,9 +1218,15 @@ void setSplitMode_Window(iWindow *d, int splitFlags) {
             setCurrent_Root(d->roots[1]);
             d->keyRoot = d->roots[1];
             createUserInterface_Root(d->roots[1]);
-            /* If the old root has multiple tabs, move the current one to the new split. */ {
+            if (!isEmpty_String(d->pendingSplitUrl)) {
+                postCommandf_Root(d->roots[1], "open url:%s",
+                                  cstr_String(d->pendingSplitUrl));
+                clear_String(d->pendingSplitUrl);
+            }
+            else if (~splitFlags & noEvents_WindowSplit) {
                 iWidget *docTabs0 = findChild_Widget(d->roots[0]->widget, "doctabs");
                 iWidget *docTabs1 = findChild_Widget(d->roots[1]->widget, "doctabs");
+                /* If the old root has multiple tabs, move the current one to the new split. */
                 if (tabCount_Widget(docTabs0) >= 2) {
                     int movedIndex = tabPageIndex_Widget(docTabs0, moved);
                     removeTabPage_Widget(docTabs0, movedIndex);
@@ -1228,19 +1234,10 @@ void setSplitMode_Window(iWindow *d, int splitFlags) {
                     iRelease(removeTabPage_Widget(docTabs1, 0)); /* delete the default tab */
                     setRoot_Widget(as_Widget(moved), d->roots[1]);
                     prependTabPage_Widget(docTabs1, iClob(moved), "", 0, 0);
-                    if (~splitFlags & noEvents_WindowSplit) {
-                        postCommandf_App("tabs.switch page:%p", moved);
-                    }
+                    postCommandf_App("tabs.switch page:%p", moved);
                 }
-                else if (~splitFlags & noEvents_WindowSplit) {
-                    if (isEmpty_String(d->pendingSplitUrl)) {
-                        postCommand_Root(d->roots[1], "navigate.home");
-                    }
-                    else {
-                        postCommandf_Root(d->roots[1], "open url:%s",
-                                          cstr_String(d->pendingSplitUrl));
-                        clear_String(d->pendingSplitUrl);
-                    }
+                else {
+                    postCommand_Root(d->roots[1], "navigate.home");
                 }
             }
             setCurrent_Root(NULL);

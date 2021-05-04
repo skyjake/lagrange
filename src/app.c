@@ -1446,6 +1446,14 @@ static void updatePrefsThemeButtons_(iWidget *d) {
     }
 }
 
+static void updatePrefsPinSplitButtons_(iWidget *d, int value) {
+    for (size_t i = 0; i < 3; i++) {
+        setFlags_Widget(findChild_Widget(d, format_CStr("prefs.pinsplit.%u", i)),
+                        selected_WidgetFlag,
+                        i == value);
+    }
+}
+
 static void updateDropdownSelection_(iLabelWidget *dropButton, const char *selectedCommand) {
     iWidget *menu = findChild_Widget(as_Widget(dropButton), "menu");
     iForEach(ObjectList, i, children_Widget(menu)) {
@@ -1524,6 +1532,10 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
         const int arg = arg_Command(cmd);
         setFlags_Widget(findChild_Widget(d, "prefs.quoteicon.0"), selected_WidgetFlag, arg == 0);
         setFlags_Widget(findChild_Widget(d, "prefs.quoteicon.1"), selected_WidgetFlag, arg == 1);
+        return iFalse;
+    }
+    else if (equal_Command(cmd, "pinsplit.set")) {
+        updatePrefsPinSplitButtons_(d, arg_Command(cmd));
         return iFalse;
     }
     else if (equal_Command(cmd, "doctheme.dark.set")) {
@@ -1824,6 +1836,10 @@ iBool handleCommand_App(const char *cmd) {
         }
         return iTrue;
     }
+    else if (equal_Command(cmd, "pinsplit.set")) {
+        d->prefs.pinSplit = arg_Command(cmd);
+        return iTrue;
+    }
     else if (equal_Command(cmd, "theme.set")) {
         const int isAuto = argLabel_Command(cmd, "auto");
         d->prefs.theme = arg_Command(cmd);
@@ -2030,6 +2046,7 @@ iBool handleCommand_App(const char *cmd) {
         iRoot *oldRoot = root;
         if (newTab & otherRoot_OpenTabFlag) {
             root = otherRoot_Window(d->window, root);
+            setKeyRoot_Window(d->window, root);
             setCurrent_Root(root); /* need to change for widget creation */
         }
         iDocumentWidget *doc = document_Command(cmd);
@@ -2172,6 +2189,7 @@ iBool handleCommand_App(const char *cmd) {
         setToggle_Widget(findChild_Widget(dlg, "prefs.archive.openindex"), d->prefs.openArchiveIndexPages);
         setToggle_Widget(findChild_Widget(dlg, "prefs.ostheme"), d->prefs.useSystemTheme);
         setToggle_Widget(findChild_Widget(dlg, "prefs.customframe"), d->prefs.customFrame);
+        updatePrefsPinSplitButtons_(dlg, d->prefs.pinSplit);
         updateDropdownSelection_(findChild_Widget(dlg, "prefs.uilang"), cstr_String(&d->prefs.uiLanguage));
         setToggle_Widget(findChild_Widget(dlg, "prefs.retainwindow"), d->prefs.retainWindowSize);
         setText_InputWidget(findChild_Widget(dlg, "prefs.uiscale"),
@@ -2234,7 +2252,8 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "navigate.home")) {
         /* Look for bookmarks tagged "homepage". */
-        iRegExp *pattern = iClob(new_RegExp("\\bhomepage\\b", caseInsensitive_RegExpOption));
+        iRegExp *pattern = iClob(new_RegExp("\\b" homepage_BookmarkTag "\\b",
+                                            caseInsensitive_RegExpOption));
         const iPtrArray *homepages =
             list_Bookmarks(d->bookmarks, NULL, filterTagsRegExp_Bookmarks, pattern);
         if (isEmpty_PtrArray(homepages)) {
