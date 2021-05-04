@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-04-09 13:18+0000\n"
+"PO-Revision-Date: 2021-05-05 03:55+0000\n"
 "Last-Translator: Nikolay Korotkiy <sikmir@gmail.com>\n"
 "Language-Team: Esperanto <http://weblate.skyjake.fi/projects/lagrange/ui/eo/>"
 "\n"
@@ -618,3 +618,80 @@ msgstr "Hz"
 
 msgid "mb.per.sec"
 msgstr "MB/s"
+
+msgid "dlg.newident.org"
+msgstr "Organizaĵo:"
+
+msgid "prefs.theme.dark"
+msgstr "Malhela"
+
+msgid "prefs.theme.light"
+msgstr "Hela"
+
+msgid "menu.split.merge"
+msgstr "Kunfandi la langetojn"
+
+msgid "menu.split.horizontal"
+msgstr "Horizontala"
+
+msgid "menu.split.vertical"
+msgstr "Vertikala"
+
+msgid "dlg.translate.to"
+msgstr "Al:"
+
+msgid "prefs.accent.teal"
+msgstr "Turkisa"
+
+msgid "dlg.translate.from"
+msgstr "De:"
+
+msgid "lang.ia"
+msgstr "Interlingvao"
+
+msgid "hint.newident.optional"
+msgstr "nedeviga"
+
+msgid "prefs.accent.orange"
+msgstr "Oranĝa"
+
+msgid "prefs.linewidth.normal"
+msgstr "Normala"
+
+msgid "prefs.quoteicon.line"
+msgstr "Linio"
+
+msgid "sidebar.action.feeds.showall"
+msgstr "Ĉiuj"
+
+msgid "sidebar.action.feeds.showunread"
+msgstr "Nelegitaj"
+
+msgid "sidebar.action.ident.new"
+msgstr "Nova…"
+
+# tab button
+msgid "heading.prefs.general"
+msgstr "Ĝenerala"
+
+# tab button
+msgid "heading.prefs.interface"
+msgstr "Fasado"
+
+msgid "heading.prefs.proxies"
+msgstr "PROKURILOJ"
+
+msgid "gempub.meta.lang"
+msgstr "Lingvo"
+
+msgid "gempub.meta.license"
+msgstr "Permesilo"
+
+msgid "gempub.meta.author"
+msgstr "Aŭtoro"
+
+msgid "gempub.meta.pub"
+msgstr "Eldonita"
+
+msgid "gempub.meta.version"
+msgstr "Versio"
