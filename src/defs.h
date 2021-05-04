@@ -28,8 +28,9 @@ enum iFileVersion {
     initial_FileVersion                 = 0,
     addedResponseTimestamps_FileVersion = 1,
     multipleRoots_FileVersion           = 2,
+    serializedSidebarState_FileVersion  = 3,
     /* meta */
-    latest_FileVersion = 2
+    latest_FileVersion = 3
 };
 
 /* Icons */

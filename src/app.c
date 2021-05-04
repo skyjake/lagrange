@@ -169,9 +169,6 @@ const iString *dateStr_(const iDate *date) {
 
 static iString *serializePrefs_App_(const iApp *d) {
     iString *str = new_String();
-    setCurrent_Root(d->window->roots[0]); /* TODO: How about the other? */
-    const iSidebarWidget *sidebar  = findWidget_App("sidebar");
-    const iSidebarWidget *sidebar2 = findWidget_App("sidebar2");
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
     appendFormat_String(str, "customframe arg:%d\n", d->prefs.customFrame);
 #endif
@@ -183,8 +180,6 @@ static iString *serializePrefs_App_(const iApp *d) {
         w = d->window->place.normalRect.size.x;
         h = d->window->place.normalRect.size.y;
         appendFormat_String(str, "window.setrect width:%d height:%d coord:%d %d\n", w, h, x, y);
-        appendFormat_String(str, "sidebar.width arg:%f gaps:1\n", width_SidebarWidget(sidebar));
-        appendFormat_String(str, "sidebar2.width arg:%f gaps:1\n", width_SidebarWidget(sidebar2));
         /* On macOS, maximization should be applied at creation time or the window will take
            a moment to animate to its maximized size. */
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
@@ -204,16 +199,6 @@ static iString *serializePrefs_App_(const iApp *d) {
             appendFormat_String(str, "~window.maximize\n");
         }
 #endif
-    }
-    /* Sidebars. */ {
-        if (isVisible_Widget(sidebar) && deviceType_App() != phone_AppDeviceType) {
-            appendCStr_String(str, "sidebar.toggle\n");
-        }
-        appendFormat_String(str, "sidebar.mode arg:%d\n", mode_SidebarWidget(sidebar));
-        if (isVisible_Widget(sidebar2) && deviceType_App() != phone_AppDeviceType) {
-            appendCStr_String(str, "sidebar2.toggle\n");
-        }
-        appendFormat_String(str, "sidebar2.mode arg:%d\n", mode_SidebarWidget(sidebar2));
     }
     appendFormat_String(str, "uilang id:%s\n", cstr_String(&d->prefs.uiLanguage));
     appendFormat_String(str, "uiscale arg:%f\n", uiScale_Window(d->window));
@@ -378,6 +363,7 @@ static void savePrefs_App_(const iApp *d) {
 static const char *magicState_App_       = "lgL1";
 static const char *magicWindow_App_      = "wind";
 static const char *magicTabDocument_App_ = "tabd";
+static const char *magicSidebar_App_     = "side";
 
 enum iDocumentStateFlag {
     current_DocumentStateFlag     = iBit(1),
@@ -415,9 +401,29 @@ static iBool loadState_App_(iApp *d) {
                 d->window->pendingSplitMode = splitMode;
                 setSplitMode_Window(d->window, splitMode | noEvents_WindowSplit);
                 d->window->keyRoot = d->window->roots[keyRoot];
-                continue;
             }
-            if (!memcmp(magic, magicTabDocument_App_, 4)) {
+            else if (!memcmp(magic, magicSidebar_App_, 4)) {
+                const uint16_t bits = readU16_File(f);
+                const uint8_t modes = readU8_File(f);
+                const float widths[2] = {
+                    readf_Stream(stream_File(f)),
+                    readf_Stream(stream_File(f))
+                };
+                const uint8_t rootIndex = bits & 0xff;
+                const uint8_t flags     = bits >> 8;
+                iRoot *root = d->window->roots[rootIndex];
+                if (root && deviceType_App() != phone_AppDeviceType) {
+                    iSidebarWidget *sidebar  = findChild_Widget(root->widget, "sidebar");
+                    iSidebarWidget *sidebar2 = findChild_Widget(root->widget, "sidebar2");
+                    setWidth_SidebarWidget(sidebar,  widths[0]);
+                    setWidth_SidebarWidget(sidebar2, widths[1]);
+                    postCommandf_Root(root, "sidebar.mode arg:%u", modes & 0xf);
+                    postCommandf_Root(root, "sidebar2.mode arg:%u", modes >> 4);
+                    if (flags & 1) postCommand_Root(root, "sidebar.toggle");
+                    if (flags & 2) postCommand_Root(root, "sidebar2.toggle");
+                }
+            }
+            else if (!memcmp(magic, magicTabDocument_App_, 4)) {
                 const int8_t flags = read8_File(f);
                 int rootIndex = flags & rootIndex1_DocumentStateFlag ? 1 : 0;
                 if (rootIndex > numRoots_Window(d->window) - 1) {
@@ -461,6 +467,10 @@ static void saveState_App_(const iApp *d) {
     iUnused(d);
     trimCache_App();
     iWindow *win = d->window;
+    /* UI state is saved in binary because it is quite complex (e.g.,
+       navigation history, cached content) and depends closely on the widget
+       tree. The data is largely not reorderable and should not be modified
+       by the user manually. */
     iFile *f = newCStr_File(concatPath_CStr(dataDir_App_(), stateFileName_App_));
     if (open_File(f, writeOnly_FileMode)) {
         writeData_File(f, magicState_App_, 4);
@@ -469,6 +479,24 @@ static void saveState_App_(const iApp *d) {
             writeData_File(f, magicWindow_App_, 4);
             writeU32_File(f, win->splitMode);
             writeU32_File(f, win->keyRoot == win->roots[0] ? 0 : 1);
+        }
+        /* State of UI elements. */ {
+            iForIndices(i, win->roots) {
+                const iRoot *root = win->roots[i];
+                if (root) {
+                    writeData_File(f, magicSidebar_App_, 4);
+                    const iSidebarWidget *sidebar  = findChild_Widget(root->widget, "sidebar");
+                    const iSidebarWidget *sidebar2 = findChild_Widget(root->widget, "sidebar2");
+                    writeU16_File(f, i |
+                                  (isVisible_Widget(sidebar)  ? 0x100 : 0) |
+                                  (isVisible_Widget(sidebar2) ? 0x200 : 0));
+                    writeU8_File(f,
+                                 mode_SidebarWidget(sidebar) |
+                                 (mode_SidebarWidget(sidebar2) << 4));
+                    writef_Stream(stream_File(f), width_SidebarWidget(sidebar));
+                    writef_Stream(stream_File(f), width_SidebarWidget(sidebar2));
+                }
+            }
         }
         iConstForEach(ObjectList, i, iClob(listDocuments_App(NULL))) {
             iAssert(isInstance_Object(i.object, &Class_DocumentWidget));
