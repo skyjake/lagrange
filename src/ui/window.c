@@ -1175,10 +1175,6 @@ void setKeyboardHeight_Window(iWindow *d, int height) {
 void checkPendingSplit_Window(iWindow *d) {
     if (d->splitMode != d->pendingSplitMode) {
         setSplitMode_Window(d, d->pendingSplitMode);
-        if (!isEmpty_String(d->pendingSplitUrl)) {
-            postCommandf_Root(d->keyRoot, "open url:%s", cstr_String(d->pendingSplitUrl));
-            clear_String(d->pendingSplitUrl);
-        }
     }
 }
 
@@ -1237,7 +1233,14 @@ void setSplitMode_Window(iWindow *d, int splitFlags) {
                     }
                 }
                 else if (~splitFlags & noEvents_WindowSplit) {
-                    postCommand_Root(d->roots[1], "navigate.home");
+                    if (isEmpty_String(d->pendingSplitUrl)) {
+                        postCommand_Root(d->roots[1], "navigate.home");
+                    }
+                    else {
+                        postCommandf_Root(d->roots[1], "open url:%s",
+                                          cstr_String(d->pendingSplitUrl));
+                        clear_String(d->pendingSplitUrl);
+                    }
                 }
             }
             setCurrent_Root(NULL);
