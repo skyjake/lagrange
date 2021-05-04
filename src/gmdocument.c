@@ -669,22 +669,6 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             icon.font = equal_Rangecc(link->labelIcon, "\u2219") ? regularMonospace_FontId
                                                                  : regular_FontId;
             alignDecoration_GmRun_(&icon, iFalse);
-#if 0
-            {
-                const iRect visBounds = visualBounds_Text(icon.font, icon.text);
-                const int   visWidth  = width_Rect(visBounds);
-                /* Keep the icon aligned to the left edge. */
-                icon.visBounds.pos.x -= left_Rect(visBounds);
-                if (visWidth > width_Rect(icon.visBounds)) {
-                    /* ...unless it's a wide icon, in which case move it to the left. */
-                    icon.visBounds.pos.x -= visWidth - width_Rect(icon.visBounds);
-                }
-                else if (visWidth < width_Rect(icon.visBounds) * 3 / 4) {
-                    /* ...or a narrow icon, which needs to be centered but leave a gap. */
-                    icon.visBounds.pos.x += (width_Rect(icon.visBounds) * 3 / 4 - visWidth) / 2;
-                }
-            }
-#endif
             icon.color = linkColor_GmDocument(d, run.linkId, icon_GmLinkPart);
             icon.flags |= decoration_GmRunFlag;
             pushBack_Array(&d->layout, &icon);
@@ -727,6 +711,10 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 meta->pixelRect.pos = pos;
                 meta->flags |= topLeft_GmPreMetaFlag;
             }
+        }
+        /* Visited links are never bold. */
+        if (run.linkId && linkFlags_GmDocument(d, run.linkId) & visited_GmLinkFlag) {
+            run.font = paragraph_FontId;
         }
         iAssert(!isEmpty_Range(&runLine)); /* must have something at this point */
         while (!isEmpty_Range(&runLine)) {
@@ -921,9 +909,9 @@ static void setDerivedThemeColors_(enum iGmDocumentTheme theme) {
     set_Color(tmBackgroundAltText_ColorId,
               mix_Color(get_Color(tmQuoteIcon_ColorId), get_Color(tmBackground_ColorId), 0.85f));
     set_Color(tmBackgroundOpenLink_ColorId,
-              mix_Color(get_Color(tmLinkText_ColorId), get_Color(tmBackground_ColorId), 0.92f));
+              mix_Color(get_Color(tmLinkText_ColorId), get_Color(tmBackground_ColorId), 0.90f));
     set_Color(tmFrameOpenLink_ColorId,
-              mix_Color(get_Color(tmLinkText_ColorId), get_Color(tmBackground_ColorId), 0.78f));
+              mix_Color(get_Color(tmLinkText_ColorId), get_Color(tmBackground_ColorId), 0.75f));
     if (theme == colorfulDark_GmDocumentTheme) {
         /* Ensure paragraph text and link text aren't too similarly colored. */
         if (delta_Color(get_Color(tmLinkText_ColorId), get_Color(tmParagraph_ColorId)) < 100) {
@@ -932,7 +920,7 @@ static void setDerivedThemeColors_(enum iGmDocumentTheme theme) {
         }
     }
     set_Color(tmLinkCustomIconVisited_ColorId,
-              mix_Color(get_Color(tmLinkIconVisited_ColorId), get_Color(tmLinkIcon_ColorId), 0.5f));
+              mix_Color(get_Color(tmLinkIconVisited_ColorId), get_Color(tmLinkIcon_ColorId), 0.20f));
 }
 
 static void updateIconBasedOnUrl_GmDocument_(iGmDocument *d) {
