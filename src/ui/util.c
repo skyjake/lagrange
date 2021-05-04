@@ -2473,8 +2473,8 @@ iWidget *makeBookmarkEditor_Widget(void) {
     addChild_Widget(values, iClob(makeToggle_Widget("bmed.tag.home")));
     addChild_Widget(headings, iClob(makeHeading_Widget("${bookmark.tag.remote}")));
     addChild_Widget(values, iClob(makeToggle_Widget("bmed.tag.remote")));
-    addChild_Widget(headings, iClob(makeHeading_Widget("${bookmark.tag.sub}")));
-    addChild_Widget(values, iClob(makeToggle_Widget("bmed.tag.sub")));
+    addChild_Widget(headings, iClob(makeHeading_Widget("${bookmark.tag.linksplit}")));
+    addChild_Widget(values, iClob(makeToggle_Widget("bmed.tag.linksplit")));
     arrange_Widget(dlg);
     for (int i = 0; i < 3; ++i) {
         as_Widget(inputs[i])->rect.size.x = 100 * gap_UI - headings->rect.size.x;

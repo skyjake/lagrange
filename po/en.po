@@ -488,6 +488,9 @@ msgstr "Subscribe to Feed"
 msgid "bookmark.tag.remote"
 msgstr "Use as Bookmark Source"
 
+msgid "bookmark.tag.linksplit"
+msgstr "Links open to the side"
+
 msgid "bookmark.untag.home"
 msgstr "Remove Homepage"
 
