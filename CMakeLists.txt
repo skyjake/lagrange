@@ -89,6 +89,7 @@ set (EMBED_RESOURCES
     res/lang/ie.bin
     res/lang/ru.bin
     res/lang/sr.bin
+    res/lang/tok.bin
     res/lang/zh_Hans.bin
     res/lang/zh_Hant.bin
     res/shadow.png

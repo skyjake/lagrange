@@ -2232,6 +2232,7 @@ iWidget *makePreferences_Widget(void) {
                 { "${lang.ie} - ie", 0, 0, "uilang id:ie" },
                 { "${lang.ru} - ru", 0, 0, "uilang id:ru" },
                 { "${lang.sr} - sr", 0, 0, "uilang id:sr" },
+                { "${lang.tok} - tok", 0, 0, "uilang id:tok" },
                 { "${lang.zh.hans} - zh", 0, 0, "uilang id:zh_Hans" },
                 { "${lang.zh.hant} - zh", 0, 0, "uilang id:zh_Hant" },
             };
