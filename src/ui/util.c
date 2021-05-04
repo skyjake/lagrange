@@ -171,7 +171,7 @@ int keyMods_Sym(int kmods) {
 
 int openTabMode_Sym(int kmods) {
     const int km = keyMods_Sym(kmods);
-    return (km & KMOD_ALT ? otherRoot_OpenTabFlag : 0) | /* open to the side */
+    return (km == KMOD_SHIFT ? otherRoot_OpenTabFlag : 0) | /* open to the side */
            (((km & KMOD_PRIMARY) && (km & KMOD_SHIFT)) ? new_OpenTabFlag :
             (km & KMOD_PRIMARY) ? newBackground_OpenTabFlag : 0);
 }
