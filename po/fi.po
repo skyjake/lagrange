@@ -3,8 +3,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2021-03-23 09:09+0000\n"
-"PO-Revision-Date: 2021-04-27 14:18+0000\n"
-"Last-Translator: Jaakko Keränen <jaakko.keranen@iki.fi>\n"
+"PO-Revision-Date: 2021-05-05 03:55+0000\n"
+"Last-Translator: Nikolay Korotkiy <sikmir@gmail.com>\n"
 "Language-Team: Finnish <http://weblate.skyjake.fi/projects/lagrange/ui/fi/>\n"
 "Language: fi\n"
 "MIME-Version: 1.0\n"
@@ -461,7 +461,7 @@ msgstr "Poista tilaus"
 
 msgid "error.unsupported.suggestsave"
 msgstr ""
-"Voit tallentaa sen latauskansioon. Paina %s tai valitse \"%s\" valikosta."
+"Voit tallentaa sen latauskansioon: paina %s tai valitse \"%s\" valikosta."
 
 msgid "heading.pageinfo"
 msgstr "SIVUN TIEDOT"
@@ -1438,3 +1438,45 @@ msgstr "Tuo…"
 
 msgid "menu.downloads"
 msgstr "Näytä latauskansio"
+
+msgid "menu.split.merge"
+msgstr "Yhdistä välilehdet"
+
+msgid "menu.split.horizontal"
+msgstr "Vaaka"
+
+msgid "menu.split.vertical"
+msgstr "Pysty"
+
+msgid "lang.ia"
+msgstr "Interlingua"
+
+msgid "gempub.cover.untitled"
+msgstr "Nimetön kirja"
+
+msgid "gempub.cover.aboutbook"
+msgstr "Tietoja tästä kirjasta"
+
+msgid "gempub.meta.author"
+msgstr "Kirjailija"
+
+msgid "gempub.meta.version"
+msgstr "Versio"
+
+msgid "gempub.meta.pub"
+msgstr "Julkaistu"
+
+msgid "gempub.meta.lang"
+msgstr "Kieli"
+
+msgid "gempub.meta.license"
+msgstr "Lisenssi"
+
+msgid "gempub.cover.image"
+msgstr "Kansikuva"
+
+msgid "gempub.meta.pubdate"
+msgstr "Julkaisupäivä"
+
+msgid "gempub.cover.view"
+msgstr "Näytä Gempub-sisältö"
