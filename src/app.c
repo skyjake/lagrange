@@ -2109,6 +2109,7 @@ iBool handleCommand_App(const char *cmd) {
         iBool  wasCurrent = (doc == (iWidget *) document_App());
         size_t index      = tabPageIndex_Widget(tabs, doc);
         iBool  wasClosed  = iFalse;
+        postCommand_App("document.openurls.changed");
         if (argLabel_Command(cmd, "toright")) {
             while (tabCount_Widget(tabs) > index + 1) {
                 destroy_Widget(removeTabPage_Widget(tabs, index + 1));
@@ -2314,6 +2315,11 @@ iBool handleCommand_App(const char *cmd) {
         save_Visited(d->visited, dataDir_App_());
         return iFalse;
     }
+    else if (equal_Command(cmd, "document.changed")) {
+        /* Set of open tabs has changed. */
+        postCommand_App("document.openurls.changed");
+        return iFalse;
+    }
     else if (equal_Command(cmd, "ident.new")) {
         iWidget *dlg = makeIdentityCreation_Widget();
         setFocus_Widget(findChild_Widget(dlg, "ident.until"));
@@ -2471,4 +2477,14 @@ iObjectList *listDocuments_App(const iRoot *rootOrNull) {
         }
     }
     return docs;
+}
+
+iStringSet *listOpenURLs_App(void) {
+    iStringSet *set = new_StringSet();
+    iObjectList *docs = listDocuments_App(NULL);
+    iConstForEach(ObjectList, i, docs) {
+        insert_StringSet(set, withSpacesEncoded_String(url_DocumentWidget(i.object)));
+    }
+    iRelease(docs);
+    return set;
 }

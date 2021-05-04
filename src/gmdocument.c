@@ -33,6 +33,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <the_Foundation/ptrarray.h>
 #include <the_Foundation/regexp.h>
+#include <the_Foundation/stringset.h>
 
 #include <ctype.h>
 
@@ -87,6 +88,7 @@ struct Impl_GmDocument {
     uint32_t  themeSeed;
     iChar     siteIcon;
     iMedia *  media;
+    iStringSet *openURLs; /* currently open URLs for highlighting links */
 };
 
 iDefineObjectConstruction(GmDocument)
@@ -229,6 +231,9 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
                 if (isValid_Time(&link->when)) {
                     link->flags |= visited_GmLinkFlag;
                 }
+                if (contains_StringSet(d->openURLs, &link->url)) {
+                    link->flags |= isOpen_GmLinkFlag;
+                }
             }
         }
         pushBack_PtrArray(&d->links, link);
@@ -340,6 +345,13 @@ static void alignDecoration_GmRun_(iGmRun *run, iBool isCentered) {
     run->visBounds.size.x -= xAdjust;
 }
 
+static void updateOpenURLs_GmDocument_(iGmDocument *d) {
+    if (d->openURLs) {
+        iReleasePtr(&d->openURLs);
+    }
+    d->openURLs = listOpenURLs_App();
+}
+
 static void doLayout_GmDocument_(iGmDocument *d) {
     const iPrefs *prefs             = prefs_App();
     const iBool   isMono            = isForcedMonospace_GmDocument_(d);
@@ -405,6 +417,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     if (d->size.x <= 0 || isEmpty_String(&d->source)) {
         return;
     }
+    updateOpenURLs_GmDocument_(d);
     const iRangecc   content       = range_String(&d->source);
     iRangecc         contentLine   = iNullRange;
     iInt2            pos           = zero_I2();
@@ -861,9 +874,11 @@ void init_GmDocument(iGmDocument *d) {
     d->themeSeed = 0;
     d->siteIcon = 0;
     d->media = new_Media();
+    d->openURLs = NULL;
 }
 
 void deinit_GmDocument(iGmDocument *d) {
+    iReleasePtr(&d->openURLs);
     delete_Media(d->media);
     deinit_String(&d->bannerText);
     deinit_String(&d->title);
@@ -900,10 +915,15 @@ static void setDerivedThemeColors_(enum iGmDocumentTheme theme) {
     set_Color(tmQuoteIcon_ColorId,
               mix_Color(get_Color(tmQuote_ColorId), get_Color(tmBackground_ColorId), 0.55f));
     set_Color(tmBannerSideTitle_ColorId,
-              mix_Color(get_Color(tmBannerTitle_ColorId), get_Color(tmBackground_ColorId),
+              mix_Color(get_Color(tmBannerTitle_ColorId),
+                        get_Color(tmBackground_ColorId),
                         theme == colorfulDark_GmDocumentTheme ? 0.55f : 0));
-    set_Color(tmAltTextBackground_ColorId, mix_Color(get_Color(tmQuoteIcon_ColorId),
-                                                     get_Color(tmBackground_ColorId), 0.85f));
+    set_Color(tmBackgroundAltText_ColorId,
+              mix_Color(get_Color(tmQuoteIcon_ColorId), get_Color(tmBackground_ColorId), 0.85f));
+    set_Color(tmBackgroundOpenLink_ColorId,
+              mix_Color(get_Color(tmLinkText_ColorId), get_Color(tmBackground_ColorId), 0.92f));
+    set_Color(tmFrameOpenLink_ColorId,
+              mix_Color(get_Color(tmLinkText_ColorId), get_Color(tmBackground_ColorId), 0.78f));
     if (theme == colorfulDark_GmDocumentTheme) {
         /* Ensure paragraph text and link text aren't too similarly colored. */
         if (delta_Color(get_Color(tmLinkText_ColorId), get_Color(tmParagraph_ColorId)) < 100) {
@@ -1379,6 +1399,22 @@ void setWidth_GmDocument(iGmDocument *d, int width) {
 
 void redoLayout_GmDocument(iGmDocument *d) {
     doLayout_GmDocument_(d);
+}
+
+iBool updateOpenURLs_GmDocument(iGmDocument *d) {
+    iBool wasChanged = iFalse;
+    updateOpenURLs_GmDocument_(d);
+    iForEach(PtrArray, i, &d->links) {
+        iGmLink *link = i.ptr;
+        if (!equal_String(&link->url, &d->url)) {
+            const iBool isOpen = contains_StringSet(d->openURLs, &link->url);
+            if (isOpen ^ ((link->flags & isOpen_GmLinkFlag) != 0)) {
+                iChangeFlags(link->flags, isOpen_GmLinkFlag, isOpen);
+                wasChanged = iTrue;
+            }
+        }
+    }
+    return wasChanged;
 }
 
 iLocalDef iBool isNormalizableSpace_(char ch) {

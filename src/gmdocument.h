@@ -83,6 +83,7 @@ enum iGmLinkFlags {
     permanent_GmLinkFlag          = iBit(15), /* content cannot be dismissed; media link */
     query_GmLinkFlag              = iBit(16), /* Gopher query link */
     iconFromLabel_GmLinkFlag      = iBit(17), /* use an Emoji/special character from label */
+    isOpen_GmLinkFlag             = iBit(18), /* currently open in a tab */
 };
 
 struct Impl_GmHeading {
@@ -164,6 +165,7 @@ void    setFormat_GmDocument    (iGmDocument *, enum iGmDocumentFormat format);
 void    setBanner_GmDocument    (iGmDocument *, enum iGmDocumentBanner type);
 void    setWidth_GmDocument     (iGmDocument *, int width);
 void    redoLayout_GmDocument   (iGmDocument *);
+iBool   updateOpenURLs_GmDocument(iGmDocument *);
 void    setUrl_GmDocument       (iGmDocument *, const iString *url);
 void    setSource_GmDocument    (iGmDocument *, const iString *source, int width);
 void    foldPre_GmDocument      (iGmDocument *, uint16_t preId);

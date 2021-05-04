@@ -26,6 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <the_Foundation/objectlist.h>
 #include <the_Foundation/string.h>
+#include <the_Foundation/stringset.h>
 #include <the_Foundation/time.h>
 
 #include "prefs.h"
@@ -90,6 +91,7 @@ iMimeHooks *        mimeHooks_App       (void);
 iPeriodic *         periodic_App        (void);
 iDocumentWidget *   document_App        (void);
 iObjectList *       listDocuments_App   (const iRoot *rootOrNull); /* NULL for all roots */
+iStringSet *        listOpenURLs_App    (void); /* all tabs */
 iDocumentWidget *   newTab_App          (const iDocumentWidget *duplicateOf, iBool switchToNew);
 void                trimCache_App       (void);
 

@@ -286,7 +286,7 @@ struct Impl_DocumentWidget {
     iWidget *      playerMenu;
     iWidget *      copyMenu;
     iVisBuf *      visBuf;
-    iGmRunRange *  visBufMeta;
+    iVisBufMeta *  visBufMeta;
     iPtrSet *      invalidRuns;
     iDrawBufs *    drawBufs; /* dynamic state for drawing */
     iTranslation * translation;
@@ -1881,7 +1881,15 @@ static iBool handlePinch_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
 
 static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
     iWidget *w = as_Widget(d);
-    if (equal_Command(cmd, "document.render")) /* Periodic makes direct dispatch to here */ {
+    if (equal_Command(cmd, "document.openurls.changed")) {
+        /* When any tab changes its document URL, update the open link indicators. */
+        if (updateOpenURLs_GmDocument(d->doc)) {
+            invalidate_DocumentWidget_(d);
+            refresh_Widget(d);
+        }
+        return iFalse;
+    }
+    if (equal_Command(cmd, "document.render")) /* `Periodic` makes direct dispatch to here */ {
 //        printf("%u: document.render\n", SDL_GetTicks());
         if (SDL_GetTicks() - d->drawBufs->lastRenderTime > 150) {
             remove_Periodic(periodic_App(), d);
@@ -3486,15 +3494,18 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
         /* Media UIs are drawn afterwards as a dynamic overlay. */
         return;
     }
-//    printf("  drawRun: {%s}\n", cstr_Rangecc(run->text));
-    enum iColorId      fg  = run->color;
-    const iGmDocument *doc = d->widget->doc;
-    iBool              isHover =
+    enum iColorId      fg        = run->color;
+    const iGmDocument *doc       = d->widget->doc;
+    const int          linkFlags = linkFlags_GmDocument(doc, run->linkId);
+    /* Hover state of a link. */
+    iBool isHover =
         (run->linkId && d->widget->hoverLink && run->linkId == d->widget->hoverLink->linkId &&
          ~run->flags & decoration_GmRunFlag);
+    /* Visible (scrolled) position of the run. */
     const iInt2 visPos = addX_I2(add_I2(run->visBounds.pos, origin),
                                  /* Preformatted runs can be scrolled. */
                                  runOffset_DocumentWidget_(d->widget, run));
+    const iRect visRect = { visPos, run->visBounds.size };
     if (run->flags & footer_GmRunFlag) {
         iRect footerBack =
             (iRect){ visPos, init_I2(width_Rect(d->widgetBounds), run->visBounds.size.y) };
@@ -3502,16 +3513,48 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
         fillRect_Paint(&d->paint, footerBack, tmBackground_ColorId);
         return;
     }
-    fillRect_Paint(&d->paint, (iRect){ visPos, run->visBounds.size }, tmBackground_ColorId);
+    /* Fill the background. */ {
+        if (run->linkId && linkFlags & isOpen_GmLinkFlag) {
+            /* Open links get a highlighted background. */
+            int bg = tmBackgroundOpenLink_ColorId;
+            const int frame = tmFrameOpenLink_ColorId;
+            iRect     wideRect = { init_I2(left_Rect(d->widgetBounds), visPos.y),
+                               init_I2(width_Rect(d->widgetBounds) +
+                                           width_Widget(d->widget->scroll),
+                                       height_Rect(run->visBounds)) };
+            /* The first line is composed of two runs that may be drawn in either order, so
+               only draw half of the background. */
+            if (run->flags & decoration_GmRunFlag) {
+                wideRect.size.x = right_Rect(visRect) - left_Rect(wideRect);
+            }
+            else if (run->flags & startOfLine_GmRunFlag) {
+                wideRect.size.x = right_Rect(wideRect) - left_Rect(visRect);
+                wideRect.pos.x  = left_Rect(visRect);
+            }
+            fillRect_Paint(&d->paint, wideRect, bg);
+            if (run->flags & (startOfLine_GmRunFlag | decoration_GmRunFlag)) {
+                drawHLine_Paint(&d->paint, topLeft_Rect(wideRect), width_Rect(wideRect), frame);
+            }
+            /* TODO: The decoration is not marked as endOfLine, so it lacks the bottom line. */
+//            if (run->flags & endOfLine_GmRunFlag) {
+//                drawHLine_Paint(
+//                    &d->paint, addY_I2(bottomLeft_Rect(wideRect), -1), width_Rect(wideRect), frame);
+//            }
+        }
+        else {
+            /* Normal background for other runs. */
+            fillRect_Paint(&d->paint, (iRect){ visPos, run->visBounds.size }, tmBackground_ColorId);
+        }
+    }
     if (run->linkId && ~run->flags & decoration_GmRunFlag) {
         fg = linkColor_GmDocument(doc, run->linkId, isHover ? textHover_GmLinkPart : text_GmLinkPart);
-        if (linkFlags_GmDocument(doc, run->linkId) & content_GmLinkFlag) {
+        if (linkFlags & content_GmLinkFlag) {
             fg = linkColor_GmDocument(doc, run->linkId, textHover_GmLinkPart); /* link is inactive */
         }
     }
     if (run->flags & altText_GmRunFlag) {
         const iInt2 margin = preRunMargin_GmDocument(doc, run->preId);
-        fillRect_Paint(&d->paint, (iRect){ visPos, run->visBounds.size }, tmAltTextBackground_ColorId);
+        fillRect_Paint(&d->paint, (iRect){ visPos, run->visBounds.size }, tmBackgroundAltText_ColorId);
         drawRect_Paint(&d->paint, (iRect){ visPos, run->visBounds.size }, tmQuoteIcon_ColorId);
         drawWrapRange_Text(run->font, add_I2(visPos, margin),
                            run->visBounds.size.x - 2 * margin.x, run->color, run->text);
@@ -3552,7 +3595,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
     if (run->linkId && ~run->flags & decoration_GmRunFlag) {
         const int metaFont = paragraph_FontId;
         /* TODO: Show status of an ongoing media request. */
-        const int flags = linkFlags_GmDocument(doc, run->linkId);
+        const int flags = linkFlags;
         const iRect linkRect = moved_Rect(run->visBounds, origin);
         iMediaRequest *mr = NULL;
         /* Show metadata about inline content. */
@@ -3614,7 +3657,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
         else if (isHover) {
             const iGmLinkId linkId = d->widget->hoverLink->linkId;
             const iString * url    = linkUrl_GmDocument(doc, linkId);
-            const int       flags  = linkFlags_GmDocument(doc, linkId);
+            const int       flags  = linkFlags;
             iUrl parts;
             init_Url(&parts, url);
             fg                    = linkColor_GmDocument(doc, linkId, textHover_GmLinkPart);
@@ -4122,7 +4165,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
             if (altTextOpacity < 1) {
                 SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_BLEND);
             }
-            fillRect_Paint(&ctx.paint, altRect, tmAltTextBackground_ColorId);
+            fillRect_Paint(&ctx.paint, altRect, tmBackgroundAltText_ColorId);
             drawRect_Paint(&ctx.paint, altRect, tmQuoteIcon_ColorId);
             setOpacity_Text(altTextOpacity);
             drawWrapRange_Text(altFont, addX_I2(pos, margin), wrap,
