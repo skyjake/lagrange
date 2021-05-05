@@ -85,13 +85,17 @@ static void parseNavigationLinks_Gempub_(const iGempub *d) {
         init_RegExpMatch(&m);
         if (matchRange_RegExp(linkPattern, line, &m)) {
             iBeginCollect();
-            iGempubNavLink link;
-            init_GempubNavLink(&link);
             const iRangecc url = capturedRange_RegExpMatch(&m, 1);
-            set_String(&link.url, absoluteUrl_String(url_GmRequest(index), collectNewRange_String(url)));
-            setRange_String(&link.label, capturedRange_RegExpMatch(&m, 2));
-            trim_String(&link.label);
-            pushBack_Array(d->navLinks, &link);
+            iUrl parts;
+            init_Url(&parts, collectNewRange_String(url));
+            if (isEmpty_Range(&parts.scheme)) {
+                iGempubNavLink link;
+                init_GempubNavLink(&link);
+                set_String(&link.url, absoluteUrl_String(url_GmRequest(index), collectNewRange_String(url)));
+                setRange_String(&link.label, capturedRange_RegExpMatch(&m, 2));
+                trim_String(&link.label);
+                pushBack_Array(d->navLinks, &link);
+            }
             iEndCollect();
         }
     }
