@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-05-05 03:55+0000\n"
+"PO-Revision-Date: 2021-05-06 09:39+0000\n"
 "Last-Translator: Olga Smirnova <mistresssilvara@hotmail.com>\n"
 "Language-Team: Occidental <http://weblate.skyjake.fi/projects/lagrange/ui/ie/"
 ">\n"
@@ -1537,3 +1537,55 @@ msgstr "Lingue"
 
 msgid "gempub.meta.license"
 msgstr "Licentie"
+
+msgid "gempub.cover.viewlocal"
+msgstr "On posse leer ti libre Gempub pos que it ha esset gardat localmen."
+
+#, c-format
+msgid "dir.summary"
+msgid_plural "dir.summary.n"
+msgstr[0] "Ti fólder contene %zu element."
+msgstr[1] "Ti fólder contene %zu elementes."
+
+#, c-format
+msgid "archive.summary"
+msgid_plural "archive.summary.n"
+msgstr[0] "Ti archive contene %zu element e su compresset grandore es %.1f Mo."
+msgstr[1] "Ti archive contene %zu elementes e su compresset grandore es %.1f Mo."
+
+msgid "link.side"
+msgstr "Aperter li ligament láteralmen"
+
+#, c-format
+msgid "doc.archive"
+msgstr "%s es un compresset archive."
+
+msgid "doc.archive.view"
+msgstr "Vider li contenete del archive"
+
+msgid "bookmark.tag.linksplit"
+msgstr "Ligamentes apertet láteralmen"
+
+msgid "lang.tok"
+msgstr "Toki Pona"
+
+msgid "prefs.pinsplit.none"
+msgstr "Null"
+
+msgid "prefs.pinsplit.left"
+msgstr "Levul carte"
+
+msgid "prefs.pinsplit.right"
+msgstr "Dextri carte"
+
+msgid "archive.exit"
+msgstr "Surtir li archive"
+
+msgid "dir.empty"
+msgstr "Ti fólder es vacui."
+
+msgid "keys.tab.close.other"
+msgstr "Cluder li altri cartes"
+
+msgid "keys.split.menu"
+msgstr "Selecter li mode de fension"
