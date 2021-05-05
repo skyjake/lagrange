@@ -696,25 +696,28 @@ void submit_GmRequest(iGmRequest *d) {
                         }
                         else {
                             /* The root directory. */
-                            appendFormat_String(page, "=> %s " close_Icon " Exit the archive\n",
+                            appendFormat_String(page, "=> %s " close_Icon " ${archive.exit}\n",
                                                 cstr_String(containerUrl));
-                            appendFormat_String(page, "# %s\n\n"
-                                                "This archive contains %zu items and its compressed "
-                                                "size is %.1f MB.\n\n",
-                                                cstr_Rangecc(containerName),
+                            appendFormat_String(page, "# %s\n\n", cstr_Rangecc(containerName));
+                            appendFormat_String(page,
+                                                cstrCount_Lang("archive.summary.n", numEntries_Archive(arch)),
                                                 numEntries_Archive(arch),
                                                 (double) sourceSize_Archive(arch) / 1.0e6);
+                            appendCStr_String(page, "\n\n");
                         }
                         iStringSet *contents = iClob(listDirectory_Archive(arch, entryPath));
                         if (!isRoot) {
                             if (isEmpty_StringSet(contents)) {
-                                appendCStr_String(page, "This directory is empty.\n");
+                                appendCStr_String(page, "${dir.empty}\n");
                             }
                             else if (size_StringSet(contents) > 1) {
-                                appendFormat_String(page, "This directory contains %zu items.\n\n",
+                                appendFormat_String(page, cstrCount_Lang("dir.summary.n",
+                                                                         size_StringSet(contents)),
                                                     size_StringSet(contents));
+                                appendCStr_String(page, "\n\n");
                             }
                         }
+                        translate_Lang(page);
                         iConstForEach(StringSet, e, contents) {
                             const iString *subPath = e.value;
                             iRangecc relSub = range_String(subPath);

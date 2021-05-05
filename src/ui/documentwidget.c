@@ -1182,10 +1182,11 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse
                     setRange_String(&d->sourceMime, param);
                     iString *key = collectNew_String();
                     toString_Sym(SDLK_s, KMOD_PRIMARY, key);
-                    format_String(&str, "# %s\n"
-                                  "%s is a compressed archive.\n\n",
-                                  zipPageHeading_(param),
-                                  cstr_Rangecc(baseName_Path(d->mod.url)));
+                    format_String(&str, "# %s\n", zipPageHeading_(param));
+                    appendFormat_String(&str,
+                                        cstr_Lang("doc.archive"),
+                                        cstr_Rangecc(baseName_Path(d->mod.url)));
+                    appendCStr_String(&str, "\n\n");
                     iString *localPath = localFilePathFromUrl_String(d->mod.url);
                     if (!localPath) {
                         appendFormat_String(&str, "%s\n\n",
@@ -1195,7 +1196,7 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse
                     }
                     delete_String(localPath);
                     if (equalCase_Rangecc(urlScheme_String(d->mod.url), "file")) {
-                        appendFormat_String(&str, "=> %s/ View archive contents\n",
+                        appendFormat_String(&str, "=> %s/ ${doc.archive.view}\n",
                                             cstr_String(withSpacesEncoded_String(d->mod.url)));
                     }
                     translate_Lang(&str);

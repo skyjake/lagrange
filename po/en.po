@@ -5,6 +5,12 @@ msgstr "Preformatted text without a caption"
 msgid "doc.fetching"
 msgstr "Fetching"
 
+msgid "doc.archive"
+msgstr "%s is a compressed archive."
+
+msgid "doc.archive.view"
+msgstr "View archive contents"
+
 # Inline download status message.
 msgid "media.download.warnclose"
 msgstr "Download will be cancelled if this tab is closed."
@@ -1239,6 +1245,22 @@ msgstr "Reset to Default"
 msgid "menu.binding.clear"
 msgstr "Remove"
 
+msgid "archive.exit"
+msgstr "Exit the archive"
+
+msgid "archive.summary"
+msgid_plural "archive.summary.n"
+msgstr[0] "This archive contains %zu item and its compressed size is %.1f MB."
+msgstr[1] "This archive contains %zu items and its compressed size is %.1f MB."
+
+msgid "dir.empty"
+msgstr "This directory is empty."
+
+msgid "dir.summary"
+msgid_plural "dir.summary.n"
+msgstr[0] "This directory contains %zu item."
+msgstr[1] "This directory contains %zu items."
+
 msgid "keys.top"
 msgstr "Jump to top"
 
@@ -1319,6 +1341,9 @@ msgstr "New tab"
 
 msgid "keys.tab.close"
 msgstr "Close tab"
+
+msgid "keys.tab.close.other"
+msgstr "Close other tabs"
 
 msgid "keys.tab.prev"
 msgstr "Previous tab"
