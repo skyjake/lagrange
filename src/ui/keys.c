@@ -222,6 +222,7 @@ static const struct { int id; iMenuItem bind; int flags; } defaultBindings_[] = 
 #endif
     { 76, { "${keys.tab.new}",              newTab_KeyShortcut,             "tabs.new"                          }, 0 },
     { 77, { "${keys.tab.close}",            closeTab_KeyShortcut,           "tabs.close"                        }, 0 },
+    { 78, { "${keys.tab.close.other}",      SDLK_w, KMOD_PRIMARY | KMOD_SHIFT, "tabs.close toleft:1 toright:1"  }, 0 },
     { 80, { "${keys.tab.prev}",             prevTab_KeyShortcut,            "tabs.prev"                         }, 0 },
     { 81, { "${keys.tab.next}",             nextTab_KeyShortcut,            "tabs.next"                         }, 0 },
     { 90, { "${keys.split.menu}",           SDLK_j, KMOD_PRIMARY,           "splitmenu.open"                    }, 0 },
