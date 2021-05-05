@@ -43,7 +43,7 @@ void init_Url(iUrl *d, const iString *text) {
     static iRegExp *urlPattern_;
     static iRegExp *authPattern_;
     if (!urlPattern_) {
-        urlPattern_  = new_RegExp("^(([^:/?#]+):)?(//([^/?#]*))?"
+        urlPattern_  = new_RegExp("^(([-.+a-z0-9]+):)?(//([^/?#]*))?"
                                  "([^?#]*)(\\?([^#]*))?(#(.*))?",
                                  caseInsensitive_RegExpOption);
         authPattern_ = new_RegExp("(([^@]+)@)?(([^:\\[\\]]+)"
