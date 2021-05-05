@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-05-05 03:55+0000\n"
+"PO-Revision-Date: 2021-05-06 09:39+0000\n"
 "Last-Translator: Страхиња Радић <contact@strahinja.org>\n"
 "Language-Team: Serbian <http://weblate.skyjake.fi/projects/lagrange/ui/sr/>\n"
 "Language: sr\n"
@@ -1568,3 +1568,51 @@ msgstr "Језик"
 
 msgid "gempub.meta.license"
 msgstr "Лиценца"
+
+msgid "bookmark.tag.linksplit"
+msgstr "Везе се отварају са стране"
+
+#, c-format
+msgid "doc.archive"
+msgstr "%s је компресована архива."
+
+msgid "doc.archive.view"
+msgstr "Прегледај садржај архиве"
+
+msgid "lang.tok"
+msgstr "Токи пона"
+
+msgid "prefs.pinsplit"
+msgstr "Прикачени раздвојени поглед:"
+
+msgid "prefs.pinsplit.none"
+msgstr "Ништа"
+
+msgid "prefs.pinsplit.left"
+msgstr "Лева картица"
+
+msgid "prefs.pinsplit.right"
+msgstr "Десна картица"
+
+#, c-format
+msgid "archive.summary"
+msgid_plural "archive.summary.n"
+msgstr[0] "Ова архива садржи %zu ставку, а њена компресована величина је %.1f МБ."
+msgstr[1] "Ова архива садржи %zu ставке, а њена компресована величина је %.1f МБ."
+msgstr[2] "Ова архива садржи %zu ставки, а њена компресована величина је %.1f МБ."
+
+msgid "archive.exit"
+msgstr "Изађи из архиве"
+
+msgid "dir.empty"
+msgstr "Овај директоријум је празан."
+
+#, c-format
+msgid "dir.summary"
+msgid_plural "dir.summary.n"
+msgstr[0] "Овај директоријум садржи %zu ставку."
+msgstr[1] "Овај директоријум садржи %zu ставке."
+msgstr[2] "Овај директоријум садржи %zu ставки."
+
+msgid "keys.tab.close.other"
+msgstr "Затварање осталих картица"
