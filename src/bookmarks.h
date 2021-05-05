@@ -52,9 +52,23 @@ struct Impl_Bookmark {
 
 iLocalDef uint32_t  id_Bookmark (const iBookmark *d) { return d->node.key; }
 
-iBool   hasTag_Bookmark     (const iBookmark *d, const char *tag);
-void    addTag_Bookmark     (iBookmark *d, const char *tag);
-void    removeTag_Bookmark  (iBookmark *d, const char *tag);
+iBool   hasTag_Bookmark     (const iBookmark *, const char *tag);
+void    addTag_Bookmark     (iBookmark *, const char *tag);
+void    removeTag_Bookmark  (iBookmark *, const char *tag);
+
+iLocalDef void addTagIfMissing_Bookmark(iBookmark *d, const char *tag) {
+    if (!hasTag_Bookmark(d, tag)) {
+        addTag_Bookmark(d, tag);
+    }
+}
+iLocalDef void addOrRemoveTag_Bookmark(iBookmark *d, const char *tag, iBool add) {
+    if (add) {
+        addTagIfMissing_Bookmark(d, tag);
+    }
+    else {
+        removeTag_Bookmark(d, tag);
+    }
+}
 
 /*----------------------------------------------------------------------------------------------*/
 

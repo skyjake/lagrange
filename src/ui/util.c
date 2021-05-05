@@ -2506,11 +2506,18 @@ static iBool handleBookmarkCreationCommands_SidebarWidget_(iWidget *editor, cons
             const iString *tags  = text_InputWidget(findChild_Widget(editor, "bmed.tags"));
             const iString *icon  = collect_String(trimmed_String(text_InputWidget(findChild_Widget(editor, "bmed.icon"))));
             const uint32_t id    = add_Bookmarks(bookmarks_App(), url, title, tags, first_String(icon));
+            iBookmark *    bm    = get_Bookmarks(bookmarks_App(), id);
             if (!isEmpty_String(icon)) {
-                iBookmark *bm = get_Bookmarks(bookmarks_App(), id);
-                if (!hasTag_Bookmark(bm, userIcon_BookmarkTag)) {
-                    addTag_Bookmark(bm, userIcon_BookmarkTag);
-                }
+                addTagIfMissing_Bookmark(bm, userIcon_BookmarkTag);
+            }
+            if (isSelected_Widget(findChild_Widget(editor, "bmed.tag.home"))) {
+                addTag_Bookmark(bm, homepage_BookmarkTag);
+            }
+            if (isSelected_Widget(findChild_Widget(editor, "bmed.tag.remote"))) {
+                addTag_Bookmark(bm, remoteSource_BookmarkTag);
+            }
+            if (isSelected_Widget(findChild_Widget(editor, "bmed.tag.linksplit"))) {
+                addTag_Bookmark(bm, linkSplit_BookmarkTag);
             }
             postCommand_App("bookmarks.changed");
         }

@@ -265,9 +265,10 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
             break;
         }
         case bookmarks_SidebarMode: {
-            iRegExp *homeTag = iClob(new_RegExp("\\bhomepage\\b", caseSensitive_RegExpOption));
-            iRegExp *subTag  = iClob(new_RegExp("\\bsubscribed\\b", caseSensitive_RegExpOption));
-            iRegExp *remoteSourceTag = iClob(new_RegExp("\\bremotesource\\b", caseSensitive_RegExpOption));
+            iRegExp *homeTag         = iClob(new_RegExp("\\b" homepage_BookmarkTag "\\b", caseSensitive_RegExpOption));
+            iRegExp *subTag          = iClob(new_RegExp("\\b" subscribed_BookmarkTag "\\b", caseSensitive_RegExpOption));
+            iRegExp *remoteSourceTag = iClob(new_RegExp("\\b" remoteSource_BookmarkTag "\\b", caseSensitive_RegExpOption));
+            iRegExp *linkSplitTag    = iClob(new_RegExp("\\b" linkSplit_BookmarkTag "\\b", caseSensitive_RegExpOption));
             iConstForEach(PtrArray, i, list_Bookmarks(bookmarks_App(), cmpTitle_Bookmark_, NULL, NULL)) {
                 const iBookmark *bm = i.ptr;
                 iSidebarItem *item = new_SidebarItem();
@@ -289,6 +290,10 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                     if (matchString_RegExp(remoteSourceTag, &bm->tags, &m)) {
                         appendChar_String(&item->meta, 0x2913);
                         item->isBold = iTrue;
+                    }
+                    init_RegExpMatch(&m);
+                    if (matchString_RegExp(linkSplitTag, &bm->tags, &m)) {
+                        appendChar_String(&item->meta, 0x25e7);
                     }
                 }
                 addItem_ListWidget(d->list, item);
@@ -828,11 +833,15 @@ iBool handleBookmarkEditorCommands_SidebarWidget_(iWidget *editor, const char *c
                 bm->icon = 0;
             }
             else {
-                if (!hasTag_Bookmark(bm, userIcon_BookmarkTag)) {
-                    addTag_Bookmark(bm, userIcon_BookmarkTag);
-                }
+                addTagIfMissing_Bookmark(bm, userIcon_BookmarkTag);
                 bm->icon = first_String(icon);
             }
+            addOrRemoveTag_Bookmark(bm, homepage_BookmarkTag,
+                                    isSelected_Widget(findChild_Widget(editor, "bmed.tag.home")));
+            addOrRemoveTag_Bookmark(bm, remoteSource_BookmarkTag,
+                                    isSelected_Widget(findChild_Widget(editor, "bmed.tag.remote")));
+            addOrRemoveTag_Bookmark(bm, linkSplit_BookmarkTag,
+                                    isSelected_Widget(findChild_Widget(editor, "bmed.tag.linksplit")));
             postCommand_App("bookmarks.changed");
         }
         setFlags_Widget(as_Widget(d), disabled_WidgetFlag, iFalse);
@@ -1012,6 +1021,15 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                     setText_InputWidget(findChild_Widget(dlg, "bmed.icon"),
                                         collect_String(newUnicodeN_String(&bm->icon, 1)));
                 }
+                setFlags_Widget(findChild_Widget(dlg, "bmed.tag.home"),
+                                selected_WidgetFlag,
+                                hasTag_Bookmark(bm, homepage_BookmarkTag));
+                setFlags_Widget(findChild_Widget(dlg, "bmed.tag.remote"),
+                                selected_WidgetFlag,
+                                hasTag_Bookmark(bm, remoteSource_BookmarkTag));
+                setFlags_Widget(findChild_Widget(dlg, "bmed.tag.linksplit"),
+                                selected_WidgetFlag,
+                                hasTag_Bookmark(bm, linkSplit_BookmarkTag));
                 setCommandHandler_Widget(dlg, handleBookmarkEditorCommands_SidebarWidget_);
                 setFocus_Widget(findChild_Widget(dlg, "bmed.title"));
             }
