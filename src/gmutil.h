@@ -26,6 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/string.h>
 
 iDeclareType(GmError)
+iDeclareType(RegExp)
 iDeclareType(Url)
 
 /* Response status codes. */
@@ -89,6 +90,8 @@ struct Impl_GmError {
 
 iBool               isDefined_GmError   (enum iGmStatusCode code);
 const iGmError *    get_GmError         (enum iGmStatusCode code);
+
+iRegExp *       newGemtextLink_RegExp   (void);
 
 struct Impl_Url {
     iRangecc scheme;

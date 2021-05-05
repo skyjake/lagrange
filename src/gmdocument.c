@@ -168,7 +168,7 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
     /* Returns the human-readable label of the link. */
     static iRegExp *pattern_;
     if (!pattern_) {
-        pattern_ = new_RegExp("=>\\s*([^\\s]+)(\\s.*)?", caseInsensitive_RegExpOption);
+        pattern_ = newGemtextLink_RegExp();
     }
     iRegExpMatch m;
     init_RegExpMatch(&m);

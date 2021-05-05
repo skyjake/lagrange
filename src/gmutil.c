@@ -25,6 +25,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/regexp.h>
 #include <the_Foundation/object.h>
 #include <the_Foundation/path.h>
+#include <the_Foundation/regexp.h>
+
+iRegExp *newGemtextLink_RegExp(void) {
+    return new_RegExp("=>\\s*([^\\s]+)(\\s.*)?", 0);
+}
 
 void init_Url(iUrl *d, const iString *text) {
     /* Handle "file:" as a special case since it only has the path part. */

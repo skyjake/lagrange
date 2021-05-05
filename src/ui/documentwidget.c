@@ -1094,6 +1094,7 @@ static const char *zipPageHeading_(const iRangecc mime) {
 }
 
 static void postProcessRequestContent_DocumentWidget_(iDocumentWidget *d) {
+    iWidget *w = as_Widget(d);
     delete_Gempub(d->sourceGempub);
     d->sourceGempub = NULL;
     if (!cmpCase_String(&d->sourceMime, "application/octet-stream") ||
@@ -1111,26 +1112,53 @@ static void postProcessRequestContent_DocumentWidget_(iDocumentWidget *d) {
         }
     }
     if (!d->sourceGempub) {
-        iString *localPath = localFilePathFromUrl_String(d->mod.url);
+        const iString *localPath = collect_String(localFilePathFromUrl_String(d->mod.url));
+        iBool isInside = iFalse;
+        if (localPath && !fileExists_FileInfo(localPath)) {
+            /* This URL may refer to a file inside the archive. */
+            localPath = findContainerArchive_Path(localPath);
+            isInside = iTrue;
+        }
         if (localPath && equal_CStr(mediaType_Path(localPath), "application/gpub+zip")) {
             iGempub *gempub = new_Gempub();
             if (openFile_Gempub(gempub, localPath)) {
-                setBaseUrl_Gempub(gempub, d->mod.url);
-                setSource_DocumentWidget(d, collect_String(coverPageSource_Gempub(gempub)));
-                setCStr_String(&d->sourceMime, mimeType_Gempub);
+                setBaseUrl_Gempub(gempub, collect_String(makeFileUrl_String(localPath)));
+                if (!isInside) {
+                    setSource_DocumentWidget(d, collect_String(coverPageSource_Gempub(gempub)));
+                    setCStr_String(&d->sourceMime, mimeType_Gempub);
+                }
                 d->sourceGempub = gempub;
             }
             else {
                 delete_Gempub(gempub);
             }
         }
-        delete_String(localPath);
     }
     if (d->sourceGempub) {
         if (preloadCoverImage_Gempub(d->sourceGempub, d->doc)) {
             redoLayout_GmDocument(d->doc);
             updateVisible_DocumentWidget_(d);
             invalidate_DocumentWidget_(d);
+        }
+        if (prefs_App()->pinSplit && equal_String(d->mod.url, indexPageUrl_Gempub(d->sourceGempub))) {
+            const iString *navStart = navStartLinkUrl_Gempub(d->sourceGempub);
+            if (navStart) {
+                iWindow *win = get_Window();
+                /* Auto-split to show index and the first navigation link. */
+                if (numRoots_Window(win) == 2) {
+                    /* This document is showing the index page. */
+                    iRoot *other = otherRoot_Window(win, w->root);
+                    postCommandf_Root(other, "open url:%s", cstr_String(navStart));
+                    if (prefs_App()->pinSplit == 1 && w->root == win->roots[1]) {
+                        /* On the wrong side. */
+                        postCommand_App("ui.split swap:1");
+                    }
+                }
+                else {
+                    postCommandf_App(
+                        "open newtab:%d url:%s", otherRoot_OpenTabFlag, cstr_String(navStart));
+                }
+            }
         }
     }
 }
