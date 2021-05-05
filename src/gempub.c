@@ -25,31 +25,92 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "lang.h"
 #include "defs.h"
 #include "gmdocument.h"
+#include "gmrequest.h"
 #include "ui/util.h"
+#include "app.h"
 
 #include <the_Foundation/archive.h>
 #include <the_Foundation/file.h>
 #include <the_Foundation/path.h>
+#include <the_Foundation/regexp.h>
 
 const char *mimeType_Gempub = "application/gpub+zip";
 
+/*----------------------------------------------------------------------------------------------*/
+
+iDeclareType(GempubNavLink)
+ 
+struct Impl_GempubNavLink {
+    iString url;
+    iString label;
+};
+    
+static void init_GempubNavLink(iGempubNavLink *d) {
+    init_String(&d->url);
+    init_String(&d->label);
+}
+
+static void deinit_GempubNavLink(iGempubNavLink *d) {
+    deinit_String(&d->url);
+    deinit_String(&d->label);   
+}
+
+iDefineTypeConstruction(GempubNavLink)
+    
+/*----------------------------------------------------------------------------------------------*/
+    
 struct Impl_Gempub {
     iArchive *arch;
     iString baseUrl;
     iString props[max_GempubProperty];
+    iArray *navLinks; /* from index page */
 };
 
 iDefineTypeConstruction(Gempub)
+    
+static void parseNavigationLinks_Gempub_(const iGempub *d) {
+    if (!isEmpty_Array(d->navLinks)) {
+        return;
+    }
+    iGmRequest *index = iClob(new_GmRequest(certs_App()));
+    setUrl_GmRequest(index, indexPageUrl_Gempub(d));
+    submit_GmRequest(index); /* this is just a local file read */
+    iAssert(isFinished_GmRequest(index));
+    iRangecc src = iNullRange;
+    iRegExp *linkPattern = iClob(newGemtextLink_RegExp());
+    while (nextSplit_Rangecc(range_Block(body_GmRequest(index)), "\n", &src)) {
+        iRangecc line = src;
+        trim_Rangecc(&line);
+        iRegExpMatch m;
+        init_RegExpMatch(&m);
+        if (matchRange_RegExp(linkPattern, line, &m)) {
+            iBeginCollect();
+            iGempubNavLink link;
+            init_GempubNavLink(&link);
+            const iRangecc url = capturedRange_RegExpMatch(&m, 1);
+            set_String(&link.url, absoluteUrl_String(url_GmRequest(index), collectNewRange_String(url)));
+            setRange_String(&link.label, capturedRange_RegExpMatch(&m, 2));
+            trim_String(&link.label);
+            pushBack_Array(d->navLinks, &link);
+            iEndCollect();
+        }
+    }
+}
     
 void init_Gempub(iGempub *d) {
     d->arch = NULL;
     init_String(&d->baseUrl);
     iForIndices(i, d->props) {
         init_String(&d->props[i]);
-    }    
+    }
+    d->navLinks = new_Array(sizeof(iGempubNavLink));
 }
 
 void deinit_Gempub(iGempub *d) {
+    iForEach(Array, n, d->navLinks) {
+        deinit_GempubNavLink(n.value);
+    }
+    delete_Array(d->navLinks);
     iForIndices(i, d->props) {
         deinit_String(&d->props[i]);
     }
@@ -140,12 +201,27 @@ void close_Gempub(iGempub *d) {
     }
 }
 
+void setBaseUrl_Gempub(iGempub *d, const iString *url) {
+    set_String(&d->baseUrl, url);
+}
+
 iBool isOpen_Gempub(const iGempub *d) {
     return d->arch != NULL;
 }
 
-void setBaseUrl_Gempub(iGempub *d, const iString *url) {
-    set_String(&d->baseUrl, url);
+const iString *indexPageUrl_Gempub(const iGempub *d) {
+    iAssert(!isEmpty_String(&d->baseUrl));
+    iString *dir = collect_String(copy_String(&d->baseUrl));
+    appendCStr_String(dir, "/");
+    return absoluteUrl_String(dir, &d->props[index_GempubProperty]);
+}
+
+const iString *navStartLinkUrl_Gempub(const iGempub *d) {
+    parseNavigationLinks_Gempub_(d);
+    if (isEmpty_Array(d->navLinks)) {
+        return NULL; /* has no navigation structure */
+    }
+    return &((const iGempubNavLink *) constFront_Array(d->navLinks))->url;
 }
 
 static iBool hasProperty_Gempub_(const iGempub *d, enum iGempubProperty prop) {
@@ -176,7 +252,7 @@ iString *coverPageSource_Gempub(const iGempub *d) {
     appendProperty_Gempub_(d, "${gempub.meta.author}:", author_GempubProperty, out);
     if (!isRemote_Gempub_(d)) {
         appendFormat_String(out, "\n=> %s " book_Icon " ${gempub.cover.view}\n",
-                            cstrCollect_String(concat_Path(baseUrl, &d->props[index_GempubProperty])));
+                            cstr_String(indexPageUrl_Gempub(d)));
         if (hasProperty_Gempub_(d, cover_GempubProperty)) {
             appendFormat_String(out, "\n=> %s  ${gempub.cover.image}\n",
                                 cstrCollect_String(concat_Path(baseUrl, &d->props[cover_GempubProperty])));
