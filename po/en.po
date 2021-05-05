@@ -5,6 +5,7 @@ msgstr "Preformatted text without a caption"
 msgid "doc.fetching"
 msgstr "Fetching"
 
+#, c-format
 msgid "doc.archive"
 msgstr "%s is a compressed archive."
 
@@ -1248,6 +1249,7 @@ msgstr "Remove"
 msgid "archive.exit"
 msgstr "Exit the archive"
 
+#, c-format
 msgid "archive.summary"
 msgid_plural "archive.summary.n"
 msgstr[0] "This archive contains %zu item and its compressed size is %.1f MB."
@@ -1256,6 +1258,7 @@ msgstr[1] "This archive contains %zu items and its compressed size is %.1f MB."
 msgid "dir.empty"
 msgstr "This directory is empty."
 
+#, c-format
 msgid "dir.summary"
 msgid_plural "dir.summary.n"
 msgstr[0] "This directory contains %zu item."
