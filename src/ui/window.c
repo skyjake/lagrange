@@ -1214,30 +1214,36 @@ void setSplitMode_Window(iWindow *d, int splitFlags) {
             /* Add a second root. */
             iDocumentWidget *moved = document_Root(d->roots[0]);
             iAssert(d->roots[1] == NULL);
-            d->roots[1] = new_Root();
-            setCurrent_Root(d->roots[1]);
-            d->keyRoot = d->roots[1];
-            createUserInterface_Root(d->roots[1]);
+            const iBool addToLeft = (prefs_App()->pinSplit == 2);
+            size_t newRootIndex = 1;
+            if (addToLeft) {
+                iSwap(iRoot *, d->roots[0], d->roots[1]);
+                newRootIndex = 0;
+            }
+            d->roots[newRootIndex] = new_Root();
+            d->keyRoot             = d->roots[newRootIndex];
+            setCurrent_Root(d->roots[newRootIndex]);
+            createUserInterface_Root(d->roots[newRootIndex]);
             if (!isEmpty_String(d->pendingSplitUrl)) {
-                postCommandf_Root(d->roots[1], "open url:%s",
+                postCommandf_Root(d->roots[newRootIndex], "open url:%s",
                                   cstr_String(d->pendingSplitUrl));
                 clear_String(d->pendingSplitUrl);
             }
             else if (~splitFlags & noEvents_WindowSplit) {
-                iWidget *docTabs0 = findChild_Widget(d->roots[0]->widget, "doctabs");
-                iWidget *docTabs1 = findChild_Widget(d->roots[1]->widget, "doctabs");
+                iWidget *docTabs0 = findChild_Widget(d->roots[newRootIndex ^ 1]->widget, "doctabs");
+                iWidget *docTabs1 = findChild_Widget(d->roots[newRootIndex]->widget, "doctabs");
                 /* If the old root has multiple tabs, move the current one to the new split. */
                 if (tabCount_Widget(docTabs0) >= 2) {
                     int movedIndex = tabPageIndex_Widget(docTabs0, moved);
                     removeTabPage_Widget(docTabs0, movedIndex);
                     showTabPage_Widget(docTabs0, tabPage_Widget(docTabs0, iMax(movedIndex - 1, 0)));
                     iRelease(removeTabPage_Widget(docTabs1, 0)); /* delete the default tab */
-                    setRoot_Widget(as_Widget(moved), d->roots[1]);
+                    setRoot_Widget(as_Widget(moved), d->roots[newRootIndex]);
                     prependTabPage_Widget(docTabs1, iClob(moved), "", 0, 0);
                     postCommandf_App("tabs.switch page:%p", moved);
                 }
                 else {
-                    postCommand_Root(d->roots[1], "navigate.home");
+                    postCommand_Root(d->roots[newRootIndex], "navigate.home");
                 }
             }
             setCurrent_Root(NULL);

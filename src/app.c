@@ -2037,7 +2037,9 @@ iBool handleCommand_App(const char *cmd) {
         const int newTab = argLabel_Command(cmd, "newtab");
         if (newTab & otherRoot_OpenTabFlag && numRoots_Window(get_Window()) == 1) {
             /* Need to split first. */
-            postCommandf_App("ui.split arg:3 newtab:%d url:%s",
+            const iInt2 winSize = get_Window()->size;
+            postCommandf_App("ui.split arg:3 axis:%d newtab:%d url:%s",
+                             (float) winSize.x / (float) winSize.y < 0.7f ? 1 : 0,
                              newTab & ~otherRoot_OpenTabFlag,
                              cstr_String(url));
             return iTrue;
