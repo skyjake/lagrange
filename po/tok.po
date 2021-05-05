@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-05-05 03:55+0000\n"
+"PO-Revision-Date: 2021-05-06 09:39+0000\n"
 "Last-Translator: jan Anja <cyber@sysrq.in>\n"
 "Language-Team: Toki Pona <http://weblate.skyjake.fi/projects/lagrange/ui/tok/"
 ">\n"
@@ -138,7 +138,7 @@ msgid "menu.save.downloads"
 msgstr "o awen e lipu tawa ilo sona"
 
 msgid "menu.sidebar"
-msgstr "o len ala len e poki poka"
+msgstr "o len ala len e poki poka?"
 
 msgid "menu.sidebar.left"
 msgstr "o len ala len e poki poka wan?"
@@ -326,7 +326,7 @@ msgid "page.timestamp"
 msgstr "tenpo %c la mi kama jo e lipu ni"
 
 msgid "feeds.entry.newtab"
-msgstr "open e lipu lon poka sin"
+msgstr "o open e lipu lon poki sin"
 
 msgid "feeds.entry.markread"
 msgstr "mi wile ala lukin e lipu"
@@ -1229,12 +1229,12 @@ msgstr "o weka e nimi ali e ijo ali"
 #, c-format
 msgid "dlg.import.found"
 msgid_plural "dlg.import.found.n"
-msgstr[0] "nimi tawa sin %d li lon e lipu ni."
+msgstr[0] "nimi tawa sin %d li lon lipu ni."
 
 #, c-format
 msgid "feeds.list.counts"
 msgid_plural "feeds.list.counts.n"
-msgstr[0] "sina jo e lipu lukin %zu. ona ale li jo e %%s.\n"
+msgstr[0] "lipu lukin %zu li lon. ona ale li jo e %%s.\n"
 
 msgid "macos.menu.bookmarks.list"
 msgstr "lipu awen ali"
@@ -1475,7 +1475,7 @@ msgstr ""
 "• 2021-12-31 23:59:59"
 
 msgid "menu.split.swap"
-msgstr "o esun e poka"
+msgstr "o esun e poki"
 
 msgid "lang.ia"
 msgstr "toki Intelinwa"
@@ -1484,10 +1484,10 @@ msgid "heading.newident.missing"
 msgstr "NIMI LI LON ALA"
 
 msgid "link.side"
-msgstr "o open e nimi tawa lon poki poka"
+msgstr "o open e nimi tawa lon poki ante"
 
 msgid "link.side.newtab"
-msgstr "o open e nimi tawa lon poki poka sin"
+msgstr "o open e nimi tawa lon poki ante sin"
 
 msgid "dlg.newindent.missing.commonname"
 msgstr "sina wile pana e nimi."
@@ -1515,7 +1515,7 @@ msgid "gempub.cover.untitled"
 msgstr "lipu pi nimi ala"
 
 msgid "keys.split.next"
-msgstr "o tawa poka ante"
+msgstr "o tawa poki ante"
 
 msgid "gempub.cover.view"
 msgstr "o lukin e lipu Kempu"
@@ -1528,3 +1528,47 @@ msgstr "tenpo"
 
 msgid "gempub.meta.pub"
 msgstr "tenpo sike"
+
+#, c-format
+msgid "doc.archive"
+msgstr "ijo mute li lon ijo lili %s."
+
+msgid "doc.archive.view"
+msgstr "o lukin e ijo mute insa ijo ni"
+
+msgid "bookmark.tag.linksplit"
+msgstr "nimi tawa lon poki ante"
+
+msgid "lang.tok"
+msgstr "toki pona"
+
+msgid "dir.empty"
+msgstr "ala li lon poki ni."
+
+msgid "prefs.pinsplit.left"
+msgstr "poki nanpa wan"
+
+msgid "prefs.pinsplit.right"
+msgstr "poki nanpa tu"
+
+#, c-format
+msgid "archive.summary"
+msgid_plural "archive.summary.n"
+msgstr[0] "ijo %zu li lon ijo ni (tu suli Meka %.1f)."
+
+msgid "archive.exit"
+msgstr "o pini e ijo"
+
+msgid "prefs.pinsplit"
+msgstr "o open e nimi tawa lon:"
+
+msgid "prefs.pinsplit.none"
+msgstr "poki sama"
+
+#, c-format
+msgid "dir.summary"
+msgid_plural "dir.summary.n"
+msgstr[0] "ijo %zu li lon poki ni."
+
+msgid "keys.tab.close.other"
+msgstr "o pini e poki ante"
