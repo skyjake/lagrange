@@ -7,28 +7,21 @@
 # Release notes
 
 ## 1.4
-
-Browsing:
-* Added split view modes: two tabs at once, horizontal/vertical split, 1:1/2:1/1:2 weights, merge tabs, swap sides. See section 1.8 on the Help page for details.
+* Added split view modes: two tabs at once, horizontal/vertical split, 1:1/2:1/1:2 weights, merge tabs, swap sides. See section 1.8 in Help for details.
 * Split view pinning: keep a page pinned on one side while all opened links go to the other side.
 * "file://" URLs can be used for viewing contents of local directories and ZIP archives.
-* Basic Gempub support: generating a cover page, automatic split view for index and contents.
-* Navigation arrow buttons are disabled at end/beginning of history.
-* Bold link styling is used for unvisited links only.
-
-Page rendering and UI:
-* Optimized page rendering. Now each line of text is rendered into the view buffer only once, and whenever the view is stationary, content is prefilled in the available space outside the viewport. Previously, at least one line of text was rendered every frame whenever the viewport was moved, which was mostly redundant.
+* Basic Gempub support: a cover page is generated based on metadata, and there's an automatic split view for index and contents. On macOS, Lagrange is registered as a viewer of .gpub files.
+* Bold link styling is used for indicating which links are unvisited.
+* Page rendering was optimized: now each line of text is rendered into the view buffer only once, and whenever the view is stationary, content is prefilled in the available space outside the viewport. Previously, at least one line of text was rendered every frame when the viewport was moving, which was mostly redundant.
 * Added UI languages: Interlingua, Toki Pona.
 * Added toggles for special tags in the bookmark creation/editor dialog.
 * Added "Show Downloads" to the File/main menu.
 * Added "Open Downloaded File" to the file save dialog to make it easy to find the local copy of the file.
 * Updated the UI font to Source Sans 3. It now has all the styles and weights needed for page rendering, too.
-* Added a semibold Fira Sans weight (used for links).
+* Added a semibold Fira Sans weight (used for unvisited links).
 * Preferences: Reorganized the fonts dropdown menu.
 * All lists support smooth scrolling.
 * Adjustments to how display DPI affects UI scaling.
-
-Bug fixes:
 * Fixed allocation of page rendering buffers. Previously, some buffers may have gone unused or were allocated erroneously to the same position, causing unnecessary work for the page renderer.
 * Fixed a possible crash when closing a tab.
 * Fixed various issues in the UI layout.
