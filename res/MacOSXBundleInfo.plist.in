@@ -68,6 +68,22 @@
                         <key>LSTypeIsPackage</key>
                         <false/>
                 </dict>
+                <dict>
+                        <key>CFBundleTypeExtensions</key>
+                        <array>
+                                <string>gpub</string>
+                        </array>
+                        <key>CFBundleTypeIconFile</key>
+                        <string>gempub.icns</string>
+                        <key>CFBundleTypeName</key>
+                        <string>Gempub Book</string>
+                        <key>CFBundleTypeRole</key>
+                        <string>Viewer</string>
+                        <key>LSHandlerRank</key>
+                        <string>Default</string>
+                        <key>LSTypeIsPackage</key>
+                        <false/>
+                </dict>
         </array>
         <key>CFBundleURLTypes</key>
         <array>
