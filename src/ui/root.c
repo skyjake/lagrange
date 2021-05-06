@@ -1053,7 +1053,9 @@ void createUserInterface_Root(iRoot *d) {
                 setBackgroundColor_Widget(as_Widget(pin), uiBackground_ColorId);
                 setAlignVisually_LabelWidget(pin, iTrue);
                 setNoAutoMinHeight_LabelWidget(pin, iTrue);
-                addChildFlags_Widget(rightEmbed, iClob(pin), collapse_WidgetFlag);
+                addChildFlags_Widget(rightEmbed,
+                                     iClob(pin),
+                                     collapse_WidgetFlag | tight_WidgetFlag | frameless_WidgetFlag);
             }
             /* Reload button. */ {
                 iLabelWidget *reload;
