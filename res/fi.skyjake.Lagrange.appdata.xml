@@ -45,6 +45,89 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.4" date="2021-05-07">
+            <description>
+                <p>This release introduces a split view mode, support for Gempub
+                    files, and optimizes page rendering. Notable changes include:</p>
+                <ul>
+                    <li>Split view for browsing two tabs at once.</li>
+                    <li>Split view pinning for keeping an index page or menu on
+                        one side while opening all links on the other side.</li>
+                    <li>Viewing contents of local directories and ZIP archives.</li>
+                    <li>Basic Gempub support: viewing the book cover page, and opening
+                        the contents in a split view.</li>
+                    <li>Page renderer buffers content more efficiently.</li>
+                    <li>New UI languages: Interlingua, Toki Pona.</li>
+                    <li>All lists support smooth scrolling.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.4.0</url>
+        </release>
+        <release version="1.3.4" date="2021-04-26">
+            <description>
+                <p>Changes:</p>
+                <ul>
+                    <li>Allow server certificates with a `*.tld` subject wildcard.</li>
+                    <li>Updated the French UI translation.</li>
+                </ul>
+                <p>Bug fixes:</p>
+                <ul>
+                    <li>Broken media type check in the audio player. Media types with
+                        parameters failed to be recognized.</li>
+                    <li>Crash after a redirect.</li>
+                    <li>Rare issue with handling multiple rapid network requests.</li>
+                    <li>Rare situation where a network connection would fail to open.</li>
+                    <li>Minor stability improvements.</li>
+                </ul>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.3.4</url>
+        </release>
+        <release version="1.3.3" date="2021-04-18">
+            <description>
+                <p>New features/changes:</p>
+                <ul>
+                    <li>Added UI languages: French, German. (Note that neither is 
+                        100% finished yet.)</li>
+                    <li>Added environment variable LAGRANGE_OVERRIDE_DPI.</li>
+                    <li>Back/forward navigation buttons are disabled if they have 
+                        no more pages to switch to.</li>
+                    <li>Minor UI color tuning.</li>
+                </ul>
+                <p>Bug fixes:</p>
+                <ul>
+                    <li>Disabled IPC in Flatpak builds for compatibility reasons. 
+                        Beware of multiple instances overwriting each other's data.</li>
+                    <li>Possible crash when closing a tab.</li>
+                    <li>Possible crash when restoring application state at launch.</li>
+                    <li>Parsing and making requests with literal IPv6 addresses.</li>
+                </ul>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.3.3</url>
+        </release>
+        <release version="1.3.2" date="2021-04-11">
+            <description>
+                <p>Bug fixes:</p>
+                <ul>
+                    <li>Crash after updating from v1.2 due to undefined CA file/path
+                        configuration.</li>
+                    <li>Conflation of pixel ratio and display DPI. Pixel ratio is now
+                        always separately detected so mouse events can be correctly
+                        positioned. You may find that adjusting the UI scale factor
+                        (Preferences &gt; Interface) is necessary after upgrading.</li>
+                    <li>Sidebar width changing when moving the window to a different
+                        display.</li>
+                    <li>Inability to use Tab in keybindings.</li>
+                    <li>Opening Gopher URLs via drag-and-drop.</li>
+                    <li>"Add bookmark..." does nothing on a feed entry.</li>
+                    <li>Keybindings list not being updated immediately when UI language
+                        changes.</li>
+                    <li>Trimming of link label text when a custom Emoji is used.</li>
+                </ul>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.3.2</url>
+        </release>
         <release version="1.3.1" date="2021-04-05">
             <description>
                 <p>Version 1.3 is a major feature update with improvements for
