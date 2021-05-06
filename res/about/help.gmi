@@ -207,7 +207,7 @@ Note that remote bookmarks are read-only: they cannot be edited or tagged. This 
 * The "remotesource" tag marks the bookmark as a source of remote bookmarks. All links on the source pages are shown as remote bookmarks in the Bookmarks list.
 * The "remote" tag is used for remote bookmarks. These bookmarks cannot be edited or tagged, but you can make a local duplicate to turn it into a regular bookmark.
 * The "usericon" tag prevents a random icon to be selected for the bookmark. This tag is automatically applied when an icon character is entered in the bookmark editor.
-* The "linksplit" tag
+* The "linksplit" tag causes all links on the bookmarked page to open to the side, automatically enabling split view mode.
 
 ## 1.5 Subscribing to feeds
 
