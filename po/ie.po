@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-04-27 14:18+0000\n"
+"PO-Revision-Date: 2021-05-06 09:39+0000\n"
 "Last-Translator: Olga Smirnova <mistresssilvara@hotmail.com>\n"
 "Language-Team: Occidental <http://weblate.skyjake.fi/projects/lagrange/ui/ie/"
 ">\n"
@@ -1042,7 +1042,7 @@ msgstr "Vi %sAuxilie%s por plu information pri certificates TLS de cliente."
 #, c-format
 msgid "error.unsupported.suggestsave"
 msgstr ""
-"Vu posse gardar it a vor fólder Descargates. Tippa %s o selecte «%s» in li "
+"Vu posse gardar it a vor fólder Descargates: tippa %s o selecte «%s» in li "
 "menú."
 
 msgid "pageinfo.cert.ca.unverified"
@@ -1457,3 +1457,135 @@ msgstr "Deselecter"
 
 msgid "menu.downloads"
 msgstr "Monstrar Descargates"
+
+msgid "menu.split.merge"
+msgstr "Unir cartes"
+
+msgid "menu.view.split"
+msgstr "Fender li vise..."
+
+msgid "dlg.newident.date.example"
+msgstr ""
+"Ples controlar li date «Valid til». Exemples:\n"
+"• 2030\n"
+"• 2025-06-30\n"
+"• 2021-12-31 23:59:59"
+
+# User preference that controls whether index.gmi pages get automatically opened when browsing the contents of a directory inside a compressed archive.
+msgid "prefs.archive.openindex"
+msgstr "Aperter li index de archive:"
+
+msgid "lang.ia"
+msgstr "Interlingua"
+
+msgid "heading.newident.missing"
+msgstr "MANCANT INFORMATION"
+
+msgid "dlg.newindent.missing.commonname"
+msgstr "Li «comun nómine» deve esser providet."
+
+msgid "heading.newident.date.bad"
+msgstr "ÍNVALID DATE"
+
+msgid "dlg.newident.date.past"
+msgstr "Date de expiration deve esser in li futur."
+
+msgid "dlg.save.opendownload"
+msgstr "Aperter li descargat file"
+
+msgid "menu.split.swap"
+msgstr "Cambiar láteres"
+
+msgid "menu.split.horizontal"
+msgstr "Horizontalmen"
+
+msgid "menu.split.vertical"
+msgstr "Verticalmen"
+
+msgid "keys.split.next"
+msgstr "Ear al altri panel"
+
+msgid "gempub.cover.untitled"
+msgstr "Libre sin titul"
+
+msgid "gempub.cover.aboutbook"
+msgstr "Pri ti-ci libre"
+
+msgid "gempub.cover.view"
+msgstr "Vider li contenete de Gempub"
+
+msgid "gempub.cover.image"
+msgstr "Image del covriment"
+
+msgid "gempub.meta.author"
+msgstr "Autor"
+
+msgid "gempub.meta.version"
+msgstr "Version"
+
+msgid "gempub.meta.pubdate"
+msgstr "Date de edition"
+
+msgid "gempub.meta.revdate"
+msgstr "Date de modification"
+
+msgid "gempub.meta.pub"
+msgstr "Editoría"
+
+msgid "gempub.meta.lang"
+msgstr "Lingue"
+
+msgid "gempub.meta.license"
+msgstr "Licentie"
+
+msgid "gempub.cover.viewlocal"
+msgstr "On posse leer ti libre Gempub pos que it ha esset gardat localmen."
+
+#, c-format
+msgid "dir.summary"
+msgid_plural "dir.summary.n"
+msgstr[0] "Ti fólder contene %zu element."
+msgstr[1] "Ti fólder contene %zu elementes."
+
+#, c-format
+msgid "archive.summary"
+msgid_plural "archive.summary.n"
+msgstr[0] "Ti archive contene %zu element e su compresset grandore es %.1f Mo."
+msgstr[1] "Ti archive contene %zu elementes e su compresset grandore es %.1f Mo."
+
+msgid "link.side"
+msgstr "Aperter li ligament láteralmen"
+
+#, c-format
+msgid "doc.archive"
+msgstr "%s es un compresset archive."
+
+msgid "doc.archive.view"
+msgstr "Vider li contenete del archive"
+
+msgid "bookmark.tag.linksplit"
+msgstr "Ligamentes apertet láteralmen"
+
+msgid "lang.tok"
+msgstr "Toki Pona"
+
+msgid "prefs.pinsplit.none"
+msgstr "Null"
+
+msgid "prefs.pinsplit.left"
+msgstr "Levul carte"
+
+msgid "prefs.pinsplit.right"
+msgstr "Dextri carte"
+
+msgid "archive.exit"
+msgstr "Surtir li archive"
+
+msgid "dir.empty"
+msgstr "Ti fólder es vacui."
+
+msgid "keys.tab.close.other"
+msgstr "Cluder li altri cartes"
+
+msgid "keys.split.menu"
+msgstr "Selecter li mode de fension"

@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-04-27 14:18+0000\n"
+"PO-Revision-Date: 2021-05-05 03:55+0000\n"
 "Last-Translator: Wally Hackenslacker <mastor89@protonmail.com>\n"
 "Language-Team: Spanish <http://weblate.skyjake.fi/projects/lagrange/ui/es/>\n"
 "Language: es\n"
@@ -873,7 +873,7 @@ msgstr "Notas sobre %s:"
 #, c-format
 msgid "error.unsupported.suggestsave"
 msgstr ""
-"Puede guardarlo como archivo a su carpeta de Descargas. Presione %s o "
+"Puede guardarlo como archivo a su carpeta de Descargas: presione %s o "
 "seleccione \"%s\" del menú."
 
 msgid "dlg.save.incomplete"
@@ -1466,3 +1466,97 @@ msgstr "Nuevo…"
 
 msgid "sidebar.action.ident.import"
 msgstr "Importar…"
+
+msgid "menu.split.merge"
+msgstr "Unir pestañas"
+
+msgid "menu.split.swap"
+msgstr "Intercambiar Lados"
+
+msgid "menu.split.horizontal"
+msgstr "Horizontal"
+
+msgid "menu.split.vertical"
+msgstr "Vertical"
+
+msgid "menu.view.split"
+msgstr "Dividir Vista..."
+
+msgid "dlg.save.opendownload"
+msgstr "Abrir Archivo Descargado"
+
+msgid "link.side"
+msgstr "Abrir Enlace al Lado"
+
+msgid "link.side.newtab"
+msgstr "Abrir Enlace en Nueva Pestaña a un Lado"
+
+msgid "lang.ia"
+msgstr "Interlingua"
+
+msgid "heading.newident.missing"
+msgstr "INFORMACIÓN FALTANTE"
+
+msgid "dlg.newindent.missing.commonname"
+msgstr "Debe especificar un \"nombre común\"."
+
+msgid "heading.newident.date.bad"
+msgstr "FECHA NO VÁLIDA"
+
+msgid "dlg.newident.date.past"
+msgstr "La fecha de vencimiento debe ser en el futuro."
+
+msgid "dlg.newident.date.example"
+msgstr ""
+"Por favor verifique la fecha de \"Válido hasta\". Ejemplos:\n"
+"• 2030\n"
+"• 2025-06-30\n"
+"• 2021-12-31 23:59:59"
+
+# User preference that controls whether index.gmi pages get automatically opened when browsing the contents of a directory inside a compressed archive.
+msgid "prefs.archive.openindex"
+msgstr "Abrir índice de archivo:"
+
+msgid "keys.split.menu"
+msgstr "Establecer modo de vista dividida"
+
+msgid "keys.split.next"
+msgstr "Cambiar foco a siguiente división"
+
+msgid "gempub.cover.viewlocal"
+msgstr ""
+"Este libro Gempub puede ser visualizado después de que haya sido guardado "
+"localmente."
+
+msgid "gempub.cover.untitled"
+msgstr "Libro sin Título"
+
+msgid "gempub.cover.aboutbook"
+msgstr "Acerca de este libro"
+
+msgid "gempub.cover.view"
+msgstr "Ver contenido del Gempub"
+
+msgid "gempub.cover.image"
+msgstr "Imagen de portada"
+
+msgid "gempub.meta.author"
+msgstr "Autor"
+
+msgid "gempub.meta.version"
+msgstr "Versión"
+
+msgid "gempub.meta.revdate"
+msgstr "Fecha de revisión"
+
+msgid "gempub.meta.pub"
+msgstr "Publicado el"
+
+msgid "gempub.meta.pubdate"
+msgstr "Fecha de publicación"
+
+msgid "gempub.meta.lang"
+msgstr "Idioma"
+
+msgid "gempub.meta.license"
+msgstr "Licencia"

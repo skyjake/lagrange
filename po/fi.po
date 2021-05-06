@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2021-03-23 09:09+0000\n"
-"PO-Revision-Date: 2021-04-27 14:18+0000\n"
+"PO-Revision-Date: 2021-05-06 09:39+0000\n"
 "Last-Translator: Jaakko Keränen <jaakko.keranen@iki.fi>\n"
 "Language-Team: Finnish <http://weblate.skyjake.fi/projects/lagrange/ui/fi/>\n"
 "Language: fi\n"
@@ -461,7 +461,7 @@ msgstr "Poista tilaus"
 
 msgid "error.unsupported.suggestsave"
 msgstr ""
-"Voit tallentaa sen latauskansioon. Paina %s tai valitse \"%s\" valikosta."
+"Voit tallentaa sen latauskansioon: paina %s tai valitse \"%s\" valikosta."
 
 msgid "heading.pageinfo"
 msgstr "SIVUN TIEDOT"
@@ -1438,3 +1438,141 @@ msgstr "Tuo…"
 
 msgid "menu.downloads"
 msgstr "Näytä latauskansio"
+
+msgid "menu.split.merge"
+msgstr "Yhdistä välilehdet"
+
+msgid "menu.split.horizontal"
+msgstr "Vaaka"
+
+msgid "menu.split.vertical"
+msgstr "Pysty"
+
+msgid "lang.ia"
+msgstr "Interlingua"
+
+msgid "gempub.cover.untitled"
+msgstr "Nimetön kirja"
+
+msgid "gempub.cover.aboutbook"
+msgstr "Tietoja tästä kirjasta"
+
+msgid "gempub.meta.author"
+msgstr "Kirjailija"
+
+msgid "gempub.meta.version"
+msgstr "Versio"
+
+msgid "gempub.meta.pub"
+msgstr "Julkaistu"
+
+msgid "gempub.meta.lang"
+msgstr "Kieli"
+
+msgid "gempub.meta.license"
+msgstr "Lisenssi"
+
+msgid "gempub.cover.image"
+msgstr "Kansikuva"
+
+msgid "gempub.meta.pubdate"
+msgstr "Julkaisupäivä"
+
+msgid "gempub.cover.view"
+msgstr "Näytä Gempub-sisältö"
+
+msgid "dlg.save.opendownload"
+msgstr "Avaa ladattu tiedosto"
+
+msgid "menu.split.swap"
+msgstr "Vaihda keskenään"
+
+msgid "menu.view.split"
+msgstr "Jaa kahtia..."
+
+msgid "link.side"
+msgstr "Avaa linkki viereen"
+
+msgid "link.side.newtab"
+msgstr "Avaa linkki viereen uuteen välilehteen"
+
+msgid "dlg.newident.date.example"
+msgstr ""
+"Tarkista voimassaolopäivämäärä. Esimerkkejä:\n"
+"• 2030\n"
+"• 2025-06-30\n"
+"• 2021-12-31 23:59:59"
+
+msgid "doc.archive"
+msgstr "%s on pakattu arkisto."
+
+msgid "doc.archive.view"
+msgstr "Näytä arkiston sisältö"
+
+msgid "bookmark.tag.linksplit"
+msgstr "Linkit aukeavat viereen"
+
+msgid "lang.tok"
+msgstr "Toki Pona"
+
+msgid "heading.newident.missing"
+msgstr "PUUTTUVA TIETO"
+
+msgid "dlg.newindent.missing.commonname"
+msgstr "\"Yleisnimi\" on pakollinen tieto."
+
+msgid "heading.newident.date.bad"
+msgstr "VIRHEELLINEN PÄIVÄMÄÄRÄ"
+
+msgid "dlg.newident.date.past"
+msgstr "Voimassaolon täytyy päättyä tulevaisuudessa."
+
+msgid "prefs.pinsplit"
+msgstr "Jaetun näkymän kiinnitys:"
+
+msgid "prefs.pinsplit.none"
+msgstr "Ei"
+
+msgid "prefs.pinsplit.left"
+msgstr "Vasen välilehti"
+
+msgid "prefs.pinsplit.right"
+msgstr "Oikea välilehti"
+
+msgid "archive.exit"
+msgstr "Poistu arkistosta"
+
+msgid "archive.summary"
+msgid_plural "archive.summary.n"
+msgstr[0] "Tämä arkisto sisältää %zu tiedoston ja sen pakattu koko on %.1f mt."
+msgstr[1] "Tämä arkisto sisältää %zu tiedostoa ja sen pakattu koko on %.1f mt."
+
+msgid "dir.empty"
+msgstr "Tämä hakemisto on tyhjä."
+
+# User preference that controls whether index.gmi pages get automatically opened when browsing the contents of a directory inside a compressed archive.
+msgid "prefs.archive.openindex"
+msgstr "Avaa arkistojen index-sivut:"
+
+#, c-format
+msgid "dir.summary"
+msgid_plural "dir.summary.n"
+msgstr[0] "Tämä hakemisto sisältää %zu nimikkeen."
+msgstr[1] "Tämä hakemisto sisältää %zu nimikettä."
+
+msgid "keys.tab.close.other"
+msgstr "Sulje muut välilehdet"
+
+msgid "gempub.cover.viewlocal"
+msgstr ""
+"Tämän Gempub-kirjan voi avata sen jälkeen, kun se on talletettu "
+"paikallisesti."
+
+msgid "gempub.meta.revdate"
+msgstr "Päivitetty"
+
+msgid "keys.split.menu"
+msgstr "Aseta näkymän jakaus"
+
+msgid "keys.split.next"
+msgstr "Aktivoi seuraava jakaus"
