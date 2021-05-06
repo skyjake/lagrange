@@ -973,6 +973,12 @@ iBool isPinned_DocumentWidget_(const iDocumentWidget *d) {
            (prefs->pinSplit == 2 && w->root == win->roots[1]);
 }
 
+static void showOrHidePinningIndicator_DocumentWidget_(iDocumentWidget *d) {
+    iWidget *w = as_Widget(d);
+    showCollapsed_Widget(findChild_Widget(root_Widget(as_Widget(d)), "document.pinned"),
+                         isPinned_DocumentWidget_(d));
+}
+
 void setSource_DocumentWidget(iDocumentWidget *d, const iString *source) {
     setUrl_GmDocument(d->doc, d->mod.url);
     setSource_GmDocument(d->doc, source, documentWidth_DocumentWidget_(d));
@@ -991,6 +997,7 @@ void setSource_DocumentWidget(iDocumentWidget *d, const iString *source) {
             d->flags |= otherRootByDefault_DocumentWidgetFlag;
         }
     }
+    showOrHidePinningIndicator_DocumentWidget_(d);
 }
 
 static void updateTheme_DocumentWidget_(iDocumentWidget *d) {
@@ -1991,6 +1998,14 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     else if (equal_Command(cmd, "document.layout.changed") && document_App() == d) {
         updateSize_DocumentWidget(d);
     }
+    else if (equal_Command(cmd, "pinsplit.set")) {
+        postCommand_App("document.update.pin"); /* prefs value not set yet */
+        return iFalse;
+    }
+    else if (equal_Command(cmd, "document.update.pin")) {
+        showOrHidePinningIndicator_DocumentWidget_(d);
+        return iFalse;
+    }
     else if (equal_Command(cmd, "tabs.changed")) {
         setLinkNumberMode_DocumentWidget_(d, iFalse);
         if (cmp_String(id_Widget(w), suffixPtr_Command(cmd, "id")) == 0) {
@@ -2004,6 +2019,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         init_Anim(&d->altTextOpacity, 0);
         updateSideOpacity_DocumentWidget_(d, iFalse);
         updateWindowTitle_DocumentWidget_(d);
+        showOrHidePinningIndicator_DocumentWidget_(d);
         allocVisBuffer_DocumentWidget_(d);
         animateMedia_DocumentWidget_(d);
         remove_Periodic(periodic_App(), d);

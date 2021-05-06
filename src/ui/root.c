@@ -1047,6 +1047,14 @@ void createUserInterface_Root(iRoot *d) {
                 addChildFlags_Widget(
                     rightEmbed, iClob(progress), collapse_WidgetFlag);
             }
+            /* Pinning indicator. */ {
+                iLabelWidget *pin = new_LabelWidget(uiTextAction_ColorEscape leftHalf_Icon, NULL);
+                setId_Widget(as_Widget(pin), "document.pinned");
+                setBackgroundColor_Widget(as_Widget(pin), uiBackground_ColorId);
+                setAlignVisually_LabelWidget(pin, iTrue);
+                setNoAutoMinHeight_LabelWidget(pin, iTrue);
+                addChildFlags_Widget(rightEmbed, iClob(pin), collapse_WidgetFlag);
+            }
             /* Reload button. */ {
                 iLabelWidget *reload;
                 if (deviceType_App() == desktop_AppDeviceType) {
