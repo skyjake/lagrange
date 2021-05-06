@@ -1346,6 +1346,12 @@ iBool isHover_Widget(const iAnyObject *d) {
     return get_Window()->hover == d;
 }
 
+iBool isUnderKeyRoot_Widget(const iAnyObject *d) {
+    iAssert(isInstance_Object(d, &Class_Widget));
+    const iWidget *w = d;
+    return w && get_Window() && w->root == get_Window()->keyRoot;
+}
+
 iBool isSelected_Widget(const iAnyObject *d) {
     if (d) {
         iAssert(isInstance_Object(d, &Class_Widget));

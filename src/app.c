@@ -124,7 +124,6 @@ struct Impl_App {
     int          sleepTimer;
 #endif
     iAtomicInt   pendingRefresh;
-    int          tabEnum; /* IDs for new tabs */
     iBool        isLoadingPrefs;
     iStringList *launchCommands;
     iBool        isFinishedLaunching;
@@ -722,7 +721,6 @@ static void init_App_(iApp *d, int argc, char **argv) {
     d->certs     = new_GmCerts(dataDir_App_());
     d->visited   = new_Visited();
     d->bookmarks = new_Bookmarks();
-    d->tabEnum   = 0; /* generates unique IDs for tab pages */
     init_Periodic(&d->periodic);
 #if defined (iPlatformAppleDesktop)
     setupApplication_MacOS();
@@ -1602,7 +1600,6 @@ iDocumentWidget *newTab_App(const iDocumentWidget *duplicateOf, iBool switchToNe
     else {
         doc = new_DocumentWidget();
     }
-    setId_Widget(as_Widget(doc), format_CStr("document%03d", ++d->tabEnum));
     appendTabPage_Widget(tabs, as_Widget(doc), "", 0, 0);
     iRelease(doc); /* now owned by the tabs */
     addChild_Widget(findChild_Widget(tabs, "tabs.buttons"), iClob(newTabButton));

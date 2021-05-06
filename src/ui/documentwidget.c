@@ -298,10 +298,12 @@ struct Impl_DocumentWidget {
 
 iDefineObjectConstruction(DocumentWidget)
 
+static int docEnum_ = 0;
+
 void init_DocumentWidget(iDocumentWidget *d) {
     iWidget *w = as_Widget(d);
     init_Widget(w);
-    setId_Widget(w, "document000");
+    setId_Widget(w, format_CStr("document%03d", ++docEnum_));
     setFlags_Widget(w, hover_WidgetFlag, iTrue);
     init_PersistentDocumentState(&d->mod);
     d->flags           = 0;
@@ -880,7 +882,7 @@ static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
     }
     /* Take away parts if it doesn't fit. */
     const int avail = bounds_Widget(as_Widget(tabButton)).size.x - 3 * gap_UI;
-    iBool setWindow = (document_App() == d);
+    iBool setWindow = (document_App() == d && isUnderKeyRoot_Widget(d));
     for (;;) {
         iString *text = collect_String(joinCStr_StringArray(title, " \u2014 "));
         if (setWindow) {
@@ -1953,7 +1955,8 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         }
         return iTrue;
     }
-    else if (equal_Command(cmd, "window.resized") || equal_Command(cmd, "font.changed")) {
+    else if (equal_Command(cmd, "window.resized") || equal_Command(cmd, "font.changed") ||
+             equal_Command(cmd, "keyroot.changed")) {
         /* Alt/Option key may be involved in window size changes. */
         setLinkNumberMode_DocumentWidget_(d, iFalse);
         d->phoneToolbar = findWidget_App("toolbar");

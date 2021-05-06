@@ -232,6 +232,7 @@ iBool   isDisabled_Widget           (const iAnyObject *);
 iBool   isFocused_Widget            (const iAnyObject *);
 iBool   isHover_Widget              (const iAnyObject *);
 iBool   isSelected_Widget           (const iAnyObject *);
+iBool   isUnderKeyRoot_Widget       (const iAnyObject *);
 iBool   isCommand_Widget            (const iWidget *d, const SDL_Event *ev, const char *cmd);
 iBool   hasParent_Widget            (const iWidget *d, const iWidget *someParent);
 iBool   isAffectedByVisualOffset_Widget
