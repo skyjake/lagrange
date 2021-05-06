@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-05-06 09:39+0000\n"
+"PO-Revision-Date: 2021-05-06 15:03+0000\n"
 "Last-Translator: Страхиња Радић <contact@strahinja.org>\n"
 "Language-Team: Serbian <http://weblate.skyjake.fi/projects/lagrange/ui/sr/>\n"
 "Language: sr\n"
@@ -604,10 +604,10 @@ msgid "prefs.centershort"
 msgstr "Вертикално центрирање:"
 
 msgid "prefs.hidetoolbarscroll"
-msgstr "Сакриј траку са алаткама при скроловању:"
+msgstr "Сакривање траке са алаткама при скроловању:"
 
 msgid "prefs.ostheme"
-msgstr "Користи системску тему:"
+msgstr "Употреба системске теме:"
 
 msgid "prefs.theme"
 msgstr "Тема:"
@@ -631,7 +631,7 @@ msgid "prefs.uiscale"
 msgstr "Фактор размере интерфејса:"
 
 msgid "prefs.retainwindow"
-msgstr "Задржи положај:"
+msgstr "Задржавање положаја:"
 
 msgid "prefs.doctheme.dark"
 msgstr "Тамна тема:"
@@ -673,7 +673,7 @@ msgid "prefs.biglede"
 msgstr "Велики први пасус:"
 
 msgid "prefs.decodeurls"
-msgstr "Декодирај УРЛ-ове:"
+msgstr "Декодирање УРЛ-ова:"
 
 msgid "prefs.cachesize"
 msgstr "Величина кеша:"
@@ -697,61 +697,61 @@ msgid "menu.binding.clear"
 msgstr "Уклони"
 
 msgid "keys.top"
-msgstr "Иди на врх"
+msgstr "Прелазак на врх"
 
 msgid "keys.bottom"
-msgstr "Иди на дно"
+msgstr "Прелазак на дно"
 
 msgid "keys.scroll.up"
-msgstr "Скролуј горе"
+msgstr "Скроловање нагоре"
 
 msgid "keys.scroll.down"
-msgstr "Скролуј доле"
+msgstr "Скроловање надоле"
 
 msgid "keys.scroll.halfpage.down"
-msgstr "Скролуј доле за пола странице"
+msgstr "Скроловање надоле за пола странице"
 
 msgid "keys.scroll.page.up"
-msgstr "Скролуј горе за једну страницу"
+msgstr "Скроловање нагоре за једну страницу"
 
 msgid "keys.forward"
-msgstr "Иди унапред"
+msgstr "Кретање унапред"
 
 msgid "keys.back"
-msgstr "Иди уназад"
+msgstr "Кретање уназад"
 
 msgid "keys.parent"
-msgstr "Иди на надређени каталог"
+msgstr "Прелазак на надређени каталог"
 
 msgid "keys.root"
-msgstr "Иди на корен капсуле"
+msgstr "Прелазак на корен капсуле"
 
 msgid "keys.reload"
-msgstr "Поново учитај страницу"
+msgstr "Поновно учитавање странице"
 
 msgid "keys.link.homerow.next"
 msgstr "Следећи низ тастера основног реда"
 
 msgid "keys.bookmark.add"
-msgstr "Додај обележивач"
+msgstr "Додавање обележивача"
 
 msgid "keys.findtext"
-msgstr "Тражи текст на страници"
+msgstr "Претрага текста на страници"
 
 msgid "keys.zoom.in"
-msgstr "Увећај"
+msgstr "Увећавање"
 
 msgid "keys.zoom.out"
-msgstr "Умањи"
+msgstr "Умањивање"
 
 msgid "keys.zoom.reset"
-msgstr "Поништи увећање"
+msgstr "Поништавање увећања"
 
 msgid "keys.tab.new"
 msgstr "Нова картица"
 
 msgid "keys.tab.close"
-msgstr "Затвори картицу"
+msgstr "Затварање картице"
 
 msgid "keys.tab.prev"
 msgstr "Претходна картица"
@@ -951,7 +951,7 @@ msgid "dlg.certimport.nokey"
 msgstr "Без приватног кључа"
 
 msgid "link.hint.image"
-msgstr "Приказ слике"
+msgstr "Прикажи слику"
 
 msgid "menu.closetab.other"
 msgstr "Затвори остале картице"
@@ -1086,7 +1086,7 @@ msgid "prefs.downloads"
 msgstr "Фолдер за преузете датотеке:"
 
 msgid "prefs.collapsepreonload"
-msgstr "Скупи преформатирани текст:"
+msgstr "Скупљање преформатираног текста:"
 
 # strftime() formatted, split on two lines
 #, c-format
@@ -1107,7 +1107,7 @@ msgid "feeds.entry.newtab"
 msgstr "Отвори ставку у новој картици"
 
 msgid "prefs.imageloadscroll"
-msgstr "Учитај слике при скроловању:"
+msgstr "Учитавање слика при скроловању:"
 
 msgid "feeds.entry.markunread"
 msgstr "Означи као непрочитано"
@@ -1188,7 +1188,7 @@ msgid "ident.using"
 msgstr "Користи се на овој страници"
 
 msgid "prefs.quoteicon.icon"
-msgstr "Икона \""
+msgstr "Икона за \""
 
 #, c-format
 msgid "ident.usedonurls"
@@ -1198,7 +1198,7 @@ msgstr[1] "Користи се на %zu УРЛ-а"
 msgstr[2] "Користи се на %zu УРЛ-ова"
 
 msgid "prefs.plaintext.wrap"
-msgstr "Преломи чисти текст:"
+msgstr "Прелом чистог текста:"
 
 msgid "ident.stopuse.all"
 msgstr "Престани са употребом свуда"
@@ -1210,25 +1210,25 @@ msgid "heading.ident.use"
 msgstr "УПОТРЕБА ИДЕНТИТЕТА"
 
 msgid "keys.scroll.halfpage.up"
-msgstr "Скролуј горе за пола странице"
+msgstr "Скроловање нагоре за пола странице"
 
 msgid "menu.edit.notes"
 msgstr "Уреди забелешке…"
 
 msgid "keys.scroll.page.down"
-msgstr "Скролуј доле за једну страницу"
+msgstr "Скроловање надоле за једну страницу"
 
 msgid "heading.ident.notes"
 msgstr "ЗАБЕЛЕШКЕ О ИДЕНТИТЕТУ"
 
 msgid "keys.link.modkey"
-msgstr "Отвори везу преко тастера модификатора"
+msgstr "Отварање везе преко тастера модификатора"
 
 msgid "heading.ident.delete"
 msgstr "БРИСАЊЕ ИДЕНТИТЕТА"
 
 msgid "keys.link.homerow.newtab"
-msgstr "Отвори везу у новој картици преко тастера основног реда"
+msgstr "Отварање везе у новој картици преко тастера основног реда"
 
 #, c-format
 msgid "dlg.confirm.ident.delete"
@@ -1238,13 +1238,13 @@ msgstr ""
 "укључујући и његов сертификат и приватне кључеве?"
 
 msgid "keys.link.homerow.hover"
-msgstr "Наднеси над везу преко тастера основног реда"
+msgstr "Надношење над везу преко тастера основног реда"
 
 msgid "dlg.ident.delete"
 msgstr "Обриши идентитет и датотеке"
 
 msgid "keys.link.homerow"
-msgstr "Отвори везу преко тастера из основног реда"
+msgstr "Отварање везе преко тастера из основног реда"
 
 # The %s format characters are used to highlight the word "Help" and must be used in the translation in same way as here.
 #, c-format
@@ -1253,12 +1253,12 @@ msgstr ""
 "Видети %sПомоћ%s за више информација у вези са TLS клијентским сертификатима."
 
 msgid "keys.subscribe"
-msgstr "Претплати се на страницу"
+msgstr "Претплата на страницу"
 
 #, c-format
 msgid "error.unsupported.suggestsave"
 msgstr ""
-"Можете је сачувати као датотеку у вашем фолдеру „Преузимања“: притисните %s "
+"Можете га сачувати као датотеку у вашем фолдеру „Преузимања“: притисните %s "
 "или изаберите „%s“ из менија."
 
 msgid "dlg.certwarn.domain"
@@ -1270,14 +1270,14 @@ msgid "pageinfo.domain.match"
 msgstr "Назив домена одговара"
 
 msgid "keys.fullscreen"
-msgstr "Смени режим пуног екрана"
+msgstr "Смена режима пуног екрана"
 
 #, c-format
 msgid "dlg.input.prompt"
 msgstr "Унесите податке за %s:"
 
 msgid "keys.hoverurl"
-msgstr "Смени приказ УРЛ-ова при надношењу показивача"
+msgstr "Смена приказивања УРЛ-ова при надношењу показивача"
 
 msgid "heading.save.error"
 msgstr "ГРЕШКА ПРИ ЧУВАЊУ ДАТОТЕКЕ"
@@ -1450,14 +1450,14 @@ msgstr "МБ/с"
 
 # Interpretation: (Bold links) on dark (background).
 msgid "prefs.boldlink.dark"
-msgstr "у тамној теми"
+msgstr "У тамној теми"
 
 msgid "prefs.boldlink"
-msgstr "Подебљај везе:"
+msgstr "Подебљавање веза:"
 
 # Interpretation: (Bold links) on light (background).
 msgid "prefs.boldlink.light"
-msgstr "у светлој теми"
+msgstr "У светлој теми"
 
 msgid "menu.select.clear"
 msgstr "Очисти избор"
@@ -1500,7 +1500,7 @@ msgstr ""
 "• 2021-12-31 23:59:59"
 
 msgid "keys.split.next"
-msgstr "Пребаци фокус на следећи раздвојени део"
+msgstr "Пребацивање фокуса на следећи раздвојени део"
 
 msgid "gempub.cover.aboutbook"
 msgstr "О овој књизи"
@@ -1537,10 +1537,10 @@ msgid "prefs.archive.openindex"
 msgstr "Отварање индекса архива:"
 
 msgid "keys.split.menu"
-msgstr "Укључи режим раздвојеног погледа"
+msgstr "Укључивање режима раздвојеног погледа"
 
 msgid "gempub.cover.viewlocal"
-msgstr "Можете прегледати ову џемпуб књигу када је локално сачувате."
+msgstr "Можете прегледати ову Џемпуб књигу када је локално сачувате."
 
 msgid "gempub.cover.untitled"
 msgstr "Ненасловљена књига"
@@ -1583,16 +1583,16 @@ msgid "lang.tok"
 msgstr "Токи пона"
 
 msgid "prefs.pinsplit"
-msgstr "Прикачени раздвојени поглед:"
+msgstr "Качење раздвојеног погледа:"
 
 msgid "prefs.pinsplit.none"
-msgstr "Ништа"
+msgstr "Нигде"
 
 msgid "prefs.pinsplit.left"
-msgstr "Лева картица"
+msgstr "У левој картици"
 
 msgid "prefs.pinsplit.right"
-msgstr "Десна картица"
+msgstr "У десној картици"
 
 #, c-format
 msgid "archive.summary"
