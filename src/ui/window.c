@@ -1056,10 +1056,12 @@ void draw_Window(iWindow *d) {
                         }, uiSeparator_ColorId);
                     }
                     if (root == d->keyRoot) {
+                        const iBool isDark = isDark_ColorTheme(colorTheme_App());
                         fillRect_Paint(&p, (iRect){
                             topLeft_Rect(bounds),
                             init_I2(width_Rect(bounds), gap_UI / 2)
-                        }, uiBackgroundSelected_ColorId);
+                        }, isDark ? uiBackgroundSelected_ColorId
+                                  : uiIcon_ColorId);
                     }
                 }
             }
@@ -1197,6 +1199,7 @@ void setSplitMode_Window(iWindow *d, int splitFlags) {
             iForEach(ObjectList, i, tabs) {
                 setRoot_Widget(i.object, d->roots[0]);
             }
+            setFocus_Widget(NULL);
             delete_Root(d->roots[1]);
             d->roots[1] = NULL;
             d->keyRoot = d->roots[0];
