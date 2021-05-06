@@ -1974,6 +1974,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         invalidate_DocumentWidget_(d);
         dealloc_VisBuf(d->visBuf);
         updateWindowTitle_DocumentWidget_(d);
+        showOrHidePinningIndicator_DocumentWidget_(d);
         refresh_Widget(w);
     }
     else if (equal_Command(cmd, "window.focus.lost")) {

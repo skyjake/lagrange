@@ -31,7 +31,6 @@ Like Gemini, Lagrange has been designed with minimalism in mind. It depends on a
 * Smooth scrolling
 * Scaling page content (50%...200%)
 * Scaling factor for the UI (for arbitrary monitor DPI)
-
 * Sidebars for managing bookmarks, identities and subscribed feeds, and viewing browsing history and the page outline
 * Multiple tabs
 * Split view for browsing two pages at once
@@ -41,7 +40,6 @@ Like Gemini, Lagrange has been designed with minimalism in mind. It depends on a
 * Select and copy text with the mouse
 * Find text on the page
 * Open image and audio links inline on the same page
-
 * Instant back/forward navigation
 * Smart suggestions when typing an URL — search bookmarks, history, identities
 * Search engine integration
@@ -301,6 +299,8 @@ This is called "pinning" and the behavior can be configured in Preferences. The 
 * "Right Tab" is the same but works the other way around. The page open in the right tab is pinned and clicked links open on the left.
 
 The default pinning mode is "Left Tab".
+
+The ◧ indicator is shown in the URL input field when the current tab is pinned.
 
 ## 1.9 Viewing local files and directories
 
