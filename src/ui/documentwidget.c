@@ -1137,7 +1137,8 @@ static void postProcessRequestContent_DocumentWidget_(iDocumentWidget *d) {
         }
     }
     if (d->sourceGempub) {
-        if (preloadCoverImage_Gempub(d->sourceGempub, d->doc)) {
+        if (equal_String(d->mod.url, coverPageUrl_Gempub(d->sourceGempub)) &&
+            preloadCoverImage_Gempub(d->sourceGempub, d->doc)) {
             redoLayout_GmDocument(d->doc);
             updateVisible_DocumentWidget_(d);
             invalidate_DocumentWidget_(d);

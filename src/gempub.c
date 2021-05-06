@@ -206,11 +206,15 @@ void close_Gempub(iGempub *d) {
 }
 
 void setBaseUrl_Gempub(iGempub *d, const iString *url) {
-    set_String(&d->baseUrl, url);
+    set_String(&d->baseUrl, collect_String(urlDecodeExclude_String(url, "/:")));
 }
 
 iBool isOpen_Gempub(const iGempub *d) {
     return d->arch != NULL;
+}
+
+const iString *coverPageUrl_Gempub(const iGempub *d) {
+    return &d->baseUrl;
 }
 
 const iString *indexPageUrl_Gempub(const iGempub *d) {
