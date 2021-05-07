@@ -1445,8 +1445,8 @@ static void updatePrefsThemeButtons_(iWidget *d) {
 }
 
 static void updatePrefsPinSplitButtons_(iWidget *d, int value) {
-    for (size_t i = 0; i < 3; i++) {
-        setFlags_Widget(findChild_Widget(d, format_CStr("prefs.pinsplit.%u", i)),
+    for (int i = 0; i < 3; i++) {
+        setFlags_Widget(findChild_Widget(d, format_CStr("prefs.pinsplit.%d", i)),
                         selected_WidgetFlag,
                         i == value);
     }
@@ -1588,7 +1588,7 @@ iDocumentWidget *document_Command(const char *cmd) {
 }
 
 iDocumentWidget *newTab_App(const iDocumentWidget *duplicateOf, iBool switchToNew) {
-    iApp *d = &app_;
+    //iApp *d = &app_;
     iWidget *tabs = findWidget_Root("doctabs");
     setFlags_Widget(tabs, hidden_WidgetFlag, iFalse);
     iWidget *newTabButton = findChild_Widget(tabs, "newtab");
@@ -2029,9 +2029,9 @@ iBool handleCommand_App(const char *cmd) {
              (equalCase_Rangecc(parts.scheme, "http") ||
               equalCase_Rangecc(parts.scheme, "https")))) {
             openInDefaultBrowser_App(url);
-        const int newTab = argLabel_Command(cmd, "newtab");
             return iTrue;
         }
+        const int newTab = argLabel_Command(cmd, "newtab");
         if (newTab & otherRoot_OpenTabFlag && numRoots_Window(get_Window()) == 1) {
             /* Need to split first. */
             const iInt2 winSize = get_Window()->size;
