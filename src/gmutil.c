@@ -439,6 +439,7 @@ iString *localFilePathFromUrl_String(const iString *d) {
     if (startsWith_String(path, "/")) {
         remove_Block(&path->chars, 0, 1);
     }
+    replace_Block(&path->chars, '/', '\\');
 #endif
     return path;
 }
