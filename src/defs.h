@@ -30,7 +30,8 @@ enum iFileVersion {
     multipleRoots_FileVersion           = 2,
     serializedSidebarState_FileVersion  = 3,
     /* meta */
-    latest_FileVersion = 3
+    idents_FileVersion = 1, /* version used by GmCerts/idents.lgr */
+    latest_FileVersion = 3,
 };
 
 /* Icons */

@@ -205,7 +205,7 @@ void saveIdentities_GmCerts(const iGmCerts *d) {
     iFile *f = new_File(collect_String(concatCStr_Path(&d->saveDir, identsFilename_GmCerts_)));
     if (open_File(f, writeOnly_FileMode)) {
         writeData_File(f, magicIdMeta_GmCerts_, 4);
-        writeU32_File(f, latest_FileVersion); /* version */
+        writeU32_File(f, idents_FileVersion); /* version */
         iConstForEach(PtrArray, i, &d->idents) {
             const iGmIdentity *ident = i.ptr;
             if (~ident->flags & temporary_GmIdentityFlag) {
