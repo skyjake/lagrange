@@ -14,13 +14,17 @@
 * Bold link styling is used for indicating which links are unvisited.
 * Page rendering was optimized: now each line of text is rendered into the view buffer only once, and whenever the view is stationary, content is prefilled in the available space outside the viewport. Previously, at least one line of text was rendered every frame when the viewport was moving, which was mostly redundant.
 * Added UI languages: Interlingua, Toki Pona.
+* Added "New"/"Import" buttons in the bottom of the Identities tab.
+* Added an "All"/"Unread" mode switch in the bottom of the Feeds tab.
 * Added toggles for special tags in the bookmark creation/editor dialog.
 * Added "Show Downloads" to the File/main menu.
 * Added "Open Downloaded File" to the file save dialog to make it easy to find the local copy of the file.
 * Updated the UI font to Source Sans 3. It now has all the styles and weights needed for page rendering, too.
 * Added a semibold Fira Sans weight (used for unvisited links).
 * Preferences: Reorganized the fonts dropdown menu.
+* Changed popup dismiss behavior so that a click outside just dismisses the popup and does not trigger further actions.
 * All lists support smooth scrolling.
+* Multitouch scrolling: each finger can scroll a different widget.
 * Adjustments to how display DPI affects UI scaling.
 * Fixed allocation of page rendering buffers. Previously, some buffers may have gone unused or were allocated erroneously to the same position, causing unnecessary work for the page renderer.
 * Fixed various issues in the UI layout.
