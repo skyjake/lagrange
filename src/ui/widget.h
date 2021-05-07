@@ -34,6 +34,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/string.h>
 #include <SDL_events.h>
 
+iDeclareType(Root) /* each widget is associated with a Root */
+
 #define iDeclareWidgetClass(className) \
     iDeclareType(className); \
     typedef iWidgetClass i##className##Class; \
@@ -85,7 +87,8 @@ enum iWidgetFlag {
 };
 
 /* 64-bit extended flags */
-#define wasCollapsed_WidgetFlag             iBit64(32)
+//#define wasCollapsed_WidgetFlag             iBit64(32)
+#define disabledWhenHidden_WidgetFlag       iBit64(32)
 #define centerHorizontal_WidgetFlag         iBit64(33)
 #define moveToParentLeftEdge_WidgetFlag     iBit64(34)
 #define moveToParentRightEdge_WidgetFlag    iBit64(35)
@@ -113,6 +116,7 @@ enum iWidgetFlag {
 #define moveToParentBottomEdge_WidgetFlag   iBit64(57)
 #define parentCannotResizeHeight_WidgetFlag iBit64(58)
 #define ignoreForParentWidth_WidgetFlag     iBit64(59)
+#define noFadeBackground_WidgetFlag         iBit64(60)
 
 enum iWidgetAddPos {
     back_WidgetAddPos,
@@ -137,6 +141,7 @@ struct Impl_Widget {
     iObjectList *children;
     iWidget *    parent;
     iBool (*commandHandler)(iWidget *, const char *);
+    iRoot *      root;
 };
 
 iDeclareObjectConstruction(Widget)
@@ -165,15 +170,24 @@ void    destroy_Widget          (iWidget *); /* widget removed and deleted later
 void    destroyPending_Widget   (void);
 void    releaseChildren_Widget  (iWidget *);
 
-const iString *id_Widget                (const iWidget *);
+/* Coordinate spaces:
+    - window: 0,0 is at the top left corner of the window
+    - local:  0,0 is at the top left corner of the parent widget
+    - inner:  0,0 is at the top left corner of the widget */
+
+iWidget *       root_Widget             (const iWidget *);
+const iString * id_Widget               (const iWidget *);
 int64_t flags_Widget                    (const iWidget *);
 iRect   bounds_Widget                   (const iWidget *); /* outer bounds */
 iRect   innerBounds_Widget              (const iWidget *);
 iRect   boundsWithoutVisualOffset_Widget(const iWidget *);
-iInt2   localCoord_Widget               (const iWidget *, iInt2 coord);
-iBool   contains_Widget                 (const iWidget *, iInt2 coord);
-iBool   containsExpanded_Widget         (const iWidget *, iInt2 coord, int expand);
-iAny *  hitChild_Widget                 (const iWidget *, iInt2 coord);
+iInt2   localToWindow_Widget            (const iWidget *, iInt2 localCoord);
+iInt2   windowToLocal_Widget            (const iWidget *, iInt2 windowCoord);
+iInt2   innerToWindow_Widget            (const iWidget *, iInt2 innerCoord);
+iInt2   windowToInner_Widget            (const iWidget *, iInt2 windowCoord);
+iBool   contains_Widget                 (const iWidget *, iInt2 windowCoord);
+iBool   containsExpanded_Widget         (const iWidget *, iInt2 windowCoord, int expand);
+iAny *  hitChild_Widget                 (const iWidget *, iInt2 windowCoord);
 iAny *  findChild_Widget                (const iWidget *, const char *id);
 const iPtrArray *findChildren_Widget    (const iWidget *, const char *id);
 iAny *  findParentClass_Widget          (const iWidget *, const iAnyClass *class);
@@ -198,6 +212,7 @@ iLocalDef int height_Widget(const iAnyObject *d) {
     return 0;
 }
 iLocalDef iObjectList *children_Widget(iAnyObject *d) {
+    if (d == NULL) return NULL;
     iAssert(isInstance_Object(d, &Class_Widget));
     return ((iWidget *) d)->children;
 }
@@ -217,8 +232,11 @@ iBool   isDisabled_Widget           (const iAnyObject *);
 iBool   isFocused_Widget            (const iAnyObject *);
 iBool   isHover_Widget              (const iAnyObject *);
 iBool   isSelected_Widget           (const iAnyObject *);
+iBool   isUnderKeyRoot_Widget       (const iAnyObject *);
 iBool   isCommand_Widget            (const iWidget *d, const SDL_Event *ev, const char *cmd);
 iBool   hasParent_Widget            (const iWidget *d, const iWidget *someParent);
+iBool   isAffectedByVisualOffset_Widget
+                                    (const iWidget *);
 void    setId_Widget                (iWidget *, const char *id);
 void    setFlags_Widget             (iWidget *, int64_t flags, iBool set);
 void    setPos_Widget               (iWidget *, iInt2 pos);
@@ -231,8 +249,10 @@ void    showCollapsed_Widget        (iWidget *, iBool show); /* takes care of re
 void    setBackgroundColor_Widget   (iWidget *, int bgColor);
 void    setFrameColor_Widget        (iWidget *, int frameColor);
 void    setCommandHandler_Widget    (iWidget *, iBool (*handler)(iWidget *, const char *));
+void    setRoot_Widget              (iWidget *, iRoot *root); /* updates the entire tree */
 iAny *  addChild_Widget             (iWidget *, iAnyObject *child); /* holds a ref */
 iAny *  addChildPos_Widget          (iWidget *, iAnyObject *child, enum iWidgetAddPos addPos);
+iAny *  addChildPosFlags_Widget     (iWidget *, iAnyObject *child, enum iWidgetAddPos addPos, int64_t childFlags);
 iAny *  addChildFlags_Widget        (iWidget *, iAnyObject *child, int64_t childFlags); /* holds a ref */
 iAny *  insertChildAfter_Widget     (iWidget *, iAnyObject *child, size_t afterIndex);
 iAny *  insertChildAfterFlags_Widget(iWidget *, iAnyObject *child, size_t afterIndex, int64_t childFlags);

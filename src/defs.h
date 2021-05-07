@@ -27,8 +27,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 enum iFileVersion {
     initial_FileVersion                 = 0,
     addedResponseTimestamps_FileVersion = 1,
+    multipleRoots_FileVersion           = 2,
+    serializedSidebarState_FileVersion  = 3,
     /* meta */
-    latest_FileVersion = 1
+    idents_FileVersion = 1, /* version used by GmCerts/idents.lgr */
+    latest_FileVersion = 3,
 };
 
 /* Icons */
@@ -57,17 +60,18 @@ enum iFileVersion {
 #define timer_Icon          "\u23f2"
 #define home_Icon           "\U0001f3e0"
 #define edit_Icon           "\u270e"
-#define delete_Icon         "\u232b" //"\u2bbf"
+#define delete_Icon         "\u232b"
 #define copy_Icon           "\u2bba"
 #define check_Icon          "\u2714"
 #define ballotCheck_Icon    "\U0001f5f9"
 #define inbox_Icon          "\U0001f4e5"
 #define book_Icon           "\U0001f56e"
+#define folder_Icon         "\U0001f4c1"
 #define openTab_Icon        "\u2750"
 #define openTabBg_Icon      "\u2b1a"
 #define openExt_Icon        "\u27a0"
 #define add_Icon            "\u2795"
-#define page_Icon           "\U00010117" // "\U0001d363" // "\U0001f5b9"
+#define page_Icon           "\U00010117"
 #define circle_Icon         "\u25cf"
 #define circleWhite_Icon    "\u25cb"
 #define gear_Icon           "\u2699"
@@ -76,6 +80,7 @@ enum iFileVersion {
 #define rightAngle_Icon     "\U0001fba5"
 #define planet_Icon         "\U0001fa90"
 #define info_Icon           "\u2139"
+#define bug_Icon            "\U0001f41e"
 #define leftHalf_Icon       "\u25e7"
 #define rightHalf_Icon      "\u25e8"
 #define scissor_Icon        "\u2700"
@@ -83,7 +88,8 @@ enum iFileVersion {
 #define clipboard_Icon      "\U0001f4cb"
 #define unhappy_Icon        "\U0001f641"
 #define globe_Icon          "\U0001f310"
-#define magnifyingGlass_Icon    "\U0001f50d"
+#define magnifyingGlass_Icon "\U0001f50d"
+#define midEllipsis_Icon    "\u00b7\u00b7\u00b7"
 
 /* UI labels that depend on the platform */
 

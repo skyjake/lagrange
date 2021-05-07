@@ -26,6 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <the_Foundation/objectlist.h>
 #include <the_Foundation/string.h>
+#include <the_Foundation/stringset.h>
 #include <the_Foundation/time.h>
 
 #include "prefs.h"
@@ -36,6 +37,7 @@ iDeclareType(DocumentWidget)
 iDeclareType(GmCerts)
 iDeclareType(MimeHooks)
 iDeclareType(Periodic)
+iDeclareType(Root)
 iDeclareType(Visited)
 iDeclareType(Window)
 
@@ -57,6 +59,12 @@ enum iUserEventCode {
     command_UserEventCode = 1,
     refresh_UserEventCode = 2,
     asleep_UserEventCode = 3,
+    /* The start of a potential touch tap event is notified via a custom event because
+       sending SDL_MOUSEBUTTONDOWN would be premature: we don't know how long the tap will
+       take, it could turn into a tap-and-hold for example. */
+    widgetTapBegins_UserEventCode = 4,
+    widgetTouchEnds_UserEventCode = 5, /* finger lifted, but momentum may continue */
+    immediateRefresh_UserEventCode = 6, /* refresh even though more events are pending */
 };
 
 const iString *execPath_App     (void);
@@ -65,6 +73,7 @@ const iString *downloadDir_App  (void);
 const iString *debugInfo_App    (void);
 
 int         run_App                     (int argc, char **argv);
+void        rootOrder_App               (iRoot *roots[2]); /* TODO: max roots? */
 void        processEvents_App           (enum iAppEventMode mode);
 iBool       handleCommand_App           (const char *cmd);
 void        refresh_App                 (void);
@@ -81,9 +90,12 @@ iBookmarks *        bookmarks_App       (void);
 iMimeHooks *        mimeHooks_App       (void);
 iPeriodic *         periodic_App        (void);
 iDocumentWidget *   document_App        (void);
-iObjectList *       listDocuments_App   (void);
+iObjectList *       listDocuments_App   (const iRoot *rootOrNull); /* NULL for all roots */
+iStringSet *        listOpenURLs_App    (void); /* all tabs */
 iDocumentWidget *   newTab_App          (const iDocumentWidget *duplicateOf, iBool switchToNew);
 void                trimCache_App       (void);
+
+iDocumentWidget *   document_Root       (iRoot *);
 
 const iPrefs *      prefs_App           (void);
 iBool               forceSoftwareRender_App(void);
@@ -99,13 +111,18 @@ iAny *      findWidget_App      (const char *id);
 void        addTicker_App       (iTickerFunc ticker, iAny *context);
 void        removeTicker_App    (iTickerFunc ticker, iAny *context);
 void        postRefresh_App     (void);
-void        postCommand_App     (const char *command);
+void        postImmediateRefresh_App(void);
+void        postCommand_Root    (iRoot *, const char *command);
+void        postCommandf_Root   (iRoot *, const char *command, ...);
 void        postCommandf_App    (const char *command, ...);
 
-iLocalDef void postCommandString_App(const iString *command) {
+iLocalDef void postCommandString_Root(iRoot *d, const iString *command) {
     if (command) {
-        postCommand_App(cstr_String(command));
+        postCommand_Root(d, cstr_String(command));
     }
+}
+iLocalDef void postCommand_App(const char *command) {
+    postCommandf_App(command);
 }
 
 iDocumentWidget *   document_Command    (const char *cmd);

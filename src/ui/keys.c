@@ -22,6 +22,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "keys.h"
 #include "util.h"
+#include "window.h"
 #include "app.h"
 
 #include <the_Foundation/file.h>
@@ -221,8 +222,11 @@ static const struct { int id; iMenuItem bind; int flags; } defaultBindings_[] = 
 #endif
     { 76, { "${keys.tab.new}",              newTab_KeyShortcut,             "tabs.new"                          }, 0 },
     { 77, { "${keys.tab.close}",            closeTab_KeyShortcut,           "tabs.close"                        }, 0 },
+    { 78, { "${keys.tab.close.other}",      SDLK_w, KMOD_PRIMARY | KMOD_SHIFT, "tabs.close toleft:1 toright:1"  }, 0 },
     { 80, { "${keys.tab.prev}",             prevTab_KeyShortcut,            "tabs.prev"                         }, 0 },
     { 81, { "${keys.tab.next}",             nextTab_KeyShortcut,            "tabs.next"                         }, 0 },
+    { 90, { "${keys.split.menu}",           SDLK_j, KMOD_PRIMARY,           "splitmenu.open"                    }, 0 },
+    { 91, { "${keys.split.next}",           SDLK_TAB, KMOD_CTRL,            "keyroot.next",                     }, 0 },
     { 100,{ "${keys.hoverurl}",             '/', KMOD_PRIMARY,              "prefs.hoverlink.toggle"            }, 0 },
     /* The following cannot currently be changed (built-in duplicates). */
 #if defined (iPlatformApple)
@@ -424,21 +428,22 @@ void setLabel_Keys(int id, const char *label) {
 
 iBool processEvent_Keys(const SDL_Event *ev) {
     iKeys *d = &keys_;
+    iRoot *root = get_Window()->keyRoot;
     if (ev->type == SDL_KEYDOWN || ev->type == SDL_KEYUP) {
         const iBinding *bind = find_Keys_(d, ev->key.keysym.sym, keyMods_Sym(ev->key.keysym.mod));
         if (bind) {
             if (ev->type == SDL_KEYUP) {
                 if (bind->flags & argRelease_BindFlag) {
-                    postCommandf_App("%s release:1", cstr_String(&bind->command));
+                    postCommandf_Root(root, "%s release:1", cstr_String(&bind->command));
                     return iTrue;
                 }
                 return iFalse;
             }
             if (ev->key.repeat && (bind->flags & argRepeat_BindFlag)) {
-                postCommandf_App("%s repeat:1", cstr_String(&bind->command));
+                postCommandf_Root(root, "%s repeat:1", cstr_String(&bind->command));
             }
             else {
-                postCommandString_App(&bind->command);
+                postCommandString_Root(root, &bind->command);
             }
             return iTrue;
         }

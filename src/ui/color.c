@@ -21,6 +21,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "color.h"
+#include "root.h"
 #include "app.h"
 
 #include <the_Foundation/string.h>
@@ -65,7 +66,11 @@ static const iColor lightPalette_[] = {
     { 0,   150, 0,   255 },
 };
 
-static iColor palette_[max_ColorId];
+static iColor uiPalette_[tmFirst_ColorId]; /* not theme-specific */
+
+iColor *paletteColor_(enum iColorId id) {
+    return id < tmFirst_ColorId ? &uiPalette_[id] : &get_Root()->tmPalette[id - tmFirst_ColorId];
+}
 
 iLocalDef void copy_(enum iColorId dst, enum iColorId src) {
     set_Color(dst, get_Color(src));
@@ -73,7 +78,7 @@ iLocalDef void copy_(enum iColorId dst, enum iColorId src) {
 
 void setThemePalette_Color(enum iColorTheme theme) {
     const iPrefs *prefs = prefs_App();
-    memcpy(palette_, isDark_ColorTheme(theme) ? darkPalette_ : lightPalette_, sizeof(darkPalette_));
+    memcpy(uiPalette_, isDark_ColorTheme(theme) ? darkPalette_ : lightPalette_, sizeof(darkPalette_));
     const int accentHi    = (prefs->accent == cyan_ColorAccent ? cyan_ColorId : orange_ColorId);
     const int accentLo    = (prefs->accent == cyan_ColorAccent ? teal_ColorId : brown_ColorId);
     const int altAccentHi = (prefs->accent == cyan_ColorAccent ? orange_ColorId : cyan_ColorId);
@@ -298,8 +303,8 @@ void setThemePalette_Color(enum iColorTheme theme) {
     set_Color(uiTextShortcut_ColorId, mix_Color(get_Color(uiTextShortcut_ColorId),
                                                 get_Color(uiBackground_ColorId),
                                                 0.4f));
-    palette_[uiMarked_ColorId].a = 128;
-    palette_[uiMatching_ColorId].a = 128;
+    uiPalette_[uiMarked_ColorId  ].a = 128;
+    uiPalette_[uiMatching_ColorId].a = 128;
     if (deviceType_App() == phone_AppDeviceType) {
         copy_(uiInputBackground_ColorId, uiBackgroundSidebar_ColorId);
         copy_(uiInputFrame_ColorId, uiBackgroundSidebar_ColorId);
@@ -311,14 +316,14 @@ void setThemePalette_Color(enum iColorTheme theme) {
 iColor get_Color(int color) {
     const iColor *rgba = &transparent_;
     if (color >= 0 && color < max_ColorId) {
-        rgba = &palette_[color];
+        rgba = paletteColor_(color);
     }
     return *rgba;
 }
 
 void set_Color(int color, iColor rgba) {
     if (color >= uiBackground_ColorId && color < max_ColorId) {
-        palette_[color] = rgba;
+        *paletteColor_(color) = rgba;
     }
 }
 
@@ -341,7 +346,7 @@ iLocalDef iBool equal_Color_(const iColor *x, const iColor *y) {
 int darker_Color(int color) {
     const iColor rgb = get_Color(color);
     for (int i = 0; i < uiFirst_ColorId; i++) {
-        if (equal_Color_(&rgb, &palette_[i])) {
+        if (equal_Color_(&rgb, paletteColor_(i))) {
             return i > 0 ? i - 1 : i;
         }
     }
@@ -351,7 +356,7 @@ int darker_Color(int color) {
 int lighter_Color(int color) {
     const iColor rgb = get_Color(color);
     for (int i = 0; i < uiFirst_ColorId; i++) {
-        if (equal_Color_(&rgb, &palette_[i])) {
+        if (equal_Color_(&rgb, paletteColor_(i))) {
             return i < uiFirst_ColorId - 1 ? i + 1 : i;
         }
     }

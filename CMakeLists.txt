@@ -18,7 +18,7 @@
 cmake_minimum_required (VERSION 3.9)
 
 project (Lagrange
-    VERSION 1.3.4
+    VERSION 1.4.0
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
@@ -59,6 +59,7 @@ set (EMBED_RESOURCES
     res/fonts/FiraSans-Italic.ttf
     res/fonts/FiraSans-Light.ttf
     res/fonts/FiraSans-Regular.ttf
+    res/fonts/FiraSans-SemiBold.ttf
     res/fonts/Literata-Regular-opsz=14.ttf
     res/fonts/Literata-Bold-opsz=36.ttf
     res/fonts/Literata-ExtraLight-opsz=18.ttf
@@ -73,17 +74,22 @@ set (EMBED_RESOURCES
     res/fonts/Nunito-ExtraLight.ttf
     res/fonts/Nunito-LightItalic.ttf
     res/fonts/Nunito-Regular.ttf
-    res/fonts/SourceSansPro-Regular.ttf
-    res/fonts/SourceSansPro-Bold.ttf
+    res/fonts/SourceSans3-Bold.ttf
+    res/fonts/SourceSans3-ExtraLight.ttf
+    res/fonts/SourceSans3-It.ttf
+    res/fonts/SourceSans3-Regular.ttf
+    res/fonts/SourceSans3-Semibold.ttf
     res/fonts/Symbola.ttf
     res/lang/de.bin
     res/lang/en.bin
     res/lang/es.bin
     res/lang/fi.bin
     res/lang/fr.bin
+    res/lang/ia.bin
     res/lang/ie.bin
     res/lang/ru.bin
     res/lang/sr.bin
+    res/lang/tok.bin
     res/lang/zh_Hans.bin
     res/lang/zh_Hant.bin
     res/shadow.png
@@ -106,6 +112,8 @@ set (SOURCES
     src/defs.h
     src/feeds.c
     src/feeds.h
+    src/gempub.c
+    src/gempub.h
     src/gmcerts.c
     src/gmcerts.h
     src/gmdocument.c
@@ -164,6 +172,8 @@ set (SOURCES
     src/ui/metrics.h
     src/ui/paint.c
     src/ui/paint.h
+    src/ui/root.c
+    src/ui/root.h
     src/ui/mediaui.c
     src/ui/mediaui.h
     src/ui/scrollwidget.c
@@ -315,6 +325,7 @@ if (APPLE)
         XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "fi.skyjake.lagrange"
     )
     if (IOS)
+        target_compile_definitions (app PUBLIC LAGRANGE_IOS_VERSION="${IOS_BUNDLE_VERSION}")
         set_target_properties (app PROPERTIES
             MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_LIST_DIR}/res/iOSBundleInfo.plist.in"
             MACOSX_BUNDLE_BUNDLE_VERSION "${IOS_BUNDLE_VERSION}"

@@ -235,7 +235,7 @@ static void initFonts_Text_(iText *d) {
     float         h123Scaling  = 1.0f; /* glyph scaling (<=1.0), for increasing line spacing */
     if (d->contentFont == firaSans_TextFont) {
         regularFont = &fontFiraSansRegular_Embedded;
-        boldFont    = &fontFiraSansBold_Embedded;
+        boldFont    = &fontFiraSansSemiBold_Embedded;
         lightFont   = &fontFiraSansLight_Embedded;
         italicFont  = &fontFiraSansItalic_Embedded;
         scaling     = italicScaling = lightScaling = 0.85f;
@@ -253,12 +253,11 @@ static void initFonts_Text_(iText *d) {
         italicFont  = &fontLiterataLightItalicopsz10_Embedded;
         lightFont   = &fontLiterataExtraLightopsz18_Embedded;
     }
-    else if (d->contentFont == sourceSansPro_TextFont) {
-        regularFont = &fontSourceSansProRegular_Embedded;
-        boldFont    = &fontSourceSansProBold_Embedded;
-        italicFont  = &fontFiraSansItalic_Embedded;
-        lightFont   = &fontFiraSansLight_Embedded;
-        lightScaling = italicScaling = 0.85f;
+    else if (d->contentFont == sourceSans3_TextFont) {
+        regularFont = &fontSourceSans3Regular_Embedded;
+        boldFont    = &fontSourceSans3Semibold_Embedded;
+        italicFont  = &fontSourceSans3It_Embedded;
+        lightFont   = &fontSourceSans3ExtraLight_Embedded;
     }
     else if (d->contentFont == iosevka_TextFont) {
         regularFont = &fontIosevkaTermExtended_Embedded;
@@ -281,9 +280,9 @@ static void initFonts_Text_(iText *d) {
         h12Font = &fontLiterataBoldopsz36_Embedded;
         h3Font  = &fontLiterataRegularopsz14_Embedded;
     }
-    else if (d->headingFont == sourceSansPro_TextFont) {
-        h12Font = &fontSourceSansProBold_Embedded;
-        h3Font = &fontSourceSansProRegular_Embedded;
+    else if (d->headingFont == sourceSans3_TextFont) {
+        h12Font = &fontSourceSans3Bold_Embedded;
+        h3Font = &fontSourceSans3Regular_Embedded;
     }
     else if (d->headingFont == iosevka_TextFont) {
         h12Font = &fontIosevkaTermExtended_Embedded;
@@ -303,15 +302,15 @@ static void initFonts_Text_(iText *d) {
         /* Content sizes: smallmono, mono, 1.0, 1.2, 1.333, 1.666, 2.0 */
     } fontData[max_FontId] = {
         /* UI fonts: normal weight */
-        { &fontSourceSansProRegular_Embedded, uiSize,               1.0f, uiNormal_FontSize },
-        { &fontSourceSansProRegular_Embedded, uiSize * 1.125f,      1.0f, uiMedium_FontSize },
-        { &fontSourceSansProRegular_Embedded, uiSize * 1.333f,      1.0f, uiBig_FontSize },
-        { &fontSourceSansProRegular_Embedded, uiSize * 1.666f,      1.0f, uiLarge_FontSize },
+        { &fontSourceSans3Regular_Embedded, uiSize,               1.0f, uiNormal_FontSize },
+        { &fontSourceSans3Regular_Embedded, uiSize * 1.125f,      1.0f, uiMedium_FontSize },
+        { &fontSourceSans3Regular_Embedded, uiSize * 1.333f,      1.0f, uiBig_FontSize },
+        { &fontSourceSans3Regular_Embedded, uiSize * 1.666f,      1.0f, uiLarge_FontSize },
         /* UI fonts: bold weight */
-        { &fontSourceSansProBold_Embedded,    uiSize,               1.0f, uiNormal_FontSize },
-        { &fontSourceSansProBold_Embedded,    uiSize * 1.125f,      1.0f, uiMedium_FontSize },
-        { &fontSourceSansProBold_Embedded,    uiSize * 1.333f,      1.0f, uiBig_FontSize },
-        { &fontSourceSansProBold_Embedded,    uiSize * 1.666f,      1.0f, uiLarge_FontSize },
+        { &fontSourceSans3Bold_Embedded,    uiSize,               1.0f, uiNormal_FontSize },
+        { &fontSourceSans3Bold_Embedded,    uiSize * 1.125f,      1.0f, uiMedium_FontSize },
+        { &fontSourceSans3Bold_Embedded,    uiSize * 1.333f,      1.0f, uiBig_FontSize },
+        { &fontSourceSans3Bold_Embedded,    uiSize * 1.666f,      1.0f, uiLarge_FontSize },
         /* content fonts */
         { regularFont,                        textSize,             scaling,      contentRegular_FontSize },
         { boldFont,                           textSize,             scaling,      contentRegular_FontSize },
@@ -324,7 +323,7 @@ static void initFonts_Text_(iText *d) {
         { &fontIosevkaTermExtended_Embedded,  smallMonoSize,        1.0f,         contentMonoSmall_FontSize },
         { &fontIosevkaTermExtended_Embedded,  monoSize,             1.0f,         contentMono_FontSize },
         /* extra content fonts */
-        { &fontSourceSansProRegular_Embedded, textSize,             scaling, contentRegular_FontSize },
+        { &fontSourceSans3Regular_Embedded, textSize,             scaling, contentRegular_FontSize },
         { &fontIosevkaTermExtended_Embedded,  textSize,             0.866f,  contentRegular_FontSize },
         /* symbols and scripts */
 #define DEFINE_FONT_SET(data) \
@@ -499,12 +498,6 @@ static SDL_Surface *rasterizeGlyph_Font_(const iFont *d, uint32_t glyphIndex, fl
 #endif
 }
 
-#if 0
-iLocalDef SDL_Rect sdlRect_(const iRect rect) {
-    return (SDL_Rect){ rect.pos.x, rect.pos.y, rect.size.x, rect.size.y };
-}
-#endif
-
 iLocalDef iCacheRow *cacheRow_Text_(iText *d, int height) {
     return at_Array(&d->cacheRows, (height - 1) / d->cacheRowAllocStep);
 }
@@ -549,32 +542,6 @@ static void allocate_Font_(iFont *d, iGlyph *glyph, int hoff) {
         glyph->advance = d->xScale * adv;
     }
 }
-
-#if 0
-static iBool cache_Font_(const iFont *d, iGlyph *glyph, int hoff) {
-    iText *       txt     = &text_;
-    SDL_Renderer *render  = txt->render;
-    SDL_Texture * tex     = NULL;
-    SDL_Surface * surface = NULL;
-    iRect *       glRect  = &glyph->rect[hoff];
-    /* Rasterize the glyph using stbtt. */
-    iAssert(!isRasterized_Glyph_(glyph, hoff));
-    surface = rasterizeGlyph_Font_(d, glyph->glyphIndex, hoff * 0.5f);
-    tex = SDL_CreateTextureFromSurface(render, surface);
-    iAssert(isEqual_I2(glRect->size, init_I2(surface->w, surface->h)));
-    if (tex) {
-        SDL_SetTextureBlendMode(tex, SDL_BLENDMODE_NONE);
-        const SDL_Rect dstRect = sdlRect_(*glRect);
-        SDL_RenderCopy(render, tex, &(SDL_Rect){ 0, 0, dstRect.w, dstRect.h }, &dstRect);
-        SDL_DestroyTexture(tex);
-        setRasterized_Glyph_(glyph, hoff);
-    }
-    if (surface) {
-        SDL_FreeSurface(surface);
-    }
-    return isRasterized_Glyph_(glyph, hoff);
-}
-#endif
 
 iLocalDef iFont *characterFont_Font_(iFont *d, iChar ch, uint32_t *glyphIndex) {
     if ((*glyphIndex = glyphIndex_Font_(d, ch)) != 0) {
@@ -631,20 +598,6 @@ iLocalDef iFont *characterFont_Font_(iFont *d, iChar ch, uint32_t *glyphIndex) {
 //    }
     return font;
 }
-
-#if 0
-static void doRaster_Font_(const iFont *font, iGlyph *glyph) {
-    SDL_Texture *oldTarget = SDL_GetRenderTarget(text_.render);
-    SDL_SetRenderTarget(text_.render, text_.cache);
-    if (!isRasterized_Glyph_(glyph, 0)) {
-        cache_Font_(font, glyph, 0);
-    }
-    if (!isRasterized_Glyph_(glyph, 1)) {
-        cache_Font_(font, glyph, 1); /* half-pixel offset */
-    }
-    SDL_SetRenderTarget(text_.render, oldTarget);
-}
-#endif
 
 static iGlyph *glyph_Font_(iFont *d, iChar ch) {
     iGlyph * glyph;
@@ -787,7 +740,7 @@ void cacheTextGlyphs_Font_(iFont *d, const iRangecc text) {
                 oldTarget = SDL_GetRenderTarget(text_.render);
                 SDL_SetRenderTarget(text_.render, text_.cache);
             }
-            //printf("copying %d rasters\n", size_Array(rasters)); fflush(stdout);
+//            printf("copying %zu rasters from %p\n", size_Array(rasters), bufTex); fflush(stdout);
             iConstForEach(Array, i, rasters) {
                 const iRasterGlyph *rg = i.value;
 //                iAssert(isEqual_I2(rg->rect.size, rg->glyph->rect[rg->hoff].size));
@@ -797,6 +750,7 @@ void cacheTextGlyphs_Font_(iFont *d, const iRangecc text) {
                                (const SDL_Rect *) &rg->rect,
                                (const SDL_Rect *) glRect);
                 setRasterized_Glyph_(rg->glyph, rg->hoff);
+//                printf(" - %u\n", rg->glyph->glyphIndex);
             }
             SDL_DestroyTexture(bufTex);
             /* Resume with an empty buffer. */
@@ -1022,8 +976,9 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
         int x1 = iMax(xpos, xposExtend);
         /* Which half of the pixel the glyph falls on? */
         const int hoff = enableHalfPixelGlyphs_Text ? (xpos - x1 > 0.5f ? 1 : 0) : 0;
-        if (mode & draw_RunMode && !isRasterized_Glyph_(glyph, hoff)) {
+        if (mode & draw_RunMode && ch != 0x20 && ch != 0 && !isRasterized_Glyph_(glyph, hoff)) {
             /* Need to pause here and make sure all glyphs have been cached in the text. */
+//            printf("[Text] missing from cache: %lc (%x)\n", (int) ch, ch);
             cacheTextGlyphs_Font_(d, args->text);
             glyph = glyph_Font_(d, ch); /* cache may have been reset */
         }
@@ -1448,20 +1403,27 @@ void init_TextBuf(iTextBuf *d, int font, int color, const char *text) {
     SDL_Renderer *render = text_.render;
     d->size    = advance_Text(font, text);
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
-    d->texture = SDL_CreateTexture(render,
-                                   SDL_PIXELFORMAT_RGBA4444,
-                                   SDL_TEXTUREACCESS_STATIC | SDL_TEXTUREACCESS_TARGET,
-                                   d->size.x,
-                                   d->size.y);
-    SDL_Texture *oldTarget = SDL_GetRenderTarget(render);
-    SDL_SetRenderTarget(render, d->texture);
-    SDL_SetTextureBlendMode(text_.cache, SDL_BLENDMODE_NONE); /* blended when TextBuf is drawn */
-    SDL_SetRenderDrawColor(text_.render, 0, 0, 0, 0);
-    SDL_RenderClear(text_.render);
-    draw_Text_(font, zero_I2(), color | fillBackground_ColorId, range_CStr(text));
-    SDL_SetTextureBlendMode(text_.cache, SDL_BLENDMODE_BLEND);
-    SDL_SetRenderTarget(render, oldTarget);
-    SDL_SetTextureBlendMode(d->texture, SDL_BLENDMODE_BLEND);
+    if (d->size.x * d->size.y) {
+        d->texture = SDL_CreateTexture(render,
+                                       SDL_PIXELFORMAT_RGBA4444,
+                                       SDL_TEXTUREACCESS_STATIC | SDL_TEXTUREACCESS_TARGET,
+                                       d->size.x,
+                                       d->size.y);
+    }
+    else {
+        d->texture = NULL;
+    }
+    if (d->texture) {
+        SDL_Texture *oldTarget = SDL_GetRenderTarget(render);
+        SDL_SetRenderTarget(render, d->texture);
+        SDL_SetTextureBlendMode(text_.cache, SDL_BLENDMODE_NONE); /* blended when TextBuf is drawn */
+        SDL_SetRenderDrawColor(text_.render, 0, 0, 0, 0);
+        SDL_RenderClear(text_.render);
+        draw_Text_(font, zero_I2(), color | fillBackground_ColorId, range_CStr(text));
+        SDL_SetTextureBlendMode(text_.cache, SDL_BLENDMODE_BLEND);
+        SDL_SetRenderTarget(render, oldTarget);
+        SDL_SetTextureBlendMode(d->texture, SDL_BLENDMODE_BLEND);
+    }
 }
 
 void deinit_TextBuf(iTextBuf *d) {

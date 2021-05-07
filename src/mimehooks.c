@@ -1,4 +1,29 @@
+/* Copyright 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
+
 #include "mimehooks.h"
+#include "defs.h"
+#include "gmutil.h"
+#include "gempub.h"
 #include "app.h"
 
 #include <the_Foundation/file.h>
@@ -109,7 +134,8 @@ static iBlock *translateAtomXmlToGeminiFeed_(const iString *mime, const iBlock *
     init_String(&out);
     format_String(&out,
                   "20 text/gemini\r\n"
-                  "# %s\n\n", cstr_String(title));
+                  "# %s\n\n",
+                  cstr_String(title));
     if (!isEmpty_String(subtitle)) {
         appendFormat_String(&out, "## %s\n\n", cstr_String(subtitle));
     }
@@ -177,7 +203,23 @@ finished:
     return output;
 }
 
+iBlock *translateGemPubCoverPage_(const iBlock *source, const iString *requestUrl) {
+    iBlock *output = NULL;
+    iGempub *gempub = new_Gempub();
+    if (open_Gempub(gempub, source)) {
+        setBaseUrl_Gempub(gempub, requestUrl);
+        output = newCStr_Block("20 text/gemini; charset=utf-8\r\n");
+        iString *src = coverPageSource_Gempub(gempub);
+        append_Block(output, utf8_String(src));
+        delete_String(src);
+    }
+    delete_Gempub(gempub);
+    return output;
+}
+
 /*----------------------------------------------------------------------------------------------*/
+
+static const char *mimeHooksFilename_MimeHooks_ = "mimehooks.txt";
 
 struct Impl_MimeHooks {
     iPtrArray filters;
@@ -194,6 +236,12 @@ void deinit_MimeHooks(iMimeHooks *d) {
         delete_FilterHook(i.ptr);
     }
     deinit_PtrArray(&d->filters);
+}
+
+static iBool checkGemPub_(const iString *mime, const iString *requestUrl) {
+    /* Only process GemPub in local files. */
+    return (equalCase_Rangecc(urlScheme_String(requestUrl), "file") &&
+            startsWithCase_String(mime, mimeType_Gempub));
 }
 
 iBool willTryFilter_MimeHooks(const iMimeHooks *d, const iString *mime) {
@@ -228,6 +276,12 @@ iBlock *tryFilter_MimeHooks(const iMimeHooks *d, const iString *mime, const iBlo
         }
     }
     /* Built-in filters. */
+    if (checkGemPub_(mime, requestUrl)) {
+        iBlock *result = translateGemPubCoverPage_(body, requestUrl);
+        if (result) {
+            return result;
+        }
+    }
     init_RegExpMatch(&m);
     if (matchString_RegExp(xmlMimePattern_(), mime, &m)) {
         iBlock *result = translateAtomXmlToGeminiFeed_(mime, body, requestUrl);
@@ -237,8 +291,6 @@ iBlock *tryFilter_MimeHooks(const iMimeHooks *d, const iString *mime, const iBlo
     }
     return NULL;
 }
-
-static const char *mimeHooksFilename_MimeHooks_ = "mimehooks.txt";
 
 void load_MimeHooks(iMimeHooks *d, const char *saveDir) {
     iBool reportError = iFalse;

@@ -20,7 +20,10 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
+#pragma once
+
 #include <the_Foundation/mutex.h>
+#include <the_Foundation/ptrset.h>
 #include <the_Foundation/sortedarray.h>
 
 iDeclareType(Periodic)
@@ -31,6 +34,7 @@ struct Impl_Periodic {
     iMutex *     mutex;
     iSortedArray commands;
     uint32_t     lastPostTime;
+    iPtrSet      pendingRemoval; /* contexts */
 };
 
 void    init_Periodic   (iPeriodic *);
@@ -40,7 +44,7 @@ iLocalDef iBool isEmpty_Periodic(const iPeriodic *d) {
     return isEmpty_SortedArray(&d->commands);
 }
 
-void    add_Periodic            (iPeriodic *, iAny *context, const char *command);
-void    remove_Periodic         (iPeriodic *, iAny *context);
+void    add_Periodic            (iPeriodic *, iAnyObject *context, const char *command);
+void    remove_Periodic         (iPeriodic *, iAnyObject *context);
 
-iBool   postCommands_Periodic   (iPeriodic *);
+iBool   dispatchCommands_Periodic( iPeriodic *);

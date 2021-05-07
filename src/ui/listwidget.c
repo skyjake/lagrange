@@ -25,6 +25,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "paint.h"
 #include "util.h"
 #include "command.h"
+#include "touch.h"
 #include "visbuf.h"
 #include "app.h"
 
@@ -49,14 +50,37 @@ iDefineObjectConstruction(ListWidget)
 struct Impl_ListWidget {
     iWidget widget;
     iScrollWidget *scroll;
-    int scrollY;
+    iSmoothScroll scrollY;
     int itemHeight;
     iPtrArray items;
     size_t hoverItem;
     iClick click;
     iIntSet invalidItems;
     iVisBuf *visBuf;
+    iBool noHoverWhileScrolling;
 };
+
+static void refreshWhileScrolling_ListWidget_(iAnyObject *any) {
+    iListWidget *d = any;
+    updateVisible_ListWidget(d);
+    refresh_Widget(d);
+    if (!isFinished_SmoothScroll(&d->scrollY)) {
+        addTicker_App(refreshWhileScrolling_ListWidget_, any);
+    }
+}
+
+static void scrollBegan_ListWidget_(iAnyObject *any, int offset, uint32_t span) {
+    iListWidget *d = any;
+    iUnused(span);
+    if (offset) {
+        if (d->hoverItem != iInvalidPos) {
+            invalidateItem_ListWidget(d, d->hoverItem);
+            d->hoverItem = iInvalidPos;
+        }
+        d->noHoverWhileScrolling = iTrue;
+    }
+    refreshWhileScrolling_ListWidget_(d);
+}
 
 void init_ListWidget(iListWidget *d) {
     iWidget *w = as_Widget(d);
@@ -66,8 +90,9 @@ void init_ListWidget(iListWidget *d) {
     setFlags_Widget(w, hover_WidgetFlag, iTrue);
     addChild_Widget(w, iClob(d->scroll = new_ScrollWidget()));
     setThumb_ScrollWidget(d->scroll, 0, 0);
-    d->scrollY = 0;
+    init_SmoothScroll(&d->scrollY, w, scrollBegan_ListWidget_);
     d->itemHeight = 0;
+    d->noHoverWhileScrolling = iFalse;
     init_PtrArray(&d->items);
     d->hoverItem = iInvalidPos;
     init_Click(&d->click, d, SDL_BUTTON_LEFT);
@@ -76,6 +101,7 @@ void init_ListWidget(iListWidget *d) {
 }
 
 void deinit_ListWidget(iListWidget *d) {
+    removeTicker_App(refreshWhileScrolling_ListWidget_, d);
     clear_ListWidget(d);
     deinit_PtrArray(&d->items);
     delete_VisBuf(d->visBuf);
@@ -125,9 +151,10 @@ void updateVisible_ListWidget(iListWidget *d) {
     if (area_Rect(bounds) == 0) {
         return;
     }
-    setRange_ScrollWidget(d->scroll, (iRangei){ 0, scrollMax_ListWidget_(d) });
+    setMax_SmoothScroll(&d->scrollY, scrollMax_ListWidget_(d));
+    setRange_ScrollWidget(d->scroll, (iRangei){ 0, d->scrollY.max });
     setThumb_ScrollWidget(d->scroll,
-                          d->scrollY,
+                          pos_SmoothScroll(&d->scrollY),
                           contentSize > 0 ? height_Rect(bounds_Widget(as_Widget(d->scroll))) *
                                                 height_Rect(bounds) / contentSize
                                           : 0);
@@ -155,36 +182,26 @@ int itemHeight_ListWidget(const iListWidget *d) {
 }
 
 int scrollPos_ListWidget(const iListWidget *d) {
-    return d->scrollY;
+    return targetValue_Anim(&d->scrollY.pos);
 }
 
 void setScrollPos_ListWidget(iListWidget *d, int pos) {
-    d->scrollY = pos;
+    setValue_Anim(&d->scrollY.pos, pos, 0);
     d->hoverItem = iInvalidPos;
     refresh_Widget(as_Widget(d));
 }
 
 void scrollOffset_ListWidget(iListWidget *d, int offset) {
-    const int oldScroll = d->scrollY;
-    d->scrollY += offset;
-    if (d->scrollY < 0) {
-        d->scrollY = 0;
-    }
-    const int scrollMax = scrollMax_ListWidget_(d);
-    d->scrollY = iMin(d->scrollY, scrollMax);
-    if (oldScroll != d->scrollY) {
-        if (d->hoverItem != iInvalidPos) {
-            invalidateItem_ListWidget(d, d->hoverItem);
-            d->hoverItem = iInvalidPos;
-        }
-        updateVisible_ListWidget(d);
-        refresh_Widget(as_Widget(d));
-    }
+    moveSpan_SmoothScroll(&d->scrollY, offset, 0);
 }
 
 void scrollToItem_ListWidget(iListWidget *d, size_t index) {
+    if (index >= size_PtrArray(&d->items)) {
+        return;
+    }
+    stop_Anim(&d->scrollY.pos);
     const iRect rect    = innerBounds_Widget(as_Widget(d));
-    int         yTop    = d->itemHeight * index - d->scrollY;
+    int         yTop    = d->itemHeight * index - pos_SmoothScroll(&d->scrollY);
     int         yBottom = yTop + d->itemHeight;
     if (yBottom > height_Rect(rect)) {
         scrollOffset_ListWidget(d, yBottom - height_Rect(rect));
@@ -212,7 +229,7 @@ static iRanges visRange_ListWidget_(const iListWidget *d) {
 
 size_t itemIndex_ListWidget(const iListWidget *d, iInt2 pos) {
     const iRect bounds = innerBounds_Widget(constAs_Widget(d));
-    pos.y -= top_Rect(bounds) - d->scrollY;
+    pos.y -= top_Rect(bounds) - pos_SmoothScroll(&d->scrollY);
     if (pos.y < 0 || !d->itemHeight) return iInvalidPos;
     size_t index = pos.y / d->itemHeight;
     if (index >= size_Array(&d->items)) return iInvalidPos;
@@ -279,10 +296,23 @@ static void sizeChanged_ListWidget_(iListWidget *d) {
     invalidate_ListWidget(d);
 }
 
+static void updateHover_ListWidget_(iListWidget *d, const iInt2 mouse) {
+    size_t hover = iInvalidPos;
+    if (!d->noHoverWhileScrolling &&
+        !contains_Widget(constAs_Widget(d->scroll), mouse) &&
+        contains_Widget(constAs_Widget(d), mouse)) {
+        hover = itemIndex_ListWidget(d, mouse);
+    }
+    setHoverItem_ListWidget_(d, hover);
+}
+
 static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
     if (isMetricsChange_UserEvent(ev)) {
         invalidate_ListWidget(d);
+    }
+    else if (processEvent_SmoothScroll(&d->scrollY, ev)) {
+        return iTrue;
     }
     else if (isCommand_SDLEvent(ev)) {
         const char *cmd = command_UserEvent(ev);
@@ -294,32 +324,38 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
             return iTrue;
         }
     }
+    else if (ev->type == SDL_USEREVENT && ev->user.code == widgetTapBegins_UserEventCode) {
+        d->noHoverWhileScrolling = iFalse;
+    }
     if (ev->type == SDL_MOUSEMOTION) {
-        const iInt2 mouse = init_I2(ev->motion.x, ev->motion.y);
-        size_t hover = iInvalidPos;
-        if (!contains_Widget(constAs_Widget(d->scroll), mouse) &&
-            contains_Widget(w, mouse)) {
-            hover = itemIndex_ListWidget(d, mouse);
+        if (ev->motion.which != SDL_TOUCH_MOUSEID) {
+            d->noHoverWhileScrolling = iFalse;
         }
-        setHoverItem_ListWidget_(d, hover);
+        updateHover_ListWidget_(d, init_I2(ev->motion.x, ev->motion.y));
     }
     if (ev->type == SDL_MOUSEWHEEL && isHover_Widget(w)) {
         int amount = -ev->wheel.y;
-        if (!isPerPixel_MouseWheelEvent(&ev->wheel)) {
-            amount *= 3 * d->itemHeight;
+        if (isPerPixel_MouseWheelEvent(&ev->wheel)) {
+            stop_Anim(&d->scrollY.pos);
+            moveSpan_SmoothScroll(&d->scrollY, amount, 0);
         }
-        scrollOffset_ListWidget(d, amount);
+        else {
+            /* Traditional mouse wheel. */
+            amount *= 3 * d->itemHeight;
+            moveSpan_SmoothScroll(&d->scrollY, amount, 200);            
+        }
         return iTrue;
     }
     switch (processEvent_Click(&d->click, ev)) {
         case started_ClickResult:
+            d->noHoverWhileScrolling = iFalse;
+            updateHover_ListWidget_(d, mouseCoord_Window(get_Window()));
             redrawHoverItem_ListWidget_(d);
             return iTrue;
         case aborted_ClickResult:
             redrawHoverItem_ListWidget_(d);
             break;
         case finished_ClickResult:
-//        case double_ClickResult:
             redrawHoverItem_ListWidget_(d);
             if (contains_Rect(innerBounds_Widget(w), pos_Click(&d->click)) &&
                 d->hoverItem != iInvalidSize) {
@@ -333,26 +369,13 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
     return processEvent_Widget(w, ev);
 }
 
-#if 0
-static void drawItem_ListWidget_(const iListWidget *d, iPaint *p, size_t index, iInt2 pos) {
-    const iWidget *  w         = constAs_Widget(d);
-    const iRect      bounds    = innerBounds_Widget(w);
-    const iListItem *item      = constAt_PtrArray(&d->items, index);
-    const iRect      itemRect  = { pos, init_I2(width_Rect(bounds), d->itemHeight) };
-    class_ListItem(item)->draw(item, p, itemRect, d);
-}
-
-static const iListItem *item_ListWidget_(const iListWidget *d, size_t pos) {
-    return constAt_PtrArray(&d->items, pos);
-}
-#endif
-
 static void draw_ListWidget_(const iListWidget *d) {
     const iWidget *w      = constAs_Widget(d);
     const iRect    bounds = innerBounds_Widget(w);
     if (!bounds.size.y || !bounds.size.x || !d->itemHeight) {
         return;
     }
+    const int scrollY = pos_SmoothScroll(&d->scrollY);
     iPaint p;
     init_Paint(&p);
     drawBackground_Widget(w);
@@ -368,8 +391,8 @@ static void draw_ListWidget_(const iListWidget *d) {
             w->bgColor, w->bgColor, w->bgColor, w->bgColor
         };
         const int bottom = numItems_ListWidget(d) * d->itemHeight;
-        const iRangei vis = { d->scrollY / d->itemHeight * d->itemHeight,
-                             ((d->scrollY + bounds.size.y) / d->itemHeight + 1) * d->itemHeight };
+        const iRangei vis = { scrollY / d->itemHeight * d->itemHeight,
+                             ((scrollY + bounds.size.y) / d->itemHeight + 1) * d->itemHeight };
         reposition_VisBuf(d->visBuf, vis);
         /* Check which parts are invalid. */
         iRangei invalidRange[iElemCount(d->visBuf->buffers)];
@@ -421,7 +444,7 @@ static void draw_ListWidget_(const iListWidget *d) {
         clear_IntSet(&iConstCast(iListWidget *, d)->invalidItems);
     }
     setClip_Paint(&p, bounds_Widget(w));
-    draw_VisBuf(d->visBuf, addY_I2(topLeft_Rect(bounds), -d->scrollY));
+    draw_VisBuf(d->visBuf, addY_I2(topLeft_Rect(bounds), -scrollY), ySpan_Rect(bounds));
     unsetClip_Paint(&p);
     drawChildren_Widget(w);
 }

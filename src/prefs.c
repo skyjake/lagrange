@@ -37,10 +37,12 @@ void init_Prefs(iPrefs *d) {
     d->zoomPercent       = 100;
     d->sideIcon          = iTrue;
     d->hideToolbarOnScroll = iTrue;
+    d->pinSplit          = 1;
     d->hoverLink         = iFalse;
     d->smoothScrolling   = iTrue;
     d->loadImageInsteadOfScrolling = iFalse;
     d->collapsePreOnLoad = iFalse;
+    d->openArchiveIndexPages = iTrue;
     d->decodeUserVisibleURLs = iTrue;
     d->maxCacheSize      = 10;
     d->font              = nunito_TextFont;

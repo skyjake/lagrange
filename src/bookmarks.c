@@ -219,7 +219,7 @@ iBool remove_Bookmarks(iBookmarks *d, uint32_t id) {
     if (bm) {
         /* If this is a remote source, make sure all the remote bookmarks are
            removed as well. */
-        if (hasTag_Bookmark(bm, "remotesource")) {
+        if (hasTag_Bookmark(bm, remoteSource_BookmarkTag)) {
             iForEach(Hash, i, &d->bookmarks) {
                 iBookmark *j = (iBookmark *) i.value;
                 if (j->sourceId == id_Bookmark(bm)) {
@@ -240,7 +240,7 @@ iBool updateBookmarkIcon_Bookmarks(iBookmarks *d, const iString *url, iChar icon
     const uint32_t id = findUrl_Bookmarks(d, url);
     if (id) {
         iBookmark *bm = get_Bookmarks(d, id);
-        if (!hasTag_Bookmark(bm, "remote") && !hasTag_Bookmark(bm, "usericon")) {
+        if (!hasTag_Bookmark(bm, remote_BookmarkTag) && !hasTag_Bookmark(bm, userIcon_BookmarkTag)) {
             if (icon != bm->icon) {
                 bm->icon = icon;
                 changed = iTrue;
@@ -257,7 +257,7 @@ iChar siteIcon_Bookmarks(const iBookmarks *d, const iString *url) {
     }
     static iRegExp *tagPattern_;
     if (!tagPattern_) {
-        tagPattern_ = new_RegExp("\\busericon\\b", caseSensitive_RegExpOption);
+        tagPattern_ = new_RegExp("\\b" userIcon_BookmarkTag "\\b", caseSensitive_RegExpOption);
     }
     const iRangecc urlRoot      = urlRoot_String(url);
     size_t         matchingSize = iInvalidSize; /* we'll pick the shortest matching */
@@ -412,7 +412,7 @@ const iString *bookmarkListPage_Bookmarks(const iBookmarks *d, enum iBookmarkLis
 
 static iBool isRemoteSource_Bookmark_(void *context, const iBookmark *d) {
     iUnused(context);
-    return hasTag_Bookmark(d, "remotesource");
+    return hasTag_Bookmark(d, remoteSource_BookmarkTag);
 }
 
 void remoteRequestFinished_Bookmarks_(iBookmarks *d, iGmRequest *req) {
@@ -484,7 +484,7 @@ void fetchRemote_Bookmarks(iBookmarks *d) {
         size_t numRemoved = 0;
         iForEach(Hash, i, &d->bookmarks) {
             iBookmark *bm = (iBookmark *) i.value;
-            if (hasTag_Bookmark(bm, "remote")) {
+            if (hasTag_Bookmark(bm, remote_BookmarkTag)) {
                 remove_HashIterator(&i);
                 delete_Bookmark(bm);
                 numRemoved++;

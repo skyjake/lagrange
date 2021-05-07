@@ -49,6 +49,10 @@
         </array>
         <key>UILaunchStoryboardName</key>
         <string>LaunchScreen</string>
+		<key>UIBackgroundModes</key>
+		<array>
+			<string>audio</string>			
+		</array>
 		<key>ITSAppUsesNonExemptEncryption</key>
 		<false/>
         <key>LSSupportsOpeningDocumentsInPlace</key>
@@ -65,6 +69,22 @@
                         <string>text-gemini.icns</string>
                         <key>CFBundleTypeName</key>
                         <string>Gemini Text File</string>
+                        <key>CFBundleTypeRole</key>
+                        <string>Viewer</string>
+                        <key>LSHandlerRank</key>
+                        <string>Default</string>
+                        <key>LSTypeIsPackage</key>
+                        <false/>
+                </dict>
+                <dict>
+                        <key>CFBundleTypeExtensions</key>
+                        <array>
+                                <string>gpub</string>
+                        </array>
+                        <key>CFBundleTypeIconFile</key>
+                        <string>gempub.icns</string>
+                        <key>CFBundleTypeName</key>
+                        <string>Gempub Book</string>
                         <key>CFBundleTypeRole</key>
                         <string>Viewer</string>
                         <key>LSHandlerRank</key>

@@ -23,19 +23,21 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "util.h"
 
 #include "app.h"
+#include "bindingswidget.h"
 #include "bookmarks.h"
 #include "color.h"
 #include "command.h"
 #include "defs.h"
 #include "documentwidget.h"
-#include "gmutil.h"
 #include "feeds.h"
-#include "labelwidget.h"
+#include "gmutil.h"
 #include "inputwidget.h"
-#include "bindingswidget.h"
 #include "keys.h"
-#include "widget.h"
+#include "labelwidget.h"
+#include "root.h"
 #include "text.h"
+#include "touch.h"
+#include "widget.h"
 #include "window.h"
 
 #if defined (iPlatformAppleMobile)
@@ -169,7 +171,9 @@ int keyMods_Sym(int kmods) {
 
 int openTabMode_Sym(int kmods) {
     const int km = keyMods_Sym(kmods);
-    return ((km & KMOD_PRIMARY) && (km & KMOD_SHIFT)) ? 1 : (km & KMOD_PRIMARY) ? 2 : 0;
+    return (km == KMOD_SHIFT ? otherRoot_OpenTabFlag : 0) | /* open to the side */
+           (((km & KMOD_PRIMARY) && (km & KMOD_SHIFT)) ? new_OpenTabFlag :
+            (km & KMOD_PRIMARY) ? newBackground_OpenTabFlag : 0);
 }
 
 iRangei intersect_Rangei(iRangei a, iRangei b) {
@@ -220,20 +224,18 @@ static const char *moveForward_(const char *pos, iRangecc bounds, int mode) {
 void extendRange_Rangecc(iRangecc *d, iRangecc bounds, int mode) {
     if (!d->start) return;
     if (d->end >= d->start) {
-        if (mode & bothStartAndEnd_RangeExtension) {
+        if (mode & moveStart_RangeExtension) {
             d->start = moveBackward_(d->start, bounds, mode);
-            d->end   = moveForward_(d->end, bounds, mode);
         }
-        else {
+        if (mode & moveEnd_RangeExtension) {
             d->end = moveForward_(d->end, bounds, mode);
         }
     }
     else {
-        if (mode & bothStartAndEnd_RangeExtension) {
+        if (mode & moveStart_RangeExtension) {
             d->start = moveForward_(d->start, bounds, mode);
-            d->end   = moveBackward_(d->end, bounds, mode);
         }
-        else {
+        if (mode & moveEnd_RangeExtension) {
             d->end = moveBackward_(d->end, bounds, mode);
         }
     }
@@ -248,6 +250,7 @@ iBool isFinished_Anim(const iAnim *d) {
 void init_Anim(iAnim *d, float value) {
     d->due = d->when = SDL_GetTicks();
     d->from = d->to = value;
+    d->bounce = 0.0f;
     d->flags = 0;
 }
 
@@ -278,20 +281,29 @@ static float valueAt_Anim_(const iAnim *d, const uint32_t now) {
         return d->from;
     }
     float t = pos_Anim_(d, now);
-    const iBool isSoft = (d->flags & softer_AnimFlag) != 0;
+    const iBool isSoft     = (d->flags & softer_AnimFlag) != 0;
+    const iBool isVerySoft = (d->flags & muchSofter_AnimFlag) != 0;
     if ((d->flags & easeBoth_AnimFlag) == easeBoth_AnimFlag) {
         t = easeBoth_(t);
         if (isSoft) t = easeBoth_(t);
+        if (isVerySoft) t = easeBoth_(easeBoth_(t));
     }
     else if (d->flags & easeIn_AnimFlag) {
         t = easeIn_(t);
         if (isSoft) t = easeIn_(t);
+        if (isVerySoft) t = easeIn_(easeIn_(t));
     }
     else if (d->flags & easeOut_AnimFlag) {
         t = easeOut_(t);
         if (isSoft) t = easeOut_(t);
+        if (isVerySoft) t = easeOut_(easeOut_(t));
     }
-    return d->from * (1.0f - t) + d->to * t;
+    float value = d->from * (1.0f - t) + d->to * t;
+    if (d->flags & bounce_AnimFlag) {
+        t = (1.0f - easeOut_(easeOut_(t))) * easeOut_(t);
+        value += d->bounce * t;
+    }
+    return value;
 }
 
 void setValue_Anim(iAnim *d, float to, uint32_t span) {
@@ -306,6 +318,7 @@ void setValue_Anim(iAnim *d, float to, uint32_t span) {
         d->when = now;
         d->due  = now + span;
     }
+    d->bounce = 0;
 }
 
 void setValueSpeed_Anim(iAnim *d, float to, float unitsPerSecond) {
@@ -318,6 +331,7 @@ void setValueSpeed_Anim(iAnim *d, float to, float unitsPerSecond) {
         d->to                = to;
         d->when              = now;
         d->due               = d->when + span;
+        d->bounce            = 0;
     }
 }
 
@@ -335,9 +349,10 @@ void setValueEased_Anim(iAnim *d, float to, uint32_t span) {
         d->from  = valueAt_Anim_(d, now);
         d->flags = easeOut_AnimFlag;
     }
-    d->to   = to;
-    d->when = now;
-    d->due  = now + span;
+    d->to     = to;
+    d->when   = now;
+    d->due    = now + span;
+    d->bounce = 0;
 }
 
 void setFlags_Anim(iAnim *d, int flags, iBool set) {
@@ -433,6 +448,108 @@ iInt2 delta_Click(const iClick *d) {
     return sub_I2(d->pos, d->startPos);
 }
 
+/*----------------------------------------------------------------------------------------------*/
+
+void init_SmoothScroll(iSmoothScroll *d, iWidget *owner, iSmoothScrollNotifyFunc notify) {
+    reset_SmoothScroll(d);
+    d->widget = owner;
+    d->notify = notify;
+}
+
+void reset_SmoothScroll(iSmoothScroll *d) {
+    init_Anim(&d->pos, 0);
+    d->max = 0;
+    d->overscroll = (deviceType_App() != desktop_AppDeviceType ? 100 * gap_UI : 0);
+}
+
+void setMax_SmoothScroll(iSmoothScroll *d, int max) {
+    max = iMax(0, max);
+    if (max != d->max) {
+        d->max = max;
+        if (targetValue_Anim(&d->pos) > d->max) {
+            d->pos.to = d->max;
+        }
+    }
+}
+
+static int overscroll_SmoothScroll_(const iSmoothScroll *d) {
+    if (d->overscroll) {
+        const int y = value_Anim(&d->pos);
+        if (y <= 0) {
+            return y;
+        }
+        if (y >= d->max) {
+            return y - d->max;
+        }
+    }
+    return 0;
+}
+
+float pos_SmoothScroll(const iSmoothScroll *d) {
+    return value_Anim(&d->pos) - overscroll_SmoothScroll_(d) * 0.667f;
+}
+
+iBool isFinished_SmoothScroll(const iSmoothScroll *d) {
+    return isFinished_Anim(&d->pos);
+}
+
+void moveSpan_SmoothScroll(iSmoothScroll *d, int offset, uint32_t span) {
+#if !defined (iPlatformMobile)
+    if (!prefs_App()->smoothScrolling) {
+        span = 0; /* always instant */
+    }
+#endif
+    int destY = targetValue_Anim(&d->pos) + offset;
+    if (destY < -d->overscroll) {
+        destY = -d->overscroll;
+    }
+    if (d->max > 0) {
+        if (destY >= d->max + d->overscroll) {
+            destY = d->max + d->overscroll;
+        }
+    }
+    else {
+        destY = 0;
+    }
+    if (span) {
+        setValueEased_Anim(&d->pos, destY, span);
+    }
+    else {
+        setValue_Anim(&d->pos, destY, 0);
+    }
+    if (d->overscroll && widgetMode_Touch(d->widget) == momentum_WidgetTouchMode) {
+        const int osDelta = overscroll_SmoothScroll_(d);
+        if (osDelta) {
+            const float remaining = stopWidgetMomentum_Touch(d->widget);
+            span = iMini(1000, 50 * sqrt(remaining / gap_UI));
+            setValue_Anim(&d->pos, osDelta < 0 ? 0 : d->max, span);
+            d->pos.flags = bounce_AnimFlag | easeOut_AnimFlag | softer_AnimFlag;
+            //            printf("remaining: %f  dur: %d\n", remaining, duration);
+            d->pos.bounce = (osDelta < 0 ? -1 : 1) *
+                            iMini(5 * d->overscroll, remaining * remaining * 0.00005f);
+        }
+    }
+    if (d->notify) {
+        d->notify(d->widget, offset, span);
+    }
+}
+
+void move_SmoothScroll(iSmoothScroll *d, int offset) {
+    moveSpan_SmoothScroll(d, offset, 0 /* instantly */);
+}
+
+iBool processEvent_SmoothScroll(iSmoothScroll *d, const SDL_Event *ev) {
+    if (ev->type == SDL_USEREVENT && ev->user.code == widgetTouchEnds_UserEventCode) {
+        const int osDelta = overscroll_SmoothScroll_(d);
+        if (osDelta) {
+            moveSpan_SmoothScroll(d, -osDelta, 100 * sqrt(iAbs(osDelta) / gap_UI));
+            d->pos.flags = easeOut_AnimFlag | muchSofter_AnimFlag;
+        }
+        return iTrue;
+    }
+    return iFalse;
+}
+
 /*-----------------------------------------------------------------------------------------------*/
 
 iWidget *makePadding_Widget(int size) {
@@ -520,7 +637,7 @@ static iBool menuHandler_(iWidget *menu, const char *cmd) {
         }
         if ((equal_Command(cmd, "mouse.clicked") || equal_Command(cmd, "mouse.missed")) &&
             arg_Command(cmd)) {
-            if (hitChild_Widget(get_Window()->root, coord_Command(cmd)) == parentMenuButton_(menu)) {
+            if (hitChild_Window(get_Window(), coord_Command(cmd)) == parentMenuButton_(menu)) {
                 return iFalse;
             }
             /* Dismiss open menus when clicking outside them. */
@@ -573,13 +690,22 @@ iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
             addChild_Widget(menu, iClob(makeMenuSeparator_()));
         }
         else {
+            iBool isInfo = iFalse;
+            const char *labelText = item->label;
+            if (startsWith_CStr(labelText, "```")) {
+                labelText += 3;
+                isInfo = iTrue;
+            }
             iLabelWidget *label = addChildFlags_Widget(
                 menu,
-                iClob(newKeyMods_LabelWidget(item->label, item->key, item->kmods, item->command)),
+                iClob(newKeyMods_LabelWidget(labelText, item->key, item->kmods, item->command)),
                 noBackground_WidgetFlag | frameless_WidgetFlag | alignLeft_WidgetFlag |
-                                                       drawKey_WidgetFlag | itemFlags);
+                drawKey_WidgetFlag | (isInfo ? wrapText_WidgetFlag : 0) | itemFlags);
             haveIcons |= checkIcon_LabelWidget(label);
             updateSize_LabelWidget(label); /* drawKey was set */
+            if (isInfo) {
+                setTextColor_LabelWidget(label, uiTextAction_ColorId);
+            }
         }
     }
     if (deviceType_App() == phone_AppDeviceType) {
@@ -609,12 +735,13 @@ iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
     return menu;
 }
 
-void openMenu_Widget(iWidget *d, iInt2 coord) {
-    openMenuFlags_Widget(d, coord, iTrue);
+void openMenu_Widget(iWidget *d, iInt2 windowCoord) {
+    openMenuFlags_Widget(d, windowCoord, iTrue);
 }
 
-void openMenuFlags_Widget(iWidget *d, iInt2 coord, iBool postCommands) {
-    const iInt2 rootSize        = rootSize_Window(get_Window());
+void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, iBool postCommands) {
+    const iRect rootRect        = rect_Root(d->root);
+    const iInt2 rootSize        = rootRect.size;
     const iBool isPortraitPhone = (deviceType_App() == phone_AppDeviceType && isPortrait_App());
     const iBool isSlidePanel    = (flags_Widget(d) & horizontalOffset_WidgetFlag) != 0;
     if (postCommands) {
@@ -632,13 +759,16 @@ void openMenuFlags_Widget(iWidget *d, iInt2 coord, iBool postCommands) {
         if (!isSlidePanel) {
             setFlags_Widget(d, borderTop_WidgetFlag, iTrue);
         }
-        d->rect.size.x = rootSize_Window(get_Window()).x;
+        d->rect.size.x = rootSize.x;
     }
     /* Update item fonts. */ {
         iForEach(ObjectList, i, children_Widget(d)) {
             if (isInstance_Object(i.object, &Class_LabelWidget)) {
                 iLabelWidget *label = i.object;
                 const iBool isCaution = startsWith_String(text_LabelWidget(label), uiTextCaution_ColorEscape);
+                if (flags_Widget(as_Widget(label)) & wrapText_WidgetFlag) {
+                    continue;
+                }
                 if (deviceType_App() == desktop_AppDeviceType) {
                     setFont_LabelWidget(label, isCaution ? uiLabelBold_FontId : uiLabel_FontId);
                 }
@@ -663,14 +793,14 @@ void openMenuFlags_Widget(iWidget *d, iInt2 coord, iBool postCommands) {
         }
     }
     else {
-        d->rect.pos = coord;
+        d->rect.pos = windowToLocal_Widget(d, windowCoord);
     }
     /* Ensure the full menu is visible. */
     const iRect bounds       = bounds_Widget(d);
-    int         leftExcess   = -left_Rect(bounds);
-    int         rightExcess  = right_Rect(bounds) - rootSize.x;
-    int         topExcess    = -top_Rect(bounds);
-    int         bottomExcess = bottom_Rect(bounds) - rootSize.y;
+    int         leftExcess   = left_Rect(rootRect) - left_Rect(bounds);
+    int         rightExcess  = right_Rect(bounds) - right_Rect(rootRect);
+    int         topExcess    = top_Rect(rootRect) - top_Rect(bounds);
+    int         bottomExcess = bottom_Rect(bounds) - bottom_Rect(rootRect);
 #if defined (iPlatformAppleMobile)
     /* Reserve space for the system status bar. */ {
         float l, t, r, b;
@@ -704,6 +834,9 @@ void openMenuFlags_Widget(iWidget *d, iInt2 coord, iBool postCommands) {
 }
 
 void closeMenu_Widget(iWidget *d) {
+    if (d == NULL || flags_Widget(d) & hidden_WidgetFlag) {
+        return; /* Already closed. */
+    }
     setFlags_Widget(d, hidden_WidgetFlag, iTrue);
     setFlags_Widget(findChild_Widget(d, "menu.cancel"), disabled_WidgetFlag, iTrue);
     postRefresh_App();
@@ -738,7 +871,7 @@ int checkContextMenu_Widget(iWidget *menu, const SDL_Event *ev) {
         }
         const iInt2 mousePos = init_I2(ev->button.x, ev->button.y);
         if (contains_Widget(menu->parent, mousePos)) {
-            openMenu_Widget(menu, localCoord_Widget(menu->parent, mousePos));
+            openMenu_Widget(menu, mousePos);
             return 0x2;
         }
     }
@@ -789,8 +922,19 @@ static iBool tabSwitcher_(iWidget *tabs, const char *cmd) {
             if (isVisible_Widget(child)) break;
             tabIndex++;
         }
-        tabIndex += (equal_Command(cmd, "tabs.next") ? +1 : -1);
-        showTabPage_Widget(tabs, child_Widget(pages, iWrap(tabIndex, 0, childCount_Widget(pages))));
+        const int dir = (equal_Command(cmd, "tabs.next") ? +1 : -1);
+        /* If out of tabs, rotate to the next set of tabs if one is available. */
+        if ((tabIndex == 0 && dir < 0) || (tabIndex == childCount_Widget(pages) - 1 && dir > 0)) {
+            iWidget *nextTabs = findChild_Widget(otherRoot_Window(get_Window(), tabs->root)->widget,
+                                                 "doctabs");
+            iWidget *nextPages = findChild_Widget(nextTabs, "tabs.pages");
+            tabIndex = (dir < 0 ? childCount_Widget(nextPages) - 1 : 0);
+            showTabPage_Widget(nextTabs, child_Widget(nextPages, tabIndex));
+            postCommand_App("keyroot.next");
+        }
+        else {
+            showTabPage_Widget(tabs, child_Widget(pages, tabIndex + dir));
+        }
         refresh_Widget(tabs);
         return iTrue;
     }
@@ -824,11 +968,13 @@ static void addTabPage_Widget_(iWidget *tabs, enum iWidgetAddPos addPos, iWidget
         buttons,
         iClob(newKeyMods_LabelWidget(label, key, kmods, format_CStr("tabs.switch page:%p", page))),
         addPos);
-    setFlags_Widget(buttons, hidden_WidgetFlag, iFalse);
     setFlags_Widget(button, selected_WidgetFlag, isSel);
     setFlags_Widget(
         button, noTopFrame_WidgetFlag | commandOnClick_WidgetFlag | expand_WidgetFlag, iTrue);
     addChildPos_Widget(pages, page, addPos);
+    if (tabCount_Widget(tabs) > 1) {
+        setFlags_Widget(buttons, hidden_WidgetFlag, iFalse);
+    }
     setFlags_Widget(page, hidden_WidgetFlag | disabled_WidgetFlag, !isSel);
 }
 
@@ -838,6 +984,14 @@ void appendTabPage_Widget(iWidget *tabs, iWidget *page, const char *label, int k
 
 void prependTabPage_Widget(iWidget *tabs, iWidget *page, const char *label, int key, int kmods) {
     addTabPage_Widget_(tabs, front_WidgetAddPos, page, label, key, kmods);
+}
+
+void moveTabButtonToEnd_Widget(iWidget *tabButton) {
+    iWidget *buttons = tabButton->parent;
+    iWidget *tabs    = buttons->parent;
+    removeChild_Widget(buttons, tabButton);
+    addChild_Widget(buttons, iClob(tabButton));
+    arrange_Widget(tabs);
 }
 
 iWidget *tabPage_Widget(iWidget *tabs, size_t index) {
@@ -914,7 +1068,7 @@ void showTabPage_Widget(iWidget *tabs, const iWidget *page) {
     }
     /* Notify. */
     if (!isEmpty_String(id_Widget(page))) {
-        postCommandf_App("tabs.changed id:%s", cstr_String(id_Widget(page)));
+        postCommandf_Root(page->root, "tabs.changed id:%s", cstr_String(id_Widget(page)));
     }
 }
 
@@ -1020,7 +1174,7 @@ static void updateSheetPanelMetrics_(iWidget *sheet) {
     navi->rect.pos = init_I2(left, top);
     iConstForEach(PtrArray, i, findChildren_Widget(sheet, "panel.toppad")) {
         iWidget *pad = *i.value;
-        setSize_Widget(pad, init1_I2(naviHeight));
+        setFixedSize_Widget(pad, init1_I2(naviHeight));
     }
 #endif
     setFixedSize_Widget(navi, init_I2(-1, naviHeight));
@@ -1030,7 +1184,8 @@ static iBool slidePanelHandler_(iWidget *d, const char *cmd) {
     if (equal_Command(cmd, "panel.open")) {
         iWidget *button = pointer_Command(cmd);
         iWidget *panel = userData_Object(button);
-        openMenu_Widget(panel, zero_I2());
+        openMenu_Widget(panel, innerToWindow_Widget(panel, zero_I2()));
+        setFlags_Widget(panel, disabled_WidgetFlag, iFalse);
 //        updateTextCStr_LabelWidget(findWidget_App("panel.back"), );
         return iTrue;
     }
@@ -1045,6 +1200,7 @@ static iBool slidePanelHandler_(iWidget *d, const char *cmd) {
             iWidget *child = i.object;
             if (!cmp_String(id_Widget(child), "panel") && isVisible_Widget(child)) {
                 closeMenu_Widget(child);
+                setFlags_Widget(child, disabled_WidgetFlag, iTrue);
                 setFocus_Widget(NULL);
                 updateTextCStr_LabelWidget(findWidget_App("panel.back"), "Back");
                 wasClosed = iTrue;
@@ -1055,10 +1211,9 @@ static iBool slidePanelHandler_(iWidget *d, const char *cmd) {
         }
         return iTrue;
     }
-    if (equal_Command(cmd, "panel.showhelp")) {
+    if (equal_Command(cmd, "document.changed")) {
         postCommand_App("prefs.dismiss");
-        postCommand_App("open url:about:help");
-        return iTrue;
+        return iFalse;
     }
     if (equal_Command(cmd, "window.resized")) {
         updateSheetPanelMetrics_(parent_Widget(d));
@@ -1108,7 +1263,7 @@ static iAnyObject *addPanelChild_(iWidget *panel, iAnyObject *child, int64_t fla
                                   enum iPrefsElement precedingElementType) {
     /* Erase redundant/unused headings. */
     if (precedingElementType == heading_PrefsElement &&
-        (!child || elementType == heading_PrefsElement)) {
+        (!child || (elementType == heading_PrefsElement || elementType == radioButton_PrefsElement))) {
         iRelease(removeChild_Widget(panel, lastChild_Widget(panel)));
         if (!cmp_String(id_Widget(constAs_Widget(lastChild_Widget(panel))), "padding")) {
             iRelease(removeChild_Widget(panel, lastChild_Widget(panel)));
@@ -1120,12 +1275,18 @@ static iAnyObject *addPanelChild_(iWidget *panel, iAnyObject *child, int64_t fla
             if (elementType == heading_PrefsElement ||
                 (elementType == toggle_PrefsElement &&
                  precedingElementType != toggle_PrefsElement &&
+                 precedingElementType != heading_PrefsElement) ||
+                (elementType == dropdown_PrefsElement &&
+                 precedingElementType != dropdown_PrefsElement &&
+                 precedingElementType != heading_PrefsElement) ||
+                (elementType == textInput_PrefsElement &&
+                 precedingElementType != textInput_PrefsElement &&
                  precedingElementType != heading_PrefsElement)) {
                 addChild_Widget(panel, iClob(makePadding_Widget(lineHeight_Text(defaultBig_FontId))));
             }
         }
-        if (elementType == toggle_PrefsElement &&
-            precedingElementType != toggle_PrefsElement) {
+        if ((elementType == toggle_PrefsElement && precedingElementType != toggle_PrefsElement) ||
+            (elementType == textInput_PrefsElement && precedingElementType != textInput_PrefsElement)) {
             flags |= borderTop_WidgetFlag;
         }
         return addChildFlags_Widget(panel, child, flags);
@@ -1151,6 +1312,7 @@ static iLabelWidget *makePanelButton_(const char *text, const char *command) {
                     iTrue);
     checkIcon_LabelWidget(btn);
     setFont_LabelWidget(btn, defaultBig_FontId);
+    setTextColor_LabelWidget(btn, uiTextStrong_ColorId);
     setBackgroundColor_Widget(as_Widget(btn), uiBackgroundSidebar_ColorId);
     return btn;
 }
@@ -1175,6 +1337,52 @@ static iWidget *makeValuePadding_(iWidget *value) {
     return pad;
 }
 
+static iWidget *makeValuePaddingWithHeading_(iLabelWidget *heading, iWidget *value) {
+    iWidget *div = new_Widget();
+    setFlags_Widget(div,
+                    borderBottom_WidgetFlag | arrangeHeight_WidgetFlag |
+                    resizeWidthOfChildren_WidgetFlag |
+                    arrangeHorizontal_WidgetFlag, iTrue);
+    setBackgroundColor_Widget(div, uiBackgroundSidebar_ColorId);
+    setPadding_Widget(div, gap_UI, gap_UI, 4 * gap_UI, gap_UI);
+    addChildFlags_Widget(div, iClob(heading), 0);
+    //setFixedSize_Widget(as_Widget(heading), init_I2(-1, height_Widget(value)));
+    setFont_LabelWidget(heading, defaultBig_FontId);
+    setTextColor_LabelWidget(heading, uiTextStrong_ColorId);
+    if (isInstance_Object(value, &Class_InputWidget)) {
+        addChildFlags_Widget(div, iClob(value), expand_WidgetFlag);
+    }
+    else {
+        addChildFlags_Widget(div, iClob(new_Widget()), expand_WidgetFlag);
+        addChild_Widget(div, iClob(value));
+    }
+    return div;
+}
+
+static iWidget *addChildPanel_(iWidget *sheet, iLabelWidget *panelButton,
+                               const iString *titleText) {
+    iWidget *owner = new_Widget();
+    setId_Widget(owner, "panel");
+    setUserData_Object(panelButton, owner);
+    setBackgroundColor_Widget(owner, uiBackground_ColorId);
+    setId_Widget(addChild_Widget(owner, iClob(makePadding_Widget(0))), "panel.toppad");
+    if (titleText) {
+        iLabelWidget *title =
+            addChildFlags_Widget(owner,
+                                 iClob(new_LabelWidget(cstr_String(titleText), NULL)),
+                                 alignLeft_WidgetFlag | frameless_WidgetFlag);
+        setFont_LabelWidget(title, uiLabelLargeBold_FontId);
+        setTextColor_LabelWidget(title, uiHeading_ColorId);
+    }
+    addChildFlags_Widget(sheet,
+                         iClob(owner),
+                         focusRoot_WidgetFlag | hidden_WidgetFlag | disabled_WidgetFlag |
+                             arrangeVertical_WidgetFlag | resizeWidthOfChildren_WidgetFlag |
+                             arrangeHeight_WidgetFlag | overflowScrollable_WidgetFlag |
+                             horizontalOffset_WidgetFlag | commandOnClick_WidgetFlag);
+    return owner;
+}
+
 void finalizeSheet_Widget(iWidget *sheet) {
     /* The sheet contents are completely rearranged and restyled on a phone.
        We'll set up a linear fullscreen arrangement of the widgets. Sheets are already
@@ -1182,7 +1390,7 @@ void finalizeSheet_Widget(iWidget *sheet) {
        easier to create phone versions of each dialog, but at least this works with any
        future changes to the UI (..."works"). At least this way it is possible to enforce
        a consistent styling. */
-    if (deviceType_App() == phone_AppDeviceType && parent_Widget(sheet) == get_Window()->root) {
+    if (deviceType_App() == phone_AppDeviceType && parent_Widget(sheet) == root_Widget(sheet)) {
         if (~flags_Widget(sheet) & keepOnTop_WidgetFlag) {
             /* Already finalized. */
             arrange_Widget(sheet);
@@ -1273,38 +1481,23 @@ void finalizeSheet_Widget(iWidget *sheet) {
             if (useSlidePanels) {
                 /* Create a new child panel. */
                 iLabelWidget *button = at_PtrArray(panelButtons, index_PtrArrayIterator(&j));
-                owner = new_Widget();
-                setId_Widget(owner, "panel");
-                setUserData_Object(button, owner);
-                setBackgroundColor_Widget(owner, uiBackground_ColorId);
-                setId_Widget(addChild_Widget(owner, iClob(makePadding_Widget(0))), "panel.toppad");
-                iLabelWidget *title = addChildFlags_Widget(owner,
-                                                           iClob(new_LabelWidget(cstrCollect_String(upper_String(text_LabelWidget(button))), NULL)), alignLeft_WidgetFlag | frameless_WidgetFlag);
-                setFont_LabelWidget(title, uiLabelLargeBold_FontId);
-                setTextColor_LabelWidget(title, uiHeading_ColorId);
-                addChildFlags_Widget(sheet,
-                                     iClob(owner),
-                                     focusRoot_WidgetFlag |
-                                     hidden_WidgetFlag |
-                                     disabled_WidgetFlag |
-                                     //safePadding_WidgetFlag |
-                                     arrangeVertical_WidgetFlag |
-                                     resizeWidthOfChildren_WidgetFlag |
-                                     arrangeHeight_WidgetFlag |
-                                     overflowScrollable_WidgetFlag |
-                                     horizontalOffset_WidgetFlag |
-                                     commandOnClick_WidgetFlag);
+                owner = addChildPanel_(sheet, button,
+                                       collect_String(upper_String(text_LabelWidget(button))));
             }
             iWidget *pageContent = j.ptr;
             iWidget *headings = child_Widget(pageContent, 0);
             iWidget *values   = child_Widget(pageContent, 1);
             enum iPrefsElement prevElement = panelTitle_PrefsElement;
+            /* Identify the types of controls in the dialog and restyle/organize them. */
             while (!isEmpty_ObjectList(children_Widget(headings))) {
                 iWidget *heading = child_Widget(headings, 0);
                 iWidget *value   = child_Widget(values, 0);
                 removeChild_Widget(headings, heading);
                 removeChild_Widget(values, value);
-                if (isOmittedPref_(id_Widget(value))) {
+                /* Can we ignore these widgets? */
+                if (isOmittedPref_(id_Widget(value)) ||
+                    (class_Widget(heading) == &Class_Widget &&
+                     class_Widget(value) == &Class_Widget) /* just padding */) {
                     iRelease(heading);
                     iRelease(value);
                     continue;
@@ -1313,104 +1506,87 @@ void finalizeSheet_Widget(iWidget *sheet) {
                 iLabelWidget *headingLabel = NULL;
                 iLabelWidget *valueLabel = NULL;
                 iInputWidget *valueInput = NULL;
+                const iBool isMenuButton = findChild_Widget(value, "menu") != NULL;
                 if (isInstance_Object(heading, &Class_LabelWidget)) {
                     headingLabel = (iLabelWidget *) heading;
                     stripTrailingColon_(headingLabel);
                 }
                 if (isInstance_Object(value, &Class_LabelWidget)) {
                     valueLabel = (iLabelWidget *) value;
+                    setFont_LabelWidget(valueLabel, defaultBig_FontId);
                 }
                 if (isInstance_Object(value, &Class_InputWidget)) {
                     valueInput = (iInputWidget *) value;
+                    setFlags_Widget(value, borderBottom_WidgetFlag, iFalse);
                     element = textInput_PrefsElement;
                 }
-                if (valueLabel) {
-                    setFont_LabelWidget(valueLabel, defaultBig_FontId);
+                if (childCount_Widget(value) >= 2) {
+                    if (isInstance_Object(child_Widget(value, 0), &Class_InputWidget)) {
+                        element = textInput_PrefsElement;
+                        setPadding_Widget(value, 0, 0, gap_UI, 0);
+                        valueInput = child_Widget(value, 0);
+                    }
+                }
+                if (valueInput) {
+                    setFont_InputWidget(valueInput, defaultBig_FontId);
+                    setContentPadding_InputWidget(valueInput, 3 * gap_UI, 0);
                 }
                 /* Toggles have the button on the right. */
                 if (valueLabel && cmp_String(command_LabelWidget(valueLabel), "toggle") == 0) {
                     element = toggle_PrefsElement;
-                    iWidget *div = new_Widget();
-                    setBackgroundColor_Widget(div, uiBackgroundSidebar_ColorId);
-                    setPadding_Widget(div, gap_UI, gap_UI, 4 * gap_UI, gap_UI);
-                    addChildFlags_Widget(div, iClob(heading), 0);
-                    setFont_LabelWidget((iLabelWidget *) heading, defaultBig_FontId);
-                    addChildFlags_Widget(div, iClob(new_Widget()), expand_WidgetFlag);
-                    addChild_Widget(div, iClob(value));
                     addPanelChild_(owner,
-                                   iClob(div),
-                                   borderBottom_WidgetFlag | arrangeHeight_WidgetFlag |
-                                       resizeWidthOfChildren_WidgetFlag |
-                                       arrangeHorizontal_WidgetFlag,
-                                   element, prevElement);
+                                   iClob(makeValuePaddingWithHeading_(headingLabel, value)),
+                                   0,
+                                   element,
+                                   prevElement);
+                }
+                else if (valueLabel && isEmpty_String(text_LabelWidget(valueLabel))) {
+                    element = heading_PrefsElement;
+                    iRelease(value);
+                    addPanelChild_(owner, iClob(heading), 0, element, prevElement);
+                    setFont_LabelWidget(headingLabel, uiLabel_FontId);
+                }
+                else if (isMenuButton) {
+                    element = dropdown_PrefsElement;
+                    setFlags_Widget(value,
+                                    alignRight_WidgetFlag | noBackground_WidgetFlag |
+                                    frameless_WidgetFlag, iTrue);
+                    setFlags_Widget(value, alignLeft_WidgetFlag, iFalse);
+                    iWidget *pad = addPanelChild_(owner, iClob(makeValuePaddingWithHeading_(headingLabel, value)), 0,
+                                                  element, prevElement);
+                    pad->padding[2] = gap_UI;
+                }
+                else if (valueInput) {
+                    addPanelChild_(owner, iClob(makeValuePaddingWithHeading_(headingLabel, value)), 0,
+                                       element, prevElement);
                 }
                 else {
-                    if (valueLabel && isEmpty_String(text_LabelWidget(valueLabel))) {
-                        element = heading_PrefsElement;
-                        iRelease(value);
-                        addPanelChild_(owner, iClob(heading), 0, element, prevElement);
-                        setFont_LabelWidget(headingLabel, uiLabelBold_FontId);
+                    if (childCount_Widget(value) >= 2) {
+                        element = radioButton_PrefsElement;
+                        /* Always padding before radio buttons. */
+                        addChild_Widget(owner, iClob(makePadding_Widget(lineHeight_Text(defaultBig_FontId))));
                     }
-                    else {
-                        addChildFlags_Widget(owner, iClob(heading), borderBottom_WidgetFlag);
-                        if (headingLabel) {
-                            setTextColor_LabelWidget(headingLabel, uiSubheading_ColorId);
-                            setText_LabelWidget(headingLabel,
-                                                collect_String(upper_String(text_LabelWidget(headingLabel))));
-                        }
-                        const iBool isMenuButton = findChild_Widget(value, "menu") != NULL;
-                        if (isMenuButton) {
-                            element = dropdown_PrefsElement;
-                            setFlags_Widget(value, noBackground_WidgetFlag | frameless_WidgetFlag, iTrue);
-                            setFlags_Widget(value, alignLeft_WidgetFlag, iFalse);
-                        }
-                        if (childCount_Widget(value) >= 2) {
-                            if (isInstance_Object(child_Widget(value, 0), &Class_InputWidget)) {
-                                element = textInput_PrefsElement;
-                                setPadding_Widget(value, 0, 0, gap_UI, 0);
-                                valueInput = child_Widget(value, 0);
-                                setFlags_Widget(as_Widget(valueInput), fixedWidth_WidgetFlag, iFalse);
-                                setFlags_Widget(as_Widget(valueInput), expand_WidgetFlag, iTrue);
-                                setFlags_Widget(value, resizeWidthOfChildren_WidgetFlag |
-                                                resizeToParentWidth_WidgetFlag, iTrue);
-                                setFont_LabelWidget(child_Widget(value, 1), defaultBig_FontId);
-                                setTextColor_LabelWidget(child_Widget(value, 1), uiAnnotation_ColorId);
-                            }
-                            else {
-                                element = radioButton_PrefsElement;
-                            }
-                        }
-                        if (valueInput) {
-                            setFont_InputWidget(valueInput, defaultBig_FontId);
-                            setContentPadding_InputWidget(valueInput, 3 * gap_UI, 3 * gap_UI);
-                        }
-                        if (element == textInput_PrefsElement || isMenuButton) {
-                            setFlags_Widget(value, borderBottom_WidgetFlag, iFalse);
-                            //iWidget *pad = new_Widget();
-                            //setBackgroundColor_Widget(pad, uiBackgroundSidebar_ColorId);
-                            //setPadding_Widget(pad, 0, 1 * gap_UI, 0, 1 * gap_UI);
-                            //addChild_Widget(pad, iClob(value));
-                            addPanelChild_(owner, iClob(makeValuePadding_(value)), 0,
-                                           element, prevElement);
-                        }
-                        else {
-                            addPanelChild_(owner, iClob(value), 0, element, prevElement);
-                        }
-                        /* Radio buttons expand to fill the space. */
-                        if (element == radioButton_PrefsElement) {
-                            setBackgroundColor_Widget(value, uiBackgroundSidebar_ColorId);
-                            setPadding_Widget(value, 4 * gap_UI, 2 * gap_UI, 4 * gap_UI, 2 * gap_UI);
-                            setFlags_Widget(value,
-                                            borderBottom_WidgetFlag |
-                                            resizeToParentWidth_WidgetFlag |
-                                            resizeWidthOfChildren_WidgetFlag,
-                                            iTrue);
-                            iForEach(ObjectList, sub, children_Widget(value)) {
-                                if (isInstance_Object(sub.object, &Class_LabelWidget)) {
-                                    iLabelWidget *opt = sub.object;
-                                    setFont_LabelWidget(opt, defaultMedium_FontId);
-                                    setFlags_Widget(as_Widget(opt), noBackground_WidgetFlag, iTrue);
-                                }
+                    addChildFlags_Widget(owner, iClob(heading), borderBottom_WidgetFlag);
+                    if (headingLabel) {
+                        setTextColor_LabelWidget(headingLabel, uiSubheading_ColorId);
+                        setText_LabelWidget(headingLabel,
+                                            collect_String(upper_String(text_LabelWidget(headingLabel))));
+                    }
+                    addPanelChild_(owner, iClob(value), 0, element, prevElement);
+                    /* Radio buttons expand to fill the space. */
+                    if (element == radioButton_PrefsElement) {
+                        setBackgroundColor_Widget(value, uiBackgroundSidebar_ColorId);
+                        setPadding_Widget(value, 4 * gap_UI, 2 * gap_UI, 4 * gap_UI, 2 * gap_UI);
+                        setFlags_Widget(value,
+                                        borderBottom_WidgetFlag |
+                                        resizeToParentWidth_WidgetFlag |
+                                        resizeWidthOfChildren_WidgetFlag,
+                                        iTrue);
+                        iForEach(ObjectList, sub, children_Widget(value)) {
+                            if (isInstance_Object(sub.object, &Class_LabelWidget)) {
+                                iLabelWidget *opt = sub.object;
+                                setFont_LabelWidget(opt, defaultMedium_FontId);
+                                setFlags_Widget(as_Widget(opt), noBackground_WidgetFlag, iTrue);
                             }
                         }
                     }
@@ -1421,16 +1597,41 @@ void finalizeSheet_Widget(iWidget *sheet) {
             destroy_Widget(pageContent);
             setFlags_Widget(owner, drawBackgroundToBottom_WidgetFlag, iTrue);
         }
-        destroyPending_Widget();
+        destroyPending_Root(sheet->root);
         /* Additional elements for preferences. */
         if (isPrefs) {
             addChild_Widget(topPanel, iClob(makePadding_Widget(lineHeight_Text(defaultBig_FontId))));
             addChildFlags_Widget(topPanel,
-                                 iClob(makePanelButton_(info_Icon " ${menu.help}", "panel.showhelp")),
+                                 iClob(makePanelButton_(info_Icon " ${menu.help}", "!open url:about:help")),
                                  borderTop_WidgetFlag);
-            addChildFlags_Widget(topPanel,
-                                 iClob(makePanelButton_(planet_Icon " ${menu.about}", "panel.about")),
+            iLabelWidget *aboutButton = addChildFlags_Widget(topPanel,
+                                 iClob(makePanelButton_(planet_Icon " ${menu.about}", "panel.open")),
                                  chevron_WidgetFlag);
+            /* The About panel. */ {
+                iWidget *panel = addChildPanel_(sheet, aboutButton, NULL);
+                iString *msg = collectNew_String();
+                setCStr_String(msg, "Lagrange " LAGRANGE_APP_VERSION);
+#if defined (iPlatformAppleMobile)
+                appendCStr_String(msg, " (" LAGRANGE_IOS_VERSION ")");
+#endif
+                addChild_Widget(panel, iClob(new_LabelWidget(cstr_String(msg), NULL)));
+                addChildFlags_Widget(panel,
+                                     iClob(makePanelButton_(globe_Icon " By @jk@skyjake.fi",
+                                                            "!open url:https://skyjake.fi/@jk")),
+                                     borderTop_WidgetFlag);
+                addChildFlags_Widget(panel,
+                                     iClob(makePanelButton_(clock_Icon " ${menu.releasenotes}",
+                                                            "!open url:about:version")),
+                                     0);
+                addChildFlags_Widget(panel,
+                                     iClob(makePanelButton_(info_Icon " ${menu.aboutpages}",
+                                                            "!open url:about:about")),
+                                     0);
+                addChildFlags_Widget(panel,
+                                     iClob(makePanelButton_(bug_Icon " ${menu.debug}",
+                                                            "!open url:about:debug")),
+                                     0);
+            }
         }
         else {
             setFlags_Widget(topPanel, overflowScrollable_WidgetFlag, iTrue);
@@ -1526,6 +1727,7 @@ void finalizeSheet_Widget(iWidget *sheet) {
                                  resizeToParentWidth_WidgetFlag | arrangeVertical_WidgetFlag);
         }
         updateSheetPanelMetrics_(sheet);
+        iAssert(sheet->parent);
         arrange_Widget(sheet->parent);
         postCommand_App("widget.overflow"); /* with the correct dimensions */
 //        printTree_Widget(sheet);
@@ -1576,7 +1778,7 @@ static void acceptValueInput_(iWidget *dlg) {
 }
 
 static void updateValueInputWidth_(iWidget *dlg) {
-    const iRect safeRoot = safeRootRect_Window(get_Window());
+    const iRect safeRoot = safeRect_Root(dlg->root);
     const iInt2 rootSize = safeRoot.size;
     iWidget *   title    = findChild_Widget(dlg, "valueinput.title");
     iWidget *   prompt   = findChild_Widget(dlg, "valueinput.prompt");
@@ -1655,6 +1857,9 @@ iWidget *makeDialogButtons_Widget(const iMenuItem *actions, size_t numActions) {
         int         key       = actions[i].key;
         int         kmods     = actions[i].kmods;
         const iBool isDefault = (i == numActions - 1);
+        if (*label == '*' || *label == '&') {
+            continue; /* Special value selection items for a Question dialog. */
+        }
         if (!iCmpStr(label, "---")) {
             /* Separator.*/
             addChildFlags_Widget(div, iClob(new_Widget()), expand_WidgetFlag);
@@ -1688,7 +1893,6 @@ iWidget *makeValueInput_Widget(iWidget *parent, const iString *initialValue, con
         setFocus_Widget(NULL);
     }
     iWidget *dlg = makeSheet_Widget(command);
-//    setFlags_Widget(dlg, horizontalSafeAreaPadding_Widget, iTrue);
     setCommandHandler_Widget(dlg, valueInputHandler_);
     if (parent) {
         addChild_Widget(parent, iClob(dlg));
@@ -1748,9 +1952,16 @@ static iBool messageHandler_(iWidget *msg, const char *cmd) {
     return iFalse;
 }
 
-iWidget *makeMessage_Widget(const char *title, const char *msg) {
-    iWidget *dlg =
-        makeQuestion_Widget(title, msg, (iMenuItem[]){ { "${dlg.message.ok}", 0, 0, "message.ok" } }, 1);
+iWidget *makeSimpleMessage_Widget(const char *title, const char *msg) {
+    return makeMessage_Widget(title,
+                              msg,
+                              (iMenuItem[]){ { "${dlg.message.ok}", 0, 0, "message.ok" } },
+                              1);
+}
+
+iWidget *makeMessage_Widget(const char *title, const char *msg, const iMenuItem *items,
+                            size_t numItems) {
+    iWidget *dlg = makeQuestion_Widget(title, msg, items, numItems);
     addAction_Widget(dlg, SDLK_ESCAPE, 0, "message.ok");
     addAction_Widget(dlg, SDLK_SPACE, 0, "message.ok");
     return dlg;
@@ -1763,9 +1974,23 @@ iWidget *makeQuestion_Widget(const char *title, const char *msg,
     setCommandHandler_Widget(dlg, messageHandler_);
     addChildFlags_Widget(dlg, iClob(new_LabelWidget(title, NULL)), frameless_WidgetFlag);
     addChildFlags_Widget(dlg, iClob(new_LabelWidget(msg, NULL)), frameless_WidgetFlag);
+    /* Check for value selections. */
+    for (size_t i = 0; i < numItems; i++) {
+        const iMenuItem *item = &items[i];
+        const char first = item->label[0];
+        if (first == '*' || first == '&') {
+            addChildFlags_Widget(dlg,
+                                 iClob(newKeyMods_LabelWidget(item->label + 1,
+                                                              item->key,
+                                                              item->kmods,
+                                                              item->command)),
+                                 resizeToParentWidth_WidgetFlag |
+                                 (first == '&' ? selected_WidgetFlag : 0));
+        }
+    }
     addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
     addChild_Widget(dlg, iClob(makeDialogButtons_Widget(items, numItems)));
-    addChild_Widget(get_Window()->root, iClob(dlg));
+    addChild_Widget(dlg->root->widget, iClob(dlg));
     arrange_Widget(dlg); /* BUG: This extra arrange shouldn't be needed but the dialog won't
                             be arranged correctly unless it's here. */
     finalizeSheet_Widget(dlg);
@@ -1836,8 +2061,7 @@ static iWidget *appendTwoColumnPage_(iWidget *tabs, const char *title, int short
                                      iWidget **values) {
     /* TODO: Use `makeTwoColumnWidget_()`, see above. */
     iWidget *page = new_Widget();
-    setFlags_Widget(page, arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag |
-                    resizeHeightOfChildren_WidgetFlag, iTrue);
+    setFlags_Widget(page, arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
     addChildFlags_Widget(page, iClob(new_Widget()), expand_WidgetFlag);
     setPadding_Widget(page, 0, gap_UI, 0, gap_UI);
     iWidget *columns = new_Widget();
@@ -1872,15 +2096,28 @@ static void addRadioButton_(iWidget *parent, const char *id, const char *label, 
 }
 
 static void addFontButtons_(iWidget *parent, const char *id) {
-    const char *fontNames[] = {
-        "Nunito", "Fira Sans", "Literata", "Tinos", "Source Sans Pro", "Iosevka"
-    };
+    const struct {
+        const char *   name;
+        enum iTextFont cfgId;
+    } fonts[] = { { "Nunito", nunito_TextFont },
+                  { "Source Sans 3", sourceSans3_TextFont },
+                  { "Fira Sans", firaSans_TextFont },
+                  { "---", -1 },
+                  { "Literata", literata_TextFont },
+                  { "Tinos", tinos_TextFont },
+                  { "---", -1 },
+                  { "Iosevka", iosevka_TextFont } };
     iArray *items = new_Array(sizeof(iMenuItem));
-    iForIndices(i, fontNames) {
+    iForIndices(i, fonts) {
         pushBack_Array(items,
-                       &(iMenuItem){ fontNames[i], 0, 0, format_CStr("!%s.set arg:%d", id, i) });
+                       &(iMenuItem){ fonts[i].name,
+                                     0,
+                                     0,
+                                     fonts[i].cfgId >= 0
+                                         ? format_CStr("!%s.set arg:%d", id, fonts[i].cfgId)
+                                         : NULL });
     }
-    iLabelWidget *button = makeMenuButton_LabelWidget("Source Sans Pro", data_Array(items), size_Array(items));
+    iLabelWidget *button = makeMenuButton_LabelWidget("Source Sans 3", data_Array(items), size_Array(items));
     setBackgroundColor_Widget(findChild_Widget(as_Widget(button), "menu"), uiBackgroundMenu_ColorId);
     setId_Widget(as_Widget(button), format_CStr("prefs.%s", id));
     addChildFlags_Widget(parent, iClob(button), alignLeft_WidgetFlag);
@@ -1895,7 +2132,9 @@ static int cmp_MenuItem_(const void *e1, const void *e2) {
 #endif
 
 void updatePreferencesLayout_Widget(iWidget *prefs) {
-    if (!prefs) return;
+    if (!prefs || deviceType_App() == phone_AppDeviceType) {
+        return;
+    }
     /* Doing manual layout here because the widget arranging logic isn't sophisticated enough. */
     /* TODO: Make the arranging more sophisticated to automate this. */
     static const char *inputIds[] = {
@@ -1916,12 +2155,38 @@ void updatePreferencesLayout_Widget(iWidget *prefs) {
             as_Widget(input)->rect.size.x = 0;
         }
     }
-    as_Widget(findChild_Widget(prefs, "bindings"))->rect.size.x = 0;
+    iWidget *bindings = findChild_Widget(prefs, "bindings");
+    if (bindings) {
+        bindings->rect.size.x = 0;
+    }
     resizeToLargestPage_Widget(tabs);
     arrange_Widget(prefs);
     iForIndices(i, inputIds) {
         expandInputFieldWidth_(findChild_Widget(tabs, inputIds[i]));
     }
+}
+
+static void addDialogInputWithHeading_(iWidget *headings, iWidget *values, const char *labelText,
+                                       const char *inputId, iInputWidget *input) {
+    iLabelWidget *head = addChild_Widget(headings, iClob(makeHeading_Widget(labelText)));
+#if defined (iPlatformMobile)
+    /* On mobile, inputs have 2 gaps of extra padding. */
+    setFixedSize_Widget(as_Widget(head), init_I2(-1, height_Widget(input)));
+    setPadding_Widget(as_Widget(head), 0, gap_UI, 0, 0);
+#endif
+    setId_Widget(addChild_Widget(values, input), inputId);
+}
+
+iInputWidget *addTwoColumnDialogInputField_Widget(iWidget *headings, iWidget *values,
+                                                  const char *labelText, const char *inputId,
+                                                  iInputWidget *input) {
+    addDialogInputWithHeading_(headings, values, labelText, inputId, input);
+    return input;
+}
+
+static void addPrefsInputWithHeading_(iWidget *headings, iWidget *values,
+                                      const char *id, iInputWidget *input) {
+    addDialogInputWithHeading_(headings, values, format_CStr("${%s}", id), id, input);
 }
 
 iWidget *makePreferences_Widget(void) {
@@ -1940,8 +2205,7 @@ iWidget *makePreferences_Widget(void) {
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.downloads}")));
         setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.downloads");
 #endif
-        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.searchurl}")));
-        setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.searchurl");
+        addPrefsInputWithHeading_(headings, values, "prefs.searchurl", iClob(new_InputWidget(0)));
         addChild_Widget(headings, iClob(makePadding_Widget(bigGap)));
         addChild_Widget(values, iClob(makePadding_Widget(bigGap)));
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.collapsepreonload}")));
@@ -1952,6 +2216,16 @@ iWidget *makePreferences_Widget(void) {
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.centershort")));
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.hoverlink}")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.hoverlink")));
+        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.archive.openindex}")));
+        addChild_Widget(values, iClob(makeToggle_Widget("prefs.archive.openindex")));
+        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.pinsplit}")));
+        iWidget *pinSplit = new_Widget();
+        /* Split mode document pinning. */ {
+            addRadioButton_(pinSplit, "prefs.pinsplit.0", "${prefs.pinsplit.none}", "pinsplit.set arg:0");
+            addRadioButton_(pinSplit, "prefs.pinsplit.1", "${prefs.pinsplit.left}", "pinsplit.set arg:1");
+            addRadioButton_(pinSplit, "prefs.pinsplit.2", "${prefs.pinsplit.right}", "pinsplit.set arg:2");
+        }
+        addChildFlags_Widget(values, iClob(pinSplit), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
         addChild_Widget(headings, iClob(makePadding_Widget(bigGap)));
         addChild_Widget(values, iClob(makePadding_Widget(bigGap)));
         /* UI languages. */ {
@@ -1962,9 +2236,11 @@ iWidget *makePreferences_Widget(void) {
                 { "${lang.es} - es", 0, 0, "uilang id:es" },
                 { "${lang.fi} - fi", 0, 0, "uilang id:fi" },
                 { "${lang.fr} - fr", 0, 0, "uilang id:fr" },
+                { "${lang.ia} - ia", 0, 0, "uilang id:ia" },
                 { "${lang.ie} - ie", 0, 0, "uilang id:ie" },
                 { "${lang.ru} - ru", 0, 0, "uilang id:ru" },
                 { "${lang.sr} - sr", 0, 0, "uilang id:sr" },
+                { "${lang.tok} - tok", 0, 0, "uilang id:tok" },
                 { "${lang.zh.hans} - zh", 0, 0, "uilang id:zh_Hans" },
                 { "${lang.zh.hant} - zh", 0, 0, "uilang id:zh_Hant" },
             };
@@ -2029,10 +2305,11 @@ iWidget *makePreferences_Widget(void) {
             addChild_Widget(values, iClob(makeToggle_Widget("prefs.hidetoolbarscroll")));
         }
         makeTwoColumnHeading_("${heading.prefs.sizing}", headings, values);
-        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.uiscale}")));
-        setId_Widget(addChild_Widget(values, iClob(new_InputWidget(8))), "prefs.uiscale");
-        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.retainwindow}")));
-        addChild_Widget(values, iClob(makeToggle_Widget("prefs.retainwindow")));
+        addPrefsInputWithHeading_(headings, values, "prefs.uiscale", iClob(new_InputWidget(8)));
+        if (deviceType_App() == desktop_AppDeviceType) {
+            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.retainwindow}")));
+            addChild_Widget(values, iClob(makeToggle_Widget("prefs.retainwindow")));
+        }
     }
     /* Colors. */ {
         appendTwoColumnPage_(tabs, "${heading.prefs.colors}", '3', &headings, &values);
@@ -2138,26 +2415,24 @@ iWidget *makePreferences_Widget(void) {
         appendTwoColumnPage_(tabs, "${heading.prefs.network}", '5', &headings, &values);
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.decodeurls}")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.decodeurls")));
-        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.cachesize}")));
-        iWidget *cacheGroup = new_Widget(); {
+        /* Cache size. */ {
             iInputWidget *cache = new_InputWidget(4);
             setSelectAllOnFocus_InputWidget(cache, iTrue);
-            setId_Widget(addChild_Widget(cacheGroup, iClob(cache)), "prefs.cachesize");
-            addChildFlags_Widget(cacheGroup, iClob(new_LabelWidget("${mb}", NULL)), frameless_WidgetFlag);
+            addPrefsInputWithHeading_(headings, values, "prefs.cachesize", iClob(cache));
+            iWidget *unit =
+                addChildFlags_Widget(as_Widget(cache),
+                                     iClob(new_LabelWidget("${mb}", NULL)),
+                                     frameless_WidgetFlag | moveToParentRightEdge_WidgetFlag |
+                                     resizeToParentHeight_WidgetFlag);
+            setContentPadding_InputWidget(cache, 0, width_Widget(unit) - 4 * gap_UI);
         }
-        addChildFlags_Widget(values, iClob(cacheGroup), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
         makeTwoColumnHeading_("${heading.prefs.certs}", headings, values);
-        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.ca.file}")));
-        setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.ca.file");
-        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.ca.path}")));
-        setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.ca.path");
+        addPrefsInputWithHeading_(headings, values, "prefs.ca.file", iClob(new_InputWidget(0)));
+        addPrefsInputWithHeading_(headings, values, "prefs.ca.path", iClob(new_InputWidget(0)));
         makeTwoColumnHeading_("${heading.prefs.proxies}", headings, values);
-        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.proxy.gemini}")));
-        setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.proxy.gemini");
-        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.proxy.gopher}")));
-        setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.proxy.gopher");
-        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.proxy.http}")));
-        setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.proxy.http");
+        addPrefsInputWithHeading_(headings, values, "prefs.proxy.gemini", iClob(new_InputWidget(0)));
+        addPrefsInputWithHeading_(headings, values, "prefs.proxy.gopher", iClob(new_InputWidget(0)));
+        addPrefsInputWithHeading_(headings, values, "prefs.proxy.http", iClob(new_InputWidget(0)));
     }
     /* Keybindings. */
     if (deviceType_App() == desktop_AppDeviceType) {
@@ -2169,9 +2444,9 @@ iWidget *makePreferences_Widget(void) {
     addChild_Widget(dlg,
                     iClob(makeDialogButtons_Widget(
                         (iMenuItem[]){ { "${dismiss}", SDLK_ESCAPE, 0, "prefs.dismiss" } }, 1)));
-    addChild_Widget(get_Window()->root, iClob(dlg));
+    addChild_Widget(dlg->root->widget, iClob(dlg));
     finalizeSheet_Widget(dlg);
-    //printTree_Widget(dlg);
+//    printTree_Widget(dlg);
     return dlg;
 }
 
@@ -2185,19 +2460,26 @@ iWidget *makeBookmarkEditor_Widget(void) {
     iWidget *headings, *values;
     addChild_Widget(dlg, iClob(makeTwoColumnWidget_(&headings, &values)));
     iInputWidget *inputs[4];
-    addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.bookmark.title}")));
-    setId_Widget(addChild_Widget(values, iClob(inputs[0] = new_InputWidget(0))), "bmed.title");
-    addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.bookmark.url}")));
-    setId_Widget(addChild_Widget(values, iClob(inputs[1] = new_InputWidget(0))), "bmed.url");
+    addDialogInputWithHeading_(headings, values, "${dlg.bookmark.title}", "bmed.title", iClob(inputs[0] = new_InputWidget(0)));
+    addDialogInputWithHeading_(headings, values, "${dlg.bookmark.url}",   "bmed.url",   iClob(inputs[1] = new_InputWidget(0)));
     setUrlContent_InputWidget(inputs[1], iTrue);
-    addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.bookmark.tags}")));
-    setId_Widget(addChild_Widget(values, iClob(inputs[2] = new_InputWidget(0))), "bmed.tags");
-    addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.bookmark.icon}")));
-    setId_Widget(addChild_Widget(values, iClob(inputs[3] = new_InputWidget(1))), "bmed.icon");
+    addDialogInputWithHeading_(headings, values, "${dlg.bookmark.tags}",  "bmed.tags",  iClob(inputs[2] = new_InputWidget(0)));
+    addDialogInputWithHeading_(headings, values, "${dlg.bookmark.icon}",  "bmed.icon",  iClob(inputs[3] = new_InputWidget(1)));
+    /* Buttons for special tags. */
+    addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
+    addChild_Widget(dlg, iClob(makeTwoColumnWidget_(&headings, &values)));
+    makeTwoColumnHeading_("SPECIAL TAGS", headings, values);
+    addChild_Widget(headings, iClob(makeHeading_Widget("${bookmark.tag.home}")));
+    addChild_Widget(values, iClob(makeToggle_Widget("bmed.tag.home")));
+    addChild_Widget(headings, iClob(makeHeading_Widget("${bookmark.tag.remote}")));
+    addChild_Widget(values, iClob(makeToggle_Widget("bmed.tag.remote")));
+    addChild_Widget(headings, iClob(makeHeading_Widget("${bookmark.tag.linksplit}")));
+    addChild_Widget(values, iClob(makeToggle_Widget("bmed.tag.linksplit")));
     arrange_Widget(dlg);
     for (int i = 0; i < 3; ++i) {
         as_Widget(inputs[i])->rect.size.x = 100 * gap_UI - headings->rect.size.x;
     }
+    addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
     addChild_Widget(
         dlg,
         iClob(makeDialogButtons_Widget((iMenuItem[]){ { "${cancel}", 0, 0, NULL },
@@ -2206,7 +2488,7 @@ iWidget *makeBookmarkEditor_Widget(void) {
                                                   KMOD_PRIMARY,
                                                   "bmed.accept" } },
                                  2)));
-    addChild_Widget(get_Window()->root, iClob(dlg));
+    addChild_Widget(get_Root()->widget, iClob(dlg));
     finalizeSheet_Widget(dlg);
     return dlg;
 }
@@ -2224,11 +2506,18 @@ static iBool handleBookmarkCreationCommands_SidebarWidget_(iWidget *editor, cons
             const iString *tags  = text_InputWidget(findChild_Widget(editor, "bmed.tags"));
             const iString *icon  = collect_String(trimmed_String(text_InputWidget(findChild_Widget(editor, "bmed.icon"))));
             const uint32_t id    = add_Bookmarks(bookmarks_App(), url, title, tags, first_String(icon));
+            iBookmark *    bm    = get_Bookmarks(bookmarks_App(), id);
             if (!isEmpty_String(icon)) {
-                iBookmark *bm = get_Bookmarks(bookmarks_App(), id);
-                if (!hasTag_Bookmark(bm, "usericon")) {
-                    addTag_Bookmark(bm, "usericon");
-                }
+                addTagIfMissing_Bookmark(bm, userIcon_BookmarkTag);
+            }
+            if (isSelected_Widget(findChild_Widget(editor, "bmed.tag.home"))) {
+                addTag_Bookmark(bm, homepage_BookmarkTag);
+            }
+            if (isSelected_Widget(findChild_Widget(editor, "bmed.tag.remote"))) {
+                addTag_Bookmark(bm, remoteSource_BookmarkTag);
+            }
+            if (isSelected_Widget(findChild_Widget(editor, "bmed.tag.linksplit"))) {
+                addTag_Bookmark(bm, linkSplit_BookmarkTag);
             }
             postCommand_App("bookmarks.changed");
         }
@@ -2318,9 +2607,8 @@ iWidget *makeFeedSettings_Widget(uint32_t bookmarkId) {
                  "feedcfg.heading");
     iWidget *headings, *values;
     addChild_Widget(dlg, iClob(makeTwoColumnWidget_(&headings, &values)));
-    addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.feed.title}")));
     iInputWidget *input = new_InputWidget(0);
-    setId_Widget(addChild_Widget(values, iClob(input)), "feedcfg.title");
+    addDialogInputWithHeading_(headings, values, "${dlg.feed.title}", "feedcfg.title", iClob(input));
     addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.feed.entrytype}")));
     iWidget *types = new_Widget(); {
         addRadioButton_(types, "feedcfg.type.gemini", "${dlg.feed.type.gemini}", "feedcfg.type arg:0");
@@ -2340,14 +2628,14 @@ iWidget *makeFeedSettings_Widget(uint32_t bookmarkId) {
     setId_Widget(child_Widget(buttons, childCount_Widget(buttons) - 1), "feedcfg.save");
     arrange_Widget(dlg);
     as_Widget(input)->rect.size.x = 100 * gap_UI - headings->rect.size.x;
-    addChild_Widget(get_Window()->root, iClob(dlg));
+    addChild_Widget(get_Root()->widget, iClob(dlg));
     finalizeSheet_Widget(dlg);
     /* Initialize. */ {
         const iBookmark *bm  = bookmarkId ? get_Bookmarks(bookmarks_App(), bookmarkId) : NULL;
         setText_InputWidget(findChild_Widget(dlg, "feedcfg.title"),
                             bm ? &bm->title : feedTitle_DocumentWidget(document_App()));
         setFlags_Widget(findChild_Widget(dlg,
-                                         hasTag_Bookmark(bm, "headings") ? "feedcfg.type.headings"
+                                         hasTag_Bookmark(bm, headings_BookmarkTag) ? "feedcfg.type.headings"
                                                                          : "feedcfg.type.gemini"),
                         selected_WidgetFlag,
                         iTrue);
@@ -2365,10 +2653,8 @@ iWidget *makeIdentityCreation_Widget(void) {
                  "ident.heading");
     iWidget *page = new_Widget();
     addChildFlags_Widget(
-        dlg,
-        iClob(
-            new_LabelWidget("${dlg.newident.rsa.selfsign}", NULL)),
-        frameless_WidgetFlag);
+        dlg, iClob(new_LabelWidget("${dlg.newident.rsa.selfsign}", NULL)), frameless_WidgetFlag);
+    /* TODO: Use makeTwoColumnWidget_? */
     addChild_Widget(dlg, iClob(page));
     setFlags_Widget(page, arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
     iWidget *headings = addChildFlags_Widget(
@@ -2376,10 +2662,16 @@ iWidget *makeIdentityCreation_Widget(void) {
     iWidget *values = addChildFlags_Widget(
         page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
     iInputWidget *inputs[6];
-    addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.newident.until}")));
-    setId_Widget(addChild_Widget(values, iClob(newHint_InputWidget(19, "${hint.newident.date}"))), "ident.until");
-    addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.newident.commonname}")));
-    setId_Widget(addChild_Widget(values, iClob(inputs[0] = new_InputWidget(0))), "ident.common");
+    addDialogInputWithHeading_(headings,
+                               values,
+                               "${dlg.newident.until}",
+                               "ident.until",
+                               iClob(newHint_InputWidget(19, "${hint.newident.date}")));
+    addDialogInputWithHeading_(headings,
+                               values,
+                               "${dlg.newident.commonname}",
+                               "ident.common",
+                               iClob(inputs[0] = new_InputWidget(0)));
     /* Temporary? */ {
         addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.newident.temp}")));
         iWidget *tmpGroup = new_Widget();
@@ -2395,29 +2687,24 @@ iWidget *makeIdentityCreation_Widget(void) {
     }
     addChild_Widget(headings, iClob(makePadding_Widget(gap_UI)));
     addChild_Widget(values, iClob(makePadding_Widget(gap_UI)));
-    addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.newident.email}")));
-    setId_Widget(addChild_Widget(values, iClob(inputs[1] = newHint_InputWidget(0, "${hint.newident.optional}"))), "ident.email");
-    addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.newident.userid}")));
-    setId_Widget(addChild_Widget(values, iClob(inputs[2] = newHint_InputWidget(0, "${hint.newident.optional}"))), "ident.userid");
-    addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.newident.domain}")));
-    setId_Widget(addChild_Widget(values, iClob(inputs[3] = newHint_InputWidget(0, "${hint.newident.optional}"))), "ident.domain");
-    addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.newident.org}")));
-    setId_Widget(addChild_Widget(values, iClob(inputs[4] = newHint_InputWidget(0, "${hint.newident.optional}"))), "ident.org");
-    addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.newident.country}")));
-    setId_Widget(addChild_Widget(values, iClob(inputs[5] = newHint_InputWidget(0, "${hint.newident.optional}"))), "ident.country");
+    addDialogInputWithHeading_(headings, values, "${dlg.newident.email}",   "ident.email",   iClob(inputs[1] = newHint_InputWidget(0, "${hint.newident.optional}")));
+    addDialogInputWithHeading_(headings, values, "${dlg.newident.userid}",  "ident.userid",  iClob(inputs[2] = newHint_InputWidget(0, "${hint.newident.optional}")));
+    addDialogInputWithHeading_(headings, values, "${dlg.newident.domain}",  "ident.domain",  iClob(inputs[3] = newHint_InputWidget(0, "${hint.newident.optional}")));
+    addDialogInputWithHeading_(headings, values, "${dlg.newident.org}",     "ident.org",     iClob(inputs[4] = newHint_InputWidget(0, "${hint.newident.optional}")));
+    addDialogInputWithHeading_(headings, values, "${dlg.newident.country}", "ident.country", iClob(inputs[5] = newHint_InputWidget(0, "${hint.newident.optional}")));
     arrange_Widget(dlg);
     for (size_t i = 0; i < iElemCount(inputs); ++i) {
         as_Widget(inputs[i])->rect.size.x = 100 * gap_UI - headings->rect.size.x;
     }
-    addChild_Widget(
-        dlg,
-        iClob(makeDialogButtons_Widget((iMenuItem[]){ { "${cancel}", 0, 0, NULL },
-                                                { uiTextAction_ColorEscape "${dlg.newident.create}",
-                                                  SDLK_RETURN,
-                                                  KMOD_PRIMARY,
-                                                  "ident.accept" } },
-                                 2)));
-    addChild_Widget(get_Window()->root, iClob(dlg));
+    addChild_Widget(dlg,
+                    iClob(makeDialogButtons_Widget(
+                        (iMenuItem[]){ { "${cancel}", 0, 0, NULL },
+                                       { uiTextAction_ColorEscape "${dlg.newident.create}",
+                                         SDLK_RETURN,
+                                         KMOD_PRIMARY,
+                                         "ident.accept" } },
+                        2)));
+    addChild_Widget(get_Root()->widget, iClob(dlg));
     finalizeSheet_Widget(dlg);
     return dlg;
 }
@@ -2460,7 +2747,7 @@ const char *languageId_String(const iString *menuItemLabel) {
 int languageIndex_CStr(const char *langId) {
     iForIndices(i, languages) {
         if (equal_Rangecc(range_Command(languages[i].command, "id"), langId)) {
-            return i;
+            return (int) i;
         }
     }
     return -1;

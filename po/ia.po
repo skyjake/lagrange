@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-04-14 09:18+0000\n"
+"PO-Revision-Date: 2021-05-06 09:39+0000\n"
 "Last-Translator: Olga Smirnova <mistresssilvara@hotmail.com>\n"
 "Language-Team: Interlingua <http://weblate.skyjake.fi/projects/lagrange/ui/"
 "ia/>\n"
@@ -1255,7 +1255,7 @@ msgstr "Interstitio de recarga automatic por iste scheda."
 
 # Interpretation: (Bold links) on dark (background).
 msgid "prefs.boldlink.dark"
-msgstr "sur obscur"
+msgstr "sur le obscur"
 
 #, c-format
 msgid "minutes.ago"
@@ -1280,7 +1280,7 @@ msgstr "Ligamines grasse:"
 
 # Interpretation: (Bold links) on light (background).
 msgid "prefs.boldlink.light"
-msgstr "sur clar"
+msgstr "sur le clar"
 
 # Link download progress message.
 msgid "doc.fetching"
@@ -1376,7 +1376,7 @@ msgstr "Nove…"
 #, c-format
 msgid "error.unsupported.suggestsave"
 msgstr ""
-"Vos pote tamen salvar lo como un file a vostre dossier Discargas. Preme %s o "
+"Vos pote salvar lo como un file a vostre dossier Discargas: preme %s o "
 "selige «%s» in li menu."
 
 msgid "dlg.newident.rsa.selfsign"
@@ -1390,3 +1390,162 @@ msgstr "puncto flottante"
 
 msgid "feeds.list.refreshtime.now"
 msgstr "Le ultime actualisation esseva justo nunc."
+
+msgid "error.badstatus.msg"
+msgstr ""
+"Le servitor respondeva con un codice de stato que non es in le specification "
+"del protocollo Gemini. Forsan le servitor es del futuro o solmente "
+"malfunctiona?"
+
+#, c-format
+msgid "dlg.certwarn.mayberenewed"
+msgid_plural "dlg.certwarn.mayberenewed.n"
+msgstr[0] ""
+"Forsan le recipite certificato esseva renovate recentemente — illo es "
+"publicate por le correcte dominio e non es perimite. Le actual certificato "
+"que es digne de fide va perimir le %s, post un jorno."
+msgstr[1] ""
+"Forsan le recipite certificato esseva renovate recentemente — illo es "
+"publicate por le correcte dominio e non es perimite. Le actual certificato "
+"que es digne de fide va perimir le %s, post %d jornos."
+
+msgid "dlg.certimport.help"
+msgstr ""
+"Colla un certificato in codification PEM e/o un clave private,\n"
+"o face cadite un file .crt/.key in le fenestra."
+
+msgid "keys.link.homerow.next"
+msgstr "Parte sequente de claves del rango de base"
+
+msgid "menu.downloads"
+msgstr "Monstrar le Discargas"
+
+msgid "prefs.pinsplit.none"
+msgstr "Necun"
+
+msgid "prefs.pinsplit.left"
+msgstr "Scheda sinistra"
+
+msgid "prefs.pinsplit.right"
+msgstr "Scheda dextra"
+
+msgid "keys.split.next"
+msgstr "Commutar al division sequente"
+
+msgid "gempub.meta.lang"
+msgstr "Lingua"
+
+msgid "gempub.meta.license"
+msgstr "Licentia"
+
+#, c-format
+msgid "doc.archive"
+msgstr "%s es un archivo comprimite."
+
+msgid "doc.archive.view"
+msgstr "Vider le contentos del archivo"
+
+msgid "menu.split.merge"
+msgstr "Funder le schedas"
+
+msgid "menu.split.swap"
+msgstr "Intercambiar le lateres"
+
+msgid "menu.split.horizontal"
+msgstr "Horizontal"
+
+msgid "menu.split.vertical"
+msgstr "Vertical"
+
+msgid "menu.view.split"
+msgstr "Finder le vista..."
+
+msgid "bookmark.tag.linksplit"
+msgstr "Ligamines que aperi al latere"
+
+msgid "dlg.save.opendownload"
+msgstr "Aperir le file discargate"
+
+msgid "link.side"
+msgstr "Aperir le ligamine al latere"
+
+msgid "link.side.newtab"
+msgstr "Aperir le ligamine in un nove scheda al latere"
+
+msgid "lang.ia"
+msgstr "Interlingua"
+
+msgid "lang.tok"
+msgstr "Toki Pona"
+
+msgid "heading.newident.missing"
+msgstr "INFORMATION ABSENTE"
+
+msgid "dlg.newindent.missing.commonname"
+msgstr "On debe specificar un «Nomine commun»."
+
+msgid "heading.newident.date.bad"
+msgstr "DATA INVALIDE"
+
+msgid "dlg.newident.date.past"
+msgstr "Data de expiration debe jacer in le futuro."
+
+msgid "dlg.newident.date.example"
+msgstr ""
+"On debe verificar le data «valide usque». Exemplos:\n"
+"• 2030\n"
+"• 2025-06-30\n"
+"• 2021-12-31 23:59:59"
+
+# User preference that controls whether index.gmi pages get automatically opened when browsing the contents of a directory inside a compressed archive.
+msgid "prefs.archive.openindex"
+msgstr "Aperir indices de archivos:"
+
+msgid "archive.exit"
+msgstr "Sortir le archivo"
+
+#, c-format
+msgid "archive.summary"
+msgid_plural "archive.summary.n"
+msgstr[0] "Iste archivo contine %zu elemento e su dimension comprimite es %.1f MB."
+msgstr[1] ""
+"Iste archivo contine %zu elementos e su dimension comprimite es %.1f MB."
+
+msgid "dir.empty"
+msgstr "Iste directorio es vacue."
+
+#, c-format
+msgid "dir.summary"
+msgid_plural "dir.summary.n"
+msgstr[0] "Iste directorio contine %zu elemento."
+msgstr[1] "Iste directorio contine %zu elementos."
+
+msgid "keys.tab.close.other"
+msgstr "Clauder le altere schedas"
+
+msgid "gempub.cover.view"
+msgstr "Vider le contentos de Gempub"
+
+msgid "gempub.cover.untitled"
+msgstr "Libro sin titulo"
+
+msgid "gempub.cover.aboutbook"
+msgstr "Super iste libro"
+
+msgid "gempub.cover.image"
+msgstr "Imagine del copeta"
+
+msgid "gempub.meta.author"
+msgstr "Autor"
+
+msgid "gempub.meta.version"
+msgstr "Version"
+
+msgid "gempub.meta.revdate"
+msgstr "Data de revision"
+
+msgid "gempub.meta.pub"
+msgstr "Editor"
+
+msgid "gempub.meta.pubdate"
+msgstr "Data de publication"

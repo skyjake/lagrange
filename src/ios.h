@@ -38,3 +38,20 @@ void    exportDownloadedFile_iOS(const iString *path);
 
 iBool   isPhone_iOS             (void);
 void    safeAreaInsets_iOS      (float *left, float *top, float *right, float *bottom);
+int     displayRefreshRate_iOS  (void);
+
+/*----------------------------------------------------------------------------------------------*/
+
+iDeclareType(AVFAudioPlayer)
+iDeclareTypeConstruction(AVFAudioPlayer)
+
+iBool   setInput_AVFAudioPlayer     (iAVFAudioPlayer *, const iString *mediaType, const iBlock *audioFileData);
+void    play_AVFAudioPlayer         (iAVFAudioPlayer *);
+void    stop_AVFAudioPlayer         (iAVFAudioPlayer *);
+void    setPaused_AVFAudioPlayer    (iAVFAudioPlayer *, iBool paused);
+void    setVolume_AVFAudioPlayer    (iAVFAudioPlayer *, float volume);
+
+double  currentTime_AVFAudioPlayer  (const iAVFAudioPlayer *);
+double  duration_AVFAudioPlayer     (const iAVFAudioPlayer *);
+iBool   isStarted_AVFAudioPlayer    (const iAVFAudioPlayer *);
+iBool   isPaused_AVFAudioPlayer     (const iAVFAudioPlayer *);

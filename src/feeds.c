@@ -95,7 +95,7 @@ static void init_FeedJob(iFeedJob *d, const iBookmark *bookmark) {
     init_PtrArray(&d->results);
     iZap(d->startTime);
     d->isFirstUpdate = iFalse;
-    d->checkHeadings = hasTag_Bookmark(bookmark, "headings");
+    d->checkHeadings = hasTag_Bookmark(bookmark, headings_BookmarkTag);
 }
 
 static void deinit_FeedJob(iFeedJob *d) {

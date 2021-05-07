@@ -21,10 +21,13 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "periodic.h"
+#include "ui/widget.h"
+#include "ui/window.h"
 #include "app.h"
 
 #include <the_Foundation/string.h>
 #include <the_Foundation/thread.h>
+#include <SDL_events.h>
 #include <SDL_timer.h>
 
 iDeclareType(PeriodicCommand)
@@ -54,7 +57,22 @@ iDefineTypeConstructionArgs(PeriodicCommand, (iAny *ctx, const char *cmd), ctx, 
 
 static const uint32_t postingInterval_Periodic_ = 500;
 
-iBool postCommands_Periodic(iPeriodic *d) {
+static void removePending_Periodic_(iPeriodic *d) {
+    iForEach(PtrSet, i, &d->pendingRemoval) {
+        size_t pos;
+        iPeriodicCommand key = { .context = *i.value };
+        if (locate_SortedArray(&d->commands, &key, &pos)) {
+            iPeriodicCommand *pc = at_SortedArray(&d->commands, pos);
+            deinit_PeriodicCommand(pc);
+            remove_Array(&d->commands.values, pos);
+        }
+    }
+    clear_PtrSet(&d->pendingRemoval);
+}
+
+static iBool isDispatching_;
+
+iBool dispatchCommands_Periodic(iPeriodic *d) {
     const uint32_t now = SDL_GetTicks();
     if (now - d->lastPostTime < postingInterval_Periodic_) {
         return iFalse;
@@ -62,10 +80,24 @@ iBool postCommands_Periodic(iPeriodic *d) {
     d->lastPostTime = now;
     iBool wasPosted = iFalse;
     lock_Mutex(d->mutex);
+    isDispatching_ = iTrue;
+    iAssert(isEmpty_PtrSet(&d->pendingRemoval));
     iConstForEach(Array, i, &d->commands.values) {
-        postCommandString_App(&((const iPeriodicCommand *) i.value)->command);
+        const iPeriodicCommand *pc = i.value;
+        iAssert(isInstance_Object(pc->context, &Class_Widget));
+        const SDL_UserEvent ev = {
+            .type  = SDL_USEREVENT,
+            .code  = command_UserEventCode,
+            .data1 = (void *) cstr_String(&pc->command),
+            .data2 = findRoot_Window(get_Window(), pc->context)
+        };
+        setCurrent_Root(ev.data2);
+        dispatchEvent_Widget(pc->context, (const SDL_Event *) &ev);
         wasPosted = iTrue;
     }
+    removePending_Periodic_(d);
+    setCurrent_Root(NULL);
+    isDispatching_ = iFalse;
     unlock_Mutex(d->mutex);
     return wasPosted;
 }
@@ -74,9 +106,11 @@ void init_Periodic(iPeriodic *d) {
     d->mutex = new_Mutex();
     init_SortedArray(&d->commands, sizeof(iPeriodicCommand), cmp_PeriodicCommand_);
     d->lastPostTime = 0;
+    init_PtrSet(&d->pendingRemoval);
 }
 
 void deinit_Periodic(iPeriodic *d) {
+    deinit_PtrSet(&d->pendingRemoval);
     iForEach(Array, i, &d->commands.values) {
         deinit_PeriodicCommand(i.value);
     }
@@ -102,12 +136,9 @@ void add_Periodic(iPeriodic *d, iAny *context, const char *command) {
 
 void remove_Periodic(iPeriodic *d, iAny *context) {
     lock_Mutex(d->mutex);
-    size_t pos;
-    iPeriodicCommand key = { .context = context };
-    if (locate_SortedArray(&d->commands, &key, &pos)) {
-        iPeriodicCommand *pc = at_SortedArray(&d->commands, pos);
-        deinit_PeriodicCommand(pc);
-        remove_Array(&d->commands.values, pos);
+    insert_PtrSet(&d->pendingRemoval, context);
+    if (!isDispatching_) {
+        removePending_Periodic_(d);
     }
     unlock_Mutex(d->mutex);
 }

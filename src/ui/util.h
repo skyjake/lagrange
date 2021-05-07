@@ -31,6 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 iDeclareType(Click)
 iDeclareType(Widget)
 iDeclareType(LabelWidget)
+iDeclareType(InputWidget)
 
 iBool           isCommand_SDLEvent  (const SDL_Event *d);
 iBool           isCommand_UserEvent (const SDL_Event *, const char *cmd);
@@ -63,11 +64,17 @@ iLocalDef iBool isPerPixel_MouseWheelEvent(const SDL_MouseWheelEvent *ev) {
 #   define KMOD_SECONDARY   KMOD_GUI
 #endif
 
+enum iOpenTabFlag {
+    new_OpenTabFlag           = iBit(1),
+    newBackground_OpenTabFlag = iBit(2),
+    otherRoot_OpenTabFlag     = iBit(3),
+};
+
 iBool       isMod_Sym           (int key);
 int         normalizedMod_Sym   (int key);
 int         keyMods_Sym         (int kmods); /* shift, alt, control, or gui */
 void        toString_Sym        (int key, int kmods, iString *str);
-int         openTabMode_Sym     (int kmods);
+int         openTabMode_Sym     (int kmods); /* returns OpenTabFlags */
 
 iRangei     intersect_Rangei    (iRangei a, iRangei b);
 iRangei     union_Rangei        (iRangei a, iRangei b);
@@ -85,7 +92,9 @@ iLocalDef iBool isOverlapping_Rangei(iRangei a, iRangei b) {
 enum iRangeExtension {
     word_RangeExtension            = iBit(1),
     line_RangeExtension            = iBit(2),
-    bothStartAndEnd_RangeExtension = iBit(3),
+    moveStart_RangeExtension       = iBit(3),
+    moveEnd_RangeExtension         = iBit(4),
+    bothStartAndEnd_RangeExtension = moveStart_RangeExtension | moveEnd_RangeExtension,
 };
 
 void        extendRange_Rangecc     (iRangecc *, iRangecc bounds, int mode);
@@ -102,10 +111,12 @@ enum iAnimFlag {
     easeOut_AnimFlag    = iBit(3),
     easeBoth_AnimFlag   = easeIn_AnimFlag | easeOut_AnimFlag,
     softer_AnimFlag     = iBit(4),
+    muchSofter_AnimFlag = iBit(5),
+    bounce_AnimFlag     = iBit(6),
 };
 
 struct Impl_Anim {
-    float    from, to;
+    float    from, to, bounce;
     uint32_t when, due;
     int      flags;
 };
@@ -158,6 +169,31 @@ iInt2               delta_Click         (const iClick *);
 
 /*-----------------------------------------------------------------------------------------------*/
 
+iDeclareType(SmoothScroll)
+
+typedef void (*iSmoothScrollNotifyFunc)(iAnyObject *, int offset, uint32_t span);
+
+struct Impl_SmoothScroll {
+    iAnim    pos;
+    int      max;
+    int      overscroll;
+    iWidget *widget;
+    iSmoothScrollNotifyFunc notify;
+};
+
+void    init_SmoothScroll           (iSmoothScroll *, iWidget *owner, iSmoothScrollNotifyFunc notify);
+
+void    reset_SmoothScroll          (iSmoothScroll *);
+void    setMax_SmoothScroll         (iSmoothScroll *, int max);
+void    move_SmoothScroll           (iSmoothScroll *, int offset);
+void    moveSpan_SmoothScroll       (iSmoothScroll *, int offset, uint32_t span);
+iBool   processEvent_SmoothScroll   (iSmoothScroll *, const SDL_Event *ev);
+
+float   pos_SmoothScroll            (const iSmoothScroll *);
+iBool   isFinished_SmoothScroll     (const iSmoothScroll *);
+
+/*-----------------------------------------------------------------------------------------------*/
+
 iWidget *       makePadding_Widget  (int size);
 iLabelWidget *  makeHeading_Widget  (const char *text);
 iWidget *       makeHDiv_Widget     (void);
@@ -182,8 +218,8 @@ struct Impl_MenuItem {
 };
 
 iWidget *   makeMenu_Widget     (iWidget *parent, const iMenuItem *items, size_t n); /* returns no ref */
-void        openMenu_Widget     (iWidget *, iInt2 coord);
-void        openMenuFlags_Widget(iWidget *d, iInt2 coord, iBool postCommands);
+void        openMenu_Widget     (iWidget *, iInt2 windowCoord);
+void        openMenuFlags_Widget(iWidget *, iInt2 windowCoord, iBool postCommands);
 void        closeMenu_Widget    (iWidget *);
 
 iLabelWidget *  findMenuItem_Widget (iWidget *menu, const char *command);
@@ -210,6 +246,7 @@ void            setTabPageLabel_Widget  (iWidget *tabs, const iAnyObject *page, 
 iWidget *       tabPage_Widget          (iWidget *tabs, size_t index);
 iLabelWidget *  tabPageButton_Widget    (iWidget *tabs, const iAnyObject *page);
 iBool           isTabButton_Widget      (const iWidget *);
+void            moveTabButtonToEnd_Widget(iWidget *tabButton);
 size_t          tabPageIndex_Widget     (const iWidget *tabs, const iAnyObject *page);
 const iWidget * currentTabPage_Widget   (const iWidget *tabs);
 size_t          tabCount_Widget         (const iWidget *tabs);
@@ -220,12 +257,18 @@ iWidget *   makeSheet_Widget        (const char *id);
 void        finalizeSheet_Widget    (iWidget *sheet);
 iWidget *   makeDialogButtons_Widget(const iMenuItem *actions, size_t numActions);
 
+iInputWidget *addTwoColumnDialogInputField_Widget(iWidget *headings, iWidget *values,
+                                                  const char *labelText, const char *inputId,
+                                                  iInputWidget *input);
+
 void        makeFilePath_Widget     (iWidget *parent, const iString *initialPath, const char *title,
                                      const char *acceptLabel, const char *command);
 iWidget *   makeValueInput_Widget   (iWidget *parent, const iString *initialValue, const char *title,
                                      const char *prompt, const char *acceptLabel, const char *command);
 void        updateValueInput_Widget (iWidget *, const char *title, const char *prompt);
-iWidget *   makeMessage_Widget      (const char *title, const char *msg);
+iWidget *   makeSimpleMessage_Widget(const char *title, const char *msg);
+iWidget *   makeMessage_Widget      (const char *title, const char *msg,
+                                     const iMenuItem *items, size_t numItems);
 iWidget *   makeQuestion_Widget     (const char *title, const char *msg,
                                      const iMenuItem *items, size_t numItems);
 

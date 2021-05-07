@@ -115,7 +115,7 @@ enum iTextFont {
     firaSans_TextFont,
     literata_TextFont,
     tinos_TextFont,
-    sourceSansPro_TextFont,
+    sourceSans3_TextFont,
     iosevka_TextFont,
 };
 

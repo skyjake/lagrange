@@ -115,9 +115,7 @@ enum iColorId {
     uiTextAppTitle_ColorId,
     uiBackgroundSidebar_ColorId,
     uiBackgroundMenu_ColorId,
-    tmLinkCustomIconVisited_ColorId, /* derived from other theme colors */
-    tmAltTextBackground_ColorId,     /* derived from other theme colors */
-
+    
     /* content theme colors */
     tmFirst_ColorId,
     tmBackground_ColorId = tmFirst_ColorId,
@@ -133,9 +131,11 @@ enum iColorId {
     tmBannerTitle_ColorId,
     tmBannerIcon_ColorId,
     tmBannerSideTitle_ColorId,
-    tmOutlineHeadingAbove_ColorId,
-    tmOutlineHeadingBelow_ColorId,
     tmInlineContentMetadata_ColorId,
+    tmBackgroundAltText_ColorId,     /* derived from other theme colors */
+    tmBackgroundOpenLink_ColorId,    /* derived from other theme colors */
+    tmFrameOpenLink_ColorId,         /* derived from other theme colors */
+    tmLinkCustomIconVisited_ColorId, /* derived from other theme colors */
     tmBadLink_ColorId,
 
     tmLinkIcon_ColorId,
@@ -159,7 +159,8 @@ enum iColorId {
     tmGopherLinkDomain_ColorId,
     tmGopherLinkLastVisitDate_ColorId,
 
-    max_ColorId
+    max_ColorId,
+    tmMax_ColorId = max_ColorId - tmFirst_ColorId
 };
 
 iLocalDef iBool isLink_ColorId(enum iColorId d) {

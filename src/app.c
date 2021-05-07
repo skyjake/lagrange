@@ -39,6 +39,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "ui/inputwidget.h"
 #include "ui/keys.h"
 #include "ui/labelwidget.h"
+#include "ui/root.h"
 #include "ui/sidebarwidget.h"
 #include "ui/text.h"
 #include "ui/util.h"
@@ -123,7 +124,7 @@ struct Impl_App {
     int          sleepTimer;
 #endif
     iAtomicInt   pendingRefresh;
-    int          tabEnum;
+    iBool        isLoadingPrefs;
     iStringList *launchCommands;
     iBool        isFinishedLaunching;
     iTime        lastDropTime; /* for detecting drops of multiple items */
@@ -167,8 +168,6 @@ const iString *dateStr_(const iDate *date) {
 
 static iString *serializePrefs_App_(const iApp *d) {
     iString *str = new_String();
-    const iSidebarWidget *sidebar  = findWidget_App("sidebar");
-    const iSidebarWidget *sidebar2 = findWidget_App("sidebar2");
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
     appendFormat_String(str, "customframe arg:%d\n", d->prefs.customFrame);
 #endif
@@ -180,8 +179,6 @@ static iString *serializePrefs_App_(const iApp *d) {
         w = d->window->place.normalRect.size.x;
         h = d->window->place.normalRect.size.y;
         appendFormat_String(str, "window.setrect width:%d height:%d coord:%d %d\n", w, h, x, y);
-        appendFormat_String(str, "sidebar.width arg:%f gaps:1\n", width_SidebarWidget(sidebar));
-        appendFormat_String(str, "sidebar2.width arg:%f gaps:1\n", width_SidebarWidget(sidebar2));
         /* On macOS, maximization should be applied at creation time or the window will take
            a moment to animate to its maximized size. */
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
@@ -201,16 +198,6 @@ static iString *serializePrefs_App_(const iApp *d) {
             appendFormat_String(str, "~window.maximize\n");
         }
 #endif
-    }
-    /* Sidebars. */ {
-        if (isVisible_Widget(sidebar) && deviceType_App() != phone_AppDeviceType) {
-            appendCStr_String(str, "sidebar.toggle\n");
-        }
-        appendFormat_String(str, "sidebar.mode arg:%d\n", mode_SidebarWidget(sidebar));
-        if (isVisible_Widget(sidebar2) && deviceType_App() != phone_AppDeviceType) {
-            appendCStr_String(str, "sidebar2.toggle\n");
-        }
-        appendFormat_String(str, "sidebar2.mode arg:%d\n", mode_SidebarWidget(sidebar2));
     }
     appendFormat_String(str, "uilang id:%s\n", cstr_String(&d->prefs.uiLanguage));
     appendFormat_String(str, "uiscale arg:%f\n", uiScale_Window(d->window));
@@ -234,6 +221,7 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "prefs.centershort.changed arg:%d\n", d->prefs.centerShortDocs);
     appendFormat_String(str, "prefs.collapsepreonload.changed arg:%d\n", d->prefs.collapsePreOnLoad);
     appendFormat_String(str, "prefs.hoverlink.changed arg:%d\n", d->prefs.hoverLink);
+    appendFormat_String(str, "prefs.archive.openindex.changed arg:%d\n", d->prefs.openArchiveIndexPages);
     appendFormat_String(str, "quoteicon.set arg:%d\n", d->prefs.quoteIcon ? 1 : 0);
     appendFormat_String(str, "theme.set arg:%d auto:1\n", d->prefs.theme);
     appendFormat_String(str, "accent.set arg:%d\n", d->prefs.accent);
@@ -303,6 +291,7 @@ static const iString *prefsFileName_(void) {
 static void loadPrefs_App_(iApp *d) {
     iUnused(d);
     iBool haveCA = iFalse;
+    d->isLoadingPrefs = iTrue; /* affects which notifications get posted */
     /* Create the data dir if it doesn't exist yet. */
     makeDirs_Path(collectNewCStr_String(dataDir_App_()));
     iFile *f = new_File(prefsFileName_());
@@ -343,7 +332,7 @@ static void loadPrefs_App_(iApp *d) {
             }
 #endif
             else {
-                postCommandString_App(&cmdStr);
+                postCommandString_Root(NULL, &cmdStr);
             }
             deinit_String(&cmdStr);
         }
@@ -357,6 +346,7 @@ static void loadPrefs_App_(iApp *d) {
     d->prefs.customFrame = iFalse;
 #endif
     iRelease(f);
+    d->isLoadingPrefs = iFalse;
 }
 
 static void savePrefs_App_(const iApp *d) {
@@ -370,7 +360,14 @@ static void savePrefs_App_(const iApp *d) {
 }
 
 static const char *magicState_App_       = "lgL1";
+static const char *magicWindow_App_      = "wind";
 static const char *magicTabDocument_App_ = "tabd";
+static const char *magicSidebar_App_     = "side";
+
+enum iDocumentStateFlag {
+    current_DocumentStateFlag     = iBit(1),
+    rootIndex1_DocumentStateFlag = iBit(2)
+};
 
 static iBool loadState_App_(iApp *d) {
     iUnused(d);
@@ -391,53 +388,124 @@ static iBool loadState_App_(iApp *d) {
             return iFalse;
         }
         setVersion_Stream(stream_File(f), version);
-        iDocumentWidget *doc = document_App();
-        iDocumentWidget *current = NULL;
+        /* Window state. */
+        iDocumentWidget *doc           = NULL;
+        iDocumentWidget *current[2]    = { NULL, NULL };
+        iBool            isFirstTab[2] = { iTrue, iTrue };
         while (!atEnd_File(f)) {
             readData_File(f, 4, magic);
-            if (!memcmp(magic, magicTabDocument_App_, 4)) {
-                if (!doc) {
+            if (!memcmp(magic, magicWindow_App_, 4)) {
+                const int splitMode = read32_File(f);
+                const int keyRoot   = read32_File(f);
+                d->window->pendingSplitMode = splitMode;
+                setSplitMode_Window(d->window, splitMode | noEvents_WindowSplit);
+                d->window->keyRoot = d->window->roots[keyRoot];
+            }
+            else if (!memcmp(magic, magicSidebar_App_, 4)) {
+                const uint16_t bits = readU16_File(f);
+                const uint8_t modes = readU8_File(f);
+                const float widths[2] = {
+                    readf_Stream(stream_File(f)),
+                    readf_Stream(stream_File(f))
+                };
+                const uint8_t rootIndex = bits & 0xff;
+                const uint8_t flags     = bits >> 8;
+                iRoot *root = d->window->roots[rootIndex];
+                if (root && deviceType_App() != phone_AppDeviceType) {
+                    iSidebarWidget *sidebar  = findChild_Widget(root->widget, "sidebar");
+                    iSidebarWidget *sidebar2 = findChild_Widget(root->widget, "sidebar2");
+                    setWidth_SidebarWidget(sidebar,  widths[0]);
+                    setWidth_SidebarWidget(sidebar2, widths[1]);
+                    postCommandf_Root(root, "sidebar.mode arg:%u", modes & 0xf);
+                    postCommandf_Root(root, "sidebar2.mode arg:%u", modes >> 4);
+                    if (flags & 1) postCommand_Root(root, "sidebar.toggle");
+                    if (flags & 2) postCommand_Root(root, "sidebar2.toggle");
+                }
+            }
+            else if (!memcmp(magic, magicTabDocument_App_, 4)) {
+                const int8_t flags = read8_File(f);
+                int rootIndex = flags & rootIndex1_DocumentStateFlag ? 1 : 0;
+                if (rootIndex > numRoots_Window(d->window) - 1) {
+                    rootIndex = 0;
+                }
+                setCurrent_Root(d->window->roots[rootIndex]);
+                if (isFirstTab[rootIndex]) {
+                    isFirstTab[rootIndex] = iFalse;
+                    /* There is one pre-created tab in each root. */
+                    doc = document_Root(get_Root());
+                }
+                else {
                     doc = newTab_App(NULL, iFalse /* no switching */);
                 }
-                if (read8_File(f)) {
-                    current = doc;
+                if (flags & current_DocumentStateFlag) {
+                    current[rootIndex] = doc;
                 }
                 deserializeState_DocumentWidget(doc, stream_File(f));
                 doc = NULL;
             }
             else {
                 printf("%s: unrecognized data\n", cstr_String(path_File(f)));
+                setCurrent_Root(NULL);
                 return iFalse;
             }
         }
-        postCommandf_App("tabs.switch page:%p", current);
+        if (d->window->splitMode) {
+            /* Update root placement. */
+            resize_Window(d->window, -1, -1);
+        }
+        iForIndices(i, current) {
+            postCommandf_Root(NULL, "tabs.switch page:%p", current[i]);
+        }
+        setCurrent_Root(NULL);
         return iTrue;
     }
     return iFalse;
 }
 
-iObjectList *listDocuments_App(void) {
-    iObjectList *docs = new_ObjectList();
-    const iWidget *tabs = findWidget_App("doctabs");
-    iForEach(ObjectList, i, children_Widget(findChild_Widget(tabs, "tabs.pages"))) {
-        if (isInstance_Object(i.object, &Class_DocumentWidget)) {
-            pushBack_ObjectList(docs, i.object);
-        }
-    }
-    return docs;
-}
-
 static void saveState_App_(const iApp *d) {
     iUnused(d);
     trimCache_App();
+    iWindow *win = d->window;
+    /* UI state is saved in binary because it is quite complex (e.g.,
+       navigation history, cached content) and depends closely on the widget
+       tree. The data is largely not reorderable and should not be modified
+       by the user manually. */
     iFile *f = newCStr_File(concatPath_CStr(dataDir_App_(), stateFileName_App_));
     if (open_File(f, writeOnly_FileMode)) {
         writeData_File(f, magicState_App_, 4);
         writeU32_File(f, latest_FileVersion); /* version */
-        iConstForEach(ObjectList, i, iClob(listDocuments_App())) {
+        /* Begin with window state. */ {
+            writeData_File(f, magicWindow_App_, 4);
+            writeU32_File(f, win->splitMode);
+            writeU32_File(f, win->keyRoot == win->roots[0] ? 0 : 1);
+        }
+        /* State of UI elements. */ {
+            iForIndices(i, win->roots) {
+                const iRoot *root = win->roots[i];
+                if (root) {
+                    writeData_File(f, magicSidebar_App_, 4);
+                    const iSidebarWidget *sidebar  = findChild_Widget(root->widget, "sidebar");
+                    const iSidebarWidget *sidebar2 = findChild_Widget(root->widget, "sidebar2");
+                    writeU16_File(f, i |
+                                  (isVisible_Widget(sidebar)  ? 0x100 : 0) |
+                                  (isVisible_Widget(sidebar2) ? 0x200 : 0));
+                    writeU8_File(f,
+                                 mode_SidebarWidget(sidebar) |
+                                 (mode_SidebarWidget(sidebar2) << 4));
+                    writef_Stream(stream_File(f), width_SidebarWidget(sidebar));
+                    writef_Stream(stream_File(f), width_SidebarWidget(sidebar2));
+                }
+            }
+        }
+        iConstForEach(ObjectList, i, iClob(listDocuments_App(NULL))) {
             iAssert(isInstance_Object(i.object, &Class_DocumentWidget));
+            const iWidget *widget = constAs_Widget(i.object);
             writeData_File(f, magicTabDocument_App_, 4);
-            write8_File(f, document_App() == i.object ? 1 : 0);
+            int8_t flags = (document_Root(widget->root) == i.object ? current_DocumentStateFlag : 0);
+            if (widget->root == win->roots[1]) {
+                flags |= rootIndex1_DocumentStateFlag;
+            }
+            write8_File(f, flags);
             serializeState_DocumentWidget(i.object, stream_File(f));
         }
     }
@@ -460,7 +528,7 @@ static uint32_t checkAsleep_App_(uint32_t interval, void *param) {
 
 static uint32_t postAutoReloadCommand_App_(uint32_t interval, void *param) {
     iUnused(param);
-    postCommand_App("document.autoreload");
+    postCommand_Root(NULL, "document.autoreload");
     return interval;
 }
 
@@ -622,6 +690,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     const iBool isFirstRun =
         !fileExistsCStr_FileInfo(cleanedPath_CStr(concatPath_CStr(dataDir_App_(), "prefs.cfg")));
     d->isFinishedLaunching = iFalse;
+    d->isLoadingPrefs      = iFalse;
     d->warmupFrames        = 0;
     d->launchCommands      = new_StringList();
     iZap(d->lastDropTime);
@@ -645,16 +714,14 @@ static void init_App_(iApp *d, int argc, char **argv) {
 #endif
     init_Prefs(&d->prefs);
     setCStr_String(&d->prefs.downloadDir, downloadDir_App_());
-    d->isRunning         = iFalse;
-    d->window            = NULL;
     set_Atomic(&d->pendingRefresh, iFalse);
-    d->mimehooks         = new_MimeHooks();
-    d->certs             = new_GmCerts(dataDir_App_());
-    d->visited           = new_Visited();
-    d->bookmarks         = new_Bookmarks();
-    d->tabEnum           = 0; /* generates unique IDs for tab pages */
+    d->isRunning = iFalse;
+    d->window    = NULL;
+    d->mimehooks = new_MimeHooks();
+    d->certs     = new_GmCerts(dataDir_App_());
+    d->visited   = new_Visited();
+    d->bookmarks = new_Bookmarks();
     init_Periodic(&d->periodic);
-    setThemePalette_Color(d->prefs.theme);
 #if defined (iPlatformAppleDesktop)
     setupApplication_MacOS();
 #endif
@@ -685,11 +752,12 @@ static void init_App_(iApp *d, int argc, char **argv) {
     /* Widget state init. */
     processEvents_App(postedEventsOnly_AppEventMode);
     if (!loadState_App_(d)) {
-        postCommand_App("open url:about:help");
+        postCommand_Root(NULL, "open url:about:help");
     }
-    postCommand_App("window.unfreeze");
+    postCommand_Root(NULL, "~window.unfreeze");
+    postCommand_Root(NULL, "font.reset");
     d->autoReloadTimer = SDL_AddTimer(60 * 1000, postAutoReloadCommand_App_, NULL);
-    postCommand_App("document.autoreload");
+    postCommand_Root(NULL, "document.autoreload");
 #if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
     d->isIdling      = iFalse;
     d->lastEventTime = 0;
@@ -698,12 +766,12 @@ static void init_App_(iApp *d, int argc, char **argv) {
     d->isFinishedLaunching = iTrue;
     /* Run any commands that were pending completion of launch. */ {
         iForEach(StringList, i, d->launchCommands) {
-            postCommandString_App(i.value);
+            postCommandString_Root(NULL, i.value);
         }
     }
     /* URLs from the command line. */ {
         iConstForEach(StringList, i, openCmds) {
-            postCommandString_App(i.value);
+            postCommandString_Root(NULL, i.value);
         }
         iRelease(openCmds);
     }
@@ -816,9 +884,10 @@ const iString *debugInfo_App(void) {
     iString *msg = collectNew_String();
     format_String(msg, "# Debug information\n");
     appendFormat_String(msg, "## Documents\n");
-    iForEach(ObjectList, k, iClob(listDocuments_App())) {
+    iForEach(ObjectList, k, iClob(listDocuments_App(NULL))) {
         iDocumentWidget *doc = k.object;
-        appendFormat_String(msg, "### Tab %zu: %s\n",
+        appendFormat_String(msg, "### Tab %d.%zu: %s\n",
+                            constAs_Widget(doc)->root == get_Window()->roots[0] ? 0 : 1,
                             childIndex_Widget(constAs_Widget(doc)->parent, k.object),
                             cstr_String(bookmarkTitle_DocumentWidget(doc)));
         append_String(msg, collect_String(debugInfo_History(history_DocumentWidget(doc))));
@@ -842,7 +911,7 @@ const iString *debugInfo_App(void) {
 }
 
 static void clearCache_App_(void) {
-    iForEach(ObjectList, i, iClob(listDocuments_App())) {
+    iForEach(ObjectList, i, iClob(listDocuments_App(NULL))) {
         clearCache_History(history_DocumentWidget(i.object));
     }
 }
@@ -851,7 +920,7 @@ void trimCache_App(void) {
     iApp *d = &app_;
     size_t cacheSize = 0;
     const size_t limit = d->prefs.maxCacheSize * 1000000;
-    iObjectList *docs = listDocuments_App();
+    iObjectList *docs = listDocuments_App(NULL);
     iForEach(ObjectList, i, docs) {
         cacheSize += cacheSize_History(history_DocumentWidget(i.object));
     }
@@ -910,9 +979,9 @@ static iBool nextEvent_App_(iApp *d, enum iAppEventMode eventMode, SDL_Event *ev
 
 void processEvents_App(enum iAppEventMode eventMode) {
     iApp *d = &app_;
+    iRoot *oldCurrentRoot = current_Root(); /* restored afterwards */
     SDL_Event ev;
     iBool gotEvents = iFalse;
-    postCommands_Periodic(&d->periodic);
     while (nextEvent_App_(d, eventMode, &ev)) {
 #if defined (iPlatformAppleMobile)
         if (processEvent_iOS(&ev)) {
@@ -924,7 +993,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
                 d->isRunning = iFalse;
                 if (findWidget_App("prefs")) {
                     /* Make sure changed preferences get saved. */
-                    postCommand_App("prefs.dismiss");
+                    postCommand_Root(NULL, "prefs.dismiss");
                     processEvents_App(postedEventsOnly_AppEventMode);
                 }
                 goto backToMainLoop;
@@ -942,6 +1011,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
                 break;
             case SDL_APP_WILLENTERBACKGROUND:
             case SDL_APP_TERMINATING:
+                setFreezeDraw_Window(d->window, iTrue);
                 savePrefs_App_(d);
                 saveState_App_(d);
                 break;
@@ -957,10 +1027,10 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     if (startsWithCase_CStr(ev.drop.file, "gemini:") ||
                         startsWithCase_CStr(ev.drop.file, "gopher:") ||
                         startsWithCase_CStr(ev.drop.file, "file:")) {
-                        postCommandf_App("~open newtab:%d url:%s", newTab, ev.drop.file);
+                        postCommandf_Root(NULL, "~open newtab:%d url:%s", newTab, ev.drop.file);
                     }
                     else {
-                        postCommandf_App(
+                        postCommandf_Root(NULL,
                             "~open newtab:%d url:%s", newTab, makeFileUrl_CStr(ev.drop.file));
                     }
                 }
@@ -1043,7 +1113,12 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     handleCommand_MacOS(command_UserEvent(&ev));
 #endif
                     if (isMetricsChange_UserEvent(&ev)) {
-                        arrange_Widget(d->window->root);
+                        iForIndices(i, d->window->roots) {
+                            iRoot *root = d->window->roots[i];
+                            if (root) {
+                                arrange_Widget(root->widget);
+                            }
+                        }
                     }
                     if (!wasUsed) {
                         /* No widget handled the command, so we'll do it. */
@@ -1065,6 +1140,7 @@ void processEvents_App(enum iAppEventMode eventMode) {
     }
 #endif
 backToMainLoop:;
+    setCurrent_Root(oldCurrentRoot);
 }
 
 static void runTickers_App_(iApp *d) {
@@ -1082,9 +1158,11 @@ static void runTickers_App_(iApp *d) {
     iConstForEach(Array, i, &pending->values) {
         const iTicker *ticker = i.value;
         if (ticker->callback) {
+            setCurrent_Root(findRoot_Window(d->window, ticker->context)); /* root might be NULL */
             ticker->callback(ticker->context);
         }
     }
+    setCurrent_Root(NULL);
     delete_SortedArray(pending);
     if (isEmpty_SortedArray(&d->tickers)) {
         d->lastTickerTime = 0;
@@ -1099,9 +1177,8 @@ static int resizeWatcher_(void *user, SDL_Event *event) {
         resetFonts_Text(); {
             SDL_Event u = { .type = SDL_USEREVENT };
             u.user.code = command_UserEventCode;
-            u.user.data1 = strdup("theme.changed");
-            /*u.user.windowID = id_Window(d->window);*/
-            dispatchEvent_Widget(d->window->root, &u);
+            u.user.data1 = strdup("theme.changed auto:1");
+            dispatchEvent_Window(d->window, &u);
         }
 #endif
         drawWhileResizing_Window(d->window, winev->data1, winev->data2);
@@ -1110,16 +1187,23 @@ static int resizeWatcher_(void *user, SDL_Event *event) {
 }
 
 static int run_App_(iApp *d) {
-    arrange_Widget(findWidget_App("root"));
+    iForIndices(i, d->window->roots) {
+        if (d->window->roots[i]) {
+            arrange_Widget(d->window->roots[i]->widget);
+        }
+    }
     d->isRunning = iTrue;
     SDL_EventState(SDL_DROPFILE, SDL_ENABLE); /* open files via drag'n'drop */
 #if defined (iPlatformDesktop)
     SDL_AddEventWatch(resizeWatcher_, d); /* redraw window during resizing */
 #endif
     while (d->isRunning) {
+        dispatchCommands_Periodic(&d->periodic);
         processEvents_App(waitForNewEvents_AppEventMode);
         runTickers_App_(d);
         refresh_App();
+        /* Change the widget tree while we are not iterating through it. */
+        checkPendingSplit_Window(d->window);
         recycle_Garbage();
     }
     SDL_DelEventWatch(resizeWatcher_, d);
@@ -1128,7 +1212,12 @@ static int run_App_(iApp *d) {
 
 void refresh_App(void) {
     iApp *d = &app_;
-    destroyPending_Widget();
+    iForIndices(i, d->window->roots) {
+        iRoot *root = d->window->roots[i];
+        if (root) {
+            destroyPending_Root(root);
+        }
+    }
 #if defined (LAGRANGE_ENABLE_IDLE_SLEEP)
     if (d->warmupFrames == 0 && d->isIdling) {
         return;
@@ -1213,13 +1302,17 @@ void postRefresh_App(void) {
     if (!wasPending) {
         SDL_Event ev = { .type = SDL_USEREVENT };
         ev.user.code = refresh_UserEventCode;
-        //ev.user.windowID = id_Window(get_Window());
         SDL_PushEvent(&ev);
     }
 }
 
-void postCommand_App(const char *command) {
-    iApp *d = &app_;
+void postImmediateRefresh_App(void) {
+    SDL_Event ev = { .type = SDL_USEREVENT };
+    ev.user.code = immediateRefresh_UserEventCode;
+    SDL_PushEvent(&ev);
+}
+
+void postCommand_Root(iRoot *d, const char *command) {
     iAssert(command);
     if (strlen(command) == 0) {
         return;
@@ -1231,8 +1324,8 @@ void postCommand_App(const char *command) {
     if (*command == '~') {
         /* Requires launch to be finished; defer it if needed. */
         command++;
-        if (!d->isFinishedLaunching) {
-            pushBackCStr_StringList(d->launchCommands, command);
+        if (!app_.isFinishedLaunching) {
+            pushBackCStr_StringList(app_.launchCommands, command);
             return;
         }
     }
@@ -1240,10 +1333,26 @@ void postCommand_App(const char *command) {
     ev.user.code = command_UserEventCode;
     /*ev.user.windowID = id_Window(get_Window());*/
     ev.user.data1 = strdup(command);
+    ev.user.data2 = d; /* all events are root-specific */
     SDL_PushEvent(&ev);
     if (app_.commandEcho) {
-        printf("[command] %s\n", command); fflush(stdout);
+        iWindow *win = get_Window();
+        printf("%s[command] {%d} %s\n",
+               app_.isLoadingPrefs ? "[Prefs] " : "",
+               (d == NULL || win == NULL ? 0 : d == win->roots[0] ? 1 : 2),
+               command); fflush(stdout);
     }
+}
+
+void postCommandf_Root(iRoot *d, const char *command, ...) {
+    iBlock chars;
+    init_Block(&chars, 0);
+    va_list args;
+    va_start(args, command);
+    vprintf_Block(&chars, command, args);
+    va_end(args);
+    postCommand_Root(d, cstr_Block(&chars));
+    deinit_Block(&chars);
 }
 
 void postCommandf_App(const char *command, ...) {
@@ -1253,13 +1362,29 @@ void postCommandf_App(const char *command, ...) {
     va_start(args, command);
     vprintf_Block(&chars, command, args);
     va_end(args);
-    postCommand_App(cstr_Block(&chars));
+    postCommand_Root(NULL, cstr_Block(&chars));
     deinit_Block(&chars);
+}
+
+void rootOrder_App(iRoot *roots[2]) {
+    const iWindow *win = app_.window;
+    roots[0] = win->keyRoot;
+    roots[1] = (roots[0] == win->roots[0] ? win->roots[1] : win->roots[0]);
 }
 
 iAny *findWidget_App(const char *id) {
     if (!*id) return NULL;
-    return findChild_Widget(app_.window->root, id);
+    iRoot *order[2];
+    rootOrder_App(order);
+    iForIndices(i, order) {
+        if (order[i]) {
+            iAny *found = findChild_Widget(order[i]->widget, id);
+            if (found) {
+                return found;
+            }
+        }
+    }
+    return NULL;
 }
 
 void addTicker_App(iTickerFunc ticker, iAny *context) {
@@ -1282,7 +1407,7 @@ iPeriodic *periodic_App(void) {
 }
 
 iBool isLandscape_App(void) {
-    const iInt2 size = rootSize_Window(get_Window());
+    const iInt2 size = size_Window(get_Window());
     return size.x > size.y;
 }
 
@@ -1316,6 +1441,14 @@ static void updatePrefsThemeButtons_(iWidget *d) {
         setFlags_Widget(findChild_Widget(d, format_CStr("prefs.accent.%u", i)),
                         selected_WidgetFlag,
                         prefs_App()->accent == i);
+    }
+}
+
+static void updatePrefsPinSplitButtons_(iWidget *d, int value) {
+    for (size_t i = 0; i < 3; i++) {
+        setFlags_Widget(findChild_Widget(d, format_CStr("prefs.pinsplit.%u", i)),
+                        selected_WidgetFlag,
+                        i == value);
     }
 }
 
@@ -1399,6 +1532,10 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
         setFlags_Widget(findChild_Widget(d, "prefs.quoteicon.1"), selected_WidgetFlag, arg == 1);
         return iFalse;
     }
+    else if (equal_Command(cmd, "pinsplit.set")) {
+        updatePrefsPinSplitButtons_(d, arg_Command(cmd));
+        return iFalse;
+    }
     else if (equal_Command(cmd, "doctheme.dark.set")) {
         updateColorThemeButton_(findChild_Widget(d, "prefs.doctheme.dark"), arg_Command(cmd));
         return iFalse;
@@ -1427,8 +1564,12 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
     return iFalse;
 }
 
+iDocumentWidget *document_Root(iRoot *d) {
+    return iConstCast(iDocumentWidget *, currentTabPage_Widget(findChild_Widget(d->widget, "doctabs")));
+}
+
 iDocumentWidget *document_App(void) {
-    return iConstCast(iDocumentWidget *, currentTabPage_Widget(findWidget_App("doctabs")));
+    return document_Root(get_Root());
 }
 
 iDocumentWidget *document_Command(const char *cmd) {
@@ -1448,7 +1589,7 @@ iDocumentWidget *document_Command(const char *cmd) {
 
 iDocumentWidget *newTab_App(const iDocumentWidget *duplicateOf, iBool switchToNew) {
     iApp *d = &app_;
-    iWidget *tabs = findWidget_App("doctabs");
+    iWidget *tabs = findWidget_Root("doctabs");
     setFlags_Widget(tabs, hidden_WidgetFlag, iFalse);
     iWidget *newTabButton = findChild_Widget(tabs, "newtab");
     removeChild_Widget(newTabButton->parent, newTabButton);
@@ -1459,7 +1600,6 @@ iDocumentWidget *newTab_App(const iDocumentWidget *duplicateOf, iBool switchToNe
     else {
         doc = new_DocumentWidget();
     }
-    setId_Widget(as_Widget(doc), format_CStr("document%03d", ++d->tabEnum));
     appendTabPage_Widget(tabs, as_Widget(doc), "", 0, 0);
     iRelease(doc); /* now owned by the tabs */
     addChild_Widget(findChild_Widget(tabs, "tabs.buttons"), iClob(newTabButton));
@@ -1468,7 +1608,7 @@ iDocumentWidget *newTab_App(const iDocumentWidget *duplicateOf, iBool switchToNe
     }
     arrange_Widget(tabs);
     refresh_Widget(tabs);
-    postCommandf_App("tab.created id:%s", cstr_String(id_Widget(as_Widget(doc))));
+    postCommandf_Root(get_Root(), "tab.created id:%s", cstr_String(id_Widget(as_Widget(doc))));
     return doc;
 }
 
@@ -1489,8 +1629,8 @@ static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
             const iString *country      = text_InputWidget (findChild_Widget(dlg, "ident.country"));
             const iBool    isTemp       = isSelected_Widget(findChild_Widget(dlg, "ident.temp"));
             if (isEmpty_String(commonName)) {
-                makeMessage_Widget(orange_ColorEscape "MISSING INFO",
-                                   "A \"Common name\" must be specified.");
+                makeSimpleMessage_Widget(orange_ColorEscape "${heading.newident.missing}",
+                                         "${dlg.newindent.missing.commonname}");
                 return iTrue;
             }
             iDate until;
@@ -1504,11 +1644,8 @@ static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
                            "%04u-%u-%u %u:%u:%u",
                            &val[0], &val[1], &val[2], &val[3], &val[4], &val[5]);
                 if (n <= 0) {
-                    makeMessage_Widget(orange_ColorEscape "INVALID DATE",
-                                       "Please check the \"Valid until\" date. Examples:\n"
-                                       "\u2022 2030\n"
-                                       "\u2022 2025-06-30\n"
-                                       "\u2022 2021-12-31 23:59:59");
+                    makeSimpleMessage_Widget(orange_ColorEscape "${heading.newident.date.bad}",
+                                             "${dlg.newident.date.example}");
                     return iTrue;
                 }
                 until.year   = val[0];
@@ -1523,8 +1660,8 @@ static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
                     initCurrent_Time(&now);
                     init_Time(&t, &until);
                     if (cmp_Time(&t, &now) <= 0) {
-                        makeMessage_Widget(orange_ColorEscape "INVALID DATE",
-                                           "Expiration date must be in the future.");
+                        makeSimpleMessage_Widget(orange_ColorEscape "${heading.newident.date.bad}",
+                                                 "${dlg.newident.date.past}");
                         return iTrue;
                     }
                 }
@@ -1556,10 +1693,12 @@ const iString *searchQueryUrl_App(const iString *queryStringUnescaped) {
 
 iBool handleCommand_App(const char *cmd) {
     iApp *d = &app_;
+    const iBool isFrozen = !d->window || d->window->isDrawFrozen;
     if (equal_Command(cmd, "config.error")) {
-        makeMessage_Widget(uiTextCaution_ColorEscape "CONFIG ERROR",
-                           format_CStr("Error in config file: %s\nSee \"about:debug\" for details.",
-                                       suffixPtr_Command(cmd, "where")));
+        makeSimpleMessage_Widget(uiTextCaution_ColorEscape "CONFIG ERROR",
+                                 format_CStr("Error in config file: %s\n"
+                                             "See \"about:debug\" for details.",
+                                             suffixPtr_Command(cmd, "where")));
         return iTrue;
     }
     else if (equal_Command(cmd, "prefs.changed")) {
@@ -1582,6 +1721,17 @@ iBool handleCommand_App(const char *cmd) {
     else if (equal_Command(cmd, "translation.languages")) {
         d->prefs.langFrom = argLabel_Command(cmd, "from");
         d->prefs.langTo   = argLabel_Command(cmd, "to");
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "ui.split")) {
+        if (argLabel_Command(cmd, "swap")) {
+            swapRoots_Window(d->window);
+            return iTrue;
+        }
+        d->window->pendingSplitMode =
+            (argLabel_Command(cmd, "axis") ? vertical_WindowSplit : 0) | (arg_Command(cmd) << 1);
+        const char *url = suffixPtr_Command(cmd, "url");
+        setCStr_String(get_Window()->pendingSplitUrl, url ? url : "");
         return iTrue;
     }
     else if (equal_Command(cmd, "window.retain")) {
@@ -1608,40 +1758,60 @@ iBool handleCommand_App(const char *cmd) {
         postCommandf_App("window.fullscreen.changed arg:%d", !wasFull);
         return iTrue;
     }
+    else if (equal_Command(cmd, "font.reset")) {
+        resetFonts_Text();
+        return iTrue;
+    }
     else if (equal_Command(cmd, "font.set")) {
-        setFreezeDraw_Window(get_Window(), iTrue);
+        if (!isFrozen) {
+            setFreezeDraw_Window(get_Window(), iTrue);
+        }
         d->prefs.font = arg_Command(cmd);
         setContentFont_Text(d->prefs.font);
-        postCommand_App("font.changed");
-        postCommand_App("window.unfreeze");
+        if (!isFrozen) {
+            postCommand_App("font.changed");
+            postCommand_App("window.unfreeze");
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "headingfont.set")) {
-        setFreezeDraw_Window(get_Window(), iTrue);
+        if (!isFrozen) {
+            setFreezeDraw_Window(get_Window(), iTrue);
+        }
         d->prefs.headingFont = arg_Command(cmd);
         setHeadingFont_Text(d->prefs.headingFont);
-        postCommand_App("font.changed");
-        postCommand_App("window.unfreeze");
+        if (!isFrozen) {
+            postCommand_App("font.changed");
+            postCommand_App("window.unfreeze");
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "zoom.set")) {
-        setFreezeDraw_Window(get_Window(), iTrue); /* no intermediate draws before docs updated */
+        if (!isFrozen) {
+            setFreezeDraw_Window(get_Window(), iTrue); /* no intermediate draws before docs updated */
+        }
         d->prefs.zoomPercent = arg_Command(cmd);
         setContentFontSize_Text((float) d->prefs.zoomPercent / 100.0f);
-        postCommand_App("font.changed");
-        postCommand_App("window.unfreeze");
+        if (!isFrozen) {
+            postCommand_App("font.changed");
+            postCommand_App("window.unfreeze");
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "zoom.delta")) {
-        setFreezeDraw_Window(get_Window(), iTrue); /* no intermediate draws before docs updated */
+        if (!isFrozen) {
+            setFreezeDraw_Window(get_Window(), iTrue); /* no intermediate draws before docs updated */
+        }
         int delta = arg_Command(cmd);
         if (d->prefs.zoomPercent < 100 || (delta < 0 && d->prefs.zoomPercent == 100)) {
             delta /= 2;
         }
         d->prefs.zoomPercent = iClamp(d->prefs.zoomPercent + delta, 50, 200);
         setContentFontSize_Text((float) d->prefs.zoomPercent / 100.0f);
-        postCommand_App("font.changed");
-        postCommand_App("window.unfreeze");
+        if (!isFrozen) {
+            postCommand_App("font.changed");
+            postCommand_App("window.unfreeze");
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "smoothscroll")) {
@@ -1659,8 +1829,12 @@ iBool handleCommand_App(const char *cmd) {
     else if (equal_Command(cmd, "hidetoolbarscroll")) {
         d->prefs.hideToolbarOnScroll = arg_Command(cmd);
         if (!d->prefs.hideToolbarOnScroll) {
-            showToolbars_Window(d->window, iTrue);
+            showToolbars_Root(get_Root(), iTrue);
         }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "pinsplit.set")) {
+        d->prefs.pinSplit = arg_Command(cmd);
         return iTrue;
     }
     else if (equal_Command(cmd, "theme.set")) {
@@ -1676,7 +1850,9 @@ iBool handleCommand_App(const char *cmd) {
     else if (equal_Command(cmd, "accent.set")) {
         d->prefs.accent = arg_Command(cmd);
         setThemePalette_Color(d->prefs.theme);
-        postCommandf_App("theme.changed auto:1");
+        if (!isFrozen) {
+            invalidate_Window(d->window);
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "ostheme")) {
@@ -1685,12 +1861,16 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "doctheme.dark.set")) {
         d->prefs.docThemeDark = arg_Command(cmd);
-        postCommand_App("theme.changed auto:1");
+        if (!isFrozen) {
+            invalidate_Window(d->window);
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "doctheme.light.set")) {
         d->prefs.docThemeLight = arg_Command(cmd);
-        postCommand_App("theme.changed auto:1");
+        if (!isFrozen) {
+            invalidate_Window(d->window);
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "linewidth.set")) {
@@ -1706,16 +1886,20 @@ iBool handleCommand_App(const char *cmd) {
     else if (equal_Command(cmd, "prefs.mono.gemini.changed") ||
              equal_Command(cmd, "prefs.mono.gopher.changed")) {
         const iBool isSet = (arg_Command(cmd) != 0);
-        setFreezeDraw_Window(d->window, iTrue);
+        if (!isFrozen) {
+            setFreezeDraw_Window(d->window, iTrue);
+        }
         if (startsWith_CStr(cmd, "prefs.mono.gemini")) {
             d->prefs.monospaceGemini = isSet;
         }
         else {
             d->prefs.monospaceGopher = isSet;
         }
-        resetFonts_Text(); /* clear the glyph cache */
-        postCommand_App("font.changed");
-        postCommand_App("window.unfreeze");
+        if (!isFrozen) {
+            //resetFonts_Text(); /* clear the glyph cache */
+            postCommand_App("font.changed");
+            postCommand_App("window.unfreeze");
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "prefs.boldlink.dark.changed") ||
@@ -1727,18 +1911,23 @@ iBool handleCommand_App(const char *cmd) {
         else {
             d->prefs.boldLinkLight = isSet;
         }
-        resetFonts_Text(); /* clear the glyph cache */
-        postCommand_App("font.changed");
+        if (!d->isLoadingPrefs) {
+            postCommand_App("font.changed");
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "prefs.biglede.changed")) {
         d->prefs.bigFirstParagraph = arg_Command(cmd) != 0;
-        postCommand_App("document.layout.changed");
+        if (!d->isLoadingPrefs) {
+            postCommand_App("document.layout.changed");
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "prefs.plaintext.wrap.changed")) {
         d->prefs.plainTextWrap = arg_Command(cmd) != 0;
-        postCommand_App("document.layout.changed");
+        if (!d->isLoadingPrefs) {
+            postCommand_App("document.layout.changed");
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "prefs.sideicon.changed")) {
@@ -1748,7 +1937,9 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "prefs.centershort.changed")) {
         d->prefs.centerShortDocs = arg_Command(cmd) != 0;
-        postCommand_App("theme.changed");
+        if (!isFrozen) {
+            invalidate_Window(d->window);
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "prefs.collapsepreonload.changed")) {
@@ -1765,9 +1956,15 @@ iBool handleCommand_App(const char *cmd) {
         postRefresh_App();
         return iTrue;
     }
+    else if (equal_Command(cmd, "prefs.archive.openindex.changed")) {
+        d->prefs.openArchiveIndexPages = arg_Command(cmd) != 0;
+        return iTrue;
+    }
     else if (equal_Command(cmd, "saturation.set")) {
         d->prefs.saturation = (float) arg_Command(cmd) / 100.0f;
-        postCommandf_App("theme.changed auto:1");
+        if (!isFrozen) {
+            invalidate_Window(d->window);
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "cachesize.set")) {
@@ -1804,6 +2001,10 @@ iBool handleCommand_App(const char *cmd) {
         setCStr_String(&d->prefs.downloadDir, suffixPtr_Command(cmd, "path"));
         return iTrue;
     }
+    else if (equal_Command(cmd, "downloads.open")) {
+        postCommandf_App("open url:%s", cstrCollect_String(makeFileUrl_String(downloadDir_App())));
+        return iTrue;
+    }
     else if (equal_Command(cmd, "ca.file")) {
         setCStr_String(&d->prefs.caFile, suffixPtr_Command(cmd, "path"));
         if (!argLabel_Command(cmd, "noset")) {
@@ -1828,12 +2029,28 @@ iBool handleCommand_App(const char *cmd) {
              (equalCase_Rangecc(parts.scheme, "http") ||
               equalCase_Rangecc(parts.scheme, "https")))) {
             openInDefaultBrowser_App(url);
+        const int newTab = argLabel_Command(cmd, "newtab");
             return iTrue;
         }
+        if (newTab & otherRoot_OpenTabFlag && numRoots_Window(get_Window()) == 1) {
+            /* Need to split first. */
+            const iInt2 winSize = get_Window()->size;
+            postCommandf_App("ui.split arg:3 axis:%d newtab:%d url:%s",
+                             (float) winSize.x / (float) winSize.y < 0.7f ? 1 : 0,
+                             newTab & ~otherRoot_OpenTabFlag,
+                             cstr_String(url));
+            return iTrue;
+        }
+        iRoot *root = get_Root();
+        iRoot *oldRoot = root;
+        if (newTab & otherRoot_OpenTabFlag) {
+            root = otherRoot_Window(d->window, root);
+            setKeyRoot_Window(d->window, root);
+            setCurrent_Root(root); /* need to change for widget creation */
+        }
         iDocumentWidget *doc = document_Command(cmd);
-        const int newTab = argLabel_Command(cmd, "newtab");
-        if (newTab) {
-            doc = newTab_App(NULL, (newTab & 1) != 0); /* `newtab:2` to open in background */
+        if (newTab & (new_OpenTabFlag | newBackground_OpenTabFlag)) {
+            doc = newTab_App(NULL, (newTab & new_OpenTabFlag) != 0); /* `newtab:2` to open in background */
         }
         iHistory *history = history_DocumentWidget(doc);
         const iBool isHistory = argLabel_Command(cmd, "history") != 0;
@@ -1860,14 +2077,15 @@ iBool handleCommand_App(const char *cmd) {
            is already available, e.g., it's from "about:" or restored from cache. */
         const iRangecc gotoHeading = range_Command(cmd, "gotoheading");
         if (gotoHeading.start) {
-            postCommandf_App("document.goto heading:%s", cstr_Rangecc(gotoHeading));
+            postCommandf_Root(root, "document.goto heading:%s", cstr_Rangecc(gotoHeading));
         }
         const iRangecc gotoUrlHeading = range_Command(cmd, "gotourlheading");
         if (gotoUrlHeading.start) {
-            postCommandf_App("document.goto heading:%s",
+            postCommandf_Root(root, "document.goto heading:%s",
                              cstrCollect_String(urlDecode_String(
                                  collect_String(newRange_String(gotoUrlHeading)))));
         }
+        setCurrent_Root(oldRoot);
     }
     else if (equal_Command(cmd, "document.request.cancelled")) {
         /* TODO: How should cancelled requests be treated in the history? */
@@ -1907,6 +2125,7 @@ iBool handleCommand_App(const char *cmd) {
         iBool  wasCurrent = (doc == (iWidget *) document_App());
         size_t index      = tabPageIndex_Widget(tabs, doc);
         iBool  wasClosed  = iFalse;
+        postCommand_App("document.openurls.changed");
         if (argLabel_Command(cmd, "toright")) {
             while (tabCount_Widget(tabs) > index + 1) {
                 destroy_Widget(removeTabPage_Widget(tabs, index + 1));
@@ -1924,19 +2143,32 @@ iBool handleCommand_App(const char *cmd) {
             arrange_Widget(tabs);
             return iTrue;
         }
-        if (tabCount_Widget(tabs) > 1) {
+        const iBool isSplit = numRoots_Window(get_Window()) > 1;
+        if (tabCount_Widget(tabs) > 1 || isSplit) {
             iWidget *closed = removeTabPage_Widget(tabs, index);
             destroy_Widget(closed); /* released later */
             if (index == tabCount_Widget(tabs)) {
                 index--;
             }
-            arrange_Widget(tabs);
-            if (wasCurrent) {
-                postCommandf_App("tabs.switch page:%p", tabPage_Widget(tabs, index));
+            if (tabCount_Widget(tabs) == 0) {
+                iAssert(isSplit);
+                postCommand_App("ui.split arg:0");
+            }
+            else {
+                arrange_Widget(tabs);
+                if (wasCurrent) {
+                    postCommandf_App("tabs.switch page:%p", tabPage_Widget(tabs, index));
+                }
             }
         }
         else {
             postCommand_App("quit");
+        }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "keyroot.next")) {
+        if (setKeyRoot_Window(d->window, otherRoot_Window(d->window, d->window->keyRoot))) {
+            setFocus_Widget(NULL);
         }
         return iTrue;
     }
@@ -1953,8 +2185,10 @@ iBool handleCommand_App(const char *cmd) {
         setToggle_Widget(findChild_Widget(dlg, "prefs.smoothscroll"), d->prefs.smoothScrolling);
         setToggle_Widget(findChild_Widget(dlg, "prefs.imageloadscroll"), d->prefs.loadImageInsteadOfScrolling);
         setToggle_Widget(findChild_Widget(dlg, "prefs.hidetoolbarscroll"), d->prefs.hideToolbarOnScroll);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.archive.openindex"), d->prefs.openArchiveIndexPages);
         setToggle_Widget(findChild_Widget(dlg, "prefs.ostheme"), d->prefs.useSystemTheme);
         setToggle_Widget(findChild_Widget(dlg, "prefs.customframe"), d->prefs.customFrame);
+        updatePrefsPinSplitButtons_(dlg, d->prefs.pinSplit);
         updateDropdownSelection_(findChild_Widget(dlg, "prefs.uilang"), cstr_String(&d->prefs.uiLanguage));
         setToggle_Widget(findChild_Widget(dlg, "prefs.retainwindow"), d->prefs.retainWindowSize);
         setText_InputWidget(findChild_Widget(dlg, "prefs.uiscale"),
@@ -2017,11 +2251,12 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "navigate.home")) {
         /* Look for bookmarks tagged "homepage". */
-        iRegExp *pattern = iClob(new_RegExp("\\bhomepage\\b", caseInsensitive_RegExpOption));
+        iRegExp *pattern = iClob(new_RegExp("\\b" homepage_BookmarkTag "\\b",
+                                            caseInsensitive_RegExpOption));
         const iPtrArray *homepages =
             list_Bookmarks(d->bookmarks, NULL, filterTagsRegExp_Bookmarks, pattern);
         if (isEmpty_PtrArray(homepages)) {
-            postCommand_App("open url:about:lagrange");
+            postCommand_Root(get_Root(), "open url:about:lagrange");
         }
         else {
             iStringSet *urls = iClob(new_StringSet());
@@ -2033,13 +2268,13 @@ iBool handleCommand_App(const char *cmd) {
                 }
             }
             if (!isEmpty_StringSet(urls)) {
-                postCommandf_App(
+                postCommandf_Root(get_Root(),
                     "open url:%s",
                     cstr_String(constAt_StringSet(urls, iRandoms(0, size_StringSet(urls)))));
             }
         }
         if (argLabel_Command(cmd, "focus")) {
-            postCommand_App("navigate.focus");
+            postCommand_Root(get_Root(), "navigate.focus");
         }
         return iTrue;
     }
@@ -2098,6 +2333,11 @@ iBool handleCommand_App(const char *cmd) {
         save_Visited(d->visited, dataDir_App_());
         return iFalse;
     }
+    else if (equal_Command(cmd, "document.changed")) {
+        /* Set of open tabs has changed. */
+        postCommand_App("document.openurls.changed");
+        return iFalse;
+    }
     else if (equal_Command(cmd, "ident.new")) {
         iWidget *dlg = makeIdentityCreation_Widget();
         setFocus_Widget(findChild_Widget(dlg, "ident.until"));
@@ -2107,7 +2347,8 @@ iBool handleCommand_App(const char *cmd) {
     else if (equal_Command(cmd, "ident.import")) {
         iCertImportWidget *imp = new_CertImportWidget();
         setPageContent_CertImportWidget(imp, sourceContent_DocumentWidget(document_App()));
-        addChild_Widget(d->window->root, iClob(imp));
+        addChild_Widget(get_Root()->widget, iClob(imp));
+        finalizeSheet_Widget(as_Widget(imp));
         postRefresh_App();
         return iTrue;
     }
@@ -2151,7 +2392,7 @@ iBool handleCommand_App(const char *cmd) {
         iProcessId pid = argLabel_Command(cmd, "pid");
         if (pid) {
             iString *urls = collectNew_String();
-            iConstForEach(ObjectList, i, iClob(listDocuments_App())) {
+            iConstForEach(ObjectList, i, iClob(listDocuments_App(NULL))) {
                 append_String(urls, url_DocumentWidget(i.object));
                 appendCStr_String(urls, "\n");
             }
@@ -2192,6 +2433,7 @@ void openInDefaultBrowser_App(const iString *url) {
 #endif
     );
     start_Process(proc);
+    waitForFinished_Process(proc); /* TODO: test on Windows */
     iRelease(proc);
 #endif
 }
@@ -2235,4 +2477,32 @@ void revealPath_App(const iString *path) {
 #else
     iAssert(0 /* File revealing not implemented on this platform */);
 #endif
+}
+
+iObjectList *listDocuments_App(const iRoot *rootOrNull) {
+    iWindow *win = get_Window();
+    iObjectList *docs = new_ObjectList();
+    iForIndices(i, win->roots) {
+        iRoot *root = win->roots[i];
+        if (!root) continue;
+        if (!rootOrNull || root == rootOrNull) {
+            const iWidget *tabs = findChild_Widget(root->widget, "doctabs");
+            iForEach(ObjectList, i, children_Widget(findChild_Widget(tabs, "tabs.pages"))) {
+                if (isInstance_Object(i.object, &Class_DocumentWidget)) {
+                    pushBack_ObjectList(docs, i.object);
+                }
+            }
+        }
+    }
+    return docs;
+}
+
+iStringSet *listOpenURLs_App(void) {
+    iStringSet *set = new_StringSet();
+    iObjectList *docs = listDocuments_App(NULL);
+    iConstForEach(ObjectList, i, docs) {
+        insert_StringSet(set, withSpacesEncoded_String(url_DocumentWidget(i.object)));
+    }
+    iRelease(docs);
+    return set;
 }

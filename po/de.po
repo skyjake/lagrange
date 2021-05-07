@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-04-11 06:05+0000\n"
+"PO-Revision-Date: 2021-05-06 09:39+0000\n"
 "Last-Translator: Jaakko Keränen <jaakko.keranen@iki.fi>\n"
 "Language-Team: German <http://weblate.skyjake.fi/projects/lagrange/ui/de/>\n"
 "Language: de\n"
@@ -692,7 +692,7 @@ msgstr "Der Download wird abgebrochen, wenn Sie diesen Tab schließen."
 
 # Inline download status message.
 msgid "media.download.complete"
-msgstr "Download fertig."
+msgstr "Download abgeschlossen."
 
 # Used in inline audio player metadata popup.
 msgid "audio.meta.artist"

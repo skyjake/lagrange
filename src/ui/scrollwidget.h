@@ -31,3 +31,4 @@ iDeclareObjectConstruction(ScrollWidget)
 void    setRange_ScrollWidget   (iScrollWidget *, iRangei range);
 void    setThumb_ScrollWidget   (iScrollWidget *, int thumb, int thumbSize);
 
+void    setFadeEnabled_ScrollWidget (iScrollWidget *, iBool fadeEnabled);

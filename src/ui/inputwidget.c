@@ -74,6 +74,7 @@ enum iInputWidgetFlag {
     eatEscape_InputWidgetFlag        = iBit(6),
     isMarking_InputWidgetFlag        = iBit(7),
     markWords_InputWidgetFlag        = iBit(8),
+    needUpdateBuffer_InputWidgetFlag = iBit(9),
 };
 
 struct Impl_InputWidget {
@@ -119,13 +120,29 @@ static void invalidateBuffered_InputWidget_(iInputWidget *d) {
     }
 }
 
+static void updateSizeForFixedLength_InputWidget_(iInputWidget *d) {
+    if (d->maxLen) {
+        /* Set a fixed size based on maximum possible width of the text. */
+        iBlock *content = new_Block(d->maxLen);
+        fill_Block(content, 'M');
+        int extraHeight = (flags_Widget(as_Widget(d)) & extraPadding_WidgetFlag ? 2 * gap_UI : 0);
+        setFixedSize_Widget(
+            as_Widget(d),
+            add_I2(measure_Text(d->font, cstr_Block(content)),
+                   init_I2(6 * gap_UI + d->leftPadding + d->rightPadding,
+                           2 * gap_UI + extraHeight)));
+        delete_Block(content);
+    }
+}
+
 static void updateMetrics_InputWidget_(iInputWidget *d) {
     iWidget *w = as_Widget(d);
+    updateSizeForFixedLength_InputWidget_(d);
     /* Caller must arrange the width, but the height is fixed. */
     w->rect.size.y = lineHeight_Text(d->font) * 1.3f;
-#if defined (iPlatformMobile)
-    w->rect.size.y += 2 * gap_UI;
-#endif
+    if (flags_Widget(w) & extraPadding_WidgetFlag) {
+        w->rect.size.y += 2 * gap_UI;
+    }
     invalidateBuffered_InputWidget_(d);
     if (parent_Widget(w)) {
         arrange_Widget(w);
@@ -136,6 +153,9 @@ void init_InputWidget(iInputWidget *d, size_t maxLen) {
     iWidget *w = &d->widget;
     init_Widget(w);
     setFlags_Widget(w, focusable_WidgetFlag | hover_WidgetFlag | touchDrag_WidgetFlag, iTrue);
+#if defined (iPlatformMobile)
+    setFlags_Widget(w, extraPadding_WidgetFlag, iTrue);
+#endif
     init_Array(&d->text, sizeof(iChar));
     init_Array(&d->oldText, sizeof(iChar));
     init_String(&d->hint);
@@ -244,15 +264,7 @@ iInputWidgetContentPadding contentPadding_InputWidget(const iInputWidget *d) {
 void setMaxLen_InputWidget(iInputWidget *d, size_t maxLen) {
     d->maxLen = maxLen;
     d->mode   = (maxLen == 0 ? insert_InputMode : overwrite_InputMode);
-    if (maxLen) {
-        /* Set a fixed size. */
-        iBlock *content = new_Block(maxLen);
-        fill_Block(content, 'M');
-        setFixedSize_Widget(
-            as_Widget(d),
-            add_I2(measure_Text(d->font, cstr_Block(content)), init_I2(6 * gap_UI, 2 * gap_UI)));
-        delete_Block(content);
-    }
+    updateSizeForFixedLength_InputWidget_(d);
 }
 
 void setHint_InputWidget(iInputWidget *d, const char *hintText) {
@@ -269,6 +281,7 @@ void setContentPadding_InputWidget(iInputWidget *d, int left, int right) {
     if (right >= 0) {
         d->rightPadding = right;
     }
+    updateSizeForFixedLength_InputWidget_(d);
     refresh_Widget(d);
 }
 
@@ -289,29 +302,29 @@ static iString *visText_InputWidget_(const iInputWidget *d) {
 }
 
 static void updateBuffered_InputWidget_(iInputWidget *d) {
-    if (isExposed_Window(get_Window())) {
-        invalidateBuffered_InputWidget_(d);
-        iString *bufText = NULL;
-        if (d->inFlags & isUrl_InputWidgetFlag) {
-            /* Highlight the host name. */
-            iUrl parts;
-            const iString *text = collect_String(utf32toUtf8_InputWidget_(d));
-            init_Url(&parts, text);
-            if (!isEmpty_Range(&parts.host)) {
-                bufText = new_String();
-                appendRange_String(bufText, (iRangecc){ constBegin_String(text), parts.host.start });
-                appendCStr_String(bufText, uiTextStrong_ColorEscape);
-                appendRange_String(bufText, parts.host);
-                appendCStr_String(bufText, restore_ColorEscape);
-                appendRange_String(bufText, (iRangecc){ parts.host.end, constEnd_String(text) });
-            }
+    iWindow *win = get_Window();
+    invalidateBuffered_InputWidget_(d);
+    iString *bufText = NULL;
+    if (d->inFlags & isUrl_InputWidgetFlag && as_Widget(d)->root == win->keyRoot) {
+        /* Highlight the host name. */
+        iUrl parts;
+        const iString *text = collect_String(utf32toUtf8_InputWidget_(d));
+        init_Url(&parts, text);
+        if (!isEmpty_Range(&parts.host)) {
+            bufText = new_String();
+            appendRange_String(bufText, (iRangecc){ constBegin_String(text), parts.host.start });
+            appendCStr_String(bufText, uiTextStrong_ColorEscape);
+            appendRange_String(bufText, parts.host);
+            appendCStr_String(bufText, restore_ColorEscape);
+            appendRange_String(bufText, (iRangecc){ parts.host.end, constEnd_String(text) });
         }
-        if (!bufText) {
-            bufText = visText_InputWidget_(d);
-        }
-        d->buffered = new_TextBuf(d->font, uiInputText_ColorId, cstr_String(bufText));
-        delete_String(bufText);
     }
+    if (!bufText) {
+        bufText = visText_InputWidget_(d);
+    }
+    d->buffered = new_TextBuf(d->font, uiInputText_ColorId, cstr_String(bufText));
+    delete_String(bufText);
+    d->inFlags &= ~needUpdateBuffer_InputWidgetFlag;
 }
 
 void setText_InputWidget(iInputWidget *d, const iString *text) {
@@ -326,7 +339,7 @@ void setText_InputWidget(iInputWidget *d, const iString *text) {
             text = enc;
         }
         /* Omit the default (Gemini) scheme if there isn't much space. */
-        if (isNarrow_Window(get_Window())) { // flags_Widget(as_Widget(d)) & tight_WidgetFlag) {
+        if (isNarrow_Root(as_Widget(d)->root)) {
             text = omitDefaultScheme_(collect_String(copy_String(text)));
         }
     }
@@ -344,7 +357,7 @@ void setText_InputWidget(iInputWidget *d, const iString *text) {
         iZap(d->mark);
     }
     if (!isFocused_Widget(d)) {
-        updateBuffered_InputWidget_(d);
+        d->inFlags |= needUpdateBuffer_InputWidgetFlag;
     }
     refresh_Widget(as_Widget(d));
 }
@@ -416,7 +429,7 @@ void end_InputWidget(iInputWidget *d, iBool accept) {
     if (!accept) {
         setCopy_Array(&d->text, &d->oldText);
     }
-    updateBuffered_InputWidget_(d);
+    d->inFlags |= needUpdateBuffer_InputWidgetFlag;
     SDL_RemoveTimer(d->timer);
     d->timer = 0;
     SDL_StopTextInput();
@@ -693,6 +706,9 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
         begin_InputWidget(d);
         return iFalse;
     }
+    else if (isCommand_UserEvent(ev, "keyroot.changed")) {
+        d->inFlags |= needUpdateBuffer_InputWidgetFlag;
+    }
     else if (isCommand_UserEvent(ev, "lang.changed")) {
         set_String(&d->hint, &d->srcHint);
         translate_Lang(&d->hint);
@@ -713,7 +729,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
     }
     else if (isCommand_UserEvent(ev, "theme.changed")) {
         if (d->buffered) {
-            updateBuffered_InputWidget_(d);
+            d->inFlags |= needUpdateBuffer_InputWidgetFlag;
         }
         return iFalse;
     }
@@ -721,7 +737,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
         if (isFocused_Widget(d) && arg_Command(command_UserEvent(ev))) {
             iRect rect = bounds_Widget(w);
             rect.pos.y -= value_Anim(&get_Window()->rootOffset);
-            const iInt2 visRoot = visibleRootSize_Window(get_Window());
+            const iInt2 visRoot = visibleSize_Root(w->root);
             if (bottom_Rect(rect) > visRoot.y) {
                 setValue_Anim(&get_Window()->rootOffset, -(bottom_Rect(rect) - visRoot.y), 250);
             }
@@ -742,10 +758,10 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
         return iTrue;
     }
     if (ev->type == SDL_MOUSEMOTION && isHover_Widget(d)) {
-        const iInt2 local = localCoord_Widget(w, init_I2(ev->motion.x, ev->motion.y));
+        const iInt2 inner = windowToInner_Widget(w, init_I2(ev->motion.x, ev->motion.y));
         setCursor_Window(get_Window(),
-                         local.x >= 2 * gap_UI + d->leftPadding &&
-                                 local.x < width_Widget(w) - d->rightPadding
+                         inner.x >= 2 * gap_UI + d->leftPadding &&
+                         inner.x < width_Widget(w) - d->rightPadding
                              ? SDL_SYSTEM_CURSOR_IBEAM
                              : SDL_SYSTEM_CURSOR_ARROW);
     }
@@ -992,6 +1008,9 @@ static void draw_InputWidget_(const iInputWidget *d) {
     const iBool    isFocused = isFocused_Widget(w);
     const iBool    isHover   = isHover_Widget(w) &&
                                contains_Widget(w, mouseCoord_Window(get_Window()));
+    if (d->inFlags & needUpdateBuffer_InputWidgetFlag) {
+        updateBuffered_InputWidget_(iConstCast(iInputWidget *, d));
+    }
     iPaint p;
     init_Paint(&p);
     iString *text = visText_InputWidget_(d);

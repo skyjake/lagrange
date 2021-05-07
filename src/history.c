@@ -21,6 +21,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "history.h"
+#include "ui/root.h"
 #include "app.h"
 
 #include <the_Foundation/file.h>
@@ -244,9 +245,10 @@ iBool goBack_History(iHistory *d) {
     lock_Mutex(d->mtx);
     if (d->recentPos < size_Array(&d->recent) - 1) {
         d->recentPos++;
-        postCommandf_App("open history:1 scroll:%f url:%s",
-                         mostRecentUrl_History(d)->normScrollY,
-                         cstr_String(url_History(d, d->recentPos)));
+        postCommandf_Root(get_Root(),
+                          "open history:1 scroll:%f url:%s",
+                          mostRecentUrl_History(d)->normScrollY,
+                          cstr_String(url_History(d, d->recentPos)));
         unlock_Mutex(d->mtx);
         return iTrue;
     }
@@ -258,9 +260,10 @@ iBool goForward_History(iHistory *d) {
     lock_Mutex(d->mtx);
     if (d->recentPos > 0) {
         d->recentPos--;
-        postCommandf_App("open history:1 scroll:%f url:%s",
-                         mostRecentUrl_History(d)->normScrollY,
-                         cstr_String(url_History(d, d->recentPos)));
+        postCommandf_Root(get_Root(),
+                          "open history:1 scroll:%f url:%s",
+                          mostRecentUrl_History(d)->normScrollY,
+                          cstr_String(url_History(d, d->recentPos)));
         unlock_Mutex(d->mtx);
         return iTrue;
     }

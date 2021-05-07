@@ -107,7 +107,7 @@ This application uses fonts licensed under the Open Font License.
 => https://www.google.com/get/noto/#sans-arab  Noto Sans Arabic
 => https://www.google.com/get/noto/help/cjk/  Noto Sans CJK (JP, SC)
 => https://github.com/googlefonts/nunito/blob/master/OFL.txt  Nunito
-=> https://github.com/adobe-fonts/source-sans-pro/blob/release/LICENSE.md  Source Sans Pro
+=> https://github.com/adobe-fonts/source-sans/blob/release/LICENSE.md  Source Sans 3
 
 Additional fonts:
 

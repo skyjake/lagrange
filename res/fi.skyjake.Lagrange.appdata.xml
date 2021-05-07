@@ -45,6 +45,26 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.4" date="2021-05-07">
+            <description>
+                <p>This release introduces a split view mode, support for Gempub
+                    files, and optimizes page rendering. Notable changes include:</p>
+                <ul>
+                    <li>Split view for browsing two tabs at once.</li>
+                    <li>Split view pinning for keeping an index page or menu on
+                        one side while opening all links on the other side.</li>
+                    <li>Viewing contents of local directories and ZIP archives.</li>
+                    <li>Basic Gempub support: viewing the book cover page, and opening
+                        the contents in a split view.</li>
+                    <li>Page renderer buffers content more efficiently.</li>
+                    <li>New UI languages: Interlingua, Toki Pona.</li>
+                    <li>All lists support smooth scrolling.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.4.0</url>
+        </release>
         <release version="1.3.4" date="2021-04-26">
             <description>
                 <p>Changes:</p>

@@ -22,11 +22,23 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
-#include <the_Foundation/defs.h>
+#include <the_Foundation/vec2.h>
 #include <SDL_events.h>
 
 iDeclareType(Widget)
 
+enum iWidgetTouchMode {
+    none_WidgetTouchMode,
+    touch_WidgetTouchMode,
+    momentum_WidgetTouchMode,
+};
+
 iBool   processEvent_Touch      (const SDL_Event *);
 void    update_Touch            (void);
-void    widgetDestroyed_Touch   (iWidget *widget);
+
+float                   stopWidgetMomentum_Touch    (const iWidget *widget);
+enum iWidgetTouchMode   widgetMode_Touch            (const iWidget *widget);
+void                    widgetDestroyed_Touch       (iWidget *widget);
+
+iInt2   latestPosition_Touch    (void); /* valid during processing of current event */
+size_t  numFingers_Touch        (void);

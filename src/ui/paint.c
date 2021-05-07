@@ -79,16 +79,17 @@ void unsetClip_Paint(iPaint *d) {
 #if SDL_VERSION_ATLEAST(2, 0, 12)
     SDL_RenderSetClipRect(renderer_Paint_(d), NULL);
 #else
-    const SDL_Rect winRect = { 0, 0, d->dst->root->rect.size.x, d->dst->root->rect.size.y };
-    SDL_RenderSetClipRect(renderer_Paint_(d), &winRect);
+    const iRect rect =
+        current_Root() ? rect_Root(get_Root()) : (iRect){ zero_I2(), get_Window()->size };
+    SDL_RenderSetClipRect(renderer_Paint_(d), (const SDL_Rect *) &rect);
 #endif
 }
 
 void drawRect_Paint(const iPaint *d, iRect rect, int color) {
     iInt2 br = bottomRight_Rect(rect);
     /* Keep the right/bottom edge visible in the window. */
-    if (br.x == d->dst->root->rect.size.x) br.x--;
-    if (br.y == d->dst->root->rect.size.y) br.y--;
+    if (br.x == d->dst->size.x) br.x--;
+    if (br.y == d->dst->size.y) br.y--;
     const SDL_Point edges[] = {
         { left_Rect(rect),  top_Rect(rect) },
         { br.x, top_Rect(rect) },

@@ -33,10 +33,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <SDL_timer.h>
 
 #if defined (LAGRANGE_ENABLE_MPG123)
-#  include <mpg123.h>
+#   include <mpg123.h>
+#endif
+#if defined (iPlatformAppleMobile)
+#   include "../ios.h"
 #endif
 
 /*----------------------------------------------------------------------------------------------*/
+
+iDeclareType(AVFAudioPlayer) /* iOS */
 
 iDeclareType(ContentSpec)
 
@@ -447,6 +452,7 @@ struct Impl_Player {
     iInputBuf *       data;
     uint32_t          lastInteraction;
     iDecoder *        decoder;
+    iAVFAudioPlayer * avfPlayer; /* iOS */
 };
 
 iDefineTypeConstruction(Player)
@@ -611,7 +617,7 @@ static iContentSpec contentSpec_Player_(const iPlayer *d) {
     iAssert(content.inputFormat == content.output.format ||
             (content.inputFormat == AUDIO_S24LSB && content.output.format == AUDIO_S16) ||
             (content.inputFormat == AUDIO_F64LSB && content.output.format == AUDIO_F32));
-    content.output.samples = 2048;
+    content.output.samples = 8192;
     return content;
 }
 
@@ -634,24 +640,40 @@ static void writeOutputSamples_Player_(void *plr, Uint8 *stream, int len) {
 void init_Player(iPlayer *d) {
     iZap(d->spec);
     init_String(&d->mime);
-    d->device  = 0;
-    d->decoder = NULL;
-    d->data    = new_InputBuf();
-    d->volume  = 1.0f;
-    d->flags   = 0;
+    d->device    = 0;
+    d->decoder   = NULL;
+    d->avfPlayer = NULL;
+    d->data      = new_InputBuf();
+    d->volume    = 1.0f;
+    d->flags     = 0;
 }
 
 void deinit_Player(iPlayer *d) {
     stop_Player(d);
     delete_InputBuf(d->data);
     deinit_String(&d->mime);
+#if defined (iPlatformAppleMobile)
+    if (d->avfPlayer) {
+        delete_AVFAudioPlayer(d->avfPlayer);
+    }
+#endif
 }
 
 iBool isStarted_Player(const iPlayer *d) {
+#if defined (iPlatformAppleMobile)
+    if (d->avfPlayer) {
+        return isStarted_AVFAudioPlayer(d->avfPlayer);
+    }
+#endif
     return d->device != 0;
 }
 
 iBool isPaused_Player(const iPlayer *d) {
+#if defined (iPlatformAppleMobile)
+    if (d->avfPlayer) {
+        return isPaused_AVFAudioPlayer(d->avfPlayer);
+    }
+#endif
     if (!d->device) return iTrue;
     return SDL_GetAudioDeviceStatus(d->device) == SDL_AUDIO_PAUSED;
 }
@@ -676,15 +698,26 @@ void updateSourceData_Player(iPlayer *d, const iString *mimeType, const iBlock *
         case append_PlayerUpdate: {
             const size_t oldSize = size_Block(&input->data);
             const size_t newSize = size_Block(data);
-            iAssert(newSize >= oldSize);
+            if (input->isComplete) {
+                iAssert(newSize == oldSize);
+                break;
+            }
             /* The old parts cannot have changed. */
-//            iAssert(memcmp(constData_Block(&input->data), constData_Block(data), oldSize) == 0);
             appendData_Block(&input->data, constBegin_Block(data) + oldSize, newSize - oldSize);
-            input->isComplete = iFalse;
             break;
         }
         case complete_PlayerUpdate:
-            input->isComplete = iTrue;
+            if (!input->isComplete) {
+                input->isComplete = iTrue;
+#if defined (iPlatformAppleMobile)
+                iAssert(d->avfPlayer == NULL);
+                d->avfPlayer = new_AVFAudioPlayer();
+                if (!setInput_AVFAudioPlayer(d->avfPlayer, &d->mime, &input->data)) {
+                    delete_AVFAudioPlayer(d->avfPlayer);
+                    d->avfPlayer = NULL;
+                }
+#endif
+            }
             break;
     }
     signal_Condition(&input->changed);
@@ -695,6 +728,13 @@ iBool start_Player(iPlayer *d) {
     if (isStarted_Player(d)) {
         return iFalse;
     }
+#if defined (iPlatformAppleMobile)
+    if (d->avfPlayer) {
+        play_AVFAudioPlayer(d->avfPlayer);
+        setNotIdle_Player(d);
+        return iTrue;
+    }
+#endif
     iContentSpec content = contentSpec_Player_(d);
     if (!content.output.freq) {
         return iFalse;
@@ -713,6 +753,12 @@ iBool start_Player(iPlayer *d) {
 }
 
 void setPaused_Player(iPlayer *d, iBool isPaused) {
+#if defined (iPlatformAppleMobile)
+    if (d->avfPlayer) {
+        setPaused_AVFAudioPlayer(d->avfPlayer, isPaused);
+        return;
+    }
+#endif
     if (isStarted_Player(d)) {
         SDL_PauseAudioDevice(d->device, isPaused ? SDL_TRUE : SDL_FALSE);
         setNotIdle_Player(d);
@@ -720,6 +766,12 @@ void setPaused_Player(iPlayer *d, iBool isPaused) {
 }
 
 void stop_Player(iPlayer *d) {
+#if defined (iPlatformAppleMobile)
+    if (d->avfPlayer) {
+        stop_AVFAudioPlayer(d->avfPlayer);
+        return;
+    }
+#endif
     if (isStarted_Player(d)) {
         /* TODO: Stop the stream/decoder. */
         SDL_PauseAudioDevice(d->device, SDL_TRUE);
@@ -735,6 +787,11 @@ void setVolume_Player(iPlayer *d, float volume) {
     if (d->decoder) {
         d->decoder->gain = d->volume;
     }
+#if defined (iPlatformAppleMobile)
+    if (d->avfPlayer) {
+        setVolume_AVFAudioPlayer(d->avfPlayer, volume);
+    }
+#endif
     setNotIdle_Player(d);
 }
 
@@ -762,11 +819,21 @@ const iString *tag_Player(const iPlayer *d, enum iPlayerTag tag) {
 }
 
 float time_Player(const iPlayer *d) {
+#if defined (iPlatformAppleMobile)
+    if (d->avfPlayer) {
+        return currentTime_AVFAudioPlayer(d->avfPlayer);
+    }
+#endif
     if (!d->decoder) return 0;
     return (float) ((double) d->decoder->currentSample / (double) d->spec.freq);
 }
 
 float duration_Player(const iPlayer *d) {
+#if defined (iPlatformAppleMobile)
+    if (d->avfPlayer) {
+        return duration_AVFAudioPlayer(d->avfPlayer);
+    }
+#endif
     if (!d->decoder) return 0;
     return (float) ((double) d->decoder->totalSamples / (double) d->spec.freq);
 }

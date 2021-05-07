@@ -22,7 +22,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
-#include "widget.h"
+#include "root.h"
 
 #include <the_Foundation/rect.h>
 #include <SDL_events.h>
@@ -56,6 +56,18 @@ struct Impl_WindowPlacement {
     int   lastHit;
 };
 
+enum iWindowSplit {
+    vertical_WindowSplit = iBit(1),
+    oneToTwo_WindowSplit = iBit(2),
+    twoToOne_WindowSplit = iBit(3),
+    equal_WindowSplit    = oneToTwo_WindowSplit | twoToOne_WindowSplit,
+    /* meta */
+    mode_WindowSplit     = vertical_WindowSplit | equal_WindowSplit,
+    mask_WindowSplit     = equal_WindowSplit,
+    merge_WindowSplit    = iBit(10),
+    noEvents_WindowSplit = iBit(11),
+};
+
 struct Impl_Window {
     SDL_Window *  win;
     iWindowPlacement place;
@@ -63,11 +75,20 @@ struct Impl_Window {
     iBool         isExposed;
     iBool         isMinimized;
     iBool         isMouseInside;
+    iBool         isInvalidated;
     iBool         ignoreClick;
     uint32_t      focusGainedAt;
     SDL_Renderer *render;
-    iWidget *     root;
-    float         pixelRatio; /* conversion between points and pixels, e.g., coords, window size */
+    iInt2         size;
+    int           splitMode;
+    int           pendingSplitMode;
+    iString *     pendingSplitUrl; /* URL to open in a newly opened split */
+    iRoot *       roots[2];     /* root widget and UI state; second one is for split mode */
+    iRoot *       keyRoot;      /* root that has the current keyboard input focus */
+    iWidget *     hover;
+    iWidget *     mouseGrab;
+    iWidget *     focus;
+    float         pixelRatio;   /* conversion between points and pixels, e.g., coords, window size */
     float         displayScale; /* DPI-based scaling factor of current display, affects uiScale only */
     float         uiScale;
     uint32_t      frameTime;
@@ -82,32 +103,38 @@ struct Impl_Window {
 };
 
 iBool       processEvent_Window     (iWindow *, const SDL_Event *);
+iBool       dispatchEvent_Window    (iWindow *, const SDL_Event *);
+void        invalidate_Window       (iWindow *); /* discard all cached graphics */
 void        draw_Window             (iWindow *);
 void        drawWhileResizing_Window(iWindow *d, int w, int h); /* workaround for SDL bug */
 void        resize_Window           (iWindow *, int w, int h);
 void        setTitle_Window         (iWindow *, const iString *title);
 void        setUiScale_Window       (iWindow *, float uiScale);
 void        setFreezeDraw_Window    (iWindow *, iBool freezeDraw);
+iBool       setKeyRoot_Window       (iWindow *, iRoot *root);
 void        setCursor_Window        (iWindow *, int cursor);
 void        setSnap_Window          (iWindow *, int snapMode);
 void        setKeyboardHeight_Window(iWindow *, int height);
-void        dismissPortraitPhoneSidebars_Window (iWindow *);
+void        setSplitMode_Window     (iWindow *, int splitMode);
 void        showToolbars_Window     (iWindow *, iBool show);
 iBool       postContextClick_Window (iWindow *, const SDL_MouseButtonEvent *);
+void        checkPendingSplit_Window(iWindow *);
+void        swapRoots_Window        (iWindow *);
 
 uint32_t    id_Window               (const iWindow *);
-iInt2       rootSize_Window         (const iWindow *);
-iRect       safeRootRect_Window     (const iWindow *);
-iInt2       visibleRootSize_Window  (const iWindow *); /* may be obstructed by software keyboard */
+iInt2       size_Window             (const iWindow *);
 iInt2       maxTextureSize_Window   (const iWindow *);
 float       uiScale_Window          (const iWindow *);
 iInt2       coord_Window            (const iWindow *, int x, int y);
 iInt2       mouseCoord_Window       (const iWindow *);
+iAnyObject *hitChild_Window         (const iWindow *, iInt2 coord);
 uint32_t    frameTime_Window        (const iWindow *);
 SDL_Renderer *renderer_Window       (const iWindow *);
 int         snap_Window             (const iWindow *);
 iBool       isFullscreen_Window     (const iWindow *);
-iBool       isNarrow_Window         (const iWindow *);
+int         numRoots_Window         (const iWindow *);
+iRoot *     findRoot_Window         (const iWindow *, const iWidget *widget);
+iRoot *     otherRoot_Window        (const iWindow *, iRoot *root);
 
 iWindow *   get_Window              (void);
 

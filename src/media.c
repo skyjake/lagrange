@@ -312,12 +312,12 @@ iBool setData_Media(iMedia *d, iGmLinkId linkId, const iString *mime, const iBlo
             audio = at_PtrArray(&d->audio, existing - 1);
             iAssert(equal_String(&audio->props.mime, mime)); /* MIME cannot change */
             updateSourceData_Player(audio->player, mime, data, append_PlayerUpdate);
+            if (!isPartial) {
+                updateSourceData_Player(audio->player, NULL, NULL, complete_PlayerUpdate);
+            }
             if (!isStarted_Player(audio->player)) {
                 /* Maybe the previous updates didn't have enough data. */
                 start_Player(audio->player);
-            }
-            if (!isPartial) {
-                updateSourceData_Player(audio->player, NULL, NULL, complete_PlayerUpdate);
             }
         }
     }
