@@ -412,6 +412,7 @@ void init_Window(iWindow *d, iRect rect) {
     d->place.initialPos = rect.pos;
     d->place.normalRect = rect;
     d->place.lastNotifiedSize = zero_I2();
+    d->place.snap = 0;
     d->pendingCursor = NULL;
     d->isDrawFrozen = iTrue;
     d->isExposed = iFalse;
