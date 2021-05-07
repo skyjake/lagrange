@@ -597,16 +597,18 @@ void submit_GmRequest(iGmRequest *d) {
     else if (equalCase_Rangecc(url.scheme, "file")) {
         /* TODO: Move handling of "file://" URLs elsewhere, it's getting complex. */
         iString *path = collect_String(localFilePathFromUrl_String(&d->url));
+        /* Note: As a local file path, `path` uses the OS directory separators
+           (i.e., \ on Windows). `Archive` accepts both. */
         iFile *f = new_File(path);
         if (isDirectory_(path)) {
-            if (endsWith_String(path, "/")) {
+            if (endsWith_String(path, iPathSeparator)) {
                 removeEnd_String(path, 1);
             }
             resp->statusCode = success_GmStatusCode;
             setCStr_String(&resp->meta, "text/gemini");
             iString *page = collectNew_String();
             iString *parentDir = collectNewRange_String(dirName_Path(path));
-            appendFormat_String(page, "=> %s " upArrow_Icon " %s/\n\n",
+            appendFormat_String(page, "=> %s " upArrow_Icon " %s" iPathSeparator "\n\n",
                                 cstrCollect_String(makeFileUrl_String(parentDir)),
                                 cstr_String(parentDir));
             appendFormat_String(page, "# %s\n", cstr_Rangecc(baseName_Path(path)));
@@ -630,7 +632,7 @@ void submit_GmRequest(iGmRequest *d) {
                 appendFormat_String(page, "=> %s %s%s\n",
                                     cstrCollect_String(makeFileUrl_String(path_FileInfo(entry))),
                                     cstr_Rangecc(baseName_Path(path_FileInfo(entry))),
-                                    isDirectory_FileInfo(entry) ? "/" : "");
+                                    isDirectory_FileInfo(entry) ? iPathSeparator : "");
                 iRelease(entry);
             }
             set_Block(&resp->body, utf8_String(page));
@@ -652,7 +654,8 @@ void submit_GmRequest(iGmRequest *d) {
                     iString *entryPath = collect_String(copy_String(path));
                     remove_Block(&entryPath->chars, 0, size_String(container) + 1); /* last slash, too */
                     iBool isDir = isDirectory_Archive(arch, entryPath);
-                    if (isDir && !isEmpty_String(entryPath) && !endsWith_String(entryPath, "/")) {
+                    if (isDir && !isEmpty_String(entryPath) &&
+                        !endsWith_String(entryPath, iPathSeparator)) {
                         /* Must have a slash for directories, otherwise relative navigation
                            will not work. */
                         resp->statusCode = redirectPermanent_GmStatusCode;
@@ -683,7 +686,9 @@ void submit_GmRequest(iGmRequest *d) {
                             const iRangecc parentDir = dirName_Path(collectNewRange_String(curDir));
                             if (!equal_Rangecc(parentDir, ".")) {
                                 /* A subdirectory. */
-                                appendFormat_String(page, "=> ../ " upArrow_Icon " %s/\n",
+                                appendFormat_String(page,
+                                                    "=> ../ " upArrow_Icon " %s" iPathSeparator
+                                                    "\n",
                                                     cstr_Rangecc(parentDir));
                             }
                             else {
