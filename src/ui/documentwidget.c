@@ -1102,7 +1102,7 @@ static const char *zipPageHeading_(const iRangecc mime) {
     return cstrCollect_String(heading);
 }
 
-static void postProcessRequestContent_DocumentWidget_(iDocumentWidget *d) {
+static void postProcessRequestContent_DocumentWidget_(iDocumentWidget *d, iBool isCached) {
     iWidget *w = as_Widget(d);
     delete_Gempub(d->sourceGempub);
     d->sourceGempub = NULL;
@@ -1150,7 +1150,8 @@ static void postProcessRequestContent_DocumentWidget_(iDocumentWidget *d) {
             updateVisible_DocumentWidget_(d);
             invalidate_DocumentWidget_(d);
         }
-        if (prefs_App()->pinSplit && equal_String(d->mod.url, indexPageUrl_Gempub(d->sourceGempub))) {
+        if (!isCached && prefs_App()->pinSplit &&
+            equal_String(d->mod.url, indexPageUrl_Gempub(d->sourceGempub))) {
             const iString *navStart = navStartLinkUrl_Gempub(d->sourceGempub);
             if (navStart) {
                 iWindow *win = get_Window();
@@ -1397,7 +1398,7 @@ static iBool updateFromHistory_DocumentWidget_(iDocumentWidget *d) {
             format_String(&d->sourceHeader, cstr_Lang("pageinfo.header.cached"));
             set_Block(&d->sourceContent, &resp->body);
             updateDocument_DocumentWidget_(d, resp, iTrue);
-            postProcessRequestContent_DocumentWidget_(d);
+            postProcessRequestContent_DocumentWidget_(d, iTrue);
         }
         d->state = ready_RequestState;
         init_Anim(&d->altTextOpacity, 0);
@@ -2250,7 +2251,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         checkResponse_DocumentWidget_(d);
         init_Anim(&d->scrollY.pos, d->initNormScrollY * size_GmDocument(d->doc).y); /* TODO: unless user already scrolled! */
         d->state = ready_RequestState;
-        postProcessRequestContent_DocumentWidget_(d);
+        postProcessRequestContent_DocumentWidget_(d, iFalse);
         /* The response may be cached. */
         if (d->request) {
             if (!equal_Rangecc(urlScheme_String(d->mod.url), "about") &&
