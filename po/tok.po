@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-05-06 09:39+0000\n"
+"PO-Revision-Date: 2021-05-08 09:12+0000\n"
 "Last-Translator: jan Anja <cyber@sysrq.in>\n"
 "Language-Team: Toki Pona <http://weblate.skyjake.fi/projects/lagrange/ui/tok/"
 ">\n"
@@ -1444,7 +1444,7 @@ msgid "menu.view.split"
 msgstr "o tu e poki..."
 
 msgid "menu.split.vertical"
-msgstr "poka"
+msgstr "sewi en anpa"
 
 msgid "menu.split.merge"
 msgstr "o wan e poki"
@@ -1465,7 +1465,7 @@ msgid "gempub.cover.viewlocal"
 msgstr "sina awen e lipu tawa ilo sona la sina ken lukin e lipu Kempu."
 
 msgid "menu.split.horizontal"
-msgstr "sewi en anpa"
+msgstr "poka"
 
 msgid "dlg.newident.date.example"
 msgstr ""
