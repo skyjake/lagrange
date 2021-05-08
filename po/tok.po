@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-05-08 09:12+0000\n"
+"PO-Revision-Date: 2021-05-08 09:13+0000\n"
 "Last-Translator: tbodt <tblodt@icloud.com>\n"
 "Language-Team: Toki Pona <http://weblate.skyjake.fi/projects/lagrange/ui/tok/"
 ">\n"
@@ -1211,7 +1211,7 @@ msgid "dlg.message.ok"
 msgstr "o awen pali"
 
 msgid "menu.closetab.left"
-msgstr "o pini e poki monsi"
+msgstr "o weka e poki lon monsi"
 
 msgid "macos.menu.find"
 msgstr "o lukin e nimi"
