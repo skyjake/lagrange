@@ -2015,13 +2015,13 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             updateTheme_DocumentWidget_(d);
             updateTrust_DocumentWidget_(d, NULL);
             updateSize_DocumentWidget(d);
+            showOrHidePinningIndicator_DocumentWidget_(d);
             updateFetchProgress_DocumentWidget_(d);
         }
         init_Anim(&d->sideOpacity, 0);
         init_Anim(&d->altTextOpacity, 0);
         updateSideOpacity_DocumentWidget_(d, iFalse);
         updateWindowTitle_DocumentWidget_(d);
-        showOrHidePinningIndicator_DocumentWidget_(d);
         allocVisBuffer_DocumentWidget_(d);
         animateMedia_DocumentWidget_(d);
         remove_Periodic(periodic_App(), d);
