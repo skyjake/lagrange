@@ -1197,6 +1197,10 @@ void setSplitMode_Window(iWindow *d, int splitFlags) {
         if (oldCount == 2 && splitMode == 0) {
             /* Keep references to the tabs of the second root. */
             const iDocumentWidget *curPage = document_Root(d->keyRoot);
+            if (!curPage) {
+                /* All tabs closed on that side. */
+                curPage = document_Root(otherRoot_Window(d, d->keyRoot));
+            }
             iObjectList *tabs = listDocuments_App(d->roots[1]);
             iForEach(ObjectList, i, tabs) {
                 setRoot_Widget(i.object, d->roots[0]);
