@@ -1196,6 +1196,7 @@ void setSplitMode_Window(iWindow *d, int splitFlags) {
         setFreezeDraw_Window(d, iTrue);
         if (oldCount == 2 && splitMode == 0) {
             /* Keep references to the tabs of the second root. */
+            const iDocumentWidget *curPage = document_Root(d->keyRoot);
             iObjectList *tabs = listDocuments_App(d->roots[1]);
             iForEach(ObjectList, i, tabs) {
                 setRoot_Widget(i.object, d->roots[0]);
@@ -1213,6 +1214,7 @@ void setSplitMode_Window(iWindow *d, int splitFlags) {
             /* The last child is the [+] button for adding a tab. */
             moveTabButtonToEnd_Widget(findChild_Widget(docTabs, "newtab"));
             iRelease(tabs);
+            postCommandf_App("tabs.switch id:%s", cstr_String(id_Widget(constAs_Widget(curPage))));
         }
         else if (splitMode && oldCount == 1) {
             /* Add a second root. */
