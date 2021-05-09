@@ -769,8 +769,8 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
             d->focusGainedAt = SDL_GetTicks();
             setCapsLockDown_Keys(iFalse);
             postCommand_App("window.focus.gained");
+            d->isExposed = iTrue;
 #if defined (iPlatformMobile)
-            d->isExposed = iTrue; /* no expose event is sent, so now we know it's visible */
             /* Returned to foreground, may have lost buffered content. */
             invalidate_Window_(d);
             postCommand_App("window.unfreeze");
