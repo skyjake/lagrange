@@ -6,6 +6,11 @@
 ```
 # Release notes
 
+## 1.4.1
+* Fixed removing the left side split by closing all its tabs. The URL input field got confused about which tab was currently open and the wrong theme was active.
+* Fixed tab merging when unsplitting the window: keep the currently active tab open.
+* Fixed scrollbar in Preferences > Keys being hidden until the list is scrolled.
+
 ## 1.4
 * Added split view modes: two tabs at once, horizontal/vertical split, 1:1/2:1/1:2 weights, merge tabs, swap sides. See section 1.8 in Help for details.
 * Split view pinning: keep a page pinned on one side while all opened links go to the other side.
