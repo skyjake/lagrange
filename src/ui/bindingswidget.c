@@ -179,6 +179,12 @@ static iBool processEvent_BindingsWidget_(iBindingsWidget *d, const SDL_Event *e
         postCommand_App("bindings.changed");
         return iTrue;
     }
+    else if (startsWith_CStr(cmd, "tabs.changed id:bindings")) {
+        /* Force the scrollbar to unfade. The list is created hidden so the scrollbar is not
+           shown by default.*/
+        updateVisible_ListWidget(d->list);
+        return iFalse;
+    }
     else if (equal_Command(cmd, "lang.changed")) {
         updateItems_BindingsWidget_(d);
         return iFalse;

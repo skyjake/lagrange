@@ -556,5 +556,5 @@ iLabelWidget *newColor_LabelWidget(const char *text, int color) {
 iBeginDefineSubclass(LabelWidget, Widget)
     .processEvent = (iAny *) processEvent_LabelWidget_,
     .draw         = (iAny *) draw_LabelWidget_,
-   .sizeChanged   = (iAny *) sizeChanged_LabelWidget_,
+    .sizeChanged  = (iAny *) sizeChanged_LabelWidget_,
 iEndDefineSubclass(LabelWidget)
