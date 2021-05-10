@@ -1,2 +1,73 @@
 msgid ""
-msgstr "X-Generator: Weblate\nMIME-Version: 1.0\nContent-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit"
+msgstr ""
+"Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
+"PO-Revision-Date: 2021-05-11 15:18+0000\n"
+"Last-Translator: Waterrail <maksymiliankrol03@gmail.com>\n"
+"Language-Team: Interslavic <http://weblate.skyjake.fi/projects/lagrange/ui/"
+"isv/>\n"
+"Language: isv\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=n==1? 0 : n==2 ? 1 : 2;\n"
+"X-Generator: Weblate 4.5.1\n"
+
+msgid "doc.pre.nocaption"
+msgstr "Vvodno sformatovany napis bez opisa"
+
+# Inline download status message.
+msgid "media.download.warnclose"
+msgstr "Dostava bude odrěčeny pri zamknutju tutoj karticy."
+
+#, c-format
+msgid "feeds.list.counts"
+msgid_plural "feeds.list.counts.n"
+msgstr[0] "Jeste podpisyvani na %zu tasmě sodrživajučej %%s.\n"
+msgstr[1] "Jeste podpisyvani na %zu tasmu sodrživajuču %%s.\n"
+msgstr[2] "Jeste podpisyvani na %zu tasmah sodrživajučih %%s.\n"
+
+# Link download progress message.
+msgid "doc.fetching"
+msgstr "Dostavanje"
+
+#, c-format
+msgid "doc.archive"
+msgstr "%s je stisknutym arhivom."
+
+msgid "doc.archive.view"
+msgstr "Prěgleděti sodržanje arhiva"
+
+# Inline download status message.
+msgid "media.download.complete"
+msgstr "Dostava ukončena."
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.title"
+msgstr "Nazva"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.artist"
+msgstr "Artist"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.date"
+msgstr "Data"
+
+# used as adjective, n is 8, 16, 24, 32, or 64
+#, c-format
+msgid "n.bit"
+msgstr "%d-bitny"
+
+msgid "numbertype.integer"
+msgstr "cělo"
+
+msgid "numbertype.float"
+msgstr "s plavajučeju komoju"
+
+# Hertz, unit for frequency values
+msgid "hz"
+msgstr "Hz"
+
+# Used in about:feeds.
+msgid "feeds.list.title"
+msgstr "Vpisy v tasmě"
