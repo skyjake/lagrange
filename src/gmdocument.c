@@ -713,7 +713,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             }
         }
         /* Visited links are never bold. */
-        if (run.linkId && linkFlags_GmDocument(d, run.linkId) & visited_GmLinkFlag) {
+        if (!isMono && run.linkId && linkFlags_GmDocument(d, run.linkId) & visited_GmLinkFlag) {
             run.font = paragraph_FontId;
         }
         iAssert(!isEmpty_Range(&runLine)); /* must have something at this point */
