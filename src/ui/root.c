@@ -285,6 +285,16 @@ void destroyPending_Root(iRoot *d) {
     setCurrent_Root(NULL);
 }
 
+void postArrange_Root(iRoot *d) {
+    if (!d->pendingArrange) {
+        d->pendingArrange = iTrue;
+        SDL_Event ev = { .type = SDL_USEREVENT };
+        ev.user.code = arrange_UserEventCode;
+        ev.user.data2 = d;
+        SDL_PushEvent(&ev);
+    }
+}
+
 iPtrArray *onTop_Root(iRoot *d) {
     if (!d->onTop) {
         d->onTop = new_PtrArray();
@@ -335,6 +345,12 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
     }
     else if (equal_Command(cmd, "focus.set")) {
         setFocus_Widget(findWidget_App(cstr_Rangecc(range_Command(cmd, "id"))));
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "input.resized")) {
+        /* No parent handled this, so do a full rearrangement. */
+        arrange_Widget(root);
+        postRefresh_App();
         return iTrue;
     }
     else if (equal_Command(cmd, "window.focus.lost")) {

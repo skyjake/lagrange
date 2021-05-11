@@ -923,6 +923,13 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
             }
             /* TODO: Check out if `uc_wordbreak_property()` from libunistring can be used here. */
             if (ch == '\n') {
+                if (args->xposLimit > 0 && ~mode & noWrapFlag_RunMode) {
+                    /* Stop the line here, this is a hard warp. */
+                    if (args->continueFrom_out) {
+                        *args->continueFrom_out = chPos;
+                    }
+                    break;
+                }
                 xpos = xposExtend = orig.x;
                 ypos += d->height;
                 prevCh = ch;

@@ -1049,6 +1049,23 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     }
                     continue;
                 }
+                else if (ev.type == SDL_USEREVENT && ev.user.code == arrange_UserEventCode) {
+                    printf("[App] rearrange\n");
+                    resize_Window(d->window, -1, -1);
+                    iForIndices(i, d->window->roots) {
+                        if (d->window->roots[i]) {
+                            d->window->roots[i]->pendingArrange = iFalse;
+                        }
+                    }
+//                    if (ev.user.data2 == d->window->roots[0]) {
+//                        arrange_Widget(d->window->roots[0]->widget);
+//                    }
+//                    else if (d->window->roots[1]) {
+//                        arrange_Widget(d->window->roots[1]->widget);
+//                    }
+//                    postRefresh_App();
+                    continue;
+                }
                 d->lastEventTime = SDL_GetTicks();
                 if (d->isIdling) {
 //                    printf("[App] ...woke up\n");
