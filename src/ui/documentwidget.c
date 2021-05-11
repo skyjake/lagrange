@@ -975,13 +975,11 @@ iBool isPinned_DocumentWidget_(const iDocumentWidget *d) {
 
 static void showOrHidePinningIndicator_DocumentWidget_(iDocumentWidget *d) {
     iWidget *w = as_Widget(d);
-    showCollapsed_Widget(findChild_Widget(root_Widget(as_Widget(d)), "document.pinned"),
+    showCollapsed_Widget(findChild_Widget(root_Widget(w), "document.pinned"),
                          isPinned_DocumentWidget_(d));
 }
 
-void setSource_DocumentWidget(iDocumentWidget *d, const iString *source) {
-    setUrl_GmDocument(d->doc, d->mod.url);
-    setSource_GmDocument(d->doc, source, documentWidth_DocumentWidget_(d));
+static void documentWasChanged_DocumentWidget_(iDocumentWidget *d) {
     documentRunsInvalidated_DocumentWidget_(d);
     updateWindowTitle_DocumentWidget_(d);
     updateVisible_DocumentWidget_(d);
@@ -997,7 +995,23 @@ void setSource_DocumentWidget(iDocumentWidget *d, const iString *source) {
             d->flags |= otherRootByDefault_DocumentWidgetFlag;
         }
     }
-    showOrHidePinningIndicator_DocumentWidget_(d);
+    showOrHidePinningIndicator_DocumentWidget_(d);    
+}
+
+void setSource_DocumentWidget(iDocumentWidget *d, const iString *source) {
+    setUrl_GmDocument(d->doc, d->mod.url);
+    setSource_GmDocument(d->doc,
+                         source,
+                         documentWidth_DocumentWidget_(d),
+                         isFinished_GmRequest(d->request) ? final_GmDocumentUpdate
+                                                          : partial_GmDocumentUpdate);
+    documentWasChanged_DocumentWidget_(d);
+}
+
+static void replaceDocument_DocumentWidget_(iDocumentWidget *d, iGmDocument *newDoc) {
+    iRelease(d->doc);
+    d->doc = ref_Object(newDoc);
+    documentWasChanged_DocumentWidget_(d);
 }
 
 static void updateTheme_DocumentWidget_(iDocumentWidget *d) {
@@ -1063,13 +1077,13 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
     setBanner_GmDocument(d->doc, useBanner ? bannerType_DocumentWidget_(d) : none_GmDocumentBanner);
     setFormat_GmDocument(d->doc, gemini_GmDocumentFormat);
     translate_Lang(src);
+    d->state = ready_RequestState;
     setSource_DocumentWidget(d, src);
     updateTheme_DocumentWidget_(d);
     reset_SmoothScroll(&d->scrollY);
     init_Anim(&d->sideOpacity, 0);
     init_Anim(&d->altTextOpacity, 0);
     resetWideRuns_DocumentWidget_(d);
-    d->state = ready_RequestState;
 }
 
 static void updateFetchProgress_DocumentWidget_(iDocumentWidget *d) {
@@ -1174,7 +1188,9 @@ static void postProcessRequestContent_DocumentWidget_(iDocumentWidget *d, iBool 
     }
 }
 
-static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse *response,
+static void updateDocument_DocumentWidget_(iDocumentWidget *d,
+                                           const iGmResponse *response,
+                                           iGmDocument *cachedDoc,
                                            const iBool isInitialUpdate) {
     if (d->state == ready_RequestState) {
         return;
@@ -1247,6 +1263,7 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse
                     docFormat = gemini_GmDocumentFormat;
                     setRange_String(&d->sourceMime, param);
                     const iGmLinkId imgLinkId = 1; /* there's only the one link */
+                    /* TODO: Do the image loading in `postProcessRequestContent_DocumentWidget_()` */
                     if ((isAudio && isInitialUpdate) || (!isAudio && isRequestFinished)) {
                         const char *linkTitle =
                             startsWith_String(mimeStr, "image/") ? "Image" : "Audio";
@@ -1300,7 +1317,10 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse
                            collect_String(decode_Block(&str.chars, cstr_Rangecc(charset))));
             }
         }
-        if (setSource) {
+        if (cachedDoc) {
+            replaceDocument_DocumentWidget_(d, cachedDoc);
+        }
+        else if (setSource) {
             setSource_DocumentWidget(d, &str);
         }
         deinit_String(&str);
@@ -1386,7 +1406,8 @@ static iBool updateFromHistory_DocumentWidget_(iDocumentWidget *d) {
         clear_ObjectList(d->media);
         delete_Gempub(d->sourceGempub);
         d->sourceGempub = NULL;
-        reset_GmDocument(d->doc);
+        iRelease(d->doc);
+        d->doc = new_GmDocument();
         resetWideRuns_DocumentWidget_(d);
         d->state = fetching_RequestState;
         /* Do the fetch. */ {
@@ -1397,10 +1418,11 @@ static iBool updateFromHistory_DocumentWidget_(iDocumentWidget *d) {
             d->sourceStatus = success_GmStatusCode;
             format_String(&d->sourceHeader, cstr_Lang("pageinfo.header.cached"));
             set_Block(&d->sourceContent, &resp->body);
-            updateDocument_DocumentWidget_(d, resp, iTrue);
-            postProcessRequestContent_DocumentWidget_(d, iTrue);
+            updateDocument_DocumentWidget_(d, resp, recent->cachedDoc, iTrue);
+            setCachedDocument_History(d->mod.history, d->doc);
         }
         d->state = ready_RequestState;
+        postProcessRequestContent_DocumentWidget_(d, iTrue);
         init_Anim(&d->altTextOpacity, 0);
         reset_SmoothScroll(&d->scrollY);
         init_Anim(&d->scrollY.pos, d->initNormScrollY * size_GmDocument(d->doc).y);
@@ -1587,11 +1609,12 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
             }
             case categorySuccess_GmStatusCode:
                 reset_SmoothScroll(&d->scrollY);
-                reset_GmDocument(d->doc); /* new content incoming */
+                iRelease(d->doc); /* new content incoming */
+                d->doc = new_GmDocument();
                 delete_Gempub(d->sourceGempub);
                 d->sourceGempub = NULL;
                 resetWideRuns_DocumentWidget_(d);
-                updateDocument_DocumentWidget_(d, resp, iTrue);
+                updateDocument_DocumentWidget_(d, resp, NULL, iTrue);
                 break;
             case categoryRedirect_GmStatusCode:
                 if (isEmpty_String(&resp->meta)) {
@@ -1642,7 +1665,7 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
         switch (category_GmStatusCode(statusCode)) {
             case categorySuccess_GmStatusCode:
                 /* More content available. */
-                updateDocument_DocumentWidget_(d, resp, iFalse);
+                updateDocument_DocumentWidget_(d, resp, NULL, iFalse);
                 break;
             default:
                 break;
@@ -2258,6 +2281,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                 (startsWithCase_String(meta_GmRequest(d->request), "text/") ||
                  !cmp_String(&d->sourceMime, mimeType_Gempub))) {
                 setCachedResponse_History(d->mod.history, lockResponse_GmRequest(d->request));
+                setCachedDocument_History(d->mod.history, d->doc); /* keeps a ref */
                 unlockResponse_GmRequest(d->request);
             }
         }

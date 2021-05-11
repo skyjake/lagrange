@@ -47,7 +47,7 @@ iBool isDark_GmDocumentTheme(enum iGmDocumentTheme d) {
 iDeclareType(GmLink)
 
 struct Impl_GmLink {
-    iString url;
+    iString url; /* resolved */
     iRangecc urlRange; /* URL in the source */
     iRangecc labelRange; /* label in the source */
     iRangecc labelIcon; /* special icon defined in the label text */
@@ -74,8 +74,9 @@ iDefineTypeConstruction(GmLink)
 struct Impl_GmDocument {
     iObject object;
     enum iGmDocumentFormat format;
-    iString   source;
-    iString   url; /* for resolving relative links */
+    iString   unormSource; /* unnormalized source */
+    iString   source;      /* normalized source */
+    iString   url;         /* for resolving relative links */
     iString   localHost;
     iInt2     size;
     iArray    layout; /* contents of source, laid out in document space */
@@ -437,7 +438,10 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         isFirstText = iFalse;
     }
     while (nextSplit_Rangecc(content, "\n", &contentLine)) {
-        iRangecc line = contentLine; /* `line` will be trimmed later; would confuse nextSplit */
+        iRangecc line = contentLine; /* `line` will be trimmed; modifying would confuse `nextSplit_Rangecc` */
+        if (*line.end == '\r') {
+            line.end--; /* trim CR always */
+        }
         iGmRun run = { .color = white_ColorId };
         enum iGmLineType type;
         float indent = 0.0f;
@@ -844,10 +848,13 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             }
         }
     }
+    printf("[GmDocument] layout size: %zu runs (%zu bytes)\n",
+           size_Array(&d->layout), size_Array(&d->layout) * sizeof(iGmRun));        
 }
 
 void init_GmDocument(iGmDocument *d) {
     d->format = gemini_GmDocumentFormat;
+    init_String(&d->unormSource);
     init_String(&d->source);
     init_String(&d->url);
     init_String(&d->localHost);
@@ -878,6 +885,7 @@ void deinit_GmDocument(iGmDocument *d) {
     deinit_String(&d->localHost);
     deinit_String(&d->url);
     deinit_String(&d->source);
+    deinit_String(&d->unormSource);
 }
 
 iMedia *media_GmDocument(iGmDocument *d) {
@@ -888,6 +896,7 @@ const iMedia *constMedia_GmDocument(const iGmDocument *d) {
     return d->media;
 }
 
+#if 0
 void reset_GmDocument(iGmDocument *d) {
     clear_Media(d->media);
     clearLinks_GmDocument_(d);
@@ -896,8 +905,11 @@ void reset_GmDocument(iGmDocument *d) {
     clear_Array(&d->preMeta);
     clear_String(&d->url);
     clear_String(&d->localHost);
+    clear_String(&d->source);
+    clear_String(&d->unormSource);
     d->themeSeed = 0;
 }
+#endif
 
 static void setDerivedThemeColors_(enum iGmDocumentTheme theme) {
     set_Color(tmQuoteIcon_ColorId,
@@ -1418,6 +1430,8 @@ static void normalize_GmDocument(iGmDocument *d) {
         isPreformat = iTrue; /* Cannot be turned off. */
     }
     const int preTabWidth = 4; /* TODO: user-configurable parameter */
+    iBool wasNormalized = iFalse;
+    iBool hasTabs = iFalse;
     while (nextSplit_Rangecc(src, "\n", &line)) {
         if (isPreformat) {
             /* Replace any tab characters with spaces for visualization. */
@@ -1428,9 +1442,15 @@ static void normalize_GmDocument(iGmDocument *d) {
                     while (numSpaces-- > 0) {
                         appendCStrN_String(normalized, " ", 1);
                     }
+                    hasTabs = iTrue;
+                    wasNormalized = iTrue;
                 }
-                else if (*ch != '\r') {
+                else if (*ch != '\v') {
                     appendCStrN_String(normalized, ch, 1);
+                }
+                else {
+                    hasTabs = iTrue;
+                    wasNormalized = iTrue;
                 }
             }
             appendCStr_String(normalized, "\n");
@@ -1450,7 +1470,10 @@ static void normalize_GmDocument(iGmDocument *d) {
         int spaceCount = 0;
         for (const char *ch = line.start; ch != line.end; ch++) {
             char c = *ch;
-            if (c == '\r') continue;
+            if (c == '\v') {
+                wasNormalized = iTrue;
+                continue;
+            }
             if (isNormalizableSpace_(c)) {
                 if (isPrevSpace) {
                     if (++spaceCount == 8) {
@@ -1459,9 +1482,13 @@ static void normalize_GmDocument(iGmDocument *d) {
                         popBack_Block(&normalized->chars);
                         pushBack_Block(&normalized->chars, '\t');
                     }
+                    wasNormalized = iTrue;
                     continue; /* skip repeated spaces */
                 }
-                c = ' ';
+                if (c != ' ') {
+                    c = ' ';
+                    wasNormalized = iTrue;
+                }
                 isPrevSpace = iTrue;
             }
             else {
@@ -1472,7 +1499,13 @@ static void normalize_GmDocument(iGmDocument *d) {
         }
         appendCStr_String(normalized, "\n");
     }
+    printf("hasTabs: %d\n", hasTabs);
+    printf("wasNormalized: %d\n", wasNormalized);
+    fflush(stdout);
     set_String(&d->source, collect_String(normalized));
+    printf("orig:%zu norm:%zu\n", size_String(&d->unormSource), size_String(&d->source));
+    /* normalized source has an extra newline at the end */
+    iAssert(wasNormalized || equal_String(&d->unormSource, &d->source));
 }
 
 void setUrl_GmDocument(iGmDocument *d, const iString *url) {
@@ -1483,8 +1516,18 @@ void setUrl_GmDocument(iGmDocument *d, const iString *url) {
     updateIconBasedOnUrl_GmDocument_(d);
 }
 
-void setSource_GmDocument(iGmDocument *d, const iString *source, int width) {
-    set_String(&d->source, source);
+void setSource_GmDocument(iGmDocument *d, const iString *source, int width,
+                          enum iGmDocumentUpdate updateType) {
+    printf("[GmDocument] source update (%zu bytes), width:%d, final:%d\n",
+           size_String(source), width, updateType == final_GmDocumentUpdate);
+    if (size_String(source) == size_String(&d->unormSource)) {
+        iAssert(equal_String(source, &d->unormSource));
+        printf("[GmDocument] source is unchanged!\n");
+        return; /* Nothing to do. */
+    }
+    set_String(&d->unormSource, source);
+    /* Normalize. */
+    set_String(&d->source, &d->unormSource);
     if (isNormalized_GmDocument_(d)) {
         normalize_GmDocument(d);
     }
@@ -1584,6 +1627,14 @@ const iArray *headings_GmDocument(const iGmDocument *d) {
 
 const iString *source_GmDocument(const iGmDocument *d) {
     return &d->source;
+}
+
+size_t memorySize_GmDocument(const iGmDocument *d) {
+    return size_String(&d->unormSource) +
+           size_String(&d->source) +
+           size_Array(&d->layout) * sizeof(iGmRun) +
+           size_Array(&d->links)  * sizeof(iGmLink) +
+           memorySize_Media(d->media);
 }
 
 iRangecc findText_GmDocument(const iGmDocument *d, const iString *text, const char *start) {

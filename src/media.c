@@ -261,6 +261,11 @@ void clear_Media(iMedia *d) {
     clear_PtrArray(&d->downloads);
 }
 
+size_t memorySize_Media(const iMedia *d) {
+    /* TODO: Calculate the actual memory use. */
+    return 0; 
+}
+
 iBool setDownloadUrl_Media(iMedia *d, iGmLinkId linkId, const iString *url) {
     iGmDownload *dl       = NULL;
     iMediaId     existing = findLinkDownload_Media(d, linkId);

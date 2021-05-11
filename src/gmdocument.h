@@ -125,12 +125,12 @@ enum iGmRunMediaType {
 
 struct Impl_GmRun {
     iRangecc  text;
+    iRect     bounds;    /* used for hit testing, may extend to edges */
+    iRect     visBounds; /* actual visual bounds */
     uint8_t   font;
     uint8_t   color;
     uint8_t   flags;
     uint8_t   mediaType;
-    iRect     bounds;    /* used for hit testing, may extend to edges */
-    iRect     visBounds; /* actual visual bounds */
     uint16_t  preId;     /* preformatted block ID (sequential) */
     iGmLinkId linkId;    /* zero for non-links */
     uint16_t  mediaId;   /* zero if not an image */
@@ -160,6 +160,11 @@ enum iGmDocumentBanner {
     certificateWarning_GmDocumentBanner,
 };
 
+enum iGmDocumentUpdate {
+    partial_GmDocumentUpdate, /* appending more content */
+    final_GmDocumentUpdate,   /* process all lines, including the last one if not terminated */
+};
+
 void    setThemeSeed_GmDocument (iGmDocument *, const iBlock *seed);
 void    setFormat_GmDocument    (iGmDocument *, enum iGmDocumentFormat format);
 void    setBanner_GmDocument    (iGmDocument *, enum iGmDocumentBanner type);
@@ -167,10 +172,11 @@ void    setWidth_GmDocument     (iGmDocument *, int width);
 void    redoLayout_GmDocument   (iGmDocument *);
 iBool   updateOpenURLs_GmDocument(iGmDocument *);
 void    setUrl_GmDocument       (iGmDocument *, const iString *url);
-void    setSource_GmDocument    (iGmDocument *, const iString *source, int width);
+void    setSource_GmDocument    (iGmDocument *, const iString *source, int width,
+                                 enum iGmDocumentUpdate updateType);
 void    foldPre_GmDocument      (iGmDocument *, uint16_t preId);
 
-void    reset_GmDocument        (iGmDocument *); /* free images */
+//void    reset_GmDocument        (iGmDocument *); /* free images */
 
 typedef void (*iGmDocumentRenderFunc)(void *, const iGmRun *);
 
@@ -190,6 +196,7 @@ enum iGmDocumentBanner bannerType_GmDocument(const iGmDocument *);
 const iString * bannerText_GmDocument       (const iGmDocument *);
 const iArray *  headings_GmDocument         (const iGmDocument *); /* array of GmHeadings */
 const iString * source_GmDocument           (const iGmDocument *);
+size_t          memorySize_GmDocument       (const iGmDocument *); /* bytes */
 
 iRangecc        findText_GmDocument                 (const iGmDocument *, const iString *text, const char *start);
 iRangecc        findTextBefore_GmDocument           (const iGmDocument *, const iString *text, const char *before);

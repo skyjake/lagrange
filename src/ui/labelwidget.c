@@ -196,7 +196,7 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
         }
     }
     int colorEscape = none_ColorId;
-    if (startsWith_String(&d->label, "\r")) {
+    if (startsWith_String(&d->label, "\v")) {
         colorEscape = cstr_String(&d->label)[1] - asciiBase_ColorEscape; /* TODO: can be two bytes long */
     }
     if (isHover_Widget(w)) {

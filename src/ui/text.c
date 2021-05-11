@@ -946,10 +946,10 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                 prevCh = 0;
                 continue;
             }
-            if (ch == '\r') { /* color change */
+            if (ch == '\v') { /* color change */
                 iChar esc = nextChar_(&chPos, args->text.end);
                 int colorNum = args->color;
-                if (esc == '\r') { /* Extended range. */
+                if (esc == '\v') { /* Extended range. */
                     esc = nextChar_(&chPos, args->text.end) + asciiExtended_ColorEscape;
                     colorNum = esc - asciiBase_ColorEscape;
                 }

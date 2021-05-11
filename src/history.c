@@ -34,11 +34,13 @@ static const size_t maxStack_History_ = 50; /* back/forward navigable items */
 
 void init_RecentUrl(iRecentUrl *d) {
     init_String(&d->url);
-    d->normScrollY = 0;
+    d->normScrollY    = 0;
     d->cachedResponse = NULL;
+    d->cachedDoc      = NULL;
 }
 
 void deinit_RecentUrl(iRecentUrl *d) {
+    iRelease(d->cachedDoc);
     deinit_String(&d->url);
     delete_GmResponse(d->cachedResponse);
 }
@@ -48,9 +50,27 @@ iDefineTypeConstruction(RecentUrl)
 iRecentUrl *copy_RecentUrl(const iRecentUrl *d) {
     iRecentUrl *copy = new_RecentUrl();
     set_String(&copy->url, &d->url);
-    copy->normScrollY = d->normScrollY;
+    copy->normScrollY    = d->normScrollY;
     copy->cachedResponse = d->cachedResponse ? copy_GmResponse(d->cachedResponse) : NULL;
+    copy->cachedDoc      = ref_Object(d->cachedDoc);
     return copy;
+}
+
+size_t cacheSize_RecentUrl(const iRecentUrl *d) {
+    size_t size = 0;
+    if (d->cachedResponse) {
+        size += size_String(&d->cachedResponse->meta);
+        size += size_Block(&d->cachedResponse->body);
+    }
+    return size;    
+}
+
+size_t memorySize_RecentUrl(const iRecentUrl *d) {
+    size_t size = cacheSize_RecentUrl(d);
+    if (d->cachedDoc) {
+        size += memorySize_GmDocument(d->cachedDoc);
+    }
+    return size;
 }
 
 /*----------------------------------------------------------------------------------------------*/
@@ -92,19 +112,30 @@ iString *debugInfo_History(const iHistory *d) {
     iString *str = new_String();
     format_String(str,
                   "```\n"
-                  "Idx |    Size | SP%% | URL\n"
-                  "----+---------+-----+-----\n");
-    size_t totalSize = 0;
+                  "Idx |   Cache |   Memory | SP%% | URL\n"
+                  "----+---------+----------+-----+-----\n");
+    size_t totalCache = 0;
+    size_t totalMemory = 0;
     iConstForEach(Array, i, &d->recent) {
         const iRecentUrl *item = i.value;
         appendFormat_String(
             str, " %2zu | ", size_Array(&d->recent) - index_ArrayConstIterator(&i) - 1);
-        if (item->cachedResponse) {
-            appendFormat_String(str, "%7zu", size_Block(&item->cachedResponse->body));
-            totalSize += size_Block(&item->cachedResponse->body);
+        const size_t cacheSize = cacheSize_RecentUrl(item);
+        const size_t memSize   = memorySize_RecentUrl(item);
+        if (cacheSize) {
+            appendFormat_String(str, "%7zu", cacheSize);
+            totalCache += cacheSize;
         }
         else {
             appendFormat_String(str, "     --");
+        }
+        appendCStr_String(str, " | ");
+        if (memSize) {
+            appendFormat_String(str, "%8zu", memSize);
+            totalMemory += memSize;
+        }
+        else {
+            appendFormat_String(str, "      --");
         }
         appendFormat_String(str,
                             " | %3d | %s\n",
@@ -114,8 +145,10 @@ iString *debugInfo_History(const iHistory *d) {
     appendFormat_String(str, "\n```\n");
     appendFormat_String(str,
                         "Total cached data: %.3f MB\n"
+                        "Total memory usage: %.3f MB\n"
                         "Navigation position: %zu\n\n",
-                        totalSize / 1.0e6f,
+                        totalCache / 1.0e6f,
+                        totalMemory / 1.0e6f,
                         d->recentPos);
     return str;
 }
@@ -301,14 +334,22 @@ void setCachedResponse_History(iHistory *d, const iGmResponse *response) {
     unlock_Mutex(d->mtx);
 }
 
+void setCachedDocument_History(iHistory *d, iGmDocument *doc) {
+    lock_Mutex(d->mtx);
+    iRecentUrl *item = mostRecentUrl_History(d);
+    if (item && item->cachedDoc != doc) {
+        iRelease(item->cachedDoc);
+        item->cachedDoc = ref_Object(doc);
+    }
+    unlock_Mutex(d->mtx);
+}
+
 size_t cacheSize_History(const iHistory *d) {
     size_t cached = 0;
     lock_Mutex(d->mtx);
     iConstForEach(Array, i, &d->recent) {
         const iRecentUrl *url = i.value;
-        if (url->cachedResponse) {
-            cached += size_Block(&url->cachedResponse->body);
-        }
+        cached += cacheSize_RecentUrl(url);
     }
     unlock_Mutex(d->mtx);
     return cached;
@@ -335,9 +376,9 @@ size_t pruneLeastImportant_History(iHistory *d) {
     lock_Mutex(d->mtx);
     iConstForEach(Array, i, &d->recent) {
         const iRecentUrl *url = i.value;
-        if (url->cachedResponse) {
+        if (url->cachedResponse || url->cachedDoc) {
             const double urlScore =
-                size_Block(&url->cachedResponse->body) *
+                cacheSize_RecentUrl(url) *
                 pow(secondsSince_Time(&now, &url->cachedResponse->when) / 60.0, 1.25);
             if (urlScore > score) {
                 chosen = index_ArrayConstIterator(&i);
@@ -347,9 +388,10 @@ size_t pruneLeastImportant_History(iHistory *d) {
     }
     if (chosen != iInvalidPos) {
         iRecentUrl *url = at_Array(&d->recent, chosen);
-        delta = size_Block(&url->cachedResponse->body);
+        delta = cacheSize_RecentUrl(url);
         delete_GmResponse(url->cachedResponse);
         url->cachedResponse = NULL;
+        iReleasePtr(&url->cachedDoc);
     }
     unlock_Mutex(d->mtx);
     return delta;

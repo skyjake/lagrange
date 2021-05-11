@@ -50,6 +50,8 @@ void    clear_Media             (iMedia *);
 iBool   setDownloadUrl_Media    (iMedia *, uint16_t linkId, const iString *url);
 iBool   setData_Media           (iMedia *, uint16_t linkId, const iString *mime, const iBlock *data, int flags);
 
+size_t  memorySize_Media        (const iMedia *);
+
 iMediaId        findLinkImage_Media (const iMedia *, uint16_t linkId);
 iBool           imageInfo_Media     (const iMedia *, iMediaId imageId, iGmMediaInfo *info_out);
 iInt2           imageSize_Media     (const iMedia *, iMediaId imageId);

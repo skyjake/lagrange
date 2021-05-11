@@ -468,12 +468,12 @@ const char *escape_Color(int color) {
         return esc[color];
     }
     /* TODO: Conflict with format strings! "%" (37) may be used as the color value. */
-    /* Double-\r is used for range extension. */
+    /* Double-\v is used for range extension. */
     if (color + asciiBase_ColorEscape > 127) {
         iAssert(color - asciiExtended_ColorEscape + asciiBase_ColorEscape <= 127);
-        return format_CStr("\r\r%c", color - asciiExtended_ColorEscape + asciiBase_ColorEscape);
+        return format_CStr("\v\v%c", color - asciiExtended_ColorEscape + asciiBase_ColorEscape);
     }
-    return format_CStr("\r%c", color + asciiBase_ColorEscape);
+    return format_CStr("\v%c", color + asciiBase_ColorEscape);
 }
 
 iHSLColor setSat_HSLColor(iHSLColor d, float sat) {

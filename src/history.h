@@ -22,6 +22,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
+#include "gmdocument.h"
 #include "gmrequest.h"
 
 #include <the_Foundation/ptrarray.h>
@@ -37,6 +38,7 @@ struct Impl_RecentUrl {
     iString      url;
     float        normScrollY;    /* normalized to document height */
     iGmResponse *cachedResponse; /* kept in memory for quicker back navigation */
+    iGmDocument *cachedDoc;      /* cached copy of the presentation: layout and media (not serialized) */
 };
 
 /*----------------------------------------------------------------------------------------------*/
@@ -51,6 +53,7 @@ void        clear_History               (iHistory *);
 void        add_History                 (iHistory *, const iString *url);
 void        replace_History             (iHistory *, const iString *url);
 void        setCachedResponse_History   (iHistory *, const iGmResponse *response);
+void        setCachedDocument_History   (iHistory *, iGmDocument *doc);
 iBool       goBack_History              (iHistory *);
 iBool       goForward_History           (iHistory *);
 iRecentUrl *recentUrl_History           (iHistory *, size_t pos);
