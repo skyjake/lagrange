@@ -154,6 +154,7 @@ struct Impl_Click {
     int      button;
     int      count;
     iWidget *bounds;
+    int      minHeight;
     iInt2    startPos;
     iInt2    pos;
 };
@@ -166,6 +167,7 @@ iBool               isMoved_Click       (const iClick *);
 iInt2               pos_Click           (const iClick *);
 iRect               rect_Click          (const iClick *);
 iInt2               delta_Click         (const iClick *);
+iBool               contains_Click      (const iClick *, iInt2 coord);
 
 /*-----------------------------------------------------------------------------------------------*/
 

@@ -378,8 +378,18 @@ void init_Click(iClick *d, iAnyObject *widget, int button) {
     d->isActive = iFalse;
     d->button   = button;
     d->bounds   = as_Widget(widget);
+    d->minHeight = 0;
     d->startPos = zero_I2();
     d->pos      = zero_I2();
+}
+
+iBool contains_Click(const iClick *d, iInt2 coord) {
+    if (d->minHeight) {
+        iRect rect = bounds_Widget(d->bounds);
+        rect.size.y = iMax(d->minHeight, rect.size.y);
+        return contains_Rect(rect, coord);
+    }
+    return contains_Widget(d->bounds, coord);
 }
 
 enum iClickResult processEvent_Click(iClick *d, const SDL_Event *event) {
@@ -403,7 +413,7 @@ enum iClickResult processEvent_Click(iClick *d, const SDL_Event *event) {
     }
     if (!d->isActive) {
         if (mb->state == SDL_PRESSED) {
-            if (contains_Widget(d->bounds, pos)) {
+            if (contains_Click(d, pos)) {
                 d->isActive = iTrue;
                 d->startPos = d->pos = pos;
                 setMouseGrab_Widget(d->bounds);
@@ -413,7 +423,7 @@ enum iClickResult processEvent_Click(iClick *d, const SDL_Event *event) {
     }
     else { /* Active. */
         if (mb->state == SDL_RELEASED) {
-            enum iClickResult result = contains_Widget(d->bounds, pos)
+            enum iClickResult result = contains_Click(d, pos)
                                            ? finished_ClickResult
                                            : aborted_ClickResult;
             d->isActive = iFalse;
@@ -891,6 +901,14 @@ static iBool isTabPage_Widget_(const iWidget *tabs, const iWidget *page) {
     return page && page->parent == findChild_Widget(tabs, "tabs.pages");
 }
 
+static void unfocusFocusInsideTabPage_(const iWidget *page) {
+    iWidget *focus = focus_Widget();
+    if (page && focus && hasParent_Widget(focus, page)) {
+        printf("unfocus inside page: %p\n", focus);
+        setFocus_Widget(NULL);
+    }
+}
+
 static iBool tabSwitcher_(iWidget *tabs, const char *cmd) {
     if (equal_Command(cmd, "tabs.switch")) {
         iWidget *target = pointerLabel_Command(cmd, "page");
@@ -898,6 +916,7 @@ static iBool tabSwitcher_(iWidget *tabs, const char *cmd) {
             target = findChild_Widget(tabs, cstr_Rangecc(range_Command(cmd, "id")));
         }
         if (!target) return iFalse;
+        unfocusFocusInsideTabPage_(currentTabPage_Widget(tabs));
         if (flags_Widget(target) & focusable_WidgetFlag) {
             setFocus_Widget(target);
         }
@@ -915,6 +934,7 @@ static iBool tabSwitcher_(iWidget *tabs, const char *cmd) {
         }
     }
     else if (equal_Command(cmd, "tabs.next") || equal_Command(cmd, "tabs.prev")) {
+        unfocusFocusInsideTabPage_(currentTabPage_Widget(tabs));
         iWidget *pages = findChild_Widget(tabs, "tabs.pages");
         int tabIndex = 0;
         iConstForEach(ObjectList, i, pages->children) {
@@ -1881,6 +1901,9 @@ iWidget *makeDialogButtons_Widget(const iMenuItem *actions, size_t numActions) {
         }
         iLabelWidget *button =
             addChild_Widget(div, iClob(newKeyMods_LabelWidget(label, key, kmods, cmd)));
+        if (isDefault) {
+            setId_Widget(as_Widget(button), "default");
+        }
         setFlags_Widget(as_Widget(button), alignLeft_WidgetFlag | drawKey_WidgetFlag, isDefault);
         setFont_LabelWidget(button, isDefault ? fonts[1] : fonts[0]);
     }
@@ -2175,6 +2198,10 @@ static void addDialogInputWithHeading_(iWidget *headings, iWidget *values, const
     setPadding_Widget(as_Widget(head), 0, gap_UI, 0, 0);
 #endif
     setId_Widget(addChild_Widget(values, input), inputId);
+    if (deviceType_App() != phone_AppDeviceType) {
+        /* Ensure that the label has the same height as the input widget. */
+        as_Widget(head)->sizeRef = as_Widget(input);
+    }
 }
 
 iInputWidget *addTwoColumnDialogInputField_Widget(iWidget *headings, iWidget *values,
@@ -2202,10 +2229,13 @@ iWidget *makePreferences_Widget(void) {
     /* General preferences. */ {
         appendTwoColumnPage_(tabs, "${heading.prefs.general}", '1', &headings, &values);
 #if defined (LAGRANGE_ENABLE_DOWNLOAD_EDIT)
-        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.downloads}")));
-        setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.downloads");
+        //addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.downloads}")));
+        //setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.downloads");
+        addPrefsInputWithHeading_(headings, values, "prefs.downloads", iClob(new_InputWidget(0)));
 #endif
-        addPrefsInputWithHeading_(headings, values, "prefs.searchurl", iClob(new_InputWidget(0)));
+        iInputWidget *searchUrl;
+        addPrefsInputWithHeading_(headings, values, "prefs.searchurl", iClob(searchUrl = new_InputWidget(0)));
+        setUrlContent_InputWidget(searchUrl, iTrue);
         addChild_Widget(headings, iClob(makePadding_Widget(bigGap)));
         addChild_Widget(values, iClob(makePadding_Widget(bigGap)));
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.collapsepreonload}")));

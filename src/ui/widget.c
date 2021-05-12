@@ -54,6 +54,7 @@ void init_Widget(iWidget *d) {
     d->flags          = 0;
     d->rect           = zero_Rect();
     d->minSize        = zero_I2();
+    d->sizeRef        = NULL;
     d->bgColor        = none_ColorId;
     d->frameColor     = none_ColorId;
     init_Anim(&d->visualOffset, 0.0f);
@@ -329,6 +330,9 @@ static void setWidth_Widget_(iWidget *d, int width) {
 
 static void setHeight_Widget_(iWidget *d, int height) {
     iAssert(height >= 0);
+    if (d->sizeRef) {
+        return; /* height defined by another widget */
+    }
     TRACE(d, "attempt to set height to %d (current: %d, min height: %d)", height, d->rect.size.y, d->minSize.y);
     height = iMax(height, d->minSize.y);
     if (~d->flags & fixedHeight_WidgetFlag) { //} || d->flags & collapse_WidgetFlag) {
@@ -415,6 +419,10 @@ static void boundsOfChildren_Widget_(const iWidget *d, iRect *bounds_out) {
 
 static void arrange_Widget_(iWidget *d) {
     TRACE(d, "arranging...");
+    if (d->sizeRef) {
+        d->rect.size.y = height_Widget(d->sizeRef);
+        TRACE(d, "use referenced height: %d", d->rect.size.y);
+    }
     if (d->flags & moveToParentLeftEdge_WidgetFlag) {
         d->rect.pos.x = d->padding[0]; /* FIXME: Shouldn't this be d->parent->padding[0]? */
         TRACE(d, "move to parent left edge: %d", d->rect.pos.x);
@@ -1035,6 +1043,7 @@ void drawBackground_Widget(const iWidget *d) {
         init_Paint(&p);
         drawSoftShadow_Paint(&p, bounds_Widget(d), 12 * gap_UI, black_ColorId, 30);
     }
+    
     if (fadeBackground && ~d->flags & noFadeBackground_WidgetFlag) {
         iPaint p;
         init_Paint(&p);
@@ -1131,10 +1140,10 @@ void drawChildren_Widget(const iWidget *d) {
         }
     }
     /* Root draws the on-top widgets on top of everything else. */
-    if (!d->parent) {
+    if (d == d->root->widget) {
         iConstForEach(PtrArray, i, onTop_Root(d->root)) {
             const iWidget *top = *i.value;
-            draw_Widget(top);
+            class_Widget(top)->draw(top);
         }
     }
 }

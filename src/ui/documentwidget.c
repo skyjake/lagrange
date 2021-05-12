@@ -304,7 +304,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     iWidget *w = as_Widget(d);
     init_Widget(w);
     setId_Widget(w, format_CStr("document%03d", ++docEnum_));
-    setFlags_Widget(w, hover_WidgetFlag, iTrue);
+    setFlags_Widget(w, hover_WidgetFlag | noBackground_WidgetFlag, iTrue);
     init_PersistentDocumentState(&d->mod);
     d->flags           = 0;
     d->phoneToolbar    = NULL;
@@ -1571,6 +1571,43 @@ static void togglePreFold_DocumentWidget_(iDocumentWidget *d, uint16_t preId) {
     refresh_Widget(as_Widget(d));
 }
 
+static iString *makeQueryUrl_DocumentWidget_(const iDocumentWidget *d,
+                                             const iString *userEnteredText) {
+    iString *url = copy_String(d->mod.url);
+    /* Remove the existing query string. */
+    const size_t qPos = indexOfCStr_String(url, "?");
+    if (qPos != iInvalidPos) {
+        remove_Block(&url->chars, qPos, iInvalidSize);
+    }
+    appendCStr_String(url, "?");
+    append_String(url, collect_String(urlEncode_String(userEnteredText)));
+    return url;
+}
+
+static void inputQueryValidator_(iInputWidget *input, void *context) {
+    iDocumentWidget *d = context;
+    iString *url = makeQueryUrl_DocumentWidget_(d, text_InputWidget(input));
+    iWidget *dlg = parent_Widget(input);
+    iLabelWidget *counter = findChild_Widget(dlg, "valueinput.counter");
+    iAssert(counter);
+    int avail = 1024 - (int) size_String(url);
+    setFlags_Widget(findChild_Widget(dlg, "default"), disabled_WidgetFlag, avail < 0);
+    setEnterKeyEnabled_InputWidget(input, avail >= 0);
+    int len = length_String(text_InputWidget(input));
+    if (len > 1024) {
+        iString *trunc = copy_String(text_InputWidget(input));
+        truncate_String(trunc, 1024);
+        setText_InputWidget(input, trunc);
+        delete_String(trunc);
+    }
+    setTextCStr_LabelWidget(counter, format_CStr("%d", avail)); /* Gemini URL maxlen */
+    setTextColor_LabelWidget(counter,
+                             avail < 0   ? uiTextCaution_ColorId :
+                             avail < 128 ? uiTextStrong_ColorId
+                                         : uiTextDim_ColorId);
+    delete_String(url);
+}
+
 static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
     if (!d->request) {
         return;
@@ -1598,12 +1635,20 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                     isEmpty_String(&resp->meta)
                         ? format_CStr(cstr_Lang("dlg.input.prompt"), cstr_Rangecc(parts.path))
                         : cstr_String(&resp->meta),
-                    uiTextCaution_ColorEscape "${dlg.input.send} \u21d2",
+                    uiTextCaution_ColorEscape "${dlg.input.send}",
                     format_CStr("!document.input.submit doc:%p", d));
+                setId_Widget(addChildPosFlags_Widget(findChild_Widget(dlg, "dialogbuttons"),
+                                                     iClob(new_LabelWidget("", NULL)),
+                                                     front_WidgetAddPos, frameless_WidgetFlag),
+                             "valueinput.counter");
+                setValidator_InputWidget(findChild_Widget(dlg, "input"), inputQueryValidator_, d);
                 setSensitiveContent_InputWidget(findChild_Widget(dlg, "input"),
                                                 statusCode == sensitiveInput_GmStatusCode);
                 if (document_App() != d) {
                     postCommandf_App("tabs.switch page:%p", d);
+                }
+                else {
+                    updateTheme_DocumentWidget_(d);
                 }
                 break;
             }
@@ -2229,17 +2274,10 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equal_Command(cmd, "document.input.submit") && document_Command(cmd) == d) {
-        iString *value = suffix_Command(cmd, "value");
-        set_String(value, collect_String(urlEncode_String(value)));
-        iString *url = collect_String(copy_String(d->mod.url));
-        const size_t qPos = indexOfCStr_String(url, "?");
-        if (qPos != iInvalidPos) {
-            remove_Block(&url->chars, qPos, iInvalidSize);
-        }
-        appendCStr_String(url, "?");
-        append_String(url, value);
-        postCommandf_Root(w->root, "open url:%s", cstr_String(url));
-        delete_String(value);
+        postCommandf_Root(w->root,
+                          "open url:%s",
+                          cstrCollect_String(makeQueryUrl_DocumentWidget_
+                                             (d, collect_String(suffix_Command(cmd, "value")))));
         return iTrue;
     }
     else if (equal_Command(cmd, "valueinput.cancelled") &&
@@ -4172,7 +4210,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
     if (width_Rect(bounds) <= 0) {
         return;
     }
-    draw_Widget(w);
+//    draw_Widget(w);
     if (d->drawBufs->flags & updateTimestampBuf_DrawBufsFlag) {
         updateTimestampBuf_DocumentWidget_(d);
     }
@@ -4250,7 +4288,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
     if (colorTheme_App() == pureWhite_ColorTheme) {
         drawHLine_Paint(&ctx.paint, topLeft_Rect(bounds), width_Rect(bounds), uiSeparator_ColorId);
     }
-    draw_Widget(w);
+    drawChildren_Widget(w);
     /* Alt text. */
     const float altTextOpacity = value_Anim(&d->altTextOpacity) * 6 - 5;
     if (d->hoverAltPre && altTextOpacity > 0) {

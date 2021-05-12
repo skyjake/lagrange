@@ -726,7 +726,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             const int wrapAvail = d->size.x - run.bounds.pos.x - rightMargin * gap_Text;
             const int avail = isWordWrapped ? wrapAvail : 0;
             const char *contPos;
-            const iInt2 dims  = tryAdvance_Text(run.font, runLine, avail, &contPos);
+            const iInt2 dims = tryAdvance_Text(run.font, runLine, avail, &contPos);
             iChangeFlags(run.flags, wide_GmRunFlag, (isPreformat && dims.x > d->size.x));
             run.bounds.size.x = iMax(wrapAvail, dims.x); /* Extends to the right edge for selection. */
             run.bounds.size.y = dims.y;

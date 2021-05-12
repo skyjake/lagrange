@@ -134,6 +134,7 @@ struct Impl_Widget {
     int64_t      flags;
     iRect        rect;
     iInt2        minSize;
+    iWidget *    sizeRef;
     int          padding[4]; /* left, top, right, bottom */
     iAnim        visualOffset;
     int          bgColor;

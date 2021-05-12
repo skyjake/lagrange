@@ -285,6 +285,16 @@ void destroyPending_Root(iRoot *d) {
     setCurrent_Root(NULL);
 }
 
+void postArrange_Root(iRoot *d) {
+    if (!d->pendingArrange) {
+        d->pendingArrange = iTrue;
+        SDL_Event ev = { .type = SDL_USEREVENT };
+        ev.user.code = arrange_UserEventCode;
+        ev.user.data2 = d;
+        SDL_PushEvent(&ev);
+    }
+}
+
 iPtrArray *onTop_Root(iRoot *d) {
     if (!d->onTop) {
         d->onTop = new_PtrArray();
@@ -335,6 +345,12 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
     }
     else if (equal_Command(cmd, "focus.set")) {
         setFocus_Widget(findWidget_App(cstr_Rangecc(range_Command(cmd, "id"))));
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "input.resized")) {
+        /* No parent handled this, so do a full rearrangement. */
+        arrange_Widget(root);
+        postRefresh_App();
         return iTrue;
     }
     else if (equal_Command(cmd, "window.focus.lost")) {
@@ -518,13 +534,17 @@ static iBool willPerformSearchQuery_(const iString *userInput) {
     return !isEmpty_String(&prefs_App()->searchUrl) && !isLikelyUrl_String(userInput);
 }
 
+static void updateUrlInputContentPadding_(iWidget *navBar) {
+    iInputWidget *url = findChild_Widget(navBar, "url");
+    const iWidget *indicators = findChild_Widget(navBar, "url.rightembed");
+    setContentPadding_InputWidget(url, -1,
+                                  width_Widget(indicators));
+}
+
 static void showSearchQueryIndicator_(iBool show) {
     iWidget *indicator = findWidget_App("input.indicator.search");
     showCollapsed_Widget(indicator, show);
-    iAssert(isInstance_Object(parent_Widget(parent_Widget(indicator)), &Class_InputWidget));
-    iInputWidget *url = (iInputWidget *) parent_Widget(parent_Widget(indicator));
-    setContentPadding_InputWidget(url, -1, contentPadding_InputWidget(url).left +
-                                               (show ? width_Widget(indicator) : 0));
+    updateUrlInputContentPadding_(findWidget_Root("navbar"));
 }
 
 static int navBarAvailableSpace_(iWidget *navBar) {
@@ -992,6 +1012,7 @@ void createUserInterface_Root(iRoot *d) {
             setFlags_Widget(as_Widget(url), resizeHeightOfChildren_WidgetFlag, iTrue);
             setSelectAllOnFocus_InputWidget(url, iTrue);
             setId_Widget(as_Widget(url), "url");
+            setMaxLayoutLines_InputWidget(url, 1);
             setUrlContent_InputWidget(url, iTrue);
             setNotifyEdits_InputWidget(url, iTrue);
             setTextCStr_InputWidget(url, "gemini://");
@@ -1017,7 +1038,7 @@ void createUserInterface_Root(iRoot *d) {
                                      moveToParentRightEdge_WidgetFlag);
             /* Feeds refresh indicator is inside the input field. */ {
                 iLabelWidget *queryInd =
-                    new_LabelWidget(uiTextAction_ColorEscape "\u21d2 ${status.query}", NULL);
+                    new_LabelWidget(uiTextAction_ColorEscape "${status.query} \u21a9", NULL);
                 setId_Widget(as_Widget(queryInd), "input.indicator.search");
                 setBackgroundColor_Widget(as_Widget(queryInd), uiBackground_ColorId);
                 setFrameColor_Widget(as_Widget(queryInd), uiTextAction_ColorId);
