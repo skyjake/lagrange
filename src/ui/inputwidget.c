@@ -985,24 +985,32 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
     switch (processEvent_Click(&d->click, ev)) {
         case none_ClickResult:
             break;
-        case started_ClickResult:
+        case started_ClickResult: {
             setFocus_Widget(w);
+            const size_t oldCursor = d->cursor;
             setCursor_InputWidget(d, coordIndex_InputWidget_(d, pos_Click(&d->click)));
-            iZap(d->mark);
-            iZap(d->initialMark);
-            d->inFlags &= ~(isMarking_InputWidgetFlag | markWords_InputWidgetFlag);
-            if (d->click.count == 2) {
-                d->inFlags |= isMarking_InputWidgetFlag | markWords_InputWidgetFlag;
-                d->mark.start = d->mark.end = d->cursor;
-                extendRange_InputWidget_(d, &d->mark.start, -1);
-                extendRange_InputWidget_(d, &d->mark.end, +1);
-                d->initialMark = d->mark;
-                refresh_Widget(w);
+            if (keyMods_Sym(modState_Keys()) == KMOD_SHIFT) {
+                d->mark = d->initialMark = (iRanges){ oldCursor, d->cursor };
+                d->inFlags |= isMarking_InputWidgetFlag;
             }
-            if (d->click.count == 3) {
-                selectAll_InputWidget(d);
+            else {
+                iZap(d->mark);
+                iZap(d->initialMark);
+                d->inFlags &= ~(isMarking_InputWidgetFlag | markWords_InputWidgetFlag);
+                if (d->click.count == 2) {
+                    d->inFlags |= isMarking_InputWidgetFlag | markWords_InputWidgetFlag;
+                    d->mark.start = d->mark.end = d->cursor;
+                    extendRange_InputWidget_(d, &d->mark.start, -1);
+                    extendRange_InputWidget_(d, &d->mark.end, +1);
+                    d->initialMark = d->mark;
+                    refresh_Widget(w);
+                }
+                if (d->click.count == 3) {
+                    selectAll_InputWidget(d);
+                }
             }
             return iTrue;
+        }
         case aborted_ClickResult:
             d->inFlags &= ~isMarking_InputWidgetFlag;
             return iTrue;
