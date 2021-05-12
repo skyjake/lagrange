@@ -1901,6 +1901,9 @@ iWidget *makeDialogButtons_Widget(const iMenuItem *actions, size_t numActions) {
         }
         iLabelWidget *button =
             addChild_Widget(div, iClob(newKeyMods_LabelWidget(label, key, kmods, cmd)));
+        if (isDefault) {
+            setId_Widget(as_Widget(button), "default");
+        }
         setFlags_Widget(as_Widget(button), alignLeft_WidgetFlag | drawKey_WidgetFlag, isDefault);
         setFont_LabelWidget(button, isDefault ? fonts[1] : fonts[0]);
     }

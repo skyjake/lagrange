@@ -75,6 +75,7 @@ enum iInputWidgetFlag {
     isMarking_InputWidgetFlag        = iBit(7),
     markWords_InputWidgetFlag        = iBit(8),
     needUpdateBuffer_InputWidgetFlag = iBit(9),
+    enterKeyEnabled_InputWidgetFlag  = iBit(10),
 };
 
 /*----------------------------------------------------------------------------------------------*/
@@ -124,6 +125,8 @@ struct Impl_InputWidget {
     int             cursorVis;
     uint32_t        timer;
     iTextBuf *      buffered;
+    iInputWidgetValidatorFunc validator;
+    void *          validatorContext;
 };
 
 iDefineObjectConstructionArgs(InputWidget, (size_t maxLen), maxLen)
@@ -295,6 +298,8 @@ static void updateLinesAndResize_InputWidget_(iInputWidget *d) {
 void init_InputWidget(iInputWidget *d, size_t maxLen) {
     iWidget *w = &d->widget;
     init_Widget(w);
+    d->validator = NULL;
+    d->validatorContext = NULL;
     setFlags_Widget(w, focusable_WidgetFlag | hover_WidgetFlag | touchDrag_WidgetFlag, iTrue);
 #if defined (iPlatformMobile)
     setFlags_Widget(w, extraPadding_WidgetFlag, iTrue);
@@ -312,7 +317,7 @@ void init_InputWidget(iInputWidget *d, size_t maxLen) {
     d->lastCursor   = 0;
     d->cursorLine   = 0;
     d->verticalMoveX = -1; /* TODO: Use this. */
-    d->inFlags      = eatEscape_InputWidgetFlag;
+    d->inFlags      = eatEscape_InputWidgetFlag | enterKeyEnabled_InputWidgetFlag;
     iZap(d->mark);
     setMaxLen_InputWidget(d, maxLen);
     d->maxLayoutLines = iInvalidSize;
@@ -421,6 +426,15 @@ void setMaxLen_InputWidget(iInputWidget *d, size_t maxLen) {
 void setMaxLayoutLines_InputWidget(iInputWidget *d, size_t maxLayoutLines) {
     d->maxLayoutLines = maxLayoutLines;
     updateMetrics_InputWidget_(d);
+}
+
+void setValidator_InputWidget(iInputWidget *d, iInputWidgetValidatorFunc validator, void *context) {
+    d->validator = validator;
+    d->validatorContext = context;
+}
+
+void setEnterKeyEnabled_InputWidget(iInputWidget *d, iBool enterKeyEnabled) {
+    iChangeFlags(d->inFlags, enterKeyEnabled_InputWidgetFlag, enterKeyEnabled);
 }
 
 void setHint_InputWidget(iInputWidget *d, const char *hintText) {
@@ -715,6 +729,9 @@ static iRanges mark_InputWidget_(const iInputWidget *d) {
 }
 
 static void contentsWereChanged_InputWidget_(iInputWidget *d) {
+    if (d->validator) {
+        d->validator(d, d->validatorContext); /* this may change the contents */
+    }
     updateLinesAndResize_InputWidget_(d);
     if (d->inFlags & notifyEdits_InputWidgetFlag) {
         postCommand_Widget(d, "input.edited id:%s", cstr_String(id_Widget(constAs_Widget(d))));
@@ -1068,8 +1085,10 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                     contentsWereChanged_InputWidget_(d);
                     return iTrue;
                 }
-                d->inFlags |= enterPressed_InputWidgetFlag;
-                setFocus_Widget(NULL);
+                if (d->inFlags & enterKeyEnabled_InputWidgetFlag) {
+                    d->inFlags |= enterPressed_InputWidgetFlag;
+                    setFocus_Widget(NULL);
+                }
                 return iTrue;
             case SDLK_ESCAPE:
                 end_InputWidget(d, iFalse);

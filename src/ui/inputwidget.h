@@ -39,6 +39,8 @@ struct Impl_InputWidgetContentPadding {
     int right;
 };
 
+typedef void (*iInputWidgetValidatorFunc)(iInputWidget *, void *context);
+
 void    setHint_InputWidget     (iInputWidget *, const char *hintText);
 void    setMode_InputWidget     (iInputWidget *, enum iInputMode mode);
 void    setMaxLen_InputWidget   (iInputWidget *, size_t maxLen);
@@ -48,6 +50,8 @@ void    setFont_InputWidget     (iInputWidget *, int fontId);
 void    setCursor_InputWidget   (iInputWidget *, size_t pos);
 void    setContentPadding_InputWidget   (iInputWidget *, int left, int right); /* only affects the text entry */
 void    setMaxLayoutLines_InputWidget   (iInputWidget *, size_t maxLayoutLines);
+void    setValidator_InputWidget        (iInputWidget *, iInputWidgetValidatorFunc validator, void *context);
+void    setEnterKeyEnabled_InputWidget  (iInputWidget *, iBool enterKeyEnabled);
 void    begin_InputWidget       (iInputWidget *);
 void    end_InputWidget         (iInputWidget *, iBool accept);
 void    selectAll_InputWidget   (iInputWidget *);
