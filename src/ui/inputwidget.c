@@ -311,7 +311,7 @@ void init_InputWidget(iInputWidget *d, size_t maxLen) {
     d->cursor       = 0;
     d->lastCursor   = 0;
     d->cursorLine   = 0;
-    d->verticalMoveX = -1;
+    d->verticalMoveX = -1; /* TODO: Use this. */
     d->inFlags      = eatEscape_InputWidgetFlag;
     iZap(d->mark);
     setMaxLen_InputWidget(d, maxLen);
@@ -442,7 +442,6 @@ void setContentPadding_InputWidget(iInputWidget *d, int left, int right) {
 }
 
 static void updateBuffered_InputWidget_(iInputWidget *d) {
-//    iWindow *win = get_Window();
     invalidateBuffered_InputWidget_(d);
     iString *bufText = NULL;
 #if 0
@@ -1194,7 +1193,8 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                     refresh_Widget(d);
                     return iTrue;
                 }
-                break;
+                /* For moving to lookup from url entry. */
+                return processEvent_Widget(as_Widget(d), ev);
             case SDLK_DOWN:
                 if (moveCursorByLine_InputWidget_(d, +1)) {
                     refresh_Widget(d);

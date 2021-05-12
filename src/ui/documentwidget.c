@@ -1576,7 +1576,7 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                     isEmpty_String(&resp->meta)
                         ? format_CStr(cstr_Lang("dlg.input.prompt"), cstr_Rangecc(parts.path))
                         : cstr_String(&resp->meta),
-                    uiTextCaution_ColorEscape "\u21d2 ${dlg.input.send}",
+                    uiTextCaution_ColorEscape "${dlg.input.send}",
                     format_CStr("!document.input.submit doc:%p", d));
                 setSensitiveContent_InputWidget(findChild_Widget(dlg, "input"),
                                                 statusCode == sensitiveInput_GmStatusCode);
