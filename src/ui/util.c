@@ -2198,6 +2198,10 @@ static void addDialogInputWithHeading_(iWidget *headings, iWidget *values, const
     setPadding_Widget(as_Widget(head), 0, gap_UI, 0, 0);
 #endif
     setId_Widget(addChild_Widget(values, input), inputId);
+    if (deviceType_App() != phone_AppDeviceType) {
+        /* Ensure that the label has the same height as the input widget. */
+        as_Widget(head)->sizeRef = as_Widget(input);
+    }
 }
 
 iInputWidget *addTwoColumnDialogInputField_Widget(iWidget *headings, iWidget *values,
@@ -2225,8 +2229,9 @@ iWidget *makePreferences_Widget(void) {
     /* General preferences. */ {
         appendTwoColumnPage_(tabs, "${heading.prefs.general}", '1', &headings, &values);
 #if defined (LAGRANGE_ENABLE_DOWNLOAD_EDIT)
-        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.downloads}")));
-        setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.downloads");
+        //addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.downloads}")));
+        //setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.downloads");
+        addPrefsInputWithHeading_(headings, values, "prefs.downloads", iClob(new_InputWidget(0)));
 #endif
         iInputWidget *searchUrl;
         addPrefsInputWithHeading_(headings, values, "prefs.searchurl", iClob(searchUrl = new_InputWidget(0)));

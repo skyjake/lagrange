@@ -1578,6 +1578,10 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
             setToggle_Widget(findChild_Widget(d, "prefs.ostheme"), iFalse);
         }
     }
+    else if (equalWidget_Command(cmd, d, "input.resized")) {
+        updatePreferencesLayout_Widget(d);
+        return iFalse;
+    }
     return iFalse;
 }
 
