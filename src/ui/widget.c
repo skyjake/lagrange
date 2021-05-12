@@ -1035,6 +1035,7 @@ void drawBackground_Widget(const iWidget *d) {
         init_Paint(&p);
         drawSoftShadow_Paint(&p, bounds_Widget(d), 12 * gap_UI, black_ColorId, 30);
     }
+    
     if (fadeBackground && ~d->flags & noFadeBackground_WidgetFlag) {
         iPaint p;
         init_Paint(&p);
@@ -1131,10 +1132,10 @@ void drawChildren_Widget(const iWidget *d) {
         }
     }
     /* Root draws the on-top widgets on top of everything else. */
-    if (!d->parent) {
+    if (d == d->root->widget) {
         iConstForEach(PtrArray, i, onTop_Root(d->root)) {
             const iWidget *top = *i.value;
-            draw_Widget(top);
+            class_Widget(top)->draw(top);
         }
     }
 }

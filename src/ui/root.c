@@ -534,13 +534,17 @@ static iBool willPerformSearchQuery_(const iString *userInput) {
     return !isEmpty_String(&prefs_App()->searchUrl) && !isLikelyUrl_String(userInput);
 }
 
+static void updateUrlInputContentPadding_(iWidget *navBar) {
+    iInputWidget *url = findChild_Widget(navBar, "url");
+    const iWidget *indicators = findChild_Widget(navBar, "url.rightembed");
+    setContentPadding_InputWidget(url, -1,
+                                  width_Widget(indicators));
+}
+
 static void showSearchQueryIndicator_(iBool show) {
     iWidget *indicator = findWidget_App("input.indicator.search");
     showCollapsed_Widget(indicator, show);
-    iAssert(isInstance_Object(parent_Widget(parent_Widget(indicator)), &Class_InputWidget));
-    iInputWidget *url = (iInputWidget *) parent_Widget(parent_Widget(indicator));
-    setContentPadding_InputWidget(url, -1, contentPadding_InputWidget(url).left +
-                                               (show ? width_Widget(indicator) : 0));
+    updateUrlInputContentPadding_(findWidget_Root("navbar"));
 }
 
 static int navBarAvailableSpace_(iWidget *navBar) {
@@ -1008,6 +1012,7 @@ void createUserInterface_Root(iRoot *d) {
             setFlags_Widget(as_Widget(url), resizeHeightOfChildren_WidgetFlag, iTrue);
             setSelectAllOnFocus_InputWidget(url, iTrue);
             setId_Widget(as_Widget(url), "url");
+            setMaxLayoutLines_InputWidget(url, 1);
             setUrlContent_InputWidget(url, iTrue);
             setNotifyEdits_InputWidget(url, iTrue);
             setTextCStr_InputWidget(url, "gemini://");

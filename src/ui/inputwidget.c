@@ -104,6 +104,7 @@ struct Impl_InputWidget {
     enum iInputMode mode;
     int             inFlags;
     size_t          maxLen;
+    size_t          maxLayoutLines;
     iArray          text;    /* iChar[] */
     iArray          oldText; /* iChar[] */
     iArray          lines;
@@ -162,7 +163,8 @@ iLocalDef iInt2 padding_(void) {
 }
 
 static iRect contentBounds_InputWidget_(const iInputWidget *d) {
-    const iWidget *w      = constAs_Widget(d);
+    const iWidget *w         = constAs_Widget(d);
+    const iRect widgetBounds = bounds_Widget(w);
     iRect          bounds = adjusted_Rect(bounds_Widget(w),
                                           addX_I2(padding_(), d->leftPadding),
                                           neg_I2(addX_I2(padding_(), d->rightPadding)));
@@ -233,7 +235,12 @@ static void updateLines_InputWidget_(iInputWidget *d) {
     const int wrapWidth = contentBounds_InputWidget_(d).size.x;
     while (wrapWidth > 0 && content.end != content.start) {
         const char *endPos;
-        tryAdvance_Text(d->font, content, wrapWidth, &endPos);
+        if (d->inFlags & isUrl_InputWidgetFlag) {
+            tryAdvanceNoWrap_Text(d->font, content, wrapWidth, &endPos);
+        }
+        else {
+            tryAdvance_Text(d->font, content, wrapWidth, &endPos);
+        }
         const iRangecc part = (iRangecc){ content.start, endPos };
         iInputLine line;
         init_InputLine(&line);
@@ -256,15 +263,19 @@ static void updateLines_InputWidget_(iInputWidget *d) {
     updateCursorLine_InputWidget_(d);
 }
 
-static int contentHeight_InputWidget_(const iInputWidget *d) {
-    return iMax(1, size_Array(&d->lines)) * lineHeight_Text(d->font);
+static int contentHeight_InputWidget_(const iInputWidget *d, iBool forLayout) {
+    size_t numLines = iMax(1, size_Array(&d->lines));
+    if (forLayout) {
+        numLines = iMin(numLines, d->maxLayoutLines);
+    }
+    return numLines * lineHeight_Text(d->font);
 }
 
 static void updateMetrics_InputWidget_(iInputWidget *d) {
     iWidget *w = as_Widget(d);
     updateSizeForFixedLength_InputWidget_(d);
     /* Caller must arrange the width, but the height is fixed. */
-    w->rect.size.y = contentHeight_InputWidget_(d) + 3 * padding_().y; /* TODO: Why 3x? */
+    w->rect.size.y = contentHeight_InputWidget_(d, iTrue) + 3 * padding_().y; /* TODO: Why 3x? */
     if (flags_Widget(w) & extraPadding_WidgetFlag) {
         w->rect.size.y += 2 * gap_UI;
     }
@@ -276,6 +287,7 @@ static void updateLinesAndResize_InputWidget_(iInputWidget *d) {
     const size_t oldCount = size_Array(&d->lines);
     updateLines_InputWidget_(d);
     if (oldCount != size_Array(&d->lines)) {
+        d->click.minHeight = contentHeight_InputWidget_(d, iFalse);
         updateMetrics_InputWidget_(d);
     }
 }
@@ -303,6 +315,7 @@ void init_InputWidget(iInputWidget *d, size_t maxLen) {
     d->inFlags      = eatEscape_InputWidgetFlag;
     iZap(d->mark);
     setMaxLen_InputWidget(d, maxLen);
+    d->maxLayoutLines = iInvalidSize;
     setFlags_Widget(w, fixedHeight_WidgetFlag, iTrue);
     init_Click(&d->click, d, SDL_BUTTON_LEFT);
     d->timer = 0;
@@ -403,6 +416,11 @@ void setMaxLen_InputWidget(iInputWidget *d, size_t maxLen) {
     d->maxLen = maxLen;
     d->mode   = (maxLen == 0 ? insert_InputMode : overwrite_InputMode);
     updateSizeForFixedLength_InputWidget_(d);
+}
+
+void setMaxLayoutLines_InputWidget(iInputWidget *d, size_t maxLayoutLines) {
+    d->maxLayoutLines = maxLayoutLines;
+    updateMetrics_InputWidget_(d);
 }
 
 void setHint_InputWidget(iInputWidget *d, const char *hintText) {
@@ -532,7 +550,7 @@ void begin_InputWidget(iInputWidget *d) {
     }
     updateCursorLine_InputWidget_(d);
     SDL_StartTextInput();
-    setFlags_Widget(w, selected_WidgetFlag, iTrue);
+    setFlags_Widget(w, selected_WidgetFlag | keepOnTop_WidgetFlag, iTrue);
     showCursor_InputWidget_(d);
     refresh_Widget(w);
     d->timer = SDL_AddTimer(refreshInterval_InputWidget_, cursorTimer_, d);
@@ -560,7 +578,7 @@ void end_InputWidget(iInputWidget *d, iBool accept) {
     SDL_RemoveTimer(d->timer);
     d->timer = 0;
     SDL_StopTextInput();
-    setFlags_Widget(w, selected_WidgetFlag, iFalse);
+    setFlags_Widget(w, selected_WidgetFlag | keepOnTop_WidgetFlag, iFalse);
     const char *id = cstr_String(id_Widget(as_Widget(d)));
     if (!*id) id = "_";
     updateLinesAndResize_InputWidget_(d);
@@ -866,6 +884,20 @@ static void extendRange_InputWidget_(iInputWidget *d, size_t *pos, int dir) {
     }
 }
 
+static iRect bounds_InputWidget_(const iInputWidget *d) {
+    const iWidget *w = constAs_Widget(d);
+    iRect bounds = bounds_Widget(w);
+    if (!isFocused_Widget(d)) {
+        return bounds;
+    }
+    bounds.size.y = contentHeight_InputWidget_(d, iFalse) + 3 * padding_().y;
+    return bounds;
+}
+
+static iBool contains_InputWidget_(const iInputWidget *d, iInt2 coord) {
+    return contains_Rect(bounds_InputWidget_(d), coord);
+}
+
 static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
     if (isCommand_Widget(w, ev, "focus.gained")) {
@@ -925,8 +957,9 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
         copy_InputWidget_(d, iFalse);
         return iTrue;
     }
-    if (ev->type == SDL_MOUSEMOTION && isHover_Widget(d)) {
-        const iInt2 inner = windowToInner_Widget(w, init_I2(ev->motion.x, ev->motion.y));
+    if (ev->type == SDL_MOUSEMOTION && (isHover_Widget(d) || flags_Widget(w) & keepOnTop_WidgetFlag)) {
+        const iInt2 coord = init_I2(ev->motion.x, ev->motion.y);
+        const iInt2 inner = windowToInner_Widget(w, coord);
         setCursor_Window(get_Window(),
                          inner.x >= 2 * gap_UI + d->leftPadding &&
                          inner.x < width_Widget(w) - d->rightPadding
@@ -975,6 +1008,12 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
         case finished_ClickResult:
             d->inFlags &= ~isMarking_InputWidgetFlag;
             return iTrue;
+    }
+    if (ev->type == SDL_MOUSEMOTION && flags_Widget(w) & keepOnTop_WidgetFlag) {
+        const iInt2 coord = init_I2(ev->motion.x, ev->motion.y);
+        if (contains_Click(&d->click, coord)) {
+            return iTrue;
+        }
     }
     if (ev->type == SDL_MOUSEBUTTONDOWN && ev->button.button == SDL_BUTTON_RIGHT &&
         contains_Widget(w, init_I2(ev->button.x, ev->button.y))) {
@@ -1193,11 +1232,11 @@ static iBool isWhite_(const iString *str) {
 
 static void draw_InputWidget_(const iInputWidget *d) {
     const iWidget *w         = constAs_Widget(d);
-    iRect          bounds    = adjusted_Rect(bounds_Widget(w), padding_(), neg_I2(padding_()));
+    iRect          bounds    = adjusted_Rect(bounds_InputWidget_(d), padding_(), neg_I2(padding_()));
     iBool          isHint    = iFalse;
     const iBool    isFocused = isFocused_Widget(w);
     const iBool    isHover   = isHover_Widget(w) &&
-                               contains_Widget(w, mouseCoord_Window(get_Window()));
+                               contains_InputWidget_(d, mouseCoord_Window(get_Window()));
     if (d->inFlags & needUpdateBuffer_InputWidgetFlag) {
         updateBuffered_InputWidget_(iConstCast(iInputWidget *, d));
     }
