@@ -304,7 +304,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     iWidget *w = as_Widget(d);
     init_Widget(w);
     setId_Widget(w, format_CStr("document%03d", ++docEnum_));
-    setFlags_Widget(w, hover_WidgetFlag, iTrue);
+    setFlags_Widget(w, hover_WidgetFlag | noBackground_WidgetFlag, iTrue);
     init_PersistentDocumentState(&d->mod);
     d->flags           = 0;
     d->phoneToolbar    = NULL;
@@ -1576,12 +1576,15 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                     isEmpty_String(&resp->meta)
                         ? format_CStr(cstr_Lang("dlg.input.prompt"), cstr_Rangecc(parts.path))
                         : cstr_String(&resp->meta),
-                    uiTextCaution_ColorEscape "${dlg.input.send} \u21d2",
+                    uiTextCaution_ColorEscape "\u21d2 ${dlg.input.send}",
                     format_CStr("!document.input.submit doc:%p", d));
                 setSensitiveContent_InputWidget(findChild_Widget(dlg, "input"),
                                                 statusCode == sensitiveInput_GmStatusCode);
                 if (document_App() != d) {
                     postCommandf_App("tabs.switch page:%p", d);
+                }
+                else {
+                    updateTheme_DocumentWidget_(d);
                 }
                 break;
             }
@@ -4148,7 +4151,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
     if (width_Rect(bounds) <= 0) {
         return;
     }
-    draw_Widget(w);
+//    draw_Widget(w);
     if (d->drawBufs->flags & updateTimestampBuf_DrawBufsFlag) {
         updateTimestampBuf_DocumentWidget_(d);
     }
@@ -4226,7 +4229,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
     if (colorTheme_App() == pureWhite_ColorTheme) {
         drawHLine_Paint(&ctx.paint, topLeft_Rect(bounds), width_Rect(bounds), uiSeparator_ColorId);
     }
-    draw_Widget(w);
+    drawChildren_Widget(w);
     /* Alt text. */
     const float altTextOpacity = value_Anim(&d->altTextOpacity) * 6 - 5;
     if (d->hoverAltPre && altTextOpacity > 0) {
