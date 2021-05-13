@@ -23,6 +23,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "widget.h"
 
 #include "app.h"
+#include "periodic.h"
 #include "touch.h"
 #include "command.h"
 #include "paint.h"
@@ -98,6 +99,7 @@ static void aboutToBeDestroyed_Widget_(iWidget *d) {
     if (flags_Widget(d) & keepOnTop_WidgetFlag) {
         removeOne_PtrArray(onTop_Root(d->root), d);
     }
+    remove_Periodic(periodic_App(), d);
     if (isHover_Widget(d)) {
         get_Window()->hover = NULL;
     }
