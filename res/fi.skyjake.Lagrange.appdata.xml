@@ -45,6 +45,24 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.4.1" date="2021-05-13">
+            <description>
+                <p>Bug fixes:</p>
+                <ul>
+                    <li>Removing the left side split by closing all its tabs. The URL
+                        input field got confused about which tab was currently open, and
+                        the wrong theme was active.</li>
+                    <li>Tab merging when unsplitting the window: keep the currently 
+                        active tab open.</li>
+                    <li>Sidebars sometimes become unresponsive.</li>
+                    <li>Incorrect font was used for visited monospace Gopher links.</li>
+                    <li>Incorrectly shown/hidden tab pinning indicator.</li>
+                    <li>Scrollbar in Preferences &gt; Keys was hidden until the list 
+                        was scrolled.</li>
+                </ul>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.4.1</url>
+        </release>
         <release version="1.4" date="2021-05-07">
             <description>
                 <p>This release introduces a split view mode, support for Gempub
