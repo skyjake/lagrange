@@ -455,31 +455,46 @@ void setContentPadding_InputWidget(iInputWidget *d, int left, int right) {
     refresh_Widget(d);
 }
 
+static iBool isHintVisible_InputWidget_(const iInputWidget *d) {
+    return !isEmpty_String(&d->hint) && size_Array(&d->lines) == 1 &&
+           isEmpty_String(&line_InputWidget_(d, 0)->text);
+}
+
 static void updateBuffered_InputWidget_(iInputWidget *d) {
     invalidateBuffered_InputWidget_(d);
-    iString *bufText = NULL;
+    if (isHintVisible_InputWidget_(d)) {
+        d->buffered = new_TextBuf(d->font, uiAnnotation_ColorId, cstr_String(&d->hint));                
+    }
+    else {
+        iString *bufText = NULL;
 #if 0
-    if (d->inFlags & isUrl_InputWidgetFlag && as_Widget(d)->root == win->keyRoot) {
-        /* TODO: Move this omitting to `updateLines_`? */
-        /* Highlight the host name. */
-        iUrl parts;
-        const iString *text = collect_String(utf32toUtf8_InputWidget_(d));
-        init_Url(&parts, text);
-        if (!isEmpty_Range(&parts.host)) {
-            bufText = new_String();
-            appendRange_String(bufText, (iRangecc){ constBegin_String(text), parts.host.start });
-            appendCStr_String(bufText, uiTextStrong_ColorEscape);
-            appendRange_String(bufText, parts.host);
-            appendCStr_String(bufText, restore_ColorEscape);
-            appendRange_String(bufText, (iRangecc){ parts.host.end, constEnd_String(text) });
+        if (d->inFlags & isUrl_InputWidgetFlag && as_Widget(d)->root == win->keyRoot) {
+            /* TODO: Move this omitting to `updateLines_`? */
+            /* Highlight the host name. */
+            iUrl parts;
+            const iString *text = collect_String(utf32toUtf8_InputWidget_(d));
+            init_Url(&parts, text);
+            if (!isEmpty_Range(&parts.host)) {
+                bufText = new_String();
+                appendRange_String(bufText, (iRangecc){ constBegin_String(text), parts.host.start });
+                appendCStr_String(bufText, uiTextStrong_ColorEscape);
+                appendRange_String(bufText, parts.host);
+                appendCStr_String(bufText, restore_ColorEscape);
+                appendRange_String(bufText, (iRangecc){ parts.host.end, constEnd_String(text) });
+            }
         }
-    }
 #endif
-    if (!bufText) {
-        bufText = visText_InputWidget_(d);
+        if (!bufText) {
+            bufText = visText_InputWidget_(d);
+        }
+        const int   maxWidth = contentBounds_InputWidget_(d).size.x;
+        const int   fg       = uiInputText_ColorId;
+        const char *text     = cstr_String(bufText);
+        d->buffered =
+            (d->inFlags & isUrl_InputWidgetFlag ? newBound_TextBuf(d->font, fg, maxWidth, text)
+                                                : newWrap_TextBuf (d->font, fg, maxWidth, text));
+        delete_String(bufText);
     }
-    d->buffered = new_TextBuf(d->font, uiInputText_ColorId, cstr_String(bufText));
-    delete_String(bufText);
     d->inFlags &= ~needUpdateBuffer_InputWidgetFlag;
 }
 
@@ -707,6 +722,7 @@ void setSensitiveContent_InputWidget(iInputWidget *d, iBool isSensitive) {
 
 void setUrlContent_InputWidget(iInputWidget *d, iBool isUrl) {
     iChangeFlags(d->inFlags, isUrl_InputWidgetFlag, isUrl);
+    d->inFlags |= needUpdateBuffer_InputWidgetFlag;
 }
 
 void setSelectAllOnFocus_InputWidget(iInputWidget *d, iBool selectAllOnFocus) {
@@ -963,6 +979,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
         updateLinesAndResize_InputWidget_(d);
     }
     else if (isResize_UserEvent(ev)) {
+        d->inFlags |= needUpdateBuffer_InputWidgetFlag;
         if (d->inFlags & isUrl_InputWidgetFlag) {
             /* Restore/omit the default scheme if necessary. */
             setText_InputWidget(d, text_InputWidget(d));
@@ -1260,7 +1277,7 @@ static iBool isWhite_(const iString *str) {
 static void draw_InputWidget_(const iInputWidget *d) {
     const iWidget *w         = constAs_Widget(d);
     iRect          bounds    = adjusted_Rect(bounds_InputWidget_(d), padding_(), neg_I2(padding_()));
-    iBool          isHint    = iFalse;
+    iBool          isHint    = isHintVisible_InputWidget_(d);
     const iBool    isFocused = isFocused_Widget(w);
     const iBool    isHover   = isHover_Widget(w) &&
                                contains_InputWidget_(d, mouseCoord_Window(get_Window()));
@@ -1290,33 +1307,43 @@ static void draw_InputWidget_(const iInputWidget *d) {
     const int   fg         = isHint                                  ? uiAnnotation_ColorId
                              : isFocused && !isEmpty_Array(&d->text) ? uiInputTextFocused_ColorId
                                                                      : uiInputText_ColorId;
-    /* TODO: If buffered, just draw the buffered copy. */
-    iConstForEach(Array, i, &d->lines) {
-        const iInputLine *line      = i.value;
-        const iBool       isLast    = index_ArrayConstIterator(&i) == size_Array(&d->lines) - 1;
-        const iInputLine *nextLine  = isLast ? NULL : (line + 1);
-        const iRanges     lineRange = { line->offset,
-                                        nextLine ? nextLine->offset : size_Array(&d->text) };
-        if (isFocused && !isEmpty_Range(&d->mark)) {
-            /* Draw the selected range. */
-            const iRanges mark = mark_InputWidget_(d);
-            if (mark.start < lineRange.end && mark.end > lineRange.start) {
-                const int m1 = advanceN_Text(d->font,
-                                             cstr_String(&line->text),
-                                             iMax(lineRange.start, mark.start) - line->offset)
-                                   .x;
-                const int m2 = advanceN_Text(d->font,
-                                             cstr_String(&line->text),
-                                             iMin(lineRange.end, mark.end) - line->offset)
-                                   .x;
-                fillRect_Paint(&p,
-                               (iRect){ addX_I2(drawPos, iMin(m1, m2)),
-                                        init_I2(iAbs(m2 - m1), lineHeight_Text(d->font)) },
-                               uiMarked_ColorId);
+    /* If buffered, just draw the buffered copy. */
+    if (d->buffered && !isFocused) { //&& !isFocused/* && !isHint*/) {
+        /* Most input widgets will use this, since only one is focused at a time. */
+        draw_TextBuf(d->buffered, topLeft_Rect(contentBounds), white_ColorId);
+    }
+    else if (isHint) {
+        drawRange_Text(d->font, topLeft_Rect(contentBounds), uiAnnotation_ColorId,
+                       range_String(&d->hint));
+    }
+    else {
+        iConstForEach(Array, i, &d->lines) {
+            const iInputLine *line      = i.value;
+            const iBool       isLast    = index_ArrayConstIterator(&i) == size_Array(&d->lines) - 1;
+            const iInputLine *nextLine  = isLast ? NULL : (line + 1);
+            const iRanges     lineRange = { line->offset,
+                                            nextLine ? nextLine->offset : size_Array(&d->text) };
+            if (isFocused && !isEmpty_Range(&d->mark)) {
+                /* Draw the selected range. */
+                const iRanges mark = mark_InputWidget_(d);
+                if (mark.start < lineRange.end && mark.end > lineRange.start) {
+                    const int m1 = advanceN_Text(d->font,
+                                                 cstr_String(&line->text),
+                                                 iMax(lineRange.start, mark.start) - line->offset)
+                                       .x;
+                    const int m2 = advanceN_Text(d->font,
+                                                 cstr_String(&line->text),
+                                                 iMin(lineRange.end, mark.end) - line->offset)
+                                       .x;
+                    fillRect_Paint(&p,
+                                   (iRect){ addX_I2(drawPos, iMin(m1, m2)),
+                                            init_I2(iAbs(m2 - m1), lineHeight_Text(d->font)) },
+                                   uiMarked_ColorId);
+                }
             }
+            drawRange_Text(d->font, drawPos, fg, range_String(&line->text));
+            drawPos.y += lineHeight_Text(d->font);
         }
-        drawRange_Text(d->font, drawPos, fg, range_String(&line->text));
-        drawPos.y += lineHeight_Text(d->font);
     }
 //    if (d->buffered && !isFocused && !isHint) {
 //        /* Most input widgets will use this, since only one is focused at a time. */

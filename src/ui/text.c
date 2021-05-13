@@ -1404,9 +1404,21 @@ iString *renderBlockChars_Text(const iBlock *fontData, int height, enum iTextBlo
 
 iDefineTypeConstructionArgs(TextBuf, (int font, int color, const char *text), font, color, text)
 
-void init_TextBuf(iTextBuf *d, int font, int color, const char *text) {
+static void initWrap_TextBuf_(iTextBuf *d, int font, int color, int maxWidth, iBool doWrap, const char *text) {
     SDL_Renderer *render = text_.render;
-    d->size    = advance_Text(font, text);
+    if (maxWidth == 0) {
+        d->size = advance_Text(font, text);
+    }
+    else {
+        d->size = zero_I2();
+        iRangecc content = range_CStr(text);
+        while (!isEmpty_Range(&content)) {
+            const iInt2 size = (doWrap ? tryAdvance_Text(font, content, maxWidth, &content.start)
+                                 : tryAdvanceNoWrap_Text(font, content, maxWidth, &content.start));
+            d->size.x = iMax(d->size.x, size.x);
+            d->size.y += size.y;
+        }
+    }
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
     if (d->size.x * d->size.y) {
         d->texture = SDL_CreateTexture(render,
@@ -1424,15 +1436,48 @@ void init_TextBuf(iTextBuf *d, int font, int color, const char *text) {
         SDL_SetTextureBlendMode(text_.cache, SDL_BLENDMODE_NONE); /* blended when TextBuf is drawn */
         SDL_SetRenderDrawColor(text_.render, 0, 0, 0, 0);
         SDL_RenderClear(text_.render);
-        draw_Text_(font, zero_I2(), color | fillBackground_ColorId, range_CStr(text));
+        const int fg    = color | fillBackground_ColorId;
+        iRangecc  range = range_CStr(text);
+        if (maxWidth == 0) {
+            draw_Text_(font, zero_I2(), fg, range);
+        }
+        else if (doWrap) {
+            drawWrapRange_Text(font, zero_I2(), maxWidth, fg, range);
+        }
+        else {
+            iInt2 pos = zero_I2();
+            while (!isEmpty_Range(&range)) {
+                const char *endp;
+                tryAdvanceNoWrap_Text(font, range, maxWidth, &endp);
+                draw_Text_(font, pos, fg, (iRangecc){ range.start, endp });
+                range.start = endp;
+                pos.y += lineHeight_Text(font);
+            }
+        }
         SDL_SetTextureBlendMode(text_.cache, SDL_BLENDMODE_BLEND);
         SDL_SetRenderTarget(render, oldTarget);
         SDL_SetTextureBlendMode(d->texture, SDL_BLENDMODE_BLEND);
     }
 }
 
+void init_TextBuf(iTextBuf *d, int font, int color, const char *text) {
+    initWrap_TextBuf_(d, font, color, 0, iFalse, text);
+}
+
 void deinit_TextBuf(iTextBuf *d) {
     SDL_DestroyTexture(d->texture);
+}
+
+iTextBuf *newBound_TextBuf(int font, int color, int boundWidth, const char *text) {
+    iTextBuf *d = iMalloc(TextBuf);
+    initWrap_TextBuf_(d, font, color, boundWidth, iFalse, text);
+    return d;
+}
+
+iTextBuf *newWrap_TextBuf(int font, int color, int wrapWidth, const char *text) {
+    iTextBuf *d = iMalloc(TextBuf);
+    initWrap_TextBuf_(d, font, color, wrapWidth, iTrue, text);
+    return d;
 }
 
 void draw_TextBuf(const iTextBuf *d, iInt2 pos, int color) {
