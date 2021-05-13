@@ -41,20 +41,20 @@ struct Impl_InputWidgetContentPadding {
 
 typedef void (*iInputWidgetValidatorFunc)(iInputWidget *, void *context);
 
-void    setHint_InputWidget     (iInputWidget *, const char *hintText);
-void    setMode_InputWidget     (iInputWidget *, enum iInputMode mode);
-void    setMaxLen_InputWidget   (iInputWidget *, size_t maxLen);
-void    setText_InputWidget     (iInputWidget *, const iString *text);
-void    setTextCStr_InputWidget (iInputWidget *, const char *cstr);
-void    setFont_InputWidget     (iInputWidget *, int fontId);
-void    setCursor_InputWidget   (iInputWidget *, size_t pos);
+void    setHint_InputWidget             (iInputWidget *, const char *hintText);
+void    setMode_InputWidget             (iInputWidget *, enum iInputMode mode);
+void    setMaxLen_InputWidget           (iInputWidget *, size_t maxLen);
+void    setText_InputWidget             (iInputWidget *, const iString *text);
+void    setTextCStr_InputWidget         (iInputWidget *, const char *cstr);
+void    setFont_InputWidget             (iInputWidget *, int fontId);
+void    setCursor_InputWidget           (iInputWidget *, size_t pos);
 void    setContentPadding_InputWidget   (iInputWidget *, int left, int right); /* only affects the text entry */
 void    setMaxLayoutLines_InputWidget   (iInputWidget *, size_t maxLayoutLines);
 void    setValidator_InputWidget        (iInputWidget *, iInputWidgetValidatorFunc validator, void *context);
 void    setEnterKeyEnabled_InputWidget  (iInputWidget *, iBool enterKeyEnabled);
-void    begin_InputWidget       (iInputWidget *);
-void    end_InputWidget         (iInputWidget *, iBool accept);
-void    selectAll_InputWidget   (iInputWidget *);
+void    begin_InputWidget               (iInputWidget *);
+void    end_InputWidget                 (iInputWidget *, iBool accept);
+void    selectAll_InputWidget           (iInputWidget *);
 
 void    setSelectAllOnFocus_InputWidget (iInputWidget *, iBool selectAllOnFocus);
 void    setSensitiveContent_InputWidget (iInputWidget *, iBool isSensitive);
@@ -62,9 +62,8 @@ void    setUrlContent_InputWidget       (iInputWidget *, iBool isUrl);
 void    setNotifyEdits_InputWidget      (iInputWidget *, iBool notifyEdits);
 void    setEatEscape_InputWidget        (iInputWidget *, iBool eatEscape);
 
-const iString * text_InputWidget            (const iInputWidget *);
-iInputWidgetContentPadding
-                contentPadding_InputWidget  (const iInputWidget *);
+iInputWidgetContentPadding  contentPadding_InputWidget  (const iInputWidget *);
+const iString *             text_InputWidget            (const iInputWidget *);
 
 iLocalDef iInputWidget *newHint_InputWidget(size_t maxLen, const char *hint) {
     iInputWidget *d = new_InputWidget(maxLen);

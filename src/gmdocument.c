@@ -1505,7 +1505,7 @@ static void normalize_GmDocument(iGmDocument *d) {
     set_String(&d->source, collect_String(normalized));
     printf("orig:%zu norm:%zu\n", size_String(&d->unormSource), size_String(&d->source));
     /* normalized source has an extra newline at the end */
-    iAssert(wasNormalized || equal_String(&d->unormSource, &d->source));
+//    iAssert(wasNormalized || equal_String(&d->unormSource, &d->source));
 }
 
 void setUrl_GmDocument(iGmDocument *d, const iString *url) {

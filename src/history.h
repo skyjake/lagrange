@@ -41,6 +41,13 @@ struct Impl_RecentUrl {
     iGmDocument *cachedDoc;      /* cached copy of the presentation: layout and media (not serialized) */
 };
 
+iDeclareType(MemInfo)
+
+struct Impl_MemInfo {
+    size_t cacheSize;   /* number of bytes stored persistently */
+    size_t memorySize;  /* number of bytes stored in RAM */
+};
+
 /*----------------------------------------------------------------------------------------------*/
 
 iDeclareType(History)
@@ -78,4 +85,4 @@ const iGmResponse *
 size_t      cacheSize_History           (const iHistory *);
 
 iString *   debugInfo_History           (const iHistory *);
-
+iMemInfo    memoryUsage_History         (const iHistory *);

@@ -658,12 +658,12 @@ void setCursor_InputWidget(iInputWidget *d, size_t pos) {
 }
 
 static size_t indexForRelativeX_InputWidget_(const iInputWidget *d, int x, const iInputLine *line) {
+    size_t index = line->offset;
     if (x <= 0) {
-        return line->offset;
+        return index;
     }
     const char *endPos;
     tryAdvanceNoWrap_Text(d->font, range_String(&line->text), x, &endPos);
-    size_t index = line->offset;
     if (endPos == constEnd_String(&line->text)) {
         index += length_String(&line->text);
     }
@@ -691,10 +691,10 @@ static iBool moveCursorByLine_InputWidget_(iInputWidget *d, int dir) {
     }
     if (newCursor != iInvalidPos) {
         /* Clamp it to the current line. */
-        newCursor = iMax(newCursor, line->offset);
         newCursor = iMin(newCursor, line->offset + length_String(&line->text) -
                          /* last line is allowed to go to the cursorMax */
                          ((const void *) line < constAt_Array(&d->lines, numLines - 1) ? 1 : 0));
+        newCursor = iMax(newCursor, line->offset);
         setCursor_InputWidget(d, newCursor);
         return iTrue;
     }
@@ -1311,7 +1311,7 @@ static void draw_InputWidget_(const iInputWidget *d) {
                                    .x;
                 fillRect_Paint(&p,
                                (iRect){ addX_I2(drawPos, iMin(m1, m2)),
-                                        init_I2(iAbs(m2 - m1), lineHeight_Text(d->font)) },
+                                        init_I2(iMax(gap_UI / 3, iAbs(m2 - m1)), lineHeight_Text(d->font)) },
                                uiMarked_ColorId);
             }
         }

@@ -108,6 +108,16 @@ iHistory *copy_History(const iHistory *d) {
     return copy;
 }
 
+iMemInfo memoryUsage_History(const iHistory *d) {
+    iMemInfo mem = { 0, 0 };
+    iConstForEach(Array, i, &d->recent) {
+        const iRecentUrl *item = i.value;
+        mem.cacheSize  += cacheSize_RecentUrl(item);
+        mem.memorySize += memorySize_RecentUrl(item);
+    }
+    return mem;
+}
+
 iString *debugInfo_History(const iHistory *d) {
     iString *str = new_String();
     format_String(str,

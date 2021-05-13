@@ -882,13 +882,25 @@ const iString *debugInfo_App(void) {
     extern char **environ; /* The environment variables. */
     iApp *d = &app_;
     iString *msg = collectNew_String();
+    iObjectList *docs = iClob(listDocuments_App(NULL));
     format_String(msg, "# Debug information\n");
+    appendFormat_String(msg, "## Memory usage\n"); {
+        iMemInfo total = { 0, 0 };
+        iForEach(ObjectList, i, docs) {
+            iDocumentWidget *doc = i.object;
+            iMemInfo usage = memoryUsage_History(history_DocumentWidget(doc));
+            total.cacheSize += usage.cacheSize;
+            total.memorySize += usage.memorySize;
+        }
+        appendFormat_String(msg, "Total cache: %.3f MB\n", total.cacheSize / 1.0e6f);
+        appendFormat_String(msg, "Total memory: %.3f MB\n", total.memorySize / 1.0e6f);
+    }
     appendFormat_String(msg, "## Documents\n");
-    iForEach(ObjectList, k, iClob(listDocuments_App(NULL))) {
+    iForEach(ObjectList, k, docs) {
         iDocumentWidget *doc = k.object;
         appendFormat_String(msg, "### Tab %d.%zu: %s\n",
-                            constAs_Widget(doc)->root == get_Window()->roots[0] ? 0 : 1,
-                            childIndex_Widget(constAs_Widget(doc)->parent, k.object),
+                            constAs_Widget(doc)->root == get_Window()->roots[0] ? 1 : 2,
+                            childIndex_Widget(constAs_Widget(doc)->parent, k.object) + 1,
                             cstr_String(bookmarkTitle_DocumentWidget(doc)));
         append_String(msg, collect_String(debugInfo_History(history_DocumentWidget(doc))));
     }
