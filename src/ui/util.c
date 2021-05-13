@@ -2523,11 +2523,6 @@ iWidget *makeBookmarkEditor_Widget(void) {
     return dlg;
 }
 
-static void enableSidebars_(void) {
-    setFlags_Widget(findWidget_App("sidebar"), disabled_WidgetFlag, iFalse);
-    setFlags_Widget(findWidget_App("sidebar2"), disabled_WidgetFlag, iFalse);
-}
-
 static iBool handleBookmarkCreationCommands_SidebarWidget_(iWidget *editor, const char *cmd) {
     if (equal_Command(cmd, "bmed.accept") || equal_Command(cmd, "cancel")) {
         if (equal_Command(cmd, "bmed.accept")) {
@@ -2552,8 +2547,6 @@ static iBool handleBookmarkCreationCommands_SidebarWidget_(iWidget *editor, cons
             postCommand_App("bookmarks.changed");
         }
         destroy_Widget(editor);
-        /* Sidebars are disabled when a dialog is opened. */
-        enableSidebars_();
         return iTrue;
     }
     return iFalse;
@@ -2583,8 +2576,6 @@ iWidget *makeBookmarkCreation_Widget(const iString *url, const iString *title, i
 static iBool handleFeedSettingCommands_(iWidget *dlg, const char *cmd) {
     if (equal_Command(cmd, "cancel")) {
         destroy_Widget(dlg);
-        /* Sidebars are disabled when a dialog is opened. */
-        enableSidebars_();
         return iTrue;
     }
     if (equal_Command(cmd, "feedcfg.accept")) {
@@ -2619,8 +2610,6 @@ static iBool handleFeedSettingCommands_(iWidget *dlg, const char *cmd) {
         }
         postCommand_App("bookmarks.changed");
         destroy_Widget(dlg);
-        /* Sidebars are disabled when a dialog is opened. */
-        enableSidebars_();
         return iTrue;
     }
     return iFalse;
