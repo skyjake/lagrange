@@ -374,10 +374,6 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
             break;
         }
         case identities_SidebarMode: {
-            /* Actions. */ {
-                addActionButton_SidebarWidget_(d, add_Icon " ${sidebar.action.ident.new}", "ident.new", 0);
-                addActionButton_SidebarWidget_(d, "${sidebar.action.ident.import}", "ident.import", 0);
-            }
             const iString *tabUrl = url_DocumentWidget(document_App());
             isEmpty = iTrue;
             iConstForEach(PtrArray, i, identities_GmCerts(certs_App())) {
@@ -413,6 +409,11 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 addItem_ListWidget(d->list, item);
                 iRelease(item);
                 isEmpty = iFalse;
+            }
+            /* Actions. */
+            if (!isEmpty) {
+                addActionButton_SidebarWidget_(d, add_Icon " ${sidebar.action.ident.new}", "ident.new", 0);
+                addActionButton_SidebarWidget_(d, "${sidebar.action.ident.import}", "ident.import", 0);
             }
             const iMenuItem menuItems[] = {
                 { person_Icon " ${ident.use}", 0, 0, "ident.use arg:1" },
