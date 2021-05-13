@@ -44,6 +44,7 @@ int cmp_MsgStr_(const void *e1, const void *e2) {
 enum iPluralType {
     none_PluralType,
     notEqualToOne_PluralType,
+    polish_PluralType,
     slavic_PluralType,
 };
 
@@ -58,6 +59,10 @@ static size_t pluralIndex_Lang_(const iLang *d, int n) {
     switch (d->pluralType) {
         case notEqualToOne_PluralType:
             return n != 1;
+        case polish_PluralType:
+            return n == 1                                                          ? 0
+                   : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? 1
+                                                                                   : 2;
         case slavic_PluralType:
             return n % 10 == 1 && n % 100 != 11                                    ? 0
                    : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? 1
@@ -81,6 +86,7 @@ static void load_Lang_(iLang *d, const char *id) {
                        : equal_CStr(id, "de")      ? &blobDe_Embedded
                        : equal_CStr(id, "ia")      ? &blobIa_Embedded
                        : equal_CStr(id, "ie")      ? &blobIe_Embedded
+                       : equal_CStr(id, "pl")      ? &blobPl_Embedded
                        : equal_CStr(id, "sr")      ? &blobSr_Embedded
                        : equal_CStr(id, "tok")     ? &blobTok_Embedded
                        : equal_CStr(id, "zh_Hans") ? &blobZh_Hans_Embedded
@@ -88,6 +94,9 @@ static void load_Lang_(iLang *d, const char *id) {
                                                    : &blobEn_Embedded;
     if (data == &blobRu_Embedded || data == &blobSr_Embedded) {
         d->pluralType = slavic_PluralType;
+    }
+    else if (data == &blobPl_Embedded) {
+        d->pluralType = polish_PluralType;
     }
     else if (data == &blobZh_Hans_Embedded || data == &blobZh_Hant_Embedded ||
              data == &blobTok_Embedded) {

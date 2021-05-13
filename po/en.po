@@ -885,6 +885,9 @@ msgstr "Italian"
 msgid "lang.ja"
 msgstr "Japanese"
 
+msgid "lang.pl"
+msgstr "Polish"
+
 msgid "lang.pt"
 msgstr "Portuguese"
 
