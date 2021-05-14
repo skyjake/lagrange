@@ -515,14 +515,14 @@ void init_Window(iWindow *d, iRect rect) {
 
 void deinit_Window(iWindow *d) {
     iRecycle();
-    if (theWindow_ == d) {
-        theWindow_ = NULL;
-    }
     iForIndices(i, d->roots) {
         if (d->roots[i]) {
             setCurrent_Root(d->roots[i]);
             deinit_Root(d->roots[i]);
         }
+    }
+    if (theWindow_ == d) {
+        theWindow_ = NULL;
     }
     setCurrent_Root(NULL);
     delete_String(d->pendingSplitUrl);
