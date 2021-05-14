@@ -928,9 +928,12 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
 iBool scrollOverflow_Widget(iWidget *d, int delta) {
     iRect bounds = bounds_Widget(d);
     const iInt2 rootSize = size_Root(d->root);
-    const iRect winRect = safeRect_Root(d->root);
-    const int yTop = top_Rect(winRect);
-    const int yBottom = bottom_Rect(winRect);
+    const iRect winRect  = safeRect_Root(d->root);
+    const int   yTop     = top_Rect(winRect);
+    const int   yBottom  = bottom_Rect(winRect);
+    if (top_Rect(bounds) >= yTop && bottom_Rect(bounds) < yBottom) {
+        return iFalse; /* fits inside just fine */
+    }
     //const int safeBottom = rootSize.y - yBottom;
     bounds.pos.y += delta;
     const iRangei range = { bottom_Rect(winRect) - height_Rect(bounds), yTop };
