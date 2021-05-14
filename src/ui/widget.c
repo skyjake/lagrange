@@ -699,25 +699,23 @@ static void arrange_Widget_(iWidget *d) {
     TRACE(d, "END");
 }
 
-#if 0
-void resetSize_Widget(iWidget *d) {
-    if (~d->flags & fixedWidth_WidgetFlag) {
-        d->rect.size.x = d->minSize.x;
-    }
-    if (~d->flags & fixedHeight_WidgetFlag) {
-        d->rect.size.y = d->minSize.y;
-    }
+static void resetArrangement_Widget_(iWidget *d) {
     iForEach(ObjectList, i, children_Widget(d)) {
         iWidget *child = as_Widget(i.object);
-        if (isArrangedSize_Widget_(child)) {
-            resetSize_Widget(child);
+        resetArrangement_Widget_(child);
+        if (isArrangedPos_Widget_(child)) {
+            if (d->flags & arrangeHorizontal_WidgetFlag) {
+                child->rect.pos.x = 0;
+            }
+            if (d->flags & arrangeVertical_WidgetFlag) {
+                child->rect.pos.y = 0;
+            }
         }
     }
 }
-#endif
 
 void arrange_Widget(iWidget *d) {
-    //resetSize_Widget_(d); /* back to initial default sizes */
+    resetArrangement_Widget_(d); /* back to initial default sizes */
     arrange_Widget_(d);
 }
 
