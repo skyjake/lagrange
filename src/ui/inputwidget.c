@@ -114,6 +114,7 @@ struct Impl_InputWidget {
     iArray          text;    /* iChar[] */
     iArray          oldText; /* iChar[] */
     iArray          lines;
+    int             lastUpdateWidth;
     iString         hint;
     iString         srcHint;
     int             leftPadding;
@@ -239,6 +240,7 @@ static void clearLines_InputWidget_(iInputWidget *d) {
 }
 
 static void updateLines_InputWidget_(iInputWidget *d) {
+    d->lastUpdateWidth = d->widget.rect.size.x;
     clearLines_InputWidget_(d);
     if (d->maxLen) {
         /* Everything on a single line. */
@@ -339,6 +341,7 @@ void init_InputWidget(iInputWidget *d, size_t maxLen) {
     d->cursor       = 0;
     d->lastCursor   = 0;
     d->cursorLine   = 0;
+    d->lastUpdateWidth = 0;
     d->verticalMoveX = -1; /* TODO: Use this. */
     d->inFlags      = eatEscape_InputWidgetFlag | enterKeyEnabled_InputWidgetFlag;
     iZap(d->mark);
@@ -1007,7 +1010,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
         updateMetrics_InputWidget_(d);
         updateLinesAndResize_InputWidget_(d);
     }
-    else if (isResize_UserEvent(ev)) {
+    else if (isResize_UserEvent(ev) || d->lastUpdateWidth != w->rect.size.x) {
         d->inFlags |= needUpdateBuffer_InputWidgetFlag;
         if (d->inFlags & isUrl_InputWidgetFlag) {
             /* Restore/omit the default scheme if necessary. */
