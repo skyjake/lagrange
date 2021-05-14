@@ -781,6 +781,7 @@ enum iRunMode {
     permanentColorFlag_RunMode      = iBit(11),
     alwaysVariableWidthFlag_RunMode = iBit(12),
     fillBackground_RunMode          = iBit(13),
+    stopAtNewline_RunMode           = iBit(14), /* don't advance past \n, consider it a wrap pos */
 };
 
 static enum iFontId fontId_Text_(const iFont *font) {
@@ -923,7 +924,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
             }
             /* TODO: Check out if `uc_wordbreak_property()` from libunistring can be used here. */
             if (ch == '\n') {
-                if (args->xposLimit > 0 && ~mode & noWrapFlag_RunMode) {
+                if (args->xposLimit > 0 && mode & stopAtNewline_RunMode) {
                     /* Stop the line here, this is a hard warp. */
                     if (args->continueFrom_out) {
                         *args->continueFrom_out = chPos;
@@ -1148,7 +1149,8 @@ iInt2 advanceRange_Text(int fontId, iRangecc text) {
 iInt2 tryAdvance_Text(int fontId, iRangecc text, int width, const char **endPos) {
     int advance;
     const int height = run_Font_(font_Text_(fontId),
-                                 &(iRunArgs){ .mode = measure_RunMode | runFlagsFromId_(fontId),
+                                 &(iRunArgs){ .mode = measure_RunMode | stopAtNewline_RunMode |
+                                                      runFlagsFromId_(fontId),
                                               .text = text,
                                               .xposLimit        = width,
                                               .continueFrom_out = endPos,
@@ -1161,6 +1163,7 @@ iInt2 tryAdvanceNoWrap_Text(int fontId, iRangecc text, int width, const char **e
     int advance;
     const int height = run_Font_(font_Text_(fontId),
                                  &(iRunArgs){ .mode = measure_RunMode | noWrapFlag_RunMode |
+                                                      stopAtNewline_RunMode |
                                                       runFlagsFromId_(fontId),
                                               .text             = text,
                                               .xposLimit        = width,
