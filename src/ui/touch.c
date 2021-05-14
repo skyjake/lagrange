@@ -338,19 +338,6 @@ static void update_TouchState_(void *ptr) {
     }
 }
 
-static iWidget *findOverflowScrollable_Widget_(iWidget *d) {
-    const iInt2 rootSize = size_Root(d->root);
-    for (iWidget *w = d; w; w = parent_Widget(w)) {
-        if (flags_Widget(w) & overflowScrollable_WidgetFlag) {
-            if (height_Widget(w) > rootSize.y && !hasVisibleChildOnTop_Widget(w)) {
-                return w;
-            }
-            return NULL;
-        }
-    }
-    return NULL;
-}
-
 static iWidget *findSlidePanel_Widget_(iWidget *d) {
     for (iWidget *w = d; w; w = parent_Widget(w)) {
         if (isVisible_Widget(w) && flags_Widget(w) & horizontalOffset_WidgetFlag) {
@@ -544,7 +531,7 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                     divvf_F3(&touch->accum, 6);
                     divfv_I2(&pixels, 6);
                     /* Allow scrolling a scrollable widget. */
-                    iWidget *flow = findOverflowScrollable_Widget_(touch->affinity);
+                    iWidget *flow = findOverflowScrollable_Widget(touch->affinity);
                     if (flow) {
                         touch->affinity = flow;
                     }

@@ -42,8 +42,12 @@ static const size_t maxUndo_InputWidget_         = 64;
 
 static void enableEditorKeysInMenus_(iBool enable) {
 #if defined (iPlatformAppleDesktop)
-    enableMenuItemsByKey_MacOS(SDLK_LEFT, KMOD_PRIMARY, enable);
+    enableMenuItemsByKey_MacOS(SDLK_LEFT,  KMOD_PRIMARY, enable);
     enableMenuItemsByKey_MacOS(SDLK_RIGHT, KMOD_PRIMARY, enable);
+    enableMenuItemsByKey_MacOS(SDLK_UP,    KMOD_PRIMARY, enable);
+    enableMenuItemsByKey_MacOS(SDLK_DOWN,  KMOD_PRIMARY, enable);
+    enableMenuItemsByKey_MacOS(SDLK_UP,    KMOD_PRIMARY | KMOD_SHIFT, enable);
+    enableMenuItemsByKey_MacOS(SDLK_DOWN,  KMOD_PRIMARY | KMOD_SHIFT, enable);
 #else
     iUnused(enable);
 #endif
@@ -84,6 +88,7 @@ iDeclareType(InputLine)
     
 struct Impl_InputLine {
     size_t offset; /* character position from the beginning */
+    size_t len;    /* length as characters */
     iString text; /* UTF-8 */
 };
 
@@ -138,7 +143,23 @@ static void clearUndo_InputWidget_(iInputWidget *d) {
     clear_Array(&d->undoStack);
 }
 
+iLocalDef iInt2 padding_(void) {
+    return init_I2(gap_UI / 2, gap_UI / 2);
+}
+
+static iRect contentBounds_InputWidget_(const iInputWidget *d) {
+    const iWidget *w         = constAs_Widget(d);
+    //    const iRect widgetBounds = bounds_Widget(w);
+    iRect          bounds = adjusted_Rect(bounds_Widget(w),
+                                 addX_I2(padding_(), d->leftPadding),
+                                 neg_I2(addX_I2(padding_(), d->rightPadding)));
+    shrink_Rect(&bounds, init_I2(gap_UI * (flags_Widget(w) & tight_WidgetFlag ? 1 : 2), 0));
+    bounds.pos.y += padding_().y / 2;
+    return bounds;
+}
+
 static void updateCursorLine_InputWidget_(iInputWidget *d) {
+    iWidget *w = as_Widget(d);
     d->cursorLine = 0;
     iConstForEach(Array, i, &d->lines) {
         const iInputLine *line = i.value;
@@ -146,6 +167,20 @@ static void updateCursorLine_InputWidget_(iInputWidget *d) {
             break;
         }
         d->cursorLine = index_ArrayConstIterator(&i);
+    }
+    /* May need to scroll to keep the cursor visible. */
+    iWidget *flow = findOverflowScrollable_Widget(w);
+    if (flow) {
+        const iRect rootRect = rect_Root(w->root);
+        int         yCursor  = contentBounds_InputWidget_(d).pos.y +
+                               lineHeight_Text(d->font) * d->cursorLine;
+        const int margin = lineHeight_Text(d->font) * 3;
+        if (yCursor < top_Rect(rootRect) + margin) {
+            scrollOverflow_Widget(flow, top_Rect(rootRect) + margin - yCursor);
+        }
+        else if (yCursor > bottom_Rect(rootRect) - margin * 3 / 2) {
+            scrollOverflow_Widget(flow, bottom_Rect(rootRect) - margin * 3 / 2 - yCursor);
+        }
     }
 }
 
@@ -159,21 +194,6 @@ static void invalidateBuffered_InputWidget_(iInputWidget *d) {
         delete_TextBuf(d->buffered);
         d->buffered = NULL;
     }
-}
-
-iLocalDef iInt2 padding_(void) {
-    return init_I2(gap_UI / 2, gap_UI / 2);
-}
-
-static iRect contentBounds_InputWidget_(const iInputWidget *d) {
-    const iWidget *w         = constAs_Widget(d);
-    const iRect widgetBounds = bounds_Widget(w);
-    iRect          bounds = adjusted_Rect(bounds_Widget(w),
-                                          addX_I2(padding_(), d->leftPadding),
-                                          neg_I2(addX_I2(padding_(), d->rightPadding)));
-    shrink_Rect(&bounds, init_I2(gap_UI * (flags_Widget(w) & tight_WidgetFlag ? 1 : 2), 0));
-    bounds.pos.y += padding_().y / 2;
-    return bounds;
 }
 
 static void updateSizeForFixedLength_InputWidget_(iInputWidget *d) {
@@ -226,6 +246,7 @@ static void updateLines_InputWidget_(iInputWidget *d) {
         init_InputLine(&line);
         iString *u8 = visText_InputWidget_(d);
         set_String(&line.text, u8);
+        line.len = length_String(u8);
         delete_String(u8);
         pushBack_Array(&d->lines, &line);
         updateCursorLine_InputWidget_(d);
@@ -249,14 +270,16 @@ static void updateLines_InputWidget_(iInputWidget *d) {
         init_InputLine(&line);
         setRange_String(&line.text, part);
         line.offset = charPos;
+        line.len    = length_String(&line.text);
         pushBack_Array(&d->lines, &line);
-        charPos += length_String(&line.text);
+        charPos += line.len;
         content.start = endPos;        
     }
     if (isEmpty_Array(&d->lines) || endsWith_String(u8, "\n")) {
         /* Always at least one empty line. */
         iInputLine line;
         init_InputLine(&line);
+        line.offset = charPos;
         pushBack_Array(&d->lines, &line);
     }
     else {
@@ -578,7 +601,11 @@ void begin_InputWidget(iInputWidget *d) {
     }
     updateCursorLine_InputWidget_(d);
     SDL_StartTextInput();
-    setFlags_Widget(w, selected_WidgetFlag | keepOnTop_WidgetFlag, iTrue);
+    setFlags_Widget(w, selected_WidgetFlag, iTrue);
+    if (d->maxLayoutLines != iInvalidSize) {
+        /* This will extend beyond the arranged region. */
+        setFlags_Widget(w, keepOnTop_WidgetFlag, iTrue);
+    }
     showCursor_InputWidget_(d);
     refresh_Widget(w);
     d->timer = SDL_AddTimer(refreshInterval_InputWidget_, cursorTimer_, d);
@@ -672,6 +699,10 @@ void setCursor_InputWidget(iInputWidget *d, size_t pos) {
     showCursor_InputWidget_(d);
 }
 
+iLocalDef iBool isLastLine_InputWidget_(const iInputWidget *d, const iInputLine *line) {
+    return (const void *) line == constAt_Array(&d->lines, size_Array(&d->lines) - 1);
+}
+
 static size_t indexForRelativeX_InputWidget_(const iInputWidget *d, int x, const iInputLine *line) {
     if (x <= 0) {
         return line->offset;
@@ -680,7 +711,7 @@ static size_t indexForRelativeX_InputWidget_(const iInputWidget *d, int x, const
     tryAdvanceNoWrap_Text(d->font, range_String(&line->text), x, &endPos);
     size_t index = line->offset;
     if (endPos == constEnd_String(&line->text)) {
-        index += length_String(&line->text);
+        index += line->len;
     }
     else {
         /* Need to know the actual character index. */
@@ -689,6 +720,9 @@ static size_t indexForRelativeX_InputWidget_(const iInputWidget *d, int x, const
             if (i.pos >= endPos) break;
             index++;
         }
+    }
+    if (!isLastLine_InputWidget_(d, line) && index == line->offset + line->len) {
+        index = iMax(index - 1, line->offset);
     }
     return index;
 }
@@ -705,11 +739,6 @@ static iBool moveCursorByLine_InputWidget_(iInputWidget *d, int dir) {
         newCursor = indexForRelativeX_InputWidget_(d, xPos, ++line);
     }
     if (newCursor != iInvalidPos) {
-        /* Clamp it to the current line. */
-        newCursor = iMax(newCursor, line->offset);
-        newCursor = iMin(newCursor, line->offset + length_String(&line->text) -
-                         /* last line is allowed to go to the cursorMax */
-                         ((const void *) line < constAt_Array(&d->lines, numLines - 1) ? 1 : 0));
         setCursor_InputWidget(d, newCursor);
         return iTrue;
     }
@@ -896,7 +925,7 @@ static iRanges lineRange_InputWidget_(const iInputWidget *d) {
         return (iRanges){ 0, 0 };
     }
     const iInputLine *line = line_InputWidget_(d, d->cursorLine);
-    return (iRanges){ line->offset, line->offset + length_String(&line->text) };
+    return (iRanges){ line->offset, line->offset + line->len };
 }
 
 static void extendRange_InputWidget_(iInputWidget *d, size_t *pos, int dir) {
@@ -1094,6 +1123,17 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                     return iTrue;
             }
         }
+#if defined (iPlatformApple)
+        if (mods == KMOD_PRIMARY || mods == (KMOD_PRIMARY | KMOD_SHIFT)) {
+            switch (key) {
+                case SDLK_UP:
+                case SDLK_DOWN:
+                    setCursor_InputWidget(d, key == SDLK_UP ? 0 : curMax);
+                    refresh_Widget(d);
+                    return iTrue;
+            }
+        }
+#endif        
         d->lastCursor = d->cursor;
         switch (key) {
             case SDLK_INSERT:
@@ -1187,7 +1227,12 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                 break;
             case SDLK_HOME:
             case SDLK_END:
-                setCursor_InputWidget(d, key == SDLK_HOME ? lineFirst : lineLast);
+                if (mods == KMOD_PRIMARY || mods == (KMOD_PRIMARY | KMOD_SHIFT)) {
+                    setCursor_InputWidget(d, key == SDLK_HOME ? 0 : curMax);
+                }
+                else {
+                    setCursor_InputWidget(d, key == SDLK_HOME ? lineFirst : lineLast);
+                }
                 refresh_Widget(w);
                 return iTrue;
             case SDLK_a:
@@ -1233,19 +1278,20 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                 /* Allow focus switching. */
                 return processEvent_Widget(as_Widget(d), ev);
             case SDLK_UP:
-                if (moveCursorByLine_InputWidget_(d, -1)) {
-                    refresh_Widget(d);
-                    return iTrue;
-                }
-                /* For moving to lookup from url entry. */
-                return processEvent_Widget(as_Widget(d), ev);
             case SDLK_DOWN:
-                if (moveCursorByLine_InputWidget_(d, +1)) {
+                if (moveCursorByLine_InputWidget_(d, key == SDLK_UP ? -1 : +1)) {
                     refresh_Widget(d);
                     return iTrue;
                 }
                 /* For moving to lookup from url entry. */
                 return processEvent_Widget(as_Widget(d), ev);
+            case SDLK_PAGEUP:
+            case SDLK_PAGEDOWN:
+                for (int count = 0; count < 5; count++) {
+                    moveCursorByLine_InputWidget_(d, key == SDLK_PAGEUP ? -1 : +1);
+                }
+                refresh_Widget(d);
+                return iTrue;        
         }
         if (mods & (KMOD_PRIMARY | KMOD_SECONDARY)) {
             return iFalse;
@@ -1265,6 +1311,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
     return processEvent_Widget(w, ev);
 }
 
+#if 0
 static iBool isWhite_(const iString *str) {
     iConstForEach(String, i, str) {
         if (!isSpace_Char(i.value)) {
@@ -1273,6 +1320,7 @@ static iBool isWhite_(const iString *str) {
     }
     return iTrue;
 }
+#endif
 
 static void draw_InputWidget_(const iInputWidget *d) {
     const iWidget *w         = constAs_Widget(d);
@@ -1337,7 +1385,8 @@ static void draw_InputWidget_(const iInputWidget *d) {
                                        .x;
                     fillRect_Paint(&p,
                                    (iRect){ addX_I2(drawPos, iMin(m1, m2)),
-                                            init_I2(iAbs(m2 - m1), lineHeight_Text(d->font)) },
+                                            init_I2(iMax(gap_UI / 3, iAbs(m2 - m1)),
+                                                    lineHeight_Text(d->font)) },
                                    uiMarked_ColorId);
                 }
             }
@@ -1405,13 +1454,7 @@ static void draw_InputWidget_(const iInputWidget *d) {
     drawChildren_Widget(w);
 }
 
-//static void sizeChanged_InputWidget_(iInputWidget *d) {
-//    printf("[InputWidget] %p: size changed, updating layout\n", d);
-//    updateLinesAndResize_InputWidget_(d, iFalse);
-//}
-
 iBeginDefineSubclass(InputWidget, Widget)
     .processEvent = (iAny *) processEvent_InputWidget_,
     .draw         = (iAny *) draw_InputWidget_,
-//    .sizeChanged  = (iAny *) sizeChanged_InputWidget_,
 iEndDefineSubclass(InputWidget)

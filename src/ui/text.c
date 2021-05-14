@@ -1269,7 +1269,7 @@ int drawWrapRange_Text(int fontId, iInt2 pos, int maxWidth, int color, iRangecc 
         const iInt2 adv = tryAdvance_Text(fontId, text, maxWidth, &endp);
         drawRange_Text(fontId, pos, color, (iRangecc){ text.start, endp });
         text.start = endp;
-        pos.y += adv.y;
+        pos.y += iMax(adv.y, lineHeight_Text(fontId));
     }
     return pos.y;
 }
@@ -1416,7 +1416,7 @@ static void initWrap_TextBuf_(iTextBuf *d, int font, int color, int maxWidth, iB
             const iInt2 size = (doWrap ? tryAdvance_Text(font, content, maxWidth, &content.start)
                                  : tryAdvanceNoWrap_Text(font, content, maxWidth, &content.start));
             d->size.x = iMax(d->size.x, size.x);
-            d->size.y += size.y;
+            d->size.y += iMax(size.y, lineHeight_Text(font));
         }
     }
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");

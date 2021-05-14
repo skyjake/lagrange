@@ -927,7 +927,7 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
     return iFalse;
 }
 
-static iBool scrollOverflow_Widget_(iWidget *d, int delta) {
+iBool scrollOverflow_Widget(iWidget *d, int delta) {
     iRect bounds = bounds_Widget(d);
     const iInt2 rootSize = size_Root(d->root);
     const iRect winRect = safeRect_Root(d->root);
@@ -980,7 +980,7 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
         if (!isPerPixel_MouseWheelEvent(&ev->wheel)) {
             step *= lineHeight_Text(uiLabel_FontId);
         }
-        if (scrollOverflow_Widget_(d, step)) {
+        if (scrollOverflow_Widget(d, step)) {
             return iTrue;
         }
     }
@@ -989,7 +989,7 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
             if (d->flags & overflowScrollable_WidgetFlag &&
                 ~d->flags & visualOffset_WidgetFlag &&
                 isCommand_UserEvent(ev, "widget.overflow")) {
-                scrollOverflow_Widget_(d, 0); /* check bounds */
+                scrollOverflow_Widget(d, 0); /* check bounds */
             }
             if (ev->user.code == command_UserEventCode && d->commandHandler &&
                 d->commandHandler(d, ev->user.data1)) {
@@ -1319,6 +1319,22 @@ iAny *findParentClass_Widget(const iWidget *d, const iAnyClass *class) {
         i = i->parent;
     }
     return i;
+}
+
+iAny *findOverflowScrollable_Widget(iWidget *d) {
+    const iRect rootRect = rect_Root(d->root);
+    for (iWidget *w = d; w; w = parent_Widget(w)) {
+        if (flags_Widget(w) & overflowScrollable_WidgetFlag) {
+            const iRect bounds = boundsWithoutVisualOffset_Widget(w);
+            if ((bottom_Rect(bounds) > bottom_Rect(rootRect) ||
+                 top_Rect(bounds) < top_Rect(rootRect)) &&
+                !hasVisibleChildOnTop_Widget(w)) {
+                return w;
+            }
+            return NULL;
+        }
+    }
+    return NULL;
 }
 
 size_t childCount_Widget(const iWidget *d) {

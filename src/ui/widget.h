@@ -193,6 +193,7 @@ iAny *  findChild_Widget                (const iWidget *, const char *id);
 const iPtrArray *findChildren_Widget    (const iWidget *, const char *id);
 iAny *  findParentClass_Widget          (const iWidget *, const iAnyClass *class);
 iAny *  findFocusable_Widget            (const iWidget *startFrom, enum iWidgetFocusDir focusDir);
+iAny *  findOverflowScrollable_Widget   (iWidget *);
 size_t  childCount_Widget               (const iWidget *);
 void    draw_Widget                     (const iWidget *);
 void    drawBackground_Widget           (const iWidget *);
@@ -262,6 +263,7 @@ iAny *  child_Widget                (iWidget *, size_t index); /* O(n) */
 size_t  childIndex_Widget           (const iWidget *, const iAnyObject *child); /* O(n) */
 void    arrange_Widget              (iWidget *);
 void    resetSize_Widget            (iWidget *);
+iBool   scrollOverflow_Widget       (iWidget *, int delta); /* moves the widget */
 iBool   dispatchEvent_Widget        (iWidget *, const SDL_Event *);
 iBool   processEvent_Widget         (iWidget *, const SDL_Event *);
 void    postCommand_Widget          (const iAnyObject *, const char *cmd, ...);
