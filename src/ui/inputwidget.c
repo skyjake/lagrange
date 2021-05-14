@@ -175,9 +175,9 @@ static void updateCursorLine_InputWidget_(iInputWidget *d) {
     /* May need to scroll to keep the cursor visible. */
     iWidget *flow = findOverflowScrollable_Widget(w);
     if (flow) {
-        const iRect rootRect = rect_Root(w->root);
+        const iRect rootRect = { rect_Root(w->root).pos, visibleSize_Root(w->root) };
         int         yCursor  = contentBounds_InputWidget_(d).pos.y +
-                               lineHeight_Text(d->font) * d->cursorLine;
+                               lineHeight_Text(d->font) * (int) d->cursorLine;
         const int margin = lineHeight_Text(d->font) * 3;
         if (yCursor < top_Rect(rootRect) + margin) {
             scrollOverflow_Widget(flow, top_Rect(rootRect) + margin - yCursor);
@@ -877,7 +877,8 @@ static iInt2 textOrigin_InputWidget_(const iInputWidget *d) { //}, const char *v
 
 static size_t coordIndex_InputWidget_(const iInputWidget *d, iInt2 coord) {
     const iInt2 pos = sub_I2(coord, contentBounds_InputWidget_(d).pos);
-    const size_t lineNumber = iMin(pos.y / lineHeight_Text(d->font), (int) size_Array(&d->lines) - 1);
+    const size_t lineNumber = iMin(iMax(0, pos.y) / lineHeight_Text(d->font),
+                                   (int) size_Array(&d->lines) - 1);
     const iInputLine *line = line_InputWidget_(d, lineNumber);
     const char *endPos;
     tryAdvanceNoWrap_Text(d->font, range_String(&line->text), pos.x, &endPos);
