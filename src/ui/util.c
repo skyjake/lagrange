@@ -2783,6 +2783,7 @@ int languageIndex_CStr(const char *langId) {
 iWidget *makeTranslation_Widget(iWidget *parent) {
     iWidget *dlg = makeSheet_Widget("xlt");
     setFlags_Widget(dlg, keepOnTop_WidgetFlag, iFalse);
+    dlg->minSize.x = 70 * gap_UI;
     setCommandHandler_Widget(dlg, translationHandler_);
     addChildFlags_Widget(dlg,
                          iClob(new_LabelWidget(uiHeading_ColorEscape "${heading.translate}", NULL)),
