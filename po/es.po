@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-05-05 03:55+0000\n"
-"Last-Translator: Wally Hackenslacker <mastor89@protonmail.com>\n"
+"PO-Revision-Date: 2021-05-15 06:18+0000\n"
+"Last-Translator: Nikolay Korotkiy <sikmir@gmail.com>\n"
 "Language-Team: Spanish <http://weblate.skyjake.fi/projects/lagrange/ui/es/>\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
@@ -1560,3 +1560,6 @@ msgstr "Idioma"
 
 msgid "gempub.meta.license"
 msgstr "Licencia"
+
+msgid "lang.pl"
+msgstr "Polaco"
