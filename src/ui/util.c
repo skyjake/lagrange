@@ -1257,6 +1257,7 @@ static iBool isOmittedPref_(const iString *id) {
     static const char *omittedPrefs[] = {
         "prefs.smoothscroll",
         "prefs.imageloadscroll",
+        "prefs.pinsplit",
         "prefs.retainwindow",
         "prefs.ca.file",
         "prefs.ca.path",
@@ -1597,6 +1598,7 @@ void finalizeSheet_Widget(iWidget *sheet) {
                     if (element == radioButton_PrefsElement) {
                         setBackgroundColor_Widget(value, uiBackgroundSidebar_ColorId);
                         setPadding_Widget(value, 4 * gap_UI, 2 * gap_UI, 4 * gap_UI, 2 * gap_UI);
+                        setFlags_Widget(value, arrangeWidth_WidgetFlag, iFalse);
                         setFlags_Widget(value,
                                         borderBottom_WidgetFlag |
                                         resizeToParentWidth_WidgetFlag |

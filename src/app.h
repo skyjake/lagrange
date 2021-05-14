@@ -110,6 +110,7 @@ typedef void (*iTickerFunc)(iAny *);
 
 iAny *      findWidget_App      (const char *id);
 void        addTicker_App       (iTickerFunc ticker, iAny *context);
+void        addTickerRoot_App   (iTickerFunc ticker, iRoot *root, iAny *context);
 void        removeTicker_App    (iTickerFunc ticker, iAny *context);
 void        postRefresh_App     (void);
 void        postImmediateRefresh_App(void);

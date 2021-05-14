@@ -146,6 +146,7 @@ iDeclareType(Ticker)
 
 struct Impl_Ticker {
     iAny *context;
+    iRoot *root;
     void (*callback)(iAny *);
 };
 
@@ -411,15 +412,17 @@ static iBool loadState_App_(iApp *d) {
                 const uint8_t rootIndex = bits & 0xff;
                 const uint8_t flags     = bits >> 8;
                 iRoot *root = d->window->roots[rootIndex];
-                if (root && deviceType_App() != phone_AppDeviceType) {
+                if (root) {
                     iSidebarWidget *sidebar  = findChild_Widget(root->widget, "sidebar");
                     iSidebarWidget *sidebar2 = findChild_Widget(root->widget, "sidebar2");
-                    setWidth_SidebarWidget(sidebar,  widths[0]);
-                    setWidth_SidebarWidget(sidebar2, widths[1]);
                     postCommandf_Root(root, "sidebar.mode arg:%u", modes & 0xf);
                     postCommandf_Root(root, "sidebar2.mode arg:%u", modes >> 4);
-                    if (flags & 1) postCommand_Root(root, "sidebar.toggle");
-                    if (flags & 2) postCommand_Root(root, "sidebar2.toggle");
+                    if (deviceType_App() != phone_AppDeviceType) {
+                        setWidth_SidebarWidget(sidebar,  widths[0]);
+                        setWidth_SidebarWidget(sidebar2, widths[1]);
+                        if (flags & 1) postCommand_Root(root, "sidebar.toggle");
+                        if (flags & 2) postCommand_Root(root, "sidebar2.toggle");
+                    }
                 }
             }
             else if (!memcmp(magic, magicTabDocument_App_, 4)) {
@@ -776,6 +779,10 @@ static void init_App_(iApp *d, int argc, char **argv) {
         iRelease(openCmds);
     }
     fetchRemote_Bookmarks(d->bookmarks);
+    if (deviceType_App() != desktop_AppDeviceType) {
+        /* HACK: Force a resize so widgets update their state. */
+        resize_Window(d->window, -1, -1);
+    }
 }
 
 static void deinit_App(iApp *d) {
@@ -1175,7 +1182,7 @@ static void runTickers_App_(iApp *d) {
     iConstForEach(Array, i, &pending->values) {
         const iTicker *ticker = i.value;
         if (ticker->callback) {
-            setCurrent_Root(findRoot_Window(d->window, ticker->context)); /* root might be NULL */
+            setCurrent_Root(ticker->root); /* root might be NULL */
             ticker->callback(ticker->context);
         }
     }
@@ -1406,13 +1413,19 @@ iAny *findWidget_App(const char *id) {
 
 void addTicker_App(iTickerFunc ticker, iAny *context) {
     iApp *d = &app_;
-    insert_SortedArray(&d->tickers, &(iTicker){ context, ticker });
+    insert_SortedArray(&d->tickers, &(iTicker){ context, get_Root(), ticker });
+    postRefresh_App();
+}
+
+void addTickerRoot_App(iTickerFunc ticker, iRoot *root, iAny *context) {
+    iApp *d = &app_;
+    insert_SortedArray(&d->tickers, &(iTicker){ context, root, ticker });
     postRefresh_App();
 }
 
 void removeTicker_App(iTickerFunc ticker, iAny *context) {
     iApp *d = &app_;
-    remove_SortedArray(&d->tickers, &(iTicker){ context, ticker });
+    remove_SortedArray(&d->tickers, &(iTicker){ context, NULL, ticker });
 }
 
 iMimeHooks *mimeHooks_App(void) {

@@ -196,7 +196,7 @@ didPickDocumentsAtURLs:(NSArray<NSURL *> *)urls {
     CGRect keyboardFrame = [view convertRect:rawFrame fromView:nil];
 //    NSLog(@"keyboardFrame: %@", NSStringFromCGRect(keyboardFrame));
     iWindow *window = get_Window();
-    const iInt2 rootSize = rootSize_Window(window);
+    const iInt2 rootSize = size_Root(window->roots[0]);
     const int keyTop = keyboardFrame.origin.y * window->pixelRatio;
     setKeyboardHeight_Window(window, rootSize.y - keyTop);
 }

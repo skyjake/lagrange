@@ -156,6 +156,9 @@ static iRect contentBounds_InputWidget_(const iInputWidget *d) {
                                  neg_I2(addX_I2(padding_(), d->rightPadding)));
     shrink_Rect(&bounds, init_I2(gap_UI * (flags_Widget(w) & tight_WidgetFlag ? 1 : 2), 0));
     bounds.pos.y += padding_().y / 2;
+    if (flags_Widget(w) & extraPadding_WidgetFlag) {
+        bounds.pos.y += gap_UI;
+    }
     return bounds;
 }
 
@@ -955,6 +958,9 @@ static iRect bounds_InputWidget_(const iInputWidget *d) {
         return bounds;
     }
     bounds.size.y = contentHeight_InputWidget_(d, iFalse) + 3 * padding_().y;
+    if (w->flags & extraPadding_WidgetFlag) {
+        bounds.size.y += 2 * gap_UI;
+    }
     return bounds;
 }
 
@@ -1005,6 +1011,13 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
             }
         }
         return iFalse;
+    }
+    else if (isCommand_UserEvent(ev, "text.insert")) {
+        pushUndo_InputWidget_(d);
+        deleteMarked_InputWidget_(d);
+        insertChar_InputWidget_(d, arg_Command(command_UserEvent(ev)));
+        contentsWereChanged_InputWidget_(d);
+        return iTrue;
     }
     else if (isMetricsChange_UserEvent(ev)) {
         updateMetrics_InputWidget_(d);
@@ -1351,7 +1364,8 @@ static void draw_InputWidget_(const iInputWidget *d) {
                             isFocused ? gap_UI / 4 : 1,
                             isFocused ? uiInputFrameFocused_ColorId
                                       : isHover ? uiInputFrameHover_ColorId : uiInputFrame_ColorId);
-    setClip_Paint(&p, adjusted_Rect(bounds, init_I2(d->leftPadding, 0), init_I2(-d->rightPadding, 0)));
+    setClip_Paint(&p, adjusted_Rect(bounds, init_I2(d->leftPadding, 0),
+                                    init_I2(-d->rightPadding, w->flags & extraPadding_WidgetFlag ? -gap_UI / 2 : 0)));
     const iRect contentBounds = contentBounds_InputWidget_(d);
 //    const iInt2 textOrigin = textOrigin_InputWidget_(d); //, cstr_String(text));
     iInt2       drawPos    = topLeft_Rect(contentBounds);

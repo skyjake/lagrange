@@ -1444,7 +1444,8 @@ static void scrollBegan_DocumentWidget_(iAnyObject *any, int offset, uint32_t du
     }
     /* Show and hide toolbar on scroll. */
     if (deviceType_App() == phone_AppDeviceType) {
-        if (prefs_App()->hideToolbarOnScroll && iAbs(offset) > 5) {
+        if (prefs_App()->hideToolbarOnScroll && iAbs(offset) > 5 &&
+            normScrollPos_DocumentWidget_(d) > 0) {
             showToolbars_Root(as_Widget(d)->root, offset < 0);
         }
     }
@@ -1584,6 +1585,7 @@ static void inputQueryValidator_(iInputWidget *input, void *context) {
                              avail < 128 ? uiTextStrong_ColorId
                                          : uiTextDim_ColorId);
     delete_String(url);
+    arrange_Widget(findChild_Widget(dlg, "dialogbuttons"));
 }
 
 static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
@@ -1616,16 +1618,27 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                     uiTextCaution_ColorEscape "${dlg.input.send}",
                     format_CStr("!document.input.submit doc:%p", d));
                 iWidget *buttons = findChild_Widget(dlg, "dialogbuttons");
-                iLabelWidget *lineBreak =
-                    insertChildAfter_Widget(buttons, iClob(new_LabelWidget("${dlg.input.linebreak}"
-                                                                           uiTextAction_ColorEscape
-                                                                           "  " shiftReturn_Icon,
-                                                                           NULL)), 0);
+                iLabelWidget *lineBreak;
+                /* The line break and URL length counters are positioned differently on mobile. */
+                if (deviceType_App() == desktop_AppDeviceType) {
+                    lineBreak = new_LabelWidget("${dlg.input.linebreak}"
+                                                uiTextAction_ColorEscape
+                                                "  " shiftReturn_Icon,
+                                                NULL);
+                    insertChildAfter_Widget(buttons, iClob(lineBreak), 0);
+                }
+                else {
+                    lineBreak = new_LabelWidget("${dlg.input.linebreak}", "text.insert arg:10");
+                }
+                setFlags_Widget(as_Widget(lineBreak), frameless_WidgetFlag, iTrue);
                 setTextColor_LabelWidget(lineBreak, uiTextDim_ColorId);
                 setId_Widget(addChildPosFlags_Widget(buttons,
                                                      iClob(new_LabelWidget("", NULL)),
                                                      front_WidgetAddPos, frameless_WidgetFlag),
                              "valueinput.counter");
+                if (deviceType_App() != desktop_AppDeviceType) {
+                    addChildPos_Widget(buttons, iClob(lineBreak), front_WidgetAddPos);
+                }
                 setValidator_InputWidget(findChild_Widget(dlg, "input"), inputQueryValidator_, d);
                 setSensitiveContent_InputWidget(findChild_Widget(dlg, "input"),
                                                 statusCode == sensitiveInput_GmStatusCode);

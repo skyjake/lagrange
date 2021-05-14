@@ -151,6 +151,11 @@ void setFlags_Widget(iWidget *d, int64_t flags, iBool set) {
                 removeOne_PtrArray(onTop, d);
             }
         }
+        if (d->flags & arrangeWidth_WidgetFlag &&
+            d->flags & resizeToParentWidth_WidgetFlag) {
+            printf("[Widget] Conflicting flags for ");
+            identify_Widget(d);
+        }
     }
 }
 
@@ -210,7 +215,7 @@ void setVisualOffset_Widget(iWidget *d, int value, uint32_t span, int animFlags)
     else {
         setValue_Anim(&d->visualOffset, value, span);
         d->visualOffset.flags = animFlags;
-        addTicker_App(visualOffsetAnimation_Widget_, d);
+        addTickerRoot_App(visualOffsetAnimation_Widget_, d->root, d);
     }
 }
 
@@ -471,12 +476,19 @@ static void arrange_Widget_(iWidget *d) {
     const int expCount = numExpandingChildren_Widget_(d);
     TRACE(d, "%d expanding children", expCount);
     /* Resize children to fill the parent widget. */
+    iAssert((d->flags & (resizeToParentWidth_WidgetFlag | arrangeWidth_WidgetFlag)) !=
+            (resizeToParentWidth_WidgetFlag | arrangeWidth_WidgetFlag));
     if (d->flags & resizeChildren_WidgetFlag) {
         const iInt2 dirs = init_I2((d->flags & resizeWidthOfChildren_WidgetFlag) != 0,
                                    (d->flags & resizeHeightOfChildren_WidgetFlag) != 0);
 #if !defined (NDEBUG)
         /* Check for conflicting flags. */
-        if (dirs.x) iAssert(~d->flags & arrangeWidth_WidgetFlag);
+        if (dirs.x) {
+            if (d->flags & arrangeWidth_WidgetFlag) {
+                identify_Widget(d);
+            }
+            iAssert(~d->flags & arrangeWidth_WidgetFlag);
+        }
         if (dirs.y) iAssert(~d->flags & arrangeHeight_WidgetFlag);
 #endif
         TRACE(d, "resize children, x:%d y:%d (own size: %dx%d)", dirs.x, dirs.y,
@@ -715,8 +727,10 @@ static void resetArrangement_Widget_(iWidget *d) {
 }
 
 void arrange_Widget(iWidget *d) {
-    resetArrangement_Widget_(d); /* back to initial default sizes */
-    arrange_Widget_(d);
+    if (d) {
+        resetArrangement_Widget_(d); /* back to initial default sizes */
+        arrange_Widget_(d);
+    }
 }
 
 static void applyVisualOffset_Widget_(const iWidget *d, iInt2 *pos) {
@@ -919,9 +933,11 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
             }
         }
         if (class_Widget(d)->processEvent(d, ev)) {
+            iAssert(get_Root() == d->root);
             return iTrue;
         }
     }
+    iAssert(get_Root() == d->root);
     return iFalse;
 }
 
@@ -994,6 +1010,7 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
             }
             if (ev->user.code == command_UserEventCode && d->commandHandler &&
                 d->commandHandler(d, ev->user.data1)) {
+                iAssert(get_Root() == d->root);
                 return iTrue;
             }
             break;
@@ -1586,7 +1603,7 @@ static void printInfo_Widget_(const iWidget *d) {
                cstr_String(text_LabelWidget((const iLabelWidget *) d)),
                cstr_String(command_LabelWidget((const iLabelWidget *) d)));
     }
-    printf("size:%dx%d {min:%dx%d} [%d..%d %d:%d] flags:%08llx%s%s%s%s%s\n",
+    printf("size:%dx%d {min:%dx%d} [%d..%d %d:%d] flags:%08llx%s%s%s%s%s%s%s\n",
            d->rect.size.x, d->rect.size.y,
            d->minSize.x, d->minSize.y,
            d->padding[0], d->padding[2],
@@ -1596,7 +1613,9 @@ static void printInfo_Widget_(const iWidget *d) {
            d->flags & tight_WidgetFlag ? " tight" : "",
            d->flags & fixedWidth_WidgetFlag ? " fixW" : "",
            d->flags & fixedHeight_WidgetFlag ? " fixH" : "",
-           d->flags & resizeToParentWidth_WidgetFlag ? " rsPrnW" : "");
+           d->flags & resizeToParentWidth_WidgetFlag ? " prnW" : "",
+           d->flags & arrangeWidth_WidgetFlag ? " aW" : "",
+           d->flags & resizeWidthOfChildren_WidgetFlag ? " rsWChild" : "");
 }
 
 static void printTree_Widget_(const iWidget *d, int indent) {

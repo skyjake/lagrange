@@ -555,6 +555,7 @@ static void updateMetrics_SidebarWidget_(iSidebarWidget *d) {
                                        .x);
         }
     }
+    printf("maxButtonLabelWidth: %d\n", d->maxButtonLabelWidth);
     updateItemHeight_SidebarWidget_(d);
 }
 
@@ -578,11 +579,11 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     d->itemFonts[0] = uiContent_FontId;
     d->itemFonts[1] = uiContentBold_FontId;
 #if defined (iPlatformAppleMobile)
-    d->widthAsGaps = 73;
     if (deviceType_App() == phone_AppDeviceType) {
         d->itemFonts[0] = defaultBig_FontId;
         d->itemFonts[1] = defaultBigBold_FontId;
     }
+    d->widthAsGaps = 73;
 #else
     d->widthAsGaps = 60;
 #endif
@@ -806,7 +807,7 @@ void setWidth_SidebarWidget(iSidebarWidget *d, float widthAsGaps) {
     if (isVisible_Widget(w)) {
         w->rect.size.x = width;
     }
-    arrange_Widget(findWidget_App("stack"));
+    arrange_Widget(findWidget_Root("stack"));
     checkModeButtonLayout_SidebarWidget_(d);
     updateItemHeight_SidebarWidget_(d);
     if (!isFixedWidth && !isRefreshPending_App()) {
@@ -1661,7 +1662,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
         drawRange_Text(
             font, cPos, d->listItem.isSelected ? iconColor : metaFg, range_String(&icon));
         deinit_String(&icon);
-        drawRange_Text(d->listItem.isSelected ? uiContentBold_FontId : font,
+        drawRange_Text(d->listItem.isSelected ? sidebar->itemFonts[1] : font,
                        add_I2(cPos, init_I2(indent, 0)),
                        fg,
                        range_String(&d->label));

@@ -269,6 +269,7 @@ iAnyObject *findWidget_Root(const char *id) {
 }
 
 void destroyPending_Root(iRoot *d) {
+    iRoot *oldRoot = current_Root();
     setCurrent_Root(d);
     iForEach(PtrSet, i, d->pendingDestruction) {
         iWidget *widget = *i.value;
@@ -282,7 +283,7 @@ void destroyPending_Root(iRoot *d) {
         iRelease(widget);
         remove_PtrSetIterator(&i);
     }
-    setCurrent_Root(NULL);
+    setCurrent_Root(oldRoot);
 }
 
 void postArrange_Root(iRoot *d) {
@@ -414,6 +415,7 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
         else {
             addChildPos_Widget(findChild_Widget(root, "stack"), iClob(sidebar), back_WidgetAddPos);
             setWidth_SidebarWidget(sidebar, (float) width_Widget(root) / (float) gap_UI);
+            setWidth_SidebarWidget(sidebar2, (float) width_Widget(root) / (float) gap_UI);
         }
         return iFalse;
     }
@@ -595,7 +597,7 @@ static void updateNavBarSize_(iWidget *navBar) {
     if (isPhone) {
         static const char *buttons[] = { "navbar.back",  "navbar.forward", "navbar.sidebar",
                                          "navbar.ident", "navbar.home",    "navbar.menu" };
-        iWidget *toolBar = findWidget_App("toolbar");
+        iWidget *toolBar = findWidget_Root("toolbar");
         setVisualOffset_Widget(toolBar, 0, 0, 0);
         setFlags_Widget(toolBar, hidden_WidgetFlag, isLandscape_App());
         iForIndices(i, buttons) {
@@ -1216,7 +1218,9 @@ void createUserInterface_Root(iRoot *d) {
         setFlags_Widget(toolBar, moveToParentBottomEdge_WidgetFlag |
                                      parentCannotResizeHeight_WidgetFlag |
                                      resizeWidthOfChildren_WidgetFlag |
-                                     arrangeHeight_WidgetFlag | arrangeHorizontal_WidgetFlag, iTrue);
+                                     arrangeHeight_WidgetFlag | arrangeHorizontal_WidgetFlag |
+                                     commandOnClick_WidgetFlag |
+                                     drawBackgroundToBottom_WidgetFlag, iTrue);
         setBackgroundColor_Widget(toolBar, tmBannerBackground_ColorId);
         setId_Widget(addChildFlags_Widget(toolBar,
                                           iClob(newLargeIcon_LabelWidget("\U0001f870", "navigate.back")),
@@ -1244,17 +1248,17 @@ void createUserInterface_Root(iRoot *d) {
             setFlags_Widget(i.object, noBackground_WidgetFlag, iTrue);
             setTextColor_LabelWidget(i.object, tmBannerIcon_ColorId);
             //            setBackgroundColor_Widget(i.object, tmBannerSideTitle_ColorId);
-            }
+        }
         const iMenuItem items[] = {
             { pin_Icon " ${sidebar.bookmarks}", 0, 0, "toolbar.showview arg:0" },
             { star_Icon " ${sidebar.feeds}", 0, 0, "toolbar.showview arg:1" },
             { clock_Icon " ${sidebar.history}", 0, 0, "toolbar.showview arg:2" },
             { page_Icon " ${toolbar.outline}", 0, 0, "toolbar.showview arg:4" },
-            };
+        };
         iWidget *menu = makeMenu_Widget(findChild_Widget(toolBar, "toolbar.view"),
                                         items, iElemCount(items));
         setId_Widget(menu, "toolbar.menu"); /* view menu */
-        }
+    }
 #endif
     updatePadding_Root(d);
     /* Global context menus. */ {
@@ -1319,6 +1323,11 @@ void createUserInterface_Root(iRoot *d) {
     }
     updateMetrics_Root(d);
     updateNavBarSize_(navBar);
+    if (deviceType_App() == phone_AppDeviceType) {
+        const float sidebarWidth = width_Widget(root) / (float) gap_UI;
+        setWidth_SidebarWidget(findChild_Widget(root, "sidebar"), sidebarWidth);
+        setWidth_SidebarWidget(findChild_Widget(root, "sidebar2"), sidebarWidth);
+    }
 }
 
 void showToolbars_Root(iRoot *d, iBool show) {

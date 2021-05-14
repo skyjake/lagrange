@@ -227,7 +227,7 @@ static void dispatchButtonUp_Touch_(iFloat3 pos) {
 
 static void dispatchNotification_Touch_(const iTouch *d, int code) {
     if (d->affinity) {
-        iRoot *oldRoot = get_Root();
+        iRoot *oldRoot = current_Root();
         setCurrent_Root(d->affinity->root);
         dispatchEvent_Widget(d->affinity, (SDL_Event *) &(SDL_UserEvent){
             .type = SDL_USEREVENT,
@@ -334,7 +334,7 @@ static void update_TouchState_(void *ptr) {
     }
     /* Keep updating if interaction is still ongoing. */
     if (!isEmpty_Array(d->touches) || !isEmpty_Array(d->moms)) {
-        addTicker_App(update_TouchState_, ptr);
+        addTickerRoot_App(update_TouchState_, NULL, ptr);
     }
 }
 
@@ -479,7 +479,7 @@ iBool processEvent_Touch(const SDL_Event *ev) {
         }
         /* This may begin a pinch. */
         checkNewPinch_TouchState_(d, back_Array(d->touches));
-        addTicker_App(update_TouchState_, d);
+        addTickerRoot_App(update_TouchState_, NULL, d);
     }
     else if (ev->type == SDL_FINGERMOTION) {
         iTouch *touch = find_TouchState_(d, fing->fingerId);

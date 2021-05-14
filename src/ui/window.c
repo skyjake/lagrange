@@ -171,19 +171,6 @@ int numRoots_Window(const iWindow *d) {
     return num;
 }
 
-static void setupUserInterface_Window(iWindow *d) {
-#if defined (iPlatformAppleDesktop)
-    insertMacMenus_();
-#endif
-    /* One root is created by default. */
-    d->roots[0] = new_Root();
-    setCurrent_Root(d->roots[0]);
-    createUserInterface_Root(d->roots[0]);
-    setCurrent_Root(NULL);
-    /* One of the roots always has keyboard input focus. */
-    d->keyRoot = d->roots[0];
-}
-
 static void windowSizeChanged_Window_(iWindow *d) {
     const int numRoots = numRoots_Window(d);
     const iInt2 rootSize = d->size;
@@ -212,6 +199,19 @@ static void windowSizeChanged_Window_(iWindow *d) {
             arrange_Widget(root->widget);
         }
     }
+}
+
+static void setupUserInterface_Window(iWindow *d) {
+#if defined (iPlatformAppleDesktop)
+    insertMacMenus_();
+#endif
+    /* One root is created by default. */
+    d->roots[0] = new_Root();
+    setCurrent_Root(d->roots[0]);
+    createUserInterface_Root(d->roots[0]);
+    setCurrent_Root(NULL);
+    /* One of the roots always has keyboard input focus. */
+    d->keyRoot = d->roots[0];
 }
 
 static void updateSize_Window_(iWindow *d, iBool notifyAlways) {
@@ -761,7 +761,7 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
 #if defined (iPlatformMobile)
         case SDL_WINDOWEVENT_RESIZED:
             /* On mobile, this occurs when the display is rotated. */
-            invalidate_Window_(d);
+            invalidate_Window(d);
             postRefresh_App();
             return iTrue;
 #endif
@@ -772,7 +772,7 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
             d->isExposed = iTrue;
 #if defined (iPlatformMobile)
             /* Returned to foreground, may have lost buffered content. */
-            invalidate_Window_(d);
+            invalidate_Window(d);
             postCommand_App("window.unfreeze");
 #endif
             return iFalse;
@@ -995,7 +995,7 @@ void draw_Window(iWindow *d) {
     /* Check if root needs resizing. */ {
         iInt2 renderSize;
         SDL_GetRendererOutputSize(d->render, &renderSize.x, &renderSize.y);
-        if (!isEqual_I2(renderSize, d->root->rect.size)) {
+        if (!isEqual_I2(renderSize, d->size)) {
             updateSize_Window_(d, iTrue);
             processEvents_App(postedEventsOnly_AppEventMode);
         }
@@ -1008,7 +1008,7 @@ void draw_Window(iWindow *d) {
     /* Clear the window. The clear color is visible as a border around the window
        when the custom frame is being used. */ {
 #if defined (iPlatformAppleMobile)
-        const iColor back = get_Color(tmBackground_ColorId);
+        const iColor back = get_Color(uiBackground_ColorId);
 #else
         const iColor back = get_Color(gotFocus && d->place.snap != maximized_WindowSnap &&
                                               ~winFlags & SDL_WINDOW_FULLSCREEN_DESKTOP
