@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-05-05 03:55+0000\n"
-"Last-Translator: MCMic <come@chilliet.eu>\n"
+"PO-Revision-Date: 2021-05-15 06:18+0000\n"
+"Last-Translator: Nikolay Korotkiy <sikmir@gmail.com>\n"
 "Language-Team: French <http://weblate.skyjake.fi/projects/lagrange/ui/fr/>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -1547,3 +1547,6 @@ msgstr "Licence"
 
 msgid "gempub.cover.view"
 msgstr "Voir le contenu du Gempub"
+
+msgid "lang.pl"
+msgstr "Polonais"
