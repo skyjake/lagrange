@@ -2287,7 +2287,9 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         }
         updateFetchProgress_DocumentWidget_(d);
         checkResponse_DocumentWidget_(d);
-        init_Anim(&d->scrollY.pos, d->initNormScrollY * size_GmDocument(d->doc).y); /* TODO: unless user already scrolled! */
+        if (category_GmStatusCode(status_GmRequest(d->request)) == success_GmStatusCode) {
+            init_Anim(&d->scrollY.pos, d->initNormScrollY * size_GmDocument(d->doc).y); /* TODO: unless user already scrolled! */
+        }
         d->state = ready_RequestState;
         postProcessRequestContent_DocumentWidget_(d, iFalse);
         /* The response may be cached. */
