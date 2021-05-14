@@ -80,7 +80,7 @@ void toString_Sym(int key, int kmods, iString *str) {
         appendChar_String(str, 0x2325);
     }
     if (kmods & KMOD_SHIFT) {
-        appendChar_String(str, 0x21e7);
+        appendCStr_String(str, shift_Icon);
     }
     if (kmods & KMOD_GUI) {
         appendChar_String(str, 0x2318);
@@ -93,7 +93,7 @@ void toString_Sym(int key, int kmods, iString *str) {
         appendCStr_String(str, "Alt+");
     }
     if (kmods & KMOD_SHIFT) {
-        appendCStr_String(str, "Shift+");
+        appendCStr_String(str, shift_Icon "+");
     }
     if (kmods & KMOD_GUI) {
         appendCStr_String(str, "Meta+");
@@ -138,7 +138,7 @@ void toString_Sym(int key, int kmods, iString *str) {
     }
     else if (key == SDLK_RETURN) {
         removePlus_(str);
-        appendChar_String(str, 0x21a9); /* Leftwards arrow with a hook */
+        appendCStr_String(str, return_Icon); /* Leftwards arrow with a hook */
     }
     else {
         appendCStr_String(str, SDL_GetKeyName(key));
@@ -904,7 +904,7 @@ static iBool isTabPage_Widget_(const iWidget *tabs, const iWidget *page) {
 static void unfocusFocusInsideTabPage_(const iWidget *page) {
     iWidget *focus = focus_Widget();
     if (page && focus && hasParent_Widget(focus, page)) {
-        printf("unfocus inside page: %p\n", focus);
+//        printf("unfocus inside page: %p\n", focus);
         setFocus_Widget(NULL);
     }
 }
@@ -1806,7 +1806,8 @@ static void updateValueInputWidth_(iWidget *dlg) {
         dlg->rect.size.x = rootSize.x;
     }
     else {
-        dlg->rect.size.x = iMaxi(iMaxi(rootSize.x / 2, title->rect.size.x), prompt->rect.size.x);
+        dlg->rect.size.x =
+            iMaxi(iMaxi(iMin(rootSize.x, 100 * gap_UI), title->rect.size.x), prompt->rect.size.x);
     }
 }
 
@@ -1879,6 +1880,12 @@ iWidget *makeDialogButtons_Widget(const iMenuItem *actions, size_t numActions) {
         const iBool isDefault = (i == numActions - 1);
         if (*label == '*' || *label == '&') {
             continue; /* Special value selection items for a Question dialog. */
+        }
+        if (startsWith_CStr(label, "```")) {
+            /* Annotation. */
+            iLabelWidget *annotation = addChild_Widget(div, iClob(new_LabelWidget(label + 3, NULL)));
+            setTextColor_LabelWidget(annotation, uiTextAction_ColorId);
+            continue;
         }
         if (!iCmpStr(label, "---")) {
             /* Separator.*/

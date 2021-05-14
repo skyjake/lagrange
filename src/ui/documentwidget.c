@@ -1615,7 +1615,14 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                         : cstr_String(&resp->meta),
                     uiTextCaution_ColorEscape "${dlg.input.send}",
                     format_CStr("!document.input.submit doc:%p", d));
-                setId_Widget(addChildPosFlags_Widget(findChild_Widget(dlg, "dialogbuttons"),
+                iWidget *buttons = findChild_Widget(dlg, "dialogbuttons");
+                iLabelWidget *lineBreak =
+                    insertChildAfter_Widget(buttons, iClob(new_LabelWidget("${dlg.input.linebreak}"
+                                                                           uiTextAction_ColorEscape
+                                                                           "  " shiftReturn_Icon,
+                                                                           NULL)), 0);
+                setTextColor_LabelWidget(lineBreak, uiTextDim_ColorId);
+                setId_Widget(addChildPosFlags_Widget(buttons,
                                                      iClob(new_LabelWidget("", NULL)),
                                                      front_WidgetAddPos, frameless_WidgetFlag),
                              "valueinput.counter");

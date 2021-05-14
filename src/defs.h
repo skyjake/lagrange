@@ -90,6 +90,16 @@ enum iFileVersion {
 #define globe_Icon          "\U0001f310"
 #define magnifyingGlass_Icon "\U0001f50d"
 #define midEllipsis_Icon    "\u00b7\u00b7\u00b7"
+#define return_Icon         "\u21a9"
+
+#if defined (iPlatformApple)
+#   define shift_Icon       "\u21e7"
+#   define shiftReturn_Icon shift_Icon return_Icon
+#else
+#   define shift_Icon       "Shift"
+#   define shiftReturn_Icon shift_Icon " " return_Icon
+#endif
+
 
 /* UI labels that depend on the platform */
 
