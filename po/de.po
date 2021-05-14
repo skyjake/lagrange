@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-05-06 09:39+0000\n"
-"Last-Translator: Jaakko Keränen <jaakko.keranen@iki.fi>\n"
+"PO-Revision-Date: 2021-05-15 06:18+0000\n"
+"Last-Translator: Nikolay Korotkiy <sikmir@gmail.com>\n"
 "Language-Team: German <http://weblate.skyjake.fi/projects/lagrange/ui/de/>\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
@@ -1100,7 +1100,7 @@ msgid "prefs.mono"
 msgstr "Körper in Monospace:"
 
 msgid "prefs.linewidth"
-msgstr "Zeilenbreite"
+msgstr "Zeilenbreite:"
 
 msgid "prefs.linewidth.fill"
 msgstr "Füllung"
@@ -1208,3 +1208,9 @@ msgstr "SEITENINHALT"
 
 msgid "heading.prefs.proxies"
 msgstr "PROXIES"
+
+msgid "gempub.meta.lang"
+msgstr "Sprache"
+
+msgid "lang.pl"
+msgstr "Polnisch"
