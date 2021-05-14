@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-05-06 15:03+0000\n"
-"Last-Translator: Страхиња Радић <contact@strahinja.org>\n"
+"PO-Revision-Date: 2021-05-15 06:18+0000\n"
+"Last-Translator: Nikolay Korotkiy <sikmir@gmail.com>\n"
 "Language-Team: Serbian <http://weblate.skyjake.fi/projects/lagrange/ui/sr/>\n"
 "Language: sr\n"
 "MIME-Version: 1.0\n"
@@ -1616,3 +1616,6 @@ msgstr[2] "Овај директоријум садржи %zu ставки."
 
 msgid "keys.tab.close.other"
 msgstr "Затварање осталих картица"
+
+msgid "lang.pl"
+msgstr "Пољски"
