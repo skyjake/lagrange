@@ -741,6 +741,9 @@ static void resetArrangement_Widget_(iWidget *d) {
                 child->rect.pos.y = 0;
             }
         }
+        if (child->flags & expand_WidgetFlag) {
+            child->rect = zero_Rect();
+        }
     }
 }
 

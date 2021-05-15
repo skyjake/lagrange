@@ -1836,7 +1836,7 @@ static void updateValueInputWidth_(iWidget *dlg) {
     }
     else {
         dlg->rect.size.x =
-            iMaxi(iMaxi(iMin(rootSize.x, 100 * gap_UI), title->rect.size.x), prompt->rect.size.x);
+            iMin(rootSize.x, iMaxi(iMaxi(100 * gap_UI, title->rect.size.x), prompt->rect.size.x));
     }
 }
 
