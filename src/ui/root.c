@@ -350,6 +350,7 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
     }
     else if (equal_Command(cmd, "input.resized")) {
         /* No parent handled this, so do a full rearrangement. */
+        /* TODO: Defer this and do a single rearrangement later. */
         arrange_Widget(root);
         postRefresh_App();
         return iTrue;

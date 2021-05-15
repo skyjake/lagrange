@@ -340,7 +340,7 @@ static void update_TouchState_(void *ptr) {
 
 static iWidget *findSlidePanel_Widget_(iWidget *d) {
     for (iWidget *w = d; w; w = parent_Widget(w)) {
-        if (isVisible_Widget(w) && flags_Widget(w) & horizontalOffset_WidgetFlag) {
+        if (isVisible_Widget(w) && flags_Widget(w) & edgeDraggable_WidgetFlag) {
             return w;
         }
     }
@@ -453,6 +453,8 @@ iBool processEvent_Touch(const SDL_Event *ev) {
         if (edge == left_TouchEdge) {
             dragging = findSlidePanel_Widget_(aff);
             if (dragging) {
+                printf("Selected for dragging: ");
+                identify_Widget(dragging);
                 setFlags_Widget(dragging, dragged_WidgetFlag, iTrue);
             }
         }
@@ -743,6 +745,20 @@ void widgetDestroyed_Touch(iWidget *widget) {
 
 iInt2 latestPosition_Touch(void) {
     return touchState_()->currentTouchPos;
+}
+
+iBool isHovering_Touch(void) {
+    iTouchState *d = touchState_();
+    if (numFingers_Touch() == 1) {
+        const iTouch *touch = constFront_Array(d->touches);
+        if (touch->isTapBegun && isStationary_Touch_(touch)) {
+            return iTrue;
+        }
+        if (touch->isTapAndHold) {
+            return iTrue;
+        }
+    }
+    return iFalse;
 }
 
 size_t numFingers_Touch(void) {

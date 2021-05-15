@@ -117,6 +117,9 @@ enum iWidgetFlag {
 #define parentCannotResizeHeight_WidgetFlag iBit64(58)
 #define ignoreForParentWidth_WidgetFlag     iBit64(59)
 #define noFadeBackground_WidgetFlag         iBit64(60)
+#define destroyPending_WidgetFlag           iBit64(61) /* TODO: needed? */
+#define edgeDraggable_WidgetFlag            iBit64(62)
+#define topPanelOffset_WidgetFlag           iBit64(63) /* visual offset determined by the offset of siblings */
 
 enum iWidgetAddPos {
     back_WidgetAddPos,
@@ -139,9 +142,10 @@ struct Impl_Widget {
     iAnim        visualOffset;
     int          bgColor;
     int          frameColor;
+//    iAnim        fadeOpacity;
     iObjectList *children;
     iWidget *    parent;
-    iBool (*commandHandler)(iWidget *, const char *);
+    iBool      (*commandHandler)(iWidget *, const char *);
     iRoot *      root;
 };
 

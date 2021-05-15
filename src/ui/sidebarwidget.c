@@ -555,7 +555,6 @@ static void updateMetrics_SidebarWidget_(iSidebarWidget *d) {
                                        .x);
         }
     }
-    printf("maxButtonLabelWidth: %d\n", d->maxButtonLabelWidth);
     updateItemHeight_SidebarWidget_(d);
 }
 

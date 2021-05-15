@@ -40,6 +40,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #   include "../ios.h"
 #endif
 
+static void printInfo_Widget_(const iWidget *);
+
 void releaseChildren_Widget(iWidget *d) {
     iForEach(ObjectList, i, d->children) {
         ((iWidget *) i.object)->parent = NULL; /* the actual reference being held */
@@ -59,11 +61,22 @@ void init_Widget(iWidget *d) {
     d->bgColor        = none_ColorId;
     d->frameColor     = none_ColorId;
     init_Anim(&d->visualOffset, 0.0f);
+//    init_Anim(&d->fadeOpacity, 0.0f);
     d->children       = NULL;
     d->parent         = NULL;
     d->commandHandler = NULL;
     iZap(d->padding);
 }
+
+#if 0
+static void animateFadeOpacity_Widget_(void *ptr) {
+    iWidget *d = ptr;
+    postRefresh_App();
+    if (!isFinished_Anim(&d->fadeOpacity)) {
+        addTicker_App(animateFadeOpacity_Widget_, ptr);
+    }
+}
+#endif
 
 static void visualOffsetAnimation_Widget_(void *ptr) {
     iWidget *d = ptr;
@@ -89,10 +102,12 @@ void deinit_Widget(iWidget *d) {
     if (d->flags & visualOffset_WidgetFlag) {
         removeTicker_App(visualOffsetAnimation_Widget_, d);
     }
+//    removeTicker_App(animateFadeOpacity_Widget_, d);
     widgetDestroyed_Touch(d);
 }
 
 static void aboutToBeDestroyed_Widget_(iWidget *d) {
+    d->flags |= destroyPending_WidgetFlag;
     if (isFocused_Widget(d)) {
         setFocus_Widget(NULL);
         return;
@@ -371,10 +386,13 @@ iRect innerBounds_Widget(const iWidget *d) {
     return ib;
 }
 
-//iLocalDef iBool isArranged_Widget_(const iWidget *d) {
-//    return !isCollapsed_Widget_(d) && ~d->flags & fixedPosition_WidgetFlag;
-//}
-
+iRect innerBoundsWithoutVisualOffset_Widget(const iWidget *d) {
+    iRect ib = adjusted_Rect(boundsWithoutVisualOffset_Widget(d),
+                             init_I2(d->padding[0], d->padding[1]),
+                             init_I2(-d->padding[2], -d->padding[3]));
+    ib.size = max_I2(zero_I2(), ib.size);
+    return ib;
+}
 
 static size_t numArrangedChildren_Widget_(const iWidget *d) {
     size_t count = 0;
@@ -743,6 +761,16 @@ static void applyVisualOffset_Widget_(const iWidget *d, iInt2 *pos) {
             pos->y += off;
         }
     }
+    if (d->flags & topPanelOffset_WidgetFlag) {
+        iConstForEach(ObjectList, i, children_Widget(parent_Widget(d))) {
+            const iWidget *child = i.object;
+            if (child == d) continue;
+            if (child->flags & (visualOffset_WidgetFlag | dragged_WidgetFlag)) {
+                const int invOff = size_Root(d->root).x - iRound(value_Anim(&child->visualOffset));
+                pos->x -= invOff / 3;
+            }
+        }
+    }
 }
 
 iRect bounds_Widget(const iWidget *d) {
@@ -942,7 +970,7 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
 }
 
 iBool scrollOverflow_Widget(iWidget *d, int delta) {
-    iRect bounds = bounds_Widget(d);
+    iRect       bounds   = boundsWithoutVisualOffset_Widget(d);
     const iInt2 rootSize = size_Root(d->root);
     const iRect winRect  = safeRect_Root(d->root);
     const int   yTop     = top_Rect(winRect);
@@ -1046,6 +1074,7 @@ void drawBackground_Widget(const iWidget *d) {
     if (d->flags & noBackground_WidgetFlag) {
         return;
     }
+//    iAnim *fadeOpacity = (iAnim *) &d->fadeOpacity;
     if (d->flags & hidden_WidgetFlag && ~d->flags & visualOffset_WidgetFlag) {
         return;
     }
@@ -1063,10 +1092,24 @@ void drawBackground_Widget(const iWidget *d) {
         init_Paint(&p);
         drawSoftShadow_Paint(&p, bounds_Widget(d), 12 * gap_UI, black_ColorId, 30);
     }
-    
-    if (fadeBackground && ~d->flags & noFadeBackground_WidgetFlag) {
+    const iBool isFaded = fadeBackground &&
+                          ~d->flags & noFadeBackground_WidgetFlag &&
+                          ~d->flags & destroyPending_WidgetFlag;
+#if 0
+    if (isFaded && fadeOpacity->to != 1.0f) {
+        setValue_Anim(fadeOpacity, 1.0f, 150);
+        animateFadeOpacity_Widget_((void *) d);
+    }
+    else if (!isFaded && fadeOpacity->to != 0.0f) {
+        setValue_Anim(fadeOpacity, 0.0f, 150);
+        animateFadeOpacity_Widget_((void *) d);
+    }
+    if (value_Anim(fadeOpacity) > 0.0f) {
+#endif
+    if (isFaded) {
         iPaint p;
         init_Paint(&p);
+//        p.alpha = (uint8_t) (2 * 0x50 * value_Anim(&d->fadeOpacity));
         p.alpha = 0x50;
         SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_BLEND);
         int fadeColor;
@@ -1081,9 +1124,7 @@ void drawBackground_Widget(const iWidget *d) {
                 fadeColor = gray50_ColorId;
                 break;
         }
-        fillRect_Paint(&p,
-                       rect_Root(d->root),
-                       fadeColor);
+        fillRect_Paint(&p, rect_Root(d->root), fadeColor);
         SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_NONE);
     }
     if (d->bgColor >= 0 || d->frameColor >= 0) {
@@ -1603,7 +1644,8 @@ static void printInfo_Widget_(const iWidget *d) {
                cstr_String(text_LabelWidget((const iLabelWidget *) d)),
                cstr_String(command_LabelWidget((const iLabelWidget *) d)));
     }
-    printf("size:%dx%d {min:%dx%d} [%d..%d %d:%d] flags:%08llx%s%s%s%s%s%s%s\n",
+    printf("pos:%d,%d size:%dx%d {min:%dx%d} [%d..%d %d:%d] flags:%08llx%s%s%s%s%s%s%s\n",
+           d->rect.pos.x, d->rect.pos.y,
            d->rect.size.x, d->rect.size.y,
            d->minSize.x, d->minSize.y,
            d->padding[0], d->padding[2],

@@ -255,9 +255,10 @@ size_t          tabCount_Widget         (const iWidget *tabs);
 
 /*-----------------------------------------------------------------------------------------------*/
 
-iWidget *   makeSheet_Widget        (const char *id);
-void        finalizeSheet_Widget    (iWidget *sheet);
-iWidget *   makeDialogButtons_Widget(const iMenuItem *actions, size_t numActions);
+iWidget *   makeSheet_Widget            (const char *id);
+void        finalizeSheet_Widget        (iWidget *sheet);
+void        setupSheetTransition_Widget (iWidget *sheet, iBool isIncoming);
+iWidget *   makeDialogButtons_Widget    (const iMenuItem *actions, size_t numActions);
 
 iInputWidget *addTwoColumnDialogInputField_Widget(iWidget *headings, iWidget *values,
                                                   const char *labelText, const char *inputId,

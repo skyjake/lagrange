@@ -1056,7 +1056,14 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     }
                     continue;
                 }
-                else if (ev.type == SDL_USEREVENT && ev.user.code == arrange_UserEventCode) {
+                d->lastEventTime = SDL_GetTicks();
+                if (d->isIdling) {
+//                    printf("[App] ...woke up\n");
+//                    fflush(stdout);
+                }
+                d->isIdling = iFalse;
+#endif
+                if (ev.type == SDL_USEREVENT && ev.user.code == arrange_UserEventCode) {
                     printf("[App] rearrange\n");
                     resize_Window(d->window, -1, -1);
                     iForIndices(i, d->window->roots) {
@@ -1073,13 +1080,6 @@ void processEvents_App(enum iAppEventMode eventMode) {
 //                    postRefresh_App();
                     continue;
                 }
-                d->lastEventTime = SDL_GetTicks();
-                if (d->isIdling) {
-//                    printf("[App] ...woke up\n");
-//                    fflush(stdout);
-                }
-                d->isIdling = iFalse;
-#endif
                 gotEvents = iTrue;
                 /* Keyboard modifier mapping. */
                 if (ev.type == SDL_KEYDOWN || ev.type == SDL_KEYUP) {
@@ -1508,6 +1508,7 @@ static void updateFontButton_(iLabelWidget *button, int font) {
 
 static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
     if (equal_Command(cmd, "prefs.dismiss") || equal_Command(cmd, "preferences")) {
+        setupSheetTransition_Widget(d, iFalse);
         setUiScale_Window(get_Window(),
                           toFloat_String(text_InputWidget(findChild_Widget(d, "prefs.uiscale"))));
 #if defined (LAGRANGE_ENABLE_DOWNLOAD_EDIT)

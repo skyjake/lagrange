@@ -41,4 +41,5 @@ enum iWidgetTouchMode   widgetMode_Touch            (const iWidget *widget);
 void                    widgetDestroyed_Touch       (iWidget *widget);
 
 iInt2   latestPosition_Touch    (void); /* valid during processing of current event */
+iBool   isHovering_Touch        (void); /* stationary touch or a long-press drag ongoing */
 size_t  numFingers_Touch        (void);

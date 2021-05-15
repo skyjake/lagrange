@@ -1444,8 +1444,8 @@ static void scrollBegan_DocumentWidget_(iAnyObject *any, int offset, uint32_t du
     }
     /* Show and hide toolbar on scroll. */
     if (deviceType_App() == phone_AppDeviceType) {
-        if (prefs_App()->hideToolbarOnScroll && iAbs(offset) > 5 &&
-            normScrollPos_DocumentWidget_(d) > 0) {
+        const float normPos = normScrollPos_DocumentWidget_(d);
+        if (prefs_App()->hideToolbarOnScroll && iAbs(offset) > 5 && normPos >= 0) {
             showToolbars_Root(as_Widget(d)->root, offset < 0);
         }
     }

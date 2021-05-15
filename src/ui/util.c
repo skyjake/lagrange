@@ -837,7 +837,7 @@ void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, iBool postCommands) {
     if (postCommands) {
         postCommand_Widget(d, "menu.opened");
     }
-    if (isPortraitPhone) {
+    if (deviceType_App() == phone_AppDeviceType) {
         setVisualOffset_Widget(d, isSlidePanel ? width_Widget(d) : height_Widget(d), 0, 0);
         setVisualOffset_Widget(d, 0, 330, easeOut_AnimFlag | softer_AnimFlag);
     }
@@ -851,7 +851,7 @@ void closeMenu_Widget(iWidget *d) {
     setFlags_Widget(findChild_Widget(d, "menu.cancel"), disabled_WidgetFlag, iTrue);
     postRefresh_App();
     postCommand_Widget(d, "menu.closed");
-    if (isPortrait_App() && deviceType_App() == phone_AppDeviceType) {
+    if (deviceType_App() == phone_AppDeviceType) {
         const iBool wasDragged = iAbs(value_Anim(&d->visualOffset) - 0) > 1;
         setVisualOffset_Widget(d,
                                flags_Widget(d) & horizontalOffset_WidgetFlag ?
@@ -1206,7 +1206,13 @@ static iBool slidePanelHandler_(iWidget *d, const char *cmd) {
         iWidget *panel = userData_Object(button);
         openMenu_Widget(panel, innerToWindow_Widget(panel, zero_I2()));
         setFlags_Widget(panel, disabled_WidgetFlag, iFalse);
-//        updateTextCStr_LabelWidget(findWidget_App("panel.back"), );
+        /*
+        if (deviceType_App() == phone_AppDeviceType && isPortrait_App()) {
+            setFlags_Widget(d, visualOffset_WidgetFlag | horizontalOffset_WidgetFlag, iTrue);
+            d->visualOffset = panel->visualOffset;
+            d->visualOffset.to = -d->visualOffset.from / 3;
+            d->visualOffset.from = 0;
+        }*/
         return iTrue;
     }
     if (equal_Command(cmd, "mouse.clicked") && arg_Command(cmd) &&
@@ -1220,6 +1226,13 @@ static iBool slidePanelHandler_(iWidget *d, const char *cmd) {
             iWidget *child = i.object;
             if (!cmp_String(id_Widget(child), "panel") && isVisible_Widget(child)) {
                 closeMenu_Widget(child);
+                /*
+                if (deviceType_App() == phone_AppDeviceType && isPortrait_App()) {
+                    setFlags_Widget(d, visualOffset_WidgetFlag | horizontalOffset_WidgetFlag, iTrue);
+                    d->visualOffset = child->visualOffset;
+                    d->visualOffset.from = -d->visualOffset.to / 3;
+                    d->visualOffset.to = 0;
+                }*/
                 setFlags_Widget(child, disabled_WidgetFlag, iTrue);
                 setFocus_Widget(NULL);
                 updateTextCStr_LabelWidget(findWidget_App("panel.back"), "Back");
@@ -1373,6 +1386,15 @@ static iWidget *makeValuePaddingWithHeading_(iLabelWidget *heading, iWidget *val
     if (isInstance_Object(value, &Class_InputWidget)) {
         addChildFlags_Widget(div, iClob(value), expand_WidgetFlag);
     }
+    else if (isInstance_Object(value, &Class_LabelWidget) &&
+             cmp_String(command_LabelWidget((iLabelWidget *) value), "toggle")) {
+        addChildFlags_Widget(div, iClob(value), expand_WidgetFlag);
+        /* TODO: This doesn't work? */
+//        setCommand_LabelWidget(heading,
+//                               collectNewFormat_String("!%s ptr:%p",
+//                                           cstr_String(command_LabelWidget((iLabelWidget *) value)),
+//                                           value));
+    }
     else {
         addChildFlags_Widget(div, iClob(new_Widget()), expand_WidgetFlag);
         addChild_Widget(div, iClob(value));
@@ -1400,7 +1422,8 @@ static iWidget *addChildPanel_(iWidget *sheet, iLabelWidget *panelButton,
                          focusRoot_WidgetFlag | hidden_WidgetFlag | disabled_WidgetFlag |
                              arrangeVertical_WidgetFlag | resizeWidthOfChildren_WidgetFlag |
                              arrangeHeight_WidgetFlag | overflowScrollable_WidgetFlag |
-                             horizontalOffset_WidgetFlag | commandOnClick_WidgetFlag);
+                             horizontalOffset_WidgetFlag | edgeDraggable_WidgetFlag |
+                             commandOnClick_WidgetFlag);
     return owner;
 }
 
@@ -1433,7 +1456,8 @@ void finalizeSheet_Widget(iWidget *sheet) {
         setFlags_Widget(sheet,
                         commandOnClick_WidgetFlag |
                         frameless_WidgetFlag |
-                        resizeWidthOfChildren_WidgetFlag,
+                        resizeWidthOfChildren_WidgetFlag |
+                        edgeDraggable_WidgetFlag,
                         iTrue);
         iPtrArray *   contents         = collect_PtrArray(new_PtrArray()); /* two-column pages */
         iPtrArray *   panelButtons     = collect_PtrArray(new_PtrArray());
@@ -1443,6 +1467,7 @@ void finalizeSheet_Widget(iWidget *sheet) {
         const int64_t panelButtonFlags = borderBottom_WidgetFlag | alignLeft_WidgetFlag |
                                          frameless_WidgetFlag | extraPadding_WidgetFlag;
         iWidget *topPanel = new_Widget();
+        setFlags_Widget(topPanel, topPanelOffset_WidgetFlag, iTrue); /* slide with children */
         setId_Widget(topPanel, "panel.top");
         addChild_Widget(topPanel, iClob(makePadding_Widget(lineHeight_Text(defaultBig_FontId))));
         if (prefsTabs) {
@@ -1493,7 +1518,8 @@ void finalizeSheet_Widget(iWidget *sheet) {
         const iBool useSlidePanels = (size_PtrArray(contents) == size_PtrArray(panelButtons));
         addChildFlags_Widget(sheet, iClob(topPanel),
                              arrangeVertical_WidgetFlag |
-                             resizeWidthOfChildren_WidgetFlag | arrangeHeight_WidgetFlag |
+                             resizeWidthOfChildren_WidgetFlag |
+                             arrangeHeight_WidgetFlag |
                              overflowScrollable_WidgetFlag |
                              commandOnClick_WidgetFlag);
         setCommandHandler_Widget(topPanel, slidePanelHandler_);
@@ -1636,7 +1662,8 @@ void finalizeSheet_Widget(iWidget *sheet) {
 #if defined (iPlatformAppleMobile)
                 appendCStr_String(msg, " (" LAGRANGE_IOS_VERSION ")");
 #endif
-                addChild_Widget(panel, iClob(new_LabelWidget(cstr_String(msg), NULL)));
+                addChildFlags_Widget(panel, iClob(new_LabelWidget(cstr_String(msg), NULL)),
+                                     frameless_WidgetFlag);
                 addChildFlags_Widget(panel,
                                      iClob(makePanelButton_(globe_Icon " By @jk@skyjake.fi",
                                                             "!open url:https://skyjake.fi/@jk")),
@@ -2011,13 +2038,17 @@ iWidget *makeQuestion_Widget(const char *title, const char *msg,
         const iMenuItem *item = &items[i];
         const char first = item->label[0];
         if (first == '*' || first == '&') {
-            addChildFlags_Widget(dlg,
+            iLabelWidget *option =
+                addChildFlags_Widget(dlg,
                                  iClob(newKeyMods_LabelWidget(item->label + 1,
                                                               item->key,
                                                               item->kmods,
                                                               item->command)),
                                  resizeToParentWidth_WidgetFlag |
                                  (first == '&' ? selected_WidgetFlag : 0));
+            if (deviceType_App() != desktop_AppDeviceType) {
+                setFont_LabelWidget(option, defaultBig_FontId);
+            }
         }
     }
     addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
@@ -2225,6 +2256,23 @@ static void addPrefsInputWithHeading_(iWidget *headings, iWidget *values,
     addDialogInputWithHeading_(headings, values, format_CStr("${%s}", id), id, input);
 }
 
+void setupSheetTransition_Widget(iWidget *sheet, iBool isIncoming) {
+    if (deviceType_App() == phone_AppDeviceType && isPortrait_App()) {
+        identify_Widget(sheet);
+        /* View transition. */
+        if (isIncoming) {
+            setFlags_Widget(sheet, horizontalOffset_WidgetFlag, iTrue);
+            setVisualOffset_Widget(sheet, size_Root(sheet->root).x, 0, 0);
+            setVisualOffset_Widget(sheet, 0, 200, easeOut_AnimFlag);
+        }
+        else {
+            const iBool wasDragged = iAbs(value_Anim(&sheet->visualOffset)) > 0;
+            setVisualOffset_Widget(sheet, size_Root(sheet->root).x, wasDragged ? 100 : 200,
+                                   wasDragged ? 0 : easeIn_AnimFlag);
+        }
+    }
+}
+
 iWidget *makePreferences_Widget(void) {
     iWidget *dlg = makeSheet_Widget("prefs");
     addChildFlags_Widget(dlg,
@@ -2257,14 +2305,16 @@ iWidget *makePreferences_Widget(void) {
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.hoverlink")));
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.archive.openindex}")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.archive.openindex")));
-        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.pinsplit}")));
-        iWidget *pinSplit = new_Widget();
-        /* Split mode document pinning. */ {
-            addRadioButton_(pinSplit, "prefs.pinsplit.0", "${prefs.pinsplit.none}", "pinsplit.set arg:0");
-            addRadioButton_(pinSplit, "prefs.pinsplit.1", "${prefs.pinsplit.left}", "pinsplit.set arg:1");
-            addRadioButton_(pinSplit, "prefs.pinsplit.2", "${prefs.pinsplit.right}", "pinsplit.set arg:2");
+        if (deviceType_App() != phone_AppDeviceType) {
+            addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.pinsplit}")));
+            iWidget *pinSplit = new_Widget();
+            /* Split mode document pinning. */ {
+                addRadioButton_(pinSplit, "prefs.pinsplit.0", "${prefs.pinsplit.none}", "pinsplit.set arg:0");
+                addRadioButton_(pinSplit, "prefs.pinsplit.1", "${prefs.pinsplit.left}", "pinsplit.set arg:1");
+                addRadioButton_(pinSplit, "prefs.pinsplit.2", "${prefs.pinsplit.right}", "pinsplit.set arg:2");
+            }
+            addChildFlags_Widget(values, iClob(pinSplit), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
         }
-        addChildFlags_Widget(values, iClob(pinSplit), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
         addChild_Widget(headings, iClob(makePadding_Widget(bigGap)));
         addChild_Widget(values, iClob(makePadding_Widget(bigGap)));
         /* UI languages. */ {
@@ -2486,6 +2536,7 @@ iWidget *makePreferences_Widget(void) {
                         (iMenuItem[]){ { "${dismiss}", SDLK_ESCAPE, 0, "prefs.dismiss" } }, 1)));
     addChild_Widget(dlg->root->widget, iClob(dlg));
     finalizeSheet_Widget(dlg);
+    setupSheetTransition_Widget(dlg, iTrue);
 //    printTree_Widget(dlg);
     return dlg;
 }
