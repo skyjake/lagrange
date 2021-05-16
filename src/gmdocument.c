@@ -712,12 +712,25 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 meta->flags |= topLeft_GmPreMetaFlag;
             }
         }
-        /* Visited links are never bold. */
-        if (!isMono && run.linkId && linkFlags_GmDocument(d, run.linkId) & visited_GmLinkFlag) {
-            run.font = paragraph_FontId;
+        float lineHeightReduction = 0.0f;
+        if (!isMono) {
+            /* Upper-level headings are typeset a bit tighter. */
+            if (type == heading1_GmLineType) {
+                lineHeightReduction = 0.10f;
+            }
+            else if (type == heading2_GmLineType) {
+                lineHeightReduction = 0.05f;
+            }
+            /* Visited links are never bold. */
+            if (run.linkId && linkFlags_GmDocument(d, run.linkId) & visited_GmLinkFlag) {
+                run.font = paragraph_FontId;
+            }
         }
         iAssert(!isEmpty_Range(&runLine)); /* must have something at this point */
         while (!isEmpty_Range(&runLine)) {
+            if (~run.flags & startOfLine_GmRunFlag && lineHeightReduction > 0.0f) {
+                pos.y -= lineHeightReduction * lineHeight_Text(run.font);
+            }
             run.bounds.pos = addX_I2(pos, indent * gap_Text);
             const int wrapAvail = d->size.x - run.bounds.pos.x - rightMargin * gap_Text;
             const int avail = isWordWrapped ? wrapAvail : 0;
