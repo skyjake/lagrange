@@ -657,8 +657,6 @@ void finalizeSheet_Mobile(iWidget *sheet) {
         iAssert(sheet->parent);
         arrange_Widget(sheet->parent);
         postCommand_App("widget.overflow"); /* with the correct dimensions */
-        //puts("---- MOBILE LAYOUT ----");
-        //printTree_Widget(sheet);
     }
     else {
         arrange_Widget(sheet);

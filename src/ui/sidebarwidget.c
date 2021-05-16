@@ -522,11 +522,11 @@ float width_SidebarWidget(const iSidebarWidget *d) {
 }
 
 static const char *normalModeLabels_[max_SidebarMode] = {
-    book_Icon " ${sidebar.bookmarks}",
-    star_Icon " ${sidebar.feeds}",
-    clock_Icon " ${sidebar.history}",
+    book_Icon   " ${sidebar.bookmarks}",
+    star_Icon   " ${sidebar.feeds}",
+    clock_Icon  " ${sidebar.history}",
     person_Icon " ${sidebar.identities}",
-    page_Icon " ${sidebar.outline}",
+    page_Icon   " ${sidebar.outline}",
 };
 
 static const char *tightModeLabels_[max_SidebarMode] = {
