@@ -180,6 +180,8 @@ set (SOURCES
     src/ui/root.h
     src/ui/mediaui.c
     src/ui/mediaui.h
+    src/ui/mobile.c
+    src/ui/mobile.h
     src/ui/scrollwidget.c
     src/ui/scrollwidget.h
     src/ui/sidebarwidget.c

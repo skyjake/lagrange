@@ -469,11 +469,11 @@ static void setReloadLabel_Root_(iRoot *d, iBool animating) {
     const iBool isMobile = deviceType_App() != desktop_AppDeviceType;
     iLabelWidget *label = findChild_Widget(d->widget, "reload");
     updateTextCStr_LabelWidget(
-        label, animating ? loadAnimationCStr_() : (isMobile ? pageMenuCStr_ : reloadCStr_));
-    if (isMobile) {
-        setCommand_LabelWidget(label,
-                               collectNewCStr_String(animating ? "navigate.reload" : "menu.open"));
-    }
+        label, animating ? loadAnimationCStr_() : (/*isMobile ? pageMenuCStr_ :*/ reloadCStr_));
+//    if (isMobile) {
+//        setCommand_LabelWidget(label,
+//                               collectNewCStr_String(animating ? "navigate.reload" : "menu.open"));
+//    }
 }
 
 static void checkLoadAnimation_Root_(iRoot *d) {
@@ -539,9 +539,12 @@ static iBool willPerformSearchQuery_(const iString *userInput) {
 
 static void updateUrlInputContentPadding_(iWidget *navBar) {
     iInputWidget *url = findChild_Widget(navBar, "url");
-    const iWidget *indicators = findChild_Widget(navBar, "url.rightembed");
-    setContentPadding_InputWidget(url, -1,
-                                  width_Widget(indicators));
+    const int lockWidth = width_Widget(findChild_Widget(navBar, "navbar.lock"));
+    const int indicatorsWidth = width_Widget(findChild_Widget(navBar, "url.rightembed"));
+    /* The indicators widget has a padding that covers the urlButtons area. */
+    setContentPadding_InputWidget(url,
+                                  lockWidth - 2 * gap_UI, // * 0.75f,
+                                  indicatorsWidth);
 }
 
 static void showSearchQueryIndicator_(iBool show) {
@@ -588,12 +591,12 @@ static void updateNavBarSize_(iWidget *navBar) {
                 updateSize_LabelWidget(label);
             }
         }
+        updateUrlInputContentPadding_(navBar);
         /* Note that InputWidget uses the `tight` flag to adjust its inner padding. */
-        /* TODO: Is this redundant? See `updateMetrics_Window_()`. */
-        const int embedButtonWidth = width_Widget(findChild_Widget(navBar, "navbar.lock"));
-        setContentPadding_InputWidget(findChild_Widget(navBar, "url"),
-                                      embedButtonWidth * 0.75f,
-                                      embedButtonWidth * 0.75f);
+//        const int embedButtonWidth = width_Widget(findChild_Widget(navBar, "navbar.lock"));
+//        setContentPadding_InputWidget(findChild_Widget(navBar, "url"),
+//                                      embedButtonWidth * 0.75f,
+//                                      embedButtonWidth * 0.75f);
     }
     if (isPhone) {
         static const char *buttons[] = { "navbar.back",  "navbar.forward", "navbar.sidebar",
@@ -904,15 +907,19 @@ void updateMetrics_Root(iRoot *d) {
     iWidget *url        = findChild_Widget(d->widget, "url");
     iWidget *rightEmbed = findChild_Widget(navBar, "url.rightembed");
     iWidget *embedPad   = findChild_Widget(navBar, "url.embedpad");
+    iWidget *urlButtons = findChild_Widget(navBar, "url.buttons");
     setPadding_Widget(as_Widget(url), 0, gap_UI, 0, gap_UI);
     navBar->rect.size.y = 0; /* recalculate height based on children (FIXME: shouldn't be needed) */
-    updateSize_LabelWidget((iLabelWidget *) lock);
-    setFixedSize_Widget(embedPad, init_I2(width_Widget(lock) + gap_UI / 2, 1));
-    setContentPadding_InputWidget((iInputWidget *) url, width_Widget(lock) * 0.75,
-                                  width_Widget(lock) * 0.75);
+//    updateSize_LabelWidget((iLabelWidget *) lock);
+//    updateSize_LabelWidget((iLabelWidget *) findChild_Widget(navBar, "reload"));
+//    arrange_Widget(urlButtons);
+    setFixedSize_Widget(embedPad, init_I2(width_Widget(urlButtons) + gap_UI / 2, 1));
+//    setContentPadding_InputWidget((iInputWidget *) url, width_Widget(lock) * 0.75,
+//                                  width_Widget(lock) * 0.75);
     rightEmbed->rect.pos.y = gap_UI;
     updatePadding_Root(d);
     arrange_Widget(d->widget);
+    updateUrlInputContentPadding_(navBar);
     postRefresh_App();
 }
 
@@ -1060,7 +1067,7 @@ void createUserInterface_Root(iRoot *d) {
                 setNoAutoMinHeight_LabelWidget(fprog, iTrue);
                 addChildFlags_Widget(rightEmbed,
                                      iClob(fprog),
-                                     collapse_WidgetFlag | frameless_WidgetFlag | hidden_WidgetFlag);
+                                     collapse_WidgetFlag | hidden_WidgetFlag | frameless_WidgetFlag);
             }
             /* Download progress indicator is also inside the input field, but hidden normally. */ {
                 iLabelWidget *progress = new_LabelWidget(uiTextCaution_ColorEscape "00.000 ${mb}", NULL);
@@ -1069,7 +1076,7 @@ void createUserInterface_Root(iRoot *d) {
                 setAlignVisually_LabelWidget(progress, iTrue);
                 setNoAutoMinHeight_LabelWidget(progress, iTrue);
                 addChildFlags_Widget(
-                    rightEmbed, iClob(progress), collapse_WidgetFlag);
+                    rightEmbed, iClob(progress), collapse_WidgetFlag | hidden_WidgetFlag);
             }
             /* Pinning indicator. */ {
                 iLabelWidget *pin = new_LabelWidget(uiTextAction_ColorEscape leftHalf_Icon, NULL);
@@ -1079,39 +1086,44 @@ void createUserInterface_Root(iRoot *d) {
                 setNoAutoMinHeight_LabelWidget(pin, iTrue);
                 addChildFlags_Widget(rightEmbed,
                                      iClob(pin),
-                                     collapse_WidgetFlag | tight_WidgetFlag | frameless_WidgetFlag);
+                                     collapse_WidgetFlag | hidden_WidgetFlag | tight_WidgetFlag | frameless_WidgetFlag);
+            }
+            iWidget *urlButtons = new_Widget();
+            setId_Widget(urlButtons, "url.buttons");
+            setFlags_Widget(urlButtons, embedFlags | arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
+            /* Mobile page menu. */
+            if (deviceType_App() != desktop_AppDeviceType) {
+                iLabelWidget *pageMenuButton;
+                /* In a mobile layout, the reload button is replaced with the Page/Ellipsis menu. */
+                pageMenuButton = makeMenuButton_LabelWidget(pageMenuCStr_,
+                    (iMenuItem[]){
+                        { upArrow_Icon " ${menu.parent}", navigateParent_KeyShortcut, "navigate.parent" },
+                        { upArrowBar_Icon " ${menu.root}", navigateRoot_KeyShortcut, "navigate.root" },
+                        { timer_Icon " ${menu.autoreload}", 0, 0, "document.autoreload.menu" },
+                        { "---", 0, 0, NULL },
+                        { bookmark_Icon " ${menu.page.bookmark}", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
+                        { star_Icon " ${menu.page.subscribe}", subscribeToPage_KeyModifier, "feeds.subscribe" },
+                        { book_Icon " ${menu.page.import}", 0, 0, "bookmark.links confirm:1" },
+                        { globe_Icon " ${menu.page.translate}", 0, 0, "document.translate" },
+                        { "---", 0, 0, NULL },
+                        { "${menu.page.copyurl}", 0, 0, "document.copylink" },
+                        { "${menu.page.copysource}", 'c', KMOD_PRIMARY, "copy" },
+                        { download_Icon " " saveToDownloads_Label, SDLK_s, KMOD_PRIMARY, "document.save" } },
+                    12);
+                setId_Widget(as_Widget(pageMenuButton), "pagemenubutton");
+                setFont_LabelWidget(pageMenuButton, uiContentBold_FontId);
+                setAlignVisually_LabelWidget(pageMenuButton, iTrue);
+                addChildFlags_Widget(urlButtons, iClob(pageMenuButton), embedFlags);
+                updateSize_LabelWidget(pageMenuButton);
             }
             /* Reload button. */ {
-                iLabelWidget *reload;
-                if (deviceType_App() == desktop_AppDeviceType) {
-                    reload = newIcon_LabelWidget(reloadCStr_, 0, 0, "navigate.reload");
-                }
-                else {
-                    /* In a mobile layout, the reload button is replaced with the Page/Ellipsis menu. */
-                    reload = makeMenuButton_LabelWidget(pageMenuCStr_,
-                                                        (iMenuItem[]){
-                                                            { reload_Icon " ${menu.reload}", reload_KeyShortcut, "navigate.reload" },
-                                                            { timer_Icon " ${menu.autoreload}", 0, 0, "document.autoreload.menu" },
-                                                            { "---", 0, 0, NULL },
-                                                            { upArrow_Icon " ${menu.parent}", navigateParent_KeyShortcut, "navigate.parent" },
-                                                            { upArrowBar_Icon " ${menu.root}", navigateRoot_KeyShortcut, "navigate.root" },
-                                                            { "---", 0, 0, NULL },
-                                                            { pin_Icon " ${menu.page.bookmark}", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
-                                                            { star_Icon " ${menu.page.subscribe}", subscribeToPage_KeyModifier, "feeds.subscribe" },
-                                                            { book_Icon " ${menu.page.import}", 0, 0, "bookmark.links confirm:1" },
-                                                            { globe_Icon " ${menu.page.translate}", 0, 0, "document.translate" },
-                                                            { "---", 0, 0, NULL },
-                                                            { "${menu.page.copyurl}", 0, 0, "document.copylink" },
-                                                            { "${menu.page.copysource}", 'c', KMOD_PRIMARY, "copy" },
-                                                            { download_Icon " " saveToDownloads_Label, SDLK_s, KMOD_PRIMARY, "document.save" } },
-                                                        14);
-                    setFont_LabelWidget((iLabelWidget *) reload, uiContentBold_FontId);
-                    setAlignVisually_LabelWidget((iLabelWidget *) reload, iTrue);
-                }
+                iLabelWidget *reload = newIcon_LabelWidget(reloadCStr_, 0, 0, "navigate.reload");
                 setId_Widget(as_Widget(reload), "reload");
-                addChildFlags_Widget(as_Widget(url), iClob(reload), embedFlags | moveToParentRightEdge_WidgetFlag);
+                addChildFlags_Widget(urlButtons, iClob(reload), embedFlags);
                 updateSize_LabelWidget(reload);
             }
+            addChildFlags_Widget(as_Widget(url), iClob(urlButtons), moveToParentRightEdge_WidgetFlag);
+            arrange_Widget(urlButtons);
             setId_Widget(addChild_Widget(rightEmbed, iClob(makePadding_Widget(0))), "url.embedpad");
         }
         if (deviceType_App() != desktop_AppDeviceType) {

@@ -1651,7 +1651,7 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                 break;
             }
             case categorySuccess_GmStatusCode:
-                reset_SmoothScroll(&d->scrollY);
+                //reset_SmoothScroll(&d->scrollY);
                 reset_GmDocument(d->doc); /* new content incoming */
                 delete_Gempub(d->sourceGempub);
                 d->sourceGempub = NULL;
@@ -2307,7 +2307,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         }
         updateFetchProgress_DocumentWidget_(d);
         checkResponse_DocumentWidget_(d);
-        if (category_GmStatusCode(status_GmRequest(d->request)) == success_GmStatusCode) {
+        if (category_GmStatusCode(status_GmRequest(d->request)) == categorySuccess_GmStatusCode) {
             init_Anim(&d->scrollY.pos, d->initNormScrollY * size_GmDocument(d->doc).y); /* TODO: unless user already scrolled! */
         }
         d->state = ready_RequestState;

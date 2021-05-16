@@ -1508,7 +1508,7 @@ static void updateFontButton_(iLabelWidget *button, int font) {
 
 static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
     if (equal_Command(cmd, "prefs.dismiss") || equal_Command(cmd, "preferences")) {
-        setupSheetTransition_Widget(d, iFalse);
+        setupSheetTransition_Mobile(d, iFalse);
         setUiScale_Window(get_Window(),
                           toFloat_String(text_InputWidget(findChild_Widget(d, "prefs.uiscale"))));
 #if defined (LAGRANGE_ENABLE_DOWNLOAD_EDIT)
@@ -2383,7 +2383,7 @@ iBool handleCommand_App(const char *cmd) {
         iCertImportWidget *imp = new_CertImportWidget();
         setPageContent_CertImportWidget(imp, sourceContent_DocumentWidget(document_App()));
         addChild_Widget(get_Root()->widget, iClob(imp));
-        finalizeSheet_Widget(as_Widget(imp));
+        finalizeSheet_Mobile(as_Widget(imp));
         postRefresh_App();
         return iTrue;
     }
