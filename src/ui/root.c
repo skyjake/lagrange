@@ -1236,7 +1236,7 @@ void createUserInterface_Root(iRoot *d) {
                                           frameless_WidgetFlag),
                      "toolbar.ident");
         setId_Widget(addChildFlags_Widget(toolBar,
-                                          iClob(newLargeIcon_LabelWidget("\U0001f588", "toolbar.showview arg:-1")),
+                                          iClob(newLargeIcon_LabelWidget(book_Icon, "toolbar.showview arg:-1")),
                                           frameless_WidgetFlag | commandOnClick_WidgetFlag),
                      "toolbar.view");
         iLabelWidget *menuButton = makeMenuButton_LabelWidget("\U0001d362", phoneNavMenuItems_,
@@ -1251,7 +1251,7 @@ void createUserInterface_Root(iRoot *d) {
             //            setBackgroundColor_Widget(i.object, tmBannerSideTitle_ColorId);
         }
         const iMenuItem items[] = {
-            { pin_Icon " ${sidebar.bookmarks}", 0, 0, "toolbar.showview arg:0" },
+            { book_Icon " ${sidebar.bookmarks}", 0, 0, "toolbar.showview arg:0" },
             { star_Icon " ${sidebar.feeds}", 0, 0, "toolbar.showview arg:1" },
             { clock_Icon " ${sidebar.history}", 0, 0, "toolbar.showview arg:2" },
             { page_Icon " ${toolbar.outline}", 0, 0, "toolbar.showview arg:4" },

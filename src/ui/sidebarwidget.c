@@ -240,7 +240,7 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 as_Widget(d),
                 (iMenuItem[]){ { openTab_Icon " ${feeds.entry.newtab}", 0, 0, "feed.entry.opentab" },
                                { circle_Icon " ${feeds.entry.markread}", 0, 0, "feed.entry.toggleread" },
-                               { pin_Icon " ${feeds.entry.bookmark}", 0, 0, "feed.entry.bookmark" },
+                               { bookmark_Icon " ${feeds.entry.bookmark}", 0, 0, "feed.entry.bookmark" },
                                { "---", 0, 0, NULL },
                                { page_Icon " ${feeds.entry.openfeed}", 0, 0, "feed.entry.openfeed" },
                                { edit_Icon " ${feeds.edit}", 0, 0, "feed.entry.edit" },
@@ -365,7 +365,7 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 as_Widget(d),
                 (iMenuItem[]){
                     { "${menu.copyurl}", 0, 0, "history.copy" },
-                    { pin_Icon " ${sidebar.entry.bookmark}", 0, 0, "history.addbookmark" },
+                    { bookmark_Icon " ${sidebar.entry.bookmark}", 0, 0, "history.addbookmark" },
                     { "---", 0, 0, NULL },
                     { close_Icon " ${menu.forgeturl}", 0, 0, "history.delete" },
                     { "---", 0, 0, NULL },
@@ -522,7 +522,7 @@ float width_SidebarWidget(const iSidebarWidget *d) {
 }
 
 static const char *normalModeLabels_[max_SidebarMode] = {
-    pin_Icon " ${sidebar.bookmarks}",
+    book_Icon " ${sidebar.bookmarks}",
     star_Icon " ${sidebar.feeds}",
     clock_Icon " ${sidebar.history}",
     person_Icon " ${sidebar.identities}",
@@ -530,7 +530,7 @@ static const char *normalModeLabels_[max_SidebarMode] = {
 };
 
 static const char *tightModeLabels_[max_SidebarMode] = {
-    pin_Icon,
+    book_Icon,
     star_Icon,
     clock_Icon,
     person_Icon,
