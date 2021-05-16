@@ -61,22 +61,11 @@ void init_Widget(iWidget *d) {
     d->bgColor        = none_ColorId;
     d->frameColor     = none_ColorId;
     init_Anim(&d->visualOffset, 0.0f);
-//    init_Anim(&d->fadeOpacity, 0.0f);
     d->children       = NULL;
     d->parent         = NULL;
     d->commandHandler = NULL;
     iZap(d->padding);
 }
-
-#if 0
-static void animateFadeOpacity_Widget_(void *ptr) {
-    iWidget *d = ptr;
-    postRefresh_App();
-    if (!isFinished_Anim(&d->fadeOpacity)) {
-        addTicker_App(animateFadeOpacity_Widget_, ptr);
-    }
-}
-#endif
 
 static void visualOffsetAnimation_Widget_(void *ptr) {
     iWidget *d = ptr;
@@ -102,7 +91,6 @@ void deinit_Widget(iWidget *d) {
     if (d->flags & visualOffset_WidgetFlag) {
         removeTicker_App(visualOffsetAnimation_Widget_, d);
     }
-//    removeTicker_App(animateFadeOpacity_Widget_, d);
     widgetDestroyed_Touch(d);
 }
 
@@ -1077,7 +1065,6 @@ void drawBackground_Widget(const iWidget *d) {
     if (d->flags & noBackground_WidgetFlag) {
         return;
     }
-//    iAnim *fadeOpacity = (iAnim *) &d->fadeOpacity;
     if (d->flags & hidden_WidgetFlag && ~d->flags & visualOffset_WidgetFlag) {
         return;
     }
@@ -1098,22 +1085,15 @@ void drawBackground_Widget(const iWidget *d) {
     const iBool isFaded = fadeBackground &&
                           ~d->flags & noFadeBackground_WidgetFlag &&
                           ~d->flags & destroyPending_WidgetFlag;
-#if 0
-    if (isFaded && fadeOpacity->to != 1.0f) {
-        setValue_Anim(fadeOpacity, 1.0f, 150);
-        animateFadeOpacity_Widget_((void *) d);
-    }
-    else if (!isFaded && fadeOpacity->to != 0.0f) {
-        setValue_Anim(fadeOpacity, 0.0f, 150);
-        animateFadeOpacity_Widget_((void *) d);
-    }
-    if (value_Anim(fadeOpacity) > 0.0f) {
-#endif
     if (isFaded) {
         iPaint p;
         init_Paint(&p);
-//        p.alpha = (uint8_t) (2 * 0x50 * value_Anim(&d->fadeOpacity));
         p.alpha = 0x50;
+        if (flags_Widget(d) & visualOffset_WidgetFlag) {
+            const float area = d->rect.size.x * d->rect.size.y;
+            const float visibleArea = area_Rect(intersect_Rect(bounds_Widget(d), rect_Root(d->root)));
+            p.alpha *= (area > 0 ? visibleArea / area : 0.0f);
+        }
         SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_BLEND);
         int fadeColor;
         switch (colorTheme_App()) {

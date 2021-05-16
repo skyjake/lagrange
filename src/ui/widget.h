@@ -142,7 +142,6 @@ struct Impl_Widget {
     iAnim        visualOffset;
     int          bgColor;
     int          frameColor;
-//    iAnim        fadeOpacity;
     iObjectList *children;
     iWidget *    parent;
     iBool      (*commandHandler)(iWidget *, const char *);
