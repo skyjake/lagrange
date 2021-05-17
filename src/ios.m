@@ -302,6 +302,24 @@ iBool processEvent_iOS(const SDL_Event *ev) {
                 postCommandf_App("os.theme.changed dark:%d contrast:1", isSystemDarkMode_ ? 1 : 0);
             }
         }
+        else if (equal_Command(cmd, "theme.changed")) {
+            if (@available(iOS 13.0, *)) {
+                /* SDL doesn't expose this as a setting, so we'll rely on a hack.
+                   Adding an SDL hint for this would be a cleaner solution than calling
+                   a private method. */
+                UIViewController *vc = viewController_(get_Window());
+                SEL sel = NSSelectorFromString(@"setStatusStyle:"); /* custom method */
+                if ([vc respondsToSelector:sel]) {
+                    NSInvocation *call = [NSInvocation invocationWithMethodSignature:
+                                          [NSMethodSignature signatureWithObjCTypes:"v@:i"]];
+                    [call setSelector:sel];
+                    int style = isDark_ColorTheme(colorTheme_App()) ?
+                        UIStatusBarStyleLightContent : UIStatusBarStyleDarkContent;
+                    [call setArgument:&style atIndex:2];
+                    [call invokeWithTarget:vc];
+                }
+            }
+        }
     }
     return iFalse; /* allow normal processing */
 }
