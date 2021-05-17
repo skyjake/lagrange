@@ -30,6 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "root.h"
 #include "text.h"
 #include "widget.h"
+#include "window.h"
 
 #if defined (iPlatformAppleMobile)
 #   include "ios.h"
@@ -37,6 +38,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 static iBool useMobileSheetLayout_(void) {
     return deviceType_App() != desktop_AppDeviceType;
+}
+
+static iBool isSideBySideLayout_(void) {
+    if (deviceType_App() == phone_AppDeviceType) {
+        return isLandscape_App();
+    }
+    return numRoots_Window(get_Window()) == 1;
 }
 
 static enum iFontId labelFont_(void) {
@@ -89,7 +97,7 @@ static iBool mainDetailSplitHandler_(iWidget *mainDetailSplit, const char *cmd) 
         iWidget *    navi         = findChild_Widget(sheet, "panel.navi");
         iWidget *    detailStack  = findChild_Widget(mainDetailSplit, "detailstack");
         const size_t numPanels    = childCount_Widget(detailStack);
-        const iBool  isSideBySide = !isPortrait && numPanels > 0;
+        const iBool  isSideBySide = isSideBySideLayout_() && numPanels > 0;
         setFlags_Widget(mainDetailSplit, arrangeHorizontal_WidgetFlag, isSideBySide);
         setFlags_Widget(detailStack, expand_WidgetFlag, isSideBySide);
         setFlags_Widget(detailStack, hidden_WidgetFlag, numPanels == 0);
@@ -112,8 +120,8 @@ static iBool mainDetailSplitHandler_(iWidget *mainDetailSplit, const char *cmd) 
         }
         iForEach(ObjectList, i, children_Widget(detailStack)) {
             iWidget *panel = i.object;
-            setFlags_Widget(panel, edgeDraggable_WidgetFlag, isPortrait);
-            if (!isPortrait) {
+            setFlags_Widget(panel, edgeDraggable_WidgetFlag, !isSideBySide);
+            if (isSideBySide) {
                 setVisualOffset_Widget(panel, 0, 0, 0);
             }
             setPadding_Widget(panel, pad, 0, pad, pad);
@@ -124,7 +132,7 @@ static iBool mainDetailSplitHandler_(iWidget *mainDetailSplit, const char *cmd) 
 }
 
 static iBool topPanelHandler_(iWidget *topPanel, const char *cmd) {
-    const iBool isPortrait = useMobileSheetLayout_() && isPortrait_App();
+    const iBool isPortrait = !isSideBySideLayout_();
     if (equal_Command(cmd, "panel.open")) {
         iWidget *button = pointer_Command(cmd);
         iWidget *panel = userData_Object(button);
@@ -149,7 +157,7 @@ static iBool topPanelHandler_(iWidget *topPanel, const char *cmd) {
     }
     if (equal_Command(cmd, "panel.close")) {
         iBool wasClosed = iFalse;
-        if (isPortrait_App()) {
+        if (isPortrait) {
             iForEach(ObjectList, i, children_Widget(findDetailStack_(topPanel))) {
                 iWidget *child = i.object;
                 if (!cmp_String(id_Widget(child), "panel") && isVisible_Widget(child)) {
@@ -366,22 +374,22 @@ void finalizeSheet_Mobile(iWidget *sheet) {
             postRefresh_App();
             return;
         }
-        /*       Landscape Layout               Portrait Layout
-                                                                  
-        ┌─────────┬──────Detail─Stack─────┐  ┌─────────┬ ─ ─ ─ ─ ┐
-        │         │┌───────────────────┐  │  │         │Detail
-        │         ││┌──────────────────┴┐ │  │         │Stack    │
-        │         │││┌──────────────────┴┐│  │         │┌──────┐
-        │         ││││                   ││  │         ││┌─────┴┐│
-        │         ││││                   ││  │         │││      │
-        │Top Panel││││                   ││  │Top Panel│││      ││
-        │         ││││      Panels       ││  │         │││Panels│
-        │         ││││                   ││  │         │││      ││
-        │         │└┤│                   ││  │         │││      │
-        │         │ └┤                   ││  │         │└┤      ││
-        │         │  └───────────────────┘│  │         │ └──────┘
-        └─────────┴───────────────────────┘  └─────────┴ ─ ─ ─ ─ ┘
-                                                        offscreen
+        /*       Landscape Layout                 Portrait Layout
+                                              
+        ┌─────────┬──────Detail─Stack─────┐    ┌─────────┬ ─ ─ ─ ─ ┐
+        │         │┌───────────────────┐  │    │         │Detail
+        │         ││┌──────────────────┴┐ │    │         │Stack    │
+        │         │││┌──────────────────┴┐│    │         │┌──────┐
+        │         ││││                   ││    │         ││┌─────┴┐│
+        │         ││││                   ││    │         │││      │
+        │Top Panel││││                   ││    │Top Panel│││      ││
+        │         ││││      Panels       ││    │         │││Panels│
+        │         ││││                   ││    │         │││      ││
+        │         │└┤│                   ││    │         │││      │
+        │         │ └┤                   ││    │         │└┤      ││
+        │         │  └───────────────────┘│    │         │ └──────┘
+        └─────────┴───────────────────────┘    └─────────┴ ─ ─ ─ ─ ┘
+                                                          offscreen
         */
         /* Modify the top sheet to act as a fullscreen background. */
         setPadding1_Widget(sheet, 0);
@@ -732,7 +740,7 @@ void finalizeSheet_Mobile(iWidget *sheet) {
                                  arrangeHeight_WidgetFlag | resizeWidthOfChildren_WidgetFlag |
                                  resizeToParentWidth_WidgetFlag | arrangeVertical_WidgetFlag);
         }
-        if (isPrefs && isLandscape_App()) {
+        if (isPrefs && isSideBySideLayout_()) {
             /* Show the General panel. */
             postCommand_Widget(at_PtrArray(panelButtons, 0), "panel.open");
         }
@@ -770,7 +778,7 @@ void setupMenuTransition_Mobile(iWidget *sheet, iBool isIncoming) {
 }
 
 void setupSheetTransition_Mobile(iWidget *sheet, iBool isIncoming) {
-    if (deviceType_App() != phone_AppDeviceType || isLandscape_App()) {
+    if (isSideBySideLayout_()) {
         return;
     }
     if (isIncoming) {
