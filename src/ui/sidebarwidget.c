@@ -773,6 +773,7 @@ static void checkModeButtonLayout_SidebarWidget_(iSidebarWidget *d) {
     for (int i = 0; i < max_SidebarMode; i++) {
         iLabelWidget *button = d->modeButtons[i];
         if (!button) continue;
+        setAlignVisually_LabelWidget(button, isTight);
         setFlags_Widget(as_Widget(button), tight_WidgetFlag, isTight);
         if (i == feeds_SidebarMode && d->numUnreadEntries) {
             updateText_LabelWidget(
