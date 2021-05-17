@@ -74,12 +74,21 @@ static iBool mainDetailSplitHandler_(iWidget *mainDetailSplit, const char *cmd) 
         setPos_Widget(mainDetailSplit, topLeft_Rect(safeRoot));
         setFixedSize_Widget(mainDetailSplit, safeRoot.size);
         setFlags_Widget(mainDetailSplit, arrangeHorizontal_WidgetFlag, !isPortrait);
-        iForEach(ObjectList, i, children_Widget(findChild_Widget(mainDetailSplit, "detailstack"))) {
+        iWidget *detailStack = findChild_Widget(mainDetailSplit, "detailstack");
+        setFlags_Widget(detailStack, expand_WidgetFlag, !isPortrait);
+        if (!isPortrait) {
+            iWidget *topPanel = findChild_Widget(mainDetailSplit, "panel.top");
+            iAssert(topPanel);
+            topPanel->rect.size.x = safeRoot.size.x * 2 / 5;
+        }
+        iForEach(ObjectList, i, children_Widget(detailStack)) {
             iWidget *panel = i.object;
             setFlags_Widget(panel, edgeDraggable_WidgetFlag, isPortrait);
             if (!isPortrait) {
                 setVisualOffset_Widget(panel, 0, 0, 0);
             }
+            const int pad = isPortrait ? 0 : 3 * gap_UI;
+            setPadding_Widget(panel, pad, 0, pad, pad);
         }
         arrange_Widget(mainDetailSplit);
     }
@@ -710,21 +719,6 @@ void finalizeSheet_Mobile(iWidget *sheet) {
     }
     postRefresh_App();
 }
-
-#if 0
-void setupDetailPanelTransition_Mobile(iWidget *panel, iBool isIncoming) {
-    if (isIncoming || deviceType_App() != phone_AppDeviceType) {
-        setVisualOffset_Widget(panel, 0, 200, easeOut_AnimFlag | softer_AnimFlag);
-    }
-    else {
-        const iBool wasDragged = iAbs(value_Anim(&panel->visualOffset)) > -width_Widget(panel);
-        setVisualOffset_Widget(panel,
-                               -width_Widget(panel),
-                               wasDragged ? 100 : 200,
-                               wasDragged ? 0 : easeOut_AnimFlag | softer_AnimFlag);
-    }
-}
-#endif
 
 void setupMenuTransition_Mobile(iWidget *sheet, iBool isIncoming) {
     if (deviceType_App() != phone_AppDeviceType) {
