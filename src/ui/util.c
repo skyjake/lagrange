@@ -1513,7 +1513,7 @@ static int cmp_MenuItem_(const void *e1, const void *e2) {
 #endif
 
 void updatePreferencesLayout_Widget(iWidget *prefs) {
-    if (!prefs || deviceType_App() == phone_AppDeviceType) {
+    if (!prefs || deviceType_App() != desktop_AppDeviceType) {
         return;
     }
     /* Doing manual layout here because the widget arranging logic isn't sophisticated enough. */

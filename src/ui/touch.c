@@ -586,6 +586,7 @@ iBool processEvent_Touch(const SDL_Event *ev) {
 //                   pixels.y, y_F3(amount), y_F3(touch->accum));
             if (pixels.x || pixels.y) {
                 setFocus_Widget(NULL);
+                setCurrent_Root(touch->affinity->root);
                 dispatchMotion_Touch_(touch->pos[0], 0);
                 dispatchEvent_Widget(touch->affinity, (SDL_Event *) &(SDL_MouseWheelEvent){
                     .type = SDL_MOUSEWHEEL,

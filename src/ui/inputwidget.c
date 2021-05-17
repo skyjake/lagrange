@@ -306,7 +306,7 @@ static void updateMetrics_InputWidget_(iInputWidget *d) {
     iWidget *w = as_Widget(d);
     updateSizeForFixedLength_InputWidget_(d);
     /* Caller must arrange the width, but the height is fixed. */
-    w->rect.size.y = contentHeight_InputWidget_(d, iTrue) + 3 * padding_().y; /* TODO: Why 3x? */
+    w->rect.size.y = contentHeight_InputWidget_(d, iTrue) + 3.0f * padding_().y; /* TODO: Why 3x? */
     if (flags_Widget(w) & extraPadding_WidgetFlag) {
         w->rect.size.y += 2 * gap_UI;
     }

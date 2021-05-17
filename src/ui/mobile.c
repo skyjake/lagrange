@@ -35,10 +35,22 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #   include "ios.h"
 #endif
 
+static iBool useMobileSheetLayout_(void) {
+    return deviceType_App() != desktop_AppDeviceType;
+}
+
+static enum iFontId labelFont_(void) {
+    return deviceType_App() == phone_AppDeviceType ? defaultBig_FontId : defaultMedium_FontId;
+}
+
+static enum iFontId labelBoldFont_(void) {
+    return deviceType_App() == phone_AppDeviceType ? defaultBigBold_FontId : defaultMediumBold_FontId;
+}
+
 static void updatePanelSheetMetrics_(iWidget *sheet) {
     iWidget *navi       = findChild_Widget(sheet, "panel.navi");
     iWidget *naviPad    = child_Widget(navi, 0);
-    int      naviHeight = lineHeight_Text(defaultBig_FontId) + 4 * gap_UI;
+    int      naviHeight = lineHeight_Text(labelFont_()) + 4 * gap_UI;
 #if defined (iPlatformAppleMobile)
     float left, right, top, bottom;
     safeAreaInsets_iOS(&left, &top, &right, &bottom);
@@ -70,16 +82,33 @@ static void unselectAllPanelButtons_(iWidget *topPanel) {
 static iBool mainDetailSplitHandler_(iWidget *mainDetailSplit, const char *cmd) {
     if (equal_Command(cmd, "window.resized")) {
         const iBool isPortrait = (deviceType_App() == phone_AppDeviceType && isPortrait_App());
-        const iRect safeRoot = safeRect_Root(mainDetailSplit->root);
+        const iRect safeRoot   = safeRect_Root(mainDetailSplit->root);
         setPos_Widget(mainDetailSplit, topLeft_Rect(safeRoot));
         setFixedSize_Widget(mainDetailSplit, safeRoot.size);
-        setFlags_Widget(mainDetailSplit, arrangeHorizontal_WidgetFlag, !isPortrait);
-        iWidget *detailStack = findChild_Widget(mainDetailSplit, "detailstack");
-        setFlags_Widget(detailStack, expand_WidgetFlag, !isPortrait);
-        if (!isPortrait) {
-            iWidget *topPanel = findChild_Widget(mainDetailSplit, "panel.top");
+        iWidget *    sheet        = parent_Widget(mainDetailSplit);
+        iWidget *    navi         = findChild_Widget(sheet, "panel.navi");
+        iWidget *    detailStack  = findChild_Widget(mainDetailSplit, "detailstack");
+        const size_t numPanels    = childCount_Widget(detailStack);
+        const iBool  isSideBySide = !isPortrait && numPanels > 0;
+        setFlags_Widget(mainDetailSplit, arrangeHorizontal_WidgetFlag, isSideBySide);
+        setFlags_Widget(detailStack, expand_WidgetFlag, isSideBySide);
+        setFlags_Widget(detailStack, hidden_WidgetFlag, numPanels == 0);
+        iWidget *topPanel = findChild_Widget(mainDetailSplit, "panel.top");
+        const int pad = isPortrait ? 0 : 3 * gap_UI;
+        if (isSideBySide) {
             iAssert(topPanel);
-            topPanel->rect.size.x = safeRoot.size.x * 2 / 5;
+            topPanel->rect.size.x = (deviceType_App() == phone_AppDeviceType ?
+                                     safeRoot.size.x * 2 / 5 : (safeRoot.size.x / 3));
+        }
+        if (deviceType_App() == tablet_AppDeviceType) {
+            setPadding_Widget(topPanel, pad, 0, pad, pad);
+            if (numPanels == 0) {
+                setFlags_Widget(sheet, centerHorizontal_WidgetFlag, iTrue);
+                const int sheetWidth = iMin(safeRoot.size.x, safeRoot.size.y);
+                mainDetailSplit->rect.size.x = sheetWidth;
+                setFixedSize_Widget(sheet, init_I2(sheetWidth, -1));
+                setFixedSize_Widget(navi, init_I2(sheetWidth, -1));
+            }
         }
         iForEach(ObjectList, i, children_Widget(detailStack)) {
             iWidget *panel = i.object;
@@ -87,7 +116,6 @@ static iBool mainDetailSplitHandler_(iWidget *mainDetailSplit, const char *cmd) 
             if (!isPortrait) {
                 setVisualOffset_Widget(panel, 0, 0, 0);
             }
-            const int pad = isPortrait ? 0 : 3 * gap_UI;
             setPadding_Widget(panel, pad, 0, pad, pad);
         }
         arrange_Widget(mainDetailSplit);
@@ -96,7 +124,7 @@ static iBool mainDetailSplitHandler_(iWidget *mainDetailSplit, const char *cmd) 
 }
 
 static iBool topPanelHandler_(iWidget *topPanel, const char *cmd) {
-    const iBool isPortrait = deviceType_App() == phone_AppDeviceType && isPortrait_App();
+    const iBool isPortrait = useMobileSheetLayout_() && isPortrait_App();
     if (equal_Command(cmd, "panel.open")) {
         iWidget *button = pointer_Command(cmd);
         iWidget *panel = userData_Object(button);
@@ -213,7 +241,7 @@ static iAnyObject *addPanelChild_(iWidget *panel, iAnyObject *child, int64_t fla
                 (elementType == textInput_PrefsElement &&
                  precedingElementType != textInput_PrefsElement &&
                  precedingElementType != heading_PrefsElement)) {
-                addChild_Widget(panel, iClob(makePadding_Widget(lineHeight_Text(defaultBig_FontId))));
+                addChild_Widget(panel, iClob(makePadding_Widget(lineHeight_Text(labelFont_()))));
             }
         }
         if ((elementType == toggle_PrefsElement && precedingElementType != toggle_PrefsElement) ||
@@ -242,7 +270,7 @@ static iLabelWidget *makePanelButton_(const char *text, const char *command) {
                     frameless_WidgetFlag | extraPadding_WidgetFlag,
                     iTrue);
     checkIcon_LabelWidget(btn);
-    setFont_LabelWidget(btn, defaultBig_FontId);
+    setFont_LabelWidget(btn, labelFont_());
     setTextColor_LabelWidget(btn, uiTextStrong_ColorId);
     setBackgroundColor_Widget(as_Widget(btn), uiBackgroundSidebar_ColorId);
     return btn;
@@ -251,7 +279,7 @@ static iLabelWidget *makePanelButton_(const char *text, const char *command) {
 static iWidget *makeValuePadding_(iWidget *value) {
     iInputWidget *input = isInstance_Object(value, &Class_InputWidget) ? (iInputWidget *) value : NULL;
     if (input) {
-        setFont_InputWidget(input, defaultBig_FontId);
+        setFont_InputWidget(input, labelFont_());
         setContentPadding_InputWidget(input, 3 * gap_UI, 3 * gap_UI);
     }
     iWidget *pad = new_Widget();
@@ -278,7 +306,7 @@ static iWidget *makeValuePaddingWithHeading_(iLabelWidget *heading, iWidget *val
     setPadding_Widget(div, gap_UI, gap_UI, 4 * gap_UI, gap_UI);
     addChildFlags_Widget(div, iClob(heading), 0);
     //setFixedSize_Widget(as_Widget(heading), init_I2(-1, height_Widget(value)));
-    setFont_LabelWidget(heading, defaultBig_FontId);
+    setFont_LabelWidget(heading, labelFont_());
     setTextColor_LabelWidget(heading, uiTextStrong_ColorId);
     if (isInstance_Object(value, &Class_InputWidget)) {
         addChildFlags_Widget(div, iClob(value), expand_WidgetFlag);
@@ -331,7 +359,7 @@ void finalizeSheet_Mobile(iWidget *sheet) {
        easier to create phone versions of each dialog, but at least this works with any
        future changes to the UI (..."works"). At least this way it is possible to enforce
        a consistent styling. */
-    if (deviceType_App() == phone_AppDeviceType && parent_Widget(sheet) == root_Widget(sheet)) {
+    if (useMobileSheetLayout_() && parent_Widget(sheet) == root_Widget(sheet)) {
         if (~flags_Widget(sheet) & keepOnTop_WidgetFlag) {
             /* Already finalized. */
             arrange_Widget(sheet);
@@ -398,10 +426,10 @@ void finalizeSheet_Mobile(iWidget *sheet) {
         }
         iWidget *detailStack = new_Widget(); {
             setId_Widget(detailStack, "detailstack");
-            setFlags_Widget(detailStack, resizeWidthOfChildren_WidgetFlag, iTrue);
+            setFlags_Widget(detailStack, collapse_WidgetFlag | resizeWidthOfChildren_WidgetFlag, iTrue);
             addChild_Widget(mainDetailSplit, iClob(detailStack));
         }
-        addChild_Widget(topPanel, iClob(makePadding_Widget(lineHeight_Text(defaultBig_FontId))));
+        addChild_Widget(topPanel, iClob(makePadding_Widget(lineHeight_Text(labelFont_()))));
         /* Slide top panel with detail panels. */ {
             setFlags_Widget(topPanel, refChildrenOffset_WidgetFlag, iTrue);
             topPanel->offsetRef = detailStack;
@@ -433,7 +461,7 @@ void finalizeSheet_Mobile(iWidget *sheet) {
                     0x1f5a7, /* computer network */
                 };
                 setIcon_LabelWidget(panelButton, icons[i]);
-//                setFont_LabelWidget(panelButton, defaultBig_FontId);
+//                setFont_LabelWidget(panelButton, labelFont_());
 //                setBackgroundColor_Widget(as_Widget(panelButton), uiBackgroundSidebar_ColorId);
                 iRelease(page);
                 delete_String(text);
@@ -490,7 +518,7 @@ void finalizeSheet_Mobile(iWidget *sheet) {
                 }
                 if (isInstance_Object(value, &Class_LabelWidget)) {
                     valueLabel = (iLabelWidget *) value;
-                    setFont_LabelWidget(valueLabel, defaultBig_FontId);
+                    setFont_LabelWidget(valueLabel, labelFont_());
                 }
                 if (isInstance_Object(value, &Class_InputWidget)) {
                     valueInput = (iInputWidget *) value;
@@ -505,7 +533,7 @@ void finalizeSheet_Mobile(iWidget *sheet) {
                     }
                 }
                 if (valueInput) {
-                    setFont_InputWidget(valueInput, defaultBig_FontId);
+                    setFont_InputWidget(valueInput, labelFont_());
                     setContentPadding_InputWidget(valueInput, 3 * gap_UI, 0);
                 }
                 /* Toggles have the button on the right. */
@@ -541,7 +569,7 @@ void finalizeSheet_Mobile(iWidget *sheet) {
                     if (childCount_Widget(value) >= 2) {
                         element = radioButton_PrefsElement;
                         /* Always padding before radio buttons. */
-                        addChild_Widget(owner, iClob(makePadding_Widget(lineHeight_Text(defaultBig_FontId))));
+                        addChild_Widget(owner, iClob(makePadding_Widget(lineHeight_Text(labelFont_()))));
                     }
                     addChildFlags_Widget(owner, iClob(heading), borderBottom_WidgetFlag);
                     if (headingLabel) {
@@ -577,13 +605,13 @@ void finalizeSheet_Mobile(iWidget *sheet) {
         destroyPending_Root(sheet->root);
         /* Additional elements for preferences. */
         if (isPrefs) {
-            addChild_Widget(topPanel, iClob(makePadding_Widget(lineHeight_Text(defaultBig_FontId))));
-            addChildFlags_Widget(topPanel,
-                                 iClob(makePanelButton_(info_Icon " ${menu.help}", "!open url:about:help")),
-                                 borderTop_WidgetFlag);
+            addChild_Widget(topPanel, iClob(makePadding_Widget(lineHeight_Text(labelFont_()))));
             iLabelWidget *aboutButton = addChildFlags_Widget(topPanel,
                                  iClob(makePanelButton_(planet_Icon " ${menu.about}", "panel.open")),
                                  chevron_WidgetFlag);
+            addChildFlags_Widget(topPanel,
+                                 iClob(makePanelButton_(info_Icon " ${menu.help}", "!open url:about:help")),
+                                 borderTop_WidgetFlag);
             /* The About panel. */ {
                 iWidget *panel = addChildPanel_(detailStack, aboutButton, NULL);
                 iString *msg = collectNew_String();
@@ -640,7 +668,7 @@ void finalizeSheet_Mobile(iWidget *sheet) {
                                                       alignLeft_WidgetFlag | extraPadding_WidgetFlag);
             checkIcon_LabelWidget(back);
             setId_Widget(as_Widget(back), "panel.back");
-            setFont_LabelWidget(back, defaultBig_FontId);
+            setFont_LabelWidget(back, labelFont_());
             if (!isPrefs) {
                 /* Pick up the dialog buttons for the navbar. */
                 iWidget *buttons = findChild_Widget(sheet, "dialogbuttons");
@@ -659,11 +687,11 @@ void finalizeSheet_Mobile(iWidget *sheet) {
                     setFlags_Widget(as_Widget(back), alignLeft_WidgetFlag, iFalse);
                     setFlags_Widget(as_Widget(back), alignRight_WidgetFlag, iTrue);
                     setIcon_LabelWidget(back, 0);
-                    setFont_LabelWidget(back, defaultBigBold_FontId);
+                    setFont_LabelWidget(back, labelBoldFont_());
                 }
                 else if (def != cancel) {
                     removeChild_Widget(buttons, def);
-                    setFont_LabelWidget(def, defaultBigBold_FontId);
+                    setFont_LabelWidget(def, labelBoldFont_());
                     setFlags_Widget(as_Widget(def),
                                     frameless_WidgetFlag | extraPadding_WidgetFlag |
                                     noBackground_WidgetFlag, iTrue);
@@ -677,7 +705,7 @@ void finalizeSheet_Mobile(iWidget *sheet) {
                             i.object != cancel && i.object != def) {
                             iLabelWidget *item = i.object;
                             setBackgroundColor_Widget(i.object, uiBackgroundSidebar_ColorId);
-                            setFont_LabelWidget(item, defaultBig_FontId);
+                            setFont_LabelWidget(item, labelFont_());
                             removeChild_Widget(buttons, item);
                             addChildFlags_Widget(topPanel, iClob(item), panelButtonFlags |
                                                  (isFirstAction ? borderTop_WidgetFlag : 0));
@@ -721,7 +749,7 @@ void finalizeSheet_Mobile(iWidget *sheet) {
 }
 
 void setupMenuTransition_Mobile(iWidget *sheet, iBool isIncoming) {
-    if (deviceType_App() != phone_AppDeviceType) {
+    if (!useMobileSheetLayout_()) {
         return;    
     }
     const iBool isSlidePanel = (flags_Widget(sheet) & horizontalOffset_WidgetFlag) != 0;
@@ -751,6 +779,7 @@ void setupSheetTransition_Mobile(iWidget *sheet, iBool isIncoming) {
         setVisualOffset_Widget(sheet, 0, 200, easeOut_AnimFlag);
     }
     else {
+        setFlags_Widget(sheet, horizontalOffset_WidgetFlag, iTrue);
         const iBool wasDragged = iAbs(value_Anim(&sheet->visualOffset)) > 0;
         setVisualOffset_Widget(sheet, size_Root(sheet->root).x, wasDragged ? 100 : 200,
                                wasDragged ? 0 : easeIn_AnimFlag);
