@@ -119,7 +119,7 @@ enum iWidgetFlag {
 #define noFadeBackground_WidgetFlag         iBit64(60)
 #define destroyPending_WidgetFlag           iBit64(61) /* TODO: needed? */
 #define edgeDraggable_WidgetFlag            iBit64(62)
-#define topPanelOffset_WidgetFlag           iBit64(63) /* visual offset determined by the offset of siblings */
+#define refChildrenOffset_WidgetFlag        iBit64(63) /* visual offset determined by the offset of referenced children */
 
 enum iWidgetAddPos {
     back_WidgetAddPos,
@@ -138,6 +138,7 @@ struct Impl_Widget {
     iRect        rect;
     iInt2        minSize;
     iWidget *    sizeRef;
+    iWidget *    offsetRef;
     int          padding[4]; /* left, top, right, bottom */
     iAnim        visualOffset;
     int          bgColor;

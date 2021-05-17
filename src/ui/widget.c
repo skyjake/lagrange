@@ -58,6 +58,7 @@ void init_Widget(iWidget *d) {
     d->rect           = zero_Rect();
     d->minSize        = zero_I2();
     d->sizeRef        = NULL;
+    d->offsetRef      = NULL;
     d->bgColor        = none_ColorId;
     d->frameColor     = none_ColorId;
     init_Anim(&d->visualOffset, 0.0f);
@@ -755,13 +756,13 @@ static void applyVisualOffset_Widget_(const iWidget *d, iInt2 *pos) {
             pos->y += off;
         }
     }
-    if (d->flags & topPanelOffset_WidgetFlag) {
-        iConstForEach(ObjectList, i, children_Widget(parent_Widget(d))) {
+    if (d->flags & refChildrenOffset_WidgetFlag) {
+        iConstForEach(ObjectList, i, children_Widget(d->offsetRef)) {
             const iWidget *child = i.object;
             if (child == d) continue;
             if (child->flags & (visualOffset_WidgetFlag | dragged_WidgetFlag)) {
                 const int invOff = size_Root(d->root).x - iRound(value_Anim(&child->visualOffset));
-                pos->x -= invOff / 3;
+                pos->x -= invOff / 4;
             }
         }
     }
@@ -1092,7 +1093,7 @@ void drawBackground_Widget(const iWidget *d) {
         iPaint p;
         init_Paint(&p);
         p.alpha = 0x50;
-        if (flags_Widget(d) & visualOffset_WidgetFlag) {
+        if (flags_Widget(d) & (visualOffset_WidgetFlag | dragged_WidgetFlag)) {
             const float area = d->rect.size.x * d->rect.size.y;
             const float visibleArea = area_Rect(intersect_Rect(bounds_Widget(d), rect_Root(d->root)));
             p.alpha *= (area > 0 ? visibleArea / area : 0.0f);

@@ -392,8 +392,11 @@ void finalizeSheet_Mobile(iWidget *sheet) {
             setFlags_Widget(detailStack, resizeWidthOfChildren_WidgetFlag, iTrue);
             addChild_Widget(mainDetailSplit, iClob(detailStack));
         }
-        //setFlags_Widget(topPanel, topPanelOffset_WidgetFlag, iTrue); /* slide with children */
         addChild_Widget(topPanel, iClob(makePadding_Widget(lineHeight_Text(defaultBig_FontId))));
+        /* Slide top panel with detail panels. */ {
+            setFlags_Widget(topPanel, refChildrenOffset_WidgetFlag, iTrue);
+            topPanel->offsetRef = detailStack;
+        }
         if (prefsTabs) {
             iRelease(removeChild_Widget(sheet, child_Widget(sheet, 0))); /* heading */
             iRelease(removeChild_Widget(sheet, findChild_Widget(sheet, "dialogbuttons")));
@@ -561,7 +564,6 @@ void finalizeSheet_Mobile(iWidget *sheet) {
             }
             addPanelChild_(owner, NULL, 0, 0, prevElement);
             destroy_Widget(pageContent);
-//            setFlags_Widget(owner, drawBackgroundToBottom_WidgetFlag, iTrue);
         }
         destroyPending_Root(sheet->root);
         /* Additional elements for preferences. */
