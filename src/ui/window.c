@@ -1007,11 +1007,11 @@ void draw_Window(iWindow *d) {
     init_Paint(&p);
     /* Clear the window. The clear color is visible as a border around the window
        when the custom frame is being used. */ {
+        setCurrent_Root(d->roots[0]);
 #if defined (iPlatformAppleMobile)
        iColor back = get_Color(uiBackground_ColorId);
        if (deviceType_App() == phone_AppDeviceType) {
            /* Page background extends to safe area, so fill it completely. */
-           setCurrent_Root(d->roots[0]);
            back = get_Color(tmBackground_ColorId);
        }
 #else

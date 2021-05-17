@@ -62,20 +62,19 @@ void endTarget_Paint(iPaint *d) {
 }
 
 void setClip_Paint(iPaint *d, iRect rect) {
-    if (rect.pos.y < 0) {
-        const int off = rect.pos.y;
-        rect.pos.y -= off;
-        rect.size.y = iMax(0, rect.size.y + off);
-    }
-    if (rect.pos.x < 0) {
-        const int off = rect.pos.x;
-        rect.pos.x -= off;
-        rect.size.x = iMax(0, rect.size.x + off);
+    rect = intersect_Rect(rect, rect_Root(get_Root()));
+    if (isEmpty_Rect(rect)) {
+        rect = init_Rect(0, 0, 1, 1);
     }
     SDL_RenderSetClipRect(renderer_Paint_(d), (const SDL_Rect *) &rect);
 }
 
 void unsetClip_Paint(iPaint *d) {
+    if (numRoots_Window(get_Window()) > 1) {
+        const iRect rect = rect_Root(get_Root());
+        SDL_RenderSetClipRect(renderer_Paint_(d), (const SDL_Rect *) &rect);
+        return;
+    }
 #if SDL_VERSION_ATLEAST(2, 0, 12)
     SDL_RenderSetClipRect(renderer_Paint_(d), NULL);
 #else

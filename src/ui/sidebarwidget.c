@@ -878,10 +878,31 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
         if (arg_Command(cmd) && isVisible_Widget(w)) {
             return iTrue;
         }
+        const iBool isAnimated = (deviceType_App() != phone_AppDeviceType);
+        int visX = 0;
+        if (isVisible_Widget(w)) {
+            visX = left_Rect(bounds_Widget(w)) - left_Rect(w->root->widget->rect);
+        }
         setFlags_Widget(w, hidden_WidgetFlag, isVisible_Widget(w));
         if (isVisible_Widget(w)) {
+            setFlags_Widget(w, keepOnTop_WidgetFlag, iFalse);
             w->rect.size.x = d->widthAsGaps * gap_UI;
             invalidate_ListWidget(d->list);
+            if (isAnimated) {
+                setFlags_Widget(w, horizontalOffset_WidgetFlag, iTrue);
+                setVisualOffset_Widget(w, (d->side == left_SideBarSide ? -1 : 1) * w->rect.size.x, 0, 0);
+                setVisualOffset_Widget(w, 0, 300, easeOut_AnimFlag | softer_AnimFlag);
+            }
+        }
+        else if (isAnimated) {
+            if (d->side == right_SideBarSide) {
+                setVisualOffset_Widget(w, visX, 0, 0);
+                setVisualOffset_Widget(w, visX + w->rect.size.x, 300, easeOut_AnimFlag | softer_AnimFlag);
+            }
+            else {
+                setFlags_Widget(w, keepOnTop_WidgetFlag, iTrue);
+                setVisualOffset_Widget(w, -w->rect.size.x, 300, easeOut_AnimFlag | softer_AnimFlag);
+            }
         }
         arrange_Widget(w->parent);
         /* BUG: Rearranging because the arrange above didn't fully resolve the height. */
@@ -1433,9 +1454,17 @@ static void draw_SidebarWidget_(const iSidebarWidget *d) {
     const iRect    bounds = bounds_Widget(w);
     iPaint p;
     init_Paint(&p);
+    if (flags_Widget(w) & visualOffset_WidgetFlag && isVisible_Widget(w)) {
+        fillRect_Paint(&p, boundsWithoutVisualOffset_Widget(w), tmBackground_ColorId);
+    }
     draw_Widget(w);
-    drawVLine_Paint(
-        &p, addX_I2(topRight_Rect(bounds), -1), height_Rect(bounds), uiSeparator_ColorId);
+    if (isVisible_Widget(w)) {
+        drawVLine_Paint(
+            &p,
+            addX_I2(d->side == left_SideBarSide ? topRight_Rect(bounds) : topLeft_Rect(bounds), -1),
+            height_Rect(bounds),
+            uiSeparator_ColorId);
+    }
 }
 
 static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
