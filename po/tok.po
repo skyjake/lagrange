@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-05-10 06:26+0000\n"
+"PO-Revision-Date: 2021-05-18 04:18+0000\n"
 "Last-Translator: jan Anja <cyber@sysrq.in>\n"
 "Language-Team: Toki Pona <http://weblate.skyjake.fi/projects/lagrange/ui/tok/"
 ">\n"
@@ -1572,3 +1572,6 @@ msgstr[0] "ijo %zu li lon poki ni."
 
 msgid "keys.tab.close.other"
 msgstr "o pini e poki ante"
+
+msgid "lang.pl"
+msgstr "toki Posuka"
