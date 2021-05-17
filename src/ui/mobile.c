@@ -56,16 +56,53 @@ static iWidget *findDetailStack_(iWidget *topPanel) {
     return findChild_Widget(parent_Widget(topPanel), "detailstack");
 }
 
+static void unselectAllPanelButtons_(iWidget *topPanel) {
+    iForEach(ObjectList, i, children_Widget(topPanel)) {
+        if (isInstance_Object(i.object, &Class_LabelWidget)) {
+            iLabelWidget *label = i.object;
+            if (!cmp_String(command_LabelWidget(label), "panel.open")) {
+                setFlags_Widget(i.object, selected_WidgetFlag, iFalse);
+            }
+        }
+    }
+}
+
+static iBool mainDetailSplitHandler_(iWidget *mainDetailSplit, const char *cmd) {
+    if (equal_Command(cmd, "window.resized")) {
+        const iBool isPortrait = (deviceType_App() == phone_AppDeviceType && isPortrait_App());
+        const iRect safeRoot = safeRect_Root(mainDetailSplit->root);
+        setPos_Widget(mainDetailSplit, topLeft_Rect(safeRoot));
+        setFixedSize_Widget(mainDetailSplit, safeRoot.size);
+        setFlags_Widget(mainDetailSplit, arrangeHorizontal_WidgetFlag, !isPortrait);
+        iForEach(ObjectList, i, children_Widget(findChild_Widget(mainDetailSplit, "detailstack"))) {
+            iWidget *panel = i.object;
+            setFlags_Widget(panel, edgeDraggable_WidgetFlag, isPortrait);
+            if (!isPortrait) {
+                setVisualOffset_Widget(panel, 0, 0, 0);
+            }
+        }
+        arrange_Widget(mainDetailSplit);
+    }
+    return iFalse;
+}
+
 static iBool topPanelHandler_(iWidget *topPanel, const char *cmd) {
+    const iBool isPortrait = deviceType_App() == phone_AppDeviceType && isPortrait_App();
     if (equal_Command(cmd, "panel.open")) {
         iWidget *button = pointer_Command(cmd);
         iWidget *panel = userData_Object(button);
 //        openMenu_Widget(panel, innerToWindow_Widget(panel, zero_I2()));
 //        setFlags_Widget(panel, hidden_WidgetFlag, iFalse);
+        unselectAllPanelButtons_(topPanel);
         iForEach(ObjectList, i, children_Widget(findDetailStack_(topPanel))) {
             iWidget *child = i.object;
             setFlags_Widget(child, hidden_WidgetFlag | disabled_WidgetFlag, child != panel);
+            /* Animate the current panel in. */
+            if (child == panel && isPortrait) {
+                setupSheetTransition_Mobile(panel, iTrue);
+            }
         }
+        setFlags_Widget(button, selected_WidgetFlag, iTrue);
         return iTrue;
     }
     if (equal_Command(cmd, "mouse.clicked") && arg_Command(cmd) &&
@@ -76,10 +113,11 @@ static iBool topPanelHandler_(iWidget *topPanel, const char *cmd) {
     if (equal_Command(cmd, "panel.close")) {
         iBool wasClosed = iFalse;
         if (isPortrait_App()) {
-            iForEach(ObjectList, i, children_Widget(parent_Widget(topPanel))) {
+            iForEach(ObjectList, i, children_Widget(findDetailStack_(topPanel))) {
                 iWidget *child = i.object;
                 if (!cmp_String(id_Widget(child), "panel") && isVisible_Widget(child)) {
     //                closeMenu_Widget(child);
+                    setupSheetTransition_Mobile(child, iFalse);
                     setFlags_Widget(child, hidden_WidgetFlag | disabled_WidgetFlag, iTrue);
                     setFocus_Widget(NULL);
                     updateTextCStr_LabelWidget(findWidget_App("panel.back"), "Back");
@@ -87,6 +125,7 @@ static iBool topPanelHandler_(iWidget *topPanel, const char *cmd) {
                 }
             }
         }
+        unselectAllPanelButtons_(topPanel);
         if (!wasClosed) {
             postCommand_App("prefs.dismiss");
         }
@@ -271,8 +310,8 @@ static iWidget *addChildPanel_(iWidget *parent, iLabelWidget *panelButton,
                          focusRoot_WidgetFlag | hidden_WidgetFlag | disabled_WidgetFlag |
                              arrangeVertical_WidgetFlag | resizeWidthOfChildren_WidgetFlag |
                              arrangeHeight_WidgetFlag | overflowScrollable_WidgetFlag |
-                             //horizontalOffset_WidgetFlag | edgeDraggable_WidgetFlag |
-                             commandOnClick_WidgetFlag);
+                             drawBackgroundToBottom_WidgetFlag |
+                             horizontalOffset_WidgetFlag | commandOnClick_WidgetFlag);
     return panel;
 }
 
@@ -321,7 +360,7 @@ void finalizeSheet_Mobile(iWidget *sheet) {
                         iFalse);
         setFlags_Widget(sheet,
                         frameless_WidgetFlag |
-                        resizeWidthOfChildren_WidgetFlag |
+                        //resizeWidthOfChildren_WidgetFlag |
                         edgeDraggable_WidgetFlag |
                         commandOnClick_WidgetFlag,
                         iTrue);
@@ -333,6 +372,7 @@ void finalizeSheet_Mobile(iWidget *sheet) {
         const int64_t panelButtonFlags = borderBottom_WidgetFlag | alignLeft_WidgetFlag |
                                          frameless_WidgetFlag | extraPadding_WidgetFlag;
         iWidget *mainDetailSplit = makeHDiv_Widget();
+        setCommandHandler_Widget(mainDetailSplit, mainDetailSplitHandler_);
         setFlags_Widget(mainDetailSplit, resizeHeightOfChildren_WidgetFlag, iFalse);
         setId_Widget(mainDetailSplit, "mdsplit");
         iWidget *topPanel = new_Widget(); {
@@ -521,7 +561,7 @@ void finalizeSheet_Mobile(iWidget *sheet) {
             }
             addPanelChild_(owner, NULL, 0, 0, prevElement);
             destroy_Widget(pageContent);
-            setFlags_Widget(owner, drawBackgroundToBottom_WidgetFlag, iTrue);
+//            setFlags_Widget(owner, drawBackgroundToBottom_WidgetFlag, iTrue);
         }
         destroyPending_Root(sheet->root);
         /* Additional elements for preferences. */
@@ -653,6 +693,11 @@ void finalizeSheet_Mobile(iWidget *sheet) {
                                  arrangeHeight_WidgetFlag | resizeWidthOfChildren_WidgetFlag |
                                  resizeToParentWidth_WidgetFlag | arrangeVertical_WidgetFlag);
         }
+        if (isPrefs && isLandscape_App()) {
+            /* Show the General panel. */
+            postCommand_Widget(at_PtrArray(panelButtons, 0), "panel.open");
+        }
+        mainDetailSplitHandler_(mainDetailSplit, "window.resized"); /* make it resize the split */
         updatePanelSheetMetrics_(sheet);
         iAssert(sheet->parent);
         arrange_Widget(sheet->parent);
@@ -663,6 +708,21 @@ void finalizeSheet_Mobile(iWidget *sheet) {
     }
     postRefresh_App();
 }
+
+#if 0
+void setupDetailPanelTransition_Mobile(iWidget *panel, iBool isIncoming) {
+    if (isIncoming || deviceType_App() != phone_AppDeviceType) {
+        setVisualOffset_Widget(panel, 0, 200, easeOut_AnimFlag | softer_AnimFlag);
+    }
+    else {
+        const iBool wasDragged = iAbs(value_Anim(&panel->visualOffset)) > -width_Widget(panel);
+        setVisualOffset_Widget(panel,
+                               -width_Widget(panel),
+                               wasDragged ? 100 : 200,
+                               wasDragged ? 0 : easeOut_AnimFlag | softer_AnimFlag);
+    }
+}
+#endif
 
 void setupMenuTransition_Mobile(iWidget *sheet, iBool isIncoming) {
     if (deviceType_App() != phone_AppDeviceType) {

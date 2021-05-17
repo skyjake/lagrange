@@ -26,7 +26,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 iDeclareType(Widget)
 
-void        setupMenuTransition_Mobile  (iWidget *menu, iBool isIncoming);
+void        setupMenuTransition_Mobile          (iWidget *menu, iBool isIncoming);
+void        setupSheetTransition_Mobile         (iWidget *sheet, iBool isIncoming);
+//void        setupDetailPanelTransition_Mobile   (iWidget *Panel, iBool isIncoming);
 
 void        finalizeSheet_Mobile        (iWidget *sheet);
-void        setupSheetTransition_Mobile (iWidget *sheet, iBool isIncoming);
