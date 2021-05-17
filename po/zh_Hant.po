@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-04-14 09:18+0000\n"
+"PO-Revision-Date: 2021-05-18 04:18+0000\n"
 "Last-Translator: Shibo Lyu <github@of.sb>\n"
 "Language-Team: Chinese (Traditional) <http://weblate.skyjake.fi/projects/"
 "lagrange/ui/zh_Hant/>\n"
@@ -1408,3 +1408,145 @@ msgstr "建立…"
 
 msgid "sidebar.action.ident.import"
 msgstr "匯入…"
+
+#, c-format
+msgid "dir.summary"
+msgid_plural "dir.summary.n"
+msgstr[0] "該檔案夾內含 %zu 項。"
+
+msgid "lang.pl"
+msgstr "波蘭語"
+
+# User preference that controls whether index.gmi pages get automatically opened when browsing the contents of a directory inside a compressed archive.
+msgid "prefs.archive.openindex"
+msgstr "檢視存檔內檔案夾時使用 index.gmi："
+
+#, c-format
+msgid "archive.summary"
+msgid_plural "archive.summary.n"
+msgstr[0] "該存檔內含 %zu 項，壓縮後共 %.1f MB。"
+
+msgid "keys.split.menu"
+msgstr "設定分屏模式"
+
+msgid "menu.downloads"
+msgstr "顯示下載檔案夾"
+
+#, c-format
+msgid "doc.archive"
+msgstr "%s 是一個壓縮檔。"
+
+msgid "doc.archive.view"
+msgstr "檢視存檔內容"
+
+msgid "bookmark.tag.linksplit"
+msgstr "在側邊打開連結"
+
+msgid "dlg.save.opendownload"
+msgstr "打開下載的檔案"
+
+msgid "link.side"
+msgstr "在側邊打開連結"
+
+msgid "link.side.newtab"
+msgstr "在側邊新標籤頁中打開連結"
+
+msgid "lang.ia"
+msgstr "因特語"
+
+msgid "lang.tok"
+msgstr "道本語"
+
+msgid "heading.newident.missing"
+msgstr "資料缺失"
+
+msgid "dlg.newindent.missing.commonname"
+msgstr "必須指定一個「通用名稱（CN）」。"
+
+msgid "heading.newident.date.bad"
+msgstr "無效日期"
+
+msgid "dlg.newident.date.past"
+msgstr "過期日必須在未來。"
+
+msgid "dlg.newident.date.example"
+msgstr ""
+"請檢查「有效期至」欄位。例子：\n"
+"• 2030\n"
+"• 2025-06-30\n"
+"• 2021-12-31 23:59:59"
+
+msgid "menu.split.merge"
+msgstr "合併標籤頁"
+
+msgid "menu.split.swap"
+msgstr "交換位置"
+
+msgid "menu.split.horizontal"
+msgstr "橫向"
+
+msgid "menu.split.vertical"
+msgstr "縱向"
+
+msgid "menu.view.split"
+msgstr "分屏…"
+
+msgid "gempub.cover.untitled"
+msgstr "未名書"
+
+msgid "prefs.pinsplit"
+msgstr "總在側邊打開連結："
+
+msgid "prefs.pinsplit.none"
+msgstr "關閉"
+
+msgid "prefs.pinsplit.left"
+msgstr "左"
+
+msgid "prefs.pinsplit.right"
+msgstr "右"
+
+msgid "archive.exit"
+msgstr "退出存檔"
+
+msgid "dir.empty"
+msgstr "檔案夾為空。"
+
+msgid "keys.tab.close.other"
+msgstr "關閉其他標籤頁"
+
+msgid "keys.split.next"
+msgstr "切換焦點至下一分屏"
+
+msgid "gempub.cover.viewlocal"
+msgstr "該 Gempub 書籍可以在被儲存後閱讀。"
+
+msgid "gempub.cover.aboutbook"
+msgstr "有關本書"
+
+msgid "gempub.cover.view"
+msgstr "檢視 Gempub 目錄"
+
+msgid "gempub.cover.image"
+msgstr "封面圖"
+
+msgid "gempub.meta.author"
+msgstr "作者"
+
+msgid "gempub.meta.version"
+msgstr "版本"
+
+msgid "gempub.meta.revdate"
+msgstr "修訂日期"
+
+msgid "gempub.meta.pub"
+msgstr "已發行"
+
+msgid "gempub.meta.pubdate"
+msgstr "發行日期"
+
+msgid "gempub.meta.lang"
+msgstr "語言"
+
+msgid "gempub.meta.license"
+msgstr "授權協議"
