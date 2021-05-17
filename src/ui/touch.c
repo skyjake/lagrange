@@ -318,6 +318,8 @@ static void update_TouchState_(void *ptr) {
             if (pixels.x || pixels.y) {
                 subv_F3(&mom->accum, initI2_F3(pixels));
                 dispatchMotion_Touch_(mom->pos, 0);
+                iAssert(mom->affinity);
+                setCurrent_Root(mom->affinity->root);
                 dispatchEvent_Widget(mom->affinity, (SDL_Event *) &(SDL_MouseWheelEvent){
                                                         .type = SDL_MOUSEWHEEL,
                                                         .timestamp = nowTime,
@@ -598,6 +600,7 @@ iBool processEvent_Touch(const SDL_Event *ev) {
             if (pixels.x || pixels.y) {
                 setFocus_Widget(NULL);
                 dispatchMotion_Touch_(touch->pos[0], 0);
+                setCurrent_Root(touch->affinity->root);
                 dispatchEvent_Widget(touch->affinity, (SDL_Event *) &(SDL_MouseWheelEvent){
                     .type = SDL_MOUSEWHEEL,
                     .timestamp = SDL_GetTicks(),
