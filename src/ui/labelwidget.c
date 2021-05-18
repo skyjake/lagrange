@@ -404,7 +404,9 @@ void updateSize_LabelWidget(iLabelWidget *d) {
     iWidget *w = as_Widget(d);
     const int64_t flags = flags_Widget(w);
     const iInt2 size = defaultSize_LabelWidget(d);
-    w->minSize.y = size.y; /* vertically text must remain visible */
+    if (!d->flags.noAutoMinHeight) {
+        w->minSize.y = size.y; /* vertically text must remain visible */
+    }
     /* Wrapped text implies that width must be defined by arrangement. */
     if (!(flags & (fixedWidth_WidgetFlag | wrapText_WidgetFlag))) {
         w->rect.size.x = size.x;
