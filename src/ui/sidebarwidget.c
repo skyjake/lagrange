@@ -878,7 +878,8 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
         if (arg_Command(cmd) && isVisible_Widget(w)) {
             return iTrue;
         }
-        const iBool isAnimated = (deviceType_App() != phone_AppDeviceType);
+        const iBool isAnimated = argLabel_Command(cmd, "noanim") == 0 &&
+                                 (deviceType_App() != phone_AppDeviceType);
         int visX = 0;
         if (isVisible_Widget(w)) {
             visX = left_Rect(bounds_Widget(w)) - left_Rect(w->root->widget->rect);
@@ -895,6 +896,7 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
             }
         }
         else if (isAnimated) {
+            setFlags_Widget(w, horizontalOffset_WidgetFlag, iTrue);
             if (d->side == right_SideBarSide) {
                 setVisualOffset_Widget(w, visX, 0, 0);
                 setVisualOffset_Widget(w, visX + w->rect.size.x, 300, easeOut_AnimFlag | softer_AnimFlag);

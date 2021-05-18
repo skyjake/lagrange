@@ -420,8 +420,8 @@ static iBool loadState_App_(iApp *d) {
                     if (deviceType_App() != phone_AppDeviceType) {
                         setWidth_SidebarWidget(sidebar,  widths[0]);
                         setWidth_SidebarWidget(sidebar2, widths[1]);
-                        if (flags & 1) postCommand_Root(root, "sidebar.toggle");
-                        if (flags & 2) postCommand_Root(root, "sidebar2.toggle");
+                        if (flags & 1) postCommand_Root(root, "sidebar.toggle noanim:1");
+                        if (flags & 2) postCommand_Root(root, "sidebar2.toggle noanim:1");
                     }
                 }
             }
