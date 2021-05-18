@@ -726,13 +726,15 @@ static void resetArrangement_Widget_(iWidget *d) {
             if (d->flags & arrangeHorizontal_WidgetFlag) {
                 child->rect.pos.x = 0;
             }
-            if (d->flags & resizeWidthOfChildren_WidgetFlag && child->flags & expand_WidgetFlag) {
+            if (d->flags & resizeWidthOfChildren_WidgetFlag && child->flags & expand_WidgetFlag &&
+                ~child->flags & fixedWidth_WidgetFlag) {
                 child->rect.size.x = 0;
             }
             if (d->flags & arrangeVertical_WidgetFlag) {
                 child->rect.pos.y = 0;
             }
-            if (d->flags & resizeHeightOfChildren_WidgetFlag && child->flags & expand_WidgetFlag) {
+            if (d->flags & resizeHeightOfChildren_WidgetFlag && child->flags & expand_WidgetFlag &&
+                ~child->flags & fixedHeight_WidgetFlag) {
                 child->rect.size.y = 0;
             }
         }

@@ -1199,6 +1199,11 @@ void swapRoots_Window(iWindow *d) {
 
 void setSplitMode_Window(iWindow *d, int splitFlags) {
     const int splitMode = splitFlags & mode_WindowSplit;
+    if (deviceType_App() == phone_AppDeviceType) {
+        /* There isn't enough room on the phone. */
+        /* TODO: Maybe in landscape only? */
+        return;
+    }
     iAssert(current_Root() == NULL);
     if (d->splitMode != splitMode) {
         int oldCount = numRoots_Window(d);

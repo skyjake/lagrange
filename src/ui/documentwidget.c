@@ -3053,6 +3053,9 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                   0,
                                   format_CStr("!open newtab:5 url:%s", cstr_String(linkUrl)) } },
                             4);
+                        if (deviceType_App() == phone_AppDeviceType) {
+                            removeN_Array(&items, size_Array(&items) - 2, iInvalidSize);
+                        }
                     }
                     else if (!willUseProxy_App(scheme)) {
                         pushBack_Array(
