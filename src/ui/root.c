@@ -583,20 +583,22 @@ static void updateNavBarSize_(iWidget *navBar) {
     /* Button sizing. */
     if (isNarrow ^ ((flags_Widget(navBar) & tight_WidgetFlag) != 0)) {
         setFlags_Widget(navBar, tight_WidgetFlag, isNarrow);
-        iForEach(ObjectList, i, navBar->children) {
-            iWidget *child = as_Widget(i.object);
-            setFlags_Widget(child, tight_WidgetFlag, isNarrow);
-            if (isInstance_Object(i.object, &Class_LabelWidget)) {
-                iLabelWidget *label = i.object;
-                updateSize_LabelWidget(label);
+        iObjectList *lists[] = {
+            children_Widget(navBar),
+            children_Widget(findChild_Widget(navBar, "url")),
+            children_Widget(findChild_Widget(navBar, "url.buttons")),
+        };
+        iForIndices(k, lists) {
+            iForEach(ObjectList, i, lists[k]) {
+                iWidget *child = as_Widget(i.object);
+                setFlags_Widget(child, tight_WidgetFlag, isNarrow);
+                if (isInstance_Object(i.object, &Class_LabelWidget)) {
+                    iLabelWidget *label = i.object;
+                    updateSize_LabelWidget(label);
+                }
             }
         }
         updateUrlInputContentPadding_(navBar);
-        /* Note that InputWidget uses the `tight` flag to adjust its inner padding. */
-//        const int embedButtonWidth = width_Widget(findChild_Widget(navBar, "navbar.lock"));
-//        setContentPadding_InputWidget(findChild_Widget(navBar, "url"),
-//                                      embedButtonWidth * 0.75f,
-//                                      embedButtonWidth * 0.75f);
     }
     if (isPhone) {
         static const char *buttons[] = { "navbar.back",  "navbar.forward", "navbar.sidebar",
@@ -620,7 +622,8 @@ static void updateNavBarSize_(iWidget *navBar) {
         urlBar->rect.size.x = iMini(navBarAvailableSpace_(navBar), 167 * gap_UI);
         arrange_Widget(navBar);
     }
-    refresh_Widget(navBar);
+    updateMetrics_Root(navBar->root); /* tight flags changed; need to resize URL bar contents */
+//    refresh_Widget(navBar);
     postCommand_Widget(navBar, "layout.changed id:navbar");
 }
 
@@ -1086,7 +1089,9 @@ void createUserInterface_Root(iRoot *d) {
                 setNoAutoMinHeight_LabelWidget(pin, iTrue);
                 addChildFlags_Widget(rightEmbed,
                                      iClob(pin),
-                                     collapse_WidgetFlag | hidden_WidgetFlag | tight_WidgetFlag | frameless_WidgetFlag);
+                                     collapse_WidgetFlag | hidden_WidgetFlag | tight_WidgetFlag |
+                                     frameless_WidgetFlag);
+                updateSize_LabelWidget(pin);
             }
             iWidget *urlButtons = new_Widget();
             setId_Widget(urlButtons, "url.buttons");
