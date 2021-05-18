@@ -148,6 +148,8 @@ iLocalDef iInt2 padding_(void) {
     return init_I2(gap_UI / 2, gap_UI / 2);
 }
 
+#define extraPaddingHeight_ (1.25f * gap_UI)
+
 static iRect contentBounds_InputWidget_(const iInputWidget *d) {
     const iWidget *w         = constAs_Widget(d);
     //    const iRect widgetBounds = bounds_Widget(w);
@@ -157,7 +159,7 @@ static iRect contentBounds_InputWidget_(const iInputWidget *d) {
     shrink_Rect(&bounds, init_I2(gap_UI * (flags_Widget(w) & tight_WidgetFlag ? 1 : 2), 0));
     bounds.pos.y += padding_().y / 2;
     if (flags_Widget(w) & extraPadding_WidgetFlag) {
-        bounds.pos.y += gap_UI;
+        bounds.pos.y += extraPaddingHeight_ / 2;
     }
     return bounds;
 }
@@ -205,7 +207,7 @@ static void updateSizeForFixedLength_InputWidget_(iInputWidget *d) {
         /* Set a fixed size based on maximum possible width of the text. */
         iBlock *content = new_Block(d->maxLen);
         fill_Block(content, 'M');
-        int extraHeight = (flags_Widget(as_Widget(d)) & extraPadding_WidgetFlag ? 2 * gap_UI : 0);
+        int extraHeight = (flags_Widget(as_Widget(d)) & extraPadding_WidgetFlag ? extraPaddingHeight_ : 0);
         setFixedSize_Widget(
             as_Widget(d),
             add_I2(measure_Text(d->font, cstr_Block(content)),
@@ -299,7 +301,7 @@ static int contentHeight_InputWidget_(const iInputWidget *d, iBool forLayout) {
     if (forLayout) {
         numLines = iMin(numLines, d->maxLayoutLines);
     }
-    return numLines * lineHeight_Text(d->font);
+    return (int) numLines * lineHeight_Text(d->font);
 }
 
 static void updateMetrics_InputWidget_(iInputWidget *d) {
@@ -308,7 +310,7 @@ static void updateMetrics_InputWidget_(iInputWidget *d) {
     /* Caller must arrange the width, but the height is fixed. */
     w->rect.size.y = contentHeight_InputWidget_(d, iTrue) + 3.0f * padding_().y; /* TODO: Why 3x? */
     if (flags_Widget(w) & extraPadding_WidgetFlag) {
-        w->rect.size.y += 2 * gap_UI;
+        w->rect.size.y += extraPaddingHeight_;
     }
     invalidateBuffered_InputWidget_(d);
     postCommand_Widget(d, "input.resized");
@@ -960,7 +962,7 @@ static iRect bounds_InputWidget_(const iInputWidget *d) {
     }
     bounds.size.y = contentHeight_InputWidget_(d, iFalse) + 3 * padding_().y;
     if (w->flags & extraPadding_WidgetFlag) {
-        bounds.size.y += 2 * gap_UI;
+        bounds.size.y += extraPaddingHeight_;
     }
     return bounds;
 }
