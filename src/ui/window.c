@@ -566,12 +566,16 @@ iRoot *otherRoot_Window(const iWindow *d, iRoot *root) {
     return root == d->roots[0] && d->roots[1] ? d->roots[1] : d->roots[0];
 }
 
-void invalidate_Window(iWindow *d) {
-    if (d && !d->isInvalidated) {
+static void invalidate_Window_(iWindow *d, iBool forced) {
+    if (d && (!d->isInvalidated || forced)) {
         d->isInvalidated = iTrue;
         resetFonts_Text();
         postCommand_App("theme.changed auto:1"); /* forces UI invalidation */
     }
+}
+
+void invalidate_Window(iWindow *d) {
+    invalidate_Window_(d, iFalse);
 }
 
 static iBool isNormalPlacement_Window_(const iWindow *d) {
@@ -741,14 +745,14 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
             return iTrue;
         case SDL_WINDOWEVENT_RESTORED:
             updateSize_Window_(d, iTrue);
-            invalidate_Window(d);
+            invalidate_Window_(d, iTrue);
             d->isMinimized = iFalse;
             postRefresh_App();
             return iTrue;
         case SDL_WINDOWEVENT_MINIMIZED:
             d->isMinimized = iTrue;
             return iTrue;
-#endif
+#endif /* defined (iPlatformDesktop) */
         case SDL_WINDOWEVENT_LEAVE:
             unhover_Widget();
             d->isMouseInside = iFalse;
@@ -772,7 +776,7 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
             d->isExposed = iTrue;
 #if defined (iPlatformMobile)
             /* Returned to foreground, may have lost buffered content. */
-            invalidate_Window(d);
+            invalidate_Window_(d, iTrue);
             postCommand_App("window.unfreeze");
 #endif
             return iFalse;
