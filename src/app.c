@@ -1000,6 +1000,9 @@ void processEvents_App(enum iAppEventMode eventMode) {
             case SDL_APP_LOWMEMORY:
                 clearCache_App_();
                 break;
+            case SDL_APP_WILLENTERFOREGROUND:
+                invalidate_Window(d->window);
+                break;
             case SDL_APP_DIDENTERFOREGROUND:
                 gotEvents = iTrue;
                 d->warmupFrames = 5;

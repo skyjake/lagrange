@@ -515,14 +515,14 @@ void init_Window(iWindow *d, iRect rect) {
 
 void deinit_Window(iWindow *d) {
     iRecycle();
-    if (theWindow_ == d) {
-        theWindow_ = NULL;
-    }
     iForIndices(i, d->roots) {
         if (d->roots[i]) {
             setCurrent_Root(d->roots[i]);
             deinit_Root(d->roots[i]);
         }
+    }
+    if (theWindow_ == d) {
+        theWindow_ = NULL;
     }
     setCurrent_Root(NULL);
     delete_String(d->pendingSplitUrl);
@@ -566,12 +566,16 @@ iRoot *otherRoot_Window(const iWindow *d, iRoot *root) {
     return root == d->roots[0] && d->roots[1] ? d->roots[1] : d->roots[0];
 }
 
-void invalidate_Window(iWindow *d) {
-    if (d && !d->isInvalidated) {
+static void invalidate_Window_(iWindow *d, iBool forced) {
+    if (d && (!d->isInvalidated || forced)) {
         d->isInvalidated = iTrue;
         resetFonts_Text();
         postCommand_App("theme.changed auto:1"); /* forces UI invalidation */
     }
+}
+
+void invalidate_Window(iWindow *d) {
+    invalidate_Window_(d, iFalse);
 }
 
 static iBool isNormalPlacement_Window_(const iWindow *d) {
@@ -741,14 +745,14 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
             return iTrue;
         case SDL_WINDOWEVENT_RESTORED:
             updateSize_Window_(d, iTrue);
-            invalidate_Window(d);
+            invalidate_Window_(d, iTrue);
             d->isMinimized = iFalse;
             postRefresh_App();
             return iTrue;
         case SDL_WINDOWEVENT_MINIMIZED:
             d->isMinimized = iTrue;
             return iTrue;
-#endif
+#endif /* defined (iPlatformDesktop) */
         case SDL_WINDOWEVENT_LEAVE:
             unhover_Widget();
             d->isMouseInside = iFalse;
@@ -772,7 +776,7 @@ static iBool handleWindowEvent_Window_(iWindow *d, const SDL_WindowEvent *ev) {
             d->isExposed = iTrue;
 #if defined (iPlatformMobile)
             /* Returned to foreground, may have lost buffered content. */
-            invalidate_Window_(d);
+            invalidate_Window_(d, iTrue);
             postCommand_App("window.unfreeze");
 #endif
             return iFalse;
@@ -1023,7 +1027,10 @@ void draw_Window(iWindow *d) {
     /* Clear the window. The clear color is visible as a border around the window
        when the custom frame is being used. */ {
 #if defined (iPlatformAppleMobile)
-        const iColor back = get_Color(tmBackground_ColorId);
+        iColor back = get_Color(uiBackground_ColorId);
+        if (deviceType_App() == phone_AppDeviceType) {
+            /* Page background extends to safe area, so fill it completely. */
+            back = get_Color(tmBackground_ColorId);
 #else
         const iColor back = get_Color(gotFocus && d->place.snap != maximized_WindowSnap &&
                                               ~winFlags & SDL_WINDOW_FULLSCREEN_DESKTOP
