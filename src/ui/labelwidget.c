@@ -28,6 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "app.h"
 #include "util.h"
 #include "keys.h"
+#include "touch.h"
 
 struct Impl_LabelWidget {
     iWidget widget;
@@ -45,6 +46,15 @@ struct Impl_LabelWidget {
         uint8_t noAutoMinHeight : 1; /* minimum height is not set automatically */
     } flags;
 };
+
+static iBool isHover_LabelWidget_(const iLabelWidget *d) {
+#if defined (iPlatformMobile)
+    if (!isHovering_Touch()) {
+        return iFalse;
+    }
+#endif
+    return isHover_Widget(d);
+}
 
 static iInt2 padding_LabelWidget_(const iLabelWidget *d, int corner) {
     const iWidget *w = constAs_Widget(d);
@@ -199,7 +209,7 @@ static void getColors_LabelWidget_(const iLabelWidget *d, int *bg, int *fg, int 
     if (startsWith_String(&d->label, "\v")) {
         colorEscape = cstr_String(&d->label)[1] - asciiBase_ColorEscape; /* TODO: can be two bytes long */
     }
-    if (isHover_Widget(w)) {
+    if (isHover_LabelWidget_(d)) {
         if (isFrameless) {
             *bg = uiBackgroundFramelessHover_ColorId;
             *fg = uiTextFramelessHover_ColorId;
@@ -257,7 +267,7 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
     const int64_t flags    = flags_Widget(w);
     const iRect   bounds   = bounds_Widget(w);
     iRect         rect     = bounds;
-    const iBool   isHover  = isHover_Widget(w);
+    const iBool   isHover  = isHover_LabelWidget_(d);
     if (isButton) {
         shrink_Rect(&rect, divi_I2(gap2_UI, 4));
         adjustEdges_Rect(&rect, gap_UI / 8, 0, -gap_UI / 8, 0);

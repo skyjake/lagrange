@@ -22,24 +22,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
-#include <the_Foundation/vec2.h>
-#include <SDL_events.h>
+#include <the_Foundation/defs.h>
 
 iDeclareType(Widget)
 
-enum iWidgetTouchMode {
-    none_WidgetTouchMode,
-    touch_WidgetTouchMode,
-    momentum_WidgetTouchMode,
-};
+void        setupMenuTransition_Mobile          (iWidget *menu, iBool isIncoming);
+void        setupSheetTransition_Mobile         (iWidget *sheet, iBool isIncoming);
 
-iBool   processEvent_Touch      (const SDL_Event *);
-void    update_Touch            (void);
-
-float                   stopWidgetMomentum_Touch    (const iWidget *widget);
-enum iWidgetTouchMode   widgetMode_Touch            (const iWidget *widget);
-void                    widgetDestroyed_Touch       (iWidget *widget);
-
-iInt2   latestPosition_Touch    (void); /* valid during processing of current event */
-iBool   isHovering_Touch        (void); /* stationary touch or a long-press drag ongoing */
-size_t  numFingers_Touch        (void);
+void        finalizeSheet_Mobile        (iWidget *sheet);

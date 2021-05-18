@@ -640,6 +640,9 @@ msgstr "Copy Fingerprint"
 msgid "dlg.input.prompt"
 msgstr "Please enter input for %s:"
 
+msgid "dlg.input.linebreak"
+msgstr "Line break"
+
 msgid "dlg.input.send"
 msgstr "Send"
 
@@ -884,6 +887,9 @@ msgstr "Italian"
 
 msgid "lang.ja"
 msgstr "Japanese"
+
+msgid "lang.pl"
+msgstr "Polish"
 
 msgid "lang.pt"
 msgstr "Portuguese"

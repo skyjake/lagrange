@@ -106,7 +106,8 @@ struct Impl_SidebarWidget {
     size_t            numUnreadEntries;
     iWidget *         resizer;
     iWidget *         menu;
-    iSidebarItem *    contextItem; /* list item accessed in the context menu */
+    iSidebarItem *    contextItem;  /* list item accessed in the context menu */
+    size_t            contextIndex; /* index of list item accessed in the context menu */
 };
 
 iDefineObjectConstructionArgs(SidebarWidget, (enum iSidebarSide side), side)
@@ -239,7 +240,7 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 as_Widget(d),
                 (iMenuItem[]){ { openTab_Icon " ${feeds.entry.newtab}", 0, 0, "feed.entry.opentab" },
                                { circle_Icon " ${feeds.entry.markread}", 0, 0, "feed.entry.toggleread" },
-                               { pin_Icon " ${feeds.entry.bookmark}", 0, 0, "feed.entry.bookmark" },
+                               { bookmark_Icon " ${feeds.entry.bookmark}", 0, 0, "feed.entry.bookmark" },
                                { "---", 0, 0, NULL },
                                { page_Icon " ${feeds.entry.openfeed}", 0, 0, "feed.entry.openfeed" },
                                { edit_Icon " ${feeds.edit}", 0, 0, "feed.entry.edit" },
@@ -364,7 +365,7 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 as_Widget(d),
                 (iMenuItem[]){
                     { "${menu.copyurl}", 0, 0, "history.copy" },
-                    { pin_Icon " ${sidebar.entry.bookmark}", 0, 0, "history.addbookmark" },
+                    { bookmark_Icon " ${sidebar.entry.bookmark}", 0, 0, "history.addbookmark" },
                     { "---", 0, 0, NULL },
                     { close_Icon " ${menu.forgeturl}", 0, 0, "history.delete" },
                     { "---", 0, 0, NULL },
@@ -373,10 +374,6 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
             break;
         }
         case identities_SidebarMode: {
-            /* Actions. */ {
-                addActionButton_SidebarWidget_(d, add_Icon " ${sidebar.action.ident.new}", "ident.new", 0);
-                addActionButton_SidebarWidget_(d, "${sidebar.action.ident.import}", "ident.import", 0);
-            }
             const iString *tabUrl = url_DocumentWidget(document_App());
             isEmpty = iTrue;
             iConstForEach(PtrArray, i, identities_GmCerts(certs_App())) {
@@ -412,6 +409,11 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 addItem_ListWidget(d->list, item);
                 iRelease(item);
                 isEmpty = iFalse;
+            }
+            /* Actions. */
+            if (!isEmpty) {
+                addActionButton_SidebarWidget_(d, add_Icon " ${sidebar.action.ident.new}", "ident.new", 0);
+                addActionButton_SidebarWidget_(d, "${sidebar.action.ident.import}", "ident.import", 0);
             }
             const iMenuItem menuItems[] = {
                 { person_Icon " ${ident.use}", 0, 0, "ident.use arg:1" },
@@ -520,15 +522,15 @@ float width_SidebarWidget(const iSidebarWidget *d) {
 }
 
 static const char *normalModeLabels_[max_SidebarMode] = {
-    pin_Icon " ${sidebar.bookmarks}",
-    star_Icon " ${sidebar.feeds}",
-    clock_Icon " ${sidebar.history}",
+    book_Icon   " ${sidebar.bookmarks}",
+    star_Icon   " ${sidebar.feeds}",
+    clock_Icon  " ${sidebar.history}",
     person_Icon " ${sidebar.identities}",
-    page_Icon " ${sidebar.outline}",
+    page_Icon   " ${sidebar.outline}",
 };
 
 static const char *tightModeLabels_[max_SidebarMode] = {
-    pin_Icon,
+    book_Icon,
     star_Icon,
     clock_Icon,
     person_Icon,
@@ -576,11 +578,11 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     d->itemFonts[0] = uiContent_FontId;
     d->itemFonts[1] = uiContentBold_FontId;
 #if defined (iPlatformAppleMobile)
-    d->widthAsGaps = 73;
     if (deviceType_App() == phone_AppDeviceType) {
         d->itemFonts[0] = defaultBig_FontId;
         d->itemFonts[1] = defaultBigBold_FontId;
     }
+    d->widthAsGaps = 73;
 #else
     d->widthAsGaps = 60;
 #endif
@@ -644,6 +646,7 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
                  "actions");
     setBackgroundColor_Widget(d->actions, uiBackgroundSidebar_ColorId);
     d->contextItem = NULL;
+    d->contextIndex = iInvalidPos;
     d->blank = new_Widget();
     addChildFlags_Widget(content, iClob(d->blank), resizeChildren_WidgetFlag);
     addChildFlags_Widget(vdiv, iClob(content), expand_WidgetFlag);
@@ -770,6 +773,7 @@ static void checkModeButtonLayout_SidebarWidget_(iSidebarWidget *d) {
     for (int i = 0; i < max_SidebarMode; i++) {
         iLabelWidget *button = d->modeButtons[i];
         if (!button) continue;
+        setAlignVisually_LabelWidget(button, isTight);
         setFlags_Widget(as_Widget(button), tight_WidgetFlag, isTight);
         if (i == feeds_SidebarMode && d->numUnreadEntries) {
             updateText_LabelWidget(
@@ -803,7 +807,7 @@ void setWidth_SidebarWidget(iSidebarWidget *d, float widthAsGaps) {
     if (isVisible_Widget(w)) {
         w->rect.size.x = width;
     }
-    arrange_Widget(findWidget_App("stack"));
+    arrange_Widget(findWidget_Root("stack"));
     checkModeButtonLayout_SidebarWidget_(d);
     updateItemHeight_SidebarWidget_(d);
     if (!isFixedWidth && !isRefreshPending_App()) {
@@ -844,7 +848,6 @@ iBool handleBookmarkEditorCommands_SidebarWidget_(iWidget *editor, const char *c
                                     isSelected_Widget(findChild_Widget(editor, "bmed.tag.linksplit")));
             postCommand_App("bookmarks.changed");
         }
-        setFlags_Widget(as_Widget(d), disabled_WidgetFlag, iFalse);
         destroy_Widget(editor);
         return iTrue;
     }
@@ -875,10 +878,33 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
         if (arg_Command(cmd) && isVisible_Widget(w)) {
             return iTrue;
         }
+        const iBool isAnimated = argLabel_Command(cmd, "noanim") == 0 &&
+                                 (deviceType_App() != phone_AppDeviceType);
+        int visX = 0;
+        if (isVisible_Widget(w)) {
+            visX = left_Rect(bounds_Widget(w)) - left_Rect(w->root->widget->rect);
+        }
         setFlags_Widget(w, hidden_WidgetFlag, isVisible_Widget(w));
         if (isVisible_Widget(w)) {
+            setFlags_Widget(w, keepOnTop_WidgetFlag, iFalse);
             w->rect.size.x = d->widthAsGaps * gap_UI;
             invalidate_ListWidget(d->list);
+            if (isAnimated) {
+                setFlags_Widget(w, horizontalOffset_WidgetFlag, iTrue);
+                setVisualOffset_Widget(w, (d->side == left_SideBarSide ? -1 : 1) * w->rect.size.x, 0, 0);
+                setVisualOffset_Widget(w, 0, 300, easeOut_AnimFlag | softer_AnimFlag);
+            }
+        }
+        else if (isAnimated) {
+            setFlags_Widget(w, horizontalOffset_WidgetFlag, iTrue);
+            if (d->side == right_SideBarSide) {
+                setVisualOffset_Widget(w, visX, 0, 0);
+                setVisualOffset_Widget(w, visX + w->rect.size.x, 300, easeOut_AnimFlag | softer_AnimFlag);
+            }
+            else {
+                setFlags_Widget(w, keepOnTop_WidgetFlag, iTrue);
+                setVisualOffset_Widget(w, -w->rect.size.x, 300, easeOut_AnimFlag | softer_AnimFlag);
+            }
         }
         arrange_Widget(w->parent);
         /* BUG: Rearranging because the arrange above didn't fully resolve the height. */
@@ -985,11 +1011,8 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             itemClicked_SidebarWidget_(d, pointerLabel_Command(cmd, "item"));
             return iTrue;
         }
-        else if (isCommand_Widget(w, ev, "menu.opened")) {
-            setFlags_Widget(as_Widget(d->list), disabled_WidgetFlag, iTrue);
-        }
         else if (isCommand_Widget(w, ev, "menu.closed")) {
-            setFlags_Widget(as_Widget(d->list), disabled_WidgetFlag, iFalse);
+         //   invalidateItem_ListWidget(d->list, d->contextIndex);
         }
         else if (isCommand_Widget(w, ev, "bookmark.open")) {
             const iSidebarItem *item = d->contextItem;
@@ -1010,7 +1033,6 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         else if (isCommand_Widget(w, ev, "bookmark.edit")) {
             const iSidebarItem *item = d->contextItem;
             if (d->mode == bookmarks_SidebarMode && item) {
-                setFlags_Widget(w, disabled_WidgetFlag, iTrue);
                 iWidget *dlg = makeBookmarkEditor_Widget();
                 setId_Widget(dlg, format_CStr("bmed.%s", cstr_String(id_Widget(w))));
                 iBookmark *bm = get_Bookmarks(bookmarks_App(), item->id);
@@ -1038,7 +1060,6 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         else if (isCommand_Widget(w, ev, "bookmark.dup")) {
             const iSidebarItem *item = d->contextItem;
             if (d->mode == bookmarks_SidebarMode && item) {
-                setFlags_Widget(w, disabled_WidgetFlag, iTrue);
                 iBookmark *bm = get_Bookmarks(bookmarks_App(), item->id);
                 const iBool isRemote = hasTag_Bookmark(bm, remote_BookmarkTag);
                 iChar icon = isRemote ? 0x1f588 : bm->icon;
@@ -1131,7 +1152,6 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                         return iTrue;
                     }
                     if (isCommand_Widget(w, ev, "feed.entry.edit")) {
-                        setFlags_Widget(w, disabled_WidgetFlag, iTrue);
                         makeFeedSettings_Widget(id_Bookmark(feedBookmark));
                         return iTrue;
                     }
@@ -1307,6 +1327,10 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                 setCursor_Window(get_Window(), SDL_SYSTEM_CURSOR_ARROW);
             }
         }
+        if (d->contextIndex != iInvalidPos) {
+            invalidateItem_ListWidget(d->list, d->contextIndex);
+            d->contextIndex = iInvalidPos;
+        }
     }
     if (d->menu && ev->type == SDL_MOUSEBUTTONDOWN) {
         if (ev->button.button == SDL_BUTTON_RIGHT) {
@@ -1315,7 +1339,12 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                 updateMouseHover_ListWidget(d->list);
             }
             if (constHoverItem_ListWidget(d->list) || isVisible_Widget(d->menu)) {
-                d->contextItem = hoverItem_ListWidget(d->list);
+                d->contextItem  = hoverItem_ListWidget(d->list);
+                /* Context is drawn in hover state. */
+                if (d->contextIndex != iInvalidPos) {
+                    invalidateItem_ListWidget(d->list, d->contextIndex);
+                }
+                d->contextIndex = hoverItemIndex_ListWidget(d->list);
                 /* Update menu items. */
                 /* TODO: Some callback-based mechanism would be nice for updating menus right
                    before they open? */
@@ -1427,18 +1456,30 @@ static void draw_SidebarWidget_(const iSidebarWidget *d) {
     const iRect    bounds = bounds_Widget(w);
     iPaint p;
     init_Paint(&p);
+    if (flags_Widget(w) & visualOffset_WidgetFlag && isVisible_Widget(w)) {
+        fillRect_Paint(&p, boundsWithoutVisualOffset_Widget(w), tmBackground_ColorId);
+    }
     draw_Widget(w);
-    drawVLine_Paint(
-        &p, addX_I2(topRight_Rect(bounds), -1), height_Rect(bounds), uiSeparator_ColorId);
+    if (isVisible_Widget(w)) {
+        drawVLine_Paint(
+            &p,
+            addX_I2(d->side == left_SideBarSide ? topRight_Rect(bounds) : topLeft_Rect(bounds), -1),
+            height_Rect(bounds),
+            uiSeparator_ColorId);
+    }
 }
 
 static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                               const iListWidget *list) {
     const iSidebarWidget *sidebar = findParentClass_Widget(constAs_Widget(list),
                                                            &Class_SidebarWidget);
+    const iBool isMenuVisible = isVisible_Widget(sidebar->menu);
     const iBool isPressing   = isMouseDown_ListWidget(list);
-    const iBool isHover      = isHover_Widget(constAs_Widget(list)) &&
-                               constHoverItem_ListWidget(list) == d;
+    const iBool isHover      =
+            (!isMenuVisible &&
+            isHover_Widget(constAs_Widget(list)) &&
+            constHoverItem_ListWidget(list) == d) ||
+            (isMenuVisible && sidebar->contextItem == d);
     const int scrollBarWidth = scrollBarWidth_ListWidget(list);
 #if defined (iPlatformApple)
     const int blankWidth     = 0;
@@ -1652,7 +1693,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
         drawRange_Text(
             font, cPos, d->listItem.isSelected ? iconColor : metaFg, range_String(&icon));
         deinit_String(&icon);
-        drawRange_Text(d->listItem.isSelected ? uiContentBold_FontId : font,
+        drawRange_Text(d->listItem.isSelected ? sidebar->itemFonts[1] : font,
                        add_I2(cPos, init_I2(indent, 0)),
                        fg,
                        range_String(&d->label));

@@ -170,10 +170,13 @@ iString *   renderBlockChars_Text   (const iBlock *fontData, int height, enum iT
 
 iDeclareType(TextBuf)
 iDeclareTypeConstructionArgs(TextBuf, int font, int color, const char *text)
-
+    
 struct Impl_TextBuf {
     SDL_Texture *texture;
     iInt2        size;
 };
 
-void    draw_TextBuf        (const iTextBuf *, iInt2 pos, int color);
+iTextBuf *  newBound_TextBuf(int font, int color, int boundWidth, const char *text); /* does not word wrap */
+iTextBuf *  newWrap_TextBuf (int font, int color, int wrapWidth, const char *text);
+
+void        draw_TextBuf    (const iTextBuf *, iInt2 pos, int color);

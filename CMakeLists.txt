@@ -22,8 +22,11 @@ project (Lagrange
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
-set (IOS_BUNDLE_VERSION 6)
 set (COPYRIGHT_YEAR 2021)
+if (IOS)
+    set (PROJECT_VERSION 1.4)  # pinned for TestFlight
+    set (IOS_BUNDLE_VERSION 7) # just increment this
+endif ()
 
 # Build configuration.
 option (ENABLE_IPC              "Use IPC to communicate between running instances" ON)
@@ -87,6 +90,7 @@ set (EMBED_RESOURCES
     res/lang/fr.bin
     res/lang/ia.bin
     res/lang/ie.bin
+    res/lang/pl.bin
     res/lang/ru.bin
     res/lang/sr.bin
     res/lang/tok.bin
@@ -176,6 +180,8 @@ set (SOURCES
     src/ui/root.h
     src/ui/mediaui.c
     src/ui/mediaui.h
+    src/ui/mobile.c
+    src/ui/mobile.h
     src/ui/scrollwidget.c
     src/ui/scrollwidget.h
     src/ui/sidebarwidget.c

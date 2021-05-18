@@ -7,10 +7,11 @@
 # Release notes
 
 ## 1.4.1
-* Fixed removing the left side split by closing all its tabs. The URL input field got confused about which tab was currently open and the wrong theme was active.
+* Fixed removing the left side split by closing all its tabs. The URL input field got confused about which tab was currently open, and the wrong theme was active.
 * Fixed tab merging when unsplitting the window: keep the currently active tab open.
+* Fixed issue with sidebars sometimes becoming unresponsive.
 * Fixed font used for visited monospace Gopher links.
-* Fixed incorrectly shown pinning indicator (◧) for the current tab.
+* Fixed incorrectly shown/hidden ◧ indicator.
 * Fixed scrollbar in Preferences > Keys being hidden until the list is scrolled.
 
 ## 1.4

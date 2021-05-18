@@ -305,7 +305,7 @@ void setThemePalette_Color(enum iColorTheme theme) {
                                                 0.4f));
     uiPalette_[uiMarked_ColorId  ].a = 128;
     uiPalette_[uiMatching_ColorId].a = 128;
-    if (deviceType_App() == phone_AppDeviceType) {
+    if (deviceType_App() != desktop_AppDeviceType) {
         copy_(uiInputBackground_ColorId, uiBackgroundSidebar_ColorId);
         copy_(uiInputFrame_ColorId, uiBackgroundSidebar_ColorId);
         copy_(uiInputFrameFocused_ColorId, uiBackgroundSidebar_ColorId);

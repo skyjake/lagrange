@@ -414,7 +414,7 @@ static void draw_ListWidget_(const iListWidget *d) {
                                         init_I2(blankWidth, d->itemHeight) };
             iConstForEach(IntSet, v, &d->invalidItems) {
                 const size_t index = *v.value;
-                if (contains_Range(&drawItems, index)) {
+                if (contains_Range(&drawItems, index) && index < size_PtrArray(&d->items)) {
                     const iListItem *item = constAt_PtrArray(&d->items, index);
                     const iRect      itemRect = { init_I2(0, index * d->itemHeight - buf->origin),
                                                   init_I2(d->visBuf->texSize.x, d->itemHeight) };

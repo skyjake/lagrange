@@ -227,7 +227,7 @@ static void dispatchButtonUp_Touch_(iFloat3 pos) {
 
 static void dispatchNotification_Touch_(const iTouch *d, int code) {
     if (d->affinity) {
-        iRoot *oldRoot = get_Root();
+        iRoot *oldRoot = current_Root();
         setCurrent_Root(d->affinity->root);
         dispatchEvent_Widget(d->affinity, (SDL_Event *) &(SDL_UserEvent){
             .type = SDL_USEREVENT,
@@ -318,6 +318,8 @@ static void update_TouchState_(void *ptr) {
             if (pixels.x || pixels.y) {
                 subv_F3(&mom->accum, initI2_F3(pixels));
                 dispatchMotion_Touch_(mom->pos, 0);
+                iAssert(mom->affinity);
+                setCurrent_Root(mom->affinity->root);
                 dispatchEvent_Widget(mom->affinity, (SDL_Event *) &(SDL_MouseWheelEvent){
                                                         .type = SDL_MOUSEWHEEL,
                                                         .timestamp = nowTime,
@@ -334,26 +336,13 @@ static void update_TouchState_(void *ptr) {
     }
     /* Keep updating if interaction is still ongoing. */
     if (!isEmpty_Array(d->touches) || !isEmpty_Array(d->moms)) {
-        addTicker_App(update_TouchState_, ptr);
+        addTickerRoot_App(update_TouchState_, NULL, ptr);
     }
-}
-
-static iWidget *findOverflowScrollable_Widget_(iWidget *d) {
-    const iInt2 rootSize = size_Root(d->root);
-    for (iWidget *w = d; w; w = parent_Widget(w)) {
-        if (flags_Widget(w) & overflowScrollable_WidgetFlag) {
-            if (height_Widget(w) > rootSize.y && !hasVisibleChildOnTop_Widget(w)) {
-                return w;
-            }
-            return NULL;
-        }
-    }
-    return NULL;
 }
 
 static iWidget *findSlidePanel_Widget_(iWidget *d) {
     for (iWidget *w = d; w; w = parent_Widget(w)) {
-        if (isVisible_Widget(w) && flags_Widget(w) & horizontalOffset_WidgetFlag) {
+        if (isVisible_Widget(w) && flags_Widget(w) & edgeDraggable_WidgetFlag) {
             return w;
         }
     }
@@ -466,6 +455,8 @@ iBool processEvent_Touch(const SDL_Event *ev) {
         if (edge == left_TouchEdge) {
             dragging = findSlidePanel_Widget_(aff);
             if (dragging) {
+//                printf("Selected for dragging: ");
+//                identify_Widget(dragging);
                 setFlags_Widget(dragging, dragged_WidgetFlag, iTrue);
             }
         }
@@ -492,7 +483,7 @@ iBool processEvent_Touch(const SDL_Event *ev) {
         }
         /* This may begin a pinch. */
         checkNewPinch_TouchState_(d, back_Array(d->touches));
-        addTicker_App(update_TouchState_, d);
+        addTickerRoot_App(update_TouchState_, NULL, d);
     }
     else if (ev->type == SDL_FINGERMOTION) {
         iTouch *touch = find_TouchState_(d, fing->fingerId);
@@ -544,7 +535,7 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                     divvf_F3(&touch->accum, 6);
                     divfv_I2(&pixels, 6);
                     /* Allow scrolling a scrollable widget. */
-                    iWidget *flow = findOverflowScrollable_Widget_(touch->affinity);
+                    iWidget *flow = findOverflowScrollable_Widget(touch->affinity);
                     if (flow) {
                         touch->affinity = flow;
                     }
@@ -567,7 +558,7 @@ iBool processEvent_Touch(const SDL_Event *ev) {
             }
             /* Edge swipe aborted? */
             if (touch->edge == left_TouchEdge) {
-                if (fing->dx < 0) {
+                if (fing->dx < 0 && x_F3(touch->pos[0]) < tapRadiusPt_ * window->pixelRatio) {
                     touch->edge = none_TouchEdge;
                     if (touch->edgeDragging) {
                         setFlags_Widget(touch->edgeDragging, dragged_WidgetFlag, iFalse);
@@ -598,6 +589,7 @@ iBool processEvent_Touch(const SDL_Event *ev) {
             if (pixels.x || pixels.y) {
                 setFocus_Widget(NULL);
                 dispatchMotion_Touch_(touch->pos[0], 0);
+                setCurrent_Root(touch->affinity->root);
                 dispatchEvent_Widget(touch->affinity, (SDL_Event *) &(SDL_MouseWheelEvent){
                     .type = SDL_MOUSEWHEEL,
                     .timestamp = SDL_GetTicks(),
@@ -642,17 +634,19 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                 continue;
             }
             /* Edge swipes do not generate momentum. */
+            const size_t lastIndex = iMin(touch->posCount - 1, lastIndex_Touch_);
             const uint32_t duration = nowTime - touch->startTime;
-            const iFloat3 gestureVector = sub_F3(pos, touch->startPos);
+            const iFloat3 gestureVector = sub_F3(pos, touch->pos[lastIndex]);
             iFloat3 velocity = zero_F3();
             if (touch->edge && fabsf(2 * x_F3(gestureVector)) > fabsf(y_F3(gestureVector)) &&
                 !isStationary_Touch_(touch)) {
-                dispatchClick_Touch_(touch, touch->edge == left_TouchEdge ? SDL_BUTTON_X1
-                                                                          : SDL_BUTTON_X2);
+                const int swipeDir = x_F3(gestureVector) > 0 ? +1 : -1;
+                dispatchClick_Touch_(touch,
+                                     touch->edge == left_TouchEdge  && swipeDir > 0 ? SDL_BUTTON_X1 :
+                                     touch->edge == right_TouchEdge && swipeDir < 0 ? SDL_BUTTON_X2 : 0);
                 setHover_Widget(NULL);
             }
             else {
-                const size_t lastIndex = iMin(touch->posCount - 1, lastIndex_Touch_);
                 const uint32_t elapsed = fing->timestamp - touch->posTime[lastIndex];
                 const float minVelocity = 400.0f;
                 if (elapsed < 150) {
@@ -756,6 +750,20 @@ void widgetDestroyed_Touch(iWidget *widget) {
 
 iInt2 latestPosition_Touch(void) {
     return touchState_()->currentTouchPos;
+}
+
+iBool isHovering_Touch(void) {
+    iTouchState *d = touchState_();
+    if (numFingers_Touch() == 1) {
+        const iTouch *touch = constFront_Array(d->touches);
+        if (touch->isTapBegun && isStationary_Touch_(touch)) {
+            return iTrue;
+        }
+        if (touch->isTapAndHold) {
+            return iTrue;
+        }
+    }
+    return iFalse;
 }
 
 size_t numFingers_Touch(void) {

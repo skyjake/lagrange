@@ -1466,7 +1466,8 @@ static void scrollBegan_DocumentWidget_(iAnyObject *any, int offset, uint32_t du
     }
     /* Show and hide toolbar on scroll. */
     if (deviceType_App() == phone_AppDeviceType) {
-        if (prefs_App()->hideToolbarOnScroll && iAbs(offset) > 5) {
+        const float normPos = normScrollPos_DocumentWidget_(d);
+        if (prefs_App()->hideToolbarOnScroll && iAbs(offset) > 5 && normPos >= 0) {
             showToolbars_Root(as_Widget(d)->root, offset < 0);
         }
     }
@@ -1606,6 +1607,7 @@ static void inputQueryValidator_(iInputWidget *input, void *context) {
                              avail < 128 ? uiTextStrong_ColorId
                                          : uiTextDim_ColorId);
     delete_String(url);
+    arrange_Widget(findChild_Widget(dlg, "dialogbuttons"));
 }
 
 static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
@@ -1637,10 +1639,28 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                         : cstr_String(&resp->meta),
                     uiTextCaution_ColorEscape "${dlg.input.send}",
                     format_CStr("!document.input.submit doc:%p", d));
-                setId_Widget(addChildPosFlags_Widget(findChild_Widget(dlg, "dialogbuttons"),
+                iWidget *buttons = findChild_Widget(dlg, "dialogbuttons");
+                iLabelWidget *lineBreak;
+                /* The line break and URL length counters are positioned differently on mobile. */
+                if (deviceType_App() == desktop_AppDeviceType) {
+                    lineBreak = new_LabelWidget("${dlg.input.linebreak}"
+                                                uiTextAction_ColorEscape
+                                                "  " shiftReturn_Icon,
+                                                NULL);
+                    insertChildAfter_Widget(buttons, iClob(lineBreak), 0);
+                }
+                else {
+                    lineBreak = new_LabelWidget("${dlg.input.linebreak}", "text.insert arg:10");
+                }
+                setFlags_Widget(as_Widget(lineBreak), frameless_WidgetFlag, iTrue);
+                setTextColor_LabelWidget(lineBreak, uiTextDim_ColorId);
+                setId_Widget(addChildPosFlags_Widget(buttons,
                                                      iClob(new_LabelWidget("", NULL)),
                                                      front_WidgetAddPos, frameless_WidgetFlag),
                              "valueinput.counter");
+                if (deviceType_App() != desktop_AppDeviceType) {
+                    addChildPos_Widget(buttons, iClob(lineBreak), front_WidgetAddPos);
+                }
                 setValidator_InputWidget(findChild_Widget(dlg, "input"), inputQueryValidator_, d);
                 setSensitiveContent_InputWidget(findChild_Widget(dlg, "input"),
                                                 statusCode == sensitiveInput_GmStatusCode);
@@ -1653,7 +1673,7 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                 break;
             }
             case categorySuccess_GmStatusCode:
-                reset_SmoothScroll(&d->scrollY);
+                //reset_SmoothScroll(&d->scrollY);
                 iRelease(d->doc); /* new content incoming */
                 d->doc = new_GmDocument();
                 delete_Gempub(d->sourceGempub);
@@ -2310,7 +2330,9 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         }
         updateFetchProgress_DocumentWidget_(d);
         checkResponse_DocumentWidget_(d);
-        init_Anim(&d->scrollY.pos, d->initNormScrollY * size_GmDocument(d->doc).y); /* TODO: unless user already scrolled! */
+        if (category_GmStatusCode(status_GmRequest(d->request)) == categorySuccess_GmStatusCode) {
+            init_Anim(&d->scrollY.pos, d->initNormScrollY * size_GmDocument(d->doc).y); /* TODO: unless user already scrolled! */
+        }
         d->state = ready_RequestState;
         postProcessRequestContent_DocumentWidget_(d, iFalse);
         /* The response may be cached. */
@@ -3081,7 +3103,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                     pushBackN_Array(&items,
                                     (iMenuItem[]){ { "---", 0, 0, NULL },
                                                    { "${link.copy}", 0, 0, "document.copylink" },
-                                                   { pin_Icon " ${link.bookmark}",
+                                                   { bookmark_Icon " ${link.bookmark}",
                                                      0,
                                                      0,
                                                      format_CStr("!bookmark.add title:%s url:%s",
@@ -3126,7 +3148,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                             { reload_Icon " ${menu.reload}", reload_KeyShortcut, "navigate.reload" },
                             { timer_Icon " ${menu.autoreload}", 0, 0, "document.autoreload.menu" },
                             { "---", 0, 0, NULL },
-                            { pin_Icon " ${menu.page.bookmark}", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
+                            { bookmark_Icon " ${menu.page.bookmark}", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
                             { star_Icon " ${menu.page.subscribe}", subscribeToPage_KeyModifier, "feeds.subscribe" },
                             { "---", 0, 0, NULL },
                             { book_Icon " ${menu.page.import}", 0, 0, "bookmark.links confirm:1" },

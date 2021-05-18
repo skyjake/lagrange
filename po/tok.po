@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-05-06 09:39+0000\n"
+"PO-Revision-Date: 2021-05-10 06:26+0000\n"
 "Last-Translator: jan Anja <cyber@sysrq.in>\n"
 "Language-Team: Toki Pona <http://weblate.skyjake.fi/projects/lagrange/ui/tok/"
 ">\n"
@@ -119,7 +119,7 @@ msgid "menu.closetab.other"
 msgstr "o pini e poki ante"
 
 msgid "menu.closetab.right"
-msgstr "o pini e poki sinpin"
+msgstr "o pini e poki lon sinpin"
 
 msgid "menu.duptab"
 msgstr "o pali e poki sama"
@@ -147,7 +147,7 @@ msgid "menu.sidebar.right"
 msgstr "o len ala len e poki poka tu?"
 
 msgid "menu.zoom.in"
-msgstr "o mute"
+msgstr "o suli"
 
 msgid "menu.zoom.out"
 msgstr "o lili"
@@ -789,7 +789,7 @@ msgid "prefs.searchurl"
 msgstr "nimi tawa tan lukin e nimi:"
 
 msgid "prefs.hoverlink"
-msgstr "tawa la sina lukin e nimi tawa:"
+msgstr "tawa la o lukin e nimi tawa:"
 
 msgid "prefs.collapsepreonload"
 msgstr "o len e sitelen namako:"
@@ -798,7 +798,7 @@ msgid "prefs.smoothscroll"
 msgstr "tawa suwi:"
 
 msgid "prefs.imageloadscroll"
-msgstr "tawa la sina lukin e sitelen:"
+msgstr "tawa la o lukin e sitelen:"
 
 msgid "prefs.hidetoolbarscroll"
 msgstr "tawa la mi len e ijo sewi:"
@@ -1186,7 +1186,7 @@ msgid "prefs.linewidth.normal"
 msgstr "nasa ala"
 
 msgid "prefs.decodeurls"
-msgstr "sina lukin pona e nimi tawa:"
+msgstr "o pona lukin e nimi tawa:"
 
 msgid "prefs.ca.file"
 msgstr "ijo tawa ilo CA:"
@@ -1211,7 +1211,7 @@ msgid "dlg.message.ok"
 msgstr "o awen pali"
 
 msgid "menu.closetab.left"
-msgstr "o pini e poki monsi"
+msgstr "o pini e poki lon monsi"
 
 msgid "macos.menu.find"
 msgstr "o lukin e nimi"
@@ -1444,7 +1444,7 @@ msgid "menu.view.split"
 msgstr "o tu e poki..."
 
 msgid "menu.split.vertical"
-msgstr "poka"
+msgstr "sewi en anpa"
 
 msgid "menu.split.merge"
 msgstr "o wan e poki"
@@ -1465,7 +1465,7 @@ msgid "gempub.cover.viewlocal"
 msgstr "sina awen e lipu tawa ilo sona la sina ken lukin e lipu Kempu."
 
 msgid "menu.split.horizontal"
-msgstr "sewi en anpa"
+msgstr "poka"
 
 msgid "dlg.newident.date.example"
 msgstr ""

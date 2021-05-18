@@ -1,0 +1,1629 @@
+msgid ""
+msgstr ""
+"Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
+"PO-Revision-Date: 2021-05-13 04:58+0000\n"
+"Last-Translator: Waterrail <maksymiliankrol03@gmail.com>\n"
+"Language-Team: Polish <http://weblate.skyjake.fi/projects/lagrange/ui/pl/>\n"
+"Language: pl\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
+"|| n%100>=20) ? 1 : 2;\n"
+"X-Generator: Weblate 4.5.1\n"
+
+msgid "error.proxyrefusal.msg"
+msgstr ""
+"Żądanie dotyczyło zasobu w domenie, która nie jest obsługiwana przez serwer, "
+"a serwer nie akceptuje żądań proxy."
+
+msgid "gempub.cover.viewlocal"
+msgstr "Aby wyświetlić tę książkę Gempub, najpierw musisz ją pobrać."
+
+msgid "gempub.meta.revdate"
+msgstr "Data korekty"
+
+# Link download progress message.
+msgid "doc.fetching"
+msgstr "Pobieram"
+
+#, c-format
+msgid "doc.archive"
+msgstr "%s jest archiwum skompresowanym."
+
+# Inline download status message.
+msgid "media.download.complete"
+msgstr "Ukończono pobieranie."
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.title"
+msgstr "Tytuł"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.artist"
+msgstr "Artysta"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.genre"
+msgstr "Gatunek"
+
+# used as adjective, n is 8, 16, 24, 32, or 64
+#, c-format
+msgid "n.bit"
+msgstr "%d-bitowy"
+
+msgid "numbertype.integer"
+msgstr "całkowita"
+
+msgid "numbertype.float"
+msgstr "zmiennoprzecinkowa"
+
+# Hertz, unit for frequency values
+msgid "hz"
+msgstr "Hz"
+
+# Used in about:feeds.
+msgid "feeds.list.title"
+msgstr "Wpisy kanału"
+
+#, c-format
+msgid "feeds.list.entrycount"
+msgid_plural "feeds.list.entrycount.n"
+msgstr[0] "łącznie %zu wpis"
+msgstr[1] "łącznie %zu wpisy"
+msgstr[2] "łącznie %zu wpisów"
+
+msgid "feeds.list.refreshtime.now"
+msgstr "Ostatnie odświeżenie miało miejsce przed chwilą."
+
+#, c-format
+msgid "feeds.list.refreshtime"
+msgstr "Ostatnie odświeżenie miało miejsce %s."
+
+#, c-format
+msgid "minutes.ago"
+msgid_plural "minutes.ago.n"
+msgstr[0] "minutę temu"
+msgstr[1] "%d minuty temu"
+msgstr[2] "%d minut temu"
+
+msgid "about.tagline"
+msgstr "Piękny klient Gemini"
+
+msgid "about.version"
+msgstr "Wersja"
+
+msgid "about.powered"
+msgstr "Oparty na SDL 2, OpenSSL oraz ☕️"
+
+msgid "cancel"
+msgstr "Anuluj"
+
+msgid "menu.title.edit"
+msgstr "Edytuj"
+
+msgid "menu.title.view"
+msgstr "Podgląd"
+
+msgid "menu.title.bookmarks"
+msgstr "Zakładki"
+
+msgid "menu.title.identity"
+msgstr "Tożsamość"
+
+msgid "dismiss"
+msgstr "Zamknij"
+
+msgid "dlg.message.ok"
+msgstr "Kontynuuj"
+
+msgid "dlg.default"
+msgstr " OK "
+
+msgid "toggle.yes"
+msgstr "TAK"
+
+msgid "toggle.no"
+msgstr "NIE"
+
+msgid "menu.newtab"
+msgstr "Nowa karta"
+
+msgid "menu.closetab"
+msgstr "Zamknij kartę"
+
+msgid "menu.closetab.left"
+msgstr "Zamknij karty po lewej"
+
+msgid "menu.closetab.right"
+msgstr "Zamknij karty po prawej"
+
+msgid "menu.duptab"
+msgstr "Powiel kartę"
+
+msgid "menu.split.merge"
+msgstr "Scal karty"
+
+msgid "menu.split.swap"
+msgstr "Zamień karty miejscami"
+
+msgid "menu.split.horizontal"
+msgstr "Poziomo"
+
+msgid "menu.openlocation"
+msgstr "Otwórz lokalizację…"
+
+msgid "menu.downloads"
+msgstr "Pokaż folder pobranych"
+
+msgid "menu.find"
+msgstr "Znajdź na stronie"
+
+msgid "macos.menu.find"
+msgstr "Znajdź"
+
+# Used on desktop operating systems. "Downloads" refers to the user's configured downloads directory.
+msgid "menu.save.downloads"
+msgstr "Zapisz w Pobranych"
+
+msgid "menu.sidebar"
+msgstr "Przełącz pasek boczny"
+
+msgid "menu.sidebar.left"
+msgstr "Przełącz lewy panel boczny"
+
+msgid "menu.sidebar.right"
+msgstr "Przełącz prawy panel boczny"
+
+msgid "menu.zoom.in"
+msgstr "Powiększ"
+
+msgid "menu.zoom.out"
+msgstr "Pomniejsz"
+
+msgid "menu.zoom.reset"
+msgstr "Resetuj powiększenie"
+
+msgid "macos.menu.bookmarks.list"
+msgstr "Pokaż wszystkie"
+
+msgid "menu.view.split"
+msgstr "Widok dzielony…"
+
+msgid "macos.menu.bookmarks.bytag"
+msgstr "Sortuj według tagu"
+
+msgid "macos.menu.bookmarks.bytime"
+msgstr "Sortuj według daty utworzenia"
+
+msgid "menu.feeds.entrylist"
+msgstr "Pokaż wpisy kanału"
+
+msgid "menu.help"
+msgstr "Pomoc"
+
+msgid "menu.releasenotes"
+msgstr "Informacje o wydaniu"
+
+msgid "menu.quit"
+msgstr "Wyjdź z Lagrange"
+
+msgid "menu.preferences"
+msgstr "Opcje…"
+
+msgid "menu.copy"
+msgstr "Kopiuj"
+
+msgid "menu.paste"
+msgstr "Wklej"
+
+msgid "menu.select.clear"
+msgstr "Wyczyść zaznaczenie"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.bookmarks"
+msgstr "Pokaż zakładki"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.feeds"
+msgstr "Pokaż kanały"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.history"
+msgstr "Pokaż historię"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.identities"
+msgstr "Pokaż tożsamości"
+
+msgid "menu.back"
+msgstr "Wstecz"
+
+msgid "menu.forward"
+msgstr "Dalej"
+
+msgid "menu.parent"
+msgstr "Przejdź do katalogu nadrzędnego"
+
+msgid "menu.root"
+msgstr "Przejdź do katalogu głównego"
+
+msgid "menu.reload"
+msgstr "Odśwież stronę"
+
+msgid "menu.autoreload"
+msgstr "Ustaw autoodświeżanie…"
+
+msgid "menu.page.bookmark"
+msgstr "Dodaj stronę do zakładek…"
+
+msgid "menu.aboutpages"
+msgstr "Strony z informacjami"
+
+msgid "menu.about"
+msgstr "O Lagrange"
+
+msgid "panel.back"
+msgstr "Wstecz"
+
+msgid "menu.debug"
+msgstr "Informacje debugowania"
+
+msgid "menu.page.import"
+msgstr "Importuj linki jako zakładki…"
+
+msgid "menu.page.translate"
+msgstr "Przetłumacz…"
+
+msgid "menu.page.copyurl"
+msgstr "Kopiuj adres strony"
+
+msgid "menu.page.copysource"
+msgstr "Kopiuj źródło strony"
+
+msgid "menu.feeds.refresh"
+msgstr "Odśwież kanały"
+
+msgid "menu.identity.new"
+msgstr "Nowa tożsamość…"
+
+msgid "menu.identity.import"
+msgstr "Importuj…"
+
+msgid "sidebar.bookmarks"
+msgstr "Zakładki"
+
+msgid "sidebar.history"
+msgstr "Historia"
+
+msgid "sidebar.identities"
+msgstr "Tożsamości"
+
+msgid "sidebar.outline"
+msgstr "Konspekt"
+
+msgid "sidebar.action.feeds.showunread"
+msgstr "Nieprzeczytane"
+
+msgid "sidebar.action.ident.new"
+msgstr "Nowa…"
+
+msgid "toolbar.outline"
+msgstr "Konspekt strony"
+
+msgid "hint.findtext"
+msgstr "Znajdź tekst na stronie"
+
+msgid "status.query"
+msgstr "Zapytanie wyszukiwania"
+
+msgid "status.feeds"
+msgstr "Aktualizuję kanały"
+
+# megabytes, used as the unit after a number
+msgid "mb"
+msgstr "MB"
+
+msgid "mb.per.sec"
+msgstr "MB/s"
+
+# kilobytes, used as the unit after a number
+msgid "kb"
+msgstr "KB"
+
+msgid "num.bytes"
+msgid_plural "num.bytes.n"
+msgstr[0] "%zu bajt"
+msgstr[1] "%zu bajty"
+msgstr[2] "%zu bajtów"
+
+# strftime() formatted, split on two lines
+#, c-format
+msgid "page.timestamp"
+msgstr ""
+"Otrzymano %d.%m.%Y\n"
+"o %H:%M"
+
+# strftime() formatted
+#, c-format
+msgid "sidebar.date.thisyear"
+msgstr "%d %B"
+
+# strftime() formatted
+#, c-format
+msgid "sidebar.date.otheryear"
+msgstr "%d.%m.%Y"
+
+msgid "feeds.today"
+msgstr "Dziś"
+
+msgid "feeds.entry.newtab"
+msgstr "Otwórz wpis w nowej karcie"
+
+msgid "feeds.entry.markread"
+msgstr "Oznacz jako przeczytane"
+
+msgid "sidebar.entry.bookmark"
+msgstr "Dodaj zakładkę…"
+
+msgid "feeds.entry.bookmark"
+msgstr "Dodaj zakładkę…"
+
+msgid "feeds.unsubscribe"
+msgstr "Anuluj subskrypcję…"
+
+msgid "feeds.markallread"
+msgstr "Oznacz wszystko jako przeczytane"
+
+msgid "feeds.refresh"
+msgstr "Odśwież kanały"
+
+msgid "menu.opentab"
+msgstr "Otwórz w nowej karcie"
+
+msgid "menu.opentab.background"
+msgstr "Otwórz w nowej karcie w tle"
+
+msgid "menu.edit"
+msgstr "Edytuj…"
+
+msgid "menu.dup"
+msgstr "Powiel…"
+
+msgid "menu.forgeturl"
+msgstr "Zapomnij adres URL"
+
+msgid "history.clear"
+msgstr "Wyczyść historię…"
+
+msgid "heading.history.clear"
+msgstr "CZYSZCZENIE HISTORII"
+
+msgid "dlg.history.clear"
+msgstr "Wyczyść historię"
+
+msgid "bookmark.tag.home"
+msgstr "Użyj jako strony głównej"
+
+msgid "bookmark.tag.sub"
+msgstr "Subskrybuj kanał"
+
+msgid "bookmark.tag.remote"
+msgstr "Użyj jako źródła zakładek"
+
+msgid "bookmark.untag.home"
+msgstr "Usuń stronę główną"
+
+msgid "bookmark.untag.sub"
+msgstr "Anuluj subskrypcję kanału"
+
+msgid "bookmark.tag.linksplit"
+msgstr "Linki otwierane w podzielonym oknie"
+
+msgid "bookmark.delete"
+msgstr "Usuń zakładkę"
+
+msgid "bookmarks.reload"
+msgstr "Odśwież zewnętrzne zakładki"
+
+msgid "ident.notused"
+msgstr "Nieużywana"
+
+#, c-format
+msgid "ident.usedonurls"
+msgid_plural "ident.usedonurls.n"
+msgstr[0] "Używana w %zu adresie URL"
+msgstr[1] "Używana w %zu adresach URL"
+msgstr[2] "Używana w %zu adresach URL"
+
+msgid "ident.temporary"
+msgstr "Tymczasowa"
+
+msgid "ident.stopuse.all"
+msgstr "Nie używaj nigdzie"
+
+msgid "ident.use"
+msgstr "Używaj na tej stronie"
+
+msgid "ident.stopuse"
+msgstr "Nie używaj na tej stronie"
+
+msgid "ident.showuse"
+msgstr "Pokaż użycie"
+
+msgid "heading.ident.use"
+msgstr "UŻYCIE TOŻSAMOŚCI"
+
+msgid "menu.edit.notes"
+msgstr "Edytuj adnotacje…"
+
+msgid "heading.ident.notes"
+msgstr "ADNOTACJE TOŻSAMOŚCI"
+
+# %s refers to name of an identity.
+#, c-format
+msgid "dlg.ident.notes"
+msgstr "Adnotacje na temat tożsamości %s:"
+
+msgid "ident.fingerprint"
+msgstr "Kopiuj odcisk palca"
+
+msgid "ident.delete"
+msgstr "Usuń tożsamość…"
+
+msgid "heading.ident.delete"
+msgstr "USUWANIE TOŻSAMOŚCI"
+
+msgid "dlg.ident.delete"
+msgstr "Usuń tożsamość i pliki"
+
+#, c-format
+msgid "dlg.confirm.unsub"
+msgstr ""
+"Czy na pewno chcesz anulować subskrypcję kanału\n"
+"„%s”?"
+
+msgid "dlg.unsub"
+msgstr "Anuluj subskrypcję"
+
+#, c-format
+msgid "error.unsupported.suggestsave"
+msgstr ""
+"Możesz zapisać go jako plik w folderze Pobrane: naciśnij %s lub wybierz „%s” "
+"z menu."
+
+msgid "heading.pageinfo"
+msgstr "INFORMACJE NA TEMAT STRONY"
+
+msgid "pageinfo.header.cached"
+msgstr "(zawartość pamięci podręcznej)"
+
+msgid "heading.unsub"
+msgstr "ANULOWANIE SUBSKRYPCJI"
+
+msgid "pageinfo.cert.ca.unverified"
+msgstr "Niezweryfikowany przez CA"
+
+msgid "pageinfo.cert.notexpired"
+msgstr "Niewygasły"
+
+msgid "pageinfo.cert.expired"
+msgstr "Wygasły"
+
+msgid "pageinfo.cert.trusted"
+msgstr "Zaufany"
+
+msgid "pageinfo.cert.untrusted"
+msgstr "Niezaufany"
+
+msgid "pageinfo.domain.match"
+msgstr "Pasująca nazwa domeny"
+
+msgid "pageinfo.domain.mismatch"
+msgstr "Niepasująca nazwa domeny"
+
+msgid "dlg.cert.trust"
+msgstr "Ufaj"
+
+msgid "dlg.cert.fingerprint"
+msgstr "Kopiuj odcisk palca"
+
+#, c-format
+msgid "dlg.input.prompt"
+msgstr "Wprowadź dane dla %s:"
+
+msgid "dlg.input.send"
+msgstr "Wyślij"
+
+msgid "heading.save"
+msgstr "ZAPISANO PLIK"
+
+msgid "heading.save.incomplete"
+msgstr "STRONA NIEKOMPLETNA"
+
+msgid "dlg.save.incomplete"
+msgstr "Zawartość strony jest nadal pobierana."
+
+msgid "dlg.save.size"
+msgstr "Rozmiar:"
+
+msgid "dlg.save.opendownload"
+msgstr "Otwórz pobrany plik"
+
+msgid "heading.save.error"
+msgstr "BŁĄD ZAPISYWANIA PLIKU"
+
+msgid "heading.import.bookmarks"
+msgstr "IMPORTUJ ZAKŁADKI"
+
+#, c-format
+msgid "dlg.import.add"
+msgid_plural "dlg.import.add.n"
+msgstr[0] "%sDodaj zakładkę"
+msgstr[1] "%sDodaj %d zakładki"
+msgstr[2] "%sDodaj %d zakładek"
+
+msgid "dlg.import.notnew"
+msgstr "Wszystkie linki na tej stronie są już oznaczone zakładką."
+
+msgid "heading.autoreload"
+msgstr "AUTOODŚWIEŻANIE"
+
+msgid "dlg.autoreload"
+msgstr "Wybierz interwał autoodświeżania tej karty."
+
+msgid "reload.never"
+msgstr "Nigdy"
+
+msgid "reload.onceperday"
+msgstr "Raz dziennie"
+
+#, c-format
+msgid "num.hours"
+msgid_plural "num.hours.n"
+msgstr[0] "%d godzina"
+msgstr[1] "%d godziny"
+msgstr[2] "%d godzin"
+
+msgid "link.newtab"
+msgstr "Otwórz link w nowej karcie"
+
+msgid "link.browser"
+msgstr "Otwórz link w domyślnej przeglądarce"
+
+msgid "link.noproxy"
+msgstr "Otwórz bez użycia proxy"
+
+msgid "link.copy"
+msgstr "Kopiuj link"
+
+msgid "link.bookmark"
+msgstr "Dodaj link do zakładek…"
+
+msgid "link.side"
+msgstr "Otwórz link w innym oknie"
+
+msgid "link.side.newtab"
+msgstr "Otwórz link w nowym oknie"
+
+msgid "heading.openlink"
+msgstr "OTWARCIE LINKU"
+
+#, c-format
+msgid "dlg.openlink.confirm"
+msgstr ""
+"Otworzyć link w przeglądarce domyślnej?\n"
+"%s%s"
+
+msgid "dlg.openlink"
+msgstr "Otwórz link"
+
+msgid "heading.certwarn"
+msgstr "NIEZAUFANY CERTYFIKAT"
+
+msgid "dlg.certwarn.different"
+msgstr ""
+"Otrzymany certyfikat jest ważny, ale różni się od tego zaufanego przez nas."
+
+msgid "dlg.certwarn.domain.expired"
+msgstr "Otrzymany certyfikat zarówno wygasł, jak i dotyczy niewłaściwej domeny."
+
+msgid "heading.certimport"
+msgstr "IMPORT TOŻSAMOŚCI"
+
+msgid "dlg.certimport.help"
+msgstr ""
+"Wklej klucz prywatny i/lub certyfikat w formacie PEM,\n"
+"albo upuść plik .crt/.key na obszar okna."
+
+msgid "heading.certimport.pasted"
+msgstr "WKLEJONO ZE SCHOWKA"
+
+msgid "heading.certimport.dropped"
+msgstr "UPUSZCZONO PLIK"
+
+msgid "dlg.certimport.import"
+msgstr "Importuj"
+
+msgid "dlg.certimport.notes"
+msgstr "Adnotacje:"
+
+msgid "hint.certimport.description"
+msgstr "opis"
+
+msgid "dlg.certimport.nokey"
+msgstr "Brak prywatnego klucza"
+
+msgid "link.hint.audio"
+msgstr "Odtwórz dźwięk"
+
+msgid "link.hint.image"
+msgstr "Wyświetl obraz"
+
+msgid "bookmark.title.blank"
+msgstr "Pusta strona"
+
+# Interpret as "Results from bookmarks..."
+msgid "heading.lookup.bookmarks"
+msgstr "ZAKŁADKI"
+
+# Interpret as "Results from feeds..."
+msgid "heading.lookup.feeds"
+msgstr "KANAŁY"
+
+# Interpret as "Results from history..."
+msgid "heading.lookup.history"
+msgstr "HISTORIA"
+
+# Interpret as "Results from page content..."
+msgid "heading.lookup.pagecontent"
+msgstr "ZAWARTOŚĆ STRONY"
+
+msgid "heading.translate"
+msgstr "TŁUMACZENIE STRONY"
+
+msgid "dlg.translate.unavail"
+msgstr "Usługa niedostępna"
+
+msgid "dlg.translate"
+msgstr "Tłumacz"
+
+msgid "lang.ar"
+msgstr "arabski"
+
+msgid "lang.zh"
+msgstr "chiński"
+
+msgid "lang.zh.hans"
+msgstr "chiński (uproszczony)"
+
+msgid "dlg.translate.from"
+msgstr "Język strony:"
+
+msgid "dlg.translate.to"
+msgstr "Język docelowy:"
+
+msgid "lang.zh.hant"
+msgstr "chiński (tradycyjny)"
+
+msgid "lang.de"
+msgstr "niemiecki"
+
+msgid "lang.en"
+msgstr "angielski"
+
+msgid "lang.ia"
+msgstr "interlingua"
+
+msgid "lang.ie"
+msgstr "interlingue"
+
+msgid "lang.fi"
+msgstr "fiński"
+
+msgid "lang.fr"
+msgstr "francuski"
+
+msgid "lang.hi"
+msgstr "hindi"
+
+msgid "lang.it"
+msgstr "włoski"
+
+msgid "lang.ja"
+msgstr "japoński"
+
+msgid "lang.ru"
+msgstr "rosyjski"
+
+msgid "lang.es"
+msgstr "hiszpański"
+
+msgid "lang.sr"
+msgstr "serbski"
+
+msgid "lang.tok"
+msgstr "toki pona"
+
+msgid "heading.newident"
+msgstr "NOWA TOŻSAMOŚĆ"
+
+msgid "dlg.newident.until"
+msgstr "Data ważności:"
+
+msgid "hint.newident.date"
+msgstr "RRRR-MM-DD GG:MM:SS"
+
+msgid "dlg.newident.commonname"
+msgstr "Nazwa zwyczajowa:"
+
+msgid "dlg.newident.temp"
+msgstr "Tymczasowo:"
+
+msgid "dlg.newident.notsaved"
+msgstr "nie zapisano na dysku"
+
+msgid "hint.newident.optional"
+msgstr "pole opcjonalne"
+
+msgid "dlg.newident.userid"
+msgstr "Identyfikator użytkownika:"
+
+msgid "dlg.newident.domain"
+msgstr "Domena:"
+
+msgid "dlg.newident.org"
+msgstr "Organizacja:"
+
+msgid "dlg.newident.country"
+msgstr "Kraj:"
+
+msgid "heading.newident.missing"
+msgstr "BRAKUJĄCE DANE"
+
+msgid "dlg.newindent.missing.commonname"
+msgstr "Podaj nazwę zwyczajową."
+
+msgid "heading.newident.date.bad"
+msgstr "NIEWŁAŚCIWA DATA"
+
+msgid "dlg.newident.date.past"
+msgstr "Data wygaśnięcia musi przypadać w przyszłości."
+
+msgid "heading.feedcfg"
+msgstr "USTAWIENIA KANAŁU"
+
+msgid "heading.subscribe"
+msgstr "SUBSKRYBOWANIE STRONY"
+
+msgid "dlg.feed.title"
+msgstr "Tytuł:"
+
+msgid "dlg.feed.type.gemini"
+msgstr "Linki RRRR-MM-DD"
+
+msgid "dlg.feed.type.headings"
+msgstr "Nowe nagłówki"
+
+msgid "dlg.feed.save"
+msgstr "Zapisz ustawienia"
+
+msgid "dlg.feed.sub"
+msgstr "Subskrybuj"
+
+msgid "heading.bookmark.edit"
+msgstr "EDYCJA ZAKŁADKI"
+
+msgid "dlg.bookmark.save"
+msgstr "Zapisz zakładkę"
+
+msgid "dlg.bookmark.title"
+msgstr "Tytuł:"
+
+msgid "dlg.bookmark.url"
+msgstr "Adres:"
+
+msgid "dlg.bookmark.icon"
+msgstr "Ikona:"
+
+msgid "heading.prefs"
+msgstr "OPCJE"
+
+msgid "heading.prefs.certs"
+msgstr "CERTYFIKATY"
+
+msgid "heading.prefs.fonts"
+msgstr "CZCIONKI"
+
+# tab button
+msgid "heading.prefs.interface"
+msgstr "Interfejs"
+
+# tab button
+msgid "heading.prefs.keys"
+msgstr "Klawisze"
+
+# tab button
+msgid "heading.prefs.network"
+msgstr "Sieć"
+
+msgid "heading.prefs.paragraph"
+msgstr "PARAGRAF"
+
+msgid "heading.prefs.pagecontent"
+msgstr "ZAWARTOŚĆ STRON"
+
+msgid "heading.prefs.proxies"
+msgstr "PROXY"
+
+msgid "heading.prefs.scrolling"
+msgstr "PRZEWIJANIE"
+
+msgid "heading.prefs.sizing"
+msgstr "ROZMIAR"
+
+msgid "heading.prefs.widelayout"
+msgstr "SZEROKI UKŁAD"
+
+# tab button
+msgid "heading.prefs.style"
+msgstr "Styl"
+
+# tab button
+msgid "heading.prefs.userinterface"
+msgstr "Interfejs użytkownika"
+
+msgid "prefs.downloads"
+msgstr "Folder pobranych plików:"
+
+msgid "prefs.hoverlink"
+msgstr "Pokazuj adres po najechaniu kursorem:"
+
+msgid "prefs.centershort"
+msgstr "Wyrównanie w pionie:"
+
+# User preference that controls whether index.gmi pages get automatically opened when browsing the contents of a directory inside a compressed archive.
+msgid "prefs.archive.openindex"
+msgstr "Otwieraj indeksy archiwum:"
+
+msgid "prefs.pinsplit"
+msgstr "Otwieraj linki w widoku dzielonym:"
+
+msgid "prefs.pinsplit.none"
+msgstr "W tym samym oknie"
+
+msgid "prefs.pinsplit.left"
+msgstr "w oknie z prawej"
+
+msgid "prefs.pinsplit.right"
+msgstr "w oknie z lewej"
+
+msgid "prefs.smoothscroll"
+msgstr "Gładkie przewijanie:"
+
+msgid "prefs.hidetoolbarscroll"
+msgstr "Ukryj pasek narzędzi przy przewijaniu:"
+
+msgid "prefs.theme"
+msgstr "Motyw:"
+
+msgid "prefs.theme.black"
+msgstr "Czarny"
+
+msgid "prefs.theme.dark"
+msgstr "Ciemny"
+
+msgid "prefs.theme.light"
+msgstr "Jasny"
+
+msgid "prefs.theme.white"
+msgstr "Biały"
+
+msgid "prefs.uilang"
+msgstr "Język:"
+
+msgid "prefs.uiscale"
+msgstr "Współczynnik skalowania interfejsu:"
+
+msgid "prefs.customframe"
+msgstr "Niestandardowa ramka okna:"
+
+msgid "prefs.retainwindow"
+msgstr "Utrzymuj położenie:"
+
+msgid "prefs.sideicon"
+msgstr "Ikona kapsułki:"
+
+msgid "prefs.doctheme.light"
+msgstr "Jasny motyw:"
+
+msgid "prefs.doctheme.name.colorfuldark"
+msgstr "Kolorowy ciemny"
+
+msgid "prefs.doctheme.name.black"
+msgstr "Czarny"
+
+msgid "prefs.doctheme.name.gray"
+msgstr "Szary"
+
+msgid "prefs.doctheme.name.white"
+msgstr "Biały"
+
+msgid "prefs.doctheme.name.sepia"
+msgstr "Sepia"
+
+msgid "prefs.doctheme.name.highcontrast"
+msgstr "Wysoki kontrast"
+
+msgid "prefs.font"
+msgstr "Czcionka treści:"
+
+msgid "prefs.mono"
+msgstr "Tekst o stałej szerokości:"
+
+msgid "prefs.mono.gemini"
+msgstr "Gemini"
+
+msgid "prefs.mono.gopher"
+msgstr "Gopher"
+
+msgid "prefs.boldlink"
+msgstr "Pogrubione linki:"
+
+# Interpretation: (Bold links) on light (background).
+msgid "prefs.boldlink.light"
+msgstr "Na jasnym"
+
+msgid "prefs.linewidth"
+msgstr "Szerokość linii:"
+
+msgid "prefs.linewidth.normal"
+msgstr "Normalna"
+
+msgid "prefs.linewidth.fill"
+msgstr "Pełna"
+
+msgid "prefs.quoteicon"
+msgstr "Wskaźnik cytatu:"
+
+msgid "prefs.quoteicon.icon"
+msgstr "Ikona \""
+
+msgid "prefs.quoteicon.line"
+msgstr "Linia"
+
+msgid "prefs.biglede"
+msgstr "Duży 1. paragraf:"
+
+msgid "prefs.decodeurls"
+msgstr "Dekoduj adresy URL:"
+
+msgid "prefs.cachesize"
+msgstr "Rozmiar buforu:"
+
+msgid "prefs.ca.file"
+msgstr "Plik CA:"
+
+msgid "archive.exit"
+msgstr "Wyjdź z archiwum"
+
+msgid "dir.empty"
+msgstr "Ten katalog jest pusty."
+
+msgid "prefs.proxy.gemini"
+msgstr "Proxy Gemini:"
+
+msgid "prefs.proxy.gopher"
+msgstr "Proxy Gopher:"
+
+msgid "prefs.proxy.http"
+msgstr "Proxy HTTP:"
+
+#, c-format
+msgid "dir.summary"
+msgid_plural "dir.summary.n"
+msgstr[0] "Ten katalog zawiera %zu element."
+msgstr[1] "Ten katalog zawiera %zu elementy."
+msgstr[2] "Ten katalog zawiera %zu elementów."
+
+msgid "menu.binding.reset"
+msgstr "Przywróć domyślne"
+
+msgid "keys.top"
+msgstr "Przejdź na szczyt"
+
+msgid "keys.bottom"
+msgstr "Przejdź na spód"
+
+msgid "keys.scroll.up"
+msgstr "Przewiń w górę"
+
+msgid "keys.scroll.down"
+msgstr "Przewiń w dół"
+
+msgid "keys.scroll.page.down"
+msgstr "Przewiń o całą stronę w dół"
+
+msgid "keys.scroll.page.up"
+msgstr "Przewiń o całą stronę w górę"
+
+msgid "keys.scroll.halfpage.up"
+msgstr "Przewiń o pół strony w górę"
+
+msgid "keys.back"
+msgstr "Wstecz"
+
+msgid "keys.forward"
+msgstr "Dalej"
+
+msgid "keys.root"
+msgstr "Przejdź do korzenia kapsułki"
+
+msgid "keys.reload"
+msgstr "Odśwież stronę"
+
+msgid "keys.link.homerow"
+msgstr "Otwórz link za pomocą klawisza wiersza głównego"
+
+msgid "keys.link.homerow.hover"
+msgstr "Najedź kursorem na link za pomocą klawisza wiersza głównego"
+
+msgid "keys.link.homerow.next"
+msgstr "Następny zestaw linków klawiszy wiersza głównego"
+
+msgid "keys.bookmark.add"
+msgstr "Dodaj zakładkę"
+
+msgid "keys.findtext"
+msgstr "Znajdź tekst na stronie"
+
+msgid "keys.zoom.in"
+msgstr "Powiększ"
+
+msgid "keys.zoom.out"
+msgstr "Pomniejsz"
+
+msgid "keys.zoom.reset"
+msgstr "Resetuj powiększenie"
+
+msgid "keys.tab.new"
+msgstr "Nowa karta"
+
+msgid "keys.tab.close"
+msgstr "Zamknij kartę"
+
+msgid "error.badstatus"
+msgstr "Nieznany kod statusu"
+
+msgid "keys.tab.close.other"
+msgstr "Zamknij resztę kart"
+
+msgid "keys.tab.prev"
+msgstr "Poprzednia karta"
+
+msgid "keys.tab.next"
+msgstr "Następna karta"
+
+msgid "keys.split.menu"
+msgstr "Dostosuj tryb widoku dzielonego"
+
+msgid "keys.split.next"
+msgstr "Skoncentruj się na następnym oknie"
+
+msgid "keys.hoverurl"
+msgstr "Pokaż adres URL po najechaniu kursorem"
+
+msgid "error.openfile"
+msgstr "Nie można otworzyć pliku"
+
+msgid "error.openfile.msg"
+msgstr "Żądany plik nie istnieje bądź jest niedostępny. Sprawdź ścieżkę pliku."
+
+msgid "error.unsupported.media"
+msgstr "Nieobsługiwany rodzaj treści"
+
+msgid "error.badredirect"
+msgstr "Nieprawidłowe przekierowanie"
+
+msgid "error.unsupported.media.msg"
+msgstr "Nie można wyświetlić otrzymanej treści za pomocą tej aplikacji."
+
+msgid "error.unsupported.protocol"
+msgstr "Nieobsługiwany protokół"
+
+msgid "error.unsupported.protocol.msg"
+msgstr "Żądany protokół jest nieobsługiwany przez tę aplikację."
+
+msgid "error.manyredirects"
+msgstr "Zbyt wiele przekierowań"
+
+msgid "error.schemeredirect"
+msgstr "Przekierowanie ze zmianą schematu"
+
+msgid "error.tls"
+msgstr "Błąd sieci/TLS"
+
+msgid "error.tls.msg"
+msgstr "Nie można nawiązać połączenia z serwerem. Oto treść błędu:"
+
+msgid "error.temporary"
+msgstr "Tymczasowy błąd"
+
+msgid "error.temporary.msg"
+msgstr ""
+"Żądanie nie powiodło się, ale może się powieść, jeśli spróbujesz ponownie w "
+"przyszłości."
+
+msgid "error.unavail"
+msgstr "Serwer niedostępny"
+
+msgid "error.proxy"
+msgstr "Błąd proxy"
+
+msgid "error.slowdown"
+msgstr "Zwolnij"
+
+msgid "error.slowdown.msg"
+msgstr "Serwer ogranicza liczbę żądań. Proszę czekać…"
+
+msgid "error.gone"
+msgstr "Usunięto"
+
+msgid "error.notfound"
+msgstr "Nie znaleziono"
+
+msgid "error.permanent"
+msgstr "Błąd permanentny"
+
+msgid "error.permanent.msg"
+msgstr ""
+"Twoje żądanie nie powiodło się i nie powiedzie się również w przyszłości, "
+"jeśli zostanie powtórzone."
+
+msgid "error.proxyrefusal"
+msgstr "Żądanie odrzucone przez serwer proxy"
+
+msgid "error.cert.auth"
+msgstr "Nieautoryzowany certyfikat"
+
+msgid "error.cert.invalid"
+msgstr "Nieprawidłowy certyfikat"
+
+msgid "error.cert.invalid.msg"
+msgstr "Podany certyfikat klienta stracił ważność lub jest nieprawidłowy."
+
+msgid "error.cert.needed"
+msgstr "Wymagany certyfikat"
+
+msgid "error.cert.needed.msg"
+msgstr ""
+"Dostęp do żądanego zasobu wymaga identyfikacji za pomocą certyfikatu klienta."
+
+msgid "gempub.cover.untitled"
+msgstr "Książka bez tytułu"
+
+msgid "gempub.cover.aboutbook"
+msgstr "O tej książce"
+
+msgid "gempub.cover.view"
+msgstr "Wyświetl zawartość Gempub"
+
+msgid "gempub.cover.image"
+msgstr "Grafika okładki"
+
+msgid "gempub.meta.author"
+msgstr "Autor"
+
+msgid "gempub.meta.version"
+msgstr "Wersja"
+
+msgid "gempub.meta.pub"
+msgstr "Rok publikacji"
+
+msgid "gempub.meta.pubdate"
+msgstr "Data publikacji"
+
+msgid "gempub.meta.lang"
+msgstr "Język"
+
+msgid "gempub.meta.license"
+msgstr "Licencja"
+
+msgid "doc.pre.nocaption"
+msgstr "Wstępnie sformatowany tekst bez opisu"
+
+msgid "doc.archive.view"
+msgstr "Wyświetl zawartość archiwum"
+
+# Inline download status message.
+msgid "media.download.warnclose"
+msgstr "Pobieranie zostanie anulowane po zamknięciu tej karty."
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.date"
+msgstr "Data"
+
+#, c-format
+msgid "feeds.list.counts"
+msgid_plural "feeds.list.counts.n"
+msgstr[0] "Subskrybujesz %zu kanał zawierający %%s.\n"
+msgstr[1] "Subskrybujesz %zu kanały zawierające %%s.\n"
+msgstr[2] "Subskrybujesz %zu kanałów zawierających %%s.\n"
+
+msgid "menu.title.file"
+msgstr "Plik"
+
+msgid "menu.title.help"
+msgstr "Pomoc"
+
+msgid "menu.closetab.other"
+msgstr "Zamknij resztę kart"
+
+msgid "menu.split.vertical"
+msgstr "Pionowo"
+
+# Used on iOS. "Files" refers to Apple's iOS app where you can pick an iCloud folder.
+msgid "menu.save.files"
+msgstr "Zapisz w Plikach"
+
+msgid "menu.bookmarks.list"
+msgstr "Pokaż wszystkie zakładki"
+
+msgid "menu.bookmarks.bytag"
+msgstr "Sortuj zakładki według tagu"
+
+msgid "menu.bookmarks.bytime"
+msgstr "Sortuj zakładki według daty utworzenia"
+
+msgid "menu.cut"
+msgstr "Wytnij"
+
+# Used in the Edit menu on macOS. Note: could be replaced with menu.page.copyurl.
+msgid "menu.copy.pagelink"
+msgstr "Kopiuj link do strony"
+
+# Used in the View menu on macOS. Shows sidebar and switches sidebar tab.
+msgid "menu.show.outline"
+msgstr "Pokaż konspekt strony"
+
+msgid "menu.page.subscribe"
+msgstr "Zasubskrybuj stronę…"
+
+msgid "menu.import.links"
+msgstr "Importuj wszystkie linki ze strony…"
+
+msgid "menu.bookmarks.refresh"
+msgstr "Odśwież zewnętrzne zakładki"
+
+msgid "menu.identity.notactive"
+msgstr "Brak aktywnych tożsamości"
+
+msgid "sidebar.feeds"
+msgstr "Kanały"
+
+msgid "sidebar.action.feeds.showall"
+msgstr "Wszystkie"
+
+msgid "sidebar.action.ident.import"
+msgstr "Importuj…"
+
+# Usage: "(count) Unread" in the sidebar tab title, referring to feed entries.
+msgid "sidebar.unread"
+msgid_plural "sidebar.unread.n"
+msgstr[0] "nieprzeczytany"
+msgstr[1] "nieprzeczytane"
+msgstr[2] "nieprzeczytanych"
+
+msgid "feeds.entry.markunread"
+msgstr "Oznacz jako nieprzeczytane"
+
+msgid "feeds.entry.openfeed"
+msgstr "Otwórz stronę kanału"
+
+msgid "feeds.edit"
+msgstr "Edytuj kanał…"
+
+msgid "menu.copyurl"
+msgstr "Kopiuj adres URL"
+
+msgid "dlg.confirm.history.clear"
+msgstr "Czy na pewno chcesz wyczyścić historię wszystkich odwiedzonych witryn?"
+
+#, c-format
+msgid "hours.ago"
+msgid_plural "hours.ago.n"
+msgstr[0] "godzinę temu"
+msgstr[1] "%d godziny temu"
+msgstr[2] "%d godzin temu"
+
+#, c-format
+msgid "days.ago"
+msgid_plural "days.ago.n"
+msgstr[0] "dzień temu"
+msgstr[1] "%d dni temu"
+msgstr[2] "%d dni temu"
+
+# Alt-text of the preformatted logo.
+msgid "about.logo"
+msgstr "ASCII-Art: wyraz „Lagrange” napisany dużą czcionką"
+
+msgid "bookmark.untag.remote"
+msgstr "Usuń źródło zakładki"
+
+msgid "ident.using"
+msgstr "Używana na tej stronie"
+
+# strftime() formatted
+#, c-format
+msgid "ident.expiry"
+msgstr "Wygasa %d.%m.%Y"
+
+#, c-format
+msgid "dlg.confirm.ident.delete"
+msgstr ""
+"Czy na pewno chcesz usunąć tożsamość\n"
+"%s%s%s\n"
+"wraz z jej certyfikatem i plikami kluczy prywatnych?"
+
+msgid "sidebar.empty.idents"
+msgstr "Brak tożsamości"
+
+# The %s format characters are used to highlight the word "Help" and must be used in the translation in same way as here.
+#, c-format
+msgid "ident.gotohelp"
+msgstr ""
+"Więcej informacji na temat certyfikatów klienta TLS można uzyskać w dziale "
+"%sPomoc%s."
+
+msgid "pageinfo.cert.status"
+msgstr "Status certyfikatu:"
+
+msgid "pageinfo.cert.ca.verified"
+msgstr "Zweryfikowany przez CA"
+
+#, c-format
+msgid "dlg.import.found"
+msgid_plural "dlg.import.found.n"
+msgstr[0] "Znaleziono nowy link na tej stronie."
+msgstr[1] "Znaleziono %d nowe linki na tej stronie."
+msgstr[2] "Znaleziono %d nowych linków na tej stronie."
+
+#, c-format
+msgid "num.minutes"
+msgid_plural "num.minutes.n"
+msgstr[0] "%d minuta"
+msgstr[1] "%d minuty"
+msgstr[2] "%d minut"
+
+msgid "link.newtab.background"
+msgstr "Otwórz link w karcie w tle"
+
+msgid "link.download"
+msgstr "Pobierz plik"
+
+#, c-format
+msgid "dlg.certwarn.mayberenewed"
+msgid_plural "dlg.certwarn.mayberenewed.n"
+msgstr[0] ""
+"Otrzymany certyfikat mógł zostać niedawno odnowiony — dotyczy właściwej "
+"domeny i jeszcze nie wygasł. Aktualny zaufany certyfikat wygaśnie %s, w "
+"ciągu jednego dnia."
+msgstr[1] ""
+"Otrzymany certyfikat mógł zostać niedawno odnowiony — dotyczy właściwej "
+"domeny i jeszcze nie wygasł. Aktualny zaufany certyfikat wygaśnie %s, za %-d "
+"dni."
+msgstr[2] ""
+"Otrzymany certyfikat mógł zostać niedawno odnowiony — dotyczy właściwej "
+"domeny i jeszcze nie wygasł. Aktualny zaufany certyfikat wygaśnie %s, za %-d "
+"dni."
+
+#, c-format
+msgid "dlg.certwarn.expired"
+msgstr "Otrzymany certyfikat wygasł %s."
+
+msgid "dlg.certwarn.domain"
+msgstr ""
+"Otrzymany certyfikat dotyczy niewłaściwej domeny (%s). Problem może wynikać "
+"z konfiguracji serwera."
+
+msgid "dlg.certimport.notfound"
+msgstr "Nie znaleziono certyfikatu lub klucza prywatnego."
+
+msgid "dlg.certimport.notfound.page"
+msgstr "Nie znaleziono certyfikatu/klucza na obecnej stronie."
+
+msgid "dlg.certimport.nocert"
+msgstr "Brak certyfikatu"
+
+# Interpret as "Results from identitites..."
+msgid "heading.lookup.identities"
+msgstr "TOŻSAMOŚCI"
+
+# Interpret as "Other results..."
+msgid "heading.lookup.other"
+msgstr "INNY"
+
+msgid "dlg.translate.fail"
+msgstr "Żądanie nie powiodło się"
+
+msgid "lang.pt"
+msgstr "portugalski"
+
+msgid "dlg.newident.rsa.selfsign"
+msgstr "Tworzenie samodzielnie podpisanego 2048-bitowego certyfikatu RSA."
+
+msgid "dlg.newident.email"
+msgstr "Adres e-mail:"
+
+msgid "dlg.newident.create"
+msgstr "Utwórz tożsamość"
+
+msgid "dlg.newident.date.example"
+msgstr ""
+"Sprawdź datę wygaśnięcia. Przykładowo:\n"
+"• 2030\n"
+"• 2025-06-30\n"
+"• 2021-12-31 23:59:59"
+
+msgid "menu.binding.clear"
+msgstr "Usuń"
+
+#, c-format
+msgid "archive.summary"
+msgid_plural "archive.summary.n"
+msgstr[0] ""
+"To archiwum zawiera %zu element, a jego rozmiar po kompresji wynosi %.1f MB."
+msgstr[1] ""
+"To archiwum zawiera %zu elementy, a jego rozmiar po kompresji wynosi %.1f MB."
+msgstr[2] ""
+"To archiwum zawiera %zu elementów, a jego rozmiar po kompresji wynosi %.1f "
+"MB."
+
+msgid "dlg.feed.entrytype"
+msgstr "Rodzaj wpisu:"
+
+msgid "heading.bookmark.add"
+msgstr "DODAWANIE ZAKŁADKI"
+
+msgid "dlg.bookmark.tags"
+msgstr "Etykiety:"
+
+# tab button
+msgid "heading.prefs.colors"
+msgstr "Kolorystyka"
+
+# tab button
+msgid "heading.prefs.general"
+msgstr "Ogólne"
+
+msgid "prefs.searchurl"
+msgstr "URL wyszukiwania:"
+
+msgid "prefs.collapsepreonload"
+msgstr "Zwijaj wstępnie sformatowany tekst:"
+
+msgid "prefs.imageloadscroll"
+msgstr "Ładuj obraz przy przewijaniu:"
+
+msgid "prefs.ostheme"
+msgstr "Używaj motywu systemu:"
+
+msgid "prefs.accent"
+msgstr "Kolor akcentu:"
+
+msgid "prefs.accent.teal"
+msgstr "Turkusowy"
+
+msgid "prefs.accent.orange"
+msgstr "Pomarańczowy"
+
+msgid "prefs.plaintext.wrap"
+msgstr "Zawijaj zwykły tekst:"
+
+msgid "prefs.saturation"
+msgstr "Nasycenie:"
+
+msgid "error.badheader"
+msgstr "Niewłaściwy nagłówek"
+
+msgid "error.badheader.msg"
+msgstr ""
+"Otrzymany nagłówek nie jest zgodny ze specyfikacją protokołu Gemini. Może to "
+"być wynikiem usterki serwera, bądź próby skontaktowania się z serwerem innym "
+"niż Gemini."
+
+msgid "error.badredirect.msg"
+msgstr ""
+"Serwer odpowiedział przekierowaniem, ale nie podał poprawnego docelowego "
+"adresu URL. Może to być wynikiem usterki serwera."
+
+msgid "error.badrequest"
+msgstr "Nieprawidłowe żądanie"
+
+msgid "error.badrequest.msg"
+msgstr "Serwer nie zrozumiał Twojego żądania."
+
+msgid "error.badresource"
+msgstr "Nieprawidłowy zasób"
+
+msgid "error.badresource.msg"
+msgstr "Żądany zasób nie istnieje."
+
+msgid "error.badstatus.msg"
+msgstr ""
+"Serwer odpowiedział kodem statusu, którego nie ma w specyfikacji protokołu "
+"Gemini. Może serwer pochodzi z przyszłości? Albo po prostu uległ awarii."
+
+msgid "error.cert.auth.msg"
+msgstr ""
+"Podany certyfikat klienta jest ważny, ale nie ma uprawnień dostępu do "
+"żądanego zasobu."
+
+msgid "error.cgi"
+msgstr "Błąd CGI"
+
+msgid "error.cgi.msg"
+msgstr ""
+"Awaria podczas generowania dynamicznej zawartości na serwerze. Może to być "
+"spowodowane nieprawidłowym działaniem oprogramowania po stronie serwera."
+
+msgid "error.gone.msg"
+msgstr "Żądany zasób nie jest już dostępny."
+
+msgid "error.manyredirects.msg"
+msgstr ""
+"Być może znajdujesz się w pętli przekierowań. Następny przekierowany adres "
+"URL znajduje się poniżej, jeśli chcesz kontynuować ręcznie."
+
+msgid "error.notfound.msg"
+msgstr "Żądany zasób nie może być znaleziony w tym czasie."
+
+msgid "prefs.doctheme.dark"
+msgstr "Ciemny motyw:"
+
+msgid "prefs.doctheme.name.colorfullight"
+msgstr "Kolorowy jasny"
+
+msgid "prefs.headingfont"
+msgstr "Czcionka nagłówka:"
+
+# Interpretation: (Bold links) on dark (background).
+msgid "prefs.boldlink.dark"
+msgstr "Na ciemnym"
+
+msgid "prefs.ca.path"
+msgstr "Ścieżka CA:"
+
+msgid "keys.scroll.halfpage.down"
+msgstr "Przewiń o pół strony w dół"
+
+msgid "keys.parent"
+msgstr "Przejdź do katalogu nadrzędnego"
+
+msgid "keys.link.modkey"
+msgstr "Otwórz link za pomocą klucza modyfikującego"
+
+msgid "keys.link.homerow.newtab"
+msgstr "Otwórz link w nowej karcie za pomocą klawisza wiersza głównego"
+
+msgid "keys.subscribe"
+msgstr "Subskrybuj stronę"
+
+msgid "keys.fullscreen"
+msgstr "Przełącz tryb pełnoekranowy"
+
+msgid "error.schemeredirect.msg"
+msgstr ""
+"Serwer próbował przekierować nas na adres URL o innym schemacie niż "
+"pierwotny adres URL. Oto link, za pomocą którego możesz go ręcznie otworzyć."
+
+msgid "error.unavail.msg"
+msgstr ""
+"Serwer jest niedostępny z powodu przeciążenia lub konserwacji. Sprawdź "
+"ponownie później."
+
+msgid "error.proxy.msg"
+msgstr ""
+"Żądanie proxy nie powiodło się, ponieważ serwer nie był w stanie pomyślnie "
+"zakończyć transakcji ze zdalnym hostem. Mogły wystąpić problemy z łącznością "
+"sieciową."
