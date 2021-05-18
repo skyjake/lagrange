@@ -1142,7 +1142,9 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                 }
                 if (isCommand_Widget(w, ev, "feed.entry.bookmark")) {
                     makeBookmarkCreation_Widget(&item->url, &item->label, item->icon);
-                    postCommand_App("focus.set id:bmed.title");
+                    if (deviceType_App() == desktop_AppDeviceType) {
+                        postCommand_App("focus.set id:bmed.title");
+                    }
                     return iTrue;
                 }
                 iBookmark *feedBookmark = get_Bookmarks(bookmarks_App(), item->id);
@@ -1290,7 +1292,9 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                     &item->url,
                     collect_String(newRange_String(urlHost_String(&item->url))),
                     0x1f310 /* globe */);
-                postCommand_App("focus.set id:bmed.title");
+                if (deviceType_App() == desktop_AppDeviceType) {
+                    postCommand_App("focus.set id:bmed.title");
+                }
             }
         }
         else if (equal_Command(cmd, "history.clear")) {

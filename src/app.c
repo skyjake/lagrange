@@ -2153,7 +2153,7 @@ iBool handleCommand_App(const char *cmd) {
         iWidget *tabs = findWidget_App("doctabs");
 #if defined (iPlatformAppleMobile)
         /* Can't close the last on mobile. */
-        if (tabCount_Widget(tabs) == 1) {
+        if (tabCount_Widget(tabs) == 1 && numRoots_Window(get_Window()) == 1) {
             postCommand_App("navigate.home");
             return iTrue;
         }
@@ -2331,7 +2331,9 @@ iBool handleCommand_App(const char *cmd) {
                                         bookmarkTitle_DocumentWidget(doc),
                                         siteIcon_GmDocument(document_DocumentWidget(doc)));
         }
-        postCommand_App("focus.set id:bmed.title");
+        if (deviceType_App() == desktop_AppDeviceType) {
+            postCommand_App("focus.set id:bmed.title");
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "feeds.subscribe")) {
