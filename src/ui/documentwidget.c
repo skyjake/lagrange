@@ -3706,8 +3706,8 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
 //                    &d->paint, addY_I2(bottomLeft_Rect(wideRect), -1), width_Rect(wideRect), frame);
 //            }
         }
-        else {
-            /* Normal background for other runs. */
+        else if (run->linkId) {
+            /* Normal background for runs that may change appearance. */
             fillRect_Paint(&d->paint, (iRect){ visPos, run->visBounds.size }, tmBackground_ColorId);
         }
     }
