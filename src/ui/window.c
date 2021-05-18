@@ -59,7 +59,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 static iWindow *theWindow_ = NULL;
 
-#if defined (iPlatformApple) || defined (iPlatformLinux)
+#if defined (iPlatformApple) || defined (iPlatformLinux) || defined (iPlatformOther)
 static float initialUiScale_ = 1.0f;
 #else
 static float initialUiScale_ = 1.1f;
