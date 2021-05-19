@@ -253,7 +253,9 @@ static iAnyObject *addPanelChild_(iWidget *panel, iAnyObject *child, int64_t fla
             }
         }
         if ((elementType == toggle_PrefsElement && precedingElementType != toggle_PrefsElement) ||
-            (elementType == textInput_PrefsElement && precedingElementType != textInput_PrefsElement)) {
+            (elementType == textInput_PrefsElement && precedingElementType != textInput_PrefsElement) ||
+            (elementType == dropdown_PrefsElement && precedingElementType != dropdown_PrefsElement) ||
+            (elementType == radioButton_PrefsElement && precedingElementType == heading_PrefsElement)) {
             flags |= borderTop_WidgetFlag;
         }
         return addChildFlags_Widget(panel, child, flags);
@@ -305,6 +307,7 @@ static iWidget *makeValuePadding_(iWidget *value) {
 }
 
 static iWidget *makeValuePaddingWithHeading_(iLabelWidget *heading, iWidget *value) {
+    const iBool isInput = isInstance_Object(value, &Class_InputWidget);
     iWidget *div = new_Widget();
     setFlags_Widget(div,
                     borderBottom_WidgetFlag | arrangeHeight_WidgetFlag |
@@ -313,10 +316,11 @@ static iWidget *makeValuePaddingWithHeading_(iLabelWidget *heading, iWidget *val
     setBackgroundColor_Widget(div, uiBackgroundSidebar_ColorId);
     setPadding_Widget(div, gap_UI, gap_UI, 4 * gap_UI, gap_UI);
     addChildFlags_Widget(div, iClob(heading), 0);
+    setPadding1_Widget(as_Widget(heading), 0);
     //setFixedSize_Widget(as_Widget(heading), init_I2(-1, height_Widget(value)));
     setFont_LabelWidget(heading, labelFont_());
     setTextColor_LabelWidget(heading, uiTextStrong_ColorId);
-    if (isInstance_Object(value, &Class_InputWidget)) {
+    if (isInput) {
         addChildFlags_Widget(div, iClob(value), expand_WidgetFlag);
     }
     else if (isInstance_Object(value, &Class_LabelWidget) &&
@@ -332,6 +336,7 @@ static iWidget *makeValuePaddingWithHeading_(iLabelWidget *heading, iWidget *val
         addChildFlags_Widget(div, iClob(new_Widget()), expand_WidgetFlag);
         addChild_Widget(div, iClob(value));
     }
+    printTree_Widget(div);
     return div;
 }
 
@@ -374,7 +379,9 @@ void finalizeSheet_Mobile(iWidget *sheet) {
             postRefresh_App();
             return;
         }
-        /*       Landscape Layout                 Portrait Layout
+        /* TODO: In portrait, top panel and detail stack are all stacked together.
+         
+                 Landscape Layout                 Portrait Layout
                                               
         ┌─────────┬──────Detail─Stack─────┐    ┌─────────┬ ─ ─ ─ ─ ┐
         │         │┌───────────────────┐  │    │         │Detail
@@ -616,10 +623,9 @@ void finalizeSheet_Mobile(iWidget *sheet) {
             addChild_Widget(topPanel, iClob(makePadding_Widget(lineHeight_Text(labelFont_()))));
             iLabelWidget *aboutButton = addChildFlags_Widget(topPanel,
                                  iClob(makePanelButton_(planet_Icon " ${menu.about}", "panel.open")),
-                                 chevron_WidgetFlag);
+                                 chevron_WidgetFlag | borderTop_WidgetFlag);
             addChildFlags_Widget(topPanel,
-                                 iClob(makePanelButton_(info_Icon " ${menu.help}", "!open url:about:help")),
-                                 borderTop_WidgetFlag);
+                                 iClob(makePanelButton_(info_Icon " ${menu.help}", "!open url:about:help")), 0);
             /* The About panel. */ {
                 iWidget *panel = addChildPanel_(detailStack, aboutButton, NULL);
                 iString *msg = collectNew_String();

@@ -571,10 +571,11 @@ static float normScrollPos_DocumentWidget_(const iDocumentWidget *d) {
 }
 
 static int scrollMax_DocumentWidget_(const iDocumentWidget *d) {
-    int sm = size_GmDocument(d->doc).y - height_Rect(bounds_Widget(constAs_Widget(d))) +
+    const iWidget *w = constAs_Widget(d);
+    int sm = size_GmDocument(d->doc).y - height_Rect(bounds_Widget(w)) +
              (hasSiteBanner_GmDocument(d->doc) ? 1 : 2) * d->pageMargin * gap_UI;
     if (d->phoneToolbar) {
-        sm += size_Root(constAs_Widget(d)->root).y -
+        sm += size_Root(w->root).y -
               top_Rect(boundsWithoutVisualOffset_Widget(d->phoneToolbar));
     }
     return sm;
@@ -3077,6 +3078,9 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                   0,
                                   format_CStr("!open newtab:5 url:%s", cstr_String(linkUrl)) } },
                             4);
+                        if (deviceType_App() == phone_AppDeviceType) {
+                            removeN_Array(&items, size_Array(&items) - 2, iInvalidSize);
+                        }
                     }
                     else if (!willUseProxy_App(scheme)) {
                         pushBack_Array(
