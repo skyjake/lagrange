@@ -25,7 +25,7 @@ project (Lagrange
 set (COPYRIGHT_YEAR 2021)
 if (IOS)
     set (PROJECT_VERSION 1.4)  # pinned for TestFlight
-    set (IOS_BUNDLE_VERSION 7) # just increment this
+    set (IOS_BUNDLE_VERSION 8) # just increment this
 endif ()
 
 # Build configuration.
