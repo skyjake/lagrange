@@ -323,7 +323,6 @@ static iBool setWidth_Widget_(iWidget *d, int width) {
             d->rect.size.x = width;
             TRACE(d, "width has changed to %d", width);
             if (class_Widget(d)->sizeChanged) {
-                const int oldHeight = d->rect.size.y;
                 class_Widget(d)->sizeChanged(d);
             }
             return iTrue;
