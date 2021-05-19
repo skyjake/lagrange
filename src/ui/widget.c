@@ -338,7 +338,7 @@ static iBool setWidth_Widget_(iWidget *d, int width) {
 static iBool setHeight_Widget_(iWidget *d, int height) {
     iAssert(height >= 0);
     if (d->sizeRef) {
-        return; /* height defined by another widget */
+        return iFalse; /* height defined by another widget */
     }
     TRACE(d, "attempt to set height to %d (current: %d, min height: %d)", height, d->rect.size.y, d->minSize.y);
     height = iMax(height, d->minSize.y);
