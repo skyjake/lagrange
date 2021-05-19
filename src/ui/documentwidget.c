@@ -571,10 +571,11 @@ static float normScrollPos_DocumentWidget_(const iDocumentWidget *d) {
 }
 
 static int scrollMax_DocumentWidget_(const iDocumentWidget *d) {
-    int sm = size_GmDocument(d->doc).y - height_Rect(bounds_Widget(constAs_Widget(d))) +
+    const iWidget *w = constAs_Widget(d);
+    int sm = size_GmDocument(d->doc).y - height_Rect(bounds_Widget(w)) +
              (hasSiteBanner_GmDocument(d->doc) ? 1 : 2) * d->pageMargin * gap_UI;
     if (d->phoneToolbar) {
-        sm += size_Root(constAs_Widget(d)->root).y -
+        sm += size_Root(w->root).y -
               top_Rect(boundsWithoutVisualOffset_Widget(d->phoneToolbar));
     }
     return sm;

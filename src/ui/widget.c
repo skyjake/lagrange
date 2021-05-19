@@ -314,50 +314,48 @@ static void printf_Widget_(const iWidget *d, const char *format, ...) {
     delete_String(msg);
 }
 
-static void setWidth_Widget_(iWidget *d, int width) {
+static iBool setWidth_Widget_(iWidget *d, int width) {
     iAssert(width >= 0);
     TRACE(d, "attempt to set width to %d (current: %d, min width: %d)", width, d->rect.size.x, d->minSize.x);
     width = iMax(width, d->minSize.x);
-    if (~d->flags & fixedWidth_WidgetFlag) { //} || d->flags & collapse_WidgetFlag) {
+    if (~d->flags & fixedWidth_WidgetFlag) {
         if (d->rect.size.x != width) {
             d->rect.size.x = width;
             TRACE(d, "width has changed to %d", width);
             if (class_Widget(d)->sizeChanged) {
                 const int oldHeight = d->rect.size.y;
                 class_Widget(d)->sizeChanged(d);
-                if (d->rect.size.y != oldHeight) {
-                    TRACE(d, "sizeChanged() cuased height change to %d; redoing parent", d->rect.size.y);
-                    /* Widget updated its height. */
-                    arrange_Widget_(d->parent);
-                    TRACE(d, "parent layout redone");
-                }
             }
+            return iTrue;
         }
     }
     else {
         TRACE(d, "changing width not allowed; flags: %x", d->flags);
     }
+    return iFalse;
 }
 
-static void setHeight_Widget_(iWidget *d, int height) {
+static iBool setHeight_Widget_(iWidget *d, int height) {
     iAssert(height >= 0);
     if (d->sizeRef) {
         return; /* height defined by another widget */
     }
     TRACE(d, "attempt to set height to %d (current: %d, min height: %d)", height, d->rect.size.y, d->minSize.y);
     height = iMax(height, d->minSize.y);
-    if (~d->flags & fixedHeight_WidgetFlag) { //} || d->flags & collapse_WidgetFlag) {
+    if (~d->flags & fixedHeight_WidgetFlag) {
         if (d->rect.size.y != height) {
             d->rect.size.y = height;
             TRACE(d, "height has changed to %d", height);
             if (class_Widget(d)->sizeChanged) {
                 class_Widget(d)->sizeChanged(d);
             }
+            return iTrue;
         }
     }
     else {
         TRACE(d, "changing height not allowed; flags: %x", d->flags);
     }
+    return iFalse;
 }
 
 iLocalDef iRect innerRect_Widget_(const iWidget *d) {
@@ -578,6 +576,12 @@ static void arrange_Widget_(iWidget *d) {
             TRACE(d, "...done changing child sizes (EVEN mode)");
         }
     }
+    /* Children arrange themselves. */ {
+        iForEach(ObjectList, i, d->children) {
+            iWidget *child = as_Widget(i.object);
+            arrange_Widget_(child);
+        }
+    }
     /* Resize the expanding children to fill the remaining available space. */
     if (expCount > 0 && (d->flags & (arrangeHorizontal_WidgetFlag | arrangeVertical_WidgetFlag))) {
         TRACE(d, "%d expanding children, resizing them %s...", expCount,
@@ -600,15 +604,19 @@ static void arrange_Widget_(iWidget *d) {
                 TRACE(d, "child %p size is not arranged", child);
                 continue;
             }
+            iBool sizeChanged = iFalse;
             if (child->flags & expand_WidgetFlag) {
                 if (d->flags & arrangeHorizontal_WidgetFlag) {
-                    setWidth_Widget_(child, avail.x);
-                    setHeight_Widget_(child, height_Rect(innerRect));
+                    sizeChanged |= setWidth_Widget_(child, avail.x);
+                    sizeChanged |= setHeight_Widget_(child, height_Rect(innerRect));
                 }
                 else if (d->flags & arrangeVertical_WidgetFlag) {
-                    setWidth_Widget_(child, width_Rect(innerRect));
-                    setHeight_Widget_(child, avail.y);
+                    sizeChanged |= setWidth_Widget_(child, width_Rect(innerRect));
+                    sizeChanged |= setHeight_Widget_(child, avail.y);
                 }
+            }
+            if (sizeChanged) {
+                arrange_Widget_(child); /* its children may need rearranging */
             }
         }
     }
@@ -618,7 +626,9 @@ static void arrange_Widget_(iWidget *d) {
         iForEach(ObjectList, i, d->children) {
             iWidget *child = as_Widget(i.object);
             if (isArrangedSize_Widget_(child)) {
-                setWidth_Widget_(child, widest);
+                if (setWidth_Widget_(child, widest)) {
+                    arrange_Widget_(child); /* its children may need rearranging */
+                }
             }
             else {
                 TRACE(d, "child %p cannot be resized (parentCannotResize: %d)", child,
@@ -633,7 +643,6 @@ static void arrange_Widget_(iWidget *d) {
           d->flags & arrangeVertical_WidgetFlag ? " vert" : "");
     iForEach(ObjectList, i, d->children) {
         iWidget *child = as_Widget(i.object);
-        arrange_Widget_(child);
         if (isCollapsed_Widget_(child) || !isArrangedPos_Widget_(child)) {
             TRACE(d, "child %p arranging prohibited", child);
             continue;
@@ -743,6 +752,11 @@ static void resetArrangement_Widget_(iWidget *d) {
 
 void arrange_Widget(iWidget *d) {
     if (d) {
+#if !defined (NDEBUG)
+        if (tracing_) {
+            puts("\n==== NEW WIDGET ARRANGEMENT ====\n");
+        }
+#endif
         resetArrangement_Widget_(d); /* back to initial default sizes */
         arrange_Widget_(d);
     }
