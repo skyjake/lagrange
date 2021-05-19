@@ -776,17 +776,12 @@ static iBool handleSearchBarCommands_(iWidget *searchBar, const char *cmd) {
     else if (equal_Command(cmd, "focus.gained")) {
         if (pointer_Command(cmd) == findChild_Widget(searchBar, "find.input")) {
             if (!isVisible_Widget(searchBar)) {
-//                setFlags_Widget(searchBar, hidden_WidgetFlag | disabled_WidgetFlag, iFalse);
-//                arrange_Widget(root_Widget(searchBar));
-//                postRefresh_App();
                 showCollapsed_Widget(searchBar, iTrue);
             }
         }
     }
     else if (equal_Command(cmd, "find.close")) {
         if (isVisible_Widget(searchBar)) {
-            //setFlags_Widget(searchBar, hidden_WidgetFlag | disabled_WidgetFlag, iTrue);
-            //arrange_Widget(searchBar->parent);
             showCollapsed_Widget(searchBar, iFalse);
             if (isFocused_Widget(findChild_Widget(searchBar, "find.input"))) {
                 setFocus_Widget(NULL);
