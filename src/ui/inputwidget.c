@@ -1162,7 +1162,8 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                 return iTrue;
             case SDLK_RETURN:
             case SDLK_KP_ENTER:
-                if (mods == KMOD_SHIFT || (~d->inFlags & isUrl_InputWidgetFlag &&
+                if (mods == KMOD_SHIFT || (d->maxLen == 0 &&
+                                           ~d->inFlags & isUrl_InputWidgetFlag &&
                                            deviceType_App() != desktop_AppDeviceType)) {
                     pushUndo_InputWidget_(d);
                     deleteMarked_InputWidget_(d);
