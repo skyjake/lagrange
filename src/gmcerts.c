@@ -105,7 +105,7 @@ void deserialize_GmIdentity(iGmIdentity *d, iStream *ins) {
         iString url;
         init_String(&url);
         deserialize_String(&url, ins);
-        insert_StringSet(d->useUrls, &url);
+        setUse_GmIdentity(d, &url, iTrue);
         deinit_String(&url);
     }
 }
@@ -166,6 +166,15 @@ void setUse_GmIdentity(iGmIdentity *d, const iString *url, iBool use) {
         return; /* Redudant. */
     }
     if (use) {
+        /* Remove all use-URLs that become redundant by this newly added URL. */
+        /* TODO: StringSet could have a non-const iterator. */
+        iForEach(Array, i, &d->useUrls->strings.values) {
+            iString *used = i.value;
+            if (startsWithCase_String(used, cstr_String(url))) {
+                deinit_String(used);
+                remove_ArrayIterator(&i);
+            }
+        }
 #if !defined (NDEBUG)
         const iBool wasInserted =
 #endif

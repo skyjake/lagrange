@@ -148,6 +148,64 @@ static iLabelWidget *addActionButton_SidebarWidget_(iSidebarWidget *d, const cha
     return btn;
 }
 
+static iGmIdentity *menuIdentity_SidebarWidget_(const iSidebarWidget *d) {
+    if (d->mode == identities_SidebarMode) {
+        if (d->contextItem) {
+            return identity_GmCerts(certs_App(), d->contextItem->id);
+        }
+    }
+    return NULL;
+}
+
+static void updateContextMenu_SidebarWidget_(iSidebarWidget *d) {
+    if (d->mode != identities_SidebarMode) {
+        return;
+    }
+    iArray *items = collectNew_Array(sizeof(iMenuItem));
+    pushBackN_Array(items, (iMenuItem[]){
+        { person_Icon " ${ident.use}", 0, 0, "ident.use arg:1" },
+        { close_Icon " ${ident.stopuse}", 0, 0, "ident.use arg:0" },
+        { close_Icon " ${ident.stopuse.all}", 0, 0, "ident.use arg:0 clear:1" },
+        { "---", 0, 0, NULL },
+        { edit_Icon " ${menu.edit.notes}", 0, 0, "ident.edit" },
+        { "${ident.fingerprint}", 0, 0, "ident.fingerprint" },
+        { "---", 0, 0, NULL },
+        { delete_Icon " " uiTextCaution_ColorEscape "${ident.delete}", 0, 0, "ident.delete confirm:1" },
+    }, 8);
+    /* Used URLs. */
+    const iGmIdentity *ident = menuIdentity_SidebarWidget_(d);
+    if (ident) {
+        size_t insertPos = 3;
+        if (!isEmpty_StringSet(ident->useUrls)) {
+            insert_Array(items, insertPos++, &(iMenuItem){ "---", 0, 0, NULL });
+        }
+        const iString *docUrl = url_DocumentWidget(document_App());
+        iBool usedOnCurrentPage = iFalse;
+        iConstForEach(StringSet, i, ident->useUrls) {            
+            const iString *url = i.value;
+            usedOnCurrentPage |= equalCase_String(docUrl, url);
+            iRangecc urlStr = range_String(url);
+            if (startsWith_Rangecc(urlStr, "gemini://")) {
+                urlStr.start += 9; /* omit the default scheme */
+            }
+            if (endsWith_Rangecc(urlStr, "/")) {
+                urlStr.end--; /* looks cleaner */
+            }
+            insert_Array(items,
+                         insertPos++,
+                         &(iMenuItem){ format_CStr(globe_Icon " %s", cstr_Rangecc(urlStr)),
+                                       0,
+                                       0,
+                                       format_CStr("!open url:%s", cstr_String(url)) });
+        }
+        if (!usedOnCurrentPage) {
+            remove_Array(items, 1);
+        }
+    }
+    destroy_Widget(d->menu);    
+    d->menu = makeMenu_Widget(as_Widget(d), data_Array(items), size_Array(items));    
+}
+
 static void updateItems_SidebarWidget_(iSidebarWidget *d) {
     clear_ListWidget(d->list);
     releaseChildren_Widget(d->blank);
@@ -380,8 +438,11 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 const iGmIdentity *ident = i.ptr;
                 iSidebarItem *item = new_SidebarItem();
                 item->id = (uint32_t) index_PtrArrayConstIterator(&i);
-                item->icon = ident->icon;
+                item->icon = 0x1f464; /* person */
                 set_String(&item->label, collect_String(subject_TlsCertificate(ident->cert)));
+                if (startsWith_String(&item->label, "CN = ")) {
+                    remove_Block(&item->label.chars, 0, 5);
+                }
                 iDate until;
                 validUntil_TlsCertificate(ident->cert, &until);
                 const iBool isActive = isUsedOn_GmIdentity(ident, tabUrl);
@@ -697,15 +758,6 @@ static const iGmIdentity *constHoverIdentity_SidebarWidget_(const iSidebarWidget
     return NULL;
 }
 
-static iGmIdentity *menuIdentity_SidebarWidget_(const iSidebarWidget *d) {
-    if (d->mode == identities_SidebarMode) {
-        if (d->contextItem) {
-            return identity_GmCerts(certs_App(), d->contextItem->id);
-        }
-    }
-    return NULL;
-}
-
 static iGmIdentity *hoverIdentity_SidebarWidget_(const iSidebarWidget *d) {
     return iConstCast(iGmIdentity *, constHoverIdentity_SidebarWidget_(d));
 }
@@ -848,6 +900,7 @@ iBool handleBookmarkEditorCommands_SidebarWidget_(iWidget *editor, const char *c
                                     isSelected_Widget(findChild_Widget(editor, "bmed.tag.linksplit")));
             postCommand_App("bookmarks.changed");
         }
+        setupSheetTransition_Mobile(editor, iFalse);
         destroy_Widget(editor);
         return iTrue;
     }
@@ -1199,14 +1252,6 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             }
             return iTrue;
         }
-        else if (isCommand_Widget(w, ev, "ident.showuse")) {
-            const iGmIdentity *ident = menuIdentity_SidebarWidget_(d);
-            if (ident) {
-                makeSimpleMessage_Widget(uiHeading_ColorEscape "${heading.ident.use}",
-                                         cstrCollect_String(joinCStr_StringSet(ident->useUrls, "\n")));
-            }
-            return iTrue;
-        }
         else if (isCommand_Widget(w, ev, "ident.edit")) {
             const iGmIdentity *ident = menuIdentity_SidebarWidget_(d);
             if (ident) {
@@ -1343,13 +1388,14 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                 updateMouseHover_ListWidget(d->list);
             }
             if (constHoverItem_ListWidget(d->list) || isVisible_Widget(d->menu)) {
-                d->contextItem  = hoverItem_ListWidget(d->list);
+                d->contextItem = hoverItem_ListWidget(d->list);
                 /* Context is drawn in hover state. */
                 if (d->contextIndex != iInvalidPos) {
                     invalidateItem_ListWidget(d->list, d->contextIndex);
                 }
                 d->contextIndex = hoverItemIndex_ListWidget(d->list);
                 /* Update menu items. */
+                updateContextMenu_SidebarWidget_(d);                
                 /* TODO: Some callback-based mechanism would be nice for updating menus right
                    before they open? */
                 if (d->mode == bookmarks_SidebarMode && d->contextItem) {
@@ -1695,8 +1741,16 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
         const int metaFg = isHover ? permanent_ColorId | (isPressing ? uiTextPressed_ColorId
                                                                      : uiTextFramelessHover_ColorId)
                                    : uiTextDim_ColorId;
+        if (!d->listItem.isSelected) {
+            for (int off = 0; off < 4; ++off) {
+                drawRange_Text(font,
+                               add_I2(cPos, init_I2(off % 2 == 0 ? -1 : 1, off / 2 == 0 ? -1 : 1)),
+                               metaFg,
+                               range_String(&icon));
+            }
+        }
         drawRange_Text(
-            font, cPos, d->listItem.isSelected ? iconColor : metaFg, range_String(&icon));
+            font, cPos, d->listItem.isSelected ? iconColor : uiBackgroundSidebar_ColorId /*metaFg*/, range_String(&icon));
         deinit_String(&icon);
         drawRange_Text(d->listItem.isSelected ? sidebar->itemFonts[1] : font,
                        add_I2(cPos, init_I2(indent, 0)),
