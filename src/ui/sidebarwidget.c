@@ -1460,7 +1460,8 @@ static void draw_SidebarWidget_(const iSidebarWidget *d) {
     const iRect    bounds = bounds_Widget(w);
     iPaint p;
     init_Paint(&p);
-    if (flags_Widget(w) & visualOffset_WidgetFlag && isVisible_Widget(w)) {
+    if (flags_Widget(w) & visualOffset_WidgetFlag &&
+        flags_Widget(w) & horizontalOffset_WidgetFlag && isVisible_Widget(w)) {
         fillRect_Paint(&p, boundsWithoutVisualOffset_Widget(w), tmBackground_ColorId);
     }
     draw_Widget(w);

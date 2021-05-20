@@ -101,9 +101,6 @@ static void aboutToBeDestroyed_Widget_(iWidget *d) {
         setFocus_Widget(NULL);
         return;
     }
-    if (flags_Widget(d) & keepOnTop_WidgetFlag) {
-        removeOne_PtrArray(onTop_Root(d->root), d);
-    }
     remove_Periodic(periodic_App(), d);
     if (isHover_Widget(d)) {
         get_Window()->hover = NULL;
@@ -858,6 +855,9 @@ iLocalDef iBool isMouseEvent_(const SDL_Event *ev) {
 }
 
 static iBool filterEvent_Widget_(const iWidget *d, const SDL_Event *ev) {
+    if (d->flags & destroyPending_WidgetFlag) {
+        return iFalse; /* no more events handled */
+    }
     const iBool isKey   = isKeyboardEvent_(ev);
     const iBool isMouse = isMouseEvent_(ev);
     if ((d->flags & disabled_WidgetFlag) || (d->flags & hidden_WidgetFlag &&
@@ -1103,8 +1103,8 @@ void drawBackground_Widget(const iWidget *d) {
         drawSoftShadow_Paint(&p, bounds_Widget(d), 12 * gap_UI, black_ColorId, 30);
     }
     const iBool isFaded = fadeBackground &&
-                          ~d->flags & noFadeBackground_WidgetFlag &&
-                          ~d->flags & destroyPending_WidgetFlag;
+                          ~d->flags & noFadeBackground_WidgetFlag;/* &&
+                          ~d->flags & destroyPending_WidgetFlag;*/
     if (isFaded) {
         iPaint p;
         init_Paint(&p);

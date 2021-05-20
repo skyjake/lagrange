@@ -1176,6 +1176,7 @@ iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
                 postCommandf_App("valueinput.cancelled id:%s", cstr_String(id_Widget(dlg)));
                 setId_Widget(dlg, ""); /* no further commands to emit */
             }
+            setupSheetTransition_Mobile(dlg, iFalse);
             destroy_Widget(dlg);
             return iTrue;
         }
@@ -1184,11 +1185,13 @@ iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
     else if (equal_Command(cmd, "cancel")) {
         postCommandf_App("valueinput.cancelled id:%s", cstr_String(id_Widget(dlg)));
         setId_Widget(dlg, ""); /* no further commands to emit */
+        setupSheetTransition_Mobile(dlg, iFalse);
         destroy_Widget(dlg);
         return iTrue;
     }
     else if (equal_Command(cmd, "valueinput.accept")) {
         acceptValueInput_(dlg);
+        setupSheetTransition_Mobile(dlg, iFalse);        
         destroy_Widget(dlg);
         return iTrue;
     }
@@ -1324,6 +1327,7 @@ static iBool messageHandler_(iWidget *msg, const char *cmd) {
           equal_Command(cmd, "scrollbar.fade") ||
           equal_Command(cmd, "widget.overflow") ||
           startsWith_CStr(cmd, "window."))) {
+        setupSheetTransition_Mobile(msg, iFalse);
         destroy_Widget(msg);
     }
     return iFalse;
@@ -1908,6 +1912,7 @@ static iBool handleBookmarkCreationCommands_SidebarWidget_(iWidget *editor, cons
             }
             postCommand_App("bookmarks.changed");
         }
+        setupSheetTransition_Mobile(editor, iFalse);
         destroy_Widget(editor);
         return iTrue;
     }
@@ -1937,6 +1942,7 @@ iWidget *makeBookmarkCreation_Widget(const iString *url, const iString *title, i
 
 static iBool handleFeedSettingCommands_(iWidget *dlg, const char *cmd) {
     if (equal_Command(cmd, "cancel")) {
+        setupSheetTransition_Mobile(dlg, iFalse);
         destroy_Widget(dlg);
         return iTrue;
     }
@@ -1971,6 +1977,7 @@ static iBool handleFeedSettingCommands_(iWidget *dlg, const char *cmd) {
             }
         }
         postCommand_App("bookmarks.changed");
+        setupSheetTransition_Mobile(dlg, iFalse);
         destroy_Widget(dlg);
         return iTrue;
     }

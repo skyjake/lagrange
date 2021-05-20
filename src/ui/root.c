@@ -276,6 +276,9 @@ void destroyPending_Root(iRoot *d) {
         if (!isFinished_Anim(&widget->visualOffset)) {
             continue;
         }
+        if (widget->flags & keepOnTop_WidgetFlag) {
+            removeOne_PtrArray(onTop_Root(widget->root), widget);
+        }
         if (widget->parent) {
             removeChild_Widget(widget->parent, widget);
         }
