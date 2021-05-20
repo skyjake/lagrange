@@ -1743,35 +1743,32 @@ static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
                 const iLabelWidget *scope    = findChild_Widget(dlg, "ident.scope");
                 const iString *     selLabel = text_LabelWidget(scope);
                 int                 selScope = 0;
-//                printf("SelLabel: %s\n", cstr_String(selLabel));
                 iConstForEach(ObjectList,
                               i,
                               children_Widget(findChild_Widget(constAs_Widget(scope), "menu"))) {
                     if (isInstance_Object(i.object, &Class_LabelWidget)) {
                         const iLabelWidget *item = i.object;
-//                        printf("itemLabel: %s\n", cstr_String(text_LabelWidget(item)));
                         if (equal_String(text_LabelWidget(item), selLabel)) {
                             break;
                         }
                         selScope++;
                     }
                 }
-//                printf("selScope:%d\n", selScope);
                 const iString *docUrl = url_DocumentWidget(document_Root(dlg->root));
+                iString *useUrl = NULL;
                 switch (selScope) {
                     case 0: /* current domain */
-                        signIn_GmCerts(d->certs,
-                                       ident,
-                                       collectNewFormat_String(
-                                           "gemini://%s", cstr_Rangecc(urlHost_String(docUrl))));
+                        useUrl = collectNewFormat_String("gemini://%s",
+                                                         cstr_Rangecc(urlHost_String(docUrl)));
                         break;
                     case 1: /* current page */
-                        signIn_GmCerts(d->certs, ident, docUrl);
+                        useUrl = collect_String(copy_String(docUrl));
                         break;
                     default: /* not used */
                         break;
                 }
-                if (selScope == 0 || selScope == 1) {
+                if (useUrl) {
+                    signIn_GmCerts(d->certs, ident, useUrl);
                     postCommand_App("navigate.reload");
                 }
             }
