@@ -719,7 +719,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 lineHeightReduction = 0.10f;
             }
             else if (type == heading2_GmLineType) {
-                lineHeightReduction = 0.05f;
+                lineHeightReduction = 0.06f;
             }
             /* Visited links are never bold. */
             if (run.linkId && linkFlags_GmDocument(d, run.linkId) & visited_GmLinkFlag) {
