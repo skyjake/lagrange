@@ -1076,7 +1076,7 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
         }
     }
     setBanner_GmDocument(d->doc, useBanner ? bannerType_DocumentWidget_(d) : none_GmDocumentBanner);
-    setFormat_GmDocument(d->doc, gemini_GmDocumentFormat);
+    setFormat_GmDocument(d->doc, gemini_SourceFormat);
     translate_Lang(src);
     d->state = ready_RequestState;
     setSource_DocumentWidget(d, src);
@@ -1214,7 +1214,7 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
         if (isSuccess_GmStatusCode(statusCode)) {
             /* Check the MIME type. */
             iRangecc charset = range_CStr("utf-8");
-            enum iGmDocumentFormat docFormat = undefined_GmDocumentFormat;
+            enum iSourceFormat docFormat = undefined_SourceFormat;
             const iString *mimeStr = collect_String(lower_String(&response->meta)); /* for convenience */
             set_String(&d->sourceMime, mimeStr);
             iRangecc mime = range_String(mimeStr);
@@ -1223,18 +1223,18 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                 iRangecc param = seg;
                 trim_Rangecc(&param);
                 if (equal_Rangecc(param, "text/gemini")) {
-                    docFormat = gemini_GmDocumentFormat;
+                    docFormat = gemini_SourceFormat;
                     setRange_String(&d->sourceMime, param);
                 }
                 else if (startsWith_Rangecc(param, "text/") ||
                          equal_Rangecc(param, "application/json")) {
-                    docFormat = plainText_GmDocumentFormat;
+                    docFormat = plainText_SourceFormat;
                     setRange_String(&d->sourceMime, param);
                 }
                 else if (equal_Rangecc(param, "application/zip") ||
                          (startsWith_Rangecc(param, "application/") &&
                           endsWithCase_Rangecc(param, "+zip"))) {
-                    docFormat = gemini_GmDocumentFormat;
+                    docFormat = gemini_SourceFormat;
                     setRange_String(&d->sourceMime, param);
                     iString *key = collectNew_String();
                     toString_Sym(SDLK_s, KMOD_PRIMARY, key);
@@ -1261,7 +1261,7 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                          startsWith_Rangecc(param, "audio/")) {
                     const iBool isAudio = startsWith_Rangecc(param, "audio/");
                     /* Make a simple document with an image or audio player. */
-                    docFormat = gemini_GmDocumentFormat;
+                    docFormat = gemini_SourceFormat;
                     setRange_String(&d->sourceMime, param);
                     const iGmLinkId imgLinkId = 1; /* there's only the one link */
                     /* TODO: Do the image loading in `postProcessRequestContent_DocumentWidget_()` */
@@ -1306,7 +1306,7 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                     }
                 }
             }
-            if (docFormat == undefined_GmDocumentFormat) {
+            if (docFormat == undefined_SourceFormat) {
                 showErrorPage_DocumentWidget_(d, unsupportedMimeType_GmStatusCode, &response->meta);
                 deinit_String(&str);
                 return;

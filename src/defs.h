@@ -24,6 +24,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "lang.h"
 
+enum iSourceFormat {
+    undefined_SourceFormat = -1,
+    gemini_SourceFormat    = 0,
+    plainText_SourceFormat,
+};
+
 enum iFileVersion {
     initial_FileVersion                 = 0,
     addedResponseTimestamps_FileVersion = 1,

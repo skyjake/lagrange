@@ -22,6 +22,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
+#include "defs.h"
 #include "gmutil.h"
 #include "media.h"
 
@@ -148,12 +149,6 @@ iRangecc    findLoc_GmRun   (const iGmRun *, iInt2 pos);
 iDeclareClass(GmDocument)
 iDeclareObjectConstruction(GmDocument)
 
-enum iGmDocumentFormat {
-    undefined_GmDocumentFormat = -1,
-    gemini_GmDocumentFormat    = 0,
-    plainText_GmDocumentFormat,
-};
-
 enum iGmDocumentBanner {
     none_GmDocumentBanner,
     siteDomain_GmDocumentBanner,
@@ -166,7 +161,7 @@ enum iGmDocumentUpdate {
 };
 
 void    setThemeSeed_GmDocument (iGmDocument *, const iBlock *seed);
-void    setFormat_GmDocument    (iGmDocument *, enum iGmDocumentFormat format);
+void    setFormat_GmDocument    (iGmDocument *, enum iSourceFormat format);
 void    setBanner_GmDocument    (iGmDocument *, enum iGmDocumentBanner type);
 void    setWidth_GmDocument     (iGmDocument *, int width);
 void    redoLayout_GmDocument   (iGmDocument *);

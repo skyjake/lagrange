@@ -21,6 +21,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "gmdocument.h"
+#include "gmtypesetter.h"
 #include "gmutil.h"
 #include "lang.h"
 #include "ui/color.h"
@@ -73,7 +74,7 @@ iDefineTypeConstruction(GmLink)
 
 struct Impl_GmDocument {
     iObject object;
-    enum iGmDocumentFormat format;
+    enum iSourceFormat format;
     iString   unormSource; /* unnormalized source */
     iString   source;      /* normalized source */
     iString   url;         /* for resolving relative links */
@@ -95,7 +96,7 @@ struct Impl_GmDocument {
 iDefineObjectConstruction(GmDocument)
 
 static enum iGmLineType lineType_GmDocument_(const iGmDocument *d, const iRangecc line) {
-    if (d->format == plainText_GmDocumentFormat) {
+    if (d->format == plainText_SourceFormat) {
         return text_GmLineType;
     }
     return lineType_Rangecc(line);
@@ -305,7 +306,7 @@ static void linkContentWasLaidOut_GmDocument_(iGmDocument *d, const iGmMediaInfo
 
 static iBool isNormalized_GmDocument_(const iGmDocument *d) {
     const iPrefs *prefs = prefs_App();
-    if (d->format == plainText_GmDocumentFormat) {
+    if (d->format == plainText_SourceFormat) {
         return iTrue; /* tabs are always normalized in plain text */
     }
     if (startsWithCase_String(&d->url, "gemini:") && prefs->monospaceGemini) {
@@ -433,7 +434,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     enum iGmLineType prevType      = text_GmLineType;
     enum iGmLineType prevNonBlankType = text_GmLineType;
     iBool            followsBlank  = iFalse;
-    if (d->format == plainText_GmDocumentFormat) {
+    if (d->format == plainText_SourceFormat) {
         isPreformat = iTrue;
         isFirstText = iFalse;
     }
@@ -502,14 +503,14 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             if (contentLine.start == content.start) {
                 prevType = type;
             }
-            if (d->format == gemini_GmDocumentFormat &&
+            if (d->format == gemini_SourceFormat &&
                 startsWithSc_Rangecc(line, "```", &iCaseSensitive)) {
                 isPreformat = iFalse;
                 addSiteBanner = iFalse; /* overrides the banner */
                 continue;
             }
             run.preId = preId;
-            run.font = (d->format == plainText_GmDocumentFormat ? regularMonospace_FontId : preFont);
+            run.font = (d->format == plainText_SourceFormat ? regularMonospace_FontId : preFont);
             indent = indents[type];
         }
         if (addSiteBanner) {
@@ -582,7 +583,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             }
         }
         /* Folded blocks are represented by a single run with the alt text. */
-        if (isPreformat && d->format != plainText_GmDocumentFormat) {
+        if (isPreformat && d->format != plainText_SourceFormat) {
             const iGmPreMeta *meta = constAt_Array(&d->preMeta, preId - 1);
             if (meta->flags & folded_GmPreMetaFlag) {
                 const iBool isBlank = isEmpty_Range(&meta->altText);
@@ -678,7 +679,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             pushBack_Array(&d->layout, &icon);
         }
         run.color = colors[type];
-        if (d->format == plainText_GmDocumentFormat) {
+        if (d->format == plainText_SourceFormat) {
             run.color = colors[text_GmLineType];
         }
         /* Special formatting for the first paragraph (e.g., subtitle, introduction, or lede). */
@@ -707,8 +708,8 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                            type == quote_GmLineType ? 4 : 0);
         }
         const iBool isWordWrapped =
-            (d->format == plainText_GmDocumentFormat ? prefs->plainTextWrap : !isPreformat);
-        if (isPreformat && d->format != plainText_GmDocumentFormat) {
+            (d->format == plainText_SourceFormat ? prefs->plainTextWrap : !isPreformat);
+        if (isPreformat && d->format != plainText_SourceFormat) {
             /* Remember the top left coordinates of the block (first line of block). */
             iGmPreMeta *meta = at_Array(&d->preMeta, preId - 1);
             if (~meta->flags & topLeft_GmPreMetaFlag) {
@@ -866,7 +867,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
 }
 
 void init_GmDocument(iGmDocument *d) {
-    d->format = gemini_GmDocumentFormat;
+    d->format = gemini_SourceFormat;
     init_String(&d->unormSource);
     init_String(&d->source);
     init_String(&d->url);
@@ -1397,7 +1398,7 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
 #endif
 }
 
-void setFormat_GmDocument(iGmDocument *d, enum iGmDocumentFormat format) {
+void setFormat_GmDocument(iGmDocument *d, enum iSourceFormat format) {
     d->format = format;
 }
 
@@ -1439,7 +1440,7 @@ static void normalize_GmDocument(iGmDocument *d) {
     iRangecc src = range_String(&d->source);
     iRangecc line = iNullRange;
     iBool isPreformat = iFalse;
-    if (d->format == plainText_GmDocumentFormat) {
+    if (d->format == plainText_SourceFormat) {
         isPreformat = iTrue; /* Cannot be turned off. */
     }
     const int preTabWidth = 4; /* TODO: user-configurable parameter */
@@ -1467,7 +1468,7 @@ static void normalize_GmDocument(iGmDocument *d) {
                 }
             }
             appendCStr_String(normalized, "\n");
-            if (d->format == gemini_GmDocumentFormat &&
+            if (d->format == gemini_SourceFormat &&
                 lineType_GmDocument_(d, line) == preformatted_GmLineType) {
                 isPreformat = iFalse;
             }

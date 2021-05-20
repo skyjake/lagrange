@@ -124,6 +124,8 @@ set (SOURCES
     src/gmdocument.h
     src/gmrequest.c
     src/gmrequest.h
+    src/gmtypesetter.c
+    src/gmtypesetter.h
     src/gmutil.c
     src/gmutil.h
     src/gopher.c
