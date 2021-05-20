@@ -433,6 +433,7 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
         }
         case identities_SidebarMode: {
             const iString *tabUrl = url_DocumentWidget(document_App());
+            const iRangecc tabHost = urlHost_String(tabUrl);
             isEmpty = iTrue;
             iConstForEach(PtrArray, i, identities_GmCerts(certs_App())) {
                 const iGmIdentity *ident = i.ptr;
@@ -467,6 +468,9 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                                         cstr_String(&ident->notes));
                 }
                 item->listItem.isSelected = isActive;
+                if (isUsedOnDomain_GmIdentity(ident, tabHost)) {
+                    item->indent = 1; /* will be highlighted */
+                }
                 addItem_ListWidget(d->list, item);
                 iRelease(item);
                 isEmpty = iFalse;
@@ -1540,6 +1544,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
     const int itemHeight     = height_Rect(itemRect);
     const int iconColor      = isHover ? (isPressing ? uiTextPressed_ColorId : uiIconHover_ColorId)
                                        : uiIcon_ColorId;
+    const int altIconColor   = isPressing ? uiTextPressed_ColorId : uiTextCaution_ColorId;
     const int font = sidebar->itemFonts[d->isBold ? 1 : 0];
     int bg         = uiBackgroundSidebar_ColorId;
     if (isHover) {
@@ -1730,6 +1735,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
     else if (sidebar->mode == identities_SidebarMode) {
         const int fg = isHover ? (isPressing ? uiTextPressed_ColorId : uiTextFramelessHover_ColorId)
                                : uiTextStrong_ColorId;
+        const iBool isUsedOnDomain = (d->indent != 0);
         iString icon;
         initUnicodeN_String(&icon, &d->icon, 1);
         iInt2 cPos = topLeft_Rect(itemRect);
@@ -1741,7 +1747,8 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
         const int metaFg = isHover ? permanent_ColorId | (isPressing ? uiTextPressed_ColorId
                                                                      : uiTextFramelessHover_ColorId)
                                    : uiTextDim_ColorId;
-        if (!d->listItem.isSelected) {
+        if (!d->listItem.isSelected && !isUsedOnDomain) {
+            /* Draw an outline of the icon. */
             for (int off = 0; off < 4; ++off) {
                 drawRange_Text(font,
                                add_I2(cPos, init_I2(off % 2 == 0 ? -1 : 1, off / 2 == 0 ? -1 : 1)),
@@ -1749,8 +1756,12 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                                range_String(&icon));
             }
         }
-        drawRange_Text(
-            font, cPos, d->listItem.isSelected ? iconColor : uiBackgroundSidebar_ColorId /*metaFg*/, range_String(&icon));
+        drawRange_Text(font,
+                       cPos,
+                       d->listItem.isSelected ? iconColor
+                       : isUsedOnDomain       ? altIconColor
+                                              : uiBackgroundSidebar_ColorId,
+                       range_String(&icon));
         deinit_String(&icon);
         drawRange_Text(d->listItem.isSelected ? sidebar->itemFonts[1] : font,
                        add_I2(cPos, init_I2(indent, 0)),

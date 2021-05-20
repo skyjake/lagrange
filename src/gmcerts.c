@@ -161,6 +161,16 @@ iBool isUsedOn_GmIdentity(const iGmIdentity *d, const iString *url) {
     return iFalse;
 }
 
+iBool isUsedOnDomain_GmIdentity(const iGmIdentity *d, const iRangecc domain) {
+    iConstForEach(StringSet, i, d->useUrls) {
+        const iRangecc host = urlHost_String(i.value);
+        if (equalRangeCase_Rangecc(host, domain)) {
+            return iTrue;
+        }
+    }
+    return iFalse;
+}
+
 void setUse_GmIdentity(iGmIdentity *d, const iString *url, iBool use) {
     if (use && isUsedOn_GmIdentity(d, url)) {
         return; /* Redudant. */
