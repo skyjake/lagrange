@@ -369,6 +369,13 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
     return processEvent_Widget(w, ev);
 }
 
+iRect itemRect_ListWidget(const iListWidget *d, size_t index) {
+    const iRect bounds  = innerBounds_Widget(constAs_Widget(d));
+    const int   scrollY = pos_SmoothScroll(&d->scrollY);
+    return (iRect){ addY_I2(topLeft_Rect(bounds), d->itemHeight * (int) index - scrollY),
+                    init_I2(width_Rect(bounds), d->itemHeight) };
+}
+
 static void draw_ListWidget_(const iListWidget *d) {
     const iWidget *w      = constAs_Widget(d);
     const iRect    bounds = innerBounds_Widget(w);

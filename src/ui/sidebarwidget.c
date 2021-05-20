@@ -766,7 +766,7 @@ static iGmIdentity *hoverIdentity_SidebarWidget_(const iSidebarWidget *d) {
     return iConstCast(iGmIdentity *, constHoverIdentity_SidebarWidget_(d));
 }
 
-static void itemClicked_SidebarWidget_(iSidebarWidget *d, const iSidebarItem *item) {
+static void itemClicked_SidebarWidget_(iSidebarWidget *d, iSidebarItem *item, size_t itemIndex) {
     setFocus_Widget(NULL);
     switch (d->mode) {
         case documentOutline_SidebarMode: {
@@ -791,17 +791,16 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, const iSidebarItem *it
             break;
         }
         case identities_SidebarMode: {
-            iGmIdentity *ident = hoverIdentity_SidebarWidget_(d);
-            if (ident) {
-                const iString *tabUrl = url_DocumentWidget(document_App());
-                if (isUsedOn_GmIdentity(ident, tabUrl)) {
-                    signOut_GmCerts(certs_App(), tabUrl);
-                }
-                else {
-                    signIn_GmCerts(certs_App(), ident, tabUrl);
-                }
-                updateItems_SidebarWidget_(d);
-                updateMouseHover_ListWidget(d->list);
+            d->contextItem  = item;
+            d->contextIndex = itemIndex;
+            if (itemIndex < numItems_ListWidget(d->list)) {
+                updateContextMenu_SidebarWidget_(d);
+                arrange_Widget(d->menu);
+                openMenu_Widget(d->menu,
+                                d->side == left_SideBarSide
+                                    ? topRight_Rect(itemRect_ListWidget(d->list, itemIndex))
+                                    : addX_I2(topLeft_Rect(itemRect_ListWidget(d->list, itemIndex)),
+                                              -width_Widget(d->menu)));
             }
             break;
         }
@@ -1065,7 +1064,8 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             return iTrue;
         }
         else if (isCommand_Widget(w, ev, "list.clicked")) {
-            itemClicked_SidebarWidget_(d, pointerLabel_Command(cmd, "item"));
+            itemClicked_SidebarWidget_(
+                d, pointerLabel_Command(cmd, "item"), argU32Label_Command(cmd, "arg"));
             return iTrue;
         }
         else if (isCommand_Widget(w, ev, "menu.closed")) {
