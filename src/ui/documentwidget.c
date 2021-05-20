@@ -1058,7 +1058,9 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
                                     cstr_String(meta));
                 break;
             default:
-                appendFormat_String(src, "\n\nServer returned error: %s", cstr_String(meta));
+                if (!isEmpty_String(meta)) {
+                    appendFormat_String(src, "\n\n${error.server.msg}\n> %s", cstr_String(meta));
+                }
                 break;
         }
     }

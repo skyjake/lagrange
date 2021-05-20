@@ -597,6 +597,9 @@ msgstr "Unsubscribe"
 msgid "error.unsupported.suggestsave"
 msgstr "You can save it as a file to your Downloads folder: press %s or select \"%s\" from the menu."
 
+msgid "error.server.msg"
+msgstr "Server responded with the message:"
+
 msgid "heading.pageinfo"
 msgstr "PAGE INFORMATION"
 
