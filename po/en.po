@@ -916,7 +916,7 @@ msgid "dlg.newident.until"
 msgstr "Valid until:"
 
 msgid "hint.newident.date"
-msgstr "YYYY-MM-DD HH:MM:SS"
+msgstr "YYYY or YYYY-MM-DD"
 
 msgid "hint.newident.optional"
 msgstr "optional"
@@ -929,6 +929,9 @@ msgstr "Temporary:"
 
 msgid "dlg.newident.notsaved"
 msgstr "not saved to disk"
+
+msgid "dlg.newident.scope"
+msgstr "Use on:"
 
 msgid "dlg.newident.email"
 msgstr "Email:"
@@ -944,6 +947,9 @@ msgstr "Organization:"
 
 msgid "dlg.newident.country"
 msgstr "Country:"
+
+msgid "dlg.newident.more"
+msgstr "More…"
 
 msgid "dlg.newident.create"
 msgstr "Create Identity"

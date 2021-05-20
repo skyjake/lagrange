@@ -1551,8 +1551,8 @@ void updatePreferencesLayout_Widget(iWidget *prefs) {
     }
 }
 
-static void addDialogInputWithHeading_(iWidget *headings, iWidget *values, const char *labelText,
-                                       const char *inputId, iInputWidget *input) {
+static void addDialogInputWithHeadingAndFlags_(iWidget *headings, iWidget *values, const char *labelText,
+                                               const char *inputId, iInputWidget *input, int64_t flags) {
     iLabelWidget *head = addChild_Widget(headings, iClob(makeHeading_Widget(labelText)));
 #if defined (iPlatformMobile)
     /* On mobile, inputs have 2 gaps of extra padding. */
@@ -1564,6 +1564,13 @@ static void addDialogInputWithHeading_(iWidget *headings, iWidget *values, const
         /* Ensure that the label has the same height as the input widget. */
         as_Widget(head)->sizeRef = as_Widget(input);
     }
+    setFlags_Widget(as_Widget(head), flags, iTrue);
+    setFlags_Widget(as_Widget(input), flags, iTrue);
+}
+
+static void addDialogInputWithHeading_(iWidget *headings, iWidget *values, const char *labelText,
+                                       const char *inputId, iInputWidget *input) {
+    addDialogInputWithHeadingAndFlags_(headings, values, labelText, inputId, input, 0);
 }
 
 iInputWidget *addTwoColumnDialogInputField_Widget(iWidget *headings, iWidget *values,
@@ -2049,7 +2056,21 @@ iWidget *makeIdentityCreation_Widget(void) {
         page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
     iWidget *values = addChildFlags_Widget(
         page, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
+    setId_Widget(headings, "headings");
+    setId_Widget(values, "values");
     iInputWidget *inputs[6];
+    /* Where will the new identity be active on? */ {
+        addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.newident.scope}")));
+        const iMenuItem items[] = {
+            { "Current Domain", 0, 0, "ident.scope arg:0" },
+            { "Current Page",   0, 0, "ident.scope arg:1" },
+            { "Not Used",       0, 0, "ident.scope arg:2" },
+        };
+        setId_Widget(addChild_Widget(values,
+                                     iClob(makeMenuButton_LabelWidget(
+                                         items[0].label, items, iElemCount(items)))),
+                     "ident.scope");
+    }
     addDialogInputWithHeading_(headings,
                                values,
                                "${dlg.newident.until}",
@@ -2066,32 +2087,35 @@ iWidget *makeIdentityCreation_Widget(void) {
         setFlags_Widget(tmpGroup, arrangeSize_WidgetFlag | arrangeHorizontal_WidgetFlag, iTrue);
         addChild_Widget(tmpGroup, iClob(makeToggle_Widget("ident.temp")));
         setId_Widget(
-            addChildFlags_Widget(
-                tmpGroup,
-                iClob(new_LabelWidget(uiTextCaution_ColorEscape "\u26a0  ${dlg.newident.notsaved}", NULL)),
-                hidden_WidgetFlag | frameless_WidgetFlag),
+            addChildFlags_Widget(tmpGroup,
+                                 iClob(new_LabelWidget(uiTextCaution_ColorEscape warning_Icon
+                                                       "  ${dlg.newident.notsaved}",
+                                                       NULL)),
+                                 hidden_WidgetFlag | frameless_WidgetFlag),
             "ident.temp.note");
         addChild_Widget(values, iClob(tmpGroup));
     }
-    addChild_Widget(headings, iClob(makePadding_Widget(gap_UI)));
-    addChild_Widget(values, iClob(makePadding_Widget(gap_UI)));
-    addDialogInputWithHeading_(headings, values, "${dlg.newident.email}",   "ident.email",   iClob(inputs[1] = newHint_InputWidget(0, "${hint.newident.optional}")));
-    addDialogInputWithHeading_(headings, values, "${dlg.newident.userid}",  "ident.userid",  iClob(inputs[2] = newHint_InputWidget(0, "${hint.newident.optional}")));
-    addDialogInputWithHeading_(headings, values, "${dlg.newident.domain}",  "ident.domain",  iClob(inputs[3] = newHint_InputWidget(0, "${hint.newident.optional}")));
-    addDialogInputWithHeading_(headings, values, "${dlg.newident.org}",     "ident.org",     iClob(inputs[4] = newHint_InputWidget(0, "${hint.newident.optional}")));
-    addDialogInputWithHeading_(headings, values, "${dlg.newident.country}", "ident.country", iClob(inputs[5] = newHint_InputWidget(0, "${hint.newident.optional}")));
+    addChildFlags_Widget(headings, iClob(makePadding_Widget(gap_UI)), collapse_WidgetFlag | hidden_WidgetFlag);
+    addChildFlags_Widget(values, iClob(makePadding_Widget(gap_UI)), collapse_WidgetFlag | hidden_WidgetFlag);
+    addDialogInputWithHeadingAndFlags_(headings, values, "${dlg.newident.email}",   "ident.email",   iClob(inputs[1] = newHint_InputWidget(0, "${hint.newident.optional}")), collapse_WidgetFlag | hidden_WidgetFlag);
+    addDialogInputWithHeadingAndFlags_(headings, values, "${dlg.newident.userid}",  "ident.userid",  iClob(inputs[2] = newHint_InputWidget(0, "${hint.newident.optional}")), collapse_WidgetFlag | hidden_WidgetFlag);
+    addDialogInputWithHeadingAndFlags_(headings, values, "${dlg.newident.domain}",  "ident.domain",  iClob(inputs[3] = newHint_InputWidget(0, "${hint.newident.optional}")), collapse_WidgetFlag | hidden_WidgetFlag);
+    addDialogInputWithHeadingAndFlags_(headings, values, "${dlg.newident.org}",     "ident.org",     iClob(inputs[4] = newHint_InputWidget(0, "${hint.newident.optional}")), collapse_WidgetFlag | hidden_WidgetFlag);
+    addDialogInputWithHeadingAndFlags_(headings, values, "${dlg.newident.country}", "ident.country", iClob(inputs[5] = newHint_InputWidget(0, "${hint.newident.optional}")), collapse_WidgetFlag | hidden_WidgetFlag);
     arrange_Widget(dlg);
     for (size_t i = 0; i < iElemCount(inputs); ++i) {
         as_Widget(inputs[i])->rect.size.x = 100 * gap_UI - headings->rect.size.x;
     }
     addChild_Widget(dlg,
                     iClob(makeDialogButtons_Widget(
-                        (iMenuItem[]){ { "${cancel}", 0, 0, NULL },
+                        (iMenuItem[]){ { "${dlg.newident.more}", 0, 0, "ident.showmore" },
+                                       { "---", 0, 0, NULL },
+                                       { "${cancel}", SDLK_ESCAPE, 0, "ident.cancel" },
                                        { uiTextAction_ColorEscape "${dlg.newident.create}",
                                          SDLK_RETURN,
                                          KMOD_PRIMARY,
                                          "ident.accept" } },
-                        2)));
+                        4)));
     addChild_Widget(get_Root()->widget, iClob(dlg));
     finalizeSheet_Mobile(dlg);
     return dlg;

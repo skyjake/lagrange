@@ -1653,12 +1653,36 @@ iDocumentWidget *newTab_App(const iDocumentWidget *duplicateOf, iBool switchToNe
 
 static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
     iApp *d = &app_;
+    if (equal_Command(cmd, "ident.showmore")) {
+        iForEach(ObjectList, i, children_Widget(findChild_Widget(dlg, "headings"))) {
+            if (flags_Widget(i.object) & collapse_WidgetFlag) {
+                setFlags_Widget(i.object, hidden_WidgetFlag, iFalse);
+            }
+        }
+        iForEach(ObjectList, j, children_Widget(findChild_Widget(dlg, "values"))) {
+            if (flags_Widget(j.object) & collapse_WidgetFlag) {
+                setFlags_Widget(j.object, hidden_WidgetFlag, iFalse);
+            }
+        }
+        setFlags_Widget(child_Widget(findChild_Widget(dlg, "dialogbuttons"), 0), disabled_WidgetFlag,
+                        iTrue);
+        arrange_Widget(dlg);
+        refresh_Widget(dlg);        
+        return iTrue;
+    }
+    if (equal_Command(cmd, "ident.scope")) {
+        iLabelWidget *scope = findChild_Widget(dlg, "ident.scope");
+        setText_LabelWidget(scope,
+                            text_LabelWidget(child_Widget(
+                                findChild_Widget(as_Widget(scope), "menu"), arg_Command(cmd))));
+        return iTrue;
+    }
     if (equal_Command(cmd, "ident.temp.changed")) {
         setFlags_Widget(
             findChild_Widget(dlg, "ident.temp.note"), hidden_WidgetFlag, !arg_Command(cmd));
         return iFalse;
     }
-    if (equal_Command(cmd, "ident.accept") || equal_Command(cmd, "cancel")) {
+    if (equal_Command(cmd, "ident.accept") || equal_Command(cmd, "ident.cancel")) {
         if (equal_Command(cmd, "ident.accept")) {
             const iString *commonName   = text_InputWidget (findChild_Widget(dlg, "ident.common"));
             const iString *email        = text_InputWidget (findChild_Widget(dlg, "ident.email"));
@@ -1706,11 +1730,55 @@ static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
                 }
             }
             /* The input seems fine. */
-            newIdentity_GmCerts(d->certs, isTemp ? temporary_GmIdentityFlag : 0,
-                                until, commonName, email, userId, domain, organization, country);
+            iGmIdentity *ident = newIdentity_GmCerts(d->certs,
+                                                     isTemp ? temporary_GmIdentityFlag : 0,
+                                                     until,
+                                                     commonName,
+                                                     email,
+                                                     userId,
+                                                     domain,
+                                                     organization,
+                                                     country);
+            /* Use in the chosen scope. */ {
+                const iLabelWidget *scope    = findChild_Widget(dlg, "ident.scope");
+                const iString *     selLabel = text_LabelWidget(scope);
+                int                 selScope = 0;
+//                printf("SelLabel: %s\n", cstr_String(selLabel));
+                iConstForEach(ObjectList,
+                              i,
+                              children_Widget(findChild_Widget(constAs_Widget(scope), "menu"))) {
+                    if (isInstance_Object(i.object, &Class_LabelWidget)) {
+                        const iLabelWidget *item = i.object;
+//                        printf("itemLabel: %s\n", cstr_String(text_LabelWidget(item)));
+                        if (equal_String(text_LabelWidget(item), selLabel)) {
+                            break;
+                        }
+                        selScope++;
+                    }
+                }
+//                printf("selScope:%d\n", selScope);
+                const iString *docUrl = url_DocumentWidget(document_Root(dlg->root));
+                switch (selScope) {
+                    case 0: /* current domain */
+                        signIn_GmCerts(d->certs,
+                                       ident,
+                                       collectNewFormat_String(
+                                           "gemini://%s", cstr_Rangecc(urlHost_String(docUrl))));
+                        break;
+                    case 1: /* current page */
+                        signIn_GmCerts(d->certs, ident, docUrl);
+                        break;
+                    default: /* not used */
+                        break;
+                }
+                if (selScope == 0 || selScope == 1) {
+                    postCommand_App("navigate.reload");
+                }
+            }
             postCommandf_App("sidebar.mode arg:%d show:1", identities_SidebarMode);
             postCommand_App("idents.changed");
         }
+        setupSheetTransition_Mobile(dlg, iFalse);
         destroy_Widget(dlg);
         return iTrue;
     }
