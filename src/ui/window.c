@@ -854,6 +854,19 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
                 const iInt2 pos = coord_Window(d, event.button.x, event.button.y);
                 event.button.x = pos.x;
                 event.button.y = pos.y;
+                if (event.type == SDL_MOUSEBUTTONDOWN) {
+                    /* Button clicks will change keyroot. */
+                    if (numRoots_Window(d) > 1) {
+                        const iInt2 click = init_I2(event.button.x, event.button.y);
+                        iForIndices(i, d->roots) {
+                            iRoot *root = d->roots[i];
+                            if (root != d->keyRoot && contains_Rect(rect_Root(root), click)) {
+                                setKeyRoot_Window(d, root);
+                                break;
+                            }
+                        }
+                    }
+                }
             }
             const iWidget *oldHover = d->hover;
             iBool wasUsed = iFalse;
@@ -885,7 +898,9 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
                     wasUsed = dispatchEvent_Window(d, &paste);
                 }
                 if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_RIGHT) {
-                    postContextClick_Window(d, &event.button);
+                    if (postContextClick_Window(d, &event.button)) {
+                        wasUsed = iTrue;
+                    }
                 }
             }
             if (isMetricsChange_UserEvent(&event)) {
