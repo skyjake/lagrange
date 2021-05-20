@@ -33,6 +33,7 @@ void init_Prefs(iPrefs *d) {
     d->accent            = cyan_ColorAccent;
     d->customFrame       = iFalse; /* needs some more work to be default */
     d->retainWindowSize  = iTrue;
+    d->uiAnimations      = iTrue;
     d->uiScale           = 1.0f; /* default set elsewhere */
     d->zoomPercent       = 100;
     d->sideIcon          = iTrue;

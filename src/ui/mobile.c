@@ -788,13 +788,15 @@ void setupMenuTransition_Mobile(iWidget *sheet, iBool isIncoming) {
 
 void setupSheetTransition_Mobile(iWidget *sheet, iBool isIncoming) {
     if (!useMobileSheetLayout_()) {
-        setFlags_Widget(sheet, horizontalOffset_WidgetFlag, iFalse);
-        if (isIncoming) {
-            setVisualOffset_Widget(sheet, -height_Widget(sheet), 0, 0);
-            setVisualOffset_Widget(sheet, 0, 200, easeOut_AnimFlag | softer_AnimFlag);
-        }
-        else {
-            setVisualOffset_Widget(sheet, -height_Widget(sheet), 200, easeIn_AnimFlag);
+        if (prefs_App()->uiAnimations) {
+            setFlags_Widget(sheet, horizontalOffset_WidgetFlag, iFalse);
+            if (isIncoming) {
+                setVisualOffset_Widget(sheet, -height_Widget(sheet), 0, 0);
+                setVisualOffset_Widget(sheet, 0, 200, easeOut_AnimFlag | softer_AnimFlag);
+            }
+            else {
+                setVisualOffset_Widget(sheet, -height_Widget(sheet), 200, easeIn_AnimFlag);
+            }
         }
         return;
     }
