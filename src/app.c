@@ -599,6 +599,18 @@ static void communicateWithRunningInstance_App_(iApp *d, iProcessId instance,
 }
 #endif /* defined (LAGRANGE_ENABLE_IPC) */
 
+static iBool hasCommandLineOpenableScheme_(const iRangecc uri) {
+    static const char *schemes[] = {
+        "gemini:", "gopher:", "finger:", "file:", "data:", "about:"
+    };
+    iForIndices(i, schemes) {
+        if (startsWithCase_Rangecc(uri, schemes[i])) {
+            return iTrue;
+        }
+    }
+    return iFalse;
+}
+
 static void init_App_(iApp *d, int argc, char **argv) {
     init_CommandLine(&d->args, argc, argv);
     /* Where was the app started from? We ask SDL first because the command line alone is
@@ -633,6 +645,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
         defineValues_CommandLine(&d->args, "go-home", 0);
         defineValues_CommandLine(&d->args, "help", 0);
         defineValues_CommandLine(&d->args, listTabUrls_CommandLineOption, 0);
+        defineValues_CommandLine(&d->args, openUrlOrSearch_CommandLineOption, 1);
         defineValuesN_CommandLine(&d->args, "new-tab", 0, 1);
         defineValues_CommandLine(&d->args, "sw", 0);
         defineValues_CommandLine(&d->args, "version;V", 0);
@@ -652,14 +665,11 @@ static void init_App_(iApp *d, int argc, char **argv) {
             const iRangecc arg = i.entry;
             if (i.argType == value_CommandLineArgType) {
                 /* URLs and file paths accepted. */
-                const iBool isKnownScheme =
-                    startsWithCase_Rangecc(arg, "gemini:") || startsWithCase_Rangecc(arg, "gopher:") ||
-                    startsWithCase_Rangecc(arg, "finger:") || startsWithCase_Rangecc(arg, "file:")   ||
-                    startsWithCase_Rangecc(arg, "data:")   || startsWithCase_Rangecc(arg, "about:");
-                if (isKnownScheme || fileExistsCStr_FileInfo(cstr_Rangecc(arg))) {
+                const iBool isOpenable = hasCommandLineOpenableScheme_(arg);
+                if (isOpenable || fileExistsCStr_FileInfo(cstr_Rangecc(arg))) {
                     iString *decUrl =
-                        isKnownScheme ? urlDecodeExclude_String(collectNewRange_String(arg), "/?#:")
-                                      : makeFileUrl_String(collectNewRange_String(arg));
+                        isOpenable ? urlDecodeExclude_String(collectNewRange_String(arg), "/?#:")
+                                   : makeFileUrl_String(collectNewRange_String(arg));
                     pushBack_StringList(openCmds,
                                         collectNewFormat_String(
                                             "open newtab:1 url:%s", cstr_String(decUrl)));
@@ -669,6 +679,19 @@ static void init_App_(iApp *d, int argc, char **argv) {
                     fprintf(stderr, "Invalid URL/file: %s\n", cstr_Rangecc(arg));
                     terminate_App_(1);
                 }
+            }
+            else if (equal_CommandLineConstIterator(&i, openUrlOrSearch_CommandLineOption)) {
+                const iCommandLineArg *arg = iClob(argument_CommandLineConstIterator(&i));
+                const iString *input = value_CommandLineArg(arg, 0);
+                if (startsWith_String(input, "//")) {
+                    input = collectNewFormat_String("gemini:%s", cstr_String(input));
+                }
+                if (hasCommandLineOpenableScheme_(range_String(input))) {
+                    input = collect_String(urlDecodeExclude_String(input, "/?#:"));
+                }
+                pushBack_StringList(
+                    openCmds,
+                    collectNewFormat_String("search newtab:1 query:%s", cstr_String(input)));
             }
             else if (!isDefined_CommandLine(&d->args, collectNewRange_String(i.entry))) {
                 fprintf(stderr, "Unknown option: %s\n", cstr_Rangecc(arg));
@@ -2123,6 +2146,20 @@ iBool handleCommand_App(const char *cmd) {
         setCStr_String(&d->prefs.caPath, suffixPtr_Command(cmd, "path"));
         if (!argLabel_Command(cmd, "noset")) {
             setCACertificates_TlsRequest(&d->prefs.caFile, &d->prefs.caPath);
+        }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "search")) {
+        const int newTab = argLabel_Command(cmd, "newtab");
+        const iString *query = collect_String(suffix_Command(cmd, "query"));
+        if (!isLikelyUrl_String(query)) {
+            const iString *url = searchQueryUrl_App(query);
+            if (!isEmpty_String(url)) {
+                postCommandf_App("open newtab:%d url:%s", newTab, cstr_String(url));
+            }
+        }
+        else {
+            postCommandf_App("open newtab:%d url:%s", newTab, cstr_String(query));
         }
         return iTrue;
     }

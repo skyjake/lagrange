@@ -8,6 +8,10 @@ General options:
   -E, --echo            Print all internal app events to stdout.
       --help            Print these instructions.
       --sw              Disable hardware accelerated rendering.
+  -u, --url-or-search URL | text
+                        Open a URL, or make a search query with given text.
+                        This only works if the search query URL has been
+                        configured.
   -V, --version         Print the application version.
 
 Options that control a running instance of Lagrange:

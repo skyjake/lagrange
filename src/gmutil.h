@@ -110,6 +110,8 @@ iRangecc        urlUser_String          (const iString *);
 iRangecc        urlRoot_String          (const iString *);
 const iString * absoluteUrl_String      (const iString *, const iString *urlMaybeRelative);
 iBool           isLikelyUrl_String      (const iString *);
+iBool           isKnownScheme_Rangecc   (iRangecc scheme); /* any URI scheme */
+iBool           isKnownUrlScheme_Rangecc(iRangecc scheme); /* URL schemes only */
 void            punyEncodeDomain_Rangecc(iRangecc domain, iString *encoded_out);
 void            punyEncodeUrlHost_String(iString *absoluteUrl);
 void            stripDefaultUrlPort_String(iString *);
