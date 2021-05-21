@@ -232,39 +232,14 @@ enum iDocumentLinkOrdinalMode {
 
 struct Impl_DocumentWidget {
     iWidget        widget;
-    enum iRequestState state;
-    iPersistentDocumentState mod;
     int            flags;
+    
+    /* User interface: */
     enum iDocumentLinkOrdinalMode ordinalMode;
     size_t         ordinalBase;
-    iString *      titleUser;
-    iGmRequest *   request;
-    iAtomicInt     isRequestUpdated; /* request has new content, need to parse it */
-    iObjectList *  media;
-    enum iGmStatusCode sourceStatus;
-    iString        sourceHeader;
-    iString        sourceMime;
-    iBlock         sourceContent; /* original content as received, for saving */
-    iTime          sourceTime;
-    iGempub *      sourceGempub; /* NULL unless the page is Gempub content */
-    iGmDocument *  doc;
-    int            certFlags;
-    iBlock *       certFingerprint;
-    iDate          certExpiry;
-    iString *      certSubject;
-    int            redirectCount;
     iRangecc       selectMark;
     iRangecc       initialSelectMark; /* for word/line selection */
     iRangecc       foundMark;
-    int            pageMargin;
-    iPtrArray      visibleLinks;
-    iPtrArray      visiblePre;
-    iPtrArray      visibleWideRuns; /* scrollable blocks; TODO: merge into `visiblePre` */
-    iArray         wideRunOffsets;
-    iAnim          animWideRunOffset;
-    uint16_t       animWideRunId;
-    iGmRunRange    animWideRunRange;
-    iPtrArray      visibleMedia; /* currently playing audio / ongoing downloads */
     const iGmRun * grabbedPlayer; /* currently adjusting volume in a player */
     float          grabbedStartVolume;
     int            mediaTimer;
@@ -272,29 +247,63 @@ struct Impl_DocumentWidget {
     const iGmRun * hoverAltPre; /* for drawing alt text */
     const iGmRun * hoverLink;
     const iGmRun * contextLink;
-    iGmRunRange    visibleRuns;
-    iGmRunRange    renderRuns;
     iClick         click;
     iInt2          contextPos; /* coordinates of latest right click */
+    int            pinchZoomInitial;
+    int            pinchZoomPosted;
     iString        pendingGotoHeading;
+    
+    /* Network request: */
+    enum iRequestState state;
+    iGmRequest *   request;
+    iAtomicInt     isRequestUpdated; /* request has new content, need to parse it */
+    int            certFlags;
+    iBlock *       certFingerprint;
+    iDate          certExpiry;
+    iString *      certSubject;
+    int            redirectCount;
+    iObjectList *  media; /* inline media requests */
+    
+    /* Document: */
+    iPersistentDocumentState mod;
+    iString *      titleUser;
+    enum iGmStatusCode sourceStatus;
+    iString        sourceHeader;
+    iString        sourceMime;
+    iBlock         sourceContent; /* original content as received, for saving */
+    iTime          sourceTime;
+    iGempub *      sourceGempub; /* NULL unless the page is Gempub content */
+    iGmDocument *  doc;
+    
+    /* Rendering: */
+    int            pageMargin;
     float          initNormScrollY;
-//    iAnim          scrollY;
-//    int            overscroll;
     iSmoothScroll  scrollY;
     iAnim          sideOpacity;
     iAnim          altTextOpacity;
+    iGmRunRange    visibleRuns;
+    iPtrArray      visibleLinks;
+    iPtrArray      visiblePre;
+    iPtrArray      visibleMedia; /* currently playing audio / ongoing downloads */   
+    iPtrArray      visibleWideRuns; /* scrollable blocks; TODO: merge into `visiblePre` */
+    iArray         wideRunOffsets;
+    iAnim          animWideRunOffset;
+    uint16_t       animWideRunId;
+    iGmRunRange    animWideRunRange;
+    iDrawBufs *    drawBufs; /* dynamic state for drawing */
+    iVisBuf *      visBuf;    
+    iVisBufMeta *  visBufMeta;
+    iGmRunRange    renderRuns;
+    iPtrSet *      invalidRuns;
+    
+    /* Widget structure: */    
     iScrollWidget *scroll;
+    iWidget *      footerButtons;
     iWidget *      menu;
     iWidget *      playerMenu;
     iWidget *      copyMenu;
-    iVisBuf *      visBuf;
-    iVisBufMeta *  visBufMeta;
-    iPtrSet *      invalidRuns;
-    iDrawBufs *    drawBufs; /* dynamic state for drawing */
     iTranslation * translation;
     iWidget *      phoneToolbar;
-    int            pinchZoomInitial;
-    int            pinchZoomPosted;
 };
 
 iDefineObjectConstruction(DocumentWidget)
@@ -3667,6 +3676,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                                  /* Preformatted runs can be scrolled. */
                                  runOffset_DocumentWidget_(d->widget, run));
     const iRect visRect = { visPos, run->visBounds.size };
+#if 0
     if (run->flags & footer_GmRunFlag) {
         iRect footerBack =
             (iRect){ visPos, init_I2(width_Rect(d->widgetBounds), run->visBounds.size.y) };
@@ -3674,15 +3684,16 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
         fillRect_Paint(&d->paint, footerBack, tmBackground_ColorId);
         return;
     }
+#endif
     /* Fill the background. */ {
         if (run->linkId && linkFlags & isOpen_GmLinkFlag) {
             /* Open links get a highlighted background. */
             int bg = tmBackgroundOpenLink_ColorId;
             const int frame = tmFrameOpenLink_ColorId;
             iRect     wideRect = { init_I2(left_Rect(d->widgetBounds), visPos.y),
-                               init_I2(width_Rect(d->widgetBounds) +
+                                   init_I2(width_Rect(d->widgetBounds) +
                                            width_Widget(d->widget->scroll),
-                                       height_Rect(run->visBounds)) };
+                                           height_Rect(run->visBounds)) };
             /* The first line is composed of two runs that may be drawn in either order, so
                only draw half of the background. */
             if (run->flags & decoration_GmRunFlag) {
