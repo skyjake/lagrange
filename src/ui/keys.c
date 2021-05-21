@@ -188,6 +188,7 @@ static void clear_Keys_(iKeys *d) {
 enum iBindFlag {
     argRepeat_BindFlag  = iBit(1),
     argRelease_BindFlag = iBit(2),
+    noDirectTrigger_BindFlag = iBit(3), /* can only be triggered via LabelWidget */
 };
 
 /* TODO: This indirection could be used for localization, although all UI strings
@@ -227,6 +228,14 @@ static const struct { int id; iMenuItem bind; int flags; } defaultBindings_[] = 
     { 81, { "${keys.tab.next}",             nextTab_KeyShortcut,            "tabs.next"                         }, 0 },
     { 90, { "${keys.split.menu}",           SDLK_j, KMOD_PRIMARY,           "splitmenu.open"                    }, 0 },
     { 91, { "${keys.split.next}",           SDLK_TAB, KMOD_CTRL,            "keyroot.next",                     }, 0 },
+    { 92, { "${keys.split.menu.merge}",     '1', 0,                         "ui.split arg:0",                   }, noDirectTrigger_BindFlag },
+    { 93, { "${keys.split.menu.swap}",      SDLK_x, 0,                      "ui.split swap:1",                  }, noDirectTrigger_BindFlag },
+    { 94, { "${keys.split.menu.horiz}",     '3', 0,                         "ui.split arg:3 axis:0",            }, noDirectTrigger_BindFlag },
+    { 95, { "${keys.split.menu.horiz12}",   SDLK_d, 0,                      "ui.split arg:1 axis:0",            }, noDirectTrigger_BindFlag },
+    { 96, { "${keys.split.menu.horiz21}",   SDLK_e, 0,                      "ui.split arg:2 axis:0",            }, noDirectTrigger_BindFlag },
+    { 97, { "${keys.split.menu.vert}",      '2', 0,                         "ui.split arg:3 axis:1",            }, noDirectTrigger_BindFlag },
+    { 98, { "${keys.split.menu.vert12}",    SDLK_f, 0,                      "ui.split arg:1 axis:1",            }, noDirectTrigger_BindFlag },
+    { 99, { "${keys.split.menu.vert21}",    SDLK_r, 0,                      "ui.split arg:2 axis:1",            }, noDirectTrigger_BindFlag },
     { 100,{ "${keys.hoverurl}",             '/', KMOD_PRIMARY,              "prefs.hoverlink.toggle"            }, 0 },
     /* The following cannot currently be changed (built-in duplicates). */
 #if defined (iPlatformApple)
@@ -432,6 +441,9 @@ iBool processEvent_Keys(const SDL_Event *ev) {
     if (ev->type == SDL_KEYDOWN || ev->type == SDL_KEYUP) {
         const iBinding *bind = find_Keys_(d, ev->key.keysym.sym, keyMods_Sym(ev->key.keysym.mod));
         if (bind) {
+            if (bind->flags & noDirectTrigger_BindFlag) {
+                return iFalse;
+            }
             if (ev->type == SDL_KEYUP) {
                 if (bind->flags & argRelease_BindFlag) {
                     postCommandf_Root(root, "%s release:1", cstr_String(&bind->command));

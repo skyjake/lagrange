@@ -1375,6 +1375,30 @@ msgstr "Set view split mode"
 msgid "keys.split.next"
 msgstr "Switch focus to next split"
 
+msgid "keys.split.menu.merge"
+msgstr "Split view menu: Merge tabs"
+
+msgid "keys.split.menu.swap"
+msgstr "Split view menu: Swap sides"
+
+msgid "keys.split.menu.horiz"
+msgstr "Split view menu: Horizontal"
+
+msgid "keys.split.menu.horiz12"
+msgstr "Split view menu: Horizontal 1:2"
+
+msgid "keys.split.menu.horiz21"
+msgstr "Split view menu: Horizontal 2:1"
+
+msgid "keys.split.menu.vert"
+msgstr "Split view menu: Vertical"
+
+msgid "keys.split.menu.vert12"
+msgstr "Split view menu: Vertical 1:2"
+
+msgid "keys.split.menu.vert21"
+msgstr "Split view menu: Vertical 2:1"
+
 msgid "keys.hoverurl"
 msgstr "Toggle show URL on hover"
 

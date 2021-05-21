@@ -1308,11 +1308,11 @@ void createUserInterface_Root(iRoot *d) {
             { "${menu.split.merge}", '1', 0, "ui.split arg:0" },
             { "${menu.split.swap}", SDLK_x, 0, "ui.split swap:1" },
             { "---", 0, 0, NULL },
-            { "${menu.split.horizontal}", '2', 0, "ui.split arg:3 axis:0" },
+            { "${menu.split.horizontal}", '3', 0, "ui.split arg:3 axis:0" },
             { "${menu.split.horizontal} 1:2", SDLK_d, 0, "ui.split arg:1 axis:0" },
             { "${menu.split.horizontal} 2:1", SDLK_e, 0, "ui.split arg:2 axis:0" },
             { "---", 0, 0, NULL },
-            { "${menu.split.vertical}", '3', 0, "ui.split arg:3 axis:1" },
+            { "${menu.split.vertical}", '2', 0, "ui.split arg:3 axis:1" },
             { "${menu.split.vertical} 1:2", SDLK_f, 0, "ui.split arg:1 axis:1" },
             { "${menu.split.vertical} 2:1", SDLK_r, 0, "ui.split arg:2 axis:1" },
         }, 10);
