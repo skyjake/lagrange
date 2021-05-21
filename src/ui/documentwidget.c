@@ -318,6 +318,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
     init_PersistentDocumentState(&d->mod);
     d->flags           = 0;
     d->phoneToolbar    = NULL;
+    d->footerButtons   = NULL;
     iZap(d->certExpiry);
     d->certFingerprint  = new_Block(0);
     d->certFlags        = 0;
@@ -331,7 +332,6 @@ void init_DocumentWidget(iDocumentWidget *d) {
     d->redirectCount    = 0;
     d->ordinalBase      = 0;
     d->initNormScrollY  = 0;
-    //init_Anim(&d->scrollY, 0);
     init_SmoothScroll(&d->scrollY, w, scrollBegan_DocumentWidget_);
     d->animWideRunId = 0;
     init_Anim(&d->animWideRunOffset, 0);
@@ -1032,6 +1032,37 @@ static enum iGmDocumentBanner bannerType_DocumentWidget_(const iDocumentWidget *
     return siteDomain_GmDocumentBanner;
 }
 
+static void makeFooterButtons_DocumentWidget_(iDocumentWidget *d, const iMenuItem *items, size_t count) {
+    iWidget *w = as_Widget(d);
+    destroy_Widget(d->footerButtons);
+    d->footerButtons = NULL;
+    if (count == 0) {
+        return;
+    }
+    d->footerButtons = new_Widget();
+    setFlags_Widget(d->footerButtons,
+                    unhittable_WidgetFlag | arrangeVertical_WidgetFlag |
+                        resizeWidthOfChildren_WidgetFlag | arrangeHeight_WidgetFlag |
+                        fixedPosition_WidgetFlag | resizeToParentWidth_WidgetFlag,
+                    iTrue);
+    setBackgroundColor_Widget(d->footerButtons, tmBannerBackground_ColorId);
+    const iRect bounds = bounds_Widget(w);
+    const iRect docBounds = documentBounds_DocumentWidget_(d);
+    const int hPad = (width_Rect(bounds) - width_Rect(docBounds)) / 2;
+    const int vPad = 3 * gap_UI;
+    setPadding_Widget(d->footerButtons, hPad, vPad, hPad, vPad);
+    for (size_t i = 0; i < count; ++i) {
+        iLabelWidget *button =
+            addChild_Widget(d->footerButtons,
+                            iClob(newKeyMods_LabelWidget(
+                                items[i].label, items[i].key, items[i].kmods, items[i].command)));
+        checkIcon_LabelWidget(button);
+        setFont_LabelWidget(button, uiContent_FontId);
+    }
+    addChild_Widget(as_Widget(d), iClob(d->footerButtons));
+    arrange_Widget(d->footerButtons);
+}
+
 static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode code,
                                           const iString *meta) {
     iString *src = collectNewCStr_String("# ");
@@ -1061,6 +1092,13 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
                                     cstr_Lang("error.unsupported.suggestsave"),
                                     cstr_String(key),
                                     saveToDownloads_Label);
+                makeFooterButtons_DocumentWidget_(
+                    d,
+                    (iMenuItem[]){ { translateCStr_Lang(download_Icon " " saveToDownloads_Label),
+                                     0,
+                                     0,
+                                     "document.save" } },
+                    1);
                 break;
             }
             case slowDown_GmStatusCode:
