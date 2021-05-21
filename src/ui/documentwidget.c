@@ -222,6 +222,7 @@ enum iDocumentWidgetFlag {
     movingSelectMarkStart_DocumentWidgetFlag = iBit(10),
     movingSelectMarkEnd_DocumentWidgetFlag   = iBit(11),
     otherRootByDefault_DocumentWidgetFlag    = iBit(12), /* links open to other root by default */
+    urlChanged_DocumentWidgetFlag            = iBit(13),
 };
 
 enum iDocumentLinkOrdinalMode {
@@ -1414,6 +1415,7 @@ static void updateFromCachedResponse_DocumentWidget_(iDocumentWidget *d, float n
     moveSpan_SmoothScroll(&d->scrollY, 0, 0); /* clamp position to new max */
     cacheDocumentGlyphs_DocumentWidget_(d);
     d->drawBufs->flags |= updateTimestampBuf_DrawBufsFlag | updateSideBuf_DrawBufsFlag;
+    d->flags &= ~urlChanged_DocumentWidgetFlag;
     postCommandf_Root(as_Widget(d)->root, "document.changed doc:%p url:%s", d, cstr_String(d->mod.url));
 }
 
@@ -1662,7 +1664,10 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                 break;
             }
             case categorySuccess_GmStatusCode:
-                //reset_SmoothScroll(&d->scrollY);
+                if (d->flags & urlChanged_DocumentWidgetFlag) {
+                    /* Keep scroll position when reloading the same page. */
+                    reset_SmoothScroll(&d->scrollY);
+                }
                 reset_GmDocument(d->doc); /* new content incoming */
                 delete_Gempub(d->sourceGempub);
                 d->sourceGempub = NULL;
@@ -2321,6 +2326,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         if (category_GmStatusCode(status_GmRequest(d->request)) == categorySuccess_GmStatusCode) {
             init_Anim(&d->scrollY.pos, d->initNormScrollY * size_GmDocument(d->doc).y); /* TODO: unless user already scrolled! */
         }
+        d->flags &= ~urlChanged_DocumentWidgetFlag;
         d->state = ready_RequestState;
         postProcessRequestContent_DocumentWidget_(d, iFalse);
         /* The response may be cached. */
@@ -4410,9 +4416,16 @@ void deserializeState_DocumentWidget(iDocumentWidget *d, iStream *ins) {
     updateFromHistory_DocumentWidget_(d);
 }
 
+static void setUrl_DocumentWidget_(iDocumentWidget *d, const iString *url) {
+    if (!equal_String(d->mod.url, url)) {
+        d->flags |= urlChanged_DocumentWidgetFlag;
+        set_String(d->mod.url, url);
+    }
+}    
+
 void setUrlFromCache_DocumentWidget(iDocumentWidget *d, const iString *url, iBool isFromCache) {
     setLinkNumberMode_DocumentWidget_(d, iFalse);
-    set_String(d->mod.url, urlFragmentStripped_String(url));
+    setUrl_DocumentWidget_(d, urlFragmentStripped_String(url));
     /* See if there a username in the URL. */
     parseUser_DocumentWidget_(d);
     if (!isFromCache || !updateFromHistory_DocumentWidget_(d)) {
@@ -4423,7 +4436,7 @@ void setUrlFromCache_DocumentWidget(iDocumentWidget *d, const iString *url, iBoo
 void setUrlAndSource_DocumentWidget(iDocumentWidget *d, const iString *url, const iString *mime,
                                     const iBlock *source) {
     setLinkNumberMode_DocumentWidget_(d, iFalse);
-    set_String(d->mod.url, url);
+    setUrl_DocumentWidget_(d, url);
     parseUser_DocumentWidget_(d);
     iGmResponse *resp = new_GmResponse();
     resp->statusCode = success_GmStatusCode;
