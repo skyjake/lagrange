@@ -56,6 +56,7 @@ enum iFileVersion {
 #define whiteStar_Icon      "\u2606"
 #define person_Icon         "\U0001f464"
 #define download_Icon       "\u2ba7"
+#define export_Icon         "\U0001f4e4"
 #define hourglass_Icon      "\u231b"
 #define timer_Icon          "\u23f2"
 #define home_Icon           "\U0001f3e0"

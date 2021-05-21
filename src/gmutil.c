@@ -475,6 +475,9 @@ const char *mediaType_Path(const iString *path) {
              endsWithCase_String(path, ".hpp")) {
         return "text/plain";
     }
+    else if (endsWithCase_String(path, ".pem")) {
+        return "application/x-pem-file";
+    }
     else if (endsWithCase_String(path, ".zip")) {
         return "application/zip";
     }

@@ -542,8 +542,8 @@ msgstr "Stop Using on This Page"
 msgid "ident.stopuse.all"
 msgstr "Stop Using Everywhere"
 
-msgid "ident.showuse"
-msgstr "Show Usage"
+msgid "ident.export"
+msgstr "Export"
 
 msgid "heading.ident.use"
 msgstr "IDENTITY USAGE"

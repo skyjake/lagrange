@@ -976,7 +976,7 @@ iBool isPinned_DocumentWidget_(const iDocumentWidget *d) {
 
 static void showOrHidePinningIndicator_DocumentWidget_(iDocumentWidget *d) {
     iWidget *w = as_Widget(d);
-    showCollapsed_Widget(findChild_Widget(root_Widget(as_Widget(d)), "document.pinned"),
+    showCollapsed_Widget(findChild_Widget(root_Widget(w), "document.pinned"),
                          isPinned_DocumentWidget_(d));
 }
 
@@ -1214,7 +1214,9 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse
                     setRange_String(&d->sourceMime, param);
                 }
                 else if (startsWith_Rangecc(param, "text/") ||
-                         equal_Rangecc(param, "application/json")) {
+                         equal_Rangecc(param, "application/json") ||
+                         equal_Rangecc(param, "application/x-pem-file") ||
+                         equal_Rangecc(param, "application/pem-certificate-chain")) {
                     docFormat = plainText_GmDocumentFormat;
                     setRange_String(&d->sourceMime, param);
                 }
@@ -1383,37 +1385,42 @@ static void cacheDocumentGlyphs_DocumentWidget_(const iDocumentWidget *d) {
     }
 }
 
+static void updateFromCachedResponse_DocumentWidget_(iDocumentWidget *d, float normScrollY,
+                                                     const iGmResponse *resp) {
+    setLinkNumberMode_DocumentWidget_(d, iFalse);
+    clear_ObjectList(d->media);
+    delete_Gempub(d->sourceGempub);
+    d->sourceGempub = NULL;
+    reset_GmDocument(d->doc);
+    resetWideRuns_DocumentWidget_(d);
+    d->state = fetching_RequestState;
+    /* Do the fetch. */ {
+        d->initNormScrollY = normScrollY;
+        /* Use the cached response data. */
+        updateTrust_DocumentWidget_(d, resp);
+        d->sourceTime   = resp->when;
+        d->sourceStatus = success_GmStatusCode;
+        format_String(&d->sourceHeader, cstr_Lang("pageinfo.header.cached"));
+        set_Block(&d->sourceContent, &resp->body);
+        updateDocument_DocumentWidget_(d, resp, iTrue);
+        postProcessRequestContent_DocumentWidget_(d, iTrue);
+    }
+    d->state = ready_RequestState;
+    init_Anim(&d->altTextOpacity, 0);
+    reset_SmoothScroll(&d->scrollY);
+    init_Anim(&d->scrollY.pos, d->initNormScrollY * size_GmDocument(d->doc).y);
+    updateSideOpacity_DocumentWidget_(d, iFalse);
+    updateVisible_DocumentWidget_(d);
+    moveSpan_SmoothScroll(&d->scrollY, 0, 0); /* clamp position to new max */
+    cacheDocumentGlyphs_DocumentWidget_(d);
+    d->drawBufs->flags |= updateTimestampBuf_DrawBufsFlag | updateSideBuf_DrawBufsFlag;
+    postCommandf_Root(as_Widget(d)->root, "document.changed doc:%p url:%s", d, cstr_String(d->mod.url));
+}
+
 static iBool updateFromHistory_DocumentWidget_(iDocumentWidget *d) {
     const iRecentUrl *recent = findUrl_History(d->mod.history, d->mod.url);
     if (recent && recent->cachedResponse) {
-        const iGmResponse *resp = recent->cachedResponse;
-        clear_ObjectList(d->media);
-        delete_Gempub(d->sourceGempub);
-        d->sourceGempub = NULL;
-        reset_GmDocument(d->doc);
-        resetWideRuns_DocumentWidget_(d);
-        d->state = fetching_RequestState;
-        /* Do the fetch. */ {
-            d->initNormScrollY = recent->normScrollY;
-            /* Use the cached response data. */
-            updateTrust_DocumentWidget_(d, resp);
-            d->sourceTime   = resp->when;
-            d->sourceStatus = success_GmStatusCode;
-            format_String(&d->sourceHeader, cstr_Lang("pageinfo.header.cached"));
-            set_Block(&d->sourceContent, &resp->body);
-            updateDocument_DocumentWidget_(d, resp, iTrue);
-            postProcessRequestContent_DocumentWidget_(d, iTrue);
-        }
-        d->state = ready_RequestState;
-        init_Anim(&d->altTextOpacity, 0);
-        reset_SmoothScroll(&d->scrollY);
-        init_Anim(&d->scrollY.pos, d->initNormScrollY * size_GmDocument(d->doc).y);
-        updateSideOpacity_DocumentWidget_(d, iFalse);
-        updateVisible_DocumentWidget_(d);
-        moveSpan_SmoothScroll(&d->scrollY, 0, 0); /* clamp position to new max */
-        cacheDocumentGlyphs_DocumentWidget_(d);
-        d->drawBufs->flags |= updateTimestampBuf_DrawBufsFlag | updateSideBuf_DrawBufsFlag;
-        postCommandf_Root(as_Widget(d)->root, "document.changed doc:%p url:%s", d, cstr_String(d->mod.url));
+        updateFromCachedResponse_DocumentWidget_(d, recent->normScrollY, recent->cachedResponse);
         return iTrue;
     }
     else if (!isEmpty_String(d->mod.url)) {
@@ -4411,6 +4418,20 @@ void setUrlFromCache_DocumentWidget(iDocumentWidget *d, const iString *url, iBoo
     if (!isFromCache || !updateFromHistory_DocumentWidget_(d)) {
         fetch_DocumentWidget_(d);
     }
+}
+
+void setUrlAndSource_DocumentWidget(iDocumentWidget *d, const iString *url, const iString *mime,
+                                    const iBlock *source) {
+    setLinkNumberMode_DocumentWidget_(d, iFalse);
+    set_String(d->mod.url, url);
+    parseUser_DocumentWidget_(d);
+    iGmResponse *resp = new_GmResponse();
+    resp->statusCode = success_GmStatusCode;
+    initCurrent_Time(&resp->when);
+    set_String(&resp->meta, mime);
+    set_Block(&resp->body, source);
+    updateFromCachedResponse_DocumentWidget_(d, 0, resp);
+    delete_GmResponse(resp);
 }
 
 iDocumentWidget *duplicate_DocumentWidget(const iDocumentWidget *orig) {

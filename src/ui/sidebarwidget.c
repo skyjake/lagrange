@@ -169,9 +169,10 @@ static void updateContextMenu_SidebarWidget_(iSidebarWidget *d) {
         { "---", 0, 0, NULL },
         { edit_Icon " ${menu.edit.notes}", 0, 0, "ident.edit" },
         { "${ident.fingerprint}", 0, 0, "ident.fingerprint" },
+        { export_Icon " ${ident.export}", 0, 0, "ident.export" },
         { "---", 0, 0, NULL },
         { delete_Icon " " uiTextCaution_ColorEscape "${ident.delete}", 0, 0, "ident.delete confirm:1" },
-    }, 8);
+    }, 9);
     /* Used URLs. */
     const iGmIdentity *ident = menuIdentity_SidebarWidget_(d);
     if (ident) {
@@ -440,10 +441,7 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 iSidebarItem *item = new_SidebarItem();
                 item->id = (uint32_t) index_PtrArrayConstIterator(&i);
                 item->icon = 0x1f464; /* person */
-                set_String(&item->label, collect_String(subject_TlsCertificate(ident->cert)));
-                if (startsWith_String(&item->label, "CN = ")) {
-                    remove_Block(&item->label.chars, 0, 5);
-                }
+                set_String(&item->label, name_GmIdentity(ident));
                 iDate until;
                 validUntil_TlsCertificate(ident->cert, &until);
                 const iBool isActive = isUsedOn_GmIdentity(ident, tabUrl);
@@ -480,11 +478,11 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 addActionButton_SidebarWidget_(d, add_Icon " ${sidebar.action.ident.new}", "ident.new", 0);
                 addActionButton_SidebarWidget_(d, "${sidebar.action.ident.import}", "ident.import", 0);
             }
+            /*
             const iMenuItem menuItems[] = {
                 { person_Icon " ${ident.use}", 0, 0, "ident.use arg:1" },
                 { close_Icon " ${ident.stopuse}", 0, 0, "ident.use arg:0" },
                 { close_Icon " ${ident.stopuse.all}", 0, 0, "ident.use arg:0 clear:1" },
-                { "${ident.showuse}", 0, 0, "ident.showuse" },
                 { "---", 0, 0, NULL },
                 { edit_Icon " ${menu.edit.notes}", 0, 0, "ident.edit" },
                 { "${ident.fingerprint}", 0, 0, "ident.fingerprint" },
@@ -494,6 +492,7 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 { delete_Icon " " uiTextCaution_ColorEscape "${ident.delete}", 0, 0, "ident.delete confirm:1" },
             };
             d->menu = makeMenu_Widget(as_Widget(d), menuItems, iElemCount(menuItems));
+            */
             break;
         }
         default:
@@ -792,6 +791,9 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, iSidebarItem *item, si
         }
         case identities_SidebarMode: {
             d->contextItem  = item;
+            if (d->contextIndex != iInvalidPos) {
+                invalidateItem_ListWidget(d->list, d->contextIndex);
+            }
             d->contextIndex = itemIndex;
             if (itemIndex < numItems_ListWidget(d->list)) {
                 updateContextMenu_SidebarWidget_(d);
@@ -1277,6 +1279,20 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             }
             return iTrue;
         }
+        else if (isCommand_Widget(w, ev, "ident.export")) {
+            const iGmIdentity *ident = menuIdentity_SidebarWidget_(d);
+            if (ident) {
+                iString *pem = collect_String(pem_TlsCertificate(ident->cert));
+                append_String(pem, collect_String(privateKeyPem_TlsCertificate(ident->cert)));
+                iDocumentWidget *expTab = newTab_App(NULL, iTrue);
+                setUrlAndSource_DocumentWidget(
+                    expTab,
+                    collectNewFormat_String("file:%s.pem", cstr_String(name_GmIdentity(ident))),
+                    collectNewCStr_String("text/plain"),
+                    utf8_String(pem));
+            }
+            return iTrue;
+        }
         else if (isCommand_Widget(w, ev, "ident.setnotes")) {
             iGmIdentity *ident = pointerLabel_Command(cmd, "ident");
             if (ident) {
@@ -1385,7 +1401,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             d->contextIndex = iInvalidPos;
         }
     }
-    if (d->menu && ev->type == SDL_MOUSEBUTTONDOWN) {
+    if ((d->menu || d->mode == identities_SidebarMode )&& ev->type == SDL_MOUSEBUTTONDOWN) {
         if (ev->button.button == SDL_BUTTON_RIGHT) {
             d->contextItem = NULL;
             if (!isVisible_Widget(d->menu)) {
@@ -1457,11 +1473,13 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                                         (!cmdClear && cmdUse && isUsedOn_GmIdentity(ident, docUrl)) ||
                                         (!cmdClear && !cmdUse && !isUsedOn_GmIdentity(ident, docUrl)));
                             }
+                            /*
                             else if (equal_Command(cmdItem, "ident.showuse")) {
                                 setFlags_Widget(as_Widget(menuItem),
                                                 disabled_WidgetFlag,
                                                 !isUsed_GmIdentity(ident));
                             }
+                            */
                         }
                     }
                 }

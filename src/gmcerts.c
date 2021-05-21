@@ -201,7 +201,11 @@ void clearUse_GmIdentity(iGmIdentity *d) {
 }
 
 const iString *name_GmIdentity(const iGmIdentity *d) {
-    return collect_String(subject_TlsCertificate(d->cert));
+    iString *name = collect_String(subject_TlsCertificate(d->cert));
+    if (startsWith_String(name, "CN = ")) {
+        remove_Block(&name->chars, 0, 5);
+    }
+    return name;
 }
 
 iDefineTypeConstruction(GmIdentity)

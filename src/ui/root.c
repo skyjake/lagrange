@@ -438,10 +438,7 @@ static void updateNavBarIdentity_(iWidget *navBar) {
     setFlags_Widget(tool, selected_WidgetFlag, ident != NULL);
     /* Update menu. */
     iLabelWidget *idItem = child_Widget(findChild_Widget(button, "menu"), 0);
-    iString *subjectName = ident ? collect_String(subject_TlsCertificate(ident->cert)) : NULL;
-    if (subjectName && startsWith_String(subjectName, "CN = ")) {
-        remove_Block(&subjectName->chars, 0, 5);
-    }
+    const iString *subjectName = ident ? name_GmIdentity(ident) : NULL;
     setTextCStr_LabelWidget(
         idItem,
         subjectName ? format_CStr(uiTextAction_ColorEscape "%s", cstr_String(subjectName))
