@@ -30,7 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 iDeclareType(GmCerts)
 iDeclareType(GmResponse)
 
-enum iGmCertFlags {
+enum iGmCertFlag {
     available_GmCertFlag       = iBit(1), /* certificate provided by server */
     trusted_GmCertFlag         = iBit(2), /* TOFU status */
     timeVerified_GmCertFlag    = iBit(3), /* has not expired */
