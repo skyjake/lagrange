@@ -1,7 +1,7 @@
 Usage: lagrange [options] [URLs] [paths]
 
-URLs and local files are opened in separate tabs. By default the first 
-URL/path opens in the currently open tab.
+When multiple URLs and local files are specified, they are opened in
+separate tabs.
 
 General options:
 

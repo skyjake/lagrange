@@ -576,6 +576,7 @@ static void communicateWithRunningInstance_App_(iApp *d, iProcessId instance,
     }
     if (!isEmpty_StringList(openCmds)) {
         append_String(cmds, collect_String(joinCStr_StringList(openCmds, "\n")));
+        requestRaise = iTrue;
     }
     if (isEmpty_String(cmds)) {
         /* By default open a new tab. */
@@ -647,7 +648,6 @@ static void init_App_(iApp *d, int argc, char **argv) {
             terminate_App_(0);
         }
         /* Check for URLs. */
-        iBool newTab = iFalse;
         iConstForEach(CommandLine, i, &d->args) {
             const iRangecc arg = i.entry;
             if (i.argType == value_CommandLineArgType) {
@@ -662,9 +662,8 @@ static void init_App_(iApp *d, int argc, char **argv) {
                                       : makeFileUrl_String(collectNewRange_String(arg));
                     pushBack_StringList(openCmds,
                                         collectNewFormat_String(
-                                            "open newtab:%d url:%s", newTab, cstr_String(decUrl)));
+                                            "open newtab:1 url:%s", cstr_String(decUrl)));
                     delete_String(decUrl);
-                    newTab = iTrue;
                 }
                 else {
                     fprintf(stderr, "Invalid URL/file: %s\n", cstr_Rangecc(arg));
