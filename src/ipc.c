@@ -176,8 +176,9 @@ iBool write_Ipc(iProcessId pid, const iString *input, enum iIpcWrite type) {
     iFile *f = newCStr_File(inputFilePath_(&ipc_, pid));
     if (open_File(f, text_FileMode | append_FileMode)) {
         write_File(f, utf8_String(input));
-        if (type == command_IpcWrite) {
-            printf_Stream(stream_File(f), "\nipc.signal arg:%d\n", currentId_Process());
+        if (type != response_IpcWrite) {
+            printf_Stream(stream_File(f), "\nipc.signal arg:%d%s\n", currentId_Process(),
+                          type == commandAndRaise_IpcWrite ? " raise:1" : "");
         }
         close_File(f);
         ok = iTrue;
@@ -186,10 +187,10 @@ iBool write_Ipc(iProcessId pid, const iString *input, enum iIpcWrite type) {
     return ok;
 }
 
-iString *communicate_Ipc(const iString *command) {
+iString *communicate_Ipc(const iString *command, iBool requestRaise) {
     const iProcessId dst = check_Ipc();
     if (dst) {
-        if (write_Ipc(dst, command, command_IpcWrite)) {
+        if (write_Ipc(dst, command, requestRaise ? commandAndRaise_IpcWrite : command_IpcWrite)) {
             response_ = new_IpcResponse();
             signal(SIGUSR1, handleSignal_IpcResponse_);
             lock_Mutex(&response_->mtx);
@@ -300,7 +301,7 @@ iBool write_Ipc(iProcessId pid, const iString *input, enum iIpcWrite type) {
     return ok;
 }
 
-iString *communicate_Ipc(const iString *command) {
+iString *communicate_Ipc(const iString *command, iBool requestRaise) {
     iProcessId pid = check_Ipc();
     if (!pid) {
         return NULL;
@@ -308,7 +309,7 @@ iString *communicate_Ipc(const iString *command) {
     /* Open a mailslot for the response. */
     HANDLE responseSlot = CreateMailslotA(slotName_(currentId_Process()), 0, 1000, NULL);
     /* Write the commands. */
-    if (!write_Ipc(pid, command, command_IpcWrite)) {
+    if (!write_Ipc(pid, command, requestRaise ? commandAndRaise_IpcWrite : command_IpcWrite)) {
         CloseHandle(responseSlot);
         return NULL;
     }

@@ -545,6 +545,7 @@ static void terminate_App_(int rc) {
 static void communicateWithRunningInstance_App_(iApp *d, iProcessId instance,
                                                 const iStringList *openCmds) {
     iString *cmds = new_String();
+    iBool requestRaise = iFalse;
     const iProcessId pid = currentId_Process();
     iConstForEach(CommandLine, i, &d->args) {
         if (i.argType == value_CommandLineArgType) {
@@ -552,6 +553,7 @@ static void communicateWithRunningInstance_App_(iApp *d, iProcessId instance,
         }
         if (equal_CommandLineConstIterator(&i, "go-home")) {
             appendCStr_String(cmds, "navigate.home\n");
+            requestRaise = iTrue;
         }
         else if (equal_CommandLineConstIterator(&i, "new-tab")) {
             iCommandLineArg *arg = argument_CommandLineConstIterator(&i);
@@ -563,6 +565,7 @@ static void communicateWithRunningInstance_App_(iApp *d, iProcessId instance,
                 appendCStr_String(cmds, "tabs.new\n");
             }
             iRelease(arg);
+            requestRaise = iTrue;
         }
         else if (equal_CommandLineConstIterator(&i, "close-tab")) {
             appendCStr_String(cmds, "tabs.close\n");
@@ -577,9 +580,10 @@ static void communicateWithRunningInstance_App_(iApp *d, iProcessId instance,
     if (isEmpty_String(cmds)) {
         /* By default open a new tab. */
         appendCStr_String(cmds, "tabs.new\n");
+        requestRaise = iTrue;
     }
     if (!isEmpty_String(cmds)) {
-        iString *result = communicate_Ipc(cmds);
+        iString *result = communicate_Ipc(cmds, requestRaise);
         if (result) {
             fwrite(cstr_String(result), 1, size_String(result), stdout);
             fflush(stdout);
@@ -2507,6 +2511,11 @@ iBool handleCommand_App(const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "ipc.signal")) {
+        if (argLabel_Command(cmd, "raise")) {
+            if (d->window && d->window->win) {
+                SDL_RaiseWindow(d->window->win);
+            }
+        }
         signal_Ipc(arg_Command(cmd));
         return iTrue;
     }
