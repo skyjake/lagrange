@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-05-15 06:18+0000\n"
-"Last-Translator: Nikolay Korotkiy <sikmir@gmail.com>\n"
+"PO-Revision-Date: 2021-05-24 13:18+0000\n"
+"Last-Translator: Wally Hackenslacker <mastor89@protonmail.com>\n"
 "Language-Team: Spanish <http://weblate.skyjake.fi/projects/lagrange/ui/es/>\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
@@ -1563,3 +1563,49 @@ msgstr "Licencia"
 
 msgid "lang.pl"
 msgstr "Polaco"
+
+#, c-format
+msgid "doc.archive"
+msgstr "%s es un archivo comprimido."
+
+msgid "doc.archive.view"
+msgstr "Ver el contenido del archivo"
+
+msgid "bookmark.tag.linksplit"
+msgstr "Abrir enlaces a un lado"
+
+msgid "lang.tok"
+msgstr "Toki Pona"
+
+msgid "archive.exit"
+msgstr "Salir del archivo"
+
+#, c-format
+msgid "archive.summary"
+msgid_plural "archive.summary.n"
+msgstr[0] "Este archivo contiene %zu item y su tamaño comprimido es de %.1f MB."
+msgstr[1] "Este archivo contiene %zu items y su tamaño comprimido es de %.1f MB."
+
+#, c-format
+msgid "dir.summary"
+msgid_plural "dir.summary.n"
+msgstr[0] "Este directorio contiene %zu item."
+msgstr[1] "Este directorio contiene %zu items."
+
+msgid "keys.tab.close.other"
+msgstr "Cerrar otras pestañas"
+
+msgid "prefs.pinsplit"
+msgstr "Fijar pestaña para vista dividida:"
+
+msgid "prefs.pinsplit.none"
+msgstr "Ninguna"
+
+msgid "prefs.pinsplit.left"
+msgstr "Pestaña Izquierda"
+
+msgid "prefs.pinsplit.right"
+msgstr "Pestaña Derecha"
+
+msgid "dir.empty"
+msgstr "Este directorio está vacío."
