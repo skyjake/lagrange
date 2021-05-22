@@ -45,6 +45,21 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.4.2" date="2021-05-22">
+            <description>
+                <p>Bug fixes:</p>
+                <ul>
+                    <li>UI colors were all black on the first run.</li>
+                    <li>Right mouse click on an inactive split does not have any
+                        effect.</li>
+                    <li>Action buttons showing under the Help link in an empty
+                        Identities sidebar.</li>
+                    <li>Potential crash at shutdown.</li>
+                    <li>Minor UI layout issues.</li>
+                </ul>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.4.2</url>
+        </release>
         <release version="1.4.1" date="2021-05-13">
             <description>
                 <p>Bug fixes:</p>

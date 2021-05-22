@@ -6,6 +6,13 @@
 ```
 # Release notes
 
+## 1.4.2
+* Fixed UI colors being all black on the first run.
+* Fixed right mouse click on an inactive split not having any effect.
+* Fixed action buttons showing under the Help link in an empty Identities sidebar.
+* Fixed potential crash at shutdown.
+* Fixed minor UI layout issues.
+
 ## 1.4.1
 * Fixed removing the left side split by closing all its tabs. The URL input field got confused about which tab was currently open, and the wrong theme was active.
 * Fixed tab merging when unsplitting the window: keep the currently active tab open.
