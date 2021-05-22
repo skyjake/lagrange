@@ -845,6 +845,12 @@ iBool containsExpanded_Widget(const iWidget *d, iInt2 windowCoord, int expand) {
         addY_I2(d->rect.size,
                 d->flags & drawBackgroundToBottom_WidgetFlag ? size_Root(d->root).y : 0)
     };
+    /* Apply the animated offset. (Visual offsets don't affect interaction.) */
+    for (const iWidget *w = d; w; w = w->parent) {
+        if (w->animOffsetRef) {
+            windowCoord.y += value_Anim(w->animOffsetRef);
+        }
+    }
     return contains_Rect(expand ? expanded_Rect(bounds, init1_I2(expand)) : bounds,
                          windowToInner_Widget(d, windowCoord));
 }

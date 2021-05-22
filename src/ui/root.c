@@ -128,7 +128,7 @@ static const iMenuItem phoneNavMenuItems_[] = {
 static const iMenuItem identityButtonMenuItems_[] = {
     { "${menu.identity.notactive}", 0, 0, "ident.showactive" },
     { "---", 0, 0, NULL },
-    { add_Icon " ${menu.identity.new}", SDLK_n, KMOD_PRIMARY | KMOD_SHIFT, "ident.new" },
+    { add_Icon " ${menu.identity.new}", newIdentity_KeyShortcut, "ident.new" },
     { "${menu.identity.import}", SDLK_i, KMOD_PRIMARY | KMOD_SHIFT, "ident.import" },
     { "---", 0, 0, NULL },
     { person_Icon " ${menu.show.identities}", 0, 0, "toolbar.showident" },
@@ -138,7 +138,7 @@ static const iMenuItem identityButtonMenuItems_[] = {
     { "${menu.identity.notactive}", 0, 0, "ident.showactive" },
     { "---", 0, 0, NULL },
 # if !defined (iPlatformAppleDesktop)
-    { add_Icon " ${menu.identity.new}", SDLK_n, KMOD_PRIMARY | KMOD_SHIFT, "ident.new" },
+    { add_Icon " ${menu.identity.new}", newIdentity_KeyShortcut, "ident.new" },
     { "${menu.identity.import}", SDLK_i, KMOD_PRIMARY | KMOD_SHIFT, "ident.import" },
     { "---", 0, 0, NULL },
     { person_Icon " ${menu.show.identities}", '4', KMOD_PRIMARY, "sidebar.mode arg:3 show:1" },

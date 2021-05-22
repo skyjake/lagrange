@@ -1249,9 +1249,11 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                 }
                 else if (arg_Command(cmd)) {
                     signIn_GmCerts(certs_App(), ident, tabUrl);
+                    postCommand_App("navigate.reload");
                 }
                 else {
                     signOut_GmCerts(certs_App(), tabUrl);
+                    postCommand_App("navigate.reload");
                 }
                 saveIdentities_GmCerts(certs_App());
                 updateItems_SidebarWidget_(d);
@@ -1491,10 +1493,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         const int kmods = keyMods_Sym(ev->key.keysym.mod);
         /* Hide the sidebar when Escape is pressed. */
         if (kmods == 0 && key == SDLK_ESCAPE && isVisible_Widget(d)) {
-            setFlags_Widget(w, hidden_WidgetFlag, iTrue);
-            arrange_Widget(w->parent);
-            updateSize_DocumentWidget(document_App());
-            refresh_Widget(w->parent);
+            postCommand_Widget(d, "%s.toggle", cstr_String(id_Widget(w)));
             return iTrue;
         }
     }

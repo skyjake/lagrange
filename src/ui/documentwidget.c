@@ -503,7 +503,7 @@ static iRect documentBounds_DocumentWidget_(const iDocumentWidget *d) {
         rect.size.y -= margin;
     }
     if (d->flags & centerVertically_DocumentWidgetFlag) {
-        const iInt2 docSize = addY_I2(size_GmDocument(d->doc), height_Widget(d->footerButtons));
+        const iInt2 docSize = size_GmDocument(d->doc);
         if (docSize.y < rect.size.y) {
             /* Center vertically if short. There is one empty paragraph line's worth of margin
                between the banner and the page contents. */
@@ -828,6 +828,26 @@ static void updateVisible_DocumentWidget_(iDocumentWidget *d) {
     const iRangei visRange  = visibleRange_DocumentWidget_(d);
     const iRect   bounds    = bounds_Widget(as_Widget(d));
     const int     scrollMax = scrollMax_DocumentWidget_(d);
+    /* Reposition the footer buttons as appropriate. */
+    /* TODO: You can just position `footerButtons` here completely without having to get
+       `Widget` involved with the offset in any way. */
+    if (d->footerButtons) {
+        const iRect bounds    = bounds_Widget(as_Widget(d));
+        const iRect docBounds = documentBounds_DocumentWidget_(d);
+        const int   hPad      = (width_Rect(bounds) - iMin(120 * gap_UI, width_Rect(docBounds))) / 2;
+        const int   vPad      = 3 * gap_UI;
+        setPadding_Widget(d->footerButtons, hPad, vPad, hPad, vPad);
+        arrange_Widget(d->footerButtons);
+        d->footerButtons->animOffsetRef = (scrollMax > 0 ? &d->scrollY.pos : NULL);
+        if (scrollMax <= 0) {
+            d->footerButtons->animOffsetRef = NULL;
+            d->footerButtons->rect.pos.y = height_Rect(bounds) - height_Widget(d->footerButtons);
+        }
+        else {
+            d->footerButtons->animOffsetRef = &d->scrollY.pos;
+            d->footerButtons->rect.pos.y = size_GmDocument(d->doc).y + 2 * gap_UI * d->pageMargin;
+        }
+    }
     setMax_SmoothScroll(&d->scrollY, scrollMax);
     setRange_ScrollWidget(d->scroll, (iRangei){ 0, scrollMax });
     const int docSize = size_GmDocument(d->doc).y;
@@ -1041,24 +1061,18 @@ static void makeFooterButtons_DocumentWidget_(iDocumentWidget *d, const iMenuIte
         return;
     }
     d->footerButtons = new_Widget();
-    d->footerButtons->animOffsetRef = &d->scrollY.pos;
     setFlags_Widget(d->footerButtons,
                     unhittable_WidgetFlag | arrangeVertical_WidgetFlag |
                         resizeWidthOfChildren_WidgetFlag | arrangeHeight_WidgetFlag |
-                        fixedPosition_WidgetFlag | resizeToParentWidth_WidgetFlag |
-                        moveToParentBottomEdge_WidgetFlag,
+                        fixedPosition_WidgetFlag | resizeToParentWidth_WidgetFlag,
                     iTrue);
-    setBackgroundColor_Widget(d->footerButtons, tmBannerBackground_ColorId);
-    const iRect bounds = bounds_Widget(w);
-    const iRect docBounds = documentBounds_DocumentWidget_(d);
-    const int hPad = (width_Rect(bounds) - width_Rect(docBounds)) / 2;
-    const int vPad = 3 * gap_UI;
-    setPadding_Widget(d->footerButtons, hPad, vPad, hPad, vPad);
+    setBackgroundColor_Widget(d->footerButtons, tmBackground_ColorId);
     for (size_t i = 0; i < count; ++i) {
-        iLabelWidget *button =
-            addChild_Widget(d->footerButtons,
-                            iClob(newKeyMods_LabelWidget(
-                                items[i].label, items[i].key, items[i].kmods, items[i].command)));
+        iLabelWidget *button = addChildFlags_Widget(
+            d->footerButtons,
+            iClob(newKeyMods_LabelWidget(
+                items[i].label, items[i].key, items[i].kmods, items[i].command)),
+            alignLeft_WidgetFlag | drawKey_WidgetFlag);
         checkIcon_LabelWidget(button);
         setFont_LabelWidget(button, uiContent_FontId);
     }
@@ -1092,10 +1106,10 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
                 iString *key = collectNew_String();
                 toString_Sym(SDLK_s, KMOD_PRIMARY, key);
                 appendFormat_String(src, "\n```\n%s\n```\n", cstr_String(meta));
-                appendFormat_String(src,
-                                    cstr_Lang("error.unsupported.suggestsave"),
-                                    cstr_String(key),
-                                    saveToDownloads_Label);
+//                appendFormat_String(src,
+//                                    cstr_Lang("error.unsupported.suggestsave"),
+//                                    cstr_String(key),
+//                                    saveToDownloads_Label);
                 makeFooterButtons_DocumentWidget_(
                     d,
                     (iMenuItem[]){ { translateCStr_Lang(download_Icon " " saveToDownloads_Label),
@@ -1115,6 +1129,13 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
                 }
                 break;
         }
+    }
+    if (category_GmStatusCode(code) == categoryClientCertificate_GmStatus) {
+        makeFooterButtons_DocumentWidget_(
+            d,
+            (iMenuItem[]){ { leftHalf_Icon " ${menu.show.identities}", '4', KMOD_PRIMARY, "sidebar.mode arg:3 show:1" },
+                           { person_Icon " ${menu.identity.new}", newIdentity_KeyShortcut, "ident.new" } },
+            2);
     }
     setBanner_GmDocument(d->doc, useBanner ? bannerType_DocumentWidget_(d) : none_GmDocumentBanner);
     setFormat_GmDocument(d->doc, gemini_GmDocumentFormat);
@@ -1200,11 +1221,15 @@ static void postProcessRequestContent_DocumentWidget_(iDocumentWidget *d, iBool 
         }
     }
     if (d->sourceGempub) {
-        if (equal_String(d->mod.url, coverPageUrl_Gempub(d->sourceGempub)) &&
-            preloadCoverImage_Gempub(d->sourceGempub, d->doc)) {
-            redoLayout_GmDocument(d->doc);
-            updateVisible_DocumentWidget_(d);
-            invalidate_DocumentWidget_(d);
+        if (equal_String(d->mod.url, coverPageUrl_Gempub(d->sourceGempub))) {
+            makeFooterButtons_DocumentWidget_(d, (iMenuItem[]){
+                                                     { "Gempub Cover Page", 0, 0, NULL }
+                                                 }, 1);
+            if (preloadCoverImage_Gempub(d->sourceGempub, d->doc)) {
+                redoLayout_GmDocument(d->doc);
+                updateVisible_DocumentWidget_(d);
+                invalidate_DocumentWidget_(d);
+            }
         }
         if (!isCached && prefs_App()->pinSplit &&
             equal_String(d->mod.url, indexPageUrl_Gempub(d->sourceGempub))) {
@@ -2108,6 +2133,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         const iBool keepCenter = equal_Command(cmd, "font.changed");
         updateDocumentWidthRetainingScrollPosition_DocumentWidget_(d, keepCenter);
         d->drawBufs->flags |= updateSideBuf_DrawBufsFlag;
+        updateVisible_DocumentWidget_(d);
         invalidate_DocumentWidget_(d);
         dealloc_VisBuf(d->visBuf);
         updateWindowTitle_DocumentWidget_(d);
