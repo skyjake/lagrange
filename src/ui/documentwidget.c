@@ -503,7 +503,7 @@ static iRect documentBounds_DocumentWidget_(const iDocumentWidget *d) {
         rect.size.y -= margin;
     }
     if (d->flags & centerVertically_DocumentWidgetFlag) {
-        const iInt2 docSize = size_GmDocument(d->doc);
+        const iInt2 docSize = addY_I2(size_GmDocument(d->doc), height_Widget(d->footerButtons));
         if (docSize.y < rect.size.y) {
             /* Center vertically if short. There is one empty paragraph line's worth of margin
                between the banner and the page contents. */
@@ -583,7 +583,8 @@ static float normScrollPos_DocumentWidget_(const iDocumentWidget *d) {
 static int scrollMax_DocumentWidget_(const iDocumentWidget *d) {
     const iWidget *w = constAs_Widget(d);
     int sm = size_GmDocument(d->doc).y - height_Rect(bounds_Widget(w)) +
-             (hasSiteBanner_GmDocument(d->doc) ? 1 : 2) * d->pageMargin * gap_UI;
+             (hasSiteBanner_GmDocument(d->doc) ? 1 : 2) * d->pageMargin * gap_UI +
+             height_Widget(d->footerButtons);
     if (d->phoneToolbar) {
         sm += size_Root(w->root).y -
               top_Rect(boundsWithoutVisualOffset_Widget(d->phoneToolbar));
@@ -1040,10 +1041,12 @@ static void makeFooterButtons_DocumentWidget_(iDocumentWidget *d, const iMenuIte
         return;
     }
     d->footerButtons = new_Widget();
+    d->footerButtons->animOffsetRef = &d->scrollY.pos;
     setFlags_Widget(d->footerButtons,
                     unhittable_WidgetFlag | arrangeVertical_WidgetFlag |
                         resizeWidthOfChildren_WidgetFlag | arrangeHeight_WidgetFlag |
-                        fixedPosition_WidgetFlag | resizeToParentWidth_WidgetFlag,
+                        fixedPosition_WidgetFlag | resizeToParentWidth_WidgetFlag |
+                        moveToParentBottomEdge_WidgetFlag,
                     iTrue);
     setBackgroundColor_Widget(d->footerButtons, tmBannerBackground_ColorId);
     const iRect bounds = bounds_Widget(w);
@@ -1061,6 +1064,7 @@ static void makeFooterButtons_DocumentWidget_(iDocumentWidget *d, const iMenuIte
     }
     addChild_Widget(as_Widget(d), iClob(d->footerButtons));
     arrange_Widget(d->footerButtons);
+    arrange_Widget(w);
 }
 
 static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode code,
@@ -1440,6 +1444,8 @@ static void updateFromCachedResponse_DocumentWidget_(iDocumentWidget *d, float n
     delete_Gempub(d->sourceGempub);
     d->sourceGempub = NULL;
     reset_GmDocument(d->doc);
+    destroy_Widget(d->footerButtons);
+    d->footerButtons = NULL;
     resetWideRuns_DocumentWidget_(d);
     d->state = fetching_RequestState;
     /* Do the fetch. */ {
@@ -1718,6 +1724,8 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                 reset_GmDocument(d->doc); /* new content incoming */
                 delete_Gempub(d->sourceGempub);
                 d->sourceGempub = NULL;
+                destroy_Widget(d->footerButtons);
+                d->footerButtons = NULL;
                 resetWideRuns_DocumentWidget_(d);
                 updateDocument_DocumentWidget_(d, resp, iTrue);
                 break;

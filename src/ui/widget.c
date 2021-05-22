@@ -59,6 +59,7 @@ void init_Widget(iWidget *d) {
     d->minSize        = zero_I2();
     d->sizeRef        = NULL;
     d->offsetRef      = NULL;
+    d->animOffsetRef  = NULL;
     d->bgColor        = none_ColorId;
     d->frameColor     = none_ColorId;
     init_Anim(&d->visualOffset, 0.0f);
@@ -768,6 +769,9 @@ static void applyVisualOffset_Widget_(const iWidget *d, iInt2 *pos) {
         else {
             pos->y += off;
         }
+    }
+    if (d->animOffsetRef) {
+        pos->y -= value_Anim(d->animOffsetRef);
     }
     if (d->flags & refChildrenOffset_WidgetFlag) {
         iConstForEach(ObjectList, i, children_Widget(d->offsetRef)) {
