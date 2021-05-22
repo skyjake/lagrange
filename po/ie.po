@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-05-06 09:39+0000\n"
+"PO-Revision-Date: 2021-05-24 13:18+0000\n"
 "Last-Translator: Olga Smirnova <mistresssilvara@hotmail.com>\n"
 "Language-Team: Occidental <http://weblate.skyjake.fi/projects/lagrange/ui/ie/"
 ">\n"
@@ -1589,3 +1589,6 @@ msgstr "Cluder li altri cartes"
 
 msgid "keys.split.menu"
 msgstr "Selecter li mode de fension"
+
+msgid "lang.pl"
+msgstr "Polonesi"
