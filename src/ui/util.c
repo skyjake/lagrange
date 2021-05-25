@@ -1845,7 +1845,7 @@ iWidget *makePreferences_Widget(void) {
     updatePreferencesLayout_Widget(dlg);
     addChild_Widget(dlg,
                     iClob(makeDialogButtons_Widget(
-                        (iMenuItem[]){ { "${dismiss}", SDLK_ESCAPE, 0, "prefs.dismiss" } }, 1)));
+                        (iMenuItem[]){ { "${close}", SDLK_ESCAPE, 0, "prefs.dismiss" } }, 1)));
     addChild_Widget(dlg->root->widget, iClob(dlg));
     finalizeSheet_Mobile(dlg);
     setupSheetTransition_Mobile(dlg, iTrue);

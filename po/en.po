@@ -108,8 +108,8 @@ msgstr "Powered by SDL 2, OpenSSL, and ☕️"
 msgid "cancel"
 msgstr "Cancel"
 
-msgid "dismiss"
-msgstr "Dismiss"
+msgid "close"
+msgstr "Close"
 
 msgid "dlg.message.ok"
 msgstr "Continue"
