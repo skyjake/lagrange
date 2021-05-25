@@ -62,7 +62,7 @@ enum iFileVersion {
 #define home_Icon           "\U0001f3e0"
 #define edit_Icon           "\u270e"
 #define delete_Icon         "\u232b"
-#define copy_Icon           "\u2bba"
+#define copy_Icon           "\u2398" //"\u2bba"
 #define check_Icon          "\u2714"
 #define ballotCheck_Icon    "\U0001f5f9"
 #define inbox_Icon          "\U0001f4e5"

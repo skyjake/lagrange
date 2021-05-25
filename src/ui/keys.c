@@ -311,7 +311,10 @@ static iBinding *findCommand_Keys_(iKeys *d, const char *command) {
 static void updateLookup_Keys_(iKeys *d) {
     clear_PtrSet(&d->lookup);
     iConstForEach(Array, i, &d->bindings) {
-        insert_PtrSet(&d->lookup, i.value);
+        const iBinding *bind = i.value;
+        if (~bind->flags & noDirectTrigger_BindFlag) {
+            insert_PtrSet(&d->lookup, i.value);
+        }
     }
 }
 
@@ -442,9 +445,6 @@ iBool processEvent_Keys(const SDL_Event *ev) {
     if (ev->type == SDL_KEYDOWN || ev->type == SDL_KEYUP) {
         const iBinding *bind = find_Keys_(d, ev->key.keysym.sym, keyMods_Sym(ev->key.keysym.mod));
         if (bind) {
-            if (bind->flags & noDirectTrigger_BindFlag) {
-                return iFalse;
-            }
             if (ev->type == SDL_KEYUP) {
                 if (bind->flags & argRelease_BindFlag) {
                     postCommandf_Root(root, "%s release:1", cstr_String(&bind->command));

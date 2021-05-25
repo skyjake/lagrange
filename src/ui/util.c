@@ -1525,6 +1525,7 @@ void updatePreferencesLayout_Widget(iWidget *prefs) {
     static const char *inputIds[] = {
         "prefs.searchurl",
         "prefs.downloads",
+        "prefs.userfont",
         "prefs.ca.file",
         "prefs.ca.path",
         "prefs.proxy.gemini",
@@ -1786,6 +1787,7 @@ iWidget *makePreferences_Widget(void) {
                 updateSize_LabelWidget((iLabelWidget *) tog);
             }
             addChildFlags_Widget(values, iClob(boldLink), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+            addPrefsInputWithHeading_(headings, values, "prefs.userfont", iClob(new_InputWidget(0)));
         }
         makeTwoColumnHeading_("${heading.prefs.paragraph}", headings, values);
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.linewidth}")));

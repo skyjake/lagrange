@@ -32,6 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <the_Foundation/array.h>
 #include <the_Foundation/file.h>
+#include <the_Foundation/fileinfo.h>
 #include <the_Foundation/hash.h>
 #include <the_Foundation/math.h>
 #include <the_Foundation/stringlist.h>
@@ -124,10 +125,6 @@ struct Impl_Font {
     iBool          isMonospaced;
     iBool          manualKernOnly;
     enum iFontSize sizeId;  /* used to look up different fonts of matching size */
-//    enum iFontId
-//    enum iFontId   japaneseFont; /* font to use for Japanese glyphs */
-//    enum iFontId   chineseFont;  /* font to use for Simplified Chinese glyphs */
-//    enum iFontId   koreanFont;   /* font to use for Korean glyphs */
     uint32_t       indexTable[128 - 32]; /* quick ASCII lookup */
 };
 
@@ -155,13 +152,12 @@ static void init_Font(iFont *d, const iBlock *data, int height, float scale,
             d->xScale *= floorf(advance) / advance;
         }
     }
-    d->vertOffset   = height * (1.0f - scale) / 2;
-    d->baseline     = ascent * d->yScale;
-    d->sizeId       = sizeId;
-//    d->symbolsFont  = symbolsFont;
-//    d->japaneseFont = regularJapanese_FontId;
-//    d->chineseFont  = regularChinese_FontId;
-//    d->koreanFont   = regularKorean_FontId;
+    d->baseline   = ascent * d->yScale;
+    d->vertOffset = height * (1.0f - scale) / 2;
+    if (scale > 1.0f) {
+        d->vertOffset /= 2; /* Tweak for Noto Sans Symbols */
+    }
+    d->sizeId = sizeId;
     memset(d->indexTable, 0xff, sizeof(d->indexTable));
 }
 
@@ -215,7 +211,8 @@ struct Impl_Text {
     iRegExp *      ansiEscape;
 };
 
-static iText text_;
+static iText   text_;
+static iBlock *userFont_;
 
 static void initFonts_Text_(iText *d) {
     const float textSize = fontSize_UI * d->contentFontSize;
@@ -321,27 +318,31 @@ static void initFonts_Text_(iText *d) {
         { &fontIosevkaTermExtended_Embedded,  smallMonoSize,        1.0f,         contentMonoSmall_FontSize },
         { &fontIosevkaTermExtended_Embedded,  monoSize,             1.0f,         contentMono_FontSize },
         /* extra content fonts */
-        { &fontSourceSans3Regular_Embedded, textSize,             scaling, contentRegular_FontSize },
-        { &fontIosevkaTermExtended_Embedded,  textSize,             0.866f,  contentRegular_FontSize },
+        { &fontSourceSans3Regular_Embedded,   textSize,             scaling, contentRegular_FontSize },
+//        { &fontIosevkaTermExtended_Embedded,  textSize,             0.866f,  contentRegular_FontSize },
         /* symbols and scripts */
-#define DEFINE_FONT_SET(data) \
-        { &data, uiSize,            1.0f, uiNormal_FontSize }, \
-        { &data, uiSize * 1.125f,   1.0f, uiMedium_FontSize }, \
-        { &data, uiSize * 1.333f,   1.0f, uiBig_FontSize }, \
-        { &data, uiSize * 1.666f,   1.0f, uiLarge_FontSize }, \
-        { &data, textSize,          1.0f, contentRegular_FontSize }, \
-        { &data, textSize * 1.200f, 1.0f, contentMedium_FontSize }, \
-        { &data, textSize * 1.333f, 1.0f, contentBig_FontSize }, \
-        { &data, textSize * 1.666f, 1.0f, contentLarge_FontSize }, \
-        { &data, textSize * 2.000f, 1.0f, contentHuge_FontSize }, \
-        { &data, smallMonoSize,     1.0f, contentMonoSmall_FontSize }, \
-        { &data, monoSize,          1.0f, contentMono_FontSize }
-        DEFINE_FONT_SET(fontSymbola_Embedded),
-        DEFINE_FONT_SET(fontNotoEmojiRegular_Embedded),
-        DEFINE_FONT_SET(fontNotoSansJPRegular_Embedded),
-        DEFINE_FONT_SET(fontNotoSansSCRegular_Embedded),
-        DEFINE_FONT_SET(fontNanumGothicRegular_Embedded), /* TODO: should use Noto Sans here, too */
-        DEFINE_FONT_SET(fontNotoSansArabicUIRegular_Embedded),
+#define DEFINE_FONT_SET(data, glyphScale) \
+        { (data), uiSize,            glyphScale, uiNormal_FontSize }, \
+        { (data), uiSize * 1.125f,   glyphScale, uiMedium_FontSize }, \
+        { (data), uiSize * 1.333f,   glyphScale, uiBig_FontSize }, \
+        { (data), uiSize * 1.666f,   glyphScale, uiLarge_FontSize }, \
+        { (data), textSize,          glyphScale, contentRegular_FontSize }, \
+        { (data), textSize * 1.200f, glyphScale, contentMedium_FontSize }, \
+        { (data), textSize * 1.333f, glyphScale, contentBig_FontSize }, \
+        { (data), textSize * 1.666f, glyphScale, contentLarge_FontSize }, \
+        { (data), textSize * 2.000f, glyphScale, contentHuge_FontSize }, \
+        { (data), smallMonoSize,     glyphScale, contentMonoSmall_FontSize }, \
+        { (data), monoSize,          glyphScale, contentMono_FontSize }
+        DEFINE_FONT_SET(userFont_ ? userFont_ : &fontIosevkaTermExtended_Embedded, 1.0f),
+        DEFINE_FONT_SET(&fontIosevkaTermExtended_Embedded, 0.866f),
+        DEFINE_FONT_SET(&fontNotoSansSymbolsRegular_Embedded, 1.45f),
+        DEFINE_FONT_SET(&fontNotoSansSymbols2Regular_Embedded, 1.45f),
+        DEFINE_FONT_SET(&fontSmolEmojiRegular_Embedded, 1.0f),
+        DEFINE_FONT_SET(&fontNotoEmojiRegular_Embedded, 1.0f),
+        DEFINE_FONT_SET(&fontNotoSansJPRegular_Embedded, 1.0f),
+        DEFINE_FONT_SET(&fontNotoSansSCRegular_Embedded, 1.0f),
+        DEFINE_FONT_SET(&fontNanumGothicRegular_Embedded, 1.0f), /* TODO: should use Noto Sans here, too */
+        DEFINE_FONT_SET(&fontNotoSansArabicUIRegular_Embedded, 1.0f),
     };
     iForIndices(i, fontData) {
         iFont *font = &d->fonts[i];
@@ -401,8 +402,28 @@ static void deinitCache_Text_(iText *d) {
     SDL_DestroyTexture(d->cache);
 }
 
+void loadUserFonts_Text(void) {
+    if (userFont_) {
+        delete_Block(userFont_);
+        userFont_ = NULL;
+    }
+    /* Load the system font. */
+    const iPrefs *prefs = prefs_App();
+    if (!isEmpty_String(&prefs->symbolFontPath)) {
+        iFile *f = new_File(&prefs->symbolFontPath);
+        if (open_File(f, readOnly_FileMode)) {
+            userFont_ = readAll_File(f);
+        }
+        else {
+            fprintf(stderr, "[Text] failed to open: %s\n", cstr_String(&prefs->symbolFontPath));
+        }
+        iRelease(f);
+    }
+}
+
 void init_Text(SDL_Renderer *render) {
     iText *d = &text_;
+    loadUserFonts_Text();
     d->contentFont     = nunito_TextFont;
     d->headingFont     = nunito_TextFont;
     d->contentFontSize = contentScale_Text_;
@@ -542,14 +563,27 @@ static void allocate_Font_(iFont *d, iGlyph *glyph, int hoff) {
 }
 
 iLocalDef iFont *characterFont_Font_(iFont *d, iChar ch, uint32_t *glyphIndex) {
+    /* Smol Emoji overrides all other fonts. */
+    if (ch != 0x20) {
+        iFont *smol = font_Text_(smolEmoji_FontId + d->sizeId);
+        if (smol != d && (*glyphIndex = glyphIndex_Font_(smol, ch)) != 0) {
+            return smol;
+        }
+    }
     if ((*glyphIndex = glyphIndex_Font_(d, ch)) != 0) {
         return d;
     }
-    /* Not defined in current font, try Noto Emoji (for selected characters). */
-    if ((ch >= 0x1f300 && ch < 0x1f600) || (ch >= 0x1f680 && ch <= 0x1f6c5)) {
-        iFont *emoji = font_Text_(emoji_FontId + d->sizeId);
-        if (emoji != d && (*glyphIndex = glyphIndex_Font_(emoji, ch)) != 0) {
-            return emoji;
+    const int fallbacks[] = {
+        smolEmoji_FontId,
+        notoEmoji_FontId,
+        symbols2_FontId,
+        symbols_FontId
+    };
+    /* First fallback is Smol Emoji. */
+    iForIndices(i, fallbacks) {
+        iFont *fallback = font_Text_(fallbacks[i] + d->sizeId);
+        if (fallback != d && (*glyphIndex = glyphIndex_Font_(fallback, ch)) != 0) {
+            return fallback;
         }
     }
     /* Try Simplified Chinese. */
@@ -588,13 +622,18 @@ iLocalDef iFont *characterFont_Font_(iFont *d, iChar ch, uint32_t *glyphIndex) {
         return d;
     }
 #endif
-    /* Fall back to Symbola for anything else. */
-    iFont *font = font_Text_(symbols_FontId + d->sizeId);
-    *glyphIndex = glyphIndex_Font_(font, ch);
-//    if (!*glyphIndex) {
-//        fprintf(stderr, "failed to find %08x (%lc)\n", ch, ch); fflush(stderr);
-//    }
-    return font;
+    /* User's symbols font. */ {
+        iFont *sys = font_Text_(userSymbols_FontId + d->sizeId);
+        if (sys != d && (*glyphIndex = glyphIndex_Font_(sys, ch)) != 0) {
+            return sys;
+        }
+    }
+//    iFont *font = font_Text_(iosevka_FontId + d->sizeId);
+//    *glyphIndex = glyphIndex_Font_(font, ch);
+    if (!*glyphIndex) {
+        fprintf(stderr, "failed to find %08x (%lc)\n", ch, (int)ch); fflush(stderr);
+    }
+    return d;
 }
 
 static iGlyph *glyph_Font_(iFont *d, iChar ch) {

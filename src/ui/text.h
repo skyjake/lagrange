@@ -68,11 +68,14 @@ enum iFontId {
     monospace_FontId,
     /* extra content fonts */
     defaultContentSized_FontId, /* UI font but sized to regular_FontId */
-    regularMonospace_FontId,
     /* symbols and scripts */
-    symbols_FontId,
-    emoji_FontId             = symbols_FontId + max_FontSize,
-    japanese_FontId          = emoji_FontId + max_FontSize,
+    userSymbols_FontId,
+    iosevka_FontId           = userSymbols_FontId + max_FontSize,
+    symbols_FontId           = iosevka_FontId + max_FontSize,
+    symbols2_FontId          = symbols_FontId + max_FontSize,
+    smolEmoji_FontId         = symbols2_FontId + max_FontSize,
+    notoEmoji_FontId         = smolEmoji_FontId + max_FontSize,
+    japanese_FontId          = notoEmoji_FontId + max_FontSize,
     chineseSimplified_FontId = japanese_FontId + max_FontSize,
     korean_FontId            = chineseSimplified_FontId + max_FontSize,
     arabic_FontId            = korean_FontId + max_FontSize,
@@ -91,7 +94,7 @@ enum iFontId {
     uiInput_FontId          = defaultMedium_FontId,
     uiContent_FontId        = defaultMedium_FontId,
     uiContentBold_FontId    = defaultMediumBold_FontId,
-    uiContentSymbols_FontId = symbols_FontId + uiMedium_FontSize,
+    uiContentSymbols_FontId = symbols_FontId + uiMedium_FontSize,    
     /* Document fonts: */
     paragraph_FontId         = regular_FontId,
     firstParagraph_FontId    = medium_FontId,
@@ -102,6 +105,7 @@ enum iFontId {
     heading2_FontId          = largeBold_FontId,
     heading3_FontId          = big_FontId,
     banner_FontId            = largeLight_FontId,
+    regularMonospace_FontId  = iosevka_FontId + contentRegular_FontSize    
 };
 
 iLocalDef iBool isJapanese_FontId(enum iFontId id) {
@@ -123,6 +127,8 @@ extern int gap_Text; /* affected by content font size */
 
 void    init_Text               (SDL_Renderer *);
 void    deinit_Text             (void);
+
+void    loadUserFonts_Text      (void); /* based on Prefs */
 
 void    setContentFont_Text     (enum iTextFont font);
 void    setHeadingFont_Text     (enum iTextFont font);

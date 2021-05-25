@@ -63,6 +63,11 @@ void    setNotifyEdits_InputWidget      (iInputWidget *, iBool notifyEdits);
 void    setEatEscape_InputWidget        (iInputWidget *, iBool eatEscape);
 
 const iString * text_InputWidget            (const iInputWidget *);
+
+iLocalDef const char *cstrText_InputWidget(const iInputWidget *d) {
+    return cstr_String(text_InputWidget(d));
+}
+
 iInputWidgetContentPadding
                 contentPadding_InputWidget  (const iInputWidget *);
 

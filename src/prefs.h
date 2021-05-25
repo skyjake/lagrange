@@ -70,6 +70,7 @@ struct Impl_Prefs {
     iString          gopherProxy;
     iString          httpProxy;
     /* Style */
+    iString          symbolFontPath;
     enum iTextFont   font;
     enum iTextFont   headingFont;
     iBool            monospaceGemini;

@@ -204,6 +204,7 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "uiscale arg:%f\n", uiScale_Window(d->window));
     appendFormat_String(str, "prefs.dialogtab arg:%d\n", d->prefs.dialogTab);
     appendFormat_String(str, "font.set arg:%d\n", d->prefs.font);
+    appendFormat_String(str, "font.user path:%s\n", cstr_String(&d->prefs.symbolFontPath));
     appendFormat_String(str, "headingfont.set arg:%d\n", d->prefs.headingFont);
     appendFormat_String(str, "zoom.set arg:%d\n", d->prefs.zoomPercent);
     appendFormat_String(str, "smoothscroll arg:%d\n", d->prefs.smoothScrolling);
@@ -1555,24 +1556,25 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
                          isSelected_Widget(findChild_Widget(d, "prefs.imageloadscroll")));
         postCommandf_App("hidetoolbarscroll arg:%d",
                          isSelected_Widget(findChild_Widget(d, "prefs.hidetoolbarscroll")));
-        postCommandf_App("ostheme arg:%d",
-                         isSelected_Widget(findChild_Widget(d, "prefs.ostheme")));
+        postCommandf_App("ostheme arg:%d", isSelected_Widget(findChild_Widget(d, "prefs.ostheme")));
+        postCommandf_App("font.user path:%s",
+                         cstrText_InputWidget(findChild_Widget(d, "prefs.userfont")));
         postCommandf_App("decodeurls arg:%d",
                          isSelected_Widget(findChild_Widget(d, "prefs.decodeurls")));
         postCommandf_App("searchurl address:%s",
-                         cstr_String(text_InputWidget(findChild_Widget(d, "prefs.searchurl"))));
+                         cstrText_InputWidget(findChild_Widget(d, "prefs.searchurl")));
         postCommandf_App("cachesize.set arg:%d",
-                         toInt_String(text_InputWidget(findChild_Widget(d, "prefs.cachesize"))));
+                         toInt_String(text_InputWidget(findChild_Widget(d, "prefs.cachesize"))));        
         postCommandf_App("ca.file path:%s",
-                         cstr_String(text_InputWidget(findChild_Widget(d, "prefs.ca.file"))));
+                         cstrText_InputWidget(findChild_Widget(d, "prefs.ca.file")));
         postCommandf_App("ca.path path:%s",
-                         cstr_String(text_InputWidget(findChild_Widget(d, "prefs.ca.path"))));
+                         cstrText_InputWidget(findChild_Widget(d, "prefs.ca.path")));
         postCommandf_App("proxy.gemini address:%s",
-                         cstr_String(text_InputWidget(findChild_Widget(d, "prefs.proxy.gemini"))));
+                         cstrText_InputWidget(findChild_Widget(d, "prefs.proxy.gemini")));
         postCommandf_App("proxy.gopher address:%s",
-                         cstr_String(text_InputWidget(findChild_Widget(d, "prefs.proxy.gopher"))));
+                         cstrText_InputWidget(findChild_Widget(d, "prefs.proxy.gopher")));
         postCommandf_App("proxy.http address:%s",
-                         cstr_String(text_InputWidget(findChild_Widget(d, "prefs.proxy.http"))));
+                         cstrText_InputWidget(findChild_Widget(d, "prefs.proxy.http")));
         const iWidget *tabs = findChild_Widget(d, "prefs.tabs");
         if (tabs) {
             postCommandf_App("prefs.dialogtab arg:%u",
@@ -1890,6 +1892,22 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "font.reset")) {
         resetFonts_Text();
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "font.user")) {
+        const char *path = suffixPtr_Command(cmd, "path");
+        if (cmp_String(&d->prefs.symbolFontPath, path)) {
+            if (!isFrozen) {
+                setFreezeDraw_Window(get_Window(), iTrue);
+            }
+            setCStr_String(&d->prefs.symbolFontPath, path);
+            loadUserFonts_Text();
+            resetFonts_Text();
+            if (!isFrozen) {
+                postCommand_App("font.changed");
+                postCommand_App("window.unfreeze");
+            }
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "font.set")) {
@@ -2332,6 +2350,7 @@ iBool handleCommand_App(const char *cmd) {
         setToggle_Widget(findChild_Widget(dlg, "prefs.archive.openindex"), d->prefs.openArchiveIndexPages);
         setToggle_Widget(findChild_Widget(dlg, "prefs.ostheme"), d->prefs.useSystemTheme);
         setToggle_Widget(findChild_Widget(dlg, "prefs.customframe"), d->prefs.customFrame);
+        setText_InputWidget(findChild_Widget(dlg, "prefs.userfont"), &d->prefs.symbolFontPath);
         updatePrefsPinSplitButtons_(dlg, d->prefs.pinSplit);
         updateDropdownSelection_(findChild_Widget(dlg, "prefs.uilang"), cstr_String(&d->prefs.uiLanguage));
         setToggle_Widget(findChild_Widget(dlg, "prefs.retainwindow"), d->prefs.retainWindowSize);

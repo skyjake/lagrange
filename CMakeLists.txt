@@ -72,17 +72,19 @@ set (EMBED_RESOURCES
     res/fonts/NotoSansArabicUI-Regular.ttf
     res/fonts/NotoSansJP-Regular.ttf
     res/fonts/NotoSansSC-Regular.ttf
+    res/fonts/NotoSansSymbols-Regular.ttf
+    res/fonts/NotoSansSymbols2-Regular.ttf
     res/fonts/Nunito-Bold.ttf
     res/fonts/Nunito-ExtraBold.ttf
     res/fonts/Nunito-ExtraLight.ttf
     res/fonts/Nunito-LightItalic.ttf
     res/fonts/Nunito-Regular.ttf
+    res/fonts/SmolEmoji-Regular.ttf
     res/fonts/SourceSans3-Bold.ttf
     res/fonts/SourceSans3-ExtraLight.ttf
     res/fonts/SourceSans3-It.ttf
     res/fonts/SourceSans3-Regular.ttf
     res/fonts/SourceSans3-Semibold.ttf
-    res/fonts/Symbola.ttf
     res/lang/de.bin
     res/lang/en.bin
     res/lang/es.bin

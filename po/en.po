@@ -1210,6 +1210,9 @@ msgstr "On Dark"
 msgid "prefs.boldlink.light"
 msgstr "On Light"
 
+msgid "prefs.userfont"
+msgstr "Symbol font:"
+
 msgid "prefs.linewidth"
 msgstr "Line width:"
 
