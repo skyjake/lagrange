@@ -2287,7 +2287,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         if (!isEmpty_Array(items)) {
             pushBack_Array(items, &(iMenuItem){ "---", 0, 0, 0 });
         }
-        pushBack_Array(items, &(iMenuItem){ "${dismiss}", 0, 0, "message.ok" });
+        pushBack_Array(items, &(iMenuItem){ "${close}", 0, 0, "message.ok" });
         iWidget *dlg = makeQuestion_Widget(uiHeading_ColorEscape "${heading.pageinfo}",
                                            cstr_String(msg),
                                            data_Array(items),

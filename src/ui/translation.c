@@ -473,7 +473,7 @@ iBool handleCommand_Translation(iTranslation *d, const char *cmd) {
             updateTextCStr_LabelWidget(
                 findMenuItem_Widget(findChild_Widget(d->dlg, "dialogbuttons"),
                                     "translation.cancel"),
-                "${dismiss}");
+                "${close}");
             cancel_TlsRequest(d->request);
         }
         else {
