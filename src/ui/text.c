@@ -154,8 +154,13 @@ static void init_Font(iFont *d, const iBlock *data, int height, float scale,
     }
     d->baseline   = ascent * d->yScale;
     d->vertOffset = height * (1.0f - scale) / 2;
-    if (scale > 1.0f) {
-        d->vertOffset /= 2; /* Tweak for Noto Sans Symbols */
+    /* Custom tweaks. */
+    if (data == &fontNotoSansSymbolsRegular_Embedded ||
+        data == &fontNotoSansSymbols2Regular_Embedded) {
+        d->vertOffset /= 2; 
+    }
+    else if (data == &fontNotoEmojiRegular_Embedded) {
+        //d->vertOffset -= height / 30;
     }
     d->sizeId = sizeId;
     memset(d->indexTable, 0xff, sizeof(d->indexTable));
@@ -338,7 +343,7 @@ static void initFonts_Text_(iText *d) {
         DEFINE_FONT_SET(&fontNotoSansSymbolsRegular_Embedded, 1.45f),
         DEFINE_FONT_SET(&fontNotoSansSymbols2Regular_Embedded, 1.45f),
         DEFINE_FONT_SET(&fontSmolEmojiRegular_Embedded, 1.0f),
-        DEFINE_FONT_SET(&fontNotoEmojiRegular_Embedded, 1.0f),
+        DEFINE_FONT_SET(&fontNotoEmojiRegular_Embedded, 1.10f),
         DEFINE_FONT_SET(&fontNotoSansJPRegular_Embedded, 1.0f),
         DEFINE_FONT_SET(&fontNotoSansSCRegular_Embedded, 1.0f),
         DEFINE_FONT_SET(&fontNanumGothicRegular_Embedded, 1.0f), /* TODO: should use Noto Sans here, too */
@@ -563,6 +568,9 @@ static void allocate_Font_(iFont *d, iGlyph *glyph, int hoff) {
 }
 
 iLocalDef iFont *characterFont_Font_(iFont *d, iChar ch, uint32_t *glyphIndex) {
+    if (isVariationSelector_Char(ch)) {
+        return d;
+    }
     /* Smol Emoji overrides all other fonts. */
     if (ch != 0x20) {
         iFont *smol = font_Text_(smolEmoji_FontId + d->sizeId);

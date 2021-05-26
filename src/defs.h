@@ -92,7 +92,7 @@ enum iFileVersion {
 #define globe_Icon          "\U0001f310"
 #define magnifyingGlass_Icon "\U0001f50d"
 #define midEllipsis_Icon    "\u00b7\u00b7\u00b7"
-#define return_Icon         "\u21a9"
+#define return_Icon         "\u23ce"
 
 #if defined (iPlatformApple)
 #   define shift_Icon       "\u21e7"

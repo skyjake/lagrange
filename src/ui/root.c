@@ -1049,7 +1049,7 @@ void createUserInterface_Root(iRoot *d) {
                                      moveToParentRightEdge_WidgetFlag);
             /* Feeds refresh indicator is inside the input field. */ {
                 iLabelWidget *queryInd =
-                    new_LabelWidget(uiTextAction_ColorEscape "${status.query} \u21a9", NULL);
+                    new_LabelWidget(uiTextAction_ColorEscape "${status.query} " return_Icon, NULL);
                 setId_Widget(as_Widget(queryInd), "input.indicator.search");
                 setBackgroundColor_Widget(as_Widget(queryInd), uiBackground_ColorId);
                 setFrameColor_Widget(as_Widget(queryInd), uiTextAction_ColorId);
