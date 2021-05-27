@@ -54,7 +54,8 @@ struct Impl_ScrollWidget {
 };
 
 static void updateMetrics_ScrollWidget_(iScrollWidget *d) {
-    as_Widget(d)->rect.size.x = gap_UI * 3;
+    iWidget *w = as_Widget(d);
+    w->rect.size.x = gap_UI * 3;
 }
 
 static void animateOpacity_ScrollWidget_(void *ptr) {
