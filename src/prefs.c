@@ -76,9 +76,11 @@ void init_Prefs(iPrefs *d) {
     if (fileExistsCStr_FileInfo("/etc/ssl/certs")) {
         setCStr_String(&d->caPath, "/etc/ssl/certs");
     }
+    /*
 #if defined (iPlatformAppleDesktop)
     setCStr_String(&d->symbolFontPath, "/System/Library/Fonts/Apple Symbols.ttf");
 #endif
+     */
 }
 
 void deinit_Prefs(iPrefs *d) {
