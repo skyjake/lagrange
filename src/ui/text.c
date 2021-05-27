@@ -1237,7 +1237,7 @@ iInt2 advanceN_Text(int fontId, const char *text, size_t n) {
     return init_I2(advance, lineHeight_Text(fontId));
 }
 
-static void drawBounded_Text_(int fontId, iInt2 pos, int xposBound, int color, iRangecc text) {
+static void drawBoundedN_Text_(int fontId, iInt2 pos, int xposBound, int color, iRangecc text, size_t maxLen) {
     iText *d    = &text_;
     iFont *font = font_Text_(fontId);
     const iColor clr = get_Color(color & mask_ColorId);
@@ -1248,9 +1248,14 @@ static void drawBounded_Text_(int fontId, iInt2 pos, int xposBound, int color, i
                                    (color & fillBackground_ColorId ? fillBackground_RunMode : 0) |
                                    runFlagsFromId_(fontId),
                            .text            = text,
+                           .maxLen          = maxLen,                           
                            .pos             = pos,
                            .xposLayoutBound = xposBound,
                            .color           = color & mask_ColorId });
+}
+
+static void drawBounded_Text_(int fontId, iInt2 pos, int xposBound, int color, iRangecc text) {
+    drawBoundedN_Text_(fontId, pos, xposBound, color, text, 0);
 }
 
 static void draw_Text_(int fontId, iInt2 pos, int color, iRangecc text) {
@@ -1293,6 +1298,10 @@ void drawString_Text(int fontId, iInt2 pos, int color, const iString *text) {
 
 void drawRange_Text(int fontId, iInt2 pos, int color, iRangecc text) {
     draw_Text_(fontId, pos, color, text);
+}
+
+void drawRangeN_Text(int fontId, iInt2 pos, int color, iRangecc text, size_t maxChars) {
+    drawBoundedN_Text_(fontId, pos, 0, color, text, maxChars);
 }
 
 iInt2 advanceWrapRange_Text(int fontId, int maxWidth, iRangecc text) {

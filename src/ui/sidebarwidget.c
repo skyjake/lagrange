@@ -1680,7 +1680,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                                : uiText_ColorId;
         iString str;
         init_String(&str);
-        appendChar_String(&str, d->icon ? d->icon : 0x1f588);
+        appendChar_String(&str, d->icon ? d->icon : 0x1f588);        
         const iRect iconArea = { addX_I2(pos, gap_UI),
                                  init_I2(1.75f * lineHeight_Text(font), itemHeight) };
         drawCentered_Text(font,
@@ -1694,9 +1694,13 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
         deinit_String(&str);
         const iInt2 textPos = addY_I2(topRight_Rect(iconArea), (itemHeight - lineHeight_Text(font)) / 2);
         drawRange_Text(font, textPos, fg, range_String(&d->label));
+        const int metaFont = default_FontId;
+        const int metaIconWidth = 4.5f * gap_UI;
         const iInt2 metaPos =
-            init_I2(right_Rect(itemRect) - advanceRange_Text(font, range_String(&d->meta)).x -
-                        2 * gap_UI - (scrollBarWidth ? scrollBarWidth - gap_UI : 0),
+            init_I2(right_Rect(itemRect) -
+                        length_String(&d->meta) *
+                            metaIconWidth
+                        - 2 * gap_UI - (blankWidth ? blankWidth - 1.5f * gap_UI : (gap_UI / 2)),
                     textPos.y);
         fillRect_Paint(p,
                        init_Rect(metaPos.x,
@@ -1704,10 +1708,22 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                                  right_Rect(itemRect) - metaPos.x,
                                  height_Rect(itemRect)),
                        bg);
-        drawRange_Text(font,
-                       metaPos,
-                       isHover && isPressing ? fg : uiTextCaution_ColorId,
-                       range_String(&d->meta));
+        iInt2 mpos = metaPos;
+        iStringConstIterator iter;
+        init_StringConstIterator(&iter, &d->meta);
+        iRangecc range = { cstr_String(&d->meta), iter.pos };
+        while (iter.value) {
+            next_StringConstIterator(&iter);
+            range.end = iter.pos;
+            iRect iconArea = { mpos, init_I2(metaIconWidth, lineHeight_Text(metaFont)) };
+            iRect visBounds = visualBounds_Text(metaFont, range);
+            drawRange_Text(metaFont,
+                           sub_I2(mid_Rect(iconArea), mid_Rect(visBounds)),
+                           isHover && isPressing ? fg : uiTextCaution_ColorId,
+                           range);
+            mpos.x += metaIconWidth;
+            range.start = range.end;            
+        }        
     }
     else if (sidebar->mode == history_SidebarMode) {
         iBeginCollect();
