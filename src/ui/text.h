@@ -157,14 +157,15 @@ void    setOpacity_Text     (float opacity);
 
 void    cache_Text          (int fontId, iRangecc text); /* pre-render glyphs */
 
-void    draw_Text           (int fontId, iInt2 pos, int color, const char *text, ...);
-void    drawAlign_Text      (int fontId, iInt2 pos, int color, enum iAlignment align, const char *text, ...);
-void    drawCentered_Text   (int fontId, iRect rect, iBool alignVisual, int color, const char *text, ...);
-void    drawString_Text     (int fontId, iInt2 pos, int color, const iString *text);
-void    drawRange_Text      (int fontId, iInt2 pos, int color, iRangecc text);
-void    drawRangeN_Text     (int fontId, iInt2 pos, int color, iRangecc text, size_t maxLen);
-void    drawBoundRange_Text (int fontId, iInt2 pos, int boundWidth, int color, iRangecc text); /* bound does not wrap */
-int     drawWrapRange_Text  (int fontId, iInt2 pos, int maxWidth, int color, iRangecc text); /* returns new Y */
+void    draw_Text               (int fontId, iInt2 pos, int color, const char *text, ...);
+void    drawAlign_Text          (int fontId, iInt2 pos, int color, enum iAlignment align, const char *text, ...);
+void    drawCentered_Text       (int fontId, iRect rect, iBool alignVisual, int color, const char *text, ...);
+void    drawCenteredRange_Text  (int fontId, iRect rect, iBool alignVisual, int color, iRangecc text);
+void    drawString_Text         (int fontId, iInt2 pos, int color, const iString *text);
+void    drawRange_Text          (int fontId, iInt2 pos, int color, iRangecc text);
+void    drawRangeN_Text         (int fontId, iInt2 pos, int color, iRangecc text, size_t maxLen);
+void    drawBoundRange_Text     (int fontId, iInt2 pos, int boundWidth, int color, iRangecc text); /* bound does not wrap */
+int     drawWrapRange_Text      (int fontId, iInt2 pos, int maxWidth, int color, iRangecc text); /* returns new Y */
 
 SDL_Texture *   glyphCache_Text     (void);
 

@@ -2908,7 +2908,7 @@ static size_t linkOrdinalFromKey_DocumentWidget_(const iDocumentWidget *d, int k
 static iChar linkOrdinalChar_DocumentWidget_(const iDocumentWidget *d, size_t ord) {
     if (d->ordinalMode == numbersAndAlphabet_DocumentLinkOrdinalMode) {
         if (ord < 9) {
-            return 0x278a + ord;
+            return '1' + ord;
         }
 #if defined (iPlatformApple)
         if (ord < 9 + 22) {
@@ -2917,17 +2917,17 @@ static iChar linkOrdinalChar_DocumentWidget_(const iDocumentWidget *d, size_t or
             if (key >= 'm') key++;
             if (key >= 'q') key++;
             if (key >= 'w') key++;
-            return 0x24b6 + key - 'a';
+            return 'A' + key - 'a';
         }
 #else
         if (ord < 9 + 26) {
-            return 0x24b6 + ord - 9;
+            return 'A' + ord - 9;
         }
 #endif
     }
     else {
         if (ord < iElemCount(homeRowKeys_)) {
-            return 0x24b6 + homeRowKeys_[ord] - 'a';
+            return 'A' + homeRowKeys_[ord] - 'a';
         }
     }
     return 0;
@@ -3818,10 +3818,12 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                 const iChar ordChar =
                     linkOrdinalChar_DocumentWidget_(d->widget, ord - d->widget->ordinalBase);
                 if (ordChar) {
-                    drawString_Text(run->font,
-                                    init_I2(d->viewPos.x - gap_UI / 3, visPos.y),
-                                    tmQuote_ColorId,
-                                    collect_String(newUnicodeN_String(&ordChar, 1)));
+                    const char *circle = "\u25ef"; /* Large Circle */
+                    iRect nbArea = { init_I2(d->viewPos.x - gap_UI / 3, visPos.y),
+                                     init_I2(4 * gap_UI, lineHeight_Text(run->font)) };
+                    drawRange_Text(run->font, topLeft_Rect(nbArea), tmQuote_ColorId,
+                                   range_CStr(circle));
+                    drawCentered_Text(run->font, nbArea, iTrue, tmQuote_ColorId, "%lc", (int) ordChar);
                     goto runDrawn;
                 }
             }
