@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2021-03-23 09:09+0000\n"
-"PO-Revision-Date: 2021-05-28 05:41+0000\n"
+"PO-Revision-Date: 2021-05-29 02:37+0000\n"
 "Last-Translator: Jaakko Keränen <jaakko.keranen@iki.fi>\n"
 "Language-Team: Finnish <http://weblate.skyjake.fi/projects/lagrange/ui/fi/>\n"
 "Language: fi\n"
@@ -1600,3 +1600,36 @@ msgstr "Lisää…"
 
 msgid "prefs.userfont"
 msgstr "Kuvakefontti:"
+
+msgid "keys.split.menu.vert21"
+msgstr "Jaetun näkymän valikko: pysty 2:1"
+
+msgid "dlg.newident.scope.domain"
+msgstr "Tämä verkkotunnus"
+
+msgid "dlg.newident.scope.page"
+msgstr "Tämä sivu"
+
+msgid "dlg.newident.scope.none"
+msgstr "Ei käytetä"
+
+msgid "keys.split.menu.merge"
+msgstr "Jaetun näkymän valikko: yhdistä välilehdet"
+
+msgid "keys.split.menu.swap"
+msgstr "Jaetun näkymän valikko: vaihda puolia"
+
+msgid "keys.split.menu.horiz"
+msgstr "Jaetun näkymän valikko: vaaka"
+
+msgid "keys.split.menu.horiz12"
+msgstr "Jaetun näkymän valikko: vaaka 1:2"
+
+msgid "keys.split.menu.horiz21"
+msgstr "Jaetun näkymän valikko: vaaka 2:1"
+
+msgid "keys.split.menu.vert"
+msgstr "Jaetun näkymän valikko: pysty"
+
+msgid "keys.split.menu.vert12"
+msgstr "Jaetun näkymän valikko: pysty 1:2"
