@@ -324,7 +324,7 @@ static void initFonts_Text_(iText *d) {
         { &fontIosevkaTermExtended_Embedded,  monoSize,             1.0f,         contentMono_FontSize },
         /* extra content fonts */
         { &fontSourceSans3Regular_Embedded,   textSize,             scaling, contentRegular_FontSize },
-//        { &fontIosevkaTermExtended_Embedded,  textSize,             0.866f,  contentRegular_FontSize },
+        { &fontSourceSans3Regular_Embedded,   textSize * 0.80f,     scaling, contentRegular_FontSize },
         /* symbols and scripts */
 #define DEFINE_FONT_SET(data, glyphScale) \
         { (data), uiSize,            glyphScale, uiNormal_FontSize }, \
@@ -626,7 +626,7 @@ iLocalDef iFont *characterFont_Font_(iFont *d, iChar ch, uint32_t *glyphIndex) {
     /* White up arrow is used for the Shift key on macOS. Symbola's glyph is not a great
        match to the other text, so use the UI font instead. */
     if ((ch == 0x2318 || ch == 0x21e7) && d == font_Text_(regular_FontId)) {
-        *glyphIndex = glyphIndex_Font_(d = font_Text_(defaultContentSized_FontId), ch);
+        *glyphIndex = glyphIndex_Font_(d = font_Text_(defaultContentRegular_FontId), ch);
         return d;
     }
 #endif

@@ -67,7 +67,8 @@ enum iFontId {
     monospaceSmall_FontId,
     monospace_FontId,
     /* extra content fonts */
-    defaultContentSized_FontId, /* UI font but sized to regular_FontId */
+    defaultContentRegular_FontId, /* UI font but sized to regular_FontId */
+    defaultContentSmall_FontId, /* UI font but sized smaller */
     /* symbols and scripts */
     userSymbols_FontId,
     iosevka_FontId           = userSymbols_FontId + max_FontSize,
