@@ -327,14 +327,15 @@ static void alignDecoration_GmRun_(iGmRun *run, iBool isCentered) {
     int         xAdjust   = 0;
     if (!isCentered) {
         /* Keep the icon aligned to the left edge. */
+        const int alignWidth = width_Rect(run->visBounds) * 3 / 4;
         xAdjust -= left_Rect(visBounds);
-        if (visWidth > width_Rect(run->visBounds)) {
+        if (visWidth > alignWidth) {
             /* ...unless it's a wide icon, in which case move it to the left. */
-            xAdjust -= visWidth - width_Rect(run->visBounds);
+            xAdjust -= visWidth - alignWidth;
         }
-        else if (visWidth < width_Rect(run->visBounds) * 3 / 4) {
+        else if (visWidth < alignWidth) {
             /* ...or a narrow icon, which needs to be centered but leave a gap. */
-            xAdjust += (width_Rect(run->visBounds) * 3 / 4 - visWidth) / 2;
+            xAdjust += (alignWidth - visWidth) / 2;
         }
     }
     else {
@@ -613,7 +614,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             iGmRun bulRun = run;
             if (prefs->font == literata_TextFont) {
                 /* Something wrong this the glyph in Literata, looks cropped. */
-                bulRun.font = defaultContentSized_FontId;
+                bulRun.font = defaultContentRegular_FontId;
             }
             bulRun.color = tmQuote_ColorId;
             bulRun.visBounds.pos = addX_I2(pos, (indents[text_GmLineType] - 0.55f) * gap_Text);
