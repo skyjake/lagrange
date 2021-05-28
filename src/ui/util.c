@@ -2064,9 +2064,9 @@ iWidget *makeIdentityCreation_Widget(void) {
     /* Where will the new identity be active on? */ {
         addChild_Widget(headings, iClob(makeHeading_Widget("${dlg.newident.scope}")));
         const iMenuItem items[] = {
-            { "Current Domain", 0, 0, "ident.scope arg:0" },
-            { "Current Page",   0, 0, "ident.scope arg:1" },
-            { "Not Used",       0, 0, "ident.scope arg:2" },
+            { "${dlg.newident.scope.domain}", 0, 0, "ident.scope arg:0" },
+            { "${dlg.newident.scope.page}",   0, 0, "ident.scope arg:1" },
+            { "${dlg.newident.scope.none}",   0, 0, "ident.scope arg:2" },
         };
         setId_Widget(addChild_Widget(values,
                                      iClob(makeMenuButton_LabelWidget(

@@ -936,6 +936,15 @@ msgstr "not saved to disk"
 msgid "dlg.newident.scope"
 msgstr "Use on:"
 
+msgid "dlg.newident.scope.domain"
+msgstr "Current Domain"
+
+msgid "dlg.newident.scope.page"
+msgstr "Current Page"
+
+msgid "dlg.newident.scope.none"
+msgstr "Not Used"
+
 msgid "dlg.newident.email"
 msgstr "Email:"
 
