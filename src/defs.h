@@ -36,6 +36,8 @@ enum iFileVersion {
 
 /* Icons */
 
+#define rightArrowhead_Icon "\u27a4"
+#define leftArrowhead_Icon  "\u27a4"
 #define warning_Icon        "\u26a0"
 #define openLock_Icon       "\U0001f513"
 #define closedLock_Icon     "\U0001f512"

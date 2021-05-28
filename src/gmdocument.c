@@ -30,6 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "visited.h"
 #include "bookmarks.h"
 #include "app.h"
+#include "defs.h"
 
 #include <the_Foundation/ptrarray.h>
 #include <the_Foundation/regexp.h>
@@ -400,7 +401,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     static const float bottomMargin[max_GmLineType] = {
         0.0f, 0.333f, 1.0f, 0.5f, 0.5f, 0.5f, 0.5f, 0.25f
     };
-    static const char *arrow           = "\u27a4";
+    static const char *arrow           = rightArrowhead_Icon;
     static const char *envelope        = "\U0001f4e7";
     static const char *bullet          = "\u2022";
     static const char *folder          = "\U0001f4c1";

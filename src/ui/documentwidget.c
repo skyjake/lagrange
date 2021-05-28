@@ -1222,13 +1222,87 @@ static void postProcessRequestContent_DocumentWidget_(iDocumentWidget *d, iBool 
     }
     if (d->sourceGempub) {
         if (equal_String(d->mod.url, coverPageUrl_Gempub(d->sourceGempub))) {
-            makeFooterButtons_DocumentWidget_(d, (iMenuItem[]){
-                                                     { "Gempub Cover Page", 0, 0, NULL }
-                                                 }, 1);
+            if (equalCase_Rangecc(urlScheme_String(d->mod.url), "file")) {
+                iArray *items = collectNew_Array(sizeof(iMenuItem));
+                pushBack_Array(
+                    items,
+                    &(iMenuItem){ book_Icon " ${gempub.cover.view}",
+                                  0,
+                                  0,
+                                  format_CStr("!open url:%s",
+                                              cstr_String(indexPageUrl_Gempub(d->sourceGempub))) });
+                if (navSize_Gempub(d->sourceGempub) > 0) {
+                    pushBack_Array(
+                        items,
+                        &(iMenuItem){
+                            format_CStr(forwardArrow_Icon " %s",
+                                        cstr_String(navLinkLabel_Gempub(d->sourceGempub, 0))),
+                            SDLK_RIGHT,
+                            0,
+                            format_CStr("!open url:%s",
+                                        cstr_String(navLinkUrl_Gempub(d->sourceGempub, 0))) });
+                }
+                makeFooterButtons_DocumentWidget_(d, constData_Array(items), size_Array(items));
+            }
             if (preloadCoverImage_Gempub(d->sourceGempub, d->doc)) {
                 redoLayout_GmDocument(d->doc);
                 updateVisible_DocumentWidget_(d);
                 invalidate_DocumentWidget_(d);
+            }
+        }
+        else if (equal_String(d->mod.url, indexPageUrl_Gempub(d->sourceGempub))) {
+            makeFooterButtons_DocumentWidget_(
+                d,
+                (iMenuItem[]){ { format_CStr(book_Icon " %s",
+                                             cstr_String(property_Gempub(d->sourceGempub,
+                                                                         title_GempubProperty))),
+                                 SDLK_LEFT,
+                                 0,
+                                 format_CStr("!open url:%s",
+                                             cstr_String(coverPageUrl_Gempub(d->sourceGempub))) } },
+                1);
+        }
+        else {
+            /* Navigation buttons. */
+            iArray *items = collectNew_Array(sizeof(iMenuItem));
+            const size_t navIndex = navIndex_Gempub(d->sourceGempub, d->mod.url);
+            if (navIndex != iInvalidPos) {
+                if (navIndex < navSize_Gempub(d->sourceGempub) - 1) {
+                    pushBack_Array(
+                        items,
+                        &(iMenuItem){
+                            format_CStr(forwardArrow_Icon " %s",
+                                        cstr_String(navLinkLabel_Gempub(d->sourceGempub, navIndex + 1))),
+                            SDLK_RIGHT,
+                            0,
+                            format_CStr("!open url:%s",
+                                        cstr_String(navLinkUrl_Gempub(d->sourceGempub, navIndex + 1))) });
+                }
+                if (navIndex > 0) {
+                    pushBack_Array(
+                        items,
+                        &(iMenuItem){
+                            format_CStr(backArrow_Icon " %s",
+                                        cstr_String(navLinkLabel_Gempub(d->sourceGempub, navIndex - 1))),
+                            SDLK_LEFT,
+                            0,
+                            format_CStr("!open url:%s",
+                                        cstr_String(navLinkUrl_Gempub(d->sourceGempub, navIndex - 1))) });
+                }
+                else if (!equalCase_String(d->mod.url, indexPageUrl_Gempub(d->sourceGempub))) {
+                    pushBack_Array(
+                        items,
+                        &(iMenuItem){
+                            format_CStr(book_Icon " %s",
+                                        cstr_String(property_Gempub(d->sourceGempub, title_GempubProperty))),
+                            SDLK_LEFT,
+                            0,
+                            format_CStr("!open url:%s",
+                                        cstr_String(coverPageUrl_Gempub(d->sourceGempub))) });
+                }
+            }
+            if (!isEmpty_Array(items)) {
+                makeFooterButtons_DocumentWidget_(d, constData_Array(items), size_Array(items));                
             }
         }
         if (!isCached && prefs_App()->pinSplit &&

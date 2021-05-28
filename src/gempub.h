@@ -60,5 +60,9 @@ const iString * property_Gempub         (const iGempub *, enum iGempubProperty);
 const iString * coverPageUrl_Gempub     (const iGempub *);
 const iString * indexPageUrl_Gempub     (const iGempub *);
 const iString * navStartLinkUrl_Gempub  (const iGempub *); /* for convenience */
+size_t          navSize_Gempub          (const iGempub *);
+size_t          navIndex_Gempub         (const iGempub *, const iString *url);
+const iString * navLinkUrl_Gempub       (const iGempub *, size_t index);
+const iString * navLinkLabel_Gempub     (const iGempub *, size_t index);
 
 extern const char *mimeType_Gempub;

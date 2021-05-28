@@ -213,6 +213,10 @@ iBool isOpen_Gempub(const iGempub *d) {
     return d->arch != NULL;
 }
 
+const iString *property_Gempub(const iGempub *d, enum iGempubProperty prop) {
+    return &d->props[prop];
+}
+
 const iString *coverPageUrl_Gempub(const iGempub *d) {
     return &d->baseUrl;
 }
@@ -230,6 +234,39 @@ const iString *navStartLinkUrl_Gempub(const iGempub *d) {
         return NULL; /* has no navigation structure */
     }
     return &((const iGempubNavLink *) constFront_Array(d->navLinks))->url;
+}
+
+size_t navSize_Gempub(const iGempub *d) {
+    parseNavigationLinks_Gempub_(d);
+    return size_Array(d->navLinks);
+}
+
+size_t navIndex_Gempub(const iGempub *d, const iString *url) {
+    parseNavigationLinks_Gempub_(d);
+    const iString *normUrl = withSpacesEncoded_String(url);
+    iConstForEach(Array, i, d->navLinks) {
+        const iGempubNavLink *nav = i.value;
+        if (equalCase_String(&nav->url, normUrl)) {
+            return index_ArrayConstIterator(&i);
+        }
+    }
+    return iInvalidPos;
+}
+
+const iString *navLinkUrl_Gempub(const iGempub *d, size_t index) {
+    parseNavigationLinks_Gempub_(d);
+    if (index < size_Array(d->navLinks)) {
+        return &constValue_Array(d->navLinks, index, iGempubNavLink).url;
+    }
+    return NULL;
+}
+
+const iString *navLinkLabel_Gempub(const iGempub *d, size_t index) {
+    parseNavigationLinks_Gempub_(d);
+    if (index < size_Array(d->navLinks)) {
+        return &constValue_Array(d->navLinks, index, iGempubNavLink).label;
+    }
+    return NULL;    
 }
 
 static iBool hasProperty_Gempub_(const iGempub *d, enum iGempubProperty prop) {
