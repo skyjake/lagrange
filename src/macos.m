@@ -60,8 +60,9 @@ static NSString *currentSystemAppearance_(void) {
 }
 
 iBool shouldDefaultToMetalRenderer_MacOS(void) {
+    return iFalse; /*
     const iInt2 ver = macVer_();
-    return ver.x > 10 || ver.y > 13;
+    return ver.x > 10 || ver.y > 13;*/
 }
 
 /*----------------------------------------------------------------------------------------------*/
