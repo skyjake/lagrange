@@ -1,0 +1,85 @@
+Only in SDL2-2.0.14/src: .DS_Store
+diff -ru SDL2-2.0.14-original/src/events/SDL_mouse.c SDL2-2.0.14/src/events/SDL_mouse.c
+--- SDL2-2.0.14-original/src/events/SDL_mouse.c	2020-12-21 19:44:36.000000000 +0200
++++ SDL2-2.0.14/src/events/SDL_mouse.c	2021-01-06 18:31:18.000000000 +0200
+@@ -647,8 +647,8 @@
+         event.wheel.preciseX = x;
+         event.wheel.preciseY = y;
+ #endif
+-        event.wheel.x = integral_x;
+-        event.wheel.y = integral_y;
++        event.wheel.x = x; //integral_x;
++        event.wheel.y = y; //integral_y;
+         event.wheel.direction = (Uint32)direction;
+         posted = (SDL_PushEvent(&event) > 0);
+     }
+Only in SDL2-2.0.14/src/video: .DS_Store
+diff -ru SDL2-2.0.14-original/src/video/cocoa/SDL_cocoamouse.m SDL2-2.0.14/src/video/cocoa/SDL_cocoamouse.m
+--- SDL2-2.0.14-original/src/video/cocoa/SDL_cocoamouse.m	2020-12-21 19:44:36.000000000 +0200
++++ SDL2-2.0.14/src/video/cocoa/SDL_cocoamouse.m	2021-01-06 18:31:18.000000000 +0200
+@@ -423,10 +423,16 @@
+     }
+ 
+     SDL_MouseID mouseID = mouse->mouseID;
+-    CGFloat x = -[event deltaX];
+-    CGFloat y = [event deltaY];
++    CGFloat x = -[event scrollingDeltaX];
++    CGFloat y = [event scrollingDeltaY];
+     SDL_MouseWheelDirection direction = SDL_MOUSEWHEEL_NORMAL;
+ 
++    /* HACK: Make a distinction between precise and imprecise scrolling.
++       Trackpad seems to be mouseID 0. */
++    if (![event hasPreciseScrollingDeltas]) {
++        mouseID = 1;
++    }
++
+     if ([event respondsToSelector:@selector(isDirectionInvertedFromDevice)]) {
+         if ([event isDirectionInvertedFromDevice] == YES) {
+             direction = SDL_MOUSEWHEEL_FLIPPED;
+Only in SDL2-2.0.14/src/video/cocoa: SDL_cocoamouse.m.orig
+diff -ru SDL2-2.0.14-original/src/video/uikit/SDL_uikitviewcontroller.h SDL2-2.0.14/src/video/uikit/SDL_uikitviewcontroller.h
+--- SDL2-2.0.14-original/src/video/uikit/SDL_uikitviewcontroller.h	2020-12-21 19:44:36.000000000 +0200
++++ SDL2-2.0.14/src/video/uikit/SDL_uikitviewcontroller.h	2021-05-17 13:11:13.000000000 +0300
+@@ -58,10 +58,13 @@
+ #if !TARGET_OS_TV
+ - (NSUInteger)supportedInterfaceOrientations;
+ - (BOOL)prefersStatusBarHidden;
++- (void)setStatusStyle:(UIStatusBarStyle)style;
++- (UIStatusBarStyle)preferredStatusBarStyle;
+ - (BOOL)prefersHomeIndicatorAutoHidden;
+ - (UIRectEdge)preferredScreenEdgesDeferringSystemGestures;
+ 
+ @property (nonatomic, assign) int homeIndicatorHidden;
++@property (nonatomic, assign) UIStatusBarStyle statusBarStyle;
+ #endif
+ 
+ #if SDL_IPHONE_KEYBOARD
+diff -ru SDL2-2.0.14-original/src/video/uikit/SDL_uikitviewcontroller.m SDL2-2.0.14/src/video/uikit/SDL_uikitviewcontroller.m
+--- SDL2-2.0.14-original/src/video/uikit/SDL_uikitviewcontroller.m	2020-12-21 19:44:36.000000000 +0200
++++ SDL2-2.0.14/src/video/uikit/SDL_uikitviewcontroller.m	2021-05-17 13:11:58.000000000 +0300
+@@ -104,6 +104,7 @@
+ #endif
+ 
+ #if !TARGET_OS_TV
++        self.statusBarStyle = UIStatusBarStyleDefault;
+         SDL_AddHintCallback(SDL_HINT_IOS_HIDE_HOME_INDICATOR,
+                             SDL_HideHomeIndicatorHintChanged,
+                             (__bridge void *) self);
+@@ -229,6 +230,17 @@
+     return hidden;
+ }
+ 
++- (void)setStatusStyle:(UIStatusBarStyle)style
++{
++    self.statusBarStyle = style;
++    [self setNeedsStatusBarAppearanceUpdate];
++}
++
++- (UIStatusBarStyle)preferredStatusBarStyle
++{
++    return self.statusBarStyle;
++}
++
+ - (UIRectEdge)preferredScreenEdgesDeferringSystemGestures
+ {
+     if (self.homeIndicatorHidden >= 0) {

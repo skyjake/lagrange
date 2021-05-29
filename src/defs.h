@@ -36,6 +36,8 @@ enum iFileVersion {
 
 /* Icons */
 
+#define rightArrowhead_Icon "\u27a4"
+#define leftArrowhead_Icon  "\u27a4"
 #define warning_Icon        "\u26a0"
 #define openLock_Icon       "\U0001f513"
 #define closedLock_Icon     "\U0001f512"
@@ -56,16 +58,18 @@ enum iFileVersion {
 #define whiteStar_Icon      "\u2606"
 #define person_Icon         "\U0001f464"
 #define download_Icon       "\u2ba7"
+#define export_Icon         "\U0001f4e4"
 #define hourglass_Icon      "\u231b"
 #define timer_Icon          "\u23f2"
 #define home_Icon           "\U0001f3e0"
 #define edit_Icon           "\u270e"
 #define delete_Icon         "\u232b"
-#define copy_Icon           "\u2bba"
+#define copy_Icon           "\u2398" //"\u2bba"
 #define check_Icon          "\u2714"
 #define ballotCheck_Icon    "\U0001f5f9"
 #define inbox_Icon          "\U0001f4e5"
 #define book_Icon           "\U0001f56e"
+#define bookmark_Icon       "\U0001f516"
 #define folder_Icon         "\U0001f4c1"
 #define openTab_Icon        "\u2750"
 #define openTabBg_Icon      "\u2b1a"
@@ -90,6 +94,16 @@ enum iFileVersion {
 #define globe_Icon          "\U0001f310"
 #define magnifyingGlass_Icon "\U0001f50d"
 #define midEllipsis_Icon    "\u00b7\u00b7\u00b7"
+#define return_Icon         "\u23ce"
+
+#if defined (iPlatformApple)
+#   define shift_Icon       "\u21e7"
+#   define shiftReturn_Icon shift_Icon return_Icon
+#else
+#   define shift_Icon       "Shift"
+#   define shiftReturn_Icon shift_Icon " " return_Icon
+#endif
+
 
 /* UI labels that depend on the platform */
 

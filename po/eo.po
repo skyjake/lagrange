@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-05-05 03:55+0000\n"
+"PO-Revision-Date: 2021-05-15 06:18+0000\n"
 "Last-Translator: Nikolay Korotkiy <sikmir@gmail.com>\n"
 "Language-Team: Esperanto <http://weblate.skyjake.fi/projects/lagrange/ui/eo/>"
 "\n"
@@ -695,3 +695,6 @@ msgstr "Eldonita"
 
 msgid "gempub.meta.version"
 msgstr "Versio"
+
+msgid "lang.pl"
+msgstr "Pola"

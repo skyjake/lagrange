@@ -117,6 +117,9 @@ enum iWidgetFlag {
 #define parentCannotResizeHeight_WidgetFlag iBit64(58)
 #define ignoreForParentWidth_WidgetFlag     iBit64(59)
 #define noFadeBackground_WidgetFlag         iBit64(60)
+#define destroyPending_WidgetFlag           iBit64(61) /* TODO: needed? */
+#define edgeDraggable_WidgetFlag            iBit64(62)
+#define refChildrenOffset_WidgetFlag        iBit64(63) /* visual offset determined by the offset of referenced children */
 
 enum iWidgetAddPos {
     back_WidgetAddPos,
@@ -134,13 +137,16 @@ struct Impl_Widget {
     int64_t      flags;
     iRect        rect;
     iInt2        minSize;
+    iWidget *    sizeRef;
+    iWidget *    offsetRef;
+    const iAnim *animOffsetRef;
     int          padding[4]; /* left, top, right, bottom */
     iAnim        visualOffset;
     int          bgColor;
     int          frameColor;
     iObjectList *children;
     iWidget *    parent;
-    iBool (*commandHandler)(iWidget *, const char *);
+    iBool      (*commandHandler)(iWidget *, const char *);
     iRoot *      root;
 };
 
@@ -192,6 +198,7 @@ iAny *  findChild_Widget                (const iWidget *, const char *id);
 const iPtrArray *findChildren_Widget    (const iWidget *, const char *id);
 iAny *  findParentClass_Widget          (const iWidget *, const iAnyClass *class);
 iAny *  findFocusable_Widget            (const iWidget *startFrom, enum iWidgetFocusDir focusDir);
+iAny *  findOverflowScrollable_Widget   (iWidget *);
 size_t  childCount_Widget               (const iWidget *);
 void    draw_Widget                     (const iWidget *);
 void    drawBackground_Widget           (const iWidget *);
@@ -261,6 +268,7 @@ iAny *  child_Widget                (iWidget *, size_t index); /* O(n) */
 size_t  childIndex_Widget           (const iWidget *, const iAnyObject *child); /* O(n) */
 void    arrange_Widget              (iWidget *);
 void    resetSize_Widget            (iWidget *);
+iBool   scrollOverflow_Widget       (iWidget *, int delta); /* moves the widget */
 iBool   dispatchEvent_Widget        (iWidget *, const SDL_Event *);
 iBool   processEvent_Widget         (iWidget *, const SDL_Event *);
 void    postCommand_Widget          (const iAnyObject *, const char *cmd, ...);

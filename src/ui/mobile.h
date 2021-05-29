@@ -21,25 +21,12 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
-#if defined (LAGRANGE_ENABLE_IPC)
 
-#include <the_Foundation/string.h>
-#include <the_Foundation/process.h>
+#include <the_Foundation/defs.h>
 
-void        init_Ipc    (const char *runDir);
-void        deinit_Ipc  (void);
+iDeclareType(Widget)
 
-iProcessId  check_Ipc           (void);
-void        listen_Ipc          (void);
-iString *   communicate_Ipc     (const iString *command, iBool requestRaise);
-void        signal_Ipc          (iProcessId pid);
+void        setupMenuTransition_Mobile          (iWidget *menu, iBool isIncoming);
+void        setupSheetTransition_Mobile         (iWidget *sheet, iBool isIncoming);
 
-enum iIpcWrite {
-    command_IpcWrite,
-    commandAndRaise_IpcWrite,
-    response_IpcWrite,
-};
-
-iBool       write_Ipc           (iProcessId pid, const iString *input, enum iIpcWrite type);
-
-#endif /* defined (LAGRANGE_ENABLE_IPC) */
+void        finalizeSheet_Mobile        (iWidget *sheet);

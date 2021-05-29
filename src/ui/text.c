@@ -32,6 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <the_Foundation/array.h>
 #include <the_Foundation/file.h>
+#include <the_Foundation/fileinfo.h>
 #include <the_Foundation/hash.h>
 #include <the_Foundation/math.h>
 #include <the_Foundation/stringlist.h>
@@ -126,10 +127,6 @@ struct Impl_Font {
     iBool          isMonospaced;
     iBool          manualKernOnly;
     enum iFontSize sizeId;  /* used to look up different fonts of matching size */
-//    enum iFontId
-//    enum iFontId   japaneseFont; /* font to use for Japanese glyphs */
-//    enum iFontId   chineseFont;  /* font to use for Simplified Chinese glyphs */
-//    enum iFontId   koreanFont;   /* font to use for Korean glyphs */
     uint32_t       indexTable[128 - 32]; /* quick ASCII lookup */
 };
 
@@ -157,13 +154,17 @@ static void init_Font(iFont *d, const iBlock *data, int height, float scale,
             d->xScale *= floorf(advance) / advance;
         }
     }
-    d->vertOffset   = height * (1.0f - scale) / 2;
-    d->baseline     = ascent * d->yScale;
-    d->sizeId       = sizeId;
-//    d->symbolsFont  = symbolsFont;
-//    d->japaneseFont = regularJapanese_FontId;
-//    d->chineseFont  = regularChinese_FontId;
-//    d->koreanFont   = regularKorean_FontId;
+    d->baseline   = ascent * d->yScale;
+    d->vertOffset = height * (1.0f - scale) / 2;
+    /* Custom tweaks. */
+    if (data == &fontNotoSansSymbolsRegular_Embedded ||
+        data == &fontNotoSansSymbols2Regular_Embedded) {
+        d->vertOffset /= 2; 
+    }
+    else if (data == &fontNotoEmojiRegular_Embedded) {
+        //d->vertOffset -= height / 30;
+    }
+    d->sizeId = sizeId;
     memset(d->indexTable, 0xff, sizeof(d->indexTable));
 }
 
@@ -217,7 +218,8 @@ struct Impl_Text {
     iRegExp *      ansiEscape;
 };
 
-static iText text_;
+static iText   text_;
+static iBlock *userFont_;
 
 static void initFonts_Text_(iText *d) {
     const float textSize = fontSize_UI * d->contentFontSize;
@@ -323,27 +325,31 @@ static void initFonts_Text_(iText *d) {
         { &fontIosevkaTermExtended_Embedded,  smallMonoSize,        1.0f,         contentMonoSmall_FontSize },
         { &fontIosevkaTermExtended_Embedded,  monoSize,             1.0f,         contentMono_FontSize },
         /* extra content fonts */
-        { &fontSourceSans3Regular_Embedded, textSize,             scaling, contentRegular_FontSize },
-        { &fontIosevkaTermExtended_Embedded,  textSize,             0.866f,  contentRegular_FontSize },
+        { &fontSourceSans3Regular_Embedded,   textSize,             scaling, contentRegular_FontSize },
+        { &fontSourceSans3Regular_Embedded,   textSize * 0.80f,     scaling, contentRegular_FontSize },
         /* symbols and scripts */
-#define DEFINE_FONT_SET(data) \
-        { &data, uiSize,            1.0f, uiNormal_FontSize }, \
-        { &data, uiSize * 1.125f,   1.0f, uiMedium_FontSize }, \
-        { &data, uiSize * 1.333f,   1.0f, uiBig_FontSize }, \
-        { &data, uiSize * 1.666f,   1.0f, uiLarge_FontSize }, \
-        { &data, textSize,          1.0f, contentRegular_FontSize }, \
-        { &data, textSize * 1.200f, 1.0f, contentMedium_FontSize }, \
-        { &data, textSize * 1.333f, 1.0f, contentBig_FontSize }, \
-        { &data, textSize * 1.666f, 1.0f, contentLarge_FontSize }, \
-        { &data, textSize * 2.000f, 1.0f, contentHuge_FontSize }, \
-        { &data, smallMonoSize,     1.0f, contentMonoSmall_FontSize }, \
-        { &data, monoSize,          1.0f, contentMono_FontSize }
-        DEFINE_FONT_SET(fontSymbola_Embedded),
-        DEFINE_FONT_SET(fontNotoEmojiRegular_Embedded),
-        DEFINE_FONT_SET(fontNotoSansJPRegular_Embedded),
-        DEFINE_FONT_SET(fontNotoSansSCRegular_Embedded),
-        DEFINE_FONT_SET(fontNanumGothicRegular_Embedded), /* TODO: should use Noto Sans here, too */
-        DEFINE_FONT_SET(fontNotoSansArabicUIRegular_Embedded),
+#define DEFINE_FONT_SET(data, glyphScale) \
+        { (data), uiSize,            glyphScale, uiNormal_FontSize }, \
+        { (data), uiSize * 1.125f,   glyphScale, uiMedium_FontSize }, \
+        { (data), uiSize * 1.333f,   glyphScale, uiBig_FontSize }, \
+        { (data), uiSize * 1.666f,   glyphScale, uiLarge_FontSize }, \
+        { (data), textSize,          glyphScale, contentRegular_FontSize }, \
+        { (data), textSize * 1.200f, glyphScale, contentMedium_FontSize }, \
+        { (data), textSize * 1.333f, glyphScale, contentBig_FontSize }, \
+        { (data), textSize * 1.666f, glyphScale, contentLarge_FontSize }, \
+        { (data), textSize * 2.000f, glyphScale, contentHuge_FontSize }, \
+        { (data), smallMonoSize,     glyphScale, contentMonoSmall_FontSize }, \
+        { (data), monoSize,          glyphScale, contentMono_FontSize }
+        DEFINE_FONT_SET(userFont_ ? userFont_ : &fontIosevkaTermExtended_Embedded, 1.0f),
+        DEFINE_FONT_SET(&fontIosevkaTermExtended_Embedded, 0.866f),
+        DEFINE_FONT_SET(&fontNotoSansSymbolsRegular_Embedded, 1.45f),
+        DEFINE_FONT_SET(&fontNotoSansSymbols2Regular_Embedded, 1.45f),
+        DEFINE_FONT_SET(&fontSmolEmojiRegular_Embedded, 1.0f),
+        DEFINE_FONT_SET(&fontNotoEmojiRegular_Embedded, 1.10f),
+        DEFINE_FONT_SET(&fontNotoSansJPRegular_Embedded, 1.0f),
+        DEFINE_FONT_SET(&fontNotoSansSCRegular_Embedded, 1.0f),
+        DEFINE_FONT_SET(&fontNanumGothicRegular_Embedded, 1.0f), /* TODO: should use Noto Sans here, too */
+        DEFINE_FONT_SET(&fontNotoSansArabicUIRegular_Embedded, 1.0f),
     };
     iForIndices(i, fontData) {
         iFont *font = &d->fonts[i];
@@ -403,8 +409,28 @@ static void deinitCache_Text_(iText *d) {
     SDL_DestroyTexture(d->cache);
 }
 
+void loadUserFonts_Text(void) {
+    if (userFont_) {
+        delete_Block(userFont_);
+        userFont_ = NULL;
+    }
+    /* Load the system font. */
+    const iPrefs *prefs = prefs_App();
+    if (!isEmpty_String(&prefs->symbolFontPath)) {
+        iFile *f = new_File(&prefs->symbolFontPath);
+        if (open_File(f, readOnly_FileMode)) {
+            userFont_ = readAll_File(f);
+        }
+        else {
+            fprintf(stderr, "[Text] failed to open: %s\n", cstr_String(&prefs->symbolFontPath));
+        }
+        iRelease(f);
+    }
+}
+
 void init_Text(SDL_Renderer *render) {
     iText *d = &text_;
+    loadUserFonts_Text();
     d->contentFont     = nunito_TextFont;
     d->headingFont     = nunito_TextFont;
     d->contentFontSize = contentScale_Text_;
@@ -544,14 +570,36 @@ static void allocate_Font_(iFont *d, iGlyph *glyph, int hoff) {
 }
 
 iLocalDef iFont *characterFont_Font_(iFont *d, iChar ch, uint32_t *glyphIndex) {
+    if (isVariationSelector_Char(ch)) {
+        return d;
+    }
+    /* Smol Emoji overrides all other fonts. */
+    if (ch != 0x20) {
+        iFont *smol = font_Text_(smolEmoji_FontId + d->sizeId);
+        if (smol != d && (*glyphIndex = glyphIndex_Font_(smol, ch)) != 0) {
+            return smol;
+        }
+    }
+    /* Manual exceptions. */ {
+        if (ch >= 0x2190 && ch <= 0x2193 /* arrows */) {
+            d = font_Text_(iosevka_FontId + d->sizeId);
+            *glyphIndex = glyphIndex_Font_(d, ch);
+            return d;
+        }
+    }
     if ((*glyphIndex = glyphIndex_Font_(d, ch)) != 0) {
         return d;
     }
-    /* Not defined in current font, try Noto Emoji (for selected characters). */
-    if ((ch >= 0x1f300 && ch < 0x1f600) || (ch >= 0x1f680 && ch <= 0x1f6c5)) {
-        iFont *emoji = font_Text_(emoji_FontId + d->sizeId);
-        if (emoji != d && (*glyphIndex = glyphIndex_Font_(emoji, ch)) != 0) {
-            return emoji;
+    const int fallbacks[] = {
+        notoEmoji_FontId,
+        symbols2_FontId,
+        symbols_FontId
+    };
+    /* First fallback is Smol Emoji. */
+    iForIndices(i, fallbacks) {
+        iFont *fallback = font_Text_(fallbacks[i] + d->sizeId);
+        if (fallback != d && (*glyphIndex = glyphIndex_Font_(fallback, ch)) != 0) {
+            return fallback;
         }
     }
     /* Try Simplified Chinese. */
@@ -586,17 +634,25 @@ iLocalDef iFont *characterFont_Font_(iFont *d, iChar ch, uint32_t *glyphIndex) {
     /* White up arrow is used for the Shift key on macOS. Symbola's glyph is not a great
        match to the other text, so use the UI font instead. */
     if ((ch == 0x2318 || ch == 0x21e7) && d == font_Text_(regular_FontId)) {
-        *glyphIndex = glyphIndex_Font_(d = font_Text_(defaultContentSized_FontId), ch);
+        *glyphIndex = glyphIndex_Font_(d = font_Text_(defaultContentRegular_FontId), ch);
         return d;
     }
 #endif
-    /* Fall back to Symbola for anything else. */
-    iFont *font = font_Text_(symbols_FontId + d->sizeId);
-    *glyphIndex = glyphIndex_Font_(font, ch);
-//    if (!*glyphIndex) {
-//        fprintf(stderr, "failed to find %08x (%lc)\n", ch, ch); fflush(stderr);
-//    }
-    return font;
+    /* User's symbols font. */ {
+        iFont *sys = font_Text_(userSymbols_FontId + d->sizeId);
+        if (sys != d && (*glyphIndex = glyphIndex_Font_(sys, ch)) != 0) {
+            return sys;
+        }
+    }
+    /* Final fallback. */
+    iFont *font = font_Text_(iosevka_FontId + d->sizeId);
+    if (d != font) {
+        *glyphIndex = glyphIndex_Font_(font, ch);
+    }
+    if (!*glyphIndex) {
+        fprintf(stderr, "failed to find %08x (%lc)\n", ch, (int)ch); fflush(stderr);
+    }
+    return d;
 }
 
 static iGlyph *glyph_Font_(iFont *d, iChar ch) {
@@ -783,6 +839,7 @@ enum iRunMode {
     permanentColorFlag_RunMode      = iBit(11),
     alwaysVariableWidthFlag_RunMode = iBit(12),
     fillBackground_RunMode          = iBit(13),
+    stopAtNewline_RunMode           = iBit(14), /* don't advance past \n, consider it a wrap pos */
 };
 
 static enum iFontId fontId_Text_(const iFont *font) {
@@ -925,6 +982,13 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
             }
             /* TODO: Check out if `uc_wordbreak_property()` from libunistring can be used here. */
             if (ch == '\n') {
+                if (args->xposLimit > 0 && mode & stopAtNewline_RunMode) {
+                    /* Stop the line here, this is a hard warp. */
+                    if (args->continueFrom_out) {
+                        *args->continueFrom_out = chPos;
+                    }
+                    break;
+                }
                 xpos = xposExtend = orig.x;
                 ypos += d->height;
                 prevCh = ch;
@@ -1143,7 +1207,8 @@ iInt2 advanceRange_Text(int fontId, iRangecc text) {
 iInt2 tryAdvance_Text(int fontId, iRangecc text, int width, const char **endPos) {
     int advance;
     const int height = run_Font_(font_Text_(fontId),
-                                 &(iRunArgs){ .mode = measure_RunMode | runFlagsFromId_(fontId),
+                                 &(iRunArgs){ .mode = measure_RunMode | stopAtNewline_RunMode |
+                                                      runFlagsFromId_(fontId),
                                               .text = text,
                                               .xposLimit        = width,
                                               .continueFrom_out = endPos,
@@ -1156,6 +1221,7 @@ iInt2 tryAdvanceNoWrap_Text(int fontId, iRangecc text, int width, const char **e
     int advance;
     const int height = run_Font_(font_Text_(fontId),
                                  &(iRunArgs){ .mode = measure_RunMode | noWrapFlag_RunMode |
+                                                      stopAtNewline_RunMode |
                                                       runFlagsFromId_(fontId),
                                               .text             = text,
                                               .xposLimit        = width,
@@ -1182,7 +1248,7 @@ iInt2 advanceN_Text(int fontId, const char *text, size_t n) {
     return init_I2(advance, lineHeight_Text(fontId));
 }
 
-static void drawBounded_Text_(int fontId, iInt2 pos, int xposBound, int color, iRangecc text) {
+static void drawBoundedN_Text_(int fontId, iInt2 pos, int xposBound, int color, iRangecc text, size_t maxLen) {
     iText *d    = &text_;
     iFont *font = font_Text_(fontId);
     const iColor clr = get_Color(color & mask_ColorId);
@@ -1193,9 +1259,14 @@ static void drawBounded_Text_(int fontId, iInt2 pos, int xposBound, int color, i
                                    (color & fillBackground_ColorId ? fillBackground_RunMode : 0) |
                                    runFlagsFromId_(fontId),
                            .text            = text,
+                           .maxLen          = maxLen,                           
                            .pos             = pos,
                            .xposLayoutBound = xposBound,
                            .color           = color & mask_ColorId });
+}
+
+static void drawBounded_Text_(int fontId, iInt2 pos, int xposBound, int color, iRangecc text) {
+    drawBoundedN_Text_(fontId, pos, xposBound, color, text, 0);
 }
 
 static void draw_Text_(int fontId, iInt2 pos, int color, iRangecc text) {
@@ -1240,6 +1311,10 @@ void drawRange_Text(int fontId, iInt2 pos, int color, iRangecc text) {
     draw_Text_(fontId, pos, color, text);
 }
 
+void drawRangeN_Text(int fontId, iInt2 pos, int color, iRangecc text, size_t maxChars) {
+    drawBoundedN_Text_(fontId, pos, 0, color, text, maxChars);
+}
+
 iInt2 advanceWrapRange_Text(int fontId, int maxWidth, iRangecc text) {
     iInt2 size = zero_I2();
     const char *endp;
@@ -1264,7 +1339,7 @@ int drawWrapRange_Text(int fontId, iInt2 pos, int maxWidth, int color, iRangecc 
         const iInt2 adv = tryAdvance_Text(fontId, text, maxWidth, &endp);
         drawRange_Text(fontId, pos, color, (iRangecc){ text.start, endp });
         text.start = endp;
-        pos.y += adv.y;
+        pos.y += iMax(adv.y, lineHeight_Text(fontId));
     }
     return pos.y;
 }
@@ -1277,13 +1352,16 @@ void drawCentered_Text(int fontId, iRect rect, iBool alignVisual, int color, con
         vprintf_Block(&chars, format, args);
         va_end(args);
     }
-    const iRangecc text       = range_Block(&chars);
-    iRect          textBounds = alignVisual ? visualBounds_Text(fontId, text)
+    drawCenteredRange_Text(fontId, rect, alignVisual, color, range_Block(&chars));
+    deinit_Block(&chars);
+}
+
+void drawCenteredRange_Text(int fontId, iRect rect, iBool alignVisual, int color, iRangecc text) {
+    iRect textBounds = alignVisual ? visualBounds_Text(fontId, text)
                                    : (iRect){ zero_I2(), advanceRange_Text(fontId, text) };
     textBounds.pos = sub_I2(mid_Rect(rect), mid_Rect(textBounds));
     textBounds.pos.x = iMax(textBounds.pos.x, left_Rect(rect)); /* keep left edge visible */
     draw_Text_(fontId, textBounds.pos, color, text);
-    deinit_Block(&chars);
 }
 
 SDL_Texture *glyphCache_Text(void) {
@@ -1399,9 +1477,21 @@ iString *renderBlockChars_Text(const iBlock *fontData, int height, enum iTextBlo
 
 iDefineTypeConstructionArgs(TextBuf, (int font, int color, const char *text), font, color, text)
 
-void init_TextBuf(iTextBuf *d, int font, int color, const char *text) {
+static void initWrap_TextBuf_(iTextBuf *d, int font, int color, int maxWidth, iBool doWrap, const char *text) {
     SDL_Renderer *render = text_.render;
-    d->size    = advance_Text(font, text);
+    if (maxWidth == 0) {
+        d->size = advance_Text(font, text);
+    }
+    else {
+        d->size = zero_I2();
+        iRangecc content = range_CStr(text);
+        while (!isEmpty_Range(&content)) {
+            const iInt2 size = (doWrap ? tryAdvance_Text(font, content, maxWidth, &content.start)
+                                 : tryAdvanceNoWrap_Text(font, content, maxWidth, &content.start));
+            d->size.x = iMax(d->size.x, size.x);
+            d->size.y += iMax(size.y, lineHeight_Text(font));
+        }
+    }
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
     if (d->size.x * d->size.y) {
         d->texture = SDL_CreateTexture(render,
@@ -1419,15 +1509,48 @@ void init_TextBuf(iTextBuf *d, int font, int color, const char *text) {
         SDL_SetTextureBlendMode(text_.cache, SDL_BLENDMODE_NONE); /* blended when TextBuf is drawn */
         SDL_SetRenderDrawColor(text_.render, 0, 0, 0, 0);
         SDL_RenderClear(text_.render);
-        draw_Text_(font, zero_I2(), color | fillBackground_ColorId, range_CStr(text));
+        const int fg    = color | fillBackground_ColorId;
+        iRangecc  range = range_CStr(text);
+        if (maxWidth == 0) {
+            draw_Text_(font, zero_I2(), fg, range);
+        }
+        else if (doWrap) {
+            drawWrapRange_Text(font, zero_I2(), maxWidth, fg, range);
+        }
+        else {
+            iInt2 pos = zero_I2();
+            while (!isEmpty_Range(&range)) {
+                const char *endp;
+                tryAdvanceNoWrap_Text(font, range, maxWidth, &endp);
+                draw_Text_(font, pos, fg, (iRangecc){ range.start, endp });
+                range.start = endp;
+                pos.y += lineHeight_Text(font);
+            }
+        }
         SDL_SetTextureBlendMode(text_.cache, SDL_BLENDMODE_BLEND);
         SDL_SetRenderTarget(render, oldTarget);
         SDL_SetTextureBlendMode(d->texture, SDL_BLENDMODE_BLEND);
     }
 }
 
+void init_TextBuf(iTextBuf *d, int font, int color, const char *text) {
+    initWrap_TextBuf_(d, font, color, 0, iFalse, text);
+}
+
 void deinit_TextBuf(iTextBuf *d) {
     SDL_DestroyTexture(d->texture);
+}
+
+iTextBuf *newBound_TextBuf(int font, int color, int boundWidth, const char *text) {
+    iTextBuf *d = iMalloc(TextBuf);
+    initWrap_TextBuf_(d, font, color, boundWidth, iFalse, text);
+    return d;
+}
+
+iTextBuf *newWrap_TextBuf(int font, int color, int wrapWidth, const char *text) {
+    iTextBuf *d = iMalloc(TextBuf);
+    initWrap_TextBuf_(d, font, color, wrapWidth, iTrue, text);
+    return d;
 }
 
 void draw_TextBuf(const iTextBuf *d, iInt2 pos, int color) {

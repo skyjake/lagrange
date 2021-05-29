@@ -30,6 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "visited.h"
 #include "bookmarks.h"
 #include "app.h"
+#include "defs.h"
 
 #include <the_Foundation/ptrarray.h>
 #include <the_Foundation/regexp.h>
@@ -327,14 +328,15 @@ static void alignDecoration_GmRun_(iGmRun *run, iBool isCentered) {
     int         xAdjust   = 0;
     if (!isCentered) {
         /* Keep the icon aligned to the left edge. */
+        const int alignWidth = width_Rect(run->visBounds) * 3 / 4;
         xAdjust -= left_Rect(visBounds);
-        if (visWidth > width_Rect(run->visBounds)) {
+        if (visWidth > alignWidth) {
             /* ...unless it's a wide icon, in which case move it to the left. */
-            xAdjust -= visWidth - width_Rect(run->visBounds);
+            xAdjust -= visWidth - alignWidth;
         }
-        else if (visWidth < width_Rect(run->visBounds) * 3 / 4) {
+        else if (visWidth < alignWidth) {
             /* ...or a narrow icon, which needs to be centered but leave a gap. */
-            xAdjust += (width_Rect(run->visBounds) * 3 / 4 - visWidth) / 2;
+            xAdjust += (alignWidth - visWidth) / 2;
         }
     }
     else {
@@ -399,7 +401,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     static const float bottomMargin[max_GmLineType] = {
         0.0f, 0.333f, 1.0f, 0.5f, 0.5f, 0.5f, 0.5f, 0.25f
     };
-    static const char *arrow           = "\u27a4";
+    static const char *arrow           = rightArrowhead_Icon;
     static const char *envelope        = "\U0001f4e7";
     static const char *bullet          = "\u2022";
     static const char *folder          = "\U0001f4c1";
@@ -613,7 +615,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             iGmRun bulRun = run;
             if (prefs->font == literata_TextFont) {
                 /* Something wrong this the glyph in Literata, looks cropped. */
-                bulRun.font = defaultContentSized_FontId;
+                bulRun.font = defaultContentRegular_FontId;
             }
             bulRun.color = tmQuote_ColorId;
             bulRun.visBounds.pos = addX_I2(pos, (indents[text_GmLineType] - 0.55f) * gap_Text);
@@ -712,17 +714,30 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 meta->flags |= topLeft_GmPreMetaFlag;
             }
         }
-        /* Visited links are never bold. */
-        if (!isMono && run.linkId && linkFlags_GmDocument(d, run.linkId) & visited_GmLinkFlag) {
-            run.font = paragraph_FontId;
+        float lineHeightReduction = 0.0f;
+        if (!isMono) {
+            /* Upper-level headings are typeset a bit tighter. */
+            if (type == heading1_GmLineType) {
+                lineHeightReduction = 0.10f;
+            }
+            else if (type == heading2_GmLineType) {
+                lineHeightReduction = 0.06f;
+            }
+            /* Visited links are never bold. */
+            if (run.linkId && linkFlags_GmDocument(d, run.linkId) & visited_GmLinkFlag) {
+                run.font = paragraph_FontId;
+            }
         }
         iAssert(!isEmpty_Range(&runLine)); /* must have something at this point */
         while (!isEmpty_Range(&runLine)) {
+            if (~run.flags & startOfLine_GmRunFlag && lineHeightReduction > 0.0f) {
+                pos.y -= lineHeightReduction * lineHeight_Text(run.font);
+            }
             run.bounds.pos = addX_I2(pos, indent * gap_Text);
             const int wrapAvail = d->size.x - run.bounds.pos.x - rightMargin * gap_Text;
             const int avail = isWordWrapped ? wrapAvail : 0;
             const char *contPos;
-            const iInt2 dims  = tryAdvance_Text(run.font, runLine, avail, &contPos);
+            const iInt2 dims = tryAdvance_Text(run.font, runLine, avail, &contPos);
             iChangeFlags(run.flags, wide_GmRunFlag, (isPreformat && dims.x > d->size.x));
             run.bounds.size.x = iMax(wrapAvail, dims.x); /* Extends to the right edge for selection. */
             run.bounds.size.y = dims.y;

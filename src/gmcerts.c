@@ -105,7 +105,7 @@ void deserialize_GmIdentity(iGmIdentity *d, iStream *ins) {
         iString url;
         init_String(&url);
         deserialize_String(&url, ins);
-        insert_StringSet(d->useUrls, &url);
+        setUse_GmIdentity(d, &url, iTrue);
         deinit_String(&url);
     }
 }
@@ -161,11 +161,30 @@ iBool isUsedOn_GmIdentity(const iGmIdentity *d, const iString *url) {
     return iFalse;
 }
 
+iBool isUsedOnDomain_GmIdentity(const iGmIdentity *d, const iRangecc domain) {
+    iConstForEach(StringSet, i, d->useUrls) {
+        const iRangecc host = urlHost_String(i.value);
+        if (equalRangeCase_Rangecc(host, domain)) {
+            return iTrue;
+        }
+    }
+    return iFalse;
+}
+
 void setUse_GmIdentity(iGmIdentity *d, const iString *url, iBool use) {
     if (use && isUsedOn_GmIdentity(d, url)) {
         return; /* Redudant. */
     }
     if (use) {
+        /* Remove all use-URLs that become redundant by this newly added URL. */
+        /* TODO: StringSet could have a non-const iterator. */
+        iForEach(Array, i, &d->useUrls->strings.values) {
+            iString *used = i.value;
+            if (startsWithCase_String(used, cstr_String(url))) {
+                deinit_String(used);
+                remove_ArrayIterator(&i);
+            }
+        }
 #if !defined (NDEBUG)
         const iBool wasInserted =
 #endif
@@ -182,7 +201,11 @@ void clearUse_GmIdentity(iGmIdentity *d) {
 }
 
 const iString *name_GmIdentity(const iGmIdentity *d) {
-    return collect_String(subject_TlsCertificate(d->cert));
+    iString *name = collect_String(subject_TlsCertificate(d->cert));
+    if (startsWith_String(name, "CN = ")) {
+        remove_Block(&name->chars, 0, 5);
+    }
+    return name;
 }
 
 iDefineTypeConstruction(GmIdentity)

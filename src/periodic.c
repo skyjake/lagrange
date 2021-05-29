@@ -91,9 +91,11 @@ iBool dispatchCommands_Periodic(iPeriodic *d) {
             .data1 = (void *) cstr_String(&pc->command),
             .data2 = findRoot_Window(get_Window(), pc->context)
         };
-        setCurrent_Root(ev.data2);
-        dispatchEvent_Widget(pc->context, (const SDL_Event *) &ev);
-        wasPosted = iTrue;
+        if (ev.data2) {
+            setCurrent_Root(ev.data2);
+            dispatchEvent_Widget(pc->context, (const SDL_Event *) &ev);
+            wasPosted = iTrue;
+        }
     }
     removePending_Periodic_(d);
     setCurrent_Root(NULL);

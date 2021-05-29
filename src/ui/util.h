@@ -22,6 +22,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
+#include "mobile.h"
+
 #include <the_Foundation/string.h>
 #include <the_Foundation/rect.h>
 #include <the_Foundation/vec2.h>
@@ -154,6 +156,7 @@ struct Impl_Click {
     int      button;
     int      count;
     iWidget *bounds;
+    int      minHeight;
     iInt2    startPos;
     iInt2    pos;
 };
@@ -166,6 +169,7 @@ iBool               isMoved_Click       (const iClick *);
 iInt2               pos_Click           (const iClick *);
 iRect               rect_Click          (const iClick *);
 iInt2               delta_Click         (const iClick *);
+iBool               contains_Click      (const iClick *, iInt2 coord);
 
 /*-----------------------------------------------------------------------------------------------*/
 
@@ -253,9 +257,8 @@ size_t          tabCount_Widget         (const iWidget *tabs);
 
 /*-----------------------------------------------------------------------------------------------*/
 
-iWidget *   makeSheet_Widget        (const char *id);
-void        finalizeSheet_Widget    (iWidget *sheet);
-iWidget *   makeDialogButtons_Widget(const iMenuItem *actions, size_t numActions);
+iWidget *   makeSheet_Widget            (const char *id);
+iWidget *   makeDialogButtons_Widget    (const iMenuItem *actions, size_t numActions);
 
 iInputWidget *addTwoColumnDialogInputField_Widget(iWidget *headings, iWidget *values,
                                                   const char *labelText, const char *inputId,

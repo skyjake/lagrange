@@ -67,12 +67,16 @@ enum iFontId {
     monospaceSmall_FontId,
     monospace_FontId,
     /* extra content fonts */
-    defaultContentSized_FontId, /* UI font but sized to regular_FontId */
-    regularMonospace_FontId,
+    defaultContentRegular_FontId, /* UI font but sized to regular_FontId */
+    defaultContentSmall_FontId, /* UI font but sized smaller */
     /* symbols and scripts */
-    symbols_FontId,
-    emoji_FontId             = symbols_FontId + max_FontSize,
-    japanese_FontId          = emoji_FontId + max_FontSize,
+    userSymbols_FontId,
+    iosevka_FontId           = userSymbols_FontId + max_FontSize,
+    symbols_FontId           = iosevka_FontId + max_FontSize,
+    symbols2_FontId          = symbols_FontId + max_FontSize,
+    smolEmoji_FontId         = symbols2_FontId + max_FontSize,
+    notoEmoji_FontId         = smolEmoji_FontId + max_FontSize,
+    japanese_FontId          = notoEmoji_FontId + max_FontSize,
     chineseSimplified_FontId = japanese_FontId + max_FontSize,
     korean_FontId            = chineseSimplified_FontId + max_FontSize,
     arabic_FontId            = korean_FontId + max_FontSize,
@@ -91,7 +95,7 @@ enum iFontId {
     uiInput_FontId          = defaultMedium_FontId,
     uiContent_FontId        = defaultMedium_FontId,
     uiContentBold_FontId    = defaultMediumBold_FontId,
-    uiContentSymbols_FontId = symbols_FontId + uiMedium_FontSize,
+    uiContentSymbols_FontId = symbols_FontId + uiMedium_FontSize,    
     /* Document fonts: */
     paragraph_FontId         = regular_FontId,
     firstParagraph_FontId    = medium_FontId,
@@ -102,6 +106,7 @@ enum iFontId {
     heading2_FontId          = largeBold_FontId,
     heading3_FontId          = big_FontId,
     banner_FontId            = largeLight_FontId,
+    regularMonospace_FontId  = iosevka_FontId + contentRegular_FontSize    
 };
 
 iLocalDef iBool isJapanese_FontId(enum iFontId id) {
@@ -123,6 +128,8 @@ extern int gap_Text; /* affected by content font size */
 
 void    init_Text               (SDL_Renderer *);
 void    deinit_Text             (void);
+
+void    loadUserFonts_Text      (void); /* based on Prefs */
 
 void    setContentFont_Text     (enum iTextFont font);
 void    setHeadingFont_Text     (enum iTextFont font);
@@ -151,13 +158,15 @@ void    setOpacity_Text     (float opacity);
 
 void    cache_Text          (int fontId, iRangecc text); /* pre-render glyphs */
 
-void    draw_Text           (int fontId, iInt2 pos, int color, const char *text, ...);
-void    drawAlign_Text      (int fontId, iInt2 pos, int color, enum iAlignment align, const char *text, ...);
-void    drawCentered_Text   (int fontId, iRect rect, iBool alignVisual, int color, const char *text, ...);
-void    drawString_Text     (int fontId, iInt2 pos, int color, const iString *text);
-void    drawRange_Text      (int fontId, iInt2 pos, int color, iRangecc text);
-void    drawBoundRange_Text (int fontId, iInt2 pos, int boundWidth, int color, iRangecc text); /* bound does not wrap */
-int     drawWrapRange_Text  (int fontId, iInt2 pos, int maxWidth, int color, iRangecc text); /* returns new Y */
+void    draw_Text               (int fontId, iInt2 pos, int color, const char *text, ...);
+void    drawAlign_Text          (int fontId, iInt2 pos, int color, enum iAlignment align, const char *text, ...);
+void    drawCentered_Text       (int fontId, iRect rect, iBool alignVisual, int color, const char *text, ...);
+void    drawCenteredRange_Text  (int fontId, iRect rect, iBool alignVisual, int color, iRangecc text);
+void    drawString_Text         (int fontId, iInt2 pos, int color, const iString *text);
+void    drawRange_Text          (int fontId, iInt2 pos, int color, iRangecc text);
+void    drawRangeN_Text         (int fontId, iInt2 pos, int color, iRangecc text, size_t maxLen);
+void    drawBoundRange_Text     (int fontId, iInt2 pos, int boundWidth, int color, iRangecc text); /* bound does not wrap */
+int     drawWrapRange_Text      (int fontId, iInt2 pos, int maxWidth, int color, iRangecc text); /* returns new Y */
 
 SDL_Texture *   glyphCache_Text     (void);
 
@@ -170,10 +179,13 @@ iString *   renderBlockChars_Text   (const iBlock *fontData, int height, enum iT
 
 iDeclareType(TextBuf)
 iDeclareTypeConstructionArgs(TextBuf, int font, int color, const char *text)
-
+    
 struct Impl_TextBuf {
     SDL_Texture *texture;
     iInt2        size;
 };
 
-void    draw_TextBuf        (const iTextBuf *, iInt2 pos, int color);
+iTextBuf *  newBound_TextBuf(int font, int color, int boundWidth, const char *text); /* does not word wrap */
+iTextBuf *  newWrap_TextBuf (int font, int color, int wrapWidth, const char *text);
+
+void        draw_TextBuf    (const iTextBuf *, iInt2 pos, int color);

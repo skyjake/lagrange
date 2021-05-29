@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-05-06 15:03+0000\n"
+"PO-Revision-Date: 2021-05-29 02:37+0000\n"
 "Last-Translator: Страхиња Радић <contact@strahinja.org>\n"
 "Language-Team: Serbian <http://weblate.skyjake.fi/projects/lagrange/ui/sr/>\n"
 "Language: sr\n"
@@ -503,7 +503,7 @@ msgid "dlg.newident.until"
 msgstr "Важи до:"
 
 msgid "hint.newident.date"
-msgstr "ГГГГ-ММ-ДД ЧЧ:ММ:СС"
+msgstr "ГГГГ или ГГГГ-ММ-ДД"
 
 msgid "hint.newident.optional"
 msgstr "необавезно"
@@ -1616,3 +1616,60 @@ msgstr[2] "Овај директоријум садржи %zu ставки."
 
 msgid "keys.tab.close.other"
 msgstr "Затварање осталих картица"
+
+msgid "lang.pl"
+msgstr "Пољски"
+
+msgid "dlg.newident.scope.domain"
+msgstr "Текућем домену"
+
+msgid "dlg.newident.scope.page"
+msgstr "Текућој страници"
+
+msgid "dlg.newident.scope.none"
+msgstr "Не користити"
+
+msgid "keys.split.menu.merge"
+msgstr "Мени раздвојеног погледа: Спој картице"
+
+msgid "keys.split.menu.swap"
+msgstr "Мени раздвојеног погледа: Замени стране"
+
+msgid "keys.split.menu.horiz"
+msgstr "Мени раздвојеног погледа: Хоризонтално"
+
+msgid "keys.split.menu.horiz12"
+msgstr "Мени раздвојеног погледа: Хоризонтално 1:2"
+
+msgid "keys.split.menu.horiz21"
+msgstr "Мени раздвојеног погледа: Хоризонтално 2:1"
+
+msgid "keys.split.menu.vert"
+msgstr "Мени раздвојеног погледа: Вертикално"
+
+msgid "keys.split.menu.vert12"
+msgstr "Мени раздвојеног погледа: Вертикално 1:2"
+
+msgid "keys.split.menu.vert21"
+msgstr "Мени раздвојеног погледа: Вертикално 2:1"
+
+msgid "dlg.newident.more"
+msgstr "Више…"
+
+msgid "dlg.newident.scope"
+msgstr "Користити на:"
+
+msgid "prefs.userfont"
+msgstr "Фонт за симболе:"
+
+msgid "close"
+msgstr "Затвори"
+
+msgid "ident.export"
+msgstr "Извези"
+
+msgid "error.server.msg"
+msgstr "Сервер је одговорио поруком:"
+
+msgid "dlg.input.linebreak"
+msgstr "Прелом реда"

@@ -146,6 +146,7 @@ iDeclareType(Ticker)
 
 struct Impl_Ticker {
     iAny *context;
+    iRoot *root;
     void (*callback)(iAny *);
 };
 
@@ -203,6 +204,7 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "uiscale arg:%f\n", uiScale_Window(d->window));
     appendFormat_String(str, "prefs.dialogtab arg:%d\n", d->prefs.dialogTab);
     appendFormat_String(str, "font.set arg:%d\n", d->prefs.font);
+    appendFormat_String(str, "font.user path:%s\n", cstr_String(&d->prefs.symbolFontPath));
     appendFormat_String(str, "headingfont.set arg:%d\n", d->prefs.headingFont);
     appendFormat_String(str, "zoom.set arg:%d\n", d->prefs.zoomPercent);
     appendFormat_String(str, "smoothscroll arg:%d\n", d->prefs.smoothScrolling);
@@ -211,6 +213,7 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "decodeurls arg:%d\n", d->prefs.decodeUserVisibleURLs);
     appendFormat_String(str, "linewidth.set arg:%d\n", d->prefs.lineWidth);
     /* TODO: Set up an array of booleans in Prefs and do these in a loop. */
+    appendFormat_String(str, "prefs.animate.changed arg:%d\n", d->prefs.uiAnimations);
     appendFormat_String(str, "prefs.mono.gemini.changed arg:%d\n", d->prefs.monospaceGemini);
     appendFormat_String(str, "prefs.mono.gopher.changed arg:%d\n", d->prefs.monospaceGopher);
     appendFormat_String(str, "prefs.boldlink.dark.changed arg:%d\n", d->prefs.boldLinkDark);
@@ -411,15 +414,17 @@ static iBool loadState_App_(iApp *d) {
                 const uint8_t rootIndex = bits & 0xff;
                 const uint8_t flags     = bits >> 8;
                 iRoot *root = d->window->roots[rootIndex];
-                if (root && deviceType_App() != phone_AppDeviceType) {
+                if (root) {
                     iSidebarWidget *sidebar  = findChild_Widget(root->widget, "sidebar");
                     iSidebarWidget *sidebar2 = findChild_Widget(root->widget, "sidebar2");
-                    setWidth_SidebarWidget(sidebar,  widths[0]);
-                    setWidth_SidebarWidget(sidebar2, widths[1]);
                     postCommandf_Root(root, "sidebar.mode arg:%u", modes & 0xf);
                     postCommandf_Root(root, "sidebar2.mode arg:%u", modes >> 4);
-                    if (flags & 1) postCommand_Root(root, "sidebar.toggle");
-                    if (flags & 2) postCommand_Root(root, "sidebar2.toggle");
+                    if (deviceType_App() != phone_AppDeviceType) {
+                        setWidth_SidebarWidget(sidebar,  widths[0]);
+                        setWidth_SidebarWidget(sidebar2, widths[1]);
+                        if (flags & 1) postCommand_Root(root, "sidebar.toggle noanim:1");
+                        if (flags & 2) postCommand_Root(root, "sidebar2.toggle noanim:1");
+                    }
                 }
             }
             else if (!memcmp(magic, magicTabDocument_App_, 4)) {
@@ -542,6 +547,7 @@ static void terminate_App_(int rc) {
 static void communicateWithRunningInstance_App_(iApp *d, iProcessId instance,
                                                 const iStringList *openCmds) {
     iString *cmds = new_String();
+    iBool requestRaise = iFalse;
     const iProcessId pid = currentId_Process();
     iConstForEach(CommandLine, i, &d->args) {
         if (i.argType == value_CommandLineArgType) {
@@ -549,6 +555,7 @@ static void communicateWithRunningInstance_App_(iApp *d, iProcessId instance,
         }
         if (equal_CommandLineConstIterator(&i, "go-home")) {
             appendCStr_String(cmds, "navigate.home\n");
+            requestRaise = iTrue;
         }
         else if (equal_CommandLineConstIterator(&i, "new-tab")) {
             iCommandLineArg *arg = argument_CommandLineConstIterator(&i);
@@ -560,6 +567,7 @@ static void communicateWithRunningInstance_App_(iApp *d, iProcessId instance,
                 appendCStr_String(cmds, "tabs.new\n");
             }
             iRelease(arg);
+            requestRaise = iTrue;
         }
         else if (equal_CommandLineConstIterator(&i, "close-tab")) {
             appendCStr_String(cmds, "tabs.close\n");
@@ -570,13 +578,15 @@ static void communicateWithRunningInstance_App_(iApp *d, iProcessId instance,
     }
     if (!isEmpty_StringList(openCmds)) {
         append_String(cmds, collect_String(joinCStr_StringList(openCmds, "\n")));
+        requestRaise = iTrue;
     }
     if (isEmpty_String(cmds)) {
         /* By default open a new tab. */
         appendCStr_String(cmds, "tabs.new\n");
+        requestRaise = iTrue;
     }
     if (!isEmpty_String(cmds)) {
-        iString *result = communicate_Ipc(cmds);
+        iString *result = communicate_Ipc(cmds, requestRaise);
         if (result) {
             fwrite(cstr_String(result), 1, size_String(result), stdout);
             fflush(stdout);
@@ -590,6 +600,18 @@ static void communicateWithRunningInstance_App_(iApp *d, iProcessId instance,
     terminate_App_(0);
 }
 #endif /* defined (LAGRANGE_ENABLE_IPC) */
+
+static iBool hasCommandLineOpenableScheme_(const iRangecc uri) {
+    static const char *schemes[] = {
+        "gemini:", "gopher:", "finger:", "file:", "data:", "about:"
+    };
+    iForIndices(i, schemes) {
+        if (startsWithCase_Rangecc(uri, schemes[i])) {
+            return iTrue;
+        }
+    }
+    return iFalse;
+}
 
 static void init_App_(iApp *d, int argc, char **argv) {
     init_CommandLine(&d->args, argc, argv);
@@ -625,6 +647,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
         defineValues_CommandLine(&d->args, "go-home", 0);
         defineValues_CommandLine(&d->args, "help", 0);
         defineValues_CommandLine(&d->args, listTabUrls_CommandLineOption, 0);
+        defineValues_CommandLine(&d->args, openUrlOrSearch_CommandLineOption, 1);
         defineValuesN_CommandLine(&d->args, "new-tab", 0, 1);
         defineValues_CommandLine(&d->args, "sw", 0);
         defineValues_CommandLine(&d->args, "version;V", 0);
@@ -640,29 +663,37 @@ static void init_App_(iApp *d, int argc, char **argv) {
             terminate_App_(0);
         }
         /* Check for URLs. */
-        iBool newTab = iFalse;
         iConstForEach(CommandLine, i, &d->args) {
             const iRangecc arg = i.entry;
             if (i.argType == value_CommandLineArgType) {
                 /* URLs and file paths accepted. */
-                const iBool isKnownScheme =
-                    startsWithCase_Rangecc(arg, "gemini:") || startsWithCase_Rangecc(arg, "gopher:") ||
-                    startsWithCase_Rangecc(arg, "finger:") || startsWithCase_Rangecc(arg, "file:")   ||
-                    startsWithCase_Rangecc(arg, "data:")   || startsWithCase_Rangecc(arg, "about:");
-                if (isKnownScheme || fileExistsCStr_FileInfo(cstr_Rangecc(arg))) {
+                const iBool isOpenable = hasCommandLineOpenableScheme_(arg);
+                if (isOpenable || fileExistsCStr_FileInfo(cstr_Rangecc(arg))) {
                     iString *decUrl =
-                        isKnownScheme ? urlDecodeExclude_String(collectNewRange_String(arg), "/?#:")
-                                      : makeFileUrl_String(collectNewRange_String(arg));
+                        isOpenable ? urlDecodeExclude_String(collectNewRange_String(arg), "/?#:")
+                                   : makeFileUrl_String(collectNewRange_String(arg));
                     pushBack_StringList(openCmds,
                                         collectNewFormat_String(
-                                            "open newtab:%d url:%s", newTab, cstr_String(decUrl)));
+                                            "open newtab:1 url:%s", cstr_String(decUrl)));
                     delete_String(decUrl);
-                    newTab = iTrue;
                 }
                 else {
                     fprintf(stderr, "Invalid URL/file: %s\n", cstr_Rangecc(arg));
                     terminate_App_(1);
                 }
+            }
+            else if (equal_CommandLineConstIterator(&i, openUrlOrSearch_CommandLineOption)) {
+                const iCommandLineArg *arg = iClob(argument_CommandLineConstIterator(&i));
+                const iString *input = value_CommandLineArg(arg, 0);
+                if (startsWith_String(input, "//")) {
+                    input = collectNewFormat_String("gemini:%s", cstr_String(input));
+                }
+                if (hasCommandLineOpenableScheme_(range_String(input))) {
+                    input = collect_String(urlDecodeExclude_String(input, "/?#:"));
+                }
+                pushBack_StringList(
+                    openCmds,
+                    collectNewFormat_String("search newtab:1 query:%s", cstr_String(input)));
             }
             else if (!isDefined_CommandLine(&d->args, collectNewRange_String(i.entry))) {
                 fprintf(stderr, "Unknown option: %s\n", cstr_Rangecc(arg));
@@ -777,6 +808,10 @@ static void init_App_(iApp *d, int argc, char **argv) {
         iRelease(openCmds);
     }
     fetchRemote_Bookmarks(d->bookmarks);
+    if (deviceType_App() != desktop_AppDeviceType) {
+        /* HACK: Force a resize so widgets update their state. */
+        resize_Window(d->window, -1, -1);
+    }
 }
 
 static void deinit_App(iApp *d) {
@@ -1060,6 +1095,23 @@ void processEvents_App(enum iAppEventMode eventMode) {
                 }
                 d->isIdling = iFalse;
 #endif
+                if (ev.type == SDL_USEREVENT && ev.user.code == arrange_UserEventCode) {
+                    printf("[App] rearrange\n");
+                    resize_Window(d->window, -1, -1);
+                    iForIndices(i, d->window->roots) {
+                        if (d->window->roots[i]) {
+                            d->window->roots[i]->pendingArrange = iFalse;
+                        }
+                    }
+//                    if (ev.user.data2 == d->window->roots[0]) {
+//                        arrange_Widget(d->window->roots[0]->widget);
+//                    }
+//                    else if (d->window->roots[1]) {
+//                        arrange_Widget(d->window->roots[1]->widget);
+//                    }
+//                    postRefresh_App();
+                    continue;
+                }
                 gotEvents = iTrue;
                 /* Keyboard modifier mapping. */
                 if (ev.type == SDL_KEYDOWN || ev.type == SDL_KEYUP) {
@@ -1162,7 +1214,7 @@ static void runTickers_App_(iApp *d) {
     iConstForEach(Array, i, &pending->values) {
         const iTicker *ticker = i.value;
         if (ticker->callback) {
-            setCurrent_Root(findRoot_Window(d->window, ticker->context)); /* root might be NULL */
+            setCurrent_Root(ticker->root); /* root might be NULL */
             ticker->callback(ticker->context);
         }
     }
@@ -1393,13 +1445,19 @@ iAny *findWidget_App(const char *id) {
 
 void addTicker_App(iTickerFunc ticker, iAny *context) {
     iApp *d = &app_;
-    insert_SortedArray(&d->tickers, &(iTicker){ context, ticker });
+    insert_SortedArray(&d->tickers, &(iTicker){ context, get_Root(), ticker });
+    postRefresh_App();
+}
+
+void addTickerRoot_App(iTickerFunc ticker, iRoot *root, iAny *context) {
+    iApp *d = &app_;
+    insert_SortedArray(&d->tickers, &(iTicker){ context, root, ticker });
     postRefresh_App();
 }
 
 void removeTicker_App(iTickerFunc ticker, iAny *context) {
     iApp *d = &app_;
-    remove_SortedArray(&d->tickers, &(iTicker){ context, ticker });
+    remove_SortedArray(&d->tickers, &(iTicker){ context, NULL, ticker });
 }
 
 iMimeHooks *mimeHooks_App(void) {
@@ -1482,6 +1540,7 @@ static void updateFontButton_(iLabelWidget *button, int font) {
 
 static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
     if (equal_Command(cmd, "prefs.dismiss") || equal_Command(cmd, "preferences")) {
+        setupSheetTransition_Mobile(d, iFalse);
         setUiScale_Window(get_Window(),
                           toFloat_String(text_InputWidget(findChild_Widget(d, "prefs.uiscale"))));
 #if defined (LAGRANGE_ENABLE_DOWNLOAD_EDIT)
@@ -1498,24 +1557,25 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
                          isSelected_Widget(findChild_Widget(d, "prefs.imageloadscroll")));
         postCommandf_App("hidetoolbarscroll arg:%d",
                          isSelected_Widget(findChild_Widget(d, "prefs.hidetoolbarscroll")));
-        postCommandf_App("ostheme arg:%d",
-                         isSelected_Widget(findChild_Widget(d, "prefs.ostheme")));
+        postCommandf_App("ostheme arg:%d", isSelected_Widget(findChild_Widget(d, "prefs.ostheme")));
+        postCommandf_App("font.user path:%s",
+                         cstrText_InputWidget(findChild_Widget(d, "prefs.userfont")));
         postCommandf_App("decodeurls arg:%d",
                          isSelected_Widget(findChild_Widget(d, "prefs.decodeurls")));
         postCommandf_App("searchurl address:%s",
-                         cstr_String(text_InputWidget(findChild_Widget(d, "prefs.searchurl"))));
+                         cstrText_InputWidget(findChild_Widget(d, "prefs.searchurl")));
         postCommandf_App("cachesize.set arg:%d",
-                         toInt_String(text_InputWidget(findChild_Widget(d, "prefs.cachesize"))));
+                         toInt_String(text_InputWidget(findChild_Widget(d, "prefs.cachesize"))));        
         postCommandf_App("ca.file path:%s",
-                         cstr_String(text_InputWidget(findChild_Widget(d, "prefs.ca.file"))));
+                         cstrText_InputWidget(findChild_Widget(d, "prefs.ca.file")));
         postCommandf_App("ca.path path:%s",
-                         cstr_String(text_InputWidget(findChild_Widget(d, "prefs.ca.path"))));
+                         cstrText_InputWidget(findChild_Widget(d, "prefs.ca.path")));
         postCommandf_App("proxy.gemini address:%s",
-                         cstr_String(text_InputWidget(findChild_Widget(d, "prefs.proxy.gemini"))));
+                         cstrText_InputWidget(findChild_Widget(d, "prefs.proxy.gemini")));
         postCommandf_App("proxy.gopher address:%s",
-                         cstr_String(text_InputWidget(findChild_Widget(d, "prefs.proxy.gopher"))));
+                         cstrText_InputWidget(findChild_Widget(d, "prefs.proxy.gopher")));
         postCommandf_App("proxy.http address:%s",
-                         cstr_String(text_InputWidget(findChild_Widget(d, "prefs.proxy.http"))));
+                         cstrText_InputWidget(findChild_Widget(d, "prefs.proxy.http")));
         const iWidget *tabs = findChild_Widget(d, "prefs.tabs");
         if (tabs) {
             postCommandf_App("prefs.dialogtab arg:%u",
@@ -1564,6 +1624,10 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
         if (!argLabel_Command(cmd, "auto")) {
             setToggle_Widget(findChild_Widget(d, "prefs.ostheme"), iFalse);
         }
+    }
+    else if (equalWidget_Command(cmd, d, "input.resized")) {
+        updatePreferencesLayout_Widget(d);
+        return iFalse;
     }
     return iFalse;
 }
@@ -1618,12 +1682,36 @@ iDocumentWidget *newTab_App(const iDocumentWidget *duplicateOf, iBool switchToNe
 
 static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
     iApp *d = &app_;
+    if (equal_Command(cmd, "ident.showmore")) {
+        iForEach(ObjectList, i, children_Widget(findChild_Widget(dlg, "headings"))) {
+            if (flags_Widget(i.object) & collapse_WidgetFlag) {
+                setFlags_Widget(i.object, hidden_WidgetFlag, iFalse);
+            }
+        }
+        iForEach(ObjectList, j, children_Widget(findChild_Widget(dlg, "values"))) {
+            if (flags_Widget(j.object) & collapse_WidgetFlag) {
+                setFlags_Widget(j.object, hidden_WidgetFlag, iFalse);
+            }
+        }
+        setFlags_Widget(child_Widget(findChild_Widget(dlg, "dialogbuttons"), 0), disabled_WidgetFlag,
+                        iTrue);
+        arrange_Widget(dlg);
+        refresh_Widget(dlg);        
+        return iTrue;
+    }
+    if (equal_Command(cmd, "ident.scope")) {
+        iLabelWidget *scope = findChild_Widget(dlg, "ident.scope");
+        setText_LabelWidget(scope,
+                            text_LabelWidget(child_Widget(
+                                findChild_Widget(as_Widget(scope), "menu"), arg_Command(cmd))));
+        return iTrue;
+    }
     if (equal_Command(cmd, "ident.temp.changed")) {
         setFlags_Widget(
             findChild_Widget(dlg, "ident.temp.note"), hidden_WidgetFlag, !arg_Command(cmd));
         return iFalse;
     }
-    if (equal_Command(cmd, "ident.accept") || equal_Command(cmd, "cancel")) {
+    if (equal_Command(cmd, "ident.accept") || equal_Command(cmd, "ident.cancel")) {
         if (equal_Command(cmd, "ident.accept")) {
             const iString *commonName   = text_InputWidget (findChild_Widget(dlg, "ident.common"));
             const iString *email        = text_InputWidget (findChild_Widget(dlg, "ident.email"));
@@ -1671,11 +1759,52 @@ static iBool handleIdentityCreationCommands_(iWidget *dlg, const char *cmd) {
                 }
             }
             /* The input seems fine. */
-            newIdentity_GmCerts(d->certs, isTemp ? temporary_GmIdentityFlag : 0,
-                                until, commonName, email, userId, domain, organization, country);
+            iGmIdentity *ident = newIdentity_GmCerts(d->certs,
+                                                     isTemp ? temporary_GmIdentityFlag : 0,
+                                                     until,
+                                                     commonName,
+                                                     email,
+                                                     userId,
+                                                     domain,
+                                                     organization,
+                                                     country);
+            /* Use in the chosen scope. */ {
+                const iLabelWidget *scope    = findChild_Widget(dlg, "ident.scope");
+                const iString *     selLabel = text_LabelWidget(scope);
+                int                 selScope = 0;
+                iConstForEach(ObjectList,
+                              i,
+                              children_Widget(findChild_Widget(constAs_Widget(scope), "menu"))) {
+                    if (isInstance_Object(i.object, &Class_LabelWidget)) {
+                        const iLabelWidget *item = i.object;
+                        if (equal_String(text_LabelWidget(item), selLabel)) {
+                            break;
+                        }
+                        selScope++;
+                    }
+                }
+                const iString *docUrl = url_DocumentWidget(document_Root(dlg->root));
+                iString *useUrl = NULL;
+                switch (selScope) {
+                    case 0: /* current domain */
+                        useUrl = collectNewFormat_String("gemini://%s",
+                                                         cstr_Rangecc(urlHost_String(docUrl)));
+                        break;
+                    case 1: /* current page */
+                        useUrl = collect_String(copy_String(docUrl));
+                        break;
+                    default: /* not used */
+                        break;
+                }
+                if (useUrl) {
+                    signIn_GmCerts(d->certs, ident, useUrl);
+                    postCommand_App("navigate.reload");
+                }
+            }
             postCommandf_App("sidebar.mode arg:%d show:1", identities_SidebarMode);
             postCommand_App("idents.changed");
         }
+        setupSheetTransition_Mobile(dlg, iFalse);
         destroy_Widget(dlg);
         return iTrue;
     }
@@ -1764,6 +1893,22 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "font.reset")) {
         resetFonts_Text();
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "font.user")) {
+        const char *path = suffixPtr_Command(cmd, "path");
+        if (cmp_String(&d->prefs.symbolFontPath, path)) {
+            if (!isFrozen) {
+                setFreezeDraw_Window(get_Window(), iTrue);
+            }
+            setCStr_String(&d->prefs.symbolFontPath, path);
+            loadUserFonts_Text();
+            resetFonts_Text();
+            if (!isFrozen) {
+                postCommand_App("font.changed");
+                postCommand_App("window.unfreeze");
+            }
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "font.set")) {
@@ -1964,6 +2109,10 @@ iBool handleCommand_App(const char *cmd) {
         d->prefs.openArchiveIndexPages = arg_Command(cmd) != 0;
         return iTrue;
     }
+    else if (equal_Command(cmd, "prefs.animate.changed")) {
+        d->prefs.uiAnimations = arg_Command(cmd) != 0;
+        return iTrue;
+    }
     else if (equal_Command(cmd, "saturation.set")) {
         d->prefs.saturation = (float) arg_Command(cmd) / 100.0f;
         if (!isFrozen) {
@@ -2020,6 +2169,20 @@ iBool handleCommand_App(const char *cmd) {
         setCStr_String(&d->prefs.caPath, suffixPtr_Command(cmd, "path"));
         if (!argLabel_Command(cmd, "noset")) {
             setCACertificates_TlsRequest(&d->prefs.caFile, &d->prefs.caPath);
+        }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "search")) {
+        const int newTab = argLabel_Command(cmd, "newtab");
+        const iString *query = collect_String(suffix_Command(cmd, "query"));
+        if (!isLikelyUrl_String(query)) {
+            const iString *url = searchQueryUrl_App(query);
+            if (!isEmpty_String(url)) {
+                postCommandf_App("open newtab:%d url:%s", newTab, cstr_String(url));
+            }
+        }
+        else {
+            postCommandf_App("open newtab:%d url:%s", newTab, cstr_String(query));
         }
         return iTrue;
     }
@@ -2118,7 +2281,7 @@ iBool handleCommand_App(const char *cmd) {
         iWidget *tabs = findWidget_App("doctabs");
 #if defined (iPlatformAppleMobile)
         /* Can't close the last on mobile. */
-        if (tabCount_Widget(tabs) == 1) {
+        if (tabCount_Widget(tabs) == 1 && numRoots_Window(get_Window()) == 1) {
             postCommand_App("navigate.home");
             return iTrue;
         }
@@ -2192,6 +2355,8 @@ iBool handleCommand_App(const char *cmd) {
         setToggle_Widget(findChild_Widget(dlg, "prefs.archive.openindex"), d->prefs.openArchiveIndexPages);
         setToggle_Widget(findChild_Widget(dlg, "prefs.ostheme"), d->prefs.useSystemTheme);
         setToggle_Widget(findChild_Widget(dlg, "prefs.customframe"), d->prefs.customFrame);
+        setToggle_Widget(findChild_Widget(dlg, "prefs.animate"), d->prefs.uiAnimations);
+        setText_InputWidget(findChild_Widget(dlg, "prefs.userfont"), &d->prefs.symbolFontPath);
         updatePrefsPinSplitButtons_(dlg, d->prefs.pinSplit);
         updateDropdownSelection_(findChild_Widget(dlg, "prefs.uilang"), cstr_String(&d->prefs.uiLanguage));
         setToggle_Widget(findChild_Widget(dlg, "prefs.retainwindow"), d->prefs.retainWindowSize);
@@ -2296,7 +2461,9 @@ iBool handleCommand_App(const char *cmd) {
                                         bookmarkTitle_DocumentWidget(doc),
                                         siteIcon_GmDocument(document_DocumentWidget(doc)));
         }
-        postCommand_App("focus.set id:bmed.title");
+        if (deviceType_App() == desktop_AppDeviceType) {
+            postCommand_App("focus.set id:bmed.title");
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "feeds.subscribe")) {
@@ -2352,7 +2519,7 @@ iBool handleCommand_App(const char *cmd) {
         iCertImportWidget *imp = new_CertImportWidget();
         setPageContent_CertImportWidget(imp, sourceContent_DocumentWidget(document_App()));
         addChild_Widget(get_Root()->widget, iClob(imp));
-        finalizeSheet_Widget(as_Widget(imp));
+        finalizeSheet_Mobile(as_Widget(imp));
         postRefresh_App();
         return iTrue;
     }
@@ -2405,6 +2572,11 @@ iBool handleCommand_App(const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "ipc.signal")) {
+        if (argLabel_Command(cmd, "raise")) {
+            if (d->window && d->window->win) {
+                SDL_RaiseWindow(d->window->win);
+            }
+        }
         signal_Ipc(arg_Command(cmd));
         return iTrue;
     }

@@ -128,7 +128,7 @@ static const iMenuItem phoneNavMenuItems_[] = {
 static const iMenuItem identityButtonMenuItems_[] = {
     { "${menu.identity.notactive}", 0, 0, "ident.showactive" },
     { "---", 0, 0, NULL },
-    { add_Icon " ${menu.identity.new}", SDLK_n, KMOD_PRIMARY | KMOD_SHIFT, "ident.new" },
+    { add_Icon " ${menu.identity.new}", newIdentity_KeyShortcut, "ident.new" },
     { "${menu.identity.import}", SDLK_i, KMOD_PRIMARY | KMOD_SHIFT, "ident.import" },
     { "---", 0, 0, NULL },
     { person_Icon " ${menu.show.identities}", 0, 0, "toolbar.showident" },
@@ -138,7 +138,7 @@ static const iMenuItem identityButtonMenuItems_[] = {
     { "${menu.identity.notactive}", 0, 0, "ident.showactive" },
     { "---", 0, 0, NULL },
 # if !defined (iPlatformAppleDesktop)
-    { add_Icon " ${menu.identity.new}", SDLK_n, KMOD_PRIMARY | KMOD_SHIFT, "ident.new" },
+    { add_Icon " ${menu.identity.new}", newIdentity_KeyShortcut, "ident.new" },
     { "${menu.identity.import}", SDLK_i, KMOD_PRIMARY | KMOD_SHIFT, "ident.import" },
     { "---", 0, 0, NULL },
     { person_Icon " ${menu.show.identities}", '4', KMOD_PRIMARY, "sidebar.mode arg:3 show:1" },
@@ -156,10 +156,10 @@ static const char *pageMenuCStr_ = midEllipsis_Icon;
 /* TODO: A preference for these, maybe? */
 static const char *stopSeqCStr_[] = {
     /* Corners */
-    uiTextCaution_ColorEscape "\U0000230c",
-    uiTextCaution_ColorEscape "\U0000230d",
-    uiTextCaution_ColorEscape "\U0000230f",
-    uiTextCaution_ColorEscape "\U0000230e",
+    uiTextCaution_ColorEscape "\U0000231c",
+    uiTextCaution_ColorEscape "\U0000231d",
+    uiTextCaution_ColorEscape "\U0000231f",
+    uiTextCaution_ColorEscape "\U0000231e",
 #if 0
     /* Rotating arrow */
     uiTextCaution_ColorEscape "\U00002b62",
@@ -269,11 +269,15 @@ iAnyObject *findWidget_Root(const char *id) {
 }
 
 void destroyPending_Root(iRoot *d) {
+    iRoot *oldRoot = current_Root();
     setCurrent_Root(d);
     iForEach(PtrSet, i, d->pendingDestruction) {
         iWidget *widget = *i.value;
         if (!isFinished_Anim(&widget->visualOffset)) {
             continue;
+        }
+        if (widget->flags & keepOnTop_WidgetFlag) {
+            removeOne_PtrArray(onTop_Root(widget->root), widget);
         }
         if (widget->parent) {
             removeChild_Widget(widget->parent, widget);
@@ -282,7 +286,17 @@ void destroyPending_Root(iRoot *d) {
         iRelease(widget);
         remove_PtrSetIterator(&i);
     }
-    setCurrent_Root(NULL);
+    setCurrent_Root(oldRoot);
+}
+
+void postArrange_Root(iRoot *d) {
+    if (!d->pendingArrange) {
+        d->pendingArrange = iTrue;
+        SDL_Event ev = { .type = SDL_USEREVENT };
+        ev.user.code = arrange_UserEventCode;
+        ev.user.data2 = d;
+        SDL_PushEvent(&ev);
+    }
 }
 
 iPtrArray *onTop_Root(iRoot *d) {
@@ -335,6 +349,13 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
     }
     else if (equal_Command(cmd, "focus.set")) {
         setFocus_Widget(findWidget_App(cstr_Rangecc(range_Command(cmd, "id"))));
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "input.resized")) {
+        /* No parent handled this, so do a full rearrangement. */
+        /* TODO: Defer this and do a single rearrangement later. */
+        arrange_Widget(root);
+        postRefresh_App();
         return iTrue;
     }
     else if (equal_Command(cmd, "window.focus.lost")) {
@@ -398,6 +419,7 @@ static iBool handleRootCommands_(iWidget *root, const char *cmd) {
         else {
             addChildPos_Widget(findChild_Widget(root, "stack"), iClob(sidebar), back_WidgetAddPos);
             setWidth_SidebarWidget(sidebar, (float) width_Widget(root) / (float) gap_UI);
+            setWidth_SidebarWidget(sidebar2, (float) width_Widget(root) / (float) gap_UI);
         }
         return iFalse;
     }
@@ -416,11 +438,11 @@ static void updateNavBarIdentity_(iWidget *navBar) {
     setFlags_Widget(tool, selected_WidgetFlag, ident != NULL);
     /* Update menu. */
     iLabelWidget *idItem = child_Widget(findChild_Widget(button, "menu"), 0);
+    const iString *subjectName = ident ? name_GmIdentity(ident) : NULL;
     setTextCStr_LabelWidget(
         idItem,
-        ident ? format_CStr(uiTextAction_ColorEscape "%s",
-                            cstrCollect_String(subject_TlsCertificate(ident->cert)))
-              : "${menu.identity.notactive}");
+        subjectName ? format_CStr(uiTextAction_ColorEscape "%s", cstr_String(subjectName))
+                    : "${menu.identity.notactive}");
     setFlags_Widget(as_Widget(idItem), disabled_WidgetFlag, !ident);
 }
 
@@ -450,11 +472,11 @@ static void setReloadLabel_Root_(iRoot *d, iBool animating) {
     const iBool isMobile = deviceType_App() != desktop_AppDeviceType;
     iLabelWidget *label = findChild_Widget(d->widget, "reload");
     updateTextCStr_LabelWidget(
-        label, animating ? loadAnimationCStr_() : (isMobile ? pageMenuCStr_ : reloadCStr_));
-    if (isMobile) {
-        setCommand_LabelWidget(label,
-                               collectNewCStr_String(animating ? "navigate.reload" : "menu.open"));
-    }
+        label, animating ? loadAnimationCStr_() : (/*isMobile ? pageMenuCStr_ :*/ reloadCStr_));
+//    if (isMobile) {
+//        setCommand_LabelWidget(label,
+//                               collectNewCStr_String(animating ? "navigate.reload" : "menu.open"));
+//    }
 }
 
 static void checkLoadAnimation_Root_(iRoot *d) {
@@ -518,13 +540,20 @@ static iBool willPerformSearchQuery_(const iString *userInput) {
     return !isEmpty_String(&prefs_App()->searchUrl) && !isLikelyUrl_String(userInput);
 }
 
+static void updateUrlInputContentPadding_(iWidget *navBar) {
+    iInputWidget *url = findChild_Widget(navBar, "url");
+    const int lockWidth = width_Widget(findChild_Widget(navBar, "navbar.lock"));
+    const int indicatorsWidth = width_Widget(findChild_Widget(navBar, "url.rightembed"));
+    /* The indicators widget has a padding that covers the urlButtons area. */
+    setContentPadding_InputWidget(url,
+                                  lockWidth - 2 * gap_UI, // * 0.75f,
+                                  indicatorsWidth);
+}
+
 static void showSearchQueryIndicator_(iBool show) {
     iWidget *indicator = findWidget_App("input.indicator.search");
     showCollapsed_Widget(indicator, show);
-    iAssert(isInstance_Object(parent_Widget(parent_Widget(indicator)), &Class_InputWidget));
-    iInputWidget *url = (iInputWidget *) parent_Widget(parent_Widget(indicator));
-    setContentPadding_InputWidget(url, -1, contentPadding_InputWidget(url).left +
-                                               (show ? width_Widget(indicator) : 0));
+    updateUrlInputContentPadding_(findWidget_Root("navbar"));
 }
 
 static int navBarAvailableSpace_(iWidget *navBar) {
@@ -557,25 +586,27 @@ static void updateNavBarSize_(iWidget *navBar) {
     /* Button sizing. */
     if (isNarrow ^ ((flags_Widget(navBar) & tight_WidgetFlag) != 0)) {
         setFlags_Widget(navBar, tight_WidgetFlag, isNarrow);
-        iForEach(ObjectList, i, navBar->children) {
-            iWidget *child = as_Widget(i.object);
-            setFlags_Widget(child, tight_WidgetFlag, isNarrow);
-            if (isInstance_Object(i.object, &Class_LabelWidget)) {
-                iLabelWidget *label = i.object;
-                updateSize_LabelWidget(label);
+        iObjectList *lists[] = {
+            children_Widget(navBar),
+            children_Widget(findChild_Widget(navBar, "url")),
+            children_Widget(findChild_Widget(navBar, "url.buttons")),
+        };
+        iForIndices(k, lists) {
+            iForEach(ObjectList, i, lists[k]) {
+                iWidget *child = as_Widget(i.object);
+                setFlags_Widget(child, tight_WidgetFlag, isNarrow);
+                if (isInstance_Object(i.object, &Class_LabelWidget)) {
+                    iLabelWidget *label = i.object;
+                    updateSize_LabelWidget(label);
+                }
             }
         }
-        /* Note that InputWidget uses the `tight` flag to adjust its inner padding. */
-        /* TODO: Is this redundant? See `updateMetrics_Window_()`. */
-        const int embedButtonWidth = width_Widget(findChild_Widget(navBar, "navbar.lock"));
-        setContentPadding_InputWidget(findChild_Widget(navBar, "url"),
-                                      embedButtonWidth * 0.75f,
-                                      embedButtonWidth * 0.75f);
+        updateUrlInputContentPadding_(navBar);
     }
     if (isPhone) {
         static const char *buttons[] = { "navbar.back",  "navbar.forward", "navbar.sidebar",
                                          "navbar.ident", "navbar.home",    "navbar.menu" };
-        iWidget *toolBar = findWidget_App("toolbar");
+        iWidget *toolBar = findWidget_Root("toolbar");
         setVisualOffset_Widget(toolBar, 0, 0, 0);
         setFlags_Widget(toolBar, hidden_WidgetFlag, isLandscape_App());
         iForIndices(i, buttons) {
@@ -594,7 +625,8 @@ static void updateNavBarSize_(iWidget *navBar) {
         urlBar->rect.size.x = iMini(navBarAvailableSpace_(navBar), 167 * gap_UI);
         arrange_Widget(navBar);
     }
-    refresh_Widget(navBar);
+    updateMetrics_Root(navBar->root); /* tight flags changed; need to resize URL bar contents */
+//    refresh_Widget(navBar);
     postCommand_Widget(navBar, "layout.changed id:navbar");
 }
 
@@ -747,17 +779,12 @@ static iBool handleSearchBarCommands_(iWidget *searchBar, const char *cmd) {
     else if (equal_Command(cmd, "focus.gained")) {
         if (pointer_Command(cmd) == findChild_Widget(searchBar, "find.input")) {
             if (!isVisible_Widget(searchBar)) {
-//                setFlags_Widget(searchBar, hidden_WidgetFlag | disabled_WidgetFlag, iFalse);
-//                arrange_Widget(root_Widget(searchBar));
-//                postRefresh_App();
                 showCollapsed_Widget(searchBar, iTrue);
             }
         }
     }
     else if (equal_Command(cmd, "find.close")) {
         if (isVisible_Widget(searchBar)) {
-            //setFlags_Widget(searchBar, hidden_WidgetFlag | disabled_WidgetFlag, iTrue);
-            //arrange_Widget(searchBar->parent);
             showCollapsed_Widget(searchBar, iFalse);
             if (isFocused_Widget(findChild_Widget(searchBar, "find.input"))) {
                 setFocus_Widget(NULL);
@@ -881,15 +908,19 @@ void updateMetrics_Root(iRoot *d) {
     iWidget *url        = findChild_Widget(d->widget, "url");
     iWidget *rightEmbed = findChild_Widget(navBar, "url.rightembed");
     iWidget *embedPad   = findChild_Widget(navBar, "url.embedpad");
+    iWidget *urlButtons = findChild_Widget(navBar, "url.buttons");
     setPadding_Widget(as_Widget(url), 0, gap_UI, 0, gap_UI);
     navBar->rect.size.y = 0; /* recalculate height based on children (FIXME: shouldn't be needed) */
-    updateSize_LabelWidget((iLabelWidget *) lock);
-    setFixedSize_Widget(embedPad, init_I2(width_Widget(lock) + gap_UI / 2, 1));
-    setContentPadding_InputWidget((iInputWidget *) url, width_Widget(lock) * 0.75,
-                                  width_Widget(lock) * 0.75);
+//    updateSize_LabelWidget((iLabelWidget *) lock);
+//    updateSize_LabelWidget((iLabelWidget *) findChild_Widget(navBar, "reload"));
+//    arrange_Widget(urlButtons);
+    setFixedSize_Widget(embedPad, init_I2(width_Widget(urlButtons) + gap_UI / 2, 1));
+//    setContentPadding_InputWidget((iInputWidget *) url, width_Widget(lock) * 0.75,
+//                                  width_Widget(lock) * 0.75);
     rightEmbed->rect.pos.y = gap_UI;
     updatePadding_Root(d);
     arrange_Widget(d->widget);
+    updateUrlInputContentPadding_(navBar);
     postRefresh_App();
 }
 
@@ -992,6 +1023,7 @@ void createUserInterface_Root(iRoot *d) {
             setFlags_Widget(as_Widget(url), resizeHeightOfChildren_WidgetFlag, iTrue);
             setSelectAllOnFocus_InputWidget(url, iTrue);
             setId_Widget(as_Widget(url), "url");
+            setMaxLayoutLines_InputWidget(url, 1);
             setUrlContent_InputWidget(url, iTrue);
             setNotifyEdits_InputWidget(url, iTrue);
             setTextCStr_InputWidget(url, "gemini://");
@@ -1017,7 +1049,7 @@ void createUserInterface_Root(iRoot *d) {
                                      moveToParentRightEdge_WidgetFlag);
             /* Feeds refresh indicator is inside the input field. */ {
                 iLabelWidget *queryInd =
-                    new_LabelWidget(uiTextAction_ColorEscape "\u21d2 ${status.query}", NULL);
+                    new_LabelWidget(uiTextAction_ColorEscape "${status.query} " return_Icon, NULL);
                 setId_Widget(as_Widget(queryInd), "input.indicator.search");
                 setBackgroundColor_Widget(as_Widget(queryInd), uiBackground_ColorId);
                 setFrameColor_Widget(as_Widget(queryInd), uiTextAction_ColorId);
@@ -1036,7 +1068,7 @@ void createUserInterface_Root(iRoot *d) {
                 setNoAutoMinHeight_LabelWidget(fprog, iTrue);
                 addChildFlags_Widget(rightEmbed,
                                      iClob(fprog),
-                                     collapse_WidgetFlag | frameless_WidgetFlag | hidden_WidgetFlag);
+                                     collapse_WidgetFlag | hidden_WidgetFlag | frameless_WidgetFlag);
             }
             /* Download progress indicator is also inside the input field, but hidden normally. */ {
                 iLabelWidget *progress = new_LabelWidget(uiTextCaution_ColorEscape "00.000 ${mb}", NULL);
@@ -1045,7 +1077,7 @@ void createUserInterface_Root(iRoot *d) {
                 setAlignVisually_LabelWidget(progress, iTrue);
                 setNoAutoMinHeight_LabelWidget(progress, iTrue);
                 addChildFlags_Widget(
-                    rightEmbed, iClob(progress), collapse_WidgetFlag);
+                    rightEmbed, iClob(progress), collapse_WidgetFlag | hidden_WidgetFlag);
             }
             /* Pinning indicator. */ {
                 iLabelWidget *pin = new_LabelWidget(uiTextAction_ColorEscape leftHalf_Icon, NULL);
@@ -1055,39 +1087,46 @@ void createUserInterface_Root(iRoot *d) {
                 setNoAutoMinHeight_LabelWidget(pin, iTrue);
                 addChildFlags_Widget(rightEmbed,
                                      iClob(pin),
-                                     collapse_WidgetFlag | tight_WidgetFlag | frameless_WidgetFlag);
+                                     collapse_WidgetFlag | hidden_WidgetFlag | tight_WidgetFlag |
+                                     frameless_WidgetFlag);
+                updateSize_LabelWidget(pin);
+            }
+            iWidget *urlButtons = new_Widget();
+            setId_Widget(urlButtons, "url.buttons");
+            setFlags_Widget(urlButtons, embedFlags | arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag, iTrue);
+            /* Mobile page menu. */
+            if (deviceType_App() != desktop_AppDeviceType) {
+                iLabelWidget *pageMenuButton;
+                /* In a mobile layout, the reload button is replaced with the Page/Ellipsis menu. */
+                pageMenuButton = makeMenuButton_LabelWidget(pageMenuCStr_,
+                    (iMenuItem[]){
+                        { upArrow_Icon " ${menu.parent}", navigateParent_KeyShortcut, "navigate.parent" },
+                        { upArrowBar_Icon " ${menu.root}", navigateRoot_KeyShortcut, "navigate.root" },
+                        { timer_Icon " ${menu.autoreload}", 0, 0, "document.autoreload.menu" },
+                        { "---", 0, 0, NULL },
+                        { bookmark_Icon " ${menu.page.bookmark}", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
+                        { star_Icon " ${menu.page.subscribe}", subscribeToPage_KeyModifier, "feeds.subscribe" },
+                        { book_Icon " ${menu.page.import}", 0, 0, "bookmark.links confirm:1" },
+                        { globe_Icon " ${menu.page.translate}", 0, 0, "document.translate" },
+                        { "---", 0, 0, NULL },
+                        { "${menu.page.copyurl}", 0, 0, "document.copylink" },
+                        { "${menu.page.copysource}", 'c', KMOD_PRIMARY, "copy" },
+                        { download_Icon " " saveToDownloads_Label, SDLK_s, KMOD_PRIMARY, "document.save" } },
+                    12);
+                setId_Widget(as_Widget(pageMenuButton), "pagemenubutton");
+                setFont_LabelWidget(pageMenuButton, uiContentBold_FontId);
+                setAlignVisually_LabelWidget(pageMenuButton, iTrue);
+                addChildFlags_Widget(urlButtons, iClob(pageMenuButton), embedFlags);
+                updateSize_LabelWidget(pageMenuButton);
             }
             /* Reload button. */ {
-                iLabelWidget *reload;
-                if (deviceType_App() == desktop_AppDeviceType) {
-                    reload = newIcon_LabelWidget(reloadCStr_, 0, 0, "navigate.reload");
-                }
-                else {
-                    /* In a mobile layout, the reload button is replaced with the Page/Ellipsis menu. */
-                    reload = makeMenuButton_LabelWidget(pageMenuCStr_,
-                                                        (iMenuItem[]){
-                                                            { reload_Icon " ${menu.reload}", reload_KeyShortcut, "navigate.reload" },
-                                                            { timer_Icon " ${menu.autoreload}", 0, 0, "document.autoreload.menu" },
-                                                            { "---", 0, 0, NULL },
-                                                            { upArrow_Icon " ${menu.parent}", navigateParent_KeyShortcut, "navigate.parent" },
-                                                            { upArrowBar_Icon " ${menu.root}", navigateRoot_KeyShortcut, "navigate.root" },
-                                                            { "---", 0, 0, NULL },
-                                                            { pin_Icon " ${menu.page.bookmark}", SDLK_d, KMOD_PRIMARY, "bookmark.add" },
-                                                            { star_Icon " ${menu.page.subscribe}", subscribeToPage_KeyModifier, "feeds.subscribe" },
-                                                            { book_Icon " ${menu.page.import}", 0, 0, "bookmark.links confirm:1" },
-                                                            { globe_Icon " ${menu.page.translate}", 0, 0, "document.translate" },
-                                                            { "---", 0, 0, NULL },
-                                                            { "${menu.page.copyurl}", 0, 0, "document.copylink" },
-                                                            { "${menu.page.copysource}", 'c', KMOD_PRIMARY, "copy" },
-                                                            { download_Icon " " saveToDownloads_Label, SDLK_s, KMOD_PRIMARY, "document.save" } },
-                                                        14);
-                    setFont_LabelWidget((iLabelWidget *) reload, uiContentBold_FontId);
-                    setAlignVisually_LabelWidget((iLabelWidget *) reload, iTrue);
-                }
+                iLabelWidget *reload = newIcon_LabelWidget(reloadCStr_, 0, 0, "navigate.reload");
                 setId_Widget(as_Widget(reload), "reload");
-                addChildFlags_Widget(as_Widget(url), iClob(reload), embedFlags | moveToParentRightEdge_WidgetFlag);
+                addChildFlags_Widget(urlButtons, iClob(reload), embedFlags);
                 updateSize_LabelWidget(reload);
             }
+            addChildFlags_Widget(as_Widget(url), iClob(urlButtons), moveToParentRightEdge_WidgetFlag);
+            arrange_Widget(urlButtons);
             setId_Widget(addChild_Widget(rightEmbed, iClob(makePadding_Widget(0))), "url.embedpad");
         }
         if (deviceType_App() != desktop_AppDeviceType) {
@@ -1195,7 +1234,9 @@ void createUserInterface_Root(iRoot *d) {
         setFlags_Widget(toolBar, moveToParentBottomEdge_WidgetFlag |
                                      parentCannotResizeHeight_WidgetFlag |
                                      resizeWidthOfChildren_WidgetFlag |
-                                     arrangeHeight_WidgetFlag | arrangeHorizontal_WidgetFlag, iTrue);
+                                     arrangeHeight_WidgetFlag | arrangeHorizontal_WidgetFlag |
+                                     commandOnClick_WidgetFlag |
+                                     drawBackgroundToBottom_WidgetFlag, iTrue);
         setBackgroundColor_Widget(toolBar, tmBannerBackground_ColorId);
         setId_Widget(addChildFlags_Widget(toolBar,
                                           iClob(newLargeIcon_LabelWidget("\U0001f870", "navigate.back")),
@@ -1210,7 +1251,7 @@ void createUserInterface_Root(iRoot *d) {
                                           frameless_WidgetFlag),
                      "toolbar.ident");
         setId_Widget(addChildFlags_Widget(toolBar,
-                                          iClob(newLargeIcon_LabelWidget("\U0001f588", "toolbar.showview arg:-1")),
+                                          iClob(newLargeIcon_LabelWidget(book_Icon, "toolbar.showview arg:-1")),
                                           frameless_WidgetFlag | commandOnClick_WidgetFlag),
                      "toolbar.view");
         iLabelWidget *menuButton = makeMenuButton_LabelWidget("\U0001d362", phoneNavMenuItems_,
@@ -1223,17 +1264,17 @@ void createUserInterface_Root(iRoot *d) {
             setFlags_Widget(i.object, noBackground_WidgetFlag, iTrue);
             setTextColor_LabelWidget(i.object, tmBannerIcon_ColorId);
             //            setBackgroundColor_Widget(i.object, tmBannerSideTitle_ColorId);
-            }
+        }
         const iMenuItem items[] = {
-            { pin_Icon " ${sidebar.bookmarks}", 0, 0, "toolbar.showview arg:0" },
+            { book_Icon " ${sidebar.bookmarks}", 0, 0, "toolbar.showview arg:0" },
             { star_Icon " ${sidebar.feeds}", 0, 0, "toolbar.showview arg:1" },
             { clock_Icon " ${sidebar.history}", 0, 0, "toolbar.showview arg:2" },
             { page_Icon " ${toolbar.outline}", 0, 0, "toolbar.showview arg:4" },
-            };
+        };
         iWidget *menu = makeMenu_Widget(findChild_Widget(toolBar, "toolbar.view"),
                                         items, iElemCount(items));
         setId_Widget(menu, "toolbar.menu"); /* view menu */
-        }
+    }
 #endif
     updatePadding_Root(d);
     /* Global context menus. */ {
@@ -1267,11 +1308,11 @@ void createUserInterface_Root(iRoot *d) {
             { "${menu.split.merge}", '1', 0, "ui.split arg:0" },
             { "${menu.split.swap}", SDLK_x, 0, "ui.split swap:1" },
             { "---", 0, 0, NULL },
-            { "${menu.split.horizontal}", '2', 0, "ui.split arg:3 axis:0" },
+            { "${menu.split.horizontal}", '3', 0, "ui.split arg:3 axis:0" },
             { "${menu.split.horizontal} 1:2", SDLK_d, 0, "ui.split arg:1 axis:0" },
             { "${menu.split.horizontal} 2:1", SDLK_e, 0, "ui.split arg:2 axis:0" },
             { "---", 0, 0, NULL },
-            { "${menu.split.vertical}", '3', 0, "ui.split arg:3 axis:1" },
+            { "${menu.split.vertical}", '2', 0, "ui.split arg:3 axis:1" },
             { "${menu.split.vertical} 1:2", SDLK_f, 0, "ui.split arg:1 axis:1" },
             { "${menu.split.vertical} 2:1", SDLK_r, 0, "ui.split arg:2 axis:1" },
         }, 10);
@@ -1298,6 +1339,11 @@ void createUserInterface_Root(iRoot *d) {
     }
     updateMetrics_Root(d);
     updateNavBarSize_(navBar);
+    if (deviceType_App() == phone_AppDeviceType) {
+        const float sidebarWidth = width_Widget(root) / (float) gap_UI;
+        setWidth_SidebarWidget(findChild_Widget(root, "sidebar"), sidebarWidth);
+        setWidth_SidebarWidget(findChild_Widget(root, "sidebar2"), sidebarWidth);
+    }
 }
 
 void showToolbars_Root(iRoot *d, iBool show) {

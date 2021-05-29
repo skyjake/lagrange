@@ -44,8 +44,9 @@ struct Impl_GmIdentity {
     int flags;
 };
 
-iBool   isUsed_GmIdentity   (const iGmIdentity *);
-iBool   isUsedOn_GmIdentity (const iGmIdentity *, const iString *url);
+iBool   isUsed_GmIdentity           (const iGmIdentity *);
+iBool   isUsedOn_GmIdentity         (const iGmIdentity *, const iString *url);
+iBool   isUsedOnDomain_GmIdentity   (const iGmIdentity *, const iRangecc domain);
 
 void    setUse_GmIdentity   (iGmIdentity *, const iString *url, iBool use);
 void    clearUse_GmIdentity (iGmIdentity *);

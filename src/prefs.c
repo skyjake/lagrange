@@ -33,6 +33,7 @@ void init_Prefs(iPrefs *d) {
     d->accent            = cyan_ColorAccent;
     d->customFrame       = iFalse; /* needs some more work to be default */
     d->retainWindowSize  = iTrue;
+    d->uiAnimations      = iTrue;
     d->uiScale           = 1.0f; /* default set elsewhere */
     d->zoomPercent       = 100;
     d->sideIcon          = iTrue;
@@ -67,6 +68,7 @@ void init_Prefs(iPrefs *d) {
     init_String(&d->httpProxy);
     init_String(&d->downloadDir);
     init_String(&d->searchUrl);
+    init_String(&d->symbolFontPath);
     /* TODO: Add some platform-specific common locations? */
     if (fileExistsCStr_FileInfo("/etc/ssl/cert.pem")) { /* macOS */
         setCStr_String(&d->caFile, "/etc/ssl/cert.pem");
@@ -74,9 +76,15 @@ void init_Prefs(iPrefs *d) {
     if (fileExistsCStr_FileInfo("/etc/ssl/certs")) {
         setCStr_String(&d->caPath, "/etc/ssl/certs");
     }
+    /*
+#if defined (iPlatformAppleDesktop)
+    setCStr_String(&d->symbolFontPath, "/System/Library/Fonts/Apple Symbols.ttf");
+#endif
+     */
 }
 
 void deinit_Prefs(iPrefs *d) {
+    deinit_String(&d->symbolFontPath);
     deinit_String(&d->searchUrl);
     deinit_String(&d->geminiProxy);
     deinit_String(&d->gopherProxy);

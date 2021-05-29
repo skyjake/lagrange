@@ -94,6 +94,9 @@ static void parseNavigationLinks_Gempub_(const iGempub *d) {
                 set_String(&link.url, absoluteUrl_String(url_GmRequest(index), collectNewRange_String(url)));
                 setRange_String(&link.label, capturedRange_RegExpMatch(&m, 2));
                 trim_String(&link.label);
+                if (isEmpty_String(&link.label)) {
+                    setRange_String(&link.label, url);                    
+                }
                 pushBack_Array(d->navLinks, &link);
             }
             iEndCollect();
@@ -213,6 +216,10 @@ iBool isOpen_Gempub(const iGempub *d) {
     return d->arch != NULL;
 }
 
+const iString *property_Gempub(const iGempub *d, enum iGempubProperty prop) {
+    return &d->props[prop];
+}
+
 const iString *coverPageUrl_Gempub(const iGempub *d) {
     return &d->baseUrl;
 }
@@ -232,6 +239,39 @@ const iString *navStartLinkUrl_Gempub(const iGempub *d) {
     return &((const iGempubNavLink *) constFront_Array(d->navLinks))->url;
 }
 
+size_t navSize_Gempub(const iGempub *d) {
+    parseNavigationLinks_Gempub_(d);
+    return size_Array(d->navLinks);
+}
+
+size_t navIndex_Gempub(const iGempub *d, const iString *url) {
+    parseNavigationLinks_Gempub_(d);
+    const iString *normUrl = withSpacesEncoded_String(url);
+    iConstForEach(Array, i, d->navLinks) {
+        const iGempubNavLink *nav = i.value;
+        if (equalCase_String(&nav->url, normUrl)) {
+            return index_ArrayConstIterator(&i);
+        }
+    }
+    return iInvalidPos;
+}
+
+const iString *navLinkUrl_Gempub(const iGempub *d, size_t index) {
+    parseNavigationLinks_Gempub_(d);
+    if (index < size_Array(d->navLinks)) {
+        return &constValue_Array(d->navLinks, index, iGempubNavLink).url;
+    }
+    return NULL;
+}
+
+const iString *navLinkLabel_Gempub(const iGempub *d, size_t index) {
+    parseNavigationLinks_Gempub_(d);
+    if (index < size_Array(d->navLinks)) {
+        return &constValue_Array(d->navLinks, index, iGempubNavLink).label;
+    }
+    return NULL;    
+}
+
 static iBool hasProperty_Gempub_(const iGempub *d, enum iGempubProperty prop) {
     return !isEmpty_String(&d->props[prop]);
 }
@@ -243,7 +283,7 @@ static void appendProperty_Gempub_(const iGempub *d, const char *label,
     }
 }
 
-static iBool isRemote_Gempub_(const iGempub *d) {
+iBool isRemote_Gempub(const iGempub *d) {
     return !equalCase_Rangecc(urlScheme_String(&d->baseUrl), "file");
 }
 
@@ -258,7 +298,7 @@ iString *coverPageSource_Gempub(const iGempub *d) {
     }
     appendCStr_String(out, "\n");
     appendProperty_Gempub_(d, "${gempub.meta.author}:", author_GempubProperty, out);
-    if (!isRemote_Gempub_(d)) {
+    if (!isRemote_Gempub(d)) {
         appendFormat_String(out, "\n=> %s " book_Icon " ${gempub.cover.view}\n",
                             cstr_String(indexPageUrl_Gempub(d)));
         if (hasProperty_Gempub_(d, cover_GempubProperty)) {
@@ -269,12 +309,12 @@ iString *coverPageSource_Gempub(const iGempub *d) {
     else {
         iString *key = collectNew_String(); /* TODO: add a helper for this */
         toString_Sym(SDLK_s, KMOD_PRIMARY, key);
-        appendCStr_String(out, "\n${gempub.cover.viewlocal} ");
-        appendFormat_String(out,
-                            cstr_Lang("error.unsupported.suggestsave"),
-                            cstr_String(key),
-                            saveToDownloads_Label);
-        appendCStr_String(out, "\n");
+        appendCStr_String(out, "\n${gempub.cover.viewlocal}\n");
+//        appendFormat_String(out,
+//                            cstr_Lang("error.unsupported.suggestsave"),
+//                            cstr_String(key),
+//                            saveToDownloads_Label);
+//        appendCStr_String(out, "\n");
     }
     appendCStr_String(out, "\n## ${gempub.cover.aboutbook}\n");
     appendProperty_Gempub_(d, "${gempub.meta.version}:", version_GempubProperty, out);

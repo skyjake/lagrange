@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-05-06 09:39+0000\n"
+"PO-Revision-Date: 2021-05-24 13:18+0000\n"
 "Last-Translator: Olga Smirnova <mistresssilvara@hotmail.com>\n"
 "Language-Team: Interlingua <http://weblate.skyjake.fi/projects/lagrange/ui/"
 "ia/>\n"
@@ -1549,3 +1549,9 @@ msgstr "Editor"
 
 msgid "gempub.meta.pubdate"
 msgstr "Data de publication"
+
+msgid "lang.pl"
+msgstr "Polonese"
+
+msgid "gempub.cover.viewlocal"
+msgstr "On pote vider iste libro Gempub post que lo es salvate localmente."

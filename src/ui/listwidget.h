@@ -73,6 +73,7 @@ iAnyObject *        hoverItem_ListWidget        (iListWidget *);
 size_t              numItems_ListWidget         (const iListWidget *);
 int                 visCount_ListWidget         (const iListWidget *);
 size_t              itemIndex_ListWidget        (const iListWidget *, iInt2 pos);
+iRect               itemRect_ListWidget         (const iListWidget *, size_t index);
 const iAnyObject *  constItem_ListWidget        (const iListWidget *, size_t index);
 const iAnyObject *  constHoverItem_ListWidget   (const iListWidget *);
 size_t              hoverItemIndex_ListWidget   (const iListWidget *);

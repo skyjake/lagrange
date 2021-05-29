@@ -42,7 +42,8 @@ iDeclareType(Visited)
 iDeclareType(Window)
 
 /* Command line options strings. */
-#define listTabUrls_CommandLineOption   "list-tab-urls;L"
+#define listTabUrls_CommandLineOption       "list-tab-urls;L"
+#define openUrlOrSearch_CommandLineOption   "url-or-search;u"
 
 enum iAppDeviceType {
     desktop_AppDeviceType,
@@ -57,14 +58,15 @@ enum iAppEventMode {
 
 enum iUserEventCode {
     command_UserEventCode = 1,
-    refresh_UserEventCode = 2,
-    asleep_UserEventCode = 3,
+    refresh_UserEventCode,
+    arrange_UserEventCode,
+    asleep_UserEventCode,
     /* The start of a potential touch tap event is notified via a custom event because
        sending SDL_MOUSEBUTTONDOWN would be premature: we don't know how long the tap will
        take, it could turn into a tap-and-hold for example. */
-    widgetTapBegins_UserEventCode = 4,
-    widgetTouchEnds_UserEventCode = 5, /* finger lifted, but momentum may continue */
-    immediateRefresh_UserEventCode = 6, /* refresh even though more events are pending */
+    widgetTapBegins_UserEventCode,
+    widgetTouchEnds_UserEventCode, /* finger lifted, but momentum may continue */
+    immediateRefresh_UserEventCode, /* refresh even though more events are pending */
 };
 
 const iString *execPath_App     (void);
@@ -109,6 +111,7 @@ typedef void (*iTickerFunc)(iAny *);
 
 iAny *      findWidget_App      (const char *id);
 void        addTicker_App       (iTickerFunc ticker, iAny *context);
+void        addTickerRoot_App   (iTickerFunc ticker, iRoot *root, iAny *context);
 void        removeTicker_App    (iTickerFunc ticker, iAny *context);
 void        postRefresh_App     (void);
 void        postImmediateRefresh_App(void);

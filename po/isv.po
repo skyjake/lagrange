@@ -1,0 +1,193 @@
+msgid ""
+msgstr ""
+"Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
+"PO-Revision-Date: 2021-05-13 04:58+0000\n"
+"Last-Translator: Waterrail <maksymiliankrol03@gmail.com>\n"
+"Language-Team: Interslavic <http://weblate.skyjake.fi/projects/lagrange/ui/"
+"isv/>\n"
+"Language: isv\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=n==1? 0 : n==2 ? 1 : 2;\n"
+"X-Generator: Weblate 4.5.1\n"
+
+msgid "doc.pre.nocaption"
+msgstr "Vvodno sformatovany napis bez opisa"
+
+# Inline download status message.
+msgid "media.download.warnclose"
+msgstr "Dostava bude odrěčeny pri zamknutju tutoj karticy."
+
+#, c-format
+msgid "feeds.list.counts"
+msgid_plural "feeds.list.counts.n"
+msgstr[0] "Jeste podpisyvani na %zu tasmě sodrživajučej %%s.\n"
+msgstr[1] "Jeste podpisyvani na %zu tasmu sodrživajuču %%s.\n"
+msgstr[2] "Jeste podpisyvani na %zu tasmah sodrživajučih %%s.\n"
+
+# Link download progress message.
+msgid "doc.fetching"
+msgstr "Dostavanje"
+
+#, c-format
+msgid "doc.archive"
+msgstr "%s je spakovany arhivom."
+
+msgid "doc.archive.view"
+msgstr "Prěgleděti sodržanje arhiva"
+
+# Inline download status message.
+msgid "media.download.complete"
+msgstr "Dostava ukončena."
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.title"
+msgstr "Nazva"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.artist"
+msgstr "Artist"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.date"
+msgstr "Data"
+
+# used as adjective, n is 8, 16, 24, 32, or 64
+#, c-format
+msgid "n.bit"
+msgstr "%d-bitny"
+
+msgid "numbertype.integer"
+msgstr "cělo"
+
+msgid "numbertype.float"
+msgstr "s plavajučeju komoju"
+
+# Hertz, unit for frequency values
+msgid "hz"
+msgstr "Hz"
+
+# Used in about:feeds.
+msgid "feeds.list.title"
+msgstr "Vpisy v tasmě"
+
+msgid "archive.exit"
+msgstr "Izhod iz arhiva"
+
+msgid "bookmark.delete"
+msgstr "Dodati zakladku"
+
+msgid "bookmark.tag.linksplit"
+msgstr "Linky otvarjane v děljenom oknom"
+
+msgid "bookmarks.reload"
+msgstr "Izsinhronizovati s žrlom zakladok"
+
+msgid "dir.empty"
+msgstr "Toj katalog je pusty."
+
+#, c-format
+msgid "dir.summary"
+msgid_plural "dir.summary.n"
+msgstr[0] "Toj katalog sodrživa %zu element."
+msgstr[1] "Toj katalog sodrživa %zu elementa."
+msgstr[2] "Toj katalog sodrživa %zu elementy."
+
+msgid "dlg.autoreload"
+msgstr "Izberite interval automatičnogo ponovnogo nakladanja toj karticy."
+
+msgid "dlg.bookmark.icon"
+msgstr "Ikona:"
+
+msgid "dlg.bookmark.save"
+msgstr "Zapisati zakladku"
+
+msgid "dlg.certimport.help"
+msgstr ""
+"Vstavite privatny ključ i/abo svědočstvo v formatu PEM,\n"
+"abo spustite fajl .crt/.key na oblast okna."
+
+# Alt-text of the preformatted logo.
+msgid "about.logo"
+msgstr "ASCII-art: rěč \"Lagrange\" natipkana velikym fontom"
+
+msgid "about.powered"
+msgstr "Ustanovjeny na SDL 2, OpenSSL i ☕️"
+
+msgid "about.tagline"
+msgstr "Krasny klient Gemini"
+
+msgid "about.version"
+msgstr "Versija"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.genre"
+msgstr "Žanr"
+
+msgid "cancel"
+msgstr "Anulovati"
+
+#, c-format
+msgid "days.ago"
+msgid_plural "days.ago.n"
+msgstr[0] "%d dni nazad"
+msgstr[1] "%d dnja nazad"
+msgstr[2] "%d denj nazad"
+
+msgid "dismiss"
+msgstr "Zamknuti"
+
+msgid "bookmark.tag.home"
+msgstr "Upotrěbiti kako glavnu stranicu"
+
+msgid "bookmark.tag.remote"
+msgstr "Upotrěbiti kako žrlo zakladok"
+
+msgid "bookmark.tag.sub"
+msgstr "Podpiš tasmu"
+
+msgid "bookmark.untag.home"
+msgstr "Odstraniti glavnu stranicu"
+
+msgid "bookmark.untag.remote"
+msgstr "Odstraniti žrlo zakladok"
+
+msgid "bookmark.untag.sub"
+msgstr "Odrěči podpisku tasmy"
+
+msgid "dlg.cert.fingerprint"
+msgstr "Kopirovati odtisk prsta"
+
+msgid "dlg.cert.trust"
+msgstr "Dověrjati"
+
+msgid "dlg.certimport.import"
+msgstr "Importovati"
+
+msgid "dlg.certimport.nocert"
+msgstr "Nemaje svědočstva"
+
+msgid "dlg.certimport.nokey"
+msgstr "Nemaje privatnogo ključa"
+
+msgid "dlg.certimport.notes"
+msgstr "Zapisky:"
+
+msgid "dlg.certimport.notfound"
+msgstr "Svědočstvo abo privatny ključ ne najdeny."
+
+msgid "dlg.certimport.notfound.page"
+msgstr "Nemaje svědočstva/ključa na sejčasnoj stranici."
+
+msgid "bookmark.title.blank"
+msgstr "Pusta stranica"
+
+msgid "dlg.bookmark.title"
+msgstr "Nazva:"
+
+msgid "dlg.bookmark.tags"
+msgstr "Etikety:"
+
+msgid "dlg.bookmark.url"
+msgstr "URL:"
