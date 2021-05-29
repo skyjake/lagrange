@@ -45,6 +45,44 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.5" date="2021-05-29">
+            <description>
+                <p>This release contains several user interface improvements.</p>
+                <ul>
+                    <li>Improved identity management: revised certificate creation UI,
+                        taking a new identity into use immediately, sidebar context
+                        menu shows used URLs as clickable menu items, exporting
+                        identities.</li>
+                    <li>Improved text input: inserting line breaks, input fields use word
+                        wrapping and expand vertically, query URL length
+                        indicator.</li>
+                    <li>Show buttons in the page footer area for performing relevant
+                        actions conveniently.</li>
+                    <li>Animated showing of sidebars and dialogs.</li>
+                    <li>Font updates, setting for custom fallback TrueType font.</li>
+                    <li>Gempub: Linear navigation through the book.</li>
+                    <li>New UI language: Polish.</li>
+                </ul>
+                <p>The full release notes can be viewed inside the app by opening
+                    the "about:version" page.</p>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.5.0</url>
+        </release>
+        <release version="1.4.2" date="2021-05-22">
+            <description>
+                <p>Bug fixes:</p>
+                <ul>
+                    <li>UI colors were all black on the first run.</li>
+                    <li>Right mouse click on an inactive split does not have any
+                        effect.</li>
+                    <li>Action buttons showing under the Help link in an empty
+                        Identities sidebar.</li>
+                    <li>Potential crash at shutdown.</li>
+                    <li>Minor UI layout issues.</li>
+                </ul>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.4.2</url>
+        </release>
         <release version="1.4.1" date="2021-05-13">
             <description>
                 <p>Bug fixes:</p>
