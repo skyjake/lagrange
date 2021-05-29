@@ -582,7 +582,6 @@ iLocalDef iFont *characterFont_Font_(iFont *d, iChar ch, uint32_t *glyphIndex) {
         return d;
     }
     const int fallbacks[] = {
-        smolEmoji_FontId,
         notoEmoji_FontId,
         symbols2_FontId,
         symbols_FontId
@@ -636,8 +635,11 @@ iLocalDef iFont *characterFont_Font_(iFont *d, iChar ch, uint32_t *glyphIndex) {
             return sys;
         }
     }
-//    iFont *font = font_Text_(iosevka_FontId + d->sizeId);
-//    *glyphIndex = glyphIndex_Font_(font, ch);
+    /* Final fallback. */
+    iFont *font = font_Text_(iosevka_FontId + d->sizeId);
+    if (d != font) {
+        *glyphIndex = glyphIndex_Font_(font, ch);
+    }
     if (!*glyphIndex) {
         fprintf(stderr, "failed to find %08x (%lc)\n", ch, (int)ch); fflush(stderr);
     }
