@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-05-24 13:18+0000\n"
+"PO-Revision-Date: 2021-05-29 02:37+0000\n"
 "Last-Translator: Olga Smirnova <mistresssilvara@hotmail.com>\n"
 "Language-Team: Occidental <http://weblate.skyjake.fi/projects/lagrange/ui/ie/"
 ">\n"
@@ -783,7 +783,7 @@ msgid "dlg.newident.until"
 msgstr "Valid til:"
 
 msgid "hint.newident.date"
-msgstr "AAAA-MM-DD HH:MM:SS"
+msgstr "AAAA o AAAA-MM-DD"
 
 msgid "hint.newident.optional"
 msgstr "facultativ"
@@ -1592,3 +1592,54 @@ msgstr "Selecter li mode de fension"
 
 msgid "lang.pl"
 msgstr "Polonesi"
+
+msgid "keys.split.menu.horiz21"
+msgstr "Fendet vise: horizontalmen 2:1"
+
+msgid "close"
+msgstr "Cluder"
+
+msgid "ident.export"
+msgstr "Exportar"
+
+msgid "error.server.msg"
+msgstr "Li servitor respondet per li missage:"
+
+msgid "dlg.input.linebreak"
+msgstr "Rupter li linea"
+
+msgid "dlg.newident.scope"
+msgstr "Usar sur:"
+
+msgid "dlg.newident.more"
+msgstr "Plu…"
+
+msgid "prefs.userfont"
+msgstr "Fonde simbolic:"
+
+msgid "dlg.newident.scope.domain"
+msgstr "Li actual dominia"
+
+msgid "dlg.newident.scope.page"
+msgstr "Li actual págine"
+
+msgid "dlg.newident.scope.none"
+msgstr "Ne usat"
+
+msgid "keys.split.menu.vert"
+msgstr "Fendet vise: verticalmen"
+
+msgid "keys.split.menu.vert12"
+msgstr "Fendet vise: verticalmen 1:2"
+
+msgid "keys.split.menu.vert21"
+msgstr "Fendet vise: verticalmen 2:1"
+
+msgid "keys.split.menu.merge"
+msgstr "Fendet vise: unir cartes"
+
+msgid "keys.split.menu.horiz"
+msgstr "Fendet vise: horizontalmen"
+
+msgid "keys.split.menu.horiz12"
+msgstr "Fendet vise: horizontalmen 1:2"
