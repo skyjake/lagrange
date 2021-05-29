@@ -1591,7 +1591,7 @@ static void updateFromCachedResponse_DocumentWidget_(iDocumentWidget *d, float n
 }
 
 static iBool updateFromHistory_DocumentWidget_(iDocumentWidget *d) {
-    const iRecentUrl *recent = findUrl_History(d->mod.history, d->mod.url);
+    const iRecentUrl *recent = findUrl_History(d->mod.history, withSpacesEncoded_String(d->mod.url));
     if (recent && recent->cachedResponse) {
         updateFromCachedResponse_DocumentWidget_(d, recent->normScrollY, recent->cachedResponse);
         return iTrue;
