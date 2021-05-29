@@ -1599,6 +1599,10 @@ static iBool updateFromHistory_DocumentWidget_(iDocumentWidget *d) {
     else if (!isEmpty_String(d->mod.url)) {
         fetch_DocumentWidget_(d);
     }
+    if (recent) {
+        /* Retain scroll position in refetched content as well. */
+        d->initNormScrollY = recent->normScrollY;
+    }
     return iFalse;
 }
 
