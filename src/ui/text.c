@@ -578,6 +578,13 @@ iLocalDef iFont *characterFont_Font_(iFont *d, iChar ch, uint32_t *glyphIndex) {
             return smol;
         }
     }
+    /* Manual exceptions. */ {
+        if (ch >= 0x2190 && ch <= 0x2193 /* arrows */) {
+            d = font_Text_(iosevka_FontId + d->sizeId);
+            *glyphIndex = glyphIndex_Font_(d, ch);
+            return d;
+        }
+    }
     if ((*glyphIndex = glyphIndex_Font_(d, ch)) != 0) {
         return d;
     }
