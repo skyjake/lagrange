@@ -7,32 +7,45 @@
 # Release notes
 
 ## 1.5
-* New UI language: Polish.
+* Added "Smol Emoji" and "Noto Sans Symbols" fonts, removed Symbola.
+⚠️ Many Emoji and pictographs defined in the last five years are currently missing.
+* Added document footer buttons: on certain pages (e.g., error messages) show relevant actions in the bottom of the page. For example, if a certificate is required for viewing a page, show buttons for creating a new identity and showing the Identities sidebar.
+* Error pages include the human-readable text sent by the server.
+* Disregard old feed entries whose unread status would have been forgotten.
+* Added UI language: Polish.
+
+Identity management:
+* Revised New Identity dialog. An option is provided to automatically use the new identity on the current domain/page. The additional fields are hidden by default.
+* Improved usability of Identities sidebar. No more accidental activations: left-clicking an identity opens the context menu without making any changes. The context menu shows each active URL as a menu item for easy access. Identity icons reflect the usage status: all identities used on the current domain get highlighted in addition to the currently used one.
+* Identities can be exported: certificate and private key are opened in a new tab in plain text PEM format.
+* Fixed issues with identity usage: a higher-up URL overrides and deactivates all contained URLs to avoid redundant activation.
+
+Text input:
 * Revised text input widgets: added support for multiple lines, and when entering user response to a query, show how many bytes are remaining for the response URL about to be submitted. In dialogs, input fields expand vertically instead of scrolling their content horizontally.
 * Input widgets allow inserting newlines using Shift+Return.
 * Disallow sending query responses that are too long (1024 bytes maximum).
 * Shift-click to select a range of text in input widgets (i.e, without dragging).
-* Footer buttons: on certain pages (e.g., error messages) show relevant actions in the bottom of the page. For example, if a certificate is required for viewing a page, show buttons for creating a new identity and showing the Identities sidebar.
-* Gempub: Linear navigation through the book with Left/Right arrow keys and via footer buttons. The navigation order is determined by links on the Gempub index page.
+
+Rendering:
+* Animate showing and hiding of sidebars and dialogs. Animations are enabled by default, by can be disabled with Preferences > Interface > Animations.
+* Added setting for a custom TrueType symbol font for any missing characters. Note: Must be a .TTF file — OpenType and bitmap fonts are not supported.
 * Link navigation shortcut icons (home row and numbered) are drawn with a consistent appearance.
-* Animate showing and hiding of sidebars and dialogs.
-* macOS: Workaround for a Metal rendering issue.
-* Added "Smol Emoji" and "Noto Sans Symbols" fonts, removed Symbola. Note: Many Emoji and pictographs added in recent years are still missing.
-* Added setting for a custom TrueType symbol font for any missing characters.
-* Feeds: Disregard old entries whose unread status would have been forgotten.
 * Improved icon alignment in lists.
-* Added --url-or-search (-u) command line option. Depending on the parameter, either open an URL or make a search query.
-* Open all URLs/files specified on the command line in new tabs, and raise the window if the app is already running. (Kudos to Alyssa Rosenzweig.)
+* Reduced line gap between word-wrapped top-level headings.
+* Modal dialog background dimming fades in/out smoothly.
+* macOS: Workaround for an issue that causes UI refresh to pause occasionally for ~100 ms.
+
+Split view:
 * Added keybindings for split view menu items.
 * Changed default split view keys to conform to Emacs (3 for horizontal, 2 for vertical split).
-* Improved New Identity dialog. An option is provided to automatically use the new identity of the current domain/page. The additional fields are hidden by default.
-* Improved usability of Identities sidebar. No more accidental activations: left-clicking an identity opens the context menu without making any changes. The context menu shows each active URL as a menu item for easy access. Identity icons reflect the usage status: all identities used on the current domain get highlighted in addition to the currently used one.
-* Identities can be exported: certificate and private key are opened in a new tab in plain text PEM format.
-* Fixed issues with identity usage: a higher-up URL overrides and deactivates URLs with all the contained paths to avoid redundant activation.
-* Error pages include the human-readable text sent by the server.
-* Reduced line gap between word-wrapped top-level headings.
-* Improvements for touch screen event handling in split view mode.
-* Modal dialog background dimming fades in/out smoothly.
+* Fixes and improvements for touch screen event handling in split view mode.
+
+Command line:
+* Added --url-or-search (-u) command line option. Depending on the parameter, either open an URL or make a search query.
+* Open all URLs/files specified on the command line in new tabs, and raise the window if the app is already running. (Kudos to Alyssa Rosenzweig.)
+
+Gempub:
+* Linear navigation through the book with Left/Right arrow keys and via footer buttons. The navigation order is determined by links on the Gempub index page.
 
 ## 1.4.1
 * Fixed removing the left side split by closing all its tabs. The URL input field got confused about which tab was currently open, and the wrong theme was active.
