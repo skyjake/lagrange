@@ -1698,6 +1698,8 @@ iWidget *makePreferences_Widget(void) {
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.customframe}")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.customframe")));
 #endif
+        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.animate}")));
+        addChild_Widget(values, iClob(makeToggle_Widget("prefs.animate")));
         makeTwoColumnHeading_("${heading.prefs.scrolling}", headings, values);
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.smoothscroll}")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.smoothscroll")));

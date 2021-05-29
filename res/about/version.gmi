@@ -13,7 +13,8 @@
 * Disallow sending query responses that are too long (1024 bytes maximum).
 * Shift-click to select a range of text in input widgets (i.e, without dragging).
 * Footer buttons: on certain pages (e.g., error messages) show relevant actions in the bottom of the page. For example, if a certificate is required for viewing a page, show buttons for creating a new identity and showing the Identities sidebar.
-* Link navigation shortcut icons are drawn with a consistent appearance.
+* Gempub: Linear navigation through the book with Left/Right arrow keys and via footer buttons. The navigation order is determined by links on the Gempub index page.
+* Link navigation shortcut icons (home row and numbered) are drawn with a consistent appearance.
 * Animate showing and hiding of sidebars and dialogs.
 * macOS: Workaround for a Metal rendering issue.
 * Added "Smol Emoji" and "Noto Sans Symbols" fonts, removed Symbola. Note: Many Emoji and pictographs added in recent years are still missing.

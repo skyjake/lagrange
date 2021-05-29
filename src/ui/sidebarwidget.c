@@ -936,7 +936,8 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
         if (arg_Command(cmd) && isVisible_Widget(w)) {
             return iTrue;
         }
-        const iBool isAnimated = argLabel_Command(cmd, "noanim") == 0 &&
+        const iBool isAnimated = prefs_App()->uiAnimations &&
+                                 argLabel_Command(cmd, "noanim") == 0 &&
                                  (deviceType_App() != phone_AppDeviceType);
         int visX = 0;
         if (isVisible_Widget(w)) {

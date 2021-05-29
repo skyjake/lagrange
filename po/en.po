@@ -1160,6 +1160,9 @@ msgstr "UI scale factor:"
 msgid "prefs.customframe"
 msgstr "Custom window frame:"
 
+msgid "prefs.animate"
+msgstr "Animations:"
+
 msgid "prefs.retainwindow"
 msgstr "Retain placement:"
 
