@@ -820,6 +820,13 @@ static iRangecc currentHeading_DocumentWidget_(const iDocumentWidget *d) {
     return heading;
 }
 
+static int updateScrollMax_DocumentWidget_(iDocumentWidget *d) {
+    arrange_Widget(d->footerButtons); /* scrollMax depends on footer height */
+    const int scrollMax = scrollMax_DocumentWidget_(d);
+    setMax_SmoothScroll(&d->scrollY, scrollMax);
+    return scrollMax;
+}
+
 static void updateVisible_DocumentWidget_(iDocumentWidget *d) {
     iChangeFlags(d->flags,
                  centerVertically_DocumentWidgetFlag,
@@ -827,7 +834,7 @@ static void updateVisible_DocumentWidget_(iDocumentWidget *d) {
                      !isSuccess_GmStatusCode(d->sourceStatus));
     const iRangei visRange  = visibleRange_DocumentWidget_(d);
     const iRect   bounds    = bounds_Widget(as_Widget(d));
-    const int     scrollMax = scrollMax_DocumentWidget_(d);
+    const int     scrollMax = updateScrollMax_DocumentWidget_(d);
     /* Reposition the footer buttons as appropriate. */
     /* TODO: You can just position `footerButtons` here completely without having to get
        `Widget` involved with the offset in any way. */
@@ -837,7 +844,6 @@ static void updateVisible_DocumentWidget_(iDocumentWidget *d) {
         const int   hPad      = (width_Rect(bounds) - iMin(120 * gap_UI, width_Rect(docBounds))) / 2;
         const int   vPad      = 3 * gap_UI;
         setPadding_Widget(d->footerButtons, hPad, vPad, hPad, vPad);
-        arrange_Widget(d->footerButtons);
         d->footerButtons->animOffsetRef = (scrollMax > 0 ? &d->scrollY.pos : NULL);
         if (scrollMax <= 0) {
             d->footerButtons->animOffsetRef = NULL;
@@ -848,7 +854,6 @@ static void updateVisible_DocumentWidget_(iDocumentWidget *d) {
             d->footerButtons->rect.pos.y = size_GmDocument(d->doc).y + 2 * gap_UI * d->pageMargin;
         }
     }
-    setMax_SmoothScroll(&d->scrollY, scrollMax);
     setRange_ScrollWidget(d->scroll, (iRangei){ 0, scrollMax });
     const int docSize = size_GmDocument(d->doc).y;
     setThumb_ScrollWidget(d->scroll,
@@ -1066,7 +1071,7 @@ static void makeFooterButtons_DocumentWidget_(iDocumentWidget *d, const iMenuIte
                         resizeWidthOfChildren_WidgetFlag | arrangeHeight_WidgetFlag |
                         fixedPosition_WidgetFlag | resizeToParentWidth_WidgetFlag,
                     iTrue);
-    setBackgroundColor_Widget(d->footerButtons, tmBackground_ColorId);
+    //setBackgroundColor_Widget(d->footerButtons, tmBackground_ColorId);
     for (size_t i = 0; i < count; ++i) {
         iLabelWidget *button = addChildFlags_Widget(
             d->footerButtons,
@@ -1079,6 +1084,7 @@ static void makeFooterButtons_DocumentWidget_(iDocumentWidget *d, const iMenuIte
     addChild_Widget(as_Widget(d), iClob(d->footerButtons));
     arrange_Widget(d->footerButtons);
     arrange_Widget(w);
+    updateVisible_DocumentWidget_(d); /* final placement for the buttons */
 }
 
 static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode code,
@@ -1222,7 +1228,7 @@ static void postProcessRequestContent_DocumentWidget_(iDocumentWidget *d, iBool 
     }
     if (d->sourceGempub) {
         if (equal_String(d->mod.url, coverPageUrl_Gempub(d->sourceGempub))) {
-            if (equalCase_Rangecc(urlScheme_String(d->mod.url), "file")) {
+            if (!isRemote_Gempub(d->sourceGempub)) {
                 iArray *items = collectNew_Array(sizeof(iMenuItem));
                 pushBack_Array(
                     items,
@@ -1243,6 +1249,19 @@ static void postProcessRequestContent_DocumentWidget_(iDocumentWidget *d, iBool 
                                         cstr_String(navLinkUrl_Gempub(d->sourceGempub, 0))) });
                 }
                 makeFooterButtons_DocumentWidget_(d, constData_Array(items), size_Array(items));
+            }
+            else {
+                makeFooterButtons_DocumentWidget_(
+                    d,
+                    (iMenuItem[]){ { book_Icon " ${menu.save.downloads.open}",
+                                     SDLK_s,
+                                     KMOD_PRIMARY | KMOD_SHIFT,
+                                     "document.save open:1" },
+                                   { download_Icon " " saveToDownloads_Label,
+                                     SDLK_s,
+                                     KMOD_PRIMARY,
+                                     "document.save" } },
+                    2);
             }
             if (preloadCoverImage_Gempub(d->sourceGempub, d->doc)) {
                 redoLayout_GmDocument(d->doc);
@@ -2048,7 +2067,8 @@ static iBool fetchNextUnfetchedImage_DocumentWidget_(iDocumentWidget *d) {
     return iFalse;
 }
 
-static void saveToDownloads_(const iString *url, const iString *mime, const iBlock *content) {
+static const iString *saveToDownloads_(const iString *url, const iString *mime, const iBlock *content,
+                                       iBool showDialog) {
     const iString *savePath = downloadPathForUrl_App(url, mime);
     /* Write the file. */ {
         iFile *f = new_File(savePath);
@@ -2060,17 +2080,22 @@ static void saveToDownloads_(const iString *url, const iString *mime, const iBlo
 #if defined (iPlatformAppleMobile)
             exportDownloadedFile_iOS(savePath);
 #else
-            const iMenuItem items[2] = {
-                { "${dlg.save.opendownload}", 0, 0,
-                    format_CStr("!open url:%s", cstrCollect_String(makeFileUrl_String(savePath))) },
-                { "${dlg.message.ok}", 0, 0, "message.ok" },
-            };
-            makeMessage_Widget(uiHeading_ColorEscape "${heading.save}",
-                               format_CStr("%s\n${dlg.save.size} %.3f %s", cstr_String(path_File(f)),
-                                           isMega ? size / 1.0e6f : (size / 1.0e3f),
-                                           isMega ? "${mb}" : "${kb}"),
-                               items, iElemCount(items));
+            if (showDialog) {
+                const iMenuItem items[2] = {
+                    { "${dlg.save.opendownload}", 0, 0,
+                        format_CStr("!open url:%s", cstrCollect_String(makeFileUrl_String(savePath))) },
+                    { "${dlg.message.ok}", 0, 0, "message.ok" },
+                };
+                makeMessage_Widget(uiHeading_ColorEscape "${heading.save}",
+                                   format_CStr("%s\n${dlg.save.size} %.3f %s",
+                                               cstr_String(path_File(f)),
+                                               isMega ? size / 1.0e6f : (size / 1.0e3f),
+                                               isMega ? "${mb}" : "${kb}"),
+                                   items,
+                                   iElemCount(items));
+            }
 #endif
+            return savePath;
         }
         else {
             makeSimpleMessage_Widget(uiTextCaution_ColorEscape "${heading.save.error}",
@@ -2078,6 +2103,7 @@ static void saveToDownloads_(const iString *url, const iString *mime, const iBlo
         }
         iRelease(f);
     }
+    return collectNew_String();
 }
 
 static void addAllLinks_(void *context, const iGmRun *run) {
@@ -2556,7 +2582,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         const iMediaRequest *media  = findMediaRequest_DocumentWidget_(d, linkId);
         if (media) {
             saveToDownloads_(url_GmRequest(media->req), meta_GmRequest(media->req),
-                             body_GmRequest(media->req));
+                             body_GmRequest(media->req), iTrue);
         }
     }
     else if (equal_Command(cmd, "document.save") && document_App() == d) {
@@ -2565,7 +2591,13 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                                      "${dlg.save.incomplete}");
         }
         else if (!isEmpty_Block(&d->sourceContent)) {
-            saveToDownloads_(d->mod.url, &d->sourceMime, &d->sourceContent);
+            const iBool    doOpen   = argLabel_Command(cmd, "open");
+            const iString *savePath = saveToDownloads_(d->mod.url, &d->sourceMime,
+                                                       &d->sourceContent, !doOpen);
+            if (!isEmpty_String(savePath) && doOpen) {
+                postCommandf_Root(
+                    w->root, "!open url:%s", cstrCollect_String(makeFileUrl_String(savePath)));
+            }
         }
         return iTrue;
     }
@@ -2675,6 +2707,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equal_Command(cmd, "scroll.bottom") && document_App() == d) {
+        updateScrollMax_DocumentWidget_(d); /* scrollY.max might not be fully updated */
         init_Anim(&d->scrollY.pos, d->scrollY.max);
         invalidate_VisBuf(d->visBuf);
         clampScroll_DocumentWidget_(d);
@@ -3188,6 +3221,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 iArray items;
                 init_Array(&items, sizeof(iMenuItem));
                 if (d->contextLink) {
+                    /* Context menu for a link. */
                     const iString *linkUrl  = linkUrl_GmDocument(d->doc, d->contextLink->linkId);
 //                    const int      linkFlags = linkFlags_GmDocument(d->doc, d->contextLink->linkId);
                     const iRangecc scheme   = urlScheme_String(linkUrl);

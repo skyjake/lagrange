@@ -53,6 +53,7 @@ void        close_Gempub            (iGempub *);
 void        setBaseUrl_Gempub       (iGempub *, const iString *baseUrl);
 
 iBool       isOpen_Gempub           (const iGempub *);
+iBool       isRemote_Gempub         (const iGempub *);
 iString *   coverPageSource_Gempub  (const iGempub *);
 iBool       preloadCoverImage_Gempub(const iGempub *, iGmDocument *doc);
 

@@ -191,6 +191,9 @@ msgstr "Save to Files"
 msgid "menu.save.downloads"
 msgstr "Save to Downloads"
 
+msgid "menu.save.downloads.open"
+msgstr "Save to Downloads and Open File"
+
 msgid "menu.sidebar"
 msgstr "Toggle Sidebar"
 
