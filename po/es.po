@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-05-24 13:18+0000\n"
+"PO-Revision-Date: 2021-06-04 14:18+0000\n"
 "Last-Translator: Wally Hackenslacker <mastor89@protonmail.com>\n"
 "Language-Team: Spanish <http://weblate.skyjake.fi/projects/lagrange/ui/es/>\n"
 "Language: es\n"
@@ -919,7 +919,7 @@ msgid "dlg.newident.until"
 msgstr "Válido hasta:"
 
 msgid "hint.newident.date"
-msgstr "YYYY-MM-DD HH:MM:SS"
+msgstr "YYYY ó YYYY-MM-DD"
 
 msgid "hint.newident.optional"
 msgstr "opcional"
@@ -1609,3 +1609,42 @@ msgstr "Pestaña Derecha"
 
 msgid "dir.empty"
 msgstr "Este directorio está vacío."
+
+msgid "prefs.animate"
+msgstr "Animaciones:"
+
+msgid "close"
+msgstr "Cerrar"
+
+msgid "ident.export"
+msgstr "Exportar"
+
+msgid "error.server.msg"
+msgstr "El servidor respondió con el mensaje:"
+
+msgid "dlg.input.linebreak"
+msgstr "Salto de linea"
+
+msgid "dlg.newident.scope"
+msgstr "Usar en:"
+
+msgid "prefs.userfont"
+msgstr "Fuente simbólica:"
+
+msgid "keys.split.item"
+msgstr "Menú de vista dividida:"
+
+msgid "dlg.newident.scope.domain"
+msgstr "Dominio Actual"
+
+msgid "dlg.newident.scope.page"
+msgstr "Página Actual"
+
+msgid "dlg.newident.scope.none"
+msgstr "Sin Usar"
+
+msgid "dlg.newident.more"
+msgstr "Más…"
+
+msgid "menu.save.downloads.open"
+msgstr "Guardar a Descargas y Abrir Archivo"
