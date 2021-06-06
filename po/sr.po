@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-05-29 02:37+0000\n"
+"PO-Revision-Date: 2021-06-01 07:18+0000\n"
 "Last-Translator: Страхиња Радић <contact@strahinja.org>\n"
 "Language-Team: Serbian <http://weblate.skyjake.fi/projects/lagrange/ui/sr/>\n"
 "Language: sr\n"
@@ -1673,3 +1673,12 @@ msgstr "Сервер је одговорио поруком:"
 
 msgid "dlg.input.linebreak"
 msgstr "Прелом реда"
+
+msgid "prefs.animate"
+msgstr "Анимације:"
+
+msgid "keys.split.item"
+msgstr "Мени раздвојеног погледа:"
+
+msgid "menu.save.downloads.open"
+msgstr "Сачувај у фолдеру за преузимања и отвори"
