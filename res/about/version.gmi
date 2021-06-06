@@ -6,6 +6,10 @@
 ```
 # Release notes
 
+## 1.5.1
+* Updated UI translations.
+* Updated "Smol Emoji" font with new and improved glyphs.
+
 ## 1.5
 * Added "Smol Emoji" and "Noto Sans Symbols" fonts, removed Symbola.
 ⚠️ Many Emoji and pictographs defined in the last five years are currently missing.
