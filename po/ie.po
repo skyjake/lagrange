@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-05-29 02:37+0000\n"
+"PO-Revision-Date: 2021-06-04 14:18+0000\n"
 "Last-Translator: Olga Smirnova <mistresssilvara@hotmail.com>\n"
 "Language-Team: Occidental <http://weblate.skyjake.fi/projects/lagrange/ui/ie/"
 ">\n"
@@ -1643,3 +1643,18 @@ msgstr "Fendet vise: horizontalmen"
 
 msgid "keys.split.menu.horiz12"
 msgstr "Fendet vise: horizontalmen 1:2"
+
+msgid "prefs.animate"
+msgstr "Animationes:"
+
+msgid "keys.split.item"
+msgstr "Menú de fendet vise:"
+
+msgid "menu.save.downloads.open"
+msgstr "Gardar al Descargates e aperter"
+
+msgid "link.side.newtab"
+msgstr "Aperter in un nov carte láteralmen"
+
+msgid "prefs.pinsplit"
+msgstr "Fixation de fendet vise:"

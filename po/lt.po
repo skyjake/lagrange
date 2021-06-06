@@ -1,0 +1,125 @@
+msgid ""
+msgstr ""
+"Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
+"PO-Revision-Date: 2021-06-04 14:18+0000\n"
+"Last-Translator: Arns Udovič <zordsdavini@arns.lt>\n"
+"Language-Team: Lithuanian <http://weblate.skyjake.fi/projects/lagrange/ui/lt/"
+">\n"
+"Language: lt\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n % 10 == 1 && (n % 100 < 11 || n % 100 > "
+"19)) ? 0 : ((n % 10 >= 2 && n % 10 <= 9 && (n % 100 < 11 || n % 100 > 19)) ? "
+"1 : 2);\n"
+"X-Generator: Weblate 4.5.1\n"
+
+msgid "doc.pre.nocaption"
+msgstr "Neformatuotas tekstas be aprašymo"
+
+# Link download progress message.
+msgid "doc.fetching"
+msgstr "Kraunama"
+
+#, c-format
+msgid "doc.archive"
+msgstr "%s yra suspaustas archyvas."
+
+msgid "doc.archive.view"
+msgstr "Peržiūrėti archyvo turinį"
+
+# Inline download status message.
+msgid "media.download.warnclose"
+msgstr "Parsiuntimas bus nutrauktas, jei uždarysite skirtuką."
+
+# Inline download status message.
+msgid "media.download.complete"
+msgstr "Parsiuntimas baigtas."
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.title"
+msgstr "Pavadinimas"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.artist"
+msgstr "Atlikėjas"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.genre"
+msgstr "Žanras"
+
+# Used in inline audio player metadata popup.
+msgid "audio.meta.date"
+msgstr "Data"
+
+# Hertz, unit for frequency values
+msgid "hz"
+msgstr "Hz"
+
+msgid "feeds.list.refreshtime.now"
+msgstr "Paskutinis atnaujinimas įvyko vos prieš akimirką."
+
+#, c-format
+msgid "feeds.list.refreshtime"
+msgstr "Paskutinis atnaujinimas įvyko %s."
+
+#, c-format
+msgid "minutes.ago"
+msgid_plural "minutes.ago.n"
+msgstr[0] "prieš %d minutę"
+msgstr[1] "prieš %d minutes"
+msgstr[2] "prieš %d minučių"
+
+#, c-format
+msgid "hours.ago"
+msgid_plural "hours.ago.n"
+msgstr[0] "prieš %d valandą"
+msgstr[1] "preš %d valandas"
+msgstr[2] "prieš %d valandų"
+
+#, c-format
+msgid "days.ago"
+msgid_plural "days.ago.n"
+msgstr[0] "prieš %d dieną"
+msgstr[1] "prieš %d dienas"
+msgstr[2] "prieš %d dienų"
+
+# Alt-text of the preformatted logo.
+msgid "about.logo"
+msgstr "ASCII menas: žodis „Lagrange“, kuriame naudojamas didelis šriftas"
+
+msgid "about.tagline"
+msgstr "Graži Gemini naršyklė"
+
+msgid "about.version"
+msgstr "Versija"
+
+msgid "cancel"
+msgstr "Atšaukti"
+
+msgid "close"
+msgstr "Uždaryti"
+
+msgid "dlg.message.ok"
+msgstr "Tęsti"
+
+msgid "dlg.default"
+msgstr " OK "
+
+msgid "toggle.yes"
+msgstr "Taip"
+
+msgid "toggle.no"
+msgstr "Ne"
+
+msgid "menu.title.file"
+msgstr "Failas"
+
+msgid "menu.title.edit"
+msgstr "Redaguoti"
+
+msgid "menu.title.bookmarks"
+msgstr "Žymės"
+
+msgid "gempub.meta.license"
+msgstr "Licenzija"
