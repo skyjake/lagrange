@@ -45,6 +45,16 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.5.1" date="2021-06-06">
+            <description>
+                <p>Resource update:</p>
+                <ul>
+                    <li>Latest UI translation strings.</li>
+                    <li>More glyphs in the Smol Emoji font.</li>
+                </ul>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.5.1</url>
+        </release>
         <release version="1.5" date="2021-05-29">
             <description>
                 <p>This release contains several user interface improvements.</p>
