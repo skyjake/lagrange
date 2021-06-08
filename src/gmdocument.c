@@ -1488,6 +1488,7 @@ static void normalize_GmDocument(iGmDocument *d) {
         appendCStr_String(normalized, "\n");
     }
     set_String(&d->source, collect_String(normalized));
+    normalize_String(&d->source); /* NFC */
 }
 
 void setUrl_GmDocument(iGmDocument *d, const iString *url) {
