@@ -6,6 +6,9 @@
 ```
 # Release notes
 
+## 1.5.2
+* Normalize page contents (NFC) to avoid most common issues with diacritics.
+
 ## 1.5.1
 * Updated UI translations.
 * Updated "Smol Emoji" font with new and improved glyphs.
