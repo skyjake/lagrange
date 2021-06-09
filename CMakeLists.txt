@@ -396,6 +396,7 @@ Categories=Network
 Exec=${CMAKE_INSTALL_PREFIX}/bin/lagrange %U
 Terminal=false
 Type=Application
+StartupWMClass=lagrange
 Icon=fi.skyjake.Lagrange
 MimeType=x-scheme-handler/gemini;x-scheme-handler/gopher
 ")
