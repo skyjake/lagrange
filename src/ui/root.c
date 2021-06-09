@@ -128,7 +128,7 @@ static const iMenuItem phoneNavMenuItems_[] = {
 static const iMenuItem identityButtonMenuItems_[] = {
     { "${menu.identity.notactive}", 0, 0, "ident.showactive" },
     { "---", 0, 0, NULL },
-    { add_Icon " ${menu.identity.new}", SDLK_n, KMOD_PRIMARY | KMOD_SHIFT, "ident.new" },
+    { add_Icon " ${menu.identity.new}", newIdentity_KeyShortcut, "ident.new" },
     { "${menu.identity.import}", SDLK_i, KMOD_PRIMARY | KMOD_SHIFT, "ident.import" },
     { "---", 0, 0, NULL },
     { person_Icon " ${menu.show.identities}", 0, 0, "toolbar.showident" },
@@ -138,7 +138,7 @@ static const iMenuItem identityButtonMenuItems_[] = {
     { "${menu.identity.notactive}", 0, 0, "ident.showactive" },
     { "---", 0, 0, NULL },
 # if !defined (iPlatformAppleDesktop)
-    { add_Icon " ${menu.identity.new}", SDLK_n, KMOD_PRIMARY | KMOD_SHIFT, "ident.new" },
+    { add_Icon " ${menu.identity.new}", newIdentity_KeyShortcut, "ident.new" },
     { "${menu.identity.import}", SDLK_i, KMOD_PRIMARY | KMOD_SHIFT, "ident.import" },
     { "---", 0, 0, NULL },
     { person_Icon " ${menu.show.identities}", '4', KMOD_PRIMARY, "sidebar.mode arg:3 show:1" },
@@ -156,10 +156,10 @@ static const char *pageMenuCStr_ = midEllipsis_Icon;
 /* TODO: A preference for these, maybe? */
 static const char *stopSeqCStr_[] = {
     /* Corners */
-    uiTextCaution_ColorEscape "\U0000230c",
-    uiTextCaution_ColorEscape "\U0000230d",
-    uiTextCaution_ColorEscape "\U0000230f",
-    uiTextCaution_ColorEscape "\U0000230e",
+    uiTextCaution_ColorEscape "\U0000231c",
+    uiTextCaution_ColorEscape "\U0000231d",
+    uiTextCaution_ColorEscape "\U0000231f",
+    uiTextCaution_ColorEscape "\U0000231e",
 #if 0
     /* Rotating arrow */
     uiTextCaution_ColorEscape "\U00002b62",
@@ -275,6 +275,9 @@ void destroyPending_Root(iRoot *d) {
         iWidget *widget = *i.value;
         if (!isFinished_Anim(&widget->visualOffset)) {
             continue;
+        }
+        if (widget->flags & keepOnTop_WidgetFlag) {
+            removeOne_PtrArray(onTop_Root(widget->root), widget);
         }
         if (widget->parent) {
             removeChild_Widget(widget->parent, widget);
@@ -435,11 +438,11 @@ static void updateNavBarIdentity_(iWidget *navBar) {
     setFlags_Widget(tool, selected_WidgetFlag, ident != NULL);
     /* Update menu. */
     iLabelWidget *idItem = child_Widget(findChild_Widget(button, "menu"), 0);
+    const iString *subjectName = ident ? name_GmIdentity(ident) : NULL;
     setTextCStr_LabelWidget(
         idItem,
-        ident ? format_CStr(uiTextAction_ColorEscape "%s",
-                            cstrCollect_String(subject_TlsCertificate(ident->cert)))
-              : "${menu.identity.notactive}");
+        subjectName ? format_CStr(uiTextAction_ColorEscape "%s", cstr_String(subjectName))
+                    : "${menu.identity.notactive}");
     setFlags_Widget(as_Widget(idItem), disabled_WidgetFlag, !ident);
 }
 
@@ -1046,7 +1049,7 @@ void createUserInterface_Root(iRoot *d) {
                                      moveToParentRightEdge_WidgetFlag);
             /* Feeds refresh indicator is inside the input field. */ {
                 iLabelWidget *queryInd =
-                    new_LabelWidget(uiTextAction_ColorEscape "${status.query} \u21a9", NULL);
+                    new_LabelWidget(uiTextAction_ColorEscape "${status.query} " return_Icon, NULL);
                 setId_Widget(as_Widget(queryInd), "input.indicator.search");
                 setBackgroundColor_Widget(as_Widget(queryInd), uiBackground_ColorId);
                 setFrameColor_Widget(as_Widget(queryInd), uiTextAction_ColorId);
@@ -1305,11 +1308,11 @@ void createUserInterface_Root(iRoot *d) {
             { "${menu.split.merge}", '1', 0, "ui.split arg:0" },
             { "${menu.split.swap}", SDLK_x, 0, "ui.split swap:1" },
             { "---", 0, 0, NULL },
-            { "${menu.split.horizontal}", '2', 0, "ui.split arg:3 axis:0" },
+            { "${menu.split.horizontal}", '3', 0, "ui.split arg:3 axis:0" },
             { "${menu.split.horizontal} 1:2", SDLK_d, 0, "ui.split arg:1 axis:0" },
             { "${menu.split.horizontal} 2:1", SDLK_e, 0, "ui.split arg:2 axis:0" },
             { "---", 0, 0, NULL },
-            { "${menu.split.vertical}", '3', 0, "ui.split arg:3 axis:1" },
+            { "${menu.split.vertical}", '2', 0, "ui.split arg:3 axis:1" },
             { "${menu.split.vertical} 1:2", SDLK_f, 0, "ui.split arg:1 axis:1" },
             { "${menu.split.vertical} 2:1", SDLK_r, 0, "ui.split arg:2 axis:1" },
         }, 10);

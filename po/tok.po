@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-05-10 06:26+0000\n"
+"PO-Revision-Date: 2021-06-01 07:18+0000\n"
 "Last-Translator: jan Anja <cyber@sysrq.in>\n"
 "Language-Team: Toki Pona <http://weblate.skyjake.fi/projects/lagrange/ui/tok/"
 ">\n"
@@ -877,7 +877,7 @@ msgid "prefs.saturation"
 msgstr "kule:"
 
 msgid "prefs.headingfont"
-msgstr "nasin lukin pi sitelen suli:"
+msgstr "nasin lukin tawa sitelen suli:"
 
 msgid "prefs.font"
 msgstr "nasin lukin tawa sitelen:"
@@ -1572,3 +1572,45 @@ msgstr[0] "ijo %zu li lon poki ni."
 
 msgid "keys.tab.close.other"
 msgstr "o pini e poki ante"
+
+msgid "lang.pl"
+msgstr "toki Posuka"
+
+msgid "prefs.userfont"
+msgstr "sitelen TTF:"
+
+msgid "dlg.newident.scope.page"
+msgstr "lipu ni"
+
+msgid "dlg.newident.scope.none"
+msgstr "lipu ala"
+
+msgid "dlg.newident.scope.domain"
+msgstr "mun ni"
+
+msgid "prefs.animate"
+msgstr "tawa namako:"
+
+msgid "menu.save.downloads.open"
+msgstr "o awen li open e lipu"
+
+msgid "keys.split.item"
+msgstr "ijo kipisi:"
+
+msgid "ident.export"
+msgstr "o pana"
+
+msgid "error.server.msg"
+msgstr "ilo pana li toki e ni:"
+
+msgid "dlg.input.linebreak"
+msgstr "linja sin"
+
+msgid "close"
+msgstr "o pini"
+
+msgid "dlg.newident.more"
+msgstr "namako…"
+
+msgid "dlg.newident.scope"
+msgstr "o kepeken e ona lon:"

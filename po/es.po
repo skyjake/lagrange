@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-05-05 03:55+0000\n"
+"PO-Revision-Date: 2021-06-04 14:18+0000\n"
 "Last-Translator: Wally Hackenslacker <mastor89@protonmail.com>\n"
 "Language-Team: Spanish <http://weblate.skyjake.fi/projects/lagrange/ui/es/>\n"
 "Language: es\n"
@@ -919,7 +919,7 @@ msgid "dlg.newident.until"
 msgstr "Válido hasta:"
 
 msgid "hint.newident.date"
-msgstr "YYYY-MM-DD HH:MM:SS"
+msgstr "YYYY ó YYYY-MM-DD"
 
 msgid "hint.newident.optional"
 msgstr "opcional"
@@ -1560,3 +1560,91 @@ msgstr "Idioma"
 
 msgid "gempub.meta.license"
 msgstr "Licencia"
+
+msgid "lang.pl"
+msgstr "Polaco"
+
+#, c-format
+msgid "doc.archive"
+msgstr "%s es un archivo comprimido."
+
+msgid "doc.archive.view"
+msgstr "Ver el contenido del archivo"
+
+msgid "bookmark.tag.linksplit"
+msgstr "Abrir enlaces a un lado"
+
+msgid "lang.tok"
+msgstr "Toki Pona"
+
+msgid "archive.exit"
+msgstr "Salir del archivo"
+
+#, c-format
+msgid "archive.summary"
+msgid_plural "archive.summary.n"
+msgstr[0] "Este archivo contiene %zu item y su tamaño comprimido es de %.1f MB."
+msgstr[1] "Este archivo contiene %zu items y su tamaño comprimido es de %.1f MB."
+
+#, c-format
+msgid "dir.summary"
+msgid_plural "dir.summary.n"
+msgstr[0] "Este directorio contiene %zu item."
+msgstr[1] "Este directorio contiene %zu items."
+
+msgid "keys.tab.close.other"
+msgstr "Cerrar otras pestañas"
+
+msgid "prefs.pinsplit"
+msgstr "Fijar pestaña para vista dividida:"
+
+msgid "prefs.pinsplit.none"
+msgstr "Ninguna"
+
+msgid "prefs.pinsplit.left"
+msgstr "Pestaña Izquierda"
+
+msgid "prefs.pinsplit.right"
+msgstr "Pestaña Derecha"
+
+msgid "dir.empty"
+msgstr "Este directorio está vacío."
+
+msgid "prefs.animate"
+msgstr "Animaciones:"
+
+msgid "close"
+msgstr "Cerrar"
+
+msgid "ident.export"
+msgstr "Exportar"
+
+msgid "error.server.msg"
+msgstr "El servidor respondió con el mensaje:"
+
+msgid "dlg.input.linebreak"
+msgstr "Salto de linea"
+
+msgid "dlg.newident.scope"
+msgstr "Usar en:"
+
+msgid "prefs.userfont"
+msgstr "Fuente simbólica:"
+
+msgid "keys.split.item"
+msgstr "Menú de vista dividida:"
+
+msgid "dlg.newident.scope.domain"
+msgstr "Dominio Actual"
+
+msgid "dlg.newident.scope.page"
+msgstr "Página Actual"
+
+msgid "dlg.newident.scope.none"
+msgstr "Sin Usar"
+
+msgid "dlg.newident.more"
+msgstr "Más…"
+
+msgid "menu.save.downloads.open"
+msgstr "Guardar a Descargas y Abrir Archivo"

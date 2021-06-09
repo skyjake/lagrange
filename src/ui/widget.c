@@ -59,6 +59,7 @@ void init_Widget(iWidget *d) {
     d->minSize        = zero_I2();
     d->sizeRef        = NULL;
     d->offsetRef      = NULL;
+    d->animOffsetRef  = NULL;
     d->bgColor        = none_ColorId;
     d->frameColor     = none_ColorId;
     init_Anim(&d->visualOffset, 0.0f);
@@ -100,9 +101,6 @@ static void aboutToBeDestroyed_Widget_(iWidget *d) {
     if (isFocused_Widget(d)) {
         setFocus_Widget(NULL);
         return;
-    }
-    if (flags_Widget(d) & keepOnTop_WidgetFlag) {
-        removeOne_PtrArray(onTop_Root(d->root), d);
     }
     remove_Periodic(periodic_App(), d);
     if (isHover_Widget(d)) {
@@ -771,6 +769,9 @@ static void applyVisualOffset_Widget_(const iWidget *d, iInt2 *pos) {
             pos->y += off;
         }
     }
+    if (d->animOffsetRef) {
+        pos->y -= value_Anim(d->animOffsetRef);
+    }
     if (d->flags & refChildrenOffset_WidgetFlag) {
         iConstForEach(ObjectList, i, children_Widget(d->offsetRef)) {
             const iWidget *child = i.object;
@@ -843,6 +844,12 @@ iBool containsExpanded_Widget(const iWidget *d, iInt2 windowCoord, int expand) {
         addY_I2(d->rect.size,
                 d->flags & drawBackgroundToBottom_WidgetFlag ? size_Root(d->root).y : 0)
     };
+    /* Apply the animated offset. (Visual offsets don't affect interaction.) */
+    for (const iWidget *w = d; w; w = w->parent) {
+        if (w->animOffsetRef) {
+            windowCoord.y += value_Anim(w->animOffsetRef);
+        }
+    }
     return contains_Rect(expand ? expanded_Rect(bounds, init1_I2(expand)) : bounds,
                          windowToInner_Widget(d, windowCoord));
 }
@@ -857,6 +864,9 @@ iLocalDef iBool isMouseEvent_(const SDL_Event *ev) {
 }
 
 static iBool filterEvent_Widget_(const iWidget *d, const SDL_Event *ev) {
+    if (d->flags & destroyPending_WidgetFlag) {
+        return iFalse; /* no more events handled */
+    }
     const iBool isKey   = isKeyboardEvent_(ev);
     const iBool isMouse = isMouseEvent_(ev);
     if ((d->flags & disabled_WidgetFlag) || (d->flags & hidden_WidgetFlag &&
@@ -1102,8 +1112,8 @@ void drawBackground_Widget(const iWidget *d) {
         drawSoftShadow_Paint(&p, bounds_Widget(d), 12 * gap_UI, black_ColorId, 30);
     }
     const iBool isFaded = fadeBackground &&
-                          ~d->flags & noFadeBackground_WidgetFlag &&
-                          ~d->flags & destroyPending_WidgetFlag;
+                          ~d->flags & noFadeBackground_WidgetFlag;/* &&
+                          ~d->flags & destroyPending_WidgetFlag;*/
     if (isFaded) {
         iPaint p;
         init_Paint(&p);

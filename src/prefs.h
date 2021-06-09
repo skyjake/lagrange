@@ -47,6 +47,7 @@ struct Impl_Prefs {
     enum iColorAccent accent;
     iBool            customFrame; /* when LAGRANGE_ENABLE_CUSTOM_FRAME is defined */
     iBool            retainWindowSize;
+    iBool            uiAnimations;
     float            uiScale;
     int              zoomPercent;
     iBool            sideIcon;
@@ -69,6 +70,7 @@ struct Impl_Prefs {
     iString          gopherProxy;
     iString          httpProxy;
     /* Style */
+    iString          symbolFontPath;
     enum iTextFont   font;
     enum iTextFont   headingFont;
     iBool            monospaceGemini;

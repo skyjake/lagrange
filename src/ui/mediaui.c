@@ -86,7 +86,7 @@ static int drawSevenSegmentTime_(iInt2 pos, int color, int align, int seconds) {
     const int hours = seconds / 3600;
     const int mins  = (seconds / 60) % 60;
     const int secs  = seconds % 60;
-    const int font  = uiLabel_FontId;
+    const int font  = defaultBig_FontId;
     iString   num;
     init_String(&num);
     if (hours) {
@@ -102,7 +102,7 @@ static int drawSevenSegmentTime_(iInt2 pos, int color, int align, int seconds) {
     if (align == right_Alignment) {
         pos.x -= size.x;
     }
-    drawRange_Text(font, pos, color, range_String(&num));
+    drawRange_Text(font, addY_I2(pos, -gap_UI / 8), color, range_String(&num));
     deinit_String(&num);
     return size.x;
 }
@@ -123,7 +123,7 @@ void draw_PlayerUI(iPlayerUI *d, iPaint *p) {
         drawPlayerButton_(
             p, d->volumeRect, volumeChar_(volume_Player(d->player)), uiContentSymbols_FontId);
     }
-    const int   hgt       = lineHeight_Text(uiLabel_FontId);
+    const int   hgt       = lineHeight_Text(defaultBig_FontId);
     const int   yMid      = mid_Rect(d->scrubberRect).y;
     const float playTime  = time_Player(d->player);
     const float totalTime = duration_Player(d->player);
@@ -153,7 +153,8 @@ void draw_PlayerUI(iPlayerUI *d, iPaint *p) {
     const char *dot = "\u23fa";
     const int dotWidth = advance_Text(uiLabel_FontId, dot).x;
     draw_Text(uiLabel_FontId,
-              init_I2(s1 * (1.0f - normPos) + s2 * normPos - dotWidth / 2, yMid - hgt / 2),
+              init_I2(s1 * (1.0f - normPos) + s2 * normPos - dotWidth / 2,
+                      yMid - lineHeight_Text(uiLabel_FontId) / 2),
               isPaused_Player(d->player) ? dim : bright,
               dot);
     /* Volume adjustment. */
@@ -186,7 +187,8 @@ void draw_PlayerUI(iPlayerUI *d, iPaint *p) {
                         width_Rect(d->volumeSlider) - volPart,
                         dim);
         draw_Text(uiLabel_FontId,
-                  init_I2(left_Rect(d->volumeSlider) + volPart - dotWidth / 2, yMid - hgt / 2),
+                  init_I2(left_Rect(d->volumeSlider) + volPart - dotWidth / 2,
+                          yMid - lineHeight_Text(uiLabel_FontId) / 2),
                   volColor,
                   dot);
     }

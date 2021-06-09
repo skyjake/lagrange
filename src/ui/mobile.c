@@ -381,22 +381,22 @@ void finalizeSheet_Mobile(iWidget *sheet) {
         }
         /* TODO: In portrait, top panel and detail stack are all stacked together.
          
-                 Landscape Layout                 Portrait Layout
-                                              
-        ┌─────────┬──────Detail─Stack─────┐    ┌─────────┬ ─ ─ ─ ─ ┐
-        │         │┌───────────────────┐  │    │         │Detail
-        │         ││┌──────────────────┴┐ │    │         │Stack    │
-        │         │││┌──────────────────┴┐│    │         │┌──────┐
-        │         ││││                   ││    │         ││┌─────┴┐│
-        │         ││││                   ││    │         │││      │
-        │Top Panel││││                   ││    │Top Panel│││      ││
-        │         ││││      Panels       ││    │         │││Panels│
-        │         ││││                   ││    │         │││      ││
-        │         │└┤│                   ││    │         │││      │
-        │         │ └┤                   ││    │         │└┤      ││
-        │         │  └───────────────────┘│    │         │ └──────┘
-        └─────────┴───────────────────────┘    └─────────┴ ─ ─ ─ ─ ┘
-                                                          offscreen
+                 Landscape Layout                 Portrait Layout
+                                              
+        ┌─────────┬──────Detail─Stack─────┐    ┌─────────┬ ─ ─ ─ ─ ┐
+        │         │┌───────────────────┐  │    │         │Detail
+        │         ││┌──────────────────┴┐ │    │         │Stack    │
+        │         │││┌──────────────────┴┐│    │         │┌──────┐
+        │         ││││                   ││    │         ││┌─────┴┐│
+        │         ││││                   ││    │         │││      │
+        │Top Panel││││                   ││    │Top Panel│││      ││
+        │         ││││      Panels       ││    │         │││Panels│
+        │         ││││                   ││    │         │││      ││
+        │         │└┤│                   ││    │         │││      │
+        │         │ └┤                   ││    │         │└┤      ││
+        │         │  └───────────────────┘│    │         │ └──────┘
+        └─────────┴───────────────────────┘    └─────────┴ ─ ─ ─ ─ ┘
+                                                          offscreen
         */
         /* Modify the top sheet to act as a fullscreen background. */
         setPadding1_Widget(sheet, 0);
@@ -759,6 +759,9 @@ void finalizeSheet_Mobile(iWidget *sheet) {
     else {
         arrange_Widget(sheet);
     }
+    if (!useMobileSheetLayout_()) {
+        setupSheetTransition_Mobile(sheet, iTrue);
+    }
     postRefresh_App();
 }
 
@@ -784,16 +787,28 @@ void setupMenuTransition_Mobile(iWidget *sheet, iBool isIncoming) {
 }
 
 void setupSheetTransition_Mobile(iWidget *sheet, iBool isIncoming) {
-    if (isSideBySideLayout_()) {
+    if (!useMobileSheetLayout_()) {
+        if (prefs_App()->uiAnimations) {
+            setFlags_Widget(sheet, horizontalOffset_WidgetFlag, iFalse);
+            if (isIncoming) {
+                setVisualOffset_Widget(sheet, -height_Widget(sheet), 0, 0);
+                setVisualOffset_Widget(sheet, 0, 200, easeOut_AnimFlag | softer_AnimFlag);
+            }
+            else {
+                setVisualOffset_Widget(sheet, -height_Widget(sheet), 200, easeIn_AnimFlag);
+            }
+        }
         return;
     }
+    if(isSideBySideLayout_()) {
+        return;
+    }
+    setFlags_Widget(sheet, horizontalOffset_WidgetFlag, iTrue);
     if (isIncoming) {
-        setFlags_Widget(sheet, horizontalOffset_WidgetFlag, iTrue);
         setVisualOffset_Widget(sheet, size_Root(sheet->root).x, 0, 0);
         setVisualOffset_Widget(sheet, 0, 200, easeOut_AnimFlag);
     }
     else {
-        setFlags_Widget(sheet, horizontalOffset_WidgetFlag, iTrue);
         const iBool wasDragged = iAbs(value_Anim(&sheet->visualOffset)) > 0;
         setVisualOffset_Widget(sheet, size_Root(sheet->root).x, wasDragged ? 100 : 200,
                                wasDragged ? 0 : easeIn_AnimFlag);

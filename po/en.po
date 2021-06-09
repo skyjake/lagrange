@@ -108,8 +108,8 @@ msgstr "Powered by SDL 2, OpenSSL, and ☕️"
 msgid "cancel"
 msgstr "Cancel"
 
-msgid "dismiss"
-msgstr "Dismiss"
+msgid "close"
+msgstr "Close"
 
 msgid "dlg.message.ok"
 msgstr "Continue"
@@ -190,6 +190,9 @@ msgstr "Save to Files"
 # Used on desktop operating systems. "Downloads" refers to the user's configured downloads directory.
 msgid "menu.save.downloads"
 msgstr "Save to Downloads"
+
+msgid "menu.save.downloads.open"
+msgstr "Save to Downloads and Open File"
 
 msgid "menu.sidebar"
 msgstr "Toggle Sidebar"
@@ -542,8 +545,8 @@ msgstr "Stop Using on This Page"
 msgid "ident.stopuse.all"
 msgstr "Stop Using Everywhere"
 
-msgid "ident.showuse"
-msgstr "Show Usage"
+msgid "ident.export"
+msgstr "Export"
 
 msgid "heading.ident.use"
 msgstr "IDENTITY USAGE"
@@ -596,6 +599,9 @@ msgstr "Unsubscribe"
 #, c-format
 msgid "error.unsupported.suggestsave"
 msgstr "You can save it as a file to your Downloads folder: press %s or select \"%s\" from the menu."
+
+msgid "error.server.msg"
+msgstr "Server responded with the message:"
 
 msgid "heading.pageinfo"
 msgstr "PAGE INFORMATION"
@@ -916,7 +922,7 @@ msgid "dlg.newident.until"
 msgstr "Valid until:"
 
 msgid "hint.newident.date"
-msgstr "YYYY-MM-DD HH:MM:SS"
+msgstr "YYYY or YYYY-MM-DD"
 
 msgid "hint.newident.optional"
 msgstr "optional"
@@ -929,6 +935,18 @@ msgstr "Temporary:"
 
 msgid "dlg.newident.notsaved"
 msgstr "not saved to disk"
+
+msgid "dlg.newident.scope"
+msgstr "Use on:"
+
+msgid "dlg.newident.scope.domain"
+msgstr "Current Domain"
+
+msgid "dlg.newident.scope.page"
+msgstr "Current Page"
+
+msgid "dlg.newident.scope.none"
+msgstr "Not Used"
 
 msgid "dlg.newident.email"
 msgstr "Email:"
@@ -944,6 +962,9 @@ msgstr "Organization:"
 
 msgid "dlg.newident.country"
 msgstr "Country:"
+
+msgid "dlg.newident.more"
+msgstr "More…"
 
 msgid "dlg.newident.create"
 msgstr "Create Identity"
@@ -1139,6 +1160,9 @@ msgstr "UI scale factor:"
 msgid "prefs.customframe"
 msgstr "Custom window frame:"
 
+msgid "prefs.animate"
+msgstr "Animations:"
+
 msgid "prefs.retainwindow"
 msgstr "Retain placement:"
 
@@ -1200,6 +1224,9 @@ msgstr "On Dark"
 # Interpretation: (Bold links) on light (background).
 msgid "prefs.boldlink.light"
 msgstr "On Light"
+
+msgid "prefs.userfont"
+msgstr "Symbol font:"
 
 msgid "prefs.linewidth"
 msgstr "Line width:"
@@ -1365,6 +1392,9 @@ msgstr "Set view split mode"
 
 msgid "keys.split.next"
 msgstr "Switch focus to next split"
+
+msgid "keys.split.item"
+msgstr "Split view menu:"
 
 msgid "keys.hoverurl"
 msgstr "Toggle show URL on hover"

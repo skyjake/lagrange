@@ -262,7 +262,20 @@ void urlEncodePath_String(iString *d) {
     delete_String(encoded);
 }
 
-static iBool isSupportedUrlScheme_Rangecc_(iRangecc scheme) {
+iBool isKnownScheme_Rangecc(iRangecc scheme) {
+    if (isKnownUrlScheme_Rangecc(scheme)) {
+        return iTrue;
+    }
+    static const char *uriSchemes[] = { "about", "data" };
+    iForIndices(i, uriSchemes) {
+        if (equalCase_Rangecc(scheme, uriSchemes[i])) {
+            return iTrue;
+        }
+    }    
+    return iFalse;
+}
+
+iBool isKnownUrlScheme_Rangecc(iRangecc scheme) {
     static const char *schemes[] = { "gemini", "gopher", "finger", "http", "https", "file" };
     iForIndices(i, schemes) {
         if (equalCase_Rangecc(scheme, schemes[i])) {
@@ -277,7 +290,7 @@ const iString *absoluteUrl_String(const iString *d, const iString *urlMaybeRelat
     iUrl rel;
     init_Url(&orig, d);
     init_Url(&rel, urlMaybeRelative);
-    if (!isEmpty_Range(&rel.scheme) && !isSupportedUrlScheme_Rangecc_(rel.scheme) &&
+    if (!isEmpty_Range(&rel.scheme) && !isKnownUrlScheme_Rangecc(rel.scheme) &&
         isEmpty_Range(&rel.host)) {
         /* Probably not an URL, so we can't make this absolute. */
         return urlMaybeRelative;
@@ -474,6 +487,9 @@ const char *mediaType_Path(const iString *path) {
              endsWithCase_String(path, ".cpp") ||
              endsWithCase_String(path, ".hpp")) {
         return "text/plain";
+    }
+    else if (endsWithCase_String(path, ".pem")) {
+        return "application/x-pem-file";
     }
     else if (endsWithCase_String(path, ".zip")) {
         return "application/zip";

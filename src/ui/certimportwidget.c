@@ -114,6 +114,7 @@ void init_CertImportWidget(iCertImportWidget *d) {
         setFlags_Widget(w,
                         mouseModal_WidgetFlag | keepOnTop_WidgetFlag | arrangeVertical_WidgetFlag |
                             arrangeSize_WidgetFlag | centerHorizontal_WidgetFlag |
+                            parentCannotResize_WidgetFlag |
                             overflowScrollable_WidgetFlag,
                         iTrue);
     }
@@ -214,11 +215,20 @@ static iBool processEvent_CertImportWidget_(iCertImportWidget *d, const SDL_Even
             return iTrue;
         }
     }
+    if (isCommand_UserEvent(ev, "input.paste")) {
+        if (!tryImportFromClipboard_CertImportWidget_(d)) {
+            makeSimpleMessage_Widget(uiTextCaution_ColorEscape "${heading.certimport.pasted}",
+                                     "${dlg.certimport.notfound}");
+        }
+        postRefresh_App();        
+        return iTrue;
+    }
     if (isCommand_UserEvent(ev, "certimport.paste")) {
         tryImportFromClipboard_CertImportWidget_(d);
         return iTrue;
     }
     if (isCommand_Widget(w, ev, "cancel")) {
+        setupSheetTransition_Mobile(w, iFalse);
         destroy_Widget(w);
         return iTrue;
     }
@@ -226,6 +236,7 @@ static iBool processEvent_CertImportWidget_(iCertImportWidget *d, const SDL_Even
         if (d->cert && !isEmpty_TlsCertificate(d->cert) && hasPrivateKey_TlsCertificate(d->cert)) {
             importIdentity_GmCerts(certs_App(), d->cert, text_InputWidget(d->notes));
             d->cert = NULL; /* taken */
+            setupSheetTransition_Mobile(w, iFalse);
             destroy_Widget(w);
             postCommand_App("idents.changed");
         }

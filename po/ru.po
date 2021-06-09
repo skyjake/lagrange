@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2021-03-23 19:02+0000\n"
-"PO-Revision-Date: 2021-05-06 09:39+0000\n"
+"PO-Revision-Date: 2021-06-01 07:18+0000\n"
 "Last-Translator: jan Anja <cyber@sysrq.in>\n"
 "Language-Team: Russian <http://weblate.skyjake.fi/projects/lagrange/ui/ru/>\n"
 "Language: ru\n"
@@ -688,7 +688,7 @@ msgid "dlg.newident.until"
 msgstr "Действителен до:"
 
 msgid "hint.newident.date"
-msgstr "ГГГГ-ММ-ДД ЧЧ:ММ:СС"
+msgstr "ГГГГ или ГГГ-ММ-ДД"
 
 msgid "hint.newident.optional"
 msgstr "необязательно"
@@ -1595,3 +1595,45 @@ msgstr[2] "Каталог содержит %zu элементов."
 
 msgid "keys.tab.close.other"
 msgstr "Закрыть другие владки"
+
+msgid "lang.pl"
+msgstr "Польский"
+
+msgid "ident.export"
+msgstr "Экспорт"
+
+msgid "close"
+msgstr "Закрыть"
+
+msgid "error.server.msg"
+msgstr "Сообщение от сервера:"
+
+msgid "dlg.input.linebreak"
+msgstr "Перенос строки"
+
+msgid "dlg.newident.scope.domain"
+msgstr "Текущий домен"
+
+msgid "prefs.animate"
+msgstr "Анимации:"
+
+msgid "keys.split.item"
+msgstr "Меню действий с окном:"
+
+msgid "prefs.userfont"
+msgstr "Шрифт TrueType:"
+
+msgid "dlg.newident.scope"
+msgstr "Область использования:"
+
+msgid "dlg.newident.more"
+msgstr "Ещё…"
+
+msgid "menu.save.downloads.open"
+msgstr "Сохранить и открыть"
+
+msgid "dlg.newident.scope.page"
+msgstr "Текущая страница"
+
+msgid "dlg.newident.scope.none"
+msgstr "Нигде"

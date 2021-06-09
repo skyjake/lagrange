@@ -286,7 +286,7 @@ void add_History(iHistory *d, const iString *url ){
 
 iBool goBack_History(iHistory *d) {
     lock_Mutex(d->mtx);
-    if (d->recentPos < size_Array(&d->recent) - 1) {
+    if (!isEmpty_Array(&d->recent) && d->recentPos < size_Array(&d->recent) - 1) {
         d->recentPos++;
         postCommandf_Root(get_Root(),
                           "open history:1 scroll:%f url:%s",
@@ -322,7 +322,8 @@ iBool atLatest_History(const iHistory *d) {
 
 iBool atOldest_History(const iHistory *d) {
     iBool isOldest;
-    iGuardMutex(d->mtx, isOldest = (d->recentPos == size_Array(&d->recent) - 1));
+    iGuardMutex(d->mtx, isOldest = (isEmpty_Array(&d->recent) ||
+                                    d->recentPos == size_Array(&d->recent) - 1));
     return isOldest;
 }
 

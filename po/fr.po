@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-05-05 03:55+0000\n"
+"PO-Revision-Date: 2021-05-21 08:18+0000\n"
 "Last-Translator: MCMic <come@chilliet.eu>\n"
 "Language-Team: French <http://weblate.skyjake.fi/projects/lagrange/ui/fr/>\n"
 "Language: fr\n"
@@ -158,7 +158,7 @@ msgstr "Copier l’empreinte"
 
 # Inline download status message.
 msgid "media.download.warnclose"
-msgstr "Le téléchargement sera annulé si l'onglet est fermé."
+msgstr "Le téléchargement sera annulé si cet onglet est fermé."
 
 # Inline download status message.
 msgid "media.download.complete"
@@ -1547,3 +1547,60 @@ msgstr "Licence"
 
 msgid "gempub.cover.view"
 msgstr "Voir le contenu du Gempub"
+
+msgid "lang.pl"
+msgstr "Polonais"
+
+msgid "link.side.newtab"
+msgstr "Ouvrir le lien dans un nouvel onglet sur le côté"
+
+msgid "keys.tab.close.other"
+msgstr "Fermer les autres onglets"
+
+msgid "doc.archive.view"
+msgstr "Afficher le contenu de l’archive"
+
+#, c-format
+msgid "doc.archive"
+msgstr "%s est une archive compressée."
+
+msgid "bookmark.tag.linksplit"
+msgstr "Ouverture des liens sur le côté"
+
+msgid "link.side"
+msgstr "Ouvrir le lien sur le côté"
+
+msgid "lang.tok"
+msgstr "Toki Pona"
+
+msgid "prefs.pinsplit"
+msgstr "Épingler un des côtés :"
+
+msgid "prefs.pinsplit.none"
+msgstr "Aucun"
+
+msgid "archive.exit"
+msgstr "Sortir de l’archive"
+
+#, c-format
+msgid "archive.summary"
+msgid_plural "archive.summary.n"
+msgstr[0] ""
+"Cette archive contient %zu élément et sa taille compressée est de %.1f Mo."
+msgstr[1] ""
+"Cette archive contient %zu éléments et sa taille compressée est de %.1f Mo."
+
+msgid "dir.empty"
+msgstr "Ce répertoire est vide."
+
+#, c-format
+msgid "dir.summary"
+msgid_plural "dir.summary.n"
+msgstr[0] "Ce répertoire contient %zu élément."
+msgstr[1] "Ce répertoire contient %zu éléments."
+
+msgid "menu.split.swap"
+msgstr "Échanger les côtés"
+
+msgid "keys.split.menu"
+msgstr "Définir le mode de vues séparées"

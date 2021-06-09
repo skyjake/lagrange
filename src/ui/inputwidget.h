@@ -65,6 +65,10 @@ void    setEatEscape_InputWidget        (iInputWidget *, iBool eatEscape);
 iInputWidgetContentPadding  contentPadding_InputWidget  (const iInputWidget *);
 const iString *             text_InputWidget            (const iInputWidget *);
 
+iLocalDef const char *cstrText_InputWidget(const iInputWidget *d) {
+    return cstr_String(text_InputWidget(d));
+}
+
 iLocalDef iInputWidget *newHint_InputWidget(size_t maxLen, const char *hint) {
     iInputWidget *d = new_InputWidget(maxLen);
     setHint_InputWidget(d, hint);

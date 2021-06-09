@@ -42,7 +42,8 @@ iDeclareType(Visited)
 iDeclareType(Window)
 
 /* Command line options strings. */
-#define listTabUrls_CommandLineOption   "list-tab-urls;L"
+#define listTabUrls_CommandLineOption       "list-tab-urls;L"
+#define openUrlOrSearch_CommandLineOption   "url-or-search;u"
 
 enum iAppDeviceType {
     desktop_AppDeviceType,

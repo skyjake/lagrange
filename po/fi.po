@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2021-03-23 09:09+0000\n"
-"PO-Revision-Date: 2021-05-13 05:38+0000\n"
+"PO-Revision-Date: 2021-05-29 12:27+0000\n"
 "Last-Translator: Jaakko Keränen <jaakko.keranen@iki.fi>\n"
 "Language-Team: Finnish <http://weblate.skyjake.fi/projects/lagrange/ui/fi/>\n"
 "Language: fi\n"
@@ -679,7 +679,7 @@ msgid "dlg.newident.until"
 msgstr "Voimassa:"
 
 msgid "hint.newident.date"
-msgstr "VVVV-KK-PP TT:MM:SS"
+msgstr "VVVV tai VVVV-KK-PP"
 
 msgid "hint.newident.optional"
 msgstr "vapaaehtoinen"
@@ -1579,3 +1579,66 @@ msgstr "Aktivoi seuraava jakaus"
 
 msgid "lang.pl"
 msgstr "Puola"
+
+msgid "close"
+msgstr "Sulje"
+
+msgid "ident.export"
+msgstr "Vie"
+
+msgid "error.server.msg"
+msgstr "Palvelin vastasi seuraavalla viestillä:"
+
+msgid "dlg.input.linebreak"
+msgstr "Rivinvaihto"
+
+msgid "dlg.newident.scope"
+msgstr "Käytössä:"
+
+msgid "dlg.newident.more"
+msgstr "Lisää…"
+
+msgid "prefs.userfont"
+msgstr "Kuvakefontti:"
+
+msgid "keys.split.menu.vert21"
+msgstr "Jaetun näkymän valikko: pysty 2:1"
+
+msgid "dlg.newident.scope.domain"
+msgstr "Tämä verkkotunnus"
+
+msgid "dlg.newident.scope.page"
+msgstr "Tämä sivu"
+
+msgid "dlg.newident.scope.none"
+msgstr "Ei käytetä"
+
+msgid "keys.split.menu.merge"
+msgstr "Jaetun näkymän valikko: yhdistä välilehdet"
+
+msgid "keys.split.menu.swap"
+msgstr "Jaetun näkymän valikko: vaihda puolia"
+
+msgid "keys.split.menu.horiz"
+msgstr "Jaetun näkymän valikko: vaaka"
+
+msgid "keys.split.menu.horiz12"
+msgstr "Jaetun näkymän valikko: vaaka 1:2"
+
+msgid "keys.split.menu.horiz21"
+msgstr "Jaetun näkymän valikko: vaaka 2:1"
+
+msgid "keys.split.menu.vert"
+msgstr "Jaetun näkymän valikko: pysty"
+
+msgid "keys.split.menu.vert12"
+msgstr "Jaetun näkymän valikko: pysty 1:2"
+
+msgid "prefs.animate"
+msgstr "Animaatiot:"
+
+msgid "menu.save.downloads.open"
+msgstr "Tallenna latauskansioon ja avaa tiedosto"
+
+msgid "keys.split.item"
+msgstr "Jaetun näkymän valikko:"

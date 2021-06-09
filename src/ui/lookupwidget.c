@@ -127,10 +127,11 @@ static void draw_LookupItem_(iLookupItem *d, iPaint *p, iRect rect, const iListW
         pos.y = bottom_Rect(rect) - lineHeight_Text(d->font);
     }
     if (!isEmpty_String(&d->icon)) {
-        const iRect iconRect = { pos, init_I2(gap_UI * 5, height_Rect(rect)) };
-        const iInt2 iconSize = measureRange_Text(d->font, range_String(&d->icon));
+        const iRect iconRect = { init_I2(pos.x, top_Rect(rect)),
+                                 init_I2(gap_UI * 5, height_Rect(rect)) };
+        const iRect iconVis = visualBounds_Text(d->font, range_String(&d->icon));
         drawRange_Text(d->font,
-                       addX_I2(pos, width_Rect(iconRect) / 2 - iconSize.x / 2),
+                       sub_I2(mid_Rect(iconRect), mid_Rect(iconVis)),
                        fg,
                        range_String(&d->icon));
         pos.x += width_Rect(iconRect) + gap_UI * 3 / 2;
@@ -301,7 +302,7 @@ static void searchIdentities_LookupJob_(iLookupJob *d) {
         iLookupResult *res = new_LookupResult();
         res->type = identity_LookupResultType;
         res->relevance = identityRelevance_LookupJob_(d, identity);
-        res->icon = identity->icon;
+        res->icon = 0x1f464; /* identity->icon; */
         iString *cn = subject_TlsCertificate(identity->cert);
         set_String(&res->label, cn);
         delete_String(cn);
@@ -700,6 +701,12 @@ static iBool processEvent_LookupWidget_(iLookupWidget *d, const SDL_Event *ev) {
             postCommand_App("focus.set id:"); /* unfocus */
         }
         return iTrue;
+    }
+    if (ev->type == SDL_MOUSEMOTION) {
+        if (contains_Widget(w, init_I2(ev->motion.x, ev->motion.y))) {
+            setCursor_Window(get_Window(), SDL_SYSTEM_CURSOR_HAND);
+        }
+        return iFalse;
     }
     if (ev->type == SDL_KEYDOWN) {
         const int mods = keyMods_Sym(ev->key.keysym.mod);

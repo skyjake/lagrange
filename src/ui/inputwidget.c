@@ -547,7 +547,9 @@ void setText_InputWidget(iInputWidget *d, const iString *text) {
     }
     clearUndo_InputWidget_(d);
     clear_Array(&d->text);
-    iConstForEach(String, i, text) {
+    iString *nfcText = collect_String(copy_String(text));
+    normalize_String(nfcText);
+    iConstForEach(String, i, nfcText) {
         pushBack_Array(&d->text, &i.value);
     }
     if (isFocused_Widget(d)) {

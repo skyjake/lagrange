@@ -148,11 +148,16 @@ void updateVisible_ListWidget(iListWidget *d) {
     const int   contentSize = size_PtrArray(&d->items) * d->itemHeight;
     const iRect bounds      = innerBounds_Widget(as_Widget(d));
     const iBool wasVisible  = isVisible_Widget(d->scroll);
-    if (area_Rect(bounds) == 0) {
+    if (width_Rect(bounds) <= 0 || height_Rect(bounds) <= 0) {
         return;
     }
+    /* The scroll widget's visibility depends on it having a valid non-zero size.
+       However, this may be called during arrangement (sizeChanged_ListWidget_),
+       which means the child hasn't been arranged yet. The child cannot update
+       its visibility unless it knows its correct size. */
+    arrange_Widget(as_Widget(d->scroll));
     setMax_SmoothScroll(&d->scrollY, scrollMax_ListWidget_(d));
-    setRange_ScrollWidget(d->scroll, (iRangei){ 0, d->scrollY.max });
+    setRange_ScrollWidget(d->scroll, (iRangei){ 0, d->scrollY.max });    
     setThumb_ScrollWidget(d->scroll,
                           pos_SmoothScroll(&d->scrollY),
                           contentSize > 0 ? height_Rect(bounds_Widget(as_Widget(d->scroll))) *
@@ -367,6 +372,13 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
             break;
     }
     return processEvent_Widget(w, ev);
+}
+
+iRect itemRect_ListWidget(const iListWidget *d, size_t index) {
+    const iRect bounds  = innerBounds_Widget(constAs_Widget(d));
+    const int   scrollY = pos_SmoothScroll(&d->scrollY);
+    return (iRect){ addY_I2(topLeft_Rect(bounds), d->itemHeight * (int) index - scrollY),
+                    init_I2(width_Rect(bounds), d->itemHeight) };
 }
 
 static void draw_ListWidget_(const iListWidget *d) {

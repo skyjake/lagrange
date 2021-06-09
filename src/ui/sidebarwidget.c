@@ -148,6 +148,65 @@ static iLabelWidget *addActionButton_SidebarWidget_(iSidebarWidget *d, const cha
     return btn;
 }
 
+static iGmIdentity *menuIdentity_SidebarWidget_(const iSidebarWidget *d) {
+    if (d->mode == identities_SidebarMode) {
+        if (d->contextItem) {
+            return identity_GmCerts(certs_App(), d->contextItem->id);
+        }
+    }
+    return NULL;
+}
+
+static void updateContextMenu_SidebarWidget_(iSidebarWidget *d) {
+    if (d->mode != identities_SidebarMode) {
+        return;
+    }
+    iArray *items = collectNew_Array(sizeof(iMenuItem));
+    pushBackN_Array(items, (iMenuItem[]){
+        { person_Icon " ${ident.use}", 0, 0, "ident.use arg:1" },
+        { close_Icon " ${ident.stopuse}", 0, 0, "ident.use arg:0" },
+        { close_Icon " ${ident.stopuse.all}", 0, 0, "ident.use arg:0 clear:1" },
+        { "---", 0, 0, NULL },
+        { edit_Icon " ${menu.edit.notes}", 0, 0, "ident.edit" },
+        { "${ident.fingerprint}", 0, 0, "ident.fingerprint" },
+        { export_Icon " ${ident.export}", 0, 0, "ident.export" },
+        { "---", 0, 0, NULL },
+        { delete_Icon " " uiTextCaution_ColorEscape "${ident.delete}", 0, 0, "ident.delete confirm:1" },
+    }, 9);
+    /* Used URLs. */
+    const iGmIdentity *ident = menuIdentity_SidebarWidget_(d);
+    if (ident) {
+        size_t insertPos = 3;
+        if (!isEmpty_StringSet(ident->useUrls)) {
+            insert_Array(items, insertPos++, &(iMenuItem){ "---", 0, 0, NULL });
+        }
+        const iString *docUrl = url_DocumentWidget(document_App());
+        iBool usedOnCurrentPage = iFalse;
+        iConstForEach(StringSet, i, ident->useUrls) {            
+            const iString *url = i.value;
+            usedOnCurrentPage |= equalCase_String(docUrl, url);
+            iRangecc urlStr = range_String(url);
+            if (startsWith_Rangecc(urlStr, "gemini://")) {
+                urlStr.start += 9; /* omit the default scheme */
+            }
+            if (endsWith_Rangecc(urlStr, "/")) {
+                urlStr.end--; /* looks cleaner */
+            }
+            insert_Array(items,
+                         insertPos++,
+                         &(iMenuItem){ format_CStr(globe_Icon " %s", cstr_Rangecc(urlStr)),
+                                       0,
+                                       0,
+                                       format_CStr("!open url:%s", cstr_String(url)) });
+        }
+        if (!usedOnCurrentPage) {
+            remove_Array(items, 1);
+        }
+    }
+    destroy_Widget(d->menu);    
+    d->menu = makeMenu_Widget(as_Widget(d), data_Array(items), size_Array(items));    
+}
+
 static void updateItems_SidebarWidget_(iSidebarWidget *d) {
     clear_ListWidget(d->list);
     releaseChildren_Widget(d->blank);
@@ -375,13 +434,14 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
         }
         case identities_SidebarMode: {
             const iString *tabUrl = url_DocumentWidget(document_App());
+            const iRangecc tabHost = urlHost_String(tabUrl);
             isEmpty = iTrue;
             iConstForEach(PtrArray, i, identities_GmCerts(certs_App())) {
                 const iGmIdentity *ident = i.ptr;
                 iSidebarItem *item = new_SidebarItem();
                 item->id = (uint32_t) index_PtrArrayConstIterator(&i);
-                item->icon = ident->icon;
-                set_String(&item->label, collect_String(subject_TlsCertificate(ident->cert)));
+                item->icon = 0x1f464; /* person */
+                set_String(&item->label, name_GmIdentity(ident));
                 iDate until;
                 validUntil_TlsCertificate(ident->cert, &until);
                 const iBool isActive = isUsedOn_GmIdentity(ident, tabUrl);
@@ -406,6 +466,9 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                                         cstr_String(&ident->notes));
                 }
                 item->listItem.isSelected = isActive;
+                if (isUsedOnDomain_GmIdentity(ident, tabHost)) {
+                    item->indent = 1; /* will be highlighted */
+                }
                 addItem_ListWidget(d->list, item);
                 iRelease(item);
                 isEmpty = iFalse;
@@ -415,11 +478,11 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 addActionButton_SidebarWidget_(d, add_Icon " ${sidebar.action.ident.new}", "ident.new", 0);
                 addActionButton_SidebarWidget_(d, "${sidebar.action.ident.import}", "ident.import", 0);
             }
+            /*
             const iMenuItem menuItems[] = {
                 { person_Icon " ${ident.use}", 0, 0, "ident.use arg:1" },
                 { close_Icon " ${ident.stopuse}", 0, 0, "ident.use arg:0" },
                 { close_Icon " ${ident.stopuse.all}", 0, 0, "ident.use arg:0 clear:1" },
-                { "${ident.showuse}", 0, 0, "ident.showuse" },
                 { "---", 0, 0, NULL },
                 { edit_Icon " ${menu.edit.notes}", 0, 0, "ident.edit" },
                 { "${ident.fingerprint}", 0, 0, "ident.fingerprint" },
@@ -429,6 +492,7 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
                 { delete_Icon " " uiTextCaution_ColorEscape "${ident.delete}", 0, 0, "ident.delete confirm:1" },
             };
             d->menu = makeMenu_Widget(as_Widget(d), menuItems, iElemCount(menuItems));
+            */
             break;
         }
         default:
@@ -697,20 +761,11 @@ static const iGmIdentity *constHoverIdentity_SidebarWidget_(const iSidebarWidget
     return NULL;
 }
 
-static iGmIdentity *menuIdentity_SidebarWidget_(const iSidebarWidget *d) {
-    if (d->mode == identities_SidebarMode) {
-        if (d->contextItem) {
-            return identity_GmCerts(certs_App(), d->contextItem->id);
-        }
-    }
-    return NULL;
-}
-
 static iGmIdentity *hoverIdentity_SidebarWidget_(const iSidebarWidget *d) {
     return iConstCast(iGmIdentity *, constHoverIdentity_SidebarWidget_(d));
 }
 
-static void itemClicked_SidebarWidget_(iSidebarWidget *d, const iSidebarItem *item) {
+static void itemClicked_SidebarWidget_(iSidebarWidget *d, iSidebarItem *item, size_t itemIndex) {
     setFocus_Widget(NULL);
     switch (d->mode) {
         case documentOutline_SidebarMode: {
@@ -735,17 +790,19 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, const iSidebarItem *it
             break;
         }
         case identities_SidebarMode: {
-            iGmIdentity *ident = hoverIdentity_SidebarWidget_(d);
-            if (ident) {
-                const iString *tabUrl = url_DocumentWidget(document_App());
-                if (isUsedOn_GmIdentity(ident, tabUrl)) {
-                    signOut_GmCerts(certs_App(), tabUrl);
-                }
-                else {
-                    signIn_GmCerts(certs_App(), ident, tabUrl);
-                }
-                updateItems_SidebarWidget_(d);
-                updateMouseHover_ListWidget(d->list);
+            d->contextItem  = item;
+            if (d->contextIndex != iInvalidPos) {
+                invalidateItem_ListWidget(d->list, d->contextIndex);
+            }
+            d->contextIndex = itemIndex;
+            if (itemIndex < numItems_ListWidget(d->list)) {
+                updateContextMenu_SidebarWidget_(d);
+                arrange_Widget(d->menu);
+                openMenu_Widget(d->menu,
+                                d->side == left_SideBarSide
+                                    ? topRight_Rect(itemRect_ListWidget(d->list, itemIndex))
+                                    : addX_I2(topLeft_Rect(itemRect_ListWidget(d->list, itemIndex)),
+                                              -width_Widget(d->menu)));
             }
             break;
         }
@@ -848,6 +905,7 @@ iBool handleBookmarkEditorCommands_SidebarWidget_(iWidget *editor, const char *c
                                     isSelected_Widget(findChild_Widget(editor, "bmed.tag.linksplit")));
             postCommand_App("bookmarks.changed");
         }
+        setupSheetTransition_Mobile(editor, iFalse);
         destroy_Widget(editor);
         return iTrue;
     }
@@ -878,7 +936,8 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
         if (arg_Command(cmd) && isVisible_Widget(w)) {
             return iTrue;
         }
-        const iBool isAnimated = argLabel_Command(cmd, "noanim") == 0 &&
+        const iBool isAnimated = prefs_App()->uiAnimations &&
+                                 argLabel_Command(cmd, "noanim") == 0 &&
                                  (deviceType_App() != phone_AppDeviceType);
         int visX = 0;
         if (isVisible_Widget(w)) {
@@ -1008,7 +1067,8 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             return iTrue;
         }
         else if (isCommand_Widget(w, ev, "list.clicked")) {
-            itemClicked_SidebarWidget_(d, pointerLabel_Command(cmd, "item"));
+            itemClicked_SidebarWidget_(
+                d, pointerLabel_Command(cmd, "item"), argU32Label_Command(cmd, "arg"));
             return iTrue;
         }
         else if (isCommand_Widget(w, ev, "menu.closed")) {
@@ -1190,20 +1250,14 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                 }
                 else if (arg_Command(cmd)) {
                     signIn_GmCerts(certs_App(), ident, tabUrl);
+                    postCommand_App("navigate.reload");
                 }
                 else {
                     signOut_GmCerts(certs_App(), tabUrl);
+                    postCommand_App("navigate.reload");
                 }
                 saveIdentities_GmCerts(certs_App());
                 updateItems_SidebarWidget_(d);
-            }
-            return iTrue;
-        }
-        else if (isCommand_Widget(w, ev, "ident.showuse")) {
-            const iGmIdentity *ident = menuIdentity_SidebarWidget_(d);
-            if (ident) {
-                makeSimpleMessage_Widget(uiHeading_ColorEscape "${heading.ident.use}",
-                                         cstrCollect_String(joinCStr_StringSet(ident->useUrls, "\n")));
             }
             return iTrue;
         }
@@ -1225,6 +1279,20 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                 const iString *fps = collect_String(
                     hexEncode_Block(collect_Block(fingerprint_TlsCertificate(ident->cert))));
                 SDL_SetClipboardText(cstr_String(fps));
+            }
+            return iTrue;
+        }
+        else if (isCommand_Widget(w, ev, "ident.export")) {
+            const iGmIdentity *ident = menuIdentity_SidebarWidget_(d);
+            if (ident) {
+                iString *pem = collect_String(pem_TlsCertificate(ident->cert));
+                append_String(pem, collect_String(privateKeyPem_TlsCertificate(ident->cert)));
+                iDocumentWidget *expTab = newTab_App(NULL, iTrue);
+                setUrlAndSource_DocumentWidget(
+                    expTab,
+                    collectNewFormat_String("file:%s.pem", cstr_String(name_GmIdentity(ident))),
+                    collectNewCStr_String("text/plain"),
+                    utf8_String(pem));
             }
             return iTrue;
         }
@@ -1336,20 +1404,21 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             d->contextIndex = iInvalidPos;
         }
     }
-    if (d->menu && ev->type == SDL_MOUSEBUTTONDOWN) {
+    if ((d->menu || d->mode == identities_SidebarMode )&& ev->type == SDL_MOUSEBUTTONDOWN) {
         if (ev->button.button == SDL_BUTTON_RIGHT) {
             d->contextItem = NULL;
             if (!isVisible_Widget(d->menu)) {
                 updateMouseHover_ListWidget(d->list);
             }
             if (constHoverItem_ListWidget(d->list) || isVisible_Widget(d->menu)) {
-                d->contextItem  = hoverItem_ListWidget(d->list);
+                d->contextItem = hoverItem_ListWidget(d->list);
                 /* Context is drawn in hover state. */
                 if (d->contextIndex != iInvalidPos) {
                     invalidateItem_ListWidget(d->list, d->contextIndex);
                 }
                 d->contextIndex = hoverItemIndex_ListWidget(d->list);
                 /* Update menu items. */
+                updateContextMenu_SidebarWidget_(d);                
                 /* TODO: Some callback-based mechanism would be nice for updating menus right
                    before they open? */
                 if (d->mode == bookmarks_SidebarMode && d->contextItem) {
@@ -1407,11 +1476,13 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                                         (!cmdClear && cmdUse && isUsedOn_GmIdentity(ident, docUrl)) ||
                                         (!cmdClear && !cmdUse && !isUsedOn_GmIdentity(ident, docUrl)));
                             }
+                            /*
                             else if (equal_Command(cmdItem, "ident.showuse")) {
                                 setFlags_Widget(as_Widget(menuItem),
                                                 disabled_WidgetFlag,
                                                 !isUsed_GmIdentity(ident));
                             }
+                            */
                         }
                     }
                 }
@@ -1423,10 +1494,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
         const int kmods = keyMods_Sym(ev->key.keysym.mod);
         /* Hide the sidebar when Escape is pressed. */
         if (kmods == 0 && key == SDLK_ESCAPE && isVisible_Widget(d)) {
-            setFlags_Widget(w, hidden_WidgetFlag, iTrue);
-            arrange_Widget(w->parent);
-            updateSize_DocumentWidget(document_App());
-            refresh_Widget(w->parent);
+            postCommand_Widget(d, "%s.toggle", cstr_String(id_Widget(w)));
             return iTrue;
         }
     }
@@ -1460,7 +1528,8 @@ static void draw_SidebarWidget_(const iSidebarWidget *d) {
     const iRect    bounds = bounds_Widget(w);
     iPaint p;
     init_Paint(&p);
-    if (flags_Widget(w) & visualOffset_WidgetFlag && isVisible_Widget(w)) {
+    if (flags_Widget(w) & visualOffset_WidgetFlag &&
+        flags_Widget(w) & horizontalOffset_WidgetFlag && isVisible_Widget(w)) {
         fillRect_Paint(&p, boundsWithoutVisualOffset_Widget(w), tmBackground_ColorId);
     }
     draw_Widget(w);
@@ -1493,6 +1562,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
     const int itemHeight     = height_Rect(itemRect);
     const int iconColor      = isHover ? (isPressing ? uiTextPressed_ColorId : uiIconHover_ColorId)
                                        : uiIcon_ColorId;
+    const int altIconColor   = isPressing ? uiTextPressed_ColorId : uiTextCaution_ColorId;
     const int font = sidebar->itemFonts[d->isBold ? 1 : 0];
     int bg         = uiBackgroundSidebar_ColorId;
     if (isHover) {
@@ -1611,7 +1681,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                                : uiText_ColorId;
         iString str;
         init_String(&str);
-        appendChar_String(&str, d->icon ? d->icon : 0x1f588);
+        appendChar_String(&str, d->icon ? d->icon : 0x1f588);        
         const iRect iconArea = { addX_I2(pos, gap_UI),
                                  init_I2(1.75f * lineHeight_Text(font), itemHeight) };
         drawCentered_Text(font,
@@ -1625,9 +1695,13 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
         deinit_String(&str);
         const iInt2 textPos = addY_I2(topRight_Rect(iconArea), (itemHeight - lineHeight_Text(font)) / 2);
         drawRange_Text(font, textPos, fg, range_String(&d->label));
+        const int metaFont = default_FontId;
+        const int metaIconWidth = 4.5f * gap_UI;
         const iInt2 metaPos =
-            init_I2(right_Rect(itemRect) - advanceRange_Text(font, range_String(&d->meta)).x -
-                        2 * gap_UI - (scrollBarWidth ? scrollBarWidth - gap_UI : 0),
+            init_I2(right_Rect(itemRect) -
+                        length_String(&d->meta) *
+                            metaIconWidth
+                        - 2 * gap_UI - (blankWidth ? blankWidth - 1.5f * gap_UI : (gap_UI / 2)),
                     textPos.y);
         fillRect_Paint(p,
                        init_Rect(metaPos.x,
@@ -1635,10 +1709,22 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                                  right_Rect(itemRect) - metaPos.x,
                                  height_Rect(itemRect)),
                        bg);
-        drawRange_Text(font,
-                       metaPos,
-                       isHover && isPressing ? fg : uiTextCaution_ColorId,
-                       range_String(&d->meta));
+        iInt2 mpos = metaPos;
+        iStringConstIterator iter;
+        init_StringConstIterator(&iter, &d->meta);
+        iRangecc range = { cstr_String(&d->meta), iter.pos };
+        while (iter.value) {
+            next_StringConstIterator(&iter);
+            range.end = iter.pos;
+            iRect iconArea = { mpos, init_I2(metaIconWidth, lineHeight_Text(metaFont)) };
+            iRect visBounds = visualBounds_Text(metaFont, range);
+            drawRange_Text(metaFont,
+                           sub_I2(mid_Rect(iconArea), mid_Rect(visBounds)),
+                           isHover && isPressing ? fg : uiTextCaution_ColorId,
+                           range);
+            mpos.x += metaIconWidth;
+            range.start = range.end;            
+        }        
     }
     else if (sidebar->mode == history_SidebarMode) {
         iBeginCollect();
@@ -1683,6 +1769,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
     else if (sidebar->mode == identities_SidebarMode) {
         const int fg = isHover ? (isPressing ? uiTextPressed_ColorId : uiTextFramelessHover_ColorId)
                                : uiTextStrong_ColorId;
+        const iBool isUsedOnDomain = (d->indent != 0);
         iString icon;
         initUnicodeN_String(&icon, &d->icon, 1);
         iInt2 cPos = topLeft_Rect(itemRect);
@@ -1694,8 +1781,21 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
         const int metaFg = isHover ? permanent_ColorId | (isPressing ? uiTextPressed_ColorId
                                                                      : uiTextFramelessHover_ColorId)
                                    : uiTextDim_ColorId;
-        drawRange_Text(
-            font, cPos, d->listItem.isSelected ? iconColor : metaFg, range_String(&icon));
+        if (!d->listItem.isSelected && !isUsedOnDomain) {
+            /* Draw an outline of the icon. */
+            for (int off = 0; off < 4; ++off) {
+                drawRange_Text(font,
+                               add_I2(cPos, init_I2(off % 2 == 0 ? -1 : 1, off / 2 == 0 ? -1 : 1)),
+                               metaFg,
+                               range_String(&icon));
+            }
+        }
+        drawRange_Text(font,
+                       cPos,
+                       d->listItem.isSelected ? iconColor
+                       : isUsedOnDomain       ? altIconColor
+                                              : uiBackgroundSidebar_ColorId,
+                       range_String(&icon));
         deinit_String(&icon);
         drawRange_Text(d->listItem.isSelected ? sidebar->itemFonts[1] : font,
                        add_I2(cPos, init_I2(indent, 0)),

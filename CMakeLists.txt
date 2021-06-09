@@ -18,14 +18,14 @@
 cmake_minimum_required (VERSION 3.9)
 
 project (Lagrange
-    VERSION 1.5.0
+    VERSION 1.5.2
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
 set (COPYRIGHT_YEAR 2021)
 if (IOS)
     set (PROJECT_VERSION 1.4)  # pinned for TestFlight
-    set (IOS_BUNDLE_VERSION 7) # just increment this
+    set (IOS_BUNDLE_VERSION 8) # just increment this
 endif ()
 
 # Build configuration.
@@ -72,17 +72,19 @@ set (EMBED_RESOURCES
     res/fonts/NotoSansArabicUI-Regular.ttf
     res/fonts/NotoSansJP-Regular.ttf
     res/fonts/NotoSansSC-Regular.ttf
+    res/fonts/NotoSansSymbols-Regular.ttf
+    res/fonts/NotoSansSymbols2-Regular.ttf
     res/fonts/Nunito-Bold.ttf
     res/fonts/Nunito-ExtraBold.ttf
     res/fonts/Nunito-ExtraLight.ttf
     res/fonts/Nunito-LightItalic.ttf
     res/fonts/Nunito-Regular.ttf
+    res/fonts/SmolEmoji-Regular.ttf
     res/fonts/SourceSans3-Bold.ttf
     res/fonts/SourceSans3-ExtraLight.ttf
     res/fonts/SourceSans3-It.ttf
     res/fonts/SourceSans3-Regular.ttf
     res/fonts/SourceSans3-Semibold.ttf
-    res/fonts/Symbola.ttf
     res/lang/de.bin
     res/lang/en.bin
     res/lang/es.bin
@@ -396,6 +398,7 @@ Categories=Network
 Exec=${CMAKE_INSTALL_PREFIX}/bin/lagrange %U
 Terminal=false
 Type=Application
+StartupWMClass=lagrange
 Icon=fi.skyjake.Lagrange
 MimeType=x-scheme-handler/gemini;x-scheme-handler/gopher
 ")

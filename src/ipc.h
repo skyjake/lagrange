@@ -31,11 +31,12 @@ void        deinit_Ipc  (void);
 
 iProcessId  check_Ipc           (void);
 void        listen_Ipc          (void);
-iString *   communicate_Ipc     (const iString *command);
+iString *   communicate_Ipc     (const iString *command, iBool requestRaise);
 void        signal_Ipc          (iProcessId pid);
 
 enum iIpcWrite {
     command_IpcWrite,
+    commandAndRaise_IpcWrite,
     response_IpcWrite,
 };
 

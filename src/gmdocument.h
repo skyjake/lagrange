@@ -65,7 +65,7 @@ iBool isDark_GmDocumentTheme(enum iGmDocumentTheme);
 
 typedef uint16_t iGmLinkId;
 
-enum iGmLinkFlags {
+enum iGmLinkFlag {
     gemini_GmLinkFlag             = iBit(1),
     gopher_GmLinkFlag             = iBit(2),
     finger_GmLinkFlag             = iBit(3),

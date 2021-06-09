@@ -31,6 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "visited.h"
 #include "bookmarks.h"
 #include "app.h"
+#include "defs.h"
 
 #include <the_Foundation/ptrarray.h>
 #include <the_Foundation/regexp.h>
@@ -329,14 +330,15 @@ static void alignDecoration_GmRun_(iGmRun *run, iBool isCentered) {
     int         xAdjust   = 0;
     if (!isCentered) {
         /* Keep the icon aligned to the left edge. */
+        const int alignWidth = width_Rect(run->visBounds) * 3 / 4;
         xAdjust -= left_Rect(visBounds);
-        if (visWidth > width_Rect(run->visBounds)) {
+        if (visWidth > alignWidth) {
             /* ...unless it's a wide icon, in which case move it to the left. */
-            xAdjust -= visWidth - width_Rect(run->visBounds);
+            xAdjust -= visWidth - alignWidth;
         }
-        else if (visWidth < width_Rect(run->visBounds) * 3 / 4) {
+        else if (visWidth < alignWidth) {
             /* ...or a narrow icon, which needs to be centered but leave a gap. */
-            xAdjust += (width_Rect(run->visBounds) * 3 / 4 - visWidth) / 2;
+            xAdjust += (alignWidth - visWidth) / 2;
         }
     }
     else {
@@ -401,7 +403,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     static const float bottomMargin[max_GmLineType] = {
         0.0f, 0.333f, 1.0f, 0.5f, 0.5f, 0.5f, 0.5f, 0.25f
     };
-    static const char *arrow           = "\u27a4";
+    static const char *arrow           = rightArrowhead_Icon;
     static const char *envelope        = "\U0001f4e7";
     static const char *bullet          = "\u2022";
     static const char *folder          = "\U0001f4c1";
@@ -618,7 +620,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             iGmRun bulRun = run;
             if (prefs->font == literata_TextFont) {
                 /* Something wrong this the glyph in Literata, looks cropped. */
-                bulRun.font = defaultContentSized_FontId;
+                bulRun.font = defaultContentRegular_FontId;
             }
             bulRun.color = tmQuote_ColorId;
             bulRun.visBounds.pos = addX_I2(pos, (indents[text_GmLineType] - 0.55f) * gap_Text);
@@ -724,7 +726,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 lineHeightReduction = 0.10f;
             }
             else if (type == heading2_GmLineType) {
-                lineHeightReduction = 0.05f;
+                lineHeightReduction = 0.06f;
             }
             /* Visited links are never bold. */
             if (run.linkId && linkFlags_GmDocument(d, run.linkId) & visited_GmLinkFlag) {
@@ -1517,6 +1519,7 @@ static void normalize_GmDocument(iGmDocument *d) {
     printf("wasNormalized: %d\n", wasNormalized);
     fflush(stdout);
     set_String(&d->source, collect_String(normalized));
+    normalize_String(&d->source); /* NFC */
     printf("orig:%zu norm:%zu\n", size_String(&d->unormSource), size_String(&d->source));
     /* normalized source has an extra newline at the end */
 //    iAssert(wasNormalized || equal_String(&d->unormSource, &d->source));

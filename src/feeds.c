@@ -300,8 +300,16 @@ static iBool isHeadingEntry_FeedEntry_(const iFeedEntry *d) {
 static iBool updateEntries_Feeds_(iFeeds *d, iPtrArray *incoming) {
     iBool gotNew = iFalse;
     lock_Mutex(d->mtx);
+    iTime now;
+    initCurrent_Time(&now);
     iForEach(PtrArray, i, incoming) {
         iFeedEntry *entry = i.ptr;
+        /* Disregard old entries. */
+        if (secondsSince_Time(&now, &entry->posted) >= maxAge_Visited) {
+            /* We don't remember this far back, so the unread status of the entry would
+               be incorrect. */
+            continue;
+        }
         size_t pos;
         if (locate_SortedArray(&d->entries, &entry, &pos)) {
             iFeedEntry *existing = *(iFeedEntry **) at_SortedArray(&d->entries, pos);

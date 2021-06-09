@@ -26,6 +26,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/ptrarray.h>
 #include <SDL_events.h>
 
+#define newIdentity_KeyShortcut         SDLK_n,             KMOD_PRIMARY | KMOD_SHIFT
+
 #if defined (iPlatformApple)
 #   define reload_KeyShortcut           SDLK_r,             KMOD_PRIMARY
 #   define newTab_KeyShortcut           SDLK_t,             KMOD_PRIMARY
