@@ -43,6 +43,8 @@ void    updateSize_LabelWidget      (iLabelWidget *);
 void    updateText_LabelWidget      (iLabelWidget *, const iString *text); /* not resized */
 void    updateTextCStr_LabelWidget  (iLabelWidget *, const char *text); /* not resized */
 
+void    updateTextAndResizeWidthCStr_LabelWidget    (iLabelWidget *, const char *text);
+
 iInt2           defaultSize_LabelWidget (const iLabelWidget *);
 int             font_LabelWidget        (const iLabelWidget *);
 const iString * text_LabelWidget        (const iLabelWidget *);

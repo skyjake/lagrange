@@ -2503,11 +2503,15 @@ iBool handleCommand_App(const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "feeds.update.started")) {
-        showCollapsed_Widget(findWidget_App("feeds.progress"), iTrue);
+        iAnyObject *prog = findWidget_Root("feeds.progress");
+        const iWidget *navBar = findWidget_Root("navbar");
+        updateTextAndResizeWidthCStr_LabelWidget(
+            prog, flags_Widget(navBar) & tight_WidgetFlag ? "\u2605" : "\u2605 ${status.feeds}");
+        showCollapsed_Widget(prog, iTrue);
         return iFalse;
     }
     else if (equal_Command(cmd, "feeds.update.finished")) {
-        showCollapsed_Widget(findWidget_App("feeds.progress"), iFalse);
+        showCollapsed_Widget(findWidget_Root("feeds.progress"), iFalse);
         refreshFinished_Feeds();
         postRefresh_App();
         return iFalse;

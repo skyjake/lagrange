@@ -1789,7 +1789,9 @@ iWidget *makePreferences_Widget(void) {
                 updateSize_LabelWidget((iLabelWidget *) tog);
             }
             addChildFlags_Widget(values, iClob(boldLink), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
-            addPrefsInputWithHeading_(headings, values, "prefs.userfont", iClob(new_InputWidget(0)));
+            iInputWidget *customFont = new_InputWidget(0);
+            setHint_InputWidget(customFont, "${hint.prefs.userfont}");
+            addPrefsInputWithHeading_(headings, values, "prefs.userfont", iClob(customFont));
         }
         makeTwoColumnHeading_("${heading.prefs.paragraph}", headings, values);
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.linewidth}")));

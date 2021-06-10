@@ -392,6 +392,9 @@ msgstr "Find text on page"
 msgid "status.query"
 msgstr "Search Query"
 
+msgid "status.query.tight"
+msgstr "Query"
+
 msgid "status.feeds"
 msgstr "Updating Feeds"
 
@@ -1227,6 +1230,9 @@ msgstr "On Light"
 
 msgid "prefs.userfont"
 msgstr "Symbol font:"
+
+msgid "hint.prefs.userfont"
+msgstr "path of a TrueType font"
 
 msgid "prefs.linewidth"
 msgstr "Line width:"

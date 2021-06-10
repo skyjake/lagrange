@@ -551,9 +551,15 @@ static void updateUrlInputContentPadding_(iWidget *navBar) {
 }
 
 static void showSearchQueryIndicator_(iBool show) {
+    iWidget *navBar = findWidget_Root("navbar");
     iWidget *indicator = findWidget_App("input.indicator.search");
+    updateTextCStr_LabelWidget((iLabelWidget *) indicator,
+                               flags_Widget(navBar) & tight_WidgetFlag
+                                   ? "${status.query.tight} " return_Icon
+                                   : "${status.query} " return_Icon);
+    indicator->rect.size.x = defaultSize_LabelWidget((iLabelWidget *) indicator).x; /* don't touch height */
     showCollapsed_Widget(indicator, show);
-    updateUrlInputContentPadding_(findWidget_Root("navbar"));
+    updateUrlInputContentPadding_(navBar);
 }
 
 static int navBarAvailableSpace_(iWidget *navBar) {
@@ -1048,9 +1054,9 @@ void createUserInterface_Root(iRoot *d) {
                                      resizeHeightOfChildren_WidgetFlag |
                                      moveToParentRightEdge_WidgetFlag);
             /* Feeds refresh indicator is inside the input field. */ {
-                iLabelWidget *queryInd =
-                    new_LabelWidget(uiTextAction_ColorEscape "${status.query} " return_Icon, NULL);
+                iLabelWidget *queryInd = new_LabelWidget("${status.query} " return_Icon, NULL);
                 setId_Widget(as_Widget(queryInd), "input.indicator.search");
+                setTextColor_LabelWidget(queryInd, uiTextAction_ColorId);
                 setBackgroundColor_Widget(as_Widget(queryInd), uiBackground_ColorId);
                 setFrameColor_Widget(as_Widget(queryInd), uiTextAction_ColorId);
                 setAlignVisually_LabelWidget(queryInd, iTrue);
@@ -1060,9 +1066,9 @@ void createUserInterface_Root(iRoot *d) {
                                      collapse_WidgetFlag | hidden_WidgetFlag);
             }
             /* Feeds refresh indicator is inside the input field. */ {
-                iLabelWidget *fprog = new_LabelWidget(uiTextCaution_ColorEscape
-                                                      "\u2605 ${status.feeds}", NULL);
+                iLabelWidget *fprog = new_LabelWidget("", NULL);
                 setId_Widget(as_Widget(fprog), "feeds.progress");
+                setTextColor_LabelWidget(fprog, uiTextCaution_ColorId);
                 setBackgroundColor_Widget(as_Widget(fprog), uiBackground_ColorId);
                 setAlignVisually_LabelWidget(fprog, iTrue);
                 setNoAutoMinHeight_LabelWidget(fprog, iTrue);
