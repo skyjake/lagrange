@@ -2562,7 +2562,8 @@ iBool handleCommand_App(const char *cmd) {
         iAnyObject *prog = findWidget_Root("feeds.progress");
         const iWidget *navBar = findWidget_Root("navbar");
         updateTextAndResizeWidthCStr_LabelWidget(
-            prog, flags_Widget(navBar) & tight_WidgetFlag ? "\u2605" : "\u2605 ${status.feeds}");
+            prog, flags_Widget(navBar) & tight_WidgetFlag || deviceType_App() == phone_AppDeviceType ?
+                                                 "\u2605" : "\u2605 ${status.feeds}");
         showCollapsed_Widget(prog, iTrue);
         return iFalse;
     }

@@ -51,6 +51,7 @@ void    setCursor_InputWidget           (iInputWidget *, size_t pos);
 void    setContentPadding_InputWidget   (iInputWidget *, int left, int right); /* only affects the text entry */
 void    setMaxLayoutLines_InputWidget   (iInputWidget *, size_t maxLayoutLines);
 void    setValidator_InputWidget        (iInputWidget *, iInputWidgetValidatorFunc validator, void *context);
+void    setEnterInsertsLF_InputWidget   (iInputWidget *, iBool enterInsertsLF);
 void    setEnterKeyEnabled_InputWidget  (iInputWidget *, iBool enterKeyEnabled);
 void    begin_InputWidget               (iInputWidget *);
 void    end_InputWidget                 (iInputWidget *, iBool accept);

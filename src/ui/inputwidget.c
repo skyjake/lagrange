@@ -80,6 +80,7 @@ enum iInputWidgetFlag {
     markWords_InputWidgetFlag        = iBit(8),
     needUpdateBuffer_InputWidgetFlag = iBit(9),
     enterKeyEnabled_InputWidgetFlag  = iBit(10),
+    enterKeyInsertsLineFeed_InputWidgetFlag = iBit(11),
 };
 
 /*----------------------------------------------------------------------------------------------*/
@@ -347,8 +348,11 @@ void init_InputWidget(iInputWidget *d, size_t maxLen) {
     d->lastCursor   = 0;
     d->cursorLine   = 0;
     d->lastUpdateWidth = 0;
-    d->verticalMoveX = -1; /* TODO: Use this. */
-    d->inFlags      = eatEscape_InputWidgetFlag | enterKeyEnabled_InputWidgetFlag;
+    d->verticalMoveX   = -1; /* TODO: Use this. */
+    d->inFlags         = eatEscape_InputWidgetFlag | enterKeyEnabled_InputWidgetFlag;
+    if (deviceType_App() != desktop_AppDeviceType) {
+        d->inFlags |= enterKeyInsertsLineFeed_InputWidgetFlag;
+    }
     iZap(d->mark);
     setMaxLen_InputWidget(d, maxLen);
     d->maxLayoutLines = iInvalidSize;
@@ -462,6 +466,10 @@ void setMaxLayoutLines_InputWidget(iInputWidget *d, size_t maxLayoutLines) {
 void setValidator_InputWidget(iInputWidget *d, iInputWidgetValidatorFunc validator, void *context) {
     d->validator = validator;
     d->validatorContext = context;
+}
+
+void setEnterInsertsLF_InputWidget(iInputWidget *d, iBool enterInsertsLF) {
+    iChangeFlags(d->inFlags, enterKeyInsertsLineFeed_InputWidgetFlag, enterInsertsLF);
 }
 
 void setEnterKeyEnabled_InputWidget(iInputWidget *d, iBool enterKeyEnabled) {
@@ -1166,7 +1174,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
             case SDLK_KP_ENTER:
                 if (mods == KMOD_SHIFT || (d->maxLen == 0 &&
                                            ~d->inFlags & isUrl_InputWidgetFlag &&
-                                           deviceType_App() != desktop_AppDeviceType)) {
+                                           d->inFlags & enterKeyInsertsLineFeed_InputWidgetFlag)) {
                     pushUndo_InputWidget_(d);
                     deleteMarked_InputWidget_(d);
                     insertChar_InputWidget_(d, '\n');

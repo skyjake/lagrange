@@ -86,6 +86,7 @@ uint32_t    elapsedSinceLastTicker_App  (void); /* milliseconds */
 iBool               isLandscape_App     (void);
 iLocalDef iBool     isPortrait_App      (void) { return !isLandscape_App(); }
 enum iAppDeviceType deviceType_App      (void);
+iLocalDef iBool     isPortraitPhone_App (void) { return isPortrait_App() && deviceType_App() == phone_AppDeviceType; }
 iGmCerts *          certs_App           (void);
 iVisited *          visited_App         (void);
 iBookmarks *        bookmarks_App       (void);

@@ -834,20 +834,20 @@ static iBool handleToolBarCommands_(iWidget *toolBar, const char *cmd) {
         const int viewHeight = size_Root(get_Root()).y;
         if (arg_Command(cmd) >= 0) {
             postCommandf_App("sidebar.mode arg:%d show:1", arg_Command(cmd));
-            if (!isVisible) {
-                setVisualOffset_Widget(sidebar, viewHeight, 0, 0);
-                setVisualOffset_Widget(sidebar, 0, 400, easeOut_AnimFlag | softer_AnimFlag);
-            }
+//            if (!isVisible) {
+//                setVisualOffset_Widget(sidebar, viewHeight, 0, 0);
+//                setVisualOffset_Widget(sidebar, 0, 400, easeOut_AnimFlag | softer_AnimFlag);
+//            }
         }
         else {
             postCommandf_App("sidebar.toggle");
-            if (isVisible) {
-                setVisualOffset_Widget(sidebar, height_Widget(sidebar), 250, easeIn_AnimFlag);
-            }
-            else {
-                setVisualOffset_Widget(sidebar, viewHeight, 0, 0);
-                setVisualOffset_Widget(sidebar, 0, 400, easeOut_AnimFlag | softer_AnimFlag);
-            }
+//            if (isVisible) {
+//                setVisualOffset_Widget(sidebar, height_Widget(sidebar), 250, easeIn_AnimFlag);
+//            }
+//            else {
+//                setVisualOffset_Widget(sidebar, viewHeight, 0, 0);
+//                setVisualOffset_Widget(sidebar, 0, 400, easeOut_AnimFlag | softer_AnimFlag);
+//            }
         }
         return iTrue;
     }
@@ -855,7 +855,10 @@ static iBool handleToolBarCommands_(iWidget *toolBar, const char *cmd) {
         /* TODO: Clean this up. */
         iWidget *sidebar  = findWidget_App("sidebar");
         iWidget *sidebar2 = findWidget_App("sidebar2");
-        dismissSidebar_(sidebar, "toolbar.view");
+        //dismissSidebar_(sidebar, "toolbar.view");
+        if (isVisible_Widget(sidebar)) {
+            postCommandf_App("sidebar.toggle");
+        }
         const iBool isVisible = isVisible_Widget(sidebar2);
         //        setFlags_Widget(findChild_Widget(toolBar, "toolbar.ident"), noBackground_WidgetFlag,
         //                        isVisible);
@@ -1225,6 +1228,7 @@ void createUserInterface_Root(iRoot *d) {
         setHint_InputWidget(input, "${hint.findtext}");
         setSelectAllOnFocus_InputWidget(input, iTrue);
         setEatEscape_InputWidget(input, iFalse); /* unfocus and close with one keypress */
+        setEnterInsertsLF_InputWidget(input, iFalse);
         setId_Widget(addChildFlags_Widget(searchBar, iClob(input), expand_WidgetFlag),
                      "find.input");
         addChild_Widget(searchBar, iClob(newIcon_LabelWidget("  \u2b9f  ", 'g', KMOD_PRIMARY, "find.next")));

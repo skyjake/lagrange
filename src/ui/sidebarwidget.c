@@ -678,8 +678,8 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
                              iClob(buttons),
                              arrangeHorizontal_WidgetFlag |
                                  resizeWidthOfChildren_WidgetFlag |
-                             arrangeHeight_WidgetFlag | resizeToParentWidth_WidgetFlag |
-                             drawBackgroundToHorizontalSafeArea_WidgetFlag);
+                             arrangeHeight_WidgetFlag | resizeToParentWidth_WidgetFlag); // |
+//                             drawBackgroundToHorizontalSafeArea_WidgetFlag);
         setBackgroundColor_Widget(buttons, uiBackgroundSidebar_ColorId);
     }
     else {
@@ -700,13 +700,13 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     setPadding_Widget(as_Widget(d->list), 0, gap_UI, 0, gap_UI);
     addChildFlags_Widget(listAndActions,
                          iClob(d->list),
-                         expand_WidgetFlag | drawBackgroundToHorizontalSafeArea_WidgetFlag);
+                         expand_WidgetFlag); // | drawBackgroundToHorizontalSafeArea_WidgetFlag);
     setId_Widget(addChildPosFlags_Widget(listAndActions,
                                          iClob(d->actions = new_Widget()),
                                          isPhone ? front_WidgetAddPos : back_WidgetAddPos,
                                          arrangeHorizontal_WidgetFlag | arrangeHeight_WidgetFlag |
-                                             resizeWidthOfChildren_WidgetFlag |
-                                             drawBackgroundToHorizontalSafeArea_WidgetFlag),
+                                         resizeWidthOfChildren_WidgetFlag), // |
+//                                             drawBackgroundToHorizontalSafeArea_WidgetFlag),
                  "actions");
     setBackgroundColor_Widget(d->actions, uiBackgroundSidebar_ColorId);
     d->contextItem = NULL;
@@ -938,7 +938,7 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
         }
         const iBool isAnimated = prefs_App()->uiAnimations &&
                                  argLabel_Command(cmd, "noanim") == 0 &&
-                                 (deviceType_App() != phone_AppDeviceType);
+                                 (d->side == left_SideBarSide || deviceType_App() != phone_AppDeviceType);
         int visX = 0;
         if (isVisible_Widget(w)) {
             visX = left_Rect(bounds_Widget(w)) - left_Rect(w->root->widget->rect);
@@ -989,6 +989,15 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             if (isVisible_Widget(w)) {
                 postCommand_Widget(w, "sidebar.toggle");
             }
+            setFlags_Widget(findChild_Widget(w, "buttons"),
+                            drawBackgroundToHorizontalSafeArea_WidgetFlag,
+                            isLandscape_App());
+            setFlags_Widget(findChild_Widget(w, "actions"),
+                            drawBackgroundToHorizontalSafeArea_WidgetFlag,
+                            isLandscape_App());
+            setFlags_Widget(as_Widget(d->list),
+                            drawBackgroundToHorizontalSafeArea_WidgetFlag,
+                            isLandscape_App());
             return iFalse;
         }
     }
@@ -1528,9 +1537,11 @@ static void draw_SidebarWidget_(const iSidebarWidget *d) {
     const iRect    bounds = bounds_Widget(w);
     iPaint p;
     init_Paint(&p);
-    if (flags_Widget(w) & visualOffset_WidgetFlag &&
-        flags_Widget(w) & horizontalOffset_WidgetFlag && isVisible_Widget(w)) {
-        fillRect_Paint(&p, boundsWithoutVisualOffset_Widget(w), tmBackground_ColorId);
+    if (deviceType_App() != phone_AppDeviceType) {
+        if (flags_Widget(w) & visualOffset_WidgetFlag &&
+            flags_Widget(w) & horizontalOffset_WidgetFlag && isVisible_Widget(w)) {
+            fillRect_Paint(&p, boundsWithoutVisualOffset_Widget(w), tmBackground_ColorId);
+        }
     }
     draw_Widget(w);
     if (isVisible_Widget(w)) {
