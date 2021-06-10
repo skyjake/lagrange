@@ -210,6 +210,7 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "smoothscroll arg:%d\n", d->prefs.smoothScrolling);
     appendFormat_String(str, "imageloadscroll arg:%d\n", d->prefs.loadImageInsteadOfScrolling);
     appendFormat_String(str, "cachesize.set arg:%d\n", d->prefs.maxCacheSize);
+    appendFormat_String(str, "memorysize.set arg:%d\n", d->prefs.maxMemorySize);
     appendFormat_String(str, "decodeurls arg:%d\n", d->prefs.decodeUserVisibleURLs);
     appendFormat_String(str, "linewidth.set arg:%d\n", d->prefs.lineWidth);
     /* TODO: Set up an array of booleans in Prefs and do these in a loop. */
@@ -991,6 +992,33 @@ void trimCache_App(void) {
     iRelease(docs);
 }
 
+void trimMemory_App(void) {
+    iApp *d = &app_;
+    size_t memorySize = 0;
+    const size_t limit = d->prefs.maxMemorySize * 1000000;
+    iObjectList *docs = listDocuments_App(NULL);
+    iForEach(ObjectList, i, docs) {
+        memorySize += memorySize_History(history_DocumentWidget(i.object));
+    }
+    init_ObjectListIterator(&i, docs);
+    iBool wasPruned = iFalse;
+    while (memorySize > limit) {
+        iDocumentWidget *doc = i.object;
+        const size_t pruned = pruneLeastImportantMemory_History(history_DocumentWidget(doc));
+        if (pruned) {
+            memorySize -= pruned;
+            wasPruned = iTrue;
+        }
+        next_ObjectListIterator(&i);
+        if (!i.value) {
+            if (!wasPruned) break;
+            wasPruned = iFalse;
+            init_ObjectListIterator(&i, docs);
+        }
+    }
+    iRelease(docs);    
+}
+
 iLocalDef iBool isWaitingAllowed_App_(iApp *d) {
     if (!isEmpty_Periodic(&d->periodic)) {
         return iFalse;
@@ -1577,7 +1605,9 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
         postCommandf_App("searchurl address:%s",
                          cstrText_InputWidget(findChild_Widget(d, "prefs.searchurl")));
         postCommandf_App("cachesize.set arg:%d",
-                         toInt_String(text_InputWidget(findChild_Widget(d, "prefs.cachesize"))));        
+                         toInt_String(text_InputWidget(findChild_Widget(d, "prefs.cachesize"))));
+        postCommandf_App("memorysize.set arg:%d",
+                         toInt_String(text_InputWidget(findChild_Widget(d, "prefs.memorysize"))));
         postCommandf_App("ca.file path:%s",
                          cstrText_InputWidget(findChild_Widget(d, "prefs.ca.file")));
         postCommandf_App("ca.path path:%s",
@@ -2139,6 +2169,13 @@ iBool handleCommand_App(const char *cmd) {
         }
         return iTrue;
     }
+    else if (equal_Command(cmd, "memorysize.set")) {
+        d->prefs.maxMemorySize = arg_Command(cmd);
+        if (d->prefs.maxMemorySize <= 0) {
+            d->prefs.maxMemorySize = 0;
+        }
+        return iTrue;
+    }
     else if (equal_Command(cmd, "searchurl")) {
         iString *url = &d->prefs.searchUrl;
         setCStr_String(url, suffixPtr_Command(cmd, "address"));
@@ -2417,6 +2454,8 @@ iBool handleCommand_App(const char *cmd) {
             iTrue);
         setText_InputWidget(findChild_Widget(dlg, "prefs.cachesize"),
                             collectNewFormat_String("%d", d->prefs.maxCacheSize));
+        setText_InputWidget(findChild_Widget(dlg, "prefs.memorysize"),
+                            collectNewFormat_String("%d", d->prefs.maxMemorySize));
         setToggle_Widget(findChild_Widget(dlg, "prefs.decodeurls"), d->prefs.decodeUserVisibleURLs);
         setText_InputWidget(findChild_Widget(dlg, "prefs.searchurl"), &d->prefs.searchUrl);
         setText_InputWidget(findChild_Widget(dlg, "prefs.ca.file"), &d->prefs.caFile);

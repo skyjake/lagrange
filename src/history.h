@@ -66,8 +66,10 @@ iBool       goForward_History           (iHistory *);
 iRecentUrl *recentUrl_History           (iHistory *, size_t pos);
 iRecentUrl *mostRecentUrl_History       (iHistory *);
 iRecentUrl *findUrl_History             (iHistory *, const iString *url);
-void        clearCache_History          (iHistory *);
-size_t      pruneLeastImportant_History (iHistory *);
+
+void        clearCache_History                  (iHistory *);
+size_t      pruneLeastImportant_History         (iHistory *);
+size_t      pruneLeastImportantMemory_History   (iHistory *);
 
 iBool       atLatest_History            (const iHistory *);
 iBool       atOldest_History            (const iHistory *);
@@ -83,6 +85,7 @@ const iRecentUrl *
 const iGmResponse *
             cachedResponse_History      (const iHistory *);
 size_t      cacheSize_History           (const iHistory *);
+size_t      memorySize_History          (const iHistory *);
 
 iString *   debugInfo_History           (const iHistory *);
 iMemInfo    memoryUsage_History         (const iHistory *);

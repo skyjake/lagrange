@@ -1264,6 +1264,9 @@ msgstr "Decode URLs:"
 msgid "prefs.cachesize"
 msgstr "Cache size:"
 
+msgid "prefs.memorysize"
+msgstr "Memory size:"
+
 msgid "prefs.ca.file"
 msgstr "CA file:"
 

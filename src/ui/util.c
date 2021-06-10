@@ -1834,6 +1834,17 @@ iWidget *makePreferences_Widget(void) {
                                      resizeToParentHeight_WidgetFlag);
             setContentPadding_InputWidget(cache, 0, width_Widget(unit) - 4 * gap_UI);
         }
+        /* Memory size. */ {
+            iInputWidget *mem = new_InputWidget(4);
+            setSelectAllOnFocus_InputWidget(mem, iTrue);
+            addPrefsInputWithHeading_(headings, values, "prefs.memorysize", iClob(mem));
+            iWidget *unit =
+                addChildFlags_Widget(as_Widget(mem),
+                                     iClob(new_LabelWidget("${mb}", NULL)),
+                                     frameless_WidgetFlag | moveToParentRightEdge_WidgetFlag |
+                                         resizeToParentHeight_WidgetFlag);
+            setContentPadding_InputWidget(mem, 0, width_Widget(unit) - 4 * gap_UI);
+        }
         makeTwoColumnHeading_("${heading.prefs.certs}", headings, values);
         addPrefsInputWithHeading_(headings, values, "prefs.ca.file", iClob(new_InputWidget(0)));
         addPrefsInputWithHeading_(headings, values, "prefs.ca.path", iClob(new_InputWidget(0)));

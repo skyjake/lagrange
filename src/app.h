@@ -96,6 +96,7 @@ iObjectList *       listDocuments_App   (const iRoot *rootOrNull); /* NULL for a
 iStringSet *        listOpenURLs_App    (void); /* all tabs */
 iDocumentWidget *   newTab_App          (const iDocumentWidget *duplicateOf, iBool switchToNew);
 void                trimCache_App       (void);
+void                trimMemory_App      (void);
 
 iDocumentWidget *   document_Root       (iRoot *);
 

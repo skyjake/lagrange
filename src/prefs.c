@@ -46,6 +46,7 @@ void init_Prefs(iPrefs *d) {
     d->openArchiveIndexPages = iTrue;
     d->decodeUserVisibleURLs = iTrue;
     d->maxCacheSize      = 10;
+    d->maxMemorySize     = 200;
     d->font              = nunito_TextFont;
     d->headingFont       = nunito_TextFont;
     d->monospaceGemini   = iFalse;

@@ -366,6 +366,17 @@ size_t cacheSize_History(const iHistory *d) {
     return cached;
 }
 
+size_t memorySize_History(const iHistory *d) {
+    size_t bytes = 0;
+    lock_Mutex(d->mtx);
+    iConstForEach(Array, i, &d->recent) {
+        const iRecentUrl *url = i.value;
+        bytes += memorySize_RecentUrl(url);
+    }
+    unlock_Mutex(d->mtx);
+    return bytes;
+}
+
 void clearCache_History(iHistory *d) {
     lock_Mutex(d->mtx);
     iForEach(Array, i, &d->recent) {
@@ -374,6 +385,7 @@ void clearCache_History(iHistory *d) {
             delete_GmResponse(url->cachedResponse);
             url->cachedResponse = NULL;
         }
+        iReleasePtr(&url->cachedDoc); /* release all cached documents and media as well */
     }
     unlock_Mutex(d->mtx);
 }
@@ -387,7 +399,7 @@ size_t pruneLeastImportant_History(iHistory *d) {
     lock_Mutex(d->mtx);
     iConstForEach(Array, i, &d->recent) {
         const iRecentUrl *url = i.value;
-        if (url->cachedResponse || url->cachedDoc) {
+        if (url->cachedResponse) {
             const double urlScore =
                 cacheSize_RecentUrl(url) *
                 pow(secondsSince_Time(&now, &url->cachedResponse->when) / 60.0, 1.25);
@@ -403,6 +415,40 @@ size_t pruneLeastImportant_History(iHistory *d) {
         delete_GmResponse(url->cachedResponse);
         url->cachedResponse = NULL;
         iReleasePtr(&url->cachedDoc);
+    }
+    unlock_Mutex(d->mtx);
+    return delta;
+}
+
+size_t pruneLeastImportantMemory_History(iHistory *d) {
+    size_t delta  = 0;
+    size_t chosen = iInvalidPos;
+    double score  = 0.0f;
+    iTime now;
+    initCurrent_Time(&now);
+    lock_Mutex(d->mtx);
+    iConstForEach(Array, i, &d->recent) {
+        const iRecentUrl *url = i.value;
+        if (d->recentPos == size_Array(&d->recent) - index_ArrayConstIterator(&i) - 1) {
+            continue; /* Not the current navigation position. */
+        }
+        if (url->cachedDoc) {
+            const double urlScore =
+                memorySize_RecentUrl(url) *
+                (url->cachedResponse
+                     ? pow(secondsSince_Time(&now, &url->cachedResponse->when) / 60.0, 1.25)
+                     : 1.0);
+            if (urlScore > score) {
+                chosen = index_ArrayConstIterator(&i);
+                score  = urlScore;
+            }
+        }
+    }
+    if (chosen != iInvalidPos) {
+        iRecentUrl *url = at_Array(&d->recent, chosen);
+        const size_t before = memorySize_RecentUrl(url);
+        iReleasePtr(&url->cachedDoc);
+        delta = before - memorySize_RecentUrl(url);
     }
     unlock_Mutex(d->mtx);
     return delta;
