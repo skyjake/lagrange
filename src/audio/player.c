@@ -724,6 +724,13 @@ void updateSourceData_Player(iPlayer *d, const iString *mimeType, const iBlock *
     unlock_Mutex(&input->mtx);
 }
 
+size_t sourceDataSize_Player(const iPlayer *d) {
+    lock_Mutex(&d->data->mtx);
+    const size_t size = size_Block(&d->data->data);
+    unlock_Mutex(&d->data->mtx);
+    return size;
+}
+
 iBool start_Player(iPlayer *d) {
     if (isStarted_Player(d)) {
         return iFalse;
