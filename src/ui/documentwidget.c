@@ -3348,6 +3348,18 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                                                                      d->contextLink->linkId) });
                         }
                     }
+                    if (equalCase_Rangecc(scheme, "file")) {
+                        /* Local files may be deleted. */
+                        pushBack_Array(
+                            &items,
+                            &(iMenuItem){ delete_Icon " " uiTextCaution_ColorEscape
+                                                      " ${link.file.delete}",
+                                          0,
+                                          0,
+                                          format_CStr("!file.delete confirm:1 path:%s",
+                                                      cstrCollect_String(
+                                                          localFilePathFromUrl_String(linkUrl))) });
+                    }
                 }
                 else if (deviceType_App() == desktop_AppDeviceType) {
                     if (!isEmpty_Range(&d->selectMark)) {
@@ -4484,7 +4496,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
     /* Text markers. */
     const iBool isTouchSelecting = (flags_Widget(w) & touchDrag_WidgetFlag) != 0;
     if (!isEmpty_Range(&d->foundMark) || !isEmpty_Range(&d->selectMark)) {
-        SDL_Renderer *render           = renderer_Window(get_Window());
+        SDL_Renderer *render = renderer_Window(get_Window());
         ctx.firstMarkRect = zero_Rect();
         ctx.lastMarkRect = zero_Rect();
         SDL_SetRenderDrawBlendMode(render,

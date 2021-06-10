@@ -2303,6 +2303,23 @@ iBool handleCommand_App(const char *cmd) {
         }
         setCurrent_Root(oldRoot);
     }
+    else if (equal_Command(cmd, "file.delete")) {
+        const char *path = suffixPtr_Command(cmd, "path");
+        if (argLabel_Command(cmd, "confirm")) {
+            makeQuestion_Widget(
+                uiHeading_ColorEscape "${heading.file.delete}",
+                format_CStr("${dlg.file.delete.confirm}\n%s", path),
+                (iMenuItem[]){
+                    { "${cancel}", 0, 0, NULL },
+                    { uiTextCaution_ColorEscape "${dlg.file.delete}", 0, 0,
+                      format_CStr("!file.delete path:%s", path) } },
+                2);
+        }
+        else {
+            remove(path);
+        }
+        return iTrue;
+    }
     else if (equal_Command(cmd, "document.request.cancelled")) {
         /* TODO: How should cancelled requests be treated in the history? */
 #if 0
