@@ -18,14 +18,14 @@
 cmake_minimum_required (VERSION 3.9)
 
 project (Lagrange
-    VERSION 1.5.2
+    VERSION 1.6.0
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
 set (COPYRIGHT_YEAR 2021)
 if (IOS)
     set (PROJECT_VERSION 1.4)  # pinned for TestFlight
-    set (IOS_BUNDLE_VERSION 8) # just increment this
+    set (IOS_BUNDLE_VERSION 9) # just increment this
 endif ()
 
 # Build configuration.
