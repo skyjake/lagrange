@@ -61,6 +61,7 @@ size_t          numAudio_Media      (const iMedia *);
 iMediaId        findLinkAudio_Media (const iMedia *, uint16_t linkId);
 iBool           audioInfo_Media     (const iMedia *, iMediaId audioId, iGmMediaInfo *info_out);
 iPlayer *       audioPlayer_Media   (const iMedia *, iMediaId audioId);
+void            pauseAllPlayers_Media(const iMedia *, iBool setPaused);
 
 iMediaId        findLinkDownload_Media  (const iMedia *, uint16_t linkId);
 iBool           downloadInfo_Media      (const iMedia *, iMediaId downloadId, iGmMediaInfo *info_out);

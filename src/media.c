@@ -469,6 +469,15 @@ iPlayer *audioPlayer_Media(const iMedia *d, iMediaId audioId) {
     return NULL;
 }
 
+void pauseAllPlayers_Media(const iMedia *d, iBool setPaused) {
+    for (size_t i = 0; i < size_PtrArray(&d->audio); ++i) {
+        const iGmAudio *audio = constAt_PtrArray(&d->audio, i);
+        if (audio->player) {
+            setPaused_Player(audio->player, setPaused);
+        }
+    }
+}
+
 iBool downloadInfo_Media(const iMedia *d, iMediaId downloadId, iGmMediaInfo *info_out) {
     if (downloadId > 0 && downloadId <= size_PtrArray(&d->downloads)) {
         const iGmDownload *dl = constAt_PtrArray(&d->downloads, downloadId - 1);

@@ -392,6 +392,7 @@ void init_DocumentWidget(iDocumentWidget *d) {
 }
 
 void deinit_DocumentWidget(iDocumentWidget *d) {
+    pauseAllPlayers_Media(media_GmDocument(d->doc), iTrue);
     removeTicker_App(animate_DocumentWidget_, d);
     removeTicker_App(prerender_DocumentWidget_, d);
     remove_Periodic(periodic_App(), d);
@@ -1046,6 +1047,7 @@ void setSource_DocumentWidget(iDocumentWidget *d, const iString *source) {
 }
 
 static void replaceDocument_DocumentWidget_(iDocumentWidget *d, iGmDocument *newDoc) {
+    pauseAllPlayers_Media(media_GmDocument(d->doc), iTrue);
     iRelease(d->doc);
     d->doc = ref_Object(newDoc);
     documentWasChanged_DocumentWidget_(d);
@@ -1581,6 +1583,7 @@ static void updateFromCachedResponse_DocumentWidget_(iDocumentWidget *d, float n
     clear_ObjectList(d->media);
     delete_Gempub(d->sourceGempub);
     d->sourceGempub = NULL;
+    pauseAllPlayers_Media(media_GmDocument(d->doc), iTrue);
     iRelease(d->doc);
     destroy_Widget(d->footerButtons);
     d->footerButtons = NULL;
@@ -1867,6 +1870,7 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                     /* Keep scroll position when reloading the same page. */
                     reset_SmoothScroll(&d->scrollY);
                 }
+                pauseAllPlayers_Media(media_GmDocument(d->doc), iTrue);
                 iRelease(d->doc); /* new content incoming */
                 d->doc = new_GmDocument();
                 delete_Gempub(d->sourceGempub);
@@ -4673,7 +4677,7 @@ void setUrlAndSource_DocumentWidget(iDocumentWidget *d, const iString *url, cons
     initCurrent_Time(&resp->when);
     set_String(&resp->meta, mime);
     set_Block(&resp->body, source);
-    updateFromCachedResponse_DocumentWidget_(d, 0, resp);
+    updateFromCachedResponse_DocumentWidget_(d, 0, resp, NULL);
     delete_GmResponse(resp);
 }
 
