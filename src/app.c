@@ -1089,6 +1089,13 @@ void processEvents_App(enum iAppEventMode eventMode) {
                 postRefresh_App();
                 break;
             case SDL_APP_WILLENTERBACKGROUND:
+#if defined (iPlatformAppleMobile)
+                updateNowPlayingInfo_iOS();
+#endif
+                setFreezeDraw_Window(d->window, iTrue);
+                savePrefs_App_(d);
+                saveState_App_(d);
+                break;
             case SDL_APP_TERMINATING:
                 setFreezeDraw_Window(d->window, iTrue);
                 savePrefs_App_(d);

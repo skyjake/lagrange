@@ -56,3 +56,6 @@ double  currentTime_AVFAudioPlayer  (const iAVFAudioPlayer *);
 double  duration_AVFAudioPlayer     (const iAVFAudioPlayer *);
 iBool   isStarted_AVFAudioPlayer    (const iAVFAudioPlayer *);
 iBool   isPaused_AVFAudioPlayer     (const iAVFAudioPlayer *);
+
+void    clearNowPlayingInfo_iOS     (void);
+void    updateNowPlayingInfo_iOS    (void);

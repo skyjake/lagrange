@@ -68,3 +68,5 @@ float   	streamProgress_Player   (const iPlayer *); /* normalized 0...1 */
 
 uint32_t    idleTimeMs_Player       (const iPlayer *);
 iString *   metadataLabel_Player    (const iPlayer *);
+
+iPlayer *   active_Player           (void);

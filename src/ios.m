@@ -22,6 +22,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "ios.h"
 #include "app.h"
+#include "audio/player.h"
 #include "ui/command.h"
 #include "ui/window.h"
 
@@ -32,9 +33,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <SDL_syswm.h>
 #include <SDL_timer.h>
 
-#import <UIKit/UIKit.h>
-#import <CoreHaptics/CoreHaptics.h>
 #import <AVFAudio/AVFAudio.h>
+#import <CoreHaptics/CoreHaptics.h>
+#import <UIKit/UIKit.h>
+#import <MediaPlayer/MediaPlayer.h>
 
 static iBool isSystemDarkMode_ = iFalse;
 static iBool isPhone_          = iFalse;
@@ -241,6 +243,55 @@ void setupApplication_iOS(void) {
                    name:UIKeyboardWillHideNotification
                  object:nil];
     [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayback error:nil];
+    /* Media player remote controls. */
+    MPRemoteCommandCenter *commandCenter = [MPRemoteCommandCenter sharedCommandCenter];
+    [[commandCenter pauseCommand] addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
+        iPlayer *player = active_Player();
+        if (player) {
+            setPaused_Player(player, iTrue);
+            return MPRemoteCommandHandlerStatusSuccess;
+        }
+        return MPRemoteCommandHandlerStatusCommandFailed;
+    }];
+    [[commandCenter playCommand] addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
+        iPlayer *player = active_Player();
+        if (player) {
+            if (isPaused_Player(player)) {
+                setPaused_Player(player, iFalse);
+            }
+            else {
+                start_Player(player);
+            }
+            return MPRemoteCommandHandlerStatusSuccess;
+        }
+        return MPRemoteCommandHandlerStatusCommandFailed;
+    }];
+    [[commandCenter stopCommand] addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
+        iPlayer *player = active_Player();
+        if (player) {
+            stop_Player(player);
+            return MPRemoteCommandHandlerStatusSuccess;
+        }
+        return MPRemoteCommandHandlerStatusCommandFailed;
+    }];
+    [[commandCenter togglePlayPauseCommand] addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
+        iPlayer *player = active_Player();
+        if (player) {
+            setPaused_Player(player, !isPaused_Player(player));
+            return MPRemoteCommandHandlerStatusSuccess;
+        }
+        return MPRemoteCommandHandlerStatusCommandFailed;
+    }];
+    [[commandCenter nextTrackCommand] setEnabled:NO];
+    [[commandCenter previousTrackCommand] setEnabled:NO];
+    [[commandCenter changeRepeatModeCommand] setEnabled:NO];
+    [[commandCenter changeShuffleModeCommand] setEnabled:NO];
+    [[commandCenter changePlaybackRateCommand] setEnabled:NO];
+    [[commandCenter seekForwardCommand] setEnabled:NO];
+    [[commandCenter seekBackwardCommand] setEnabled:NO];
+    [[commandCenter skipForwardCommand] setEnabled:NO];
+    [[commandCenter skipBackwardCommand] setEnabled:NO];
+    [[commandCenter changePlaybackPositionCommand] setEnabled:NO];
 }
 
 static iBool isDarkMode_(iWindow *window) {
@@ -333,6 +384,38 @@ iBool processEvent_iOS(const SDL_Event *ev) {
         }
     }
     return iFalse; /* allow normal processing */
+}
+
+void updateNowPlayingInfo_iOS(void) {
+    const iPlayer *player = active_Player();
+    if (!player) {
+        clearNowPlayingInfo_iOS();
+        return;
+    }
+    NSMutableDictionary<NSString *, id> *info = [[NSMutableDictionary<NSString *, id> alloc] init];
+    [info setObject:[NSNumber numberWithDouble:time_Player(player)]
+            forKey:MPNowPlayingInfoPropertyElapsedPlaybackTime];
+    [info setObject:[NSNumber numberWithInt:MPNowPlayingInfoMediaTypeAudio]
+            forKey:MPNowPlayingInfoPropertyMediaType];
+    [info setObject:[NSNumber numberWithDouble:duration_Player(player)]
+             forKey:MPMediaItemPropertyPlaybackDuration];
+    const iString *title  = tag_Player(player, title_PlayerTag);
+    const iString *artist = tag_Player(player, artist_PlayerTag);
+    if (isEmpty_String(title)) {
+        title = collectNewCStr_String("Audio"); /* TODO: Use link label or URL file name */
+    }
+    if (isEmpty_String(artist)) {
+        artist = collectNewCStr_String("Lagrange"); /* TODO: Use domain or base URL */
+    }
+    [info setObject:[NSString stringWithUTF8String:cstr_String(title)]
+             forKey:MPMediaItemPropertyTitle];
+    [info setObject:[NSString stringWithUTF8String:cstr_String(artist)]
+             forKey:MPMediaItemPropertyArtist];
+    [[MPNowPlayingInfoCenter defaultCenter] setNowPlayingInfo:info];
+}
+
+void clearNowPlayingInfo_iOS(void) {
+    [[MPNowPlayingInfoCenter defaultCenter] setNowPlayingInfo:nil];
 }
 
 void exportDownloadedFile_iOS(const iString *path) {
