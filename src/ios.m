@@ -181,11 +181,22 @@ static AppState *appState_;
 
 - (void)documentPicker:(UIDocumentPickerViewController *)controller
 didPickDocumentsAtURLs:(NSArray<NSURL *> *)urls {
-    [self removeSavedFile];
+    if (fileBeingSaved) {
+        [self removeSavedFile];
+    }
+    else {
+        /* A file is being opened. */
+        NSURL *url = [urls firstObject];
+        iString *path = localFilePathFromUrl_String(collectNewCStr_String([[url absoluteString]
+                                                                           UTF8String]));
+        postCommandf_App("file.open temp:1 path:%s", cstrCollect_String(path));
+    }
 }
 
 - (void)documentPickerWasCancelled:(UIDocumentPickerViewController *)controller {
-    [self removeSavedFile];
+    if (fileBeingSaved) {
+        [self removeSavedFile];
+    }
 }
 
 -(void)keyboardOnScreen:(NSNotification *)notification {
@@ -332,6 +343,17 @@ void exportDownloadedFile_iOS(const iString *path) {
                                               inMode:UIDocumentPickerModeExportToService];
     picker.delegate = appState_;
     [appState_ setFileBeingSaved:path];
+    [viewController_(get_Window()) presentViewController:picker animated:YES completion:nil];
+}
+
+void pickFileForOpening_iOS(void) {
+    UIDocumentPickerViewController *picker = [[UIDocumentPickerViewController alloc]
+                                              initWithDocumentTypes:@[@"fi.skyjake.lagrange.gemini",
+                                                                      @"public.text",
+                                                                      @"public.image",
+                                                                      @"public.audio"]
+                                              inMode:UIDocumentPickerModeImport];
+    picker.delegate = appState_;
     [viewController_(get_Window()) presentViewController:picker animated:YES completion:nil];
 }
 

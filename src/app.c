@@ -2303,6 +2303,19 @@ iBool handleCommand_App(const char *cmd) {
         }
         setCurrent_Root(oldRoot);
     }
+    else if (equal_Command(cmd, "file.open")) {
+        const char *path = suffixPtr_Command(cmd, "path");
+        if (path) {
+            postCommandf_App("open temp:%d url:%s",
+                             argLabel_Command(cmd, "temp"),
+                             makeFileUrl_CStr(path));
+            return iTrue;
+        }
+#if defined (iPlatformAppleMobile)
+        pickFileForOpening_iOS();
+#endif
+        return iTrue;
+    }
     else if (equal_Command(cmd, "file.delete")) {
         const char *path = suffixPtr_Command(cmd, "path");
         if (argLabel_Command(cmd, "confirm")) {

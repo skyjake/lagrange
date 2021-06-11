@@ -468,6 +468,9 @@ msgstr "Open in New Tab"
 msgid "menu.opentab.background"
 msgstr "Open in Background Tab"
 
+msgid "menu.openfile"
+msgstr "Open File…"
+
 msgid "menu.edit"
 msgstr "Edit…"
 

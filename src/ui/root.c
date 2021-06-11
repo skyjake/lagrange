@@ -90,6 +90,7 @@ static const iMenuItem navMenuItems_[] = {
 #if defined (iPlatformAppleMobile)
 /* Tablet menu. */
 static const iMenuItem tabletNavMenuItems_[] = {
+    { folder_Icon " ${menu.openfile}", SDLK_o, KMOD_PRIMARY, "file.open" },
     { add_Icon " ${menu.newtab}", 't', KMOD_PRIMARY, "tabs.new" },
     { close_Icon " ${menu.closetab}", 'w', KMOD_PRIMARY, "tabs.close" },
     { "---", 0, 0, NULL },
@@ -110,6 +111,7 @@ static const iMenuItem tabletNavMenuItems_[] = {
 
 /* Phone menu. */
 static const iMenuItem phoneNavMenuItems_[] = {
+    { folder_Icon " ${menu.openfile}", SDLK_o, KMOD_PRIMARY, "file.open" },
     { add_Icon " ${menu.newtab}", 't', KMOD_PRIMARY, "tabs.new" },
     { close_Icon " ${menu.closetab}", 'w', KMOD_PRIMARY, "tabs.close" },
     { "---", 0, 0, NULL },
