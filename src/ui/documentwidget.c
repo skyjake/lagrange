@@ -2374,6 +2374,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                     msg, "%s\n", formatCStrs_Lang("num.bytes.n", size_Block(&d->sourceContent)));
             }
         }
+        /* TODO: On mobile, omit the CA status. */
         appendFormat_String(
             msg,
             "\n%s${pageinfo.cert.status}\n"

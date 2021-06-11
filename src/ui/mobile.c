@@ -201,6 +201,8 @@ static iBool isTwoColumnPage_(iWidget *d) {
 
 static iBool isOmittedPref_(const iString *id) {
     static const char *omittedPrefs[] = {
+        "prefs.userfont",
+        "prefs.animate",
         "prefs.smoothscroll",
         "prefs.imageloadscroll",
         "prefs.pinsplit",

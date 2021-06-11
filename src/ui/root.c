@@ -1126,7 +1126,7 @@ void createUserInterface_Root(iRoot *d) {
                 setId_Widget(as_Widget(pageMenuButton), "pagemenubutton");
                 setFont_LabelWidget(pageMenuButton, uiContentBold_FontId);
                 setAlignVisually_LabelWidget(pageMenuButton, iTrue);
-                addChildFlags_Widget(urlButtons, iClob(pageMenuButton), embedFlags);
+                addChildFlags_Widget(urlButtons, iClob(pageMenuButton), embedFlags | tight_WidgetFlag);
                 updateSize_LabelWidget(pageMenuButton);
             }
             /* Reload button. */ {
