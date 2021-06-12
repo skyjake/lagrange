@@ -40,6 +40,10 @@ iDeclareType(TouchState)
 #define numHistory_Touch_   5
 #define lastIndex_Touch_    (numHistory_Touch_ - 1)
 
+static const uint32_t longPressSpanMs_  = 500;
+static const uint32_t shortPressSpanMs_ = 250;
+static const int      tapRadiusPt_      = 10;
+
 enum iTouchEdge {
     none_TouchEdge,
     left_TouchEdge,
@@ -55,7 +59,7 @@ enum iTouchAxis {
 struct Impl_Touch {
     SDL_FingerID id;
     iWidget *affinity; /* widget on which the touch started */
-    iWidget *edgeDragging;
+//    iWidget *edgeDragging;
     iBool hasMoved;
     iBool isTapBegun;
     iBool isLeftDown;
@@ -131,9 +135,6 @@ static iTouch *find_TouchState_(iTouchState *d, SDL_FingerID id) {
     }
     return NULL;
 }
-
-static const uint32_t longPressSpanMs_ = 500;
-static const int      tapRadiusPt_     = 10;
 
 iLocalDef float distance_Touch_(const iTouch *d) {
     return length_F3(sub_F3(d->pos[0], d->startPos));
@@ -246,6 +247,11 @@ iLocalDef double accurateTicks_(void) {
     return 1000.0 * (double) count / (double) freq;
 }
 
+static iFloat3 gestureVector_Touch_(const iTouch *d) {
+    const size_t lastIndex = iMin(d->posCount - 1, lastIndex_Touch_);
+    return sub_F3(d->pos[0], d->pos[lastIndex]);
+}
+
 static void update_TouchState_(void *ptr) {
     iTouchState *d = ptr;
     /* Check for long presses to simulate right clicks. */
@@ -254,6 +260,22 @@ static void update_TouchState_(void *ptr) {
         iTouch *touch = i.value;
         if (touch->pinchId || touch->isTouchDrag) {
             continue;
+        }
+        if (touch->edge) {
+            const iFloat3 pos = touch->pos[0];
+            /* Cancel the swipe if the finger doesn't move or moves mostly vertically. */
+            const iFloat3 gestureVector = gestureVector_Touch_(touch);
+            if (fabsf(2 * x_F3(gestureVector)) < fabsf(y_F3(gestureVector)) ||
+                (isStationary_Touch_(touch) && nowTime - touch->startTime > shortPressSpanMs_)) {
+                //const int swipeDir = x_F3(gestureVector) > 0 ? +1 : -1;
+                //dispatchClick_Touch_(touch,
+//                                     touch->edge == left_TouchEdge  && swipeDir > 0 ? SDL_BUTTON_X1 :
+//                                     touch->edge == right_TouchEdge && swipeDir < 0 ? SDL_BUTTON_X2 : 0);
+//                setHover_Widget(NULL);
+                postCommandf_App("edgeswipe.ended abort:1 side:%d id:%llu", touch->edge, touch->id);
+                touch->edge = none_TouchEdge;                
+            }
+            else continue;
         }
         /* Holding a touch will reset previous momentum for this widget. */
         if (isStationary_Touch_(touch)) {
@@ -450,8 +472,10 @@ iBool processEvent_Touch(const SDL_Event *ev) {
         }
         else if (x > rootSize.x - edgeWidth) {
             edge = right_TouchEdge;
+//            puts("DOWN on right edge");
         }
         iWidget *aff = hitChild_Window(window, init_I2(iRound(x), iRound(y_F3(pos))));
+#if 0
         if (edge == left_TouchEdge) {
             dragging = findSlidePanel_Widget_(aff);
             if (dragging) {
@@ -460,6 +484,7 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                 setFlags_Widget(dragging, dragged_WidgetFlag, iTrue);
             }
         }
+#endif
         /* TODO: We must retain a reference to the affinity widget, or otherwise it might
            be destroyed during the gesture. */
 //        printf("aff:[%p] %s:'%s'\n", aff, aff ? class_Widget(aff)->name : "-",
@@ -469,7 +494,7 @@ iBool processEvent_Touch(const SDL_Event *ev) {
         iTouch newTouch = {
             .id = fing->fingerId,
             .affinity = aff,
-            .edgeDragging = dragging,
+//            .edgeDragging = dragging,
             .didBeginOnTouchDrag = (flags_Widget(aff) & touchDrag_WidgetFlag) != 0,
             .edge = edge,
             .startTime = nowTime,
@@ -487,6 +512,14 @@ iBool processEvent_Touch(const SDL_Event *ev) {
     }
     else if (ev->type == SDL_FINGERMOTION) {
         iTouch *touch = find_TouchState_(d, fing->fingerId);
+        if (touch && touch->edge) {
+            pushPos_Touch_(touch, pos, nowTime);
+            postCommandf_App("edgeswipe.moved arg:%d side:%d id:%llu",
+                             (int) (x_F3(pos) - x_F3(touch->startPos)),
+                             touch->edge,
+                             touch->id);
+            return iTrue;
+        }
         if (touch && touch->affinity) {
             if (touch->isTouchDrag) {
                 dispatchMotion_Touch_(pos, SDL_BUTTON_LMASK);
@@ -556,6 +589,8 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                     touch->axis = y_TouchAxis;
                 }
             }
+            iAssert(touch->edge == none_TouchEdge);
+#if 0
             /* Edge swipe aborted? */
             if (touch->edge == left_TouchEdge) {
                 if (fing->dx < 0 && x_F3(touch->pos[0]) < tapRadiusPt_ * window->pixelRatio) {
@@ -570,22 +605,35 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                     setVisualOffset_Widget(touch->edgeDragging, x_F3(pos) - x_F3(touch->startPos), 10, 0);
                 }
             }
-            if (touch->edge == right_TouchEdge && fing->dx > 0) {
-                touch->edge = none_TouchEdge;
+            if (touch->edge == right_TouchEdge) {
+                if (fing->dx > 0 && x_F3(touch->pos[0]) > window->size.x - tapRadiusPt_ * window->pixelRatio) {
+                    puts("touch->edge==right returned to right edge, aborted");
+                    touch->edge = none_TouchEdge;
+                    if (touch->edgeDragging) {
+                        setFlags_Widget(touch->edgeDragging, dragged_WidgetFlag, iFalse);
+                        setVisualOffset_Widget(touch->edgeDragging, 0, 200, easeOut_AnimFlag);
+                        touch->edgeDragging = NULL;
+                    }
+                }
+                else if (touch->edgeDragging) {
+                    setVisualOffset_Widget(touch->edgeDragging, x_F3(pos) - x_F3(touch->startPos), 10, 0);
+                }
             }
             if (touch->edge) {
                 pixels.y = 0;
             }
+#endif
             if (touch->axis == x_TouchAxis) {
                 pixels.y = 0;
             }
             if (touch->axis == y_TouchAxis) {
                 pixels.x = 0;
             }
-//            printf("%p (%s) py: %i wy: %f acc: %f\n",
+//            printf("%p (%s) py: %i wy: %f acc: %f edge: %d\n",
 //                   touch->affinity,
 //                   class_Widget(touch->affinity)->name,
-//                   pixels.y, y_F3(amount), y_F3(touch->accum));
+//                   pixels.y, y_F3(amount), y_F3(touch->accum),
+//                   touch->edge);
             if (pixels.x || pixels.y) {
                 setFocus_Widget(NULL);
                 dispatchMotion_Touch_(touch->pos[0], 0);
@@ -612,8 +660,15 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                 endPinch_TouchState_(d, touch->pinchId);
                 break;
             }
+#if 0
             if (touch->edgeDragging) {
                 setFlags_Widget(touch->edgeDragging, dragged_WidgetFlag, iFalse);
+            }
+#endif
+            if (touch->edge && !isStationary_Touch_(touch)) {
+                postCommandf_App("edgeswipe.ended side:%d id:%llu", touch->edge, touch->id);
+                remove_ArrayIterator(&i);
+                continue;
             }
             if (flags_Widget(touch->affinity) & touchDrag_WidgetFlag) {
                 if (!touch->isLeftDown && !touch->isTapAndHold) {
@@ -638,6 +693,7 @@ iBool processEvent_Touch(const SDL_Event *ev) {
             const uint32_t duration = nowTime - touch->startTime;
             const iFloat3 gestureVector = sub_F3(pos, touch->pos[lastIndex]);
             iFloat3 velocity = zero_F3();
+#if 0
             if (touch->edge && fabsf(2 * x_F3(gestureVector)) > fabsf(y_F3(gestureVector)) &&
                 !isStationary_Touch_(touch)) {
                 const int swipeDir = x_F3(gestureVector) > 0 ? +1 : -1;
@@ -646,7 +702,9 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                                      touch->edge == right_TouchEdge && swipeDir < 0 ? SDL_BUTTON_X2 : 0);
                 setHover_Widget(NULL);
             }
-            else {
+            else
+#endif
+            {
                 const uint32_t elapsed = fing->timestamp - touch->posTime[lastIndex];
                 const float minVelocity = 400.0f;
                 if (elapsed < 150) {

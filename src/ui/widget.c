@@ -1056,10 +1056,32 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
                 isCommand_UserEvent(ev, "widget.overflow")) {
                 scrollOverflow_Widget(d, 0); /* check bounds */
             }
-            if (ev->user.code == command_UserEventCode && d->commandHandler &&
-                d->commandHandler(d, ev->user.data1)) {
-                iAssert(get_Root() == d->root);
-                return iTrue;
+            if (ev->user.code == command_UserEventCode) {
+                const char *cmd = command_UserEvent(ev);
+                if (d->flags & edgeDraggable_WidgetFlag &&
+                    isVisible_Widget(d) &&
+                    ~d->flags & disabled_WidgetFlag &&
+                    equal_Command(cmd, "edgeswipe.moved")) {
+                    if (~d->flags & dragged_WidgetFlag) {
+                        setFlags_Widget(d, dragged_WidgetFlag, iTrue);
+                    }
+                    setVisualOffset_Widget(d, arg_Command(command_UserEvent(ev)), 10, 0);
+                    return iTrue;
+                }
+                if (d->flags & dragged_WidgetFlag && equal_Command(cmd, "edgeswipe.ended")) {
+                    if (argLabel_Command(cmd, "abort")) {
+                        setVisualOffset_Widget(d, 0, 200, easeOut_AnimFlag);
+                        setFlags_Widget(d, dragged_WidgetFlag, iFalse);
+                    }
+                    else {
+                        postCommand_Widget(
+                            d, argLabel_Command(cmd, "side") == 1 ? "swipe.back" : "swipe.forward");
+                    }
+                }
+                if (d->commandHandler && d->commandHandler(d, ev->user.data1)) {
+                    iAssert(get_Root() == d->root);
+                    return iTrue;
+                }
             }
             break;
         }

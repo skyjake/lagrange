@@ -150,8 +150,7 @@ static iBool topPanelHandler_(iWidget *topPanel, const char *cmd) {
         setFlags_Widget(button, selected_WidgetFlag, iTrue);
         return iTrue;
     }
-    if (equal_Command(cmd, "mouse.clicked") && arg_Command(cmd) &&
-        argLabel_Command(cmd, "button") == SDL_BUTTON_X1) {
+    if (equal_Command(cmd, "swipe.back")) {
         postCommand_App("panel.close");
         return iTrue;
     }

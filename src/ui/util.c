@@ -1326,6 +1326,7 @@ static iBool messageHandler_(iWidget *msg, const char *cmd) {
           equal_Command(cmd, "document.request.updated") ||
           equal_Command(cmd, "scrollbar.fade") ||
           equal_Command(cmd, "widget.overflow") ||
+          equal_Command(cmd, "edgeswipe.ended") ||
           startsWith_CStr(cmd, "window."))) {
         setupSheetTransition_Mobile(msg, iFalse);
         destroy_Widget(msg);
