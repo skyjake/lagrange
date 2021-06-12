@@ -69,10 +69,6 @@ iDefineTypeConstructionArgs(Window, (iRect rect), rect)
 
 /* TODO: Define menus per platform. */
 
-#if defined (iPlatformAppleDesktop)
-#  define iHaveNativeMenus
-#endif
-
 #if defined (iHaveNativeMenus)
 /* Using native menus. */
 static const iMenuItem fileMenuItems_[] = {
@@ -202,7 +198,7 @@ static void windowSizeChanged_Window_(iWindow *d) {
 }
 
 static void setupUserInterface_Window(iWindow *d) {
-#if defined (iPlatformAppleDesktop)
+#if defined (iHaveNativeMenus)
     insertMacMenus_();
 #endif
     /* One root is created by default. */
@@ -913,7 +909,7 @@ iBool processEvent_Window(iWindow *d, const SDL_Event *ev) {
                 }
             }
             if (isCommand_UserEvent(&event, "lang.changed")) {
-#if defined (iPlatformAppleDesktop)
+#if defined (iHaveNativeMenus)
                 /* Retranslate the menus. */
                 removeMacMenus_();
                 insertMacMenus_();

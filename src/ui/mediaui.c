@@ -118,7 +118,7 @@ void draw_PlayerUI(iPlayerUI *d, iPaint *p) {
                       isPaused_Player(d->player) ? "\U0001f782" : "\u23f8",
                       uiContent_FontId);
     drawPlayerButton_(p, d->rewindRect, "\u23ee", uiContent_FontId);
-    drawPlayerButton_(p, d->menuRect, "\U0001d362", uiContent_FontId);
+    drawPlayerButton_(p, d->menuRect, menu_Icon, uiContent_FontId);
     if (!isAdjusting) {
         drawPlayerButton_(
             p, d->volumeRect, volumeChar_(volume_Player(d->player)), uiContentSymbols_FontId);

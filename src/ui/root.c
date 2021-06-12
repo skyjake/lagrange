@@ -52,10 +52,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <SDL_timer.h>
 
-#if defined (iPlatformAppleDesktop)
-#  define iHaveNativeMenus
-#endif
-
 #if defined (iPlatformPcDesktop)
 /* TODO: Submenus wouldn't hurt here. */
 static const iMenuItem navMenuItems_[] = {
@@ -1158,11 +1154,11 @@ void createUserInterface_Root(iRoot *d) {
 #if !defined (iHaveNativeMenus)
 #   if defined (iPlatformAppleMobile)
         iLabelWidget *navMenu =
-            makeMenuButton_LabelWidget("\U0001d362", isPhone ? phoneNavMenuItems_ : tabletNavMenuItems_,
+            makeMenuButton_LabelWidget(menu_Icon, isPhone ? phoneNavMenuItems_ : tabletNavMenuItems_,
                                        isPhone ? iElemCount(phoneNavMenuItems_) : iElemCount(tabletNavMenuItems_));
 #   else
         iLabelWidget *navMenu =
-            makeMenuButton_LabelWidget("\U0001d362", navMenuItems_, iElemCount(navMenuItems_));
+            makeMenuButton_LabelWidget(menu_Icon, navMenuItems_, iElemCount(navMenuItems_));
 #   endif
         setAlignVisually_LabelWidget(navMenu, iTrue);
         setId_Widget(addChildFlags_Widget(navBar, iClob(navMenu), collapse_WidgetFlag), "navbar.menu");
@@ -1267,7 +1263,7 @@ void createUserInterface_Root(iRoot *d) {
                                           iClob(newLargeIcon_LabelWidget(book_Icon, "toolbar.showview arg:-1")),
                                           frameless_WidgetFlag | commandOnClick_WidgetFlag),
                      "toolbar.view");
-        iLabelWidget *menuButton = makeMenuButton_LabelWidget("\U0001d362", phoneNavMenuItems_,
+        iLabelWidget *menuButton = makeMenuButton_LabelWidget(menu_Icon, phoneNavMenuItems_,
                                                               iElemCount(phoneNavMenuItems_));
         setFont_LabelWidget(menuButton, uiLabelLarge_FontId);
         setId_Widget(as_Widget(menuButton), "toolbar.navmenu");

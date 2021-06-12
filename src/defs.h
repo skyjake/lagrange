@@ -42,6 +42,7 @@ enum iFileVersion {
 
 /* Icons */
 
+#define menu_Icon           "\U0001d362"
 #define rightArrowhead_Icon "\u27a4"
 #define leftArrowhead_Icon  "\u27a4"
 #define warning_Icon        "\u26a0"
@@ -110,6 +111,9 @@ enum iFileVersion {
 #   define shiftReturn_Icon shift_Icon " " return_Icon
 #endif
 
+#if defined (iPlatformAppleDesktop)
+#   define iHaveNativeMenus
+#endif
 
 /* UI labels that depend on the platform */
 
