@@ -2266,11 +2266,15 @@ static iWidget *swipeParent_DocumentWidget_(iDocumentWidget *d) {
 
 static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
     iWidget *w = as_Widget(d);
+    /* Swipe animations are rather complex and utilize both cached GmDocument content
+       and temporary DocumentWidgets. Depending on the swipe direction, this DocumentWidget
+       may wait until the finger is released to actually perform the navigation action. */
     if (equal_Command(cmd, "edgeswipe.moved")) {
+        //printf("[%p] responds to edgeswipe.moved\n", d);
         as_Widget(d)->offsetRef = NULL;
         const int side = argLabel_Command(cmd, "side");
         const int offset = arg_Command(cmd);
-        if (side == 1) {
+        if (side == 1) { /* left edge */
             if (atOldest_History(d->mod.history)) {
                 return iTrue;
             }
@@ -2285,7 +2289,7 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
                                 fixedPosition_WidgetFlag | fixedSize_WidgetFlag, iTrue);
                 swipeIn->widget.rect.pos = windowToInner_Widget(swipeParent, localToWindow_Widget(w, w->rect.pos));
                 swipeIn->widget.rect.size = d->widget.rect.size;
-                swipeIn->widget.offsetRef = w;
+                swipeIn->widget.offsetRef = parent_Widget(w);
                 iRecentUrl *recent = new_RecentUrl();
                 preceding_History(d->mod.history, recent);
                 if (recent->cachedDoc) {
@@ -2293,15 +2297,18 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
                     updateScrollMax_DocumentWidget_(d);
                     setValue_Anim(&swipeIn->scrollY.pos, size_GmDocument(swipeIn->doc).y * recent->normScrollY, 0);
                     updateVisible_DocumentWidget_(swipeIn);
+                    swipeIn->drawBufs->flags |= updateTimestampBuf_DrawBufsFlag | updateSideBuf_DrawBufsFlag;
                 }
                 delete_RecentUrl(recent);
                 addChildPos_Widget(swipeParent, iClob(swipeIn), front_WidgetAddPos);
             }
         }
-        if (side == 2) {
+        if (side == 2) { /* right edge */
             if (offset < -get_Window()->pixelRatio * 10) {
+                int animSpan = 10;
                 if (!atLatest_History(d->mod.history) &&
                     ~flags_Widget(w) & dragged_WidgetFlag) {
+                    animSpan = 0;
                     postCommand_Widget(d, "navigate.forward");
                     setFlags_Widget(w, dragged_WidgetFlag, iTrue);
                     /* Set up the swipe dummy. */
@@ -2319,10 +2326,10 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
                     destroy_Widget(as_Widget(target)); /* will be actually deleted after animation finishes */
                 }
                 if (flags_Widget(w) & dragged_WidgetFlag) {
-                    setVisualOffset_Widget(w, width_Widget(w) + offset, 10, 0);
+                    setVisualOffset_Widget(w, width_Widget(w) + offset, animSpan, 0);
                 }
                 else {
-                    setVisualOffset_Widget(w, offset / 4, 10, 0);
+                    setVisualOffset_Widget(w, offset / 4, animSpan, 0);
                 }
             }
             return iTrue;

@@ -281,7 +281,7 @@ void destroyPending_Root(iRoot *d) {
         if (widget->parent) {
             removeChild_Widget(widget->parent, widget);
         }
-        iAssert(widget->parent == NULL);
+        iAssert(widget->parent == NULL);        
         iRelease(widget);
         remove_PtrSetIterator(&i);
     }

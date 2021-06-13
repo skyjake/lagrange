@@ -82,10 +82,10 @@ static void visualOffsetAnimation_Widget_(void *ptr) {
 
 void deinit_Widget(iWidget *d) {
     releaseChildren_Widget(d);
-//#if !defined (NDEBUG)
-//    printf("widget %p (%s) deleted (on top:%d)\n", d, cstr_String(&d->id),
-//           d->flags & keepOnTop_WidgetFlag ? 1 : 0);
-//#endif
+#if 0 && !defined (NDEBUG)
+    printf("widget %p (%s) deleted (on top:%d)\n", d, cstr_String(&d->id),
+           d->flags & keepOnTop_WidgetFlag ? 1 : 0);
+#endif
     deinit_String(&d->id);
     if (d->flags & keepOnTop_WidgetFlag) {
         removeAll_PtrArray(onTop_Root(d->root), d);
