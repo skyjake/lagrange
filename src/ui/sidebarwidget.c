@@ -625,7 +625,7 @@ static void updateMetrics_SidebarWidget_(iSidebarWidget *d) {
 void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     iWidget *w = as_Widget(d);
     init_Widget(w);
-    setId_Widget(w, side == left_SideBarSide ? "sidebar" : "sidebar2");
+    setId_Widget(w, side == left_SidebarSide ? "sidebar" : "sidebar2");
     initCopy_String(&d->cmdPrefix, id_Widget(w));
     appendChar_String(&d->cmdPrefix, '.');
     setBackgroundColor_Widget(w, none_ColorId);
@@ -659,7 +659,7 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     d->actions = NULL;
     /* On a phone, the right sidebar is used exclusively for Identities. */
     const iBool isPhone = deviceType_App() == phone_AppDeviceType;
-    if (!isPhone || d->side == left_SideBarSide) {
+    if (!isPhone || d->side == left_SidebarSide) {
         iWidget *buttons = new_Widget();
         setId_Widget(buttons, "buttons");
         for (int i = 0; i < max_SidebarMode; i++) {
@@ -715,24 +715,24 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     addChildFlags_Widget(content, iClob(d->blank), resizeChildren_WidgetFlag);
     addChildFlags_Widget(vdiv, iClob(content), expand_WidgetFlag);
     setMode_SidebarWidget(d,
-                          deviceType_App() == phone_AppDeviceType && d->side == right_SideBarSide ?
+                          deviceType_App() == phone_AppDeviceType && d->side == right_SidebarSide ?
                           identities_SidebarMode : bookmarks_SidebarMode);
     d->resizer =
         addChildFlags_Widget(w,
                              iClob(new_Widget()),
                              hover_WidgetFlag | commandOnClick_WidgetFlag | fixedWidth_WidgetFlag |
                                  resizeToParentHeight_WidgetFlag |
-                                 (side == left_SideBarSide ? moveToParentRightEdge_WidgetFlag
+                                 (side == left_SidebarSide ? moveToParentRightEdge_WidgetFlag
                                                            : moveToParentLeftEdge_WidgetFlag));
     if (deviceType_App() == phone_AppDeviceType) {
         setFlags_Widget(d->resizer, hidden_WidgetFlag | disabled_WidgetFlag, iTrue);
     }
-    setId_Widget(d->resizer, side == left_SideBarSide ? "sidebar.grab" : "sidebar2.grab");
+    setId_Widget(d->resizer, side == left_SidebarSide ? "sidebar.grab" : "sidebar2.grab");
     setBackgroundColor_Widget(d->resizer, none_ColorId);
     d->menu = NULL;
     addAction_Widget(w, SDLK_r, KMOD_PRIMARY | KMOD_SHIFT, "feeds.refresh");
     updateMetrics_SidebarWidget_(d);
-    if (side == left_SideBarSide) {
+    if (side == left_SidebarSide) {
         postCommand_App("~sidebar.update"); /* unread count */
     }
 }
@@ -799,7 +799,7 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, iSidebarItem *item, si
                 updateContextMenu_SidebarWidget_(d);
                 arrange_Widget(d->menu);
                 openMenu_Widget(d->menu,
-                                d->side == left_SideBarSide
+                                d->side == left_SidebarSide
                                     ? topRight_Rect(itemRect_ListWidget(d->list, itemIndex))
                                     : addX_I2(topLeft_Rect(itemRect_ListWidget(d->list, itemIndex)),
                                               -width_Widget(d->menu)));
@@ -857,7 +857,7 @@ void setWidth_SidebarWidget(iSidebarWidget *d, float widthAsGaps) {
     if (!isFixedWidth) {
         /* Even less space if the other sidebar is visible, too. */
         const int otherWidth =
-            width_Widget(findWidget_App(d->side == left_SideBarSide ? "sidebar2" : "sidebar"));
+            width_Widget(findWidget_App(d->side == left_SidebarSide ? "sidebar2" : "sidebar"));
         width = iClamp(width, 30 * gap_UI, size_Root(w->root).x - 50 * gap_UI - otherWidth);
     }
     d->widthAsGaps = (float) width / (float) gap_UI;
@@ -938,7 +938,7 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
         }
         const iBool isAnimated = prefs_App()->uiAnimations &&
                                  argLabel_Command(cmd, "noanim") == 0 &&
-                                 (d->side == left_SideBarSide || deviceType_App() != phone_AppDeviceType);
+                                 (d->side == left_SidebarSide || deviceType_App() != phone_AppDeviceType);
         int visX = 0;
         if (isVisible_Widget(w)) {
             visX = left_Rect(bounds_Widget(w)) - left_Rect(w->root->widget->rect);
@@ -950,13 +950,13 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
             invalidate_ListWidget(d->list);
             if (isAnimated) {
                 setFlags_Widget(w, horizontalOffset_WidgetFlag, iTrue);
-                setVisualOffset_Widget(w, (d->side == left_SideBarSide ? -1 : 1) * w->rect.size.x, 0, 0);
+                setVisualOffset_Widget(w, (d->side == left_SidebarSide ? -1 : 1) * w->rect.size.x, 0, 0);
                 setVisualOffset_Widget(w, 0, 300, easeOut_AnimFlag | softer_AnimFlag);
             }
         }
         else if (isAnimated) {
             setFlags_Widget(w, horizontalOffset_WidgetFlag, iTrue);
-            if (d->side == right_SideBarSide) {
+            if (d->side == right_SidebarSide) {
                 setVisualOffset_Widget(w, visX, 0, 0);
                 setVisualOffset_Widget(w, visX + w->rect.size.x, 300, easeOut_AnimFlag | softer_AnimFlag);
             }
@@ -984,7 +984,8 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
     /* Handle commands. */
     if (isResize_UserEvent(ev)) {
         checkModeButtonLayout_SidebarWidget_(d);
-        if (deviceType_App() == phone_AppDeviceType && d->side == left_SideBarSide) {
+        if (deviceType_App() == phone_AppDeviceType && d->side == left_SidebarSide) {
+            setFlags_Widget(w, rightEdgeDraggable_WidgetFlag, isPortrait_App());
             /* In landscape, visibility of the toolbar is controlled separately. */
             if (isVisible_Widget(w)) {
                 postCommand_Widget(w, "sidebar.toggle");
@@ -1038,6 +1039,11 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
             postCommandf_App("sidebar.mode arg:%d toggle:1", identities_SidebarMode);
             return iTrue;
         }
+        else if (isPortraitPhone_App() && isVisible_Widget(w) && d->side == left_SidebarSide &&
+                 equal_Command(cmd, "swipe.forward")) {
+            postCommand_App("sidebar.toggle");
+            return iTrue;
+        }
         else if (startsWith_CStr(cmd, cstr_String(&d->cmdPrefix))) {
             if (handleSidebarCommand_SidebarWidget_(d, cmd + size_String(&d->cmdPrefix))) {
                 return iTrue;
@@ -1068,7 +1074,7 @@ static iBool processEvent_SidebarWidget_(iSidebarWidget *d, const SDL_Event *ev)
                 const int resMid = d->resizer->rect.size.x / 2;
                 setWidth_SidebarWidget(
                     d,
-                    ((d->side == left_SideBarSide
+                    ((d->side == left_SidebarSide
                          ? inner.x
                           : (right_Rect(rect_Root(w->root)) - coord_Command(cmd).x)) +
                      resMid) / (float) gap_UI);
@@ -1547,7 +1553,7 @@ static void draw_SidebarWidget_(const iSidebarWidget *d) {
     if (isVisible_Widget(w)) {
         drawVLine_Paint(
             &p,
-            addX_I2(d->side == left_SideBarSide ? topRight_Rect(bounds) : topLeft_Rect(bounds), -1),
+            addX_I2(d->side == left_SidebarSide ? topRight_Rect(bounds) : topLeft_Rect(bounds), -1),
             height_Rect(bounds),
             uiSeparator_ColorId);
     }

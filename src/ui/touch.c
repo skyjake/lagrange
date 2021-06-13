@@ -274,8 +274,9 @@ static void update_TouchState_(void *ptr) {
 //                setHover_Widget(NULL);
                 postCommandf_App("edgeswipe.ended abort:1 side:%d id:%llu", touch->edge, touch->id);
                 touch->edge = none_TouchEdge;                
+                remove_ArrayIterator(&i);
             }
-            else continue;
+            continue;
         }
         /* Holding a touch will reset previous momentum for this widget. */
         if (isStationary_Touch_(touch)) {
@@ -362,6 +363,7 @@ static void update_TouchState_(void *ptr) {
     }
 }
 
+#if 0
 static iWidget *findSlidePanel_Widget_(iWidget *d) {
     for (iWidget *w = d; w; w = parent_Widget(w)) {
         if (isVisible_Widget(w) && flags_Widget(w) & edgeDraggable_WidgetFlag) {
@@ -370,6 +372,7 @@ static iWidget *findSlidePanel_Widget_(iWidget *d) {
     }
     return NULL;
 }
+#endif
 
 static void checkNewPinch_TouchState_(iTouchState *d, iTouch *newTouch) {
     iWidget *affinity = newTouch->affinity;

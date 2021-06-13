@@ -1185,9 +1185,9 @@ void createUserInterface_Root(iRoot *d) {
     }
     /* Sidebars. */ {
         iWidget *content = findChild_Widget(root, "tabs.content");
-        iSidebarWidget *sidebar1 = new_SidebarWidget(left_SideBarSide);
+        iSidebarWidget *sidebar1 = new_SidebarWidget(left_SidebarSide);
         addChildPos_Widget(content, iClob(sidebar1), front_WidgetAddPos);
-        iSidebarWidget *sidebar2 = new_SidebarWidget(right_SideBarSide);
+        iSidebarWidget *sidebar2 = new_SidebarWidget(right_SidebarSide);
         if (deviceType_App() != phone_AppDeviceType) {
             addChildPos_Widget(content, iClob(sidebar2), back_WidgetAddPos);
         }

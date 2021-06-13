@@ -120,7 +120,7 @@ static iBool mainDetailSplitHandler_(iWidget *mainDetailSplit, const char *cmd) 
         }
         iForEach(ObjectList, i, children_Widget(detailStack)) {
             iWidget *panel = i.object;
-            setFlags_Widget(panel, edgeDraggable_WidgetFlag, !isSideBySide);
+            setFlags_Widget(panel, leftEdgeDraggable_WidgetFlag, !isSideBySide);
             if (isSideBySide) {
                 setVisualOffset_Widget(panel, 0, 0, 0);
             }
@@ -414,7 +414,7 @@ void finalizeSheet_Mobile(iWidget *sheet) {
         setFlags_Widget(sheet,
                         frameless_WidgetFlag |
                         //resizeWidthOfChildren_WidgetFlag |
-                        edgeDraggable_WidgetFlag |
+                        leftEdgeDraggable_WidgetFlag |
                         commandOnClick_WidgetFlag,
                         iTrue);
         iPtrArray *   contents         = collect_PtrArray(new_PtrArray()); /* two-column pages */

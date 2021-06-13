@@ -1317,7 +1317,7 @@ void updateValueInput_Widget(iWidget *d, const char *title, const char *prompt) 
 
 static iBool messageHandler_(iWidget *msg, const char *cmd) {
     /* Almost any command dismisses the sheet. */
-    /* TODO: Use a "notification" prefix (like `) to ignore all types of commands line this? */
+    /* TODO: Add a "notification" type of user events to separate them from user actions. */
     if (!(equal_Command(cmd, "media.updated") ||
           equal_Command(cmd, "media.player.update") ||
           equal_Command(cmd, "bookmarks.request.finished") ||

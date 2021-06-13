@@ -1058,15 +1058,19 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
             }
             if (ev->user.code == command_UserEventCode) {
                 const char *cmd = command_UserEvent(ev);
-                if (d->flags & edgeDraggable_WidgetFlag &&
-                    isVisible_Widget(d) &&
-                    ~d->flags & disabled_WidgetFlag &&
+                if (d->flags & (leftEdgeDraggable_WidgetFlag | rightEdgeDraggable_WidgetFlag) &&
+                    isVisible_Widget(d) && ~d->flags & disabled_WidgetFlag &&
                     equal_Command(cmd, "edgeswipe.moved")) {
-                    if (~d->flags & dragged_WidgetFlag) {
-                        setFlags_Widget(d, dragged_WidgetFlag, iTrue);
+                    /* Check the side. */
+                    const int side = argLabel_Command(cmd, "side");
+                    if ((side == 1 && d->flags & leftEdgeDraggable_WidgetFlag) ||
+                        (side == 2 && d->flags & rightEdgeDraggable_WidgetFlag)) {
+                        if (~d->flags & dragged_WidgetFlag) {
+                            setFlags_Widget(d, dragged_WidgetFlag, iTrue);
+                        }
+                        setVisualOffset_Widget(d, arg_Command(command_UserEvent(ev)), 10, 0);
+                        return iTrue;
                     }
-                    setVisualOffset_Widget(d, arg_Command(command_UserEvent(ev)), 10, 0);
-                    return iTrue;
                 }
                 if (d->flags & dragged_WidgetFlag && equal_Command(cmd, "edgeswipe.ended")) {
                     if (argLabel_Command(cmd, "abort")) {

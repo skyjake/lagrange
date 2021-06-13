@@ -36,8 +36,8 @@ enum iSidebarMode {
 const char *    icon_SidebarMode    (enum iSidebarMode mode);
 
 enum iSidebarSide {
-    left_SideBarSide,
-    right_SideBarSide,
+    left_SidebarSide,
+    right_SidebarSide,
 };
 
 enum iFeedsMode {
