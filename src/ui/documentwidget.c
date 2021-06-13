@@ -315,6 +315,10 @@ void init_DocumentWidget(iDocumentWidget *d) {
     init_Widget(w);
     setId_Widget(w, format_CStr("document%03d", ++docEnum_));
     setFlags_Widget(w, hover_WidgetFlag | noBackground_WidgetFlag, iTrue);
+    if (deviceType_App() != desktop_AppDeviceType) {
+        setFlags_Widget(w, leftEdgeDraggable_WidgetFlag | rightEdgeDraggable_WidgetFlag |
+                        horizontalOffset_WidgetFlag, iTrue);
+    }
     init_PersistentDocumentState(&d->mod);
     d->flags           = 0;
     d->phoneToolbar    = NULL;
@@ -977,6 +981,9 @@ static void updateTimestampBuf_DocumentWidget_(const iDocumentWidget *d) {
 }
 
 static void invalidate_DocumentWidget_(iDocumentWidget *d) {
+    if (flags_Widget(as_Widget(d)) & destroyPending_WidgetFlag) {
+        return;
+    }
     invalidate_VisBuf(d->visBuf);
     clear_PtrSet(d->invalidRuns);
 }
@@ -2237,6 +2244,133 @@ static iBool handlePinch_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
     return iTrue;
 }
 
+static void swap_DocumentWidget_(iDocumentWidget *d, iGmDocument *doc,
+                                 iDocumentWidget *swapBuffersWith) {
+    if (doc) {
+        iAssert(isInstance_Object(doc, &Class_GmDocument));
+        iGmDocument *copy = ref_Object(doc);
+        iRelease(d->doc);
+        d->doc = copy;
+        d->scrollY = swapBuffersWith->scrollY;
+        updateVisible_DocumentWidget_(d);
+        iSwap(iVisBuf *,     d->visBuf,     swapBuffersWith->visBuf);
+        iSwap(iVisBufMeta *, d->visBufMeta, swapBuffersWith->visBufMeta);
+        iSwap(iDrawBufs *,   d->drawBufs,   swapBuffersWith->drawBufs);
+        invalidate_DocumentWidget_(swapBuffersWith);
+    }
+}
+
+static iWidget *swipeParent_DocumentWidget_(iDocumentWidget *d) {
+    return findChild_Widget(as_Widget(d)->root->widget, "doctabs");
+}
+
+static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
+    iWidget *w = as_Widget(d);
+    if (equal_Command(cmd, "edgeswipe.moved")) {
+        as_Widget(d)->offsetRef = NULL;
+        const int side = argLabel_Command(cmd, "side");
+        const int offset = arg_Command(cmd);
+        if (side == 1) {
+            if (atOldest_History(d->mod.history)) {
+                return iTrue;
+            }
+            iWidget *swipeParent = swipeParent_DocumentWidget_(d);
+            /* The temporary "swipeIn" will display the previous page until the finger is lifted. */
+            iDocumentWidget *swipeIn = findChild_Widget(swipeParent, "swipein");
+            if (!swipeIn) {
+                swipeIn = new_DocumentWidget();
+                setId_Widget(as_Widget(swipeIn), "swipein");
+                setFlags_Widget(as_Widget(swipeIn),
+                                disabled_WidgetFlag | refChildrenOffset_WidgetFlag |
+                                fixedPosition_WidgetFlag | fixedSize_WidgetFlag, iTrue);
+                swipeIn->widget.rect.pos = windowToInner_Widget(swipeParent, localToWindow_Widget(w, w->rect.pos));
+                swipeIn->widget.rect.size = d->widget.rect.size;
+                swipeIn->widget.offsetRef = w;
+                iRecentUrl *recent = new_RecentUrl();
+                preceding_History(d->mod.history, recent);
+                if (recent->cachedDoc) {
+                    iChangeRef(swipeIn->doc, recent->cachedDoc);
+                    updateScrollMax_DocumentWidget_(d);
+                    setValue_Anim(&swipeIn->scrollY.pos, size_GmDocument(swipeIn->doc).y * recent->normScrollY, 0);
+                    updateVisible_DocumentWidget_(swipeIn);
+                }
+                delete_RecentUrl(recent);
+                addChildPos_Widget(swipeParent, iClob(swipeIn), front_WidgetAddPos);
+            }
+        }
+        if (side == 2) {
+            if (offset < -get_Window()->pixelRatio * 10) {
+                if (!atLatest_History(d->mod.history) &&
+                    ~flags_Widget(w) & dragged_WidgetFlag) {
+                    postCommand_Widget(d, "navigate.forward");
+                    setFlags_Widget(w, dragged_WidgetFlag, iTrue);
+                    /* Set up the swipe dummy. */
+                    iWidget *swipeParent = swipeParent_DocumentWidget_(d);
+                    iDocumentWidget *target = new_DocumentWidget();
+                    setId_Widget(as_Widget(target), "swipeout");
+                    /* The target takes the old document and jumps on top. */
+                    target->widget.rect.pos = windowToInner_Widget(swipeParent, localToWindow_Widget(w, w->rect.pos));
+                    target->widget.rect.size = d->widget.rect.size;
+                    setFlags_Widget(as_Widget(target), fixedPosition_WidgetFlag | fixedSize_WidgetFlag, iTrue);
+                    swap_DocumentWidget_(target, d->doc, d);
+                    addChildPos_Widget(swipeParent, iClob(target), front_WidgetAddPos);
+                    setFlags_Widget(as_Widget(target), refChildrenOffset_WidgetFlag, iTrue);
+                    as_Widget(target)->offsetRef = parent_Widget(w);
+                    destroy_Widget(as_Widget(target)); /* will be actually deleted after animation finishes */
+                }
+                if (flags_Widget(w) & dragged_WidgetFlag) {
+                    setVisualOffset_Widget(w, width_Widget(w) + offset, 10, 0);
+                }
+                else {
+                    setVisualOffset_Widget(w, offset / 4, 10, 0);
+                }
+            }
+            return iTrue;
+        }
+    }
+    if (equal_Command(cmd, "edgeswipe.ended") && argLabel_Command(cmd, "side") == 2) {
+        if (argLabel_Command(cmd, "abort") && flags_Widget(w) & dragged_WidgetFlag) {
+            postCommand_Widget(d, "navigate.back");
+        }
+        setFlags_Widget(w, dragged_WidgetFlag, iFalse);
+        setVisualOffset_Widget(w, 0, 100, 0);
+        return iTrue;
+    }
+    if (equal_Command(cmd, "edgeswipe.ended") && argLabel_Command(cmd, "side") == 1) {
+        iWidget *swipeParent = swipeParent_DocumentWidget_(d);
+        iWidget *swipeIn = findChild_Widget(swipeParent, "swipein");
+        if (swipeIn) {
+            swipeIn->offsetRef = NULL;
+            destroy_Widget(swipeIn);
+        }
+    }
+    if (equal_Command(cmd, "swipe.back")) {
+        if (atOldest_History(d->mod.history)) {
+            setVisualOffset_Widget(w, 0, 100, 0);
+            return iTrue;
+        }
+        iWidget *swipeParent = swipeParent_DocumentWidget_(d);
+        iDocumentWidget *target = new_DocumentWidget();
+        setId_Widget(as_Widget(target), "swipeout");
+        /* The target takes the old document and jumps on top. */
+        target->widget.rect.pos = windowToInner_Widget(swipeParent, innerToWindow_Widget(w, zero_I2()));
+        /* Note: `innerToWindow_Widget` does not apply visual offset. */
+        target->widget.rect.size = w->rect.size;
+        setFlags_Widget(as_Widget(target), fixedPosition_WidgetFlag | fixedSize_WidgetFlag, iTrue);
+        swap_DocumentWidget_(target, d->doc, d);
+        addChildPos_Widget(swipeParent, iClob(target), back_WidgetAddPos);
+        setFlags_Widget(as_Widget(d), refChildrenOffset_WidgetFlag, iTrue);
+        as_Widget(d)->offsetRef = swipeParent;
+        setVisualOffset_Widget(as_Widget(target), value_Anim(&w->visualOffset), 0, 0);
+        setVisualOffset_Widget(as_Widget(target), width_Widget(target), 150, 0);
+        destroy_Widget(as_Widget(target)); /* will be actually deleted after animation finishes */
+        setVisualOffset_Widget(w, 0, 0, 0);
+        postCommand_Widget(d, "navigate.back");
+        return iTrue;
+    }
+    return iFalse;
+}
+
 static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
     iWidget *w = as_Widget(d);
     if (equal_Command(cmd, "document.openurls.changed")) {
@@ -2842,7 +2976,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                     uiHeading_ColorEscape "${heading.import.bookmarks}",
                     formatCStrs_Lang("dlg.import.found.n", count),
                     (iMenuItem[]){ { "${cancel}", 0, 0, NULL },
-                                   { format_CStr(cstrCount_Lang("dlg.import.add.n", count),
+                                   { format_CStr(cstrCount_Lang("dlg.import.add.n", (int) count),
                                                  uiTextAction_ColorEscape,
                                                  count),
                                      0,
@@ -2900,6 +3034,10 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     else if (startsWith_CStr(cmd, "pinch.") && document_Command(cmd) == d) {
         return handlePinch_DocumentWidget_(d, cmd);
+    }
+    else if ((startsWith_CStr(cmd, "edgeswipe.") || startsWith_CStr(cmd, "swipe.")) &&
+             document_App() == d) {
+        return handleSwipe_DocumentWidget_(d, cmd);
     }
     return iFalse;
 }
@@ -4306,7 +4444,8 @@ static iBool render_DocumentWidget_(const iDocumentWidget *d, iDrawContext *ctx,
     /* Swap buffers around to have room available both before and after the visible region. */
     allocVisBuffer_DocumentWidget_(d);
     reposition_VisBuf(visBuf, vis);
-    /* Redraw the invalid ranges. */ {
+    /* Redraw the invalid ranges. */
+    if (~flags_Widget(constAs_Widget(d)) & destroyPending_WidgetFlag) {
         iPaint *p = &ctx->paint;
         init_Paint(p);
         iForIndices(i, visBuf->buffers) {
@@ -4490,6 +4629,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
         .vis             = vis,
         .showLinkNumbers = (d->flags & showLinkNumbers_DocumentWidgetFlag) != 0,
     };
+    init_Paint(&ctx.paint);
     render_DocumentWidget_(d, &ctx, iFalse /* just the mandatory parts */);
     setClip_Paint(&ctx.paint, bounds);
     int yTop = docBounds.pos.y - pos_SmoothScroll(&d->scrollY);

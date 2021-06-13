@@ -271,7 +271,8 @@ void destroyPending_Root(iRoot *d) {
     setCurrent_Root(d);
     iForEach(PtrSet, i, d->pendingDestruction) {
         iWidget *widget = *i.value;
-        if (!isFinished_Anim(&widget->visualOffset)) {
+        if (!isFinished_Anim(&widget->visualOffset) ||
+            isBeingVisuallyOffsetByReference_Widget(widget)) {
             continue;
         }
         if (widget->flags & keepOnTop_WidgetFlag) {
@@ -1169,11 +1170,11 @@ void createUserInterface_Root(iRoot *d) {
         setId_Widget(mainStack, "stack");
         addChildFlags_Widget(div, iClob(mainStack), resizeChildren_WidgetFlag | expand_WidgetFlag |
                                                         unhittable_WidgetFlag);
-        iWidget *tabBar = makeTabs_Widget(mainStack);
-        setId_Widget(tabBar, "doctabs");
-        setBackgroundColor_Widget(tabBar, uiBackground_ColorId);
-        appendTabPage_Widget(tabBar, iClob(new_DocumentWidget()), "Document", 0, 0);
-        iWidget *buttons = findChild_Widget(tabBar, "tabs.buttons");
+        iWidget *docTabs = makeTabs_Widget(mainStack);
+        setId_Widget(docTabs, "doctabs");
+        setBackgroundColor_Widget(docTabs, uiBackground_ColorId);
+        appendTabPage_Widget(docTabs, iClob(new_DocumentWidget()), "Document", 0, 0);
+        iWidget *buttons = findChild_Widget(docTabs, "tabs.buttons");
         setFlags_Widget(buttons, collapse_WidgetFlag | hidden_WidgetFlag |
                                      drawBackgroundToHorizontalSafeArea_WidgetFlag, iTrue);
         if (deviceType_App() == phone_AppDeviceType) {

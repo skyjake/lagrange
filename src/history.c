@@ -284,6 +284,36 @@ void add_History(iHistory *d, const iString *url ){
     unlock_Mutex(d->mtx);
 }
 
+iBool preceding_History(iHistory *d, iRecentUrl *recent_out) {
+    iBool ok = iFalse;
+    lock_Mutex(d->mtx);
+    if (!isEmpty_Array(&d->recent) && d->recentPos < size_Array(&d->recent) - 1) {
+        const iRecentUrl *recent = constAt_Array(&d->recent, d->recentPos + 1);
+        set_String(&recent_out->url, &recent->url);
+        recent_out->normScrollY = recent->normScrollY;
+        recent_out->cachedDoc = ref_Object(recent->cachedDoc);
+        /* Cached response is not returned, would involve a deep copy. */
+        ok = iTrue;
+    }
+    unlock_Mutex(d->mtx);
+    return ok;
+}
+
+iBool following_History(iHistory *d, iRecentUrl *recent_out) {
+    iBool ok = iFalse;
+    lock_Mutex(d->mtx);
+    if (!isEmpty_Array(&d->recent) && d->recentPos > 0) {
+        const iRecentUrl *recent = constAt_Array(&d->recent, d->recentPos - 1);
+        set_String(&recent_out->url, &recent->url);
+        recent_out->normScrollY = recent->normScrollY;
+        recent_out->cachedDoc = ref_Object(recent->cachedDoc);
+        /* Cached response is not returned, would involve a deep copy. */
+        ok = iTrue;
+    }
+    unlock_Mutex(d->mtx);
+    return ok;
+}
+
 iBool goBack_History(iHistory *d) {
     lock_Mutex(d->mtx);
     if (!isEmpty_Array(&d->recent) && d->recentPos < size_Array(&d->recent) - 1) {

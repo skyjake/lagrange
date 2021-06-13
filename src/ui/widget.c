@@ -759,6 +759,19 @@ void arrange_Widget(iWidget *d) {
     }
 }
 
+iBool isBeingVisuallyOffsetByReference_Widget(const iWidget *d) {
+    if (d->flags & refChildrenOffset_WidgetFlag) {
+        iConstForEach(ObjectList, i, children_Widget(d->offsetRef)) {
+            const iWidget *child = i.object;
+            if (child == d) continue;
+            if (child->flags & (visualOffset_WidgetFlag | dragged_WidgetFlag)) {
+                return iTrue;
+            }
+        }
+    }
+    return iFalse;
+}
+
 static void applyVisualOffset_Widget_(const iWidget *d, iInt2 *pos) {
     if (d->flags & (visualOffset_WidgetFlag | dragged_WidgetFlag)) {
         const int off = iRound(value_Anim(&d->visualOffset));
@@ -1075,12 +1088,12 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
                 if (d->flags & dragged_WidgetFlag && equal_Command(cmd, "edgeswipe.ended")) {
                     if (argLabel_Command(cmd, "abort")) {
                         setVisualOffset_Widget(d, 0, 200, easeOut_AnimFlag);
-                        setFlags_Widget(d, dragged_WidgetFlag, iFalse);
                     }
                     else {
                         postCommand_Widget(
                             d, argLabel_Command(cmd, "side") == 1 ? "swipe.back" : "swipe.forward");
                     }
+                    setFlags_Widget(d, dragged_WidgetFlag, iFalse);
                 }
                 if (d->commandHandler && d->commandHandler(d, ev->user.data1)) {
                     iAssert(get_Root() == d->root);

@@ -273,8 +273,9 @@ static void update_TouchState_(void *ptr) {
 //                                     touch->edge == right_TouchEdge && swipeDir < 0 ? SDL_BUTTON_X2 : 0);
 //                setHover_Widget(NULL);
                 postCommandf_App("edgeswipe.ended abort:1 side:%d id:%llu", touch->edge, touch->id);
-                touch->edge = none_TouchEdge;                
-                remove_ArrayIterator(&i);
+                touch->edge = none_TouchEdge;
+                /* May be a regular drag along the edge so don't remove. */
+                //remove_ArrayIterator(&i);
             }
             continue;
         }
@@ -516,6 +517,7 @@ iBool processEvent_Touch(const SDL_Event *ev) {
     else if (ev->type == SDL_FINGERMOTION) {
         iTouch *touch = find_TouchState_(d, fing->fingerId);
         if (touch && touch->edge) {
+            clear_Array(d->moms);
             pushPos_Touch_(touch, pos, nowTime);
             postCommandf_App("edgeswipe.moved arg:%d side:%d id:%llu",
                              (int) (x_F3(pos) - x_F3(touch->startPos)),

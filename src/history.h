@@ -63,6 +63,8 @@ void        setCachedResponse_History   (iHistory *, const iGmResponse *response
 void        setCachedDocument_History   (iHistory *, iGmDocument *doc);
 iBool       goBack_History              (iHistory *);
 iBool       goForward_History           (iHistory *);
+iBool       preceding_History           (iHistory *d, iRecentUrl *recent_out);
+iBool       following_History           (iHistory *d, iRecentUrl *recent_out);
 iRecentUrl *recentUrl_History           (iHistory *, size_t pos);
 iRecentUrl *mostRecentUrl_History       (iHistory *);
 iRecentUrl *findUrl_History             (iHistory *, const iString *url);

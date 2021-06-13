@@ -447,7 +447,7 @@ void finalizeSheet_Mobile(iWidget *sheet) {
         }
         addChild_Widget(topPanel, iClob(makePadding_Widget(lineHeight_Text(labelFont_()))));
         /* Slide top panel with detail panels. */ {
-            setFlags_Widget(topPanel, refChildrenOffset_WidgetFlag, iTrue);
+        setFlags_Widget(topPanel, refChildrenOffset_WidgetFlag, iTrue);
             topPanel->offsetRef = detailStack;
         }
         if (prefsTabs) {
