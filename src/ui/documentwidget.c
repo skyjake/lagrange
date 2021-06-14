@@ -1674,7 +1674,7 @@ static void scrollBegan_DocumentWidget_(iAnyObject *any, int offset, uint32_t du
     if (deviceType_App() == phone_AppDeviceType) {
         const float normPos = normScrollPos_DocumentWidget_(d);
         if (prefs_App()->hideToolbarOnScroll && iAbs(offset) > 5 && normPos >= 0) {
-            showToolbars_Root(as_Widget(d)->root, offset < 0);
+            showToolbar_Root(as_Widget(d)->root, offset < 0);
         }
     }
     updateVisible_DocumentWidget_(d);
@@ -2840,7 +2840,11 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             if (d->flags & openedFromSidebar_DocumentWidgetFlag &&
                 !isVisible_Widget(findWidget_App("sidebar"))) {
                 postCommand_App("sidebar.toggle");
-                showToolbars_Root(get_Root(), iTrue);
+                showToolbar_Root(get_Root(), iTrue);
+#if defined (iPlatformAppleMobile)
+                /* TODO: Add a softer tap? */
+//                playHapticEffect_iOS(tap_HapticEffect);
+#endif
                 return iTrue;
             }
             d->flags &= ~openedFromSidebar_DocumentWidgetFlag;

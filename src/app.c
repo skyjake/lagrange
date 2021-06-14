@@ -2027,7 +2027,7 @@ iBool handleCommand_App(const char *cmd) {
     else if (equal_Command(cmd, "hidetoolbarscroll")) {
         d->prefs.hideToolbarOnScroll = arg_Command(cmd);
         if (!d->prefs.hideToolbarOnScroll) {
-            showToolbars_Root(get_Root(), iTrue);
+            showToolbar_Root(get_Root(), iTrue);
         }
         return iTrue;
     }

@@ -971,6 +971,7 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
                     w, -w->rect.size.x - safePad, 300, easeOut_AnimFlag | softer_AnimFlag);
             }
         }
+        updateToolbarColors_Root(w->root);
         arrange_Widget(w->parent);
         /* BUG: Rearranging because the arrange above didn't fully resolve the height. */
         arrange_Widget(w);

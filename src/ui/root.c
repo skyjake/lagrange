@@ -514,6 +514,24 @@ void updatePadding_Root(iRoot *d) {
 #endif
 }
 
+void updateToolbarColors_Root(iRoot *d) {
+#if defined (iPlatformMobile)
+    iWidget *toolBar = findChild_Widget(d->widget, "toolbar");
+    if (toolBar) {
+        const iBool isSidebarVisible = isVisible_Widget(findChild_Widget(d->widget, "sidebar"));
+        setBackgroundColor_Widget(toolBar, isSidebarVisible ? uiBackgroundSidebar_ColorId :
+                                  tmBannerBackground_ColorId);
+        iForEach(ObjectList, i, children_Widget(toolBar)) {
+            iLabelWidget *btn = i.object;
+            setTextColor_LabelWidget(i.object, isSidebarVisible ? uiTextDim_ColorId :
+                                     tmBannerIcon_ColorId);
+        }
+    }
+#else
+    iUnused(d);
+#endif
+}
+
 void dismissPortraitPhoneSidebars_Root(iRoot *d) {
     if (deviceType_App() == phone_AppDeviceType && isPortrait_App()) {
         iWidget *sidebar = findChild_Widget(d->widget, "sidebar");
@@ -1247,7 +1265,6 @@ void createUserInterface_Root(iRoot *d) {
                                      arrangeHeight_WidgetFlag | arrangeHorizontal_WidgetFlag |
                                      commandOnClick_WidgetFlag |
                                      drawBackgroundToBottom_WidgetFlag, iTrue);
-        setBackgroundColor_Widget(toolBar, tmBannerBackground_ColorId);
         setId_Widget(addChildFlags_Widget(toolBar,
                                           iClob(newLargeIcon_LabelWidget("\U0001f870", "navigate.back")),
                                           frameless_WidgetFlag),
@@ -1269,12 +1286,13 @@ void createUserInterface_Root(iRoot *d) {
         setFont_LabelWidget(menuButton, uiLabelLarge_FontId);
         setId_Widget(as_Widget(menuButton), "toolbar.navmenu");
         addChildFlags_Widget(toolBar, iClob(menuButton), frameless_WidgetFlag);
+//        setBackgroundColor_Widget(toolBar, tmBannerBackground_ColorId);
         iForEach(ObjectList, i, children_Widget(toolBar)) {
             iLabelWidget *btn = i.object;
             setFlags_Widget(i.object, noBackground_WidgetFlag, iTrue);
-            setTextColor_LabelWidget(i.object, tmBannerIcon_ColorId);
-            //            setBackgroundColor_Widget(i.object, tmBannerSideTitle_ColorId);
+//            setTextColor_LabelWidget(i.object, tmBannerIcon_ColorId);
         }
+        updateToolbarColors_Root(d);
         const iMenuItem items[] = {
             { book_Icon " ${sidebar.bookmarks}", 0, 0, "toolbar.showview arg:0" },
             { star_Icon " ${sidebar.feeds}", 0, 0, "toolbar.showview arg:1" },
@@ -1356,7 +1374,7 @@ void createUserInterface_Root(iRoot *d) {
     }
 }
 
-void showToolbars_Root(iRoot *d, iBool show) {
+void showToolbar_Root(iRoot *d, iBool show) {
     /* The toolbar is only used on phone portrait layout. */
     if (isLandscape_App()) return;
     iWidget *toolBar = findChild_Widget(d->widget, "toolbar");

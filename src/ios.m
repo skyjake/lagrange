@@ -327,7 +327,7 @@ iBool isPhone_iOS(void) {
 }
 
 int displayRefreshRate_iOS(void) {
-    return uiWindow_(get_Window()).screen.maximumFramesPerSecond;
+    return (int) uiWindow_(get_Window()).screen.maximumFramesPerSecond;
 }
 
 void setupWindow_iOS(iWindow *window) {

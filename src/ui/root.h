@@ -34,7 +34,8 @@ void        postArrange_Root                    (iRoot *);
 void        updateMetrics_Root                  (iRoot *);
 void        updatePadding_Root                  (iRoot *); /* TODO: is part of metrics? */
 void        dismissPortraitPhoneSidebars_Root   (iRoot *);
-void        showToolbars_Root                   (iRoot *, iBool show);
+void        showToolbar_Root                    (iRoot *, iBool show);
+void        updateToolbarColors_Root            (iRoot *);
 
 iInt2       size_Root                           (const iRoot *);
 iRect       rect_Root                           (const iRoot *);
