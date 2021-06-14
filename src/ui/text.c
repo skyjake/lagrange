@@ -1504,9 +1504,10 @@ static void initWrap_TextBuf_(iTextBuf *d, int font, int color, int maxWidth, iB
     if (d->texture) {
         SDL_Texture *oldTarget = SDL_GetRenderTarget(render);
         SDL_SetRenderTarget(render, d->texture);
+        SDL_SetRenderDrawBlendMode(render, SDL_BLENDMODE_NONE);
+        SDL_SetRenderDrawColor(render, 255, 255, 255, 0);
+        SDL_RenderClear(render);
         SDL_SetTextureBlendMode(text_.cache, SDL_BLENDMODE_NONE); /* blended when TextBuf is drawn */
-        SDL_SetRenderDrawColor(text_.render, 0, 0, 0, 0);
-        SDL_RenderClear(text_.render);
         const int fg    = color | fillBackground_ColorId;
         iRangecc  range = range_CStr(text);
         if (maxWidth == 0) {
