@@ -130,7 +130,8 @@ void deinit_PersistentDocumentState(iPersistentDocumentState *d) {
 
 void serialize_PersistentDocumentState(const iPersistentDocumentState *d, iStream *outs) {
     serialize_String(d->url, outs);
-    writeU16_Stream(outs, d->reloadInterval & 7);
+    uint16_t params = d->reloadInterval & 7;
+    writeU16_Stream(outs, params);
     serialize_History(d->history, outs);
 }
 
@@ -223,6 +224,7 @@ enum iDocumentWidgetFlag {
     movingSelectMarkEnd_DocumentWidgetFlag   = iBit(11),
     otherRootByDefault_DocumentWidgetFlag    = iBit(12), /* links open to other root by default */
     urlChanged_DocumentWidgetFlag            = iBit(13),
+    openedFromSidebar_DocumentWidgetFlag     = iBit(14),
 };
 
 enum iDocumentLinkOrdinalMode {
@@ -1606,7 +1608,8 @@ static void updateFromCachedResponse_DocumentWidget_(iDocumentWidget *d, float n
         format_String(&d->sourceHeader, cstr_Lang("pageinfo.header.cached"));
         set_Block(&d->sourceContent, &resp->body);
         updateDocument_DocumentWidget_(d, resp, cachedDoc, iTrue);
-        setCachedDocument_History(d->mod.history, d->doc);
+        setCachedDocument_History(d->mod.history, d->doc,
+                                  (d->flags & openedFromSidebar_DocumentWidgetFlag) != 0);
     }
     d->state = ready_RequestState;
     postProcessRequestContent_DocumentWidget_(d, iTrue);
@@ -1626,6 +1629,9 @@ static void updateFromCachedResponse_DocumentWidget_(iDocumentWidget *d, float n
 static iBool updateFromHistory_DocumentWidget_(iDocumentWidget *d) {
     const iRecentUrl *recent = findUrl_History(d->mod.history, withSpacesEncoded_String(d->mod.url));
     if (recent && recent->cachedResponse) {
+        iChangeFlags(d->flags,
+                     openedFromSidebar_DocumentWidgetFlag,
+                     recent->flags.openedFromSidebar);
         updateFromCachedResponse_DocumentWidget_(
             d, recent->normScrollY, recent->cachedResponse, recent->cachedDoc);
         return iTrue;
@@ -2282,6 +2288,9 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
             /* The temporary "swipeIn" will display the previous page until the finger is lifted. */
             iDocumentWidget *swipeIn = findChild_Widget(swipeParent, "swipein");
             if (!swipeIn) {
+                const iBool sidebarSwipe = (isPortraitPhone_App() &&
+                                            d->flags & openedFromSidebar_DocumentWidgetFlag &&
+                                            !isVisible_Widget(findWidget_App("sidebar")));
                 swipeIn = new_DocumentWidget();
                 setId_Widget(as_Widget(swipeIn), "swipein");
                 setFlags_Widget(as_Widget(swipeIn),
@@ -2290,16 +2299,18 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
                 swipeIn->widget.rect.pos = windowToInner_Widget(swipeParent, localToWindow_Widget(w, w->rect.pos));
                 swipeIn->widget.rect.size = d->widget.rect.size;
                 swipeIn->widget.offsetRef = parent_Widget(w);
-                iRecentUrl *recent = new_RecentUrl();
-                preceding_History(d->mod.history, recent);
-                if (recent->cachedDoc) {
-                    iChangeRef(swipeIn->doc, recent->cachedDoc);
-                    updateScrollMax_DocumentWidget_(d);
-                    setValue_Anim(&swipeIn->scrollY.pos, size_GmDocument(swipeIn->doc).y * recent->normScrollY, 0);
-                    updateVisible_DocumentWidget_(swipeIn);
-                    swipeIn->drawBufs->flags |= updateTimestampBuf_DrawBufsFlag | updateSideBuf_DrawBufsFlag;
+                if (!sidebarSwipe) {
+                    iRecentUrl *recent = new_RecentUrl();
+                    preceding_History(d->mod.history, recent);
+                    if (recent->cachedDoc) {
+                        iChangeRef(swipeIn->doc, recent->cachedDoc);
+                        updateScrollMax_DocumentWidget_(d);
+                        setValue_Anim(&swipeIn->scrollY.pos, size_GmDocument(swipeIn->doc).y * recent->normScrollY, 0);
+                        updateVisible_DocumentWidget_(swipeIn);
+                        swipeIn->drawBufs->flags |= updateTimestampBuf_DrawBufsFlag | updateSideBuf_DrawBufsFlag;
+                    }
+                    delete_RecentUrl(recent);
                 }
-                delete_RecentUrl(recent);
                 addChildPos_Widget(swipeParent, iClob(swipeIn), front_WidgetAddPos);
             }
         }
@@ -2326,7 +2337,9 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
                     destroy_Widget(as_Widget(target)); /* will be actually deleted after animation finishes */
                 }
                 if (flags_Widget(w) & dragged_WidgetFlag) {
-                    setVisualOffset_Widget(w, width_Widget(w) + offset, animSpan, 0);
+                    setVisualOffset_Widget(w, width_Widget(w) +
+                                           width_Widget(d) * offset / size_Root(w->root).x,
+                                           animSpan, 0);
                 }
                 else {
                     setVisualOffset_Widget(w, offset / 4, animSpan, 0);
@@ -2426,6 +2439,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iFalse;
     }
     else if (equal_Command(cmd, "theme.changed") && document_App() == d) {
+//        invalidateTheme_History(d->mod.history); /* cached colors */
         updateTheme_DocumentWidget_(d);
         updateVisible_DocumentWidget_(d);
         updateTrust_DocumentWidget_(d, NULL);
@@ -2691,7 +2705,8 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                 (startsWithCase_String(meta_GmRequest(d->request), "text/") ||
                  !cmp_String(&d->sourceMime, mimeType_Gempub))) {
                 setCachedResponse_History(d->mod.history, lockResponse_GmRequest(d->request));
-                setCachedDocument_History(d->mod.history, d->doc); /* keeps a ref */
+                setCachedDocument_History(d->mod.history, d->doc, /* keeps a ref */
+                                          (d->flags & openedFromSidebar_DocumentWidgetFlag) != 0);
                 unlockResponse_GmRequest(d->request);
             }
         }
@@ -2821,6 +2836,15 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equal_Command(cmd, "navigate.back") && document_App() == d) {
+        if (isPortraitPhone_App()) {
+            if (d->flags & openedFromSidebar_DocumentWidgetFlag &&
+                !isVisible_Widget(findWidget_App("sidebar"))) {
+                postCommand_App("sidebar.toggle");
+                showToolbars_Root(get_Root(), iTrue);
+                return iTrue;
+            }
+            d->flags &= ~openedFromSidebar_DocumentWidgetFlag;
+        }
         if (d->request) {
             postCommandf_Root(w->root,
                 "document.request.cancelled doc:%p url:%s", d, cstr_String(d->mod.url));
@@ -3499,7 +3523,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                         pushBack_Array(
                             &items,
                             &(iMenuItem){ delete_Icon " " uiTextCaution_ColorEscape
-                                                      " ${link.file.delete}",
+                                                      "${link.file.delete}",
                                           0,
                                           0,
                                           format_CStr("!file.delete confirm:1 path:%s",
@@ -4366,7 +4390,7 @@ static void drawSideElements_DocumentWidget_(const iDocumentWidget *d) {
     iDrawBufs *    dbuf      = d->drawBufs;
     iPaint         p;
     init_Paint(&p);
-    setClip_Paint(&p, bounds);
+    setClip_Paint(&p, boundsWithoutVisualOffset_Widget(w));
     /* Side icon and current heading. */
     if (prefs_App()->sideIcon && opacity > 0 && dbuf->sideIconBuf) {
         const iInt2 texSize = size_SDLTexture(dbuf->sideIconBuf);
@@ -4616,12 +4640,17 @@ static void prerender_DocumentWidget_(iAny *context) {
 }
 
 static void draw_DocumentWidget_(const iDocumentWidget *d) {
-    const iWidget *w      = constAs_Widget(d);
-    const iRect    bounds = bounds_Widget(w);
+    const iWidget *w                   = constAs_Widget(d);
+    const iRect    bounds              = bounds_Widget(w);
+    const iRect    boundsWithoutVisOff = boundsWithoutVisualOffset_Widget(w);
+    const iRect    clipBounds          = intersect_Rect(bounds, boundsWithoutVisOff);
     if (width_Rect(bounds) <= 0) {
         return;
     }
-//    draw_Widget(w);
+    /* TODO: Come up with a better palette caching system.
+       It should be able to recompute cached colors in `History` when the theme has changed.
+       Cache the theme seed in `GmDocument`? */
+//    makePaletteGlobal_GmDocument(d->doc);
     if (d->drawBufs->flags & updateTimestampBuf_DrawBufsFlag) {
         updateTimestampBuf_DocumentWidget_(d);
     }
@@ -4638,7 +4667,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
     };
     init_Paint(&ctx.paint);
     render_DocumentWidget_(d, &ctx, iFalse /* just the mandatory parts */);
-    setClip_Paint(&ctx.paint, bounds);
+    setClip_Paint(&ctx.paint, clipBounds);
     int yTop = docBounds.pos.y - pos_SmoothScroll(&d->scrollY);
     draw_VisBuf(d->visBuf, init_I2(bounds.pos.x, yTop), ySpan_Rect(bounds));
     /* Text markers. */
@@ -4673,7 +4702,6 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
         }
     }
     drawMedia_DocumentWidget_(d, &ctx.paint);
-    unsetClip_Paint(&ctx.paint);
     /* Fill the top and bottom, in case the document is short. */
     if (yTop > top_Rect(bounds)) {
         fillRect_Paint(&ctx.paint,
@@ -4687,6 +4715,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
                        init_Rect(bounds.pos.x, yBottom, bounds.size.x, bottom_Rect(bounds) - yBottom),
                        tmBackground_ColorId);
     }
+    unsetClip_Paint(&ctx.paint);
     drawSideElements_DocumentWidget_(d);
     if (prefs_App()->hoverLink && d->hoverLink) {
         const int      font     = uiLabel_FontId;
@@ -4747,6 +4776,23 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
         const iRangecc mark = selectMark_DocumentWidget_(d);
         drawCentered_Text(uiLabelBold_FontId, rect, iFalse, uiBackground_ColorId, "%zu bytes selected",
                           size_Range(&mark));
+    }
+    if (w->offsetRef) {
+        const int offX = visualOffsetByReference_Widget(w);
+        if (offX) {
+            setClip_Paint(&ctx.paint, clipBounds);
+            SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_BLEND);
+            ctx.paint.alpha = iAbs(offX) / (float) get_Window()->size.x * 300;
+            fillRect_Paint(&ctx.paint, bounds, backgroundFadeColor_Widget());
+            SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_NONE);
+            unsetClip_Paint(&ctx.paint);
+        }
+        else {
+            /* TODO: Should have a better place to do this; drawing is supposed to be immutable. */
+            iWidget *mut = iConstCast(iWidget *, w);
+            mut->offsetRef = NULL;
+            mut->flags &= ~refChildrenOffset_WidgetFlag;
+        }
     }
 }
 
@@ -4814,10 +4860,13 @@ static void setUrl_DocumentWidget_(iDocumentWidget *d, const iString *url) {
     if (!equal_String(d->mod.url, url)) {
         d->flags |= urlChanged_DocumentWidgetFlag;
         set_String(d->mod.url, url);
-}    
+    }
 }
 
-void setUrlFromCache_DocumentWidget(iDocumentWidget *d, const iString *url, iBool isFromCache) {
+void setUrlFlags_DocumentWidget(iDocumentWidget *d, const iString *url, int setUrlFlags) {
+    iChangeFlags(d->flags, openedFromSidebar_DocumentWidgetFlag,
+                 (setUrlFlags & openedFromSidebar_DocumentWidgetSetUrlFlag) != 0);
+    const iBool isFromCache = (setUrlFlags & useCachedContentIfAvailable_DocumentWidgetSetUrlFlag) != 0;
     setLinkNumberMode_DocumentWidget_(d, iFalse);
     setUrl_DocumentWidget_(d, urlFragmentStripped_String(url));
     /* See if there a username in the URL. */
@@ -4829,6 +4878,7 @@ void setUrlFromCache_DocumentWidget(iDocumentWidget *d, const iString *url, iBoo
 
 void setUrlAndSource_DocumentWidget(iDocumentWidget *d, const iString *url, const iString *mime,
                                     const iBlock *source) {
+    d->flags &= ~openedFromSidebar_DocumentWidgetFlag;
     setLinkNumberMode_DocumentWidget_(d, iFalse);
     setUrl_DocumentWidget_(d, url);
     parseUser_DocumentWidget_(d);
@@ -4846,12 +4896,12 @@ iDocumentWidget *duplicate_DocumentWidget(const iDocumentWidget *orig) {
     delete_History(d->mod.history);
     d->initNormScrollY = normScrollPos_DocumentWidget_(d);
     d->mod.history = copy_History(orig->mod.history);
-    setUrlFromCache_DocumentWidget(d, orig->mod.url, iTrue);
+    setUrlFlags_DocumentWidget(d, orig->mod.url, useCachedContentIfAvailable_DocumentWidgetSetUrlFlag);
     return d;
 }
 
 void setUrl_DocumentWidget(iDocumentWidget *d, const iString *url) {
-    setUrlFromCache_DocumentWidget(d, url, iFalse);
+    setUrlFlags_DocumentWidget(d, url, 0);
 }
 
 void setInitialScroll_DocumentWidget(iDocumentWidget *d, float normScrollY) {
@@ -4860,6 +4910,11 @@ void setInitialScroll_DocumentWidget(iDocumentWidget *d, float normScrollY) {
 
 void setRedirectCount_DocumentWidget(iDocumentWidget *d, int count) {
     d->redirectCount = count;
+}
+
+void setOpenedFromSidebar_DocumentWidget(iDocumentWidget *d, iBool fromSidebar) {
+    iChangeFlags(d->flags, openedFromSidebar_DocumentWidgetFlag, fromSidebar);
+    setCachedDocument_History(d->mod.history, d->doc, fromSidebar);
 }
 
 iBool isRequestOngoing_DocumentWidget(const iDocumentWidget *d) {

@@ -773,6 +773,7 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, iSidebarItem *item, si
             const iGmHeading *head = constAt_Array(headings_GmDocument(doc), item->id);
             postCommandf_App("document.goto loc:%p", head->text.start);
             dismissPortraitPhoneSidebars_Root(as_Widget(d)->root);
+            setOpenedFromSidebar_DocumentWidget(document_App(), iTrue);
             break;
         }
         case feeds_SidebarMode: {
@@ -783,7 +784,7 @@ static void itemClicked_SidebarWidget_(iSidebarWidget *d, iSidebarItem *item, si
         case bookmarks_SidebarMode:
         case history_SidebarMode: {
             if (!isEmpty_String(&item->url)) {
-                postCommandf_Root(get_Root(), "open newtab:%d url:%s",
+                postCommandf_Root(get_Root(), "open fromsidebar:1 newtab:%d url:%s",
                                  openTabMode_Sym(modState_Keys()),
                                  cstr_String(&item->url));
             }
@@ -944,13 +945,16 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
             visX = left_Rect(bounds_Widget(w)) - left_Rect(w->root->widget->rect);
         }
         setFlags_Widget(w, hidden_WidgetFlag, isVisible_Widget(w));
+        /* Safe area inset for mobile. */
+        const int safePad = (d->side == left_SidebarSide ? left_Rect(safeRect_Root(w->root)) : 0);
         if (isVisible_Widget(w)) {
             setFlags_Widget(w, keepOnTop_WidgetFlag, iFalse);
             w->rect.size.x = d->widthAsGaps * gap_UI;
             invalidate_ListWidget(d->list);
             if (isAnimated) {
                 setFlags_Widget(w, horizontalOffset_WidgetFlag, iTrue);
-                setVisualOffset_Widget(w, (d->side == left_SidebarSide ? -1 : 1) * w->rect.size.x, 0, 0);
+                setVisualOffset_Widget(
+                    w, (d->side == left_SidebarSide ? -1 : 1) * (w->rect.size.x + safePad), 0, 0);
                 setVisualOffset_Widget(w, 0, 300, easeOut_AnimFlag | softer_AnimFlag);
             }
         }
@@ -958,11 +962,13 @@ static iBool handleSidebarCommand_SidebarWidget_(iSidebarWidget *d, const char *
             setFlags_Widget(w, horizontalOffset_WidgetFlag, iTrue);
             if (d->side == right_SidebarSide) {
                 setVisualOffset_Widget(w, visX, 0, 0);
-                setVisualOffset_Widget(w, visX + w->rect.size.x, 300, easeOut_AnimFlag | softer_AnimFlag);
+                setVisualOffset_Widget(
+                    w, visX + w->rect.size.x + safePad, 300, easeOut_AnimFlag | softer_AnimFlag);
             }
             else {
                 setFlags_Widget(w, keepOnTop_WidgetFlag, iTrue);
-                setVisualOffset_Widget(w, -w->rect.size.x, 300, easeOut_AnimFlag | softer_AnimFlag);
+                setVisualOffset_Widget(
+                    w, -w->rect.size.x - safePad, 300, easeOut_AnimFlag | softer_AnimFlag);
             }
         }
         arrange_Widget(w->parent);

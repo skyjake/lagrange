@@ -242,10 +242,9 @@ iBool   isSelected_Widget           (const iAnyObject *);
 iBool   isUnderKeyRoot_Widget       (const iAnyObject *);
 iBool   isCommand_Widget            (const iWidget *d, const SDL_Event *ev, const char *cmd);
 iBool   hasParent_Widget            (const iWidget *d, const iWidget *someParent);
-iBool   isAffectedByVisualOffset_Widget
-                                    (const iWidget *);
-iBool   isBeingVisuallyOffsetByReference_Widget
-                                    (const iWidget *);
+iBool   isAffectedByVisualOffset_Widget         (const iWidget *);
+iBool   isBeingVisuallyOffsetByReference_Widget (const iWidget *);
+int     visualOffsetByReference_Widget          (const iWidget *);
 void    setId_Widget                (iWidget *, const char *id);
 void    setFlags_Widget             (iWidget *, int64_t flags, iBool set);
 void    setPos_Widget               (iWidget *, iInt2 pos);
@@ -277,6 +276,8 @@ void    postCommand_Widget          (const iAnyObject *, const char *cmd, ...);
 void    refresh_Widget              (const iAnyObject *);
 
 iBool   equalWidget_Command (const char *cmd, const iWidget *widget, const char *checkCommand);
+
+int         backgroundFadeColor_Widget  (void);
 
 void        setFocus_Widget         (iWidget *);
 iWidget *   focus_Widget            (void);

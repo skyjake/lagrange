@@ -92,6 +92,8 @@ struct Impl_GmDocument {
     iChar     siteIcon;
     iMedia *  media;
     iStringSet *openURLs; /* currently open URLs for highlighting links */
+    iBool     isPaletteValid;
+    iColor    palette[tmMax_ColorId]; /* copy of the color palette */
 };
 
 iDefineObjectConstruction(GmDocument)
@@ -889,6 +891,8 @@ void init_GmDocument(iGmDocument *d) {
     d->siteIcon = 0;
     d->media = new_Media();
     d->openURLs = NULL;
+    d->isPaletteValid = iFalse;
+    iZap(d->palette);
 }
 
 void deinit_GmDocument(iGmDocument *d) {
@@ -1401,6 +1405,20 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
     }
     printf("---\n");
 #endif
+    /* Color functions operate on the global palette for convenience, but we may need to switch
+       palettes on the fly if more than one GmDocument is being displayed simultaneously. */
+    memcpy(d->palette, get_Root()->tmPalette, sizeof(d->palette));
+    d->isPaletteValid = iTrue;
+}
+
+void makePaletteGlobal_GmDocument(const iGmDocument *d) {
+    if (d->isPaletteValid) {
+        memcpy(get_Root()->tmPalette, d->palette, sizeof(d->palette));
+    }
+}
+
+void invalidatePalette_GmDocument(iGmDocument *d) {
+    d->isPaletteValid = iFalse;
 }
 
 void setFormat_GmDocument(iGmDocument *d, enum iSourceFormat format) {

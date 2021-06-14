@@ -2244,7 +2244,8 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "open")) {
         iString *url = collectNewCStr_String(suffixPtr_Command(cmd, "url"));
-        const iBool noProxy = argLabel_Command(cmd, "noproxy");
+        const iBool noProxy     = argLabel_Command(cmd, "noproxy") != 0;
+        const iBool fromSidebar = argLabel_Command(cmd, "fromsidebar") != 0;
         iUrl parts;
         init_Url(&parts, url);
         if (argLabel_Command(cmd, "default") || equalCase_Rangecc(parts.scheme, "mailto") ||
@@ -2295,7 +2296,9 @@ iBool handleCommand_App(const char *cmd) {
         else {
             urlEncodePath_String(url);
         }
-        setUrlFromCache_DocumentWidget(doc, url, isHistory);
+        setUrlFlags_DocumentWidget(doc, url,
+           (isHistory   ? useCachedContentIfAvailable_DocumentWidgetSetUrlFlag : 0) |
+           (fromSidebar ? openedFromSidebar_DocumentWidgetSetUrlFlag : 0));
         /* Optionally, jump to a text in the document. This will only work if the document
            is already available, e.g., it's from "about:" or restored from cache. */
         const iRangecc gotoHeading = range_Command(cmd, "gotoheading");

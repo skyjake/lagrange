@@ -65,6 +65,7 @@ struct Impl_Touch {
     iBool isLeftDown;
     iBool isTouchDrag;
     iBool isTapAndHold;
+    iBool didPostEdgeMove;
     iBool didBeginOnTouchDrag;
     int pinchId;
     enum iTouchEdge edge;
@@ -391,6 +392,12 @@ static void checkNewPinch_TouchState_(iTouchState *d, iTouch *newTouch) {
         pinch.touchIds[1] = other->id;
         newTouch->pinchId = other->pinchId = pinch.id;
         clearWidgetMomentum_TouchState_(d, affinity);
+        if (other->edge && other->didPostEdgeMove) {
+            postCommandf_App("edgeswipe.ended abort:1 side:%d id:%llu", other->edge, other->id);
+            other->didPostEdgeMove = iFalse;
+        }
+        other->edge = none_TouchEdge;
+        newTouch->edge = none_TouchEdge;
         /* Remember current positions to determine pinch amount. */
         newTouch->startPos = newTouch->pos[0];
         other->startPos    = other->pos[0];
@@ -476,7 +483,6 @@ iBool processEvent_Touch(const SDL_Event *ev) {
         }
         else if (x > rootSize.x - edgeWidth) {
             edge = right_TouchEdge;
-//            puts("DOWN on right edge");
         }
         iWidget *aff = hitChild_Window(window, init_I2(iRound(x), iRound(y_F3(pos))));
 #if 0
@@ -523,6 +529,7 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                              (int) (x_F3(pos) - x_F3(touch->startPos)),
                              touch->edge,
                              touch->id);
+            touch->didPostEdgeMove = iTrue;
             return iTrue;
         }
         if (touch && touch->affinity) {
@@ -595,39 +602,6 @@ iBool processEvent_Touch(const SDL_Event *ev) {
                 }
             }
             iAssert(touch->edge == none_TouchEdge);
-#if 0
-            /* Edge swipe aborted? */
-            if (touch->edge == left_TouchEdge) {
-                if (fing->dx < 0 && x_F3(touch->pos[0]) < tapRadiusPt_ * window->pixelRatio) {
-                    touch->edge = none_TouchEdge;
-                    if (touch->edgeDragging) {
-                        setFlags_Widget(touch->edgeDragging, dragged_WidgetFlag, iFalse);
-                        setVisualOffset_Widget(touch->edgeDragging, 0, 200, easeOut_AnimFlag);
-                        touch->edgeDragging = NULL;
-                    }
-                }
-                else if (touch->edgeDragging) {
-                    setVisualOffset_Widget(touch->edgeDragging, x_F3(pos) - x_F3(touch->startPos), 10, 0);
-                }
-            }
-            if (touch->edge == right_TouchEdge) {
-                if (fing->dx > 0 && x_F3(touch->pos[0]) > window->size.x - tapRadiusPt_ * window->pixelRatio) {
-                    puts("touch->edge==right returned to right edge, aborted");
-                    touch->edge = none_TouchEdge;
-                    if (touch->edgeDragging) {
-                        setFlags_Widget(touch->edgeDragging, dragged_WidgetFlag, iFalse);
-                        setVisualOffset_Widget(touch->edgeDragging, 0, 200, easeOut_AnimFlag);
-                        touch->edgeDragging = NULL;
-                    }
-                }
-                else if (touch->edgeDragging) {
-                    setVisualOffset_Widget(touch->edgeDragging, x_F3(pos) - x_F3(touch->startPos), 10, 0);
-                }
-            }
-            if (touch->edge) {
-                pixels.y = 0;
-            }
-#endif
             if (touch->axis == x_TouchAxis) {
                 pixels.y = 0;
             }
@@ -671,7 +645,12 @@ iBool processEvent_Touch(const SDL_Event *ev) {
             }
 #endif
             if (touch->edge && !isStationary_Touch_(touch)) {
-                postCommandf_App("edgeswipe.ended side:%d id:%llu", touch->edge, touch->id);
+                const iFloat3 gesture = gestureVector_Touch_(touch);
+                const float pixel = window->pixelRatio;
+                const int moveDir = x_F3(gesture) < -pixel ? -1 : x_F3(gesture) > pixel ? +1 : 0;
+                const int didAbort = (touch->edge == left_TouchEdge  && moveDir < 0) ||
+                                     (touch->edge == right_TouchEdge && moveDir > 0);
+                postCommandf_App("edgeswipe.ended abort:%d side:%d id:%llu", didAbort, touch->edge, touch->id);
                 remove_ArrayIterator(&i);
                 continue;
             }
