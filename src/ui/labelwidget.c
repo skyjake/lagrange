@@ -44,6 +44,7 @@ struct Impl_LabelWidget {
     struct {
         uint8_t alignVisual     : 1; /* align according to visible bounds, not font metrics */
         uint8_t noAutoMinHeight : 1; /* minimum height is not set automatically */
+        uint8_t drawAsOutline   : 1; /* draw as outline, filled with background color */
     } flags;
 };
 
@@ -348,14 +349,14 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
             cstr_String(&d->label));
     }
     else {
-        drawCentered_Text(d->font,
-                          adjusted_Rect(bounds,
-                                        add_I2(zero_I2(), init_I2(iconPad, 0)),
-                                        neg_I2(zero_I2())),
-                          d->flags.alignVisual,
-                          fg,
-                          "%s",
-                          cstr_String(&d->label));
+        drawCenteredOutline_Text(
+            d->font,
+            adjusted_Rect(bounds, add_I2(zero_I2(), init_I2(iconPad, 0)), neg_I2(zero_I2())),
+            d->flags.alignVisual,
+            d->flags.drawAsOutline ? fg : none_ColorId,
+            d->flags.drawAsOutline ? d->widget.bgColor : fg,
+            "%s",
+            cstr_String(&d->label));
     }
     if (flags & chevron_WidgetFlag) {
         const iRect chRect = rect;
@@ -442,6 +443,7 @@ void init_LabelWidget(iLabelWidget *d, const char *label, const char *cmd) {
     setFlags_Widget(w, hover_WidgetFlag, d->click.button != 0);
     d->flags.alignVisual = iFalse;
     d->flags.noAutoMinHeight = iFalse;
+    d->flags.drawAsOutline = iFalse;
     updateSize_LabelWidget(d);
     updateKey_LabelWidget_(d); /* could be bound to another key */
 }
@@ -479,6 +481,10 @@ void setNoAutoMinHeight_LabelWidget(iLabelWidget *d, iBool noAutoMinHeight) {
     if (noAutoMinHeight) {
         d->widget.minSize.y = 0;
     }
+}
+
+void setOutline_LabelWidget(iLabelWidget *d, iBool drawAsOutline) {
+    d->flags.drawAsOutline = drawAsOutline;
 }
 
 void updateText_LabelWidget(iLabelWidget *d, const iString *text) {

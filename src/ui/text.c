@@ -1315,6 +1315,18 @@ void drawRangeN_Text(int fontId, iInt2 pos, int color, iRangecc text, size_t max
     drawBoundedN_Text_(fontId, pos, 0, color, text, maxChars);
 }
 
+void drawOutline_Text(int fontId, iInt2 pos, int outlineColor, int fillColor, iRangecc text) {
+    for (int off = 0; off < 4; ++off) {
+        drawRange_Text(fontId,
+                       add_I2(pos, init_I2(off % 2 == 0 ? -1 : 1, off / 2 == 0 ? -1 : 1)),
+                       outlineColor,
+                       text);
+    }
+    if (fillColor != none_ColorId) {
+        drawRange_Text(fontId, pos, fillColor, text);
+    }
+}
+
 iInt2 advanceWrapRange_Text(int fontId, int maxWidth, iRangecc text) {
     iInt2 size = zero_I2();
     const char *endp;
@@ -1353,6 +1365,31 @@ void drawCentered_Text(int fontId, iRect rect, iBool alignVisual, int color, con
         va_end(args);
     }
     drawCenteredRange_Text(fontId, rect, alignVisual, color, range_Block(&chars));
+    deinit_Block(&chars);
+}
+
+void drawCenteredOutline_Text(int fontId, iRect rect, iBool alignVisual, int outlineColor,
+                              int fillColor, const char *format, ...) {
+    iBlock chars;
+    init_Block(&chars, 0); {
+        va_list args;
+        va_start(args, format);
+        vprintf_Block(&chars, format, args);
+        va_end(args);
+    }
+    if (outlineColor != none_ColorId) {
+        for (int off = 0; off < 4; ++off) {
+            drawCenteredRange_Text(
+                fontId,
+                moved_Rect(rect, init_I2(off % 2 == 0 ? -1 : 1, off / 2 == 0 ? -1 : 1)),
+                alignVisual,
+                outlineColor,
+                range_Block(&chars));
+        }
+    }
+    if (fillColor != none_ColorId) {
+        drawCenteredRange_Text(fontId, rect, alignVisual, fillColor, range_Block(&chars));
+    }
     deinit_Block(&chars);
 }
 

@@ -1806,13 +1806,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                                                                      : uiTextFramelessHover_ColorId)
                                    : uiTextDim_ColorId;
         if (!d->listItem.isSelected && !isUsedOnDomain) {
-            /* Draw an outline of the icon. */
-            for (int off = 0; off < 4; ++off) {
-                drawRange_Text(font,
-                               add_I2(cPos, init_I2(off % 2 == 0 ? -1 : 1, off / 2 == 0 ? -1 : 1)),
-                               metaFg,
-                               range_String(&icon));
-            }
+            drawOutline_Text(font, cPos, metaFg, none_ColorId, range_String(&icon));
         }
         drawRange_Text(font,
                        cPos,

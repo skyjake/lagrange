@@ -432,9 +432,9 @@ static void updateNavBarIdentity_(iWidget *navBar) {
     const iGmIdentity *ident =
         identityForUrl_GmCerts(certs_App(), url_DocumentWidget(document_App()));
     iWidget *button = findChild_Widget(navBar, "navbar.ident");
-    iWidget *tool = findWidget_App("toolbar.ident");
+    iLabelWidget *toolButton = findWidget_App("toolbar.ident");
     setFlags_Widget(button, selected_WidgetFlag, ident != NULL);
-    setFlags_Widget(tool, selected_WidgetFlag, ident != NULL);
+    setOutline_LabelWidget(toolButton, ident == NULL);
     /* Update menu. */
     iLabelWidget *idItem = child_Widget(findChild_Widget(button, "menu"), 0);
     const iString *subjectName = ident ? name_GmIdentity(ident) : NULL;
@@ -519,12 +519,14 @@ void updateToolbarColors_Root(iRoot *d) {
     iWidget *toolBar = findChild_Widget(d->widget, "toolbar");
     if (toolBar) {
         const iBool isSidebarVisible = isVisible_Widget(findChild_Widget(d->widget, "sidebar"));
-        setBackgroundColor_Widget(toolBar, isSidebarVisible ? uiBackgroundSidebar_ColorId :
-                                  tmBannerBackground_ColorId);
+        const int bg = isSidebarVisible ? uiBackgroundSidebar_ColorId :
+                                          tmBannerBackground_ColorId;
+        setBackgroundColor_Widget(toolBar, bg);
         iForEach(ObjectList, i, children_Widget(toolBar)) {
             iLabelWidget *btn = i.object;
             setTextColor_LabelWidget(i.object, isSidebarVisible ? uiTextDim_ColorId :
                                      tmBannerIcon_ColorId);
+            setBackgroundColor_Widget(i.object, bg); /* using noBackground, but ident has outline */
         }
     }
 #else
