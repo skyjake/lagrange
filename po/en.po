@@ -1058,7 +1058,7 @@ msgid "heading.prefs.colors"
 msgstr "Colors"
 
 msgid "heading.prefs.fonts"
-msgstr "FONTS"
+msgstr "Fonts"
 
 # tab button
 msgid "heading.prefs.general"
@@ -1066,7 +1066,7 @@ msgstr "General"
 
 # tab button
 msgid "heading.prefs.interface"
-msgstr "Interface"
+msgstr "UI"
 
 # tab button
 msgid "heading.prefs.keys"
@@ -1079,8 +1079,11 @@ msgstr "Network"
 msgid "heading.prefs.paragraph"
 msgstr "PARAGRAPH"
 
+msgid "heading.prefs.uitheme"
+msgstr "UI COLORS"
+
 msgid "heading.prefs.pagecontent"
-msgstr "PAGE CONTENT"
+msgstr "PAGE COLORS"
 
 msgid "heading.prefs.proxies"
 msgstr "PROXIES"

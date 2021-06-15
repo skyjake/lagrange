@@ -473,7 +473,8 @@ void finalizeSheet_Mobile(iWidget *sheet) {
                     0x02699, /* gear */
                     0x1f4f1, /* mobile phone */
                     0x1f3a8, /* palette */
-                    0x1f523,
+                    0x1f5da, /* aA */
+                    0x1f660, /* pointing bud */
                     0x1f5a7, /* computer network */
                 };
                 setIcon_LabelWidget(panelButton, icons[i]);
@@ -621,6 +622,12 @@ void finalizeSheet_Mobile(iWidget *sheet) {
         destroyPending_Root(sheet->root);
         /* Additional elements for preferences. */
         if (isPrefs) {
+            addChild_Widget(topPanel, iClob(makePadding_Widget(lineHeight_Text(labelFont_()))));
+            /* Management. */ {
+                iLabelWidget *idManButton = addChildFlags_Widget(topPanel,
+                                                                 iClob(makePanelButton_(person_Icon " ${sidebar.identities}", "panel.open")),
+                                                                 chevron_WidgetFlag | borderTop_WidgetFlag);
+            }
             addChild_Widget(topPanel, iClob(makePadding_Widget(lineHeight_Text(labelFont_()))));
             iLabelWidget *aboutButton = addChildFlags_Widget(topPanel,
                                  iClob(makePanelButton_(planet_Icon " ${menu.about}", "panel.open")),
