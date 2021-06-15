@@ -254,9 +254,12 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
                 if ((len = decodeBytes_MultibyteChar(desc.start, desc.end, &icon)) > 0) {
                     if (desc.start + len < desc.end &&
                         (isPictograph_Char(icon) || isEmoji_Char(icon) ||
+                         /* TODO: Add range(s) of 0x2nnn symbols. */
+                         icon == 0x2139 /* info */ ||
                          icon == 0x2191 /* up arrow */ ||
+                         icon == 0x2022 /* bullet */ ||
                          icon == 0x2a2f /* close X */ ||
-                         icon == 0x2022 /* bullet */) &&
+                         icon == 0x2b50) &&
                         !isFitzpatrickType_Char(icon)) {
                         link->flags |= iconFromLabel_GmLinkFlag;
                         link->labelIcon = (iRangecc){ desc.start, desc.start + len };
@@ -1488,6 +1491,7 @@ static void normalize_GmDocument(iGmDocument *d) {
         appendCStr_String(normalized, "\n");
     }
     set_String(&d->source, collect_String(normalized));
+    normalize_String(&d->source); /* NFC */
 }
 
 void setUrl_GmDocument(iGmDocument *d, const iString *url) {

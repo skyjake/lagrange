@@ -64,7 +64,8 @@ int main(int argc, char **argv) {
                           "ECDHE-ECDSA-AES128-GCM-SHA256:"
                           "ECDHE-RSA-AES256-GCM-SHA384:"
                           "ECDHE-RSA-CHACHA20-POLY1305:"
-                          "ECDHE-RSA-AES128-GCM-SHA256");
+                          "ECDHE-RSA-AES128-GCM-SHA256:"
+                          "DHE-RSA-AES256-GCM-SHA384");
     SDL_SetHint(SDL_HINT_VIDEO_ALLOW_SCREENSAVER, "1");
     SDL_SetHint(SDL_HINT_MAC_CTRL_CLICK_EMULATE_RIGHT_CLICK, "1");
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER)) {

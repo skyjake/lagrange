@@ -18,7 +18,7 @@
 cmake_minimum_required (VERSION 3.9)
 
 project (Lagrange
-    VERSION 1.5.1
+    VERSION 1.5.2
     DESCRIPTION "A Beautiful Gemini Client"
     LANGUAGES C
 )
@@ -396,6 +396,7 @@ Categories=Network
 Exec=${CMAKE_INSTALL_PREFIX}/bin/lagrange %U
 Terminal=false
 Type=Application
+StartupWMClass=lagrange
 Icon=fi.skyjake.Lagrange
 MimeType=x-scheme-handler/gemini;x-scheme-handler/gopher
 ")

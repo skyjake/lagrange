@@ -215,6 +215,14 @@ static iBool processEvent_CertImportWidget_(iCertImportWidget *d, const SDL_Even
             return iTrue;
         }
     }
+    if (isCommand_UserEvent(ev, "input.paste")) {
+        if (!tryImportFromClipboard_CertImportWidget_(d)) {
+            makeSimpleMessage_Widget(uiTextCaution_ColorEscape "${heading.certimport.pasted}",
+                                     "${dlg.certimport.notfound}");
+        }
+        postRefresh_App();        
+        return iTrue;
+    }
     if (isCommand_UserEvent(ev, "certimport.paste")) {
         tryImportFromClipboard_CertImportWidget_(d);
         return iTrue;
