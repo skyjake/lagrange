@@ -1600,8 +1600,6 @@ iWidget *makePreferences_Widget(void) {
     /* General preferences. */ {
         appendTwoColumnPage_(tabs, "${heading.prefs.general}", '1', &headings, &values);
 #if defined (LAGRANGE_ENABLE_DOWNLOAD_EDIT)
-        //addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.downloads}")));
-        //setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.downloads");
         addPrefsInputWithHeading_(headings, values, "prefs.downloads", iClob(new_InputWidget(0)));
 #endif
         iInputWidget *searchUrl;

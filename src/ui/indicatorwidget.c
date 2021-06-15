@@ -109,7 +109,7 @@ void draw_IndicatorWidget_(const iIndicatorWidget *d) {
             colors[0] = black_ColorId;
         }
         fillRect_Paint(&p,
-                       (iRect){ topLeft_Rect(rect), init_I2(pos * width_Rect(rect), gap_UI / 4)},
+                       (iRect){ topLeft_Rect(rect), init_I2(pos * width_Rect(rect), gap_UI / 3)},
                        colors[isCompleted_IndicatorWidget_(d) ? 1 : 0]);
     }
 }

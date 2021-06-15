@@ -571,7 +571,8 @@ static void showSearchQueryIndicator_(iBool show) {
     iWidget *navBar = findWidget_Root("navbar");
     iWidget *indicator = findWidget_App("input.indicator.search");
     updateTextCStr_LabelWidget((iLabelWidget *) indicator,
-                               flags_Widget(navBar) & tight_WidgetFlag
+                               (deviceType_App() == phone_AppDeviceType ||
+                                flags_Widget(navBar) & tight_WidgetFlag)
                                    ? "${status.query.tight} " return_Icon
                                    : "${status.query} " return_Icon);
     indicator->rect.size.x = defaultSize_LabelWidget((iLabelWidget *) indicator).x; /* don't touch height */
