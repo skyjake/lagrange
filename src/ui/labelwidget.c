@@ -45,6 +45,7 @@ struct Impl_LabelWidget {
         uint8_t alignVisual     : 1; /* align according to visible bounds, not font metrics */
         uint8_t noAutoMinHeight : 1; /* minimum height is not set automatically */
         uint8_t drawAsOutline   : 1; /* draw as outline, filled with background color */
+        uint8_t noTopFrame      : 1;
     } flags;
 };
 
@@ -290,7 +291,7 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
             };
             drawLines_Paint(&p, points + 2, 3, frame2);
             drawLines_Paint(
-                &p, points, !isHover && flags & noTopFrame_WidgetFlag ? 2 : 3, frame);
+                &p, points, !isHover && flags & d->flags.noTopFrame ? 2 : 3, frame);
         }
     }
     setClip_Paint(&p, rect);
@@ -444,6 +445,7 @@ void init_LabelWidget(iLabelWidget *d, const char *label, const char *cmd) {
     d->flags.alignVisual = iFalse;
     d->flags.noAutoMinHeight = iFalse;
     d->flags.drawAsOutline = iFalse;
+    d->flags.noTopFrame = iFalse;
     updateSize_LabelWidget(d);
     updateKey_LabelWidget_(d); /* could be bound to another key */
 }
@@ -481,6 +483,10 @@ void setNoAutoMinHeight_LabelWidget(iLabelWidget *d, iBool noAutoMinHeight) {
     if (noAutoMinHeight) {
         d->widget.minSize.y = 0;
     }
+}
+
+void setNoTopFrame_LabelWidget(iLabelWidget *d, iBool noTopFrame) {
+    d->flags.noTopFrame = noTopFrame;
 }
 
 void setOutline_LabelWidget(iLabelWidget *d, iBool drawAsOutline) {

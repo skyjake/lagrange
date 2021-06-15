@@ -31,6 +31,7 @@ iDeclareObjectConstructionArgs(LabelWidget, const char *label, const char *comma
 
 void    setAlignVisually_LabelWidget(iLabelWidget *, iBool alignVisual);
 void    setNoAutoMinHeight_LabelWidget(iLabelWidget *, iBool noAutoMinHeight);
+void    setNoTopFrame_LabelWidget   (iLabelWidget *, iBool noTopFrame);
 void    setOutline_LabelWidget      (iLabelWidget *, iBool drawAsOutline);
 void    setFont_LabelWidget         (iLabelWidget *, int fontId);
 void    setTextColor_LabelWidget    (iLabelWidget *, int color);

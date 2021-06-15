@@ -979,8 +979,8 @@ static void addTabPage_Widget_(iWidget *tabs, enum iWidgetAddPos addPos, iWidget
         iClob(newKeyMods_LabelWidget(label, key, kmods, format_CStr("tabs.switch page:%p", page))),
         addPos);
     setFlags_Widget(button, selected_WidgetFlag, isSel);
-    setFlags_Widget(
-        button, noTopFrame_WidgetFlag | commandOnClick_WidgetFlag | expand_WidgetFlag, iTrue);
+    setFlags_Widget(button, commandOnClick_WidgetFlag | expand_WidgetFlag, iTrue);
+    setNoTopFrame_LabelWidget((iLabelWidget *) button, iTrue);
     addChildPos_Widget(pages, page, addPos);
     if (tabCount_Widget(tabs) > 1) {
         setFlags_Widget(buttons, hidden_WidgetFlag, iFalse);

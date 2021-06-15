@@ -443,6 +443,10 @@ static void updateNavBarIdentity_(iWidget *navBar) {
         subjectName ? format_CStr(uiTextAction_ColorEscape "%s", cstr_String(subjectName))
                     : "${menu.identity.notactive}");
     setFlags_Widget(as_Widget(idItem), disabled_WidgetFlag, !ident);
+    iLabelWidget *toolName = findWidget_App("toolbar.name");
+    if (toolName) {
+        updateTextCStr_LabelWidget(toolName, subjectName ? cstr_String(subjectName) : "");
+    }
 }
 
 static void updateNavDirButtons_(iWidget *navBar) {
@@ -951,6 +955,19 @@ void updateMetrics_Root(iRoot *d) {
     updatePadding_Root(d);
     arrange_Widget(d->widget);
     updateUrlInputContentPadding_(navBar);
+    /* Position the toolbar identity name label manually. */ {
+        iLabelWidget *idName = findChild_Widget(d->widget, "toolbar.name");
+        if (idName) {
+            const iWidget *idButton = findChild_Widget(d->widget, "toolbar.ident");
+            const int font = defaultSmall_FontId;
+            setFont_LabelWidget(idName, font);
+            setPos_Widget(as_Widget(idName),
+                          windowToLocal_Widget(as_Widget(idName),
+                                addY_I2(bottomLeft_Rect(bounds_Widget(idButton)), -gap_UI * 2)));
+            setFixedSize_Widget(as_Widget(idName), init_I2(width_Widget(idButton),
+                                                           lineHeight_Text(font)));
+        }
+    }
     postRefresh_App();
 }
 
@@ -1284,16 +1301,24 @@ void createUserInterface_Root(iRoot *d) {
                                           iClob(newLargeIcon_LabelWidget(book_Icon, "toolbar.showview arg:-1")),
                                           frameless_WidgetFlag | commandOnClick_WidgetFlag),
                      "toolbar.view");
+        setId_Widget(addChildFlags_Widget(toolBar,
+                                          iClob(new_LabelWidget("", NULL)),
+                                          frameless_WidgetFlag |
+                                          noBackground_WidgetFlag |
+                                          disabled_WidgetFlag |
+                                          fixedPosition_WidgetFlag |
+                                          fixedSize_WidgetFlag |
+                                          ignoreForParentWidth_WidgetFlag |
+                                          ignoreForParentHeight_WidgetFlag),
+                     "toolbar.name");
         iLabelWidget *menuButton = makeMenuButton_LabelWidget(menu_Icon, phoneNavMenuItems_,
                                                               iElemCount(phoneNavMenuItems_));
         setFont_LabelWidget(menuButton, uiLabelLarge_FontId);
         setId_Widget(as_Widget(menuButton), "toolbar.navmenu");
         addChildFlags_Widget(toolBar, iClob(menuButton), frameless_WidgetFlag);
-//        setBackgroundColor_Widget(toolBar, tmBannerBackground_ColorId);
         iForEach(ObjectList, i, children_Widget(toolBar)) {
             iLabelWidget *btn = i.object;
             setFlags_Widget(i.object, noBackground_WidgetFlag, iTrue);
-//            setTextColor_LabelWidget(i.object, tmBannerIcon_ColorId);
         }
         updateToolbarColors_Root(d);
         const iMenuItem items[] = {

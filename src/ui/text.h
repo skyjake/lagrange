@@ -50,6 +50,7 @@ enum iFontId {
     defaultMedium_FontId,
     defaultBig_FontId,
     defaultLarge_FontId,
+    defaultSmall_FontId,
     /* UI fonts: bold weight */
     defaultBold_FontId,
     defaultMediumBold_FontId,

@@ -406,6 +406,11 @@ static void boundsOfChildren_Widget_(const iWidget *d, iRect *bounds_out) {
         iRect childRect = child->rect;
         if (child->flags & ignoreForParentWidth_WidgetFlag) {
             childRect.size.x = 0;
+            childRect.pos.x  = bounds_out->pos.x;
+        }
+        if (child->flags & ignoreForParentHeight_WidgetFlag) {
+            childRect.size.y = 0;
+            childRect.pos.y  = bounds_out->pos.y;
         }
         if (isEmpty_Rect(*bounds_out)) {
             *bounds_out = childRect;

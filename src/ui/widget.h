@@ -87,7 +87,7 @@ enum iWidgetFlag {
 };
 
 /* 64-bit extended flags */
-#define rightEdgeDraggable_WidgetFlag       iBit64(32)
+#define rightEdgeDraggable_WidgetFlag       iBit64(31)
 #define disabledWhenHidden_WidgetFlag       iBit64(32)
 #define centerHorizontal_WidgetFlag         iBit64(33)
 #define moveToParentLeftEdge_WidgetFlag     iBit64(34)
@@ -103,7 +103,7 @@ enum iWidgetFlag {
 #define drawBackgroundToVerticalSafeArea_WidgetFlag     iBit64(44)
 #define visualOffset_WidgetFlag             iBit64(45)
 #define parentCannotResize_WidgetFlag       iBit64(46)
-#define noTopFrame_WidgetFlag               iBit64(47)
+#define ignoreForParentHeight_WidgetFlag    iBit64(47)
 #define unpadded_WidgetFlag                 iBit64(48) /* ignore parent's padding */
 #define extraPadding_WidgetFlag             iBit64(49)
 #define borderBottom_WidgetFlag             iBit64(50)
@@ -117,7 +117,7 @@ enum iWidgetFlag {
 #define parentCannotResizeHeight_WidgetFlag iBit64(58)
 #define ignoreForParentWidth_WidgetFlag     iBit64(59)
 #define noFadeBackground_WidgetFlag         iBit64(60)
-#define destroyPending_WidgetFlag           iBit64(61) /* TODO: needed? */
+#define destroyPending_WidgetFlag           iBit64(61)
 #define leftEdgeDraggable_WidgetFlag        iBit64(62)
 #define refChildrenOffset_WidgetFlag        iBit64(63) /* visual offset determined by the offset of referenced children */
 

@@ -306,6 +306,7 @@ static void initFonts_Text_(iText *d) {
         { &fontSourceSans3Regular_Embedded, uiSize * 1.125f,      1.0f, uiMedium_FontSize },
         { &fontSourceSans3Regular_Embedded, uiSize * 1.333f,      1.0f, uiBig_FontSize },
         { &fontSourceSans3Regular_Embedded, uiSize * 1.666f,      1.0f, uiLarge_FontSize },
+        { &fontSourceSans3Regular_Embedded, uiSize * 0.8f,       1.0f, uiNormal_FontSize },
         /* UI fonts: bold weight */
         { &fontSourceSans3Bold_Embedded,    uiSize,               1.0f, uiNormal_FontSize },
         { &fontSourceSans3Bold_Embedded,    uiSize * 1.125f,      1.0f, uiMedium_FontSize },
