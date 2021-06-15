@@ -1042,7 +1042,10 @@ static void documentWasChanged_DocumentWidget_(iDocumentWidget *d) {
             d->flags |= otherRootByDefault_DocumentWidgetFlag;
         }
     }
-    showOrHidePinningIndicator_DocumentWidget_(d);    
+    showOrHidePinningIndicator_DocumentWidget_(d);
+    setCachedDocument_History(d->mod.history,
+                              d->doc, /* keeps a ref */
+                              (d->flags & openedFromSidebar_DocumentWidgetFlag) != 0);
 }
 
 void setSource_DocumentWidget(iDocumentWidget *d, const iString *source) {
@@ -1168,8 +1171,14 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
                            { person_Icon " ${menu.identity.new}", newIdentity_KeyShortcut, "ident.new" } },
             2);
     }
-    setBanner_GmDocument(d->doc, useBanner ? bannerType_DocumentWidget_(d) : none_GmDocumentBanner);
-    setFormat_GmDocument(d->doc, gemini_SourceFormat);
+    /* Make a new document for the error page.*/ {
+        iGmDocument *errorDoc = new_GmDocument();
+        setUrl_GmDocument(errorDoc, d->mod.url);
+        setBanner_GmDocument(errorDoc, useBanner ? bannerType_DocumentWidget_(d) : none_GmDocumentBanner);
+        setFormat_GmDocument(errorDoc, gemini_SourceFormat);
+        replaceDocument_DocumentWidget_(d, errorDoc);
+        iRelease(errorDoc);
+    }
     translate_Lang(src);
     d->state = ready_RequestState;
     setSource_DocumentWidget(d, src);
@@ -1608,8 +1617,8 @@ static void updateFromCachedResponse_DocumentWidget_(iDocumentWidget *d, float n
         format_String(&d->sourceHeader, cstr_Lang("pageinfo.header.cached"));
         set_Block(&d->sourceContent, &resp->body);
         updateDocument_DocumentWidget_(d, resp, cachedDoc, iTrue);
-        setCachedDocument_History(d->mod.history, d->doc,
-                                  (d->flags & openedFromSidebar_DocumentWidgetFlag) != 0);
+//        setCachedDocument_History(d->mod.history, d->doc,
+//                                  (d->flags & openedFromSidebar_DocumentWidgetFlag) != 0);
     }
     d->state = ready_RequestState;
     postProcessRequestContent_DocumentWidget_(d, iTrue);
@@ -2705,8 +2714,6 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                 (startsWithCase_String(meta_GmRequest(d->request), "text/") ||
                  !cmp_String(&d->sourceMime, mimeType_Gempub))) {
                 setCachedResponse_History(d->mod.history, lockResponse_GmRequest(d->request));
-                setCachedDocument_History(d->mod.history, d->doc, /* keeps a ref */
-                                          (d->flags & openedFromSidebar_DocumentWidgetFlag) != 0);
                 unlockResponse_GmRequest(d->request);
             }
         }
@@ -4917,7 +4924,7 @@ void setRedirectCount_DocumentWidget(iDocumentWidget *d, int count) {
 
 void setOpenedFromSidebar_DocumentWidget(iDocumentWidget *d, iBool fromSidebar) {
     iChangeFlags(d->flags, openedFromSidebar_DocumentWidgetFlag, fromSidebar);
-    setCachedDocument_History(d->mod.history, d->doc, fromSidebar);
+//    setCachedDocument_History(d->mod.history, d->doc, fromSidebar);
 }
 
 iBool isRequestOngoing_DocumentWidget(const iDocumentWidget *d) {

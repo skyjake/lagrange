@@ -919,6 +919,10 @@ const iMedia *constMedia_GmDocument(const iGmDocument *d) {
     return d->media;
 }
 
+const iString *url_GmDocument(const iGmDocument *d) {
+    return &d->url;
+}
+
 #if 0
 void reset_GmDocument(iGmDocument *d) {
     clear_Media(d->media);

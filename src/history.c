@@ -391,6 +391,7 @@ void setCachedDocument_History(iHistory *d, iGmDocument *doc, iBool openedFromSi
     lock_Mutex(d->mtx);
     iRecentUrl *item = mostRecentUrl_History(d);
     if (item) {
+        iAssert(equal_String(url_GmDocument(doc), &item->url));
         item->flags.openedFromSidebar = openedFromSidebar;
         if (item->cachedDoc != doc) {
             iRelease(item->cachedDoc);

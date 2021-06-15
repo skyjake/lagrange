@@ -179,6 +179,7 @@ typedef void (*iGmDocumentRenderFunc)(void *, const iGmRun *);
 
 iMedia *        media_GmDocument            (iGmDocument *);
 const iMedia *  constMedia_GmDocument       (const iGmDocument *);
+const iString * url_GmDocument              (const iGmDocument *);
 
 void            render_GmDocument           (const iGmDocument *, iRangei visRangeY,
                                              iGmDocumentRenderFunc render, void *); /* includes partial overlaps */
