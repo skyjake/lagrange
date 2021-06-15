@@ -446,6 +446,8 @@ static void updateNavBarIdentity_(iWidget *navBar) {
     iLabelWidget *toolName = findWidget_App("toolbar.name");
     if (toolName) {
         updateTextCStr_LabelWidget(toolName, subjectName ? cstr_String(subjectName) : "");
+        setFont_LabelWidget(toolButton, subjectName ? defaultMedium_FontId : uiLabelLarge_FontId);
+        arrange_Widget(parent_Widget(toolButton));
     }
 }
 
@@ -958,12 +960,16 @@ void updateMetrics_Root(iRoot *d) {
     /* Position the toolbar identity name label manually. */ {
         iLabelWidget *idName = findChild_Widget(d->widget, "toolbar.name");
         if (idName) {
-            const iWidget *idButton = findChild_Widget(d->widget, "toolbar.ident");
+            const iWidget *toolBar = findChild_Widget(d->widget, "toolbar");
+            const iWidget *viewButton = findChild_Widget(d->widget, "toolbar.view");
+            const iWidget *idButton = findChild_Widget(toolBar, "toolbar.ident");
             const int font = defaultSmall_FontId;
             setFont_LabelWidget(idName, font);
             setPos_Widget(as_Widget(idName),
                           windowToLocal_Widget(as_Widget(idName),
-                                addY_I2(bottomLeft_Rect(bounds_Widget(idButton)), -gap_UI * 2)));
+                                               init_I2(left_Rect(bounds_Widget(idButton)),
+                                                       bottom_Rect(bounds_Widget(viewButton)) -
+                                                           lineHeight_Text(font) - gap_UI / 2)));
             setFixedSize_Widget(as_Widget(idName), init_I2(width_Widget(idButton),
                                                            lineHeight_Text(font)));
         }
@@ -1302,10 +1308,9 @@ void createUserInterface_Root(iRoot *d) {
                                           frameless_WidgetFlag | commandOnClick_WidgetFlag),
                      "toolbar.view");
         setId_Widget(addChildFlags_Widget(toolBar,
-                                          iClob(new_LabelWidget("", NULL)),
+                                          iClob(new_LabelWidget("", "toolbar.showident")),
                                           frameless_WidgetFlag |
                                           noBackground_WidgetFlag |
-                                          disabled_WidgetFlag |
                                           fixedPosition_WidgetFlag |
                                           fixedSize_WidgetFlag |
                                           ignoreForParentWidth_WidgetFlag |
