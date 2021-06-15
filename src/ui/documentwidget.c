@@ -2842,8 +2842,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
                 postCommand_App("sidebar.toggle");
                 showToolbar_Root(get_Root(), iTrue);
 #if defined (iPlatformAppleMobile)
-                /* TODO: Add a softer tap? */
-//                playHapticEffect_iOS(tap_HapticEffect);
+                playHapticEffect_iOS(gentleTap_HapticEffect);
 #endif
                 return iTrue;
             }

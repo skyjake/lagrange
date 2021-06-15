@@ -66,6 +66,7 @@ API_AVAILABLE(ios(13.0))
 @interface HapticState : NSObject
 @property (nonatomic, strong) CHHapticEngine *engine;
 @property (nonatomic, strong) NSDictionary   *tapDef;
+@property (nonatomic, strong) NSDictionary   *gentleTapDef;
 @end
 
 @implementation HapticState
@@ -107,26 +108,47 @@ API_AVAILABLE(ios(13.0))
                     CHHapticPatternKeyEvent: @{
                         CHHapticPatternKeyEventType:    CHHapticEventTypeHapticTransient,
                         CHHapticPatternKeyTime:         @0.0,
-                        CHHapticPatternKeyEventDuration:@0.1
+                        CHHapticPatternKeyEventDuration:@0.1,
+                        CHHapticPatternKeyEventParameters: @[
+                            @{
+                                CHHapticPatternKeyParameterID: CHHapticEventParameterIDHapticIntensity,
+                                CHHapticPatternKeyParameterValue: @1.0
+                            }
+                        ]
                     },
                 },
-            ],
+            ]
+    };
+    self.gentleTapDef = @{
+        CHHapticPatternKeyPattern:
+            @[
+                @{
+                    CHHapticPatternKeyEvent: @{
+                        CHHapticPatternKeyEventType:    CHHapticEventTypeHapticTransient,
+                        CHHapticPatternKeyTime:         @0.0,
+                        CHHapticPatternKeyEventDuration:@0.1,
+                        CHHapticPatternKeyEventParameters: @[
+                            @{
+                                CHHapticPatternKeyParameterID: CHHapticEventParameterIDHapticIntensity,
+                                CHHapticPatternKeyParameterValue: @0.33
+                            }
+                        ]
+                    },
+                },
+            ]
     };
 }
 
--(void)playTapEffect {
+
+-(void)playHapticEffect:(NSDictionary *)def {
     NSError *error = nil;
-    CHHapticPattern *pattern = [[CHHapticPattern alloc] initWithDictionary:self.tapDef
+    CHHapticPattern *pattern = [[CHHapticPattern alloc] initWithDictionary:def
                                                                      error:&error];
     // TODO: Check the error.
     id<CHHapticPatternPlayer> player = [self.engine createPlayerWithPattern:pattern error:&error];
     // TODO: Check the error.
     [self.engine startWithCompletionHandler:^(NSError *err){
         if (err == nil) {
-            /* Just keep it running. */
-//            [self.engine notifyWhenPlayersFinished:^(NSError * _Nullable error) {
-//                return CHHapticEngineFinishedActionStopEngine;
-//            }];
             NSError *startError = nil;
             [player startAtTime:0.0 error:&startError];
         }
@@ -341,7 +363,10 @@ void playHapticEffect_iOS(enum iHapticEffect effect) {
         HapticState *hs = (HapticState *) appState_.haptic;
         switch(effect) {
             case tap_HapticEffect:
-                [hs playTapEffect];
+                [hs playHapticEffect:hs.tapDef];
+                break;
+            case gentleTap_HapticEffect:
+                [hs playHapticEffect:hs.gentleTapDef];
                 break;
         }
     }

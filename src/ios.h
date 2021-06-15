@@ -28,6 +28,7 @@ iDeclareType(Window)
 
 enum iHapticEffect {
     tap_HapticEffect,
+    gentleTap_HapticEffect,
 };
 
 void    setupApplication_iOS    (void);
