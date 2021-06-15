@@ -710,7 +710,8 @@ iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
                 menu,
                 iClob(newKeyMods_LabelWidget(labelText, item->key, item->kmods, item->command)),
                 noBackground_WidgetFlag | frameless_WidgetFlag | alignLeft_WidgetFlag |
-                drawKey_WidgetFlag | (isInfo ? wrapText_WidgetFlag : 0) | itemFlags);
+                drawKey_WidgetFlag | itemFlags);
+            setWrap_LabelWidget(label, isInfo);
             haveIcons |= checkIcon_LabelWidget(label);
             updateSize_LabelWidget(label); /* drawKey was set */
             if (isInfo) {
@@ -776,7 +777,7 @@ void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, iBool postCommands) {
             if (isInstance_Object(i.object, &Class_LabelWidget)) {
                 iLabelWidget *label = i.object;
                 const iBool isCaution = startsWith_String(text_LabelWidget(label), uiTextCaution_ColorEscape);
-                if (flags_Widget(as_Widget(label)) & wrapText_WidgetFlag) {
+                if (isWrapped_LabelWidget(label)) {
                     continue;
                 }
                 if (deviceType_App() == desktop_AppDeviceType) {

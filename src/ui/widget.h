@@ -92,7 +92,7 @@ enum iWidgetFlag {
 #define centerHorizontal_WidgetFlag         iBit64(33)
 #define moveToParentLeftEdge_WidgetFlag     iBit64(34)
 #define moveToParentRightEdge_WidgetFlag    iBit64(35)
-#define wrapText_WidgetFlag                 iBit64(36)
+#define noShadowBorder_WidgetFlag           iBit64(36)
 #define borderTop_WidgetFlag                iBit64(37)
 #define overflowScrollable_WidgetFlag       iBit64(38)
 #define focusRoot_WidgetFlag                iBit64(39)

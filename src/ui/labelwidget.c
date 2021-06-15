@@ -46,6 +46,7 @@ struct Impl_LabelWidget {
         uint8_t noAutoMinHeight : 1; /* minimum height is not set automatically */
         uint8_t drawAsOutline   : 1; /* draw as outline, filled with background color */
         uint8_t noTopFrame      : 1;
+        uint8_t wrap            : 1;
     } flags;
 };
 
@@ -317,7 +318,7 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
             cstr_String(&str));
         deinit_String(&str);
     }
-    if (flags & wrapText_WidgetFlag) {
+    if (d->flags.wrap) {
         const iRect inner = adjusted_Rect(innerBounds_Widget(w), init_I2(iconPad, 0), zero_I2());
         const int   wrap  = inner.size.x;
         drawWrapRange_Text(d->font, topLeft_Rect(inner), wrap, fg, range_String(&d->label));
@@ -372,7 +373,7 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
 
 static void sizeChanged_LabelWidget_(iLabelWidget *d) {
     iWidget *w = as_Widget(d);
-    if (flags_Widget(w) & wrapText_WidgetFlag) {
+    if (d->flags.wrap) {
         if (flags_Widget(w) & fixedHeight_WidgetFlag) {
             /* Calculate a new height based on the wrapping. */
             w->rect.size.y = advanceWrapRange_Text(
@@ -410,7 +411,7 @@ void updateSize_LabelWidget(iLabelWidget *d) {
         w->minSize.y = size.y; /* vertically text must remain visible */
     }
     /* Wrapped text implies that width must be defined by arrangement. */
-    if (!(flags & (fixedWidth_WidgetFlag | wrapText_WidgetFlag))) {
+    if (~flags & fixedWidth_WidgetFlag && !d->flags.wrap) {
         w->rect.size.x = size.x;
     }
     if (~flags & fixedHeight_WidgetFlag) {
@@ -442,10 +443,11 @@ void init_LabelWidget(iLabelWidget *d, const char *label, const char *cmd) {
     d->kmods = 0;
     init_Click(&d->click, d, !isEmpty_String(&d->command) ? SDL_BUTTON_LEFT : 0);
     setFlags_Widget(w, hover_WidgetFlag, d->click.button != 0);
-    d->flags.alignVisual = iFalse;
+    d->flags.alignVisual     = iFalse;
     d->flags.noAutoMinHeight = iFalse;
-    d->flags.drawAsOutline = iFalse;
-    d->flags.noTopFrame = iFalse;
+    d->flags.drawAsOutline   = iFalse;
+    d->flags.noTopFrame      = iFalse;
+    d->flags.wrap            = iFalse;
     updateSize_LabelWidget(d);
     updateKey_LabelWidget_(d); /* could be bound to another key */
 }
@@ -489,8 +491,14 @@ void setNoTopFrame_LabelWidget(iLabelWidget *d, iBool noTopFrame) {
     d->flags.noTopFrame = noTopFrame;
 }
 
+void setWrap_LabelWidget(iLabelWidget *d, iBool wrap) {
+    d->flags.wrap = wrap;
+}
+
 void setOutline_LabelWidget(iLabelWidget *d, iBool drawAsOutline) {
-    d->flags.drawAsOutline = drawAsOutline;
+    if (d) {
+        d->flags.drawAsOutline = drawAsOutline;
+    }
 }
 
 void updateText_LabelWidget(iLabelWidget *d, const iString *text) {
@@ -552,6 +560,10 @@ iBool checkIcon_LabelWidget(iLabelWidget *d) {
 
 iChar icon_LabelWidget(const iLabelWidget *d) {
     return d->icon;
+}
+
+iBool isWrapped_LabelWidget(const iLabelWidget *d) {
+    return d->flags.wrap;
 }
 
 const iString *text_LabelWidget(const iLabelWidget *d) {

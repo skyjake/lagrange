@@ -1164,7 +1164,7 @@ void drawBackground_Widget(const iWidget *d) {
             shadowBorder = iFalse;
         }
     }
-    if (shadowBorder) {
+    if (shadowBorder && ~d->flags & noShadowBorder_WidgetFlag) {
         iPaint p;
         init_Paint(&p);
         drawSoftShadow_Paint(&p, bounds_Widget(d), 12 * gap_UI, black_ColorId, 30);

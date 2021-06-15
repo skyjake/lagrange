@@ -523,15 +523,17 @@ static void updateItems_SidebarWidget_(iSidebarWidget *d) {
             addChild_Widget(div, iClob(makePadding_Widget(gap_UI)));
             addChild_Widget(div, iClob(new_LabelWidget("${menu.identity.import}", "ident.import")));
             addChildFlags_Widget(div, iClob(new_Widget()), expand_WidgetFlag); /* pad */
+            iLabelWidget *linkLabel;
             setBackgroundColor_Widget(
                 addChildFlags_Widget(
                     div,
-                    iClob(new_LabelWidget(format_CStr(cstr_Lang("ident.gotohelp"),
+                    iClob(linkLabel = new_LabelWidget(format_CStr(cstr_Lang("ident.gotohelp"),
                                                       uiTextStrong_ColorEscape,
                                                       restore_ColorEscape),
                                           "!open newtab:1 gotoheading:1.6 url:about:help")),
-                    frameless_WidgetFlag | fixedHeight_WidgetFlag | wrapText_WidgetFlag),
+                    frameless_WidgetFlag | fixedHeight_WidgetFlag),
                 uiBackgroundSidebar_ColorId);
+            setWrap_LabelWidget(linkLabel, iTrue);
             addChild_Widget(d->blank, iClob(div));
         }
 //        arrange_Widget(d->blank);
@@ -631,7 +633,8 @@ void init_SidebarWidget(iSidebarWidget *d, enum iSidebarSide side) {
     setBackgroundColor_Widget(w, none_ColorId);
     setFlags_Widget(w,
                     collapse_WidgetFlag | hidden_WidgetFlag | arrangeHorizontal_WidgetFlag |
-                        resizeWidthOfChildren_WidgetFlag,
+                        resizeWidthOfChildren_WidgetFlag | noFadeBackground_WidgetFlag |
+                    noShadowBorder_WidgetFlag,
                     iTrue);
     iZap(d->modeScroll);
     d->side = side;
