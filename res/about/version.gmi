@@ -8,7 +8,12 @@
 
 ## 1.5.2
 * Fixed pasting a PEM-formatted certificate and/or private key via clipboard in Import Identity.
-* Normalize page contents (NFC) to avoid most common issues with diacritics.
+* Possible workaround for a visual glitch in the URL field.
+* Specify `StartupWMClass` in .desktop file.
+* Normalize page contents to avoid the most common issues with diacritics (Unicode NFC).
+* Expanded the set of recognized custom link icons.
+* Updated "Smol Emoji" font with new glyphs.
+* Allow use of TLS cipher "DHE-RSA-AES256-GCM-SHA384".
 
 ## 1.5.1
 * Updated UI translations.
