@@ -60,9 +60,22 @@
 		<key>CFBundleDocumentTypes</key>
 		<array>
 			<dict>
+				<key>CFBundleTypeName</key>
+				<string>Gemini Text File</string>
+				<key>LSHandlerRank</key>
+		        <string>Default</string>
 				<key>LSItemContentTypes</key>
 				<array>
 					<string>fi.skyjake.lagrange.gemini</string>
+				</array>
+			</dict>
+			<dict>
+				<key>CFBundleTypeName</key>
+				<string>Plain Text File</string>
+				<key>LSHandlerRank</key>
+		        <string>Alternate</string>
+				<key>LSItemContentTypes</key>
+				<array>
 					<string>public.plain-text</string>
 				</array>
 			</dict>
