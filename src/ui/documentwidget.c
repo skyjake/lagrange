@@ -1432,7 +1432,9 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d, const iGmResponse
                             linkTitle =
                                 baseName_Path(collect_String(newRange_String(parts.path))).start;
                         }
-                        format_String(&str, "=> %s %s\n", cstr_String(d->mod.url), linkTitle);
+                        format_String(&str, "=> %s %s\n",
+                                      cstr_String(withSpacesEncoded_String(d->mod.url)),
+                                      linkTitle);
                         setData_Media(media_GmDocument(d->doc),
                                       imgLinkId,
                                       mimeStr,
@@ -3870,7 +3872,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
     }
 #endif
     /* Fill the background. */ {
-        if (run->linkId && linkFlags & isOpen_GmLinkFlag) {
+        if (run->linkId && linkFlags & isOpen_GmLinkFlag && ~linkFlags & content_GmLinkFlag) {
             /* Open links get a highlighted background. */
             int bg = tmBackgroundOpenLink_ColorId;
             const int frame = tmFrameOpenLink_ColorId;
