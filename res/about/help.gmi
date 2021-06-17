@@ -501,6 +501,63 @@ Translation table for keyboard modifiers. For example, one could swap the Alt an
 ### mimehooks.txt
 See section 4.
 
+### palette.txt
+Palette for UI color themes. This configuration file does not exist by default and must be created manually.
+
+The actual colors used in the user interface are derived from the base palette. Therefore, you should not change the colors too drastically, but instead follow the expected pattern: a range of 5 intensities (black-white), followed by two accent color pairs (dim, bright). The last five colors are used for certain specific uses, e.g., the green is used for the navbar lock icon to indicate a trusted server certificate. The palettes defined here do not affect page color themes, only the UI. Note that link icons are considered part of the UI, so you may find that changing the palette will reduce visibility of the icons with some of the page color themes.
+
+The file specifies two palettes: one for dark mode and one for light mode. The current palette is selected with the lines:
+```
+# Dark
+```
+and
+```
+# Light
+```
+
+The other lines specify colors:
+> {label}: {rgb-hex}
+> {label}: {red} {green} {blue}
+* {rgb-hex} must use the form "#RRGGBB"
+* {red}, {green}, {blue} are decimal numbers in the range 0...255
+
+The configuration below defines the built-in default palette:
+```palette.txt with the default UI palette
+# Dark
+
+black:      #000000
+gray25:     #282828
+gray50:     #505050
+gray75:     #A0A0A0
+white:      #FFFFFF
+brown:      106     80      0
+orange:     255     192     0
+teal:       0       96      128
+cyan:       0       192     255
+yellow:     255     255     32
+red:        255     64      64
+magenta:    255     0       255
+blue:       132     132     255
+green:      0       200     0
+
+# Light
+
+black:      0       0       0
+gray25:     75      75      75 
+gray50:     150     150     150
+gray75:     235     235     235
+white:      255     255     255
+brown:      210     120      10 
+orange:     235     215     200
+teal:       10      110     130
+cyan:       170     215     220
+yellow:     255     255     32 
+red:        255     64      64 
+magenta:    255     0       255
+blue:       132     132     255
+green:      0       150     0
+```
+
 ### prefs.cfg
 Persistent configuration variables. The file is rewritten when the application is closed. Each line is interpreted as an internal UI event like those printed with the --echo command line option.
 
