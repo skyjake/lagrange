@@ -761,6 +761,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     setupApplication_iOS();
 #endif
     init_Keys();
+    loadPalette_Color(dataDir_App_());
     setThemePalette_Color(d->prefs.theme); /* default UI colors */
     loadPrefs_App_(d);
     load_Keys(dataDir_App_());

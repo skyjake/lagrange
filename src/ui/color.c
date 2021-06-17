@@ -24,11 +24,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "root.h"
 #include "app.h"
 
+#include <the_Foundation/file.h>
+#include <the_Foundation/path.h>
 #include <the_Foundation/string.h>
 
 static const iColor transparent_;
 
-static const iColor darkPalette_[] = {
+static iColor darkPalette_[] = {
     { 0,   0,   0,   255 },
     { 40,  40,  40,  255 },
     { 80,  80,  80,  255 },
@@ -47,7 +49,7 @@ static const iColor darkPalette_[] = {
     { 0,   200, 0,   255 },
 };
 
-static const iColor lightPalette_[] = {
+static iColor lightPalette_[] = {
     { 0,   0,   0,   255 },
     { 75,  75,  75,  255 },
     { 150, 150, 150, 255 },
@@ -803,4 +805,78 @@ iColor ansiForeground_Color(iRangecc escapeSequence, int fallback) {
         clr.b /= 2;
     }
     return clr;
+}
+
+iBool loadPalette_Color(const char *path) {
+    iBool wasLoaded = iFalse;
+    iFile *f = newCStr_File(concatPath_CStr(path, "palette.txt"));
+    if (open_File(f, text_FileMode | readOnly_FileMode)) {
+        iColor *dstPal = darkPalette_;
+        iRangecc srcLine = iNullRange;
+        const iBlock *src = collect_Block(readAll_File(f));
+        while (nextSplit_Rangecc(range_Block(src), "\n", &srcLine)) {
+            iRangecc line = srcLine;
+            trim_Rangecc(&line);
+            if (isEmpty_Range(&line)) {
+                continue;
+            }
+            if (*line.start == '#') {
+                /* Control directive. */
+                line.start++;
+                trim_Rangecc(&line);
+                if (equalCase_Rangecc(line, "dark")) {
+                    dstPal = darkPalette_;
+                }
+                else if (equalCase_Rangecc(line, "light")) {
+                    dstPal = lightPalette_;
+                }
+                continue;
+            }
+            static const struct {
+                const char *label;
+                int         paletteIndex;
+            } colors_[] = {
+                { "black:", 0 }, { "gray25:", 1 }, { "gray50:", 2 }, { "gray75:", 3 },
+                { "white:", 4 }, { "brown:", 5 },  { "orange:", 6 }, { "teal:", 7 },
+                { "cyan:", 8 },  { "yellow:", 9 }, { "red:", 10 },   { "magenta:", 11 },
+                { "blue:", 12 }, { "green:", 13 },
+            };
+            iForIndices(i, colors_) {
+                if (startsWithCase_Rangecc(line, colors_[i].label)) {
+                    iColor *dst = &dstPal[colors_[i].paletteIndex];
+                    line.start += strlen(colors_[i].label);
+                    trim_Rangecc(&line);
+                    if (!isEmpty_Range(&line)) {
+                        if (*line.start == '#') {
+                            /* Hexadecimal color. */
+                            line.start++;
+                            if (size_Range(&line) == 6) {
+                                iBlock *vals = hexDecode_Rangecc(line);
+                                iAssert(size_Block(vals) == 3);
+                                const uint8_t *rgb = constData_Block(vals);
+                                *dst = (iColor){ rgb[0], rgb[1], rgb[2], 255 };
+                                delete_Block(vals);
+                            }
+                            else {
+                                fprintf(stderr, "[Color] invalid custom color: %s\n",
+                                        cstr_Rangecc(line));
+                            }
+                        }
+                        else {
+                            unsigned int red = 0, green = 0, blue = 0;
+                            sscanf(line.start, "%u %u %u", &red, &green, &blue);
+                            if (red > 255 || green > 255 || blue > 255) {
+                                fprintf(stderr, "[Color] RGB value(s) out of range: %s\n",
+                                        cstr_Rangecc(line));
+                            }
+                            *dst = (iColor){ red, green, blue, 255 };
+                        }
+                    }
+                }
+            }
+        }
+        wasLoaded = iTrue;
+    }
+    iRelease(f);
+    return wasLoaded;
 }

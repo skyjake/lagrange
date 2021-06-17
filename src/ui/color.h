@@ -244,7 +244,9 @@ iLocalDef void setHsl_Color(int color, iHSLColor hsl) {
     set_Color(color, rgb_HSLColor(hsl));
 }
 
+iBool           loadPalette_Color       (const char *path);
 void            setThemePalette_Color   (enum iColorTheme theme);
 
 iColor          ansiForeground_Color    (iRangecc escapeSequence, int fallback);
 const char *    escape_Color            (int color);
+
