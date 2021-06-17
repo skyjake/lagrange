@@ -1357,13 +1357,7 @@ static void draw_InputWidget_(const iInputWidget *d) {
     }
     iPaint p;
     init_Paint(&p);
-    /* `lines` is already up to date and ready for drawing. */
-    /* TODO: If empty, draw the hint. */
-//    iString *text = visText_InputWidget_(d);
-//    if (isWhite_(text) && !isEmpty_String(&d->hint)) {
-//        set_String(text, &d->hint);
-//        isHint = iTrue;
-//    }
+    /* `lines` is already up to date and ready for drawing. */    
     fillRect_Paint(
         &p, bounds, isFocused ? uiInputBackgroundFocused_ColorId : uiInputBackground_ColorId);
     drawRectThickness_Paint(&p,
@@ -1374,7 +1368,6 @@ static void draw_InputWidget_(const iInputWidget *d) {
     setClip_Paint(&p, adjusted_Rect(bounds, init_I2(d->leftPadding, 0),
                                     init_I2(-d->rightPadding, w->flags & extraPadding_WidgetFlag ? -gap_UI / 2 : 0)));
     const iRect contentBounds = contentBounds_InputWidget_(d);
-//    const iInt2 textOrigin = textOrigin_InputWidget_(d); //, cstr_String(text));
     iInt2       drawPos    = topLeft_Rect(contentBounds);
     const int   fg         = isHint                                  ? uiAnnotation_ColorId
                              : isFocused && !isEmpty_Array(&d->text) ? uiInputTextFocused_ColorId
@@ -1418,19 +1411,6 @@ static void draw_InputWidget_(const iInputWidget *d) {
             drawPos.y += lineHeight_Text(d->font);
         }
     }
-//    if (d->buffered && !isFocused && !isHint) {
-//        /* Most input widgets will use this, since only one is focused at a time. */
-//        draw_TextBuf(d->buffered, textOrigin, white_ColorId);
-//    }
-//    else {
-//        draw_Text(d->font,
-//                  textOrigin,
-//                  isHint ? uiAnnotation_ColorId
-//                         : isFocused && !isEmpty_Array(&d->text) ? uiInputTextFocused_ColorId
-//                                                                 : uiInputText_ColorId,
-//                  "%s",
-//                  cstr_String(text));
-//    }
     unsetClip_Paint(&p);
     /* Cursor blinking. */
     if (isFocused && d->cursorVis) {
@@ -1474,7 +1454,6 @@ static void draw_InputWidget_(const iInputWidget *d) {
             deinit_String(&cur);
         }
     }
-//    delete_String(text);
     drawChildren_Widget(w);
 }
 
