@@ -504,7 +504,7 @@ See section 4.
 ### palette.txt
 Palette for UI color themes. This configuration file does not exist by default and must be created manually.
 
-The actual colors used in the user interface are derived from the base palette. Therefore, you should not change the colors too drastically, but instead follow the expected pattern: a range of 5 intensities (black-white), followed by two accent color pairs (dim, bright). The last five colors are used for certain specific uses, e.g., the green is used for the navbar lock icon to indicate a trusted server certificate. The palettes defined here do not affect page color themes, only the UI. Note that link icons are considered part of the UI, so you may find that changing the palette will reduce visibility of the icons with some of the page color themes.
+The actual colors used in the user interface are derived from the base palette. Therefore, you should not change the colors too drastically, but instead follow the expected pattern: a range of 5 intensities (black-white), followed by two accent color pairs (dim, bright). The last five colors are reserved for certain specific uses, e.g., the green is used for the navbar lock icon to indicate a trusted server certificate. The palettes defined here do not affect page color themes, only the UI. Note that link icons are considered part of the UI, so you may find that changing the palette will reduce visibility of the icons with some of the page color themes.
 
 The file specifies two palettes: one for dark mode and one for light mode. The current palette is selected with the lines:
 ```
