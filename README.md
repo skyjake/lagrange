@@ -21,7 +21,7 @@ Like Gemini, Lagrange has been designed with minimalism in mind. It depends on a
 
 Prebuilt binaries for Windows, macOS and Linux can be found in [Releases][rel]. You can also find [Lagrange on Flathub for Linux](https://flathub.org/apps/details/fi.skyjake.Lagrange).
 
-On macOS you can install and upgrade via a Homebrew:
+On macOS you can install and upgrade via Homebrew:
 
 ```
 brew install --cask lagrange
