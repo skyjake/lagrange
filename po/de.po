@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-05-15 06:18+0000\n"
-"Last-Translator: Nikolay Korotkiy <sikmir@gmail.com>\n"
+"PO-Revision-Date: 2021-06-22 14:06+0000\n"
+"Last-Translator: Alex Schroeder <alex@alexschroeder.ch>\n"
 "Language-Team: German <http://weblate.skyjake.fi/projects/lagrange/ui/de/>\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
@@ -900,7 +900,7 @@ msgid "dlg.newident.until"
 msgstr "Gültig bis:"
 
 msgid "hint.newident.date"
-msgstr "YYYY-MM-DD HH:MM:SS"
+msgstr "JJJJ oder JJJJ-MM-TT"
 
 msgid "hint.newident.optional"
 msgstr "optional"
@@ -1214,3 +1214,116 @@ msgstr "Sprache"
 
 msgid "lang.pl"
 msgstr "Polnisch"
+
+msgid "error.notfound"
+msgstr "Nicht gefunden"
+
+msgid "error.slowdown.msg"
+msgstr "Der Server limitiert die Anzahl Anfragen. Bitte warten…"
+
+msgid "error.permanent.msg"
+msgstr "Die Anfrage schlug fehl und wird auch in Zukunft fehlschlagen."
+
+msgid "error.notfound.msg"
+msgstr "Die angefragte Ressource konnte nicht gefunden werden."
+
+msgid "error.cert.needed.msg"
+msgstr ""
+"Der Zugang zu dieser Ressource erfordert eine Identifikation mittels Client "
+"Zertifikat."
+
+msgid "error.cert.auth"
+msgstr "Zertifikat ist nicht authorisiert"
+
+msgid "error.cert.auth.msg"
+msgstr ""
+"Das verwendete Client-Zertifikat ist gültig, ist aber nicht autorisiert, "
+"diese Ressource anzufragen."
+
+msgid "gempub.cover.viewlocal"
+msgstr ""
+"Dieses Gempub Buch kann angezeigt werden, nachdem es lokal gespeichert wurde."
+
+msgid "gempub.meta.revdate"
+msgstr "Überarbeitung"
+
+msgid "gempub.meta.pub"
+msgstr "Veröffentlicht"
+
+msgid "gempub.meta.pubdate"
+msgstr "Veröffentlichungsdatum"
+
+msgid "gempub.cover.aboutbook"
+msgstr "Über dieses Buch"
+
+msgid "gempub.cover.untitled"
+msgstr "Buch ohne Titel"
+
+msgid "error.proxy"
+msgstr "Proxy Fehler"
+
+msgid "error.unavail.msg"
+msgstr ""
+"Der Server ist nicht erreichbar, entweder wegen Überlastung oder "
+"Wartungsarbeiten. Versuchen Sie es später noch einmal."
+
+msgid "error.cgi"
+msgstr "CGI Fehler"
+
+msgid "error.cgi.msg"
+msgstr ""
+"Es gab einen Fehler bei der Erstellung von dynamischen Inhalten auf dem "
+"Server. Das könnte an einem Fehler der Software auf dem Server liegen."
+
+msgid "error.slowdown"
+msgstr "Nicht so schnell"
+
+msgid "error.permanent"
+msgstr "Permanenter Fehler"
+
+msgid "error.proxyrefusal"
+msgstr "Proxy Anfrage verweigert"
+
+msgid "error.proxyrefusal.msg"
+msgstr ""
+"Die Anfrage betrifft eine Domäne, welche dieser Server nicht bedient, und "
+"dieser Server ist kein Proxy und leitet deswegen auch keine Anfragen weiter."
+
+msgid "error.cert.invalid.msg"
+msgstr "Das angegebene Client-Zertifikat ist abgelaufen oder ungültig."
+
+msgid "gempub.cover.view"
+msgstr "Gempub Inhalt anzeigen"
+
+msgid "gempub.cover.image"
+msgstr "Titelbild"
+
+msgid "error.proxy.msg"
+msgstr ""
+"Eine Anfrage an den Proxy ist fehlgeschlagen, da die Transaktion mit dem "
+"Zielsystem fehlgeschlagen ist. Vielleicht gibt es da Probleme mit dem "
+"Netzwerk."
+
+msgid "error.gone"
+msgstr "Verschwunden"
+
+msgid "error.badrequest"
+msgstr "Anfragefehler"
+
+msgid "error.badrequest.msg"
+msgstr "Der Server hat die Anfrage nicht verstanden."
+
+msgid "error.cert.needed"
+msgstr "Ein Zertifikat wird benötigt"
+
+msgid "gempub.meta.author"
+msgstr "Autor"
+
+msgid "gempub.meta.version"
+msgstr "Version"
+
+msgid "gempub.meta.license"
+msgstr "Lizenz"
+
+msgid "error.gone.msg"
+msgstr "Die angefragte Ressource ist nicht mehr vorhanden."
