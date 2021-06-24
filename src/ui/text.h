@@ -116,7 +116,8 @@ iLocalDef iBool isJapanese_FontId(enum iFontId id) {
 #define emojiVariationSelector_Char     ((iChar) 0xfe0f)
 
 enum iTextFont {
-    nunito_TextFont,
+    undefined_TextFont = -1,
+    nunito_TextFont = 0,
     firaSans_TextFont,
     literata_TextFont,
     tinos_TextFont,
