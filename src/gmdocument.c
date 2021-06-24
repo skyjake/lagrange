@@ -1423,6 +1423,9 @@ iBool updateOpenURLs_GmDocument(iGmDocument *d) {
             const iBool isOpen = contains_StringSet(d->openURLs, &link->url);
             if (isOpen ^ ((link->flags & isOpen_GmLinkFlag) != 0)) {
                 iChangeFlags(link->flags, isOpen_GmLinkFlag, isOpen);
+                if (isOpen) {
+                    link->flags |= visited_GmLinkFlag;
+                }
                 wasChanged = iTrue;
             }
         }
