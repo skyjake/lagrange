@@ -3933,11 +3933,12 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                     linkOrdinalChar_DocumentWidget_(d->widget, ord - d->widget->ordinalBase);
                 if (ordChar) {
                     const char *circle = "\u25ef"; /* Large Circle */
+                    const int   circleFont = defaultContentRegular_FontId;
                     iRect nbArea = { init_I2(d->viewPos.x - gap_UI / 3, visPos.y),
-                                     init_I2(3.95f * gap_Text, 1.0f * lineHeight_Text(run->font)) };
+                                     init_I2(3.95f * gap_Text, 1.0f * lineHeight_Text(circleFont)) };
                     drawRange_Text(
-                        run->font, topLeft_Rect(nbArea), tmQuote_ColorId, range_CStr(circle));
-                    iRect circleArea = visualBounds_Text(run->font, range_CStr(circle));
+                        circleFont, topLeft_Rect(nbArea), tmQuote_ColorId, range_CStr(circle));
+                    iRect circleArea = visualBounds_Text(circleFont, range_CStr(circle));
                     addv_I2(&circleArea.pos, topLeft_Rect(nbArea));
                     drawCentered_Text(defaultContentSmall_FontId,
                                       circleArea,
