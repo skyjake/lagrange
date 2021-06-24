@@ -285,6 +285,12 @@ static void clearLinks_GmDocument_(iGmDocument *d) {
     clear_PtrArray(&d->links);
 }
 
+static iBool isGopher_GmDocument_(const iGmDocument *d) {
+    const iRangecc scheme = urlScheme_String(&d->url);
+    return (equalCase_Rangecc(scheme, "gopher") ||
+            equalCase_Rangecc(scheme, "finger"));
+}
+
 static iBool isForcedMonospace_GmDocument_(const iGmDocument *d) {
     const iRangecc scheme = urlScheme_String(&d->url);
     if (equalCase_Rangecc(scheme, "gemini")) {
@@ -360,6 +366,7 @@ static void updateOpenURLs_GmDocument_(iGmDocument *d) {
 static void doLayout_GmDocument_(iGmDocument *d) {
     const iPrefs *prefs             = prefs_App();
     const iBool   isMono            = isForcedMonospace_GmDocument_(d);
+    const iBool   isGopher          = isGopher_GmDocument_(d);
     const iBool   isNarrow          = d->size.x < 90 * gap_Text;
     const iBool   isVeryNarrow      = d->size.x <= 70 * gap_Text;
     const iBool   isExtremelyNarrow = d->size.x <= 60 * gap_Text;
@@ -475,7 +482,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                     meta.flags = constValue_Array(oldPreMeta, preIndex, iGmPreMeta).flags &
                                  folded_GmPreMetaFlag;
                 }
-                else if (prefs->collapsePreOnLoad) {
+                else if (prefs->collapsePreOnLoad && !isGopher) {
                     meta.flags |= folded_GmPreMetaFlag;
                 }
                 pushBack_Array(&d->preMeta, &meta);
