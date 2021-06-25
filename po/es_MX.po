@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-04-09 13:18+0000\n"
+"PO-Revision-Date: 2021-06-26 21:06+0000\n"
 "Last-Translator: El Mau <public@correolibre.net>\n"
 "Language-Team: Spanish (Mexico) <http://weblate.skyjake.fi/projects/lagrange/"
 "ui/es_MX/>\n"
@@ -525,8 +525,8 @@ msgstr "Eliminar suscripción"
 #, c-format
 msgid "error.unsupported.suggestsave"
 msgstr ""
-"Puede guardarlo como archivo a su carpeta de Descargas, sin embargo. "
-"Presione %s o seleccione \"%s\" del menú."
+"Puede guardarlo como archivo en su carpeta de Descargas, presione %s o "
+"seleccione \"%s\" del menú."
 
 msgid "heading.pageinfo"
 msgstr "INFORMACIÓN DE PÁGINA"
@@ -852,7 +852,7 @@ msgid "dlg.newident.rsa.selfsign"
 msgstr "Creando un certificado RSA autofirmado de 2048 bits."
 
 msgid "hint.newident.date"
-msgstr "YYYY-MM-DD HH:MM:SS"
+msgstr "YYYY o YYYY-MM-DD"
 
 msgid "hint.newident.optional"
 msgstr "opcional"
@@ -901,3 +901,262 @@ msgstr "NUEVA IDENTIDAD"
 
 msgid "dlg.newident.until"
 msgstr "Válido hasta:"
+
+msgid "close"
+msgstr "Cerrar"
+
+msgid "ident.export"
+msgstr "Exportar"
+
+msgid "error.server.msg"
+msgstr "El servidor respondió con el mensaje:"
+
+msgid "dlg.save.opendownload"
+msgstr "Abrir archivo descargado"
+
+msgid "link.side"
+msgstr "Abrir enlace al lado"
+
+msgid "dlg.newident.scope"
+msgstr "Usar en:"
+
+msgid "dlg.newident.more"
+msgstr "Más…"
+
+msgid "dlg.newident.date.example"
+msgstr ""
+"Por favor verifique la fecha de \"Válido hasta\". Ejemplos:\n"
+"• 2030\n"
+"• 2025-06-30\n"
+"• 2021-12-31 23:59:59"
+
+msgid "heading.feedcfg"
+msgstr "CONFIGURACIÓN DE SUSCRIPCIONES"
+
+msgid "heading.subscribe"
+msgstr "SUSCRIBIRSE A PÁGINA"
+
+# tab button
+msgid "heading.prefs.keys"
+msgstr "Combinaciones de teclas"
+
+msgid "heading.prefs.paragraph"
+msgstr "PÁRRAFO"
+
+# tab button
+msgid "heading.prefs.userinterface"
+msgstr "Interfaz de Usuario"
+
+msgid "prefs.downloads"
+msgstr "Carpeta de descargas:"
+
+msgid "dlg.feed.type.gemini"
+msgstr "Enlaces YYYY-MM-DD"
+
+msgid "dlg.feed.type.headings"
+msgstr "Nuevos titulares"
+
+msgid "menu.split.merge"
+msgstr "Unir pestañas"
+
+msgid "menu.split.swap"
+msgstr "Intercambiar Lados"
+
+msgid "menu.split.horizontal"
+msgstr "Horizontal"
+
+msgid "menu.split.vertical"
+msgstr "Vertical"
+
+msgid "menu.select.clear"
+msgstr "Borrar Selección"
+
+msgid "link.side.newtab"
+msgstr "Abrir enlace en nueva pestaña a un lado"
+
+msgid "doc.archive.view"
+msgstr "Ver el contenido del archivo"
+
+#, c-format
+msgid "doc.archive"
+msgstr "%s es un archivo comprimido."
+
+msgid "prefs.centershort"
+msgstr "Centrado vertical:"
+
+msgid "dlg.newident.scope.domain"
+msgstr "Dominio actual"
+
+msgid "dlg.newident.scope.page"
+msgstr "Página actual"
+
+msgid "dlg.newident.scope.none"
+msgstr "Sin usar"
+
+msgid "dlg.feed.entrytype"
+msgstr "Tipo de entrada:"
+
+msgid "dlg.feed.save"
+msgstr "Guardar configuración"
+
+msgid "dlg.feed.sub"
+msgstr "Suscribir"
+
+msgid "heading.bookmark.add"
+msgstr "AGREGAR MARCADOR"
+
+msgid "heading.bookmark.edit"
+msgstr "EDITAR MARCADOR"
+
+msgid "dlg.bookmark.save"
+msgstr "Guardar marcador"
+
+msgid "dlg.bookmark.title"
+msgstr "Título:"
+
+msgid "dlg.bookmark.url"
+msgstr "URL:"
+
+msgid "dlg.bookmark.tags"
+msgstr "Etiquetas:"
+
+msgid "dlg.bookmark.icon"
+msgstr "Ícono:"
+
+msgid "heading.prefs"
+msgstr "PREFERENCIAS"
+
+msgid "heading.prefs.certs"
+msgstr "CERTIFICADOS"
+
+# tab button
+msgid "heading.prefs.colors"
+msgstr "Colores"
+
+msgid "heading.prefs.fonts"
+msgstr "FUENTES"
+
+# tab button
+msgid "heading.prefs.network"
+msgstr "Red"
+
+msgid "heading.prefs.pagecontent"
+msgstr "CONTENIDO DE LA PÁGINA"
+
+msgid "heading.prefs.proxies"
+msgstr "PROXIES"
+
+msgid "heading.prefs.widelayout"
+msgstr "DISPOSICIÓN AMPLIA"
+
+msgid "menu.downloads"
+msgstr "Mostrar Descargas"
+
+msgid "sidebar.action.feeds.showall"
+msgstr "Todo"
+
+msgid "bookmark.tag.linksplit"
+msgstr "Abrir enlaces a un lado"
+
+msgid "lang.pl"
+msgstr "Polaco"
+
+msgid "dlg.newident.email"
+msgstr "Correo electrónico:"
+
+msgid "dlg.newident.userid"
+msgstr "ID de Usuario:"
+
+msgid "dlg.newident.domain"
+msgstr "Dominio:"
+
+msgid "dlg.newident.org"
+msgstr "Organización:"
+
+msgid "dlg.newindent.missing.commonname"
+msgstr "Debe especificar un \"nombre común\"."
+
+msgid "dlg.feed.title"
+msgstr "Título:"
+
+msgid "menu.save.downloads.open"
+msgstr "Guardar en Descargas y Abrir Archivo"
+
+msgid "menu.view.split"
+msgstr "Dividir Vista..."
+
+msgid "sidebar.action.feeds.showunread"
+msgstr "Sin leer"
+
+msgid "sidebar.action.ident.new"
+msgstr "Nuevo…"
+
+msgid "sidebar.action.ident.import"
+msgstr "Importar…"
+
+msgid "dlg.input.linebreak"
+msgstr "Salto de linea"
+
+msgid "lang.ia"
+msgstr "Interlingua"
+
+msgid "lang.tok"
+msgstr "Toki Pona"
+
+msgid "dlg.newident.country"
+msgstr "País:"
+
+msgid "dlg.newident.create"
+msgstr "Crear identidad"
+
+msgid "heading.newident.missing"
+msgstr "INFORMACIÓN FALTANTE"
+
+msgid "heading.newident.date.bad"
+msgstr "FECHA INVÁLIDA"
+
+msgid "dlg.newident.date.past"
+msgstr "La fecha de vencimiento debe ser en el futuro."
+
+# tab button
+msgid "heading.prefs.general"
+msgstr "General"
+
+# tab button
+msgid "heading.prefs.interface"
+msgstr "Interfaz"
+
+msgid "heading.prefs.scrolling"
+msgstr "DESPLAZAMIENTO"
+
+msgid "heading.prefs.sizing"
+msgstr "TAMAÑOS"
+
+# tab button
+msgid "heading.prefs.style"
+msgstr "Estilo"
+
+msgid "prefs.searchurl"
+msgstr "URL de búsqueda:"
+
+msgid "prefs.hoverlink"
+msgstr "Mostrar URL al situar el cursor:"
+
+msgid "prefs.collapsepreonload"
+msgstr "Colapsar pre-formateado:"
+
+# User preference that controls whether index.gmi pages get automatically opened when browsing the contents of a directory inside a compressed archive.
+msgid "prefs.archive.openindex"
+msgstr "Abrir índices de archivos:"
+
+msgid "prefs.pinsplit"
+msgstr "Fijar pestaña para vista dividida:"
+
+msgid "prefs.pinsplit.none"
+msgstr "Ninguna"
+
+msgid "prefs.pinsplit.left"
+msgstr "Pestaña Izquierda"
+
+msgid "prefs.pinsplit.right"
+msgstr "Pestaña Derecha"
