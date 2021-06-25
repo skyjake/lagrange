@@ -21,6 +21,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "gmdocument.h"
+#include "gmtypesetter.h"
 #include "gmutil.h"
 #include "lang.h"
 #include "ui/color.h"
@@ -48,7 +49,7 @@ iBool isDark_GmDocumentTheme(enum iGmDocumentTheme d) {
 iDeclareType(GmLink)
 
 struct Impl_GmLink {
-    iString url;
+    iString url; /* resolved */
     iRangecc urlRange; /* URL in the source */
     iRangecc labelRange; /* label in the source */
     iRangecc labelIcon; /* special icon defined in the label text */
@@ -74,9 +75,10 @@ iDefineTypeConstruction(GmLink)
 
 struct Impl_GmDocument {
     iObject object;
-    enum iGmDocumentFormat format;
-    iString   source;
-    iString   url; /* for resolving relative links */
+    enum iSourceFormat format;
+    iString   unormSource; /* unnormalized source */
+    iString   source;      /* normalized source */
+    iString   url;         /* for resolving relative links */
     iString   localHost;
     iInt2     size;
     iArray    layout; /* contents of source, laid out in document space */
@@ -90,12 +92,14 @@ struct Impl_GmDocument {
     iChar     siteIcon;
     iMedia *  media;
     iStringSet *openURLs; /* currently open URLs for highlighting links */
+    iBool     isPaletteValid;
+    iColor    palette[tmMax_ColorId]; /* copy of the color palette */
 };
 
 iDefineObjectConstruction(GmDocument)
 
 static enum iGmLineType lineType_GmDocument_(const iGmDocument *d, const iRangecc line) {
-    if (d->format == plainText_GmDocumentFormat) {
+    if (d->format == plainText_SourceFormat) {
         return text_GmLineType;
     }
     return lineType_Rangecc(line);
@@ -254,9 +258,12 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
                 if ((len = decodeBytes_MultibyteChar(desc.start, desc.end, &icon)) > 0) {
                     if (desc.start + len < desc.end &&
                         (isPictograph_Char(icon) || isEmoji_Char(icon) ||
+                         /* TODO: Add range(s) of 0x2nnn symbols. */
+                         icon == 0x2139 /* info */ ||
                          icon == 0x2191 /* up arrow */ ||
+                         icon == 0x2022 /* bullet */ ||
                          icon == 0x2a2f /* close X */ ||
-                         icon == 0x2022 /* bullet */) &&
+                         icon == 0x2b50) &&
                         !isFitzpatrickType_Char(icon)) {
                         link->flags |= iconFromLabel_GmLinkFlag;
                         link->labelIcon = (iRangecc){ desc.start, desc.start + len };
@@ -282,6 +289,12 @@ static void clearLinks_GmDocument_(iGmDocument *d) {
     clear_PtrArray(&d->links);
 }
 
+static iBool isGopher_GmDocument_(const iGmDocument *d) {
+    const iRangecc scheme = urlScheme_String(&d->url);
+    return (equalCase_Rangecc(scheme, "gopher") ||
+            equalCase_Rangecc(scheme, "finger"));
+}
+
 static iBool isForcedMonospace_GmDocument_(const iGmDocument *d) {
     const iRangecc scheme = urlScheme_String(&d->url);
     if (equalCase_Rangecc(scheme, "gemini")) {
@@ -305,7 +318,7 @@ static void linkContentWasLaidOut_GmDocument_(iGmDocument *d, const iGmMediaInfo
 
 static iBool isNormalized_GmDocument_(const iGmDocument *d) {
     const iPrefs *prefs = prefs_App();
-    if (d->format == plainText_GmDocumentFormat) {
+    if (d->format == plainText_SourceFormat) {
         return iTrue; /* tabs are always normalized in plain text */
     }
     if (startsWithCase_String(&d->url, "gemini:") && prefs->monospaceGemini) {
@@ -357,6 +370,7 @@ static void updateOpenURLs_GmDocument_(iGmDocument *d) {
 static void doLayout_GmDocument_(iGmDocument *d) {
     const iPrefs *prefs             = prefs_App();
     const iBool   isMono            = isForcedMonospace_GmDocument_(d);
+    const iBool   isGopher          = isGopher_GmDocument_(d);
     const iBool   isNarrow          = d->size.x < 90 * gap_Text;
     const iBool   isVeryNarrow      = d->size.x <= 70 * gap_Text;
     const iBool   isExtremelyNarrow = d->size.x <= 60 * gap_Text;
@@ -434,12 +448,15 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     enum iGmLineType prevType      = text_GmLineType;
     enum iGmLineType prevNonBlankType = text_GmLineType;
     iBool            followsBlank  = iFalse;
-    if (d->format == plainText_GmDocumentFormat) {
+    if (d->format == plainText_SourceFormat) {
         isPreformat = iTrue;
         isFirstText = iFalse;
     }
     while (nextSplit_Rangecc(content, "\n", &contentLine)) {
-        iRangecc line = contentLine; /* `line` will be trimmed later; would confuse nextSplit */
+        iRangecc line = contentLine; /* `line` will be trimmed; modifying would confuse `nextSplit_Rangecc` */
+        if (*line.end == '\r') {
+            line.end--; /* trim CR always */
+        }
         iGmRun run = { .color = white_ColorId };
         enum iGmLineType type;
         float indent = 0.0f;
@@ -472,7 +489,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                     meta.flags = constValue_Array(oldPreMeta, preIndex, iGmPreMeta).flags &
                                  folded_GmPreMetaFlag;
                 }
-                else if (prefs->collapsePreOnLoad) {
+                else if (prefs->collapsePreOnLoad && !isGopher) {
                     meta.flags |= folded_GmPreMetaFlag;
                 }
                 pushBack_Array(&d->preMeta, &meta);
@@ -500,14 +517,14 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             if (contentLine.start == content.start) {
                 prevType = type;
             }
-            if (d->format == gemini_GmDocumentFormat &&
+            if (d->format == gemini_SourceFormat &&
                 startsWithSc_Rangecc(line, "```", &iCaseSensitive)) {
                 isPreformat = iFalse;
                 addSiteBanner = iFalse; /* overrides the banner */
                 continue;
             }
             run.preId = preId;
-            run.font = (d->format == plainText_GmDocumentFormat ? regularMonospace_FontId : preFont);
+            run.font = (d->format == plainText_SourceFormat ? regularMonospace_FontId : preFont);
             indent = indents[type];
         }
         if (addSiteBanner) {
@@ -580,7 +597,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             }
         }
         /* Folded blocks are represented by a single run with the alt text. */
-        if (isPreformat && d->format != plainText_GmDocumentFormat) {
+        if (isPreformat && d->format != plainText_SourceFormat) {
             const iGmPreMeta *meta = constAt_Array(&d->preMeta, preId - 1);
             if (meta->flags & folded_GmPreMetaFlag) {
                 const iBool isBlank = isEmpty_Range(&meta->altText);
@@ -676,7 +693,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             pushBack_Array(&d->layout, &icon);
         }
         run.color = colors[type];
-        if (d->format == plainText_GmDocumentFormat) {
+        if (d->format == plainText_SourceFormat) {
             run.color = colors[text_GmLineType];
         }
         /* Special formatting for the first paragraph (e.g., subtitle, introduction, or lede). */
@@ -705,8 +722,8 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                            type == quote_GmLineType ? 4 : 0);
         }
         const iBool isWordWrapped =
-            (d->format == plainText_GmDocumentFormat ? prefs->plainTextWrap : !isPreformat);
-        if (isPreformat && d->format != plainText_GmDocumentFormat) {
+            (d->format == plainText_SourceFormat ? prefs->plainTextWrap : !isPreformat);
+        if (isPreformat && d->format != plainText_SourceFormat) {
             /* Remember the top left coordinates of the block (first line of block). */
             iGmPreMeta *meta = at_Array(&d->preMeta, preId - 1);
             if (~meta->flags & topLeft_GmPreMetaFlag) {
@@ -859,10 +876,13 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             }
         }
     }
+    printf("[GmDocument] layout size: %zu runs (%zu bytes)\n",
+           size_Array(&d->layout), size_Array(&d->layout) * sizeof(iGmRun));        
 }
 
 void init_GmDocument(iGmDocument *d) {
-    d->format = gemini_GmDocumentFormat;
+    d->format = gemini_SourceFormat;
+    init_String(&d->unormSource);
     init_String(&d->source);
     init_String(&d->url);
     init_String(&d->localHost);
@@ -878,6 +898,8 @@ void init_GmDocument(iGmDocument *d) {
     d->siteIcon = 0;
     d->media = new_Media();
     d->openURLs = NULL;
+    d->isPaletteValid = iFalse;
+    iZap(d->palette);
 }
 
 void deinit_GmDocument(iGmDocument *d) {
@@ -893,6 +915,7 @@ void deinit_GmDocument(iGmDocument *d) {
     deinit_String(&d->localHost);
     deinit_String(&d->url);
     deinit_String(&d->source);
+    deinit_String(&d->unormSource);
 }
 
 iMedia *media_GmDocument(iGmDocument *d) {
@@ -903,6 +926,11 @@ const iMedia *constMedia_GmDocument(const iGmDocument *d) {
     return d->media;
 }
 
+const iString *url_GmDocument(const iGmDocument *d) {
+    return &d->url;
+}
+
+#if 0
 void reset_GmDocument(iGmDocument *d) {
     clear_Media(d->media);
     clearLinks_GmDocument_(d);
@@ -911,8 +939,11 @@ void reset_GmDocument(iGmDocument *d) {
     clear_Array(&d->preMeta);
     clear_String(&d->url);
     clear_String(&d->localHost);
+    clear_String(&d->source);
+    clear_String(&d->unormSource);
     d->themeSeed = 0;
 }
+#endif
 
 static void setDerivedThemeColors_(enum iGmDocumentTheme theme) {
     set_Color(tmQuoteIcon_ColorId,
@@ -1385,9 +1416,23 @@ void setThemeSeed_GmDocument(iGmDocument *d, const iBlock *seed) {
     }
     printf("---\n");
 #endif
+    /* Color functions operate on the global palette for convenience, but we may need to switch
+       palettes on the fly if more than one GmDocument is being displayed simultaneously. */
+    memcpy(d->palette, get_Root()->tmPalette, sizeof(d->palette));
+    d->isPaletteValid = iTrue;
 }
 
-void setFormat_GmDocument(iGmDocument *d, enum iGmDocumentFormat format) {
+void makePaletteGlobal_GmDocument(const iGmDocument *d) {
+    if (d->isPaletteValid) {
+        memcpy(get_Root()->tmPalette, d->palette, sizeof(d->palette));
+    }
+}
+
+void invalidatePalette_GmDocument(iGmDocument *d) {
+    d->isPaletteValid = iFalse;
+}
+
+void setFormat_GmDocument(iGmDocument *d, enum iSourceFormat format) {
     d->format = format;
 }
 
@@ -1413,6 +1458,9 @@ iBool updateOpenURLs_GmDocument(iGmDocument *d) {
             const iBool isOpen = contains_StringSet(d->openURLs, &link->url);
             if (isOpen ^ ((link->flags & isOpen_GmLinkFlag) != 0)) {
                 iChangeFlags(link->flags, isOpen_GmLinkFlag, isOpen);
+                if (isOpen) {
+                    link->flags |= visited_GmLinkFlag;
+                }
                 wasChanged = iTrue;
             }
         }
@@ -1429,10 +1477,12 @@ static void normalize_GmDocument(iGmDocument *d) {
     iRangecc src = range_String(&d->source);
     iRangecc line = iNullRange;
     iBool isPreformat = iFalse;
-    if (d->format == plainText_GmDocumentFormat) {
+    if (d->format == plainText_SourceFormat) {
         isPreformat = iTrue; /* Cannot be turned off. */
     }
     const int preTabWidth = 4; /* TODO: user-configurable parameter */
+    iBool wasNormalized = iFalse;
+    iBool hasTabs = iFalse;
     while (nextSplit_Rangecc(src, "\n", &line)) {
         if (isPreformat) {
             /* Replace any tab characters with spaces for visualization. */
@@ -1443,13 +1493,19 @@ static void normalize_GmDocument(iGmDocument *d) {
                     while (numSpaces-- > 0) {
                         appendCStrN_String(normalized, " ", 1);
                     }
+                    hasTabs = iTrue;
+                    wasNormalized = iTrue;
                 }
-                else if (*ch != '\r') {
+                else if (*ch != '\v') {
                     appendCStrN_String(normalized, ch, 1);
+                }
+                else {
+                    hasTabs = iTrue;
+                    wasNormalized = iTrue;
                 }
             }
             appendCStr_String(normalized, "\n");
-            if (d->format == gemini_GmDocumentFormat &&
+            if (d->format == gemini_SourceFormat &&
                 lineType_GmDocument_(d, line) == preformatted_GmLineType) {
                 isPreformat = iFalse;
             }
@@ -1465,7 +1521,10 @@ static void normalize_GmDocument(iGmDocument *d) {
         int spaceCount = 0;
         for (const char *ch = line.start; ch != line.end; ch++) {
             char c = *ch;
-            if (c == '\r') continue;
+            if (c == '\v') {
+                wasNormalized = iTrue;
+                continue;
+            }
             if (isNormalizableSpace_(c)) {
                 if (isPrevSpace) {
                     if (++spaceCount == 8) {
@@ -1474,9 +1533,13 @@ static void normalize_GmDocument(iGmDocument *d) {
                         popBack_Block(&normalized->chars);
                         pushBack_Block(&normalized->chars, '\t');
                     }
+                    wasNormalized = iTrue;
                     continue; /* skip repeated spaces */
                 }
-                c = ' ';
+                if (c != ' ') {
+                    c = ' ';
+                    wasNormalized = iTrue;
+                }
                 isPrevSpace = iTrue;
             }
             else {
@@ -1487,8 +1550,14 @@ static void normalize_GmDocument(iGmDocument *d) {
         }
         appendCStr_String(normalized, "\n");
     }
+    printf("hasTabs: %d\n", hasTabs);
+    printf("wasNormalized: %d\n", wasNormalized);
+    fflush(stdout);
     set_String(&d->source, collect_String(normalized));
     normalize_String(&d->source); /* NFC */
+    printf("orig:%zu norm:%zu\n", size_String(&d->unormSource), size_String(&d->source));
+    /* normalized source has an extra newline at the end */
+//    iAssert(wasNormalized || equal_String(&d->unormSource, &d->source));
 }
 
 void setUrl_GmDocument(iGmDocument *d, const iString *url) {
@@ -1499,8 +1568,18 @@ void setUrl_GmDocument(iGmDocument *d, const iString *url) {
     updateIconBasedOnUrl_GmDocument_(d);
 }
 
-void setSource_GmDocument(iGmDocument *d, const iString *source, int width) {
-    set_String(&d->source, source);
+void setSource_GmDocument(iGmDocument *d, const iString *source, int width,
+                          enum iGmDocumentUpdate updateType) {
+    printf("[GmDocument] source update (%zu bytes), width:%d, final:%d\n",
+           size_String(source), width, updateType == final_GmDocumentUpdate);
+    if (size_String(source) == size_String(&d->unormSource)) {
+        iAssert(equal_String(source, &d->unormSource));
+        printf("[GmDocument] source is unchanged!\n");
+        return; /* Nothing to do. */
+    }
+    set_String(&d->unormSource, source);
+    /* Normalize. */
+    set_String(&d->source, &d->unormSource);
     if (isNormalized_GmDocument_(d)) {
         normalize_GmDocument(d);
     }
@@ -1600,6 +1679,14 @@ const iArray *headings_GmDocument(const iGmDocument *d) {
 
 const iString *source_GmDocument(const iGmDocument *d) {
     return &d->source;
+}
+
+size_t memorySize_GmDocument(const iGmDocument *d) {
+    return size_String(&d->unormSource) +
+           size_String(&d->source) +
+           size_Array(&d->layout) * sizeof(iGmRun) +
+           size_Array(&d->links)  * sizeof(iGmLink) +
+           memorySize_Media(d->media);
 }
 
 iRangecc findText_GmDocument(const iGmDocument *d, const iString *text, const char *start) {

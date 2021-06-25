@@ -82,10 +82,10 @@ static void visualOffsetAnimation_Widget_(void *ptr) {
 
 void deinit_Widget(iWidget *d) {
     releaseChildren_Widget(d);
-//#if !defined (NDEBUG)
-//    printf("widget %p (%s) deleted (on top:%d)\n", d, cstr_String(&d->id),
-//           d->flags & keepOnTop_WidgetFlag ? 1 : 0);
-//#endif
+#if 0 && !defined (NDEBUG)
+    printf("widget %p (%s) deleted (on top:%d)\n", d, cstr_String(&d->id),
+           d->flags & keepOnTop_WidgetFlag ? 1 : 0);
+#endif
     deinit_String(&d->id);
     if (d->flags & keepOnTop_WidgetFlag) {
         removeAll_PtrArray(onTop_Root(d->root), d);
@@ -321,7 +321,6 @@ static iBool setWidth_Widget_(iWidget *d, int width) {
             d->rect.size.x = width;
             TRACE(d, "width has changed to %d", width);
             if (class_Widget(d)->sizeChanged) {
-                const int oldHeight = d->rect.size.y;
                 class_Widget(d)->sizeChanged(d);
             }
             return iTrue;
@@ -407,6 +406,11 @@ static void boundsOfChildren_Widget_(const iWidget *d, iRect *bounds_out) {
         iRect childRect = child->rect;
         if (child->flags & ignoreForParentWidth_WidgetFlag) {
             childRect.size.x = 0;
+            childRect.pos.x  = bounds_out->pos.x;
+        }
+        if (child->flags & ignoreForParentHeight_WidgetFlag) {
+            childRect.size.y = 0;
+            childRect.pos.y  = bounds_out->pos.y;
         }
         if (isEmpty_Rect(*bounds_out)) {
             *bounds_out = childRect;
@@ -760,6 +764,27 @@ void arrange_Widget(iWidget *d) {
     }
 }
 
+iBool isBeingVisuallyOffsetByReference_Widget(const iWidget *d) {
+    return visualOffsetByReference_Widget(d) != 0;
+}
+
+int visualOffsetByReference_Widget(const iWidget *d) {
+    if (d->offsetRef && d->flags & refChildrenOffset_WidgetFlag) {
+        int offX = 0;
+        iConstForEach(ObjectList, i, children_Widget(d->offsetRef)) {
+            const iWidget *child = i.object;
+            if (child == d) continue;
+            if (child->flags & (visualOffset_WidgetFlag | dragged_WidgetFlag)) {
+//                const float factor = width_Widget(d) / (float) size_Root(d->root).x;
+                const int invOff = width_Widget(d) - iRound(value_Anim(&child->visualOffset));
+                offX -= invOff / 4;
+            }
+        }
+        return offX;
+    }
+    return 0;
+}
+
 static void applyVisualOffset_Widget_(const iWidget *d, iInt2 *pos) {
     if (d->flags & (visualOffset_WidgetFlag | dragged_WidgetFlag)) {
         const int off = iRound(value_Anim(&d->visualOffset));
@@ -774,14 +799,7 @@ static void applyVisualOffset_Widget_(const iWidget *d, iInt2 *pos) {
         pos->y -= value_Anim(d->animOffsetRef);
     }
     if (d->flags & refChildrenOffset_WidgetFlag) {
-        iConstForEach(ObjectList, i, children_Widget(d->offsetRef)) {
-            const iWidget *child = i.object;
-            if (child == d) continue;
-            if (child->flags & (visualOffset_WidgetFlag | dragged_WidgetFlag)) {
-                const int invOff = size_Root(d->root).x - iRound(value_Anim(&child->visualOffset));
-                pos->x -= invOff / 4;
-            }
-        }
+        pos->x += visualOffsetByReference_Widget(d);
     }
 }
 
@@ -1057,10 +1075,38 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
                 isCommand_UserEvent(ev, "widget.overflow")) {
                 scrollOverflow_Widget(d, 0); /* check bounds */
             }
-            if (ev->user.code == command_UserEventCode && d->commandHandler &&
-                d->commandHandler(d, ev->user.data1)) {
-                iAssert(get_Root() == d->root);
-                return iTrue;
+            if (ev->user.code == command_UserEventCode) {
+                const char *cmd = command_UserEvent(ev);
+                if (d->flags & (leftEdgeDraggable_WidgetFlag | rightEdgeDraggable_WidgetFlag) &&
+                    isVisible_Widget(d) && ~d->flags & disabled_WidgetFlag &&
+                    equal_Command(cmd, "edgeswipe.moved")) {
+                    /* Check the side. */
+                    const int side = argLabel_Command(cmd, "side");
+                    if ((side == 1 && d->flags & leftEdgeDraggable_WidgetFlag) ||
+                        (side == 2 && d->flags & rightEdgeDraggable_WidgetFlag)) {
+                        if (~d->flags & dragged_WidgetFlag) {
+                            setFlags_Widget(d, dragged_WidgetFlag, iTrue);
+                        }
+                        setVisualOffset_Widget(d, arg_Command(command_UserEvent(ev)) *
+                                               width_Widget(d) / size_Root(d->root).x,
+                                               10, 0);
+                        return iTrue;
+                    }
+                }
+                if (d->flags & dragged_WidgetFlag && equal_Command(cmd, "edgeswipe.ended")) {
+                    if (argLabel_Command(cmd, "abort")) {
+                        setVisualOffset_Widget(d, 0, 200, easeOut_AnimFlag);
+                    }
+                    else {
+                        postCommand_Widget(
+                            d, argLabel_Command(cmd, "side") == 1 ? "swipe.back" : "swipe.forward");
+                    }
+                    setFlags_Widget(d, dragged_WidgetFlag, iFalse);
+                }
+                if (d->commandHandler && d->commandHandler(d, ev->user.data1)) {
+                    iAssert(get_Root() == d->root);
+                    return iTrue;
+                }
             }
             break;
         }
@@ -1091,6 +1137,17 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
     return iFalse;
 }
 
+int backgroundFadeColor_Widget(void) {
+    switch (colorTheme_App()) {
+        case light_ColorTheme:
+            return gray25_ColorId;
+        case pureWhite_ColorTheme:
+            return gray50_ColorId;
+        default:
+            return black_ColorId;
+    }
+}
+
 void drawBackground_Widget(const iWidget *d) {
     if (d->flags & noBackground_WidgetFlag) {
         return;
@@ -1107,14 +1164,13 @@ void drawBackground_Widget(const iWidget *d) {
             shadowBorder = iFalse;
         }
     }
-    if (shadowBorder) {
+    if (shadowBorder && ~d->flags & noShadowBorder_WidgetFlag) {
         iPaint p;
         init_Paint(&p);
         drawSoftShadow_Paint(&p, bounds_Widget(d), 12 * gap_UI, black_ColorId, 30);
     }
     const iBool isFaded = fadeBackground &&
-                          ~d->flags & noFadeBackground_WidgetFlag;/* &&
-                          ~d->flags & destroyPending_WidgetFlag;*/
+                          ~d->flags & noFadeBackground_WidgetFlag;
     if (isFaded) {
         iPaint p;
         init_Paint(&p);
@@ -1125,19 +1181,7 @@ void drawBackground_Widget(const iWidget *d) {
             p.alpha *= (area > 0 ? visibleArea / area : 0.0f);
         }
         SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_BLEND);
-        int fadeColor;
-        switch (colorTheme_App()) {
-            default:
-                fadeColor = black_ColorId;
-                break;
-            case light_ColorTheme:
-                fadeColor = gray25_ColorId;
-                break;
-            case pureWhite_ColorTheme:
-                fadeColor = gray50_ColorId;
-                break;
-        }
-        fillRect_Paint(&p, rect_Root(d->root), fadeColor);
+        fillRect_Paint(&p, rect_Root(d->root), backgroundFadeColor_Widget());
         SDL_SetRenderDrawBlendMode(renderer_Window(get_Window()), SDL_BLENDMODE_NONE);
     }
     if (d->bgColor >= 0 || d->frameColor >= 0) {

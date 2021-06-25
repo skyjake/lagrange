@@ -15,6 +15,7 @@ set (SDL2_LDFLAGS
     "-framework Foundation"
     "-framework Foundation"
     "-framework GameController"
+    "-framework MediaPlayer"
     "-framework Metal"
     "-framework OpenGLES"
     "-framework QuartzCore"

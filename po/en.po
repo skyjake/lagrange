@@ -392,6 +392,9 @@ msgstr "Find text on page"
 msgid "status.query"
 msgstr "Search Query"
 
+msgid "status.query.tight"
+msgstr "Query"
+
 msgid "status.feeds"
 msgstr "Updating Feeds"
 
@@ -464,6 +467,9 @@ msgstr "Open in New Tab"
 
 msgid "menu.opentab.background"
 msgstr "Open in Background Tab"
+
+msgid "menu.openfile"
+msgstr "Open File…"
 
 msgid "menu.edit"
 msgstr "Edit…"
@@ -738,6 +744,18 @@ msgstr "Bookmark Link…"
 
 msgid "link.download"
 msgstr "Download Linked File"
+
+msgid "link.file.delete"
+msgstr "Delete File"
+
+msgid "heading.file.delete"
+msgstr "DELETE FILE"
+
+msgid "dlg.file.delete.confirm"
+msgstr "Are you sure you want to delete this file?"
+
+msgid "dlg.file.delete"
+msgstr "Delete"
 
 msgid "heading.openlink"
 msgstr "OPEN LINK"
@@ -1040,7 +1058,7 @@ msgid "heading.prefs.colors"
 msgstr "Colors"
 
 msgid "heading.prefs.fonts"
-msgstr "FONTS"
+msgstr "Fonts"
 
 # tab button
 msgid "heading.prefs.general"
@@ -1048,7 +1066,7 @@ msgstr "General"
 
 # tab button
 msgid "heading.prefs.interface"
-msgstr "Interface"
+msgstr "UI"
 
 # tab button
 msgid "heading.prefs.keys"
@@ -1061,8 +1079,11 @@ msgstr "Network"
 msgid "heading.prefs.paragraph"
 msgstr "PARAGRAPH"
 
+msgid "heading.prefs.uitheme"
+msgstr "UI COLORS"
+
 msgid "heading.prefs.pagecontent"
-msgstr "PAGE CONTENT"
+msgstr "PAGE COLORS"
 
 msgid "heading.prefs.proxies"
 msgstr "PROXIES"
@@ -1228,6 +1249,9 @@ msgstr "On Light"
 msgid "prefs.userfont"
 msgstr "Symbol font:"
 
+msgid "hint.prefs.userfont"
+msgstr "path of a TrueType font"
+
 msgid "prefs.linewidth"
 msgstr "Line width:"
 
@@ -1257,6 +1281,9 @@ msgstr "Decode URLs:"
 
 msgid "prefs.cachesize"
 msgstr "Cache size:"
+
+msgid "prefs.memorysize"
+msgstr "Memory size:"
 
 msgid "prefs.ca.file"
 msgstr "CA file:"

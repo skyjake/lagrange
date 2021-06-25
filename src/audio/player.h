@@ -48,6 +48,7 @@ enum iPlayerTag {
 
 void    updateSourceData_Player (iPlayer *, const iString *mimeType, const iBlock *data,
                                  enum iPlayerUpdate update);
+size_t  sourceDataSize_Player   (const iPlayer *);
 
 iBool   	start_Player            (iPlayer *);
 void    	stop_Player             (iPlayer *);
@@ -67,3 +68,5 @@ float   	streamProgress_Player   (const iPlayer *); /* normalized 0...1 */
 
 uint32_t    idleTimeMs_Player       (const iPlayer *);
 iString *   metadataLabel_Player    (const iPlayer *);
+
+iPlayer *   active_Player           (void);

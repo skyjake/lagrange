@@ -1,4 +1,4 @@
-/* Copyright 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
+/* Copyright 2021 Jaakko Keränen <jaakko.keranen@iki.fi>
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -22,35 +22,20 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
-#include "widget.h"
+#include "defs.h"
 
-enum iSidebarMode {
-    bookmarks_SidebarMode,
-    feeds_SidebarMode,
-    history_SidebarMode,
-    identities_SidebarMode,
-    documentOutline_SidebarMode,
-    max_SidebarMode
-};
+#include <the_Foundation/array.h>
+#include <the_Foundation/string.h>
+#include <the_Foundation/vec2.h>
 
-const char *    icon_SidebarMode    (enum iSidebarMode mode);
+/* GmTypesetter has two jobs: it normalizes incoming source text, and typesets it as a
+   sequence of GmRuns. New data can be appended progressively. */
 
-enum iSidebarSide {
-    left_SidebarSide,
-    right_SidebarSide,
-};
-
-enum iFeedsMode {
-    all_FeedsMode,
-    unread_FeedsMode
-};
-
-iDeclareWidgetClass(SidebarWidget)
-iDeclareObjectConstructionArgs(SidebarWidget, enum iSidebarSide side)
-
-iBool               setMode_SidebarWidget       (iSidebarWidget *, enum iSidebarMode mode);
-void                setButtonFont_SidebarWidget (iSidebarWidget *, int font);
-
-enum iSidebarMode   mode_SidebarWidget          (const iSidebarWidget *);
-float               width_SidebarWidget         (const iSidebarWidget *);
-void                setWidth_SidebarWidget      (iSidebarWidget *, float widthAsGaps);
+iDeclareType(GmTypesetter)
+iDeclareTypeConstruction(GmTypesetter)
+        
+void    reset_GmTypesetter      (iGmTypesetter *, enum iSourceFormat format);
+void    setWidth_GmTypesetter   (iGmTypesetter *, int width);
+void    addInput_GmTypesetter   (iGmTypesetter *, const iString *source);
+iBool   getRuns_GmTypesetter    (iGmTypesetter *, iArray *runs_out); /* returns false when no output generated */
+void    skip_GmTypesetter       (iGmTypesetter *, int ySkip);

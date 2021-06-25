@@ -556,7 +556,7 @@ const iString *feedEntryOpenCommand_String(const iString *url, int newTab) {
             iString *head = newRange_String(
                 (iRangecc){ constBegin_String(url) + fragPos + 1, constEnd_String(url) });
             format_String(cmd,
-                          "open newtab:%d gotourlheading:%s url:%s",
+                          "open fromsidebar:1 newtab:%d gotourlheading:%s url:%s",
                           newTab,
                           cstr_String(head),
                           cstr_Rangecc((iRangecc){ constBegin_String(url),
@@ -564,7 +564,7 @@ const iString *feedEntryOpenCommand_String(const iString *url, int newTab) {
             delete_String(head);
         }
         else {
-            format_String(cmd, "open newtab:%d url:%s", newTab, cstr_String(url));
+            format_String(cmd, "open fromsidebar:1 newtab:%d url:%s", newTab, cstr_String(url));
         }
         return cmd;
     }

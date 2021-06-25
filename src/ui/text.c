@@ -116,6 +116,7 @@ iDefineTypeConstructionArgs(Glyph, (iChar ch), ch)
 
 struct Impl_Font {
     iBlock *       data;
+    enum iTextFont family;
     stbtt_fontinfo font;
     float          xScale, yScale;
     int            vertOffset; /* offset due to scaling */
@@ -134,6 +135,15 @@ static void init_Font(iFont *d, const iBlock *data, int height, float scale,
                       enum iFontSize sizeId, iBool isMonospaced) {
     init_Hash(&d->glyphs);
     d->data = NULL;
+    d->family = undefined_TextFont;
+    /* Note: We only use `family` currently for applying a kerning fix to Nunito. */
+    if (data == &fontNunitoRegular_Embedded ||
+        data == &fontNunitoBold_Embedded ||
+        data == &fontNunitoExtraBold_Embedded ||
+        data == &fontNunitoLightItalic_Embedded ||
+        data == &fontNunitoExtraLight_Embedded) {
+        d->family = nunito_TextFont;
+    }
     d->isMonospaced = isMonospaced;
     d->height = height;
     iZap(d->font);
@@ -306,6 +316,7 @@ static void initFonts_Text_(iText *d) {
         { &fontSourceSans3Regular_Embedded, uiSize * 1.125f,      1.0f, uiMedium_FontSize },
         { &fontSourceSans3Regular_Embedded, uiSize * 1.333f,      1.0f, uiBig_FontSize },
         { &fontSourceSans3Regular_Embedded, uiSize * 1.666f,      1.0f, uiLarge_FontSize },
+        { &fontSourceSans3Semibold_Embedded, uiSize * 0.8f,       1.0f, uiNormal_FontSize },
         /* UI fonts: bold weight */
         { &fontSourceSans3Bold_Embedded,    uiSize,               1.0f, uiNormal_FontSize },
         { &fontSourceSans3Bold_Embedded,    uiSize * 1.125f,      1.0f, uiMedium_FontSize },
@@ -389,7 +400,9 @@ static void initCache_Text_(iText *d) {
     d->cacheRowAllocStep = iMax(2, textSize / 6);
     /* Allocate initial (empty) rows. These will be assigned actual locations in the cache
        once at least one glyph is stored. */
-    for (int h = d->cacheRowAllocStep; h <= 2 * textSize + d->cacheRowAllocStep; h += d->cacheRowAllocStep) {
+    for (int h = d->cacheRowAllocStep;
+         h <= 2.5 * textSize + d->cacheRowAllocStep;
+         h += d->cacheRowAllocStep) {
         pushBack_Array(&d->cacheRows, &(iCacheRow){ .height = 0 });
     }
     d->cacheBottom = 0;
@@ -1010,10 +1023,10 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                 prevCh = 0;
                 continue;
             }
-            if (ch == '\r') { /* color change */
+            if (ch == '\v') { /* color change */
                 iChar esc = nextChar_(&chPos, args->text.end);
                 int colorNum = args->color;
-                if (esc == '\r') { /* Extended range. */
+                if (esc == '\v') { /* Extended range. */
                     esc = nextChar_(&chPos, args->text.end) + asciiExtended_ColorEscape;
                     colorNum = esc - asciiBase_ColorEscape;
                 }
@@ -1128,14 +1141,26 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
             const iChar next = nextChar_(&peek, args->text.end);
             if (enableKerning_Text && !d->manualKernOnly && next) {
                 const uint32_t nextGlyphIndex = glyphIndex_Font_(glyph->font, next);
-                const int kern = stbtt_GetGlyphKernAdvance(
+                int kern = stbtt_GetGlyphKernAdvance(
                     &glyph->font->font, glyph->glyphIndex, nextGlyphIndex);
+                /* Nunito needs some kerning fixes. */
+                if (glyph->font->family == nunito_TextFont) {
+                    if (ch == 'W' && (next == 'i' || next == 'h')) {
+                        kern = -30;
+                    }
+                    else if (ch == 'T' && next == 'h') {
+                        kern = -15;
+                    }
+                    else if (ch == 'V' && next == 'i') {
+                        kern = -15;
+                    }
+                }
                 if (kern) {
 //                    printf("%lc(%u) -> %lc(%u): kern %d (%f)\n", ch, glyph->glyphIndex, next,
 //                           nextGlyphIndex,
 //                           kern, d->xScale * kern);
-                    xpos       += d->xScale * kern;
-                    xposExtend += d->xScale * kern;
+                    xpos       += glyph->font->xScale * kern;
+                    xposExtend += glyph->font->xScale * kern;
                 }
             }
         }
@@ -1313,6 +1338,18 @@ void drawRangeN_Text(int fontId, iInt2 pos, int color, iRangecc text, size_t max
     drawBoundedN_Text_(fontId, pos, 0, color, text, maxChars);
 }
 
+void drawOutline_Text(int fontId, iInt2 pos, int outlineColor, int fillColor, iRangecc text) {
+    for (int off = 0; off < 4; ++off) {
+        drawRange_Text(fontId,
+                       add_I2(pos, init_I2(off % 2 == 0 ? -1 : 1, off / 2 == 0 ? -1 : 1)),
+                       outlineColor,
+                       text);
+    }
+    if (fillColor != none_ColorId) {
+        drawRange_Text(fontId, pos, fillColor, text);
+    }
+}
+
 iInt2 advanceWrapRange_Text(int fontId, int maxWidth, iRangecc text) {
     iInt2 size = zero_I2();
     const char *endp;
@@ -1351,6 +1388,31 @@ void drawCentered_Text(int fontId, iRect rect, iBool alignVisual, int color, con
         va_end(args);
     }
     drawCenteredRange_Text(fontId, rect, alignVisual, color, range_Block(&chars));
+    deinit_Block(&chars);
+}
+
+void drawCenteredOutline_Text(int fontId, iRect rect, iBool alignVisual, int outlineColor,
+                              int fillColor, const char *format, ...) {
+    iBlock chars;
+    init_Block(&chars, 0); {
+        va_list args;
+        va_start(args, format);
+        vprintf_Block(&chars, format, args);
+        va_end(args);
+    }
+    if (outlineColor != none_ColorId) {
+        for (int off = 0; off < 4; ++off) {
+            drawCenteredRange_Text(
+                fontId,
+                moved_Rect(rect, init_I2(off % 2 == 0 ? -1 : 1, off / 2 == 0 ? -1 : 1)),
+                alignVisual,
+                outlineColor,
+                range_Block(&chars));
+        }
+    }
+    if (fillColor != none_ColorId) {
+        drawCenteredRange_Text(fontId, rect, alignVisual, fillColor, range_Block(&chars));
+    }
     deinit_Block(&chars);
 }
 
@@ -1504,9 +1566,10 @@ static void initWrap_TextBuf_(iTextBuf *d, int font, int color, int maxWidth, iB
     if (d->texture) {
         SDL_Texture *oldTarget = SDL_GetRenderTarget(render);
         SDL_SetRenderTarget(render, d->texture);
+        SDL_SetRenderDrawBlendMode(render, SDL_BLENDMODE_NONE);
+        SDL_SetRenderDrawColor(render, 255, 255, 255, 0);
+        SDL_RenderClear(render);
         SDL_SetTextureBlendMode(text_.cache, SDL_BLENDMODE_NONE); /* blended when TextBuf is drawn */
-        SDL_SetRenderDrawColor(text_.render, 0, 0, 0, 0);
-        SDL_RenderClear(text_.render);
         const int fg    = color | fillBackground_ColorId;
         iRangecc  range = range_CStr(text);
         if (maxWidth == 0) {

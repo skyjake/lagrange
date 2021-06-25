@@ -87,12 +87,12 @@ enum iWidgetFlag {
 };
 
 /* 64-bit extended flags */
-//#define wasCollapsed_WidgetFlag             iBit64(32)
+#define rightEdgeDraggable_WidgetFlag       iBit64(31)
 #define disabledWhenHidden_WidgetFlag       iBit64(32)
 #define centerHorizontal_WidgetFlag         iBit64(33)
 #define moveToParentLeftEdge_WidgetFlag     iBit64(34)
 #define moveToParentRightEdge_WidgetFlag    iBit64(35)
-#define wrapText_WidgetFlag                 iBit64(36)
+#define noShadowBorder_WidgetFlag           iBit64(36)
 #define borderTop_WidgetFlag                iBit64(37)
 #define overflowScrollable_WidgetFlag       iBit64(38)
 #define focusRoot_WidgetFlag                iBit64(39)
@@ -103,7 +103,7 @@ enum iWidgetFlag {
 #define drawBackgroundToVerticalSafeArea_WidgetFlag     iBit64(44)
 #define visualOffset_WidgetFlag             iBit64(45)
 #define parentCannotResize_WidgetFlag       iBit64(46)
-#define noTopFrame_WidgetFlag               iBit64(47)
+#define ignoreForParentHeight_WidgetFlag    iBit64(47)
 #define unpadded_WidgetFlag                 iBit64(48) /* ignore parent's padding */
 #define extraPadding_WidgetFlag             iBit64(49)
 #define borderBottom_WidgetFlag             iBit64(50)
@@ -117,8 +117,8 @@ enum iWidgetFlag {
 #define parentCannotResizeHeight_WidgetFlag iBit64(58)
 #define ignoreForParentWidth_WidgetFlag     iBit64(59)
 #define noFadeBackground_WidgetFlag         iBit64(60)
-#define destroyPending_WidgetFlag           iBit64(61) /* TODO: needed? */
-#define edgeDraggable_WidgetFlag            iBit64(62)
+#define destroyPending_WidgetFlag           iBit64(61)
+#define leftEdgeDraggable_WidgetFlag        iBit64(62)
 #define refChildrenOffset_WidgetFlag        iBit64(63) /* visual offset determined by the offset of referenced children */
 
 enum iWidgetAddPos {
@@ -242,8 +242,9 @@ iBool   isSelected_Widget           (const iAnyObject *);
 iBool   isUnderKeyRoot_Widget       (const iAnyObject *);
 iBool   isCommand_Widget            (const iWidget *d, const SDL_Event *ev, const char *cmd);
 iBool   hasParent_Widget            (const iWidget *d, const iWidget *someParent);
-iBool   isAffectedByVisualOffset_Widget
-                                    (const iWidget *);
+iBool   isAffectedByVisualOffset_Widget         (const iWidget *);
+iBool   isBeingVisuallyOffsetByReference_Widget (const iWidget *);
+int     visualOffsetByReference_Widget          (const iWidget *);
 void    setId_Widget                (iWidget *, const char *id);
 void    setFlags_Widget             (iWidget *, int64_t flags, iBool set);
 void    setPos_Widget               (iWidget *, iInt2 pos);
@@ -275,6 +276,8 @@ void    postCommand_Widget          (const iAnyObject *, const char *cmd, ...);
 void    refresh_Widget              (const iAnyObject *);
 
 iBool   equalWidget_Command (const char *cmd, const iWidget *widget, const char *checkCommand);
+
+int         backgroundFadeColor_Widget  (void);
 
 void        setFocus_Widget         (iWidget *);
 iWidget *   focus_Widget            (void);

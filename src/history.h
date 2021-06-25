@@ -22,6 +22,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #pragma once
 
+#include "gmdocument.h"
 #include "gmrequest.h"
 
 #include <the_Foundation/ptrarray.h>
@@ -37,6 +38,17 @@ struct Impl_RecentUrl {
     iString      url;
     float        normScrollY;    /* normalized to document height */
     iGmResponse *cachedResponse; /* kept in memory for quicker back navigation */
+    iGmDocument *cachedDoc;      /* cached copy of the presentation: layout and media (not serialized) */
+    struct {
+        uint8_t openedFromSidebar : 1;
+    } flags;
+};
+
+iDeclareType(MemInfo)
+
+struct Impl_MemInfo {
+    size_t cacheSize;   /* number of bytes stored persistently */
+    size_t memorySize;  /* number of bytes stored in RAM */
 };
 
 /*----------------------------------------------------------------------------------------------*/
@@ -51,13 +63,19 @@ void        clear_History               (iHistory *);
 void        add_History                 (iHistory *, const iString *url);
 void        replace_History             (iHistory *, const iString *url);
 void        setCachedResponse_History   (iHistory *, const iGmResponse *response);
+void        setCachedDocument_History   (iHistory *, iGmDocument *doc, iBool openedFromSidebar);
 iBool       goBack_History              (iHistory *);
 iBool       goForward_History           (iHistory *);
+iBool       preceding_History           (iHistory *d, iRecentUrl *recent_out);
+//iBool       following_History           (iHistory *d, iRecentUrl *recent_out);
 iRecentUrl *recentUrl_History           (iHistory *, size_t pos);
 iRecentUrl *mostRecentUrl_History       (iHistory *);
 iRecentUrl *findUrl_History             (iHistory *, const iString *url);
-void        clearCache_History          (iHistory *);
-size_t      pruneLeastImportant_History (iHistory *);
+
+void        clearCache_History                  (iHistory *);
+size_t      pruneLeastImportant_History         (iHistory *);
+size_t      pruneLeastImportantMemory_History   (iHistory *);
+void        invalidateTheme_History             (iHistory *); /* theme has changed, cached contents need updating */
 
 iBool       atLatest_History            (const iHistory *);
 iBool       atOldest_History            (const iHistory *);
@@ -73,6 +91,7 @@ const iRecentUrl *
 const iGmResponse *
             cachedResponse_History      (const iHistory *);
 size_t      cacheSize_History           (const iHistory *);
+size_t      memorySize_History          (const iHistory *);
 
 iString *   debugInfo_History           (const iHistory *);
-
+iMemInfo    memoryUsage_History         (const iHistory *);

@@ -80,6 +80,7 @@ enum iInputWidgetFlag {
     markWords_InputWidgetFlag        = iBit(8),
     needUpdateBuffer_InputWidgetFlag = iBit(9),
     enterKeyEnabled_InputWidgetFlag  = iBit(10),
+    enterKeyInsertsLineFeed_InputWidgetFlag = iBit(11),
 };
 
 /*----------------------------------------------------------------------------------------------*/
@@ -347,8 +348,11 @@ void init_InputWidget(iInputWidget *d, size_t maxLen) {
     d->lastCursor   = 0;
     d->cursorLine   = 0;
     d->lastUpdateWidth = 0;
-    d->verticalMoveX = -1; /* TODO: Use this. */
-    d->inFlags      = eatEscape_InputWidgetFlag | enterKeyEnabled_InputWidgetFlag;
+    d->verticalMoveX   = -1; /* TODO: Use this. */
+    d->inFlags         = eatEscape_InputWidgetFlag | enterKeyEnabled_InputWidgetFlag;
+    if (deviceType_App() != desktop_AppDeviceType) {
+        d->inFlags |= enterKeyInsertsLineFeed_InputWidgetFlag;
+    }
     iZap(d->mark);
     setMaxLen_InputWidget(d, maxLen);
     d->maxLayoutLines = iInvalidSize;
@@ -462,6 +466,10 @@ void setMaxLayoutLines_InputWidget(iInputWidget *d, size_t maxLayoutLines) {
 void setValidator_InputWidget(iInputWidget *d, iInputWidgetValidatorFunc validator, void *context) {
     d->validator = validator;
     d->validatorContext = context;
+}
+
+void setEnterInsertsLF_InputWidget(iInputWidget *d, iBool enterInsertsLF) {
+    iChangeFlags(d->inFlags, enterKeyInsertsLineFeed_InputWidgetFlag, enterInsertsLF);
 }
 
 void setEnterKeyEnabled_InputWidget(iInputWidget *d, iBool enterKeyEnabled) {
@@ -714,12 +722,12 @@ iLocalDef iBool isLastLine_InputWidget_(const iInputWidget *d, const iInputLine 
 }
 
 static size_t indexForRelativeX_InputWidget_(const iInputWidget *d, int x, const iInputLine *line) {
+    size_t index = line->offset;
     if (x <= 0) {
-        return line->offset;
+        return index;
     }
     const char *endPos;
     tryAdvanceNoWrap_Text(d->font, range_String(&line->text), x, &endPos);
-    size_t index = line->offset;
     if (endPos == constEnd_String(&line->text)) {
         index += line->len;
     }
@@ -1166,7 +1174,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
             case SDLK_KP_ENTER:
                 if (mods == KMOD_SHIFT || (d->maxLen == 0 &&
                                            ~d->inFlags & isUrl_InputWidgetFlag &&
-                                           deviceType_App() != desktop_AppDeviceType)) {
+                                           d->inFlags & enterKeyInsertsLineFeed_InputWidgetFlag)) {
                     pushUndo_InputWidget_(d);
                     deleteMarked_InputWidget_(d);
                     insertChar_InputWidget_(d, '\n');
@@ -1357,13 +1365,7 @@ static void draw_InputWidget_(const iInputWidget *d) {
     }
     iPaint p;
     init_Paint(&p);
-    /* `lines` is already up to date and ready for drawing. */
-    /* TODO: If empty, draw the hint. */
-//    iString *text = visText_InputWidget_(d);
-//    if (isWhite_(text) && !isEmpty_String(&d->hint)) {
-//        set_String(text, &d->hint);
-//        isHint = iTrue;
-//    }
+    /* `lines` is already up to date and ready for drawing. */    
     fillRect_Paint(
         &p, bounds, isFocused ? uiInputBackgroundFocused_ColorId : uiInputBackground_ColorId);
     drawRectThickness_Paint(&p,
@@ -1374,7 +1376,6 @@ static void draw_InputWidget_(const iInputWidget *d) {
     setClip_Paint(&p, adjusted_Rect(bounds, init_I2(d->leftPadding, 0),
                                     init_I2(-d->rightPadding, w->flags & extraPadding_WidgetFlag ? -gap_UI / 2 : 0)));
     const iRect contentBounds = contentBounds_InputWidget_(d);
-//    const iInt2 textOrigin = textOrigin_InputWidget_(d); //, cstr_String(text));
     iInt2       drawPos    = topLeft_Rect(contentBounds);
     const int   fg         = isHint                                  ? uiAnnotation_ColorId
                              : isFocused && !isEmpty_Array(&d->text) ? uiInputTextFocused_ColorId
@@ -1418,19 +1419,6 @@ static void draw_InputWidget_(const iInputWidget *d) {
             drawPos.y += lineHeight_Text(d->font);
         }
     }
-//    if (d->buffered && !isFocused && !isHint) {
-//        /* Most input widgets will use this, since only one is focused at a time. */
-//        draw_TextBuf(d->buffered, textOrigin, white_ColorId);
-//    }
-//    else {
-//        draw_Text(d->font,
-//                  textOrigin,
-//                  isHint ? uiAnnotation_ColorId
-//                         : isFocused && !isEmpty_Array(&d->text) ? uiInputTextFocused_ColorId
-//                                                                 : uiInputText_ColorId,
-//                  "%s",
-//                  cstr_String(text));
-//    }
     unsetClip_Paint(&p);
     /* Cursor blinking. */
     if (isFocused && d->cursorVis) {
@@ -1474,7 +1462,6 @@ static void draw_InputWidget_(const iInputWidget *d) {
             deinit_String(&cur);
         }
     }
-//    delete_String(text);
     drawChildren_Widget(w);
 }
 

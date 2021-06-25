@@ -22,6 +22,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "ios.h"
 #include "app.h"
+#include "audio/player.h"
 #include "ui/command.h"
 #include "ui/window.h"
 
@@ -32,9 +33,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <SDL_syswm.h>
 #include <SDL_timer.h>
 
-#import <UIKit/UIKit.h>
-#import <CoreHaptics/CoreHaptics.h>
 #import <AVFAudio/AVFAudio.h>
+#import <CoreHaptics/CoreHaptics.h>
+#import <UIKit/UIKit.h>
+#import <MediaPlayer/MediaPlayer.h>
 
 static iBool isSystemDarkMode_ = iFalse;
 static iBool isPhone_          = iFalse;
@@ -64,6 +66,7 @@ API_AVAILABLE(ios(13.0))
 @interface HapticState : NSObject
 @property (nonatomic, strong) CHHapticEngine *engine;
 @property (nonatomic, strong) NSDictionary   *tapDef;
+@property (nonatomic, strong) NSDictionary   *gentleTapDef;
 @end
 
 @implementation HapticState
@@ -105,26 +108,47 @@ API_AVAILABLE(ios(13.0))
                     CHHapticPatternKeyEvent: @{
                         CHHapticPatternKeyEventType:    CHHapticEventTypeHapticTransient,
                         CHHapticPatternKeyTime:         @0.0,
-                        CHHapticPatternKeyEventDuration:@0.1
+                        CHHapticPatternKeyEventDuration:@0.1,
+                        CHHapticPatternKeyEventParameters: @[
+                            @{
+                                CHHapticPatternKeyParameterID: CHHapticEventParameterIDHapticIntensity,
+                                CHHapticPatternKeyParameterValue: @1.0
+                            }
+                        ]
                     },
                 },
-            ],
+            ]
+    };
+    self.gentleTapDef = @{
+        CHHapticPatternKeyPattern:
+            @[
+                @{
+                    CHHapticPatternKeyEvent: @{
+                        CHHapticPatternKeyEventType:    CHHapticEventTypeHapticTransient,
+                        CHHapticPatternKeyTime:         @0.0,
+                        CHHapticPatternKeyEventDuration:@0.1,
+                        CHHapticPatternKeyEventParameters: @[
+                            @{
+                                CHHapticPatternKeyParameterID: CHHapticEventParameterIDHapticIntensity,
+                                CHHapticPatternKeyParameterValue: @0.33
+                            }
+                        ]
+                    },
+                },
+            ]
     };
 }
 
--(void)playTapEffect {
+
+-(void)playHapticEffect:(NSDictionary *)def {
     NSError *error = nil;
-    CHHapticPattern *pattern = [[CHHapticPattern alloc] initWithDictionary:self.tapDef
+    CHHapticPattern *pattern = [[CHHapticPattern alloc] initWithDictionary:def
                                                                      error:&error];
     // TODO: Check the error.
     id<CHHapticPatternPlayer> player = [self.engine createPlayerWithPattern:pattern error:&error];
     // TODO: Check the error.
     [self.engine startWithCompletionHandler:^(NSError *err){
         if (err == nil) {
-            /* Just keep it running. */
-//            [self.engine notifyWhenPlayersFinished:^(NSError * _Nullable error) {
-//                return CHHapticEngineFinishedActionStopEngine;
-//            }];
             NSError *startError = nil;
             [player startAtTime:0.0 error:&startError];
         }
@@ -181,11 +205,22 @@ static AppState *appState_;
 
 - (void)documentPicker:(UIDocumentPickerViewController *)controller
 didPickDocumentsAtURLs:(NSArray<NSURL *> *)urls {
-    [self removeSavedFile];
+    if (fileBeingSaved) {
+        [self removeSavedFile];
+    }
+    else {
+        /* A file is being opened. */
+        NSURL *url = [urls firstObject];
+        iString *path = localFilePathFromUrl_String(collectNewCStr_String([[url absoluteString]
+                                                                           UTF8String]));
+        postCommandf_App("file.open temp:1 path:%s", cstrCollect_String(path));
+    }
 }
 
 - (void)documentPickerWasCancelled:(UIDocumentPickerViewController *)controller {
-    [self removeSavedFile];
+    if (fileBeingSaved) {
+        [self removeSavedFile];
+    }
 }
 
 -(void)keyboardOnScreen:(NSNotification *)notification {
@@ -230,6 +265,55 @@ void setupApplication_iOS(void) {
                    name:UIKeyboardWillHideNotification
                  object:nil];
     [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayback error:nil];
+    /* Media player remote controls. */
+    MPRemoteCommandCenter *commandCenter = [MPRemoteCommandCenter sharedCommandCenter];
+    [[commandCenter pauseCommand] addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
+        iPlayer *player = active_Player();
+        if (player) {
+            setPaused_Player(player, iTrue);
+            return MPRemoteCommandHandlerStatusSuccess;
+        }
+        return MPRemoteCommandHandlerStatusCommandFailed;
+    }];
+    [[commandCenter playCommand] addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
+        iPlayer *player = active_Player();
+        if (player) {
+            if (isPaused_Player(player)) {
+                setPaused_Player(player, iFalse);
+            }
+            else {
+                start_Player(player);
+            }
+            return MPRemoteCommandHandlerStatusSuccess;
+        }
+        return MPRemoteCommandHandlerStatusCommandFailed;
+    }];
+    [[commandCenter stopCommand] addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
+        iPlayer *player = active_Player();
+        if (player) {
+            stop_Player(player);
+            return MPRemoteCommandHandlerStatusSuccess;
+        }
+        return MPRemoteCommandHandlerStatusCommandFailed;
+    }];
+    [[commandCenter togglePlayPauseCommand] addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
+        iPlayer *player = active_Player();
+        if (player) {
+            setPaused_Player(player, !isPaused_Player(player));
+            return MPRemoteCommandHandlerStatusSuccess;
+        }
+        return MPRemoteCommandHandlerStatusCommandFailed;
+    }];
+    [[commandCenter nextTrackCommand] setEnabled:NO];
+    [[commandCenter previousTrackCommand] setEnabled:NO];
+    [[commandCenter changeRepeatModeCommand] setEnabled:NO];
+    [[commandCenter changeShuffleModeCommand] setEnabled:NO];
+    [[commandCenter changePlaybackRateCommand] setEnabled:NO];
+    [[commandCenter seekForwardCommand] setEnabled:NO];
+    [[commandCenter seekBackwardCommand] setEnabled:NO];
+    [[commandCenter skipForwardCommand] setEnabled:NO];
+    [[commandCenter skipBackwardCommand] setEnabled:NO];
+    [[commandCenter changePlaybackPositionCommand] setEnabled:NO];
 }
 
 static iBool isDarkMode_(iWindow *window) {
@@ -265,7 +349,7 @@ iBool isPhone_iOS(void) {
 }
 
 int displayRefreshRate_iOS(void) {
-    return uiWindow_(get_Window()).screen.maximumFramesPerSecond;
+    return (int) uiWindow_(get_Window()).screen.maximumFramesPerSecond;
 }
 
 void setupWindow_iOS(iWindow *window) {
@@ -279,7 +363,10 @@ void playHapticEffect_iOS(enum iHapticEffect effect) {
         HapticState *hs = (HapticState *) appState_.haptic;
         switch(effect) {
             case tap_HapticEffect:
-                [hs playTapEffect];
+                [hs playHapticEffect:hs.tapDef];
+                break;
+            case gentleTap_HapticEffect:
+                [hs playHapticEffect:hs.gentleTapDef];
                 break;
         }
     }
@@ -324,6 +411,38 @@ iBool processEvent_iOS(const SDL_Event *ev) {
     return iFalse; /* allow normal processing */
 }
 
+void updateNowPlayingInfo_iOS(void) {
+    const iPlayer *player = active_Player();
+    if (!player) {
+        clearNowPlayingInfo_iOS();
+        return;
+    }
+    NSMutableDictionary<NSString *, id> *info = [[NSMutableDictionary<NSString *, id> alloc] init];
+    [info setObject:[NSNumber numberWithDouble:time_Player(player)]
+            forKey:MPNowPlayingInfoPropertyElapsedPlaybackTime];
+    [info setObject:[NSNumber numberWithInt:MPNowPlayingInfoMediaTypeAudio]
+            forKey:MPNowPlayingInfoPropertyMediaType];
+    [info setObject:[NSNumber numberWithDouble:duration_Player(player)]
+             forKey:MPMediaItemPropertyPlaybackDuration];
+    const iString *title  = tag_Player(player, title_PlayerTag);
+    const iString *artist = tag_Player(player, artist_PlayerTag);
+    if (isEmpty_String(title)) {
+        title = collectNewCStr_String("Audio"); /* TODO: Use link label or URL file name */
+    }
+    if (isEmpty_String(artist)) {
+        artist = collectNewCStr_String("Lagrange"); /* TODO: Use domain or base URL */
+    }
+    [info setObject:[NSString stringWithUTF8String:cstr_String(title)]
+             forKey:MPMediaItemPropertyTitle];
+    [info setObject:[NSString stringWithUTF8String:cstr_String(artist)]
+             forKey:MPMediaItemPropertyArtist];
+    [[MPNowPlayingInfoCenter defaultCenter] setNowPlayingInfo:info];
+}
+
+void clearNowPlayingInfo_iOS(void) {
+    [[MPNowPlayingInfoCenter defaultCenter] setNowPlayingInfo:nil];
+}
+
 void exportDownloadedFile_iOS(const iString *path) {
     NSURL *url = [NSURL fileURLWithPath:[[NSString alloc] initWithCString:cstr_String(path)
                                                                  encoding:NSUTF8StringEncoding]];
@@ -332,6 +451,17 @@ void exportDownloadedFile_iOS(const iString *path) {
                                               inMode:UIDocumentPickerModeExportToService];
     picker.delegate = appState_;
     [appState_ setFileBeingSaved:path];
+    [viewController_(get_Window()) presentViewController:picker animated:YES completion:nil];
+}
+
+void pickFileForOpening_iOS(void) {
+    UIDocumentPickerViewController *picker = [[UIDocumentPickerViewController alloc]
+                                              initWithDocumentTypes:@[@"fi.skyjake.lagrange.gemini",
+                                                                      @"public.text",
+                                                                      @"public.image",
+                                                                      @"public.audio"]
+                                              inMode:UIDocumentPickerModeImport];
+    picker.delegate = appState_;
     [viewController_(get_Window()) presentViewController:picker animated:YES completion:nil];
 }
 

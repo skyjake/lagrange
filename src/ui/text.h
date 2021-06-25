@@ -50,6 +50,7 @@ enum iFontId {
     defaultMedium_FontId,
     defaultBig_FontId,
     defaultLarge_FontId,
+    defaultSmall_FontId,
     /* UI fonts: bold weight */
     defaultBold_FontId,
     defaultMediumBold_FontId,
@@ -116,7 +117,8 @@ iLocalDef iBool isJapanese_FontId(enum iFontId id) {
 #define emojiVariationSelector_Char     ((iChar) 0xfe0f)
 
 enum iTextFont {
-    nunito_TextFont,
+    undefined_TextFont = -1,
+    nunito_TextFont = 0,
     firaSans_TextFont,
     literata_TextFont,
     tinos_TextFont,
@@ -162,9 +164,11 @@ void    draw_Text               (int fontId, iInt2 pos, int color, const char *t
 void    drawAlign_Text          (int fontId, iInt2 pos, int color, enum iAlignment align, const char *text, ...);
 void    drawCentered_Text       (int fontId, iRect rect, iBool alignVisual, int color, const char *text, ...);
 void    drawCenteredRange_Text  (int fontId, iRect rect, iBool alignVisual, int color, iRangecc text);
+void    drawCenteredOutline_Text(int fontId, iRect rect, iBool alignVisual, int outlineColor, int fillColor, const char *text, ...);
 void    drawString_Text         (int fontId, iInt2 pos, int color, const iString *text);
 void    drawRange_Text          (int fontId, iInt2 pos, int color, iRangecc text);
 void    drawRangeN_Text         (int fontId, iInt2 pos, int color, iRangecc text, size_t maxLen);
+void    drawOutline_Text        (int fontId, iInt2 pos, int outlineColor, int fillColor, iRangecc text);
 void    drawBoundRange_Text     (int fontId, iInt2 pos, int boundWidth, int color, iRangecc text); /* bound does not wrap */
 int     drawWrapRange_Text      (int fontId, iInt2 pos, int maxWidth, int color, iRangecc text); /* returns new Y */
 

@@ -31,6 +31,9 @@ iDeclareObjectConstructionArgs(LabelWidget, const char *label, const char *comma
 
 void    setAlignVisually_LabelWidget(iLabelWidget *, iBool alignVisual);
 void    setNoAutoMinHeight_LabelWidget(iLabelWidget *, iBool noAutoMinHeight);
+void    setNoTopFrame_LabelWidget   (iLabelWidget *, iBool noTopFrame);
+void    setWrap_LabelWidget         (iLabelWidget *, iBool wrap);
+void    setOutline_LabelWidget      (iLabelWidget *, iBool drawAsOutline);
 void    setFont_LabelWidget         (iLabelWidget *, int fontId);
 void    setTextColor_LabelWidget    (iLabelWidget *, int color);
 void    setText_LabelWidget         (iLabelWidget *, const iString *text); /* resizes widget */
@@ -43,12 +46,15 @@ void    updateSize_LabelWidget      (iLabelWidget *);
 void    updateText_LabelWidget      (iLabelWidget *, const iString *text); /* not resized */
 void    updateTextCStr_LabelWidget  (iLabelWidget *, const char *text); /* not resized */
 
+void    updateTextAndResizeWidthCStr_LabelWidget    (iLabelWidget *, const char *text);
+
 iInt2           defaultSize_LabelWidget (const iLabelWidget *);
 int             font_LabelWidget        (const iLabelWidget *);
 const iString * text_LabelWidget        (const iLabelWidget *);
 const iString * sourceText_LabelWidget  (const iLabelWidget *); /* untranslated */
 const iString * command_LabelWidget     (const iLabelWidget *);
 iChar           icon_LabelWidget        (const iLabelWidget *);
+iBool           isWrapped_LabelWidget   (const iLabelWidget *);
 
 iLabelWidget *newKeyMods_LabelWidget(const char *label, int key, int kmods, const char *command);
 iLabelWidget *newColor_LabelWidget  (const char *text, int color);

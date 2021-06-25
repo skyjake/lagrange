@@ -59,6 +59,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <stdarg.h>
 #include <errno.h>
 
+//#define LAGRANGE_ENABLE_MOUSE_TOUCH_EMULATION 1
+
 #if defined (iPlatformAppleDesktop)
 #   include "macos.h"
 #endif
@@ -210,6 +212,7 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "smoothscroll arg:%d\n", d->prefs.smoothScrolling);
     appendFormat_String(str, "imageloadscroll arg:%d\n", d->prefs.loadImageInsteadOfScrolling);
     appendFormat_String(str, "cachesize.set arg:%d\n", d->prefs.maxCacheSize);
+    appendFormat_String(str, "memorysize.set arg:%d\n", d->prefs.maxMemorySize);
     appendFormat_String(str, "decodeurls arg:%d\n", d->prefs.decodeUserVisibleURLs);
     appendFormat_String(str, "linewidth.set arg:%d\n", d->prefs.lineWidth);
     /* TODO: Set up an array of booleans in Prefs and do these in a loop. */
@@ -760,6 +763,7 @@ static void init_App_(iApp *d, int argc, char **argv) {
     setupApplication_iOS();
 #endif
     init_Keys();
+    loadPalette_Color(dataDir_App_());
     setThemePalette_Color(d->prefs.theme); /* default UI colors */
     loadPrefs_App_(d);
     load_Keys(dataDir_App_());
@@ -918,13 +922,25 @@ const iString *debugInfo_App(void) {
     extern char **environ; /* The environment variables. */
     iApp *d = &app_;
     iString *msg = collectNew_String();
+    iObjectList *docs = iClob(listDocuments_App(NULL));
     format_String(msg, "# Debug information\n");
+    appendFormat_String(msg, "## Memory usage\n"); {
+        iMemInfo total = { 0, 0 };
+        iForEach(ObjectList, i, docs) {
+            iDocumentWidget *doc = i.object;
+            iMemInfo usage = memoryUsage_History(history_DocumentWidget(doc));
+            total.cacheSize += usage.cacheSize;
+            total.memorySize += usage.memorySize;
+        }
+        appendFormat_String(msg, "Total cache: %.3f MB\n", total.cacheSize / 1.0e6f);
+        appendFormat_String(msg, "Total memory: %.3f MB\n", total.memorySize / 1.0e6f);
+    }
     appendFormat_String(msg, "## Documents\n");
-    iForEach(ObjectList, k, iClob(listDocuments_App(NULL))) {
+    iForEach(ObjectList, k, docs) {
         iDocumentWidget *doc = k.object;
         appendFormat_String(msg, "### Tab %d.%zu: %s\n",
-                            constAs_Widget(doc)->root == get_Window()->roots[0] ? 0 : 1,
-                            childIndex_Widget(constAs_Widget(doc)->parent, k.object),
+                            constAs_Widget(doc)->root == get_Window()->roots[0] ? 1 : 2,
+                            childIndex_Widget(constAs_Widget(doc)->parent, k.object) + 1,
                             cstr_String(bookmarkTitle_DocumentWidget(doc)));
         append_String(msg, collect_String(debugInfo_History(history_DocumentWidget(doc))));
     }
@@ -977,6 +993,33 @@ void trimCache_App(void) {
         }
     }
     iRelease(docs);
+}
+
+void trimMemory_App(void) {
+    iApp *d = &app_;
+    size_t memorySize = 0;
+    const size_t limit = d->prefs.maxMemorySize * 1000000;
+    iObjectList *docs = listDocuments_App(NULL);
+    iForEach(ObjectList, i, docs) {
+        memorySize += memorySize_History(history_DocumentWidget(i.object));
+    }
+    init_ObjectListIterator(&i, docs);
+    iBool wasPruned = iFalse;
+    while (memorySize > limit) {
+        iDocumentWidget *doc = i.object;
+        const size_t pruned = pruneLeastImportantMemory_History(history_DocumentWidget(doc));
+        if (pruned) {
+            memorySize -= pruned;
+            wasPruned = iTrue;
+        }
+        next_ObjectListIterator(&i);
+        if (!i.value) {
+            if (!wasPruned) break;
+            wasPruned = iFalse;
+            init_ObjectListIterator(&i, docs);
+        }
+    }
+    iRelease(docs);    
 }
 
 iLocalDef iBool isWaitingAllowed_App_(iApp *d) {
@@ -1049,6 +1092,13 @@ void processEvents_App(enum iAppEventMode eventMode) {
                 postRefresh_App();
                 break;
             case SDL_APP_WILLENTERBACKGROUND:
+#if defined (iPlatformAppleMobile)
+                updateNowPlayingInfo_iOS();
+#endif
+                setFreezeDraw_Window(d->window, iTrue);
+                savePrefs_App_(d);
+                saveState_App_(d);
+                break;
             case SDL_APP_TERMINATING:
                 setFreezeDraw_Window(d->window, iTrue);
                 savePrefs_App_(d);
@@ -1149,6 +1199,45 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     ev.wheel.x = -ev.wheel.x;
 #endif
                 }
+#if defined (LAGRANGE_ENABLE_MOUSE_TOUCH_EMULATION)
+                /* Convert mouse events to finger events to test the touch handling. */ {
+                    static float xPrev = 0.0f;
+                    static float yPrev = 0.0f;
+                    if (ev.type == SDL_MOUSEBUTTONDOWN || ev.type == SDL_MOUSEBUTTONUP) {
+                        const float xf = (d->window->pixelRatio * ev.button.x) / (float) d->window->size.x;
+                        const float yf = (d->window->pixelRatio * ev.button.y) / (float) d->window->size.y;
+                        ev.type = (ev.type == SDL_MOUSEBUTTONDOWN ? SDL_FINGERDOWN : SDL_FINGERUP);
+                        ev.tfinger.x = xf;
+                        ev.tfinger.y = yf;
+                        ev.tfinger.dx = xf - xPrev;
+                        ev.tfinger.dy = yf - yPrev;
+                        xPrev = xf;
+                        yPrev = yf;
+                        ev.tfinger.fingerId = 0x1234;
+                        ev.tfinger.pressure = 1.0f;
+                        ev.tfinger.timestamp = SDL_GetTicks();
+                        ev.tfinger.touchId = SDL_TOUCH_MOUSEID;
+                    }
+                    else if (ev.type == SDL_MOUSEMOTION) {
+                        if (~ev.motion.state & SDL_BUTTON(SDL_BUTTON_LEFT)) {
+                            continue; /* only when pressing a button */    
+                        }
+                        const float xf = (d->window->pixelRatio * ev.motion.x) / (float) d->window->size.x;
+                        const float yf = (d->window->pixelRatio * ev.motion.y) / (float) d->window->size.y;
+                        ev.type = SDL_FINGERMOTION;
+                        ev.tfinger.x = xf;
+                        ev.tfinger.y = yf;
+                        ev.tfinger.dx = xf - xPrev;
+                        ev.tfinger.dy = yf - yPrev;
+                        xPrev = xf;
+                        yPrev = yf;
+                        ev.tfinger.fingerId = 0x1234;
+                        ev.tfinger.pressure = 1.0f;
+                        ev.tfinger.timestamp = SDL_GetTicks();
+                        ev.tfinger.touchId = SDL_TOUCH_MOUSEID;                        
+                    }
+                }
+#endif
                 iBool wasUsed = processEvent_Window(d->window, &ev);
                 if (!wasUsed) {
                     /* There may be a key bindings for this. */
@@ -1565,7 +1654,9 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
         postCommandf_App("searchurl address:%s",
                          cstrText_InputWidget(findChild_Widget(d, "prefs.searchurl")));
         postCommandf_App("cachesize.set arg:%d",
-                         toInt_String(text_InputWidget(findChild_Widget(d, "prefs.cachesize"))));        
+                         toInt_String(text_InputWidget(findChild_Widget(d, "prefs.cachesize"))));
+        postCommandf_App("memorysize.set arg:%d",
+                         toInt_String(text_InputWidget(findChild_Widget(d, "prefs.memorysize"))));
         postCommandf_App("ca.file path:%s",
                          cstrText_InputWidget(findChild_Widget(d, "prefs.ca.file")));
         postCommandf_App("ca.path path:%s",
@@ -1978,7 +2069,7 @@ iBool handleCommand_App(const char *cmd) {
     else if (equal_Command(cmd, "hidetoolbarscroll")) {
         d->prefs.hideToolbarOnScroll = arg_Command(cmd);
         if (!d->prefs.hideToolbarOnScroll) {
-            showToolbars_Root(get_Root(), iTrue);
+            showToolbar_Root(get_Root(), iTrue);
         }
         return iTrue;
     }
@@ -2127,6 +2218,13 @@ iBool handleCommand_App(const char *cmd) {
         }
         return iTrue;
     }
+    else if (equal_Command(cmd, "memorysize.set")) {
+        d->prefs.maxMemorySize = arg_Command(cmd);
+        if (d->prefs.maxMemorySize <= 0) {
+            d->prefs.maxMemorySize = 0;
+        }
+        return iTrue;
+    }
     else if (equal_Command(cmd, "searchurl")) {
         iString *url = &d->prefs.searchUrl;
         setCStr_String(url, suffixPtr_Command(cmd, "address"));
@@ -2188,7 +2286,8 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "open")) {
         iString *url = collectNewCStr_String(suffixPtr_Command(cmd, "url"));
-        const iBool noProxy = argLabel_Command(cmd, "noproxy");
+        const iBool noProxy     = argLabel_Command(cmd, "noproxy") != 0;
+        const iBool fromSidebar = argLabel_Command(cmd, "fromsidebar") != 0;
         iUrl parts;
         init_Url(&parts, url);
         if (argLabel_Command(cmd, "default") || equalCase_Rangecc(parts.scheme, "mailto") ||
@@ -2239,7 +2338,9 @@ iBool handleCommand_App(const char *cmd) {
         else {
             urlEncodePath_String(url);
         }
-        setUrlFromCache_DocumentWidget(doc, url, isHistory);
+        setUrlFlags_DocumentWidget(doc, url,
+           (isHistory   ? useCachedContentIfAvailable_DocumentWidgetSetUrlFlag : 0) |
+           (fromSidebar ? openedFromSidebar_DocumentWidgetSetUrlFlag : 0));
         /* Optionally, jump to a text in the document. This will only work if the document
            is already available, e.g., it's from "about:" or restored from cache. */
         const iRangecc gotoHeading = range_Command(cmd, "gotoheading");
@@ -2253,6 +2354,36 @@ iBool handleCommand_App(const char *cmd) {
                                  collect_String(newRange_String(gotoUrlHeading)))));
         }
         setCurrent_Root(oldRoot);
+    }
+    else if (equal_Command(cmd, "file.open")) {
+        const char *path = suffixPtr_Command(cmd, "path");
+        if (path) {
+            postCommandf_App("open temp:%d url:%s",
+                             argLabel_Command(cmd, "temp"),
+                             makeFileUrl_CStr(path));
+            return iTrue;
+        }
+#if defined (iPlatformAppleMobile)
+        pickFileForOpening_iOS();
+#endif
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "file.delete")) {
+        const char *path = suffixPtr_Command(cmd, "path");
+        if (argLabel_Command(cmd, "confirm")) {
+            makeQuestion_Widget(
+                uiHeading_ColorEscape "${heading.file.delete}",
+                format_CStr("${dlg.file.delete.confirm}\n%s", path),
+                (iMenuItem[]){
+                    { "${cancel}", 0, 0, NULL },
+                    { uiTextCaution_ColorEscape "${dlg.file.delete}", 0, 0,
+                      format_CStr("!file.delete path:%s", path) } },
+                2);
+        }
+        else {
+            remove(path);
+        }
+        return iTrue;
     }
     else if (equal_Command(cmd, "document.request.cancelled")) {
         /* TODO: How should cancelled requests be treated in the history? */
@@ -2405,6 +2536,8 @@ iBool handleCommand_App(const char *cmd) {
             iTrue);
         setText_InputWidget(findChild_Widget(dlg, "prefs.cachesize"),
                             collectNewFormat_String("%d", d->prefs.maxCacheSize));
+        setText_InputWidget(findChild_Widget(dlg, "prefs.memorysize"),
+                            collectNewFormat_String("%d", d->prefs.maxMemorySize));
         setToggle_Widget(findChild_Widget(dlg, "prefs.decodeurls"), d->prefs.decodeUserVisibleURLs);
         setText_InputWidget(findChild_Widget(dlg, "prefs.searchurl"), &d->prefs.searchUrl);
         setText_InputWidget(findChild_Widget(dlg, "prefs.ca.file"), &d->prefs.caFile);
@@ -2491,11 +2624,16 @@ iBool handleCommand_App(const char *cmd) {
         return iTrue;
     }
     else if (equal_Command(cmd, "feeds.update.started")) {
-        showCollapsed_Widget(findWidget_App("feeds.progress"), iTrue);
+        iAnyObject *prog = findWidget_Root("feeds.progress");
+        const iWidget *navBar = findWidget_Root("navbar");
+        updateTextAndResizeWidthCStr_LabelWidget(
+            prog, flags_Widget(navBar) & tight_WidgetFlag || deviceType_App() == phone_AppDeviceType ?
+                                                 "\u2605" : "\u2605 ${status.feeds}");
+        showCollapsed_Widget(prog, iTrue);
         return iFalse;
     }
     else if (equal_Command(cmd, "feeds.update.finished")) {
-        showCollapsed_Widget(findWidget_App("feeds.progress"), iFalse);
+        showCollapsed_Widget(findWidget_Root("feeds.progress"), iFalse);
         refreshFinished_Feeds();
         postRefresh_App();
         return iFalse;

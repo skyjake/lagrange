@@ -24,18 +24,26 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "lang.h"
 
+enum iSourceFormat {
+    undefined_SourceFormat = -1,
+    gemini_SourceFormat    = 0,
+    plainText_SourceFormat,
+};
+
 enum iFileVersion {
     initial_FileVersion                 = 0,
     addedResponseTimestamps_FileVersion = 1,
     multipleRoots_FileVersion           = 2,
     serializedSidebarState_FileVersion  = 3,
+    addedRecentUrlFlags_FileVersion     = 4,
     /* meta */
     idents_FileVersion = 1, /* version used by GmCerts/idents.lgr */
-    latest_FileVersion = 3,
+    latest_FileVersion = 4,
 };
 
 /* Icons */
 
+#define menu_Icon           "\U0001d362"
 #define rightArrowhead_Icon "\u27a4"
 #define leftArrowhead_Icon  "\u27a4"
 #define warning_Icon        "\u26a0"
@@ -104,6 +112,9 @@ enum iFileVersion {
 #   define shiftReturn_Icon shift_Icon " " return_Icon
 #endif
 
+#if defined (iPlatformAppleDesktop)
+#   define iHaveNativeMenus
+#endif
 
 /* UI labels that depend on the platform */
 

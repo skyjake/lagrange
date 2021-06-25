@@ -66,6 +66,7 @@ struct Impl_Prefs {
     iString          caPath;
     iBool            decodeUserVisibleURLs;
     int              maxCacheSize; /* MB */
+    int              maxMemorySize; /* MB */
     iString          geminiProxy;
     iString          gopherProxy;
     iString          httpProxy;

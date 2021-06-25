@@ -45,6 +45,24 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="1.5.2" date="2021-06-15">
+            <description>
+                <p>Bug fixes and tweaks:</p>
+                <ul>
+                    <li>Fixed pasting a PEM-formatted certificate and/or 
+                        private key via clipboard in Import Identity.</li>
+                    <li>Possible workaround for a visual glitch in the URL
+                        field.</li>
+                    <li>Specify `StartupWMClass` in .desktop file.</li>
+                    <li>Normalize page contents to avoid the most common issues
+                        with diacritics (Unicode NFC).</li>
+                    <li>Expanded the set of recognized custom link icons.</li>
+                    <li>Updated "Smol Emoji" font with new glyphs.</li>
+                    <li>Allow use of TLS cipher "DHE-RSA-AES256-GCM-SHA384".</li>
+                </ul>
+            </description>
+            <url>https://github.com/skyjake/lagrange/releases/tag/v1.5.2</url>
+        </release>
         <release version="1.5.1" date="2021-06-06">
             <description>
                 <p>Resource update:</p>

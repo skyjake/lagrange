@@ -710,7 +710,8 @@ iWidget *makeMenu_Widget(iWidget *parent, const iMenuItem *items, size_t n) {
                 menu,
                 iClob(newKeyMods_LabelWidget(labelText, item->key, item->kmods, item->command)),
                 noBackground_WidgetFlag | frameless_WidgetFlag | alignLeft_WidgetFlag |
-                drawKey_WidgetFlag | (isInfo ? wrapText_WidgetFlag : 0) | itemFlags);
+                drawKey_WidgetFlag | itemFlags);
+            setWrap_LabelWidget(label, isInfo);
             haveIcons |= checkIcon_LabelWidget(label);
             updateSize_LabelWidget(label); /* drawKey was set */
             if (isInfo) {
@@ -776,7 +777,7 @@ void openMenuFlags_Widget(iWidget *d, iInt2 windowCoord, iBool postCommands) {
             if (isInstance_Object(i.object, &Class_LabelWidget)) {
                 iLabelWidget *label = i.object;
                 const iBool isCaution = startsWith_String(text_LabelWidget(label), uiTextCaution_ColorEscape);
-                if (flags_Widget(as_Widget(label)) & wrapText_WidgetFlag) {
+                if (isWrapped_LabelWidget(label)) {
                     continue;
                 }
                 if (deviceType_App() == desktop_AppDeviceType) {
@@ -979,8 +980,8 @@ static void addTabPage_Widget_(iWidget *tabs, enum iWidgetAddPos addPos, iWidget
         iClob(newKeyMods_LabelWidget(label, key, kmods, format_CStr("tabs.switch page:%p", page))),
         addPos);
     setFlags_Widget(button, selected_WidgetFlag, isSel);
-    setFlags_Widget(
-        button, noTopFrame_WidgetFlag | commandOnClick_WidgetFlag | expand_WidgetFlag, iTrue);
+    setFlags_Widget(button, commandOnClick_WidgetFlag | expand_WidgetFlag, iTrue);
+    setNoTopFrame_LabelWidget((iLabelWidget *) button, iTrue);
     addChildPos_Widget(pages, page, addPos);
     if (tabCount_Widget(tabs) > 1) {
         setFlags_Widget(buttons, hidden_WidgetFlag, iFalse);
@@ -1317,7 +1318,7 @@ void updateValueInput_Widget(iWidget *d, const char *title, const char *prompt) 
 
 static iBool messageHandler_(iWidget *msg, const char *cmd) {
     /* Almost any command dismisses the sheet. */
-    /* TODO: Use a "notification" prefix (like `) to ignore all types of commands line this? */
+    /* TODO: Add a "notification" type of user events to separate them from user actions. */
     if (!(equal_Command(cmd, "media.updated") ||
           equal_Command(cmd, "media.player.update") ||
           equal_Command(cmd, "bookmarks.request.finished") ||
@@ -1326,6 +1327,7 @@ static iBool messageHandler_(iWidget *msg, const char *cmd) {
           equal_Command(cmd, "document.request.updated") ||
           equal_Command(cmd, "scrollbar.fade") ||
           equal_Command(cmd, "widget.overflow") ||
+          equal_Command(cmd, "edgeswipe.ended") ||
           startsWith_CStr(cmd, "window."))) {
         setupSheetTransition_Mobile(msg, iFalse);
         destroy_Widget(msg);
@@ -1599,8 +1601,6 @@ iWidget *makePreferences_Widget(void) {
     /* General preferences. */ {
         appendTwoColumnPage_(tabs, "${heading.prefs.general}", '1', &headings, &values);
 #if defined (LAGRANGE_ENABLE_DOWNLOAD_EDIT)
-        //addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.downloads}")));
-        //setId_Widget(addChild_Widget(values, iClob(new_InputWidget(0))), "prefs.downloads");
         addPrefsInputWithHeading_(headings, values, "prefs.downloads", iClob(new_InputWidget(0)));
 #endif
         iInputWidget *searchUrl;
@@ -1608,12 +1608,6 @@ iWidget *makePreferences_Widget(void) {
         setUrlContent_InputWidget(searchUrl, iTrue);
         addChild_Widget(headings, iClob(makePadding_Widget(bigGap)));
         addChild_Widget(values, iClob(makePadding_Widget(bigGap)));
-        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.collapsepreonload}")));
-        addChild_Widget(values, iClob(makeToggle_Widget("prefs.collapsepreonload")));
-        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.plaintext.wrap}")));
-        addChild_Widget(values, iClob(makeToggle_Widget("prefs.plaintext.wrap")));
-        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.centershort}")));
-        addChild_Widget(values, iClob(makeToggle_Widget("prefs.centershort")));
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.hoverlink}")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.hoverlink")));
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.archive.openindex}")));
@@ -1674,26 +1668,6 @@ iWidget *makePreferences_Widget(void) {
     }
     /* User Interface. */ {
         appendTwoColumnPage_(tabs, "${heading.prefs.interface}", '2', &headings, &values);
-#if defined (iPlatformApple) || defined (iPlatformMSys)
-        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.ostheme}")));
-        addChild_Widget(values, iClob(makeToggle_Widget("prefs.ostheme")));
-#endif
-        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.theme}")));
-        iWidget *themes = new_Widget();
-        /* Themes. */ {
-            setId_Widget(addChild_Widget(themes, iClob(new_LabelWidget("${prefs.theme.black}", "theme.set arg:0"))), "prefs.theme.0");
-            setId_Widget(addChild_Widget(themes, iClob(new_LabelWidget("${prefs.theme.dark}", "theme.set arg:1"))), "prefs.theme.1");
-            setId_Widget(addChild_Widget(themes, iClob(new_LabelWidget("${prefs.theme.light}", "theme.set arg:2"))), "prefs.theme.2");
-            setId_Widget(addChild_Widget(themes, iClob(new_LabelWidget("${prefs.theme.white}", "theme.set arg:3"))), "prefs.theme.3");
-        }
-        addChildFlags_Widget(values, iClob(themes), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
-        /* Accents. */
-        iWidget *accent = new_Widget(); {
-            setId_Widget(addChild_Widget(accent, iClob(new_LabelWidget("${prefs.accent.teal}", "accent.set arg:0"))), "prefs.accent.0");
-            setId_Widget(addChild_Widget(accent, iClob(new_LabelWidget("${prefs.accent.orange}", "accent.set arg:1"))), "prefs.accent.1");
-        }
-        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.accent}")));
-        addChildFlags_Widget(values, iClob(accent), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
 #if defined (LAGRANGE_ENABLE_CUSTOM_FRAME)
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.customframe}")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.customframe")));
@@ -1718,6 +1692,27 @@ iWidget *makePreferences_Widget(void) {
     }
     /* Colors. */ {
         appendTwoColumnPage_(tabs, "${heading.prefs.colors}", '3', &headings, &values);
+        makeTwoColumnHeading_("${heading.prefs.uitheme}", headings, values);
+#if defined (iPlatformApple) || defined (iPlatformMSys)
+        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.ostheme}")));
+        addChild_Widget(values, iClob(makeToggle_Widget("prefs.ostheme")));
+#endif
+        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.theme}")));
+        iWidget *themes = new_Widget();
+        /* Themes. */ {
+            setId_Widget(addChild_Widget(themes, iClob(new_LabelWidget("${prefs.theme.black}", "theme.set arg:0"))), "prefs.theme.0");
+            setId_Widget(addChild_Widget(themes, iClob(new_LabelWidget("${prefs.theme.dark}", "theme.set arg:1"))), "prefs.theme.1");
+            setId_Widget(addChild_Widget(themes, iClob(new_LabelWidget("${prefs.theme.light}", "theme.set arg:2"))), "prefs.theme.2");
+            setId_Widget(addChild_Widget(themes, iClob(new_LabelWidget("${prefs.theme.white}", "theme.set arg:3"))), "prefs.theme.3");
+        }
+        addChildFlags_Widget(values, iClob(themes), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+        /* Accents. */
+        iWidget *accent = new_Widget(); {
+            setId_Widget(addChild_Widget(accent, iClob(new_LabelWidget("${prefs.accent.teal}", "accent.set arg:0"))), "prefs.accent.0");
+            setId_Widget(addChild_Widget(accent, iClob(new_LabelWidget("${prefs.accent.orange}", "accent.set arg:1"))), "prefs.accent.1");
+        }
+        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.accent}")));
+        addChildFlags_Widget(values, iClob(accent), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
         makeTwoColumnHeading_("${heading.prefs.pagecontent}", headings, values);
         for (int i = 0; i < 2; ++i) {
             const iBool isDark = (i == 0);
@@ -1750,14 +1745,15 @@ iWidget *makePreferences_Widget(void) {
         }
         addChildFlags_Widget(values, iClob(sats), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
     }
-    /* Layout. */ {
-        setId_Widget(appendTwoColumnPage_(tabs, "${heading.prefs.style}", '4', &headings, &values), "prefs.page.style");
-        makeTwoColumnHeading_("${heading.prefs.fonts}", headings, values);
+    /* Fonts. */ {
+        setId_Widget(appendTwoColumnPage_(tabs, "${heading.prefs.fonts}", '4', &headings, &values), "prefs.page.fonts");
         /* Fonts. */ {
             addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.headingfont}")));
             addFontButtons_(values, "headingfont");
             addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.font}")));
             addFontButtons_(values, "font");
+            addChild_Widget(headings, iClob(makePadding_Widget(bigGap)));
+            addChild_Widget(values, iClob(makePadding_Widget(bigGap)));
             addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.mono}")));
             iWidget *mono = new_Widget(); {
                 iWidget *tog;
@@ -1789,9 +1785,18 @@ iWidget *makePreferences_Widget(void) {
                 updateSize_LabelWidget((iLabelWidget *) tog);
             }
             addChildFlags_Widget(values, iClob(boldLink), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
-            addPrefsInputWithHeading_(headings, values, "prefs.userfont", iClob(new_InputWidget(0)));
-        }
-        makeTwoColumnHeading_("${heading.prefs.paragraph}", headings, values);
+            addChild_Widget(headings, iClob(makePadding_Widget(bigGap)));
+            addChild_Widget(values, iClob(makePadding_Widget(bigGap)));
+            /* Custom font. */ {
+                iInputWidget *customFont = new_InputWidget(0);
+                setHint_InputWidget(customFont, "${hint.prefs.userfont}");
+                addPrefsInputWithHeading_(headings, values, "prefs.userfont", iClob(customFont));
+            }
+        }        
+    }
+    /* Style. */ {
+        setId_Widget(appendTwoColumnPage_(tabs, "${heading.prefs.style}", '5', &headings, &values), "prefs.page.style");
+//        makeTwoColumnHeading_("${heading.prefs.paragraph}", headings, values);
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.linewidth}")));
         iWidget *widths = new_Widget();
         /* Line widths. */ {
@@ -1811,14 +1816,20 @@ iWidget *makePreferences_Widget(void) {
         addChildFlags_Widget(values, iClob(quote), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.biglede}")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.biglede")));
+        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.plaintext.wrap}")));
+        addChild_Widget(values, iClob(makeToggle_Widget("prefs.plaintext.wrap")));
+        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.collapsepreonload}")));
+        addChild_Widget(values, iClob(makeToggle_Widget("prefs.collapsepreonload")));
 //        makeTwoColumnHeading_("${heading.prefs.widelayout}", headings, values);
         addChild_Widget(headings, iClob(makePadding_Widget(bigGap)));
         addChild_Widget(values, iClob(makePadding_Widget(bigGap)));
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.sideicon}")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.sideicon")));
+        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.centershort}")));
+        addChild_Widget(values, iClob(makeToggle_Widget("prefs.centershort")));
     }
     /* Network. */ {
-        appendTwoColumnPage_(tabs, "${heading.prefs.network}", '5', &headings, &values);
+        appendTwoColumnPage_(tabs, "${heading.prefs.network}", '6', &headings, &values);
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.decodeurls}")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.decodeurls")));
         /* Cache size. */ {
@@ -1832,6 +1843,17 @@ iWidget *makePreferences_Widget(void) {
                                      resizeToParentHeight_WidgetFlag);
             setContentPadding_InputWidget(cache, 0, width_Widget(unit) - 4 * gap_UI);
         }
+        /* Memory size. */ {
+            iInputWidget *mem = new_InputWidget(4);
+            setSelectAllOnFocus_InputWidget(mem, iTrue);
+            addPrefsInputWithHeading_(headings, values, "prefs.memorysize", iClob(mem));
+            iWidget *unit =
+                addChildFlags_Widget(as_Widget(mem),
+                                     iClob(new_LabelWidget("${mb}", NULL)),
+                                     frameless_WidgetFlag | moveToParentRightEdge_WidgetFlag |
+                                         resizeToParentHeight_WidgetFlag);
+            setContentPadding_InputWidget(mem, 0, width_Widget(unit) - 4 * gap_UI);
+        }
         makeTwoColumnHeading_("${heading.prefs.certs}", headings, values);
         addPrefsInputWithHeading_(headings, values, "prefs.ca.file", iClob(new_InputWidget(0)));
         addPrefsInputWithHeading_(headings, values, "prefs.ca.path", iClob(new_InputWidget(0)));
@@ -1843,7 +1865,7 @@ iWidget *makePreferences_Widget(void) {
     /* Keybindings. */
     if (deviceType_App() == desktop_AppDeviceType) {
         iBindingsWidget *bind = new_BindingsWidget();
-        appendFramelessTabPage_(tabs, iClob(bind), "${heading.prefs.keys}", '6', KMOD_PRIMARY);
+        appendFramelessTabPage_(tabs, iClob(bind), "${heading.prefs.keys}", '7', KMOD_PRIMARY);
     }
     addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
     updatePreferencesLayout_Widget(dlg);
