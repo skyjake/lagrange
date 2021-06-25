@@ -59,6 +59,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <stdarg.h>
 #include <errno.h>
 
+//#define LAGRANGE_ENABLE_MOUSE_TOUCH_EMULATION 1
+
 #if defined (iPlatformAppleDesktop)
 #   include "macos.h"
 #endif
@@ -1197,6 +1199,45 @@ void processEvents_App(enum iAppEventMode eventMode) {
                     ev.wheel.x = -ev.wheel.x;
 #endif
                 }
+#if defined (LAGRANGE_ENABLE_MOUSE_TOUCH_EMULATION)
+                /* Convert mouse events to finger events to test the touch handling. */ {
+                    static float xPrev = 0.0f;
+                    static float yPrev = 0.0f;
+                    if (ev.type == SDL_MOUSEBUTTONDOWN || ev.type == SDL_MOUSEBUTTONUP) {
+                        const float xf = (d->window->pixelRatio * ev.button.x) / (float) d->window->size.x;
+                        const float yf = (d->window->pixelRatio * ev.button.y) / (float) d->window->size.y;
+                        ev.type = (ev.type == SDL_MOUSEBUTTONDOWN ? SDL_FINGERDOWN : SDL_FINGERUP);
+                        ev.tfinger.x = xf;
+                        ev.tfinger.y = yf;
+                        ev.tfinger.dx = xf - xPrev;
+                        ev.tfinger.dy = yf - yPrev;
+                        xPrev = xf;
+                        yPrev = yf;
+                        ev.tfinger.fingerId = 0x1234;
+                        ev.tfinger.pressure = 1.0f;
+                        ev.tfinger.timestamp = SDL_GetTicks();
+                        ev.tfinger.touchId = SDL_TOUCH_MOUSEID;
+                    }
+                    else if (ev.type == SDL_MOUSEMOTION) {
+                        if (~ev.motion.state & SDL_BUTTON(SDL_BUTTON_LEFT)) {
+                            continue; /* only when pressing a button */    
+                        }
+                        const float xf = (d->window->pixelRatio * ev.motion.x) / (float) d->window->size.x;
+                        const float yf = (d->window->pixelRatio * ev.motion.y) / (float) d->window->size.y;
+                        ev.type = SDL_FINGERMOTION;
+                        ev.tfinger.x = xf;
+                        ev.tfinger.y = yf;
+                        ev.tfinger.dx = xf - xPrev;
+                        ev.tfinger.dy = yf - yPrev;
+                        xPrev = xf;
+                        yPrev = yf;
+                        ev.tfinger.fingerId = 0x1234;
+                        ev.tfinger.pressure = 1.0f;
+                        ev.tfinger.timestamp = SDL_GetTicks();
+                        ev.tfinger.touchId = SDL_TOUCH_MOUSEID;                        
+                    }
+                }
+#endif
                 iBool wasUsed = processEvent_Window(d->window, &ev);
                 if (!wasUsed) {
                     /* There may be a key bindings for this. */

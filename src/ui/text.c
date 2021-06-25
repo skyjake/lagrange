@@ -116,6 +116,7 @@ iDefineTypeConstructionArgs(Glyph, (iChar ch), ch)
 
 struct Impl_Font {
     iBlock *       data;
+    enum iTextFont family;
     stbtt_fontinfo font;
     float          xScale, yScale;
     int            vertOffset; /* offset due to scaling */
@@ -134,6 +135,15 @@ static void init_Font(iFont *d, const iBlock *data, int height, float scale,
                       enum iFontSize sizeId, iBool isMonospaced) {
     init_Hash(&d->glyphs);
     d->data = NULL;
+    d->family = undefined_TextFont;
+    /* Note: We only use `family` currently for applying a kerning fix to Nunito. */
+    if (data == &fontNunitoRegular_Embedded ||
+        data == &fontNunitoBold_Embedded ||
+        data == &fontNunitoExtraBold_Embedded ||
+        data == &fontNunitoLightItalic_Embedded ||
+        data == &fontNunitoExtraLight_Embedded) {
+        d->family = nunito_TextFont;
+    }
     d->isMonospaced = isMonospaced;
     d->height = height;
     iZap(d->font);
@@ -1131,14 +1141,26 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
             const iChar next = nextChar_(&peek, args->text.end);
             if (enableKerning_Text && !d->manualKernOnly && next) {
                 const uint32_t nextGlyphIndex = glyphIndex_Font_(glyph->font, next);
-                const int kern = stbtt_GetGlyphKernAdvance(
+                int kern = stbtt_GetGlyphKernAdvance(
                     &glyph->font->font, glyph->glyphIndex, nextGlyphIndex);
+                /* Nunito needs some kerning fixes. */
+                if (glyph->font->family == nunito_TextFont) {
+                    if (ch == 'W' && (next == 'i' || next == 'h')) {
+                        kern = -30;
+                    }
+                    else if (ch == 'T' && next == 'h') {
+                        kern = -15;
+                    }
+                    else if (ch == 'V' && next == 'i') {
+                        kern = -15;
+                    }
+                }
                 if (kern) {
 //                    printf("%lc(%u) -> %lc(%u): kern %d (%f)\n", ch, glyph->glyphIndex, next,
 //                           nextGlyphIndex,
 //                           kern, d->xScale * kern);
-                    xpos       += d->xScale * kern;
-                    xposExtend += d->xScale * kern;
+                    xpos       += glyph->font->xScale * kern;
+                    xposExtend += glyph->font->xScale * kern;
                 }
             }
         }
