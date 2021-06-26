@@ -45,6 +45,10 @@ This is how to build Lagrange in a POSIX-compatible environment. The required to
 6. Build it: ```cmake --build .```
 7. Now you can run `lagrange`, `lagrange.exe`, or `Lagrange.app`.
 
+### Unicode text rendering
+
+(details about HarfBuzz and FriBidi)
+
 ### Installing to a directory
 
 Set `CMAKE_INSTALL_PREFIX` to install to a directory of your choosing.
@@ -60,6 +64,7 @@ This will also install an XDG .desktop file for launching the app.
 | ------------ | ----------- |
 | `ENABLE_BINCAT_SH` | Merge resource files (fonts, etc.) together using a Bash shell script. By default this is **OFF**, so _res/bincat.c_ is compiled as a native executable for this purpose. However, when cross-compiling, native binaries built during the CMake run may be targeted for the wrong architecture. Set this to **ON** if you are having problems with bincat while running CMake. |
 | `ENABLE_IDLE_SLEEP` | Sleep in the main thread instead of waiting for events. On some platforms, `SDL_WaitEvent()` may have a relatively high CPU usage. Setting this to **ON** polls for events periodically but otherwise keeps the main thread sleeping, reducing CPU usage. The drawback is that there is a slightly increased latency reacting to new events after idle mode ends. |
+| `ENABLE_HARFBUZZ` | Use the HarfBuzz library for shaping Unicode text. This is required for correctly rendering complex scripts and composite glyphs. If disabled, a simplified text shaping algorithm is used that only works for left-to-right languages like English. |
 | `ENABLE_KERNING` | Use kerning information in the fonts to adjust glyph placement. Setting this **ON** improves text appearance in subtle ways but slows down text rendering. It may be a good idea to set this to **OFF** when running on a slow CPU. |
 | `ENABLE_MPG123` | Use the mpg123 library for decoding MPEG audio files. |
 | `ENABLE_RESOURCE_EMBED` | Embed all resource files into the Lagrange executable instead of keeping them in a separate file that gets loaded at launch. Setting this **ON** makes it much slower to run CMake and to compile Lagrange. |
