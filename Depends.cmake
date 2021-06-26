@@ -3,6 +3,18 @@ if (IOS)
     return ()
 endif ()
 
+if (ENABLE_HARFBUZZ AND EXISTS ${CMAKE_SOURCE_DIR}/lib/harfbuzz)
+    # Build HarfBuzz with minimal dependencies.
+    set (HB_BUILD_SUBSET  OFF CACHE BOOL "" FORCE)
+    set (HB_HAVE_CORETEXT OFF CACHE BOOL "" FORCE)
+    set (HB_HAVE_FREETYPE OFF CACHE BOOL "" FORCE)
+    set (HB_HAVE_GLIB     OFF CACHE BOOL "" FORCE)
+    set (HB_HAVE_GOBJECT  OFF CACHE BOOL "" FORCE)
+    set (HB_HAVE_ICU      OFF CACHE BOOL "" FORCE)
+    add_subdirectory (${CMAKE_SOURCE_DIR}/lib/harfbuzz)
+    set (HARFBUZZ_FOUND YES)
+endif ()
+
 if (NOT EXISTS ${CMAKE_SOURCE_DIR}/lib/the_Foundation/CMakeLists.txt)
     set (INSTALL_THE_FOUNDATION YES)
     find_package (the_Foundation REQUIRED)
