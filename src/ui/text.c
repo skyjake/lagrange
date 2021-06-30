@@ -76,17 +76,17 @@ enum iGlyphFlag {
 struct Impl_Glyph {
     iHashNode node;
     int flags;
-    uint32_t glyphIndex;
+//    uint32_t glyphIndex;
     iFont *font; /* may come from symbols/emoji */
     iRect rect[2]; /* zero and half pixel offset */
     iInt2 d[2];
     float advance; /* scaled */
 };
 
-void init_Glyph(iGlyph *d, iChar ch) {
-    d->node.key   = ch;
+void init_Glyph(iGlyph *d, uint32_t glyphIndex) {
+    d->node.key   = glyphIndex;
     d->flags      = 0;
-    d->glyphIndex = 0;
+    //d->glyphIndex = 0;
     d->font       = NULL;
     d->rect[0]    = zero_Rect();
     d->rect[1]    = zero_Rect();
@@ -97,7 +97,10 @@ void deinit_Glyph(iGlyph *d) {
     iUnused(d);
 }
 
-static iChar codepoint_Glyph_(const iGlyph *d) {
+//static iChar codepoint_Glyph_(const iGlyph *d) {
+//    return d->node.key;
+//}
+static uint32_t index_Glyph_(const iGlyph *d) {
     return d->node.key;
 }
 
@@ -126,11 +129,16 @@ struct Impl_Font {
     int            vertOffset; /* offset due to scaling */
     int            height;
     int            baseline;
-    iHash          glyphs;
+    iHash          glyphs; /* key is glyph index in the font */ /* TODO: does not need to be a Hash */
     iBool          isMonospaced;
     iBool          manualKernOnly;
     enum iFontSize sizeId;  /* used to look up different fonts of matching size */
     uint32_t       indexTable[128 - 32]; /* quick ASCII lookup */
+#if defined (LAGRANGE_ENABLE_HARFBUZZ)
+    hb_blob_t *    hbBlob; /* raw TrueType data */
+    hb_face_t *    hbFace;
+    hb_font_t *    hbFont;
+#endif
 };
 
 static iFont *font_Text_(enum iFontId id);
@@ -178,6 +186,14 @@ static void init_Font(iFont *d, const iBlock *data, int height, float scale,
     }
     d->sizeId = sizeId;
     memset(d->indexTable, 0xff, sizeof(d->indexTable));
+#if defined(LAGRANGE_ENABLE_HARFBUZZ)
+    /* HarfBuzz will read the font data. */ {
+        d->hbBlob = hb_blob_create(constData_Block(data), size_Block(data),
+                                   HB_MEMORY_MODE_READONLY, NULL, NULL);
+        d->hbFace = hb_face_create(d->hbBlob, 0);
+        d->hbFont = hb_font_create(d->hbFace);
+    }
+#endif
 }
 
 static void clearGlyphs_Font_(iFont *d) {
@@ -188,6 +204,13 @@ static void clearGlyphs_Font_(iFont *d) {
 }
 
 static void deinit_Font(iFont *d) {
+#if defined(LAGRANGE_ENABLE_HARFBUZZ)
+    /* HarfBuzz objects. */ {
+        hb_font_destroy(d->hbFont);
+        hb_face_destroy(d->hbFace);
+        hb_blob_destroy(d->hbBlob);
+    }
+#endif
     clearGlyphs_Font_(d);
     deinit_Hash(&d->glyphs);
     delete_Block(d->data);
@@ -570,7 +593,7 @@ static void allocate_Font_(iFont *d, iGlyph *glyph, int hoff) {
     iRect *glRect = &glyph->rect[hoff];
     int    x0, y0, x1, y1;
     stbtt_GetGlyphBitmapBoxSubpixel(
-        &d->font, glyph->glyphIndex, d->xScale, d->yScale, hoff * 0.5f, 0.0f, &x0, &y0, &x1, &y1);
+        &d->font, index_Glyph_(glyph), d->xScale, d->yScale, hoff * 0.5f, 0.0f, &x0, &y0, &x1, &y1);
     glRect->size = init_I2(x1 - x0, y1 - y0);
     /* Determine placement in the glyph cache texture, advancing in rows. */
     glRect->pos    = assignCachePos_Text_(&text_, glRect->size);
@@ -578,8 +601,7 @@ static void allocate_Font_(iFont *d, iGlyph *glyph, int hoff) {
     glyph->d[hoff].y += d->vertOffset;
     if (hoff == 0) { /* hoff==1 uses same metrics as `glyph` */
         int adv;
-        const uint32_t gIndex = glyph->glyphIndex;
-        stbtt_GetGlyphHMetrics(&d->font, gIndex, &adv, NULL);
+        stbtt_GetGlyphHMetrics(&d->font, index_Glyph_(glyph), &adv, NULL);
         glyph->advance = d->xScale * adv;
     }
 }
@@ -670,12 +692,9 @@ iLocalDef iFont *characterFont_Font_(iFont *d, iChar ch, uint32_t *glyphIndex) {
     return d;
 }
 
-static iGlyph *glyph_Font_(iFont *d, iChar ch) {
-    iGlyph * glyph;
-    uint32_t glyphIndex = 0;
-    /* The glyph may actually come from a different font; look up the right font. */
-    iFont *font = characterFont_Font_(d, ch, &glyphIndex);
-    void * node = value_Hash(&font->glyphs, ch);
+static iGlyph *glyphByIndex_Font_(iFont *d, uint32_t glyphIndex) {
+    iGlyph* glyph = NULL;
+    void *  node = value_Hash(&d->glyphs, glyphIndex);
     if (node) {
         glyph = node;
     }
@@ -687,16 +706,22 @@ static iGlyph *glyph_Font_(iFont *d, iChar ch) {
 #endif
             resetCache_Text_(&text_);
         }
-        glyph             = new_Glyph(ch);
-        glyph->glyphIndex = glyphIndex;
-        glyph->font       = font;
+        glyph       = new_Glyph(glyphIndex);
+        glyph->font = d;
         /* New glyphs are always allocated at least. This reserves a position in the cache
            and updates the glyph metrics. */
-        allocate_Font_(font, glyph, 0);
-        allocate_Font_(font, glyph, 1);
-        insert_Hash(&font->glyphs, &glyph->node);
+        allocate_Font_(d, glyph, 0);
+        allocate_Font_(d, glyph, 1);
+        insert_Hash(&d->glyphs, &glyph->node);
     }
     return glyph;
+}
+
+static iGlyph *glyph_Font_(iFont *d, iChar ch) {
+    /* The glyph may actually come from a different font; look up the right font. */
+    uint32_t glyphIndex = 0;
+    iFont *font = characterFont_Font_(d, ch, &glyphIndex);
+    return glyphByIndex_Font_(font, glyphIndex);
 }
 
 static iChar nextChar_(const char **chPos, const char *end) {
@@ -713,6 +738,76 @@ static iChar nextChar_(const char **chPos, const char *end) {
     return ch;
 }
 
+/*----------------------------------------------------------------------------------------------*/
+
+iDeclareType(AttributedRun)
+
+struct Impl_AttributedRun {
+    iRangecc  text;
+    iFont    *font;
+    iColor    fgColor;
+};
+
+iDeclareType(AttributedText)
+iDeclareTypeConstructionArgs(AttributedText, iRangecc text, iFont *font, iColor fgColor)
+
+struct Impl_AttributedText {
+    iRangecc  text;
+    iFont    *font;
+    iColor    fgColor;
+    iArray    runs;
+};
+
+iDefineTypeConstructionArgs(AttributedText, (iRangecc text, iFont *font, iColor fgColor),
+                            text, font, fgColor)
+
+static void prepare_AttributedText_(iAttributedText *d) {
+    iAssert(isEmpty_Array(&d->runs));
+    const char *chPos = d->text.start;
+    iAttributedRun run = { .text = d->text, .font = d->font, .fgColor = d->fgColor };
+    while (chPos < d->text.end) {
+        const char *currentPos = chPos;
+        const iChar ch = nextChar_(&chPos, d->text.end);
+        if (ch == '\v') {
+            /* TODO: Color escapes. */
+            
+        }
+        if (isSpace_Char(ch) || isVariationSelector_Char(ch) || isDefaultIgnorable_Char(ch) ||
+            isFitzpatrickType_Char(ch)) {
+            continue;
+        }
+        const iGlyph *glyph = glyph_Font_(d->font, ch);
+        /* TODO: Look for ANSI/color escapes. */
+        if (glyph->font != run.font) {
+            /* A different font is being used for this glyph. */
+            iAttributedRun finishedRun = run;
+            finishedRun.text.end = currentPos;
+            if (!isEmpty_Range(&finishedRun.text)) {
+                pushBack_Array(&d->runs, &finishedRun);
+            }
+            run.text.start = currentPos;
+            run.font = glyph->font;
+        }
+    }
+    if (!isEmpty_Range(&run.text)) {
+        pushBack_Array(&d->runs, &run);
+    }
+}
+
+void init_AttributedText(iAttributedText *d, iRangecc text, iFont *font, iColor fgColor) {
+    d->text    = text;
+    d->font    = font;
+    d->fgColor = fgColor;
+    init_Array(&d->runs, sizeof(iAttributedRun));
+    prepare_AttributedText_(d);
+}
+
+void deinit_AttributedText(iAttributedText *d) {
+    deinit_Array(&d->runs);
+}
+
+/*----------------------------------------------------------------------------------------------*/
+
 iDeclareType(RasterGlyph)
 
 struct Impl_RasterGlyph {
@@ -721,35 +816,40 @@ struct Impl_RasterGlyph {
     iRect   rect;
 };
 
-void cacheTextGlyphs_Font_(iFont *d, const iRangecc text) {
-    const char * chPos   = text.start;
+static void cacheGlyphs_Font_(iFont *d, const iArray *glyphIndices) {
+    /* TODO: Make this an object so it can be used sequentially without reallocating buffers. */
+//    const char * chPos   = text.start;
     SDL_Surface *buf     = NULL;
-    const iInt2  bufSize = init_I2(iMin(512, d->height * iMin(2 * size_Range(&text), 20)),
+    const iInt2  bufSize = init_I2(iMin(512, d->height * iMin(2 * size_Array(glyphIndices), 20)),
                                    d->height * 4 / 3);
     int          bufX    = 0;
     iArray *     rasters = NULL;
     SDL_Texture *oldTarget = NULL;
     iBool        isTargetChanged = iFalse;
     iAssert(isExposed_Window(get_Window()));
+//    iAttributedText *attrText = new_AttributedText(text, d, (iColor){ 255, 255, 255, 255 });
     /* We'll flush the buffered rasters periodically until everything is cached. */
-    while (chPos < text.end) {
-        while (chPos < text.end) {
-            const char *lastPos = chPos;
-            const iChar ch = nextChar_(&chPos, text.end);
-            if (ch == 0 || isSpace_Char(ch) || isDefaultIgnorable_Char(ch) ||
-                isFitzpatrickType_Char(ch)) {
-                continue;
-            }
+    size_t index = 0;
+    while (index < size_Array(glyphIndices)) {
+        for (; index < size_Array(glyphIndices); index++) {
+//            const char *lastPos = chPos;
+//            const iChar ch = nextChar_(&chPos, text.end);
+//            if (ch == 0 || isSpace_Char(ch) || isDefaultIgnorable_Char(ch) ||
+//                isFitzpatrickType_Char(ch)) {
+//                continue;
+//            }
+            const uint32_t glyphIndex = constValue_Array(glyphIndices, index, uint32_t);
             const int lastCacheBottom = text_.cacheBottom;
-            iGlyph *glyph = glyph_Font_(d, ch);
+            iGlyph *glyph = glyphByIndex_Font_(d, glyphIndex);
             if (text_.cacheBottom < lastCacheBottom) {
                 /* The cache was reset due to running out of space. We need to restart from
                    the beginning! */
-                chPos = text.start;
                 bufX = 0;
                 if (rasters) {
                     clear_Array(rasters);
                 }
+                index = 0;
+                break;
             }
             if (!isFullyRasterized_Glyph_(glyph)) {
                 /* Need to cache this. */
@@ -764,9 +864,9 @@ void cacheTextGlyphs_Font_(iFont *d, const iRangecc text) {
                 }
                 SDL_Surface *surfaces[2] = {
                     !isRasterized_Glyph_(glyph, 0) ?
-                            rasterizeGlyph_Font_(glyph->font, glyph->glyphIndex, 0) : NULL,
+                            rasterizeGlyph_Font_(glyph->font, index_Glyph_(glyph), 0) : NULL,
                     !isRasterized_Glyph_(glyph, 1) ?
-                            rasterizeGlyph_Font_(glyph->font, glyph->glyphIndex, 0.5f) : NULL
+                            rasterizeGlyph_Font_(glyph->font, index_Glyph_(glyph), 0.5f) : NULL
                 };
                 iBool outOfSpace = iFalse;
                 iForIndices(i, surfaces) {
@@ -797,7 +897,7 @@ void cacheTextGlyphs_Font_(iFont *d, const iRangecc text) {
                     }
                 }
                 if (outOfSpace) {
-                    chPos = lastPos;
+                    index--; /* do-over */
                     break;
                 }
             }
@@ -828,10 +928,8 @@ void cacheTextGlyphs_Font_(iFont *d, const iRangecc text) {
             clear_Array(rasters);
             bufX = 0;
         }
-        else {
-            iAssert(chPos >= text.end);
-        }
     }
+//    delete_AttributedText(attrText);
     if (rasters) {
         delete_Array(rasters);
     }
@@ -841,6 +939,30 @@ void cacheTextGlyphs_Font_(iFont *d, const iRangecc text) {
     if (isTargetChanged) {
         SDL_SetRenderTarget(text_.render, oldTarget);
     }
+}
+
+static void cacheSingleGlyph_Font_(iFont *d, uint32_t glyphIndex) {
+    iArray indices;
+    init_Array(&indices, sizeof(uint32_t));
+    pushBack_Array(&indices, &glyphIndex);
+    cacheGlyphs_Font_(d, &indices);
+    deinit_Array(&indices);
+}
+
+static void cacheTextGlyphs_Font_(iFont *d, const iRangecc text) {
+    iArray glyphIndices;
+    init_Array(&glyphIndices, sizeof(uint32_t));
+    for (const char *chPos = text.start; chPos != text.end; ) {
+        const char *oldPos = chPos;
+        const iChar ch = nextChar_(&chPos, text.end);
+        if (chPos == oldPos) break;
+        const uint32_t glyphIndex = glyphIndex_Font_(d, ch);
+        if (glyphIndex) {
+            pushBack_Array(&glyphIndices, &glyphIndex);
+        }
+    }
+    cacheGlyphs_Font_(d, &glyphIndices);
+    deinit_Array(&glyphIndices);
 }
 
 enum iRunMode {
@@ -861,44 +983,6 @@ static enum iFontId fontId_Text_(const iFont *font) {
     return (enum iFontId) (font - text_.fonts);
 }
 
-iLocalDef iBool isWrapPunct_(iChar c) {
-    /* Punctuation that participates in word-wrapping. */
-    return (c == '/' || c == '\\' || c == '=' || c == '-' || c == ',' || c == ';' || c == '.' || c == ':' || c == 0xad);
-}
-
-iLocalDef iBool isClosingBracket_(iChar c) {
-    return (c == ')' || c == ']' || c == '}' || c == '>');
-}
-
-//iLocalDef iBool isBracket_(iChar c) {
-//    return (c == '(' || c == '[' || c == '{' || c == '<' || isClosingBracket_(c));
-//}
-
-iLocalDef iBool isWrapBoundary_(iChar prevC, iChar c) {
-    /* Line wrapping boundaries are determined by looking at a character and the
-       last character processed. We want to wrap at natural word boundaries where
-       possible, so normally we wrap at a space followed a non-space character. As
-       an exception, we also wrap after punctuation used to break up words, so we
-       can wrap text like foo/bar/baz-abc-def.xyz at any puncation boundaries,
-       without wrapping on other punctuation used for expressive purposes like
-       emoticons :-) */
-    if (isClosingBracket_(prevC) && !isWrapPunct_(c)) {
-        return iTrue;
-    }
-    if (isSpace_Char(prevC)) {
-        return iFalse;
-    }
-    if ((prevC == '/' || prevC == '\\' || prevC == '-' || prevC == '_' || prevC == '+') &&
-        !isWrapPunct_(c)) {
-        return iTrue;
-    }
-    return isSpace_Char(c);
-}
-
-iLocalDef iBool isMeasuring_(enum iRunMode mode) {
-    return (mode & modeMask_RunMode) == measure_RunMode;
-}
-
 iDeclareType(RunArgs)
 
 struct Impl_RunArgs {
@@ -915,15 +999,94 @@ struct Impl_RunArgs {
 
 #if defined (LAGRANGE_ENABLE_HARFBUZZ)
 static iRect run_Font_(iFont *d, const iRunArgs *args) {
-    iRect       bounds      = zero_Rect();
-    const iInt2 orig        = args->pos;
+    const int    mode       = args->mode;
+    iRect        bounds     = zero_Rect();
+    const iInt2  orig       = args->pos;
+    float        xCursor    = 0.0f;
+    float        yCursor    = 0.0f;
+    float        xCursorMax = 0.0f;
+    iAssert(args->text.end >= args->text.start);
+    if (args->continueFrom_out) {
+        *args->continueFrom_out = args->text.end;
+    }
+    hb_buffer_t *hbBuf  = hb_buffer_create();
+    /* Split the text into a number of attributed runs that specify exactly which font is
+       used and other attributes such as color. (HarfBuzz shaping is done with one specific font.) */
+    iAttributedText *attrText = new_AttributedText(args->text, d, get_Color(args->color));
+    iConstForEach(Array, i, &attrText->runs) {
+        const iAttributedRun *run = i.value;
+        hb_buffer_clear_contents(hbBuf);
+        hb_buffer_add_utf8(hbBuf, run->text.start, size_Range(&run->text), 0, -1);
+        hb_buffer_set_direction(hbBuf, HB_DIRECTION_LTR); /* TODO: FriBidi? */
+        /* hb_buffer_set_script(hbBuf, HB_SCRIPT_LATIN); */ /* will be autodetected */
+        hb_buffer_set_language(hbBuf, hb_language_from_string("en", -1)); /* TODO: language from document/UI, if known */
+        hb_shape(run->font->hbFont, hbBuf, NULL, 0); /* TODO: Specify features, too? */
+        unsigned int               glyphCount = 0;
+        const hb_glyph_info_t *    glyphInfo  = hb_buffer_get_glyph_infos(hbBuf, &glyphCount);
+        const hb_glyph_position_t *glyphPos   = hb_buffer_get_glyph_positions(hbBuf, &glyphCount);
+        /* Draw each glyph. */
+        for (unsigned int i = 0; i < glyphCount; i++) {
+            const hb_codepoint_t glyphId = glyphInfo[i].codepoint;
+            const float xOffset  = run->font->xScale * glyphPos[i].x_offset;
+            const float yOffset  = run->font->yScale * glyphPos[i].y_offset;
+            const float xAdvance = run->font->xScale * glyphPos[i].x_advance;
+            const float yAdvance = run->font->yScale * glyphPos[i].y_advance;
+            const iGlyph *glyph = glyphByIndex_Font_(run->font, glyphId);
+            const int hoff = 0; /* TODO: which half? */
+            /* draw_glyph(glyphid, cursor_x + x_offset, cursor_y + y_offset); */
+            /* Draw the glyph. */ {
+                SDL_Rect dst = { orig.x + xCursor + xOffset + glyph->d[hoff].x,
+                                 orig.y + yCursor + yOffset + glyph->font->baseline + glyph->d[hoff].y,
+                                 glyph->rect[hoff].size.x,
+                                 glyph->rect[hoff].size.y };
+                if (mode & visualFlag_RunMode) {
+                    if (isEmpty_Rect(bounds)) {
+                        bounds = init_Rect(dst.x, dst.y, dst.w, dst.h);
+                    }
+                    else {
+                        bounds = union_Rect(bounds, init_Rect(dst.x, dst.y, dst.w, dst.h));
+                    }
+                }
+                else {
+                    bounds.size.x = iMax(bounds.size.x, dst.x + dst.w);
+                    bounds.size.y = iMax(bounds.size.y, yCursor + glyph->font->height);
+                }
+                if (mode & draw_RunMode) {
+                    if (!isRasterized_Glyph_(glyph, hoff)) {
+                        cacheSingleGlyph_Font_(run->font, glyphId); /* may cause cache reset */
+                        glyph = glyphByIndex_Font_(run->font, glyphId);
+                        iAssert(isRasterized_Glyph_(glyph, hoff));
+                    }
+                    SDL_Rect src;
+                    memcpy(&src, &glyph->rect[hoff], sizeof(SDL_Rect));
+                    if (args->mode & fillBackground_RunMode) {
+                        /* Alpha blending looks much better if the RGB components don't change in
+                           the partially transparent pixels. */
+                        SDL_RenderFillRect(text_.render, &dst);
+                    }
+                    SDL_RenderCopy(text_.render, text_.cache, &src, &dst);
+                }
+            }
+            xCursor += xAdvance;
+            yCursor += yAdvance;
+            xCursorMax = iMax(xCursorMax, xCursor);
+        }
+    }
+    if (args->runAdvance_out) {
+        *args->runAdvance_out = xCursorMax;
+    }
+    hb_buffer_destroy(hbBuf);
+    delete_AttributedText(attrText);
     return bounds;
 }
+
 #else /* !defined (LAGRANGE_ENABLE_HARFBUZZ) */
+
 /* The fallback method: an incomplete solution for simple scripts. */
 #   define run_Font_    runSimple_Font_
 #   include "text_simple.c"
-#endif 
+
+#endif /* defined (LAGRANGE_ENABLE_HARFBUZZ) */
 
 int lineHeight_Text(int fontId) {
     return font_Text_(fontId)->height;

@@ -22,10 +22,44 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 /* this file is included from text.c, so it doesn't use includes of its own */
 
+iLocalDef iBool isWrapPunct_(iChar c) {
+    /* Punctuation that participates in word-wrapping. */
+    return (c == '/' || c == '\\' || c == '=' || c == '-' || c == ',' || c == ';' || c == '.' || c == ':' || c == 0xad);
+}
+
+iLocalDef iBool isClosingBracket_(iChar c) {
+    return (c == ')' || c == ']' || c == '}' || c == '>');
+}
+
+iLocalDef iBool isWrapBoundary_(iChar prevC, iChar c) {
+    /* Line wrapping boundaries are determined by looking at a character and the
+       last character processed. We want to wrap at natural word boundaries where
+       possible, so normally we wrap at a space followed a non-space character. As
+       an exception, we also wrap after punctuation used to break up words, so we
+       can wrap text like foo/bar/baz-abc-def.xyz at any puncation boundaries,
+       without wrapping on other punctuation used for expressive purposes like
+       emoticons :-) */
+    if (isClosingBracket_(prevC) && !isWrapPunct_(c)) {
+        return iTrue;
+    }
+    if (isSpace_Char(prevC)) {
+        return iFalse;
+    }
+    if ((prevC == '/' || prevC == '\\' || prevC == '-' || prevC == '_' || prevC == '+') &&
+        !isWrapPunct_(c)) {
+        return iTrue;
+    }
+    return isSpace_Char(c);
+}
+
+iLocalDef iBool isMeasuring_(enum iRunMode mode) {
+    return (mode & modeMask_RunMode) == measure_RunMode;
+}
+
 static iRect runSimple_Font_(iFont *d, const iRunArgs *args) {
     /* This function shapes text using a simplified, incomplete algorithm. It works for English 
-       and other simple LTR scripts. Composed glyphs are not supported (must rely on text being
-       in a pre-composed form). This algorithm is used if HarfBuzz is not available. */
+       and other non-complex LTR scripts. Composed glyphs are not supported (must rely on text
+       being in a pre-composed form). This algorithm is used if HarfBuzz is not available. */
     iRect       bounds      = zero_Rect();
     const iInt2 orig        = args->pos;
     float       xpos        = orig.x;
