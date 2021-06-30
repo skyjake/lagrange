@@ -766,19 +766,21 @@ struct Impl_AttributedText {
 iDefineTypeConstructionArgs(AttributedText, (iRangecc text, iFont *font, iColor fgColor),
                             text, font, fgColor)
 
+static void finishRun_AttributedText_(iAttributedText *d, iAttributedRun *run,
+                                      const char *endAt) {
+    iAttributedRun finishedRun = *run;
+    finishedRun.text.end = endAt;
+    if (!isEmpty_Range(&finishedRun.text)) {
+        pushBack_Array(&d->runs, &finishedRun);
+        run->lineBreaks = 0;
+    }
+    run->text.start = endAt;
+}
+
 static void prepare_AttributedText_(iAttributedText *d) {
     iAssert(isEmpty_Array(&d->runs));
     const char *chPos = d->text.start;
     iAttributedRun run = { .text = d->text, .font = d->font, .fgColor = d->fgColor };
-#define finishRun_() { \
-    iAttributedRun finishedRun = run; \
-    finishedRun.text.end = currentPos; \
-    if (!isEmpty_Range(&finishedRun.text)) { \
-        pushBack_Array(&d->runs, &finishedRun); \
-        run.lineBreaks = 0; \
-    } \
-    run.text.start = currentPos; \
-}
     while (chPos < d->text.end) {
         const char *currentPos = chPos;
         if (*chPos == 0x1b) { /* ANSI escape. */
@@ -786,7 +788,7 @@ static void prepare_AttributedText_(iAttributedText *d) {
             iRegExpMatch m;
             init_RegExpMatch(&m);
             if (match_RegExp(text_.ansiEscape, chPos, d->text.end - chPos, &m)) {
-                finishRun_();
+                finishRun_AttributedText_(d, &run, currentPos);
                 run.fgColor = ansiForeground_Color(capturedRange_RegExpMatch(&m, 1),
                                                    tmParagraph_ColorId);
                 chPos = end_RegExpMatch(&m);
@@ -796,7 +798,7 @@ static void prepare_AttributedText_(iAttributedText *d) {
         }
         const iChar ch = nextChar_(&chPos, d->text.end);
         if (ch == '\v') {
-            finishRun_();
+            finishRun_AttributedText_(d, &run, currentPos);
             /* An internal color escape. */
             iChar esc = nextChar_(&chPos, d->text.end);
             int colorNum = none_ColorId; /* default color */
@@ -813,7 +815,7 @@ static void prepare_AttributedText_(iAttributedText *d) {
             continue;
         }
         if (ch == '\n') {
-            finishRun_();
+            finishRun_AttributedText_(d, &run, currentPos);
             run.text.start = chPos;
             run.lineBreaks++;
             continue;
@@ -826,7 +828,7 @@ static void prepare_AttributedText_(iAttributedText *d) {
         /* TODO: Look for ANSI/color escapes. */
         if (index_Glyph_(glyph) && glyph->font != run.font) {
             /* A different font is being used for this glyph. */
-            finishRun_();
+            finishRun_AttributedText_(d, &run, currentPos);
             run.font = glyph->font;
         }
     }
@@ -1069,7 +1071,8 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
             const float xAdvance = run->font->xScale * glyphPos[i].x_advance;
             const float yAdvance = run->font->yScale * glyphPos[i].y_advance;
             const iGlyph *glyph = glyphByIndex_Font_(run->font, glyphId);
-            const int hoff = 0; /* TODO: which half? */
+            const float xf = xCursor + xOffset;
+            const int hoff = enableHalfPixelGlyphs_Text ? (xf - ((int) xf) > 0.5f ? 1 : 0) : 0;
             /* draw_glyph(glyphid, cursor_x + x_offset, cursor_y + y_offset); */
             /* Draw the glyph. */ {
                 SDL_Rect dst = { orig.x + xCursor + xOffset + glyph->d[hoff].x,
