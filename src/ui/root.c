@@ -725,7 +725,7 @@ static iBool handleNavBarCommands_(iWidget *navBar, const char *cmd) {
                 const iString *urlStr = collect_String(suffix_Command(cmd, "url"));
                 trimCache_App();
                 trimMemory_App();
-                visitUrl_Visited(visited_App(), withSpacesEncoded_String(urlStr), 0); /* TODO: internal URI normalization */
+                visitUrl_Visited(visited_App(), urlStr, 0); /* TODO: internal URI normalization */
                 postCommand_App("visited.changed"); /* sidebar will update */
                 setText_InputWidget(url, urlStr);
                 checkLoadAnimation_Root_(get_Root());

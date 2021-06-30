@@ -1554,13 +1554,14 @@ static void normalize_GmDocument(iGmDocument *d) {
     printf("wasNormalized: %d\n", wasNormalized);
     fflush(stdout);
     set_String(&d->source, collect_String(normalized));
-    normalize_String(&d->source); /* NFC */
+    //normalize_String(&d->source); /* NFC */
     printf("orig:%zu norm:%zu\n", size_String(&d->unormSource), size_String(&d->source));
     /* normalized source has an extra newline at the end */
 //    iAssert(wasNormalized || equal_String(&d->unormSource, &d->source));
 }
 
 void setUrl_GmDocument(iGmDocument *d, const iString *url) {
+    url = canonicalUrl_String(url);
     set_String(&d->url, url);
     iUrl parts;
     init_Url(&parts, url);

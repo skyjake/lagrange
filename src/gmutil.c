@@ -537,9 +537,29 @@ const iString *withSpacesEncoded_String(const iString *d) {
     if (isDataUrl_String(d)) {
         return d;
     }
-    iString *enc = copy_String(d);
-    urlEncodeSpaces_String(enc);
-    return collect_String(enc);
+    /* Only make a copy if we need to modify the URL. */
+    if (indexOfCStr_String(d, " ") != iInvalidPos) {
+        iString *enc = copy_String(d);
+        urlEncodeSpaces_String(enc);
+        return collect_String(enc);
+    }
+    return d;
+}
+
+const iString *canonicalUrl_String(const iString *d) {
+    /* The "canonical" form, used for internal storage and comparisons, is:
+       - all non-reserved characters decoded (i.e., it's an IRI)
+       - expect for spaces, which are always `%20`
+       This means a canonical URL can be used on a gemtext link line without modifications. */
+    iString *canon = maybeUrlDecodeExclude_String(d, "/?:;#&= ");
+    /* `canon` may now be NULL if nothing was decoded. */
+    if (indexOfCStr_String(canon ? canon : d, " ") != iInvalidPos) {
+        if (!canon) {
+            canon = copy_String(d);
+        }
+        urlEncodeSpaces_String(canon);
+    }
+    return canon ? collect_String(canon) : d;
 }
 
 iRangecc mediaTypeWithoutParameters_Rangecc(iRangecc mime) {

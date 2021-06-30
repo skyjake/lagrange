@@ -215,7 +215,7 @@ static void parseResult_FeedJob_(iFeedJob *d) {
                 entry->discovered = now;
                 entry->bookmarkId = d->bookmarkId;
                 setRange_String(&entry->url, url);
-                set_String(&entry->url, absoluteUrl_String(url_GmRequest(d->request), &entry->url));
+                set_String(&entry->url, canonicalUrl_String(absoluteUrl_String(url_GmRequest(d->request), &entry->url)));
                 setRange_String(&entry->title, title);
                 trimTitle_(&entry->title);
                 int year, month, day;
@@ -241,7 +241,7 @@ static void parseResult_FeedJob_(iFeedJob *d) {
                     entry->bookmarkId = d->bookmarkId;
                     iString *title = newRange_String(line);
                     set_String(&entry->title, title);
-                    set_String(&entry->url, &d->url);
+                    set_String(&entry->url, canonicalUrl_String(&d->url));                    
                     appendChar_String(&entry->url, '#');
                     append_String(&entry->url, collect_String(urlEncode_String(title)));
                     delete_String(title);

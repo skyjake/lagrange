@@ -903,7 +903,7 @@ static iBool copy_InputWidget_(iInputWidget *d, iBool doCut) {
         iString *str = collect_String(newUnicodeN_String(constAt_Array(&d->text, m.start),
                                                          size_Range(&m)));
         SDL_SetClipboardText(
-            cstr_String(d->inFlags & isUrl_InputWidgetFlag ? withSpacesEncoded_String(str) : str));
+            cstr_String(d->inFlags & isUrl_InputWidgetFlag ? canonicalUrl_String(str) : str));
         if (doCut) {
             pushUndo_InputWidget_(d);
             deleteMarked_InputWidget_(d);

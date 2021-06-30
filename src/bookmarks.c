@@ -158,6 +158,7 @@ void load_Bookmarks(iBookmarks *d, const char *dirPath) {
                     appendChar_String(&bm->url, '/');
                 }
                 stripDefaultUrlPort_String(&bm->url);
+                set_String(&bm->url, canonicalUrl_String(&bm->url));
             }
             nextSplit_Rangecc(src, "\n", &line);
             setRange_String(&bm->title, line);
@@ -201,7 +202,7 @@ uint32_t add_Bookmarks(iBookmarks *d, const iString *url, const iString *title, 
                        iChar icon) {
     lock_Mutex(d->mtx);
     iBookmark *bm = new_Bookmark();
-    set_String(&bm->url, url);
+    set_String(&bm->url, canonicalUrl_String(url));
     set_String(&bm->title, title);
     if (tags) {
         set_String(&bm->tags, tags);
@@ -298,6 +299,7 @@ static iBool matchUrl_(void *url, const iBookmark *bm) {
 
 uint32_t findUrl_Bookmarks(const iBookmarks *d, const iString *url) {
     /* TODO: O(n), boo */
+    url = canonicalUrl_String(url);
     const iPtrArray *found = list_Bookmarks(d, NULL, matchUrl_, (void *) url);
     if (isEmpty_PtrArray(found)) return 0;
     return id_Bookmark(constFront_PtrArray(found));
@@ -448,7 +450,7 @@ void requestFinished_Bookmarks(iBookmarks *d, iGmRequest *req) {
                 const iRangecc url    = capturedRange_RegExpMatch(&m, 1);
                 const iRangecc title  = capturedRange_RegExpMatch(&m, 3);
                 iString *      urlStr = newRange_String(url);
-                const iString *absUrl = absoluteUrl_String(url_GmRequest(req), urlStr);
+                const iString *absUrl = canonicalUrl_String(absoluteUrl_String(url_GmRequest(req), urlStr));
                 if (!findUrl_Bookmarks(d, absUrl)) {
                     iString *titleStr = newRange_String(title);
                     if (isEmpty_String(titleStr)) {

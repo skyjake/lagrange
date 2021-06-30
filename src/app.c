@@ -2815,7 +2815,7 @@ iStringSet *listOpenURLs_App(void) {
     iStringSet *set = new_StringSet();
     iObjectList *docs = listDocuments_App(NULL);
     iConstForEach(ObjectList, i, docs) {
-        insert_StringSet(set, withSpacesEncoded_String(url_DocumentWidget(i.object)));
+        insert_StringSet(set, canonicalUrl_String(url_DocumentWidget(i.object)));
     }
     iRelease(docs);
     return set;

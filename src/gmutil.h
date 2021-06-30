@@ -123,6 +123,7 @@ const char *    makeFileUrl_CStr        (const char *localFilePath);
 iString *       localFilePathFromUrl_String(const iString *);
 void            urlEncodeSpaces_String  (iString *);
 const iString * withSpacesEncoded_String(const iString *);
+const iString * canonicalUrl_String     (const iString *);
 
 const char *    mediaType_Path                      (const iString *path);
 iRangecc        mediaTypeWithoutParameters_Rangecc  (iRangecc mime);

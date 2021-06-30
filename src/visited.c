@@ -144,6 +144,7 @@ static size_t find_Visited_(const iVisited *d, const iString *url) {
 
 void visitUrl_Visited(iVisited *d, const iString *url, uint16_t visitFlags) {
     if (isEmpty_String(url)) return;
+    url = canonicalUrl_String(url);
     iVisitedUrl visit;
     init_VisitedUrl(&visit);
     visit.flags = visitFlags;
@@ -165,6 +166,7 @@ void visitUrl_Visited(iVisited *d, const iString *url, uint16_t visitFlags) {
 }
 
 void removeUrl_Visited(iVisited *d, const iString *url) {
+    url = canonicalUrl_String(url);
     iGuardMutex(d->mtx, {
         size_t pos = find_Visited_(d, url);
         if (pos < size_SortedArray(&d->visited)) {

@@ -1470,7 +1470,7 @@ static void updateDocument_DocumentWidget_(iDocumentWidget *d,
                                 baseName_Path(collect_String(newRange_String(parts.path))).start;
                         }
                         format_String(&str, "=> %s %s\n",
-                                      cstr_String(withSpacesEncoded_String(d->mod.url)),
+                                      cstr_String(canonicalUrl_String(d->mod.url)),
                                       linkTitle);
                         setData_Media(media_GmDocument(d->doc),
                                       imgLinkId,
@@ -1638,7 +1638,7 @@ static void updateFromCachedResponse_DocumentWidget_(iDocumentWidget *d, float n
 }
 
 static iBool updateFromHistory_DocumentWidget_(iDocumentWidget *d) {
-    const iRecentUrl *recent = findUrl_History(d->mod.history, withSpacesEncoded_String(d->mod.url));
+    const iRecentUrl *recent = findUrl_History(d->mod.history, canonicalUrl_String(d->mod.url));
     if (recent && recent->cachedResponse) {
         iChangeFlags(d->flags,
                      openedFromSidebar_DocumentWidgetFlag,
@@ -1845,8 +1845,11 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
         d->sourceStatus = statusCode;
         switch (category_GmStatusCode(statusCode)) {
             case categoryInput_GmStatusCode: {
+                /* Let the navigation history know that we have been to this URL even though
+                   it is only displayed as an input dialog. */
+                visitUrl_Visited(visited_App(), d->mod.url, transient_VisitedUrlFlag);
                 iUrl parts;
-                init_Url(&parts, d->mod.url);
+                init_Url(&parts, d->mod.url);                
                 iWidget *dlg = makeValueInput_Widget(
                     as_Widget(d),
                     NULL,
@@ -2646,11 +2649,11 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     else if (equal_Command(cmd, "document.copylink") && document_App() == d) {
         if (d->contextLink) {
-            SDL_SetClipboardText(cstr_String(withSpacesEncoded_String(absoluteUrl_String(
+            SDL_SetClipboardText(cstr_String(canonicalUrl_String(absoluteUrl_String(
                 d->mod.url, linkUrl_GmDocument(d->doc, d->contextLink->linkId)))));
         }
         else {
-            SDL_SetClipboardText(cstr_String(withSpacesEncoded_String(d->mod.url)));
+            SDL_SetClipboardText(cstr_String(canonicalUrl_String(d->mod.url)));
         }
         return iTrue;
     }
@@ -4870,6 +4873,7 @@ void deserializeState_DocumentWidget(iDocumentWidget *d, iStream *ins) {
 }
 
 static void setUrl_DocumentWidget_(iDocumentWidget *d, const iString *url) {
+    url = canonicalUrl_String(url);
     if (!equal_String(d->mod.url, url)) {
         d->flags |= urlChanged_DocumentWidgetFlag;
         set_String(d->mod.url, url);
