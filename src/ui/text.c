@@ -742,10 +742,15 @@ static iChar nextChar_(const char **chPos, const char *end) {
 
 iDeclareType(AttributedRun)
 
+/*enum iAttributedRunFlags {
+    newline_AttributedRunFlag = iBit(1),
+};*/
+
 struct Impl_AttributedRun {
     iRangecc  text;
-    iFont    *font;
+    iFont *   font;
     iColor    fgColor;
+    int       lineBreaks;
 };
 
 iDeclareType(AttributedText)
@@ -753,7 +758,7 @@ iDeclareTypeConstructionArgs(AttributedText, iRangecc text, iFont *font, iColor 
 
 struct Impl_AttributedText {
     iRangecc  text;
-    iFont    *font;
+    iFont *   font;
     iColor    fgColor;
     iArray    runs;
 };
@@ -765,27 +770,63 @@ static void prepare_AttributedText_(iAttributedText *d) {
     iAssert(isEmpty_Array(&d->runs));
     const char *chPos = d->text.start;
     iAttributedRun run = { .text = d->text, .font = d->font, .fgColor = d->fgColor };
+#define finishRun_() { \
+    iAttributedRun finishedRun = run; \
+    finishedRun.text.end = currentPos; \
+    if (!isEmpty_Range(&finishedRun.text)) { \
+        pushBack_Array(&d->runs, &finishedRun); \
+        run.lineBreaks = 0; \
+    } \
+    run.text.start = currentPos; \
+}
     while (chPos < d->text.end) {
         const char *currentPos = chPos;
+        if (*chPos == 0x1b) { /* ANSI escape. */
+            chPos++;
+            iRegExpMatch m;
+            init_RegExpMatch(&m);
+            if (match_RegExp(text_.ansiEscape, chPos, d->text.end - chPos, &m)) {
+                finishRun_();
+                run.fgColor = ansiForeground_Color(capturedRange_RegExpMatch(&m, 1),
+                                                   tmParagraph_ColorId);
+                chPos = end_RegExpMatch(&m);
+                run.text.start = chPos;
+                continue;
+            }
+        }
         const iChar ch = nextChar_(&chPos, d->text.end);
         if (ch == '\v') {
-            /* TODO: Color escapes. */
-            
+            finishRun_();
+            /* An internal color escape. */
+            iChar esc = nextChar_(&chPos, d->text.end);
+            int colorNum = none_ColorId; /* default color */
+            if (esc == '\v') { /* Extended range. */
+                esc = nextChar_(&chPos, d->text.end) + asciiExtended_ColorEscape;
+                colorNum = esc - asciiBase_ColorEscape;
+            }
+            else if (esc != 0x24) { /* ASCII Cancel */
+                colorNum = esc - asciiBase_ColorEscape;
+            }
+            run.text.start = chPos;
+            run.fgColor = (colorNum >= 0 ? get_Color(colorNum) : d->fgColor);
+            //prevCh = 0;
+            continue;
         }
-        if (isSpace_Char(ch) || isVariationSelector_Char(ch) || isDefaultIgnorable_Char(ch) ||
+        if (ch == '\n') {
+            finishRun_();
+            run.text.start = chPos;
+            run.lineBreaks++;
+            continue;
+        }
+        if (isVariationSelector_Char(ch) || isDefaultIgnorable_Char(ch) ||
             isFitzpatrickType_Char(ch)) {
             continue;
         }
         const iGlyph *glyph = glyph_Font_(d->font, ch);
         /* TODO: Look for ANSI/color escapes. */
-        if (glyph->font != run.font) {
+        if (index_Glyph_(glyph) && glyph->font != run.font) {
             /* A different font is being used for this glyph. */
-            iAttributedRun finishedRun = run;
-            finishedRun.text.end = currentPos;
-            if (!isEmpty_Range(&finishedRun.text)) {
-                pushBack_Array(&d->runs, &finishedRun);
-            }
-            run.text.start = currentPos;
+            finishRun_();
             run.font = glyph->font;
         }
     }
@@ -818,7 +859,6 @@ struct Impl_RasterGlyph {
 
 static void cacheGlyphs_Font_(iFont *d, const iArray *glyphIndices) {
     /* TODO: Make this an object so it can be used sequentially without reallocating buffers. */
-//    const char * chPos   = text.start;
     SDL_Surface *buf     = NULL;
     const iInt2  bufSize = init_I2(iMin(512, d->height * iMin(2 * size_Array(glyphIndices), 20)),
                                    d->height * 4 / 3);
@@ -827,17 +867,10 @@ static void cacheGlyphs_Font_(iFont *d, const iArray *glyphIndices) {
     SDL_Texture *oldTarget = NULL;
     iBool        isTargetChanged = iFalse;
     iAssert(isExposed_Window(get_Window()));
-//    iAttributedText *attrText = new_AttributedText(text, d, (iColor){ 255, 255, 255, 255 });
     /* We'll flush the buffered rasters periodically until everything is cached. */
     size_t index = 0;
     while (index < size_Array(glyphIndices)) {
         for (; index < size_Array(glyphIndices); index++) {
-//            const char *lastPos = chPos;
-//            const iChar ch = nextChar_(&chPos, text.end);
-//            if (ch == 0 || isSpace_Char(ch) || isDefaultIgnorable_Char(ch) ||
-//                isFitzpatrickType_Char(ch)) {
-//                continue;
-//            }
             const uint32_t glyphIndex = constValue_Array(glyphIndices, index, uint32_t);
             const int lastCacheBottom = text_.cacheBottom;
             iGlyph *glyph = glyphByIndex_Font_(d, glyphIndex);
@@ -929,7 +962,6 @@ static void cacheGlyphs_Font_(iFont *d, const iArray *glyphIndices) {
             bufX = 0;
         }
     }
-//    delete_AttributedText(attrText);
     if (rasters) {
         delete_Array(rasters);
     }
@@ -952,6 +984,7 @@ static void cacheSingleGlyph_Font_(iFont *d, uint32_t glyphIndex) {
 static void cacheTextGlyphs_Font_(iFont *d, const iRangecc text) {
     iArray glyphIndices;
     init_Array(&glyphIndices, sizeof(uint32_t));
+    /* TODO: Do this with AttributedText */
     for (const char *chPos = text.start; chPos != text.end; ) {
         const char *oldPos = chPos;
         const iChar ch = nextChar_(&chPos, text.end);
@@ -1015,6 +1048,10 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
     iAttributedText *attrText = new_AttributedText(args->text, d, get_Color(args->color));
     iConstForEach(Array, i, &attrText->runs) {
         const iAttributedRun *run = i.value;
+        if (run->lineBreaks) {
+            xCursor = 0.0f;
+            yCursor += d->height * run->lineBreaks;
+        }
         hb_buffer_clear_contents(hbBuf);
         hb_buffer_add_utf8(hbBuf, run->text.start, size_Range(&run->text), 0, -1);
         hb_buffer_set_direction(hbBuf, HB_DIRECTION_LTR); /* TODO: FriBidi? */
@@ -1056,6 +1093,13 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                         cacheSingleGlyph_Font_(run->font, glyphId); /* may cause cache reset */
                         glyph = glyphByIndex_Font_(run->font, glyphId);
                         iAssert(isRasterized_Glyph_(glyph, hoff));
+                    }
+                    if (~mode & permanentColorFlag_RunMode) {
+                        //const iColor clr = get_Color(colorNum);
+                        SDL_SetTextureColorMod(text_.cache, run->fgColor.r, run->fgColor.g, run->fgColor.b);
+//                        if (args->mode & fillBackground_RunMode) {
+//                            SDL_SetRenderDrawColor(text_.render, clr.r, clr.g, clr.b, 0);
+//                        }
                     }
                     SDL_Rect src;
                     memcpy(&src, &glyph->rect[hoff], sizeof(SDL_Rect));
