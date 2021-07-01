@@ -24,6 +24,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <the_Foundation/rect.h>
 #include <the_Foundation/string.h>
+#include <the_Foundation/vec2.h>
 
 #include <SDL_render.h>
 
@@ -164,13 +165,32 @@ void    draw_Text               (int fontId, iInt2 pos, int color, const char *t
 void    drawAlign_Text          (int fontId, iInt2 pos, int color, enum iAlignment align, const char *text, ...);
 void    drawCentered_Text       (int fontId, iRect rect, iBool alignVisual, int color, const char *text, ...);
 void    drawCenteredRange_Text  (int fontId, iRect rect, iBool alignVisual, int color, iRangecc text);
-void    drawCenteredOutline_Text(int fontId, iRect rect, iBool alignVisual, int outlineColor, int fillColor, const char *text, ...);
+void    drawCenteredOutline_Text(int fontId, iRect rect, iBool alignVisual, int outlineColor,
+                                 int fillColor, const char *text, ...);
 void    drawString_Text         (int fontId, iInt2 pos, int color, const iString *text);
 void    drawRange_Text          (int fontId, iInt2 pos, int color, iRangecc text);
 void    drawRangeN_Text         (int fontId, iInt2 pos, int color, iRangecc text, size_t maxLen);
 void    drawOutline_Text        (int fontId, iInt2 pos, int outlineColor, int fillColor, iRangecc text);
 void    drawBoundRange_Text     (int fontId, iInt2 pos, int boundWidth, int color, iRangecc text); /* bound does not wrap */
 int     drawWrapRange_Text      (int fontId, iInt2 pos, int maxWidth, int color, iRangecc text); /* returns new Y */
+
+iDeclareType(WrapText)
+
+struct Impl_WrapText {
+    /* arguments */
+    iRangecc text;
+    int      maxWidth;
+    iBool  (*wrapFunc)(iWrapText *, iRangecc wrappedText, int advance);
+    void *   context;
+    /* output */
+    iInt2    cursor_out;
+    /* internal */
+    iRangecc wrapRange_;
+};
+
+iRect   measure_WrapText        (iWrapText *, int fontId);
+iInt2   advance_WrapText        (iWrapText *, int fontId);
+void    draw_WrapText           (iWrapText *, int fontId, iInt2 pos, int color);
 
 SDL_Texture *   glyphCache_Text     (void);
 

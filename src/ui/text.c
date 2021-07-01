@@ -257,19 +257,19 @@ static iText   text_;
 static iBlock *userFont_;
 
 static void initFonts_Text_(iText *d) {
-    const float textSize = fontSize_UI * d->contentFontSize;
-    const float monoSize = textSize * 0.71f;
-    const float smallMonoSize = monoSize * 0.8f;
-    const iBlock *regularFont  = &fontNunitoRegular_Embedded;
-    const iBlock *boldFont     = &fontNunitoBold_Embedded;
-    const iBlock *italicFont   = &fontNunitoLightItalic_Embedded;
-    const iBlock *h12Font      = &fontNunitoExtraBold_Embedded;
-    const iBlock *h3Font       = &fontNunitoRegular_Embedded;
-    const iBlock *lightFont    = &fontNunitoExtraLight_Embedded;
-    float         scaling      = 1.0f; /* glyph scaling (<=1.0), for increasing line spacing */
-    float         italicScaling= 1.0f;
-    float         lightScaling = 1.0f;
-    float         h123Scaling  = 1.0f; /* glyph scaling (<=1.0), for increasing line spacing */
+    const float   textSize      = fontSize_UI * d->contentFontSize;
+    const float   monoSize      = textSize * 0.71f;
+    const float   smallMonoSize = monoSize * 0.8f;
+    const iBlock *regularFont   = &fontNunitoRegular_Embedded;
+    const iBlock *boldFont      = &fontNunitoBold_Embedded;
+    const iBlock *italicFont    = &fontNunitoLightItalic_Embedded;
+    const iBlock *h12Font       = &fontNunitoExtraBold_Embedded;
+    const iBlock *h3Font        = &fontNunitoRegular_Embedded;
+    const iBlock *lightFont     = &fontNunitoExtraLight_Embedded;
+    float         scaling       = 1.0f; /* glyph scaling (<=1.0), for increasing line spacing */
+    float         italicScaling = 1.0f;
+    float         lightScaling  = 1.0f;
+    float         h123Scaling   = 1.0f; /* glyph scaling (<=1.0), for increasing line spacing */
     if (d->contentFont == firaSans_TextFont) {
         regularFont = &fontFiraSansRegular_Embedded;
         boldFont    = &fontFiraSansSemiBold_Embedded;
@@ -754,17 +754,18 @@ struct Impl_AttributedRun {
 };
 
 iDeclareType(AttributedText)
-iDeclareTypeConstructionArgs(AttributedText, iRangecc text, iFont *font, iColor fgColor)
+iDeclareTypeConstructionArgs(AttributedText, iRangecc text, size_t maxLen, iFont *font, iColor fgColor)
 
 struct Impl_AttributedText {
     iRangecc  text;
+    size_t    maxLen;
     iFont *   font;
     iColor    fgColor;
     iArray    runs;
 };
 
-iDefineTypeConstructionArgs(AttributedText, (iRangecc text, iFont *font, iColor fgColor),
-                            text, font, fgColor)
+iDefineTypeConstructionArgs(AttributedText, (iRangecc text, size_t maxLen, iFont *font, iColor fgColor),
+                            text, maxLen, font, fgColor)
 
 static void finishRun_AttributedText_(iAttributedText *d, iAttributedRun *run,
                                       const char *endAt) {
@@ -774,13 +775,15 @@ static void finishRun_AttributedText_(iAttributedText *d, iAttributedRun *run,
         pushBack_Array(&d->runs, &finishedRun);
         run->lineBreaks = 0;
     }
-    run->text.start = endAt;
+    run->text.start = run->text.end = endAt;
 }
 
 static void prepare_AttributedText_(iAttributedText *d) {
     iAssert(isEmpty_Array(&d->runs));
+    size_t avail = d->maxLen;
     const char *chPos = d->text.start;
-    iAttributedRun run = { .text = d->text, .font = d->font, .fgColor = d->fgColor };
+    iAttributedRun run = { .text = (iRangecc){ d->text.start, d->text.start },
+                           .font = d->font, .fgColor = d->fgColor };
     while (chPos < d->text.end) {
         const char *currentPos = chPos;
         if (*chPos == 0x1b) { /* ANSI escape. */
@@ -824,10 +827,13 @@ static void prepare_AttributedText_(iAttributedText *d) {
             isFitzpatrickType_Char(ch)) {
             continue;
         }
+        if (avail-- == 0) {
+            /* TODO: Check the combining class; only count base characters here. */
+            break;
+        }
         const iGlyph *glyph = glyph_Font_(d->font, ch);
-        /* TODO: Look for ANSI/color escapes. */
         if (index_Glyph_(glyph) && glyph->font != run.font) {
-            /* A different font is being used for this glyph. */
+            /* A different font is being used for this character. */
             finishRun_AttributedText_(d, &run, currentPos);
             run.font = glyph->font;
         }
@@ -837,8 +843,9 @@ static void prepare_AttributedText_(iAttributedText *d) {
     }
 }
 
-void init_AttributedText(iAttributedText *d, iRangecc text, iFont *font, iColor fgColor) {
+void init_AttributedText(iAttributedText *d, iRangecc text, size_t maxLen, iFont *font, iColor fgColor) {
     d->text    = text;
+    d->maxLen  = maxLen ? maxLen : iInvalidSize;
     d->font    = font;
     d->fgColor = fgColor;
     init_Array(&d->runs, sizeof(iAttributedRun));
@@ -991,9 +998,14 @@ static void cacheTextGlyphs_Font_(iFont *d, const iRangecc text) {
         const char *oldPos = chPos;
         const iChar ch = nextChar_(&chPos, text.end);
         if (chPos == oldPos) break;
-        const uint32_t glyphIndex = glyphIndex_Font_(d, ch);
-        if (glyphIndex) {
-            pushBack_Array(&glyphIndices, &glyphIndex);
+        if (!isSpace_Char(ch) &&
+            !isDefaultIgnorable_Char(ch) &&
+            !isVariationSelector_Char(ch) &&
+            !isFitzpatrickType_Char(ch)) {
+            const uint32_t glyphIndex = glyphIndex_Font_(d, ch);
+            if (glyphIndex) {
+                pushBack_Array(&glyphIndices, &glyphIndex);
+            }
         }
     }
     cacheGlyphs_Font_(d, &glyphIndices);
@@ -1025,12 +1037,21 @@ struct Impl_RunArgs {
     iRangecc      text;
     size_t        maxLen; /* max characters to process */
     iInt2         pos;
+    iWrapText *   wrap;
     int           xposLimit;       /* hard limit for wrapping */
     int           xposLayoutBound; /* visible bound for layout purposes; does not affect wrapping */
     int           color;
     const char ** continueFrom_out;
     int *         runAdvance_out;
 };
+
+static void notify_WrapText_(iWrapText *d, const char *ending, int advance) {
+    if (d && d->wrapFunc) {
+        const char *end = ending ? ending : d->wrapRange_.end;
+        d->wrapFunc(d, (iRangecc){ d->wrapRange_.start, end }, advance);
+        d->wrapRange_.start = end;
+    }
+}
 
 #if defined (LAGRANGE_ENABLE_HARFBUZZ)
 static iRect run_Font_(iFont *d, const iRunArgs *args) {
@@ -1040,22 +1061,54 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
     float        xCursor    = 0.0f;
     float        yCursor    = 0.0f;
     float        xCursorMax = 0.0f;
+    iRangecc     wrapRange  = args->text;
     iAssert(args->text.end >= args->text.start);
     if (args->continueFrom_out) {
         *args->continueFrom_out = args->text.end;
     }
-    hb_buffer_t *hbBuf  = hb_buffer_create();
-    /* Split the text into a number of attributed runs that specify exactly which font is
-       used and other attributes such as color. (HarfBuzz shaping is done with one specific font.) */
-    iAttributedText *attrText = new_AttributedText(args->text, d, get_Color(args->color));
-    iConstForEach(Array, i, &attrText->runs) {
-        const iAttributedRun *run = i.value;
-        if (run->lineBreaks) {
+    hb_buffer_t *hbBuf = hb_buffer_create();
+    /* Split the text into a number of attributed runs that specify exactly which
+       font is used and other attributes such as color. (HarfBuzz shaping is done
+       with one specific font.) */
+    iAttributedText *attrText =
+        new_AttributedText(args->text, args->maxLen, d, get_Color(args->color));
+    if (args->wrap) {
+        /* TODO: Duplicated args? */
+        iAssert(equalRange_Rangecc(args->wrap->text, args->text));
+        /* Initialize the wrap range. */
+        args->wrap->wrapRange_ = args->text;
+    }
+    const char *wrapResumePos = NULL;
+    for (size_t runIndex = 0; runIndex < size_Array(&attrText->runs); runIndex++) {
+        const iAttributedRun *run = at_Array(&attrText->runs, runIndex);
+        iRangecc runText = run->text;
+        if (wrapResumePos) {
             xCursor = 0.0f;
-            yCursor += d->height * run->lineBreaks;
+            yCursor += d->height;
+            runText.start = wrapResumePos;
+            wrapResumePos = NULL;
+        }
+        else if (run->lineBreaks) {
+            for (int i = 0; i < run->lineBreaks; i++) {
+                /* One callback for each "wrapped" line even if they're empty. */
+                notify_WrapText_(args->wrap, run->text.start, iRound(xCursor));
+                xCursor = 0.0f;
+                yCursor += d->height;
+            }
         }
         hb_buffer_clear_contents(hbBuf);
-        hb_buffer_add_utf8(hbBuf, run->text.start, size_Range(&run->text), 0, -1);
+        /* Cluster values are used to determine offset inside the UTF-8 source string. */
+        //hb_buffer_set_cluster_level(hbBuf, HB_BUFFER_CLUSTER_LEVEL_MONOTONE_CHARACTERS);
+        for (const char *pos = runText.start; pos < runText.end; ) {
+            iChar ucp = 0;
+            const int len = decodeBytes_MultibyteChar(pos, runText.end, &ucp);
+            if (len > 0) {
+                hb_buffer_add(hbBuf, ucp, pos - runText.start);
+                pos += len;
+            }
+            else break;
+        }
+        hb_buffer_set_content_type(hbBuf, HB_BUFFER_CONTENT_TYPE_UNICODE);
         hb_buffer_set_direction(hbBuf, HB_DIRECTION_LTR); /* TODO: FriBidi? */
         /* hb_buffer_set_script(hbBuf, HB_SCRIPT_LATIN); */ /* will be autodetected */
         hb_buffer_set_language(hbBuf, hb_language_from_string("en", -1)); /* TODO: language from document/UI, if known */
@@ -1063,9 +1116,45 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
         unsigned int               glyphCount = 0;
         const hb_glyph_info_t *    glyphInfo  = hb_buffer_get_glyph_infos(hbBuf, &glyphCount);
         const hb_glyph_position_t *glyphPos   = hb_buffer_get_glyph_positions(hbBuf, &glyphCount);
+        const char *breakPos = NULL;
+        /* Check if this run needs to be wrapped. If so, we'll draw the portion that fits on
+           the line, and re-run the loop resuming the run from the wrap point. */
+        if (args->wrap && args->wrap->maxWidth > 0) {
+            float x = xCursor;
+            const char *safeBreak = NULL;
+            for (unsigned int i = 0; i < glyphCount; i++) {
+                const hb_glyph_info_t *info    = &glyphInfo[i];
+                const hb_codepoint_t   glyphId = info->codepoint;
+                const iGlyph *glyph    = glyphByIndex_Font_(run->font, glyphId);
+                const int   glyphFlags = hb_glyph_info_get_glyph_flags(info);
+                const float xOffset    = run->font->xScale * glyphPos[i].x_offset;
+                const float xAdvance   = run->font->xScale * glyphPos[i].x_advance;
+                const char *textPos    = runText.start + info->cluster;
+                if (~glyphFlags & HB_GLYPH_FLAG_UNSAFE_TO_BREAK) {
+                    safeBreak = textPos;
+                }
+                if (x + xOffset + glyph->d[0].x + glyph->rect[0].size.x > args->wrap->maxWidth) {
+                    if (safeBreak) {
+                        breakPos = safeBreak;
+                    }
+                    else {
+                        breakPos = textPos;
+                    }
+                    break;
+                }
+                x += xAdvance;
+            }
+            /* Make a callback for each wrapped line. */
+            if (breakPos) {
+                notify_WrapText_(args->wrap, breakPos, iRound(x));
+            }
+        }
         /* Draw each glyph. */
         for (unsigned int i = 0; i < glyphCount; i++) {
-            const hb_codepoint_t glyphId = glyphInfo[i].codepoint;
+            const hb_glyph_info_t *info    = &glyphInfo[i];
+            const hb_codepoint_t   glyphId = info->codepoint;
+            const char *textPos    = runText.start + info->cluster;
+            const int glyphFlags = hb_glyph_info_get_glyph_flags(info);
             const float xOffset  = run->font->xScale * glyphPos[i].x_offset;
             const float yOffset  = run->font->yScale * glyphPos[i].y_offset;
             const float xAdvance = run->font->xScale * glyphPos[i].x_advance;
@@ -1073,7 +1162,11 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
             const iGlyph *glyph = glyphByIndex_Font_(run->font, glyphId);
             const float xf = xCursor + xOffset;
             const int hoff = enableHalfPixelGlyphs_Text ? (xf - ((int) xf) > 0.5f ? 1 : 0) : 0;
-            /* draw_glyph(glyphid, cursor_x + x_offset, cursor_y + y_offset); */
+            if (textPos == breakPos) {
+                runIndex--; /* stay on the same run */
+                wrapResumePos = textPos;
+                break;
+            }
             /* Draw the glyph. */ {
                 SDL_Rect dst = { orig.x + xCursor + xOffset + glyph->d[hoff].x,
                                  orig.y + yCursor + yOffset + glyph->font->baseline + glyph->d[hoff].y,
@@ -1098,17 +1191,18 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                         iAssert(isRasterized_Glyph_(glyph, hoff));
                     }
                     if (~mode & permanentColorFlag_RunMode) {
-                        //const iColor clr = get_Color(colorNum);
-                        SDL_SetTextureColorMod(text_.cache, run->fgColor.r, run->fgColor.g, run->fgColor.b);
-//                        if (args->mode & fillBackground_RunMode) {
-//                            SDL_SetRenderDrawColor(text_.render, clr.r, clr.g, clr.b, 0);
-//                        }
+                        const iColor clr = run->fgColor;
+                        SDL_SetTextureColorMod(text_.cache, clr.r, clr.g, clr.b);
+                        if (args->mode & fillBackground_RunMode) {
+                            SDL_SetRenderDrawColor(text_.render, clr.r, clr.g, clr.b, 0);
+                        }
                     }
                     SDL_Rect src;
                     memcpy(&src, &glyph->rect[hoff], sizeof(SDL_Rect));
                     if (args->mode & fillBackground_RunMode) {
                         /* Alpha blending looks much better if the RGB components don't change in
                            the partially transparent pixels. */
+                        /* TODO: Backgrounds of all glyphs should be cleared before drawing anything else. */
                         SDL_RenderFillRect(text_.render, &dst);
                     }
                     SDL_RenderCopy(text_.render, text_.cache, &src, &dst);
@@ -1119,6 +1213,8 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
             xCursorMax = iMax(xCursorMax, xCursor);
         }
     }
+    /* The final, unbroken line. */
+    notify_WrapText_(args->wrap, NULL, xCursor);
     if (args->runAdvance_out) {
         *args->runAdvance_out = xCursorMax;
     }
@@ -1205,6 +1301,35 @@ iInt2 tryAdvanceNoWrap_Text(int fontId, iRangecc text, int width, const char **e
                                               .runAdvance_out   = &advance })
                            .size.y;
     return init_I2(advance, height);
+}
+
+iInt2 advance_WrapText(iWrapText *d, int fontId) {
+    run_Font_(font_Text_(fontId),
+              &(iRunArgs){ .mode = measure_RunMode | runFlagsFromId_(fontId),
+                           .text = d->text,
+                           .wrap = d
+    });
+    return d->cursor_out;
+}
+
+iRect measure_WrapText(iWrapText *d, int fontId) {
+    return run_Font_(font_Text_(fontId),
+              &(iRunArgs){ .mode = measure_RunMode | runFlagsFromId_(fontId),
+                           .text = d->text,
+                           .wrap = d
+    });
+}
+
+void draw_WrapText(iWrapText *d, int fontId, iInt2 pos, int color) {
+    run_Font_(font_Text_(fontId),
+              &(iRunArgs){ .mode  = draw_RunMode | runFlagsFromId_(fontId) |
+                                    (color & permanent_ColorId ? permanentColorFlag_RunMode : 0) |
+                                    (color & fillBackground_ColorId ? fillBackground_RunMode : 0),
+                           .text  = d->text,
+                           .pos   = pos,
+                           .wrap  = d,
+                           .color = color,
+    });
 }
 
 iInt2 advance_Text(int fontId, const char *text) {
