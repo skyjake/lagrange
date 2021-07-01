@@ -775,15 +775,16 @@ static void finishRun_AttributedText_(iAttributedText *d, iAttributedRun *run,
         pushBack_Array(&d->runs, &finishedRun);
         run->lineBreaks = 0;
     }
-    run->text.start = run->text.end = endAt;
+    run->text.start = endAt;
 }
 
 static void prepare_AttributedText_(iAttributedText *d) {
     iAssert(isEmpty_Array(&d->runs));
     size_t avail = d->maxLen;
     const char *chPos = d->text.start;
-    iAttributedRun run = { .text = (iRangecc){ d->text.start, d->text.start },
-                           .font = d->font, .fgColor = d->fgColor };
+    iAttributedRun run = { .text = d->text,
+                           .font = d->font,
+                           .fgColor = d->fgColor };
     while (chPos < d->text.end) {
         const char *currentPos = chPos;
         if (*chPos == 0x1b) { /* ANSI escape. */
@@ -829,6 +830,7 @@ static void prepare_AttributedText_(iAttributedText *d) {
         }
         if (avail-- == 0) {
             /* TODO: Check the combining class; only count base characters here. */
+            run.text.end = currentPos;
             break;
         }
         const iGlyph *glyph = glyph_Font_(d->font, ch);
@@ -1045,12 +1047,19 @@ struct Impl_RunArgs {
     int *         runAdvance_out;
 };
 
-static void notify_WrapText_(iWrapText *d, const char *ending, int advance) {
-    if (d && d->wrapFunc) {
+static iBool notify_WrapText_(iWrapText *d, const char *ending, int advance) {
+    if (d && d->wrapFunc && d->wrapRange_.start) {
         const char *end = ending ? ending : d->wrapRange_.end;
-        d->wrapFunc(d, (iRangecc){ d->wrapRange_.start, end }, advance);
-        d->wrapRange_.start = end;
+        const iBool result = d->wrapFunc(d, (iRangecc){ d->wrapRange_.start, end }, advance);
+        if (result) {
+            d->wrapRange_.start = end;
+        }
+        else {
+            d->wrapRange_ = iNullRange;
+        }
+        return result;
     }
+    return iTrue;
 }
 
 #if defined (LAGRANGE_ENABLE_HARFBUZZ)
@@ -1079,6 +1088,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
         args->wrap->wrapRange_ = args->text;
     }
     const char *wrapResumePos = NULL;
+    iBool willAbortDueToWrap = iFalse;
     for (size_t runIndex = 0; runIndex < size_Array(&attrText->runs); runIndex++) {
         const iAttributedRun *run = at_Array(&attrText->runs, runIndex);
         iRangecc runText = run->text;
@@ -1091,7 +1101,9 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
         else if (run->lineBreaks) {
             for (int i = 0; i < run->lineBreaks; i++) {
                 /* One callback for each "wrapped" line even if they're empty. */
-                notify_WrapText_(args->wrap, run->text.start, iRound(xCursor));
+                if (!notify_WrapText_(args->wrap, run->text.start, iRound(xCursor))) {
+                    break;
+                }
                 xCursor = 0.0f;
                 yCursor += d->height;
             }
@@ -1146,14 +1158,16 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
             }
             /* Make a callback for each wrapped line. */
             if (breakPos) {
-                notify_WrapText_(args->wrap, breakPos, iRound(x));
+                if (!notify_WrapText_(args->wrap, breakPos, iRound(x))) {
+                    willAbortDueToWrap = iTrue;
+                }
             }
         }
         /* Draw each glyph. */
         for (unsigned int i = 0; i < glyphCount; i++) {
             const hb_glyph_info_t *info    = &glyphInfo[i];
             const hb_codepoint_t   glyphId = info->codepoint;
-            const char *textPos    = runText.start + info->cluster;
+            const char *textPos  = runText.start + info->cluster;
             const int glyphFlags = hb_glyph_info_get_glyph_flags(info);
             const float xOffset  = run->font->xScale * glyphPos[i].x_offset;
             const float yOffset  = run->font->yScale * glyphPos[i].y_offset;
@@ -1212,6 +1226,12 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
             yCursor += yAdvance;
             xCursorMax = iMax(xCursorMax, xCursor);
         }
+        if (willAbortDueToWrap) {
+            break;
+        }
+    }
+    if (args->wrap) {
+        args->wrap->cursor_out = init_I2(xCursor, yCursor);
     }
     /* The final, unbroken line. */
     notify_WrapText_(args->wrap, NULL, xCursor);
@@ -1276,7 +1296,17 @@ iInt2 advanceRange_Text(int fontId, iRangecc text) {
     return init_I2(advance, height);
 }
 
+static iBool cbAdvanceOneLine_(iWrapText *d, iRangecc range, int advance) {
+    *((const char **) d->context) = range.end;
+    return iFalse; /* just one line */
+}
+
 iInt2 tryAdvance_Text(int fontId, iRangecc text, int width, const char **endPos) {
+    iWrapText wrap = { .text = text, .maxWidth = width,
+                       .wrapFunc = cbAdvanceOneLine_, .context = endPos };
+    const int x = advance_WrapText(&wrap, fontId).x;
+    return init_I2(x, lineHeight_Text(fontId));
+#if 0
     int advance;
     const int height = run_Font_(font_Text_(fontId),
                                  &(iRunArgs){ .mode = measure_RunMode | stopAtNewline_RunMode |
@@ -1287,9 +1317,16 @@ iInt2 tryAdvance_Text(int fontId, iRangecc text, int width, const char **endPos)
                                               .runAdvance_out   = &advance })
                            .size.y;
     return init_I2(advance, height);
+#endif
 }
 
 iInt2 tryAdvanceNoWrap_Text(int fontId, iRangecc text, int width, const char **endPos) {
+    /* TODO: "NoWrap" means words aren't wrapped; the line is broken at nearest character. */
+    iWrapText wrap = { .text = text, .maxWidth = width,
+                       .wrapFunc = cbAdvanceOneLine_, .context = endPos };
+    const int x = advance_WrapText(&wrap, fontId).x;
+    return init_I2(x, lineHeight_Text(fontId));
+#if 0
     int advance;
     const int height = run_Font_(font_Text_(fontId),
                                  &(iRunArgs){ .mode = measure_RunMode | noWrapFlag_RunMode |
@@ -1301,6 +1338,7 @@ iInt2 tryAdvanceNoWrap_Text(int fontId, iRangecc text, int width, const char **e
                                               .runAdvance_out   = &advance })
                            .size.y;
     return init_I2(advance, height);
+#endif
 }
 
 iInt2 advance_WrapText(iWrapText *d, int fontId) {
@@ -1314,7 +1352,7 @@ iInt2 advance_WrapText(iWrapText *d, int fontId) {
 
 iRect measure_WrapText(iWrapText *d, int fontId) {
     return run_Font_(font_Text_(fontId),
-              &(iRunArgs){ .mode = measure_RunMode | runFlagsFromId_(fontId),
+              &(iRunArgs){ .mode = measure_RunMode | visualFlag_RunMode | runFlagsFromId_(fontId),
                            .text = d->text,
                            .wrap = d
     });
