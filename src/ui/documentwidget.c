@@ -1638,7 +1638,7 @@ static void updateFromCachedResponse_DocumentWidget_(iDocumentWidget *d, float n
 }
 
 static iBool updateFromHistory_DocumentWidget_(iDocumentWidget *d) {
-    const iRecentUrl *recent = findUrl_History(d->mod.history, canonicalUrl_String(d->mod.url));
+    const iRecentUrl *recent = findUrl_History(d->mod.history, d->mod.url);
     if (recent && recent->cachedResponse) {
         iChangeFlags(d->flags,
                      openedFromSidebar_DocumentWidgetFlag,

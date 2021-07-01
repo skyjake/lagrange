@@ -181,7 +181,7 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
         iGmLink *link = new_GmLink();
         link->urlRange = capturedRange_RegExpMatch(&m, 1);
         setRange_String(&link->url, link->urlRange);
-        set_String(&link->url, absoluteUrl_String(&d->url, &link->url));
+        set_String(&link->url, canonicalUrl_String(absoluteUrl_String(&d->url, &link->url)));        
         /* Check the URL. */ {
             iUrl parts;
             init_Url(&parts, &link->url);
