@@ -194,6 +194,7 @@ void deserialize_History(iHistory *d, iStream *ins) {
         iRecentUrl item;
         init_RecentUrl(&item);
         deserialize_String(&item.url, ins);
+        set_String(&item.url, canonicalUrl_String(&item.url));
         item.normScrollY = (float) read32_Stream(ins) / 1.0e6f;
         if (version_Stream(ins) >= addedRecentUrlFlags_FileVersion) {
             uint16_t flags = readU16_Stream(ins);
@@ -246,6 +247,7 @@ const iString *url_History(const iHistory *d, size_t pos) {
 }
 
 iRecentUrl *findUrl_History(iHistory *d, const iString *url) {
+    url = canonicalUrl_String(url);
     lock_Mutex(d->mtx);
     iReverseForEach(Array, i, &d->recent) {
         if (cmpStringCase_String(url, &((iRecentUrl *) i.value)->url) == 0) {
@@ -258,6 +260,7 @@ iRecentUrl *findUrl_History(iHistory *d, const iString *url) {
 }
 
 void replace_History(iHistory *d, const iString *url) {
+    url = canonicalUrl_String(url);
     lock_Mutex(d->mtx);
     /* Update in the history. */
     iRecentUrl *item = mostRecentUrl_History(d);
@@ -267,7 +270,8 @@ void replace_History(iHistory *d, const iString *url) {
     unlock_Mutex(d->mtx);
 }
 
-void add_History(iHistory *d, const iString *url ){
+void add_History(iHistory *d, const iString *url) {
+    url = canonicalUrl_String(url);
     lock_Mutex(d->mtx);
     /* Cut the trailing history items. */
     if (d->recentPos > 0) {

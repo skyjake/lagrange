@@ -241,7 +241,7 @@ static void parseResult_FeedJob_(iFeedJob *d) {
                     entry->bookmarkId = d->bookmarkId;
                     iString *title = newRange_String(line);
                     set_String(&entry->title, title);
-                    set_String(&entry->url, canonicalUrl_String(&d->url));                    
+                    set_String(&entry->url, canonicalUrl_String(&d->url));
                     appendChar_String(&entry->url, '#');
                     append_String(&entry->url, collect_String(urlEncode_String(title)));
                     delete_String(title);
@@ -498,8 +498,9 @@ static void load_Feeds_(iFeeds *d) {
                     break;
                 }
                 case 2: {
-                    /* TODO: All right, this could maybe use a bit more robust, structured
-                       format. The code below is messy. */
+                    /* TODO: Cleanup needed...
+                       All right, this could maybe use a bit more robust, structured format.
+                       The code below is messy. */
                     const uint32_t feedId = strtoul(line.start, NULL, 16);
                     if (!nextSplit_Rangecc(range_Block(src), "\n", &line)) {
                         goto aborted;
@@ -535,6 +536,7 @@ static void load_Feeds_(iFeeds *d) {
                         entry->discovered.ts.tv_sec = discovered;
                         set_String(&entry->url, url);
                         stripDefaultUrlPort_String(&entry->url);
+                        set_String(&entry->url, canonicalUrl_String(&entry->url));
                         set_String(&entry->title, title);
                         insert_SortedArray(&d->entries, &entry);
                     }
