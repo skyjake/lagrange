@@ -159,7 +159,7 @@ static void init_Font(iFont *d, const iBlock *data, int height, float scale,
     if (data == &fontNunitoRegular_Embedded ||
         data == &fontNunitoBold_Embedded ||
         data == &fontNunitoExtraBold_Embedded ||
-        data == &fontNunitoLightItalic_Embedded ||
+        //data == &fontNunitoLightItalic_Embedded ||
         data == &fontNunitoExtraLight_Embedded) {
         d->family = nunito_TextFont;
     }
