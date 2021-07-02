@@ -38,10 +38,37 @@ iLocalDef iBool isDiagram_(char ch) {
     return strchr("^*_-=~/|\\<>()[]{}", ch) != NULL;
 }
 
+iLocalDef iBool isBoxDrawing_Char(iChar c) {
+    return (c >= 0x2500 && c <= 0x257f);
+}
+
 static iBool isPreformatted_(iRangecc text) {
-    int numDiag  = 0;
-    int numSpace = 0;
+    int  numDiag   = 0;
+    int  numSpace  = 0;
+    int  numRepeat = 0;
+    char chPrev    = 0;
     for (const char *ch = text.start; ch != text.end; ch++) {
+        if (*ch < 0) {
+            iChar uc;
+            int len = decodeBytes_MultibyteChar(ch, text.end, &uc);
+            if (len > 0) {
+                if (isBoxDrawing_Char(uc)) {
+                    if (++numDiag == 3)
+                        return iTrue;
+                }
+                ch += len - 1;
+                continue;
+            }
+        }
+        if (*ch != '.' && *ch == chPrev) {
+            if (numRepeat++ == 6) {
+                return iTrue;
+            }
+        }
+        else {
+            numRepeat = 0;
+        }
+        chPrev = *ch;
         if (isDiagram_(*ch)) {
             if (++numDiag == 3)
                 return iTrue;
