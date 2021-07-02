@@ -131,17 +131,24 @@ struct Impl_Font {
     int            baseline;
     iHash          glyphs; /* key is glyph index in the font */ /* TODO: does not need to be a Hash */
     iBool          isMonospaced;
-    iBool          manualKernOnly;
+//    iBool          manualKernOnly;
     enum iFontSize sizeId;  /* used to look up different fonts of matching size */
     uint32_t       indexTable[128 - 32]; /* quick ASCII lookup */
 #if defined (LAGRANGE_ENABLE_HARFBUZZ)
     hb_blob_t *    hbBlob; /* raw TrueType data */
     hb_face_t *    hbFace;
-    hb_font_t *    hbFont;
+    hb_font_t *    hbMainFont;
+    hb_font_t *    hbFont; /* may be a sub-font with customized font metrics */
 #endif
 };
 
 static iFont *font_Text_(enum iFontId id);
+
+static hb_position_t hbGlyphHKernForNunito_(hb_font_t *font, void *fontData,
+                                            hb_codepoint_t firstGlyph, hb_codepoint_t secondGlyph,
+                                            void *userData) {
+    return 100;
+}
 
 static void init_Font(iFont *d, const iBlock *data, int height, float scale,
                       enum iFontSize sizeId, iBool isMonospaced) {
@@ -191,7 +198,23 @@ static void init_Font(iFont *d, const iBlock *data, int height, float scale,
         d->hbBlob = hb_blob_create(constData_Block(data), size_Block(data),
                                    HB_MEMORY_MODE_READONLY, NULL, NULL);
         d->hbFace = hb_face_create(d->hbBlob, 0);
-        d->hbFont = hb_font_create(d->hbFace);
+        d->hbMainFont = hb_font_create(d->hbFace);
+#if 0
+        /* TODO: The custom kerning function doesn't get called?
+           Maybe HarfBuzz needs FreeType to do kerning? */
+        if (d->family == nunito_TextFont) {
+            /* Customize the kerning of Nunito. */
+            d->hbFont = hb_font_create_sub_font(d->hbMainFont);
+            hb_font_funcs_t *ffs = hb_font_funcs_create();
+            hb_font_funcs_set_glyph_h_kerning_func(ffs, hbGlyphHKernForNunito_, d, NULL);
+            hb_font_set_funcs(d->hbFont, ffs, NULL, NULL);
+            hb_font_funcs_destroy(ffs);
+        }
+        else
+#endif
+        {
+            d->hbFont = hb_font_reference(d->hbMainFont);
+        }
     }
 #endif
 }
@@ -207,6 +230,7 @@ static void deinit_Font(iFont *d) {
 #if defined(LAGRANGE_ENABLE_HARFBUZZ)
     /* HarfBuzz objects. */ {
         hb_font_destroy(d->hbFont);
+        hb_font_destroy(d->hbMainFont);
         hb_face_destroy(d->hbFace);
         hb_blob_destroy(d->hbBlob);
     }
@@ -395,9 +419,9 @@ static void initFonts_Text_(iText *d) {
                   fontData[i].scaling,
                   fontData[i].sizeId,
                   fontData[i].ttf == &fontIosevkaTermExtended_Embedded);
-        if (i == default_FontId || i == defaultMedium_FontId) {
-            font->manualKernOnly = iTrue;
-        }
+//        if (i == default_FontId || i == defaultMedium_FontId) {
+//            font->manualKernOnly = iTrue;
+//        }
     }
     gap_Text = iRound(gap_UI * d->contentFontSize);
 }
@@ -1065,6 +1089,32 @@ static iBool notify_WrapText_(iWrapText *d, const char *ending, int advance) {
     return iTrue;
 }
 
+float horizKern_Font_(iFont *d, uint32_t glyph1, uint32_t glyph2) {
+#if defined (LAGRANGE_ENABLE_KERNING)
+    if (!enableKerning_Text || d->family != nunito_TextFont) {
+        return 0.0f;
+    }
+    if (glyph1 && glyph2) {
+        /* These indices will be quickly found from the lookup table. */
+        const uint32_t gi_h = glyphIndex_Font_(d, 'h');
+        const uint32_t gi_i = glyphIndex_Font_(d, 'i');
+        int kern = 0;
+        /* Nunito needs some kerning fixes. */
+        if (glyph1 == glyphIndex_Font_(d, 'W') && (glyph2 == gi_h || glyph2 == gi_i)) {
+            kern = -60;
+        }
+        else if (glyph1 == glyphIndex_Font_(d, 'T') && glyph2 == gi_h) {
+            kern = -25;
+        }
+        else if (glyph1 == glyphIndex_Font_(d, 'V') && glyph2 == gi_i) {
+            kern = -40;
+        }
+        return d->xScale * kern;
+    }
+#endif
+    return 0.0f;
+}
+
 #if defined (LAGRANGE_ENABLE_HARFBUZZ)
 static iRect run_Font_(iFont *d, const iRunArgs *args) {
     const int    mode       = args->mode;
@@ -1168,6 +1218,11 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                     break;
                 }
                 x += xAdvance;
+                /* Additional kerning tweak. It would be better to use HarfBuzz font callbacks,
+                   but they don't seem to get called? */
+                if (i + 1 < glyphCount) {
+                    x += horizKern_Font_(run->font, glyphId, glyphInfo[i + 1].codepoint);
+                }
             }
             /* Make a callback for each wrapped line. */
             if (breakPos) {
@@ -1244,6 +1299,11 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
             }
             xCursor += xAdvance;
             yCursor += yAdvance;
+            /* Additional kerning tweak. It would be better to use HarfBuzz font callbacks,
+               but they don't seem to get called? */
+            if (i + 1 < glyphCount) {
+                xCursor += horizKern_Font_(run->font, glyphId, glyphInfo[i + 1].codepoint);
+            }
             xCursorMax = iMax(xCursorMax, xCursor);
         }
         if (willAbortDueToWrap) {
