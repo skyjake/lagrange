@@ -1124,6 +1124,8 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
     float        yCursor    = 0.0f;
     float        xCursorMax = 0.0f;
     iRangecc     wrapRange  = args->text;
+    const iBool  isMonospaced = d->isMonospaced;
+    const float  monoAdvance  = isMonospaced ? glyph_Font_(d, 'M')->advance : 0.0f;
     iAssert(args->text.end >= args->text.start);
     if (args->continueFrom_out) {
         *args->continueFrom_out = args->text.end;
@@ -1167,6 +1169,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
         for (const char *pos = runText.start; pos < runText.end; ) {
             iChar ucp = 0;
             const int len = decodeBytes_MultibyteChar(pos, runText.end, &ucp);
+//            if (ucp == 0xad) ucp = '-';
             if (len > 0) {
                 hb_buffer_add(hbBuf, ucp, pos - runText.start);
                 pos += len;
@@ -1176,33 +1179,62 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
         hb_buffer_set_content_type(hbBuf, HB_BUFFER_CONTENT_TYPE_UNICODE);
         hb_buffer_set_direction(hbBuf, HB_DIRECTION_LTR); /* TODO: FriBidi? */
         /* hb_buffer_set_script(hbBuf, HB_SCRIPT_LATIN); */ /* will be autodetected */
-        hb_buffer_set_language(hbBuf, hb_language_from_string("en", -1)); /* TODO: language from document/UI, if known */
+        //hb_buffer_set_language(hbBuf, hb_language_from_string("en", -1)); /* TODO: language from document/UI, if known */
         hb_shape(run->font->hbFont, hbBuf, NULL, 0); /* TODO: Specify features, too? */
         unsigned int               glyphCount = 0;
         const hb_glyph_info_t *    glyphInfo  = hb_buffer_get_glyph_infos(hbBuf, &glyphCount);
-        const hb_glyph_position_t *glyphPos   = hb_buffer_get_glyph_positions(hbBuf, &glyphCount);
+        hb_glyph_position_t *      glyphPos   = hb_buffer_get_glyph_positions(hbBuf, &glyphCount);
         const char *breakPos = NULL;
+        iBool isSoftHyphenBreak = iFalse;
+        /* Fit foreign glyphs into the expected monospacing. */
+        if (isMonospaced) {
+            for (unsigned int i = 0; i < glyphCount; ++i) {
+                const hb_glyph_info_t *info = &glyphInfo[i];
+                const hb_codepoint_t glyphId = info->codepoint;
+                const char *textPos = runText.start + info->cluster;
+                if (run->font != d) {
+                    iChar ch = 0;
+                    decodeBytes_MultibyteChar(textPos, runText.end, &ch);
+                    if (isPictograph_Char(ch) || isEmoji_Char(ch)) {
+                        const float dw = run->font->xScale * glyphPos[i].x_advance - monoAdvance;
+                        glyphPos[i].x_offset  -= dw / 2 / run->font->xScale - 1;
+                        glyphPos[i].x_advance -= dw / run->font->xScale - 1;
+                    }
+                }
+            }
+        }
         /* Check if this run needs to be wrapped. If so, we'll draw the portion that fits on
            the line, and re-run the loop resuming the run from the wrap point. */
         if (args->wrap && args->wrap->maxWidth > 0) {
             float x = xCursor;
             const char *safeBreak = NULL;
+            iChar prevCh = 0;
             for (unsigned int i = 0; i < glyphCount; i++) {
                 const hb_glyph_info_t *info    = &glyphInfo[i];
                 const hb_codepoint_t   glyphId = info->codepoint;
+                const char *textPos    = runText.start + info->cluster;
                 const iGlyph *glyph    = glyphByIndex_Font_(run->font, glyphId);
                 const int   glyphFlags = hb_glyph_info_get_glyph_flags(info);
                 const float xOffset    = run->font->xScale * glyphPos[i].x_offset;
                 const float xAdvance   = run->font->xScale * glyphPos[i].x_advance;
-                const char *textPos    = runText.start + info->cluster;
                 if (args->wrap->mode == word_WrapTextMode) {
                     /* When word wrapping, only consider certain places breakable. */
                     iChar ch = 0;
                     decodeBytes_MultibyteChar(textPos, runText.end, &ch);
-                    /* TODO: Allow some punctuation to wrap words. */
-                    if (isSpace_Char(ch)) {
+                    /*if (prevCh == 0xad) {
                         safeBreak = textPos;
+                        isSoftHyphenBreak = iTrue;
                     }
+                    else*/
+                    if ((ch >= 128 || !ispunct(ch)) && (prevCh == '-' || prevCh == '/')) {
+                        safeBreak = textPos;
+                        isSoftHyphenBreak = iFalse;
+                    }
+                    else if (isSpace_Char(ch)) {
+                        safeBreak = textPos;
+                        isSoftHyphenBreak = iFalse;
+                    }
+                    prevCh = ch;
                 }
                 else {
                     if (~glyphFlags & HB_GLYPH_FLAG_UNSAFE_TO_BREAK) {
@@ -1234,6 +1266,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
         }
         /* We have determined a possible wrap position inside the text run, so now we can
            draw the glyphs. */
+        float surplusAdvance = 0.0f;
         for (unsigned int i = 0; i < glyphCount; i++) {
             const hb_glyph_info_t *info    = &glyphInfo[i];
             const hb_codepoint_t   glyphId = info->codepoint;
@@ -1253,7 +1286,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
             }
             /* Draw the glyph. */ {
                 SDL_Rect dst = { orig.x + xCursor + xOffset + glyph->d[hoff].x,
-                                 orig.y + yCursor + yOffset + glyph->font->baseline + glyph->d[hoff].y,
+                                 orig.y + yCursor - yOffset + glyph->font->baseline + glyph->d[hoff].y,
                                  glyph->rect[hoff].size.x,
                                  glyph->rect[hoff].size.y };
                 if (mode & visualFlag_RunMode) {
@@ -1268,17 +1301,10 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                     bounds.size.x = iMax(bounds.size.x, dst.x + dst.w);
                     bounds.size.y = iMax(bounds.size.y, yCursor + glyph->font->height);
                 }
-                if (mode & draw_RunMode) {
+                if (mode & draw_RunMode && *textPos != 0x20) {
                     if (!isRasterized_Glyph_(glyph, hoff)) {
                         cacheSingleGlyph_Font_(run->font, glyphId); /* may cause cache reset */
                         glyph = glyphByIndex_Font_(run->font, glyphId);
-#if 0
-                        if (!isRasterized_Glyph_(glyph, hoff)) {
-                            /* TODO: Should not be needed! The glyph cache should retry automatically if running out of buffer. */
-                            cacheSingleGlyph_Font_(run->font, glyphId); /* may cause cache reset */
-                            glyph = glyphByIndex_Font_(run->font, glyphId);
-                        }
-#endif
                         iAssert(isRasterized_Glyph_(glyph, hoff));
                     }
                     if (~mode & permanentColorFlag_RunMode) {
