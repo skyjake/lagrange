@@ -1199,6 +1199,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                     /* When word wrapping, only consider certain places breakable. */
                     iChar ch = 0;
                     decodeBytes_MultibyteChar(textPos, runText.end, &ch);
+                    /* TODO: Allow some punctuation to wrap words. */
                     if (isSpace_Char(ch)) {
                         safeBreak = textPos;
                     }
@@ -1231,7 +1232,8 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                 }
             }
         }
-        /* Draw each glyph. */
+        /* We have determined a possible wrap position inside the text run, so now we can
+           draw the glyphs. */
         for (unsigned int i = 0; i < glyphCount; i++) {
             const hb_glyph_info_t *info    = &glyphInfo[i];
             const hb_codepoint_t   glyphId = info->codepoint;
