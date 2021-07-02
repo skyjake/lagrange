@@ -341,7 +341,7 @@ static void alignDecoration_GmRun_(iGmRun *run, iBool isCentered) {
     int         xAdjust   = 0;
     if (!isCentered) {
         /* Keep the icon aligned to the left edge. */
-        const int alignWidth = width_Rect(run->visBounds) * 3 / 4;
+        const int alignWidth = width_Rect(run->visBounds) * 4 / 5;
         xAdjust -= left_Rect(visBounds);
         if (visWidth > alignWidth) {
             /* ...unless it's a wide icon, in which case move it to the left. */
@@ -413,10 +413,10 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         indents[preformatted_GmLineType] = indents[text_GmLineType];
     }
     static const float topMargin[max_GmLineType] = {
-        0.0f, 0.333f, 1.0f, 0.5f, 2.0f, 1.5f, 1.25f, 0.25f
+        0.0f, 0.25f, 1.0f, 0.5f, 2.0f, 1.5f, 1.25f, 0.25f
     };
     static const float bottomMargin[max_GmLineType] = {
-        0.0f, 0.333f, 1.0f, 0.5f, 0.5f, 0.5f, 0.5f, 0.25f
+        0.0f, 0.25f, 1.0f, 0.5f, 0.5f, 0.5f, 0.5f, 0.25f
     };
     static const char *arrow           = rightArrowhead_Icon;
     static const char *envelope        = "\U0001f4e7";
@@ -589,7 +589,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             else if (type == link_GmLineType && prevType == link_GmLineType) {
                 /* Balance space between the link icons and the labels, both vertically
                    between icons and between the icon and the label. */
-                required *= 0.75f;
+                //required *= 0.75f;
             }
             if (type == quote_GmLineType && prevType == quote_GmLineType) {
                 /* No margin between consecutive quote lines. */
