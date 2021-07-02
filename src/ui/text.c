@@ -1379,7 +1379,7 @@ iInt2 advanceRange_Text(int fontId, iRangecc text) {
 }
 
 static iBool cbAdvanceOneLine_(iWrapText *d, iRangecc range, int advance) {
-    *((const char **) d->context) = range.end;
+    *((const char **) d->context) = iMin(skipSpace_CStr(range.end), d->text.end);
     return iFalse; /* just one line */
 }
 
