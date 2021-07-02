@@ -181,7 +181,7 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
         iGmLink *link = new_GmLink();
         link->urlRange = capturedRange_RegExpMatch(&m, 1);
         setRange_String(&link->url, link->urlRange);
-        set_String(&link->url, canonicalUrl_String(absoluteUrl_String(&d->url, &link->url)));        
+        set_String(&link->url, canonicalUrl_String(absoluteUrl_String(&d->url, &link->url)));
         /* Check the URL. */ {
             iUrl parts;
             init_Url(&parts, &link->url);
@@ -409,6 +409,9 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         indents[bullet_GmLineType] -= 5;
         indents[preformatted_GmLineType] -= 5;
     }
+    if (isGopher) {
+        indents[preformatted_GmLineType] = indents[text_GmLineType];
+    }
     static const float topMargin[max_GmLineType] = {
         0.0f, 0.333f, 1.0f, 0.5f, 2.0f, 1.5f, 1.25f, 0.25f
     };
@@ -567,6 +570,10 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         }
         /* Begin indenting after the first preformatted block. */
         if (type != preformatted_GmLineType || prevType != preformatted_GmLineType) {
+            enableIndents = iTrue;
+        }
+        /* Gopher: Always indent preformatted blocks. */
+        if (isGopher && type == preformatted_GmLineType) {
             enableIndents = iTrue;
         }
         if (!enableIndents) {
