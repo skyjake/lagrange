@@ -176,10 +176,16 @@ int     drawWrapRange_Text      (int fontId, iInt2 pos, int maxWidth, int color,
 
 iDeclareType(WrapText)
 
+enum iWrapTextMode {
+    anyCharacter_WrapTextMode,
+    word_WrapTextMode,
+};
+
 struct Impl_WrapText {
     /* arguments */
     iRangecc text;
     int      maxWidth;
+    enum iWrapTextMode mode;
     iBool  (*wrapFunc)(iWrapText *, iRangecc wrappedText, int advance);
     void *   context;
     /* output */
