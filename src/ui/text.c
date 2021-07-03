@@ -50,6 +50,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #   include <hb.h>
 #endif
 
+#if defined (LAGRANGE_ENABLE_FRIBIDI)
+#   include <fribidi/fribidi.h>
+#endif
+
 #if SDL_VERSION_ATLEAST(2, 0, 10)
 #   define LAGRANGE_RASTER_DEPTH    8
 #   define LAGRANGE_RASTER_FORMAT   SDL_PIXELFORMAT_INDEX8
@@ -76,7 +80,6 @@ enum iGlyphFlag {
 struct Impl_Glyph {
     iHashNode node;
     int flags;
-//    uint32_t glyphIndex;
     iFont *font; /* may come from symbols/emoji */
     iRect rect[2]; /* zero and half pixel offset */
     iInt2 d[2];
@@ -86,7 +89,6 @@ struct Impl_Glyph {
 void init_Glyph(iGlyph *d, uint32_t glyphIndex) {
     d->node.key   = glyphIndex;
     d->flags      = 0;
-    //d->glyphIndex = 0;
     d->font       = NULL;
     d->rect[0]    = zero_Rect();
     d->rect[1]    = zero_Rect();
@@ -97,9 +99,6 @@ void deinit_Glyph(iGlyph *d) {
     iUnused(d);
 }
 
-//static iChar codepoint_Glyph_(const iGlyph *d) {
-//    return d->node.key;
-//}
 static uint32_t index_Glyph_(const iGlyph *d) {
     return d->node.key;
 }
@@ -131,7 +130,6 @@ struct Impl_Font {
     int            baseline;
     iHash          glyphs; /* key is glyph index in the font */ /* TODO: does not need to be a Hash */
     iBool          isMonospaced;
-//    iBool          manualKernOnly;
     enum iFontSize sizeId;  /* used to look up different fonts of matching size */
     uint32_t       indexTable[128 - 32]; /* quick ASCII lookup */
 #if defined (LAGRANGE_ENABLE_HARFBUZZ)
@@ -419,9 +417,6 @@ static void initFonts_Text_(iText *d) {
                   fontData[i].scaling,
                   fontData[i].sizeId,
                   fontData[i].ttf == &fontIosevkaTermExtended_Embedded);
-//        if (i == default_FontId || i == defaultMedium_FontId) {
-//            font->manualKernOnly = iTrue;
-//        }
     }
     gap_Text = iRound(gap_UI * d->contentFontSize);
 }
@@ -1123,7 +1118,6 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
     float        xCursor    = 0.0f;
     float        yCursor    = 0.0f;
     float        xCursorMax = 0.0f;
-    iRangecc     wrapRange  = args->text;
     const iBool  isMonospaced = d->isMonospaced;
     const float  monoAdvance  = isMonospaced ? glyph_Font_(d, 'M')->advance : 0.0f;
     iAssert(args->text.end >= args->text.start);
@@ -1266,12 +1260,10 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
         }
         /* We have determined a possible wrap position inside the text run, so now we can
            draw the glyphs. */
-        float surplusAdvance = 0.0f;
         for (unsigned int i = 0; i < glyphCount; i++) {
             const hb_glyph_info_t *info    = &glyphInfo[i];
             const hb_codepoint_t   glyphId = info->codepoint;
             const char *textPos  = runText.start + info->cluster;
-            const int glyphFlags = hb_glyph_info_get_glyph_flags(info);
             const float xOffset  = run->font->xScale * glyphPos[i].x_offset;
             const float yOffset  = run->font->yScale * glyphPos[i].y_offset;
             const float xAdvance = run->font->xScale * glyphPos[i].x_advance;
@@ -1413,8 +1405,9 @@ iInt2 tryAdvance_Text(int fontId, iRangecc text, int width, const char **endPos)
     iWrapText wrap = { .mode = word_WrapTextMode,
                        .text = text, .maxWidth = width,
                        .wrapFunc = cbAdvanceOneLine_, .context = endPos };
-    const int x = advance_WrapText(&wrap, fontId).x;
-    return init_I2(x, lineHeight_Text(fontId));
+    //const int x = advance_WrapText(&wrap, fontId).x;
+    //return init_I2(x, lineHeight_Text(fontId));
+    return addY_I2(advance_WrapText(&wrap, fontId), lineHeight_Text(fontId));
     
 #if 0
     int advance;
