@@ -142,11 +142,13 @@ struct Impl_Font {
 
 static iFont *font_Text_(enum iFontId id);
 
+#if 0
 static hb_position_t hbGlyphHKernForNunito_(hb_font_t *font, void *fontData,
                                             hb_codepoint_t firstGlyph, hb_codepoint_t secondGlyph,
                                             void *userData) {
     return 100;
 }
+#endif
 
 static void init_Font(iFont *d, const iBlock *data, int height, float scale,
                       enum iFontSize sizeId, iBool isMonospaced) {
@@ -160,6 +162,9 @@ static void init_Font(iFont *d, const iBlock *data, int height, float scale,
         //data == &fontNunitoLightItalic_Embedded ||
         data == &fontNunitoExtraLight_Embedded) {
         d->family = nunito_TextFont;
+    }
+    else if (data == &fontNotoSansArabicUIRegular_Embedded) {
+        d->family = notoSansArabic_TextFont;
     }
     d->isMonospaced = isMonospaced;
     d->height = height;
@@ -851,7 +856,12 @@ static void prepare_AttributedText_(iAttributedText *d) {
             run.text.end = currentPos;
             break;
         }
-        const iGlyph *glyph = glyph_Font_(d->font, ch);
+        iFont *currentFont = d->font;
+        if (run.font->family == notoSansArabic_TextFont && ch == 0x20) {
+            currentFont = run.font; /* remain as Arabic for whitespace */
+            /* TODO: FriBidi should be applied before this loop, but how to map the positions? */
+        }
+        const iGlyph *glyph = glyph_Font_(currentFont, ch);
         if (index_Glyph_(glyph) && glyph->font != run.font) {
             /* A different font is being used for this character. */
             finishRun_AttributedText_(d, &run, currentPos);
@@ -1160,18 +1170,61 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
         hb_buffer_clear_contents(hbBuf);
         /* Cluster values are used to determine offset inside the UTF-8 source string. */
         //hb_buffer_set_cluster_level(hbBuf, HB_BUFFER_CLUSTER_LEVEL_MONOTONE_CHARACTERS);
+#if 0 && defined (LAGRANGE_ENABLE_FRIBIDI)
+        /* Reorder to visual order. */ {
+            iArray u32;
+            iArray logToRun;
+            init_Array(&u32, sizeof(uint32_t));
+            init_Array(&logToRun, sizeof(FriBidiStrIndex));
+            for (const char *pos = runText.start; pos < runText.end; ) {
+                iChar ucp = 0;
+                const int len = decodeBytes_MultibyteChar(pos, runText.end, &ucp);
+                if (len > 0) {
+                    pushBack_Array(&u32, &ucp);
+                    pushBack_Array(&logToRun, &(int){ pos - runText.start });
+                    pos += len;
+                }
+                else break;
+            }
+            iArray vis32;
+            init_Array(&vis32, sizeof(uint32_t));
+            resize_Array(&vis32, size_Array(&u32));
+            iArray visToLog;
+            init_Array(&visToLog, sizeof(FriBidiStrIndex));
+            resize_Array(&visToLog, size_Array(&u32));
+            FriBidiParType baseDir = (FriBidiParType) FRIBIDI_TYPE_ON;
+            fribidi_log2vis(constData_Array(&u32),
+                            size_Array(&u32),
+                            &baseDir,                            
+                            data_Array(&vis32),
+                            NULL,
+                            data_Array(&visToLog),
+                            NULL);
+            const FriBidiStrIndex *visToLogIndex = constData_Array(&visToLog);
+            const FriBidiStrIndex *logToRunIndex = constData_Array(&logToRun);
+            iConstForEach(Array, v, &vis32) {
+                hb_buffer_add(hbBuf,
+                              *(const hb_codepoint_t *) v.value,
+                              logToRunIndex[visToLogIndex[index_ArrayConstIterator(&v)]]);
+            }
+            deinit_Array(&visToLog);
+            deinit_Array(&vis32);
+            deinit_Array(&logToRun);
+            deinit_Array(&u32);
+        }
+#else /* !defined (LAGRANGE_ENABLE_FRIBIDI) */
         for (const char *pos = runText.start; pos < runText.end; ) {
             iChar ucp = 0;
             const int len = decodeBytes_MultibyteChar(pos, runText.end, &ucp);
-//            if (ucp == 0xad) ucp = '-';
             if (len > 0) {
                 hb_buffer_add(hbBuf, ucp, pos - runText.start);
                 pos += len;
             }
             else break;
         }
+#endif       
         hb_buffer_set_content_type(hbBuf, HB_BUFFER_CONTENT_TYPE_UNICODE);
-        hb_buffer_set_direction(hbBuf, HB_DIRECTION_LTR); /* TODO: FriBidi? */
+        hb_buffer_set_direction(hbBuf, HB_DIRECTION_LTR);
         /* hb_buffer_set_script(hbBuf, HB_SCRIPT_LATIN); */ /* will be autodetected */
         //hb_buffer_set_language(hbBuf, hb_language_from_string("en", -1)); /* TODO: language from document/UI, if known */
         hb_shape(run->font->hbFont, hbBuf, NULL, 0); /* TODO: Specify features, too? */
@@ -1264,6 +1317,8 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
             const hb_glyph_info_t *info    = &glyphInfo[i];
             const hb_codepoint_t   glyphId = info->codepoint;
             const char *textPos  = runText.start + info->cluster;
+            iAssert(textPos >= runText.start);
+            iAssert(textPos < runText.end);
             const float xOffset  = run->font->xScale * glyphPos[i].x_offset;
             const float yOffset  = run->font->yScale * glyphPos[i].y_offset;
             const float xAdvance = run->font->xScale * glyphPos[i].x_advance;
@@ -1405,8 +1460,8 @@ iInt2 tryAdvance_Text(int fontId, iRangecc text, int width, const char **endPos)
     iWrapText wrap = { .mode = word_WrapTextMode,
                        .text = text, .maxWidth = width,
                        .wrapFunc = cbAdvanceOneLine_, .context = endPos };
-    //const int x = advance_WrapText(&wrap, fontId).x;
-    //return init_I2(x, lineHeight_Text(fontId));
+    /* The return value is expected to be the horizontal/vertical bounds, while WrapText
+       returns the actual advanced cursor position. */
     return addY_I2(advance_WrapText(&wrap, fontId), lineHeight_Text(fontId));
     
 #if 0

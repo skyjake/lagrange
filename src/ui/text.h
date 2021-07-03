@@ -125,6 +125,7 @@ enum iTextFont {
     tinos_TextFont,
     sourceSans3_TextFont,
     iosevka_TextFont,
+    notoSansArabic_TextFont,
 };
 
 extern int gap_Text; /* affected by content font size */

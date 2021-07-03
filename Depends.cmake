@@ -17,17 +17,21 @@ if (ENABLE_HARFBUZZ AND EXISTS ${CMAKE_SOURCE_DIR}/lib/harfbuzz/CMakeLists.txt)
 endif ()
 
 if (ENABLE_FRIBIDI AND EXISTS ${CMAKE_SOURCE_DIR}/lib/fribidi)
+    cmake_policy (SET CMP0114 NEW)
     # Build FriBidi with Meson.
+    find_program (MESON_EXECUTABLE meson DOC "Meson build system")
+    find_program (NINJA_EXECUTABLE NAMES ninja ninja-build DOC "Ninja build tool")
+    # TODO: Add an option to use autotools instead.
     include (ExternalProject)
     set (_dst ${CMAKE_BINARY_DIR}/lib/fribidi)
     ExternalProject_Add (fribidi
         PREFIX              ${CMAKE_BINARY_DIR}/fribidi-ext
         SOURCE_DIR          ${CMAKE_SOURCE_DIR}/lib/fribidi
-        CONFIGURE_COMMAND   meson ${CMAKE_SOURCE_DIR}/lib/fribidi 
+        CONFIGURE_COMMAND   NINJA=${NINJA_EXECUTABLE} ${MESON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/lib/fribidi 
                                 -Dtests=false -Ddocs=false -Dbin=false
                                 --prefix ${_dst}
-        BUILD_COMMAND       ninja
-        INSTALL_COMMAND     ninja install
+        BUILD_COMMAND       ${NINJA_EXECUTABLE}
+        INSTALL_COMMAND     ${NINJA_EXECUTABLE} install
     )
     add_library (fribidi-lib INTERFACE)
     target_include_directories (fribidi-lib INTERFACE ${_dst}/include)
