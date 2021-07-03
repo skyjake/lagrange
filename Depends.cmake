@@ -3,7 +3,7 @@ if (IOS)
     return ()
 endif ()
 
-if (ENABLE_HARFBUZZ AND EXISTS ${CMAKE_SOURCE_DIR}/lib/harfbuzz)
+if (ENABLE_HARFBUZZ AND EXISTS ${CMAKE_SOURCE_DIR}/lib/harfbuzz/CMakeLists.txt)
     # Build HarfBuzz with minimal dependencies.
     set (HB_BUILD_SUBSET  OFF CACHE BOOL "" FORCE)
     set (HB_HAVE_CORETEXT OFF CACHE BOOL "" FORCE)
@@ -11,8 +11,28 @@ if (ENABLE_HARFBUZZ AND EXISTS ${CMAKE_SOURCE_DIR}/lib/harfbuzz)
     set (HB_HAVE_GLIB     OFF CACHE BOOL "" FORCE)
     set (HB_HAVE_GOBJECT  OFF CACHE BOOL "" FORCE)
     set (HB_HAVE_ICU      OFF CACHE BOOL "" FORCE)
+    cmake_policy (SET CMP0075 NEW) 
     add_subdirectory (${CMAKE_SOURCE_DIR}/lib/harfbuzz)
     set (HARFBUZZ_FOUND YES)
+endif ()
+
+if (ENABLE_FRIBIDI AND EXISTS ${CMAKE_SOURCE_DIR}/lib/fribidi)
+    # Build FriBidi with Meson.
+    include (ExternalProject)
+    set (_dst ${CMAKE_BINARY_DIR}/lib/fribidi)
+    ExternalProject_Add (fribidi
+        PREFIX              ${CMAKE_BINARY_DIR}/fribidi-ext
+        SOURCE_DIR          ${CMAKE_SOURCE_DIR}/lib/fribidi
+        CONFIGURE_COMMAND   meson ${CMAKE_SOURCE_DIR}/lib/fribidi 
+                                -Dtests=false -Ddocs=false -Dbin=false
+                                --prefix ${_dst}
+        BUILD_COMMAND       ninja
+        INSTALL_COMMAND     ninja install
+    )
+    add_library (fribidi-lib INTERFACE)
+    target_include_directories (fribidi-lib INTERFACE ${_dst}/include)
+    target_link_libraries (fribidi-lib INTERFACE -L${_dst}/lib fribidi)
+    set (FRIBIDI_FOUND YES)
 endif ()
 
 if (NOT EXISTS ${CMAKE_SOURCE_DIR}/lib/the_Foundation/CMakeLists.txt)
