@@ -1170,7 +1170,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
         hb_buffer_clear_contents(hbBuf);
         /* Cluster values are used to determine offset inside the UTF-8 source string. */
         //hb_buffer_set_cluster_level(hbBuf, HB_BUFFER_CLUSTER_LEVEL_MONOTONE_CHARACTERS);
-#if 0 && defined (LAGRANGE_ENABLE_FRIBIDI)
+#if defined (LAGRANGE_ENABLE_FRIBIDI)
         /* Reorder to visual order. */ {
             iArray u32;
             iArray logToRun;

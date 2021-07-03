@@ -3,40 +3,65 @@ if (IOS)
     return ()
 endif ()
 
+find_package (PkgConfig)
+
 if (ENABLE_HARFBUZZ AND EXISTS ${CMAKE_SOURCE_DIR}/lib/harfbuzz/CMakeLists.txt)
-    # Build HarfBuzz with minimal dependencies.
-    set (HB_BUILD_SUBSET  OFF CACHE BOOL "" FORCE)
-    set (HB_HAVE_CORETEXT OFF CACHE BOOL "" FORCE)
-    set (HB_HAVE_FREETYPE OFF CACHE BOOL "" FORCE)
-    set (HB_HAVE_GLIB     OFF CACHE BOOL "" FORCE)
-    set (HB_HAVE_GOBJECT  OFF CACHE BOOL "" FORCE)
-    set (HB_HAVE_ICU      OFF CACHE BOOL "" FORCE)
-    cmake_policy (SET CMP0075 NEW) 
-    add_subdirectory (${CMAKE_SOURCE_DIR}/lib/harfbuzz)
-    set (HARFBUZZ_FOUND YES)
+    # Find HarfBuzz with pkg-config.
+    if (NOT ENABLE_HARFBUZZ_MINIMAL AND PKG_CONFIG_FOUND)
+        pkg_check_modules (HARFBUZZ IMPORTED_TARGET harfbuzz)
+    endif ()
+    if (ENABLE_HARFBUZZ_MINIMAL OR NOT HARFBUZZ_FOUND)
+        # Build HarfBuzz with minimal dependencies.
+        set (HB_BUILD_SUBSET  OFF CACHE BOOL "" FORCE)
+        set (HB_HAVE_CORETEXT OFF CACHE BOOL "" FORCE)
+        set (HB_HAVE_FREETYPE OFF CACHE BOOL "" FORCE)
+        set (HB_HAVE_GLIB     OFF CACHE BOOL "" FORCE)
+        set (HB_HAVE_GOBJECT  OFF CACHE BOOL "" FORCE)
+        set (HB_HAVE_ICU      OFF CACHE BOOL "" FORCE)
+        add_subdirectory (${CMAKE_SOURCE_DIR}/lib/harfbuzz)
+        set (HARFBUZZ_LIBRARIES harfbuzz)
+        # HarfBuzz is C++ so must link with the standard library.    
+        if (APPLE)
+            list (APPEND HARFBUZZ_LIBRARIES c++)
+        else ()
+            list (APPEND HARFBUZZ_LIBRARIES stdc++)
+        endif ()        
+        set (HARFBUZZ_FOUND YES)        
+    endif ()
 endif ()
 
 if (ENABLE_FRIBIDI AND EXISTS ${CMAKE_SOURCE_DIR}/lib/fribidi)
-    cmake_policy (SET CMP0114 NEW)
-    # Build FriBidi with Meson.
-    find_program (MESON_EXECUTABLE meson DOC "Meson build system")
-    find_program (NINJA_EXECUTABLE NAMES ninja ninja-build DOC "Ninja build tool")
-    # TODO: Add an option to use autotools instead.
-    include (ExternalProject)
-    set (_dst ${CMAKE_BINARY_DIR}/lib/fribidi)
-    ExternalProject_Add (fribidi
-        PREFIX              ${CMAKE_BINARY_DIR}/fribidi-ext
-        SOURCE_DIR          ${CMAKE_SOURCE_DIR}/lib/fribidi
-        CONFIGURE_COMMAND   NINJA=${NINJA_EXECUTABLE} ${MESON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/lib/fribidi 
-                                -Dtests=false -Ddocs=false -Dbin=false
-                                --prefix ${_dst}
-        BUILD_COMMAND       ${NINJA_EXECUTABLE}
-        INSTALL_COMMAND     ${NINJA_EXECUTABLE} install
-    )
-    add_library (fribidi-lib INTERFACE)
-    target_include_directories (fribidi-lib INTERFACE ${_dst}/include)
-    target_link_libraries (fribidi-lib INTERFACE -L${_dst}/lib fribidi)
-    set (FRIBIDI_FOUND YES)
+    # Find FriBidi with pkg-config.
+    if (NOT ENABLE_FRIBIDI_BUILD AND PKG_CONFIG_FOUND)
+        pkg_check_modules (FRIBIDI IMPORTED_TARGET fribidi)
+        add_library (fribidi-lib ALIAS PkgConfig::FRIBIDI)
+    endif ()
+    if (ENABLE_FRIBIDI_BUILD OR NOT FRIBIDI_FOUND)
+        # Build FriBidi with Meson.
+        find_program (MESON_EXECUTABLE meson DOC "Meson build system")
+        find_program (NINJA_EXECUTABLE ninja DOC "Ninja build tool")    
+        include (ExternalProject)
+        set (_dst ${CMAKE_BINARY_DIR}/lib/fribidi)
+        if (MESON_EXECUTABLE AND NINJA_EXECUTABLE)
+            ExternalProject_Add (fribidi
+                PREFIX              ${CMAKE_BINARY_DIR}/fribidi-ext
+                SOURCE_DIR          ${CMAKE_SOURCE_DIR}/lib/fribidi
+                CONFIGURE_COMMAND   NINJA=${NINJA_EXECUTABLE} ${MESON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/lib/fribidi 
+                                        -Dtests=false -Ddocs=false -Dbin=false
+                                        -Dc_flags=-Wno-macro-redefined
+                                        --prefix ${_dst}
+                BUILD_COMMAND       ${NINJA_EXECUTABLE}
+                INSTALL_COMMAND     ${NINJA_EXECUTABLE} install
+            )
+        else ()
+            message (FATAL_ERROR 
+                "GNU FriBidi must be built with Meson. Please install Meson and Ninja and try again, or provide FriBidi via pkg-config.")
+        endif ()
+        add_library (fribidi-lib INTERFACE)
+        target_include_directories (fribidi-lib INTERFACE ${_dst}/include)
+        target_link_libraries (fribidi-lib INTERFACE -L${_dst}/lib fribidi)
+        set (FRIBIDI_FOUND YES)
+    endif ()
 endif ()
 
 if (NOT EXISTS ${CMAKE_SOURCE_DIR}/lib/the_Foundation/CMakeLists.txt)
@@ -54,7 +79,7 @@ else ()
                 OUTPUT_STRIP_TRAILING_WHITESPACE
             )
             if (subout)
-                message (FATAL_ERROR "The 'lib/the_Foundation' submodule has been updated, please re-run CMake.\n")
+                message (FATAL_ERROR "'lib/the_Foundation' Git submodule has been updated, please re-run CMake.\n")
             endif ()
         endif ()
     endif ()
@@ -72,6 +97,7 @@ else ()
         message (FATAL_ERROR "Lagrange requires zlib for reading compressed archives. Please check if pkg-config can find 'zlib'.")
     endif ()
 endif ()
+
 find_package (PkgConfig REQUIRED)
 pkg_check_modules (SDL2 REQUIRED sdl2)
 pkg_check_modules (MPG123 IMPORTED_TARGET libmpg123)
