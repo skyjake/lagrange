@@ -241,9 +241,10 @@ static void parseResult_FeedJob_(iFeedJob *d) {
                     entry->bookmarkId = d->bookmarkId;
                     iString *title = newRange_String(line);
                     set_String(&entry->title, title);
-                    set_String(&entry->url, canonicalUrl_String(&d->url));
+                    set_String(&entry->url, &d->url);
                     appendChar_String(&entry->url, '#');
                     append_String(&entry->url, collect_String(urlEncode_String(title)));
+                    set_String(&entry->url, canonicalUrl_String(&entry->url));
                     delete_String(title);
                     pushBack_PtrArray(&d->results, entry);
                 }
