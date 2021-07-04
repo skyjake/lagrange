@@ -791,6 +791,7 @@ struct Impl_AttributedText {
     iArray    runs;
     iArray    visual;   /* UTF-32 text in visual order (LTR) */
     iArray    visualToSourceOffset; /* map visual character to an UTF-8 offset in the source text */
+    char *    bidiLevels;
 };
 
 iDefineTypeConstructionArgs(AttributedText, (iRangecc text, size_t maxLen, iFont *font, iColor fgColor),
@@ -849,27 +850,80 @@ static void prepare_AttributedText_(iAttributedText *d) {
             pushBack_Array(&d->visualToSourceOffset, &(int){ ch - d->source.start });
             ch += len;
         }
-        /* Location of the terminating null. */
-        pushBack_Array(&d->visualToSourceOffset, &(int){ d->source.end - d->source.start });
 #if defined (LAGRANGE_ENABLE_FRIBIDI)
-        /* TODO: Use FriBidi to reorder the codepoints. */
-        
+        /* Use FriBidi to reorder the codepoints. */
+//        iArray u32;
+//        iArray logToRun;
+//        init_Array(&u32, sizeof(uint32_t));
+//        init_Array(&logToRun, sizeof(FriBidiStrIndex));
+//        for (const char *pos = runText.start; pos < runText.end; ) {
+//            iChar ucp = 0;
+//            const int len = decodeBytes_MultibyteChar(pos, runText.end, &ucp);
+//            if (len > 0) {
+//                pushBack_Array(&u32, &ucp);
+//                pushBack_Array(&logToRun, &(int){ pos - runText.start });
+//                pos += len;
+//            }
+//            else break;
+//        }
+        const size_t len = size_Array(&d->visual);
+        iArray ordered;
+        iArray visToLog;
+        init_Array(&ordered, sizeof(uint32_t));
+        init_Array(&visToLog, sizeof(FriBidiStrIndex));
+        resize_Array(&ordered, len);
+        resize_Array(&visToLog, len);
+        d->bidiLevels = malloc(len);
+        FriBidiParType baseDir = (FriBidiParType) FRIBIDI_TYPE_ON;
+        fribidi_log2vis(constData_Array(&d->visual),
+                        len,
+                        &baseDir,
+                        data_Array(&ordered),
+                        NULL,
+                        data_Array(&visToLog),
+                        (FriBidiLevel *) d->bidiLevels);
+//        if (FRIBIDI_IS_RTL(baseDir)) {
+//            isRunRTL = iTrue;
+//        }
+        /* Replace with the visually ordered codepoints. */
+        setCopy_Array(&d->visual, &ordered);
+        deinit_Array(&ordered);
+        /* Remap the source positions for visual order. */
+        const int *mapToSource = constData_Array(&d->visualToSourceOffset);
+        const FriBidiStrIndex *visToLogIndex = constData_Array(&visToLog);
+        iArray orderedMapToSource;
+        init_Array(&orderedMapToSource, sizeof(int));
+        resize_Array(&orderedMapToSource, len);
+        for (size_t i = 0; i < len; i++) {
+            *(int *) at_Array(&orderedMapToSource, i) = mapToSource[visToLogIndex[i]];
+        }
+        setCopy_Array(&d->visualToSourceOffset, &orderedMapToSource);
+        deinit_Array(&orderedMapToSource);
+        deinit_Array(&visToLog);
+        //const FriBidiStrIndex *logToRunIndex = constData_Array(&logToRun);
+//        iConstForEach(Array, v, &vis32) {
+//            hb_buffer_add(hbBuf,
+//                          *(const hb_codepoint_t *) v.value,
+//                          logToRunIndex[visToLogIndex[index_ArrayConstIterator(&v)]]);
+//        }
+//        deinit_Array(&visToLog);
+//        deinit_Array(&vis32);
+//        deinit_Array(&logToRun);
+//        deinit_Array(&u32);
 #endif
     }
-//    iRangecc srcText = d->source;
+    /* The mapping needs to include the terminating NULL position. */ {
+        pushBack_Array(&d->visualToSourceOffset, &(int){ d->source.end - d->source.start });
+    }
     iRangei  visText = { 0, size_Array(&d->visual) };
     size_t   avail   = d->maxLen;
-    //const char *srcPos = srcText.start;
     iAttributedRun run = { .visual  = visText,
-//                           .source  = d->source,
                            .font    = d->font,
                            .fgColor = d->fgColor };
-    //while (chPos < visText.end) {
-    const int *mapToSource = constData_Array(&d->visualToSourceOffset);
-    const iChar *visualText = constData_Array(&d->visual);
+    const int *  mapToSource = constData_Array(&d->visualToSourceOffset);
+    const iChar *visualText  = constData_Array(&d->visual);
     for (int pos = 0; pos < visText.end; pos++) {
         const iChar ch = visualText[pos];
-        //const char *currentPos = chPos;
         if (ch == 0x1b) { /* ANSI escape. */
             pos++;
             const char *srcPos = d->source.start + mapToSource[pos];
@@ -944,6 +998,15 @@ static void prepare_AttributedText_(iAttributedText *d) {
     if (!isEmpty_Range(&run.visual)) {
         pushBack_Array(&d->runs, &run);
     }
+#if 0
+    printf("[AttributedText] %zu runs:\n", size_Array(&d->runs));
+    iConstForEach(Array, i, &d->runs) {
+        const iAttributedRun *run = i.value;
+        printf("  %zu %d...%d {%s}\n", index_ArrayConstIterator(&i),
+               run->visual.start, run->visual.end,
+               cstr_Rangecc(sourceRange_AttributedText_(d, run->visual)));
+    }
+#endif
 }
 
 void init_AttributedText(iAttributedText *d, iRangecc text, size_t maxLen, iFont *font, iColor fgColor) {
@@ -954,10 +1017,12 @@ void init_AttributedText(iAttributedText *d, iRangecc text, size_t maxLen, iFont
     init_Array(&d->runs, sizeof(iAttributedRun));
     init_Array(&d->visual, sizeof(iChar));
     init_Array(&d->visualToSourceOffset, sizeof(int));
+    d->bidiLevels = NULL;
     prepare_AttributedText_(d);
 }
 
 void deinit_AttributedText(iAttributedText *d) {
+    free(d->bidiLevels);
     deinit_Array(&d->visual);
     deinit_Array(&d->visualToSourceOffset);
     deinit_Array(&d->runs);
@@ -1267,56 +1332,9 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
         iBool isRunRTL = iFalse;
         /* Cluster values are used to determine offset inside the UTF-8 source string. */
         //hb_buffer_set_cluster_level(hbBuf, HB_BUFFER_CLUSTER_LEVEL_MONOTONE_CHARACTERS);
-#if 0 && defined (LAGRANGE_ENABLE_FRIBIDI)
-        /* Reorder to visual order. */ {
-            iArray u32;
-            iArray logToRun;
-            init_Array(&u32, sizeof(uint32_t));
-            init_Array(&logToRun, sizeof(FriBidiStrIndex));
-            for (const char *pos = runText.start; pos < runText.end; ) {
-                iChar ucp = 0;
-                const int len = decodeBytes_MultibyteChar(pos, runText.end, &ucp);
-                if (len > 0) {
-                    pushBack_Array(&u32, &ucp);
-                    pushBack_Array(&logToRun, &(int){ pos - runText.start });
-                    pos += len;
-                }
-                else break;
-            }
-            iArray vis32;
-            init_Array(&vis32, sizeof(uint32_t));
-            resize_Array(&vis32, size_Array(&u32));
-            iArray visToLog;
-            init_Array(&visToLog, sizeof(FriBidiStrIndex));
-            resize_Array(&visToLog, size_Array(&u32));
-            FriBidiParType baseDir = (FriBidiParType) FRIBIDI_TYPE_ON;
-            fribidi_log2vis(constData_Array(&u32),
-                            size_Array(&u32),
-                            &baseDir,                            
-                            data_Array(&vis32),
-                            NULL,
-                            data_Array(&visToLog),
-                            NULL);
-            if (FRIBIDI_IS_RTL(baseDir)) {
-                isRunRTL = iTrue;
-            }
-            const FriBidiStrIndex *visToLogIndex = constData_Array(&visToLog);
-            const FriBidiStrIndex *logToRunIndex = constData_Array(&logToRun);
-            iConstForEach(Array, v, &vis32) {
-                hb_buffer_add(hbBuf,
-                              *(const hb_codepoint_t *) v.value,
-                              logToRunIndex[visToLogIndex[index_ArrayConstIterator(&v)]]);
-            }
-            deinit_Array(&visToLog);
-            deinit_Array(&vis32);
-            deinit_Array(&logToRun);
-            deinit_Array(&u32);
-        }
-#else /* !defined (LAGRANGE_ENABLE_FRIBIDI) */
         for (int pos = runVisual.start; pos < runVisual.end; pos++) {
             hb_buffer_add(hbBuf, visualText[pos], pos);
         }
-#endif
         hb_buffer_set_content_type(hbBuf, HB_BUFFER_CONTENT_TYPE_UNICODE);
         hb_buffer_set_direction(hbBuf, HB_DIRECTION_LTR);
         /* hb_buffer_set_script(hbBuf, HB_SCRIPT_LATIN); */ /* will be autodetected */
@@ -1339,7 +1357,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                     if (isPictograph_Char(ch) || isEmoji_Char(ch)) {
                         const float dw = run->font->xScale * glyphPos[i].x_advance - monoAdvance;
                         glyphPos[i].x_offset  -= dw / 2 / run->font->xScale - 1;
-                        glyphPos[i].x_advance -= dw / run->font->xScale - 1;
+                        glyphPos[i].x_advance -= dw     / run->font->xScale - 1;
                     }
                 }
             }
@@ -1354,10 +1372,11 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                 const hb_glyph_info_t *info    = &glyphInfo[i];
                 const hb_codepoint_t   glyphId = info->codepoint;
 //                const char *textPos    = sourceText.start + info->cluster;
-                const iGlyph *glyph    = glyphByIndex_Font_(run->font, glyphId);
-                const int   glyphFlags = hb_glyph_info_get_glyph_flags(info);
-                const float xOffset    = run->font->xScale * glyphPos[i].x_offset;
-                const float xAdvance   = run->font->xScale * glyphPos[i].x_advance;
+                const int     visPos     = info->cluster;
+                const iGlyph *glyph      = glyphByIndex_Font_(run->font, glyphId);
+                const int     glyphFlags = hb_glyph_info_get_glyph_flags(info);
+                const float   xOffset    = run->font->xScale * glyphPos[i].x_offset;
+                const float   xAdvance   = run->font->xScale * glyphPos[i].x_advance;
                 if (args->wrap->mode == word_WrapTextMode) {
                     /* When word wrapping, only consider certain places breakable. */
                     const iChar ch = visualText[info->cluster];
@@ -1368,26 +1387,26 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                     }
                     else*/
                     if ((ch >= 128 || !ispunct(ch)) && (prevCh == '-' || prevCh == '/')) {
-                        safeBreak = i;
+                        safeBreak = visPos;
 //                        isSoftHyphenBreak = iFalse;
                     }
                     else if (isSpace_Char(ch)) {
-                        safeBreak = i;
+                        safeBreak = visPos;
 //                        isSoftHyphenBreak = iFalse;
                     }
                     prevCh = ch;
                 }
                 else {
                     if (~glyphFlags & HB_GLYPH_FLAG_UNSAFE_TO_BREAK) {
-                        safeBreak = i;
+                        safeBreak = visPos;
                     }
                 }
                 if (x + xOffset + glyph->d[0].x + glyph->rect[0].size.x > args->wrap->maxWidth) {
-                    if (safeBreak) {
-                        breakPos = safeBreak + 1;
+                    if (safeBreak >= 0) {
+                        breakPos = safeBreak;
                     }
                     else {
-                        breakPos = i + 1;
+                        breakPos = visPos;
                     }
                     break;
                 }
