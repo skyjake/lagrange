@@ -773,8 +773,7 @@ static iBool isControl_Char_(iChar c) {
 iDeclareType(AttributedRun)
 
 struct Impl_AttributedRun {
-    iRangei   visual; /* UTF-32 codepoint indices */
-//    iRangecc  source;
+    iRangei   visual; /* UTF-32 codepoint indices in the visual-order text */
     iFont *   font;
     iColor    fgColor;
     int       lineBreaks;
@@ -818,13 +817,11 @@ static void finishRun_AttributedText_(iAttributedText *d, iAttributedRun *run, i
     iAttributedRun finishedRun = *run;
     iAssert(endAt >= 0 && endAt <= size_Array(&d->visual));
     finishedRun.visual.end = endAt;
-//    finishedRun.source.end = sourcePtr_AttributedText_(d, endAt);
     if (!isEmpty_Range(&finishedRun.visual)) {
         pushBack_Array(&d->runs, &finishedRun);
         run->lineBreaks = 0;
     }
     run->visual.start = endAt;
-//    run->source.start = finishedRun.source.end;
 }
 
 size_t length_Rangecc(const iRangecc d) {
@@ -852,20 +849,6 @@ static void prepare_AttributedText_(iAttributedText *d) {
         }
 #if defined (LAGRANGE_ENABLE_FRIBIDI)
         /* Use FriBidi to reorder the codepoints. */
-//        iArray u32;
-//        iArray logToRun;
-//        init_Array(&u32, sizeof(uint32_t));
-//        init_Array(&logToRun, sizeof(FriBidiStrIndex));
-//        for (const char *pos = runText.start; pos < runText.end; ) {
-//            iChar ucp = 0;
-//            const int len = decodeBytes_MultibyteChar(pos, runText.end, &ucp);
-//            if (len > 0) {
-//                pushBack_Array(&u32, &ucp);
-//                pushBack_Array(&logToRun, &(int){ pos - runText.start });
-//                pos += len;
-//            }
-//            else break;
-//        }
         const size_t len = size_Array(&d->visual);
         iArray ordered;
         iArray visToLog;
@@ -882,9 +865,6 @@ static void prepare_AttributedText_(iAttributedText *d) {
                         NULL,
                         data_Array(&visToLog),
                         (FriBidiLevel *) d->bidiLevels);
-//        if (FRIBIDI_IS_RTL(baseDir)) {
-//            isRunRTL = iTrue;
-//        }
         /* Replace with the visually ordered codepoints. */
         setCopy_Array(&d->visual, &ordered);
         deinit_Array(&ordered);
@@ -900,23 +880,13 @@ static void prepare_AttributedText_(iAttributedText *d) {
         setCopy_Array(&d->visualToSourceOffset, &orderedMapToSource);
         deinit_Array(&orderedMapToSource);
         deinit_Array(&visToLog);
-        //const FriBidiStrIndex *logToRunIndex = constData_Array(&logToRun);
-//        iConstForEach(Array, v, &vis32) {
-//            hb_buffer_add(hbBuf,
-//                          *(const hb_codepoint_t *) v.value,
-//                          logToRunIndex[visToLogIndex[index_ArrayConstIterator(&v)]]);
-//        }
-//        deinit_Array(&visToLog);
-//        deinit_Array(&vis32);
-//        deinit_Array(&logToRun);
-//        deinit_Array(&u32);
 #endif
     }
     /* The mapping needs to include the terminating NULL position. */ {
         pushBack_Array(&d->visualToSourceOffset, &(int){ d->source.end - d->source.start });
     }
-    iRangei  visText = { 0, size_Array(&d->visual) };
-    size_t   avail   = d->maxLen;
+    iRangei visText = { 0, size_Array(&d->visual) };
+    size_t  avail   = d->maxLen;
     iAttributedRun run = { .visual  = visText,
                            .font    = d->font,
                            .fgColor = d->fgColor };
@@ -928,49 +898,39 @@ static void prepare_AttributedText_(iAttributedText *d) {
             pos++;
             const char *srcPos = d->source.start + mapToSource[pos];
             /* Do a regexp match in the source text. */
+            /* TODO: Does this work in RTL regions?! */
             iRegExpMatch m;
             init_RegExpMatch(&m);
             if (match_RegExp(text_.ansiEscape, srcPos, d->source.end - srcPos, &m)) {
                 finishRun_AttributedText_(d, &run, pos - 1);
                 run.fgColor = ansiForeground_Color(capturedRange_RegExpMatch(&m, 1),
                                                    tmParagraph_ColorId);
-                //chPos = end_RegExpMatch(&m);
-                //run.source.start = end_RegExpMatch(&m);// chPos;
                 pos += length_Rangecc(capturedRange_RegExpMatch(&m, 0));
                 iAssert(mapToSource[pos] == end_RegExpMatch(&m) - d->source.start);
                 /* The run continues after the escape sequence. */
                 run.visual.start = pos--; /* loop increments `pos` */
-//                const char *endPos = d->source.start + mapToSource[pos];
-//                printf("ANSI Escape: {%s}\n", cstr_Rangecc((iRangecc){ srcPos, endPos }));
                 continue;
             }
         }
-        //const iChar ch = nextChar_(&chPos, visText.end);
         if (ch == '\v') {
             finishRun_AttributedText_(d, &run, pos);
             /* An internal color escape. */
-            //iChar esc = nextChar_(&chPos, visText.end);
             iChar esc = visualText[++pos];
-//            srcPos++;
             int colorNum = none_ColorId; /* default color */
             if (esc == '\v') { /* Extended range. */
                 esc = visualText[++pos] + asciiExtended_ColorEscape;
-//                srcPos++;
                 colorNum = esc - asciiBase_ColorEscape;
             }
             else if (esc != 0x24) { /* ASCII Cancel */
                 colorNum = esc - asciiBase_ColorEscape;
             }
             run.visual.start = pos + 1;
-//            run.source.start = srcPos;
             run.fgColor = (colorNum >= 0 ? get_Color(colorNum) : d->fgColor);
-            //prevCh = 0;
             continue;
         }
         if (ch == '\n') {
             finishRun_AttributedText_(d, &run, pos);
             run.visual.start = pos + 1;
-//            run.source.start = srcPos + 1;
             run.lineBreaks++;
             continue;
         }
@@ -980,7 +940,6 @@ static void prepare_AttributedText_(iAttributedText *d) {
         if (avail-- == 0) {
             /* TODO: Check the combining class; only count base characters here. */
             run.visual.end = pos;
-//            run.source.end = srcPos;
             break;
         }
         iFont *currentFont = d->font;
@@ -1308,7 +1267,6 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
     for (size_t runIndex = 0; runIndex < size_Array(&attrText.runs); runIndex++) {
         const iAttributedRun *run = at_Array(&attrText.runs, runIndex);
         iRangei runVisual = run->visual;
-        //iRangecc runSource = run->source;
         if (wrapResumePos >= 0) {
             xCursor = 0.0f;
             yCursor += d->height;
@@ -1349,11 +1307,8 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
         if (isMonospaced) {
             for (unsigned int i = 0; i < glyphCount; ++i) {
                 const hb_glyph_info_t *info = &glyphInfo[i];
-//                const hb_codepoint_t glyphId = info->codepoint;
-//                const char *textPos = sourceText.start + visToSource[info->cluster];
                 if (glyphPos[i].x_advance > 0 && run->font != d) {
                     const iChar ch = visualText[info->cluster];
-//                    decodeBytes_MultibyteChar(textPos, runSource.end, &ch);
                     if (isPictograph_Char(ch) || isEmoji_Char(ch)) {
                         const float dw = run->font->xScale * glyphPos[i].x_advance - monoAdvance;
                         glyphPos[i].x_offset  -= dw / 2 / run->font->xScale - 1;
@@ -1371,7 +1326,6 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
             for (unsigned int i = 0; i < glyphCount; i++) {
                 const hb_glyph_info_t *info    = &glyphInfo[i];
                 const hb_codepoint_t   glyphId = info->codepoint;
-//                const char *textPos    = sourceText.start + info->cluster;
                 const int     visPos     = info->cluster;
                 const iGlyph *glyph      = glyphByIndex_Font_(run->font, glyphId);
                 const int     glyphFlags = hb_glyph_info_get_glyph_flags(info);
@@ -1380,12 +1334,6 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                 if (args->wrap->mode == word_WrapTextMode) {
                     /* When word wrapping, only consider certain places breakable. */
                     const iChar ch = visualText[info->cluster];
-//                    decodeBytes_MultibyteChar(textPos, runSource.end, &ch);
-                    /*if (prevCh == 0xad) {
-                        safeBreak = textPos;
-                        isSoftHyphenBreak = iTrue;
-                    }
-                    else*/
                     if ((ch >= 128 || !ispunct(ch)) && (prevCh == '-' || prevCh == '/')) {
                         safeBreak = visPos;
 //                        isSoftHyphenBreak = iFalse;
@@ -1436,9 +1384,6 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
         for (unsigned int i = 0; i < glyphCount; i++) {
             const hb_glyph_info_t *info    = &glyphInfo[i];
             const hb_codepoint_t   glyphId = info->codepoint;
-//            const char *textPos  = runText.start + info->cluster;
-//            iAssert(textPos >= runText.start);
-//            iAssert(textPos < runText.end);
             const int   visPos   = info->cluster;
             const float xOffset  = run->font->xScale * glyphPos[i].x_offset;
             const float yOffset  = run->font->yScale * glyphPos[i].y_offset;
@@ -1606,20 +1551,6 @@ iInt2 tryAdvanceNoWrap_Text(int fontId, iRangecc text, int width, const char **e
                        .wrapFunc = cbAdvanceOneLine_, .context = endPos };
     const int x = advance_WrapText(&wrap, fontId).x;
     return init_I2(x, lineHeight_Text(fontId));
-    
-#if 0
-    int advance;
-    const int height = run_Font_(font_Text_(fontId),
-                                 &(iRunArgs){ .mode = measure_RunMode | noWrapFlag_RunMode |
-                                                      stopAtNewline_RunMode |
-                                                      runFlagsFromId_(fontId),
-                                              .text             = text,
-                                              .xposLimit        = width,
-                                              .continueFrom_out = endPos,
-                                              .runAdvance_out   = &advance })
-                           .size.y;
-    return init_I2(advance, height);
-#endif
 }
 
 iInt2 advance_WrapText(iWrapText *d, int fontId) {
