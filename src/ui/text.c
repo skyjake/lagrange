@@ -1121,6 +1121,15 @@ float horizKern_Font_(iFont *d, uint32_t glyph1, uint32_t glyph2) {
 }
 
 #if defined (LAGRANGE_ENABLE_HARFBUZZ)
+static float glyphRunRightEdge_Font_(const iFont *d, const hb_glyph_position_t *glyphPos, size_t count) {
+    float x = 0.0f;
+    for (unsigned int i = 0; i < count; i++) {
+        const float xAdvance = d->xScale * glyphPos[i].x_advance;
+        x += xAdvance;
+    }
+    return x;
+}
+
 static iRect run_Font_(iFont *d, const iRunArgs *args) {
     const int    mode       = args->mode;
     iRect        bounds     = zero_Rect();
@@ -1168,6 +1177,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
             }
         }
         hb_buffer_clear_contents(hbBuf);
+        iBool isRunRTL = iFalse;
         /* Cluster values are used to determine offset inside the UTF-8 source string. */
         //hb_buffer_set_cluster_level(hbBuf, HB_BUFFER_CLUSTER_LEVEL_MONOTONE_CHARACTERS);
 #if defined (LAGRANGE_ENABLE_FRIBIDI)
@@ -1200,6 +1210,9 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                             NULL,
                             data_Array(&visToLog),
                             NULL);
+            if (FRIBIDI_IS_RTL(baseDir)) {
+                isRunRTL = iTrue;
+            }
             const FriBidiStrIndex *visToLogIndex = constData_Array(&visToLog);
             const FriBidiStrIndex *logToRunIndex = constData_Array(&logToRun);
             iConstForEach(Array, v, &vis32) {
@@ -1222,7 +1235,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
             }
             else break;
         }
-#endif       
+#endif
         hb_buffer_set_content_type(hbBuf, HB_BUFFER_CONTENT_TYPE_UNICODE);
         hb_buffer_set_direction(hbBuf, HB_DIRECTION_LTR);
         /* hb_buffer_set_script(hbBuf, HB_SCRIPT_LATIN); */ /* will be autodetected */
@@ -1311,6 +1324,11 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                 }
             }
         }
+        /* Right-align RTL runs. */
+        if (isRunRTL && xCursor < 1 && args->xposLayoutBound > 0) {
+            xCursor += args->xposLayoutBound - orig.x -
+                       glyphRunRightEdge_Font_(run->font, glyphPos, glyphCount);
+        }
         /* We have determined a possible wrap position inside the text run, so now we can
            draw the glyphs. */
         for (unsigned int i = 0; i < glyphCount; i++) {
@@ -1345,7 +1363,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                     }
                 }
                 else {
-                    bounds.size.x = iMax(bounds.size.x, dst.x + dst.w);
+                    bounds.size.x = iMax(bounds.size.x, dst.x + dst.w - orig.x);
                     bounds.size.y = iMax(bounds.size.y, yCursor + glyph->font->height);
                 }
                 if (mode & draw_RunMode && *textPos != 0x20) {
