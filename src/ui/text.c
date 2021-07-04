@@ -187,9 +187,11 @@ static void init_Font(iFont *d, const iBlock *data, int height, float scale,
     d->baseline   = ascent * d->yScale;
     d->vertOffset = height * (1.0f - scale) / 2;
     /* Custom tweaks. */
-    if (data == &fontNotoSansSymbolsRegular_Embedded ||
-        data == &fontNotoSansSymbols2Regular_Embedded) {
-        d->vertOffset /= 2; 
+    if (data == &fontNotoSansSymbolsRegular_Embedded) {
+        d->vertOffset *= 1.2f; 
+    }
+    else if (data == &fontNotoSansSymbols2Regular_Embedded) {
+        d->vertOffset /= 2;
     }
     else if (data == &fontNotoEmojiRegular_Embedded) {
         //d->vertOffset -= height / 30;
@@ -405,7 +407,7 @@ static void initFonts_Text_(iText *d) {
         { (data), monoSize,          glyphScale, contentMono_FontSize }
         DEFINE_FONT_SET(userFont_ ? userFont_ : &fontIosevkaTermExtended_Embedded, 1.0f),
         DEFINE_FONT_SET(&fontIosevkaTermExtended_Embedded, 0.866f),
-        DEFINE_FONT_SET(&fontNotoSansSymbolsRegular_Embedded, 1.45f),
+        DEFINE_FONT_SET(&fontNotoSansSymbolsRegular_Embedded, 2.0f),
         DEFINE_FONT_SET(&fontNotoSansSymbols2Regular_Embedded, 1.45f),
         DEFINE_FONT_SET(&fontSmolEmojiRegular_Embedded, 1.0f),
         DEFINE_FONT_SET(&fontNotoEmojiRegular_Embedded, 1.10f),

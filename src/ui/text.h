@@ -45,6 +45,13 @@ enum iFontSize {
     max_FontSize,
 };
 
+iLocalDef enum iFontSize larger_FontSize(enum iFontSize size) {
+    if (size == uiLarge_FontSize || size == contentHuge_FontSize || size == contentMono_FontSize) {
+        return size; /* biggest available */
+    }
+    return size + 1;
+}
+
 enum iFontId {
     /* UI fonts: normal weight (1x, 1.125x, 1.33x, 1.67x) */
     default_FontId = 0,
