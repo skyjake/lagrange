@@ -1448,10 +1448,10 @@ static void draw_InputWidget_(const iInputWidget *d) {
         const iString *   text    = &curLine->text;
         /* The `gap_UI` offsets below are a hack. They are used because for some reason the
            cursor rect and the glyph inside don't quite position like during `run_Text_()`. */
-        const iInt2 prefixSize = measureN_Text(d->font, cstr_String(text), d->cursor - curLine->offset).bounds.size;
-        const iInt2 curPos     = addX_I2(addY_I2(contentBounds.pos, lineHeight_Text(d->font) * d->cursorLine),
-                                         prefixSize.x +
-                                         (d->mode == insert_InputMode ? -curSize.x / 2 : 0));
+        const int prefixSize = measureN_Text(d->font, cstr_String(text), d->cursor - curLine->offset).advance.x;
+        const iInt2 curPos   = addX_I2(addY_I2(contentBounds.pos, lineHeight_Text(d->font) * d->cursorLine),
+                                       prefixSize +
+                                       (d->mode == insert_InputMode ? -curSize.x / 2 : 0));
         const iRect curRect    = { curPos, curSize };
         fillRect_Paint(&p, curRect, uiInputCursor_ColorId);
         if (d->mode == overwrite_InputMode) {
