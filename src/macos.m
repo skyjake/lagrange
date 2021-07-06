@@ -544,6 +544,10 @@ void handleCommand_MacOS(const char *cmd) {
             mainIndex++;
         }
     }
+    else if (equal_Command(cmd, "emojipicker")) {
+        [NSApp orderFrontCharacterPalette:nil];
+        return iTrue;
+    }
 }
 
 void log_MacOS(const char *msg) {

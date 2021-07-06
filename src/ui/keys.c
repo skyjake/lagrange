@@ -240,8 +240,9 @@ static const struct { int id; iMenuItem bind; int flags; } defaultBindings_[] = 
     { 110,{ "${menu.save.downloads}",       SDLK_s, KMOD_PRIMARY,           "document.save"                     }, 0 },
     /* The following cannot currently be changed (built-in duplicates). */
 #if defined (iPlatformApple)
-    { 1002, { NULL, SDLK_LEFTBRACKET, KMOD_PRIMARY,     "navigate.back"                 }, 0 },
-    { 1003, { NULL, SDLK_RIGHTBRACKET, KMOD_PRIMARY,    "navigate.forward"              }, 0 },
+    { 1002, { NULL, SDLK_LEFTBRACKET,  KMOD_PRIMARY,             "navigate.back"        }, 0 },
+    { 1003, { NULL, SDLK_RIGHTBRACKET, KMOD_PRIMARY,             "navigate.forward"     }, 0 },
+    { 1100, { NULL, SDLK_SPACE,        KMOD_PRIMARY | KMOD_CTRL, "emojipicker"          }, 0 },
 #endif
     { 1004, { NULL, SDLK_F5, 0,                         "document.reload"               }, 0 },
     /* Media keys. */
