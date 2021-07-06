@@ -1482,6 +1482,13 @@ iLocalDef iBool isNormalizableSpace_(char ch) {
 static void normalize_GmDocument(iGmDocument *d) {
     iString *normalized = new_String();
     iRangecc src = range_String(&d->source);
+    /* Check for a BOM. In UTF-8, the BOM can just be skipped if present. */ {
+        iChar ch = 0;
+        decodeBytes_MultibyteChar(src.start, src.end, &ch);
+        if (ch == 0xfeff) /* zero-width non-breaking space */ {
+            src.start += 3;
+        }
+    }
     iRangecc line = iNullRange;
     iBool isPreformat = iFalse;
     if (d->format == plainText_SourceFormat) {
