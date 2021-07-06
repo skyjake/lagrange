@@ -376,9 +376,9 @@ static void sizeChanged_LabelWidget_(iLabelWidget *d) {
     if (d->flags.wrap) {
         if (flags_Widget(w) & fixedHeight_WidgetFlag) {
             /* Calculate a new height based on the wrapping. */
-            w->rect.size.y = advanceWrapRange_Text(
+            w->rect.size.y = measureWrapRange_Text(
                                  d->font, innerBounds_Widget(w).size.x, range_String(&d->label))
-                                 .y;
+                                 .bounds.size.y;
         }
     }
 }
@@ -386,13 +386,13 @@ static void sizeChanged_LabelWidget_(iLabelWidget *d) {
 iInt2 defaultSize_LabelWidget(const iLabelWidget *d) {
     const iWidget *w = constAs_Widget(d);
     const int64_t flags = flags_Widget(w);
-    iInt2 size = add_I2(measure_Text(d->font, cstr_String(&d->label)),
+    iInt2 size = add_I2(measure_Text(d->font, cstr_String(&d->label)).bounds.size,
                         add_I2(padding_LabelWidget_(d, 0), padding_LabelWidget_(d, 2)));
     if ((flags & drawKey_WidgetFlag) && d->key) {
         iString str;
         init_String(&str);
         keyStr_LabelWidget_(d, &str);
-        size.x += 2 * gap_UI + measure_Text(uiShortcuts_FontId, cstr_String(&str)).x;
+        size.x += 2 * gap_UI + measure_Text(uiShortcuts_FontId, cstr_String(&str)).bounds.size.x;
         deinit_String(&str);
     }
     size.x += iconPadding_LabelWidget_(d);

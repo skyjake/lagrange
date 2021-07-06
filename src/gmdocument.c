@@ -166,7 +166,7 @@ static iInt2 measurePreformattedBlock_GmDocument_(const iGmDocument *d, const ch
         }
         contents->end = line.end;
     }
-    return measureRange_Text(font, *contents);
+    return measureRange_Text(font, *contents).bounds.size;
 }
 
 static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *linkId) {
@@ -483,7 +483,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 if (meta.pixelRect.size.x >
                     d->size.x - (enableIndents ? indents[preformatted_GmLineType] : 0) * gap_Text) {
                     preFont = preformattedSmall_FontId;
-                    meta.pixelRect.size = measureRange_Text(preFont, meta.contents);
+                    meta.pixelRect.size = measureRange_Text(preFont, meta.contents).bounds.size;
                 }
                 trimLine_Rangecc(&line, type, isNormalized);
                 meta.altText = line; /* without the ``` */
@@ -614,8 +614,8 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 altText.color      = tmQuote_ColorId;
                 altText.text       = isBlank ? range_Lang(range_CStr("doc.pre.nocaption"))
                                              : meta->altText;
-                iInt2 size = advanceWrapRange_Text(altText.font, d->size.x - 2 * margin.x,
-                                                   altText.text);
+                iInt2 size = measureWrapRange_Text(altText.font, d->size.x - 2 * margin.x,
+                                                   altText.text).bounds.size;
                 altText.bounds = altText.visBounds = init_Rect(pos.x, pos.y, d->size.x,
                                                                size.y + 2 * margin.y);
                 altText.preId = preId;
@@ -661,7 +661,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             quoteRun.text   = range_CStr(quote);
             quoteRun.color  = tmQuoteIcon_ColorId;
             iRect vis       = visualBounds_Text(quoteRun.font, quoteRun.text);
-            quoteRun.visBounds.size = advance_Text(quoteRun.font, quote);
+            quoteRun.visBounds.size = measure_Text(quoteRun.font, quote).bounds.size;
             quoteRun.visBounds.pos =
                 add_I2(pos,
                        init_I2((indents[quote_GmLineType] - 5) * gap_Text,

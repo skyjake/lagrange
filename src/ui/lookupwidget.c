@@ -121,7 +121,7 @@ static void draw_LookupItem_(iLookupItem *d, iPaint *p, iRect rect, const iListW
                  ? permanent_ColorId | (isPressing || isCursor ? uiTextPressed_ColorId
                                                                : uiTextFramelessHover_ColorId)
                  : d->fg;
-    const iInt2 size = measureRange_Text(d->font, range_String(&d->text));
+    const iInt2 size = measureRange_Text(d->font, range_String(&d->text)).bounds.size;
     iInt2       pos  = init_I2(left_Rect(rect) + 3 * gap_UI, mid_Rect(rect).y - size.y / 2);
     if (d->listItem.isSeparator) {
         pos.y = bottom_Rect(rect) - lineHeight_Text(d->font);

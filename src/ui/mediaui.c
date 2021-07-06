@@ -98,7 +98,7 @@ static int drawSevenSegmentTime_(iInt2 pos, int color, int align, int seconds) {
     appendChar_String(&num, ':');
     appendChar_String(&num, sevenSegmentDigit_ + (secs / 10) % 10);
     appendChar_String(&num, sevenSegmentDigit_ + (secs % 10));
-    iInt2 size = advanceRange_Text(font, range_String(&num));
+    iInt2 size = measureRange_Text(font, range_String(&num)).bounds.size;
     if (align == right_Alignment) {
         pos.x -= size.x;
     }
@@ -151,7 +151,7 @@ void draw_PlayerUI(iPlayerUI *d, iPaint *p) {
     drawHLine_Paint(p, init_I2(s1, yMid), part, bright);
     drawHLine_Paint(p, init_I2(s1 + part, yMid), scrubMax - part, dim);
     const char *dot = "\u23fa";
-    const int dotWidth = advance_Text(uiLabel_FontId, dot).x;
+    const int dotWidth = measure_Text(uiLabel_FontId, dot).advance.x;
     draw_Text(uiLabel_FontId,
               init_I2(s1 * (1.0f - normPos) + s2 * normPos - dotWidth / 2,
                       yMid - lineHeight_Text(uiLabel_FontId) / 2),
@@ -223,7 +223,7 @@ static void drawSevenSegmentBytes_(iInt2 pos, int color, size_t numBytes) {
         }
     }
     const int font = uiLabel_FontId;
-    const iInt2 dims = advanceRange_Text(font, range_String(&digits));
+    const iInt2 dims = measureRange_Text(font, range_String(&digits)).bounds.size;
     drawRange_Text(font, addX_I2(pos, -dims.x), color, range_String(&digits));
     deinit_String(&digits);
 }

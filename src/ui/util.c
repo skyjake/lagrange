@@ -1648,9 +1648,9 @@ iWidget *makePreferences_Widget(void) {
             size_t widestPos = iInvalidPos;
             iConstForEach(Array, i, uiLangs) {
                 const int width =
-                    advance_Text(uiLabel_FontId,
+                    measure_Text(uiLabel_FontId,
                                  translateCStr_Lang(((const iMenuItem *) i.value)->label))
-                        .x;
+                        .advance.x;
                 if (widestPos == iInvalidPos || width > widest) {
                     widest = width;
                     widestPos = index_ArrayConstIterator(&i);

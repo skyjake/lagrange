@@ -211,7 +211,7 @@ static void updateSizeForFixedLength_InputWidget_(iInputWidget *d) {
         int extraHeight = (flags_Widget(as_Widget(d)) & extraPadding_WidgetFlag ? extraPaddingHeight_ : 0);
         setFixedSize_Widget(
             as_Widget(d),
-            add_I2(measure_Text(d->font, cstr_Block(content)),
+            add_I2(measure_Text(d->font, cstr_Block(content)).bounds.size,
                    init_I2(6 * gap_UI + d->leftPadding + d->rightPadding,
                            2 * gap_UI + extraHeight)));
         delete_Block(content);
@@ -747,7 +747,7 @@ static size_t indexForRelativeX_InputWidget_(const iInputWidget *d, int x, const
 
 static iBool moveCursorByLine_InputWidget_(iInputWidget *d, int dir) {
     const iInputLine *line = line_InputWidget_(d, d->cursorLine);
-    int xPos = advanceN_Text(d->font, cstr_String(&line->text), d->cursor - line->offset).x;
+    int xPos = measureN_Text(d->font, cstr_String(&line->text), d->cursor - line->offset).advance.x;
     size_t newCursor = iInvalidPos;
     const size_t numLines = size_Array(&d->lines);
     if (dir < 0 && d->cursorLine > 0) {
@@ -1400,14 +1400,14 @@ static void draw_InputWidget_(const iInputWidget *d) {
                 /* Draw the selected range. */
                 const iRanges mark = mark_InputWidget_(d);
                 if (mark.start < lineRange.end && mark.end > lineRange.start) {
-                    const int m1 = advanceN_Text(d->font,
+                    const int m1 = measureN_Text(d->font,
                                                  cstr_String(&line->text),
                                                  iMax(lineRange.start, mark.start) - line->offset)
-                                       .x;
-                    const int m2 = advanceN_Text(d->font,
+                                       .advance.x;
+                    const int m2 = measureN_Text(d->font,
                                                  cstr_String(&line->text),
                                                  iMin(lineRange.end, mark.end) - line->offset)
-                                       .x;
+                                       .advance.x;
                     fillRect_Paint(&p,
                                    (iRect){ addX_I2(drawPos, iMin(m1, m2)),
                                             init_I2(iMax(gap_UI / 3, iAbs(m2 - m1)),
@@ -1437,7 +1437,8 @@ static void draw_InputWidget_(const iInputWidget *d) {
             else {
                 initCStr_String(&cur, " ");
             }
-            curSize = addX_I2(advance_Text(d->font, cstr_String(&cur)), iMin(2, gap_UI / 4));
+            curSize = addX_I2(measure_Text(d->font, cstr_String(&cur)).bounds.size,
+                              iMin(2, gap_UI / 4));
         }
         else {
             /* Bar cursor. */
@@ -1447,7 +1448,7 @@ static void draw_InputWidget_(const iInputWidget *d) {
         const iString *   text    = &curLine->text;
         /* The `gap_UI` offsets below are a hack. They are used because for some reason the
            cursor rect and the glyph inside don't quite position like during `run_Text_()`. */
-        const iInt2 prefixSize = advanceN_Text(d->font, cstr_String(text), d->cursor - curLine->offset);
+        const iInt2 prefixSize = measureN_Text(d->font, cstr_String(text), d->cursor - curLine->offset).bounds.size;
         const iInt2 curPos     = addX_I2(addY_I2(contentBounds.pos, lineHeight_Text(d->font) * d->cursorLine),
                                          prefixSize.x +
                                          (d->mode == insert_InputMode ? -curSize.x / 2 : 0));

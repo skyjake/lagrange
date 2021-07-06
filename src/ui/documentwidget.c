@@ -942,7 +942,7 @@ static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
             prependChar_String(text, siteIcon);
             prependCStr_String(text, escape_Color(uiIcon_ColorId));
         }
-        const int width = advanceRange_Text(default_FontId, range_String(text)).x;
+        const int width = measureRange_Text(default_FontId, range_String(text)).advance.x;
         if (width <= avail ||
             isEmpty_StringArray(title)) {
             updateText_LabelWidget(tabButton, text);
@@ -953,7 +953,7 @@ static void updateWindowTitle_DocumentWidget_(const iDocumentWidget *d) {
             const char *endPos;
             tryAdvanceNoWrap_Text(default_FontId,
                                   range_String(text),
-                                  avail - advance_Text(default_FontId, "...").x,
+                                  avail - measure_Text(default_FontId, "...").advance.x,
                                   &endPos);
             updateText_LabelWidget(
                 tabButton,
@@ -3898,17 +3898,17 @@ static void fillRange_DrawContext_(iDrawContext *d, const iGmRun *run, enum iCol
                       contains_Range(&mark, run->text.start))) {
         int x = 0;
         if (!*isInside) {
-            x = advanceRange_Text(run->font,
+            x = measureRange_Text(run->font,
                                   (iRangecc){ run->text.start, iMax(run->text.start, mark.start) })
-                    .x;
+                    .advance.x;
         }
         int w = width_Rect(run->visBounds) - x;
         if (contains_Range(&run->text, mark.end) || mark.end < run->text.start) {
-            w = advanceRange_Text(
+            w = measureRange_Text(
                     run->font,
                     !*isInside ? mark
                                : (iRangecc){ run->text.start, iMax(run->text.start, mark.end) })
-                    .x;
+                    .advance.x;
             *isInside = iFalse;
         }
         else {
@@ -4013,8 +4013,8 @@ static void drawBannerRun_DrawContext_(iDrawContext *d, const iGmRun *run, iInt2
             appendCStr_String(&str, "\n");
             appendCStr_String(&str, cstr_Lang("dlg.certwarn.domain.expired"));
         }
-        const iInt2 dims = advanceWrapRange_Text(
-            uiContent_FontId, width_Rect(rect) - 16 * gap_UI, range_String(&str));
+        const iInt2 dims = measureWrapRange_Text(
+            uiContent_FontId, width_Rect(rect) - 16 * gap_UI, range_String(&str)).bounds.size;
         const int warnHeight = run->visBounds.size.y - domainHeight;
         const int yOff = (lineHeight_Text(uiLabelLarge_FontId) -
                           lineHeight_Text(uiContent_FontId)) / 2;
@@ -4224,7 +4224,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                 appendFormat_String(
                     &text, "  %s" close_Icon, isHover ? escape_Color(tmLinkText_ColorId) : "");
             }
-            const iInt2 size = measureRange_Text(metaFont, range_String(&text));
+            const iInt2 size = measureRange_Text(metaFont, range_String(&text)).bounds.size;
             fillRect_Paint(
                 &d->paint,
                 (iRect){ add_I2(origin, addX_I2(topRight_Rect(run->bounds), -size.x - gap_UI)),
@@ -4293,7 +4293,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                 append_String(&str, collect_String(format_Date(&date, "%b %d")));
             }
             if (!isEmpty_String(&str)) {
-                const iInt2 textSize = measure_Text(metaFont, cstr_String(&str));
+                const iInt2 textSize = measure_Text(metaFont, cstr_String(&str)).bounds.size;
                 int tx = topRight_Rect(linkRect).x;
                 const char *msg = cstr_String(&str);
                 if (tx + textSize.x > right_Rect(d->widgetBounds)) {
@@ -4301,7 +4301,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                     fillRect_Paint(&d->paint, (iRect){ init_I2(tx, top_Rect(linkRect)), textSize },
                                    uiBackground_ColorId);
                     msg += 4; /* skip the space and dash */
-                    tx += measure_Text(metaFont, " \u2014").x / 2;
+                    tx += measure_Text(metaFont, " \u2014").advance.x / 2;
                 }
                 drawAlign_Text(metaFont,
                                init_I2(tx, top_Rect(linkRect)),
@@ -4359,8 +4359,8 @@ static void updateSideIconBuf_DocumentWidget_(const iDocumentWidget *d) {
     /* Determine the required size. */
     iInt2 bufSize = init1_I2(minBannerSize);
     if (isHeadingVisible) {
-        const iInt2 headingSize = advanceWrapRange_Text(heading3_FontId, avail,
-                                                        currentHeading_DocumentWidget_(d));
+        const iInt2 headingSize = measureWrapRange_Text(heading3_FontId, avail,
+                                                        currentHeading_DocumentWidget_(d)).bounds.size;
         if (headingSize.x > 0) {
             bufSize.y += gap_Text + headingSize.y;
             bufSize.x = iMax(bufSize.x, headingSize.x);
@@ -4736,7 +4736,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
     if (prefs_App()->hoverLink && d->hoverLink) {
         const int      font     = uiLabel_FontId;
         const iRangecc linkUrl  = range_String(linkUrl_GmDocument(d->doc, d->hoverLink->linkId));
-        const iInt2    size     = measureRange_Text(font, linkUrl);
+        const iInt2    size     = measureRange_Text(font, linkUrl).bounds.size;
         const iRect    linkRect = { addY_I2(bottomLeft_Rect(bounds), -size.y),
                                     addX_I2(size, 2 * gap_UI) };
         fillRect_Paint(&ctx.paint, linkRect, tmBackground_ColorId);
@@ -4757,7 +4757,7 @@ static void draw_DocumentWidget_(const iDocumentWidget *d) {
             const int   wrap     = docBounds.size.x - 2 * margin;
             iInt2 pos            = addY_I2(add_I2(docBounds.pos, meta->pixelRect.pos),
                                            -pos_SmoothScroll(&d->scrollY));
-            const iInt2 textSize = advanceWrapRange_Text(altFont, wrap, meta->altText);
+            const iInt2 textSize = measureWrapRange_Text(altFont, wrap, meta->altText).bounds.size;
             pos.y -= textSize.y + gap_UI;
             pos.y               = iMax(pos.y, top_Rect(bounds));
             const iRect altRect = { pos, init_I2(docBounds.size.x, textSize.y) };

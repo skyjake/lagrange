@@ -148,13 +148,28 @@ void    setContentFontSize_Text (float fontSizeFactor); /* affects all except `d
 void    resetFonts_Text         (void);
 
 int     lineHeight_Text         (int fontId);
-iInt2   measure_Text            (int fontId, const char *text);
-iInt2   measureRange_Text       (int fontId, iRangecc text);
+//iInt2   measure_Text            (int fontId, const char *text);
+//iInt2   measureRange_Text       (int fontId, iRangecc text);
 iRect   visualBounds_Text       (int fontId, iRangecc text);
-iInt2   advance_Text            (int fontId, const char *text);
-iInt2   advanceN_Text           (int fontId, const char *text, size_t n); /* `n` in characters */
-iInt2   advanceRange_Text       (int fontId, iRangecc text);
-iInt2   advanceWrapRange_Text   (int fontId, int maxWidth, iRangecc text);
+//iInt2   advance_Text            (int fontId, const char *text);
+//iInt2   advanceN_Text           (int fontId, const char *text, size_t n); /* `n` in characters */
+//iInt2   advanceRange_Text       (int fontId, iRangecc text);
+//iInt2   advanceWrapRange_Text   (int fontId, int maxWidth, iRangecc text);
+
+iDeclareType(TextMetrics)
+
+struct Impl_TextMetrics {
+    iRect bounds;  /* logical bounds: multiples of line height, horiz. advance */
+    iInt2 advance; /* cursor offset */
+};
+
+iTextMetrics    measureRange_Text       (int fontId, iRangecc text);
+iTextMetrics    measureWrapRange_Text   (int fontId, int maxWidth, iRangecc text);
+iTextMetrics    measureN_Text           (int fontId, const char *text, size_t n); /* `n` in characters */
+
+iLocalDef iTextMetrics measure_Text(int fontId, const char *text) {
+    return measureRange_Text(fontId, range_CStr(text));
+}
 
 iInt2   tryAdvance_Text         (int fontId, iRangecc text, int width, const char **endPos);
 iInt2   tryAdvanceNoWrap_Text   (int fontId, iRangecc text, int width, const char **endPos);
@@ -196,15 +211,12 @@ struct Impl_WrapText {
     enum iWrapTextMode mode;
     iBool  (*wrapFunc)(iWrapText *, iRangecc wrappedText, int advance);
     void *   context;
-    /* output */
-    iInt2    cursor_out;
     /* internal */
     iRangecc wrapRange_;
 };
 
-iRect   measure_WrapText        (iWrapText *, int fontId);
-iInt2   advance_WrapText        (iWrapText *, int fontId);
-void    draw_WrapText           (iWrapText *, int fontId, iInt2 pos, int color);
+iTextMetrics    measure_WrapText    (iWrapText *, int fontId);
+void            draw_WrapText       (iWrapText *, int fontId, iInt2 pos, int color);
 
 SDL_Texture *   glyphCache_Text     (void);
 

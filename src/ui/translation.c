@@ -80,7 +80,7 @@ void init_TranslationProgressWidget(iTranslationProgressWidget *d) {
         spr->color = 0;
         init_String(&spr->text);
         appendChar_String(&spr->text, chars[i]);
-        spr->xoff = (width - advanceRange_Text(d->font, range_String(&spr->text)).x) / 2;
+        spr->xoff = (width - measureRange_Text(d->font, range_String(&spr->text)).advance.x) / 2;
         spr->size = init_I2(width, lineHeight_Text(d->font));
         x += width + gap;
     }

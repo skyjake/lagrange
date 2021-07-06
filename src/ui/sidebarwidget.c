@@ -618,7 +618,7 @@ static void updateMetrics_SidebarWidget_(iSidebarWidget *d) {
                 iMaxi(d->maxButtonLabelWidth,
                       3 * gap_UI + measure_Text(font_LabelWidget(d->modeButtons[i]),
                                                 translateCStr_Lang(normalModeLabels_[i]))
-                                       .x);
+                                       .bounds.size.x);
         }
     }
     updateItemHeight_SidebarWidget_(d);
@@ -1672,8 +1672,8 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
             }
             /* Select the layout based on how the title fits. */
             int         metaFg    = isPressing ? fg : uiSubheading_ColorId;
-            iInt2       titleSize = advanceRange_Text(titleFont, range_String(&d->label));
-            const iInt2 metaSize  = advanceRange_Text(uiLabel_FontId, range_String(&d->meta));
+            iInt2       titleSize = measureRange_Text(titleFont, range_String(&d->label)).bounds.size;
+            const iInt2 metaSize  = measureRange_Text(uiLabel_FontId, range_String(&d->meta)).bounds.size;
             pos.x += iconPad;
             const int avail = width_Rect(itemRect) - iconPad - 3 * gap_UI;
             const int labelFg = isPressing ? fg : (isUnread ? uiTextStrong_ColorId : uiText_ColorId);
@@ -1682,7 +1682,7 @@ static void draw_SidebarItem_(const iSidebarItem *d, iPaint *p, iRect itemRect,
                 pos.y += (itemHeight - h2 - h2) / 2;
                 draw_Text(
                     uiLabel_FontId, addY_I2(pos, h2 - h1 - gap_UI / 8), metaFg, "%s \u2014 ", cstr_String(&d->meta));
-                int skip  = metaSize.x + advance_Text(uiLabel_FontId, " \u2014 ").x;
+                int skip  = metaSize.x + measure_Text(uiLabel_FontId, " \u2014 ").advance.x;
                 iInt2 cur = addX_I2(pos, skip);
                 const char *endPos;
                 tryAdvance_Text(titleFont, range_String(&d->label), avail - skip, &endPos);
