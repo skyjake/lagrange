@@ -1183,7 +1183,7 @@ iBool valueInputHandler_(iWidget *dlg, const char *cmd) {
         }
         return iFalse;
     }
-    else if (equal_Command(cmd, "cancel")) {
+    else if (equal_Command(cmd, "valueinput.cancel")) {
         postCommandf_App("valueinput.cancelled id:%s", cstr_String(id_Widget(dlg)));
         setId_Widget(dlg, ""); /* no further commands to emit */
         setupSheetTransition_Mobile(dlg, iFalse);
@@ -1301,7 +1301,8 @@ iWidget *makeValueInput_Widget(iWidget *parent, const iString *initialValue, con
     addChild_Widget(
         dlg,
         iClob(makeDialogButtons_Widget(
-            (iMenuItem[]){ { "${cancel}", 0, 0, NULL }, { acceptLabel, 0, 0, "valueinput.accept" } },
+            (iMenuItem[]){ { "${cancel}", SDLK_ESCAPE, 0, "valueinput.cancel" },
+                           { acceptLabel, 0, 0, "valueinput.accept" } },
             2)));
     finalizeSheet_Mobile(dlg);
     if (parent) {
