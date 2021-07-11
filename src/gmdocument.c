@@ -394,37 +394,30 @@ static const int colors[max_GmLineType] = {
     tmLinkText_ColorId,
 };
 
-static iRangecc typesetOneLine_RunTypesetter_(iRunTypesetter *d, iRangecc runLine) {
+static iBool typesetOneLine_RunTypesetter_(iWrapText *wrap, iRangecc wrapRange, int wrapAdvance) {
+    iRunTypesetter *d = wrap->context;
+    const int fontId = d->run.font;
+    d->run.text = wrapRange;
     if (~d->run.flags & startOfLine_GmRunFlag && d->lineHeightReduction > 0.0f) {
-        d->pos.y -= d->lineHeightReduction * lineHeight_Text(d->run.font);
+        d->pos.y -= d->lineHeightReduction * lineHeight_Text(fontId);
     }
     d->run.bounds.pos = addX_I2(d->pos, d->indent);
-    const int wrapAvail = d->layoutWidth - d->run.bounds.pos.x - d->rightMargin;
-    const int avail = d->isWordWrapped ? wrapAvail : 0;
-    const char *contPos;
-    const iInt2 dims = tryAdvance_Text(d->run.font, runLine, avail, &contPos);
+    const iInt2 dims = init_I2(wrapAdvance, lineHeight_Text(fontId));
     iChangeFlags(d->run.flags, wide_GmRunFlag, (d->isPreformat && dims.x > d->layoutWidth));
-    d->run.bounds.size.x = iMax(wrapAvail, dims.x); /* Extends to the right edge for selection. */
-    d->run.bounds.size.y = dims.y;
-    d->run.visBounds     = d->run.bounds;
+    d->run.bounds.size.x    = iMax(wrap->maxWidth, dims.x); /* Extends to the right edge for selection. */
+    d->run.bounds.size.y    = dims.y;
+    d->run.visBounds        = d->run.bounds;
     d->run.visBounds.size.x = dims.x;
-    if (contPos > runLine.start) {
-        d->run.text = (iRangecc){ runLine.start, contPos };
-    }
-    else {
-        d->run.text = runLine;
-        contPos = runLine.end;
-    }
     pushBack_Array(&d->doc->layout, &d->run);
     d->run.flags &= ~startOfLine_GmRunFlag;
-    runLine.start = contPos;
-    trimStart_Rangecc(&runLine);
-    d->pos.y += lineHeight_Text(d->run.font) * prefs_App()->lineSpacing;
-    if (--d->bigCount == 0) {
-        d->run.font  = d->fonts[text_GmLineType];
-        d->run.color = colors[text_GmLineType];
-    }
-    return runLine;
+//    runLine.start = contPos;
+//    trimStart_Rangecc(&runLine);
+    d->pos.y += lineHeight_Text(fontId) * prefs_App()->lineSpacing;
+//    if (--d->bigCount == 0) {
+//        d->run.font  = d->fonts[text_GmLineType];
+//        d->run.color = colors[text_GmLineType];
+//    }
+    return iTrue; /* continue to next wrapped line */
 }
 
 static void doLayout_GmDocument_(iGmDocument *d) {
@@ -811,9 +804,17 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                                .isPreformat         = isPreformat,
                                .bigCount            = bigCount,
                                .fonts               = fonts };
-        while (!isEmpty_Range(&runLine)) {
-            runLine = typesetOneLine_RunTypesetter_(&rts, runLine);
-        }
+//        while (!isEmpty_Range(&runLine)) {
+//            runLine = typesetOneLine_RunTypesetter_(&rts, runLine);
+//        }
+        iWrapText wrapText = { .text     = runLine,
+                               .maxWidth = isWordWrapped ? d->size.x - run.bounds.pos.x -
+                                                               rts.indent - rts.rightMargin
+                                                         : 0 /* unlimited */,
+                               .mode     = word_WrapTextMode,
+                               .wrapFunc = typesetOneLine_RunTypesetter_,
+                               .context  = &rts };
+        measure_WrapText(&wrapText, run.font);
         pos = rts.pos;
         /* Flag the end of line, too. */
         ((iGmRun *) back_Array(&d->layout))->flags |= endOfLine_GmRunFlag;
