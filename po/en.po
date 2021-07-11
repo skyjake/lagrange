@@ -1139,6 +1139,12 @@ msgstr "Right Tab"
 msgid "prefs.smoothscroll"
 msgstr "Smooth scrolling:"
 
+msgid "prefs.scrollspeed.keyboard"
+msgstr "Keyboard speed:"
+
+msgid "prefs.scrollspeed.mouse"
+msgstr "Mouse speed:"
+
 msgid "prefs.imageloadscroll"
 msgstr "Load image on scroll:"
 
@@ -1260,6 +1266,9 @@ msgstr "Normal"
 
 msgid "prefs.linewidth.fill"
 msgstr "Fill"
+
+msgid "prefs.linespacing"
+msgstr "Line spacing:"
 
 msgid "prefs.quoteicon"
 msgstr "Quote indicator:"
