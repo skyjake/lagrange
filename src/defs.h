@@ -41,6 +41,12 @@ enum iFileVersion {
     latest_FileVersion = 4,
 };
 
+enum iScrollType {
+    keyboard_ScrollType,
+    mouse_ScrollType,
+    max_ScrollType
+};
+
 /* Icons */
 
 #define menu_Icon           "\U0001d362"

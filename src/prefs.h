@@ -57,6 +57,7 @@ struct Impl_Prefs {
     iString          downloadDir;
     iBool            hoverLink;
     iBool            smoothScrolling;
+    int              smoothScrollSpeed[max_ScrollType];
     iBool            loadImageInsteadOfScrolling;
     iBool            collapsePreOnLoad;
     iString          searchUrl;
@@ -91,3 +92,8 @@ struct Impl_Prefs {
 };
 
 iDeclareTypeConstruction(Prefs)
+    
+iLocalDef float scrollSpeedFactor_Prefs(const iPrefs *d, enum iScrollType type) {
+    iAssert(type >= 0 && type < max_ScrollType);
+    return 10.0f / iMax(1, d->smoothScrollSpeed[type]);
+}

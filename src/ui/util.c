@@ -1678,6 +1678,25 @@ iWidget *makePreferences_Widget(void) {
         makeTwoColumnHeading_("${heading.prefs.scrolling}", headings, values);
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.smoothscroll}")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.smoothscroll")));
+        /* Scroll speeds. */ {
+            for (int type = 0; type < max_ScrollType; type++) {
+                const char *typeStr = (type == mouse_ScrollType ? "mouse" : "keyboard");
+                addChild_Widget(headings,
+                                iClob(makeHeading_Widget(type == mouse_ScrollType
+                                                             ? "${prefs.scrollspeed.mouse}"
+                                                             : "${prefs.scrollspeed.keyboard}")));
+                iWidget *scrollSpeed = new_Widget();
+                addRadioButton_(scrollSpeed, format_CStr("prefs.scrollspeed.%s.7",  typeStr), "0", format_CStr("scrollspeed arg:7  type:%d", type));
+                addRadioButton_(scrollSpeed, format_CStr("prefs.scrollspeed.%s.10", typeStr), "1", format_CStr("scrollspeed arg:10 type:%d", type));
+                addRadioButton_(scrollSpeed, format_CStr("prefs.scrollspeed.%s.13", typeStr), "2", format_CStr("scrollspeed arg:13 type:%d", type));
+                addRadioButton_(scrollSpeed, format_CStr("prefs.scrollspeed.%s.17", typeStr), "3", format_CStr("scrollspeed arg:17 type:%d", type));
+                addRadioButton_(scrollSpeed, format_CStr("prefs.scrollspeed.%s.23", typeStr), "4", format_CStr("scrollspeed arg:23 type:%d", type));
+                addRadioButton_(scrollSpeed, format_CStr("prefs.scrollspeed.%s.30", typeStr), "5", format_CStr("scrollspeed arg:30 type:%d", type));
+                addRadioButton_(scrollSpeed, format_CStr("prefs.scrollspeed.%s.40", typeStr), "6", format_CStr("scrollspeed arg:40 type:%d", type));
+                addChildFlags_Widget(
+                    values, iClob(scrollSpeed), arrangeHorizontal_WidgetFlag | arrangeSize_WidgetFlag);
+            }
+        }
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.imageloadscroll}")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.imageloadscroll")));
         if (deviceType_App() == phone_AppDeviceType) {

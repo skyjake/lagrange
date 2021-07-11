@@ -201,7 +201,9 @@ static void updateSideIconBuf_DocumentWidget_   (const iDocumentWidget *d);
 static void prerender_DocumentWidget_           (iAny *);
 static void scrollBegan_DocumentWidget_         (iAnyObject *, int, uint32_t);
 
-static const int smoothDuration_DocumentWidget_  = 600; /* milliseconds */
+static const int smoothDuration_DocumentWidget_(enum iScrollType type) {
+    return 600 /* milliseconds */ * scrollSpeedFactor_Prefs(prefs_App(), type);
+}
 
 enum iRequestState {
     blank_RequestState,
@@ -2913,7 +2915,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         const float amount = argLabel_Command(cmd, "full") != 0 ? 1.0f : 0.5f;
         smoothScroll_DocumentWidget_(d,
                                      dir * amount * height_Rect(documentBounds_DocumentWidget_(d)),
-                                     smoothDuration_DocumentWidget_);
+                                     smoothDuration_DocumentWidget_(keyboard_ScrollType));
         return iTrue;
     }
     else if (equal_Command(cmd, "scroll.top") && document_App() == d) {
@@ -2942,7 +2944,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         }
         smoothScroll_DocumentWidget_(d,
                                      3 * lineHeight_Text(paragraph_FontId) * dir,
-                                     smoothDuration_DocumentWidget_);
+                                     smoothDuration_DocumentWidget_(keyboard_ScrollType));
         return iTrue;
     }
     else if (equal_Command(cmd, "document.goto") && document_App() == d) {
@@ -3381,7 +3383,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             smoothScroll_DocumentWidget_(
                 d,
                 -3 * amount * lineHeight_Text(paragraph_FontId),
-                smoothDuration_DocumentWidget_ *
+                smoothDuration_DocumentWidget_(mouse_ScrollType) *
                     /* accelerated speed for repeated wheelings */
                     (!isFinished_SmoothScroll(&d->scrollY) && pos_Anim(&d->scrollY.pos) < 0.25f
                          ? 0.5f

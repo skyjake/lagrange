@@ -210,6 +210,8 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "headingfont.set arg:%d\n", d->prefs.headingFont);
     appendFormat_String(str, "zoom.set arg:%d\n", d->prefs.zoomPercent);
     appendFormat_String(str, "smoothscroll arg:%d\n", d->prefs.smoothScrolling);
+    appendFormat_String(str, "scrollspeed arg:%d type:%d\n", d->prefs.smoothScrollSpeed[keyboard_ScrollType], keyboard_ScrollType);
+    appendFormat_String(str, "scrollspeed arg:%d type:%d\n", d->prefs.smoothScrollSpeed[mouse_ScrollType], mouse_ScrollType);
     appendFormat_String(str, "imageloadscroll arg:%d\n", d->prefs.loadImageInsteadOfScrolling);
     appendFormat_String(str, "cachesize.set arg:%d\n", d->prefs.maxCacheSize);
     appendFormat_String(str, "memorysize.set arg:%d\n", d->prefs.maxMemorySize);
@@ -1604,6 +1606,15 @@ static void updatePrefsPinSplitButtons_(iWidget *d, int value) {
     }
 }
 
+static void updateScrollSpeedButtons_(iWidget *d, enum iScrollType type, const int value) {
+    const char *typeStr = (type == mouse_ScrollType ? "mouse" : "keyboard");
+    for (int i = 0; i <= 40; i++) {
+        setFlags_Widget(findChild_Widget(d, format_CStr("prefs.scrollspeed.%s.%d", typeStr, i)),
+                        selected_WidgetFlag,
+                        i == value);
+    }
+}
+
 static void updateDropdownSelection_(iLabelWidget *dropButton, const char *selectedCommand) {
     iWidget *menu = findChild_Widget(as_Widget(dropButton), "menu");
     iForEach(ObjectList, i, children_Widget(menu)) {
@@ -1690,6 +1701,10 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
     }
     else if (equal_Command(cmd, "pinsplit.set")) {
         updatePrefsPinSplitButtons_(d, arg_Command(cmd));
+        return iFalse;
+    }
+    else if (equal_Command(cmd, "scrollspeed")) {
+        updateScrollSpeedButtons_(d, argLabel_Command(cmd, "type"), arg_Command(cmd));
         return iFalse;
     }
     else if (equal_Command(cmd, "doctheme.dark.set")) {
@@ -2063,6 +2078,13 @@ iBool handleCommand_App(const char *cmd) {
     }
     else if (equal_Command(cmd, "smoothscroll")) {
         d->prefs.smoothScrolling = arg_Command(cmd);
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "scrollspeed")) {
+        const int type = argLabel_Command(cmd, "type");
+        if (type == keyboard_ScrollType || type == mouse_ScrollType) {
+            d->prefs.smoothScrollSpeed[type] = iClamp(arg_Command(cmd), 1, 40);
+        }
         return iTrue;
     }
     else if (equal_Command(cmd, "decodeurls")) {
@@ -2501,6 +2523,8 @@ iBool handleCommand_App(const char *cmd) {
         setToggle_Widget(findChild_Widget(dlg, "prefs.animate"), d->prefs.uiAnimations);
         setText_InputWidget(findChild_Widget(dlg, "prefs.userfont"), &d->prefs.symbolFontPath);
         updatePrefsPinSplitButtons_(dlg, d->prefs.pinSplit);
+        updateScrollSpeedButtons_(dlg, mouse_ScrollType, d->prefs.smoothScrollSpeed[mouse_ScrollType]);
+        updateScrollSpeedButtons_(dlg, keyboard_ScrollType, d->prefs.smoothScrollSpeed[keyboard_ScrollType]);
         updateDropdownSelection_(findChild_Widget(dlg, "prefs.uilang"), cstr_String(&d->prefs.uiLanguage));
         setToggle_Widget(findChild_Widget(dlg, "prefs.retainwindow"), d->prefs.retainWindowSize);
         setText_InputWidget(findChild_Widget(dlg, "prefs.uiscale"),

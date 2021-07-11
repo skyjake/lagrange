@@ -41,3 +41,7 @@ const iString * string_Command      (const char *, const char *label); /* space-
 iRangecc        range_Command       (const char *, const char *label); /* space-delimited */
 const char *    suffixPtr_Command   (const char *, const char *label); /* until end-of-command */
 iString *       suffix_Command      (const char *, const char *label); /* until end-of-command */
+
+iLocalDef iBool hasLabel_Command(const char *d, const char *label) {
+    return suffixPtr_Command(d, label) != NULL;
+}

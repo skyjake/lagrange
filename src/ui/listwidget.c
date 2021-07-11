@@ -347,7 +347,8 @@ static iBool processEvent_ListWidget_(iListWidget *d, const SDL_Event *ev) {
         else {
             /* Traditional mouse wheel. */
             amount *= 3 * d->itemHeight;
-            moveSpan_SmoothScroll(&d->scrollY, amount, 200);            
+            moveSpan_SmoothScroll(
+                &d->scrollY, amount, 200 * scrollSpeedFactor_Prefs(prefs_App(), mouse_ScrollType));
         }
         return iTrue;
     }
