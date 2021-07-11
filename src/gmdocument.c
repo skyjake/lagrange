@@ -370,7 +370,7 @@ static void updateOpenURLs_GmDocument_(iGmDocument *d) {
 iDeclareType(RunTypesetter)
     
 struct Impl_RunTypesetter {
-    iGmDocument *doc;
+    iArray layout;
     iGmRun run;
     iInt2  pos;
     float  lineHeightReduction;
@@ -379,10 +379,29 @@ struct Impl_RunTypesetter {
     int    rightMargin;
     iBool  isWordWrapped;
     iBool  isPreformat;
-    int    bigCount;
     const int *fonts;
 };
     
+static void init_RunTypesetter_(iRunTypesetter *d) {
+    iZap(*d);
+    init_Array(&d->layout, sizeof(iGmRun));
+}
+
+static void deinit_RunTypesetter_(iRunTypesetter *d) {
+    deinit_Array(&d->layout);
+}
+
+static void clear_RunTypesetter_(iRunTypesetter *d) {
+    clear_Array(&d->layout);
+}
+
+static void commit_RunTypesetter_(iRunTypesetter *d, iGmDocument *doc) {
+    pushBackN_Array(&doc->layout, constData_Array(&d->layout), size_Array(&d->layout));
+    clear_RunTypesetter_(d);
+}
+
+static const int maxLedeLines_ = 10;
+
 static const int colors[max_GmLineType] = {
     tmParagraph_ColorId,
     tmParagraph_ColorId,
@@ -408,7 +427,7 @@ static iBool typesetOneLine_RunTypesetter_(iWrapText *wrap, iRangecc wrapRange, 
     d->run.bounds.size.y    = dims.y;
     d->run.visBounds        = d->run.bounds;
     d->run.visBounds.size.x = dims.x;
-    pushBack_Array(&d->doc->layout, &d->run);
+    pushBack_Array(&d->layout, &d->run);
     d->run.flags &= ~startOfLine_GmRunFlag;
 //    runLine.start = contPos;
 //    trimStart_Rangecc(&runLine);
@@ -744,11 +763,13 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             run.color = colors[text_GmLineType];
         }
         /* Special formatting for the first paragraph (e.g., subtitle, introduction, or lede). */
-        int bigCount = 0;
+//        int bigCount = 0;
+        iBool isLedeParagraph = iFalse;
         if (type == text_GmLineType && isFirstText) {
             if (!isMono) run.font = firstParagraph_FontId;
             run.color = tmFirstParagraph_ColorId;
-            bigCount = 15; /* max lines -- what if the whole document is one paragraph? */
+//            bigCount = 15; /* max lines -- what if the whole document is one paragraph? */
+            isLedeParagraph = iTrue;
             isFirstText = iFalse;
         }
         else if (type != heading1_GmLineType) {
@@ -793,29 +814,40 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             }
         }
         iAssert(!isEmpty_Range(&runLine)); /* must have something at this point */
-        iRunTypesetter rts = { .doc                 = d,
-                               .run                 = run,
-                               .pos                 = pos,
-                               .lineHeightReduction = lineHeightReduction,
-                               .indent              = indent * gap_Text,
-                               .layoutWidth         = d->size.x,
-                               .rightMargin         = rightMargin * gap_Text,
-                               .isWordWrapped       = isWordWrapped,
-                               .isPreformat         = isPreformat,
-                               .bigCount            = bigCount,
-                               .fonts               = fonts };
-//        while (!isEmpty_Range(&runLine)) {
-//            runLine = typesetOneLine_RunTypesetter_(&rts, runLine);
-//        }
-        iWrapText wrapText = { .text     = runLine,
-                               .maxWidth = isWordWrapped ? d->size.x - run.bounds.pos.x -
-                                                               rts.indent - rts.rightMargin
-                                                         : 0 /* unlimited */,
-                               .mode     = word_WrapTextMode,
-                               .wrapFunc = typesetOneLine_RunTypesetter_,
-                               .context  = &rts };
-        measure_WrapText(&wrapText, run.font);
-        pos = rts.pos;
+        /* Typeset the paragraph. */ {
+            iRunTypesetter rts;
+            init_RunTypesetter_(&rts);
+            rts.run                 = run;
+            rts.pos                 = pos;
+            rts.lineHeightReduction = lineHeightReduction;
+            rts.layoutWidth         = d->size.x;
+            rts.indent              = indent * gap_Text;
+            rts.rightMargin         = rightMargin * gap_Text;
+            rts.isWordWrapped       = isWordWrapped;
+            rts.isPreformat         = isPreformat;
+            rts.fonts               = fonts;
+            iWrapText wrapText = { .text     = runLine,
+                                   .maxWidth = isWordWrapped ? d->size.x - run.bounds.pos.x -
+                                                                   rts.indent - rts.rightMargin
+                                                             : 0 /* unlimited */,
+                                   .mode     = word_WrapTextMode,
+                                   .wrapFunc = typesetOneLine_RunTypesetter_,
+                                   .context  = &rts };
+            for (;;) { /* may need to retry */
+                measure_WrapText(&wrapText, run.font);
+                if (!isLedeParagraph || size_Array(&rts.layout) <= maxLedeLines_) {
+                    commit_RunTypesetter_(&rts, d);
+                    break;
+                }
+                clear_RunTypesetter_(&rts);
+                rts.pos         = pos;
+                rts.run.font    = rts.fonts[text_GmLineType];
+                rts.run.color   = colors   [text_GmLineType];
+                isLedeParagraph = iFalse;
+            }
+            pos = rts.pos;
+            deinit_RunTypesetter_(&rts);
+        }
         /* Flag the end of line, too. */
         ((iGmRun *) back_Array(&d->layout))->flags |= endOfLine_GmRunFlag;
         /* Image or audio content. */
