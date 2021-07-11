@@ -147,7 +147,7 @@ static int lastVisibleRunBottom_GmDocument_(const iGmDocument *d) {
         if (isEmpty_Range(&run->text)) {
             continue;
         }
-        return bottom_Rect(run->bounds);
+        return top_Rect(run->bounds) + height_Rect(run->bounds) * prefs_App()->lineSpacing;
     }
     return 0;
 }
@@ -546,7 +546,8 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 banner.text      = bannerText;
                 banner.color     = tmBannerTitle_ColorId;
                 pushBack_Array(&d->layout, &banner);
-                pos.y += height_Rect(banner.visBounds) + lineHeight_Text(paragraph_FontId);
+                pos.y += height_Rect(banner.visBounds) +
+                         lineHeight_Text(paragraph_FontId) * prefs->lineSpacing;
             }
         }
         /* Empty lines don't produce text runs. */
@@ -560,7 +561,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 run.text           = iNullRange;
                 pushBack_Array(&d->layout, &run);
             }
-            pos.y += lineHeight_Text(run.font);
+            pos.y += lineHeight_Text(run.font) * prefs->lineSpacing;
             prevType = type;
             if (type != quote_GmLineType) {
                 addQuoteIcon = prefs->quoteIcon;
@@ -586,11 +587,6 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             if (type == link_GmLineType && prevNonBlankType == link_GmLineType && followsBlank) {
                 required = 1.25f * lineHeight_Text(paragraph_FontId);
             }
-            else if (type == link_GmLineType && prevType == link_GmLineType) {
-                /* Balance space between the link icons and the labels, both vertically
-                   between icons and between the icon and the label. */
-                //required *= 0.75f;
-            }
             if (type == quote_GmLineType && prevType == quote_GmLineType) {
                 /* No margin between consecutive quote lines. */
                 required = 0;
@@ -598,9 +594,10 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             if (isEmpty_Array(&d->layout)) {
                 required = 0; /* top of document */
             }
+            required *= prefs->lineSpacing;
             int delta = pos.y - lastVisibleRunBottom_GmDocument_(d);
             if (delta < required) {
-                pos.y += required - delta;
+                pos.y += (required - delta);
             }
         }
         /* Folded blocks are represented by a single run with the alt text. */
@@ -778,7 +775,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             run.flags &= ~startOfLine_GmRunFlag;
             runLine.start = contPos;
             trimStart_Rangecc(&runLine);
-            pos.y += lineHeight_Text(run.font);
+            pos.y += lineHeight_Text(run.font) * prefs->lineSpacing;
             if (--bigCount == 0) {
                 run.font = fonts[text_GmLineType];
                 run.color = colors[text_GmLineType];

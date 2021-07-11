@@ -54,6 +54,7 @@ void init_Prefs(iPrefs *d) {
     d->boldLinkDark      = iTrue;
     d->boldLinkLight     = iTrue;
     d->lineWidth         = 38;
+    d->lineSpacing       = 1.0f;
     d->bigFirstParagraph = iTrue;
     d->quoteIcon         = iTrue;
     d->centerShortDocs   = iTrue;

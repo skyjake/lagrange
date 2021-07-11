@@ -215,6 +215,7 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "memorysize.set arg:%d\n", d->prefs.maxMemorySize);
     appendFormat_String(str, "decodeurls arg:%d\n", d->prefs.decodeUserVisibleURLs);
     appendFormat_String(str, "linewidth.set arg:%d\n", d->prefs.lineWidth);
+    appendFormat_String(str, "linespacing.set arg:%f\n", d->prefs.lineSpacing);
     /* TODO: Set up an array of booleans in Prefs and do these in a loop. */
     appendFormat_String(str, "prefs.animate.changed arg:%d\n", d->prefs.uiAnimations);
     appendFormat_String(str, "prefs.mono.gemini.changed arg:%d\n", d->prefs.monospaceGemini);
@@ -1707,6 +1708,12 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
         updateFontButton_(findChild_Widget(d, "prefs.headingfont"), arg_Command(cmd));
         return iFalse;
     }
+    else if (startsWith_CStr(cmd, "input.ended id:prefs.linespacing")) {    
+        /* Apply line spacing changes immediately. */
+        const iInputWidget *lineSpacing = findWidget_App("prefs.linespacing");
+        postCommandf_App("linespacing.set arg:%f", toFloat_String(text_InputWidget(lineSpacing)));
+        return iTrue;
+    }
     else if (equal_Command(cmd, "prefs.ostheme.changed")) {
         postCommandf_App("ostheme arg:%d", arg_Command(cmd));
     }
@@ -2118,6 +2125,11 @@ iBool handleCommand_App(const char *cmd) {
         postCommand_App("document.layout.changed");
         return iTrue;
     }
+    else if (equal_Command(cmd, "linespacing.set")) {
+        d->prefs.lineSpacing = iMax(0.5f, argf_Command(cmd));
+        postCommand_App("document.layout.changed redo:1");
+        return iTrue;
+    }
     else if (equal_Command(cmd, "quoteicon.set")) {
         d->prefs.quoteIcon = arg_Command(cmd) != 0;
         postCommand_App("document.layout.changed");
@@ -2516,6 +2528,8 @@ iBool handleCommand_App(const char *cmd) {
             findChild_Widget(dlg, format_CStr("prefs.linewidth.%d", d->prefs.lineWidth)),
             selected_WidgetFlag,
             iTrue);
+        setText_InputWidget(findChild_Widget(dlg, "prefs.linespacing"),
+                            collectNewFormat_String("%.2f", d->prefs.lineSpacing));
         setFlags_Widget(
             findChild_Widget(dlg, format_CStr("prefs.quoteicon.%d", d->prefs.quoteIcon)),
             selected_WidgetFlag,

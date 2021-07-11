@@ -1298,9 +1298,9 @@ static void postProcessRequestContent_DocumentWidget_(iDocumentWidget *d, iBool 
                     2);
             }
             if (preloadCoverImage_Gempub(d->sourceGempub, d->doc)) {
-            redoLayout_GmDocument(d->doc);
-            updateVisible_DocumentWidget_(d);
-            invalidate_DocumentWidget_(d);
+                redoLayout_GmDocument(d->doc);
+                updateVisible_DocumentWidget_(d);
+                invalidate_DocumentWidget_(d);
             }
         }
         else if (equal_String(d->mod.url, indexPageUrl_Gempub(d->sourceGempub))) {
@@ -2461,7 +2461,10 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         invalidate_DocumentWidget_(d);
         refresh_Widget(w);
     }
-    else if (equal_Command(cmd, "document.layout.changed") && document_App() == d) {
+    else if (equal_Command(cmd, "document.layout.changed") && document_Root(get_Root()) == d) {
+        if (argLabel_Command(cmd, "redo")) {
+            redoLayout_GmDocument(d->doc);
+        }
         updateSize_DocumentWidget(d);
     }
     else if (equal_Command(cmd, "pinsplit.set")) {

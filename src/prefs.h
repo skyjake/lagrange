@@ -79,6 +79,7 @@ struct Impl_Prefs {
     iBool            boldLinkDark;
     iBool            boldLinkLight;
     int              lineWidth;
+    float            lineSpacing;
     iBool            bigFirstParagraph;
     iBool            quoteIcon;
     iBool            centerShortDocs;
