@@ -814,16 +814,17 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             if (!prefs->quoteIcon && type == quote_GmLineType) {
                 rts.run.flags |= quoteBorder_GmRunFlag;
             }
-            iWrapText wrapText = { .text     = line,
-                                   .maxWidth = rts.isWordWrapped ? d->size.x - run.bounds.pos.x -
-                                                                       rts.indent - rts.rightMargin
-                                                                 : 0 /* unlimited */,
-                                   .mode     = word_WrapTextMode,
-                                   .wrapFunc = typesetOneLine_RunTypesetter_,
-                                   .context  = &rts };
             for (;;) { /* may need to retry */
                 rts.run.flags |= startOfLine_GmRunFlag;
-                measure_WrapText(&wrapText, run.font);
+                measure_WrapText(&(iWrapText){ .text     = line,
+                                               .maxWidth = rts.isWordWrapped
+                                                               ? d->size.x - run.bounds.pos.x -
+                                                                     rts.indent - rts.rightMargin
+                                                               : 0 /* unlimited */,
+                                               .mode     = word_WrapTextMode,
+                                               .wrapFunc = typesetOneLine_RunTypesetter_,
+                                               .context  = &rts },
+                                 run.font);
                 if (!isLedeParagraph || size_Array(&rts.layout) <= maxLedeLines_) {
                     commit_RunTypesetter_(&rts, d);
                     break;
