@@ -430,13 +430,7 @@ static iBool typesetOneLine_RunTypesetter_(iWrapText *wrap, iRangecc wrapRange, 
     d->run.visBounds.size.x = dims.x;
     pushBack_Array(&d->layout, &d->run);
     d->run.flags &= ~startOfLine_GmRunFlag;
-//    runLine.start = contPos;
-//    trimStart_Rangecc(&runLine);
     d->pos.y += lineHeight_Text(fontId) * prefs_App()->lineSpacing;
-//    if (--d->bigCount == 0) {
-//        d->run.font  = d->fonts[text_GmLineType];
-//        d->run.color = colors[text_GmLineType];
-//    }
     return iTrue; /* continue to next wrapped line */
 }
 
@@ -526,7 +520,6 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         iGmRun run = { .color = white_ColorId };
         enum iGmLineType type;
         float indent = 0.0f;
-        int rightMargin = 0;
         /* Detect the type of the line. */
         if (!isPreformat) {
             type = lineType_GmDocument_(d, line);
@@ -776,22 +769,6 @@ static void doLayout_GmDocument_(iGmDocument *d) {
         else if (type != heading1_GmLineType) {
             isFirstText = iFalse;
         }
-        iRangecc runLine = line;
-        /* Create one or more text runs for this line. */
-        run.flags |= startOfLine_GmRunFlag;
-        if (!prefs->quoteIcon && type == quote_GmLineType) {
-            run.flags |= quoteBorder_GmRunFlag;
-        }
-        /* The right margin is used for balancing lines horizontally. */
-        if (isVeryNarrow) {
-            rightMargin = 0;
-        }
-        else {
-            rightMargin = (type == text_GmLineType || type == bullet_GmLineType ||
-                           type == quote_GmLineType ? 4 : 0);
-        }
-        const iBool isWordWrapped =
-            (d->format == plainText_SourceFormat ? prefs->plainTextWrap : !isPreformat);
         if (isPreformat && d->format != plainText_SourceFormat) {
             /* Remember the top left coordinates of the block (first line of block). */
             iGmPreMeta *meta = at_Array(&d->preMeta, preId - 1);
@@ -800,18 +777,27 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 meta->flags |= topLeft_GmPreMetaFlag;
             }
         }
-        iAssert(!isEmpty_Range(&runLine)); /* must have something at this point */
+        iAssert(!isEmpty_Range(&line)); /* must have something at this point */
         /* Typeset the paragraph. */ {
             iRunTypesetter rts;
             init_RunTypesetter_(&rts);
             rts.run           = run;
             rts.pos           = pos;
             rts.fonts         = fonts;
-            rts.isWordWrapped = isWordWrapped;
+            rts.isWordWrapped = (d->format == plainText_SourceFormat ? prefs->plainTextWrap
+                                                                     : !isPreformat);
             rts.isPreformat   = isPreformat;
             rts.layoutWidth   = d->size.x;
             rts.indent        = indent * gap_Text;
-            rts.rightMargin   = rightMargin * gap_Text;
+            /* The right margin is used for balancing lines horizontally. */
+            if (isVeryNarrow) {
+                rts.rightMargin = 0;
+            }
+            else {
+                rts.rightMargin = (type == text_GmLineType || type == bullet_GmLineType ||
+                                           type == quote_GmLineType
+                                       ? 4 : 0) * gap_Text;
+            }
             if (!isMono) {
                 /* Upper-level headings are typeset a bit tighter. */
                 if (type == heading1_GmLineType) {
@@ -825,14 +811,18 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                     rts.run.font = paragraph_FontId;
                 }
             }
-            iWrapText wrapText = { .text     = runLine,
-                                   .maxWidth = isWordWrapped ? d->size.x - run.bounds.pos.x -
-                                                                   rts.indent - rts.rightMargin
-                                                             : 0 /* unlimited */,
+            if (!prefs->quoteIcon && type == quote_GmLineType) {
+                rts.run.flags |= quoteBorder_GmRunFlag;
+            }
+            iWrapText wrapText = { .text     = line,
+                                   .maxWidth = rts.isWordWrapped ? d->size.x - run.bounds.pos.x -
+                                                                       rts.indent - rts.rightMargin
+                                                                 : 0 /* unlimited */,
                                    .mode     = word_WrapTextMode,
                                    .wrapFunc = typesetOneLine_RunTypesetter_,
                                    .context  = &rts };
             for (;;) { /* may need to retry */
+                rts.run.flags |= startOfLine_GmRunFlag;
                 measure_WrapText(&wrapText, run.font);
                 if (!isLedeParagraph || size_Array(&rts.layout) <= maxLedeLines_) {
                     commit_RunTypesetter_(&rts, d);
