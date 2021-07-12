@@ -170,8 +170,10 @@ void    setUrl_GmDocument       (iGmDocument *, const iString *url);
 void    setSource_GmDocument    (iGmDocument *, const iString *source, int width,
                                  enum iGmDocumentUpdate updateType);
 void    foldPre_GmDocument      (iGmDocument *, uint16_t preId);
-void    invalidatePalette_GmDocument(iGmDocument *);
-void    makePaletteGlobal_GmDocument(const iGmDocument *); /* copies document colors to the global palette */
+
+void    updateVisitedLinks_GmDocument   (iGmDocument *); /* check all links for visited status */
+void    invalidatePalette_GmDocument    (iGmDocument *);
+void    makePaletteGlobal_GmDocument    (const iGmDocument *); /* copies document colors to the global palette */
 
 //void    reset_GmDocument        (iGmDocument *); /* free images */
 

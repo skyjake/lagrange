@@ -1029,6 +1029,7 @@ static void showOrHidePinningIndicator_DocumentWidget_(iDocumentWidget *d) {
 }
 
 static void documentWasChanged_DocumentWidget_(iDocumentWidget *d) {
+    updateVisitedLinks_GmDocument(d->doc);
     documentRunsInvalidated_DocumentWidget_(d);
     updateWindowTitle_DocumentWidget_(d);
     updateVisible_DocumentWidget_(d);
@@ -2415,6 +2416,11 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
             invalidate_DocumentWidget_(d);
             refresh_Widget(d);
         }
+        return iFalse;
+    }
+    if (equal_Command(cmd, "visited.changed")) {
+        updateVisitedLinks_GmDocument(d->doc);
+        invalidateVisibleLinks_DocumentWidget_(d);
         return iFalse;
     }
     if (equal_Command(cmd, "document.render")) /* `Periodic` makes direct dispatch to here */ {

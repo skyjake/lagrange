@@ -33,6 +33,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "app.h"
 #include "defs.h"
 
+#include <the_Foundation/intset.h>
 #include <the_Foundation/ptrarray.h>
 #include <the_Foundation/regexp.h>
 #include <the_Foundation/stringset.h>
@@ -799,33 +800,31 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                 meta->flags |= topLeft_GmPreMetaFlag;
             }
         }
-        float lineHeightReduction = 0.0f;
-        if (!isMono) {
-            /* Upper-level headings are typeset a bit tighter. */
-            if (type == heading1_GmLineType) {
-                lineHeightReduction = 0.10f;
-            }
-            else if (type == heading2_GmLineType) {
-                lineHeightReduction = 0.06f;
-            }
-            /* Visited links are never bold. */
-            if (run.linkId && linkFlags_GmDocument(d, run.linkId) & visited_GmLinkFlag) {
-                run.font = paragraph_FontId;
-            }
-        }
         iAssert(!isEmpty_Range(&runLine)); /* must have something at this point */
         /* Typeset the paragraph. */ {
             iRunTypesetter rts;
             init_RunTypesetter_(&rts);
-            rts.run                 = run;
-            rts.pos                 = pos;
-            rts.lineHeightReduction = lineHeightReduction;
-            rts.layoutWidth         = d->size.x;
-            rts.indent              = indent * gap_Text;
-            rts.rightMargin         = rightMargin * gap_Text;
-            rts.isWordWrapped       = isWordWrapped;
-            rts.isPreformat         = isPreformat;
-            rts.fonts               = fonts;
+            rts.run           = run;
+            rts.pos           = pos;
+            rts.fonts         = fonts;
+            rts.isWordWrapped = isWordWrapped;
+            rts.isPreformat   = isPreformat;
+            rts.layoutWidth   = d->size.x;
+            rts.indent        = indent * gap_Text;
+            rts.rightMargin   = rightMargin * gap_Text;
+            if (!isMono) {
+                /* Upper-level headings are typeset a bit tighter. */
+                if (type == heading1_GmLineType) {
+                    rts.lineHeightReduction = 0.10f;
+                }
+                else if (type == heading2_GmLineType) {
+                    rts.lineHeightReduction = 0.06f;
+                }
+                /* Visited links are never bold. */
+                if (run.linkId && linkFlags_GmDocument(d, run.linkId) & visited_GmLinkFlag) {
+                    rts.run.font = paragraph_FontId;
+                }
+            }
             iWrapText wrapText = { .text     = runLine,
                                    .maxWidth = isWordWrapped ? d->size.x - run.bounds.pos.x -
                                                                    rts.indent - rts.rightMargin
@@ -1520,9 +1519,25 @@ void redoLayout_GmDocument(iGmDocument *d) {
     doLayout_GmDocument_(d);
 }
 
+static void markLinkRunsVisited_GmDocument_(iGmDocument *d, const iIntSet *linkIds) {
+    iForEach(Array, r, &d->layout) {
+        iGmRun *run = r.value;
+        if (run->linkId && !run->mediaId && contains_IntSet(linkIds, run->linkId)) {
+            if (run->font == bold_FontId) {
+                run->font = paragraph_FontId;
+            }
+            else if (run->flags & decoration_GmRunFlag) {
+                run->color = linkColor_GmDocument(d, run->linkId, icon_GmLinkPart);
+            }
+        }
+    }
+}
+
 iBool updateOpenURLs_GmDocument(iGmDocument *d) {
     iBool wasChanged = iFalse;
     updateOpenURLs_GmDocument_(d);
+    iIntSet linkIds;
+    init_IntSet(&linkIds);
     iForEach(PtrArray, i, &d->links) {
         iGmLink *link = i.ptr;
         if (!equal_String(&link->url, &d->url)) {
@@ -1531,11 +1546,14 @@ iBool updateOpenURLs_GmDocument(iGmDocument *d) {
                 iChangeFlags(link->flags, isOpen_GmLinkFlag, isOpen);
                 if (isOpen) {
                     link->flags |= visited_GmLinkFlag;
+                    insert_IntSet(&linkIds, index_PtrArrayIterator(&i) + 1);
                 }
                 wasChanged = iTrue;
             }
         }
     }
+    markLinkRunsVisited_GmDocument_(d, &linkIds);
+    deinit_IntSet(&linkIds);
     return wasChanged;
 }
 
@@ -1670,6 +1688,23 @@ void foldPre_GmDocument(iGmDocument *d, uint16_t preId) {
         iGmPreMeta *meta = at_Array(&d->preMeta, preId - 1);
         meta->flags ^= folded_GmPreMetaFlag;
     }
+}
+
+void updateVisitedLinks_GmDocument(iGmDocument *d) {
+    iIntSet linkIds;
+    init_IntSet(&linkIds);
+    iForEach(PtrArray, i, &d->links) {
+        iGmLink *link = i.ptr;
+        if (~link->flags & visited_GmLinkFlag) {
+            iTime visitTime = urlVisitTime_Visited(visited_App(), &link->url);
+            if (isValid_Time(&visitTime)) {
+                link->flags |= visited_GmLinkFlag;
+                insert_IntSet(&linkIds, index_PtrArrayIterator(&i) + 1);
+            }
+        }
+    }
+    markLinkRunsVisited_GmDocument_(d, &linkIds);
+    deinit_IntSet(&linkIds);
 }
 
 const iGmPreMeta *preMeta_GmDocument(const iGmDocument *d, uint16_t preId) {
