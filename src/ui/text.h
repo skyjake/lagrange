@@ -148,13 +148,7 @@ void    setContentFontSize_Text (float fontSizeFactor); /* affects all except `d
 void    resetFonts_Text         (void);
 
 int     lineHeight_Text         (int fontId);
-//iInt2   measure_Text            (int fontId, const char *text);
-//iInt2   measureRange_Text       (int fontId, iRangecc text);
 iRect   visualBounds_Text       (int fontId, iRangecc text);
-//iInt2   advance_Text            (int fontId, const char *text);
-//iInt2   advanceN_Text           (int fontId, const char *text, size_t n); /* `n` in characters */
-//iInt2   advanceRange_Text       (int fontId, iRangecc text);
-//iInt2   advanceWrapRange_Text   (int fontId, int maxWidth, iRangecc text);
 
 iDeclareType(TextMetrics)
 
@@ -209,7 +203,7 @@ struct Impl_WrapText {
     iRangecc text;
     int      maxWidth;
     enum iWrapTextMode mode;
-    iBool  (*wrapFunc)(iWrapText *, iRangecc wrappedText, int advance);
+    iBool  (*wrapFunc)(iWrapText *, iRangecc wrappedText, int origin, int advance);
     void *   context;
     /* internal */
     iRangecc wrapRange_;

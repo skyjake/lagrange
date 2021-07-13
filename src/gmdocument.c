@@ -414,17 +414,19 @@ static const int colors[max_GmLineType] = {
     tmLinkText_ColorId,
 };
 
-static iBool typesetOneLine_RunTypesetter_(iWrapText *wrap, iRangecc wrapRange, int wrapAdvance) {
+static iBool typesetOneLine_RunTypesetter_(iWrapText *wrap, iRangecc wrapRange, int origin, int advance) {
+    iAssert(wrapRange.start <= wrapRange.end);
+    printf("typeset: {%s}\n", cstr_Rangecc(wrapRange));
     iRunTypesetter *d = wrap->context;
     const int fontId = d->run.font;
     d->run.text = wrapRange;
     if (~d->run.flags & startOfLine_GmRunFlag && d->lineHeightReduction > 0.0f) {
         d->pos.y -= d->lineHeightReduction * lineHeight_Text(fontId);
     }
-    d->run.bounds.pos = addX_I2(d->pos, d->indent);
-    const iInt2 dims = init_I2(wrapAdvance, lineHeight_Text(fontId));
+    d->run.bounds.pos = addX_I2(d->pos, origin + d->indent);
+    const iInt2 dims = init_I2(advance, lineHeight_Text(fontId));
     iChangeFlags(d->run.flags, wide_GmRunFlag, (d->isPreformat && dims.x > d->layoutWidth));
-    d->run.bounds.size.x    = iMax(wrap->maxWidth, dims.x); /* Extends to the right edge for selection. */
+    d->run.bounds.size.x    = iMax(wrap->maxWidth, dims.x) - origin; /* Extends to the right edge for selection. */
     d->run.bounds.size.y    = dims.y;
     d->run.visBounds        = d->run.bounds;
     d->run.visBounds.size.x = dims.x;

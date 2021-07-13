@@ -773,10 +773,14 @@ static iBool isControl_Char_(iChar c) {
 iDeclareType(AttributedRun)
 
 struct Impl_AttributedRun {
-    iRangei   visual; /* UTF-32 codepoint indices in the visual-order text */
+    iRangei   logical; /* UTF-32 codepoint indices in the logical-order text */
+    //iRangei   visual;  /* UTF-32 codepoint indices in the visual-order text */
     iFont *   font;
     iColor    fgColor;
-    iBool     isLineBreak;
+    struct {
+        uint8_t isLineBreak : 1;
+        uint8_t isRTL       : 1;
+    } flags;
 };
 
 iDeclareType(AttributedText)
@@ -788,40 +792,41 @@ struct Impl_AttributedText {
     iFont *   font;
     iColor    fgColor;
     iArray    runs;
+    iArray    logical;  /* UTF-32 text in logical order (mixed directions; matches source) */
     iArray    visual;   /* UTF-32 text in visual order (LTR) */
-    iArray    visualToSourceOffset; /* map visual character to an UTF-8 offset in the source text */
+    iArray    logicalToVisual;          /* map visual index to logical index */
+    iArray    visualToLogical;          /* map visual index to logical index */
+    iArray    logicalToSourceOffset;    /* map logical character to an UTF-8 offset in the source text */
     char *    bidiLevels;
 };
 
 iDefineTypeConstructionArgs(AttributedText, (iRangecc text, size_t maxLen, iFont *font, iColor fgColor),
                             text, maxLen, font, fgColor)
 
-static const char *sourcePtr_AttributedText_(const iAttributedText *d, int visualPos) {
-    const int *mapToSource = constData_Array(&d->visualToSourceOffset);
-    return d->source.start + mapToSource[visualPos];
+static const char *sourcePtr_AttributedText_(const iAttributedText *d, int logicalPos) {
+    const int *logToSource = constData_Array(&d->logicalToSourceOffset);
+    return d->source.start + logToSource[logicalPos];
 }
 
-static iRangecc sourceRange_AttributedText_(const iAttributedText *d, iRangei visual) {
-    const int *mapToSource = constData_Array(&d->visualToSourceOffset);
+static iRangecc sourceRange_AttributedText_(const iAttributedText *d, iRangei logical) {
+    const int *logToSource = constData_Array(&d->logicalToSourceOffset);
     iRangecc range = {
-        d->source.start + mapToSource[visual.start],
-        d->source.start + mapToSource[visual.end]
+        d->source.start + logToSource[logical.start],
+        d->source.start + logToSource[logical.end]
     };
-    if (range.start > range.end) {
-        iSwap(const char *, range.start, range.end);
-    }
+    iAssert(range.start <= range.end);
     return range;
 }
 
 static void finishRun_AttributedText_(iAttributedText *d, iAttributedRun *run, int endAt) {
     iAttributedRun finishedRun = *run;
-    iAssert(endAt >= 0 && endAt <= size_Array(&d->visual));
-    finishedRun.visual.end = endAt;
-    if (!isEmpty_Range(&finishedRun.visual)) {
+    iAssert(endAt >= 0 && endAt <= size_Array(&d->logical));
+    finishedRun.logical.end = endAt;
+    if (!isEmpty_Range(&finishedRun.logical)) {
         pushBack_Array(&d->runs, &finishedRun);
-        run->isLineBreak = iFalse;
+        run->flags.isLineBreak = iFalse;
     }
-    run->visual.start = endAt;
+    run->logical.start = endAt;
 }
 
 size_t length_Rangecc(const iRangecc d) {
@@ -836,69 +841,74 @@ size_t length_Rangecc(const iRangecc d) {
     return n;
 }
 
+static enum iFontId fontId_Text_(const iFont *font) {
+    return (enum iFontId) (font - text_.fonts);
+}
+
 static void prepare_AttributedText_(iAttributedText *d) {
     iAssert(isEmpty_Array(&d->runs));
-    /* Prepare the visual (LTR) string. */ {
+    size_t length = 0;
+    /* Prepare the UTF-32 logical string. */ {
         for (const char *ch = d->source.start; ch < d->source.end; ) {
             iChar u32;
             int len = decodeBytes_MultibyteChar(ch, d->source.end, &u32);
             if (len <= 0) break;
-            pushBack_Array(&d->visual, &u32);
-            pushBack_Array(&d->visualToSourceOffset, &(int){ ch - d->source.start });
+            pushBack_Array(&d->logical, &u32);
+            length++;
+            /* Remember the byte offset to each character. We will need this to communicate
+               back the wrapped UTF-8 ranges. */
+            pushBack_Array(&d->logicalToSourceOffset, &(int){ ch - d->source.start });
             ch += len;
         }
 #if defined (LAGRANGE_ENABLE_FRIBIDI)
         /* Use FriBidi to reorder the codepoints. */
-        const size_t len = size_Array(&d->visual);
-        iArray ordered;
-        iArray visToLog;
-        init_Array(&ordered, sizeof(uint32_t));
-        init_Array(&visToLog, sizeof(FriBidiStrIndex));
-        resize_Array(&ordered, len);
-        resize_Array(&visToLog, len);
-        d->bidiLevels = malloc(len);
+        resize_Array(&d->visual, length);
+        resize_Array(&d->logicalToVisual, length);
+        resize_Array(&d->visualToLogical, length);
+        d->bidiLevels = malloc(length);
         FriBidiParType baseDir = (FriBidiParType) FRIBIDI_TYPE_ON;
-        fribidi_log2vis(constData_Array(&d->visual),
-                        len,
+        fribidi_log2vis(constData_Array(&d->logical),
+                        length,
                         &baseDir,
-                        data_Array(&ordered),
-                        NULL,
-                        data_Array(&visToLog),
+                        data_Array(&d->visual),
+                        data_Array(&d->logicalToVisual),
+                        data_Array(&d->visualToLogical),
                         (FriBidiLevel *) d->bidiLevels);
-        /* Replace with the visually ordered codepoints. */
-        setCopy_Array(&d->visual, &ordered);
-        deinit_Array(&ordered);
-        /* Remap the source positions for visual order. */
-        const int *mapToSource = constData_Array(&d->visualToSourceOffset);
-        const FriBidiStrIndex *visToLogIndex = constData_Array(&visToLog);
-        iArray orderedMapToSource;
-        init_Array(&orderedMapToSource, sizeof(int));
-        resize_Array(&orderedMapToSource, len);
-        for (size_t i = 0; i < len; i++) {
-            *(int *) at_Array(&orderedMapToSource, i) = mapToSource[visToLogIndex[i]];
-        }
-        setCopy_Array(&d->visualToSourceOffset, &orderedMapToSource);
-        deinit_Array(&orderedMapToSource);
-        deinit_Array(&visToLog);
 #endif
     }
     /* The mapping needs to include the terminating NULL position. */ {
-        pushBack_Array(&d->visualToSourceOffset, &(int){ d->source.end - d->source.start });
+        pushBack_Array(&d->logicalToSourceOffset, &(int){ d->source.end - d->source.start });
     }
-    iRangei visText = { 0, size_Array(&d->visual) };
-    size_t  avail   = d->maxLen;
-    iAttributedRun run = { .visual  = visText,
-                           .font    = d->font,
-                           .fgColor = d->fgColor };
-    const int *  mapToSource = constData_Array(&d->visualToSourceOffset);
-    const iChar *visualText  = constData_Array(&d->visual);
-    for (int pos = 0; pos < visText.end; pos++) {
-        const iChar ch = visualText[pos];
+    size_t         avail       = d->maxLen;
+    iAttributedRun run         = { .logical = { 0, length },
+                                   .font    = d->font,
+                                   .fgColor = d->fgColor };
+    const int *    logToSource = constData_Array(&d->logicalToSourceOffset);
+    const int *    logToVis    = constData_Array(&d->logicalToVisual);
+    const iChar *  logicalText = constData_Array(&d->logical);
+//    const iChar *  visualText  = constData_Array(&d->visual);
+    iBool          isRTL       = iFalse;
+    for (int pos = 0; pos < length; pos++) {
+        const iChar ch     = logicalText[pos];
+        const int   visPos = logToVis[pos];
+#if defined (LAGRANGE_ENABLE_FRIBIDI)
+        const iBool isNeutral = FRIBIDI_IS_NEUTRAL(d->bidiLevels[visPos]);
+        if (d->bidiLevels && !isNeutral) {
+            iBool rtl = FRIBIDI_IS_RTL(d->bidiLevels[visPos]) != 0;
+            if (rtl != isRTL) {
+                /* Direction changes; must end the current run. */
+                finishRun_AttributedText_(d, &run, pos);
+                isRTL = rtl;
+            }
+        }
+#else
+        const iBool isNeutral = iTrue;
+#endif
+        run.flags.isRTL = isRTL;
         if (ch == 0x1b) { /* ANSI escape. */
             pos++;
-            const char *srcPos = d->source.start + mapToSource[pos];
+            const char *srcPos = d->source.start + logToSource[pos];
             /* Do a regexp match in the source text. */
-            /* TODO: Does this work in RTL regions?! */
             iRegExpMatch m;
             init_RegExpMatch(&m);
             if (match_RegExp(text_.ansiEscape, srcPos, d->source.end - srcPos, &m)) {
@@ -906,33 +916,33 @@ static void prepare_AttributedText_(iAttributedText *d) {
                 run.fgColor = ansiForeground_Color(capturedRange_RegExpMatch(&m, 1),
                                                    tmParagraph_ColorId);
                 pos += length_Rangecc(capturedRange_RegExpMatch(&m, 0));
-                iAssert(mapToSource[pos] == end_RegExpMatch(&m) - d->source.start);
+                iAssert(logToSource[pos] == end_RegExpMatch(&m) - d->source.start);
                 /* The run continues after the escape sequence. */
-                run.visual.start = pos--; /* loop increments `pos` */
+                run.logical.start = pos--; /* loop increments `pos` */
                 continue;
             }
         }
         if (ch == '\v') {
             finishRun_AttributedText_(d, &run, pos);
             /* An internal color escape. */
-            iChar esc = visualText[++pos];
+            iChar esc = logicalText[++pos];
             int colorNum = none_ColorId; /* default color */
             if (esc == '\v') { /* Extended range. */
-                esc = visualText[++pos] + asciiExtended_ColorEscape;
+                esc = logicalText[++pos] + asciiExtended_ColorEscape;
                 colorNum = esc - asciiBase_ColorEscape;
             }
             else if (esc != 0x24) { /* ASCII Cancel */
                 colorNum = esc - asciiBase_ColorEscape;
             }
-            run.visual.start = pos + 1;
+            run.logical.start = pos + 1;
             run.fgColor = (colorNum >= 0 ? get_Color(colorNum) : d->fgColor);
             continue;
         }
         if (ch == '\n') {
             finishRun_AttributedText_(d, &run, pos);
             /* A separate run for the newline. */
-            run.visual.start = pos;
-            run.isLineBreak = iTrue;
+            run.logical.start = pos;
+            run.flags.isLineBreak = iTrue;
             finishRun_AttributedText_(d, &run, pos + 1);
             continue;
         }
@@ -941,31 +951,32 @@ static void prepare_AttributedText_(iAttributedText *d) {
         }
         if (avail-- == 0) {
             /* TODO: Check the combining class; only count base characters here. */
-            run.visual.end = pos;
+            run.logical.end = pos;
             break;
         }
         iFont *currentFont = d->font;
-        if (run.font->family == notoSansArabic_TextFont && ch == 0x20) {
+        if (run.font->family == notoSansArabic_TextFont && (isSpace_Char(ch) || isPunct_Char(ch))) {
             currentFont = run.font; /* remain as Arabic for whitespace */
-            /* TODO: FriBidi should be applied before this loop, but how to map the positions? */
         }
         const iGlyph *glyph = glyph_Font_(currentFont, ch);
         if (index_Glyph_(glyph) && glyph->font != run.font) {
             /* A different font is being used for this character. */
             finishRun_AttributedText_(d, &run, pos);
             run.font = glyph->font;
+            printf("changing font to %d at pos %u (%lc)\n", fontId_Text_(run.font), pos, (int)logicalText[pos]);
         }
     }
-    if (!isEmpty_Range(&run.visual)) {
+    if (!isEmpty_Range(&run.logical)) {
         pushBack_Array(&d->runs, &run);
     }
-#if 0
+#if 1
     printf("[AttributedText] %zu runs:\n", size_Array(&d->runs));
     iConstForEach(Array, i, &d->runs) {
         const iAttributedRun *run = i.value;
-        printf("  %zu %d...%d {%s}\n", index_ArrayConstIterator(&i),
-               run->visual.start, run->visual.end,
-               cstr_Rangecc(sourceRange_AttributedText_(d, run->visual)));
+        printf("  %zu %s %d...%d {%s}\n", index_ArrayConstIterator(&i),
+               run->flags.isRTL ? "<-" : "->",
+               run->logical.start, run->logical.end,
+               !run->flags.isRTL? cstr_Rangecc(sourceRange_AttributedText_(d, run->logical)) : "---");
     }
 #endif
 }
@@ -976,16 +987,22 @@ void init_AttributedText(iAttributedText *d, iRangecc text, size_t maxLen, iFont
     d->font    = font;
     d->fgColor = fgColor;
     init_Array(&d->runs, sizeof(iAttributedRun));
+    init_Array(&d->logical, sizeof(iChar));
     init_Array(&d->visual, sizeof(iChar));
-    init_Array(&d->visualToSourceOffset, sizeof(int));
+    init_Array(&d->logicalToVisual, sizeof(int));
+    init_Array(&d->visualToLogical, sizeof(int));
+    init_Array(&d->logicalToSourceOffset, sizeof(int));
     d->bidiLevels = NULL;
     prepare_AttributedText_(d);
 }
 
 void deinit_AttributedText(iAttributedText *d) {
     free(d->bidiLevels);
+    deinit_Array(&d->logicalToSourceOffset);
+    deinit_Array(&d->logicalToVisual);
+    deinit_Array(&d->visualToLogical);
     deinit_Array(&d->visual);
-    deinit_Array(&d->visualToSourceOffset);
+    deinit_Array(&d->logical);
     deinit_Array(&d->runs);
 }
 
@@ -1128,17 +1145,18 @@ static void cacheTextGlyphs_Font_(iFont *d, const iRangecc text) {
     init_Array(&glyphIndices, sizeof(uint32_t));
     iAttributedText attrText;
     init_AttributedText(&attrText, text, 0, d, (iColor){});
-    /* We use AttributedText here so the glyph lookup matches the behavior during text drawing --
+    /* We use AttributedText here so the font lookup matches the behavior during text drawing --
        glyphs may be selected from a font that's different than `d`. */
-    const iChar *visualText = constData_Array(&attrText.visual);
+    const iChar *logicalText = constData_Array(&attrText.logical);
     iConstForEach(Array, i, &attrText.runs) {
         const iAttributedRun *run = i.value;
-        if (run->isLineBreak) {
+        if (run->flags.isLineBreak) {
             continue;
         }
-        for (int pos = run->visual.start; pos < run->visual.end; pos++) {
-            const iChar ch = visualText[pos];
+        for (int pos = run->logical.start; pos < run->logical.end; pos++) {
+            const iChar ch = logicalText[pos];
             if (!isSpace_Char(ch) && !isControl_Char_(ch)) {
+                /* TODO: Use `run->font`; the glyph may be selected from a different font. */
                 const uint32_t glyphIndex = glyphIndex_Font_(d, ch);
                 if (glyphIndex) {
                     pushBack_Array(&glyphIndices, &glyphIndex);
@@ -1147,6 +1165,7 @@ static void cacheTextGlyphs_Font_(iFont *d, const iRangecc text) {
         }
     }
     deinit_AttributedText(&attrText);
+    /* TODO: Cache glyphs from ALL the fonts we encountered above. */
     cacheGlyphs_Font_(d, &glyphIndices);
     deinit_Array(&glyphIndices);
 }
@@ -1165,10 +1184,6 @@ enum iRunMode {
     stopAtNewline_RunMode           = iBit(14), /* don't advance past \n, consider it a wrap pos */
 };
 
-static enum iFontId fontId_Text_(const iFont *font) {
-    return (enum iFontId) (font - text_.fonts);
-}
-
 iDeclareType(RunArgs)
 
 struct Impl_RunArgs {
@@ -1180,18 +1195,22 @@ struct Impl_RunArgs {
     int           xposLimit;       /* hard limit for wrapping */
     int           xposLayoutBound; /* visible bound for layout purposes; does not affect wrapping */
     int           color;
-    /* TODO: Use TextMetrics output pointer instead of return value & cursorAdvance_out */
+    /* TODO: Cleanup using TextMetrics
+       Use TextMetrics output pointer instead of return value & cursorAdvance_out. */
     iInt2 *       cursorAdvance_out;
     const char ** continueFrom_out;
     int *         runAdvance_out;
 };
 
-static iBool notify_WrapText_(iWrapText *d, const char *ending, int advance) {
+static iBool notify_WrapText_(iWrapText *d, const char *ending, int origin, int advance) {
     if (d && d->wrapFunc && d->wrapRange_.start) {
+        /* `wrapRange_` uses logical indices. */
         const char *end = ending ? ending : d->wrapRange_.end;
-        const iBool result = d->wrapFunc(d, (iRangecc){ d->wrapRange_.start, end }, advance);
+        iRangecc range = { d->wrapRange_.start, end };
+        iAssert(range.start <= range.end);
+        const iBool result = d->wrapFunc(d, range, origin, advance);
         if (result) {
-            d->wrapRange_.start = end;
+            d->wrapRange_.start = range.end;
         }
         else {
             d->wrapRange_ = iNullRange;
@@ -1235,15 +1254,18 @@ struct Impl_GlyphBuffer {
     hb_buffer_t *        hb;
     iFont *              font;
     const iChar *        visualText;
+    const int *          visToLog;
     hb_glyph_info_t *    glyphInfo;
     hb_glyph_position_t *glyphPos;
     unsigned int         glyphCount;
 };
 
-static void init_GlyphBuffer_(iGlyphBuffer *d, iFont *font, const iChar *visualText) {
+static void init_GlyphBuffer_(iGlyphBuffer *d, iFont *font, const iChar *visualText,
+                              const int *visToLog) {
     d->hb         = hb_buffer_create();
     d->font       = font;
     d->visualText = visualText;
+    d->visToLog   = visToLog;
     d->glyphInfo  = NULL;
     d->glyphPos   = NULL;
     d->glyphCount = 0;
@@ -1261,14 +1283,15 @@ static void shape_GlyphBuffer_(iGlyphBuffer *d) {
     }
 }
 
-static float advance_GlyphBuffer_(const iGlyphBuffer *d, iRangei wrapVisRange) {
+static float advance_GlyphBuffer_(const iGlyphBuffer *d, iRangei wrapPosRange) {
     float x = 0.0f;
     for (unsigned int i = 0; i < d->glyphCount; i++) {
         const int visPos = d->glyphInfo[i].cluster;
-        if (visPos < wrapVisRange.start) {
+        const int logPos = d->visToLog[visPos];
+        if (logPos < wrapPosRange.start) {
             continue;
         }
-        if (visPos >= wrapVisRange.end) {
+        if (logPos >= wrapPosRange.end) {
             break;
         }
         x += d->font->xScale * d->glyphPos[i].x_advance;
@@ -1305,7 +1328,6 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
     float        yCursor    = 0.0f;
     float        xCursorMax = 0.0f;
     const iBool  isMonospaced = d->isMonospaced;
-    const float  monoAdvance  = isMonospaced ? glyph_Font_(d, 'M')->advance : 0.0f;
     iAssert(args->text.end >= args->text.start);
     if (args->continueFrom_out) {
         *args->continueFrom_out = args->text.end;
@@ -1321,8 +1343,11 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
         /* Initialize the wrap range. */
         args->wrap->wrapRange_ = args->text;
     }
-    const iChar *visualText = constData_Array(&attrText.visual);
-    const size_t runCount   = size_Array(&attrText.runs);
+    const iChar *logicalText = constData_Array(&attrText.logical);
+    const iChar *visualText  = constData_Array(&attrText.visual);
+    const int *  logToVis    = constData_Array(&attrText.logicalToVisual);
+    const int *  visToLog    = constData_Array(&attrText.visualToLogical);
+    const size_t runCount    = size_Array(&attrText.runs);
     iArray buffers;
     init_Array(&buffers, sizeof(iGlyphBuffer));
     resize_Array(&buffers, runCount);
@@ -1330,12 +1355,13 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
     iConstForEach(Array, i, &attrText.runs) {
         const iAttributedRun *run = i.value;
         iGlyphBuffer *buf = at_Array(&buffers, index_ArrayConstIterator(&i));
-        init_GlyphBuffer_(buf, run->font, visualText);
-        for (int pos = run->visual.start; pos < run->visual.end; pos++) {
-            hb_buffer_add(buf->hb, visualText[pos], pos);
+        init_GlyphBuffer_(buf, run->font, visualText, visToLog);
+        for (int pos = run->logical.start; pos < run->logical.end; pos++) {
+            const int visPos = logToVis[pos];
+            hb_buffer_add(buf->hb, visualText[visPos], visPos);
         }
         hb_buffer_set_content_type(buf->hb, HB_BUFFER_CONTENT_TYPE_UNICODE);
-        hb_buffer_set_direction(buf->hb, HB_DIRECTION_LTR);
+        hb_buffer_set_direction(buf->hb, run->flags.isRTL ? HB_DIRECTION_RTL : HB_DIRECTION_LTR); /* visual is LTR */
         /* hb_buffer_set_script(hbBuf, HB_SCRIPT_LATIN); */ /* will be autodetected */
     }
     if (isMonospaced) {
@@ -1344,31 +1370,34 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
             evenMonospaceAdvances_GlyphBuffer_(at_Array(&buffers, runIndex), d);
         }
     }
-    iBool willAbortDueToWrap = iFalse;
-    const iRangecc sourceText  = attrText.source;
-    const int *    visToSource = constData_Array(&attrText.visualToSourceOffset);
-    const size_t   visSize  = size_Array(&attrText.visual);
-    iRanges wrapRuns = { 0, runCount };
-    iRangei wrapVisRange = { 0, visSize };
-    int     wrapResumePos      = visSize;
-    size_t  wrapResumeRunIndex = runCount;
+    iBool        willAbortDueToWrap = iFalse;
+    const size_t textLen            = size_Array(&attrText.logical);
+    iRanges      wrapRuns           = { 0, runCount };
+    iRangei      wrapPosRange       = { 0, textLen };
+    int          wrapResumePos      = textLen;
+    size_t       wrapResumeRunIndex = runCount;
+    const int    layoutBound        = (args->wrap ? args->wrap->maxWidth : 0);
     while (!isEmpty_Range(&wrapRuns)) {
         float wrapAdvance = 0.0f;
+        iBool isLineRTL = iFalse;
+        /* First we need to figure out how much text fits on the current line. */
         if (args->wrap && args->wrap->maxWidth > 0) {
-            iAssert(wrapVisRange.end == visSize);
+            float breakAdvance = -1.0f;
+            iAssert(wrapPosRange.end == textLen);
             /* Determine ends of wrapRuns and wrapVisRange. */
             for (size_t runIndex = wrapRuns.start; runIndex < wrapRuns.end; runIndex++) {
                 const iAttributedRun *run = at_Array(&attrText.runs, runIndex);
-                if (run->isLineBreak) {
-                    wrapVisRange.end   = run->visual.start;
-                    wrapResumePos      = run->visual.end;
+                if (run->flags.isLineBreak) {
+                    wrapPosRange.end   = run->logical.start;
+                    wrapResumePos      = run->logical.end;
                     wrapRuns.end       = runIndex;
                     wrapResumeRunIndex = runIndex + 1;
                     yCursor += d->height;
                     break;
                 }
+                isLineRTL |= run->flags.isRTL;
                 wrapResumeRunIndex = runCount;
-                wrapResumePos      = visSize;
+                wrapResumePos      = textLen;
                 iGlyphBuffer *buf = at_Array(&buffers, runIndex);
                 iAssert(run->font == buf->font);
                 shape_GlyphBuffer_(buf);
@@ -1377,8 +1406,9 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                 for (unsigned int i = 0; i < buf->glyphCount; i++) {
                     const hb_glyph_info_t *info    = &buf->glyphInfo[i];
                     const hb_codepoint_t   glyphId = info->codepoint;
-                    const int              visPos  = info->cluster;
-                    if (visPos < wrapVisRange.start) {
+                    const int              visPos_  = info->cluster;
+                    const int              logPos  = visToLog[visPos_];
+                    if (logPos < wrapPosRange.start) {
                         continue;
                     }
                     const iGlyph *glyph      = glyphByIndex_Font_(run->font, glyphId);
@@ -1387,37 +1417,42 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                     const float   xAdvance   = run->font->xScale * buf->glyphPos[i].x_advance;
                     if (args->wrap->mode == word_WrapTextMode) {
                         /* When word wrapping, only consider certain places breakable. */
-                        const iChar ch = visualText[info->cluster];
+                        const iChar ch = logicalText[logPos];
                         if ((ch >= 128 || !ispunct(ch)) && (prevCh == '-' || prevCh == '/')) {
-                            safeBreakPos = visPos;
+                            safeBreakPos = logPos;
+                            breakAdvance = wrapAdvance;
     //                        isSoftHyphenBreak = iFalse;
                         }
                         else if (isSpace_Char(ch)) {
-                            safeBreakPos = visPos;
+                            safeBreakPos = logPos;
+                            breakAdvance = wrapAdvance;
     //                        isSoftHyphenBreak = iFalse;
                         }
                         prevCh = ch;
                     }
                     else {
                         if (~glyphFlags & HB_GLYPH_FLAG_UNSAFE_TO_BREAK) {
-                            safeBreakPos = visPos;
+                            safeBreakPos = logPos;
+                            breakAdvance = wrapAdvance;
                         }
                     }
                     /* Out of room? */
                     if (wrapAdvance + xOffset + glyph->d[0].x + glyph->rect[0].size.x >
                         args->wrap->maxWidth) {
                         if (safeBreakPos >= 0) {
-                            wrapVisRange.end = safeBreakPos;
+                            wrapPosRange.end = safeBreakPos;
                         }
                         else {
-                            wrapVisRange.end = visPos;
+                            wrapPosRange.end = logPos;
+                            breakAdvance     = wrapAdvance;
                         }
-                        wrapResumePos      = wrapVisRange.end;
-                        while (wrapResumePos < visSize && isSpace_Char(visualText[wrapResumePos])) {
+                        wrapResumePos      = wrapPosRange.end;
+                        while (wrapResumePos < textLen && isSpace_Char(logicalText[wrapResumePos])) {
                             wrapResumePos++; /* skip space */
                         }
                         wrapRuns.end       = runIndex + 1; /* still includes this run */
                         wrapResumeRunIndex = runIndex;     /* ...but continue from the same one */
+                        wrapAdvance        = breakAdvance;
                         break;
                     }
                     wrapAdvance += xAdvance;
@@ -1432,130 +1467,30 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
             }
         }
         else {
-            /* Calculate total advance without wrapping. */
+            /* Not wrapped so everything fits! Calculate total advance without wrapping. */
             for (size_t i = wrapRuns.start; i < wrapRuns.end; i++) {
-                wrapAdvance += advance_GlyphBuffer_(at_Array(&buffers, i), wrapVisRange);
+                wrapAdvance += advance_GlyphBuffer_(at_Array(&buffers, i), wrapPosRange);
             }
+        }
+        /* Alignment. */
+        int origin = 0;
+        /* TODO: Is everything on the line RTL? If so, right-align. */
+        if (isLineRTL && layoutBound > 0 && wrapAdvance < layoutBound) {
+            origin = layoutBound - wrapAdvance;
         }
         /* Make a callback for each wrapped line. */
         if (!notify_WrapText_(args->wrap,
-//                              sourcePtr_AttributedText_(&attrText, wrapVisRange.end),
                               sourcePtr_AttributedText_(&attrText, wrapResumePos),
+                              origin,
                               iRound(wrapAdvance))) {
             willAbortDueToWrap = iTrue;
         }
-#if 0
-            if (wrapResumePos >= 0) {
-                xCursor = 0.0f;
-                yCursor += d->height;
-                runVisual.start = wrapResumePos;
-                wrapResumePos = NULL;
-            }
-            else if (run->lineBreaks) {
-                for (int i = 0; i < run->lineBreaks; i++) {
-                    /* One callback for each "wrapped" line even if they're empty. */
-                    if (!notify_WrapText_(args->wrap,
-                                          sourcePtr_AttributedText_(&attrText, run->visual.start),
-                                          iRound(xCursor))) {
-                        break;
-                    }
-                    xCursor = 0.0f;
-                    yCursor += d->height;
-                }
-            }
-            const iRangecc runSource = sourceRange_AttributedText_(&attrText, runVisual);
-            hb_buffer_clear_contents(hbBuf);
-            iBool isRunRTL = attrText.bidiLevels != NULL;
-            /* Cluster values are used to determine offset inside the UTF-8 source string. */
-            //hb_buffer_set_cluster_level(hbBuf, HB_BUFFER_CLUSTER_LEVEL_MONOTONE_CHARACTERS);
-            for (int pos = runVisual.start; pos < runVisual.end; pos++) {
-                hb_buffer_add(hbBuf, visualText[pos], pos);
-                if (attrText.bidiLevels) {
-                    const char lev = attrText.bidiLevels[pos];
-                    if (!FRIBIDI_IS_NEUTRAL(lev) && !FRIBIDI_IS_RTL(lev)) {
-                        isRunRTL = iFalse;
-                    }
-                }
-            }
-            hb_buffer_set_content_type(hbBuf, HB_BUFFER_CONTENT_TYPE_UNICODE);
-            hb_buffer_set_direction(hbBuf, HB_DIRECTION_LTR);
-            /* hb_buffer_set_script(hbBuf, HB_SCRIPT_LATIN); */ /* will be autodetected */
-            //hb_buffer_set_language(hbBuf, hb_language_from_string("en", -1)); /* TODO: language from document/UI, if known */
-            hb_shape(run->font->hbFont, hbBuf, NULL, 0); /* TODO: Specify features, too? */
-            unsigned int               glyphCount = 0;
-            const hb_glyph_info_t *    glyphInfo  = hb_buffer_get_glyph_infos(hbBuf, &glyphCount);
-            hb_glyph_position_t *      glyphPos   = hb_buffer_get_glyph_positions(hbBuf, &glyphCount);
-//        iBool isSoftHyphenBreak = iFalse;
-        /* Check if this run needs to be wrapped. If so, we'll draw the portion that fits on
-           the line, and re-run the loop resuming the run from the wrap point. */
-        if (args->wrap && args->wrap->maxWidth > 0) {
-            float x = xCursor;
-            int safeBreak = -1;
-            iChar prevCh = 0;
-            for (unsigned int i = 0; i < glyphCount; i++) {
-                const hb_glyph_info_t *info    = &glyphInfo[i];
-                const hb_codepoint_t   glyphId = info->codepoint;
-                const int     visPos     = info->cluster;
-                const iGlyph *glyph      = glyphByIndex_Font_(run->font, glyphId);
-                const int     glyphFlags = hb_glyph_info_get_glyph_flags(info);
-                const float   xOffset    = run->font->xScale * glyphPos[i].x_offset;
-                const float   xAdvance   = run->font->xScale * glyphPos[i].x_advance;
-                if (args->wrap->mode == word_WrapTextMode) {
-                    /* When word wrapping, only consider certain places breakable. */
-                    const iChar ch = visualText[info->cluster];
-                    if ((ch >= 128 || !ispunct(ch)) && (prevCh == '-' || prevCh == '/')) {
-                        safeBreak = visPos;
-//                        isSoftHyphenBreak = iFalse;
-                    }
-                    else if (isSpace_Char(ch)) {
-                        safeBreak = visPos;
-//                        isSoftHyphenBreak = iFalse;
-                    }
-                    prevCh = ch;
-                }
-                else {
-                    if (~glyphFlags & HB_GLYPH_FLAG_UNSAFE_TO_BREAK) {
-                        safeBreak = visPos;
-                    }
-                }
-                if (x + xOffset + glyph->d[0].x + glyph->rect[0].size.x > args->wrap->maxWidth) {
-                    if (safeBreak >= 0) {
-                        breakPos = safeBreak;
-                    }
-                    else {
-                        breakPos = visPos;
-                    }
-                    break;
-                }
-                x += xAdvance;
-                /* Additional kerning tweak. It would be better to use HarfBuzz font callbacks,
-                   but they don't seem to get called? */
-                if (i + 1 < glyphCount) {
-                    x += horizKern_Font_(run->font, glyphId, glyphInfo[i + 1].codepoint);
-                }
-            }
-            /* Make a callback for each wrapped line. */
-            if (breakPos >= 0) {
-                if (!notify_WrapText_(args->wrap,
-                                      sourcePtr_AttributedText_(&attrText, breakPos),
-                                      iRound(x))) {
-                    willAbortDueToWrap = iTrue;
-                }
-            }
-        }
-        /* Right-align RTL runs. */
-        if (isRunRTL && xCursor < 1 && args->xposLayoutBound > 0) {
-            xCursor += args->xposLayoutBound - orig.x -
-                       glyphRunRightEdge_Font_(run->font, glyphPos, glyphCount);
-        }
-#endif
-        /* TODO: Alignment. */
-        xCursor = 0.0f;
+        xCursor = origin;
         /* We have determined a possible wrap position and alignment for the work runs,
            so now we can process the glyphs. */
         for (size_t runIndex = wrapRuns.start; runIndex < wrapRuns.end; runIndex++) {
             const iAttributedRun *run = at_Array(&attrText.runs, runIndex);
-            if (run->isLineBreak) {
+            if (run->flags.isLineBreak) {
                 xCursor = 0.0f;
                 yCursor += d->height;
                 continue;
@@ -1563,17 +1498,15 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
             iGlyphBuffer *buf = at_Array(&buffers, runIndex);
             shape_GlyphBuffer_(buf);
             iAssert(run->font == buf->font);
-            iRangei runVisual = run->visual;
             /* Process all the glyphs. */
             for (unsigned int i = 0; i < buf->glyphCount; i++) {
                 const hb_glyph_info_t *info    = &buf->glyphInfo[i];
                 const hb_codepoint_t   glyphId = info->codepoint;
                 const int              visPos  = info->cluster;
-                if (visPos < wrapVisRange.start) {
+                const int              logPos  = visToLog[visPos];
+                if (logPos < wrapPosRange.start || logPos >= wrapPosRange.end) {
+                    /* Already handled this part of the run. */
                     continue;
-                }
-                if (visPos >= wrapVisRange.end) {
-                    break;
                 }
                 const float xOffset  = run->font->xScale * buf->glyphPos[i].x_offset;
                 const float yOffset  = run->font->yScale * buf->glyphPos[i].y_offset;
@@ -1582,13 +1515,6 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                 const iGlyph *glyph = glyphByIndex_Font_(run->font, glyphId);
                 const float xf = xCursor + xOffset;
                 const int hoff = enableHalfPixelGlyphs_Text ? (xf - ((int) xf) > 0.5f ? 1 : 0) : 0;
-#if 0
-                if (visPos == breakPos) {
-                    runIndex--; /* stay on the same run */
-                    wrapResumePos = visPos;
-                    break;
-                }
-#endif
                 /* Output position for the glyph. */
                 SDL_Rect dst = { orig.x + xCursor + xOffset + glyph->d[hoff].x,
                                  orig.y + yCursor - yOffset + glyph->font->baseline + glyph->d[hoff].y,
@@ -1645,17 +1571,13 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
         }
         wrapRuns.start     = wrapResumeRunIndex;
         wrapRuns.end       = runCount;
-        wrapVisRange.start = wrapResumePos;
-        wrapVisRange.end   = visSize;
+        wrapPosRange.start = wrapResumePos;
+        wrapPosRange.end   = textLen;
         yCursor += d->height;
     }
     if (args->cursorAdvance_out) {
         *args->cursorAdvance_out = init_I2(xCursor, yCursor);
     }
-#if 0
-    /* The final, unbroken line. */
-    notify_WrapText_(args->wrap, NULL, xCursor);
-#endif
     if (args->runAdvance_out) {
         *args->runAdvance_out = xCursorMax;
     }
@@ -1678,15 +1600,6 @@ int lineHeight_Text(int fontId) {
     return font_Text_(fontId)->height;
 }
 
-#if 0
-iInt2 measureRange_Text(int fontId, iRangecc text) {
-    if (isEmpty_Range(&text)) {
-        return init_I2(0, lineHeight_Text(fontId));
-    }
-    return run_Font_(font_Text_(fontId), &(iRunArgs){ .mode = measure_RunMode, .text = text }).size;
-}
-#endif
-
 iTextMetrics measureRange_Text(int fontId, iRangecc text) {
     if (isEmpty_Range(&text)) {
         return (iTextMetrics){ init_Rect(0, 0, 0, lineHeight_Text(fontId)), zero_I2() };
@@ -1708,12 +1621,6 @@ iRect visualBounds_Text(int fontId, iRangecc text) {
                      });
 }
 
-#if 0
-iInt2 measure_Text(int fontId, const char *text) {
-    return measureRange_Text(fontId, range_CStr(text));
-}
-#endif
-
 void cache_Text(int fontId, iRangecc text) {
     cacheTextGlyphs_Font_(font_Text_(fontId), text);
 }
@@ -1726,20 +1633,9 @@ static int runFlagsFromId_(enum iFontId fontId) {
     return runFlags;
 }
 
-#if 0
-iInt2 advanceRange_Text(int fontId, iRangecc text) {
-    int advance;
-    const int height = run_Font_(font_Text_(fontId),
-                                 &(iRunArgs){ .mode = measure_RunMode | runFlagsFromId_(fontId),
-                                              .text = text,
-                                              .runAdvance_out = &advance })
-                           .size.y;
-    return init_I2(advance, height);
-}
-#endif
-
-static iBool cbAdvanceOneLine_(iWrapText *d, iRangecc range, int advance) {
-    *((const char **) d->context) = range.end; // iMin(skipSpace_CStr(range.end), d->text.end);
+static iBool cbAdvanceOneLine_(iWrapText *d, iRangecc range, int origin, int advance) {
+    iUnused(origin, advance);
+    *((const char **) d->context) = range.end;
     return iFalse; /* just one line */
 }
 
@@ -1752,19 +1648,6 @@ iInt2 tryAdvance_Text(int fontId, iRangecc text, int width, const char **endPos)
                        .context  = endPos };
     /* The return value is expected to be the horizontal/vertical bounds. */
     return measure_WrapText(&wrap, fontId).bounds.size;
-    
-#if 0
-    int advance;
-    const int height = run_Font_(font_Text_(fontId),
-                                 &(iRunArgs){ .mode = measure_RunMode | stopAtNewline_RunMode |
-                                                      runFlagsFromId_(fontId),
-                                              .text = text,
-                                              .xposLimit        = width,
-                                              .continueFrom_out = endPos,
-                                              .runAdvance_out   = &advance })
-                           .size.y;
-    return init_I2(advance, height);
-#endif
 }
 
 iInt2 tryAdvanceNoWrap_Text(int fontId, iRangecc text, int width, const char **endPos) {
@@ -1790,25 +1673,6 @@ iTextMetrics measureN_Text(int fontId, const char *text, size_t n) {
                            .cursorAdvance_out = &tm.advance });
     return tm;
 }
-
-#if 0
-iInt2 advance_Text(int fontId, const char *text) {
-    return advanceRange_Text(fontId, range_CStr(text));
-}
-
-iInt2 advanceN_Text(int fontId, const char *text, size_t n) {
-    if (n == 0) {
-        return init_I2(0, lineHeight_Text(fontId));
-    }
-    int advance;
-    int height = run_Font_(font_Text_(fontId),
-              &(iRunArgs){ .mode           = measure_RunMode | runFlagsFromId_(fontId),
-                           .text           = range_CStr(text),
-                           .maxLen         = n,
-                           .runAdvance_out = &advance }).size.y;
-    return init_I2(advance, height);
-}
-#endif
 
 static void drawBoundedN_Text_(int fontId, iInt2 pos, int xposBound, int color, iRangecc text, size_t maxLen) {
     iText *d    = &text_;
@@ -1894,20 +1758,6 @@ iTextMetrics measureWrapRange_Text(int fontId, int maxWidth, iRangecc text) {
     return measure_WrapText(&wrap, fontId);
 }
 
-#if 0
-iInt2 advanceWrapRange_Text(int fontId, int maxWidth, iRangecc text) {
-    iInt2 size = zero_I2();
-    const char *endp;
-    while (!isEmpty_Range(&text)) {
-        iInt2 line = tryAdvance_Text(fontId, text, maxWidth, &endp);
-        text.start = endp;
-        size.x = iMax(size.x, line.x);
-        size.y += line.y;
-    }
-    return size;
-}
-#endif
-
 void drawBoundRange_Text(int fontId, iInt2 pos, int boundWidth, int color, iRangecc text) {
     /* This function is used together with text that has already been wrapped, so we'll know
        the bound width but don't have to re-wrap the text. */
@@ -1969,16 +1819,6 @@ void drawCenteredRange_Text(int fontId, iRect rect, iBool alignVisual, int color
     textBounds.pos.x = iMax(textBounds.pos.x, left_Rect(rect)); /* keep left edge visible */
     draw_Text_(fontId, textBounds.pos, color, text);
 }
-
-#if 0
-iInt2 advance_WrapText(iWrapText *d, int fontId) {
-    const iRect bounds = run_Font_(font_Text_(fontId),
-              &(iRunArgs){ .mode = measure_RunMode | runFlagsFromId_(fontId),
-                           .text = d->text,
-                           .wrap = d });
-    return bounds.size;
-}
-#endif
 
 iTextMetrics measure_WrapText(iWrapText *d, int fontId) {
     iTextMetrics tm;
