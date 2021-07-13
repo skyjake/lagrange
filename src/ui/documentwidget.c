@@ -1585,7 +1585,7 @@ static void parseUser_DocumentWidget_(iDocumentWidget *d) {
 static void cacheRunGlyphs_(void *data, const iGmRun *run) {
     iUnused(data);
     if (!isEmpty_Range(&run->text)) {
-        cache_Text(run->font, run->text);
+        cache_Text(run->textParams.font, run->text);
     }
 }
 
@@ -3910,14 +3910,14 @@ static void fillRange_DrawContext_(iDrawContext *d, const iGmRun *run, enum iCol
                       contains_Range(&mark, run->text.start))) {
         int x = 0;
         if (!*isInside) {
-            x = measureRange_Text(run->font,
+            x = measureRange_Text(run->textParams.font,
                                   (iRangecc){ run->text.start, iMax(run->text.start, mark.start) })
                     .advance.x;
         }
         int w = width_Rect(run->visBounds) - x;
         if (contains_Range(&run->text, mark.end) || mark.end < run->text.start) {
             w = measureRange_Text(
-                    run->font,
+                    run->textParams.font,
                     !*isInside ? mark
                                : (iRangecc){ run->text.start, iMax(run->text.start, mark.end) })
                     .advance.x;
@@ -3973,15 +3973,15 @@ static void drawBannerRun_DrawContext_(iDrawContext *d, const iGmRun *run, iInt2
     iInt2 bpos = add_I2(visPos, init_I2(0, lineHeight_Text(banner_FontId) / 2));
     if (icon) {
         appendChar_String(&str, icon);
-        const iRect iconRect = visualBounds_Text(run->font, range_String(&str));
+        const iRect iconRect = visualBounds_Text(run->textParams.font, range_String(&str));
         drawRange_Text(
-            run->font,
-            addY_I2(bpos, -mid_Rect(iconRect).y + lineHeight_Text(run->font) / 2),
+            run->textParams.font,
+            addY_I2(bpos, -mid_Rect(iconRect).y + lineHeight_Text(run->textParams.font) / 2),
             tmBannerIcon_ColorId,
             range_String(&str));
         bpos.x += right_Rect(iconRect) + 3 * gap_Text;
     }
-    drawRange_Text(run->font,
+    drawRange_Text(run->textParams.font,
                    bpos,
                    tmBannerTitle_ColorId,
                    bannerText_DocumentWidget_(d->widget));
@@ -4088,7 +4088,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
         /* Media UIs are drawn afterwards as a dynamic overlay. */
         return;
     }
-    enum iColorId      fg        = run->color;
+    enum iColorId      fg        = run->textParams.color;
     const iGmDocument *doc       = d->widget->doc;
     const int          linkFlags = linkFlags_GmDocument(doc, run->linkId);
     /* Hover state of a link. */
@@ -4152,8 +4152,11 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
         const iInt2 margin = preRunMargin_GmDocument(doc, run->preId);
         fillRect_Paint(&d->paint, (iRect){ visPos, run->visBounds.size }, tmBackgroundAltText_ColorId);
         drawRect_Paint(&d->paint, (iRect){ visPos, run->visBounds.size }, tmQuoteIcon_ColorId);
-        drawWrapRange_Text(run->font, add_I2(visPos, margin),
-                           run->visBounds.size.x - 2 * margin.x, run->color, run->text);
+        drawWrapRange_Text(run->textParams.font,
+                           add_I2(visPos, margin),
+                           run->visBounds.size.x - 2 * margin.x,
+                           run->textParams.color,
+                           run->text);
     }
     else if (run->flags & siteBanner_GmRunFlag) {
         /* Banner background. */
@@ -4194,7 +4197,11 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                             height_Rect(run->visBounds),
                             tmQuoteIcon_ColorId);
         }
-        drawBoundRange_Text(run->font, visPos, width_Rect(run->visBounds), fg, run->text);
+        drawBoundRange_Text(run->textParams.font,
+                            visPos,
+                            (run->textParams.isRTL ? -1 : 1) * width_Rect(run->visBounds),
+                            fg,
+                            run->text);
     runDrawn:;
     }
     /* Presentation of links. */

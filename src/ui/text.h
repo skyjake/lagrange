@@ -205,7 +205,7 @@ struct Impl_WrapText {
     iRangecc text;
     int      maxWidth;
     enum iWrapTextMode mode;
-    iBool  (*wrapFunc)(iWrapText *, iRangecc wrappedText, int origin, int advance);
+    iBool  (*wrapFunc)(iWrapText *, iRangecc wrappedText, int origin, int advance, iBool isBaseRTL);
     void *   context;
     /* internal */
     iRangecc wrapRange_;

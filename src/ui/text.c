@@ -792,7 +792,8 @@ struct Impl_AttributedRun {
 };
 
 iDeclareType(AttributedText)
-iDeclareTypeConstructionArgs(AttributedText, iRangecc text, size_t maxLen, iFont *font, iColor fgColor)
+iDeclareTypeConstructionArgs(AttributedText, iRangecc text, size_t maxLen, iFont *font,
+                             iColor fgColor, int baseDir)
 
 struct Impl_AttributedText {
     iRangecc  source;   /* original source text */
@@ -809,8 +810,9 @@ struct Impl_AttributedText {
     iBool     isBaseRTL;
 };
 
-iDefineTypeConstructionArgs(AttributedText, (iRangecc text, size_t maxLen, iFont *font, iColor fgColor),
-                            text, maxLen, font, fgColor)
+iDefineTypeConstructionArgs(AttributedText,
+                            (iRangecc text, size_t maxLen, iFont *font, iColor fgColor, int baseDir),
+                            text, maxLen, font, fgColor, baseDir)
 
 static const char *sourcePtr_AttributedText_(const iAttributedText *d, int logicalPos) {
     const int *logToSource = constData_Array(&d->logicalToSourceOffset);
@@ -867,7 +869,7 @@ static enum iFontId fontId_Text_(const iFont *font) {
     return (enum iFontId) (font - text_.fonts);
 }
 
-static void prepare_AttributedText_(iAttributedText *d) {
+static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir) {
     iAssert(isEmpty_Array(&d->runs));
     size_t length = 0;
     /* Prepare the UTF-32 logical string. */ {
@@ -896,7 +898,7 @@ static void prepare_AttributedText_(iAttributedText *d) {
                         data_Array(&d->logicalToVisual),
                         data_Array(&d->visualToLogical),
                         (FriBidiLevel *) d->bidiLevels);
-        d->isBaseRTL = FRIBIDI_IS_RTL(baseDir);
+        d->isBaseRTL = (overrideBaseDir == 0 ? FRIBIDI_IS_RTL(baseDir) : (overrideBaseDir < 0));
 #endif
     }
     /* The mapping needs to include the terminating NULL position. */ {
@@ -1017,7 +1019,8 @@ static void prepare_AttributedText_(iAttributedText *d) {
 #endif
 }
 
-void init_AttributedText(iAttributedText *d, iRangecc text, size_t maxLen, iFont *font, iColor fgColor) {
+void init_AttributedText(iAttributedText *d, iRangecc text, size_t maxLen, iFont *font, iColor fgColor,
+                         int baseDir) {
     d->source  = text;
     d->maxLen  = maxLen ? maxLen : iInvalidSize;
     d->font    = font;
@@ -1030,7 +1033,7 @@ void init_AttributedText(iAttributedText *d, iRangecc text, size_t maxLen, iFont
     init_Array(&d->logicalToSourceOffset, sizeof(int));
     d->bidiLevels = NULL;
     d->isBaseRTL = iFalse;
-    prepare_AttributedText_(d);
+    prepare_AttributedText_(d, baseDir);
 }
 
 void deinit_AttributedText(iAttributedText *d) {
@@ -1181,7 +1184,7 @@ static void cacheTextGlyphs_Font_(iFont *d, const iRangecc text) {
     iArray glyphIndices;
     init_Array(&glyphIndices, sizeof(uint32_t));
     iAttributedText attrText;
-    init_AttributedText(&attrText, text, 0, d, (iColor){});
+    init_AttributedText(&attrText, text, 0, d, (iColor){}, 0);
     /* We use AttributedText here so the font lookup matches the behavior during text drawing --
        glyphs may be selected from a font that's different than `d`. */
     const iChar *logicalText = constData_Array(&attrText.logical);
@@ -1229,9 +1232,10 @@ struct Impl_RunArgs {
     size_t        maxLen; /* max characters to process */
     iInt2         pos;
     iWrapText *   wrap;
-    int           xposLimit;       /* hard limit for wrapping */
-    int           xposLayoutBound; /* visible bound for layout purposes; does not affect wrapping */
+    int           xposLimit;        /* hard limit for wrapping */
+    int           xposLayoutBound;  /* visible bound for layout purposes; does not affect wrapping */
     int           color;
+    int           baseDir;
     /* TODO: Cleanup using TextMetrics
        Use TextMetrics output pointer instead of return value & cursorAdvance_out. */
     iInt2 *       cursorAdvance_out;
@@ -1239,13 +1243,13 @@ struct Impl_RunArgs {
     int *         runAdvance_out;
 };
 
-static iBool notify_WrapText_(iWrapText *d, const char *ending, int origin, int advance) {
+static iBool notify_WrapText_(iWrapText *d, const char *ending, int origin, int advance, iBool isBaseRTL) {
     if (d && d->wrapFunc && d->wrapRange_.start) {
         /* `wrapRange_` uses logical indices. */
-        const char *end = ending ? ending : d->wrapRange_.end;
-        iRangecc range = { d->wrapRange_.start, end };
+        const char *end   = ending ? ending : d->wrapRange_.end;
+        iRangecc    range = { d->wrapRange_.start, end };
         iAssert(range.start <= range.end);
-        const iBool result = d->wrapFunc(d, range, origin, advance);
+        const iBool result = d->wrapFunc(d, range, origin, advance, isBaseRTL);
         if (result) {
             d->wrapRange_.start = end;
         }
@@ -1380,7 +1384,8 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
        font is used and other attributes such as color. (HarfBuzz shaping is done
        with one specific font.) */
     iAttributedText attrText;
-    init_AttributedText(&attrText, args->text, args->maxLen, d, get_Color(args->color));
+    init_AttributedText(&attrText, args->text, args->maxLen, d, get_Color(args->color),
+                        args->baseDir);
     if (args->wrap) {
         /* TODO: Duplicated args? */
         iAssert(equalRange_Rangecc(args->wrap->text, args->text));
@@ -1390,7 +1395,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
     const iChar *logicalText = constData_Array(&attrText.logical);
     const iChar *visualText  = constData_Array(&attrText.visual);
     const int *  logToVis    = constData_Array(&attrText.logicalToVisual);
-    const int *  visToLog    = constData_Array(&attrText.visualToLogical);
+//    const int *  visToLog    = constData_Array(&attrText.visualToLogical);
     const size_t runCount    = size_Array(&attrText.runs);
     iArray buffers;
     init_Array(&buffers, sizeof(iGlyphBuffer));
@@ -1580,7 +1585,8 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
         if (!notify_WrapText_(args->wrap,
                               sourcePtr_AttributedText_(&attrText, wrapResumePos),
                               origin,
-                              iRound(wrapAdvance))) {
+                              iRound(wrapAdvance),
+                              attrText.isBaseRTL)) {
             willAbortDueToWrap = iTrue;
         }
         xCursor = origin;
@@ -1743,8 +1749,9 @@ static int runFlagsFromId_(enum iFontId fontId) {
     return runFlags;
 }
 
-static iBool cbAdvanceOneLine_(iWrapText *d, iRangecc range, int origin, int advance) {
-    iUnused(origin, advance);
+static iBool cbAdvanceOneLine_(iWrapText *d, iRangecc range, int origin, int advance,
+                               iBool isBaseRTL) {
+    iUnused(origin, advance, isBaseRTL);
     *((const char **) d->context) = range.end;
     return iFalse; /* just one line */
 }
@@ -1785,9 +1792,9 @@ iTextMetrics measureN_Text(int fontId, const char *text, size_t n) {
 }
 
 static void drawBoundedN_Text_(int fontId, iInt2 pos, int xposBound, int color, iRangecc text, size_t maxLen) {
-    iText *d    = &text_;
-    iFont *font = font_Text_(fontId);
-    const iColor clr = get_Color(color & mask_ColorId);
+    iText *      d    = &text_;
+    iFont *      font = font_Text_(fontId);
+    const iColor clr  = get_Color(color & mask_ColorId);
     SDL_SetTextureColorMod(d->cache, clr.r, clr.g, clr.b);
     run_Font_(font,
               &(iRunArgs){ .mode = draw_RunMode |
@@ -1798,7 +1805,8 @@ static void drawBoundedN_Text_(int fontId, iInt2 pos, int xposBound, int color, 
                            .maxLen          = maxLen,                           
                            .pos             = pos,
                            .xposLayoutBound = xposBound,
-                           .color           = color & mask_ColorId });
+                           .color           = color & mask_ColorId,
+                           .baseDir         = xposBound ? iSign(xposBound - pos.x) : 0 });
 }
 
 static void drawBounded_Text_(int fontId, iInt2 pos, int xposBound, int color, iRangecc text) {

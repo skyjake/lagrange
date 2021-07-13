@@ -128,8 +128,11 @@ struct Impl_GmRun {
     iRangecc  text;
     iRect     bounds;    /* used for hit testing, may extend to edges */
     iRect     visBounds; /* actual visual bounds */
-    uint8_t   font;
-    uint8_t   color;
+    struct {
+        uint16_t   color : 8;
+        uint16_t   font  : 7;
+        uint16_t   isRTL : 1;
+    } textParams;
     uint8_t   flags;
     uint8_t   mediaType;
     uint16_t  preId;     /* preformatted block ID (sequential) */
