@@ -132,7 +132,9 @@ enum iTextFont {
     tinos_TextFont,
     sourceSans3_TextFont,
     iosevka_TextFont,
+    /* families: */
     notoSansArabic_TextFont,
+    emojiAndSymbols_TextFont,
 };
 
 extern int gap_Text; /* affected by content font size */

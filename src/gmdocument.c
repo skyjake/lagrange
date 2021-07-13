@@ -416,7 +416,8 @@ static const int colors[max_GmLineType] = {
 
 static iBool typesetOneLine_RunTypesetter_(iWrapText *wrap, iRangecc wrapRange, int origin, int advance) {
     iAssert(wrapRange.start <= wrapRange.end);
-    printf("typeset: {%s}\n", cstr_Rangecc(wrapRange));
+    trimEnd_Rangecc(&wrapRange);
+//    printf("typeset: {%s}\n", cstr_Rangecc(wrapRange));
     iRunTypesetter *d = wrap->context;
     const int fontId = d->run.font;
     d->run.text = wrapRange;

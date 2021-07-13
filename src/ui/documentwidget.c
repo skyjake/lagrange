@@ -4194,7 +4194,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                             height_Rect(run->visBounds),
                             tmQuoteIcon_ColorId);
         }
-        drawRange_Text(run->font, visPos, /*width_Rect(run->bounds),*/ fg, run->text);
+        drawBoundRange_Text(run->font, visPos, width_Rect(run->visBounds), fg, run->text);
     runDrawn:;
     }
     /* Presentation of links. */
@@ -4326,8 +4326,8 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
             }
         }
     }
-    drawRect_Paint(&d->paint, (iRect){ visPos, run->bounds.size }, green_ColorId);
-    drawRect_Paint(&d->paint, (iRect){ visPos, run->visBounds.size }, red_ColorId);
+//    drawRect_Paint(&d->paint, (iRect){ visPos, run->bounds.size }, green_ColorId);
+//    drawRect_Paint(&d->paint, (iRect){ visPos, run->visBounds.size }, red_ColorId);
 }
 
 static int drawSideRect_(iPaint *p, iRect rect) {
