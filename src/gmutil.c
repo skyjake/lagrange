@@ -74,6 +74,35 @@ void init_Url(iUrl *d, const iString *text) {
     }
 }
 
+uint16_t port_Url(const iUrl *d) {
+    uint16_t port = 0;
+    if (!isEmpty_Range(&d->port)) {
+        iString portStr;
+        initRange_String(&portStr, d->port);
+        port = toInt_String(&portStr);
+        deinit_String(&portStr);
+    }
+    if (port != 0) {
+        return port;
+    }
+    if (isEmpty_Range(&d->scheme) || equalCase_Rangecc(d->scheme, "gemini")) {
+        port = GEMINI_DEFAULT_PORT;
+    }
+    else if (equalCase_Rangecc(d->scheme, "gopher")) {
+        port = 70;
+    }
+    else if (equalCase_Rangecc(d->scheme, "finger")) {
+        port = 79;
+    }
+    else if (equalCase_Rangecc(d->scheme, "http")) {
+        port = 80;
+    }
+    else if (equalCase_Rangecc(d->scheme, "https")) {
+        port = 443;
+    }
+    return port;
+}
+
 static iRangecc dirPath_(iRangecc path) {
     const size_t pos = lastIndexOfCStr_Rangecc(path, "/");
     if (pos == iInvalidPos) return path;
@@ -98,7 +127,8 @@ static iRangecc prevPathSeg_(const char *end, const char *start) {
 void stripDefaultUrlPort_String(iString *d) {
     iUrl parts;
     init_Url(&parts, d);
-    if (equalCase_Rangecc(parts.scheme, "gemini") && equal_Rangecc(parts.port, "1965")) {
+    if (equalCase_Rangecc(parts.scheme, "gemini") &&
+        equal_Rangecc(parts.port, GEMINI_DEFAULT_PORT_CSTR)) {
         /* Always preceded by a colon. */
         remove_Block(&d->chars, parts.port.start - 1 - constBegin_String(d),
                      size_Range(&parts.port) + 1);
@@ -167,6 +197,12 @@ iRangecc urlHost_String(const iString *d) {
     iUrl url;
     init_Url(&url, d);
     return url.host;
+}
+
+uint16_t urlPort_String(const iString *d) {
+    iUrl url;
+    init_Url(&url, d);
+    return port_Url(&url);
 }
 
 iRangecc urlUser_String(const iString *d) {
@@ -320,8 +356,9 @@ const iString *absoluteUrl_String(const iString *d, const iString *urlMaybeRelat
         }
         delete_String(decHost);
         /* Default Gemini port is removed as redundant; normalization. */
-        if (!isEmpty_Range(&selHost->port) && (!equalCase_Rangecc(scheme, "gemini")
-                                               || !equal_Rangecc(selHost->port, "1965"))) {
+        if (!isEmpty_Range(&selHost->port) &&
+            (!equalCase_Rangecc(scheme, "gemini") ||
+             !equal_Rangecc(selHost->port, GEMINI_DEFAULT_PORT_CSTR))) {
             appendCStr_String(absolute, ":");
             appendRange_String(absolute, selHost->port);
         }

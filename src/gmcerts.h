@@ -60,10 +60,10 @@ iDeclareTypeConstructionArgs(GmCerts, const char *saveDir)
 
 typedef iBool (*iGmCertsIdentityFilterFunc)(void *context, const iGmIdentity *);
 
-iBool               checkTrust_GmCerts      (iGmCerts *, iRangecc domain, const iTlsCertificate *cert);
-void                setTrusted_GmCerts      (iGmCerts *, iRangecc domain, const iBlock *fingerprint,
+iBool               checkTrust_GmCerts      (iGmCerts *, iRangecc domain, uint16_t port, const iTlsCertificate *cert);
+void                setTrusted_GmCerts      (iGmCerts *, iRangecc domain, uint16_t port, const iBlock *fingerprint,
                                              const iDate *validUntil);
-iTime               domainValidUntil_GmCerts(const iGmCerts *, iRangecc domain);
+iTime               domainValidUntil_GmCerts(const iGmCerts *, iRangecc domain, uint16_t port);
 
 /**
  * Create a new self-signed TLS client certificate for identifying the user.

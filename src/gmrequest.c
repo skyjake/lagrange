@@ -149,7 +149,11 @@ struct Impl_GmRequest {
 iDefineObjectConstructionArgs(GmRequest, (iGmCerts *certs), certs)
 iDefineAudienceGetter(GmRequest, updated)
 iDefineAudienceGetter(GmRequest, finished)
-
+    
+static uint16_t port_GmRequest_(iGmRequest *d) {
+    return urlPort_String(&d->url);
+}
+    
 static void checkServerCertificate_GmRequest_(iGmRequest *d) {
     const iTlsCertificate *cert = d->req ? serverCertificate_TlsRequest(d->req) : NULL;
     iGmResponse *resp = d->resp;
@@ -165,7 +169,7 @@ static void checkServerCertificate_GmRequest_(iGmRequest *d) {
         if (verifyDomain_GmCerts(cert, domain)) {
             resp->certFlags |= domainVerified_GmCertFlag;
         }
-        if (checkTrust_GmCerts(d->certs, domain, cert)) {
+        if (checkTrust_GmCerts(d->certs, domain, port_GmRequest_(d), cert)) {
             resp->certFlags |= trusted_GmCertFlag;
         }
         if (verify_TlsCertificate(cert) == authority_TlsCertificateVerifyStatus) {
@@ -836,7 +840,7 @@ void submit_GmRequest(iGmRequest *d) {
     iConnect(TlsRequest, d->req, readyRead, d, readIncoming_GmRequest_);
     iConnect(TlsRequest, d->req, finished, d, requestFinished_GmRequest_);
     if (port == 0) {
-        port = 1965; /* default Gemini port */
+        port = GEMINI_DEFAULT_PORT; /* default Gemini port */
     }
     setHost_TlsRequest(d->req, host, port);
     setContent_TlsRequest(d->req,

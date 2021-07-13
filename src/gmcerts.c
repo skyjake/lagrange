@@ -426,7 +426,7 @@ iBool verifyDomain_GmCerts(const iTlsCertificate *cert, iRangecc domain) {
     return iFalse;
 }
 
-iBool checkTrust_GmCerts(iGmCerts *d, iRangecc domain, const iTlsCertificate *cert) {
+iBool checkTrust_GmCerts(iGmCerts *d, iRangecc domain, uint16_t port, const iTlsCertificate *cert) {
     if (!cert) {
         return iFalse;
     }
@@ -441,6 +441,9 @@ iBool checkTrust_GmCerts(iGmCerts *d, iRangecc domain, const iTlsCertificate *ce
     /* TODO: Could call setTrusted_GmCerts() instead of duplicating the trust-setting. */
     /* Good certificate. If not already trusted, add it now. */
     iString *key = newRange_String(domain);
+    if (port && port != GEMINI_DEFAULT_PORT) {
+        appendFormat_String(key, ":%u", port);
+    }
     iDate until;
     validUntil_TlsCertificate(cert, &until);
     iBlock *fingerprint = fingerprint_TlsCertificate(cert);
@@ -471,10 +474,13 @@ iBool checkTrust_GmCerts(iGmCerts *d, iRangecc domain, const iTlsCertificate *ce
     return iTrue;
 }
 
-void setTrusted_GmCerts(iGmCerts *d, iRangecc domain, const iBlock *fingerprint,
+void setTrusted_GmCerts(iGmCerts *d, iRangecc domain, uint16_t port, const iBlock *fingerprint,
                         const iDate *validUntil) {
     iString *key = collectNew_String();
     punyEncodeDomain_Rangecc(domain, key);
+    if (port && port != GEMINI_DEFAULT_PORT) {
+        appendFormat_String(key, ":%u", port);
+    }
     lock_Mutex(d->mtx);
     iTrustEntry *trust = value_StringHash(d->trusted, key);
     if (trust) {
@@ -488,12 +494,15 @@ void setTrusted_GmCerts(iGmCerts *d, iRangecc domain, const iBlock *fingerprint,
     unlock_Mutex(d->mtx);
 }
 
-iTime domainValidUntil_GmCerts(const iGmCerts *d, iRangecc domain) {
+iTime domainValidUntil_GmCerts(const iGmCerts *d, iRangecc domain, uint16_t port) {
     iTime expiry;
     iZap(expiry);
     lock_Mutex(d->mtx);
     iString key;
     initRange_String(&key, domain);
+    if (port && port != GEMINI_DEFAULT_PORT) {
+        appendFormat_String(&key, ":%u", port);
+    }
     const iTrustEntry *trust = constValue_StringHash(d->trusted, &key);
     if (trust) {
         expiry = trust->validUntil;

@@ -93,6 +93,9 @@ const iGmError *    get_GmError         (enum iGmStatusCode code);
 
 iRegExp *       newGemtextLink_RegExp   (void);
 
+#define GEMINI_DEFAULT_PORT         ((uint16_t) 1965)
+#define GEMINI_DEFAULT_PORT_CSTR    "1965"
+
 struct Impl_Url {
     iRangecc scheme;
     iRangecc host;
@@ -103,9 +106,11 @@ struct Impl_Url {
 };
 
 void            init_Url                (iUrl *, const iString *text);
+uint16_t        port_Url                (const iUrl *);
 
 iRangecc        urlScheme_String        (const iString *);
 iRangecc        urlHost_String          (const iString *);
+uint16_t        urlPort_String          (const iString *);
 iRangecc        urlUser_String          (const iString *);
 iRangecc        urlRoot_String          (const iString *);
 const iString * absoluteUrl_String      (const iString *, const iString *urlMaybeRelative);

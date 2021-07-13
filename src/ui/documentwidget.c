@@ -2623,8 +2623,9 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
     }
     else if (equal_Command(cmd, "server.trustcert") && document_App() == d) {
         const iRangecc host = urlHost_String(d->mod.url);
+        const uint16_t port = urlPort_String(d->mod.url);
         if (!isEmpty_Block(d->certFingerprint) && !isEmpty_Range(&host)) {
-            setTrusted_GmCerts(certs_App(), host, d->certFingerprint, &d->certExpiry);
+            setTrusted_GmCerts(certs_App(), host, port, d->certFingerprint, &d->certExpiry);
             d->certFlags |= trusted_GmCertFlag;
             postCommand_Widget(w, "document.info");
             updateTrust_DocumentWidget_(d, NULL);
@@ -3993,7 +3994,8 @@ static void drawBannerRun_DrawContext_(iDrawContext *d, const iGmRun *run, iInt2
         if (certFlags & timeVerified_GmCertFlag && certFlags & domainVerified_GmCertFlag) {
             iUrl parts;
             init_Url(&parts, d->widget->mod.url);
-            const iTime oldUntil = domainValidUntil_GmCerts(certs_App(), parts.host);
+            const iTime oldUntil =
+                domainValidUntil_GmCerts(certs_App(), parts.host, port_Url(&parts));
             iDate exp;
             init_Date(&exp, &oldUntil);
             iTime now;
@@ -4192,7 +4194,7 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                             height_Rect(run->visBounds),
                             tmQuoteIcon_ColorId);
         }
-        drawBoundRange_Text(run->font, visPos, width_Rect(run->bounds), fg, run->text);
+        drawRange_Text(run->font, visPos, /*width_Rect(run->bounds),*/ fg, run->text);
     runDrawn:;
     }
     /* Presentation of links. */
@@ -4324,8 +4326,8 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
             }
         }
     }
-//    drawRect_Paint(&d->paint, (iRect){ visPos, run->bounds.size }, green_ColorId);
-//    drawRect_Paint(&d->paint, (iRect){ visPos, run->visBounds.size }, red_ColorId);
+    drawRect_Paint(&d->paint, (iRect){ visPos, run->bounds.size }, green_ColorId);
+    drawRect_Paint(&d->paint, (iRect){ visPos, run->visBounds.size }, red_ColorId);
 }
 
 static int drawSideRect_(iPaint *p, iRect rect) {
