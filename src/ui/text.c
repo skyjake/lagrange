@@ -895,6 +895,14 @@ static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir) {
                         NULL,
                         (FriBidiLevel *) d->bidiLevels);
         d->isBaseRTL = (overrideBaseDir == 0 ? FRIBIDI_IS_RTL(baseDir) : (overrideBaseDir < 0));
+#else
+        /* 1:1 mapping. */
+        setCopy_Array(&d->visual, &d->logical);
+        resize_Array(&d->logicalToVisual, length);
+        for (size_t i = 0; i < length; i++) {
+            set_Array(&d->logicalToVisual, i, &(int){ i });
+        }
+        d->isBaseRTL = iFalse;
 #endif
     }
     /* The mapping needs to include the terminating NULL position. */ {
@@ -1208,13 +1216,13 @@ enum iRunMode {
     draw_RunMode                    = 1,
     modeMask_RunMode                = 0x00ff,
     flagsMask_RunMode               = 0xff00,
-    noWrapFlag_RunMode              = iBit(9),
+//    noWrapFlag_RunMode              = iBit(9),
     visualFlag_RunMode              = iBit(10), /* actual visible bounding box of the glyph,
                                                    e.g., for icons */
     permanentColorFlag_RunMode      = iBit(11),
     alwaysVariableWidthFlag_RunMode = iBit(12),
     fillBackground_RunMode          = iBit(13),
-    stopAtNewline_RunMode           = iBit(14), /* don't advance past \n, consider it a wrap pos */
+//    stopAtNewline_RunMode           = iBit(14), /* don't advance past \n, consider it a wrap pos */
 };
 
 iDeclareType(RunArgs)
@@ -1225,14 +1233,14 @@ struct Impl_RunArgs {
     size_t        maxLen; /* max characters to process */
     iInt2         pos;
     iWrapText *   wrap;
-    int           xposLimit;        /* hard limit for wrapping */
-    int           xposLayoutBound;  /* visible bound for layout purposes; does not affect wrapping */
+//    int           xposLimit;        /* hard limit for wrapping */
+//    int           xposLayoutBound;  /* visible bound for layout purposes; does not affect wrapping */
     int           color;
     int           baseDir;
     /* TODO: Cleanup using TextMetrics
        Use TextMetrics output pointer instead of return value & cursorAdvance_out. */
     iInt2 *       cursorAdvance_out;
-    const char ** continueFrom_out;
+//    const char ** continueFrom_out;
     int *         runAdvance_out;
 };
 
@@ -1368,9 +1376,9 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
     float        xCursorMax = 0.0f;
     const iBool  isMonospaced = d->isMonospaced;
     iAssert(args->text.end >= args->text.start);
-    if (args->continueFrom_out) {
-        *args->continueFrom_out = args->text.end;
-    }
+//    if (args->continueFrom_out) {
+//        *args->continueFrom_out = args->text.end;
+//    }
     /* Split the text into a number of attributed runs that specify exactly which
        font is used and other attributes such as color. (HarfBuzz shaping is done
        with one specific font.) */
@@ -1575,10 +1583,10 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
             if (layoutBound > 0) {
                 origin = layoutBound - wrapAdvance;
             }
-            else if (args->xposLayoutBound > 0) {
-                iAssert(mode & draw_RunMode);
-//                origin = args->xposLayoutBound - orig.x - wrapAdvance * 2;
-            }
+//            else if (args->xposLayoutBound > 0) {
+//                iAssert(mode & draw_RunMode);
+////                origin = args->xposLayoutBound - orig.x - wrapAdvance * 2;
+//            }
         }
         /* Make a callback for each wrapped line. */
         if (!notify_WrapText_(args->wrap,
@@ -1768,6 +1776,7 @@ iInt2 tryAdvance_Text(int fontId, iRangecc text, int width, const char **endPos)
 
 iInt2 tryAdvanceNoWrap_Text(int fontId, iRangecc text, int width, const char **endPos) {
     /* TODO: "NoWrap" means words aren't wrapped; the line is broken at nearest character. */
+    /* FIXME: Get rid of this. Caller could use WrapText directly? */
     iWrapText wrap = { .mode     = anyCharacter_WrapTextMode,
                        .text     = text,
                        .maxWidth = width,
@@ -1803,7 +1812,7 @@ static void drawBoundedN_Text_(int fontId, iInt2 pos, int xposBound, int color, 
                            .text            = text,
                            .maxLen          = maxLen,                           
                            .pos             = pos,
-                           .xposLayoutBound = xposBound,
+//                           .xposLayoutBound = xposBound,
                            .color           = color & mask_ColorId,
                            .baseDir         = xposBound ? iSign(xposBound - pos.x) : 0 });
 }

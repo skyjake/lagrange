@@ -68,13 +68,19 @@ static iRect runSimple_Font_(iFont *d, const iRunArgs *args) {
     int         ypos        = orig.y;
     size_t      maxLen      = args->maxLen ? args->maxLen : iInvalidSize;
     float       xposExtend  = orig.x; /* allows wide glyphs to use more space; restored by whitespace */
+    iWrapText * wrap        = args->wrap;
+    int         wrapAdvance = 0;
+    const int   xposLimit   = (wrap && wrap->maxWidth ? orig.x + wrap->maxWidth : 0);
     const enum iRunMode mode        = args->mode;
     const char *        lastWordEnd = args->text.start;
-    iAssert(args->xposLimit == 0 || isMeasuring_(mode));
+    iAssert(xposLimit == 0 || isMeasuring_(mode));
     iAssert(args->text.end >= args->text.start);
-    if (args->continueFrom_out) {
-        *args->continueFrom_out = args->text.end;
+    if (wrap) {
+        wrap->wrapRange_ = args->text;
     }
+//    if (args->continueFrom_out) {
+//        *args->continueFrom_out = args->text.end;
+//    }
     iChar prevCh = 0;
     const iBool isMonospaced = d->isMonospaced && !(mode & alwaysVariableWidthFlag_RunMode);
     if (isMonospaced) {
@@ -85,7 +91,8 @@ static iRect runSimple_Font_(iFont *d, const iRunArgs *args) {
         SDL_SetRenderDrawColor(text_.render, initial.r, initial.g, initial.b, 0);
     }
     /* Text rendering is not very straightforward! Let's dive in... */
-    for (const char *chPos = args->text.start; chPos != args->text.end; ) {
+    const char *chPos;
+    for (chPos = args->text.start; chPos != args->text.end; ) {
         iAssert(chPos < args->text.end);
         const char *currentPos = chPos;
         if (*chPos == 0x1b) { /* ANSI escape. */
@@ -123,11 +130,11 @@ static iRect runSimple_Font_(iFont *d, const iRunArgs *args) {
             if (ch == 0xad) { /* soft hyphen */
                 lastWordEnd = chPos;
                 if (isMeasuring_(mode)) {
-                    if (args->xposLimit > 0) {
+                    if (xposLimit > 0) {
                         const char *postHyphen = chPos;
                         iChar       nextCh     = nextChar_(&postHyphen, args->text.end);
                         if ((int) xpos + glyph_Font_(d, ch)->rect[0].size.x +
-                            glyph_Font_(d, nextCh)->rect[0].size.x > args->xposLimit) {
+                            glyph_Font_(d, nextCh)->rect[0].size.x > xposLimit) {
                             /* Wraps after hyphen, should show it. */
                         }
                         else continue;
@@ -143,11 +150,8 @@ static iRect runSimple_Font_(iFont *d, const iRunArgs *args) {
             }
             /* TODO: Check out if `uc_wordbreak_property()` from libunistring can be used here. */
             if (ch == '\n') {
-                if (args->xposLimit > 0 && mode & stopAtNewline_RunMode) {
-                    /* Stop the line here, this is a hard warp. */
-                    if (args->continueFrom_out) {
-                        *args->continueFrom_out = chPos;
-                    }
+                /* Notify about the wrap. */
+                if (!notify_WrapText_(wrap, chPos, 0, iMax(xpos, xposExtend) - orig.x, iFalse)) {
                     break;
                 }
                 xpos = xposExtend = orig.x;
@@ -157,7 +161,7 @@ static iRect runSimple_Font_(iFont *d, const iRunArgs *args) {
             }
             if (ch == '\t') {
                 const int tabStopWidth = d->height * 10;
-                const int halfWidth    = (iMax(args->xposLimit, args->xposLayoutBound) - orig.x) / 2;
+                const int halfWidth    = (xposLimit - orig.x) / 2;
                 const int xRel         = xpos - orig.x;
                 /* First stop is always to half width. */
                 if (halfWidth > 0 && xRel < halfWidth) {
@@ -204,23 +208,32 @@ static iRect runSimple_Font_(iFont *d, const iRunArgs *args) {
         if (mode & draw_RunMode && ch != 0x20 && ch != 0 && !isRasterized_Glyph_(glyph, hoff)) {
             /* Need to pause here and make sure all glyphs have been cached in the text. */
 //            printf("[Text] missing from cache: %lc (%x)\n", (int) ch, ch);
-            cacheTextGlyphs_Font_(d, args->text);
+            //cacheTextGlyphs_Font_(d, args->text);
+            cacheSingleGlyph_Font_(glyph->font, index_Glyph_(glyph));
             glyph = glyph_Font_(d, ch); /* cache may have been reset */
         }
         int x2 = x1 + glyph->rect[hoff].size.x;
         /* Out of the allotted space on the line? */
-        if (args->xposLimit > 0 && x2 > args->xposLimit) {
-            if (args->continueFrom_out) {
-                if (lastWordEnd != args->text.start && ~mode & noWrapFlag_RunMode) {
-                    *args->continueFrom_out = skipSpace_CStr(lastWordEnd);
-                    *args->continueFrom_out = iMin(*args->continueFrom_out,
-                                                   args->text.end);
-                }
-                else {
-                    *args->continueFrom_out = currentPos; /* forced break */
-                }
+        if (xposLimit > 0 && x2 > xposLimit) {
+            iAssert(wrap);
+            const char *wrapPos = currentPos;
+            int advance = x1 - orig.x;
+            if (lastWordEnd != args->text.start && wrap->mode == word_WrapTextMode) {
+                wrapPos = skipSpace_CStr(lastWordEnd);
+                wrapPos = iMin(wrapPos, args->text.end);
+                advance = wrapAdvance;
             }
-            break;
+//            if (args->continueFrom_out) {
+//                *args->continueFrom_out = wrapPos;
+//            }
+            if (!notify_WrapText_(wrap, wrapPos, 0, advance, iFalse)) {
+                break;
+            }
+            xpos = xposExtend = orig.x;
+            ypos += d->height;
+            prevCh = 0;
+            chPos = wrapPos; /* go back */
+            continue;
         }
         const int yLineMax = ypos + d->height;
         SDL_Rect dst = { x1 + glyph->d[hoff].x,
@@ -289,10 +302,10 @@ static iRect runSimple_Font_(iFont *d, const iRunArgs *args) {
             /* TODO: No need to decode the next char twice; check this on the next iteration. */
             const char *peek = chPos;
             const iChar next = nextChar_(&peek, args->text.end);
-            if (enableKerning_Text && !d->manualKernOnly && next) {
+            if (enableKerning_Text && next) {
                 const uint32_t nextGlyphIndex = glyphIndex_Font_(glyph->font, next);
                 int kern = stbtt_GetGlyphKernAdvance(
-                    &glyph->font->font, glyph->glyphIndex, nextGlyphIndex);
+                    &glyph->font->font, index_Glyph_(glyph), nextGlyphIndex);
                 /* Nunito needs some kerning fixes. */
                 if (glyph->font->family == nunito_TextFont) {
                     if (ch == 'W' && (next == 'i' || next == 'h')) {
@@ -317,13 +330,18 @@ static iRect runSimple_Font_(iFont *d, const iRunArgs *args) {
 #endif
         xposExtend = iMax(xposExtend, xpos);
         xposMax    = iMax(xposMax, xposExtend);
-        if (args->continueFrom_out && ((mode & noWrapFlag_RunMode) || isWrapBoundary_(prevCh, ch))) {
+        if ((wrap && wrap->mode == anyCharacter_WrapTextMode) || isWrapBoundary_(prevCh, ch)) {
             lastWordEnd = currentPos; /* mark word wrap position */
+            wrapAdvance = x2 - orig.x;
         }
         prevCh = ch;
         if (--maxLen == 0) {
             break;
         }
+    }
+    notify_WrapText_(wrap, chPos, 0, xpos - orig.x, iFalse);
+    if (args->cursorAdvance_out) {
+        *args->cursorAdvance_out = sub_I2(init_I2(xpos, ypos), orig);
     }
     if (args->runAdvance_out) {
         *args->runAdvance_out = xposMax - orig.x;
