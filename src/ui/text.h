@@ -133,7 +133,7 @@ enum iTextFont {
     sourceSans3_TextFont,
     iosevka_TextFont,
     /* families: */
-    notoSansArabic_TextFont,
+    arabic_TextFont,
     emojiAndSymbols_TextFont,
 };
 

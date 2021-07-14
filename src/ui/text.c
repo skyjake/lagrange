@@ -163,8 +163,9 @@ static void init_Font(iFont *d, const iBlock *data, int height, float scale,
         data == &fontNunitoExtraLight_Embedded) {
         d->family = nunito_TextFont;
     }
-    else if (data == &fontNotoSansArabicUIRegular_Embedded) {
-        d->family = notoSansArabic_TextFont;
+    else if (//data == &fontScheherazadeNewRegular_Embedded) {
+             data == &fontNotoSansArabicUIRegular_Embedded) {
+        d->family = arabic_TextFont;
     }
     else if (data == &fontNotoSansSymbolsRegular_Embedded ||
              data == &fontNotoSansSymbols2Regular_Embedded ||
@@ -421,6 +422,7 @@ static void initFonts_Text_(iText *d) {
         DEFINE_FONT_SET(&fontNotoSansSCRegular_Embedded, 1.0f),
         DEFINE_FONT_SET(&fontNanumGothicRegular_Embedded, 1.0f), /* TODO: should use Noto Sans here, too */
         DEFINE_FONT_SET(&fontNotoSansArabicUIRegular_Embedded, 1.0f),
+//        DEFINE_FONT_SET(&fontScheherazadeNewRegular_Embedded, 1.0f),
     };
     iForIndices(i, fontData) {
         iFont *font = &d->fonts[i];
@@ -787,6 +789,7 @@ struct Impl_AttributedRun {
     struct {
         uint8_t isLineBreak : 1;
         uint8_t isRTL       : 1;
+        uint8_t isArabic    : 1; /* Arabic script detected */
     } flags;
 };
 
@@ -803,6 +806,7 @@ struct Impl_AttributedText {
     iArray   logical;         /* UTF-32 text in logical order (mixed directions; matches source) */
     iArray   visual;          /* UTF-32 text in visual order (LTR) */
     iArray   logicalToVisual; /* map visual index to logical index */
+    iArray   visualToLogical;
     iArray   logicalToSourceOffset; /* map logical character to an UTF-8 offset in the source text */
     char *   bidiLevels;
     iBool    isBaseRTL;
@@ -846,6 +850,7 @@ static void finishRun_AttributedText_(iAttributedText *d, iAttributedRun *run, i
     if (!isEmpty_Range(&finishedRun.logical)) {
         pushBack_Array(&d->runs, &finishedRun);
         run->flags.isLineBreak = iFalse;
+        run->flags.isArabic    = iFalse;
     }
     run->logical.start = endAt;
 }
@@ -885,14 +890,15 @@ static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir) {
         /* Use FriBidi to reorder the codepoints. */
         resize_Array(&d->visual, length);
         resize_Array(&d->logicalToVisual, length);
-        d->bidiLevels = malloc(length);
+        resize_Array(&d->visualToLogical, length);
+        d->bidiLevels = length ? malloc(length) : NULL;
         FriBidiParType baseDir = (FriBidiParType) FRIBIDI_TYPE_ON;
         fribidi_log2vis(constData_Array(&d->logical),
                         length,
                         &baseDir,
                         data_Array(&d->visual),
                         data_Array(&d->logicalToVisual),
-                        NULL,
+                        data_Array(&d->visualToLogical),
                         (FriBidiLevel *) d->bidiLevels);
         d->isBaseRTL = (overrideBaseDir == 0 ? FRIBIDI_IS_RTL(baseDir) : (overrideBaseDir < 0));
 #else
@@ -902,11 +908,14 @@ static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir) {
         for (size_t i = 0; i < length; i++) {
             set_Array(&d->logicalToVisual, i, &(int){ i });
         }
+        setCopy_Array(&d->visualToLogical, &d->logicalToVisual);
         d->isBaseRTL = iFalse;
 #endif
     }
     /* The mapping needs to include the terminating NULL position. */ {
         pushBack_Array(&d->logicalToSourceOffset, &(int){ d->source.end - d->source.start });
+        pushBack_Array(&d->logicalToVisual, &(int){ length });
+        pushBack_Array(&d->visualToLogical, &(int){ length });
     }
     size_t         avail       = d->maxLen;
     iAttributedRun run         = { .logical = { 0, length },
@@ -918,18 +927,19 @@ static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir) {
     iBool          isRTL       = d->isBaseRTL;
     int            numNonSpace = 0;
     for (int pos = 0; pos < length; pos++) {
-        const iChar ch     = logicalText[pos];
-        const int   visPos = logToVis[pos];
+        const iChar ch = logicalText[pos];
 #if defined (LAGRANGE_ENABLE_FRIBIDI)
-        const char lev = d->bidiLevels[pos];
-        const iBool isNeutral = FRIBIDI_IS_NEUTRAL(lev);
-        if (d->bidiLevels && !isNeutral) {
-            iBool rtl = FRIBIDI_IS_RTL(lev) != 0;
-            if (rtl != isRTL) {
-                /* Direction changes; must end the current run. */
-//                printf("dir change at %zu: %lc U+%04X\n", pos, ch, ch);
-                finishRun_AttributedText_(d, &run, pos);
-                isRTL = rtl;
+        if (d->bidiLevels) {
+            const char lev = d->bidiLevels[pos];
+            const iBool isNeutral = FRIBIDI_IS_NEUTRAL(lev);
+            if (!isNeutral) {
+                iBool rtl = FRIBIDI_IS_RTL(lev) != 0;
+                if (rtl != isRTL) {
+                    /* Direction changes; must end the current run. */
+    //                printf("dir change at %zu: %lc U+%04X\n", pos, ch, ch);
+                    finishRun_AttributedText_(d, &run, pos);
+                    isRTL = rtl;
+                }
             }
         }
 #else
@@ -993,7 +1003,7 @@ static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir) {
             continue;
         }
         iFont *currentFont = d->font;
-        if (run.font->family == notoSansArabic_TextFont && isPunct_Char(ch)) {
+        if (run.font->family == arabic_TextFont && isPunct_Char(ch)) {
             currentFont = run.font; /* remain as Arabic for whitespace */
         }
         const iGlyph *glyph = glyph_Font_(currentFont, ch);
@@ -1006,6 +1016,11 @@ static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir) {
                    (int)logicalText[pos]);
 #endif
         }
+#if defined (LAGRANGE_ENABLE_FRIBIDI)
+        if (fribidi_get_bidi_type(ch) == FRIBIDI_TYPE_AL) {
+            run.flags.isArabic = iTrue; /* Arabic letter */
+        }
+#endif
     }
     if (!isEmpty_Range(&run.logical)) {
         pushBack_Array(&d->runs, &run);
@@ -1014,9 +1029,10 @@ static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir) {
     printf("[AttributedText] %zu runs:\n", size_Array(&d->runs));
     iConstForEach(Array, i, &d->runs) {
         const iAttributedRun *run = i.value;
-        printf("  %zu %s %d...%d {%s}\n", index_ArrayConstIterator(&i),
+        printf("  %zu %s log:%d...%d vis:%d...%d {%s}\n", index_ArrayConstIterator(&i),
                run->flags.isRTL ? "<-" : "->",
-               run->logical.start, run->logical.end,
+               run->logical.start, run->logical.end - 1,
+               logToVis[run->logical.start], logToVis[run->logical.end - 1],
                cstr_Rangecc(sourceRange_AttributedText_(d, run->logical)));
     }
 #endif
@@ -1032,6 +1048,7 @@ void init_AttributedText(iAttributedText *d, iRangecc text, size_t maxLen, iFont
     init_Array(&d->logical, sizeof(iChar));
     init_Array(&d->visual, sizeof(iChar));
     init_Array(&d->logicalToVisual, sizeof(int));
+    init_Array(&d->visualToLogical, sizeof(int));
     init_Array(&d->logicalToSourceOffset, sizeof(int));
     d->bidiLevels = NULL;
     d->isBaseRTL = iFalse;
@@ -1042,6 +1059,7 @@ void deinit_AttributedText(iAttributedText *d) {
     free(d->bidiLevels);
     deinit_Array(&d->logicalToSourceOffset);
     deinit_Array(&d->logicalToVisual);
+    deinit_Array(&d->visualToLogical);
     deinit_Array(&d->visual);
     deinit_Array(&d->logical);
     deinit_Array(&d->runs);
@@ -1355,18 +1373,6 @@ static void evenMonospaceAdvances_GlyphBuffer_(iGlyphBuffer *d, iFont *baseFont)
     }
 }
 
-iLocalDef iChar flipBracket_(iChar c) {
-    if (c == '(') return ')';
-    if (c == ')') return '(';
-    if (c == '{') return '}';
-    if (c == '}') return '{';
-    if (c == '[') return ']';
-    if (c == ']') return '[';
-    if (c == '<') return '>';
-    if (c == '>') return '<';
-    return c;
-}
-
 static iRect run_Font_(iFont *d, const iRunArgs *args) {
     const int    mode       = args->mode;
     const iInt2  orig       = args->pos;
@@ -1394,6 +1400,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
     const iChar *logicalText = constData_Array(&attrText.logical);
     const iChar *visualText  = constData_Array(&attrText.visual);
     const int *  logToVis    = constData_Array(&attrText.logicalToVisual);
+    const int *  visToLog    = constData_Array(&attrText.visualToLogical);
     const size_t runCount    = size_Array(&attrText.runs);
     iArray buffers;
     init_Array(&buffers, sizeof(iGlyphBuffer));
@@ -1403,20 +1410,20 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
         const iAttributedRun *run = i.value;
         iGlyphBuffer *buf = at_Array(&buffers, index_ArrayConstIterator(&i));
         init_GlyphBuffer_(buf, run->font, logicalText);
-        for (int pos = run->logical.start; pos < run->logical.end; pos++) {
-            const int visPos = logToVis[pos];
-            iChar ch = visualText[visPos];
-            if (run->flags.isRTL) {
-                /* Something odd with brackets... My guess is that because the font is not
-                   RTL (Noto Sans Arabic seems to lack brackets), they are not flipped
-                   as expected. */
-                ch = flipBracket_(ch);
-            }
-            hb_buffer_add(buf->hb, ch, pos);
+        /* Insert the text in visual order (LTR) in the HarfBuzz buffer for shaping.
+           First we need to map the logical run to the corresponding visual run. */
+        int v[2] = { logToVis[run->logical.start], logToVis[run->logical.end - 1] };
+        if (v[0] > v[1]) {
+            iSwap(int, v[0], v[1]); /* always LTR */
+        }
+        for (int vis = v[0]; vis <= v[1]; vis++) {
+            hb_buffer_add(buf->hb, visualText[vis], visToLog[vis]);
         }
         hb_buffer_set_content_type(buf->hb, HB_BUFFER_CONTENT_TYPE_UNICODE);
-        hb_buffer_set_direction(buf->hb, run->flags.isRTL ? HB_DIRECTION_RTL : HB_DIRECTION_LTR);
-        /* hb_buffer_set_script(hbBuf, HB_SCRIPT_LATIN); */ /* will be autodetected */
+        hb_buffer_set_direction(buf->hb, HB_DIRECTION_LTR); /* visual */
+        if (run->flags.isArabic) {
+            hb_buffer_set_script(buf->hb, HB_SCRIPT_ARABIC);
+        }
     }
     if (isMonospaced) {
         /* Fit borrowed glyphs into the expected monospacing. */
