@@ -7,25 +7,25 @@
 # Release notes
 
 ## 1.6
-* Added support for bidirectional text and complex scripts such as Arabic. العالم متنوع
+* Added support for bidirectional text and complex scripts. العالم متنوع
 * Added setting for adjusting line spacing.
 * Added settings for keyboard and mouse scrolling speeds.
-* Added configuration file for defining UI color palette (see Help page).
-* Added link context menu item for deleting local files (e.g., Downloads).
+* Added configuration file for defining UI color palette (see Help, section 3.5).
+* Added link context menu item for deleting local files (e.g., downloads).
 * Inline images/audio will not get discarded during back/forward navigation. The Network > Memory Size setting determines the maximum memory usage for media. Setting the Memory Size to zero is equivalent to the previous behavior of discarding everything when the page changes.
 * Page contents are cached in presentation form for quicker restoring during back/forward navigation.
 * Debug information includes RAM use in addition to cache size. This includes document layout and media stored in memory (e.g., raw pixel data of images).
-* Right-to-left paragraphs are aligned to the right.
 * Preferences have been reorganized. There is a new Fonts page, and some General settings have been moved to the Style page. All color-related settings are on the Colors page, including UI theme colors.
-* Opened links are updated to reflect visited status even when opened in background or to the side.
+* Opened links are updated to reflect visited status even when opened in a background tab or to the side.
+* Unicode Byte Order Mark is ignored in the beginning of a page.
+* Right-to-left paragraphs are aligned to the right.
 * Large lede paragraph font is not applied if the paragraph has too many lines.
-* Input dialog is not accidentally dismissed unless the Cancel button is clicked or Escape is pressed.
-* Unicode Byte Order Mark is ignored in the beginning of a `text/gemini` page.
+* Adjusted kerning of Nunito.
+* Fixed sizing of characters in the Noto Symbols fonts.
+* Updated Smol Emoji with new characters.
 * Improved internal handling of URLs. For example, some URLs were not being recognized as visited because of percent-encoding differences.
 * Fixed URL in the generated page for viewing a single image (spaces weren't encoded).
-* Fixed sizing of characters in the Noto Symbols fonts.
-* Adjusted kerning of Nunito.
-* Updated Smol Emoji with new characters.
+* Input dialog is not dismissed unless the Cancel button is clicked or Escape is pressed.
 * Query/Feeds indicators have a smaller appearance in a narrow window to leave room for the URL.
 * Workaround for a potential hang during the closing of a socket.
 * Gopher: Improved detection of ASCII art.
