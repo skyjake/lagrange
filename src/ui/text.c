@@ -1526,19 +1526,36 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                 wrapAdvance += advance_GlyphBuffer_(at_Array(&buffers, i), wrapPosRange);
             }
         }
-        /* Reorder the run indices according to text direction. */
         iArray runOrder;
         init_Array(&runOrder, sizeof(size_t));
-        size_t rtlStartIndex = iInvalidPos;
-        for (size_t runIndex = wrapRuns.start; runIndex < wrapRuns.end; runIndex++) {
-            if (attrText.isBaseRTL) {
-                if (rtlStartIndex == iInvalidPos) {
-                    rtlStartIndex = size_Array(&runOrder);
+        /* Reorder the run indices according to text direction. */ {
+            size_t oppositeInsertIndex = iInvalidPos;
+            for (size_t runIndex = wrapRuns.start; runIndex < wrapRuns.end; runIndex++) {
+                const iAttributedRun *run = at_Array(&attrText.runs, runIndex);
+                if (!attrText.isBaseRTL) { /* left-to-right */
+                    if (run->flags.isRTL) {
+                        if (oppositeInsertIndex == iInvalidPos) {
+                            oppositeInsertIndex = size_Array(&runOrder);
+                        }
+                        insert_Array(&runOrder, oppositeInsertIndex, &runIndex);
+                    }
+                    else {
+                        pushBack_Array(&runOrder, &runIndex);
+                        oppositeInsertIndex = iInvalidPos;
+                    }
                 }
-                insert_Array(&runOrder, rtlStartIndex, &runIndex);
-            }
-            else {
-                pushBack_Array(&runOrder, &runIndex);
+                else { /* right-to-left */
+                    if (!run->flags.isRTL) {
+                        if (oppositeInsertIndex == iInvalidPos) {
+                            oppositeInsertIndex = 0;
+                        }
+                        insert_Array(&runOrder, oppositeInsertIndex++, &runIndex);
+                    }
+                    else {
+                        pushFront_Array(&runOrder, &runIndex);
+                        oppositeInsertIndex = iInvalidPos;
+                    }
+                }
             }
         }
 #if 0
