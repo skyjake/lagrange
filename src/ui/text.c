@@ -782,7 +782,6 @@ iDeclareType(AttributedRun)
 
 struct Impl_AttributedRun {
     iRangei   logical; /* UTF-32 codepoint indices in the logical-order text */
-    //iRangei   visual;  /* UTF-32 codepoint indices in the visual-order text */
     iFont *   font;
     iColor    fgColor;
     struct {
@@ -796,18 +795,17 @@ iDeclareTypeConstructionArgs(AttributedText, iRangecc text, size_t maxLen, iFont
                              iColor fgColor, int baseDir)
 
 struct Impl_AttributedText {
-    iRangecc  source;   /* original source text */
-    size_t    maxLen;
-    iFont *   font;
-    iColor    fgColor;
-    iArray    runs;
-    iArray    logical;  /* UTF-32 text in logical order (mixed directions; matches source) */
-    iArray    visual;   /* UTF-32 text in visual order (LTR) */
-    iArray    logicalToVisual;          /* map visual index to logical index */
-    iArray    visualToLogical;          /* map visual index to logical index */
-    iArray    logicalToSourceOffset;    /* map logical character to an UTF-8 offset in the source text */
-    char *    bidiLevels;
-    iBool     isBaseRTL;
+    iRangecc source; /* original source text */
+    size_t   maxLen;
+    iFont *  font;
+    iColor   fgColor;
+    iArray   runs;
+    iArray   logical;         /* UTF-32 text in logical order (mixed directions; matches source) */
+    iArray   visual;          /* UTF-32 text in visual order (LTR) */
+    iArray   logicalToVisual; /* map visual index to logical index */
+    iArray   logicalToSourceOffset; /* map logical character to an UTF-8 offset in the source text */
+    char *   bidiLevels;
+    iBool    isBaseRTL;
 };
 
 iDefineTypeConstructionArgs(AttributedText,
@@ -829,6 +827,7 @@ static iRangecc sourceRange_AttributedText_(const iAttributedText *d, iRangei lo
     return range;
 }
 
+#if 0
 static iBool isAllSpace_AttributedText_(const iAttributedText *d, iRangei range) {
     const iChar *logicalText = constData_Array(&d->logical);
     for (size_t i = range.start; i < range.end; i++) {
@@ -838,14 +837,12 @@ static iBool isAllSpace_AttributedText_(const iAttributedText *d, iRangei range)
     }
     return iTrue;
 }
+#endif
 
 static void finishRun_AttributedText_(iAttributedText *d, iAttributedRun *run, int endAt) {
     iAttributedRun finishedRun = *run;
     iAssert(endAt >= 0 && endAt <= size_Array(&d->logical));
     finishedRun.logical.end = endAt;
-//    if (isAllSpace_AttributedText_(d, finishedRun.logical)) {
-//        return;
-//    }
     if (!isEmpty_Range(&finishedRun.logical)) {
         pushBack_Array(&d->runs, &finishedRun);
         run->flags.isLineBreak = iFalse;
@@ -888,7 +885,6 @@ static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir) {
         /* Use FriBidi to reorder the codepoints. */
         resize_Array(&d->visual, length);
         resize_Array(&d->logicalToVisual, length);
-        resize_Array(&d->visualToLogical, length);
         d->bidiLevels = malloc(length);
         FriBidiParType baseDir = (FriBidiParType) FRIBIDI_TYPE_ON;
         fribidi_log2vis(constData_Array(&d->logical),
@@ -896,7 +892,7 @@ static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir) {
                         &baseDir,
                         data_Array(&d->visual),
                         data_Array(&d->logicalToVisual),
-                        data_Array(&d->visualToLogical),
+                        NULL,
                         (FriBidiLevel *) d->bidiLevels);
         d->isBaseRTL = (overrideBaseDir == 0 ? FRIBIDI_IS_RTL(baseDir) : (overrideBaseDir < 0));
 #endif
@@ -911,7 +907,6 @@ static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir) {
     const int *    logToSource = constData_Array(&d->logicalToSourceOffset);
     const int *    logToVis    = constData_Array(&d->logicalToVisual);
     const iChar *  logicalText = constData_Array(&d->logical);
-//    const iChar *  visualText  = constData_Array(&d->visual);
     iBool          isRTL       = d->isBaseRTL;
     int            numNonSpace = 0;
     for (int pos = 0; pos < length; pos++) {
@@ -1029,7 +1024,6 @@ void init_AttributedText(iAttributedText *d, iRangecc text, size_t maxLen, iFont
     init_Array(&d->logical, sizeof(iChar));
     init_Array(&d->visual, sizeof(iChar));
     init_Array(&d->logicalToVisual, sizeof(int));
-    init_Array(&d->visualToLogical, sizeof(int));
     init_Array(&d->logicalToSourceOffset, sizeof(int));
     d->bidiLevels = NULL;
     d->isBaseRTL = iFalse;
@@ -1040,7 +1034,6 @@ void deinit_AttributedText(iAttributedText *d) {
     free(d->bidiLevels);
     deinit_Array(&d->logicalToSourceOffset);
     deinit_Array(&d->logicalToVisual);
-    deinit_Array(&d->visualToLogical);
     deinit_Array(&d->visual);
     deinit_Array(&d->logical);
     deinit_Array(&d->runs);
@@ -1295,20 +1288,18 @@ struct Impl_GlyphBuffer {
     hb_buffer_t *        hb;
     iFont *              font;
     const iChar *        logicalText;
-//    const int *          visToLog;
     hb_glyph_info_t *    glyphInfo;
     hb_glyph_position_t *glyphPos;
     unsigned int         glyphCount;
 };
 
 static void init_GlyphBuffer_(iGlyphBuffer *d, iFont *font, const iChar *logicalText) {
-    d->hb         = hb_buffer_create();
-    d->font       = font;
+    d->hb          = hb_buffer_create();
+    d->font        = font;
     d->logicalText = logicalText;
-//    d->visToLog   = visToLog;
-    d->glyphInfo  = NULL;
-    d->glyphPos   = NULL;
-    d->glyphCount = 0;
+    d->glyphInfo   = NULL;
+    d->glyphPos    = NULL;
+    d->glyphCount  = 0;
 }
 
 static void deinit_GlyphBuffer_(iGlyphBuffer *d) {
@@ -1395,7 +1386,6 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
     const iChar *logicalText = constData_Array(&attrText.logical);
     const iChar *visualText  = constData_Array(&attrText.visual);
     const int *  logToVis    = constData_Array(&attrText.logicalToVisual);
-//    const int *  visToLog    = constData_Array(&attrText.visualToLogical);
     const size_t runCount    = size_Array(&attrText.runs);
     iArray buffers;
     init_Array(&buffers, sizeof(iGlyphBuffer));
@@ -1540,10 +1530,8 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
         iArray runOrder;
         init_Array(&runOrder, sizeof(size_t));
         size_t rtlStartIndex = iInvalidPos;
-        iBool wasRtl = attrText.isBaseRTL;
         for (size_t runIndex = wrapRuns.start; runIndex < wrapRuns.end; runIndex++) {
-            const iAttributedRun *run = at_Array(&attrText.runs, runIndex);
-            if (wasRtl) { //} || run->flags.isRTL) {
+            if (attrText.isBaseRTL) {
                 if (rtlStartIndex == iInvalidPos) {
                     rtlStartIndex = size_Array(&runOrder);
                 }
@@ -1552,7 +1540,6 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
             else {
                 pushBack_Array(&runOrder, &runIndex);
             }
-//            wasRtl = run->flags.isRTL;
         }
 #if 0
         printf("Run order: ");
@@ -1566,12 +1553,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
         iAssert(size_Array(&runOrder) == size_Range(&wrapRuns));
         /* Alignment. */
         int origin = 0;
-        iBool isRightAligned = attrText.isBaseRTL; // iFalse;
-//        /* Right-align if the last run is RTL. */ {
-//            const size_t lastIndex = *(size_t *) back_Array(&runOrder);
-//            const iAttributedRun *run = at_Array(&attrText.runs, lastIndex);
-//            isRightAligned = run->flags.isRTL;
-//        }
+        iBool isRightAligned = attrText.isBaseRTL;
         if (isRightAligned) {
             if (layoutBound > 0) {
                 origin = layoutBound - wrapAdvance;
