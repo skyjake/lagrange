@@ -830,7 +830,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                                                .mode     = word_WrapTextMode,
                                                .wrapFunc = typesetOneLine_RunTypesetter_,
                                                .context  = &rts },
-                                 run.textParams.font);
+                                 rts.run.textParams.font);
                 if (!isLedeParagraph || size_Array(&rts.layout) <= maxLedeLines_) {
                     commit_RunTypesetter_(&rts, d);
                     break;
