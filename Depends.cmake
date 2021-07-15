@@ -28,6 +28,7 @@ if (ENABLE_HARFBUZZ AND EXISTS ${CMAKE_SOURCE_DIR}/lib/harfbuzz/CMakeLists.txt)
                                         -Dbuildtype=release
                                         -Dtests=disabled -Dglib=disabled -Dgobject=disabled
                                         -Dcairo=disabled -Dicu=disabled -Dfreetype=disabled
+                                        -Ddocs=disabled
                                         --prefix ${_dst}
                 BUILD_COMMAND       ${NINJA_EXECUTABLE}
                 INSTALL_COMMAND     ${NINJA_EXECUTABLE} install
