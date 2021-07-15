@@ -23,7 +23,7 @@ if (ENABLE_HARFBUZZ AND EXISTS ${CMAKE_SOURCE_DIR}/lib/harfbuzz/CMakeLists.txt)
             ExternalProject_Add (harfbuzz-ext
                 PREFIX              ${CMAKE_BINARY_DIR}/harfbuzz-ext
                 SOURCE_DIR          ${CMAKE_SOURCE_DIR}/lib/harfbuzz
-                CONFIGURE_COMMAND   NINJA=${NINJA_EXECUTABLE} ${MESON_EXECUTABLE} 
+                CONFIGURE_COMMAND   NINJA=${NINJA_EXECUTABLE} ${MESON_EXECUTABLE}
                                         ${CMAKE_SOURCE_DIR}/lib/harfbuzz
                                         -Dbuildtype=release
                                         -Dtests=disabled -Dglib=disabled -Dgobject=disabled
@@ -90,8 +90,10 @@ if (ENABLE_FRIBIDI AND EXISTS ${CMAKE_SOURCE_DIR}/lib/fribidi)
                 CONFIGURE_COMMAND   NINJA=${NINJA_EXECUTABLE} ${MESON_EXECUTABLE}
                                         ${CMAKE_SOURCE_DIR}/lib/fribidi
                                         -Dbuildtype=release
+                                        -Ddefault_library=static
                                         -Dtests=false -Ddocs=false -Dbin=false
                                         -Dc_flags=-Wno-macro-redefined
+                                        -Dlibdir=lib
                                         --prefix ${_dst}
                 BUILD_COMMAND       ${NINJA_EXECUTABLE}
                 INSTALL_COMMAND     ${NINJA_EXECUTABLE} install
@@ -105,11 +107,11 @@ if (ENABLE_FRIBIDI AND EXISTS ${CMAKE_SOURCE_DIR}/lib/fribidi)
         target_include_directories (fribidi-lib INTERFACE ${_dst}/include)
         if (APPLE)
             target_link_libraries (fribidi-lib INTERFACE ${_dst}/lib/libfribidi.0.dylib)
-        else ()
+        elseif (MSYS)
             target_link_libraries (fribidi-lib INTERFACE -L${_dst}/lib fribidi)
-        endif ()
-        if (MSYS)
             install (PROGRAMS ${_dst}/bin/msys-fribidi-0.dll DESTINATION .)
+        else ()
+            target_link_libraries (fribidi-lib INTERFACE ${_dst}/lib/libfribidi.a)
         endif ()
         set (FRIBIDI_FOUND YES)
     endif ()
