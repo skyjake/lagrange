@@ -820,7 +820,7 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             if (!prefs->quoteIcon && type == quote_GmLineType) {
                 rts.run.flags |= quoteBorder_GmRunFlag;
             }
-            for (;;) { /* may need to retry */
+            for (;;) { /* need to retry if the font needs changing */
                 rts.run.flags |= startOfLine_GmRunFlag;
                 iWrapText wrapText = { .text     = line,
                                        .maxWidth = rts.isWordWrapped
@@ -841,12 +841,14 @@ static void doLayout_GmDocument_(iGmDocument *d) {
                             prun->visBounds.pos.x += offset;                            
                         }
                         if (type == bullet_GmLineType || type == link_GmLineType ||
-                            type == quote_GmLineType) {
+                            (type == quote_GmLineType && prefs->quoteIcon)) {
                             iGmRun *decor = back_Array(&d->layout);
                             iAssert(decor->flags & decoration_GmRunFlag);
                             decor->visBounds.pos.x = d->size.x - width_Rect(decor->visBounds) -
-                                                     decor->visBounds.pos.x + gap_Text *
-                                                     (type == bullet_GmLineType ? 1.5f : 1);
+                                                     decor->visBounds.pos.x +
+                                                     gap_Text * (type == bullet_GmLineType  ? 1.5f
+                                                                 : type == quote_GmLineType ? 0.0f
+                                                                                            : 1.0f);
                         }
                     }
                     commit_RunTypesetter_(&rts, d);

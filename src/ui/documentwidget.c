@@ -4193,7 +4193,10 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
         }
         if (run->flags & quoteBorder_GmRunFlag) {
             drawVLine_Paint(&d->paint,
-                            addX_I2(visPos, -gap_Text * 5 / 2),
+                            addX_I2(visPos,
+                                    !run->textParams.isRTL
+                                        ? -gap_Text * 5 / 2
+                                        : (width_Rect(run->visBounds) + gap_Text * 5 / 2)),
                             height_Rect(run->visBounds),
                             tmQuoteIcon_ColorId);
         }
@@ -4286,8 +4289,8 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                  showHost)) {
                 format_String(
                     &str,
-                    " \u2014%s%s%s%s%s",
-                    showHost ? " " : "",
+                    "%s%s%s%s%s",
+                    showHost ? "" : "",
                     showHost
                         ? (flags & mailto_GmLinkFlag    ? cstr_String(url)
                            : ~flags & gemini_GmLinkFlag ? format_CStr("%s://%s",
@@ -4313,9 +4316,18 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                 append_String(&str, collect_String(format_Date(&date, "%b %d")));
             }
             if (!isEmpty_String(&str)) {
+                if (run->textParams.isRTL) {
+                    appendCStr_String(&str, " \u2014 ");
+                }
+                else {
+                    prependCStr_String(&str, " \u2014 ");
+                }
                 const iInt2 textSize = measure_Text(metaFont, cstr_String(&str)).bounds.size;
                 int tx = topRight_Rect(linkRect).x;
                 const char *msg = cstr_String(&str);
+                if (run->textParams.isRTL) {
+                    tx = topLeft_Rect(linkRect).x - textSize.x;                    
+                }
                 if (tx + textSize.x > right_Rect(d->widgetBounds)) {
                     tx = right_Rect(d->widgetBounds) - textSize.x;
                     fillRect_Paint(&d->paint, (iRect){ init_I2(tx, top_Rect(linkRect)), textSize },
