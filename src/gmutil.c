@@ -561,13 +561,22 @@ const char *mediaType_Path(const iString *path) {
     return "application/octet-stream";
 }
 
-void urlEncodeSpaces_String(iString *d) {
+static void replaceAllChars_String_(iString *d, char c, const char *replacement) {
+    const char cstr[2] = { c, 0 };
+    const size_t repLen = strlen(replacement);
+    size_t pos = 0;
     for (;;) {
-        const size_t pos = indexOfCStr_String(d, " ");
+        pos = indexOfCStrFrom_String(d, cstr, pos);
         if (pos == iInvalidPos) break;
         remove_Block(&d->chars, pos, 1);
-        insertData_Block(&d->chars, pos, "%20", 3);
-    }
+        insertData_Block(&d->chars, pos, replacement, repLen);
+        pos += repLen;
+    }    
+}
+
+void urlEncodeSpaces_String(iString *d) {
+    replaceAllChars_String_(d, ' ', "%20");  /* spaces */
+    replaceAllChars_String_(d, '\n', "%0A"); /* newlines */
 }
 
 const iString *withSpacesEncoded_String(const iString *d) {
@@ -590,7 +599,8 @@ const iString *canonicalUrl_String(const iString *d) {
        This means a canonical URL can be used on a gemtext link line without modifications. */
     iString *canon = maybeUrlDecodeExclude_String(d, "/?:;#&= ");
     /* `canon` may now be NULL if nothing was decoded. */
-    if (indexOfCStr_String(canon ? canon : d, " ") != iInvalidPos) {
+    if (indexOfCStr_String(canon ? canon : d, " ") != iInvalidPos ||
+        indexOfCStr_String(canon ? canon : d, "\n") != iInvalidPos) {
         if (!canon) {
             canon = copy_String(d);
         }
