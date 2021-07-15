@@ -23,9 +23,11 @@ if (ENABLE_HARFBUZZ AND EXISTS ${CMAKE_SOURCE_DIR}/lib/harfbuzz/CMakeLists.txt)
             ExternalProject_Add (harfbuzz
                 PREFIX              ${CMAKE_BINARY_DIR}/harfbuzz-ext
                 SOURCE_DIR          ${CMAKE_SOURCE_DIR}/lib/harfbuzz
-                CONFIGURE_COMMAND   NINJA=${NINJA_EXECUTABLE} ${MESON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/lib/harfbuzz
+                CONFIGURE_COMMAND   NINJA=${NINJA_EXECUTABLE} ${MESON_EXECUTABLE} 
+                                        ${CMAKE_SOURCE_DIR}/lib/harfbuzz
                                         -Dbuildtype=release
                                         -Dtests=disabled -Dglib=disabled -Dgobject=disabled
+                                        -Dcairo=disabled -Dicu=disabled -Dfreetype=disabled
                                         --prefix ${_dst}
                 BUILD_COMMAND       ${NINJA_EXECUTABLE}
                 INSTALL_COMMAND     ${NINJA_EXECUTABLE} install
@@ -36,6 +38,8 @@ if (ENABLE_HARFBUZZ AND EXISTS ${CMAKE_SOURCE_DIR}/lib/harfbuzz/CMakeLists.txt)
                 # Link dynamically.
                 target_link_libraries (harfbuzz-lib INTERFACE -L${_dst}/lib harfbuzz)
                 install (PROGRAMS ${_dst}/bin/msys-harfbuzz-0.dll DESTINATION .)
+            else ()
+                target_link_libraries (harfbuzz-lib INTERFACE -L${_dst} harfbuzz)
             endif ()
             set (HARFBUZZ_FOUND YES)
         else ()
@@ -76,7 +80,8 @@ if (ENABLE_FRIBIDI AND EXISTS ${CMAKE_SOURCE_DIR}/lib/fribidi)
             ExternalProject_Add (fribidi
                 PREFIX              ${CMAKE_BINARY_DIR}/fribidi-ext
                 SOURCE_DIR          ${CMAKE_SOURCE_DIR}/lib/fribidi
-                CONFIGURE_COMMAND   NINJA=${NINJA_EXECUTABLE} ${MESON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/lib/fribidi
+                CONFIGURE_COMMAND   NINJA=${NINJA_EXECUTABLE} ${MESON_EXECUTABLE}
+                                        ${CMAKE_SOURCE_DIR}/lib/fribidi
                                         -Dbuildtype=release
                                         -Dtests=false -Ddocs=false -Dbin=false
                                         -Dc_flags=-Wno-macro-redefined
