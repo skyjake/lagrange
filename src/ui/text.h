@@ -207,7 +207,7 @@ struct Impl_WrapText {
     enum iWrapTextMode mode;
     iBool  (*wrapFunc)(iWrapText *, iRangecc wrappedText, int origin, int advance, iBool isBaseRTL);
     void *   context;
-    int      baseDir; /* set to +1 for LTR, -1 for RTL
+    int      baseDir; /* set to +1 for LTR, -1 for RTL */
     /* internal */
     iRangecc wrapRange_;
 };
