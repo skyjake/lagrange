@@ -822,16 +822,33 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             }
             for (;;) { /* may need to retry */
                 rts.run.flags |= startOfLine_GmRunFlag;
-                measure_WrapText(&(iWrapText){ .text     = line,
-                                               .maxWidth = rts.isWordWrapped
-                                                               ? d->size.x - run.bounds.pos.x -
-                                                                     rts.indent - rts.rightMargin
-                                                               : 0 /* unlimited */,
-                                               .mode     = word_WrapTextMode,
-                                               .wrapFunc = typesetOneLine_RunTypesetter_,
-                                               .context  = &rts },
-                                 rts.run.textParams.font);
+                iWrapText wrapText = { .text     = line,
+                                       .maxWidth = rts.isWordWrapped
+                                                       ? d->size.x - run.bounds.pos.x -
+                                                             rts.indent - rts.rightMargin
+                                                       : 0 /* unlimited */,
+                                       .mode     = word_WrapTextMode,
+                                       .wrapFunc = typesetOneLine_RunTypesetter_,
+                                       .context  = &rts };
+                measure_WrapText(&wrapText, rts.run.textParams.font);
                 if (!isLedeParagraph || size_Array(&rts.layout) <= maxLedeLines_) {
+                    if (wrapText.baseDir < 0) {
+                        /* Right-aligned paragraphs need margins and decorations to be flipped. */
+                        iForEach(Array, pr, &rts.layout) {
+                            iGmRun *prun = pr.value;
+                            const int offset = rts.rightMargin - rts.indent;
+                            prun->bounds.pos.x    += offset;
+                            prun->visBounds.pos.x += offset;                            
+                        }
+                        if (type == bullet_GmLineType || type == link_GmLineType ||
+                            type == quote_GmLineType) {
+                            iGmRun *decor = back_Array(&d->layout);
+                            iAssert(decor->flags & decoration_GmRunFlag);
+                            decor->visBounds.pos.x = d->size.x - width_Rect(decor->visBounds) -
+                                                     decor->visBounds.pos.x + gap_Text *
+                                                     (type == bullet_GmLineType ? 1.5f : 1);
+                        }
+                    }
                     commit_RunTypesetter_(&rts, d);
                     break;
                 }

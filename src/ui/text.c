@@ -1382,9 +1382,6 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
     float        xCursorMax = 0.0f;
     const iBool  isMonospaced = d->isMonospaced;
     iAssert(args->text.end >= args->text.start);
-//    if (args->continueFrom_out) {
-//        *args->continueFrom_out = args->text.end;
-//    }
     /* Split the text into a number of attributed runs that specify exactly which
        font is used and other attributes such as color. (HarfBuzz shaping is done
        with one specific font.) */
@@ -1392,6 +1389,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
     init_AttributedText(&attrText, args->text, args->maxLen, d, get_Color(args->color),
                         args->baseDir);
     if (args->wrap) {
+        args->wrap->baseDir = attrText.isBaseRTL ? -1 : +1;
         /* TODO: Duplicated args? */
         iAssert(equalRange_Rangecc(args->wrap->text, args->text));
         /* Initialize the wrap range. */
