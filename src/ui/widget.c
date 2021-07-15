@@ -903,7 +903,7 @@ void unhover_Widget(void) {
 }
 
 iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
-    iAssert(d->root == get_Root());
+    //iAssert(d->root == get_Root());
     if (!d->parent) {
         if (get_Window()->focus && get_Window()->focus->root == d->root && isKeyboardEvent_(ev)) {
             /* Root dispatches keyboard events directly to the focused widget. */
@@ -954,7 +954,7 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
            handle the events first. */
         iReverseForEach(ObjectList, i, d->children) {
             iWidget *child = as_Widget(i.object);
-            iAssert(child->root == d->root);
+            //iAssert(child->root == d->root);
             if (child == get_Window()->focus && isKeyboardEvent_(ev)) {
                 continue; /* Already dispatched. */
             }
@@ -1000,11 +1000,11 @@ iBool dispatchEvent_Widget(iWidget *d, const SDL_Event *ev) {
             }
         }
         if (class_Widget(d)->processEvent(d, ev)) {
-            iAssert(get_Root() == d->root);
+            //iAssert(get_Root() == d->root);
             return iTrue;
         }
     }
-    iAssert(get_Root() == d->root);
+    //iAssert(get_Root() == d->root);
     return iFalse;
 }
 
@@ -1104,7 +1104,6 @@ iBool processEvent_Widget(iWidget *d, const SDL_Event *ev) {
                     setFlags_Widget(d, dragged_WidgetFlag, iFalse);
                 }
                 if (d->commandHandler && d->commandHandler(d, ev->user.data1)) {
-                    iAssert(get_Root() == d->root);
                     return iTrue;
                 }
             }
