@@ -1450,7 +1450,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                     wrapResumePos      = run->logical.end;
                     wrapRuns.end       = runIndex;
                     wrapResumeRunIndex = runIndex + 1;
-                    yCursor += d->height;
+                    //yCursor += d->height;
                     break;
                 }
                 wrapResumeRunIndex = runCount;
@@ -1489,10 +1489,10 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                         prevCh = ch;
                     }
                     else {
-                        if (~glyphFlags & HB_GLYPH_FLAG_UNSAFE_TO_BREAK) {
+                        //if (~glyphFlags & HB_GLYPH_FLAG_UNSAFE_TO_BREAK) {
                             safeBreakPos = logPos;
                             breakAdvance = wrapAdvance;
-                        }
+                        //}
                     }
                     /* Out of room? */
                     if (wrapAdvance + xOffset + glyph->d[0].x + glyph->rect[0].size.x >
@@ -1787,7 +1787,8 @@ iInt2 tryAdvanceNoWrap_Text(int fontId, iRangecc text, int width, const char **e
                        .maxWidth = width,
                        .wrapFunc = cbAdvanceOneLine_,
                        .context  = endPos };
-    return measure_WrapText(&wrap, fontId).bounds.size;
+    iTextMetrics tm = measure_WrapText(&wrap, fontId);
+    return init_I2(maxWidth_TextMetrics(tm), tm.bounds.size.y);
 }
 
 iTextMetrics measureN_Text(int fontId, const char *text, size_t n) {
@@ -1969,7 +1970,7 @@ void draw_WrapText(iWrapText *d, int fontId, iInt2 pos, int color) {
                            .text  = d->text,
                            .pos   = pos,
                            .wrap  = d,
-                           .color = color,
+                           .color = color & mask_ColorId,
     });
 }
 
@@ -2088,6 +2089,13 @@ iDefineTypeConstructionArgs(TextBuf, (int font, int color, const char *text), fo
 
 static void initWrap_TextBuf_(iTextBuf *d, int font, int color, int maxWidth, iBool doWrap, const char *text) {
     SDL_Renderer *render = text_.render;
+    iWrapText wrapText = {
+        .text     = range_CStr(text),
+        .maxWidth = maxWidth,
+        .mode     = (doWrap ? word_WrapTextMode : anyCharacter_WrapTextMode),
+    };
+    d->size = measure_WrapText(&wrapText, font).bounds.size;
+#if 0
     if (maxWidth == 0) {
         d->size = measure_Text(font, text).bounds.size;
     }
@@ -2101,6 +2109,7 @@ static void initWrap_TextBuf_(iTextBuf *d, int font, int color, int maxWidth, iB
             d->size.y += iMax(size.y, lineHeight_Text(font));
         }
     }
+#endif
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
     if (d->size.x * d->size.y) {
         d->texture = SDL_CreateTexture(render,
@@ -2119,7 +2128,7 @@ static void initWrap_TextBuf_(iTextBuf *d, int font, int color, int maxWidth, iB
         SDL_SetRenderDrawColor(render, 255, 255, 255, 0);
         SDL_RenderClear(render);
         SDL_SetTextureBlendMode(text_.cache, SDL_BLENDMODE_NONE); /* blended when TextBuf is drawn */
-        const int fg    = color | fillBackground_ColorId;
+#if 0
         iRangecc  range = range_CStr(text);
         if (maxWidth == 0) {
             draw_Text_(font, zero_I2(), fg, range);
@@ -2137,6 +2146,8 @@ static void initWrap_TextBuf_(iTextBuf *d, int font, int color, int maxWidth, iB
                 pos.y += lineHeight_Text(font);
             }
         }
+#endif
+        draw_WrapText(&wrapText, font, zero_I2(), color | fillBackground_ColorId);
         SDL_SetTextureBlendMode(text_.cache, SDL_BLENDMODE_BLEND);
         SDL_SetRenderTarget(render, oldTarget);
         SDL_SetTextureBlendMode(d->texture, SDL_BLENDMODE_BLEND);

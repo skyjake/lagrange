@@ -18,7 +18,7 @@
 * Preferences have been reorganized. There is a new Fonts page, and some General settings have been moved to the Style page. All color-related settings are on the Colors page, including UI theme colors.
 * Opened links are updated to reflect visited status even when opened in a background tab or to the side.
 * Unicode Byte Order Mark is ignored in the beginning of a page.
-* Right-to-left paragraphs are aligned to the right.
+* Right-to-left paragraphs are aligned to the right. Link icons and list/quote symbols are moved to the right margin.
 * Large lede paragraph font is not applied if the paragraph has too many lines.
 * Adjusted kerning of Nunito.
 * Fixed sizing of characters in the Noto Symbols fonts.

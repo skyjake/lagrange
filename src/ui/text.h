@@ -159,6 +159,10 @@ struct Impl_TextMetrics {
     iInt2 advance; /* cursor offset */
 };
 
+iLocalDef int maxWidth_TextMetrics(const iTextMetrics d) {
+    return iMax(width_Rect(d.bounds), d.advance.x);
+}
+
 iTextMetrics    measureRange_Text       (int fontId, iRangecc text);
 iTextMetrics    measureWrapRange_Text   (int fontId, int maxWidth, iRangecc text);
 iTextMetrics    measureN_Text           (int fontId, const char *text, size_t n); /* `n` in characters */

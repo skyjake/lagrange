@@ -747,7 +747,13 @@ static size_t indexForRelativeX_InputWidget_(const iInputWidget *d, int x, const
 
 static iBool moveCursorByLine_InputWidget_(iInputWidget *d, int dir) {
     const iInputLine *line = line_InputWidget_(d, d->cursorLine);
-    int xPos = measureN_Text(d->font, cstr_String(&line->text), d->cursor - line->offset).advance.x;
+    int xPos1 = maxWidth_TextMetrics(measureN_Text(d->font,
+                             cstr_String(&line->text),
+                             d->cursor - line->offset));
+    int xPos2 = maxWidth_TextMetrics(measureN_Text(d->font,
+                              cstr_String(&line->text),
+                              iMin(d->cursor + 1 - line->offset, line->len)));
+    const int xPos = (xPos1 + xPos2) / 2;
     size_t newCursor = iInvalidPos;
     const size_t numLines = size_Array(&d->lines);
     if (dir < 0 && d->cursorLine > 0) {
@@ -860,32 +866,6 @@ static size_t skipWord_InputWidget_(const iInputWidget *d, size_t pos, int dir) 
     }
     return pos;
 }
-
-#if 0
-static iInt2 textOrigin_InputWidget_(const iInputWidget *d) { //}, const char *visText) {
-//    const iWidget *w         = constAs_Widget(d);
-    iRect          bounds    = contentBounds_InputWidget_(d);/* adjusted_Rect(bounds_Widget(w),
-                                 addX_I2(padding_(), d->leftPadding),
-                                 neg_I2(addX_I2(padding_(), d->rightPadding)));*/
-//    const iInt2    emSize    = advance_Text(d->font, "M");
-//    const int      textWidth = advance_Text(d->font, visText).x;
-//    const int      cursorX   = advanceN_Text(d->font, visText, d->cursor).x;
-//    int            xOff      = 0;
-//    shrink_Rect(&bounds, init_I2(gap_UI * (flags_Widget(w) & tight_WidgetFlag ? 1 : 2), 0));
-/*    if (d->maxLen == 0) {
-        if (textWidth > width_Rect(bounds) - emSize.x) {
-            xOff = width_Rect(bounds) - emSize.x - textWidth;
-        }
-        if (cursorX + xOff < width_Rect(bounds) / 2) {
-            xOff = width_Rect(bounds) / 2 - cursorX;
-        }
-        xOff = iMin(xOff, 0);
-    }*/
-//    const int yOff = 0.3f * lineHeight_Text(d->font); // (height_Rect(bounds) - lineHeight_Text(d->font)) / 2;
-//    return addY_I2(topLeft_Rect(bounds), yOff);
-    
-}
-#endif
 
 static size_t coordIndex_InputWidget_(const iInputWidget *d, iInt2 coord) {
     const iInt2 pos = sub_I2(coord, contentBounds_InputWidget_(d).pos);
@@ -1342,17 +1322,6 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
     return processEvent_Widget(w, ev);
 }
 
-#if 0
-static iBool isWhite_(const iString *str) {
-    iConstForEach(String, i, str) {
-        if (!isSpace_Char(i.value)) {
-            return iFalse;
-        }
-    }
-    return iTrue;
-}
-#endif
-
 static void draw_InputWidget_(const iInputWidget *d) {
     const iWidget *w         = constAs_Widget(d);
     iRect          bounds    = adjusted_Rect(bounds_InputWidget_(d), padding_(), neg_I2(padding_()));
@@ -1400,14 +1369,12 @@ static void draw_InputWidget_(const iInputWidget *d) {
                 /* Draw the selected range. */
                 const iRanges mark = mark_InputWidget_(d);
                 if (mark.start < lineRange.end && mark.end > lineRange.start) {
-                    const int m1 = measureN_Text(d->font,
+                    const int m1 = maxWidth_TextMetrics(measureN_Text(d->font,
                                                  cstr_String(&line->text),
-                                                 iMax(lineRange.start, mark.start) - line->offset)
-                                       .advance.x;
-                    const int m2 = measureN_Text(d->font,
+                                                 iMax(lineRange.start, mark.start) - line->offset));
+                    const int m2 = maxWidth_TextMetrics(measureN_Text(d->font,
                                                  cstr_String(&line->text),
-                                                 iMin(lineRange.end, mark.end) - line->offset)
-                                       .advance.x;
+                                                 iMin(lineRange.end, mark.end) - line->offset));
                     fillRect_Paint(&p,
                                    (iRect){ addX_I2(drawPos, iMin(m1, m2)),
                                             init_I2(iMax(gap_UI / 3, iAbs(m2 - m1)),
@@ -1446,15 +1413,20 @@ static void draw_InputWidget_(const iInputWidget *d) {
         }
         const iInputLine *curLine = line_InputWidget_(d, d->cursorLine);
         const iString *   text    = &curLine->text;
-        /* The `gap_UI` offsets below are a hack. They are used because for some reason the
-           cursor rect and the glyph inside don't quite position like during `run_Text_()`. */
-        const int prefixSize = measureN_Text(d->font, cstr_String(text), d->cursor - curLine->offset).advance.x;
+        /* The bounds include visible characters, while advance includes whitespace as well.
+           Normally only the advance is needed, but if the cursor is at a newline, the advance
+           will have reset back to zero. */
+        const int prefixSize = maxWidth_TextMetrics(measureN_Text(d->font,
+                                                                  cstr_String(text),
+                                                                  d->cursor - curLine->offset));
         const iInt2 curPos   = addX_I2(addY_I2(contentBounds.pos, lineHeight_Text(d->font) * d->cursorLine),
                                        prefixSize +
                                        (d->mode == insert_InputMode ? -curSize.x / 2 : 0));
-        const iRect curRect    = { curPos, curSize };
+        const iRect curRect  = { curPos, curSize };
         fillRect_Paint(&p, curRect, uiInputCursor_ColorId);
         if (d->mode == overwrite_InputMode) {
+            /* The `gap_UI` offsets below are a hack. They are used because for some reason the
+               cursor rect and the glyph inside don't quite position like during `run_Text_()`. */
             draw_Text(d->font,
                       addX_I2(curPos, iMin(1, gap_UI / 8)),
                       uiInputCursorText_ColorId,
