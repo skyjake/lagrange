@@ -4,31 +4,60 @@ if (IOS)
 endif ()
 
 find_package (PkgConfig)
+find_program (MESON_EXECUTABLE meson DOC "Meson build system")
+find_program (NINJA_EXECUTABLE ninja DOC "Ninja build tool")
+include (ExternalProject)
 
 if (ENABLE_HARFBUZZ AND EXISTS ${CMAKE_SOURCE_DIR}/lib/harfbuzz/CMakeLists.txt)
     # Find HarfBuzz with pkg-config.
     if (NOT ENABLE_HARFBUZZ_MINIMAL AND PKG_CONFIG_FOUND)
         pkg_check_modules (HARFBUZZ IMPORTED_TARGET harfbuzz)
+        if (HARFBUZZ_FOUND)
+            add_library (harfbuzz-lib ALIAS PkgConfig::HARFBUZZ)
+        endif ()
     endif ()
     if (ENABLE_HARFBUZZ_MINIMAL OR NOT HARFBUZZ_FOUND)
         # Build HarfBuzz with minimal dependencies.
-        set (HB_BUILD_SUBSET  OFF CACHE BOOL "" FORCE)
-        set (HB_HAVE_CORETEXT OFF CACHE BOOL "" FORCE)
-        set (HB_HAVE_FREETYPE OFF CACHE BOOL "" FORCE)
-        set (HB_HAVE_GLIB     OFF CACHE BOOL "" FORCE)
-        set (HB_HAVE_GOBJECT  OFF CACHE BOOL "" FORCE)
-        set (HB_HAVE_ICU      OFF CACHE BOOL "" FORCE)
-        set (SKIP_INSTALL_ALL YES CACHE BOOL "" FORCE)
-        add_subdirectory (${CMAKE_SOURCE_DIR}/lib/harfbuzz)
-        set (HARFBUZZ_LIBRARIES harfbuzz)
-        # HarfBuzz is C++ so must link with the standard library.    
-        if (APPLE)
-            list (APPEND HARFBUZZ_LIBRARIES c++)
+        if (MESON_EXECUTABLE AND NINJA_EXECUTABLE)
+            set (_dst ${CMAKE_BINARY_DIR}/lib/harfbuzz)
+            ExternalProject_Add (harfbuzz
+                PREFIX              ${CMAKE_BINARY_DIR}/harfbuzz-ext
+                SOURCE_DIR          ${CMAKE_SOURCE_DIR}/lib/harfbuzz
+                CONFIGURE_COMMAND   NINJA=${NINJA_EXECUTABLE} ${MESON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/lib/harfbuzz
+                                        -Dbuildtype=release
+                                        -Dtests=disabled -Dglib=disabled -Dgobject=disabled
+                                        --prefix ${_dst}
+                BUILD_COMMAND       ${NINJA_EXECUTABLE}
+                INSTALL_COMMAND     ${NINJA_EXECUTABLE} install
+            )
+            add_library (harfbuzz-lib INTERFACE)
+            target_include_directories (harfbuzz-lib INTERFACE ${_dst}/include/harfbuzz)
+            if (MSYS)
+                # Link dynamically.
+                target_link_libraries (harfbuzz-lib INTERFACE -L${_dst}/lib harfbuzz)
+                install (PROGRAMS ${_dst}/bin/msys-harfbuzz-0.dll DESTINATION .)
+            endif ()
+            set (HARFBUZZ_FOUND YES)
         else ()
-            list (APPEND HARFBUZZ_LIBRARIES stdc++)
-        endif ()        
-        set (HARFBUZZ_FOUND YES)        
-        set (SKIP_INSTALL_ALL NO CACHE BOOL "" FORCE)
+            # Try the CMake instead.
+            set (HB_BUILD_SUBSET  OFF CACHE BOOL "" FORCE)
+            set (HB_HAVE_CORETEXT OFF CACHE BOOL "" FORCE)
+            set (HB_HAVE_FREETYPE OFF CACHE BOOL "" FORCE)
+            set (HB_HAVE_GLIB     OFF CACHE BOOL "" FORCE)
+            set (HB_HAVE_GOBJECT  OFF CACHE BOOL "" FORCE)
+            set (HB_HAVE_ICU      OFF CACHE BOOL "" FORCE)
+            set (SKIP_INSTALL_ALL YES CACHE BOOL "" FORCE)
+            add_subdirectory (${CMAKE_SOURCE_DIR}/lib/harfbuzz)
+            set (HARFBUZZ_LIBRARIES harfbuzz)
+            # HarfBuzz is C++ so must link with the standard library.
+            if (APPLE)
+                list (APPEND HARFBUZZ_LIBRARIES c++)
+            else ()
+                list (APPEND HARFBUZZ_LIBRARIES stdc++)
+            endif ()
+            set (HARFBUZZ_FOUND YES)
+            set (SKIP_INSTALL_ALL NO CACHE BOOL "" FORCE)
+        endif ()
     endif ()
 endif ()
 
@@ -36,19 +65,19 @@ if (ENABLE_FRIBIDI AND EXISTS ${CMAKE_SOURCE_DIR}/lib/fribidi)
     # Find FriBidi with pkg-config.
     if (NOT ENABLE_FRIBIDI_BUILD AND PKG_CONFIG_FOUND)
         pkg_check_modules (FRIBIDI IMPORTED_TARGET fribidi)
-        add_library (fribidi-lib ALIAS PkgConfig::FRIBIDI)
+        if (FRIBIDI_FOUND)
+            add_library (fribidi-lib ALIAS PkgConfig::FRIBIDI)
+        endif ()
     endif ()
     if (ENABLE_FRIBIDI_BUILD OR NOT FRIBIDI_FOUND)
         # Build FriBidi with Meson.
-        find_program (MESON_EXECUTABLE meson DOC "Meson build system")
-        find_program (NINJA_EXECUTABLE ninja DOC "Ninja build tool")    
-        include (ExternalProject)
         set (_dst ${CMAKE_BINARY_DIR}/lib/fribidi)
         if (MESON_EXECUTABLE AND NINJA_EXECUTABLE)
             ExternalProject_Add (fribidi
                 PREFIX              ${CMAKE_BINARY_DIR}/fribidi-ext
                 SOURCE_DIR          ${CMAKE_SOURCE_DIR}/lib/fribidi
-                CONFIGURE_COMMAND   NINJA=${NINJA_EXECUTABLE} ${MESON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/lib/fribidi 
+                CONFIGURE_COMMAND   NINJA=${NINJA_EXECUTABLE} ${MESON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/lib/fribidi
+                                        -Dbuildtype=release
                                         -Dtests=false -Ddocs=false -Dbin=false
                                         -Dc_flags=-Wno-macro-redefined
                                         --prefix ${_dst}
@@ -56,12 +85,15 @@ if (ENABLE_FRIBIDI AND EXISTS ${CMAKE_SOURCE_DIR}/lib/fribidi)
                 INSTALL_COMMAND     ${NINJA_EXECUTABLE} install
             )
         else ()
-            message (FATAL_ERROR 
+            message (FATAL_ERROR
                 "GNU FriBidi must be built with Meson. Please install Meson and Ninja and try again, or provide FriBidi via pkg-config.")
         endif ()
         add_library (fribidi-lib INTERFACE)
         target_include_directories (fribidi-lib INTERFACE ${_dst}/include)
         target_link_libraries (fribidi-lib INTERFACE -L${_dst}/lib fribidi)
+        if (MSYS)
+            install (PROGRAMS ${_dst}/bin/msys-fribidi-0.dll DESTINATION .)
+        endif ()
         set (FRIBIDI_FOUND YES)
     endif ()
 endif ()
