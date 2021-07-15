@@ -20,7 +20,7 @@ if (ENABLE_HARFBUZZ AND EXISTS ${CMAKE_SOURCE_DIR}/lib/harfbuzz/CMakeLists.txt)
         # Build HarfBuzz with minimal dependencies.
         if (MESON_EXECUTABLE AND NINJA_EXECUTABLE)
             set (_dst ${CMAKE_BINARY_DIR}/lib/harfbuzz)
-            ExternalProject_Add (harfbuzz
+            ExternalProject_Add (harfbuzz-ext
                 PREFIX              ${CMAKE_BINARY_DIR}/harfbuzz-ext
                 SOURCE_DIR          ${CMAKE_SOURCE_DIR}/lib/harfbuzz
                 CONFIGURE_COMMAND   NINJA=${NINJA_EXECUTABLE} ${MESON_EXECUTABLE} 
@@ -34,13 +34,19 @@ if (ENABLE_HARFBUZZ AND EXISTS ${CMAKE_SOURCE_DIR}/lib/harfbuzz/CMakeLists.txt)
                 INSTALL_COMMAND     ${NINJA_EXECUTABLE} install
             )
             add_library (harfbuzz-lib INTERFACE)
+            add_dependencies (harfbuzz-lib harfbuzz-ext)
             target_include_directories (harfbuzz-lib INTERFACE ${_dst}/include/harfbuzz)
             if (MSYS)
                 # Link dynamically.
                 target_link_libraries (harfbuzz-lib INTERFACE -L${_dst}/lib harfbuzz)
                 install (PROGRAMS ${_dst}/bin/msys-harfbuzz-0.dll DESTINATION .)
             else ()
-                target_link_libraries (harfbuzz-lib INTERFACE -L${_dst} harfbuzz)
+                target_link_libraries (harfbuzz-lib INTERFACE ${_dst}/libharfbuzz.a)
+                if (APPLE)
+                    target_link_libraries (harfbuzz-lib INTERFACE c++)
+                else ()
+                    target_link_libraries (harfbuzz-lib INTERFACE stdc++)
+                endif ()
             endif ()
             set (HARFBUZZ_FOUND YES)
         else ()
@@ -78,7 +84,7 @@ if (ENABLE_FRIBIDI AND EXISTS ${CMAKE_SOURCE_DIR}/lib/fribidi)
         # Build FriBidi with Meson.
         set (_dst ${CMAKE_BINARY_DIR}/lib/fribidi)
         if (MESON_EXECUTABLE AND NINJA_EXECUTABLE)
-            ExternalProject_Add (fribidi
+            ExternalProject_Add (fribidi-ext
                 PREFIX              ${CMAKE_BINARY_DIR}/fribidi-ext
                 SOURCE_DIR          ${CMAKE_SOURCE_DIR}/lib/fribidi
                 CONFIGURE_COMMAND   NINJA=${NINJA_EXECUTABLE} ${MESON_EXECUTABLE}
@@ -95,8 +101,13 @@ if (ENABLE_FRIBIDI AND EXISTS ${CMAKE_SOURCE_DIR}/lib/fribidi)
                 "GNU FriBidi must be built with Meson. Please install Meson and Ninja and try again, or provide FriBidi via pkg-config.")
         endif ()
         add_library (fribidi-lib INTERFACE)
+        add_dependencies (fribidi-lib fribidi-ext)
         target_include_directories (fribidi-lib INTERFACE ${_dst}/include)
-        target_link_libraries (fribidi-lib INTERFACE -L${_dst}/lib fribidi)
+        if (APPLE)
+            target_link_libraries (fribidi-lib INTERFACE ${_dst}/lib/libfribidi.0.dylib)
+        else ()
+            target_link_libraries (fribidi-lib INTERFACE -L${_dst}/lib fribidi)
+        endif ()
         if (MSYS)
             install (PROGRAMS ${_dst}/bin/msys-fribidi-0.dll DESTINATION .)
         endif ()
