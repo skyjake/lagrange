@@ -565,11 +565,12 @@ Persistent configuration variables. The file is rewritten when the application i
 ### state.lgr
 A binary file that contains the current state of the application: open tabs and their scroll positions, and navigation history with cached page content (up to the configured cache limit). You may delete this file when the application is not running to close all tabs and clear the page content cache.
 
-### trusted.txt
-Trusted server certificates. Each line specifies the certificate fingerprint of one domain:
-> {domain} {valid-until} {fingerprint}
+### trusted.2.txt
+Trusted server certificates. Each line specifies the certificate fingerprint of one server:
+> {domain};{port} {valid-until} {fingerprint}
 * Domain names are stored in punycode format if they contain non-ASCII characters.
 * The "valid until" expiration date is a UNIX timestamp.
+* The fingerprint is an SHA256 checksum of the server certificate's public key in DER format.
 
 ### visited.2.txt
 The combined navigation history of all tabs. Each line specifies one URL:
