@@ -118,6 +118,31 @@ void deserialize_GmResponse(iGmResponse *d, iStream *ins) {
 
 /*----------------------------------------------------------------------------------------------*/
 
+iDeclareType(TitanData)
+iDeclareTypeConstruction(TitanData)
+    
+struct Impl_TitanData {
+    iBlock  data;
+    iString mime;
+    iString token;
+};
+
+iDefineTypeConstruction(TitanData)
+
+void init_TitanData(iTitanData *d) {
+    init_Block(&d->data, 0);
+    init_String(&d->mime);
+    init_String(&d->token);
+}
+
+void deinit_TitanData(iTitanData *d) {
+    deinit_String(&d->token);
+    deinit_String(&d->mime);
+    deinit_Block(&d->data);
+}
+
+/*----------------------------------------------------------------------------------------------*/
+
 static iAtomicInt idGen_;
 
 enum iGmRequestState {
@@ -135,6 +160,7 @@ struct Impl_GmRequest {
     iGmCerts *           certs; /* not owned */
     enum iGmRequestState state;
     iString              url;
+    iTitanData *         titan;
     iTlsRequest *        req;
     iGopher              gopher;
     iGmResponse *        resp;
@@ -498,20 +524,21 @@ static void beginGopherConnection_GmRequest_(iGmRequest *d, const iString *host,
 /*----------------------------------------------------------------------------------------------*/
 
 void init_GmRequest(iGmRequest *d, iGmCerts *certs) {
-    d->mtx  = new_Mutex();
-    d->id   = add_Atomic(&idGen_, 1) + 1;
-    d->resp = new_GmResponse();
+    d->mtx   = new_Mutex();
+    d->id    = add_Atomic(&idGen_, 1) + 1;
+    d->resp  = new_GmResponse();
     d->isFilterEnabled = iTrue;
     d->isRespLocked    = iFalse;
     d->isRespFiltered  = iFalse;
     set_Atomic(&d->allowUpdate, iTrue);
     init_String(&d->url);
     init_Gopher(&d->gopher);
-    d->certs      = certs;
-    d->req        = NULL;
-    d->updated    = NULL;
-    d->finished   = NULL;
-    d->state      = initialized_GmRequestState;
+    d->titan    = NULL;
+    d->certs    = certs;
+    d->req      = NULL;
+    d->updated  = NULL;
+    d->finished = NULL;
+    d->state    = initialized_GmRequestState;
 }
 
 void deinit_GmRequest(iGmRequest *d) {
@@ -529,6 +556,7 @@ void deinit_GmRequest(iGmRequest *d) {
         unlock_Mutex(d->mtx);
     }
     iReleasePtr(&d->req);
+    delete_TitanData(d->titan);
     deinit_Gopher(&d->gopher);
     delete_Audience(d->finished);
     delete_Audience(d->updated);
@@ -551,6 +579,20 @@ void setUrl_GmRequest(iGmRequest *d, const iString *url) {
        the web. */
     urlEncodePath_String(&d->url);
     urlEncodeSpaces_String(&d->url);
+}
+
+static iBool isTitan_GmRequest_(const iGmRequest *d) {
+    return equalCase_Rangecc(urlScheme_String(&d->url), "titan");
+}
+
+void setTitanData_GmRequest(iGmRequest *d, const iString *mime, const iBlock *payload,
+                            const iString *token) {
+    if (!d->titan) {
+        d->titan = new_TitanData();   
+    }
+    set_Block(&d->titan->data, payload);
+    set_String(&d->titan->mime, mime);
+    set_String(&d->titan->token, token);
 }
 
 static iBool isDirectory_(const iString *path) {
@@ -837,7 +879,8 @@ void submit_GmRequest(iGmRequest *d) {
         beginGopherConnection_GmRequest_(d, host, port ? port : 79);
         return;
     }
-    else if (!equalCase_Rangecc(url.scheme, "gemini")) {
+    else if (!equalCase_Rangecc(url.scheme, "gemini") &&
+             !equalCase_Rangecc(url.scheme, "titan")) {
         resp->statusCode = unsupportedProtocol_GmStatusCode;
         d->state = finished_GmRequestState;
         iNotifyAudience(d, finished, GmRequestFinished);
@@ -855,8 +898,34 @@ void submit_GmRequest(iGmRequest *d) {
         port = GEMINI_DEFAULT_PORT; /* default Gemini port */
     }
     setHost_TlsRequest(d->req, host, port);
-    setContent_TlsRequest(d->req,
-                          utf8_String(collectNewFormat_String("%s\r\n", cstr_String(&d->url))));
+    /* Titan requests can have an arbitrary payload. */
+    if (isTitan_GmRequest_(d)) {
+        iBlock content;
+        initCopy_Block(&content, utf8_String(&d->url));
+        if (d->titan) {
+            printf_Block(&content,
+                         ";mime=%s;size=%zu",
+                         cstr_String(&d->titan->mime),
+                         size_Block(&d->titan->data));
+            if (!isEmpty_String(&d->titan->token)) {
+                appendCStr_Block(&content, ";token=");
+                append_Block(&content, utf8_String(&d->titan->token));
+            }
+            appendCStr_Block(&content, "\r\n");
+            append_Block(&content, &d->titan->data);
+        }
+        else {
+            /* Empty data. */
+            appendCStr_Block(&content, ";mime=application/octet-stream;size=0\r\n");
+        }
+        setContent_TlsRequest(d->req, &content);
+        deinit_Block(&content);
+    }
+    else {
+        /* Gemini request. */
+        setContent_TlsRequest(d->req,
+                              utf8_String(collectNewFormat_String("%s\r\n", cstr_String(&d->url))));
+    }
     submit_TlsRequest(d->req);
 }
 

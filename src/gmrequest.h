@@ -67,6 +67,8 @@ iDeclareAudienceGetter(GmRequest, finished)
 
 void                enableFilters_GmRequest     (iGmRequest *, iBool enable);
 void                setUrl_GmRequest            (iGmRequest *, const iString *url);
+void                setTitanData_GmRequest      (iGmRequest *, const iString *mime,
+                                                 const iBlock *payload, const iString *token);
 void                submit_GmRequest            (iGmRequest *);
 void                cancel_GmRequest            (iGmRequest *);
 
