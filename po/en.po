@@ -180,6 +180,9 @@ msgstr "Show Downloads"
 msgid "menu.pageinfo"
 msgstr "Show Page Information"
 
+msgid "menu.unexpire"
+msgstr "Ignore Expiry and Continue Loading"
+
 msgid "menu.find"
 msgstr "Find on Page"
 

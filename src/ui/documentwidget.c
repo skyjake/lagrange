@@ -1138,8 +1138,8 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
             case tlsServerCertificateExpired_GmStatusCode:
                 makeFooterButtons_DocumentWidget_(
                     d,
-                    (iMenuItem[]){ { rightArrowhead_Icon " Ignore Expiry and Continue Loading",
-                                       0, 0, "server.unexpire"
+                    (iMenuItem[]){ { rightArrowhead_Icon " ${menu.unexpire}",
+                                       SDLK_RETURN, 0, "server.unexpire"
                                    },
                                    { info_Icon " ${menu.pageinfo}",
                                      SDLK_i,
