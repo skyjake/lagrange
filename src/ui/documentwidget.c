@@ -1135,7 +1135,18 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
                 useBanner = iFalse; /* valid data wasn't received from host */
                 appendFormat_String(src, "\n\n>%s\n", cstr_String(meta));
                 break;
-                /* fall through */
+            case tlsServerCertificateExpired_GmStatusCode:
+                makeFooterButtons_DocumentWidget_(
+                    d,
+                    (iMenuItem[]){ { rightArrowhead_Icon " Ignore Expiry and Continue Loading",
+                                       0, 0, "server.unexpire"
+                                   },
+                                   { info_Icon " ${menu.pageinfo}",
+                                     SDLK_i,
+                                     KMOD_PRIMARY,
+                                     "document.info" } },
+                    2);
+                break;
             case tlsServerCertificateNotVerified_GmStatusCode:
                 makeFooterButtons_DocumentWidget_(
                     d,
@@ -1575,12 +1586,12 @@ static void updateTrust_DocumentWidget_(iDocumentWidget *d, const iGmResponse *r
         ~d->certFlags & trusted_GmCertFlag) {
         updateTextCStr_LabelWidget(lock, red_ColorEscape warning_Icon);
     }
-    else if (d->certFlags & trusted_GmCertFlag) {
-        updateTextCStr_LabelWidget(lock, green_ColorEscape closedLock_Icon);
+    else if (~d->certFlags & timeVerified_GmCertFlag) {
+        updateTextCStr_LabelWidget(lock, isDarkMode ? orange_ColorEscape warning_Icon
+                                                    : black_ColorEscape warning_Icon);        
     }
     else {
-        updateTextCStr_LabelWidget(lock, isDarkMode ? orange_ColorEscape warning_Icon
-            : black_ColorEscape warning_Icon);
+        updateTextCStr_LabelWidget(lock, green_ColorEscape closedLock_Icon);
     }
     setBanner_GmDocument(d->doc, bannerType_DocumentWidget_(d));
 }
@@ -2631,12 +2642,27 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         addAction_Widget(dlg, SDLK_SPACE, 0, "message.ok");
         return iTrue;
     }
+    else if (equal_Command(cmd, "server.unexpire") && document_App() == d) {
+        const iRangecc host = urlHost_String(d->mod.url);
+        const uint16_t port = urlPort_String(d->mod.url);
+        if (!isEmpty_Block(d->certFingerprint) && !isEmpty_Range(&host)) {
+            iTime expiry;
+            initCurrent_Time(&expiry);
+            iTime oneHour; /* One hour is long enough for a single visit (?). */
+            initSeconds_Time(&oneHour, 3600);
+            add_Time(&expiry, &oneHour);
+            iDate expDate;
+            init_Date(&expDate, &expiry);
+            setTrusted_GmCerts(certs_App(), host, port, d->certFingerprint, &expDate);
+            postCommand_Widget(w, "navigate.reload");
+        }
+        return iTrue;
+    }
     else if (equal_Command(cmd, "server.trustcert") && document_App() == d) {
         const iRangecc host = urlHost_String(d->mod.url);
         const uint16_t port = urlPort_String(d->mod.url);
         if (!isEmpty_Block(d->certFingerprint) && !isEmpty_Range(&host)) {
             setTrusted_GmCerts(certs_App(), host, port, d->certFingerprint, &d->certExpiry);
-            d->certFlags |= trusted_GmCertFlag;
             postCommand_Widget(w, "navigate.reload");
         }
         return iTrue;

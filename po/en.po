@@ -1498,11 +1498,17 @@ msgstr "Network/TLS Failure"
 msgid "error.tls.msg"
 msgstr "Failed to communicate with the server. Here is the error message:"
 
+msgid "error.certexpired"
+msgstr "Expired Certificate"
+
+msgid "error.certexpired.msg"
+msgstr "Connection to the server was cancelled because its TLS certificate has expired."
+
 msgid "error.certverify"
 msgstr "Untrusted Server"
 
 msgid "error.certverify.msg"
-msgstr "Connection to the server was aborted because the received TLS certificate does not match the one we trust. Please check if the server has announced a certificate change. If not, it is possible that a malicious third party is masquerading as the server you tried to reach.\n\nThe certificate can be marked as trusted in Page Information."
+msgstr "Connection to the server was cancelled because its TLS certificate does not match the one we trust. Please check if the server has announced a certificate change. If not, it is possible that a malicious third party is masquerading as the server you tried to reach.\n\nThe certificate can be marked as trusted in Page Information."
 
 msgid "error.temporary"
 msgstr "Temporary Failure"

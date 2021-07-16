@@ -682,8 +682,12 @@ static const struct {
       { 0x1f5a7, /* networked computers */
         "${error.tls}",
         "${error.tls.msg}" } },
+    { tlsServerCertificateExpired_GmStatusCode,
+      { 0x1f4C6, /* calendar */
+        "${error.certexpired}",
+        "${error.certexpired.msg}" } },
     { tlsServerCertificateNotVerified_GmStatusCode,
-      { 0x1f645,
+      { 0x1f645, /* no good */
         "${error.certverify}",
         "${error.certverify.msg}" } },
     { temporaryFailure_GmStatusCode,

@@ -456,13 +456,8 @@ iBool checkTrust_GmCerts(iGmCerts *d, iRangecc domain, uint16_t port, const iTls
     if (!cert) {
         return iFalse;
     }
-    if (isExpired_TlsCertificate(cert)) {
-        return iFalse;
-    }
     /* We trust CA verification implicitly. */
-    //const iBool isAuth = verify_TlsCertificate(cert) == authority_TlsCertificateVerifyStatus;
-//    const iBool isAuth = iFalse; /* CA verification done during handshake */
-    if (/*!isAuth &&*/ !verifyDomain_GmCerts(cert, domain)) {
+    if (!verifyDomain_GmCerts(cert, domain)) {
         return iFalse;
     }
     /* TODO: Could call setTrusted_GmCerts() instead of duplicating the trust-setting. */
@@ -474,11 +469,12 @@ iBool checkTrust_GmCerts(iGmCerts *d, iRangecc domain, uint16_t port, const iTls
     init_String(&key);
     makeTrustKey_(domain, port, &key);
     lock_Mutex(d->mtx);
+    iBool ok = !isExpired_TlsCertificate(cert);
     iTrustEntry *trust = value_StringHash(d->trusted, &key);
     if (trust) {
         /* We already have it, check if it matches the one we trust for this domain (if it's
            still valid. */
-        if (/*!isAuth && */elapsedSeconds_Time(&trust->validUntil) < 0) {
+        if (elapsedSeconds_Time(&trust->validUntil) < 0) {
             /* Trusted cert is still valid. */
             const iBool isTrusted = cmp_Block(fingerprint, &trust->fingerprint) == 0;
             unlock_Mutex(d->mtx);
@@ -487,17 +483,23 @@ iBool checkTrust_GmCerts(iGmCerts *d, iRangecc domain, uint16_t port, const iTls
             return isTrusted;
         }
         /* Update the trusted cert. */
-        init_Time(&trust->validUntil, &until);
-        set_Block(&trust->fingerprint, fingerprint);
+        if (ok) {
+            init_Time(&trust->validUntil, &until);
+            set_Block(&trust->fingerprint, fingerprint);
+        }
     }
     else {
-        insert_StringHash(d->trusted, &key, iClob(new_TrustEntry(fingerprint, &until)));
+        if (ok) {
+            insert_StringHash(d->trusted, &key, iClob(new_TrustEntry(fingerprint, &until)));
+        }
     }
-    save_GmCerts_(d);
+    if (ok) {
+        save_GmCerts_(d);
+    }
     unlock_Mutex(d->mtx);
     delete_Block(fingerprint);
     deinit_String(&key);
-    return iTrue;
+    return ok;
 }
 
 void setTrusted_GmCerts(iGmCerts *d, iRangecc domain, uint16_t port, const iBlock *fingerprint,

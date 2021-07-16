@@ -290,8 +290,14 @@ static void requestFinished_GmRequest_(iGmRequest *d, iTlsRequest *req) {
                                                                  : finished_GmRequestState);
     if (d->state == failure_GmRequestState) {
         if (!isVerified_TlsRequest(req)) {
-            d->resp->statusCode = tlsServerCertificateNotVerified_GmStatusCode;
-            setCStr_String(&d->resp->meta, "Server certificate could not be verified");
+            if (isExpired_TlsCertificate(serverCertificate_TlsRequest(req))) {
+                d->resp->statusCode = tlsServerCertificateExpired_GmStatusCode;
+                setCStr_String(&d->resp->meta, "Server certificate has expired");
+            }
+            else {
+                d->resp->statusCode = tlsServerCertificateNotVerified_GmStatusCode;
+                setCStr_String(&d->resp->meta, "Server certificate could not be verified");
+            }
         }
         else {
             d->resp->statusCode = tlsFailure_GmStatusCode;

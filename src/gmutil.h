@@ -43,6 +43,7 @@ enum iGmStatusCode {
     unknownStatusCode_GmStatusCode,
     invalidLocalResource_GmStatusCode,
     tlsFailure_GmStatusCode,
+    tlsServerCertificateExpired_GmStatusCode,
     tlsServerCertificateNotVerified_GmStatusCode,
 
     none_GmStatusCode                      = 0,
