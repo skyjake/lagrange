@@ -1135,6 +1135,16 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
                 useBanner = iFalse; /* valid data wasn't received from host */
                 appendFormat_String(src, "\n\n>%s\n", cstr_String(meta));
                 break;
+                /* fall through */
+            case tlsServerCertificateNotVerified_GmStatusCode:
+                makeFooterButtons_DocumentWidget_(
+                    d,
+                    (iMenuItem[]){ { info_Icon " ${menu.pageinfo}",
+                                     SDLK_i,
+                                     KMOD_PRIMARY,
+                                     "document.info" } },
+                    1);
+                break;
             case failedToOpenFile_GmStatusCode:
             case certificateNotValid_GmStatusCode:
                 appendFormat_String(src, "\n\n%s", cstr_String(meta));
@@ -1143,10 +1153,6 @@ static void showErrorPage_DocumentWidget_(iDocumentWidget *d, enum iGmStatusCode
                 iString *key = collectNew_String();
                 toString_Sym(SDLK_s, KMOD_PRIMARY, key);
                 appendFormat_String(src, "\n```\n%s\n```\n", cstr_String(meta));
-//                appendFormat_String(src,
-//                                    cstr_Lang("error.unsupported.suggestsave"),
-//                                    cstr_String(key),
-//                                    saveToDownloads_Label);
                 makeFooterButtons_DocumentWidget_(
                     d,
                     (iMenuItem[]){ { translateCStr_Lang(download_Icon " " saveToDownloads_Label),
@@ -1565,7 +1571,8 @@ static void updateTrust_DocumentWidget_(iDocumentWidget *d, const iGmResponse *r
     }
     setFlags_Widget(as_Widget(lock), disabled_WidgetFlag, iFalse);
     const iBool isDarkMode = isDark_ColorTheme(colorTheme_App());
-    if (~d->certFlags & domainVerified_GmCertFlag) {
+    if (~d->certFlags & domainVerified_GmCertFlag ||
+        ~d->certFlags & trusted_GmCertFlag) {
         updateTextCStr_LabelWidget(lock, red_ColorEscape warning_Icon);
     }
     else if (d->certFlags & trusted_GmCertFlag) {
@@ -2592,8 +2599,11 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         setFocus_Widget(NULL);
         iArray *items = new_Array(sizeof(iMenuItem));
         if (canTrust) {
-            pushBack_Array(
-                items, &(iMenuItem){ uiTextCaution_ColorEscape "${dlg.cert.trust}", 0, 0, "server.trustcert" });
+            pushBack_Array(items,
+                           &(iMenuItem){ uiTextCaution_ColorEscape "${dlg.cert.trust}",
+                                         SDLK_u,
+                                         KMOD_PRIMARY | KMOD_SHIFT,
+                                         "server.trustcert" });
         }
         if (haveFingerprint) {
             pushBack_Array(items, &(iMenuItem){ "${dlg.cert.fingerprint}", 0, 0, "server.copycert" });
@@ -2627,11 +2637,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         if (!isEmpty_Block(d->certFingerprint) && !isEmpty_Range(&host)) {
             setTrusted_GmCerts(certs_App(), host, port, d->certFingerprint, &d->certExpiry);
             d->certFlags |= trusted_GmCertFlag;
-            postCommand_Widget(w, "document.info");
-            updateTrust_DocumentWidget_(d, NULL);
-            redoLayout_GmDocument(d->doc);
-            invalidate_DocumentWidget_(d);
-            refresh_Widget(d);
+            postCommand_Widget(w, "navigate.reload");
         }
         return iTrue;
     }

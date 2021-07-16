@@ -161,7 +161,7 @@ static void checkServerCertificate_GmRequest_(iGmRequest *d) {
     if (cert) {
         const iRangecc domain = range_String(hostName_Address(address_TlsRequest(d->req)));
         resp->certFlags |= available_GmCertFlag;
-        set_Block(&resp->certFingerprint, collect_Block(fingerprint_TlsCertificate(cert)));
+        set_Block(&resp->certFingerprint, collect_Block(publicKeyFingerprint_TlsCertificate(cert)));
         resp->certFlags |= haveFingerprint_GmCertFlag;
         if (!isExpired_TlsCertificate(cert)) {
             resp->certFlags |= timeVerified_GmCertFlag;
@@ -289,8 +289,14 @@ static void requestFinished_GmRequest_(iGmRequest *d, iTlsRequest *req) {
     d->state = (status_TlsRequest(req) == error_TlsRequestStatus ? failure_GmRequestState
                                                                  : finished_GmRequestState);
     if (d->state == failure_GmRequestState) {
-        d->resp->statusCode = tlsFailure_GmStatusCode;
-        set_String(&d->resp->meta, errorMessage_TlsRequest(req));
+        if (!isVerified_TlsRequest(req)) {
+            d->resp->statusCode = tlsServerCertificateNotVerified_GmStatusCode;
+            setCStr_String(&d->resp->meta, "Server certificate could not be verified");
+        }
+        else {
+            d->resp->statusCode = tlsFailure_GmStatusCode;
+            set_String(&d->resp->meta, errorMessage_TlsRequest(req));
+        }
     }
     checkServerCertificate_GmRequest_(d);
     unlock_Mutex(d->mtx);
