@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-06-01 07:18+0000\n"
+"PO-Revision-Date: 2021-07-19 19:06+0000\n"
 "Last-Translator: Страхиња Радић <contact@strahinja.org>\n"
 "Language-Team: Serbian <http://weblate.skyjake.fi/projects/lagrange/ui/sr/>\n"
 "Language: sr\n"
@@ -291,7 +291,7 @@ msgid "dlg.unsub"
 msgstr "Уклонити претплату"
 
 msgid "heading.pageinfo"
-msgstr "ИНФОРМАЦИЈЕ О СТРАНИЦИ"
+msgstr "ПОДАЦИ О СТРАНИЦИ"
 
 msgid "pageinfo.header.cached"
 msgstr "(кеширани садржај)"
@@ -560,7 +560,7 @@ msgid "heading.prefs.certs"
 msgstr "СЕРТИФИКАТИ"
 
 msgid "heading.prefs.fonts"
-msgstr "ФОНТОВИ"
+msgstr "Фонтови"
 
 # tab button
 msgid "heading.prefs.general"
@@ -578,7 +578,7 @@ msgid "heading.prefs.paragraph"
 msgstr "ПАСУС"
 
 msgid "heading.prefs.pagecontent"
-msgstr "САДРЖАЈ СТРАНИЦЕ"
+msgstr "БОЈЕ СТРАНИЦЕ"
 
 msgid "heading.prefs.sizing"
 msgstr "ВЕЛИЧИНА"
@@ -1682,3 +1682,55 @@ msgstr "Мени раздвојеног погледа:"
 
 msgid "menu.save.downloads.open"
 msgstr "Сачувај у фолдеру за преузимања и отвори"
+
+msgid "hint.prefs.userfont"
+msgstr "путања TrueType фонта"
+
+msgid "menu.pageinfo"
+msgstr "Прикажи податке о страници"
+
+msgid "status.query.tight"
+msgstr "Упит"
+
+msgid "menu.openfile"
+msgstr "Отвори датотеку…"
+
+msgid "link.file.delete"
+msgstr "Обриши датотеку"
+
+msgid "heading.file.delete"
+msgstr "БРИСАЊЕ ДАТОТЕКЕ"
+
+msgid "dlg.file.delete.confirm"
+msgstr "Да ли сте сигурни да желите да обришете ову датотеку?"
+
+msgid "dlg.file.delete"
+msgstr "Обриши"
+
+msgid "heading.prefs.uitheme"
+msgstr "БОЈЕ ИНТЕРФЕЈСА"
+
+msgid "prefs.scrollspeed.keyboard"
+msgstr "Брзина тастатуре:"
+
+msgid "prefs.scrollspeed.mouse"
+msgstr "Брзина миша:"
+
+msgid "prefs.linespacing"
+msgstr "Проред:"
+
+msgid "prefs.memorysize"
+msgstr "Величина меморије:"
+
+msgid "error.certverify"
+msgstr "Сервер без поверења"
+
+msgid "error.certverify.msg"
+msgstr ""
+"Повезивање са сервером је прекинуто јер примљени TLS сертификат не одговара "
+"оном коме је указано поверење. Проверите да ли је сервер огласио промену "
+"сертификата. Уколико није, могуће је да се злонамерна трећа страна лажно "
+"представља као сервер коме покушавате да приступите.\n"
+"\n"
+"Сертификат се може означити као сертификат са поверењем у Подацима о "
+"страници."
