@@ -48,6 +48,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "scrollwidget.h"
 #include "touch.h"
 #include "translation.h"
+#include "uploadwidget.h"
 #include "util.h"
 #include "visbuf.h"
 #include "visited.h"
@@ -2426,6 +2427,24 @@ static iBool handleSwipe_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
     return iFalse;
 }
 
+static iBool cancelRequest_DocumentWidget_(iDocumentWidget *d, iBool postBack) {
+    if (d->request) {
+        iWidget *w = as_Widget(d);
+        postCommandf_Root(w->root,
+                          "document.request.cancelled doc:%p url:%s", d, cstr_String(d->mod.url));
+        iReleasePtr(&d->request);
+        if (d->state != ready_RequestState) {
+            d->state = ready_RequestState;
+            if (postBack) {
+                postCommand_Root(w->root, "navigate.back");
+            }
+        }
+        updateFetchProgress_DocumentWidget_(d);
+        return iTrue;
+    }
+    return iFalse;
+}
+
 static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) {
     iWidget *w = as_Widget(d);
     if (equal_Command(cmd, "document.openurls.changed")) {
@@ -2792,6 +2811,18 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         }
         return wasHandled;
     }
+    else if (equal_Command(cmd, "document.upload") && d == document_App()) {
+        if (equalCase_Rangecc(urlScheme_String(d->mod.url), "gemini") ||
+            equalCase_Rangecc(urlScheme_String(d->mod.url), "titan")) {
+            iUploadWidget *upload = new_UploadWidget();
+            setUrl_UploadWidget(upload, d->mod.url);
+            setResponseViewer_UploadWidget(upload, d);
+            addChild_Widget(get_Root()->widget, iClob(upload));
+            finalizeSheet_Mobile(as_Widget(upload));
+            postRefresh_App();
+        }
+        return iTrue;
+    }
     else if (equal_Command(cmd, "media.updated") || equal_Command(cmd, "media.finished")) {
         return handleMediaCommand_DocumentWidget_(d, cmd);
     }
@@ -2812,15 +2843,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iFalse;
     }
     else if (equal_Command(cmd, "document.stop") && document_App() == d) {
-        if (d->request) {
-            postCommandf_Root(w->root,
-                "document.request.cancelled doc:%p url:%s", d, cstr_String(d->mod.url));
-            iReleasePtr(&d->request);
-            if (d->state != ready_RequestState) {
-                d->state = ready_RequestState;
-                postCommand_Root(w->root, "navigate.back");
-            }
-            updateFetchProgress_DocumentWidget_(d);
+        if (cancelRequest_DocumentWidget_(d, iTrue /* navigate back */)) {
             return iTrue;
         }
     }
@@ -3613,6 +3636,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                             { "---", 0, 0, NULL },
                             { book_Icon " ${menu.page.import}", 0, 0, "bookmark.links confirm:1" },
                             { globe_Icon " ${menu.page.translate}", 0, 0, "document.translate" },
+                            { upload_Icon " ${menu.page.upload}", 0, 0, "document.upload" },
                             { "---", 0, 0, NULL },
                             { "${menu.page.copyurl}", 0, 0, "document.copylink" } },
                         15);
@@ -3642,6 +3666,11 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                 }
                 d->menu = makeMenu_Widget(w, data_Array(&items), size_Array(&items));
                 deinit_Array(&items);
+                setMenuItemDisabled_Widget(
+                    d->menu,
+                    "document.upload",
+                    !equalCase_Rangecc(urlScheme_String(d->mod.url), "gemini") &&
+                    !equalCase_Rangecc(urlScheme_String(d->mod.url), "titan"));
             }
             processContextMenuEvent_Widget(d->menu, ev, {});
         }
@@ -5002,6 +5031,22 @@ void setOpenedFromSidebar_DocumentWidget(iDocumentWidget *d, iBool fromSidebar) 
 
 iBool isRequestOngoing_DocumentWidget(const iDocumentWidget *d) {
     return d->request != NULL;
+}
+
+void takeRequest_DocumentWidget(iDocumentWidget *d, iGmRequest *finishedRequest) {
+    cancelRequest_DocumentWidget_(d, iFalse /* don't post anything */);
+    const iString *url = url_GmRequest(finishedRequest);
+    
+    add_History(d->mod.history, url);
+    setUrl_DocumentWidget_(d, url);
+    d->state = fetching_RequestState;
+    iAssert(d->request == NULL);
+    d->request = finishedRequest;
+    postCommand_Widget(d,
+                       "document.request.finished doc:%p reqid:%u request:%p",
+                       d,
+                       id_GmRequest(d->request),
+                       d->request);
 }
 
 void updateSize_DocumentWidget(iDocumentWidget *d) {

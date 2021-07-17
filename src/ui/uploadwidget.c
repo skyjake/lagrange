@@ -25,8 +25,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "inputwidget.h"
 #include "documentwidget.h"
 #include "color.h"
+#include "command.h"
 #include "gmrequest.h"
 #include "app.h"
+
+#include <the_Foundation/file.h>
+#include <the_Foundation/fileinfo.h>
 
 iDefineObjectConstruction(UploadWidget)
 
@@ -39,6 +43,11 @@ struct Impl_UploadWidget {
     iInputWidget *   mime;
     iInputWidget *   token;
     iInputWidget *   input;
+    iLabelWidget *   filePathLabel;
+    iLabelWidget *   fileSizeLabel;
+    iString          filePath;
+    size_t           fileSize;
+    iAtomicInt       isRequestUpdated;
 };
 
 void init_UploadWidget(iUploadWidget *d) {
@@ -49,6 +58,8 @@ void init_UploadWidget(iUploadWidget *d) {
     init_String(&d->url);
     d->viewer = NULL;
     d->request = NULL;
+    init_String(&d->filePath);
+    d->fileSize = 0;
     addChildFlags_Widget(w,
                          iClob(new_LabelWidget(uiHeading_ColorEscape "${heading.upload}", NULL)),
                          frameless_WidgetFlag);
@@ -64,10 +75,11 @@ void init_UploadWidget(iUploadWidget *d) {
         iWidget *page = new_Widget();
         setFlags_Widget(page, arrangeSize_WidgetFlag, iTrue);
         d->input = new_InputWidget(0);
+        setHint_InputWidget(d->input, "${hint.upload.text}");
         setEnterInsertsLF_InputWidget(d->input, iTrue);
         setFixedSize_Widget(as_Widget(d->input), init_I2(120 * gap_UI, -1));
         addChild_Widget(page, iClob(d->input));
-        appendTabPage_Widget(tabs, iClob(page), "${heading.upload.text}", '1', 0);
+        appendFramelessTabPage_Widget(tabs, iClob(page), "${heading.upload.text}", '1', 0);
     }
     /* File content. */ {
         appendTwoColumnTabPage_Widget(tabs, "${heading.upload.file}", '2', &headings, &values);        
@@ -75,9 +87,9 @@ void init_UploadWidget(iUploadWidget *d) {
 //        iWidget *hint = addChild_Widget(values, iClob(new_LabelWidget("${upload.file.drophint}", NULL)));
 //        pad->sizeRef = hint;
         addChild_Widget(headings, iClob(new_LabelWidget("${upload.file.name}", NULL)));
-        addChild_Widget(values, iClob(new_LabelWidget("filename.ext", NULL)));
+        d->filePathLabel = addChild_Widget(values, iClob(new_LabelWidget("${upload.file.drophere}", NULL)));
         addChild_Widget(headings, iClob(new_LabelWidget("${upload.file.size}", NULL)));        
-        addChild_Widget(values, iClob(new_LabelWidget("0 KB", NULL)));
+        d->fileSizeLabel = addChild_Widget(values, iClob(new_LabelWidget("\u2014", NULL)));
         d->mime = new_InputWidget(0);
         setFixedSize_Widget(as_Widget(d->mime), init_I2(50 * gap_UI, -1));
         addTwoColumnDialogInputField_Widget(headings, values, "${upload.mime}", "upload.mime", iClob(d->mime));
@@ -100,6 +112,10 @@ void init_UploadWidget(iUploadWidget *d) {
                                                       KMOD_PRIMARY,
                                                       "upload.accept" } },
                                      2);
+        setId_Widget(addChildPosFlags_Widget(buttons,
+                                             iClob(new_LabelWidget("0", NULL)),
+                                             front_WidgetAddPos, frameless_WidgetFlag),
+                     "upload.pending");
         addChild_Widget(w, iClob(buttons));
     }
     resizeToLargestPage_Widget(tabs);
@@ -107,17 +123,35 @@ void init_UploadWidget(iUploadWidget *d) {
 }
 
 void deinit_UploadWidget(iUploadWidget *d) {
+    deinit_String(&d->filePath);
     deinit_String(&d->url);
     iRelease(d->request);
 }
 
 void setUrl_UploadWidget(iUploadWidget *d, const iString *url) {
-    set_String(&d->url, url);
+    iUrl parts;
+    init_Url(&parts, url);
+    setCStr_String(&d->url, "titan");
+    appendRange_String(&d->url, (iRangecc){ parts.scheme.end, constEnd_String(url) });
     setText_LabelWidget(d->info, &d->url);
 }
 
 void setResponseViewer_UploadWidget(iUploadWidget *d, iDocumentWidget *doc) {
     d->viewer = doc;
+}
+
+static iWidget *acceptButton_UploadWidget_(iUploadWidget *d) {
+    return lastChild_Widget(findChild_Widget(as_Widget(d), "dialogbuttons"));
+}
+
+static void requestUpdated_UploadWidget_(iUploadWidget *d, iGmRequest *req) {
+    if (!exchange_Atomic(&d->isRequestUpdated, iTrue)) {
+        postCommand_Widget(d, "upload.request.updated reqid:%u", id_GmRequest(req));
+    }
+}
+
+static void requestFinished_UploadWidget_(iUploadWidget *d, iGmRequest *req) {
+    postCommand_Widget(d, "upload.request.finished reqid:%u", id_GmRequest(req));
 }
 
 static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
@@ -128,12 +162,80 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
         destroy_Widget(w);
         return iTrue;
     }
+    const char *cmd = command_UserEvent(ev);
     if (isCommand_Widget(w, ev, "upload.accept")) {
+        iWidget * tabs     = findChild_Widget(w, "upload.tabs");
+        const int tabIndex = tabPageIndex_Widget(tabs, currentTabPage_Widget(tabs));
         /* Make a GmRequest and send the data. */
+        iAssert(d->request == NULL);
+        iAssert(!isEmpty_String(&d->url));
+        d->request = new_GmRequest(certs_App());
+        setUrl_GmRequest(d->request, &d->url);
+        if (tabIndex == 0) {
+            /* Uploading text. */
+            setTitanData_GmRequest(d->request,
+                                   collectNewCStr_String("text/plain"),
+                                   utf8_String(text_InputWidget(d->input)),
+                                   text_InputWidget(d->token));
+        }
+        else {
+            /* Uploading a file. */
+            iFile *f = iClob(new_File(&d->filePath));
+            if (!open_File(f, readOnly_FileMode)) {
+                makeMessage_Widget("${heading.upload.error.file}",
+                                   "${upload.error.msg}",
+                                   (iMenuItem[]){ "${dlg.message.ok}", 0, 0, "message.ok" }, 1);
+                iReleasePtr(&d->request);
+                return iTrue;
+            }
+            setTitanData_GmRequest(d->request,
+                                   text_InputWidget(d->mime),
+                                   collect_Block(readAll_File(f)),
+                                   text_InputWidget(d->token));
+            close_File(f);
+        }
+        iConnect(GmRequest, d->request, updated,  d, requestUpdated_UploadWidget_);
+        iConnect(GmRequest, d->request, finished, d, requestFinished_UploadWidget_);
+        submit_GmRequest(d->request);
         /* The dialog will remain open until the request finishes, showing upload progress. */
+        setFocus_Widget(NULL);
+        setFlags_Widget(tabs, disabled_WidgetFlag, iTrue);
+        setFlags_Widget(as_Widget(d->token), disabled_WidgetFlag, iTrue);
+        setFlags_Widget(acceptButton_UploadWidget_(d), disabled_WidgetFlag, iTrue);
+        return iTrue;
+    }
+    else if (isCommand_Widget(w, ev, "upload.request.updated")) {
+        /* TODO: Upload progress update? */   
+    }
+    else if (isCommand_Widget(w, ev, "upload.request.finished") &&
+             id_GmRequest(d->request) == argU32Label_Command(cmd, "reqid")) {
+        if (d->viewer) {
+            takeRequest_DocumentWidget(d->viewer, d->request);
+            d->request = NULL; /* DocumentWidget has it now. */
+        }
+        setupSheetTransition_Mobile(w, iFalse);
+        destroy_Widget(w);
+        return iTrue;        
     }
     if (ev->type == SDL_DROPFILE) {
         /* Switch to File tab. */
+        iWidget *tabs = findChild_Widget(w, "upload.tabs");
+        showTabPage_Widget(tabs, tabPage_Widget(tabs, 1));
+        setCStr_String(&d->filePath, ev->drop.file);
+        iFileInfo *info = iClob(new_FileInfo(&d->filePath));
+        if (isDirectory_FileInfo(info)) {
+            makeMessage_Widget("${heading.upload.error.file}",
+                               "${upload.error.directory}",
+                               (iMenuItem[]){ "${dlg.message.ok}", 0, 0, "message.ok" }, 1);
+            clear_String(&d->filePath);
+            d->fileSize = 0;
+            return iTrue;
+        }
+        d->fileSize = size_FileInfo(info);
+        setText_LabelWidget(d->filePathLabel, &d->filePath);
+        setTextCStr_LabelWidget(d->fileSizeLabel, formatCStrs_Lang("num.bytes.n", d->fileSize));
+        setTextCStr_InputWidget(d->mime, mediaType_Path(&d->filePath));
+        return iTrue;
     }
     return processEvent_Widget(w, ev);
 }

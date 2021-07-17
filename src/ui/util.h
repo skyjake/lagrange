@@ -226,7 +226,8 @@ void        openMenu_Widget     (iWidget *, iInt2 windowCoord);
 void        openMenuFlags_Widget(iWidget *, iInt2 windowCoord, iBool postCommands);
 void        closeMenu_Widget    (iWidget *);
 
-iLabelWidget *  findMenuItem_Widget (iWidget *menu, const char *command);
+iLabelWidget *  findMenuItem_Widget         (iWidget *menu, const char *command);
+void            setMenuItemDisabled_Widget  (iWidget *menu, const char *command, iBool disable);
 
 int         checkContextMenu_Widget (iWidget *, const SDL_Event *ev); /* see macro below */
 
@@ -242,6 +243,7 @@ iLabelWidget *  makeMenuButton_LabelWidget  (const char *label, const iMenuItem 
 
 iWidget *       makeTabs_Widget         (iWidget *parent);
 void            appendTabPage_Widget    (iWidget *tabs, iWidget *page, const char *label, int key, int kmods);
+void            appendFramelessTabPage_Widget(iWidget *tabs, iWidget *page, const char *title, int shortcut, int kmods);
 iWidget *       appendTwoColumnTabPage_Widget(iWidget *tabs, const char *title, int shortcut, iWidget **headings,
                                               iWidget **values);
 void            prependTabPage_Widget   (iWidget *tabs, iWidget *page, const char *label, int key, int kmods);

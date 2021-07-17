@@ -1161,6 +1161,7 @@ void createUserInterface_Root(iRoot *d) {
                         { star_Icon " ${menu.page.subscribe}", subscribeToPage_KeyModifier, "feeds.subscribe" },
                         { book_Icon " ${menu.page.import}", 0, 0, "bookmark.links confirm:1" },
                         { globe_Icon " ${menu.page.translate}", 0, 0, "document.translate" },
+                        { upload_Icon " ${menu.page.upload}", 0, 0, "document.upload" },
                         { "---", 0, 0, NULL },
                         { "${menu.page.copyurl}", 0, 0, "document.copylink" },
                         { "${menu.page.copysource}", 'c', KMOD_PRIMARY, "copy" },

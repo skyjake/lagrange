@@ -26,6 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <the_Foundation/stream.h>
 
 iDeclareType(GmDocument)
+iDeclareType(GmRequest)
 iDeclareType(History)
 
 iDeclareWidgetClass(DocumentWidget)
@@ -57,5 +58,7 @@ void    setInitialScroll_DocumentWidget (iDocumentWidget *, float normScrollY); 
 void    setRedirectCount_DocumentWidget (iDocumentWidget *, int count);
 void    setSource_DocumentWidget        (iDocumentWidget *, const iString *sourceText);
 void    setOpenedFromSidebar_DocumentWidget(iDocumentWidget *, iBool fromSidebar);
+
+void    takeRequest_DocumentWidget      (iDocumentWidget *, iGmRequest *finishedRequest); /* ownership given */
 
 void    updateSize_DocumentWidget       (iDocumentWidget *);

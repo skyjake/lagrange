@@ -629,7 +629,7 @@ void submit_GmRequest(iGmRequest *d) {
     iGmResponse *resp = d->resp;
     clear_GmResponse(resp);
 #if !defined (NDEBUG)
-    printf("[GmRequest] URL: %s\n", cstr_String(&d->url));
+    printf("[GmRequest] URL: %s\n", cstr_String(&d->url)); fflush(stdout);
 #endif
     iUrl url;
     init_Url(&url, &d->url);
@@ -901,10 +901,11 @@ void submit_GmRequest(iGmRequest *d) {
     /* Titan requests can have an arbitrary payload. */
     if (isTitan_GmRequest_(d)) {
         iBlock content;
-        initCopy_Block(&content, utf8_String(&d->url));
+        init_Block(&content, 0);
         if (d->titan) {
             printf_Block(&content,
-                         ";mime=%s;size=%zu",
+                         "%s;mime=%s;size=%zu",
+                         cstr_String(&d->url),
                          cstr_String(&d->titan->mime),
                          size_Block(&d->titan->data));
             if (!isEmpty_String(&d->titan->token)) {
@@ -917,7 +918,8 @@ void submit_GmRequest(iGmRequest *d) {
         }
         else {
             /* Empty data. */
-            appendCStr_Block(&content, ";mime=application/octet-stream;size=0\r\n");
+            printf_Block(
+                &content, "%s;mime=application/octet-stream;size=0\r\n", cstr_String(&d->url));
         }
         setContent_TlsRequest(d->req, &content);
         deinit_Block(&content);

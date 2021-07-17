@@ -864,6 +864,13 @@ iLabelWidget *findMenuItem_Widget(iWidget *menu, const char *command) {
     return NULL;
 }
 
+void setMenuItemDisabled_Widget(iWidget *menu, const char *command, iBool disable) {
+    iLabelWidget *item = findMenuItem_Widget(menu, command);
+    if (item) {
+        setFlags_Widget(as_Widget(item), disabled_WidgetFlag, disable);
+    }
+}
+
 int checkContextMenu_Widget(iWidget *menu, const SDL_Event *ev) {
     if (menu && ev->type == SDL_MOUSEBUTTONDOWN && ev->button.button == SDL_BUTTON_RIGHT) {
         if (isVisible_Widget(menu)) {
@@ -1428,8 +1435,8 @@ iWidget *makeToggle_Widget(const char *id) {
     return toggle;
 }
 
-static void appendFramelessTabPage_(iWidget *tabs, iWidget *page, const char *title, int shortcut,
-                                    int kmods) {
+void appendFramelessTabPage_Widget(iWidget *tabs, iWidget *page, const char *title, int shortcut,
+                                   int kmods) {
     appendTabPage_Widget(tabs, page, title, shortcut, kmods);
     setFlags_Widget(
         (iWidget *) back_ObjectList(children_Widget(findChild_Widget(tabs, "tabs.buttons"))),
@@ -1461,7 +1468,7 @@ iWidget *appendTwoColumnTabPage_Widget(iWidget *tabs, const char *title, int sho
     *values = addChildFlags_Widget(
         columns, iClob(new_Widget()), arrangeVertical_WidgetFlag | arrangeSize_WidgetFlag);
     addChildFlags_Widget(page, iClob(new_Widget()), expand_WidgetFlag);
-    appendFramelessTabPage_(tabs, iClob(page), title, shortcut, shortcut ? KMOD_PRIMARY : 0);
+    appendFramelessTabPage_Widget(tabs, iClob(page), title, shortcut, shortcut ? KMOD_PRIMARY : 0);
     return page;
 }
 
@@ -1888,7 +1895,7 @@ iWidget *makePreferences_Widget(void) {
     /* Keybindings. */
     if (deviceType_App() == desktop_AppDeviceType) {
         iBindingsWidget *bind = new_BindingsWidget();
-        appendFramelessTabPage_(tabs, iClob(bind), "${heading.prefs.keys}", '7', KMOD_PRIMARY);
+        appendFramelessTabPage_Widget(tabs, iClob(bind), "${heading.prefs.keys}", '7', KMOD_PRIMARY);
     }
     addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
     updatePreferencesLayout_Widget(dlg);
