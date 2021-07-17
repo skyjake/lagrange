@@ -175,6 +175,16 @@ static void setScheme_GmLink_(iGmLink *d, enum iGmLinkScheme scheme) {
     d->flags |= scheme;
 }
 
+static iBool isAllowedLinkIcon_Char_(iChar icon) {
+    if (isFitzpatrickType_Char(icon)) {
+        return iFalse;
+    }
+    return isPictograph_Char(icon) || isEmoji_Char(icon) ||
+           /* TODO: Add range(s) of 0x2nnn symbols. */
+           icon == 0x2139 /* info */ || icon == 0x2191 /* up arrow */ ||
+           icon == 0x2022 /* bullet */ || icon == 0x2a2f /* close X */ || icon == 0x2b50;
+}
+
 static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *linkId) {
     /* Returns the human-readable label of the link. */
     static iRegExp *pattern_;
@@ -262,19 +272,14 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
             /* Check for a custom icon. */
             enum iGmLinkScheme scheme = scheme_GmLinkFlag(link->flags);
             if ((scheme == gemini_GmLinkScheme && ~link->flags & remote_GmLinkFlag) ||
-                scheme == file_GmLinkScheme) {
+                scheme == file_GmLinkScheme ||
+                scheme == mailto_GmLinkScheme) {
                 iChar icon = 0;
                 int len = 0;
                 if ((len = decodeBytes_MultibyteChar(desc.start, desc.end, &icon)) > 0) {
                     if (desc.start + len < desc.end &&
-                        (isPictograph_Char(icon) || isEmoji_Char(icon) ||
-                         /* TODO: Add range(s) of 0x2nnn symbols. */
-                         icon == 0x2139 /* info */ ||
-                         icon == 0x2191 /* up arrow */ ||
-                         icon == 0x2022 /* bullet */ ||
-                         icon == 0x2a2f /* close X */ ||
-                         icon == 0x2b50) &&
-                        !isFitzpatrickType_Char(icon)) {
+                        ((scheme != mailto_GmLinkScheme && isAllowedLinkIcon_Char_(icon)) ||
+                         (scheme == mailto_GmLinkScheme && icon == 0x1f4e7 /* envelope */))) {
                         link->flags |= iconFromLabel_GmLinkFlag;
                         link->labelIcon = (iRangecc){ desc.start, desc.start + len };
                         line.start += len;
@@ -1982,7 +1987,7 @@ enum iColorId linkColor_GmDocument(const iGmDocument *d, iGmLinkId linkId, enum 
             if (isUnsupported) {
                 return tmBadLink_ColorId;
             }
-            if (link->flags & iconFromLabel_GmLinkFlag) {
+            if (scheme != mailto_GmLinkScheme && link->flags & iconFromLabel_GmLinkFlag) {
                 return link->flags & visited_GmLinkFlag ? tmLinkCustomIconVisited_ColorId
                                                         : tmLinkIcon_ColorId;
             }
