@@ -200,6 +200,8 @@ set (SOURCES
     src/ui/touch.h
     src/ui/translation.c
     src/ui/translation.h
+    src/ui/uploadwidget.c
+    src/ui/uploadwidget.h
     src/ui/util.c
     src/ui/util.h
     src/ui/visbuf.c

@@ -242,6 +242,8 @@ iLabelWidget *  makeMenuButton_LabelWidget  (const char *label, const iMenuItem 
 
 iWidget *       makeTabs_Widget         (iWidget *parent);
 void            appendTabPage_Widget    (iWidget *tabs, iWidget *page, const char *label, int key, int kmods);
+iWidget *       appendTwoColumnTabPage_Widget(iWidget *tabs, const char *title, int shortcut, iWidget **headings,
+                                              iWidget **values);
 void            prependTabPage_Widget   (iWidget *tabs, iWidget *page, const char *label, int key, int kmods);
 iWidget *       removeTabPage_Widget    (iWidget *tabs, size_t index); /* returns the page */
 void            resizeToLargestPage_Widget  (iWidget *tabs);
@@ -258,7 +260,9 @@ size_t          tabCount_Widget         (const iWidget *tabs);
 /*-----------------------------------------------------------------------------------------------*/
 
 iWidget *   makeSheet_Widget            (const char *id);
+void        useSheetStyle_Widget        (iWidget *);
 iWidget *   makeDialogButtons_Widget    (const iMenuItem *actions, size_t numActions);
+iWidget *   makeTwoColumns_Widget       (iWidget **headings, iWidget **values);
 
 iInputWidget *addTwoColumnDialogInputField_Widget(iWidget *headings, iWidget *values,
                                                   const char *labelText, const char *inputId,

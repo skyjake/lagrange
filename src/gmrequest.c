@@ -909,7 +909,8 @@ void submit_GmRequest(iGmRequest *d) {
                          size_Block(&d->titan->data));
             if (!isEmpty_String(&d->titan->token)) {
                 appendCStr_Block(&content, ";token=");
-                append_Block(&content, utf8_String(&d->titan->token));
+                append_Block(&content,
+                             utf8_String(collect_String(urlEncode_String(&d->titan->token))));
             }
             appendCStr_Block(&content, "\r\n");
             append_Block(&content, &d->titan->data);

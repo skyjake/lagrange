@@ -41,6 +41,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "ui/labelwidget.h"
 #include "ui/root.h"
 #include "ui/sidebarwidget.h"
+#include "ui/uploadwidget.h"
 #include "ui/text.h"
 #include "ui/util.h"
 #include "ui/window.h"
@@ -2324,6 +2325,15 @@ iBool handleCommand_App(const char *cmd) {
         const iBool fromSidebar = argLabel_Command(cmd, "fromsidebar") != 0;
         iUrl parts;
         init_Url(&parts, url);
+        if (equalCase_Rangecc(parts.scheme, "titan")) {
+            iUploadWidget *upload = new_UploadWidget();
+            setUrl_UploadWidget(upload, url);
+            setResponseViewer_UploadWidget(upload, document_App());
+            addChild_Widget(get_Root()->widget, iClob(upload));
+            finalizeSheet_Mobile(as_Widget(upload));
+            postRefresh_App();
+            return iTrue;
+        }
         if (argLabel_Command(cmd, "default") || equalCase_Rangecc(parts.scheme, "mailto") ||
             ((noProxy || isEmpty_String(&d->prefs.httpProxy)) &&
              (equalCase_Rangecc(parts.scheme, "http") ||
