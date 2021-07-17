@@ -3857,7 +3857,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
                         }
                         refresh_Widget(w);
                     }
-                    else if (linkFlags & supportedProtocol_GmLinkFlag) {
+                    else if (linkFlags & supportedScheme_GmLinkFlag) {
                         int tabMode = openTabMode_Sym(modState_Keys());
                         if (isPinned_DocumentWidget_(d)) {
                             tabMode ^= otherRoot_OpenTabFlag;
@@ -4309,8 +4309,10 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
             iUrl parts;
             init_Url(&parts, url);
             fg                    = linkColor_GmDocument(doc, linkId, textHover_GmLinkPart);
+            const enum iGmLinkScheme scheme = scheme_GmLinkFlag(flags);
             const iBool showHost  = (flags & humanReadable_GmLinkFlag &&
-                                    (!isEmpty_Range(&parts.host) || flags & mailto_GmLinkFlag));
+                                    (!isEmpty_Range(&parts.host) ||
+                                     scheme == mailto_GmLinkScheme));
             const iBool showImage = (flags & imageFileExtension_GmLinkFlag) != 0;
             const iBool showAudio = (flags & audioFileExtension_GmLinkFlag) != 0;
             iString str;
@@ -4324,11 +4326,11 @@ static void drawRun_DrawContext_(void *context, const iGmRun *run) {
                     "%s%s%s%s%s",
                     showHost ? "" : "",
                     showHost
-                        ? (flags & mailto_GmLinkFlag    ? cstr_String(url)
-                           : ~flags & gemini_GmLinkFlag ? format_CStr("%s://%s",
-                                                                      cstr_Rangecc(parts.scheme),
-                                                                      cstr_Rangecc(parts.host))
-                                                        : cstr_Rangecc(parts.host))
+                        ? (scheme == mailto_GmLinkScheme   ? cstr_String(url)
+                           : scheme != gemini_GmLinkScheme ? format_CStr("%s://%s",
+                                                                         cstr_Rangecc(parts.scheme),
+                                                                         cstr_Rangecc(parts.host))
+                                                           : cstr_Rangecc(parts.host))
                         : "",
                     showHost && (showImage || showAudio) ? " \u2014" : "",
                     showImage || showAudio

@@ -65,27 +65,35 @@ iBool isDark_GmDocumentTheme(enum iGmDocumentTheme);
 
 typedef uint16_t iGmLinkId;
 
-enum iGmLinkFlag {
-    gemini_GmLinkFlag             = iBit(1),
-    gopher_GmLinkFlag             = iBit(2),
-    finger_GmLinkFlag             = iBit(3),
-    http_GmLinkFlag               = iBit(4),
-    file_GmLinkFlag               = iBit(5),
-    data_GmLinkFlag               = iBit(6),
-    about_GmLinkFlag              = iBit(7),
-    mailto_GmLinkFlag             = iBit(8),
-    supportedProtocol_GmLinkFlag  = 0xff,
-    remote_GmLinkFlag             = iBit(9),
-    humanReadable_GmLinkFlag      = iBit(10), /* link has a human-readable description */
-    imageFileExtension_GmLinkFlag = iBit(11),
-    audioFileExtension_GmLinkFlag = iBit(12),
-    content_GmLinkFlag            = iBit(13), /* content visible below */
-    visited_GmLinkFlag            = iBit(14), /* in the history */
-    permanent_GmLinkFlag          = iBit(15), /* content cannot be dismissed; media link */
-    query_GmLinkFlag              = iBit(16), /* Gopher query link */
-    iconFromLabel_GmLinkFlag      = iBit(17), /* use an Emoji/special character from label */
-    isOpen_GmLinkFlag             = iBit(18), /* currently open in a tab */
+enum iGmLinkScheme {
+    gemini_GmLinkScheme = 1,
+    titan_GmLinkScheme,
+    gopher_GmLinkScheme,
+    finger_GmLinkScheme,
+    http_GmLinkScheme,
+    file_GmLinkScheme,
+    data_GmLinkScheme,
+    about_GmLinkScheme,
+    mailto_GmLinkScheme,
 };
+
+enum iGmLinkFlag {
+    supportedScheme_GmLinkFlag    = 0x3f, /* mask of bits 1...6 */
+    remote_GmLinkFlag             = iBit(7),
+    humanReadable_GmLinkFlag      = iBit(8), /* link has a human-readable description */
+    imageFileExtension_GmLinkFlag = iBit(9),
+    audioFileExtension_GmLinkFlag = iBit(10),
+    content_GmLinkFlag            = iBit(11), /* content visible below */
+    visited_GmLinkFlag            = iBit(12), /* in the history */
+    permanent_GmLinkFlag          = iBit(13), /* content cannot be dismissed; media link */
+    query_GmLinkFlag              = iBit(14), /* Gopher query link */
+    iconFromLabel_GmLinkFlag      = iBit(15), /* use an Emoji/special character from label */
+    isOpen_GmLinkFlag             = iBit(16), /* currently open in a tab */
+};
+
+iLocalDef enum iGmLinkScheme scheme_GmLinkFlag(int flags) {
+    return flags & supportedScheme_GmLinkFlag;
+}
 
 struct Impl_GmHeading {
     iRangecc text;

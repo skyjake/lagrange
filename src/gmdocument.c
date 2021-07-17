@@ -170,6 +170,11 @@ static iInt2 measurePreformattedBlock_GmDocument_(const iGmDocument *d, const ch
     return measureRange_Text(font, *contents).bounds.size;
 }
 
+static void setScheme_GmLink_(iGmLink *d, enum iGmLinkScheme scheme) {
+    d->flags &= ~supportedScheme_GmLinkFlag;
+    d->flags |= scheme;
+}
+
 static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *linkId) {
     /* Returns the human-readable label of the link. */
     static iRegExp *pattern_;
@@ -189,32 +194,35 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
             if (!equalCase_Rangecc(parts.host, cstr_String(&d->localHost))) {
                 link->flags |= remote_GmLinkFlag;
             }
-            if (startsWithCase_Rangecc(parts.scheme, "gemini")) {
-                link->flags |= gemini_GmLinkFlag;
+            if (equalCase_Rangecc(parts.scheme, "gemini")) {
+                setScheme_GmLink_(link, gemini_GmLinkScheme);
+            }
+            else if (equalCase_Rangecc(parts.scheme, "titan")) {
+                setScheme_GmLink_(link, titan_GmLinkScheme);
             }
             else if (startsWithCase_Rangecc(parts.scheme, "http")) {
-                link->flags |= http_GmLinkFlag;
+                setScheme_GmLink_(link, http_GmLinkScheme);
             }
             else if (equalCase_Rangecc(parts.scheme, "gopher")) {
-                link->flags |= gopher_GmLinkFlag;
+                setScheme_GmLink_(link, gopher_GmLinkScheme);
                 if (startsWith_Rangecc(parts.path, "/7")) {
                     link->flags |= query_GmLinkFlag;
                 }
             }
             else if (equalCase_Rangecc(parts.scheme, "finger")) {
-                link->flags |= finger_GmLinkFlag;
+                setScheme_GmLink_(link, finger_GmLinkScheme);
             }
             else if (equalCase_Rangecc(parts.scheme, "file")) {
-                link->flags |= file_GmLinkFlag;
+                setScheme_GmLink_(link, file_GmLinkScheme);
             }
             else if (equalCase_Rangecc(parts.scheme, "data")) {
-                link->flags |= data_GmLinkFlag;
+                setScheme_GmLink_(link, data_GmLinkScheme);
             }
             else if (equalCase_Rangecc(parts.scheme, "about")) {
-                link->flags |= about_GmLinkFlag;
+                setScheme_GmLink_(link, about_GmLinkScheme);
             }
             else if (equalCase_Rangecc(parts.scheme, "mailto")) {
-                link->flags |= mailto_GmLinkFlag;
+                setScheme_GmLink_(link, mailto_GmLinkScheme);
             }
             /* Check the file name extension, if present. */
             if (!isEmpty_Range(&parts.path)) {
@@ -252,8 +260,9 @@ static iRangecc addLink_GmDocument_(iGmDocument *d, iRangecc line, iGmLinkId *li
             line = desc; /* Just show the description. */
             link->flags |= humanReadable_GmLinkFlag;
             /* Check for a custom icon. */
-            if ((link->flags & gemini_GmLinkFlag && ~link->flags & remote_GmLinkFlag) ||
-                link->flags & file_GmLinkFlag) {
+            enum iGmLinkScheme scheme = scheme_GmLinkFlag(link->flags);
+            if ((scheme == gemini_GmLinkScheme && ~link->flags & remote_GmLinkFlag) ||
+                scheme == file_GmLinkScheme) {
                 iChar icon = 0;
                 int len = 0;
                 if ((len = decodeBytes_MultibyteChar(desc.start, desc.end, &icon)) > 0) {
@@ -484,10 +493,11 @@ static void doLayout_GmDocument_(iGmDocument *d) {
     static const char *envelope        = "\U0001f4e7";
     static const char *bullet          = "\u2022";
     static const char *folder          = "\U0001f4c1";
-    static const char *globe           = "\U0001f310";
+    static const char *globe           = globe_Icon;
     static const char *quote           = "\u201c";
     static const char *magnifyingGlass = "\U0001f50d";
     static const char *pointingFinger  = "\U0001f449";
+    static const char *uploadArrow     = upload_Icon;
     clear_Array(&d->layout);
     clearLinks_GmDocument_(d);
     clear_Array(&d->headings);
@@ -739,10 +749,12 @@ static void doLayout_GmDocument_(iGmDocument *d) {
             icon.visBounds.size = init_I2(indent * gap_Text, lineHeight_Text(run.textParams.font));
             icon.bounds         = zero_Rect(); /* just visual */
             const iGmLink *link = constAt_PtrArray(&d->links, run.linkId - 1);
+            const enum iGmLinkScheme scheme = scheme_GmLinkFlag(link->flags);
             icon.text           = range_CStr(link->flags & query_GmLinkFlag    ? magnifyingGlass
-                                             : link->flags & file_GmLinkFlag   ? folder
-                                             : link->flags & finger_GmLinkFlag ? pointingFinger
-                                             : link->flags & mailto_GmLinkFlag ? envelope
+                                             : scheme == file_GmLinkScheme     ? folder
+                                             : scheme == titan_GmLinkScheme    ? uploadArrow
+                                             : scheme == finger_GmLinkScheme   ? pointingFinger
+                                             : scheme == mailto_GmLinkScheme   ? envelope
                                              : link->flags & remote_GmLinkFlag ? globe
                                                                                : arrow);
             /* Custom link icon is shown on local Gemini links only. */
@@ -1951,12 +1963,21 @@ iMediaId linkAudio_GmDocument(const iGmDocument *d, iGmLinkId linkId) {
     return findLinkAudio_Media(d->media, linkId);
 }
 
+iLocalDef iBool isWWW_GmLinkScheme(enum iGmLinkScheme d) {
+    return d == http_GmLinkScheme || d == mailto_GmLinkScheme;
+}
+
+iLocalDef iBool isOldSchool_GmLinkScheme(enum iGmLinkScheme d) {
+    return d == gopher_GmLinkScheme || d == finger_GmLinkScheme;
+}
+
 enum iColorId linkColor_GmDocument(const iGmDocument *d, iGmLinkId linkId, enum iGmLinkPart part) {
     const iGmLink *link = link_GmDocument_(d, linkId);
-    const int www_GmLinkFlag            = http_GmLinkFlag | mailto_GmLinkFlag;
-    const int gopherOrFinger_GmLinkFlag = gopher_GmLinkFlag | finger_GmLinkFlag;
+//    const int www_GmLinkFlag            = http_GmLinkFlag | mailto_GmLinkFlag;
+//    const int gopherOrFinger_GmLinkFlag = gopher_GmLinkFlag | finger_GmLinkFlag;
+    const enum iGmLinkScheme scheme = scheme_GmLinkFlag(link->flags);
     if (link) {
-        const iBool isUnsupported = (link->flags & supportedProtocol_GmLinkFlag) == 0;
+        const iBool isUnsupported = (link->flags & supportedScheme_GmLinkFlag) == 0;
         if (part == icon_GmLinkPart) {
             if (isUnsupported) {
                 return tmBadLink_ColorId;
@@ -1966,36 +1987,36 @@ enum iColorId linkColor_GmDocument(const iGmDocument *d, iGmLinkId linkId, enum 
                                                         : tmLinkIcon_ColorId;
             }
             if (link->flags & visited_GmLinkFlag) {
-                return link->flags & www_GmLinkFlag ? tmHypertextLinkIconVisited_ColorId
-                       : link->flags & gopherOrFinger_GmLinkFlag ? tmGopherLinkIconVisited_ColorId
-                                                                 : tmLinkIconVisited_ColorId;
+                return isWWW_GmLinkScheme(scheme)         ? tmHypertextLinkIconVisited_ColorId
+                       : isOldSchool_GmLinkScheme(scheme) ? tmGopherLinkIconVisited_ColorId
+                                                          : tmLinkIconVisited_ColorId;
             }
-            return link->flags & www_GmLinkFlag              ? tmHypertextLinkIcon_ColorId
-                   : link->flags & gopherOrFinger_GmLinkFlag ? tmGopherLinkIcon_ColorId
-                                                             : tmLinkIcon_ColorId;
+            return isWWW_GmLinkScheme(scheme)         ? tmHypertextLinkIcon_ColorId
+                   : isOldSchool_GmLinkScheme(scheme) ? tmGopherLinkIcon_ColorId
+                                                      : tmLinkIcon_ColorId;
         }
         if (part == text_GmLinkPart) {
-            return link->flags & www_GmLinkFlag              ? tmHypertextLinkText_ColorId
-                   : link->flags & gopherOrFinger_GmLinkFlag ? tmGopherLinkText_ColorId
-                                                             : tmLinkText_ColorId;
+            return isWWW_GmLinkScheme(scheme)         ? tmHypertextLinkText_ColorId
+                   : isOldSchool_GmLinkScheme(scheme) ? tmGopherLinkText_ColorId
+                                                      : tmLinkText_ColorId;
         }
         if (part == textHover_GmLinkPart) {
-            return link->flags & www_GmLinkFlag              ? tmHypertextLinkTextHover_ColorId
-                   : link->flags & gopherOrFinger_GmLinkFlag ? tmGopherLinkTextHover_ColorId
-                                                             : tmLinkTextHover_ColorId;
+            return isWWW_GmLinkScheme(scheme)         ? tmHypertextLinkTextHover_ColorId
+                   : isOldSchool_GmLinkScheme(scheme) ? tmGopherLinkTextHover_ColorId
+                                                      : tmLinkTextHover_ColorId;
         }
         if (part == domain_GmLinkPart) {
             if (isUnsupported) {
                 return tmBadLink_ColorId;
             }
-            return link->flags & www_GmLinkFlag              ? tmHypertextLinkDomain_ColorId
-                   : link->flags & gopherOrFinger_GmLinkFlag ? tmGopherLinkDomain_ColorId
-                                                             : tmLinkDomain_ColorId;
+            return isWWW_GmLinkScheme(scheme)         ? tmHypertextLinkDomain_ColorId
+                   : isOldSchool_GmLinkScheme(scheme) ? tmGopherLinkDomain_ColorId
+                                                      : tmLinkDomain_ColorId;
         }
         if (part == visited_GmLinkPart) {
-            return link->flags & www_GmLinkFlag              ? tmHypertextLinkLastVisitDate_ColorId
-                   : link->flags & gopherOrFinger_GmLinkFlag ? tmGopherLinkLastVisitDate_ColorId
-                                                             : tmLinkLastVisitDate_ColorId;
+            return isWWW_GmLinkScheme(scheme)         ? tmHypertextLinkLastVisitDate_ColorId
+                   : isOldSchool_GmLinkScheme(scheme) ? tmGopherLinkLastVisitDate_ColorId
+                                                      : tmLinkLastVisitDate_ColorId;
         }
     }
     return tmLinkText_ColorId;
