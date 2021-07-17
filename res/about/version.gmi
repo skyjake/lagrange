@@ -12,7 +12,8 @@
 * Added settings for keyboard and mouse scrolling speeds.
 * Added configuration file for defining UI color palette (see Help, section 3.5).
 * Added link context menu item for deleting local files (e.g., downloads).
-* Improved TOFU implementation: if the server certificate is not trusted, the connection is aborted at the TLS handshake stage. Previously only a warning was shown and the page contents were fetched regardless.
+* Improved TOFU implementation: if the server certificate is not trusted, the connection is aborted at the TLS handshake stage. Previously, only a warning was shown and the page contents were fetched regardless.
+* Improved handling of expired server certificates. An error page is shown and the connection is aborted at the TLS handshake stage. The user can give a temporary exception to load the page.
 * Inline images/audio will not get discarded during back/forward navigation. The Network > Memory Size setting determines the maximum memory usage for media. Setting the Memory Size to zero is equivalent to the previous behavior of discarding everything when the page changes.
 * Page contents are cached in presentation form for quicker restoring during back/forward navigation.
 * Debug information includes RAM use in addition to cache size. This includes document layout and media stored in memory (e.g., raw pixel data of images).
