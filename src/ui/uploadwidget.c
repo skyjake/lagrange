@@ -45,10 +45,20 @@ struct Impl_UploadWidget {
     iInputWidget *   input;
     iLabelWidget *   filePathLabel;
     iLabelWidget *   fileSizeLabel;
+    iLabelWidget *   counter;
     iString          filePath;
     size_t           fileSize;
     iAtomicInt       isRequestUpdated;
 };
+
+static void updateProgress_UploadWidget_(iGmRequest *request, size_t current, size_t total) {
+    iUploadWidget *d = userData_Object(request);
+    postCommand_Widget(d,
+                       "upload.request.updated reqid:%u arg:%zu total:%zu",
+                       id_GmRequest(request),
+                       current,
+                       total);
+}
 
 void init_UploadWidget(iUploadWidget *d) {
     iWidget *w = as_Widget(d);
@@ -113,9 +123,9 @@ void init_UploadWidget(iUploadWidget *d) {
                                                       "upload.accept" } },
                                      2);
         setId_Widget(addChildPosFlags_Widget(buttons,
-                                             iClob(new_LabelWidget("0", NULL)),
+                                             iClob(d->counter = new_LabelWidget("", NULL)),
                                              front_WidgetAddPos, frameless_WidgetFlag),
-                     "upload.pending");
+                     "upload.counter");
         addChild_Widget(w, iClob(buttons));
     }
     resizeToLargestPage_Widget(tabs);
@@ -144,11 +154,13 @@ static iWidget *acceptButton_UploadWidget_(iUploadWidget *d) {
     return lastChild_Widget(findChild_Widget(as_Widget(d), "dialogbuttons"));
 }
 
+#if 0
 static void requestUpdated_UploadWidget_(iUploadWidget *d, iGmRequest *req) {
     if (!exchange_Atomic(&d->isRequestUpdated, iTrue)) {
         postCommand_Widget(d, "upload.request.updated reqid:%u", id_GmRequest(req));
     }
 }
+#endif
 
 static void requestFinished_UploadWidget_(iUploadWidget *d, iGmRequest *req) {
     postCommand_Widget(d, "upload.request.finished reqid:%u", id_GmRequest(req));
@@ -170,6 +182,8 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
         iAssert(d->request == NULL);
         iAssert(!isEmpty_String(&d->url));
         d->request = new_GmRequest(certs_App());
+        setSendProgressFunc_GmRequest(d->request, updateProgress_UploadWidget_);
+        setUserData_Object(d->request, d);
         setUrl_GmRequest(d->request, &d->url);
         if (tabIndex == 0) {
             /* Uploading text. */
@@ -194,7 +208,7 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
                                    text_InputWidget(d->token));
             close_File(f);
         }
-        iConnect(GmRequest, d->request, updated,  d, requestUpdated_UploadWidget_);
+//        iConnect(GmRequest, d->request, updated,  d, requestUpdated_UploadWidget_);
         iConnect(GmRequest, d->request, finished, d, requestFinished_UploadWidget_);
         submit_GmRequest(d->request);
         /* The dialog will remain open until the request finishes, showing upload progress. */
@@ -204,8 +218,10 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
         setFlags_Widget(acceptButton_UploadWidget_(d), disabled_WidgetFlag, iTrue);
         return iTrue;
     }
-    else if (isCommand_Widget(w, ev, "upload.request.updated")) {
-        /* TODO: Upload progress update? */   
+    else if (isCommand_Widget(w, ev, "upload.request.updated") &&
+             id_GmRequest(d->request) == argU32Label_Command(cmd, "reqid")) {
+        setText_LabelWidget(d->counter,
+                            collectNewFormat_String("%u", argU32Label_Command(cmd, "arg")));
     }
     else if (isCommand_Widget(w, ev, "upload.request.finished") &&
              id_GmRequest(d->request) == argU32Label_Command(cmd, "reqid")) {

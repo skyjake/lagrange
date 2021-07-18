@@ -64,11 +64,14 @@ iDeclareNotifyFunc(GmRequest, Updated)
 iDeclareNotifyFunc(GmRequest, Finished)
 iDeclareAudienceGetter(GmRequest, updated)
 iDeclareAudienceGetter(GmRequest, finished)
+    
+typedef void (*iGmRequestProgressFunc)(iGmRequest *, size_t current, size_t total);
 
 void                enableFilters_GmRequest     (iGmRequest *, iBool enable);
 void                setUrl_GmRequest            (iGmRequest *, const iString *url);
 void                setTitanData_GmRequest      (iGmRequest *, const iString *mime,
                                                  const iBlock *payload, const iString *token);
+void                setSendProgressFunc_GmRequest(iGmRequest *, iGmRequestProgressFunc func);
 void                submit_GmRequest            (iGmRequest *);
 void                cancel_GmRequest            (iGmRequest *);
 

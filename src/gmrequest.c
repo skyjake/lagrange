@@ -170,6 +170,7 @@ struct Impl_GmRequest {
     iAtomicInt           allowUpdate;
     iAudience *          updated;
     iAudience *          finished;
+    iGmRequestProgressFunc sendProgress;
 };
 
 iDefineObjectConstructionArgs(GmRequest, (iGmCerts *certs), certs)
@@ -538,11 +539,13 @@ void init_GmRequest(iGmRequest *d, iGmCerts *certs) {
     d->req      = NULL;
     d->updated  = NULL;
     d->finished = NULL;
+    d->sendProgress = NULL;
     d->state    = initialized_GmRequestState;
 }
 
 void deinit_GmRequest(iGmRequest *d) {
     if (d->req) {
+        iDisconnectObject(TlsRequest, d->req, sent, d);
         iDisconnectObject(TlsRequest, d->req, readyRead, d);
         iDisconnectObject(TlsRequest, d->req, finished, d);
     }
@@ -593,6 +596,17 @@ void setTitanData_GmRequest(iGmRequest *d, const iString *mime, const iBlock *pa
     set_Block(&d->titan->data, payload);
     set_String(&d->titan->mime, mime);
     set_String(&d->titan->token, token);
+}
+
+void setSendProgressFunc_GmRequest(iGmRequest *d, iGmRequestProgressFunc func) {
+    d->sendProgress = func;
+}
+
+static void bytesSent_GmRequest_(iGmRequest *d, iTlsRequest *req, size_t sent, size_t toSend) {
+    iUnused(req);
+    if (d->sendProgress) {
+        d->sendProgress(d, sent, toSend);
+    }
 }
 
 static iBool isDirectory_(const iString *path) {
@@ -893,6 +907,7 @@ void submit_GmRequest(iGmRequest *d) {
         setCertificate_TlsRequest(d->req, identity->cert);
     }
     iConnect(TlsRequest, d->req, readyRead, d, readIncoming_GmRequest_);
+    iConnect(TlsRequest, d->req, sent, d, bytesSent_GmRequest_);
     iConnect(TlsRequest, d->req, finished, d, requestFinished_GmRequest_);
     if (port == 0) {
         port = GEMINI_DEFAULT_PORT; /* default Gemini port */
