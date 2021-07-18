@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-06-04 14:18+0000\n"
+"PO-Revision-Date: 2021-07-19 19:06+0000\n"
 "Last-Translator: Olga Smirnova <mistresssilvara@hotmail.com>\n"
 "Language-Team: Occidental <http://weblate.skyjake.fi/projects/lagrange/ui/ie/"
 ">\n"
@@ -97,7 +97,7 @@ msgid "dlg.bookmark.tags"
 msgstr "Tags:"
 
 msgid "heading.prefs.fonts"
-msgstr "FONDES"
+msgstr "Fondes"
 
 # tab button
 msgid "heading.prefs.general"
@@ -105,7 +105,7 @@ msgstr "General"
 
 # tab button
 msgid "heading.prefs.interface"
-msgstr "Interfacie"
+msgstr "IdU"
 
 # tab button
 msgid "heading.prefs.keys"
@@ -1078,7 +1078,7 @@ msgid "dlg.bookmark.save"
 msgstr "Gardar li marca-págines"
 
 msgid "heading.prefs.pagecontent"
-msgstr "CONTENETE DE PÁGINE"
+msgstr "COLORES DE PÁGINE"
 
 msgid "heading.prefs.sizing"
 msgstr "DIMENSION"
@@ -1658,3 +1658,45 @@ msgstr "Aperter in un nov carte láteralmen"
 
 msgid "prefs.pinsplit"
 msgstr "Fixation de fendet vise:"
+
+msgid "menu.pageinfo"
+msgstr "Monstrar li information de págine"
+
+msgid "link.file.delete"
+msgstr "Remover li file"
+
+msgid "heading.file.delete"
+msgstr "REMOVER LI FILE"
+
+msgid "dlg.file.delete.confirm"
+msgstr "Esque vu vole remover ti-ci file?"
+
+msgid "dlg.file.delete"
+msgstr "Remover"
+
+msgid "heading.prefs.uitheme"
+msgstr "COLORES DE IDU"
+
+msgid "prefs.scrollspeed.keyboard"
+msgstr "Rapiditá del tastatura:"
+
+msgid "prefs.scrollspeed.mouse"
+msgstr "Velocitá del mus:"
+
+msgid "hint.prefs.userfont"
+msgstr "rute de un fonde TrueType"
+
+msgid "prefs.linespacing"
+msgstr "Interspacie:"
+
+msgid "prefs.memorysize"
+msgstr "Grandore de memorie:"
+
+msgid "error.certverify"
+msgstr "Ínfidet servitore"
+
+msgid "status.query.tight"
+msgstr "Serchar"
+
+msgid "menu.openfile"
+msgstr "Aperter un file…"
