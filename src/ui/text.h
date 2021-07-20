@@ -212,6 +212,10 @@ struct Impl_WrapText {
     iBool  (*wrapFunc)(iWrapText *, iRangecc wrappedText, int origin, int advance, iBool isBaseRTL);
     void *   context;
     int      baseDir; /* set to +1 for LTR, -1 for RTL */
+    iInt2    hitPoint;
+    /* output */
+    const char *hitChar_out;
+    float       hitGlyphNormX_out; /* normalized X inside the glyph */
     /* internal */
     iRangecc wrapRange_;
 };

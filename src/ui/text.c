@@ -1376,12 +1376,15 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
     iAttributedText attrText;
     init_AttributedText(&attrText, args->text, args->maxLen, d, get_Color(args->color),
                         args->baseDir);
-    if (args->wrap) {
-        args->wrap->baseDir = attrText.isBaseRTL ? -1 : +1;
+    iWrapText *wrap = args->wrap;
+    if (wrap) {
+        wrap->baseDir = attrText.isBaseRTL ? -1 : +1;
         /* TODO: Duplicated args? */
-        iAssert(equalRange_Rangecc(args->wrap->text, args->text));
+        iAssert(equalRange_Rangecc(wrap->text, args->text));
         /* Initialize the wrap range. */
-        args->wrap->wrapRange_ = args->text;
+        wrap->wrapRange_ = args->text;
+        wrap->hitChar_out = NULL;
+        wrap->hitGlyphNormX_out = 0.0f;
     }
     const iChar *logicalText = constData_Array(&attrText.logical);
     const iChar *visualText  = constData_Array(&attrText.visual);
@@ -1423,8 +1426,9 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
     iRangei      wrapPosRange       = { 0, textLen };
     int          wrapResumePos      = textLen;  /* logical position where next line resumes */
     size_t       wrapResumeRunIndex = runCount; /* index of run where next line resumes */
-    const int    layoutBound        = (args->wrap ? args->wrap->maxWidth : 0);
+    const int    layoutBound        = (wrap ? wrap->maxWidth : 0);
     iBool        isFirst            = iTrue;
+    const iBool  checkHitPoint      = wrap && !isEqual_I2(wrap->hitPoint, zero_I2());
     while (!isEmpty_Range(&wrapRuns)) {
         if (isFirst) {
             isFirst = iFalse;
@@ -1434,7 +1438,9 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
         }
         float wrapAdvance = 0.0f;
         /* First we need to figure out how much text fits on the current line. */
-        if (args->wrap && args->wrap->maxWidth > 0) {
+        if (wrap && (wrap->maxWidth > 0 || checkHitPoint)) {
+            const iBool isHitPointOnThisLine = (checkHitPoint && wrap->hitPoint.y >= yCursor &&
+                                                wrap->hitPoint.y < yCursor + d->height);
             float breakAdvance = -1.0f;
             iAssert(wrapPosRange.end == textLen);
             /* Determine ends of wrapRuns and wrapVisRange. */
@@ -1463,6 +1469,11 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                     if (logPos < wrapPosRange.start || logPos >= wrapPosRange.end) {
                         continue;
                     }
+                    /* Check if the hit point is on the left side of this line. */
+                    if (isHitPointOnThisLine && !wrap->hitChar_out && wrap->hitPoint.x < orig.x) {
+                        wrap->hitChar_out = sourcePtr_AttributedText_(&attrText, logPos);
+                        wrap->hitGlyphNormX_out = 0.0f;
+                    }
                     const iGlyph *glyph      = glyphByIndex_Font_(run->font, glyphId);
                     const int     glyphFlags = hb_glyph_info_get_glyph_flags(info);
                     const float   xOffset    = run->font->xScale * buf->glyphPos[i].x_offset;
@@ -1489,8 +1500,16 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                             breakAdvance = wrapAdvance;
                         //}
                     }
+                    if (isHitPointOnThisLine) {
+                        if (wrap->hitPoint.x >= orig.x + wrapAdvance &&
+                            wrap->hitPoint.x < orig.x + wrapAdvance + xAdvance) {
+                            wrap->hitChar_out = sourcePtr_AttributedText_(&attrText, logPos);
+                            wrap->hitGlyphNormX_out = (wrap->hitPoint.x - wrapAdvance) / xAdvance;
+                        }
+                    }
                     /* Out of room? */
-                    if (wrapAdvance + xOffset + glyph->d[0].x + glyph->rect[0].size.x >
+                    if (wrap->maxWidth > 0 &&
+                        wrapAdvance + xOffset + glyph->d[0].x + glyph->rect[0].size.x >
                         args->wrap->maxWidth) {
                         if (safeBreakPos >= 0) {
                             wrapPosRange.end = safeBreakPos;
@@ -1509,8 +1528,10 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                             breakAdvance     = wrapAdvance;
                         }
                         wrapResumePos      = wrapPosRange.end;
-                        while (wrapResumePos < textLen && isSpace_Char(logicalText[wrapResumePos])) {
-                            wrapResumePos++; /* skip space */
+                        if (args->wrap->mode != anyCharacter_WrapTextMode) {
+                            while (wrapResumePos < textLen && isSpace_Char(logicalText[wrapResumePos])) {
+                                wrapResumePos++; /* skip space */
+                            }
                         }
                         wrapRuns.end       = runIndex + 1; /* still includes this run */
                         wrapResumeRunIndex = runIndex;     /* ...but continue from the same one */
@@ -1526,6 +1547,11 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                                                        buf->glyphInfo[i + 1].codepoint);
                     }
                 }
+            }
+            if (isHitPointOnThisLine && wrap->hitPoint.x >= orig.x + wrapAdvance) {
+                /* On the right side. */
+                wrap->hitChar_out = sourcePtr_AttributedText_(&attrText, iMax(0, wrapResumePos - 1));
+                wrap->hitGlyphNormX_out = 1.0f;
             }
         }
         else {
@@ -1589,7 +1615,8 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
 //            }
         }
         /* Make a callback for each wrapped line. */
-        if (!notify_WrapText_(args->wrap,
+        if (wrap && wrap->wrapFunc &&
+            !notify_WrapText_(args->wrap,
                               sourcePtr_AttributedText_(&attrText, wrapResumePos),
                               origin,
                               iRound(wrapAdvance),
