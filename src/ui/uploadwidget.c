@@ -86,6 +86,7 @@ void init_UploadWidget(iUploadWidget *d) {
         setFlags_Widget(page, arrangeSize_WidgetFlag, iTrue);
         d->input = new_InputWidget(0);
         setFont_InputWidget(d->input, monospace_FontId);
+        setLineLimits_InputWidget(d->input, 10, 20);
         setHint_InputWidget(d->input, "${hint.upload.text}");
         setEnterInsertsLF_InputWidget(d->input, iTrue);
         setFixedSize_Widget(as_Widget(d->input), init_I2(120 * gap_UI, -1));

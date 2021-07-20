@@ -869,6 +869,10 @@ static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir) {
             if (len <= 0) break;
             pushBack_Array(&d->logical, &u32);
             length++;
+            if (length == d->maxLen) {
+                /* TODO: Check the combining class; only count base characters here. */
+                break;
+            }
             /* Remember the byte offset to each character. We will need this to communicate
                back the wrapped UTF-8 ranges. */
             pushBack_Array(&d->logicalToSourceOffset, &(int){ ch - d->source.start });
@@ -905,7 +909,6 @@ static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir) {
         pushBack_Array(&d->logicalToVisual, &(int){ length });
         pushBack_Array(&d->visualToLogical, &(int){ length });
     }
-    size_t         avail       = d->maxLen;
     iAttributedRun run         = { .logical = { 0, length },
                                    .font    = d->font,
                                    .fgColor = d->fgColor };
@@ -977,11 +980,6 @@ static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir) {
         }
         if (isControl_Char_(ch)) {
             continue;
-        }
-        if (avail-- == 0) {
-            /* TODO: Check the combining class; only count base characters here. */
-            run.logical.end = pos;
-            break;
         }
         if (ch == 0x20) {
             if (run.font->family == emojiAndSymbols_TextFont) {
@@ -1434,6 +1432,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
             isFirst = iFalse;
         }
         else {
+            xCursor = 0;
             yCursor += d->height;
         }
         float wrapAdvance = 0.0f;
@@ -1723,6 +1722,12 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
         wrapRuns.end       = runCount;
         wrapPosRange.start = wrapResumePos;
         wrapPosRange.end   = textLen;
+    }
+    if (endsWith_Rangecc(args->text, "\n")) {
+        /* FIXME: This is a kludge, the wrap loop should handle this case, too. */
+        /* The last wrap is an empty newline wrap. */
+        xCursor = 0;
+        yCursor += d->height;
     }
     if (args->cursorAdvance_out) {
         *args->cursorAdvance_out = init_I2(xCursor, yCursor);
