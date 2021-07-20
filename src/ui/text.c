@@ -855,18 +855,6 @@ static void finishRun_AttributedText_(iAttributedText *d, iAttributedRun *run, i
     run->logical.start = endAt;
 }
 
-size_t length_Rangecc(const iRangecc d) {
-    size_t n = 0;
-    for (const char *i = d.start; i < d.end; ) {
-        iChar ch;
-        const int chLen = decodeBytes_MultibyteChar(i, d.end, &ch);
-        if (chLen <= 0) break;
-        i += chLen;
-        n++;
-    }
-    return n;
-}
-
 static enum iFontId fontId_Text_(const iFont *font) {
     return (enum iFontId) (font - text_.fonts);
 }
@@ -1436,7 +1424,14 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
     int          wrapResumePos      = textLen;  /* logical position where next line resumes */
     size_t       wrapResumeRunIndex = runCount; /* index of run where next line resumes */
     const int    layoutBound        = (args->wrap ? args->wrap->maxWidth : 0);
+    iBool        isFirst            = iTrue;
     while (!isEmpty_Range(&wrapRuns)) {
+        if (isFirst) {
+            isFirst = iFalse;
+        }
+        else {
+            yCursor += d->height;
+        }
         float wrapAdvance = 0.0f;
         /* First we need to figure out how much text fits on the current line. */
         if (args->wrap && args->wrap->maxWidth > 0) {
@@ -1701,7 +1696,6 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
         wrapRuns.end       = runCount;
         wrapPosRange.start = wrapResumePos;
         wrapPosRange.end   = textLen;
-        yCursor += d->height;
     }
     if (args->cursorAdvance_out) {
         *args->cursorAdvance_out = init_I2(xCursor, yCursor);
@@ -1962,8 +1956,9 @@ iTextMetrics measure_WrapText(iWrapText *d, int fontId) {
     return tm;
 }
 
-void draw_WrapText(iWrapText *d, int fontId, iInt2 pos, int color) {
-    run_Font_(font_Text_(fontId),
+iTextMetrics draw_WrapText(iWrapText *d, int fontId, iInt2 pos, int color) {
+    iTextMetrics tm;
+    tm.bounds = run_Font_(font_Text_(fontId),
               &(iRunArgs){ .mode  = draw_RunMode | runFlagsFromId_(fontId) |
                                     (color & permanent_ColorId ? permanentColorFlag_RunMode : 0) |
                                     (color & fillBackground_ColorId ? fillBackground_RunMode : 0),
@@ -1971,7 +1966,9 @@ void draw_WrapText(iWrapText *d, int fontId, iInt2 pos, int color) {
                            .pos   = pos,
                            .wrap  = d,
                            .color = color & mask_ColorId,
+                           .cursorAdvance_out = &tm.advance,
     });
+    return tm;
 }
 
 SDL_Texture *glyphCache_Text(void) {

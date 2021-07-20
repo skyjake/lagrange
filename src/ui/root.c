@@ -1076,7 +1076,7 @@ void createUserInterface_Root(iRoot *d) {
             setFlags_Widget(as_Widget(url), resizeHeightOfChildren_WidgetFlag, iTrue);
             setSelectAllOnFocus_InputWidget(url, iTrue);
             setId_Widget(as_Widget(url), "url");
-            setMaxLayoutLines_InputWidget(url, 1);
+            setLineLimits_InputWidget(url, 1, 1); /* just one line while not focused */
             setUrlContent_InputWidget(url, iTrue);
             setNotifyEdits_InputWidget(url, iTrue);
             setTextCStr_InputWidget(url, "gemini://");

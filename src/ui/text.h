@@ -217,7 +217,7 @@ struct Impl_WrapText {
 };
 
 iTextMetrics    measure_WrapText    (iWrapText *, int fontId);
-void            draw_WrapText       (iWrapText *, int fontId, iInt2 pos, int color);
+iTextMetrics    draw_WrapText       (iWrapText *, int fontId, iInt2 pos, int color);
 
 SDL_Texture *   glyphCache_Text     (void);
 
