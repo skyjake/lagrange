@@ -206,15 +206,17 @@ enum iWrapTextMode {
 
 struct Impl_WrapText {
     /* arguments */
-    iRangecc text;
-    int      maxWidth;
+    iRangecc    text;
+    int         maxWidth;
     enum iWrapTextMode mode;
-    iBool  (*wrapFunc)(iWrapText *, iRangecc wrappedText, int origin, int advance, iBool isBaseRTL);
-    void *   context;
-    int      baseDir; /* set to +1 for LTR, -1 for RTL */
-    iInt2    hitPoint;
+    iBool     (*wrapFunc)(iWrapText *, iRangecc wrappedText, int origin, int advance, iBool isBaseRTL);
+    void *      context;
+    int         baseDir; /* set to +1 for LTR, -1 for RTL */
+    iInt2       hitPoint; /* sets hitChar_out */
+    const char *hitChar; /* sets hitAdvance_out */
     /* output */
     const char *hitChar_out;
+    iInt2       hitAdvance_out;
     float       hitGlyphNormX_out; /* normalized X inside the glyph */
     /* internal */
     iRangecc wrapRange_;

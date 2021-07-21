@@ -1380,8 +1380,9 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
         /* TODO: Duplicated args? */
         iAssert(equalRange_Rangecc(wrap->text, args->text));
         /* Initialize the wrap range. */
-        wrap->wrapRange_ = args->text;
-        wrap->hitChar_out = NULL;
+        wrap->wrapRange_        = args->text;
+        wrap->hitAdvance_out    = zero_I2();
+        wrap->hitChar_out       = NULL;
         wrap->hitGlyphNormX_out = 0.0f;
     }
     const iChar *logicalText = constData_Array(&attrText.logical);
@@ -1427,6 +1428,7 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
     const int    layoutBound        = (wrap ? wrap->maxWidth : 0);
     iBool        isFirst            = iTrue;
     const iBool  checkHitPoint      = wrap && !isEqual_I2(wrap->hitPoint, zero_I2());
+    const iBool  checkHitChar       = wrap && wrap->hitChar;
     while (!isEmpty_Range(&wrapRuns)) {
         if (isFirst) {
             isFirst = iFalse;
@@ -1446,6 +1448,11 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
             for (size_t runIndex = wrapRuns.start; runIndex < wrapRuns.end; runIndex++) {
                 const iAttributedRun *run = at_Array(&attrText.runs, runIndex);
                 if (run->flags.isLineBreak) {
+                    if (checkHitChar) {
+                        if (wrap->hitChar == sourcePtr_AttributedText_(&attrText, run->logical.start)) {
+                            wrap->hitAdvance_out = init_I2(wrapAdvance, yCursor);
+                        }
+                    }
                     wrapPosRange.end   = run->logical.start;
                     wrapResumePos      = run->logical.end;
                     wrapRuns.end       = runIndex;
@@ -1467,6 +1474,11 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
                     const int              logPos  = info->cluster;
                     if (logPos < wrapPosRange.start || logPos >= wrapPosRange.end) {
                         continue;
+                    }
+                    if (checkHitChar) {
+                        if (wrap->hitChar == sourcePtr_AttributedText_(&attrText, logPos)) {
+                            wrap->hitAdvance_out = init_I2(wrapAdvance, yCursor);
+                        }
                     }
                     /* Check if the hit point is on the left side of this line. */
                     if (isHitPointOnThisLine && !wrap->hitChar_out && wrap->hitPoint.x < orig.x) {
@@ -1722,6 +1734,9 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
         wrapRuns.end       = runCount;
         wrapPosRange.start = wrapResumePos;
         wrapPosRange.end   = textLen;
+    }
+    if (checkHitChar && wrap->hitChar == args->text.end) {
+        wrap->hitAdvance_out = init_I2(xCursor, yCursor);
     }
     if (endsWith_Rangecc(args->text, "\n")) {
         /* FIXME: This is a kludge, the wrap loop should handle this case, too. */

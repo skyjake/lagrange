@@ -1090,8 +1090,13 @@ static iBool findXBreaks_LineMover_(iWrapText *wrap, iRangecc wrappedText,
 static iBool moveCursorByLine_InputWidget_(iInputWidget *d, int dir) {
     const iInputLine *line = cursorLine_InputWidget_(d);
     iRangecc text = range_String(&line->text);
-    iInt2 relCoord = measureRange_Text(d->font, (iRangecc){ text.start,
-                                                            text.start + d->cursor.x }).advance;
+    iWrapText wrapText = {
+        .text     = rangeSize_String(&line->text, d->cursor.x),
+        .maxWidth = width_Rect(contentBounds_InputWidget_(d)),
+        .mode     = (d->inFlags & isUrl_InputWidgetFlag ? anyCharacter_WrapTextMode
+                                                        : word_WrapTextMode),
+    };
+    iInt2 relCoord = measure_WrapText(&wrapText, d->font).advance;
     const int cursorWidth = measureN_Text(d->font, charPos_InputWidget_(d, d->cursor), 1).advance.x;
     int relLine = relCoord.y / lineHeight_Text(d->font);
     if ((dir < 0 && relLine > 0) || (dir > 0 && relLine < numWrapLines_InputLine_(line) - 1)) {
@@ -1111,13 +1116,8 @@ static iBool moveCursorByLine_InputWidget_(iInputWidget *d, int dir) {
     else {
         return iFalse;
     }
-    iWrapText wrapText = {
-        .text     = range_String(&cursorLine_InputWidget_(d)->text),
-        .maxWidth = width_Rect(contentBounds_InputWidget_(d)),
-        .mode     = (d->inFlags & isUrl_InputWidgetFlag ? anyCharacter_WrapTextMode
-                                                        : word_WrapTextMode),
-        .hitPoint = addY_I2(relCoord, 1), //arelCddX_I2(relCoord, cursorWidth),
-    };
+    wrapText.text     = range_String(&cursorLine_InputWidget_(d)->text);
+    wrapText.hitPoint = addY_I2(relCoord, 1); //arelCddX_I2(relCoord, cursorWidth),
     measure_WrapText(&wrapText, d->font);
     iAssert(wrapText.hitChar_out);
     d->cursor.x = wrapText.hitChar_out - wrapText.text.start;
@@ -1129,7 +1129,8 @@ static iBool moveCursorByLine_InputWidget_(iInputWidget *d, int dir) {
             d->cursor.x += n;
         }
     }*/
-    showCursor_InputWidget_(d);
+    //showCursor_InputWidget_(d);
+    setCursor_InputWidget(d, d->cursor);
     return iTrue;
     
 #if 0
@@ -1896,20 +1897,28 @@ static iBool draw_MarkPainter_(iWrapText *wrapText, iRangecc wrappedText, int or
         wrappedText.end   - cstr + mp->line->range.start
     };
     if (mark.end <= lineRange.start || mark.start >= lineRange.end) {
+        mp->pos.y += lineHeight_Text(mp->d->font);
         return iTrue; /* outside of mark */
     }
     iRect rect = { addX_I2(mp->pos, origin), init_I2(advance, lineHeight_Text(mp->d->font)) };
     if (mark.end < lineRange.end) {
         /* Calculate where the mark ends. */
-        const iRangecc markedPrefix = { cstr, cstr + mark.end - lineRange.start };
+        const iRangecc markedPrefix = { //cstr, cstr + mark.end - lineRange.start };
+            wrappedText.start,
+            wrappedText.start + mark.end - lineRange.start
+        };
         rect.size.x = measureRange_Text(mp->d->font, markedPrefix).advance.x;
     }
     if (mark.start > lineRange.start) {
         /* Calculate where the mark starts. */
-        const iRangecc unmarkedPrefix = { cstr, cstr + mark.start - lineRange.start };
+        const iRangecc unmarkedPrefix = { //cstr, cstr + mark.start - lineRange.start
+            wrappedText.start,
+            wrappedText.start + mark.start - lineRange.start
+        };
         adjustEdges_Rect(&rect, 0, 0, 0, measureRange_Text(mp->d->font, unmarkedPrefix).advance.x);
     }
     rect.size.x = iMax(gap_UI / 3, rect.size.x);
+    mp->pos.y += lineHeight_Text(mp->d->font);
     fillRect_Paint(mp->paint, rect, uiMarked_ColorId);
     return iTrue;
 }
@@ -2041,11 +2050,11 @@ static void draw_InputWidget_(const iInputWidget *d) {
         /* The bounds include visible characters, while advance includes whitespace as well.
            Normally only the advance is needed, but if the cursor is at a newline, the advance
            will have reset back to zero. */
-        wrapText.text = range_String(text);
-        wrapText.text.end = wrapText.text.start + d->cursor.x;
-        iAssert(wrapText.text.end <= constEnd_String(text));
+        wrapText.text    = range_String(text);
+        wrapText.hitChar = wrapText.text.start + d->cursor.x;
         //const int prefixSize = maxWidth_TextMetrics(
-        const iTextMetrics tm = measure_WrapText(&wrapText, d->font);
+        measure_WrapText(&wrapText, d->font);
+        const iInt2 advance = wrapText.hitAdvance_out;
         //        const iInt2 curPos   = addX_I2(addY_I2(contentBounds.pos, lineHeight_Text(d->font)
         //        * d->cursorLine),
         //                                       prefixSize +
@@ -2054,7 +2063,7 @@ static void draw_InputWidget_(const iInputWidget *d) {
         //printf("%d -> tm.advance: %d, %d\n", d->cursor.x, tm.advance.x, tm.advance.y);
         const iInt2 curPos = add_I2(addY_I2(topLeft_Rect(contentBounds), visLineOffsetY +
                                             visWrapsAbove * lineHeight_Text(d->font)),
-                                    addX_I2(tm.advance,
+                                    addX_I2(advance,
                                             (d->mode == insert_InputMode ? -curSize.x / 2 : 0)));
         const iRect curRect  = { curPos, curSize };
         fillRect_Paint(&p, curRect, uiInputCursor_ColorId);
