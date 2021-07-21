@@ -158,15 +158,22 @@ static iBool convertSource_Gopher_(iGopher *d) {
                     if (startsWith_Rangecc(path, "URL:")) {
                         format_String(buf,
                                       "=> %s %s\n",
-                                      cstr_Rangecc((iRangecc){ path.start + 4, path.end }),
+                                      cstr_String(withSpacesEncoded_String(collectNewRange_String
+                                                                           ((iRangecc){ path.start + 4, path.end }))),
                                       cstr_Rangecc(text));
                     }
                     appendData_Block(d->output, constBegin_String(buf), size_String(buf));
                     iEndCollect();
                     break;
                 }
-                default:
-                    break; /* Ignore unknown types. */
+                default: /* all unknown types */
+                    setPre_Gopher_(d, iFalse);
+                    appendData_Block(d->output, text.start, size_Range(&text));
+                    appendCStr_Block(d->output, "\n");
+                    setPre_Gopher_(d, iTrue);
+                    appendData_Block(d->output, path.start, port.end - path.start);
+                    appendCStr_Block(d->output, "\n");
+                    break;
             }
             delete_String(buf);
         }
