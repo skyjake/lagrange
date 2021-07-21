@@ -300,6 +300,39 @@ static int endX_InputWidget_(const iInputWidget *d, int y) {
     return line->range.end - (isLastLine_InputWidget_(d, line) ? 0 : 1) - line->range.start;
 }
 
+static iInt2 movedCursor_InputWidget_(const iInputWidget *d, iInt2 pos, int xDir, int yDir) {
+    iChar ch;
+    if (xDir < 0) {
+        if (pos.x == 0) {
+            if (pos.y > 0) {
+                pos.x = endX_InputWidget_(d, --pos.y);
+            }
+        }
+        else {
+            iAssert(pos.x > 0);
+            int n = decodePrecedingBytes_MultibyteChar(charPos_InputWidget_(d, pos),
+                                                       cstr_String(lineString_InputWidget_(d, pos.y)),
+                                                       &ch);
+            pos.x -= n;
+        }
+    }
+    else if (xDir > 0) {
+        if (pos.x == endX_InputWidget_(d, pos.y)) {
+            if (pos.y < size_Array(&d->lines) - 1) {
+                pos.y++;
+                pos.x = 0;
+            }
+        }
+        else {
+            int n = decodeBytes_MultibyteChar(charPos_InputWidget_(d, pos),
+                                              constEnd_String(lineString_InputWidget_(d, pos.y)),
+                                              &ch);
+            pos.x += n;
+        }
+    }
+    return pos;
+}
+
 static iRangecc rangeSize_String(const iString *d, size_t size) {
     return (iRangecc){
         constBegin_String(d),
@@ -436,8 +469,9 @@ static size_t length_InputWidget_(const iInputWidget *d) {
     return len;
 }
 
+static const char *sensitive_ = "\u25cf"; /* black circle */
+
 static iString *visText_InputWidget_(const iInputWidget *d) {
-    static const iChar sensitiveChar_ = 0x25cf; /* black circle */
     iString *text;
     if (~d->inFlags & isSensitive_InputWidgetFlag) {
         text = text_InputWidget_(d);
@@ -446,7 +480,7 @@ static iString *visText_InputWidget_(const iInputWidget *d) {
         text = new_String();
         iAssert(d->length == length_InputWidget_(d));
         for (size_t i = 0; i < d->length; i++) {
-            appendChar_String(text, sensitiveChar_);
+            appendCStr_String(text, sensitive_);
         }
     }
     return text;
@@ -989,8 +1023,12 @@ static void insertRange_InputWidget_(iInputWidget *d, iRangecc range) {
         iInputLine *line = cursorLine_InputWidget_(d);
         if (d->mode == insert_InputMode) {
             insertData_Block(&line->text.chars, d->cursor.x, range.start, size_Range(&range));
-            d->cursor.x += size_Range(&range);
         }
+        else {
+            iAssert(!newline);
+            setSubData_Block(&line->text.chars, d->cursor.x, range.start, size_Range(&range));
+        }
+        d->cursor.x += size_Range(&range);
         if (!newline) {
             break;
         }
@@ -1004,6 +1042,16 @@ static void insertRange_InputWidget_(iInputWidget *d, iRangecc range) {
         appendCStr_String(&line->text, "\n");
         insert_Array(&d->lines, ++d->cursor.y, &split);
         d->cursor.x = 0;
+    }
+    if (d->maxLen > 0) {
+        iAssert(size_Array(&d->lines) == 1);
+        iAssert(d->cursor.y == 0);
+        iInputLine *line = front_Array(&d->lines);
+        size_t len = length_String(&line->text);
+        if (len > d->maxLen) {
+            removeEnd_String(&line->text, len - d->maxLen);
+            d->cursor.x = endX_InputWidget_(d, 0);
+        }
     }
     textOfLinesWasChanged_InputWidget_(d, (iRangei){ firstModified, d->cursor.y + 1 });
 #if 0
@@ -1277,39 +1325,6 @@ static iChar at_InputWidget_(const iInputWidget *d, iInt2 pos) {
 
 static iBool isWordChar_InputWidget_(const iInputWidget *d, iInt2 pos) {
     return isAlphaNumeric_Char(at_InputWidget_(d, pos));
-}
-
-static iInt2 movedCursor_InputWidget_(const iInputWidget *d, iInt2 pos, int xDir, int yDir) {
-    iChar ch;
-    if (xDir < 0) {
-        if (pos.x == 0) {
-            if (pos.y > 0) {
-                pos.x = endX_InputWidget_(d, --pos.y);
-            }
-        }
-        else {
-            iAssert(pos.x > 0);
-            int n = decodePrecedingBytes_MultibyteChar(charPos_InputWidget_(d, pos),
-                                                       cstr_String(lineString_InputWidget_(d, pos.y)),
-                                                       &ch);
-            pos.x -= n;
-        }
-    }
-    else if (xDir > 0) {
-        if (pos.x == endX_InputWidget_(d, pos.y)) {
-            if (pos.y < size_Array(&d->lines) - 1) {
-                pos.y++;
-                pos.x = 0;
-            }
-        }
-        else {
-            int n = decodeBytes_MultibyteChar(charPos_InputWidget_(d, pos),
-                                              constEnd_String(lineString_InputWidget_(d, pos.y)),
-                                              &ch);
-            pos.x += n;
-        }
-    }
-    return pos;
 }
 
 iLocalDef iBool movePos_InputWidget_(const iInputWidget *d, iInt2 *pos, int dir) {
@@ -2023,35 +2038,36 @@ static void draw_InputWidget_(const iInputWidget *d) {
     unsetClip_Paint(&p);
     /* Draw the insertion point. */
     if (isFocused && d->cursorVis) {
-        iString cur;
         iInt2 curSize;
+        iRangecc cursorChar = iNullRange;
         int visWrapsAbove = 0;
         for (int i = d->cursor.y - 1; i >= visLines.start; i--) {
             const iInputLine *line = constAt_Array(&d->lines, i);
             visWrapsAbove += numWrapLines_InputLine_(line);
         }
-#if 0
         if (d->mode == overwrite_InputMode) {
             /* Block cursor that overlaps a character. */
-            if (d->cursor < size_Array(&d->text)) {
-                if (~d->inFlags & isSensitive_InputWidgetFlag) {
-                    initUnicodeN_String(&cur, constAt_Array(&d->text, d->cursor), 1);
-                }
-                else {
-                    initUnicodeN_String(&cur, &sensitiveChar_, 1);
+            cursorChar.start = charPos_InputWidget_(d, d->cursor);
+            iChar ch = 0;
+            int n = decodeBytes_MultibyteChar(cursorChar.start,
+                                      constEnd_String(&constCursorLine_InputWidget_(d)->text),
+                                      &ch);
+            cursorChar.end = cursorChar.start + iMax(n, 0);
+            if (ch) {
+                if (d->inFlags & isSensitive_InputWidgetFlag) {
+                    cursorChar = range_CStr(sensitive_);
                 }
             }
             else {
-                initCStr_String(&cur, " ");
+                cursorChar = range_CStr(" ");
             }
-            curSize = addX_I2(measure_Text(d->font, cstr_String(&cur)).bounds.size,
+            curSize = addX_I2(measureRange_Text(d->font, ch ? cursorChar : range_CStr("_")).bounds.size,
                               iMin(2, gap_UI / 4));
         }
         else {
-#endif
             /* Bar cursor. */
             curSize = init_I2(gap_UI / 2, lineHeight_Text(d->font));
-//      }
+        }
         //const iInputLine *curLine = constCursorLine_InputWidget_(d);
         //const iString *   text    = &curLine->text;
         /* The bounds include visible characters, while advance includes whitespace as well.
@@ -2078,12 +2094,10 @@ static void draw_InputWidget_(const iInputWidget *d) {
         if (d->mode == overwrite_InputMode) {
             /* The `gap_UI` offsets below are a hack. They are used because for some reason the
                cursor rect and the glyph inside don't quite position like during `run_Text_()`. */
-            draw_Text(d->font,
-                      addX_I2(curPos, iMin(1, gap_UI / 8)),
-                      uiInputCursorText_ColorId,
-                      "%s",
-                      cstr_String(&cur));
-            deinit_String(&cur);
+            drawRange_Text(d->font,
+                           addX_I2(curPos, iMin(1, gap_UI / 8)),
+                           uiInputCursorText_ColorId,
+                           cursorChar);
         }
     }
     drawChildren_Widget(w);
