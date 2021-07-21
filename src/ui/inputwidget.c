@@ -1119,8 +1119,12 @@ static iBool moveCursorByLine_InputWidget_(iInputWidget *d, int dir) {
     wrapText.text     = range_String(&cursorLine_InputWidget_(d)->text);
     wrapText.hitPoint = addY_I2(relCoord, 1); //arelCddX_I2(relCoord, cursorWidth),
     measure_WrapText(&wrapText, d->font);
-    iAssert(wrapText.hitChar_out);
-    d->cursor.x = wrapText.hitChar_out - wrapText.text.start;
+    if (wrapText.hitChar_out) {
+        d->cursor.x = wrapText.hitChar_out - wrapText.text.start;
+    }
+    else {
+        d->cursor.x = endX_InputWidget_(d, d->cursor.y);
+    }
     /*
     if (wrapText.hitGlyphNormX_out > 0.5f && d->cursor.x < endX_InputWidget_(d, d->cursor.y)) {
         iChar ch;
@@ -1392,19 +1396,20 @@ static iInt2 coordCursor_InputWidget_(const iInputWidget *d, iInt2 coord) {
     const iRangei visLines = visibleLineRange_InputWidget_(d);
     for (size_t y = visLines.start; y < visLines.end; y++) {
         wrapText.text = range_String(lineString_InputWidget_(d, y));
-        measure_WrapText(&wrapText, d->font);
+        const iTextMetrics tm = measure_WrapText(&wrapText, d->font);
         if (wrapText.hitChar_out) {
             const char *pos = wrapText.hitChar_out;
             /* Cursor is between characters, so jump to next character if halfway there. */
             if (wrapText.hitGlyphNormX_out > 0.5f) {
                 iChar ch;
                 int n = decodeBytes_MultibyteChar(pos, wrapText.text.end, &ch);
-                if (n > 0) {
+                if (ch != '\n' && n > 0) {
                     pos += n;
                 }
             }
             return init_I2(iMin(pos - wrapText.text.start, endX_InputWidget_(d, y)), y);
         }
+        wrapText.hitPoint.y -= tm.advance.y;
     }
     return cursorMax_InputWidget_(d);
 }

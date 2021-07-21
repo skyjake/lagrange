@@ -1440,8 +1440,8 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
         float wrapAdvance = 0.0f;
         /* First we need to figure out how much text fits on the current line. */
         if (wrap && (wrap->maxWidth > 0 || checkHitPoint)) {
-            const iBool isHitPointOnThisLine = (checkHitPoint && wrap->hitPoint.y >= yCursor &&
-                                                wrap->hitPoint.y < yCursor + d->height);
+            const iBool isHitPointOnThisLine = (checkHitPoint && wrap->hitPoint.y >= orig.y + yCursor &&
+                                                wrap->hitPoint.y < orig.y + yCursor + d->height);
             float breakAdvance = -1.0f;
             iAssert(wrapPosRange.end == textLen);
             /* Determine ends of wrapRuns and wrapVisRange. */
