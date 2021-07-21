@@ -1744,7 +1744,6 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                 showCursor_InputWidget_(d);
                 refresh_Widget(w);
                 return iTrue;
-#if 0
             case SDLK_d:
                 if (mods != KMOD_CTRL) break;
             case SDLK_DELETE:
@@ -1755,14 +1754,18 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                 }
                 else if (mods & byWord_KeyModifier) {
                     pushUndo_InputWidget_(d);
-                    d->mark.start = d->cursor;
-                    d->mark.end   = skipWord_InputWidget_(d, d->cursor, +1);
+                    d->mark.start = cursorToIndex_InputWidget_(d, d->cursor);
+                    d->mark.end   = cursorToIndex_InputWidget_(d, skipWord_InputWidget_(d, d->cursor, +1));
                     deleteMarked_InputWidget_(d);
                     contentsWereChanged_InputWidget_(d);
                 }
-                else if (d->cursor < size_Array(&d->text)) {
+                else if (!isEqual_I2(d->cursor, curMax)) {//} < size_Array(&d->text)) {
                     pushUndo_InputWidget_(d);
-                    remove_Array(&d->text, d->cursor);
+                    //remove_Array(&d->text, d->cursor);
+                    deleteIndexRange_InputWidget_(d, (iRanges){
+                        cursorToIndex_InputWidget_(d, d->cursor),
+                        cursorToIndex_InputWidget_(d, movedCursor_InputWidget_(d, d->cursor, +1, 0))
+                    });
                     contentsWereChanged_InputWidget_(d);
                 }
                 showCursor_InputWidget_(d);
@@ -1777,7 +1780,12 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                     }
                     else {
                         pushUndo_InputWidget_(d);
-                        removeN_Array(&d->text, d->cursor, size_Array(&d->text) - d->cursor);
+                        iInputLine *line = cursorLine_InputWidget_(d);
+                        truncate_String(&line->text, d->cursor.x);
+                        if (!isLastLine_InputWidget_(d, line)) {
+                            appendCStr_String(&line->text, "\n"); /* must have a newline */
+                        }
+                        lineTextWasChanged_InputWidget_(d, line);
                         contentsWereChanged_InputWidget_(d);
                     }
                     showCursor_InputWidget_(d);
@@ -1785,7 +1793,6 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                     return iTrue;
                 }
                 break;
-#endif
             case SDLK_HOME:
             case SDLK_END:
                 if (mods == KMOD_PRIMARY || mods == (KMOD_PRIMARY | KMOD_SHIFT)) {
@@ -1954,8 +1961,8 @@ static void draw_InputWidget_(const iInputWidget *d) {
         .maxWidth = width_Rect(contentBounds),
         .mode     = (d->inFlags & isUrl_InputWidgetFlag ? anyCharacter_WrapTextMode : word_WrapTextMode)
     };
-    const iRangei visLines = visibleLineRange_InputWidget_(d);
-    const int visLineOffsetY = visLineOffsetY_InputWidget_(d);
+    const iRangei visLines       = visibleLineRange_InputWidget_(d);
+    const int     visLineOffsetY = visLineOffsetY_InputWidget_(d);
     /* If buffered, just draw the buffered copy. */
     if (d->buffered && !isFocused) {
         /* Most input widgets will use this, since only one is focused at a time. */
