@@ -1561,8 +1561,18 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
             }
             if (isHitPointOnThisLine && wrap->hitPoint.x >= orig.x + wrapAdvance) {
                 /* On the right side. */
-                wrap->hitChar_out = sourcePtr_AttributedText_(&attrText, iMax(0, wrapResumePos - 1));
-                wrap->hitGlyphNormX_out = 1.0f;
+                if (wrapResumePos == textLen) {
+                    wrap->hitChar_out = sourcePtr_AttributedText_(&attrText, wrapResumePos);
+                }
+                else {
+                    const char *hit = sourcePtr_AttributedText_(&attrText, iMax(0, wrapResumePos - 1));
+                    while (hit > args->text.start) {
+                        if (!isSpace_Char(hit[-1])) break;
+                        hit--;
+                    }
+                    wrap->hitChar_out = hit;
+                }
+                wrap->hitGlyphNormX_out = 0.0f;
             }
         }
         else {

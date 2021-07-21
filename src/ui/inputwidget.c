@@ -58,9 +58,9 @@ static void enableEditorKeysInMenus_(iBool enable) {
 iDeclareType(InputLine)
         
 struct Impl_InputLine {
-    iString text; /* UTF-8 */
-    iRanges range; /* byte offset inside the entire content; for marking */
-    iRangei wrapLines; /* range of visual wrapped lines */
+    iString text;
+    iRanges range;      /* byte offset inside the entire content; for marking */
+    iRangei wrapLines;  /* range of visual wrapped lines */
 };
 
 static void init_InputLine(iInputLine *d) {
@@ -323,17 +323,35 @@ static int visLineOffsetY_InputWidget_(const iInputWidget *d) {
     return (line->wrapLines.start - d->visWrapLines.start) * lineHeight_Text(d->font);
 }
 
+static iWrapText wrap_InputWidget_(const iInputWidget *d, int y) {
+    return (iWrapText){
+        .text     = range_String(&line_InputWidget_(d, y)->text),
+        .maxWidth = width_Rect(contentBounds_InputWidget_(d)),
+        .mode     = (d->inFlags & isUrl_InputWidgetFlag ? anyCharacter_WrapTextMode
+                                                        : word_WrapTextMode),
+    };
+}
+
+static iInt2 relativeCursorCoord_InputWidget_(const iInputWidget *d) {
+    /* Relative to the start of the line on which the cursor is. */
+    iWrapText wt = wrap_InputWidget_(d, d->cursor.y);
+    wt.hitChar = wt.text.start + d->cursor.x;
+    measure_WrapText(&wt, d->font);
+    return wt.hitAdvance_out;
+}
+
 static void updateVisible_InputWidget_(iInputWidget *d) {
     const int totalWraps = numWrapLines_InputWidget_(d);
     const int visWraps = iClamp(totalWraps, d->minWrapLines, d->maxWrapLines);
     /* Resize the height of the editor. */
     d->visWrapLines.end = d->visWrapLines.start + visWraps;
     /* Determine which wraps are currently visible. */
+    d->cursor.y = iMin(d->cursor.y, size_Array(&d->lines) - 1);
     const iInputLine *curLine = constAt_Array(&d->lines, d->cursor.y);
     const int cursorY = curLine->wrapLines.start +
-        measureRange_Text(d->font, rangeSize_String(&curLine->text, d->cursor.x))
-        .advance.y / lineHeight_Text(d->font);
-    
+        relativeCursorCoord_InputWidget_(d).y / lineHeight_Text(d->font);
+//        measureRange_Text(d->font, rangeSize_String(&curLine->text, d->cursor.x))
+//        .advance.y / lineHeight_Text(d->font);
     //int scrollY = d->visLineOffsetY / lineHeight_Text(d->font);
     /* Scroll to cursor. */
     int delta = 0;
@@ -528,12 +546,7 @@ static void updateMetrics_InputWidget_(iInputWidget *d) {
 
 static void updateLine_InputWidget_(iInputWidget *d, iInputLine *line) {
     iAssert(endsWith_String(&line->text, "\n") || isLastLine_InputWidget_(d, line));
-    iWrapText wrapText = {
-        .text     = range_String(&line->text),
-        .maxWidth = width_Rect(contentBounds_InputWidget_(d)),
-        .mode     = (d->inFlags & isUrl_InputWidgetFlag ? anyCharacter_WrapTextMode
-                                                        : word_WrapTextMode),
-    };
+    iWrapText wrapText = wrap_InputWidget_(d, indexOf_Array(&d->lines, line));
     if (wrapText.maxWidth <= 0) {
         line->wrapLines.end = line->wrapLines.start + 1;
         return;
@@ -1087,16 +1100,17 @@ static iBool findXBreaks_LineMover_(iWrapText *wrap, iRangecc wrappedText,
     
 }
 
-static iBool moveCursorByLine_InputWidget_(iInputWidget *d, int dir) {
+static iBool moveCursorByLine_InputWidget_(iInputWidget *d, int dir, int horiz) {
     const iInputLine *line = cursorLine_InputWidget_(d);
     iRangecc text = range_String(&line->text);
-    iWrapText wrapText = {
-        .text     = rangeSize_String(&line->text, d->cursor.x),
-        .maxWidth = width_Rect(contentBounds_InputWidget_(d)),
-        .mode     = (d->inFlags & isUrl_InputWidgetFlag ? anyCharacter_WrapTextMode
-                                                        : word_WrapTextMode),
-    };
-    iInt2 relCoord = measure_WrapText(&wrapText, d->font).advance;
+//    iWrapText wrapText = {
+//        .text     = rangeSize_String(&line->text, d->cursor.x),
+//        .maxWidth = width_Rect(contentBounds_InputWidget_(d)),
+//        .mode     = (d->inFlags & isUrl_InputWidgetFlag ? anyCharacter_WrapTextMode
+//                                                        : word_WrapTextMode),
+//    };
+    //iInt2 relCoord = measure_WrapText(&wrapText, d->font).advance;
+    iInt2 relCoord = relativeCursorCoord_InputWidget_(d);
     const int cursorWidth = measureN_Text(d->font, charPos_InputWidget_(d, d->cursor), 1).advance.x;
     int relLine = relCoord.y / lineHeight_Text(d->font);
     if ((dir < 0 && relLine > 0) || (dir > 0 && relLine < numWrapLines_InputLine_(line) - 1)) {
@@ -1113,14 +1127,17 @@ static iBool moveCursorByLine_InputWidget_(iInputWidget *d, int dir) {
         line = cursorLine_InputWidget_(d);
         relCoord.y = 0;
     }
+    else if (dir == 0 && horiz != 0) {
+        relCoord.x = (horiz < 0 ? 0 : width_Widget(d));
+    }
     else {
         return iFalse;
     }
-    wrapText.text     = range_String(&cursorLine_InputWidget_(d)->text);
-    wrapText.hitPoint = addY_I2(relCoord, 1); //arelCddX_I2(relCoord, cursorWidth),
-    measure_WrapText(&wrapText, d->font);
-    if (wrapText.hitChar_out) {
-        d->cursor.x = wrapText.hitChar_out - wrapText.text.start;
+    iWrapText wt = wrap_InputWidget_(d, d->cursor.y);
+    wt.hitPoint = addY_I2(relCoord, 1); /* never (0, 0) because that disables the hit test */
+    measure_WrapText(&wt, d->font);
+    if (wt.hitChar_out) {
+        d->cursor.x = wt.hitChar_out - wt.text.start;
     }
     else {
         d->cursor.x = endX_InputWidget_(d, d->cursor.y);
@@ -1134,32 +1151,8 @@ static iBool moveCursorByLine_InputWidget_(iInputWidget *d, int dir) {
         }
     }*/
     //showCursor_InputWidget_(d);
-    setCursor_InputWidget(d, d->cursor);
+    setCursor_InputWidget(d, d->cursor); /* mark, show */
     return iTrue;
-    
-#if 0
-    const iInputLine *line = line_InputWidget_(d, d->cursorLine);
-    int xPos1 = maxWidth_TextMetrics(measureN_Text(d->font,
-                             cstr_String(&line->text),
-                             d->cursor - line->offset));
-    int xPos2 = maxWidth_TextMetrics(measureN_Text(d->font,
-                              cstr_String(&line->text),
-                              iMin(d->cursor + 1 - line->offset, line->len)));
-    const int xPos = (xPos1 + xPos2) / 2;
-    size_t newCursor = iInvalidPos;
-    const size_t numLines = size_Array(&d->lines);
-    if (dir < 0 && d->cursorLine > 0) {
-        newCursor = indexForRelativeX_InputWidget_(d, xPos, --line);
-    }
-    else if (dir > 0 && d->cursorLine < numLines - 1) {
-        newCursor = indexForRelativeX_InputWidget_(d, xPos, ++line);
-    }
-    if (newCursor != iInvalidPos) {
-        setCursor_InputWidget(d, newCursor);
-        return iTrue;
-    }
-#endif
-    return iFalse;
 }
 
 void setSensitiveContent_InputWidget(iInputWidget *d, iBool isSensitive) {
@@ -1449,7 +1442,8 @@ static void paste_InputWidget_(iInputWidget *d) {
             }
         }
         SDL_free(text);
-        iConstForEach(String, i, paste) { insertChar_InputWidget_(d, i.value); }
+        //iConstForEach(String, i, paste) { insertChar_InputWidget_(d, i.value); }
+        insertRange_InputWidget_(d, range_String(paste));
         contentsWereChanged_InputWidget_(d);
     }
 }
@@ -1826,7 +1820,8 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
             case SDLK_RIGHT: {
                 const int dir = (key == SDLK_LEFT ? -1 : +1);
                 if (mods & byLine_KeyModifier) {
-                    setCursor_InputWidget(d, dir < 0 ? lineFirst : lineLast);
+                    //setCursor_InputWidget(d, dir < 0 ? lineFirst : lineLast);
+                    moveCursorByLine_InputWidget_(d, 0, dir);
                 }
                 else if (mods & byWord_KeyModifier) {
                     setCursor_InputWidget(d, skipWord_InputWidget_(d, d->cursor, dir));
@@ -1847,7 +1842,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                 return processEvent_Widget(as_Widget(d), ev);
             case SDLK_UP:
             case SDLK_DOWN:
-                if (moveCursorByLine_InputWidget_(d, key == SDLK_UP ? -1 : +1)) {
+                if (moveCursorByLine_InputWidget_(d, key == SDLK_UP ? -1 : +1, 0)) {
                     refresh_Widget(d);
                     return iTrue;
                 }
@@ -1856,7 +1851,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
             case SDLK_PAGEUP:
             case SDLK_PAGEDOWN:
                 for (int count = 0; count < 5; count++) {
-                    moveCursorByLine_InputWidget_(d, key == SDLK_PAGEUP ? -1 : +1);
+                    moveCursorByLine_InputWidget_(d, key == SDLK_PAGEUP ? -1 : +1, 0);
                 }
                 refresh_Widget(d);
                 return iTrue;
@@ -2050,16 +2045,17 @@ static void draw_InputWidget_(const iInputWidget *d) {
             /* Bar cursor. */
             curSize = init_I2(gap_UI / 2, lineHeight_Text(d->font));
 //      }
-        const iInputLine *curLine = constCursorLine_InputWidget_(d);
-        const iString *   text    = &curLine->text;
+        //const iInputLine *curLine = constCursorLine_InputWidget_(d);
+        //const iString *   text    = &curLine->text;
         /* The bounds include visible characters, while advance includes whitespace as well.
            Normally only the advance is needed, but if the cursor is at a newline, the advance
            will have reset back to zero. */
-        wrapText.text    = range_String(text);
-        wrapText.hitChar = wrapText.text.start + d->cursor.x;
+        //wrapText.text    = range_String(text);
+        //wrapText.hitChar = wrapText.text.start + d->cursor.x;
         //const int prefixSize = maxWidth_TextMetrics(
-        measure_WrapText(&wrapText, d->font);
-        const iInt2 advance = wrapText.hitAdvance_out;
+        //measure_WrapText(&wrapText, d->font);
+        //const iInt2 advance = wrapText.hitAdvance_out;
+        const iInt2 advance = relativeCursorCoord_InputWidget_(d);
         //        const iInt2 curPos   = addX_I2(addY_I2(contentBounds.pos, lineHeight_Text(d->font)
         //        * d->cursorLine),
         //                                       prefixSize +
