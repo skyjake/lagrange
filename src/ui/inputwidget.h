@@ -47,7 +47,6 @@ void    setMaxLen_InputWidget           (iInputWidget *, size_t maxLen);
 void    setText_InputWidget             (iInputWidget *, const iString *text);
 void    setTextCStr_InputWidget         (iInputWidget *, const char *cstr);
 void    setFont_InputWidget             (iInputWidget *, int fontId);
-//void    setCursor_InputWidget           (iInputWidget *, size_t pos);
 void    setContentPadding_InputWidget   (iInputWidget *, int left, int right); /* only affects the text entry */
 void    setLineLimits_InputWidget       (iInputWidget *, int minLines, int maxLines);
 void    setValidator_InputWidget        (iInputWidget *, iInputWidgetValidatorFunc validator, void *context);

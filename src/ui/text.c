@@ -2153,21 +2153,6 @@ static void initWrap_TextBuf_(iTextBuf *d, int font, int color, int maxWidth, iB
         .mode     = (doWrap ? word_WrapTextMode : anyCharacter_WrapTextMode),
     };
     d->size = measure_WrapText(&wrapText, font).bounds.size;
-#if 0
-    if (maxWidth == 0) {
-        d->size = measure_Text(font, text).bounds.size;
-    }
-    else {
-        d->size = zero_I2();
-        iRangecc content = range_CStr(text);
-        while (!isEmpty_Range(&content)) {
-            const iInt2 size = (doWrap ? tryAdvance_Text(font, content, maxWidth, &content.start)
-                                 : tryAdvanceNoWrap_Text(font, content, maxWidth, &content.start));
-            d->size.x = iMax(d->size.x, size.x);
-            d->size.y += iMax(size.y, lineHeight_Text(font));
-        }
-    }
-#endif
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
     if (d->size.x * d->size.y) {
         d->texture = SDL_CreateTexture(render,
@@ -2186,25 +2171,6 @@ static void initWrap_TextBuf_(iTextBuf *d, int font, int color, int maxWidth, iB
         SDL_SetRenderDrawColor(render, 255, 255, 255, 0);
         SDL_RenderClear(render);
         SDL_SetTextureBlendMode(text_.cache, SDL_BLENDMODE_NONE); /* blended when TextBuf is drawn */
-#if 0
-        iRangecc  range = range_CStr(text);
-        if (maxWidth == 0) {
-            draw_Text_(font, zero_I2(), fg, range);
-        }
-        else if (doWrap) {
-            drawWrapRange_Text(font, zero_I2(), maxWidth, fg, range);
-        }
-        else {
-            iInt2 pos = zero_I2();
-            while (!isEmpty_Range(&range)) {
-                const char *endp;
-                tryAdvanceNoWrap_Text(font, range, maxWidth, &endp);
-                draw_Text_(font, pos, fg, (iRangecc){ range.start, endp });
-                range.start = endp;
-                pos.y += lineHeight_Text(font);
-            }
-        }
-#endif
         draw_WrapText(&wrapText, font, zero_I2(), color | fillBackground_ColorId);
         SDL_SetTextureBlendMode(text_.cache, SDL_BLENDMODE_BLEND);
         SDL_SetRenderTarget(render, oldTarget);
