@@ -795,7 +795,7 @@ struct Impl_AttributedRun {
 
 iDeclareType(AttributedText)
 iDeclareTypeConstructionArgs(AttributedText, iRangecc text, size_t maxLen, iFont *font,
-                             iColor fgColor, int baseDir)
+                             iColor fgColor, int baseDir, iChar overrideChar)
 
 struct Impl_AttributedText {
     iRangecc source; /* original source text */
@@ -813,8 +813,9 @@ struct Impl_AttributedText {
 };
 
 iDefineTypeConstructionArgs(AttributedText,
-                            (iRangecc text, size_t maxLen, iFont *font, iColor fgColor, int baseDir),
-                            text, maxLen, font, fgColor, baseDir)
+                            (iRangecc text, size_t maxLen, iFont *font, iColor fgColor,
+                             int baseDir, iChar overrideChar),
+                            text, maxLen, font, fgColor, baseDir, overrideChar)
 
 static const char *sourcePtr_AttributedText_(const iAttributedText *d, int logicalPos) {
     const int *logToSource = constData_Array(&d->logicalToSourceOffset);
@@ -859,7 +860,7 @@ static enum iFontId fontId_Text_(const iFont *font) {
     return (enum iFontId) (font - text_.fonts);
 }
 
-static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir) {
+static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir, iChar overrideChar) {
     iAssert(isEmpty_Array(&d->runs));
     size_t length = 0;
     /* Prepare the UTF-32 logical string. */ {
@@ -867,6 +868,9 @@ static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir) {
             iChar u32;
             int len = decodeBytes_MultibyteChar(ch, d->source.end, &u32);
             if (len <= 0) break;
+            if (overrideChar) {
+                u32 = overrideChar;
+            }
             pushBack_Array(&d->logical, &u32);
             length++;
             if (length == d->maxLen) {
@@ -1025,7 +1029,7 @@ static void prepare_AttributedText_(iAttributedText *d, int overrideBaseDir) {
 }
 
 void init_AttributedText(iAttributedText *d, iRangecc text, size_t maxLen, iFont *font, iColor fgColor,
-                         int baseDir) {
+                         int baseDir, iChar overrideChar) {
     d->source  = text;
     d->maxLen  = maxLen ? maxLen : iInvalidSize;
     d->font    = font;
@@ -1038,7 +1042,7 @@ void init_AttributedText(iAttributedText *d, iRangecc text, size_t maxLen, iFont
     init_Array(&d->logicalToSourceOffset, sizeof(int));
     d->bidiLevels = NULL;
     d->isBaseRTL = iFalse;
-    prepare_AttributedText_(d, baseDir);
+    prepare_AttributedText_(d, baseDir, overrideChar);
 }
 
 void deinit_AttributedText(iAttributedText *d) {
@@ -1189,7 +1193,7 @@ static void cacheTextGlyphs_Font_(iFont *d, const iRangecc text) {
     iArray glyphIndices;
     init_Array(&glyphIndices, sizeof(uint32_t));
     iAttributedText attrText;
-    init_AttributedText(&attrText, text, 0, d, (iColor){}, 0);
+    init_AttributedText(&attrText, text, 0, d, (iColor){}, 0, 0);
     /* We use AttributedText here so the font lookup matches the behavior during text drawing --
        glyphs may be selected from a font that's different than `d`. */
     const iChar *logicalText = constData_Array(&attrText.logical);
@@ -1367,14 +1371,14 @@ static iRect run_Font_(iFont *d, const iRunArgs *args) {
     float        yCursor    = 0.0f;
     float        xCursorMax = 0.0f;
     const iBool  isMonospaced = d->isMonospaced;
+    iWrapText *wrap = args->wrap;
     iAssert(args->text.end >= args->text.start);
     /* Split the text into a number of attributed runs that specify exactly which
        font is used and other attributes such as color. (HarfBuzz shaping is done
        with one specific font.) */
     iAttributedText attrText;
     init_AttributedText(&attrText, args->text, args->maxLen, d, get_Color(args->color),
-                        args->baseDir);
-    iWrapText *wrap = args->wrap;
+                        args->baseDir, wrap ? wrap->overrideChar : 0);
     if (wrap) {
         wrap->baseDir = attrText.isBaseRTL ? -1 : +1;
         /* TODO: Duplicated args? */

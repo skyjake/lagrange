@@ -178,28 +178,17 @@ struct Impl_InputWidget {
     enum iInputMode mode;
     int             inFlags;
     size_t          maxLen; /* characters */
-//    size_t          maxLayoutLines;
-//    iArray          text;    /* iChar[] */
-//    iArray          oldText; /* iChar[] */
-    size_t          length; /* current length in characters */
     iArray          lines;    /* iInputLine[] */
-    //iArray          oldLines; /* iInputLine[], for restoring if edits cancelled */
     iString         oldText; /* for restoring if edits cancelled */
     int             lastUpdateWidth;
     iString         srcHint;
     iString         hint;
     int             leftPadding;
     int             rightPadding;
-//    size_t          cursor; /* offset from beginning */
-//    size_t          lastCursor;
-//    size_t          cursorLine;
     iInt2           cursor; /* cursor position: x = byte offset, y = line index */
     iInt2           prevCursor; /* previous cursor position */
-//    int             verticalMoveX;
     iRangei         visWrapLines; /* which wrap lines are current visible */
-//    int             visLineOffsetY; /* vertical offset of first visible line (pixels) */
     int             minWrapLines, maxWrapLines; /* min/max number of visible lines allowed */
-//    int             scrollY; /* wrap lines */
     iRanges         mark;
     iRanges         initialMark;
     iArray          undoStack;
@@ -356,12 +345,16 @@ static int visLineOffsetY_InputWidget_(const iInputWidget *d) {
     return (line->wrapLines.start - d->visWrapLines.start) * lineHeight_Text(d->font);
 }
 
+static const iChar sensitiveChar_ = 0x25cf; /* black circle */
+static const char *sensitive_     = "\u25cf"; /* black circle */
+
 static iWrapText wrap_InputWidget_(const iInputWidget *d, int y) {
     return (iWrapText){
         .text     = range_String(&line_InputWidget_(d, y)->text),
         .maxWidth = width_Rect(contentBounds_InputWidget_(d)),
         .mode     = (d->inFlags & isUrl_InputWidgetFlag ? anyCharacter_WrapTextMode
                                                         : word_WrapTextMode),
+        .overrideChar = (d->inFlags & isSensitive_InputWidgetFlag ? sensitiveChar_ : 0),
     };
 }
 
@@ -469,8 +462,7 @@ static size_t length_InputWidget_(const iInputWidget *d) {
     return len;
 }
 
-static const char *sensitive_ = "\u25cf"; /* black circle */
-
+#if 0
 static iString *visText_InputWidget_(const iInputWidget *d) {
     iString *text;
     if (~d->inFlags & isSensitive_InputWidgetFlag) {
@@ -478,15 +470,15 @@ static iString *visText_InputWidget_(const iInputWidget *d) {
     }
     else {
         text = new_String();
-        iAssert(d->length == length_InputWidget_(d));
-        for (size_t i = 0; i < d->length; i++) {
+//        iAssert(d->length == length_InputWidget_(d));
+        const size_t len = length_InputWidget_(d);
+        for (size_t i = 0; i < len; i++) {
             appendCStr_String(text, sensitive_);
         }
     }
     return text;
 }
 
-#if 0
 static void clearLines_InputWidget_(iInputWidget *d) {
     iForEach(Array, i, &d->lines) {
         deinit_InputLine(i.value);
@@ -1134,20 +1126,6 @@ static size_t indexForRelativeX_InputWidget_(const iInputWidget *d, int x, const
 }
 #endif
 
-iDeclareType(LineMover)
-
-struct Impl_LineMover {
-    iInputWidget *d;
-    int dir;
-    int x;
-};
-
-static iBool findXBreaks_LineMover_(iWrapText *wrap, iRangecc wrappedText,
-                                    int origin, int advance, iBool isBaseRTL) {
-    iUnused(isBaseRTL);
-    
-}
-
 static iBool moveCursorByLine_InputWidget_(iInputWidget *d, int dir, int horiz) {
     const iInputLine *line = cursorLine_InputWidget_(d);
     iRangecc text = range_String(&line->text);
@@ -1400,6 +1378,7 @@ static iInt2 coordCursor_InputWidget_(const iInputWidget *d, iInt2 coord) {
         .maxWidth = width_Rect(bounds),
         .mode = (d->inFlags & isUrl_InputWidgetFlag ? anyCharacter_WrapTextMode : word_WrapTextMode),
         .hitPoint = relCoord,
+        .overrideChar = (d->inFlags & isSensitive_InputWidgetFlag ? sensitiveChar_ : 0),
     };
     const iRangei visLines = visibleLineRange_InputWidget_(d);
     for (size_t y = visLines.start; y < visLines.end; y++) {
@@ -1710,14 +1689,15 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                 return iTrue;
             case SDLK_RETURN:
             case SDLK_KP_ENTER:
-                if (mods == KMOD_SHIFT || (d->maxLen == 0 &&
-                                           ~d->inFlags & isUrl_InputWidgetFlag &&
-                                           d->inFlags & enterKeyInsertsLineFeed_InputWidgetFlag)) {
-                    pushUndo_InputWidget_(d);
-                    deleteMarked_InputWidget_(d);
-                    insertChar_InputWidget_(d, '\n');
-                    contentsWereChanged_InputWidget_(d);
-                    return iTrue;
+                if (~d->inFlags & isSensitive_InputWidgetFlag && d->maxLen == 0) {
+                    if (mods == KMOD_SHIFT || (~d->inFlags & isUrl_InputWidgetFlag &&
+                                               d->inFlags & enterKeyInsertsLineFeed_InputWidgetFlag)) {
+                        pushUndo_InputWidget_(d);
+                        deleteMarked_InputWidget_(d);
+                        insertChar_InputWidget_(d, '\n');
+                        contentsWereChanged_InputWidget_(d);
+                        return iTrue;
+                    }
                 }
                 if (d->inFlags & enterKeyEnabled_InputWidgetFlag) {
                     d->inFlags |= enterPressed_InputWidgetFlag;
@@ -1973,8 +1953,10 @@ static void draw_InputWidget_(const iInputWidget *d) {
                              : isFocused /*&& !isEmpty_Array(&d->lines)*/ ? uiInputTextFocused_ColorId
                                                                       : uiInputText_ColorId;
     iWrapText wrapText = {
-        .maxWidth = width_Rect(contentBounds),
-        .mode     = (d->inFlags & isUrl_InputWidgetFlag ? anyCharacter_WrapTextMode : word_WrapTextMode)
+        .maxWidth     = width_Rect(contentBounds),
+        .mode         = (d->inFlags & isUrl_InputWidgetFlag ? anyCharacter_WrapTextMode
+                                                            : word_WrapTextMode),
+        .overrideChar = (d->inFlags & isSensitive_InputWidgetFlag ? sensitiveChar_ : 0),
     };
     const iRangei visLines       = visibleLineRange_InputWidget_(d);
     const int     visLineOffsetY = visLineOffsetY_InputWidget_(d);
@@ -1995,6 +1977,7 @@ static void draw_InputWidget_(const iInputWidget *d) {
             .contentBounds = contentBounds,
             .mark = mark_InputWidget_(d)
         };
+        iAssert(~d->inFlags & isSensitive_InputWidgetFlag || size_Range(&visLines) == 1);
         for (size_t vis = visLines.start; vis < visLines.end; vis++) {
             const iInputLine *line = constAt_Array(&d->lines, vis);
             wrapText.text     = range_String(&line->text);
@@ -2061,7 +2044,7 @@ static void draw_InputWidget_(const iInputWidget *d) {
             else {
                 cursorChar = range_CStr(" ");
             }
-            curSize = addX_I2(measureRange_Text(d->font, ch ? cursorChar : range_CStr("_")).bounds.size,
+            curSize = addX_I2(measureRange_Text(d->font, ch ? cursorChar : range_CStr("0")).bounds.size,
                               iMin(2, gap_UI / 4));
         }
         else {

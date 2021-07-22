@@ -211,6 +211,7 @@ struct Impl_WrapText {
     enum iWrapTextMode mode;
     iBool     (*wrapFunc)(iWrapText *, iRangecc wrappedText, int origin, int advance, iBool isBaseRTL);
     void *      context;
+    iChar       overrideChar; /* use this for all characters instead of the real ones */
     int         baseDir; /* set to +1 for LTR, -1 for RTL */
     iInt2       hitPoint; /* sets hitChar_out */
     const char *hitChar; /* sets hitAdvance_out */
