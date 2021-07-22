@@ -769,9 +769,12 @@ void setContentPadding_InputWidget(iInputWidget *d, int left, int right) {
     refresh_Widget(d);
 }
 
+iLocalDef iBool isEmpty_InputWidget_(const iInputWidget *d) {
+    return size_Array(&d->lines) == 1 && isEmpty_String(&line_InputWidget_(d, 0)->text);
+}
+
 static iBool isHintVisible_InputWidget_(const iInputWidget *d) {
-    return !isEmpty_String(&d->hint) && isEmpty_Array(&d->lines);/* size_Array(&d->lines) <= 1 &&
-           isEmpty_String(&line_InputWidget_(d, 0)->text);*/
+    return !isEmpty_String(&d->hint) && isEmpty_InputWidget_(d);
 }
 
 static void updateBuffered_InputWidget_(iInputWidget *d) {
