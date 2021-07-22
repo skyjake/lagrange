@@ -1225,30 +1225,25 @@ static void contentsWereChanged_InputWidget_(iInputWidget *d) {
 
 static void deleteIndexRange_InputWidget_(iInputWidget *d, iRanges deleted) {
     size_t firstModified = iInvalidPos;
-    for (size_t i = 0; i < size_Array(&d->lines); i++) {
+    for (int i = size_Array(&d->lines) - 1; i >= 0; i--) {
         iInputLine *line = at_Array(&d->lines, i);
-        if (line->range.end < deleted.start) {
-            continue;
-        }
-        if (line->range.start >= deleted.end) {
+        if (line->range.end <= deleted.start) {
             break;
         }
-        if (firstModified == iInvalidPos) {
-            firstModified = i;
-        }
-        if (line->range.start >= deleted.start && line->range.end <= deleted.end) {
-            /* Delete the entire line. */
-            deinit_InputLine(line);
-            remove_Array(&d->lines, i--);
+        if (line->range.start >= deleted.end) {
             continue;
+        }
+        firstModified = i;
+        if (line->range.start >= deleted.start && line->range.end <= deleted.end) {
+            clear_String(&line->text);
         }
         else if (deleted.start > line->range.start && deleted.end >= line->range.end) {
             truncate_Block(&line->text.chars, deleted.start - line->range.start);
         }
-        else if (deleted.start <= line->range.start && deleted.end < line->range.end) {
+        else if (deleted.start <= line->range.start && deleted.end <= line->range.end) {
             remove_Block(&line->text.chars, 0, deleted.end - line->range.start);
         }
-        else if (deleted.start > line->range.start && deleted.end < line->range.end) {
+        else if (deleted.start > line->range.start && deleted.end <= line->range.end) {
             remove_Block(&line->text.chars, deleted.start - line->range.start, size_Range(&deleted));
         }
         else {
@@ -1495,6 +1490,10 @@ static iBool contains_InputWidget_(const iInputWidget *d, iInt2 coord) {
 static void lineTextWasChanged_InputWidget_(iInputWidget *d, iInputLine *line) {
     const int y = indexOf_Array(&d->lines, line);
     textOfLinesWasChanged_InputWidget_(d, (iRangei){ y, y + 1 });
+}
+
+static iBool isArrowUpDownConsumed_InputWidget_(const iInputWidget *d) {
+    return d->maxWrapLines > 1;
 }
 
 static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
@@ -1852,6 +1851,9 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
             case SDLK_DOWN:
                 if (moveCursorByLine_InputWidget_(d, key == SDLK_UP ? -1 : +1, 0)) {
                     refresh_Widget(d);
+                    return iTrue;
+                }
+                if (isArrowUpDownConsumed_InputWidget_(d)) {
                     return iTrue;
                 }
                 /* For moving to lookup from url entry. */
