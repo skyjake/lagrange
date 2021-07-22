@@ -1887,10 +1887,14 @@ static void checkResponse_DocumentWidget_(iDocumentWidget *d) {
                     /* The line break and URL length counters are positioned differently on mobile.
                        There is no line breaks in sensitive input. */
                     if (deviceType_App() == desktop_AppDeviceType) {
-                        lineBreak = new_LabelWidget("${dlg.input.linebreak}"
-                                                    uiTextAction_ColorEscape
-                                                    "  " shiftReturn_Icon,
-                                                    NULL);
+                        iString *keyStr = collectNew_String();
+                        toString_Sym(SDLK_RETURN,
+                                     lineBreakKeyMod_ReturnKeyBehavior(prefs_App()->returnKey),
+                                     keyStr);
+                        lineBreak = new_LabelWidget(
+                            format_CStr("${dlg.input.linebreak}" uiTextAction_ColorEscape "  %s",
+                                        cstr_String(keyStr)),
+                            NULL);
                         insertChildAfter_Widget(buttons, iClob(lineBreak), 0);
                     }
                     else {

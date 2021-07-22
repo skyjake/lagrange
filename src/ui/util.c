@@ -169,6 +169,13 @@ int keyMods_Sym(int kmods) {
     return kmods;
 }
 
+int keyMod_ReturnKeyFlag(int flag) {
+    flag &= mask_ReturnKeyFlag;
+    const int kmods[4] = { 0, KMOD_SHIFT, KMOD_CTRL, KMOD_GUI };
+    if (flag < 0 || flag >= iElemCount(kmods)) return 0;
+    return kmods[flag];
+}
+
 int openTabMode_Sym(int kmods) {
     const int km = keyMods_Sym(kmods);
     return (km == KMOD_SHIFT ? otherRoot_OpenTabFlag : 0) | /* open to the side */
@@ -1307,12 +1314,14 @@ iWidget *makeValueInput_Widget(iWidget *parent, const iString *initialValue, con
     setId_Widget(as_Widget(input), "input");
     updateValueInputWidth_(dlg);
     addChild_Widget(dlg, iClob(makePadding_Widget(gap_UI)));
-    addChild_Widget(
-        dlg,
-        iClob(makeDialogButtons_Widget(
-            (iMenuItem[]){ { "${cancel}", SDLK_ESCAPE, 0, "valueinput.cancel" },
-                           { acceptLabel, 0, 0, "valueinput.accept" } },
-            2)));
+    addChild_Widget(dlg,
+                    iClob(makeDialogButtons_Widget(
+                        (iMenuItem[]){ { "${cancel}", SDLK_ESCAPE, 0, "valueinput.cancel" },
+                                       { acceptLabel,
+                                         SDLK_RETURN,
+                                         acceptKeyMod_ReturnKeyBehavior(prefs_App()->returnKey),
+                                         "valueinput.accept" } },
+                        2)));
     finalizeSheet_Mobile(dlg);
     if (parent) {
         setFocus_Widget(as_Widget(input));

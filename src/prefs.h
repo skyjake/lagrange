@@ -54,6 +54,7 @@ struct Impl_Prefs {
     iBool            hideToolbarOnScroll;
     int              pinSplit; /* 0: no pinning, 1: left doc, 2: right doc */
     /* Behavior */
+    int              returnKey;
     iString          downloadDir;
     iBool            hoverLink;
     iBool            smoothScrolling;

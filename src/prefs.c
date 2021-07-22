@@ -39,6 +39,7 @@ void init_Prefs(iPrefs *d) {
     d->sideIcon          = iTrue;
     d->hideToolbarOnScroll = iTrue;
     d->pinSplit          = 1;
+    d->returnKey         = default_ReturnKeyBehavior;
     d->hoverLink         = iFalse;
     d->smoothScrolling   = iTrue;
     d->smoothScrollSpeed[keyboard_ScrollType] = 10;

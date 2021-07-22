@@ -1693,8 +1693,9 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
             case SDLK_RETURN:
             case SDLK_KP_ENTER:
                 if (~d->inFlags & isSensitive_InputWidgetFlag && d->maxLen == 0) {
-                    if (mods == KMOD_SHIFT || (~d->inFlags & isUrl_InputWidgetFlag &&
-                                               d->inFlags & enterKeyInsertsLineFeed_InputWidgetFlag)) {
+                    if (mods == lineBreakKeyMod_ReturnKeyBehavior(prefs_App()->returnKey) ||
+                        (~d->inFlags & isUrl_InputWidgetFlag &&
+                         d->inFlags & enterKeyInsertsLineFeed_InputWidgetFlag)) {
                         pushUndo_InputWidget_(d);
                         deleteMarked_InputWidget_(d);
                         insertChar_InputWidget_(d, '\n');
@@ -1702,11 +1703,13 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                         return iTrue;
                     }
                 }
-                if (d->inFlags & enterKeyEnabled_InputWidgetFlag) {
+                if (d->inFlags & enterKeyEnabled_InputWidgetFlag &&
+                    mods == acceptKeyMod_ReturnKeyBehavior(prefs_App()->returnKey)) {
                     d->inFlags |= enterPressed_InputWidgetFlag;
                     setFocus_Widget(NULL);
+                    return iTrue;
                 }
-                return iTrue;
+                return iFalse;
             case SDLK_ESCAPE:
                 end_InputWidget(d, iFalse);
                 setFocus_Widget(NULL);
