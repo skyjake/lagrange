@@ -1607,6 +1607,22 @@ static void addPrefsInputWithHeading_(iWidget *headings, iWidget *values,
     addDialogInputWithHeading_(headings, values, format_CStr("${%s}", id), id, input);
 }
 
+static size_t findWidestItemLabel_(const iMenuItem *items, size_t num) {
+    int widest = 0;
+    size_t widestPos = iInvalidPos;
+    for (size_t i = 0; i < num; i++) {
+        const int width =
+            measure_Text(uiLabel_FontId,
+                         translateCStr_Lang(items[i].label))
+                .advance.x;
+        if (widestPos == iInvalidPos || width > widest) {
+            widest = width;
+            widestPos = i;
+        }
+    }
+    return widestPos;
+}
+
 iWidget *makePreferences_Widget(void) {
     iWidget *dlg = makeSheet_Widget("prefs");
     addChildFlags_Widget(dlg,
@@ -1661,20 +1677,8 @@ iWidget *makePreferences_Widget(void) {
                 { "${lang.zh.hant} - zh", 0, 0, "uilang id:zh_Hant" },
             };
             pushBackN_Array(uiLangs, langItems, iElemCount(langItems));
-            //sort_Array(uiLangs, cmp_MenuItem_);
             /* TODO: Add an arrange flag for resizing parent to widest child. */
-            int widest = 0;
-            size_t widestPos = iInvalidPos;
-            iConstForEach(Array, i, uiLangs) {
-                const int width =
-                    measure_Text(uiLabel_FontId,
-                                 translateCStr_Lang(((const iMenuItem *) i.value)->label))
-                        .advance.x;
-                if (widestPos == iInvalidPos || width > widest) {
-                    widest = width;
-                    widestPos = index_ArrayConstIterator(&i);
-                }
-            }
+            size_t widestPos = findWidestItemLabel_(data_Array(uiLangs), size_Array(uiLangs));
             addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.uilang}")));
             setId_Widget(addChildFlags_Widget(values,
                                               iClob(makeMenuButton_LabelWidget(
@@ -1691,6 +1695,46 @@ iWidget *makePreferences_Widget(void) {
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.customframe}")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.customframe")));
 #endif
+        addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.returnkey}")));
+        /* Return key behaviors. */ {
+            const iMenuItem returnKeyBehaviors[] = {
+                { "${prefs.returnkey.linebreak} "
+                  uiTextAction_ColorEscape shift_Icon return_Icon restore_ColorEscape
+                  "    ${prefs.returnkey.accept} "
+                  uiTextAction_ColorEscape return_Icon,
+                  0,
+                  0,
+                  format_CStr("returnkey.set arg:%d", default_ReturnKeyBehavior) },
+                { "${prefs.returnkey.linebreak} "
+                  uiTextAction_ColorEscape return_Icon restore_ColorEscape
+                  "    ${prefs.returnkey.accept} "
+                  uiTextAction_ColorEscape shift_Icon return_Icon,
+                  0,
+                  0,
+                  format_CStr("returnkey.set arg:%d", acceptWithShift_ReturnKeyBehavior) },
+                { "${prefs.returnkey.linebreak} "
+                   uiTextAction_ColorEscape return_Icon restore_ColorEscape
+                   "    ${prefs.returnkey.accept} " uiTextAction_ColorEscape
+#if defined (iPlatformApple)
+                    "\u2318" return_Icon,
+#else
+                     "Ctrl" return_Icon,
+#endif
+                    0,
+                    0,
+                    format_CStr("returnkey.set arg:%d", acceptWithPrimaryMod_ReturnKeyBehavior) },
+            };
+            iLabelWidget *returnKey = makeMenuButton_LabelWidget(
+                returnKeyBehaviors[findWidestItemLabel_(returnKeyBehaviors,
+                                                        iElemCount(returnKeyBehaviors))]
+                    .label,
+                returnKeyBehaviors,
+                iElemCount(returnKeyBehaviors));
+            setBackgroundColor_Widget(findChild_Widget(as_Widget(returnKey), "menu"),
+                                      uiBackgroundMenu_ColorId);
+            setId_Widget(addChildFlags_Widget(values, iClob(returnKey), alignLeft_WidgetFlag),
+                         "prefs.returnkey");
+        }
         addChild_Widget(headings, iClob(makeHeading_Widget("${prefs.animate}")));
         addChild_Widget(values, iClob(makeToggle_Widget("prefs.animate")));
         makeTwoColumnHeading_("${heading.prefs.scrolling}", headings, values);

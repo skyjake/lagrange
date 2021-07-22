@@ -219,6 +219,7 @@ static iString *serializePrefs_App_(const iApp *d) {
     appendFormat_String(str, "decodeurls arg:%d\n", d->prefs.decodeUserVisibleURLs);
     appendFormat_String(str, "linewidth.set arg:%d\n", d->prefs.lineWidth);
     appendFormat_String(str, "linespacing.set arg:%f\n", d->prefs.lineSpacing);
+    appendFormat_String(str, "returnkey.set arg:%d\n", d->prefs.returnKey);
     /* TODO: Set up an array of booleans in Prefs and do these in a loop. */
     appendFormat_String(str, "prefs.animate.changed arg:%d\n", d->prefs.uiAnimations);
     appendFormat_String(str, "prefs.mono.gemini.changed arg:%d\n", d->prefs.monospaceGemini);
@@ -1700,6 +1701,11 @@ static iBool handlePrefsCommands_(iWidget *d, const char *cmd) {
         setFlags_Widget(findChild_Widget(d, "prefs.quoteicon.1"), selected_WidgetFlag, arg == 1);
         return iFalse;
     }
+    else if (equal_Command(cmd, "returnkey.set")) {
+        updateDropdownSelection_(findChild_Widget(d, "prefs.returnkey"),
+                                 format_CStr("returnkey.set arg:%d", arg_Command(cmd)));
+        return iFalse;
+    }
     else if (equal_Command(cmd, "pinsplit.set")) {
         updatePrefsPinSplitButtons_(d, arg_Command(cmd));
         return iFalse;
@@ -2101,6 +2107,10 @@ iBool handleCommand_App(const char *cmd) {
         if (!d->prefs.hideToolbarOnScroll) {
             showToolbar_Root(get_Root(), iTrue);
         }
+        return iTrue;
+    }
+    else if (equal_Command(cmd, "returnkey.set")) {
+        d->prefs.returnKey = arg_Command(cmd);
         return iTrue;
     }
     else if (equal_Command(cmd, "pinsplit.set")) {
@@ -2536,6 +2546,8 @@ iBool handleCommand_App(const char *cmd) {
         updateScrollSpeedButtons_(dlg, mouse_ScrollType, d->prefs.smoothScrollSpeed[mouse_ScrollType]);
         updateScrollSpeedButtons_(dlg, keyboard_ScrollType, d->prefs.smoothScrollSpeed[keyboard_ScrollType]);
         updateDropdownSelection_(findChild_Widget(dlg, "prefs.uilang"), cstr_String(&d->prefs.uiLanguage));
+        updateDropdownSelection_(findChild_Widget(dlg, "prefs.returnkey"),
+                                 format_CStr("returnkey.set arg:%d", d->prefs.returnKey));
         setToggle_Widget(findChild_Widget(dlg, "prefs.retainwindow"), d->prefs.retainWindowSize);
         setText_InputWidget(findChild_Widget(dlg, "prefs.uiscale"),
                             collectNewFormat_String("%g", uiScale_Window(d->window)));

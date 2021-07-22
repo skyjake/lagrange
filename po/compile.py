@@ -25,7 +25,8 @@ ESCAPES = {
     '"': '"',
     'n': '\n',
     'r': '\r',
-    't': '\t'
+    't': '\t',
+    'v': '\v',
 }
 
 if '--new' in sys.argv:

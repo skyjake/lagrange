@@ -1193,6 +1193,15 @@ msgstr "UI scale factor:"
 msgid "prefs.customframe"
 msgstr "Custom window frame:"
 
+msgid "prefs.returnkey"
+msgstr "Return key behavior:"
+
+msgid "prefs.returnkey.linebreak"
+msgstr "Line break"
+
+msgid "prefs.returnkey.accept"
+msgstr "Accept"
+
 msgid "prefs.animate"
 msgstr "Animations:"
 
@@ -1440,6 +1449,9 @@ msgstr "Split view menu:"
 
 msgid "keys.hoverurl"
 msgstr "Toggle show URL on hover"
+
+msgid "keys.upload"
+msgstr "Upload Page with Titan"
 
 msgid "error.badstatus"
 msgstr "Unknown Status Code"
