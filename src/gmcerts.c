@@ -589,8 +589,15 @@ static iGmIdentity *add_GmCerts_(iGmCerts *d, iTlsCertificate *cert, int flags) 
 iGmIdentity *newIdentity_GmCerts(iGmCerts *d, int flags, iDate validUntil, const iString *commonName,
                                  const iString *email, const iString *userId, const iString *domain,
                                  const iString *org, const iString *country) {
+    /* Note: RFC 5280 defines a self-signed CA certificate as also being self-issued, so
+       to honor this definition we set the issuer and the subject to be fully equivalent. */
     const iTlsCertificateName names[] = {
         { issuerCommonName_TlsCertificateNameType,    commonName },
+        { issuerEmailAddress_TlsCertificateNameType,  !isEmpty_String(email)   ? email   : NULL },
+        { issuerUserId_TlsCertificateNameType,        !isEmpty_String(userId)  ? userId  : NULL },
+        { issuerDomain_TlsCertificateNameType,        !isEmpty_String(domain)  ? domain  : NULL },
+        { issuerOrganization_TlsCertificateNameType,  !isEmpty_String(org)     ? org     : NULL },
+        { issuerCountry_TlsCertificateNameType,       !isEmpty_String(country) ? country : NULL },
         { subjectCommonName_TlsCertificateNameType,   commonName },
         { subjectEmailAddress_TlsCertificateNameType, !isEmpty_String(email)   ? email   : NULL },
         { subjectUserId_TlsCertificateNameType,       !isEmpty_String(userId)  ? userId  : NULL },
