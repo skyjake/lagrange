@@ -393,7 +393,7 @@ msgid "toolbar.outline"
 msgstr "Page Outline"
 
 msgid "hint.findtext"
-msgstr "Find text on page"
+msgstr "find text on page"
 
 msgid "status.query"
 msgstr "Search Query"
@@ -860,6 +860,42 @@ msgstr "IDENTITIES"
 # Interpret as "Other results..."
 msgid "heading.lookup.other"
 msgstr "OTHER"
+
+msgid "menu.page.upload"
+msgstr "Upload Page with Titan"
+
+msgid "heading.upload"
+msgstr "UPLOAD WITH TITAN"
+
+msgid "heading.upload.text"
+msgstr "Text"
+
+msgid "hint.upload.text"
+msgstr "enter text to upload"
+
+msgid "heading.upload.file"
+msgstr "File"
+
+msgid "upload.file.name"
+msgstr "File name:"
+
+msgid "upload.file.drophere"
+msgstr "(drag-and-drop a file on the window)"
+
+msgid "upload.file.size"
+msgstr "File size:"
+
+msgid "upload.mime"
+msgstr "MIME type:"
+
+msgid "upload.token"
+msgstr "Upload token:"
+
+msgid "hint.upload.token"
+msgstr "see server's instructions"
+
+msgid "dlg.upload.send"
+msgstr "Upload"
 
 msgid "heading.translate"
 msgstr "TRANSLATE PAGE"
@@ -1451,7 +1487,7 @@ msgid "keys.hoverurl"
 msgstr "Toggle show URL on hover"
 
 msgid "keys.upload"
-msgstr "Upload Page with Titan"
+msgstr "Upload page with Titan"
 
 msgid "error.badstatus"
 msgstr "Unknown Status Code"

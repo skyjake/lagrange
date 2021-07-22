@@ -99,7 +99,7 @@ void init_UploadWidget(iUploadWidget *d) {
 //        iWidget *hint = addChild_Widget(values, iClob(new_LabelWidget("${upload.file.drophint}", NULL)));
 //        pad->sizeRef = hint;
         addChild_Widget(headings, iClob(new_LabelWidget("${upload.file.name}", NULL)));
-        d->filePathLabel = addChild_Widget(values, iClob(new_LabelWidget("${upload.file.drophere}", NULL)));
+        d->filePathLabel = addChild_Widget(values, iClob(new_LabelWidget(uiTextAction_ColorEscape "${upload.file.drophere}", NULL)));
         addChild_Widget(headings, iClob(new_LabelWidget("${upload.file.size}", NULL)));        
         d->fileSizeLabel = addChild_Widget(values, iClob(new_LabelWidget("\u2014", NULL)));
         d->mime = new_InputWidget(0);
@@ -131,7 +131,7 @@ void init_UploadWidget(iUploadWidget *d) {
         addChild_Widget(w, iClob(buttons));
     }
     resizeToLargestPage_Widget(tabs);
-    setFocus_Widget(as_Widget(d->token));
+    setFocus_Widget(as_Widget(d->input));
 }
 
 void deinit_UploadWidget(iUploadWidget *d) {
