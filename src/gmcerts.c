@@ -457,6 +457,7 @@ iBool checkTrust_GmCerts(iGmCerts *d, iRangecc domain, uint16_t port, const iTls
         return iFalse;
     }
     /* We trust CA verification implicitly. */
+    const iBool isCATrusted = (verify_TlsCertificate(cert) == authority_TlsCertificateVerifyStatus);
     if (!verifyDomain_GmCerts(cert, domain)) {
         return iFalse;
     }
@@ -477,10 +478,14 @@ iBool checkTrust_GmCerts(iGmCerts *d, iRangecc domain, uint16_t port, const iTls
         if (elapsedSeconds_Time(&trust->validUntil) < 0) {
             /* Trusted cert is still valid. */
             const iBool isTrusted = cmp_Block(fingerprint, &trust->fingerprint) == 0;
-            unlock_Mutex(d->mtx);
-            delete_Block(fingerprint);
-            deinit_String(&key);
-            return isTrusted;
+            /* Even if we don't trust it, we will go ahead and update the trusted certificate
+               if a CA vouched for it. */
+            if (isTrusted || !isCATrusted) {
+                unlock_Mutex(d->mtx);
+                delete_Block(fingerprint);
+                deinit_String(&key);
+                return isTrusted;
+            }
         }
         /* Update the trusted cert. */
         if (ok) {
