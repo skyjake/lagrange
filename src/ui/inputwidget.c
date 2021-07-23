@@ -224,11 +224,14 @@ struct Impl_InputWidget {
 
 iDefineObjectConstructionArgs(InputWidget, (size_t maxLen), maxLen)
   
+static void updateMetrics_InputWidget_(iInputWidget *);
+
 static void restoreBackup_InputWidget_(iInputWidget *d) {
     if (!d->backupPath) return;
     iFile *f = new_File(d->backupPath);
     if (open_File(f, readOnly_FileMode | text_FileMode)) {
         setText_InputWidget(d, collect_String(readString_File(f)));
+        updateMetrics_InputWidget_(d);
     }
     iRelease(f);
 }
@@ -674,11 +677,29 @@ static void updateLine_InputWidget_(iInputWidget *d, iInputLine *line) {
     line->wrapLines.end = line->wrapLines.start + height_Rect(tm.bounds) / lineHeight_Text(d->font);
 }
 
+static void updateLineRangesStartingFrom_InputWidget_(iInputWidget *d, int y) {
+    iInputLine *line = at_Array(&d->lines, y);
+    line->range.end = line->range.start + size_String(&line->text);
+    for (size_t i = y + 1; i < size_Array(&d->lines); i++) {
+        iInputLine *next  = at_Array(&d->lines, i);
+        next->range.start = line->range.end;
+        next->range.end   = next->range.start + size_String(&next->text);
+        /* Update wrap line range as well. */
+        next->wrapLines = (iRangei){
+            line->wrapLines.end,
+            line->wrapLines.end + numWrapLines_InputLine_(next)
+        };
+        line = next;
+    }
+}
+
 static void updateAllLinesAndResizeHeight_InputWidget_(iInputWidget *d) {
     const int oldWraps = numWrapLines_InputWidget_(d);
     iForEach(Array, i, &d->lines) {
         updateLine_InputWidget_(d, i.value); /* count number of visible lines */
     }
+    updateLineRangesStartingFrom_InputWidget_(d, 0);
+    updateVisible_InputWidget_(d);
     if (oldWraps != numWrapLines_InputWidget_(d)) {
 //        d->click.minHeight = contentHeight_InputWidget_(d, iFalse);
         updateMetrics_InputWidget_(d);
@@ -960,6 +981,7 @@ void setText_InputWidget(iInputWidget *d, const iString *text) {
     iForEach(Array, i, &d->lines) {
         updateLine_InputWidget_(d, i.value); /* count number of visible lines */
     }
+    updateLineRangesStartingFrom_InputWidget_(d, 0);
     if (isFocused_Widget(d)) {
         d->cursor = cursorMax_InputWidget_(d);
     }
@@ -972,6 +994,7 @@ void setText_InputWidget(iInputWidget *d, const iString *text) {
         d->inFlags |= needUpdateBuffer_InputWidgetFlag;
     }
 //    updateLinesAndResize_InputWidget_(d);
+//    updateAllLinesAndResizeHeight_InputWidget_(d);
     updateVisible_InputWidget_(d);
     refresh_Widget(as_Widget(d));
 }
@@ -1094,22 +1117,6 @@ void end_InputWidget(iInputWidget *d, iBool accept) {
                        id,
                        d->inFlags & enterPressed_InputWidgetFlag ? 1 : 0,
                        accept ? 1 : 0);
-}
-
-static void updateLineRangesStartingFrom_InputWidget_(iInputWidget *d, int y) {
-    iInputLine *line = at_Array(&d->lines, y);
-    line->range.end = line->range.start + size_String(&line->text);
-    for (size_t i = y + 1; i < size_Array(&d->lines); i++) {
-        iInputLine *next  = at_Array(&d->lines, i);
-        next->range.start = line->range.end;
-        next->range.end   = next->range.start + size_String(&next->text);
-        /* Update wrap line range as well. */
-        next->wrapLines = (iRangei){
-            line->wrapLines.end,
-            line->wrapLines.end + numWrapLines_InputLine_(next)
-        };
-        line = next;
-    }
 }
 
 static void textOfLinesWasChanged_InputWidget_(iInputWidget *d, iRangei lineRange) {
@@ -1601,6 +1608,19 @@ static iBool isArrowUpDownConsumed_InputWidget_(const iInputWidget *d) {
 
 static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
+    /* Resize according to width immediately. */
+    if (d->lastUpdateWidth != w->rect.size.x) {
+        d->inFlags |= needUpdateBuffer_InputWidgetFlag;
+#if 0
+        if (d->inFlags & isUrl_InputWidgetFlag) {
+            /* Restore/omit the default scheme if necessary. */
+            setText_InputWidget(d, text_InputWidget(d));
+        }
+#endif
+//        updateLinesAndResize_InputWidget_(d);
+        updateAllLinesAndResizeHeight_InputWidget_(d);
+        d->lastUpdateWidth = w->rect.size.x;
+    }
     if (isCommand_Widget(w, ev, "focus.gained")) {
         begin_InputWidget(d);
         return iFalse;
@@ -1659,16 +1679,6 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
     else if (isMetricsChange_UserEvent(ev)) {
         updateMetrics_InputWidget_(d);
      //   updateLinesAndResize_InputWidget_(d);
-    }
-    else if (isResize_UserEvent(ev) || d->lastUpdateWidth != w->rect.size.x) {
-        d->inFlags |= needUpdateBuffer_InputWidgetFlag;
-#if 0
-        if (d->inFlags & isUrl_InputWidgetFlag) {
-            /* Restore/omit the default scheme if necessary. */
-            setText_InputWidget(d, text_InputWidget(d));
-        }
-#endif
-//        updateLinesAndResize_InputWidget_(d);
     }
     else if (isFocused_Widget(d) && isCommand_UserEvent(ev, "copy")) {
         copy_InputWidget_(d, iFalse);

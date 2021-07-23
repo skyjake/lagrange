@@ -93,7 +93,6 @@ void init_UploadWidget(iUploadWidget *d) {
         setFlags_Widget(page, arrangeSize_WidgetFlag, iTrue);
         d->input = new_InputWidget(0);
         setId_Widget(as_Widget(d->input), "upload.text");
-        setBackupFileName_InputWidget(d->input, "uploadbackup.txt");
         setFont_InputWidget(d->input, monospace_FontId);
         setLineLimits_InputWidget(d->input, 7, 20);
         setHint_InputWidget(d->input, "${hint.upload.text}");
@@ -141,6 +140,7 @@ void init_UploadWidget(iUploadWidget *d) {
     }
     resizeToLargestPage_Widget(tabs);
     setFocus_Widget(as_Widget(d->input));
+    setBackupFileName_InputWidget(d->input, "uploadbackup.txt");
 }
 
 void deinit_UploadWidget(iUploadWidget *d) {
