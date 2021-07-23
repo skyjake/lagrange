@@ -111,7 +111,7 @@ void init_UploadWidget(iUploadWidget *d) {
         addChild_Widget(headings, iClob(new_LabelWidget("${upload.file.size}", NULL)));        
         d->fileSizeLabel = addChild_Widget(values, iClob(new_LabelWidget("\u2014", NULL)));
         d->mime = new_InputWidget(0);
-        setFixedSize_Widget(as_Widget(d->mime), init_I2(50 * gap_UI, -1));
+        setFixedSize_Widget(as_Widget(d->mime), init_I2(70 * gap_UI, -1));
         addTwoColumnDialogInputField_Widget(headings, values, "${upload.mime}", "upload.mime", iClob(d->mime));
     }
     /* Token. */ {
@@ -139,6 +139,9 @@ void init_UploadWidget(iUploadWidget *d) {
         addChild_Widget(w, iClob(buttons));
     }
     resizeToLargestPage_Widget(tabs);
+    arrange_Widget(w);
+    setFixedSize_Widget(as_Widget(d->token), init_I2(width_Widget(tabs) - left_Rect(parent_Widget(d->token)->rect), -1));
+    setFlags_Widget(as_Widget(d->token), expand_WidgetFlag, iTrue);
     setFocus_Widget(as_Widget(d->input));
     setBackupFileName_InputWidget(d->input, "uploadbackup.txt");
 }
