@@ -1043,7 +1043,8 @@ void resizeToLargestPage_Widget(iWidget *tabs) {
     iWidget *pages = findChild_Widget(tabs, "tabs.pages");
     iForEach(ObjectList, i, children_Widget(pages)) {
         setMinSize_Widget(i.object, zero_I2());
-//        resetSize_Widget(i.object);
+        iWidget *w = i.object;
+        w->rect.size = zero_I2();
     }
     arrange_Widget(tabs);
     iInt2 largest = zero_I2();

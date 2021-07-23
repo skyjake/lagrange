@@ -76,6 +76,13 @@ void init_UploadWidget(iUploadWidget *d) {
     d->info = addChildFlags_Widget(w, iClob(new_LabelWidget("", NULL)), frameless_WidgetFlag);
     /* Tabs for input data. */
     iWidget *tabs = makeTabs_Widget(w);
+    /* Make the tabs support vertical expansion based on content. */ {
+        setFlags_Widget(tabs, resizeHeightOfChildren_WidgetFlag, iFalse);
+        setFlags_Widget(tabs, arrangeHeight_WidgetFlag, iTrue);
+        iWidget *tabPages = findChild_Widget(tabs, "tabs.pages");
+        setFlags_Widget(tabPages, resizeHeightOfChildren_WidgetFlag, iFalse);
+        setFlags_Widget(tabPages, arrangeHeight_WidgetFlag, iTrue);
+    }
     iWidget *headings, *values;
     setBackgroundColor_Widget(findChild_Widget(tabs, "tabs.buttons"), uiBackgroundSidebar_ColorId);
     setId_Widget(tabs, "upload.tabs");
@@ -234,6 +241,13 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
         setupSheetTransition_Mobile(w, iFalse);
         destroy_Widget(w);
         return iTrue;        
+    }
+    else if (isCommand_Widget(w, ev, "input.resized")) {
+        
+        resizeToLargestPage_Widget(findChild_Widget(w, "upload.tabs"));
+        arrange_Widget(w);
+        refresh_Widget(w);
+        return iTrue;
     }
     if (ev->type == SDL_DROPFILE) {
         /* Switch to File tab. */

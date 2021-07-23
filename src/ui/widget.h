@@ -268,7 +268,6 @@ iAny *  removeChild_Widget          (iWidget *, iAnyObject *child); /* returns a
 iAny *  child_Widget                (iWidget *, size_t index); /* O(n) */
 size_t  childIndex_Widget           (const iWidget *, const iAnyObject *child); /* O(n) */
 void    arrange_Widget              (iWidget *);
-void    resetSize_Widget            (iWidget *);
 iBool   scrollOverflow_Widget       (iWidget *, int delta); /* moves the widget */
 iBool   dispatchEvent_Widget        (iWidget *, const SDL_Event *);
 iBool   processEvent_Widget         (iWidget *, const SDL_Event *);
