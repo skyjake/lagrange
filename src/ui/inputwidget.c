@@ -30,6 +30,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include "app.h"
 
 #include <the_Foundation/array.h>
+#include <the_Foundation/file.h>
+#include <the_Foundation/path.h>
 #include <SDL_clipboard.h>
 #include <SDL_timer.h>
 
@@ -87,13 +89,21 @@ static void clearInputLines_(iArray *inputLines) {
 static void splitToLines_(const iString *text, iArray *inputLines) {
     clearInputLines_(inputLines);
     if (isEmpty_String(text)) {
-        iInputLine line;
-        init_InputLine(&line);
-        pushBack_Array(inputLines, &line);
+        iInputLine empty;
+        init_InputLine(&empty);
+        pushBack_Array(inputLines, &empty);
         return;
     }
     size_t   index = 0;
     iRangecc seg   = iNullRange;
+    if (startsWith_String(text, "\n")) { /* empty segment ignored at the start */
+        iInputLine empty;
+        init_InputLine(&empty);
+        setCStr_String(&empty.text, "\n");
+        empty.range = (iRanges){ 0, 1 };
+        index = 1;
+        pushBack_Array(inputLines, &empty);
+    }
     while (nextSplit_Rangecc(range_String(text), "\n", &seg)) {
         iInputLine line;
         init_InputLine(&line);
@@ -103,7 +113,14 @@ static void splitToLines_(const iString *text, iArray *inputLines) {
         pushBack_Array(inputLines, &line);
         index = line.range.end;
     }
-    if (!endsWith_String(text, "\n")) {
+    if (endsWith_String(text, "\n")) { /* empty segment ignored at the end */
+        iInputLine empty;
+        init_InputLine(&empty);
+        iInputLine *last = back_Array(inputLines);
+        empty.range.start = empty.range.end = last->range.end;
+        pushBack_Array(inputLines, &empty);
+    }
+    else {
         iInputLine *last = back_Array(inputLines);
         removeEnd_String(&last->text, 1);
         last->range.end--;
@@ -168,7 +185,9 @@ enum iInputWidgetFlag {
     markWords_InputWidgetFlag        = iBit(8),
     needUpdateBuffer_InputWidgetFlag = iBit(9),
     enterKeyEnabled_InputWidgetFlag  = iBit(10),
-    enterKeyInsertsLineFeed_InputWidgetFlag = iBit(11),
+    enterKeyInsertsLineFeed_InputWidgetFlag
+                                     = iBit(11),
+    needBackup_InputWidgetFlag       = iBit(12),
 };
 
 /*----------------------------------------------------------------------------------------------*/
@@ -199,10 +218,84 @@ struct Impl_InputWidget {
     iTextBuf *      buffered; /* pre-rendered static text */
     iInputWidgetValidatorFunc validator;
     void *          validatorContext;
+    iString *       backupPath;
+    int             backupTimer;
 };
 
 iDefineObjectConstructionArgs(InputWidget, (size_t maxLen), maxLen)
   
+static void restoreBackup_InputWidget_(iInputWidget *d) {
+    if (!d->backupPath) return;
+    iFile *f = new_File(d->backupPath);
+    if (open_File(f, readOnly_FileMode | text_FileMode)) {
+        setText_InputWidget(d, collect_String(readString_File(f)));
+    }
+    iRelease(f);
+}
+
+static void saveBackup_InputWidget_(iInputWidget *d) {
+    if (!d->backupPath) return;
+    iFile *f = new_File(d->backupPath);
+    if (open_File(f, writeOnly_FileMode | text_FileMode)) {
+        iConstForEach(Array, i, &d->lines) {
+            const iInputLine *line = i.value;
+            write_File(f, utf8_String(&line->text));
+        }
+        d->inFlags &= ~needBackup_InputWidgetFlag;
+#if !defined (NDEBUG)
+        iConstForEach(Array, j, &d->lines) {
+            iAssert(endsWith_String(&((const iInputLine *) j.value)->text, "\n") ||
+                    index_ArrayConstIterator(&j) == size_Array(&d->lines) - 1);
+        }
+#endif
+    }
+    iRelease(f);
+}
+
+static void eraseBackup_InputWidget_(iInputWidget *d) {
+    if (d->backupPath) {
+        remove(cstr_String(d->backupPath));
+        delete_String(d->backupPath);
+        d->backupPath = NULL;
+    }
+}
+
+static uint32_t backupTimeout_InputWidget_(uint32_t interval, void *context) {
+    iInputWidget *d = context;
+    postCommand_Widget(d, "input.backup");
+    return 0;
+}
+
+static void restartBackupTimer_InputWidget_(iInputWidget *d) {
+    if (d->backupPath) {
+        d->inFlags |= needBackup_InputWidgetFlag;
+        if (d->backupTimer) {
+            SDL_RemoveTimer(d->backupTimer);
+        }
+        d->backupTimer = SDL_AddTimer(2500, backupTimeout_InputWidget_, d);
+    }
+}
+
+void setBackupFileName_InputWidget(iInputWidget *d, const char *fileName) {
+    if (fileName == NULL) {
+        if (d->backupTimer) {
+            SDL_RemoveTimer(d->backupTimer);
+            d->backupTimer = 0;
+        }
+        eraseBackup_InputWidget_(d);
+        if (d->backupPath) {
+            delete_String(d->backupPath);
+            d->backupPath = NULL;
+        }
+        return;
+    }
+    if (!d->backupPath) {
+        d->backupPath = copy_String(dataDir_App());
+    }
+    append_Path(d->backupPath, collectNewCStr_String(fileName));
+    restoreBackup_InputWidget_(d);
+}
+
 static void clearUndo_InputWidget_(iInputWidget *d) {
     iForEach(Array, i, &d->undoStack) {
         deinit_InputUndo_(i.value);
@@ -635,11 +728,21 @@ void init_InputWidget(iInputWidget *d, size_t maxLen) {
     d->timer = 0;
     d->cursorVis = 0;
     d->buffered = NULL;
+    d->backupPath = NULL;
+    d->backupTimer = 0;
     //updateLines_InputWidget_(d);
     updateMetrics_InputWidget_(d);
 }
 
 void deinit_InputWidget(iInputWidget *d) {
+    if (d->backupTimer) {
+        SDL_RemoveTimer(d->backupTimer);
+    }
+    if (d->inFlags & needBackup_InputWidgetFlag) {
+        saveBackup_InputWidget_(d);
+    }
+    delete_String(d->backupPath);
+    d->backupPath = NULL;
     clearInputLines_(&d->lines);
     if (isSelected_Widget(d)) {
         SDL_StopTextInput();
@@ -1016,6 +1119,7 @@ static void textOfLinesWasChanged_InputWidget_(iInputWidget *d, iRangei lineRang
     updateLineRangesStartingFrom_InputWidget_(d, lineRange.start);
     updateVisible_InputWidget_(d);
     updateMetrics_InputWidget_(d);
+    restartBackupTimer_InputWidget_(d);
 }
 
 static void insertRange_InputWidget_(iInputWidget *d, iRangecc range) {
@@ -1239,6 +1343,7 @@ static void contentsWereChanged_InputWidget_(iInputWidget *d) {
 
 static void deleteIndexRange_InputWidget_(iInputWidget *d, iRanges deleted) {
     size_t firstModified = iInvalidPos;
+    restartBackupTimer_InputWidget_(d);
     for (int i = size_Array(&d->lines) - 1; i >= 0; i--) {
         iInputLine *line = at_Array(&d->lines, i);
         if (line->range.end <= deleted.start) {
@@ -1545,6 +1650,12 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
         contentsWereChanged_InputWidget_(d);
         return iTrue;
     }
+    else if (isCommand_Widget(w, ev, "input.backup")) {
+        if (d->inFlags & needBackup_InputWidgetFlag) {
+            saveBackup_InputWidget_(d);
+        }
+        return iTrue;
+    }
     else if (isMetricsChange_UserEvent(ev)) {
         updateMetrics_InputWidget_(d);
      //   updateLinesAndResize_InputWidget_(d);
@@ -1708,7 +1819,7 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
                 }
                 return iFalse;
             case SDLK_ESCAPE:
-                end_InputWidget(d, iFalse);
+                end_InputWidget(d, iTrue);
                 setFocus_Widget(NULL);
                 return (d->inFlags & eatEscape_InputWidgetFlag) != 0;
             case SDLK_BACKSPACE:

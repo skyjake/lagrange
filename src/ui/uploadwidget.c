@@ -92,6 +92,8 @@ void init_UploadWidget(iUploadWidget *d) {
         iWidget *page = new_Widget();
         setFlags_Widget(page, arrangeSize_WidgetFlag, iTrue);
         d->input = new_InputWidget(0);
+        setId_Widget(as_Widget(d->input), "upload.text");
+        setBackupFileName_InputWidget(d->input, "uploadbackup.txt");
         setFont_InputWidget(d->input, monospace_FontId);
         setLineLimits_InputWidget(d->input, 7, 20);
         setHint_InputWidget(d->input, "${hint.upload.text}");
@@ -234,6 +236,9 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
     }
     else if (isCommand_Widget(w, ev, "upload.request.finished") &&
              id_GmRequest(d->request) == argU32Label_Command(cmd, "reqid")) {
+        if (isSuccess_GmStatusCode(status_GmRequest(d->request))) {
+            setBackupFileName_InputWidget(d->input, NULL); /* erased */
+        }
         if (d->viewer) {
             takeRequest_DocumentWidget(d->viewer, d->request);
             d->request = NULL; /* DocumentWidget has it now. */
@@ -243,7 +248,6 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
         return iTrue;        
     }
     else if (isCommand_Widget(w, ev, "input.resized")) {
-        
         resizeToLargestPage_Widget(findChild_Widget(w, "upload.tabs"));
         arrange_Widget(w);
         refresh_Widget(w);
