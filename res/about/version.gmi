@@ -7,32 +7,48 @@
 # Release notes
 
 ## 1.6
+⚠️ A new TOFU trust store will be created. The old one is kept around but ignored.
+⚠️ App state serialization format has been updated. Downgrading to a previous release will cause app state to be reset (e.g., tabs closed, navigation history cleared).
+⚠️ New build dependencies: HarfBuzz and GNU FriBidi (see README).
+
+New features:
 * Added support for bidirectional text and complex scripts. العالم متنوع
-* Added setting for adjusting line spacing.
-* Added settings for keyboard and mouse scrolling speeds.
-* Added configuration file for defining UI color palette (see Help, section 3.5).
-* Added link context menu item for deleting local files (e.g., downloads).
-* Improved TOFU implementation: if the server certificate is not trusted, the connection is aborted at the TLS handshake stage. Previously, only a warning was shown and the page contents were fetched regardless.
-* Improved handling of expired server certificates. An error page is shown and the connection is aborted at the TLS handshake stage. The user can give a temporary exception to load the page.
-* Inline images/audio will not get discarded during back/forward navigation. The Network > Memory Size setting determines the maximum memory usage for media. Setting the Memory Size to zero is equivalent to the previous behavior of discarding everything when the page changes.
-* Page contents are cached in presentation form for quicker restoring during back/forward navigation.
-* Debug information includes RAM use in addition to cache size. This includes document layout and media stored in memory (e.g., raw pixel data of images).
-* Preferences have been reorganized. There is a new Fonts page, and some General settings have been moved to the Style page. All color-related settings are on the Colors page, including UI theme colors.
-* Opened links are updated to reflect visited status even when opened in a background tab or to the side.
-* Unicode Byte Order Mark is ignored in the beginning of a page.
 * Right-to-left paragraphs are aligned to the right. Link icons and list/quote symbols are moved to the right margin.
-* Large lede paragraph font is not applied if the paragraph has too many lines.
-* Adjusted kerning of Nunito.
-* Fixed sizing of characters in the Noto Symbols fonts.
+* Added support for Titan uploads. The data to upload can be entered via a text field or by dropping a file on the window.
+* Added a configuration file for defining the UI color palette (see Help, section 3.5).
+* Added settings for keyboard and mouse scrolling speeds.
+* Added setting for changing Return key behavior in input fields (line break vs. accept).
+* Added setting for adjusting line spacing.
+* Added link context menu item for deleting local files (e.g., downloads).
+* Added a keybinding for opening the current page URL in the upload dialog (Ctrl+U/⌘U). This simply switches the page's URL scheme from `gemini` to `titan`.
+
+Changes and enhancements:
+* Improved TOFU: if the server certificate is not trusted, the connection is aborted at the TLS handshake stage. Previously, only a warning was shown and the page contents were fetched regardless.
+* Server certificate fingerprints are generated based on public keys, which allows servers to renew their certificates without losing trusted status.
+* Improved handling of expired server certificates. An error page is shown and the connection is aborted at the TLS handshake stage. The user can give a temporary exception to load the page.
+* Page contents are cached in presentation form for quicker restoring during back/forward navigation.
+* Inline images/audio will not get discarded during back/forward navigation. The Network > Memory Size setting determines the maximum memory usage for media. Setting the Memory Size to zero is equivalent to the previous behavior of discarding everything when the page changes.
+* Debug information includes RAM use in addition to cache size. This includes document layout and media stored in memory (e.g., raw pixel data of images).
+* Text input fields support larger amounts of content and expand vertically only up to a limit, after which they start scrolling.
+* Preferences have been reorganized. There is a new Fonts page, and some General settings have been moved to the Style page. All color-related settings are on the Colors page, including UI theme colors.
+* Links opened on a page are updated to reflect visited status even when opening into a background tab or to the side.
+* Unicode Byte Order Mark is ignored in the beginning of a page.
 * Updated Smol Emoji with new characters.
+* Query/Feeds indicators have a smaller appearance in a narrow window to leave room for the URL.
+
+Fixes:
+* Large lede paragraph font is not applied if the paragraph has too many lines.
+* Fixed inor kerning issues when using Nunito.
+* Fixed sizing of characters in the Noto Symbols fonts.
 * Improved internal handling of URLs. For example, some URLs were not being recognized as visited because of percent-encoding differences.
 * Fixed URL in the generated page for viewing a single image (spaces weren't encoded).
 * Input dialog is not dismissed unless the Cancel button is clicked or Escape is pressed.
-* Query/Feeds indicators have a smaller appearance in a narrow window to leave room for the URL.
 * Workaround for a potential hang during the closing of a socket.
+* TLS client certificates generated by the app have identical issuer and subject fields, including all the provided information and not just the Common Name.
 * Gopher: Improved detection of ASCII art.
-* Gopher: All preformatted blocks are unindented.
+* Gopher: Show contents of unrecognized line types.
 * Gopher: Don't collapse preformatted blocks since everything is preformatted in the source.
+* Gopher: All preformatted blocks are unindented.
 * macOS: ^⌘Space shows the system-provided symbols and Emoji character palette.
 
 ## 1.5.2
