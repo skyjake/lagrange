@@ -62,7 +62,7 @@ void init_PlayerUI(iPlayerUI *d, const iPlayer *player, iRect bounds) {
 }
 
 static void drawPlayerButton_(iPaint *p, iRect rect, const char *label, int font) {
-    const iInt2 mouse     = mouseCoord_Window(get_Window());
+    const iInt2 mouse     = mouseCoord_Window(get_Window(), 0);
     const iBool isHover   = contains_Rect(rect, mouse);
     const iBool isPressed = isHover && (SDL_GetMouseState(NULL, NULL) & SDL_BUTTON_LEFT) != 0;
     const int frame = (isPressed ? uiTextCaution_ColorId : isHover ? uiHeading_ColorId : uiAnnotation_ColorId);
@@ -159,7 +159,7 @@ void draw_PlayerUI(iPlayerUI *d, iPaint *p) {
               dot);
     /* Volume adjustment. */
     if (isAdjusting) {
-        const iInt2 mouse   = mouseCoord_Window(get_Window());
+        const iInt2 mouse   = mouseCoord_Window(get_Window(), 0);
         const iBool isHover = contains_Rect(d->volumeRect, mouse) &&
                               ~flags_Player(d->player) & volumeGrabbed_PlayerFlag;
         const iBool isPressed = (SDL_GetMouseState(NULL, NULL) & SDL_BUTTON_LEFT) != 0;

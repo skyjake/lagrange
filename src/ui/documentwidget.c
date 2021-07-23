@@ -882,7 +882,7 @@ static void updateVisible_DocumentWidget_(iDocumentWidget *d) {
     if (memcmp(&oldHeading, &newHeading, sizeof(oldHeading))) {
         d->drawBufs->flags |= updateSideBuf_DrawBufsFlag;
     }
-    updateHover_DocumentWidget_(d, mouseCoord_Window(get_Window()));
+    updateHover_DocumentWidget_(d, mouseCoord_Window(get_Window(), 0));
     updateSideOpacity_DocumentWidget_(d, iTrue);
     animateMedia_DocumentWidget_(d);
     /* Remember scroll positions of recently visited pages. */ {
@@ -1806,7 +1806,7 @@ static void togglePreFold_DocumentWidget_(iDocumentWidget *d, uint16_t preId) {
     foldPre_GmDocument(d->doc, preId);
     redoLayout_GmDocument(d->doc);
     clampScroll_DocumentWidget_(d);
-    updateHover_DocumentWidget_(d, mouseCoord_Window(get_Window()));
+    updateHover_DocumentWidget_(d, mouseCoord_Window(get_Window(), 0));
     invalidate_DocumentWidget_(d);
     refresh_Widget(as_Widget(d));
 }
@@ -3123,7 +3123,7 @@ static iBool handleCommand_DocumentWidget_(iDocumentWidget *d, const char *cmd) 
         return iTrue;
     }
     else if (equalWidget_Command(cmd, w, "menu.closed")) {
-        updateHover_DocumentWidget_(d, mouseCoord_Window(get_Window()));
+        updateHover_DocumentWidget_(d, mouseCoord_Window(get_Window(), 0));
     }
     else if (equal_Command(cmd, "document.autoreload")) {
         if (d->mod.reloadInterval) {
@@ -3435,7 +3435,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
         }
     }
     else if (ev->type == SDL_MOUSEWHEEL && isHover_Widget(w)) {
-        const iInt2 mouseCoord = mouseCoord_Window(get_Window());
+        const iInt2 mouseCoord = coord_MouseWheelEvent(&ev->wheel);
         if (isPerPixel_MouseWheelEvent(&ev->wheel)) {
             const iInt2 wheel = init_I2(ev->wheel.x, ev->wheel.y);
             stop_Anim(&d->scrollY.pos);
@@ -3694,7 +3694,7 @@ static iBool processEvent_DocumentWidget_(iDocumentWidget *d, const SDL_Event *e
             /* Enable hover state now that scrolling has surely finished. */
             if (d->flags & noHoverWhileScrolling_DocumentWidgetFlag) {
                 d->flags &= ~noHoverWhileScrolling_DocumentWidgetFlag;
-                updateHover_DocumentWidget_(d, mouseCoord_Window(get_Window()));
+                updateHover_DocumentWidget_(d, mouseCoord_Window(get_Window(), ev->button.which));
             }
             if (~flags_Widget(w) & touchDrag_WidgetFlag) {
                 iChangeFlags(d->flags, selecting_DocumentWidgetFlag, iFalse);

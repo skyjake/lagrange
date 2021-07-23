@@ -1760,7 +1760,9 @@ static iBool processEvent_InputWidget_(iInputWidget *d, const SDL_Event *ev) {
             closeMenu_Widget(clipMenu);
         }
         else {
-            openMenuFlags_Widget(clipMenu, mouseCoord_Window(get_Window()), iFalse);
+            openMenuFlags_Widget(clipMenu,
+                                 mouseCoord_Window(get_Window(), ev->button.which),
+                                 iFalse);
         }
         return iTrue;
     }
@@ -2058,7 +2060,7 @@ static void draw_InputWidget_(const iInputWidget *d) {
     iBool          isHint    = isHintVisible_InputWidget_(d);
     const iBool    isFocused = isFocused_Widget(w);
     const iBool    isHover   = isHover_Widget(w) &&
-                               contains_InputWidget_(d, mouseCoord_Window(get_Window()));
+                               contains_InputWidget_(d, mouseCoord_Window(get_Window(), 0));
     if (d->inFlags & needUpdateBuffer_InputWidgetFlag) {
         updateBuffered_InputWidget_(iConstCast(iInputWidget *, d));
     }

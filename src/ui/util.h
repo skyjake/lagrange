@@ -58,6 +58,8 @@ iLocalDef iBool isPerPixel_MouseWheelEvent(const SDL_MouseWheelEvent *ev) {
     return (ev->direction & perPixel_MouseWheelFlag) != 0;
 }
 
+iInt2   coord_MouseWheelEvent   (const SDL_MouseWheelEvent *);
+
 #if defined (iPlatformApple)
 #   define KMOD_PRIMARY     KMOD_GUI
 #   define KMOD_SECONDARY   KMOD_CTRL

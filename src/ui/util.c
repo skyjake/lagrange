@@ -64,6 +64,10 @@ const char *command_UserEvent(const SDL_Event *d) {
     return "";
 }
 
+iInt2 coord_MouseWheelEvent(const SDL_MouseWheelEvent *ev) {
+    return mouseCoord_Window(get_Window(), ev->which);
+}
+
 static void removePlus_(iString *str) {
     if (endsWith_String(str, "+")) {
         removeEnd_String(str, 1);
