@@ -220,7 +220,7 @@ struct Impl_WrapText {
     iInt2       hitAdvance_out;
     float       hitGlyphNormX_out; /* normalized X inside the glyph */
     /* internal */
-    iRangecc wrapRange_;
+    iRangecc    wrapRange_;
 };
 
 iTextMetrics    measure_WrapText    (iWrapText *, int fontId);
@@ -236,14 +236,13 @@ iString *   renderBlockChars_Text   (const iBlock *fontData, int height, enum iT
 /*-----------------------------------------------------------------------------------------------*/
 
 iDeclareType(TextBuf)
-iDeclareTypeConstructionArgs(TextBuf, int font, int color, const char *text)
+iDeclareTypeConstructionArgs(TextBuf, iWrapText *wrap, int fontId, int color)
     
 struct Impl_TextBuf {
     SDL_Texture *texture;
     iInt2        size;
 };
 
-iTextBuf *  newBound_TextBuf(int font, int color, int boundWidth, const char *text); /* does not word wrap */
-iTextBuf *  newWrap_TextBuf (int font, int color, int wrapWidth, const char *text);
+iTextBuf *  newRange_TextBuf (int font, int color, iRangecc text);
 
 void        draw_TextBuf    (const iTextBuf *, iInt2 pos, int color);

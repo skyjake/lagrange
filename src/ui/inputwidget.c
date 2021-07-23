@@ -777,26 +777,40 @@ static iBool isHintVisible_InputWidget_(const iInputWidget *d) {
     return !isEmpty_String(&d->hint) && isEmpty_InputWidget_(d);
 }
 
+static iRangei visibleLineRange_InputWidget_(const iInputWidget *d) {
+    iRangei vis = { -1, -1 };
+    /* Determine which lines are in the potentially visible range. */
+    for (int i = 0; i < size_Array(&d->lines); i++) {
+        const iInputLine *line = constAt_Array(&d->lines, i);
+        if (vis.start < 0 && line->wrapLines.end > d->visWrapLines.start) {
+            vis.start = vis.end = i;
+        }
+        if (line->wrapLines.start < d->visWrapLines.end) {
+            vis.end = i + 1;
+        }
+        else break;
+    }
+    return vis;
+}
+
 static void updateBuffered_InputWidget_(iInputWidget *d) {
     invalidateBuffered_InputWidget_(d);
-#if 0
     if (isHintVisible_InputWidget_(d)) {
-        d->buffered = new_TextBuf(d->font, uiAnnotation_ColorId, cstr_String(&d->hint));                
+        d->buffered = newRange_TextBuf(d->font, uiAnnotation_ColorId, range_String(&d->hint));                
     }
     else {
-        iString *bufText = NULL;
-        if (!bufText) {
-            bufText = visText_InputWidget_(d);
+        /* Draw all the potentially visible lines to a buffer. */
+        iString *visText = new_String();
+        const iRangei visRange = visibleLineRange_InputWidget_(d);
+        for (int i = visRange.start; i < visRange.end; i++) {
+            append_String(visText, &line_InputWidget_(d, i)->text);
         }
-        const int   maxWidth = contentBounds_InputWidget_(d).size.x;
-        const int   fg       = uiInputText_ColorId;
-        const char *text     = cstr_String(bufText);
-        d->buffered =
-            (d->inFlags & isUrl_InputWidgetFlag ? newBound_TextBuf(d->font, fg, maxWidth, text)
-                                                : newWrap_TextBuf (d->font, fg, maxWidth, text));
-        delete_String(bufText);
+        iWrapText wt = wrap_InputWidget_(d, 0);
+        wt.text = range_String(visText);
+        const int fg = uiInputText_ColorId;
+        d->buffered = new_TextBuf(&wt, d->font, fg);
+        delete_String(visText);
     }
-#endif
     d->inFlags &= ~needUpdateBuffer_InputWidgetFlag;
 }
 
@@ -1344,22 +1358,6 @@ static iInt2 skipWord_InputWidget_(const iInputWidget *d, iInt2 pos, int dir) {
         movePos_InputWidget_(d, &pos, +1);
     }
     return pos;
-}
-
-static iRangei visibleLineRange_InputWidget_(const iInputWidget *d) {
-    iRangei vis = { -1, -1 };
-    /* Determine which lines are in the potentially visible range. */
-    for (int i = 0; i < size_Array(&d->lines); i++) {
-        const iInputLine *line = constAt_Array(&d->lines, i);
-        if (vis.start < 0 && line->wrapLines.end > d->visWrapLines.start) {
-            vis.start = vis.end = i;
-        }
-        if (line->wrapLines.start < d->visWrapLines.end) {
-            vis.end = i + 1;
-        }
-        else break;
-    }
-    return vis;
 }
 
 static iInt2 coordCursor_InputWidget_(const iInputWidget *d, iInt2 coord) {
@@ -1971,7 +1969,7 @@ static void draw_InputWidget_(const iInputWidget *d) {
     /* If buffered, just draw the buffered copy. */
     if (d->buffered && !isFocused) {
         /* Most input widgets will use this, since only one is focused at a time. */
-        draw_TextBuf(d->buffered, drawPos, white_ColorId);
+        draw_TextBuf(d->buffered, addY_I2(drawPos, visLineOffsetY), white_ColorId);
     }
     else if (isHint) {
         drawRange_Text(d->font, drawPos, uiAnnotation_ColorId, range_String(&d->hint));

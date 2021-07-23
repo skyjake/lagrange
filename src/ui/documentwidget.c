@@ -977,10 +977,10 @@ static void updateTimestampBuf_DocumentWidget_(const iDocumentWidget *d) {
         d->drawBufs->timestampBuf = NULL;
     }
     if (isValid_Time(&d->sourceTime)) {
-        d->drawBufs->timestampBuf = new_TextBuf(
+        d->drawBufs->timestampBuf = newRange_TextBuf(
             uiLabel_FontId,
             white_ColorId,
-            cstrCollect_String(format_Time(&d->sourceTime, cstr_Lang("page.timestamp"))));
+            range_String(collect_String(format_Time(&d->sourceTime, cstr_Lang("page.timestamp")))));
     }
     d->drawBufs->flags &= ~updateTimestampBuf_DrawBufsFlag;
 }

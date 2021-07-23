@@ -2143,16 +2143,11 @@ iString *renderBlockChars_Text(const iBlock *fontData, int height, enum iTextBlo
 
 /*-----------------------------------------------------------------------------------------------*/
 
-iDefineTypeConstructionArgs(TextBuf, (int font, int color, const char *text), font, color, text)
+iDefineTypeConstructionArgs(TextBuf, (iWrapText *wrapText, int font, int color), wrapText, font, color)
 
-static void initWrap_TextBuf_(iTextBuf *d, int font, int color, int maxWidth, iBool doWrap, const char *text) {
+void init_TextBuf(iTextBuf *d, iWrapText *wrapText, int font, int color) {
     SDL_Renderer *render = text_.render;
-    iWrapText wrapText = {
-        .text     = range_CStr(text),
-        .maxWidth = maxWidth,
-        .mode     = (doWrap ? word_WrapTextMode : anyCharacter_WrapTextMode),
-    };
-    d->size = measure_WrapText(&wrapText, font).bounds.size;
+    d->size = measure_WrapText(wrapText, font).bounds.size;
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
     if (d->size.x * d->size.y) {
         d->texture = SDL_CreateTexture(render,
@@ -2171,31 +2166,19 @@ static void initWrap_TextBuf_(iTextBuf *d, int font, int color, int maxWidth, iB
         SDL_SetRenderDrawColor(render, 255, 255, 255, 0);
         SDL_RenderClear(render);
         SDL_SetTextureBlendMode(text_.cache, SDL_BLENDMODE_NONE); /* blended when TextBuf is drawn */
-        draw_WrapText(&wrapText, font, zero_I2(), color | fillBackground_ColorId);
+        draw_WrapText(wrapText, font, zero_I2(), color | fillBackground_ColorId);
         SDL_SetTextureBlendMode(text_.cache, SDL_BLENDMODE_BLEND);
         SDL_SetRenderTarget(render, oldTarget);
         SDL_SetTextureBlendMode(d->texture, SDL_BLENDMODE_BLEND);
     }
 }
 
-void init_TextBuf(iTextBuf *d, int font, int color, const char *text) {
-    initWrap_TextBuf_(d, font, color, 0, iFalse, text);
-}
-
 void deinit_TextBuf(iTextBuf *d) {
     SDL_DestroyTexture(d->texture);
 }
 
-iTextBuf *newBound_TextBuf(int font, int color, int boundWidth, const char *text) {
-    iTextBuf *d = iMalloc(TextBuf);
-    initWrap_TextBuf_(d, font, color, boundWidth, iFalse, text);
-    return d;
-}
-
-iTextBuf *newWrap_TextBuf(int font, int color, int wrapWidth, const char *text) {
-    iTextBuf *d = iMalloc(TextBuf);
-    initWrap_TextBuf_(d, font, color, wrapWidth, iTrue, text);
-    return d;
+iTextBuf *newRange_TextBuf(int font, int color, iRangecc text) {
+    return new_TextBuf(&(iWrapText){ .text = text }, font, color);
 }
 
 void draw_TextBuf(const iTextBuf *d, iInt2 pos, int color) {
