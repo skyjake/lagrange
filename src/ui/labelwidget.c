@@ -263,6 +263,14 @@ iLocalDef int iconPadding_LabelWidget_(const iLabelWidget *d) {
     return d->icon ? iRound(lineHeight_Text(d->font) * amount) : 0;
 }
 
+static iRect contentBounds_LabelWidget_(const iLabelWidget *d) {
+    iRect content = adjusted_Rect(bounds_Widget(constAs_Widget(d)),
+                                  padding_LabelWidget_(d, 0),
+                                  neg_I2(padding_LabelWidget_(d, 2)));
+    adjustEdges_Rect(&content, 0, 0, 0, iconPadding_LabelWidget_(d));
+    return content;
+}
+
 static void draw_LabelWidget_(const iLabelWidget *d) {
     const iWidget *w = constAs_Widget(d);
     draw_Widget(w);
@@ -319,9 +327,9 @@ static void draw_LabelWidget_(const iLabelWidget *d) {
         deinit_String(&str);
     }
     if (d->flags.wrap) {
-        const iRect inner = adjusted_Rect(innerBounds_Widget(w), init_I2(iconPad, 0), zero_I2());
-        const int   wrap  = inner.size.x;
-        drawWrapRange_Text(d->font, topLeft_Rect(inner), wrap, fg, range_String(&d->label));
+        const iRect cont = contentBounds_LabelWidget_(d); //djusted_Rect(innerBounds_Widget(w), init_I2(iconPad, 0), zero_I2());
+        drawWrapRange_Text(
+            d->font, topLeft_Rect(cont), width_Rect(cont), fg, range_String(&d->label));
     }
     else if (flags & alignLeft_WidgetFlag) {
         draw_Text(d->font, add_I2(bounds.pos, addX_I2(padding_LabelWidget_(d, 0), iconPad)),
@@ -376,9 +384,11 @@ static void sizeChanged_LabelWidget_(iLabelWidget *d) {
     if (d->flags.wrap) {
         if (flags_Widget(w) & fixedHeight_WidgetFlag) {
             /* Calculate a new height based on the wrapping. */
-            w->rect.size.y = measureWrapRange_Text(
-                                 d->font, innerBounds_Widget(w).size.x, range_String(&d->label))
-                                 .bounds.size.y;
+            const iRect cont = contentBounds_LabelWidget_(d);
+            w->rect.size.y =
+                measureWrapRange_Text(d->font, width_Rect(cont), range_String(&d->label))
+                    .bounds.size.y +
+                padding_LabelWidget_(d, 0).y + padding_LabelWidget_(d, 2).y;
         }
     }
 }
@@ -473,6 +483,9 @@ void setTextColor_LabelWidget(iLabelWidget *d, int color) {
 void setText_LabelWidget(iLabelWidget *d, const iString *text) {
     updateText_LabelWidget(d, text);
     updateSize_LabelWidget(d);
+    if (isWrapped_LabelWidget(d)) {
+        sizeChanged_LabelWidget_(d);
+    }
 }
 
 void setAlignVisually_LabelWidget(iLabelWidget *d, iBool alignVisual) {
