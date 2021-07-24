@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
-"PO-Revision-Date: 2021-07-19 19:06+0000\n"
+"PO-Revision-Date: 2021-07-25 18:06+0000\n"
 "Last-Translator: Olga Smirnova <mistresssilvara@hotmail.com>\n"
 "Language-Team: Occidental <http://weblate.skyjake.fi/projects/lagrange/ui/ie/"
 ">\n"
@@ -884,7 +884,7 @@ msgid "menu.page.copysource"
 msgstr "Copiar li fonte del págine"
 
 msgid "hint.findtext"
-msgstr "Trovar textu sur li págine"
+msgstr "trovar textu sur li págine"
 
 msgid "status.query"
 msgstr "Sercha"
@@ -1700,3 +1700,75 @@ msgstr "Serchar"
 
 msgid "menu.openfile"
 msgstr "Aperter un file…"
+
+msgid "upload.port"
+msgstr "Portu…"
+
+msgid "heading.uploadport"
+msgstr "PORTU DE CARGA DE TITAN"
+
+msgid "dlg.uploadport.set"
+msgstr "Assignar li portu"
+
+msgid "dlg.uploadport.msg"
+msgstr ""
+"Assignar li portu de Titan por ti-ci adresse.\n"
+"Li portu es gardat in li preferenties del site."
+
+msgid "prefs.returnkey"
+msgstr "Coduida del taste Enter:"
+
+msgid "prefs.returnkey.linebreak"
+msgstr "Nov linea"
+
+msgid "prefs.returnkey.accept"
+msgstr "Acceptar"
+
+msgid "keys.upload"
+msgstr "Cargar un págine med Titan"
+
+msgid "error.certexpired"
+msgstr "Certificate ha expirat"
+
+msgid "error.certexpired.msg"
+msgstr ""
+"Conexion al servitor esset interrupted pro que su certificate TLS es expirat."
+
+msgid "menu.unexpire"
+msgstr "Ignorar li expiration e continuar cargar"
+
+msgid "menu.page.upload"
+msgstr "Cargar un págine med Titan"
+
+msgid "heading.upload"
+msgstr "CARGAR MED TITAN"
+
+msgid "heading.upload.text"
+msgstr "Textu"
+
+msgid "hint.upload.text"
+msgstr "intra un textu por cargar"
+
+msgid "heading.upload.file"
+msgstr "File"
+
+msgid "upload.file.name"
+msgstr "Nómine de file:"
+
+msgid "upload.file.drophere"
+msgstr "(fa cader un file in li fenestre)"
+
+msgid "upload.file.size"
+msgstr "Grandore de file:"
+
+msgid "upload.mime"
+msgstr "Tip MIME:"
+
+msgid "dlg.upload.send"
+msgstr "Cargar"
+
+msgid "upload.token"
+msgstr "Code de carga:"
+
+msgid "hint.upload.token"
+msgstr "vi instructiones del servitor"
