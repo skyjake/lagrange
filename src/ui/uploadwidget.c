@@ -213,7 +213,6 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
     iWidget *w = as_Widget(d);
     const char *cmd = command_UserEvent(ev);
     if (isCommand_Widget(w, ev, "upload.cancel")) {
-        /* TODO: If text has been entered, ask for confirmation. */
         setupSheetTransition_Mobile(w, iFalse);
         destroy_Widget(w);
         return iTrue;
