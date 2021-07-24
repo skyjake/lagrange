@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2021-03-23 19:02+0000\n"
-"PO-Revision-Date: 2021-07-19 19:06+0000\n"
+"PO-Revision-Date: 2021-07-25 18:06+0000\n"
 "Last-Translator: Olga Smirnova <mistresssilvara@hotmail.com>\n"
 "Language-Team: Russian <http://weblate.skyjake.fi/projects/lagrange/ui/ru/>\n"
 "Language: ru\n"
@@ -267,7 +267,7 @@ msgid "toolbar.outline"
 msgstr "Структура страницы"
 
 msgid "hint.findtext"
-msgstr "Найти текст на странице"
+msgstr "найти текст на странице"
 
 msgid "status.query"
 msgstr "Поисковый запрос"
@@ -1679,3 +1679,84 @@ msgstr "Размер памяти:"
 
 msgid "error.certverify"
 msgstr "К серверу нет доверия"
+
+msgid "menu.unexpire"
+msgstr "Все равно загрузить"
+
+msgid "menu.page.upload"
+msgstr "Загрузить страницу (Titan)"
+
+msgid "heading.upload"
+msgstr "ЗАГРУЗКА ΤΙΤΑΝ"
+
+msgid "heading.upload.text"
+msgstr "Текст"
+
+msgid "hint.upload.text"
+msgstr "введите загружаемый текст"
+
+msgid "heading.upload.file"
+msgstr "Файл"
+
+msgid "upload.file.name"
+msgstr "Имя файла:"
+
+msgid "upload.file.drophere"
+msgstr "(перетащите файл в окно)"
+
+msgid "upload.file.size"
+msgstr "Размер:"
+
+msgid "upload.mime"
+msgstr "Тип MIME:"
+
+msgid "upload.token"
+msgstr "Токен для загрузки:"
+
+msgid "hint.upload.token"
+msgstr "см. инструкции сервера"
+
+msgid "dlg.upload.send"
+msgstr "Загрузить"
+
+msgid "prefs.returnkey"
+msgstr "Поведение клавиши Enter:"
+
+msgid "prefs.returnkey.accept"
+msgstr "Подтверждение"
+
+msgid "keys.upload"
+msgstr "Загрузить страницу (Titan)"
+
+msgid "error.certexpired"
+msgstr "Сертификат просрочен"
+
+msgid "error.certexpired.msg"
+msgstr ""
+"Не удалось соединиться с сервером, потому что его сертификат TLS просрочен."
+
+msgid "upload.port"
+msgstr "Порт…"
+
+msgid "heading.uploadport"
+msgstr "ПОРТ ЗАГРУЗОК TITAN"
+
+msgid "dlg.uploadport.msg"
+msgstr ""
+"Задать порт сервера Titan для данного адреса.\n"
+"Порт сохраняется в настройках сайта."
+
+msgid "dlg.uploadport.set"
+msgstr "Задать порт"
+
+msgid "prefs.returnkey.linebreak"
+msgstr "Перенос строк"
+
+msgid "error.certverify.msg"
+msgstr ""
+"Не удалось соединиться с сервером, потому что его сертификат TLS не "
+"совпадает с доверенным. Убедитесь, что сервер не сменил сертификат. В "
+"противном случае, злоумышленники могут маскироваться под сервер, к которому "
+"выполнялось подключение.\n"
+"\n"
+"Сертификат можно пометить как доверенный в окне «Сведения о странице»."
