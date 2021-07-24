@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: jaakko.keranen@iki.fi\n"
 "POT-Creation-Date: 2021-03-23 09:09+0000\n"
-"PO-Revision-Date: 2021-07-16 13:12+0000\n"
+"PO-Revision-Date: 2021-07-24 04:05+0000\n"
 "Last-Translator: Weblate Admin <jaakko.keranen@iki.fi>\n"
 "Language-Team: Finnish <http://weblate.skyjake.fi/projects/lagrange/ui/fi/>\n"
 "Language: fi\n"
@@ -265,7 +265,7 @@ msgid "toolbar.outline"
 msgstr "Sivun rakenne"
 
 msgid "hint.findtext"
-msgstr "Etsi teksti sivulta"
+msgstr "etsi teksti sivulta"
 
 msgid "status.query"
 msgstr "Kysely"
@@ -1645,10 +1645,10 @@ msgstr "Jaetun näkymän valikko:"
 
 msgid "error.certverify.msg"
 msgstr ""
-"Yhteys palvelimeen keskeytettiin, koska emme luota sen lähettämään TLS-"
-"sertifikaattiin. Tarkista, onko palvelin ilmoittanut vaihdosta uuteen "
-"sertifikaattiin. Jos ei, on mahdollista, että jokin muu taho yrittää "
-"esiintyä vilpillisesti tänä palvelimena.\n"
+"Yhteyden avaaminen palvelimeen keskeytettiin, koska emme luota sen "
+"lähettämään TLS-sertifikaattiin. Tarkista, onko palvelin ilmoittanut "
+"vaihdosta uuteen sertifikaattiin. Jos ei, on mahdollista, että jokin muu "
+"taho yrittää esiintyä vilpillisesti tänä palvelimena.\n"
 "\n"
 "Sertifikaatti voidaan merkitä luotetuksi Sivun tiedon -paneelissa."
 
@@ -1693,3 +1693,62 @@ msgstr "Muistin koko:"
 
 msgid "error.certverify"
 msgstr "Palvelin ei luotettu"
+
+msgid "menu.unexpire"
+msgstr "Jatka lataamista vanhentumisesta huolimatta"
+
+msgid "menu.page.upload"
+msgstr "Lähetä sivu Titanilla"
+
+msgid "heading.upload"
+msgstr "TITAN-LÄHETYS"
+
+msgid "heading.upload.text"
+msgstr "Teksti"
+
+msgid "hint.upload.text"
+msgstr "syötä lähetettävä teksti"
+
+msgid "heading.upload.file"
+msgstr "Tiedosto"
+
+msgid "upload.file.name"
+msgstr "Nimi:"
+
+msgid "upload.file.drophere"
+msgstr "(pudota tiedosto ikkunaan)"
+
+msgid "upload.file.size"
+msgstr "Koko:"
+
+msgid "upload.mime"
+msgstr "MIME-tyyppi:"
+
+msgid "upload.token"
+msgstr "Lähetysavain:"
+
+msgid "hint.upload.token"
+msgstr "katso palvelimen ohjeet"
+
+msgid "dlg.upload.send"
+msgstr "Lähetä"
+
+msgid "prefs.returnkey.linebreak"
+msgstr "Rivinvaihto"
+
+msgid "prefs.returnkey.accept"
+msgstr "Hyväksy"
+
+msgid "prefs.returnkey"
+msgstr "Palautusnäppäin:"
+
+msgid "keys.upload"
+msgstr "Lähetä sivu Titanilla"
+
+msgid "error.certexpired"
+msgstr "Vanhentunut sertifikaatti"
+
+msgid "error.certexpired.msg"
+msgstr ""
+"Yhteyden avaaminen palvelimeen keskeytettiin, koska sen TLS-sertifikaatti on "
+"vanhentunut."
