@@ -231,7 +231,6 @@ static void restoreBackup_InputWidget_(iInputWidget *d) {
     iFile *f = new_File(d->backupPath);
     if (open_File(f, readOnly_FileMode | text_FileMode)) {
         setText_InputWidget(d, collect_String(readString_File(f)));
-        updateMetrics_InputWidget_(d);
     }
     iRelease(f);
 }
@@ -419,7 +418,7 @@ static const char *sensitive_     = "\u25cf";
 static iWrapText wrap_InputWidget_(const iInputWidget *d, int y) {
     return (iWrapText){
         .text     = range_String(&line_InputWidget_(d, y)->text),
-        .maxWidth = width_Rect(contentBounds_InputWidget_(d)),
+        .maxWidth = d->maxLen == 0 ? width_Rect(contentBounds_InputWidget_(d)) : 0,
         .mode     = (d->inFlags & isUrl_InputWidgetFlag ? anyCharacter_WrapTextMode
                                                         : word_WrapTextMode),
         .overrideChar = (d->inFlags & isSensitive_InputWidgetFlag ? sensitiveChar_ : 0),
@@ -455,6 +454,10 @@ static void updateVisible_InputWidget_(iInputWidget *d) {
     d->visWrapLines.start += delta;
     d->visWrapLines.end   += delta;
     iAssert(contains_Range(&d->visWrapLines, cursorY));
+    if (!isFocused_Widget(d) && d->maxWrapLines == 1) {
+        d->visWrapLines.start = 0;
+        d->visWrapLines.end = 1;
+    }
 }
 
 static void showCursor_InputWidget_(iInputWidget *d) {
@@ -823,18 +826,19 @@ void setText_InputWidget(iInputWidget *d, const iString *text) {
         updateLine_InputWidget_(d, i.value); /* count number of visible lines */
     }
     updateLineRangesStartingFrom_InputWidget_(d, 0);
-    if (isFocused_Widget(d)) {
+    //if (isFocused_Widget(d)) {
         d->cursor = cursorMax_InputWidget_(d);
-    }
-    else {
-        d->cursor.y = iMin(d->cursor.y, (int) size_Array(&d->lines) - 1);
-        d->cursor.x = iMin(d->cursor.x, size_String(&cursorLine_InputWidget_(d)->text));
+//    }
+//    else {
+//        d->cursor.y = iMin(d->cursor.y, (int) size_Array(&d->lines) - 1);
+//        d->cursor.x = iMin(d->cursor.x, size_String(&cursorLine_InputWidget_(d)->text));
         iZap(d->mark);
-    }
+//    }
     if (!isFocused_Widget(d)) {
         d->inFlags |= needUpdateBuffer_InputWidgetFlag;
     }
     updateVisible_InputWidget_(d);
+    updateMetrics_InputWidget_(d);
     refresh_Widget(as_Widget(d));
 }
 
@@ -918,6 +922,7 @@ void begin_InputWidget(iInputWidget *d) {
         iZap(d->mark);
     }
     enableEditorKeysInMenus_(iFalse);
+    updateVisible_InputWidget_(d);
 }
 
 void end_InputWidget(iInputWidget *d, iBool accept) {
@@ -1249,7 +1254,7 @@ static iInt2 coordCursor_InputWidget_(const iInputWidget *d, iInt2 coord) {
         return cursorMax_InputWidget_(d);
     }
     iWrapText wrapText = {
-        .maxWidth = width_Rect(bounds),
+        .maxWidth = d->maxLen == 0 ? width_Rect(bounds) : 0,
         .mode = (d->inFlags & isUrl_InputWidgetFlag ? anyCharacter_WrapTextMode : word_WrapTextMode),
         .hitPoint = relCoord,
         .overrideChar = (d->inFlags & isSensitive_InputWidgetFlag ? sensitiveChar_ : 0),
@@ -1831,7 +1836,7 @@ static void draw_InputWidget_(const iInputWidget *d) {
                              : isFocused /*&& !isEmpty_Array(&d->lines)*/ ? uiInputTextFocused_ColorId
                                                                       : uiInputText_ColorId;
     iWrapText wrapText = {
-        .maxWidth     = width_Rect(contentBounds),
+        .maxWidth     = d->maxLen == 0 ? width_Rect(contentBounds) : 0,
         .mode         = (d->inFlags & isUrl_InputWidgetFlag ? anyCharacter_WrapTextMode
                                                             : word_WrapTextMode),
         .overrideChar = (d->inFlags & isSensitive_InputWidgetFlag ? sensitiveChar_ : 0),

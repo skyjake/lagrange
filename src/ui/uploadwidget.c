@@ -224,7 +224,7 @@ static iBool processEvent_UploadWidget_(iUploadWidget *d, const SDL_Event *ev) {
             setUrlPort_UploadWidget_(d, &d->originalUrl, arg_Command(cmd));
         }
         else {
-            makeValueInput_Widget(w,
+            makeValueInput_Widget(root_Widget(w),
                                   collectNewFormat_String("%u", titanPortForUrl_(&d->originalUrl)),
                                   uiHeading_ColorEscape "${heading.uploadport}",
                                   "${dlg.uploadport.msg}",
